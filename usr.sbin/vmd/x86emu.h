@@ -73,7 +73,7 @@ enum {
   i3      = TYPE_IMM+0x03,
 
   Jb      = TYPE_JMP+SIZE_BYTE,
-  Jv      = TYPE_JMP+SIZE_VWORD,
+  Jz      = TYPE_JMP+SIZE_ZWORD,
 
   Xb      = TYPE_INDEX+SIZE_BYTE,
   Xv      = TYPE_INDEX+SIZE_VWORD,

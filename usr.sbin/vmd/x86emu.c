@@ -72,22 +72,22 @@ struct opcode hicodes[256] = {
 
    /* 0x80 */
    [0x80] =
-   _(jcc,     Jv,  __, __, FLG_D64),
-   _(jcc,     Jv,  __, __, FLG_D64),
-   _(jcc,     Jv,  __, __, FLG_D64),
-   _(jcc,     Jv,  __, __, FLG_D64),
-   _(jcc,     Jv,  __, __, FLG_D64),
-   _(jcc,     Jv,  __, __, FLG_D64),
-   _(jcc,     Jv,  __, __, FLG_D64),
-   _(jcc,     Jv,  __, __, FLG_D64),
-   _(jcc,     Jv,  __, __, FLG_D64),
-   _(jcc,     Jv,  __, __, FLG_D64),
-   _(jcc,     Jv,  __, __, FLG_D64),
-   _(jcc,     Jv,  __, __, FLG_D64),
-   _(jcc,     Jv,  __, __, FLG_D64),
-   _(jcc,     Jv,  __, __, FLG_D64),
-   _(jcc,     Jv,  __, __, FLG_D64),
-   _(jcc,     Jv,  __, __, FLG_D64),
+   _(jcc,     Jz,  __, __, FLG_D64),
+   _(jcc,     Jz,  __, __, FLG_D64),
+   _(jcc,     Jz,  __, __, FLG_D64),
+   _(jcc,     Jz,  __, __, FLG_D64),
+   _(jcc,     Jz,  __, __, FLG_D64),
+   _(jcc,     Jz,  __, __, FLG_D64),
+   _(jcc,     Jz,  __, __, FLG_D64),
+   _(jcc,     Jz,  __, __, FLG_D64),
+   _(jcc,     Jz,  __, __, FLG_D64),
+   _(jcc,     Jz,  __, __, FLG_D64),
+   _(jcc,     Jz,  __, __, FLG_D64),
+   _(jcc,     Jz,  __, __, FLG_D64),
+   _(jcc,     Jz,  __, __, FLG_D64),
+   _(jcc,     Jz,  __, __, FLG_D64),
+   _(jcc,     Jz,  __, __, FLG_D64),
+   _(jcc,     Jz,  __, __, FLG_D64),
 
    /* 0x90 */
    _(setcc,   Eb,  __, __, FLG_MRR),
@@ -167,17 +167,17 @@ struct opcode locodes[256] = {
    _(add,     Ev,  Gv, __, FLG_MRR),
    _(add,     Gb,  Eb, __, FLG_MRR),
    _(add,     Gv,  Ev, __, FLG_MRR),
-   _(add,     rAL, Ib),
-   _(add,    rvAX, Iv),
+   _(add,    rAL,  Ib),
+   _(add,   rvAX,  Iz),
    _(push,   rES,  __, __, FLG_NO64),
    _(pop,    rES,  __, __, FLG_NO64),
    _(or,      Eb,  Gb, __, FLG_MRR),
    _(or,      Ev,  Gv, __, FLG_MRR),
    _(or,      Gb,  Eb, __, FLG_MRR),
    _(or,      Gv,  Ev, __, FLG_MRR),
-   _(or,      rAL, Ib),
-   _(or,     rvAX, Iv),
-   _(push,    rCS, __, __, FLG_NO64),
+   _(or,     rAL,  Ib),
+   _(or,    rvAX,  Iz),
+   _(push,   rCS,  __, __, FLG_NO64),
    _xxx,
 
    /* 0x10 */
@@ -185,35 +185,35 @@ struct opcode locodes[256] = {
    _(adc,     Ev,  Gv, __, FLG_MRR),
    _(adc,     Gb,  Eb, __, FLG_MRR),
    _(adc,     Gv,  Ev, __, FLG_MRR),
-   _(adc,     rAL, Ib),
-   _(adc,    rvAX, Iv),
-   _(push,    rSS, __, __, FLG_NO64),
-   _(pop,     rSS, __, __, FLG_NO64),
+   _(adc,    rAL,  Ib),
+   _(adc,   rvAX,  Iz),
+   _(push,   rSS,  __, __, FLG_NO64),
+   _(pop,    rSS,  __, __, FLG_NO64),
    _(sbb,     Eb,  Gb, __, FLG_MRR),
    _(sbb,     Ev,  Gv, __, FLG_MRR),
    _(sbb,     Gb,  Eb, __, FLG_MRR),
    _(sbb,     Gv,  Ev, __, FLG_MRR),
-   _(sbb,     rAL, Ib),
-   _(sbb,    rvAX, Iv),
-   _(push,    rDS, __, __, FLG_NO64),
-   _(pop,     rDS, __, __, FLG_NO64),
+   _(sbb,    rAL,  Ib),
+   _(sbb,   rvAX,  Iz),
+   _(push,   rDS,  __, __, FLG_NO64),
+   _(pop,    rDS,  __, __, FLG_NO64),
 
    /* 0x20 */
    _(and,     Eb,  Gb, __, FLG_MRR),
    _(and,     Ev,  Gv, __, FLG_MRR),
    _(and,     Gb,  Eb, __, FLG_MRR),
    _(and,     Gv,  Ev, __, FLG_MRR),
-   _(and,     rAL, Ib),
-   _(and,    rvAX, Iv),
-   _(pfx,     rES, __, __, FLG_SEG),
-   _(daa,      __, __, __, FLG_NO64),
+   _(and,    rAL,  Ib),
+   _(and,   rvAX,  Iz),
+   _(pfx,    rES,  __, __, FLG_SEG),
+   _(daa,     __,  __, __, FLG_NO64),
    _(sub,     Eb,  Gb, __, FLG_MRR),
    _(sub,     Ev,  Gv, __, FLG_MRR),
    _(sub,     Gb,  Eb, __, FLG_MRR),
    _(sub,     Gv,  Ev, __, FLG_MRR),
-   _(sub,     rAL, Ib),
-   _(sub,    rvAX, Iv),
-   _(pfx,     rCS, __, __, FLG_SEG),
+   _(sub,    rAL,  Ib),
+   _(sub,   rvAX,  Iz),
+   _(pfx,    rCS,  __, __, FLG_SEG),
    _(das,     __,  __, __, FLG_NO64),
 
    /* 0x30 */
@@ -221,18 +221,18 @@ struct opcode locodes[256] = {
    _(xor,     Ev,  Gv, __, FLG_MRR),
    _(xor,     Gb,  Eb, __, FLG_MRR),
    _(xor,     Gv,  Ev, __, FLG_MRR),
-   _(xor,     rAL, Ib),
-   _(xor,    rvAX, Iv),
-   _(pfx,     rSS, __, __, FLG_SEG),
-   _(aaa,      __, __, __, FLG_NO64),
-   _(cmp,      Eb, Gb, __, FLG_MRR),
-   _(cmp,      Ev, Gv, __, FLG_MRR),
-   _(cmp,      Gb, Eb, __, FLG_MRR),
-   _(cmp,      Gv, Ev, __, FLG_MRR),
-   _(cmp,     rAL, Ib),
-   _(cmp,    rvAX, Iv),
-   _(pfx,     rDS, __, __, FLG_SEG),
-   _(aas,      __, __, __, FLG_NO64),
+   _(xor,    rAL,  Ib),
+   _(xor,   rvAX,  Iz),
+   _(pfx,    rSS,  __, __, FLG_SEG),
+   _(aaa,     __,  __, __, FLG_NO64),
+   _(cmp,     Eb,  Gb, __, FLG_MRR),
+   _(cmp,     Ev,  Gv, __, FLG_MRR),
+   _(cmp,     Gb,  Eb, __, FLG_MRR),
+   _(cmp,     Gv,  Ev, __, FLG_MRR),
+   _(cmp,    rAL,  Ib),
+   _(cmp,   rvAX,  Iz),
+   _(pfx,    rDS,  __, __, FLG_SEG),
+   _(aas,     __,  __, __, FLG_NO64),
 
    /* 0x40 */
    _(inc,     gv,  __, __, FLG_REX),
@@ -273,8 +273,8 @@ struct opcode locodes[256] = {
    /* 0x60 */
    _(pusha,   __,  __, __, FLG_NO64),
    _(popa,    __,  __, __, FLG_NO64),
-   _xxx,                                       // EVEX
-   _xxx,                                       // movsxd Gv, Rd
+   _xxx,                               // EVEX
+   _xxx,                               // movsxd Gv, Rd
    _(pfx,    rFS,  __, __, FLG_SEG),
    _(pfx,    rGS,  __, __, FLG_SEG),
    _(pfx,     __,  __, __, FLG_OSZ),
@@ -352,7 +352,7 @@ struct opcode locodes[256] = {
    _(cmpsb,   Xb,  Yb, __, FLG_MEM), //repz/repnz
    _(cmpsv,   Xb,  Yv, __, FLG_MEM), //repz/repnz
    _(test,   rAL,  Ib),
-   _(test,  rvAX,  Iv),
+   _(test,  rvAX,  Iz),
    _(stosb,   Yb, rAL, __, FLG_MEM), //rep
    _(stosv,   Yv,rvAX, __, FLG_MEM), //rep
    _(lodsb,  rAL,  Xb, __, FLG_MEM),
@@ -397,14 +397,14 @@ struct opcode locodes[256] = {
    _(iret),
 
    /* 0xd0 */
-   _(grp2,   Eb,  i1,  __, FLG_MRR|FLG_GRP),
-   _(grp2,   Ev,  i1,  __, FLG_MRR|FLG_GRP),
-   _(grp2,   Eb,  rCL, __, FLG_MRR|FLG_GRP),
-   _(grp2,   Eb,  rCL, __, FLG_MRR|FLG_GRP),
-   _(aam,    Ib,  __,  __, FLG_NO64),
-   _(aad,    Ib,  __,  __, FLG_NO64),
-   _(salc,   __,  __,  __, FLG_NO64),
-   _(xlat,   __,  __,  __, FLG_MEM),
+   _(grp2,    Eb,  i1, __, FLG_MRR|FLG_GRP),
+   _(grp2,    Ev,  i1, __, FLG_MRR|FLG_GRP),
+   _(grp2,    Eb, rCL, __, FLG_MRR|FLG_GRP),
+   _(grp2,    Eb, rCL, __, FLG_MRR|FLG_GRP),
+   _(aam,     Ib,  __, __, FLG_NO64),
+   _(aad,     Ib,  __, __, FLG_NO64),
+   _(salc,    __,  __, __, FLG_NO64),
+   _(xlat,    __,  __, __, FLG_MEM),
    _xxx,
    _xxx,
    _xxx,
@@ -422,9 +422,9 @@ struct opcode locodes[256] = {
    _(in,     rAL,  Ib),
    _(in,    rvAX,  Ib),
    _(out,     Ib,  rAL),
-   _(out,     Ib,  rvAX),
-   _(call,    Jv,  __, __, FLG_D64),
-   _(jmp,     Jv,  __, __, FLG_D64),
+   _(out,     Ib, rvAX),
+   _(call,    Jz,  __, __, FLG_D64),
+   _(jmp,     Jz,  __, __, FLG_D64),
    _(jmp,     Ap,  __, __, FLG_NO64),
    _(jmp,     Jb,  __, __, FLG_D64),
    _(in,     rAL, rDX),
@@ -463,8 +463,7 @@ struct istate {
   uint32_t asz;
   uint32_t mode;
 
-  /* Instruction bytes */
-  uint8_t  ib[16];
+  /* number of instruction bytes */
   int      nib;
 
   uint8_t *pc;
@@ -472,10 +471,8 @@ struct istate {
 
 static uint64_t
 getb(struct istate *i) {
-  uint8_t c = *i->pc++;
-
-  i->ib[i->nib++] = c;
-  return c;
+  i->nib++;
+  return *i->pc++;
 }
 
 /* Get operand size */
@@ -507,10 +504,6 @@ asize(struct istate *i) {
   }
   return 0;
 }
-
-/* f3 48 a5 = rep movsv
- * f3 48 ab = rep stosv
- */
 
 /*============================*
  * Decode opcode
@@ -672,6 +665,7 @@ mkea(struct istate *i, int sz) {
   return 0;
 }
 
+/* Decode opcode argument. Return register if applicable */
 static uint32_t
 decodearg(struct istate *i, int arg) {
   int tt, sz, vv;
@@ -733,11 +727,16 @@ static int vmmreg[] = {
   VCPU_REGS_R13,
   VCPU_REGS_R14,
   VCPU_REGS_R15,
+  VCPU_REGS_RSP, // spl
+  VCPU_REGS_RBP, // bpl
+  VCPU_REGS_RSI, // sil
+  VCPU_REGS_RDI, // dil
 };
 
+/* Map X86 reg to vmm reg */
 static int
 Vreg(int arg) {
-  if ((arg & VAL_MASK) < 16)
+  if ((arg & VAL_MASK) < 20)
     return vmmreg[arg & VAL_MASK];
   printf("error bad reg: %x\n", arg);
   return VCPU_REGS_RAX;
@@ -759,9 +758,9 @@ dodis(uint8_t *ib, struct insn *ix) {
   decodearg(&i, o.arg2); 
   printf(" : %d\n", i.nib);
 
-  ix->incr = 0;
   if (strncmp(o.mnem, "mov", 3))
     return 0;
+  memset(ix, 0, sizeof(*ix));
   if ((a0 & TYPE_MASK) == TYPE_REG) {
     ix->dir = VEI_DIR_IN;
     ix->size = sz(a0);
@@ -775,6 +774,6 @@ dodis(uint8_t *ib, struct insn *ix) {
     ix->incr = i.nib;
   }
   printf("dir:%d size:%d reg:%d incr:%d\n", ix->dir, ix->size, ix->reg, ix->incr);
-  return 0;
+  return 1;
 }
 
