@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.2 2020/07/08 01:18:04 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.3 2020/07/09 01:49:15 schwarze Exp $
 
-PROGS =			fp string
+PROGS =			fp int string
 
 REGRESS_TARGETS =	${PROGS:S/^/run-regress-/}
 
