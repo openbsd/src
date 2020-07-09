@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.130 2020/06/27 14:29:45 krw Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.131 2020/07/09 22:48:05 krw Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -581,6 +581,15 @@ mpii_attach(struct device *parent, struct device *self, void *aux)
 		goto free_devs;
 	}
 
+	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_BIO,
+	    mpii_intr, sc, sc->sc_dev.dv_xname);
+	if (sc->sc_ih == NULL)
+		goto free_devs;
+
+	/* force autoconf to wait for the first sas discovery to complete */
+	sc->sc_pending = 1;
+	config_pending_incr();
+
 	/* we should be good to go now, attach scsibus */
 	sc->sc_link.adapter = &mpii_switch;
 	sc->sc_link.adapter_softc = sc;
@@ -591,15 +600,6 @@ mpii_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.pool = &sc->sc_iopool;
 
 	saa.saa_sc_link = &sc->sc_link;
-
-	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_BIO,
-	    mpii_intr, sc, sc->sc_dev.dv_xname);
-	if (sc->sc_ih == NULL)
-		goto free_devs;
-
-	/* force autoconf to wait for the first sas discovery to complete */
-	sc->sc_pending = 1;
-	config_pending_incr();
 
 	/* config_found() returns the scsibus attached to us */
 	sc->sc_scsibus = (struct scsibus_softc *) config_found(&sc->sc_dev,
