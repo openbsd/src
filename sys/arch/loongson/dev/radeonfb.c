@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeonfb.c,v 1.2 2017/01/15 20:22:33 fcambus Exp $	*/
+/*	$OpenBSD: radeonfb.c,v 1.4 2020/05/25 09:55:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -123,7 +123,7 @@ struct radeonfb_softc {
 };
 
 int	radeonfb_alloc_screen(void *, const struct wsscreen_descr *, void **,
-	    int *, int *, long *);
+	    int *, int *, uint32_t *);
 void	radeonfb_free_screen(void *, void *);
 int	radeonfb_ioctl(void *, u_long, caddr_t, int, struct proc *);
 int	radeonfb_list_font(void *, struct wsdisplay_font *);
@@ -154,9 +154,9 @@ struct cfdriver radeonfb_cd = {
 };
 
 int	radeonfb_copycols(void *, int, int, int, int);
-int	radeonfb_erasecols(void *, int, int, int, long);
+int	radeonfb_erasecols(void *, int, int, int, uint32_t);
 int	radeonfb_copyrows(void *, int, int, int);
-int	radeonfb_eraserows(void *, int, int, long);
+int	radeonfb_eraserows(void *, int, int, uint32_t);
 
 int	radeonfb_setup(struct radeonfb *);
 void	radeonfb_wait_fifo(struct radeonfb *, int);
@@ -253,7 +253,7 @@ radeonfb_attach(struct device *parent, struct device *self, void *aux)
 
 int
 radeonfb_alloc_screen(void *v, const struct wsscreen_descr *type,
-    void **cookiep, int *curxp, int *curyp, long *attrp)
+    void **cookiep, int *curxp, int *curyp, uint32_t *attrp)
 {
 	struct radeonfb_softc *sc = (struct radeonfb_softc *)v;
 	struct rasops_info *ri = &sc->sc_fb->ri;
@@ -263,7 +263,7 @@ radeonfb_alloc_screen(void *v, const struct wsscreen_descr *type,
 
 	*cookiep = ri;
 	*curxp = *curyp = 0;
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, attrp);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, attrp);
 	sc->sc_nscr++;
 
 	return 0;
@@ -433,7 +433,7 @@ radeonfb_copycols(void *cookie, int row, int src, int dst, int num)
 }
 
 int
-radeonfb_erasecols(void *cookie, int row, int col, int num, long attr)
+radeonfb_erasecols(void *cookie, int row, int col, int num, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	struct radeonfb *fb = ri->ri_hw;
@@ -468,7 +468,7 @@ radeonfb_copyrows(void *cookie, int src, int dst, int num)
 }
 
 int
-radeonfb_eraserows(void *cookie, int row, int num, long attr)
+radeonfb_eraserows(void *cookie, int row, int num, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	struct radeonfb *fb = ri->ri_hw;
@@ -686,7 +686,7 @@ int
 radeonfb_cnattach(bus_space_tag_t memt, bus_space_tag_t iot, pcitag_t tag,
     pcireg_t id)
 {
-	long defattr;
+	uint32_t defattr;
 	struct rasops_info *ri;
 	pcireg_t bar;
 	int rc;
@@ -722,7 +722,7 @@ radeonfb_cnattach(bus_space_tag_t memt, bus_space_tag_t iot, pcitag_t tag,
 		return rc;
 
 	ri = &radeonfbcn.ri;
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&radeonfbcn.wsd, ri, 0, 0, defattr);
 
 	return 0;

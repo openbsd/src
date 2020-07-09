@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.262 2020/04/28 12:58:27 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.267 2020/06/03 06:54:04 dlg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1395,11 +1395,6 @@ init_x86_64(paddr_t first_avail)
 	i8254_startclock();
 
 	/*
-	 * Attach the glass console early in case we need to display a panic.
-	 */
-	cninit();
-
-	/*
 	 * Initialize PAGE_SIZE-dependent variables.
 	 */
 	uvm_setpagesize();
@@ -1420,6 +1415,8 @@ init_x86_64(paddr_t first_avail)
 		getbootinfo(bootinfo, bootinfo_size);
 	} else
 		panic("invalid /boot");
+
+	cninit();
 
 /*
  * Memory on the AMD64 port is described by three different things.
@@ -1927,8 +1924,6 @@ getbootinfo(char *bootinfo, int bootinfo_size)
 	bios_ddb_t *bios_ddb;
 	bios_bootduid_t *bios_bootduid;
 	bios_bootsr_t *bios_bootsr;
-	int docninit = 0;
-
 #undef BOOTINFO_DEBUG
 #ifdef BOOTINFO_DEBUG
 	printf("bootargv:");
@@ -1983,9 +1978,6 @@ getbootinfo(char *bootinfo, int bootinfo_size)
 					comconsaddr = consaddr;
 					comconsrate = cdp->conspeed;
 					comconsiot = X86_BUS_SPACE_IO;
-
-					/* Probe the serial port this time. */
-					docninit++;
 				}
 #endif
 #ifdef BOOTINFO_DEBUG
@@ -2023,8 +2015,6 @@ getbootinfo(char *bootinfo, int bootinfo_size)
 
 		case BOOTARG_EFIINFO:
 			bios_efiinfo = (bios_efiinfo_t *)q->ba_arg;
-			if (bios_efiinfo->fb_addr != 0)
-				docninit++;
 			break;
 
 		case BOOTARG_UCODE:
@@ -2039,8 +2029,6 @@ getbootinfo(char *bootinfo, int bootinfo_size)
 			break;
 		}
 	}
-	if (docninit > 0)
-		cninit();
 #ifdef BOOTINFO_DEBUG
 	printf("\n");
 #endif
@@ -2066,93 +2054,4 @@ check_context(const struct reg *regs, struct trapframe *tf)
 		return EINVAL;
 
 	return 0;
-}
-
-#include <sys/timetc.h>
-#include <dev/clock_subr.h>
-
-todr_chip_handle_t todr_handle;
-
-#define MINYEAR		((OpenBSD / 100) - 1)	/* minimum plausible year */
-
-/*
- * inittodr:
- *
- *      Initialize time from the time-of-day register.
- */
-void
-inittodr(time_t base)
-{
-	time_t deltat;
-	struct timeval rtctime;
-	struct timespec ts;
-	int badbase;
-
-	if (base < (MINYEAR - 1970) * SECYR) {
-		printf("WARNING: preposterous time in file system\n");
-		/* read the system clock anyway */
-		base = (MINYEAR - 1970) * SECYR;
-		badbase = 1;
-	} else
-		badbase = 0;
-
-	if (todr_handle == NULL ||
-	    todr_gettime(todr_handle, &rtctime) != 0 ||
-	    rtctime.tv_sec < (MINYEAR - 1970) * SECYR) {
-		/*
-		 * Believe the time in the file system for lack of
-		 * anything better, resetting the TODR.
-		 */
-		rtctime.tv_sec = base;
-		rtctime.tv_usec = 0;
-		if (todr_handle != NULL && !badbase)
-			printf("WARNING: bad clock chip time\n");
-		ts.tv_sec = rtctime.tv_sec;
-		ts.tv_nsec = rtctime.tv_usec * 1000;
-		tc_setclock(&ts);
-		goto bad;
-	} else {
-		ts.tv_sec = rtctime.tv_sec;
-		ts.tv_nsec = rtctime.tv_usec * 1000;
-		tc_setclock(&ts);
-	}
-
-	if (!badbase) {
-		/*
-		 * See if we gained/lost two or more days; if
-		 * so, assume something is amiss.
-		 */
-		deltat = rtctime.tv_sec - base;
-		if (deltat < 0)
-			deltat = -deltat;
-		if (deltat < 2 * SECDAY)
-			return;         /* all is well */
-#ifndef SMALL_KERNEL
-		printf("WARNING: clock %s %lld days\n",
-		    rtctime.tv_sec < base ? "lost" : "gained",
-		    (long long)(deltat / SECDAY));
-#endif
-	}
- bad:
-	printf("WARNING: CHECK AND RESET THE DATE!\n");
-}
-
-/*
- * resettodr:
- *
- *      Reset the time-of-day register with the current time.
- */
-void
-resettodr(void)
-{
-	struct timeval rtctime;
-
-	if (time_second == 1)
-		return;
-
-	microtime(&rtctime);
-
-	if (todr_handle != NULL &&
-	    todr_settime(todr_handle, &rtctime) != 0)
-		printf("WARNING: can't update clock chip time\n");
 }

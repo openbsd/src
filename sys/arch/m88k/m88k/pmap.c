@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.85 2016/10/19 08:28:20 guenther Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.86 2020/06/23 02:18:58 aoyama Exp $	*/
 
 /*
  * Copyright (c) 2001-2004, 2010, Miodrag Vallat.
@@ -464,7 +464,7 @@ pmap_expand_kmap(vaddr_t va, int canfail)
 	struct vm_page *pg;
 	paddr_t pa;
 
-	DPRINTF(CD_KMAP, ("pmap_expand_kmap(%p, %d)\n", va, canfail));
+	DPRINTF(CD_KMAP, ("pmap_expand_kmap(%lx, %d)\n", va, canfail));
 
 	if (__predict_true(uvm.page_init_done)) {
 		pg = uvm_pagealloc(NULL, 0, NULL,
@@ -506,7 +506,7 @@ pmap_expand(pmap_t pmap, vaddr_t va, int canfail)
 	paddr_t pa;
 	sdt_entry_t *sdt;
 
-	DPRINTF(CD_EXP, ("pmap_expand(%p, %p, %d)\n", pmap, va, canfail));
+	DPRINTF(CD_EXP, ("pmap_expand(%p, %lx, %d)\n", pmap, va, canfail));
 
 	sdt = SDTENT(pmap, va);
 	for (;;) {
@@ -582,7 +582,7 @@ pmap_map(paddr_t pa, psize_t sz, vm_prot_t prot, u_int cmode,
 	uint npg, batcno;
 	paddr_t curpa;
 
-	DPRINTF(CD_MAP, ("pmap_map(%p, %p, %x, %x)\n",
+	DPRINTF(CD_MAP, ("pmap_map(%lx, %lx, %x, %x)\n",
 	    pa, sz, prot, cmode));
 #ifdef DIAGNOSTIC
 	if (pa != 0 && pa < VM_MAX_KERNEL_ADDRESS)
@@ -690,7 +690,7 @@ pmap_bootstrap(paddr_t s_rom, paddr_t e_rom)
 
 	nsdt = roundup(avail_end, (1 << SDT_SHIFT)) >> SDT_SHIFT;
 	npdt = roundup(avail_end, (1 << PDT_SHIFT)) >> PDT_SHIFT;
-	DPRINTF(CD_BOOT, ("avail_end %08x pages %08x nsdt %08x npdt %08x\n",
+	DPRINTF(CD_BOOT, ("avail_end %08lx pages %08lx nsdt %08x npdt %08x\n",
 	    avail_end, atop(avail_end), nsdt, npdt));
 
 	/*
@@ -717,7 +717,7 @@ pmap_bootstrap(paddr_t s_rom, paddr_t e_rom)
 	if (e_rom == 0)
 		s_rom = e_rom = PAGE_SIZE;
 	DPRINTF(CD_BOOT, ("nsdt %d npdt %d npdtpg %d\n", nsdt, npdt, npdtpg));
-	DPRINTF(CD_BOOT, ("area below the kernel %p-%p: %d pages, need %d\n",
+	DPRINTF(CD_BOOT, ("area below the kernel %lx-%lx: %ld pages, need %d\n",
 	    e_rom, s_low, atop(s_low - e_rom), npdtpg + 1));
 	if (e_rom < s_low && npdtpg + 1 <= atop(s_low - e_rom)) {
 		sdtpa = e_rom;
@@ -766,7 +766,7 @@ pmap_bootstrap(paddr_t s_rom, paddr_t e_rom)
 		*pte++ = pa | PG_SO | PG_RW | PG_M_U | PG_V;
 		pa += PAGE_SIZE;
 	}
-	DPRINTF(CD_BOOT, ("-%p, pa %08x\n", pte, pa));
+	DPRINTF(CD_BOOT, ("-%p, pa %08lx\n", pte, pa));
 	for (i = (pt_entry_t *)round_page((vaddr_t)pte) - pte; i != 0; i--)
 		*pte++ = PG_NV;
 
@@ -819,7 +819,7 @@ pmap_bootstrap(paddr_t s_rom, paddr_t e_rom)
 	pmap_kernel()->pm_count = 1;
 	pmap_kernel()->pm_apr = sdtpa | kernel_apr;
 
-	DPRINTF(CD_BOOT, ("default apr %08x kernel apr %08x\n",
+	DPRINTF(CD_BOOT, ("default apr %08x kernel apr %08lx\n",
 	    kernel_apr, sdtpa));
 
 	pmap_bootstrap_cpu(cpu_number());
@@ -835,7 +835,7 @@ pmap_bootstrap_cpu(cpuid_t cpu)
 	/* Load supervisor pointer to segment table. */
 	cmmu_set_sapr(pmap_kernel()->pm_apr);
 #ifdef PMAPDEBUG
-	printf("cpu%d: running virtual\n", cpu);
+	printf("cpu%lu: running virtual\n", cpu);
 #endif
 
 	cmmu_batc_setup(cpu, kernel_apr & CACHE_MASK);
@@ -902,7 +902,7 @@ pmap_create(void)
 	pmap->pm_apr = pa | userland_apr;
 	pmap->pm_count = 1;
 
-	DPRINTF(CD_CREAT, ("pmap_create() -> pmap %p, pm_stab %p\n", pmap, pa));
+	DPRINTF(CD_CREAT, ("pmap_create() -> pmap %p, pm_stab %lx\n", pmap, pa));
 
 	return pmap;
 }
@@ -1005,7 +1005,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 	struct vm_page *pg;
 
-	DPRINTF(CD_ENT, ("pmap_enter(%p, %p, %p, %x, %x)\n",
+	DPRINTF(CD_ENT, ("pmap_enter(%p, %lx, %lx, %x, %x)\n",
 	    pmap, va, pa, prot, flags));
 
 	npte = m88k_protection(prot);
@@ -1030,7 +1030,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 * Special case if the physical page is already mapped at this address.
 	 */
 	old_pa = ptoa(PG_PFNUM(*pte));
-	DPRINTF(CD_ENT, ("pmap_enter: old_pa %p pte %p\n", old_pa, *pte));
+	DPRINTF(CD_ENT, ("pmap_enter: old_pa %lx pte %x\n", old_pa, *pte));
 
 	pg = PHYS_TO_VM_PAGE(pa);
 	s = splvm();
@@ -1123,7 +1123,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	npte |= pa;
 	*pte = npte;
 	tlb_flush(pmap, va, npte);
-	DPRINTF(CD_ENT, ("pmap_enter: new pte %p\n", npte));
+	DPRINTF(CD_ENT, ("pmap_enter: new pte %x\n", npte));
 
 	/*
 	 * Cache attribute flags
@@ -1152,7 +1152,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
 	pt_entry_t *pte, npte;
 
-	DPRINTF(CD_ENT, ("pmap_kenter_pa(%p, %p, %x)\n", va, pa, prot));
+	DPRINTF(CD_ENT, ("pmap_kenter_pa(%lx, %lx, %x)\n", va, pa, prot));
 
 	npte = m88k_protection(prot) | PG_W | PG_V;
 #ifdef M88110
@@ -1198,7 +1198,7 @@ pmap_remove_pte(pmap_t pmap, vaddr_t va, pt_entry_t *pte, struct vm_page *pg,
 	paddr_t pa;
 
 	splassert(IPL_VM);
-	DPRINTF(CD_RM, ("pmap_remove_pte(%p, %p, %d)\n", pmap, va, flush));
+	DPRINTF(CD_RM, ("pmap_remove_pte(%p, %lx, %d)\n", pmap, va, flush));
 
 	/*
 	 * Update statistics.
@@ -1289,7 +1289,7 @@ pmap_remove_range(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	vaddr_t va, eseg;
 	pt_entry_t *pte;
 
-	DPRINTF(CD_RM, ("pmap_remove_range(%p, %p, %p)\n", pmap, sva, eva));
+	DPRINTF(CD_RM, ("pmap_remove_range(%p, %lx, %lx)\n", pmap, sva, eva));
 
 	/*
 	 * Loop through the range in PAGE_SIZE increments.
@@ -1344,7 +1344,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 {
 	vaddr_t e, eseg;
 
-	DPRINTF(CD_RM, ("pmap_kremove(%p, %x)\n", va, len));
+	DPRINTF(CD_RM, ("pmap_kremove(%lx, %lx)\n", va, len));
 
 	e = va + len;
 	while (va != e) {
@@ -1513,7 +1513,7 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	paddr_t src = VM_PAGE_TO_PHYS(srcpg);
 	paddr_t dst = VM_PAGE_TO_PHYS(dstpg);
 
-	DPRINTF(CD_COPY, ("pmap_copy_page(%p,%p) pa %p %p\n",
+	DPRINTF(CD_COPY, ("pmap_copy_page(%p,%p) pa %lx %lx\n",
 	    srcpg, dstpg, src, dst));
 	curcpu()->ci_copypage((vaddr_t)src, (vaddr_t)dst);
 
@@ -1530,7 +1530,7 @@ pmap_zero_page(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 
-	DPRINTF(CD_ZERO, ("pmap_zero_page(%p) pa %p\n", pg, pa));
+	DPRINTF(CD_ZERO, ("pmap_zero_page(%p) pa %lx\n", pg, pa));
 	curcpu()->ci_zeropage((vaddr_t)pa);
 
 	if (KERNEL_APR_CMODE == CACHE_DFL)
@@ -1576,7 +1576,7 @@ pmap_changebit(struct vm_page *pg, int set, int mask)
 				continue;	 /* no page mapping */
 #ifdef PMAPDEBUG
 			if (ptoa(PG_PFNUM(*pte)) != VM_PAGE_TO_PHYS(pg))
-				panic("pmap_changebit: pte %08x in pmap %p doesn't point to page %p@%p",
+				panic("pmap_changebit: pte %08x in pmap %p doesn't point to page %p@%lx",
 				    *pte, pmap, pg, VM_PAGE_TO_PHYS(pg));
 #endif
 
@@ -1641,7 +1641,7 @@ pmap_testbit(struct vm_page *pg, int bit)
 
 #ifdef PMAPDEBUG
 			if (ptoa(PG_PFNUM(*pte)) != VM_PAGE_TO_PHYS(pg))
-				panic("pmap_testbit: pte %08x in pmap %p doesn't point to page %p@%p",
+				panic("pmap_testbit: pte %08x in pmap %p doesn't point to page %p@%lx",
 				    *pte, pmap, pg, VM_PAGE_TO_PHYS(pg));
 #endif
 
@@ -1703,7 +1703,7 @@ pmap_unsetbit(struct vm_page *pg, int bit)
 				continue;	 /* no page mapping */
 #ifdef PMAPDEBUG
 			if (ptoa(PG_PFNUM(*pte)) != VM_PAGE_TO_PHYS(pg))
-				panic("pmap_unsetbit: pte %08x in pmap %p doesn't point to page %p@%p",
+				panic("pmap_unsetbit: pte %08x in pmap %p doesn't point to page %p@%lx",
 				    *pte, pmap, pg, VM_PAGE_TO_PHYS(pg));
 #endif
 
@@ -1909,7 +1909,7 @@ pmap_cache_ctrl(vaddr_t sva, vaddr_t eva, u_int mode)
 	paddr_t pa;
 	cpuid_t cpu;
 
-	DPRINTF(CD_CACHE, ("pmap_cache_ctrl(%p, %p, %x)\n",
+	DPRINTF(CD_CACHE, ("pmap_cache_ctrl(%lx, %lx, %x)\n",
 	    sva, eva, mode));
 
 	s = splvm();

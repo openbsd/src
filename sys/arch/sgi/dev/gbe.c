@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbe.c,v 1.21 2013/10/21 10:36:16 miod Exp $ */
+/*	$OpenBSD: gbe.c,v 1.23 2020/05/25 09:55:48 jsg Exp $ */
 
 /*
  * Copyright (c) 2007, 2008, 2009 Joel Sing <jsing@openbsd.org>
@@ -124,7 +124,7 @@ void	gbe_loadcmap(struct gbe_screen *, u_int, u_int);
 int 	gbe_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t gbe_mmap(void *, off_t, int);
 int	gbe_alloc_screen(void *, const struct wsscreen_descr *, void **,
-	    int *, int *, long *);
+	    int *, int *, uint32_t *);
 void	gbe_free_screen(void *, void *);
 int	gbe_show_screen(void *, void *, int, void (*)(void *, int, int),
 	    void *);
@@ -138,11 +138,11 @@ void	gbe_rop(struct gbe_softc *, int, int, int, int, int);
 void	gbe_copyrect(struct gbe_softc *, int, int, int, int, int, int, int);
 void	gbe_fillrect(struct gbe_softc *, int, int, int, int, int);
 int	gbe_do_cursor(struct rasops_info *);
-int	gbe_putchar(void *, int, int, u_int, long);
+int	gbe_putchar(void *, int, int, u_int, uint32_t);
 int	gbe_copycols(void *, int, int, int, int);
-int	gbe_erasecols(void *, int, int, int, long);
+int	gbe_erasecols(void *, int, int, int, uint32_t);
 int	gbe_copyrows(void *, int, int, int);
-int	gbe_eraserows(void *, int, int, long);
+int	gbe_eraserows(void *, int, int, uint32_t);
 
 static struct gbe_screen gbe_consdata;
 static int gbe_console;
@@ -209,7 +209,7 @@ gbe_attach(struct device *parent, struct device *self, void *aux)
 	int fb_nsegs;
 	int ro_nsegs;
 	uint32_t val;
-	long attr;
+	uint32_t attr;
 
 	printf(": ");
 
@@ -401,7 +401,7 @@ gbe_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Attach as console if necessary. */
 	if (strncmp(bios_console, "video", 5) == 0) {
-		screen->ri.ri_ops.alloc_attr(&screen->ri, 0, 0, 0, &attr);
+		screen->ri.ri_ops.pack_attr(&screen->ri, 0, 0, 0, &attr);
 		wsdisplay_cnattach(&gbe_stdscreen, &screen->ri, 0, 0, attr);
 		gsc->console = 1;
 	}
@@ -945,7 +945,7 @@ gbe_mmap(void *v, off_t offset, int protection)
 
 int
 gbe_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
-    int *curxp, int *curyp, long *attrp)
+    int *curxp, int *curyp, uint32_t *attrp)
 {
 	struct gbe_screen *screen = (struct gbe_screen *)v;
 	struct gbe_softc *gsc = (struct gbe_softc *)screen->sc;
@@ -964,7 +964,7 @@ gbe_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	*curyp = 0;
 
 	/* Correct screen attributes. */
-	screen->ri.ri_ops.alloc_attr(&screen->ri, 0, 0, 0, attrp);
+	screen->ri.ri_ops.pack_attr(&screen->ri, 0, 0, 0, attrp);
 
 	return (0);
 }
@@ -1191,7 +1191,7 @@ gbe_do_cursor(struct rasops_info *ri)
 }
 
 int
-gbe_putchar(void *cookie, int row, int col, u_int uc, long attr)
+gbe_putchar(void *cookie, int row, int col, u_int uc, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	struct gbe_softc *gsc = ri->ri_hw;
@@ -1234,7 +1234,7 @@ gbe_copycols(void *cookie, int row, int src, int dst, int num)
 }
 
 int
-gbe_erasecols(void *cookie, int row, int col, int num, long attr)
+gbe_erasecols(void *cookie, int row, int col, int num, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	struct gbe_softc *sc = ri->ri_hw;
@@ -1269,7 +1269,7 @@ gbe_copyrows(void *cookie, int src, int dst, int num)
 }
 
 int
-gbe_eraserows(void *cookie, int row, int num, long attr)
+gbe_eraserows(void *cookie, int row, int num, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	struct gbe_softc *sc = ri->ri_hw;
@@ -1326,7 +1326,7 @@ gbe_cnattach(bus_space_tag_t iot, bus_addr_t addr)
 	uint32_t val;
 	paddr_t pa;
 	vaddr_t va;
-	long attr;
+	uint32_t attr;
 
 	/*
 	 * Setup GBE for use as early console.
@@ -1402,7 +1402,7 @@ gbe_cnattach(bus_space_tag_t iot, bus_addr_t addr)
 	/*
 	 * Attach wsdisplay.
 	 */
-	gbe_consdata.ri.ri_ops.alloc_attr(&gbe_consdata.ri, 0, 0, 0, &attr);
+	gbe_consdata.ri.ri_ops.pack_attr(&gbe_consdata.ri, 0, 0, 0, &attr);
 	wsdisplay_cnattach(&gbe_stdscreen, &gbe_consdata.ri, 0, 0, attr);
 	gbe_console = 1;
 

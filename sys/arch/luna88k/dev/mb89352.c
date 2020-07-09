@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.23 2017/11/03 06:54:06 aoyama Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.24 2020/06/27 14:29:44 krw Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -223,7 +223,6 @@ spc_attach(struct spc_softc *sc, struct scsi_adapter *adapter)
 	sc->sc_link.openings = 2;
 	sc->sc_link.pool = &sc->sc_iopool;
 
-	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	/*

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifmedia.4,v 1.26 2020/04/30 10:29:45 stsp Exp $
+.\"	$OpenBSD: ifmedia.4,v 1.27 2020/05/16 12:23:12 jmc Exp $
 .\"	$NetBSD: ifmedia.4,v 1.14 2001/06/30 17:57:56 bjh21 Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 30 2020 $
+.Dd $Mdocdate: May 16 2020 $
 .Dt IFMEDIA 4
 .Os
 .Sh NAME
@@ -219,7 +219,7 @@ The following media modes are defined for IEEE802.11 Wireless LAN:
 .Pp
 .Bl -tag -offset indent -width IFM_IEEE80211_11AC -compact
 .It Dv IFM_IEEE80211_11A
-5Ghz, OFDM mode.
+5GHz, OFDM mode.
 [11a]
 .It Dv IFM_IEEE80211_11B
 2GHz, DSSS/CCK mode.
@@ -230,15 +230,13 @@ The following media modes are defined for IEEE802.11 Wireless LAN:
 .It Dv IFM_IEEE80211_FH
 2GHz, GFSK mode.
 [fh]
-.It Dv IFM_IEEE70211_11N
+.It Dv IFM_IEEE80211_11N
 2GHz/5GHz, HT mode.
 [11n]
-.It Dv IFM_IEEE70211_11AC
+.It Dv IFM_IEEE80211_11AC
 5GHz, VHT mode.
 [11ac]
 .El
-.Pp
-The above media modes correspond to revisions of the IEEE 802.11 standard.
 .Pp
 The following media options are defined for IEEE802.11 Wireless LAN:
 .Pp
@@ -263,22 +261,19 @@ Monitor mode.
 All of the above media options are mutually exclusive.
 If no media option is used, the wireless interface will try to find an
 access point to connect to.
-The
 .Cm hostap
 mode allows the wireless interface to act as an access point for other
 802.11 devices.
-The
 .Cm ibss
 mode is the standardized method of operating without an access point, with
 each participating device taking on part of the role of an access point.
-The
 .Cm adhoc
-mode is more accurately known as
+mode, more accurately known as
 .Em ad-hoc demo mode ,
-is not specified by the IEEE 802.11 standard, and only works with
+is not specified by the IEEE 802.11 standard and only works with
 .Xr wi 4
 devices.
-Likewise, the
+Likewise,
 .Cm ibssmaster
 mode only works with
 .Xr wi 4
@@ -405,12 +400,12 @@ OFDM 72Mbps.
 The above media types were first introduced in the IEEE 802.11a-1999
 standard for the 5GHz band, and in the IEEE 802.11g-2003 standard
 for the 2.4GHz band.
-(OFDM with 72Mbps is a proprietary extension and was never standardized
-by IEEE.)
+OFDM with 72Mbps is a proprietary extension and was never standardized
+by IEEE.
 .Pp
 Orthogonal Frequency Division Multiplexing (OFDM) is the current
 standard modulation technique for 802.11.
-Each 20 Mhz channel used by 802.11a and 802.11g provides space for
+Each 20MHz channel used by 802.11a and 802.11g provides space for
 48 OFDM sub-carriers for data.
 The sub-carriers use BPSK, QPSK, 16QAM, or 64QAM modulation, combined with
 a particular coding rate for error correction at the receiver.
@@ -433,12 +428,12 @@ The IEEE 802.11n-2009 standard for
 (HT) wireless LAN defines additional sub-carriers, modulations, and
 coding rates.
 The channel bandwidth for data frame transmissions was optionally extended
-to 40 MHz, with full backwards compatibility to 802.11a/b/g devices which
-cannot decode 40 MHz transmissions.
+to 40MHz, with full backwards compatibility to 802.11a/b/g devices which
+cannot decode 40MHz transmissions.
 Several additional features were introduced, most notably MIMO (multiple-input,
 multiple-output).
 With MIMO, a data stream is divided across up to 4
-.Dq spatial streams
+.Dq spatial streams ,
 which are transmitted in parallel by a corresponding amount of antennas.
 Each spatial stream is received with a dedicated antenna, and the spatial
 streams are de-multiplexed to obtain the original data stream.
@@ -465,7 +460,7 @@ vendors.
 The IEEE 802.11ac-2013 standard for
 .Dq Very High Throughput
 (VHT) wireless LAN operates in the 5GHz band only.
-The channel bandwidth for data frame transmissions can be up to 160 MHz wide.
+The channel bandwidth for data frame transmissions can be up to 160MHz wide.
 The MCS identifiers were redefined and vastly reduced in number.
 As a result, only VHT_MCS0 to VHT_MCS9 are defined for 802.11ac:
 .Pp

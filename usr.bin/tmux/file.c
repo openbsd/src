@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.5 2019/12/16 16:39:03 nicm Exp $ */
+/* $OpenBSD: file.c,v 1.7 2020/05/26 08:41:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 #include <sys/queue.h>
+#include <sys/uio.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -241,7 +242,9 @@ file_write(struct client *c, const char *path, int flags, const void *bdata,
 		cf->path = xstrdup("-");
 
 		fd = STDOUT_FILENO;
-		if (c == NULL || c->flags & CLIENT_ATTACHED) {
+		if (c == NULL ||
+		    (c->flags & CLIENT_ATTACHED) ||
+		    (c->flags & CLIENT_CONTROL)) {
 			cf->error = EBADF;
 			goto done;
 		}
@@ -310,7 +313,9 @@ file_read(struct client *c, const char *path, client_file_cb cb, void *cbdata)
 		cf->path = xstrdup("-");
 
 		fd = STDIN_FILENO;
-		if (c == NULL || c->flags & CLIENT_ATTACHED) {
+		if (c == NULL ||
+		    (c->flags & CLIENT_ATTACHED) ||
+		    (c->flags & CLIENT_CONTROL)) {
 			cf->error = EBADF;
 			goto done;
 		}

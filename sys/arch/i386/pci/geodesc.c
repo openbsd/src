@@ -1,4 +1,4 @@
-/*	$OpenBSD: geodesc.c,v 1.14 2020/01/05 01:07:58 jsg Exp $	*/
+/*	$OpenBSD: geodesc.c,v 1.15 2020/07/06 13:33:07 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl <markus@openbsd.org>
@@ -65,7 +65,9 @@ struct timecounter geodesc_timecounter = {
 	0xffffffff,		/* counter_mask */
 	27000000,		/* frequency */
 	"GEOTSC",		/* name */
-	2000			/* quality */
+	2000,			/* quality */
+	NULL,			/* private bits */
+	0			/* expose to user */
 };
 
 int

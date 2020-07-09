@@ -1,4 +1,4 @@
-/*	$OpenBSD: idr.h,v 1.2 2019/05/13 16:23:15 jsg Exp $	*/
+/*	$OpenBSD: idr.h,v 1.3 2020/06/08 04:48:14 jsg Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -18,7 +18,10 @@
 #ifndef _LINUX_IDR_H
 #define _LINUX_IDR_H
 
+#include <sys/types.h>
 #include <sys/tree.h>
+
+#include <linux/radix-tree.h>
 
 struct idr_entry {
 	SPLAY_ENTRY(idr_entry) entry;

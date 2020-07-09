@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.213 2020/02/15 09:35:48 anton Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.216 2020/07/07 02:01:43 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -64,6 +64,11 @@
 #include <uvm/uvm_extern.h>
 #include <machine/tcb.h>
 
+#include <sys/timetc.h>
+
+struct uvm_object *timekeep_object;
+struct timekeep *timekeep;
+
 void	unveil_destroy(struct process *ps);
 
 const struct kmem_va_mode kv_exec = {
@@ -75,6 +80,11 @@ const struct kmem_va_mode kv_exec = {
  * Map the shared signal code.
  */
 int exec_sigcode_map(struct process *, struct emul *);
+
+/*
+ * Map the shared timekeep page.
+ */
+int exec_timekeep_map(struct process *);
 
 /*
  * If non-zero, stackgap_random specifies the upper limit of the random gap size
@@ -670,6 +680,10 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	 */
 	KNOTE(&pr->ps_klist, NOTE_EXEC);
 
+	/* map the process's timekeep page, needs to be before e_fixup */
+	if (exec_timekeep_map(pr))
+		goto free_pack_abort;
+
 	/* setup new registers and do misc. setup. */
 	if (pack.ep_emul->e_fixup != NULL) {
 		if ((*pack.ep_emul->e_fixup)(p, &pack) != 0)
@@ -860,6 +874,52 @@ exec_sigcode_map(struct process *pr, struct emul *e)
 	/* Calculate PC at point of sigreturn entry */
 	pr->ps_sigcoderet = pr->ps_sigcode +
 	    (pr->ps_emul->e_esigret - pr->ps_emul->e_sigcode);
+
+	return (0);
+}
+
+int
+exec_timekeep_map(struct process *pr)
+{
+	size_t timekeep_sz = round_page(sizeof(struct timekeep));
+
+	/*
+	 * Similar to the sigcode object, except that there is a single
+	 * timekeep object, and not one per emulation.
+	 */
+	if (timekeep_object == NULL) {
+		vaddr_t va = 0;
+
+		timekeep_object = uao_create(timekeep_sz, 0);
+		uao_reference(timekeep_object);
+
+		if (uvm_map(kernel_map, &va, timekeep_sz, timekeep_object,
+		    0, 0, UVM_MAPFLAG(PROT_READ | PROT_WRITE, PROT_READ | PROT_WRITE,
+		    MAP_INHERIT_SHARE, MADV_RANDOM, 0))) {
+			uao_detach(timekeep_object);
+			timekeep_object = NULL;
+			return (ENOMEM);
+		}
+		if (uvm_fault_wire(kernel_map, va, va + timekeep_sz,
+		    PROT_READ | PROT_WRITE)) {
+			uvm_unmap(kernel_map, va, va + timekeep_sz);
+			uao_detach(timekeep_object);
+			timekeep_object = NULL;
+			return (ENOMEM);
+		}
+
+		timekeep = (struct timekeep *)va;
+		timekeep->tk_version = TK_VERSION;
+	}
+
+	pr->ps_timekeep = 0; /* no hint */
+	uao_reference(timekeep_object);
+	if (uvm_map(&pr->ps_vmspace->vm_map, &pr->ps_timekeep, round_page(timekeep_sz),
+	    timekeep_object, 0, 0, UVM_MAPFLAG(PROT_READ, PROT_READ,
+	    MAP_INHERIT_COPY, MADV_RANDOM, 0))) {
+		uao_detach(timekeep_object);
+		return (ENOMEM);
+	}
 
 	return (0);
 }

@@ -1,10 +1,9 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.109 2017/07/04 13:10:13 espie Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.111 2020/07/01 00:08:06 afresh1 Exp $
 #
 # Build wrapper for Perl
 #
 
-
-CONFIGURE_ARGS= -dsE -Dopenbsd_distribution=defined -Dccflags='-DNO_LOCALE_NUMERIC -DNO_LOCALE_COLLATE'
+CONFIGURE_ARGS=	-dse -Dopenbsd_distribution=defined
 
 .if !exists(${.OBJDIR}/config.over)
 CONFIGURE_ARGS+= -Dmksymlinks
@@ -12,51 +11,21 @@ CONFIGURE_ARGS+= -Dmksymlinks
 
 .MAIN: all
 
-# Arguments passed to Configure...
+CLEANFILES=	config.sh
 
-CPPFLAGS+= -DPERL_CORE -DNO_LOCALE_NUMERIC -DNO_LOCALE_COLLATE -DBIG_TIME -I.
-
-GEN_AFTER= 	bitcount.h config.h mg_data.h uudmap.h cflags makedepend \
-		myconfig Makefile Policy.sh pod/Makefile
-
-GENERATED=	config.sh ${GEN_AFTER}
-
-${GEN_AFTER}: config.sh
-
-CLEANFILES=	config.sh Policy.sh DynaLoader.c
+config.sh:	${.CURDIR}/config.over ${.CURDIR}/hints/openbsd.sh
+	cd ${.OBJDIR} && PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
+	    exec /bin/sh ${.CURDIR}/Configure ${CONFIGURE_ARGS}
 
 # nothing!
 depend:
 	@:
 
-depend.done: ${GENERATED}
-	cd ${.OBJDIR} && exec ${MAKE} depend
-	touch $@
-
-config.sh:	${.CURDIR}/config.over
-	cd ${.OBJDIR} && PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
-	    exec /bin/sh ${.CURDIR}/Configure ${CONFIGURE_ARGS}
-
-Makefile cflags makedepend makedir myconfig Policy.sh config.h:
-	cd ${.OBJDIR} && exec /bin/sh ${@:S/./_/}.SH
-
-pod/Makefile:
-	cd ${.OBJDIR}/pod && exec /bin/sh Makefile.SH
-
-uudmap.h: bitcount.h
-mg_data.h: bitcount.h
-
-bitcount.h: generate_uudmap
-	./generate_uudmap uudmap.h bitcount.h mg_data.h
-
-generate_uudmap: generate_uudmap.o
-	${CC} ${CPPFLAGS} ${CFLAGS} -o generate_uudmap generate_uudmap.o
-
 test:
-	-@if [ -e Makefile ]; then ${MAKE} test; fi
+	-@test -e Makefile && ${MAKE} test
 
 clean:
-	-@if [ -e Makefile ]; then ${MAKE} realclean; fi
+	-@test -e Makefile && ${MAKE} realclean
 
 cleandir:
 	-@if [ ${.CURDIR} != ${.OBJDIR} ]; then \
@@ -65,10 +34,10 @@ cleandir:
 	    test -e Makefile && ${MAKE} distclean; \
 	    rm -f ${CLEANFILES}; \
 	fi
-	@cd ${.CURDIR} && ${MAKE} -f Makefile.bsd-wrapper1 cleandir
+	cd ${.CURDIR} && ${MAKE} -f Makefile.bsd-wrapper1 cleandir
 
-all:	depend.done
-	cd ${.CURDIR} && exec ${MAKE} -f Makefile.bsd-wrapper1 perl.build CPPFLAGS="${CPPFLAGS}" GENERATED="${GENERATED}"
+all:	config.sh
+	cd ${.CURDIR} && exec ${MAKE} -f Makefile.bsd-wrapper1 perl.build
 	cd ${.CURDIR} && exec ${MAKE} -f Makefile.bsd-wrapper1 mansrc.build
 
 install:

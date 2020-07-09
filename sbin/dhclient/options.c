@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.120 2019/07/03 03:24:01 deraadt Exp $	*/
+/*	$OpenBSD: options.c,v 1.123 2020/07/07 19:48:31 krw Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -621,8 +621,8 @@ pretty_print_classless_routes(unsigned char *src, size_t srclen,
 
 	i = 0;
 	while (i < srclen) {
-		len = extract_classless_route(&src[i], srclen - i,
-		    &dest.s_addr, &netmask.s_addr, &gateway.s_addr);
+		len = extract_route(&src[i], srclen - i, &dest.s_addr,
+		    &netmask.s_addr, &gateway.s_addr);
 		if (len == 0)
 			goto bad;
 		i += len;
@@ -671,13 +671,19 @@ pretty_print_domain_list(unsigned char *src, size_t srclen,
 
 	memset(buf, 0, buflen);
 
-	if (srclen >= DHCP_DOMAIN_SEARCH_LEN || strlen(src) == 0 ||
-	    strlen(src) > DHCP_DOMAIN_SEARCH_LEN)
+	/*
+	 * N.B.: option data is *NOT* guaranteed to be NUL
+	 *	 terminated. Avoid strlen(), strdup(), etc.!
+	 */
+	if (srclen >= DHCP_DOMAIN_SEARCH_LEN || src[0] == '\0')
 		return;
 
-	dupnames = inputstring = strdup(src);
+	inputstring = malloc(srclen + 1);
 	if (inputstring == NULL)
 		fatal("domain name list");
+	memcpy(inputstring, src, srclen);
+	inputstring[srclen] = '\0';
+	dupnames = inputstring;
 
 	count = 0;
 	while ((hn = strsep(&inputstring, " \t")) != NULL) {
@@ -963,15 +969,33 @@ unpack_options(struct dhcp_packet *packet)
 }
 
 void
-merge_option_data(struct option_data *first,
+merge_option_data(char *fmt, struct option_data *first,
     struct option_data *second, struct option_data *dest)
 {
+	int space = 0;
+
 	free(dest->data);
+	dest->data = NULL;
 	dest->len = first->len + second->len;
-	dest->data = calloc(1, dest->len);
+	if (dest->len == 0)
+		return;
+
+	/*
+	 * N.B.: option data is *NOT* guaranteed to be NUL
+	 *	 terminated. Avoid strlen(), strdup(), etc.!
+	 */
+	if (fmt[0] == 'D') {
+		if (first->len > 0 && second->len > 0)
+			space = 1;
+	}
+
+	dest->len += space;
+	dest->data = malloc(dest->len);
 	if (dest->data == NULL)
 		fatal("merged option data");
 
 	memcpy(dest->data, first->data, first->len);
-	memcpy(dest->data + first->len, second->data, second->len);
+	if (space == 1)
+		dest->data[first->len] = ' ';
+	memcpy(dest->data + first->len + space, second->data, second->len);
 }

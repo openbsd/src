@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.36 2020/02/12 14:08:56 krw Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.39 2020/06/27 14:29:45 krw Exp $	*/
 
 /*
  * Copyright (c) 2016, 2017 Mike Belopuhov
@@ -227,10 +227,9 @@ void	xbf_scsi_cmd(struct scsi_xfer *);
 int	xbf_submit_cmd(struct scsi_xfer *);
 int	xbf_poll_cmd(struct scsi_xfer *);
 void	xbf_complete_cmd(struct xbf_softc *, struct xbf_ccb_queue *, int);
-int	xbf_dev_probe(struct scsi_link *);
 
 struct scsi_adapter xbf_switch = {
-	xbf_scsi_cmd, NULL, xbf_dev_probe, NULL, NULL
+	xbf_scsi_cmd, NULL, NULL, NULL, NULL
 };
 
 void	xbf_scsi_inq(struct scsi_xfer *);
@@ -303,13 +302,13 @@ xbf_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_link.adapter = &xbf_switch;
 	sc->sc_link.adapter_softc = self;
-	sc->sc_link.adapter_buswidth = 2;
+	/* Only valid target/lun is 0/0. */
+	sc->sc_link.adapter_buswidth = 1;
 	sc->sc_link.luns = 1;
-	sc->sc_link.adapter_target = 2;
+	sc->sc_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
 	sc->sc_link.openings = sc->sc_nccb;
 	sc->sc_link.pool = &sc->sc_iopool;
 
-	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 	sc->sc_scsibus = config_found(self, &saa, scsiprint);
 
@@ -897,15 +896,6 @@ xbf_scsi_done(struct scsi_xfer *xs, int error)
 	s = splbio();
 	scsi_done(xs);
 	splx(s);
-}
-
-int
-xbf_dev_probe(struct scsi_link *link)
-{
-	if (link->target == 0)
-		return (0);
-
-	return (ENODEV);
 }
 
 int

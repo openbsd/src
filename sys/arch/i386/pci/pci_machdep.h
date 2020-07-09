@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.31 2020/03/20 13:15:49 mpi Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.32 2020/06/17 06:17:19 dlg Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.7 1997/06/06 23:29:18 thorpej Exp $	*/
 
 /*
@@ -100,6 +100,9 @@ int		pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char	*pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
 void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 		    int, int (*)(void *), void *, const char *);
+void		*pci_intr_establish_cpu(pci_chipset_tag_t, pci_intr_handle_t,
+		    int, struct cpu_info *,
+		    int (*)(void *), void *, const char *);
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
 void		pci_decompose_tag(pci_chipset_tag_t, pcitag_t,
 		    int *, int *, int *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlclock.c,v 1.9 2020/01/12 22:00:23 kettenis Exp $	*/
+/*	$OpenBSD: amlclock.c,v 1.11 2020/05/18 10:40:38 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -28,6 +28,7 @@
 #include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/fdt.h>
 
+/* Clock IDs */
 #define G12A_SYS_PLL		0
 #define G12A_FCLK_DIV2		2
 #define G12A_FCLK_DIV3		3
@@ -48,9 +49,10 @@
 #define G12A_CPU_CLK		187
 #define G12A_PCIE_PLL		201
 #define G12A_TS			212
-#define G12A_SYS1_PLL		214
-#define G12A_CPUB_CLK		224
+#define G12B_SYS1_PLL		214
+#define G12B_CPUB_CLK		224
 
+/* Registers */
 #define HHI_PCIE_PLL_CNTL0	0x26
 #define HHI_PCIE_PLL_CNTL1	0x27
 #define HHI_PCIE_PLL_CNTL2	0x28
@@ -131,6 +133,7 @@ struct amlclock_softc {
 	struct device		sc_dev;
 	struct regmap		*sc_rm;
 	int			sc_node;
+	uint32_t		sc_g12b;
 
 	struct amlclock_gate	*sc_gates;
 	int			sc_ngates;
@@ -160,7 +163,8 @@ amlclock_match(struct device *parent, void *match, void *aux)
 	struct fdt_attach_args *faa = aux;
 
 	return (OF_is_compatible(faa->fa_node, "amlogic,g12a-clkc") ||
-	    OF_is_compatible(faa->fa_node, "amlogic,g12b-clkc"));
+	    OF_is_compatible(faa->fa_node, "amlogic,g12b-clkc") ||
+	    OF_is_compatible(faa->fa_node, "amlogic,sm1-clkc"));
 }
 
 void
@@ -177,6 +181,9 @@ amlclock_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_node = faa->fa_node;
 	printf("\n");
+
+	if (OF_is_compatible(faa->fa_node, "amlogic,g12b-clkc"))
+		sc->sc_g12b = 1;
 
 	sc->sc_gates = aml_g12a_gates;
 	sc->sc_ngates = nitems(aml_g12a_gates);
@@ -199,8 +206,8 @@ amlclock_get_cpu_freq(struct amlclock_softc *sc, bus_size_t offset)
 
 	reg = HREAD4(sc, offset);
 	if (reg & HHI_SYS_CPU_CLK_FINAL_MUX_SEL) {
-		if (offset == HHI_SYS_CPU_CLK_CNTL0)
-			idx = G12A_SYS1_PLL;
+		if (sc->sc_g12b && offset == HHI_SYS_CPU_CLK_CNTL0)
+			idx = G12B_SYS1_PLL;
 		else
 			idx = G12A_SYS_PLL;
 		return amlclock_get_frequency(sc, &idx);
@@ -253,8 +260,8 @@ amlclock_set_cpu_freq(struct amlclock_softc *sc, bus_size_t offset,
 			delay(100);
 		}
 
-		if (offset == HHI_SYS_CPU_CLK_CNTL0)
-			idx = G12A_SYS1_PLL;
+		if (sc->sc_g12b && offset == HHI_SYS_CPU_CLK_CNTL0)
+			idx = G12B_SYS1_PLL;
 		else
 			idx = G12A_SYS_PLL;
 		amlclock_set_frequency(sc, &idx, freq);
@@ -416,7 +423,7 @@ amlclock_get_frequency(void *cookie, uint32_t *cells)
 		m = HHI_SYS_DPLL_M(reg);
 		n = HHI_SYS_DPLL_N(reg);
 		return (((uint64_t)sc->sc_xtal * m) / n) / div;
-	case G12A_SYS1_PLL:
+	case G12B_SYS1_PLL:
 		reg = HREAD4(sc, HHI_SYS1_PLL_CNTL0);
 		div = 1 << HHI_SYS_DPLL_OD(reg);
 		m = HHI_SYS_DPLL_M(reg);
@@ -535,7 +542,7 @@ amlclock_get_frequency(void *cookie, uint32_t *cells)
 		return amlclock_get_frequency(sc, &idx) / div;
 	case G12A_CPU_CLK:
 		return amlclock_get_cpu_freq(sc, HHI_SYS_CPU_CLK_CNTL0);
-	case G12A_CPUB_CLK:
+	case G12B_CPUB_CLK:
 		return amlclock_get_cpu_freq(sc, HHI_SYS_CPUB_CLK_CNTL);
 	}
 
@@ -553,7 +560,7 @@ amlclock_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 	switch (idx) {
 	case G12A_SYS_PLL:
 		return amlclock_set_pll_freq(sc, HHI_SYS_PLL_CNTL0, freq);
-	case G12A_SYS1_PLL:
+	case G12B_SYS1_PLL:
 		return amlclock_set_pll_freq(sc, HHI_SYS1_PLL_CNTL0, freq);
 	case G12A_PCIE_PLL:
 		/* Fixed at 100 MHz. */
@@ -577,7 +584,7 @@ amlclock_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 		return 0;
 	case G12A_CPU_CLK:
 		return amlclock_set_cpu_freq(sc, HHI_SYS_CPU_CLK_CNTL0, freq);
-	case G12A_CPUB_CLK:
+	case G12B_CPUB_CLK:
 		return amlclock_set_cpu_freq(sc, HHI_SYS_CPUB_CLK_CNTL, freq);
 	}
 

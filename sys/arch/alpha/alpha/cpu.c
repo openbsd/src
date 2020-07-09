@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.c,v 1.42 2016/10/27 09:46:14 dlg Exp $ */
+/* $OpenBSD: cpu.c,v 1.43 2020/05/29 04:42:23 deraadt Exp $ */
 /* $NetBSD: cpu.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $ */
 
 /*-
@@ -64,7 +64,6 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <dev/rndvar.h>
 
 #include <uvm/uvm_extern.h>
 

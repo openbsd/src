@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.5 2016/09/02 12:17:32 tb Exp $
+dnl	$OpenBSD: prep,v 1.6 2020/05/17 17:04:28 deraadt Exp $
 The default configuration of the MACHINE systems comes with a Linux
 installation on the disk (either an IDE hard drive, or a CompactFlash
 card). At the moment, there is no known way to log in this installation
@@ -6,7 +6,7 @@ as ``root'' or interrupt the boot process, and start an OpenBSD
 installation procedure.
 
 Because of this, the only way to boot the OpenBSD install is to copy
-the miniroot "miniroot{:--:}OSrev.fs" image to the hard drive or CompactFlash
+the miniroot "miniroot{:--:}OSrev.img" image to the hard drive or CompactFlash
 (on the other hand, upgrades can be started by copying bsd.rd to the
  OpenBSD disk and booting from it).
 
@@ -18,7 +18,7 @@ it uses. Under OpenBSD, it will appear as a ``wd'' device, for example
 
 Use the dd(1) utility to copy the miniroot to the hard drive.
 The command would likely be, under OpenBSD:
-	dd if=miniroot{:--:}OSrev.fs of=/dev/rwd1c
+	dd if=miniroot{:--:}OSrev.img of=/dev/rwd1c
 Replace ``rwd1c'' with the appropriate device name for the raw device
 on the system used to do the copy.
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bcmgpio.4,v 1.1 2020/04/24 10:05:18 kettenis Exp $
+.\"	$OpenBSD: bcmgpio.4,v 1.2 2020/05/16 17:58:55 jmc Exp $
 .\"
 .\" Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 24 2020 $
+.Dd $Mdocdate: May 16 2020 $
 .Dt BCMGPIO 4
 .Os
 .Sh NAME
@@ -31,6 +31,7 @@ BCM2711 SoCs.
 It does not provide direct device driver entry points but makes its
 functions available to other drivers.
 .Sh SEE ALSO
+.Xr gpio 4 ,
 .Xr intro 4
 .Sh HISTORY
 The

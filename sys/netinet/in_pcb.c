@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.248 2019/07/15 12:40:42 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.249 2020/05/27 20:44:07 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -530,6 +530,13 @@ in_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 void
 in_pcbdisconnect(struct inpcb *inp)
 {
+#if NPF > 0
+	if (inp->inp_pf_sk) {
+		pf_remove_divert_state(inp->inp_pf_sk);
+		/* pf_remove_divert_state() may have detached the state */
+		pf_inp_unlink(inp);
+	}
+#endif
 	switch (sotopf(inp->inp_socket)) {
 #ifdef INET6
 	case PF_INET6:

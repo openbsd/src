@@ -1,4 +1,4 @@
-/*	$OpenBSD: maketab.c,v 1.11 2010/06/13 17:58:19 millert Exp $	*/
+/*	$OpenBSD: maketab.c,v 1.19 2020/06/13 01:21:01 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -63,6 +63,7 @@ struct xx
 	{ DIVIDE, "arith", " / " },
 	{ MOD, "arith", " % " },
 	{ UMINUS, "arith", " -" },
+	{ UPLUS, "arith", " +" },
 	{ POWER, "arith", " **" },
 	{ PREINCR, "incrdecr", "++" },
 	{ POSTINCR, "incrdecr", "++" },
@@ -104,6 +105,7 @@ struct xx
 	{ ARG, "arg", "arg" },
 	{ VARNF, "getnf", "NF" },
 	{ GETLINE, "awkgetline", "getline" },
+	{ GENSUB, "gensub", "gensub" },
 	{ 0, "", "" },
 };
 
@@ -118,33 +120,55 @@ int main(int argc, char *argv[])
 	char c;
 	FILE *fp;
 	char buf[200], name[200], def[200];
+	enum { TOK_UNKNOWN, TOK_ENUM, TOK_DEFINE } tokentype = TOK_UNKNOWN;
 
 	printf("#include <stdio.h>\n");
 	printf("#include \"awk.h\"\n");
 	printf("#include \"ytab.h\"\n\n");
-	for (i = SIZE; --i >= 0; )
-		names[i] = "";
 
-	if ((fp = fopen("ytab.h", "r")) == NULL) {
-		fprintf(stderr, "maketab: can't open ytab.h!\n");
+	if (argc != 2) {
+		fprintf(stderr, "usage: maketab YTAB_H\n");
 		exit(1);
 	}
-	printf("static char *printname[%d] = {\n", SIZE);
+	if ((fp = fopen(argv[1], "r")) == NULL) {
+		fprintf(stderr, "maketab can't open %s!\n", argv[1]);
+		exit(1);
+	}
+	printf("static const char * const printname[%d] = {\n", SIZE);
 	i = 0;
 	while (fgets(buf, sizeof buf, fp) != NULL) {
-		n = sscanf(buf, "%1c %s %s %d", &c, def, name, &tok);
-		if (n != 4 || c != '#' || strcmp(def, "define") != 0)
-			continue;	/* not a valid #define */
+		// 199 is sizeof(def) - 1
+		if (tokentype != TOK_ENUM) {
+			n = sscanf(buf, "%1c %199s %199s %d", &c, def, name,
+			    &tok);
+			if (n == 4 && c == '#' && strcmp(def, "define") == 0) {
+				tokentype = TOK_DEFINE;
+			} else if (tokentype != TOK_UNKNOWN) {
+				continue;
+			}
+		}
+		if (tokentype != TOK_DEFINE) {
+			/* not a valid #define, bison uses enums now */
+			n = sscanf(buf, "%199s = %d,\n", name, &tok);
+			if (n != 2)
+				continue;
+			tokentype = TOK_ENUM;
+		}
+		if (strcmp(name, "YYSTYPE_IS_DECLARED") == 0) {
+			tokentype = TOK_UNKNOWN;
+			continue;
+		}
 		if (tok < FIRSTTOKEN || tok > LASTTOKEN) {
+			tokentype = TOK_UNKNOWN;
 			/* fprintf(stderr, "maketab: funny token %d %s ignored\n", tok, buf); */
 			continue;
 		}
-		names[tok-FIRSTTOKEN] = (char *) strdup(name);
+		names[tok-FIRSTTOKEN] = strdup(name);
 		if (names[tok-FIRSTTOKEN] == NULL) {
-			fprintf(stderr, "maketab: out of memory\n");
+			fprintf(stderr, "maketab out of space copying %s", name);
 			exit(1);
 		}
-		printf("\t(char *) \"%s\",\t/* %d */\n", name, tok);
+		printf("\t\"%s\",\t/* %d */\n", name, tok);
 		i++;
 	}
 	printf("};\n\n");
@@ -153,20 +177,18 @@ int main(int argc, char *argv[])
 		table[p->token-FIRSTTOKEN] = p->name;
 	printf("\nCell *(*proctab[%d])(Node **, int) = {\n", SIZE);
 	for (i=0; i<SIZE; i++)
-		if (table[i]==0)
-			printf("\tnullproc,\t/* %s */\n", names[i]);
-		else
-			printf("\t%s,\t/* %s */\n", table[i], names[i]);
+		printf("\t%s,\t/* %s */\n",
+		    table[i] ? table[i] : "nullproc", names[i] ? names[i] : "");
 	printf("};\n\n");
 
-	printf("char *tokname(int n)\n");	/* print a tokname() function */
+	printf("const char *tokname(int n)\n");	/* print a tokname() function */
 	printf("{\n");
-	printf("	static char buf[100];\n\n");
-	printf("	if (n < FIRSTTOKEN || n > LASTTOKEN) {\n");
-	printf("		snprintf(buf, sizeof buf, \"token %%d\", n);\n");
-	printf("		return buf;\n");
-	printf("	}\n");
-	printf("	return printname[n-FIRSTTOKEN];\n");
+	printf("\tstatic char buf[100];\n\n");
+	printf("\tif (n < FIRSTTOKEN || n > LASTTOKEN) {\n");
+	printf("\t\tsnprintf(buf, sizeof(buf), \"token %%d\", n);\n");
+	printf("\t\treturn buf;\n");
+	printf("\t}\n");
+	printf("\treturn printname[n-FIRSTTOKEN];\n");
 	printf("}\n");
 	return 0;
 }

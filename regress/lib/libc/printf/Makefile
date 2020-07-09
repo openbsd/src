@@ -1,5 +1,13 @@
-#	$OpenBSD: Makefile,v 1.1 2008/09/07 20:36:10 martynas Exp $
+#	$OpenBSD: Makefile,v 1.3 2020/07/09 01:49:15 schwarze Exp $
 
-PROG=	fp
+PROGS =			fp int string
+
+REGRESS_TARGETS =	${PROGS:S/^/run-regress-/}
+
+.for p in ${PROGS}
+run-regress-${p}: ${p}
+	./${p}
+.PHONY: run-regress-${p}
+.endfor
 
 .include <bsd.regress.mk>

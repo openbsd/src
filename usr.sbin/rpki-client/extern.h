@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.29 2020/04/30 13:46:39 deraadt Exp $ */
+/*	$OpenBSD: extern.h,v 1.31 2020/06/30 12:52:44 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -263,6 +263,7 @@ struct	stats {
 	size_t	 crls; /* revocation lists */
 	size_t	 vrps; /* total number of vrps */
 	size_t	 uniqs; /* number of unique vrps */
+	size_t	 del_files; /* number of files removed in cleanup */
 	char	*talnames;
 	struct timeval	elapsed_time;
 	struct timeval	user_time;
@@ -288,7 +289,7 @@ struct cert	*cert_read(int);
 
 void		 mft_buffer(char **, size_t *, size_t *, const struct mft *);
 void		 mft_free(struct mft *);
-struct mft	*mft_parse(X509 **, const char *, int);
+struct mft	*mft_parse(X509 **, const char *);
 int		 mft_check(const char *, struct mft *);
 struct mft	*mft_read(int);
 

@@ -1,4 +1,4 @@
-/*	$Id: test-mft.c,v 1.4 2019/12/17 11:52:41 claudio Exp $ */
+/*	$Id: test-mft.c,v 1.5 2020/07/05 18:31:28 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -57,7 +57,7 @@ mft_print(const struct mft *p)
 int
 main(int argc, char *argv[])
 {
-	int		 c, i, verb = 0, force = 0;
+	int		 c, i, verb = 0;
 	struct mft	*p;
 	X509		*xp = NULL;
 
@@ -65,11 +65,8 @@ main(int argc, char *argv[])
 	OpenSSL_add_all_ciphers();
 	OpenSSL_add_all_digests();
 
-	while (-1 != (c = getopt(argc, argv, "fv")))
+	while (-1 != (c = getopt(argc, argv, "v")))
 		switch (c) {
-		case 'f':
-			force = 1;
-			break;
 		case 'v':
 			verb++;
 			break;
@@ -84,7 +81,7 @@ main(int argc, char *argv[])
 		errx(1, "argument missing");
 
 	for (i = 0; i < argc; i++) {
-		if ((p = mft_parse(&xp, argv[i], force)) == NULL)
+		if ((p = mft_parse(&xp, argv[i])) == NULL)
 			break;
 		if (verb)
 			mft_print(p);

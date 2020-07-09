@@ -1,4 +1,4 @@
-#	$OpenBSD: obsd-regress.t,v 1.10 2018/12/08 21:03:51 jca Exp $
+#	$OpenBSD: obsd-regress.t,v 1.12 2020/07/07 10:33:58 jca Exp $
 
 #
 # ksh regression tests from OpenBSD
@@ -92,6 +92,17 @@ stdin:
 	echo "should not print"
 arguments: !-e!
 expected-exit: e != 0
+---
+
+name: or-list-error-2
+description:
+	Test exit status of || list in -e mode
+stdin:
+	eval false || true
+	echo "should print"
+expected-stdout:
+	should print
+arguments: !-e!
 ---
 
 name: var-functions
@@ -502,4 +513,92 @@ description:
 	support kill -s SIGNAME syntax
 stdin:
 	kill -s SIGINFO $$
+---
+
+name: pipeline-pipefail-1
+description:
+	check pipeline return status
+stdin:
+	set -o pipefail
+	true | true
+---
+
+name: pipeline-pipefail-2
+description:
+	check pipeline return status
+stdin:
+	set -o pipefail
+	false | true
+expected-exit: e == 1
+---
+
+name: pipeline-pipefail-3
+description:
+	check pipeline return status
+stdin:
+	set -o pipefail
+	true | false
+expected-exit: e == 1
+---
+
+name: pipeline-pipefail-4
+description:
+	check pipeline return status
+stdin:
+	set -o pipefail
+	! false | true
+---
+
+name: pipeline-pipefail-errexit-1
+description:
+	check pipeline return status
+stdin:
+	set -e
+	false | true
+	echo "ok"
+expected-stdout: ok
+---
+
+name: pipeline-pipefail-errexit-2
+description:
+	check pipeline return status
+stdin:
+	set -e
+	set -o pipefail
+	false | true
+	echo "should not print"
+expected-exit: e == 1
+expected-stdout:
+---
+
+name: pipeline-pipefail-errexit-3
+description:
+	check pipeline return status
+stdin:
+	set -e
+	set -o pipefail
+	false | true || echo "ok"
+expected-stdout: ok
+---
+
+name: pipeline-pipefail-check-time-1
+description:
+	check pipeline return status
+stdin:
+	false | true &
+	p=$!
+	set -o pipefail
+	wait $p
+---
+
+name: pipeline-pipefail-check-time-2
+description:
+	check pipeline return status
+stdin:
+	set -o pipefail
+	false | true &
+	p=$!
+	set +o pipefail
+	wait $p
+expected-exit: e == 1
 ---

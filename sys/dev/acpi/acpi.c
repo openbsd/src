@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.382 2020/04/14 20:42:26 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.388 2020/06/24 22:03:41 cheloha Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -33,6 +33,7 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/sensors.h>
+#include <sys/timetc.h>
 
 #ifdef HIBERNATE
 #include <sys/hibernate.h>
@@ -42,7 +43,6 @@
 #include <machine/cpufunc.h>
 #include <machine/bus.h>
 
-#include <dev/rndvar.h>
 #include <dev/pci/pcivar.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -73,6 +73,7 @@ int	acpi_debug = 16;
 
 int	acpi_poll_enabled;
 int	acpi_hasprocfvs;
+int	acpi_haspci;
 
 #define ACPIEN_RETRIES 15
 
@@ -1942,20 +1943,11 @@ void
 acpi_sleep_task(void *arg0, int sleepmode)
 {
 	struct acpi_softc *sc = arg0;
-	struct acpi_ac *ac;
-	struct acpi_bat *bat;
-	struct acpi_sbs *sbs;
 
 	/* System goes to sleep here.. */
 	acpi_sleep_state(sc, sleepmode);
-
-	/* AC and battery information needs refreshing */
-	SLIST_FOREACH(ac, &sc->sc_ac, aac_link)
-		aml_notify(ac->aac_softc->sc_devnode, 0x80);
-	SLIST_FOREACH(bat, &sc->sc_bat, aba_link)
-		aml_notify(bat->aba_softc->sc_devnode, 0x80);
-	SLIST_FOREACH(sbs, &sc->sc_sbs, asbs_link)
-		aml_notify(sbs->asbs_softc->sc_devnode, 0x80);
+	/* Tell userland to recheck A/C and battery status */
+	acpi_record_event(sc, APM_POWER_CHANGE);
 }
 
 #endif /* SMALL_KERNEL */
@@ -2705,7 +2697,8 @@ fail_suspend:
 	splx(s);
 
 	acpibtn_disable_psw();		/* disable _LID for wakeup */
-	inittodr(time_second);
+
+	inittodr(gettime());
 
 	/* 3rd resume AML step: _TTS(runstate) */
 	aml_node_setval(sc, sc->sc_tts, sc->sc_state);
@@ -3172,6 +3165,135 @@ acpi_attach_deps(struct acpi_softc *sc, struct aml_node *node)
 }
 
 int
+acpi_parse_resources(int crsidx, union acpi_resource *crs, void *arg)
+{
+	struct acpi_attach_args *aaa = arg;
+	int type = AML_CRSTYPE(crs);
+	uint8_t flags;
+
+	switch (type) {
+	case SR_IOPORT:
+	case SR_FIXEDPORT:
+	case LR_MEM24:
+	case LR_MEM32:
+	case LR_MEM32FIXED:
+	case LR_WORD:
+	case LR_DWORD:
+	case LR_QWORD:
+		if (aaa->aaa_naddr >= nitems(aaa->aaa_addr))
+			return 0;
+		break;
+	case SR_IRQ:
+	case LR_EXTIRQ:
+		if (aaa->aaa_nirq >= nitems(aaa->aaa_irq))
+			return 0;
+	}
+
+	switch (type) {
+	case SR_IOPORT:
+	case SR_FIXEDPORT:
+		aaa->aaa_bst[aaa->aaa_naddr] = aaa->aaa_iot;
+		break;	
+	case LR_MEM24:
+	case LR_MEM32:
+	case LR_MEM32FIXED:
+		aaa->aaa_bst[aaa->aaa_naddr] = aaa->aaa_memt;
+		break;
+	case LR_WORD:
+	case LR_DWORD:
+	case LR_QWORD:
+		switch (crs->lr_word.type) {
+		case LR_TYPE_MEMORY:
+			aaa->aaa_bst[aaa->aaa_naddr] = aaa->aaa_memt;
+			break;
+		case LR_TYPE_IO:
+			aaa->aaa_bst[aaa->aaa_naddr] = aaa->aaa_iot;
+			break;
+		default:
+			/* Bus number range or something else; skip. */
+			return 0;
+		}
+	}
+
+	switch (type) {
+	case SR_IOPORT:
+		aaa->aaa_addr[aaa->aaa_naddr] = crs->sr_ioport._min;
+		aaa->aaa_size[aaa->aaa_naddr] = crs->sr_ioport._len;
+		aaa->aaa_naddr++;
+		break;
+	case SR_FIXEDPORT:
+		aaa->aaa_addr[aaa->aaa_naddr] = crs->sr_fioport._bas;
+		aaa->aaa_size[aaa->aaa_naddr] = crs->sr_fioport._len;
+		aaa->aaa_naddr++;
+		break;
+	case LR_MEM24:
+		aaa->aaa_addr[aaa->aaa_naddr] = crs->lr_m24._min;
+		aaa->aaa_size[aaa->aaa_naddr] = crs->lr_m24._len;
+		aaa->aaa_naddr++;
+		break;
+	case LR_MEM32:
+		aaa->aaa_addr[aaa->aaa_naddr] = crs->lr_m32._min;
+		aaa->aaa_size[aaa->aaa_naddr] = crs->lr_m32._len;
+		aaa->aaa_naddr++;
+		break;
+	case LR_MEM32FIXED:
+		aaa->aaa_addr[aaa->aaa_naddr] = crs->lr_m32fixed._bas;
+		aaa->aaa_size[aaa->aaa_naddr] = crs->lr_m32fixed._len;
+		aaa->aaa_naddr++;
+		break;
+	case LR_WORD:
+		aaa->aaa_addr[aaa->aaa_naddr] = crs->lr_word._min;
+		aaa->aaa_size[aaa->aaa_naddr] = crs->lr_word._len;
+		aaa->aaa_naddr++;
+		break;
+	case LR_DWORD:
+		aaa->aaa_addr[aaa->aaa_naddr] = crs->lr_dword._min;
+		aaa->aaa_size[aaa->aaa_naddr] = crs->lr_dword._len;
+		aaa->aaa_naddr++;
+		break;
+	case LR_QWORD:
+		aaa->aaa_addr[aaa->aaa_naddr] = crs->lr_qword._min;
+		aaa->aaa_size[aaa->aaa_naddr] = crs->lr_qword._len;
+		aaa->aaa_naddr++;
+		break;
+	case SR_IRQ:
+		aaa->aaa_irq[aaa->aaa_nirq] = ffs(crs->sr_irq.irq_mask) - 1;
+		/* Default is exclusive, active-high, edge triggered. */
+		if (AML_CRSLEN(crs) < 3)
+			flags = SR_IRQ_MODE;
+		else
+			flags = crs->sr_irq.irq_flags;
+		/* Map flags to those of the extended interrupt descriptor. */
+		if (flags & SR_IRQ_SHR)
+			aaa->aaa_irq_flags[aaa->aaa_nirq] |= LR_EXTIRQ_SHR;
+		if (flags & SR_IRQ_POLARITY)
+			aaa->aaa_irq_flags[aaa->aaa_nirq] |= LR_EXTIRQ_POLARITY;
+		if (flags & SR_IRQ_MODE)
+			aaa->aaa_irq_flags[aaa->aaa_nirq] |= LR_EXTIRQ_MODE;
+		aaa->aaa_nirq++;
+		break;
+	case LR_EXTIRQ:
+		aaa->aaa_irq[aaa->aaa_nirq] = crs->lr_extirq.irq[0];
+		aaa->aaa_irq_flags[aaa->aaa_nirq] = crs->lr_extirq.flags;
+		aaa->aaa_nirq++;
+		break;
+	}
+
+	return 0;
+}
+
+void
+acpi_parse_crs(struct acpi_softc *sc, struct acpi_attach_args *aaa)
+{
+	struct aml_value res;
+
+	if (aml_evalname(sc, aaa->aaa_node, "_CRS", 0, NULL, &res))
+		return;
+
+	aml_parse_resource(&res, acpi_parse_resources, aaa);
+}
+
+int
 acpi_foundhid(struct aml_node *node, void *arg)
 {
 	struct acpi_softc	*sc = (struct acpi_softc *)arg;
@@ -3204,6 +3326,7 @@ acpi_foundhid(struct aml_node *node, void *arg)
 	aaa.aaa_node = node->parent;
 	aaa.aaa_dev = dev;
 	aaa.aaa_cdev = cdev;
+	acpi_parse_crs(sc, &aaa);
 
 #ifndef SMALL_KERNEL
 	if (!strcmp(cdev, ACPI_DEV_MOUSE)) {
@@ -3380,7 +3503,7 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct acpi_sbs *sbs;
 	struct apm_power_info *pi = (struct apm_power_info *)data;
 	int bats;
-	unsigned int remaining, rem, minutes, rate;
+	unsigned int capacity, remaining, minutes, rate;
 	int s;
 
 	if (!acpi_cd.cd_ndevs || APMUNIT(dev) != 0 ||
@@ -3431,7 +3554,8 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		pi->battery_life = 0;
 		pi->minutes_left = 0;
 		bats = 0;
-		remaining = rem = 0;
+		capacity = 0;
+		remaining = 0;
 		minutes = 0;
 		rate = 0;
 		SLIST_FOREACH(bat, &sc->sc_bat, aba_link) {
@@ -3442,11 +3566,9 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 				continue;
 
 			bats++;
-			rem = (bat->aba_softc->sc_bst.bst_capacity * 100) /
-			    bat->aba_softc->sc_bix.bix_last_capacity;
-			if (rem > 100)
-				rem = 100;
-			remaining += rem;
+			capacity += bat->aba_softc->sc_bix.bix_last_capacity;
+			remaining += min(bat->aba_softc->sc_bst.bst_capacity,
+			    bat->aba_softc->sc_bix.bix_last_capacity);
 
 			if (bat->aba_softc->sc_bst.bst_rate == BST_UNKNOWN)
 				continue;
@@ -3464,10 +3586,9 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 				continue;
 
 			bats++;
-			rem = sbs->asbs_softc->sc_battery.rel_charge;
-			if (rem > 100)
-				rem = 100;
-			remaining += rem;
+			capacity += 100;
+			remaining += min(100,
+			    sbs->asbs_softc->sc_battery.rel_charge);
 
 			if (sbs->asbs_softc->sc_battery.run_time ==
 			    ACPISBS_VALUE_UNKNOWN)
@@ -3490,7 +3611,7 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			pi->minutes_left = 60 * minutes / rate;
 
 		/* running on battery */
-		pi->battery_life = remaining / bats;
+		pi->battery_life = remaining * 100 / capacity;
 		if (pi->battery_life > 50)
 			pi->battery_state = APM_BATT_HIGH;
 		else if (pi->battery_life > 25)

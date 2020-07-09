@@ -1,4 +1,4 @@
-.\" $OpenBSD: x509v3.cnf.5,v 1.6 2019/06/06 01:06:59 schwarze Exp $
+.\" $OpenBSD: x509v3.cnf.5,v 1.7 2020/06/11 18:03:19 jmc Exp $
 .\" full merge up to:
 .\" OpenSSL man5/x509v3_config a41815f0 Mar 17 18:43:53 2017 -0700
 .\" selective merge up to: OpenSSL 36cf10cf Oct 4 02:11:08 2017 -0400
@@ -51,7 +51,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 6 2019 $
+.Dd $Mdocdate: June 11 2020 $
 .Dt X509V3.CNF 5
 .Os
 .Sh NAME
@@ -186,16 +186,16 @@ keyUsage=digitalSignature, nonRepudiation
 keyUsage=critical, keyCertSign
 .Ed
 .Ss Extended key usage
-This extensions consists of a list of usages indicating purposes for
-which the certificate public key can be used for.
+This extension consists of a list of purposes for
+which the certificate public key can be used.
 .Pp
 These can either be object short names or the dotted numerical form of OIDs.
 While any OID can be used, only certain values make sense.
 In particular the following PKIX, NS and MS values are meaningful:
 .Bl -column emailProtection
 .It Em value Ta Em meaning
-.It Ic serverAuth      Ta SSL/TLS web server authentication
-.It Ic clientAuth      Ta SSL/TLS web client authentication
+.It Ic serverAuth      Ta TLS server authentication
+.It Ic clientAuth      Ta TLS client authentication
 .It Ic codeSigning     Ta code signing
 .It Ic emailProtection Ta E-mail protection (S/MIME)
 .It Ic timeStamping    Ta trusted timestamping

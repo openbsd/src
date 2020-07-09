@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_installboot.h,v 1.5 2019/09/02 16:36:12 otto Exp $	*/
+/*	$OpenBSD: i386_installboot.h,v 1.6 2020/06/27 15:35:29 deraadt Exp $	*/
 /*
  * Copyright (c) 2011 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2003 Tom Cosgrove <tom.cosgrove@arches-consulting.com>
@@ -55,4 +55,4 @@ void	pbr_set_symbols(char *, char *, struct sym_data *);
 void	sym_set_value(struct sym_data *, char *, u_int32_t);
 void	write_bootblocks(int, char *, struct disklabel *);
 int	findgptefisys(int, struct disklabel *);
-void	write_efisystem(struct disklabel *, char);
+void	write_filesystem(struct disklabel *, char);

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.95 2019/12/06 19:15:16 jmc Exp $
+.\"	$OpenBSD: ddb.4,v 1.98 2020/06/17 10:55:24 sthen Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: December 6 2019 $
+.Dd $Mdocdate: June 17 2020 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -202,6 +202,7 @@ are displayed and no other action is performed.
 .It Ic help
 List the available commands.
 .\" --------------------
+.Tg examine
 .It Xo
 .Oo Ic e Oc Ns
 .Ic x Ns Op Ic amine
@@ -275,6 +276,7 @@ is set to the
 .Ar addr
 plus the size of the data examined.
 .\" --------------------
+.Tg print
 .It Xo
 .Ic p Ns Op Ic rint
 .Op Cm /axzodurc
@@ -301,6 +303,7 @@ will print something like this:
 xxxxxx
 .Ed
 .\" --------------------
+.Tg pprint
 .It Xo
 .Ic pp Ns Op Ic rint
 .Op Ar addr
@@ -316,6 +319,7 @@ as part of building a new kernel.
 .\" .Op Ar addr
 .\" .Ar expr Op expr ...
 .\" .Xc
+.Tg write
 .It Xo
 .Ic w Ns Op Ic rite
 .Op Cm /bhl
@@ -394,6 +398,7 @@ allows the breakpoint to be silently hit
 times before stopping at the
 break point.
 .\" --------------------
+.Tg delete
 .It Xo
 .Ic d Ns Op Ic elete
 .Op Ar addr
@@ -405,6 +410,7 @@ command.
 .\" .It Xo Ic s Ns Op Cm /p
 .\" .Op Ic \&, Ns Ar count
 .\" .Xc
+.Tg step
 .It Xo
 .Ic s Ns Op Ic tep
 .Op Cm /p
@@ -437,6 +443,7 @@ Parentheses may be omitted if the function takes no arguments.
 The number of arguments is currently limited to 10.
 .\" --------------------
 .\" .It Ic c Ns Op Cm /c
+.Tg continue
 .It Xo
 .Ic c Ns Op Ic ontinue
 .Op Cm /c
@@ -539,19 +546,21 @@ argument.
 .\" --------------------
 .It Xo
 .Ic trace
-.Op Cm /pu
+.Op Cm /tu
 .Op Ar frameaddr Ns
 .Op Ic \&, Ns Ar count
 .Xc
 Show the stack trace.
 The
-.Cm /p
+.Cm /t
 modifier interprets the
 .Ar frameaddr
 argument as the TID of a process and shows the stack trace of
 that process.
+.Ar frameaddr
+is subject to the radix; use the 0t prefix to enter a decimal TID.
 The
-.Cm /p
+.Cm /t
 modifier is not supported on all platforms.
 The
 .Cm /u
@@ -949,6 +958,7 @@ command.
 A synonym for
 .Ic show all procs .
 .\" --------------------
+.Tg machine
 .It Xo
 .Ic mac Ns Op Ic hine
 .Ar subcommand Op Ar args ...

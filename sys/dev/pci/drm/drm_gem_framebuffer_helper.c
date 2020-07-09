@@ -1,6 +1,5 @@
 /* Public domain. */
 
-#include <drm/drmP.h>
 #include <drm/drm_gem.h>
 #include <drm/drm_framebuffer.h>
 

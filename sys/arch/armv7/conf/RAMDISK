@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.118 2020/04/29 19:30:58 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.119 2020/06/18 08:48:04 fcambus Exp $
 
 machine		armv7 arm
 
@@ -126,6 +126,7 @@ pci*		at pciecam?
 
 sdhc*		at fdt?
 sdmmc*		at sdhc?
+bwfm*		at sdmmc?		# Broadcom FullMAC
 
 psci*		at fdt? early 1
 syscon*		at fdt? early 1
@@ -272,6 +273,7 @@ rsu*		at uhub?		# Realtek RTL8188SU/RTL8191SU/RTL8192SU
 uath*		at uhub?		# Atheros AR5005UG/AR5005UX
 otus*		at uhub?		# Atheros AR9001U
 athn*		at uhub?		# Atheros AR9002U
+bwfm*		at uhub?		# Broadcom FullMAC
 
 atphy*		at mii?			# Attansic F1 PHYs
 rgephy*		at mii?			# Realtek 8169S/8110S PHY

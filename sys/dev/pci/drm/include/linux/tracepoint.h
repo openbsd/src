@@ -3,6 +3,8 @@
 #ifndef _LINUX_TRACEPOINT_H
 #define _LINUX_TRACEPOINT_H
 
+#include <linux/types.h>
+
 #define TP_PROTO(x...) x
 
 #define DEFINE_EVENT(template, name, proto, args) \

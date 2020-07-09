@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.55 2020/03/23 03:01:21 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.56 2020/06/26 20:16:21 naddy Exp $
 
 SUBDIR+= _setjmp
 SUBDIR+= alloca arc4random-fork atexit
@@ -6,7 +6,7 @@ SUBDIR+= basename
 SUBDIR+= cephes cxa-atexit
 SUBDIR+= db dirname
 SUBDIR+= env explicit_bzero
-SUBDIR+= fmemopen fnmatch fpclassify fread
+SUBDIR+= ffs fmemopen fnmatch fpclassify fread
 SUBDIR+= gcvt getaddrinfo getcap getopt getopt_long glob
 SUBDIR+= hsearch
 SUBDIR+= ieeefp ifnameindex

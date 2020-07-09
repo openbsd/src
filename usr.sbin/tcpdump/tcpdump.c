@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.92 2020/01/24 22:46:37 procter Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.93 2020/06/21 05:00:18 dlg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -371,6 +371,8 @@ main(int argc, char **argv)
 				packettype = PT_MPLS;
 			else if (strcasecmp(optarg, "tftp") == 0)
 				packettype = PT_TFTP;
+			else if (strcasecmp(optarg, "wg") == 0)
+				packettype = PT_WIREGUARD;
 			else if (strcasecmp(optarg, "sack") == 0)
 				/*
 				 * kept for compatibility; DEFAULT_SNAPLEN

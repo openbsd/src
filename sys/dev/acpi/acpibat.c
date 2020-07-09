@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.67 2018/07/01 19:40:49 mlarkin Exp $ */
+/* $OpenBSD: acpibat.c,v 1.68 2020/06/10 22:26:40 jca Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -31,9 +31,14 @@
 
 int	acpibat_match(struct device *, void *, void *);
 void	acpibat_attach(struct device *, struct device *, void *);
+int	acpibat_activate(struct device *, int);
 
 struct cfattach acpibat_ca = {
-	sizeof(struct acpibat_softc), acpibat_match, acpibat_attach
+	sizeof(struct acpibat_softc),
+	acpibat_match,
+	acpibat_attach,
+	NULL,
+	acpibat_activate,
 };
 
 struct cfdriver acpibat_cd = {
@@ -108,6 +113,31 @@ acpibat_attach(struct device *parent, struct device *self, void *aux)
 
 	aml_register_notify(sc->sc_devnode, aa->aaa_dev,
 	    acpibat_notify, sc, ACPIDEV_POLL);
+}
+
+int
+acpibat_activate(struct device *self, int act)
+{
+	struct acpibat_softc *sc = (struct acpibat_softc *)self;
+	int64_t sta;
+
+	switch (act) {
+	case DVACT_WAKEUP:
+		/* Check if installed state of battery has changed */
+		if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "_STA", 0,
+		    NULL, &sta) == 0) {
+			if (sta & STA_BATTERY)
+				sc->sc_bat_present = 1;
+			else
+				sc->sc_bat_present = 0;
+		}
+		acpibat_getbix(sc);
+		acpibat_getbst(sc);
+		acpibat_refresh(sc);
+		break;
+	}
+
+	return (0);
 }
 
 void
@@ -315,8 +345,6 @@ acpibat_refresh(void *arg)
 			sc->sc_sens[9].flags = 0;
 		}
 	}
-
-	acpi_record_event(sc->sc_acpi, APM_POWER_CHANGE);
 }
 
 int
@@ -505,6 +533,7 @@ acpibat_notify(struct aml_node *node, int notify_type, void *arg)
 	}
 
 	acpibat_refresh(sc);
+	acpi_record_event(sc->sc_acpi, APM_POWER_CHANGE);
 
 	return (0);
 }

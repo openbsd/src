@@ -65,6 +65,18 @@ for protocol in SSLv3 TLSv1.2; do
     fi
   done
 done
+for protocol in TLSv1.3; do
+  echo "Testing ciphersuites for $protocol"
+  for cipher in `$openssl ciphers -v "$protocol" |
+    awk "/ $protocol / { print \\$1 }"`; do
+    echo "Testing $cipher"
+    $ssltest -cipher $cipher
+    if [ $? -ne 0 ] ; then
+      echo "Failed $cipher"
+      exit 1
+    fi
+  done
+done
 
 #############################################################################
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: set_memory.h,v 1.1 2019/04/14 10:14:52 jsg Exp $	*/
+/*	$OpenBSD: set_memory.h,v 1.2 2020/06/08 04:48:14 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -19,6 +19,10 @@
 #define _ASM_SET_MEMORY_H
 
 #include <sys/atomic.h>
+
+#include <sys/param.h>		/* for PAGE_SIZE on i386 */
+#include <uvm/uvm_extern.h>
+
 #include <machine/pmap.h>
 
 #if defined(__amd64__) || defined(__i386__)

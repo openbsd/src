@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.45 2018/06/01 14:23:48 fcambus Exp $	*/
+/*	$OpenBSD: via.c,v 1.46 2020/05/29 04:42:24 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -34,8 +34,6 @@
 
 #include <machine/cpufunc.h>
 #include <machine/specialreg.h>
-
-#include <dev/rndvar.h>
 
 void	viac3_rnd(void *);
 

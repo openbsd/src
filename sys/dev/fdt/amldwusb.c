@@ -1,4 +1,4 @@
-/*	$OpenBSD: amldwusb.c,v 1.1 2019/08/29 17:20:03 kettenis Exp $	*/
+/*	$OpenBSD: amldwusb.c,v 1.2 2020/05/18 10:41:29 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark kettenis <kettenis@openbsd.org>
  *
@@ -28,6 +28,7 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_misc.h>
+#include <dev/ofw/ofw_power.h>
 #include <dev/ofw/ofw_regulator.h>
 #include <dev/ofw/fdt.h>
 
@@ -160,6 +161,7 @@ amldwusb_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	power_domain_enable(faa->fa_node);
 	clock_enable_all(faa->fa_node);
 
 	reset_assert_all(faa->fa_node);

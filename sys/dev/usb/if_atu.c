@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.128 2020/01/05 08:58:25 jsg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.129 2020/06/16 09:41:21 jmatthew Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1742,8 +1742,8 @@ atu_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	rxi.rxi_tstamp = UGETDW(h->rx_time);
 	ieee80211_input(ifp, m, ni, &rxi);
 
-	ieee80211_release_node(ic, ni);
 done1:
+	ieee80211_release_node(ic, ni);
 	splx(s);
 done:
 	/* Setup new transfer. */

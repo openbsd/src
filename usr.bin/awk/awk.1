@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.46 2020/01/22 03:47:38 deraadt Exp $
+.\"	$OpenBSD: awk.1,v 1.55 2020/06/27 14:04:58 millert Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -22,7 +22,7 @@
 .\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 22 2020 $
+.Dd $Mdocdate: June 27 2020 $
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -130,13 +130,21 @@ and newlines are used as field separators
 This is convenient when working with multi-line records.
 .Pp
 An input line is normally made up of fields separated by whitespace,
-or by the regular expression
-.Va FS .
+or by the value of the field separator
+.Va FS
+at the time the line is read.
 The fields are denoted
 .Va $1 , $2 , ... ,
 while
 .Va $0
 refers to the entire line.
+.Va FS
+may be set to either a single character or a regular expression.
+As as special case, if
+.Va FS
+is a single space
+.Pq the default ,
+fields will be split by one or more whitespace characters.
 If
 .Va FS
 is null, the input line is split into one field per character.
@@ -161,8 +169,13 @@ as the field separator, use the
 .Fl F
 option with a value of
 .Sq [t] .
+The field separator is usually set via the
+.Fl F
+option or from inside a
+.Ic BEGIN
+block so that it takes effect before the input is read.
 .Pp
-A pattern-action statement has the form
+A pattern-action statement has the form:
 .Pp
 .D1 Ar pattern Ic \&{ Ar action Ic \&}
 .Pp
@@ -288,9 +301,9 @@ The
 .Ic print
 statement prints its arguments on the standard output
 (or on a file if
-.Pf > Ar file
+.Pf >\ \& Ar file
 or
-.Pf >> Ar file
+.Pf >>\ \& Ar file
 is present or on a pipe if
 .Pf |\ \& Ar cmd
 is present), separated by the current output field separator,
@@ -303,7 +316,8 @@ identical string values in different statements denote
 the same open file.
 The
 .Ic printf
-statement formats its expression list according to the format
+statement formats its expression list according to the
+.Ar format
 (see
 .Xr printf 1 ) .
 .Pp
@@ -373,6 +387,9 @@ may be used to capture control after processing is finished.
 and
 .Ic END
 do not combine with other patterns.
+They may appear multiple times in a program and execute
+in the order they are read by
+.Nm .
 .Pp
 Variable names with special meanings:
 .Pp
@@ -393,9 +410,9 @@ The name of the current input file.
 .It Va FNR
 Ordinal number of the current record in the current file.
 .It Va FS
-Regular expression used to separate fields; also settable
-by option
-.Fl F Ar fs .
+Regular expression used to separate fields (default whitespace);
+also settable by option
+.Fl F Ar fs
 .It Va NF
 Number of fields in the current record.
 .Va $NF
@@ -415,6 +432,11 @@ The length of the string matched by the
 function.
 .It Va RS
 Input record separator (default newline).
+If empty, blank lines separate records.
+If more than one character long,
+.Va RS
+is treated as a regular expression, and records are
+separated by text matching the expression.
 .It Va RSTART
 The starting position of the string matched by the
 .Fn match
@@ -465,6 +487,8 @@ such that
 .Sm off
 .Pf 0 \*(Le Fa n No \*(Lt 1 .
 .Sm on
+Random numbers are non-deterministic unless a seed is explicitly set with
+.Fn srand .
 .It Fn sin x
 Return the sine of
 .Fa x ,
@@ -482,10 +506,68 @@ to
 and returns the previous seed.
 If
 .Fa expr
-is omitted, the time of day is used instead.
+is omitted,
+.Fn rand
+will return non-deterministic random numbers.
 .El
 .Ss String Functions
 .Bl -tag -width "split(s, a, fs)"
+.It Fn gensub r s h [t]
+Search the target string
+.Ar t
+for matches of the regular expression
+.Ar r .
+If
+.Ar h
+is a string beginning with
+.Ic g
+or
+.Ic G ,
+then replace all matches of
+.Ar r
+with
+.Ar s .
+Otherwise,
+.Ar h
+is a number indicating which match of
+.Ar r
+to replace.
+If no
+.Ar t
+is supplied,
+.Va $0
+is used instead.
+.\"Within the replacement text
+.\".Ar s ,
+.\"the sequence
+.\".Ar \en ,
+.\"where
+.\".Ar n
+.\"is a digit from 1 to 9, may be used to indicate just the text that
+.\"matched the
+.\".Ar n Ap th
+.\"parenthesized subexpression.
+.\"The sequence
+.\".Ic \e0
+.\"represents the entire text, as does the character
+.\".Ic & .
+Unlike
+.Fn sub
+and
+.Fn gsub ,
+the modified string is returned as the result of the function,
+and the original target is
+.Em not
+changed.
+Note that
+.Ar \en
+sequences within the replacement string
+.Ar s ,
+as supported by GNU
+.Nm ,
+are
+.Em not
+supported at this time.
 .It Fn gsub r t s
 The same as
 .Fn sub
@@ -502,7 +584,8 @@ occurs, or 0 if it does not.
 The length of
 .Fa s
 taken as a string,
-or of
+number of elements in an array for an array argument,
+or length of
 .Va $0
 if no argument is given.
 .It Fn match s r
@@ -595,6 +678,37 @@ Returns a copy of
 with all lower-case characters translated to their
 corresponding upper-case equivalents.
 .El
+.Ss Time Functions
+This version of
+.Nm
+provides the following functions for obtaining and formatting time
+stamps.
+.Bl -tag -width indent
+.It Fn strftime "[format [, timestamp]]"
+Formats
+.Ar timestamp
+according to the string
+.Ar format .
+The format string may contain any of the conversion specifications described
+in the
+.Xr strftime 3
+manual page, as well as any arbitrary text.
+The
+.Ar timestamp
+must be in the same form as a value returned by
+.Fn systime .
+If
+.Ar timestamp
+is not specified, the current time is used.
+If
+.Ar format
+is not specified, a default format equivalent to the output of
+.Xr date 1
+is used.
+.It Fn systime
+Returns the value of time in seconds since 0 hours, 0 minutes,
+0 seconds, January 1, 1970, Coordinated Universal Time (UTC).
+.El
 .Ss Input/Output and General Functions
 .Bl -tag -width "getline [var] < file"
 .It Fn close expr
@@ -658,7 +772,7 @@ and
 returns 1 for a successful input, 0 for end of file, and \-1 for an error.
 .It Xo
 .Ic getline Op Va var
-.Pf \ \&< Ar file
+.Pf <\ \& Ar file
 .Xc
 Sets
 .Va $0
@@ -687,6 +801,19 @@ remains open until explicitly closed with a call to
 Executes
 .Fa cmd
 and returns its exit status.
+This will be \-1 upon error,
+.Ar cmd Ns 's
+exit status upon a normal exit,
+256 +
+.Em sig
+if
+.Fa cmd
+was terminated by a signal, where
+.Em sig
+is the number of the signal,
+or 512 +
+.Em sig
+if there was a core dump.
 .El
 .Ss Bit-Operation Functions
 .Bl -tag -width "lshift(a, b)"
@@ -703,6 +830,14 @@ Returns integer argument x shifted by n bits to the left.
 .It Fn rshift x n
 Returns integer argument x shifted by n bits to the right.
 .El
+.Sh ENVIRONMENT
+The following environment variables affect the execution of
+.Nm :
+.Bl -tag -width POSIXLY_CORRECT
+.It Ev POSIXLY_CORRECT
+When set, behave in accordance with the standard, even when it conflicts
+with historical behavior.
+.El
 .Sh EXIT STATUS
 .Ex -std awk
 .Pp
@@ -718,7 +853,7 @@ Print first two fields in opposite order:
 .Pp
 .Dl { print $2, $1 }
 .Pp
-Same, with input fields separated by comma and/or blanks and tabs:
+Same, with input fields separated by comma and/or spaces and tabs:
 .Bd -literal -offset indent
 BEGIN { FS = ",[ \et]*|[ \et]+" }
       { print $2, $1 }
@@ -749,9 +884,12 @@ Print an error message to standard error:
 .Ed
 .Sh SEE ALSO
 .Xr cut 1 ,
+.Xr date 1 ,
+.Xr grep 1 ,
 .Xr lex 1 ,
 .Xr printf 1 ,
 .Xr sed 1 ,
+.Xr strftime 3 ,
 .Xr re_format 7 ,
 .Xr script 7
 .Rs
@@ -768,18 +906,36 @@ The
 .Nm
 utility is compliant with the
 .St -p1003.1-2008
-specification,
-except
-.Nm
-does not support {n,m} pattern matching.
+specification except that consecutive backslashes in the replacement
+string argument for
+.Fn sub
+and
+.Fn gsub
+are not collapsed and a slash
+.Pq Ql /
+does not need to be escaped in a bracket expression.
+Also, the behaviour of
+.Fn rand
+and
+.Fn srand
+has been changed to support non-deterministic random numbers.
 .Pp
 The flags
 .Op Fl \&dV
 and
 .Op Fl safe ,
-as well as the commands
-.Cm fflush , compl , and , or ,
-.Cm xor , lshift , rshift ,
+as well as the functions
+.Fn fflush ,
+.Fn gensub ,
+.Fn compl ,
+.Fn and ,
+.Fn or ,
+.Fn xor ,
+.Fn lshift ,
+.Fn rshift ,
+.Fn strftime
+and
+.Fn systime
 are extensions to that specification.
 .Sh HISTORY
 An
@@ -795,3 +951,5 @@ to it.
 .Pp
 The scope rules for variables in functions are a botch;
 the syntax is worse.
+.Pp
+Only eight-bit character sets are handled correctly.

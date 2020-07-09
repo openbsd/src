@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.10 2020/04/30 13:46:39 deraadt Exp $ */
+/*	$OpenBSD: output-json.c,v 1.12 2020/05/03 20:24:02 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -17,6 +17,7 @@
 
 #include <stdlib.h>
 #include <unistd.h>
+#include <time.h>
 #include <netdb.h>
 #include <openssl/ssl.h>
 
@@ -26,12 +27,13 @@ static int
 outputheader_json(FILE *out, struct stats *st)
 {
 	char		hn[NI_MAXHOST], tbuf[26];
+	struct tm	*tp;
 	time_t		t;
 
 	time(&t);
 	setenv("TZ", "UTC", 1);
-	ctime_r(&t, tbuf);
-	*strrchr(tbuf, '\n') = '\0';
+	tp = localtime(&t);
+	strftime(tbuf, sizeof tbuf, "%FT%TZ", tp);
 
 	gethostname(hn, sizeof hn);
 

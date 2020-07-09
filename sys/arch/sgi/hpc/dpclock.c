@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpclock.c,v 1.3 2014/10/11 18:41:18 miod Exp $	*/
+/*	$OpenBSD: dpclock.c,v 1.4 2020/05/21 01:49:49 visa Exp $	*/
 /*	$NetBSD: dpclock.c,v 1.3 2011/07/01 18:53:46 dyoung Exp $	*/
 
 /*
@@ -94,8 +94,7 @@
 
 #include <machine/bus.h>
 
-#include <mips64/dev/clockvar.h>
-
+#include <dev/clock_subr.h>
 #include <dev/ic/dp8573areg.h>
 #include <sgi/hpc/hpcvar.h>
 
@@ -103,6 +102,7 @@
 
 struct dpclock_softc {
 	struct device		sc_dev;
+	struct todr_chip_handle	sc_todr;
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
@@ -163,8 +163,8 @@ leapyear(int year)
 	return (rv);
 }
 
-void	dpclock_gettime(void *, time_t, struct tod_time *);
-void	dpclock_settime(void *, struct tod_time *);
+int	dpclock_gettime(struct todr_chip_handle *, struct timeval *);
+int	dpclock_settime(struct todr_chip_handle *, struct timeval *);
 
 int
 dpclock_match(struct device *parent, void *vcf, void *aux)
@@ -225,18 +225,20 @@ dpclock_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	sys_tod.tod_get = dpclock_gettime;
-	sys_tod.tod_set = dpclock_settime;
-	sys_tod.tod_cookie = self;
+	sc->sc_todr.cookie = self;
+	sc->sc_todr.todr_gettime = dpclock_gettime;
+	sc->sc_todr.todr_settime = dpclock_settime;
+	todr_attach(&sc->sc_todr);
 }
 
 /*
  * Get the time of day, based on the clock's value and/or the base value.
  */
-void
-dpclock_gettime(void *cookie, time_t base, struct tod_time *ct)
+int
+dpclock_gettime(struct todr_chip_handle *handle, struct timeval *tv)
 {
-	struct dpclock_softc *sc = (void *)cookie;
+	struct clock_ymdhms dt;
+	struct dpclock_softc *sc = handle->cookie;
 	uint i;
 	uint8_t regs[DP8573A_NREG];
 
@@ -247,11 +249,11 @@ dpclock_gettime(void *cookie, time_t base, struct tod_time *ct)
 	for (i = 0; i < nitems(regs); i++)
 		regs[i] = dpclock_read(sc, i);
 
-	ct->sec = frombcd(regs[DP8573A_SAVE_SEC]);
-	ct->min = frombcd(regs[DP8573A_SAVE_MIN]);
+	dt.dt_sec = frombcd(regs[DP8573A_SAVE_SEC]);
+	dt.dt_min = frombcd(regs[DP8573A_SAVE_MIN]);
 
 	if (regs[DP8573A_RT_MODE] & DP8573A_RT_MODE_1224) {
-		ct->hour = frombcd(regs[DP8573A_SAVE_HOUR] &
+		dt.dt_hour = frombcd(regs[DP8573A_SAVE_HOUR] &
 		    DP8573A_HOUR_12HR_MASK) +
 		    ((regs[DP8573A_SAVE_HOUR] & DP8573A_RT_MODE_1224) ? 0 : 12);
 
@@ -260,28 +262,35 @@ dpclock_gettime(void *cookie, time_t base, struct tod_time *ct)
 		 * for PM gives us 01-24, whereas we want 00-23, so map hour
 		 * 24 to hour 0.
 		 */
-		if (ct->hour == 24)
-			ct->hour = 0;
+		if (dt.dt_hour == 24)
+			dt.dt_hour = 0;
 	} else {
-		ct->hour = frombcd(regs[DP8573A_SAVE_HOUR] &
+		dt.dt_hour = frombcd(regs[DP8573A_SAVE_HOUR] &
 		    DP8573A_HOUR_24HR_MASK);
 	}
 
-	ct->day = frombcd(regs[DP8573A_SAVE_DOM]);
-	ct->mon = frombcd(regs[DP8573A_SAVE_MONTH]);
-	ct->year = frombcd(regs[DP8573A_YEAR]) + (IRIX_BASE_YEAR - 1900);
+	dt.dt_day = frombcd(regs[DP8573A_SAVE_DOM]);
+	dt.dt_mon = frombcd(regs[DP8573A_SAVE_MONTH]);
+	dt.dt_year = frombcd(regs[DP8573A_YEAR]) + IRIX_BASE_YEAR;
+
+	tv->tv_sec = clock_ymdhms_to_secs(&dt);
+	tv->tv_usec = 0;
+	return 0;
 }
 
 /*
  * Reset the TODR based on the time value.
  */
-void
-dpclock_settime(void *cookie, struct tod_time *ct)
+int
+dpclock_settime(struct todr_chip_handle *handle, struct timeval *tv)
 {
-	struct dpclock_softc *sc = (void *)cookie;
+	struct clock_ymdhms dt;
+	struct dpclock_softc *sc = handle->cookie;
 	uint i;
 	uint st, r, delta;
 	uint8_t regs[DP8573A_NREG];
+
+	clock_secs_to_ymdhms(tv->tv_sec, &dt);
 
 	r = dpclock_read(sc, DP8573A_TIMESAVE_CTL);
 	dpclock_write(sc, DP8573A_TIMESAVE_CTL, r | DP8573A_TIMESAVE_CTL_EN);
@@ -291,13 +300,13 @@ dpclock_settime(void *cookie, struct tod_time *ct)
 		regs[i] = dpclock_read(sc, i);
 
 	regs[DP8573A_SUBSECOND] = 0;
-	regs[DP8573A_SECOND] = tobcd(ct->sec);
-	regs[DP8573A_MINUTE] = tobcd(ct->min);
-	regs[DP8573A_HOUR] = tobcd(ct->hour) & DP8573A_HOUR_24HR_MASK;
-	regs[DP8573A_DOW] = tobcd(ct->dow);
-	regs[DP8573A_DOM] = tobcd(ct->day);
-	regs[DP8573A_MONTH] = tobcd(ct->mon);
-	regs[DP8573A_YEAR] = tobcd(ct->year - (IRIX_BASE_YEAR - 1900));
+	regs[DP8573A_SECOND] = tobcd(dt.dt_sec);
+	regs[DP8573A_MINUTE] = tobcd(dt.dt_min);
+	regs[DP8573A_HOUR] = tobcd(dt.dt_hour) & DP8573A_HOUR_24HR_MASK;
+	regs[DP8573A_DOW] = tobcd(dt.dt_wday + 1);
+	regs[DP8573A_DOM] = tobcd(dt.dt_day);
+	regs[DP8573A_MONTH] = tobcd(dt.dt_mon);
+	regs[DP8573A_YEAR] = tobcd(dt.dt_year - IRIX_BASE_YEAR);
 
 	st = dpclock_read(sc, DP8573A_STATUS);
 	dpclock_write(sc, DP8573A_STATUS, st | DP8573A_STATUS_REGSEL);
@@ -316,11 +325,13 @@ dpclock_settime(void *cookie, struct tod_time *ct)
 	 * by year 2100.
 	 */
 	delta = 0;
-	while (delta < 3 && !leapyear(ct->year - delta))
+	while (delta < 3 && !leapyear(dt.dt_year - delta))
 		delta++;
 	
 	r &= ~(DP8573A_RT_MODE_LYLSB | DP8573A_RT_MODE_LYMSB);
 	dpclock_write(sc, DP8573A_RT_MODE, r | delta | DP8573A_RT_MODE_CLKSS);
 
 	dpclock_write(sc, DP8573A_STATUS, st & ~DP8573A_STATUS_REGSEL);
+
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.116 2019/04/28 17:59:51 mpi Exp $	*/
+/*	$OpenBSD: main.c,v 1.120 2020/06/16 14:03:42 jmc Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -127,7 +127,7 @@ main(int argc, char *argv[])
 	tableid = getrtable();
 
 	while ((ch = getopt(argc, argv,
-	    "AaBbc:deFf:ghI:iLlM:mN:np:P:qrsT:tuvW:w:")) != -1)
+	    "AaBbc:deFf:ghI:iLlM:mN:np:P:qRrsT:tuvW:w:")) != -1)
 		switch (ch) {
 		case 'A':
 			Aflag = 1;
@@ -225,6 +225,9 @@ main(int argc, char *argv[])
 		case 'q':
 			qflag = 1;
 			break;
+		case 'R':
+			Rflag = 1;
+			break;
 		case 'r':
 			rflag = 1;
 			break;
@@ -318,6 +321,11 @@ main(int argc, char *argv[])
 			mroutepr();
 		if (af == AF_INET6 || af == AF_UNSPEC)
 			mroute6pr();
+		exit(0);
+	}
+
+	if (Rflag) {
+		rdomainpr();
 		exit(0);
 	}
 
@@ -445,16 +453,17 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-AaBln] [-f address_family] [-M core] [-N system]\n"
-	    "       %s [-bdeFgilmnqrstu] [-f address_family] [-M core] [-N system]\n"
+	    "usage: netstat [-AaBln] [-M core] [-N system] [-p protocol] [-T rtable]\n"
+	    "       netstat -W interface\n"
+	    "       netstat -m\n"
+	    "       netstat -I interface | -i [-bdehnqt]\n"
+	    "       netstat -w wait [-bdehnqt] [-c count] [-I interface]\n"
+	    "       netstat -s [-gru] [-f address_family] [-p protocol]\n"
+	    "       netstat -g [-lnu] [-f address_family]\n"
+	    "       netstat -R\n"
+	    "       netstat -r [-AFu] [-f address_family] [-M core] [-N system] [-p protocol]\n"
 	    "               [-T rtable]\n"
-	    "       %s [-bdehn] [-c count] [-I interface] [-M core] [-N system] [-w wait]\n"
-	    "       %s [-v] [-M core] [-N system] -P pcbaddr\n"
-	    "       %s [-s] [-M core] [-N system] [-p protocol]\n"
-	    "       %s [-a] [-f address_family] [-i | -I interface]\n"
-	    "       %s [-W interface]\n",
-	    __progname, __progname, __progname, __progname,
-	    __progname, __progname, __progname);
+	    "       netstat -P pcbaddr [-v] [-M core] [-N system]\n");
 	exit(1);
 }
 

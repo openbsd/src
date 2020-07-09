@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcclock.c,v 1.3 2010/01/22 21:44:00 miod Exp $	*/
+/*	$OpenBSD: mcclock.c,v 1.4 2020/05/25 13:16:06 visa Exp $	*/
 /*	$NetBSD: mcclock.c,v 1.4 1996/10/13 02:59:41 christos Exp $	*/
 
 /*
@@ -33,20 +33,17 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <mips64/dev/clockvar.h>
-#include <loongson/dev/mcclockvar.h>
+#include <dev/clock_subr.h>
 #include <dev/ic/mc146818reg.h>
+
+#include <loongson/dev/mcclockvar.h>
 
 struct cfdriver mcclock_cd = {
 	NULL, "mcclock", DV_DULL,
 };
 
-void	mcclock_get(void *, time_t, struct tod_time *);
-void	mcclock_set(void *, struct tod_time *);
-
-struct tod_desc mcclock_clockfns = {
-	NULL, mcclock_get, mcclock_set,
-};
+int	mcclock_gettime(struct todr_chip_handle *, struct timeval *);
+int	mcclock_settime(struct todr_chip_handle *, struct timeval *);
 
 #define	mc146818_write(dev, reg, datum)					\
 	    (*(dev)->sc_busfns->mc_bf_write)(dev, reg, datum)
@@ -67,21 +64,20 @@ mcclock_attach(sc, busfns)
 	mc146818_write(sc, MC_REGB, MC_REGB_BINARY | MC_REGB_24HR);
 	mc146818_write(sc, MC_REGA, MC_BASE_32_KHz | MC_RATE_NONE);
 
-	sys_tod.tod_cookie = sc;
-	sys_tod.tod_get = mcclock_get;
-	sys_tod.tod_set = mcclock_set;
+	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_gettime = mcclock_gettime;
+	sc->sc_todr.todr_settime = mcclock_settime;
+	todr_attach(&sc->sc_todr);
 }
 
 /*
  * Get the time of day, based on the clock's value and/or the base value.
  */
-void
-mcclock_get(dev, base, ct)
-	void *dev;
-	time_t base;
-	struct tod_time *ct;
+int
+mcclock_gettime(struct todr_chip_handle *handle, struct timeval *tv)
 {
-	struct mcclock_softc *sc = (struct mcclock_softc *)dev;
+	struct clock_ymdhms dt;
+	struct mcclock_softc *sc = handle->cookie;
 	mc_todregs regs;
 	int s;
 
@@ -89,40 +85,46 @@ mcclock_get(dev, base, ct)
 	MC146818_GETTOD(sc, &regs)
 	splx(s);
 
-	ct->sec = regs[MC_SEC];
-	ct->min = regs[MC_MIN];
-	ct->hour = regs[MC_HOUR];
-	ct->dow = regs[MC_DOW];
-	ct->day = regs[MC_DOM];
-	ct->mon = regs[MC_MONTH];
-	ct->year = regs[MC_YEAR] + 100;
+	dt.dt_sec = regs[MC_SEC];
+	dt.dt_min = regs[MC_MIN];
+	dt.dt_hour = regs[MC_HOUR];
+	dt.dt_day = regs[MC_DOM];
+	dt.dt_mon = regs[MC_MONTH];
+	dt.dt_year = regs[MC_YEAR] + 2000;
+
+	tv->tv_sec = clock_ymdhms_to_secs(&dt);
+	tv->tv_usec = 0;
+	return 0;
 }
 
 /*
  * Reset the TODR based on the time value.
  */
-void
-mcclock_set(dev, ct)
-	void *dev;
-	struct tod_time *ct;
+int
+mcclock_settime(struct todr_chip_handle *handle, struct timeval *tv)
 {
-	struct mcclock_softc *sc = (struct mcclock_softc *)dev;
+	struct clock_ymdhms dt;
+	struct mcclock_softc *sc = handle->cookie;
 	mc_todregs regs;
 	int s;
+
+	clock_secs_to_ymdhms(tv->tv_sec, &dt);
 
 	s = splclock();
 	MC146818_GETTOD(sc, &regs);
 	splx(s);
 
-	regs[MC_SEC] = ct->sec;
-	regs[MC_MIN] = ct->min;
-	regs[MC_HOUR] = ct->hour;
-	regs[MC_DOW] = ct->dow;
-	regs[MC_DOM] = ct->day;
-	regs[MC_MONTH] = ct->mon;
-	regs[MC_YEAR] = ct->year - 100;
+	regs[MC_SEC] = dt.dt_sec;
+	regs[MC_MIN] = dt.dt_min;
+	regs[MC_HOUR] = dt.dt_hour;
+	regs[MC_DOW] = dt.dt_wday + 1;
+	regs[MC_DOM] = dt.dt_day;
+	regs[MC_MONTH] = dt.dt_mon;
+	regs[MC_YEAR] = dt.dt_year % 100;
 
 	s = splclock();
 	MC146818_PUTTOD(sc, &regs);
 	splx(s);
+
+	return 0;
 }

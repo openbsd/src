@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.53 2020/04/23 16:13:11 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.54 2020/05/10 13:38:46 deraadt Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -163,8 +163,8 @@ log_ext_subtype(short type, u_int8_t subtype)
 }
 
 const char *
-log_shutcomm(const char *communication) {
-	static char buf[(SHUT_COMM_LEN - 1) * 4 + 1];
+log_reason(const char *communication) {
+	static char buf[(REASON_LEN - 1) * 4 + 1];
 
 	strnvis(buf, communication, sizeof(buf), VIS_NL | VIS_OCTAL);
 

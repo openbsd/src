@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.161 2019/12/20 13:34:41 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.163 2020/06/05 13:35:21 visa Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)

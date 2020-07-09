@@ -1,4 +1,4 @@
-.\" $OpenBSD: PEM_read_bio_PrivateKey.3,v 1.16 2019/11/02 15:25:34 schwarze Exp $
+.\" $OpenBSD: PEM_read_bio_PrivateKey.3,v 1.18 2020/06/15 14:13:14 schwarze Exp $
 .\" full merge up to:
 .\" OpenSSL man3/PEM_read_bio_PrivateKey.pod 18bad535 Apr 9 15:13:55 2019 +0100
 .\" OpenSSL man3/PEM_read_CMS.pod 83cf7abf May 29 13:07:08 2018 +0100
@@ -51,11 +51,10 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 2 2019 $
+.Dd $Mdocdate: June 15 2020 $
 .Dt PEM_READ_BIO_PRIVATEKEY 3
 .Os
 .Sh NAME
-.Nm pem_password_cb ,
 .Nm PEM_read_bio_PrivateKey ,
 .Nm PEM_read_PrivateKey ,
 .Nm PEM_write_bio_PrivateKey ,
@@ -149,13 +148,6 @@
 .Nd PEM routines
 .Sh SYNOPSIS
 .In openssl/pem.h
-.Ft typedef int
-.Fo pem_password_cb
-.Fa "char *buf"
-.Fa "int size"
-.Fa "int rwflag"
-.Fa "void *u"
-.Fc
 .Ft EVP_PKEY *
 .Fo PEM_read_bio_PrivateKey
 .Fa "BIO *bp"
@@ -754,7 +746,9 @@
 .Sh DESCRIPTION
 The PEM functions read or write structures in PEM format.
 In this sense PEM format is simply base64-encoded data surrounded by
-header lines.
+header lines; see
+.Xr PEM_read 3
+for more details.
 .Pp
 For more details about the meaning of arguments see the
 .Sx PEM function arguments
@@ -770,6 +764,9 @@ will be used to collectively refer to the
 and
 .Fn PEM_write_TYPE
 functions.
+If no set of specific functions exists for a given type,
+.Xr PEM_ASN1_read 3
+can be used instead.
 .Pp
 The
 .Sy PrivateKey
@@ -1047,10 +1044,14 @@ If this parameter is set to
 .Dv NULL ,
 then the private key is written in unencrypted form.
 .Pp
-The
+The optional arguments
+.Fa u
+and
 .Fa cb
-argument is the callback to use when querying for the passphrase used
-for encrypted PEM structures (normally only private keys).
+are a passphrase used for encrypting a PEM structure
+or a callback to obtain the passphrase; see
+.Xr pem_password_cb 3
+for details.
 .Pp
 For the PEM write routines, if the
 .Fa kstr
@@ -1063,62 +1064,6 @@ bytes at
 are used as the passphrase and
 .Fa cb
 is ignored.
-.Pp
-If the
-.Fa cb
-parameter is set to
-.Dv NULL
-and the
-.Fa u
-parameter is not
-.Dv NULL ,
-then the
-.Fa u
-parameter is interpreted as a null terminated string to use as the
-passphrase.
-If both
-.Fa cb
-and
-.Fa u
-are
-.Dv NULL ,
-then the default callback routine is used, which will typically
-prompt for the passphrase on the current terminal with echoing
-turned off.
-.Pp
-The default passphrase callback is sometimes inappropriate (for example
-in a GUI application) so an alternative can be supplied.
-The callback routine has the following form:
-.Bd -filled -offset inset
-.Ft int
-.Fo cb
-.Fa "char *buf"
-.Fa "int size"
-.Fa "int rwflag"
-.Fa "void *u"
-.Fc
-.Ed
-.Pp
-.Fa buf
-is the buffer to write the passphrase to.
-.Fa size
-is the maximum length of the passphrase, i.e. the size of
-.Fa buf .
-.Fa rwflag
-is a flag which is set to 0 when reading and 1 when writing.
-A typical routine will ask the user to verify the passphrase (for
-example by prompting for it twice) if
-.Fa rwflag
-is 1.
-The
-.Fa u
-parameter has the same value as the
-.Fa u
-parameter passed to the PEM routine.
-It allows arbitrary data to be passed to the callback by the application
-(for example a window handle in a GUI application).
-The callback must return the number of characters in the passphrase
-or -1 if an error occurred.
 .Ss PEM encryption format
 This old
 .Sy PrivateKey
@@ -1266,8 +1211,11 @@ pass_cb(char *buf, int size, int rwflag, void *u)
 .Sh SEE ALSO
 .Xr BIO_new 3 ,
 .Xr DSA_new 3 ,
+.Xr PEM_ASN1_read 3 ,
 .Xr PEM_bytes_read_bio 3 ,
 .Xr PEM_read 3 ,
+.Xr PEM_read_SSL_SESSION 3 ,
+.Xr PEM_write_bio_CMS_stream 3 ,
 .Xr PEM_write_bio_PKCS7_stream 3 ,
 .Xr RSA_new 3 ,
 .Xr X509_CRL_new 3 ,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.165 2020/04/24 08:50:23 mpi Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.166 2020/06/07 23:52:05 dlg Exp $	*/
 
 /******************************************************************************
 
@@ -147,7 +147,7 @@ void	ixgbe_enable_intr(struct ix_softc *);
 void	ixgbe_disable_intr(struct ix_softc *);
 void	ixgbe_update_stats_counters(struct ix_softc *);
 int	ixgbe_txeof(struct tx_ring *);
-int	ixgbe_rxeof(struct ix_queue *);
+int	ixgbe_rxeof(struct rx_ring *);
 void	ixgbe_rx_checksum(uint32_t, struct mbuf *, uint32_t);
 void	ixgbe_iff(struct ix_softc *);
 #ifdef IX_DEBUG
@@ -248,7 +248,6 @@ ixgbe_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Set up the timer callout */
 	timeout_set(&sc->timer, ixgbe_local_timer, sc);
-	timeout_set(&sc->rx_refill, ixgbe_rxrefill, sc);
 
 	/* Determine hardware revision */
 	ixgbe_identify_hardware(sc);
@@ -378,7 +377,6 @@ ixgbe_detach(struct device *self, int flags)
 	if_detach(ifp);
 
 	timeout_del(&sc->timer);
-	timeout_del(&sc->rx_refill);
 	ixgbe_free_pci_resources(sc);
 
 	ixgbe_free_transmit_structures(sc);
@@ -404,13 +402,11 @@ ixgbe_start(struct ifqueue *ifq)
 {
 	struct ifnet		*ifp = ifq->ifq_if;
 	struct ix_softc		*sc = ifp->if_softc;
-	struct tx_ring		*txr = sc->tx_rings;
+	struct tx_ring		*txr = ifq->ifq_softc;
 	struct mbuf  		*m_head;
 	unsigned int		 head, free, used;
 	int			 post = 0;
 
-	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(ifq))
-		return;
 	if (!sc->link_up)
 		return;
 
@@ -858,7 +854,8 @@ ixgbe_init(void *arg)
 
 	/* Now inform the stack we're ready */
 	ifp->if_flags |= IFF_RUNNING;
-	ifq_clr_oactive(&ifp->if_snd);
+	for (i = 0; i < sc->num_queues; i++)
+		ifq_clr_oactive(ifp->if_ifqs[i]);
 
 	splx(s);
 }
@@ -1030,17 +1027,13 @@ ixgbe_queue_intr(void *vque)
 	struct ix_queue *que = vque;
 	struct ix_softc	*sc = que->sc;
 	struct ifnet	*ifp = &sc->arpcom.ac_if;
-	struct tx_ring	*txr = sc->tx_rings;
+	struct rx_ring	*rxr = que->rxr;
+	struct tx_ring	*txr = que->txr;
 
 	if (ISSET(ifp->if_flags, IFF_RUNNING)) {
-		ixgbe_rxeof(que);
+		ixgbe_rxeof(rxr);
 		ixgbe_txeof(txr);
-		if (ixgbe_rxfill(que->rxr)) {
-			/* Advance the Rx Queue "Tail Pointer" */
-			IXGBE_WRITE_REG(&sc->hw, IXGBE_RDT(que->rxr->me),
-			    que->rxr->last_desc_filled);
-		} else
-			timeout_add(&sc->rx_refill, 1);
+		ixgbe_rxrefill(rxr);
 	}
 
 	ixgbe_enable_queue(sc, que->msix);
@@ -1059,6 +1052,7 @@ ixgbe_legacy_intr(void *arg)
 {
 	struct ix_softc	*sc = (struct ix_softc *)arg;
 	struct ifnet	*ifp = &sc->arpcom.ac_if;
+	struct rx_ring	*rxr = sc->rx_rings;
 	struct tx_ring	*txr = sc->tx_rings;
 	int rv;
 
@@ -1069,16 +1063,9 @@ ixgbe_legacy_intr(void *arg)
 	}
 
 	if (ISSET(ifp->if_flags, IFF_RUNNING)) {
-		struct ix_queue *que = sc->queues;
-
-		ixgbe_rxeof(que);
+		ixgbe_rxeof(rxr);
 		ixgbe_txeof(txr);
-		if (ixgbe_rxfill(que->rxr)) {
-			/* Advance the Rx Queue "Tail Pointer" */
-			IXGBE_WRITE_REG(&sc->hw, IXGBE_RDT(que->rxr->me),
-			    que->rxr->last_desc_filled);
-		} else
-			timeout_add(&sc->rx_refill, 1);
+		ixgbe_rxrefill(rxr);
 	}
 
 	ixgbe_enable_queues(sc);
@@ -1103,7 +1090,6 @@ ixgbe_intr(struct ix_softc *sc)
 		KERNEL_LOCK();
 		ixgbe_update_link_status(sc);
 		KERNEL_UNLOCK();
-		ifq_start(&ifp->if_snd);
 	}
 
 	if (hw->mac.type != ixgbe_mac_82598EB) {
@@ -1604,6 +1590,7 @@ ixgbe_stop(void *arg)
 {
 	struct ix_softc *sc = arg;
 	struct ifnet   *ifp = &sc->arpcom.ac_if;
+	int i;
 
 	/* Tell the stack that the interface is no longer active */
 	ifp->if_flags &= ~IFF_RUNNING;
@@ -1620,17 +1607,20 @@ ixgbe_stop(void *arg)
 	if (sc->hw.mac.ops.disable_tx_laser)
 		sc->hw.mac.ops.disable_tx_laser(&sc->hw);
 	timeout_del(&sc->timer);
-	timeout_del(&sc->rx_refill);
 
 	/* reprogram the RAR[0] in case user changed it. */
 	ixgbe_set_rar(&sc->hw, 0, sc->hw.mac.addr, 0, IXGBE_RAH_AV);
 
-	ifq_barrier(&ifp->if_snd);
 	intr_barrier(sc->tag);
+	for (i = 0; i < sc->num_queues; i++) {
+		struct ifqueue *ifq = ifp->if_ifqs[i];
+		ifq_barrier(ifq);
+		ifq_clr_oactive(ifq);
+
+		timeout_del(&sc->rx_rings[i].rx_refill);
+	}
 
 	KASSERT((ifp->if_flags & IFF_RUNNING) == 0);
-
-	ifq_clr_oactive(&ifp->if_snd);
 
 	/* Should we really clear all structures on stop? */
 	ixgbe_free_transmit_structures(sc);
@@ -1865,6 +1855,7 @@ void
 ixgbe_setup_interface(struct ix_softc *sc)
 {
 	struct ifnet   *ifp = &sc->arpcom.ac_if;
+	int i;
 
 	strlcpy(ifp->if_xname, sc->dev.dv_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
@@ -1897,6 +1888,21 @@ ixgbe_setup_interface(struct ix_softc *sc)
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
+
+	if_attach_queues(ifp, sc->num_queues);
+	if_attach_iqueues(ifp, sc->num_queues);
+	for (i = 0; i < sc->num_queues; i++) {
+		struct ifqueue *ifq = ifp->if_ifqs[i];
+		struct ifiqueue *ifiq = ifp->if_iqs[i];
+		struct tx_ring *txr = &sc->tx_rings[i];
+		struct rx_ring *rxr = &sc->rx_rings[i];
+
+		ifq->ifq_softc = txr;
+		txr->ifq = ifq;
+
+		ifiq->ifiq_softc = rxr;
+		rxr->ifiq = ifiq;
+	}
 
 	sc->max_frame_size = IXGBE_MAX_FRAME_SIZE;
 }
@@ -2133,6 +2139,7 @@ ixgbe_allocate_queues(struct ix_softc *sc)
 		/* Set up some basics */
 		rxr->sc = sc;
 		rxr->me = i;
+		timeout_set(&rxr->rx_refill, ixgbe_rxrefill, rxr);
 
 		if (ixgbe_dma_malloc(sc, rsize,
 			&rxr->rxdma, BUS_DMA_NOWAIT)) {
@@ -2564,6 +2571,7 @@ int
 ixgbe_txeof(struct tx_ring *txr)
 {
 	struct ix_softc			*sc = txr->sc;
+	struct ifqueue			*ifq = txr->ifq;
 	struct ifnet			*ifp = &sc->arpcom.ac_if;
 	unsigned int			 head, tail, last;
 	struct ixgbe_tx_buf		*tx_buffer;
@@ -2618,8 +2626,8 @@ ixgbe_txeof(struct tx_ring *txr)
 
 	txr->next_to_clean = tail;
 
-	if (ifq_is_oactive(&ifp->if_snd))
-		ifq_restart(&ifp->if_snd);
+	if (ifq_is_oactive(ifq))
+		ifq_restart(ifq);
 
 	return TRUE;
 }
@@ -2786,20 +2794,18 @@ ixgbe_rxfill(struct rx_ring *rxr)
 }
 
 void
-ixgbe_rxrefill(void *xsc)
+ixgbe_rxrefill(void *xrxr)
 {
-	struct ix_softc *sc = xsc;
-	struct ix_queue *que = sc->queues;
-	int s;
+	struct rx_ring *rxr = xrxr;
+	struct ix_softc *sc = rxr->sc;
 
-	s = splnet();
-	if (ixgbe_rxfill(que->rxr)) {
+	if (ixgbe_rxfill(rxr)) {
 		/* Advance the Rx Queue "Tail Pointer" */
-		IXGBE_WRITE_REG(&sc->hw, IXGBE_RDT(que->rxr->me),
-		    que->rxr->last_desc_filled);
-	} else
-		timeout_add(&sc->rx_refill, 1);
-	splx(s);
+		IXGBE_WRITE_REG(&sc->hw, IXGBE_RDT(rxr->me),
+		    rxr->last_desc_filled);
+	} else if (if_rxr_inuse(&rxr->rx_ring) == 0)
+		timeout_add(&rxr->rx_refill, 1);
+
 }
 
 /*********************************************************************
@@ -3037,10 +3043,9 @@ ixgbe_free_receive_buffers(struct rx_ring *rxr)
  *
  *********************************************************************/
 int
-ixgbe_rxeof(struct ix_queue *que)
+ixgbe_rxeof(struct rx_ring *rxr)
 {
-	struct ix_softc 	*sc = que->sc;
-	struct rx_ring		*rxr = que->rxr;
+	struct ix_softc 	*sc = rxr->sc;
 	struct ifnet   		*ifp = &sc->arpcom.ac_if;
 	struct mbuf_list	 ml = MBUF_LIST_INITIALIZER();
 	struct mbuf    		*mp, *sendmp;
@@ -3172,7 +3177,8 @@ next_desc:
 	}
 	rxr->next_to_check = i;
 
-	if_input(ifp, &ml);
+	if (ifiq_input(rxr->ifiq, &ml))
+		if_rxr_livelocked(&rxr->rx_ring);
 
 	if (!(staterr & IXGBE_RXD_STAT_DD))
 		return FALSE;

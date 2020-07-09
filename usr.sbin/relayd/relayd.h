@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.260 2019/09/15 19:23:29 rob Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.261 2020/05/14 17:27:39 pvk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -695,15 +695,16 @@ TAILQ_HEAD(relay_rules, relay_rule);
 #define TLSFLAG_TLSV1_0				0x02
 #define TLSFLAG_TLSV1_1				0x04
 #define TLSFLAG_TLSV1_2				0x08
-#define TLSFLAG_TLSV1				0x0e
+#define TLSFLAG_TLSV1_3				0x10
+#define TLSFLAG_TLSV1				0x1e
 #define TLSFLAG_VERSION				0x1f
 #define TLSFLAG_CIPHER_SERVER_PREF		0x20
 #define TLSFLAG_CLIENT_RENEG			0x40
 #define TLSFLAG_DEFAULT				\
-	(TLSFLAG_TLSV1_2|TLSFLAG_CIPHER_SERVER_PREF)
+	(TLSFLAG_TLSV1_2|TLSFLAG_TLSV1_3|TLSFLAG_CIPHER_SERVER_PREF)
 
 #define TLSFLAG_BITS						\
-	"\06\01sslv3\02tlsv1.0\03tlsv1.1\04tlsv1.2"	\
+	"\06\01sslv3\02tlsv1.0\03tlsv1.1\04tlsv1.2\05tlsv1.3"	\
 	"\06cipher-server-preference\07client-renegotiation"
 
 #define TLSCIPHERS_DEFAULT	"HIGH:!aNULL"

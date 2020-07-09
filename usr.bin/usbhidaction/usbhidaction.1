@@ -1,4 +1,4 @@
-.\" $OpenBSD: usbhidaction.1,v 1.14 2020/04/20 20:54:31 ratchov Exp $
+.\" $OpenBSD: usbhidaction.1,v 1.15 2020/06/24 19:19:03 jmc Exp $
 .\" $NetBSD: usbhidaction.1,v 1.6 2002/01/18 14:38:59 augustss Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 20 2020 $
+.Dd $Mdocdate: June 24 2020 $
 .Dt USBHIDACTION 1
 .Os
 .Sh NAME
@@ -105,20 +105,20 @@ master volume and muting of an
 .Xr azalia 4
 device using the multimedia keys on a Belkin USB keyboard.
 .Bd -literal -offset indent
-# The volume range is 0..255. Moving 8 volume steps each keypress
+# The volume range is 0..1. Moving 0.05 volume steps, each keypress
 # moves quickly through the volume range but still has decent
 # granularity.
 Consumer:Volume_Increment					   1
-	mixerctl -f $1 outputs.master=+8
+	sndioctl -f $1 output.level=+0.05
 Consumer:Volume_Decrement					   1
-	mixerctl -f $1 outputs.master=-8
+	sndioctl -f $1 output.level=-0.05
 Consumer:Mute							   1
-	mixerctl -f $1 outputs.master.mute=toggle
+	sndioctl -f $1 output.mute=!
 .Ed
 .Pp
 A sample invocation using this configuration would be
 .Bd -literal -offset indent
-$ usbhidaction -f /dev/uhid1 -c conf /dev/audioctl0
+$ usbhidaction -f /dev/uhid1 -c conf snd/0
 .Ed
 .Sh SEE ALSO
 .Xr usbhidctl 1 ,

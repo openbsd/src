@@ -1,4 +1,4 @@
-/*	$OpenBSD: sisfb.c,v 1.5 2017/01/15 20:22:33 fcambus Exp $	*/
+/*	$OpenBSD: sisfb.c,v 1.7 2020/05/25 09:55:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -84,7 +84,7 @@ struct cfdriver sisfb_cd = {
 };
 
 int	sisfb_alloc_screen(void *, const struct wsscreen_descr *, void **, int *,
-	    int *, long *);
+	    int *, uint32_t *);
 void	sisfb_free_screen(void *, void *);
 int	sisfb_ioctl(void *, u_long, caddr_t, int, struct proc *);
 int	sisfb_list_font(void *, struct wsdisplay_font *);
@@ -268,7 +268,7 @@ fail1:
 
 int
 sisfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
-    int *curxp, int *curyp, long *attrp)
+    int *curxp, int *curyp, uint32_t *attrp)
 {
 	struct sisfb_softc *sc = (struct sisfb_softc *)v;
 	struct rasops_info *ri = &sc->sc_fb->ri;
@@ -278,7 +278,7 @@ sisfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 
 	*cookiep = ri;
 	*curxp = *curyp = 0;
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, attrp);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, attrp);
 	sc->sc_nscr++;
 
 	return 0;
@@ -607,7 +607,7 @@ int
 sisfb_cnattach(bus_space_tag_t memt, bus_space_tag_t iot, pcitag_t tag,
     pcireg_t id)
 {
-	long defattr;
+	uint32_t defattr;
 	struct rasops_info *ri;
 	pcireg_t bar;
 	int rc;
@@ -652,7 +652,7 @@ sisfb_cnattach(bus_space_tag_t memt, bus_space_tag_t iot, pcitag_t tag,
 		return rc;
 
 	ri = &sisfbcn.ri;
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&sisfbcn.wsd, ri, 0, 0, defattr);
 
 	return 0;

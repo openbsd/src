@@ -302,16 +302,6 @@ static int fiji_start_smu(struct pp_hwmgr *hwmgr)
 			hwmgr->avfs_supported = false;
 	}
 
-	/* To initialize all clock gating before RLC loaded and running.*/
-	amdgpu_device_ip_set_clockgating_state(hwmgr->adev,
-			AMD_IP_BLOCK_TYPE_GFX, AMD_CG_STATE_GATE);
-	amdgpu_device_ip_set_clockgating_state(hwmgr->adev,
-			AMD_IP_BLOCK_TYPE_GMC, AMD_CG_STATE_GATE);
-	amdgpu_device_ip_set_clockgating_state(hwmgr->adev,
-			AMD_IP_BLOCK_TYPE_SDMA, AMD_CG_STATE_GATE);
-	amdgpu_device_ip_set_clockgating_state(hwmgr->adev,
-			AMD_IP_BLOCK_TYPE_COMMON, AMD_CG_STATE_GATE);
-
 	/* Setup SoftRegsStart here for register lookup in case
 	 * DummyBackEnd is used and ProcessFirmwareHeader is not executed
 	 */
@@ -950,7 +940,7 @@ static int fiji_populate_single_graphic_level(struct pp_hwmgr *hwmgr,
 {
 	int result;
 	/* PP_Clocks minClocks; */
-	uint32_t threshold, mvdd;
+	uint32_t mvdd;
 	struct smu7_hwmgr *data = (struct smu7_hwmgr *)(hwmgr->backend);
 	struct phm_ppt_v1_information *table_info =
 			(struct phm_ppt_v1_information *)(hwmgr->pptable);
@@ -982,8 +972,6 @@ static int fiji_populate_single_graphic_level(struct pp_hwmgr *hwmgr,
 	level->DownHyst = data->current_profile_setting.sclk_down_hyst;
 	level->VoltageDownHyst = 0;
 	level->PowerThrottle = 0;
-
-	threshold = clock * data->fast_watermark_threshold / 100;
 
 	data->display_timing.min_clock_in_sr = hwmgr->display_config->min_core_set_clock_in_sr;
 
@@ -1210,7 +1198,8 @@ static int fiji_populate_single_memory_level(struct pp_hwmgr *hwmgr,
 	 * PECI_GetNumberOfActiveDisplays(hwmgr->pPECI,
 	 * &(data->DisplayTiming.numExistingDisplays));
 	 */
-	data->display_timing.num_existing_displays = 1;
+	data->display_timing.num_existing_displays = hwmgr->display_config->num_display;
+	data->display_timing.vrefresh = hwmgr->display_config->vrefresh;
 
 	if (mclk_stutter_mode_threshold &&
 		(clock <= mclk_stutter_mode_threshold) &&
@@ -1510,7 +1499,7 @@ static int fiji_populate_memory_timing_parameters(struct pp_hwmgr *hwmgr,
 	uint32_t dram_timing;
 	uint32_t dram_timing2;
 	uint32_t burstTime;
-	ULONG state, trrds, trrdl;
+	ULONG trrds, trrdl;
 	int result;
 
 	result = atomctrl_set_engine_dram_timings_rv770(hwmgr,
@@ -1522,7 +1511,6 @@ static int fiji_populate_memory_timing_parameters(struct pp_hwmgr *hwmgr,
 	dram_timing2 = cgs_read_register(hwmgr->device, mmMC_ARB_DRAM_TIMING2);
 	burstTime = cgs_read_register(hwmgr->device, mmMC_ARB_BURST_TIME);
 
-	state = PHM_GET_FIELD(burstTime, MC_ARB_BURST_TIME, STATE0);
 	trrds = PHM_GET_FIELD(burstTime, MC_ARB_BURST_TIME, TRRDS0);
 	trrdl = PHM_GET_FIELD(burstTime, MC_ARB_BURST_TIME, TRRDL0);
 
@@ -2313,6 +2301,8 @@ static uint32_t fiji_get_offsetof(uint32_t type, uint32_t member)
 			return offsetof(SMU73_SoftRegisters, VoltageChangeTimeout);
 		case AverageGraphicsActivity:
 			return offsetof(SMU73_SoftRegisters, AverageGraphicsActivity);
+		case AverageMemoryActivity:
+			return offsetof(SMU73_SoftRegisters, AverageMemoryActivity);
 		case PreVBlankGap:
 			return offsetof(SMU73_SoftRegisters, PreVBlankGap);
 		case VBlankTimeout:
@@ -2650,6 +2640,7 @@ static int fiji_update_dpm_settings(struct pp_hwmgr *hwmgr,
 }
 
 const struct pp_smumgr_func fiji_smu_funcs = {
+	.name = "fiji_smu",
 	.smu_init = &fiji_smu_init,
 	.smu_fini = &smu7_smu_fini,
 	.start_smu = &fiji_start_smu,

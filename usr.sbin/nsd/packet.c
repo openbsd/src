@@ -348,12 +348,19 @@ int packet_find_notify_serial(buffer_type *packet, uint32_t* serial)
 {
 	size_t saved_position = buffer_position(packet);
 	/* count of further RRs after question section */
-	size_t rrcount = ANCOUNT(packet) + NSCOUNT(packet) + ARCOUNT(packet);
+	size_t rrcount = (size_t)ANCOUNT(packet) + (size_t)NSCOUNT(packet) + (size_t)ARCOUNT(packet);
+	size_t qcount = (size_t)QDCOUNT(packet);
 	size_t i;
 	buffer_set_position(packet, QHEADERSZ);
+	if(qcount > 64 || rrcount > 65530) {
+		/* query count 0 or 1 only, rr number limited by 64k packet,
+		 * and should not be impossibly high, parse error */
+		buffer_set_position(packet, saved_position);
+		return 0;
+	}
 
 	/* skip all question RRs */
-	for (i = 0; i < QDCOUNT(packet); ++i) {
+	for (i = 0; i < qcount; ++i) {
 		if (!packet_skip_rr(packet, 1)) {
 			buffer_set_position(packet, saved_position);
 			return 0;

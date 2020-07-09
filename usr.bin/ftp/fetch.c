@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.194 2020/02/22 01:00:07 jca Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.197 2020/07/04 11:23:35 kn Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -72,7 +72,6 @@ static int	file_get(const char *, const char *);
 static int	url_get(const char *, const char *, const char *, int);
 static int	save_chunked(FILE *, struct tls *, int , char *, size_t);
 static void	aborthttp(int);
-static void	abortfile(int);
 static char	hextochar(const char *);
 static char	*urldecode(const char *);
 static char	*recode_credentials(const char *_userinfo);
@@ -190,7 +189,7 @@ static int
 file_get(const char *path, const char *outfile)
 {
 	struct stat	 st;
-	int		 fd, out, rval = -1, save_errno;
+	int		 fd, out = -1, rval = -1, save_errno;
 	volatile sig_t	 oldintr, oldinti;
 	const char	*savefile;
 	char		*buf = NULL, *cp;
@@ -248,7 +247,7 @@ file_get(const char *path, const char *outfile)
 			(void)signal(SIGINFO, oldinti);
 		goto cleanup_copy;
 	}
-	oldintr = signal(SIGINT, abortfile);
+	oldintr = signal(SIGINT, aborthttp);
 
 	bytes = 0;
 	hashbytes = mark;
@@ -261,6 +260,7 @@ file_get(const char *path, const char *outfile)
 		for (cp = buf; len > 0; len -= wlen, cp += wlen) {
 			if ((wlen = write(out, cp, len)) == -1) {
 				warn("Writing %s", savefile);
+				signal(SIGINT, oldintr);
 				signal(SIGINFO, oldinti);
 				goto cleanup_copy;
 			}
@@ -274,6 +274,7 @@ file_get(const char *path, const char *outfile)
 		}
 	}
 	save_errno = errno;
+	signal(SIGINT, oldintr);
 	signal(SIGINFO, oldinti);
 	if (hash && !progress && bytes > 0) {
 		if (bytes < mark)
@@ -288,7 +289,6 @@ file_get(const char *path, const char *outfile)
 	progressmeter(1, NULL);
 	if (verbose)
 		ptransfer(0);
-	(void)signal(SIGINT, oldintr);
 
 	rval = 0;
 
@@ -1032,6 +1032,7 @@ noslash:
 	oldinti = signal(SIGINFO, psummary);
 	if (chunked) {
 		error = save_chunked(fin, tls, out, buf, buflen);
+		signal(SIGINT, oldintr);
 		signal(SIGINFO, oldinti);
 		if (error == -1)
 			goto cleanup_url_get;
@@ -1041,6 +1042,7 @@ noslash:
 			for (cp = buf; len > 0; len -= wlen, cp += wlen) {
 				if ((wlen = write(out, cp, len)) == -1) {
 					warn("Writing %s", savefile);
+					signal(SIGINT, oldintr);
 					signal(SIGINFO, oldinti);
 					goto cleanup_url_get;
 				}
@@ -1054,6 +1056,7 @@ noslash:
 			}
 		}
 		save_errno = errno;
+		signal(SIGINT, oldintr);
 		signal(SIGINFO, oldinti);
 		if (hash && !progress && bytes > 0) {
 			if (bytes < mark)
@@ -1080,7 +1083,6 @@ noslash:
 
 	if (verbose)
 		ptransfer(0);
-	(void)signal(SIGINT, oldintr);
 
 	rval = 0;
 	goto cleanup_url_get;
@@ -1184,24 +1186,10 @@ save_chunked(FILE *fin, struct tls *tls, int out, char *buf, size_t buflen)
 static void
 aborthttp(int signo)
 {
+	const char errmsg[] = "\nfetch aborted.\n";
 
 	alarmtimer(0);
-	fputs("\nhttp fetch aborted.\n", ttyout);
-	(void)fflush(ttyout);
-	longjmp(httpabort, 1);
-}
-
-/*
- * Abort a http retrieval
- */
-/* ARGSUSED */
-static void
-abortfile(int signo)
-{
-
-	alarmtimer(0);
-	fputs("\nfile fetch aborted.\n", ttyout);
-	(void)fflush(ttyout);
+	write(fileno(ttyout), errmsg, sizeof(errmsg) - 1);
 	longjmp(httpabort, 1);
 }
 

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: xfer,v 1.34 2019/08/01 19:42:52 jmc Exp $
+dnl	$OpenBSD: xfer,v 1.35 2020/05/17 17:04:28 deraadt Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM (NOT supported if booting from floppy)
@@ -29,7 +29,7 @@ OpenBSDXferFloppyFromUNIX
 Creating a bootable hard disk using SunOS, Solaris or other Unix-like system:
 
 	If you don't have a floppy drive you can copy the miniroot
-	"miniroot{:--:}OSrev.fs" onto the hard disk you intend to boot on.
+	"miniroot{:--:}OSrev.img" onto the hard disk you intend to boot on.
 	Traditionally, the way to do this is to use dd(1) to place the
 	bootable filesystem image in the "swap" partition of the disk
 	(while running in single user mode), and then booting from that
@@ -45,9 +45,9 @@ Creating a bootable hard disk using SunOS, Solaris or other Unix-like system:
 
 	Use the dd(1) utility to copy the file to the hard drive.
 	The command would likely be, under SunOS:
- 		dd if=miniroot{:--:}OSrev.fs of=/dev/rsd0b bs=64b
+ 		dd if=miniroot{:--:}OSrev.img of=/dev/rsd0b bs=64b
 	and under Solaris:
- 		dd if=miniroot{:--:}OSrev.fs of=/dev/rdsk/c0t0d0s1 bs=64b
+ 		dd if=miniroot{:--:}OSrev.img of=/dev/rdsk/c0t0d0s1 bs=64b
 
 	The blocksize is arbitrary as long as it's a multiple of 512-bytes
 	and within the maximum supported by the driver, i.e. bs=126b may

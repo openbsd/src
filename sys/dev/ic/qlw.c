@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.34 2020/02/05 16:29:30 krw Exp $ */
+/*	$OpenBSD: qlw.c,v 1.39 2020/07/05 21:54:44 krw Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -62,7 +62,6 @@ struct cfdriver qlw_cd = {
 };
 
 void		qlw_scsi_cmd(struct scsi_xfer *);
-int		qlw_scsi_probe(struct scsi_link *);
 
 u_int16_t	qlw_read(struct qlw_softc *, bus_size_t);
 void		qlw_write(struct qlw_softc *, bus_size_t, u_int16_t);
@@ -130,7 +129,7 @@ void		qlw_dump_iocb_segs(struct qlw_softc *, void *, int);
 static inline int
 qlw_xs_bus(struct qlw_softc *sc, struct scsi_xfer *xs)
 {
-	return ((xs->sc_link->scsibus == sc->sc_link[0].scsibus) ? 0 : 1);
+	return ((xs->sc_link->bus == sc->sc_scsibus[0]) ? 0 : 1);
 }
 
 static inline u_int16_t
@@ -164,7 +163,7 @@ qlw_queue_write(struct qlw_softc *sc, bus_size_t offset, u_int16_t value)
 }
 
 struct scsi_adapter qlw_switch = {
-	qlw_scsi_cmd, NULL, qlw_scsi_probe, NULL, NULL
+	qlw_scsi_cmd, NULL, NULL, NULL, NULL
 };
 
 int
@@ -268,7 +267,7 @@ qlw_attach(struct qlw_softc *sc)
 			sc->sc_max_queue_depth[bus] = sc->sc_maxrequests;
 	}
 
-	/* 
+	/*
 	 * On some 1020/1040 variants the response queue is limited to
 	 * 256 entries.  We don't really need all that many anyway.
 	 */
@@ -302,7 +301,7 @@ qlw_attach(struct qlw_softc *sc)
 		printf("couldn't set clock rate: %x\n", sc->sc_mbox[0]);
 		return (ENXIO);
 	}
-	
+
 	sc->sc_mbox[0] = QLW_MBOX_SET_RETRY_COUNT;
 	sc->sc_mbox[1] = sc->sc_retry_count[0];
 	sc->sc_mbox[2] = sc->sc_retry_delay[0];
@@ -312,7 +311,7 @@ qlw_attach(struct qlw_softc *sc)
 		printf("couldn't set retry count: %x\n", sc->sc_mbox[0]);
 		return (ENXIO);
 	}
-	
+
 	sc->sc_mbox[0] = QLW_MBOX_SET_ASYNC_DATA_SETUP;
 	sc->sc_mbox[1] = sc->sc_async_data_setup[0];
 	sc->sc_mbox[2] = sc->sc_async_data_setup[1];
@@ -400,10 +399,10 @@ qlw_attach(struct qlw_softc *sc)
 		sc->sc_link[bus].adapter_softc = sc;
 		sc->sc_link[bus].adapter_target = sc->sc_initiator[bus];
 		sc->sc_link[bus].adapter_buswidth = QLW_MAX_TARGETS;
+		sc->sc_link[bus].luns = QLW_MAX_LUNS;
 		sc->sc_link[bus].openings = sc->sc_max_queue_depth[bus];
 		sc->sc_link[bus].pool = &sc->sc_iopool;
 
-		memset(&saa, 0, sizeof(saa));
 		saa.saa_sc_link = &sc->sc_link[bus];
 
 		/* config_found() returns the scsibus attached to us */
@@ -785,15 +784,6 @@ qlw_intr(void *xsc)
 
 	qlw_handle_intr(sc, isr, info);
 	return (1);
-}
-
-int
-qlw_scsi_probe(struct scsi_link *link)
-{
-	if (link->lun >= QLW_MAX_LUNS)
-		return (EINVAL);
-
-	return (0);
 }
 
 void

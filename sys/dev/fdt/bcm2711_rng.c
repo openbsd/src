@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2711_rng.c,v 1.1 2020/04/19 16:00:00 kettenis Exp $	*/
+/*	$OpenBSD: bcm2711_rng.c,v 1.2 2020/05/29 04:42:25 deraadt Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -23,7 +23,6 @@
 #include <machine/bus.h>
 #include <machine/fdt.h>
 
-#include <dev/rndvar.h>
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
 

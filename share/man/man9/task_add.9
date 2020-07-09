@@ -1,4 +1,4 @@
-.\"	$OpenBSD: task_add.9,v 1.21 2019/04/28 04:20:40 dlg Exp $
+.\"	$OpenBSD: task_add.9,v 1.22 2020/06/08 00:29:51 dlg Exp $
 .\"
 .\" Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 28 2019 $
+.Dd $Mdocdate: June 8 2020 $
 .Dt TASK_ADD 9
 .Os
 .Sh NAME
@@ -100,9 +100,6 @@ guarantees that any task that was running on the
 .Fa tq
 taskq when the barrier was called has finished by the time the barrier
 returns.
-.Fn taskq_barrier
-is only supported on taskqs serviced by 1 thread,
-and may not be called by a task running in the specified taskq.
 .Pp
 .Fn taskq_del_barrier
 either removes

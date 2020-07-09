@@ -1,0 +1,52 @@
+#	$OpenBSD: GENERIC,v 1.13 2020/07/07 22:43:29 kettenis Exp $
+#
+# For further information on compiling OpenBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
+
+machine		powerpc64
+include		"../../../conf/GENERIC"
+maxusers	80
+
+option		PCIVERBOSE
+option		USER_PCICONF
+option		USBVERBOSE
+
+config		bsd	swap generic
+
+mainbus0	at root
+cpu0		at mainbus?
+opal0		at fdt?
+opalcons*	at fdt?
+opalsens*	at fdt?
+phb*		at fdt?
+pci*		at phb?
+xive*		at fdt?
+
+ppb*		at pci?
+pci*		at ppb?
+ahci*		at pci?
+bge*		at pci?
+nvme*		at pci?
+xhci*		at pci?
+usb*		at xhci?
+
+scsibus*	at scsi?
+sd*		at scsibus?
+
+# USB devices
+uhub*		at usb?			# USB Hubs
+uhub*		at uhub?		# USB Hubs
+uaudio*		at uhub?		# USB Audio
+audio*		at uaudio?
+umass*		at uhub?		# USB Mass Storage devices
+
+brgphy*		at mii?			# Broadcom Gigabit PHYs
+
+# Pseudo-Devices
+pseudo-device	openprom

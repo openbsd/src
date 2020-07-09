@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.9 2018/04/20 14:08:12 visa Exp $	*/
+/*	$OpenBSD: dev.c,v 1.10 2020/05/27 14:45:56 visa Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -73,7 +73,8 @@ pmon_iostrategy(void *f, int rw, daddr32_t dblk, size_t size, void *buf,
 	off_t offs, pos;
 	int rc;
 
-	*rsize = 0;
+	if (rsize != NULL)
+		*rsize = 0;
 	if (size == 0)
 		return 0;
 
@@ -91,9 +92,9 @@ pmon_iostrategy(void *f, int rw, daddr32_t dblk, size_t size, void *buf,
 	rc = pmon_read(pi->fd, buf, size);
 	if (rc >= 0) {
 		pi->curpos += rc;
-		*rsize = rc;
-	} else
-		*rsize = 0;
+		if (rsize != NULL)
+			*rsize = rc;
+	}
 
 	if (rc != size)
 		return EIO;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.164 2020/04/11 07:49:48 otto Exp $ */
+/*	$OpenBSD: ntp.c,v 1.165 2020/06/22 06:11:34 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -365,7 +365,7 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 		if (nfds > 0 && pfd[PFD_PIPE_MAIN].revents & (POLLIN|POLLERR)) {
 			nfds--;
 			if (ntp_dispatch_imsg() == -1) {
-				log_warn("pipe write error (from main)");
+				log_debug("pipe read error (from main)");
 				ntp_quit = 1;
 			}
 		}
@@ -380,7 +380,7 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 		if (nfds > 0 && pfd[PFD_PIPE_DNS].revents & (POLLIN|POLLERR)) {
 			nfds--;
 			if (ntp_dispatch_imsg_dns() == -1) {
-				log_warn("pipe write error (from dns engine)");
+				log_warn("pipe read error (from dns engine)");
 				ntp_quit = 1;
 			}
 		}

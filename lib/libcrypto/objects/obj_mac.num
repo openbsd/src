@@ -940,8 +940,8 @@ gost89_cbc		939
 tc26		940
 id_tc26_gost3411_2012_256		941
 id_tc26_gost3411_2012_512		942
-id_tc26_gost_3410_2012_512_paramSetA		943
-id_tc26_gost_3410_2012_512_paramSetB		944
+id_tc26_gost_3410_12_512_paramSetA		943
+id_tc26_gost_3410_12_512_paramSetB		944
 id_tc26_gost_28147_param_Z		945
 id_tc26_gost3410_2012_256		946
 id_tc26_gost3410_2012_512		947
@@ -990,3 +990,11 @@ dhSinglePass_cofactorDH_sha512kdf_scheme	989
 dh_std_kdf	990
 dh_cofactor_kdf	991
 pSpecified	992
+id_tc26_gost_3410_12_256_paramSetA		993
+id_tc26_gost_3410_12_256_paramSetB		994
+id_tc26_gost_3410_12_256_paramSetC		995
+id_tc26_gost_3410_12_256_paramSetD		996
+id_tc26_gost_3410_12_512_paramSetTest		997
+id_tc26_gost_3410_12_512_paramSetC		998
+id_tc26_hmac_gost_3411_12_256	999
+id_tc26_hmac_gost_3411_12_512	1000

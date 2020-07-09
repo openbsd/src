@@ -1,4 +1,4 @@
-/*	$OpenBSD: msivar.h,v 1.1 2011/07/06 05:35:53 kettenis Exp $	*/
+/*	$OpenBSD: msivar.h,v 1.2 2020/06/23 01:21:29 jmatthew Exp $	*/
 /*
  * Copyright (c) 2011 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -15,12 +15,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-struct msi_eq *msi_eq_alloc(bus_dma_tag_t, int);
+struct msi_eq *msi_eq_alloc(bus_dma_tag_t, int, int);
+size_t msi_eq_offset(struct msi_eq *, int);
 void msi_eq_free(bus_dma_tag_t t, struct msi_eq *);
 
 struct msi_eq {
 	bus_dmamap_t	meq_map;
 	bus_dma_segment_t meq_seg;
 	caddr_t		meq_va;
+	size_t		meq_queuesize;
 	int		meq_nentries;
+	int		meq_nqueues;
 };

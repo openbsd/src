@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_cardbus.c,v 1.28 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: if_re_cardbus.c,v 1.29 2020/06/17 10:48:44 claudio Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -51,7 +51,6 @@ struct re_cardbus_softc {
 	struct rl_softc sc_rl;
 
 	/* Cardbus-specific data */
-	void *sc_ih;
 	cardbus_devfunc_t ct;
 	pcitag_t sc_tag;
 	pci_chipset_tag_t sc_pc;
@@ -140,9 +139,9 @@ re_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	re_cardbus_setup(sc);
 
 	/* Allocate interrupt */
-	csc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline,
+	sc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline,
 	    IPL_NET, re_intr, sc, sc->sc_dev.dv_xname);
-	if (csc->sc_ih == NULL) {
+	if (sc->sc_ih == NULL) {
 		printf(": couldn't establish interrupt at %d",
 		    ca->ca_intrline);
 		Cardbus_function_disable(csc->ct);
@@ -154,7 +153,7 @@ re_cardbus_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Call bus-independent (common) attach routine */
 	if (re_attach(sc, intrstr)) {
-		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, csc->sc_ih);
+		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, sc->sc_ih);
 		Cardbus_mapreg_unmap(ct, csc->sc_bar_reg, sc->rl_btag,
 		    sc->rl_bhandle, csc->sc_mapsize);
 	}
@@ -248,8 +247,8 @@ re_cardbus_detach(struct device *self, int flags)
 	if_detach(ifp);
 
 	/* Disable interrupts */
-	if (csc->sc_ih != NULL)
-		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, csc->sc_ih);
+	if (sc->sc_ih != NULL)
+		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, sc->sc_ih);
 
 	/* Free cardbus resources */
 	Cardbus_mapreg_unmap(ct, csc->sc_bar_reg, sc->rl_btag, sc->rl_bhandle,

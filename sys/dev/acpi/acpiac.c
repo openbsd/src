@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiac.c,v 1.31 2018/07/01 19:40:49 mlarkin Exp $ */
+/* $OpenBSD: acpiac.c,v 1.33 2020/06/10 22:26:40 jca Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -33,13 +33,18 @@
 
 int  acpiac_match(struct device *, void *, void *);
 void acpiac_attach(struct device *, struct device *, void *);
+int  acpiac_activate(struct device *, int);
 int  acpiac_notify(struct aml_node *, int, void *);
 
 void acpiac_refresh(void *);
-int acpiac_getsta(struct acpiac_softc *);
+int acpiac_getpsr(struct acpiac_softc *);
 
 struct cfattach acpiac_ca = {
-	sizeof(struct acpiac_softc), acpiac_match, acpiac_attach
+	sizeof(struct acpiac_softc),
+	acpiac_match,
+	acpiac_attach,
+	NULL,
+	acpiac_activate,
 };
 
 struct cfdriver acpiac_cd = {
@@ -70,7 +75,7 @@ acpiac_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node;
 
-	acpiac_getsta(sc);
+	acpiac_getpsr(sc);
 	printf(": AC unit ");
 	if (sc->sc_ac_stat == PSR_ONLINE)
 		printf("online\n");
@@ -92,32 +97,42 @@ acpiac_attach(struct device *parent, struct device *self, void *aux)
 	    acpiac_notify, sc, ACPIDEV_NOPOLL);
 }
 
+int
+acpiac_activate(struct device *self, int act)
+{
+	struct acpiac_softc *sc = (struct acpiac_softc *)self;
+
+	switch (act) {
+	case DVACT_WAKEUP:
+		acpiac_refresh(sc);
+		dnprintf(10, "A/C status: %d\n", sc->sc_ac_stat);
+		break;
+	}
+
+	return (0);
+}
+
 void
 acpiac_refresh(void *arg)
 {
 	struct acpiac_softc *sc = arg;
 
-	acpiac_getsta(sc);
+	acpiac_getpsr(sc);
 	sc->sc_sens[0].value = sc->sc_ac_stat;
-	acpi_record_event(sc->sc_acpi, APM_POWER_CHANGE);
 }
 
 int
-acpiac_getsta(struct acpiac_softc *sc)
+acpiac_getpsr(struct acpiac_softc *sc)
 {
-	int64_t sta;
+	int64_t psr;
 
-	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_STA", 0, NULL, NULL)) {
-		dnprintf(10, "%s: no _STA\n",
-		    DEVNAME(sc));
-	}
-
-	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "_PSR", 0, NULL, &sta)) {
+	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "_PSR", 0, NULL, &psr)) {
 		dnprintf(10, "%s: no _PSR\n",
 		    DEVNAME(sc));
 		return (1);
 	}
-	sc->sc_ac_stat = sta;
+	sc->sc_ac_stat = psr;
+
 	return (0);
 }
 
@@ -140,6 +155,7 @@ acpiac_notify(struct aml_node *node, int notify_type, void *arg)
 		/* FALLTHROUGH */
 	case 0x80:
 		acpiac_refresh(sc);
+		acpi_record_event(sc->sc_acpi, APM_POWER_CHANGE);
 		dnprintf(10, "A/C status: %d\n", sc->sc_ac_stat);
 		break;
 	}

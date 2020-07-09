@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.60 2014/07/28 15:00:27 jsg Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.62 2020/05/25 09:55:48 jsg Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ struct vgafb_softc {
 int	vgafb_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	vgafb_mmap(void *, off_t, int);
 int	vgafb_alloc_screen(void *, const struct wsscreen_descr *, void **,
-	    int *, int *, long *);
+	    int *, int *, uint32_t *);
 void	vgafb_free_screen(void *, void *);
 int	vgafb_show_screen(void *, void *, int, void (*cb)(void *, int, int),
 	    void *);
@@ -179,7 +179,7 @@ int
 vgafb_console_init(struct vgafb_softc *sc)
 {
 	struct rasops_info *ri = &sc->sc_ri;
-	long defattr;
+	uint32_t defattr;
 
 	ri->ri_flg = RI_CENTER | RI_VCONS | RI_WRONLY;
 	ri->ri_hw = sc;
@@ -196,7 +196,7 @@ vgafb_console_init(struct vgafb_softc *sc)
 	sc->sc_wsd.fontwidth = ri->ri_font->fontwidth;
 	sc->sc_wsd.fontheight = ri->ri_font->fontheight;
 
-	ri->ri_ops.alloc_attr(ri->ri_active, 0, 0, 0, &defattr);
+	ri->ri_ops.pack_attr(ri->ri_active, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&sc->sc_wsd, ri->ri_active, ri->ri_ccol, ri->ri_crow,
 	    defattr);
 
@@ -452,7 +452,7 @@ vgafb_burn(void *v, u_int on, u_int flags)
 
 int
 vgafb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
-    int *curxp, int *curyp, long *attrp)
+    int *curxp, int *curyp, uint32_t *attrp)
 {
 	struct vgafb_softc *sc = v;
 	struct rasops_info *ri = &sc->sc_ri;

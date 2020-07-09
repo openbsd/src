@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshbuf.h,v 1.21 2020/04/26 09:38:14 dtucker Exp $	*/
+/*	$OpenBSD: sshbuf.h,v 1.23 2020/06/22 05:54:10 djm Exp $	*/
 /*
  * Copyright (c) 2011 Damien Miller
  *
@@ -243,7 +243,7 @@ int	sshbuf_put_ec(struct sshbuf *buf, const EC_POINT *v, const EC_GROUP *g);
 int	sshbuf_put_eckey(struct sshbuf *buf, const EC_KEY *v);
 
 /* Dump the contents of the buffer in a human-readable format */
-void	sshbuf_dump(struct sshbuf *buf, FILE *f);
+void	sshbuf_dump(const struct sshbuf *buf, FILE *f);
 
 /* Dump specified memory in a human-readable format */
 void	sshbuf_dump_data(const void *s, size_t len, FILE *f);
@@ -254,6 +254,8 @@ char	*sshbuf_dtob16(struct sshbuf *buf);
 /* Encode the contents of the buffer as base64 */
 char	*sshbuf_dtob64_string(const struct sshbuf *buf, int wrap);
 int	sshbuf_dtob64(const struct sshbuf *d, struct sshbuf *b64, int wrap);
+/* RFC4648 "base64url" encoding variant */
+int	sshbuf_dtourlb64(const struct sshbuf *d, struct sshbuf *b64, int wrap);
 
 /* Decode base64 data and append it to the buffer */
 int	sshbuf_b64tod(struct sshbuf *buf, const char *b64);

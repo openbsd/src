@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.35 2020/04/07 13:27:52 visa Exp $	*/
+/*	$OpenBSD: event.h,v 1.44 2020/06/22 13:14:32 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -39,6 +39,7 @@
 #define EVFILT_SIGNAL		(-6)	/* attached to struct process */
 #define EVFILT_TIMER		(-7)	/* timers */
 #define EVFILT_DEVICE		(-8)	/* devices */
+#define EVFILT_EXCEPT		(-9)	/* exceptional conditions */
 
 #define EVFILT_SYSCOUNT		8
 
@@ -87,6 +88,12 @@ struct kevent {
 #define NOTE_EOF	0x0002			/* return on EOF */
 
 /*
+ * data/hint flags for EVFILT_EXCEPT, shared with userspace and with
+ * EVFILT_{READ|WRITE}
+ */
+#define NOTE_OOB	0x0004			/* OOB data on a socket */
+
+/*
  * data/hint flags for EVFILT_VNODE, shared with userspace
  */
 #define	NOTE_DELETE	0x0001			/* vnode was removed */
@@ -129,6 +136,10 @@ struct klist {
 
 #ifdef _KERNEL
 
+/* kernel-only flags */
+#define __EV_POLL	0x1000		/* match behavior of poll & select */
+#define __EV_HUP	EV_FLAG1	/* device or socket disconnected */
+
 #define EVFILT_MARKER	0xf			/* placemarker for tailq */
 
 /*
@@ -136,10 +147,10 @@ struct klist {
  */
 #define NOTE_SUBMIT	0x01000000		/* initial knote submission */
 
-#define KNOTE(list_, hint)	do { \
-					struct klist *list = (list_); \
-					if ((list) != NULL) \
-						knote((list), (hint)); \
+#define KNOTE(list, hint)	do { \
+					struct klist *__list = (list); \
+					if (__list != NULL) \
+						knote(__list, hint); \
 				} while (0)
 
 #define	KN_HASHSIZE		64		/* XXX should be tunable */
@@ -192,6 +203,7 @@ struct knote {
 struct proc;
 
 extern const struct filterops sig_filtops;
+extern const struct filterops dead_filtops;
 
 extern void	knote(struct klist *list, long hint);
 extern void	knote_activate(struct knote *);

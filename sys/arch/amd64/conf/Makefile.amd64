@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.117 2019/11/07 20:42:28 guenther Exp $
+#	$OpenBSD: Makefile.amd64,v 1.118 2020/06/08 04:47:57 jsg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -36,7 +36,11 @@ INCLUDES=	-nostdinc -I$S -I${.OBJDIR} -I$S/arch \
 		-I$S/dev/pci/drm/amd/powerplay/hwmgr \
 		-I$S/dev/pci/drm/amd/display/dc/inc \
 		-I$S/dev/pci/drm/amd/display/dc/inc/hw \
-		-I$S/dev/pci/drm/amd/display/modules/inc
+		-I$S/dev/pci/drm/amd/display/dc/clk_mgr \
+		-I$S/dev/pci/drm/amd/display/modules/inc \
+		-I$S/dev/pci/drm/amd/display/modules/hdcp \
+		-I$S/dev/pci/drm/amd/display/dmub/inc \
+		-I$S/dev/pci/drm/i915
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -MD -MP
 CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
 		-Wno-uninitialized -Wno-pointer-sign \
@@ -184,9 +188,35 @@ dcn_calc_auto.o: $S/dev/pci/drm/amd/display/dc/calcs/dcn_calc_auto.c
 	${NORMAL_C} ${HARDFLOAT_CFLAGS}
 dcn_calc_math.o: $S/dev/pci/drm/amd/display/dc/calcs/dcn_calc_math.c
 	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+display_mode_vba.o: $S/dev/pci/drm/amd/display/dc/dml/display_mode_vba.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+display_mode_vba_20.o: $S/dev/pci/drm/amd/display/dc/dml/dcn20/display_mode_vba_20.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+display_rq_dlg_calc_20.o: $S/dev/pci/drm/amd/display/dc/dml/dcn20/display_rq_dlg_calc_20.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+display_mode_vba_20v2.o: $S/dev/pci/drm/amd/display/dc/dml/dcn20/display_mode_vba_20v2.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+display_rq_dlg_calc_20v2.o: $S/dev/pci/drm/amd/display/dc/dml/dcn20/display_rq_dlg_calc_20v2.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+display_mode_vba_21.o: $S/dev/pci/drm/amd/display/dc/dml/dcn21/display_mode_vba_21.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+display_rq_dlg_calc_21.o: $S/dev/pci/drm/amd/display/dc/dml/dcn21/display_rq_dlg_calc_21.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
 dml1_display_rq_dlg_calc.o: $S/dev/pci/drm/amd/display/dc/dml/dml1_display_rq_dlg_calc.c
 	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+display_rq_dlg_helpers.o: $S/dev/pci/drm/amd/display/dc/dml/display_rq_dlg_helpers.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
 dml_common_defs.o: $S/dev/pci/drm/amd/display/dc/dml/dml_common_defs.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+dcn20_resource.o: $S/dev/pci/drm/amd/display/dc/dcn20/dcn20_resource.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+dcn21_resource.o: $S/dev/pci/drm/amd/display/dc/dcn21/dcn21_resource.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+dc_dsc.o: $S/dev/pci/drm/amd/display/dc/dsc/dc_dsc.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+rc_calc.o: $S/dev/pci/drm/amd/display/dc/dsc/rc_calc.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+rc_calc_dpi.o: $S/dev/pci/drm/amd/display/dc/dsc/rc_calc_dpi.c
 	${NORMAL_C} ${HARDFLOAT_CFLAGS}
 
 clean:

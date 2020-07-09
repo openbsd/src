@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.26 2020/04/05 15:15:42 krw Exp $
+#       $OpenBSD: install.md,v 1.27 2020/05/25 06:18:53 otto Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -32,7 +32,7 @@
 #
 
 MDTERM=vt100
-MDFSOPT=-O1
+# FFS2 not supported for booting, use FFS1
 MDROOTFSOPT="-f 1024 -b 8192 -O1"
 NCPU=$(sysctl -n hw.ncpufound)
 

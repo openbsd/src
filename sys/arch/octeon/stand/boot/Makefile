@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2019/08/04 08:53:14 visa Exp $
+#	$OpenBSD: Makefile,v 1.8 2020/05/25 15:53:14 deraadt Exp $
 
 NOMAN=
 #MAN=		boot.8

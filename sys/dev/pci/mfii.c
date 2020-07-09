@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.68 2020/03/21 20:42:23 krw Exp $ */
+/* $OpenBSD: mfii.c,v 1.73 2020/06/27 17:28:58 krw Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -784,11 +784,10 @@ mfii_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.openings = sc->sc_max_cmds;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter = &mfii_switch;
-	sc->sc_link.adapter_target = sc->sc_info.mci_max_lds;
+	sc->sc_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
 	sc->sc_link.adapter_buswidth = sc->sc_info.mci_max_lds;
 	sc->sc_link.pool = &sc->sc_iopool;
 
-	memset(&saa, 0, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	sc->sc_scsibus = (struct scsibus_softc *)
@@ -921,11 +920,10 @@ mfii_syspd(struct mfii_softc *sc)
 	link->adapter = &mfii_pd_switch;
 	link->adapter_softc = sc;
 	link->adapter_buswidth = MFI_MAX_PD;
-	link->adapter_target = -1;
+	link->adapter_target = SDEV_NO_ADAPTER_TARGET;
 	link->openings = sc->sc_max_cmds - 1;
 	link->pool = &sc->sc_iopool;
 
-	memset(&saa, 0, sizeof(saa));
 	saa.saa_sc_link = link;
 
 	sc->sc_pd->pd_scsibus = (struct scsibus_softc *)
@@ -1241,13 +1239,13 @@ mfii_aen(void *arg)
 	case MFI_EVT_PD_INSERTED_EXT:
 		if (med->med_arg_type != MFI_EVT_ARGS_PD_ADDRESS)
 			break;
-		
+
 		mfii_aen_pd_insert(sc, &med->args.pd_address);
 		break;
  	case MFI_EVT_PD_REMOVED_EXT:
 		if (med->med_arg_type != MFI_EVT_ARGS_PD_ADDRESS)
 			break;
-		
+
 		mfii_aen_pd_remove(sc, &med->args.pd_address);
 		break;
 
@@ -1362,7 +1360,7 @@ mfii_aen_ld_update(struct mfii_softc *sc)
 	for (i = 0; i < MFI_MAX_LD; i++) {
 		old = sc->sc_target_lds[i];
 		nld = newlds[i];
-		
+
 		if (old == -1 && nld != -1) {
 			DNPRINTF(MFII_D_MISC, "%s: attaching target %d\n",
 			    DEVNAME(sc), i);
@@ -1966,7 +1964,7 @@ mfii_initialise_firmware(struct mfii_softc *sc)
 	htolem32(&iiq->system_request_frame_base_address_hi,
 	    MFII_DMA_DVA(sc->sc_requests) >> 32);
 
-	iiq->timestamp = htole64(time_uptime);
+	iiq->timestamp = htole64(getuptime());
 
 	ccb = scsi_io_get(&sc->sc_iopool, SCSI_NOSLEEP);
 	if (ccb == NULL) {
@@ -3794,7 +3792,7 @@ mfii_refresh_ld_sensor(struct mfii_softc *sc, int ld)
 
 	target = sc->sc_ld_list.mll_list[ld].mll_ld.mld_target;
 	sensor = &sc->sc_sensors[target];
-	
+
 	switch(sc->sc_ld_list.mll_list[ld].mll_state) {
 	case MFI_LD_OFFLINE:
 		sensor->value = SENSOR_DRIVE_FAIL;

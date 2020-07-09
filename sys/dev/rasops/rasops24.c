@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops24.c,v 1.11 2018/12/26 11:33:57 fcambus Exp $	*/
+/*	$OpenBSD: rasops24.c,v 1.12 2020/05/25 09:55:49 jsg Exp $	*/
 /*	$NetBSD: rasops24.c,v 1.12 2000/04/12 14:22:29 pk Exp $	*/
 
 /*-
@@ -39,18 +39,18 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/rasops/rasops.h>
 
-int 	rasops24_putchar(void *, int, int, u_int, long attr);
+int 	rasops24_putchar(void *, int, int, u_int, uint32_t attr);
 #ifndef RASOPS_SMALL
-int 	rasops24_putchar8(void *, int, int, u_int, long attr);
-int 	rasops24_putchar12(void *, int, int, u_int, long attr);
-int 	rasops24_putchar16(void *, int, int, u_int, long attr);
-void	rasops24_makestamp(struct rasops_info *, long);
+int 	rasops24_putchar8(void *, int, int, u_int, uint32_t attr);
+int 	rasops24_putchar12(void *, int, int, u_int, uint32_t attr);
+int 	rasops24_putchar16(void *, int, int, u_int, uint32_t attr);
+void	rasops24_makestamp(struct rasops_info *, uint32_t);
 
 /*
  * 4x1 stamp for optimized character blitting
  */
 static int32_t	stamp[64];
-static long	stamp_attr;
+static uint32_t	stamp_attr;
 static int	stamp_mutex;	/* XXX see note in readme */
 #endif
 
@@ -106,7 +106,7 @@ rasops24_init(struct rasops_info *ri)
  * XXX this bites - we should use masks.
  */
 int
-rasops24_putchar(void *cookie, int row, int col, u_int uc, long attr)
+rasops24_putchar(void *cookie, int row, int col, u_int uc, uint32_t attr)
 {
 	int fb, width, height, cnt, clr[2];
 	struct rasops_info *ri;
@@ -185,7 +185,7 @@ rasops24_putchar(void *cookie, int row, int col, u_int uc, long attr)
  * Recompute the blitting stamp.
  */
 void
-rasops24_makestamp(struct rasops_info *ri, long attr)
+rasops24_makestamp(struct rasops_info *ri, uint32_t attr)
 {
 	u_int fg, bg, c1, c2, c3, c4;
 	int i;
@@ -226,7 +226,7 @@ rasops24_makestamp(struct rasops_info *ri, long attr)
  * Put a single character. This is for 8-pixel wide fonts.
  */
 int
-rasops24_putchar8(void *cookie, int row, int col, u_int uc, long attr)
+rasops24_putchar8(void *cookie, int row, int col, u_int uc, uint32_t attr)
 {
 	struct rasops_info *ri;
 	int height, so, fs;
@@ -304,7 +304,7 @@ rasops24_putchar8(void *cookie, int row, int col, u_int uc, long attr)
  * Put a single character. This is for 12-pixel wide fonts.
  */
 int
-rasops24_putchar12(void *cookie, int row, int col, u_int uc, long attr)
+rasops24_putchar12(void *cookie, int row, int col, u_int uc, uint32_t attr)
 {
 	struct rasops_info *ri;
 	int height, so, fs;
@@ -389,7 +389,7 @@ rasops24_putchar12(void *cookie, int row, int col, u_int uc, long attr)
  * Put a single character. This is for 16-pixel wide fonts.
  */
 int
-rasops24_putchar16(void *cookie, int row, int col, u_int uc, long attr)
+rasops24_putchar16(void *cookie, int row, int col, u_int uc, uint32_t attr)
 {
 	struct rasops_info *ri;
 	int height, so, fs;

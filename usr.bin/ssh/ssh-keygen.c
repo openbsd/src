@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-keygen.c,v 1.407 2020/04/20 04:43:57 djm Exp $ */
+/* $OpenBSD: ssh-keygen.c,v 1.413 2020/06/26 05:02:03 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -653,9 +653,10 @@ do_convert_from_ssh2(struct passwd *pw, struct sshkey **k, int *private)
 		encoded[len-3] = '\0';
 	if ((r = sshbuf_b64tod(buf, encoded)) != 0)
 		fatal("%s: base64 decoding failed: %s", __func__, ssh_err(r));
-	if (*private)
-		*k = do_convert_private_ssh2(buf);
-	else if ((r = sshkey_fromb(buf, k)) != 0)
+	if (*private) {
+		if ((*k = do_convert_private_ssh2(buf)) == NULL)
+			fatal("%s: private key conversion failed", __func__);
+	} else if ((r = sshkey_fromb(buf, k)) != 0)
 		fatal("decode blob failed: %s", ssh_err(r));
 	sshbuf_free(buf);
 	fclose(fp);
@@ -1034,7 +1035,6 @@ do_gen_all_hostkeys(struct passwd *pw)
 	struct sshkey *private, *public;
 	char comment[1024], *prv_tmp, *pub_tmp, *prv_file, *pub_file;
 	int i, type, fd, r;
-	FILE *f;
 
 	for (i = 0; key_types[i].key_type; i++) {
 		public = private = NULL;
@@ -1072,11 +1072,11 @@ do_gen_all_hostkeys(struct passwd *pw)
 		fflush(stdout);
 		type = sshkey_type_from_name(key_types[i].key_type);
 		if ((fd = mkstemp(prv_tmp)) == -1) {
-			error("Could not save your public key in %s: %s",
+			error("Could not save your private key in %s: %s",
 			    prv_tmp, strerror(errno));
 			goto failnext;
 		}
-		close(fd); /* just using mkstemp() to generate/reserve a name */
+		(void)close(fd); /* just using mkstemp() to reserve a name */
 		bits = 0;
 		type_bits_valid(type, NULL, &bits);
 		if ((r = sshkey_generate(type, bits, &private)) != 0) {
@@ -1100,25 +1100,10 @@ do_gen_all_hostkeys(struct passwd *pw)
 			goto failnext;
 		}
 		(void)fchmod(fd, 0644);
-		f = fdopen(fd, "w");
-		if (f == NULL) {
-			error("fdopen %s failed: %s", pub_tmp, strerror(errno));
-			close(fd);
-			goto failnext;
-		}
-		if ((r = sshkey_write(public, f)) != 0) {
-			error("write key failed: %s", ssh_err(r));
-			fclose(f);
-			goto failnext;
-		}
-		fprintf(f, " %s\n", comment);
-		if (ferror(f) != 0) {
-			error("write key failed: %s", strerror(errno));
-			fclose(f);
-			goto failnext;
-		}
-		if (fclose(f) != 0) {
-			error("key close failed: %s", strerror(errno));
+		(void)close(fd);
+		if ((r = sshkey_save_public(public, pub_tmp, comment)) != 0) {
+			fatal("Unable to save public key to %s: %s",
+			    identity_file, ssh_err(r));
 			goto failnext;
 		}
 
@@ -1285,6 +1270,7 @@ do_known_hosts(struct passwd *pw, const char *name, int find_host,
 	int r, fd, oerrno, inplace = 0;
 	struct known_hosts_ctx ctx;
 	u_int foreach_options;
+	struct stat sb;
 
 	if (!have_identity) {
 		cp = tilde_expand_filename(_PATH_SSH_USER_HOSTFILE, pw->pw_uid);
@@ -1294,6 +1280,8 @@ do_known_hosts(struct passwd *pw, const char *name, int find_host,
 		free(cp);
 		have_identity = 1;
 	}
+	if (stat(identity_file, &sb) != 0)
+		fatal("Cannot stat %s: %s", identity_file, strerror(errno));
 
 	memset(&ctx, 0, sizeof(ctx));
 	ctx.out = stdout;
@@ -1320,6 +1308,7 @@ do_known_hosts(struct passwd *pw, const char *name, int find_host,
 			unlink(tmp);
 			fatal("fdopen: %s", strerror(oerrno));
 		}
+		fchmod(fd, sb.st_mode & 0644);
 		inplace = 1;
 	}
 	/* XXX support identity_file == "-" for stdin */
@@ -1495,8 +1484,7 @@ do_change_comment(struct passwd *pw, const char *identity_comment)
 	struct sshkey *private;
 	struct sshkey *public;
 	struct stat st;
-	FILE *f;
-	int r, fd;
+	int r;
 
 	if (!have_identity)
 		ask_filename(pw, "Enter file in which the key is");
@@ -1575,18 +1563,11 @@ do_change_comment(struct passwd *pw, const char *identity_comment)
 	sshkey_free(private);
 
 	strlcat(identity_file, ".pub", sizeof(identity_file));
-	fd = open(identity_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
-	if (fd == -1)
-		fatal("Could not save your public key in %s", identity_file);
-	f = fdopen(fd, "w");
-	if (f == NULL)
-		fatal("fdopen %s failed: %s", identity_file, strerror(errno));
-	if ((r = sshkey_write(public, f)) != 0)
-		fatal("write key failed: %s", ssh_err(r));
+	if ((r = sshkey_save_public(public, identity_file, new_comment)) != 0) {
+		fatal("Unable to save public key to %s: %s",
+		    identity_file, ssh_err(r));
+	}
 	sshkey_free(public);
-	fprintf(f, " %s\n", new_comment);
-	fclose(f);
-
 	free(comment);
 
 	if (strlen(new_comment) > 0)
@@ -1718,12 +1699,11 @@ do_ca_sign(struct passwd *pw, const char *ca_key_path, int prefer_agent,
     unsigned long long cert_serial, int cert_serial_autoinc,
     int argc, char **argv)
 {
-	int r, i, fd, found, agent_fd = -1;
+	int r, i, found, agent_fd = -1;
 	u_int n;
 	struct sshkey *ca, *public;
 	char valid[64], *otmp, *tmp, *cp, *out, *comment;
 	char *ca_fp = NULL, **plist = NULL;
-	FILE *f;
 	struct ssh_identitylist *agent_ids;
 	size_t j;
 	struct notifier_ctx *notifier = NULL;
@@ -1846,16 +1826,10 @@ do_ca_sign(struct passwd *pw, const char *ca_key_path, int prefer_agent,
 		xasprintf(&out, "%s-cert.pub", tmp);
 		free(tmp);
 
-		if ((fd = open(out, O_WRONLY|O_CREAT|O_TRUNC, 0644)) == -1)
-			fatal("Could not open \"%s\" for writing: %s", out,
-			    strerror(errno));
-		if ((f = fdopen(fd, "w")) == NULL)
-			fatal("%s: fdopen: %s", __func__, strerror(errno));
-		if ((r = sshkey_write(public, f)) != 0)
-			fatal("Could not write certified key to %s: %s",
-			    out, ssh_err(r));
-		fprintf(f, " %s\n", comment);
-		fclose(f);
+		if ((r = sshkey_save_public(public, out, comment)) != 0) {
+			fatal("Unable to save public key to %s: %s",
+			    identity_file, ssh_err(r));
+		}
 
 		if (!quiet) {
 			sshkey_format_cert_validity(public->cert,
@@ -2942,7 +2916,7 @@ do_download_sk(const char *skprovider, const char *device)
 {
 	struct sshkey **keys;
 	size_t nkeys, i;
-	int r, ok = -1;
+	int r, ret = -1;
 	char *fp, *pin = NULL, *pass = NULL, *path, *pubpath;
 	const char *ext;
 
@@ -2958,14 +2932,16 @@ do_download_sk(const char *skprovider, const char *device)
 		    &keys, &nkeys)) != 0) {
 			if (i == 0 && r == SSH_ERR_KEY_WRONG_PASSPHRASE)
 				continue;
-			freezero(pin, strlen(pin));
+			if (pin != NULL)
+				freezero(pin, strlen(pin));
 			error("Unable to load resident keys: %s", ssh_err(r));
 			return -1;
 		}
 	}
 	if (nkeys == 0)
 		logit("No keys to download");
-	freezero(pin, strlen(pin));
+	if (pin != NULL)
+		freezero(pin, strlen(pin));
 
 	for (i = 0; i < nkeys; i++) {
 		if (keys[i]->type != KEY_ECDSA_SK &&
@@ -3024,13 +3000,13 @@ do_download_sk(const char *skprovider, const char *device)
 	}
 
 	if (i >= nkeys)
-		ok = 0; /* success */
+		ret = 0; /* success */
 	if (pass != NULL)
 		freezero(pass, strlen(pass));
 	for (i = 0; i < nkeys; i++)
 		sshkey_free(keys[i]);
 	free(keys);
-	return ok ? 0 : -1;
+	return ret;
 }
 
 static void
@@ -3084,11 +3060,10 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	char dotsshdir[PATH_MAX], comment[1024], *passphrase;
+	char comment[1024], *passphrase;
 	char *rr_hostname = NULL, *ep, *fp, *ra;
 	struct sshkey *private, *public;
 	struct passwd *pw;
-	struct stat st;
 	int r, opt, type;
 	int change_passphrase = 0, change_comment = 0, show_cert = 0;
 	int find_host = 0, delete_host = 0, hash_hosts = 0;
@@ -3608,20 +3583,8 @@ main(int argc, char **argv)
 		ask_filename(pw, "Enter file in which to save the key");
 
 	/* Create ~/.ssh directory if it doesn't already exist. */
-	snprintf(dotsshdir, sizeof dotsshdir, "%s/%s",
-	    pw->pw_dir, _PATH_SSH_USER_DIR);
-	if (strstr(identity_file, dotsshdir) != NULL) {
-		if (stat(dotsshdir, &st) == -1) {
-			if (errno != ENOENT) {
-				error("Could not stat %s: %s", dotsshdir,
-				    strerror(errno));
-			} else if (mkdir(dotsshdir, 0700) == -1) {
-				error("Could not create directory '%s': %s",
-				    dotsshdir, strerror(errno));
-			} else if (!quiet)
-				printf("Created directory '%s'.\n", dotsshdir);
-		}
-	}
+	hostfile_create_user_ssh_dir(identity_file, !quiet);
+
 	/* If the file already exists, ask the user to confirm. */
 	if (!confirm_overwrite(identity_file))
 		exit(1);
@@ -3654,7 +3617,7 @@ main(int argc, char **argv)
 	strlcat(identity_file, ".pub", sizeof(identity_file));
 	if ((r = sshkey_save_public(public, identity_file, comment)) != 0) {
 		fatal("Unable to save public key to %s: %s",
-		    identity_file, strerror(errno));
+		    identity_file, ssh_err(r));
 	}
 
 	if (!quiet) {

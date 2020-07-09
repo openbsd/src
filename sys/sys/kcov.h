@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.h,v 1.4 2019/01/20 09:57:23 anton Exp $	*/
+/*	$OpenBSD: kcov.h,v 1.5 2020/06/04 19:30:49 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -32,6 +32,8 @@
 #ifdef _KERNEL
 
 #define KCOV_BUF_MAX_NMEMB	(256 << 10)
+
+struct proc;
 
 void kcov_exit(struct proc *);
 

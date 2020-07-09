@@ -1,4 +1,4 @@
-/*	$OpenBSD: urng.c,v 1.9 2018/07/09 20:09:00 jasper Exp $ */
+/*	$OpenBSD: urng.c,v 1.10 2020/05/29 04:42:25 deraadt Exp $ */
 
 /*
  * Copyright (c) 2017 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -37,8 +37,6 @@
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdevs.h>
-
-#include <dev/rndvar.h>
 
 #define DEVNAME(_sc) ((_sc)->sc_dev.dv_xname)
 

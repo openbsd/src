@@ -18,6 +18,15 @@ struct rcu_head {
 #define rcu_read_lock()
 #define rcu_read_unlock()
 #define rcu_pointer_handoff(p)	(p)
+#define init_rcu_head(h)
+#define destroy_rcu_head(h)
+
+#define rcu_replace_pointer(rp, p, c)		\
+({						\
+	__typeof(rp) __r = rp;			\
+	rp = p;					\
+	__r;					\
+})
 
 #define kfree_rcu(objp, name)	do { free((void *)objp, M_DRM, 0); } while(0)
 
@@ -32,5 +41,8 @@ call_rcu(struct rcu_head *head, void (*fn)(struct rcu_head *))
 }
 
 #define synchronize_rcu()
+#define synchronize_rcu_expedited()
+#define cond_synchronize_rcu(x)
+#define get_state_synchronize_rcu()	0
 
 #endif

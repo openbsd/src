@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff3prog.c,v 1.19 2016/10/18 21:06:52 millert Exp $	*/
+/*	$OpenBSD: diff3prog.c,v 1.20 2020/06/26 07:28:47 stsp Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -555,9 +555,16 @@ edscript(int n)
 			printf("%da\n=======\n", de[n].old.to -1);
 		(void)fseek(fp[2], (long)de[n].new.from, SEEK_SET);
 		for (k = de[n].new.to-de[n].new.from; k > 0; k-= j) {
+			size_t r;
 			j = k > BUFSIZ ? BUFSIZ : k;
-			if (fread(block, 1, j, fp[2]) != j)
+			r = fread(block, 1, j, fp[2]);
+			if (r == 0) {
+				if (feof(fp[2]))
+					break;
 				trouble();
+			}
+			if (r != j)
+				j = r;
 			(void)fwrite(block, 1, j, stdout);
 		}
 		if (!oflag || !overlap[n])

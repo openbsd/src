@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile.inc,v 1.25 2019/10/31 00:37:25 jsg Exp $
+#	$OpenBSD: Makefile.inc,v 1.27 2020/05/18 06:20:43 otto Exp $
 
-FS=		miniroot-${BOARD}-${OSrev}.fs
+FS=		miniroot-${BOARD}-${OSrev}.img
 FSSIZE=		67584	# ffs+msdos, actually
 MOUNT_POINT=	/mnt
 
@@ -22,7 +22,7 @@ ${FS}: bsd.rd
 	echo 'u\ne 0\nC\nn\n${MSDOSSTART}\n${MSDOSSIZE}\ne 3\nA6\nn\n${FFSSTART}\n*\nf 0\nw\nq\n' \
 	    | fdisk -e `cat vnd` >/dev/null
 	echo 'a a\n\n\n\nw\nq\n' | disklabel -E `cat vnd` >/dev/null
-	newfs -t msdos -L boot /dev/r`cat vnd`i
+	newfs -O 1 -t msdos -L boot /dev/r`cat vnd`i
 	mount -o-l /dev/`cat vnd`i ${MOUNT_POINT}
 
 .for DTB in ${DTBS}
@@ -49,7 +49,7 @@ ${FS}: bsd.rd
 	cp /usr/mdec/BOOTARM.EFI ${MOUNT_POINT}/efi/boot/bootarm.efi
 	umount ${MOUNT_POINT}
 
-	newfs -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
+	newfs -O 1 -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
 	mount /dev/`cat vnd`a ${MOUNT_POINT}
 	install -c -m 555 -o root -g wheel bsd.rd ${MOUNT_POINT}/bsd
 	ln ${MOUNT_POINT}/bsd ${MOUNT_POINT}/bsd.rd

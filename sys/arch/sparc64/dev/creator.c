@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.51 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: creator.c,v 1.53 2020/05/25 09:55:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -54,8 +54,8 @@ void	creator_ras_fifo_wait(struct creator_softc *, int);
 void	creator_ras_wait(struct creator_softc *);
 void	creator_ras_init(struct creator_softc *);
 int	creator_ras_copyrows(void *, int, int, int);
-int	creator_ras_erasecols(void *, int, int, int, long int);
-int	creator_ras_eraserows(void *, int, int, long int);
+int	creator_ras_erasecols(void *, int, int, int, uint32_t);
+int	creator_ras_eraserows(void *, int, int, uint32_t);
 void	creator_ras_fill(struct creator_softc *);
 void	creator_ras_setfg(struct creator_softc *, int32_t);
 
@@ -241,14 +241,14 @@ creator_ioctl(v, cmd, data, flags, p)
 		sc->sc_mode = *(u_int *)data;
 		if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 			struct rasops_info *ri = &sc->sc_sunfb.sf_ro;
-			long attr;
+			uint32_t attr;
 
 			if ((sc->sc_sunfb.sf_dev.dv_cfdata->cf_flags &
 			    CREATOR_CFFLAG_NOACCEL) == 0)
 				creator_ras_init(sc);
 
 			/* Clear screen. */
-			ri->ri_ops.alloc_attr(ri,
+			ri->ri_ops.pack_attr(ri,
 			    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, &attr);
 			ri->ri_ops.eraserows(ri, 0, ri->ri_rows, attr);
 		} 
@@ -594,7 +594,7 @@ int
 creator_ras_eraserows(cookie, row, n, attr)
 	void *cookie;
 	int row, n;
-	long int attr;
+	uint32_t attr;
 {
 	struct rasops_info *ri = cookie;
 	struct creator_softc *sc = ri->ri_hw;
@@ -634,7 +634,7 @@ int
 creator_ras_erasecols(cookie, row, col, n, attr)
 	void *cookie;
 	int row, col, n;
-	long int attr;
+	uint32_t attr;
 {
 	struct rasops_info *ri = cookie;
 	struct creator_softc *sc = ri->ri_hw;

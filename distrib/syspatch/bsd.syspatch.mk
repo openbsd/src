@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.syspatch.mk,v 1.25 2019/05/12 15:30:18 robert Exp $
+#	$OpenBSD: bsd.syspatch.mk,v 1.26 2020/05/24 16:48:35 tb Exp $
 #
 # Copyright (c) 2016-2017 Robert Nagy <robert@openbsd.org>
 #
@@ -76,7 +76,7 @@ depend:
 cleandir: clean
 
 ${_FAKE_COOKIE}:
-.if !empty(ERRATA:C/[[:digit:]]{3}_[[:alnum:]_]+//) 
+.if !empty(ERRATA:C/[[:digit:]]{3}_[[:alnum:]_-]+//) 
 	@{ echo "***>   invalid errata format: ${ERRATA}"; \
 	exit 1; };
 .endif

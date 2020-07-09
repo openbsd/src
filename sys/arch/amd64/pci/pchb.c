@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.44 2020/01/04 01:34:24 jsg Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.45 2020/05/29 04:42:23 deraadt Exp $	*/
 /*	$NetBSD: pchb.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -67,8 +67,6 @@
 
 #include <dev/pci/agpvar.h>
 #include <dev/pci/ppbreg.h>
-
-#include <dev/rndvar.h>
 
 #include <dev/ic/i82802reg.h>
 

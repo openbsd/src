@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.632 2020/04/29 08:53:45 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.636 2020/05/31 06:23:57 dlg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -115,7 +115,6 @@
 #include <machine/mpbiosvar.h>
 #endif /* MULTIPROCESSOR */
 
-#include <dev/rndvar.h>
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <dev/ic/i8042reg.h>
@@ -1847,6 +1846,17 @@ identifycpu(struct cpu_info *ci)
 		}
 	}
 
+	if (ci->ci_feature_flags & CPUID_CFLUSH) {
+		u_int regs[4];
+
+		/* to get the cacheline size you must do cpuid
+		 * with eax 0x01
+		 */
+
+		cpuid(0x01, regs); 
+		ci->ci_cflushsz = ((regs[1] >> 8) & 0xff) * 8;
+	}
+
 	if (vendor == CPUVENDOR_INTEL) {
 		u_int regs[4];
 		/*
@@ -1859,15 +1869,6 @@ identifycpu(struct cpu_info *ci)
 		 */
 		if (ci->ci_family == 6 && ci->ci_model < 15)
 		    ci->ci_feature_flags &= ~CPUID_PAT;
-
-		if (ci->ci_feature_flags & CPUID_CFLUSH) {
-			/* to get the cacheline size you must do cpuid
-			 * with eax 0x01
-			 */
-
-			cpuid(0x01, regs); 
-			ci->ci_cflushsz = ((regs[1] >> 8) & 0xff) * 8;
-		}
 
 		if (cpuid_level >= 0x1) {
 			cpuid(0x80000000, regs);
@@ -4038,91 +4039,11 @@ intr_barrier(void *ih)
 	sched_barrier(NULL);
 }
 
-#include <sys/timetc.h>
-#include <dev/clock_subr.h>
-
-todr_chip_handle_t todr_handle;
-
-#define MINYEAR		((OpenBSD / 100) - 1)	/* minimum plausible year */
-
-/*
- * inittodr:
- *
- *      Initialize time from the time-of-day register.
- */
-void
-inittodr(time_t base)
+unsigned int
+cpu_rnd_messybits(void)
 {
-	time_t deltat;
-	struct timeval rtctime;
 	struct timespec ts;
-	int badbase;
 
-	if (base < (MINYEAR - 1970) * SECYR) {
-		printf("WARNING: preposterous time in file system\n");
-		/* read the system clock anyway */
-		base = (MINYEAR - 1970) * SECYR;
-		badbase = 1;
-	} else
-		badbase = 0;
-
-	if (todr_handle == NULL ||
-	    todr_gettime(todr_handle, &rtctime) != 0 ||
-	    rtctime.tv_sec < (MINYEAR - 1970) * SECYR) {
-		/*
-		 * Believe the time in the file system for lack of
-		 * anything better, resetting the TODR.
-		 */
-		rtctime.tv_sec = base;
-		rtctime.tv_usec = 0;
-		if (todr_handle != NULL && !badbase)
-			printf("WARNING: bad clock chip time\n");
-		ts.tv_sec = rtctime.tv_sec;
-		ts.tv_nsec = rtctime.tv_usec * 1000;
-		tc_setclock(&ts);
-		goto bad;
-	} else {
-		ts.tv_sec = rtctime.tv_sec;
-		ts.tv_nsec = rtctime.tv_usec * 1000;
-		tc_setclock(&ts);
-	}
-
-	if (!badbase) {
-		/*
-		 * See if we gained/lost two or more days; if
-		 * so, assume something is amiss.
-		 */
-		deltat = rtctime.tv_sec - base;
-		if (deltat < 0)
-			deltat = -deltat;
-		if (deltat < 2 * SECDAY)
-			return;         /* all is well */
-#ifndef SMALL_KERNEL
-		printf("WARNING: clock %s %lld days\n",
-		    rtctime.tv_sec < base ? "lost" : "gained",
-		    (long long)(deltat / SECDAY));
-#endif
-	}
- bad:
-	printf("WARNING: CHECK AND RESET THE DATE!\n");
-}
-
-/*
- * resettodr:
- *
- *      Reset the time-of-day register with the current time.
- */
-void
-resettodr(void)
-{
-	struct timeval rtctime;
-
-	if (time_second == 1)
-		return;
-
-	microtime(&rtctime);
-
-	if (todr_handle != NULL &&
-	    todr_settime(todr_handle, &rtctime) != 0)
-		printf("WARNING: can't update clock chip time\n");
+	nanotime(&ts);
+	return (ts.tv_nsec ^ (ts.tv_sec << 20));
 }

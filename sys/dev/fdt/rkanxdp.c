@@ -1,4 +1,4 @@
-/* $OpenBSD: rkanxdp.c,v 1.3 2020/03/16 21:51:25 kettenis Exp $ */
+/* $OpenBSD: rkanxdp.c,v 1.4 2020/06/08 04:47:58 jsg Exp $ */
 /* $NetBSD: rk_anxdp.c,v 1.2 2020/01/04 12:08:32 jmcneill Exp $ */
 /*-
  * Copyright (c) 2019 Jonathan A. Kollasch <jakllsch@kollasch.net>
@@ -40,7 +40,6 @@
 #include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
 
-#include <drm/drmP.h>
 #include <drm/drm_crtc_helper.h>
 
 #include <dev/ic/anxdp.h>
@@ -72,14 +71,7 @@ int rkanxdp_match(struct device *, void *, void *);
 void rkanxdp_attach(struct device *, struct device *, void *);
 
 void rkanxdp_select_input(struct rkanxdp_softc *, u_int);
-bool rkanxdp_encoder_mode_fixup(struct drm_encoder *,
-    const struct drm_display_mode *, struct drm_display_mode *);
-void rkanxdp_encoder_mode_set(struct drm_encoder *,
-    struct drm_display_mode *, struct drm_display_mode *);
 void rkanxdp_encoder_enable(struct drm_encoder *);
-void rkanxdp_encoder_disable(struct drm_encoder *);
-void rkanxdp_encoder_prepare(struct drm_encoder *);
-void rkanxdp_encoder_commit(struct drm_encoder *);
 void rkanxdp_encoder_dpms(struct drm_encoder *, int);
 
 int rkanxdp_ep_activate(void *, struct endpoint *, void *);
@@ -161,41 +153,13 @@ rkanxdp_select_input(struct rkanxdp_softc *sc, u_int crtc_index)
 	regmap_write_4(sc->sc_grf, RK3399_GRF_SOC_CON20, write_mask | write_val);
 }
 
-bool
-rkanxdp_encoder_mode_fixup(struct drm_encoder *encoder,
-    const struct drm_display_mode *mode, struct drm_display_mode *adjusted_mode)
-{
-	return true;
-}
-
-void
-rkanxdp_encoder_mode_set(struct drm_encoder *encoder,
-    struct drm_display_mode *mode, struct drm_display_mode *adjusted)
-{
-}
-
 void
 rkanxdp_encoder_enable(struct drm_encoder *encoder)
-{
-}
-
-void
-rkanxdp_encoder_disable(struct drm_encoder *encoder)
-{
-}
-
-void
-rkanxdp_encoder_prepare(struct drm_encoder *encoder)
 {
 	struct rkanxdp_softc *sc = to_rkanxdp_encoder(encoder);
 	u_int crtc_index = drm_crtc_index(encoder->crtc);
 
 	rkanxdp_select_input(sc, crtc_index);
-}
-
-void
-rkanxdp_encoder_commit(struct drm_encoder *encoder)
-{
 }
 
 void
@@ -211,12 +175,7 @@ struct drm_encoder_funcs rkanxdp_encoder_funcs = {
 };
 
 struct drm_encoder_helper_funcs rkanxdp_encoder_helper_funcs = {
-	.prepare = rkanxdp_encoder_prepare,
-	.mode_fixup = rkanxdp_encoder_mode_fixup,
-	.mode_set = rkanxdp_encoder_mode_set,
 	.enable = rkanxdp_encoder_enable,
-	.disable = rkanxdp_encoder_disable,
-	.commit = rkanxdp_encoder_commit,
 	.dpms = rkanxdp_encoder_dpms,
 };
 

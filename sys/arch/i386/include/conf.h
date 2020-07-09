@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.17 2019/01/18 01:34:50 pd Exp $	*/
+/*	$OpenBSD: conf.h,v 1.19 2020/05/25 06:37:53 mpi Exp $	*/
 /*	$NetBSD: conf.h,v 1.2 1996/05/05 19:28:34 christos Exp $	*/
 
 /*
@@ -40,15 +40,6 @@ cdev_decl(pms);
 bdev_decl(fd);
 cdev_decl(fd);
 
-/* open, close, read, write, ioctl, tty, mmap */
-#define cdev_pc_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	dev_init(c,n,tty), ttpoll, dev_init(c,n,mmap), D_TTY }
-
-cdev_decl(pc);
-
-
 #define	cdev_acpiapm_init(c,n) {\
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
@@ -65,7 +56,6 @@ cdev_decl(pms);
 
 cdev_decl(joy);
 
-#define biospoll seltrue
 cdev_decl(bios);
 
 cdev_decl(acpi);
@@ -74,5 +64,4 @@ cdev_decl(apm);
 
 cdev_decl(acpiapm);
 
-#define pctrpoll seltrue
 cdev_decl(pctr);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c.h,v 1.1 2019/04/14 10:14:53 jsg Exp $	*/
+/*	$OpenBSD: i2c.h,v 1.2 2020/06/08 04:48:14 jsg Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -33,6 +33,8 @@ struct i2c_algorithm;
 #define I2C_FUNC_SMBUS_BLOCK_PROC_CALL	0
 #define I2C_FUNC_10BIT_ADDR		0
 
+struct i2c_lock_operations;
+
 struct i2c_adapter {
 	struct i2c_controller ic;
 
@@ -40,8 +42,15 @@ struct i2c_adapter {
 	const struct i2c_algorithm *algo;
 	void *algo_data;
 	int retries;
+	const struct i2c_lock_operations *lock_ops;
 
 	void *data;
+};
+
+struct i2c_lock_operations {
+	void (*lock_bus)(struct i2c_adapter *, unsigned int);
+	int (*trylock_bus)(struct i2c_adapter *, unsigned int);
+	void (*unlock_bus)(struct i2c_adapter *, unsigned int);
 };
 
 #define I2C_NAME_SIZE	20

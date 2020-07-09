@@ -73,43 +73,39 @@ static ERR_STRING_DATA GOST_str_functs[]= {
 	{0, NULL}
 };
 
-static ERR_STRING_DATA GOST_str_reasons[]=
-	{
-{ERR_REASON(GOST_R_BAD_KEY_PARAMETERS_FORMAT),"bad key parameters format"},
-{ERR_REASON(GOST_R_BAD_PKEY_PARAMETERS_FORMAT),"bad pkey parameters format"},
-{ERR_REASON(GOST_R_CANNOT_PACK_EPHEMERAL_KEY),"cannot pack ephemeral key"},
-{ERR_REASON(GOST_R_CTRL_CALL_FAILED)     ,"ctrl call failed"},
-{ERR_REASON(GOST_R_ERROR_COMPUTING_SHARED_KEY),"error computing shared key"},
-{ERR_REASON(GOST_R_ERROR_PARSING_KEY_TRANSPORT_INFO),"error parsing key transport info"},
-{ERR_REASON(GOST_R_INCOMPATIBLE_ALGORITHMS),"incompatible algorithms"},
-{ERR_REASON(GOST_R_INCOMPATIBLE_PEER_KEY),"incompatible peer key"},
-{ERR_REASON(GOST_R_INVALID_DIGEST_TYPE)  ,"invalid digest type"},
-{ERR_REASON(GOST_R_INVALID_IV_LENGTH)    ,"invalid iv length"},
-{ERR_REASON(GOST_R_INVALID_MAC_KEY_LENGTH),"invalid mac key length"},
-{ERR_REASON(GOST_R_KEY_IS_NOT_INITIALIZED),"key is not initialized"},
-{ERR_REASON(GOST_R_KEY_PARAMETERS_MISSING),"key parameters missing"},
-{ERR_REASON(GOST_R_MAC_KEY_NOT_SET)      ,"mac key not set"},
-{ERR_REASON(GOST_R_NO_PARAMETERS_SET)    ,"no parameters set"},
-{ERR_REASON(GOST_R_NO_PEER_KEY)          ,"no peer key"},
-{ERR_REASON(GOST_R_NO_PRIVATE_PART_OF_NON_EPHEMERAL_KEYPAIR),"no private part of non ephemeral keypair"},
-{ERR_REASON(GOST_R_PUBLIC_KEY_UNDEFINED) ,"public key undefined"},
-{ERR_REASON(GOST_R_RANDOM_NUMBER_GENERATOR_FAILED),"random number generator failed"},
-{ERR_REASON(GOST_R_SIGNATURE_MISMATCH)   ,"signature mismatch"},
-{ERR_REASON(GOST_R_SIGNATURE_PARTS_GREATER_THAN_Q),"signature parts greater than q"},
-{ERR_REASON(GOST_R_UKM_NOT_SET)          ,"ukm not set"},
-{0,NULL}
-	};
-
+static ERR_STRING_DATA GOST_str_reasons[] = {
+	{ERR_REASON(GOST_R_BAD_KEY_PARAMETERS_FORMAT),"bad key parameters format"},
+	{ERR_REASON(GOST_R_BAD_PKEY_PARAMETERS_FORMAT),"bad pkey parameters format"},
+	{ERR_REASON(GOST_R_CANNOT_PACK_EPHEMERAL_KEY),"cannot pack ephemeral key"},
+	{ERR_REASON(GOST_R_CTRL_CALL_FAILED)     ,"ctrl call failed"},
+	{ERR_REASON(GOST_R_ERROR_COMPUTING_SHARED_KEY),"error computing shared key"},
+	{ERR_REASON(GOST_R_ERROR_PARSING_KEY_TRANSPORT_INFO),"error parsing key transport info"},
+	{ERR_REASON(GOST_R_INCOMPATIBLE_ALGORITHMS),"incompatible algorithms"},
+	{ERR_REASON(GOST_R_INCOMPATIBLE_PEER_KEY),"incompatible peer key"},
+	{ERR_REASON(GOST_R_INVALID_DIGEST_TYPE)  ,"invalid digest type"},
+	{ERR_REASON(GOST_R_INVALID_IV_LENGTH)    ,"invalid iv length"},
+	{ERR_REASON(GOST_R_INVALID_MAC_KEY_LENGTH),"invalid mac key length"},
+	{ERR_REASON(GOST_R_KEY_IS_NOT_INITIALIZED),"key is not initialized"},
+	{ERR_REASON(GOST_R_KEY_PARAMETERS_MISSING),"key parameters missing"},
+	{ERR_REASON(GOST_R_MAC_KEY_NOT_SET)      ,"mac key not set"},
+	{ERR_REASON(GOST_R_NO_PARAMETERS_SET)    ,"no parameters set"},
+	{ERR_REASON(GOST_R_NO_PEER_KEY)          ,"no peer key"},
+	{ERR_REASON(GOST_R_NO_PRIVATE_PART_OF_NON_EPHEMERAL_KEYPAIR),"no private part of non ephemeral keypair"},
+	{ERR_REASON(GOST_R_PUBLIC_KEY_UNDEFINED) ,"public key undefined"},
+	{ERR_REASON(GOST_R_RANDOM_NUMBER_GENERATOR_FAILED),"random number generator failed"},
+	{ERR_REASON(GOST_R_SIGNATURE_MISMATCH)   ,"signature mismatch"},
+	{ERR_REASON(GOST_R_SIGNATURE_PARTS_GREATER_THAN_Q),"signature parts greater than q"},
+	{ERR_REASON(GOST_R_UKM_NOT_SET)          ,"ukm not set"},
+	{0, NULL}
+};
 #endif
 
-void ERR_load_GOST_strings(void)
-	{
+void
+ERR_load_GOST_strings(void) {
 #ifndef OPENSSL_NO_ERR
-
-	if (ERR_func_error_string(GOST_str_functs[0].error) == NULL)
-		{
+	if (ERR_func_error_string(GOST_str_functs[0].error) == NULL) {
 		ERR_load_strings(0,GOST_str_functs);
 		ERR_load_strings(0,GOST_str_reasons);
-		}
-#endif
 	}
+#endif
+}

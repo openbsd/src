@@ -1,4 +1,4 @@
-/* $OpenBSD: dwhdmi.c,v 1.2 2020/03/04 13:38:22 kettenis Exp $ */
+/* $OpenBSD: dwhdmi.c,v 1.3 2020/06/08 04:47:58 jsg Exp $ */
 /* $NetBSD: dw_hdmi.c,v 1.7 2019/12/22 23:23:32 thorpej Exp $ */
 
 /*-
@@ -40,10 +40,12 @@
 #include <dev/audio/audio_dai.h>
 #endif
 
-#include <drm/drmP.h>
+#include <drm/drm_atomic.h>
+#include <drm/drm_atomic_helper.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_crtc_helper.h>
 #include <drm/drm_edid.h>
+#include <drm/drm_probe_helper.h>
 
 #define DDC_SEGMENT_ADDR	0x30
 
@@ -564,6 +566,9 @@ const struct drm_connector_funcs dwhdmi_connector_funcs = {
 	.detect = dwhdmi_connector_detect,
 	.fill_modes = drm_helper_probe_single_connector_modes,
 	.destroy = dwhdmi_connector_destroy,
+	.reset = drm_atomic_helper_connector_reset,
+	.atomic_duplicate_state = drm_atomic_helper_connector_duplicate_state,
+	.atomic_destroy_state = drm_atomic_helper_connector_destroy_state,
 };
 
 int
@@ -593,31 +598,13 @@ dwhdmi_connector_get_modes(struct drm_connector *connector)
 	return error;
 }
 
-struct drm_encoder *
-dwhdmi_connector_best_encoder(struct drm_connector *connector)
-{
-	int enc_id = connector->encoder_ids[0];
-	struct drm_mode_object *obj;
-	struct drm_encoder *encoder = NULL;
-
-	if (enc_id) {
-		obj = drm_mode_object_find(connector->dev, NULL, enc_id,
-		    DRM_MODE_OBJECT_ENCODER);
-		if (obj == NULL)
-			return NULL;
-		encoder = obj_to_encoder(obj);
-	}
-
-	return encoder;
-}
-
 const struct drm_connector_helper_funcs dwhdmi_connector_helper_funcs = {
 	.get_modes = dwhdmi_connector_get_modes,
-	.best_encoder = dwhdmi_connector_best_encoder,
 };
 
 int
-dwhdmi_bridge_attach(struct drm_bridge *bridge)
+dwhdmi_bridge_attach(struct drm_bridge *bridge,
+    enum drm_bridge_attach_flags flags)
 {
 	struct dwhdmi_softc * const sc = bridge->driver_private;
 	struct dwhdmi_connector *dwhdmi_connector = &sc->sc_connector;
@@ -682,7 +669,8 @@ dwhdmi_bridge_post_disable(struct drm_bridge *bridge)
 
 void
 dwhdmi_bridge_mode_set(struct drm_bridge *bridge,
-    struct drm_display_mode *mode, struct drm_display_mode *adjusted_mode)
+    const struct drm_display_mode *mode,
+    const struct drm_display_mode *adjusted_mode)
 {
 	struct dwhdmi_softc *sc = bridge->driver_private;
 
@@ -917,11 +905,9 @@ dwhdmi_bind(struct dwhdmi_softc *sc, struct drm_encoder *encoder)
 	sc->sc_bridge.funcs = &dwhdmi_bridge_funcs;
 	sc->sc_bridge.encoder = encoder;
 
-	error = drm_bridge_attach(encoder, &sc->sc_bridge, NULL);
+	error = drm_bridge_attach(encoder, &sc->sc_bridge, NULL, 0);
 	if (error != 0)
 		return EIO;
-
-	encoder->bridge = &sc->sc_bridge;
 
 	return 0;
 }

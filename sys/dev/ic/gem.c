@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.123 2018/02/07 22:35:14 bluhm Exp $	*/
+/*	$OpenBSD: gem.c,v 1.124 2020/06/22 02:27:04 dlg Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -1020,6 +1020,9 @@ gem_rint(struct gem_softc *sc)
 		ml_enqueue(&ml, m);
 	}
 
+	if (ifiq_input(&ifp->if_rcv, &ml))
+		if_rxr_livelocked(&sc->sc_rx_ring);
+
 	/* Update the receive pointer. */
 	sc->sc_rx_cons = i;
 	gem_fill_rx_ring(sc);
@@ -1027,8 +1030,6 @@ gem_rint(struct gem_softc *sc)
 
 	DPRINTF(sc, ("gem_rint: done sc->sc_rx_cons %d, complete %d\n",
 		sc->sc_rx_cons, bus_space_read_4(t, h, GEM_RX_COMPLETION)));
-
-	if_input(ifp, &ml);
 
 	return (1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.104 2020/04/12 07:02:43 dlg Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.106 2020/07/04 08:06:08 anton Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ struct if_clone {
  *	I	immutable after creation
  *	d	protection left do the driver
  *	c	only used in ioctl or routing socket contexts (kernel lock)
- *	k	kernel lock
+ *	K	kernel lock
  *	N	net lock
  *
  *  For SRP related structures that allow lock-free reads, the write lock
@@ -120,7 +120,7 @@ TAILQ_HEAD(ifnet_head, ifnet);		/* the actual queue head */
 struct ifnet {				/* and the entries */
 	void	*if_softc;		/* [I] lower-level data for this if */
 	struct	refcnt if_refcnt;
-	TAILQ_ENTRY(ifnet) if_list;	/* [k] all struct ifnets are chained */
+	TAILQ_ENTRY(ifnet) if_list;	/* [K] all struct ifnets are chained */
 	TAILQ_HEAD(, ifaddr) if_addrlist; /* [N] list of addresses per if */
 	TAILQ_HEAD(, ifmaddr) if_maddrlist; /* [N] list of multicast records */
 	TAILQ_HEAD(, ifg_list) if_groups; /* [N] list of groups per if */
@@ -131,7 +131,7 @@ struct ifnet {				/* and the entries */
 	void	(*if_rtrequest)(struct ifnet *, int, struct rtentry *);
 	char	if_xname[IFNAMSIZ];	/* [I] external name (name + unit) */
 	int	if_pcount;		/* [N] # of promiscuous listeners */
-	unsigned int if_bridgeidx;	/* [k] used by bridge ports */
+	unsigned int if_bridgeidx;	/* [K] used by bridge ports */
 	caddr_t	if_bpf;			/* packet filter structure */
 	caddr_t if_switchport;		/* used by switch ports */
 	caddr_t if_mcast;		/* used by multicast code */
@@ -159,7 +159,7 @@ struct ifnet {				/* and the entries */
 	struct	task if_linkstatetask;	/* [I] task to do route updates */
 
 	/* procedure handles */
-	SRPL_HEAD(, ifih) if_inputs;	/* [k] input routines (dequeue) */
+	SRPL_HEAD(, ifih) if_inputs;	/* [K] input routines (dequeue) */
 	int	(*if_output)(struct ifnet *, struct mbuf *, struct sockaddr *,
 		     struct rtentry *);	/* output routine (enqueue) */
 					/* link level output function */
@@ -387,6 +387,7 @@ void	if_rxr_init(struct if_rxring *, u_int, u_int);
 u_int	if_rxr_get(struct if_rxring *, u_int);
 
 #define if_rxr_put(_r, _c)	do { (_r)->rxr_alive -= (_c); } while (0)
+#define if_rxr_needrefill(_r)	((_r)->rxr_alive < (_r)->rxr_lwm)
 #define if_rxr_inuse(_r)	((_r)->rxr_alive)
 #define if_rxr_cwm(_r)		((_r)->rxr_cwm)
 

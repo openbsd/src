@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ldconfig.8,v 1.29 2016/07/04 20:56:50 kettenis Exp $
+.\"	$OpenBSD: ldconfig.8,v 1.30 2020/05/08 11:04:50 jca Exp $
 .\"
 .\" Copyright (c) 1993,1995 Paul Kranenburg
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: July 4 2016 $
+.Dd $Mdocdate: May 8 2020 $
 .Dt LDCONFIG 8
 .Os
 .Sh NAME
@@ -120,9 +120,7 @@ Switch on verbose mode.
 .El
 .Sh SECURITY
 Special care must be taken when loading shared libraries into the address
-space of
-.Ev set-user-Id
-programs.
+space of set-user-ID and set-group-ID programs.
 Whenever such a program is run,
 .Xr ld.so 1
 will only load shared libraries from the
@@ -141,7 +139,7 @@ It is presumed that the set of directories specified to
 .Nm
 are under control of the system's administrator.
 .Xr ld.so 1
-further assists set-user-Id programs by erasing the
+further assists set-user-ID and set-group-ID programs by erasing the
 .Ev LD_LIBRARY_PATH
 from the environment.
 .Sh ENVIRONMENT

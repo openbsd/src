@@ -1,4 +1,4 @@
-/*	$OpenBSD: zx.c,v 1.20 2015/09/10 15:02:32 miod Exp $	*/
+/*	$OpenBSD: zx.c,v 1.21 2020/05/25 09:55:49 jsg Exp $	*/
 /*	$NetBSD: zx.c,v 1.5 2002/10/02 16:52:46 thorpej Exp $	*/
 
 /*
@@ -150,15 +150,15 @@ int	zx_putcmap(struct zx_softc *);
 void	zx_copyrect(struct rasops_info *, int, int, int, int, int, int);
 int	zx_cross_loadwid(struct zx_softc *, u_int, u_int, u_int);
 int	zx_cross_wait(struct zx_softc *);
-void	zx_fillrect(struct rasops_info *, int, int, int, int, long, int);
+void	zx_fillrect(struct rasops_info *, int, int, int, int, uint32_t, int);
 int	zx_intr(void *);
 void	zx_prom(void *);
 
-int	zx_putchar(void *, int, int, u_int, long);
+int	zx_putchar(void *, int, int, u_int, uint32_t);
 int	zx_copycols(void *, int, int, int, int);
-int	zx_erasecols(void *, int, int, int, long);
+int	zx_erasecols(void *, int, int, int, uint32_t);
 int	zx_copyrows(void *, int, int, int);
-int	zx_eraserows(void *, int, int, long);
+int	zx_eraserows(void *, int, int, uint32_t);
 int	zx_do_cursor(struct rasops_info *);
 
 struct cfattach zx_ca = {
@@ -564,7 +564,7 @@ zx_burner(void *v, u_int on, u_int flags)
 }
 
 void
-zx_fillrect(struct rasops_info *ri, int x, int y, int w, int h, long attr,
+zx_fillrect(struct rasops_info *ri, int x, int y, int w, int h, uint32_t attr,
 	    int rop)
 {
 	struct zx_softc *sc;
@@ -641,7 +641,7 @@ zx_do_cursor(struct rasops_info *ri)
 }
 
 int
-zx_erasecols(void *cookie, int row, int col, int num, long attr)
+zx_erasecols(void *cookie, int row, int col, int num, uint32_t attr)
 {
 	struct rasops_info *ri;
 
@@ -653,7 +653,7 @@ zx_erasecols(void *cookie, int row, int col, int num, long attr)
 }
 
 int
-zx_eraserows(void *cookie, int row, int num, long attr)
+zx_eraserows(void *cookie, int row, int num, uint32_t attr)
 {
 	struct rasops_info *ri;
 	struct zx_softc *sc;
@@ -709,7 +709,7 @@ zx_copycols(void *cookie, int row, int src, int dst, int num)
 }
 
 int
-zx_putchar(void *cookie, int row, int col, u_int uc, long attr)
+zx_putchar(void *cookie, int row, int col, u_int uc, uint32_t attr)
 {
 	struct rasops_info *ri;
 	struct zx_softc *sc;

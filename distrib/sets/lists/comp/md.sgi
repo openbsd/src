@@ -47,11 +47,9 @@
 ./usr/include/mips64/setjmp.h
 ./usr/include/mips64/signal.h
 ./usr/include/mips64/spinlock.h
-./usr/include/mips64/stdarg.h
 ./usr/include/mips64/sysarch.h
 ./usr/include/mips64/tcb.h
 ./usr/include/mips64/trap.h
-./usr/include/mips64/varargs.h
 ./usr/include/mips64/vmparam.h
 ./usr/include/sgi
 ./usr/include/sgi/_float.h
@@ -99,11 +97,10 @@
 ./usr/include/sgi/setjmp.h
 ./usr/include/sgi/signal.h
 ./usr/include/sgi/spinlock.h
-./usr/include/sgi/stdarg.h
 ./usr/include/sgi/sysarch.h
 ./usr/include/sgi/tcb.h
+./usr/include/sgi/timetc.h
 ./usr/include/sgi/trap.h
-./usr/include/sgi/varargs.h
 ./usr/include/sgi/vmparam.h
 ./usr/include/sgi/z8530var.h
 ./usr/include/unwind.h

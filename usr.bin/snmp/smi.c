@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.7 2020/01/17 09:52:44 martijn Exp $	*/
+/*	$OpenBSD: smi.c,v 1.9 2020/05/31 20:38:28 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -537,7 +537,6 @@ smi_oid2string(struct ber_oid *o, char *buf, size_t len,
 	bzero(buf, len);
 	bzero(&key, sizeof(key));
 	bcopy(o, &key.o_id, sizeof(struct ber_oid));
-	key.o_flags |= OID_KEY;		/* do not match wildcards */
 
 	for (i = 0; i < o->bo_n; i++) {
 		key.o_oidlen = i + 1;
@@ -550,7 +549,7 @@ smi_oid2string(struct ber_oid *o, char *buf, size_t len,
 					continue;
 			}
 		} else
-			snprintf(str, sizeof(str), "%d", key.o_oid[i]);
+			snprintf(str, sizeof(str), "%u", key.o_oid[i]);
 		if (*buf != '\0' || i == 0)
 			strlcat(buf, ".", len);
 		strlcat(buf, str, len);
@@ -573,12 +572,6 @@ smi_mibtree(struct oid *oids)
 			continue;
 		}
 		decl = RB_FIND(oidtree, &smi_oidtree, oid);
-		decl->o_flags = oid->o_flags;
-		decl->o_get = oid->o_get;
-		decl->o_set = oid->o_set;
-		decl->o_table = oid->o_table;
-		decl->o_val = oid->o_val;
-		decl->o_data = oid->o_data;
 	}
 }
 
@@ -593,28 +586,15 @@ smi_findkey(char *name)
 }
 
 struct oid *
-smi_foreach(struct oid *oid, u_int flags)
+smi_foreach(struct oid *oid)
 {
 	/*
 	 * Traverse the tree of MIBs with the option to check
 	 * for specific OID flags.
 	 */
-	if (oid == NULL) {
-		oid = RB_MIN(oidtree, &smi_oidtree);
-		if (oid == NULL)
-			return (NULL);
-		if (flags == 0 || (oid->o_flags & flags))
-			return (oid);
-	}
-	for (;;) {
-		oid = RB_NEXT(oidtree, &smi_oidtree, oid);
-		if (oid == NULL)
-			break;
-		if (flags == 0 || (oid->o_flags & flags))
-			return (oid);
-	}
-
-	return (oid);
+	if (oid == NULL)
+		return RB_MIN(oidtree, &smi_oidtree);
+	return RB_NEXT(oidtree, &smi_oidtree, oid);
 }
 
 int
@@ -626,17 +606,6 @@ smi_oid_cmp(struct oid *a, struct oid *b)
 		if (a->o_oid[i] != b->o_oid[i])
 			return (a->o_oid[i] - b->o_oid[i]);
 	}
-
-	/*
-	 * Return success if the matched object is a table
-	 * or a MIB registered by a subagent
-	 * (it will match any sub-elements)
-	 */
-	if ((b->o_flags & OID_TABLE ||
-	    b->o_flags & OID_REGISTERED) &&
-	    (a->o_flags & OID_KEY) == 0 &&
-	    (a->o_oidlen > b->o_oidlen))
-		return (0);
 
 	return (a->o_oidlen - b->o_oidlen);
 }

@@ -1,5 +1,5 @@
-.\"	$OpenBSD: PKCS7_sign.3,v 1.10 2019/06/10 14:58:48 schwarze Exp $
-.\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
+.\" $OpenBSD: PKCS7_sign.3,v 1.13 2020/06/10 11:43:08 schwarze Exp $
+.\" full merge up to: OpenSSL df75c2bf Dec 9 01:02:36 2018 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2002, 2003, 2006-2009, 2015 The OpenSSL Project.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 10 2019 $
+.Dd $Mdocdate: June 10 2020 $
 .Dt PKCS7_SIGN 3
 .Os
 .Sh NAME
@@ -166,11 +166,12 @@ properly finalize the
 .Vt PKCS7
 structure will give unpredictable results.
 .Pp
-Several functions, including
+Several functions including
+.Xr PKCS7_final 3 ,
 .Xr SMIME_write_PKCS7 3 ,
-.Xr i2d_PKCS7_bio_stream 3 ,
-and
 .Xr PEM_write_bio_PKCS7_stream 3 ,
+and
+.Xr i2d_PKCS7_bio_stream 3
 finalize the structure.
 Alternatively finalization can be performed by obtaining the streaming
 ASN.1
@@ -195,8 +196,10 @@ if the
 .Dv PKCS7_PARTIAL
 flag is set.
 One or more signers can be added using the function
-.Xr PKCS7_sign_add_signer 3 .
-.Fn PKCS7_final
+.Xr PKCS7_sign_add_signer 3
+and attributes can be added using the functions described in
+.Xr PKCS7_add_attribute 3 .
+.Xr PKCS7_final 3
 must also be called to finalize the structure if streaming is not
 enabled.
 Alternative signing digests can also be specified using this method.
@@ -227,7 +230,10 @@ if an error occurred.
 The error can be obtained from
 .Xr ERR_get_error 3 .
 .Sh SEE ALSO
+.Xr PKCS7_add_attribute 3 ,
 .Xr PKCS7_encrypt 3 ,
+.Xr PKCS7_final 3 ,
+.Xr PKCS7_get_signer_info 3 ,
 .Xr PKCS7_new 3 ,
 .Xr PKCS7_sign_add_signer 3 ,
 .Xr PKCS7_verify 3

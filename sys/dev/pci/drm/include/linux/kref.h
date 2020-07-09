@@ -1,4 +1,4 @@
-/*	$OpenBSD: kref.h,v 1.1 2019/04/14 10:14:53 jsg Exp $	*/
+/*	$OpenBSD: kref.h,v 1.4 2020/06/17 02:58:15 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -32,7 +32,7 @@ struct kref {
 static inline void
 kref_init(struct kref *ref)
 {
-	ref->refcount = 1;
+	atomic_set(&ref->refcount, 1);
 }
 
 static inline unsigned int
@@ -68,13 +68,6 @@ kref_put(struct kref *ref, void (*release)(struct kref *ref))
 	return 0;
 }
 
-static inline void
-kref_sub(struct kref *ref, unsigned int v, void (*release)(struct kref *ref))
-{
-	if (atomic_sub_int_nv(&ref->refcount, v) == 0)
-		release(ref);
-}
-
 static inline int
 kref_put_mutex(struct kref *kref, void (*release)(struct kref *kref),
     struct rwlock *lock)
@@ -86,6 +79,23 @@ kref_put_mutex(struct kref *kref, void (*release)(struct kref *kref),
 			return 1;
 		}
 		rw_exit_write(lock);
+		return 0;
+	}
+
+	return 0;
+}
+
+static inline int
+kref_put_lock(struct kref *kref, void (*release)(struct kref *kref),
+    struct mutex *lock)
+{
+	if (!atomic_add_unless(&kref->refcount, -1, 1)) {
+		mtx_enter(lock);
+		if (likely(atomic_dec_and_test(&kref->refcount))) {
+			release(kref);
+			return 1;
+		}
+		mtx_leave(lock);
 		return 0;
 	}
 

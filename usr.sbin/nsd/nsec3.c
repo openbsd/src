@@ -119,6 +119,7 @@ nsec3_hash_and_store(zone_type* zone, const dname_type* dname, uint8_t* store)
 
 	detect_nsec3_params(zone->nsec3_param, &nsec3_salt,
 		&nsec3_saltlength, &nsec3_iterations);
+	assert(nsec3_iterations >= 0 && nsec3_iterations <= 65536);
 	iterated_hash((unsigned char*)store, nsec3_salt, nsec3_saltlength,
 		dname_name(dname), dname->name_size, nsec3_iterations);
 }

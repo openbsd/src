@@ -1,4 +1,4 @@
-/* $OpenBSD: ssdfb.c,v 1.10 2019/02/22 09:39:33 patrick Exp $ */
+/* $OpenBSD: ssdfb.c,v 1.11 2020/05/25 09:55:48 jsg Exp $ */
 /*
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
  *
@@ -129,18 +129,18 @@ void	 ssdfb_set_range(struct ssdfb_softc *, uint8_t, uint8_t,
 int	 ssdfb_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	 ssdfb_mmap(void *, off_t, int);
 int	 ssdfb_alloc_screen(void *, const struct wsscreen_descr *, void **,
-	    int *, int *, long *);
+	    int *, int *, uint32_t *);
 void	 ssdfb_free_screen(void *, void *);
 int	 ssdfb_show_screen(void *, void *, int, void (*cb) (void *, int, int),
 	    void *);
 int	 ssdfb_list_font(void *, struct wsdisplay_font *);
 int	 ssdfb_load_font(void *, void *, struct wsdisplay_font *);
 
-int	 ssdfb_putchar(void *, int, int, u_int, long);
+int	 ssdfb_putchar(void *, int, int, u_int, uint32_t);
 int	 ssdfb_copycols(void *, int, int, int, int);
-int	 ssdfb_erasecols(void *, int, int, int, long);
+int	 ssdfb_erasecols(void *, int, int, int, uint32_t);
 int	 ssdfb_copyrows(void *, int, int, int);
-int	 ssdfb_eraserows(void *, int, int, long);
+int	 ssdfb_eraserows(void *, int, int, uint32_t);
 int	 ssdfb_do_cursor(struct rasops_info *);
 
 struct cfattach ssdfb_i2c_ca = {
@@ -696,7 +696,7 @@ ssdfb_mmap(void *v, off_t off, int prot)
 
 int
 ssdfb_alloc_screen(void *v, const struct wsscreen_descr *descr,
-    void **cookiep, int *curxp, int *curyp, long *attrp)
+    void **cookiep, int *curxp, int *curyp, uint32_t *attrp)
 {
 	struct ssdfb_softc	*sc = v;
 	struct rasops_info	*ri = &sc->sc_rinfo;
@@ -742,7 +742,7 @@ ssdfb_list_font(void *v, struct wsdisplay_font *font)
 }
 
 int
-ssdfb_putchar(void *cookie, int row, int col, u_int uc, long attr)
+ssdfb_putchar(void *cookie, int row, int col, u_int uc, uint32_t attr)
 {
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct ssdfb_softc *sc = ri->ri_hw;
@@ -772,7 +772,7 @@ ssdfb_copycols(void *cookie, int row, int src, int dst, int num)
 }
 
 int
-ssdfb_erasecols(void *cookie, int row, int col, int num, long attr)
+ssdfb_erasecols(void *cookie, int row, int col, int num, uint32_t attr)
 {
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct ssdfb_softc *sc = ri->ri_hw;
@@ -800,7 +800,7 @@ ssdfb_copyrows(void *cookie, int src, int dst, int num)
 }
 
 int
-ssdfb_eraserows(void *cookie, int row, int num, long attr)
+ssdfb_eraserows(void *cookie, int row, int num, uint32_t attr)
 {
 	struct rasops_info *ri = (struct rasops_info *)cookie;
 	struct ssdfb_softc *sc = ri->ri_hw;

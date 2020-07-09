@@ -1,4 +1,4 @@
-/* $OpenBSD: job.c,v 1.57 2020/03/24 08:09:44 nicm Exp $ */
+/* $OpenBSD: job.c,v 1.58 2020/05/16 15:24:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
 
 #include <fcntl.h>
 #include <paths.h>
@@ -285,6 +286,12 @@ job_check_died(pid_t pid, int status)
 	}
 	if (job == NULL)
 		return;
+	if (WIFSTOPPED(status)) {
+		if (WSTOPSIG(status) == SIGTTIN || WSTOPSIG(status) == SIGTTOU)
+			return;
+		killpg(job->pid, SIGCONT);
+		return;
+	}
 	log_debug("job died %p: %s, pid %ld", job, job->cmd, (long) job->pid);
 
 	job->status = status;

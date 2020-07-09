@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.205 2020/03/13 10:07:01 anton Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.206 2020/05/10 00:56:06 guenther Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -679,7 +679,7 @@ do {									\
 	PR_UNLOCK(pr);							\
 									\
 	if (((pr)->ps_flags & PS_ZOMBIE) == 0) {			\
-		struct timeval tv;					\
+		struct timeval __tv;					\
 									\
 		(kp)->p_uvalid = 1;					\
 									\
@@ -699,9 +699,9 @@ do {									\
 		(kp)->p_uru_nivcsw = (p)->p_ru.ru_nivcsw;		\
 									\
 		timeradd(&(pr)->ps_cru.ru_utime,			\
-			 &(pr)->ps_cru.ru_stime, &tv);			\
-		(kp)->p_uctime_sec = tv.tv_sec;				\
-		(kp)->p_uctime_usec = tv.tv_usec;			\
+			 &(pr)->ps_cru.ru_stime, &__tv);		\
+		(kp)->p_uctime_sec = __tv.tv_sec;			\
+		(kp)->p_uctime_usec = __tv.tv_usec;			\
 	}								\
 									\
 	(kp)->p_cpuid = KI_NOCPU;					\

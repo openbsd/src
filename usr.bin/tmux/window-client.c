@@ -1,4 +1,4 @@
-/* $OpenBSD: window-client.c,v 1.26 2020/01/28 08:06:11 nicm Exp $ */
+/* $OpenBSD: window-client.c,v 1.29 2020/06/01 09:43:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -37,8 +37,7 @@ static void		 window_client_key(struct window_mode_entry *,
 #define WINDOW_CLIENT_DEFAULT_COMMAND "detach-client -t '%%'"
 
 #define WINDOW_CLIENT_DEFAULT_FORMAT \
-	"session #{session_name} " \
-	"(#{client_width}x#{client_height}, #{t:client_activity})"
+	"#{t/p:client_activity}: session #{session_name}"
 
 static const struct menu_item window_client_menu_items[] = {
 	{ "Detach", 'd', NULL },
@@ -167,7 +166,7 @@ window_client_build(void *modedata, struct mode_tree_sort_criteria *sort_crit,
 	data->item_size = 0;
 
 	TAILQ_FOREACH(c, &clients, entry) {
-		if (c->session == NULL || (c->flags & (CLIENT_DETACHING)))
+		if (c->session == NULL || (c->flags & CLIENT_UNATTACHEDFLAGS))
 			continue;
 
 		item = window_client_add_item(data);
@@ -272,7 +271,7 @@ window_client_init(struct window_mode_entry *wme,
 		data->command = xstrdup(args->argv[0]);
 
 	data->data = mode_tree_start(wp, args, window_client_build,
-	    window_client_draw, NULL, window_client_menu, data,
+	    window_client_draw, NULL, window_client_menu, NULL, data,
 	    window_client_menu_items, window_client_sort_list,
 	    nitems(window_client_sort_list), &s);
 	mode_tree_zoom(data->data, args);

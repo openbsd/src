@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: checknewfs,v 1.7 2019/02/13 11:50:43 bluhm Exp $
+#	$OpenBSD: checknewfs,v 1.8 2020/05/18 06:20:44 otto Exp $
 # Written by Otto Moerbeek, 2007,  Public domain
 
 
@@ -20,7 +20,7 @@ dotest() {
 	dd if=/dev/random of=$image bs=512 count=$1 2>/dev/null &&
 	vnconfig vnd0 $image &&
 	disklabel -w vnd0 $2 &&
-	newfs $3 /dev/rvnd0a
+	newfs -O 1 $3 /dev/rvnd0a
 	if [ $? != 0 ]; then
 		ret=$(($ret + 1))
 		echo TEST $1 $2 \"$3\" failed

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.185 2020/02/06 21:06:15 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.190 2020/07/05 20:17:25 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -282,18 +282,17 @@ struct scsi_link {
 	SLIST_ENTRY(scsi_link)	bus_list;
 
 	u_int		state;
-#define SDEV_S_WAITING		(1<<0)
 #define SDEV_S_DYING		(1<<1)
 
-	u_int8_t scsibus;		/* the Nth scsibus */
 	u_int8_t luns;
 	u_int16_t target;		/* targ of this dev */
 	u_int16_t lun;			/* lun of this dev */
 	u_int16_t openings;		/* available operations per lun */
 	u_int64_t port_wwn;		/* world wide name of port */
 	u_int64_t node_wwn;		/* world wide name of node */
-	u_int16_t adapter_target;	/* what are we on the scsi bus */
-	u_int16_t adapter_buswidth;	/* 8 (regular) or 16 (wide). (0 becomes 8) */
+	u_int16_t adapter_target;	/* what are we on the scsi bus (don't probe!) */
+#define	SDEV_NO_ADAPTER_TARGET	0xffff	/* we are not a target on the scsi bus */
+	u_int16_t adapter_buswidth;	/* number of targets to probe (0 becomes 8) */
 	u_int16_t flags;		/* flags that all devices have */
 #define	SDEV_REMOVABLE		0x0001	/* media is removable */
 #define	SDEV_MEDIA_LOADED	0x0002	/* device figures are still valid */
@@ -302,7 +301,6 @@ struct scsi_link {
 #define	SDEV_DBX		0x00f0	/* debugging flags (scsi_debug.h) */
 #define	SDEV_EJECTING		0x0100	/* eject on device close */
 #define	SDEV_ATAPI		0x0200	/* device is ATAPI */
-#define	SDEV_2NDBUS		0x0400	/* device is a 'second' bus device */
 #define SDEV_UMASS		0x0800	/* device is UMASS SCSI */
 #define SDEV_VIRTUAL		0x1000	/* device is virtualised on the hba */
 #define SDEV_OWN_IOPL		0x2000	/* scsibus */
@@ -370,7 +368,6 @@ struct scsibus_softc {
  */
 struct scsi_attach_args {
 	struct scsi_link *sa_sc_link;
-	struct scsi_inquiry_data *sa_inqbuf;
 };
 
 /*

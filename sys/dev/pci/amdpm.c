@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdpm.c,v 1.34 2020/01/09 14:35:19 mpi Exp $	*/
+/*	$OpenBSD: amdpm.c,v 1.36 2020/07/06 13:33:09 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -59,7 +59,6 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-#include <dev/rndvar.h>
 #include <dev/i2c/i2cvar.h>
 
 #ifdef AMDPM_DEBUG
@@ -83,7 +82,9 @@ static struct timecounter amdpm_timecounter = {
 	0xffffff,		/* counter_mask */
 	AMDPM_FREQUENCY,	/* frequency */
 	"AMDPM",		/* name */
-	1000			/* quality */
+	1000,			/* quality */
+	NULL,			/* private bits */
+	0,			/* expose to user */
 };
 
 #define	AMDPM_CONFREG	0x40

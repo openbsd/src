@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dd.1,v 1.37 2020/02/14 20:13:10 schwarze Exp $
+.\"	$OpenBSD: dd.1,v 1.38 2020/05/17 17:04:29 deraadt Exp $
 .\"	$NetBSD: dd.1,v 1.5 1995/03/21 09:04:04 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)dd.1	8.2 (Berkeley) 1/13/94
 .\"
-.Dd $Mdocdate: February 14 2020 $
+.Dd $Mdocdate: May 17 2020 $
 .Dt DD 1
 .Os
 .Sh NAME
@@ -323,7 +323,7 @@ Write an
 .Ox
 floppy image to a floppy disk:
 .Pp
-.Dl # dd if=floppy34.fs of=/dev/rfd0c bs=32k
+.Dl # dd if=floppy67.img of=/dev/rfd0c bs=32k
 .Pp
 Create an ISO-9660 image of a CD-ROM:
 .Pp

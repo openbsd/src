@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.22 2020/03/22 08:59:22 martijn Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.27 2020/06/30 19:26:40 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -111,10 +111,10 @@ main(int argc, char *argv[])
 	const EVP_CIPHER *cipher = NULL;
 	struct snmp_sec *sec;
 	char *user = NULL;
-	enum usm_key_level authkeylevel;
+	enum usm_key_level authkeylevel = USM_KEY_UNSET;
 	char *authkey = NULL;
 	size_t authkeylen = 0;
-	enum usm_key_level privkeylevel;
+	enum usm_key_level privkeylevel = USM_KEY_UNSET;
 	char *privkey = NULL;
 	size_t privkeylen = 0;
 	int seclevel = SNMP_MSGFLAG_REPORT;
@@ -122,7 +122,7 @@ main(int argc, char *argv[])
 	char *ctxengineid = NULL, *secengineid = NULL;
 	size_t ctxengineidlen, secengineidlen;
 	int zflag = 0;
-	long long boots, time;
+	long long boots = 0, time = 0;
 	char optstr[BUFSIZ];
 	const char *errstr;
 	char *strtolp;
@@ -987,7 +987,7 @@ snmpc_df(int argc, char *argv[])
 				snprintf(df[i].avail, sizeof(df[i].avail),
 				    "%lld", (units * (size - used)) / 1024);
 			len = (int) strlen(df[i].avail);
-			if (len > usedlen)
+			if (len > availlen)
 				availlen = len;
 			if (size == 0)
 				strlcpy(df[i].proc, "0%", sizeof(df[i].proc));
@@ -1034,7 +1034,7 @@ snmpc_mibtree(int argc, char *argv[])
 	struct oid *oid;
 	char buf[BUFSIZ];
 
-	for (oid = NULL; (oid = smi_foreach(oid, 0)) != NULL;) {
+	for (oid = NULL; (oid = smi_foreach(oid)) != NULL;) {
 		smi_oid2string(&oid->o_id, buf, sizeof(buf), oid_lookup);
 		printf("%s\n", buf);
 	}
@@ -1098,7 +1098,7 @@ snmpc_printerror(enum snmp_error error, struct ber_element *varbind,
 
 	if (index >= 1) {
 		/* Only print if the index is in the reply */
-		for (i = 1; varbind != NULL && i <= index;
+		for (i = 1; varbind != NULL && i < index;
 		    varbind = varbind->be_next)
 			i++;
 		if (varbind != NULL &&
@@ -1237,7 +1237,7 @@ snmpc_parseagent(char *agent, char *defaultport)
 			port = defaultport;
 		error = getaddrinfo(hostname, port, &hints, &ai0);
 		if (error) {
-			if (error != EAI_NODATA && port != defaultport)
+			if (error != EAI_NODATA || port == defaultport)
 				errx(1, "%s", gai_strerror(error));
 			*--port = ':';
 			error = getaddrinfo(hostname, defaultport, &hints,
@@ -1252,6 +1252,8 @@ snmpc_parseagent(char *agent, char *defaultport)
 			    connect(s, (struct sockaddr *)ai->ai_addr,
 			    ai->ai_addrlen) != -1)
 				break;
+			close(s);
+			s = -1;
 		}
 	} else {
 		s = socket(AF_UNIX, SOCK_STREAM, 0);

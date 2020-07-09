@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100var.h,v 1.10 2013/10/18 22:06:41 miod Exp $ */
+/* $OpenBSD: wsemul_vt100var.h,v 1.11 2020/05/25 09:55:49 jsg Exp $ */
 /* $NetBSD: wsemul_vt100var.h,v 1.5 2000/04/28 21:56:17 mycroft Exp $ */
 
 /*
@@ -35,9 +35,9 @@ struct wsemul_vt100_emuldata {
 	void *emulcookie;
 	int scrcapabilities;
 	u_int nrows, ncols, crow, ccol;
-	long defattr;			/* default attribute */
+	uint32_t defattr;		/* default attribute */
 
-	long kernattr;			/* attribute for kernel output */
+	uint32_t kernattr;		/* attribute for kernel output */
 	void *cbcookie;
 #ifdef DIAGNOSTIC
 	int console;
@@ -55,7 +55,7 @@ struct wsemul_vt100_emuldata {
 #define VTFL_NATCHARSET	0x080	/* national replacement charset mode */
 #define VTFL_SAVEDCURS	0x100	/* we have a saved cursor state */
 #define VTFL_UTF8	0x200	/* utf-8 character set */
-	long curattr, bkgdattr;		/* currently used attribute */
+	uint32_t curattr, bkgdattr;	/* currently used attribute */
 	int attrflags, fgcol, bgcol;	/* properties of curattr */
 	u_int scrreg_startrow;
 	u_int scrreg_nrows;
@@ -84,7 +84,7 @@ struct wsemul_vt100_emuldata {
 #define DCSTYPE_TABRESTORE 1 /* DCS2$t */
 
 	u_int savedcursor_row, savedcursor_col;
-	long savedattr, savedbkgdattr;
+	uint32_t savedattr, savedbkgdattr;
 	int savedattrflags, savedfgcol, savedbgcol;
 	int savedchartab0, savedchartab1;
 	u_int *savedchartab_G[4];

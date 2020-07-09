@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxsb.c,v 1.35 2018/04/28 15:44:59 jasper Exp $	*/
+/*	$OpenBSD: glxsb.c,v 1.36 2020/05/29 04:42:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
@@ -33,7 +33,6 @@
 #include <machine/bus.h>
 #include <machine/cpufunc.h>
 
-#include <dev/rndvar.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 

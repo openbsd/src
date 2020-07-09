@@ -1,4 +1,3 @@
-/*	$OpenBSD: drm_cache.h,v 1.1 2019/04/14 10:14:52 jsg Exp $	*/
 /**************************************************************************
  *
  * Copyright 2009 Red Hat Inc.
@@ -35,17 +34,20 @@
 #define _DRM_CACHE_H_
 
 #include <linux/scatterlist.h>
-#include <uvm/uvm_extern.h>
 
 void drm_clflush_pages(struct vm_page *pages[], unsigned long num_pages);
+void drm_clflush_sg(struct sg_table *st);
+void drm_clflush_virt_range(void *addr, unsigned long length);
+bool drm_need_swiotlb(int dma_bits);
+
 
 static inline bool drm_arch_can_wc_memory(void)
 {
-#if defined(__powerpc__)
+#if defined(CONFIG_PPC) && !defined(CONFIG_NOT_COHERENT_CACHE)
 	return false;
-#elif defined(__mips__)
+#elif defined(CONFIG_MIPS) && defined(CONFIG_CPU_LOONGSON64)
 	return false;
-#elif defined(__arm__) || defined(__arm64__)
+#elif defined(CONFIG_ARM) || defined(CONFIG_ARM64)
 	/*
 	 * The DRM driver stack is designed to work with cache coherent devices
 	 * only, but permits an optimization to be enabled in some cases, where

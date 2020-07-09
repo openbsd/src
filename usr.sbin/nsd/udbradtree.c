@@ -266,7 +266,7 @@ static int udb_radnode_array_grow(udb_base* udb, udb_ptr* n, size_t want)
 		RADARRAY(&a)->array[i].len = lookup_len(n, i);
 	}
 	memmove(&RADARRAY(&a)->array[ns], lookup_string(n, 0),
-		lookup(n)->len * lookup(n)->str_cap);
+		((size_t)lookup(n)->len) * ((size_t)lookup(n)->str_cap));
 	udb_radarray_zero_ptrs(udb, n);
 	udb_rel_ptr_free_space(&RADNODE(n)->lookup, udb, size_of_lookup(n));
 	udb_rptr_set_ptr(&RADNODE(n)->lookup, udb, &a);
@@ -361,7 +361,7 @@ static int udb_radnode_array_space(udb_base* udb, udb_ptr* n, uint8_t byte,
 				lookup_node(n, i+need)->pidx = i+need;
 		}
 		memmove(lookup_string(n, need), lookup_string(n, 0),
-			lookup(n)->len*lookup(n)->str_cap);
+			((size_t)lookup(n)->len)*((size_t)lookup(n)->str_cap));
 		/* zero the first */
 		for(i = 0; i < (int)need; i++) {
 			udb_rptr_zero(&lookup(n)->array[i].node, udb);
@@ -1257,7 +1257,7 @@ int udb_radix_find_less_equal(udb_base* udb, udb_ptr* rt, uint8_t* k,
 			/* must match additional string */
 			if(pos+lookup_len(&n, byte) > len) {
 				/* the additional string is longer than key*/
-				if( (r=memcmp(&k[pos], lookup_string(&n, byte),
+				if( (memcmp(&k[pos], lookup_string(&n, byte),
 					len-pos)) <= 0) {
 					/* and the key is before this node */
 					udb_ptr_set_rptr(result, udb,

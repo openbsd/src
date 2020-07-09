@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.131 2020/04/07 13:27:51 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.141 2020/07/04 08:33:43 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -57,6 +57,8 @@
 #include <sys/timeout.h>
 #include <sys/wait.h>
 
+void	kqueue_terminate(struct proc *p, struct kqueue *);
+void	kqueue_free(struct kqueue *);
 void	kqueue_init(void);
 void	KQREF(struct kqueue *);
 void	KQRELE(struct kqueue *);
@@ -156,6 +158,7 @@ const struct filterops *const sysfilt_ops[] = {
 	&sig_filtops,			/* EVFILT_SIGNAL */
 	&timer_filtops,			/* EVFILT_TIMER */
 	&file_filtops,			/* EVFILT_DEVICE */
+	&file_filtops,			/* EVFILT_EXCEPT */
 };
 
 void
@@ -181,6 +184,12 @@ KQRELE(struct kqueue *kq)
 		fdpunlock(fdp);
 	}
 
+	kqueue_free(kq);
+}
+
+void
+kqueue_free(struct kqueue *kq)
+{
 	free(kq->kq_knlist, M_KEVENT, kq->kq_knlistsize *
 	    sizeof(struct knlist));
 	hashfree(kq->kq_knhash, KN_HASHSIZE, M_KEVENT);
@@ -238,6 +247,7 @@ int
 filt_procattach(struct knote *kn)
 {
 	struct process *pr;
+	int s;
 
 	if ((curproc->p_p->ps_flags & PS_PLEDGE) &&
 	    (curproc->p_p->ps_pledge & PLEDGE_PROC) == 0)
@@ -266,8 +276,9 @@ filt_procattach(struct knote *kn)
 		kn->kn_flags &= ~EV_FLAG1;
 	}
 
-	/* XXX lock the proc here while adding to the list? */
+	s = splhigh();
 	klist_insert(&pr->ps_klist, kn);
+	splx(s);
 
 	return (0);
 }
@@ -284,12 +295,14 @@ void
 filt_procdetach(struct knote *kn)
 {
 	struct process *pr = kn->kn_ptr.p_process;
+	int s;
 
 	if (kn->kn_status & KN_DETACHED)
 		return;
 
-	/* XXX locking?  this might modify another process. */
+	s = splhigh();
 	klist_remove(&pr->ps_klist, kn);
+	splx(s);
 }
 
 int
@@ -318,10 +331,10 @@ filt_proc(struct knote *kn, long hint)
 
 		s = splhigh();
 		kn->kn_status |= KN_DETACHED;
-		splx(s);
 		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
 		kn->kn_data = W_EXITCODE(pr->ps_xexit, pr->ps_xsig);
 		klist_remove(&pr->ps_klist, kn);
+		splx(s);
 		return (1);
 	}
 
@@ -475,6 +488,8 @@ static int
 filt_dead(struct knote *kn, long hint)
 {
 	kn->kn_flags |= (EV_EOF | EV_ONESHOT);
+	if (kn->kn_flags & __EV_POLL)
+		kn->kn_flags |= __EV_HUP;
 	kn->kn_data = 0;
 	return (1);
 }
@@ -485,12 +500,26 @@ filt_deaddetach(struct knote *kn)
 	/* Nothing to do */
 }
 
-static const struct filterops dead_filtops = {
+const struct filterops dead_filtops = {
 	.f_flags	= FILTEROP_ISFD,
 	.f_attach	= NULL,
 	.f_detach	= filt_deaddetach,
 	.f_event	= filt_dead,
 };
+
+struct kqueue *
+kqueue_alloc(struct filedesc *fdp)
+{
+	struct kqueue *kq;
+
+	kq = pool_get(&kqueue_pool, PR_WAITOK | PR_ZERO);
+	kq->kq_refs = 1;
+	kq->kq_fdp = fdp;
+	TAILQ_INIT(&kq->kq_head);
+	task_set(&kq->kq_task, kqueue_task, kq);
+
+	return (kq);
+}
 
 int
 sys_kqueue(struct proc *p, void *v, register_t *retval)
@@ -500,11 +529,7 @@ sys_kqueue(struct proc *p, void *v, register_t *retval)
 	struct file *fp;
 	int fd, error;
 
-	kq = pool_get(&kqueue_pool, PR_WAITOK | PR_ZERO);
-	kq->kq_refs = 1;
-	kq->kq_fdp = fdp;
-	TAILQ_INIT(&kq->kq_head);
-	task_set(&kq->kq_task, kqueue_task, kq);
+	kq = kqueue_alloc(fdp);
 
 	fdplock(fdp);
 	error = falloc(p, &fp, &fd);
@@ -1069,13 +1094,12 @@ kqueue_stat(struct file *fp, struct stat *st, struct proc *p)
 	return (0);
 }
 
-int
-kqueue_close(struct file *fp, struct proc *p)
+void
+kqueue_terminate(struct proc *p, struct kqueue *kq)
 {
-	struct kqueue *kq = fp->f_data;
 	int i;
 
-	KERNEL_LOCK();
+	KERNEL_ASSERT_LOCKED();
 
 	for (i = 0; i < kq->kq_knlistsize; i++)
 		knote_remove(p, &kq->kq_knlist[i]);
@@ -1083,13 +1107,22 @@ kqueue_close(struct file *fp, struct proc *p)
 		for (i = 0; i < kq->kq_knhashmask + 1; i++)
 			knote_remove(p, &kq->kq_knhash[i]);
 	}
-	fp->f_data = NULL;
-
 	kq->kq_state |= KQ_DYING;
 	kqueue_wakeup(kq);
 
 	KASSERT(klist_empty(&kq->kq_sel.si_note));
 	task_del(systq, &kq->kq_task);
+
+}
+
+int
+kqueue_close(struct file *fp, struct proc *p)
+{
+	struct kqueue *kq = fp->f_data;
+
+	KERNEL_LOCK();
+	kqueue_terminate(p, kq);
+	fp->f_data = NULL;
 
 	KQRELE(kq);
 
@@ -1303,10 +1336,12 @@ knote_processexit(struct proc *p)
 {
 	struct process *pr = p->p_p;
 
+	KASSERT(p == curproc);
+
 	KNOTE(&pr->ps_klist, NOTE_EXIT);
 
 	/* remove other knotes hanging off the process */
-	knote_remove(p, &pr->ps_klist.kl_list);
+	klist_invalidate(&pr->ps_klist);
 }
 
 void
@@ -1413,6 +1448,7 @@ void
 klist_invalidate(struct klist *list)
 {
 	struct knote *kn;
+	struct proc *p = curproc;
 	int s;
 
 	/*
@@ -1427,10 +1463,15 @@ klist_invalidate(struct klist *list)
 			continue;
 		splx(s);
 		kn->kn_fop->f_detach(kn);
-		kn->kn_fop = &dead_filtops;
-		knote_activate(kn);
-		s = splhigh();
-		knote_release(kn);
+		if (kn->kn_fop->f_flags & FILTEROP_ISFD) {
+			kn->kn_fop = &dead_filtops;
+			knote_activate(kn);
+			s = splhigh();
+			knote_release(kn);
+		} else {
+			knote_drop(kn, p);
+			s = splhigh();
+		}
 	}
 	splx(s);
 }

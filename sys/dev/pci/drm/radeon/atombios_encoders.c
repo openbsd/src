@@ -23,15 +23,19 @@
  * Authors: Dave Airlie
  *          Alex Deucher
  */
-#include <drm/drmP.h>
-#include <drm/drm_crtc_helper.h>
-#include <drm/radeon_drm.h>
-#include "radeon.h"
-#include "radeon_audio.h"
-#include "radeon_asic.h"
-#include "atom.h"
+
 #include <linux/backlight.h>
 #include <linux/dmi.h>
+#include <linux/pci.h>
+
+#include <drm/drm_crtc_helper.h>
+#include <drm/drm_file.h>
+#include <drm/radeon_drm.h>
+
+#include "atom.h"
+#include "radeon.h"
+#include "radeon_asic.h"
+#include "radeon_audio.h"
 
 extern int atom_debug;
 
@@ -214,13 +218,8 @@ void radeon_atom_backlight_init(struct radeon_encoder *radeon_encoder,
 	memset(&props, 0, sizeof(props));
 	props.max_brightness = RADEON_MAX_BL_LEVEL;
 	props.type = BACKLIGHT_RAW;
-#ifdef notyet
 	snprintf(bl_name, sizeof(bl_name),
 		 "radeon_bl%d", dev->primary->index);
-#else
-	snprintf(bl_name, sizeof(bl_name),
-		 "radeon_bl%d", 0);
-#endif
 	bd = backlight_device_register(bl_name, drm_connector->kdev,
 				       pdata, &radeon_atom_backlight_ops, &props);
 	if (IS_ERR(bd)) {
@@ -1886,11 +1885,10 @@ atombios_set_encoder_crtc_source(struct drm_encoder *encoder)
 			if (ASIC_IS_AVIVO(rdev))
 				args.v1.ucCRTC = radeon_crtc->crtc_id;
 			else {
-				if (radeon_encoder->encoder_id == ENCODER_OBJECT_ID_INTERNAL_DAC1) {
+				if (radeon_encoder->encoder_id == ENCODER_OBJECT_ID_INTERNAL_DAC1)
 					args.v1.ucCRTC = radeon_crtc->crtc_id;
-				} else {
+				else
 					args.v1.ucCRTC = radeon_crtc->crtc_id << 2;
-				}
 			}
 			switch (radeon_encoder->encoder_id) {
 			case ENCODER_OBJECT_ID_INTERNAL_TMDS1:
@@ -2235,9 +2233,9 @@ assigned:
 		DRM_ERROR("Got encoder index incorrect - returning 0\n");
 		return 0;
 	}
-	if (rdev->mode_info.active_encoders & (1 << enc_idx)) {
+	if (rdev->mode_info.active_encoders & (1 << enc_idx))
 		DRM_ERROR("chosen encoder in use %d\n", enc_idx);
-	}
+
 	rdev->mode_info.active_encoders |= (1 << enc_idx);
 	return enc_idx;
 }
@@ -2390,9 +2388,7 @@ radeon_atom_dac_detect(struct drm_encoder *encoder, struct drm_connector *connec
 {
 	struct drm_device *dev = encoder->dev;
 	struct radeon_device *rdev = dev->dev_private;
-#ifdef DRMDEBUG
 	struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
-#endif
 	struct radeon_connector *radeon_connector = to_radeon_connector(connector);
 	uint32_t bios_0_scratch;
 
@@ -2433,9 +2429,7 @@ radeon_atom_dig_detect(struct drm_encoder *encoder, struct drm_connector *connec
 {
 	struct drm_device *dev = encoder->dev;
 	struct radeon_device *rdev = dev->dev_private;
-#ifdef DRMDEBUG
 	struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
-#endif
 	struct radeon_connector *radeon_connector = to_radeon_connector(connector);
 	struct drm_encoder *ext_encoder = radeon_get_external_encoder(encoder);
 	u32 bios_0_scratch;

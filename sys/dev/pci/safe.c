@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe.c,v 1.43 2018/04/28 15:44:59 jasper Exp $	*/
+/*	$OpenBSD: safe.c,v 1.44 2020/05/29 04:42:25 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -46,7 +46,6 @@
 #include <crypto/sha1.h>
 #include <crypto/cryptodev.h>
 #include <crypto/cryptosoft.h>
-#include <dev/rndvar.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

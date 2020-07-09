@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.118 2020/02/19 01:31:38 cheloha Exp $	*/
+/*	$OpenBSD: ips.c,v 1.121 2020/06/27 17:28:58 krw Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -721,19 +721,17 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 	/* Attach SCSI bus */
 	if (sc->sc_nunits > 0)
 		sc->sc_scsi_link.openings = sc->sc_nccbs / sc->sc_nunits;
-	sc->sc_scsi_link.adapter_target = sc->sc_nunits;
+	sc->sc_scsi_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
 	sc->sc_scsi_link.adapter_buswidth = sc->sc_nunits;
 	sc->sc_scsi_link.adapter = &ips_switch;
 	sc->sc_scsi_link.adapter_softc = sc;
 	sc->sc_scsi_link.pool = &sc->sc_iopool;
 
-	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_scsi_link;
 	sc->sc_scsibus = (struct scsibus_softc *)config_found(self, &saa,
 	    scsiprint);
 
 	/* For each channel attach SCSI pass-through bus */
-	bzero(&saa, sizeof(saa));
 	for (i = 0; i < IPS_MAXCHANS; i++) {
 		struct ips_pt *pt;
 		struct scsi_link *link;
@@ -1564,7 +1562,7 @@ ips_error(struct ips_softc *sc, struct ips_ccb *ccb)
 			for (i = 0; i < dcdb->senselen; i++)
 				DPRINTF(IPS_D_ERR, (" %x", dcdb->sense[i]));
 		}
-	}		
+	}
 	DPRINTF(IPS_D_ERR, ("\n"));
 
 	switch (gsc) {

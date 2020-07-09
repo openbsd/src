@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.33 2020/04/19 17:05:55 jsing Exp $ */
+/* $OpenBSD: s_server.c,v 1.38 2020/05/23 13:00:30 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -300,6 +300,7 @@ sv_usage(void)
 	BIO_printf(bio_err, " -cipher arg   - play with 'openssl ciphers' to see what goes here\n");
 	BIO_printf(bio_err, " -serverpref   - Use server's cipher preferences\n");
 	BIO_printf(bio_err, " -quiet        - Inhibit printing of session and certificate information\n");
+	BIO_printf(bio_err, " -tls1_3       - Just talk TLSv1.3\n");
 	BIO_printf(bio_err, " -tls1_2       - Just talk TLSv1.2\n");
 	BIO_printf(bio_err, " -tls1_1       - Just talk TLSv1.1\n");
 	BIO_printf(bio_err, " -tls1         - Just talk TLSv1\n");
@@ -312,6 +313,7 @@ sv_usage(void)
 	BIO_printf(bio_err, " -no_tls1      - Just disable TLSv1\n");
 	BIO_printf(bio_err, " -no_tls1_1    - Just disable TLSv1.1\n");
 	BIO_printf(bio_err, " -no_tls1_2    - Just disable TLSv1.2\n");
+	BIO_printf(bio_err, " -no_tls1_3    - Just disable TLSv1.3\n");
 #ifndef OPENSSL_NO_DH
 	BIO_printf(bio_err, " -no_dhe       - Disable ephemeral DH\n");
 #endif
@@ -581,6 +583,7 @@ s_server_main(int argc, char *argv[])
 	const char *alpn_in = NULL;
 	const char *groups_in = NULL;
 	tlsextalpnctx alpn_ctx = { NULL, 0 };
+	uint16_t min_version = 0, max_version = 0;
 
 	if (single_execution) {
 		if (pledge("stdio rpath inet dns tty", NULL) == -1) {
@@ -589,7 +592,7 @@ s_server_main(int argc, char *argv[])
 		}
 	}
 
-	meth = SSLv23_server_method();
+	meth = TLS_server_method();
 
 	local_argc = argc;
 	local_argv = argv;
@@ -774,20 +777,28 @@ s_server_main(int argc, char *argv[])
 			off |= SSL_OP_NO_TLSv1_1;
 		} else if (strcmp(*argv, "-no_tls1_2") == 0) {
 			off |= SSL_OP_NO_TLSv1_2;
+		} else if (strcmp(*argv, "-no_tls1_3") == 0) {
+			off |= SSL_OP_NO_TLSv1_3;
 		} else if (strcmp(*argv, "-no_comp") == 0) {
 			off |= SSL_OP_NO_COMPRESSION;
 		} else if (strcmp(*argv, "-no_ticket") == 0) {
 			off |= SSL_OP_NO_TICKET;
 		} else if (strcmp(*argv, "-tls1") == 0) {
-			meth = TLSv1_server_method();
+			min_version = TLS1_VERSION;
+			max_version = TLS1_VERSION;
 		} else if (strcmp(*argv, "-tls1_1") == 0) {
-			meth = TLSv1_1_server_method();
+			min_version = TLS1_1_VERSION;
+			max_version = TLS1_1_VERSION;
 		} else if (strcmp(*argv, "-tls1_2") == 0) {
-			meth = TLSv1_2_server_method();
+			min_version = TLS1_2_VERSION;
+			max_version = TLS1_2_VERSION;
+		} else if (strcmp(*argv, "-tls1_3") == 0) {
+			min_version = TLS1_3_VERSION;
+			max_version = TLS1_3_VERSION;
 		}
 #ifndef OPENSSL_NO_DTLS1
 		else if (strcmp(*argv, "-dtls1") == 0) {
-			meth = DTLSv1_server_method();
+			meth = DTLS_server_method();
 			socket_type = SOCK_DGRAM;
 		} else if (strcmp(*argv, "-timeout") == 0)
 			enable_timeouts = 1;
@@ -956,6 +967,14 @@ s_server_main(int argc, char *argv[])
 		ERR_print_errors(bio_err);
 		goto end;
 	}
+
+	SSL_CTX_clear_mode(ctx, SSL_MODE_AUTO_RETRY);
+
+	if (!SSL_CTX_set_min_proto_version(ctx, min_version))
+		goto end;
+	if (!SSL_CTX_set_max_proto_version(ctx, max_version))
+		goto end;
+
 	if (session_id_prefix) {
 		if (strlen(session_id_prefix) >= 32)
 			BIO_printf(bio_err,
@@ -1009,6 +1028,12 @@ s_server_main(int argc, char *argv[])
 			ERR_print_errors(bio_err);
 			goto end;
 		}
+
+		if (!SSL_CTX_set_min_proto_version(ctx2, min_version))
+			goto end;
+		if (!SSL_CTX_set_max_proto_version(ctx2, max_version))
+			goto end;
+		SSL_CTX_clear_mode(ctx2, SSL_MODE_AUTO_RETRY);
 	}
 	if (ctx2) {
 		BIO_printf(bio_s_out, "Setting secondary ctx parameters\n");
@@ -1480,6 +1505,8 @@ sv_body(char *hostname, int s, unsigned char *context)
 					ret = 1;
 					goto err;
 				}
+				if (k <= 0)
+					continue;
 				l += k;
 				i -= k;
 				if (i <= 0)
@@ -1727,8 +1754,10 @@ www_body(char *hostname, int s, unsigned char *context)
 					ERR_print_errors(bio_err);
 				goto err;
 			} else {
-				BIO_printf(bio_s_out, "read R BLOCK\n");
-				sleep(1);
+				if (s_debug)  {
+					BIO_printf(bio_s_out, "read R BLOCK\n");
+					sleep(1);
+				}
 				continue;
 			}
 		} else if (i == 0) {	/* end of input */

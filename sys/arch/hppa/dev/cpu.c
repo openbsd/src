@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.41 2014/01/19 12:45:35 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.42 2020/05/29 04:42:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -31,7 +31,6 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
-#include <dev/rndvar.h>
 
 #include <uvm/uvm_extern.h>
 

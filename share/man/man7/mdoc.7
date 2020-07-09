@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.170 2020/02/13 18:31:55 schwarze Exp $
+.\"	$OpenBSD: mdoc.7,v 1.172 2020/06/30 14:48:18 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010, 2011, 2013-2020 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 13 2020 $
+.Dd $Mdocdate: June 30 2020 $
 .Dt MDOC 7
 .Os
 .Sh NAME
@@ -1352,6 +1352,7 @@ the following are valid architectures:
 .Cm macppc ,
 .Cm mips64 ,
 .Cm octeon ,
+.Cm powerpc64 ,
 .Cm sgi ,
 and
 .Cm sparc64 .
@@ -1861,8 +1862,8 @@ instead.
 Format a hyperlink.
 .Pp
 Examples:
-.Dl \&.Lk http://bsd.lv \(dqThe BSD.lv Project\(dq
-.Dl \&.Lk http://bsd.lv
+.Dl \&.Lk https://bsd.lv \(dqThe BSD.lv Project\(dq
+.Dl \&.Lk https://bsd.lv
 .Pp
 See also
 .Ic \&Mt .
@@ -3153,10 +3154,16 @@ but produces large indentations.
 .Xr tbl 7
 .Pp
 The web page
-.Lk http://mandoc.bsd.lv/mdoc/ "extended documentation for the mdoc language"
+.Lk https://mandoc.bsd.lv/mdoc/ "extended documentation for the mdoc language"
 provides a few tutorial-style pages for beginners, an extensive style
 guide for advanced authors, and an alphabetic index helping to choose
 the best macros for various kinds of content.
+.Pp
+The manual page
+.Lk https://man.voidlinux.org/groff_mdoc "groff_mdoc(7)"
+contained in the
+.Dq groff
+package documents exactly the same language in a somehwat different style.
 .Sh HISTORY
 The
 .Nm

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.9 2016/03/05 17:16:33 tobiasu Exp $	*/
+/*	$OpenBSD: clock.c,v 1.10 2020/05/11 13:27:38 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.32 2006/09/05 11:09:36 uwe Exp $	*/
 
 /*-
@@ -223,6 +223,30 @@ delay(int n)
 	_cpu_spin(sh_clock.cpucycle_1us * n);
 }
 
+extern todr_chip_handle_t todr_handle;
+struct todr_chip_handle rtc_todr;
+
+int
+rtc_gettime(struct todr_chip_handle *handle, struct timeval *tv)
+{
+	struct clock_ymdhms dt;
+
+	sh_clock.rtc.get(sh_clock.rtc._cookie, tv->tv_sec, &dt);
+	tv->tv_sec = clock_ymdhms_to_secs(&dt);
+	tv->tv_usec = 0;
+	return 0;
+}
+
+int
+rtc_settime(struct todr_chip_handle *handle, struct timeval *tv)
+{
+	struct clock_ymdhms dt;
+
+	clock_secs_to_ymdhms(tv->tv_sec, &dt);
+	sh_clock.rtc.set(sh_clock.rtc._cookie, &dt);
+	return 0;
+}
+
 /*
  * Start the clock interrupt.
  */
@@ -286,73 +310,10 @@ cpu_initclocks(void)
 	/* Make sure to start RTC */
 	if (sh_clock.rtc.init != NULL)
 		sh_clock.rtc.init(sh_clock.rtc._cookie);
-}
 
-void
-inittodr(time_t base)
-{
-	struct clock_ymdhms dt;
-	struct timespec ts;
-	time_t rtc;
-
-	if (!sh_clock.rtc_initialized)
-		sh_clock.rtc_initialized = 1;
-
-	sh_clock.rtc.get(sh_clock.rtc._cookie, base, &dt);
-	rtc = clock_ymdhms_to_secs(&dt);
-
-#ifdef DEBUG
-	printf("inittodr: %d/%d/%d/%d/%d/%d(%d)\n", dt.dt_year,
-	    dt.dt_mon, dt.dt_day, dt.dt_hour, dt.dt_min, dt.dt_sec,
-	    dt.dt_wday);
-#endif
-
-	if (!(sh_clock.flags & SH_CLOCK_NOINITTODR) &&
-	    (rtc < base ||
-		dt.dt_year < MINYEAR ||
-		dt.dt_mon < 1 || dt.dt_mon > 12 ||
-		dt.dt_wday > 6 ||
-		dt.dt_day < 1 || dt.dt_day > 31 ||
-		dt.dt_hour > 23 || dt.dt_min > 59 || dt.dt_sec > 59)) {
-		/*
-		 * Believe the time in the file system for lack of
-		 * anything better, resetting the RTC.
-		 */
-		ts.tv_sec = base;
-		ts.tv_nsec = 0;
-		tc_setclock(&ts);
-		printf("WARNING: preposterous clock chip time\n");
-		resettodr();
-		printf(" -- CHECK AND RESET THE DATE!\n");
-		return;
-	}
-
-	ts.tv_sec = rtc;
-	ts.tv_nsec = 0;
-	tc_setclock(&ts);
-
-	return;
-}
-
-void
-resettodr(void)
-{
-	struct clock_ymdhms dt;
-	int s;
-
-	if (!sh_clock.rtc_initialized)
-		return;
-
-	s = splclock();
-	clock_secs_to_ymdhms(time_second, &dt);
-	splx(s);
-
-	sh_clock.rtc.set(sh_clock.rtc._cookie, &dt);
-#ifdef DEBUG
-        printf("%s: %d/%d/%d/%d/%d/%d(%d)\n", __FUNCTION__,
-	    dt.dt_year, dt.dt_mon, dt.dt_day, dt.dt_hour, dt.dt_min, dt.dt_sec,
-	    dt.dt_wday);
-#endif
+	rtc_todr.todr_gettime = rtc_gettime;
+	rtc_todr.todr_settime = rtc_settime;
+	todr_handle = &rtc_todr;
 }
 
 #ifdef SH3

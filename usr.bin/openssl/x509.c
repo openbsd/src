@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.17 2019/01/19 21:17:05 jsg Exp $ */
+/* $OpenBSD: x509.c,v 1.18 2020/05/10 17:13:31 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -774,12 +774,20 @@ x509_main(int argc, char **argv)
 			} else if (text == i) {
 				X509_print_ex(STDout, x, nmflag, certflag);
 			} else if (startdate == i) {
+				ASN1_TIME *nB = X509_get_notBefore(x);
 				BIO_puts(STDout, "notBefore=");
-				ASN1_TIME_print(STDout, X509_get_notBefore(x));
+				if (ASN1_time_parse(nB->data, nB->length, NULL, 0) == -1)
+					BIO_puts(STDout, "INVALID RFC5280 TIME");
+				else
+					ASN1_TIME_print(STDout, nB);
 				BIO_puts(STDout, "\n");
 			} else if (enddate == i) {
+				ASN1_TIME *nA = X509_get_notAfter(x);
 				BIO_puts(STDout, "notAfter=");
-				ASN1_TIME_print(STDout, X509_get_notAfter(x));
+				if (ASN1_time_parse(nA->data, nA->length, NULL, 0) == -1)
+					BIO_puts(STDout, "INVALID RFC5280 TIME");
+				else
+					ASN1_TIME_print(STDout, nA);
 				BIO_puts(STDout, "\n");
 			} else if (fingerprint == i) {
 				int j;
@@ -863,8 +871,11 @@ x509_main(int argc, char **argv)
 	}
 	if (checkend) {
 		time_t tcheck = time(NULL) + checkoffset;
-
-		if (X509_cmp_time(X509_get_notAfter(x), &tcheck) < 0) {
+		int timecheck = X509_cmp_time(X509_get_notAfter(x), &tcheck);
+		if (timecheck == 0) {
+			BIO_printf(out, "Certificate expiry time is invalid\n");
+			ret = 1;
+		} else if (timecheck < 0) {
 			BIO_printf(out, "Certificate will expire\n");
 			ret = 1;
 		} else {

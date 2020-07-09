@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.h,v 1.68 2019/09/30 01:53:04 dlg Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.69 2020/06/18 23:27:58 dlg Exp $	*/
 /*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
 
 /*
@@ -123,8 +123,8 @@ struct bpf_version {
 /*
  * Direction filters for BIOCSDIRFILT/BIOCGDIRFILT
  */
-#define BPF_DIRECTION_IN	1
-#define BPF_DIRECTION_OUT	(1<<1)
+#define BPF_DIRECTION_IN	(1 << 0)
+#define BPF_DIRECTION_OUT	(1 << 1)
 
 /*
  * Values for BIOCGFILDROP/BIOCSFILDROP
@@ -147,22 +147,21 @@ struct bpf_hdr {
 	u_int32_t	bh_datalen;	/* original length of packet */
 	u_int16_t	bh_hdrlen;	/* length of bpf header (this struct
 					   plus alignment padding) */
+	u_int16_t	bh_ifidx;	/* receive interface index */
+
+	u_int16_t	bh_flowid;
+	u_int8_t	bh_flags;
+#define BPF_F_PRI_MASK		0x07
+#define BPF_F_FLOWID		0x08
+#define BPF_F_DIR_SHIFT		4
+#define BPF_F_DIR_MASK		(0x3 << BPF_F_DIR_SHIFT)
+#define BPF_F_DIR_IN		(BPF_DIRECTION_IN << BPF_F_DIR_SHIFT)
+#define BPF_F_DIR_OUT		(BPF_DIRECTION_OUT << BPF_F_DIR_SHIFT)
+	u_int8_t	bh_drops;
 };
-/*
- * Because the structure above is not a multiple of 4 bytes, some compilers
- * will insist on inserting padding; hence, sizeof(struct bpf_hdr) won't work.
- * Only the kernel needs to know about it; applications use bh_hdrlen.
- * XXX To save a few bytes on 32-bit machines, we avoid end-of-struct
- * XXX padding by using the size of the header data elements.  This is
- * XXX fail-safe: on new machines, we just use the 'safe' sizeof.
- */
+
 #ifdef _KERNEL
-#if defined(__arm__) || defined(__i386__) || defined(__mips__) || \
-    defined(__sparc64__)
-#define SIZEOF_BPF_HDR 18
-#else
 #define SIZEOF_BPF_HDR sizeof(struct bpf_hdr)
-#endif
 #endif
 
 /*

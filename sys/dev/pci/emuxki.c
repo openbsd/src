@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.53 2018/09/13 04:07:20 miko Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.54 2020/06/17 00:03:13 mortimer Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -1490,7 +1490,7 @@ emuxki_voice_new(struct emuxki_softc *sc, u_int8_t use)
 		goto skip_initialize;
 
 	voice->sc = sc;
-	voice->state = !EMU_VOICE_STATE_STARTED;
+	voice->state = 0;
 	voice->stereo = EMU_VOICE_STEREO_NOTSET;
 	voice->b16 = 0;
 	voice->sample_rate = 0;

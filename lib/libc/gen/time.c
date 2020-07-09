@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.8 2019/06/28 13:32:41 deraadt Exp $ */
+/*	$OpenBSD: time.c,v 1.9 2020/07/06 13:33:06 pirofti Exp $ */
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@ time(time_t *t)
 {
 	struct timeval tt;
 
-	if (gettimeofday(&tt, NULL) == -1)
+	if (WRAP(gettimeofday)(&tt, NULL) == -1)
 		return (-1);
 	if (t)
 		*t = (time_t)tt.tv_sec;

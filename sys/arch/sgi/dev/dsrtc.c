@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsrtc.c,v 1.13 2016/01/21 06:28:56 jsg Exp $ */
+/*	$OpenBSD: dsrtc.c,v 1.14 2020/05/21 01:48:43 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -34,12 +34,11 @@
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 
+#include <dev/clock_subr.h>
 #include <dev/ic/ds1687reg.h>
-#define	todr_chip_handle_t void *	/* XXX that's just to eat prototypes */
 #include <dev/ic/mk48txxreg.h>
 
 #include <mips64/archtype.h>
-#include <mips64/dev/clockvar.h>
 
 #include <sgi/dev/dsrtcvar.h>
 #include <sgi/localbus/macebusvar.h>
@@ -49,6 +48,7 @@
 
 struct	dsrtc_softc {
 	struct device		sc_dev;
+	struct todr_chip_handle	sc_todr;
 	bus_space_tag_t		sc_clkt;
 	bus_space_handle_t	sc_clkh, sc_clkh2;
 	int			sc_yrbase;
@@ -83,10 +83,10 @@ void	ip32_dsrtc_write(struct dsrtc_softc *, int, int);
 int	ioc_ds1687_dsrtc_read(struct dsrtc_softc *, int);
 void	ioc_ds1687_dsrtc_write(struct dsrtc_softc *, int, int);
 
-void	ds1687_get(void *, time_t, struct tod_time *);
-void	ds1687_set(void *, struct tod_time *);
-void	ds1742_get(void *, time_t, struct tod_time *);
-void	ds1742_set(void *, struct tod_time *);
+int	ds1687_gettime(struct todr_chip_handle *, struct timeval *);
+int	ds1687_settime(struct todr_chip_handle *, struct timeval *);
+int	ds1742_gettime(struct todr_chip_handle *, struct timeval *);
+int	ds1742_settime(struct todr_chip_handle *, struct timeval *);
 
 static inline int frombcd(int, int);
 static inline int tobcd(int, int);
@@ -152,8 +152,8 @@ dsrtc_attach_ioc(struct device *parent, struct device *self, void *aux)
 		sc->read = ioc_ds1687_dsrtc_read;
 		sc->write = ioc_ds1687_dsrtc_write;
 
-		sys_tod.tod_get = ds1687_get;
-		sys_tod.tod_set = ds1687_set;
+		sc->sc_todr.todr_gettime = ds1687_gettime;
+		sc->sc_todr.todr_settime = ds1687_settime;
 	} else {
 		/* DS1742W */
 
@@ -172,13 +172,12 @@ dsrtc_attach_ioc(struct device *parent, struct device *self, void *aux)
 		 */
 		sc->sc_yrbase = sys_config.system_type == SGI_IP35 ?
 		    POSIX_BASE_YEAR - 2 : POSIX_BASE_YEAR;
-		/* mips64 clock code expects year relative to 1900 */
-		sc->sc_yrbase -= 1900;
 
-		sys_tod.tod_get = ds1742_get;
-		sys_tod.tod_set = ds1742_set;
+		sc->sc_todr.todr_gettime = ds1742_gettime;
+		sc->sc_todr.todr_settime = ds1742_settime;
 	}
-	sys_tod.tod_cookie = self;
+	sc->sc_todr.cookie = self;
+	todr_attach(&sc->sc_todr);
 
 	return;
 
@@ -213,12 +212,11 @@ dsrtc_attach_iof(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->sc_yrbase = sys_config.system_type == SGI_IP35 ?
 	    POSIX_BASE_YEAR - 2 : POSIX_BASE_YEAR;
-	/* mips64 clock code expects year relative to 1900 */
-	sc->sc_yrbase -= 1900;
 
-	sys_tod.tod_cookie = self;
-	sys_tod.tod_get = ds1742_get;
-	sys_tod.tod_set = ds1742_set;
+	sc->sc_todr.cookie = self;
+	sc->sc_todr.todr_gettime = ds1742_gettime;
+	sc->sc_todr.todr_settime = ds1742_settime;
+	todr_attach(&sc->sc_todr);
 
 	return;
 
@@ -244,9 +242,10 @@ dsrtc_attach_macebus(struct device *parent, struct device *self, void *aux)
 	sc->read = ip32_dsrtc_read;
 	sc->write = ip32_dsrtc_write;
 
-	sys_tod.tod_cookie = self;
-	sys_tod.tod_get = ds1687_get;
-	sys_tod.tod_set = ds1687_set;
+	sc->sc_todr.cookie = self;
+	sc->sc_todr.todr_gettime = ds1687_gettime;
+	sc->sc_todr.todr_settime = ds1687_settime;
+	todr_attach(&sc->sc_todr);
 }
 
 int
@@ -279,11 +278,12 @@ ioc_ds1687_dsrtc_write(struct dsrtc_softc *sc, int reg, int val)
  * Dallas DS1687 clock driver.
  */
 
-void
-ds1687_get(void *v, time_t base, struct tod_time *ct)
+int
+ds1687_gettime(struct todr_chip_handle *handle, struct timeval *tv)
 {
-	struct dsrtc_softc *sc = v;
-	int ctrl, century, dm;
+	struct clock_ymdhms dt;
+	struct dsrtc_softc *sc = handle->cookie;
+	int ctrl, dm;
 
 	/* Select bank 1. */
 	ctrl = (*sc->read)(sc, DS1687_CTRL_A);
@@ -297,25 +297,30 @@ ds1687_get(void *v, time_t base, struct tod_time *ct)
 		/* Do nothing. */;
 
 	/* Read the RTC. */
-	ct->sec = frombcd((*sc->read)(sc, DS1687_SEC), dm);
-	ct->min = frombcd((*sc->read)(sc, DS1687_MIN), dm);
-	ct->hour = frombcd((*sc->read)(sc, DS1687_HOUR), dm);
-	ct->day = frombcd((*sc->read)(sc, DS1687_DAY), dm);
-	ct->mon = frombcd((*sc->read)(sc, DS1687_MONTH), dm);
-	ct->year = frombcd((*sc->read)(sc, DS1687_YEAR), dm);
-	century = frombcd((*sc->read)(sc, DS1687_CENTURY), dm);
+	dt.dt_sec = frombcd((*sc->read)(sc, DS1687_SEC), dm);
+	dt.dt_min = frombcd((*sc->read)(sc, DS1687_MIN), dm);
+	dt.dt_hour = frombcd((*sc->read)(sc, DS1687_HOUR), dm);
+	dt.dt_day = frombcd((*sc->read)(sc, DS1687_DAY), dm);
+	dt.dt_mon = frombcd((*sc->read)(sc, DS1687_MONTH), dm);
+	dt.dt_year = frombcd((*sc->read)(sc, DS1687_YEAR), dm);
+	dt.dt_year += frombcd((*sc->read)(sc, DS1687_CENTURY), dm) * 100;
 
-	ct->year += 100 * (century - 19);
+	tv->tv_sec = clock_ymdhms_to_secs(&dt);
+	tv->tv_usec = 0;
+	return 0;
 }
 
-void
-ds1687_set(void *v, struct tod_time *ct)
+int
+ds1687_settime(struct todr_chip_handle *handle, struct timeval *tv)
 {
-	struct dsrtc_softc *sc = v;
+	struct clock_ymdhms dt;
+	struct dsrtc_softc *sc = handle->cookie;
 	int year, century, ctrl, dm;
 
-	century = ct->year / 100 + 19;
-	year = ct->year % 100;
+	clock_secs_to_ymdhms(tv->tv_sec, &dt);
+
+	century = dt.dt_year / 100;
+	year = dt.dt_year % 100;
 
 	/* Select bank 1. */
 	ctrl = (*sc->read)(sc, DS1687_CTRL_A);
@@ -331,27 +336,30 @@ ds1687_set(void *v, struct tod_time *ct)
 	(*sc->write)(sc, DS1687_CTRL_B, ctrl | DS1687_SET_CLOCK);
 
 	/* Update the RTC. */
-	(*sc->write)(sc, DS1687_SEC, tobcd(ct->sec, dm));
-	(*sc->write)(sc, DS1687_MIN, tobcd(ct->min, dm));
-	(*sc->write)(sc, DS1687_HOUR, tobcd(ct->hour, dm));
-	(*sc->write)(sc, DS1687_DOW, tobcd(ct->dow, dm));
-	(*sc->write)(sc, DS1687_DAY, tobcd(ct->day, dm));
-	(*sc->write)(sc, DS1687_MONTH, tobcd(ct->mon, dm));
+	(*sc->write)(sc, DS1687_SEC, tobcd(dt.dt_sec, dm));
+	(*sc->write)(sc, DS1687_MIN, tobcd(dt.dt_min, dm));
+	(*sc->write)(sc, DS1687_HOUR, tobcd(dt.dt_hour, dm));
+	(*sc->write)(sc, DS1687_DOW, tobcd(dt.dt_wday + 1, dm));
+	(*sc->write)(sc, DS1687_DAY, tobcd(dt.dt_day, dm));
+	(*sc->write)(sc, DS1687_MONTH, tobcd(dt.dt_mon, dm));
 	(*sc->write)(sc, DS1687_YEAR, tobcd(year, dm));
 	(*sc->write)(sc, DS1687_CENTURY, tobcd(century, dm));
 
 	/* Enable updates. */
 	(*sc->write)(sc, DS1687_CTRL_B, ctrl);
+
+	return 0;
 }
 
 /*
  * Dallas DS1742 clock driver.
  */
 
-void
-ds1742_get(void *v, time_t base, struct tod_time *ct)
+int
+ds1742_gettime(struct todr_chip_handle *handle, struct timeval *tv)
 {
-	struct dsrtc_softc *sc = v;
+	struct clock_ymdhms dt;
+	struct dsrtc_softc *sc = handle->cookie;
 	int csr;
 
 	/* Freeze update. */
@@ -360,30 +368,37 @@ ds1742_get(void *v, time_t base, struct tod_time *ct)
 	bus_space_write_1(sc->sc_clkt, sc->sc_clkh, MK48TXX_ICSR, csr);
 
 	/* Read the RTC. */
-	ct->sec = frombcd(bus_space_read_1(sc->sc_clkt, sc->sc_clkh,
+	dt.dt_sec = frombcd(bus_space_read_1(sc->sc_clkt, sc->sc_clkh,
 	    MK48TXX_ISEC), 0);
-	ct->min = frombcd(bus_space_read_1(sc->sc_clkt, sc->sc_clkh,
+	dt.dt_min = frombcd(bus_space_read_1(sc->sc_clkt, sc->sc_clkh,
 	    MK48TXX_IMIN), 0);
-	ct->hour = frombcd(bus_space_read_1(sc->sc_clkt, sc->sc_clkh,
+	dt.dt_hour = frombcd(bus_space_read_1(sc->sc_clkt, sc->sc_clkh,
 	    MK48TXX_IHOUR), 0);
-	ct->day = frombcd(bus_space_read_1(sc->sc_clkt, sc->sc_clkh,
+	dt.dt_day = frombcd(bus_space_read_1(sc->sc_clkt, sc->sc_clkh,
 	    MK48TXX_IDAY), 0);
-	ct->mon = frombcd(bus_space_read_1(sc->sc_clkt, sc->sc_clkh,
+	dt.dt_mon = frombcd(bus_space_read_1(sc->sc_clkt, sc->sc_clkh,
 	    MK48TXX_IMON), 0);
-	ct->year = frombcd(bus_space_read_1(sc->sc_clkt, sc->sc_clkh,
+	dt.dt_year = frombcd(bus_space_read_1(sc->sc_clkt, sc->sc_clkh,
 	    MK48TXX_IYEAR), 0) + sc->sc_yrbase;
 
 	/* Enable updates again. */
 	csr = bus_space_read_1(sc->sc_clkt, sc->sc_clkh, MK48TXX_ICSR);
 	csr &= ~MK48TXX_CSR_READ;
 	bus_space_write_1(sc->sc_clkt, sc->sc_clkh, MK48TXX_ICSR, csr);
+
+	tv->tv_sec = clock_ymdhms_to_secs(&dt);
+	tv->tv_usec = 0;
+	return 0;
 }
 
-void
-ds1742_set(void *v, struct tod_time *ct)
+int
+ds1742_settime(struct todr_chip_handle *handle, struct timeval *tv)
 {
-	struct dsrtc_softc *sc = v;
+	struct clock_ymdhms dt;
+	struct dsrtc_softc *sc = handle->cookie;
 	int csr;
+
+	clock_secs_to_ymdhms(tv->tv_sec, &dt);
 
 	/* Enable write. */
 	csr = bus_space_read_1(sc->sc_clkt, sc->sc_clkh, MK48TXX_ICSR);
@@ -392,24 +407,26 @@ ds1742_set(void *v, struct tod_time *ct)
 
 	/* Update the RTC. */
 	bus_space_write_1(sc->sc_clkt, sc->sc_clkh, MK48TXX_ISEC,
-	    tobcd(ct->sec, 0));
+	    tobcd(dt.dt_sec, 0));
 	bus_space_write_1(sc->sc_clkt, sc->sc_clkh, MK48TXX_IMIN,
-	    tobcd(ct->min, 0));
+	    tobcd(dt.dt_min, 0));
 	bus_space_write_1(sc->sc_clkt, sc->sc_clkh, MK48TXX_IHOUR,
-	    tobcd(ct->hour, 0));
+	    tobcd(dt.dt_hour, 0));
 	bus_space_write_1(sc->sc_clkt, sc->sc_clkh, MK48TXX_IWDAY,
-	    tobcd(ct->dow, 0));
+	    tobcd(dt.dt_wday + 1, 0));
 	bus_space_write_1(sc->sc_clkt, sc->sc_clkh, MK48TXX_IDAY,
-	    tobcd(ct->day, 0));
+	    tobcd(dt.dt_day, 0));
 	bus_space_write_1(sc->sc_clkt, sc->sc_clkh, MK48TXX_IMON,
-	    tobcd(ct->mon, 0));
+	    tobcd(dt.dt_mon, 0));
 	bus_space_write_1(sc->sc_clkt, sc->sc_clkh, MK48TXX_IYEAR,
-	    tobcd(ct->year - sc->sc_yrbase, 0));
+	    tobcd(dt.dt_year - sc->sc_yrbase, 0));
 
 	/* Load new values. */
 	csr = bus_space_read_1(sc->sc_clkt, sc->sc_clkh, MK48TXX_ICSR);
 	csr &= ~MK48TXX_CSR_WRITE;
 	bus_space_write_1(sc->sc_clkt, sc->sc_clkh, MK48TXX_ICSR, csr);
+
+	return 0;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bold8x16-iso1.h,v 1.4 2012/01/06 14:55:38 shadchin Exp $ */
+/*	$OpenBSD: bold8x16-iso1.h,v 1.5 2020/06/24 17:24:35 fcambus Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,18 +36,18 @@
 static u_char bold8x16_iso1_data[];
 
 struct wsdisplay_font bold8x16_iso1 = {
-	"Boldface.iso1",		/* typeface name */
-	0,				/* index */
-	' ',				/* firstchar */
-	256 - ' ',			/* numchars */
-	WSDISPLAY_FONTENC_ISO,		/* encoding */
-	8,				/* width */
-	16,				/* height */
-	1,				/* stride */
-	WSDISPLAY_FONTORDER_L2R,	/* bit order */
-	WSDISPLAY_FONTORDER_L2R,	/* byte order */
-	NULL,				/* cookie */
-	bold8x16_iso1_data		/* data */
+	.name		= "Boldface.iso1",
+	.index		= 0,
+	.firstchar	= ' ',
+	.numchars	= 256 - ' ',
+	.encoding	= WSDISPLAY_FONTENC_ISO,
+	.fontwidth	= 8,
+	.fontheight	= 16,
+	.stride		= 1,
+	.bitorder	= WSDISPLAY_FONTORDER_L2R,
+	.byteorder	= WSDISPLAY_FONTORDER_L2R,
+	.cookie		= NULL,
+	.data		= bold8x16_iso1_data
 };
 
 static u_char bold8x16_iso1_data[] = {

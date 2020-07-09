@@ -1,4 +1,4 @@
-\	$OpenBSD: bootblk.fth,v 1.9 2020/04/02 06:06:22 otto Exp $
+\	$OpenBSD: bootblk.fth,v 1.10 2020/06/05 09:16:13 otto Exp $
 \	$NetBSD: bootblk.fth,v 1.15 2015/08/20 05:40:08 dholland Exp $
 \
 \	IEEE 1275 Open Firmware Boot Block
@@ -716,7 +716,15 @@ create cur-blockno -1 l, -1 l,		\ Current disk block.
     2drop
 ;
 
-" load-base " evaluate constant loader-base
+\
+\ According to the 1275 addendum for SPARC processors:
+\ Default load-base is 0x4000.  At least 0x8.0000 or
+\ 512KB must be available at that address.  
+\
+\ The Fcode bootblock can take up up to 8KB (O.K., 7.5KB) 
+\ so load programs at 0x4000 + 0x2000=> 0x6000
+\
+" load-base " evaluate 2000 + constant loader-base
 
 : load-file-signon ( load-file len boot-path len -- load-file len boot-path len )
    ." Loading file" space 2over type cr ." from device" space 2dup type cr
@@ -821,7 +829,7 @@ create cur-blockno -1 l, -1 l,		\ Current disk block.
 ;
 
 : do-boot ( bootfile -- )
-   ." OpenBSD IEEE 1275 Bootblock 2.0" cr
+   ." OpenBSD IEEE 1275 Bootblock 2.1" cr
 
    \ Open boot device
    boot-path				( boot-path len )

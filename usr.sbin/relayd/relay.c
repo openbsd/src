@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.250 2019/07/13 06:53:00 chrisz Exp $	*/
+/*	$OpenBSD: relay.c,v 1.251 2020/05/14 17:27:38 pvk Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -2066,6 +2066,8 @@ relay_tls_ctx_create_proto(struct protocol *proto, struct tls_config *tls_cfg)
 		protocols |= TLS_PROTOCOL_TLSv1_1;
 	if (proto->tlsflags & TLSFLAG_TLSV1_2)
 		protocols |= TLS_PROTOCOL_TLSv1_2;
+	if (proto->tlsflags & TLSFLAG_TLSV1_3)
+		protocols |= TLS_PROTOCOL_TLSv1_3;
 	if (tls_config_set_protocols(tls_cfg, protocols) == -1) {
 		log_warnx("could not set the TLS protocol: %s",
 		    tls_config_error(tls_cfg));

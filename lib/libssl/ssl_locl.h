@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.272 2020/04/18 14:07:56 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.282 2020/07/07 19:31:11 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -173,6 +173,10 @@ __BEGIN_HIDDEN_DECLS
 #define LIBRESSL_HAS_TLS1_3_CLIENT
 #endif
 
+#ifndef LIBRESSL_HAS_TLS1_3_SERVER
+#define LIBRESSL_HAS_TLS1_3_SERVER
+#endif
+
 #if defined(LIBRESSL_HAS_TLS1_3_CLIENT) || defined(LIBRESSL_HAS_TLS1_3_SERVER)
 #define LIBRESSL_HAS_TLS1_3
 #endif
@@ -329,12 +333,10 @@ __BEGIN_HIDDEN_DECLS
 #define SSL_USE_TLS1_3_CIPHERS(s) \
 	(s->method->internal->ssl3_enc->enc_flags & SSL_ENC_FLAG_TLS1_3_CIPHERS)
 
-#define SSL_PKEY_RSA_ENC	0
-#define SSL_PKEY_RSA_SIGN	1
-#define SSL_PKEY_DH_RSA		2
-#define SSL_PKEY_ECC            3
-#define SSL_PKEY_GOST01		4
-#define SSL_PKEY_NUM		5
+#define SSL_PKEY_RSA		0
+#define SSL_PKEY_ECC		1
+#define SSL_PKEY_GOST01		2
+#define SSL_PKEY_NUM		3
 
 #define SSL_MAX_EMPTY_RECORDS	32
 
@@ -383,9 +385,6 @@ typedef struct ssl_method_internal_st {
 
 	const struct ssl_method_st *(*get_ssl_method)(int version);
 
-	long (*get_timeout)(void);
-	int (*ssl_version)(void);
-
 	struct ssl3_enc_method *ssl3_enc; /* Extra SSLv3/TLS stuff */
 } SSL_METHOD_INTERNAL;
 
@@ -433,6 +432,12 @@ typedef struct ssl_handshake_st {
 	uint8_t *sigalgs;
 } SSL_HANDSHAKE;
 
+typedef struct cert_pkey_st {
+	X509 *x509;
+	EVP_PKEY *privatekey;
+	STACK_OF(X509) *chain;
+} CERT_PKEY;
+
 typedef struct ssl_handshake_tls13_st {
 	uint16_t min_version;
 	uint16_t max_version;
@@ -440,6 +445,10 @@ typedef struct ssl_handshake_tls13_st {
 
 	int use_legacy;
 	int hrr;
+
+	/* Certificate and sigalg selected for use (static pointers). */
+	const CERT_PKEY *cpk;
+	const struct ssl_sigalg *sigalg;
 
 	/* Version proposed by peer server. */
 	uint16_t server_version;
@@ -458,6 +467,12 @@ typedef struct ssl_handshake_tls13_st {
 	/* Legacy session ID. */
 	uint8_t legacy_session_id[SSL_MAX_SSL_SESSION_ID_LENGTH];
 	size_t legacy_session_id_len;
+
+	/* ClientHello hash, used to validate following HelloRetryRequest */
+	EVP_MD_CTX *clienthello_md_ctx;
+	unsigned char *clienthello_hash;
+	unsigned int clienthello_hash_len;
+
 } SSL_HANDSHAKE_TLS13;
 
 typedef struct ssl_ctx_internal_st {
@@ -736,20 +751,15 @@ typedef struct ssl_internal_st {
 	long max_cert_list;
 	int first_packet;
 
-	int servername_done;	/* no further mod of servername
-				   0 : call the servername extension callback.
-				   1 : prepare 2, allow last ack just after in server callback.
-				   2 : don't call servername callback, no ack in server hello
-				   */
-
 	/* Expect OCSP CertificateStatus message */
 	int tlsext_status_expected;
 	/* OCSP status request only */
 	STACK_OF(OCSP_RESPID) *tlsext_ocsp_ids;
 	X509_EXTENSIONS *tlsext_ocsp_exts;
+
 	/* OCSP response received or to be sent */
 	unsigned char *tlsext_ocsp_resp;
-	int tlsext_ocsp_resplen;
+	size_t tlsext_ocsp_resp_len;
 
 	/* RFC4507 session ticket expected to be received or sent */
 	int tlsext_ticket_expected;
@@ -988,12 +998,6 @@ typedef struct dtls1_state_internal_st {
 } DTLS1_STATE_INTERNAL;
 #define D1I(s) (s->d1->internal)
 
-typedef struct cert_pkey_st {
-	X509 *x509;
-	EVP_PKEY *privatekey;
-	STACK_OF(X509) *chain;
-} CERT_PKEY;
-
 typedef struct cert_st {
 	/* Current active set */
 	CERT_PKEY *key; /* ALWAYS points to an element of the pkeys array
@@ -1093,10 +1097,11 @@ int ssl_version_set_min(const SSL_METHOD *meth, uint16_t ver, uint16_t max_ver,
     uint16_t *out_ver);
 int ssl_version_set_max(const SSL_METHOD *meth, uint16_t ver, uint16_t min_ver,
     uint16_t *out_ver);
-uint16_t ssl_max_server_version(SSL *s);
+int ssl_downgrade_max_version(SSL *s, uint16_t *max_ver);
 int ssl_cipher_is_permitted(const SSL_CIPHER *cipher, uint16_t min_ver,
     uint16_t max_ver);
 
+const SSL_METHOD *tls_legacy_method(void);
 const SSL_METHOD *tls_legacy_client_method(void);
 const SSL_METHOD *tls_legacy_server_method(void);
 
@@ -1218,7 +1223,6 @@ int ssl3_record_write(SSL *s, int type);
 void tls1_record_sequence_increment(unsigned char *seq);
 int ssl3_do_change_cipher_spec(SSL *ssl);
 
-long tls1_default_timeout(void);
 int dtls1_do_write(SSL *s, int type);
 int ssl3_packet_read(SSL *s, int plen);
 int ssl3_packet_extend(SSL *s, int plen);
@@ -1248,7 +1252,6 @@ void dtls1_get_ccs_header(unsigned char *data, struct ccs_header_st *ccs_hdr);
 void dtls1_reset_seq_numbers(SSL *s, int rw);
 void dtls1_build_sequence_number(unsigned char *dst, unsigned char *seq,
     unsigned short epoch);
-long dtls1_default_timeout(void);
 struct timeval* dtls1_get_timeout(SSL *s, struct timeval* timeleft);
 int dtls1_check_timeout_num(SSL *s);
 int dtls1_handle_timeout(SSL *s);

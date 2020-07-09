@@ -1,4 +1,4 @@
-/*	$OpenBSD: re_search.c,v 1.33 2017/08/06 04:39:45 bcallah Exp $	*/
+/*	$OpenBSD: re_search.c,v 1.34 2020/07/09 10:42:24 tb Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -332,8 +332,8 @@ re_forwsrch(void)
 	while (clp != (curbp->b_headp)) {
 		regex_match[0].rm_so = tbo;
 		regex_match[0].rm_eo = llength(clp);
-		error = regexec(&regex_buff, ltext(clp), RE_NMATCH, regex_match,
-		    REG_STARTEND);
+		error = regexec(&regex_buff, ltext(clp) ? ltext(clp) : "",
+		    RE_NMATCH, regex_match, REG_STARTEND);
 		if (error != 0) {
 			clp = lforw(clp);
 			tdotline++;
@@ -389,8 +389,9 @@ re_backsrch(void)
 		 * do this character-by-character after the first match since
 		 * POSIX regexps don't give you a way to do reverse matches.
 		 */
-		while (!regexec(&regex_buff, ltext(clp), RE_NMATCH, regex_match,
-		    REG_STARTEND) && regex_match[0].rm_so < tbo) {
+		while (!regexec(&regex_buff, ltext(clp) ? ltext(clp) : "",
+		    RE_NMATCH, regex_match, REG_STARTEND) &&
+		    regex_match[0].rm_so <= tbo) {
 			memcpy(&lastmatch, &regex_match[0], sizeof(regmatch_t));
 			regex_match[0].rm_so++;
 			regex_match[0].rm_eo = llength(clp);
@@ -538,8 +539,8 @@ killmatches(int cond)
 		/* see if line matches */
 		regex_match[0].rm_so = 0;
 		regex_match[0].rm_eo = llength(clp);
-		error = regexec(&regex_buff, ltext(clp), RE_NMATCH, regex_match,
-		    REG_STARTEND);
+		error = regexec(&regex_buff, ltext(clp) ? ltext(clp) : "",
+		    RE_NMATCH, regex_match, REG_STARTEND);
 
 		/* Delete line when appropriate */
 		if ((cond == FALSE && error) || (cond == TRUE && !error)) {
@@ -613,8 +614,8 @@ countmatches(int cond)
 		/* see if line matches */
 		regex_match[0].rm_so = 0;
 		regex_match[0].rm_eo = llength(clp);
-		error = regexec(&regex_buff, ltext(clp), RE_NMATCH, regex_match,
-		    REG_STARTEND);
+		error = regexec(&regex_buff, ltext(clp) ? ltext(clp) : "",
+		    RE_NMATCH, regex_match, REG_STARTEND);
 
 		/* Count line when appropriate */
 		if ((cond == FALSE && error) || (cond == TRUE && !error))

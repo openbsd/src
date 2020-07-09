@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.135 2020/04/28 12:58:28 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.137 2020/06/03 06:54:04 dlg Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -303,6 +303,16 @@ void cpu_unidle(struct cpu_info *);
 
 #include <machine/cpufunc.h>
 #include <machine/psl.h>
+
+static inline unsigned int
+cpu_rnd_messybits(void)
+{
+	unsigned int hi, lo;
+
+	__asm volatile("rdtsc" : "=d" (hi), "=a" (lo));
+
+	return (hi ^ lo);
+}
 
 #endif /* _KERNEL */
 

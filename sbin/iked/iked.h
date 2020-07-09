@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.147 2020/04/23 20:17:48 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.152 2020/06/03 17:56:42 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -158,7 +158,6 @@ struct iked_flow {
 
 	uint8_t				 flow_saproto;
 	uint8_t				 flow_ipproto;
-	uint8_t				 flow_type;
 
 	struct iked_addr		*flow_local;	/* outer source */
 	struct iked_addr		*flow_peer;	/* outer dest */
@@ -310,6 +309,7 @@ struct iked_hash {
 	size_t		 hash_length;	/* Output length */
 	size_t		 hash_trunc;	/* Truncate the output length */
 	struct iked_hash *hash_prf;	/* PRF pointer */
+	int		 hash_isaead;
 };
 
 struct iked_cipher {
@@ -322,6 +322,8 @@ struct iked_cipher {
 	struct ibuf	*encr_iv;	/* Initialization Vector */
 	size_t		 encr_ivlength;	/* IV length */
 	size_t		 encr_length;	/* Block length */
+	size_t		 encr_saltlength;	/* IV salt length */
+	uint16_t	 encr_authid;	/* ID of associated authentication */
 };
 
 struct iked_dsa {
@@ -804,8 +806,7 @@ struct iked_sa *
 	    struct iked_policy *);
 void	 sa_free(struct iked *, struct iked_sa *);
 void	 sa_free_flows(struct iked *, struct iked_saflows *);
-int	 sa_address(struct iked_sa *, struct iked_addr *,
-	    struct sockaddr_storage *);
+int	 sa_address(struct iked_sa *, struct iked_addr *, struct sockaddr *);
 void	 childsa_free(struct iked_childsa *);
 struct iked_childsa *
 	 childsa_lookup(struct iked_sa *, uint64_t, uint8_t);
@@ -842,12 +843,15 @@ struct ibuf *
 	 cipher_setkey(struct iked_cipher *, void *, size_t);
 struct ibuf *
 	 cipher_setiv(struct iked_cipher *, void *, size_t);
+int	 cipher_settag(struct iked_cipher *, uint8_t *, size_t);
+int	 cipher_gettag(struct iked_cipher *, uint8_t *, size_t);
 void	 cipher_free(struct iked_cipher *);
-void	 cipher_init(struct iked_cipher *, int);
-void	 cipher_init_encrypt(struct iked_cipher *);
-void	 cipher_init_decrypt(struct iked_cipher *);
-void	 cipher_update(struct iked_cipher *, void *, size_t, void *, size_t *);
-void	 cipher_final(struct iked_cipher *, void *, size_t *);
+int	 cipher_init(struct iked_cipher *, int);
+int	 cipher_init_encrypt(struct iked_cipher *);
+int	 cipher_init_decrypt(struct iked_cipher *);
+void	 cipher_aad(struct iked_cipher *, void *, size_t, size_t *);
+int	 cipher_update(struct iked_cipher *, void *, size_t, void *, size_t *);
+int	 cipher_final(struct iked_cipher *);
 size_t	 cipher_length(struct iked_cipher *);
 size_t	 cipher_keylength(struct iked_cipher *);
 size_t	 cipher_ivlength(struct iked_cipher *);
@@ -934,7 +938,8 @@ int	 ikev2_msg_send(struct iked *, struct iked_message *);
 int	 ikev2_msg_send_encrypt(struct iked *, struct iked_sa *,
 	    struct ibuf **, uint8_t, uint8_t, int);
 struct ibuf
-	*ikev2_msg_encrypt(struct iked *, struct iked_sa *, struct ibuf *);
+	*ikev2_msg_encrypt(struct iked *, struct iked_sa *, struct ibuf *,
+	    struct ibuf *);
 struct ibuf *
 	 ikev2_msg_decrypt(struct iked *, struct iked_sa *,
 	    struct ibuf *, struct ibuf *);
@@ -994,7 +999,6 @@ int	 ca_pubkey_serialize(EVP_PKEY *, struct iked_id *);
 void	 ca_sslinit(void);
 void	 ca_sslerror(const char *);
 char	*ca_asn1_name(uint8_t *, size_t);
-char	*ca_x509_name(void *);
 void	*ca_x509_name_parse(char *);
 void	 ca_cert_info(const char *, X509 *);
 
@@ -1131,5 +1135,6 @@ void	 print_policy(struct iked_policy *);
 size_t	 keylength_xf(unsigned int, unsigned int, unsigned int);
 size_t	 noncelength_xf(unsigned int, unsigned int);
 int	 cmdline_symset(char *);
+int	 encxf_noauth(unsigned int);
 
 #endif /* IKED_H */

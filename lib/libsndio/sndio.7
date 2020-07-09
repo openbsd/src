@@ -1,4 +1,4 @@
-.\" $OpenBSD: sndio.7,v 1.20 2018/07/28 09:11:55 ratchov Exp $
+.\" $OpenBSD: sndio.7,v 1.23 2020/05/25 12:25:16 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,64 +14,62 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 28 2018 $
+.Dd $Mdocdate: May 25 2020 $
 .Dt SNDIO 7
 .Os
 .Sh NAME
 .Nm sndio
 .Nd interface to audio and MIDI
 .Sh DESCRIPTION
-The
+Programs access audio and MIDI hardware using the
 .Nm sndio
-audio and MIDI system provides access to audio and MIDI hardware and
-to services provided by
-.Xr sndiod 8 ,
-summarized below.
-.Pp
-Hardware
-.Xr audio 4
-devices correspond to peripherals.
-Only one application may use any device at a given time.
-Generally a limited number of encodings, sample rates and channel numbers are
-supported by the hardware, which may not meet the requirements of
-audio programs.
-.Pp
-To overcome hardware limitations and to allow multiple applications
-to share the hardware,
+library.
+It allows both access through the
 .Xr sndiod 8
-can be used.
-It exposes one or more software sub-devices backed by the underlying hardware,
-while doing all necessary conversions on the fly.
-It can mix multiple streams or split the hardware into
-multiple sub-devices, to allow programs to use the hardware
-concurrently.
+server and raw access to the hardware.
+The audio device or MIDI port, as well as the access method,
+are designated by the sndio descriptor.
+It is provided by the user with the program device selection method,
+or with the
+.Ev AUDIODEVICE
+and
+.Ev MIDIDEVICE
+environment variables if there's no device selection method.
 .Pp
-Hardware MIDI ports correspond to serial connectors provided by the
-.Xr midi 4
-driver.
-They are typically used to access MIDI hardware (synthesizers, keyboards,
-control surfaces, etc.), but they do not allow applications to exchange
-information using the MIDI protocol.
+Usually, programs access the hardware via the
+.Xr sndiod 8
+server, because raw access to the hardware is exclusive and
+requires additional privileges.
+The
+.Xr sndiod 8
+server supports multiple connections at a time, allowing multiple programs to
+use the hardware concurrently.
+It performs the necessary audio processing on the fly to
+overcome any incompatibility between software and hardware.
+Connections to
+.Xr sndiod 8
+may also be established through the network, including from virtual machines.
 .Pp
-Software MIDI thru boxes allow one application to send MIDI data to other
-applications connected to the thru box (for instance a software sequencer
-can send events to multiple software synthesizers).
-There's no hardware involved: thru boxes are created by
-.Xr sndiod 8 .
+The
+.Xr sndiod 8
+server exposes
+.Em MIDI thru
+ports, allowing one program to send MIDI data to other programs,
+for instance to allow a sequencer to send events to a synthesizer.
 .Pp
 Additionally,
 .Xr sndiod 8
-exposes a MIDI port used to control and monitor audio streams
-in real time using MIDI.
-.Sh DEVICE NAMES
-From the user's perspective every audio interface, MIDI port, and
-.Xr sndiod 8
-service has a name of the form:
+exposes a MIDI port used to control audio programs using
+standard MIDI Machine Control (MMC), MIDI Time Code (MTC),
+and master volume messages.
+.Sh AUDIO AND MIDI DESCRIPTORS
+From the user's perspective every audio device or MIDI port
+has a descriptor of the form:
 .Bd -literal -offset center
-type[@hostname][,unit]/devnum[.option]
+type[@hostname][,servnum]/devnum[.option]
 .Ed
 .Pp
-This information is used by audio and MIDI applications to determine
+This information is used by programs to determine
 how to access the audio device or MIDI port.
 .Bl -tag -width "hostname"
 .It Ar type
@@ -91,7 +89,7 @@ port.
 Audio device exposed by
 .Xr sndiod 8 .
 .It Cm midithru
-MIDI thru box created with
+MIDI thru port created with
 .Xr sndiod 8 .
 .It Cm midi
 MIDI port exposed by
@@ -103,7 +101,7 @@ Default audio device or MIDI port (see below).
 The hostname or address where the remote
 .Xr sndiod 8
 server to connect to is running.
-.It Ar unit
+.It Ar servnum
 The number of the
 .Xr sndiod 8
 server to connect to, corresponding to the integer specified using the
@@ -133,17 +131,19 @@ For example:
 .Pp
 .Bl -tag -width "snd/0.rear" -offset 3n -compact
 .It Li rsnd/0
-First hardware audio device.
+Raw access to first audio device.
 .It Li rmidi/5
-Hardware MIDI port number 5.
+Raw access to MIDI port number 5.
 .It Li snd/0
-First audio device exposed by
+Audio device referred by first
+.Fl f
+option of
 .Xr sndiod 8 .
 .It Li snd/0.rear
 Sub-device registered with
 .Fl s Fa rear .
 .It Li midithru/0
-First MIDI thru box created with
+First MIDI thru port created with
 .Xr sndiod 8 .
 .El
 .Sh DEFAULTS
@@ -159,15 +159,16 @@ If that fails, it then tries to use
 .Li rsnd/0 .
 This allows the
 .Xr sndiod 8
-audio server to be used by default and the bare hardware as fallback;
+audio server to be used by default and the raw hardware as fallback;
 programs don't have to be reconfigured when
 .Xr sndiod 8
 is started or stopped.
 .Pp
-If
+Similarly, if no MIDI descriptor is provided to a program
+or when the reserved word
 .Cm default
-is used as the MIDI port, the program will use the
-one specified in the
+is passed as the device descriptor,
+the program uses the one specified in the
 .Ev MIDIDEVICE
 environment variable.
 If it is not set, the program first tries to connect to
@@ -181,14 +182,12 @@ machines with no MIDI hardware by default, e.g. a MIDI player
 could use a software synthesizer with no manual configuration
 required.
 .Sh AUTHENTICATION
-If a shared
+For privacy reasons only one user may have connections to
 .Xr sndiod 8
-server is running, for privacy reasons only one user may have
-connections to it at a given time
-(though the same user could have multiple connections to it).
+at a given time.
 Users are identified by their
 .Em session cookie ,
-which is automatically generated by audio or MIDI applications
+which is automatically generated by audio or MIDI programs
 upon the first connection to the server.
 The cookie is stored in
 .Pa "$HOME/.sndio/cookie"
@@ -199,28 +198,32 @@ can connect to the server using the same cookie.
 .Sh ENVIRONMENT
 .Bl -tag -width "AUDIODEVICEXXX" -compact
 .It Ev AUDIODEVICE
-Audio device that
-.Xr sio_open 3
-uses if the application provides no device chooser.
+Audio device descriptor to use
+when no descriptor is explicitly specified to a program.
 .It Ev MIDIDEVICE
-MIDI port that
-.Xr mio_open 3
-uses if the application provides no MIDI port chooser.
+MIDI port descriptor to use
+when no descriptor is explicitly specified to a program.
 .El
 .Pp
 These environment variables are ignored by
 .Nm
 if the program has the set-user-ID or set-group-ID bits set.
 .Sh FILES
-.Bl -tag -width "/dev/audioNXXX" -compact
+.Bl -tag -width "~/.sndio/cookie" -compact
+.It Pa ~/.sndio/cookie
+User's session authentication cookie.
 .It Pa /dev/audioN
 Audio devices.
 .It Pa /dev/rmidiN
 MIDI ports.
 .El
 .Sh SEE ALSO
+.Xr aucat 1 ,
+.Xr midicat 1 ,
+.Xr sndioctl 1 ,
 .Xr mio_open 3 ,
 .Xr sio_open 3 ,
+.Xr sioctl_open 3 ,
 .Xr audio 4 ,
 .Xr midi 4 ,
 .Xr sndiod 8

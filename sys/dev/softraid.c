@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.401 2020/04/14 07:38:21 jca Exp $ */
+/* $OpenBSD: softraid.c,v 1.405 2020/06/27 17:28:58 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1804,11 +1804,10 @@ sr_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter = &sr_switch;
-	sc->sc_link.adapter_target = SR_MAX_LD;
+	sc->sc_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
 	sc->sc_link.adapter_buswidth = SR_MAX_LD;
 	sc->sc_link.luns = 1;
 
-	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	sc->sc_scsibus = (struct scsibus_softc *)config_found(&sc->sc_dev,
@@ -3418,7 +3417,7 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc,
 			    "chunk count");
 			goto unwind;
 		}
-			
+
 		/* Ensure metadata level matches requested assembly level. */
 		if (sd->sd_meta->ssdi.ssd_level != bc->bc_level) {
 			sr_error(sc, "volume level does not match metadata "
@@ -3704,11 +3703,17 @@ sr_ioctl_installboot(struct sr_softc *sc, struct sr_discipline *sd,
 		goto done;
 	}
 
-	if (bb->bb_bootblk_size > SR_BOOT_BLOCKS_SIZE * DEV_BSIZE)
+	if (bb->bb_bootblk_size > SR_BOOT_BLOCKS_SIZE * DEV_BSIZE) {
+		sr_error(sc, "boot block too large (%d > %d)",
+		    bb->bb_bootblk_size, SR_BOOT_BLOCKS_SIZE * DEV_BSIZE);
 		goto done;
+	}
 
-	if (bb->bb_bootldr_size > SR_BOOT_LOADER_SIZE * DEV_BSIZE)
+	if (bb->bb_bootldr_size > SR_BOOT_LOADER_SIZE * DEV_BSIZE) {
+		sr_error(sc, "boot loader too large (%d > %d)",
+		    bb->bb_bootldr_size, SR_BOOT_LOADER_SIZE * DEV_BSIZE);
 		goto done;
+	}
 
 	secsize = sd->sd_meta->ssdi.ssd_secsize;
 

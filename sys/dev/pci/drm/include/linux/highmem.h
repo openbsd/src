@@ -1,4 +1,4 @@
-/*	$OpenBSD: highmem.h,v 1.1 2019/04/14 10:14:53 jsg Exp $	*/
+/*	$OpenBSD: highmem.h,v 1.3 2020/06/14 15:20:07 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -18,11 +18,12 @@
 #ifndef _LINUX_HIGHMEM_H
 #define _LINUX_HIGHMEM_H
 
+#include <sys/param.h>
 #include <uvm/uvm_extern.h>
 #include <linux/uaccess.h>
 
 void	*kmap(struct vm_page *);
-void	 kunmap(void *addr);
+void	 kunmap_va(void *addr);
 
 #define kmap_to_page(ptr)	(ptr)
 

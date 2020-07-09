@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-panes.c,v 1.34 2020/04/13 20:51:57 nicm Exp $ */
+/* $OpenBSD: cmd-display-panes.c,v 1.35 2020/05/16 15:34:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -131,9 +131,7 @@ cmd_display_panes_draw_pane(struct screen_redraw_ctx *ctx,
 		gc.bg = active_colour;
 	else
 		gc.bg = colour;
-	gc.flags |= GRID_FLAG_NOPALETTE;
-
-	tty_attributes(tty, &gc, wp);
+	tty_attributes(tty, &gc, &grid_default_cell, NULL);
 	for (ptr = buf; *ptr != '\0'; ptr++) {
 		if (*ptr < '0' || *ptr > '9')
 			continue;
@@ -160,9 +158,7 @@ draw_text:
 		gc.fg = active_colour;
 	else
 		gc.fg = colour;
-	gc.flags |= GRID_FLAG_NOPALETTE;
-
-	tty_attributes(tty, &gc, wp);
+	tty_attributes(tty, &gc, &grid_default_cell, NULL);
 	tty_puts(tty, buf);
 
 	tty_cursor(tty, 0, 0);

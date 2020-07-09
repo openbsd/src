@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.105 2020/04/07 13:27:51 visa Exp $ */
+/*	$OpenBSD: ugen.c,v 1.106 2020/05/13 08:13:42 mpi Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1342,13 +1342,6 @@ const struct filterops ugenread_isoc_filtops = {
 	.f_event	= filt_ugenread_isoc,
 };
 
-const struct filterops ugen_seltrue_filtops = {
-	.f_flags	= FILTEROP_ISFD,
-	.f_attach	= NULL,
-	.f_detach	= filt_ugenrdetach,
-	.f_event	= filt_seltrue,
-};
-
 int
 ugenkqfilter(dev_t dev, struct knote *kn)
 {
@@ -1378,13 +1371,11 @@ ugenkqfilter(dev_t dev, struct knote *kn)
 			kn->kn_fop = &ugenread_isoc_filtops;
 			break;
 		case UE_BULK:
-			/* 
+			/*
 			 * We have no easy way of determining if a read will
 			 * yield any data or a write will happen.
-			 * So, emulate "seltrue".
 			 */
-			kn->kn_fop = &ugen_seltrue_filtops;
-			break;
+			return (seltrue_kqfilter(dev, kn));
 		default:
 			return (EINVAL);
 		}
@@ -1402,10 +1393,8 @@ ugenkqfilter(dev_t dev, struct knote *kn)
 			/*
 			 * We have no easy way of determining if a read will
 			 * yield any data or a write will happen.
-			 * So, emulate "seltrue".
 			 */
-			kn->kn_fop = &ugen_seltrue_filtops;
-			break;
+			return (seltrue_kqfilter(dev, kn));
 		default:
 			return (EINVAL);
 		}

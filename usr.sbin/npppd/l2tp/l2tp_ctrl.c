@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp_ctrl.c,v 1.23 2019/05/10 01:29:31 guenther Exp $	*/
+/*	$OpenBSD: l2tp_ctrl.c,v 1.24 2020/06/09 02:39:27 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 /**@file Control connection processing functions for L2TP LNS */
-/* $Id: l2tp_ctrl.c,v 1.23 2019/05/10 01:29:31 guenther Exp $ */
+/* $Id: l2tp_ctrl.c,v 1.24 2020/06/09 02:39:27 yasuoka Exp $ */
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
@@ -66,26 +66,28 @@
 
 #define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
-static int                l2tp_ctrl_init (l2tp_ctrl *, l2tpd *, struct sockaddr *, struct sockaddr *, void *);
-static void               l2tp_ctrl_reload (l2tp_ctrl *);
-static int                l2tp_ctrl_send_disconnect_notify (l2tp_ctrl *);
+static int		 l2tp_ctrl_init(l2tp_ctrl *, l2tpd *, struct sockaddr *, struct sockaddr *, void *);
+static void		 l2tp_ctrl_reload(l2tp_ctrl *);
+static int		 l2tp_ctrl_send_disconnect_notify(l2tp_ctrl *);
 #if 0
-static void               l2tp_ctrl_purge_ipsec_sa (l2tp_ctrl *);
+static void		 l2tp_ctrl_purge_ipsec_sa(l2tp_ctrl *);
 #endif
-static void               l2tp_ctrl_timeout (int, short, void *);
-static int                l2tp_ctrl_resend_una_packets (l2tp_ctrl *);
-static void               l2tp_ctrl_destroy_all_calls (l2tp_ctrl *);
-static int                l2tp_ctrl_disconnect_all_calls (l2tp_ctrl *, int);
-static void               l2tp_ctrl_reset_timeout (l2tp_ctrl *);
-static inline int         l2tp_ctrl_txwin_size (l2tp_ctrl *);
-static inline int         l2tp_ctrl_txwin_is_full (l2tp_ctrl *);
-static int                l2tp_ctrl_recv_SCCRQ (l2tp_ctrl *, u_char *, int, l2tpd *, struct sockaddr *);
-static int                l2tp_ctrl_send_StopCCN (l2tp_ctrl *, int);
-static int                l2tp_ctrl_recv_StopCCN (l2tp_ctrl *, u_char *, int);
-static void               l2tp_ctrl_send_SCCRP (l2tp_ctrl *);
-static int                l2tp_ctrl_send_HELLO (l2tp_ctrl *);
-static int                l2tp_ctrl_send_ZLB (l2tp_ctrl *);
-static inline const char  *l2tp_ctrl_state_string (l2tp_ctrl *);
+static void		 l2tp_ctrl_timeout(int, short, void *);
+static int		 l2tp_ctrl_resend_una_packets(l2tp_ctrl *, bool);
+static void		 l2tp_ctrl_destroy_all_calls(l2tp_ctrl *);
+static int		 l2tp_ctrl_disconnect_all_calls(l2tp_ctrl *, int);
+static void		 l2tp_ctrl_reset_timeout(l2tp_ctrl *);
+static int		 l2tp_ctrl_txwin_size(l2tp_ctrl *);
+static bool		 l2tp_ctrl_txwin_is_full(l2tp_ctrl *);
+static bool		 l2tp_ctrl_in_peer_window(l2tp_ctrl *, uint16_t);
+static bool		 l2tp_ctrl_in_our_window(l2tp_ctrl *, uint16_t);
+static int		 l2tp_ctrl_recv_SCCRQ(l2tp_ctrl *, u_char *, int, l2tpd *, struct sockaddr *);
+static int		 l2tp_ctrl_send_StopCCN(l2tp_ctrl *, int);
+static int		 l2tp_ctrl_recv_StopCCN(l2tp_ctrl *, u_char *, int);
+static void		 l2tp_ctrl_send_SCCRP(l2tp_ctrl *);
+static int		 l2tp_ctrl_send_HELLO(l2tp_ctrl *);
+static int		 l2tp_ctrl_send_ZLB(l2tp_ctrl *);
+static const char	*l2tp_ctrl_state_string(l2tp_ctrl *);
 
 #ifdef	L2TP_CTRL_DEBUG
 #define	L2TP_CTRL_ASSERT(x)	ASSERT(x)
@@ -158,13 +160,20 @@ l2tp_ctrl_init(l2tp_ctrl *_this, l2tpd *_l2tpd, struct sockaddr *peer,
 
 	/* prepare send buffer */
 	_this->winsz = L2TPD_DEFAULT_SEND_WINSZ;
-	if ((_this->snd_buffers = calloc(_this->winsz, sizeof(bytebuffer *)))
-	    == NULL) {
+	/*
+	 * _this->winsz is informed as our receive window size.  Also
+	 * MIN(_this->winsz, _this->peer_winsiz) is used for the size of
+	 * transmit side window.  We need winsz * 2 sized buffer so that a
+	 * stingy client can fill both of window separately.
+	 */
+	_this->snd_buffercnt = _this->winsz * 2;
+	if ((_this->snd_buffers = calloc(_this->snd_buffercnt,
+	    sizeof(bytebuffer *))) == NULL) {
 		l2tpd_log(_l2tpd, LOG_ERR,
 		    "calloc() failed in %s(): %m", __func__);
 		goto fail;
 	}
-	for (i = 0; i < _this->winsz; i++) {
+	for (i = 0; i < _this->snd_buffercnt; i++) {
 		if ((bytebuf = bytebuffer_create(L2TPD_SND_BUFSIZ)) == NULL) {
 			l2tpd_log(_l2tpd, LOG_ERR,
 			    "bytebuffer_create() failed in %s(): %m", __func__);
@@ -332,7 +341,7 @@ cleanup:
 
 		/* free send buffer */
 		if (_this->snd_buffers != NULL) {
-			for (i = 0; i < _this->winsz; i++)
+			for (i = 0; i < _this->snd_buffercnt; i++)
 				bytebuffer_destroy(_this->snd_buffers[i]);
 			free(_this->snd_buffers);
 			_this->snd_buffers = NULL;
@@ -565,7 +574,7 @@ l2tp_ctrl_timeout(int fd, short evtype, void *ctx)
 	}
 	/* resend if required */
 	if (need_resend)
-		l2tp_ctrl_resend_una_packets(_this);
+		l2tp_ctrl_resend_una_packets(_this, true);
 	l2tp_ctrl_reset_timeout(_this);
 }
 
@@ -599,7 +608,7 @@ l2tp_ctrl_send(l2tp_ctrl *_this, const void *msg, int len)
 
 /* resend una packets */
 static int
-l2tp_ctrl_resend_una_packets(l2tp_ctrl *_this)
+l2tp_ctrl_resend_una_packets(l2tp_ctrl *_this, bool resend)
 {
 	uint16_t seq;
 	bytebuffer *bytebuf;
@@ -608,9 +617,14 @@ l2tp_ctrl_resend_una_packets(l2tp_ctrl *_this)
 
 	nsend = 0;
 	for (seq = _this->snd_una; SEQ_LT(seq, _this->snd_nxt); seq++) {
-		bytebuf = _this->snd_buffers[seq % _this->winsz];
+		if (!l2tp_ctrl_in_peer_window(_this, seq))
+			break;
+		if (SEQ_LT(seq, _this->snd_last) && !resend)
+			continue;
+		bytebuf = _this->snd_buffers[seq % _this->snd_buffercnt];
 		header = bytebuffer_pointer(bytebuf);
 		header->nr = htons(_this->rcv_nxt);
+		_this->snd_lastnr = _this->rcv_nxt;
 #ifdef L2TP_CTRL_DEBUG
 		if (debuglevel >= 3) {
 			l2tp_ctrl_log(_this, DEBUG_LEVEL_3, "RESEND seq=%u",
@@ -931,23 +945,24 @@ l2tp_ctrl_input(l2tpd *_this, int listener_index, struct sockaddr *peer,
 			l2tp_ctrl_log(ctrl, LOG_INFO, "RecvZLB");
 
 		if (SEQ_GT(hdr.nr, ctrl->snd_una)) {
-			if (hdr.nr == ctrl->snd_nxt ||
-			    SEQ_LT(hdr.nr, ctrl->snd_nxt))
-				ctrl->snd_una = hdr.nr;
-			else {
+			/* a new ack arrived */
+			if (SEQ_GT(hdr.nr, ctrl->snd_nxt)) {
+				/* ack is proceeded us */
 				l2tp_ctrl_log(ctrl, LOG_INFO,
 				    "Received message has bad Nr field: "
-				    "%u < %u.", hdr.ns, ctrl->snd_nxt);
-				/* XXX Drop with ZLB? */
+				    "%u < %u", ctrl->snd_nxt, hdr.nr);
 				goto fail;
 			}
+			ctrl->snd_una = hdr.nr;
+			/* peer window is moved.  send out pending packets */
+			l2tp_ctrl_resend_una_packets(ctrl, false);
 		}
 		if (l2tp_ctrl_txwin_size(ctrl) <= 0) {
 			/* no waiting ack */
 			if (ctrl->hello_wait_ack != 0) {
 				/*
 				 * Reset Hello state, as an ack for the Hello
-				 * is recived.
+				 * is received.
 				 */
 				ctrl->hello_wait_ack = 0;
 				ctrl->hello_io_time = curr_time;
@@ -960,7 +975,7 @@ l2tp_ctrl_input(l2tpd *_this, int listener_index, struct sockaddr *peer,
 		}
 		if (hdr.ns != ctrl->rcv_nxt) {
 			/* there are remaining packet */
-			if (l2tp_ctrl_resend_una_packets(ctrl) <= 0) {
+			if (l2tp_ctrl_resend_una_packets(ctrl, true) <= 0) {
 				/* resend or sent ZLB */
 				l2tp_ctrl_send_ZLB(ctrl);
 			}
@@ -977,11 +992,12 @@ l2tp_ctrl_input(l2tpd *_this, int listener_index, struct sockaddr *peer,
 		if (pktlen <= 0)
 			return;		/* ZLB */
 
-		if (l2tp_ctrl_txwin_is_full(ctrl)) {
-			L2TP_CTRL_DBG((ctrl, LOG_DEBUG,
-			    "Received message cannot be handled. "
-			    "Transmission window is full."));
-			l2tp_ctrl_send_ZLB(ctrl);
+		if (!l2tp_ctrl_in_our_window(ctrl, hdr.ns)) {
+			l2tp_ctrl_log(ctrl, LOG_WARNING,
+			    "received message is outside of window.  "
+			    "ns=%d window=%u:%u",
+			    hdr.ns, ctrl->snd_lastnr,
+			    (uint16_t)(ctrl->snd_lastnr + ctrl->winsz - 1));
 			return;
 		}
 
@@ -1051,20 +1067,13 @@ l2tp_ctrl_input(l2tpd *_this, int listener_index, struct sockaddr *peer,
 			break;
 receive_stop_ccn:
 		case L2TP_AVP_MESSAGE_TYPE_StopCCN:
-			if (l2tp_ctrl_recv_StopCCN(ctrl, pkt, pktlen) == 0) {
-				if (l2tp_ctrl_resend_una_packets(ctrl) <= 0)
-					l2tp_ctrl_send_ZLB(ctrl);
-				l2tp_ctrl_stop(ctrl, 0);
-				return;
-			}
-			l2tp_ctrl_log(ctrl, LOG_ERR, "Received bad StopCCN");
+			l2tp_ctrl_recv_StopCCN(ctrl, pkt, pktlen);
 			l2tp_ctrl_send_ZLB(ctrl);
 			l2tp_ctrl_stop(ctrl, 0);
 			return;
 
 		case L2TP_AVP_MESSAGE_TYPE_HELLO:
-			if (l2tp_ctrl_resend_una_packets(ctrl) <= 0)
-				l2tp_ctrl_send_ZLB(ctrl);
+			l2tp_ctrl_send_ZLB(ctrl);
 			return;
 		case L2TP_AVP_MESSAGE_TYPE_CDN:
 		case L2TP_AVP_MESSAGE_TYPE_ICRP:
@@ -1116,24 +1125,45 @@ bad_packet:
 	return;
 }
 
-static inline int
+static int
 l2tp_ctrl_txwin_size(l2tp_ctrl *_this)
 {
 	uint16_t sz;
 
 	sz = _this->snd_nxt - _this->snd_una;
 
-	L2TP_CTRL_ASSERT(sz <= _this->winsz);
+	L2TP_CTRL_ASSERT(sz <= _this->buffercnt);
 
 	return sz;
 }
 
-static inline int
+static bool
 l2tp_ctrl_txwin_is_full(l2tp_ctrl *_this)
 {
-	return (l2tp_ctrl_txwin_size(_this) >= _this->winsz)? 1 : 0;
+	return (l2tp_ctrl_txwin_size(_this) >= _this->snd_buffercnt)? 1 : 0;
 }
 
+static bool
+l2tp_ctrl_in_peer_window(l2tp_ctrl *_this, uint16_t seq)
+{
+	uint16_t off;
+	int winsz;
+
+	winsz = MINIMUM(_this->winsz, _this->peer_winsz);
+	off = seq - _this->snd_una;
+
+	return ((off < winsz)? true : false);
+}
+
+static bool
+l2tp_ctrl_in_our_window(l2tp_ctrl *_this, uint16_t seq)
+{
+	uint16_t off;
+
+	off = seq - _this->snd_lastnr;
+
+	return ((off < _this->winsz)? true : false);
+}
 /* send control packet */
 int
 l2tp_ctrl_send_packet(l2tp_ctrl *_this, int call_id, bytebuffer *bytebuf)
@@ -1141,6 +1171,7 @@ l2tp_ctrl_send_packet(l2tp_ctrl *_this, int call_id, bytebuffer *bytebuf)
 	struct l2tp_header *hdr;
 	int rval;
 	time_t curr_time;
+	uint16_t seq;
 
 	curr_time = get_monosec();
 
@@ -1156,12 +1187,16 @@ l2tp_ctrl_send_packet(l2tp_ctrl *_this, int call_id, bytebuffer *bytebuf)
 	hdr->session_id = htons(call_id);
 
 	hdr->s = 1;
-	hdr->ns = htons(_this->snd_nxt);
+	seq = _this->snd_nxt;
+	hdr->ns = htons(seq);
 	hdr->nr = htons(_this->rcv_nxt);
 
 	if (bytebuffer_remaining(bytebuf) > sizeof(struct l2tp_header))
 		/* Not ZLB */
 		_this->snd_nxt++;
+
+	if (!l2tp_ctrl_in_peer_window(_this, seq))
+		return (0);
 
 	L2TP_CTRL_DBG((_this, DEBUG_LEVEL_2,
 	    "SEND C ns=%u nr=%u snd_nxt=%u snd_una=%u rcv_nxt=%u ",
@@ -1180,7 +1215,9 @@ l2tp_ctrl_send_packet(l2tp_ctrl *_this, int call_id, bytebuffer *bytebuf)
 		L2TP_CTRL_DBG((_this, LOG_DEBUG, "sendto() failed: %m"));
 	}
 
+	_this->snd_lastnr = _this->rcv_nxt;
 	_this->last_snd_ctrl = curr_time;
+	_this->snd_last = seq;
 
 	return (rval == bytebuffer_remaining(bytebuf))? 0 : 1;
 }
@@ -1201,6 +1238,7 @@ l2tp_ctrl_recv_SCCRQ(l2tp_ctrl *_this, u_char *pkt, int pktlen, l2tpd *_l2tpd,
 	strlcpy(hostname, "(no hostname)", sizeof(hostname));
 	strlcpy(vendorname, "(no vendorname)", sizeof(vendorname));
 
+	_this->peer_winsz = 4;	/* default is 4 in RFC 2661 */
 	firmrev = 0;
 	protover = 0;
 	protorev = 0;
@@ -1302,6 +1340,9 @@ l2tp_ctrl_recv_SCCRQ(l2tp_ctrl *_this, u_char *pkt, int pktlen, l2tpd *_l2tpd,
 	    "hostname=%s vendor=%s firm=%04X", host, serv, _this->tunnel_id,
 	    _this->peer_tunnel_id, protover, protorev, _this->peer_winsz,
 	    hostname, vendorname, firmrev);
+
+	if (_this->peer_winsz == 0)
+		_this->peer_winsz = 1;
 
 	return 0;
 not_acceptable:
@@ -1578,7 +1619,7 @@ l2tp_ctrl_send_HELLO(l2tp_ctrl *_this)
 
 	if ((bytebuf = l2tp_ctrl_prepare_snd_buffer(_this, 1)) == NULL) {
 		l2tp_ctrl_log(_this, LOG_ERR,
-		    "sending SCCRP failed: no buffer.");
+		    "sending HELLO failed: no buffer.");
 		return 1;
 	}
 	avp = (struct l2tp_avp *)buf;
@@ -1635,7 +1676,7 @@ l2tp_ctrl_prepare_snd_buffer(l2tp_ctrl *_this, int with_seq)
 		l2tp_ctrl_log(_this, LOG_INFO, "sending buffer is full.");
 		return NULL;
 	}
-	bytebuf = _this->snd_buffers[_this->snd_nxt % _this->winsz];
+	bytebuf = _this->snd_buffers[_this->snd_nxt % _this->snd_buffercnt];
 	bytebuffer_clear(bytebuf);
 	if (with_seq)
 		bytebuffer_put(bytebuf, BYTEBUFFER_PUT_DIRECT,

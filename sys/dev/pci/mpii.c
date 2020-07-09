@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.128 2020/02/05 16:29:30 krw Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.130 2020/06/27 14:29:45 krw Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -584,13 +584,12 @@ mpii_attach(struct device *parent, struct device *self, void *aux)
 	/* we should be good to go now, attach scsibus */
 	sc->sc_link.adapter = &mpii_switch;
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = -1;
+	sc->sc_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
 	sc->sc_link.adapter_buswidth = sc->sc_max_devices;
 	sc->sc_link.luns = 1;
 	sc->sc_link.openings = sc->sc_max_cmds - 1;
 	sc->sc_link.pool = &sc->sc_iopool;
 
-	memset(&saa, 0, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_BIO,

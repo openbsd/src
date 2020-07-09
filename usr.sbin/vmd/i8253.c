@@ -1,4 +1,4 @@
-/* $OpenBSD: i8253.c,v 1.31 2019/11/30 00:51:29 mlarkin Exp $ */
+/* $OpenBSD: i8253.c,v 1.32 2020/06/28 16:52:45 pd Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -30,6 +30,7 @@
 
 #include "i8253.h"
 #include "proc.h"
+#include "vmd.h"
 #include "vmm.h"
 #include "atomicio.h"
 
@@ -42,6 +43,35 @@ extern char *__progname;
  * a regular PC, channel 2 status can also be read from port 0x61.
  */
 struct i8253_channel i8253_channel[3];
+
+static struct vm_dev_pipe dev_pipe;
+
+/*
+ * i8253_pipe_dispatch
+ *
+ * Reads a message off the pipe, expecting one that corresponds to a
+ * reset request for a specific channel.
+ */
+static void
+i8253_pipe_dispatch(int fd, short event, void *arg)
+{
+	enum pipe_msg_type msg;
+
+	msg = vm_pipe_recv(&dev_pipe);
+	switch (msg) {
+	case I8253_RESET_CHAN_0:
+		i8253_reset(0);
+		break;
+	case I8253_RESET_CHAN_1:
+		i8253_reset(1);
+		break;
+	case I8253_RESET_CHAN_2:
+		i8253_reset(2);
+		break;
+	default:
+		fatalx("%s: unexpected pipe message %d", __func__, msg);
+	}
+}
 
 /*
  * i8253_init
@@ -77,6 +107,9 @@ i8253_init(uint32_t vm_id)
 	evtimer_set(&i8253_channel[0].timer, i8253_fire, &i8253_channel[0]);
 	evtimer_set(&i8253_channel[1].timer, i8253_fire, &i8253_channel[1]);
 	evtimer_set(&i8253_channel[2].timer, i8253_fire, &i8253_channel[2]);
+
+	vm_pipe_init(&dev_pipe, i8253_pipe_dispatch);
+	event_add(&dev_pipe.read_ev, NULL);
 }
 
 /*
@@ -271,7 +304,7 @@ vcpu_exit_i8253(struct vm_run_params *vrp)
 				    sel, i8253_channel[sel].mode,
 				    i8253_channel[sel].start);
 
-				i8253_reset(sel);
+				vm_pipe_send(&dev_pipe, sel);
 			}
 		} else {
 			if (i8253_channel[sel].rbs) {

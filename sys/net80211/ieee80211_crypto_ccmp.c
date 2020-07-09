@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_ccmp.c,v 1.21 2018/11/09 14:14:31 claudio Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_ccmp.c,v 1.22 2020/05/15 14:21:09 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -300,6 +300,45 @@ ieee80211_ccmp_encrypt(struct ieee80211com *ic, struct mbuf *m0,
 	return NULL;
 }
 
+int
+ieee80211_ccmp_get_pn(uint64_t *pn, uint64_t **prsc, struct mbuf *m,
+    struct ieee80211_key *k)
+{
+	struct ieee80211_frame *wh;
+	int hdrlen;
+	const u_int8_t *ivp;
+
+	wh = mtod(m, struct ieee80211_frame *);
+	hdrlen = ieee80211_get_hdrlen(wh);
+	if (m->m_pkthdr.len < hdrlen + IEEE80211_CCMP_HDRLEN)
+		return EINVAL;
+
+	ivp = (u_int8_t *)wh + hdrlen;
+
+	/* check that ExtIV bit is set */
+	if (!(ivp[3] & IEEE80211_WEP_EXTIV))
+		return EINVAL;
+
+	/* retrieve last seen packet number for this frame type/priority */
+	if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
+	    IEEE80211_FC0_TYPE_DATA) {
+		u_int8_t tid = ieee80211_has_qos(wh) ?
+		    ieee80211_get_qos(wh) & IEEE80211_QOS_TID : 0;
+		*prsc = &k->k_rsc[tid];
+	} else	/* 11w: management frames have their own counters */
+		*prsc = &k->k_mgmt_rsc;
+
+	/* extract the 48-bit PN from the CCMP header */
+	*pn = (u_int64_t)ivp[0]      |
+	     (u_int64_t)ivp[1] <<  8 |
+	     (u_int64_t)ivp[4] << 16 |
+	     (u_int64_t)ivp[5] << 24 |
+	     (u_int64_t)ivp[6] << 32 |
+	     (u_int64_t)ivp[7] << 40;
+
+	return 0;
+}
+
 struct mbuf *
 ieee80211_ccmp_decrypt(struct ieee80211com *ic, struct mbuf *m0,
     struct ieee80211_key *k)
@@ -307,7 +346,7 @@ ieee80211_ccmp_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 	struct ieee80211_ccmp_ctx *ctx = k->k_priv;
 	struct ieee80211_frame *wh;
 	u_int64_t pn, *prsc;
-	const u_int8_t *ivp, *src;
+	const u_int8_t *src;
 	u_int8_t *dst;
 	u_int8_t mic0[IEEE80211_CCMP_MICLEN];
 	u_int8_t a[16], b[16], s0[16], s[16];
@@ -318,35 +357,20 @@ ieee80211_ccmp_decrypt(struct ieee80211com *ic, struct mbuf *m0,
 
 	wh = mtod(m0, struct ieee80211_frame *);
 	hdrlen = ieee80211_get_hdrlen(wh);
-	ivp = (u_int8_t *)wh + hdrlen;
-
 	if (m0->m_pkthdr.len < hdrlen + IEEE80211_CCMP_HDRLEN +
 	    IEEE80211_CCMP_MICLEN) {
 		m_freem(m0);
 		return NULL;
 	}
-	/* check that ExtIV bit is set */
-	if (!(ivp[3] & IEEE80211_WEP_EXTIV)) {
+
+	/*
+	 * Get the frame's Packet Number (PN) and a pointer to our last-seen
+	 * Receive Sequence Counter (RSC) which we can use to detect replays.
+	 */
+	if (ieee80211_ccmp_get_pn(&pn, &prsc, m0, k) != 0) {
 		m_freem(m0);
 		return NULL;
 	}
-
-	/* retrieve last seen packet number for this frame type/priority */
-	if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
-	    IEEE80211_FC0_TYPE_DATA) {
-		u_int8_t tid = ieee80211_has_qos(wh) ?
-		    ieee80211_get_qos(wh) & IEEE80211_QOS_TID : 0;
-		prsc = &k->k_rsc[tid];
-	} else	/* 11w: management frames have their own counters */
-		prsc = &k->k_mgmt_rsc;
-
-	/* extract the 48-bit PN from the CCMP header */
-	pn = (u_int64_t)ivp[0]       |
-	     (u_int64_t)ivp[1] <<  8 |
-	     (u_int64_t)ivp[4] << 16 |
-	     (u_int64_t)ivp[5] << 24 |
-	     (u_int64_t)ivp[6] << 32 |
-	     (u_int64_t)ivp[7] << 40;
 	if (pn <= *prsc) {
 		/* replayed frame, discard */
 		ic->ic_stats.is_ccmp_replays++;

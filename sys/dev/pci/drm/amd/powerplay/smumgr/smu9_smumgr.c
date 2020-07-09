@@ -40,10 +40,8 @@ bool smu9_is_smc_ram_running(struct pp_hwmgr *hwmgr)
 	struct amdgpu_device *adev = hwmgr->adev;
 	uint32_t mp1_fw_flags;
 
-	WREG32_SOC15(NBIF, 0, mmPCIE_INDEX2,
-			(MP1_Public | (smnMP1_FIRMWARE_FLAGS & 0xffffffff)));
-
-	mp1_fw_flags = RREG32_SOC15(NBIF, 0, mmPCIE_DATA2);
+	mp1_fw_flags = RREG32_PCIE(MP1_Public |
+				   (smnMP1_FIRMWARE_FLAGS & 0xffffffff));
 
 	if (mp1_fw_flags & MP1_FIRMWARE_FLAGS__INTERRUPTS_ENABLED_MASK)
 		return true;
@@ -63,15 +61,29 @@ static uint32_t smu9_wait_for_response(struct pp_hwmgr *hwmgr)
 	uint32_t reg;
 	uint32_t ret;
 
-	reg = SOC15_REG_OFFSET(MP1, 0, mmMP1_SMN_C2PMSG_90);
+	/* Due to the L1 policy problem under SRIOV, we have to use
+	 * mmMP1_SMN_C2PMSG_103 as the driver response register
+	 */
+	if (hwmgr->pp_one_vf) {
+		reg = SOC15_REG_OFFSET(MP1, 0, mmMP1_SMN_C2PMSG_103);
 
-	ret = phm_wait_for_register_unequal(hwmgr, reg,
-			0, MP1_C2PMSG_90__CONTENT_MASK);
+		ret = phm_wait_for_register_unequal(hwmgr, reg,
+				0, MP1_C2PMSG_103__CONTENT_MASK);
 
-	if (ret)
-		pr_err("No response from smu\n");
+		if (ret)
+			pr_err("No response from smu\n");
 
-	return RREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_90);
+		return RREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_103);
+	} else {
+		reg = SOC15_REG_OFFSET(MP1, 0, mmMP1_SMN_C2PMSG_90);
+
+		ret = phm_wait_for_register_unequal(hwmgr, reg,
+				0, MP1_C2PMSG_90__CONTENT_MASK);
+
+		if (ret)
+			pr_err("No response from smu\n");
+		return RREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_90);
+	}
 }
 
 /*
@@ -85,7 +97,11 @@ static int smu9_send_msg_to_smc_without_waiting(struct pp_hwmgr *hwmgr,
 {
 	struct amdgpu_device *adev = hwmgr->adev;
 
-	WREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_66, msg);
+	if (hwmgr->pp_one_vf) {
+		WREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_101, msg);
+	} else {
+		WREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_66, msg);
+	}
 
 	return 0;
 }
@@ -103,7 +119,10 @@ int smu9_send_msg_to_smc(struct pp_hwmgr *hwmgr, uint16_t msg)
 
 	smu9_wait_for_response(hwmgr);
 
-	WREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_90, 0);
+	if (hwmgr->pp_one_vf)
+		WREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_103, 0);
+	else
+		WREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_90, 0);
 
 	smu9_send_msg_to_smc_without_waiting(hwmgr, msg);
 
@@ -129,9 +148,17 @@ int smu9_send_msg_to_smc_with_parameter(struct pp_hwmgr *hwmgr,
 
 	smu9_wait_for_response(hwmgr);
 
-	WREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_90, 0);
-
-	WREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_82, parameter);
+	/* Due to the L1 policy problem under SRIOV, we have to use
+	 * mmMP1_SMN_C2PMSG_101 as the driver message register and
+	 * mmMP1_SMN_C2PMSG_102 as the driver parameter register.
+	 */
+	if (hwmgr->pp_one_vf) {
+		WREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_103, 0);
+		WREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_102, parameter);
+	} else {
+		WREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_90, 0);
+		WREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_82, parameter);
+	}
 
 	smu9_send_msg_to_smc_without_waiting(hwmgr, msg);
 
@@ -146,5 +173,8 @@ uint32_t smu9_get_argument(struct pp_hwmgr *hwmgr)
 {
 	struct amdgpu_device *adev = hwmgr->adev;
 
-	return RREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_82);
+	if (hwmgr->pp_one_vf)
+		return RREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_102);
+	else
+		return RREG32_SOC15(MP1, 0, mmMP1_SMN_C2PMSG_82);
 }

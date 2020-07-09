@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_types.h,v 1.21 2016/06/15 19:39:34 gerhard Exp $	*/
+/*	$OpenBSD: if_types.h,v 1.22 2020/06/21 11:25:54 dlg Exp $	*/
 /*	$NetBSD: if_types.h,v 1.17 2000/10/26 06:51:31 onoe Exp $	*/
 
 /*
@@ -269,5 +269,6 @@
 #define IFT_BLUETOOTH	0xf8		/* Bluetooth */
 #define IFT_PFLOW	0xf9		/* pflow */
 #define IFT_MBIM	0xfa		/* Mobile Broadband Interface Model */
+#define IFT_WIREGUARD	0xfb		/* WireGuard tunnel */
 
 #endif /* _NET_IF_TYPES_H_ */

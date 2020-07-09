@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.143 2020/01/20 23:21:56 claudio Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.144 2020/06/24 22:03:44 cheloha Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1092,7 +1092,7 @@ nfs_loadattrcache(struct vnode **vpp, struct mbuf **mdp, caddr_t *dposp,
 		} else
 			np->n_size = vap->va_size;
 	}
-	np->n_attrstamp = time_second;
+	np->n_attrstamp = gettime();
 	if (vaper != NULL) {
 		bcopy(vap, vaper, sizeof(*vap));
 		if (np->n_flag & NCHG) {
@@ -1110,7 +1110,7 @@ nfs_attrtimeo(struct nfsnode *np)
 {
 	struct vnode *vp = np->n_vnode;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
-	int tenthage = (time_second - np->n_mtime.tv_sec) / 10;
+	int tenthage = (gettime() - np->n_mtime.tv_sec) / 10;
 	int minto, maxto;
 
 	if (vp->v_type == VDIR) {
@@ -1142,7 +1142,7 @@ nfs_getattrcache(struct vnode *vp, struct vattr *vaper)
 	struct vattr *vap;
 
 	if (np->n_attrstamp == 0 ||
-	    (time_second - np->n_attrstamp) >= nfs_attrtimeo(np)) {
+	    (gettime() - np->n_attrstamp) >= nfs_attrtimeo(np)) {
 		nfsstats.attrcache_misses++;
 		return (ENOENT);
 	}
@@ -1751,7 +1751,7 @@ nfsm_v3attrbuild(struct mbuf **mp, struct vattr *a, int full)
 		*tl = nfs_false;
 	}
 	if (a->va_atime.tv_nsec != VNOVAL) {
-		if (a->va_atime.tv_sec != time_second) {
+		if (a->va_atime.tv_sec != gettime()) {
 			tl = nfsm_build(&mb, 3 * NFSX_UNSIGNED);
 			*tl++ = txdr_unsigned(NFSV3SATTRTIME_TOCLIENT);
 			txdr_nfsv3time(&a->va_atime, tl);
@@ -1764,7 +1764,7 @@ nfsm_v3attrbuild(struct mbuf **mp, struct vattr *a, int full)
 		*tl = txdr_unsigned(NFSV3SATTRTIME_DONTCHANGE);
 	}
 	if (a->va_mtime.tv_nsec != VNOVAL) {
-		if (a->va_mtime.tv_sec != time_second) {
+		if (a->va_mtime.tv_sec != gettime()) {
 			tl = nfsm_build(&mb, 3 * NFSX_UNSIGNED);
 			*tl++ = txdr_unsigned(NFSV3SATTRTIME_TOCLIENT);
 			txdr_nfsv3time(&a->va_mtime, tl);

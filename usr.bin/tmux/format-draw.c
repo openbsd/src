@@ -1,4 +1,4 @@
-/* $OpenBSD: format-draw.c,v 1.16 2020/04/09 15:35:27 nicm Exp $ */
+/* $OpenBSD: format-draw.c,v 1.20 2020/05/16 16:26:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -242,7 +242,7 @@ format_draw_left(struct screen_write_ctx *octx, u_int available, u_int ocx,
 
 	/* If there is no list left, pass off to the no list function. */
 	if (width_list == 0) {
-		screen_write_start(&ctx, NULL, left);
+		screen_write_start(&ctx, left);
 		screen_write_fast_copy(&ctx, after, 0, 0, width_after, 1);
 		screen_write_stop(&ctx);
 
@@ -334,7 +334,7 @@ format_draw_centre(struct screen_write_ctx *octx, u_int available, u_int ocx,
 
 	/* If there is no list left, pass off to the no list function. */
 	if (width_list == 0) {
-		screen_write_start(&ctx, NULL, centre);
+		screen_write_start(&ctx, centre);
 		screen_write_fast_copy(&ctx, after, 0, 0, width_after, 1);
 		screen_write_stop(&ctx);
 
@@ -431,7 +431,7 @@ format_draw_right(struct screen_write_ctx *octx, u_int available, u_int ocx,
 
 	/* If there is no list left, pass off to the no list function. */
 	if (width_list == 0) {
-		screen_write_start(&ctx, NULL, right);
+		screen_write_start(&ctx, right);
 		screen_write_fast_copy(&ctx, after, 0, 0, width_after, 1);
 		screen_write_stop(&ctx);
 
@@ -536,7 +536,7 @@ format_draw(struct screen_write_ctx *octx, const struct grid_cell *base,
 	 */
 	for (i = 0; i < TOTAL; i++) {
 		screen_init(&s[i], size, 1, 0);
-		screen_write_start(&ctx[i], NULL, &s[i]);
+		screen_write_start(&ctx[i], &s[i]);
 		screen_write_clearendofline(&ctx[i], current_default.bg);
 		width[i] = 0;
 	}
@@ -547,7 +547,7 @@ format_draw(struct screen_write_ctx *octx, const struct grid_cell *base,
 	 */
 	cp = expanded;
 	while (*cp != '\0') {
-		if (cp[0] != '#' || cp[1] != '[') {
+		if (cp[0] != '#' || cp[1] != '[' || sy.ignore) {
 			/* See if this is a UTF-8 character. */
 			if ((more = utf8_open(ud, *cp)) == UTF8_MORE) {
 				while (*++cp != '\0' && more == UTF8_MORE)
@@ -600,7 +600,8 @@ format_draw(struct screen_write_ctx *octx, const struct grid_cell *base,
 
 		/* If this style pushed or popped the default, update it. */
 		if (sy.default_type == STYLE_DEFAULT_PUSH) {
-			memcpy(&current_default, &saved_sy.gc, sizeof current_default);
+			memcpy(&current_default, &saved_sy.gc,
+			    sizeof current_default);
 			sy.default_type = STYLE_DEFAULT_BASE;
 		} else if (sy.default_type == STYLE_DEFAULT_POP) {
 			memcpy(&current_default, base, sizeof current_default);
@@ -738,7 +739,7 @@ format_draw(struct screen_write_ctx *octx, const struct grid_cell *base,
 
 	/*
 	 * Draw the screens. How they are arranged depends on where the list
-	 * appearsq.
+	 * appears.
 	 */
 	switch (list_align) {
 	case STYLE_ALIGN_DEFAULT:

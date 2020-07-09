@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.46 2019/12/20 08:30:27 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.47 2020/05/25 16:52:15 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -202,8 +202,6 @@ main(int argc, char *argv[])
 
 	if (!debug)
 		daemon(1, 0);
-
-	log_info("startup");
 
 	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
 	    PF_UNSPEC, pipe_main2frontend) == -1)

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.20 2020/01/03 03:50:44 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.21 2020/05/30 19:22:00 drahn Exp $
 
 .include <bsd.own.mk>
 
@@ -32,7 +32,7 @@ INST_SUBDIRS+=	binutils
 MAN+=		binutils/doc/ar.1 binutils/doc/ranlib.1 \
 		binutils/doc/strings.1 binutils/doc/strip.1
 
-.if ${TARGET_ARCH} != "aarch64"
+.if (${TARGET_ARCH} != "aarch64" && ${TARGET_ARCH} != "powerpc64")
 SUBDIRS+=	ld gas
 CONF_SUBDIRS+=	ld gas
 INST_SUBDIRS+=	ld gas
@@ -58,7 +58,7 @@ CONFIGTARGET=--target=${TARGET_ARCH}-unknown-openbsd${OSREV}
 CONFIGTARGET=
 .endif
 
-.if ${TARGET_ARCH} == "aarch64"
+.if ${TARGET_ARCH} == "aarch64" || ${TARGET_ARCH} == "powerpc64"
 CONFIGTARGET+=--without-gnu-ld
 CONFIGTARGET+=--without-gnu-as
 .endif

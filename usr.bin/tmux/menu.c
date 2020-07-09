@@ -1,4 +1,4 @@
-/* $OpenBSD: menu.c,v 1.23 2020/04/16 17:20:23 nicm Exp $ */
+/* $OpenBSD: menu.c,v 1.30 2020/05/25 11:59:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -73,7 +73,7 @@ menu_add_item(struct menu *menu, const struct menu_item *item,
 		return;
 
 	if (fs != NULL)
-		s = format_single(qitem, item->name, c, fs->s, fs->wl, fs->wp);
+		s = format_single_from_state(qitem, item->name, c, fs);
 	else
 		s = format_single(qitem, item->name, c, NULL, NULL, NULL);
 	if (*s == '\0') { /* no item if empty after format expanded */
@@ -81,7 +81,7 @@ menu_add_item(struct menu *menu, const struct menu_item *item,
 		return;
 	}
 	if (*s != '-' && item->key != KEYC_UNKNOWN && item->key != KEYC_NONE) {
-		key = key_string_lookup_key(item->key);
+		key = key_string_lookup_key(item->key, 0);
 		xasprintf(&name, "%s#[default] #[align=right](%s)", s, key);
 	} else
 		xasprintf(&name, "%s", s);
@@ -91,7 +91,7 @@ menu_add_item(struct menu *menu, const struct menu_item *item,
 	cmd = item->command;
 	if (cmd != NULL) {
 		if (fs != NULL)
-			s = format_single(qitem, cmd, c, fs->s, fs->wl, fs->wp);
+			s = format_single_from_state(qitem, cmd, c, fs);
 		else
 			s = format_single(qitem, cmd, c, NULL, NULL, NULL);
 	} else
@@ -111,6 +111,7 @@ menu_create(const char *title)
 
 	menu = xcalloc(1, sizeof *menu);
 	menu->title = xstrdup(title);
+	menu->width = format_width(title);
 
 	return (menu);
 }
@@ -130,14 +131,12 @@ menu_free(struct menu *menu)
 	free(menu);
 }
 
-static int
+static struct screen *
 menu_mode_cb(struct client *c, __unused u_int *cx, __unused u_int *cy)
 {
 	struct menu_data	*md = c->overlay_data;
 
-	if (~md->flags & MENU_NOMOUSE)
-		return (MODE_MOUSE_ALL);
-	return (0);
+	return (&md->s);
 }
 
 static void
@@ -151,16 +150,17 @@ menu_draw_cb(struct client *c, __unused struct screen_redraw_ctx *ctx0)
 	u_int			 i, px = md->px, py = md->py;
 	struct grid_cell	 gc;
 
-	memcpy(&gc, &grid_default_cell, sizeof gc);
-	style_apply(&gc, c->session->curw->window->options, "mode-style");
+	style_apply(&gc, c->session->curw->window->options, "mode-style", NULL);
 
-	screen_write_start(&ctx, NULL, s);
+	screen_write_start(&ctx, s);
 	screen_write_clearscreen(&ctx, 8);
 	screen_write_menu(&ctx, menu, md->choice, &gc);
 	screen_write_stop(&ctx);
 
-	for (i = 0; i < screen_size_y(&md->s); i++)
-		tty_draw_line(tty, NULL, s, 0, i, menu->width + 4, px, py + i);
+	for (i = 0; i < screen_size_y(&md->s); i++) {
+		tty_draw_line(tty, s, 0, i, menu->width + 4, px, py + i,
+		    &grid_default_cell, NULL);
+	}
 }
 
 static void
@@ -227,7 +227,7 @@ menu_key_cb(struct client *c, struct key_event *event)
 			goto chosen;
 		}
 	}
-	switch (event->key) {
+	switch (event->key & ~KEYC_MASK_FLAGS) {
 	case KEYC_UP:
 	case 'k':
 		if (old == -1)
@@ -241,6 +241,16 @@ menu_key_cb(struct client *c, struct key_event *event)
 		} while ((name == NULL || *name == '-') && md->choice != old);
 		c->flags |= CLIENT_REDRAWOVERLAY;
 		return (0);
+	case KEYC_BSPACE:
+		if (~md->flags & MENU_TAB)
+			break;
+		return (1);
+	case '\011': /* Tab */
+		if (~md->flags & MENU_TAB)
+			break;
+		if (md->choice == count - 1)
+			return (1);
+		/* FALLTHROUGH */
 	case KEYC_DOWN:
 	case 'j':
 		if (old == -1)
@@ -254,6 +264,31 @@ menu_key_cb(struct client *c, struct key_event *event)
 		} while ((name == NULL || *name == '-') && md->choice != old);
 		c->flags |= CLIENT_REDRAWOVERLAY;
 		return (0);
+	case 'g':
+	case KEYC_PPAGE:
+	case '\002': /* C-b */
+		if (md->choice > 5)
+			md->choice -= 5;
+		else
+			md->choice = 0;
+		while (md->choice != count && (name == NULL || *name == '-'))
+			md->choice++;
+		if (md->choice == count)
+			md->choice = -1;
+		c->flags |= CLIENT_REDRAWOVERLAY;
+		break;
+	case 'G':
+	case KEYC_NPAGE:
+		if (md->choice > count - 6)
+			md->choice = count - 1;
+		else
+			md->choice += 5;
+		while (md->choice != -1 && (name == NULL || *name == '-'))
+			md->choice--;
+		c->flags |= CLIENT_REDRAWOVERLAY;
+		break;
+	case '\006': /* C-f */
+		break;
 	case '\r':
 		goto chosen;
 	case '\033': /* Escape */
@@ -315,6 +350,9 @@ menu_display(struct menu *menu, int flags, struct cmdq_item *item, u_int px,
 	if (fs != NULL)
 		cmd_find_copy_state(&md->fs, fs);
 	screen_init(&md->s, menu->width + 4, menu->count + 2, 0);
+	if (~md->flags & MENU_NOMOUSE)
+		md->s.mode |= MODE_MOUSE_ALL;
+	md->s.mode &= ~MODE_CURSOR;
 
 	md->px = px;
 	md->py = py;

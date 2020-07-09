@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndioctl.c,v 1.6 2020/04/27 21:44:47 schwarze Exp $	*/
+/*	$OpenBSD: sndioctl.c,v 1.15 2020/06/28 05:21:39 ratchov Exp $	*/
 /*
  * Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
  *
@@ -48,8 +48,10 @@ int matchent(struct info *, char *, int);
 int ismono(struct info *);
 void print_node(struct sioctl_node *, int);
 void print_desc(struct info *, int);
+void print_num(struct info *);
+void print_ent(struct info *, char *);
 void print_val(struct info *, int);
-void print_par(struct info *, int, char *);
+void print_par(struct info *, int);
 int parse_name(char **, char *);
 int parse_unit(char **, int *);
 int parse_val(char **, float *);
@@ -67,15 +69,11 @@ struct info *infolist;
 int i_flag = 0, v_flag = 0, m_flag = 0, n_flag = 0, q_flag = 0;
 
 static inline int
-isname_first(int c)
+isname(int c)
 {
-	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
-}
-
-static inline int
-isname_next(int c)
-{
-	return isname_first(c) || (c >= '0' && c <= '9') || (c == '_');
+	return (c == '_') ||
+	    (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+	    (c >= '0' && c <= '9');
 }
 
 static int
@@ -105,7 +103,8 @@ cmpdesc(struct sioctl_desc *d1, struct sioctl_desc *d2)
 	if (res != 0)
 		return res;
 	res = d1->node0.unit - d2->node0.unit;
-	if (d1->type == SIOCTL_VEC ||
+	if (d1->type == SIOCTL_SEL ||
+	    d1->type == SIOCTL_VEC ||
 	    d1->type == SIOCTL_LIST) {
 		if (res != 0)
 			return res;
@@ -295,6 +294,7 @@ ismono(struct info *g)
 				return 0;
 		}
 		break;
+	case SIOCTL_SEL:
 	case SIOCTL_VEC:
 	case SIOCTL_LIST:
 		for (p2 = g; p2 != NULL; p2 = nextpar(p2)) {
@@ -343,6 +343,7 @@ print_desc(struct info *p, int mono)
 	case SIOCTL_SW:
 		printf("*");
 		break;
+	case SIOCTL_SEL:
 	case SIOCTL_VEC:
 	case SIOCTL_LIST:
 		more = 0;
@@ -356,10 +357,56 @@ print_desc(struct info *p, int mono)
 			if (more)
 				printf(",");
 			print_node(&e->desc.node1, mono);
-			printf(":*");
+			if (p->desc.type != SIOCTL_SEL)
+				printf(":*");
 			more = 1;
 		}
 	}
+}
+
+void
+print_num(struct info *p)
+{
+	if (p->desc.maxval == 1)
+		printf("%d", p->curval);
+	else {
+		/*
+		 * For now, maxval is always 127 or 255,
+		 * so three decimals is always ideal.
+		 */
+		printf("%.3f", p->curval / (float)p->desc.maxval);
+	}
+}
+
+/*
+ * print a single control
+ */
+void
+print_ent(struct info *e, char *comment)
+{
+	if (e->desc.group[0] != 0) {
+		printf("%s", e->desc.group);
+		printf("/");
+	}
+	print_node(&e->desc.node0, 0);
+	printf(".%s=", e->desc.func);
+	switch (e->desc.type) {
+	case SIOCTL_NONE:
+		printf("<removed>\n");
+		break;
+	case SIOCTL_SEL:
+	case SIOCTL_VEC:
+	case SIOCTL_LIST:
+		print_node(&e->desc.node1, 0);
+		printf(":");
+		/* FALLTHROUGH */
+	case SIOCTL_SW:
+	case SIOCTL_NUM:
+		print_num(e);
+	}
+	if (comment)
+		printf("\t# %s", comment);
+	printf("\n");
 }
 
 /*
@@ -374,15 +421,9 @@ print_val(struct info *p, int mono)
 	switch (p->desc.type) {
 	case SIOCTL_NUM:
 	case SIOCTL_SW:
-		if (p->desc.maxval == 1)
-			printf("%d", p->curval);
-		else
-			/*
-			 * For now, maxval is always 127 or 255,
-			 * so three decimals is always ideal.
-			 */
-			printf("%.3f", p->curval / (float)p->desc.maxval);
+		print_num(p);
 		break;
+	case SIOCTL_SEL:
 	case SIOCTL_VEC:
 	case SIOCTL_LIST:
 		more = 0;
@@ -393,15 +434,21 @@ print_val(struct info *p, int mono)
 				if (e != firstent(p, e->desc.node1.name))
 					continue;
 			}
-			if (more)
-				printf(",");
-			print_node(&e->desc.node1, mono);
-			if (e->desc.maxval == 1)
-				printf(":%d", e->curval);
-			else
-				printf(":%.3f",
-				    e->curval / (float)e->desc.maxval);
-			more = 1;
+			if (e->desc.maxval == 1) {
+				if (e->curval) {
+					if (more)
+						printf(",");
+					print_node(&e->desc.node1, mono);
+					more = 1;
+				}
+			} else {
+				if (more)
+					printf(",");
+				print_node(&e->desc.node1, mono);
+				printf(":");
+				print_num(e);
+				more = 1;
+			}
 		}
 	}
 }
@@ -410,7 +457,7 @@ print_val(struct info *p, int mono)
  * print ``<parameter>=<value>'' string (including '\n')
  */
 void
-print_par(struct info *p, int mono, char *comment)
+print_par(struct info *p, int mono)
 {
 	if (!n_flag) {
 		if (p->desc.group[0] != 0) {
@@ -424,8 +471,6 @@ print_par(struct info *p, int mono, char *comment)
 		print_desc(p, mono);
 	else
 		print_val(p, mono);
-	if (comment)
-		printf(" # %s", comment);
 	printf("\n");
 }
 
@@ -438,11 +483,11 @@ parse_name(char **line, char *name)
 	char *p = *line;
 	unsigned len = 0;
 
-	if (!isname_first(*p)) {
-		fprintf(stderr, "letter expected near '%s'\n", p);
+	if (!isname(*p)) {
+		fprintf(stderr, "letter or digit expected near '%s'\n", p);
 		return 0;
 	}
-	while (isname_next(*p)) {
+	while (isname(*p)) {
 		if (len >= SIOCTL_NAMEMAX - 1) {
 			name[SIOCTL_NAMEMAX - 1] = '\0';
 			fprintf(stderr, "%s...: too long\n", name);
@@ -578,6 +623,9 @@ dump(void)
 		case SIOCTL_SW:
 			printf("0..%d (%u)", i->desc.maxval, i->curval);
 			break;
+		case SIOCTL_SEL:
+			print_node(&i->desc.node1, 0);
+			break;
 		case SIOCTL_VEC:
 		case SIOCTL_LIST:
 			print_node(&i->desc.node1, 0);
@@ -657,6 +705,7 @@ cmd(char *line)
 			npar++;
 		}
 		break;
+	case SIOCTL_SEL:
 	case SIOCTL_VEC:
 	case SIOCTL_LIST:
 		for (i = g; i != NULL; i = nextpar(i)) {
@@ -702,7 +751,7 @@ cmd(char *line)
 			if (nent == 0) {
 				/* XXX: use print_node()-like routine */
 				fprintf(stderr, "%s[%d]: invalid value\n", vstr, vunit);
-				print_par(g, 0, NULL);
+				print_par(g, 0);
 				exit(1);
 			}
 			comma = 1;
@@ -769,15 +818,15 @@ list(void)
 		if (i_flag) {
 			if (v_flag) {
 				for (p = g; p != NULL; p = nextpar(p))
-					print_par(p, 0, NULL);
+					print_par(p, 0);
 			} else
-				print_par(g, 1, NULL);
+				print_par(g, 1);
 		} else {
 			if (v_flag || !ismono(g)) {
 				for (p = g; p != NULL; p = nextpar(p))
-					print_par(p, 0, NULL);
+					print_par(p, 0);
 			} else
-				print_par(g, 1, NULL);
+				print_par(g, 1);
 		}
 	}
 }
@@ -802,15 +851,23 @@ ondesc(void *arg, struct sioctl_desc *d, int curval)
 	for (pi = &infolist; (i = *pi) != NULL; pi = &i->next) {
 		if (d->addr == i->desc.addr) {
 			if (m_flag)
-				print_par(i, 0, "deleted");
+				print_ent(i, "deleted");
 			*pi = i->next;
 			free(i);
 			break;
 		}
 	}
 
-	if (d->type == SIOCTL_NONE)
+	switch (d->type) {
+	case SIOCTL_NUM:
+	case SIOCTL_SW:
+	case SIOCTL_VEC:
+	case SIOCTL_LIST:
+	case SIOCTL_SEL:
+		break;
+	default:
 		return;
+	}
 
 	/*
 	 * find the right position to insert the new widget
@@ -819,7 +876,7 @@ ondesc(void *arg, struct sioctl_desc *d, int curval)
 		cmp = cmpdesc(d, &i->desc);
 		if (cmp == 0) {
 			fprintf(stderr, "fatal: duplicate control:\n");
-			print_par(i, 0, "duplicate");
+			print_ent(i, "duplicate");
 			exit(1);
 		}
 		if (cmp < 0)
@@ -837,7 +894,7 @@ ondesc(void *arg, struct sioctl_desc *d, int curval)
 	i->next = *pi;
 	*pi = i;
 	if (m_flag)
-		print_par(i, 0, "added");
+		print_ent(i, "added");
 }
 
 /*
@@ -846,15 +903,36 @@ ondesc(void *arg, struct sioctl_desc *d, int curval)
 void
 onctl(void *arg, unsigned addr, unsigned val)
 {
-	struct info *i;
+	struct info *i, *j;
 
-	for (i = infolist; i != NULL; i = i->next) {
-		if (i->ctladdr != addr)
-			continue;
-		i->curval = val;
-		if (m_flag)
-			print_par(i, 0, "changed");
+	i = infolist;
+	for (;;) {
+		if (i == NULL)
+			return;
+		if (i->ctladdr == addr)
+			break;
+		i = i->next;
 	}
+
+	if (i->curval == val) {
+		print_ent(i, "eq");
+		return;
+	}
+
+	if (i->desc.type == SIOCTL_SEL) {
+		for (j = infolist; j != NULL; j = j->next) {
+			if (strcmp(i->desc.group, j->desc.group) != 0 ||
+			    strcmp(i->desc.node0.name, j->desc.node0.name) != 0 ||
+			    strcmp(i->desc.func, j->desc.func) != 0 ||
+			    i->desc.node0.unit != j->desc.node0.unit)
+				continue;
+			j->curval = (i->ctladdr == j->ctladdr);
+		}
+	} else
+		i->curval = val;
+
+	if (m_flag)
+		print_ent(i, "changed");
 }
 
 int
@@ -903,6 +981,13 @@ main(int argc, char **argv)
 		fprintf(stderr, "%s: can't open control device\n", devname);
 		exit(1);
 	}
+
+	if (pledge("stdio audio", NULL) == -1) {
+		fprintf(stderr, "%s: pledge: %s\n", getprogname(),
+		    strerror(errno));
+		exit(1);
+	}
+
 	if (!sioctl_ondesc(hdl, ondesc, NULL)) {
 		fprintf(stderr, "%s: can't get device description\n", devname);
 		exit(1);

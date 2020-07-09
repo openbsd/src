@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.192 2020/04/28 12:24:20 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.198 2020/06/23 01:21:29 jmatthew Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -95,7 +95,6 @@
 
 #include <sys/sysctl.h>
 #include <sys/exec_elf.h>
-#include <dev/rndvar.h>
 
 #define _SPARC_BUS_DMA_PRIVATE
 #include <machine/autoconf.h>
@@ -1823,21 +1822,22 @@ sparc_bus_free(bus_space_tag_t t, bus_space_tag_t t0, bus_space_handle_t h,
 }
 
 static const struct sparc_bus_space_tag _mainbus_space_tag = {
-	NULL,				/* cookie */
-	NULL,				/* parent bus tag */
-	UPA_BUS_SPACE,			/* type */
-	ASI_PRIMARY,
-	ASI_PRIMARY,
-	"mainbus",
-	sparc_bus_alloc,
-	sparc_bus_free,
-	sparc_bus_map,			/* bus_space_map */
-	sparc_bus_protect,		/* bus_space_protect */
-	sparc_bus_unmap,		/* bus_space_unmap */
-	sparc_bus_subregion,		/* bus_space_subregion */
-	sparc_bus_mmap,			/* bus_space_mmap */
-	sparc_mainbus_intr_establish,	/* bus_intr_establish */
-	sparc_bus_addr			/* bus_space_addr */
+	.cookie =			NULL,
+	.parent =			NULL,
+	.default_type =			UPA_BUS_SPACE,
+	.asi =				ASI_PRIMARY,
+	.sasi =				ASI_PRIMARY,
+	.name =				"mainbus",
+	.sparc_bus_alloc =		sparc_bus_alloc,
+	.sparc_bus_free =		sparc_bus_free,
+	.sparc_bus_map =		sparc_bus_map,
+	.sparc_bus_protect =		sparc_bus_protect,
+	.sparc_bus_unmap =		sparc_bus_unmap,
+	.sparc_bus_subregion =		sparc_bus_subregion,
+	.sparc_bus_mmap =		sparc_bus_mmap,	
+	.sparc_intr_establish =		sparc_mainbus_intr_establish,
+	/*.sparc_intr_establish_cpu*/
+	.sparc_bus_addr =		sparc_bus_addr
 };
 const bus_space_tag_t mainbus_space_tag = &_mainbus_space_tag;
 
@@ -2001,6 +2001,23 @@ bus_intr_establish(bus_space_tag_t t, int p, int l, int f, int (*h)(void *),
 	return (ret);
 }
 
+void *
+bus_intr_establish_cpu(bus_space_tag_t t, int p, int l, int f,
+    struct cpu_info *ci, int (*h)(void *), void *a, const char *w)
+{
+	const bus_space_tag_t t0 = t;
+	void *ret;
+
+	if (t->sparc_intr_establish_cpu == NULL)
+		return (bus_intr_establish(t, p, l, f, h, a, w));
+
+	_BS_PRECALL(t, sparc_intr_establish_cpu);
+	ret = _BS_CALL(t, sparc_intr_establish_cpu)(t, t0, p, l, f, ci,
+	    h, a, w);
+	_BS_POSTCALL;
+	return (ret);
+}
+
 /* XXXX Things get complicated if we use unmapped register accesses. */
 void *
 bus_space_vaddr(bus_space_tag_t t, bus_space_handle_t h)
@@ -2114,93 +2131,4 @@ blink_led_timeout(void *vsc)
 	 */
 	t = (((averunnable.ldavg[0] + FSCALE) * hz) >> (FSHIFT + 1));
 	timeout_add(&sc->bls_to, t);
-}
-
-#include <sys/timetc.h>
-#include <dev/clock_subr.h>
-
-todr_chip_handle_t todr_handle;
-
-#define MINYEAR		((OpenBSD / 100) - 1)	/* minimum plausible year */
-
-/*
- * inittodr:
- *
- *      Initialize time from the time-of-day register.
- */
-void
-inittodr(time_t base)
-{
-	time_t deltat;
-	struct timeval rtctime;
-	struct timespec ts;
-	int badbase;
-
-	if (base < (MINYEAR - 1970) * SECYR) {
-		printf("WARNING: preposterous time in file system\n");
-		/* read the system clock anyway */
-		base = (MINYEAR - 1970) * SECYR;
-		badbase = 1;
-	} else
-		badbase = 0;
-
-	if (todr_handle == NULL ||
-	    todr_gettime(todr_handle, &rtctime) != 0 ||
-	    rtctime.tv_sec < (MINYEAR - 1970) * SECYR) {
-		/*
-		 * Believe the time in the file system for lack of
-		 * anything better, resetting the TODR.
-		 */
-		rtctime.tv_sec = base;
-		rtctime.tv_usec = 0;
-		if (todr_handle != NULL && !badbase)
-			printf("WARNING: bad clock chip time\n");
-		ts.tv_sec = rtctime.tv_sec;
-		ts.tv_nsec = rtctime.tv_usec * 1000;
-		tc_setclock(&ts);
-		goto bad;
-	} else {
-		ts.tv_sec = rtctime.tv_sec;
-		ts.tv_nsec = rtctime.tv_usec * 1000;
-		tc_setclock(&ts);
-	}
-
-	if (!badbase) {
-		/*
-		 * See if we gained/lost two or more days; if
-		 * so, assume something is amiss.
-		 */
-		deltat = rtctime.tv_sec - base;
-		if (deltat < 0)
-			deltat = -deltat;
-		if (deltat < 2 * SECDAY)
-			return;         /* all is well */
-#ifndef SMALL_KERNEL
-		printf("WARNING: clock %s %lld days\n",
-		    rtctime.tv_sec < base ? "lost" : "gained",
-		    (long long)(deltat / SECDAY));
-#endif
-	}
- bad:
-	printf("WARNING: CHECK AND RESET THE DATE!\n");
-}
-
-/*
- * resettodr:
- *
- *      Reset the time-of-day register with the current time.
- */
-void
-resettodr(void)
-{
-	struct timeval rtctime;
-
-	if (time_second == 1)
-		return;
-
-	microtime(&rtctime);
-
-	if (todr_handle != NULL &&
-	    todr_settime(todr_handle, &rtctime) != 0)
-		printf("WARNING: can't update clock chip time\n");
 }

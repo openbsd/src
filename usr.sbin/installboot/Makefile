@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2017/05/07 10:40:17 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.21 2020/06/27 15:35:29 deraadt Exp $
 
 PROG=		installboot
 SRCS=		installboot.c util.c
@@ -23,6 +23,12 @@ SRCS += hppa_installboot.c
 .elif ${MACHINE} == "landisk"
 CFLAGS += -DBOOTSTRAP
 SRCS += landisk_installboot.c
+.elif ${MACHINE} == "loongson"
+SRCS += loongson_installboot.c
+.elif ${MACHINE} == "macppc"
+SRCS += macppc_installboot.c
+.elif ${MACHINE} == "octeon"
+SRCS += octeon_installboot.c
 .elif ${MACHINE} == "sparc64"
 CFLAGS += -DSOFTRAID
 SRCS += sparc64_installboot.c

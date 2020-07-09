@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcvar.h,v 1.32 2019/04/02 07:08:40 stsp Exp $	*/
+/*	$OpenBSD: sdmmcvar.h,v 1.33 2020/07/03 13:31:47 krw Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -223,8 +223,8 @@ struct sdmmc_softc {
  * Attach devices at the sdmmc bus.
  */
 struct sdmmc_attach_args {
-	struct scsi_link *scsi_link;	/* XXX */
-	struct sdmmc_function *sf;
+	struct scsibus_attach_args	 saa;
+	struct sdmmc_function		*sf;
 };
 
 #define IPL_SDMMC	IPL_BIO

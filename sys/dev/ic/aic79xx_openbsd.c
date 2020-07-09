@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.50 2020/02/15 18:02:00 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.52 2020/07/02 15:58:17 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -99,6 +99,16 @@ ahd_attach(struct ahd_softc *ahd)
 	printf("%s\n", ahd_info);
 	ahd_lock(ahd, &s);
 
+	if (bootverbose) {
+		ahd_controller_info(ahd, ahd_info, sizeof ahd_info);
+		printf("%s: %s\n", ahd->sc_dev.dv_xname, ahd_info);
+	}
+
+	ahd_intr_enable(ahd, TRUE);
+
+	if (ahd->flags & AHD_RESET_BUS_A)
+		ahd_reset_channel(ahd, 'A', TRUE);
+
 	/*
 	 * fill in the prototype scsi_links.
 	 */
@@ -110,17 +120,6 @@ ahd_attach(struct ahd_softc *ahd)
 	ahd->sc_channel.openings = 16; /* Must ALWAYS be < 256!! */
 	ahd->sc_channel.pool = &ahd->sc_iopool;
 
-	if (bootverbose) {
-		ahd_controller_info(ahd, ahd_info, sizeof ahd_info);
-		printf("%s: %s\n", ahd->sc_dev.dv_xname, ahd_info);
-	}
-
-	ahd_intr_enable(ahd, TRUE);
-
-	if (ahd->flags & AHD_RESET_BUS_A)
-		ahd_reset_channel(ahd, 'A', TRUE);
-
-	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &ahd->sc_channel;
 
 	ahd->sc_child = config_found((void *)&ahd->sc_dev, &saa, scsiprint);

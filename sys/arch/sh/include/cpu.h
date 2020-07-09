@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.28 2019/03/24 06:09:09 visa Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.29 2020/05/31 06:23:58 dlg Exp $	*/
 /*	$NetBSD: cpu.h,v 1.41 2006/01/21 04:24:12 uwe Exp $	*/
 
 /*-
@@ -271,6 +271,7 @@ u_int cpu_dump(int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *);
 u_int cpu_dumpsize(void);
 void dumpconf(void);
 void dumpsys(void);
+unsigned int cpu_rnd_messybits(void);
 
 static inline u_long
 intr_disable(void)

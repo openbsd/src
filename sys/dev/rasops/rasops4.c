@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops4.c,v 1.11 2014/12/19 22:44:59 guenther Exp $	*/
+/*	$OpenBSD: rasops4.c,v 1.12 2020/05/25 09:55:49 jsg Exp $	*/
 /*	$NetBSD: rasops4.c,v 1.4 2001/11/15 09:48:15 lukem Exp $	*/
 
 /*-
@@ -41,20 +41,20 @@
 #include <dev/rasops/rasops_masks.h>
 
 int	rasops4_copycols(void *, int, int, int, int);
-int	rasops4_erasecols(void *, int, int, int, long);
+int	rasops4_erasecols(void *, int, int, int, uint32_t);
 int	rasops4_do_cursor(struct rasops_info *);
-int	rasops4_putchar(void *, int, int col, u_int, long);
+int	rasops4_putchar(void *, int, int col, u_int, uint32_t);
 #ifndef RASOPS_SMALL
-int	rasops4_putchar8(void *, int, int col, u_int, long);
-int	rasops4_putchar12(void *, int, int col, u_int, long);
-int	rasops4_putchar16(void *, int, int col, u_int, long);
-void	rasops4_makestamp(struct rasops_info *, long);
+int	rasops4_putchar8(void *, int, int col, u_int, uint32_t);
+int	rasops4_putchar12(void *, int, int col, u_int, uint32_t);
+int	rasops4_putchar16(void *, int, int col, u_int, uint32_t);
+void	rasops4_makestamp(struct rasops_info *, uint32_t);
 
 /*
  * 4x1 stamp for optimized character blitting
  */
 static u_int16_t	stamp[16];
-static long	stamp_attr;
+static uint32_t	stamp_attr;
 static int	stamp_mutex;	/* XXX see note in README */
 #endif
 
@@ -96,7 +96,7 @@ rasops4_init(struct rasops_info *ri)
  * Paint a single character. This is the generic version, this is ugly.
  */
 int
-rasops4_putchar(void *cookie, int row, int col, u_int uc, long attr)
+rasops4_putchar(void *cookie, int row, int col, u_int uc, uint32_t attr)
 {
 	int height, width, fs, rs, fb, bg, fg, lmask, rmask;
 	struct rasops_info *ri;
@@ -209,7 +209,7 @@ rasops4_putchar(void *cookie, int row, int col, u_int uc, long attr)
  * Put a single character. This is the generic version.
  */
 int
-rasops4_putchar(void *cookie, int row, int col, u_int uc, long attr)
+rasops4_putchar(void *cookie, int row, int col, u_int uc, uint32_t attr)
 {
 
 	/* XXX punt */
@@ -221,7 +221,7 @@ rasops4_putchar(void *cookie, int row, int col, u_int uc, long attr)
  * Recompute the blitting stamp.
  */
 void
-rasops4_makestamp(struct rasops_info *ri, long attr)
+rasops4_makestamp(struct rasops_info *ri, uint32_t attr)
 {
 	int i, fg, bg;
 
@@ -248,7 +248,7 @@ rasops4_makestamp(struct rasops_info *ri, long attr)
  * Put a single character. This is for 8-pixel wide fonts.
  */
 int
-rasops4_putchar8(void *cookie, int row, int col, u_int uc, long attr)
+rasops4_putchar8(void *cookie, int row, int col, u_int uc, uint32_t attr)
 {
 	struct rasops_info *ri;
 	int height, fs, rs;
@@ -320,7 +320,7 @@ rasops4_putchar8(void *cookie, int row, int col, u_int uc, long attr)
  * Put a single character. This is for 12-pixel wide fonts.
  */
 int
-rasops4_putchar12(void *cookie, int row, int col, u_int uc, long attr)
+rasops4_putchar12(void *cookie, int row, int col, u_int uc, uint32_t attr)
 {
 	struct rasops_info *ri;
 	int height, fs, rs;
@@ -395,7 +395,7 @@ rasops4_putchar12(void *cookie, int row, int col, u_int uc, long attr)
  * Put a single character. This is for 16-pixel wide fonts.
  */
 int
-rasops4_putchar16(void *cookie, int row, int col, u_int uc, long attr)
+rasops4_putchar16(void *cookie, int row, int col, u_int uc, uint32_t attr)
 {
 	struct rasops_info *ri;
 	int height, fs, rs;

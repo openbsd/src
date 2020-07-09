@@ -31,7 +31,7 @@
 
 #include "_libelf.h"
 
-ELFTC_VCSID("$Id: libelf_ehdr.c,v 1.2 2019/03/19 02:31:35 jsg Exp $");
+ELFTC_VCSID("$Id: libelf_ehdr.c,v 1.3 2020/05/18 06:46:23 jsg Exp $");
 
 /*
  * Retrieve counts for sections, phdrs and the section string table index
@@ -148,9 +148,8 @@ _libelf_ehdr(Elf *e, int ec, int allocate)
 		return (NULL);
 	}
 
-	msz = _libelf_msize(ELF_T_EHDR, ec, EV_CURRENT);
-
-	assert(msz > 0);
+	if ((msz = _libelf_msize(ELF_T_EHDR, ec, EV_CURRENT)) == 0)
+		return (NULL);
 
 	if ((ehdr = calloc((size_t) 1, msz)) == NULL) {
 		LIBELF_SET_ERROR(RESOURCE, 0);

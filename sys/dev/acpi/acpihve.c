@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpihve.c,v 1.2 2018/04/28 15:44:59 jasper Exp $	*/
+/*	$OpenBSD: acpihve.c,v 1.3 2020/05/29 04:42:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2017 Jonathan Gray <jsg@openbsd.org>
@@ -22,7 +22,6 @@
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
-#include <dev/rndvar.h>
 
 int	 acpihve_match(struct device *, void *, void *);
 void	 acpihve_attach(struct device *, struct device *, void *);

@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.7 2019/06/07 14:39:57 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.9 2020/05/18 06:20:43 otto Exp $
 
-FS=		floppy${OSrev}.fs
+FS=		floppy${OSrev}.img
 FSSIZE=		2880
 FSDISKTYPE=	floppy3
 MOUNT_POINT=	/mnt
@@ -19,7 +19,7 @@ ${FS}: bsd.gz
 	fdisk -yi -l ${FSSIZE} -f ${DESTDIR}/usr/mdec/mbr `cat vnd`
 .endif
 	disklabel -w `cat vnd` ${FSDISKTYPE}
-	newfs -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
+	newfs -O 1 -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
 	mount /dev/`cat vnd`a ${MOUNT_POINT}
 	cp ${DESTDIR}/usr/mdec/fdboot ${.OBJDIR}/boot
 	strip ${.OBJDIR}/boot
@@ -82,7 +82,7 @@ install:
 
 clean cleandir:
 	rm -f *.core mr.fs instbin instbin.mk instbin*.cache \
-	    *.o *.lo *.c bsd bsd.rd bsd.gz bsd.strip floppy*.fs \
+	    *.o *.lo *.c bsd bsd.rd bsd.gz bsd.strip floppy*.img \
 	    lib*.a lib*.olist instbin.map boot instbin.conf ${FS}
 	rm -rf mr.fs.d
 

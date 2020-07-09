@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2018/11/11 00:15:04 bluhm Exp $
+# $OpenBSD: Makefile,v 1.6 2020/05/11 18:20:24 jsing Exp $
 
 PROGS =			client server
 CPPFLAGS =
@@ -28,9 +28,8 @@ run-version-$p: $p-self.out
 
 run-protocol-$p: $p-self.out
 	@echo '\n======== $@ ========'
-	# check that LibreSSL protocol version is TLS 1.2
-	# XXX adapt when LibreSSL supports TLS 1.3
-	grep 'Protocol *: TLSv1.2' $p-self.out
+	# check that LibreSSL protocol version is TLS 1.3
+	grep 'Protocol *: TLSv1.3' $p-self.out
 
 .endfor
 

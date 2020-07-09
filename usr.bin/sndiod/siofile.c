@@ -1,4 +1,4 @@
-/*	$OpenBSD: siofile.c,v 1.19 2020/04/24 11:33:28 ratchov Exp $	*/
+/*	$OpenBSD: siofile.c,v 1.22 2020/06/28 05:21:39 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -84,7 +84,7 @@ dev_sio_timeout(void *arg)
 
 	dev_log(d);
 	log_puts(": watchdog timeout\n");
-	dev_close(d);
+	dev_abort(d);
 }
 
 /*
@@ -93,25 +93,24 @@ dev_sio_timeout(void *arg)
 static struct sio_hdl *
 dev_sio_openlist(struct dev *d, unsigned int mode, struct sioctl_hdl **rctlhdl)
 {
-	struct name *n;
+	struct dev_alt *n;
 	struct sio_hdl *hdl;
 	struct sioctl_hdl *ctlhdl;
-	int idx;
+	struct ctl *c;
+	int val;
 
-	idx = 0;
-	n = d->path_list;
-	while (1) {
-		if (n == NULL)
-			break;
-		hdl = fdpass_sio_open(d->num, idx, mode);
+	for (n = d->alt_list; n != NULL; n = n->next) {
+		if (d->alt_num == n->idx)
+			continue;
+		hdl = fdpass_sio_open(d->num, n->idx, mode);
 		if (hdl != NULL) {
 			if (log_level >= 2) {
 				dev_log(d);
 				log_puts(": using ");
-				log_puts(n->str);
+				log_puts(n->name);
 				log_puts("\n");
 			}
-			ctlhdl = fdpass_sioctl_open(d->num, idx,
+			ctlhdl = fdpass_sioctl_open(d->num, n->idx,
 			    SIOCTL_READ | SIOCTL_WRITE);
 			if (ctlhdl == NULL) {
 				if (log_level >= 1) {
@@ -119,11 +118,21 @@ dev_sio_openlist(struct dev *d, unsigned int mode, struct sioctl_hdl **rctlhdl)
 					log_puts(": no control device\n");
 				}
 			}
+			d->alt_num = n->idx;
+			for (c = d->ctl_list; c != NULL; c = c->next) {
+				if (c->addr < CTLADDR_ALT_SEL ||
+				    c->addr >= CTLADDR_ALT_SEL + DEV_NMAX)
+					continue;
+				val = (c->addr - CTLADDR_ALT_SEL) == n->idx;
+				if (c->curval == val)
+					continue;
+				c->curval = val;
+				if (val)
+					c->val_mask = ~0U;
+			}
 			*rctlhdl = ctlhdl;
 			return hdl;
 		}
-		n = n->next;
-		idx++;
 	}
 	return NULL;
 }
@@ -378,6 +387,7 @@ dev_sio_close(struct dev *d)
 		sioctl_close(d->sioctl.hdl);
 		d->sioctl.hdl = NULL;
 	}
+	d->alt_num = -1;
 }
 
 void
@@ -641,5 +651,5 @@ dev_sio_hup(void *arg)
 	}
 #endif
 	if (!dev_reopen(d))
-		dev_close(d);
+		dev_abort(d);
 }

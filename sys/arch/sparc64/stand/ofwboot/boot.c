@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.33 2020/01/04 18:32:15 kettenis Exp $	*/
+/*	$OpenBSD: boot.c,v 1.35 2020/05/26 16:34:41 deraadt Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2001/05/31 08:55:19 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -285,24 +285,30 @@ int
 loadrandom(char *path, char *buf, size_t buflen)
 {
 	struct stat sb;
-	int fd, i;
+	int fd, i, error = 0;
 
 #define O_RDONLY	0
 
 	fd = open(path, O_RDONLY);
 	if (fd == -1)
 		return -1;
-	if (fstat(fd, &sb) == -1 ||
-	    sb.st_uid != 0 ||
-	    (sb.st_mode & (S_IWOTH|S_IROTH)))
-		goto fail;
-	if (read(fd, buf, buflen) != buflen)
-		goto fail;
+	if (fstat(fd, &sb) == -1) {
+		error = -1;
+		goto done;
+	}
+	if (read(fd, buf, buflen) != buflen) {
+		error = -1;
+		goto done;
+	}
+	if (sb.st_mode & S_ISTXT) {
+		printf("NOTE: random seed is being reused.\n");
+		error = -1;
+		goto done;
+	}
+	fchmod(fd, sb.st_mode | S_ISTXT);
+done:
 	close(fd);
- 	return 0;
-fail:
-	close(fd);
-	return (-1);
+	return (error);
 }
 
 #ifdef SOFTRAID
@@ -471,8 +477,8 @@ main(void)
 				_rtt();
 			}
 		}
-		if (loadrandom(BOOTRANDOM, rnddata, sizeof(rnddata)))
-			printf("open %s: %s\n", BOOTRANDOM, strerror(errno));
+		if (loadrandom(BOOTRANDOM, rnddata, sizeof(rnddata)) == 0)
+			boothowto |= RB_GOODRANDOM;
 
 		rc4_keysetup(&randomctx, rnddata, sizeof rnddata);
 		rc4_skip(&randomctx, 1536);

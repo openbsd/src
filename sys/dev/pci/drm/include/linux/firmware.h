@@ -7,6 +7,7 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <linux/types.h>
+#include <linux/gfp.h>
 
 #ifndef __DECONST
 #define __DECONST(type, var)	((type)(__uintptr_t)(const void *)(var))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.123 2020/03/15 05:34:14 visa Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.125 2020/06/24 22:03:44 cheloha Exp $	*/
 /*	$NetBSD: ip6_mroute.c,v 1.59 2003/12/10 09:28:38 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
@@ -250,16 +250,16 @@ mrt6_ioctl(struct socket *so, u_long cmd, caddr_t data)
 
 	switch (cmd) {
 	case SIOCGETSGCNT_IN6:
-		NET_RLOCK();
+		NET_RLOCK_IN_IOCTL();
 		error = get_sg6_cnt((struct sioc_sg_req6 *)data,
 		    inp->inp_rtableid);
-		NET_RUNLOCK();
+		NET_RUNLOCK_IN_IOCTL();
 		break;
 	case SIOCGETMIFCNT_IN6:
-		NET_RLOCK();
+		NET_RLOCK_IN_IOCTL();
 		error = get_mif6_cnt((struct sioc_mif_req6 *)data,
 		    inp->inp_rtableid);
-		NET_RUNLOCK();
+		NET_RUNLOCK_IN_IOCTL();
 		break;
 	default:
 		error = ENOTTY;
@@ -903,10 +903,10 @@ ip6_mforward(struct ip6_hdr *ip6, struct ifnet *ifp, struct mbuf *m)
 	 */
 	if (IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_src)) {
 		ip6stat_inc(ip6s_cantforward);
-		if (ip6_log_time + ip6_log_interval < time_uptime) {
+		if (ip6_log_time + ip6_log_interval < getuptime()) {
 			char src[INET6_ADDRSTRLEN], dst[INET6_ADDRSTRLEN];
 
-			ip6_log_time = time_uptime;
+			ip6_log_time = getuptime();
 
 			inet_ntop(AF_INET6, &ip6->ip6_src, src, sizeof(src));
 			inet_ntop(AF_INET6, &ip6->ip6_dst, dst, sizeof(dst));

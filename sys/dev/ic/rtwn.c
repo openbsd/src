@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.49 2020/01/09 14:35:19 mpi Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.50 2020/06/11 00:56:12 jmatthew Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -3154,6 +3154,14 @@ rtwn_init(struct ifnet *ifp)
 	/* Clear per-station keys table. */
 	rtwn_cam_init(sc);
 
+	/* Enable decryption / encryption. */
+	if (sc->chip & RTWN_CHIP_USB) {
+		rtwn_write_2(sc, R92C_SECCFG,
+		    R92C_SECCFG_TXUCKEY_DEF | R92C_SECCFG_RXUCKEY_DEF |
+		    R92C_SECCFG_TXENC_ENA | R92C_SECCFG_RXENC_ENA |
+		    R92C_SECCFG_TXBCKEY_DEF | R92C_SECCFG_RXBCKEY_DEF);
+	}
+
 	/* Enable hardware sequence numbering. */
 	rtwn_write_1(sc, R92C_HWSEQ_CTRL, 0xff);
 
@@ -3204,14 +3212,14 @@ rtwn_init(struct ifnet *ifp)
 	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_flags |= IFF_RUNNING;
 
-#ifdef notyet
-	if (ic->ic_flags & IEEE80211_F_WEPON) {
+	if ((ic->ic_flags & IEEE80211_F_WEPON) &&
+	    (sc->chip & RTWN_CHIP_USB)) {
 		/* Install WEP keys. */
 		for (i = 0; i < IEEE80211_WEP_NKID; i++)
 			ic->ic_set_key(ic, NULL, &ic->ic_nw_keys[i]);
 		sc->sc_ops.wait_async(sc->sc_ops.cookie);
 	}
-#endif
+
 	if (ic->ic_opmode == IEEE80211_M_MONITOR)
 		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 	else

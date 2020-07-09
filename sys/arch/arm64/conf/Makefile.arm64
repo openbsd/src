@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.arm64,v 1.35 2019/11/07 20:42:28 guenther Exp $
+#	$OpenBSD: Makefile.arm64,v 1.36 2020/06/08 04:47:58 jsg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -36,7 +36,10 @@ INCLUDES=	-nostdinc -I$S -I${.OBJDIR} -I$S/arch \
 		-I$S/dev/pci/drm/amd/powerplay/hwmgr \
 		-I$S/dev/pci/drm/amd/display/dc/inc \
 		-I$S/dev/pci/drm/amd/display/dc/inc/hw \
-		-I$S/dev/pci/drm/amd/display/modules/inc
+		-I$S/dev/pci/drm/amd/display/dc/clk_mgr \
+		-I$S/dev/pci/drm/amd/display/modules/inc \
+		-I$S/dev/pci/drm/amd/display/modules/hdcp \
+		-I$S/dev/pci/drm/amd/display/dmub/inc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D__${_mach}__ -MD -MP
 CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
 		-Wno-uninitialized -Wno-pointer-sign \

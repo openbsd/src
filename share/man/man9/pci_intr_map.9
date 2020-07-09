@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci_intr_map.9,v 1.13 2013/06/04 19:27:10 schwarze Exp $
+.\"	$OpenBSD: pci_intr_map.9,v 1.17 2020/06/17 08:20:42 dlg Exp $
 .\"
 .\" Copyright (c) 2005 Michael Shalayeff
 .\" All rights reserved.
@@ -15,15 +15,17 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 4 2013 $
+.Dd $Mdocdate: June 17 2020 $
 .Dt PCI_INTR_MAP 9
 .Os
 .Sh NAME
 .Nm pci_intr_map ,
 .Nm pci_intr_map_msi ,
+.Nm pci_intr_map_msix ,
 .Nm pci_intr_line ,
 .Nm pci_intr_string ,
 .Nm pci_intr_establish ,
+.\" .Nm pci_intr_establish_cpu ,
 .Nm pci_intr_disestablish
 .Nd PCI interrupts
 .Sh SYNOPSIS
@@ -37,12 +39,34 @@
 .Ft int
 .Fn pci_intr_map_msi "struct pci_attach_args *paa" "pci_intr_handle_t *ih"
 .Ft int
+.Fo pci_intr_map_msix
+.Fa "struct pci_attach_args *paa"
+.Fa "int vector"
+.Fa "pci_intr_handle_t *ih"
+.Fc
+.Ft int
 .Fn pci_intr_line "pci_intr_handle_t ih"
 .Ft const char *
 .Fn pci_intr_string "pci_chipset_tag_t pc" "pci_intr_handle_t ih"
 .Ft void *
-.Fn pci_intr_establish "pci_chipset_tag_t pc" "pci_intr_handle_t ih" \
-"int level" "int (*func)(void *)" "void *arg" "const char *name"
+.Fo pci_intr_establish
+.Fa "pci_chipset_tag_t pc"
+.Fa "pci_intr_handle_t ih"
+.Fa "int level"
+.Fa "int (*func)(void *)"
+.Fa "void *arg"
+.Fa "const char *name"
+.Fc
+.\" .Ft void *
+.\" .Fo pci_intr_establish_cpu
+.\" .Fa "pci_chipset_tag_t pc"
+.\" .Fa "pci_intr_handle_t ih"
+.\" .Fa "int level"
+.\" .Fa "struct cpu_info *ci"
+.\" .Fa "int (*func)(void *)"
+.\" .Fa "void *arg"
+.\" .Fa "const char *name"
+.\" .Fc
 .Ft void
 .Fn pci_intr_disestablish "pci_chipset_tag_t pc" "void *v"
 .Sh DESCRIPTION
@@ -53,9 +77,10 @@ An architect type is provided by the machine-dependent
 code
 .Va pci_intr_handle_t ,
 to be initialised by
-.Fn pci_intr_map
+.Fn pci_intr_map ,
+.Fn pci_intr_map_msi ,
 or
-.Fn pci_intr_map_msi .
+.Fn pci_intr_map_msix .
 .Pp
 The
 .Fn pci_intr_map
@@ -63,6 +88,7 @@ function should be called first to establish a mapping between a PCI
 pin and the interrupt controller's interrupt vector.
 This process may include resolving the mapping through
 firmware-provided information.
+.Pp
 For devices that support Message Signaled Interrupts (MSI) the
 .Fn pci_intr_map_msi
 function should be called instead.
@@ -72,17 +98,42 @@ In that case
 .Fn pci_intr_map
 should be called to fall back on classic PCI interrupts.
 .Pp
+For devices that support Extended Message Signaled Interrupts (MSI-X) the
+.Fn pci_intr_map_msix
+function can be called instead.
+This function can fail if the system does not support MSI-X.
+In that case
+.Fn pci_intr_map_msi
+or
+.Fn pci_intr_map
+can be called to fall back on Message Signalled Interrupts or classic
+PCI interrupts respectively.
+MSI-X can provide multiple interrupt vectors per device.
+For each vector, a separate call to
+.Fn pci_intr_map_msix
+is made with the
+.Fa vector
+argument specifying which interrupt vector to map.
+.Pp
 Having initialised the
-.Va pci_intr_handle_t
+.Fa pci_intr_handle_t
 in the previous step, an interrupt handler can be established using
-.Fn pci_intr_establish
-or converted into printable form using
+.Fn pci_intr_establish .
+.\" or
+.\" .Fn pci_intr_establish_cpu .
+.\" .Fn pci_intr_establish_cpu
+.\" establishes an interrupt on the CPU specified in the
+.\" .Fa ci
+.\" argument, while
+.\" .Fn pci_intr_establish
+.\" uses a system selected CPU.
+An established interrupt handler is always called with the system
+interrupt priority level set equal to, or higher than,
+.Fa level .
+.Pp
+A printable string representation of an initialised interrupt mapping
+can be generated with
 .Fn pci_intr_string .
-A handler established using
-.Fn pci_intr_establish
-is always called with the system interrupt priority level set equal to,
-or higher than,
-.Va level .
 .Pp
 .Fn pci_intr_line
 provides the interrupt line extracted from the MD interrupt handle.

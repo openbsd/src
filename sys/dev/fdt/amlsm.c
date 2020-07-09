@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlsm.c,v 1.1 2020/01/14 20:43:20 kettenis Exp $	*/
+/*	$OpenBSD: amlsm.c,v 1.2 2020/05/29 04:42:25 deraadt Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -26,7 +26,6 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
 #include <dev/ofw/ofw_misc.h>
-#include <dev/rndvar.h>
 
 extern register_t smc_call(register_t, register_t, register_t, register_t);
 

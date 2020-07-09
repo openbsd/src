@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.79 2020/04/07 13:27:51 visa Exp $ */
+/*	$OpenBSD: uhid.c,v 1.80 2020/05/13 08:13:42 mpi Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -467,13 +467,6 @@ const struct filterops uhidread_filtops = {
 	.f_event	= filt_uhidread,
 };
 
-const struct filterops uhid_seltrue_filtops = {
-	.f_flags	= FILTEROP_ISFD,
-	.f_attach	= NULL,
-	.f_detach	= filt_uhidrdetach,
-	.f_event	= filt_seltrue,
-};
-
 int
 uhidkqfilter(dev_t dev, struct knote *kn)
 {
@@ -494,9 +487,7 @@ uhidkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	case EVFILT_WRITE:
-		klist = &sc->sc_rsel.si_note;
-		kn->kn_fop = &uhid_seltrue_filtops;
-		break;
+		return (seltrue_kqfilter(dev, kn));
 
 	default:
 		return (EINVAL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_hpux.c,v 1.6 2018/11/20 08:04:28 deraadt Exp $	*/
+/*	$OpenBSD: getentropy_hpux.c,v 1.7 2020/05/17 14:44:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -48,7 +48,7 @@
 #include <sys/pstat.h>
 
 #define REPEAT 5
-#define min(a, b) (((a) < (b)) ? (a) : (b))
+#define MINIMUM(a, b) (((a) < (b)) ? (a) : (b))
 
 #define HX(a, b) \
 	do { \
@@ -386,8 +386,8 @@ getentropy_fallback(void *buf, size_t len)
 			HD(cnt);
 		}
 		SHA512_Final(results, &ctx);
-		memcpy((char *)buf + i, results, min(sizeof(results), len - i));
-		i += min(sizeof(results), len - i);
+		memcpy((char *)buf + i, results, MINIMUM(sizeof(results), len - i));
+		i += MINIMUM(sizeof(results), len - i);
 	}
 	explicit_bzero(&ctx, sizeof ctx);
 	explicit_bzero(results, sizeof results);

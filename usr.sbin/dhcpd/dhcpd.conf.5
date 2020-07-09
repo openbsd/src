@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.conf.5,v 1.25 2020/04/17 06:24:28 dtucker Exp $
+.\"	$OpenBSD: dhcpd.conf.5,v 1.26 2020/05/16 16:58:11 jmc Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998, 1998, 1999
 .\" The Internet Software Consortium.    All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: April 17 2020 $
+.Dd $Mdocdate: May 16 2020 $
 .Dt DHCPD.CONF 5
 .Os
 .Sh NAME
@@ -885,6 +885,11 @@ the DHCP ACK or NAK reply sent to the client.
 DHCP option statements are documented in the
 .Xr dhcp-options 5
 manual page.
+.Sh FILES
+.Bl -tag -width /etc/examples/dhcpd.conf -compact
+.It Pa /etc/examples/dhcpd.conf
+Example configuration file.
+.El
 .Sh SEE ALSO
 .Xr dhcp-options 5 ,
 .Xr dhcpd.leases 5 ,

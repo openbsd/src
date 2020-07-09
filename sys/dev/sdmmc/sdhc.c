@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.65 2020/04/27 11:37:23 ians Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.68 2020/06/14 18:37:16 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -27,6 +27,7 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/time.h>
 
 #include <dev/sdmmc/sdhcreg.h>
 #include <dev/sdmmc/sdhcvar.h>
@@ -35,10 +36,11 @@
 #include <dev/sdmmc/sdmmcvar.h>
 #include <dev/sdmmc/sdmmc_ioreg.h>
 
-#define SDHC_COMMAND_TIMEOUT	hz
-#define SDHC_BUFFER_TIMEOUT	hz
-#define SDHC_TRANSFER_TIMEOUT	hz
-#define SDHC_DMA_TIMEOUT	(hz*3)
+/* Timeouts in seconds */
+#define SDHC_COMMAND_TIMEOUT	1
+#define SDHC_BUFFER_TIMEOUT	1
+#define SDHC_TRANSFER_TIMEOUT	1
+#define SDHC_DMA_TIMEOUT	3
 
 struct sdhc_host {
 	struct sdhc_softc *sc;		/* host controller device */
@@ -668,6 +670,9 @@ sdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq, int timing)
 
 	s = splsdmmc();
 
+	if (hp->sc->sc_bus_clock_pre)
+		hp->sc->sc_bus_clock_pre(hp->sc, freq, timing);
+
 #ifdef DIAGNOSTIC
 	/* Must not stop the clock if commands are in progress. */
 	if (ISSET(HREAD4(hp, SDHC_PRESENT_STATE), SDHC_CMD_INHIBIT_MASK) &&
@@ -728,6 +733,9 @@ sdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq, int timing)
 	 * Enable SD clock.
 	 */
 	HSET2(hp, SDHC_CLOCK_CTL, SDHC_SDCLK_ENABLE);
+
+	if (hp->sc->sc_bus_clock_post)
+		hp->sc->sc_bus_clock_post(hp->sc, freq, timing);
 
 ret:
 	splx(s);
@@ -813,7 +821,7 @@ sdhc_signal_voltage(sdmmc_chipset_handle_t sch, int signal_voltage)
 
 	/* Host controller clears this bit if 1.8V signalling fails. */
 	if (signal_voltage == SDMMC_SIGNAL_VOLTAGE_180 &&
-	    !ISSET(HREAD4(hp, SDHC_HOST_CTL2), SDHC_1_8V_SIGNAL_EN))
+	    !ISSET(HREAD2(hp, SDHC_HOST_CTL2), SDHC_1_8V_SIGNAL_EN))
 		return EIO;
 
 	return 0;
@@ -1188,12 +1196,12 @@ sdhc_soft_reset(struct sdhc_host *hp, int mask)
 }
 
 int
-sdhc_wait_intr_cold(struct sdhc_host *hp, int mask, int timo)
+sdhc_wait_intr_cold(struct sdhc_host *hp, int mask, int secs)
 {
-	int status;
+	int status, usecs;
 
 	mask |= SDHC_ERROR_INTERRUPT;
-	timo = timo * tick;
+	usecs = secs * 1000000;
 	status = hp->intr_status;
 	while ((status & mask) == 0) {
 
@@ -1227,7 +1235,7 @@ sdhc_wait_intr_cold(struct sdhc_host *hp, int mask, int timo)
 		}
 
 		delay(1);
-		if (timo-- == 0) {
+		if (usecs-- == 0) {
 			status |= SDHC_ERROR_INTERRUPT;
 			break;
 		}
@@ -1238,21 +1246,21 @@ sdhc_wait_intr_cold(struct sdhc_host *hp, int mask, int timo)
 }
 
 int
-sdhc_wait_intr(struct sdhc_host *hp, int mask, int timo)
+sdhc_wait_intr(struct sdhc_host *hp, int mask, int secs)
 {
 	int status;
 	int s;
 
 	if (cold)
-		return (sdhc_wait_intr_cold(hp, mask, timo));
+		return (sdhc_wait_intr_cold(hp, mask, secs));
 
 	mask |= SDHC_ERROR_INTERRUPT;
 
 	s = splsdmmc();
 	status = hp->intr_status & mask;
 	while (status == 0) {
-		if (tsleep(&hp->intr_status, PWAIT, "hcintr", timo)
-		    == EWOULDBLOCK) {
+		if (tsleep_nsec(&hp->intr_status, PWAIT, "hcintr",
+		    SEC_TO_NSEC(secs)) == EWOULDBLOCK) {
 			status |= SDHC_ERROR_INTERRUPT;
 			break;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vldcp.c,v 1.19 2019/12/19 12:04:38 reyk Exp $	*/
+/*	$OpenBSD: vldcp.c,v 1.20 2020/05/23 11:29:37 mpi Exp $	*/
 /*
  * Copyright (c) 2009, 2012 Mark Kettenis
  *
@@ -70,6 +70,11 @@ struct vldcp_softc {
 
 int	vldcp_match(struct device *, void *, void *);
 void	vldcp_attach(struct device *, struct device *, void *);
+void	filt_vldcprdetach(struct knote *);
+void	filt_vldcpwdetach(struct knote *);
+int	filt_vldcpread(struct knote *, long);
+int	filt_vldcpwrite(struct knote *, long);
+int	vldcpkqfilter(dev_t, struct knote *);
 
 struct cfattach vldcp_ca = {
 	sizeof(struct vldcp_softc), vldcp_match, vldcp_attach
@@ -614,4 +619,122 @@ vldcppoll(dev_t dev, int events, struct proc *p)
 	}
 	splx(s);
 	return revents;
+}
+
+void
+filt_vldcprdetach(struct knote *kn)
+{
+	struct vldcp_softc *sc = (void *)kn->kn_hook;
+	int s;
+
+	s = spltty();
+	klist_remove(&sc->sc_rsel.si_note, kn);
+	splx(s);
+}
+
+void
+filt_vldcpwdetach(struct knote *kn)
+{
+	struct vldcp_softc *sc = (void *)kn->kn_hook;
+	int s;
+
+	s = spltty();
+	klist_remove(&sc->sc_wsel.si_note, kn);
+	splx(s);
+}
+
+int
+filt_vldcpread(struct knote *kn, long hint)
+{
+	struct vldcp_softc *sc = (void *)kn->kn_hook;
+	struct ldc_conn *lc = &sc->sc_lc;
+	uint64_t head, tail, avail, state;
+	int s, err;
+
+	s = spltty();
+	err = hv_ldc_rx_get_state(lc->lc_id, &head, &tail, &state);
+	if (err == 0 && state == LDC_CHANNEL_UP && head != tail) {
+		avail = (tail - head) / sizeof(struct ldc_pkt) +
+		    lc->lc_rxq->lq_nentries;
+		avail %= lc->lc_rxq->lq_nentries;
+		kn->kn_data = avail;
+	} else {
+		cbus_intr_setenabled(sc->sc_bustag, sc->sc_rx_ino,
+		    INTR_ENABLED);
+	}
+	splx(s);
+
+	return (kn->kn_data > 0);
+}
+
+int
+filt_vldcwrite(struct knote *kn, long hint)
+{
+	struct vldcp_softc *sc = (void *)kn->kn_hook;
+	struct ldc_conn *lc = &sc->sc_lc;
+	uint64_t head, tail, avail, state;
+	int s, err;
+
+	s = spltty();
+	err = hv_ldc_tx_get_state(lc->lc_id, &head, &tail, &state);
+	if (err == 0 && state == LDC_CHANNEL_UP && head != tail) {
+		avail = (head - tail) / sizeof(struct ldc_pkt) +
+		    lc->lc_txq->lq_nentries - 1;
+		avail %= lc->lc_txq->lq_nentries;
+		kn->kn_data = avail;
+	} else {
+		cbus_intr_setenabled(sc->sc_bustag, sc->sc_tx_ino,
+		    INTR_ENABLED);
+	}
+	splx(s);
+
+	return (kn->kn_data > 0);
+}
+
+const struct filterops vldcpread_filtops = {
+	.f_flags	= FILTEROP_ISFD,
+	.f_attach	= NULL,
+	.f_detach	= filt_vldcprdetach,
+	.f_event	= filt_vldcpread,
+};
+
+const struct filterops vldcpwrite_filtops = {
+	.f_flags	= FILTEROP_ISFD,
+	.f_attach	= NULL,
+	.f_detach	= filt_vldcpwdetach,
+	.f_event	= filt_vldcwrite,
+};
+
+int
+vldcpkqfilter(dev_t dev, struct knote *kn)
+{
+	struct vldcp_softc *sc;
+	struct klist *klist;
+	int s;
+
+	sc = vldcp_lookup(dev);
+	if (sc == NULL)
+		return (ENXIO);
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &sc->sc_rsel.si_note;
+		kn->kn_fop = &vldcpread_filtops;
+		break;
+	case EVFILT_WRITE:
+		klist = &sc->sc_wsel.si_note;
+		kn->kn_fop = &vldcpwrite_filtops;
+		break;
+
+	default:
+		return (EINVAL);
+	}
+
+	kn->kn_hook = sc;
+
+	s = spltty();
+	klist_insert(klist, kn);
+	splx(s);
+
+	return (0);
 }

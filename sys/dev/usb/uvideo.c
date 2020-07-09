@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.206 2020/01/16 09:59:26 mpi Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.208 2020/07/05 11:47:50 landry Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -186,6 +186,7 @@ usbd_status	uvideo_usb_control(struct uvideo_softc *sc, uint8_t rt, uint8_t r,
 
 #ifdef UVIDEO_DEBUG
 #include <sys/namei.h>
+#include <sys/proc.h>
 #include <sys/vnode.h>
 
 void		uvideo_dump_desc_all(struct uvideo_softc *);
@@ -2941,9 +2942,10 @@ uvideo_querycap(void *v, struct v4l2_capability *caps)
 	strlcpy(caps->bus_info, "usb", sizeof(caps->bus_info));
 
 	caps->version = 1;
-	caps->capabilities = V4L2_CAP_VIDEO_CAPTURE
+	caps->device_caps = V4L2_CAP_VIDEO_CAPTURE
 	    | V4L2_CAP_STREAMING
 	    | V4L2_CAP_READWRITE;
+	caps->capabilities = caps->device_caps | V4L2_CAP_DEVICE_CAPS;
 
 	return (0);
 }

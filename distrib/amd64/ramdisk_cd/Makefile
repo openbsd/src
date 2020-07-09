@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.20 2019/06/07 14:39:56 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.22 2020/05/18 06:20:43 otto Exp $
 
-FS=		miniroot${OSrev}.fs
+FS=		miniroot${OSrev}.img
 FSSIZE=		9600
 FSDISKTYPE=	mini34
 CDROM=		cd${OSrev}.iso
@@ -25,7 +25,7 @@ ${FS}: bsd.gz
 	mkdir -p ${MOUNT_POINT}/efi/boot
 	cp ${EFIBOOT} ${MOUNT_POINT}/efi/boot
 	umount ${MOUNT_POINT}
-	newfs -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
+	newfs -O 1 -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
 	mount /dev/`cat vnd`a ${MOUNT_POINT}
 	cp ${DESTDIR}/usr/mdec/boot ${.OBJDIR}/boot
 	strip ${.OBJDIR}/boot
@@ -107,7 +107,7 @@ install:
 
 clean cleandir:
 	rm -f *.core mr.fs instbin instbin.mk instbin*.cache \
-	    *.o *.lo *.c bsd bsd.rd bsd.gz bsd.strip floppy*.fs \
+	    *.o *.lo *.c bsd bsd.rd bsd.gz bsd.strip floppy*.img \
 	    lib*.a lib*.olist instbin.map boot instbin.conf ${FS}
 	rm -rf mr.fs.d
 	rm -f ${CDROM}

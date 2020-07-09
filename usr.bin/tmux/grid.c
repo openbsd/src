@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.106 2020/04/15 12:59:20 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.118 2020/06/05 09:35:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -40,8 +40,16 @@ const struct grid_cell grid_default_cell = {
 	{ { ' ' }, 0, 1, 1 }, 0, 0, 8, 8, 0
 };
 
+/*
+ * Padding grid cell data. Padding cells are the only zero width cell that
+ * appears in the grid - because of this, they are always extended cells.
+ */
+static const struct grid_cell grid_padding_cell = {
+	{ { '!' }, 0, 0, 0 }, 0, GRID_FLAG_PADDING, 8, 8, 0
+};
+
 /* Cleared grid cell data. */
-const struct grid_cell grid_cleared_cell = {
+static const struct grid_cell grid_cleared_cell = {
 	{ { ' ' }, 0, 1, 1 }, 0, GRID_FLAG_CLEARED, 8, 8, 0
 };
 static const struct grid_cell_entry grid_cleared_entry = {
@@ -100,12 +108,13 @@ grid_get_extended_cell(struct grid_line *gl, struct grid_cell_entry *gce,
 }
 
 /* Set cell as extended. */
-static struct grid_cell *
+static struct grid_extd_entry *
 grid_extended_cell(struct grid_line *gl, struct grid_cell_entry *gce,
     const struct grid_cell *gc)
 {
-	struct grid_cell	*gcp;
+	struct grid_extd_entry	*gee;
 	int			 flags = (gc->flags & ~GRID_FLAG_CLEARED);
+	utf8_char		 uc;
 
 	if (~gce->flags & GRID_FLAG_EXTENDED)
 		grid_get_extended_cell(gl, gce, flags);
@@ -113,10 +122,16 @@ grid_extended_cell(struct grid_line *gl, struct grid_cell_entry *gce,
 		fatalx("offset too big");
 	gl->flags |= GRID_LINE_EXTENDED;
 
-	gcp = &gl->extddata[gce->offset];
-	memcpy(gcp, gc, sizeof *gcp);
-	gcp->flags = flags;
-	return (gcp);
+	utf8_from_data(&gc->data, &uc);
+
+	gee = &gl->extddata[gce->offset];
+	gee->data = uc;
+	gee->attr = gc->attr;
+	gee->flags = flags;
+	gee->fg = gc->fg;
+	gee->bg = gc->bg;
+	gee->us = gc->us;
+	return (gee);
 }
 
 /* Free up unused extended cells. */
@@ -124,9 +139,9 @@ static void
 grid_compact_line(struct grid_line *gl)
 {
 	int			 new_extdsize = 0;
-	struct grid_cell	*new_extddata;
+	struct grid_extd_entry	*new_extddata;
 	struct grid_cell_entry	*gce;
-	struct grid_cell	*gc;
+	struct grid_extd_entry	*gee;
 	u_int			 px, idx;
 
 	if (gl->extdsize == 0)
@@ -150,8 +165,8 @@ grid_compact_line(struct grid_line *gl)
 	for (px = 0; px < gl->cellsize; px++) {
 		gce = &gl->celldata[px];
 		if (gce->flags & GRID_FLAG_EXTENDED) {
-			gc = &gl->extddata[gce->offset];
-			memcpy(&new_extddata[idx], gc, sizeof *gc);
+			gee = &gl->extddata[gce->offset];
+			memcpy(&new_extddata[idx], gee, sizeof *gee);
 			gce->offset = idx++;
 		}
 	}
@@ -181,17 +196,14 @@ grid_clear_cell(struct grid *gd, u_int px, u_int py, u_int bg)
 {
 	struct grid_line	*gl = &gd->linedata[py];
 	struct grid_cell_entry	*gce = &gl->celldata[px];
-	struct grid_cell	*gc;
+	struct grid_extd_entry	*gee;
 
 	memcpy(gce, &grid_cleared_entry, sizeof *gce);
 	if (bg != 8) {
 		if (bg & COLOUR_FLAG_RGB) {
 			grid_get_extended_cell(gl, gce, gce->flags);
-			gl->flags |= GRID_LINE_EXTENDED;
-
-			gc = &gl->extddata[gce->offset];
-			memcpy(gc, &grid_cleared_cell, sizeof *gc);
-			gc->bg = bg;
+			gee = grid_extended_cell(gl, gce, &grid_cleared_cell);
+			gee->bg = bg;
 		} else {
 			if (bg & COLOUR_FLAG_256)
 				gce->flags |= GRID_FLAG_BG256;
@@ -211,19 +223,28 @@ grid_check_y(struct grid *gd, const char *from, u_int py)
 	return (0);
 }
 
+/* Check if two styles are (visibly) the same. */
+int
+grid_cells_look_equal(const struct grid_cell *gc1, const struct grid_cell *gc2)
+{
+	if (gc1->fg != gc2->fg || gc1->bg != gc2->bg)
+		return (0);
+	if (gc1->attr != gc2->attr || gc1->flags != gc2->flags)
+		return (0);
+	return (1);
+}
+
 /* Compare grid cells. Return 1 if equal, 0 if not. */
 int
-grid_cells_equal(const struct grid_cell *gca, const struct grid_cell *gcb)
+grid_cells_equal(const struct grid_cell *gc1, const struct grid_cell *gc2)
 {
-	if (gca->fg != gcb->fg || gca->bg != gcb->bg)
+	if (!grid_cells_look_equal(gc1, gc2))
 		return (0);
-	if (gca->attr != gcb->attr || gca->flags != gcb->flags)
+	if (gc1->data.width != gc2->data.width)
 		return (0);
-	if (gca->data.width != gcb->data.width)
+	if (gc1->data.size != gc2->data.size)
 		return (0);
-	if (gca->data.size != gcb->data.size)
-		return (0);
-	return (memcmp(gca->data.data, gcb->data.data, gca->data.size) == 0);
+	return (memcmp(gc1->data.data, gc2->data.data, gc1->data.size) == 0);
 }
 
 /* Free one line. */
@@ -474,12 +495,20 @@ static void
 grid_get_cell1(struct grid_line *gl, u_int px, struct grid_cell *gc)
 {
 	struct grid_cell_entry	*gce = &gl->celldata[px];
+	struct grid_extd_entry	*gee;
 
 	if (gce->flags & GRID_FLAG_EXTENDED) {
 		if (gce->offset >= gl->extdsize)
 			memcpy(gc, &grid_default_cell, sizeof *gc);
-		else
-			memcpy(gc, &gl->extddata[gce->offset], sizeof *gc);
+		else {
+			gee = &gl->extddata[gce->offset];
+			gc->flags = gee->flags;
+			gc->attr = gee->attr;
+			gc->fg = gee->fg;
+			gc->bg = gee->bg;
+			gc->us = gee->us;
+			utf8_to_data(gee->data, &gc->data);
+		}
 		return;
 	}
 
@@ -506,7 +535,7 @@ grid_get_cell(struct grid *gd, u_int px, u_int py, struct grid_cell *gc)
 		grid_get_cell1(&gd->linedata[py], px, gc);
 }
 
-/* Set cell at relative position. */
+/* Set cell at position. */
 void
 grid_set_cell(struct grid *gd, u_int px, u_int py, const struct grid_cell *gc)
 {
@@ -529,14 +558,21 @@ grid_set_cell(struct grid *gd, u_int px, u_int py, const struct grid_cell *gc)
 		grid_store_cell(gce, gc, gc->data.data[0]);
 }
 
-/* Set cells at relative position. */
+/* Set padding at position. */
+void
+grid_set_padding(struct grid *gd, u_int px, u_int py)
+{
+	grid_set_cell(gd, px, py, &grid_padding_cell);
+}
+
+/* Set cells at position. */
 void
 grid_set_cells(struct grid *gd, u_int px, u_int py, const struct grid_cell *gc,
     const char *s, size_t slen)
 {
 	struct grid_line	*gl;
 	struct grid_cell_entry	*gce;
-	struct grid_cell	*gcp;
+	struct grid_extd_entry	*gee;
 	u_int			 i;
 
 	if (grid_check_y(gd, __func__, py) != 0)
@@ -551,8 +587,8 @@ grid_set_cells(struct grid *gd, u_int px, u_int py, const struct grid_cell *gc,
 	for (i = 0; i < slen; i++) {
 		gce = &gl->celldata[px + i];
 		if (grid_need_extended_cell(gce, gc)) {
-			gcp = grid_extended_cell(gl, gce, gc);
-			utf8_set(&gcp->data, s[i]);
+			gee = grid_extended_cell(gl, gce, gc);
+			gee->data = utf8_build_one(s[i]);
 		} else
 			grid_store_cell(gce, gc, s[i]);
 	}
@@ -616,6 +652,8 @@ grid_clear_lines(struct grid *gd, u_int py, u_int ny, u_int bg)
 		grid_free_line(gd, yy);
 		grid_empty_line(gd, yy, bg);
 	}
+	if (py != 0)
+		gd->linedata[py - 1].flags &= ~GRID_LINE_WRAPPED;
 }
 
 /* Move a group of lines. */
@@ -642,6 +680,8 @@ grid_move_lines(struct grid *gd, u_int dy, u_int py, u_int ny, u_int bg)
 			continue;
 		grid_free_line(gd, yy);
 	}
+	if (dy != 0)
+		gd->linedata[dy - 1].flags &= ~GRID_LINE_WRAPPED;
 
 	memmove(&gd->linedata[dy], &gd->linedata[py],
 	    ny * (sizeof *gd->linedata));
@@ -654,7 +694,10 @@ grid_move_lines(struct grid *gd, u_int dy, u_int py, u_int ny, u_int bg)
 		if (yy < dy || yy >= dy + ny)
 			grid_empty_line(gd, yy, bg);
 	}
+	if (py != 0 && (py < dy || py >= dy + ny))
+		gd->linedata[py - 1].flags &= ~GRID_LINE_WRAPPED;
 }
+
 
 /* Move a group of cells. */
 void
@@ -1276,7 +1319,7 @@ grid_reflow(struct grid *gd, u_int sx)
 
 		/*
 		 * If the line is exactly right or the first character is wider
-		 * than the targe width, just move it across unchanged.
+		 * than the target width, just move it across unchanged.
 		 */
 		if (width == sx || first > sx) {
 			grid_reflow_move(target, gl);
@@ -1382,7 +1425,9 @@ grid_line_length(struct grid *gd, u_int py)
 		px = gd->sx;
 	while (px > 0) {
 		grid_get_cell(gd, px - 1, py, &gc);
-		if (gc.data.size != 1 || *gc.data.data != ' ')
+		if ((gc.flags & GRID_FLAG_PADDING) ||
+		    gc.data.size != 1 ||
+		    *gc.data.data != ' ')
 			break;
 		px--;
 	}

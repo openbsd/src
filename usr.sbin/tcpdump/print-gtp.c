@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gtp.c,v 1.11 2018/10/22 16:12:45 kn Exp $ */
+/*	$OpenBSD: print-gtp.c,v 1.12 2020/05/20 01:20:37 dlg Exp $ */
 /*
  * Copyright (c) 2009, 2010 Joel Sing <jsing@openbsd.org>
  *
@@ -57,12 +57,16 @@
 #include "interface.h"
 #include "gtp.h"
 
+#ifndef nitems
+#define nitems(_a)  (sizeof((_a)) / sizeof((_a)[0]))
+#endif
+
 void	gtp_print(const u_char *, u_int, u_short, u_short);
 void	gtp_decode_ie(const u_char *, u_short, int);
 void	gtp_print_tbcd(const u_char *, u_int);
 void	gtp_print_user_address(const u_char *, u_int);
 void	gtp_print_apn(const u_char *, u_int);
-void	gtp_print_str(const char **, u_int);
+void	gtp_print_str(const char **, u_int, u_int);
 
 void	gtp_v0_print(const u_char *, u_int, u_short, u_short);
 void	gtp_v0_print_prime(const u_char *);
@@ -466,10 +470,9 @@ gtp_print_apn(const u_char *cp, u_int len)
 
 /* Print string from array. */
 void
-gtp_print_str(const char **strs, u_int index)
+gtp_print_str(const char **strs, u_int bound, u_int index)
 {
-
-	if (index >= (sizeof(*strs) / sizeof(*strs[0])))
+	if (index >= bound)
 		printf(": %u", index);
 	else if (strs[index] != NULL)
 		printf(": %s", strs[index]);
@@ -727,7 +730,8 @@ gtp_v0_print_tv(const u_char *cp, u_int value)
 		/* 12.15 7.3.4.5.3 - Packet Transfer Command. */
 		TCHECK2(cp[0], GTPV0_TV_PACKET_XFER_CMD_LENGTH - 1);
 		printf("Packet Transfer Command");
-		gtp_print_str(gtp_packet_xfer_cmd, cp[0]);
+		gtp_print_str(gtp_packet_xfer_cmd, nitems(gtp_packet_xfer_cmd),
+		    cp[0]);
 		ielen = GTPV0_TV_PACKET_XFER_CMD_LENGTH;
 		break;
 		
@@ -1315,7 +1319,8 @@ gtp_v1_print_tv(const u_char *cp, u_int value)
 		/* 32.295 6.2.4.5.2 - Packet Transfer Command. */
 		TCHECK2(cp[0], GTPV1_TV_PACKET_XFER_CMD_LENGTH - 1);
 		printf("Packet Transfer Command");
-		gtp_print_str(gtp_packet_xfer_cmd, cp[0]);
+		gtp_print_str(gtp_packet_xfer_cmd, nitems(gtp_packet_xfer_cmd),
+		    cp[0]);
 		ielen = GTPV1_TV_PACKET_XFER_CMD_LENGTH;
 		break;
 
@@ -1515,7 +1520,7 @@ gtp_v1_print_tlv(const u_char *cp, u_int value)
 
 		/* 29.060 7.7.50 - RAT Type. */
 		printf("RAT");
-		gtp_print_str(gtp_rat_type, cp[0]);
+		gtp_print_str(gtp_rat_type, nitems(gtp_rat_type), cp[0]);
 		break;
 
 	case GTPV1_TLV_USER_LOCATION_INFO:
@@ -1607,7 +1612,8 @@ gtp_v1_print_tlv(const u_char *cp, u_int value)
 
 		/* 29.060 7.7.66 - MBMS 2G/3G Indicator. */
 		printf("MBMS 2G/3G Indicator");
-		gtp_print_str(mbms_2g3g_indicator, cp[0]);
+		gtp_print_str(mbms_2g3g_indicator, nitems(mbms_2g3g_indicator),
+		    cp[0]);
 		break;
 
 	case GTPV1_TLV_ENHANCED_NSAPI:
@@ -1697,7 +1703,8 @@ gtp_v1_print_tlv(const u_char *cp, u_int value)
 
 		/* 29.060 7.7.80 - MS Info Change Reporting. */
 		printf("MS Info Change Reporting");
-		gtp_print_str(ms_info_change_rpt, cp[0]);
+		gtp_print_str(ms_info_change_rpt, nitems(ms_info_change_rpt),
+		    cp[0]);
 		break;
 
 	case GTPV1_TLV_DIRECT_TUNNEL_FLAGS:

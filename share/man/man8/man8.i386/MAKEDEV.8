@@ -1,10 +1,10 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.115 2020/01/23 02:59:25 dlg Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.116 2020/07/06 06:13:10 dlg Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.i386/MAKEDEV.md,v 1.89 2020/01/23 02:47:28 dlg Exp 
-.\"	OpenBSD: MAKEDEV.common,v 1.109 2020/01/23 02:47:29 dlg Exp 
+.\"	OpenBSD: etc.i386/MAKEDEV.md,v 1.91 2020/07/06 06:11:27 dlg Exp 
+.\"	OpenBSD: MAKEDEV.common,v 1.111 2020/07/06 06:11:26 dlg Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.9 2017/06/06 08:11:23 tb Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
 .\"
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 23 2020 $
+.Dd $Mdocdate: July 6 2020 $
 .Dt MAKEDEV 8 i386
 .Os
 .Sh NAME
@@ -293,6 +293,9 @@ paravirtual device tree root, see
 .It Ar switch*
 Switch driver, see
 .Xr switch 4 .
+.It Ar kstat
+Kernel Statistics, see
+.Xr kstat 4 .
 .El
 .Sh FILES
 .Bl -tag -width /dev -compact

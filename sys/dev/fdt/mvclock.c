@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvclock.c,v 1.6 2020/04/15 15:40:06 kettenis Exp $	*/
+/*	$OpenBSD: mvclock.c,v 1.7 2020/05/22 10:06:59 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -65,7 +65,6 @@ uint32_t a3700_periph_nb_get_frequency(void *, uint32_t *);
 void	 a3700_periph_sb_enable(void *, uint32_t *, int);
 uint32_t a3700_periph_sb_get_frequency(void *, uint32_t *);
 uint32_t a3700_tbg_get_frequency(void *, uint32_t *);
-uint32_t a3700_xtal_get_frequency(void *, uint32_t *);
 
 int
 mvclock_match(struct device *parent, void *match, void *aux)
@@ -114,8 +113,6 @@ mvclock_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_cd.cd_get_frequency = a3700_periph_sb_get_frequency;
 	} else if (OF_is_compatible(node, "marvell,armada-3700-tbg-clock")) {
 		sc->sc_cd.cd_get_frequency = a3700_tbg_get_frequency;
-	} else if (OF_is_compatible(node, "marvell,armada-3700-xtal-clock")) {
-		sc->sc_cd.cd_get_frequency = a3700_xtal_get_frequency;
 	}
 	clock_register(&sc->sc_cd);
 }
@@ -471,24 +468,4 @@ a3700_tbg_get_frequency(void *cookie, uint32_t *cells)
 
 	freq = clock_get_frequency(sc->sc_cd.cd_node, NULL);
 	return (freq * mult) / div;
-}
-
-/* Armada 3700 XTAL block */
-
-#define XTAL			0xc
-#define  XTAL_MODE			(1 << 31)
-
-uint32_t
-a3700_xtal_get_frequency(void *cookie, uint32_t *cells)
-{
-	struct mvclock_softc *sc = cookie;
-	struct regmap *rm;
-
-	rm = regmap_bynode(OF_parent(sc->sc_cd.cd_node));
-	KASSERT(rm != NULL);
-
-	if (regmap_read_4(rm, XTAL) & XTAL_MODE)
-		return 40000000;
-	else
-		return 25000000;
 }

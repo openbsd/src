@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.104 2019/06/28 13:35:02 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.105 2020/06/12 06:22:32 remi Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -51,6 +51,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <ifaddrs.h>
 
 #include "netstat.h"
 
@@ -346,4 +347,75 @@ rt_stats(void)
 	    rtstat.rts_unreach, plural(rtstat.rts_unreach));
 	printf("\t%u use%s of a wildcard route\n",
 	    rtstat.rts_wildcard, plural(rtstat.rts_wildcard));
+}
+
+/*
+ * Print rdomain and rtable summary
+ */
+
+void
+rdomainpr(void)
+{
+	struct if_data		 *ifd;
+	struct ifaddrs		 *ifap, *ifa;
+	struct rt_tableinfo	  info;
+
+	int	 rtt_dom[RT_TABLEID_MAX+1];
+	int	 rdom_rttcnt[RT_TABLEID_MAX+1] = { };
+	int	 mib[6], rdom, rtt;
+	size_t	 len;
+	char	*old, *rdom_if[RT_TABLEID_MAX+1] = { };
+
+	getifaddrs(&ifap);
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if (ifa->ifa_addr->sa_family != AF_LINK)
+			continue;
+		ifd = ifa->ifa_data;
+		if (rdom_if[ifd->ifi_rdomain] == NULL) {
+			if (asprintf(&rdom_if[ifd->ifi_rdomain], "%s",
+			    ifa->ifa_name) == -1)
+				exit(1);
+		} else {
+			old = rdom_if[ifd->ifi_rdomain];
+			if (asprintf(&rdom_if[ifd->ifi_rdomain], "%s %s",
+			    old, ifa->ifa_name) == -1)
+				exit(1);
+			free(old);
+		}
+	}
+	freeifaddrs(ifap);
+
+	mib[0] = CTL_NET;
+	mib[1] = PF_ROUTE;
+	mib[2] = 0;
+	mib[3] = 0;
+	mib[4] = NET_RT_TABLE;
+
+	len = sizeof(info);
+	for (rtt = 0; rtt <= RT_TABLEID_MAX; rtt++) {
+		mib[5] = rtt;
+		if (sysctl(mib, 6, &info, &len, NULL, 0) == -1)
+			rtt_dom[rtt] = -1;
+		else {
+			rtt_dom[rtt] = info.rti_domainid;
+			rdom_rttcnt[info.rti_domainid]++;
+		}
+	}
+
+	for (rdom = 0; rdom <= RT_TABLEID_MAX; rdom++) {
+		if (rdom_if[rdom] == NULL)
+			continue;
+		printf("Rdomain %i\n", rdom);
+		printf("  Interface%s %s\n",
+		    (strchr(rdom_if[rdom], ' ') == NULL) ? ":" : "s:",
+		    rdom_if[rdom]);
+		printf("  Routing table%s",
+		    (rdom_rttcnt[rdom] == 1) ? ":" : "s:");
+		for (rtt = 0; rtt <= RT_TABLEID_MAX; rtt++) {
+			if (rtt_dom[rtt] == rdom)
+				printf(" %i", rtt);
+		}
+		printf("\n\n");
+		free(rdom_if[rdom]);
+	}
 }

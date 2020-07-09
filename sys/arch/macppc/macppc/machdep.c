@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.186 2019/09/03 17:51:52 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.192 2020/06/05 14:25:05 naddy Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -262,6 +262,9 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 				break;
 			case 'c':
 				boothowto |= RB_CONFIG;
+				break;
+			case 'R':
+				boothowto |= RB_GOODRANDOM;
 				break;
 			default:
 				break;

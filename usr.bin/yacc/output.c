@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.26 2016/09/21 16:26:30 otto Exp $	*/
+/*	$OpenBSD: output.c,v 1.27 2020/05/23 21:08:38 espie Exp $	*/
 /*	$NetBSD: output.c,v 1.4 1996/03/19 03:21:41 jtc Exp $	*/
 
 /*
@@ -832,10 +832,7 @@ output_defines(void)
 	fprintf(code_file, "#define YYERRCODE %d\n", symbol_value[1]);
 
 	if (dflag && unionized) {
-		fclose(union_file);
-		union_file = fopen(union_file_name, "r");
-		if (union_file == NULL)
-			open_error(union_file_name);
+		rewind(union_file);
 		while ((c = getc(union_file)) != EOF)
 			putc(c, defines_file);
 		fprintf(defines_file, " YYSTYPE;\n");
@@ -852,10 +849,7 @@ output_stored_text(void)
 	int c;
 	FILE *in, *out;
 
-	fclose(text_file);
-	text_file = fopen(text_file_name, "r");
-	if (text_file == NULL)
-		open_error(text_file_name);
+	rewind(text_file);
 	in = text_file;
 	if ((c = getc(in)) == EOF)
 		return;
@@ -1133,10 +1127,7 @@ output_semantic_actions(void)
 	int c, last;
 	FILE *out;
 
-	fclose(action_file);
-	action_file = fopen(action_file_name, "r");
-	if (action_file == NULL)
-		open_error(action_file_name);
+	rewind(action_file);
 
 	if ((c = getc(action_file)) == EOF)
 		return;

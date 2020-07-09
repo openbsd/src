@@ -1,4 +1,4 @@
-/* $OpenBSD: lunafb.c,v 1.25 2017/11/03 06:54:06 aoyama Exp $ */
+/* $OpenBSD: lunafb.c,v 1.27 2020/05/25 09:55:48 jsg Exp $ */
 /* $NetBSD: lunafb.c,v 1.7.6.1 2002/08/07 01:48:34 lukem Exp $ */
 
 /*-
@@ -111,8 +111,8 @@ void omfb_getdevconfig(paddr_t, struct om_hwdevconfig *);
 /* in omrasops.c */
 int	om_copycols(void *, int, int, int, int);
 int	om_copyrows(void *, int, int, int num);
-int	om_erasecols(void *, int, int, int, long);
-int	om_eraserows(void *, int, int, long);
+int	om_erasecols(void *, int, int, int, uint32_t);
+int	om_eraserows(void *, int, int, uint32_t);
 void	setup_omrasops1(struct rasops_info *);
 void	setup_omrasops4(struct rasops_info *);
 
@@ -131,7 +131,7 @@ const struct wsscreen_list omfb_screenlist = {
 int	omfbioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	omfbmmap(void *, off_t, int);
 int	omfb_alloc_screen(void *, const struct wsscreen_descr *,
-	    void **, int *, int *, long *);
+	    void **, int *, int *, uint32_t *);
 void	omfb_free_screen(void *, void *);
 int	omfb_show_screen(void *, void *, int, void (*) (void *, int, int),
 	    void *);
@@ -218,10 +218,10 @@ omfb_cnattach(void)
 {
 	struct om_hwdevconfig *dc = &omfb_console_dc;
 	struct rasops_info *ri = &dc->dc_ri;
-	long defattr;
+	uint32_t defattr;
 
 	omfb_getdevconfig(OMFB_FB_WADDR, dc);
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&omfb_stdscreen, ri, 0, 0, defattr);
 	omfb_console = 1;
 	return (0);
@@ -469,7 +469,7 @@ omfb_getdevconfig(paddr_t paddr, struct om_hwdevconfig *dc)
 
 int
 omfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
-    int *curxp, int *curyp, long *attrp)
+    int *curxp, int *curyp, uint32_t *attrp)
 {
 	struct omfb_softc *sc = v;
 	struct rasops_info *ri = &sc->sc_dc->dc_ri;
@@ -480,7 +480,7 @@ omfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 	*cookiep = ri;
 	*curxp = 0;
 	*curyp = 0;
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, attrp);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, attrp);
 	sc->nscreens++;
 	return (0);
 }

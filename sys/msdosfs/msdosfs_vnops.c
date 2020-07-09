@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.132 2020/04/07 13:27:52 visa Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.134 2020/06/11 09:18:43 mpi Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -2013,6 +2013,10 @@ filt_msdosfsread(struct knote *kn, long hint)
 		kn->kn_fflags |= NOTE_EOF;
 		return (1);
 	}
+
+	if (kn->kn_flags & __EV_POLL)
+		return (1);
+
 	return (kn->kn_data != 0);
 }
 

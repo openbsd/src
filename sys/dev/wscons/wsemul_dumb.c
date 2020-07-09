@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_dumb.c,v 1.13 2015/08/28 00:03:53 deraadt Exp $ */
+/* $OpenBSD: wsemul_dumb.c,v 1.14 2020/05/25 09:55:49 jsg Exp $ */
 /* $NetBSD: wsemul_dumb.c,v 1.7 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -43,9 +43,9 @@
 #include <dev/wscons/ascii.h>
 
 void	*wsemul_dumb_cnattach(const struct wsscreen_descr *, void *,
-				   int, int, long);
+				   int, int, uint32_t);
 void	*wsemul_dumb_attach(int, const struct wsscreen_descr *,
-				 void *, int, int, void *, long);
+				 void *, int, int, void *, uint32_t);
 u_int	wsemul_dumb_output(void *, const u_char *, u_int, int);
 int	wsemul_dumb_translate(void *, kbd_t, keysym_t, const u_char **);
 void	wsemul_dumb_detach(void *, u_int *, u_int *);
@@ -68,14 +68,14 @@ struct wsemul_dumb_emuldata {
 	void *cbcookie;
 	int crippled;
 	u_int nrows, ncols, crow, ccol;
-	long defattr;
+	uint32_t defattr;
 };
 
 struct wsemul_dumb_emuldata wsemul_dumb_console_emuldata;
 
 void *
 wsemul_dumb_cnattach(const struct wsscreen_descr *type, void *cookie, int ccol,
-    int crow, long defattr)
+    int crow, uint32_t defattr)
 {
 	struct wsemul_dumb_emuldata *edp;
 	const struct wsdisplay_emulops *emulops;
@@ -100,7 +100,7 @@ wsemul_dumb_cnattach(const struct wsscreen_descr *type, void *cookie, int ccol,
 
 void *
 wsemul_dumb_attach(int console, const struct wsscreen_descr *type, void *cookie,
-    int ccol, int crow, void *cbcookie, long defattr)
+    int ccol, int crow, void *cbcookie, uint32_t defattr)
 {
 	struct wsemul_dumb_emuldata *edp;
 

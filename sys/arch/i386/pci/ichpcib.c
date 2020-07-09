@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichpcib.c,v 1.28 2014/09/14 14:17:23 jsg Exp $	*/
+/*	$OpenBSD: ichpcib.c,v 1.29 2020/07/06 13:33:07 pirofti Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -63,7 +63,9 @@ struct timecounter ichpcib_timecounter = {
 	0xffffff,		/* counter_mask */
 	3579545,		/* frequency */
 	"ICHPM",		/* name */
-	1000			/* quality */
+	1000,			/* quality */
+	NULL,			/* private bits */
+	0			/* expose to user */
 };
 
 struct cfattach ichpcib_ca = {

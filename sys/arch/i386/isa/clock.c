@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.57 2020/04/29 08:53:45 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.59 2020/07/06 13:33:07 pirofti Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1996/05/12 23:11:54 mycroft Exp $	*/
 
 /*-
@@ -129,7 +129,7 @@ u_int i8254_get_timecount(struct timecounter *tc);
 u_int i8254_simple_get_timecount(struct timecounter *tc);
 
 static struct timecounter i8254_timecounter = {
-	i8254_get_timecount, NULL, ~0u, TIMER_FREQ, "i8254", 0, NULL
+	i8254_get_timecount, NULL, ~0u, TIMER_FREQ, "i8254", 0, NULL, 0
 };
 struct mutex timer_mutex = MUTEX_INITIALIZER(IPL_HIGH);
 u_long rtclock_tval;
@@ -614,7 +614,7 @@ rtcsettime(struct todr_chip_handle *handle, struct timeval *tv)
 		memset(&rtclk, 0, sizeof(rtclk));
 	splx(s);
 
-	clock_secs_to_ymdhms(time_second + utc_offset, &dt);
+	clock_secs_to_ymdhms(tv->tv_sec + utc_offset, &dt);
 
 	rtclk[MC_SEC] = bintobcd(dt.dt_sec);
 	rtclk[MC_MIN] = bintobcd(dt.dt_min);

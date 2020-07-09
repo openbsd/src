@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.160 2020/01/29 17:06:51 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.162 2020/06/02 12:24:44 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -163,7 +163,6 @@ really_kill(Job *job, int signo)
 	if (getpgid(pid) != getpgrp()) {
 		if (killpg(pid, signo) == 0)
 			return "group got signal";
-		pid = -pid;
 	} else {
 		if (kill(pid, signo) == 0)
 			return "process got signal";
@@ -946,8 +945,12 @@ Job_AbortAll(void)
 	aborting = ABORT_ERROR;
 
 	for (job = runningJobs; job != NULL; job = job->next) {
-		killpg(job->pid, SIGINT);
-		killpg(job->pid, SIGKILL);
+		debug_kill_printf("abort: send SIGINT to "
+		    "child %ld running %s: %s\n",
+		    (long)job->pid, job->node->name, really_kill(job, SIGINT));
+		debug_kill_printf("abort: send SIGKILL to "
+		    "child %ld running %s: %s\n",
+		    (long)job->pid, job->node->name, really_kill(job, SIGKILL));
 	}
 
 	/*

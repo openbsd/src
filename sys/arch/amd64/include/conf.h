@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.7 2016/01/08 11:20:58 reyk Exp $	*/
+/*	$OpenBSD: conf.h,v 1.8 2020/05/13 08:32:43 mpi Exp $	*/
 /*	$NetBSD: conf.h,v 1.2 1996/05/05 19:28:34 christos Exp $	*/
 
 /*
@@ -41,7 +41,6 @@ cdev_decl(fd);
 
 cdev_decl(spkr);
 
-#define biosselect seltrue
 cdev_decl(bios);
 
 #define	cdev_acpi_init(c,n) {\
@@ -51,7 +50,6 @@ cdev_decl(bios);
 	(dev_type_mmap((*))) enodev, 0, 0, dev_init(c,n,kqfilter) }
 cdev_decl(acpi);
 
-#define pctrpoll seltrue
 cdev_decl(pctr);
 
 #include "vmm.h"

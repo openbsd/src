@@ -15,21 +15,27 @@
  */
 
 struct parse_result;
-void	show_head(struct parse_result *);
-void	show_neighbor(struct peer *, struct parse_result *);
-void	show_timer(struct ctl_timer *);
-void	show_fib(struct kroute_full *);
-void	show_fib_table(struct ktable *);
-void	show_nexthop(struct ctl_show_nexthop *);
-void	show_interface(struct ctl_show_interface *);
-void	show_attr(u_char *, size_t, struct parse_result *);
-void	show_communities(u_char *, size_t, struct parse_result *);
-void	show_rib(struct ctl_show_rib *, u_char *, size_t,
-	    struct parse_result *);
-void	show_rib_hash(struct rde_hashstats *);
-void	show_rib_mem(struct rde_memstats *);
-void	show_result(u_int);
 
+struct output {
+	void	(*head)(struct parse_result *);
+	void	(*neighbor)(struct peer *, struct parse_result *);
+	void	(*timer)(struct ctl_timer *);
+	void	(*fib)(struct kroute_full *);
+	void	(*fib_table)(struct ktable *);
+	void	(*nexthop)(struct ctl_show_nexthop *);
+	void	(*interface)(struct ctl_show_interface *);
+	void	(*attr)(u_char *, size_t, struct parse_result *);
+	void	(*communities)(u_char *, size_t, struct parse_result *);
+	void	(*rib)(struct ctl_show_rib *, u_char *, size_t,
+		    struct parse_result *);
+	void	(*rib_hash)(struct rde_hashstats *);
+	void	(*rib_mem)(struct rde_memstats *);
+	void	(*result)(u_int);
+	void	(*tail)(void);
+};
+
+extern const struct output show_output, json_output;
+extern const size_t pt_sizes[];
 
 #define EOL0(flag)	((flag & F_CTL_SSV) ? ';' : '\n')
 
@@ -43,8 +49,7 @@ const char	*fmt_ovs(u_int8_t, int);
 const char	*fmt_auth_method(enum auth_method);
 const char	*fmt_mem(long long);
 const char	*fmt_errstr(u_int8_t, u_int8_t);
-const char	*fmt_attr(u_int8_t, u_int8_t);
+const char	*fmt_attr(u_int8_t, int);
 const char	*fmt_community(u_int16_t, u_int16_t);
 const char	*fmt_large_community(u_int32_t, u_int32_t, u_int32_t);
 const char	*fmt_ext_community(u_int8_t *);
-

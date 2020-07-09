@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.hppa/MAKEDEV.md,v 1.63 2020/01/24 14:11:01 mpi Exp 
-#	OpenBSD: MAKEDEV.common,v 1.110 2020/04/18 21:28:35 ratchov Exp 
+#	OpenBSD: etc.hppa/MAKEDEV.md,v 1.65 2020/07/06 06:11:26 dlg Exp 
+#	OpenBSD: MAKEDEV.common,v 1.111 2020/07/06 06:11:26 dlg Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -83,6 +83,7 @@
 #	video*	Video V4L2 devices
 #	vscsi*	Virtual SCSI controller
 #	switch*	Switch driver
+#	kstat	Kernel Statistics
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -227,6 +228,10 @@ std)
 	M ksyms		c 25 0 640 kmem
 	M klog		c 6 0 600
 	M pdc		c 22 0 640 operator
+	;;
+
+kstat)
+	M kstat c 51 0 640
 	;;
 
 switch*)
@@ -497,8 +502,8 @@ all)
 	R sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0 tap0 tap1 tap2
 	R tap3 tun0 tun1 tun2 tun3 pty0 fd1 fd1B fd1C fd1D fd1E fd1F
 	R fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H diskmap
-	R vscsi0 bio ch0 audio0 audio1 audio2 audio3 dt bpf fuse pppac
-	R pppx hotplug ptm local wscons pci0 pci1 pci2 pci3 uall
+	R vscsi0 bio ch0 audio0 audio1 audio2 audio3 kstat dt bpf fuse
+	R pppac pppx hotplug ptm local wscons pci0 pci1 pci2 pci3 uall
 	R video0 video1 uk0 random lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 tty00
 	R tty01 tty02 tty03 tty04 tty05 tty06 tty07 tty08 tty09 tty0a
 	R tty0b pf wd0 wd1 wd2 wd3 std st0 st1 fd

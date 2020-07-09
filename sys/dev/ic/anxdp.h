@@ -1,4 +1,4 @@
-/* $OpenBSD: anxdp.h,v 1.1 2020/02/21 15:49:09 patrick Exp $ */
+/* $OpenBSD: anxdp.h,v 1.2 2020/06/08 04:47:58 jsg Exp $ */
 /* $NetBSD: anx_dp.h,v 1.2 2020/01/04 12:08:32 jmcneill Exp $ */
 /*-
  * Copyright (c) 2019 Jonathan A. Kollasch <jakllsch@kollasch.net>
@@ -29,7 +29,7 @@
 #ifndef _DEV_IC_ANXDP_H
 #define _DEV_IC_ANXDP_H
 
-#include <drm/drmP.h>
+#include <drm/drm_bridge.h>
 #include <drm/drm_dp_helper.h>
 #include <drm/drm_panel.h>
 
@@ -54,6 +54,8 @@ struct anxdp_softc {
 	uint8_t			sc_dpcd[DP_RECEIVER_CAP_SIZE];
 
 	struct drm_display_mode	sc_curmode;
+	int			sc_link_rate;
+	int			sc_num_lanes;
 };
 
 #define	to_anxdp_connector(x)	container_of(x, struct anxdp_connector, base)

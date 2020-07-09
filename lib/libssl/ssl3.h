@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl3.h,v 1.50 2020/03/12 17:01:53 jsing Exp $ */
+/* $OpenBSD: ssl3.h,v 1.51 2020/06/05 18:14:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -348,7 +348,7 @@ typedef struct ssl3_buffer_st {
  * enough to contain all of the cert types defined either for
  * SSLv3 and TLSv1.
  */
-#define SSL3_CT_NUMBER			11
+#define SSL3_CT_NUMBER			13
 
 #define SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS	0x0001
 #define TLS1_FLAGS_SKIP_CERT_VERIFY		0x0010

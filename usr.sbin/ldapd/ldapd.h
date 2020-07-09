@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.h,v 1.31 2018/07/31 11:01:00 claudio Exp $ */
+/*	$OpenBSD: ldapd.h,v 1.32 2020/06/24 07:20:47 tb Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -53,6 +53,7 @@
 #define F_SSL			(F_LDAPS|F_STARTTLS)
 
 #define F_SECURE		 0x04
+#define F_LEGACY		 0x08
 
 #define F_SCERT			 0x01
 

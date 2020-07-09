@@ -1,4 +1,4 @@
-.\"	$OpenBSD: top.1,v 1.73 2020/01/07 13:30:43 jmc Exp $
+.\"	$OpenBSD: top.1,v 1.74 2020/06/23 21:39:19 kn Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 7 2020 $
+.Dd $Mdocdate: June 23 2020 $
 .Dt TOP 1
 .Os
 .Sh NAME
@@ -450,9 +450,9 @@ The number of system and user CPU seconds that the process has used.
 The raw percentage of CPU usage and the default field on which the
 display is sorted.
 .It COMMAND
-The name of the command that the process is currently running.
-(If the process is swapped out, this column is enclosed by angle
-brackets.)
+The name (and arguments if
+.Fl C
+is specified) of the command that the process is currently running.
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width Ev

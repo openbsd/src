@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.10 2020/04/19 23:41:19 sthen Exp $
+dnl	$OpenBSD: prep,v 1.11 2020/05/17 17:04:27 deraadt Exp $
 Please be aware that OpenBSD support for this platform is far from
 complete.
 
@@ -15,7 +15,7 @@ SPI flash.  If the miniroot images are used, U-Boot and DTB files are
 distributed as part of the miniroot disk images.
 
 OpenBSD can be installed onto a disk by copying the miniroot for your
-board "miniroot{:--:}OSrev.fs" image to an SD card.
+board "miniroot{:--:}OSrev.img" image to an SD card.
 
 Booting from an SD card:
 
@@ -26,7 +26,7 @@ Booting from an SD card:
   
   Use the dd(1) utility to copy the miniroot to the SD card.
   The command would likely be, under OpenBSD:
-  	dd if=miniroot{:--:}OSrev.fs of=/dev/rsd1c bs=1m
+  	dd if=miniroot{:--:}OSrev.img of=/dev/rsd1c bs=1m
   
   When you have connected the serial to your computer, a command such
   as "cu -l cuaU0 -s 115200" (assuming cuaU0 is your serial port device)
@@ -61,7 +61,7 @@ Install on Raspberry Pi 4:
 
   Use the dd(1) utility to copy the miniroot to the USB storage device.
   The command would likely be, under OpenBSD:
-	dd if=miniroot{:--:}OSrev.fs of=/dev/rsd1c bs=1m
+	dd if=miniroot{:--:}OSrev.img of=/dev/rsd1c bs=1m
 
   When you have connected the serial to your computer, a command such
   as "cu -l cuaU0 -s 115200" (assuming cuaU0 is your serial port device)
@@ -86,7 +86,7 @@ Install on systems without a supported miniroot:
   To do so first install the u-boot-aarch64 and dtb packages.  Write the
   provided miniroot image to an SD card:
 
- 	dd if=miniroot{:--:}OSrev.fs of=/dev/rsdXc bs=1m
+ 	dd if=miniroot{:--:}OSrev.img of=/dev/rsdXc bs=1m
 
   Add a board specific DTB file (Allwinner and Rockchip U-Boot images
   come with a default DTB):

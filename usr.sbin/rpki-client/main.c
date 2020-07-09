@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.68 2020/04/30 16:08:04 job Exp $ */
+/*	$OpenBSD: main.c,v 1.72 2020/06/30 12:52:44 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -128,9 +128,27 @@ struct	entity {
 TAILQ_HEAD(entityq, entity);
 
 /*
+ * Database of all file path accessed during a run.
+ */
+struct filepath {
+	RB_ENTRY(filepath)	entry;
+	char			*file;
+};
+
+static inline int
+filepathcmp(struct filepath *a, struct filepath *b)
+{
+	return strcasecmp(a->file, b->file);
+}
+
+RB_HEAD(filepath_tree, filepath);
+RB_PROTOTYPE(filepath_tree, filepath, entry, filepathcmp);
+struct filepath_tree  fpt = RB_INITIALIZER(&fpt);
+
+/*
  * Mark that our subprocesses will never return.
  */
-static void	proc_parser(int, int) __attribute__((noreturn));
+static void	proc_parser(int) __attribute__((noreturn));
 static void	proc_rsync(char *, char *, int, int)
 		    __attribute__((noreturn));
 static void	build_chain(const struct auth *, STACK_OF(X509) **);
@@ -158,6 +176,37 @@ logx(const char *fmt, ...)
 		va_end(ap);
 	}
 }
+
+/*
+ * Functions to lookup which files have been accessed during computation.
+ */
+static void
+filepath_add(char *file)
+{
+	struct filepath *fp;
+
+	if ((fp = malloc(sizeof(*fp))) == NULL)
+		err(1, NULL);
+	if ((fp->file = strdup(file)) == NULL)
+		err(1, NULL);
+
+	if (RB_INSERT(filepath_tree, &fpt, fp) != NULL) {
+		/* already in the tree */
+		free(fp->file);
+		free(fp);
+	}
+}
+
+static int
+filepath_exists(char *file)
+{
+	struct filepath needle;
+
+	needle.file = file;
+	return RB_FIND(filepath_tree, &fpt, &needle) != NULL;
+}
+
+RB_GENERATE(filepath_tree, filepath, entry, filepathcmp);
 
 /*
  * Resolve the media type of a resource by looking at its suffice.
@@ -374,6 +423,7 @@ entityq_add(int fd, struct entityq *q, char *file, enum rtype type,
 		if ((p->descr = strdup(descr)) == NULL)
 			err(1, "strdup");
 
+	filepath_add(file);
 	TAILQ_INSERT_TAIL(q, p, entries);
 
 	/*
@@ -649,27 +699,28 @@ proc_rsync(char *prog, char *bind_addr, int fd, int noop)
 			 * Then we respond to the parent.
 			 */
 
-			if ((pid = waitpid(WAIT_ANY, &st, 0)) == -1)
-				err(1, "waitpid");
+			while ((pid = waitpid(WAIT_ANY, &st, WNOHANG)) > 0) {
+				for (i = 0; i < idsz; i++)
+					if (ids[i].pid == pid)
+						break;
+				assert(i < idsz);
 
-			for (i = 0; i < idsz; i++)
-				if (ids[i].pid == pid)
-					break;
-			assert(i < idsz);
+				if (!WIFEXITED(st)) {
+					warnx("rsync %s terminated abnormally",
+					    ids[i].uri);
+					rc = 1;
+				} else if (WEXITSTATUS(st) != 0) {
+					warnx("rsync %s failed", ids[i].uri);
+				}
 
-			if (!WIFEXITED(st)) {
-				warnx("rsync %s terminated abnormally",
-				    ids[i].uri);
-				rc = 1;
-			} else if (WEXITSTATUS(st) != 0) {
-				warnx("rsync %s failed", ids[i].uri);
+				io_simple_write(fd, &ids[i].id, sizeof(size_t));
+				free(ids[i].uri);
+				ids[i].uri = NULL;
+				ids[i].pid = 0;
+				ids[i].id = 0;
 			}
-
-			io_simple_write(fd, &ids[i].id, sizeof(size_t));
-			free(ids[i].uri);
-			ids[i].uri = NULL;
-			ids[i].pid = 0;
-			ids[i].id = 0;
+			if (pid == -1 && errno != ECHILD)
+				err(1, "waitpid");
 			continue;
 		}
 
@@ -722,8 +773,7 @@ proc_rsync(char *prog, char *bind_addr, int fd, int noop)
 				err(1, "pledge");
 			i = 0;
 			args[i++] = (char *)prog;
-			args[i++] = "-rlt";
-			args[i++] = "--delete";
+			args[i++] = "-rt";
 			if (bind_addr != NULL) {
 				args[i++] = "--address";
 				args[i++] = (char *)bind_addr;
@@ -842,8 +892,8 @@ proc_parser_roa(struct entity *entp,
  * Return the mft on success or NULL on failure.
  */
 static struct mft *
-proc_parser_mft(struct entity *entp, int force, X509_STORE *store,
-    X509_STORE_CTX *ctx, struct auth_tree *auths, struct crl_tree *crlt)
+proc_parser_mft(struct entity *entp, X509_STORE *store, X509_STORE_CTX *ctx,
+	struct auth_tree *auths, struct crl_tree *crlt)
 {
 	struct mft		*mft;
 	X509			*x509;
@@ -852,7 +902,7 @@ proc_parser_mft(struct entity *entp, int force, X509_STORE *store,
 	STACK_OF(X509)		*chain;
 
 	assert(!entp->has_dgst);
-	if ((mft = mft_parse(&x509, entp->uri, force)) == NULL)
+	if ((mft = mft_parse(&x509, entp->uri)) == NULL)
 		return NULL;
 
 	a = valid_ski_aki(entp->uri, auths, mft->ski, mft->aki);
@@ -1077,7 +1127,7 @@ build_crls(const struct auth *a, struct crl_tree *crlt,
  * The process will exit cleanly only when fd is closed.
  */
 static void
-proc_parser(int fd, int force)
+proc_parser(int fd)
 {
 	struct tal	*tal;
 	struct cert	*cert;
@@ -1199,8 +1249,7 @@ proc_parser(int fd, int force)
 			 */
 			break;
 		case RTYPE_MFT:
-			mft = proc_parser_mft(entp, force,
-			    store, ctx, &auths, &crlt);
+			mft = proc_parser_mft(entp, store, ctx, &auths, &crlt);
 			c = (mft != NULL);
 			io_simple_buffer(&b, &bsz, &bmax, &c, sizeof(int));
 			if (mft != NULL)
@@ -1364,12 +1413,93 @@ tal_load_default(const char *tals[], size_t max)
 	return (s);
 }
 
+static char **
+add_to_del(char **del, size_t *dsz, char *file)
+{
+	size_t i = *dsz;
+
+	del = reallocarray(del, i + 1, sizeof(*del));
+	if (del == NULL)
+		err(1, "reallocarray");
+	del[i] = strdup(file);
+	if (del[i] == NULL)
+		err(1, "strdup");
+	*dsz = i + 1;
+	return del;
+}
+
+static size_t
+repo_cleanup(const char *cachedir, struct repotab *rt)
+{
+	size_t i, delsz = 0;
+	char *argv[2], **del = NULL;
+	FTS *fts;
+	FTSENT *e;
+
+	/* change working directory to the cache directory */
+	if (chdir(cachedir) == -1)
+		err(1, "%s: chdir", cachedir);
+
+	for (i = 0; i < rt->reposz; i++) {
+		if (asprintf(&argv[0], "%s/%s", rt->repos[i].host,
+		    rt->repos[i].module) == -1)
+			err(1, NULL);
+		argv[1] = NULL;
+		if ((fts = fts_open(argv, FTS_PHYSICAL | FTS_NOSTAT,
+		    NULL)) == NULL)
+			err(1, "fts_open");
+		errno = 0;
+		while ((e = fts_read(fts)) != NULL) {
+			switch (e->fts_info) {
+			case FTS_NSOK:
+				if (!filepath_exists(e->fts_path))
+					del = add_to_del(del, &delsz,
+					    e->fts_path);
+				break;
+			case FTS_D:
+			case FTS_DP:
+				/* TODO empty directory pruning */
+				break;
+			case FTS_SL:
+			case FTS_SLNONE:
+				warnx("symlink %s", e->fts_path);
+				del = add_to_del(del, &delsz, e->fts_path);
+				break;
+			case FTS_NS:
+			case FTS_ERR:
+				warnc(e->fts_errno, "fts_read %s", e->fts_path);
+				break;
+			default:
+				warnx("unhandled[%x] %s", e->fts_info,
+				    e->fts_path);
+				break;
+			}
+
+			errno = 0;
+		}
+		if (errno)
+			err(1, "fts_read");
+		if (fts_close(fts) == -1)
+			err(1, "fts_close");
+	}
+
+	for (i = 0; i < delsz; i++) {
+		if (unlink(del[i]) == -1)
+			warn("unlink %s", del[i]);
+		if (verbose > 1)
+			logx("deleted %s", del[i]);
+		free(del[i]);
+	}
+	free(del);
+
+	return delsz;
+}
+
 int
 main(int argc, char *argv[])
 {
 	int		 rc = 1, c, proc, st, rsync,
-			 fl = SOCK_STREAM | SOCK_CLOEXEC, noop = 0,
-			 force = 0;
+			 fl = SOCK_STREAM | SOCK_CLOEXEC, noop = 0;
 	size_t		 i, j, eid = 1, outsz = 0, talsz = 0;
 	pid_t		 procpid, rsyncpid;
 	int		 fd[2];
@@ -1407,7 +1537,7 @@ main(int argc, char *argv[])
 	if (pledge("stdio rpath wpath cpath fattr proc exec unveil", NULL) == -1)
 		err(1, "pledge");
 
-	while ((c = getopt(argc, argv, "b:Bcd:e:fjnot:T:v")) != -1)
+	while ((c = getopt(argc, argv, "b:Bcd:e:jnot:T:v")) != -1)
 		switch (c) {
 		case 'b':
 			bind_addr = optarg;
@@ -1423,9 +1553,6 @@ main(int argc, char *argv[])
 			break;
 		case 'e':
 			rsync_prog = optarg;
-			break;
-		case 'f':
-			force = 1;
 			break;
 		case 'j':
 			outformats |= FORMAT_JSON;
@@ -1502,7 +1629,7 @@ main(int argc, char *argv[])
 			err(1, "%s: unveil", cachedir);
 		if (pledge("stdio rpath", NULL) == -1)
 			err(1, "pledge");
-		proc_parser(fd[0], force);
+		proc_parser(fd[0]);
 		/* NOTREACHED */
 	}
 
@@ -1619,7 +1746,7 @@ main(int argc, char *argv[])
 			ent = entityq_next(proc, &q);
 			entity_process(proc, rsync, &stats,
 			    &q, ent, &rt, &eid, &v);
-			if (verbose > 1)
+			if (verbose > 2)
 				fprintf(stderr, "%s\n", ent->uri);
 			entity_free(ent);
 		}
@@ -1665,6 +1792,8 @@ main(int argc, char *argv[])
 	if (outputfiles(&v, &stats))
 		rc = 1;
 
+	stats.del_files = repo_cleanup(cachedir, &rt);
+
 	logx("Route Origin Authorizations: %zu (%zu failed parse, %zu invalid)",
 	    stats.roas, stats.roas_fail, stats.roas_invalid);
 	logx("Certificates: %zu (%zu failed parse, %zu invalid)",
@@ -1674,10 +1803,10 @@ main(int argc, char *argv[])
 	    stats.mfts, stats.mfts_fail, stats.mfts_stale);
 	logx("Certificate revocation lists: %zu", stats.crls);
 	logx("Repositories: %zu", stats.repos);
+	logx("Files removed: %zu", stats.del_files);
 	logx("VRP Entries: %zu (%zu unique)", stats.vrps, stats.uniqs);
 
 	/* Memory cleanup. */
-
 	for (i = 0; i < rt.reposz; i++) {
 		free(rt.repos[i].host);
 		free(rt.repos[i].module);
@@ -1692,7 +1821,7 @@ main(int argc, char *argv[])
 
 usage:
 	fprintf(stderr,
-	    "usage: rpki-client [-Bcfjnov] [-b sourceaddr] [-d cachedir]"
+	    "usage: rpki-client [-Bcjnov] [-b sourceaddr] [-d cachedir]"
 	    " [-e rsync_prog]\n"
 	    "                   [-T table] [-t tal] [outputdir]\n");
 	return 1;

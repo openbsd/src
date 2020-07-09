@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi.c,v 1.7 2019/08/04 09:27:09 kettenis Exp $	*/
+/*	$OpenBSD: efi.c,v 1.8 2020/07/04 13:01:16 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -94,7 +94,7 @@ efi_attach(struct device *parent, struct device *self, void *aux)
 	int node, i;
 
 	node = OF_finddevice("/chosen");
-	KASSERT(node);
+	KASSERT(node != -1);
 
 	system_table = OF_getpropint64(node, "openbsd,uefi-system-table", 0);
 	KASSERT(system_table);

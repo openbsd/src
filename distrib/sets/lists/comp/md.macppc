@@ -50,10 +50,9 @@
 ./usr/include/macppc/setjmp.h
 ./usr/include/macppc/signal.h
 ./usr/include/macppc/spinlock.h
-./usr/include/macppc/stdarg.h
 ./usr/include/macppc/tcb.h
+./usr/include/macppc/timetc.h
 ./usr/include/macppc/trap.h
-./usr/include/macppc/varargs.h
 ./usr/include/macppc/vmparam.h
 ./usr/include/macppc/z8530var.h
 ./usr/include/powerpc
@@ -95,10 +94,8 @@
 ./usr/include/powerpc/setjmp.h
 ./usr/include/powerpc/signal.h
 ./usr/include/powerpc/spinlock.h
-./usr/include/powerpc/stdarg.h
 ./usr/include/powerpc/tcb.h
 ./usr/include/powerpc/trap.h
-./usr/include/powerpc/varargs.h
 ./usr/include/ppc-asm.h
 ./usr/include/spe.h
 ./usr/include/unwind.h

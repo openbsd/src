@@ -1,11 +1,11 @@
-# $OpenBSD: Makefile.arch,v 1.6 2019/03/05 06:04:32 jsg Exp $
+# $OpenBSD: Makefile.arch,v 1.7 2020/05/30 19:22:00 drahn Exp $
 
 LLVM_ARCHS=AArch64 AMDGPU ARM Mips PowerPC Sparc X86
 
 LLVM_ARCH?=
 .if ${MACHINE_ARCH} == "amd64" || ${MACHINE_ARCH} == "i386"
 LLVM_ARCH=	X86
-.elif ${MACHINE_ARCH} == "powerpc"
+.elif ${MACHINE_ARCH} == "powerpc" || ${MACHINE_ARCH} == "powerpc64"
 LLVM_ARCH=	PowerPC
 .elif ${MACHINE_ARCH} == "sparc64"
 LLVM_ARCH=	Sparc

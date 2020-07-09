@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp.h,v 1.12 2015/12/05 16:10:31 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp.h,v 1.13 2020/06/09 02:39:27 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -30,7 +30,7 @@
 /*@file
  * header file for the L2TP module
  */
-/* $Id: l2tp.h,v 1.12 2015/12/05 16:10:31 yasuoka Exp $ */
+/* $Id: l2tp.h,v 1.13 2020/06/09 02:39:27 yasuoka Exp $ */
 
 /************************************************************************
  * Protocol Constants
@@ -357,6 +357,10 @@ typedef struct _l2tp_ctrl {
 	uint16_t	snd_una;
 	/** next send sequence number */
 	uint16_t	snd_nxt;
+	/** last send sequence number */
+	uint16_t	snd_last;
+	/** last send ack number */
+	uint16_t	snd_lastnr;
 	/** receive sequence number */
 	uint16_t	rcv_nxt;
 	/** peer's IP address */
@@ -375,6 +379,7 @@ typedef struct _l2tp_ctrl {
 	 */
 	/** bytes available in send buffer.  it is a list of length #winsz */
 	bytebuffer **snd_buffers;
+	int snd_buffercnt;
 	/** sending buffer for ZLB */
 	bytebuffer *zlb_buffer;
 

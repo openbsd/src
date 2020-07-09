@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.25 2019/08/11 19:44:25 florian Exp $ */
+/*	$Id: netproc.c,v 1.26 2020/05/10 17:34:07 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -23,6 +23,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <tls.h>
+#include <vis.h>
 
 #include "http.h"
 #include "extern.h"
@@ -664,7 +665,7 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
 {
 	int		 rc = 0;
 	size_t		 i;
-	char		*cert = NULL, *thumb = NULL, *url = NULL;
+	char		*cert = NULL, *thumb = NULL, *url = NULL, *error = NULL;
 	struct conn	 c;
 	struct capaths	 paths;
 	struct order	 order;
@@ -805,7 +806,8 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
 				    "%d", chngs[i].token, chngs[i].uri,
 				    chngs[i].status);
 
-				if (chngs[i].status == CHNG_VALID)
+				if (chngs[i].status == CHNG_VALID ||
+				    chngs[i].status == CHNG_INVALID)
 					continue;
 
 				if (chngs[i].retry++ >= RETRY_MAX) {
@@ -858,8 +860,20 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
 			sleep(RETRY_DELAY);
 	}
 
-	if (order.status != ORDER_VALID)
+	if (order.status != ORDER_VALID) {
+		for (i = 0; i < order.authsz; i++) {
+			dochngreq(&c, order.auths[i], &chngs[i]);
+			if (chngs[i].error != NULL) {
+				if (stravis(&error, chngs[i].error, VIS_SAFE)
+				    != -1) {
+					warnx("%s", error);
+					free(error);
+					error = NULL;
+				}
+			}
+		}
 		goto out;
+	}
 
 	if (order.certificate == NULL) {
 		warnx("no certificate url received");

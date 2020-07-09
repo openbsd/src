@@ -174,19 +174,19 @@ look at any line in the file we like.  Using the single quote command {'}
 followed by a character used in an {m} command, we can return to any location
 in the file we have marked.
 
-However, try {m3}, or {mM}.  You should hear a beep, or bell.  Only lower-case
-letters are acceptable to the {m} and {'} commands: numbers, upper-case
-letters, and special characters are not acceptable.
+Try {m3}, {mM}, or {m$}.  Not only lower-case letters are acceptable to the
+{m} and {'} commands: numbers, upper-case letters, and special characters are
+also acceptable.
 
-If you type the {'} command with a character that is lower-case alphabetic but
-that has not been used in an {m} command, or for which the 'marked' text has
-been deleted, you will also get a beep.  Try {'i}.  You should get a beep
-because the command {mi} has never been issued.  (Unless you've been
-experimenting.)
+If you type the {'} command with a character that that has not been used in an
+{m} command, or for which the 'marked' text has been deleted, you will get a
+beep.  Try {'i}.  You should get a beep because the command {mi} has never
+been issued.  (Unless you've been experimenting.)
 
 The command {''} attempts to return you to the location at which you last
 modified some part of your file.  However, my experience has been that it is
 difficult to predict exactly where you will end up.  
+
 Section 10: {^M} {-}
 Now do {ma}, marking your position at the top of the screen.  Now hit {^M} (or
 return) until the cursor is right ... 
@@ -235,12 +235,12 @@ The {-} command moves the cursor to the previous line in the file.  Now type
 {-}, which attempts to move the cursor to the previous line in this file.
 However, that line is not on the screen.  The resulting action will depend on
 your terminal.  (Do a {^Mz^M} to reposition the file).  On intelligent
-terminals (e.g. VT100s, Z19s, Concept 100s), a top line is 'scrolled on' and
-the bottom line is 'scrolled off'.  Other terminals, however, may not have
-this 'reverse scrolling' feature.  They will simply repaint the screen with
-the cursor line in the middle of the screen.  On such terminals it is
-necessary to type {z^M} to get the cursor line back to the top of the screen.
-
+terminals (e.g. VT100s, xterm, most modern terminals), a top line is 'scrolled
+on' and the bottom line is 'scrolled off'.  Some very old terminals, however,
+may not have this 'reverse scrolling' feature.  They will simply repaint the
+screen with the cursor line in the middle of the screen.  On such terminals it
+is necessary to type {z^M} to get the cursor line back to the top of the
+screen.
 
 
 
@@ -358,13 +358,13 @@ sequence shown):
 
 The first command looks for the next occurrence of the string 'Here 2'.
 However the second line of commands looks for an occurrence of 'Here 2' that
-is at the beginning of the line.  When the up-arrow is the first character of
-a search string it stands for the beginning of the line.  When the dollar-sign
-is the last character of the search string it stands for the end of the line.
-Therefore, the third line of commands searches for the string only when it is
-at the end of the line.  Since there is only one place the string begins a
-line, and only one place the string ends the line, subsequent {//^M} and
-{??^M} will find those same strings over and over.
+is at the beginning of the line.  When the caret (circumflex, up-arrow) is the
+first character of a search string it stands for the beginning of the line.
+When the dollar-sign is the last character of the search string it stands for
+the end of the line.  Therefore, the third line of commands searches for the
+string only when it is at the end of the line.  Since there is only one place
+the string begins a line, and only one place the string ends the line,
+subsequent {//^M} and {??^M} will find those same strings over and over.
 
 The {n} command will find the next occurrence of the / or ? search
 string.  Try {/Here 2/^M} followed by several {n} and observe the
@@ -380,7 +380,7 @@ the screen.  Remember that the dollar-sign stands for the end of the line.
 Somehow, you must tell vi that you do not want the end of the line, but a
 dollar-sign.  In other words, you must take away the special meaning that the
 dollar-sign has for the search mechanism.  You do this (for any special
-character, including the up-arrow ^) by putting a back-slash ('\', not '/') in
+character, including the caret ^) by putting a back-slash ('\', not '/') in
 front of the character.
 
 Now try {/Here 3\$/^M} and you should end up nine lines above this one.  Try
@@ -393,20 +393,20 @@ meaning from the dollar-sign.
 
 Following is a list of the characters that have special meanings in search
 strings.  If you wish to find a string containing one of these characters, you
-will have to be precede the character with a backslash.  These characters are
+will have to precede the character with a backslash.  These characters are
 called magic characters because of the fun and games you can have with them
 and they can have with you, if you aren't aware of what they do.  
 
-  ^ - (up-arrow)       beginning of a line
+  ^ - (caret)          beginning of a line
   $ - (dollar-sign)    end of a line
   . - (period)         matches any character
-  \ - (backslant)      the escape character itself
+  \ - (backslash)      the escape character itself
   [ - (square bracket) for finding patterns (see section #SEARCH)
   ] - (square bracket) ditto
   * - (asterisk)       ditto
 
 Without trying to explain it here, note that {:set nomagic^M} turns off the
-special meanings of all but the ^ up-arrow, $ dollar-sign, and backslash
+special meanings of all but the ^ caret, $ dollar-sign, and backslash
 characters.
 
 Section 18: {: (colon commands)} {ZZ}
@@ -429,10 +429,11 @@ get out without warning you that you haven't saved your file.
 
 We have mentioned before that you are currently in the vi editor, editing a
 file.  If you wish to start the tutorial over from the very beginning, you
-could {ZZ}, and then type {vi.tut beginner} in response to the Unix prompt.
-This will create a fresh copy of this file for you, which might be necessary 
-if you accidentally destroyed the copy you were working with.  Just do a 
-search for the last section you were in: e.g.  {/Section 18:/^Mz^M}.
+could {:q!^M}, and then type {vi.tut beginner} or {vi vi.beginner} in response
+to the Unix prompt.  This will provide an unmodified copy of this file for you,
+which might be necessary if you accidentally destroyed the copy you were
+working with.  Just do a search for the last section you were in: e.g.
+{/Section 18:/^Mz^M}.
 
 Section 19: {H} {M} {L}
 
@@ -738,4 +739,5 @@ repaint the screen with the cursor line
        at the bottom of the screen          {z-}
 
 More information on vi can be found in the file vi.advanced, which you can
-peruse at your leisure.  From UNIX, type {vi.tut advanced^M}.  
+peruse at your leisure.  From UNIX, type {vi.tut advanced^M} or
+{vi vi.advanced^M}.

@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.125 2018/02/10 05:56:47 florian Exp $
+#	$OpenBSD: special,v 1.126 2020/06/22 09:28:04 mvs Exp $
 #
 # Hand-crafted mtree specification for the dangerous files.
 #
@@ -66,7 +66,7 @@ special		type=file mode=0600 uname=root gname=wheel
 moduli		type=file mode=0644 uname=root gname=wheel
 netstart	type=file mode=0644 uname=root gname=wheel
 npppd		type=dir mode=0755 uname=root gname=wheel
-npppd.conf	type=file mode=0640 uname=root gname=wheel
+npppd.conf	type=file mode=0600 uname=root gname=wheel
 npppd-users	type=file mode=0600 uname=root gname=wheel
 ..	#npppd
 ntpd.conf	type=file mode=0644 uname=root gname=wheel optional

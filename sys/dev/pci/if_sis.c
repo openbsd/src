@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.135 2017/01/22 10:17:38 dlg Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.136 2020/06/22 02:31:32 dlg Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1447,7 +1447,8 @@ sis_rxeof(struct sis_softc *sc)
 		ml_enqueue(&ml, m);
 	}
 
-	if_input(ifp, &ml);
+	if (ifiq_input(&ifp->if_rcv, &ml))
+		if_rxr_livelocked(&sc->sis_cdata.sis_rx_ring);
 
 	sis_fill_rx_ring(sc);
 }

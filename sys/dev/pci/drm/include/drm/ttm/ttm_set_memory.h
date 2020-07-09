@@ -37,7 +37,6 @@
 
 #include <asm/set_memory.h>
 
-
 static inline int ttm_set_pages_array_wb(struct vm_page **pages, int addrinarray)
 {
 	return set_pages_array_wb(pages, addrinarray);

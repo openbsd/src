@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.245 2019/11/29 16:41:01 nayden Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.246 2020/06/22 11:30:23 krw Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -600,13 +600,13 @@ reroute:
 	 */
 	if (exthdrs.ip6e_hbh) {
 		struct ip6_hbh *hbh = mtod(exthdrs.ip6e_hbh, struct ip6_hbh *);
-		u_int32_t dummy1; /* XXX unused */
-		u_int32_t dummy2; /* XXX unused */
+		u_int32_t rtalert; /* returned value is ignored */
+		u_int32_t plen = 0; /* no more than 1 jumbo payload option! */
 
 		m->m_pkthdr.ph_ifidx = ifp->if_index;
 		if (ip6_process_hopopts(m, (u_int8_t *)(hbh + 1),
 		    ((hbh->ip6h_len + 1) << 3) - sizeof(struct ip6_hbh),
-		    &dummy1, &dummy2) < 0) {
+		    &rtalert, &plen) < 0) {
 			/* m was already freed at this point */
 			error = EINVAL;/* better error? */
 			goto done;

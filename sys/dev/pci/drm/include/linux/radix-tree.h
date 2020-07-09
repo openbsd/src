@@ -32,6 +32,7 @@
 #define	_LINUX_RADIX_TREE_H_
 
 #include <linux/types.h>
+#include <linux/xarray.h>
 
 #define	RADIX_TREE_MAP_SHIFT	6
 #define	RADIX_TREE_MAP_SIZE	(1UL << RADIX_TREE_MAP_SHIFT)

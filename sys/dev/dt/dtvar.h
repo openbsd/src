@@ -1,4 +1,4 @@
-/*	$OpenBSD: dtvar.h,v 1.3 2020/03/28 15:42:25 mpi Exp $ */
+/*	$OpenBSD: dtvar.h,v 1.5 2020/07/04 10:19:09 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -73,7 +73,6 @@ struct dt_evt {
 #define DTEVT_USTACK	(1 << 1)		/* userland stack */
 #define DTEVT_KSTACK	(1 << 2)		/* kernel stack */
 #define DTEVT_FUNCARGS	(1 << 3)		/* function arguments */
-#define DTEVT_RETVAL	(1 << 4)		/* function retval & error */
 
 #define	DTEVT_FLAG_BITS		\
 	"\020"			\
@@ -159,14 +158,14 @@ int		dtioc_req_isvalid(struct dtioc_req *);
  *
  *  Locks used to protect struct members in this file:
  *	I	immutable after creation
- *	k	kernel lock
- *	k,s	kernel lock for writting and SMR for reading
+ *	K	kernel lock
+ *	K,S	kernel lock for writting and SMR for reading
  *	m	per-pcb mutex
  *	c	owned (read & modified) by a single CPU
  */
 struct dt_pcb {
-	SMR_SLIST_ENTRY(dt_pcb)	 dp_pnext;	/* [k,s] next PCB per probe */
-	TAILQ_ENTRY(dt_pcb)	 dp_snext;	/* [k] next PCB per softc */
+	SMR_SLIST_ENTRY(dt_pcb)	 dp_pnext;	/* [K,S] next PCB per probe */
+	TAILQ_ENTRY(dt_pcb)	 dp_snext;	/* [K] next PCB per softc */
 
 	/* Event states ring */
 	unsigned int		 dp_prod;	/* [m] read index */
@@ -203,18 +202,18 @@ void		 dt_pcb_ring_consume(struct dt_pcb *, struct dt_evt *);
  *
  *  Locks used to protect struct members in this file:
  *	I	immutable after creation
- *	k	kernel lock
- *	d	dt_lock
- *	d,s	dt_lock for writting and SMR for reading
+ *	K	kernel lock
+ *	D	dt_lock
+ *	D,S	dt_lock for writting and SMR for reading
  */
 struct dt_probe {
-	SIMPLEQ_ENTRY(dt_probe)	 dtp_next;	/* [k] global list of probes */
-	SMR_SLIST_HEAD(, dt_pcb) dtp_pcbs;	/* [d,s] list of enabled PCBs */
+	SIMPLEQ_ENTRY(dt_probe)	 dtp_next;	/* [K] global list of probes */
+	SMR_SLIST_HEAD(, dt_pcb) dtp_pcbs;	/* [D,S] list of enabled PCBs */
 	struct dt_provider	*dtp_prov;	/* [I] its to provider */
 	const char		*dtp_func;	/* [I] probe function */
 	const char		*dtp_name;	/* [I] probe name */
 	uint32_t		 dtp_pbn;	/* [I] unique ID */
-	volatile uint32_t	 dtp_recording;	/* [d] is it recording? */
+	volatile uint32_t	 dtp_recording;	/* [D] is it recording? */
 	uint8_t			 dtp_nargs;	/* [I] # of arguments */
 
 	/* Provider specific fields. */
@@ -228,7 +227,7 @@ struct dt_probe {
  */
 struct dt_provider {
 	const char		*dtpv_name;	/* [I] provider name */
-	volatile uint32_t	 dtpv_recording;/* [d] # of recording PCBs */
+	volatile uint32_t	 dtpv_recording;/* [D] # of recording PCBs */
 
 	int		(*dtpv_alloc)(struct dt_probe *, struct dt_softc *,
 			    struct dt_pcb_list *, struct dtioc_req *);

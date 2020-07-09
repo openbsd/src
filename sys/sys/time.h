@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.50 2020/01/15 13:17:35 mpi Exp $	*/
+/*	$OpenBSD: time.h,v 1.55 2020/07/06 13:33:09 pirofti Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -163,7 +163,7 @@ struct clockinfo {
 };
 #endif /* __BSD_VISIBLE */
 
-#if defined(_KERNEL) || defined(_STANDALONE)
+#if defined(_KERNEL) || defined(_STANDALONE) || defined (_LIBC)
 #include <sys/_time.h>
 
 /* Time expressed as seconds and fractions of a second + operations on it. */
@@ -171,6 +171,9 @@ struct bintime {
 	time_t	sec;
 	uint64_t frac;
 };
+#endif
+
+#if defined(_KERNEL) || defined(_STANDALONE) || defined (_LIBC)
 
 #define bintimecmp(btp, ctp, cmp)					\
 	((btp)->sec == (ctp)->sec ?					\
@@ -249,9 +252,9 @@ TIMEVAL_TO_BINTIME(const struct timeval *tv, struct bintime *bt)
 	/* 18446744073709 = int(2^64 / 1000000) */
 	bt->frac = (uint64_t)tv->tv_usec * (uint64_t)18446744073709ULL;
 }
+#endif
 
-extern volatile time_t time_second;	/* Seconds since epoch, wall time. */
-extern volatile time_t time_uptime;	/* Seconds since reboot. */
+#if defined(_KERNEL) || defined(_STANDALONE)
 
 /*
  * Functions for looking at our clocks: [get]{bin,nano,micro}[boot|up]time()
@@ -295,6 +298,12 @@ void	binboottime(struct bintime *);
 void	microboottime(struct timeval *);
 void	nanoboottime(struct timespec *);
 
+void	binruntime(struct bintime *);
+void	nanoruntime(struct timespec *);
+
+time_t	gettime(void);
+time_t	getuptime(void);
+
 struct proc;
 int	clock_gettime(struct proc *, clockid_t, struct timespec *);
 
@@ -335,6 +344,13 @@ void clock_secs_to_ymdhms(time_t, struct clock_ymdhms *);
 #define POSIX_BASE_YEAR 1970
 
 #include <sys/stdint.h>
+
+static inline void
+USEC_TO_TIMEVAL(uint64_t us, struct timeval *tv)
+{
+	tv->tv_sec = us / 1000000;
+	tv->tv_usec = us % 1000000;
+}
 
 static inline void
 NSEC_TO_TIMEVAL(uint64_t ns, struct timeval *tv)

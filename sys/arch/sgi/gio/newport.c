@@ -1,4 +1,4 @@
-/*	$OpenBSD: newport.c,v 1.11 2017/01/15 20:22:33 fcambus Exp $	*/
+/*	$OpenBSD: newport.c,v 1.13 2020/05/25 09:55:48 jsg Exp $	*/
 /*	$NetBSD: newport.c,v 1.15 2009/05/12 23:51:25 macallan Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ struct newport_softc {
 
 struct newport_devconfig {
 	struct rasops_info	dc_ri;
-	long			dc_defattr;
+	uint32_t		dc_defattr;
 
 	uint32_t		dc_addr;
 	bus_space_tag_t		dc_st;
@@ -113,7 +113,7 @@ const struct cfattach newport_ca = {
 int	newport_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	newport_mmap(void *, off_t, int);
 int	newport_alloc_screen(void *, const struct wsscreen_descr *, void **,
-	    int *, int *, long *);
+	    int *, int *, uint32_t *);
 void	newport_free_screen(void *, void *);
 int	newport_show_screen(void *, void *, int, void (*)(void *, int, int),
 	    void *);
@@ -131,11 +131,11 @@ struct wsdisplay_accessops newport_accessops = {
 };
 
 int	newport_do_cursor(struct rasops_info *);
-int	newport_putchar(void *, int, int, u_int, long);
+int	newport_putchar(void *, int, int, u_int, uint32_t);
 int	newport_copycols(void *, int, int, int, int);
-int	newport_erasecols(void *, int, int, int, long);
+int	newport_erasecols(void *, int, int, int, uint32_t);
 int	newport_copyrows(void *, int, int, int);
-int	newport_eraserows(void *, int, int, long);
+int	newport_eraserows(void *, int, int, uint32_t);
 
 static __inline__
 void	 rex3_write(struct newport_devconfig *, bus_size_t, uint32_t);
@@ -580,7 +580,7 @@ int
 newport_cnattach(struct gio_attach_args *ga)
 {
 	struct rasops_info *ri = &newport_console_dc.dc_ri;
-	long defattr;
+	uint32_t defattr;
 	int rc;
 
 	newport_attach_common(&newport_console_dc, ga);
@@ -588,7 +588,7 @@ newport_cnattach(struct gio_attach_args *ga)
 	if (rc != 0)
 		return rc;
 
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&newport_console_dc.dc_wsd, ri, 0, 0, defattr);
 
 	return 0;
@@ -665,7 +665,7 @@ newport_do_cursor(struct rasops_info *ri)
 }
 
 int
-newport_putchar(void *c, int row, int col, u_int ch, long attr)
+newport_putchar(void *c, int row, int col, u_int ch, uint32_t attr)
 {
 	struct rasops_info *ri = c;
 	struct newport_devconfig *dc = ri->ri_hw;
@@ -749,7 +749,7 @@ newport_copycols(void *c, int row, int srccol, int dstcol, int ncols)
 }
 
 int
-newport_erasecols(void *c, int row, int startcol, int ncols, long attr)
+newport_erasecols(void *c, int row, int startcol, int ncols, uint32_t attr)
 {
 	struct rasops_info *ri = c;
 	struct newport_devconfig *dc = ri->ri_hw;
@@ -786,7 +786,7 @@ newport_copyrows(void *c, int srcrow, int dstrow, int nrows)
 }
 
 int
-newport_eraserows(void *c, int startrow, int nrows, long attr)
+newport_eraserows(void *c, int startrow, int nrows, uint32_t attr)
 {
 	struct rasops_info *ri = c;
 	struct newport_devconfig *dc = ri->ri_hw;
@@ -810,7 +810,7 @@ newport_eraserows(void *c, int startrow, int nrows, long attr)
 
 int
 newport_alloc_screen(void *v, const struct wsscreen_descr *type,
-    void **cookiep, int *curxp, int *curyp, long *attrp)
+    void **cookiep, int *curxp, int *curyp, uint32_t *attrp)
 {
 	struct newport_devconfig *dc = v;
 	struct rasops_info *ri = &dc->dc_ri;
@@ -823,7 +823,7 @@ newport_alloc_screen(void *v, const struct wsscreen_descr *type,
 
 	*cookiep = ri;
 	*curxp = *curyp = 0;
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &dc->dc_defattr);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, &dc->dc_defattr);
 	*attrp = dc->dc_defattr;
 
 	return 0;

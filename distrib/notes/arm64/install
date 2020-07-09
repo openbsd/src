@@ -1,4 +1,4 @@
-dnl     $OpenBSD: install,v 1.1 2017/01/25 02:29:25 patrick Exp $
+dnl     $OpenBSD: install,v 1.2 2020/07/05 22:27:47 tj Exp $
 OpenBSDInstallPrelude
 
 OpenBSDInstallPart2
@@ -23,7 +23,7 @@ dnl OpenBSDInstallMBRPart2(indeed)
 	will create a small 'MSDOS' partition and use the rest of
 	the disk for the OpenBSD installation.
 
-	After your OpenBSD MBR partition has been setup, the real
+	After your OpenBSD MBR partition has been set up, the real
 	partition setup can follow.
 
 OpenBSDInstallPart5

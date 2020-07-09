@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.501 2020/02/12 10:33:56 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.502 2020/05/02 14:12:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1678,8 +1678,10 @@ bad_flags:
 		/* 4-byte ready server take the default route */
 		if (memcmp(p, &zero, sizeof(u_int32_t)) == 0) {
 			/* As per RFC7606 use "attribute discard" here. */
-			log_peer_warnx(&peer->conf, "bad AGGREGATOR, "
-			    "AS 0 not allowed, attribute discarded");
+			char *pfmt = log_fmt_peer(&peer->conf);
+			log_debug("%s: bad AGGREGATOR, "
+			    "AS 0 not allowed, attribute discarded", pfmt);
+			free(pfmt);
 			plen += attr_len;
 			break;
 		}

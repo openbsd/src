@@ -1,4 +1,4 @@
-/* $OpenBSD: anxdp.c,v 1.3 2020/03/16 22:44:12 kettenis Exp $ */
+/* $OpenBSD: anxdp.c,v 1.4 2020/06/08 04:47:58 jsg Exp $ */
 /* $NetBSD: anx_dp.c,v 1.2 2020/01/04 12:08:32 jmcneill Exp $ */
 /*-
  * Copyright (c) 2019 Jonathan A. Kollasch <jakllsch@kollasch.net>
@@ -34,10 +34,12 @@
 
 #include <dev/ic/anxdp.h>
 
-#include <drm/drmP.h>
+#include <drm/drm_atomic.h>
+#include <drm/drm_atomic_helper.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_crtc_helper.h>
 #include <drm/drm_dp_helper.h>
+#include <drm/drm_probe_helper.h>
 #include <drm/drm_edid.h>
 
 #define	ANXDP_DP_TX_VERSION	0x010
@@ -219,6 +221,9 @@ struct drm_connector_funcs anxdp_connector_funcs = {
 	.detect = anxdp_connector_detect,
 	.fill_modes = drm_helper_probe_single_connector_modes,
 	.destroy = anxdp_connector_destroy,
+	.reset = drm_atomic_helper_connector_reset,
+	.atomic_duplicate_state = drm_atomic_helper_connector_duplicate_state,
+	.atomic_destroy_state = drm_atomic_helper_connector_destroy_state,
 };
 
 void
@@ -312,7 +317,7 @@ anxdp_connector_get_modes(struct drm_connector *connector)
 	int error;
 
 	if (sc->sc_panel)
-		return drm_panel_get_modes(sc->sc_panel);
+		return drm_panel_get_modes(sc->sc_panel, connector);
 
 	pedid = drm_get_edid(connector, &sc->sc_dpaux.ddc);
 
@@ -328,31 +333,13 @@ anxdp_connector_get_modes(struct drm_connector *connector)
 	return error;
 }
 
-struct drm_encoder *
-anxdp_connector_best_encoder(struct drm_connector *connector)
-{
-	int enc_id = connector->encoder_ids[0];
-	struct drm_mode_object *obj;
-	struct drm_encoder *encoder = NULL;
-
-	if (enc_id) {
-		obj = drm_mode_object_find(connector->dev, NULL, enc_id,
-		    DRM_MODE_OBJECT_ENCODER);
-		if (obj == NULL)
-			return NULL;
-		encoder = obj_to_encoder(obj);
-	}
-
-	return encoder;
-}
-
 struct drm_connector_helper_funcs anxdp_connector_helper_funcs = {
 	.get_modes = anxdp_connector_get_modes,
-	.best_encoder = anxdp_connector_best_encoder,
 };
 
 int
-anxdp_bridge_attach(struct drm_bridge *bridge)
+anxdp_bridge_attach(struct drm_bridge *bridge,
+    enum drm_bridge_attach_flags flags)
 {
 	struct anxdp_softc *sc = bridge->driver_private;
 	struct anxdp_connector *anxdp_connector = &sc->sc_connector;
@@ -396,20 +383,64 @@ anxdp_macro_reset(struct anxdp_softc *sc)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, ANXDP_PHY_TEST, val);
 }
 
+int
+anxdp_link_configure(struct anxdp_softc *sc)
+{
+	uint8_t values[2];
+	int error;
+
+	values[0] = drm_dp_link_rate_to_bw_code(sc->sc_link_rate);
+	values[1] = sc->sc_num_lanes;
+
+	if (sc->sc_dpcd[2] & DP_ENHANCED_FRAME_CAP)
+		values[1] |= DP_LANE_COUNT_ENHANCED_FRAME_EN;
+
+	error = drm_dp_dpcd_write(&sc->sc_dpaux, DP_LINK_BW_SET,
+	    values, sizeof(values));
+	if (error < 0)
+		return error;
+
+	return 0;
+}
+
+int
+anxdp_link_power_up(struct anxdp_softc *sc)
+{
+	uint8_t value;
+	int error;
+
+	if (sc->sc_dpcd[0] < 0x11)
+		return 0;
+
+	error = drm_dp_dpcd_readb(&sc->sc_dpaux, DP_SET_POWER, &value);
+	if (error < 0)
+		return error;
+
+	value &= ~DP_SET_POWER_MASK;
+	value |= DP_SET_POWER_D0;
+
+	error = drm_dp_dpcd_writeb(&sc->sc_dpaux, DP_SET_POWER, value);
+	if (error < 0)
+		return error;
+
+	delay(1000);
+	return 0;
+}
+
 void
-anxdp_link_start(struct anxdp_softc *sc, struct drm_dp_link * const link)
+anxdp_link_start(struct anxdp_softc *sc)
 {
 	uint8_t training[4];
 	uint32_t val;
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, ANXDP_LINK_BW_SET,
-	    drm_dp_link_rate_to_bw_code(link->rate));
+	    drm_dp_link_rate_to_bw_code(sc->sc_link_rate));
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, ANXDP_LANE_COUNT_SET,
-	    link->num_lanes);
-	if (0 != drm_dp_link_configure(&sc->sc_dpaux, link))
+	    sc->sc_num_lanes);
+	if (anxdp_link_configure(sc))
 		return;
 
-	for (u_int i = 0; i < link->num_lanes; i++) {
+	for (u_int i = 0; i < sc->sc_num_lanes; i++) {
 		val = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 		    ANXDP_LNx_LINK_TRAINING_CTL(i));
 		val &= ~(PRE_EMPHASIS_SET(3)|DRIVE_CURRENT_SET(3));
@@ -422,18 +453,17 @@ anxdp_link_start(struct anxdp_softc *sc, struct drm_dp_link * const link)
 		printf("%s: PLL lock timeout\n", sc->sc_dev.dv_xname);
 	}
 
-	for (u_int i = 0; i < link->num_lanes; i++) {
+	for (u_int i = 0; i < sc->sc_num_lanes; i++) {
 		training[i] = DP_TRAIN_PRE_EMPH_LEVEL_0 |
 		    DP_TRAIN_VOLTAGE_SWING_LEVEL_0;
 	}
 
 	drm_dp_dpcd_write(&sc->sc_dpaux, DP_TRAINING_LANE0_SET, training,
-	    link->num_lanes);
+	    sc->sc_num_lanes);
 }
 
 void
-anxdp_process_clock_recovery(struct anxdp_softc *sc,
-    struct drm_dp_link * const link)
+anxdp_process_clock_recovery(struct anxdp_softc *sc)
 {
 	u_int i, tries;
 	uint8_t link_status[DP_LINK_STATUS_SIZE];
@@ -455,30 +485,30 @@ again:
 	    drm_dp_dpcd_read_link_status(&sc->sc_dpaux, link_status)) {
 		return;
 	}
-	if (!drm_dp_clock_recovery_ok(link_status, link->num_lanes)) {
+	if (!drm_dp_clock_recovery_ok(link_status, sc->sc_num_lanes)) {
 		goto cr_fail;
 	}
 
 	return;
 
 cr_fail:
-	for (i = 0; i < link->num_lanes; i++) {
+	for (i = 0; i < sc->sc_num_lanes; i++) {
 		uint8_t vs, pe;
 		vs = drm_dp_get_adjust_request_voltage(link_status, i);
 		pe = drm_dp_get_adjust_request_pre_emphasis(link_status, i);
 		training[i] = vs | pe;
 	}
-	for (i = 0; i < link->num_lanes; i++) {
+	for (i = 0; i < sc->sc_num_lanes; i++) {
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 		    ANXDP_LNx_LINK_TRAINING_CTL(i), training[i]);
 	}
 	drm_dp_dpcd_write(&sc->sc_dpaux, DP_TRAINING_LANE0_SET, training,
-	    link->num_lanes);
+	    sc->sc_num_lanes);
 	goto again;
 }
 
 void
-anxdp_process_eq(struct anxdp_softc *sc, struct drm_dp_link * const link)
+anxdp_process_eq(struct anxdp_softc *sc)
 {
 	u_int i, tries;
 	uint8_t link_status[DP_LINK_STATUS_SIZE];
@@ -500,53 +530,52 @@ again:
 	    drm_dp_dpcd_read_link_status(&sc->sc_dpaux, link_status)) {
 		return;
 	}
-	if (!drm_dp_channel_eq_ok(link_status, link->num_lanes)) {
+	if (!drm_dp_channel_eq_ok(link_status, sc->sc_num_lanes)) {
 		goto eq_fail;
 	}
 
 	return;
 
 eq_fail:
-	for (i = 0; i < link->num_lanes; i++) {
+	for (i = 0; i < sc->sc_num_lanes; i++) {
 		uint8_t vs, pe;
 		vs = drm_dp_get_adjust_request_voltage(link_status, i);
 		pe = drm_dp_get_adjust_request_pre_emphasis(link_status, i);
 		training[i] = vs | pe;
 	}
-	for (i = 0; i < link->num_lanes; i++) {
+	for (i = 0; i < sc->sc_num_lanes; i++) {
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 		    ANXDP_LNx_LINK_TRAINING_CTL(i), training[i]);
 	}
 	drm_dp_dpcd_write(&sc->sc_dpaux, DP_TRAINING_LANE0_SET, training,
-	    link->num_lanes);
+	    sc->sc_num_lanes);
 	goto again;
 }
 
 void
 anxdp_train_link(struct anxdp_softc *sc)
 {
-	struct drm_dp_link link;
-
 	anxdp_macro_reset(sc);
 
-	if (0 != drm_dp_link_probe(&sc->sc_dpaux, &link)) {
+	if (DP_RECEIVER_CAP_SIZE != drm_dp_dpcd_read(&sc->sc_dpaux,
+	    DP_DPCD_REV, sc->sc_dpcd, DP_RECEIVER_CAP_SIZE)) {
 		printf("%s: link probe failed\n", sc->sc_dev.dv_xname);
 		return;
 	}
-	if (0 != drm_dp_link_power_up(&sc->sc_dpaux, &link))
-		return;
-	if (DP_RECEIVER_CAP_SIZE != drm_dp_dpcd_read(&sc->sc_dpaux, DP_DPCD_REV,
-	    sc->sc_dpcd, DP_RECEIVER_CAP_SIZE))
+
+	sc->sc_link_rate = drm_dp_bw_code_to_link_rate(sc->sc_dpcd[1]);
+	sc->sc_num_lanes = sc->sc_dpcd[2] & DP_MAX_LANE_COUNT_MASK;
+
+	if (anxdp_link_power_up(sc))
 		return;
 
-	anxdp_link_start(sc, &link);
-	anxdp_process_clock_recovery(sc, &link);
-	anxdp_process_eq(sc, &link);
+	anxdp_link_start(sc);
+	anxdp_process_clock_recovery(sc);
+	anxdp_process_eq(sc);
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, ANXDP_TRAINING_PTN_SET, 0);
 	drm_dp_dpcd_writeb(&sc->sc_dpaux, DP_TRAINING_PATTERN_SET,
 	    DP_TRAINING_PATTERN_DISABLE);
-
 }
 
 void
@@ -688,8 +717,8 @@ anxdp_bridge_post_disable(struct drm_bridge *bridge)
 
 void
 anxdp_bridge_mode_set(struct drm_bridge *bridge,
-    struct drm_display_mode *mode,
-    struct drm_display_mode *adjusted_mode)
+    const struct drm_display_mode *mode,
+    const struct drm_display_mode *adjusted_mode)
 {
 	struct anxdp_softc *sc = bridge->driver_private;
 
@@ -878,11 +907,9 @@ anxdp_bind(struct anxdp_softc *sc, struct drm_encoder *encoder)
 	sc->sc_bridge.funcs = &anxdp_bridge_funcs;
 	sc->sc_bridge.encoder = encoder;
 
-	error = drm_bridge_attach(encoder, &sc->sc_bridge, NULL);
+	error = drm_bridge_attach(encoder, &sc->sc_bridge, NULL, 0);
 	if (error != 0)
 		return EIO;
-
-	encoder->bridge = &sc->sc_bridge;
 
 	if (sc->sc_panel != NULL && sc->sc_panel->funcs != NULL &&
 	    sc->sc_panel->funcs->prepare != NULL)

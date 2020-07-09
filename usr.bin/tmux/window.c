@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.257 2020/04/13 20:51:57 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.266 2020/06/13 09:05:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -436,17 +436,26 @@ window_resize(struct window *w, u_int sx, u_int sy, int xpixel, int ypixel)
 }
 
 void
-window_pane_send_resize(struct window_pane *wp, int yadjust)
+window_pane_send_resize(struct window_pane *wp, int force)
 {
 	struct window	*w = wp->window;
 	struct winsize	 ws;
+	u_int  		 sy;
 
 	if (wp->fd == -1)
 		return;
 
+	if (!force)
+		sy = wp->sy;
+	else if (wp->sy <= 1)
+		sy = wp->sy + 1;
+	else
+		sy = wp->sy - 1;
+	log_debug("%s: %%%u resize to %u,%u", __func__, wp->id, wp->sx, sy);
+
 	memset(&ws, 0, sizeof ws);
 	ws.ws_col = wp->sx;
-	ws.ws_row = wp->sy + yadjust;
+	ws.ws_row = sy;
 	ws.ws_xpixel = w->xpixel * ws.ws_col;
 	ws.ws_ypixel = w->ypixel * ws.ws_row;
 	if (ioctl(wp->fd, TIOCSWINSZ, &ws) == -1)
@@ -488,8 +497,8 @@ window_set_active_pane(struct window *w, struct window_pane *wp, int notify)
 void
 window_redraw_active_switch(struct window *w, struct window_pane *wp)
 {
-	struct style	*sy1, *sy2;
-	int		 c1, c2;
+	struct grid_cell	*gc1, *gc2;
+	int			 c1, c2;
 
 	if (wp == w->active)
 		return;
@@ -499,18 +508,18 @@ window_redraw_active_switch(struct window *w, struct window_pane *wp)
 		 * If the active and inactive styles or palettes are different,
 		 * need to redraw the panes.
 		 */
-		sy1 = &wp->cached_style;
-		sy2 = &wp->cached_active_style;
-		if (!style_equal(sy1, sy2))
+		gc1 = &wp->cached_gc;
+		gc2 = &wp->cached_active_gc;
+		if (!grid_cells_look_equal(gc1, gc2))
 			wp->flags |= PANE_REDRAW;
 		else {
-			c1 = window_pane_get_palette(wp, sy1->gc.fg);
-			c2 = window_pane_get_palette(wp, sy2->gc.fg);
+			c1 = window_pane_get_palette(wp, gc1->fg);
+			c2 = window_pane_get_palette(wp, gc2->fg);
 			if (c1 != c2)
 				wp->flags |= PANE_REDRAW;
 			else {
-				c1 = window_pane_get_palette(wp, sy1->gc.bg);
-				c2 = window_pane_get_palette(wp, sy2->gc.bg);
+				c1 = window_pane_get_palette(wp, gc1->bg);
+				c2 = window_pane_get_palette(wp, gc2->bg);
 				if (c1 != c2)
 					wp->flags |= PANE_REDRAW;
 			}
@@ -865,6 +874,9 @@ window_pane_create(struct window *w, u_int sx, u_int sy, u_int hlimit)
 	wp->fd = -1;
 	wp->event = NULL;
 
+	wp->fg = 8;
+	wp->bg = 8;
+
 	TAILQ_INIT(&wp->modes);
 
 	wp->layout_cell = NULL;
@@ -872,11 +884,10 @@ window_pane_create(struct window *w, u_int sx, u_int sy, u_int hlimit)
 	wp->xoff = 0;
 	wp->yoff = 0;
 
-	wp->sx = wp->osx = sx;
-	wp->sy = wp->osx = sy;
+	wp->sx = sx;
+	wp->sy = sy;
 
 	wp->pipe_fd = -1;
-	wp->pipe_off = 0;
 	wp->pipe_event = NULL;
 
 	screen_init(&wp->base, sx, sy, hlimit);
@@ -914,6 +925,8 @@ window_pane_destroy(struct window_pane *wp)
 
 	if (event_initialized(&wp->resize_timer))
 		event_del(&wp->resize_timer);
+	if (event_initialized(&wp->force_timer))
+		event_del(&wp->force_timer);
 
 	RB_REMOVE(window_pane_tree, &all_window_panes, wp);
 
@@ -928,22 +941,29 @@ window_pane_destroy(struct window_pane *wp)
 static void
 window_pane_read_callback(__unused struct bufferevent *bufev, void *data)
 {
-	struct window_pane	*wp = data;
-	struct evbuffer		*evb = wp->event->input;
-	size_t			 size = EVBUFFER_LENGTH(evb);
-	char			*new_data;
-	size_t			 new_size;
+	struct window_pane		*wp = data;
+	struct evbuffer			*evb = wp->event->input;
+	struct window_pane_offset	*wpo = &wp->pipe_offset;
+	size_t				 size = EVBUFFER_LENGTH(evb);
+	char				*new_data;
+	size_t				 new_size;
+	struct client			*c;
 
-	new_size = size - wp->pipe_off;
-	if (wp->pipe_fd != -1 && new_size > 0) {
-		new_data = EVBUFFER_DATA(evb) + wp->pipe_off;
-		bufferevent_write(wp->pipe_event, new_data, new_size);
+	if (wp->pipe_fd != -1) {
+		new_data = window_pane_get_new_data(wp, wpo, &new_size);
+		if (new_size > 0) {
+			bufferevent_write(wp->pipe_event, new_data, new_size);
+			window_pane_update_used_data(wp, wpo, new_size);
+		}
 	}
 
 	log_debug("%%%u has %zu bytes", wp->id, size);
+	TAILQ_FOREACH(c, &clients, entry) {
+		if (c->session != NULL && (c->flags & CLIENT_CONTROL))
+			control_write_output(c, wp);
+	}
 	input_parse_pane(wp);
-
-	wp->pipe_off = EVBUFFER_LENGTH(evb);
+	bufferevent_disable(wp->event, EV_READ);
 }
 
 static void
@@ -968,7 +988,6 @@ window_pane_set_event(struct window_pane *wp)
 	    NULL, window_pane_error_callback, wp);
 	wp->ictx = input_init(wp, wp->event);
 
-	bufferevent_setwatermark(wp->event, EV_READ, 0, READ_SIZE);
 	bufferevent_enable(wp->event, EV_READ|EV_WRITE);
 }
 
@@ -989,27 +1008,13 @@ window_pane_resize(struct window_pane *wp, u_int sx, u_int sy)
 	if (wme != NULL && wme->mode->resize != NULL)
 		wme->mode->resize(wme, sx, sy);
 
-	wp->flags |= (PANE_RESIZE|PANE_RESIZED);
-}
-
-void
-window_pane_alternate_on(struct window_pane *wp, struct grid_cell *gc,
-    int cursor)
-{
-	if (!options_get_number(wp->options, "alternate-screen"))
-		return;
-	screen_alternate_on(&wp->base, gc, cursor);
-	wp->flags |= PANE_REDRAW;
-}
-
-void
-window_pane_alternate_off(struct window_pane *wp, struct grid_cell *gc,
-    int cursor)
-{
-	if (!options_get_number(wp->options, "alternate-screen"))
-		return;
-	screen_alternate_off(&wp->base, gc, cursor);
-	wp->flags |= PANE_REDRAW;
+	/*
+	 * If the pane has already been resized, set the force flag and make
+	 * the application resize twice to force it to redraw.
+	 */
+	if (wp->flags & PANE_RESIZE)
+		wp->flags |= PANE_RESIZEFORCE;
+	wp->flags |= PANE_RESIZE;
 }
 
 void
@@ -1096,6 +1101,7 @@ window_pane_set_mode(struct window_pane *wp, struct window_pane *swp,
 	wp->screen = wme->screen;
 	wp->flags |= (PANE_REDRAW|PANE_CHANGED);
 
+	server_redraw_window_borders(wp->window);
 	server_status_window(wp->window);
 	notify_pane("pane-mode-changed", wp);
 
@@ -1127,6 +1133,7 @@ window_pane_reset_mode(struct window_pane *wp)
 	}
 	wp->flags |= (PANE_REDRAW|PANE_CHANGED);
 
+	server_redraw_window_borders(wp->window);
 	server_status_window(wp->window);
 	notify_pane("pane-mode-changed", wp);
 }
@@ -1150,8 +1157,10 @@ window_pane_key(struct window_pane *wp, struct client *c, struct session *s,
 
 	wme = TAILQ_FIRST(&wp->modes);
 	if (wme != NULL) {
-		if (wme->mode->key != NULL && c != NULL)
-			wme->mode->key(wme, c, s, wl, (key & ~KEYC_XTERM), m);
+		if (wme->mode->key != NULL && c != NULL) {
+			key &= ~KEYC_MASK_FLAGS;
+			wme->mode->key(wme, c, s, wl, key, m);
+		}
 		return (0);
 	}
 
@@ -1481,13 +1490,16 @@ winlink_clear_flags(struct winlink *wl)
 
 /* Shuffle window indexes up. */
 int
-winlink_shuffle_up(struct session *s, struct winlink *wl)
+winlink_shuffle_up(struct session *s, struct winlink *wl, int before)
 {
 	int	 idx, last;
 
 	if (wl == NULL)
 		return (-1);
-	idx = wl->idx + 1;
+	if (before)
+		idx = wl->idx;
+	else
+		idx = wl->idx + 1;
 
 	/* Find the next free index. */
 	for (last = idx; last < INT_MAX; last++) {
@@ -1500,8 +1512,9 @@ winlink_shuffle_up(struct session *s, struct winlink *wl)
 	/* Move everything from last - 1 to idx up a bit. */
 	for (; last > idx; last--) {
 		wl = winlink_find_by_index(&s->windows, last - 1);
-		server_link_window(s, wl, s, last, 0, 0, NULL);
-		server_unlink_window(s, wl);
+		RB_REMOVE(winlinks, &s->windows, wl);
+		wl->idx++;
+		RB_INSERT(winlinks, &s->windows, wl);
 	}
 
 	return (idx);
@@ -1552,4 +1565,25 @@ window_pane_start_input(struct window_pane *wp, struct cmdq_item *item,
 	file_read(c, "-", window_pane_input_callback, cdata);
 
 	return (0);
+}
+
+void *
+window_pane_get_new_data(struct window_pane *wp,
+    struct window_pane_offset *wpo, size_t *size)
+{
+	size_t	used = wpo->used - wp->base_offset;
+
+	*size = EVBUFFER_LENGTH(wp->event->input) - used;
+	return (EVBUFFER_DATA(wp->event->input) + used);
+}
+
+void
+window_pane_update_used_data(struct window_pane *wp,
+    struct window_pane_offset *wpo, size_t size)
+{
+	size_t	used = wpo->used - wp->base_offset;
+
+	if (size > EVBUFFER_LENGTH(wp->event->input) - used)
+		size = EVBUFFER_LENGTH(wp->event->input) - used;
+	wpo->used += size;
 }

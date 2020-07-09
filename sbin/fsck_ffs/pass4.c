@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass4.c,v 1.25 2017/04/13 07:30:21 jsg Exp $	*/
+/*	$OpenBSD: pass4.c,v 1.26 2020/06/20 07:49:04 otto Exp $	*/
 /*	$NetBSD: pass4.c,v 1.11 1996/09/27 22:45:17 christos Exp $	*/
 
 /*
@@ -59,7 +59,8 @@ pass4(void)
 	struct zlncnt *zlnp;
 	union dinode *dp;
 	struct inodesc idesc;
-	int n, c, i;
+	int n, i;
+	u_int c;
 
 	memset(&idesc, 0, sizeof(struct inodesc));
 	idesc.id_type = ADDR;

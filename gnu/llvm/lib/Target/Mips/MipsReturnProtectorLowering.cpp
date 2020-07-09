@@ -111,6 +111,7 @@ void MipsReturnProtectorLowering::insertReturnProtectorEpilogue(
   unsigned REG = MF.getFrameInfo().getReturnProtectorRegister();
 
   const GlobalValue *FName = &MF.getFunction();
+  const unsigned TRAPCODE = 0x52;
 
   // Select some scratch registers
   unsigned TempReg1 = Mips::T7_64;
@@ -169,7 +170,7 @@ void MipsReturnProtectorLowering::insertReturnProtectorEpilogue(
     BuildMI(MBB, MI, MBBDL, TII->get(Mips::TNE))
       .addReg(TempReg1)
       .addReg(REG)
-      .addImm(0);
+      .addImm(TRAPCODE);
     // Emit the BAL target symbol from above
     BuildMI(MBB, MI, MBBDL, TII->get(Mips::RETGUARD_EMIT_SYMBOL))
       .addSym(BALTarget);
@@ -196,7 +197,7 @@ void MipsReturnProtectorLowering::insertReturnProtectorEpilogue(
     BuildMI(MBB, MI, MBBDL, TII->get(Mips::TNE))
       .addReg(TempReg1)
       .addReg(REG)
-      .addImm(0);
+      .addImm(TRAPCODE);
   }
 }
 

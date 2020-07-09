@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.36 2019/04/14 10:16:00 jsg Exp $
+#	$OpenBSD: Makefile,v 1.37 2020/06/22 01:02:30 dlg Exp $
 
 LDSTATIC=${STATIC}
 PROG=	kdump
@@ -26,6 +26,7 @@ ioctl.c: ${.CURDIR}/Makefile ${.CURDIR}/mkioctls
 	    ${SYS_DIR}/net/if_pppoe.h \
 	    ${SYS_DIR}/net/if_trunk.h \
 	    ${SYS_DIR}/net/if_tun.h \
+	    ${SYS_DIR}/net/if_wg.h \
 	    ${SYS_DIR}/net/pfvar.h \
 	    ${SYS_DIR}/net/pipex.h \
 	    ${SYS_DIR}/net80211/ieee80211_ioctl.h \

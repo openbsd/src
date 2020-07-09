@@ -1,4 +1,4 @@
-.\"	$OpenBSD: PKCS7_new.3,v 1.6 2019/06/10 09:49:48 schwarze Exp $
+.\" $OpenBSD: PKCS7_new.3,v 1.12 2020/06/10 11:43:08 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 10 2019 $
+.Dd $Mdocdate: June 10 2020 $
 .Dt PKCS7_NEW 3
 .Os
 .Sh NAME
@@ -246,9 +246,16 @@ frees
 .Xr i2d_PKCS7_bio_stream 3 ,
 .Xr PEM_read_PKCS7 3 ,
 .Xr PEM_write_bio_PKCS7_stream 3 ,
+.Xr PKCS7_add_attribute 3 ,
+.Xr PKCS7_dataFinal 3 ,
+.Xr PKCS7_dataInit 3 ,
 .Xr PKCS7_decrypt 3 ,
 .Xr PKCS7_encrypt 3 ,
+.Xr PKCS7_final 3 ,
+.Xr PKCS7_get_signer_info 3 ,
 .Xr PKCS7_ISSUER_AND_SERIAL_digest 3 ,
+.Xr PKCS7_set_content 3 ,
+.Xr PKCS7_set_type 3 ,
 .Xr PKCS7_sign 3 ,
 .Xr PKCS7_sign_add_signer 3 ,
 .Xr PKCS7_verify 3 ,

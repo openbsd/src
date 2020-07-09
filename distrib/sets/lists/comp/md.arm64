@@ -50,9 +50,9 @@
 ./usr/include/arm64/smbiosvar.h
 ./usr/include/arm64/softintr.h
 ./usr/include/arm64/spinlock.h
-./usr/include/arm64/stdarg.h
 ./usr/include/arm64/sysarch.h
 ./usr/include/arm64/tcb.h
+./usr/include/arm64/timetc.h
 ./usr/include/arm64/trap.h
 ./usr/include/arm64/vfp.h
 ./usr/include/arm64/vmparam.h

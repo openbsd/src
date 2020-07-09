@@ -1,4 +1,4 @@
-/*	$OpenBSD: spleen12x24.h,v 1.5 2019/10/03 08:29:18 fcambus Exp $ */
+/*	$OpenBSD: spleen12x24.h,v 1.7 2020/06/23 13:58:34 fcambus Exp $ */
 
 /*
  * Copyright (c) 2018-2019 Frederic Cambus <fcambus@openbsd.org>
@@ -29,18 +29,18 @@
 static u_char spleen12x24_data[];
 
 struct wsdisplay_font spleen12x24 = {
-	"Spleen 12x24",			/* typeface name */
-	0,				/* index */
-	' ',				/* firstchar */
-	256 - ' ',			/* numchars */
-	WSDISPLAY_FONTENC_ISO,		/* encoding */
-	12,				/* width */
-	24,				/* height */
-	2,				/* stride */
-	WSDISPLAY_FONTORDER_L2R,	/* bit order */
-	WSDISPLAY_FONTORDER_L2R,	/* byte order */
-	NULL,				/* cookie */
-	spleen12x24_data			/* data */
+	.name		= "Spleen 12x24",
+	.index		= 0,
+	.firstchar	= ' ',
+	.numchars	= 256 - ' ',
+	.encoding	= WSDISPLAY_FONTENC_ISO,
+	.fontwidth	= 12,
+	.fontheight	= 24,
+	.stride		= 2,
+	.bitorder	= WSDISPLAY_FONTORDER_L2R,
+	.byteorder	= WSDISPLAY_FONTORDER_L2R,
+	.cookie		= NULL,
+	.data		= spleen12x24_data
 };
 
 static u_char spleen12x24_data[] = {
@@ -4830,13 +4830,13 @@ static u_char spleen12x24_data[] = {
 	0x61, 0x80, 	/* .**....**....... */
 	0x61, 0x80, 	/* .**....**....... */
 	0x63, 0x00, 	/* .**...**........ */
-	0x7f, 0x00, 	/* .*******........ */
+	0x6f, 0x00, 	/* .**.****........ */
 	0x63, 0x80, 	/* .**...***....... */
 	0x60, 0xc0, 	/* .**.....**...... */
 	0x60, 0x60, 	/* .**......**..... */
 	0x60, 0x60, 	/* .**......**..... */
 	0x60, 0x60, 	/* .**......**..... */
-	0x78, 0x60, 	/* .****....**..... */
+	0x68, 0x60, 	/* .**.*....**..... */
 	0x6c, 0xc0, 	/* .**.**..**...... */
 	0x67, 0x80, 	/* .**..****....... */
 	0x00, 0x00, 	/* ................ */

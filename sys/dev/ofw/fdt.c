@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.23 2019/08/10 13:16:01 kettenis Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.24 2020/07/06 15:18:03 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -23,9 +23,6 @@
 
 #include <dev/ofw/fdt.h>
 #include <dev/ofw/openfirm.h>
-
-/* XXX */
-#define OPROMMAXPARAM	32
 
 unsigned int fdt_check_head(void *);
 char	*fdt_get_str(u_int32_t);
@@ -904,13 +901,13 @@ OF_nextprop(int handle, char *prop, void *nextprop)
 
 	if (fdt_node_property(node, "name", &data) == -1) {
 		if (strcmp(prop, "") == 0)
-			return strlcpy(nextprop, "name", OPROMMAXPARAM);
+			return strlcpy(nextprop, "name", OFMAXPARAM);
 		if (strcmp(prop, "name") == 0)
 			prop = "";
 	}
 
 	if (fdt_next_property(node, prop, &data))
-		return strlcpy(nextprop, data, OPROMMAXPARAM);
+		return strlcpy(nextprop, data, OFMAXPARAM);
 	return -1;
 }
 

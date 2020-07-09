@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.189 2020/04/07 13:27:52 visa Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.192 2020/06/18 23:32:00 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -103,8 +103,9 @@ int	bpfpoll(dev_t, int, struct proc *);
 int	bpfkqfilter(dev_t, struct knote *);
 void	bpf_wakeup(struct bpf_d *);
 void	bpf_wakeup_cb(void *);
+int	_bpf_mtap(caddr_t, const struct mbuf *, const struct mbuf *, u_int);
 void	bpf_catchpacket(struct bpf_d *, u_char *, size_t, size_t,
-	    struct timeval *);
+	    const struct bpf_hdr *);
 int	bpf_getdltlist(struct bpf_d *, struct bpf_dltlist *);
 int	bpf_setdlt(struct bpf_d *, u_int);
 
@@ -379,8 +380,8 @@ bpfopen(dev_t dev, int flag, int mode, struct proc *p)
 	smr_init(&bd->bd_smr);
 	sigio_init(&bd->bd_sigio);
 
-	if (flag & FNONBLOCK)
-		bd->bd_rtout = -1;
+	bd->bd_rtout = 0;	/* no timeout by default */
+	bd->bd_rnonblock = ISSET(flag, FNONBLOCK);
 
 	bpf_get(bd);
 	LIST_INSERT_HEAD(&bpf_d_list, bd, bd_list);
@@ -453,7 +454,7 @@ bpfread(dev_t dev, struct uio *uio, int ioflag)
 	 * If there's a timeout, bd_rdStart is tagged when we start the read.
 	 * we can then figure out when we're done reading.
 	 */
-	if (d->bd_rtout != -1 && d->bd_rdStart == 0)
+	if (d->bd_rnonblock == 0 && d->bd_rdStart == 0)
 		d->bd_rdStart = ticks;
 	else
 		d->bd_rdStart = 0;
@@ -482,7 +483,7 @@ bpfread(dev_t dev, struct uio *uio, int ioflag)
 			ROTATE_BUFFERS(d);
 			break;
 		}
-		if (d->bd_rtout == -1) {
+		if (d->bd_rnonblock) {
 			/* User requested non-blocking I/O */
 			error = EWOULDBLOCK;
 		} else {
@@ -960,9 +961,9 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 
 	case FIONBIO:		/* Non-blocking I/O */
 		if (*(int *)addr)
-			d->bd_rtout = -1;
+			d->bd_rnonblock = 1;
 		else
-			d->bd_rtout = 0;
+			d->bd_rnonblock = 0;
 		break;
 
 	case FIOASYNC:		/* Send signal on receive packets */
@@ -1153,7 +1154,7 @@ bpfpoll(dev_t dev, int events, struct proc *p)
 			 * if there's a timeout, mark the time we
 			 * started waiting.
 			 */
-			if (d->bd_rtout != -1 && d->bd_rdStart == 0)
+			if (d->bd_rnonblock == 0 && d->bd_rdStart == 0)
 				d->bd_rdStart = ticks;
 			selrecord(p, &d->bd_sel);
 		}
@@ -1193,7 +1194,7 @@ bpfkqfilter(dev_t dev, struct knote *kn)
 	klist_insert(klist, kn);
 
 	mtx_enter(&d->bd_mtx);
-	if (d->bd_rtout != -1 && d->bd_rdStart == 0)
+	if (d->bd_rnonblock == 0 && d->bd_rdStart == 0)
 		d->bd_rdStart = ticks;
 	mtx_leave(&d->bd_mtx);
 
@@ -1254,12 +1255,19 @@ bpf_mcopy(const void *src_arg, void *dst_arg, size_t len)
 int
 bpf_mtap(caddr_t arg, const struct mbuf *m, u_int direction)
 {
+	return _bpf_mtap(arg, m, m, direction);
+}
+
+int
+_bpf_mtap(caddr_t arg, const struct mbuf *mp, const struct mbuf *m,
+    u_int direction)
+{
 	struct bpf_if *bp = (struct bpf_if *)arg;
 	struct bpf_d *d;
 	size_t pktlen, slen;
 	const struct mbuf *m0;
-	struct timeval tv;
-	int gottime = 0;
+	struct bpf_hdr tbh;
+	int gothdr = 0;
 	int drop = 0;
 
 	if (m == NULL)
@@ -1292,17 +1300,31 @@ bpf_mtap(caddr_t arg, const struct mbuf *m, u_int direction)
 		if (d->bd_fildrop != BPF_FILDROP_PASS)
 			drop = 1;
 		if (d->bd_fildrop != BPF_FILDROP_DROP) {
-			if (!gottime) {
-				if (ISSET(m->m_flags, M_PKTHDR))
+			if (!gothdr) {
+				struct timeval tv;
+				memset(&tbh, 0, sizeof(tbh));
+
+				if (ISSET(mp->m_flags, M_PKTHDR)) {
+					tbh.bh_ifidx = mp->m_pkthdr.ph_ifidx;
+					tbh.bh_flowid = mp->m_pkthdr.ph_flowid;
+					tbh.bh_flags = mp->m_pkthdr.pf.prio;
+					if (ISSET(mp->m_pkthdr.csum_flags,
+					    M_FLOWID))
+						SET(tbh.bh_flags, BPF_F_FLOWID);
+
 					m_microtime(m, &tv);
-				else
+				} else
 					microtime(&tv);
 
-				gottime = 1;
+				tbh.bh_tstamp.tv_sec = tv.tv_sec;
+				tbh.bh_tstamp.tv_usec = tv.tv_usec;
+				SET(tbh.bh_flags, direction << BPF_F_DIR_SHIFT);
+
+				gothdr = 1;
 			}
 
 			mtx_enter(&d->bd_mtx);
-			bpf_catchpacket(d, (u_char *)m, pktlen, slen, &tv);
+			bpf_catchpacket(d, (u_char *)m, pktlen, slen, &tbh);
 			mtx_leave(&d->bd_mtx);
 		}
 	}
@@ -1375,7 +1397,7 @@ bpf_mtap_hdr(caddr_t arg, const void *data, u_int dlen, const struct mbuf *m,
 	} else 
 		m0 = m;
 
-	return bpf_mtap(arg, m0, direction);
+	return _bpf_mtap(arg, m, m0, direction);
 }
 
 /*
@@ -1453,9 +1475,9 @@ bpf_mtap_ether(caddr_t arg, const struct mbuf *m, u_int direction)
  */
 void
 bpf_catchpacket(struct bpf_d *d, u_char *pkt, size_t pktlen, size_t snaplen,
-    struct timeval *tv)
+    const struct bpf_hdr *tbh)
 {
-	struct bpf_hdr *hp;
+	struct bpf_hdr *bh;
 	int totlen, curlen;
 	int hdrlen, do_wakeup = 0;
 
@@ -1501,17 +1523,16 @@ bpf_catchpacket(struct bpf_d *d, u_char *pkt, size_t pktlen, size_t snaplen,
 	/*
 	 * Append the bpf header.
 	 */
-	hp = (struct bpf_hdr *)(d->bd_sbuf + curlen);
-	hp->bh_tstamp.tv_sec = tv->tv_sec;
-	hp->bh_tstamp.tv_usec = tv->tv_usec;
-	hp->bh_datalen = pktlen;
-	hp->bh_hdrlen = hdrlen;
+	bh = (struct bpf_hdr *)(d->bd_sbuf + curlen);
+	*bh = *tbh;
+	bh->bh_datalen = pktlen;
+	bh->bh_hdrlen = hdrlen;
+	bh->bh_caplen = totlen - hdrlen;
 
 	/*
 	 * Copy the packet data into the store buffer and update its length.
 	 */
-	bpf_mcopy(pkt, (u_char *)hp + hdrlen,
-	    (hp->bh_caplen = totlen - hdrlen));
+	bpf_mcopy(pkt, (u_char *)bh + hdrlen, bh->bh_caplen);
 	d->bd_slen = curlen + totlen;
 
 	if (d->bd_immediate) {

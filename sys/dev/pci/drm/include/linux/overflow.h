@@ -5,4 +5,7 @@
 
 #define array_size(x, y)	((x) * (y))
 
+#define struct_size(p, member, n) \
+	(sizeof(*(p)) + ((n) * (sizeof(*(p)->member))))
+
 #endif

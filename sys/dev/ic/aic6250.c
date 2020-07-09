@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6250.c,v 1.7 2020/02/05 16:29:29 krw Exp $	*/
+/*	$OpenBSD: aic6250.c,v 1.8 2020/06/27 14:29:44 krw Exp $	*/
 
 /*
  * Copyright (c) 2010, 2013 Miodrag Vallat.
@@ -211,7 +211,6 @@ aic6250_attach(struct aic6250_softc *sc)
 	sc->sc_link.openings = 2;
 	sc->sc_link.pool = &sc->sc_iopool;
 
-	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	config_found(&sc->sc_dev, &saa, scsiprint);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cdce.c,v 1.76 2019/11/14 13:50:55 abieber Exp $ */
+/*	$OpenBSD: if_cdce.c,v 1.77 2020/06/09 07:43:39 gerhard Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -375,17 +375,15 @@ cdce_start(struct ifnet *ifp)
 	if (usbd_is_dying(sc->cdce_udev) || ifq_is_oactive(&ifp->if_snd))
 		return;
 
-	m_head = ifq_deq_begin(&ifp->if_snd);
+	m_head = ifq_dequeue(&ifp->if_snd);
 	if (m_head == NULL)
 		return;
 
 	if (cdce_encap(sc, m_head, 0)) {
-		ifq_deq_rollback(&ifp->if_snd, m_head);
+		m_freem(m_head);
 		ifq_set_oactive(&ifp->if_snd);
 		return;
 	}
-
-	ifq_deq_commit(&ifp->if_snd, m_head);
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
@@ -422,6 +420,7 @@ cdce_encap(struct cdce_softc *sc, struct mbuf *m, int idx)
 	    10000, cdce_txeof);
 	err = usbd_transfer(c->cdce_xfer);
 	if (err != USBD_IN_PROGRESS) {
+		c->cdce_mbuf = NULL;
 		cdce_stop(sc);
 		return (EIO);
 	}

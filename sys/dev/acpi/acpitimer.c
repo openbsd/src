@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitimer.c,v 1.12 2017/10/06 13:33:53 mikeb Exp $ */
+/* $OpenBSD: acpitimer.c,v 1.13 2020/07/06 13:33:08 pirofti Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -36,7 +36,9 @@ static struct timecounter acpi_timecounter = {
 	0x00ffffff,		/* counter_mask (24 bits) */
 	ACPI_FREQUENCY,		/* frequency */
 	0,			/* name */
-	1000			/* quality */
+	1000,			/* quality */
+	NULL,			/* private bits */
+	0,			/* expose to user */
 };
 
 struct acpitimer_softc {

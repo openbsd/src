@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.183 2020/02/21 11:11:15 otto Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.185 2020/06/24 22:03:45 cheloha Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -1422,9 +1422,8 @@ retry:
 	 * already have one. This should only happen on old filesystems.
 	 */
 	if (DIP(ip, gen) == 0) {
-		DIP_ASSIGN(ip, gen, arc4random() & INT_MAX);
-		if (DIP(ip, gen) == 0 || DIP(ip, gen) == -1)
-			DIP_ASSIGN(ip, gen, 1);	/* Shouldn't happen */
+		while (DIP(ip, gen) == 0)
+			DIP_ASSIGN(ip, gen, arc4random());
 		if ((vp->v_mount->mnt_flag & MNT_RDONLY) == 0)
 			ip->i_flag |= IN_MODIFIED;
 	}
@@ -1526,7 +1525,7 @@ ffs_sbupdate(struct ufsmount *mp, int waitfor)
 	    fs->fs_sblockloc >> (fs->fs_fshift - fs->fs_fsbtodb),
 	    (int)fs->fs_sbsize, 0, INFSLP);
 	fs->fs_fmod = 0;
-	fs->fs_time = time_second;
+	fs->fs_time = gettime();
 	memcpy(bp->b_data, fs, fs->fs_sbsize);
 	/* Restore compatibility to old file systems.		   XXX */
 	dfs = (struct fs *)bp->b_data;				/* XXX */

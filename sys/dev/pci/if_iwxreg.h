@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.2 2020/02/28 14:51:53 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.15 2020/06/22 16:25:55 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -909,6 +909,8 @@ enum msix_ivar_for_cause {
 #define IWX_UCODE_TLV_API_ADAPTIVE_DWELL	32
 #define IWX_UCODE_TLV_API_NEW_RX_STATS		35
 #define IWX_UCODE_TLV_API_ADAPTIVE_DWELL_V2	42
+#define IWX_UCODE_TLV_API_BEACON_FILTER_V4	47
+#define IWX_UCODE_TLV_API_REGULATORY_NVM_INFO   48
 #define IWX_UCODE_TLV_API_REDUCED_SCAN_CONFIG   56
 #define IWX_UCODE_TLV_API_SCAN_EXT_CHAN_VER	58
 #define IWX_NUM_UCODE_TLV_API			128
@@ -1400,7 +1402,7 @@ enum iwx_gen2_tx_fifo {
 #define IWX_TX_QUEUE_CFG_TFD_SHORT_FORMAT	(1 << 1)
 
 #define IWX_DEFAULT_QUEUE_SIZE IWX_TFD_QUEUE_SIZE_MAX
-#define IWX_CMD_QUEUE_SIZE 32
+#define IWX_CMD_QUEUE_SIZE 64
 
 /**
  * struct iwx_tx_queue_cfg_cmd - txq hw scheduler config command
@@ -1523,6 +1525,7 @@ struct iwx_tx_queue_cfg_rsp {
 
 /* Location Aware Regulatory */
 #define IWX_MCC_UPDATE_CMD	0xc8
+#define IWX_MCC_CHUB_UPDATE_CMD	0xc9
 
 /* BT Coex */
 #define IWX_BT_COEX_PRIO_TABLE	0xcc
@@ -1595,7 +1598,9 @@ struct iwx_tx_queue_cfg_rsp {
 
 /* DATA_PATH group subcommand IDs */
 #define IWX_DQA_ENABLE_CMD	0x00
+#define IWX_TLC_MNG_CONFIG_CMD	0x0f
 #define IWX_RX_NO_DATA_NOTIF	0xf5
+#define IWX_TLC_MNG_UPDATE_NOTIF 0xf7
 
 /* REGULATORY_AND_NVM group subcommand IDs */
 #define IWX_NVM_ACCESS_COMPLETE	0x00
@@ -1680,53 +1685,30 @@ struct iwx_phy_cfg_cmd {
 #define IWX_PHY_CFG_RX_CHAIN_B	(1 << 13)
 #define IWX_PHY_CFG_RX_CHAIN_C	(1 << 14)
 
-#define IWX_NVM_VERSION		0
+#define IWX_MAX_DTS_TRIPS	8
 
-/* 8k family NVM HW-Section offset (in words) definitions */
-#define IWX_HW_ADDR0_WFPM_8000		0x12
-#define IWX_HW_ADDR1_WFPM_8000		0x16
-#define IWX_HW_ADDR0_PCIE_8000		0x8A
-#define IWX_HW_ADDR1_PCIE_8000		0x8E
-#define IWX_MAC_ADDRESS_OVERRIDE_8000	1
+/**
+ * struct iwx_ct_kill_notif - CT-kill entry notification
+ *
+ * @temperature: the current temperature in celsius
+ * @reserved: reserved
+ */
+struct iwx_ct_kill_notif {
+	uint16_t temperature;
+	uint16_t reserved;
+} __packed; /* GRP_PHY_CT_KILL_NTF */
 
-/* 8k family NVM SW-Section offset (in words) definitions */
-#define IWX_NVM_SW_SECTION_8000	0x1C0
-#define IWX_NVM_VERSION_8000	0
-#define IWX_RADIO_CFG_8000	0
-#define IWX_SKU_8000		2
-#define IWX_N_HW_ADDRS_8000	3
-
-/* 8k family NVM REGULATORY -Section offset (in words) definitions */
-#define IWX_NVM_CHANNELS_8000		0
-#define IWX_NVM_LAR_OFFSET_8000_OLD	0x4C7
-#define IWX_NVM_LAR_OFFSET_8000		0x507
-#define IWX_NVM_LAR_ENABLED_8000	0x7
-
-/* 8k family NVM calibration section offset (in words) definitions */
-#define IWX_NVM_CALIB_SECTION_8000	0x2B8
-#define IWX_XTAL_CALIB_8000		(0x316 - IWX_NVM_CALIB_SECTION_8000)
-
-/* SKU Capabilities (actual values from NVM definition) */
-#define IWX_NVM_SKU_CAP_BAND_24GHZ	(1 << 0)
-#define IWX_NVM_SKU_CAP_BAND_52GHZ	(1 << 1)
-#define IWX_NVM_SKU_CAP_11N_ENABLE	(1 << 2)
-#define IWX_NVM_SKU_CAP_11AC_ENABLE	(1 << 3)
-#define IWX_NVM_SKU_CAP_MIMO_DISABLE	(1 << 5)
-
-/* radio config bits (actual values from NVM definition) */
-#define IWX_NVM_RF_CFG_DASH_MSK(x)   (x & 0x3)         /* bits 0-1   */
-#define IWX_NVM_RF_CFG_STEP_MSK(x)   ((x >> 2)  & 0x3) /* bits 2-3   */
-#define IWX_NVM_RF_CFG_TYPE_MSK(x)   ((x >> 4)  & 0x3) /* bits 4-5   */
-#define IWX_NVM_RF_CFG_PNUM_MSK(x)   ((x >> 6)  & 0x3) /* bits 6-7   */
-#define IWX_NVM_RF_CFG_TX_ANT_MSK(x) ((x >> 8)  & 0xF) /* bits 8-11  */
-#define IWX_NVM_RF_CFG_RX_ANT_MSK(x) ((x >> 12) & 0xF) /* bits 12-15 */
-
-#define IWX_NVM_RF_CFG_PNUM_MSK_8000(x)		(x & 0xF)
-#define IWX_NVM_RF_CFG_DASH_MSK_8000(x)		((x >> 4) & 0xF)
-#define IWX_NVM_RF_CFG_STEP_MSK_8000(x)		((x >> 8) & 0xF)
-#define IWX_NVM_RF_CFG_TYPE_MSK_8000(x)		((x >> 12) & 0xFFF)
-#define IWX_NVM_RF_CFG_TX_ANT_MSK_8000(x)	((x >> 24) & 0xF)
-#define IWX_NVM_RF_CFG_RX_ANT_MSK_8000(x)	((x >> 28) & 0xF)
+/**
+ * struct iwx_temp_report_ths_cmd - set temperature thresholds
+ * (IWX_TEMP_REPORTING_THRESHOLDS_CMD)
+ *
+ * @num_temps: number of temperature thresholds passed
+ * @thresholds: array with the thresholds to be configured
+ */
+struct iwx_temp_report_ths_cmd {
+	uint32_t num_temps;
+	uint16_t thresholds[IWX_MAX_DTS_TRIPS];
+} __packed; /* GRP_PHY_TEMP_REPORTING_THRESHOLDS_CMD */
 
 /*
  * channel flags in NVM
@@ -1734,69 +1716,28 @@ struct iwx_phy_cfg_cmd {
  * @IWX_NVM_CHANNEL_IBSS: usable as an IBSS channel
  * @IWX_NVM_CHANNEL_ACTIVE: active scanning allowed
  * @IWX_NVM_CHANNEL_RADAR: radar detection required
+ * @IWX_NVM_CHANNEL_INDOOR_ONLY: only indoor use is allowed
+ * @IWX_NVM_CHANNEL_GO_CONCURRENT: GO operation is allowed when connected to BSS
+ *	on same channel on 2.4 or same UNII band on 5.2
  * @IWX_NVM_CHANNEL_DFS: dynamic freq selection candidate
  * @IWX_NVM_CHANNEL_WIDE: 20 MHz channel okay (?)
  * @IWX_NVM_CHANNEL_40MHZ: 40 MHz channel okay (?)
  * @IWX_NVM_CHANNEL_80MHZ: 80 MHz channel okay (?)
  * @IWX_NVM_CHANNEL_160MHZ: 160 MHz channel okay (?)
+ * @IWX_NVM_CHANNEL_DC_HIGH: DC HIGH required/allowed (?)
  */
 #define IWX_NVM_CHANNEL_VALID	(1 << 0)
 #define IWX_NVM_CHANNEL_IBSS	(1 << 1)
 #define IWX_NVM_CHANNEL_ACTIVE	(1 << 3)
 #define IWX_NVM_CHANNEL_RADAR	(1 << 4)
+#define IWX_NVM_CHANNEL_INDOOR_ONLY	(1 << 5)
+#define IWX_NVM_CHANNEL_GO_CONCURRENT	(1 << 6)
 #define IWX_NVM_CHANNEL_DFS	(1 << 7)
 #define IWX_NVM_CHANNEL_WIDE	(1 << 8)
 #define IWX_NVM_CHANNEL_40MHZ	(1 << 9)
 #define IWX_NVM_CHANNEL_80MHZ	(1 << 10)
 #define IWX_NVM_CHANNEL_160MHZ	(1 << 11)
-
-/* Target of the IWX_NVM_ACCESS_CMD */
-#define IWX_NVM_ACCESS_TARGET_CACHE	0
-#define IWX_NVM_ACCESS_TARGET_OTP	1
-#define IWX_NVM_ACCESS_TARGET_EEPROM	2
-
-/* Section types for IWX_NVM_ACCESS_CMD */
-#define IWX_NVM_SECTION_TYPE_SW			1
-#define IWX_NVM_SECTION_TYPE_PAPD		2
-#define IWX_NVM_SECTION_TYPE_REGULATORY		3
-#define IWX_NVM_SECTION_TYPE_CALIBRATION	4
-#define IWX_NVM_SECTION_TYPE_PRODUCTION		5
-#define IWX_NVM_SECTION_TYPE_POST_FCS_CALIB	6
-/* 7 unknown */
-#define IWX_NVM_SECTION_TYPE_REGULATORY_SDP	8
-/* 9 unknown */
-#define IWX_NVM_SECTION_TYPE_HW_8000		10
-#define IWX_NVM_SECTION_TYPE_MAC_OVERRIDE	11
-#define IWX_NVM_SECTION_TYPE_PHY_SKU		12
-#define IWX_NVM_NUM_OF_SECTIONS			13
-
-/**
- * enum iwx_nvm_type - nvm formats
- * @IWX_NVM: the regular format
- * @IWX_NVM_EXT: extended NVM format
- */
-enum iwx_nvm_type {
-	IWX_NVM,
-	IWX_NVM_EXT,
-};
-
-/**
- * struct iwx_nvm_access_cmd_ver2 - Request the device to send an NVM section
- * @op_code: 0 - read, 1 - write
- * @target: IWX_NVM_ACCESS_TARGET_*
- * @type: IWX_NVM_SECTION_TYPE_*
- * @offset: offset in bytes into the section
- * @length: in bytes, to read/write
- * @data: if write operation, the data to write. On read its empty
- */
-struct iwx_nvm_access_cmd {
-	uint8_t op_code;
-	uint8_t target;
-	uint16_t type;
-	uint16_t offset;
-	uint16_t length;
-	uint8_t data[];
-} __packed; /* IWX_NVM_ACCESS_CMD_API_S_VER_2 */
+#define IWX_NVM_CHANNEL_DC_HIGH	(1 << 12)
 
 /**
  * struct iwx_nvm_access_complete_cmd - NVM_ACCESS commands are completed
@@ -1806,21 +1747,128 @@ struct iwx_nvm_access_complete_cmd {
 	uint32_t reserved;
 } __packed; /* NVM_ACCESS_COMPLETE_CMD_API_S_VER_1 */
 
-/**
- * struct iwx_nvm_access_resp_ver2 - response to IWX_NVM_ACCESS_CMD
- * @offset: offset in bytes into the section
- * @length: in bytes, either how much was written or read
- * @type: IWX_NVM_SECTION_TYPE_*
- * @status: 0 for success, fail otherwise
- * @data: if read operation, the data returned. Empty on write.
+/*
+ * struct iwx_nvm_get_info - request to get NVM data
  */
-struct iwx_nvm_access_resp {
-	uint16_t offset;
-	uint16_t length;
-	uint16_t type;
-	uint16_t status;
-	uint8_t data[];
-} __packed; /* IWX_NVM_ACCESS_CMD_RESP_API_S_VER_2 */
+struct iwx_nvm_get_info {
+	uint32_t reserved;
+} __packed; /* REGULATORY_NVM_GET_INFO_CMD_API_S_VER_1 */
+
+/**
+ * enum iwx_nvm_info_general_flags - flags in NVM_GET_INFO resp
+ * @NVM_GENERAL_FLAGS_EMPTY_OTP: 1 if OTP is empty
+ */
+#define IWX_NVM_GENERAL_FLAGS_EMPTY_OTP	(1 << 0)
+
+/**
+ * struct iwx_nvm_get_info_general - general NVM data
+ * @flags: bit 0: 1 - empty, 0 - non-empty
+ * @nvm_version: nvm version
+ * @board_type: board type
+ * @n_hw_addrs: number of reserved MAC addresses
+ */
+struct iwx_nvm_get_info_general {
+	uint32_t flags;
+	uint16_t nvm_version;
+	uint8_t board_type;
+	uint8_t n_hw_addrs;
+} __packed; /* REGULATORY_NVM_GET_INFO_GENERAL_S_VER_2 */
+
+/**
+ * iwx_nvm_mac_sku_flags - flags in &iwl_nvm_get_info_sku
+ * @NVM_MAC_SKU_FLAGS_BAND_2_4_ENABLED: true if 2.4 band enabled
+ * @NVM_MAC_SKU_FLAGS_BAND_5_2_ENABLED: true if 5.2 band enabled
+ * @NVM_MAC_SKU_FLAGS_802_11N_ENABLED: true if 11n enabled
+ * @NVM_MAC_SKU_FLAGS_802_11AC_ENABLED: true if 11ac enabled
+ * @NVM_MAC_SKU_FLAGS_802_11AX_ENABLED: true if 11ax enabled
+ * @NVM_MAC_SKU_FLAGS_MIMO_DISABLED: true if MIMO disabled
+ * @NVM_MAC_SKU_FLAGS_WAPI_ENABLED: true if WAPI enabled
+ * @NVM_MAC_SKU_FLAGS_REG_CHECK_ENABLED: true if regulatory checker enabled
+ * @NVM_MAC_SKU_FLAGS_API_LOCK_ENABLED: true if API lock enabled
+ */
+#define IWX_NVM_MAC_SKU_FLAGS_BAND_2_4_ENABLED	(1 << 0)
+#define IWX_NVM_MAC_SKU_FLAGS_BAND_5_2_ENABLED	(1 << 1)
+#define IWX_NVM_MAC_SKU_FLAGS_802_11N_ENABLED	(1 << 2)
+#define IWX_NVM_MAC_SKU_FLAGS_802_11AC_ENABLED	(1 << 3)
+#define IWX_NVM_MAC_SKU_FLAGS_802_11AX_ENABLED	(1 << 4)
+#define IWX_NVM_MAC_SKU_FLAGS_MIMO_DISABLED	(1 << 5)
+#define IWX_NVM_MAC_SKU_FLAGS_WAPI_ENABLED	(1 << 8)
+#define IWX_NVM_MAC_SKU_FLAGS_REG_CHECK_ENABLED	(1 << 14)
+#define IWX_NVM_MAC_SKU_FLAGS_API_LOCK_ENABLED	(1 << 15)
+
+/**
+ * struct iwx_nvm_get_info_sku - mac information
+ * @mac_sku_flags: flags for SKU, see &enum iwl_nvm_mac_sku_flags
+ */
+struct iwx_nvm_get_info_sku {
+	uint32_t mac_sku_flags;
+} __packed; /* REGULATORY_NVM_GET_INFO_MAC_SKU_SECTION_S_VER_2 */
+
+/**
+ * struct iwx_nvm_get_info_phy - phy information
+ * @tx_chains: BIT 0 chain A, BIT 1 chain B
+ * @rx_chains: BIT 0 chain A, BIT 1 chain B
+ */
+struct iwx_nvm_get_info_phy {
+	uint32_t tx_chains;
+	uint32_t rx_chains;
+} __packed; /* REGULATORY_NVM_GET_INFO_PHY_SKU_SECTION_S_VER_1 */
+
+#define IWX_NUM_CHANNELS_V1	51
+#define IWX_NUM_CHANNELS	110
+
+/**
+ * struct iwx_nvm_get_info_regulatory - regulatory information
+ * @lar_enabled: is LAR enabled
+ * @channel_profile: regulatory data of this channel
+ * @reserved: reserved
+ */
+struct iwx_nvm_get_info_regulatory_v1 {
+	uint32_t lar_enabled;
+	uint16_t channel_profile[IWX_NUM_CHANNELS_V1];
+	uint16_t reserved;
+} __packed; /* REGULATORY_NVM_GET_INFO_REGULATORY_S_VER_1 */
+
+/**
+ * struct iwx_nvm_get_info_regulatory - regulatory information
+ * @lar_enabled: is LAR enabled
+ * @n_channels: number of valid channels in the array
+ * @channel_profile: regulatory data of this channel
+ */
+struct iwx_nvm_get_info_regulatory {
+	uint32_t lar_enabled;
+	uint32_t n_channels;
+	uint32_t channel_profile[IWX_NUM_CHANNELS];
+} __packed; /* REGULATORY_NVM_GET_INFO_REGULATORY_S_VER_2 */
+
+/**
+ * struct iwx_nvm_get_info_rsp_v3 - response to get NVM data
+ * @general: general NVM data
+ * @mac_sku: data relating to MAC sku
+ * @phy_sku: data relating to PHY sku
+ * @regulatory: regulatory data
+ */
+struct iwx_nvm_get_info_rsp_v3 {
+	struct iwx_nvm_get_info_general general;
+	struct iwx_nvm_get_info_sku mac_sku;
+	struct iwx_nvm_get_info_phy phy_sku;
+	struct iwx_nvm_get_info_regulatory_v1 regulatory;
+} __packed; /* REGULATORY_NVM_GET_INFO_RSP_API_S_VER_3 */
+
+/**
+ * struct iwx_nvm_get_info_rsp - response to get NVM data
+ * @general: general NVM data
+ * @mac_sku: data relating to MAC sku
+ * @phy_sku: data relating to PHY sku
+ * @regulatory: regulatory data
+ */
+struct iwx_nvm_get_info_rsp {
+	struct iwx_nvm_get_info_general general;
+	struct iwx_nvm_get_info_sku mac_sku;
+	struct iwx_nvm_get_info_phy phy_sku;
+	struct iwx_nvm_get_info_regulatory regulatory;
+} __packed; /* REGULATORY_NVM_GET_INFO_RSP_API_S_VER_4 */
+
 
 #define IWX_ALIVE_STATUS_ERR 0xDEAD
 #define IWX_ALIVE_STATUS_OK 0xCAFE
@@ -1864,6 +1912,31 @@ struct iwx_alive_resp_v4 {
 	struct iwx_lmac_alive lmac_data[2];
 	struct iwx_umac_alive umac_data;
 } __packed; /* ALIVE_RES_API_S_VER_4 */
+
+#define IWX_SOC_CONFIG_CMD_FLAGS_DISCRETE	(1 << 0)
+#define IWX_SOC_CONFIG_CMD_FLAGS_LOW_LATENCY	(1 << 1)
+
+#define IWX_SOC_FLAGS_LTR_APPLY_DELAY_MASK		0xc
+#define IWX_SOC_FLAGS_LTR_APPLY_DELAY_NONE		0
+#define IWX_SOC_FLAGS_LTR_APPLY_DELAY_200		1
+#define IWX_SOC_FLAGS_LTR_APPLY_DELAY_2500		2
+#define IWX_SOC_FLAGS_LTR_APPLY_DELAY_1820		3
+
+/**
+ * struct iwx_soc_configuration_cmd - Set device stabilization latency
+ *
+ * @flags: soc settings flags.  In VER_1, we can only set the DISCRETE
+ *	flag, because the FW treats the whole value as an integer. In
+ *	VER_2, we can set the bits independently.
+ * @latency: time for SOC to ensure stable power & XTAL
+ */
+struct iwx_soc_configuration_cmd {
+	uint32_t flags;
+	uint32_t latency;
+} __packed; /*
+	     * SOC_CONFIGURATION_CMD_S_VER_1 (see description above)
+	     * SOC_CONFIGURATION_CMD_S_VER_2
+	     */
 
 /**
  * commands driver may send before finishing init flow
@@ -2794,7 +2867,15 @@ struct iwx_fw_channel_info {
  * @acquisition_data: ???
  * @dsp_cfg_flags: set to 0
  */
-struct iwx_phy_context_cmd {
+/*
+ * XXX Intel forgot to bump the PHY_CONTEXT command API when they increased
+ * the size of fw_channel_info from v1 to v2.
+ * To keep things simple we define two versions of this struct, and both
+ * are labled as CMD_API_VER_1. (The Linux iwlwifi driver performs dark
+ * magic with pointers to struct members instead.)
+ */
+/* This version must be used if IWX_UCODE_TLV_CAPA_ULTRA_HB_CHANNELS is set: */
+struct iwx_phy_context_cmd_uhb {
 	/* COMMON_INDEX_HDR_API_S_VER_1 */
 	uint32_t id_and_color;
 	uint32_t action;
@@ -2807,6 +2888,21 @@ struct iwx_phy_context_cmd {
 	uint32_t acquisition_data;
 	uint32_t dsp_cfg_flags;
 } __packed; /* IWX_PHY_CONTEXT_CMD_API_VER_1 */
+/* This version must be used otherwise: */
+struct iwx_phy_context_cmd {
+	/* COMMON_INDEX_HDR_API_S_VER_1 */
+	uint32_t id_and_color;
+	uint32_t action;
+	/* IWX_PHY_CONTEXT_DATA_API_S_VER_1 */
+	uint32_t apply_time;
+	uint32_t tx_param_color;
+	struct iwx_fw_channel_info_v1 ci;
+	uint32_t txchain_info;
+	uint32_t rxchain_info;
+	uint32_t acquisition_data;
+	uint32_t dsp_cfg_flags;
+} __packed; /* IWX_PHY_CONTEXT_CMD_API_VER_1 */
+
 
 #define IWX_RX_INFO_PHY_CNT 8
 #define IWX_RX_INFO_ENERGY_ANT_ABC_IDX 1
@@ -3973,6 +4069,13 @@ struct iwx_uapsd_misbehaving_ap_notif {
  * @ba_escape_timer: Fully receive and parse beacon if no beacons were passed
  *      for a longer period of time then this escape-timeout. Units: Beacons.
  * @ba_enable_beacon_abort: 1, beacon abort is enabled; 0, disabled.
+ * @bf_threshold_absolute_low: See below.
+ * @bf_threshold_absolute_high: Send Beacon to driver if Energy value calculated
+ *      for this beacon crossed this absolute threshold. For the 'Increase'
+ *      direction the bf_energy_absolute_low[i] is used. For the 'Decrease'
+ *      direction the bf_energy_absolute_high[i] is used. Zero value means
+ *      that this specific threshold is ignored for beacon filtering, and
+ *      beacon will not be forced to be sent to driver due to this setting.
  */
 struct iwx_beacon_filter_cmd {
 	uint32_t bf_energy_delta;
@@ -3986,7 +4089,9 @@ struct iwx_beacon_filter_cmd {
 	uint32_t bf_escape_timer;
 	uint32_t ba_escape_timer;
 	uint32_t ba_enable_beacon_abort;
-} __packed;
+	uint32_t bf_threshold_absolute_low[2];
+	uint32_t bf_threshold_absolute_high[2];
+} __packed; /* BEACON_FILTER_CONFIG_API_S_VER_4 */
 
 /* Beacon filtering and beacon abort */
 #define IWX_BF_ENERGY_DELTA_DEFAULT 5
@@ -4329,6 +4434,166 @@ enum {
 #define IWX_LQ_FLAG_DYNAMIC_BW_POS          6
 #define IWX_LQ_FLAG_DYNAMIC_BW_MSK          (1 << IWX_LQ_FLAG_DYNAMIC_BW_POS)
 
+/**
+ * Options for TLC config flags
+ * @IWX_TLC_MNG_CFG_FLAGS_STBC_MSK: enable STBC. For HE this enables STBC for
+ *				    bandwidths <= 80MHz
+ * @IWX_TLC_MNG_CFG_FLAGS_LDPC_MSK: enable LDPC
+ * @IWX_TLC_MNG_CFG_FLAGS_HE_STBC_160MHZ_MSK: enable STBC in HE at 160MHz
+ *					      bandwidth
+ * @IWX_TLC_MNG_CFG_FLAGS_HE_DCM_NSS_1_MSK: enable HE Dual Carrier Modulation
+ *					    for BPSK (MCS 0) with 1 spatial
+ *					    stream
+ * @IWX_TLC_MNG_CFG_FLAGS_HE_DCM_NSS_2_MSK: enable HE Dual Carrier Modulation
+ *					    for BPSK (MCS 0) with 2 spatial
+ *					    streams
+ */
+#define IWX_TLC_MNG_CFG_FLAGS_STBC_MSK			(1 << 0)
+#define IWX_TLC_MNG_CFG_FLAGS_LDPC_MSK			(1 << 1)
+#define IWX_TLC_MNG_CFG_FLAGS_HE_STBC_160MHZ_MSK	(1 << 2)
+#define IWX_TLC_MNG_CFG_FLAGS_HE_DCM_NSS_1_MSK		(1 << 3)
+#define IWX_TLC_MNG_CFG_FLAGS_HE_DCM_NSS_2_MSK		(1 << 4)
+
+/**
+ * enum iwx_tlc_mng_cfg_cw - channel width options
+ * @IWX_TLC_MNG_CH_WIDTH_20MHZ: 20MHZ channel
+ * @IWX_TLC_MNG_CH_WIDTH_40MHZ: 40MHZ channel
+ * @IWX_TLC_MNG_CH_WIDTH_80MHZ: 80MHZ channel
+ * @IWX_TLC_MNG_CH_WIDTH_160MHZ: 160MHZ channel
+ * @IWX_TLC_MNG_CH_WIDTH_LAST: maximum value
+ */
+enum iwx_tlc_mng_cfg_cw {
+	IWX_TLC_MNG_CH_WIDTH_20MHZ,
+	IWX_TLC_MNG_CH_WIDTH_40MHZ,
+	IWX_TLC_MNG_CH_WIDTH_80MHZ,
+	IWX_TLC_MNG_CH_WIDTH_160MHZ,
+	IWX_TLC_MNG_CH_WIDTH_LAST = IWX_TLC_MNG_CH_WIDTH_160MHZ,
+};
+
+/**
+ * @IWX_TLC_MNG_CHAIN_A_MSK: chain A
+ * @IWX_TLC_MNG_CHAIN_B_MSK: chain B
+ */
+#define IWX_TLC_MNG_CHAIN_A_MSK	(1 << 0)
+#define IWX_TLC_MNG_CHAIN_B_MSK	(1 << 1)
+
+/**
+ * enum iwx_tlc_mng_cfg_mode - supported modes
+ * @IWX_TLC_MNG_MODE_CCK: enable CCK
+ * @IWX_TLC_MNG_MODE_OFDM_NON_HT: enable OFDM (non HT)
+ * @IWX_TLC_MNG_MODE_NON_HT: enable non HT
+ * @IWX_TLC_MNG_MODE_HT: enable HT
+ * @IWX_TLC_MNG_MODE_VHT: enable VHT
+ * @IWX_TLC_MNG_MODE_HE: enable HE
+ * @IWX_TLC_MNG_MODE_INVALID: invalid value
+ * @IWX_TLC_MNG_MODE_NUM: a count of possible modes
+ */
+enum iwx_tlc_mng_cfg_mode {
+	IWX_TLC_MNG_MODE_CCK = 0,
+	IWX_TLC_MNG_MODE_OFDM_NON_HT = IWX_TLC_MNG_MODE_CCK,
+	IWX_TLC_MNG_MODE_NON_HT = IWX_TLC_MNG_MODE_CCK,
+	IWX_TLC_MNG_MODE_HT,
+	IWX_TLC_MNG_MODE_VHT,
+	IWX_TLC_MNG_MODE_HE,
+	IWX_TLC_MNG_MODE_INVALID,
+	IWX_TLC_MNG_MODE_NUM = IWX_TLC_MNG_MODE_INVALID,
+};
+
+/**
+ * @IWX_TLC_MNG_HT_RATE_MCS0: index of MCS0
+ * @IWX_TLC_MNG_HT_RATE_MCS1: index of MCS1
+ * @IWX_TLC_MNG_HT_RATE_MCS2: index of MCS2
+ * @IWX_TLC_MNG_HT_RATE_MCS3: index of MCS3
+ * @IWX_TLC_MNG_HT_RATE_MCS4: index of MCS4
+ * @IWX_TLC_MNG_HT_RATE_MCS5: index of MCS5
+ * @IWX_TLC_MNG_HT_RATE_MCS6: index of MCS6
+ * @IWX_TLC_MNG_HT_RATE_MCS7: index of MCS7
+ * @IWX_TLC_MNG_HT_RATE_MCS8: index of MCS8
+ * @IWX_TLC_MNG_HT_RATE_MCS9: index of MCS9
+ * @IWX_TLC_MNG_HT_RATE_MCS10: index of MCS10
+ * @IWX_TLC_MNG_HT_RATE_MCS11: index of MCS11
+ * @IWX_TLC_MNG_HT_RATE_MAX: maximal rate for HT/VHT
+ */
+enum iwx_tlc_mng_ht_rates {
+	IWX_TLC_MNG_HT_RATE_MCS0 = 0,
+	IWX_TLC_MNG_HT_RATE_MCS1,
+	IWX_TLC_MNG_HT_RATE_MCS2,
+	IWX_TLC_MNG_HT_RATE_MCS3,
+	IWX_TLC_MNG_HT_RATE_MCS4,
+	IWX_TLC_MNG_HT_RATE_MCS5,
+	IWX_TLC_MNG_HT_RATE_MCS6,
+	IWX_TLC_MNG_HT_RATE_MCS7,
+	IWX_TLC_MNG_HT_RATE_MCS8,
+	IWX_TLC_MNG_HT_RATE_MCS9,
+	IWX_TLC_MNG_HT_RATE_MCS10,
+	IWX_TLC_MNG_HT_RATE_MCS11,
+	IWX_TLC_MNG_HT_RATE_MAX = IWX_TLC_MNG_HT_RATE_MCS11,
+};
+
+#define IWX_TLC_NSS_1	0
+#define IWX_TLC_NSS_2	1
+#define IWX_TLC_NSS_MAX	2
+
+#define IWX_TLC_HT_BW_NONE_160	0
+#define IWX_TLC_HT_BW_160	1
+
+/**
+ * struct iwx_tlc_config_cmd - TLC configuration
+ * @sta_id: station id
+ * @reserved1: reserved
+ * @max_ch_width: max supported channel width from @enum iwx_tlc_mng_cfg_cw
+ * @mode: &enum iwx_tlc_mng_cfg_mode
+ * @chains: bitmask of IWX_TLC_MNG_CHAIN_*_MSK
+ * @amsdu: 1 = TX amsdu is supported, 0 = not supported
+ * @flags: bitmask of IWX_TLC_MNG_CFG_*
+ * @non_ht_rates: bitmap of supported legacy rates
+ * @ht_rates: bitmap of &enum iwx_tlc_mng_ht_rates, per <nss, channel-width>
+ *	      pair (0 - 80mhz width and below, 1 - 160mhz).
+ * @max_mpdu_len: max MPDU length, in bytes
+ * @sgi_ch_width_supp: bitmap of SGI support per channel width
+ *		       use (1 << @enum iwx_tlc_mng_cfg_cw)
+ * @reserved2: reserved
+ */
+struct iwx_tlc_config_cmd {
+	uint8_t sta_id;
+	uint8_t reserved1[3];
+	uint8_t max_ch_width;
+	uint8_t mode;
+	uint8_t chains;
+	uint8_t amsdu;
+	uint16_t flags;
+	uint16_t non_ht_rates;
+	uint16_t ht_rates[IWX_TLC_NSS_MAX][2];
+	uint16_t max_mpdu_len;
+	uint8_t sgi_ch_width_supp;
+	uint8_t reserved2[1];
+} __packed; /* TLC_MNG_CONFIG_CMD_API_S_VER_2 */
+
+/**
+ * @IWX_TLC_NOTIF_FLAG_RATE: last initial rate update
+ * @IWX_TLC_NOTIF_FLAG_AMSDU: umsdu parameters update
+ */
+#define IWX_TLC_NOTIF_FLAG_RATE		(1 << 0)
+#define IWX_TLC_NOTIF_FLAG_AMSDU	(1 << 1)
+
+/**
+ * struct iwx_tlc_update_notif - TLC notification from FW
+ * @sta_id: station id
+ * @reserved: reserved
+ * @flags: bitmap of notifications reported
+ * @rate: current initial rate
+ * @amsdu_size: Max AMSDU size, in bytes
+ * @amsdu_enabled: bitmap for per-TID AMSDU enablement
+ */
+struct iwx_tlc_update_notif {
+	uint8_t sta_id;
+	uint8_t reserved[3];
+	uint32_t flags;
+	uint32_t rate;
+	uint32_t amsdu_size;
+	uint32_t amsdu_enabled;
+} __packed; /* TLC_MNG_UPDATE_NTFY_API_S_VER_2 */
+
 /* Antenna flags. */
 #define IWX_ANT_A	(1 << 0)
 #define IWX_ANT_B	(1 << 1)
@@ -4486,10 +4751,10 @@ enum {
  *	alignment
  * @TX_CMD_OFFLD_AMSDU: mark TX command is A-MSDU
  */
-#define IWX_TX_CMD_OFFLD_IP_HDR		(1 << 0)
+#define IWX_TX_CMD_OFFLD_IP_HDR(x)	((x) << 0)
 #define IWX_TX_CMD_OFFLD_L4_EN		(1 << 6)
 #define IWX_TX_CMD_OFFLD_L3_EN		(1 << 7)
-#define IWX_TX_CMD_OFFLD_MH_SIZE	(1 << 8)
+#define IWX_TX_CMD_OFFLD_MH_SIZE(x)	((x) << 8)
 #define IWX_TX_CMD_OFFLD_PAD		(1 << 13)
 #define IWX_TX_CMD_OFFLD_AMSDU		(1 << 14)
 #define IWX_TX_CMD_OFFLD_MH_MASK	0x1f
@@ -5291,6 +5556,45 @@ struct iwx_scan_config {
 #define IWX_UMAC_SCAN_GEN_FLAGS2_ALLOW_CHNL_REORDER	(1 << 1)
 
 /**
+ * UMAC scan general flags version 2
+ *
+ * The FW flags were reordered and hence the driver introduce version 2
+ *
+ * @IWX_UMAC_SCAN_GEN_FLAGS_V2_PERIODIC: periodic or scheduled
+ * @IWX_UMAC_SCAN_GEN_FLAGS_V2_PASS_ALL: pass all probe responses and beacons
+ *                                       during scan iterations
+ * @IWX_UMAC_SCAN_GEN_FLAGS_V2_NTFY_ITER_COMPLETE: send complete notification
+ *      on every iteration instead of only once after the last iteration
+ * @IWX_UMAC_SCAN_GEN_FLAGS_V2_FRAGMENTED_LMAC1: fragmented scan LMAC1
+ * @IWX_UMAC_SCAN_GEN_FLAGS_V2_FRAGMENTED_LMAC2: fragmented scan LMAC2
+ * @IWX_UMAC_SCAN_GEN_FLAGS_V2_MATCH: does this scan check for profile matching
+ * @IWX_UMAC_SCAN_GEN_FLAGS_V2_USE_ALL_RX_CHAINS: use all valid chains for RX
+ * @IWX_UMAC_SCAN_GEN_FLAGS_V2_ADAPTIVE_DWELL: works with adaptive dwell
+ *                                             for active channel
+ * @IWX_UMAC_SCAN_GEN_FLAGS_V2_PREEMPTIVE: can be preempted by other requests
+ * @IWX_UMAC_SCAN_GEN_FLAGS_V2_NTF_START: send notification of scan start
+ * @IWX_UMAC_SCAN_GEN_FLAGS_V2_MULTI_SSID: matching on multiple SSIDs
+ * @IWX_UMAC_SCAN_GEN_FLAGS_V2_FORCE_PASSIVE: all the channels scanned
+ *                                           as passive
+ * @IWX_UMAC_SCAN_GEN_FLAGS_V2_TRIGGER_UHB_SCAN: at the end of 2.4GHz and
+ *		5.2Ghz bands scan, trigger scan on 6GHz band to discover
+ *		the reported collocated APs
+ */
+#define IWX_UMAC_SCAN_GEN_FLAGS_V2_PERIODIC             (1 << 0)
+#define IWX_UMAC_SCAN_GEN_FLAGS_V2_PASS_ALL             (1 << 1)
+#define IWX_UMAC_SCAN_GEN_FLAGS_V2_NTFY_ITER_COMPLETE   (1 << 2)
+#define IWX_UMAC_SCAN_GEN_FLAGS_V2_FRAGMENTED_LMAC1     (1 << 3)
+#define IWX_UMAC_SCAN_GEN_FLAGS_V2_FRAGMENTED_LMAC2     (1 << 4)
+#define IWX_UMAC_SCAN_GEN_FLAGS_V2_MATCH                (1 << 5)
+#define IWX_UMAC_SCAN_GEN_FLAGS_V2_USE_ALL_RX_CHAINS    (1 << 6)
+#define IWX_UMAC_SCAN_GEN_FLAGS_V2_ADAPTIVE_DWELL       (1 << 7)
+#define IWX_UMAC_SCAN_GEN_FLAGS_V2_PREEMPTIVE           (1 << 8)
+#define IWX_UMAC_SCAN_GEN_FLAGS_V2_NTF_START            (1 << 9)
+#define IWX_UMAC_SCAN_GEN_FLAGS_V2_MULTI_SSID           (1 << 10)
+#define IWX_UMAC_SCAN_GEN_FLAGS_V2_FORCE_PASSIVE        (1 << 11)
+#define IWX_UMAC_SCAN_GEN_FLAGS_V2_TRIGGER_UHB_SCAN     (1 << 12)
+
+/**
  * struct iwx_scan_channel_cfg_umac
  * @flags:		bitmap - 0-19:	directed scan to i'th ssid.
  * @channel_num:	channel number 1-13 etc.
@@ -5299,10 +5603,20 @@ struct iwx_scan_config {
  */
 struct iwx_scan_channel_cfg_umac {
 	uint32_t flags;
-	uint8_t channel_num;
-	uint8_t iter_count;
-	uint16_t iter_interval;
-} __packed; /* SCAN_CHANNEL_CFG_S_VER2 */
+	union {
+		struct {
+			uint8_t channel_num;
+			uint8_t iter_count;
+			uint16_t iter_interval;
+		} v1; /* SCAN_CHANNEL_CFG_S_VER1 */
+		struct {
+			uint8_t channel_num;
+			uint8_t band;
+			uint8_t iter_count;
+			uint8_t iter_interval;
+		} v2; /* SCAN_CHANNEL_CFG_S_VER{2,3,4} */
+	};
+} __packed;
 
 /**
  * struct iwx_scan_umac_schedule
@@ -5671,7 +5985,7 @@ struct iwx_umac_scan_iter_complete_notif {
  * @IWX_STA_KEY_FLG_KEYID_MSK: the index of the key
  * @IWX_STA_KEY_NOT_VALID: key is invalid
  * @IWX_STA_KEY_FLG_WEP_13BYTES: set for 13 bytes WEP key
- * @IWX_STA_KEY_MULTICAST: set for multical key
+ * @IWX_STA_KEY_MULTICAST: set for multicast key
  * @IWX_STA_KEY_MFP: key is used for Management Frame Protection
  */
 #define IWX_STA_KEY_FLG_NO_ENC		(0 << 0)
@@ -5865,28 +6179,49 @@ struct iwx_add_sta_cmd {
 #define IWX_STA_AUX_ACTIVITY	4
 
 /**
- * struct iwx_add_sta_key_cmd - add/modify sta key
- * ( IWX_REPLY_ADD_STA_KEY = 0x17 )
+ * struct iwx_add_sta_key_common - add/modify sta key common part
+ * ( REPLY_ADD_STA_KEY = 0x17 )
  * @sta_id: index of station in uCode's station table
  * @key_offset: key offset in key storage
- * @key_flags: type %iwx_sta_key_flag
+ * @key_flags: IWX_STA_KEY_FLG_* 
  * @key: key material data
- * @key2: key material data
  * @rx_secur_seq_cnt: RX security sequence counter for the key
- * @tkip_rx_tsc_byte2: TSC[2] for key mix ph1 detection
- * @tkip_rx_ttak: 10-byte unicast TKIP TTAK for Rx
  */
-struct iwx_add_sta_key_cmd {
+struct iwx_add_sta_key_common {
 	uint8_t sta_id;
 	uint8_t key_offset;
 	uint16_t key_flags;
-	uint8_t key[16];
-	uint8_t key2[16];
+	uint8_t key[32];
 	uint8_t rx_secur_seq_cnt[16];
+} __packed;
+
+/**
+ * struct iwx_add_sta_key_cmd_v1 - add/modify sta key
+ * @common: see &struct iwx_add_sta_key_common
+ * @tkip_rx_tsc_byte2: TSC[2] for key mix ph1 detection
+ * @reserved: reserved
+ * @tkip_rx_ttak: 10-byte unicast TKIP TTAK for Rx
+ */
+struct iwx_add_sta_key_cmd_v1 {
+	struct iwx_add_sta_key_common common;
 	uint8_t tkip_rx_tsc_byte2;
 	uint8_t reserved;
 	uint16_t tkip_rx_ttak[5];
-} __packed; /* IWX_ADD_MODIFY_STA_KEY_API_S_VER_1 */
+} __packed; /* ADD_MODIFY_STA_KEY_API_S_VER_1 */
+
+/**
+ * struct iwx_add_sta_key_cmd - add/modify sta key
+ * @common: see &struct iwx_add_sta_key_common
+ * @rx_mic_key: TKIP RX unicast or multicast key
+ * @tx_mic_key: TKIP TX key
+ * @transmit_seq_cnt: TSC, transmit packet number
+ */
+struct iwx_add_sta_key_cmd {
+	struct iwx_add_sta_key_common common;
+	uint64_t rx_mic_key;
+	uint64_t tx_mic_key;
+	uint64_t transmit_seq_cnt;
+} __packed; /* ADD_MODIFY_STA_KEY_API_S_VER_2 */
 
 /**
  * status in the response to ADD_STA command
@@ -5991,7 +6326,7 @@ struct iwx_bt_coex_cmd {
  * 'ZZ' MCC will be used to switch to NVM default profile; in this case, the
  * MCC in the cmd response will be the relevant MCC in the NVM.
  * @mcc: given mobile country code
- * @source_id: the source from where we got the MCC, see iwx_mcc_source
+ * @source_id: the source from where we got the MCC, see IWX_MCC_SOURCE_*
  * @reserved: reserved for alignment
  * @key: integrity key for MCC API OEM testing
  * @reserved2: reserved
@@ -6005,14 +6340,14 @@ struct iwx_mcc_update_cmd {
 } __packed; /* LAR_UPDATE_MCC_CMD_API_S_VER_2 */
 
 /**
- * iwx_mcc_update_resp - response to MCC_UPDATE_CMD.
+ * iwx_mcc_update_resp_v3 - response to MCC_UPDATE_CMD.
  * Contains the new channel control profile map, if changed, and the new MCC
  * (mobile country code).
  * The new MCC may be different than what was requested in MCC_UPDATE_CMD.
  * @status: see &enum iwx_mcc_update_status
  * @mcc: the new applied MCC
  * @cap: capabilities for all channels which matches the MCC
- * @source_id: the MCC source, see iwx_mcc_source
+ * @source_id: the MCC source, see IWX_MCC_SOURCE_*
  * @time: time elapsed from the MCC test start (in 30 seconds TU)
  * @reserved: reserved.
  * @n_channels: number of channels in @channels_data (may be 14, 39, 50 or 51
@@ -6020,16 +6355,87 @@ struct iwx_mcc_update_cmd {
  * @channels: channel control data map, DWORD for each channel. Only the first
  *	16bits are used.
  */
-struct iwx_mcc_update_resp {
+struct iwx_mcc_update_resp_v3 {
 	uint32_t status;
 	uint16_t mcc;
 	uint8_t cap;
 	uint8_t source_id;
 	uint16_t time;
-	uint16_t reserved;
+	uint16_t geo_info;
 	uint32_t n_channels;
 	uint32_t channels[0];
-} __packed; /* LAR_UPDATE_MCC_CMD_RESP_S_VER_2 */
+} __packed; /* LAR_UPDATE_MCC_CMD_RESP_S_VER_3 */
+
+/**
+ * geographic information.
+ * @GEO_NO_INFO: no special info for this geo profile.
+ * @GEO_WMM_ETSI_5GHZ_INFO: this geo profile limits the WMM params
+ *	for the 5 GHz band.
+ */
+#define IWX_GEO_NO_INFO			0
+#define IWX_GEO_WMM_ETSI_5GHZ_INFO (1 << 0)
+
+/**
+ * struct iwx_mcc_update_resp - response to MCC_UPDATE_CMD.
+ * Contains the new channel control profile map, if changed, and the new MCC
+ * (mobile country code).
+ * The new MCC may be different than what was requested in MCC_UPDATE_CMD.
+ * @status: see &enum iwl_mcc_update_status
+ * @mcc: the new applied MCC
+ * @cap: capabilities for all channels which matches the MCC
+ * @time: time elapsed from the MCC test start (in units of 30 seconds)
+ * @geo_info: geographic specific profile information
+ *	see IWX_GEO_*
+ * @source_id: the MCC source, see IWX_MCC_SOURCE_*
+ * @reserved: for four bytes alignment.
+ * @n_channels: number of channels in @channels_data.
+ * @channels: channel control data map, DWORD for each channel. Only the first
+ *	16bits are used.
+ */
+struct iwx_mcc_update_resp {
+	uint32_t status;
+	uint16_t mcc;
+	uint16_t cap;
+	uint16_t time;
+	uint16_t geo_info;
+	uint8_t source_id;
+	uint8_t reserved[3];
+	uint32_t n_channels;
+	uint32_t channels[0];
+} __packed; /* LAR_UPDATE_MCC_CMD_RESP_S_VER_4 */
+
+/**
+ * struct iwx_mcc_chub_notif - chub notifies of mcc change
+ * (MCC_CHUB_UPDATE_CMD = 0xc9)
+ * The Chub (Communication Hub, CommsHUB) is a HW component that connects to
+ * the cellular and connectivity cores that gets updates of the mcc, and
+ * notifies the ucode directly of any mcc change.
+ * The ucode requests the driver to request the device to update geographic
+ * regulatory  profile according to the given MCC (Mobile Country Code).
+ * The MCC is two letter-code, ascii upper case[A-Z] or '00' for world domain.
+ * 'ZZ' MCC will be used to switch to NVM default profile; in this case, the
+ * MCC in the cmd response will be the relevant MCC in the NVM.
+ * @mcc: given mobile country code
+ * @source_id: identity of the change originator, see IWX_MCC_SOURCE_*
+ * @reserved1: reserved for alignment
+ */
+struct iwx_mcc_chub_notif {
+	uint16_t mcc;
+	uint8_t source_id;
+	uint8_t reserved1;
+} __packed; /* LAR_MCC_NOTIFY_S */
+
+enum iwx_mcc_update_status {
+	IWX_MCC_RESP_NEW_CHAN_PROFILE,
+	IWX_MCC_RESP_SAME_CHAN_PROFILE,
+	IWX_MCC_RESP_INVALID,
+	IWX_MCC_RESP_NVM_DISABLED,
+	IWX_MCC_RESP_ILLEGAL,
+	IWX_MCC_RESP_LOW_PRIORITY,
+	IWX_MCC_RESP_TEST_MODE_ACTIVE,
+	IWX_MCC_RESP_TEST_MODE_NOT_ACTIVE,
+	IWX_MCC_RESP_TEST_MODE_DENIAL_OF_SERVICE,
+};
 
 #define IWX_MCC_SOURCE_OLD_FW			0
 #define IWX_MCC_SOURCE_ME			1
@@ -6156,6 +6562,7 @@ struct iwx_rx_packet {
 #define	IWX_FH_RSCSR_FRAME_INVALID	0x55550000
 #define	IWX_FH_RSCSR_FRAME_ALIGN	0x40
 #define	IWX_FH_RSCSR_RPA_EN		(1 << 25)
+#define	IWX_FH_RSCSR_RADA_EN		(1 << 26)
 #define	IWX_FH_RSCSR_RXQ_POS		16
 #define	IWX_FH_RSCSR_RXQ_MASK		0x3F0000
 

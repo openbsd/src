@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.169 2020/03/15 05:34:13 visa Exp $	*/
+/*	$OpenBSD: in.c,v 1.170 2020/05/27 11:19:28 mpi Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -569,7 +569,7 @@ in_ioctl_get(u_long cmd, caddr_t data, struct ifnet *ifp)
 			return (error);
 	}
 
-	NET_RLOCK();
+	NET_RLOCK_IN_IOCTL();
 
 	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 		if (ifa->ifa_addr->sa_family != AF_INET)
@@ -620,7 +620,7 @@ in_ioctl_get(u_long cmd, caddr_t data, struct ifnet *ifp)
 	}
 
 err:
-	NET_RUNLOCK();
+	NET_RUNLOCK_IN_IOCTL();
 	return (error);
 }
 

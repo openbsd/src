@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.131 2020/04/27 21:30:52 patrick Exp $
+#	$OpenBSD: files.fdt,v 1.141 2020/06/25 12:09:11 patrick Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -6,6 +6,14 @@
 device	pinctrl
 attach	pinctrl at fdt
 file	dev/fdt/pinctrl.c		pinctrl
+
+device	simpleamp
+attach	simpleamp at fdt
+file	dev/fdt/simpleamp.c		simpleamp
+
+device	simpleaudio: audio
+attach	simpleaudio at fdt
+file	dev/fdt/simpleaudio.c		simpleaudio
 
 device	simplefb: wsemuldisplaydev, rasops15, rasops16, rasops24, rasops32
 attach	simplefb at fdt
@@ -125,8 +133,16 @@ device	bcmtemp
 attach	bcmtemp at fdt
 file	dev/fdt/bcm2835_temp.c		bcmtemp
 
+device	bcmtmon
+attach  bcmtmon at fdt
+file    dev/fdt/bcm2711_tmon.c		bcmtmon
+
 attach	bse at fdt with bse_fdt
 file	dev/fdt/if_bse_fdt.c		bse_fdt
+
+include	"dev/usb/dwc2/files.dwc2"
+attach	dwctwo at fdt with bcmdwctwo
+file	dev/fdt/bcm2835_dwctwo.c	bcmdwctwo	needs-flag
 
 device	exrtc
 attach	exrtc at fdt
@@ -219,6 +235,10 @@ device	amlpwm
 attach	amlpwm at fdt
 file	dev/fdt/amlpwm.c		amlpwm
 
+device	amlpwrc
+attach	amlpwrc at fdt
+file	dev/fdt/amlpwrc.c		amlpwrc
+
 device	amlreset
 attach	amlreset at fdt
 file	dev/fdt/amlreset.c		amlreset
@@ -297,6 +317,10 @@ device	rkiic: i2cbus
 attach	rkiic at fdt
 file	dev/fdt/rkiic.c			rkiic
 
+device	rkiis
+attach	rkiis at fdt
+file	dev/fdt/rkiis.c			rkiis
+
 device	rkpmic
 attach	rkpmic at i2c
 file	dev/fdt/rkpmic.c		rkpmic
@@ -366,6 +390,10 @@ device	mviic: i2cbus
 attach	mviic at fdt
 file	dev/fdt/mviic.c			mviic
 
+device	mvkpcie: pcibus
+attach	mvkpcie at fdt
+file	dev/fdt/mvkpcie.c		mvkpcie
+
 device	mvpinctrl
 attach	mvpinctrl at fdt
 file	dev/fdt/mvpinctrl.c		mvpinctrl
@@ -377,6 +405,12 @@ file	dev/fdt/mvmdio.c		mvmdio
 device	mvneta: ether, ifnet, mii, ifmedia
 attach	mvneta at fdt
 file	dev/fdt/if_mvneta.c		mvneta
+
+device	mvppc {}
+attach	mvppc at fdt
+device	mvpp: ether, ifnet, mii, ifmedia
+attach	mvpp at mvppc
+file	dev/fdt/if_mvpp.c		mvppc | mvpp
 
 device	mvrng
 attach	mvrng at fdt
@@ -500,3 +534,11 @@ file	dev/fdt/bd718x7.c		bdpmic
 device	tcpci
 attach	tcpci at i2c
 file	dev/fdt/tcpci.c			tcpci
+
+device	escodec
+attach	escodec at i2c
+file	dev/fdt/es8316ac.c		escodec
+
+device	cwfg
+attach	cwfg at i2c
+file	dev/fdt/cwfg.c			cwfg

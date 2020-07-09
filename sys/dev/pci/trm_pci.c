@@ -1,17 +1,17 @@
-/*	$OpenBSD: trm_pci.c,v 1.4 2006/11/28 23:59:45 dlg Exp $
+/*	$OpenBSD: trm_pci.c,v 1.7 2020/07/02 13:29:20 krw Exp $
  * ------------------------------------------------------------
  *       O.S     : OpenBSD
- *    FILE NAME  : trm_pci.c                          
+ *    FILE NAME  : trm_pci.c
  *         BY    : Erich Chen     (erich@tekram.com.tw)
- *    Description: Device Driver for Tekram DC395U/UW/F,DC315/U 
- *                 PCI SCSI Bus Master Host Adapter    
+ *    Description: Device Driver for Tekram DC395U/UW/F,DC315/U
+ *                 PCI SCSI Bus Master Host Adapter
  *                 (SCSI chip set used Tekram ASIC TRM-S1040)
  * (C)Copyright 1995-1999 Tekram Technology Co., Ltd.
  * (C)Copyright 2001-2002 Ashley R. Martens and Kenneth R. Westerback
  * ------------------------------------------------------------
- *    HISTORY:                    
- *                        
- *  REV#   DATE          NAME           DESCRIPTION    
+ *    HISTORY:
+ *
+ *  REV#   DATE          NAME           DESCRIPTION
  *  1.00   05/01/99      ERICH CHEN     First released for NetBSD 1.4.x
  *  1.01   00/00/00      MARTIN AKESSON Port to OpenBSD 2.8
  *  1.02   Sep 19, 2001  ASHLEY MARTENS Cleanup and formatting
@@ -65,6 +65,14 @@ struct  cfattach trm_pci_ca = {
 	NULL,			/* Activate */
 };
 
+struct  cfdriver trm_cd = {
+        NULL, "trm", DV_DULL
+};
+
+struct scsi_adapter trm_switch = {
+	trm_scsi_cmd, NULL, NULL, NULL, NULL
+};
+
 
 /*
  * ------------------------------------------------------------
@@ -72,7 +80,7 @@ struct  cfattach trm_pci_ca = {
  * Purpose  : Check the slots looking for a board we recognize.
  *            If we find one, note ti's address (slot) and call
  *            the actual probe routine to check it out.
- * Inputs   : 
+ * Inputs   :
  * ------------------------------------------------------------
  */
 int
@@ -92,7 +100,7 @@ trm_pci_probe(struct device *parent, void *match, void *aux)
 /*
  * ------------------------------------------------------------
  * Function : trm_pci_attach
- * Purpose  : 
+ * Purpose  :
  * Inputs   :
  * ------------------------------------------------------------
  */
@@ -113,7 +121,7 @@ trm_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_TEKRAM2_DC3X5U)
 		return;
 
-	/* 
+	/*
 	 * mask for get correct base address of pci IO port
 	 */
 	if (pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_IO, 0,
@@ -122,7 +130,7 @@ trm_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	/*    
+	/*
 	 * test checksum of eeprom & initial "ACB" adapter control block
 	 */
 	sc->sc_iotag    = iot;
@@ -135,7 +143,7 @@ trm_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/*
-	 *  Map and establish interrupt 
+	 *  Map and establish interrupt
 	 */
 	if (pci_intr_map(pa, &ih)) {
 		printf("%s: couldn't map interrupt\n", sc->sc_device.dv_xname);
@@ -149,11 +157,17 @@ trm_pci_attach(struct device *parent, struct device *self, void *aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-	} else { 
+	} else {
 		if (intrstr != NULL)
 			printf(": %s\n", intrstr);
 
-		bzero(&saa, sizeof(saa));
+		sc->sc_link.adapter_softc    = sc;
+		sc->sc_link.adapter_target   = sc->sc_AdaptSCSIID;
+		sc->sc_link.openings         = 30; /* So TagMask (32 bit integer) always has space */
+		sc->sc_link.adapter          = &trm_switch;
+		sc->sc_link.adapter_buswidth = ((sc->sc_config & HCC_WIDE_CARD) == 0) ? 8:16;
+		sc->sc_link.pool	     = &sc->sc_iopool;
+
 		saa.saa_sc_link = &sc->sc_link;
 
 		/* Tell SCSI layer about our SCSI bus */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_linux.c,v 1.46 2018/11/20 08:04:28 deraadt Exp $	*/
+/*	$OpenBSD: getentropy_linux.c,v 1.47 2020/05/17 14:44:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -57,7 +57,7 @@
 #include <sys/vfs.h>
 
 #define REPEAT 5
-#define min(a, b) (((a) < (b)) ? (a) : (b))
+#define MINIMUM(a, b) (((a) < (b)) ? (a) : (b))
 
 #define HX(a, b) \
 	do { \
@@ -260,7 +260,7 @@ getentropy_sysctl(void *buf, size_t len)
 	int save_errno = errno;
 
 	for (i = 0; i < len; ) {
-		size_t chunk = min(len - i, 16);
+		size_t chunk = MINIMUM(len - i, 16);
 
 		/* SYS__sysctl because some systems already removed sysctl() */
 		struct __sysctl_args args = {
@@ -515,8 +515,8 @@ getentropy_fallback(void *buf, size_t len)
 #endif
 
 		SHA512_Final(results, &ctx);
-		memcpy((char *)buf + i, results, min(sizeof(results), len - i));
-		i += min(sizeof(results), len - i);
+		memcpy((char *)buf + i, results, MINIMUM(sizeof(results), len - i));
+		i += MINIMUM(sizeof(results), len - i);
 	}
 	explicit_bzero(&ctx, sizeof ctx);
 	explicit_bzero(results, sizeof results);

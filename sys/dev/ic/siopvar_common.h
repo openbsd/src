@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopvar_common.h,v 1.30 2020/02/17 02:50:23 krw Exp $ */
+/*	$OpenBSD: siopvar_common.h,v 1.31 2020/07/01 00:02:08 krw Exp $ */
 /*	$NetBSD: siopvar_common.h,v 1.33 2005/11/18 23:10:32 bouyer Exp $ */
 
 /*
@@ -130,6 +130,7 @@ struct siop_common_target {
 struct siop_common_softc {
 	struct device sc_dev;
 	struct scsi_link sc_link;	/* link to upper level */
+	u_int16_t sc_id;		/* adapter's target on bus */
 	int features;			/* chip's features */
 	int ram_size;
 	int maxburst;

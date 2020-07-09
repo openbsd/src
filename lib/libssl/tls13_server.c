@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.34 2020/04/28 20:37:22 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.61 2020/07/03 04:12:51 tb Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -15,6 +15,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <openssl/x509v3.h>
 
 #include "ssl_locl.h"
 #include "ssl_tlsext.h"
@@ -34,10 +36,15 @@ tls13_server_init(struct tls13_ctx *ctx)
 	}
 	s->version = ctx->hs->max_version;
 
-	if (!tls1_transcript_init(s))
+	tls13_record_layer_set_retry_after_phh(ctx->rl,
+	    (s->internal->mode & SSL_MODE_AUTO_RETRY) != 0);
+
+	if (!ssl_get_new_session(s, 0)) /* XXX */
 		return 0;
 
-	if ((s->session = SSL_SESSION_new()) == NULL)
+	tls13_record_layer_set_legacy_version(ctx->rl, TLS1_VERSION);
+
+	if (!tls1_transcript_init(s))
 		return 0;
 
 	arc4random_buf(s->s3->server_random, SSL3_RANDOM_SIZE);
@@ -89,6 +96,46 @@ tls13_client_hello_is_legacy(CBS *cbs)
 	return (max_version < TLS1_3_VERSION);
 }
 
+int
+tls13_client_hello_required_extensions(struct tls13_ctx *ctx)
+{
+	SSL *ssl = ctx->ssl;
+
+	/*
+	 * RFC 8446, section 9.2. If the ClientHello has supported_versions
+	 * containing TLSv1.3, presence or absence of some extensions requires
+	 * presence or absence of others.
+	 */
+
+	/*
+	 * If we got no pre_shared_key, then signature_algorithms and
+	 * supported_groups must both be present.
+	 */
+	if (!tlsext_extension_seen(ssl, TLSEXT_TYPE_pre_shared_key)) {
+		if (!tlsext_extension_seen(ssl, TLSEXT_TYPE_signature_algorithms))
+			return 0;
+		if (!tlsext_extension_seen(ssl, TLSEXT_TYPE_supported_groups))
+			return 0;
+	}
+
+	/*
+	 * supported_groups and key_share must either both be present or
+	 * both be absent.
+	 */
+	if (tlsext_extension_seen(ssl, TLSEXT_TYPE_supported_groups) !=
+	    tlsext_extension_seen(ssl, TLSEXT_TYPE_key_share))
+		return 0;
+
+	/*
+	 * XXX - Require server_name from client? If so, we SHOULD enforce
+	 * this here - RFC 8446, 9.2.
+	 */
+
+	return 1;
+}
+
+static const uint8_t tls13_compression_null_only[] = { 0 };
+
 static int
 tls13_client_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 {
@@ -96,8 +143,7 @@ tls13_client_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 	STACK_OF(SSL_CIPHER) *ciphers = NULL;
 	const SSL_CIPHER *cipher;
 	uint16_t legacy_version;
-	uint8_t compression_method;
-	int alert_desc, comp_null;
+	int alert_desc;
 	SSL *s = ctx->ssl;
 	int ret = 0;
 
@@ -112,14 +158,60 @@ tls13_client_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 	if (!CBS_get_u8_length_prefixed(cbs, &compression_methods))
 		goto err;
 
-	if (tls13_client_hello_is_legacy(cbs)) {
+	if (tls13_client_hello_is_legacy(cbs) || s->version < TLS1_3_VERSION) {
 		if (!CBS_skip(cbs, CBS_len(cbs)))
 			goto err;
 		return tls13_use_legacy_server(ctx);
 	}
 
-	if (!tlsext_server_parse(s, cbs, &alert_desc, SSL_TLSEXT_MSG_CH)) {
+	/* Add decoded values to the current ClientHello hash */
+	if (!tls13_clienthello_hash_init(ctx)) {
+		ctx->alert = TLS13_ALERT_INTERNAL_ERROR;
+		goto err;
+	}
+	if (!tls13_clienthello_hash_update_bytes(ctx, (void *)&legacy_version,
+	    sizeof(legacy_version))) {
+		ctx->alert = TLS13_ALERT_INTERNAL_ERROR;
+		goto err;
+	}
+	if (!tls13_clienthello_hash_update(ctx, &client_random)) {
+		ctx->alert = TLS13_ALERT_INTERNAL_ERROR;
+		goto err;
+	}
+	if (!tls13_clienthello_hash_update(ctx, &session_id)) {
+		ctx->alert = TLS13_ALERT_INTERNAL_ERROR;
+		goto err;
+	}
+	if (!tls13_clienthello_hash_update(ctx, &cipher_suites)) {
+		ctx->alert = TLS13_ALERT_INTERNAL_ERROR;
+		goto err;
+	}
+	if (!tls13_clienthello_hash_update(ctx, &compression_methods)) {
+		ctx->alert = TLS13_ALERT_INTERNAL_ERROR;
+		goto err;
+	}
+
+	if (!tlsext_server_parse(s, SSL_TLSEXT_MSG_CH, cbs, &alert_desc)) {
 		ctx->alert = alert_desc;
+		goto err;
+	}
+
+	/* Finalize first ClientHello hash, or validate against it */
+	if (!ctx->hs->hrr) {
+		if (!tls13_clienthello_hash_finalize(ctx)) {
+			ctx->alert = TLS13_ALERT_INTERNAL_ERROR;
+			goto err;
+		}
+	} else {
+		if (!tls13_clienthello_hash_validate(ctx)) {
+			ctx->alert = TLS13_ALERT_ILLEGAL_PARAMETER;
+			goto err;
+		}
+		tls13_clienthello_hash_clear(ctx->hs);
+	}
+
+	if (!tls13_client_hello_required_extensions(ctx)) {
+		ctx->alert = TLS13_ALERT_MISSING_EXTENSION;
 		goto err;
 	}
 
@@ -128,43 +220,40 @@ tls13_client_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 	 * TLS 1.3 or later. This requires the legacy version be set to 0x0303.
 	 */
 	if (legacy_version != TLS1_2_VERSION) {
-		ctx->alert = SSL_AD_PROTOCOL_VERSION;
+		ctx->alert = TLS13_ALERT_PROTOCOL_VERSION;
 		goto err;
 	}
 
 	/* Store legacy session identifier so we can echo it. */
 	if (CBS_len(&session_id) > sizeof(ctx->hs->legacy_session_id)) {
-		ctx->alert = SSL_AD_ILLEGAL_PARAMETER;
+		ctx->alert = TLS13_ALERT_ILLEGAL_PARAMETER;
 		goto err;
 	}
 	if (!CBS_write_bytes(&session_id, ctx->hs->legacy_session_id,
-	    sizeof(ctx->hs->legacy_session_id), &ctx->hs->legacy_session_id_len))
+	    sizeof(ctx->hs->legacy_session_id),
+	    &ctx->hs->legacy_session_id_len)) {
+		ctx->alert = TLS13_ALERT_INTERNAL_ERROR;
 		goto err;
+	}
 
 	/* Parse cipher suites list and select preferred cipher. */
 	if ((ciphers = ssl_bytes_to_cipher_list(s, &cipher_suites)) == NULL) {
-		ctx->alert = SSL_AD_ILLEGAL_PARAMETER;
+		ctx->alert = TLS13_ALERT_ILLEGAL_PARAMETER;
 		goto err;
 	}
 	cipher = ssl3_choose_cipher(s, ciphers, SSL_get_ciphers(s));
 	if (cipher == NULL) {
 		tls13_set_errorx(ctx, TLS13_ERR_NO_SHARED_CIPHER, 0,
 		    "no shared cipher found", NULL);
-		ctx->alert = SSL_AD_HANDSHAKE_FAILURE;
+		ctx->alert = TLS13_ALERT_HANDSHAKE_FAILURE;
 		goto err;
 	}
 	S3I(s)->hs.new_cipher = cipher;
 
-	/* Ensure they advertise the NULL compression method. */
-	comp_null = 0;
-	while (CBS_len(&compression_methods) > 0) {
-		if (!CBS_get_u8(&compression_methods, &compression_method))
-			goto err;
-		if (compression_method == 0)
-			comp_null = 1;
-	}
-	if (!comp_null) {
-		ctx->alert = SSL_AD_ILLEGAL_PARAMETER;
+	/* Ensure only the NULL compression method is advertised. */
+	if (!CBS_mem_equal(&compression_methods, tls13_compression_null_only,
+	    sizeof(tls13_compression_null_only))) {
+		ctx->alert = TLS13_ALERT_ILLEGAL_PARAMETER;
 		goto err;
 	}
 
@@ -188,6 +277,8 @@ tls13_client_hello_recv(struct tls13_ctx *ctx, CBS *cbs)
 	if (s->method->internal->version < TLS1_3_VERSION)
 		return 1;
 
+	tls13_record_layer_set_legacy_version(ctx->rl, TLS1_2_VERSION);
+
 	/*
 	 * If a matching key share was provided, we do not need to send a
 	 * HelloRetryRequest.
@@ -210,17 +301,25 @@ tls13_client_hello_recv(struct tls13_ctx *ctx, CBS *cbs)
 }
 
 static int
-tls13_server_hello_build(struct tls13_ctx *ctx, CBB *cbb)
+tls13_server_hello_build(struct tls13_ctx *ctx, CBB *cbb, int hrr)
 {
+	uint16_t tlsext_msg_type = SSL_TLSEXT_MSG_SH;
+	const uint8_t *server_random;
 	CBB session_id;
 	SSL *s = ctx->ssl;
 	uint16_t cipher;
 
 	cipher = SSL_CIPHER_get_value(S3I(s)->hs.new_cipher);
+	server_random = s->s3->server_random;
+
+	if (hrr) {
+		server_random = tls13_hello_retry_request_hash;
+		tlsext_msg_type = SSL_TLSEXT_MSG_HRR;
+	}
 
 	if (!CBB_add_u16(cbb, TLS1_2_VERSION))
 		goto err;
-	if (!CBB_add_bytes(cbb, s->s3->server_random, SSL3_RANDOM_SIZE))
+	if (!CBB_add_bytes(cbb, server_random, SSL3_RANDOM_SIZE))
 		goto err;
 	if (!CBB_add_u8_length_prefixed(cbb, &session_id))
 		goto err;
@@ -231,7 +330,7 @@ tls13_server_hello_build(struct tls13_ctx *ctx, CBB *cbb)
 		goto err;
 	if (!CBB_add_u8(cbb, 0))
 		goto err;
-	if (!tlsext_server_build(s, cbb, SSL_TLSEXT_MSG_SH))
+	if (!tlsext_server_build(s, tlsext_msg_type, cbb))
 		goto err;
 
 	if (!CBB_flush(cbb))
@@ -242,35 +341,8 @@ err:
 	return 0;
 }
 
-int
-tls13_server_hello_retry_request_send(struct tls13_ctx *ctx, CBB *cbb)
-{
-	return 0;
-}
-
-int
-tls13_client_hello_retry_recv(struct tls13_ctx *ctx, CBS *cbs)
-{
-	return 0;
-}
-
-int
-tls13_server_hello_send(struct tls13_ctx *ctx, CBB *cbb)
-{
-	if (ctx->hs->key_share == NULL)
-		return 0;
-
-	if (!tls13_key_share_generate(ctx->hs->key_share))
-		return 0;
-
-	if (!tls13_server_hello_build(ctx, cbb))
-		return 0;
-
-	return 1;
-}
-
-int
-tls13_server_hello_sent(struct tls13_ctx *ctx)
+static int
+tls13_server_engage_record_protection(struct tls13_ctx *ctx)
 {
 	struct tls13_secrets *secrets;
 	struct tls13_secret context;
@@ -286,7 +358,6 @@ tls13_server_hello_sent(struct tls13_ctx *ctx)
 		goto err;
 
 	s->session->cipher = S3I(s)->hs.new_cipher;
-	s->session->ssl_version = ctx->hs->server_version;
 
 	if ((ctx->aead = tls13_cipher_aead(S3I(s)->hs.new_cipher)) == NULL)
 		goto err;
@@ -338,9 +409,109 @@ tls13_server_hello_sent(struct tls13_ctx *ctx)
 }
 
 int
+tls13_server_hello_retry_request_send(struct tls13_ctx *ctx, CBB *cbb)
+{
+	int nid;
+
+	ctx->hs->hrr = 1;
+
+	if (!tls13_synthetic_handshake_message(ctx))
+		return 0;
+
+	if (ctx->hs->key_share != NULL)
+		return 0;
+	if ((nid = tls1_get_shared_curve(ctx->ssl)) == NID_undef)
+		return 0;
+	if ((ctx->hs->server_group = tls1_ec_nid2curve_id(nid)) == 0)
+		return 0;
+
+	if (!tls13_server_hello_build(ctx, cbb, 1))
+		return 0;
+
+	return 1;
+}
+
+int
+tls13_server_hello_retry_request_sent(struct tls13_ctx *ctx)
+{
+	/*
+	 * If the client has requested middlebox compatibility mode,
+	 * we MUST send a dummy CCS following our first handshake message.
+	 * See RFC 8446 Appendix D.4.
+	 */
+	if (ctx->hs->legacy_session_id_len > 0)
+		ctx->send_dummy_ccs_after = 1;
+
+	return 1;
+}
+
+int
+tls13_client_hello_retry_recv(struct tls13_ctx *ctx, CBS *cbs)
+{
+	SSL *s = ctx->ssl;
+
+	if (!tls13_client_hello_process(ctx, cbs))
+		return 0;
+
+	/* XXX - need further checks. */
+	if (s->method->internal->version < TLS1_3_VERSION)
+		return 0;
+
+	ctx->hs->hrr = 0;
+
+	return 1;
+}
+
+static int
+tls13_servername_process(struct tls13_ctx *ctx)
+{
+	uint8_t alert = TLS13_ALERT_INTERNAL_ERROR;
+
+	if (!tls13_legacy_servername_process(ctx, &alert)) {
+		ctx->alert = alert;
+		return 0;
+	}
+
+	return 1;
+}
+
+int
+tls13_server_hello_send(struct tls13_ctx *ctx, CBB *cbb)
+{
+	if (ctx->hs->key_share == NULL)
+		return 0;
+	if (!tls13_key_share_generate(ctx->hs->key_share))
+		return 0;
+	if (!tls13_servername_process(ctx))
+		return 0;
+
+	ctx->hs->server_group = 0;
+
+	if (!tls13_server_hello_build(ctx, cbb, 0))
+		return 0;
+
+	return 1;
+}
+
+int
+tls13_server_hello_sent(struct tls13_ctx *ctx)
+{
+	/*
+	 * If the client has requested middlebox compatibility mode,
+	 * we MUST send a dummy CCS following our first handshake message.
+	 * See RFC 8446 Appendix D.4.
+	 */
+	if ((ctx->handshake_stage.hs_type & WITHOUT_HRR) &&
+	    ctx->hs->legacy_session_id_len > 0)
+		ctx->send_dummy_ccs_after = 1;
+
+	return tls13_server_engage_record_protection(ctx);
+}
+
+int
 tls13_server_encrypted_extensions_send(struct tls13_ctx *ctx, CBB *cbb)
 {
-	if (!tlsext_server_build(ctx->ssl, cbb, SSL_TLSEXT_MSG_EE))
+	if (!tlsext_server_build(ctx->ssl, SSL_TLSEXT_MSG_EE, cbb))
 		goto err;
 
 	return 1;
@@ -355,7 +526,7 @@ tls13_server_certificate_request_send(struct tls13_ctx *ctx, CBB *cbb)
 
 	if (!CBB_add_u8_length_prefixed(cbb, &certificate_request_context))
 		goto err;
-	if (!tlsext_server_build(ctx->ssl, cbb, SSL_TLSEXT_MSG_CR))
+	if (!tlsext_server_build(ctx->ssl, SSL_TLSEXT_MSG_CR, cbb))
 		goto err;
 
 	if (!CBB_flush(cbb))
@@ -366,18 +537,98 @@ tls13_server_certificate_request_send(struct tls13_ctx *ctx, CBB *cbb)
 	return 0;
 }
 
+static int
+tls13_server_check_certificate(struct tls13_ctx *ctx, CERT_PKEY *cpk,
+    int *ok, const struct ssl_sigalg **out_sigalg)
+{
+	const struct ssl_sigalg *sigalg;
+	SSL *s = ctx->ssl;
+
+	*ok = 0;
+	*out_sigalg = NULL;
+
+	if (cpk->x509 == NULL || cpk->privatekey == NULL)
+		goto done;
+
+	if (!X509_check_purpose(cpk->x509, -1, 0))
+		return 0;
+
+	/*
+	 * The digitalSignature bit MUST be set if the Key Usage extension is
+	 * present as per RFC 8446 section 4.4.2.2.
+	 */
+	if ((cpk->x509->ex_flags & EXFLAG_KUSAGE) &&
+	    !(cpk->x509->ex_kusage & X509v3_KU_DIGITAL_SIGNATURE))
+		goto done;
+
+	if ((sigalg = ssl_sigalg_select(s, cpk->privatekey)) == NULL)
+		goto done;
+
+	*ok = 1;
+	*out_sigalg = sigalg;
+
+ done:
+	return 1;
+}
+
+static int
+tls13_server_select_certificate(struct tls13_ctx *ctx, CERT_PKEY **out_cpk,
+    const struct ssl_sigalg **out_sigalg)
+{
+	SSL *s = ctx->ssl;
+	const struct ssl_sigalg *sigalg;
+	CERT_PKEY *cpk;
+	int cert_ok;
+
+	*out_cpk = NULL;
+	*out_sigalg = NULL;
+
+	cpk = &s->cert->pkeys[SSL_PKEY_ECC];
+	if (!tls13_server_check_certificate(ctx, cpk, &cert_ok, &sigalg))
+		return 0;
+	if (cert_ok)
+		goto done;
+
+	cpk = &s->cert->pkeys[SSL_PKEY_RSA];
+	if (!tls13_server_check_certificate(ctx, cpk, &cert_ok, &sigalg))
+		return 0;
+	if (cert_ok)
+		goto done;
+
+	cpk = NULL;
+	sigalg = NULL;
+
+ done:
+	*out_cpk = cpk;
+	*out_sigalg = sigalg;
+
+	return 1;
+}
+
 int
 tls13_server_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
 {
 	SSL *s = ctx->ssl;
 	CBB cert_request_context, cert_list;
+	const struct ssl_sigalg *sigalg;
 	STACK_OF(X509) *chain;
 	CERT_PKEY *cpk;
 	X509 *cert;
 	int i, ret = 0;
 
-	/* XXX - Need to revisit certificate selection. */
-	cpk = &s->cert->pkeys[SSL_PKEY_RSA_ENC];
+	if (!tls13_server_select_certificate(ctx, &cpk, &sigalg))
+		goto err;
+
+	if (cpk == NULL) {
+		/* A server must always provide a certificate. */
+		ctx->alert = TLS13_ALERT_HANDSHAKE_FAILURE;
+		tls13_set_errorx(ctx, TLS13_ERR_NO_CERTIFICATE, 0,
+		    "no server certificate", NULL);
+		goto err;
+	}
+
+	ctx->hs->cpk = cpk;
+	ctx->hs->sigalg = sigalg;
 
 	if ((chain = cpk->chain) == NULL)
 		chain = s->ctx->extra_certs;
@@ -387,19 +638,20 @@ tls13_server_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
 	if (!CBB_add_u24_length_prefixed(cbb, &cert_list))
 		goto err;
 
-	if (cpk->x509 == NULL)
-		goto done;
-
-	if (!tls13_cert_add(&cert_list, cpk->x509))
+	if (!tls13_cert_add(ctx, &cert_list, cpk->x509, tlsext_server_build))
 		goto err;
 
 	for (i = 0; i < sk_X509_num(chain); i++) {
 		cert = sk_X509_value(chain, i);
-		if (!tls13_cert_add(&cert_list, cert))
+		/*
+		 * XXX we don't send extensions with chain certs to avoid sending
+		 * a leaf ocsp stape with the chain certs.  This needs to get
+		 * fixed
+		 */
+		if (!tls13_cert_add(ctx, &cert_list, cert, NULL))
 			goto err;
 	}
 
- done:
 	if (!CBB_flush(cbb))
 		goto err;
 
@@ -412,27 +664,23 @@ tls13_server_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
 int
 tls13_server_certificate_verify_send(struct tls13_ctx *ctx, CBB *cbb)
 {
-	SSL *s = ctx->ssl;
-	const struct ssl_sigalg *sigalg = NULL;
+	const struct ssl_sigalg *sigalg;
 	uint8_t *sig = NULL, *sig_content = NULL;
 	size_t sig_len, sig_content_len;
 	EVP_MD_CTX *mdctx = NULL;
 	EVP_PKEY_CTX *pctx;
 	EVP_PKEY *pkey;
-	CERT_PKEY *cpk;
+	const CERT_PKEY *cpk;
 	CBB sig_cbb;
 	int ret = 0;
 
 	memset(&sig_cbb, 0, sizeof(sig_cbb));
 
-	/* XXX - Need to revisit certificate selection. */
-	cpk = &s->cert->pkeys[SSL_PKEY_RSA_ENC];
-	pkey = cpk->privatekey;
-
-	if ((sigalg = ssl_sigalg_select(s, pkey)) == NULL) {
-		/* XXX - SSL_R_SIGNATURE_ALGORITHMS_ERROR */
+	if ((cpk = ctx->hs->cpk) == NULL)
 		goto err;
-	}
+	if ((sigalg = ctx->hs->sigalg) == NULL)
+		goto err;
+	pkey = cpk->privatekey;
 
 	if (!CBB_init(&sig_cbb, 0))
 		goto err;
@@ -483,7 +731,7 @@ tls13_server_certificate_verify_send(struct tls13_ctx *ctx, CBB *cbb)
 
  err:
 	if (!ret && ctx->alert == 0)
-		ctx->alert = TLS1_AD_INTERNAL_ERROR;
+		ctx->alert = TLS13_ALERT_INTERNAL_ERROR;
 
 	CBB_cleanup(&sig_cbb);
 	EVP_MD_CTX_free(mdctx);
@@ -585,9 +833,14 @@ tls13_client_certificate_recv(struct tls13_ctx *ctx, CBS *cbs)
 		goto err;
 	if (!CBS_get_u24_length_prefixed(cbs, &cert_list))
 		goto err;
-
-	if (CBS_len(&cert_list) == 0)
-		return 1;
+	if (CBS_len(&cert_list) == 0) {
+		if (!(s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT))
+			return 1;
+		ctx->alert = TLS13_ALERT_CERTIFICATE_REQUIRED;
+		tls13_set_errorx(ctx, TLS13_ERR_NO_PEER_CERTIFICATE, 0,
+		    "peer did not provide a certificate", NULL);
+		goto err;
+	}
 
 	if ((certs = sk_X509_new_null()) == NULL)
 		goto err;
@@ -614,8 +867,7 @@ tls13_client_certificate_recv(struct tls13_ctx *ctx, CBS *cbs)
 	 * be preferable to keep the chain and verify once we have successfully
 	 * processed the CertificateVerify message.
 	 */
-	if (ssl_verify_cert_chain(s, certs) <= 0 &&
-	    s->verify_mode != SSL_VERIFY_NONE) {
+	if (ssl_verify_cert_chain(s, certs) <= 0) {
 		ctx->alert = ssl_verify_alarm_type(s->verify_result);
 		tls13_set_errorx(ctx, TLS13_ERR_VERIFY_FAILED, 0,
 		    "failed to verify peer certificate", NULL);
@@ -723,21 +975,21 @@ tls13_client_certificate_verify_recv(struct tls13_ctx *ctx, CBS *cbs)
 			goto err;
 	}
 	if (!EVP_DigestVerifyUpdate(mdctx, sig_content, sig_content_len)) {
-		ctx->alert = TLS1_AD_DECRYPT_ERROR;
+		ctx->alert = TLS13_ALERT_DECRYPT_ERROR;
 		goto err;
 	}
 	if (EVP_DigestVerifyFinal(mdctx, CBS_data(&signature),
 	    CBS_len(&signature)) <= 0) {
-		ctx->alert = TLS1_AD_DECRYPT_ERROR;
+		ctx->alert = TLS13_ALERT_DECRYPT_ERROR;
 		goto err;
 	}
 
 	ret = 1;
 
  err:
-	if (!ret && ctx->alert == 0) {
-		ctx->alert = TLS1_AD_DECODE_ERROR;
-	}
+	if (!ret && ctx->alert == 0)
+		ctx->alert = TLS13_ALERT_DECODE_ERROR;
+
 	CBB_cleanup(&cbb);
 	EVP_MD_CTX_free(mdctx);
 	free(sig_content);
@@ -792,7 +1044,7 @@ tls13_client_finished_recv(struct tls13_ctx *ctx, CBS *cbs)
 		goto err;
 
 	if (!CBS_mem_equal(cbs, verify_data, verify_data_len)) {
-		ctx->alert = TLS1_AD_DECRYPT_ERROR;
+		ctx->alert = TLS13_ALERT_DECRYPT_ERROR;
 		goto err;
 	}
 

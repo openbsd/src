@@ -1,4 +1,4 @@
-/*	$OpenBSD: simplepanel.c,v 1.2 2020/03/17 15:49:38 kettenis Exp $	*/
+/*	$OpenBSD: simplepanel.c,v 1.3 2020/06/08 04:47:58 jsg Exp $	*/
 /*
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
  *
@@ -64,7 +64,7 @@ struct cfdriver simplepanel_cd = {
 };
 
 void	*simplepanel_ep_get_cookie(void *, struct endpoint *);
-int	simplepanel_get_modes(struct drm_panel *);
+int	simplepanel_get_modes(struct drm_panel *, struct drm_connector *);
 
 struct drm_panel_funcs simplepanel_funcs = {
 	.get_modes = simplepanel_get_modes
@@ -86,6 +86,7 @@ simplepanel_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args *faa = aux;
 	uint32_t power_supply;
 	uint32_t *gpios;
+	int connector_type = DRM_MODE_CONNECTOR_Unknown;
 	int len, err;
 
 	pinctrl_byname(faa->fa_node, "default");
@@ -103,12 +104,13 @@ simplepanel_attach(struct device *parent, struct device *self, void *aux)
 		free(gpios, M_TEMP, len);
 	}
 
-	if (OF_is_compatible(faa->fa_node, "boe,nv140fhmn49"))
-	    sc->sc_mode = &boe_nv140fhmn49_mode;
+	if (OF_is_compatible(faa->fa_node, "boe,nv140fhmn49")) {
+		sc->sc_mode = &boe_nv140fhmn49_mode;
+		connector_type = DRM_MODE_CONNECTOR_eDP;
+	}
 
-	drm_panel_init(&sc->sc_panel);
-	sc->sc_panel.dev = self;
-	sc->sc_panel.funcs = &simplepanel_funcs;
+	drm_panel_init(&sc->sc_panel, self, &simplepanel_funcs,
+	    connector_type);
 	err = drm_panel_add(&sc->sc_panel);
 	if (err < 0) {
 		printf(": can't register panel\n");
@@ -137,16 +139,15 @@ to_simplepanel(struct drm_panel *panel)
 }
 
 int
-simplepanel_get_modes(struct drm_panel *panel)
+simplepanel_get_modes(struct drm_panel *panel, struct drm_connector *connector)
 {
-	struct drm_connector *connector = panel->connector;
 	struct simplepanel_softc *sc = to_simplepanel(panel);
 	struct drm_display_mode *mode;
 
 	if (sc->sc_mode == NULL)
 		return 0;
 
-	mode = drm_mode_duplicate(panel->drm, sc->sc_mode);
+	mode = drm_mode_duplicate(connector->dev, sc->sc_mode);
 	if (mode == NULL)
 		return 0;
 	mode->type |= DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.61 2019/06/28 13:34:59 deraadt Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.62 2020/07/07 10:33:58 jca Exp $	*/
 
 /*
  * Process and job control
@@ -70,6 +70,7 @@ struct proc {
 #define JF_REMOVE	0x200	/* flagged for removal (j_jobs()/j_notify()) */
 #define JF_USETTYMODE	0x400	/* tty mode saved if process exits normally */
 #define JF_SAVEDTTYPGRP	0x800	/* j->saved_ttypgrp is valid */
+#define JF_PIPEFAIL	0x1000	/* pipefail on when job was started */
 
 typedef struct job Job;
 struct job {
@@ -421,6 +422,8 @@ exchild(struct op *t, int flags, volatile int *xerrok,
 		 */
 		j->flags = (flags & XXCOM) ? JF_XXCOM :
 		    ((flags & XBGND) ? 0 : (JF_FG|JF_USETTYMODE));
+		if (Flag(FPIPEFAIL))
+			j->flags |= JF_PIPEFAIL;
 		timerclear(&j->usrtime);
 		timerclear(&j->systime);
 		j->state = PRUNNING;
@@ -1084,7 +1087,30 @@ j_waitj(Job *j,
 
 	j_usrtime = j->usrtime;
 	j_systime = j->systime;
-	rv = j->status;
+
+	if (j->flags & JF_PIPEFAIL) {
+		Proc *p;
+		int status;
+
+		rv = 0;
+		for (p = j->proc_list; p != NULL; p = p->next) {
+			switch (p->state) {
+			case PEXITED:
+				status = WEXITSTATUS(p->status);
+				break;
+			case PSIGNALLED:
+				status = 128 + WTERMSIG(p->status);
+				break;
+			default:
+				status = 0;
+				break;
+			}
+			if (status)
+				rv = status;
+		}
+	} else
+		rv = j->status;
+
 
 	if (!(flags & JW_ASYNCNOTIFY) &&
 	    (!Flag(FMONITOR) || j->state != PSTOPPED)) {

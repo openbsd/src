@@ -25,18 +25,24 @@
 #include <linux/kernel.h>
 #include <asm/fpu/api.h>
 
-#include "i915_drv.h"
+#include "i915_memcpy.h"
 
-#ifdef notyet
-static DEFINE_STATIC_KEY_FALSE(has_movntdqa);
+#if IS_ENABLED(CONFIG_DRM_I915_DEBUG)
+#define CI_BUG_ON(expr) BUG_ON(expr)
+#else
+#define CI_BUG_ON(expr) BUILD_BUG_ON_INVALID(expr)
 #endif
 
-#ifdef CONFIG_AS_MOVNTDQA
+#ifdef __linux__
+static DEFINE_STATIC_KEY_FALSE(has_movntdqa);
+#else
+static bool has_movntdqa = false;
+#endif
+
 static void __memcpy_ntdqa(void *dst, const void *src, unsigned long len)
 {
 	kernel_fpu_begin();
 
-	len >>= 4;
 	while (len >= 4) {
 		asm("movntdqa   (%0), %%xmm0\n"
 		    "movntdqa 16(%0), %%xmm1\n"
@@ -61,7 +67,35 @@ static void __memcpy_ntdqa(void *dst, const void *src, unsigned long len)
 
 	kernel_fpu_end();
 }
-#endif
+
+static void __memcpy_ntdqu(void *dst, const void *src, unsigned long len)
+{
+	kernel_fpu_begin();
+
+	while (len >= 4) {
+		asm("movntdqa   (%0), %%xmm0\n"
+		    "movntdqa 16(%0), %%xmm1\n"
+		    "movntdqa 32(%0), %%xmm2\n"
+		    "movntdqa 48(%0), %%xmm3\n"
+		    "movups %%xmm0,   (%1)\n"
+		    "movups %%xmm1, 16(%1)\n"
+		    "movups %%xmm2, 32(%1)\n"
+		    "movups %%xmm3, 48(%1)\n"
+		    :: "r" (src), "r" (dst) : "memory");
+		src += 64;
+		dst += 64;
+		len -= 4;
+	}
+	while (len--) {
+		asm("movntdqa (%0), %%xmm0\n"
+		    "movups %%xmm0, (%1)\n"
+		    :: "r" (src), "r" (dst) : "memory");
+		src += 16;
+		dst += 16;
+	}
+
+	kernel_fpu_end();
+}
 
 /**
  * i915_memcpy_from_wc: perform an accelerated *aligned* read from WC
@@ -85,26 +119,64 @@ bool i915_memcpy_from_wc(void *dst, const void *src, unsigned long len)
 	if (unlikely(((unsigned long)dst | (unsigned long)src | len) & 15))
 		return false;
 
-#ifdef CONFIG_AS_MOVNTDQA
+#ifdef __linux__
 	if (static_branch_likely(&has_movntdqa)) {
+#else
+	if (likely(has_movntdqa)) {
+#endif
 		if (likely(len))
-			__memcpy_ntdqa(dst, src, len);
+			__memcpy_ntdqa(dst, src, len >> 4);
 		return true;
 	}
-#endif
 
 	return false;
 }
 
+/**
+ * i915_unaligned_memcpy_from_wc: perform a mostly accelerated read from WC
+ * @dst: destination pointer
+ * @src: source pointer
+ * @len: how many bytes to copy
+ *
+ * Like i915_memcpy_from_wc(), the unaligned variant copies @len bytes from
+ * @src to @dst using * non-temporal instructions where available, but
+ * accepts that its arguments may not be aligned, but are valid for the
+ * potential 16-byte read past the end.
+ */
+void i915_unaligned_memcpy_from_wc(void *dst, void *src, unsigned long len)
+{
+	unsigned long addr;
+
+#ifdef notyet
+	CI_BUG_ON(!i915_has_memcpy_from_wc());
+#endif
+
+	addr = (unsigned long)src;
+	if (!IS_ALIGNED(addr, 16)) {
+		unsigned long x = min(roundup2(addr, 16) - addr, len);
+
+		memcpy(dst, src, x);
+
+		len -= x;
+		dst += x;
+		src += x;
+	}
+
+	if (likely(len))
+		__memcpy_ntdqu(dst, src, DIV_ROUND_UP(len, 16));
+}
+
 void i915_memcpy_init_early(struct drm_i915_private *dev_priv)
 {
-#ifdef notyet
 	/*
 	 * Some hypervisors (e.g. KVM) don't support VEX-prefix instructions
 	 * emulation. So don't enable movntdqa in hypervisor guest.
 	 */
 	if (static_cpu_has(X86_FEATURE_XMM4_1) &&
 	    !boot_cpu_has(X86_FEATURE_HYPERVISOR))
+#ifdef __linux__
 		static_branch_enable(&has_movntdqa);
+#else
+		has_movntdqa = true;
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machfb.c,v 1.10 2014/07/28 15:00:27 jsg Exp $	*/
+/*	$OpenBSD: machfb.c,v 1.11 2020/05/25 09:55:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -215,9 +215,9 @@ int	machfb_putcmap(struct machfb_softc *, struct wsdisplay_cmap *);
 void	machfb_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
 int	machfb_copycols(void *, int, int, int, int);
-int	machfb_erasecols(void *, int, int, int, long);
+int	machfb_erasecols(void *, int, int, int, uint32_t);
 int	machfb_copyrows(void *, int, int, int);
-int	machfb_eraserows(void *, int, int, long);
+int	machfb_eraserows(void *, int, int, uint32_t);
 
 void	machfb_init(struct machfb_softc *);
 int	machfb_wait_fifo(struct machfb_softc *, int);
@@ -528,7 +528,7 @@ machfb_copycols(void *cookie, int row, int src, int dst, int num)
 }
 
 int
-machfb_erasecols(void *cookie, int row, int col, int num, long attr)
+machfb_erasecols(void *cookie, int row, int col, int num, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	struct machfb_softc *sc = ri->ri_hw;
@@ -563,7 +563,7 @@ machfb_copyrows(void *cookie, int src, int dst, int num)
 }
 
 int
-machfb_eraserows(void *cookie, int row, int num, long attr)
+machfb_eraserows(void *cookie, int row, int num, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	struct machfb_softc *sc = ri->ri_hw;

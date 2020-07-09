@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.71 2020/01/23 02:40:21 dlg Exp $ */
+/*	$OpenBSD: conf.c,v 1.72 2020/07/06 04:32:25 dlg Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -94,6 +94,7 @@ cdev_decl(com);
 #include "tun.h"
 
 #include "ksyms.h"
+#include "kstat.h"
 #include "usb.h"
 #include "uhid.h"
 #include "fido.h"
@@ -181,7 +182,7 @@ struct cdevsw cdevsw[] = {
 	cdev_notdef(),			/* 48 */
 	cdev_notdef(),			/* 49 */
 	cdev_notdef(),			/* 50 */
-	cdev_notdef(),			/* 51 */
+	cdev_kstat_init(NKSTAT,kstat),	/* 51: kernel statistics */
 	cdev_midi_init(NMIDI,midi),	/* 52: MIDI I/O */
 	cdev_notdef(),			/* 53 was: sequencer I/O */
 	cdev_notdef(),			/* 54 was: RAIDframe disk driver */

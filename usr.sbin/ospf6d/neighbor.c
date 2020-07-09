@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.16 2020/01/02 10:16:46 denis Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.17 2020/06/22 18:18:20 denis Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -197,7 +197,6 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 		nbr->stats.sta_chng++;
 
 		if (old_state & NBR_STA_FULL || nbr->state & NBR_STA_FULL) {
-			extern struct ospfd_conf        *oeconf; /* XXX */
 			/*
 			 * neighbor changed from/to FULL
 			 * originate new rtr and net LSA

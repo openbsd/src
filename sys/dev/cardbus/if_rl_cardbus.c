@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl_cardbus.c,v 1.30 2015/11/24 17:11:39 mpi Exp $ */
+/*	$OpenBSD: if_rl_cardbus.c,v 1.31 2020/06/17 10:48:44 claudio Exp $ */
 /*	$NetBSD: if_rl_cardbus.c,v 1.3.8.3 2001/11/14 19:14:02 nathanw Exp $	*/
 
 /*
@@ -102,7 +102,6 @@ struct rl_cardbus_softc {
 	struct rl_softc sc_rl;	/* real rtk softc */ 
 
 	/* CardBus-specific goo. */
-	void *sc_ih;
 	cardbus_devfunc_t sc_ct;
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_tag;
@@ -186,9 +185,9 @@ rl_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Map and establish the interrupt.
 	 */
-	csc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline, IPL_NET,
+	sc->sc_ih = cardbus_intr_establish(cc, cf, csc->sc_intrline, IPL_NET,
 	    rl_intr, sc, sc->sc_dev.dv_xname);
-	if (csc->sc_ih == NULL) {
+	if (sc->sc_ih == NULL) {
 		printf(": couldn't establish interrupt\n");
 		Cardbus_function_disable(csc->sc_ct);
 		return;
@@ -218,8 +217,8 @@ rl_cardbus_detach(struct device *self, int flags)
 	/*
 	 * Unhook the interrupt handler.
 	 */
-	if (csc->sc_ih != NULL)
-		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, csc->sc_ih);
+	if (sc->sc_ih != NULL)
+		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, sc->sc_ih);
 	
 	/*
 	 * Release bus space and close window.

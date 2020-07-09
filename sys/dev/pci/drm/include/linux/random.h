@@ -27,4 +27,10 @@ get_random_long(void)
 #endif
 }
 
+static inline uint32_t
+prandom_u32_max(uint32_t x)
+{
+	return arc4random_uniform(x + 1);
+}
+
 #endif

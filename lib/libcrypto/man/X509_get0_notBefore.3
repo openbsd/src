@@ -1,7 +1,7 @@
-.\" $OpenBSD: X509_get0_notBefore.3,v 1.4 2018/03/23 23:18:17 schwarze Exp $
+.\" $OpenBSD: X509_get0_notBefore.3,v 1.5 2020/06/24 14:59:41 schwarze Exp $
 .\" content checked up to: OpenSSL 27b138e9 May 19 00:16:38 2017 +0000
 .\"
-.\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2018, 2020 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 23 2018 $
+.Dd $Mdocdate: June 24 2020 $
 .Dt X509_GET0_NOTBEFORE 3
 .Os
 .Sh NAME
@@ -23,12 +23,20 @@
 .Nm X509_get0_notAfter ,
 .Nm X509_getm_notBefore ,
 .Nm X509_getm_notAfter ,
+.Nm X509_get_notBefore ,
+.Nm X509_get_notAfter ,
 .Nm X509_CRL_get0_lastUpdate ,
 .Nm X509_CRL_get0_nextUpdate ,
+.Nm X509_CRL_get_lastUpdate ,
+.Nm X509_CRL_get_nextUpdate ,
 .Nm X509_set1_notBefore ,
 .Nm X509_set1_notAfter ,
+.Nm X509_set_notBefore ,
+.Nm X509_set_notAfter ,
 .Nm X509_CRL_set1_lastUpdate ,
-.Nm X509_CRL_set1_nextUpdate
+.Nm X509_CRL_set1_nextUpdate ,
+.Nm X509_CRL_set_lastUpdate ,
+.Nm X509_CRL_set_nextUpdate
 .Nd get and set certificate and CRL validity dates
 .Sh SYNOPSIS
 .In openssl/x509.h
@@ -49,12 +57,28 @@
 .Fa "const X509 *x"
 .Fc
 .Ft ASN1_TIME *
+.Fo X509_get_notBefore
+.Fa "const X509 *x"
+.Fc
+.Ft ASN1_TIME *
+.Fo X509_get_notAfter
+.Fa "const X509 *x"
+.Fc
+.Ft const ASN1_TIME *
 .Fo X509_CRL_get0_lastUpdate
 .Fa "const X509_CRL *crl"
 .Fc
-.Ft ASN1_TIME *
+.Ft const ASN1_TIME *
 .Fo X509_CRL_get0_nextUpdate
 .Fa "const X509_CRL *crl"
+.Fc
+.Ft ASN1_TIME *
+.Fo X509_CRL_get_lastUpdate
+.Fa "X509_CRL *crl"
+.Fc
+.Ft ASN1_TIME *
+.Fo X509_CRL_get_nextUpdate
+.Fa "X509_CRL *crl"
 .Fc
 .Ft int
 .Fo X509_set1_notBefore
@@ -67,12 +91,32 @@
 .Fa "const ASN1_TIME *tm"
 .Fc
 .Ft int
+.Fo X509_set_notBefore
+.Fa "X509 *x"
+.Fa "const ASN1_TIME *tm"
+.Fc
+.Ft int
+.Fo X509_set_notAfter
+.Fa "X509 *x"
+.Fa "const ASN1_TIME *tm"
+.Fc
+.Ft int
 .Fo X509_CRL_set1_lastUpdate
 .Fa "X509_CRL *crl"
 .Fa "const ASN1_TIME *tm"
 .Fc
 .Ft int
 .Fo X509_CRL_set1_nextUpdate
+.Fa "X509_CRL *crl"
+.Fa "const ASN1_TIME *tm"
+.Fc
+.Ft int
+.Fo X509_CRL_set_lastUpdate
+.Fa "X509_CRL *crl"
+.Fa "const ASN1_TIME *tm"
+.Fc
+.Ft int
+.Fo X509_CRL_set_nextUpdate
 .Fa "X509_CRL *crl"
 .Fa "const ASN1_TIME *tm"
 .Fc
@@ -87,6 +131,10 @@ and
 fields of the validity period of the certificate
 .Fa x ,
 respectively.
+.Fn X509_get_notBefore
+and
+.Fn X509_get_notAfter
+are deprecated aliases implemented as macros.
 .Pp
 .Fn X509_get0_notBefore
 and
@@ -102,6 +150,12 @@ and
 .Fa nextUpdate
 fields of
 .Fa crl .
+.Pp
+.Fn X509_CRL_get_lastUpdate
+and
+.Fn X509_CRL_get_nextUpdate
+are deprecated and identical except for the const qualifier
+on the argument and on the return type.
 .Pp
 .Fn X509_set1_notBefore ,
 .Fn X509_set1_notAfter ,
@@ -123,24 +177,51 @@ respectively, to a deep copy of
 and free the
 .Vt ASN1_TIME
 value that they replace.
-.Sh RETURN VALUES
-.Fn X509_get0_notBefore ,
-.Fn X509_get0_notAfter ,
-.Fn X509_getm_notBefore ,
-.Fn X509_getm_notAfter ,
-.Fn X509_CRL_get0_lastUpdate ,
-and
-.Fn X509_CRL_get0_nextUpdate
-return internal pointers which must not be freed by the application, or
-.Dv NULL
-if the requested fields are not available.
 .Pp
-.Fn X509_set1_notBefore ,
-.Fn X509_set1_notAfter ,
-.Fn X509_CRL_set1_lastUpdate ,
+.Fn X509_set_notBefore ,
+.Fn X509_set_notAfter ,
+.Fn X509_CRL_set_lastUpdate ,
 and
-.Fn X509_CRL_set1_nextUpdate
-return 1 on success or 0 on failure.
+.Fn X509_CRL_set_nextUpdate
+are deprecated aliases.
+.Sh RETURN VALUES
+The
+.Sy get
+functions return internal pointers
+which must not be freed by the application, or
+.Dv NULL
+if the requested field is not available.
+They may crash with a
+.Dv NULL
+pointer access if
+.Fa x
+or
+.Fa crl
+is
+.Dv NULL .
+.Pp
+The
+.Sy set
+functions return 1 on success or 0 on failure.
+They fail if
+.Fa x
+is
+.Dv NULL
+or does not contain a
+.Fa validity
+substructure, if
+.Fa crl
+is
+.Dv NULL ,
+or if
+.Xr ASN1_STRING_dup 3
+fails.
+.Pp
+Except for some cases of
+.Xr ASN1_STRING_dup 3
+failure, these functions do not support
+determining reasons for failure with
+.Xr ERR_get_error 3 .
 .Sh SEE ALSO
 .Xr ASN1_TIME_set 3 ,
 .Xr ASN1_TIME_set_tm 3 ,
@@ -153,6 +234,26 @@ return 1 on success or 0 on failure.
 .Xr X509_VAL_new 3 ,
 .Xr X509_verify_cert 3
 .Sh HISTORY
-These functions first appeared in OpenSSL 1.1.0
+.Fn X509_get_notBefore ,
+.Fn X509_get_notAfter ,
+.Fn X509_set_notBefore ,
+and
+.Fn X509_set_notAfter
+first appeared in SSLeay 0.6.5 and have been available since
+.Ox 2.4 .
+.Pp
+.Fn X509_CRL_get_lastUpdate
+and
+.Fn X509_CRL_get_nextUpdate
+first appeared in OpenSSL 0.9.2 and have been available since
+.Ox 2.6 .
+.Pp
+.Fn X509_CRL_set_lastUpdate
+and
+.Fn X509_CRL_set_nextUpdate
+first appeared in OpenSSL 0.9.7 and have been available since
+.Ox 3.2 .
+.Pp
+The remaining functions first appeared in OpenSSL 1.1.0
 and have been available since
 .Ox 6.3 .

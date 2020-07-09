@@ -1,4 +1,4 @@
-/*	$OpenBSD: vpci.c,v 1.29 2019/07/26 11:33:05 kettenis Exp $	*/
+/*	$OpenBSD: vpci.c,v 1.31 2020/06/25 21:43:41 jmatthew Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -35,6 +35,8 @@
 #include <sparc64/dev/viommuvar.h>
 #include <sparc64/dev/msivar.h>
 
+#define VPCI_DEFAULT_MSI_EQS	36
+
 extern struct sparc_pci_chipset _sparc_pci_chipset;
 
 struct vpci_msi_msg {
@@ -61,6 +63,16 @@ struct vpci_range {
 	u_int32_t	size_lo;
 };
 
+struct vpci_eq {
+	char 			eq_name[16];
+	int 			eq_id;
+	void 			*eq_ih;
+	struct msi_eq		*eq_meq;
+	struct vpci_pbm 	*eq_pbm;
+	uint8_t			*eq_ring;
+	uint64_t		eq_mask;
+};
+
 struct vpci_pbm {
 	struct vpci_softc *vp_sc;
 	uint64_t vp_devhandle;
@@ -74,11 +86,13 @@ struct vpci_pbm {
 	bus_dma_tag_t		vp_dmat;
 	struct iommu_state	vp_is;
 
-	struct msi_eq *vp_meq;
 	bus_addr_t vp_msiaddr;
 	int vp_msibase;
 	int vp_msinum;
 	struct intrhand **vp_msi;
+
+	unsigned int vp_neq;
+	struct vpci_eq *vp_eq;
 
 	int vp_flags;
 };
@@ -118,6 +132,8 @@ paddr_t vpci_bus_mmap(bus_space_tag_t, bus_space_tag_t, bus_addr_t, off_t,
     int, int);
 void *vpci_intr_establish(bus_space_tag_t, bus_space_tag_t, int, int, int,
     int (*)(void *), void *, const char *);
+void *vpci_intr_establish_cpu(bus_space_tag_t, bus_space_tag_t, int, int,
+    int, struct cpu_info *, int (*)(void *), void *, const char *);
 void vpci_intr_ack(struct intrhand *);
 void vpci_msi_ack(struct intrhand *);
 
@@ -249,8 +265,14 @@ vpci_init_msi(struct vpci_softc *sc, struct vpci_pbm *pbm)
 	u_int32_t msi_eq_devino[3] = { 0, 36, 24 };
 	u_int32_t msi_range[2];
 	uint64_t sysino;
-	int msis, msi_eq_size;
+	int msis, msi_eq_size, num_eq, unit;
+	struct vpci_eq *eq;
 	int err;
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+
+	/* One eq per cpu, limited by the number of eqs. */
+	num_eq = min(ncpus, getpropint(sc->sc_node, "#msi-eqs", 36));
 
 	if (OF_getprop(sc->sc_node, "msi-address-ranges",
 	    msi_addr_range, sizeof(msi_addr_range)) <= 0)
@@ -265,51 +287,85 @@ vpci_init_msi(struct vpci_softc *sc, struct vpci_pbm *pbm)
 		return;
 
 	msi_eq_size = getpropint(sc->sc_node, "msi-eq-size", 256);
-	pbm->vp_meq = msi_eq_alloc(sc->sc_dmat, msi_eq_size);
-	if (pbm->vp_meq == NULL)
-		goto free_table;
 
 	if (OF_getprop(sc->sc_node, "msi-ranges",
 	    msi_range, sizeof(msi_range)) <= 0)
 		goto free_table;
 	pbm->vp_msibase = msi_range[0];
 
-	err = hv_pci_msiq_conf(pbm->vp_devhandle, 0,
-	    pbm->vp_meq->meq_map->dm_segs[0].ds_addr,
-	    pbm->vp_meq->meq_nentries);
-	if (err != H_EOK)
-		goto free_queue;
+	pbm->vp_neq = num_eq;
+	pbm->vp_eq = mallocarray(num_eq, sizeof(*eq), M_DEVBUF,
+	    M_WAITOK | M_ZERO);
 
-	OF_getprop(sc->sc_node, "msi-eq-to-devino",
-	    msi_eq_devino, sizeof(msi_eq_devino));
-	err = sun4v_intr_devino_to_sysino(pbm->vp_devhandle,
-	    msi_eq_devino[2], &sysino);
-	if (err != H_EOK)
-		goto disable_queue;
+	CPU_INFO_FOREACH(cii, ci) {
+		unit = CPU_INFO_UNIT(ci);
+		eq = &pbm->vp_eq[unit];
 
-	if (vpci_intr_establish(pbm->vp_memt, pbm->vp_memt, sysino,
-	    IPL_HIGH, 0, vpci_msi_eq_intr, pbm, sc->sc_dv.dv_xname) == NULL)
-		goto disable_queue;
+		if (unit >= num_eq)
+			continue;
 
-	err = hv_pci_msiq_setvalid(pbm->vp_devhandle, 0, PCI_MSIQ_VALID);
-	if (err != H_EOK) {
-		printf("%s: pci_msiq_setvalid: err %d\n", __func__, err);
-		goto disable_queue;
-	}
+		eq->eq_id = unit;
+		eq->eq_pbm = pbm;
+		snprintf(eq->eq_name, sizeof(eq->eq_name), "%s:%d",
+		    sc->sc_dv.dv_xname, unit);
 
-	err = hv_pci_msiq_setstate(pbm->vp_devhandle, 0, PCI_MSIQSTATE_IDLE);
-	if (err != H_EOK) {
-		printf("%s: pci_msiq_setstate: err %d\n", __func__, err);
-		goto disable_queue;
+		eq->eq_meq = msi_eq_alloc(sc->sc_dmat, msi_eq_size, 1);
+		if (eq->eq_meq == NULL)
+			goto free_queues;
+
+		err = hv_pci_msiq_conf(pbm->vp_devhandle, unit,
+		    eq->eq_meq->meq_map->dm_segs[0].ds_addr,
+		    eq->eq_meq->meq_nentries);
+		if (err != H_EOK)
+			goto free_queues;
+
+		eq->eq_mask = (eq->eq_meq->meq_nentries *
+		    sizeof(struct vpci_msi_msg)) - 1;
+
+		OF_getprop(sc->sc_node, "msi-eq-to-devino",
+		    msi_eq_devino, sizeof(msi_eq_devino));
+		err = sun4v_intr_devino_to_sysino(pbm->vp_devhandle,
+		    msi_eq_devino[2] + unit, &sysino);
+		if (err != H_EOK)
+			goto free_queues;
+
+		eq->eq_ih = vpci_intr_establish_cpu(pbm->vp_memt, pbm->vp_memt,
+		    sysino, IPL_HIGH, BUS_INTR_ESTABLISH_MPSAFE, ci,
+		    vpci_msi_eq_intr, eq, eq->eq_name);
+		if (eq->eq_ih == NULL)
+			goto free_queues;
+
+		err = hv_pci_msiq_setvalid(pbm->vp_devhandle, unit,
+		    PCI_MSIQ_VALID);
+		if (err != H_EOK) {
+			printf("%s: pci_msiq_setvalid(%d): err %d\n", __func__,
+			    unit, err);
+			goto free_queues;
+		}
+
+		err = hv_pci_msiq_setstate(pbm->vp_devhandle, unit,
+		    PCI_MSIQSTATE_IDLE);
+		if (err != H_EOK) {
+			printf("%s: pci_msiq_setstate(%d): err %d\n", __func__,
+			    unit, err);
+			goto free_queues;
+		}
 	}
 
 	pbm->vp_flags |= PCI_FLAGS_MSI_ENABLED;
 	return;
 
-disable_queue:
-	hv_pci_msiq_conf(pbm->vp_devhandle, 0, 0, 0);
-free_queue:
-	msi_eq_free(sc->sc_dmat, pbm->vp_meq);
+free_queues:
+	CPU_INFO_FOREACH(cii, ci) {
+		unit = CPU_INFO_UNIT(ci);
+		eq = &pbm->vp_eq[unit];
+
+		if (eq->eq_meq != NULL)
+			msi_eq_free(sc->sc_dmat, eq->eq_meq);
+
+		hv_pci_msiq_conf(pbm->vp_devhandle, unit, 0, 0);
+	}
+	free(pbm->vp_eq, M_DEVBUF, num_eq * sizeof(*eq));
 free_table:
 	free(pbm->vp_msi, M_DEVBUF, 0);
 }
@@ -418,6 +474,7 @@ vpci_alloc_bus_tag(struct vpci_pbm *pbm, const char *name, int ss,
 	bt->sparc_bus_map = vpci_bus_map;
 	bt->sparc_bus_mmap = vpci_bus_mmap;
 	bt->sparc_intr_establish = vpci_intr_establish;
+	bt->sparc_intr_establish_cpu = vpci_intr_establish_cpu;
 	return (bt);
 }
 
@@ -497,15 +554,15 @@ vpci_bus_map(bus_space_tag_t t, bus_space_tag_t t0, bus_addr_t offset,
 
 	for (i = 0; i < pbm->vp_nrange; i++) {
 		bus_addr_t child, paddr;
-		bus_size_t size;
+		bus_size_t rsize;
 
 		if (((pbm->vp_range[i].cspace >> 24) & 0x03) != ss)
 			continue;
 		child = pbm->vp_range[i].child_lo;
 		child |= ((bus_addr_t)pbm->vp_range[i].child_hi) << 32;
-		size = pbm->vp_range[i].size_lo;
-		size |= ((bus_size_t)pbm->vp_range[i].size_hi) << 32;
-		if (offset < child || offset >= child + size)
+		rsize = pbm->vp_range[i].size_lo;
+		rsize |= ((bus_size_t)pbm->vp_range[i].size_hi) << 32;
+		if (offset < child || offset >= child + rsize)
 			continue;
 
 		paddr = pbm->vp_range[i].phys_lo;
@@ -547,6 +604,15 @@ void *
 vpci_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
     int level, int flags, int (*handler)(void *), void *arg, const char *what)
 {
+	return (vpci_intr_establish_cpu(t, t0, ihandle, level, flags, NULL,
+	    handler, arg, what));
+}
+
+void *
+vpci_intr_establish_cpu(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
+    int level, int flags, struct cpu_info *cpu, int (*handler)(void *),
+    void *arg, const char *what)
+{
 	struct vpci_pbm *pbm = t->cookie;
 	uint64_t devhandle = pbm->vp_devhandle;
 	uint64_t sysino = INTVEC(ihandle);
@@ -566,6 +632,7 @@ vpci_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 		pcitag_t tag = PCI_INTR_TAG(ihandle);
 		int msinum = pbm->vp_msinum++;
 		int msi = pbm->vp_msibase + msinum;
+		int eq = 0;
 
 		evcount_attach(&ih->ih_count, ih->ih_name, NULL);
 
@@ -584,7 +651,15 @@ vpci_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 			break;
 		}
 
-		err = hv_pci_msi_setmsiq(devhandle, msi, 0, 0);
+		if (cpu != NULL) {
+			/*
+			 * For now, if we have fewer eqs than cpus, map
+			 * interrupts for the eq-less cpus onto other cpus.
+			 */
+			eq = CPU_INFO_UNIT(cpu) % pbm->vp_neq;
+		}
+
+		err = hv_pci_msi_setmsiq(devhandle, msi, eq, 0);
 		if (err != H_EOK) {
 			printf("%s: pci_msi_setmsiq: err %d\n", __func__, err);
 			return (NULL);
@@ -609,6 +684,7 @@ vpci_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 	if (err != H_EOK)
 		return (NULL);
 
+	ih->ih_cpu = cpu;
 	intr_establish(ih->ih_pil, ih);
 	ih->ih_ack = vpci_intr_ack;
 
@@ -647,8 +723,8 @@ vpci_msi_ack(struct intrhand *ih)
 int
 vpci_msi_eq_intr(void *arg)
 {
-	struct vpci_pbm *pbm = arg;
-	struct msi_eq *meq = pbm->vp_meq;
+	struct vpci_eq *eq = arg;
+	struct vpci_pbm *pbm = eq->eq_pbm;
 	struct vpci_msi_msg *msg;
 	uint64_t devhandle = pbm->vp_devhandle;
 	uint64_t head, tail;
@@ -656,19 +732,21 @@ vpci_msi_eq_intr(void *arg)
 	int msinum, msi;
 	int err;
 
-	err = hv_pci_msiq_gethead(devhandle, 0, &head);
+	err = hv_pci_msiq_gethead(devhandle, eq->eq_id, &head);
 	if (err != H_EOK)
-		printf("%s: pci_msiq_gethead: %d\n", __func__, err);
+		printf("%s: pci_msiq_gethead(%d): %d\n", __func__, eq->eq_id,
+		    err);
 
-	err = hv_pci_msiq_gettail(devhandle, 0, &tail);
+	err = hv_pci_msiq_gettail(devhandle, eq->eq_id, &tail);
 	if (err != H_EOK)
-		printf("%s: pci_msiq_gettail: %d\n", __func__, err);
+		printf("%s: pci_msiq_gettail(%d): %d\n", __func__, eq->eq_id,
+		    err);
 
 	if (head == tail)
 		return (0);
 
 	while (head != tail) {
-		msg = (struct vpci_msi_msg *)(meq->meq_va + head);
+		msg = (struct vpci_msi_msg *)(eq->eq_meq->meq_va + head);
 
 		if (msg->mm_type == 0)
 			break;
@@ -684,12 +762,13 @@ vpci_msi_eq_intr(void *arg)
 		send_softint(-1, ih->ih_pil, ih);
 
 		head += sizeof(struct vpci_msi_msg);
-		head &= ((meq->meq_nentries * sizeof(struct vpci_msi_msg)) - 1);
+		head &= eq->eq_mask;
 	}
 
-	err = hv_pci_msiq_sethead(devhandle, 0, head);
+	err = hv_pci_msiq_sethead(devhandle, eq->eq_id, head);
 	if (err != H_EOK)
-		printf("%s: pci_msiq_sethead: %d\n", __func__, err);
+		printf("%s: pci_msiq_sethead(%d): %d\n", __func__, eq->eq_id,
+		    err);
 
 	return (1);
 }

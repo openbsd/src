@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.104 2020/04/20 13:25:36 nicm Exp $
+# $OpenBSD: Makefile,v 1.106 2020/05/16 16:30:59 nicm Exp $
 
 PROG=	tmux
 SRCS=	alerts.c \
@@ -120,10 +120,10 @@ SRCS=	alerts.c \
 	window-client.c \
 	window-clock.c \
 	window-copy.c \
+	window-customize.c \
 	window-tree.c \
 	window.c \
-	xmalloc.c \
-	xterm-keys.c
+	xmalloc.c
 
 CDIAGFLAGS+= -Wno-long-long -Wall -W -Wnested-externs -Wformat=2
 CDIAGFLAGS+= -Wmissing-prototypes -Wstrict-prototypes -Wmissing-declarations

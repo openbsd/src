@@ -54,11 +54,10 @@
 ./usr/include/loongson/setjmp.h
 ./usr/include/loongson/signal.h
 ./usr/include/loongson/spinlock.h
-./usr/include/loongson/stdarg.h
 ./usr/include/loongson/sysarch.h
 ./usr/include/loongson/tcb.h
+./usr/include/loongson/timetc.h
 ./usr/include/loongson/trap.h
-./usr/include/loongson/varargs.h
 ./usr/include/loongson/vmparam.h
 ./usr/include/mips64
 ./usr/include/mips64/_float.h
@@ -104,11 +103,9 @@
 ./usr/include/mips64/setjmp.h
 ./usr/include/mips64/signal.h
 ./usr/include/mips64/spinlock.h
-./usr/include/mips64/stdarg.h
 ./usr/include/mips64/sysarch.h
 ./usr/include/mips64/tcb.h
 ./usr/include/mips64/trap.h
-./usr/include/mips64/varargs.h
 ./usr/include/mips64/vmparam.h
 ./usr/include/unwind.h
 ./usr/libdata/ldscripts

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.11 2015/02/04 00:43:45 mpi Exp $	*/
+/*	$OpenBSD: parse.c,v 1.12 2020/06/05 00:51:56 jsg Exp $	*/
 /*	$NetBSD: parse.c,v 1.2 2001/12/29 20:44:22 augustss Exp $	*/
 
 /*
@@ -215,6 +215,9 @@ hid_get_item_raw(hid_data_t s, hid_item_t *h)
 	if (s == NULL)
 		return (0);
 
+	if (s->pushlevel >= MAXPUSH)
+		return (0);
+
 	c = &s->cur[s->pushlevel];
 
  top:
@@ -407,8 +410,8 @@ hid_get_item_raw(hid_data_t s, hid_item_t *h)
 				s->loc_count = dval & mask;
 				break;
 			case 10:	/* Push */
-				s->pushlevel ++;
-				if (s->pushlevel < MAXPUSH) {
+				if (s->pushlevel < MAXPUSH - 1) {
+					s->pushlevel++;
 					s->cur[s->pushlevel] = *c;
 					/* store size and count */
 					c->report_size = s->loc_size;
@@ -418,8 +421,8 @@ hid_get_item_raw(hid_data_t s, hid_item_t *h)
 				}
 				break;
 			case 11:	/* Pop */
-				s->pushlevel --;
-				if (s->pushlevel < MAXPUSH) {
+				if (s->pushlevel > 0) {
+					s->pushlevel--;
 					c = &s->cur[s->pushlevel];
 					/* restore size and count */
 					s->loc_size = c->report_size;

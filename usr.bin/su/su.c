@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.79 2019/12/07 19:23:21 millert Exp $	*/
+/*	$OpenBSD: su.c,v 1.81 2020/07/08 15:36:35 jca Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -311,20 +311,23 @@ main(int argc, char **argv)
 		err(1, "pledge");
 
 	np = *argv ? argv : argv - 1;
+
 	if (iscsh == YES) {
 		if (fastlogin)
 			*np-- = "-f";
 		if (asme)
 			*np-- = "-m";
-	}
 
-	if (asthem) {
-		avshellbuf[0] = '-';
+		if (asthem)
+			avshellbuf[0] = '-';
+		else {
+			/* csh strips the first character... */
+			avshellbuf[0] = '_';
+		}
 		strlcpy(avshellbuf+1, avshell, sizeof(avshellbuf) - 1);
 		avshell = avshellbuf;
-	} else if (iscsh == YES) {
-		/* csh strips the first character... */
-		avshellbuf[0] = '_';
+	} else if (asthem && !fastlogin) {
+		avshellbuf[0] = '-';
 		strlcpy(avshellbuf+1, avshell, sizeof(avshellbuf) - 1);
 		avshell = avshellbuf;
 	}

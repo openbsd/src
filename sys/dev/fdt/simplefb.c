@@ -1,4 +1,4 @@
-/*	$OpenBSD: simplefb.c,v 1.8 2020/01/22 05:25:05 patrick Exp $	*/
+/*	$OpenBSD: simplefb.c,v 1.11 2020/05/28 20:24:26 fcambus Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -92,7 +92,7 @@ const char *simplefb_init(int, struct rasops_info *);
 int	simplefb_wsioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	simplefb_wsmmap(void *, off_t, int);
 int	simplefb_alloc_screen(void *, const struct wsscreen_descr *,
-	    void **, int *, int *, long *);
+	    void **, int *, int *, uint32_t *);
 
 struct wsdisplay_accessops simplefb_accessops = {
 	.ioctl = simplefb_wsioctl,
@@ -103,6 +103,7 @@ struct wsdisplay_accessops simplefb_accessops = {
 	.getchar = rasops_getchar,
 	.load_font = rasops_load_font,
 	.list_font = rasops_list_font,
+	.scrollback = rasops_scrollback
 };
 
 int
@@ -130,7 +131,7 @@ simplefb_attach(struct device *parent, struct device *self, void *aux)
 	struct wsemuldisplaydev_attach_args waa;
 	const char *format;
 	int console = 0;
-	long defattr;
+	uint32_t defattr;
 
 	format = simplefb_init(faa->fa_node, ri);
 	if (format) {
@@ -177,7 +178,7 @@ simplefb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_wsl.screens = (const struct wsscreen_descr **)sc->sc_scrlist;
 
 	if (console) {
-		ri->ri_ops.alloc_attr(ri->ri_active, 0, 0, 0, &defattr);
+		ri->ri_ops.pack_attr(ri->ri_active, 0, 0, 0, &defattr);
 		wsdisplay_cnattach(&sc->sc_wsd, ri->ri_active,
 		    simplefb_ri.ri_ccol, simplefb_ri.ri_crow, defattr);
 	}
@@ -297,7 +298,7 @@ simplefb_wsmmap(void *v, off_t off, int prot)
 
 int
 simplefb_alloc_screen(void *v, const struct wsscreen_descr *type,
-    void **cookiep, int *curxp, int *curyp, long *attrp)
+    void **cookiep, int *curxp, int *curyp, uint32_t *attrp)
 {
 	return rasops_alloc_screen(v, cookiep, curxp, curyp, attrp);
 }
@@ -315,7 +316,7 @@ simplefb_init_cons(bus_space_tag_t iot)
 	bus_space_handle_t ioh;
 	struct fdt_reg reg;
 	void *node;
-	long defattr = 0;
+	uint32_t defattr = 0;
 
 	node = fdt_find_cons("simple-framebuffer");
 	if (node == NULL)
@@ -343,7 +344,7 @@ simplefb_init_cons(bus_space_tag_t iot)
 	simplefb_wsd.fontwidth = ri->ri_font->fontwidth;
 	simplefb_wsd.fontheight = ri->ri_font->fontheight;
 
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&simplefb_wsd, ri, 0, 0, defattr);
 
 #if NUKBD > 0

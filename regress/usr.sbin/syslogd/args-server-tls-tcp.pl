@@ -41,7 +41,7 @@ our %args = (
 	loggrep => {
 	    qr/syslogd\[\d+\]: loghost .* connection error: /.
 		qr/handshake failed: error:.*:SSL routines:/.
-		qr/CONNECT_CR_SRVR_HELLO:wrong version number/ => 1,
+		qr/ST_CONNECT:tlsv1 alert protocol version/ => 1,
 	},
     },
 );

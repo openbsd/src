@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.43 2019/09/28 22:20:25 deraadt Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.44 2020/07/04 09:00:09 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -724,13 +724,6 @@ int
 cn30xxgmx_reset_timing(struct cn30xxgmx_port_softc *sc)
 {
 	(*sc->sc_port_ops->port_ops_timing)(sc);
-	return 0;
-}
-
-int
-cn30xxgmx_reset_board(struct cn30xxgmx_port_softc *sc)
-{
-
 	return 0;
 }
 

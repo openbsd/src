@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.118 2019/11/13 17:36:02 deraadt Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.120 2020/06/21 05:14:04 dlg Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -143,6 +143,9 @@ struct inpcb {
 #endif
 	struct	icmp6_filter *inp_icmp6filt;
 	struct	pf_state_key *inp_pf_sk;
+	struct	mbuf *(*inp_upcall)(void *, struct mbuf *,
+		    struct ip *, struct ip6_hdr *, void *, int);
+	void	*inp_upcall_arg;
 	u_int	inp_rtableid;
 	int	inp_pipex;		/* pipex indication */
 };

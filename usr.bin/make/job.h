@@ -1,7 +1,7 @@
 #ifndef _JOB_H_
 #define _JOB_H_
 
-/*	$OpenBSD: job.h,v 1.37 2020/01/16 16:07:18 espie Exp $	*/
+/*	$OpenBSD: job.h,v 1.38 2020/06/03 12:41:39 espie Exp $	*/
 /*	$NetBSD: job.h,v 1.5 1996/11/06 17:59:10 christos Exp $ */
 
 /*
@@ -55,7 +55,7 @@ extern void Job_Make(GNode *);
 extern void Job_Init(int);
 
 /* save signal mask at start */
-extern void Sigset_Init();
+extern void Sigset_Init(void);
 
 /* interface with the normal build in make.c */
 /* okay = can_start_job();

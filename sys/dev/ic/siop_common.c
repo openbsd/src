@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_common.c,v 1.38 2020/02/17 02:50:23 krw Exp $ */
+/*	$OpenBSD: siop_common.c,v 1.41 2020/07/04 16:41:23 krw Exp $ */
 /*	$NetBSD: siop_common.c,v 1.37 2005/02/27 00:27:02 perry Exp $	*/
 
 /*
@@ -56,7 +56,7 @@ int
 siop_common_attach(sc)
 	struct siop_common_softc *sc;
 {
-	int error, i;
+	int error, i, buswidth;
 	bus_dma_segment_t seg;
 	int rseg;
 
@@ -103,15 +103,9 @@ siop_common_attach(sc)
 	 * for devices attached to this adapter. It is passed to
 	 * the upper layers in config_found().
 	 */
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_buswidth =
-	    (sc->features & SF_BUS_WIDE) ? 16 : 8;
-	sc->sc_link.adapter_target =
-	    bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_SCID);
-	if (sc->sc_link.adapter_target == 0 ||
-	    sc->sc_link.adapter_target >=
-	    sc->sc_link.adapter_buswidth)
-		sc->sc_link.adapter_target = SIOP_DEFAULT_TARGET;
+	sc->sc_id = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_SCID);
+	if (sc->sc_id == 0 || sc->sc_id >= buswidth)
+		sc->sc_id = SIOP_DEFAULT_TARGET;
 
 	for (i = 0; i < 16; i++)
 		sc->targets[i] = NULL;
@@ -171,9 +165,9 @@ siop_common_reset(sc)
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_STIME0,
 	    (0xb << STIME0_SEL_SHIFT));
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_SCID,
-	    sc->sc_link.adapter_target | SCID_RRE);
+	    sc->sc_id | SCID_RRE);
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_RESPID0,
-	    1 << sc->sc_link.adapter_target);
+	    1 << sc->sc_id);
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_DCNTL,
 	    (sc->features & SF_CHIP_PF) ? DCNTL_COM | DCNTL_PFEN : DCNTL_COM);
 	if (sc->features & SF_CHIP_AAIP)
@@ -490,7 +484,7 @@ siop_ppr_neg(siop_cmd)
 			siop_target->offset = 0;
 			siop_target->period = 0;
 			goto reject;
-		} 
+		}
 		siop_target->flags |= TARF_ISWIDE;
 		sc->targets[target]->id |= (SCNTL3_EWS << 24);
 		sc->targets[target]->id &= ~(SCNTL3_SCF_MASK << 24);
@@ -775,10 +769,9 @@ siop_sdp(siop_cmd, offset)
 {
 	struct siop_common_softc *sc = siop_cmd->siop_sc;
 	scr_table_t *table;
-	
-	if ((siop_cmd->xs->flags & (SCSI_DATA_OUT | SCSI_DATA_IN))
-	    == 0)
-	    return; /* no data pointers to save */
+
+	if ((siop_cmd->xs->flags & (SCSI_DATA_OUT | SCSI_DATA_IN))== 0)
+		return; /* no data pointers to save */
 
 	/*
 	 * offset == SIOP_NSG may be a valid condition if we get a Save data
@@ -1013,7 +1006,7 @@ siop_update_xfer_mode(sc, target)
 	struct siop_common_target *siop_target;
 
 	siop_target = sc->targets[target];
-	
+
 	printf("%s: target %d now using %s%s%d bit ",
             sc->sc_dev.dv_xname, target,
 	    (siop_target->flags & TARF_TAG) ? "tagged " : "",
@@ -1054,7 +1047,7 @@ siop_update_xfer_mode(sc, target)
 		}
 		printf(" MHz %d REQ/ACK offset ", siop_target->offset);
 	}
-	
+
 	printf("xfers\n");
 
 	if ((sc->features & SF_CHIP_GEBUG) &&

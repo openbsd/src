@@ -20,12 +20,16 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
+
 #include <linux/firmware.h>
-#include <drm/drmP.h>
+#include <linux/module.h>
+#include <linux/pci.h>
+
 #include <drm/drm_cache.h>
 #include "amdgpu.h"
 #include "gmc_v6_0.h"
 #include "amdgpu_ucode.h"
+#include "amdgpu_gem.h"
 
 #include "bif/bif_3_0_d.h"
 #include "bif/bif_3_0_sh_mask.h"
@@ -224,8 +228,8 @@ static void gmc_v6_0_vram_gtt_location(struct amdgpu_device *adev,
 	u64 base = RREG32(mmMC_VM_FB_LOCATION) & 0xFFFF;
 	base <<= 24;
 
-	amdgpu_device_vram_location(adev, &adev->gmc, base);
-	amdgpu_device_gart_location(adev, mc);
+	amdgpu_gmc_vram_location(adev, mc, base);
+	amdgpu_gmc_gart_location(adev, mc);
 }
 
 static void gmc_v6_0_mc_program(struct amdgpu_device *adev)
@@ -358,7 +362,8 @@ static int gmc_v6_0_mc_init(struct amdgpu_device *adev)
 	return 0;
 }
 
-static void gmc_v6_0_flush_gpu_tlb(struct amdgpu_device *adev, uint32_t vmid)
+static void gmc_v6_0_flush_gpu_tlb(struct amdgpu_device *adev, uint32_t vmid,
+					uint32_t vmhub, uint32_t flush_type)
 {
 	WREG32(mmVM_INVALIDATE_REQUEST, 1 << vmid);
 }
@@ -381,39 +386,18 @@ static uint64_t gmc_v6_0_emit_flush_gpu_tlb(struct amdgpu_ring *ring,
 	return pd_addr;
 }
 
-static int gmc_v6_0_set_pte_pde(struct amdgpu_device *adev, void *cpu_pt_addr,
-				uint32_t gpu_page_idx, uint64_t addr,
-				uint64_t flags)
-{
-	void __iomem *ptr = (void *)cpu_pt_addr;
-	uint64_t value;
-
-	value = addr & 0xFFFFFFFFFFFFF000ULL;
-	value |= flags;
-	writeq(value, ptr + (gpu_page_idx * 8));
-
-	return 0;
-}
-
-static uint64_t gmc_v6_0_get_vm_pte_flags(struct amdgpu_device *adev,
-					  uint32_t flags)
-{
-	uint64_t pte_flag = 0;
-
-	if (flags & AMDGPU_VM_PAGE_READABLE)
-		pte_flag |= AMDGPU_PTE_READABLE;
-	if (flags & AMDGPU_VM_PAGE_WRITEABLE)
-		pte_flag |= AMDGPU_PTE_WRITEABLE;
-	if (flags & AMDGPU_VM_PAGE_PRT)
-		pte_flag |= AMDGPU_PTE_PRT;
-
-	return pte_flag;
-}
-
 static void gmc_v6_0_get_vm_pde(struct amdgpu_device *adev, int level,
 				uint64_t *addr, uint64_t *flags)
 {
 	BUG_ON(*addr & 0xFFFFFF0000000FFFULL);
+}
+
+static void gmc_v6_0_get_vm_pte(struct amdgpu_device *adev,
+				struct amdgpu_bo_va_mapping *mapping,
+				uint64_t *flags)
+{
+	*flags &= ~AMDGPU_PTE_EXECUTABLE;
+	*flags &= ~AMDGPU_PTE_PRT;
 }
 
 static void gmc_v6_0_set_fault_enable_default(struct amdgpu_device *adev,
@@ -494,16 +478,20 @@ static void gmc_v6_0_set_prt(struct amdgpu_device *adev, bool enable)
 
 static int gmc_v6_0_gart_enable(struct amdgpu_device *adev)
 {
+	uint64_t table_addr;
 	int r, i;
 	u32 field;
 
-	if (adev->gart.robj == NULL) {
+	if (adev->gart.bo == NULL) {
 		dev_err(adev->dev, "No VRAM object for PCIE GART.\n");
 		return -EINVAL;
 	}
 	r = amdgpu_gart_table_vram_pin(adev);
 	if (r)
 		return r;
+
+	table_addr = amdgpu_bo_gpu_offset(adev->gart.bo);
+
 	/* Setup TLB control */
 	WREG32(mmMC_VM_MX_L1_TLB_CNTL,
 	       (0xA << 7) |
@@ -532,7 +520,7 @@ static int gmc_v6_0_gart_enable(struct amdgpu_device *adev)
 	/* setup context0 */
 	WREG32(mmVM_CONTEXT0_PAGE_TABLE_START_ADDR, adev->gmc.gart_start >> 12);
 	WREG32(mmVM_CONTEXT0_PAGE_TABLE_END_ADDR, adev->gmc.gart_end >> 12);
-	WREG32(mmVM_CONTEXT0_PAGE_TABLE_BASE_ADDR, adev->gart.table_addr >> 12);
+	WREG32(mmVM_CONTEXT0_PAGE_TABLE_BASE_ADDR, table_addr >> 12);
 	WREG32(mmVM_CONTEXT0_PROTECTION_FAULT_DEFAULT_ADDR,
 			(u32)(adev->dummy_page_addr >> 12));
 	WREG32(mmVM_CONTEXT0_CNTL2, 0);
@@ -556,10 +544,10 @@ static int gmc_v6_0_gart_enable(struct amdgpu_device *adev)
 	for (i = 1; i < 16; i++) {
 		if (i < 8)
 			WREG32(mmVM_CONTEXT0_PAGE_TABLE_BASE_ADDR + i,
-			       adev->gart.table_addr >> 12);
+			       table_addr >> 12);
 		else
 			WREG32(mmVM_CONTEXT8_PAGE_TABLE_BASE_ADDR + i - 8,
-			       adev->gart.table_addr >> 12);
+			       table_addr >> 12);
 	}
 
 	/* enable context1-15 */
@@ -576,10 +564,10 @@ static int gmc_v6_0_gart_enable(struct amdgpu_device *adev)
 	else
 		gmc_v6_0_set_fault_enable_default(adev, true);
 
-	gmc_v6_0_flush_gpu_tlb(adev, 0);
+	gmc_v6_0_flush_gpu_tlb(adev, 0, 0, 0);
 	dev_info(adev->dev, "PCIE GART of %uM enabled (table at 0x%016llX).\n",
 		 (unsigned)(adev->gmc.gart_size >> 20),
-		 (unsigned long long)adev->gart.table_addr);
+		 (unsigned long long)table_addr);
 	adev->gart.ready = true;
 	return 0;
 }
@@ -588,7 +576,7 @@ static int gmc_v6_0_gart_init(struct amdgpu_device *adev)
 {
 	int r;
 
-	if (adev->gart.robj) {
+	if (adev->gart.bo) {
 		dev_warn(adev->dev, "gmc_v6_0 PCIE GART already initialized\n");
 		return 0;
 	}
@@ -844,8 +832,9 @@ static unsigned gmc_v6_0_get_vbios_fb_size(struct amdgpu_device *adev)
 static int gmc_v6_0_sw_init(void *handle)
 {
 	int r;
-	int dma_bits;
 	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+
+	adev->num_vmhubs = 1;
 
 	if (adev->flags & AMD_IS_APU) {
 		adev->gmc.vram_type = AMDGPU_VRAM_TYPE_UNKNOWN;
@@ -855,11 +844,11 @@ static int gmc_v6_0_sw_init(void *handle)
 		adev->gmc.vram_type = gmc_v6_0_convert_vram_type(tmp);
 	}
 
-	r = amdgpu_irq_add_id(adev, AMDGPU_IH_CLIENTID_LEGACY, 146, &adev->gmc.vm_fault);
+	r = amdgpu_irq_add_id(adev, AMDGPU_IRQ_CLIENTID_LEGACY, 146, &adev->gmc.vm_fault);
 	if (r)
 		return r;
 
-	r = amdgpu_irq_add_id(adev, AMDGPU_IH_CLIENTID_LEGACY, 147, &adev->gmc.vm_fault);
+	r = amdgpu_irq_add_id(adev, AMDGPU_IRQ_CLIENTID_LEGACY, 147, &adev->gmc.vm_fault);
 	if (r)
 		return r;
 
@@ -867,22 +856,12 @@ static int gmc_v6_0_sw_init(void *handle)
 
 	adev->gmc.mc_mask = 0xffffffffffULL;
 
-	adev->need_dma32 = false;
-#ifdef notyet
-	dma_bits = adev->need_dma32 ? 32 : 40;
-	r = pci_set_dma_mask(adev->pdev, DMA_BIT_MASK(dma_bits));
+	r = dma_set_mask_and_coherent(adev->dev, DMA_BIT_MASK(44));
 	if (r) {
-		adev->need_dma32 = true;
-		dma_bits = 32;
 		dev_warn(adev->dev, "amdgpu: No suitable DMA available.\n");
+		return r;
 	}
-	r = pci_set_consistent_dma_mask(adev->pdev, DMA_BIT_MASK(dma_bits));
-	if (r) {
-		pci_set_consistent_dma_mask(adev->pdev, DMA_BIT_MASK(32));
-		dev_warn(adev->dev, "amdgpu: No coherent DMA available.\n");
-	}
-	adev->need_swiotlb = drm_get_max_iomem() > ((u64)1 << dma_bits);
-#endif
+	adev->need_swiotlb = drm_need_swiotlb(44);
 
 	r = gmc_v6_0_init_microcode(adev);
 	if (r) {
@@ -1120,7 +1099,6 @@ static int gmc_v6_0_process_interrupt(struct amdgpu_device *adev,
 	if (amdgpu_vm_fault_stop == AMDGPU_VM_FAULT_STOP_FIRST)
 		gmc_v6_0_set_fault_enable_default(adev, false);
 
-#ifdef notyet
 	if (printk_ratelimit()) {
 		dev_err(adev->dev, "GPU fault detected: %d 0x%08x\n",
 			entry->src_id, entry->src_data[0]);
@@ -1130,7 +1108,6 @@ static int gmc_v6_0_process_interrupt(struct amdgpu_device *adev,
 			status);
 		gmc_v6_0_vm_decode_fault(adev, status, addr, 0);
 	}
-#endif
 
 	return 0;
 }
@@ -1167,10 +1144,9 @@ static const struct amd_ip_funcs gmc_v6_0_ip_funcs = {
 static const struct amdgpu_gmc_funcs gmc_v6_0_gmc_funcs = {
 	.flush_gpu_tlb = gmc_v6_0_flush_gpu_tlb,
 	.emit_flush_gpu_tlb = gmc_v6_0_emit_flush_gpu_tlb,
-	.set_pte_pde = gmc_v6_0_set_pte_pde,
 	.set_prt = gmc_v6_0_set_prt,
 	.get_vm_pde = gmc_v6_0_get_vm_pde,
-	.get_vm_pte_flags = gmc_v6_0_get_vm_pte_flags
+	.get_vm_pte = gmc_v6_0_get_vm_pte,
 };
 
 static const struct amdgpu_irq_src_funcs gmc_v6_0_irq_funcs = {
@@ -1180,8 +1156,7 @@ static const struct amdgpu_irq_src_funcs gmc_v6_0_irq_funcs = {
 
 static void gmc_v6_0_set_gmc_funcs(struct amdgpu_device *adev)
 {
-	if (adev->gmc.gmc_funcs == NULL)
-		adev->gmc.gmc_funcs = &gmc_v6_0_gmc_funcs;
+	adev->gmc.gmc_funcs = &gmc_v6_0_gmc_funcs;
 }
 
 static void gmc_v6_0_set_irq_funcs(struct amdgpu_device *adev)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.85 2019/01/07 23:44:11 bluhm Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.86 2020/06/17 06:17:19 dlg Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.28 1997/06/06 23:29:17 thorpej Exp $	*/
 
 /*-
@@ -786,6 +786,17 @@ void	acpiprt_route_interrupt(int bus, int dev, int pin);
 
 extern struct intrhand *apic_intrhand[256];
 extern int apic_maxlevel[256];
+
+void *
+pci_intr_establish_cpu(pci_chipset_tag_t pc, pci_intr_handle_t ih,
+    int level, struct cpu_info *ci,
+    int (*func)(void *), void *arg, const char *what)
+{
+	if (ci != NULL && ci != &cpu_info_primary)
+		return (NULL);
+
+	return pci_intr_establish(pc, ih, level, func, arg, what);
+}
 
 void *
 pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.36 2020/04/28 20:30:41 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.52 2020/07/03 04:12:51 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -21,6 +21,7 @@
 #include <openssl/evp.h>
 
 #include "ssl_locl.h"
+#include "ssl_tlsext.h"
 #include "tls13_internal.h"
 
 /*
@@ -106,16 +107,15 @@ static void
 tls13_alert_received_cb(uint8_t alert_desc, void *arg)
 {
 	struct tls13_ctx *ctx = arg;
-	SSL *s = ctx->ssl;
 
-	if (alert_desc == SSL_AD_CLOSE_NOTIFY) {
+	if (alert_desc == TLS13_ALERT_CLOSE_NOTIFY) {
 		ctx->close_notify_recv = 1;
 		ctx->ssl->internal->shutdown |= SSL_RECEIVED_SHUTDOWN;
 		S3I(ctx->ssl)->warn_alert = alert_desc;
 		return;
 	}
 
-	if (alert_desc == SSL_AD_USER_CANCELLED) {
+	if (alert_desc == TLS13_ALERT_USER_CANCELED) {
 		/*
 		 * We treat this as advisory, since a close_notify alert
 		 * SHOULD follow this alert (RFC 8446 section 6.1).
@@ -129,7 +129,25 @@ tls13_alert_received_cb(uint8_t alert_desc, void *arg)
 	SSLerror(ctx->ssl, SSL_AD_REASON_OFFSET + alert_desc);
 	ERR_asprintf_error_data("SSL alert number %d", alert_desc);
 
-	SSL_CTX_remove_session(s->ctx, s->session);
+	SSL_CTX_remove_session(ctx->ssl->ctx, ctx->ssl->session);
+}
+
+static void
+tls13_alert_sent_cb(uint8_t alert_desc, void *arg)
+{
+	struct tls13_ctx *ctx = arg;
+
+	if (alert_desc == SSL_AD_CLOSE_NOTIFY) {
+		ctx->close_notify_sent = 1;
+		return;
+	}
+
+	if (alert_desc == SSL_AD_USER_CANCELLED) {
+		return;
+	}
+
+	/* All other alerts are treated as fatal in TLSv1.3. */
+	SSLerror(ctx->ssl, SSL_AD_REASON_OFFSET + alert_desc);
 }
 
 static void
@@ -160,6 +178,33 @@ tls13_legacy_handshake_message_sent_cb(void *arg)
 	tls13_handshake_msg_data(ctx->hs_msg, &cbs);
 	s->internal->msg_callback(1, TLS1_3_VERSION, SSL3_RT_HANDSHAKE,
 	    CBS_data(&cbs), CBS_len(&cbs), s, s->internal->msg_callback_arg);
+}
+
+static int
+tls13_legacy_ocsp_status_recv_cb(void *arg)
+{
+	struct tls13_ctx *ctx = arg;
+	SSL *s = ctx->ssl;
+	int ret;
+
+	if (s->ctx->internal->tlsext_status_cb == NULL ||
+	    s->internal->tlsext_ocsp_resp == NULL)
+		return 1;
+
+	ret = s->ctx->internal->tlsext_status_cb(s,
+	    s->ctx->internal->tlsext_status_arg);
+	if (ret < 0) {
+		ctx->alert = TLS13_ALERT_INTERNAL_ERROR;
+		SSLerror(s, ERR_R_MALLOC_FAILURE);
+		return 0;
+	}
+	if (ret == 0) {
+		ctx->alert = TLS13_ALERT_BAD_CERTIFICATE_STATUS_RESPONSE;
+		SSLerror(s, SSL_R_INVALID_STATUS_RESPONSE);
+		return 0;
+	}
+
+	return 1;
 }
 
 static int
@@ -213,41 +258,55 @@ tls13_phh_limit_check(struct tls13_ctx *ctx)
 static ssize_t
 tls13_key_update_recv(struct tls13_ctx *ctx, CBS *cbs)
 {
-	ssize_t ret = TLS13_IO_FAILURE;
+	struct tls13_handshake_msg *hs_msg = NULL;
+	CBB cbb_hs;
+	CBS cbs_hs;
+	uint8_t alert = TLS13_ALERT_INTERNAL_ERROR;
+	uint8_t key_update_request;
+	ssize_t ret;
 
-	if (!CBS_get_u8(cbs, &ctx->key_update_request))
+	if (!CBS_get_u8(cbs, &key_update_request)) {
+		alert = TLS13_ALERT_DECODE_ERROR;
 		goto err;
-	if (CBS_len(cbs) != 0)
+	}
+	if (CBS_len(cbs) != 0) {
+		alert = TLS13_ALERT_DECODE_ERROR;
 		goto err;
+	}
+	if (key_update_request > 1) {
+		alert = TLS13_ALERT_ILLEGAL_PARAMETER;
+		goto err;
+	}
 
 	if (!tls13_phh_update_peer_traffic_secret(ctx))
 		goto err;
 
-	if (ctx->key_update_request) {
-		CBB cbb;
-		CBS cbs; /* XXX */
+	if (key_update_request == 0)
+		return TLS13_IO_SUCCESS;
 
-		free(ctx->hs_msg);
-		ctx->hs_msg = tls13_handshake_msg_new();
-		if (!tls13_handshake_msg_start(ctx->hs_msg, &cbb, TLS13_MT_KEY_UPDATE))
-			goto err;
-		if (!CBB_add_u8(&cbb, 0))
-			goto err;
-		if (!tls13_handshake_msg_finish(ctx->hs_msg))
-			goto err;
-		tls13_handshake_msg_data(ctx->hs_msg, &cbs);
-		ret = tls13_record_layer_phh(ctx->rl, &cbs);
+	/* key_update_request == 1 */
+	if ((hs_msg = tls13_handshake_msg_new()) == NULL)
+		goto err;
+	if (!tls13_handshake_msg_start(hs_msg, &cbb_hs, TLS13_MT_KEY_UPDATE))
+		goto err;
+	if (!CBB_add_u8(&cbb_hs, 0))
+		goto err;
+	if (!tls13_handshake_msg_finish(hs_msg))
+		goto err;
 
-		tls13_handshake_msg_free(ctx->hs_msg);
-		ctx->hs_msg = NULL;
-	} else
-		ret = TLS13_IO_SUCCESS;
+	ctx->key_update_request = 1;
+	tls13_handshake_msg_data(hs_msg, &cbs_hs);
+	ret = tls13_record_layer_phh(ctx->rl, &cbs_hs);
+
+	tls13_handshake_msg_free(hs_msg);
+	hs_msg = NULL;
 
 	return ret;
+
  err:
-	ctx->key_update_request = 0;
-	/* XXX alert */
-	return TLS13_IO_FAILURE;
+	tls13_handshake_msg_free(hs_msg);
+
+	return tls13_send_alert(ctx->rl, alert);
 }
 
 static void
@@ -269,7 +328,7 @@ tls13_phh_received_cb(void *cb_arg, CBS *cbs)
 	CBS phh_cbs;
 
 	if (!tls13_phh_limit_check(ctx))
-		return tls13_send_alert(ctx->rl, SSL3_AD_UNEXPECTED_MESSAGE);
+		return tls13_send_alert(ctx->rl, TLS13_ALERT_UNEXPECTED_MESSAGE);
 
 	if ((ctx->hs_msg == NULL) &&
 	    ((ctx->hs_msg = tls13_handshake_msg_new()) == NULL))
@@ -305,6 +364,15 @@ tls13_phh_received_cb(void *cb_arg, CBS *cbs)
 	return ret;
 }
 
+static const struct tls13_record_layer_callbacks rl_callbacks = {
+	.wire_read = tls13_legacy_wire_read_cb,
+	.wire_write = tls13_legacy_wire_write_cb,
+	.alert_recv = tls13_alert_received_cb,
+	.alert_sent = tls13_alert_sent_cb,
+	.phh_recv = tls13_phh_received_cb,
+	.phh_sent = tls13_phh_done_cb,
+};
+
 struct tls13_ctx *
 tls13_ctx_new(int mode)
 {
@@ -315,13 +383,14 @@ tls13_ctx_new(int mode)
 
 	ctx->mode = mode;
 
-	if ((ctx->rl = tls13_record_layer_new(tls13_legacy_wire_read_cb,
-	    tls13_legacy_wire_write_cb, tls13_alert_received_cb,
-	    tls13_phh_received_cb, tls13_phh_done_cb, ctx)) == NULL)
+	if ((ctx->rl = tls13_record_layer_new(&rl_callbacks, ctx)) == NULL)
 		goto err;
 
 	ctx->handshake_message_sent_cb = tls13_legacy_handshake_message_sent_cb;
 	ctx->handshake_message_recv_cb = tls13_legacy_handshake_message_recv_cb;
+	ctx->ocsp_status_recv_cb = tls13_legacy_ocsp_status_recv_cb;
+
+	ctx->middlebox_compat = 1;
 
 	return ctx;
 
@@ -345,9 +414,10 @@ tls13_ctx_free(struct tls13_ctx *ctx)
 }
 
 int
-tls13_cert_add(CBB *cbb, X509 *cert)
+tls13_cert_add(struct tls13_ctx *ctx, CBB *cbb, X509 *cert,
+    int(*build_extensions)(SSL *s, uint16_t msg_type, CBB *cbb))
 {
-	CBB cert_data, cert_exts;
+	CBB cert_data;
 	uint8_t *data;
 	int cert_len;
 
@@ -360,10 +430,14 @@ tls13_cert_add(CBB *cbb, X509 *cert)
 		return 0;
 	if (i2d_X509(cert, &data) != cert_len)
 		return 0;
-
-	if (!CBB_add_u16_length_prefixed(cbb, &cert_exts))
-		return 0;
-
+	if (build_extensions != NULL) {
+		if (!build_extensions(ctx->ssl, SSL_TLSEXT_MSG_CT, cbb))
+			return 0;
+	} else {
+		CBB cert_exts;
+		if (!CBB_add_u16_length_prefixed(cbb, &cert_exts))
+			return 0;
+	}
 	if (!CBB_flush(cbb))
 		return 0;
 
@@ -412,3 +486,82 @@ tls13_synthetic_handshake_message(struct tls13_ctx *ctx)
 
 	return ret;
 }
+
+int
+tls13_clienthello_hash_init(struct tls13_ctx *ctx)
+{
+	if (ctx->hs->clienthello_md_ctx != NULL)
+		return 0;
+	if ((ctx->hs->clienthello_md_ctx = EVP_MD_CTX_new()) == NULL)
+		return 0;
+	if (!EVP_DigestInit_ex(ctx->hs->clienthello_md_ctx,
+	    EVP_sha256(), NULL))
+		return 0;
+
+	if ((ctx->hs->clienthello_hash == NULL) &&
+	    (ctx->hs->clienthello_hash = calloc(1, EVP_MAX_MD_SIZE)) ==
+	    NULL)
+		return 0;
+
+	return 1;
+}
+
+void
+tls13_clienthello_hash_clear(struct ssl_handshake_tls13_st *hs)
+{
+	EVP_MD_CTX_free(hs->clienthello_md_ctx);
+	hs->clienthello_md_ctx = NULL;
+	freezero(hs->clienthello_hash, EVP_MAX_MD_SIZE);
+	hs->clienthello_hash = NULL;
+}
+
+int
+tls13_clienthello_hash_update_bytes(struct tls13_ctx *ctx, void *data,
+    size_t len)
+{
+	return EVP_DigestUpdate(ctx->hs->clienthello_md_ctx, data, len);
+}
+
+int
+tls13_clienthello_hash_update(struct tls13_ctx *ctx, CBS *cbs)
+{
+	return tls13_clienthello_hash_update_bytes(ctx, (void *)CBS_data(cbs),
+	    CBS_len(cbs));
+}
+
+int
+tls13_clienthello_hash_finalize(struct tls13_ctx *ctx)
+{
+	if (!EVP_DigestFinal_ex(ctx->hs->clienthello_md_ctx,
+	    ctx->hs->clienthello_hash,
+	    &ctx->hs->clienthello_hash_len))
+		return 0;
+	EVP_MD_CTX_free(ctx->hs->clienthello_md_ctx);
+	ctx->hs->clienthello_md_ctx = NULL;
+	return 1;
+}
+
+int
+tls13_clienthello_hash_validate(struct tls13_ctx *ctx)
+{
+	unsigned char new_ch_hash[EVP_MAX_MD_SIZE];
+	unsigned int new_ch_hash_len;
+
+	if (ctx->hs->clienthello_hash == NULL)
+		return 0;
+
+	if (!EVP_DigestFinal_ex(ctx->hs->clienthello_md_ctx,
+	    new_ch_hash, &new_ch_hash_len))
+		return 0;
+	EVP_MD_CTX_free(ctx->hs->clienthello_md_ctx);
+	ctx->hs->clienthello_md_ctx = NULL;
+
+	if (ctx->hs->clienthello_hash_len != new_ch_hash_len)
+		return 0;
+	if (memcmp(ctx->hs->clienthello_hash, new_ch_hash,
+	    new_ch_hash_len) != 0)
+		return 0;
+
+	return 1;
+}
+

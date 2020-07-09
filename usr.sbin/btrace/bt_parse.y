@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.13 2020/04/24 15:10:41 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.15 2020/07/03 17:58:09 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -98,7 +98,7 @@ static void	 yyerror(const char *, ...);
 static int	 yylex(void);
 %}
 
-%token	ERROR OP_EQ OP_NEQ BEGIN END
+%token	ERROR OP_EQ OP_NEQ BEGIN END HZ
 /* Builtins */
 %token	BUILTIN PID TID
 /* Functions and Map operators */
@@ -592,6 +592,8 @@ again:
 		for (pc = 0, c = lgetc(); c != EOF; c = lgetc()) {
 			if (pc == '*' && c == '/')
 				goto again;
+			else if (c == '\n')
+				yylval.lineno++;
 			pc = c;
 		}
 	}

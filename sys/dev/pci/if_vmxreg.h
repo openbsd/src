@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmxreg.h,v 1.6 2019/10/27 22:24:40 dlg Exp $	*/
+/*	$OpenBSD: if_vmxreg.h,v 1.9 2020/07/07 01:36:49 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -16,30 +16,34 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-struct UPT1_TxStats {
-	u_int64_t TSO_packets;
-	u_int64_t TSO_bytes;
-	u_int64_t ucast_packets;
-	u_int64_t ucast_bytes;
-	u_int64_t mcast_packets;
-	u_int64_t mcast_bytes;
-	u_int64_t bcast_packets;
-	u_int64_t bcast_bytes;
-	u_int64_t error;
-	u_int64_t discard;
+enum UPT1_TxStats {
+	UPT1_TxStat_TSO_packets,
+	UPT1_TxStat_TSO_bytes,
+	UPT1_TxStat_ucast_packets,
+	UPT1_TxStat_ucast_bytes,
+	UPT1_TxStat_mcast_packets,
+	UPT1_TxStat_mcast_bytes,
+	UPT1_TxStat_bcast_packets,
+	UPT1_TxStat_bcast_bytes,
+	UPT1_TxStat_error,
+	UPT1_TxStat_discard,
+
+	UPT1_TxStats_count,
 } __packed;
 
-struct UPT1_RxStats {
-	u_int64_t LRO_packets;
-	u_int64_t LRO_bytes;
-	u_int64_t ucast_packets;
-	u_int64_t ucast_bytes;
-	u_int64_t mcast_packets;
-	u_int64_t mcast_bytes;
-	u_int64_t bcast_packets;
-	u_int64_t bcast_bytes;
-	u_int64_t nobuffer;
-	u_int64_t error;
+enum UPT1_RxStats {
+	UPT1_RXStat_LRO_packets,
+	UPT1_RXStat_LRO_bytes,
+	UPT1_RXStat_ucast_packets,
+	UPT1_RXStat_ucast_bytes,
+	UPT1_RXStat_mcast_packets,
+	UPT1_RXStat_mcast_bytes,
+	UPT1_RXStat_bcast_packets,
+	UPT1_RXStat_bcast_bytes,
+	UPT1_RXStat_nobuffer,
+	UPT1_RXStat_error,
+
+	UPT1_RxStats_count,
 } __packed;
 
 /* interrupt moderation levels */
@@ -73,6 +77,7 @@ struct UPT1_RxStats {
 #define VMXNET3_CMD_SET_RXMODE	0xcafe0003	/* set interface flags */
 #define VMXNET3_CMD_SET_FILTER	0xcafe0004	/* set address filter */
 #define VMXNET3_CMD_GET_STATUS	0xf00d0000	/* get queue errors */
+#define VMXNET3_CMD_GET_STATS	0xf00d0001
 #define VMXNET3_CMD_GET_LINK	0xf00d0002	/* get link status */
 #define VMXNET3_CMD_GET_MACL	0xf00d0003
 #define VMXNET3_CMD_GET_MACH	0xf00d0004
@@ -177,6 +182,7 @@ struct vmxnet3_rxcompdesc {
 #define VMXNET3_RXC_QID_S	16
 #define VMXNET3_RXC_RSSTYPE_M	0x0000000f
 #define VMXNET3_RXC_RSSTYPE_S	26
+#define VMXNET3_RXC_RSSTYPE_NONE 0
 #define VMXNET3_RXC_NOCSUM	0x40000000	/* no checksum calculated */
 #define VMXNET3_RXC_RES1	0x80000000
 
@@ -307,7 +313,7 @@ struct vmxnet3_txq_shared {
 	u_int8_t pad2[3];
 	u_int32_t error;
 
-	struct UPT1_TxStats stats;
+	uint64_t stats[UPT1_TxStats_count];
 
 	u_int8_t pad3[88];
 } __packed;
@@ -331,7 +337,25 @@ struct vmxnet3_rxq_shared {
 	u_int8_t pad3[3];
 	u_int32_t error;
 
-	struct UPT1_RxStats stats;
+	uint64_t stats[UPT1_RxStats_count];
 
 	u_int8_t pad4[88];
 } __packed;
+
+#define UPT1_RSS_MAX_KEY_SIZE		40
+#define UPT1_RSS_MAX_IND_TABLE_SIZE	128
+
+struct vmxnet3_upt1_rss_conf {
+	u_int16_t hash_type;
+#define UPT1_RSS_HASH_TYPE_NONE		0
+#define UPT1_RSS_HASH_TYPE_IPV4		1
+#define UPT1_RSS_HASH_TYPE_TCP_IPV4	2
+#define UPT1_RSS_HASH_TYPE_IPV6		4
+#define UPT1_RSS_HASH_TYPE_TCP_IPV6	8
+	u_int16_t hash_func;
+#define UPT1_RSS_HASH_FUNC_TOEPLITZ	1
+	u_int16_t hash_key_size;
+	u_int16_t ind_table_size;
+	u_int8_t hash_key[UPT1_RSS_MAX_KEY_SIZE];
+	u_int8_t ind_table[UPT1_RSS_MAX_IND_TABLE_SIZE];
+ } __packed;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.201 2020/03/13 10:07:01 anton Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.202 2020/06/11 13:23:18 visa Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -301,13 +301,14 @@ restart:
 		return (EBADF);
 	fdplock(fdp);
 	if ((error = fdalloc(p, 0, &new)) != 0) {
-		FRELE(fp, p);
 		if (error == ENOSPC) {
 			fdexpand(p);
 			fdpunlock(fdp);
+			FRELE(fp, p);
 			goto restart;
 		}
 		fdpunlock(fdp);
+		FRELE(fp, p);
 		return (error);
 	}
 	/* No need for FRELE(), finishdup() uses current ref. */
@@ -373,13 +374,14 @@ restart:
 	fdplock(fdp);
 	if (new >= fdp->fd_nfiles) {
 		if ((error = fdalloc(p, new, &i)) != 0) {
-			FRELE(fp, p);
 			if (error == ENOSPC) {
 				fdexpand(p);
 				fdpunlock(fdp);
+				FRELE(fp, p);
 				goto restart;
 			}
 			fdpunlock(fdp);
+			FRELE(fp, p);
 			return (error);
 		}
 		if (new != i)
@@ -433,13 +435,14 @@ restart:
 		}
 		fdplock(fdp);
 		if ((error = fdalloc(p, newmin, &i)) != 0) {
-			FRELE(fp, p);
 			if (error == ENOSPC) {
 				fdexpand(p);
 				fdpunlock(fdp);
+				FRELE(fp, p);
 				goto restart;
 			}
 			fdpunlock(fdp);
+			FRELE(fp, p);
 		} else {
 			int dupflags = 0;
 

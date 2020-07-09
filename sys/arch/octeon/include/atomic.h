@@ -1,4 +1,4 @@
-/* $OpenBSD: atomic.h,v 1.2 2018/01/08 13:44:43 visa Exp $ */
+/* $OpenBSD: atomic.h,v 1.3 2020/07/08 15:53:59 visa Exp $ */
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -35,6 +35,7 @@ octeon_syncw(void)
 	: : : "memory");
 }
 
+#define membar_consumer()	__asm__ volatile ("" : : : "memory")
 #define membar_producer()	octeon_syncw()
 
 #endif /* _KERNEL */

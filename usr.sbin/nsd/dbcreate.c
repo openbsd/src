@@ -296,6 +296,7 @@ create_dirs(const char* path)
 			if(errno != EEXIST) {
 				log_msg(LOG_ERR, "create dir %s: %s",
 					dir, strerror(errno));
+				*p = PATHSEP; /* restore input string */
 				return 0;
 			}
 			/* it already exists, OK, continue */

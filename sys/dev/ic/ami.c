@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.241 2020/02/15 18:02:00 krw Exp $	*/
+/*	$OpenBSD: ami.c,v 1.245 2020/07/02 15:58:17 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -238,7 +238,7 @@ ami_allocmem(struct ami_softc *sc, size_t size)
 
 	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
 	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &am->am_map) != 0)
-		goto amfree; 
+		goto amfree;
 
 	if (bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &am->am_seg, 1,
 	    &nsegs, BUS_DMA_NOWAIT | BUS_DMA_ZERO) != 0)
@@ -517,12 +517,6 @@ ami_attach(struct ami_softc *sc)
 	/* TODO: fetch & print cache strategy */
 	/* TODO: fetch & print scsi and raid info */
 
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter = &ami_switch;
-	sc->sc_link.adapter_target = sc->sc_maxunits;
-	sc->sc_link.adapter_buswidth = sc->sc_maxunits;
-	sc->sc_link.pool = &sc->sc_iopool;
-
 #ifdef AMI_DEBUG
 	printf(", FW %s, BIOS v%s, %dMB RAM\n"
 	    "%s: %d channels, %d %ss, %d logical drives, "
@@ -544,7 +538,12 @@ ami_attach(struct ami_softc *sc)
 	/* lock around ioctl requests */
 	rw_init(&sc->sc_lock, NULL);
 
-	bzero(&saa, sizeof(saa));
+	sc->sc_link.adapter_softc = sc;
+	sc->sc_link.adapter = &ami_switch;
+	sc->sc_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
+	sc->sc_link.adapter_buswidth = sc->sc_maxunits;
+	sc->sc_link.pool = &sc->sc_iopool;
+
 	saa.saa_sc_link = &sc->sc_link;
 
 	config_found(&sc->sc_dev, &saa, scsiprint);
@@ -586,11 +585,10 @@ ami_attach(struct ami_softc *sc)
 		rsc->sc_link.adapter = &ami_raw_switch;
 		rsc->sc_proctarget = -1;
 		/* TODO fetch it from the controller */
-		rsc->sc_link.adapter_target = 16;
+		rsc->sc_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
 		rsc->sc_link.adapter_buswidth = 16;
 		rsc->sc_link.pool = &sc->sc_iopool;
 
-		bzero(&saa, sizeof(saa));
 		saa.saa_sc_link = &rsc->sc_link;
 
 		ptbus = (struct scsibus_softc *)config_found(&sc->sc_dev,
@@ -1057,7 +1055,7 @@ ami_complete(struct ami_softc *sc, struct ami_ccb *ccb, int timeout)
 		s = splbio(); /* interrupt handlers are called at their IPL */
 		ready = ami_intr(sc);
 		splx(s);
-		
+
 		if (ready == 0) {
 			if (timeout-- == 0) {
 				/* XXX */
@@ -1237,7 +1235,7 @@ ami_scsi_raw_cmd(struct scsi_xfer *xs)
 
 	ccb->ccb_cmd.acc_cmd = AMI_PASSTHRU;
 	ccb->ccb_cmd.acc_passthru.apt_data = ccb->ccb_ptpa;
-	
+
 	ccb->ccb_pt->apt_param = AMI_PTPARAM(AMI_TIMEOUT_6,1,0);
 	ccb->ccb_pt->apt_channel = channel;
 	ccb->ccb_pt->apt_target = target;
@@ -2013,9 +2011,9 @@ ami_disk(struct ami_softc *sc, struct bioc_disk *bd,
 
 		ch = (i & 0xf0) >> 4;
 		tg = i & 0x0f;
-		if (ami_drv_inq(sc, ch, tg, 0, inqbuf)) 
+		if (ami_drv_inq(sc, ch, tg, 0, inqbuf))
 			goto bail;
-		
+
 		vendp = inqbuf->vendor;
 		bcopy(vendp, vend, sizeof vend - 1);
 
@@ -2172,7 +2170,7 @@ ami_ioctl_vol(struct ami_softc *sc, struct bioc_vol *bv)
 	bv->bv_size *= (uint64_t)512;
 
 	strlcpy(bv->bv_dev, sc->sc_hdr[i].dev, sizeof(bv->bv_dev));
-	
+
 bail:
 	free(p, M_DEVBUF, sizeof *p);
 

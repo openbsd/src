@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs.8,v 1.76 2020/01/16 16:46:46 schwarze Exp $
+.\"	$OpenBSD: newfs.8,v 1.77 2020/05/18 06:20:44 otto Exp $
 .\"	$NetBSD: newfs.8,v 1.12 1995/03/18 14:58:41 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)newfs.8	8.3 (Berkeley) 3/27/94
 .\"
-.Dd $Mdocdate: January 16 2020 $
+.Dd $Mdocdate: May 18 2020 $
 .Dt NEWFS 8
 .Os
 .Sh NAME
@@ -190,10 +190,9 @@ format file system.
 This option is primarily used to build root file systems that can
 be understood by older boot ROMs.
 .It 1
-Fast File System (FFS), the default for file systems smaller than 1 TB.
+Fast File System (FFS).
 .It 2
-Enhanced Fast File System (FFS2), the default for file systems larger than
-1 TB.
+Enhanced Fast File System (FFS2), the default.
 .El
 .It Fl o Ar optimization
 .Ar space

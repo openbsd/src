@@ -23,12 +23,13 @@
  * Authors: Dave Airlie
  *          Alex Deucher
  */
-#include <drm/drmP.h>
+
 #include <drm/amdgpu_drm.h>
 #include "amdgpu.h"
 #include "amdgpu_atombios.h"
 #include "amdgpu_atomfirmware.h"
 #include "amdgpu_i2c.h"
+#include "amdgpu_display.h"
 
 #include "atom.h"
 #include "atom-bits.h"
@@ -1733,9 +1734,9 @@ bool amdgpu_atombios_scratch_need_asic_init(struct amdgpu_device *adev)
  * data to or from atom. Note that atom operates on dw units.
  *
  * Use to_le=true when sending data to atom and provide at least
- * ALIGN(num_bytes,4) bytes in the dst buffer.
+ * roundup2(num_bytes,4) bytes in the dst buffer.
  *
- * Use to_le=false when receiving data from atom and provide ALIGN(num_bytes,4)
+ * Use to_le=false when receiving data from atom and provide roundup2(num_bytes,4)
  * byes in the src buffer.
  */
 void amdgpu_atombios_copy_swap(u8 *dst, u8 *src, u8 num_bytes, bool to_le)
@@ -2021,6 +2022,11 @@ int amdgpu_atombios_init(struct amdgpu_device *adev)
 	if (adev->is_atom_fw) {
 		amdgpu_atomfirmware_scratch_regs_init(adev);
 		amdgpu_atomfirmware_allocate_fb_scratch(adev);
+		ret = amdgpu_atomfirmware_get_mem_train_info(adev);
+		if (ret) {
+			DRM_ERROR("Failed to get mem train fb location.\n");
+			return ret;
+		}
 	} else {
 		amdgpu_atombios_scratch_regs_init(adev);
 		amdgpu_atombios_allocate_fb_scratch(adev);

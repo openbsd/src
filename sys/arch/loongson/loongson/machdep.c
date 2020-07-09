@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.87 2019/04/01 07:02:04 tedu Exp $ */
+/*	$OpenBSD: machdep.c,v 1.89 2020/06/05 13:35:20 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2014 Miodrag Vallat.

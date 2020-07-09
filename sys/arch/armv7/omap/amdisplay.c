@@ -1,4 +1,4 @@
-/* $OpenBSD: amdisplay.c,v 1.11 2019/12/25 11:42:05 jsg Exp $ */
+/* $OpenBSD: amdisplay.c,v 1.12 2020/05/25 09:55:48 jsg Exp $ */
 /*
  * Copyright (c) 2016 Ian Sutton <ians@openbsd.org>
  *
@@ -99,7 +99,7 @@ int	amdisplay_intr(void *);
 int	amdisplay_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	amdisplay_mmap(void *, off_t, int);
 int	amdisplay_alloc_screen(void *, const struct wsscreen_descr *,
-	    void **, int *, int *, long *);
+	    void **, int *, int *, uint32_t *);
 
 int	amdisplay_setup_dma(struct amdisplay_softc *);
 void	amdisplay_conf_crt_timings(struct amdisplay_softc *);
@@ -644,7 +644,7 @@ amdisplay_mmap(void *sconf, off_t off, int prot)
 
 int
 amdisplay_alloc_screen(void *sconf, const struct wsscreen_descr *type,
-    void **cookiep, int *curxp, int *curyp, long *attrp)
+    void **cookiep, int *curxp, int *curyp, uint32_t *attrp)
 {
 	return rasops_alloc_screen(sconf, cookiep, curxp, curyp, attrp);
 }

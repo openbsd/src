@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.101 2020/01/22 07:52:38 deraadt Exp $ */
+/*	$OpenBSD: parser.c,v 1.104 2020/05/12 13:26:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -46,7 +46,7 @@ enum token_type {
 	PEERDESC,
 	GROUPDESC,
 	RIBNAME,
-	SHUTDOWN_COMMUNICATION,
+	COMMUNICATION,
 	COMMUNITY,
 	EXTCOMMUNITY,
 	EXTCOM_SUBTYPE,
@@ -61,8 +61,7 @@ enum token_type {
 	RD,
 	FAMILY,
 	RTABLE,
-	FILENAME,
-	BULK
+	FILENAME
 };
 
 struct token {
@@ -114,9 +113,10 @@ static const struct token t_weight[];
 static const struct token t_log[];
 static const struct token t_fib_table[];
 static const struct token t_show_fib_table[];
+static const struct token t_communication[];
 
 static const struct token t_main[] = {
-	{ KEYWORD,	"reload",	RELOAD,		NULL},
+	{ KEYWORD,	"reload",	RELOAD,		t_communication},
 	{ KEYWORD,	"show",		SHOW,		t_show},
 	{ KEYWORD,	"fib",		FIB,		t_fib},
 	{ KEYWORD,	"neighbor",	NEIGHBOR,	t_neighbor},
@@ -276,16 +276,16 @@ static const struct token t_neighbor[] = {
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
-static const struct token t_nei_mod_shutc[] = {
+static const struct token t_communication[] = {
 	{ NOTOKEN,	"",		NONE,		NULL},
-	{ SHUTDOWN_COMMUNICATION, "",	NONE,		NULL},
+	{ COMMUNICATION, "",		NONE,		NULL},
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
 static const struct token t_neighbor_modifiers[] = {
 	{ KEYWORD,	"up",		NEIGHBOR_UP,		NULL},
-	{ KEYWORD,	"down",		NEIGHBOR_DOWN,		t_nei_mod_shutc},
-	{ KEYWORD,	"clear",	NEIGHBOR_CLEAR,		t_nei_mod_shutc},
+	{ KEYWORD,	"down",		NEIGHBOR_DOWN,		t_communication},
+	{ KEYWORD,	"clear",	NEIGHBOR_CLEAR,		t_communication},
 	{ KEYWORD,	"refresh",	NEIGHBOR_RREFRESH,	NULL},
 	{ KEYWORD,	"destroy",	NEIGHBOR_DESTROY,	NULL},
 	{ ENDTOKEN,	"",		NONE,			NULL}
@@ -581,29 +581,28 @@ match_token(int *argc, char **argv[], const struct token table[])
 				t = &table[i];
 				res.aid = AID_VPN_IPv4;
 			}
+			if (!strcasecmp(word, "VPNv6")) {
+				match++;
+				t = &table[i];
+				res.aid = AID_VPN_IPv6;
+			}
 			break;
 		case ADDRESS:
 			if (parse_addr(word, &res.addr)) {
 				match++;
 				t = &table[i];
-				if (t->value)
-					res.action = t->value;
 			}
 			break;
 		case PEERADDRESS:
 			if (parse_addr(word, &res.peeraddr)) {
 				match++;
 				t = &table[i];
-				if (t->value)
-					res.action = t->value;
 			}
 			break;
 		case PREFIX:
 			if (parse_prefix(word, wordlen, &res.addr, &res.prefixlen)) {
 				match++;
 				t = &table[i];
-				if (t->value)
-					res.action = t->value;
 			}
 			break;
 		case ASTYPE:
@@ -644,11 +643,11 @@ match_token(int *argc, char **argv[], const struct token table[])
 				t = &table[i];
 			}
 			break;
-		case SHUTDOWN_COMMUNICATION:
+		case COMMUNICATION:
 			if (!match && word != NULL && wordlen > 0) {
-				if (strlcpy(res.shutcomm, word,
-				    sizeof(res.shutcomm)) >=
-				    sizeof(res.shutcomm))
+				if (strlcpy(res.reason, word,
+				    sizeof(res.reason)) >=
+				    sizeof(res.reason))
 					errx(1, "shutdown reason too long");
 				match++;
 				t = &table[i];
@@ -791,10 +790,6 @@ match_token(int *argc, char **argv[], const struct token table[])
 				t = &table[i];
 			}
 			break;
-		case BULK:
-			match++;
-			t = &table[i];
-			break;
 		case ENDTOKEN:
 			break;
 		}
@@ -846,8 +841,8 @@ show_valid_args(const struct token table[])
 		case RIBNAME:
 			fprintf(stderr, "  <rib name>\n");
 			break;
-		case SHUTDOWN_COMMUNICATION:
-			fprintf(stderr, "  <shutdown reason>\n");
+		case COMMUNICATION:
+			fprintf(stderr, "  <reason>\n");
 			break;
 		case COMMUNITY:
 			fprintf(stderr, "  <community>\n");
@@ -878,12 +873,12 @@ show_valid_args(const struct token table[])
 			fprintf(stderr, "  <pftable>\n");
 			break;
 		case FAMILY:
-			fprintf(stderr, "  [ inet | inet6 | IPv4 | IPv6 | VPNv4 ]\n");
+			fprintf(stderr, "  [ inet | inet6 | IPv4 | IPv6 | "
+			    "VPNv4 | VPNv6 ]\n");
 			break;
 		case FILENAME:
 			fprintf(stderr, "  <filename>\n");
 			break;
-		case BULK:
 		case ENDTOKEN:
 			break;
 		}

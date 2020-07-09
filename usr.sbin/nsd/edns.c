@@ -128,13 +128,16 @@ edns_parse_record(edns_record_type *edns, buffer_type *packet,
 	if (opt_rdlen > 0) {
 		if(!buffer_available(packet, opt_rdlen))
 			return 0;
+		if(opt_rdlen > 65530)
+			return 0;
 		/* there is more to come, read opt code */
 		while(opt_rdlen >= 4) {
 			uint16_t optcode = buffer_read_u16(packet);
 			uint16_t optlen = buffer_read_u16(packet);
-			if(opt_rdlen < 4+optlen)
+			opt_rdlen -= 4;
+			if(opt_rdlen < optlen)
 				return 0; /* opt too long, formerr */
-			opt_rdlen -= (4+optlen);
+			opt_rdlen -= optlen;
 			if(!edns_handle_option(optcode, optlen, packet,
 				edns, query, nsd))
 				return 0;

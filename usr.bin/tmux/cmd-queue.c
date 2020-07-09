@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.91 2020/04/23 05:48:42 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.98 2020/06/01 09:43:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -341,9 +341,15 @@ cmdq_insert_hook(struct session *s, struct cmdq_item *item,
     struct cmd_find_state *current, const char *fmt, ...)
 {
 	struct cmdq_state		*state = item->state;
+	struct cmd			*cmd = item->cmd;
+	struct args			*args = cmd_get_args(cmd);
+	struct args_entry		*entryp;
+	struct args_value		*valuep;
 	struct options			*oo;
 	va_list				 ap;
-	char				*name;
+	char				*name, tmp[32], flag, *arguments;
+	int				 i;
+	const char			*value;
 	struct cmdq_item		*new_item;
 	struct cmdq_state		*new_state;
 	struct options_entry		*o;
@@ -374,6 +380,37 @@ cmdq_insert_hook(struct session *s, struct cmdq_item *item,
 	 */
 	new_state = cmdq_new_state(current, &state->event, CMDQ_STATE_NOHOOKS);
 	cmdq_add_format(new_state, "hook", "%s", name);
+
+	arguments = args_print(args);
+	cmdq_add_format(new_state, "hook_arguments", "%s", arguments);
+	free(arguments);
+
+	for (i = 0; i < args->argc; i++) {
+		xsnprintf(tmp, sizeof tmp, "hook_argument_%d", i);
+		cmdq_add_format(new_state, tmp, "%s", args->argv[i]);
+	}
+	flag = args_first(args, &entryp);
+	while (flag != 0) {
+		value = args_get(args, flag);
+		if (value == NULL) {
+			xsnprintf(tmp, sizeof tmp, "hook_flag_%c", flag);
+			cmdq_add_format(new_state, tmp, "1");
+		} else {
+			xsnprintf(tmp, sizeof tmp, "hook_flag_%c", flag);
+			cmdq_add_format(new_state, tmp, "%s", value);
+		}
+
+		i = 0;
+		value = args_first_value(args, flag, &valuep);
+		while (value != NULL) {
+			xsnprintf(tmp, sizeof tmp, "hook_flag_%c_%d", flag, i);
+			cmdq_add_format(new_state, tmp, "%s", value);
+			i++;
+			value = args_next_value(&valuep);
+		}
+
+		flag = args_next(&entryp);
+	}
 
 	a = options_array_first(o);
 	while (a != NULL) {
@@ -485,7 +522,7 @@ cmdq_find_flag(struct cmdq_item *item, struct cmd_find_state *fs,
 	const char	*value;
 
 	if (flag->flag == 0) {
-		cmd_find_clear_state(fs, 0);
+		cmd_find_from_client(fs, item->target_client, 0);
 		return (CMD_RETURN_NORMAL);
 	}
 
@@ -495,6 +532,28 @@ cmdq_find_flag(struct cmdq_item *item, struct cmd_find_state *fs,
 		return (CMD_RETURN_ERROR);
 	}
 	return (CMD_RETURN_NORMAL);
+}
+
+/* Add message with command. */
+static void
+cmdq_add_message(struct cmdq_item *item)
+{
+	struct client		*c = item->client;
+	struct cmdq_state	*state = item->state;
+	const char		*name, *key;
+	char			*tmp;
+
+	tmp = cmd_print(item->cmd);
+	if (c != NULL) {
+		name = c->name;
+		if (c->session != NULL && state->event.key != KEYC_NONE) {
+			key = key_string_lookup_key(state->event.key, 0);
+			server_add_message("%s key %s: %s", name, key, tmp);
+		} else
+			server_add_message("%s command: %s", name, tmp);
+	} else
+		server_add_message("command: %s", tmp);
+	free(tmp);
 }
 
 /* Fire command on command queue. */
@@ -512,6 +571,8 @@ cmdq_fire_command(struct cmdq_item *item)
 	int			 flags, quiet = 0;
 	char			*tmp;
 
+	if (cfg_finished)
+		cmdq_add_message(item);
 	if (log_get_level() > 1) {
 		tmp = cmd_print(cmd);
 		log_debug("%s %s: (%u) %s", __func__, name, item->group, tmp);
@@ -548,7 +609,6 @@ cmdq_fire_command(struct cmdq_item *item)
 	retval = cmdq_find_flag(item, &item->target, &entry->target);
 	if (retval == CMD_RETURN_ERROR)
 		goto out;
-
 
 	retval = entry->exec(cmd, item);
 	if (retval == CMD_RETURN_ERROR)
@@ -720,7 +780,7 @@ cmdq_guard(struct cmdq_item *item, const char *guard, int flags)
 	u_int		 number = item->number;
 
 	if (c != NULL && (c->flags & CLIENT_CONTROL))
-		file_print(c, "%%%s %ld %u %d\n", guard, t, number, flags);
+		control_write(c, "%%%s %ld %u %d", guard, t, number, flags);
 }
 
 /* Show message from command. */
@@ -747,9 +807,12 @@ cmdq_print(struct cmdq_item *item, const char *fmt, ...)
 			msg = utf8_sanitize(tmp);
 			free(tmp);
 		}
-		file_print(c, "%s\n", msg);
+		if (c->flags & CLIENT_CONTROL)
+			control_write(c, "%s", msg);
+		else
+			file_print(c, "%s\n", msg);
 	} else {
-		wp = c->session->curw->window->active;
+		wp = server_client_get_pane(c);
 		wme = TAILQ_FIRST(&wp->modes);
 		if (wme == NULL || wme->mode != &window_view_mode) {
 			window_pane_set_mode(wp, NULL, &window_view_mode, NULL,
@@ -782,19 +845,20 @@ cmdq_error(struct cmdq_item *item, const char *fmt, ...)
 		cmd_get_source(cmd, &file, &line);
 		cfg_add_cause("%s:%u: %s", file, line, msg);
 	} else if (c->session == NULL || (c->flags & CLIENT_CONTROL)) {
+		server_add_message("%s message: %s", c->name, msg);
 		if (~c->flags & CLIENT_UTF8) {
 			tmp = msg;
 			msg = utf8_sanitize(tmp);
 			free(tmp);
 		}
 		if (c->flags & CLIENT_CONTROL)
-			file_print(c, "%s\n", msg);
+			control_write(c, "%s", msg);
 		else
 			file_error(c, "%s\n", msg);
 		c->retval = 1;
 	} else {
 		*msg = toupper((u_char) *msg);
-		status_message_set(c, "%s", msg);
+		status_message_set(c, 1, "%s", msg);
 	}
 
 	free(msg);

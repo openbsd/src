@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktime.h,v 1.1 2019/04/14 10:14:53 jsg Exp $	*/
+/*	$OpenBSD: ktime.h,v 1.4 2020/07/07 04:05:25 cheloha Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -29,7 +29,7 @@ ktime_get(void)
 {
 	struct timeval tv;
 	
-	getmicrouptime(&tv);
+	microuptime(&tv);
 	return tv;
 }
 
@@ -39,13 +39,6 @@ ktime_get_raw(void)
 	struct timeval tv;
 	
 	microuptime(&tv);
-	return tv;
-}
-
-static inline struct timeval
-ktime_get_monotonic_offset(void)
-{
-	struct timeval tv = {0, 0};
 	return tv;
 }
 
@@ -70,10 +63,8 @@ ktime_to_ns(struct timeval tv)
 static inline int64_t
 ktime_get_raw_ns(void)
 {
-	return ktime_to_ns(ktime_get());
+	return ktime_to_ns(ktime_get_raw());
 }
-
-#define ktime_to_timeval(tv) (tv)
 
 static inline struct timespec64
 ktime_to_timespec64(struct timeval tv)
@@ -98,6 +89,12 @@ ktime_add(struct timeval a, struct timeval b)
 	struct timeval res;
 	timeradd(&a, &b, &res);
 	return res;
+}
+
+static inline struct timeval
+ktime_add_us(struct timeval tv, int64_t us)
+{
+	return ns_to_timeval(timeval_to_ns(&tv) + (us * NSEC_PER_USEC));
 }
 
 static inline struct timeval

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_syscall.c,v 1.3 2020/03/28 15:42:25 mpi Exp $ */
+/*	$OpenBSD: dt_prov_syscall.c,v 1.4 2020/07/04 10:19:09 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -33,7 +33,7 @@ struct dt_probe	**dtps_return;
 unsigned int	  dtps_nsysent = SYS_MAXSYSCALL;
 
 /* Flags that make sense for this provider */
-#define DTEVT_PROV_SYSCALL	(DTEVT_COMMON|DTEVT_FUNCARGS|DTEVT_RETVAL)
+#define DTEVT_PROV_SYSCALL	(DTEVT_COMMON|DTEVT_FUNCARGS)
 
 int	dt_prov_syscall_alloc(struct dt_probe *, struct dt_softc *,
 	    struct dt_pcb_list *, struct dtioc_req *);
@@ -195,10 +195,14 @@ dt_prov_syscall_return(struct dt_provider *dtpv, ...)
 		if (dtev == NULL)
 			continue;
 
-		if (ISSET(dp->dp_evtflags, DTEVT_RETVAL)) {
+		if (error) {
+			dtev->dtev_sysretval[0] = -1;
+			dtev->dtev_sysretval[1] = 0;
+			dtev->dtev_syserror = error;
+		} else {
 			dtev->dtev_sysretval[0] = retval[0];
 			dtev->dtev_sysretval[1] = retval[1];
-			dtev->dtev_syserror = error;
+			dtev->dtev_syserror = 0;
 		}
 
 		dt_pcb_ring_consume(dp, dtev);

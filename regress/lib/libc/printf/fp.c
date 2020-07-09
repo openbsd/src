@@ -1,4 +1,4 @@
-/*	$OpenBSD: fp.c,v 1.1 2008/09/07 20:36:10 martynas Exp $	*/
+/*	$OpenBSD: fp.c,v 1.2 2020/05/31 12:27:19 mortimer Exp $	*/
 /*-
  * Copyright (c) 2002, 2005 David Schultz <das@FreeBSD.org>
  * All rights reserved.
@@ -184,6 +184,14 @@ main(int argc, char *argv[])
 	testfmt(" 0X1.230000000000000000000000P-4", "%32.24A", 0x1.23p-4);
 	testfmt("0x1p-1074", "%a", 0x1p-1074);
 	testfmt("0x1.2345p-1024", "%a", 0x1.2345p-1024);
+
+#if LDBL_MANT_DIG == 113
+	testfmt("-0x1.e7d7c7b7a7978777675747372717p-14344", "%La",
+			-0x1.e7d7c7b7a7978777675747372717p-14344L);
+#elif LDBL_MANT_DIG == 64
+	testfmt("-0x8.777675747372717p-16248", "%La",
+			-0x8.777675747372717p-16248L);
+#endif
 
 	return (0);
 }

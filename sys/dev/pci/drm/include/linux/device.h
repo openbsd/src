@@ -12,6 +12,8 @@
 #include <linux/ioport.h>
 #include <linux/lockdep.h>
 #include <linux/pm.h>
+#include <linux/kobject.h>
+#include <linux/ratelimit.h> /* dev_printk.h -> ratelimit.h */
 
 struct device_node;
 
@@ -20,6 +22,8 @@ struct device_driver {
 };
 
 struct device_attribute {
+	struct attribute attr;
+	ssize_t (*show)(struct device *, struct device_attribute *, char *);
 };
 
 #define DEVICE_ATTR(_name, _mode, _show, _store) \
@@ -30,7 +34,6 @@ struct device_attribute {
 
 #define dev_get_drvdata(x)	NULL
 #define dev_set_drvdata(x, y)
-#define dev_name(dev)		""
 
 #define dev_pm_set_driver_flags(x, y)
 
@@ -52,6 +55,17 @@ struct device_attribute {
 	printf("drm:pid%d:%s *PRINTK* " fmt, curproc->p_p->ps_pid,	\
 	    __func__ , ## arg)
 
+#define dev_warn_ratelimited(dev, fmt, arg...)				\
+	printf("drm:pid%d:%s *WARNING* " fmt, curproc->p_p->ps_pid,	\
+	    __func__ , ## arg)
+#define dev_notice_ratelimited(dev, fmt, arg...)			\
+	printf("drm:pid%d:%s *NOTICE* " fmt, curproc->p_p->ps_pid,	\
+	    __func__ , ## arg)
+
+#define dev_err_once(dev, fmt, arg...)				\
+	printf("drm:pid%d:%s *ERROR* " fmt, curproc->p_p->ps_pid,	\
+	    __func__ , ## arg)
+
 #ifdef DRMDEBUG
 #define dev_info(dev, fmt, arg...)				\
 	printf("drm: " fmt, ## arg)
@@ -64,5 +78,14 @@ struct device_attribute {
 #define dev_dbg(dev, fmt, arg...) 				\
 	    do { } while(0)
 #endif
+
+static inline const char *
+dev_driver_string(struct device *dev)
+{
+	return dev->dv_cfdata->cf_driver->cd_name;
+}
+
+/* should be bus id as string, ie 0000:00:02.0 */
+#define dev_name(dev)		""
 
 #endif

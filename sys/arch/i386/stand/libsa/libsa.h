@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.45 2010/07/02 00:36:52 weingart Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.46 2020/06/14 16:00:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 Michael Shalayeff
@@ -58,6 +58,8 @@ int mem_add(long long, long long);
 int mem_delete(long long, long long);
 int mem_limit(long long);
 void mem_pass(void);
+
+int pslid(void);
 
 void devboot(dev_t, char *);
 void machdep(void);

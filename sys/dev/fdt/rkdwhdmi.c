@@ -1,4 +1,4 @@
-/* $OpenBSD: rkdwhdmi.c,v 1.3 2020/03/16 21:51:25 kettenis Exp $ */
+/* $OpenBSD: rkdwhdmi.c,v 1.5 2020/06/30 02:19:11 deraadt Exp $ */
 /* $NetBSD: rk_dwhdmi.c,v 1.4 2019/12/17 18:26:36 jakllsch Exp $ */
 
 /*-
@@ -41,7 +41,6 @@
 #include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
 
-#include <drm/drmP.h>
 #include <drm/drm_crtc_helper.h>
 
 #include <dev/ic/dwhdmi.h>
@@ -90,24 +89,16 @@ int rkdwhdmi_match(struct device *, void *, void *);
 void rkdwhdmi_attach(struct device *, struct device *, void *);
 
 void rkdwhdmi_select_input(struct rkdwhdmi_softc *, u_int);
-bool rkdwhdmi_encoder_mode_fixup(struct drm_encoder *,
-    const struct drm_display_mode *, struct drm_display_mode *);
-void rkdwhdmi_encoder_mode_set(struct drm_encoder *,
-    struct drm_display_mode *, struct drm_display_mode *);
 void rkdwhdmi_encoder_enable(struct drm_encoder *);
-void rkdwhdmi_encoder_disable(struct drm_encoder *);
-void rkdwhdmi_encoder_prepare(struct drm_encoder *);
-void rkdwhdmi_encoder_commit(struct drm_encoder *);
-void rkdwhdmi_encoder_dpms(struct drm_encoder *, int);
 
 int rkdwhdmi_ep_activate(void *, struct endpoint *, void *);
 void *rkdwhdmi_ep_get_cookie(void *, struct endpoint *);
 
 void rkdwhdmi_enable(struct dwhdmi_softc *);
-void rkdwhdmi_mode_set(struct dwhdmi_softc *, struct drm_display_mode *,
-    struct drm_display_mode *);
+void rkdwhdmi_mode_set(struct dwhdmi_softc *, const struct drm_display_mode *,
+    const struct drm_display_mode *);
 enum drm_mode_status rkdwhdmi_mode_valid(struct dwhdmi_softc *,
-    struct drm_display_mode *);
+    const struct drm_display_mode *);
 
 struct cfattach	rkdwhdmi_ca = {
 	sizeof (struct rkdwhdmi_softc), rkdwhdmi_match, rkdwhdmi_attach
@@ -212,31 +203,8 @@ rkdwhdmi_select_input(struct rkdwhdmi_softc *sc, u_int crtc_index)
 	regmap_write_4(sc->sc_grf, RK3399_GRF_SOC_CON20, write_mask | write_val);
 }
 
-bool
-rkdwhdmi_encoder_mode_fixup(struct drm_encoder *encoder,
-    const struct drm_display_mode *mode, struct drm_display_mode *adjusted_mode)
-{
-	return true;
-}
-
-void
-rkdwhdmi_encoder_mode_set(struct drm_encoder *encoder,
-    struct drm_display_mode *mode, struct drm_display_mode *adjusted)
-{
-}
-
 void
 rkdwhdmi_encoder_enable(struct drm_encoder *encoder)
-{
-}
-
-void
-rkdwhdmi_encoder_disable(struct drm_encoder *encoder)
-{
-}
-
-void
-rkdwhdmi_encoder_prepare(struct drm_encoder *encoder)
 {
 	struct rkdwhdmi_softc * const sc = to_rkdwhdmi_encoder(encoder);
 	const u_int crtc_index = drm_crtc_index(encoder->crtc);
@@ -244,22 +212,12 @@ rkdwhdmi_encoder_prepare(struct drm_encoder *encoder)
 	rkdwhdmi_select_input(sc, crtc_index);
 }
 
-void
-rkdwhdmi_encoder_commit(struct drm_encoder *encoder)
-{
-}
-
 struct drm_encoder_funcs rkdwhdmi_encoder_funcs = {
 	.destroy = drm_encoder_cleanup,
 };
 
 struct drm_encoder_helper_funcs rkdwhdmi_encoder_helper_funcs = {
-	.prepare = rkdwhdmi_encoder_prepare,
-	.mode_fixup = rkdwhdmi_encoder_mode_fixup,
-	.mode_set = rkdwhdmi_encoder_mode_set,
 	.enable = rkdwhdmi_encoder_enable,
-	.disable = rkdwhdmi_encoder_disable,
-	.commit = rkdwhdmi_encoder_commit,
 };
 
 int
@@ -308,7 +266,7 @@ rkdwhdmi_enable(struct dwhdmi_softc *dsc)
 
 void
 rkdwhdmi_mode_set(struct dwhdmi_softc *dsc,
-    struct drm_display_mode *mode, struct drm_display_mode *adjusted_mode)
+    const struct drm_display_mode *mode, const struct drm_display_mode *adjusted_mode)
 {
 	struct rkdwhdmi_softc *sc = to_rkdwhdmi_softc(dsc);
 	int error;
@@ -326,7 +284,7 @@ rkdwhdmi_mode_set(struct dwhdmi_softc *dsc,
 }
 
 enum drm_mode_status
-rkdwhdmi_mode_valid(struct dwhdmi_softc *dsc, struct drm_display_mode *mode)
+rkdwhdmi_mode_valid(struct dwhdmi_softc *dsc, const struct drm_display_mode *mode)
 {
 	struct rkdwhdmi_softc *sc = to_rkdwhdmi_softc(dsc);
 	int i;

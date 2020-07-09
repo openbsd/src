@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.1,v 1.33 2020/04/15 03:24:08 millert Exp $
+.\"	$OpenBSD: acme-client.1,v 1.34 2020/05/10 12:06:18 benno Exp $
 .\"
 .\" Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 15 2020 $
+.Dd $Mdocdate: May 10 2020 $
 .Dt ACME-CLIENT 1
 .Os
 .Sh NAME
@@ -24,14 +24,14 @@
 .Nm acme-client
 .Op Fl Fnrv
 .Op Fl f Ar configfile
-.Ar domain
+.Ar handle
 .Sh DESCRIPTION
 .Nm
 is an
 Automatic Certificate Management Environment (ACME) client:
 it looks in its configuration for a domain section
 corresponding to the
-.Ar domain
+.Ar handle
 given as command line argument
 and uses that configuration to retrieve an X.509 certificate
 which can be used to provide domain name validation
@@ -77,8 +77,9 @@ Revoke the X.509 certificate.
 .It Fl v
 Verbose operation.
 Specify twice to also trace communication and data transfers.
-.It Ar domain
-The domain name.
+.It Ar handle
+The handle of the domain section of the configuration that contains the
+details of the certificate to be created, renewed or revoked.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/acme-client.conf" -compact

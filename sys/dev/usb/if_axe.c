@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.139 2019/07/07 06:40:10 kevlo Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.140 2020/06/09 07:43:39 gerhard Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -1223,6 +1223,7 @@ axe_encap(struct axe_softc *sc, struct mbuf *m, int idx)
 	/* Transmit */
 	err = usbd_transfer(c->axe_xfer);
 	if (err != USBD_IN_PROGRESS) {
+		c->axe_mbuf = NULL;
 		axe_stop(sc);
 		return(EIO);
 	}
@@ -1246,16 +1247,15 @@ axe_start(struct ifnet *ifp)
 	if (ifq_is_oactive(&ifp->if_snd))
 		return;
 
-	m_head = ifq_deq_begin(&ifp->if_snd);
+	m_head = ifq_dequeue(&ifp->if_snd);
 	if (m_head == NULL)
 		return;
 
 	if (axe_encap(sc, m_head, 0)) {
-		ifq_deq_rollback(&ifp->if_snd, m_head);
+		m_freem(m_head);
 		ifq_set_oactive(&ifp->if_snd);
 		return;
 	}
-	ifq_deq_commit(&ifp->if_snd, m_head);
 
 	/*
 	 * If there's a BPF listener, bounce a copy of this frame

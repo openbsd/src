@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systat.1,v 1.117 2020/04/23 07:57:27 mpi Exp $
+.\"	$OpenBSD: systat.1,v 1.119 2020/06/22 13:17:54 kn Exp $
 .\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)systat.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: April 23 2020 $
+.Dd $Mdocdate: June 22 2020 $
 .Dt SYSTAT 1
 .Os
 .Sh NAME
@@ -188,6 +188,8 @@ Quit
 .Nm .
 .It Ic r
 Reverse the selected ordering if supported by the view.
+.It Ic s
+Change the screen refresh interval in seconds.
 .It Ic \&,
 Print numbers with thousand separators, where applicable.
 .It Ic ^A | Aq Ic Home
@@ -211,9 +213,6 @@ Scroll current view up by one line.
 Scroll current view down by one page.
 .It Ic Alt-V | Aq Ic Page Up
 Scroll current view up by one page.
-.It Ic ^Z
-Suspend
-.Nm .
 .El
 .Pp
 The following commands are interpreted by the

@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.54 2019/12/04 06:25:45 deraadt Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.55 2020/07/06 13:33:06 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2000-2002,2004 Todd C. Miller <millert@openbsd.org>
@@ -752,7 +752,7 @@ auth_check_expire(auth_session_t *as)
 
 	if (as->pwd && (quad_t)as->pwd->pw_expire != 0) {
 		if (as->now.tv_sec == 0)
-			gettimeofday(&as->now, NULL);
+			WRAP(gettimeofday)(&as->now, NULL);
 		if ((quad_t)as->now.tv_sec >= (quad_t)as->pwd->pw_expire) {
 			as->state &= ~AUTH_ALLOW;
 			as->state |= AUTH_EXPIRED;
@@ -779,7 +779,7 @@ auth_check_change(auth_session_t *as)
 
 	if (as->pwd && (quad_t)as->pwd->pw_change) {
 		if (as->now.tv_sec == 0)
-			gettimeofday(&as->now, NULL);
+			WRAP(gettimeofday)(&as->now, NULL);
 		if (as->now.tv_sec >= (quad_t)as->pwd->pw_change) {
 			as->state &= ~AUTH_ALLOW;
 			as->state |= AUTH_PWEXPIRED;

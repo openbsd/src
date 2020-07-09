@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.298 2020/03/24 13:50:18 tobhe Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.299 2020/06/24 22:03:42 cheloha Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -1325,8 +1325,8 @@ rtm_setmetrics(u_long which, const struct rt_metrics *in,
 	if (which & RTV_EXPIRE) {
 		expire = in->rmx_expire;
 		if (expire != 0) {
-			expire -= time_second;
-			expire += time_uptime;
+			expire -= gettime();
+			expire += getuptime();
 		}
 
 		out->rmx_expire = expire;
@@ -1340,8 +1340,8 @@ rtm_getmetrics(const struct rt_kmetrics *in, struct rt_metrics *out)
 
 	expire = in->rmx_expire;
 	if (expire != 0) {
-		expire -= time_uptime;
-		expire += time_second;
+		expire -= getuptime();
+		expire += gettime();
 	}
 
 	bzero(out, sizeof(*out));

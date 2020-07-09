@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.34 2017/09/25 10:47:46 jsg Exp $
+dnl	$OpenBSD: contents,v 1.35 2020/05/17 17:04:28 deraadt Exp $
 TopPart
 
 OpenBSDdistsets
@@ -13,7 +13,7 @@ OpenBSDinstalliso
 
 OpenBSDcd
 
-	lif{:--:}OSrev.fs	A LIF bootable bsd.rd image, suitable for
+	lif{:--:}OSrev.img	A LIF bootable bsd.rd image, suitable for
 			network boot.
 
 	xxboot		The OpenBSD/MACHINE LIF boot block.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sndiod.8,v 1.7 2020/04/25 05:35:52 ratchov Exp $
+.\"	$OpenBSD: sndiod.8,v 1.8 2020/06/28 05:21:39 ratchov Exp $
 .\"
 .\" Copyright (c) 2006-2012 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 25 2020 $
+.Dd $Mdocdate: June 28 2020 $
 .Dt SNDIOD 8
 .Os
 .Sh NAME
@@ -196,6 +196,11 @@ PCI device allows
 .Nm
 to use the USB one preferably when it's connected
 and to fall back to the PCI one when it's disconnected.
+Alternate devices may be switched with the
+.Va server.device
+control of the
+.Xr sndioctl 1
+utility.
 .It Fl f Ar device
 Add this
 .Xr sndio 7
