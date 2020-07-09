@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.47 2020/07/09 12:48:19 inoguchi Exp $ */
+/* $OpenBSD: s_client.c,v 1.48 2020/07/09 13:07:46 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -191,25 +191,18 @@ static struct {
 	int bugs;
 	char *CAfile;
 	char *CApath;
-	int c_debug;
-	int c_ign_eof;
-	int c_msg;
-	int c_nbio;
-	int c_Pause;
-	int c_quiet;
-	int c_showcerts;
-	int c_status_req;
-	int c_tlsextdebug;
 	char *cert_file;
 	int cert_format;
 	char *cipher;
 	unsigned int clr;
 	char *connect;
 	int crlf;
+	int debug;
 	int enable_timeouts;
 	const char *errstr;
 	char *groups_in;
 	char *host;
+	int ign_eof;
 	char *key_file;
 	int key_format;
 	char *keymatexportlabel;
@@ -217,18 +210,23 @@ static struct {
 	uint16_t max_version;
 	uint16_t min_version;
 	const SSL_METHOD *meth;
+	int msg;
+	int nbio;
 	int nbio_test;
 	char *npn_in;
 	unsigned int off;
 	char *passarg;
+	int pause;
 	int peekaboo;
 	char *port;
 	int prexit;
 	char *proxy;
+	int quiet;
 	int reconnect;
 	char *servername;
 	char *sess_in;
 	char *sess_out;
+	int showcerts;
 	int socket_type;
 	long socket_mtu;
 #ifndef OPENSSL_NO_SRTP
@@ -236,6 +234,8 @@ static struct {
 #endif
 	int starttls_proto;
 	int state;
+	int status_req;
+	int tlsextdebug;
 	int verify;
 	X509_VERIFY_PARAM *vpm;
 	char *xmpphost;
@@ -324,8 +324,8 @@ s_client_opt_protocol_version_tls1_3(void)
 static int
 s_client_opt_quiet(void)
 {
-	s_client_config.c_quiet = 1;
-	s_client_config.c_ign_eof = 1;
+	s_client_config.quiet = 1;
+	s_client_config.ign_eof = 1;
 	return (0);
 }
 
@@ -464,7 +464,7 @@ static const struct option s_client_options[] = {
 		.name = "debug",
 		.desc = "Print extensive debugging information",
 		.type = OPTION_FLAG,
-		.opt.flag = &s_client_config.c_debug,
+		.opt.flag = &s_client_config.debug,
 	},
 #ifndef OPENSSL_NO_DTLS1
 	{
@@ -492,7 +492,7 @@ static const struct option s_client_options[] = {
 		.name = "ign_eof",
 		.desc = "Ignore input EOF (default when -quiet)",
 		.type = OPTION_VALUE,
-		.opt.value = &s_client_config.c_ign_eof,
+		.opt.value = &s_client_config.ign_eof,
 		.value = 1,
 	},
 	{
@@ -538,7 +538,7 @@ static const struct option s_client_options[] = {
 		.name = "msg",
 		.desc = "Show all protocol messages with hex dump",
 		.type = OPTION_FLAG,
-		.opt.flag = &s_client_config.c_msg,
+		.opt.flag = &s_client_config.msg,
 	},
 #ifndef OPENSSL_NO_DTLS1
 	{
@@ -553,7 +553,7 @@ static const struct option s_client_options[] = {
 		.name = "nbio",
 		.desc = "Turn on non-blocking I/O",
 		.type = OPTION_FLAG,
-		.opt.flag = &s_client_config.c_nbio,
+		.opt.flag = &s_client_config.nbio,
 	},
 	{
 		.name = "nbio_test",
@@ -577,7 +577,7 @@ static const struct option s_client_options[] = {
 		.name = "no_ign_eof",
 		.desc = "Don't ignore input EOF",
 		.type = OPTION_VALUE,
-		.opt.value = &s_client_config.c_ign_eof,
+		.opt.value = &s_client_config.ign_eof,
 		.value = 0,
 	},
 	{
@@ -645,7 +645,7 @@ static const struct option s_client_options[] = {
 		.name = "pause",
 		.desc = "Pause 1 second between each read and write call",
 		.type = OPTION_FLAG,
-		.opt.flag = &s_client_config.c_Pause,
+		.opt.flag = &s_client_config.pause,
 	},
 	{
 		.name = "peekaboo",
@@ -717,7 +717,7 @@ static const struct option s_client_options[] = {
 		.name = "showcerts",
 		.desc = "Show all server certificates in the chain",
 		.type = OPTION_FLAG,
-		.opt.flag = &s_client_config.c_showcerts,
+		.opt.flag = &s_client_config.showcerts,
 	},
 	{
 		.name = "starttls",
@@ -737,7 +737,7 @@ static const struct option s_client_options[] = {
 		.name = "status",
 		.desc = "Send a certificate status request to the server (OCSP)",
 		.type = OPTION_FLAG,
-		.opt.flag = &s_client_config.c_status_req,
+		.opt.flag = &s_client_config.status_req,
 	},
 #ifndef OPENSSL_NO_DTLS1
 	{
@@ -775,7 +775,7 @@ static const struct option s_client_options[] = {
 		.name = "tlsextdebug",
 		.desc = "Hex dump of all TLS extensions received",
 		.type = OPTION_FLAG,
-		.opt.flag = &s_client_config.c_tlsextdebug,
+		.opt.flag = &s_client_config.tlsextdebug,
 	},
 #ifndef OPENSSL_NO_SRTP
 	{
@@ -960,7 +960,7 @@ s_client_main(int argc, char **argv)
 		}
 	}
 	if (bio_c_out == NULL) {
-		if (s_client_config.c_quiet && !s_client_config.c_debug && !s_client_config.c_msg) {
+		if (s_client_config.quiet && !s_client_config.debug && !s_client_config.msg) {
 			bio_c_out = BIO_new(BIO_s_null());
 		} else {
 			if (bio_c_out == NULL)
@@ -1085,15 +1085,15 @@ re_start:
 	}
 	BIO_printf(bio_c_out, "CONNECTED(%08X)\n", s);
 
-	if (s_client_config.c_nbio) {
-		if (!s_client_config.c_quiet)
+	if (s_client_config.nbio) {
+		if (!s_client_config.quiet)
 			BIO_printf(bio_c_out, "turning on non blocking io\n");
 		if (!BIO_socket_nbio(s, 1)) {
 			ERR_print_errors(bio_err);
 			goto end;
 		}
 	}
-	if (s_client_config.c_Pause & 0x01)
+	if (s_client_config.pause & 0x01)
 		SSL_set_debug(con, 1);
 
 	if (SSL_version(con) == DTLS1_VERSION) {
@@ -1133,20 +1133,20 @@ re_start:
 		test = BIO_new(BIO_f_nbio_test());
 		sbio = BIO_push(test, sbio);
 	}
-	if (s_client_config.c_debug) {
+	if (s_client_config.debug) {
 		SSL_set_debug(con, 1);
 		BIO_set_callback(sbio, bio_dump_callback);
 		BIO_set_callback_arg(sbio, (char *) bio_c_out);
 	}
-	if (s_client_config.c_msg) {
+	if (s_client_config.msg) {
 		SSL_set_msg_callback(con, msg_cb);
 		SSL_set_msg_callback_arg(con, bio_c_out);
 	}
-	if (s_client_config.c_tlsextdebug) {
+	if (s_client_config.tlsextdebug) {
 		SSL_set_tlsext_debug_callback(con, tlsext_cb);
 		SSL_set_tlsext_debug_arg(con, bio_c_out);
 	}
-	if (s_client_config.c_status_req) {
+	if (s_client_config.status_req) {
 		SSL_set_tlsext_status_type(con, TLSEXT_STATUSTYPE_ocsp);
 		SSL_CTX_set_tlsext_status_cb(ctx, ocsp_resp_cb);
 		SSL_CTX_set_tlsext_status_arg(ctx, bio_c_out);
@@ -1556,12 +1556,12 @@ re_start:
 			} else
 				i = read(fileno(stdin), cbuf, BUFSIZZ);
 
-			if ((!s_client_config.c_ign_eof) && ((i <= 0) || (cbuf[0] == 'Q'))) {
+			if ((!s_client_config.ign_eof) && ((i <= 0) || (cbuf[0] == 'Q'))) {
 				BIO_printf(bio_err, "DONE\n");
 				ret = 0;
 				goto shut;
 			}
-			if ((!s_client_config.c_ign_eof) && (cbuf[0] == 'R')) {
+			if ((!s_client_config.ign_eof) && (cbuf[0] == 'R')) {
 				BIO_printf(bio_err, "RENEGOTIATING\n");
 				SSL_renegotiate(con);
 				cbuf_len = 0;
@@ -1635,7 +1635,7 @@ print_stuff(BIO * bio, SSL * s, int full)
 				X509_NAME_oneline(X509_get_issuer_name(
 					sk_X509_value(sk, i)), buf, sizeof buf);
 				BIO_printf(bio, "   i:%s\n", buf);
-				if (s_client_config.c_showcerts)
+				if (s_client_config.showcerts)
 					PEM_write_bio_X509(bio, sk_X509_value(sk, i));
 			}
 		}
@@ -1643,7 +1643,7 @@ print_stuff(BIO * bio, SSL * s, int full)
 		peer = SSL_get_peer_certificate(s);
 		if (peer != NULL) {
 			BIO_printf(bio, "Server certificate\n");
-			if (!(s_client_config.c_showcerts && got_a_chain))	/* Redundant if we
+			if (!(s_client_config.showcerts && got_a_chain))	/* Redundant if we
 								 * showed the whole
 								 * chain */
 				PEM_write_bio_X509(bio, peer);
