@@ -1,4 +1,4 @@
-/* $OpenBSD: hidmt.c,v 1.11 2020/02/10 14:35:08 patrick Exp $ */
+/* $OpenBSD: hidmt.c,v 1.12 2020/07/09 21:01:08 jcs Exp $ */
 /*
  * HID multitouch driver for devices conforming to Windows Precision Touchpad
  * standard
@@ -138,30 +138,28 @@ hidmt_setup(struct device *self, struct hidmt *mt, void *desc, int dlen)
 	}
 
 	/* find maximum number of contacts being reported per input report */
-	if (!hid_locate(desc, dlen, HID_USAGE2(HUP_DIGITIZERS, HUD_CONTACT_MAX),
+	mt->sc_num_contacts = HIDMT_MAX_CONTACTS;
+	if (hid_locate(desc, dlen, HID_USAGE2(HUP_DIGITIZERS, HUD_CONTACT_MAX),
 	    mt->sc_rep_cap, hid_feature, &cap, NULL)) {
-		printf("\n%s: can't find maximum contacts\n", self->dv_xname);
-		return 1;
+		d = hid_get_udata(rep, capsize, &cap);
+		if (d > HIDMT_MAX_CONTACTS)
+			printf("\n%s: contacts %d > max %d\n", self->dv_xname,
+			    d, HIDMT_MAX_CONTACTS);
+		else
+			mt->sc_num_contacts = d;
 	}
-
-	d = hid_get_udata(rep, capsize, &cap);
-	if (d > HIDMT_MAX_CONTACTS) {
-		printf("\n%s: contacts %d > max %d\n", self->dv_xname, d,
-		    HIDMT_MAX_CONTACTS);
-		return 1;
-	}
-	else
-		mt->sc_num_contacts = d;
 
 	/* find whether this is a clickpad or not */
-	if (!hid_locate(desc, dlen, HID_USAGE2(HUP_DIGITIZERS, HUD_BUTTON_TYPE),
+	if (hid_locate(desc, dlen, HID_USAGE2(HUP_DIGITIZERS, HUD_BUTTON_TYPE),
 	    mt->sc_rep_cap, hid_feature, &cap, NULL)) {
-		printf("\n%s: can't find button type\n", self->dv_xname);
-		return 1;
+		d = hid_get_udata(rep, capsize, &cap);
+		mt->sc_clickpad = (d == 0);
+	} else {
+		/* if there's not a 2nd button, this is probably a clickpad */
+		if (!hid_locate(desc, dlen, HID_USAGE2(HUP_BUTTON, 2),
+		    mt->sc_rep_input, hid_input, &cap, NULL))
+			mt->sc_clickpad = 1;
 	}
-
-	d = hid_get_udata(rep, capsize, &cap);
-	mt->sc_clickpad = (d == 0);
 
 	/*
 	 * Walk HID descriptor and store usages we care about to know what to
