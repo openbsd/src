@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.131 2020/06/22 18:25:57 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.132 2020/07/09 02:17:07 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -391,6 +391,9 @@ sys_settimeofday(struct proc *p, void *v, register_t *retval)
 	return (0);
 }
 
+#define ADJFREQ_MAX (500000000LL << 32)
+#define ADJFREQ_MIN (-500000000LL << 32)
+
 int
 sys_adjfreq(struct proc *p, void *v, register_t *retval)
 {
@@ -408,6 +411,8 @@ sys_adjfreq(struct proc *p, void *v, register_t *retval)
 			return (error);
 		if ((error = copyin(freq, &f, sizeof(f))))
 			return (error);
+		if (f < ADJFREQ_MIN || f > ADJFREQ_MAX)
+			return (EINVAL);
 	}
 
 	rw_enter(&tc_lock, (freq == NULL) ? RW_READ : RW_WRITE);
