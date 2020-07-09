@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.c,v 1.43 2020/06/27 14:29:44 krw Exp $	*/
+/*	$OpenBSD: adv.c,v 1.44 2020/07/09 22:34:25 krw Exp $	*/
 /*	$NetBSD: adv.c,v 1.6 1998/10/28 20:39:45 dante Exp $	*/
 
 /*
@@ -480,16 +480,6 @@ adv_attach(sc)
 	scsi_iopool_init(&sc->sc_iopool, sc, adv_ccb_alloc, adv_ccb_free);
 
 	/*
-         * fill in the prototype scsi_link.
-         */
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = sc->chip_scsi_id;
-	sc->sc_link.adapter = &adv_switch;
-	sc->sc_link.openings = 4;
-	sc->sc_link.pool = &sc->sc_iopool;
-	sc->sc_link.adapter_buswidth = 7;
-
-	/*
          * Allocate the Control Blocks.
          */
 	error = adv_alloc_ccbs(sc);
@@ -509,7 +499,18 @@ adv_attach(sc)
 		       sc->sc_dev.dv_xname, i, ADV_MAX_CCB);
 	}
 
+	/*
+         * fill in the prototype scsi_link.
+         */
+	sc->sc_link.adapter_softc = sc;
+	sc->sc_link.adapter_target = sc->chip_scsi_id;
+	sc->sc_link.adapter = &adv_switch;
+	sc->sc_link.openings = 4;
+	sc->sc_link.pool = &sc->sc_iopool;
+	sc->sc_link.adapter_buswidth = 7;
+
 	saa.saa_sc_link = &sc->sc_link;
+
 	config_found(&sc->sc_dev, &saa, scsiprint);
 }
 
