@@ -1,9 +1,9 @@
-/* $OpenBSD: imt.c,v 1.4 2018/08/25 20:31:31 jcs Exp $ */
+/* $OpenBSD: imt.c,v 1.5 2020/07/09 21:01:56 jcs Exp $ */
 /*
  * HID-over-i2c multitouch trackpad driver for devices conforming to
  * Windows Precision Touchpad standard
  *
- * https://msdn.microsoft.com/en-us/library/windows/hardware/dn467314%28v=vs.85%29.aspx
+ * https://docs.microsoft.com/en-us/windows-hardware/design/component-guidelines/windows-precision-touchpad-required-hid-top-level-collections
  *
  * Copyright (c) 2016 joshua stein <jcs@openbsd.org>
  *
@@ -79,13 +79,19 @@ int
 imt_match(struct device *parent, void *match, void *aux)
 {
 	struct ihidev_attach_arg *iha = (struct ihidev_attach_arg *)aux;
+	struct imt_softc sc;
 	int size;
 	void *desc;
 
-	if (iha->reportid == IHIDEV_CLAIM_ALLREPORTID) {
+	if (iha->reportid == IHIDEV_CLAIM_MULTIPLEID) {
 		ihidev_get_report_desc(iha->parent, &desc, &size);
-		if (imt_find_winptp_reports(iha->parent, desc, size, NULL))
+		if (imt_find_winptp_reports(iha->parent, desc, size, &sc)) {
+			iha->claims[0] = sc.sc_rep_input;
+			iha->claims[1] = sc.sc_rep_config;
+			iha->claims[2] = sc.sc_rep_cap;
+			iha->nclaims = 3;
 			return (IMATCH_DEVCLASS_DEVSUBCLASS);
+		}
 	}
 
 	return (IMATCH_NONE);

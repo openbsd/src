@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.c,v 1.22 2020/01/24 04:03:11 cheloha Exp $ */
+/* $OpenBSD: ihidev.c,v 1.23 2020/07/09 21:01:55 jcs Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -173,17 +173,22 @@ ihidev_attach(struct device *parent, struct device *self, void *aux)
 	iha.iaa = ia;
 	iha.parent = sc;
 
-	/* Look for a driver claiming all report IDs first. */
-	iha.reportid = IHIDEV_CLAIM_ALLREPORTID;
+	/* Look for a driver claiming multiple report IDs first. */
+	iha.reportid = IHIDEV_CLAIM_MULTIPLEID;
+	iha.nclaims = 0;
 	dev = config_found_sm((struct device *)sc, &iha, NULL,
 	    ihidev_submatch);
 	if (dev != NULL) {
-		for (repid = 0; repid < sc->sc_nrepid; repid++)
-			sc->sc_subdevs[repid] = (struct ihidev *)dev;
-		return;
+		for (repid = 0; repid < iha.nclaims; repid++) {
+			sc->sc_subdevs[iha.claims[repid]] =
+			    (struct ihidev *)dev;
+		}
 	}
 
 	for (repid = 0; repid < sc->sc_nrepid; repid++) {
+		if (sc->sc_subdevs[repid] != NULL)
+			continue;
+
 		if (hid_report_size(sc->sc_report, sc->sc_reportlen, hid_input,
 		    repid) == 0 &&
 		    hid_report_size(sc->sc_report, sc->sc_reportlen,
@@ -748,7 +753,7 @@ ihidev_print(void *aux, const char *pnp)
 	if (pnp)
 		printf("hid at %s", pnp);
 
-	if (iha->reportid != 0 && iha->reportid != IHIDEV_CLAIM_ALLREPORTID)
+	if (iha->reportid != 0)
 		printf(" reportid %d", iha->reportid);
 
 	return (UNCONF);
