@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstat.1,v 1.86 2019/04/17 20:34:21 jmc Exp $
+.\"	$OpenBSD: netstat.1,v 1.88 2020/06/16 14:03:42 jmc Exp $
 .\"	$NetBSD: netstat.1,v 1.11 1995/10/03 21:42:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)netstat.1	8.8 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: April 17 2019 $
+.Dd $Mdocdate: June 16 2020 $
 .Dt NETSTAT 1
 .Os
 .Sh NAME
@@ -39,66 +39,75 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl AaBln
-.Op Fl f Ar address_family
-.Op Fl p Ar protocol
 .Op Fl M Ar core
 .Op Fl N Ar system
-.Nm
-.Op Fl bdeFgilmnqrstu
-.Op Fl f Ar address_family
 .Op Fl p Ar protocol
-.Op Fl M Ar core
-.Op Fl N Ar system
 .Op Fl T Ar rtable
 .Nm
-.Op Fl bdehn
+.Fl W Ar interface
+.Nm
+.Fl m
+.Nm
+.Fl I Ar interface | Fl i
+.Op Fl bdehnqt
+.Nm
+.Fl w Ar wait
+.Op Fl bdehnqt
 .Op Fl c Ar count
 .Op Fl I Ar interface
+.Nm
+.Fl s
+.Op Fl gru
+.Op Fl f Ar address_family
+.Op Fl p Ar protocol
+.Nm
+.Fl g
+.Op Fl lnu
+.Op Fl f Ar address_family
+.Nm
+.Fl R
+.Nm
+.Fl r
+.Op Fl AFu
+.Op Fl f Ar address_family
 .Op Fl M Ar core
 .Op Fl N Ar system
-.Op Fl w Ar wait
+.Op Fl p Ar protocol
+.Op Fl T Ar rtable
 .Nm
+.Fl P Ar pcbaddr
 .Op Fl v
 .Op Fl M Ar core
 .Op Fl N Ar system
-.Fl P Ar pcbaddr
-.Nm
-.Op Fl s
-.Op Fl M Ar core
-.Op Fl N Ar system
-.Op Fl p Ar protocol
-.Nm
-.Op Fl a
-.Op Fl f Ar address_family
-.Op Fl p Ar protocol
-.Op Fl i | I Ar interface
-.Nm
-.Op Fl W Ar interface
 .Sh DESCRIPTION
 The
 .Nm
-command symbolically displays the contents of various network-related
-data structures.
-There are a number of output formats,
-depending on the options for the information presented.
+command shows various aspects of network status.
+The default display shows information about
+all active network connections and sockets.
 .Pp
 The first form of the command displays a list of active sockets for
 each protocol.
-The second form presents the contents of one of the other network
-data structures according to the option selected.
-Using the third form, with a
-.Ar wait
-interval specified,
-.Nm
-will continuously display the information regarding packet
-traffic on the configured network interfaces.
-The fourth form displays internals of the protocol control block (PCB)
-and the socket structure.
-The fifth form displays statistics about the named protocol.
-The sixth form displays per interface statistics for
-the specified address family.
-The final form displays per interface statistics for
+The second form displays per-interface statistics for
 the specified wireless (802.11) device.
+The third form displays statistics related to memory use.
+The fourth form displays per-interface statistics.
+The fifth form continuously displays the information regarding packet
+traffic on the configured network interfaces.
+The sixth form displays per-protocol statistics.
+The seventh form shows information related to multicast routing.
+The eighth form displays information about routing domains.
+The ninth form displays information about routing tables.
+The final form displays internals of the protocol control block (PCB)
+and the socket structure.
+The forms are shown in order of precedence:
+for example, if
+.Fl rg
+is specified,
+then
+.Fl r
+is ignored in favour of
+.Fl g .
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -267,6 +276,8 @@ Otherwise the states of the matching sockets are shown.
 Only show interfaces that have seen packets (or bytes if
 .Fl b
 is specified).
+.It Fl R
+List all rdomains with associated interfaces and routing tables.
 .It Fl r
 Show the routing tables.
 The output is explained in more detail below.
@@ -305,10 +316,6 @@ Show network interface statistics at intervals of
 .Ar wait
 seconds.
 .El
-.Pp
-The default display, for active sockets, shows the local
-and remote addresses, send and receive queue sizes (in bytes), protocol,
-and the internal state of the protocol.
 .Pp
 Address formats are of the form
 .Dq host.port

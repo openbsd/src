@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.14 2015/03/27 20:55:56 miod Exp $
+dnl	$OpenBSD: install,v 1.15 2020/05/17 17:04:28 deraadt Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -58,7 +58,7 @@ Booting from the miniroot:
     Copy the OpenBSD/MACHINE miniroot to the swap partition (assuming your
     disk is sd0):
 
-	dd if=miniroot{:--:}OSrev.fs of=/dev/sd0b
+	dd if=miniroot{:--:}OSrev.img of=/dev/sd0b
 
     After halting the system, at the PROM prompt, enter
 

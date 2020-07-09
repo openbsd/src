@@ -174,6 +174,8 @@ static int radix_find_prefix_node(struct radtree* rt, uint8_t* k,
 		*respos = pos;
 		*result = n;
 	}
+	/* cannot reach because of returns when !n above */
+	/* ENOREACH */
 	return 1;
 }
 

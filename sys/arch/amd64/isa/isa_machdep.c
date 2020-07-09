@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.29 2017/10/14 04:44:43 jsg Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.30 2020/06/17 06:14:52 dlg Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
@@ -312,7 +312,7 @@ isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
 
 	KASSERT(pic);
 
-	return intr_establish(irq, pic, pin, type, level, ih_fun,
+	return intr_establish(irq, pic, pin, type, level, NULL, ih_fun,
 	    ih_arg, ih_what);
 }
 

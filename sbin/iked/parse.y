@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.98 2020/04/29 16:09:11 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.102 2020/06/25 13:05:58 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -32,9 +32,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <openssl/pem.h>
-#include <openssl/evp.h>
-
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -67,11 +64,6 @@ static struct file {
 	int			 lineno;
 	int			 errors;
 } *file, *topfile;
-EVP_PKEY	*wrap_pubkey(FILE *);
-EVP_PKEY	*find_pubkey(const char *);
-int		 set_policy(char *, int, struct iked_policy *);
-int		 set_policy_auth_method(const char *, EVP_PKEY *,
-		     struct iked_policy *);
 struct file	*pushfile(const char *, int);
 int		 popfile(void);
 int		 check_file_secrecy(int, const char *);
@@ -145,6 +137,12 @@ struct iked_transform ikev2_default_ike_transforms[] = {
 	{ IKEV2_XFORMTYPE_PRF,	IKEV2_XFORMPRF_HMAC_SHA1 },
 	{ IKEV2_XFORMTYPE_INTEGR, IKEV2_XFORMAUTH_HMAC_SHA2_256_128 },
 	{ IKEV2_XFORMTYPE_INTEGR, IKEV2_XFORMAUTH_HMAC_SHA1_96 },
+	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_CURVE25519 },
+	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_ECP_521 },
+	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_ECP_384 },
+	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_ECP_256 },
+	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_MODP_4096 },
+	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_MODP_3072 },
 	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_MODP_2048 },
 	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_MODP_1536 },
 	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_MODP_1024 },
@@ -152,6 +150,28 @@ struct iked_transform ikev2_default_ike_transforms[] = {
 };
 size_t ikev2_default_nike_transforms = ((sizeof(ikev2_default_ike_transforms) /
     sizeof(ikev2_default_ike_transforms[0])) - 1);
+
+struct iked_transform ikev2_default_ike_transforms_noauth[] = {
+	{ IKEV2_XFORMTYPE_ENCR,	IKEV2_XFORMENCR_AES_GCM_16, 128 },
+	{ IKEV2_XFORMTYPE_ENCR,	IKEV2_XFORMENCR_AES_GCM_16, 256 },
+	{ IKEV2_XFORMTYPE_PRF,	IKEV2_XFORMPRF_HMAC_SHA2_512 },
+	{ IKEV2_XFORMTYPE_PRF,	IKEV2_XFORMPRF_HMAC_SHA2_384 },
+	{ IKEV2_XFORMTYPE_PRF,	IKEV2_XFORMPRF_HMAC_SHA2_256 },
+	{ IKEV2_XFORMTYPE_PRF,	IKEV2_XFORMPRF_HMAC_SHA1 },
+	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_CURVE25519 },
+	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_ECP_521 },
+	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_ECP_384 },
+	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_ECP_256 },
+	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_MODP_4096 },
+	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_MODP_3072 },
+	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_MODP_2048 },
+	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_MODP_1536 },
+	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_MODP_1024 },
+	{ 0 }
+};
+size_t ikev2_default_nike_transforms_noauth =
+    ((sizeof(ikev2_default_ike_transforms_noauth) /
+    sizeof(ikev2_default_ike_transforms_noauth[0])) - 1);
 
 struct iked_transform ikev2_default_esp_transforms[] = {
 	{ IKEV2_XFORMTYPE_ENCR, IKEV2_XFORMENCR_AES_CBC, 256 },
@@ -165,6 +185,17 @@ struct iked_transform ikev2_default_esp_transforms[] = {
 };
 size_t ikev2_default_nesp_transforms = ((sizeof(ikev2_default_esp_transforms) /
     sizeof(ikev2_default_esp_transforms[0])) - 1);
+
+struct iked_transform ikev2_default_esp_transforms_noauth[] = {
+	{ IKEV2_XFORMTYPE_ENCR,	IKEV2_XFORMENCR_AES_GCM_16, 128 },
+	{ IKEV2_XFORMTYPE_ENCR,	IKEV2_XFORMENCR_AES_GCM_16, 256 },
+	{ IKEV2_XFORMTYPE_ESN,	IKEV2_XFORMESN_ESN },
+	{ IKEV2_XFORMTYPE_ESN,	IKEV2_XFORMESN_NONE },
+	{ 0 }
+};
+size_t ikev2_default_nesp_transforms_noauth =
+    ((sizeof(ikev2_default_esp_transforms_noauth) /
+    sizeof(ikev2_default_esp_transforms_noauth[0])) - 1);
 
 const struct ipsec_xf authxfs[] = {
 	{ "hmac-md5",		IKEV2_XFORMAUTH_HMAC_MD5_96,		16 },
@@ -192,6 +223,10 @@ const struct ipsec_xf ikeencxfs[] = {
 	{ "aes-128",		IKEV2_XFORMENCR_AES_CBC,	16, 16 },
 	{ "aes-192",		IKEV2_XFORMENCR_AES_CBC,	24, 24 },
 	{ "aes-256",		IKEV2_XFORMENCR_AES_CBC,	32, 32 },
+	{ "aes-128-gcm",	IKEV2_XFORMENCR_AES_GCM_16,	16, 16, 4, 1 },
+	{ "aes-256-gcm",	IKEV2_XFORMENCR_AES_GCM_16,	32, 32, 4, 1 },
+	{ "aes-128-gcm-12",	IKEV2_XFORMENCR_AES_GCM_12,	16, 16, 4, 1 },
+	{ "aes-256-gcm-12",	IKEV2_XFORMENCR_AES_GCM_12,	32, 32, 4, 1 },
 	{ NULL }
 };
 
@@ -1850,185 +1885,6 @@ get_id_type(char *string)
 		return (IKEV2_ID_FQDN);
 }
 
-EVP_PKEY *
-wrap_pubkey(FILE *fp)
-{
-	EVP_PKEY	*key = NULL;
-	struct rsa_st	*rsa = NULL;
-
-	key = PEM_read_PUBKEY(fp, NULL, NULL, NULL);
-	if (key == NULL) {
-		/* reading PKCS #8 failed, try PEM */
-		rewind(fp);
-		rsa = PEM_read_RSAPublicKey(fp, NULL, NULL, NULL);
-		fclose(fp);
-		if (rsa == NULL)
-			return (NULL);
-		if ((key = EVP_PKEY_new()) == NULL) {
-			RSA_free(rsa);
-			return (NULL);
-		}
-		if (!EVP_PKEY_set1_RSA(key, rsa)) {
-			RSA_free(rsa);
-			EVP_PKEY_free(key);
-			return (NULL);
-		}
-		/* Always free RSA *rsa */
-		RSA_free(rsa);
-	} else {
-		fclose(fp);
-	}
-
-	return (key);
-}
-
-EVP_PKEY *
-find_pubkey(const char *keyfile)
-{
-	FILE		*fp = NULL;
-	if ((fp = fopen(keyfile, "r")) == NULL)
-		return (NULL);
-
-	return (wrap_pubkey(fp));
-}
-
-int
-set_policy_auth_method(const char *peerid, EVP_PKEY *key,
-    struct iked_policy *pol)
-{
-	struct rsa_st		*rsa;
-	EC_KEY			*ec_key;
-	u_int8_t		 method;
-	u_int8_t		 cert_type;
-	struct iked_auth	*ikeauth;
-
-	method = IKEV2_AUTH_NONE;
-	cert_type = IKEV2_CERT_NONE;
-
-	if (key != NULL) {
-		/* infer policy from key type */
-		if ((rsa = EVP_PKEY_get1_RSA(key)) != NULL) {
-			method = IKEV2_AUTH_RSA_SIG;
-			cert_type = IKEV2_CERT_RSA_KEY;
-			RSA_free(rsa);
-		} else if ((ec_key = EVP_PKEY_get1_EC_KEY(key)) != NULL) {
-			const EC_GROUP *group = EC_KEY_get0_group(ec_key);
-			if (group == NULL) {
-				EC_KEY_free(ec_key);
-				return (-1);
-			}
-			switch (EC_GROUP_get_degree(group)) {
-			case 256:
-				method = IKEV2_AUTH_ECDSA_256;
-				break;
-			case 384:
-				method = IKEV2_AUTH_ECDSA_384;
-				break;
-			case 521:
-				method = IKEV2_AUTH_ECDSA_521;
-				break;
-			default:
-				EC_KEY_free(ec_key);
-				return (-1);
-			}
-			cert_type = IKEV2_CERT_ECDSA;
-			EC_KEY_free(ec_key);
-		}
-
-		if (method == IKEV2_AUTH_NONE || cert_type == IKEV2_CERT_NONE)
-			return (-1);
-	} else {
-		/* default to IKEV2_CERT_X509_CERT otherwise */
-		method = IKEV2_AUTH_SIG;
-		cert_type = IKEV2_CERT_X509_CERT;
-	}
-
-	ikeauth = &pol->pol_auth;
-
-	if (ikeauth->auth_method == IKEV2_AUTH_SHARED_KEY_MIC) {
-		if (key != NULL &&
-		    method != IKEV2_AUTH_RSA_SIG)
-			goto mismatch;
-		return (0);
-	}
-
-	if (ikeauth->auth_method != IKEV2_AUTH_NONE &&
-	    ikeauth->auth_method != IKEV2_AUTH_SIG_ANY &&
-	    ikeauth->auth_method != method)
-		goto mismatch;
-
-	ikeauth->auth_method = method;
-	pol->pol_certreqtype = cert_type;
-
-	log_debug("%s: using %s for peer %s", __func__,
-	    print_xf(method, 0, methodxfs), peerid);
-
-	return (0);
-
- mismatch:
-	log_warnx("%s: ikeauth policy mismatch, %s specified, but only %s "
-	    "possible", __func__, print_xf(ikeauth->auth_method, 0, methodxfs),
-	    print_xf(method, 0, methodxfs));
-	return (-1);
-}
-
-int
-set_policy(char *idstr, int type, struct iked_policy *pol)
-{
-	char		 keyfile[PATH_MAX];
-	const char	*prefix = NULL;
-	EVP_PKEY	*key = NULL;
-
-	switch (type) {
-	case IKEV2_ID_IPV4:
-		prefix = "ipv4";
-		break;
-	case IKEV2_ID_IPV6:
-		prefix = "ipv6";
-		break;
-	case IKEV2_ID_FQDN:
-		prefix = "fqdn";
-		break;
-	case IKEV2_ID_UFQDN:
-		prefix = "ufqdn";
-		break;
-	case IKEV2_ID_ASN1_DN:
-		/* public key authentication is not supported with ASN.1 IDs */
-		goto done;
-	default:
-		/* Unspecified ID or public key not supported for this type */
-		log_debug("%s: unknown type = %d", __func__, type);
-		return (-1);
-	}
-
-	if ((size_t)snprintf(keyfile, sizeof(keyfile),
-	    IKED_CA IKED_PUBKEY_DIR "%s/%s", prefix,
-	    idstr) >= sizeof(keyfile)) {
-		log_warnx("%s: public key path is too long", __func__);
-		return (-1);
-	}
-
-	if ((key = find_pubkey(keyfile)) == NULL) {
-		log_warnx("%s: could not find pubkey for %s", __func__,
-		    keyfile);
-	}
-
- done:
-	if (set_policy_auth_method(keyfile, key, pol) < 0) {
-		EVP_PKEY_free(key);
-		log_warnx("%s: failed to set policy auth method for %s",
-		    __func__, keyfile);
-		return (-1);
-	}
-
-	if (key != NULL) {
-		EVP_PKEY_free(key);
-		log_debug("%s: found pubkey for %s", __func__, keyfile);
-	}
-
-	return (0);
-}
-
 struct ipsec_addr_wrap *
 host(const char *s)
 {
@@ -2411,6 +2267,17 @@ print_xf(unsigned int id, unsigned int length, const struct ipsec_xf xfs[])
 	return ("unknown");
 }
 
+int
+encxf_noauth(unsigned int id)
+{
+	int i;
+
+	for (i = 0; ikeencxfs[i].name != NULL; i++)
+		if (ikeencxfs[i].id == id)
+			return ikeencxfs[i].noauth;
+	return (0);
+}
+
 size_t
 keylength_xf(unsigned int saproto, unsigned int type, unsigned int id)
 {
@@ -2703,10 +2570,11 @@ create_ike(char *name, int af, uint8_t ipproto,
 	char			 idstr[IKED_ID_SIZE];
 	unsigned int		 idtype = IKEV2_ID_NONE;
 	struct ipsec_addr_wrap	*ipa, *ipb, *ippn;
+	struct iked_auth	*ikeauth;
 	struct iked_policy	 pol;
 	struct iked_proposal	*p, *ptmp;
 	struct iked_transform	*xf;
-	unsigned int		 i, j, xfi, noauth;
+	unsigned int		 i, j, xfi, noauth, auth;
 	unsigned int		 ikepropid = 1, ipsecpropid = 1;
 	struct iked_flow	*flow, *ftmp;
 	static unsigned int	 policy_id = 0;
@@ -2836,6 +2704,17 @@ create_ike(char *name, int af, uint8_t ipproto,
 	RB_INIT(&pol.pol_flows);
 
 	if (ike_sa == NULL || ike_sa->nxfs == 0) {
+		/* AES-GCM proposal */
+		if ((p = calloc(1, sizeof(*p))) == NULL)
+			err(1, "%s", __func__);
+		p->prop_id = ikepropid++;
+		p->prop_protoid = IKEV2_SAPROTO_IKE;
+		p->prop_nxforms = ikev2_default_nike_transforms_noauth;
+		p->prop_xforms = ikev2_default_ike_transforms_noauth;
+		TAILQ_INSERT_TAIL(&pol.pol_proposals, p, prop_entry);
+		pol.pol_nproposals++;
+
+		/* Non GCM proposal */
 		if ((p = calloc(1, sizeof(*p))) == NULL)
 			err(1, "%s", __func__);
 		p->prop_id = ikepropid++;
@@ -2846,47 +2725,107 @@ create_ike(char *name, int af, uint8_t ipproto,
 		pol.pol_nproposals++;
 	} else {
 		for (i = 0; i < ike_sa->nxfs; i++) {
+			noauth = auth = 0;
+			for (j = 0; j < ike_sa->xfs[i]->nencxf; j++) {
+				if (ike_sa->xfs[i]->encxf[j]->noauth)
+					noauth++;
+				else
+					auth++;
+			}
+			if (ike_sa->xfs[i]->nauthxf)
+				auth++;
+
 			if (ike_sa->xfs[i]->nesnxf) {
 				yyerror("cannot use ESN with ikesa.");
 				goto done;
 			}
+			if (noauth && noauth != ike_sa->xfs[i]->nencxf) {
+				yyerror("cannot mix encryption transforms with "
+				    "implicit and non-implicit authentication");
+				goto done;
+			}
+			if (noauth && ike_sa->xfs[i]->nauthxf) {
+				yyerror("authentication is implicit for given "
+				    "encryption transforms");
+				goto done;
+			}
 
-			if ((p = calloc(1, sizeof(*p))) == NULL)
-				err(1, "%s", __func__);
+			if (!auth) {
+				if ((p = calloc(1, sizeof(*p))) == NULL)
+					err(1, "%s", __func__);
 
-			xf = NULL;
-			xfi = 0;
-			copy_transforms(IKEV2_XFORMTYPE_INTEGR,
-			    ike_sa->xfs[i]->authxf,
-			    ike_sa->xfs[i]->nauthxf, &xf, &xfi,
-			    ikev2_default_ike_transforms,
-			    ikev2_default_nike_transforms);
-			copy_transforms(IKEV2_XFORMTYPE_ENCR,
-			    ike_sa->xfs[i]->encxf,
-			    ike_sa->xfs[i]->nencxf, &xf, &xfi,
-			    ikev2_default_ike_transforms,
-			    ikev2_default_nike_transforms);
-			copy_transforms(IKEV2_XFORMTYPE_DH,
-			    ike_sa->xfs[i]->groupxf,
-			    ike_sa->xfs[i]->ngroupxf, &xf, &xfi,
-			    ikev2_default_ike_transforms,
-			    ikev2_default_nike_transforms);
-			copy_transforms(IKEV2_XFORMTYPE_PRF,
-			    ike_sa->xfs[i]->prfxf,
-			    ike_sa->xfs[i]->nprfxf, &xf, &xfi,
-			    ikev2_default_ike_transforms,
-			    ikev2_default_nike_transforms);
+				xf = NULL;
+				xfi = 0;
+				copy_transforms(IKEV2_XFORMTYPE_ENCR,
+				    ike_sa->xfs[i]->encxf,
+				    ike_sa->xfs[i]->nencxf, &xf, &xfi,
+				    ikev2_default_ike_transforms_noauth,
+				    ikev2_default_nike_transforms_noauth);
+				copy_transforms(IKEV2_XFORMTYPE_DH,
+				    ike_sa->xfs[i]->groupxf,
+				    ike_sa->xfs[i]->ngroupxf, &xf, &xfi,
+				    ikev2_default_ike_transforms_noauth,
+				    ikev2_default_nike_transforms_noauth);
+				copy_transforms(IKEV2_XFORMTYPE_PRF,
+				    ike_sa->xfs[i]->prfxf,
+				    ike_sa->xfs[i]->nprfxf, &xf, &xfi,
+				    ikev2_default_ike_transforms_noauth,
+				    ikev2_default_nike_transforms_noauth);
 
-			p->prop_id = ikepropid++;
-			p->prop_protoid = IKEV2_SAPROTO_IKE;
-			p->prop_xforms = xf;
-			p->prop_nxforms = xfi;
-			TAILQ_INSERT_TAIL(&pol.pol_proposals, p, prop_entry);
-			pol.pol_nproposals++;
+				p->prop_id = ikepropid++;
+				p->prop_protoid = IKEV2_SAPROTO_IKE;
+				p->prop_xforms = xf;
+				p->prop_nxforms = xfi;
+				TAILQ_INSERT_TAIL(&pol.pol_proposals, p, prop_entry);
+				pol.pol_nproposals++;
+			}
+			if (!noauth) {
+				if ((p = calloc(1, sizeof(*p))) == NULL)
+					err(1, "%s", __func__);
+
+				xf = NULL;
+				xfi = 0;
+				copy_transforms(IKEV2_XFORMTYPE_INTEGR,
+				    ike_sa->xfs[i]->authxf,
+				    ike_sa->xfs[i]->nauthxf, &xf, &xfi,
+				    ikev2_default_ike_transforms,
+				    ikev2_default_nike_transforms);
+				copy_transforms(IKEV2_XFORMTYPE_ENCR,
+				    ike_sa->xfs[i]->encxf,
+				    ike_sa->xfs[i]->nencxf, &xf, &xfi,
+				    ikev2_default_ike_transforms,
+				    ikev2_default_nike_transforms);
+				copy_transforms(IKEV2_XFORMTYPE_DH,
+				    ike_sa->xfs[i]->groupxf,
+				    ike_sa->xfs[i]->ngroupxf, &xf, &xfi,
+				    ikev2_default_ike_transforms,
+				    ikev2_default_nike_transforms);
+				copy_transforms(IKEV2_XFORMTYPE_PRF,
+				    ike_sa->xfs[i]->prfxf,
+				    ike_sa->xfs[i]->nprfxf, &xf, &xfi,
+				    ikev2_default_ike_transforms,
+				    ikev2_default_nike_transforms);
+
+				p->prop_id = ikepropid++;
+				p->prop_protoid = IKEV2_SAPROTO_IKE;
+				p->prop_xforms = xf;
+				p->prop_nxforms = xfi;
+				TAILQ_INSERT_TAIL(&pol.pol_proposals, p, prop_entry);
+				pol.pol_nproposals++;
+			}
 		}
 	}
 
 	if (ipsec_sa == NULL || ipsec_sa->nxfs == 0) {
+		if ((p = calloc(1, sizeof(*p))) == NULL)
+			err(1, "%s", __func__);
+		p->prop_id = ipsecpropid++;
+		p->prop_protoid = saproto;
+		p->prop_nxforms = ikev2_default_nesp_transforms_noauth;
+		p->prop_xforms = ikev2_default_esp_transforms_noauth;
+		TAILQ_INSERT_TAIL(&pol.pol_proposals, p, prop_entry);
+		pol.pol_nproposals++;
+
 		if ((p = calloc(1, sizeof(*p))) == NULL)
 			err(1, "%s", __func__);
 		p->prop_id = ipsecpropid++;
@@ -2897,11 +2836,16 @@ create_ike(char *name, int af, uint8_t ipproto,
 		pol.pol_nproposals++;
 	} else {
 		for (i = 0; i < ipsec_sa->nxfs; i++) {
-			noauth = 0;
+			noauth = auth = 0;
 			for (j = 0; j < ipsec_sa->xfs[i]->nencxf; j++) {
 				if (ipsec_sa->xfs[i]->encxf[j]->noauth)
 					noauth++;
+				else
+					auth++;
 			}
+			if (ipsec_sa->xfs[i]->nauthxf)
+				auth++;
+
 			if (noauth && noauth != ipsec_sa->xfs[i]->nencxf) {
 				yyerror("cannot mix encryption transforms with "
 				    "implicit and non-implicit authentication");
@@ -2913,39 +2857,69 @@ create_ike(char *name, int af, uint8_t ipproto,
 				goto done;
 			}
 
-			if ((p = calloc(1, sizeof(*p))) == NULL)
-				err(1, "%s", __func__);
+			if (!auth) {
+				if ((p = calloc(1, sizeof(*p))) == NULL)
+					err(1, "%s", __func__);
 
-			xf = NULL;
-			xfi = 0;
-			if (!ipsec_sa->xfs[i]->nencxf || !noauth)
+				xf = NULL;
+				xfi = 0;
+				copy_transforms(IKEV2_XFORMTYPE_ENCR,
+				    ipsec_sa->xfs[i]->encxf,
+				    ipsec_sa->xfs[i]->nencxf, &xf, &xfi,
+				    ikev2_default_esp_transforms_noauth,
+				    ikev2_default_nesp_transforms_noauth);
+				copy_transforms(IKEV2_XFORMTYPE_DH,
+				    ipsec_sa->xfs[i]->groupxf,
+				    ipsec_sa->xfs[i]->ngroupxf, &xf, &xfi,
+				    ikev2_default_esp_transforms_noauth,
+				    ikev2_default_nesp_transforms_noauth);
+				copy_transforms(IKEV2_XFORMTYPE_ESN,
+				    ipsec_sa->xfs[i]->esnxf,
+				    ipsec_sa->xfs[i]->nesnxf, &xf, &xfi,
+				    ikev2_default_esp_transforms_noauth,
+				    ikev2_default_nesp_transforms_noauth);
+
+				p->prop_id = ipsecpropid++;
+				p->prop_protoid = saproto;
+				p->prop_xforms = xf;
+				p->prop_nxforms = xfi;
+				TAILQ_INSERT_TAIL(&pol.pol_proposals, p, prop_entry);
+				pol.pol_nproposals++;
+			}
+			if (!noauth) {
+				if ((p = calloc(1, sizeof(*p))) == NULL)
+					err(1, "%s", __func__);
+
+				xf = NULL;
+				xfi = 0;
 				copy_transforms(IKEV2_XFORMTYPE_INTEGR,
 				    ipsec_sa->xfs[i]->authxf,
 				    ipsec_sa->xfs[i]->nauthxf, &xf, &xfi,
 				    ikev2_default_esp_transforms,
 				    ikev2_default_nesp_transforms);
-			copy_transforms(IKEV2_XFORMTYPE_ENCR,
-			    ipsec_sa->xfs[i]->encxf,
-			    ipsec_sa->xfs[i]->nencxf, &xf, &xfi,
-			    ikev2_default_esp_transforms,
-			    ikev2_default_nesp_transforms);
-			copy_transforms(IKEV2_XFORMTYPE_DH,
-			    ipsec_sa->xfs[i]->groupxf,
-			    ipsec_sa->xfs[i]->ngroupxf, &xf, &xfi,
-			    ikev2_default_esp_transforms,
-			    ikev2_default_nesp_transforms);
-			copy_transforms(IKEV2_XFORMTYPE_ESN,
-			    ipsec_sa->xfs[i]->esnxf,
-			    ipsec_sa->xfs[i]->nesnxf, &xf, &xfi,
-			    ikev2_default_esp_transforms,
-			    ikev2_default_nesp_transforms);
+				copy_transforms(IKEV2_XFORMTYPE_ENCR,
+				    ipsec_sa->xfs[i]->encxf,
+				    ipsec_sa->xfs[i]->nencxf, &xf, &xfi,
+				    ikev2_default_esp_transforms,
+				    ikev2_default_nesp_transforms);
+				copy_transforms(IKEV2_XFORMTYPE_DH,
+				    ipsec_sa->xfs[i]->groupxf,
+				    ipsec_sa->xfs[i]->ngroupxf, &xf, &xfi,
+				    ikev2_default_esp_transforms,
+				    ikev2_default_nesp_transforms);
+				copy_transforms(IKEV2_XFORMTYPE_ESN,
+				    ipsec_sa->xfs[i]->esnxf,
+				    ipsec_sa->xfs[i]->nesnxf, &xf, &xfi,
+				    ikev2_default_esp_transforms,
+				    ikev2_default_nesp_transforms);
 
-			p->prop_id = ipsecpropid++;
-			p->prop_protoid = saproto;
-			p->prop_xforms = xf;
-			p->prop_nxforms = xfi;
-			TAILQ_INSERT_TAIL(&pol.pol_proposals, p, prop_entry);
-			pol.pol_nproposals++;
+				p->prop_id = ipsecpropid++;
+				p->prop_protoid = saproto;
+				p->prop_xforms = xf;
+				p->prop_nxforms = xfi;
+				TAILQ_INSERT_TAIL(&pol.pol_proposals, p, prop_entry);
+				pol.pol_nproposals++;
+			}
 		}
 	}
 
@@ -3025,11 +2999,23 @@ create_ike(char *name, int af, uint8_t ipproto,
 		}
 	}
 
-	/* Make sure that we know how to authenticate this peer */
-	if (idtype && set_policy(idstr, idtype, &pol) < 0) {
-		log_debug("%s: set_policy failed", __func__);
-		goto done;
+	ikeauth = &pol.pol_auth;
+	switch (ikeauth->auth_method) {
+	case IKEV2_AUTH_RSA_SIG:
+		pol.pol_certreqtype = IKEV2_CERT_RSA_KEY;
+		break;
+	case IKEV2_AUTH_ECDSA_256:
+	case IKEV2_AUTH_ECDSA_384:
+	case IKEV2_AUTH_ECDSA_521:
+		pol.pol_certreqtype = IKEV2_CERT_ECDSA;
+		break;
+	default:
+		pol.pol_certreqtype = IKEV2_CERT_NONE;
+		break;
 	}
+
+	log_debug("%s: using %s for peer %s", __func__,
+	    print_xf(ikeauth->auth_method, 0, methodxfs), idstr);
 
 	config_setpolicy(env, &pol, PROC_IKEV2);
 	config_setflow(env, &pol, PROC_IKEV2);
@@ -3062,7 +3048,9 @@ done:
 	}
 	TAILQ_FOREACH_SAFE(p, &pol.pol_proposals, prop_entry, ptmp) {
 		if (p->prop_xforms != ikev2_default_ike_transforms &&
-		    p->prop_xforms != ikev2_default_esp_transforms)
+		    p->prop_xforms != ikev2_default_ike_transforms_noauth &&
+		    p->prop_xforms != ikev2_default_esp_transforms &&
+		    p->prop_xforms != ikev2_default_esp_transforms_noauth)
 			free(p->prop_xforms);
 		free(p);
 	}

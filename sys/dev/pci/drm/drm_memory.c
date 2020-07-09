@@ -1,6 +1,15 @@
-/* $OpenBSD: drm_memory.c,v 1.28 2019/04/14 10:14:51 jsg Exp $ */
-/*-
- *Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
+/*
+ * \file drm_memory.c
+ * Memory management wrappers for DRM
+ *
+ * \author Rickard E. (Rik) Faith <faith@valinux.com>
+ * \author Gareth Hughes <gareth@valinux.com>
+ */
+
+/*
+ * Created: Thu Feb  4 14:00:34 1999 by faith@valinux.com
+ *
+ * Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
  * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
  * All Rights Reserved.
  *
@@ -22,55 +31,169 @@
  * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
- *
- * Authors:
- *    Rickard E. (Rik) Faith <faith@valinux.com>
- *    Gareth Hughes <gareth@valinux.com>
- *
  */
 
-/** @file drm_memory.c
- * Wrappers for MTRR management support.
- */
-
-#include <drm/drmP.h>
-
-#if !defined(__amd64__) && !defined(__i386__)
-#define DRM_NO_MTRR	1
+#include <linux/export.h>
+#include <linux/highmem.h>
+#include <linux/pci.h>
+#include <linux/vmalloc.h>
+#ifdef __linux__
+#include <xen/xen.h>
 #endif
 
-int
-drm_mtrr_add(unsigned long offset, size_t size, int flags)
-{
-#ifndef DRM_NO_MTRR
-	int act;
-	struct mem_range_desc mrdesc;
+#include <drm/drm_agpsupport.h>
+#include <drm/drm_cache.h>
+#include <drm/drm_device.h>
 
-	mrdesc.mr_base = offset;
-	mrdesc.mr_len = size;
-	mrdesc.mr_flags = flags;
-	act = MEMRANGE_SET_UPDATE;
-	strlcpy(mrdesc.mr_owner, "drm", sizeof(mrdesc.mr_owner));
-	return mem_range_attr_set(&mrdesc, &act);
+#include "drm_legacy.h"
+
+#if IS_ENABLED(CONFIG_AGP) && defined(__linux__)
+
+#ifdef HAVE_PAGE_AGP
+# include <asm/agp.h>
 #else
-	return 0;
+# ifdef __powerpc__
+#  define PAGE_AGP	pgprot_noncached_wc(PAGE_KERNEL)
+# else
+#  define PAGE_AGP	PAGE_KERNEL
+# endif
 #endif
+
+static void *agp_remap(unsigned long offset, unsigned long size,
+		       struct drm_device *dev)
+{
+	unsigned long i, num_pages =
+	    PAGE_ALIGN(size) / PAGE_SIZE;
+	struct drm_agp_mem *agpmem;
+	struct vm_page **page_map;
+	struct vm_page **phys_page_map;
+	void *addr;
+
+	size = PAGE_ALIGN(size);
+
+#ifdef __alpha__
+	offset -= dev->hose->mem_space->start;
+#endif
+
+	list_for_each_entry(agpmem, &dev->agp->memory, head)
+		if (agpmem->bound <= offset
+		    && (agpmem->bound + (agpmem->pages << PAGE_SHIFT)) >=
+		    (offset + size))
+			break;
+	if (&agpmem->head == &dev->agp->memory)
+		return NULL;
+
+	/*
+	 * OK, we're mapping AGP space on a chipset/platform on which memory accesses by
+	 * the CPU do not get remapped by the GART.  We fix this by using the kernel's
+	 * page-table instead (that's probably faster anyhow...).
+	 */
+	/* note: use vmalloc() because num_pages could be large... */
+	page_map = vmalloc(array_size(num_pages, sizeof(struct vm_page *)));
+	if (!page_map)
+		return NULL;
+
+	phys_page_map = (agpmem->memory->pages + (offset - agpmem->bound) / PAGE_SIZE);
+	for (i = 0; i < num_pages; ++i)
+		page_map[i] = phys_page_map[i];
+	addr = vmap(page_map, num_pages, VM_IOREMAP, PAGE_AGP);
+	vfree(page_map);
+
+	return addr;
 }
 
-int
-drm_mtrr_del(int handle, unsigned long offset, size_t size, int flags)
+/** Wrapper around agp_free_memory() */
+void drm_free_agp(struct agp_memory *handle, int pages)
 {
-#ifndef DRM_NO_MTRR
-	int act;
-	struct mem_range_desc mrdesc;
+	agp_free_memory(handle);
+}
 
-	mrdesc.mr_base = offset;
-	mrdesc.mr_len = size;
-	mrdesc.mr_flags = flags;
-	act = MEMRANGE_SET_REMOVE;
-	strlcpy(mrdesc.mr_owner, "drm", sizeof(mrdesc.mr_owner));
-	return mem_range_attr_set(&mrdesc, &act);
-#else
-	return 0;
+/** Wrapper around agp_bind_memory() */
+int drm_bind_agp(struct agp_memory *handle, unsigned int start)
+{
+	return agp_bind_memory(handle, start);
+}
+
+/** Wrapper around agp_unbind_memory() */
+int drm_unbind_agp(struct agp_memory *handle)
+{
+	return agp_unbind_memory(handle);
+}
+
+#else /*  CONFIG_AGP  */
+static inline void *agp_remap(unsigned long offset, unsigned long size,
+			      struct drm_device *dev)
+{
+	return NULL;
+}
+
+#endif /* CONFIG_AGP */
+
+#ifdef __linux__
+
+void drm_legacy_ioremap(struct drm_local_map *map, struct drm_device *dev)
+{
+	if (dev->agp && dev->agp->cant_use_aperture && map->type == _DRM_AGP)
+		map->handle = agp_remap(map->offset, map->size, dev);
+	else
+		map->handle = ioremap(map->offset, map->size);
+}
+EXPORT_SYMBOL(drm_legacy_ioremap);
+
+void drm_legacy_ioremap_wc(struct drm_local_map *map, struct drm_device *dev)
+{
+	if (dev->agp && dev->agp->cant_use_aperture && map->type == _DRM_AGP)
+		map->handle = agp_remap(map->offset, map->size, dev);
+	else
+		map->handle = ioremap_wc(map->offset, map->size);
+}
+EXPORT_SYMBOL(drm_legacy_ioremap_wc);
+
+void drm_legacy_ioremapfree(struct drm_local_map *map, struct drm_device *dev)
+{
+	if (!map->handle || !map->size)
+		return;
+
+	if (dev->agp && dev->agp->cant_use_aperture && map->type == _DRM_AGP)
+		vunmap(map->handle);
+	else
+		iounmap(map->handle);
+}
+EXPORT_SYMBOL(drm_legacy_ioremapfree);
+
+#endif /* __linux__ */
+
+bool drm_need_swiotlb(int dma_bits)
+{
+	return false;
+#ifdef notyet
+	struct resource *tmp;
+	resource_size_t max_iomem = 0;
+
+	/*
+	 * Xen paravirtual hosts require swiotlb regardless of requested dma
+	 * transfer size.
+	 *
+	 * NOTE: Really, what it requires is use of the dma_alloc_coherent
+	 *       allocator used in ttm_dma_populate() instead of
+	 *       ttm_populate_and_map_pages(), which bounce buffers so much in
+	 *       Xen it leads to swiotlb buffer exhaustion.
+	 */
+	if (xen_pv_domain())
+		return true;
+
+	/*
+	 * Enforce dma_alloc_coherent when memory encryption is active as well
+	 * for the same reasons as for Xen paravirtual hosts.
+	 */
+	if (mem_encrypt_active())
+		return true;
+
+	for (tmp = iomem_resource.child; tmp; tmp = tmp->sibling) {
+		max_iomem = max(max_iomem,  tmp->end);
+	}
+
+	return max_iomem > ((u64)1 << dma_bits);
 #endif
 }
+EXPORT_SYMBOL(drm_need_swiotlb);

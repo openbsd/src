@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_id.c,v 1.13 2017/09/08 05:36:53 deraadt Exp $	*/
+/*	$OpenBSD: ip6_id.c,v 1.14 2020/06/24 22:03:44 cheloha Exp $	*/
 /*	$NetBSD: ip6_id.c,v 1.7 2003/09/13 21:32:59 itojun Exp $	*/
 /*	$KAME: ip6_id.c,v 1.8 2003/09/06 13:41:06 itojun Exp $	*/
 
@@ -196,7 +196,7 @@ ip6id_initid(struct randomtab *p)
 	p->ru_g = ip6id_pmod(p->ru_gen, j, p->ru_n);
 	p->ru_counter = 0;
 
-	p->ru_reseed = time_uptime + p->ru_out;
+	p->ru_reseed = getuptime() + p->ru_out;
 	p->ru_msb = p->ru_msb ? 0 : (1U << (p->ru_bits - 1));
 }
 
@@ -205,7 +205,7 @@ ip6id_randomid(struct randomtab *p)
 {
 	int i, n;
 
-	if (p->ru_counter >= p->ru_max || time_uptime > p->ru_reseed)
+	if (p->ru_counter >= p->ru_max || getuptime() > p->ru_reseed)
 		ip6id_initid(p);
 
 	/* Skip a random number of ids */

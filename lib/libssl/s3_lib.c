@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.192 2020/04/18 14:07:56 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.196 2020/06/06 01:40:08 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1568,6 +1568,7 @@ ssl3_free(SSL *s)
 	tls13_key_share_free(S3I(s)->hs_tls13.key_share);
 	tls13_secrets_destroy(S3I(s)->hs_tls13.secrets);
 	freezero(S3I(s)->hs_tls13.cookie, S3I(s)->hs_tls13.cookie_len);
+	tls13_clienthello_hash_clear(&S3I(s)->hs_tls13);
 
 	sk_X509_NAME_pop_free(S3I(s)->tmp.ca_names, X509_NAME_free);
 
@@ -1612,6 +1613,7 @@ ssl3_clear(SSL *s)
 	freezero(S3I(s)->hs_tls13.cookie, S3I(s)->hs_tls13.cookie_len);
 	S3I(s)->hs_tls13.cookie = NULL;
 	S3I(s)->hs_tls13.cookie_len = 0;
+	tls13_clienthello_hash_clear(&S3I(s)->hs_tls13);
 
 	S3I(s)->hs.extensions_seen = 0;
 
@@ -1842,16 +1844,30 @@ _SSL_set_tlsext_status_ids(SSL *s, STACK_OF(OCSP_RESPID) *ids)
 static int
 _SSL_get_tlsext_status_ocsp_resp(SSL *s, unsigned char **resp)
 {
-	*resp = s->internal->tlsext_ocsp_resp;
-	return s->internal->tlsext_ocsp_resplen;
+	if (s->internal->tlsext_ocsp_resp != NULL &&
+	    s->internal->tlsext_ocsp_resp_len < INT_MAX) {
+		*resp = s->internal->tlsext_ocsp_resp;
+		return (int)s->internal->tlsext_ocsp_resp_len;
+	}
+
+	*resp = NULL;
+
+	return -1;
 }
 
 static int
 _SSL_set_tlsext_status_ocsp_resp(SSL *s, unsigned char *resp, int resp_len)
 {
 	free(s->internal->tlsext_ocsp_resp);
+	s->internal->tlsext_ocsp_resp = NULL;
+	s->internal->tlsext_ocsp_resp_len = 0;
+
+	if (resp_len < 0)
+		return 0;
+
 	s->internal->tlsext_ocsp_resp = resp;
-	s->internal->tlsext_ocsp_resplen = resp_len;
+	s->internal->tlsext_ocsp_resp_len = (size_t)resp_len;
+
 	return 1;
 }
 
@@ -2533,13 +2549,15 @@ ssl3_get_req_cert_types(SSL *s, CBB *cbb)
 
 #ifndef OPENSSL_NO_GOST
 	if ((alg_k & SSL_kGOST) != 0) {
-		if (!CBB_add_u8(cbb, TLS_CT_GOST94_SIGN))
-			return 0;
 		if (!CBB_add_u8(cbb, TLS_CT_GOST01_SIGN))
 			return 0;
 		if (!CBB_add_u8(cbb, TLS_CT_GOST12_256_SIGN))
 			return 0;
 		if (!CBB_add_u8(cbb, TLS_CT_GOST12_512_SIGN))
+			return 0;
+		if (!CBB_add_u8(cbb, TLS_CT_GOST12_256_SIGN_COMPAT))
+			return 0;
+		if (!CBB_add_u8(cbb, TLS_CT_GOST12_512_SIGN_COMPAT))
 			return 0;
 	}
 #endif

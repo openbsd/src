@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.233 2020/01/24 05:44:05 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.234 2020/06/05 19:50:59 denis Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -556,7 +556,6 @@ re_rib(struct rib_entry *re)
 	return rib_byid(re->rib_id);
 }
 
-void		 path_init(u_int32_t);
 void		 path_init(u_int32_t);
 void		 path_shutdown(void);
 void		 path_hash_stats(struct rde_hashstats *);

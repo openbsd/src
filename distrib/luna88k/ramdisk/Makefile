@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.28 2019/07/31 11:19:39 aoyama Exp $
+#	$OpenBSD: Makefile,v 1.30 2020/05/18 06:20:43 otto Exp $
 
-FS=		miniroot${OSrev}.fs
+FS=		miniroot${OSrev}.img
 FSSIZE=		8192
 FSDISKTYPE=	miniroot
 MOUNT_POINT=	/mnt
@@ -21,7 +21,7 @@ ${FS}: bsd.rd
 	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
 	vnconfig -v ${FS} > vnd
 	disklabel -w `cat vnd` ${FSDISKTYPE}
-	newfs -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
+	newfs -O 1 -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
 	mount /dev/`cat vnd`a ${MOUNT_POINT}
 	install -c -m 555 -o root -g wheel \
 	    ${DESTDIR}/usr/mdec/boot ${MOUNT_POINT}/boot

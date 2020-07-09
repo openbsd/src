@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.c,v 1.48 2020/02/18 17:08:35 krw Exp $ */
+/*	$OpenBSD: iha.c,v 1.50 2020/07/02 13:08:33 krw Exp $ */
 /*-------------------------------------------------------------------------
  *
  * Device driver for the INI-9XXXU/UW or INIC-940/950  PCI SCSI Controller.
@@ -47,14 +47,6 @@
 #include <dev/ic/iha.h>
 
 /* #define IHA_DEBUG_STATE */
-
-struct cfdriver iha_cd = {
-	NULL, "iha", DV_DULL
-};
-
-struct scsi_adapter iha_switch = {
-	iha_scsi_cmd, NULL, NULL, NULL, NULL
-};
 
 /*
  * SCSI Rate Table, indexed by FLAG_SCSI_RATE field of
@@ -350,22 +342,11 @@ iha_init_tulip(struct iha_softc *sc)
 	mtx_init(&sc->sc_scb_mtx, IPL_BIO);
 	scsi_iopool_init(&sc->sc_iopool, sc, iha_scb_alloc, iha_scb_free);
 
-	/*
-	 * fill in the prototype scsi_link.
-	 */
-	sc->sc_link.adapter_softc    = sc;
-	sc->sc_link.adapter	     = &iha_switch;
-	sc->sc_link.openings	     = 4; /* # xs's allowed per device */
-	sc->sc_link.adapter_target   = pScsi->NVM_SCSI_Id;
-	sc->sc_link.adapter_buswidth = pScsi->NVM_SCSI_Targets;
-	sc->sc_link.pool             = &sc->sc_iopool;
-
-	/*
-	 * fill in the rest of the iha_softc fields
-	 */
 	sc->HCS_Semaph	  = ~SEMAPH_IN_MAIN;
 	sc->HCS_JSStatus0 = 0;
 	sc->HCS_ActScb	  = NULL;
+	sc->sc_id	  = pScsi->NVM_SCSI_Id;
+	sc->sc_maxtargets = pScsi->NVM_SCSI_Targets;
 
 	error = iha_alloc_scbs(sc);
 	if (error != 0)
@@ -407,7 +388,7 @@ iha_init_tulip(struct iha_softc *sc)
 	bus_space_write_1(iot, ioh, TUL_SCTRL0, RSMOD);
 
 	/* Program HBA's SCSI ID */
-	bus_space_write_1(iot, ioh, TUL_SID, sc->sc_link.adapter_target << 4);
+	bus_space_write_1(iot, ioh, TUL_SID, sc->sc_id << 4);
 
 	/*
 	 * Configure the channel as requested by the NVRAM settings read
@@ -941,7 +922,7 @@ iha_scsi(struct iha_softc *sc, bus_space_tag_t iot, bus_space_handle_t ioh)
 
 	/* program HBA's SCSI ID & target SCSI ID */
 	bus_space_write_1(iot, ioh, TUL_SID,
-	    (sc->sc_link.adapter_target << 4) | pScb->SCB_Target);
+	    (sc->sc_id << 4) | pScb->SCB_Target);
 
 	if ((pScb->SCB_Flags & SCSI_RESET) == 0) {
 		bus_space_write_1(iot, ioh, TUL_SYNCM, pTcs->TCS_JS_Period);

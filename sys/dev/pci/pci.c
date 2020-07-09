@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.115 2020/01/15 14:01:19 cheloha Exp $	*/
+/*	$OpenBSD: pci.c,v 1.118 2020/06/26 10:16:00 dlg Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -1031,10 +1031,11 @@ pci_vpd_read(pci_chipset_tag_t pc, pcitag_t tag, int offset, int count,
 	int ofs, i, j;
 
 	KASSERT(data != NULL);
-	KASSERT((offset + count) < 0x7fff);
+	if ((offset + count) >= PCI_VPD_ADDRESS_MASK)
+		return (EINVAL);
 
 	if (pci_get_capability(pc, tag, PCI_CAP_VPD, &ofs, &reg) == 0)
-		return (1);
+		return (ENXIO);
 
 	for (i = 0; i < count; offset += sizeof(*data), i++) {
 		reg &= 0x0000ffff;
@@ -1049,7 +1050,7 @@ pci_vpd_read(pci_chipset_tag_t pc, pcitag_t tag, int offset, int count,
 		j = 0;
 		do {
 			if (j++ == 20)
-				return (1);
+				return (EIO);
 			delay(4);
 			reg = pci_conf_read(pc, tag, ofs);
 		} while ((reg & PCI_VPD_OPFLAG) == 0);
@@ -1203,6 +1204,7 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 	case PCIOCGETROMLEN:
 	case PCIOCGETROM:
+	case PCIOCGETVPD:
 		break;
 	case PCIOCGETVGA:
 	case PCIOCSETVGA:
@@ -1387,6 +1389,40 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	fail:
 		rom->pr_romlen = PCI_ROM_SIZE(mask);
+		break;
+	}
+
+	case PCIOCGETVPD: {
+		struct pci_vpd_req *pv = (struct pci_vpd_req *)data;
+		pcireg_t *data;
+		size_t len;
+		unsigned int i;
+		int s;
+
+		CTASSERT(sizeof(*data) == sizeof(*pv->pv_data));
+
+		data = mallocarray(pv->pv_count, sizeof(*data), M_TEMP,
+		    M_WAITOK|M_CANFAIL);
+		if (data == NULL) {
+			error = ENOMEM;
+			break;
+		}
+
+		s = splhigh();
+		error = pci_vpd_read(pc, tag, pv->pv_offset, pv->pv_count,
+		    data);
+		splx(s);
+
+		len = pv->pv_count * sizeof(*pv->pv_data);
+
+		if (error == 0) {
+			for (i = 0; i < pv->pv_count; i++)
+				data[i] = letoh32(data[i]);
+
+			error = copyout(data, pv->pv_data, len);
+		}
+
+		free(data, M_TEMP, len);
 		break;
 	}
 
@@ -1646,7 +1682,18 @@ pci_resume_msix(pci_chipset_tag_t pc, pcitag_t tag,
 	pci_conf_write(pc, tag, off, mc);
 }
 
-#else
+int
+pci_intr_msix_count(pci_chipset_tag_t pc, pcitag_t tag)
+{
+	pcireg_t reg;
+
+	if (pci_get_capability(pc, tag, PCI_CAP_MSIX, NULL, &reg) == 0)
+		return (0);
+
+	return (PCI_MSIX_MC_TBLSZ(reg) + 1);
+}
+
+#else /* __HAVE_PCI_MSIX */
 
 struct msix_vector *
 pci_alloc_msix_table(pci_chipset_tag_t pc, pcitag_t tag)
@@ -1670,6 +1717,12 @@ void
 pci_resume_msix(pci_chipset_tag_t pc, pcitag_t tag,
     bus_space_tag_t memt, pcireg_t mc, struct msix_vector *table)
 {
+}
+
+int
+pci_intr_msix_count(pci_chipset_tag_t pc, pcitag_t tag)
+{
+	return (0);
 }
 
 #endif /* __HAVE_PCI_MSIX */

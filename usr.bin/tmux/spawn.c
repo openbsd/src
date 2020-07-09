@@ -1,4 +1,4 @@
-/* $OpenBSD: spawn.c,v 1.22 2020/04/23 05:48:42 nicm Exp $ */
+/* $OpenBSD: spawn.c,v 1.24 2020/05/21 07:24:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -362,6 +362,7 @@ spawn_pane(struct spawn_context *sc, char **cause)
 		xasprintf(cause, "fork failed: %s", strerror(errno));
 		new_wp->fd = -1;
 		if (~sc->flags & SPAWN_RESPAWN) {
+			server_client_remove_pane(new_wp);
 			layout_close_pane(new_wp);
 			window_remove_pane(w, new_wp);
 		}
@@ -438,7 +439,6 @@ spawn_pane(struct spawn_context *sc, char **cause)
 	_exit(1);
 
 complete:
-	new_wp->pipe_off = 0;
 	new_wp->flags &= ~PANE_EXITED;
 
 	sigprocmask(SIG_SETMASK, &oldset, NULL);

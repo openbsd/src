@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.208 2019/11/26 22:49:01 jmc Exp $
+.\"	$OpenBSD: ksh.1,v 1.209 2020/07/07 10:33:58 jca Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: November 26 2019 $
+.Dd $Mdocdate: July 7 2020 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -361,7 +361,9 @@ token to form pipelines, in which the standard output of each command but the
 last is piped (see
 .Xr pipe 2 )
 to the standard input of the following command.
-The exit status of a pipeline is that of its last command.
+The exit status of a pipeline is that of its last command, unless the
+.Ic pipefail
+option is set.
 A pipeline may be prefixed by the
 .Ql \&!
 reserved word, which causes the exit status of the pipeline to be logically
@@ -3664,6 +3666,10 @@ See the
 and
 .Ic pwd
 commands above for more details.
+.It Ic pipefail
+The exit status of a pipeline is the exit status of the rightmost
+command in the pipeline that doesn't return 0, or 0 if all commands
+returned a 0 exit status.
 .It Ic posix
 Enable POSIX mode.
 See

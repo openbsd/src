@@ -1,4 +1,4 @@
-/*	$OpenBSD: eap.c,v 1.14 2015/08/21 11:59:27 reyk Exp $	*/
+/*	$OpenBSD: eap.c,v 1.15 2020/06/18 19:55:03 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -339,17 +339,16 @@ eap_parse(struct iked *env, struct iked_sa *sa, void *data, int response)
 	struct eap_mschap_failure	*msf;
 	char				*str;
 
-	/* length is already verified by the caller */
+	/* length is already verified by the caller against sizeof(eap) */
 	len = betoh16(hdr->eap_length);
+	if (len < sizeof(*eap))
+		goto fail;
 	ptr = (uint8_t *)(eap + 1);
+	len -= sizeof(*eap);
 
 	switch (hdr->eap_code) {
 	case EAP_CODE_REQUEST:
 	case EAP_CODE_RESPONSE:
-		if (len < sizeof(*eap)) {
-			log_debug("%s: short message", __func__);
-			return (-1);
-		}
 		break;
 	case EAP_CODE_SUCCESS:
 		return (0);
@@ -381,13 +380,16 @@ eap_parse(struct iked *env, struct iked_sa *sa, void *data, int response)
 		sa->sa_eapid = str;
 		return (eap_challenge_request(env, sa, hdr));
 	case EAP_TYPE_MSCHAP_V2:
+		if (len < sizeof(*ms))
+			goto fail;
 		ms = (struct eap_mschap *)ptr;
 		switch (ms->ms_opcode) {
 		case EAP_MSOPCODE_CHALLENGE:
+			if (len < sizeof(*msc))
+				goto fail;
 			msc = (struct eap_mschap_challenge *)ptr;
 			ptr += sizeof(*msc);
-			len = betoh16(eap->eap_length) -
-			    sizeof(*eap) - sizeof(*msc);
+			len -= sizeof(*msc);
 			if ((str = get_string(ptr, len)) == NULL) {
 				log_debug("%s: invalid challenge name",
 				    __func__);
@@ -405,10 +407,11 @@ eap_parse(struct iked *env, struct iked_sa *sa, void *data, int response)
 			    sizeof(msc->msc_challenge));
 			break;
 		case EAP_MSOPCODE_RESPONSE:
+			if (len < sizeof(*msr))
+				goto fail;
 			msr = (struct eap_mschap_response *)ptr;
 			ptr += sizeof(*msr);
-			len = betoh16(eap->eap_length) -
-			    sizeof(*eap) - sizeof(*msr);
+			len -= sizeof(*msr);
 			if ((str = get_string(ptr, len)) == NULL) {
 				log_debug("%s: invalid response name",
 				    __func__);
@@ -427,10 +430,11 @@ eap_parse(struct iked *env, struct iked_sa *sa, void *data, int response)
 			break;
 		case EAP_MSOPCODE_SUCCESS:
 			if (eap->eap_code == EAP_CODE_REQUEST) {
+				if (len < sizeof(*mss))
+					goto fail;
 				mss = (struct eap_mschap_success *)ptr;
 				ptr += sizeof(*mss);
-				len = betoh16(eap->eap_length) -
-				    sizeof(*eap) - sizeof(*mss);
+				len -= sizeof(*mss);
 				if ((str = get_string(ptr, len)) == NULL) {
 					log_debug("%s: invalid response name",
 					    __func__);
@@ -445,6 +449,8 @@ eap_parse(struct iked *env, struct iked_sa *sa, void *data, int response)
 				    str, len);
 				free(str);
 			} else {
+				if (len < sizeof(*ms))
+					goto fail;
 				ms = (struct eap_mschap *)ptr;
 				log_info("%s: %s %s response", __func__,
 				    print_map(eap->eap_type, eap_type_map),
@@ -458,10 +464,11 @@ eap_parse(struct iked *env, struct iked_sa *sa, void *data, int response)
 			}
 			break;
 		case EAP_MSOPCODE_FAILURE:
+			if (len < sizeof(*msf))
+				goto fail;
 			msf = (struct eap_mschap_failure *)ptr;
 			ptr += sizeof(*msf);
-			len = betoh16(eap->eap_length) -
-			    sizeof(*eap) - sizeof(*msf);
+			len -= sizeof(*msf);
 			if ((str = get_string(ptr, len)) == NULL) {
 				log_debug("%s: invalid failure message",
 				    __func__);
@@ -490,4 +497,8 @@ eap_parse(struct iked *env, struct iked_sa *sa, void *data, int response)
 	}
 
 	return (0);
+
+ fail:
+	log_debug("%s: short message", __func__);
+	return (-1);
 }

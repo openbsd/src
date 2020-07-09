@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.78 2019/07/03 03:24:02 deraadt Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.79 2020/06/26 19:51:14 naddy Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -239,7 +239,7 @@ main(int argc, char **argv)
 
 	cddb_host = getenv("CDDB");
 	if (!cddb_host)
-		cddb_host = "freedb.freedb.org";
+		cddb_host = "gnudb.gnudb.org";
 
 	while ((ch = getopt(argc, argv, "svd:f:")) != -1)
 		switch (ch) {

@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_CTX_new.3,v 1.11 2019/03/18 06:23:38 schwarze Exp $
+.\" $OpenBSD: SSL_CTX_new.3,v 1.12 2020/06/04 18:06:43 schwarze Exp $
 .\" full merge up to: OpenSSL 21cd6e00 Oct 21 14:40:15 2015 +0100
 .\" selective merge up to: OpenSSL 1212818e Sep 11 13:22:14 2018 +0100
 .\"
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 18 2019 $
+.Dd $Mdocdate: June 4 2020 $
 .Dt SSL_CTX_NEW 3
 .Os
 .Sh NAME
@@ -170,7 +170,7 @@ can be of the following types:
 These are the general-purpose version-flexible SSL/TLS methods.
 The actual protocol version used will be negotiated to the highest
 version mutually supported by the client and the server.
-The supported protocols are TLSv1, TLSv1.1 and TLSv1.2.
+The supported protocols are TLSv1, TLSv1.1, TLSv1.2, and TLSv1.3.
 Applications should use these methods and avoid the version-specific
 methods described below.
 .It Xo

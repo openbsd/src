@@ -57,10 +57,9 @@
 ./usr/include/sparc64/signal.h
 ./usr/include/sparc64/sparc64.h
 ./usr/include/sparc64/spinlock.h
-./usr/include/sparc64/stdarg.h
 ./usr/include/sparc64/tcb.h
+./usr/include/sparc64/timetc.h
 ./usr/include/sparc64/trap.h
-./usr/include/sparc64/varargs.h
 ./usr/include/sparc64/vmparam.h
 ./usr/include/sparc64/z8530var.h
 ./usr/include/unwind.h

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskio.c,v 1.12 2018/03/02 15:36:39 visa Exp $ */
+/*	$OpenBSD: diskio.c,v 1.13 2020/06/06 10:54:41 visa Exp $ */
 
 /*
  * Copyright (c) 2016 Miodrag Vallat.
@@ -73,6 +73,9 @@ diostrategy(void *devdata, int rw, daddr32_t bn, size_t reqcnt, void *addr,
 	arc_quad_t offset;
 	long result;
 
+	if (rw != F_READ)
+		return EOPNOTSUPP;
+
 	blkoffset =
 	    (DL_SECTOBLK(&sc->sc_label, DL_GETPOFFSET(pp)) + bn) * DEV_BSIZE;
 	offset.hi = blkoffset >> 32;
@@ -82,7 +85,8 @@ diostrategy(void *devdata, int rw, daddr32_t bn, size_t reqcnt, void *addr,
 	    Bios_Read(sc->sc_fd, addr, reqcnt, &result) < 0)
 		return EIO;
 
-	*cnt = result;
+	if (cnt != NULL)
+		*cnt = result;
 	return 0;
 }
 

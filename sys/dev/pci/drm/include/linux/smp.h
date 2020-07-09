@@ -9,4 +9,7 @@
 
 #define smp_processor_id()	(curcpu()->ci_cpuid)
 
+#define get_cpu()		cpu_number()
+#define put_cpu()
+
 #endif

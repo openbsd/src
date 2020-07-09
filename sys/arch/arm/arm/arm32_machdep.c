@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.57 2020/04/27 13:02:50 kettenis Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.60 2020/05/17 15:36:50 kettenis Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -59,6 +59,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
+#include <dev/ofw/openfirm.h>
 
 #include <arm/machdep.h>
 #include <machine/conf.h>
@@ -303,6 +304,8 @@ int
 cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
 {
+	char *compatible;
+	int node, len, error;
 
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
@@ -331,97 +334,20 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_rdint(oldp, oldlenp, newp, 0));
 #endif
 
+	case CPU_COMPATIBLE:
+		node = OF_finddevice("/");
+		len = OF_getproplen(node, "compatible");
+		if (len <= 0)
+			return (EOPNOTSUPP); 
+		compatible = malloc(len, M_TEMP, M_WAITOK | M_ZERO);
+		OF_getprop(node, "compatible", compatible, len);
+		compatible[len - 1] = 0;
+		error = sysctl_rdstring(oldp, oldlenp, newp, compatible);
+		free(compatible, M_TEMP, len);
+		return error;
+
 	default:
 		return (EOPNOTSUPP);
 	}
 	/* NOTREACHED */
-}
-
-#include <sys/timetc.h>
-#include <dev/clock_subr.h>
-
-todr_chip_handle_t todr_handle;
-
-#define MINYEAR		((OpenBSD / 100) - 1)	/* minimum plausible year */
-
-/*
- * inittodr:
- *
- *      Initialize time from the time-of-day register.
- */
-void
-inittodr(time_t base)
-{
-	time_t deltat;
-	struct timeval rtctime;
-	struct timespec ts;
-	int badbase;
-
-	if (base < (MINYEAR - 1970) * SECYR) {
-		printf("WARNING: preposterous time in file system\n");
-		/* read the system clock anyway */
-		base = (MINYEAR - 1970) * SECYR;
-		badbase = 1;
-	} else
-		badbase = 0;
-
-	if (todr_handle == NULL ||
-	    todr_gettime(todr_handle, &rtctime) != 0 ||
-	    rtctime.tv_sec < (MINYEAR - 1970) * SECYR) {
-		/*
-		 * Believe the time in the file system for lack of
-		 * anything better, resetting the TODR.
-		 */
-		rtctime.tv_sec = base;
-		rtctime.tv_usec = 0;
-		if (todr_handle != NULL && !badbase)
-			printf("WARNING: bad clock chip time\n");
-		ts.tv_sec = rtctime.tv_sec;
-		ts.tv_nsec = rtctime.tv_usec * 1000;
-		tc_setclock(&ts);
-		goto bad;
-	} else {
-		ts.tv_sec = rtctime.tv_sec;
-		ts.tv_nsec = rtctime.tv_usec * 1000;
-		tc_setclock(&ts);
-	}
-
-	if (!badbase) {
-		/*
-		 * See if we gained/lost two or more days; if
-		 * so, assume something is amiss.
-		 */
-		deltat = rtctime.tv_sec - base;
-		if (deltat < 0)
-			deltat = -deltat;
-		if (deltat < 2 * SECDAY)
-			return;         /* all is well */
-#ifndef SMALL_KERNEL
-		printf("WARNING: clock %s %lld days\n",
-		    rtctime.tv_sec < base ? "lost" : "gained",
-		    (long long)(deltat / SECDAY));
-#endif
-	}
- bad:
-	printf("WARNING: CHECK AND RESET THE DATE!\n");
-}
-
-/*
- * resettodr:
- *
- *      Reset the time-of-day register with the current time.
- */
-void
-resettodr(void)
-{
-	struct timeval rtctime;
-
-	if (time_second == 1)
-		return;
-
-	microtime(&rtctime);
-
-	if (todr_handle != NULL &&
-	    todr_settime(todr_handle, &rtctime) != 0)
-		printf("WARNING: can't update clock chip time\n");
 }

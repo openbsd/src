@@ -1,4 +1,4 @@
-/* $OpenBSD: omrasops.c,v 1.14 2017/03/20 19:37:54 miod Exp $ */
+/* $OpenBSD: omrasops.c,v 1.16 2020/05/25 09:55:48 jsg Exp $ */
 /* $NetBSD: omrasops.c,v 1.1 2000/01/05 08:48:56 nisimura Exp $ */
 
 /*-
@@ -56,12 +56,12 @@
 /* wscons emulator operations */
 int	om_copycols(void *, int, int, int, int);
 int	om_copyrows(void *, int, int, int num);
-int	om_erasecols(void *, int, int, int, long);
-int	om_eraserows(void *, int, int, long);
+int	om_erasecols(void *, int, int, int, uint32_t);
+int	om_eraserows(void *, int, int, uint32_t);
 int	om1_cursor(void *, int, int, int);
-int	om1_putchar(void *, int, int, u_int, long);
+int	om1_putchar(void *, int, int, u_int, uint32_t);
 int	om4_cursor(void *, int, int, int);
-int	om4_putchar(void *, int, int, u_int, long);
+int	om4_putchar(void *, int, int, u_int, uint32_t);
 
 /* depth-depended setup functions */
 void	setup_omrasops1(struct rasops_info *);
@@ -74,7 +74,7 @@ int	om4_windowmove(struct rasops_info *, u_int16_t, u_int16_t, u_int16_t,
 		u_int16_t, u_int16_t, u_int16_t, int16_t, int16_t);
 
 /* MI function in src/sys/dev/rasops/rasops.c */
-int     rasops_alloc_cattr(void *, int, int, int, long *);
+int     rasops_pack_cattr(void *, int, int, int, uint32_t *);
 
 static int (*om_windowmove)(struct rasops_info *, u_int16_t, u_int16_t,
 		u_int16_t, u_int16_t, u_int16_t, u_int16_t, int16_t, int16_t);
@@ -92,7 +92,7 @@ extern struct wsscreen_descr omfb_stdscreen;
  * - 1bpp version -
  */
 int
-om1_putchar(void *cookie, int row, int startcol, u_int uc, long attr)
+om1_putchar(void *cookie, int row, int startcol, u_int uc, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	u_int8_t *p;
@@ -157,7 +157,7 @@ om1_putchar(void *cookie, int row, int startcol, u_int uc, long attr)
  * - 4bpp version -
  */
 int
-om4_putchar(void *cookie, int row, int startcol, u_int uc, long attr)
+om4_putchar(void *cookie, int row, int startcol, u_int uc, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	u_int8_t *p;
@@ -287,7 +287,7 @@ om4_putchar(void *cookie, int row, int startcol, u_int uc, long attr)
 }
 
 int
-om_erasecols(void *cookie, int row, int col, int num, long attr)
+om_erasecols(void *cookie, int row, int col, int num, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	int fg, bg;
@@ -311,7 +311,7 @@ om_erasecols(void *cookie, int row, int col, int num, long attr)
 }
 
 int
-om_eraserows(void *cookie, int row, int num, long attr)
+om_eraserows(void *cookie, int row, int num, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	int fg, bg;
@@ -534,8 +534,8 @@ setup_omrasops4(struct rasops_info *ri)
 		= WSSCREEN_HILIT | WSSCREEN_WSCOLORS | WSSCREEN_REVERSE;
 	/*
 	 * Since we set ri->ri_depth == 1, rasops_init() set
-	 * rasops_alloc_mattr for us.  But we use the color version,
-	 * rasops_alloc_cattr, on 4bpp/8bpp frame buffer.
+	 * rasops_pack_mattr for us.  But we use the color version,
+	 * rasops_pack_cattr, on 4bpp/8bpp frame buffer.
 	 */
-	ri->ri_ops.alloc_attr = rasops_alloc_cattr;
+	ri->ri_ops.pack_attr = rasops_pack_cattr;
 }

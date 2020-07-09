@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpbench.c,v 1.61 2020/02/12 14:46:36 schwarze Exp $	*/
+/*	$OpenBSD: tcpbench.c,v 1.63 2020/05/04 12:13:09 sthen Exp $	*/
 
 /*
  * Copyright (c) 2008 Damien Miller <djm@mindrot.org>
@@ -50,6 +50,7 @@
 #include <fcntl.h>
 #include <poll.h>
 #include <paths.h>
+#include <math.h>
 
 #include <kvm.h>
 #include <nlist.h>
@@ -101,6 +102,8 @@ struct statctx {
 	u_long udp_slice_pkts;
 };
 
+struct statctx *udp_sc; /* singleton */
+
 static void	signal_handler(int, short, void *);
 static void	saddr_ntop(const struct sockaddr *, socklen_t, char *, size_t);
 static void	drop_gid(void);
@@ -114,19 +117,22 @@ static void	list_kvars(void);
 static void	check_kvar(const char *);
 static char **	check_prepare_kvars(char *);
 static void	stats_prepare(struct statctx *);
+static void	summary_display(void);
 static void	tcp_stats_display(unsigned long long, long double, float,
     struct statctx *, struct inpcb *, struct tcpcb *, struct socket *);
 static void	tcp_process_slice(int, short, void *);
 static void	tcp_server_handle_sc(int, short, void *);
 static void	tcp_server_accept(int, short, void *);
-static void	server_init(struct addrinfo *, struct statctx *);
+static void	server_init(struct addrinfo *);
 static void	client_handle_sc(int, short, void *);
-static void	client_init(struct addrinfo *, int, struct statctx *,
-    struct addrinfo *);
+static void	client_init(struct addrinfo *, int, struct addrinfo *);
 static int	clock_gettime_tv(clockid_t, struct timeval *);
 static void	udp_server_handle_sc(int, short, void *);
 static void	udp_process_slice(int, short, void *);
 static int	map_tos(char *, int *);
+static void	quit(int, short, void *);
+static void	wrapup(int);
+
 /*
  * We account the mainstats here, that is the stats
  * for all connections, all variables starting with slice
@@ -135,10 +141,17 @@ static int	map_tos(char *, int *);
  * between all slices so far.
  */
 static struct {
-	unsigned long long slice_bytes; /* bytes for last slice */
+	struct timeval t_first;		/* first connect / packet */
+ 	unsigned long long total_bytes; /* bytes since t_first */
+	unsigned long long n_slices;	/* slices since start */
+	unsigned long long slice_bytes; /* bytes since slice reset */
 	long double peak_mbps;		/* peak mbps so far */
+	long double floor_mbps;		/* floor mbps so far */
+	long double mean_mbps;		/* mean mbps so far */
+	long double nvariance_mbps;     /* for online std dev */
 	int nconns;		        /* connected clients */
 	struct event timer;		/* process timer */
+	const char *host;               /* remote server for display */
 } mainstats;
 
 /* When adding variables, also add to tcp_stats_display() */
@@ -200,11 +213,18 @@ signal_handler(int sig, short event, void *bula)
 	 * signal handler rules don't apply, libevent decouples for us
 	 */
 	switch (sig) {
+	case SIGINFO:
+		printf("\n");
+		wrapup(-1);
+		break;
 	case SIGINT:
+		printf("\n");
+		wrapup(0);
+		break;		/* NOTREACHED */
 	case SIGTERM:
 	case SIGHUP:
 		warnx("Terminated by signal %d", sig);
-		exit(0);
+		wrapup(0);
 		break;		/* NOTREACHED */
 	default:
 		errx(1, "unexpected signal %d", sig);
@@ -479,7 +499,38 @@ stats_prepare(struct statctx *sc)
 	if (clock_gettime_tv(CLOCK_MONOTONIC, &sc->t_start) == -1)
 		err(1, "clock_gettime_tv");
 	sc->t_last = sc->t_start;
+	if (!timerisset(&mainstats.t_first))
+		mainstats.t_first = sc->t_start;
+}
 
+static void
+summary_display(void)
+{
+	struct timeval t_cur, t_diff;
+	long double std_dev;
+	unsigned long long total_elapsed;
+	char *direction;
+
+	if (!ptb->sflag) {
+		direction = "sent";
+		printf("--- %s tcpbench statistics ---\n", mainstats.host);
+	} else {
+		direction = "received";
+		printf("--- tcpbench server statistics ---\n");
+	}
+
+	std_dev = sqrtl(mainstats.nvariance_mbps / mainstats.n_slices);
+
+	if (clock_gettime_tv(CLOCK_MONOTONIC, &t_cur) == -1)
+		err(1, "clock_gettime_tv");
+	timersub(&t_cur, &mainstats.t_first, &t_diff);
+	total_elapsed = t_diff.tv_sec * 1000 + t_diff.tv_usec / 1000;
+
+	printf("%llu bytes %s over %.3Lf seconds\n",
+	    mainstats.total_bytes, direction, total_elapsed/1000.0L);
+	printf("bandwidth min/avg/max/std-dev = %.3Lf/%.3Lf/%.3Lf/%.3Lf Mbps\n",
+	    mainstats.floor_mbps, mainstats.mean_mbps, mainstats.peak_mbps,
+	    std_dev);
 }
 
 static void
@@ -546,13 +597,18 @@ static void
 tcp_process_slice(int fd, short event, void *bula)
 {
 	unsigned long long total_elapsed, since_last;
-	long double mbps, slice_mbps = 0;
+	long double mbps, old_mean_mbps, slice_mbps = 0;
 	float bwperc;
 	struct statctx *sc;
 	struct timeval t_cur, t_diff;
 	struct inpcb inpcb;
 	struct tcpcb tcpcb;
 	struct socket sockb;
+
+	if (TAILQ_EMPTY(&sc_queue))
+		return; /* don't pollute stats */
+
+	mainstats.n_slices++;
 
 	TAILQ_FOREACH(sc, &sc_queue, entry) {
 		if (clock_gettime_tv(CLOCK_MONOTONIC, &t_cur) == -1)
@@ -581,51 +637,79 @@ tcp_process_slice(int fd, short event, void *bula)
 	/* process stats for this slice */
 	if (slice_mbps > mainstats.peak_mbps)
 		mainstats.peak_mbps = slice_mbps;
+	if (slice_mbps < mainstats.floor_mbps)
+		mainstats.floor_mbps = slice_mbps;
+	old_mean_mbps = mainstats.mean_mbps;
+	mainstats.mean_mbps += (slice_mbps - mainstats.mean_mbps) /
+				mainstats.n_slices;
+
+	/* "Welford's method" for online variance
+	 * see Knuth, TAoCP Volume 2, 3rd edn., p232 */
+	mainstats.nvariance_mbps += (slice_mbps - old_mean_mbps) *
+				    (slice_mbps - mainstats.mean_mbps);
+
 	printf("Conn: %3d Mbps: %12.3Lf Peak Mbps: %12.3Lf Avg Mbps: %12.3Lf\n",
 	    mainstats.nconns, slice_mbps, mainstats.peak_mbps,
 	    mainstats.nconns ? slice_mbps / mainstats.nconns : 0);
-	mainstats.slice_bytes = 0;
 
+	mainstats.slice_bytes = 0;
 	set_slice_timer(mainstats.nconns > 0);
 }
 
 static void
-udp_process_slice(int fd, short event, void *v_sc)
+udp_process_slice(int fd, short event, void *bula)
 {
-	struct statctx *sc = v_sc;
 	unsigned long long total_elapsed, since_last, pps;
-	long double slice_mbps;
+	long double old_mean_mbps, slice_mbps;
 	struct timeval t_cur, t_diff;
+
+	mainstats.n_slices++;
 
 	if (clock_gettime_tv(CLOCK_MONOTONIC, &t_cur) == -1)
 		err(1, "clock_gettime_tv");
-	/* Calculate pps */
-	timersub(&t_cur, &sc->t_start, &t_diff);
+
+	timersub(&t_cur, &udp_sc->t_start, &t_diff);
 	total_elapsed = t_diff.tv_sec * 1000 + t_diff.tv_usec / 1000;
-	timersub(&t_cur, &sc->t_last, &t_diff);
+
+	timersub(&t_cur, &udp_sc->t_last, &t_diff);
 	since_last = t_diff.tv_sec * 1000 + t_diff.tv_usec / 1000;
 	if (since_last == 0)
 		return;
-	slice_mbps = (sc->bytes * 8) / (since_last * 1000.0);
-	pps = (sc->udp_slice_pkts * 1000) / since_last;
+
+	slice_mbps = (udp_sc->bytes * 8) / (since_last * 1000.0);
+	pps = (udp_sc->udp_slice_pkts * 1000) / since_last;
+
 	if (slice_mbps > mainstats.peak_mbps)
 		mainstats.peak_mbps = slice_mbps;
+	if (slice_mbps < mainstats.floor_mbps)
+		mainstats.floor_mbps = slice_mbps;
+	old_mean_mbps = mainstats.mean_mbps;
+	mainstats.mean_mbps += (slice_mbps - mainstats.mean_mbps) /
+				mainstats.n_slices;
+
+	/* "Welford's method" for online variance
+	 * see Knuth, TAoCP Volume 2, 3rd edn., p232 */
+	mainstats.nvariance_mbps += (slice_mbps - old_mean_mbps) *
+				    (slice_mbps - mainstats.mean_mbps);
+
 	printf("Elapsed: %11llu Mbps: %11.3Lf Peak Mbps: %11.3Lf %s PPS: %7llu\n",
 	    total_elapsed, slice_mbps, mainstats.peak_mbps,
 	    ptb->sflag ? "Rx" : "Tx", pps);
 
 	/* Clean up this slice time */
-	sc->t_last = t_cur;
-	sc->bytes = 0;
-	sc->udp_slice_pkts = 0;
+	udp_sc->t_last = t_cur;
+	udp_sc->bytes = 0;
+	udp_sc->udp_slice_pkts = 0;
+
+	mainstats.slice_bytes = 0;
 	set_slice_timer(1);
 }
 
 static void
-udp_server_handle_sc(int fd, short event, void *v_sc)
+udp_server_handle_sc(int fd, short event, void *bula)
 {
+	static int first_read = 1;
 	ssize_t n;
-	struct statctx *sc = v_sc;
 
 	n = read(fd, ptb->dummybuf, ptb->dummybuf_len);
 	if (n == 0)
@@ -638,12 +722,16 @@ udp_server_handle_sc(int fd, short event, void *v_sc)
 
 	if (ptb->vflag >= 3)
 		fprintf(stderr, "read: %zd bytes\n", n);
-	/* If this was our first packet, start slice timer */
-	if (mainstats.peak_mbps == 0)
+	if (first_read) {
+		first_read = 0;
+		stats_prepare(udp_sc);
 		set_slice_timer(1);
+	}
 	/* Account packet */
-	sc->udp_slice_pkts++;
-	sc->bytes += n;
+	udp_sc->udp_slice_pkts++;
+	udp_sc->bytes += n;
+	mainstats.slice_bytes += n;
+	mainstats.total_bytes += n;
 }
 
 static void
@@ -680,6 +768,7 @@ tcp_server_handle_sc(int fd, short event, void *v_sc)
 		fprintf(stderr, "read: %zd bytes\n", n);
 	sc->bytes += n;
 	mainstats.slice_bytes += n;
+	mainstats.total_bytes += n;
 }
 
 static void
@@ -731,10 +820,12 @@ tcp_server_accept(int fd, short event, void *arg)
 	sc->tcp_ts = ts;
 	sc->fd = sock;
 	stats_prepare(sc);
+
 	event_set(&sc->ev, sc->fd, EV_READ | EV_PERSIST,
 	    tcp_server_handle_sc, sc);
 	event_add(&sc->ev, NULL);
 	TAILQ_INSERT_TAIL(&sc_queue, sc, entry);
+
 	mainstats.nconns++;
 	if (mainstats.nconns == 1)
 		set_slice_timer(1);
@@ -744,7 +835,7 @@ tcp_server_accept(int fd, short event, void *arg)
 }
 
 static void
-server_init(struct addrinfo *aitop, struct statctx *udp_sc)
+server_init(struct addrinfo *aitop)
 {
 	char tmp[128];
 	int sock, on = 1;
@@ -806,7 +897,7 @@ server_init(struct addrinfo *aitop, struct statctx *udp_sc)
 			if ((ev = calloc(1, sizeof(*ev))) == NULL)
 				err(1, "calloc");
 			event_set(ev, sock, EV_READ | EV_PERSIST,
-			    udp_server_handle_sc, udp_sc);
+			    udp_server_handle_sc, NULL);
 			event_add(ev, NULL);
 		} else {
 			if ((ts = calloc(1, sizeof(*ts))) == NULL)
@@ -841,30 +932,30 @@ client_handle_sc(int fd, short event, void *v_sc)
 		if (errno == EINTR || errno == EWOULDBLOCK ||
 		    (UDP_MODE && errno == ENOBUFS))
 			return;
-		err(1, "write");
+		warn("write");
+		wrapup(1);
 	}
 	if (TCP_MODE && n == 0) {
 		fprintf(stderr, "Remote end closed connection");
-		exit(1);
+		wrapup(1);
 	}
 	if (ptb->vflag >= 3)
 		fprintf(stderr, "write: %zd bytes\n", n);
 	sc->bytes += n;
 	mainstats.slice_bytes += n;
+	mainstats.total_bytes += n;
 	if (UDP_MODE)
 		sc->udp_slice_pkts++;
 }
 
 static void
-client_init(struct addrinfo *aitop, int nconn, struct statctx *udp_sc,
-    struct addrinfo *aib)
+client_init(struct addrinfo *aitop, int nconn, struct addrinfo *aib)
 {
 	struct statctx *sc;
 	struct addrinfo *ai;
 	char tmp[128];
 	int i, r, sock;
 
-	sc = udp_sc;
 	for (i = 0; i < nconn; i++) {
 		for (sock = -1, ai = aitop; ai != NULL; ai = ai->ai_next) {
 			saddr_ntop(ai->ai_addr, ai->ai_addrlen, tmp,
@@ -926,13 +1017,17 @@ client_init(struct addrinfo *aitop, int nconn, struct statctx *udp_sc,
 		if (TCP_MODE) {
 			if ((sc = calloc(1, sizeof(*sc))) == NULL)
 				err(1, "calloc");
-		}
+		} else
+			sc = udp_sc;
+
 		sc->fd = sock;
 		stats_prepare(sc);
+
 		event_set(&sc->ev, sc->fd, EV_WRITE | EV_PERSIST,
 		    client_handle_sc, sc);
 		event_add(&sc->ev, NULL);
 		TAILQ_INSERT_TAIL(&sc_queue, sc, entry);
+
 		mainstats.nconns++;
 		if (mainstats.nconns == 1)
 			set_slice_timer(1);
@@ -998,7 +1093,28 @@ map_tos(char *s, int *val)
 static void
 quit(int sig, short event, void *arg)
 {
-	exit(0);
+	wrapup(0);
+}
+
+static void
+wrapup(int err)
+{
+	const int transfers = timerisset(&mainstats.t_first);
+	const int stats = (mainstats.floor_mbps != INFINITY);
+
+	if (transfers) {
+		if (!stats) {
+			if (UDP_MODE)
+				udp_process_slice(0, 0, NULL);
+			else
+				tcp_process_slice(0, 0, NULL);
+		}
+
+		summary_display();
+	}
+
+	if (err != -1)
+		exit(err);
 }
 
 int
@@ -1015,8 +1131,7 @@ main(int argc, char **argv)
 	int family = PF_UNSPEC;
 	struct nlist nl[] = { { "_tcbtable" }, { "" } };
 	const char *host = NULL, *port = DEFAULT_PORT, *srcbind = NULL;
-	struct event ev_sigint, ev_sigterm, ev_sighup, ev_progtimer;
-	struct statctx *udp_sc = NULL;
+	struct event ev_sigint, ev_sigterm, ev_sighup, ev_siginfo, ev_progtimer;
 	struct sockaddr_un sock_un;
 
 	/* Init world */
@@ -1159,7 +1274,7 @@ main(int argc, char **argv)
 		drop_gid();
 
 	if (!ptb->sflag || ptb->Uflag)
-		host = argv[0];
+		mainstats.host = host = argv[0];
 
 	if (ptb->Uflag)
 		if (unveil(host, "rwc") == -1)
@@ -1244,29 +1359,33 @@ main(int argc, char **argv)
 		err(1, "malloc");
 	arc4random_buf(ptb->dummybuf, ptb->dummybuf_len);
 
+	timerclear(&mainstats.t_first);
+	mainstats.floor_mbps = INFINITY;
+
 	/* Setup libevent and signals */
 	event_init();
 	signal_set(&ev_sigterm, SIGTERM, signal_handler, NULL);
 	signal_set(&ev_sighup, SIGHUP, signal_handler, NULL);
 	signal_set(&ev_sigint, SIGINT, signal_handler, NULL);
+	signal_set(&ev_siginfo, SIGINFO, signal_handler, NULL);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigterm, NULL);
 	signal_add(&ev_sighup, NULL);
+	signal_add(&ev_siginfo, NULL);
 	signal(SIGPIPE, SIG_IGN);
 
 	if (UDP_MODE) {
 		if ((udp_sc = calloc(1, sizeof(*udp_sc))) == NULL)
 			err(1, "calloc");
 		udp_sc->fd = -1;
-		stats_prepare(udp_sc);
-		evtimer_set(&mainstats.timer, udp_process_slice, udp_sc);
+		evtimer_set(&mainstats.timer, udp_process_slice, NULL);
 	} else {
 		print_tcp_header();
 		evtimer_set(&mainstats.timer, tcp_process_slice, NULL);
 	}
 
 	if (ptb->sflag)
-		server_init(aitop, udp_sc);
+		server_init(aitop);
 	else {
 		if (secs > 0) {
 			timerclear(&tv);
@@ -1274,7 +1393,7 @@ main(int argc, char **argv)
 			evtimer_set(&ev_progtimer, quit, NULL);
 			evtimer_add(&ev_progtimer, &tv);
 		}
-		client_init(aitop, nconn, udp_sc, aib);
+		client_init(aitop, nconn, aib);
 
 		if (pledge("stdio", NULL) == -1)
 			err(1, "pledge");

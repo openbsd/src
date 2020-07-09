@@ -1,5 +1,5 @@
-.\"	$OpenBSD: X509_get_serialNumber.3,v 1.4 2019/06/14 13:59:32 schwarze Exp $
-.\"	OpenSSL bb9ad09e Jun 6 00:43:05 2016 -0400
+.\" $OpenBSD: X509_get_serialNumber.3,v 1.5 2020/06/19 12:01:20 schwarze Exp $
+.\" full merge up to: OpenSSL df75c2bf Dec 9 01:02:36 2018 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2016 The OpenSSL Project.  All rights reserved.
@@ -48,11 +48,12 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 14 2019 $
+.Dd $Mdocdate: June 19 2020 $
 .Dt X509_GET_SERIALNUMBER 3
 .Os
 .Sh NAME
 .Nm X509_get_serialNumber ,
+.Nm X509_get0_serialNumber ,
 .Nm X509_set_serialNumber
 .Nd get or set certificate serial number
 .Sh SYNOPSIS
@@ -60,6 +61,10 @@
 .Ft ASN1_INTEGER *
 .Fo X509_get_serialNumber
 .Fa "X509 *x"
+.Fc
+.Ft const ASN1_INTEGER *
+.Fo X509_get0_serialNumber
+.Fa "const X509 *x"
 .Fc
 .Ft int
 .Fo X509_set_serialNumber
@@ -76,6 +81,10 @@ structure which can be examined or initialised.
 The value returned is an internal pointer which must not be freed
 up after the call.
 .Pp
+.Fn X509_get0_serialNumber
+does the same except that it accepts a constant argument
+and returns a constant result.
+.Pp
 .Fn X509_set_serialNumber
 sets the serial number of certificate
 .Fa x
@@ -86,7 +95,9 @@ A copy of the serial number is used internally so
 should be freed up after use.
 .Sh RETURN VALUES
 .Fn X509_get_serialNumber
-returns an
+and
+.Fn X509_get0_serialNumber
+return a pointer to an
 .Vt ASN1_INTEGER
 structure.
 .Pp
@@ -112,3 +123,7 @@ and
 .Fn X509_set_serialNumber
 first appeared in SSLeay 0.6.5 and have been available since
 .Ox 2.4 .
+.Pp
+.Fn X509_get0_serialNumber
+first appeared in OpenSSL 1.1.0 and has been available since
+.Ox 6.4 .

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.33 2017/05/25 03:19:39 dlg Exp $	*/
+/*	$OpenBSD: bus.h,v 1.34 2020/06/23 01:21:29 jmatthew Exp $	*/
 /*	$NetBSD: bus.h,v 1.31 2001/09/21 15:30:41 wiz Exp $	*/
 
 /*-
@@ -206,6 +206,12 @@ struct sparc_bus_space_tag {
 		int, int, int,
 		int (*)(void *), void *,
 		const char *);
+	void	*(*sparc_intr_establish_cpu)(bus_space_tag_t,
+		bus_space_tag_t,
+		int, int, int,
+		struct cpu_info *,
+		int (*)(void *), void *,
+		const char *);
 
 	bus_addr_t (*sparc_bus_addr)(bus_space_tag_t,
 		bus_space_tag_t, bus_space_handle_t);
@@ -267,6 +273,16 @@ void	       *bus_intr_establish(
 				int,			/*device class level,
 							  see machine/intr.h*/
 				int,			/*flags*/
+				int (*)(void *),	/*handler*/
+				void *,			/*handler arg*/
+				const char *);		/*what*/
+void	       *bus_intr_establish_cpu(
+				bus_space_tag_t,
+				int,			/*bus-specific intr*/
+				int,			/*device class level,
+							  see machine/intr.h*/
+				int,			/*flags*/
+				struct cpu_info *,	/*cpu*/
 				int (*)(void *),	/*handler*/
 				void *,			/*handler arg*/
 				const char *);		/*what*/

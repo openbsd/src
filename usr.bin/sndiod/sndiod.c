@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.40 2020/04/25 05:35:52 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.41 2020/06/18 05:11:13 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -318,8 +318,8 @@ mkdev(char *path, struct aparams *par,
 	struct dev *d;
 
 	for (d = dev_list; d != NULL; d = d->next) {
-		if (d->path_list->next == NULL &&
-		    strcmp(d->path_list->str, path) == 0)
+		if (d->alt_list->next == NULL &&
+		    strcmp(d->alt_list->name, path) == 0)
 			return d;
 	}
 	if (!bufsz && !round) {
@@ -385,6 +385,7 @@ static int
 start_helper(int background)
 {
 	struct dev *d;
+	struct dev_alt *da;
 	struct port *p;
 	struct passwd *pw;
 	struct name *n;
@@ -423,9 +424,9 @@ start_helper(int background)
 				err(1, "cannot drop privileges");
 		}
 		for (d = dev_list; d != NULL; d = d->next) {
-			for (n = d->path_list; n != NULL; n = n->next) {
-				dounveil(n->str, "rsnd/", "/dev/audio");
-				dounveil(n->str, "rsnd/", "/dev/audioctl");
+			for (da = d->alt_list; da != NULL; da = da->next) {
+				dounveil(da->name, "rsnd/", "/dev/audio");
+				dounveil(da->name, "rsnd/", "/dev/audioctl");
 			}
 		}
 		for (p = port_list; p != NULL; p = p->next) {
@@ -580,9 +581,10 @@ main(int argc, char **argv)
 			devindex = -1;
 			break;
 		case 'F':
-			if (dev_list == NULL)
+			if ((d = dev_list) == NULL)
 				errx(1, "-F %s: no devices defined", optarg);
-			namelist_add(&dev_list->path_list, optarg);
+			if (!dev_addname(d, optarg))
+				exit(1);
 			break;
 		default:
 			fputs(usagestr, stderr);

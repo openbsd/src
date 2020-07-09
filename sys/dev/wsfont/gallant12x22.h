@@ -1,4 +1,4 @@
-/*	$OpenBSD: gallant12x22.h,v 1.5 2012/01/06 14:55:38 shadchin Exp $ */
+/*	$OpenBSD: gallant12x22.h,v 1.6 2020/06/24 17:24:35 fcambus Exp $ */
 /*	$NetBSD: gallant12x22.h,v 1.2 1999/05/18 21:51:58 ad Exp $ */
 
 /*
@@ -39,18 +39,18 @@
 static u_char gallant12x22_data[];
 
 struct wsdisplay_font gallant12x22 = {
-	"Gallant",			/* typeface name */
-	0,				/* index */
-	' ',				/* firstchar */
-	256 - ' ',			/* numchars */
-	WSDISPLAY_FONTENC_ISO,		/* encoding */
-	12,				/* width */
-	22,				/* height */
-	2,				/* stride */
-	WSDISPLAY_FONTORDER_L2R,	/* bit order */
-	WSDISPLAY_FONTORDER_L2R,	/* byte order */
-	NULL,				/* cookie */
-	gallant12x22_data		/* data */
+	.name		= "Gallant",
+	.index		= 0,
+	.firstchar	= ' ',
+	.numchars	= 256 - ' ',
+	.encoding	= WSDISPLAY_FONTENC_ISO,
+	.fontwidth	= 12,
+	.fontheight	= 22,
+	.stride		= 2,
+	.bitorder	= WSDISPLAY_FONTORDER_L2R,
+	.byteorder	= WSDISPLAY_FONTORDER_L2R,
+	.cookie		= NULL,
+	.data		= gallant12x22_data
 };
 
 static u_char gallant12x22_data[] = {

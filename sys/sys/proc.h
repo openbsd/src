@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.295 2020/04/28 08:29:40 mpi Exp $	*/
+/*	$OpenBSD: proc.h,v 1.297 2020/07/06 13:33:09 pirofti Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -152,7 +152,7 @@ struct unveil;
  *	a	atomic operations
  *	m	this process' `ps_mtx'
  *	p	this process' `ps_lock'
- *	r	rlimit_lock
+ *	R	rlimit_lock
  */
 struct process {
 	/*
@@ -235,13 +235,14 @@ struct process {
 
 /* The following fields are all copied upon creation in process_new. */
 #define	ps_startcopy	ps_limit
-	struct	plimit *ps_limit;	/* [m,r] Process limits. */
+	struct	plimit *ps_limit;	/* [m,R] Process limits. */
 	struct	pgrp *ps_pgrp;		/* Pointer to process group. */
 	struct	emul *ps_emul;		/* Emulation information */
 
 	char	ps_comm[MAXCOMLEN+1];
 
 	vaddr_t	ps_strings;		/* User pointers to argv/env */
+	vaddr_t ps_timekeep; 		/* User pointer to timekeep */
 	vaddr_t	ps_sigcode;		/* User pointer to the signal code */
 	vaddr_t ps_sigcoderet;		/* User pointer to sigreturn retPC */
 	u_long	ps_sigcookie;
@@ -325,12 +326,12 @@ struct p_inentry {
 /*
  *  Locks used to protect struct members in this file:
  *	I	immutable after creation
- *	s	scheduler lock
+ *	S	scheduler lock
  *	l	read only reference, see lim_read_enter()
  *	o	owned (read/modified only) by this thread
  */
 struct proc {
-	TAILQ_ENTRY(proc) p_runq;	/* [s] current run/sleep queue */
+	TAILQ_ENTRY(proc) p_runq;	/* [S] current run/sleep queue */
 	LIST_ENTRY(proc) p_list;	/* List of all threads. */
 
 	struct	process *p_p;		/* [I] The process of this thread. */
@@ -347,8 +348,8 @@ struct proc {
 
 	int	p_flag;			/* P_* flags. */
 	u_char	p_spare;		/* unused */
-	char	p_stat;			/* [s] S* process status. */
-	u_char	p_runpri;		/* [s] Runqueue priority */
+	char	p_stat;			/* [S] S* process status. */
+	u_char	p_runpri;		/* [S] Runqueue priority */
 	u_char	p_descfd;		/* if not 255, fdesc permits this fd */
 
 	pid_t	p_tid;			/* Thread identifier. */
@@ -360,15 +361,15 @@ struct proc {
 
 	/* scheduling */
 	int	p_cpticks;	 /* Ticks of cpu time. */
-	const volatile void *p_wchan;	/* [s] Sleep address. */
+	const volatile void *p_wchan;	/* [S] Sleep address. */
 	struct	timeout p_sleep_to;/* timeout for tsleep() */
-	const char *p_wmesg;		/* [s] Reason for sleep. */
-	fixpt_t	p_pctcpu;		/* [s] %cpu for this thread */
-	u_int	p_slptime;		/* [s] Time since last blocked. */
+	const char *p_wmesg;		/* [S] Reason for sleep. */
+	fixpt_t	p_pctcpu;		/* [S] %cpu for this thread */
+	u_int	p_slptime;		/* [S] Time since last blocked. */
 	u_int	p_uticks;		/* Statclock hits in user mode. */
 	u_int	p_sticks;		/* Statclock hits in system mode. */
 	u_int	p_iticks;		/* Statclock hits processing intr. */
-	struct	cpu_info * volatile p_cpu; /* [s] CPU we're running on. */
+	struct	cpu_info * volatile p_cpu; /* [S] CPU we're running on. */
 
 	struct	rusage p_ru;		/* Statistics */
 	struct	tusage p_tu;		/* accumulated times. */
@@ -387,9 +388,9 @@ struct proc {
 #define	p_startcopy	p_sigmask
 	sigset_t p_sigmask;	/* Current signal mask. */
 
-	u_char	p_slppri;		/* [s] Sleeping priority */
-	u_char	p_usrpri;	/* [s] Priority based on p_estcpu & ps_nice */
-	u_int	p_estcpu;		/* [s] Time averaged val of p_cpticks */
+	u_char	p_slppri;		/* [S] Sleeping priority */
+	u_char	p_usrpri;	/* [S] Priority based on p_estcpu & ps_nice */
+	u_int	p_estcpu;		/* [S] Time averaged val of p_cpticks */
 	int	p_pledge_syscall;	/* Cache of current syscall */
 
 	struct	ucred *p_ucred;		/* [o] cached credentials */

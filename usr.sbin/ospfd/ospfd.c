@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.112 2020/03/29 12:36:01 denis Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.113 2020/06/26 19:04:38 bket Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -720,10 +720,7 @@ merge_config(struct ospfd_conf *conf, struct ospfd_conf *xconf)
 			SIMPLEQ_REMOVE_HEAD(&conf->redist_list, entry);
 			free(r);
 		}
-		while ((r = SIMPLEQ_FIRST(&xconf->redist_list)) != NULL) {
-			SIMPLEQ_REMOVE_HEAD(&xconf->redist_list, entry);
-			SIMPLEQ_INSERT_TAIL(&conf->redist_list, r, entry);
-		}
+		SIMPLEQ_CONCAT(&conf->redist_list, &xconf->redist_list);
 
 		/* adjust FIB priority if changed */
 		if (conf->fib_priority != xconf->fib_priority) {
@@ -782,10 +779,7 @@ merge_config(struct ospfd_conf *conf, struct ospfd_conf *xconf)
 				free(r);
 			}
 
-			while ((r = SIMPLEQ_FIRST(&xa->redist_list)) != NULL) {
-				SIMPLEQ_REMOVE_HEAD(&xa->redist_list, entry);
-				SIMPLEQ_INSERT_TAIL(&a->redist_list, r, entry);
-			}
+			SIMPLEQ_CONCAT(&a->redist_list, &xa->redist_list);
 		}
 
 		a->stub = xa->stub;

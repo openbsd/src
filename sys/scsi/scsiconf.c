@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.223 2020/02/05 16:29:30 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.225 2020/07/05 20:17:25 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -142,7 +142,6 @@ scsibusattach(struct device *parent, struct device *self, void *aux)
 		scsi_autoconf = 0;
 
 	sc_link_proto->bus = sb;
-	sc_link_proto->scsibus = sb->sc_dev.dv_unit;
 	sb->adapter_link = sc_link_proto;
 	if (sb->adapter_link->adapter_buswidth == 0)
 		sb->adapter_link->adapter_buswidth = 8;
@@ -1013,7 +1012,6 @@ scsi_probedev(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 		SET(link->flags, SDEV_REMOVABLE);
 
 	sa.sa_sc_link = link;
-	sa.sa_inqbuf = &link->inqdata;
 
 	if ((cf = config_search(scsibussubmatch, (struct device *)sb,
 	    &sa)) == 0) {

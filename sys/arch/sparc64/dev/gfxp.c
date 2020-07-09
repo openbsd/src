@@ -1,4 +1,4 @@
-/*	$OpenBSD: gfxp.c,v 1.13 2013/10/20 20:07:27 miod Exp $	*/
+/*	$OpenBSD: gfxp.c,v 1.14 2020/05/25 09:55:48 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -148,9 +148,9 @@ int	gfxp_putcmap(struct gfxp_softc *, struct wsdisplay_cmap *);
 void	gfxp_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 
 int	gfxp_copycols(void *, int, int, int, int);
-int	gfxp_erasecols(void *, int, int, int, long);
+int	gfxp_erasecols(void *, int, int, int, uint32_t);
 int	gfxp_copyrows(void *, int, int, int);
-int	gfxp_eraserows(void *, int, int, long);
+int	gfxp_eraserows(void *, int, int, uint32_t);
 
 void	gfxp_init(struct gfxp_softc *);
 void	gfxp_reinit(struct gfxp_softc *);
@@ -467,7 +467,7 @@ gfxp_copycols(void *cookie, int row, int src, int dst, int num)
 }
 
 int
-gfxp_erasecols(void *cookie, int row, int col, int num, long attr)
+gfxp_erasecols(void *cookie, int row, int col, int num, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	struct gfxp_softc *sc = ri->ri_hw;
@@ -502,7 +502,7 @@ gfxp_copyrows(void *cookie, int src, int dst, int num)
 }
 
 int
-gfxp_eraserows(void *cookie, int row, int num, long attr)
+gfxp_eraserows(void *cookie, int row, int num, uint32_t attr)
 {
 	struct rasops_info *ri = cookie;
 	struct gfxp_softc *sc = ri->ri_hw;

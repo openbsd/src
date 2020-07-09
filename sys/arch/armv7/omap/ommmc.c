@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.36 2020/04/27 11:37:23 ians Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.37 2020/07/05 06:56:34 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -292,7 +292,8 @@ ommmc_match(struct device *parent, void *match, void *aux)
 	struct fdt_attach_args *faa = aux;
 
 	return (OF_is_compatible(faa->fa_node, "ti,omap3-hsmmc") ||
-	    OF_is_compatible(faa->fa_node, "ti,omap4-hsmmc"));
+	    OF_is_compatible(faa->fa_node, "ti,omap4-hsmmc") ||
+	    OF_is_compatible(faa->fa_node, "ti,am335-sdhci"));
 }
 
 void
@@ -312,7 +313,8 @@ ommmc_attach(struct device *parent, struct device *self, void *aux)
 	if (faa->fa_reg[0].size <= 0x100)
 		return;
 
-	if (OF_is_compatible(faa->fa_node, "ti,omap4-hsmmc")) {
+	if (OF_is_compatible(faa->fa_node, "ti,omap4-hsmmc") ||
+	    OF_is_compatible(faa->fa_node, "ti,am335-sdhci")) {
 		addr = faa->fa_reg[0].addr + 0x100;
 		size = faa->fa_reg[0].size - 0x100;
 	} else {

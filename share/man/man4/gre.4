@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.77 2020/04/02 18:03:14 jmc Exp $
+.\" $OpenBSD: gre.4,v 1.78 2020/06/18 09:12:11 fcambus Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 2 2020 $
+.Dd $Mdocdate: June 18 2020 $
 .Dt GRE 4
 .Os
 .Sh NAME
@@ -236,15 +236,15 @@ virtual network flow identifier is enabled.
 .Pp
 .Nm nvgre
 interfaces use the virtual network identifier in the 24-bit
-Virtual Subnet Identifer (VSID)
+Virtual Subnet Identifier (VSID)
 aka
 Tenant Network Identifier (TNI)
 field in of the GRE Key header.
 .It Dv SIOCGVNETID Fa "struct ifreq *"
-Get the virtual network identifer used in the GRE Key header.
+Get the virtual network identifier used in the GRE Key header.
 .It Dv SIOCDVNETID Fa "struct ifreq *"
 Disable the use of the virtual network identifier.
-The virtual network identifer may only be disabled while the interface
+The virtual network identifier may only be disabled while the interface
 is down.
 .Pp
 When the virtual network identifier is disabled on
@@ -315,7 +315,7 @@ into a 24-bit virtual network identifier and an 8-bit flow
 identifier.
 .Pp
 The interface
-must already be configured with a virtual network identifer before
+must already be configured with a virtual network identifier before
 enabling flow identifiers in the GRE Key header.
 The configured virtual network identify must also fit into 24 bits.
 .It Dv SIOCDVNETFLOWID Fa "struct ifreq *"

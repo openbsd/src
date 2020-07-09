@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2835_gpio.c,v 1.3 2020/04/27 12:15:30 kettenis Exp $	*/
+/*	$OpenBSD: bcm2835_gpio.c,v 1.4 2020/06/12 13:21:55 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -244,7 +244,7 @@ bcmgpio_config_pin(void *cookie, uint32_t *cells, int config)
 	if (config & GPIO_CONFIG_OUTPUT)
 		bcmgpio_config_func(sc, pin, GPFSEL_GPIO_OUT);
 	else
-		bcmgpio_config_func(sc, pin, GPFSEL_GPIO_OUT);
+		bcmgpio_config_func(sc, pin, GPFSEL_GPIO_IN);
 	if (config & GPIO_CONFIG_PULL_UP)
 		sc->sc_config_pull(sc, pin, GPPUD_PUD_UP);
 	else if (config & GPIO_CONFIG_PULL_DOWN)

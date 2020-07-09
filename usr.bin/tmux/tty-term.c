@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-term.c,v 1.76 2020/04/23 10:22:53 nicm Exp $ */
+/* $OpenBSD: tty-term.c,v 1.82 2020/06/05 09:32:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -54,6 +54,7 @@ struct tty_term_code_entry {
 
 static const struct tty_term_code_entry tty_term_codes[] = {
 	[TTYC_ACSC] = { TTYCODE_STRING, "acsc" },
+	[TTYC_AM] = { TTYCODE_FLAG, "am" },
 	[TTYC_AX] = { TTYCODE_FLAG, "AX" },
 	[TTYC_BCE] = { TTYCODE_FLAG, "bce" },
 	[TTYC_BEL] = { TTYCODE_STRING, "bel" },
@@ -61,6 +62,8 @@ static const struct tty_term_code_entry tty_term_codes[] = {
 	[TTYC_BOLD] = { TTYCODE_STRING, "bold" },
 	[TTYC_CIVIS] = { TTYCODE_STRING, "civis" },
 	[TTYC_CLEAR] = { TTYCODE_STRING, "clear" },
+	[TTYC_CLMG] = { TTYCODE_STRING, "Clmg" },
+	[TTYC_CMG] = { TTYCODE_STRING, "Cmg" },
 	[TTYC_CNORM] = { TTYCODE_STRING, "cnorm" },
 	[TTYC_COLORS] = { TTYCODE_NUMBER, "colors" },
 	[TTYC_CR] = { TTYCODE_STRING, "Cr" },
@@ -81,12 +84,20 @@ static const struct tty_term_code_entry tty_term_codes[] = {
 	[TTYC_DIM] = { TTYCODE_STRING, "dim" },
 	[TTYC_DL1] = { TTYCODE_STRING, "dl1" },
 	[TTYC_DL] = { TTYCODE_STRING, "dl" },
+	[TTYC_DSEKS] = { TTYCODE_STRING, "Dseks" },
+	[TTYC_DSFCS] = { TTYCODE_STRING, "Dsfcs" },
+	[TTYC_DSBP] = { TTYCODE_STRING, "Dsbp" },
+	[TTYC_DSMG] = { TTYCODE_STRING, "Dsmg" },
 	[TTYC_E3] = { TTYCODE_STRING, "E3" },
 	[TTYC_ECH] = { TTYCODE_STRING, "ech" },
 	[TTYC_ED] = { TTYCODE_STRING, "ed" },
 	[TTYC_EL1] = { TTYCODE_STRING, "el1" },
 	[TTYC_EL] = { TTYCODE_STRING, "el" },
 	[TTYC_ENACS] = { TTYCODE_STRING, "enacs" },
+	[TTYC_ENBP] = { TTYCODE_STRING, "Enbp" },
+	[TTYC_ENEKS] = { TTYCODE_STRING, "Eneks" },
+	[TTYC_ENFCS] = { TTYCODE_STRING, "Enfcs" },
+	[TTYC_ENMG] = { TTYCODE_STRING, "Enmg" },
 	[TTYC_FSL] = { TTYCODE_STRING, "fsl" },
 	[TTYC_HOME] = { TTYCODE_STRING, "home" },
 	[TTYC_HPA] = { TTYCODE_STRING, "hpa" },
@@ -237,8 +248,8 @@ static const struct tty_term_code_entry tty_term_codes[] = {
 	[TTYC_OP] = { TTYCODE_STRING, "op" },
 	[TTYC_REV] = { TTYCODE_STRING, "rev" },
 	[TTYC_RGB] = { TTYCODE_FLAG, "RGB" },
-	[TTYC_RI] = { TTYCODE_STRING, "ri" },
 	[TTYC_RIN] = { TTYCODE_STRING, "rin" },
+	[TTYC_RI] = { TTYCODE_STRING, "ri" },
 	[TTYC_RMACS] = { TTYCODE_STRING, "rmacs" },
 	[TTYC_RMCUP] = { TTYCODE_STRING, "rmcup" },
 	[TTYC_RMKX] = { TTYCODE_STRING, "rmkx" },
@@ -264,8 +275,7 @@ static const struct tty_term_code_entry tty_term_codes[] = {
 	[TTYC_TSL] = { TTYCODE_STRING, "tsl" },
 	[TTYC_U8] = { TTYCODE_NUMBER, "U8" },
 	[TTYC_VPA] = { TTYCODE_STRING, "vpa" },
-	[TTYC_XENL] = { TTYCODE_FLAG, "xenl" },
-	[TTYC_XT] = { TTYCODE_FLAG, "XT" },
+	[TTYC_XT] = { TTYCODE_FLAG, "XT" }
 };
 
 u_int
@@ -541,38 +551,51 @@ tty_term_create(struct tty *tty, char *name, int *feat, int fd, char **cause)
 		goto error;
 	}
 
-	/* These can be emulated so one of the two is required. */
-	if (!tty_term_has(term, TTYC_CUD1) && !tty_term_has(term, TTYC_CUD)) {
-		xasprintf(cause, "terminal does not support cud1 or cud");
-		goto error;
+	/*
+	 * If TERM has XT or clear starts with CSI then it is safe to assume
+	 * the terminal is derived from the VT100. This controls whether device
+	 * attributes requests are sent to get more information.
+	 *
+	 * This is a bit of a hack but there aren't that many alternatives.
+	 * Worst case tmux will just fall back to using whatever terminfo(5)
+	 * says without trying to correct anything that is missing.
+	 *
+	 * Also add few features that VT100-like terminals should either
+	 * support or safely ignore.
+	 */
+	s = tty_term_string(term, TTYC_CLEAR);
+	if (tty_term_flag(term, TTYC_XT) || strncmp(s, "\033[", 2) == 0) {
+		term->flags |= TERM_VT100LIKE;
+		tty_add_features(feat, "bpaste,focus,title", ",");
 	}
 
 	/* Add RGB feature if terminal has RGB colours. */
 	if ((tty_term_flag(term, TTYC_TC) || tty_term_has(term, TTYC_RGB)) &&
 	    (!tty_term_has(term, TTYC_SETRGBF) ||
 	    !tty_term_has(term, TTYC_SETRGBB)))
-		tty_add_features(feat, "RGB", ":,");
-
-	/* Add feature if terminal has XT. */
-	if (tty_term_flag(term, TTYC_XT))
-		tty_add_features(feat, "title", ":,");
+		tty_add_features(feat, "RGB", ",");
 
 	/* Apply the features and overrides again. */
 	tty_apply_features(term, *feat);
 	tty_term_apply_overrides(term);
 
 	/*
-	 * Terminals without xenl (eat newline glitch) wrap at at $COLUMNS - 1
+	 * Terminals without am (auto right margin) wrap at at $COLUMNS - 1
 	 * rather than $COLUMNS (the cursor can never be beyond $COLUMNS - 1).
 	 *
-	 * This is irritating, most notably because it is impossible to write
-	 * to the very bottom-right of the screen without scrolling.
+	 * Terminals without xenl (eat newline glitch) ignore a newline beyond
+	 * the right edge of the terminal, but tmux doesn't care about this -
+	 * it always uses absolute only moves the cursor with a newline when
+	 * also sending a linefeed.
+	 *
+	 * This is irritating, most notably because it is painful to write to
+	 * the very bottom-right of the screen without scrolling.
 	 *
 	 * Flag the terminal here and apply some workarounds in other places to
 	 * do the best possible.
 	 */
-	if (!tty_term_flag(term, TTYC_XENL))
-		term->flags |= TERM_NOXENL;
+	if (!tty_term_flag(term, TTYC_AM))
+		term->flags |= TERM_NOAM;
 
 	/* Generate ACS table. If none is present, use nearest ASCII. */
 	memset(term->acs, 0, sizeof term->acs);

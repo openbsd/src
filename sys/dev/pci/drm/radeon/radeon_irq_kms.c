@@ -25,14 +25,21 @@
  *          Alex Deucher
  *          Jerome Glisse
  */
-#include <drm/drmP.h>
-#include <drm/drm_crtc_helper.h>
-#include <drm/radeon_drm.h>
-#include "radeon_reg.h"
-#include "radeon.h"
-#include "atom.h"
 
+#include <linux/pci.h>
 #include <linux/pm_runtime.h>
+
+#include <drm/drm_crtc_helper.h>
+#include <drm/drm_device.h>
+#include <drm/drm_irq.h>
+#include <drm/drm_probe_helper.h>
+#include <drm/drm_vblank.h>
+#include <drm/radeon_drm.h>
+
+#include "atom.h"
+#include "radeon.h"
+#include "radeon_reg.h"
+
 
 #define RADEON_WAIT_IDLE_TIMEOUT 200
 
@@ -295,7 +302,6 @@ int radeon_irq_kms_init(struct radeon_device *rdev)
 		return r;
 	}
 
-#ifdef notyet
 	/* enable msi */
 	rdev->msi_enabled = 0;
 
@@ -306,7 +312,6 @@ int radeon_irq_kms_init(struct radeon_device *rdev)
 			dev_info(rdev->dev, "radeon: using MSI.\n");
 		}
 	}
-#endif
 
 	INIT_DELAYED_WORK(&rdev->hotplug_work, radeon_hotplug_work_func);
 	INIT_WORK(&rdev->dp_work, radeon_dp_work_func);

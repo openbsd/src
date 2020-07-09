@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.145 2020/02/12 10:33:56 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.146 2020/05/10 13:38:46 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -174,7 +174,7 @@ struct peer_stats {
 	u_int8_t		 last_sent_suberr;
 	u_int8_t		 last_rcvd_errcode;
 	u_int8_t		 last_rcvd_suberr;
-	char			 last_shutcomm[SHUT_COMM_LEN];
+	char			 last_reason[REASON_LEN];
 };
 
 enum Timer {

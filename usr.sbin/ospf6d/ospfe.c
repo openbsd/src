@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.61 2020/01/02 10:16:46 denis Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.63 2020/05/16 15:54:12 denis Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -257,7 +257,6 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 	struct imsgev		*iev = bula;
 	struct imsgbuf		*ibuf = &iev->ibuf;
 	int			 n, stub_changed, shut = 0, isvalid, wasvalid;
-	unsigned int		 ifindex;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
@@ -326,31 +325,6 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 				if_fsm(iface, IF_EVT_DOWN);
 				log_warnx("interface %s down", iface->name);
 			}
-			break;
-		case IMSG_IFADD:
-			if ((iface = malloc(sizeof(struct iface))) == NULL)
-				fatal(NULL);
-			memcpy(iface, imsg.data, sizeof(struct iface));
-
-			LIST_INIT(&iface->nbr_list);
-			TAILQ_INIT(&iface->ls_ack_list);
-			RB_INIT(&iface->lsa_tree);
-
-			LIST_INSERT_HEAD(&iface->area->iface_list, iface,
-			    entry);
-			break;
-		case IMSG_IFDELETE:
-			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(ifindex))
-				fatalx("IFDELETE imsg with wrong len");
-
-			memcpy(&ifindex, imsg.data, sizeof(ifindex));
-			iface = if_find(ifindex);
-			if (iface == NULL)
-				fatalx("interface lost in ospfe");
-
-			LIST_REMOVE(iface, entry);
-			if_del(iface);
 			break;
 		case IMSG_IFADDRNEW:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +

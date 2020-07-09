@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.235 2020/03/15 05:34:14 visa Exp $	*/
+/*	$OpenBSD: in6.c,v 1.239 2020/07/03 17:42:50 florian Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -412,7 +412,7 @@ in6_ioctl_get(u_long cmd, caddr_t data, struct ifnet *ifp)
 			return (error);
 	}
 
-	NET_RLOCK();
+	NET_RLOCK_IN_IOCTL();
 
 	if (sa6 != NULL) {
 		error = in6_check_embed_scope(sa6, ifp->if_index);
@@ -469,8 +469,8 @@ in6_ioctl_get(u_long cmd, caddr_t data, struct ifnet *ifp)
 				expire = ia6->ia6_updatetime +
 				    ia6->ia6_lifetime.ia6t_vltime;
 				if (expire != 0) {
-					expire -= time_uptime;
-					expire += time_second;
+					expire -= getuptime();
+					expire += gettime();
 				}
 				retlt->ia6t_expire = expire;
 			} else
@@ -492,8 +492,8 @@ in6_ioctl_get(u_long cmd, caddr_t data, struct ifnet *ifp)
 				expire = ia6->ia6_updatetime +
 				    ia6->ia6_lifetime.ia6t_pltime;
 				if (expire != 0) {
-					expire -= time_uptime;
-					expire += time_second;
+					expire -= getuptime();
+					expire += gettime();
 				}
 				retlt->ia6t_preferred = expire;
 			} else
@@ -506,7 +506,7 @@ in6_ioctl_get(u_long cmd, caddr_t data, struct ifnet *ifp)
 	}
 
 err:
-	NET_RUNLOCK();
+	NET_RUNLOCK_IN_IOCTL();
 	return (error);
 }
 
@@ -646,7 +646,7 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		ia6->ia_ifa.ifa_addr = sin6tosa(&ia6->ia_addr);
 		ia6->ia_addr.sin6_family = AF_INET6;
 		ia6->ia_addr.sin6_len = sizeof(ia6->ia_addr);
-		ia6->ia6_updatetime = time_uptime;
+		ia6->ia6_updatetime = getuptime();
 		if ((ifp->if_flags & (IFF_POINTOPOINT | IFF_LOOPBACK)) != 0) {
 			/*
 			 * XXX: some functions expect that ifa_dstaddr is not
@@ -706,16 +706,16 @@ in6_update_ifa(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	 * to see if the address is deprecated or invalidated, but initialize
 	 * these members for applications.
 	 */
-	ia6->ia6_updatetime = time_uptime;
+	ia6->ia6_updatetime = getuptime();
 	ia6->ia6_lifetime = ifra->ifra_lifetime;
 	if (ia6->ia6_lifetime.ia6t_vltime != ND6_INFINITE_LIFETIME) {
 		ia6->ia6_lifetime.ia6t_expire =
-		    time_uptime + ia6->ia6_lifetime.ia6t_vltime;
+		    getuptime() + ia6->ia6_lifetime.ia6t_vltime;
 	} else
 		ia6->ia6_lifetime.ia6t_expire = 0;
 	if (ia6->ia6_lifetime.ia6t_pltime != ND6_INFINITE_LIFETIME) {
 		ia6->ia6_lifetime.ia6t_preferred =
-		    time_uptime + ia6->ia6_lifetime.ia6t_pltime;
+		    getuptime() + ia6->ia6_lifetime.ia6t_pltime;
 	} else
 		ia6->ia6_lifetime.ia6t_preferred = 0;
 
@@ -1555,16 +1555,16 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 			if (oifp == ifp) {
 				/* Do not replace temporary autoconf addresses
 				 * with non-temporary addresses. */
-				if ((ia6_best->ia6_flags & IN6_IFF_PRIVACY) &&
-				    !(ifatoia6(ifa)->ia6_flags &
-				    IN6_IFF_PRIVACY))
+				if ((ia6_best->ia6_flags & IN6_IFF_TEMPORARY)
+				    && !(ifatoia6(ifa)->ia6_flags &
+				    IN6_IFF_TEMPORARY))
 					continue;
 
 				/* Replace non-temporary autoconf addresses
 				 * with temporary addresses. */
-				if (!(ia6_best->ia6_flags & IN6_IFF_PRIVACY) &&
-				    (ifatoia6(ifa)->ia6_flags &
-				    IN6_IFF_PRIVACY))
+				if (!(ia6_best->ia6_flags & IN6_IFF_TEMPORARY)
+				    && (ifatoia6(ifa)->ia6_flags &
+				    IN6_IFF_TEMPORARY))
 					goto replace;
 			}
 			tlen = in6_matchlen(IFA_IN6(ifa), dst);
@@ -1577,9 +1577,9 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 				 * We should only use a carp address if no
 				 * other interface has a usable address.
 				 * Otherwise, when communicating from a carp
-				 * master to a carp slave, the slave won't
-				 * respond since the carp address is also
-				 * configured as a local address on the slave.
+				 * master to a carp backup, the backup system
+				 * won't respond since the carp address is also
+				 * configured as a local address on the backup.
 				 * Note that carp interfaces in backup state
 				 * were already skipped above.
 				 */

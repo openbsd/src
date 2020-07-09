@@ -1,4 +1,4 @@
-/*	$OpenBSD: efipxe.c,v 1.4 2019/08/20 23:38:19 patrick Exp $	*/
+/*	$OpenBSD: efipxe.c,v 1.5 2020/05/18 12:14:33 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -113,8 +113,12 @@ efi_pxeprobe(void)
 		if (pxe->Mode == NULL)
 			continue;
 
-		if (pxe->Mtftp != NULL)
-			use_mtftp = 1;
+		if (pxe->Mtftp != NULL) {
+			status = EFI_CALL(pxe->Mtftp, NULL, 0, NULL,
+			    FALSE, NULL, NULL, NULL, NULL, NULL, FALSE);
+			if (status != EFI_UNSUPPORTED)
+				use_mtftp = 1;
+		}
 
 		dhcp = (EFI_PXE_BASE_CODE_DHCPV4_PACKET *)&pxe->Mode->DhcpAck;
 		memcpy(&bootip, dhcp->BootpYiAddr, sizeof(bootip));

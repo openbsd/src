@@ -1,4 +1,4 @@
-/*	$OpenBSD: snapper.c,v 1.37 2016/09/19 06:46:43 ratchov Exp $	*/
+/*	$OpenBSD: snapper.c,v 1.38 2020/06/06 21:01:30 gkoehler Exp $	*/
 /*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -69,6 +69,8 @@ void snapper_set_input(struct snapper_softc *, int);
 
 int tas3004_write(struct snapper_softc *, u_int, const void *);
 int tas3004_init(struct snapper_softc *);
+
+extern char *hw_prod;
 
 struct cfattach snapper_ca = {
 	sizeof(struct snapper_softc), snapper_match, snapper_attach
@@ -442,6 +444,9 @@ snapper_match(struct device *parent, void *match, void *aux)
 	bzero(compat, sizeof compat);
 	OF_getprop(soundchip, "compatible", compat, sizeof compat);
 
+	if (strcmp(compat, "AOAKeylargo") == 0 &&
+	    strcmp(hw_prod, "PowerBook5,4") == 0)
+		return (1);
 	if (strcmp(compat, "snapper") == 0)
 		return (1);
 

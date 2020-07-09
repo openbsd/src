@@ -25,6 +25,7 @@
 #include "pp_debug.h"
 #include <linux/types.h>
 #include <linux/kernel.h>
+#include <linux/pci.h>
 #include <linux/slab.h>
 #include <linux/gfp.h>
 
@@ -232,25 +233,24 @@ static int iceland_request_smu_load_specific_fw(struct pp_hwmgr *hwmgr,
 
 static int iceland_start_smu(struct pp_hwmgr *hwmgr)
 {
+	struct iceland_smumgr *priv = hwmgr->smu_backend;
 	int result;
 
-	result = iceland_smu_upload_firmware_image(hwmgr);
-	if (result)
-		return result;
-	result = iceland_smu_start_smc(hwmgr);
-	if (result)
-		return result;
-
 	if (!smu7_is_smc_ram_running(hwmgr)) {
-		pr_info("smu not running, upload firmware again \n");
 		result = iceland_smu_upload_firmware_image(hwmgr);
 		if (result)
 			return result;
 
-		result = iceland_smu_start_smc(hwmgr);
-		if (result)
-			return result;
+		iceland_smu_start_smc(hwmgr);
 	}
+
+	/* Setup SoftRegsStart here to visit the register UcodeLoadStatus
+	 * to check fw loading state
+	 */
+	smu7_read_smc_sram_dword(hwmgr,
+			SMU71_FIRMWARE_HEADER_LOCATION +
+			offsetof(SMU71_Firmware_Header, SoftRegisters),
+			&(priv->smu7_data.soft_regs_start), 0x40000);
 
 	result = smu7_request_smu_load_fw(hwmgr);
 
@@ -1280,6 +1280,7 @@ static int iceland_populate_single_memory_level(
 	memory_level->DisplayWatermark = PPSMC_DISPLAY_WATERMARK_LOW;
 
 	data->display_timing.num_existing_displays = hwmgr->display_config->num_display;
+	data->display_timing.vrefresh = hwmgr->display_config->vrefresh;
 
 	/* stutter mode not support on iceland */
 
@@ -2219,6 +2220,8 @@ static uint32_t iceland_get_offsetof(uint32_t type, uint32_t member)
 			return offsetof(SMU71_SoftRegisters, VoltageChangeTimeout);
 		case AverageGraphicsActivity:
 			return offsetof(SMU71_SoftRegisters, AverageGraphicsActivity);
+		case AverageMemoryActivity:
+			return offsetof(SMU71_SoftRegisters, AverageMemoryActivity);
 		case PreVBlankGap:
 			return offsetof(SMU71_SoftRegisters, PreVBlankGap);
 		case VBlankTimeout:
@@ -2631,8 +2634,6 @@ static int iceland_initialize_mc_reg_table(struct pp_hwmgr *hwmgr)
 	cgs_write_register(hwmgr->device, mmMC_SEQ_PMG_CMD_MRS2_LP, cgs_read_register(hwmgr->device, mmMC_PMG_CMD_MRS2));
 	cgs_write_register(hwmgr->device, mmMC_SEQ_WR_CTL_2_LP, cgs_read_register(hwmgr->device, mmMC_SEQ_WR_CTL_2));
 
-	memset(table, 0x00, sizeof(pp_atomctrl_mc_reg_table));
-
 	result = atomctrl_initialize_mc_reg_table(hwmgr, module_index, table);
 
 	if (0 == result)
@@ -2659,11 +2660,12 @@ static bool iceland_is_dpm_running(struct pp_hwmgr *hwmgr)
 }
 
 const struct pp_smumgr_func iceland_smu_funcs = {
+	.name = "iceland_smu",
 	.smu_init = &iceland_smu_init,
 	.smu_fini = &smu7_smu_fini,
 	.start_smu = &iceland_start_smu,
 	.check_fw_load_finish = &smu7_check_fw_load_finish,
-	.request_smu_load_fw = &smu7_reload_firmware,
+	.request_smu_load_fw = &smu7_request_smu_load_fw,
 	.request_smu_load_specific_fw = &iceland_request_smu_load_specific_fw,
 	.send_msg_to_smc = &smu7_send_msg_to_smc,
 	.send_msg_to_smc_with_parameter = &smu7_send_msg_to_smc_with_parameter,

@@ -1,4 +1,4 @@
-.TH "nsd.conf" "5" "Dec 10, 2019" "NLnet Labs" "nsd 4.2.4"
+.TH "nsd.conf" "5" "Apr 16, 2020" "NLnet Labs" "nsd 4.3.1"
 .\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -138,11 +138,16 @@ clause. There may only be one
 .B server: 
 clause.
 .TP
-.B ip\-address:\fR <ip4 or ip6>[@port]
+.B ip\-address:\fR <ip4 or ip6>[@port] [servers]
 NSD will bind to the listed ip\-address. Can be given multiple times 
 to bind multiple ip\-addresses. Optionally, a port number can be given.
-If none are given NSD listens to the wildcard interface. Same as commandline option 
+If none are given NSD listens to the wildcard interface. Same as commandline option
 .BR \-a.
+To limit which NSD server(s) listen on the given interface, specify one or
+more servers separated by whitespace after <ip>[@port]. Ranges can be used as
+a shorthand to specify multiple consecutive servers. By default every server
+will listen.
+.BR
 For servers with multiple IP addresses that can be used to send traffic
 to the internet, list them one by one, or the source address of replies
 could be wrong.  This is because if the udp socket associates a source
@@ -151,7 +156,7 @@ send to the internet, and it picks the wrong one.  Typically needed for
 anycast instances.  Use ip-transparent to be able to list addresses that
 turn on later (typical for certain load-balancing).
 .TP
-.B interface:\fR <ip4 or ip6>[@port]
+.B interface:\fR <ip4 or ip6>[@port] [servers] [setfib]
 Same as ip\-address (for easy of compatibility with unbound.conf).
 .TP
 .B ip\-transparent:\fR <yes or no>
@@ -170,6 +175,11 @@ stack.  Only really useful if you also configure a server\-count higher
 than 1 (such as, equal to the number of cpus).  The default is no. 
 It works on Linux, but does not work on FreeBSD, and likely does not
 work on other systems.
+.TP
+.B bindtodevice:\fR <yes or no>
+Use the SO_BINDTODEVICE socket option to bind the socket to the device to
+ensure responses go out the same interface the corresponding query came in on
+and skip interface selection by the kernel.
 .TP
 .B send\-buffer\-size:\fR <number>
 Set the send buffer size for query-servicing sockets.  Set to 0 to use the default settings.
@@ -235,6 +245,22 @@ syslog (with facility LOG_DAEMON). Same as commandline option
 Start this many NSD servers. Default is 1. Same as commandline 
 option 
 .BR \-N .
+.TP
+.B cpu\-affinity:\fR <number> <number> ...
+Overall CPU affinity for NSD server(s). Default is no affinity.
+.BR \-n .
+.TP
+.B server\-N\-cpu\-affinity:\fR <number>
+Bind NSD server specified by N to a specific core. Default is to have affinity
+set to every core specified in cpu\-affinity. This setting only takes effect
+if cpu\-affinity is enabled.
+.BR \-n
+.TP
+.B xfrd\-cpu\-affinity:\fR <number>
+Bind xfrd to a specific core. Default is to have affinity set to every core
+specified in cpu\-affinity. This setting only takes effect if cpu\-affinity is
+enabled.
+.BR \-n
 .TP
 .B tcp\-count:\fR <number>
 The maximum number of concurrent, active TCP connections by each server. 
@@ -365,6 +391,13 @@ queries.  Default is no.
 .B hide\-identity:\fR <yes or no>
 Prevent NSD from replying with the identity string on CHAOS class 
 queries.  Default is no.
+.TP
+.B drop\-updates:\fR <yes or no>
+If set to yes, drop received packets with the UPDATE opcode.
+.TP
+.B use\-systemd:\fR <yes or no>
+This option is deprecated and ignored.  If compiled with libsystemd,
+NSD signals readiness to systemd and use of the option is not necessary.
 .TP
 .B log\-time\-ascii:\fR <yes or no>
 Log time in ascii, if "no" then in seconds epoch.  Default is yes.

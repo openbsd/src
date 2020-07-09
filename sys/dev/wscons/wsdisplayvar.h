@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplayvar.h,v 1.35 2020/04/19 15:05:14 kettenis Exp $ */
+/* $OpenBSD: wsdisplayvar.h,v 1.37 2020/05/25 09:55:49 jsg Exp $ */
 /* $NetBSD: wsdisplayvar.h,v 1.30 2005/02/04 02:10:49 perry Exp $ */
 
 /*
@@ -73,14 +73,17 @@ struct device;
 struct wsdisplay_emulops {
 	int	(*cursor)(void *c, int on, int row, int col);
 	int	(*mapchar)(void *, int, unsigned int *);
-	int	(*putchar)(void *c, int row, int col, u_int uc, long attr);
+	int	(*putchar)(void *c, int row, int col, u_int uc, uint32_t attr);
 	int	(*copycols)(void *c, int row, int srccol, int dstcol,
 		    int ncols);
-	int	(*erasecols)(void *c, int row, int startcol, int ncols, long);
+	int	(*erasecols)(void *c, int row, int startcol, int ncols,
+		    uint32_t);
 	int	(*copyrows)(void *c, int srcrow, int dstrow, int nrows);
-	int	(*eraserows)(void *c, int row, int nrows, long attr);
-	int	(*alloc_attr)(void *c, int fg, int bg, int flags, long *attrp);
-	void	(*unpack_attr)(void *c, long attr, int *fg, int *bg, int *ul);
+	int	(*eraserows)(void *c, int row, int nrows, uint32_t attr);
+	int	(*pack_attr)(void *c, int fg, int bg, int flags,
+		    uint32_t *attrp);
+	void	(*unpack_attr)(void *c, uint32_t attr, int *fg, int *bg,
+		    int *ul);
 /* fg / bg values. Made identical to ANSI terminal color codes. */
 #define WSCOL_BLACK	0
 #define WSCOL_RED	1
@@ -96,7 +99,6 @@ struct wsdisplay_emulops {
 #define WSATTR_BLINK	4
 #define WSATTR_UNDERLINE 8
 #define WSATTR_WSCOLORS 16
-	/* XXX need a free_attr() ??? */
 };
 
 #define	WSSCREEN_NAME_SIZE	16
@@ -118,8 +120,8 @@ struct wsscreen_descr {
  * Character cell description (for emulation mode).
  */
 struct wsdisplay_charcell {
-	u_int	uc;
-	long	attr;
+	u_int		uc;
+	uint32_t	attr;
 };
 
 struct wsdisplay_font;
@@ -135,7 +137,7 @@ struct wsdisplay_accessops {
 		    struct proc *p);
 	paddr_t	(*mmap)(void *v, off_t off, int prot);
 	int	(*alloc_screen)(void *, const struct wsscreen_descr *,
-				     void **, int *, int *, long *);
+				     void **, int *, int *, uint32_t *);
 	void	(*free_screen)(void *, void *);
 	int	(*show_screen)(void *, void *, int,
 			       void (*) (void *, int, int), void *);
@@ -189,7 +191,7 @@ struct wscons_syncops {
  * Autoconfiguration helper functions.
  */
 void	wsdisplay_cnattach(const struct wsscreen_descr *, void *,
-				int, int, long);
+				int, int, uint32_t);
 int	wsemuldisplaydevprint(void *, const char *);
 int	wsemuldisplaydevsubmatch(struct device *, void *, void *);
 

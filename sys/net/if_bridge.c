@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.339 2020/04/12 06:48:46 visa Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.340 2020/06/24 22:03:42 cheloha Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1541,7 +1541,7 @@ bridge_ipsec(struct ifnet *ifp, struct ether_header *eh, int hassnap,
 		if (tdb != NULL && (tdb->tdb_flags & TDBF_INVALID) == 0 &&
 		    tdb->tdb_xform != NULL) {
 			if (tdb->tdb_first_use == 0) {
-				tdb->tdb_first_use = time_second;
+				tdb->tdb_first_use = gettime();
 				if (tdb->tdb_flags & TDBF_FIRSTUSE)
 					timeout_add_sec(&tdb->tdb_first_tmo,
 					    tdb->tdb_exp_first_use);
@@ -1586,7 +1586,7 @@ bridge_ipsec(struct ifnet *ifp, struct ether_header *eh, int hassnap,
 			if ((af == AF_INET) &&
 			    ip_mtudisc && (ip->ip_off & htons(IP_DF)) &&
 			    tdb->tdb_mtu && ntohs(ip->ip_len) > tdb->tdb_mtu &&
-			    tdb->tdb_mtutimeout > time_second)
+			    tdb->tdb_mtutimeout > gettime())
 				bridge_send_icmp_err(ifp, eh, m,
 				    hassnap, llc, tdb->tdb_mtu,
 				    ICMP_UNREACH, ICMP_UNREACH_NEEDFRAG);

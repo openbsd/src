@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.16 2020/04/18 04:45:20 visa Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.17 2020/05/14 06:58:54 mpi Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.15 1996/02/22 23:23:41 gwr Exp $	*/
 
 /*
@@ -126,7 +126,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 	int		 i, narg, trace_proc = 0;
 
 	while ((c = *cp++) != 0) {
-		if (c == 'p')
+		if (c == 't')
 			trace_proc = 1;
 	}
 

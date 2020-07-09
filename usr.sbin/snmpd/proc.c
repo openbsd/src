@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.26 2019/01/08 15:38:36 bluhm Exp $	*/
+/*	$OpenBSD: proc.c,v 1.27 2020/06/30 17:11:49 martijn Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -525,20 +525,11 @@ proc_run(struct privsep *ps, struct privsep_proc *p,
 {
 	struct passwd		*pw;
 	const char		*root;
-	struct control_sock	*rcs;
 
 	log_procinit(p->p_title);
 
 	/* Set the process group of the current process */
 	setpgid(0, 0);
-
-	if (p->p_id == PROC_CONTROL && ps->ps_instance == 0) {
-		if (control_init(ps, &ps->ps_csock) == -1)
-			fatalx("%s: control_init", __func__);
-		TAILQ_FOREACH(rcs, &ps->ps_rcsocks, cs_entry)
-			if (control_init(ps, rcs) == -1)
-				fatalx("%s: control_init", __func__);
-	}
 
 	/* Use non-standard user */
 	if (p->p_pw != NULL)
@@ -584,15 +575,6 @@ proc_run(struct privsep *ps, struct privsep_proc *p,
 
 	proc_setup(ps, procs, nproc);
 	proc_accept(ps, PROC_PARENT_SOCK_FILENO, PROC_PARENT, 0);
-	if (p->p_id == PROC_CONTROL && ps->ps_instance == 0) {
-		TAILQ_INIT(&ctl_conns);
-		if (control_listen(&ps->ps_csock) == -1)
-			fatalx("%s: control_listen", __func__);
-		TAILQ_FOREACH(rcs, &ps->ps_rcsocks, cs_entry)
-			if (control_listen(rcs) == -1)
-				fatalx("%s: control_listen", __func__);
-	}
-
 	DPRINTF("%s: %s %d/%d, pid %d", __func__, p->p_title,
 	    ps->ps_instance + 1, ps->ps_instances[p->p_id], getpid());
 

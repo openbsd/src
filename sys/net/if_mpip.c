@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpip.c,v 1.8 2019/06/26 08:13:13 claudio Exp $ */
+/*	$OpenBSD: if_mpip.c,v 1.9 2020/06/17 06:45:22 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -496,7 +496,8 @@ mpip_input(struct mpip_softc *sc, struct mbuf *m)
 
 		label -= MPLS_LABEL_RESERVED_MAX + 1;
 		label ^= sc->sc_flow;
-		m->m_pkthdr.ph_flowid = M_FLOWID_VALID | label;
+		SET(m->m_pkthdr.csum_flags, M_FLOWID);
+		m->m_pkthdr.ph_flowid = label;
 
 		m_adj(m, sizeof(shim));
 	} else if (!MPLS_BOS_ISSET(shim))
@@ -777,8 +778,8 @@ mpip_start(struct ifnet *ifp)
 			if (m == NULL)
 				continue;
 
-			if (ISSET(m->m_pkthdr.ph_flowid, M_FLOWID_VALID))
-				flow = m->m_pkthdr.ph_flowid & M_FLOWID_MASK;
+			if (ISSET(m->m_pkthdr.csum_flags, M_FLOWID))
+				flow = m->m_pkthdr.ph_flowid;
 			flow ^= sc->sc_flow;
 			flow += MPLS_LABEL_RESERVED_MAX + 1;
 

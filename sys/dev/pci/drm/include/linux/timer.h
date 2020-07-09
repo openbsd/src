@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.h,v 1.1 2019/04/14 10:14:53 jsg Exp $	*/
+/*	$OpenBSD: timer.h,v 1.2 2020/06/08 04:48:15 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -28,6 +28,7 @@
 #define mod_timer(x, y)		timeout_add((x), (y - jiffies))
 #define mod_timer_pinned(x, y)	timeout_add((x), (y - jiffies))
 #define del_timer_sync(x)	timeout_del((x))
+#define del_timer(x)		timeout_del((x))
 #define timer_pending(x)	timeout_pending((x))
 
 static inline unsigned long

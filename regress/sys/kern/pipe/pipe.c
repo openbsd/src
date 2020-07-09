@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipe.c,v 1.3 2019/12/24 09:37:53 anton Exp $	*/
+/*	$OpenBSD: pipe.c,v 1.4 2020/06/29 18:25:37 anton Exp $	*/
 
 /*
  * Copyright (c) 2019 Anton Lindqvist <anton@openbsd.org>
@@ -30,6 +30,7 @@ static void sighandler(int);
 static __dead void usage(void);
 
 sig_atomic_t gotsigpipe = 0;
+int infinity = 0;
 int verbose = 0;
 
 int
@@ -39,6 +40,7 @@ main(int argc, char *argv[])
 		const char *t_name;
 		int (*t_fn)(void);
 	} tests[] = {
+		{ "close-race",				test_close_race },
 		{ "kqueue-read",			test_kqueue_read },
 		{ "kqueue-read-eof",			test_kqueue_read_eof },
 		{ "kqueue-write",			test_kqueue_write },
@@ -55,8 +57,11 @@ main(int argc, char *argv[])
 	};
 	int ch, i;
 
-	while ((ch = getopt(argc, argv, "v")) != -1) {
+	while ((ch = getopt(argc, argv, "iv")) != -1) {
 		switch (ch) {
+		case 'i':
+			infinity = 1;
+			break;
 		case 'v':
 			verbose = 1;
 			break;
@@ -108,6 +113,6 @@ static __dead void
 usage(void)
 {
 
-	fprintf(stderr, "usage: pipe test-case\n");
+	fprintf(stderr, "usage: pipe [-iv] test-case\n");
 	exit(1);
 }

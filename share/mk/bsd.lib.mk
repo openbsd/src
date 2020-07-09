@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.100 2019/04/02 12:55:05 deraadt Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.101 2020/05/26 17:44:23 tb Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -206,11 +206,11 @@ SOBJS+=	${OBJS:.o=.so}
 BUILDAFTER += ${SOBJS}
 
 # exclude from readelf(1) output for syspatch building
-EXCLUDE_REGEX:=	"(cmll-586|(comparetf|libgcc|unwind-dw)2| 		\
+EXCLUDE_REGEX:=	"(cmll-586|(comparetf|libgcc|unwind-dw)2|		\
 		mul(t|d|s|x)(c|f)3|crt(begin|end)S|			\
-		(div|umod|mod)di3|emutls|(add|div|sub)tf3|		\
+		(div|umod|mod)(d|t)i3|emutls|(add|div|sub)tf3|		\
 		(fixtf|float|extend|trunctf)(d|s)(ftf2|i|itf|f2)|	\
-		floatunsitf)"
+		floatunsitf|udivmodti4|AMDGPURegAsmNames|clear_cache)"
 
 ${FULLSHLIBNAME}: ${SOBJS} ${DPADD}
 	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\)

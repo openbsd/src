@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2020/01/25 16:01:43 jsing Exp $
+# $OpenBSD: Makefile,v 1.5 2020/05/11 18:20:24 jsing Exp $
 
 LIBRARIES =		libressl
 .if exists(/usr/local/bin/eopenssl)
@@ -8,7 +8,9 @@ LIBRARIES +=		openssl
 LIBRARIES +=		openssl11
 .endif
 
+run-session-client-libressl-server-libressl \
 run-session-client-libressl-server-openssl11 \
+run-session-client-openssl11-server-libressl \
 run-session-client-openssl11-server-openssl11:
 	@echo '\n======== $@ ========'
 	# TLS 1.3 needs some extra setup for session reuse

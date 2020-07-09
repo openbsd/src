@@ -25,7 +25,11 @@
 #include <linux/module.h>
 #include <linux/sched.h>
 #include <linux/slab.h>
+
 #include <asm/unaligned.h>
+
+#include <drm/drm_device.h>
+#include <drm/drm_util.h>
 
 #define ATOM_DEBUG
 
@@ -92,10 +96,6 @@ static void debug_print_spaces(int n)
 	while (n--)
 		printk("   ");
 }
-
-#ifdef DEBUG
-#undef DEBUG
-#endif
 
 #define DEBUG(...) do if (atom_debug) { printk(KERN_DEBUG __VA_ARGS__); } while (0)
 #define SDEBUG(...) do if (atom_debug) { printk(KERN_DEBUG); debug_print_spaces(debug_depth); printk(__VA_ARGS__); } while (0)
@@ -1318,9 +1318,7 @@ struct atom_context *atom_parse(struct card_info *card, void *bios)
 			break;
 		}
 	}
-#ifdef DRMDEBUG
 	pr_info("ATOM BIOS: %s\n", name);
-#endif
 
 	return ctx;
 }

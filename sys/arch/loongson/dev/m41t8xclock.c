@@ -1,4 +1,4 @@
-/*	$OpenBSD: m41t8xclock.c,v 1.3 2014/01/06 21:38:46 pirofti Exp $	*/
+/*	$OpenBSD: m41t8xclock.c,v 1.4 2020/05/25 13:15:37 visa Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -25,16 +25,15 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#include <dev/clock_subr.h>
 #include <dev/i2c/i2cvar.h>
-
 #include <dev/ic/m41t8xreg.h>
 
-#include <mips64/dev/clockvar.h>
-
 struct m41t8xclock_softc {
-	struct device	sc_dev;
-	i2c_tag_t	sc_tag;
-	i2c_addr_t	sc_addr;
+	struct device		sc_dev;
+	struct todr_chip_handle	sc_todr;
+	i2c_tag_t		sc_tag;
+	i2c_addr_t		sc_addr;
 };
 
 int	m41t8xclock_match(struct device *, void *, void *);
@@ -49,8 +48,8 @@ struct cfdriver mfokclock_cd = {
 	NULL, "mfokclock", DV_DULL
 };
 
-void	m41t8xclock_get(void *, time_t, struct tod_time *);
-void	m41t8xclock_set(void *, struct tod_time *);
+int	m41t8xclock_gettime(struct todr_chip_handle *, struct timeval *);
+int	m41t8xclock_settime(struct todr_chip_handle *, struct timeval *);
 
 int
 m41t8xclock_match(struct device *parent, void *vcf, void *aux)
@@ -70,17 +69,19 @@ m41t8xclock_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 
-	sys_tod.tod_cookie = sc;
-	sys_tod.tod_get = m41t8xclock_get;
-	sys_tod.tod_set = m41t8xclock_set;
+	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_gettime = m41t8xclock_gettime;
+	sc->sc_todr.todr_settime = m41t8xclock_settime;
+	todr_attach(&sc->sc_todr);
 
 	printf("\n");
 }
 
-void
-m41t8xclock_get(void *cookie, time_t unused, struct tod_time *tt)
+int
+m41t8xclock_gettime(struct todr_chip_handle *handle, struct timeval *tv)
 {
-	struct m41t8xclock_softc *sc = (struct m41t8xclock_softc *)cookie;
+	struct clock_ymdhms dt;
+	struct m41t8xclock_softc *sc = handle->cookie;
 	uint8_t regno, data[M41T8X_TOD_LENGTH];
 	int s;
 
@@ -94,23 +95,29 @@ m41t8xclock_get(void *cookie, time_t unused, struct tod_time *tt)
 	splx(s);
 	iic_release_bus(sc->sc_tag, 0);
 
-	tt->sec = FROMBCD(data[M41T8X_SEC] & ~M41T8X_STOP);
-	tt->min = FROMBCD(data[M41T8X_MIN]);
-	tt->hour = FROMBCD(data[M41T8X_HR] & ~(M41T8X_CEB | M41T8X_CB));
-	tt->dow = data[M41T8X_DOW];
-	tt->day = FROMBCD(data[M41T8X_DAY]);
-	tt->mon = FROMBCD(data[M41T8X_MON]);
-	tt->year = FROMBCD(data[M41T8X_YEAR]) + 100;
+	dt.dt_sec = FROMBCD(data[M41T8X_SEC] & ~M41T8X_STOP);
+	dt.dt_min = FROMBCD(data[M41T8X_MIN]);
+	dt.dt_hour = FROMBCD(data[M41T8X_HR] & ~(M41T8X_CEB | M41T8X_CB));
+	dt.dt_day = FROMBCD(data[M41T8X_DAY]);
+	dt.dt_mon = FROMBCD(data[M41T8X_MON]);
+	dt.dt_year = FROMBCD(data[M41T8X_YEAR]) + 2000;
 	if (data[M41T8X_HR] & M41T8X_CB)
-		tt->year += 100;
+		dt.dt_year += 100;
+
+	tv->tv_sec = clock_ymdhms_to_secs(&dt);
+	tv->tv_usec = 0;
+	return 0;
 }
 
-void
-m41t8xclock_set(void *cookie, struct tod_time *tt)
+int
+m41t8xclock_settime(struct todr_chip_handle *handle, struct timeval *tv)
 {
-	struct m41t8xclock_softc *sc = (struct m41t8xclock_softc *)cookie;
+	struct clock_ymdhms dt;
+	struct m41t8xclock_softc *sc = handle->cookie;
 	uint8_t regno, data[M41T8X_TOD_LENGTH];
 	int s;
+
+	clock_secs_to_ymdhms(tv->tv_sec, &dt);
 
 	iic_acquire_bus(sc->sc_tag, 0);
 	s = splclock();
@@ -122,18 +129,16 @@ m41t8xclock_set(void *cookie, struct tod_time *tt)
 		    sizeof data[0], 0);
 	/* compute new state */
 	data[M41T8X_HSEC] = 0;
-	data[M41T8X_SEC] = TOBCD(tt->sec);
-	data[M41T8X_MIN] = TOBCD(tt->min);
+	data[M41T8X_SEC] = TOBCD(dt.dt_sec);
+	data[M41T8X_MIN] = TOBCD(dt.dt_min);
 	data[M41T8X_HR] &= M41T8X_CEB;
-	if (tt->year >= 200)
+	if (dt.dt_year >= 2100)
 		data[M41T8X_HR] |= M41T8X_CB;
-	data[M41T8X_HR] |= TOBCD(tt->hour);
-	data[M41T8X_DAY] = TOBCD(tt->day);
-	data[M41T8X_MON] = TOBCD(tt->mon);
-	if (tt->year >= 200)
-		data[M41T8X_YEAR] = TOBCD(tt->year - 200);
-	else
-		data[M41T8X_YEAR] = TOBCD(tt->year - 100);
+	data[M41T8X_HR] |= TOBCD(dt.dt_hour);
+	data[M41T8X_DOW] = TOBCD(dt.dt_wday + 1);
+	data[M41T8X_DAY] = TOBCD(dt.dt_day);
+	data[M41T8X_MON] = TOBCD(dt.dt_mon);
+	data[M41T8X_YEAR] = TOBCD(dt.dt_year % 100);
 	/* write new state */
 	for (regno = M41T8X_TOD_START;
 	    regno < M41T8X_TOD_START + M41T8X_TOD_LENGTH; regno++)
@@ -141,4 +146,6 @@ m41t8xclock_set(void *cookie, struct tod_time *tt)
 		    &regno, sizeof regno, data + regno, sizeof data[0], 0);
 	splx(s);
 	iic_release_bus(sc->sc_tag, 0);
+
+	return 0;
 }

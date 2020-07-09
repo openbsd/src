@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.73 2019/05/06 12:57:56 visa Exp $ */
+/*	$OpenBSD: cpu.c,v 1.74 2020/05/29 04:42:24 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -32,7 +32,6 @@
 #include <sys/atomic.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <dev/rndvar.h>
 
 #include <uvm/uvm_extern.h>
 

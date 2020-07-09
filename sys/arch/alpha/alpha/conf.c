@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.87 2020/01/24 14:11:01 mpi Exp $	*/
+/*	$OpenBSD: conf.c,v 1.88 2020/07/06 04:32:25 dlg Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -107,6 +107,7 @@ cdev_decl(fd);
 #include "cy.h"
 cdev_decl(cy);
 #include "ksyms.h"
+#include "kstat.h"
 
 /* USB Devices */
 #include "usb.h"
@@ -181,7 +182,7 @@ struct cdevsw	cdevsw[] =
 	cdev_usbdev_init(NUGEN,ugen),	/* 48: USB generic driver */
 	cdev_tty_init(NUCOM, ucom),	/* 49: USB tty */
 	cdev_notdef(),			/* 50 */
-	cdev_notdef(),			/* 51 */
+	cdev_kstat_init(NKSTAT,kstat),	/* 51: kernel statistics */
 #ifdef USER_PCICONF
 	cdev_pci_init(NPCI,pci),	/* 52: PCI user */
 #else

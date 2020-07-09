@@ -1,4 +1,4 @@
-/*	$OpenBSD: FIXES,v 1.17 2020/02/27 21:43:46 millert Exp $	*/
+/*	$OpenBSD: FIXES,v 1.36 2020/07/02 19:06:22 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -25,6 +25,280 @@ THIS SOFTWARE.
 
 This file lists all bug fixes, changes, etc., made since the AWK book
 was sent to the printers in August, 1987.
+
+July 2, 2020:
+	Merge PRs 85 and 86 which fix regressions. Thanks to
+	Tim van der Molen for the fixes.
+
+June 25, 2020:
+	Merge PRs 82 and 84. The latter fixes issue #83. Thanks to
+	Todd Miller and awkfan77.
+
+June 12, 2020:
+	Clear errno before calling errcheck to avoid any spurious errors
+	left over from previous calls that may have set it. Thanks to
+	Todd Miller for the fix, from PR #80.
+
+	Fix Issue #78 by allowing \r to follow floating point numbers in
+	lib.c:is_number. Thanks to GitHub user ajcarr for the report
+	and to Arnold Robbins for the fix.
+
+June 5, 2020:
+	In fldbld(), make sure that inputFS is set before trying to
+	use it. Thanks to  Steffen Nurpmeso <steffen@sdaoden.eu>
+	for the report.
+
+May 5, 2020:
+	Fix checks for compilers that can handle noreturn. Thanks to
+	GitHub user enh-google for pointing it out. Closes Issue #79.
+
+April 16, 2020:
+	Handle old compilers that don't support C11 (for noreturn).
+	Thanks to Arnold Robbins.
+
+April 5, 2020:
+	Use <stdnoreturn.h> and noreturn instead of GCC attributes.
+	Thanks to GitHub user awkfan77. Closes PR #77.
+
+February 28, 2020:
+	More cleanups from Christos Zoulas: notably backslash continuation
+	inside strings removes the newline and a fix for RS = "^a".
+	Fix for address sanitizer-found problem. Thanks to GitHub user
+	enh-google.
+
+February 19, 2020:
+	More small cleanups from Christos Zoulas.
+
+February 18, 2020:
+	Additional cleanups from Christos Zoulas. It's no longer necessary
+	to use the -y flag to bison.
+
+February 6, 2020:
+	Additional small cleanups from Christos Zoulas. awk is now
+	a little more robust about reporting I/O errors upon exit.
+
+January 31, 2020:
+	Merge PR #70, which avoids use of variable length arrays. Thanks
+	to GitHub user michaelforney.  Fix issue #60 ({0} in interval
+	expressions doesn't work).  Also get all tests working again.
+	Thanks to Arnold Robbins.
+
+January 24, 2020:
+	A number of small cleanups from Christos Zoulas.  Add the close
+	on exec flag to files/pipes opened for redirection; courtesy of
+	Arnold Robbins.
+
+January 19, 2020:
+	If POSIXLY_CORRECT is set in the environment, then sub and gsub
+	use POSIX rules for multiple backslashes.  This fixes Issue #66,
+	while maintaining backwards compatibility.
+
+January 9, 2020:
+	Input/output errors on closing files are now fatal instead of
+	mere warnings. Thanks to Martijn Dekker <martijn@inlv.org>.
+
+January 5, 2020:
+	Fix a bug in the concatentation of two string constants into
+	one done in the grammar.  Fixes GitHub issue #61.  Thanks
+	to GitHub user awkfan77 for pointing out the direction for
+	the fix.  New test T.concat added to the test suite.
+	Fix a few memory leaks reported by valgrind, as well.
+
+December 27, 2019:
+	Fix a bug whereby a{0,3} could match four a's.  Thanks to
+	"Anonymous AWK fan" for the report.
+
+December 11, 2019:
+	Further printf-related fixes for 32 bit systems.
+	Thanks again to Christos Zoulas.
+
+December 8, 2019:
+	Fix the return value of sprintf("%d") on 32 bit systems.
+	Thanks to Jim Lowe for the report and to Christos Zoulas
+	for the fix.
+
+November 10, 2019:
+	Convert a number of Boolean integer variables into
+	actual bools. Convert compile_time variable into an
+	enum and simplify some of the related code.  Thanks
+	to Arnold Robbins.
+
+November 8, 2019:
+	Fix from Ori Bernstein to get UTF-8 characters instead of
+	bytes when FS = "".  This is currently the only bit of
+	the One True Awk that understands multibyte characters.
+	From Arnold Robbins, apply some cleanups in the test suite.
+
+October 25, 2019:
+	More fixes and cleanups from NetBSD, courtesy of Christos
+	Zoulas. Merges PRs 54 and 55.
+
+October 24, 2019:
+	Import second round of code cleanups from NetBSD. Much thanks
+	to Christos Zoulas (GitHub user zoulasc). Merges PR 53.
+	Add an optimization for string concatenation, also from
+	Christos.
+
+October 17, 2019:
+	Import code cleanups from NetBSD. Much thanks to Christos
+	Zoulas (GitHub user zoulasc). Merges PR 51.
+
+October 6, 2019:
+	Import code from NetBSD awk that implements RS as a regular
+	expression.
+
+September 10, 2019:
+	Fixes for various array / memory overruns found via gcc's
+	-fsanitize=unknown. Thanks to Alexander Richardson (GitHub
+	user arichardson). Merges PRs 47 and 48.
+
+July 28, 2019:
+	Import grammar optimization from NetBSD: Two string constants
+	concatenated together get turned into a single string.
+
+July 26, 2019:
+	Support POSIX-specified C-style escape sequences "\a" (alarm)
+	and "\v" (vertical tab) in command line arguments and regular
+	expressions, further to the support for them in strings added on
+	Apr 9, 1989. These now no longer match as literal "a" and "v"
+	characters (as they don't on other awk implementations).
+	Thanks to Martijn Dekker.
+
+July 17, 2019:
+	Pull in a number of code cleanups and minor fixes from
+	Warner Losh's bsd-ota branch.  The only user visible change
+	is the use of random(3) as the random number generator.
+	Thanks to Warner Losh for collecting all these fixes in
+	one easy place to get them from.
+
+July 16, 2019:
+	Fix field splitting to use FS value as of the time a record
+	was read or assigned to.  Thanks to GitHub user Cody Mello (melloc)
+	for the fix. (Merged from his branch, via PR #42.) Updated
+	testdir/T.split per said PR as well.
+
+June 24, 2019:
+	Extract awktest.tar into testdir directory. Add some very
+	simple mechanics to the makefile for running the tests and
+	for cleaning up. No changes to awk itself.
+
+June 17, 2019:
+	Disallow deleting SYMTAB and its elements, which creates
+	use-after-free bugs. Thanks to GitHub user Cody Mello (melloc)
+	for the fix. (Merged from PR #43.)
+
+June 5, 2019:
+	Allow unmatched right parenthesis in a regular expression to
+	be treated literally. Fixes Issue #40. Thanks to GitHub user
+	Warner Losh (bsdimp) for the report. Thanks to Arnold Robbins
+	for the fix.
+
+May 29,2019:
+	Fix check for command line arguments to no longer require that
+	first character after '=' not be another '='. Reverts change of
+	August 11, 1989. Thanks to GitHub user Jamie Landeg Jones for
+	pointing out the issue; from Issue #38.
+
+Apr 7, 2019:
+	Update awktest.tar(p.50) to use modern options to sort. Needed
+	for Android development. Thanks to GitHub user mohd-akram (Mohamed
+	Akram).  From Issue #33.
+
+Mar 12, 2019:
+	Added very simplistic support for cross-compiling in the
+	makefile.  We are NOT going to go in the direction of the
+	autotools, though.  Thanks to GitHub user nee-san for
+	the basic change. (Merged from PR #34.)
+
+Mar 5, 2019:
+	Added support for POSIX-standard interval expressions (a.k.a.
+	bounds, a.k.a. repetition expressions) in regular expressions,
+	backported (via NetBSD) from Apple awk-24 (20070501).
+	Thanks to Martijn Dekker <martijn@inlv.org> for the port.
+	(Merged from PR #30.)
+
+Mar 3, 2019:
+	Merge PRs as follows:
+	#12: Avoid undefined behaviour when using ctype(3) functions in
+	     relex(). Thanks to GitHub user iamleot.
+	#31: Make getline handle numeric strings, and update FIXES. Thanks
+	     to GitHub user arnoldrobbins.
+	#32: maketab: support build systems with read-only source. Thanks
+	     to GitHub user enh.
+
+Jan 25, 2019:
+	Make getline handle numeric strings properly in all cases.
+	(Thanks, Arnold.)
+
+Jan 21, 2019:
+	Merged a number of small fixes from GitHub pull requests.
+	Thanks to GitHub users Arnold Robbins (arnoldrobbins),
+	Cody Mello (melloc) and Christoph Junghans (junghans).
+	PR numbers: 13-21, 23, 24, 27.
+
+Oct 25, 2018:
+	Added test in maketab.c to prevent generating a proctab entry
+	for YYSTYPE_IS_DEFINED.  It was harmless but some gcc settings
+	generated a warning message.  Thanks to Nan Xiao for report.
+
+Aug 27, 2018:
+	Disallow '$' in printf formats; arguments evaluated in order
+	and printed in order.
+
+	Added some casts to silence warnings on debugging printfs.
+	(Thanks, Arnold.)
+
+Aug 23, 2018:
+        A long list of fixes courtesy of Arnold Robbins,
+        to whom profound thanks.
+
+        1. ofs-rebuild: OFS value used to rebuild the record was incorrect.
+        Fixed August 19, 2014. Revised fix August 2018.
+
+        2. system-status: Instead of a floating-point division by 256, use
+        the wait(2) macros to create a reasonable exit status.
+        Fixed March 12, 2016.
+
+        3. space: Use provided xisblank() function instead of ispace() for
+        matching [[:blank:]].
+
+        4. a-format: Add POSIX standard %a and %A to supported formats. Check
+        at runtime that this format is available.
+
+        5. decr-NF: Decrementing NF did not change $0. This is a decades-old
+        bug. There are interactions with the old and new value of OFS as well.
+        Most of the fix came from the NetBSD awk.
+
+        6. string-conv: String conversions of scalars were sticky.  Once a
+        conversion to string happened, even with OFMT, that value was used until
+        a new numeric value was assigned, even if OFMT differed from CONVFMT,
+        and also if CONVFMT changed.
+
+        7. unary-plus: Unary plus on a string constant returned the string.
+        Instead, it should convert the value to numeric and give that value.
+
+	Also added Arnold's tests for these to awktest.tar as T.arnold.
+
+Aug 15, 2018:
+	fixed mangled awktest.tar (thanks, Arnold), posted all
+	current (very minor) fixes to github / onetrueawk
+
+Jun 7, 2018:
+	(yes, a long layoff)
+	Updated some broken tests (beebe.tar, T.lilly)
+	[thanks to Arnold Robbins]
+
+Mar 26, 2015:
+	buffer overflow in error reporting; thanks to tobias ulmer
+	and john-mark gurney for spotting it and the fix.
+
+Feb 4, 2013:
+	cleaned up a handful of tests that didn't seem to actually
+	test for correct behavior: T.latin1, T.gawk.
+
+Jan 5, 2013:
+	added ,NULL initializer to static Cells in run.c; not really
+	needed but cleaner.  Thanks to Michael Bombardieri.
 
 Dec 20, 2012:
 	fiddled makefile to get correct yacc and bison flags.  pick yacc
@@ -53,10 +327,10 @@ Jun 12, 2011:
 	/pat/, \n /pat/ {...} is now legal, though bad style to use.
 
 	added checks to new -v code that permits -vnospace; thanks to
-	ruslan ermilov for spotting this and providing the patch. 
+	ruslan ermilov for spotting this and providing the patch.
 
 	removed fixed limit on number of open files; thanks to aleksey
-	cheusov and christos zoulos. 
+	cheusov and christos zoulos.
 
 	fixed day 1 bug that resurrected deleted elements of ARGV when
 	used as filenames (in lib.c).
@@ -74,10 +348,10 @@ May 1, 2011:
 	and arnold robbins, changed srand() to return the previous
 	seed (which is 1 on the first call of srand).  the seed is
 	an Awkfloat internally though converted to unsigned int to
-	pass to the library srand().  thanks, everyone. 
+	pass to the library srand().  thanks, everyone.
 
 	fixed a subtle (and i hope low-probability) overflow error
-	in fldbld, by adding space for one extra \0.  thanks to 
+	in fldbld, by adding space for one extra \0.  thanks to
 	robert bassett for spotting this one and providing a fix.
 
 	removed the files related to compilation on windows.  i no
@@ -114,7 +388,7 @@ Oct 8, 2008:
 
 Oct 23, 2007:
 	minor fix in lib.c: increase inputFS to 100, change malloc
-	for fields to n+1.  
+	for fields to n+1.
 
 	fixed memory fault caused by out of order test in setsval.
 
@@ -161,7 +435,7 @@ Jan 17, 2006:
 
 	core dump on linux with BEGIN {nextfile}, now fixed.
 
-	removed some #ifdef's in run.c and lex.c that appear to no 
+	removed some #ifdef's in run.c and lex.c that appear to no
 	longer be necessary.
 
 Apr 24, 2005:
@@ -175,8 +449,8 @@ Jan 14, 2005:
 	rethinking it.
 
 Dec 31, 2004:
-	prevent overflow of -f array in main, head off potential error in 
-	call of SYNTAX(), test malloc return in lib.c, all with thanks to 
+	prevent overflow of -f array in main, head off potential error in
+	call of SYNTAX(), test malloc return in lib.c, all with thanks to
 	todd miller.
 
 Dec 22, 2004:
@@ -204,8 +478,8 @@ Nov 22, 2003:
 	code known to man.
 
 	fixed a storage leak in call() that appears to have been there since
-	1983 or so -- a function without an explicit return that assigns a 
-	string to a parameter leaked a Cell.  thanks to moinak ghosh for 
+	1983 or so -- a function without an explicit return that assigns a
+	string to a parameter leaked a Cell.  thanks to moinak ghosh for
 	spotting this very subtle one.
 
 Jul 31, 2003:
@@ -227,7 +501,7 @@ Jul 28, 2003:
 	radix character in programs and command line arguments regardless of
 	the locale; otherwise, the locale should prevail for input and output
 	of numbers.  so it's intended to work that way.
-	
+
 	i have rescinded the attempt to use strcoll in expanding shorthands in
 	regular expressions (cclenter).  its properties are much too
 	surprising; for example [a-c] matches aAbBc in locale en_US but abBcC
@@ -291,7 +565,7 @@ Nov 29, 2002:
 Jun 28, 2002:
 	modified run/format() and tran/getsval() to do a slightly better
 	job on using OFMT for output from print and CONVFMT for other
-	number->string conversions, as promised by posix and done by 
+	number->string conversions, as promised by posix and done by
 	gawk and mawk.  there are still places where it doesn't work
 	right if CONVFMT is changed; by then the STR attribute of the
 	variable has been irrevocably set.  thanks to arnold robbins for
@@ -323,7 +597,7 @@ Feb 10, 2002:
 Jan 1, 2002:
 	fflush() or fflush("") flushes all files and pipes.
 
-	length(arrayname) returns number of elements; thanks to 
+	length(arrayname) returns number of elements; thanks to
 	arnold robbins for suggestion.
 
 	added a makefile.win to make it easier to build on windows.
@@ -373,7 +647,7 @@ July 5, 2000:
 
 May 25, 2000:
 	yet another attempt at making 8-bit input work, with another
-	band-aid in b.c (member()), and some (uschar) casts to head 
+	band-aid in b.c (member()), and some (uschar) casts to head
 	off potential errors in subscripts (like isdigit).  also
 	changed HAT to NCHARS-2.  thanks again to santiago vila.
 
@@ -420,7 +694,7 @@ Apr 21, 1999:
 	the test case.)
 
 Apr 16, 1999:
-	with code kindly provided by Bruce Lilly, awk now parses 
+	with code kindly provided by Bruce Lilly, awk now parses
 	/=/ and similar constructs more sensibly in more places.
 	Bruce also provided some helpful test cases.
 
@@ -477,7 +751,7 @@ Jan 13, 1999:
 
 Oct 19, 1998:
 	fixed a couple of bugs in getrec: could fail to update $0
-	after a getline var; because inputFS wasn't initialized, 
+	after a getline var; because inputFS wasn't initialized,
 	could split $0 on every character, a misleading diversion.
 
 	fixed caching bug in makedfa: LRU was actually removing
@@ -493,6 +767,8 @@ May 12, 1998:
 
 Mar 12, 1998:
 	added -V to print version number and die.
+
+[notify dave kerns, dkerns@dacsoup.ih.lucent.com]
 
 Feb 11, 1998:
 	subtle silent bug in lex.c: if the program ended with a number
@@ -623,7 +899,7 @@ May 2, 1996:
 	input file. (thanks to arnold robbins for inspiration and code).
 
 	small fixes to regexpr code:  can now handle []], [[], and
-	variants;  [] is now a syntax error, rather than matching 
+	variants;  [] is now a syntax error, rather than matching
 	everything;  [z-a] is now empty, not z.  far from complete
 	or correct, however.  (thanks to jeffrey friedl for pointing out
 	some awful behaviors.)

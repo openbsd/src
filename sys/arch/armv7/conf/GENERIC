@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.131 2020/04/29 19:30:58 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.132 2020/06/23 13:57:05 fcambus Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -17,9 +17,9 @@ makeoptions	KERNEL_BASE_VIRT="0xc0300000"
 maxusers	32			# estimated number of users
 option		CPU_ARMv7		# Support the ARMv7
 
-#option WSDISPLAY_COMPAT_USL		# VT handling
+option WSDISPLAY_COMPAT_USL		# VT handling
 option WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
-option WSDISPLAY_DEFAULTSCREENS=1
+option WSDISPLAY_DEFAULTSCREENS=6	# initial number of text consoles
 
 option		CONF_HAVE_GPIO
 option		PCIVERBOSE

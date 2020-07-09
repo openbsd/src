@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.182 2020/01/20 23:21:56 claudio Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.183 2020/06/24 22:03:44 cheloha Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -342,7 +342,7 @@ nfs_access(void *v)
 	 * shortly before, use the cached result.
 	 */
 	 cachevalid = (np->n_accstamp != -1 &&
-	     (time_second - np->n_accstamp) < nfs_attrtimeo(np) &&
+	     (gettime() - np->n_accstamp) < nfs_attrtimeo(np) &&
 	     np->n_accuid == ap->a_cred->cr_uid);
 
 	if (cachevalid) {
@@ -423,7 +423,7 @@ nfs_access(void *v)
 					np->n_accmode = ap->a_mode;
 			}
 		} else {
-			np->n_accstamp = time_second;
+			np->n_accstamp = gettime();
 			np->n_accuid = ap->a_cred->cr_uid;
 			np->n_accmode = ap->a_mode;
 			np->n_accerror = error;

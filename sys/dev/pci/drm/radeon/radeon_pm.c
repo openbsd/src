@@ -20,20 +20,24 @@
  * Authors: Rafał Miłecki <zajec5@gmail.com>
  *          Alex Deucher <alexdeucher@gmail.com>
  */
-#include <drm/drmP.h>
-#include "radeon.h"
-#include "avivod.h"
-#include "atom.h"
-#include "r600_dpm.h"
-#include <linux/power_supply.h>
-#include <linux/hwmon.h>
+
 #include <linux/hwmon-sysfs.h>
+#include <linux/hwmon.h>
+#include <linux/pci.h>
+#include <linux/power_supply.h>
+
+#include <drm/drm_debugfs.h>
+#include <drm/drm_vblank.h>
+
+#include "atom.h"
+#include "avivod.h"
+#include "r600_dpm.h"
+#include "radeon.h"
 
 #define RADEON_IDLE_LOOP_MS 100
 #define RADEON_RECLOCK_DELAY_MS 200
 #define RADEON_WAIT_VBLANK_TIMEOUT 200
 
-#ifdef DRMDEBUG
 static const char *radeon_pm_state_type_name[5] = {
 	"",
 	"Powersave",
@@ -41,7 +45,6 @@ static const char *radeon_pm_state_type_name[5] = {
 	"Balanced",
 	"Performance",
 };
-#endif
 
 static void radeon_dynpm_idle_work_handler(struct work_struct *work);
 static int radeon_debugfs_pm_init(struct radeon_device *rdev);
@@ -1626,10 +1629,8 @@ static void radeon_pm_fini_old(struct radeon_device *rdev)
 
 		cancel_delayed_work_sync(&rdev->pm.dynpm_idle_work);
 
-#ifdef __linux__
 		device_remove_file(rdev->dev, &dev_attr_power_profile);
 		device_remove_file(rdev->dev, &dev_attr_power_method);
-#endif
 	}
 
 	radeon_hwmon_fini(rdev);
@@ -1643,13 +1644,11 @@ static void radeon_pm_fini_dpm(struct radeon_device *rdev)
 		radeon_dpm_disable(rdev);
 		mutex_unlock(&rdev->pm.mutex);
 
-#ifdef __linux__
 		device_remove_file(rdev->dev, &dev_attr_power_dpm_state);
 		device_remove_file(rdev->dev, &dev_attr_power_dpm_force_performance_level);
 		/* XXX backwards compat */
 		device_remove_file(rdev->dev, &dev_attr_power_profile);
 		device_remove_file(rdev->dev, &dev_attr_power_method);
-#endif
 	}
 	radeon_dpm_fini(rdev);
 
@@ -1809,12 +1808,10 @@ static bool radeon_pm_in_vbl(struct radeon_device *rdev)
 
 static bool radeon_pm_debug_check_in_vbl(struct radeon_device *rdev, bool finish)
 {
-#ifdef DRMDEBUG
 	u32 stat_crtc = 0;
-#endif
 	bool in_vbl = radeon_pm_in_vbl(rdev);
 
-	if (in_vbl == false)
+	if (!in_vbl)
 		DRM_DEBUG_DRIVER("not in vbl for pm change %08x at %s\n", stat_crtc,
 			 finish ? "exit" : "entry");
 	return in_vbl;

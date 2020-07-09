@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.66 2020/02/21 11:10:23 claudio Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.67 2020/06/11 00:00:01 dlg Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -53,10 +53,6 @@ uint64_t sched_noidle;		/* Times we didn't pick the idle task */
 uint64_t sched_stolen;		/* Times we stole proc from other cpus */
 uint64_t sched_choose;		/* Times we chose a cpu */
 uint64_t sched_wasidle;		/* Times we came out of idle */
-
-#ifdef MULTIPROCESSOR
-struct taskq *sbartq;
-#endif
 
 int sched_smt;
 

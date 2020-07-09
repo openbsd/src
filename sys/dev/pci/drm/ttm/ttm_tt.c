@@ -35,7 +35,6 @@
 #include <linux/pagemap.h>
 #include <linux/shmem_fs.h>
 #include <linux/file.h>
-#include <linux/export.h>
 #include <drm/drm_cache.h>
 #include <drm/ttm/ttm_bo_driver.h>
 #include <drm/ttm/ttm_page_alloc.h>
@@ -49,7 +48,7 @@ int ttm_tt_create(struct ttm_buffer_object *bo, bool zero_alloc)
 	struct ttm_bo_device *bdev = bo->bdev;
 	uint32_t page_flags = 0;
 
-	reservation_object_assert_held(bo->resv);
+	dma_resv_assert_held(bo->base.resv);
 
 	if (bdev->need_dma32)
 		page_flags |= TTM_PAGE_FLAG_DMA32;
@@ -224,8 +223,9 @@ void ttm_tt_destroy(struct ttm_tt *ttm)
 	ttm->func->destroy(ttm);
 }
 
-void ttm_tt_init_fields(struct ttm_tt *ttm, struct ttm_buffer_object *bo,
-			uint32_t page_flags)
+static void ttm_tt_init_fields(struct ttm_tt *ttm,
+			       struct ttm_buffer_object *bo,
+			       uint32_t page_flags)
 {
 	ttm->bdev = bo->bdev;
 	ttm->num_pages = bo->num_pages;

@@ -1,4 +1,4 @@
-.\" $OpenBSD: tcpbench.1,v 1.26 2020/02/12 14:46:36 schwarze Exp $
+.\" $OpenBSD: tcpbench.1,v 1.28 2020/05/04 12:13:09 sthen Exp $
 .\"
 .\" Copyright (c) 2008 Damien Miller <djm@mindrot.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 12 2020 $
+.Dd $Mdocdate: May 4 2020 $
 .Dt TCPBENCH 1
 .Os
 .Sh NAME
@@ -65,14 +65,32 @@ of a listening server to connect to.
 .Pp
 Once connected, the client will send TCP or UDP traffic as fast as possible to
 the server.
-Both the client and server will periodically display throughput
-statistics along with any kernel variables the user has selected to
+Both the client and server will periodically compute and display throughput
+statistics.
+The server starts computing these for UDP on receipt of the first datagram,
+and stops for TCP when it has no connections.
+This display also includes any kernel variables the user has selected to
 sample (using the
 .Fl k
 option, which is only available in TCP mode).
 A list of available kernel variables may be obtained using the
 .Fl l
 option.
+.Pp
+A summary over the periodic throughput statistics is displayed on exit.
+Its accuracy may be increased by decreasing the
+.Ar interval .
+The summary bytes and duration cover the interval from transfer start
+to process exit.
+The summary information can also be displayed while
+.Nm
+is running by sending it a
+.Dv SIGINFO
+signal (see the
+.Cm status
+argument of
+.Xr stty 1
+for more information).
 .Pp
 The options are as follows:
 .Bl -tag -width Ds

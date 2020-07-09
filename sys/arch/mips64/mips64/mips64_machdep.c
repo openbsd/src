@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips64_machdep.c,v 1.26 2018/06/13 14:38:42 visa Exp $ */
+/*	$OpenBSD: mips64_machdep.c,v 1.32 2020/07/06 13:33:08 pirofti Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
@@ -57,7 +57,7 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <mips64/dev/clockvar.h>
+#include <dev/clock_subr.h>
 
 /*
  * Build a tlb trampoline
@@ -237,8 +237,9 @@ tlb_asid_wrap(struct cpu_info *ci)
  *	Mips machine independent clock routines.
  */
 
-struct tod_desc sys_tod;
 void (*md_startclock)(struct cpu_info *);
+
+extern todr_chip_handle_t todr_handle;
 
 /*
  * Wait "n" microseconds.
@@ -272,7 +273,9 @@ struct timecounter cp0_timecounter = {
 	0xffffffff,		/* counter_mask */
 	0,			/* frequency */
 	"CP0",			/* name */
-	0			/* quality */
+	0,			/* quality */
+	NULL,			/* private bits */
+	0,			/* expose to user */
 };
 
 u_int
@@ -288,28 +291,30 @@ cp0_get_timecount(struct timecounter *tc)
 void
 cp0_calibrate(struct cpu_info *ci)
 {
-	struct tod_desc *cd = &sys_tod;
-	struct tod_time ct;
+	struct timeval rtctime;
 	u_int first_cp0, second_cp0, cycles_per_sec;
 	int first_sec;
 
-	if (cd->tod_get == NULL)
+	if (todr_handle == NULL)
 		return;
 
-	(*cd->tod_get)(cd->tod_cookie, 0, &ct);
-	first_sec = ct.sec;
+	if (todr_gettime(todr_handle, &rtctime) != 0)
+		return;
+	first_sec = rtctime.tv_sec;
 
 	/* Let the clock tick one second. */
 	do {
 		first_cp0 = cp0_get_count();
-		(*cd->tod_get)(cd->tod_cookie, 0, &ct);
-	} while (ct.sec == first_sec);
-	first_sec = ct.sec;
+		if (todr_gettime(todr_handle, &rtctime) != 0)
+			return;
+	} while (rtctime.tv_sec == first_sec);
+	first_sec = rtctime.tv_sec;
 	/* Let the clock tick one more second. */
 	do {
 		second_cp0 = cp0_get_count();
-		(*cd->tod_get)(cd->tod_cookie, 0, &ct);
-	} while (ct.sec == first_sec);
+		if (todr_gettime(todr_handle, &rtctime) != 0)
+			return;
+	} while (rtctime.tv_sec == first_sec);
 
 	cycles_per_sec = second_cp0 - first_cp0;
 	ci->ci_hw.clock = cycles_per_sec * CP0_CYCLE_DIVIDER;
@@ -354,140 +359,6 @@ cpu_initclocks()
 void
 setstatclockrate(int newhz)
 {
-}
-
-/* XXX switch to kern/clock_subr.c routines */
-/*
- * This code is defunct after 2099. Will Unix still be here then??
- */
-static short dayyr[12] = {
-	0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334
-};
-
-#define	SECMIN	(60)		/* seconds per minute */
-#define	SECHOUR	(60*SECMIN)	/* seconds per hour */
-
-#define	YEARDAYS(year)	(((((year) + 1900) % 4) == 0 && \
-			 ((((year) + 1900) % 100) != 0 || \
-			  (((year) + 1900) % 400) == 0)) ? 366 : 365)
-
-/*
- * Initialize the time of day register, based on the time base which
- * is, e.g. from a filesystem.
- */
-void
-inittodr(time_t base)
-{
-	struct timespec ts;
-	struct tod_time c;
-	struct tod_desc *cd = &sys_tod;
-	int days, yr;
-
-	ts.tv_nsec = 0;
-
-	if (base < 35 * SECYR) {
-		printf("WARNING: preposterous time in file system");
-		/* read the system clock anyway */
-		base = 40 * SECYR;	/* 2010 */
-	}
-
-	/*
-	 * Read RTC chip registers NOTE: Read routines are responsible
-	 * for sanity checking clock. Dates after 19991231 should be
-	 * returned as year >= 100.
-	 */
-	if (cd->tod_get) {
-		(*cd->tod_get)(cd->tod_cookie, base, &c);
-	} else {
-		printf("WARNING: No TOD clock, believing file system.\n");
-		goto bad;
-	}
-
-	days = 0;
-	for (yr = 70; yr < c.year; yr++) {
-		days += YEARDAYS(yr);
-	}
-
-	days += dayyr[c.mon - 1] + c.day - 1;
-	if (YEARDAYS(c.year) == 366 && c.mon > 2) {
-		days++;
-	}
-
-	/* now have days since Jan 1, 1970; the rest is easy... */
-	ts.tv_sec = days * SECDAY + c.hour * 3600 + c.min * 60 + c.sec;
-
-	/*
-	 * See if we gained/lost time.
-	 */
-	if (base < ts.tv_sec - 5*SECYR) {
-		printf("WARNING: file system time much less than clock time\n");
-	} else if (base > ts.tv_sec + 5*SECYR) {
-		printf("WARNING: clock time much less than file system time\n");
-		printf("WARNING: using file system time\n");
-	} else {
-		tc_setclock(&ts);
-		cd->tod_valid = 1;
-		return;
-	}
-
-bad:
-	ts.tv_sec = base;
-	tc_setclock(&ts);
-	cd->tod_valid = 1;
-	printf("WARNING: CHECK AND RESET THE DATE!\n");
-}
-
-/*
- * Reset the TOD clock. This is done when the system is halted or
- * when the time is reset by the stime system call.
- */
-void
-resettodr()
-{
-	struct tod_time c;
-	struct tod_desc *cd = &sys_tod;
-	int t, t2;
-
-	/*
-	 *  Don't reset TOD if time has not been set!
-	 */
-	if (!cd->tod_valid)
-		return;
-
-	/* compute the day of week. 1 is Sunday*/
-	t2 = time_second / SECDAY;
-	c.dow = (t2 + 5) % 7 + 1;	/* 1/1/1970 was thursday */
-
-	/* compute the year */
-	t = 0;
-	t2 = time_second / SECDAY;
-	c.year = 69;
-	while (t2 >= 0) {	/* whittle off years */
-		t = t2;
-		c.year++;
-		t2 -= YEARDAYS(c.year);
-	}
-
-	/* t = month + day; separate */
-	t2 = YEARDAYS(c.year);
-	for (c.mon = 1; c.mon < 12; c.mon++) {
-		if (t < dayyr[c.mon] + (t2 == 366 && c.mon > 1))
-			break;
-	}
-
-	c.day = t - dayyr[c.mon - 1] + 1;
-	if (t2 == 366 && c.mon > 2) {
-		c.day--;
-	}
-
-	t = time_second % SECDAY;
-	c.hour = t / 3600;
-	t %= 3600;
-	c.min = t / 60;
-	c.sec = t % 60;
-
-	if (cd->tod_set)
-		(*cd->tod_set)(cd->tod_cookie, &c);
 }
 
 /*

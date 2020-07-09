@@ -1,4 +1,4 @@
-/* $OpenBSD: sshconnect2.c,v 1.321 2020/04/17 03:38:47 djm Exp $ */
+/* $OpenBSD: sshconnect2.c,v 1.324 2020/06/27 13:39:09 bket Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2008 Damien Miller.  All rights reserved.
@@ -130,11 +130,23 @@ order_hostkeyalgs(char *host, struct sockaddr *hostaddr, u_short port)
 	while ((alg = strsep(&avail, ",")) && *alg != '\0') {
 		if ((ktype = sshkey_type_from_name(alg)) == KEY_UNSPEC)
 			fatal("%s: unknown alg %s", __func__, alg);
-		if (lookup_key_in_hostkeys_by_type(hostkeys,
-		    sshkey_type_plain(ktype), NULL))
+		/*
+		 * If we have a @cert-authority marker in known_hosts then
+		 * prefer all certificate algorithms.
+		 */
+		if (sshkey_type_is_cert(ktype) &&
+		    lookup_marker_in_hostkeys(hostkeys, MRK_CA)) {
 			ALG_APPEND(first, alg);
-		else
-			ALG_APPEND(last, alg);
+			continue;
+		}
+		/* If the key appears in known_hosts then prefer it */
+		if (lookup_key_in_hostkeys_by_type(hostkeys,
+		    sshkey_type_plain(ktype), NULL)) {
+			ALG_APPEND(first, alg);
+			continue;
+		}
+		/* Otherwise, put it last */
+		ALG_APPEND(last, alg);
 	}
 #undef ALG_APPEND
 	xasprintf(&ret, "%s%s%s", first,
@@ -1137,7 +1149,8 @@ key_sig_algorithm(struct ssh *ssh, const struct sshkey *key)
 	while ((cp = strsep(&allowed, ",")) != NULL) {
 		if (sshkey_type_from_name(cp) != key->type)
 			continue;
-		tmp = match_list(sshkey_sigalg_by_name(cp), ssh->kex->server_sig_algs, NULL);
+		tmp = match_list(sshkey_sigalg_by_name(cp),
+		    ssh->kex->server_sig_algs, NULL);
 		if (tmp != NULL)
 			alg = xstrdup(cp);
 		free(tmp);
@@ -1651,10 +1664,7 @@ pubkey_prepare(Authctxt *authctxt)
 		}
 		ssh_free_identitylist(idlist);
 		/* append remaining agent keys */
-		for (id = TAILQ_FIRST(&agent); id; id = TAILQ_FIRST(&agent)) {
-			TAILQ_REMOVE(&agent, id, next);
-			TAILQ_INSERT_TAIL(preferred, id, next);
-		}
+		TAILQ_CONCAT(preferred, &agent, next);
 		authctxt->agent_fd = agent_fd;
 	}
 	/* Prefer PKCS11 keys that are explicitly listed */
@@ -1680,10 +1690,7 @@ pubkey_prepare(Authctxt *authctxt)
 		}
 	}
 	/* append remaining keys from the config file */
-	for (id = TAILQ_FIRST(&files); id; id = TAILQ_FIRST(&files)) {
-		TAILQ_REMOVE(&files, id, next);
-		TAILQ_INSERT_TAIL(preferred, id, next);
-	}
+	TAILQ_CONCAT(preferred, &files, next);
 	/* finally, filter by PubkeyAcceptedKeyTypes */
 	TAILQ_FOREACH_SAFE(id, preferred, next, id2) {
 		if (id->key != NULL && !key_type_allowed_by_config(id->key)) {

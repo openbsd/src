@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.h,v 1.27 2020/01/25 06:31:32 dlg Exp $ */
+/*	$OpenBSD: ifq.h,v 1.32 2020/07/07 00:00:03 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -20,6 +20,7 @@
 #define _NET_IFQ_H_
 
 struct ifnet;
+struct kstat;
 
 struct ifq_ops;
 
@@ -53,6 +54,8 @@ struct ifqueue {
 	uint64_t		 ifq_qdrops;
 	uint64_t		 ifq_errors;
 	uint64_t		 ifq_mcasts;
+
+	struct kstat		*ifq_kstat;
 
 	/* work serialisation */
 	struct mutex		 ifq_task_mtx;
@@ -92,6 +95,8 @@ struct ifiqueue {
 	uint64_t		 ifiq_mcasts;
 	uint64_t		 ifiq_noproto;
 
+	struct kstat		*ifiq_kstat;
+
 	/* properties */
 	unsigned int		 ifiq_idx;
 };
@@ -111,9 +116,9 @@ struct ifiqueue {
  * notifying the driver to start transmission of the queued packets.
  *
  * A network device may have multiple contexts for the transmission
- * of packets, ie, independent transmit rings. An network device
- * represented by a struct ifnet may have multiple ifqueue structures,
- * each of which represents an independent context.
+ * of packets, ie, independent transmit rings. Such a network device,
+ * represented by a struct ifnet, would then have multiple ifqueue
+ * structures, each of which maps to an independent transmit ring.
  *
  * struct ifqueue also provides the point where conditioning of
  * traffic (ie, priq and hfsc) is implemented, and provides some
@@ -192,7 +197,7 @@ struct ifiqueue {
  * lock with ifq_q_enter(). The caller must pass a reference to the
  * conditioners ifq_ops structure so the infrastructure can ensure the
  * caller is able to understand the internals. ifq_q_enter() returns
- * a pointer to the conditions internal structures, or NULL if the
+ * a pointer to the conditioners internal structures, or NULL if the
  * ifq_ops did not match the current conditioner.
  *
  * === ifq_q_leave()
@@ -233,7 +238,7 @@ struct ifiqueue {
  * = ifqueue work serialisation
  *
  * ifqueues provide a mechanism to dispatch work to be run in a single
- * context. Work in this mechanism is represtented by task structures.
+ * context. Work in this mechanism is represented by task structures.
  *
  * The tasks are run in a context similar to a taskq serviced by a
  * single kernel thread, except the work is run immediately by the
@@ -256,6 +261,12 @@ struct ifiqueue {
  * if_qstart function (which takes an ifqueue pointer) instead of an
  * if_start function (which takes an ifnet pointer).
  *
+ * If the hardware supports multiple transmit rings, it advertises
+ * support for multiple rings to the network stack with if_attach_queues()
+ * after the call to if_attach(). if_attach_queues allocates a struct
+ * ifqueue for each hardware ring, which can then be initialised by
+ * the driver with data for each ring.
+ *
  *	void	drv_start(struct ifqueue *);
  *
  *	void
@@ -265,19 +276,28 @@ struct ifiqueue {
  *		ifp->if_xflags = IFXF_MPSAFE;
  *		ifp->if_qstart = drv_start;
  *		if_attach(ifp);
+ *
+ *		if_attach_queues(ifp, DRV_NUM_TX_RINGS);
+ *		for (i = ; i < DRV_NUM_TX_RINGS; i++) {
+ *			struct ifqueue *ifq = ifp->if_ifqs[i];
+ *			struct drv_tx_ring *ring = &sc->sc_tx_rings[i];
+ *
+ *			ifq->ifq_softc = ring;
+ *			ring->ifq = ifq;
+ *		}
  *	}
  *
  * The network stack will then call ifp->if_qstart via ifq_start()
  * to guarantee there is only one instance of that function running
- * in the system and to serialise it with other work the driver may
- * provide.
+ * for each ifq in the system, and to serialise it with other work
+ * the driver may provide.
  *
  * == Initialise
  *
  * When the stack requests an interface be brought up (ie, drv_ioctl()
  * is called to handle SIOCSIFFLAGS with IFF_UP set in ifp->if_flags)
- * drivers should set IFF_RUNNING in ifp->if_flags and call
- * ifq_clr_oactive().
+ * drivers should set IFF_RUNNING in ifp->if_flags, and then call
+ * ifq_clr_oactive() against each ifq.
  *
  * == if_start
  *
@@ -295,6 +315,7 @@ struct ifiqueue {
  *	void
  *	drv_start(struct ifqueue *ifq)
  *	{
+ *		struct drv_tx_ring *ring = ifq->ifq_softc;
  *		struct ifnet *ifp = ifq->ifq_if;
  *		struct drv_softc *sc = ifp->if_softc;
  *		struct mbuf *m;
@@ -306,7 +327,7 @@ struct ifiqueue {
  *		}
  *
  *		for (;;) {
- *			if (NO_SPACE) {
+ *			if (NO_SPACE(ring)) {
  *				ifq_set_oactive(ifq);
  *				break;
  *			}
@@ -315,7 +336,7 @@ struct ifiqueue {
  *			if (m == NULL)
  *				break;
  *
- *			if (drv_encap(sc, m) != 0) { // map and fill ring
+ *			if (drv_encap(sc, ring, m) != 0) { // map and fill ring
  *				m_freem(m);
  *				continue;
  *			}
@@ -323,7 +344,7 @@ struct ifiqueue {
  *			bpf_mtap();
  *		}
  *
- *		drv_kick(sc); // notify hw of new descriptors on the ring
+ *		drv_kick(ring); // notify hw of new descriptors on the ring
  *	 }
  *
  * == Transmission completion
@@ -332,9 +353,11 @@ struct ifiqueue {
  * processing:
  *
  *	void
- *	drv_txeof(struct ifqueue *ifq)
+ *	drv_txeof(struct drv_tx_ring *ring)
  *	{
- *		while (COMPLETED_PKTS) {
+ *		struct ifqueue *ifq = ring->ifq;
+ *
+ *		while (COMPLETED_PKTS(ring)) {
  *			// unmap packets, m_freem() the mbufs.
  *		}
  *
@@ -359,7 +382,7 @@ struct ifiqueue {
  *		DISABLE_INTERRUPTS();
  *
  *		for (i = 0; i < sc->sc_num_queues; i++) {
- * 			ifq = ifp->if_ifqs[i];
+ *			ifq = ifp->if_ifqs[i];
  *			ifq_barrier(ifq);
  *		}
  *
@@ -368,7 +391,7 @@ struct ifiqueue {
  *		FREE_RESOURCES();
  *
  *		for (i = 0; i < sc->sc_num_queues; i++) {
- * 			ifq = ifp->if_ifqs[i];
+ *			ifq = ifp->if_ifqs[i];
  *			ifq_clr_oactive(ifq);
  *		}
  *	}

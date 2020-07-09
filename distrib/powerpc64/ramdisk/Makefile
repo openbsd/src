@@ -1,0 +1,94 @@
+#	$OpenBSD: Makefile,v 1.2 2020/07/05 21:57:23 kettenis Exp $
+
+FS=		miniroot${OSrev}.img
+FSSIZE=		67584
+FSDISKTYPE=	miniroot
+MOUNT_POINT=	/mnt
+MTREE=		${UTILS}/mtree.conf
+RAMDISK=	RAMDISK
+
+MSDOSSTART=	8192
+MSDOSSIZE=	32768
+FFSSTART!=	expr ${MSDOSSTART} + ${MSDOSSIZE}
+
+NEWFS_ARGS_msdos=-L boot -c1 -F16
+MOUNT_ARGS_msdos=-o-l
+
+LISTS=		${.CURDIR}/list
+UTILS=		${.CURDIR}/../../miniroot
+
+MRFSDISKTYPE=	rdroot
+MRMAKEFSARGS=	-o disklabel=${MRFSDISKTYPE},minfree=0,density=4096
+
+all: ${FS}
+
+${FS}: bsd.rd
+	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
+	vnconfig -v -t ${FSDISKTYPE} ${FS} > vnd
+	echo 'u\ne 0\nc\nn\n${MSDOSSTART}\n${MSDOSSIZE}\ne 3\nA6\nn\n${FFSSTART}\n*\nf 0\nw\nq\n' \
+	    | fdisk -e `cat vnd` >/dev/null
+	echo 'a a\n\n\n\nw\nq\n' | disklabel -E `cat vnd` >/dev/null
+	newfs -t msdos ${NEWFS_ARGS_msdos} /dev/r`cat vnd`i
+	mount ${MOUNT_ARGS_msdos} /dev/`cat vnd`i ${MOUNT_POINT}
+	cp bsd.rd ${MOUNT_POINT}/boot
+	echo 'menuentry "OpenBSD install" {' > ${MOUNT_POINT}/grub.cfg
+	echo '\tlinux /boot' >> ${MOUNT_POINT}/grub.cfg
+	echo '\tinitrd /boot' >> ${MOUNT_POINT}/grub.cfg
+	echo '}' >> ${MOUNT_POINT}/grub.cfg
+	umount ${MOUNT_POINT}
+	newfs -O 1 -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
+	mount /dev/`cat vnd`a ${MOUNT_POINT}
+	install -c -m 555 -o root -g wheel bsd.rd ${MOUNT_POINT}/bsd
+	ln ${MOUNT_POINT}/bsd ${MOUNT_POINT}/bsd.rd
+	df -i ${MOUNT_POINT}
+	umount ${MOUNT_POINT}
+	vnconfig -u `cat vnd`
+	rm -f vnd
+
+bsd.rd: mr.fs bsd
+	cp bsd bsd.rd
+	rdsetroot bsd.rd mr.fs
+
+bsd:
+	cd ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK} && \
+	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE}'
+	cp -p ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK}/obj/bsd bsd
+
+mr.fs: instbin
+	rm -rf $@.d
+	install -d -o root -g wheel $@.d
+	mtree -def ${MTREE} -p $@.d -u
+	CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} OSrev=${OSrev} \
+	    TARGDIR=$@.d UTILS=${UTILS} RELEASEDIR=${RELEASEDIR} \
+	    sh ${UTILS}/runlist.sh ${LISTS}
+	rm $@.d/instbin
+	makefs ${MRMAKEFSARGS} $@ $@.d
+
+instbin.mk instbin.cache instbin.c: instbin.conf
+	crunchgen -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib \
+	    -c instbin.c -e instbin -m instbin.mk instbin.conf
+
+instbin: instbin.mk instbin.cache instbin.c
+	${MAKE} -f instbin.mk SRCLIBDIR=${.CURDIR}/../../../lib all
+
+instbin.conf: ${LISTS}
+	awk -f ${UTILS}/makeconf.awk  ${LISTS} > instbin.conf
+
+unconfig:
+	-umount -f ${MOUNT_POINT}
+	-[ -f vnd ] && vnconfig -u `cat vnd` && rm -f vnd
+
+.ifdef RELEASEDIR
+install:
+	cp bsd.rd ${RELEASEDIR}/bsd.rd
+	chmod a+r ${RELEASEDIR}/bsd.rd
+	cp ${FS} ${RELEASEDIR}
+.endif
+
+clean cleandir:
+	rm -f *.core mr.fs instbin instbin.mk instbin.cache \
+	    lib*.a lib*.olist instbin.map *.o *.lo *.c bsd bsd.rd
+	rm -f instbin.conf
+	rm -rf cd-dir mr.fs.d
+
+.include <bsd.obj.mk>

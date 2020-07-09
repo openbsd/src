@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.127 2020/03/20 04:08:25 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.132 2020/07/09 02:17:07 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -49,6 +49,8 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+
+#include <dev/clock_subr.h>
 
 /* 
  * Time of day and interval timer support.
@@ -106,7 +108,6 @@ settime(const struct timespec *ts)
 int
 clock_gettime(struct proc *p, clockid_t clock_id, struct timespec *tp)
 {
-	struct bintime bt;
 	struct proc *q;
 	int error = 0;
 
@@ -115,9 +116,7 @@ clock_gettime(struct proc *p, clockid_t clock_id, struct timespec *tp)
 		nanotime(tp);
 		break;
 	case CLOCK_UPTIME:
-		binuptime(&bt);
-		bintimesub(&bt, &naptime, &bt);
-		BINTIME_TO_TIMESPEC(&bt, tp);
+		nanoruntime(tp);
 		break;
 	case CLOCK_MONOTONIC:
 	case CLOCK_BOOTTIME:
@@ -401,6 +400,9 @@ sys_settimeofday(struct proc *p, void *v, register_t *retval)
 	return (0);
 }
 
+#define ADJFREQ_MAX (500000000LL << 32)
+#define ADJFREQ_MIN (-500000000LL << 32)
+
 int
 sys_adjfreq(struct proc *p, void *v, register_t *retval)
 {
@@ -418,6 +420,8 @@ sys_adjfreq(struct proc *p, void *v, register_t *retval)
 			return (error);
 		if ((error = copyin(freq, &f, sizeof(f))))
 			return (error);
+		if (f < ADJFREQ_MIN || f > ADJFREQ_MAX)
+			return (EINVAL);
 	}
 
 	rw_enter(&tc_lock, (freq == NULL) ? RW_READ : RW_WRITE);
@@ -841,6 +845,107 @@ ppsratecheck(struct timeval *lasttime, int *curpps, int maxpps)
 	return (rv);
 }
 
+todr_chip_handle_t todr_handle;
+int inittodr_done;
+
+#define MINYEAR		((OpenBSD / 100) - 1)	/* minimum plausible year */
+
+/*
+ * inittodr:
+ *
+ *      Initialize time from the time-of-day register.
+ */
+void
+inittodr(time_t base)
+{
+	time_t deltat;
+	struct timeval rtctime;
+	struct timespec ts;
+	int badbase;
+
+	inittodr_done = 1;
+
+	if (base < (MINYEAR - 1970) * SECYR) {
+		printf("WARNING: preposterous time in file system\n");
+		/* read the system clock anyway */
+		base = (MINYEAR - 1970) * SECYR;
+		badbase = 1;
+	} else
+		badbase = 0;
+
+	rtctime.tv_sec = base;
+	rtctime.tv_usec = 0;
+
+	if (todr_handle == NULL ||
+	    todr_gettime(todr_handle, &rtctime) != 0 ||
+	    rtctime.tv_sec < (MINYEAR - 1970) * SECYR) {
+		/*
+		 * Believe the time in the file system for lack of
+		 * anything better, resetting the TODR.
+		 */
+		rtctime.tv_sec = base;
+		rtctime.tv_usec = 0;
+		if (todr_handle != NULL && !badbase)
+			printf("WARNING: bad clock chip time\n");
+		ts.tv_sec = rtctime.tv_sec;
+		ts.tv_nsec = rtctime.tv_usec * 1000;
+		tc_setclock(&ts);
+		goto bad;
+	} else {
+		ts.tv_sec = rtctime.tv_sec;
+		ts.tv_nsec = rtctime.tv_usec * 1000;
+		tc_setclock(&ts);
+	}
+
+	if (!badbase) {
+		/*
+		 * See if we gained/lost two or more days; if
+		 * so, assume something is amiss.
+		 */
+		deltat = rtctime.tv_sec - base;
+		if (deltat < 0)
+			deltat = -deltat;
+		if (deltat < 2 * SECDAY)
+			return;         /* all is well */
+#ifndef SMALL_KERNEL
+		printf("WARNING: clock %s %lld days\n",
+		    rtctime.tv_sec < base ? "lost" : "gained",
+		    (long long)(deltat / SECDAY));
+#endif
+	}
+ bad:
+	printf("WARNING: CHECK AND RESET THE DATE!\n");
+}
+
+/*
+ * resettodr:
+ *
+ *      Reset the time-of-day register with the current time.
+ */
+void
+resettodr(void)
+{
+	struct timeval rtctime;
+
+	/*
+	 * Skip writing the RTC if inittodr(9) never ran.  We don't
+	 * want to overwrite a reasonable value with a nonsense value.
+	 */
+	if (!inittodr_done)
+		return;
+
+	microtime(&rtctime);
+
+	if (todr_handle != NULL &&
+	    todr_settime(todr_handle, &rtctime) != 0)
+		printf("WARNING: can't update clock chip time\n");
+}
+
+void
+todr_attach(struct todr_chip_handle *todr)
+{
+	todr_handle = todr;
+}
 
 #define RESETTODR_PERIOD	1800
 

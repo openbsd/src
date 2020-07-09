@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.77 2020/03/05 16:36:30 otto Exp $
+#	$OpenBSD: RAMDISK,v 1.79 2020/05/15 12:13:35 deraadt Exp $
 
 machine		amd64
 maxusers	4
@@ -30,6 +30,7 @@ acpi0		at bios?
 #acpicpu*	at acpi?
 acpicmos*	at acpi?
 acpiec*		at acpi?
+acpipci*	at acpi?
 acpiprt*	at acpi?
 acpimadt0	at acpi?
 #acpitz*	at acpi?
@@ -52,11 +53,11 @@ pci*		at pchb?
 xhci*		at pci?
 ehci*		at pci?
 uhci*		at pci?
-ohci*		at pci?
+#ohci*		at pci?
 usb*		at xhci?
 usb*		at ehci?
 usb*		at uhci?
-usb*		at ohci?
+#usb*		at ohci?
 
 uhub*		at usb?
 uhub*		at uhub?

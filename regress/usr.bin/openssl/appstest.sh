@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.32 2020/01/26 12:37:06 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.45 2020/05/29 14:26:01 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -58,7 +58,7 @@ function check_exit_status {
 }
 
 function usage {
-	echo "usage: appstest.sh [-iq]"
+	echo "usage: appstest.sh [-egiq]"
 }
 
 function test_usage_lists_others {
@@ -102,7 +102,7 @@ __EOF__
 	section_message "listing operations"
 	
 	start_message "ciphers"
-	$openssl_bin ciphers -V
+	$openssl_bin ciphers -V > $user1_dir/ciphers-V.out
 	check_exit_status $?
 	
 	start_message "errstr"
@@ -250,7 +250,7 @@ function test_key {
 	
 	start_message "gendh - Obsoleted by dhparam."
 	gendh2=$key_dir/gendh2.pem
-	$openssl_bin gendh -2 -out $gendh2
+	$openssl_bin gendh -2 -out $gendh2 > $gendh2.log 2>&1
 	check_exit_status $?
 	
 	start_message "dh - Obsoleted by dhparam."
@@ -260,7 +260,7 @@ function test_key {
 	if [ $no_long_tests = 0 ] ; then
 		start_message "dhparam - Superseded by genpkey and pkeyparam."
 		dhparam2=$key_dir/dhparam2.pem
-		$openssl_bin dhparam -2 -out $dhparam2
+		$openssl_bin dhparam -2 -out $dhparam2 > $dhparam2.log 2>&1
 		check_exit_status $?
 		$openssl_bin dhparam -in $dhparam2 -check -text \
 			-out $dhparam2.out
@@ -273,7 +273,8 @@ function test_key {
 	
 	start_message "dsaparam - Superseded by genpkey and pkeyparam."
 	dsaparam512=$key_dir/dsaparam512.pem
-	$openssl_bin dsaparam -genkey -out $dsaparam512 512
+	$openssl_bin dsaparam -genkey -out $dsaparam512 512 \
+		> $dsaparam512.log 2>&1
 	check_exit_status $?
 	
 	start_message "dsa"
@@ -291,7 +292,7 @@ function test_key {
 	start_message "genrsa - Superseded by genpkey."
 	genrsa_aes256=$key_dir/genrsa_aes256.pem
 	$openssl_bin genrsa -f4 -aes256 -out $genrsa_aes256 \
-		-passout pass:$key_pass 2048
+		-passout pass:$key_pass 2048 > $genrsa_aes256.log 2>&1
 	check_exit_status $?
 	
 	start_message "rsa"
@@ -315,7 +316,7 @@ function test_key {
 	# EC
 	
 	start_message "ecparam -list-curves"
-	$openssl_bin ecparam -list_curves
+	$openssl_bin ecparam -list_curves -out $key_dir/ecparam-list_curves.out
 	check_exit_status $?
 	
 	# get all EC curves
@@ -346,7 +347,7 @@ function test_key {
 	
 	genpkey_dh_param=$key_dir/genpkey_dh_param.pem
 	$openssl_bin genpkey -genparam -algorithm DH -out $genpkey_dh_param \
-		-pkeyopt dh_paramgen_prime_len:1024
+		-pkeyopt dh_paramgen_prime_len:1024 > $genpkey_dh_param.log 2>&1
 	check_exit_status $?
 	
 	genpkey_dh=$key_dir/genpkey_dh.pem
@@ -357,7 +358,7 @@ function test_key {
 	
 	genpkey_dsa_param=$key_dir/genpkey_dsa_param.pem
 	$openssl_bin genpkey -genparam -algorithm DSA -out $genpkey_dsa_param \
-		-pkeyopt dsa_paramgen_bits:1024
+		-pkeyopt dsa_paramgen_bits:1024 > $genpkey_dsa_param.log 2>&1
 	check_exit_status $?
 	
 	genpkey_dsa=$key_dir/genpkey_dsa.pem
@@ -368,7 +369,8 @@ function test_key {
 	
 	genpkey_rsa=$key_dir/genpkey_rsa.pem
 	$openssl_bin genpkey -algorithm RSA -out $genpkey_rsa \
-		-pkeyopt rsa_keygen_bits:2048 -pkeyopt rsa_keygen_pubexp:3
+		-pkeyopt rsa_keygen_bits:2048 -pkeyopt rsa_keygen_pubexp:3 \
+		> $genpkey_rsa.log 2>&1
 	check_exit_status $?
 	
 	genpkey_rsa_pss=$key_dir/genpkey_rsa_pss.pem
@@ -376,7 +378,8 @@ function test_key {
 		-pkeyopt rsa_keygen_bits:2048 \
 		-pkeyopt rsa_pss_keygen_mgf1_md:sha256 \
 		-pkeyopt rsa_pss_keygen_md:sha256 \
-		-pkeyopt rsa_pss_keygen_saltlen:32
+		-pkeyopt rsa_pss_keygen_saltlen:32 \
+		> $genpkey_rsa_pss.log 2>&1
 	check_exit_status $?
 	
 	# EC by GENPKEY
@@ -648,7 +651,8 @@ __EOF__
 		-policy policy_match -days 1 -md sha256 -extensions tsa_ext \
 		-sigopt rsa_padding_mode:pss -sigopt rsa_pss_saltlen:32 \
 		-multivalue-rdn -preserveDN -noemailDN \
-		-in $tsa_csr -outdir $tsa_dir -out $tsa_cert -verbose -notext
+		-in $tsa_csr -outdir $tsa_dir -out $tsa_cert -verbose -notext \
+		> $tsa_cert.log 2>&1
 	check_exit_status $?
 	
 	#---------#---------#---------#---------#---------#---------#---------
@@ -679,7 +683,7 @@ __EOF__
 	$openssl_bin ca -batch -cert $ca_cert -keyfile $ca_key -keyform pem \
 		-key $ca_pass -out $ocsp_cert -extensions ocsp_ext \
 		-startdate `date -u '+%y%m%d%H%M%SZ'` -enddate 491223235959Z \
-		-subj $subj -infiles $ocsp_csr
+		-subj $subj -infiles $ocsp_csr > $ocsp_cert.log 2>&1
 	check_exit_status $?
 	
 	#---------#---------#---------#---------#---------#---------#---------
@@ -687,9 +691,11 @@ __EOF__
 	# --- server-admin operations (generate server key and csr) ---
 	section_message "server-admin operations (generate server key and csr)"
 	
-	server_key=$server_dir/server_key.pem
-	server_csr=$server_dir/server_csr.pem
-	server_pass=test-server-pass
+	# RSA certificate
+
+	sv_rsa_key=$server_dir/sv_rsa_key.pem
+	sv_rsa_csr=$server_dir/sv_rsa_csr.pem
+	sv_rsa_pass=test-server-pass
 	
 	if [ $mingw = 0 ] ; then
 		subj='/C=JP/ST=Tokyo/O=TEST_DUMMY_COMPANY/CN=localhost.test_dummy.com/'
@@ -699,27 +705,29 @@ __EOF__
 	
 	start_message "genrsa ... generate server key#1"
 
-	$openssl_bin genrsa -aes256 -passout pass:$server_pass -out $server_key
+	$openssl_bin genrsa -aes256 -passout pass:$sv_rsa_pass -out $sv_rsa_key
 	check_exit_status $?
 
 	start_message "req ... generate server csr#1"
 
 	$openssl_bin req -new -subj $subj -sha256 \
-		-key $server_key -keyform pem -passin pass:$server_pass \
+		-key $sv_rsa_key -keyform pem -passin pass:$sv_rsa_pass \
 		-addext 'subjectAltName = DNS:localhost.test_dummy.com' \
-		-out $server_csr -outform pem
+		-out $sv_rsa_csr -outform pem
 	check_exit_status $?
 	
 	start_message "req ... verify server csr#1"
 
-	$openssl_bin req -verify -in $server_csr -inform pem \
+	$openssl_bin req -verify -in $sv_rsa_csr -inform pem \
 		-newhdr -noout -pubkey -subject -modulus -text \
 		-nameopt multiline -reqopt compatible \
-		-out $server_csr.verify.out
+		-out $sv_rsa_csr.verify.out
 	check_exit_status $?
 
 	start_message "req ... generate server csr#2 (interactive mode)"
 	
+	# RSA certificate (for revoke test)
+
 	revoke_key=$server_dir/revoke_key.pem
 	revoke_csr=$server_dir/revoke_csr.pem
 	revoke_pass=test-revoke-pass
@@ -733,6 +741,73 @@ revoke.test_dummy.com
 __EOF__
 	check_exit_status $?
 
+	# ECDSA certificate
+
+	sv_ecdsa_key=$server_dir/sv_ecdsa_key.pem
+	sv_ecdsa_csr=$server_dir/sv_ecdsa_csr.pem
+	sv_ecdsa_pass=test-ecdsa-pass
+
+	if [ $mingw = 0 ] ; then
+		subj='/C=JP/ST=Tokyo/O=TEST_DUMMY_COMPANY/CN=ecdsa.test_dummy.com/'
+	else
+		subj='//C=JP\ST=Tokyo\O=TEST_DUMMY_COMPANY\CN=ecdsa.test_dummy.com\'
+	fi
+	
+	start_message "ecparam ... generate server key#3"
+
+	$openssl_bin ecparam -name prime256v1 -genkey -out $sv_ecdsa_key
+	check_exit_status $?
+
+	start_message "req ... generate server csr#3"
+
+	$openssl_bin req -new -subj $subj -sha256 \
+		-key $sv_ecdsa_key -keyform pem -passin pass:$sv_ecdsa_pass \
+		-addext 'subjectAltName = DNS:ecdsa.test_dummy.com' \
+		-out $sv_ecdsa_csr -outform pem
+	check_exit_status $?
+	
+	start_message "req ... verify server csr#3"
+
+	$openssl_bin req -verify -in $sv_ecdsa_csr -inform pem \
+		-newhdr -noout -pubkey -subject -modulus -text \
+		-nameopt multiline -reqopt compatible \
+		-out $sv_ecdsa_csr.verify.out
+	check_exit_status $?
+
+	# GOST certificate
+
+	sv_gost_key=$server_dir/sv_gost_key.pem
+	sv_gost_csr=$server_dir/sv_gost_csr.pem
+	sv_gost_pass=test-gost-pass
+
+	if [ $mingw = 0 ] ; then
+		subj='/C=JP/ST=Tokyo/O=TEST_DUMMY_COMPANY/CN=gost.test_dummy.com/'
+	else
+		subj='//C=JP\ST=Tokyo\O=TEST_DUMMY_COMPANY\CN=gost.test_dummy.com\'
+	fi
+	
+	start_message "genpkey ... generate server key#4"
+
+	$openssl_bin genpkey -algorithm GOST2001 -pkeyopt paramset:A \
+		-pkeyopt dgst:streebog512 -out $sv_gost_key
+	check_exit_status $?
+
+	start_message "req ... generate server csr#4"
+
+	$openssl_bin req -new -subj $subj -streebog512 \
+		-key $sv_gost_key -keyform pem -passin pass:$sv_gost_pass \
+		-addext 'subjectAltName = DNS:gost.test_dummy.com' \
+		-out $sv_gost_csr -outform pem
+	check_exit_status $?
+	
+	start_message "req ... verify server csr#4"
+
+	$openssl_bin req -verify -in $sv_gost_csr -inform pem \
+		-newhdr -noout -pubkey -subject -modulus -text \
+		-nameopt multiline -reqopt compatible \
+		-out $sv_gost_csr.verify.out
+	check_exit_status $?
+
 	#---------#---------#---------#---------#---------#---------#---------
 	
 	# --- CA operations (issue cert for server) ---
@@ -740,9 +815,9 @@ __EOF__
 	
 	start_message "ca ... issue cert for server csr#1"
 	
-	server_cert=$server_dir/server_cert.pem
+	sv_rsa_cert=$server_dir/sv_rsa_cert.pem
 	$openssl_bin ca -batch -cert $ca_cert -keyfile $ca_key -key $ca_pass \
-		-in $server_csr -out $server_cert
+		-in $sv_rsa_csr -out $sv_rsa_cert > $sv_rsa_cert.log 2>&1
 	check_exit_status $?
 	
 	start_message "x509 ... issue cert for server csr#2"
@@ -751,7 +826,22 @@ __EOF__
 	$openssl_bin x509 -req -in $revoke_csr -CA $ca_cert -CAform pem \
 		-CAkey $ca_key -CAkeyform pem \
 		-CAserial $ca_dir/serial -set_serial 10 \
-		-passin pass:$ca_pass -CAcreateserial -out $revoke_cert
+		-passin pass:$ca_pass -CAcreateserial -out $revoke_cert \
+		> $revoke_cert.log 2>&1
+	check_exit_status $?
+	
+	start_message "ca ... issue cert for server csr#3"
+	
+	sv_ecdsa_cert=$server_dir/sv_ecdsa_cert.pem
+	$openssl_bin ca -batch -cert $ca_cert -keyfile $ca_key -key $ca_pass \
+		-in $sv_ecdsa_csr -out $sv_ecdsa_cert > $sv_ecdsa_cert.log 2>&1
+	check_exit_status $?
+	
+	start_message "ca ... issue cert for server csr#4"
+	
+	sv_gost_cert=$server_dir/sv_gost_cert.pem
+	$openssl_bin ca -batch -cert $ca_cert -keyfile $ca_key -key $ca_pass \
+		-in $sv_gost_csr -out $sv_gost_cert > $sv_gost_cert.log 2>&1
 	check_exit_status $?
 	
 	#---------#---------#---------#---------#---------#---------#---------
@@ -767,14 +857,15 @@ __EOF__
 		-crl_reason unspecified -crl_hold 1.2.840.10040.2.2 \
 		-crl_compromise `date -u '+%Y%m%d%H%M%SZ'` \
 		-crl_CA_compromise `date -u '+%Y%m%d%H%M%SZ'` \
-		-keyfile $ca_key -passin pass:$ca_pass -cert $ca_cert
+		-keyfile $ca_key -passin pass:$ca_pass -cert $ca_cert \
+		> $crl_file.log 2>&1
 	check_exit_status $?
 	
 	start_message "ca ... show certificate status by serial number"
 	$openssl_bin ca -config $ssldir/openssl.cnf -status 1
 
 	start_message "crl ... CA generates CRL"
-	$openssl_bin crl -in $crl_file -fingerprint
+	$openssl_bin crl -in $crl_file -fingerprint >> $crl_file.log 2>&1
 	check_exit_status $?
 	
 	crl_p7=$ca_dir/crl.p7
@@ -788,36 +879,37 @@ __EOF__
 	section_message "server-admin operations (check csr, verify cert, certhash)"
 	
 	start_message "asn1parse ... parse server csr#1"
-	$openssl_bin asn1parse -in $server_csr -i -dlimit 100 -length 1000 \
-		-strparse 01 > $server_csr.asn1parse.out
+	$openssl_bin asn1parse -in $sv_rsa_csr -i -dlimit 100 -length 1000 \
+		-strparse 01 > $sv_rsa_csr.asn1parse.out
 	check_exit_status $?
 	
 	start_message "verify ... server cert#1"
 	$openssl_bin verify -verbose -CAfile $ca_cert -CRLfile $crl_file \
-	       	-crl_check -issuer_checks -purpose sslserver $server_cert
+	       	-crl_check -issuer_checks -purpose sslserver $sv_rsa_cert
 	check_exit_status $?
 	
 	start_message "x509 ... get detail info about server cert#1"
-	$openssl_bin x509 -in $server_cert -text -C -dates -startdate -enddate \
+	$openssl_bin x509 -in $sv_rsa_cert -text -C -dates -startdate -enddate \
 		-fingerprint -issuer -issuer_hash -issuer_hash_old \
 		-subject -hash -subject_hash -subject_hash_old -ocsp_uri \
 		-ocspid -modulus -pubkey -serial -email -noout -trustout \
 		-alias -clrtrust -clrreject -next_serial -checkend 3600 \
-		-nameopt multiline -certopt compatible > $server_cert.x509.out
+		-nameopt multiline -certopt compatible > $sv_rsa_cert.x509.out
 	check_exit_status $?
 	
 	if [ $mingw = 0 ] ; then
 		start_message "certhash"
-		$openssl_bin certhash -v $server_dir
+		$openssl_bin certhash -v $server_dir \
+			> $server_dir/certhash.log 2>&1
 		check_exit_status $?
 	fi
 	
 	# self signed
 	start_message "x509 ... generate self signed server cert"
 	server_self_cert=$server_dir/server_self_cert.pem
-	$openssl_bin x509 -in $server_cert -signkey $server_key -keyform pem \
+	$openssl_bin x509 -in $sv_rsa_cert -signkey $sv_rsa_key -keyform pem \
 		-sigopt rsa_padding_mode:pss -sigopt rsa_pss_saltlen:8 \
-		-passin pass:$server_pass -out $server_self_cert -days 1
+		-passin pass:$sv_rsa_pass -out $server_self_cert -days 1
 	check_exit_status $?
 	
 	#---------#---------#---------#---------#---------#---------#---------
@@ -849,7 +941,7 @@ __EOF__
 	start_message "ca ... CA signs SPKAC csr"
 	spkaccert=$server_dir/spkac.cert
 	$openssl_bin ca -batch -cert $ca_cert -keyfile $ca_key -key $ca_pass \
-		-spkac $spkacreq -out $spkaccert
+		-spkac $spkacreq -out $spkaccert > $spkaccert.log 2>&1
 	check_exit_status $?
 	
 	start_message "x509 ... convert DER format SPKAC cert to PEM"
@@ -872,14 +964,15 @@ __EOF__
 	start_message "x509 ... trust testCA cert"
 	user1_trust=$user1_dir/user1_trust_ca.pem
 	$openssl_bin x509 -in $ca_cert -addtrust clientAuth \
-		-setalias "trusted testCA" -purpose -out $user1_trust
+		-setalias "trusted testCA" -purpose -out $user1_trust \
+		> $user1_trust.log 2>&1
 	check_exit_status $?
 	
 	start_message "req ... generate private key and csr for user1"
 	
-	user1_key=$user1_dir/user1_key.pem
-	user1_csr=$user1_dir/user1_csr.pem
-	user1_pass=test-user1-pass
+	cl_rsa_key=$user1_dir/cl_rsa_key.pem
+	cl_rsa_csr=$user1_dir/cl_rsa_csr.pem
+	cl_rsa_pass=test-user1-pass
 	
 	if [ $mingw = 0 ] ; then
 		subj='/C=JP/ST=Tokyo/O=TEST_DUMMY_COMPANY/CN=user1.test_dummy.com/'
@@ -887,8 +980,49 @@ __EOF__
 		subj='//C=JP\ST=Tokyo\O=TEST_DUMMY_COMPANY\CN=user1.test_dummy.com\'
 	fi
 	
-	$openssl_bin req -new -keyout $user1_key -out $user1_csr \
-		-passout pass:$user1_pass -subj $subj
+	$openssl_bin req -new -keyout $cl_rsa_key -out $cl_rsa_csr \
+		-passout pass:$cl_rsa_pass -subj $subj > $cl_rsa_csr.log 2>&1
+	check_exit_status $?
+	
+	start_message "req ... generate private key and csr for user2"
+	
+	cl_ecdsa_key=$user1_dir/cl_ecdsa_key.pem
+	cl_ecdsa_csr=$user1_dir/cl_ecdsa_csr.pem
+	cl_ecdsa_pass=test-user1-pass
+	
+	if [ $mingw = 0 ] ; then
+		subj='/C=JP/ST=Tokyo/O=TEST_DUMMY_COMPANY/CN=user2.test_dummy.com/'
+	else
+		subj='//C=JP\ST=Tokyo\O=TEST_DUMMY_COMPANY\CN=user2.test_dummy.com\'
+	fi
+	
+	$openssl_bin ecparam -name prime256v1 -genkey -out $cl_ecdsa_key
+	check_exit_status $?
+
+	$openssl_bin req -new -subj $subj -sha256 \
+		-key $cl_ecdsa_key -keyform pem -passin pass:$cl_ecdsa_pass \
+		-out $cl_ecdsa_csr -outform pem
+	check_exit_status $?
+	
+	start_message "req ... generate private key and csr for user3"
+	
+	cl_gost_key=$user1_dir/cl_gost_key.pem
+	cl_gost_csr=$user1_dir/cl_gost_csr.pem
+	cl_gost_pass=test-user1-pass
+	
+	if [ $mingw = 0 ] ; then
+		subj='/C=JP/ST=Tokyo/O=TEST_DUMMY_COMPANY/CN=user3.test_dummy.com/'
+	else
+		subj='//C=JP\ST=Tokyo\O=TEST_DUMMY_COMPANY\CN=user3.test_dummy.com\'
+	fi
+	
+	$openssl_bin genpkey -algorithm GOST2001 -pkeyopt paramset:A \
+		-pkeyopt dgst:streebog512 -out $cl_gost_key
+	check_exit_status $?
+
+	$openssl_bin req -new -subj $subj -streebog512 \
+		-key $cl_gost_key -keyform pem -passin pass:$cl_gost_pass \
+		-out $cl_gost_csr -outform pem
 	check_exit_status $?
 	
 	#---------#---------#---------#---------#---------#---------#---------
@@ -898,9 +1032,23 @@ __EOF__
 	
 	start_message "ca ... issue cert for user1"
 	
-	user1_cert=$user1_dir/user1_cert.pem
+	cl_rsa_cert=$user1_dir/cl_rsa_cert.pem
 	$openssl_bin ca -batch -cert $ca_cert -keyfile $ca_key -key $ca_pass \
-		-in $user1_csr -out $user1_cert
+		-in $cl_rsa_csr -out $cl_rsa_cert > $cl_rsa_cert.log 2>&1
+	check_exit_status $?
+
+	start_message "ca ... issue cert for user2"
+	
+	cl_ecdsa_cert=$user1_dir/cl_ecdsa_cert.pem
+	$openssl_bin ca -batch -cert $ca_cert -keyfile $ca_key -key $ca_pass \
+		-in $cl_ecdsa_csr -out $cl_ecdsa_cert > $cl_ecdsa_cert.log 2>&1
+	check_exit_status $?
+	
+	start_message "ca ... issue cert for user3"
+	
+	cl_gost_cert=$user1_dir/cl_gost_cert.pem
+	$openssl_bin ca -batch -cert $ca_cert -keyfile $ca_key -key $ca_pass \
+		-in $cl_gost_csr -out $cl_gost_cert > $cl_gost_cert.log 2>&1
 	check_exit_status $?
 }
 
@@ -925,7 +1073,7 @@ __EOF__
 	
 	start_message "ts ... print time stamp request"
 	
-	$openssl_bin ts -query -in $tsa_tsq -text
+	$openssl_bin ts -query -in $tsa_tsq -text -out $tsa_tsq.log
 	check_exit_status $?
 	
 	# Reply
@@ -979,9 +1127,9 @@ __EOF__
 	
 	$openssl_bin cms -sign -in $cms_txt -text \
 		-out $cms_sig -outform smime \
-		-signer $user1_cert -inkey $user1_key -keyform pem \
+		-signer $cl_rsa_cert -inkey $cl_rsa_key -keyform pem \
 		-keyopt rsa_padding_mode:pss \
-		-passin pass:$user1_pass -md sha256 \
+		-passin pass:$cl_rsa_pass -md sha256 \
 		-from user1@test_dummy.com -to server@test_dummy.com \
 		-subject "test openssl cms" \
 		-receipt_request_from server@test_dummy.com \
@@ -992,7 +1140,7 @@ __EOF__
 	start_message "cms ... encrypt message"
 
 	$openssl_bin cms -encrypt -aes256 -binary -in $cms_sig -inform smime \
-		-recip $server_cert -keyopt rsa_padding_mode:oaep \
+		-recip $sv_rsa_cert -keyopt rsa_padding_mode:oaep \
 		-out $cms_enc
 	check_exit_status $?
 
@@ -1000,16 +1148,17 @@ __EOF__
 	start_message "cms ... decrypt message"
 
 	$openssl_bin cms -decrypt -in $cms_enc -out $cms_dec \
-		-recip $server_cert -inkey $server_key -passin pass:$server_pass
+		-recip $sv_rsa_cert -inkey $sv_rsa_key -passin pass:$sv_rsa_pass
 	check_exit_status $?
 
 	# verify
 	start_message "cms ... verify message"
 	
 	$openssl_bin cms -verify -in $cms_dec \
-		-CAfile $ca_cert -certfile $user1_cert -nointern \
+		-CAfile $ca_cert -certfile $cl_rsa_cert -nointern \
 		-check_ss_sig -issuer_checks -policy_check -x509_strict \
-		-signer $cms_sgr -text -out $cms_ver -receipt_request_print
+		-signer $cms_sgr -text -out $cms_ver -receipt_request_print \
+		> $cms_ver.log 2>&1
 	check_exit_status $?
 
 	diff -b $cms_ver $cms_txt
@@ -1073,15 +1222,15 @@ __EOF__
 	start_message "cms ... sign to receipt"
 	
 	$openssl_bin cms -sign_receipt -in $cms_sig -out $cms_srp \
-		-signer $server_cert -inkey $server_key \
-		-passin pass:$server_pass -md sha256
+		-signer $sv_rsa_cert -inkey $sv_rsa_key \
+		-passin pass:$sv_rsa_pass -md sha256
 	check_exit_status $?
 
 	# verify_receipt
 	start_message "cms ... verify receipt"
 	
 	$openssl_bin cms -verify_receipt $cms_srp -rctform smime -in $cms_sig \
-		-CAfile $ca_cert -certfile $server_cert
+		-CAfile $ca_cert -certfile $sv_rsa_cert
 	check_exit_status $?
 	
 	# encrypt with pwri
@@ -1124,7 +1273,7 @@ __EOF__
 	start_message "smime ... encrypt message"
 
 	$openssl_bin smime -encrypt -aes256 -binary -in $smime_txt \
-		-out $smime_enc $server_cert
+		-out $smime_enc $sv_rsa_cert
 	check_exit_status $?
 
 	# sign
@@ -1132,8 +1281,8 @@ __EOF__
 	
 	$openssl_bin smime -sign -in $smime_enc -text -inform smime \
 		-out $smime_sig -outform smime \
-		-signer $user1_cert -inkey $user1_key -keyform pem \
-		-passin pass:$user1_pass -md sha256 \
+		-signer $cl_rsa_cert -inkey $cl_rsa_key -keyform pem \
+		-passin pass:$cl_rsa_pass -md sha256 \
 		-from user1@test_dummy.com -to server@test_dummy.com \
 		-subject "test openssl smime"
 	check_exit_status $?
@@ -1148,7 +1297,7 @@ __EOF__
 	start_message "smime ... verify message"
 	
 	$openssl_bin smime -verify -in $smime_sig \
-		-CAfile $ca_cert -certfile $user1_cert -nointern \
+		-CAfile $ca_cert -certfile $cl_rsa_cert -nointern \
 		-check_ss_sig -issuer_checks -policy_check -x509_strict \
 		-signer $smime_sgr -text -out $smime_ver
 	check_exit_status $?
@@ -1157,7 +1306,7 @@ __EOF__
 	start_message "smime ... decrypt message"
 
 	$openssl_bin smime -decrypt -in $smime_ver -out $smime_dec \
-		-recip $server_cert -inkey $server_key -passin pass:$server_pass
+		-recip $sv_rsa_cert -inkey $sv_rsa_key -passin pass:$sv_rsa_pass
 	check_exit_status $?
 
 	diff $smime_dec $smime_txt
@@ -1169,19 +1318,19 @@ function test_ocsp {
 	section_message "OCSP operations"
 	
 	# get key without pass
-	user1_key_nopass=$user1_dir/user1_key_nopass.pem
-	$openssl_bin pkey -in $user1_key -passin pass:$user1_pass \
-		-out $user1_key_nopass
+	cl_rsa_key_nopass=$user1_dir/cl_rsa_key_nopass.pem
+	$openssl_bin pkey -in $cl_rsa_key -passin pass:$cl_rsa_pass \
+		-out $cl_rsa_key_nopass
 	check_exit_status $?
 
 	# request
 	start_message "ocsp ... create OCSP request"
 	
 	ocsp_req=$user1_dir/ocsp_req.der
-	$openssl_bin ocsp -issuer $ca_cert -cert $server_cert \
+	$openssl_bin ocsp -issuer $ca_cert -cert $sv_rsa_cert \
 		-cert $revoke_cert -serial 1 -nonce -no_certs -CAfile $ca_cert \
-		-signer $user1_cert -signkey $user1_key_nopass \
-		-sign_other $user1_cert -sha256 \
+		-signer $cl_rsa_cert -signkey $cl_rsa_key_nopass \
+		-sign_other $cl_rsa_cert -sha256 \
 		-reqout $ocsp_req -req_text -out $ocsp_req.out
 	check_exit_status $?
 	
@@ -1215,7 +1364,7 @@ function test_ocsp {
 	start_message "ocsp ... send OCSP request to server"
 	
 	ocsp_qry=$user1_dir/ocsp_qry.der
-	$openssl_bin ocsp -issuer $ca_cert -cert $server_cert \
+	$openssl_bin ocsp -issuer $ca_cert -cert $sv_rsa_cert \
 		-cert $revoke_cert -CAfile $ca_cert -no_nonce \
 		-url http://localhost:$ocsp_port -timeout 10 -text \
 		-header Host localhost \
@@ -1243,34 +1392,286 @@ function test_pkcs {
 	check_exit_status $?
 	
 	start_message "pkcs8 ... convert key to pkcs8"
-	$openssl_bin pkcs8 -in $user1_key -topk8 -out $user1_key.p8 \
-		-passin pass:$user1_pass -passout pass:$user1_pass \
+	$openssl_bin pkcs8 -in $cl_rsa_key -topk8 -out $cl_rsa_key.p8 \
+		-passin pass:$cl_rsa_pass -passout pass:$cl_rsa_pass \
 		-v1 pbeWithSHA1AndDES-CBC -v2 des3
 	check_exit_status $?
 	
 	start_message "pkcs8 ... convert pkcs8 to key in DER format"
-	$openssl_bin pkcs8 -in $user1_key.p8 -passin pass:$user1_pass \
-		-outform DER -out $user1_key.p8.der
+	$openssl_bin pkcs8 -in $cl_rsa_key.p8 -passin pass:$cl_rsa_pass \
+		-outform DER -out $cl_rsa_key.p8.der
 	check_exit_status $?
 	
 	start_message "pkcs12 ... create"
-	$openssl_bin pkcs12 -export -in $server_cert -inkey $server_key \
-		-passin pass:$server_pass -certfile $ca_cert -CAfile $ca_cert \
+	$openssl_bin pkcs12 -export -in $sv_rsa_cert -inkey $sv_rsa_key \
+		-passin pass:$sv_rsa_pass -certfile $ca_cert -CAfile $ca_cert \
 		-caname "caname_server_p12" \
 		-certpbe AES-256-CBC -keypbe AES-256-CBC -chain \
 		-name "name_server_p12" -des3 -maciter -macalg sha256 \
 		-CSP "csp_server_p12" -LMK -keyex \
-		-passout pass:$pkcs_pass -out $server_cert.p12
+		-passout pass:$pkcs_pass -out $sv_rsa_cert.p12
 	check_exit_status $?
 	
 	start_message "pkcs12 ... verify"
-	$openssl_bin pkcs12 -in $server_cert.p12 -passin pass:$pkcs_pass -info \
-		-noout
+	$openssl_bin pkcs12 -in $sv_rsa_cert.p12 -passin pass:$pkcs_pass -info \
+		-noout > $sv_rsa_cert.p12.log 2>&1
 	check_exit_status $?
 	
 	start_message "pkcs12 ... private key to PEM without encryption"
-	$openssl_bin pkcs12 -in $server_cert.p12 -password pass:$pkcs_pass \
-		-nocerts -nomacver -nodes -out $server_cert.p12.pem
+	$openssl_bin pkcs12 -in $sv_rsa_cert.p12 -password pass:$pkcs_pass \
+		-nocerts -nomacver -nodes -out $sv_rsa_cert.p12.pem
+	check_exit_status $?
+}
+
+function test_sc_by_protocol_version {
+	sc=$1
+	ver=$2
+	msg=$3
+	cid=$4
+
+	if [ $gost_tests = 1 ] && [ $ver = "tls1_3" -o $sc != 00 ] ; then
+		return
+	fi
+
+	groups_and_cipher=""
+	if [ $ver = "tls1_3" ] ; then
+		# Expect HelloRetryRequest
+		groups_and_cipher="-groups P-521:P-384 -cipher ALL"
+	fi
+
+	s_client_out=$user1_dir/s_client_${sc}_${ver}.out
+	
+	start_message "s_client ... connect to TLS/SSL test server by $ver"
+	sleep $test_pause_sec
+	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
+		-$ver $groups_and_cipher \
+		-msg -tlsextdebug < /dev/null > $s_client_out 2>&1
+	check_exit_status $?
+	
+	# check downgrade bits in SH
+	if [ $ver = "tls1" -o $ver = "tls1_1" ] ; then
+		perl -0ne \
+		    'exit (!/ServerHello\n.*\n.*44 4f\n.*57 4e 47 52 44 00/m)' \
+		    $s_client_out
+		check_exit_status $?
+	elif [ $ver = "tls1_2" ] ; then
+		perl -0ne \
+		    'exit (!/ServerHello\n.*\n.*44 4f\n.*57 4e 47 52 44 01/m)' \
+		    $s_client_out
+		check_exit_status $?
+	elif [ $ver = "tls1_3" ] ; then
+		perl -0ne \
+		    'exit (/ServerHello\n.*\n.*44 4f\n.*57 4e 47 52 44/m)' \
+		    $s_client_out
+		check_exit_status $?
+	fi
+
+	# check HRR hash
+	if [ $ver = "tls1_3" ] ; then
+		perl -0ne \
+		    'exit (!/ServerHello\n.*cf 21 ad 74 e5 9a 61 11 be 1d\n.*8c 02 1e 65 b8 91 c2 a2 11 16 7a bb 8c 5e 07 9e\n.*09 e2 c8 a8 33 9c/m)' \
+		    $s_client_out
+		check_exit_status $?
+	fi
+
+	if [ $ver = "tls1_3" ] ; then
+		grep 'Server Temp Key: ECDH, P-384, 384 bits' $s_client_out \
+			> /dev/null
+		check_exit_status $?
+	fi
+
+	# OpenSSL1.1.1 with TLSv1.3 does not call SSL_SESSION_print() until 
+	# NewSessionTicket arrival
+	if ! [ $cid = "1" -a $ver = "tls1_3" ] ; then
+		grep "$msg" $s_client_out > /dev/null
+		check_exit_status $?
+	fi
+	
+	grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
+	check_exit_status $?
+}
+
+function test_sc_all_cipher {
+	sc=$1
+	ver=$2
+
+	if [ $gost_tests = 1 ] && [ $ver = "tls1_3" -o $sc != 00 ] ; then
+		return
+	fi
+
+	copt=cipher
+	ciphers=$user1_dir/ciphers_${sc}_${ver}
+
+	if [ $ver = "tls1_3" ] ; then
+		if [ $c_id = "0" ] ; then
+			echo "AEAD-AES256-GCM-SHA384" > $ciphers
+			echo "AEAD-CHACHA20-POLY1305-SHA256" >> $ciphers
+			echo "AEAD-AES128-GCM-SHA256" >> $ciphers
+		else
+			echo "TLS_AES_256_GCM_SHA384" > $ciphers
+			echo "TLS_CHACHA20_POLY1305_SHA256" >> $ciphers
+			echo "TLS_AES_128_GCM_SHA256" >> $ciphers
+			copt=ciphersuites
+		fi
+	else
+		s_ciph=$server_dir/s_ciph_${sc}_${ver}
+		cipher_string=""
+		if [ $s_id = "0" ] ; then
+			if [ $ecdsa_tests = 1 ] ; then
+				cipher_string="ECDSA+TLSv1.2:!TLSv1.3"
+			elif [ $gost_tests = 1 ] ; then
+				cipher_string="kGOST:!NULL:!TLSv1.3"
+			else
+				cipher_string="ALL:!ECDSA:!kGOST:!TLSv1.3"
+			fi
+		fi
+		$s_bin ciphers -v $cipher_string | awk '{print $1}' > $s_ciph
+
+		c_ciph=$user1_dir/c_ciph_${sc}_${ver}
+		cipher_string=""
+		if [ $c_id = "0" ] ; then
+			if [ $ecdsa_tests = 1 ] ; then
+				cipher_string="ECDSA+TLSv1.2:!TLSv1.3"
+			elif [ $gost_tests = 1 ] ; then
+				cipher_string="kGOST:!NULL:!TLSv1.3"
+			else
+				cipher_string="ALL:!ECDSA:!kGOST:!TLSv1.3"
+			fi
+		fi
+		$c_bin ciphers -v $cipher_string | awk '{print $1}' > $c_ciph
+
+		grep -x -f $s_ciph $c_ciph | sort -R > $ciphers
+	fi
+
+	cnum=0
+	for c in `cat $ciphers` ; do
+		cnum=`expr $cnum + 1`
+		cnstr=`printf %03d $cnum`
+		s_client_out=$user1_dir/s_client_${sc}_${ver}_tls_${cnstr}_${c}.out
+	
+		start_message "s_client ... connect to TLS/SSL test server with [ $cnstr ] $ver $c"
+		sleep $test_pause_sec
+		$c_bin s_client -connect $host:$port -CAfile $ca_cert \
+			-$ver -$copt $c \
+			-msg -tlsextdebug < /dev/null > $s_client_out 2>&1
+		check_exit_status $?
+	
+		grep "Cipher is $c" $s_client_out > /dev/null
+		check_exit_status $?
+	
+		grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
+		check_exit_status $?
+	done
+}
+
+function test_sc_session_reuse {
+	sc=$1
+	ver=$2
+
+	if [ $gost_tests = 1 ] && [ $ver = "tls1_3" -o $sc != 00 ] ; then
+		return
+	fi
+
+	sess_dat=$user1_dir/s_client_${sc}_${ver}_sess.dat
+
+	# Get session ticket to reuse
+	
+	s_client_out=$user1_dir/s_client_${sc}_${ver}_tls_reuse_1.out
+	
+	start_message "s_client ... connect to TLS/SSL test server to get session id $ver"
+	sleep $test_pause_sec
+	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
+		-$ver -alpn "spdy/3,http/1.1" -sess_out $sess_dat \
+		-msg -tlsextdebug < /dev/null > $s_client_out 2>&1
+	check_exit_status $?
+	
+	grep '^New, TLS.*$' $s_client_out > /dev/null
+	check_exit_status $?
+	
+	grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
+	check_exit_status $?
+	
+	# Reuse session ticket
+	
+	s_client_out=$user1_dir/s_client_${sc}_${ver}_tls_reuse_2.out
+	
+	start_message "s_client ... connect to TLS/SSL test server reusing session id $ver"
+	sleep $test_pause_sec
+	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
+		-$ver -sess_in $sess_dat \
+		-msg -tlsextdebug < /dev/null > $s_client_out 2>&1
+	check_exit_status $?
+	
+	grep '^Reused, TLS.*$' $s_client_out > /dev/null
+	check_exit_status $?
+	
+	grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
+	check_exit_status $?
+
+	# sess_id
+
+	start_message "sess_id"
+	$c_bin sess_id -in $sess_dat -text -out $sess_dat.out
+	check_exit_status $?
+}
+
+function test_sc_verify {
+	sc=$1
+	ver=$2
+
+	if [ $gost_tests = 1 ] && [ $ver = "tls1_3" -o $sc != 00 ] ; then
+		return
+	fi
+
+	# invalid verification pattern
+	
+	s_client_out=$user1_dir/s_client_${sc}_${ver}_tls_invalid.out
+	
+	start_message "s_client ... connect to tls/ssl test server but verify error $ver"
+	sleep $test_pause_sec
+	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
+		-$ver -showcerts -crl_check -issuer_checks -policy_check \
+		-status -servername xyz \
+		-msg -tlsextdebug < /dev/null > $s_client_out 2>&1
+	check_exit_status $?
+	
+	grep 'verify return code: 0 (ok)' $s_client_out > /dev/null
+	if [ $? -eq 0 ] ; then
+		check_exit_status 1
+	else
+		check_exit_status 0
+	fi
+
+	# client certificate pattern
+	
+	s_client_out=$user1_dir/s_client_${sc}_${ver}_tls_client_cert.out
+	
+	start_message "s_client ... connect to tls/ssl test server with client certificate $ver"
+
+	if [ $ecdsa_tests = 1 ] ; then
+		echo "Using ECDSA client certificate"
+		crt=$cl_ecdsa_cert
+		key=$cl_ecdsa_key
+		pwd=$cl_ecdsa_pass
+	elif [ $gost_tests = 1 ] ; then
+		echo "Using GOST client certificate"
+		crt=$cl_gost_cert
+		key=$cl_gost_key
+		pwd=$cl_gost_pass
+	else
+		echo "Using RSA client certificate"
+		crt=$cl_rsa_cert
+		key=$cl_rsa_key
+		pwd=$cl_rsa_pass
+	fi
+
+	sleep $test_pause_sec
+	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
+		-$ver -cert $crt -key $key -pass pass:$pwd \
+		-msg -tlsextdebug < /dev/null > $s_client_out 2>&1
+	check_exit_status $?
+
+	grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
 	check_exit_status $?
 }
 
@@ -1301,8 +1702,24 @@ function test_server_client {
 
 	host="localhost"
 	port=4433
-	sess_dat=$user1_dir/s_client_${sc}_sess.dat
 	s_server_out=$server_dir/s_server_${sc}_tls.out
+
+	if [ $ecdsa_tests = 1 ] ; then
+		echo "Using ECDSA certificate"
+		crt=$sv_ecdsa_cert
+		key=$sv_ecdsa_key
+		pwd=$sv_ecdsa_pass
+	elif [ $gost_tests = 1 ] ; then
+		echo "Using GOST certificate"
+		crt=$sv_gost_cert
+		key=$sv_gost_key
+		pwd=$sv_gost_pass
+	else
+		echo "Using RSA certificate"
+		crt=$sv_rsa_cert
+		key=$sv_rsa_key
+		pwd=$sv_rsa_pass
+	fi
 
 	$s_bin version | grep 'OpenSSL 1.1.1' > /dev/null
 	if [ $? -eq 0 ] ; then
@@ -1313,163 +1730,41 @@ function test_server_client {
 	
 	start_message "s_server ... start TLS/SSL test server"
 	$s_bin s_server -accept $port -CAfile $ca_cert \
-		-cert $server_cert -key $server_key -pass pass:$server_pass \
+		-cert $crt -key $key -pass pass:$pwd \
 		-context "appstest.sh" -id_prefix "APPSTEST.SH" -crl_check \
 		-alpn "http/1.1,spdy/3" -www -cipher ALL $extra_opts \
-		-msg -tlsextdebug > $s_server_out 2>&1 &
+		-msg -tlsextdebug -verify 3 -groups X25519:P-384:P-256 \
+		-status -servername xyz -cert2 $crt -key2 $key \
+		> $s_server_out 2>&1 &
 	check_exit_status $?
 	s_server_pid=$!
 	echo "s_server pid = [ $s_server_pid ]"
 	sleep 1
 	
-	# protocol = TLSv1
-	
-	s_client_out=$user1_dir/s_client_${sc}_tls_1_0.out
-	
-	start_message "s_client ... connect to TLS/SSL test server by TLSv1"
-	sleep $test_pause_sec
-	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
-		-tls1 -msg -tlsextdebug < /dev/null > $s_client_out 2>&1
-	check_exit_status $?
-	
-	grep 'Protocol  : TLSv1$' $s_client_out > /dev/null
-	check_exit_status $?
-	
-	grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
-	check_exit_status $?
-	
-	# protocol = TLSv1.1
-	
-	s_client_out=$user1_dir/s_client_${sc}_tls_1_1.out
-	
-	start_message "s_client ... connect to TLS/SSL test server by TLSv1.1"
-	sleep $test_pause_sec
-	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
-		-tls1_1 -msg -tlsextdebug < /dev/null > $s_client_out 2>&1
-	check_exit_status $?
-	
-	grep 'Protocol  : TLSv1\.1$' $s_client_out > /dev/null
-	check_exit_status $?
-	
-	grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
-	check_exit_status $?
-	
-	# protocol = TLSv1.2
-	
-	s_client_out=$user1_dir/s_client_${sc}_tls_1_2.out
-	
-	start_message "s_client ... connect to TLS/SSL test server by TLSv1.2"
-	sleep $test_pause_sec
-	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
-		-tls1_2 -msg -tlsextdebug < /dev/null > $s_client_out 2>&1
-	check_exit_status $?
-	
-	grep 'Protocol  : TLSv1\.2$' $s_client_out > /dev/null
-	check_exit_status $?
-	
-	grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
-	check_exit_status $?
+	# test by protocol version
+	test_sc_by_protocol_version $sc tls1   'Protocol  : TLSv1$'    $c_id
+	test_sc_by_protocol_version $sc tls1_1 'Protocol  : TLSv1\.1$' $c_id
+	test_sc_by_protocol_version $sc tls1_2 'Protocol  : TLSv1\.2$' $c_id
+	test_sc_by_protocol_version $sc tls1_3 'Protocol  : TLSv1\.3$' $c_id
 	
 	# all available ciphers with random order
+	test_sc_all_cipher $sc tls1_2
+	test_sc_all_cipher $sc tls1_3
 	
-	s_ciph=$server_dir/s_ciph_${sc}
-	if [ $s_id = "0" ] ; then
-		$s_bin ciphers -v ALL:!ECDSA:!kGOST:!TLSv1.3 | awk '{print $1}' > $s_ciph
-	else
-		$s_bin ciphers -v | awk '{print $1}' > $s_ciph
-	fi
-
-	c_ciph=$user1_dir/c_ciph_${sc}
-	if [ $c_id = "0" ] ; then
-		$c_bin ciphers -v ALL:!ECDSA:!kGOST:!TLSv1.3 | awk '{print $1}' > $c_ciph
-	else
-		$c_bin ciphers -v | awk '{print $1}' > $c_ciph
-	fi
-
-	ciphers=$user1_dir/ciphers_${sc}
-	grep -x -f $s_ciph $c_ciph | sort -R > $ciphers
-
-	cnum=0
-	for c in `cat $ciphers` ; do
-		cnum=`expr $cnum + 1`
-		cnstr=`printf %03d $cnum`
-		s_client_out=$user1_dir/s_client_${sc}_tls_${cnstr}_${c}.out
-	
-		start_message "s_client ... connect to TLS/SSL test server with [ $cnstr ] $c"
-		sleep $test_pause_sec
-		$c_bin s_client -connect $host:$port -CAfile $ca_cert \
-			-tls1_2 -cipher $c \
-			-msg -tlsextdebug < /dev/null > $s_client_out 2>&1
-		check_exit_status $?
-	
-		grep "Cipher    : $c" $s_client_out > /dev/null
-		check_exit_status $?
-	
-		grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
-		check_exit_status $?
-	done
-	
-	# Get session ticket to reuse
-	
-	s_client_out=$user1_dir/s_client_${sc}_tls_reuse_1.out
-	
-	start_message "s_client ... connect to TLS/SSL test server to get session id"
-	sleep $test_pause_sec
-	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
-		-tls1_2 -alpn "spdy/3,http/1.1" -sess_out $sess_dat \
-		-msg -tlsextdebug < /dev/null > $s_client_out 2>&1
-	check_exit_status $?
-	
-	grep '^New, TLS.*$' $s_client_out > /dev/null
-	check_exit_status $?
-	
-	grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
-	check_exit_status $?
-	
-	# Reuse session ticket
-	
-	s_client_out=$user1_dir/s_client_${sc}_tls_reuse_2.out
-	
-	start_message "s_client ... connect to TLS/SSL test server reusing session id"
-	sleep $test_pause_sec
-	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
-		-tls1_2 -sess_in $sess_dat \
-		-msg -tlsextdebug < /dev/null > $s_client_out 2>&1
-	check_exit_status $?
-	
-	grep '^Reused, TLS.*$' $s_client_out > /dev/null
-	check_exit_status $?
-	
-	grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
-	check_exit_status $?
+	# session resumption
+	test_sc_session_reuse $sc tls1_2
 	
 	# invalid verification pattern
-	
-	s_client_out=$user1_dir/s_client_${sc}_tls_invalid.out
-	
-	start_message "s_client ... connect to TLS/SSL test server but verify error"
-	sleep $test_pause_sec
-	$c_bin s_client -connect $host:$port -CAfile $ca_cert \
-		-tls1_2 -showcerts -crl_check -issuer_checks -policy_check \
-		-msg -tlsextdebug < /dev/null > $s_client_out 2>&1
-	check_exit_status $?
-	
-	grep 'Verify return code: 0 (ok)' $s_client_out > /dev/null
-	if [ $? -eq 0 ] ; then
-		check_exit_status 1
-	else
-		check_exit_status 0
-	fi
+	test_sc_verify $sc tls1_2
+	test_sc_verify $sc tls1_3
 	
 	# s_time
-	start_message "s_time ... connect to TLS/SSL test server"
-	$c_bin s_time -connect $host:$port -CApath $ca_dir -time 2
-	check_exit_status $?
-	
-	# sess_id
-	start_message "sess_id"
-	$c_bin sess_id -in $sess_dat -text -out $sess_dat.out
-	check_exit_status $?
+	if [ $gost_tests != 1 ] ; then
+		start_message "s_time ... connect to TLS/SSL test server"
+		$c_bin s_time -connect $host:$port -CApath $ca_dir -time 1 \
+			> $server_dir/s_time_${sc}.log
+		check_exit_status $?
+	fi
 	
 	stop_s_server
 }
@@ -1499,13 +1794,23 @@ function test_version {
 #---------#---------#---------#---------#---------#---------#---------#---------
 
 openssl_bin=${OPENSSL:-/usr/bin/openssl}
-other_openssl_bin=${OTHER_OPENSSL:-/usr/local/bin/eopenssl}
+other_openssl_bin=${OTHER_OPENSSL:-/usr/local/bin/eopenssl11}
 
+ecdsa_tests=0
+gost_tests=0
 interop_tests=0
 no_long_tests=0
 
 while [ "$1" != "" ]; do
 	case $1 in
+		-e | --ecdsa)		shift
+					ecdsa_tests=1
+					gost_tests=0
+					;;
+		-g | --gost)		shift
+					gost_tests=1
+					ecdsa_tests=0
+					;;
 		-i | --interop)		shift
 					interop_tests=1
 					;;

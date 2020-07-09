@@ -3,10 +3,10 @@
 #define _RADEON_TRACE_H_
 
 #include <linux/stringify.h>
-#include <linux/types.h>
 #include <linux/tracepoint.h>
+#include <linux/types.h>
 
-#include <drm/drmP.h>
+#include <drm/drm_file.h>
 
 #undef TRACE_SYSTEM
 #define TRACE_SYSTEM radeon
@@ -205,4 +205,5 @@ DEFINE_EVENT(radeon_semaphore_request, radeon_semaphore_wait,
 
 /* This part must be outside protection */
 #undef TRACE_INCLUDE_PATH
-#define TRACE_INCLUDE_PATH .
+#define TRACE_INCLUDE_PATH ../../drivers/gpu/drm/radeon
+#include <trace/define_trace.h>

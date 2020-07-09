@@ -1,4 +1,4 @@
-/*	$OpenBSD: viapm.c,v 1.18 2020/01/09 14:35:19 mpi Exp $	*/
+/*	$OpenBSD: viapm.c,v 1.19 2020/07/06 13:33:09 pirofti Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis <kettenis@openbsd.org>
@@ -177,7 +177,9 @@ static struct timecounter viapm_timecounter = {
 	0xffffff,		/* counter_mask */
 	VIAPM_FREQUENCY,	/* frequency */
 	"VIAPM",		/* name */
-	1000			/* quality */
+	1000,			/* quality */
+	NULL,			/* private bits */
+	0,			/* expose to user */
 };
 
 struct timeout viapm_timeout;

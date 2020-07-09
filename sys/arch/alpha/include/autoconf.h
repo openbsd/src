@@ -1,4 +1,4 @@
-/* $OpenBSD: autoconf.h,v 1.12 2001/09/01 05:48:18 jason Exp $ */
+/* $OpenBSD: autoconf.h,v 1.13 2020/05/25 15:00:23 deraadt Exp $ */
 /* $NetBSD: autoconf.h,v 1.19 2000/06/08 03:10:06 thorpej Exp $ */
 
 /*
@@ -76,7 +76,8 @@ struct bootinfo_v1 {
 	int	(*cngetc)(void);	/* 160: console getc pointer	*/
 	void	(*cnputc)(int);		/* 168: console putc pointer	*/
 	void	(*cnpollc)(int);	/* 176: console pollc pointer	*/
-	u_long	pad[9];			/* 184: rsvd for future use	*/
+	long	howto;			/* 184: boothowto flags		*/
+	u_long	pad[8];			/* 192: rsvd for future use	*/
 					/* 256: total size		*/
 };
 

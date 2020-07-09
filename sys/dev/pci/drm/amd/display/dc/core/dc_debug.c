@@ -33,7 +33,6 @@
 
 #include "core_status.h"
 #include "core_types.h"
-#include "hw_sequencer.h"
 
 #include "resource.h"
 
@@ -115,16 +114,16 @@ void pre_surface_trace(
 				plane_state->clip_rect.height);
 
 		SURFACE_TRACE(
-				"plane_state->plane_size.grph.surface_size.x = %d;\n"
-				"plane_state->plane_size.grph.surface_size.y = %d;\n"
-				"plane_state->plane_size.grph.surface_size.width = %d;\n"
-				"plane_state->plane_size.grph.surface_size.height = %d;\n"
-				"plane_state->plane_size.grph.surface_pitch = %d;\n",
-				plane_state->plane_size.grph.surface_size.x,
-				plane_state->plane_size.grph.surface_size.y,
-				plane_state->plane_size.grph.surface_size.width,
-				plane_state->plane_size.grph.surface_size.height,
-				plane_state->plane_size.grph.surface_pitch);
+				"plane_state->plane_size.surface_size.x = %d;\n"
+				"plane_state->plane_size.surface_size.y = %d;\n"
+				"plane_state->plane_size.surface_size.width = %d;\n"
+				"plane_state->plane_size.surface_size.height = %d;\n"
+				"plane_state->plane_size.surface_pitch = %d;\n",
+				plane_state->plane_size.surface_size.x,
+				plane_state->plane_size.surface_size.y,
+				plane_state->plane_size.surface_size.width,
+				plane_state->plane_size.surface_size.height,
+				plane_state->plane_size.surface_pitch);
 
 
 		SURFACE_TRACE(
@@ -202,20 +201,20 @@ void update_surface_trace(
 			SURFACE_TRACE(
 					"plane_info->color_space = %d;\n"
 					"plane_info->format = %d;\n"
-					"plane_info->plane_size.grph.surface_pitch = %d;\n"
-					"plane_info->plane_size.grph.surface_size.height = %d;\n"
-					"plane_info->plane_size.grph.surface_size.width = %d;\n"
-					"plane_info->plane_size.grph.surface_size.x = %d;\n"
-					"plane_info->plane_size.grph.surface_size.y = %d;\n"
+					"plane_info->plane_size.surface_pitch = %d;\n"
+					"plane_info->plane_size.surface_size.height = %d;\n"
+					"plane_info->plane_size.surface_size.width = %d;\n"
+					"plane_info->plane_size.surface_size.x = %d;\n"
+					"plane_info->plane_size.surface_size.y = %d;\n"
 					"plane_info->rotation = %d;\n"
 					"plane_info->stereo_format = %d;\n",
 					update->plane_info->color_space,
 					update->plane_info->format,
-					update->plane_info->plane_size.grph.surface_pitch,
-					update->plane_info->plane_size.grph.surface_size.height,
-					update->plane_info->plane_size.grph.surface_size.width,
-					update->plane_info->plane_size.grph.surface_size.x,
-					update->plane_info->plane_size.grph.surface_size.y,
+					update->plane_info->plane_size.surface_pitch,
+					update->plane_info->plane_size.surface_size.height,
+					update->plane_info->plane_size.surface_size.width,
+					update->plane_info->plane_size.surface_size.x,
+					update->plane_info->plane_size.surface_size.y,
 					update->plane_info->rotation,
 					update->plane_info->stereo_format);
 
@@ -310,30 +309,28 @@ void context_timing_trace(
 		struct resource_context *res_ctx)
 {
 	int i;
-	struct dc  *core_dc = dc;
-	int h_pos[MAX_PIPES], v_pos[MAX_PIPES];
+	int h_pos[MAX_PIPES] = {0}, v_pos[MAX_PIPES] = {0};
 	struct crtc_position position;
-	unsigned int underlay_idx = core_dc->res_pool->underlay_pipe_index;
+	unsigned int underlay_idx = dc->res_pool->underlay_pipe_index;
 	DC_LOGGER_INIT(dc->ctx->logger);
 
 
-	for (i = 0; i < core_dc->res_pool->pipe_count; i++) {
+	for (i = 0; i < dc->res_pool->pipe_count; i++) {
 		struct pipe_ctx *pipe_ctx = &res_ctx->pipe_ctx[i];
 		/* get_position() returns CRTC vertical/horizontal counter
 		 * hence not applicable for underlay pipe
 		 */
-		if (pipe_ctx->stream == NULL
-				 || pipe_ctx->pipe_idx == underlay_idx)
+		if (pipe_ctx->stream == NULL || pipe_ctx->pipe_idx == underlay_idx)
 			continue;
 
 		pipe_ctx->stream_res.tg->funcs->get_position(pipe_ctx->stream_res.tg, &position);
 		h_pos[i] = position.horizontal_count;
 		v_pos[i] = position.vertical_count;
 	}
-	for (i = 0; i < core_dc->res_pool->pipe_count; i++) {
+	for (i = 0; i < dc->res_pool->pipe_count; i++) {
 		struct pipe_ctx *pipe_ctx = &res_ctx->pipe_ctx[i];
 
-		if (pipe_ctx->stream == NULL)
+		if (pipe_ctx->stream == NULL || pipe_ctx->pipe_idx == underlay_idx)
 			continue;
 
 		TIMING_TRACE("OTG_%d   H_tot:%d  V_tot:%d   H_pos:%d  V_pos:%d\n",
@@ -348,23 +345,23 @@ void context_clock_trace(
 		struct dc *dc,
 		struct dc_state *context)
 {
-#if defined(CONFIG_DRM_AMD_DC_DCN1_0)
+#if defined(CONFIG_DRM_AMD_DC_DCN)
 	DC_LOGGER_INIT(dc->ctx->logger);
 	CLOCK_TRACE("Current: dispclk_khz:%d  max_dppclk_khz:%d  dcfclk_khz:%d\n"
 			"dcfclk_deep_sleep_khz:%d  fclk_khz:%d  socclk_khz:%d\n",
-			context->bw.dcn.clk.dispclk_khz,
-			context->bw.dcn.clk.dppclk_khz,
-			context->bw.dcn.clk.dcfclk_khz,
-			context->bw.dcn.clk.dcfclk_deep_sleep_khz,
-			context->bw.dcn.clk.fclk_khz,
-			context->bw.dcn.clk.socclk_khz);
+			context->bw_ctx.bw.dcn.clk.dispclk_khz,
+			context->bw_ctx.bw.dcn.clk.dppclk_khz,
+			context->bw_ctx.bw.dcn.clk.dcfclk_khz,
+			context->bw_ctx.bw.dcn.clk.dcfclk_deep_sleep_khz,
+			context->bw_ctx.bw.dcn.clk.fclk_khz,
+			context->bw_ctx.bw.dcn.clk.socclk_khz);
 	CLOCK_TRACE("Calculated: dispclk_khz:%d  max_dppclk_khz:%d  dcfclk_khz:%d\n"
 			"dcfclk_deep_sleep_khz:%d  fclk_khz:%d  socclk_khz:%d\n",
-			context->bw.dcn.clk.dispclk_khz,
-			context->bw.dcn.clk.dppclk_khz,
-			context->bw.dcn.clk.dcfclk_khz,
-			context->bw.dcn.clk.dcfclk_deep_sleep_khz,
-			context->bw.dcn.clk.fclk_khz,
-			context->bw.dcn.clk.socclk_khz);
+			context->bw_ctx.bw.dcn.clk.dispclk_khz,
+			context->bw_ctx.bw.dcn.clk.dppclk_khz,
+			context->bw_ctx.bw.dcn.clk.dcfclk_khz,
+			context->bw_ctx.bw.dcn.clk.dcfclk_deep_sleep_khz,
+			context->bw_ctx.bw.dcn.clk.fclk_khz,
+			context->bw_ctx.bw.dcn.clk.socclk_khz);
 #endif
 }

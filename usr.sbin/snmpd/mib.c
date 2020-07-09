@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.98 2020/01/02 10:55:53 florian Exp $	*/
+/*	$OpenBSD: mib.c,v 1.100 2020/07/01 16:41:43 martijn Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -563,7 +563,7 @@ mib_hrstorage(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	u_int32_t		 idx;
 	struct statfs		*mntbuf, *mnt;
 	int			 mntsize, maxsize;
-	u_int32_t		 units, size, used, fail = 0;
+	u_int64_t		 units, size, used, fail = 0;
 	const char		*descr = NULL;
 	int			 mib[] = { CTL_HW, 0 };
 	u_int64_t		 physmem, realmem;
@@ -645,6 +645,12 @@ mib_hrstorage(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		used = mnt->f_blocks - mnt->f_bfree;
 		sop = &so[3];
 		break;
+	}
+
+	while (size > INT32_MAX) {
+		units *= 2;
+		size /= 2;
+		used /= 2;
 	}
 
 	/* Tables need to prepend the OID on their own */
@@ -1681,7 +1687,7 @@ mib_pfinfo(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 		*elm = ober_add_integer(*elm, s.running);
 		break;
 	case 2:
-		if (!clock_gettime(CLOCK_UPTIME, &uptime))
+		if (!clock_gettime(CLOCK_BOOTTIME, &uptime))
 			runtime = uptime.tv_sec - s.since;
 		runtime *= 100;
 		*elm = ober_add_integer(*elm, runtime);

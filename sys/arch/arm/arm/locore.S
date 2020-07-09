@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.20 2020/03/11 13:24:16 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.22 2020/05/18 17:24:03 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.14 2003/04/20 16:21:40 thorpej Exp $	*/
 
 /*
@@ -251,6 +251,7 @@ ENTRY_NP(cpu_reset)
 
 #endif	/* OFW */
 
+#ifdef DDB
 /*
  * setjump + longjmp
  */
@@ -263,6 +264,7 @@ ENTRY(longjmp)
 	ldmia	r0, {r4-r14}
 	mov	r0, #0x00000001
 	mov	pc, lr
+#endif /* DDB */
 
 	.data
 	.align	2

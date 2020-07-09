@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.13 2020/04/30 13:46:39 deraadt Exp $ */
+/*	$OpenBSD: output.c,v 1.16 2020/05/14 20:49:04 job Exp $ */
 /*
  * Copyright (c) 2019 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -25,6 +25,7 @@
 #include <string.h>
 #include <limits.h>
 #include <unistd.h>
+#include <time.h>
 
 #include <openssl/x509v3.h>
 
@@ -110,7 +111,7 @@ output_createtmp(char *name)
 		err(1, "path too long");
 	fd = mkostemp(output_tmpname, O_CLOEXEC);
 	if (fd == -1)
-		err(1, "mkostemp");
+		err(1, "mkostemp: %s", output_tmpname);
 	(void) fchmod(fd, 0644);
 	f = fdopen(fd, "w");
 	if (f == NULL)
@@ -173,13 +174,14 @@ set_signal_handler(void)
 int
 outputheader(FILE *out, struct stats *st)
 {
-	char		hn[NI_MAXHOST], tbuf[26];
+	char		hn[NI_MAXHOST], tbuf[80];
+	struct tm	*tp;
 	time_t		t;
 
 	time(&t);
 	setenv("TZ", "UTC", 1);
-	ctime_r(&t, tbuf);
-	*strrchr(tbuf, '\n') = '\0';
+	tp = localtime(&t);
+	strftime(tbuf, sizeof tbuf, "%a %b %e %H:%M:%S %Z %Y", tp);
 
 	gethostname(hn, sizeof hn);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.31 2020/02/05 16:29:29 krw Exp $	*/
+/*	$OpenBSD: aic6360.c,v 1.33 2020/06/27 17:28:58 krw Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 #ifdef DDB
@@ -236,7 +236,7 @@ aic_find(bus_space_tag_t iot, bus_space_handle_t ioh)
 	return (1);
 }
 
-/* 
+/*
  * Attach the AIC6360, fill out some high and low level data structures
  */
 void
@@ -272,7 +272,6 @@ aicattach(struct aic_softc *sc)
 	sc->sc_link.openings = 2;
 	sc->sc_link.pool = &sc->sc_iopool;
 
-	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	config_found(&sc->sc_dev, &saa, scsiprint);

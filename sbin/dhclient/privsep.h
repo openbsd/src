@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.h,v 1.61 2019/11/22 22:45:52 krw Exp $ */
+/*	$OpenBSD: privsep.h,v 1.69 2020/05/28 15:23:46 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -24,20 +24,13 @@ enum imsg_code {
 	IMSG_TELL_UNWIND
 };
 
-#define	RTLEN	128
-
 struct proposal {
-	uint8_t		rtstatic[RTLEN];
-	uint8_t		rtsearch[RTLEN];
-	uint8_t		rtdns[RTLEN];
-	struct in_addr	ifa;
+	struct in_addr	address;
 	struct in_addr	netmask;
-	unsigned int	rtstatic_len;
-	unsigned int	rtsearch_len;
-	unsigned int	rtdns_len;
+	unsigned int	routes_len;
+	unsigned int	domains_len;
+	unsigned int	ns_len;
 	int		mtu;
-	int		addrs;
-	int		inits;
 };
 
 struct unwind_info {
@@ -45,23 +38,12 @@ struct unwind_info {
 	unsigned int	count;
 };
 
-struct imsg_propose {
-	struct proposal		proposal;
-};
-
-struct imsg_revoke {
-	struct proposal		proposal;
-};
-
-struct imsg_tell_unwind {
-	struct unwind_info	unwind_info;
-};
-
 void	dispatch_imsg(char *, int, int, int, struct imsgbuf *);
 
 void	priv_write_resolv_conf(int, int, int, char *, int *);
-void	priv_propose(char *, int, struct imsg_propose *, char **, int, int, int);
+void	priv_propose(char *, int, struct proposal *, size_t, char **, int, int,
+    int);
 
-void	priv_revoke_proposal(char *, int, struct imsg_revoke *, char **);
+void	priv_revoke_proposal(char *, int, struct proposal *, char **);
 
-void	priv_tell_unwind(int, int, int, struct imsg_tell_unwind *);
+void	priv_tell_unwind(int, int, int, struct unwind_info *);

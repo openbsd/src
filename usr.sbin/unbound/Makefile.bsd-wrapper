@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.18 2019/12/21 21:40:01 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.19 2020/06/02 14:41:13 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -37,16 +37,10 @@ MAN=	doc/unbound.8 \
 	doc/unbound-control.8 \
 	doc/unbound-host.1
 
-all:	gnu
+all:	${.OBJDIR}/config.status
+	exec ${MAKE}
 
-.ifndef NOMAN
-${MANALL} ${PSALL}: ${MAN}
-
-${MAN}:	gnu
-.endif
-
-gnu: ${.OBJDIR}/config.status
-	${MAKE}
+${MAN}: ${.OBJDIR}/config.status
 
 .FORCE: .IGNORE
 
@@ -81,7 +75,6 @@ install: maninstall
 		${file} ${DESTDIR}${BINDIR}
 .endfor
 
-BEFOREMAN= ${.OBJDIR}/config.status
 CLEANFILES+= ${MAN} dnstap/dnstap_config.h doc/example.conf doc/libunbound.3 \
 		smallapp/unbound-control-setup.sh dnscrypt/dnscrypt_config.h
 

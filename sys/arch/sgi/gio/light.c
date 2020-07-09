@@ -1,4 +1,4 @@
-/*	$OpenBSD: light.c,v 1.8 2017/01/15 20:22:33 fcambus Exp $	*/
+/*	$OpenBSD: light.c,v 1.10 2020/05/25 09:55:48 jsg Exp $	*/
 /*	$NetBSD: light.c,v 1.5 2007/03/04 06:00:39 christos Exp $	*/
 
 /*
@@ -88,7 +88,7 @@ struct light_softc {
 
 struct light_devconfig {
 	struct rasops_info	dc_ri;
-	long			dc_defattr;
+	uint32_t		dc_defattr;
 
 	uint32_t		dc_addr;
 	bus_space_tag_t		dc_st;
@@ -122,7 +122,7 @@ const struct cfattach light_ca = {
 int	light_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	light_mmap(void *, off_t, int);
 int	light_alloc_screen(void *, const struct wsscreen_descr *, void **,
-	    int *, int *, long *);
+	    int *, int *, uint32_t *);
 void	light_free_screen(void *, void *);
 int	light_show_screen(void *, void *, int, void (*)(void *, int, int),
 	    void *);
@@ -142,11 +142,11 @@ struct wsdisplay_accessops light_accessops = {
 };
 
 int	light_do_cursor(struct rasops_info *);
-int	light_putchar(void *, int, int, u_int, long);
+int	light_putchar(void *, int, int, u_int, uint32_t);
 int	light_copycols(void *, int, int, int, int);
-int	light_erasecols(void *, int, int, int, long);
+int	light_erasecols(void *, int, int, int, uint32_t);
 int	light_copyrows(void *, int, int, int);
-int	light_eraserows(void *, int, int, long);
+int	light_eraserows(void *, int, int, uint32_t);
 
 static __inline__
 uint32_t rex_read(struct light_devconfig *, uint32_t, uint32_t);
@@ -442,12 +442,12 @@ int
 light_cnattach(struct gio_attach_args *ga)
 {
 	struct rasops_info *ri = &light_console_dc.dc_ri;
-	long defattr;
+	uint32_t defattr;
 
 	light_attach_common(&light_console_dc, ga);
 	light_init_screen(&light_console_dc);
 
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, &defattr);
 	wsdisplay_cnattach(&light_console_dc.dc_wsd, ri, 0, 0, defattr);
 
 	return 0;
@@ -524,7 +524,7 @@ light_do_cursor(struct rasops_info *ri)
 }
 
 int
-light_putchar(void *c, int row, int col, u_int ch, long attr)
+light_putchar(void *c, int row, int col, u_int ch, uint32_t attr)
 {
 	struct rasops_info *ri = c;
 	struct light_devconfig *dc = ri->ri_hw;
@@ -614,7 +614,7 @@ light_copycols(void *c, int row, int srccol, int dstcol, int ncols)
 
 /* erase a set of columns in the same line */
 int
-light_erasecols(void *c, int row, int startcol, int ncols, long attr)
+light_erasecols(void *c, int row, int startcol, int ncols, uint32_t attr)
 {
 	struct rasops_info *ri = c;
 	struct light_devconfig *dc = ri->ri_hw;
@@ -657,7 +657,7 @@ light_copyrows(void *c, int srcrow, int dstrow, int nrows)
 
 /* erase a set of complete rows */
 int
-light_eraserows(void *c, int row, int nrows, long attr)
+light_eraserows(void *c, int row, int nrows, uint32_t attr)
 {
 	struct rasops_info *ri = c;
 	struct light_devconfig *dc = ri->ri_hw;
@@ -730,7 +730,7 @@ light_mmap(void *v, off_t off, int prot)
 
 int
 light_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
-    int *curxp, int *curyp, long *attrp)
+    int *curxp, int *curyp, uint32_t *attrp)
 {
 	struct light_devconfig *dc = v;
 	struct rasops_info *ri = &dc->dc_ri;
@@ -743,7 +743,7 @@ light_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 
 	*cookiep = ri;
 	*curxp = *curyp = 0;
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &dc->dc_defattr);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, &dc->dc_defattr);
 	*attrp = dc->dc_defattr;
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.57 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.59 2020/07/05 21:54:44 krw Exp $	*/
 /*	$NetBSD: ahc_pci.c,v 1.43 2003/08/18 09:16:22 taca Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.57 2015/03/14 03:38:48 jsg Exp $
+ * $Id: ahc_pci.c,v 1.59 2020/07/05 21:54:44 krw Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -737,9 +737,9 @@ ahc_pci_attach(parent, self, aux)
 
 	/*
 	 * SCSI_IS_SCSIBUS_B() must returns false until sc_channel_b
-	 * has been properly initialized. XXX Breaks if >254 scsi buses.
+	 * has been properly initialized.
 	 */
-	ahc->sc_channel_b.scsibus = 0xff;
+	ahc->sc_child_b = NULL;
 
 	ahc->dev_softc = pa;
 

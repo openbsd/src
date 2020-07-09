@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.70 2020/03/06 08:41:57 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.72 2020/06/19 20:56:23 kettenis Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -63,6 +63,8 @@ void	 bwfm_update_node(void *, struct ieee80211_node *);
 void	 bwfm_update_nodes(struct bwfm_softc *);
 int	 bwfm_ioctl(struct ifnet *, u_long, caddr_t);
 int	 bwfm_media_change(struct ifnet *);
+
+void	 bwfm_process_clm_blob(struct bwfm_softc *);
 
 int	 bwfm_chip_attach(struct bwfm_softc *);
 int	 bwfm_chip_detach(struct bwfm_softc *, int);
@@ -254,6 +256,8 @@ bwfm_preinit(struct bwfm_softc *sc)
 	}
 
 	printf("%s: address %s\n", DEVNAME(sc), ether_sprintf(ic->ic_myaddr));
+
+	bwfm_process_clm_blob(sc);
 
 	if (bwfm_fwvar_var_get_int(sc, "nmode", &nmode))
 		nmode = 0;
@@ -1413,10 +1417,15 @@ bwfm_chip_tcm_rambase(struct bwfm_softc *sc)
 	case BRCM_CC_43569_CHIP_ID:
 	case BRCM_CC_43570_CHIP_ID:
 	case BRCM_CC_4358_CHIP_ID:
-	case BRCM_CC_4359_CHIP_ID:
 	case BRCM_CC_43602_CHIP_ID:
 	case BRCM_CC_4371_CHIP_ID:
 		sc->sc_chip.ch_rambase = 0x180000;
+		break;
+	case BRCM_CC_4359_CHIP_ID:
+		if (sc->sc_chip.ch_chiprev < 9)
+			sc->sc_chip.ch_rambase = 0x180000;
+		else
+			sc->sc_chip.ch_rambase = 0x160000;
 		break;
 	case BRCM_CC_43465_CHIP_ID:
 	case BRCM_CC_43525_CHIP_ID:
@@ -2748,4 +2757,47 @@ bwfm_nvram_convert(u_char *buf, size_t len, size_t *newlenp)
 
 	*newlenp = count;
 	return 0;
+}
+
+void
+bwfm_process_clm_blob(struct bwfm_softc *sc)
+{
+	struct bwfm_dload_data *data;
+	size_t off, remain, len;
+
+	if (sc->sc_clm == NULL || sc->sc_clmsize == 0)
+		return;
+
+	off = 0;
+	remain = sc->sc_clmsize;
+	data = malloc(sizeof(*data) + BWFM_DLOAD_MAX_LEN, M_TEMP, M_WAITOK);
+
+	while (remain) {
+		len = min(remain, BWFM_DLOAD_MAX_LEN);
+
+		data->flag = htole16(BWFM_DLOAD_FLAG_HANDLER_VER_1);
+		if (off == 0)
+			data->flag |= htole16(BWFM_DLOAD_FLAG_BEGIN);
+		if (remain < BWFM_DLOAD_MAX_LEN)
+			data->flag |= htole16(BWFM_DLOAD_FLAG_END);
+		data->type = htole16(BWFM_DLOAD_TYPE_CLM);
+		data->len = htole32(len);
+		data->crc = 0;
+		memcpy(data->data, sc->sc_clm + off, len);
+
+		if (bwfm_fwvar_var_set_data(sc, "clmload", data,
+		    sizeof(*data) + len)) {
+			printf("%s: could not load CLM blob\n", DEVNAME(sc));
+			goto out;
+		}
+
+		off += len;
+		remain -= len;
+	}
+
+out:
+	free(data, M_TEMP, sizeof(*data) + BWFM_DLOAD_MAX_LEN);
+	free(sc->sc_clm, M_DEVBUF, sc->sc_clmsize);
+	sc->sc_clm = NULL;
+	sc->sc_clmsize = 0;
 }

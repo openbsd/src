@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.h,v 1.11 2018/09/01 16:55:29 krw Exp $	*/
+/*	$OpenBSD: installboot.h,v 1.12 2020/06/08 19:17:12 kn Exp $	*/
 /*
  * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
  *
@@ -14,6 +14,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <dev/biovar.h>
 
 #include <stdlib.h>
 
@@ -41,4 +43,5 @@ void	md_installboot(int, char *);
 void	sr_installboot(int, char *);
 void	sr_install_bootblk(int, int, int);
 void	sr_install_bootldr(int, char *);
+void	sr_status(struct bio_status *);
 #endif

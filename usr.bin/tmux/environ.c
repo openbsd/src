@@ -1,4 +1,4 @@
-/* $OpenBSD: environ.c,v 1.24 2020/03/31 17:14:40 nicm Exp $ */
+/* $OpenBSD: environ.c,v 1.25 2020/05/16 15:40:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -252,6 +252,8 @@ environ_for_session(struct session *s, int no_TERM)
 	if (!no_TERM) {
 		value = options_get_string(global_options, "default-terminal");
 		environ_set(env, "TERM", 0, "%s", value);
+		environ_set(env, "TERM_PROGRAM", 0, "%s", "tmux");
+		environ_set(env, "TERM_PROGRAM_VERSION", 0, "%s", getversion());
 	}
 
 	if (s != NULL)

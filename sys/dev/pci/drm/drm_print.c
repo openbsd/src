@@ -28,9 +28,37 @@
 #endif
 
 #include <sys/stdarg.h>
+
+#include <linux/io.h>
+#include <linux/moduleparam.h>
 #include <linux/seq_file.h>
-#include <drm/drmP.h>
+#include <linux/slab.h>
+
+#include <drm/drm.h>
+#include <drm/drm_drv.h>
 #include <drm/drm_print.h>
+
+/*
+ * __drm_debug: Enable debug output.
+ * Bitmask of DRM_UT_x. See include/drm/drm_print.h for details.
+ */
+#ifdef DRMDEBUG
+unsigned int __drm_debug = DRM_UT_DRIVER | DRM_UT_KMS;
+#else
+unsigned int __drm_debug;
+#endif
+EXPORT_SYMBOL(__drm_debug);
+
+MODULE_PARM_DESC(debug, "Enable debug output, where each bit enables a debug category.\n"
+"\t\tBit 0 (0x01)  will enable CORE messages (drm core code)\n"
+"\t\tBit 1 (0x02)  will enable DRIVER messages (drm controller code)\n"
+"\t\tBit 2 (0x04)  will enable KMS messages (modesetting code)\n"
+"\t\tBit 3 (0x08)  will enable PRIME messages (prime code)\n"
+"\t\tBit 4 (0x10)  will enable ATOMIC messages (atomic code)\n"
+"\t\tBit 5 (0x20)  will enable VBL messages (vblank code)\n"
+"\t\tBit 7 (0x80)  will enable LEASE messages (leasing code)\n"
+"\t\tBit 8 (0x100) will enable DP messages (displayport code)");
+module_param_named(debug, __drm_debug, int, 0600);
 
 void __drm_puts_coredump(struct drm_printer *p, const char *str)
 {
@@ -144,6 +172,12 @@ void __drm_printfn_debug(struct drm_printer *p, struct va_format *vaf)
 	pr_debug("%s %pV", p->prefix, vaf);
 }
 EXPORT_SYMBOL(__drm_printfn_debug);
+
+void __drm_printfn_err(struct drm_printer *p, struct va_format *vaf)
+{
+	pr_err("*ERROR* %s %pV", p->prefix, vaf);
+}
+EXPORT_SYMBOL(__drm_printfn_err);
 #else
 void __drm_printfn_info(struct drm_printer *p, struct va_format *vaf)
 {
@@ -159,6 +193,12 @@ void __drm_printfn_debug(struct drm_printer *p, struct va_format *vaf)
 	printf("%s ", p->prefix);
 	vprintf(vaf->fmt, *vaf->va);
 #endif
+}
+
+void __drm_printfn_err(struct drm_printer *p, struct va_format *vaf)
+{
+	printf("*ERROR* %s ", p->prefix);
+	vprintf(vaf->fmt, *vaf->va);
 }
 #endif
 
@@ -194,6 +234,37 @@ void drm_printf(struct drm_printer *p, const char *f, ...)
 }
 EXPORT_SYMBOL(drm_printf);
 
+/**
+ * drm_print_bits - print bits to a &drm_printer stream
+ *
+ * Print bits (in flag fields for example) in human readable form.
+ *
+ * @p: the &drm_printer
+ * @value: field value.
+ * @bits: Array with bit names.
+ * @nbits: Size of bit names array.
+ */
+void drm_print_bits(struct drm_printer *p, unsigned long value,
+		    const char * const bits[], unsigned int nbits)
+{
+	bool first = true;
+	unsigned int i;
+
+	if (WARN_ON_ONCE(nbits > BITS_PER_TYPE(value)))
+		nbits = BITS_PER_TYPE(value);
+
+	for_each_set_bit(i, &value, nbits) {
+		if (WARN_ON_ONCE(!bits[i]))
+			continue;
+		drm_printf(p, "%s%s", first ? "" : ",",
+			   bits[i]);
+		first = false;
+	}
+	if (first)
+		drm_printf(p, "(none)");
+}
+EXPORT_SYMBOL(drm_print_bits);
+
 #ifdef __linux__
 void drm_dev_printk(const struct device *dev, const char *level,
 		    const char *format, ...)
@@ -216,13 +287,13 @@ void drm_dev_printk(const struct device *dev, const char *level,
 }
 EXPORT_SYMBOL(drm_dev_printk);
 
-void drm_dev_dbg(const struct device *dev, unsigned int category,
+void drm_dev_dbg(const struct device *dev, enum drm_debug_category category,
 		 const char *format, ...)
 {
 	struct va_format vaf;
 	va_list args;
 
-	if (!(drm_debug & category))
+	if (!drm_debug_enabled(category))
 		return;
 
 	va_start(args, format);
@@ -240,12 +311,12 @@ void drm_dev_dbg(const struct device *dev, unsigned int category,
 }
 EXPORT_SYMBOL(drm_dev_dbg);
 
-void drm_dbg(unsigned int category, const char *format, ...)
+void __drm_dbg(enum drm_debug_category category, const char *format, ...)
 {
 	struct va_format vaf;
 	va_list args;
 
-	if (!(drm_debug & category))
+	if (!drm_debug_enabled(category))
 		return;
 
 	va_start(args, format);
@@ -257,9 +328,9 @@ void drm_dbg(unsigned int category, const char *format, ...)
 
 	va_end(args);
 }
-EXPORT_SYMBOL(drm_dbg);
+EXPORT_SYMBOL(__drm_dbg);
 
-void drm_err(const char *format, ...)
+void __drm_err(const char *format, ...)
 {
 	struct va_format vaf;
 	va_list args;
@@ -273,7 +344,7 @@ void drm_err(const char *format, ...)
 
 	va_end(args);
 }
-EXPORT_SYMBOL(drm_err);
+EXPORT_SYMBOL(__drm_err);
 
 #else
 
@@ -282,46 +353,83 @@ void drm_dev_printk(const struct device *dev, const char *level,
 {
 	va_list args;
 
+#ifndef DRMDEBUG
+	if (level[0] == '\001') {
+		if (level[1] >= KERN_INFO[1] && level[1] < '9')
+			return;
+	}
+#endif
+
 	va_start(args, format);
-	printk("%s" "[" DRM_NAME "] ", level);
+	printk("[" DRM_NAME "] ");
 	vprintf(format, args);
 	va_end(args);
 }
 
-void drm_dev_dbg(const struct device *dev, unsigned int category,
+void drm_dev_dbg(const struct device *dev, enum drm_debug_category category,
 		 const char *format, ...)
 {
 	va_list args;
 
-	if (!(drm_debug & category))
+	if (!drm_debug_enabled(category))
 		return;
 
 	va_start(args, format);
-	printf(KERN_DEBUG "[" DRM_NAME "] ");
+	printk(KERN_DEBUG "[" DRM_NAME "] ");
 	vprintf(format, args);
 	va_end(args);
 }
 
-void drm_dbg(unsigned int category, const char *format, ...)
+void __drm_dbg(enum drm_debug_category category, const char *format, ...)
 {
 	va_list args;
 
-	if (!(drm_debug & category))
+	if (!drm_debug_enabled(category))
 		return;
 
 	va_start(args, format);
-	printf(KERN_DEBUG "[" DRM_NAME "] ");
+	printk(KERN_DEBUG "[" DRM_NAME "] ");
 	vprintf(format, args);
 	va_end(args);
 }
 
-void drm_err(const char *format, ...)
+void __drm_err(const char *format, ...)
 {
 	va_list args;
 
 	va_start(args, format);
-	printf(KERN_ERR "[" DRM_NAME "] *ERROR* ");
+	printk(KERN_ERR "[" DRM_NAME "] *ERROR* ");
 	vprintf(format, args);
 	va_end(args);
 }
+#endif /* __linux__ */
+
+/**
+ * drm_print_regset32 - print the contents of registers to a
+ * &drm_printer stream.
+ *
+ * @p: the &drm printer
+ * @regset: the list of registers to print.
+ *
+ * Often in driver debug, it's useful to be able to either capture the
+ * contents of registers in the steady state using debugfs or at
+ * specific points during operation.  This lets the driver have a
+ * single list of registers for both.
+ */
+void drm_print_regset32(struct drm_printer *p, struct debugfs_regset32 *regset)
+{
+#ifdef __linux__
+	int namelen = 0;
+	int i;
+
+	for (i = 0; i < regset->nregs; i++)
+		namelen = max(namelen, (int)strlen(regset->regs[i].name));
+
+	for (i = 0; i < regset->nregs; i++) {
+		drm_printf(p, "%*s = 0x%08x\n",
+			   namelen, regset->regs[i].name,
+			   readl(regset->base + regset->regs[i].offset));
+	}
 #endif
+}
+EXPORT_SYMBOL(drm_print_regset32);

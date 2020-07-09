@@ -17,12 +17,64 @@ import (
 const (
 	httpContent = "Hello, TLS!"
 
-	certHash = "SHA256:448f628a8a65aa18560e53a80c53acb38c51b427df0334082349141147dc9bf6"
+	certHash = "SHA256:1153aa0230ee0481b36bdd83ddb04b607340dbda35f3a4fff0615e4d9292d687"
 )
 
 var (
 	certNotBefore = time.Unix(0, 0)
 	certNotAfter  = certNotBefore.Add(1000000 * time.Hour)
+
+	// Generated with:
+	//   go run crypto/tls/generate_cert.go --rsa-bits 2048 \
+	//     --host 127.0.0.1,::1,example.com --ca \
+	//     --start-date "Jan 1 00:00:00 1970" --duration=1000000h`
+	testServerCert = []byte(`-----BEGIN CERTIFICATE-----
+MIIDGTCCAgGgAwIBAgIRAJHZkrBTk/yTKT3L2Z+dgZcwDQYJKoZIhvcNAQELBQAw
+EjEQMA4GA1UEChMHQWNtZSBDbzAgFw03MDAxMDEwMDAwMDBaGA8yMDg0MDEyOTE2
+MDAwMFowEjEQMA4GA1UEChMHQWNtZSBDbzCCASIwDQYJKoZIhvcNAQEBBQADggEP
+ADCCAQoCggEBANxPCe2pafj2pWdA+hnN+Ne9Auh2YdoSPbQqIPQMVTT/3j6w9LlW
+JirXCLWNuoarOA2iCgVa4Y607O/f2FTN7cKY2lvhAkuftCUJzB/lJVH5bWZgSrks
+3AaOBlBcyMKBajFoEOIgSMwHGAZO2XsWIvdbuQw3EKY50vfBvxQspjbMruhpZoKd
+9tHx6XUBoYSf5t9X+FrG2UjihnfcfBcsKGq7lbujt3+3QvlU6w1ZGOX+f9b+3+yw
+RQkswxvkzKpfmgvr8GWWUm8w9wkImhAmA2UAhsM8OwnKVltvMih5mb9L2hw5+qBV
+W1V+CSR0tDI9D8eiL26B3dvOilpZjttp3fsCAwEAAaNoMGYwDgYDVR0PAQH/BAQD
+AgKkMBMGA1UdJQQMMAoGCCsGAQUFBwMBMA8GA1UdEwEB/wQFMAMBAf8wLgYDVR0R
+BCcwJYILZXhhbXBsZS5jb22HBH8AAAGHEAAAAAAAAAAAAAAAAAAAAAEwDQYJKoZI
+hvcNAQELBQADggEBAA+tFyWOZLoUjN2SKcIXnN5zs4VZedybLFVZoJSDakgo8awS
+HPkD/1ReIOzT41Hmzjs/4CeVw6FSeKnYtEqTPOJoRVrXAIqyHGHJ2cEWpUXvg2b0
+u7lkFfElRqcBjsDZYr+rJUxkjlCa11ylCbgdwoDMIbKNldcJoLB0iwQWUE7j19xe
+CF32aISt/nGxCYcO81tn+ionwzZyf5zh5k/SmAqrPy4O/qxn8oEaox4Z7BfoZlAS
+gmPA2gedTWORfthamJdT2irz3rdHjV7NWxwTsgOAx9y+P3fqmMCyMwxFJkmP118W
+yM5xDRR+ldYKoRts5qkPR6LVtCw9kn+dJKQm0Bc=
+-----END CERTIFICATE-----`)
+	testServerKey = []byte(`-----BEGIN PRIVATE KEY-----
+MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDcTwntqWn49qVn
+QPoZzfjXvQLodmHaEj20KiD0DFU0/94+sPS5ViYq1wi1jbqGqzgNogoFWuGOtOzv
+39hUze3CmNpb4QJLn7QlCcwf5SVR+W1mYEq5LNwGjgZQXMjCgWoxaBDiIEjMBxgG
+Ttl7FiL3W7kMNxCmOdL3wb8ULKY2zK7oaWaCnfbR8el1AaGEn+bfV/haxtlI4oZ3
+3HwXLChqu5W7o7d/t0L5VOsNWRjl/n/W/t/ssEUJLMMb5MyqX5oL6/BlllJvMPcJ
+CJoQJgNlAIbDPDsJylZbbzIoeZm/S9ocOfqgVVtVfgkkdLQyPQ/Hoi9ugd3bzopa
+WY7bad37AgMBAAECggEAKSmnbD1sLHVBIFK2qB2g8gZBxddgnxMrbj802wR24ykv
+iD0d7IcZKIX2/Z0WjdTt6zYscyWw4S4S2xrS272CQAq5OdOHz0NusEDtX8Q7vd5B
+v5AcRg8IqTzeFyPO6vCtO7/675UipORqa7tNzT6sl9UOdSbQuI4zSdFsd0OEZtZs
+oqKkv+jdvKaVJQ1vsoQSup23V0bvVCRydBNFZ2mQ3etZcRRYXyu1digJ7/oMyCHf
+1F37lJmjPJ8WwsGJMk2ngJiUOQx21bbTZ22c/8sMMLJjhhC2qu984keVRanSsJwC
+Z80XcCxL/yoLF42A5ReMtutFs83rW7VX7VJGxoOaKQKBgQD91dCs9jGBVxHr4vxy
+NJC2n92R5/JpqXygXS3L6RDP+we6p/fmSd4/QllwIVeC9kepsFz4//ArmLOy9JHu
+rkXa7W9G+XbmYXSftmG78roLfAtvdudoytLQJg2bu8J3bzPVibRCUq0OORFyqOHR
+QGcQtvPxwFHctIkOjajbLpbL7QKBgQDeMAbvjzD8wU1gp2U8Bl5l5ohYgQpcs15R
+eBPS5DlRzICAeuQWi+BRjW5BPZVmTr3Ml3KiMWcalXMeH1TKoPON8RjmWgY2Fxvh
+nS7gV+rJm4H0T+bBEXNAraracwGYd6JgcH9BPD9znHRmyFR4pMPqkSa7o/OExH6W
+O32KqTMkhwKBgQCoX7wb/vK3qNnqbpal6thTS5fdwM276QESHrzSFbdhPlLSLbjy
+uO0DaS+KgZNa+6JtnN8PDDZztMb+XdyvRkpv/i9iFPgZuWtyxbfuxANEuvOa7HRz
+vpY4HAXK17EXKFxpuP4pQE4qsRAxznR8KQw0uib2pWunytlfHfhz62N7wQKBgQC+
++TTc74zBkzx42SiwYSD+IRoMSE2pxBpLmBQh7jw+TLIevIITxwJ11kRwGwiwuPl2
+Qq4rLp9aQB6EQ5XT3Ge7FwG57KLuFwrF7x59gdOymdEnNw414FPZwevae4Nhk2Kj
+1c3rOmenbVC3j3TbhXNHyJ8sJQ2IjoPniRas+iWVPQKBgQDcZzKh6U+e9efYLAt0
+qdaKhm5MCAgzD9X/Tx2OvOqgWnSXt2Q2AhK2UsHnrGBn1SDNTNDGlniQy2OM2Ywn
+n71nH1QUmgoiwBrFUh0gLxv878vwgUATqfFRTlirmK9XxHuTX9Jh6elmRebjYWyc
+Oo0CJBeMABu71Y+VkCxURT1bzw==
+-----END PRIVATE KEY-----`)
 )
 
 type handshakeError string
@@ -57,6 +109,16 @@ func newTestServer(tlsCfg *tls.Config) (*httptest.Server, *url.URL, string, erro
 			},
 		),
 	)
+	if tlsCfg == nil {
+		tlsCfg = &tls.Config{}
+	}
+	if len(tlsCfg.Certificates) == 0 {
+		cert, err := tls.X509KeyPair(testServerCert, testServerKey)
+		if err != nil {
+			return nil, nil, "", fmt.Errorf("failed to load key pair: %v", err)
+		}
+		tlsCfg.Certificates = []tls.Certificate{cert}
+	}
 	ts.TLS = tlsCfg
 	ts.StartTLS()
 

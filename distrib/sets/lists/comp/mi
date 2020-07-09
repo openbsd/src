@@ -48,6 +48,7 @@
 ./usr/include/crypto
 ./usr/include/crypto/aes.h
 ./usr/include/crypto/arc4.h
+./usr/include/crypto/blake2s.h
 ./usr/include/crypto/blf.h
 ./usr/include/crypto/cast.h
 ./usr/include/crypto/castsb.h
@@ -56,6 +57,7 @@
 ./usr/include/crypto/cmac.h
 ./usr/include/crypto/cryptodev.h
 ./usr/include/crypto/cryptosoft.h
+./usr/include/crypto/curve25519.h
 ./usr/include/crypto/des_locl.h
 ./usr/include/crypto/gmac.h
 ./usr/include/crypto/hmac.h
@@ -134,12 +136,12 @@
 ./usr/include/dev/eisa/eisavar.h
 ./usr/include/dev/fdt
 ./usr/include/dev/fdt/if_mvnetareg.h
+./usr/include/dev/fdt/if_mvppreg.h
 ./usr/include/dev/fdt/imxanatopvar.h
 ./usr/include/dev/fdt/imxccm_clocks.h
 ./usr/include/dev/fdt/imxiicvar.h
 ./usr/include/dev/fdt/imxuartreg.h
 ./usr/include/dev/fdt/imxuartvar.h
-./usr/include/dev/fdt/mvmdiovar.h
 ./usr/include/dev/fdt/mvpinctrl_pins.h
 ./usr/include/dev/fdt/pscivar.h
 ./usr/include/dev/fdt/rkclock_clocks.h
@@ -699,7 +701,6 @@
 ./usr/include/dev/rasops/rasops_bitops.h
 ./usr/include/dev/rasops/rasops_masks.h
 ./usr/include/dev/rndis.h
-./usr/include/dev/rndvar.h
 ./usr/include/dev/sbus
 ./usr/include/dev/sbus/asioreg.h
 ./usr/include/dev/sbus/bereg.h
@@ -990,6 +991,7 @@
 ./usr/include/net/if_var.h
 ./usr/include/net/if_vlan_var.h
 ./usr/include/net/if_vxlan.h
+./usr/include/net/if_wg.h
 ./usr/include/net/ifq.h
 ./usr/include/net/netisr.h
 ./usr/include/net/ofp.h
@@ -1004,7 +1006,10 @@
 ./usr/include/net/route.h
 ./usr/include/net/rtable.h
 ./usr/include/net/slcompress.h
+./usr/include/net/toeplitz.h
 ./usr/include/net/trunklacp.h
+./usr/include/net/wg_cookie.h
+./usr/include/net/wg_noise.h
 ./usr/include/net80211
 ./usr/include/net80211/ieee80211.h
 ./usr/include/net80211/ieee80211_amrr.h
@@ -1316,12 +1321,14 @@
 ./usr/include/sys/gpio.h
 ./usr/include/sys/hibernate.h
 ./usr/include/sys/hotplug.h
+./usr/include/sys/intrmap.h
 ./usr/include/sys/ioccom.h
 ./usr/include/sys/ioctl.h
 ./usr/include/sys/ipc.h
 ./usr/include/sys/kcore.h
 ./usr/include/sys/kcov.h
 ./usr/include/sys/kernel.h
+./usr/include/sys/kstat.h
 ./usr/include/sys/kthread.h
 ./usr/include/sys/ktrace.h
 ./usr/include/sys/limits.h
@@ -1536,7 +1543,6 @@
 ./usr/lib/libpanelw_p.a
 ./usr/lib/libpcap.a
 ./usr/lib/libpcap_p.a
-./usr/lib/libperl.a
 ./usr/lib/libpthread.a
 ./usr/lib/libpthread_p.a
 ./usr/lib/libradius.a
@@ -1802,6 +1808,7 @@
 ./usr/share/man/man3/BN_swap.3
 ./usr/share/man/man3/BN_zero.3
 ./usr/share/man/man3/BUF_MEM_new.3
+./usr/share/man/man3/CMAC_Init.3
 ./usr/share/man/man3/CMSG_DATA.3
 ./usr/share/man/man3/CMS_ContentInfo_new.3
 ./usr/share/man/man3/CMS_add0_cert.3
@@ -1826,6 +1833,7 @@
 ./usr/share/man/man3/CRYPTO_lock.3
 ./usr/share/man/man3/CRYPTO_memcmp.3
 ./usr/share/man/man3/CRYPTO_set_ex_data.3
+./usr/share/man/man3/ChaCha.3
 ./usr/share/man/man3/DES_set_key.3
 ./usr/share/man/man3/DH_generate_key.3
 ./usr/share/man/man3/DH_generate_parameters.3
@@ -1941,6 +1949,7 @@
 ./usr/share/man/man3/OPENSSL_malloc.3
 ./usr/share/man/man3/OPENSSL_sk_new.3
 ./usr/share/man/man3/OpenSSL_add_all_algorithms.3
+./usr/share/man/man3/PEM_ASN1_read.3
 ./usr/share/man/man3/PEM_bytes_read_bio.3
 ./usr/share/man/man3/PEM_read.3
 ./usr/share/man/man3/PEM_read_SSL_SESSION.3
@@ -1953,9 +1962,16 @@
 ./usr/share/man/man3/PKCS12_newpass.3
 ./usr/share/man/man3/PKCS12_parse.3
 ./usr/share/man/man3/PKCS5_PBKDF2_HMAC.3
+./usr/share/man/man3/PKCS7_add_attribute.3
+./usr/share/man/man3/PKCS7_dataFinal.3
+./usr/share/man/man3/PKCS7_dataInit.3
 ./usr/share/man/man3/PKCS7_decrypt.3
 ./usr/share/man/man3/PKCS7_encrypt.3
+./usr/share/man/man3/PKCS7_final.3
+./usr/share/man/man3/PKCS7_get_signer_info.3
 ./usr/share/man/man3/PKCS7_new.3
+./usr/share/man/man3/PKCS7_set_content.3
+./usr/share/man/man3/PKCS7_set_type.3
 ./usr/share/man/man3/PKCS7_sign.3
 ./usr/share/man/man3/PKCS7_sign_add_signer.3
 ./usr/share/man/man3/PKCS7_verify.3
@@ -3012,15 +3028,19 @@
 ./usr/share/man/man9/if_addrhook_add.9
 ./usr/share/man/man9/if_get.9
 ./usr/share/man/man9/if_rxr_init.9
+./usr/share/man/man9/ifiq_input.9
 ./usr/share/man/man9/ifq_deq_begin.9
 ./usr/share/man/man9/ifq_enqueue.9
 ./usr/share/man/man9/iic.9
 ./usr/share/man/man9/imax.9
 ./usr/share/man/man9/inittodr.9
 ./usr/share/man/man9/intr_barrier.9
+./usr/share/man/man9/intrmap_create.9
 ./usr/share/man/man9/intro.9
 ./usr/share/man/man9/km_alloc.9
 ./usr/share/man/man9/knote.9
+./usr/share/man/man9/kstat_create.9
+./usr/share/man/man9/kstat_kv_init.9
 ./usr/share/man/man9/kthread.9
 ./usr/share/man/man9/ktrace.9
 ./usr/share/man/man9/lim_cur.9
@@ -3073,6 +3093,7 @@
 ./usr/share/man/man9/srp_enter.9
 ./usr/share/man/man9/srpl_rc_init.9
 ./usr/share/man/man9/startuphook_establish.9
+./usr/share/man/man9/stoeplitz_to_key.9
 ./usr/share/man/man9/strcmp.9
 ./usr/share/man/man9/style.9
 ./usr/share/man/man9/syscall.9
@@ -3081,7 +3102,6 @@
 ./usr/share/man/man9/tc_init.9
 ./usr/share/man/man9/tfind.9
 ./usr/share/man/man9/thread_fork.9
-./usr/share/man/man9/time_second.9
 ./usr/share/man/man9/timeout.9
 ./usr/share/man/man9/tsleep.9
 ./usr/share/man/man9/tvtohz.9
@@ -3121,6 +3141,7 @@
 ./usr/share/man/man9/vwaitforio.9
 ./usr/share/man/man9/vwakeup.9
 ./usr/share/man/man9/wdog_register.9
+./usr/share/man/man9/wsfont_init.9
 ./usr/share/misc/gprof.callg
 ./usr/share/misc/gprof.flat
 ./var/db/libc.tags

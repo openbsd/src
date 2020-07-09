@@ -18,4 +18,10 @@ vga_client_register(struct pci_dev *a, void *b, void *c, void *d)
 	return -ENODEV;
 }
 
+static inline int
+vga_remove_vgacon(struct pci_dev *a)
+{
+	return 0;
+}
+
 #endif

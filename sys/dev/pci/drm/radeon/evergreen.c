@@ -21,18 +21,22 @@
  *
  * Authors: Alex Deucher
  */
+
 #include <linux/firmware.h>
+#include <linux/pci.h>
 #include <linux/slab.h>
-#include <drm/drmP.h>
+
+#include <drm/drm_vblank.h>
+#include <drm/radeon_drm.h>
+
+#include "atom.h"
+#include "avivod.h"
+#include "evergreen_blit_shaders.h"
+#include "evergreen_reg.h"
+#include "evergreend.h"
 #include "radeon.h"
 #include "radeon_asic.h"
 #include "radeon_audio.h"
-#include <drm/radeon_drm.h>
-#include "evergreend.h"
-#include "atom.h"
-#include "avivod.h"
-#include "evergreen_reg.h"
-#include "evergreen_blit_shaders.h"
 #include "radeon_ucode.h"
 
 #define DC_HPDx_CONTROL(x)        (DC_HPD1_CONTROL     + (x * 0xc))
@@ -1274,7 +1278,6 @@ int evergreen_set_uvd_clocks(struct radeon_device *rdev, u32 vclk, u32 dclk)
 	return 0;
 }
 
-#ifdef __linux__
 void evergreen_fix_pci_max_read_req_size(struct radeon_device *rdev)
 {
 	int readrq;
@@ -1288,30 +1291,6 @@ void evergreen_fix_pci_max_read_req_size(struct radeon_device *rdev)
 	if ((v == 0) || (v == 6) || (v == 7))
 		pcie_set_readrq(rdev->pdev, 512);
 }
-#else
-void evergreen_fix_pci_max_read_req_size(struct radeon_device *rdev)
-{
-	pcireg_t ctl, v;
-	int off;
-
-	if (pci_get_capability(rdev->pc, rdev->pa_tag, PCI_CAP_PCIEXPRESS,
-			       &off, &ctl) == 0)
-		return;
-
-	ctl = pci_conf_read(rdev->pc, rdev->pa_tag, off + PCI_PCIE_DCSR);
-
-	v = (ctl & PCI_PCIE_DCSR_MPS) >> 12;
-
-	/* if bios or OS sets MAX_READ_REQUEST_SIZE to an invalid value, fix it
-	 * to avoid hangs or perfomance issues
-	 */
-	if ((v == 0) || (v == 6) || (v == 7)) {
-		ctl &= ~PCI_PCIE_DCSR_MPS;
-		ctl |= (2 << 12);
-		pci_conf_write(rdev->pc, rdev->pa_tag, off + PCI_PCIE_DCSR, ctl);
-	}
-}
-#endif
 
 void dce4_program_fmt(struct drm_encoder *encoder)
 {
@@ -4968,7 +4947,7 @@ static void evergreen_uvd_init(struct radeon_device *rdev)
 		 * there. So it is pointless to try to go through that code
 		 * hence why we disable uvd here.
 		 */
-		rdev->has_uvd = 0;
+		rdev->has_uvd = false;
 		return;
 	}
 	rdev->ring[R600_RING_TYPE_UVD_INDEX].ring_obj = NULL;
@@ -5365,7 +5344,7 @@ void evergreen_pcie_gen2_enable(struct radeon_device *rdev)
 
 	max_bus_speed = pcie_get_speed_cap(rdev->pdev->bus->self);
 	if ((max_bus_speed != PCIE_SPEED_5_0GT) &&
-		(max_bus_speed != PCIE_SPEED_8_0GT))	
+		(max_bus_speed != PCIE_SPEED_8_0GT))
 		return;
 
 	speed_cntl = RREG32_PCIE_PORT(PCIE_LC_SPEED_CNTL);

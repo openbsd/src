@@ -11,5 +11,6 @@
 #define ENOTSUPP	ENOTSUP
 #define ENODATA		ENOTSUP
 #define ECHRNG		EINVAL
+#define EHWPOISON	EIO
 
 #endif

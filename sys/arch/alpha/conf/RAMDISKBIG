@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.102 2019/09/04 14:29:41 cheloha Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.104 2020/05/23 06:28:29 jsg Exp $
 
 machine		alpha
 maxusers	4
@@ -81,8 +81,6 @@ zstty*		at zs? channel 1
 tcds*		at tc?
 asc*		at tcds?
 asc*		at tc?
-#cfb*		at tc?
-#sfb*		at tc?
 le*		at tc?
 
 apecs*		at mainbus?
@@ -208,8 +206,6 @@ pciide*		at pci? flags 0x0000
 wd*		at pciide? flags 0x0000
 atapiscsi*	at pciide?
 
-#wsdisplay*	at cfb?
-#wsdisplay*	at sfb?
 wsdisplay*	at vga?
 wsdisplay*	at tga?
 wskbd*		at pckbd?

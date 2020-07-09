@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.100 2020/01/20 23:21:55 claudio Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.102 2020/06/11 09:18:43 mpi Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -386,11 +386,9 @@ spec_poll(void *v)
 	dev_t dev;
 
 	switch (ap->a_vp->v_type) {
-
 	default:
 		return (ap->a_events &
 		    (POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM));
-
 	case VCHR:
 		dev = ap->a_vp->v_rdev;
 		return (*cdevsw[major(dev)].d_poll)(dev, ap->a_events, ap->a_p);
@@ -400,12 +398,19 @@ int
 spec_kqfilter(void *v)
 {
 	struct vop_kqfilter_args *ap = v;
-
 	dev_t dev;
 
 	dev = ap->a_vp->v_rdev;
-	if (cdevsw[major(dev)].d_kqfilter)
-		return (*cdevsw[major(dev)].d_kqfilter)(dev, ap->a_kn);
+
+	switch (ap->a_vp->v_type) {
+	default:
+		if (ap->a_kn->kn_flags & __EV_POLL)
+			return seltrue_kqfilter(dev, ap->a_kn);
+		break;
+	case VCHR:
+		if (cdevsw[major(dev)].d_kqfilter)
+			return (*cdevsw[major(dev)].d_kqfilter)(dev, ap->a_kn);
+	}
 	return (EOPNOTSUPP);
 }
 

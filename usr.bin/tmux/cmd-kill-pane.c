@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-kill-pane.c,v 1.29 2020/04/13 10:59:58 nicm Exp $ */
+/* $OpenBSD: cmd-kill-pane.c,v 1.30 2020/05/16 16:20:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -54,6 +54,7 @@ cmd_kill_pane_exec(struct cmd *self, struct cmdq_item *item)
 		TAILQ_FOREACH_SAFE(loopwp, &wl->window->panes, entry, tmpwp) {
 			if (loopwp == wp)
 				continue;
+			server_client_remove_pane(loopwp);
 			layout_close_pane(loopwp);
 			window_remove_pane(wl->window, loopwp);
 		}

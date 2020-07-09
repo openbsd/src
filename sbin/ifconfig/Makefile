@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2019/04/10 10:14:37 dlg Exp $
+#	$OpenBSD: Makefile,v 1.17 2020/06/22 02:08:43 dlg Exp $
 
 PROG=	ifconfig
 SRCS=	ifconfig.c brconfig.c sff.c

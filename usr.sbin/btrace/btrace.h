@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.h,v 1.4 2020/04/15 16:59:04 mpi Exp $ */
+/*	$OpenBSD: btrace.h,v 1.5 2020/07/04 10:16:15 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -43,8 +43,8 @@ struct map;
 void			 map_clear(struct map *);
 void			 map_delete(struct map *, const char *);
 struct bt_arg		*map_get(struct map *, const char *);
-struct map		*map_insert(struct map *, const char *,
-			     struct bt_arg *);
+struct map		*map_insert(struct map *, const char *, struct bt_arg *,
+			    long);
 void			 map_print(struct map *, size_t, const char *);
 void			 map_zero(struct map *);
 

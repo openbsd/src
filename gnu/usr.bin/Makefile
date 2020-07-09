@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.61 2017/10/29 12:42:11 aoyama Exp $
+#	$OpenBSD: Makefile,v 1.62 2020/07/04 21:11:52 kettenis Exp $
 #	$NetBSD: Makefile,v 1.35 1996/04/03 21:20:52 chuck Exp $
 
 .include <bsd.own.mk>
@@ -21,7 +21,7 @@ SUBDIR+=	cxxfilt cvs
 # binutils-2.17 needs to build gdb in binutils at the moment
 .if make(obj)
 SUBDIR+=	binutils
-.elif ${MACHINE_CPU} != "aarch64"
+.elif ${MACHINE_CPU} != "aarch64" && ${MACHINE_CPU} != "powerpc64"
 SUBDIR+=	binutils
 .endif
 SUBDIR+=	binutils-2.17

@@ -1,4 +1,4 @@
-/*	$OpenBSD: chvgpio.c,v 1.8 2017/11/29 22:51:01 kettenis Exp $	*/
+/*	$OpenBSD: chvgpio.c,v 1.9 2020/05/22 10:16:37 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -58,11 +58,7 @@ struct chvgpio_softc {
 
 	bus_space_tag_t sc_memt;
 	bus_space_handle_t sc_memh;
-	bus_addr_t sc_addr;
 	bus_size_t sc_size;
-
-	int sc_irq;
-	int sc_irq_flags;
 	void *sc_ih;
 
 	const int *sc_pins;
@@ -146,7 +142,6 @@ const int chv_southeast_pins[] = {
 	8, 12, 6, 8, 10, 11, -1
 };
 
-int	chvgpio_parse_resources(int, union acpi_resource *, void *);
 int	chvgpio_check_pin(struct chvgpio_softc *, int);
 int	chvgpio_read_pin(void *, int);
 void	chvgpio_write_pin(void *, int, int);
@@ -166,18 +161,27 @@ chvgpio_match(struct device *parent, void *match, void *aux)
 void
 chvgpio_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct acpi_attach_args *aaa = aux;
 	struct chvgpio_softc *sc = (struct chvgpio_softc *)self;
-	struct aml_value res;
+	struct acpi_attach_args *aaa = aux;
 	int64_t uid;
 	int i;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_node = aaa->aaa_node;
-	printf(": %s", sc->sc_node->name);
+	printf(" %s", sc->sc_node->name);
+
+	if (aaa->aaa_naddr < 1) {
+		printf(": no registers\n");
+		return;
+	}
+
+	if (aaa->aaa_nirq < 1) {
+		printf(": no interrupt\n");
+		return;
+	}
 
 	if (aml_evalinteger(sc->sc_acpi, sc->sc_node, "_UID", 0, NULL, &uid)) {
-		printf(", can't find uid\n");
+		printf(": can't find uid\n");
 		return;
 	}
 
@@ -206,32 +210,21 @@ chvgpio_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_ngroups++;
 	}
 
-	if (aml_evalname(sc->sc_acpi, sc->sc_node, "_CRS", 0, NULL, &res)) {
-		printf(", can't find registers\n");
+	printf(" addr 0x%llx/0x%llx", aaa->aaa_addr[0], aaa->aaa_size[0]);
+	printf(" irq %d", aaa->aaa_irq[0]);
+
+	sc->sc_memt = aaa->aaa_bst[0];
+	sc->sc_size = aaa->aaa_size[0];
+	if (bus_space_map(sc->sc_memt, aaa->aaa_addr[0], aaa->aaa_size[0],
+	    0, &sc->sc_memh)) {
+		printf(": can't map registers\n");
 		return;
 	}
 
-	aml_parse_resource(&res, chvgpio_parse_resources, sc);
-	printf(" addr 0x%lx/0x%lx", sc->sc_addr, sc->sc_size);
-	if (sc->sc_addr == 0 || sc->sc_size == 0) {
-		printf("\n");
-		return;
-	}
-	aml_freevalue(&res);
-
-	printf(" irq %d", sc->sc_irq);
-
-	sc->sc_memt = aaa->aaa_memt;
-	if (bus_space_map(sc->sc_memt, sc->sc_addr, sc->sc_size, 0,
-	    &sc->sc_memh)) {
-		printf(", can't map registers\n");
-		return;
-	}
-
-	sc->sc_ih = acpi_intr_establish(sc->sc_irq, sc->sc_irq_flags, IPL_BIO,
-	    chvgpio_intr, sc, sc->sc_dev.dv_xname);
+	sc->sc_ih = acpi_intr_establish(aaa->aaa_irq[0], aaa->aaa_irq_flags[0],
+	    IPL_BIO, chvgpio_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
-		printf(", can't establish interrupt\n");
+		printf(": can't establish interrupt\n");
 		goto unmap;
 	}
 
@@ -258,29 +251,6 @@ chvgpio_attach(struct device *parent, struct device *self, void *aux)
 
 unmap:
 	bus_space_unmap(sc->sc_memt, sc->sc_memh, sc->sc_size);
-}
-
-int
-chvgpio_parse_resources(int crsidx, union acpi_resource *crs, void *arg)
-{
-	struct chvgpio_softc *sc = arg;
-	int type = AML_CRSTYPE(crs);
-
-	switch (type) {
-	case LR_MEM32FIXED:
-		sc->sc_addr = crs->lr_m32fixed._bas;
-		sc->sc_size = crs->lr_m32fixed._len;
-		break;
-	case LR_EXTIRQ:
-		sc->sc_irq = crs->lr_extirq.irq[0];
-		sc->sc_irq_flags = crs->lr_extirq.flags;
-		break;
-	default:
-		printf(" type 0x%x\n", type);
-		break;
-	}
-
-	return 0;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.82 2015/06/04 18:01:44 kettenis Exp $ */
+/*	$OpenBSD: cpu.c,v 1.83 2020/05/29 04:42:24 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -39,7 +39,6 @@
 #include <sys/sysctl.h>
 #include <sys/task.h>
 #include <sys/device.h>
-#include <dev/rndvar.h>
 
 #include <uvm/uvm_extern.h>
 

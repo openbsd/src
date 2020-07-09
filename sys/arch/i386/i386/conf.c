@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.167 2020/01/24 05:14:51 jsg Exp $	*/
+/*	$OpenBSD: conf.c,v 1.170 2020/07/06 04:32:25 dlg Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -77,32 +77,26 @@ struct bdevsw	bdevsw[] =
 };
 int	nblkdev = nitems(bdevsw);
 
-/* open, close, read, write, ioctl, tty, mmap */
-#define cdev_pc_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	dev_init(c,n,tty), ttpoll, dev_init(c,n,mmap), D_TTY }
-
 /* open, close, read, ioctl */
 #define cdev_joy_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, seltrue, \
-	(dev_type_mmap((*))) enodev }
+        (dev_type_mmap((*))) enodev, 0, 0, seltrue_kqfilter }
 
-/* open, close, ioctl, poll -- XXX should be a generic device */
+/* open, close, ioctl */
 #define cdev_ocis_init(c,n) { \
         dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
         (dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-        (dev_type_stop((*))) enodev, 0,  dev_init(c,n,poll), \
-        (dev_type_mmap((*))) enodev, 0 }
+        (dev_type_stop((*))) enodev, 0,  seltrue, \
+        (dev_type_mmap((*))) enodev, 0, 0, seltrue_kqfilter }
 
 /* open, close, read */
 #define cdev_nvram_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	(dev_type_write((*))) enodev, (dev_type_ioctl((*))) enodev, \
 	(dev_type_stop((*))) enodev, 0, seltrue, \
-	(dev_type_mmap((*))) enodev, 0 }
+        (dev_type_mmap((*))) enodev, 0, 0, seltrue_kqfilter }
 
 #define	mmread	mmrw
 #define	mmwrite	mmrw
@@ -142,6 +136,7 @@ cdev_decl(cy);
 #include "bios.h"
 #include "bktr.h"
 #include "ksyms.h"
+#include "kstat.h"
 #include "usb.h"
 #include "uhid.h"
 #include "fido.h"
@@ -237,7 +232,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ocis_init(NBIOS,bios),	/* 48: onboard BIOS PROM */
 	cdev_bktr_init(NBKTR,bktr),     /* 49: Bt848 video capture device */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 50: Kernel symbols device */
-	cdev_notdef(),			/* 51 */
+	cdev_kstat_init(NKSTAT,kstat),	/* 51: kernel statistics */
 	cdev_midi_init(NMIDI,midi),	/* 52: MIDI I/O */
 	cdev_notdef(),			/* 53 was: sequencer I/O */
 	cdev_notdef(),			/* 54 was: RAIDframe disk driver */

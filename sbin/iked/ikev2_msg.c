@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.66 2020/04/24 21:15:05 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.69 2020/07/08 21:35:35 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -51,6 +51,8 @@ void	 ikev2_msg_retransmit_timeout(struct iked *, void *);
 int	 ikev2_check_frag_oversize(struct iked_sa *sa, struct ibuf *buf);
 int	 ikev2_send_encrypted_fragments(struct iked *env, struct iked_sa *sa,
 	    struct ibuf *in,uint8_t exchange, uint8_t firstpayload, int response);
+int	 ikev2_msg_encrypt_prepare(struct iked_sa *, struct ikev2_payload *,
+	    struct ibuf*, struct ibuf *, struct ike_header *, uint8_t, int);
 
 void
 ikev2_msg_cb(int fd, short event, void *arg)
@@ -291,8 +293,6 @@ ikev2_msg_send(struct iked *env, struct iked_message *msg)
 			timer_add(env, &sa->sa_timer,
 			    IKED_IKE_SA_DELETE_TIMEOUT);
 		}
-		if (sa != NULL)
-			return (-1);
 	}
 
 	if (sa == NULL)
@@ -329,8 +329,46 @@ ikev2_msg_id(struct iked *env, struct iked_sa *sa)
 	return (id);
 }
 
+/*
+ * Calculate the final sizes of the IKEv2 header and the encrypted payload
+ * header.  This must be done before encryption to make sure the correct
+ * headers are authenticated.
+ */
+int
+ikev2_msg_encrypt_prepare(struct iked_sa *sa, struct ikev2_payload *pld,
+    struct ibuf *buf, struct ibuf *e, struct ike_header *hdr,
+    uint8_t firstpayload, int fragmentation)
+{
+	size_t	 len, ivlen, encrlen, integrlen, blocklen, pldlen, outlen;
+
+	if (sa == NULL ||
+	    sa->sa_encr == NULL ||
+	    sa->sa_integr == NULL) {
+		log_debug("%s: invalid SA", __func__);
+		return (-1);
+	}
+
+	len = ibuf_size(e);
+	blocklen = cipher_length(sa->sa_encr);
+	integrlen = hash_length(sa->sa_integr);
+	ivlen = cipher_ivlength(sa->sa_encr);
+	encrlen = roundup(len + 1, blocklen);
+	outlen = cipher_outlength(sa->sa_encr, encrlen);
+	pldlen = ivlen + outlen + integrlen;
+
+	if (ikev2_next_payload(pld,
+	    pldlen + (fragmentation ? sizeof(struct ikev2_frag_payload) : 0),
+	    firstpayload) == -1)
+		return (-1);
+	if (ikev2_set_header(hdr, ibuf_size(buf) + pldlen - sizeof(*hdr)) == -1)
+		return (-1);
+
+	return (0);
+}
+
 struct ibuf *
-ikev2_msg_encrypt(struct iked *env, struct iked_sa *sa, struct ibuf *src)
+ikev2_msg_encrypt(struct iked *env, struct iked_sa *sa, struct ibuf *src,
+    struct ibuf *aad)
 {
 	size_t			 len, ivlen, encrlen, integrlen, blocklen,
 				    outlen;
@@ -377,7 +415,10 @@ ikev2_msg_encrypt(struct iked *env, struct iked_sa *sa, struct ibuf *src)
 
 	cipher_setkey(sa->sa_encr, encr->buf, ibuf_length(encr));
 	cipher_setiv(sa->sa_encr, NULL, 0);	/* XXX ivlen */
-	cipher_init_encrypt(sa->sa_encr);
+	if (cipher_init_encrypt(sa->sa_encr) == -1) {
+		log_info("%s: error initiating cipher.", __func__);
+		goto done;
+	}
 
 	if ((dst = ibuf_dup(sa->sa_encr->encr_iv)) == NULL)
 		goto done;
@@ -387,8 +428,22 @@ ikev2_msg_encrypt(struct iked *env, struct iked_sa *sa, struct ibuf *src)
 		goto done;
 
 	outlen = ibuf_size(out);
-	cipher_update(sa->sa_encr,
-	    ibuf_data(src), encrlen, ibuf_data(out), &outlen);
+
+	/* Add AAD for AEAD ciphers */
+	if (sa->sa_integr->hash_isaead)
+		cipher_aad(sa->sa_encr, ibuf_data(aad),
+		    ibuf_length(aad), &outlen);
+
+	if (cipher_update(sa->sa_encr, ibuf_data(src), encrlen,
+	    ibuf_data(out), &outlen) == -1) {
+		log_info("%s: error updating cipher.", __func__);
+		goto done;
+	}
+
+	if (cipher_final(sa->sa_encr) == -1) {
+		log_info("%s: encryption failed.", __func__);
+		goto done;
+	}
 
 	if (outlen && ibuf_add(dst, ibuf_data(out), outlen) != 0)
 		goto done;
@@ -423,18 +478,13 @@ ikev2_msg_integr(struct iked *env, struct iked_sa *sa, struct ibuf *src)
 	print_hex(ibuf_data(src), 0, ibuf_size(src));
 
 	if (sa == NULL ||
+	    sa->sa_encr == NULL ||
 	    sa->sa_integr == NULL) {
 		log_debug("%s: invalid SA", __func__);
 		return (-1);
 	}
 
-	if (sa->sa_hdr.sh_initiator)
-		integr = sa->sa_key_iauth;
-	else
-		integr = sa->sa_key_rauth;
-
 	integrlen = hash_length(sa->sa_integr);
-
 	log_debug("%s: integrity checksum length %zu", __func__,
 	    integrlen);
 
@@ -444,21 +494,33 @@ ikev2_msg_integr(struct iked *env, struct iked_sa *sa, struct ibuf *src)
 	if ((tmp = ibuf_new(NULL, hash_keylength(sa->sa_integr))) == NULL)
 		goto done;
 
-	hash_setkey(sa->sa_integr, ibuf_data(integr), ibuf_size(integr));
-	hash_init(sa->sa_integr);
-	hash_update(sa->sa_integr, ibuf_data(src),
-	    ibuf_size(src) - integrlen);
-	hash_final(sa->sa_integr, ibuf_data(tmp), &tmplen);
+	if (!sa->sa_integr->hash_isaead) {
+		if (sa->sa_hdr.sh_initiator)
+			integr = sa->sa_key_iauth;
+		else
+			integr = sa->sa_key_rauth;
 
-	if (tmplen != integrlen) {
-		log_debug("%s: hash failure", __func__);
-		goto done;
+		hash_setkey(sa->sa_integr, ibuf_data(integr),
+		    ibuf_size(integr));
+		hash_init(sa->sa_integr);
+		hash_update(sa->sa_integr, ibuf_data(src),
+		    ibuf_size(src) - integrlen);
+		hash_final(sa->sa_integr, ibuf_data(tmp), &tmplen);
+
+		if (tmplen != integrlen) {
+			log_debug("%s: hash failure", __func__);
+			goto done;
+		}
+	} else {
+		/* Append AEAD tag */
+		if (cipher_gettag(sa->sa_encr, ibuf_data(tmp), ibuf_size(tmp)))
+			goto done;
 	}
 
 	if ((ptr = ibuf_seek(src,
 	    ibuf_size(src) - integrlen, integrlen)) == NULL)
 		goto done;
-	memcpy(ptr, ibuf_data(tmp), tmplen);
+	memcpy(ptr, ibuf_data(tmp), integrlen);
 
 	print_hex(ibuf_data(tmp), 0, ibuf_size(tmp));
 
@@ -475,7 +537,7 @@ ikev2_msg_decrypt(struct iked *env, struct iked_sa *sa,
 {
 	ssize_t			 ivlen, encrlen, integrlen, blocklen,
 				    outlen, tmplen;
-	uint8_t			 pad = 0, *ptr;
+	uint8_t			 pad = 0, *ptr, *integrdata;
 	struct ibuf		*integr, *encr, *tmp = NULL, *out = NULL;
 	off_t			 ivoff, encroff, integroff;
 
@@ -518,25 +580,30 @@ ikev2_msg_decrypt(struct iked *env, struct iked_sa *sa,
 	/*
 	 * Validate packet checksum
 	 */
-	if ((tmp = ibuf_new(NULL, ibuf_length(integr))) == NULL)
-		goto done;
+	if (!sa->sa_integr->hash_isaead) {
+		if ((tmp = ibuf_new(NULL, ibuf_length(integr))) == NULL)
+			goto done;
 
-	hash_setkey(sa->sa_integr, integr->buf, ibuf_length(integr));
-	hash_init(sa->sa_integr);
-	hash_update(sa->sa_integr, ibuf_data(msg),
-	    ibuf_size(msg) - integrlen);
-	hash_final(sa->sa_integr, tmp->buf, &tmplen);
+		hash_setkey(sa->sa_integr, integr->buf, ibuf_length(integr));
+		hash_init(sa->sa_integr);
+		hash_update(sa->sa_integr, ibuf_data(msg),
+		    ibuf_size(msg) - integrlen);
+		hash_final(sa->sa_integr, tmp->buf, &tmplen);
 
-	if (memcmp(tmp->buf, ibuf_data(src) + integroff, integrlen) != 0) {
-		log_debug("%s: integrity check failed", __func__);
-		goto done;
+		integrdata = ibuf_seek(src, integroff, integrlen);
+		if (integrdata == NULL)
+			goto done;
+		if (memcmp(tmp->buf, integrdata, integrlen) != 0) {
+			log_debug("%s: integrity check failed", __func__);
+			goto done;
+		}
+
+		log_debug("%s: integrity check succeeded", __func__);
+		print_hex(tmp->buf, 0, tmplen);
+
+		ibuf_release(tmp);
+		tmp = NULL;
 	}
-
-	log_debug("%s: integrity check succeeded", __func__);
-	print_hex(tmp->buf, 0, tmplen);
-
-	ibuf_release(tmp);
-	tmp = NULL;
 
 	/*
 	 * Decrypt the payload and strip any padding
@@ -548,18 +615,50 @@ ikev2_msg_decrypt(struct iked *env, struct iked_sa *sa,
 
 	cipher_setkey(sa->sa_encr, encr->buf, ibuf_length(encr));
 	cipher_setiv(sa->sa_encr, ibuf_data(src) + ivoff, ivlen);
-	cipher_init_decrypt(sa->sa_encr);
+	if (cipher_init_decrypt(sa->sa_encr) == -1) {
+		log_info("%s: error initiating cipher.", __func__);
+		goto done;
+	}
+
+	/* Set AEAD tag */
+	if (sa->sa_integr->hash_isaead) {
+		integrdata = ibuf_seek(src, integroff, integrlen);
+		if (integrdata == NULL)
+			goto done;
+		if (cipher_settag(sa->sa_encr, integrdata, integrlen)) {
+			log_info("%s: failed to set tag.", __func__);
+			goto done;
+		}
+	}
 
 	if ((out = ibuf_new(NULL, cipher_outlength(sa->sa_encr,
 	    encrlen))) == NULL)
 		goto done;
 
+	/*
+	 * Add additional authenticated data for AEAD ciphers
+	 */
+	if (sa->sa_integr->hash_isaead) {
+		log_debug("%s: AAD length %zu", __func__, ibuf_length(msg) - ibuf_length(src));
+		print_hex(ibuf_data(msg), 0, ibuf_length(msg) - ibuf_length(src));
+		cipher_aad(sa->sa_encr, ibuf_data(msg),
+		    ibuf_length(msg) - ibuf_length(src), &outlen);
+	}
+
 	if ((outlen = ibuf_length(out)) != 0) {
-		cipher_update(sa->sa_encr, ibuf_data(src) + encroff, encrlen,
-		    ibuf_data(out), &outlen);
+		if (cipher_update(sa->sa_encr, ibuf_data(src) + encroff,
+		    encrlen, ibuf_data(out), &outlen) == -1) {
+			log_info("%s: error updating cipher.", __func__);
+			goto done;
+		}
 
 		ptr = ibuf_seek(out, outlen - 1, 1);
 		pad = *ptr;
+	}
+
+	if (cipher_final(sa->sa_encr) == -1) {
+		log_info("%s: decryption failed.", __func__);
+		goto done;
 	}
 
 	log_debug("%s: decrypted payload length %zd/%zd padding %d",
@@ -585,6 +684,13 @@ ikev2_check_frag_oversize(struct iked_sa *sa, struct ibuf *buf) {
 	sa_family_t	sa_fam;
 	size_t		max;
 	size_t		ivlen, integrlen, blocklen;
+
+	if (sa == NULL ||
+	    sa->sa_encr == NULL ||
+	    sa->sa_integr == NULL) {
+		log_debug("%s: invalid SA", __func__);
+		return (-1);
+	}
 
 	sa_fam = ((struct sockaddr *)&sa->sa_local.addr)->sa_family;
 
@@ -630,17 +736,15 @@ ikev2_msg_send_encrypt(struct iked *env, struct iked_sa *sa, struct ibuf **ep,
 	if ((pld = ikev2_add_payload(buf)) == NULL)
 		goto done;
 
+	if (ikev2_msg_encrypt_prepare(sa, pld, buf, e, hdr, firstpayload, 0) == -1)
+		goto done;
+
 	/* Encrypt message and add as an E payload */
-	if ((e = ikev2_msg_encrypt(env, sa, e)) == NULL) {
+	if ((e = ikev2_msg_encrypt(env, sa, e, buf)) == NULL) {
 		log_debug("%s: encryption failed", __func__);
 		goto done;
 	}
 	if (ibuf_cat(buf, e) != 0)
-		goto done;
-	if (ikev2_next_payload(pld, ibuf_size(e), firstpayload) == -1)
-		goto done;
-
-	if (ikev2_set_header(hdr, ibuf_size(buf) - sizeof(*hdr)) == -1)
 		goto done;
 
 	/* Add integrity checksum (HMAC) */
@@ -681,6 +785,13 @@ ikev2_send_encrypted_fragments(struct iked *env, struct iked_sa *sa,
 	uint8_t				*data;
 	uint32_t			 msgid;
 	int 				 ret = -1;
+
+	if (sa == NULL ||
+	    sa->sa_encr == NULL ||
+	    sa->sa_integr == NULL) {
+		log_debug("%s: invalid SA", __func__);
+		goto done;
+	}
 
 	sa_fam = ((struct sockaddr *)&sa->sa_local.addr)->sa_family;
 
@@ -731,18 +842,16 @@ ikev2_send_encrypted_fragments(struct iked *env, struct iked_sa *sa,
 		if ((e = ibuf_new(data, MIN(left, max_len))) == NULL) {
 			goto done;
 		}
-		if ((e = ikev2_msg_encrypt(env, sa, e)) == NULL) {
+
+		if (ikev2_msg_encrypt_prepare(sa, pld, buf, e, hdr,
+		    firstpayload, 1) == -1)
+			goto done;
+
+		if ((e = ikev2_msg_encrypt(env, sa, e, buf)) == NULL) {
 			log_debug("%s: encryption failed", __func__);
 			goto done;
 		}
 		if (ibuf_cat(buf, e) != 0)
-			goto done;
-
-		if (ikev2_next_payload(pld, ibuf_size(e) + sizeof(*frag),
-		    firstpayload) == -1)
-			goto done;
-
-		if (ikev2_set_header(hdr, ibuf_size(buf) - sizeof(*hdr)) == -1)
 			goto done;
 
 		/* Add integrity checksum (HMAC) */

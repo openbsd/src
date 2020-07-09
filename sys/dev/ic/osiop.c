@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.56 2020/02/17 02:50:23 krw Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.57 2020/06/27 14:29:45 krw Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -334,7 +334,6 @@ osiop_attach(sc)
 	sc->sc_link.adapter_target = sc->sc_id;
 	sc->sc_link.pool = &sc->sc_iopool;
 
-	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	/*

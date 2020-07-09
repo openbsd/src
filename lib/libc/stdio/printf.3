@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.84 2019/08/30 20:27:25 jmc Exp $
+.\"	$OpenBSD: printf.3,v 1.85 2020/07/06 17:24:59 schwarze Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: August 30 2019 $
+.Dd $Mdocdate: July 6 2020 $
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -507,11 +507,15 @@ argument is converted in style
 .Cm f
 or
 .Cm e
-(or
+for
+.Cm g ,
+or
+.Cm F
+or
 .Cm E
 for
 .Cm G
-conversions).
+.Pq general floating point notation .
 The precision specifies the number of significant digits.
 If the precision is missing, 6 digits are given; if the precision is zero,
 it is treated as 1.

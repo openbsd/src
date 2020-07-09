@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.37 2020/01/26 22:08:36 benno Exp $
+# $OpenBSD: sysupgrade.sh,v 1.39 2020/07/04 18:30:46 ajacoutot Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -51,10 +51,7 @@ unpriv()
 	fi
 	(($# >= 1))
 
-	# XXX ksh(1) bug; send error code to the caller instead of failing hard
-	set +e
 	eval su -s /bin/sh ${_user} -c "'$@'" || _rc=$?
-	set -e
 
 	[[ -n ${_file} ]] && chown root "${_file}"
 
@@ -177,8 +174,6 @@ if [[ -n ${DL} ]]; then
 	echo Verifying sets.
 	unpriv cksum -qC SHA256 ${DL}
 fi
-
-${KEEP} && > keep
 
 cat <<__EOT >/auto_upgrade.conf
 Location of sets = disk

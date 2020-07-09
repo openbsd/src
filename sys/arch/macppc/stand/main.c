@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.10 2019/09/02 23:40:29 kettenis Exp $	*/
+/*	$OpenBSD: main.c,v 1.11 2020/05/25 15:10:18 deraadt Exp $	*/
 /*	$NetBSD: boot.c,v 1.1 1997/04/16 20:29:17 thorpej Exp $	*/
 
 /*
@@ -196,6 +196,8 @@ run_loadfile(uint64_t *marks, int howto)
                 *++cp = 's';
         if (howto & RB_KDB)
                 *++cp = 'd';
+        if (howto & RB_GOODRANDOM)
+                *++cp = 'R';
         if (*cp == '-')
 		*--cp = 0;
 	else

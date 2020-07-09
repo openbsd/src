@@ -1,4 +1,4 @@
-/*	$OpenBSD: growfs.c,v 1.53 2019/07/03 03:24:01 deraadt Exp $	*/
+/*	$OpenBSD: growfs.c,v 1.54 2020/06/20 07:49:04 otto Exp $	*/
 /*
  * Copyright (c) 2000 Christoph Herrmann, Thomas-Henning von Kamptz
  * Copyright (c) 1980, 1989, 1993 The Regents of the University of California.
@@ -136,8 +136,8 @@ static void	usage(void);
 static int	isblock(struct fs *, unsigned char *, int);
 static void	clrblock(struct fs *, unsigned char *, int);
 static void	setblock(struct fs *, unsigned char *, int);
-static void	initcg(int, time_t, int, unsigned int);
-static void	updjcg(int, time_t, int, int, unsigned int);
+static void	initcg(u_int, time_t, int, unsigned int);
+static void	updjcg(u_int, time_t, int, int, unsigned int);
 static void	updcsloc(time_t, int, int, unsigned int);
 static struct disklabel	*get_disklabel(int);
 static void	return_disklabel(int, struct disklabel *, unsigned int);
@@ -167,8 +167,8 @@ int	colwidth;
 static void
 growfs(int fsi, int fso, unsigned int Nflag)
 {
-	int	i;
-	int	cylno, j;
+	int	i, j;
+	u_int	cg;
 	time_t	utime;
 	char	tmpbuf[100];
 
@@ -199,7 +199,7 @@ growfs(int fsi, int fso, unsigned int Nflag)
 	    (float)sblock.fs_size * sblock.fs_fsize * B2MBFACTOR,
 	    (intmax_t)fsbtodb(&sblock, sblock.fs_size), sblock.fs_bsize,
 	    sblock.fs_fsize);
-	printf("\tusing %d cylinder groups of %.2fMB, %d blks, %d inodes.\n",
+	printf("\tusing %u cylinder groups of %.2fMB, %d blks, %u inodes.\n",
 	    sblock.fs_ncg, (float)sblock.fs_fpg * sblock.fs_fsize * B2MBFACTOR,
 	    sblock.fs_fpg / sblock.fs_frag, sblock.fs_ipg);
 	if (sblock.fs_flags & FS_DOSOFTDEP)
@@ -217,13 +217,13 @@ growfs(int fsi, int fso, unsigned int Nflag)
 	/*
 	 * Iterate for only the new cylinder groups.
 	 */
-	for (cylno = osblock.fs_ncg; cylno < sblock.fs_ncg; cylno++) {
-		initcg(cylno, utime, fso, Nflag);
+	for (cg = osblock.fs_ncg; cg < sblock.fs_ncg; cg++) {
+		initcg(cg, utime, fso, Nflag);
 		if (quiet)
 			continue;
 		j = snprintf(tmpbuf, sizeof(tmpbuf), " %lld%s",
-		    fsbtodb(&sblock, cgsblock(&sblock, cylno)),
-		    cylno < (sblock.fs_ncg - 1) ? "," : "");
+		    fsbtodb(&sblock, cgsblock(&sblock, cg)),
+		    cg < (sblock.fs_ncg - 1) ? "," : "");
 		if (j >= sizeof(tmpbuf))
 			j = sizeof(tmpbuf) - 1;
 		if (j < 0 || i + j >= colwidth) {
@@ -310,8 +310,8 @@ growfs(int fsi, int fso, unsigned int Nflag)
 	/*
 	 * Write out the duplicate superblocks.
 	 */
-	for (cylno = 0; cylno < sblock.fs_ncg; cylno++) {
-		wtfs(fsbtodb(&sblock, cgsblock(&sblock, cylno)),
+	for (cg = 0; cg < sblock.fs_ncg; cg++) {
+		wtfs(fsbtodb(&sblock, cgsblock(&sblock, cg)),
 		    (size_t)SBLOCKSIZE, (void *)&sblock, fso, Nflag);
 	}
 }
@@ -323,7 +323,7 @@ growfs(int fsi, int fso, unsigned int Nflag)
  * provisions for that case are removed here.
  */
 static void
-initcg(int cylno, time_t utime, int fso, unsigned int Nflag)
+initcg(u_int cg, time_t utime, int fso, unsigned int Nflag)
 {
 	static char *iobuf;
 	daddr_t d, dlower, dupper, blkno, start;
@@ -348,19 +348,19 @@ initcg(int cylno, time_t utime, int fso, unsigned int Nflag)
 	 * Allow space for super block summary information in first
 	 * cylinder group.
 	 */
-	cbase = cgbase(&sblock, cylno);
+	cbase = cgbase(&sblock, cg);
 	dmax = cbase + sblock.fs_fpg;
 	if (dmax > sblock.fs_size)
 		dmax = sblock.fs_size;
-	dlower = cgsblock(&sblock, cylno) - cbase;
-	dupper = cgdmin(&sblock, cylno) - cbase;
-	if (cylno == 0) /* XXX fscs may be relocated */
+	dlower = cgsblock(&sblock, cg) - cbase;
+	dupper = cgdmin(&sblock, cg) - cbase;
+	if (cg == 0) /* XXX fscs may be relocated */
 		dupper += howmany(sblock.fs_cssize, sblock.fs_fsize);
-	cs = &fscs[cylno];
+	cs = &fscs[cg];
 	memset(&acg, 0, sblock.fs_cgsize);
 	acg.cg_ffs2_time = utime;
 	acg.cg_magic = CG_MAGIC;
-	acg.cg_cgx = cylno;
+	acg.cg_cgx = cg;
 	acg.cg_ffs2_niblk = sblock.fs_ipg;
 	acg.cg_initediblk = MINIMUM(sblock.fs_ipg, 2 * INOPB(&sblock));
 	acg.cg_ndblk = dmax - cbase;
@@ -370,7 +370,7 @@ initcg(int cylno, time_t utime, int fso, unsigned int Nflag)
 	if (sblock.fs_magic == FS_UFS2_MAGIC) {
 		acg.cg_iusedoff = start;
 	} else {
-		if (cylno == sblock.fs_ncg - 1)
+		if (cg == sblock.fs_ncg - 1)
 			acg.cg_ncyl = sblock.fs_ncyl % sblock.fs_cpg;
 		else
 			acg.cg_ncyl = sblock.fs_cpg;
@@ -404,15 +404,15 @@ initcg(int cylno, time_t utime, int fso, unsigned int Nflag)
 		errx(37, "panic: cylinder group too big");
 	}
 	acg.cg_cs.cs_nifree += sblock.fs_ipg;
-	if (cylno == 0) {
+	if (cg == 0) {
 		for (i = 0; i < ROOTINO; i++) {
 			setbit(cg_inosused(&acg), i);
 			acg.cg_cs.cs_nifree--;
 		}
 	}
-	if (cylno > 0) {
+	if (cg > 0) {
 		/*
-		 * In cylno 0, beginning space is reserved
+		 * In cg 0, beginning space is reserved
 		 * for boot and super blocks.
 		 */
 		for (d = 0; d < dlower; d += sblock.fs_frag) {
@@ -501,7 +501,7 @@ initcg(int cylno, time_t utime, int fso, unsigned int Nflag)
 			dp2++;
 		}
 	}
-	wtfs(fsbtodb(&sblock, cgsblock(&sblock, cylno)), iobufsize,
+	wtfs(fsbtodb(&sblock, cgsblock(&sblock, cg)), iobufsize,
 	    iobuf, fso, Nflag);
 
 	/* Initialize inodes for FFS1. */
@@ -513,7 +513,7 @@ initcg(int cylno, time_t utime, int fso, unsigned int Nflag)
 				dp1->di_gen = arc4random();
 				dp1++;
 			}
-			wtfs(fsbtodb(&sblock, cgimin(&sblock, cylno) + i),
+			wtfs(fsbtodb(&sblock, cgimin(&sblock, cg) + i),
 			    (size_t)sblock.fs_bsize, &iobuf[start], fso, Nflag);
 		}
 	}
@@ -626,7 +626,7 @@ cond_bl_upd(daddr_t *block, struct gfs_bpp *field, int fsi, int fso,
  * tables and cluster summary during all those operations.
  */
 static void
-updjcg(int cylno, time_t utime, int fsi, int fso, unsigned int Nflag)
+updjcg(u_int cg, time_t utime, int fsi, int fso, unsigned int Nflag)
 {
 	daddr_t	cbase, dmax, dupper;
 	struct csum	*cs;
@@ -637,7 +637,7 @@ updjcg(int cylno, time_t utime, int fsi, int fso, unsigned int Nflag)
 	 * Read the former last (joining) cylinder group from disk, and make
 	 * a copy.
 	 */
-	rdfs(fsbtodb(&osblock, cgtod(&osblock, cylno)),
+	rdfs(fsbtodb(&osblock, cgtod(&osblock, cg)),
 	    (size_t)osblock.fs_cgsize, (void *)&aocg, fsi);
 
 	memcpy(&cgun1, &cgun2, sizeof(cgun2));
@@ -649,11 +649,11 @@ updjcg(int cylno, time_t utime, int fsi, int fso, unsigned int Nflag)
 	 * to  be  zero instead of fs_cpg. As this is now no longer  the  last
 	 * cylinder group we have to change that value now to fs_cpg.
 	 */
-	if (cgbase(&osblock, cylno+1) == osblock.fs_size) {
+	if (cgbase(&osblock, cg+1) == osblock.fs_size) {
 		if (sblock.fs_magic == FS_UFS1_MAGIC)
 			acg.cg_ncyl = sblock.fs_cpg;
 
-		wtfs(fsbtodb(&sblock, cgtod(&sblock, cylno)),
+		wtfs(fsbtodb(&sblock, cgtod(&sblock, cg)),
 		    (size_t)sblock.fs_cgsize, (void *)&acg, fso, Nflag);
 
 		return;
@@ -662,18 +662,18 @@ updjcg(int cylno, time_t utime, int fsi, int fso, unsigned int Nflag)
 	/*
 	 * Set up some variables needed later.
 	 */
-	cbase = cgbase(&sblock, cylno);
+	cbase = cgbase(&sblock, cg);
 	dmax = cbase + sblock.fs_fpg;
 	if (dmax > sblock.fs_size)
 		dmax = sblock.fs_size;
-	dupper = cgdmin(&sblock, cylno) - cbase;
-	if (cylno == 0)	/* XXX fscs may be relocated */
+	dupper = cgdmin(&sblock, cg) - cbase;
+	if (cg == 0)	/* XXX fscs may be relocated */
 		dupper += howmany(sblock.fs_cssize, sblock.fs_fsize);
 
 	/*
 	 * Set pointer to the cylinder summary for our cylinder group.
 	 */
-	cs = fscs + cylno;
+	cs = fscs + cg;
 
 	/*
 	 * Touch the cylinder group, update all fields in the cylinder group as
@@ -681,7 +681,7 @@ updjcg(int cylno, time_t utime, int fsi, int fso, unsigned int Nflag)
 	 */
 	acg.cg_time = utime;
 	if (sblock.fs_magic == FS_UFS1_MAGIC) {
-		if (cylno == sblock.fs_ncg - 1) {
+		if (cg == sblock.fs_ncg - 1) {
 			/*
 			 * This is still the last cylinder group.
 			 */
@@ -727,7 +727,7 @@ updjcg(int cylno, time_t utime, int fsi, int fso, unsigned int Nflag)
 			 * filesystem.
 			 */
 			if (isblock(&sblock, cg_blksfree(&acg),
-			    ((osblock.fs_size - cgbase(&sblock, cylno))/
+			    ((osblock.fs_size - cgbase(&sblock, cg))/
 			    sblock.fs_frag))) {
 				/*
 				 * The block is now completely available.
@@ -822,7 +822,7 @@ updjcg(int cylno, time_t utime, int fsi, int fso, unsigned int Nflag)
 	/*
 	 * Write the updated "joining" cylinder group back to disk.
 	 */
-	wtfs(fsbtodb(&sblock, cgtod(&sblock, cylno)), (size_t)sblock.fs_cgsize,
+	wtfs(fsbtodb(&sblock, cgtod(&sblock, cg)), (size_t)sblock.fs_cgsize,
 	    (void *)&acg, fso, Nflag);
 }
 
@@ -850,7 +850,7 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 	int	blocks;
 	daddr_t	cbase, dupper, odupper, d, f, g;
 	int	ind;
-	int	cylno, inc;
+	u_int	cg, inc;
 	struct gfs_bpp	*bp;
 	int	i, l;
 	int	lcs = 0;
@@ -1337,9 +1337,9 @@ updcsloc(time_t utime, int fsi, int fso, unsigned int Nflag)
 		 * cylinder  groups,  within those over all non  zero  length
 		 * inodes.
 		 */
-		for (cylno = 0; cylno < osblock.fs_ncg; cylno++) {
+		for (cg = 0; cg < osblock.fs_ncg; cg++) {
 			for (inc = osblock.fs_ipg - 1; inc > 0; inc--) {
-				updrefs(cylno, (ino_t)inc, bp, fsi, fso, Nflag);
+				updrefs(cg, (ino_t)inc, bp, fsi, fso, Nflag);
 			}
 		}
 
@@ -1906,6 +1906,8 @@ main(int argc, char **argv)
 		sblock.fs_ncyl++;
 	}
 	sblock.fs_ncg = howmany(sblock.fs_size, sblock.fs_fpg);
+	if ((ino_t)sblock.fs_ncg * sblock.fs_ipg > UINT_MAX)
+		errx(1, "more than 2^32 inodes requested");
 	maxino = sblock.fs_ncg * sblock.fs_ipg;
 
 	if (sblock.fs_size % sblock.fs_fpg != 0 &&

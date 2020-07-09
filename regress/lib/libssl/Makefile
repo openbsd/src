@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.38 2020/04/06 16:53:45 jsing Exp $
+#	$OpenBSD: Makefile,v 1.39 2020/05/21 10:46:29 tb Exp $
 
 SUBDIR += asn1
 SUBDIR += buffer
@@ -17,6 +17,7 @@ SUBDIR += unit
 
 # Things that take a long time should go below here. 
 SUBDIR += interop
+SUBDIR += tlsfuzzer
 
 install:
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.44 2020/04/24 07:28:37 mestre Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.61 2020/07/09 01:08:55 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -18,6 +18,8 @@
  */
 
 #include "bpfilter.h"
+#include "vlan.h"
+#include "kstat.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +45,10 @@
 #include <net/bpf.h>
 #endif
 
+#if NKSTAT > 0
+#include <sys/kstat.h>
+#endif
+
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
@@ -55,60 +61,60 @@
 
 #define MCX_HCA_BAR	PCI_MAPREG_START /* BAR 0 */
 
-#define MCX_FW_VER	 	  0x0000
-#define  MCX_FW_VER_MAJOR(_v)		((_v) & 0xffff)
-#define  MCX_FW_VER_MINOR(_v)		((_v) >> 16)
-#define MCX_CMDIF_FW_SUBVER	  0x0004
-#define  MCX_FW_VER_SUBMINOR(_v)	((_v) & 0xffff)
-#define  MCX_CMDIF(_v)			((_v) >> 16)
+#define MCX_FW_VER			0x0000
+#define  MCX_FW_VER_MAJOR(_v)			((_v) & 0xffff)
+#define  MCX_FW_VER_MINOR(_v)			((_v) >> 16)
+#define MCX_CMDIF_FW_SUBVER		0x0004
+#define  MCX_FW_VER_SUBMINOR(_v)		((_v) & 0xffff)
+#define  MCX_CMDIF(_v)				((_v) >> 16)
 
-#define MCX_ISSI		 1 /* as per the PRM */
-#define MCX_CMD_IF_SUPPORTED	 5
+#define MCX_ISSI			1 /* as per the PRM */
+#define MCX_CMD_IF_SUPPORTED		5
 
-#define MCX_HARDMTU		 9500
-
-#define MCX_MAX_CQS		 2		/* rq, sq */
+#define MCX_HARDMTU			9500
 
 /* queue sizes */
-#define MCX_LOG_EQ_SIZE		 6		/* one page */
-#define MCX_LOG_CQ_SIZE		 12
-#define MCX_LOG_RQ_SIZE		 10
-#define MCX_LOG_SQ_SIZE		 11
+#define MCX_LOG_EQ_SIZE			6 /* one page */
+#define MCX_LOG_CQ_SIZE			12
+#define MCX_LOG_RQ_SIZE			10
+#define MCX_LOG_SQ_SIZE			11
 
 /* completion event moderation - about 10khz, or 90% of the cq */
-#define MCX_CQ_MOD_PERIOD	50
-#define MCX_CQ_MOD_COUNTER	(((1 << (MCX_LOG_CQ_SIZE - 1)) * 9) / 10)
+#define MCX_CQ_MOD_PERIOD		50
+#define MCX_CQ_MOD_COUNTER		\
+	(((1 << (MCX_LOG_CQ_SIZE - 1)) * 9) / 10)
 
-#define MCX_LOG_SQ_ENTRY_SIZE	 6
-#define MCX_SQ_ENTRY_MAX_SLOTS	 4
-#define MCX_SQ_SEGS_PER_SLOT	 \
+#define MCX_LOG_SQ_ENTRY_SIZE		6
+#define MCX_SQ_ENTRY_MAX_SLOTS		4
+#define MCX_SQ_SEGS_PER_SLOT		\
 	(sizeof(struct mcx_sq_entry) / sizeof(struct mcx_sq_entry_seg))
-#define MCX_SQ_MAX_SEGMENTS	 \
+#define MCX_SQ_MAX_SEGMENTS		\
 	1 + ((MCX_SQ_ENTRY_MAX_SLOTS-1) * MCX_SQ_SEGS_PER_SLOT)
 
-#define MCX_LOG_FLOW_TABLE_SIZE	 5
-#define MCX_NUM_STATIC_FLOWS	 4	/* promisc, allmulti, ucast, bcast */
-#define MCX_NUM_MCAST_FLOWS 	\
+#define MCX_LOG_FLOW_TABLE_SIZE		5
+#define MCX_NUM_STATIC_FLOWS		4 /* promisc, allmulti, ucast, bcast */
+#define MCX_NUM_MCAST_FLOWS 		\
 	((1 << MCX_LOG_FLOW_TABLE_SIZE) - MCX_NUM_STATIC_FLOWS)
 
-#define MCX_SQ_INLINE_SIZE	 18
+#define MCX_SQ_INLINE_SIZE		18
+CTASSERT(ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN == MCX_SQ_INLINE_SIZE);
 
 /* doorbell offsets */
-#define MCX_CQ_DOORBELL_OFFSET	 0
-#define MCX_CQ_DOORBELL_SIZE	 16
-#define MCX_RQ_DOORBELL_OFFSET	 64
-#define MCX_SQ_DOORBELL_OFFSET	 64
+#define MCX_CQ_DOORBELL_OFFSET		0
+#define MCX_CQ_DOORBELL_SIZE		16
+#define MCX_RQ_DOORBELL_OFFSET		64
+#define MCX_SQ_DOORBELL_OFFSET		64
 
-#define MCX_WQ_DOORBELL_MASK	 0xffff
+#define MCX_WQ_DOORBELL_MASK		0xffff
 
 /* uar registers */
-#define MCX_UAR_CQ_DOORBELL	 0x20
-#define MCX_UAR_EQ_DOORBELL_ARM	 0x40
-#define MCX_UAR_EQ_DOORBELL	 0x48
-#define MCX_UAR_BF		 0x800
+#define MCX_UAR_CQ_DOORBELL		0x20
+#define MCX_UAR_EQ_DOORBELL_ARM		0x40
+#define MCX_UAR_EQ_DOORBELL		0x48
+#define MCX_UAR_BF			0x800
 
-#define MCX_CMDQ_ADDR_HI		 0x0010
-#define MCX_CMDQ_ADDR_LO		 0x0014
+#define MCX_CMDQ_ADDR_HI		0x0010
+#define MCX_CMDQ_ADDR_LO		0x0014
 #define MCX_CMDQ_ADDR_NMASK		0xfff
 #define MCX_CMDQ_LOG_SIZE(_v)		((_v) >> 4 & 0xf)
 #define MCX_CMDQ_LOG_STRIDE(_v)		((_v) >> 0 & 0xf)
@@ -118,130 +124,115 @@
 
 #define MCX_CMDQ_DOORBELL		0x0018
 
-#define MCX_STATE		0x01fc
-#define MCX_STATE_MASK			(1 << 31)
-#define MCX_STATE_INITIALIZING		(1 << 31)
-#define MCX_STATE_READY			(0 << 31)
-#define MCX_STATE_INTERFACE_MASK	(0x3 << 24)
-#define MCX_STATE_INTERFACE_FULL_DRIVER	(0x0 << 24)
-#define MCX_STATE_INTERFACE_DISABLED	(0x1 << 24)
+#define MCX_STATE			0x01fc
+#define MCX_STATE_MASK				(1 << 31)
+#define MCX_STATE_INITIALIZING			(1 << 31)
+#define MCX_STATE_READY				(0 << 31)
+#define MCX_STATE_INTERFACE_MASK		(0x3 << 24)
+#define MCX_STATE_INTERFACE_FULL_DRIVER		(0x0 << 24)
+#define MCX_STATE_INTERFACE_DISABLED		(0x1 << 24)
 
-#define MCX_INTERNAL_TIMER	0x1000
-#define MCX_INTERNAL_TIMER_H	0x1000
-#define MCX_INTERNAL_TIMER_L	0x1004
+#define MCX_INTERNAL_TIMER		0x1000
+#define MCX_INTERNAL_TIMER_H		0x1000
+#define MCX_INTERNAL_TIMER_L		0x1004
 
-#define MCX_CLEAR_INT		0x100c
+#define MCX_CLEAR_INT			0x100c
 
-#define MCX_REG_OP_WRITE	0
-#define MCX_REG_OP_READ		1
+#define MCX_REG_OP_WRITE		0
+#define MCX_REG_OP_READ			1
 
-#define MCX_REG_PMLP		0x5002
-#define MCX_REG_PMTU		0x5003
-#define MCX_REG_PTYS		0x5004
-#define MCX_REG_PAOS		0x5006
-#define MCX_REG_PFCC		0x5007
-#define MCX_REG_PPCNT		0x5008
-#define MCX_REG_MCIA		0x9014
+#define MCX_REG_PMLP			0x5002
+#define MCX_REG_PMTU			0x5003
+#define MCX_REG_PTYS			0x5004
+#define MCX_REG_PAOS			0x5006
+#define MCX_REG_PFCC			0x5007
+#define MCX_REG_PPCNT			0x5008
+#define MCX_REG_MTCAP			0x9009 /* mgmt temp capabilities */
+#define MCX_REG_MTMP			0x900a /* mgmt temp */
+#define MCX_REG_MCIA			0x9014
 
-#define MCX_ETHER_CAP_SGMII	0
-#define MCX_ETHER_CAP_1000_KX	1
-#define MCX_ETHER_CAP_10G_CX4	2
-#define MCX_ETHER_CAP_10G_KX4	3
-#define MCX_ETHER_CAP_10G_KR	4
-#define MCX_ETHER_CAP_40G_CR4	6
-#define MCX_ETHER_CAP_40G_KR4	7
-#define MCX_ETHER_CAP_10G_CR	12
-#define MCX_ETHER_CAP_10G_SR	13
-#define MCX_ETHER_CAP_10G_LR	14
-#define MCX_ETHER_CAP_40G_SR4	15
-#define MCX_ETHER_CAP_40G_LR4	16
-#define MCX_ETHER_CAP_50G_SR2	18
-#define MCX_ETHER_CAP_100G_CR4	20
-#define MCX_ETHER_CAP_100G_SR4	21
-#define MCX_ETHER_CAP_100G_KR4	22
-#define MCX_ETHER_CAP_25G_CR	27
-#define MCX_ETHER_CAP_25G_KR	28
-#define MCX_ETHER_CAP_25G_SR	29
-#define MCX_ETHER_CAP_50G_CR2	30
-#define MCX_ETHER_CAP_50G_KR2	31
+#define MCX_ETHER_CAP_SGMII		0
+#define MCX_ETHER_CAP_1000_KX		1
+#define MCX_ETHER_CAP_10G_CX4		2
+#define MCX_ETHER_CAP_10G_KX4		3
+#define MCX_ETHER_CAP_10G_KR		4
+#define MCX_ETHER_CAP_40G_CR4		6
+#define MCX_ETHER_CAP_40G_KR4		7
+#define MCX_ETHER_CAP_10G_CR		12
+#define MCX_ETHER_CAP_10G_SR		13
+#define MCX_ETHER_CAP_10G_LR		14
+#define MCX_ETHER_CAP_40G_SR4		15
+#define MCX_ETHER_CAP_40G_LR4		16
+#define MCX_ETHER_CAP_50G_SR2		18
+#define MCX_ETHER_CAP_100G_CR4		20
+#define MCX_ETHER_CAP_100G_SR4		21
+#define MCX_ETHER_CAP_100G_KR4		22
+#define MCX_ETHER_CAP_25G_CR		27
+#define MCX_ETHER_CAP_25G_KR		28
+#define MCX_ETHER_CAP_25G_SR		29
+#define MCX_ETHER_CAP_50G_CR2		30
+#define MCX_ETHER_CAP_50G_KR2		31
 
-#define MCX_PAGE_SHIFT		12
-#define MCX_PAGE_SIZE		(1 << MCX_PAGE_SHIFT)
-#define MCX_MAX_CQE		32
+#define MCX_PAGE_SHIFT			12
+#define MCX_PAGE_SIZE			(1 << MCX_PAGE_SHIFT)
+#define MCX_MAX_CQE			32
 
-#define MCX_CMD_QUERY_HCA_CAP	0x100
-#define MCX_CMD_QUERY_ADAPTER	0x101
-#define MCX_CMD_INIT_HCA	0x102
-#define MCX_CMD_TEARDOWN_HCA	0x103
-#define MCX_CMD_ENABLE_HCA	0x104
-#define MCX_CMD_DISABLE_HCA	0x105
-#define MCX_CMD_QUERY_PAGES	0x107
-#define MCX_CMD_MANAGE_PAGES	0x108
-#define MCX_CMD_SET_HCA_CAP	0x109
-#define MCX_CMD_QUERY_ISSI	0x10a
-#define MCX_CMD_SET_ISSI	0x10b
-#define MCX_CMD_SET_DRIVER_VERSION \
-				0x10d
-#define MCX_CMD_QUERY_SPECIAL_CONTEXTS \
-				0x203
-#define MCX_CMD_CREATE_EQ	0x301
-#define MCX_CMD_DESTROY_EQ	0x302
-#define MCX_CMD_CREATE_CQ	0x400
-#define MCX_CMD_DESTROY_CQ	0x401
-#define MCX_CMD_QUERY_NIC_VPORT_CONTEXT \
-				0x754
+#define MCX_CMD_QUERY_HCA_CAP		0x100
+#define MCX_CMD_QUERY_ADAPTER		0x101
+#define MCX_CMD_INIT_HCA		0x102
+#define MCX_CMD_TEARDOWN_HCA		0x103
+#define MCX_CMD_ENABLE_HCA		0x104
+#define MCX_CMD_DISABLE_HCA		0x105
+#define MCX_CMD_QUERY_PAGES		0x107
+#define MCX_CMD_MANAGE_PAGES		0x108
+#define MCX_CMD_SET_HCA_CAP		0x109
+#define MCX_CMD_QUERY_ISSI		0x10a
+#define MCX_CMD_SET_ISSI		0x10b
+#define MCX_CMD_SET_DRIVER_VERSION	0x10d
+#define MCX_CMD_QUERY_SPECIAL_CONTEXTS	0x203
+#define MCX_CMD_CREATE_EQ		0x301
+#define MCX_CMD_DESTROY_EQ		0x302
+#define MCX_CMD_CREATE_CQ		0x400
+#define MCX_CMD_DESTROY_CQ		0x401
+#define MCX_CMD_QUERY_NIC_VPORT_CONTEXT	0x754
 #define MCX_CMD_MODIFY_NIC_VPORT_CONTEXT \
-				0x755
-#define MCX_CMD_QUERY_VPORT_COUNTERS \
-				0x770
-#define MCX_CMD_ALLOC_PD	0x800
-#define MCX_CMD_ALLOC_UAR	0x802
-#define MCX_CMD_ACCESS_REG	0x805
-#define MCX_CMD_ALLOC_TRANSPORT_DOMAIN \
-				0x816
-#define MCX_CMD_CREATE_TIR	0x900
-#define MCX_CMD_DESTROY_TIR	0x902
-#define MCX_CMD_CREATE_SQ	0x904
-#define MCX_CMD_MODIFY_SQ	0x905
-#define MCX_CMD_DESTROY_SQ	0x906
-#define MCX_CMD_QUERY_SQ	0x907
-#define MCX_CMD_CREATE_RQ	0x908
-#define MCX_CMD_MODIFY_RQ	0x909
-#define MCX_CMD_DESTROY_RQ	0x90a
-#define MCX_CMD_QUERY_RQ	0x90b
-#define MCX_CMD_CREATE_TIS	0x912
-#define MCX_CMD_DESTROY_TIS	0x914
-#define MCX_CMD_SET_FLOW_TABLE_ROOT \
-				0x92f
-#define MCX_CMD_CREATE_FLOW_TABLE \
-				0x930
-#define MCX_CMD_DESTROY_FLOW_TABLE \
-				0x931
-#define MCX_CMD_QUERY_FLOW_TABLE \
-				0x932
-#define MCX_CMD_CREATE_FLOW_GROUP \
-				0x933
-#define MCX_CMD_DESTROY_FLOW_GROUP \
-				0x934
-#define MCX_CMD_QUERY_FLOW_GROUP \
-				0x935
-#define MCX_CMD_SET_FLOW_TABLE_ENTRY \
-				0x936
-#define MCX_CMD_QUERY_FLOW_TABLE_ENTRY \
-				0x937
-#define MCX_CMD_DELETE_FLOW_TABLE_ENTRY \
-				0x938
-#define MCX_CMD_ALLOC_FLOW_COUNTER \
-				0x939
-#define MCX_CMD_QUERY_FLOW_COUNTER \
-				0x93b
+					0x755
+#define MCX_CMD_QUERY_VPORT_COUNTERS	0x770
+#define MCX_CMD_ALLOC_PD		0x800
+#define MCX_CMD_ALLOC_UAR		0x802
+#define MCX_CMD_ACCESS_REG		0x805
+#define MCX_CMD_ALLOC_TRANSPORT_DOMAIN	0x816
+#define MCX_CMD_CREATE_TIR		0x900
+#define MCX_CMD_DESTROY_TIR		0x902
+#define MCX_CMD_CREATE_SQ		0x904
+#define MCX_CMD_MODIFY_SQ		0x905
+#define MCX_CMD_DESTROY_SQ		0x906
+#define MCX_CMD_QUERY_SQ		0x907
+#define MCX_CMD_CREATE_RQ		0x908
+#define MCX_CMD_MODIFY_RQ		0x909
+#define MCX_CMD_DESTROY_RQ		0x90a
+#define MCX_CMD_QUERY_RQ		0x90b
+#define MCX_CMD_CREATE_TIS		0x912
+#define MCX_CMD_DESTROY_TIS		0x914
+#define MCX_CMD_SET_FLOW_TABLE_ROOT	0x92f
+#define MCX_CMD_CREATE_FLOW_TABLE	0x930
+#define MCX_CMD_DESTROY_FLOW_TABLE	0x931
+#define MCX_CMD_QUERY_FLOW_TABLE	0x932
+#define MCX_CMD_CREATE_FLOW_GROUP	0x933
+#define MCX_CMD_DESTROY_FLOW_GROUP	0x934
+#define MCX_CMD_QUERY_FLOW_GROUP	0x935
+#define MCX_CMD_SET_FLOW_TABLE_ENTRY	0x936
+#define MCX_CMD_QUERY_FLOW_TABLE_ENTRY	0x937
+#define MCX_CMD_DELETE_FLOW_TABLE_ENTRY	0x938
+#define MCX_CMD_ALLOC_FLOW_COUNTER	0x939
+#define MCX_CMD_QUERY_FLOW_COUNTER	0x93b
 
-#define MCX_QUEUE_STATE_RST	0
-#define MCX_QUEUE_STATE_RDY	1
-#define MCX_QUEUE_STATE_ERR	3
+#define MCX_QUEUE_STATE_RST		0
+#define MCX_QUEUE_STATE_RDY		1
+#define MCX_QUEUE_STATE_ERR		3
 
-#define MCX_FLOW_TABLE_TYPE_RX	0
-#define MCX_FLOW_TABLE_TYPE_TX	1
+#define MCX_FLOW_TABLE_TYPE_RX		0
+#define MCX_FLOW_TABLE_TYPE_TX		1
 
 #define MCX_CMDQ_INLINE_DATASIZE 16
 
@@ -445,6 +436,159 @@ struct mcx_reg_pmlp {
 	uint8_t			rp_reserved1[44];
 } __packed __aligned(4);
 
+struct mcx_reg_ppcnt {
+	uint8_t			ppcnt_swid;
+	uint8_t			ppcnt_local_port;
+	uint8_t			ppcnt_pnat;
+	uint8_t			ppcnt_grp;
+#define MCX_REG_PPCNT_GRP_IEEE8023		0x00
+#define MCX_REG_PPCNT_GRP_RFC2863		0x01
+#define MCX_REG_PPCNT_GRP_RFC2819		0x02
+#define MCX_REG_PPCNT_GRP_RFC3635		0x03
+#define MCX_REG_PPCNT_GRP_PER_PRIO		0x10
+#define MCX_REG_PPCNT_GRP_PER_TC		0x11
+#define MCX_REG_PPCNT_GRP_PER_RX_BUFFER		0x11
+
+	uint8_t			ppcnt_clr;
+	uint8_t			ppcnt_reserved1[2];
+	uint8_t			ppcnt_prio_tc;
+#define MCX_REG_PPCNT_CLR			(1 << 7)
+
+	uint8_t			ppcnt_counter_set[248];
+} __packed __aligned(8);
+CTASSERT(sizeof(struct mcx_reg_ppcnt) == 256);
+CTASSERT((offsetof(struct mcx_reg_ppcnt, ppcnt_counter_set) %
+    sizeof(uint64_t)) == 0);
+
+enum mcx_ppcnt_ieee8023 {
+	frames_transmitted_ok,
+	frames_received_ok,
+	frame_check_sequence_errors,
+	alignment_errors,
+	octets_transmitted_ok,
+	octets_received_ok,
+	multicast_frames_xmitted_ok,
+	broadcast_frames_xmitted_ok,
+	multicast_frames_received_ok,
+	broadcast_frames_received_ok,
+	in_range_length_errors,
+	out_of_range_length_field,
+	frame_too_long_errors,
+	symbol_error_during_carrier,
+	mac_control_frames_transmitted,
+	mac_control_frames_received,
+	unsupported_opcodes_received,
+	pause_mac_ctrl_frames_received,
+	pause_mac_ctrl_frames_transmitted,
+
+	mcx_ppcnt_ieee8023_count
+};
+CTASSERT(mcx_ppcnt_ieee8023_count * sizeof(uint64_t) == 0x98);
+
+enum mcx_ppcnt_rfc2863 {
+	in_octets,
+	in_ucast_pkts,
+	in_discards,
+	in_errors,
+	in_unknown_protos,
+	out_octets,
+	out_ucast_pkts,
+	out_discards,
+	out_errors,
+	in_multicast_pkts,
+	in_broadcast_pkts,
+	out_multicast_pkts,
+	out_broadcast_pkts,
+
+	mcx_ppcnt_rfc2863_count
+};
+CTASSERT(mcx_ppcnt_rfc2863_count * sizeof(uint64_t) == 0x68);
+
+enum mcx_ppcnt_rfc2819 {
+	drop_events,
+	octets,
+	pkts,
+	broadcast_pkts,
+	multicast_pkts,
+	crc_align_errors,
+	undersize_pkts,
+	oversize_pkts,
+	fragments,
+	jabbers,
+	collisions,
+	pkts64octets,
+	pkts65to127octets,
+	pkts128to255octets,
+	pkts256to511octets,
+	pkts512to1023octets,
+	pkts1024to1518octets,
+	pkts1519to2047octets,
+	pkts2048to4095octets,
+	pkts4096to8191octets,
+	pkts8192to10239octets,
+
+	mcx_ppcnt_rfc2819_count
+};
+CTASSERT((mcx_ppcnt_rfc2819_count * sizeof(uint64_t)) == 0xa8);
+
+enum mcx_ppcnt_rfc3635 {
+	dot3stats_alignment_errors,
+	dot3stats_fcs_errors,
+	dot3stats_single_collision_frames,
+	dot3stats_multiple_collision_frames,
+	dot3stats_sqe_test_errors,
+	dot3stats_deferred_transmissions,
+	dot3stats_late_collisions,
+	dot3stats_excessive_collisions,
+	dot3stats_internal_mac_transmit_errors,
+	dot3stats_carrier_sense_errors,
+	dot3stats_frame_too_longs,
+	dot3stats_internal_mac_receive_errors,
+	dot3stats_symbol_errors,
+	dot3control_in_unknown_opcodes,
+	dot3in_pause_frames,
+	dot3out_pause_frames,
+
+	mcx_ppcnt_rfc3635_count
+};
+CTASSERT((mcx_ppcnt_rfc3635_count * sizeof(uint64_t)) == 0x80);
+
+struct mcx_reg_mtcap {
+	uint8_t			_reserved1[3];
+	uint8_t			mtcap_sensor_count;
+	uint8_t			_reserved2[4];
+
+	uint64_t		mtcap_sensor_map;
+};
+
+struct mcx_reg_mtmp {
+	uint8_t			_reserved1[2];
+	uint16_t		mtmp_sensor_index;
+
+	uint8_t			_reserved2[2];
+	uint16_t		mtmp_temperature;
+
+	uint16_t		mtmp_mte_mtr;
+#define MCX_REG_MTMP_MTE		(1 << 15)
+#define MCX_REG_MTMP_MTR		(1 << 14)
+	uint16_t		mtmp_max_temperature;
+
+	uint16_t		mtmp_tee;
+#define MCX_REG_MTMP_TEE_NOPE		(0 << 14)
+#define MCX_REG_MTMP_TEE_GENERATE	(1 << 14)
+#define MCX_REG_MTMP_TEE_GENERATE_ONE	(2 << 14)
+	uint16_t		mtmp_temperature_threshold_hi;
+
+	uint8_t			_reserved3[2];
+	uint16_t		mtmp_temperature_threshold_lo;
+
+	uint8_t			_reserved4[4];
+
+	uint8_t			mtmp_sensor_name[8];
+};
+CTASSERT(sizeof(struct mcx_reg_mtmp) == 0x20);
+CTASSERT(offsetof(struct mcx_reg_mtmp, mtmp_sensor_name) == 0x18);
+
 #define MCX_MCIA_EEPROM_BYTES	32
 struct mcx_reg_mcia {
 	uint8_t			rm_l;
@@ -521,7 +665,7 @@ struct mcx_cmd_query_pages_out {
 	uint32_t		cmd_syndrome;
 	uint8_t			cmd_reserved1[2];
 	uint16_t		cmd_func_id;
-	uint32_t		cmd_num_pages;
+	int32_t			cmd_num_pages;
 } __packed __aligned(4);
 
 struct mcx_cmd_manage_pages_in {
@@ -1255,6 +1399,12 @@ struct mcx_cq_entry {
 	uint32_t		cq_checksum;
 	uint32_t		__reserved__;
 	uint32_t		cq_flags;
+#define MCX_CQ_ENTRY_FLAGS_L4_OK		(1 << 26)
+#define MCX_CQ_ENTRY_FLAGS_L3_OK		(1 << 25)
+#define MCX_CQ_ENTRY_FLAGS_L2_OK		(1 << 24)
+#define MCX_CQ_ENTRY_FLAGS_CV			(1 << 16)
+#define MCX_CQ_ENTRY_FLAGS_VLAN_MASK		(0xffff)
+
 	uint32_t		cq_lro_srqn;
 	uint32_t		__reserved__[2];
 	uint32_t		cq_byte_cnt;
@@ -1891,6 +2041,12 @@ struct mcx_slot {
 	struct mbuf		*ms_m;
 };
 
+struct mcx_eq {
+	int			 eq_n;
+	uint32_t		 eq_cons;
+	struct mcx_dmamem	 eq_mem;
+};
+
 struct mcx_cq {
 	int			 cq_n;
 	struct mcx_dmamem	 cq_mem;
@@ -1910,6 +2066,46 @@ struct mcx_calibration {
 
 #define MCX_CALIBRATE_FIRST    2
 #define MCX_CALIBRATE_NORMAL   30
+
+struct mcx_rx {
+	struct mcx_softc	*rx_softc;
+	struct ifiqueue		*rx_ifiq;
+
+	int			 rx_rqn;
+	struct mcx_dmamem	 rx_rq_mem;
+	struct mcx_slot		*rx_slots;
+	uint32_t		*rx_doorbell;
+
+	uint32_t		 rx_prod;
+	struct timeout		 rx_refill;
+	struct if_rxring	 rx_rxr;
+} __aligned(64);
+
+struct mcx_tx {
+	struct mcx_softc	*tx_softc;
+	struct ifqueue		*tx_ifq;
+
+	int			 tx_uar;
+	int			 tx_sqn;
+	struct mcx_dmamem	 tx_sq_mem;
+	struct mcx_slot		*tx_slots;
+	uint32_t		*tx_doorbell;
+	int			 tx_bf_offset;
+
+	uint32_t		 tx_cons;
+	uint32_t		 tx_prod;
+} __aligned(64);
+
+struct mcx_queues {
+	char			 q_intrname[8];
+	void			*q_ihc;
+	struct mcx_softc	*q_sc;
+	int			 q_uar;
+	struct mcx_rx		 q_rx;
+	struct mcx_tx		 q_tx;
+	struct mcx_cq		 q_cq;
+	struct mcx_eq		 q_eq;
+};
 
 struct mcx_softc {
 	struct device		 sc_dev;
@@ -1942,13 +2138,18 @@ struct mcx_softc {
 	int			 sc_pd;
 	int			 sc_tdomain;
 	uint32_t		 sc_lkey;
+	int			 sc_tisn;
+	int			 sc_tirn;
 
 	struct mcx_dmamem	 sc_doorbell_mem;
 
-	int			 sc_eqn;
-	uint32_t		 sc_eq_cons;
-	struct mcx_dmamem	 sc_eq_mem;
+	struct mcx_eq		 sc_admin_eq;
+	struct mcx_eq		 sc_queue_eq;
+
 	int			 sc_hardmtu;
+	int			 sc_rxbufsz;
+
+	int			 sc_bf_size;
 
 	struct task		 sc_port_change;
 
@@ -1970,39 +2171,28 @@ struct mcx_softc {
 	unsigned int		 sc_calibration_gen;
 	struct timeout		 sc_calibrate;
 
-	struct mcx_cq		 sc_cq[MCX_MAX_CQS];
+	struct mcx_queues	 sc_queues[1];
+	unsigned int		 sc_nqueues;
+
 	int			 sc_num_cq;
 
-	/* rx */
-	int			 sc_tirn;
-	int			 sc_rqn;
-	struct mcx_dmamem	 sc_rq_mem;
-	struct mcx_slot		*sc_rx_slots;
-	uint32_t		*sc_rx_doorbell;
-
-	uint32_t		 sc_rx_prod;
-	struct timeout		 sc_rx_refill;
-	struct if_rxring	 sc_rxr;
-
-	/* tx */
-	int			 sc_tisn;
-	int			 sc_sqn;
-	struct mcx_dmamem	 sc_sq_mem;
-	struct mcx_slot		*sc_tx_slots;
-	uint32_t		*sc_tx_doorbell;
-	int			 sc_bf_size;
-	int			 sc_bf_offset;
-
-	uint32_t		 sc_tx_cons;
-	uint32_t		 sc_tx_prod;
-
-	uint64_t		 sc_last_cq_db;
-	uint64_t		 sc_last_srq_db;
+#if NKSTAT > 0
+	struct kstat		*sc_kstat_ieee8023;
+	struct kstat		*sc_kstat_rfc2863;
+	struct kstat		*sc_kstat_rfc2819;
+	struct kstat		*sc_kstat_rfc3635;
+	unsigned int		 sc_kstat_mtmp_count;
+	struct kstat		**sc_kstat_mtmp;
+#endif
 };
 #define DEVNAME(_sc) ((_sc)->sc_dev.dv_xname)
 
 static int	mcx_match(struct device *, void *, void *);
 static void	mcx_attach(struct device *, struct device *, void *);
+
+#if NKSTAT > 0
+static void	mcx_kstat_attach(struct mcx_softc *);
+#endif
 
 static int	mcx_version(struct mcx_softc *);
 static int	mcx_init_wait(struct mcx_softc *);
@@ -2017,22 +2207,23 @@ static int	mcx_hca_set_caps(struct mcx_softc *);
 static int	mcx_init_hca(struct mcx_softc *);
 static int	mcx_set_driver_version(struct mcx_softc *);
 static int	mcx_iff(struct mcx_softc *);
-static int	mcx_alloc_uar(struct mcx_softc *);
+static int	mcx_alloc_uar(struct mcx_softc *, int *);
 static int	mcx_alloc_pd(struct mcx_softc *);
 static int	mcx_alloc_tdomain(struct mcx_softc *);
-static int	mcx_create_eq(struct mcx_softc *);
+static int	mcx_create_eq(struct mcx_softc *, struct mcx_eq *, int,
+		    uint64_t, int);
 static int	mcx_query_nic_vport_context(struct mcx_softc *);
 static int	mcx_query_special_contexts(struct mcx_softc *);
 static int	mcx_set_port_mtu(struct mcx_softc *, int);
-static int	mcx_create_cq(struct mcx_softc *, int);
-static int	mcx_destroy_cq(struct mcx_softc *, int);
-static int	mcx_create_sq(struct mcx_softc *, int);
-static int	mcx_destroy_sq(struct mcx_softc *);
-static int	mcx_ready_sq(struct mcx_softc *);
-static int	mcx_create_rq(struct mcx_softc *, int);
-static int	mcx_destroy_rq(struct mcx_softc *);
-static int	mcx_ready_rq(struct mcx_softc *);
-static int	mcx_create_tir(struct mcx_softc *);
+static int	mcx_create_cq(struct mcx_softc *, struct mcx_cq *, int, int);
+static int	mcx_destroy_cq(struct mcx_softc *, struct mcx_cq *);
+static int	mcx_create_sq(struct mcx_softc *, struct mcx_tx *, int, int);
+static int	mcx_destroy_sq(struct mcx_softc *, struct mcx_tx *);
+static int	mcx_ready_sq(struct mcx_softc *, struct mcx_tx *);
+static int	mcx_create_rq(struct mcx_softc *, struct mcx_rx *, int);
+static int	mcx_destroy_rq(struct mcx_softc *, struct mcx_rx *);
+static int	mcx_ready_rq(struct mcx_softc *, struct mcx_rx *);
+static int	mcx_create_tir(struct mcx_softc *, struct mcx_rx *);
 static int	mcx_destroy_tir(struct mcx_softc *);
 static int	mcx_create_tis(struct mcx_softc *);
 static int	mcx_destroy_tis(struct mcx_softc *);
@@ -2042,8 +2233,8 @@ static int	mcx_destroy_flow_table(struct mcx_softc *);
 static int	mcx_create_flow_group(struct mcx_softc *, int, int,
 		    int, int, struct mcx_flow_match *);
 static int	mcx_destroy_flow_group(struct mcx_softc *, int);
-static int	mcx_set_flow_table_entry(struct mcx_softc *, int, int,
-		    uint8_t *);
+static int	mcx_set_flow_table_entry(struct mcx_softc *,
+		    struct mcx_rx *, int, int, uint8_t *);
 static int	mcx_delete_flow_table_entry(struct mcx_softc *, int, int);
 
 #if 0
@@ -2064,11 +2255,13 @@ static int	mcx_process_rx(struct mcx_softc *, struct mcx_cq_entry *,
 		    struct mbuf_list *, const struct mcx_calibration *);
 static void	mcx_process_txeof(struct mcx_softc *, struct mcx_cq_entry *,
 		    int *);
-static void	mcx_process_cq(struct mcx_softc *, struct mcx_cq *);
+static void	mcx_process_cq(struct mcx_softc *, struct mcx_queues *,
+		    struct mcx_cq *);
 
-static void	mcx_arm_cq(struct mcx_softc *, struct mcx_cq *);
-static void	mcx_arm_eq(struct mcx_softc *);
-static int	mcx_intr(void *);
+static void	mcx_arm_cq(struct mcx_softc *, struct mcx_cq *, int);
+static void	mcx_arm_eq(struct mcx_softc *, struct mcx_eq *, int);
+static int	mcx_admin_intr(void *);
+static int	mcx_cq_intr(void *);
 
 static int	mcx_up(struct mcx_softc *);
 static void	mcx_down(struct mcx_softc *);
@@ -2120,6 +2313,7 @@ static const struct pci_matchid mcx_devices[] = {
 	{ PCI_VENDOR_MELLANOX,	PCI_PRODUCT_MELLANOX_MT27710 },
 	{ PCI_VENDOR_MELLANOX,	PCI_PRODUCT_MELLANOX_MT27800 },
 	{ PCI_VENDOR_MELLANOX,	PCI_PRODUCT_MELLANOX_MT28800 },
+	{ PCI_VENDOR_MELLANOX,	PCI_PRODUCT_MELLANOX_MT2892  },
 };
 
 struct mcx_eth_proto_capability {
@@ -2223,9 +2417,11 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	mcx_wr(sc, MCX_CMDQ_ADDR_HI, MCX_DMA_DVA(&sc->sc_cmdq_mem) >> 32);
-	mcx_bar(sc, MCX_CMDQ_ADDR_HI, sizeof(uint32_t), BUS_SPACE_BARRIER_WRITE);
+	mcx_bar(sc, MCX_CMDQ_ADDR_HI, sizeof(uint32_t),
+	    BUS_SPACE_BARRIER_WRITE);
 	mcx_wr(sc, MCX_CMDQ_ADDR_LO, MCX_DMA_DVA(&sc->sc_cmdq_mem));
-	mcx_bar(sc, MCX_CMDQ_ADDR_LO, sizeof(uint32_t), BUS_SPACE_BARRIER_WRITE);
+	mcx_bar(sc, MCX_CMDQ_ADDR_LO, sizeof(uint32_t),
+	    BUS_SPACE_BARRIER_WRITE);
 
 	if (mcx_init_wait(sc) != 0) {
 		printf(", timeout waiting for init\n");
@@ -2289,7 +2485,7 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 		goto teardown;
 	}
 
-	if (mcx_alloc_uar(sc) != 0) {
+	if (mcx_alloc_uar(sc, &sc->sc_uar) != 0) {
 		/* error printed by mcx_alloc_uar */
 		goto teardown;
 	}
@@ -2315,7 +2511,7 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 	}
 	intrstr = pci_intr_string(sc->sc_pc, sc->sc_ih);
 	sc->sc_ihc = pci_intr_establish(sc->sc_pc, sc->sc_ih,
-	    IPL_NET | IPL_MPSAFE, mcx_intr, sc, DEVNAME(sc));
+	    IPL_NET | IPL_MPSAFE, mcx_admin_intr, sc, DEVNAME(sc));
 	if (sc->sc_ihc == NULL) {
 		printf(": unable to establish interrupt");
 		if (intrstr != NULL)
@@ -2324,7 +2520,11 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 		goto teardown;
 	}
 
-	if (mcx_create_eq(sc) != 0) {
+	if (mcx_create_eq(sc, &sc->sc_admin_eq, sc->sc_uar,
+	    (1ull << MCX_EVENT_TYPE_INTERNAL_ERROR) |
+	    (1ull << MCX_EVENT_TYPE_PORT_CHANGE) |
+	    (1ull << MCX_EVENT_TYPE_CMD_COMPLETION) |
+	    (1ull << MCX_EVENT_TYPE_PAGE_REQUEST), 0) != 0) {
 		/* error printed by mcx_create_eq */
 		goto teardown;
 	}
@@ -2347,6 +2547,8 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 	printf(", %s, address %s\n", intrstr,
 	    ether_sprintf(sc->sc_ac.ac_enaddr));
 
+	sc->sc_nqueues = nitems(sc->sc_queues);
+
 	strlcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST | IFF_SIMPLEX;
@@ -2355,7 +2557,12 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_qstart = mcx_start;
 	ifp->if_watchdog = mcx_watchdog;
 	ifp->if_hardmtu = sc->sc_hardmtu;
-	ifp->if_capabilities = IFCAP_VLAN_MTU;
+	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_IPv4 |
+	    IFCAP_CSUM_UDPv4 | IFCAP_CSUM_UDPv6 | IFCAP_CSUM_TCPv4 |
+	    IFCAP_CSUM_TCPv6;
+#if NVLAN > 0
+	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
+#endif
 	IFQ_SET_MAXLEN(&ifp->if_snd, 1024);
 
 	ifmedia_init(&sc->sc_media, IFM_IMASK, mcx_media_change,
@@ -2367,7 +2574,52 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	timeout_set(&sc->sc_rx_refill, mcx_refill, sc);
+	if_attach_iqueues(ifp, sc->sc_nqueues);
+	if_attach_queues(ifp, sc->sc_nqueues);
+	for (i = 0; i < sc->sc_nqueues; i++) {
+		struct ifiqueue *ifiq = ifp->if_iqs[i];
+		struct ifqueue *ifq = ifp->if_ifqs[i];
+		struct mcx_queues *q = &sc->sc_queues[i];
+		struct mcx_rx *rx = &q->q_rx;
+		struct mcx_tx *tx = &q->q_tx;
+		pci_intr_handle_t ih;
+		int vec;
+
+		vec = i + 1;
+		q->q_sc = sc;
+
+		if (mcx_alloc_uar(sc, &q->q_uar) != 0) {
+			printf("%s: unable to alloc uar %d\n",
+			    DEVNAME(sc), i);
+			goto teardown;
+		}
+
+		if (mcx_create_eq(sc, &q->q_eq, q->q_uar, 0, vec) != 0) {
+			printf("%s: unable to create event queue %d\n",
+			    DEVNAME(sc), i);
+			goto teardown;
+		}
+
+		rx->rx_softc = sc;
+		rx->rx_ifiq = ifiq;
+		timeout_set(&rx->rx_refill, mcx_refill, rx);
+		ifiq->ifiq_softc = rx;
+
+		tx->tx_softc = sc;
+		tx->tx_ifq = ifq;
+		ifq->ifq_softc = tx;
+
+		if (pci_intr_map_msix(pa, i + 1, &ih) != 0) {
+			printf("%s: unable to map queue interrupt %d\n",
+			    DEVNAME(sc), i);
+			goto teardown;
+		}
+		snprintf(q->q_intrname, sizeof(q->q_intrname), "%s:%d",
+		    DEVNAME(sc), i);
+		q->q_ihc = pci_intr_establish(sc->sc_pc, ih,
+		    IPL_NET | IPL_MPSAFE, mcx_cq_intr, q, q->q_intrname);
+	}
+
 	timeout_set(&sc->sc_calibrate, mcx_calibrate, sc);
 
 	task_set(&sc->sc_port_change, mcx_port_change, sc);
@@ -2381,6 +2633,10 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc_extra_mcast = 0;
 	memset(sc->sc_mcast_flows, 0, sizeof(sc->sc_mcast_flows));
+
+#if NKSTAT > 0
+	mcx_kstat_attach(sc);
+#endif
 	return;
 
 teardown:
@@ -2388,13 +2644,16 @@ teardown:
 	/* error printed by mcx_teardown_hca, and we're already unwinding */
 cqfree:
 	mcx_wr(sc, MCX_CMDQ_ADDR_HI, MCX_DMA_DVA(&sc->sc_cmdq_mem) >> 32);
-	mcx_bar(sc, MCX_CMDQ_ADDR_HI, sizeof(uint64_t), BUS_SPACE_BARRIER_WRITE);
+	mcx_bar(sc, MCX_CMDQ_ADDR_HI, sizeof(uint64_t),
+	    BUS_SPACE_BARRIER_WRITE);
 	mcx_wr(sc, MCX_CMDQ_ADDR_LO, MCX_DMA_DVA(&sc->sc_cmdq_mem) |
 	    MCX_CMDQ_INTERFACE_DISABLED);
-	mcx_bar(sc, MCX_CMDQ_ADDR_LO, sizeof(uint64_t), BUS_SPACE_BARRIER_WRITE);
+	mcx_bar(sc, MCX_CMDQ_ADDR_LO, sizeof(uint64_t),
+	    BUS_SPACE_BARRIER_WRITE);
 
 	mcx_wr(sc, MCX_CMDQ_ADDR_HI, 0);
-	mcx_bar(sc, MCX_CMDQ_ADDR_HI, sizeof(uint64_t), BUS_SPACE_BARRIER_WRITE);
+	mcx_bar(sc, MCX_CMDQ_ADDR_HI, sizeof(uint64_t),
+	    BUS_SPACE_BARRIER_WRITE);
 	mcx_wr(sc, MCX_CMDQ_ADDR_LO, MCX_CMDQ_INTERFACE_DISABLED);
 
 	mcx_dmamem_free(sc, &sc->sc_cmdq_mem);
@@ -2881,7 +3140,8 @@ mcx_access_hca_reg(struct mcx_softc *sc, uint16_t reg, int op, void *data,
 	in->cmd_register_id = htobe16(reg);
 
 	nmb = howmany(len, MCX_CMDQ_MAILBOX_DATASIZE);
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, nmb, &cqe->cq_output_ptr, token) != 0) {
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, nmb,
+	    &cqe->cq_output_ptr, token) != 0) {
 		printf(", unable to allocate access reg mailboxen\n");
 		return (-1);
 	}
@@ -2924,7 +3184,8 @@ free:
 }
 
 static int
-mcx_set_issi(struct mcx_softc *sc, struct mcx_cmdq_entry *cqe, unsigned int slot)
+mcx_set_issi(struct mcx_softc *sc, struct mcx_cmdq_entry *cqe,
+    unsigned int slot)
 {
 	struct mcx_cmd_set_issi_in *in;
 	struct mcx_cmd_set_issi_out *out;
@@ -3031,7 +3292,7 @@ free:
 
 static int
 mcx_query_pages(struct mcx_softc *sc, uint16_t type,
-    uint32_t *npages, uint16_t *func_id)
+    int32_t *npages, uint16_t *func_id)
 {
 	struct mcx_cmdq_entry *cqe;
 	struct mcx_cmd_query_pages_in *in;
@@ -3187,7 +3448,7 @@ free:
 static int
 mcx_pages(struct mcx_softc *sc, struct mcx_hwmem *mhm, uint16_t type)
 {
-	uint32_t npages;
+	int32_t npages;
 	uint16_t func_id;
 
 	if (mcx_query_pages(sc, type, &npages, &func_id) != 0) {
@@ -3195,7 +3456,7 @@ mcx_pages(struct mcx_softc *sc, struct mcx_hwmem *mhm, uint16_t type)
 		return (-1);
 	}
 
-	if (npages == 0)
+	if (npages < 1)
 		return (0);
 
 	if (mcx_hwmem_alloc(sc, mhm, npages) != 0) {
@@ -3445,6 +3706,7 @@ free:
 static int
 mcx_iff(struct mcx_softc *sc)
 {
+	struct mcx_rx *rx = &sc->sc_queues[0].q_rx;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct mcx_dmamem mxm;
 	struct mcx_cmdq_entry *cqe;
@@ -3458,7 +3720,7 @@ mcx_iff(struct mcx_softc *sc)
 	/* enable or disable the promisc flow */
 	if (ISSET(ifp->if_flags, IFF_PROMISC)) {
 		if (sc->sc_promisc_flow_enabled == 0) {
-			mcx_set_flow_table_entry(sc, MCX_FLOW_GROUP_PROMISC,
+			mcx_set_flow_table_entry(sc, rx, MCX_FLOW_GROUP_PROMISC,
 			    0, NULL);
 			sc->sc_promisc_flow_enabled = 1;
 		}
@@ -3474,8 +3736,8 @@ mcx_iff(struct mcx_softc *sc)
 
 			memset(mcast, 0, sizeof(mcast));
 			mcast[0] = 0x01;
-			mcx_set_flow_table_entry(sc, MCX_FLOW_GROUP_ALLMULTI,
-			    0, mcast);
+			mcx_set_flow_table_entry(sc, rx,
+			    MCX_FLOW_GROUP_ALLMULTI, 0, mcast);
 			sc->sc_allmulti_flow_enabled = 1;
 		}
 	} else if (sc->sc_allmulti_flow_enabled != 0) {
@@ -3497,16 +3759,17 @@ mcx_iff(struct mcx_softc *sc)
 	    MCX_CMD_MODIFY_NIC_VPORT_CONTEXT_FIELD_MTU);
 
 	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1, &cqe->cq_input_ptr, token) != 0) {
-		printf(", unable to allocate modify nic vport context mailboxen\n");
+		printf(", unable to allocate modify "
+		    "nic vport context mailboxen\n");
 		return (-1);
 	}
 	ctx = (struct mcx_nic_vport_ctx *)
 	    (((char *)mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0))) + 240);
 	ctx->vp_mtu = htobe32(sc->sc_hardmtu);
 	/*
-	 * always leave promisc-all enabled on the vport since we can't give it
-	 * a vlan list, and we're already doing multicast filtering in the flow
-	 * table.
+         * always leave promisc-all enabled on the vport since we
+         * can't give it a vlan list, and we're already doing multicast
+         * filtering in the flow table.
 	 */
 	ctx->vp_flags = htobe16(MCX_NIC_VPORT_CTX_PROMISC_ALL);
 
@@ -3538,7 +3801,7 @@ free:
 }
 
 static int
-mcx_alloc_uar(struct mcx_softc *sc)
+mcx_alloc_uar(struct mcx_softc *sc, int *uar)
 {
 	struct mcx_cmdq_entry *cqe;
 	struct mcx_cmd_alloc_uar_in *in;
@@ -3570,13 +3833,13 @@ mcx_alloc_uar(struct mcx_softc *sc)
 		return (-1);
 	}
 
-	sc->sc_uar = mcx_get_id(out->cmd_uar);
-
+	*uar = mcx_get_id(out->cmd_uar);
 	return (0);
 }
 
 static int
-mcx_create_eq(struct mcx_softc *sc)
+mcx_create_eq(struct mcx_softc *sc, struct mcx_eq *eq, int uar,
+    uint64_t events, int vector)
 {
 	struct mcx_cmdq_entry *cqe;
 	struct mcx_dmamem mxm;
@@ -3588,20 +3851,20 @@ mcx_create_eq(struct mcx_softc *sc)
 	uint64_t *pas;
 	int insize, npages, paslen, i, token;
 
-	sc->sc_eq_cons = 0;
+	eq->eq_cons = 0;
 
 	npages = howmany((1 << MCX_LOG_EQ_SIZE) * sizeof(struct mcx_eq_entry),
 	    MCX_PAGE_SIZE);
 	paslen = npages * sizeof(*pas);
 	insize = sizeof(struct mcx_cmd_create_eq_mb_in) + paslen;
 
-	if (mcx_dmamem_alloc(sc, &sc->sc_eq_mem, npages * MCX_PAGE_SIZE,
+	if (mcx_dmamem_alloc(sc, &eq->eq_mem, npages * MCX_PAGE_SIZE,
 	    MCX_PAGE_SIZE) != 0) {
 		printf(", unable to allocate event queue memory\n");
 		return (-1);
 	}
 
-	eqe = (struct mcx_eq_entry *)MCX_DMA_KVA(&sc->sc_eq_mem);
+	eqe = (struct mcx_eq_entry *)MCX_DMA_KVA(&eq->eq_mem);
 	for (i = 0; i < (1 << MCX_LOG_EQ_SIZE); i++) {
 		eqe[i].eq_owner = MCX_EQ_ENTRY_OWNER_INIT;
 	}
@@ -3614,22 +3877,20 @@ mcx_create_eq(struct mcx_softc *sc)
 	in->cmd_opcode = htobe16(MCX_CMD_CREATE_EQ);
 	in->cmd_op_mod = htobe16(0);
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, howmany(insize, MCX_CMDQ_MAILBOX_DATASIZE),
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm,
+	    howmany(insize, MCX_CMDQ_MAILBOX_DATASIZE),
 	    &cqe->cq_input_ptr, token) != 0) {
 		printf(", unable to allocate create eq mailboxen\n");
 		return (-1);
 	}
 	mbin = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
 	mbin->cmd_eq_ctx.eq_uar_size = htobe32(
-	    (MCX_LOG_EQ_SIZE << MCX_EQ_CTX_LOG_EQ_SIZE_SHIFT) | sc->sc_uar);
-	mbin->cmd_event_bitmask = htobe64(
-	    (1ull << MCX_EVENT_TYPE_INTERNAL_ERROR) |
-	    (1ull << MCX_EVENT_TYPE_PORT_CHANGE) |
-	    (1ull << MCX_EVENT_TYPE_CMD_COMPLETION) |
-	    (1ull << MCX_EVENT_TYPE_PAGE_REQUEST));
+	    (MCX_LOG_EQ_SIZE << MCX_EQ_CTX_LOG_EQ_SIZE_SHIFT) | uar);
+	mbin->cmd_eq_ctx.eq_intr = vector;
+	mbin->cmd_event_bitmask = htobe64(events);
 
 	/* physical addresses follow the mailbox in data */
-	mcx_cmdq_mboxes_pas(&mxm, sizeof(*mbin), npages, &sc->sc_eq_mem);
+	mcx_cmdq_mboxes_pas(&mxm, sizeof(*mbin), npages, &eq->eq_mem);
 	mcx_cmdq_mboxes_sign(&mxm, howmany(insize, MCX_CMDQ_MAILBOX_DATASIZE));
 	mcx_cmdq_post(sc, cqe, 0);
 
@@ -3651,8 +3912,8 @@ mcx_create_eq(struct mcx_softc *sc)
 		goto free;
 	}
 
-	sc->sc_eqn = mcx_get_id(out->cmd_eqn);
-	mcx_arm_eq(sc);
+	eq->eq_n = mcx_get_id(out->cmd_eqn);
+	mcx_arm_eq(sc, eq, uar);
 free:
 	mcx_dmamem_free(sc, &mxm);
 	return (error);
@@ -3753,8 +4014,10 @@ mcx_query_nic_vport_context(struct mcx_softc *sc)
 	in->cmd_op_mod = htobe16(0);
 	in->cmd_allowed_list_type = 0;
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1, &cqe->cq_output_ptr, token) != 0) {
-		printf(", unable to allocate query nic vport context mailboxen\n");
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1,
+	    &cqe->cq_output_ptr, token) != 0) {
+		printf(", unable to allocate "
+		    "query nic vport context mailboxen\n");
 		return (-1);
 	}
 	mcx_cmdq_mboxes_sign(&mxm, 1);
@@ -3778,7 +4041,8 @@ mcx_query_nic_vport_context(struct mcx_softc *sc)
 		goto free;
 	}
 
-	ctx = (struct mcx_nic_vport_ctx *)(mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0)));
+	ctx = (struct mcx_nic_vport_ctx *)
+	    mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
 	addr = (uint8_t *)&ctx->vp_perm_addr;
 	for (i = 0; i < ETHER_ADDR_LEN; i++) {
 		sc->sc_ac.ac_enaddr[i] = addr[i + 2];
@@ -3853,15 +4117,15 @@ mcx_set_port_mtu(struct mcx_softc *sc, int mtu)
 	}
 
 	sc->sc_hardmtu = mtu;
+	sc->sc_rxbufsz = roundup(mtu + ETHER_ALIGN, sizeof(long));
 	return 0;
 }
 
 static int
-mcx_create_cq(struct mcx_softc *sc, int eqn)
+mcx_create_cq(struct mcx_softc *sc, struct mcx_cq *cq, int uar, int eqn)
 {
 	struct mcx_cmdq_entry *cmde;
 	struct mcx_cq_entry *cqe;
-	struct mcx_cq *cq;
 	struct mcx_dmamem mxm;
 	struct mcx_cmd_create_cq_in *in;
 	struct mcx_cmd_create_cq_mb_in *mbin;
@@ -3869,12 +4133,6 @@ mcx_create_cq(struct mcx_softc *sc, int eqn)
 	int error;
 	uint64_t *pas;
 	int insize, npages, paslen, i, token;
-
-	if (sc->sc_num_cq >= MCX_MAX_CQS) {
-		printf("%s: tried to create too many cqs\n", DEVNAME(sc));
-		return (-1);
-	}
-	cq = &sc->sc_cq[sc->sc_num_cq];
 
 	npages = howmany((1 << MCX_LOG_CQ_SIZE) * sizeof(struct mcx_cq_entry),
 	    MCX_PAGE_SIZE);
@@ -3900,15 +4158,17 @@ mcx_create_cq(struct mcx_softc *sc, int eqn)
 	in->cmd_opcode = htobe16(MCX_CMD_CREATE_CQ);
 	in->cmd_op_mod = htobe16(0);
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, howmany(insize, MCX_CMDQ_MAILBOX_DATASIZE),
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm,
+	    howmany(insize, MCX_CMDQ_MAILBOX_DATASIZE),
 	    &cmde->cq_input_ptr, token) != 0) {
-		printf("%s: unable to allocate create cq mailboxen\n", DEVNAME(sc));
+		printf("%s: unable to allocate create cq mailboxen\n",
+		    DEVNAME(sc));
 		error = -1;
 		goto free;
 	}
 	mbin = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
 	mbin->cmd_cq_ctx.cq_uar_size = htobe32(
-	    (MCX_LOG_CQ_SIZE << MCX_CQ_CTX_LOG_CQ_SIZE_SHIFT) | sc->sc_uar);
+	    (MCX_LOG_CQ_SIZE << MCX_CQ_CTX_LOG_CQ_SIZE_SHIFT) | uar);
 	mbin->cmd_cq_ctx.cq_eqn = htobe32(eqn);
 	mbin->cmd_cq_ctx.cq_period_max_count = htobe32(
 	    (MCX_CQ_MOD_PERIOD << MCX_CQ_CTX_PERIOD_SHIFT) |
@@ -3944,7 +4204,7 @@ mcx_create_cq(struct mcx_softc *sc, int eqn)
 	cq->cq_count = 0;
 	cq->cq_doorbell = MCX_DMA_KVA(&sc->sc_doorbell_mem) +
 	    MCX_CQ_DOORBELL_OFFSET + (MCX_CQ_DOORBELL_SIZE * sc->sc_num_cq);
-	mcx_arm_cq(sc, cq);
+	mcx_arm_cq(sc, cq, uar);
 	sc->sc_num_cq++;
 
 free:
@@ -3953,7 +4213,7 @@ free:
 }
 
 static int
-mcx_destroy_cq(struct mcx_softc *sc, int index)
+mcx_destroy_cq(struct mcx_softc *sc, struct mcx_cq *cq)
 {
 	struct mcx_cmdq_entry *cqe;
 	struct mcx_cmd_destroy_cq_in *in;
@@ -3968,7 +4228,7 @@ mcx_destroy_cq(struct mcx_softc *sc, int index)
 	in = mcx_cmdq_in(cqe);
 	in->cmd_opcode = htobe16(MCX_CMD_DESTROY_CQ);
 	in->cmd_op_mod = htobe16(0);
-	in->cmd_cqn = htobe32(sc->sc_cq[index].cq_n);
+	in->cmd_cqn = htobe32(cq->cq_n);
 
 	mcx_cmdq_post(sc, cqe, 0);
 	error = mcx_cmdq_poll(sc, cqe, 1000);
@@ -3988,15 +4248,15 @@ mcx_destroy_cq(struct mcx_softc *sc, int index)
 		return -1;
 	}
 
-	sc->sc_cq[index].cq_n = 0;
-	mcx_dmamem_free(sc, &sc->sc_cq[index].cq_mem);
-	sc->sc_cq[index].cq_cons = 0;
-	sc->sc_cq[index].cq_count = 0;
+	cq->cq_n = 0;
+	mcx_dmamem_free(sc, &cq->cq_mem);
+	cq->cq_cons = 0;
+	cq->cq_count = 0;
 	return 0;
 }
 
 static int
-mcx_create_rq(struct mcx_softc *sc, int cqn)
+mcx_create_rq(struct mcx_softc *sc, struct mcx_rx *rx, int cqn)
 {
 	struct mcx_cmdq_entry *cqe;
 	struct mcx_dmamem mxm;
@@ -4005,6 +4265,7 @@ mcx_create_rq(struct mcx_softc *sc, int cqn)
 	struct mcx_rq_ctx *mbin;
 	int error;
 	uint64_t *pas;
+	uint32_t rq_flags;
 	uint8_t *doorbell;
 	int insize, npages, paslen, token;
 
@@ -4013,7 +4274,7 @@ mcx_create_rq(struct mcx_softc *sc, int cqn)
 	paslen = npages * sizeof(*pas);
 	insize = 0x10 + sizeof(struct mcx_rq_ctx) + paslen;
 
-	if (mcx_dmamem_alloc(sc, &sc->sc_rq_mem, npages * MCX_PAGE_SIZE,
+	if (mcx_dmamem_alloc(sc, &rx->rx_rq_mem, npages * MCX_PAGE_SIZE,
 	    MCX_PAGE_SIZE) != 0) {
 		printf("%s: unable to allocate receive queue memory\n",
 		    DEVNAME(sc));
@@ -4028,15 +4289,21 @@ mcx_create_rq(struct mcx_softc *sc, int cqn)
 	in->cmd_opcode = htobe16(MCX_CMD_CREATE_RQ);
 	in->cmd_op_mod = htobe16(0);
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, howmany(insize, MCX_CMDQ_MAILBOX_DATASIZE),
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm,
+	    howmany(insize, MCX_CMDQ_MAILBOX_DATASIZE),
 	    &cqe->cq_input_ptr, token) != 0) {
 		printf("%s: unable to allocate create rq mailboxen\n",
 		    DEVNAME(sc));
 		error = -1;
 		goto free;
 	}
-	mbin = (struct mcx_rq_ctx *)(((char *)mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0))) + 0x10);
-	mbin->rq_flags = htobe32(MCX_RQ_CTX_RLKEY | MCX_RQ_CTX_VLAN_STRIP_DIS);
+	mbin = (struct mcx_rq_ctx *)
+	    (((char *)mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0))) + 0x10);
+	rq_flags = MCX_RQ_CTX_RLKEY;
+#if NVLAN == 0
+	rq_flags |= MCX_RQ_CTX_VLAN_STRIP_DIS;
+#endif
+	mbin->rq_flags = htobe32(rq_flags);
 	mbin->rq_cqn = htobe32(cqn);
 	mbin->rq_wq.wq_type = MCX_WQ_CTX_TYPE_CYCLIC;
 	mbin->rq_wq.wq_pd = htobe32(sc->sc_pd);
@@ -4046,7 +4313,7 @@ mcx_create_rq(struct mcx_softc *sc, int cqn)
 	mbin->rq_wq.wq_log_size = MCX_LOG_RQ_SIZE;
 
 	/* physical addresses follow the mailbox in data */
-	mcx_cmdq_mboxes_pas(&mxm, sizeof(*mbin) + 0x10, npages, &sc->sc_rq_mem);
+	mcx_cmdq_mboxes_pas(&mxm, sizeof(*mbin) + 0x10, npages, &rx->rx_rq_mem);
 	mcx_cmdq_post(sc, cqe, 0);
 
 	error = mcx_cmdq_poll(sc, cqe, 1000);
@@ -4067,10 +4334,10 @@ mcx_create_rq(struct mcx_softc *sc, int cqn)
 		goto free;
 	}
 
-	sc->sc_rqn = mcx_get_id(out->cmd_rqn);
+	rx->rx_rqn = mcx_get_id(out->cmd_rqn);
 
 	doorbell = MCX_DMA_KVA(&sc->sc_doorbell_mem);
-	sc->sc_rx_doorbell = (uint32_t *)(doorbell + MCX_RQ_DOORBELL_OFFSET);
+	rx->rx_doorbell = (uint32_t *)(doorbell + MCX_RQ_DOORBELL_OFFSET);
 
 free:
 	mcx_dmamem_free(sc, &mxm);
@@ -4078,7 +4345,7 @@ free:
 }
 
 static int
-mcx_ready_rq(struct mcx_softc *sc)
+mcx_ready_rq(struct mcx_softc *sc, struct mcx_rx *rx)
 {
 	struct mcx_cmdq_entry *cqe;
 	struct mcx_dmamem mxm;
@@ -4090,15 +4357,18 @@ mcx_ready_rq(struct mcx_softc *sc)
 
 	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
 	token = mcx_cmdq_token(sc);
-	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mbin), sizeof(*out), token);
+	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mbin),
+	    sizeof(*out), token);
 
 	in = mcx_cmdq_in(cqe);
 	in->cmd_opcode = htobe16(MCX_CMD_MODIFY_RQ);
 	in->cmd_op_mod = htobe16(0);
-	in->cmd_rq_state = htobe32((MCX_QUEUE_STATE_RST << 28) | sc->sc_rqn);
+	in->cmd_rq_state = htobe32((MCX_QUEUE_STATE_RST << 28) | rx->rx_rqn);
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1, &cqe->cq_input_ptr, token) != 0) {
-		printf("%s: unable to allocate modify rq mailbox\n", DEVNAME(sc));
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1,
+	    &cqe->cq_input_ptr, token) != 0) {
+		printf("%s: unable to allocate modify rq mailbox\n",
+		    DEVNAME(sc));
 		return (-1);
 	}
 	mbin = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
@@ -4131,7 +4401,7 @@ free:
 }
 
 static int
-mcx_destroy_rq(struct mcx_softc *sc)
+mcx_destroy_rq(struct mcx_softc *sc, struct mcx_rx *rx)
 {
 	struct mcx_cmdq_entry *cqe;
 	struct mcx_cmd_destroy_rq_in *in;
@@ -4146,7 +4416,7 @@ mcx_destroy_rq(struct mcx_softc *sc)
 	in = mcx_cmdq_in(cqe);
 	in->cmd_opcode = htobe16(MCX_CMD_DESTROY_RQ);
 	in->cmd_op_mod = htobe16(0);
-	in->cmd_rqn = htobe32(sc->sc_rqn);
+	in->cmd_rqn = htobe32(rx->rx_rqn);
 
 	mcx_cmdq_post(sc, cqe, 0);
 	error = mcx_cmdq_poll(sc, cqe, 1000);
@@ -4166,12 +4436,12 @@ mcx_destroy_rq(struct mcx_softc *sc)
 		return -1;
 	}
 
-	sc->sc_rqn = 0;
+	rx->rx_rqn = 0;
 	return 0;
 }
 
 static int
-mcx_create_tir(struct mcx_softc *sc)
+mcx_create_tir(struct mcx_softc *sc, struct mcx_rx *rx)
 {
 	struct mcx_cmdq_entry *cqe;
 	struct mcx_dmamem mxm;
@@ -4183,20 +4453,22 @@ mcx_create_tir(struct mcx_softc *sc)
 
 	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
 	token = mcx_cmdq_token(sc);
-	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mbin), sizeof(*out), token);
+	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mbin),
+	    sizeof(*out), token);
 
 	in = mcx_cmdq_in(cqe);
 	in->cmd_opcode = htobe16(MCX_CMD_CREATE_TIR);
 	in->cmd_op_mod = htobe16(0);
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1, &cqe->cq_input_ptr, token) != 0) {
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1,
+	    &cqe->cq_input_ptr, token) != 0) {
 		printf("%s: unable to allocate create tir mailbox\n",
 		    DEVNAME(sc));
 		return (-1);
 	}
 	mbin = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
 	/* leave disp_type = 0, so packets get sent to the inline rqn */
-	mbin->cmd_inline_rqn = htobe32(sc->sc_rqn);
+	mbin->cmd_inline_rqn = htobe32(rx->rx_rqn);
 	mbin->cmd_tdomain = htobe32(sc->sc_tdomain);
 
 	mcx_cmdq_post(sc, cqe, 0);
@@ -4261,11 +4533,11 @@ mcx_destroy_tir(struct mcx_softc *sc)
 	}
 
 	sc->sc_tirn = 0;
-	return 0;
+	return (0);
 }
 
 static int
-mcx_create_sq(struct mcx_softc *sc, int cqn)
+mcx_create_sq(struct mcx_softc *sc, struct mcx_tx *tx, int uar, int cqn)
 {
 	struct mcx_cmdq_entry *cqe;
 	struct mcx_dmamem mxm;
@@ -4282,9 +4554,10 @@ mcx_create_sq(struct mcx_softc *sc, int cqn)
 	paslen = npages * sizeof(*pas);
 	insize = sizeof(struct mcx_sq_ctx) + paslen;
 
-	if (mcx_dmamem_alloc(sc, &sc->sc_sq_mem, npages * MCX_PAGE_SIZE,
+	if (mcx_dmamem_alloc(sc, &tx->tx_sq_mem, npages * MCX_PAGE_SIZE,
 	    MCX_PAGE_SIZE) != 0) {
-		printf("%s: unable to allocate send queue memory\n", DEVNAME(sc));
+		printf("%s: unable to allocate send queue memory\n",
+		    DEVNAME(sc));
 		return (-1);
 	}
 
@@ -4297,13 +4570,16 @@ mcx_create_sq(struct mcx_softc *sc, int cqn)
 	in->cmd_opcode = htobe16(MCX_CMD_CREATE_SQ);
 	in->cmd_op_mod = htobe16(0);
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, howmany(insize, MCX_CMDQ_MAILBOX_DATASIZE),
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm,
+	    howmany(insize, MCX_CMDQ_MAILBOX_DATASIZE),
 	    &cqe->cq_input_ptr, token) != 0) {
-		printf("%s: unable to allocate create sq mailboxen\n", DEVNAME(sc));
+		printf("%s: unable to allocate create sq mailboxen\n",
+		    DEVNAME(sc));
 		error = -1;
 		goto free;
 	}
-	mbin = (struct mcx_sq_ctx *)(((char *)mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0))) + 0x10);
+	mbin = (struct mcx_sq_ctx *)
+	    (((char *)mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0))) + 0x10);
 	mbin->sq_flags = htobe32(MCX_SQ_CTX_RLKEY |
 	    (1 << MCX_SQ_CTX_MIN_WQE_INLINE_SHIFT));
 	mbin->sq_cqn = htobe32(cqn);
@@ -4311,14 +4587,15 @@ mcx_create_sq(struct mcx_softc *sc, int cqn)
 	mbin->sq_tis_num = htobe32(sc->sc_tisn);
 	mbin->sq_wq.wq_type = MCX_WQ_CTX_TYPE_CYCLIC;
 	mbin->sq_wq.wq_pd = htobe32(sc->sc_pd);
-	mbin->sq_wq.wq_uar_page = htobe32(sc->sc_uar);
+	mbin->sq_wq.wq_uar_page = htobe32(uar);
 	mbin->sq_wq.wq_doorbell = htobe64(MCX_DMA_DVA(&sc->sc_doorbell_mem) +
 	    MCX_SQ_DOORBELL_OFFSET);
 	mbin->sq_wq.wq_log_stride = htobe16(MCX_LOG_SQ_ENTRY_SIZE);
 	mbin->sq_wq.wq_log_size = MCX_LOG_SQ_SIZE;
 
 	/* physical addresses follow the mailbox in data */
-	mcx_cmdq_mboxes_pas(&mxm, sizeof(*mbin) + 0x10, npages, &sc->sc_sq_mem);
+	mcx_cmdq_mboxes_pas(&mxm, sizeof(*mbin) + 0x10,
+	    npages, &tx->tx_sq_mem);
 	mcx_cmdq_post(sc, cqe, 0);
 
 	error = mcx_cmdq_poll(sc, cqe, 1000);
@@ -4339,17 +4616,18 @@ mcx_create_sq(struct mcx_softc *sc, int cqn)
 		goto free;
 	}
 
-	sc->sc_sqn = mcx_get_id(out->cmd_sqn);
+	tx->tx_uar = uar;
+	tx->tx_sqn = mcx_get_id(out->cmd_sqn);
 
 	doorbell = MCX_DMA_KVA(&sc->sc_doorbell_mem);
-	sc->sc_tx_doorbell = (uint32_t *)(doorbell + MCX_SQ_DOORBELL_OFFSET + 4);
+	tx->tx_doorbell = (uint32_t *)(doorbell + MCX_SQ_DOORBELL_OFFSET + 4);
 free:
 	mcx_dmamem_free(sc, &mxm);
 	return (error);
 }
 
 static int
-mcx_destroy_sq(struct mcx_softc *sc)
+mcx_destroy_sq(struct mcx_softc *sc, struct mcx_tx *tx)
 {
 	struct mcx_cmdq_entry *cqe;
 	struct mcx_cmd_destroy_sq_in *in;
@@ -4364,7 +4642,7 @@ mcx_destroy_sq(struct mcx_softc *sc)
 	in = mcx_cmdq_in(cqe);
 	in->cmd_opcode = htobe16(MCX_CMD_DESTROY_SQ);
 	in->cmd_op_mod = htobe16(0);
-	in->cmd_sqn = htobe32(sc->sc_sqn);
+	in->cmd_sqn = htobe32(tx->tx_sqn);
 
 	mcx_cmdq_post(sc, cqe, 0);
 	error = mcx_cmdq_poll(sc, cqe, 1000);
@@ -4384,12 +4662,12 @@ mcx_destroy_sq(struct mcx_softc *sc)
 		return -1;
 	}
 
-	sc->sc_sqn = 0;
+	tx->tx_sqn = 0;
 	return 0;
 }
 
 static int
-mcx_ready_sq(struct mcx_softc *sc)
+mcx_ready_sq(struct mcx_softc *sc, struct mcx_tx *tx)
 {
 	struct mcx_cmdq_entry *cqe;
 	struct mcx_dmamem mxm;
@@ -4401,14 +4679,16 @@ mcx_ready_sq(struct mcx_softc *sc)
 
 	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
 	token = mcx_cmdq_token(sc);
-	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mbin), sizeof(*out), token);
+	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mbin),
+	    sizeof(*out), token);
 
 	in = mcx_cmdq_in(cqe);
 	in->cmd_opcode = htobe16(MCX_CMD_MODIFY_SQ);
 	in->cmd_op_mod = htobe16(0);
-	in->cmd_sq_state = htobe32((MCX_QUEUE_STATE_RST << 28) | sc->sc_sqn);
+	in->cmd_sq_state = htobe32((MCX_QUEUE_STATE_RST << 28) | tx->tx_sqn);
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1, &cqe->cq_input_ptr, token) != 0) {
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1,
+	    &cqe->cq_input_ptr, token) != 0) {
 		printf("%s: unable to allocate modify sq mailbox\n",
 		    DEVNAME(sc));
 		return (-1);
@@ -4455,14 +4735,17 @@ mcx_create_tis(struct mcx_softc *sc)
 
 	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
 	token = mcx_cmdq_token(sc);
-	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mbin), sizeof(*out), token);
+	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mbin),
+	    sizeof(*out), token);
 
 	in = mcx_cmdq_in(cqe);
 	in->cmd_opcode = htobe16(MCX_CMD_CREATE_TIS);
 	in->cmd_op_mod = htobe16(0);
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1, &cqe->cq_input_ptr, token) != 0) {
-		printf("%s: unable to allocate create tis mailbox\n", DEVNAME(sc));
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1,
+	    &cqe->cq_input_ptr, token) != 0) {
+		printf("%s: unable to allocate create tis mailbox\n",
+		    DEVNAME(sc));
 		return (-1);
 	}
 	mbin = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
@@ -4530,7 +4813,7 @@ mcx_destroy_tis(struct mcx_softc *sc)
 		return -1;
 	}
 
-	sc->sc_tirn = 0;
+	sc->sc_tisn = 0;
 	return 0;
 }
 
@@ -4589,13 +4872,15 @@ mcx_create_flow_table(struct mcx_softc *sc, int log_size)
 
 	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
 	token = mcx_cmdq_token(sc);
-	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mbin), sizeof(*out), token);
+	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mbin),
+	    sizeof(*out), token);
 
 	in = mcx_cmdq_in(cqe);
 	in->cmd_opcode = htobe16(MCX_CMD_CREATE_FLOW_TABLE);
 	in->cmd_op_mod = htobe16(0);
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1, &cqe->cq_input_ptr, token) != 0) {
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1,
+	    &cqe->cq_input_ptr, token) != 0) {
 		printf("%s: unable to allocate create flow table mailbox\n",
 		    DEVNAME(sc));
 		return (-1);
@@ -4643,13 +4928,15 @@ mcx_set_flow_table_root(struct mcx_softc *sc)
 
 	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
 	token = mcx_cmdq_token(sc);
-	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mbin), sizeof(*out), token);
+	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mbin),
+	    sizeof(*out), token);
 
 	in = mcx_cmdq_in(cqe);
 	in->cmd_opcode = htobe16(MCX_CMD_SET_FLOW_TABLE_ROOT);
 	in->cmd_op_mod = htobe16(0);
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1, &cqe->cq_input_ptr, token) != 0) {
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1,
+	    &cqe->cq_input_ptr, token) != 0) {
 		printf("%s: unable to allocate set flow table root mailbox\n",
 		    DEVNAME(sc));
 		return (-1);
@@ -4703,7 +4990,8 @@ mcx_destroy_flow_table(struct mcx_softc *sc)
 	in->cmd_opcode = htobe16(MCX_CMD_DESTROY_FLOW_TABLE);
 	in->cmd_op_mod = htobe16(0);
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1, &cqe->cq_input_ptr, token) != 0) {
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1,
+	    &cqe->cq_input_ptr, token) != 0) {
 		printf("%s: unable to allocate destroy flow table mailbox\n",
 		    DEVNAME(sc));
 		return (-1);
@@ -4720,7 +5008,8 @@ mcx_destroy_flow_table(struct mcx_softc *sc)
 		goto free;
 	}
 	if (mcx_cmdq_verify(cqe) != 0) {
-		printf("%s: destroy flow table command corrupt\n", DEVNAME(sc));
+		printf("%s: destroy flow table command corrupt\n",
+		    DEVNAME(sc));
 		goto free;
 	}
 
@@ -4823,7 +5112,8 @@ mcx_destroy_flow_group(struct mcx_softc *sc, int group)
 	in->cmd_opcode = htobe16(MCX_CMD_DESTROY_FLOW_GROUP);
 	in->cmd_op_mod = htobe16(0);
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 2, &cqe->cq_input_ptr, token) != 0) {
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 2,
+	    &cqe->cq_input_ptr, token) != 0) {
 		printf("%s: unable to allocate destroy flow group mailbox\n",
 		    DEVNAME(sc));
 		return (-1);
@@ -4861,8 +5151,8 @@ free:
 }
 
 static int
-mcx_set_flow_table_entry(struct mcx_softc *sc, int group, int index,
-    uint8_t *macaddr)
+mcx_set_flow_table_entry(struct mcx_softc *sc, struct mcx_rx *rx,
+    int group, int index, uint8_t *macaddr)
 {
 	struct mcx_cmdq_entry *cqe;
 	struct mcx_dmamem mxm;
@@ -4953,9 +5243,10 @@ mcx_delete_flow_table_entry(struct mcx_softc *sc, int group, int index)
 	in->cmd_opcode = htobe16(MCX_CMD_DELETE_FLOW_TABLE_ENTRY);
 	in->cmd_op_mod = htobe16(0);
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 2, &cqe->cq_input_ptr, token) != 0) {
-		printf("%s: unable to allocate delete flow table entry mailbox\n",
-		    DEVNAME(sc));
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 2,
+	    &cqe->cq_input_ptr, token) != 0) {
+		printf("%s: unable to allocate "
+		    "delete flow table entry mailbox\n", DEVNAME(sc));
 		return (-1);
 	}
 	mbin = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
@@ -5089,7 +5380,8 @@ mcx_dump_flow_table_entry(struct mcx_softc *sc, int index)
 	CTASSERT(sizeof(*mbout) <= MCX_CMDQ_MAILBOX_DATASIZE*2);
 	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 2,
 	    &cqe->cq_output_ptr, token) != 0) {
-		printf(", unable to allocate query flow table entry mailboxes\n");
+		printf(", unable to allocate "
+		    "query flow table entry mailboxes\n");
 		return (-1);
 	}
 	cqe->cq_input_ptr = cqe->cq_output_ptr;
@@ -5310,7 +5602,7 @@ mcx_dump_sq(struct mcx_softc *sc)
 	in = mcx_cmdq_in(cqe);
 	in->cmd_opcode = htobe16(MCX_CMD_QUERY_SQ);
 	in->cmd_op_mod = htobe16(0);
-	in->cmd_sqn = htobe32(sc->sc_sqn);
+	in->cmd_sqn = htobe32(tx->tx_sqn);
 
 	CTASSERT(sizeof(*mbout) <= MCX_CMDQ_MAILBOX_DATASIZE*2);
 	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 2,
@@ -5390,8 +5682,10 @@ mcx_dump_counters(struct mcx_softc *sc)
 	in->cmd_opcode = htobe16(MCX_CMD_QUERY_VPORT_COUNTERS);
 	in->cmd_op_mod = htobe16(0);
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1, &cqe->cq_output_ptr, token) != 0) {
-		printf(", unable to allocate query nic vport counters mailboxen\n");
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1,
+	    &cqe->cq_output_ptr, token) != 0) {
+		printf(", unable to allocate "
+		    "query nic vport counters mailboxen\n");
 		return (-1);
 	}
 	cqe->cq_input_ptr = cqe->cq_output_ptr;
@@ -5460,7 +5754,8 @@ mcx_dump_flow_counter(struct mcx_softc *sc, int index, const char *what)
 	in->cmd_opcode = htobe16(MCX_CMD_QUERY_FLOW_COUNTER);
 	in->cmd_op_mod = htobe16(0);
 
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1, &cqe->cq_output_ptr, token) != 0) {
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1,
+	    &cqe->cq_output_ptr, token) != 0) {
 		printf(", unable to allocate query flow counter mailboxen\n");
 		return (-1);
 	}
@@ -5490,7 +5785,8 @@ mcx_dump_flow_counter(struct mcx_softc *sc, int index, const char *what)
 		goto free;
 	}
 
-	counters = (struct mcx_counter *)(mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0)));
+	counters = (struct mcx_counter *)
+	    (mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0)));
 	if (counters->packets)
 		printf("%s: %s inflow %llx\n", DEVNAME(sc), what,
 		    betoh64(counters->packets));
@@ -5503,8 +5799,8 @@ free:
 #endif
 
 int
-mcx_rx_fill_slots(struct mcx_softc *sc, void *ring, struct mcx_slot *slots,
-    uint *prod, int bufsize, uint nslots)
+mcx_rx_fill_slots(struct mcx_softc *sc, struct mcx_rx *rx,
+    void *ring, struct mcx_slot *slots, uint *prod, uint nslots)
 {
 	struct mcx_rq_entry *rqe;
 	struct mcx_slot *ms;
@@ -5516,12 +5812,13 @@ mcx_rx_fill_slots(struct mcx_softc *sc, void *ring, struct mcx_slot *slots,
 	rqe = ring;
 	for (fills = 0; fills < nslots; fills++) {
 		ms = &slots[slot];
-		m = MCLGETI(NULL, M_DONTWAIT, NULL, bufsize + ETHER_ALIGN);
+		m = MCLGETI(NULL, M_DONTWAIT, NULL, sc->sc_rxbufsz);
 		if (m == NULL)
 			break;
 
+		m->m_data += (m->m_ext.ext_size - sc->sc_rxbufsz);
 		m->m_data += ETHER_ALIGN;
-		m->m_len = m->m_pkthdr.len = bufsize;
+		m->m_len = m->m_pkthdr.len = sc->sc_hardmtu;
 		if (bus_dmamap_load_mbuf(sc->sc_dmat, ms->ms_map, m,
 		    BUS_DMA_NOWAIT) != 0) {
 			m_freem(m);
@@ -5529,7 +5826,8 @@ mcx_rx_fill_slots(struct mcx_softc *sc, void *ring, struct mcx_slot *slots,
 		}
 		ms->ms_m = m;
 
-		rqe[slot].rqe_byte_count = htobe32(bufsize);
+		rqe[slot].rqe_byte_count =
+		    htobe32(ms->ms_map->dm_segs[0].ds_len);
 		rqe[slot].rqe_addr = htobe64(ms->ms_map->dm_segs[0].ds_addr);
 		rqe[slot].rqe_lkey = htobe32(sc->sc_lkey);
 
@@ -5540,7 +5838,7 @@ mcx_rx_fill_slots(struct mcx_softc *sc, void *ring, struct mcx_slot *slots,
 	}
 
 	if (fills != 0) {
-		*sc->sc_rx_doorbell = htobe32(p & MCX_WQ_DOORBELL_MASK);
+		*rx->rx_doorbell = htobe32(p & MCX_WQ_DOORBELL_MASK);
 		/* barrier? */
 	}
 
@@ -5550,41 +5848,43 @@ mcx_rx_fill_slots(struct mcx_softc *sc, void *ring, struct mcx_slot *slots,
 }
 
 int
-mcx_rx_fill(struct mcx_softc *sc)
+mcx_rx_fill(struct mcx_softc *sc, struct mcx_rx *rx)
 {
 	u_int slots;
 
-	slots = if_rxr_get(&sc->sc_rxr, (1 << MCX_LOG_RQ_SIZE));
+	slots = if_rxr_get(&rx->rx_rxr, (1 << MCX_LOG_RQ_SIZE));
 	if (slots == 0)
 		return (1);
 
-	slots = mcx_rx_fill_slots(sc, MCX_DMA_KVA(&sc->sc_rq_mem),
-	    sc->sc_rx_slots, &sc->sc_rx_prod, sc->sc_hardmtu, slots);
-	if_rxr_put(&sc->sc_rxr, slots);
+	slots = mcx_rx_fill_slots(sc, rx, MCX_DMA_KVA(&rx->rx_rq_mem),
+	    rx->rx_slots, &rx->rx_prod, slots);
+	if_rxr_put(&rx->rx_rxr, slots);
 	return (0);
 }
 
 void
-mcx_refill(void *xsc)
+mcx_refill(void *xrx)
 {
-	struct mcx_softc *sc = xsc;
+	struct mcx_rx *rx = xrx;
+	struct mcx_softc *sc = rx->rx_softc;
 
-	mcx_rx_fill(sc);
+	mcx_rx_fill(sc, rx);
 
-	if (if_rxr_inuse(&sc->sc_rxr) == 0)
-		timeout_add(&sc->sc_rx_refill, 1);
+	if (if_rxr_inuse(&rx->rx_rxr) == 0)
+		timeout_add(&rx->rx_refill, 1);
 }
 
 void
 mcx_process_txeof(struct mcx_softc *sc, struct mcx_cq_entry *cqe, int *txfree)
 {
+	struct mcx_tx *tx = &sc->sc_queues[0].q_tx;
 	struct mcx_slot *ms;
 	bus_dmamap_t map;
 	int slot, slots;
 
 	slot = betoh16(cqe->cq_wqe_count) % (1 << MCX_LOG_SQ_SIZE);
 
-	ms = &sc->sc_tx_slots[slot];
+	ms = &tx->tx_slots[slot];
 	map = ms->ms_map;
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_POSTWRITE);
@@ -5659,13 +5959,15 @@ static int
 mcx_process_rx(struct mcx_softc *sc, struct mcx_cq_entry *cqe,
     struct mbuf_list *ml, const struct mcx_calibration *c)
 {
+	struct mcx_rx *rx = &sc->sc_queues[0].q_rx;
 	struct mcx_slot *ms;
 	struct mbuf *m;
+	uint32_t flags;
 	int slot;
 
 	slot = betoh16(cqe->cq_wqe_count) % (1 << MCX_LOG_RQ_SIZE);
 
-	ms = &sc->sc_rx_slots[slot];
+	ms = &rx->rx_slots[slot];
 	bus_dmamap_sync(sc->sc_dmat, ms->ms_map, 0, ms->ms_map->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD);
 	bus_dmamap_unload(sc->sc_dmat, ms->ms_map);
@@ -5676,9 +5978,23 @@ mcx_process_rx(struct mcx_softc *sc, struct mcx_cq_entry *cqe,
 	m->m_pkthdr.len = m->m_len = bemtoh32(&cqe->cq_byte_cnt);
 
 	if (cqe->cq_rx_hash_type) {
-		m->m_pkthdr.ph_flowid = M_FLOWID_VALID |
-		    betoh32(cqe->cq_rx_hash);
+		m->m_pkthdr.ph_flowid = betoh32(cqe->cq_rx_hash);
+		m->m_pkthdr.csum_flags |= M_FLOWID;
 	}
+
+	flags = bemtoh32(&cqe->cq_flags);
+	if (flags & MCX_CQ_ENTRY_FLAGS_L3_OK)
+		m->m_pkthdr.csum_flags = M_IPV4_CSUM_IN_OK;
+	if (flags & MCX_CQ_ENTRY_FLAGS_L4_OK)
+		m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK |
+		    M_UDP_CSUM_IN_OK;
+#if NVLAN > 0
+	if (flags & MCX_CQ_ENTRY_FLAGS_CV) {
+		m->m_pkthdr.ether_vtag = (flags &
+		    MCX_CQ_ENTRY_FLAGS_VLAN_MASK);
+		m->m_flags |= M_VLANTAG;
+	}
+#endif
 
 	if (c->c_tdiff) {
 		uint64_t t = bemtoh64(&cqe->cq_timestamp) - c->c_timestamp;
@@ -5712,14 +6028,13 @@ mcx_next_cq_entry(struct mcx_softc *sc, struct mcx_cq *cq)
 }
 
 static void
-mcx_arm_cq(struct mcx_softc *sc, struct mcx_cq *cq)
+mcx_arm_cq(struct mcx_softc *sc, struct mcx_cq *cq, int uar)
 {
 	bus_size_t offset;
 	uint32_t val;
 	uint64_t uval;
 
-	/* different uar per cq? */
-	offset = (MCX_PAGE_SIZE * sc->sc_uar);
+	offset = (MCX_PAGE_SIZE * uar);
 	val = ((cq->cq_count) & 3) << MCX_CQ_DOORBELL_ARM_CMD_SN_SHIFT;
 	val |= (cq->cq_cons & MCX_CQ_DOORBELL_ARM_CI_MASK);
 
@@ -5736,9 +6051,10 @@ mcx_arm_cq(struct mcx_softc *sc, struct mcx_cq *cq)
 }
 
 void
-mcx_process_cq(struct mcx_softc *sc, struct mcx_cq *cq)
+mcx_process_cq(struct mcx_softc *sc, struct mcx_queues *q, struct mcx_cq *cq)
 {
-	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct mcx_rx *rx = &q->q_rx;
+	struct mcx_tx *tx = &q->q_tx;
 	const struct mcx_calibration *c;
 	unsigned int gen;
 	struct mcx_cq_entry *cqe;
@@ -5765,11 +6081,13 @@ mcx_process_cq(struct mcx_softc *sc, struct mcx_cq *cq)
 		case MCX_CQ_ENTRY_OPCODE_REQ_ERR:
 		case MCX_CQ_ENTRY_OPCODE_SEND_ERR:
 			cqp = (uint8_t *)cqe;
-			/* printf("%s: cq completion error: %x\n", DEVNAME(sc), cqp[0x37]); */
+			/* printf("%s: cq completion error: %x\n",
+			    DEVNAME(sc), cqp[0x37]); */
 			break;
 
 		default:
-			/* printf("%s: cq completion opcode %x??\n", DEVNAME(sc), opcode); */
+			/* printf("%s: cq completion opcode %x??\n",
+			    DEVNAME(sc), opcode); */
 			break;
 		}
 
@@ -5777,71 +6095,62 @@ mcx_process_cq(struct mcx_softc *sc, struct mcx_cq *cq)
 	}
 
 	cq->cq_count++;
-	mcx_arm_cq(sc, cq);
+	mcx_arm_cq(sc, cq, q->q_uar);
 
 	if (rxfree > 0) {
-		if_rxr_put(&sc->sc_rxr, rxfree);
-		if (ifiq_input(&sc->sc_ac.ac_if.if_rcv, &ml))
-			if_rxr_livelocked(&sc->sc_rxr);
+		if_rxr_put(&rx->rx_rxr, rxfree);
+		if (ifiq_input(rx->rx_ifiq, &ml))
+			if_rxr_livelocked(&rx->rx_rxr);
 
-		mcx_rx_fill(sc);
-		if (if_rxr_inuse(&sc->sc_rxr) == 0)
-			timeout_add(&sc->sc_rx_refill, 1);
+		mcx_rx_fill(sc, rx);
+		if (if_rxr_inuse(&rx->rx_rxr) == 0)
+			timeout_add(&rx->rx_refill, 1);
 	}
 	if (txfree > 0) {
-		sc->sc_tx_cons += txfree;
-		if (ifq_is_oactive(&ifp->if_snd))
-			ifq_restart(&ifp->if_snd);
+		tx->tx_cons += txfree;
+		if (ifq_is_oactive(tx->tx_ifq))
+			ifq_restart(tx->tx_ifq);
 	}
 }
 
+
 static void
-mcx_arm_eq(struct mcx_softc *sc)
+mcx_arm_eq(struct mcx_softc *sc, struct mcx_eq *eq, int uar)
 {
 	bus_size_t offset;
 	uint32_t val;
 
-	offset = (MCX_PAGE_SIZE * sc->sc_uar) + MCX_UAR_EQ_DOORBELL_ARM;
-	val = (sc->sc_eqn << 24) | (sc->sc_eq_cons & 0xffffff);
+	offset = (MCX_PAGE_SIZE * uar) + MCX_UAR_EQ_DOORBELL_ARM;
+	val = (eq->eq_n << 24) | (eq->eq_cons & 0xffffff);
 
 	mcx_wr(sc, offset, val);
 	/* barrier? */
 }
 
 static struct mcx_eq_entry *
-mcx_next_eq_entry(struct mcx_softc *sc)
+mcx_next_eq_entry(struct mcx_softc *sc, struct mcx_eq *eq)
 {
 	struct mcx_eq_entry *eqe;
 	int next;
 
-	eqe = (struct mcx_eq_entry *)MCX_DMA_KVA(&sc->sc_eq_mem);
-	next = sc->sc_eq_cons % (1 << MCX_LOG_EQ_SIZE);
-	if ((eqe[next].eq_owner & 1) == ((sc->sc_eq_cons >> MCX_LOG_EQ_SIZE) & 1)) {
-		sc->sc_eq_cons++;
+	eqe = (struct mcx_eq_entry *)MCX_DMA_KVA(&eq->eq_mem);
+	next = eq->eq_cons % (1 << MCX_LOG_EQ_SIZE);
+	if ((eqe[next].eq_owner & 1) ==
+	    ((eq->eq_cons >> MCX_LOG_EQ_SIZE) & 1)) {
+		eq->eq_cons++;
 		return (&eqe[next]);
 	}
 	return (NULL);
 }
 
 int
-mcx_intr(void *xsc)
+mcx_admin_intr(void *xsc)
 {
 	struct mcx_softc *sc = (struct mcx_softc *)xsc;
 	struct mcx_eq_entry *eqe;
-	int i, cq;
 
-	while ((eqe = mcx_next_eq_entry(sc))) {
+	while ((eqe = mcx_next_eq_entry(sc, &sc->sc_admin_eq))) {
 		switch (eqe->eq_event_type) {
-		case MCX_EVENT_TYPE_COMPLETION:
-			cq = betoh32(eqe->eq_event_data[6]);
-			for (i = 0; i < sc->sc_num_cq; i++) {
-				if (sc->sc_cq[i].cq_n == cq) {
-					mcx_process_cq(sc, &sc->sc_cq[i]);
-					break;
-				}
-			}
-			break;
-
 		case MCX_EVENT_TYPE_LAST_WQE:
 			/* printf("%s: last wqe reached?\n", DEVNAME(sc)); */
 			break;
@@ -5863,9 +6172,32 @@ mcx_intr(void *xsc)
 			break;
 		}
 	}
-	mcx_arm_eq(sc);
+	mcx_arm_eq(sc, &sc->sc_admin_eq, sc->sc_uar);
 	return (1);
 }
+
+int
+mcx_cq_intr(void *xq)
+{
+	struct mcx_queues *q = (struct mcx_queues *)xq;
+	struct mcx_softc *sc = q->q_sc;
+	struct mcx_eq_entry *eqe;
+	int cqn;
+
+	while ((eqe = mcx_next_eq_entry(sc, &q->q_eq))) {
+		switch (eqe->eq_event_type) {
+		case MCX_EVENT_TYPE_COMPLETION:
+			cqn = betoh32(eqe->eq_event_data[6]);
+			if (cqn == q->q_cq.cq_n)
+				mcx_process_cq(sc, q, &q->q_cq);
+			break;
+		}
+	}
+
+	mcx_arm_eq(sc, &q->q_eq, q->q_uar);
+	return (1);
+}
+
 
 static void
 mcx_free_slots(struct mcx_softc *sc, struct mcx_slot *slots, int allocated,
@@ -5884,22 +6216,23 @@ mcx_free_slots(struct mcx_softc *sc, struct mcx_slot *slots, int allocated,
 }
 
 static int
-mcx_up(struct mcx_softc *sc)
+mcx_queue_up(struct mcx_softc *sc, struct mcx_queues *q)
 {
-	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct mcx_rx *rx;
+	struct mcx_tx *tx;
 	struct mcx_slot *ms;
-	int i, start;
-	struct mcx_flow_match match_crit;
+	int i;
 
-	sc->sc_rx_slots = mallocarray(sizeof(*ms), (1 << MCX_LOG_RQ_SIZE),
+	rx = &q->q_rx;
+	rx->rx_slots = mallocarray(sizeof(*ms), (1 << MCX_LOG_RQ_SIZE),
 	    M_DEVBUF, M_WAITOK | M_ZERO);
-	if (sc->sc_rx_slots == NULL) {
+	if (rx->rx_slots == NULL) {
 		printf("%s: failed to allocate rx slots\n", DEVNAME(sc));
 		return ENOMEM;
 	}
 
 	for (i = 0; i < (1 << MCX_LOG_RQ_SIZE); i++) {
-		ms = &sc->sc_rx_slots[i];
+		ms = &rx->rx_slots[i];
 		if (bus_dmamap_create(sc->sc_dmat, sc->sc_hardmtu, 1,
 		    sc->sc_hardmtu, 0,
 		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
@@ -5910,15 +6243,16 @@ mcx_up(struct mcx_softc *sc)
 		}
 	}
 
-	sc->sc_tx_slots = mallocarray(sizeof(*ms), (1 << MCX_LOG_SQ_SIZE),
+	tx = &q->q_tx;
+	tx->tx_slots = mallocarray(sizeof(*ms), (1 << MCX_LOG_SQ_SIZE),
 	    M_DEVBUF, M_WAITOK | M_ZERO);
-	if (sc->sc_tx_slots == NULL) {
+	if (tx->tx_slots == NULL) {
 		printf("%s: failed to allocate tx slots\n", DEVNAME(sc));
 		goto destroy_rx_slots;
 	}
 
 	for (i = 0; i < (1 << MCX_LOG_SQ_SIZE); i++) {
-		ms = &sc->sc_tx_slots[i];
+		ms = &tx->tx_slots[i];
 		if (bus_dmamap_create(sc->sc_dmat, sc->sc_hardmtu,
 		    MCX_SQ_MAX_SEGMENTS, sc->sc_hardmtu, 0,
 		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
@@ -5929,21 +6263,46 @@ mcx_up(struct mcx_softc *sc)
 		}
 	}
 
-	if (mcx_create_cq(sc, sc->sc_eqn) != 0)
-		goto down;
+	if (mcx_create_cq(sc, &q->q_cq, q->q_uar, q->q_eq.eq_n) != 0)
+		return ENOMEM;
 
-	/* send queue */
+	if (mcx_create_sq(sc, tx, q->q_uar, q->q_cq.cq_n) != 0)
+		return ENOMEM;
+
+	if (mcx_create_rq(sc, rx, q->q_cq.cq_n) != 0)
+		return ENOMEM;
+
+	return 0;
+destroy_tx_slots:
+	mcx_free_slots(sc, tx->tx_slots, i, (1 << MCX_LOG_SQ_SIZE));
+	tx->tx_slots = NULL;
+
+	i = (1 << MCX_LOG_RQ_SIZE);
+destroy_rx_slots:
+	mcx_free_slots(sc, rx->rx_slots, i, (1 << MCX_LOG_RQ_SIZE));
+	rx->rx_slots = NULL;
+	return ENOMEM;
+}
+
+static int
+mcx_up(struct mcx_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct mcx_rx *rx;
+	struct mcx_tx *tx;
+	int i, start;
+	struct mcx_flow_match match_crit;
+
 	if (mcx_create_tis(sc) != 0)
 		goto down;
 
-	if (mcx_create_sq(sc, sc->sc_cq[0].cq_n) != 0)
-		goto down;
+	for (i = 0; i < sc->sc_nqueues; i++) {
+		if (mcx_queue_up(sc, &sc->sc_queues[i]) != 0) {
+			goto down;
+		}
+	}
 
-	/* receive queue */
-	if (mcx_create_rq(sc, sc->sc_cq[0].cq_n) != 0)
-		goto down;
-
-	if (mcx_create_tir(sc) != 0)
+	if (mcx_create_tir(sc, &sc->sc_queues[0].q_rx) != 0)
 		goto down;
 
 	if (mcx_create_flow_table(sc, MCX_LOG_FLOW_TABLE_SIZE) != 0)
@@ -5975,12 +6334,12 @@ mcx_up(struct mcx_softc *sc)
 
 	/* flow table entries for unicast and broadcast */
 	start = 0;
-	if (mcx_set_flow_table_entry(sc, MCX_FLOW_GROUP_MAC, start,
+	if (mcx_set_flow_table_entry(sc, rx, MCX_FLOW_GROUP_MAC, start,
 	    sc->sc_ac.ac_enaddr) != 0)
 		goto down;
 	start++;
 
-	if (mcx_set_flow_table_entry(sc, MCX_FLOW_GROUP_MAC, start,
+	if (mcx_set_flow_table_entry(sc, rx, MCX_FLOW_GROUP_MAC, start,
 	    etherbroadcastaddr) != 0)
 		goto down;
 	start++;
@@ -5991,7 +6350,7 @@ mcx_up(struct mcx_softc *sc)
 	/* re-add any existing multicast flows */
 	for (i = 0; i < MCX_NUM_MCAST_FLOWS; i++) {
 		if (sc->sc_mcast_flows[i][0] != 0) {
-			mcx_set_flow_table_entry(sc, MCX_FLOW_GROUP_MAC,
+			mcx_set_flow_table_entry(sc, rx, MCX_FLOW_GROUP_MAC,
 			    sc->sc_mcast_flow_base + i,
 			    sc->sc_mcast_flows[i]);
 		}
@@ -6000,35 +6359,32 @@ mcx_up(struct mcx_softc *sc)
 	if (mcx_set_flow_table_root(sc) != 0)
 		goto down;
 
-	/* start the queues */
-	if (mcx_ready_sq(sc) != 0)
-		goto down;
+	for (i = 0; i < sc->sc_nqueues; i++) {
+		struct mcx_queues *q = &sc->sc_queues[i];
+		rx = &q->q_rx;
+		tx = &q->q_tx;
 
-	if (mcx_ready_rq(sc) != 0)
-		goto down;
+		/* start the queues */
+		if (mcx_ready_sq(sc, tx) != 0)
+			goto down;
 
-	if_rxr_init(&sc->sc_rxr, 1, (1 << MCX_LOG_RQ_SIZE));
-	sc->sc_rx_prod = 0;
-	mcx_rx_fill(sc);
+		if (mcx_ready_rq(sc, rx) != 0)
+			goto down;
+
+		if_rxr_init(&rx->rx_rxr, 1, (1 << MCX_LOG_RQ_SIZE));
+		rx->rx_prod = 0;
+		mcx_rx_fill(sc, rx);
+
+		tx->tx_cons = 0;
+		tx->tx_prod = 0;
+		ifq_clr_oactive(tx->tx_ifq);
+	}
 
 	mcx_calibrate_first(sc);
 
 	SET(ifp->if_flags, IFF_RUNNING);
 
-	sc->sc_tx_cons = 0;
-	sc->sc_tx_prod = 0;
-	ifq_clr_oactive(&ifp->if_snd);
-	ifq_restart(&ifp->if_snd);
-
 	return ENETRESET;
-destroy_tx_slots:
-	mcx_free_slots(sc, sc->sc_tx_slots, i, (1 << MCX_LOG_SQ_SIZE));
-	sc->sc_tx_slots = NULL;
-
-	i = (1 << MCX_LOG_RQ_SIZE);
-destroy_rx_slots:
-	mcx_free_slots(sc, sc->sc_rx_slots, i, (1 << MCX_LOG_RQ_SIZE));
-	sc->sc_rx_slots = NULL;
 down:
 	mcx_down(sc);
 	return ENOMEM;
@@ -6060,7 +6416,10 @@ mcx_down(struct mcx_softc *sc)
 	}
 
 	intr_barrier(sc->sc_ihc);
-	ifq_barrier(&ifp->if_snd);
+	for (i = 0; i < sc->sc_nqueues; i++) {
+		struct ifqueue *ifq = sc->sc_queues[i].q_tx.tx_ifq;
+		ifq_barrier(ifq);
+	}
 
 	timeout_del_barrier(&sc->sc_calibrate);
 
@@ -6075,28 +6434,36 @@ mcx_down(struct mcx_softc *sc)
 
 	if (sc->sc_tirn != 0)
 		mcx_destroy_tir(sc);
-	if (sc->sc_rqn != 0)
-		mcx_destroy_rq(sc);
 
-	if (sc->sc_sqn != 0)
-		mcx_destroy_sq(sc);
+	for (i = 0; i < sc->sc_nqueues; i++) {
+		struct mcx_queues *q = &sc->sc_queues[i];
+		struct mcx_rx *rx = &q->q_rx;
+		struct mcx_tx *tx = &q->q_tx;
+		struct mcx_cq *cq = &q->q_cq;
+
+		if (rx->rx_rqn != 0)
+			mcx_destroy_rq(sc, rx);
+
+		if (tx->tx_sqn != 0)
+			mcx_destroy_sq(sc, tx);
+
+		if (tx->tx_slots != NULL) {
+			mcx_free_slots(sc, tx->tx_slots,
+			    (1 << MCX_LOG_SQ_SIZE), (1 << MCX_LOG_SQ_SIZE));
+			tx->tx_slots = NULL;
+		}
+		if (rx->rx_slots != NULL) {
+			mcx_free_slots(sc, rx->rx_slots,
+			    (1 << MCX_LOG_RQ_SIZE), (1 << MCX_LOG_RQ_SIZE));
+			rx->rx_slots = NULL;
+		}
+
+		if (cq->cq_n != 0)
+			mcx_destroy_cq(sc, cq);
+	}
 	if (sc->sc_tisn != 0)
 		mcx_destroy_tis(sc);
-
-	for (i = 0; i < sc->sc_num_cq; i++)
-		mcx_destroy_cq(sc, i);
 	sc->sc_num_cq = 0;
-
-	if (sc->sc_tx_slots != NULL) {
-		mcx_free_slots(sc, sc->sc_tx_slots, (1 << MCX_LOG_SQ_SIZE),
-		    (1 << MCX_LOG_SQ_SIZE));
-		sc->sc_tx_slots = NULL;
-	}
-	if (sc->sc_rx_slots != NULL) {
-		mcx_free_slots(sc, sc->sc_rx_slots, (1 << MCX_LOG_RQ_SIZE),
-		    (1 << MCX_LOG_RQ_SIZE));
-		sc->sc_rx_slots = NULL;
-	}
 }
 
 static int
@@ -6150,6 +6517,7 @@ mcx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 					    ETHER_ADDR_LEN);
 					if (ISSET(ifp->if_flags, IFF_RUNNING)) {
 						mcx_set_flow_table_entry(sc,
+						    &sc->sc_queues[0].q_rx,
 						    MCX_FLOW_GROUP_MAC,
 						    sc->sc_mcast_flow_base + i,
 						    sc->sc_mcast_flows[i]);
@@ -6266,13 +6634,28 @@ mcx_get_sffpage(struct ifnet *ifp, struct if_sffpage *sff)
 static int
 mcx_rxrinfo(struct mcx_softc *sc, struct if_rxrinfo *ifri)
 {
-	struct if_rxring_info ifr;
+	struct if_rxring_info *ifrs;
+	unsigned int i;
+	int error;
 
-	memset(&ifr, 0, sizeof(ifr));
-	ifr.ifr_size = sc->sc_hardmtu;
-	ifr.ifr_info = sc->sc_rxr;
+	ifrs = mallocarray(sc->sc_nqueues, sizeof(*ifrs), M_TEMP,
+	    M_WAITOK|M_ZERO|M_CANFAIL);
+	if (ifrs == NULL)
+		return (ENOMEM);
 
-	return (if_rxr_info_ioctl(ifri, 1, &ifr));
+	for (i = 0; i < sc->sc_nqueues; i++) {
+		struct mcx_rx *rx = &sc->sc_queues[i].q_rx;
+		struct if_rxring_info *ifr = &ifrs[i];
+
+		snprintf(ifr->ifr_name, sizeof(ifr->ifr_name), "%u", i);
+		ifr->ifr_size = sc->sc_hardmtu;
+		ifr->ifr_info = rx->rx_rxr;
+	}
+
+	error = if_rxr_info_ioctl(ifri, i, ifrs);
+	free(ifrs, M_TEMP, i * sizeof(*ifrs));
+
+	return (error);
 }
 
 int
@@ -6300,6 +6683,7 @@ mcx_load_mbuf(struct mcx_softc *sc, struct mcx_slot *ms, struct mbuf *m)
 static void
 mcx_start(struct ifqueue *ifq)
 {
+	struct mcx_tx *tx = ifq->ifq_softc;
 	struct ifnet *ifp = ifq->ifq_if;
 	struct mcx_softc *sc = ifp->if_softc;
 	struct mcx_sq_entry *sq, *sqe;
@@ -6309,17 +6693,18 @@ mcx_start(struct ifqueue *ifq)
 	struct mbuf *m;
 	u_int idx, free, used;
 	uint64_t *bf;
+	uint32_t csum;
 	size_t bf_base;
 	int i, seg, nseg;
 
-	bf_base = (sc->sc_uar * MCX_PAGE_SIZE) + MCX_UAR_BF;
+	bf_base = (tx->tx_uar * MCX_PAGE_SIZE) + MCX_UAR_BF;
 
-	idx = sc->sc_tx_prod % (1 << MCX_LOG_SQ_SIZE);
-	free = (sc->sc_tx_cons + (1 << MCX_LOG_SQ_SIZE)) - sc->sc_tx_prod;
+	idx = tx->tx_prod % (1 << MCX_LOG_SQ_SIZE);
+	free = (tx->tx_cons + (1 << MCX_LOG_SQ_SIZE)) - tx->tx_prod;
 
 	used = 0;
 	bf = NULL;
-	sq = (struct mcx_sq_entry *)MCX_DMA_KVA(&sc->sc_sq_mem);
+	sq = (struct mcx_sq_entry *)MCX_DMA_KVA(&tx->tx_sq_mem);
 
 	for (;;) {
 		if (used + MCX_SQ_ENTRY_MAX_SLOTS >= free) {
@@ -6333,20 +6718,43 @@ mcx_start(struct ifqueue *ifq)
 		}
 
 		sqe = sq + idx;
-		ms = &sc->sc_tx_slots[idx];
+		ms = &tx->tx_slots[idx];
 		memset(sqe, 0, sizeof(*sqe));
 
 		/* ctrl segment */
 		sqe->sqe_opcode_index = htobe32(MCX_SQE_WQE_OPCODE_SEND |
-		    ((sc->sc_tx_prod & 0xffff) << MCX_SQE_WQE_INDEX_SHIFT));
+		    ((tx->tx_prod & 0xffff) << MCX_SQE_WQE_INDEX_SHIFT));
 		/* always generate a completion event */
 		sqe->sqe_signature = htobe32(MCX_SQE_CE_CQE_ALWAYS);
 
 		/* eth segment */
+		csum = 0;
+		if (m->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
+			csum |= MCX_SQE_L3_CSUM;
+		if (m->m_pkthdr.csum_flags & (M_TCP_CSUM_OUT | M_UDP_CSUM_OUT))
+			csum |= MCX_SQE_L4_CSUM;
+		sqe->sqe_mss_csum = htobe32(csum);
 		sqe->sqe_inline_header_size = htobe16(MCX_SQ_INLINE_SIZE);
-		m_copydata(m, 0, MCX_SQ_INLINE_SIZE,
-		    (caddr_t)sqe->sqe_inline_headers);
-		m_adj(m, MCX_SQ_INLINE_SIZE);
+#if NVLAN > 0
+		if (m->m_flags & M_VLANTAG) {
+			struct ether_vlan_header *evh;
+			evh = (struct ether_vlan_header *)
+			    &sqe->sqe_inline_headers;
+
+			/* slightly cheaper vlan_inject() */
+			m_copydata(m, 0, ETHER_HDR_LEN, (caddr_t)evh);
+			evh->evl_proto = evh->evl_encap_proto;
+			evh->evl_encap_proto = htons(ETHERTYPE_VLAN);
+			evh->evl_tag = htons(m->m_pkthdr.ether_vtag);
+
+			m_adj(m, ETHER_HDR_LEN);
+		} else
+#endif
+		{
+			m_copydata(m, 0, MCX_SQ_INLINE_SIZE,
+			    (caddr_t)sqe->sqe_inline_headers);
+			m_adj(m, MCX_SQ_INLINE_SIZE);
+		}
 
 		if (mcx_load_mbuf(sc, ms, m) != 0) {
 			m_freem(m);
@@ -6366,7 +6774,7 @@ mcx_start(struct ifqueue *ifq)
 		    BUS_DMASYNC_PREWRITE);
 
 		sqe->sqe_ds_sq_num =
-		    htobe32((sc->sc_sqn << MCX_SQE_SQ_NUM_SHIFT) |
+		    htobe32((tx->tx_sqn << MCX_SQE_SQ_NUM_SHIFT) |
 		    (map->dm_nsegs + 3));
 
 		/* data segment - first wqe has one segment */
@@ -6379,7 +6787,7 @@ mcx_start(struct ifqueue *ifq)
 				idx++;
 				if (idx == (1 << MCX_LOG_SQ_SIZE))
 					idx = 0;
-				sc->sc_tx_prod++;
+				tx->tx_prod++;
 				used++;
 
 				sqs = (struct mcx_sq_entry_seg *)(sq + idx);
@@ -6396,12 +6804,12 @@ mcx_start(struct ifqueue *ifq)
 		idx++;
 		if (idx == (1 << MCX_LOG_SQ_SIZE))
 			idx = 0;
-		sc->sc_tx_prod++;
+		tx->tx_prod++;
 		used++;
 	}
 
 	if (used) {
-		*sc->sc_tx_doorbell = htobe32(sc->sc_tx_prod & MCX_WQ_DOORBELL_MASK);
+		htobem32(tx->tx_doorbell, tx->tx_prod & MCX_WQ_DOORBELL_MASK);
 
 		membar_sync();
 
@@ -6410,9 +6818,9 @@ mcx_start(struct ifqueue *ifq)
 		 * to the blue flame buffer
 		 */
 		bus_space_write_raw_8(sc->sc_memt, sc->sc_memh,
-		    bf_base + sc->sc_bf_offset, *bf);
+		    bf_base + tx->tx_bf_offset, *bf);
 		/* next write goes to the other buffer */
-		sc->sc_bf_offset ^= sc->sc_bf_size;
+		tx->tx_bf_offset ^= sc->sc_bf_size;
 
 		membar_sync();
 	}
@@ -6791,3 +7199,330 @@ mcx_hwmem_free(struct mcx_softc *sc, struct mcx_hwmem *mhm)
 
 	mhm->mhm_npages = 0;
 }
+
+#if NKSTAT > 0
+struct mcx_ppcnt {
+	char			 name[KSTAT_KV_NAMELEN];
+	enum kstat_kv_unit	 unit;
+};
+
+static const struct mcx_ppcnt mcx_ppcnt_ieee8023_tpl[] = {
+	{ "Good Tx",		KSTAT_KV_U_PACKETS, },
+	{ "Good Rx",		KSTAT_KV_U_PACKETS, },
+	{ "FCS errs",		KSTAT_KV_U_PACKETS, },
+	{ "Alignment Errs",	KSTAT_KV_U_PACKETS, },
+	{ "Good Tx",		KSTAT_KV_U_BYTES, },
+	{ "Good Rx",		KSTAT_KV_U_BYTES, },
+	{ "Multicast Tx",	KSTAT_KV_U_PACKETS, },
+	{ "Broadcast Tx",	KSTAT_KV_U_PACKETS, },
+	{ "Multicast Rx",	KSTAT_KV_U_PACKETS, },
+	{ "Broadcast Rx",	KSTAT_KV_U_PACKETS, },
+	{ "In Range Len",	KSTAT_KV_U_PACKETS, },
+	{ "Out Of Range Len",	KSTAT_KV_U_PACKETS, },
+	{ "Frame Too Long",	KSTAT_KV_U_PACKETS, },
+	{ "Symbol Errs",	KSTAT_KV_U_PACKETS, },
+	{ "MAC Ctrl Tx",	KSTAT_KV_U_PACKETS, },
+	{ "MAC Ctrl Rx",	KSTAT_KV_U_PACKETS, },
+	{ "MAC Ctrl Unsup",	KSTAT_KV_U_PACKETS, },
+	{ "Pause Rx",		KSTAT_KV_U_PACKETS, },
+	{ "Pause Tx",		KSTAT_KV_U_PACKETS, },
+};
+CTASSERT(nitems(mcx_ppcnt_ieee8023_tpl) == mcx_ppcnt_ieee8023_count);
+
+static const struct mcx_ppcnt mcx_ppcnt_rfc2863_tpl[] = {
+	{ "Rx Bytes",		KSTAT_KV_U_BYTES, },
+	{ "Rx Unicast",		KSTAT_KV_U_PACKETS, },
+	{ "Rx Discards",	KSTAT_KV_U_PACKETS, },
+	{ "Rx Errors",		KSTAT_KV_U_PACKETS, },
+	{ "Rx Unknown Proto",	KSTAT_KV_U_PACKETS, },
+	{ "Tx Bytes",		KSTAT_KV_U_BYTES, },
+	{ "Tx Unicast",		KSTAT_KV_U_PACKETS, },
+	{ "Tx Discards",	KSTAT_KV_U_PACKETS, },
+	{ "Tx Errors",		KSTAT_KV_U_PACKETS, },
+	{ "Rx Multicast",	KSTAT_KV_U_PACKETS, },
+	{ "Rx Broadcast",	KSTAT_KV_U_PACKETS, },
+	{ "Tx Multicast",	KSTAT_KV_U_PACKETS, },
+	{ "Tx Broadcast",	KSTAT_KV_U_PACKETS, },
+};
+CTASSERT(nitems(mcx_ppcnt_rfc2863_tpl) == mcx_ppcnt_rfc2863_count);
+
+static const struct mcx_ppcnt mcx_ppcnt_rfc2819_tpl[] = {
+	{ "Drop Events",	KSTAT_KV_U_PACKETS, },
+	{ "Octets",		KSTAT_KV_U_BYTES, },
+	{ "Packets",		KSTAT_KV_U_PACKETS, },
+	{ "Broadcasts",		KSTAT_KV_U_PACKETS, },
+	{ "Multicasts",		KSTAT_KV_U_PACKETS, },
+	{ "CRC Align Errs",	KSTAT_KV_U_PACKETS, },
+	{ "Undersize",		KSTAT_KV_U_PACKETS, },
+	{ "Oversize",		KSTAT_KV_U_PACKETS, },
+	{ "Fragments",		KSTAT_KV_U_PACKETS, },
+	{ "Jabbers",		KSTAT_KV_U_PACKETS, },
+	{ "Collisions",		KSTAT_KV_U_NONE, },
+	{ "64B",		KSTAT_KV_U_PACKETS, },
+	{ "65-127B",		KSTAT_KV_U_PACKETS, },
+	{ "128-255B",		KSTAT_KV_U_PACKETS, },
+	{ "256-511B",		KSTAT_KV_U_PACKETS, },
+	{ "512-1023B",		KSTAT_KV_U_PACKETS, },
+	{ "1024-1518B",		KSTAT_KV_U_PACKETS, },
+	{ "1519-2047B",		KSTAT_KV_U_PACKETS, },
+	{ "2048-4095B",		KSTAT_KV_U_PACKETS, },
+	{ "4096-8191B",		KSTAT_KV_U_PACKETS, },
+	{ "8192-10239B",	KSTAT_KV_U_PACKETS, },
+};
+CTASSERT(nitems(mcx_ppcnt_rfc2819_tpl) == mcx_ppcnt_rfc2819_count);
+
+static const struct mcx_ppcnt mcx_ppcnt_rfc3635_tpl[] = {
+	{ "Alignment Errs",	KSTAT_KV_U_PACKETS, },
+	{ "FCS Errs",		KSTAT_KV_U_PACKETS, },
+	{ "Single Colls",	KSTAT_KV_U_PACKETS, },
+	{ "Multiple Colls",	KSTAT_KV_U_PACKETS, },
+	{ "SQE Test Errs",	KSTAT_KV_U_NONE, },
+	{ "Deferred Tx",	KSTAT_KV_U_PACKETS, },
+	{ "Late Colls",		KSTAT_KV_U_NONE, },
+	{ "Exess Colls",	KSTAT_KV_U_NONE, },
+	{ "Int MAC Tx Errs",	KSTAT_KV_U_PACKETS, },
+	{ "CSM Sense Errs",	KSTAT_KV_U_NONE, },
+	{ "Too Long",		KSTAT_KV_U_PACKETS, },
+	{ "Int MAC Rx Errs",	KSTAT_KV_U_PACKETS, },
+	{ "Symbol Errs",	KSTAT_KV_U_NONE, },
+	{ "Unknown Control",	KSTAT_KV_U_PACKETS, },
+	{ "Pause Rx",		KSTAT_KV_U_PACKETS, },
+	{ "Pause Tx",		KSTAT_KV_U_PACKETS, },
+};
+CTASSERT(nitems(mcx_ppcnt_rfc3635_tpl) == mcx_ppcnt_rfc3635_count);
+
+struct mcx_kstat_ppcnt {
+	const char		*ksp_name;
+	const struct mcx_ppcnt	*ksp_tpl;
+	unsigned int		 ksp_n;
+	uint8_t			 ksp_grp;
+};
+
+static const struct mcx_kstat_ppcnt mcx_kstat_ppcnt_ieee8023 = {
+	.ksp_name =		"ieee802.3",
+	.ksp_tpl =		mcx_ppcnt_ieee8023_tpl,
+	.ksp_n =		nitems(mcx_ppcnt_ieee8023_tpl),
+	.ksp_grp =		MCX_REG_PPCNT_GRP_IEEE8023,
+};
+
+static const struct mcx_kstat_ppcnt mcx_kstat_ppcnt_rfc2863 = {
+	.ksp_name =		"rfc2863",
+	.ksp_tpl =		mcx_ppcnt_rfc2863_tpl,
+	.ksp_n =		nitems(mcx_ppcnt_rfc2863_tpl),
+	.ksp_grp =		MCX_REG_PPCNT_GRP_RFC2863,
+};
+
+static const struct mcx_kstat_ppcnt mcx_kstat_ppcnt_rfc2819 = {
+	.ksp_name =		"rfc2819",
+	.ksp_tpl =		mcx_ppcnt_rfc2819_tpl,
+	.ksp_n =		nitems(mcx_ppcnt_rfc2819_tpl),
+	.ksp_grp =		MCX_REG_PPCNT_GRP_RFC2819,
+};
+
+static const struct mcx_kstat_ppcnt mcx_kstat_ppcnt_rfc3635 = {
+	.ksp_name =		"rfc3635",
+	.ksp_tpl =		mcx_ppcnt_rfc3635_tpl,
+	.ksp_n =		nitems(mcx_ppcnt_rfc3635_tpl),
+	.ksp_grp =		MCX_REG_PPCNT_GRP_RFC3635,
+};
+
+static int	mcx_kstat_ppcnt_read(struct kstat *);
+
+static void	mcx_kstat_attach_tmps(struct mcx_softc *sc);
+
+static struct kstat *
+mcx_kstat_attach_ppcnt(struct mcx_softc *sc,
+    const struct mcx_kstat_ppcnt *ksp)
+{
+	struct kstat *ks;
+	struct kstat_kv *kvs;
+	unsigned int i;
+
+	ks = kstat_create(DEVNAME(sc), 0, ksp->ksp_name, 0, KSTAT_T_KV, 0);
+	if (ks == NULL)
+		return (NULL);
+
+	kvs = mallocarray(ksp->ksp_n, sizeof(*kvs),
+	    M_DEVBUF, M_WAITOK);
+
+	for (i = 0; i < ksp->ksp_n; i++) {
+		const struct mcx_ppcnt *tpl = &ksp->ksp_tpl[i];
+
+		kstat_kv_unit_init(&kvs[i], tpl->name,
+		    KSTAT_KV_T_COUNTER64, tpl->unit);
+	}
+
+	ks->ks_softc = sc;
+	ks->ks_ptr = (void *)ksp;
+	ks->ks_data = kvs;
+	ks->ks_datalen = ksp->ksp_n * sizeof(*kvs);
+	ks->ks_read = mcx_kstat_ppcnt_read;
+
+	kstat_install(ks);
+
+	return (ks);
+}
+
+static void
+mcx_kstat_attach(struct mcx_softc *sc)
+{
+	sc->sc_kstat_ieee8023 = mcx_kstat_attach_ppcnt(sc,
+	    &mcx_kstat_ppcnt_ieee8023);
+	sc->sc_kstat_rfc2863 = mcx_kstat_attach_ppcnt(sc,
+	    &mcx_kstat_ppcnt_rfc2863);
+	sc->sc_kstat_rfc2819 = mcx_kstat_attach_ppcnt(sc,
+	    &mcx_kstat_ppcnt_rfc2819);
+	sc->sc_kstat_rfc3635 = mcx_kstat_attach_ppcnt(sc,
+	    &mcx_kstat_ppcnt_rfc3635);
+
+	mcx_kstat_attach_tmps(sc);
+}
+
+static int
+mcx_kstat_ppcnt_read(struct kstat *ks)
+{
+	struct mcx_softc *sc = ks->ks_softc;
+	struct mcx_kstat_ppcnt *ksp = ks->ks_ptr;
+	struct mcx_reg_ppcnt ppcnt = {
+		.ppcnt_grp = ksp->ksp_grp,
+		.ppcnt_local_port = 1,
+	};
+	struct kstat_kv *kvs = ks->ks_data;
+	uint64_t *vs = (uint64_t *)&ppcnt.ppcnt_counter_set;
+	unsigned int i;
+	int rv;
+
+	KERNEL_LOCK(); /* XXX */
+	rv = mcx_access_hca_reg(sc, MCX_REG_PPCNT, MCX_REG_OP_READ,
+	    &ppcnt, sizeof(ppcnt));
+	KERNEL_UNLOCK();
+	if (rv != 0)
+		return (EIO);
+
+	nanouptime(&ks->ks_updated);
+
+	for (i = 0; i < ksp->ksp_n; i++)
+		kstat_kv_u64(&kvs[i]) = bemtoh64(&vs[i]);
+
+	return (0);
+}
+
+struct mcx_kstat_mtmp {
+	struct kstat_kv		ktmp_name;
+	struct kstat_kv		ktmp_temperature;
+	struct kstat_kv		ktmp_threshold_lo;
+	struct kstat_kv		ktmp_threshold_hi;
+};
+
+static const struct mcx_kstat_mtmp mcx_kstat_mtmp_tpl = {
+	KSTAT_KV_INITIALIZER("name",		KSTAT_KV_T_ISTR),
+	KSTAT_KV_INITIALIZER("temperature",	KSTAT_KV_T_TEMP),
+	KSTAT_KV_INITIALIZER("lo threshold",	KSTAT_KV_T_TEMP),
+	KSTAT_KV_INITIALIZER("hi threshold",	KSTAT_KV_T_TEMP),
+};
+
+static const struct timeval mcx_kstat_mtmp_rate = { 1, 0 };
+
+static int mcx_kstat_mtmp_read(struct kstat *);
+
+static void
+mcx_kstat_attach_tmps(struct mcx_softc *sc)
+{
+	struct kstat *ks;
+	struct mcx_reg_mtcap mtcap;
+	struct mcx_kstat_mtmp *ktmp;
+	uint64_t map;
+	unsigned int i, n;
+
+	memset(&mtcap, 0, sizeof(mtcap));
+
+	if (mcx_access_hca_reg(sc, MCX_REG_MTCAP, MCX_REG_OP_READ,
+	    &mtcap, sizeof(mtcap)) != 0) {
+		/* unable to find temperature sensors */
+		return;
+	}
+
+	sc->sc_kstat_mtmp_count = mtcap.mtcap_sensor_count;
+	sc->sc_kstat_mtmp = mallocarray(sc->sc_kstat_mtmp_count,
+	    sizeof(*sc->sc_kstat_mtmp), M_DEVBUF, M_WAITOK);
+
+	n = 0;
+	map = bemtoh64(&mtcap.mtcap_sensor_map);
+	for (i = 0; i < sizeof(map) * NBBY; i++) {
+		if (!ISSET(map, (1ULL << i)))
+			continue;
+
+		ks = kstat_create(DEVNAME(sc), 0, "temperature", i,
+		    KSTAT_T_KV, 0);
+		if (ks == NULL) {
+			/* unable to attach temperature sensor %u, i */
+			continue;
+		}
+
+		ktmp = malloc(sizeof(*ktmp), M_DEVBUF, M_WAITOK|M_ZERO);
+		*ktmp = mcx_kstat_mtmp_tpl;
+
+		ks->ks_data = ktmp;
+		ks->ks_datalen = sizeof(*ktmp);
+		TIMEVAL_TO_TIMESPEC(&mcx_kstat_mtmp_rate, &ks->ks_interval);
+		ks->ks_read = mcx_kstat_mtmp_read;
+
+		ks->ks_softc = sc;
+		kstat_install(ks);
+
+		sc->sc_kstat_mtmp[n++] = ks;
+		if (n >= sc->sc_kstat_mtmp_count)
+			break;
+	}
+}
+
+static uint64_t
+mcx_tmp_to_uK(uint16_t *t)
+{
+	int64_t mt = (int16_t)bemtoh16(t); /* 0.125 C units */
+	mt *= 1000000 / 8; /* convert to uC */
+	mt += 273150000; /* convert to uK */
+
+	return (mt);
+}
+
+static int
+mcx_kstat_mtmp_read(struct kstat *ks)
+{
+	struct mcx_softc *sc = ks->ks_softc;
+	struct mcx_kstat_mtmp *ktmp = ks->ks_data;
+	struct mcx_reg_mtmp mtmp;
+	int rv;
+	struct timeval updated;
+
+	TIMESPEC_TO_TIMEVAL(&updated, &ks->ks_updated);
+
+	if (!ratecheck(&updated, &mcx_kstat_mtmp_rate))
+		return (0);
+
+	memset(&mtmp, 0, sizeof(mtmp));
+	htobem16(&mtmp.mtmp_sensor_index, ks->ks_unit);
+
+	KERNEL_LOCK(); /* XXX */
+	rv = mcx_access_hca_reg(sc, MCX_REG_MTMP, MCX_REG_OP_READ,
+	    &mtmp, sizeof(mtmp));
+	KERNEL_UNLOCK();
+	if (rv != 0)
+		return (EIO);
+
+	memset(kstat_kv_istr(&ktmp->ktmp_name), 0,
+	    sizeof(kstat_kv_istr(&ktmp->ktmp_name)));
+	memcpy(kstat_kv_istr(&ktmp->ktmp_name),
+	    mtmp.mtmp_sensor_name, sizeof(mtmp.mtmp_sensor_name));
+	kstat_kv_temp(&ktmp->ktmp_temperature) =
+	    mcx_tmp_to_uK(&mtmp.mtmp_temperature);
+	kstat_kv_temp(&ktmp->ktmp_threshold_lo) =
+	    mcx_tmp_to_uK(&mtmp.mtmp_temperature_threshold_lo);
+	kstat_kv_temp(&ktmp->ktmp_threshold_hi) =
+	    mcx_tmp_to_uK(&mtmp.mtmp_temperature_threshold_hi);
+
+	TIMEVAL_TO_TIMESPEC(&updated, &ks->ks_updated);
+
+	return (0);
+}
+#endif /* NKSTAT > 0 */

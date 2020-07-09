@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.195 2020/02/02 20:33:52 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.199 2020/05/13 20:55:41 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -494,8 +494,7 @@ parse_domain_list(FILE *cfile, int *len, char **dp)
 			*dp = strdup(buf);
 			if (*dp == NULL)
 				fatal("domain name list");
-			*len = strlen(buf) + 1;
-			memcpy(*dp, buf, *len);
+			*len = strlen(*dp);
 			return 1;
 		}
 		token = next_token(NULL, cfile);
@@ -786,7 +785,6 @@ parse_option(FILE *cfile, int *code, struct option_data *options)
 	long long		 number;
 	unsigned int		 hunkix = 0;
 	int			 i, freedp, len, token;
-	int			 nul_term = 0;
 
 	token = next_token(&val, cfile);
 	i = name_to_code(val);
@@ -875,16 +873,17 @@ parse_option(FILE *cfile, int *code, struct option_data *options)
 					if (parse_domain_list(cfile, &len,
 					    (char **)&dp) == 0)
 						return 0;
-				} else if (parse_hex_octets(cfile, &len, &dp)
-				    == 0) {
-					return 0;
+				} else {
+					if (parse_hex_octets(cfile, &len, &dp)
+					    == 0)
+						return 0;
+					val = rfc1035_as_string(dp, len);
+					free(dp);
+					dp = strdup(val);
+					if (dp == NULL)
+						fatal("RFC1035 hex octets");
+					len = strlen(dp);
 				}
-				val = rfc1035_as_string(dp, len);
-				free(dp);
-				dp = strdup(val);
-				if (dp == NULL)
-					fatal("RFC1035 hex octets");
-				len = strlen(dp) + 1;
 				freedp = 1;
 				break;
 			default:
@@ -914,10 +913,10 @@ parse_option(FILE *cfile, int *code, struct option_data *options)
 	} while (*fmt == 'A' && token == ',');
 
 	free(options[i].data);
-	options[i].data = malloc(hunkix + nul_term);
+	options[i].data = malloc(hunkix);
 	if (options[i].data == NULL)
 		fatal("option data");
-	memcpy(options[i].data, hunkbuf, hunkix + nul_term);
+	memcpy(options[i].data, hunkbuf, hunkix);
 	options[i].len = hunkix;
 
 	*code = i;

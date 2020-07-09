@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-command-prompt.c,v 1.51 2020/04/13 20:51:57 nicm Exp $ */
+/* $OpenBSD: cmd-command-prompt.c,v 1.53 2020/05/16 16:16:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -40,8 +40,8 @@ const struct cmd_entry cmd_command_prompt_entry = {
 	.name = "command-prompt",
 	.alias = NULL,
 
-	.args = { "1kiI:Np:t:", 0, 1 },
-	.usage = "[-1kiN] [-I inputs] [-p prompts] " CMD_TARGET_CLIENT_USAGE " "
+	.args = { "1kiI:Np:Tt:W", 0, 1 },
+	.usage = "[-1kiNTW] [-I inputs] [-p prompts] " CMD_TARGET_CLIENT_USAGE " "
 		 "[template]",
 
 	.flags = CMD_CLIENT_TFLAG,
@@ -66,6 +66,7 @@ cmd_command_prompt_exec(struct cmd *self, struct cmdq_item *item)
 {
 	struct args			*args = cmd_get_args(self);
 	struct client			*tc = cmdq_get_target_client(item);
+	struct cmd_find_state		*target = cmdq_get_target(item);
 	const char			*inputs, *prompts;
 	struct cmd_command_prompt_cdata	*cdata;
 	char				*prompt, *ptr, *input = NULL;
@@ -121,8 +122,13 @@ cmd_command_prompt_exec(struct cmd *self, struct cmdq_item *item)
 		cdata->flags |= PROMPT_INCREMENTAL;
 	else if (args_has(args, 'k'))
 		cdata->flags |= PROMPT_KEY;
-	status_prompt_set(tc, prompt, input, cmd_command_prompt_callback,
-	    cmd_command_prompt_free, cdata, cdata->flags);
+	else if (args_has(args, 'W'))
+		cdata->flags |= PROMPT_WINDOW;
+	else if (args_has(args, 'T'))
+		cdata->flags |= PROMPT_TARGET;
+	status_prompt_set(tc, target, prompt, input,
+	    cmd_command_prompt_callback, cmd_command_prompt_free, cdata,
+	    cdata->flags);
 	free(prompt);
 
 	return (CMD_RETURN_NORMAL);

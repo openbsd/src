@@ -1,4 +1,4 @@
-/* $OpenBSD: mvpinctrl.c,v 1.6 2019/04/30 20:06:32 patrick Exp $ */
+/* $OpenBSD: mvpinctrl.c,v 1.7 2020/05/22 10:06:59 patrick Exp $ */
 /*
  * Copyright (c) 2013,2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -26,6 +26,7 @@
 #include <machine/fdt.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/ofw_pinctrl.h>
@@ -60,6 +61,7 @@ struct mvpinctrl_softc {
 	struct mvpinctrl_pin	*sc_pins;
 	int			 sc_npins;
 	struct gpio_controller	 sc_gc;
+	struct clock_device	 sc_cd_xtal;
 };
 
 int	mvpinctrl_match(struct device *, void *, void *);
@@ -69,6 +71,8 @@ int	mvpinctrl_pinctrl(uint32_t, void *);
 void	mvpinctrl_config_pin(void *, uint32_t *, int);
 int	mvpinctrl_get_pin(void *, uint32_t *);
 void	mvpinctrl_set_pin(void *, uint32_t *, int);
+
+uint32_t a3700_xtal_get_frequency(void *, uint32_t *);
 
 struct cfattach mvpinctrl_ca = {
 	sizeof (struct mvpinctrl_softc), mvpinctrl_match, mvpinctrl_attach
@@ -136,7 +140,8 @@ mvpinctrl_match(struct device *parent, void *match, void *aux)
 			return 10;
 	}
 
-	if (OF_is_compatible(faa->fa_node, "marvell,armada3710-sb-pinctrl"))
+	if (OF_is_compatible(faa->fa_node, "marvell,armada3710-nb-pinctrl") ||
+	    OF_is_compatible(faa->fa_node, "marvell,armada3710-sb-pinctrl"))
 		return 10;
 
 	return 0;
@@ -172,7 +177,20 @@ mvpinctrl_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	if (OF_is_compatible(faa->fa_node, "marvell,armada3710-sb-pinctrl")) {
+	if (OF_is_compatible(faa->fa_node, "marvell,armada3710-nb-pinctrl")) {
+		for (node = OF_child(faa->fa_node); node; node = OF_peer(node)) {
+			if (OF_is_compatible(node, "marvell,armada-3700-xtal-clock"))
+				break;
+		}
+		KASSERT(node != 0);
+		sc->sc_cd_xtal.cd_node = node;
+		sc->sc_cd_xtal.cd_cookie = sc;
+		sc->sc_cd_xtal.cd_get_frequency = a3700_xtal_get_frequency;
+		clock_register(&sc->sc_cd_xtal);
+	}
+
+	if (OF_is_compatible(faa->fa_node, "marvell,armada3710-nb-pinctrl") ||
+	    OF_is_compatible(faa->fa_node, "marvell,armada3710-sb-pinctrl")) {
 		for (node = OF_child(faa->fa_node); node; node = OF_peer(node)) {
 			if (OF_getproplen(node, "gpio-controller") == 0)
 				break;
@@ -305,4 +323,20 @@ mvpinctrl_set_pin(void *cookie, uint32_t *cells, int val)
 		HSET4(sc, GPIO_OUTPUT, (1 << pin));
 	else
 		HCLR4(sc, GPIO_OUTPUT, (1 << pin));
+}
+
+/* Armada 3700 XTAL block */
+
+#define XTAL			0xc
+#define  XTAL_MODE			(1 << 31)
+
+uint32_t
+a3700_xtal_get_frequency(void *cookie, uint32_t *cells)
+{
+	struct mvpinctrl_softc *sc = cookie;
+
+	if (regmap_read_4(sc->sc_rm, XTAL) & XTAL_MODE)
+		return 40000000;
+	else
+		return 25000000;
 }

@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.21 2020/04/04 13:28:46 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.23 2020/05/18 06:20:44 otto Exp $
 
-FS=		miniroot${OSrev}.fs
+FS=		miniroot${OSrev}.img
 FSSIZE=		6400
 FSDISKTYPE=	fakeramdisk
 CDROM=		cd${OSrev}.iso
@@ -22,7 +22,7 @@ ${FS}: bsd.gz
 	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
 	vnconfig -v ${FS} > vnd
 	disklabel -w `cat vnd` ${FSDISKTYPE}
-	newfs -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
+	newfs -O 1 -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
 	mount /dev/`cat vnd`a ${MOUNT_POINT}
 	install -c -m 555 -o root -g wheel \
 	    ${DESTDIR}/usr/mdec/ofwboot ${MOUNT_POINT}/ofwboot

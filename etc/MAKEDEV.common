@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.110 2020/04/18 21:28:35 ratchov Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.111 2020/07/06 06:11:26 dlg Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -169,6 +169,7 @@ target(all, pvbus, 0, 1)dnl
 target(all, bpf)dnl
 target(all, kcov)dnl
 target(all, dt)dnl
+target(all, kstat)dnl
 dnl
 _mkdev(all, {-all-}, {-dnl
 show_target(all)dnl
@@ -532,3 +533,5 @@ __devitem(kcov, kcov, Kernel code coverage tracing)dnl
 _mkdev(kcov, kcov, {-M kcov c major_kcov_c 0 600-})dnl
 __devitem(dt, dt, Dynamic Tracer)dnl
 _mkdev(dt, dt, {-M dt c major_dt_c 0 600-})dnl
+__devitem(kstat, kstat, Kernel Statistics)dnl
+_mkdev(kstat, kstat, {-M kstat c major_kstat_c 0 640-})dnl

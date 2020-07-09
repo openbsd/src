@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.16 2019/12/31 10:05:33 mpi Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.17 2020/06/22 02:31:33 dlg Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -1039,7 +1039,9 @@ vio_rxeof(struct vio_softc *sc)
 		m_freem(m0);
 	}
 
-	if_input(ifp, &ml);
+	if (ifiq_input(&ifp->if_rcv, &ml))
+		if_rxr_livelocked(&sc->sc_rx_ring);
+
 	return r;
 }
 

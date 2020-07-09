@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.164 2020/04/27 21:31:37 patrick Exp $
+# $OpenBSD: GENERIC,v 1.172 2020/06/25 12:44:09 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -105,6 +105,10 @@ option	WSDISPLAY_COMPAT_USL		# VT handling
 option	WSDISPLAY_COMPAT_RAWKBD		# provide raw scancodes; needed for X11
 option	WSDISPLAY_DEFAULTSCREENS=6	# initial number of text consoles
 
+simpleamp*	at fdt?
+simpleaudio*	at fdt?
+audio*		at simpleaudio?
+
 simplefb*	at fdt?
 wsdisplay*	at simplefb?
 simplepanel*	at fdt?
@@ -159,6 +163,7 @@ bcmrng*		at fdt?
 bcmsdhost*	at fdt?
 sdmmc*		at bcmsdhost?
 bcmtemp*	at fdt?
+bcmtmon*	at fdt?
 bse*		at fdt?
 bse*		at acpi?
 dwctwo*		at fdt?
@@ -174,6 +179,7 @@ sdmmc*		at amlmmc?
 amlpciephy*	at fdt?
 amlpinctrl*	at fdt? early 1
 amlpwm*		at fdt?
+amlpwrc*	at fdt? early 1
 amlreset*	at fdt? early 1
 amlrng*		at fdt?
 amlsm*		at fdt? early 1
@@ -196,8 +202,12 @@ mvdog*		at fdt?
 mvgpio*		at fdt?
 mviic*		at fdt?
 iic*		at mviic?
+mvkpcie*	at fdt?
+pci*		at mvkpcie?
 mvmdio*		at fdt?
 mvneta*		at fdt?
+#mvppc*		at fdt?
+#mvpp*		at mvppc?
 mvrng*		at fdt?
 mvrtc*		at fdt?
 mvspi*		at fdt?
@@ -219,6 +229,7 @@ rkemmcphy*	at fdt?
 rkgpio*		at fdt?
 rkiic*		at fdt?
 iic*		at rkiic?
+rkiis*		at fdt?
 rkpcie*		at fdt?
 pci*		at rkpcie?
 rkpwm*		at fdt?
@@ -260,6 +271,9 @@ mskc*		at pci?			# Marvell Yukon-2
 msk*		at mskc?		#  each port of above
 re*		at pci?			# Realtek 8169/8169S/8110S
 rge*		at pci?			# Realtek 8125
+
+# PCI WiFi
+bwfm*		at pci?			# Broadcom FullMAC
 
 # PCI SCSI
 ahci*		at pci? flags 0x0000	# AHCI SATA controllers
@@ -416,13 +430,17 @@ uk*		at scsibus?
 
 # I2C devices
 abcrtc*		at iic?			# Abracon x80x RTC
+cwfg*		at iic?			# CellWise CW201x fuel gauge
 dsxrtc*		at iic?			# DS3231 RTC
+escodec*	at iic?			# ES8316 audio codec
 fanpwr*		at iic?			# FAN53555 regulator
 fusbtc*		at iic?			# USB Type-C controller
 ipmi*		at iic?			# IPMI (SIIF)
 islrtc*		at iic?			# ISL1208 RTC
 maxrtc*		at iic?			# DS1307 RTC
 mcprtc*		at iic?			# MCP794XX RTC
+pcamux*		at iic?			# PCA9548 multiplexer
+iic*		at pcamux?
 pcfrtc*		at iic?			# PCF8523 RTC
 pcxrtc*		at iic?			# PCF8563 RTC
 rkpmic*		at iic?			# RK808 PMIC

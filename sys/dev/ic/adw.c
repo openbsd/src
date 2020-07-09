@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.61 2020/03/10 22:31:36 krw Exp $ */
+/*	$OpenBSD: adw.c,v 1.62 2020/06/27 14:29:44 krw Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -512,7 +512,6 @@ adw_attach(ADW_SOFTC *sc)
 	sc->sc_link.adapter_buswidth = ADW_MAX_TID+1;
 	sc->sc_link.pool = &sc->sc_iopool;
 
-	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	config_found(&sc->sc_dev, &saa, scsiprint);

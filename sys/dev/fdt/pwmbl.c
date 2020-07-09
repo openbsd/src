@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwmbl.c,v 1.4 2020/01/28 14:09:31 patrick Exp $	*/
+/*	$OpenBSD: pwmbl.c,v 1.5 2020/06/10 23:36:26 patrick Exp $	*/
 /*
  * Copyright (c) 2019 Krystian Lewandowski
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
@@ -73,7 +73,7 @@ pwmbl_attach(struct device *parent, struct device *self, void *aux)
 	struct pwmbl_softc *sc = (struct pwmbl_softc *)self;
 	struct fdt_attach_args *faa = aux;
 	uint32_t *gpios;
-	int len;
+	int i, len;
 
 	len = OF_getproplen(faa->fa_node, "pwms");
 	if (len < 0) {
@@ -95,25 +95,28 @@ pwmbl_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	len = OF_getproplen(faa->fa_node, "brightness-levels");
-	if (len < 0) {
-		free(sc->sc_pwm, M_DEVBUF, sc->sc_pwm_len);
-		printf(": no brightness levels\n");
-		return;
+	if (len > 0) {
+		sc->sc_levels = malloc(len, M_DEVBUF, M_WAITOK);
+		OF_getpropintarray(faa->fa_node, "brightness-levels",
+		    sc->sc_levels, len);
+		sc->sc_nlevels = len / sizeof(uint32_t);
+		sc->sc_max_level = sc->sc_levels[sc->sc_nlevels - 1];
+		sc->sc_def_level = OF_getpropint(faa->fa_node,
+		    "default-brightness-level", sc->sc_nlevels - 1);
+		if (sc->sc_def_level >= sc->sc_nlevels)
+			sc->sc_def_level = sc->sc_nlevels - 1;
+		sc->sc_def_level = sc->sc_levels[sc->sc_def_level];
+	} else {
+		sc->sc_nlevels = 256;
+		sc->sc_levels = mallocarray(sc->sc_nlevels,
+		    sizeof(uint32_t), M_DEVBUF, M_WAITOK);
+		for (i = 0; i < sc->sc_nlevels; i++)
+			sc->sc_levels[i] = i;
+		sc->sc_max_level = sc->sc_levels[sc->sc_nlevels - 1];
+		sc->sc_def_level = sc->sc_levels[sc->sc_nlevels - 1];
 	}
 
 	printf("\n");
-
-	sc->sc_levels = malloc(len, M_DEVBUF, M_WAITOK);
-	OF_getpropintarray(faa->fa_node, "brightness-levels",
-	    sc->sc_levels, len);
-	sc->sc_nlevels = len / sizeof(uint32_t);
-
-	sc->sc_max_level = sc->sc_levels[sc->sc_nlevels - 1];
-	sc->sc_def_level = OF_getpropint(faa->fa_node,
-	    "default-brightness-level", sc->sc_nlevels - 1);
-	if (sc->sc_def_level >= sc->sc_nlevels)
-		sc->sc_def_level = sc->sc_nlevels - 1;
-	sc->sc_def_level = sc->sc_levels[sc->sc_def_level];
 
 	pwmbl_set_brightness(sc, sc->sc_def_level);
 

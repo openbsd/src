@@ -1,4 +1,4 @@
-/* $OpenBSD: res_random.c,v 1.24 2016/04/05 04:29:21 guenther Exp $ */
+/* $OpenBSD: res_random.c,v 1.25 2020/07/06 13:33:06 pirofti Exp $ */
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -219,7 +219,7 @@ res_initid(void)
 	if (ru_prf != NULL)
 		arc4random_buf(ru_prf, sizeof(*ru_prf));
 
-	clock_gettime(CLOCK_MONOTONIC, &ts);
+	WRAP(clock_gettime)(CLOCK_MONOTONIC, &ts);
 	ru_reseed = ts.tv_sec + RU_OUT;
 	ru_msb = ru_msb == 0x8000 ? 0 : 0x8000; 
 }
@@ -232,7 +232,7 @@ __res_randomid(void)
 	u_int r;
 	static void *randomid_mutex;
 
-	clock_gettime(CLOCK_MONOTONIC, &ts);
+	WRAP(clock_gettime)(CLOCK_MONOTONIC, &ts);
 	pid = getpid();
 
 	_MUTEX_LOCK(&randomid_mutex);

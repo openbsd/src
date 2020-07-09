@@ -205,6 +205,7 @@ debug-mode{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_DEBUG_MODE;}
 use-systemd{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_USE_SYSTEMD;}
 hide-version{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_HIDE_VERSION;}
 hide-identity{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_HIDE_IDENTITY;}
+drop-updates{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_DROP_UPDATES; }
 ip4-only{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_IP4_ONLY;}
 ip6-only{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_IP6_ONLY;}
 do-ip4{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_DO_IP4;}
@@ -289,12 +290,41 @@ max-refresh-time{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_MAX_REFRESH_TIM
 min-refresh-time{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_MIN_REFRESH_TIME;}
 max-retry-time{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_MAX_RETRY_TIME;}
 min-retry-time{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_MIN_RETRY_TIME;}
-multi-master-check{COLON}      { LEXOUT(("v(%s) ", yytext)); return VAR_MULTI_MASTER_CHECK;}
-tls-service-key{COLON} { LEXOUT(("v(%s) ", yytext)); return VAR_TLS_SERVICE_KEY;}
+multi-master-check{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_MULTI_MASTER_CHECK;}
+tls-service-key{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_SERVICE_KEY;}
 tls-service-ocsp{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_SERVICE_OCSP;}
-tls-service-pem{COLON} { LEXOUT(("v(%s) ", yytext)); return VAR_TLS_SERVICE_PEM;}
-tls-port{COLON}        { LEXOUT(("v(%s) ", yytext)); return VAR_TLS_PORT;}
+tls-service-pem{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_SERVICE_PEM;}
+tls-port{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_PORT;}
 {NEWLINE}		{ LEXOUT(("NL\n")); cfg_parser->line++;}
+
+servers={UNQUOTEDLETTER}*	{
+	yyless(yyleng - (yyleng - 8));
+	LEXOUT(("v(%s) ", yytext));
+	return VAR_SERVERS;
+}
+bindtodevice={UNQUOTEDLETTER}*	{
+	yyless(yyleng - (yyleng - 13));
+	LEXOUT(("v(%s) ", yytext));
+	return VAR_BINDTODEVICE;
+}
+setfib={UNQUOTEDLETTER}*	{
+	yyless(yyleng - (yyleng - 7));
+	LEXOUT(("v(%s) ", yytext));
+	return VAR_SETFIB;
+}
+
+cpu-affinity{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_CPU_AFFINITY; }
+xfrd-cpu-affinity{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_XFRD_CPU_AFFINITY; }
+server-[1-9][0-9]*-cpu-affinity{COLON}	{
+		char *str = yytext;
+		LEXOUT(("v(%s) ", yytext));
+		/* Skip server- */
+		while (*str != '\0' && (*str < '0' || *str > '9')) {
+			str++;
+		}
+		yylval.llng = strtoll(str, NULL, 10);
+		return VAR_SERVER_CPU_AFFINITY;
+	}
 
 	/* Quoted strings. Strip leading and ending quotes */
 \"			{ BEGIN(quotedstring); LEXOUT(("QS ")); }

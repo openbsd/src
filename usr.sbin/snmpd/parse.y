@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.57 2020/01/02 10:55:53 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.58 2020/06/30 17:11:49 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -51,11 +51,6 @@
 #include "snmpd.h"
 #include "mib.h"
 
-enum socktype {
-	SOCK_TYPE_RESTRICTED = 1,
-	SOCK_TYPE_AGENTX = 2
-};
-
 TAILQ_HEAD(files, file)		 files = TAILQ_HEAD_INITIALIZER(files);
 static struct file {
 	TAILQ_ENTRY(file)	 entry;
@@ -98,7 +93,6 @@ struct snmpd			*conf = NULL;
 static int			 errors = 0;
 static struct addresslist	*hlist;
 static struct usmuser		*user = NULL;
-static int			 nctlsocks = 0;
 
 struct address	*host_v4(const char *);
 struct address	*host_v6(const char *);
@@ -133,12 +127,12 @@ typedef struct {
 %token	SYSTEM CONTACT DESCR LOCATION NAME OBJECTID SERVICES RTFILTER
 %token	READONLY READWRITE OCTETSTRING INTEGER COMMUNITY TRAP RECEIVER
 %token	SECLEVEL NONE AUTH ENC USER AUTHKEY ENCKEY ERROR DISABLED
-%token	SOCKET RESTRICTED AGENTX HANDLE DEFAULT SRCADDR TCP UDP PFADDRFILTER
+%token	HANDLE DEFAULT SRCADDR TCP UDP PFADDRFILTER
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	hostcmn
 %type	<v.string>	srcaddr
-%type	<v.number>	optwrite yesno seclevel socktype proto
+%type	<v.number>	optwrite yesno seclevel proto
 %type	<v.data>	objtype cmd
 %type	<v.oid>		oid hostoid trapoid
 %type	<v.auth>	auth
@@ -294,31 +288,6 @@ main		: LISTEN ON STRING proto	{
 				YYERROR;
 			}
 			user = NULL;
-		}
-		| SOCKET STRING socktype {
-			if ($3) {
-				struct control_sock *rcsock;
-
-				rcsock = calloc(1, sizeof(*rcsock));
-				if (rcsock == NULL) {
-					yyerror("calloc");
-					YYERROR;
-				}
-				rcsock->cs_name = $2;
-				if ($3 == SOCK_TYPE_RESTRICTED)
-					rcsock->cs_restricted = 1;
-				else if ($3 == SOCK_TYPE_AGENTX)
-					rcsock->cs_agentx = 1;
-				TAILQ_INSERT_TAIL(&conf->sc_ps.ps_rcsocks,
-				    rcsock, cs_entry);
-			} else {
-				if (++nctlsocks > 1) {
-					yyerror("multiple control "
-					    "sockets specified");
-					YYERROR;
-				}
-				conf->sc_ps.ps_csock.cs_name = $2;
-			}
 		}
 		;
 
@@ -541,11 +510,6 @@ enc		: STRING			{
 		}
 		;
 
-socktype	: RESTRICTED		{ $$ = SOCK_TYPE_RESTRICTED; }
-		| AGENTX		{ $$ = SOCK_TYPE_AGENTX; }
-		| /* nothing */		{ $$ = 0; }
-		;
-
 proto		: /* empty */			{ $$ = IPPROTO_UDP; }
 		| TCP				{ $$ = IPPROTO_TCP; }
 		| UDP				{ $$ = IPPROTO_UDP; }
@@ -631,7 +595,6 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
-		{ "agentx",			AGENTX },
 		{ "auth",			AUTH },
 		{ "authkey",			AUTHKEY },
 		{ "community",			COMMUNITY },
@@ -655,10 +618,8 @@ lookup(char *s)
 		{ "read-only",			READONLY },
 		{ "read-write",			READWRITE },
 		{ "receiver",			RECEIVER },
-		{ "restricted",			RESTRICTED },
 		{ "seclevel",			SECLEVEL },
 		{ "services",			SERVICES },
-		{ "socket",			SOCKET },
 		{ "source-address",		SRCADDR },
 		{ "string",			OCTETSTRING },
 		{ "system",			SYSTEM },
@@ -1037,8 +998,6 @@ parse_config(const char *filename, u_int flags)
 	conf->sc_confpath = filename;
 	TAILQ_INIT(&conf->sc_addresses);
 	TAILQ_INIT(&conf->sc_sockets);
-	conf->sc_ps.ps_csock.cs_name = SNMPD_SOCKET;
-	TAILQ_INIT(&conf->sc_ps.ps_rcsocks);
 	strlcpy(conf->sc_rdcommunity, "public", SNMPD_MAXCOMMUNITYLEN);
 	strlcpy(conf->sc_rwcommunity, "private", SNMPD_MAXCOMMUNITYLEN);
 	strlcpy(conf->sc_trcommunity, "public", SNMPD_MAXCOMMUNITYLEN);

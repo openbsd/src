@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kvm.3,v 1.9 2013/08/14 08:39:25 jmc Exp $
+.\"	$OpenBSD: kvm.3,v 1.10 2020/06/25 12:20:17 kn Exp $
 .\"	$NetBSD: kvm.3,v 1.2 1996/03/18 22:33:11 thorpej Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)kvm.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: June 25 2020 $
 .Dt KVM 3
 .Os
 .Sh NAME
@@ -62,7 +62,9 @@ is first called to obtain a descriptor for all subsequent calls.
 interface to physical memory
 .El
 .Sh SEE ALSO
+.Xr kvm_dump 3 ,
 .Xr kvm_geterr 3 ,
+.Xr kvm_getfiles 3 ,
 .Xr kvm_getloadavg 3 ,
 .Xr kvm_getprocs 3 ,
 .Xr kvm_nlist 3 ,

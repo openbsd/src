@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvbus.c,v 1.20 2020/01/24 05:14:51 jsg Exp $	*/
+/*	$OpenBSD: pvbus.c,v 1.21 2020/05/29 04:42:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -37,8 +37,6 @@
 #include <machine/conf.h>
 #include <machine/bus.h>
 #include <machine/vmmvar.h>
-
-#include <dev/rndvar.h>
 
 #include <dev/pv/pvvar.h>
 #include <dev/pv/pvreg.h>

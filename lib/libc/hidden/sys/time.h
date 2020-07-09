@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.1 2015/09/11 15:38:33 guenther Exp $	*/
+/*	$OpenBSD: time.h,v 1.2 2020/07/06 13:33:06 pirofti Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -24,7 +24,7 @@ PROTO_NORMAL(adjfreq);
 PROTO_NORMAL(adjtime);
 PROTO_NORMAL(futimes);
 PROTO_NORMAL(getitimer);
-PROTO_NORMAL(gettimeofday);
+PROTO_WRAP(gettimeofday);
 PROTO_NORMAL(setitimer);
 PROTO_NORMAL(settimeofday);
 PROTO_NORMAL(utimes);

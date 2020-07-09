@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1b.c,v 1.21 2015/01/20 18:22:21 deraadt Exp $	*/
+/*	$OpenBSD: pass1b.c,v 1.22 2020/06/20 07:49:04 otto Exp $	*/
 /*	$NetBSD: pass1b.c,v 1.10 1996/09/23 16:18:37 christos Exp $	*/
 
 /*
@@ -55,7 +55,7 @@ pass1b_info(char *buf, size_t buflen)
 void
 pass1b(void)
 {
-	int c, i;
+	u_int c, i;
 	union dinode *dp;
 	struct inodesc idesc;
 	ino_t inumber;

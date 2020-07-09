@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.126 2020/04/27 21:31:37 patrick Exp $
+# $OpenBSD: RAMDISK,v 1.131 2020/06/25 12:44:09 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -157,6 +157,7 @@ amlmmc*		at fdt?
 sdmmc*		at amlmmc?
 amlpciephy*	at fdt?
 amlpinctrl*	at fdt? early 1
+amlpwrc*	at fdt? early 1
 amlreset*	at fdt? early 1
 amlrng*		at fdt?
 amluart*	at fdt?
@@ -176,8 +177,12 @@ mvdog*		at fdt?
 mvgpio*		at fdt?
 mviic*		at fdt?
 iic*		at mviic?
+mvkpcie*	at fdt?
+pci*		at mvkpcie?
 mvmdio*		at fdt?
 mvneta*		at fdt?
+#mvppc*		at fdt?
+#mvpp*		at mvppc?
 mvrng*		at fdt?
 mvrtc*		at fdt?
 mvuart*		at fdt?
@@ -227,6 +232,9 @@ mskc*		at pci?			# Marvell Yukon-2
 msk*		at mskc?		#  each port of above
 re*		at pci?			# Realtek 8169/8169S/8110S
 rge*		at pci?			# Realtek 8125
+
+# PCI WiFi
+bwfm*		at pci?			# Broadcom FullMAC
 
 # PCI SCSI
 ahci*		at pci? flags 0x0000	# AHCI SATA controllers
@@ -280,6 +288,7 @@ upgt*		at uhub?		# Conexant/Intersil PrismGT SoftMAC USB
 urtw*		at uhub?		# Realtek 8187
 rsu*		at uhub?		# Realtek RTL8188SU/RTL8191SU/RTL8192SU
 urtwn*		at uhub?		# Realtek RTL8188CU/RTL8192CU
+bwfm*		at uhub?		# Broadcom FullMAC
 
 amphy*		at mii?			# AMD 79C873 PHYs
 atphy*		at mii?			# Attansic F1 PHYs

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.40 2020/03/05 16:36:30 otto Exp $
+#	$OpenBSD: Makefile,v 1.41 2020/06/14 16:00:11 deraadt Exp $
 
 MAN=	cdboot.8
 
@@ -17,7 +17,7 @@ BINMODE=644
 
 .PATH:	${SADIR}/libsa
 SRCS+=	machdep.c dev_i386.c exec_i386.c cmd_i386.c
-SRCS+=	gidt.S random_i386.S biosdev.c bioscons.c gateA20.c \
+SRCS+=	gidt.S mdrandom.c biosdev.c bioscons.c gateA20.c \
 	memprobe.c diskprobe.c time.c run_amd64.S
 SRCS+=	softraid_amd64.c
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.119 2019/08/07 18:53:28 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.120 2020/05/17 13:48:30 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -270,6 +270,7 @@ NENTRY(lgdt)
 	RETGUARD_CHECK(lgdt, r11)
 	lretq
 
+#ifdef DDB
 ENTRY(setjmp)
 	RETGUARD_SETUP(setjmp, r11)
 	/*
@@ -307,6 +308,7 @@ ENTRY(longjmp)
 	incl	%eax
 	RETGUARD_CHECK(longjmp, r11)
 	ret
+#endif /* DDB */
 
 /*****************************************************************************/
 

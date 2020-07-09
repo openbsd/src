@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-capture-pane.c,v 1.53 2020/04/13 10:59:58 nicm Exp $ */
+/* $OpenBSD: cmd-capture-pane.c,v 1.54 2020/06/01 09:43:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Jonathan Alvarado <radobobo@users.sourceforge.net>
@@ -214,15 +214,20 @@ cmd_capture_pane_exec(struct cmd *self, struct cmdq_item *item)
 		return (CMD_RETURN_ERROR);
 
 	if (args_has(args, 'p')) {
-		if (!file_can_print(c)) {
-			cmdq_error(item, "can't write output to client");
-			free(buf);
-			return (CMD_RETURN_ERROR);
-		}
-		file_print_buffer(c, buf, len);
-		if (args_has(args, 'P') && len > 0)
+		if (len > 0 && buf[len - 1] == '\n')
+			len--;
+		if (c->flags & CLIENT_CONTROL)
+			control_write(c, "%.*s", (int)len, buf);
+		else {
+			if (!file_can_print(c)) {
+				cmdq_error(item, "can't write to client");
+				free(buf);
+				return (CMD_RETURN_ERROR);
+			}
+			file_print_buffer(c, buf, len);
 			file_print(c, "\n");
-		free(buf);
+			free(buf);
+		}
 	} else {
 		bufname = NULL;
 		if (args_has(args, 'b'))

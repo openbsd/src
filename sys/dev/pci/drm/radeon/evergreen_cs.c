@@ -25,7 +25,7 @@
  *          Alex Deucher
  *          Jerome Glisse
  */
-#include <drm/drmP.h>
+
 #include "radeon.h"
 #include "radeon_asic.h"
 #include "evergreend.h"
@@ -444,7 +444,7 @@ static int evergreen_cs_track_validate_cb(struct radeon_cs_parser *p, unsigned i
 	offset += surf.layer_size * mslice;
 	if (offset > radeon_bo_size(track->cb_color_bo[id])) {
 		/* old ddx are broken they allocate bo with w*h*bpp but
-		 * program slice with ALIGN(h, 8), catch this and patch
+		 * program slice with roundup2(h, 8), catch this and patch
 		 * command stream.
 		 */
 		if (!surf.mode) {
@@ -2417,7 +2417,7 @@ static int evergreen_packet3_check(struct radeon_cs_parser *p,
 				size = radeon_get_ib_value(p, idx+1+(i*8)+1);
 				if (p->rdev && (size + offset) > radeon_bo_size(reloc->robj)) {
 					/* force size to size of the buffer */
-					dev_warn(p->dev, "vbo resource seems too big for the bo\n");
+					dev_warn_ratelimited(p->dev, "vbo resource seems too big for the bo\n");
 					ib[idx+1+(i*8)+1] = radeon_bo_size(reloc->robj) - offset;
 				}
 

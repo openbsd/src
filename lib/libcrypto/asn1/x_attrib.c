@@ -1,4 +1,4 @@
-/* $OpenBSD: x_attrib.c,v 1.13 2015/02/14 14:56:45 jsing Exp $ */
+/* $OpenBSD: x_attrib.c,v 1.14 2020/06/04 21:21:03 schwarze Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -174,10 +174,13 @@ X509_ATTRIBUTE_create(int nid, int atrtype, void *value)
 {
 	X509_ATTRIBUTE *ret = NULL;
 	ASN1_TYPE *val = NULL;
+	ASN1_OBJECT *oid;
 
+	if ((oid = OBJ_nid2obj(nid)) == NULL)
+		return (NULL);
 	if ((ret = X509_ATTRIBUTE_new()) == NULL)
 		return (NULL);
-	ret->object = OBJ_nid2obj(nid);
+	ret->object = oid;
 	ret->single = 0;
 	if ((ret->value.set = sk_ASN1_TYPE_new_null()) == NULL)
 		goto err;

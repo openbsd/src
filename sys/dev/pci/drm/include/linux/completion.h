@@ -1,4 +1,4 @@
-/*	$OpenBSD: completion.h,v 1.3 2019/12/30 09:30:31 mpi Exp $	*/
+/*	$OpenBSD: completion.h,v 1.9 2020/06/22 14:19:35 jsg Exp $	*/
 /*
  * Copyright (c) 2015, 2018 Mark Kettenis
  *
@@ -25,14 +25,20 @@
 
 struct completion {
 	u_int done;
-	wait_queue_head_t wait;
+	struct mutex lock;
 };
 
 static inline void
 init_completion(struct completion *x)
 {
 	x->done = 0;
-	mtx_init(&x->wait.lock, IPL_TTY);
+	mtx_init(&x->lock, IPL_TTY);
+}
+
+static inline void
+reinit_completion(struct completion *x)
+{
+	x->done = 0;
 }
 
 static inline u_long
@@ -42,18 +48,34 @@ wait_for_completion_timeout(struct completion *x, u_long timo)
 
 	KASSERT(!cold);
 
-	mtx_enter(&x->wait.lock);
+	mtx_enter(&x->lock);
 	while (x->done == 0) {
-		ret = msleep(x, &x->wait.lock, 0, "wfct", timo);
+		ret = msleep(x, &x->lock, 0, "wfct", timo);
 		if (ret) {
-			mtx_leave(&x->wait.lock);
-			return (ret == EWOULDBLOCK) ? 0 : -ret;
+			mtx_leave(&x->lock);
+			/* timeout */
+			return 0;
 		}
 	}
-	x->done--;
-	mtx_leave(&x->wait.lock);
+	if (x->done != UINT_MAX)
+		x->done--;
+	mtx_leave(&x->lock);
 
 	return 1;
+}
+
+static inline void
+wait_for_completion(struct completion *x)
+{
+	KASSERT(!cold);
+
+	mtx_enter(&x->lock);
+	while (x->done == 0) {
+		msleep_nsec(x, &x->lock, 0, "wfcom", INFSLP);
+	}
+	if (x->done != UINT_MAX)
+		x->done--;
+	mtx_leave(&x->lock);
 }
 
 static inline u_long
@@ -63,16 +85,19 @@ wait_for_completion_interruptible(struct completion *x)
 
 	KASSERT(!cold);
 
-	mtx_enter(&x->wait.lock);
+	mtx_enter(&x->lock);
 	while (x->done == 0) {
-		ret = msleep_nsec(x, &x->wait.lock, PCATCH, "wfci", INFSLP);
+		ret = msleep_nsec(x, &x->lock, PCATCH, "wfci", INFSLP);
 		if (ret) {
-			mtx_leave(&x->wait.lock);
-			return (ret == EWOULDBLOCK) ? 0 : -ret;
+			mtx_leave(&x->lock);
+			if (ret == EWOULDBLOCK)
+				return 0;
+			return -ERESTARTSYS;
 		}
 	}
-	x->done--;
-	mtx_leave(&x->wait.lock);
+	if (x->done != UINT_MAX)
+		x->done--;
+	mtx_leave(&x->lock);
 
 	return 0;
 }
@@ -84,39 +109,53 @@ wait_for_completion_interruptible_timeout(struct completion *x, u_long timo)
 
 	KASSERT(!cold);
 
-	mtx_enter(&x->wait.lock);
+	mtx_enter(&x->lock);
 	while (x->done == 0) {
-		ret = msleep(x, &x->wait.lock, PCATCH, "wfcit", timo);
+		ret = msleep(x, &x->lock, PCATCH, "wfcit", timo);
 		if (ret) {
-			mtx_leave(&x->wait.lock);
-			return (ret == EWOULDBLOCK) ? 0 : -ret;
+			mtx_leave(&x->lock);
+			if (ret == EWOULDBLOCK)
+				return 0;
+			return -ERESTARTSYS;
 		}
 	}
-	x->done--;
-	mtx_leave(&x->wait.lock);
+	if (x->done != UINT_MAX)
+		x->done--;
+	mtx_leave(&x->lock);
 
 	return 1;
 }
 
 static inline void
+complete(struct completion *x)
+{
+	mtx_enter(&x->lock);
+	if (x->done != UINT_MAX)
+		x->done++;
+	mtx_leave(&x->lock);
+	wakeup_one(x);
+}
+
+static inline void
 complete_all(struct completion *x)
 {
-	mtx_enter(&x->wait.lock);
+	mtx_enter(&x->lock);
 	x->done = UINT_MAX;
-	mtx_leave(&x->wait.lock);
+	mtx_leave(&x->lock);
 	wakeup(x);
 }
 
 static inline bool
 try_wait_for_completion(struct completion *x)
 {
-	mtx_enter(&x->wait.lock);
+	mtx_enter(&x->lock);
 	if (x->done == 0) {
-		mtx_leave(&x->wait.lock);
+		mtx_leave(&x->lock);
 		return false;
 	}
-	x->done--;
-	mtx_leave(&x->wait.lock);
+	if (x->done != UINT_MAX)
+		x->done--;
+	mtx_leave(&x->lock);
 	return true;
 }
 

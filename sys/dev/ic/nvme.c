@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.75 2020/03/15 20:50:46 krw Exp $ */
+/*	$OpenBSD: nvme.c,v 1.77 2020/06/29 15:01:58 krw Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -371,7 +371,6 @@ nvme_attach(struct nvme_softc *sc)
 	sc->sc_link.openings = 64;
 	sc->sc_link.pool = &sc->sc_iopool;
 
-	memset(&saa, 0, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	sc->sc_scsibus = (struct scsibus_softc *)config_found(&sc->sc_dev,
@@ -464,19 +463,14 @@ nvme_scsi_probe(struct scsi_link *link)
 
 	scsi_io_put(&sc->sc_iopool, ccb);
 
-	if (rv != 0) {
-		rv = EIO;
-		goto done;
+	identify = NVME_DMA_KVA(mem);
+	if (rv == 0 && lemtoh64(&identify->nsze) > 0) {
+		/* Commit namespace if it has a size greater than zero. */
+		identify = malloc(sizeof(*identify), M_DEVBUF, M_WAITOK);
+		memcpy(identify, NVME_DMA_KVA(mem), sizeof(*identify));
+		sc->sc_namespaces[link->target].ident = identify;
 	}
 
-	/* commit */
-
-	identify = malloc(sizeof(*identify), M_DEVBUF, M_WAITOK|M_ZERO);
-	memcpy(identify, NVME_DMA_KVA(mem), sizeof(*identify));
-
-	sc->sc_namespaces[link->target].ident = identify;
-
-done:
 	nvme_dmamem_free(sc, mem);
 
 	return (rv);

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh.c,v 1.527 2020/04/10 00:52:07 dtucker Exp $ */
+/* $OpenBSD: ssh.c,v 1.531 2020/07/05 23:59:45 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -16,7 +16,7 @@
  * Copyright (c) 1999 Niels Provos.  All rights reserved.
  * Copyright (c) 2000, 2001, 2002, 2003 Markus Friedl.  All rights reserved.
  *
- * Modified to work with SSL by Niels Provos <provos@citi.umich.edu>
+ * Modified to work with SSLeay by Niels Provos <provos@citi.umich.edu>
  * in Canada (German citizen).
  *
  * Redistribution and use in source and binary forms, with or without
@@ -121,11 +121,11 @@ int stdin_null_flag = 0;
 
 /*
  * Flag indicating that the current process should be backgrounded and
- * a new slave launched in the foreground for ControlPersist.
+ * a new mux-client launched in the foreground for ControlPersist.
  */
 int need_controlpersist_detach = 0;
 
-/* Copies of flags for ControlPersist foreground slave */
+/* Copies of flags for ControlPersist foreground mux-client */
 int ostdin_null_flag, ono_shell_flag, otty_flag, orequest_tty;
 
 /*
@@ -241,6 +241,31 @@ default_client_percent_expand(const char *str, const char *homedir,
 	    "r", remuser,
 	    "u", locuser,
 	    (char *)NULL);
+}
+
+/*
+ * Expands the set of percent_expand options used by the majority of keywords
+ * AND perform environment variable substitution.
+ * Caller must free returned string.
+ */
+static char *
+default_client_percent_dollar_expand(const char *str, const char *homedir,
+    const char *remhost, const char *remuser, const char *locuser)
+{
+	char *ret;
+
+	ret = percent_dollar_expand(str,
+	    /* values from statics above */
+	    DEFAULT_CLIENT_PERCENT_EXPAND_ARGS,
+	    /* values from arguments */
+	    "d", homedir,
+	    "h", remhost,
+	    "r", remuser,
+	    "u", locuser,
+	    (char *)NULL);
+	if (ret == NULL)
+		fatal("invalid environment variable expansion");
+	return ret;
 }
 
 /*
@@ -604,7 +629,7 @@ main(int ac, char **av)
 	struct ssh *ssh = NULL;
 	int i, r, opt, exit_status, use_syslog, direct, timeout_ms;
 	int was_addr, config_test = 0, opt_terminated = 0, want_final_pass = 0;
-	char *p, *cp, *line, *argv0, buf[PATH_MAX], *logfile;
+	char *p, *cp, *line, *argv0, *logfile;
 	char cname[NI_MAXHOST];
 	struct stat st;
 	struct passwd *pw;
@@ -1357,14 +1382,14 @@ main(int ac, char **av)
 	if (options.control_path != NULL) {
 		cp = tilde_expand_filename(options.control_path, getuid());
 		free(options.control_path);
-		options.control_path = default_client_percent_expand(cp,
+		options.control_path = default_client_percent_dollar_expand(cp,
 		    pw->pw_dir, host, options.user, pw->pw_name);
 		free(cp);
 	}
 
 	if (options.identity_agent != NULL) {
 		p = tilde_expand_filename(options.identity_agent, getuid());
-		cp = default_client_percent_expand(p,
+		cp = default_client_percent_dollar_expand(p,
 		    pw->pw_dir, host, options.user, pw->pw_name);
 		free(p);
 		free(options.identity_agent);
@@ -1374,7 +1399,7 @@ main(int ac, char **av)
 	if (options.forward_agent_sock_path != NULL) {
 		p = tilde_expand_filename(options.forward_agent_sock_path,
 		    getuid());
-		cp = default_client_percent_expand(p,
+		cp = default_client_percent_dollar_expand(p,
 		    pw->pw_dir, host, options.user, pw->pw_name);
 		free(p);
 		free(options.forward_agent_sock_path);
@@ -1526,16 +1551,6 @@ main(int ac, char **av)
 		}
 	}
 
-	/* Create ~/.ssh * directory if it doesn't already exist. */
-	if (config == NULL) {
-		r = snprintf(buf, sizeof buf, "%s%s%s", pw->pw_dir,
-		    strcmp(pw->pw_dir, "/") ? "/" : "", _PATH_SSH_USER_DIR);
-		if (r > 0 && (size_t)r < sizeof(buf) && stat(buf, &st) == -1)
-			if (mkdir(buf, 0700) == -1)
-				error("Could not create directory '%.200s'.",
-				    buf);
-	}
-
 	/* load options.identity_files */
 	load_public_identity_files(pw);
 
@@ -1546,7 +1561,8 @@ main(int ac, char **av)
 			unsetenv(SSH_AUTHSOCKET_ENV_NAME);
 		} else {
 			cp = options.identity_agent;
-			if (cp[0] == '$') {
+			/* legacy (limited) format */
+			if (cp[0] == '$' && cp[1] != '{') {
 				if (!valid_env_name(cp + 1)) {
 					fatal("Invalid IdentityAgent "
 					    "environment variable name %s", cp);
@@ -1654,7 +1670,7 @@ control_persist_detach(void)
 		/* Child: master process continues mainloop */
 		break;
 	default:
-		/* Parent: set up mux slave to connect to backgrounded master */
+		/* Parent: set up mux client to connect to backgrounded master */
 		debug2("%s: background process is %ld", __func__, (long)pid);
 		stdin_null_flag = ostdin_null_flag;
 		options.request_tty = orequest_tty;
@@ -2033,9 +2049,9 @@ ssh_session2(struct ssh *ssh, struct passwd *pw)
 	/*
 	 * If we are in control persist mode and have a working mux listen
 	 * socket, then prepare to background ourselves and have a foreground
-	 * client attach as a control slave.
+	 * client attach as a control client.
 	 * NB. we must save copies of the flags that we override for
-	 * the backgrounding, since we defer attachment of the slave until
+	 * the backgrounding, since we defer attachment of the client until
 	 * after the connection is fully established (in particular,
 	 * async rfwd replies have been received for ExitOnForwardFailure).
 	 */
@@ -2174,7 +2190,7 @@ load_public_identity_files(struct passwd *pw)
 			continue;
 		}
 		cp = tilde_expand_filename(options.identity_files[i], getuid());
-		filename = default_client_percent_expand(cp,
+		filename = default_client_percent_dollar_expand(cp,
 		    pw->pw_dir, host, options.user, pw->pw_name);
 		free(cp);
 		check_load(sshkey_load_public(filename, &public, NULL),
@@ -2224,7 +2240,7 @@ load_public_identity_files(struct passwd *pw)
 	for (i = 0; i < options.num_certificate_files; i++) {
 		cp = tilde_expand_filename(options.certificate_files[i],
 		    getuid());
-		filename = default_client_percent_expand(cp,
+		filename = default_client_percent_dollar_expand(cp,
 		    pw->pw_dir, host, options.user, pw->pw_name);
 		free(cp);
 

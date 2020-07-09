@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.49 2020/04/21 21:32:26 deraadt Exp $
+.\" $OpenBSD: sio_open.3,v 1.50 2020/06/20 09:26:54 schwarze Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 21 2020 $
+.Dd $Mdocdate: June 20 2020 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -57,7 +57,11 @@
 .Ft "size_t"
 .Fn sio_write "struct sio_hdl *hdl" "const void *addr" "size_t nbytes"
 .Ft "void"
-.Fn sio_onmove "struct sio_hdl *hdl" "void (*cb)(void *arg, int delta)" "void *arg"
+.Fo sio_onmove
+.Fa "struct sio_hdl *hdl"
+.Fa "void (*cb)(void *arg, int delta)"
+.Fa "void *arg"
+.Fc
 .Ft "int"
 .Fn sio_nfds "struct sio_hdl *hdl"
 .Ft "int"
@@ -69,7 +73,11 @@
 .Ft "int"
 .Fn sio_setvol "struct sio_hdl *hdl" "unsigned int vol"
 .Ft "int"
-.Fn sio_onvol "struct sio_hdl *hdl" "void (*cb)(void *arg, unsigned int vol)" "void *arg"
+.Fo sio_onvol
+.Fa "struct sio_hdl *hdl"
+.Fa "void (*cb)(void *arg, unsigned int vol)"
+.Fa "void *arg"
+.Fc
 .Ft "void"
 .Fn sio_initpar "struct sio_par *par"
 .\"Fd #define SIO_BPS(bits)
@@ -159,47 +167,43 @@ struct sio_par {
 .Pp
 The parameters are as follows:
 .Bl -tag -width "appbufsz"
-.It Va bits
+.It Fa bits
 Number of bits per sample: must be between 1 and 32.
-.It Va bps
+.It Fa bps
 Bytes per samples; if specified, it must be large enough to hold all bits.
 By default it's set to the smallest power of two large enough to hold
-.Va bits .
-.It Va sig
+.Fa bits .
+.It Fa sig
 If set (i.e. non-zero) then the samples are signed, else unsigned.
-.It Va le
+.It Fa le
 If set, then the byte order is little endian, else big endian;
 it's meaningful only if
-.Va bps
-\*(Gt 1.
-.It Va msb
+.Fa bps No > 1 .
+.It Fa msb
 If set, then the
-.Va bits
+.Fa bits
 are aligned in the packet to the most significant bit
 (i.e. lower bits are padded),
 else to the least significant bit
 (i.e. higher bits are padded);
 it's meaningful only if
-.Va bits
-\*(Lt
-.Va bps
-* 8.
-.It Va rchan
+.Fa bits No < Fa bps No * 8 .
+.It Fa rchan
 The number of recorded channels; meaningful only if
 .Dv SIO_REC
 mode was selected.
-.It Va pchan
+.It Fa pchan
 The number of played channels; meaningful only if
 .Dv SIO_PLAY
 mode was selected.
-.It Va rate
+.It Fa rate
 The sampling frequency in Hz.
-.It Va bufsz
+.It Fa bufsz
 The maximum number of frames that may be buffered.
 This parameter takes into account any buffers, and
 can be used for latency calculations.
 It is read-only.
-.It Va appbufsz
+.It Fa appbufsz
 Size of the buffer in frames the application must maintain non-empty
 (on the play end) or non-full (on the record end) by calling
 .Fn sio_write
@@ -208,11 +212,11 @@ or
 fast enough to avoid overrun or underrun conditions.
 The audio subsystem may use additional buffering, thus this
 parameter cannot be used for latency calculations.
-.It Va round
+.It Fa round
 Optimal number of frames that the application buffers
 should be a multiple of, to get best performance.
 Applications can use this parameter to round their block size.
-.It Va xrun
+.It Fa xrun
 The action when the client doesn't accept
 recorded data or doesn't provide data to play fast enough;
 it can be set to one of the
@@ -268,13 +272,13 @@ following macros can be used:
 .Bl -tag -width "SIO_BPS(bits)"
 .It Dv SIO_BPS Ns Pq Fa bits
 Return the smallest value for
-.Va bps
+.Fa bps
 that is a power of two and that is large enough to
 hold
 .Fa bits .
 .It Dv SIO_LE_NATIVE
 Can be used to set the
-.Va le
+.Fa le
 parameter when native byte order is required.
 .El
 .Ss Getting device capabilities
@@ -325,50 +329,50 @@ struct sio_cap {
 .Pp
 The parameters are as follows:
 .Bl -tag -width "rchan[SIO_NCHAN]"
-.It Va enc Ns Bq Dv SIO_NENC
+.It Fa enc Ns Bq Dv SIO_NENC
 Array of supported encodings.
 The tuple of
-.Va bits ,
-.Va bps ,
-.Va sig ,
-.Va le ,
+.Fa bits ,
+.Fa bps ,
+.Fa sig ,
+.Fa le ,
 and
-.Va msb
+.Fa msb
 parameters are usable in the corresponding parameters
 of the
 .Vt sio_par
 structure.
-.It Va rchan Ns Bq Dv SIO_NCHAN
+.It Fa rchan Ns Bq Dv SIO_NCHAN
 Array of supported channel numbers for recording usable
 in the
 .Vt sio_par
 structure.
-.It Va pchan Ns Bq Dv SIO_NCHAN
+.It Fa pchan Ns Bq Dv SIO_NCHAN
 Array of supported channel numbers for playback usable
 in the
 .Vt sio_par
 structure.
-.It Va rate Ns Bq Dv SIO_NRATE
+.It Fa rate Ns Bq Dv SIO_NRATE
 Array of supported sample rates usable
 in the
 .Vt sio_par
 structure.
-.It Va nconf
+.It Fa nconf
 Number of different configurations available, i.e. number
 of filled elements of the
-.Va confs[]
+.Fa confs Ns Bq
 array.
-.It Va confs Ns Bq Dv SIO_NCONF
+.It Fa confs Ns Bq Dv SIO_NCONF
 Array of available configurations.
 Each configuration contains bitmasks indicating which
 elements of the above parameter arrays are valid for the
 given configuration.
 For instance, if the second bit of
-.Va rate
+.Fa rate
 is set, in the
 .Vt sio_conf
 structure, then the second element of the
-.Va rate Ns Bq Dv SIO_NRATE
+.Fa rate Ns Bq Dv SIO_NRATE
 array of the
 .Vt sio_cap
 structure is valid for this configuration.
@@ -485,7 +489,7 @@ it is not selected with
 .Fn sio_pollfd .
 .Pp
 The size of the
-.Ar pfd
+.Fa pfd
 array, which the caller must pre-allocate, is provided by the
 .Fn sio_nfds
 function.
@@ -534,7 +538,7 @@ latency can be obtained by subtracting the current position
 from the number of frames written.
 Once playback is actually started (first sample audible)
 the latency will never exceed the
-.Va bufsz
+.Fa bufsz
 parameter (see the sections above).
 There's a phase during which
 .Fn sio_write
@@ -543,7 +547,7 @@ once there's enough data, actual playback starts.
 During this phase talking about latency is meaningless.
 .Pp
 In any cases, at most
-.Va bufsz
+.Fa bufsz
 frames are buffered.
 This value takes into account all buffers.
 The number of frames stored is equal to the number of frames
@@ -563,13 +567,13 @@ for this.
 .Ss Handling buffer overruns and underruns
 When the application cannot accept recorded data fast enough,
 the record buffer (of size
-.Va appbufsz )
+.Fa appbufsz )
 might overrun; in this case recorded data is lost.
 Similarly if the application cannot provide data to play
 fast enough, the play buffer underruns and silence is played
 instead.
 Depending on the
-.Va xrun
+.Fa xrun
 parameter of the
 .Vt sio_par
 structure, the audio subsystem will behave as follows:
@@ -602,7 +606,7 @@ is still incremented.
 When the play buffer underruns the play latency might become negative;
 when the record buffer overruns, the record latency might become
 larger than
-.Va bufsz .
+.Fa bufsz .
 .Pp
 This mode is suitable for applications, like music production,
 where time is important and where underruns or overruns are
@@ -656,8 +660,9 @@ are ignored.
 .Pp
 The
 .Fn sio_onvol
-function can be called with a NULL argument to check whether
-a volume knob is available.
+function can be called with a
+.Dv NULL
+argument to check whether a volume knob is available.
 .Ss Error handling
 Errors related to the audio subsystem
 (like hardware errors, dropped connections) and
@@ -682,40 +687,40 @@ library is used in combination with
 then the
 .Fn sio_open
 function needs the
-.Va stdio ,
-.Va rpath ,
-.Va wpath ,
-.Va cpath ,
-.Va inet ,
-.Va unix ,
-.Va dns ,
+.Cm stdio ,
+.Cm rpath ,
+.Cm wpath ,
+.Cm cpath ,
+.Cm inet ,
+.Cm unix ,
+.Cm dns ,
 and
-.Va audio
+.Cm audio
 .Xr pledge 2
 promises.
 .Bl -bullet
 .It
-.Va rpath ,
-.Va wpath ,
+.Cm rpath ,
+.Cm wpath ,
 and
-.Va cpath
+.Cm cpath
 are needed to read, write or create the authentication cookie
 .Pa ~/.sndio/cookie .
 .It
-.Va rpath ,
-.Va wpath ,
+.Cm rpath ,
+.Cm wpath ,
 and
-.Va audio
+.Cm audio
 are needed when the device is a local raw device.
 .It
-.Va unix
+.Cm unix
 is needed when the device is a local
 .Xr sndiod 8
 sub-device.
 .It
-.Va inet
+.Cm inet
 and
-.Va dns
+.Cm dns
 are needed when the device is a remote
 .Xr sndiod 8
 sub-device.
@@ -726,12 +731,13 @@ Once no further calls to
 will be made, all these
 .Xr pledge 2
 promises may be dropped, except for the
-.Va audio
+.Cm audio
 promise.
 .Sh RETURN VALUES
 The
 .Fn sio_open
-function returns the newly created handle on success or NULL
+function returns the newly created handle on success or
+.Dv NULL
 on failure.
 .Pp
 The
@@ -747,12 +753,12 @@ functions return 1 on success and 0 on failure.
 The
 .Fn sio_pollfd
 function returns the number of
-.Va pollfd
+.Vt pollfd
 structures filled.
 The
 .Fn sio_nfds
 function returns the number of
-.Va pollfd
+.Vt pollfd
 structures the caller must preallocate in order to be sure
 that
 .Fn sio_pollfd

@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: network_statement.sh,v 1.2 2019/12/26 17:13:27 denis Exp $
+#	$OpenBSD: network_statement.sh,v 1.3 2020/06/12 13:27:43 denis Exp $
 set -e
 
 OSPF6D=$1
@@ -66,8 +66,8 @@ echo setup
 ifconfig ${PAIR1} inet6 rdomain ${RDOMAIN1} ${PAIR1IP}/64 up
 ifconfig ${PAIR2} inet6 rdomain ${RDOMAIN2} ${PAIR2IP}/64 up
 ifconfig ${PAIR1} patch ${PAIR2}
-ifconfig lo${RDOMAIN1} inet 127.0.0.1/8
-ifconfig lo${RDOMAIN2} inet 127.0.0.1/8
+ifconfig lo${RDOMAIN1} inet6 2001:db8:aaaa::${RDOMAIN1}/128
+ifconfig lo${RDOMAIN2} inet6 2001:db8:aaaa::${RDOMAIN2}/128
 ifconfig vether${RDOMAIN1} inet6 rdomain ${RDOMAIN1} ${PAIR1PREFIX}/64 up
 ifconfig vether${RDOMAIN2} inet6 rdomain ${RDOMAIN2} ${PAIR2PREFIX}/64 up
 ifconfig vether${RDOMAIN2} inet6 rdomain ${RDOMAIN2} ${PAIR2PREFIX2}/64 up
@@ -95,6 +95,8 @@ sleep 50
 
 echo tests
 route -T ${RDOMAIN1} exec ospf6ctl sh fib
+route -T ${RDOMAIN1} exec ospf6ctl sh rib | \
+    grep "2001:db8:aaaa::${RDOMAIN2}/128"
 route -T ${RDOMAIN1} exec ospf6ctl sh rib | \
     grep ${PAIR2PREFIX}/64
 route -T ${RDOMAIN1} exec ospf6ctl sh rib | \

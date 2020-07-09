@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.91 2020/01/04 01:34:24 jsg Exp $ */
+/*	$OpenBSD: pchb.c,v 1.92 2020/05/29 04:42:24 deraadt Exp $ */
 /*	$NetBSD: pchb.c,v 1.65 2007/08/15 02:26:13 markd Exp $	*/
 
 /*
@@ -69,8 +69,6 @@
 
 #include <dev/pci/agpvar.h>
 #include <dev/pci/ppbreg.h>
-
-#include <dev/rndvar.h>
 
 #include <dev/ic/i82802reg.h>
 

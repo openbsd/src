@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.28 2019/05/03 23:53:05 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.30 2020/05/18 06:20:43 otto Exp $
 
-FS=		miniroot${OSrev}.fs
+FS=		miniroot${OSrev}.img
 CDROM=		cd${OSrev}.iso
 # must match the size of `minicdroot' in disktab
 CDFSMB=	15
@@ -20,7 +20,7 @@ ${CDROM}:
 	dd if=/dev/zero of=${FS} bs=1m count=${CDFSMB}
 	vnconfig -v ${FS} > vnd
 	disklabel -w `cat vnd` minicdroot "OpenBSD/sgi     "
-	newfs -m 0 -o space -i 524288 /dev/r`cat vnd`a
+	newfs -O 1 -m 0 -o space -i 524288 /dev/r`cat vnd`a
 	mount /dev/`cat vnd`a ${MOUNT_POINT}
 	mkdir -p ${MOUNT_POINT}/${OSrev}/sgi
 .for IP in ${ALLIP}

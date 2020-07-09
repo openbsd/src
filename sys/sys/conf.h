@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.150 2020/04/21 08:29:27 mpi Exp $	*/
+/*	$OpenBSD: conf.h,v 1.155 2020/07/06 04:11:26 dlg Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -200,7 +200,7 @@ extern struct cdevsw cdevsw[];
 	(dev_type_open((*))) enodev, (dev_type_close((*))) enodev, \
 	(dev_type_read((*))) enodev, (dev_type_write((*))) enodev, \
 	(dev_type_ioctl((*))) enodev, (dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev }
+	0, seltrue, (dev_type_mmap((*))) enodev, 0, 0, seltrue_kqfilter }
 
 /* open, close, read, write, ioctl, poll, kqfilter -- XXX should be a tty */
 #define	cdev_cn_init(c,n) { \
@@ -312,7 +312,7 @@ extern struct cdevsw cdevsw[];
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
-	(dev_type_mmap((*))) enodev }
+	(dev_type_mmap((*))) enodev, 0, 0, dev_init(c,n,kqfilter) }
 
 /* open, close, read, write, ioctl, poll, kqfilter */
 #define cdev_midi_init(c,n) { \
@@ -327,6 +327,13 @@ extern struct cdevsw cdevsw[];
 	(dev_type_write((*))) enodev, (dev_type_ioctl((*))) enodev, \
 	(dev_type_stop((*))) enodev, 0, seltrue, \
 	(dev_type_mmap((*))) enodev, 0, 0, seltrue_kqfilter }
+
+/* open, close, ioctl */
+#define cdev_kstat_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, selfalse, \
+	(dev_type_mmap((*))) enodev }
 
 /* open, close, read, write, ioctl, stop, tty, poll, mmap, kqfilter */
 #define	cdev_wsdisplay_init(c,n) { \
@@ -390,12 +397,12 @@ extern struct cdevsw cdevsw[];
 	(dev_type_stop((*))) enodev, 0, selfalse, \
 	(dev_type_mmap((*))) enodev }
 
-/* open, close, ioctl, read, mmap, poll */
+/* open, close, ioctl, read, mmap, poll, kqfilter */
 #define cdev_video_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
-	dev_init(c,n,mmap) }
+	dev_init(c,n,mmap), 0, 0, dev_init(c,n,kqfilter) }
 
 /* open, close, write, ioctl */
 #define cdev_spkr_init(c,n) { \
@@ -473,8 +480,8 @@ extern struct cdevsw cdevsw[];
 #define cdev_ipmi_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, selfalse, \
-	(dev_type_mmap((*))) enodev, 0 }
+	(dev_type_stop((*))) enodev, 0, seltrue, (dev_type_mmap((*))) enodev, \
+	0, 0, seltrue_kqfilter }
 
 /* open, close, ioctl, mmap */
 #define cdev_kcov_init(c,n) { \
@@ -605,6 +612,7 @@ cdev_decl(wsmouse);
 cdev_decl(wsmux);
 
 cdev_decl(ksyms);
+cdev_decl(kstat);
 
 cdev_decl(bio);
 cdev_decl(vscsi);

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.18 2019/09/25 06:24:46 jsg Exp $
+dnl	$OpenBSD: prep,v 1.19 2020/05/17 17:04:28 deraadt Exp $
 Please be aware that OpenBSD support for this platform is far from
 complete.
 
@@ -15,7 +15,7 @@ miniroot images are used, U-Boot and DTB files are distributed as part
 of the miniroot disk images.
 
 OpenBSD can be installed onto a disk by copying the miniroot for your
-board "miniroot-board-{:--:}OSrev.fs" image to an SD card.
+board "miniroot-board-{:--:}OSrev.img" image to an SD card.
 
 Booting from an SD card:
 
@@ -26,7 +26,7 @@ Booting from an SD card:
   
   Use the dd(1) utility to copy the miniroot to the hard drive.
   The command would likely be, under OpenBSD:
-  	dd if=miniroot-am335x-{:--:}OSrev.fs of=/dev/rsd1c
+  	dd if=miniroot-am335x-{:--:}OSrev.img of=/dev/rsd1c
   
   When you have connected the BeagleBone to your computer, a command such
   as "cu -l cuaU0 -s 115200" (assuming cuaU0 is your serial port device)
@@ -61,7 +61,7 @@ Install on systems without a supported miniroot:
   To do so first install the u-boot-arm and dtb packages.  Write one of the
   provided miniroot images to an SD card:
 
- 	dd if=miniroot-am335x-{:--:}OSrev.fs of=/dev/rsdXc
+ 	dd if=miniroot-am335x-{:--:}OSrev.img of=/dev/rsdXc
 
   Add a board specific DTB file (Allwinner and Rockchip U-Boot images
   come with a default DTB):

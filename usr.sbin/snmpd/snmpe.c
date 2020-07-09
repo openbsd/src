@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.61 2020/02/14 15:08:46 martijn Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.62 2020/05/02 14:22:31 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -309,7 +309,8 @@ snmpe_parse(struct snmp_message *msg)
 			stats->snmp_ingetnexts++;
 		if (msg->sm_version != SNMP_V3 &&
 		    strcmp(env->sc_rdcommunity, msg->sm_community) != 0 &&
-		    strcmp(env->sc_rwcommunity, msg->sm_community) != 0) {
+		    (env->sc_readonly ||
+		    strcmp(env->sc_rwcommunity, msg->sm_community) != 0)) {
 			stats->snmp_inbadcommunitynames++;
 			msg->sm_errstr = "wrong read community";
 			goto fail;
@@ -320,7 +321,8 @@ snmpe_parse(struct snmp_message *msg)
 	case SNMP_C_SETREQ:
 		stats->snmp_insetrequests++;
 		if (msg->sm_version != SNMP_V3 &&
-		    strcmp(env->sc_rwcommunity, msg->sm_community) != 0) {
+		    (env->sc_readonly ||
+		    strcmp(env->sc_rwcommunity, msg->sm_community) != 0)) {
 			if (strcmp(env->sc_rdcommunity, msg->sm_community) != 0)
 				stats->snmp_inbadcommunitynames++;
 			else

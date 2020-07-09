@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nep.c,v 1.31 2018/11/09 14:14:31 claudio Exp $	*/
+/*	$OpenBSD: if_nep.c,v 1.32 2020/06/22 02:31:32 dlg Exp $	*/
 /*
  * Copyright (c) 2014, 2015 Mark Kettenis
  *
@@ -1049,7 +1049,8 @@ nep_rx_proc(struct nep_softc *sc)
 	bus_dmamap_sync(sc->sc_dmat, NEP_DMA_MAP(sc->sc_rcring), 0,
 	    NEP_DMA_LEN(sc->sc_rcring), BUS_DMASYNC_PREREAD);
 
-	if_input(ifp, &ml);
+	if (ifiq_input(&ifp->if_rcv, &ml))
+		if_rxr_livelocked(&sc->sc_rx_ring);
 
 	nep_fill_rx_ring(sc);
 

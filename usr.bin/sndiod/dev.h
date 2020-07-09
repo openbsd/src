@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.25 2020/04/16 12:26:55 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.29 2020/06/28 05:21:39 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -24,7 +24,8 @@
 
 #define CTLADDR_SLOT_LEVEL(n)	(n)
 #define CTLADDR_MASTER		(DEV_NSLOT)
-#define CTLADDR_END		(DEV_NSLOT + 1)
+#define CTLADDR_ALT_SEL		(CTLADDR_MASTER + 1)
+#define CTLADDR_END		(CTLADDR_ALT_SEL + DEV_NMAX)
 
 /*
  * audio stream state structure
@@ -126,6 +127,7 @@ struct ctl {
 #define CTL_SW		3		/* on/off switch, only bit 7 counts */
 #define CTL_VEC		4		/* number, element of vector */
 #define CTL_LIST	5		/* switch, element of a list */
+#define CTL_SEL		6		/* element of a selector */
 	unsigned int type;		/* one of above */
 	unsigned int addr;		/* control address */
 #define CTL_NAMEMAX	16		/* max name lenght */
@@ -209,7 +211,12 @@ struct dev {
 #define DEV_INIT	1			/* stopped */
 #define DEV_RUN		2			/* playin & recording */
 	unsigned int pstate;			/* one of above */
-	struct name *path_list;
+	struct dev_alt {
+		struct dev_alt *next;
+		char *name;
+		unsigned int idx;
+	} *alt_list;
+	int alt_num;
 
 	/*
 	 * actual parameters and runtime state (i.e. once opened)
@@ -260,11 +267,12 @@ struct dev {
 extern struct dev *dev_list;
 
 void dev_log(struct dev *);
-void dev_close(struct dev *);
+void dev_abort(struct dev *);
 int dev_reopen(struct dev *);
 struct dev *dev_new(char *, struct aparams *, unsigned int, unsigned int,
     unsigned int, unsigned int, unsigned int, unsigned int);
 struct dev *dev_bynum(int);
+int dev_addname(struct dev *, char *);
 void dev_del(struct dev *);
 void dev_adjpar(struct dev *, int, int, int);
 int  dev_init(struct dev *);

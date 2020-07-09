@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.356 2020/03/06 10:40:13 tobhe Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.357 2020/06/24 22:03:43 cheloha Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -589,7 +589,7 @@ ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro, int fwd)
 	ip = mtod(m, struct ip *);
 	if (ip_mtudisc && (ip->ip_off & htons(IP_DF)) && tdb->tdb_mtu &&
 	    ntohs(ip->ip_len) > tdb->tdb_mtu &&
-	    tdb->tdb_mtutimeout > time_second) {
+	    tdb->tdb_mtutimeout > gettime()) {
 		struct rtentry *rt = NULL;
 		int rt_mtucloned = 0;
 		int transportmode = 0;

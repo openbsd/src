@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse_main.3,v 1.6 2018/11/28 21:19:11 mpi Exp $
+.\" $OpenBSD: fuse_main.3,v 1.7 2020/05/25 16:33:03 jmc Exp $
 .\"
 .\" Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
 .\" Copyright (c) 2018 Helg Bredow <helg@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 28 2018 $
+.Dd $Mdocdate: May 25 2020 $
 .Dt FUSE_MAIN 3
 .Os
 .Sh NAME
@@ -56,39 +56,46 @@ Here is a simple example of a FUSE implementation:
 
 static int
 fs_readdir(const char *path, void *data, fuse_fill_dir_t filler,
-    off_t off, struct fuse_file_info *ffi)
+           off_t off, struct fuse_file_info *ffi)
 {
 	if (strcmp(path, "/") != 0)
-		return (-ENOENT);
+		return -ENOENT;
 
 	filler(data, ".", NULL, 0);
 	filler(data, "..", NULL, 0);
 	filler(data, "file", NULL, 0);
-	return (0);
+	return 0;
 }
 
 static int
 fs_read(const char *path, char *buf, size_t size, off_t off,
-    struct fuse_file_info *ffi)
+        struct fuse_file_info *ffi)
 {
-	if (off >= 5)
-		return (0);
+	size_t len;
+	const char *file_contents = "fuse filesystem example\\n";
 
-	size = 5 - off;
-	memcpy(buf, "data." + off, size);
-	return (size);
+	len = strlen(file_contents);
+
+	if (off < len) {
+		if (off + size > len)
+			size = len - off;
+		memcpy(buf, file_contents + off, size);
+	} else
+		size = 0;
+
+	return size;
 }
 
 static int
 fs_open(const char *path, struct fuse_file_info *ffi)
 {
 	if (strncmp(path, "/file", 10) != 0)
-		return (-ENOENT);
+		return -ENOENT;
 
 	if ((ffi->flags & 3) != O_RDONLY)
-		return (-EACCES);
+		return -EACCES;
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -104,10 +111,10 @@ fs_getattr(const char *path, struct stat *st)
 		st->st_nlink = 1;
 		st->st_size = 5;
 	} else {
-		return (-ENOENT);
+		return -ENOENT;
 	}
 
-	return (0);
+	return 0;
 }
 
 struct fuse_operations fsops = {
@@ -118,9 +125,9 @@ struct fuse_operations fsops = {
 };
 
 int
-main(int ac, char **av)
+main(int argc, char **argv)
 {
-	return (fuse_main(ac, av, &fsops, NULL));
+	return (fuse_main(argc, argv, &fsops, NULL));
 }
 .Ed
 .Sh SEE ALSO

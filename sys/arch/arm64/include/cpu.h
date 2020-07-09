@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.14 2019/07/02 20:13:50 kettenis Exp $ */
+/* $OpenBSD: cpu.h,v 1.18 2020/06/05 23:16:24 naddy Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -22,11 +22,15 @@
  * User-visible definitions
  */
 
-/*  CTL_MACHDEP definitions. */
-/* None for now */
-#define	CPU_MAXID		0	/* number of valid machdep ids */
+/* 
+ * CTL_MACHDEP definitions.
+ */
+#define	CPU_COMPATIBLE		1	/* compatible property */
+#define	CPU_MAXID		2	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
+	{ 0, 0 }, \
+	{ "compatible", CTLTYPE_STRING }, \
 }
 
 #ifdef _KERNEL
@@ -178,6 +182,17 @@ void cpu_boot_secondary_processors(void);
 #define CPU_BUSY_CYCLE()	__asm volatile("yield" : : : "memory")
 
 #define curpcb		curcpu()->ci_curpcb
+
+static inline unsigned int
+cpu_rnd_messybits(void)
+{
+	uint64_t val, rval;
+
+	__asm volatile("mrs %0, CNTVCT_EL0; rbit %1, %0;"
+	    : "=r" (val), "=r" (rval));
+
+	return (val ^ rval);
+}
 
 /*
  * Scheduling glue

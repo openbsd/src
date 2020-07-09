@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.83 2020/04/08 09:34:29 stsp Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.84 2020/06/08 09:09:58 stsp Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -204,6 +204,14 @@ ieee80211_ifdetach(struct ifnet *ifp)
 	struct ieee80211com *ic = (void *)ifp;
 
 	timeout_del(&ic->ic_bgscan_timeout);
+
+	/*
+	 * Undo pseudo-driver changes. Pseudo-driver detach hooks could
+	 * call back into the driver, e.g. via ioctl. So deactivate the
+	 * interface before freeing net80211-specific data structures.
+	 */
+	if_deactivate(ifp);
+
 	ieee80211_proto_detach(ifp);
 	ieee80211_crypto_detach(ifp);
 	ieee80211_node_detach(ifp);

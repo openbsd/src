@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.125 2019/08/12 13:28:15 claudio Exp $
+#	$OpenBSD: changelist,v 1.126 2020/05/05 14:42:44 schwarze Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -165,3 +165,5 @@
 /var/unbound/etc/unbound.conf
 /var/yp/Makefile.main
 /var/yp/Makefile.yp
+/.cshrc
+/.profile

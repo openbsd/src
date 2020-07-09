@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.33 2020/01/23 02:40:21 dlg Exp $	*/
+/*	$OpenBSD: conf.c,v 1.34 2020/07/06 04:32:25 dlg Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -54,6 +54,7 @@
 #include "wd.h"
 
 #include "ksyms.h"
+#include "kstat.h"
 
 #include "audio.h"
 #include "com.h"
@@ -153,7 +154,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 48 */
 	cdev_bio_init(NBIO,bio),	/* 49: ioctl tunnel */
 	cdev_notdef(),			/* 50 */
-	cdev_notdef(),			/* 51 */
+	cdev_kstat_init(NKSTAT,kstat),	/* 51: kernel statistics */
 	cdev_ptm_init(NPTY,ptm),	/* 52: pseudo-tty ptm device */
 	cdev_vscsi_init(NVSCSI,vscsi),	/* 53: vscsi */
 	cdev_disk_init(1,diskmap),	/* 54: disk mapper */

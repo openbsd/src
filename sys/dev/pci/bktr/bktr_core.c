@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.c,v 1.41 2019/12/16 04:50:48 cheloha Exp $	*/
+/*	$OpenBSD: bktr_core.c,v 1.42 2020/05/29 04:42:25 deraadt Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -103,7 +103,6 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <dev/rndvar.h>
 #include <dev/ic/bt8xx.h>
 #include <dev/pci/bktr/bktr_reg.h>
 #include <dev/pci/bktr/bktr_tuner.h>

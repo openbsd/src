@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.114 2020/04/03 20:11:47 patrick Exp $ */
+/* $OpenBSD: xhci.c,v 1.116 2020/06/30 10:21:59 gerhard Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -624,12 +624,12 @@ xhci_intr1(struct xhci_softc *sc)
 		return (1);
 	}
 
-	XOWRITE4(sc, XHCI_USBSTS, intrs); /* Acknowledge */
-	usb_schedsoftintr(&sc->sc_bus);
-
-	/* Acknowledge PCI interrupt */
+	/* Acknowledge interrupts */
+	XOWRITE4(sc, XHCI_USBSTS, intrs);
 	intrs = XRREAD4(sc, XHCI_IMAN(0));
 	XRWRITE4(sc, XHCI_IMAN(0), intrs | XHCI_IMAN_INTR_PEND);
+
+	usb_schedsoftintr(&sc->sc_bus);
 
 	return (1);
 }
@@ -1048,10 +1048,16 @@ xhci_event_command(struct xhci_softc *sc, uint64_t paddr)
 	case XHCI_CMD_ADDRESS_DEVICE:
 	case XHCI_CMD_EVAL_CTX:
 	case XHCI_CMD_NOOP:
-		/* All these commands are synchronous. */
-		KASSERT(sc->sc_cmd_trb == trb);
-		sc->sc_cmd_trb = NULL;
-		wakeup(&sc->sc_cmd_trb);
+		/*
+		 * All these commands are synchronous.
+		 *
+		 * If TRBs differ, this could be a delayed result after we
+		 * gave up waiting for the expected TRB due to timeout.
+		 */
+		if (sc->sc_cmd_trb == trb) {
+			sc->sc_cmd_trb = NULL;
+			wakeup(&sc->sc_cmd_trb);
+		}
 		break;
 	default:
 		DPRINTF(("%s: unexpected command %x\n", DEVNAME(sc), flags));
@@ -1874,7 +1880,14 @@ xhci_command_submit(struct xhci_softc *sc, struct xhci_trb *trb0, int timeout)
 		printf("cmd = %d ", XHCI_TRB_TYPE(letoh32(trb->trb_flags)));
 		xhci_dump_trb(trb);
 #endif
-		KASSERT(sc->sc_cmd_trb == trb);
+		KASSERT(sc->sc_cmd_trb == trb || sc->sc_cmd_trb == NULL);
+		/*
+		 * Just because the timeout expired this does not mean that the
+		 * TRB isn't active anymore! We could get an interrupt from
+		 * this TRB later on and then wonder what to do with it.
+		 * We'd rather abort it.
+		 */
+		xhci_command_abort(sc);
 		sc->sc_cmd_trb = NULL;
 		splx(s);
 		return (error);
@@ -1908,8 +1921,8 @@ xhci_command_abort(struct xhci_softc *sc)
 	XOWRITE4(sc, XHCI_CRCR_LO, reg | XHCI_CRCR_LO_CA);
 	XOWRITE4(sc, XHCI_CRCR_HI, 0);
 
-	for (i = 0; i < 250; i++) {
-		usb_delay_ms(&sc->sc_bus, 1);
+	for (i = 0; i < 2500; i++) {
+		DELAY(100);
 		reg = XOREAD4(sc, XHCI_CRCR_LO) & XHCI_CRCR_LO_CRR;
 		if (!reg)
 			break;

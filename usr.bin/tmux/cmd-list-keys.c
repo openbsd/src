@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-keys.c,v 1.56 2020/04/13 20:51:57 nicm Exp $ */
+/* $OpenBSD: cmd-list-keys.c,v 1.60 2020/07/06 07:27:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -68,11 +68,12 @@ cmd_list_keys_get_width(const char *tablename, key_code only)
 	while (bd != NULL) {
 		if ((only != KEYC_UNKNOWN && bd->key != only) ||
 		    KEYC_IS_MOUSE(bd->key) ||
-		    bd->note == NULL) {
+		    bd->note == NULL ||
+		    *bd->note == '\0') {
 			bd = key_bindings_next(table, bd);
 			continue;
 		}
-		width = utf8_cstrwidth(key_string_lookup_key(bd->key));
+		width = utf8_cstrwidth(key_string_lookup_key(bd->key, 0));
 		if (width > keywidth)
 			keywidth = width;
 
@@ -99,20 +100,21 @@ cmd_list_keys_print_notes(struct cmdq_item *item, struct args *args,
 	while (bd != NULL) {
 		if ((only != KEYC_UNKNOWN && bd->key != only) ||
 		    KEYC_IS_MOUSE(bd->key) ||
-		    (bd->note == NULL && !args_has(args, 'a'))) {
+		    ((bd->note == NULL || *bd->note == '\0') &&
+		    !args_has(args, 'a'))) {
 			bd = key_bindings_next(table, bd);
 			continue;
 		}
 		found = 1;
-		key = key_string_lookup_key(bd->key);
+		key = key_string_lookup_key(bd->key, 0);
 
-		if (bd->note == NULL)
+		if (bd->note == NULL || *bd->note == '\0')
 			note = cmd_list_print(bd->cmdlist, 1);
 		else
 			note = xstrdup(bd->note);
 		tmp = utf8_padcstr(key, keywidth + 1);
 		if (args_has(args, '1') && tc != NULL)
-			status_message_set(tc, "%s%s%s", prefix, tmp, note);
+			status_message_set(tc, 1, "%s%s%s", prefix, tmp, note);
 		else
 			cmdq_print(item, "%s%s%s", prefix, tmp, note);
 		free(tmp);
@@ -133,7 +135,7 @@ cmd_list_keys_get_prefix(struct args *args, key_code *prefix)
 	*prefix = options_get_number(global_s_options, "prefix");
 	if (!args_has(args, 'P')) {
 		if (*prefix != KEYC_NONE)
-			xasprintf(&s, "%s ", key_string_lookup_key(*prefix));
+			xasprintf(&s, "%s ", key_string_lookup_key(*prefix, 0));
 		else
 			s = xstrdup("");
 	} else
@@ -162,6 +164,7 @@ cmd_list_keys_exec(struct cmd *self, struct cmdq_item *item)
 			cmdq_error(item, "invalid key: %s", args->argv[0]);
 			return (CMD_RETURN_ERROR);
 		}
+		only &= KEYC_MASK_KEY;
 	}
 
 	tablename = args_get(args, 'T');
@@ -219,7 +222,7 @@ cmd_list_keys_exec(struct cmd *self, struct cmdq_item *item)
 				bd = key_bindings_next(table, bd);
 				continue;
 			}
-			key = args_escape(key_string_lookup_key(bd->key));
+			key = args_escape(key_string_lookup_key(bd->key, 0));
 
 			if (bd->flags & KEY_BINDING_REPEAT)
 				repeat = 1;
@@ -253,7 +256,7 @@ cmd_list_keys_exec(struct cmd *self, struct cmdq_item *item)
 				continue;
 			}
 			found = 1;
-			key = args_escape(key_string_lookup_key(bd->key));
+			key = args_escape(key_string_lookup_key(bd->key, 0));
 
 			if (!repeat)
 				r = "";

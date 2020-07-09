@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.14 2019/07/22 11:51:30 kettenis Exp $	*/
+/*	$OpenBSD: exec.c,v 1.16 2020/05/17 14:32:12 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006, 2016 Mark Kettenis
@@ -143,7 +143,6 @@ run_loadfile(uint64_t *marks, int howto)
 	char args[256];
 	char *cp;
 	void *fdt;
-	uint32_t board_id = 0;
 	int i;
 
 	/*
@@ -179,7 +178,7 @@ run_loadfile(uint64_t *marks, int howto)
 	else
 		*++cp = 0;
 
-	fdt = efi_makebootargs(args, &board_id);
+	fdt = efi_makebootargs(args, howto);
 
 	efi_cleanup();
 
@@ -189,7 +188,7 @@ run_loadfile(uint64_t *marks, int howto)
 	icache_inv_all();
 	mmu_disable();
 
-	(*(startfuncp)(marks[MARK_ENTRY]))((void *)esym, (void *)board_id, fdt);
+	(*(startfuncp)(marks[MARK_ENTRY]))((void *)esym, NULL, fdt);
 
 	/* NOTREACHED */
 }

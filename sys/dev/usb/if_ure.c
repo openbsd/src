@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ure.c,v 1.14 2020/03/10 01:11:30 kevlo Exp $	*/
+/*	$OpenBSD: if_ure.c,v 1.15 2020/06/09 07:43:39 gerhard Exp $	*/
 /*-
  * Copyright (c) 2015, 2016, 2019 Kevin Lo <kevlo@openbsd.org>
  * All rights reserved.
@@ -774,17 +774,16 @@ ure_start(struct ifnet *ifp)
 			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
-		
-		m_head = ifq_deq_begin(&ifp->if_snd);
+
+		m_head = ifq_dequeue(&ifp->if_snd);
 		if (m_head == NULL)
 			break;
 
 		if (ure_encap(sc, m_head)) {
-			ifq_deq_rollback(&ifp->if_snd, m_head);
+			m_freem(m_head);
 			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
-		ifq_deq_commit(&ifp->if_snd, m_head);
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
@@ -1933,6 +1932,7 @@ ure_encap(struct ure_softc *sc, struct mbuf *m)
 
 	err = usbd_transfer(c->uc_xfer);
 	if (err != 0 && err != USBD_IN_PROGRESS) {
+		c->uc_mbuf = NULL;
 		ure_stop(sc);
 		return (EIO);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxxvar.h,v 1.33 2020/02/06 18:18:51 krw Exp $	*/
+/*	$OpenBSD: aic7xxxvar.h,v 1.34 2020/07/05 21:54:44 krw Exp $	*/
 /*
  * Core definitions and data structures shareable across OS platforms.
  *
@@ -38,7 +38,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxxvar.h,v 1.33 2020/02/06 18:18:51 krw Exp $
+ * $Id: aic7xxxvar.h,v 1.34 2020/07/05 21:54:44 krw Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.h,v 1.50 2003/12/17 00:02:09 gibbs Exp $
  */
@@ -937,8 +937,8 @@ struct ahc_softc {
 
 	struct scsi_link	  sc_channel;
 	struct scsi_link	  sc_channel_b;
-	struct device *		  sc_child;
-	struct device *		  sc_child_b;
+	struct scsibus_softc	 *sc_child;
+	struct scsibus_softc	 *sc_child_b;
 
 	bus_space_tag_t           tag;
 	bus_space_handle_t        bsh;

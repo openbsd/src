@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.18 2014/12/02 15:56:22 millert Exp $	*/
+/*	$OpenBSD: defs.h,v 1.20 2020/05/24 17:31:54 espie Exp $	*/
 /*	$NetBSD: defs.h,v 1.6 1996/03/19 03:21:30 jtc Exp $	*/
 
 /*
@@ -225,13 +225,10 @@ extern char *header[];
 extern char *body[];
 extern char *trailer[];
 
-extern char *action_file_name;
 extern char *code_file_name;
 extern char *defines_file_name;
 extern char *input_file_name;
 extern char *output_file_name;
-extern char *text_file_name;
-extern char *union_file_name;
 extern char *verbose_file_name;
 
 extern FILE *action_file;
@@ -309,10 +306,10 @@ extern void finalize_closure(void);
 extern __dead void fatal(char *);
 
 extern void reflexive_transitive_closure(unsigned *, int);
-extern __dead void done(int);
 
 extern __dead void no_space(void);
 extern __dead void open_error(char *);
+extern __dead void tempfile_error(void);
 extern __dead void open_write_error(char *);
 extern __dead void unexpected_EOF(void);
 extern void print_pos(char *, char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_os.c,v 1.32 2015/03/14 03:38:49 jsg Exp $	*/
+/*	$OpenBSD: bktr_os.c,v 1.33 2020/06/20 16:06:05 krw Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp $ */
 
 /*
@@ -337,8 +337,9 @@ free_bktr_mem(bktr, dmap, kva)
 #define TUNER_DEV	0x01
 #define VBI_DEV		0x02
 
-#define UNIT(x)         (minor((x) & 0x0f))
-#define FUNCTION(x)     (minor((x >> 4) & 0x0f))
+#define	UNIT(x)		((minor((x)) < 16) ? minor((x)) : ((minor((x)) - 16) / 2))
+#define	FUNCTION(x)	((minor((x)) < 16) ? VIDEO_DEV : ((minor((x)) & 0x1) ? \
+    VBI_DEV : TUNER_DEV))
 
 /*
  * 

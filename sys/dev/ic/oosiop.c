@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop.c,v 1.26 2020/02/17 02:50:23 krw Exp $	*/
+/*	$OpenBSD: oosiop.c,v 1.28 2020/06/27 17:28:58 krw Exp $	*/
 /*	$NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $	*/
 
 /*
@@ -267,7 +267,6 @@ oosiop_attach(struct oosiop_softc *sc)
 	sc->sc_link.pool = &sc->sc_iopool;
 	sc->sc_link.quirks = ADEV_NODOORLOCK;
 
-	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	/*
@@ -551,7 +550,7 @@ oosiop_setup_dma(struct oosiop_softc *sc)
 	OOSIOP_SCRIPT_SYNC(sc, BUS_DMASYNC_POSTWRITE);
 
 	oosiop_fixup_select(sc, Ent_p_select, cb->id);
-	oosiop_fixup_jump(sc, Ent_p_datain_jump, xferbase + 
+	oosiop_fixup_jump(sc, Ent_p_datain_jump, xferbase +
 	    offsetof(struct oosiop_xfer, datain_scr[0]));
 	oosiop_fixup_jump(sc, Ent_p_dataout_jump, xferbase +
 	    offsetof(struct oosiop_xfer, dataout_scr[0]));
@@ -642,7 +641,7 @@ oosiop_phasemismatch(struct oosiop_softc *sc)
 		sstat1 = oosiop_read_1(sc, OOSIOP_SSTAT1);
 		if (sstat1 & OOSIOP_SSTAT1_OLF)
 			dbc++;
-		if ((sc->sc_tgt[cb->id].sxfer != 0) && 
+		if ((sc->sc_tgt[cb->id].sxfer != 0) &&
 		    (sstat1 & OOSIOP_SSTAT1_ORF) != 0)
 			dbc++;
 

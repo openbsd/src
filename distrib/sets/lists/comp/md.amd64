@@ -72,9 +72,9 @@
 ./usr/include/amd64/smbiosvar.h
 ./usr/include/amd64/specialreg.h
 ./usr/include/amd64/spinlock.h
-./usr/include/amd64/stdarg.h
 ./usr/include/amd64/sysarch.h
 ./usr/include/amd64/tcb.h
+./usr/include/amd64/timetc.h
 ./usr/include/amd64/trap.h
 ./usr/include/amd64/tss.h
 ./usr/include/amd64/vga_post.h

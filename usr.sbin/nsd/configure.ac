@@ -5,8 +5,19 @@ dnl
 sinclude(acx_nlnetlabs.m4)
 sinclude(dnstap/dnstap.m4)
 
-AC_INIT(NSD,4.2.4,nsd-bugs@nlnetlabs.nl)
+AC_INIT(NSD,4.3.1,nsd-bugs@nlnetlabs.nl)
 AC_CONFIG_HEADER([config.h])
+
+#
+# Setup the standard programs
+# https://www.gnu.org/software/autoconf/manual/autoconf-2.69/html_node/Setting-Output-Variables.html
+
+AC_ARG_VAR(SED, [location of the sed program])
+AC_ARG_VAR(AWK, [location of the awk program])
+AC_ARG_VAR(GREP, [location of the grep program])
+AC_ARG_VAR(EGREP, [location of the egrep program])
+AC_ARG_VAR(LEX, [location of the lex program with GNU extensions (flex)])
+AC_ARG_VAR(YACC, [location of the yacc program with GNU extensions (bison)])
 
 CFLAGS="$CFLAGS"
 AC_AIX
@@ -112,21 +123,21 @@ AC_DEFINE_UNQUOTED(ZONESDIR, ["`eval echo $zonesdir`"], [NSD default location fo
 
 # default xfrd file location.
 xfrdfile=${dbdir}/xfrd.state
-AC_ARG_WITH([xfrdfile], AC_HELP_STRING([--with-xfrdfile=path], 
+AC_ARG_WITH([xfrdfile], AC_HELP_STRING([--with-xfrdfile=path],
 	[Pathname to the NSD xfrd zone timer state file]), [xfrdfile=$withval])
 AC_DEFINE_UNQUOTED(XFRDFILE, ["`eval echo $xfrdfile`"], [Pathname to the NSD xfrd zone timer state file.])
 AC_SUBST(xfrdfile)
 
 # default zonelist file location.
 zonelistfile=${dbdir}/zone.list
-AC_ARG_WITH([zonelistfile], AC_HELP_STRING([--with-zonelistfile=path], 
+AC_ARG_WITH([zonelistfile], AC_HELP_STRING([--with-zonelistfile=path],
 	[Pathname to the NSD zone list file]), [zonelistfile=$withval])
 AC_DEFINE_UNQUOTED(ZONELISTFILE, ["`eval echo $zonelistfile`"], [Pathname to the NSD zone list file.])
 AC_SUBST(zonelistfile)
 
 # default xfr dir location.
 xfrdir="/tmp"
-AC_ARG_WITH([xfrdir], AC_HELP_STRING([--with-xfrdir=path], 
+AC_ARG_WITH([xfrdir], AC_HELP_STRING([--with-xfrdir=path],
 	[Pathname to where the NSD transfer dir is created]), [xfrdir=$withval])
 AC_DEFINE_UNQUOTED(XFRDIR, ["`eval echo $xfrdir`"], [Pathname to where the NSD transfer dir is created.])
 AC_SUBST(xfrdir)
@@ -163,23 +174,38 @@ AC_ARG_WITH([user],
 AC_SUBST(user)
 AC_DEFINE_UNQUOTED(USER, ["$user"], [the user name to drop privileges to])
 
-# Checks for programs.
-AC_PROG_AWK
 AC_PROG_CC
-AC_PROG_LN_S
-AC_PROG_INSTALL
+AC_PROG_SED
+AC_PROG_AWK
+AC_PROG_GREP
+AC_PROG_EGREP
 AC_PROG_LEX
 AC_PROG_YACC
+AC_PROG_LN_S
+AC_PROG_INSTALL
 
 if test "$LEX" != ":" -a "$LEX" != ""; then
+# Solaris provides anemic tools, and they don't offer GNU extensions like
+# 'flex -i'. Solaris also does not offer GNU replacements in /usr/gnu/bin.
+AC_MSG_CHECKING([whether lex accepts -i])
+AS_IF([echo "%%" | $LEX -i -t >/dev/null 2>&1],
+  [
+    AC_MSG_RESULT([yes])
+  ],
+  [
+    AC_MSG_RESULT([no])
+    AC_MSG_ERROR([unable to find a lexer that supports -i. If one is available then set the LEX variable])
+  ]
+)
+
   # Check if lex defines yy_current_buffer, because 2.4.6 and older use it,
   # but later could define it as a macro and then we should not redefine it.
   AC_MSG_CHECKING(if lex defines yy_current_buffer)
   cat <<EOF >conftest.lex
 %%
 EOF
-  $LEX -i -t conftest.lex >> conftest.c
-  if grep "^#define yy_current_buffer" conftest.c >/dev/null; then
+  $LEX -i -t conftest.lex >> conftest.c 2>/dev/null
+  if $GREP "^#define yy_current_buffer" conftest.c >/dev/null; then
 	  AC_DEFINE_UNQUOTED(LEX_DEFINES_YY_CURRENT_BUFFER, 1, [If flex defines yy_current_buffer as a macro])
 	AC_MSG_RESULT(yes)
   else
@@ -257,7 +283,7 @@ AC_DEFUN([CHECK_COMPILER_FLAG],
 [
 AC_REQUIRE([AC_PROG_CC])
 AC_MSG_CHECKING(whether $CC supports -$1)
-cache=`echo $1 | sed 'y%.=/+-%___p_%'`
+cache=`echo $1 | $SED 'y%.=/+-%___p_%'`
 AC_CACHE_VAL(cv_prog_cc_flag_$cache,
 [
 echo 'void f(){}' >conftest.c
@@ -331,14 +357,14 @@ AC_CHECK_CTIME_R
 AC_DEFUN([CHECK_SSL], [
     AC_ARG_WITH(ssl, AC_HELP_STRING([--with-ssl=pathname],
                 [enable SSL (will check /usr/local/ssl
-                /usr/lib/ssl /usr/ssl /usr/pkg /usr/sfw /usr/local /usr)]),[
+                /usr/lib/ssl /usr/ssl /usr/pkg /usr/sfw /usr/local /usr /usr/local/opt/openssl)]),[
         ],[
             withval="yes"
         ])
     if test x_$withval != x_no; then
         AC_MSG_CHECKING(for SSL)
         if test x_$withval = x_ -o x_$withval = x_yes; then
-            withval="/usr/local/ssl /usr/lib/ssl /usr/ssl /usr/pkg /usr/sfw /usr/local /usr"
+            withval="/usr/local/ssl /usr/lib/ssl /usr/ssl /usr/pkg /usr/sfw /usr/local /usr /usr/local/opt/openssl"
         fi
         for dir in $withval; do
             ssldir="$dir"
@@ -350,12 +376,12 @@ AC_DEFUN([CHECK_SSL], [
                 fi
                 break;
             fi
-        done 
+        done
         if test x_$found_ssl != x_yes; then
             AC_MSG_ERROR(Cannot find the SSL libraries in $withval)
         else
             AC_MSG_RESULT(found in $ssldir)
-            HAVE_SSL=yes 
+            HAVE_SSL=yes
             if test x_$ssldir != x_/usr; then
                 LDFLAGS="$LDFLAGS -L$ssldir/lib";
             fi
@@ -369,12 +395,12 @@ AC_DEFUN([CHECK_SSL], [
 
 # check for libevent
 AC_ARG_WITH(libevent, AC_HELP_STRING([--with-libevent=pathname],
-    [use libevent (will check /usr/local /opt/local /usr/lib /usr/pkg /usr/sfw /usr  or you can specify an explicit path), useful when the zone count is high.]),
+    [use libevent (will check /usr/local /opt/local /usr/lib /usr/pkg /usr/sfw /usr /usr/local/opt/libevent or you can specify an explicit path), useful when the zone count is high.]),
     [ ],[ withval="yes" ])
 if test x_$withval = x_yes -o x_$withval != x_no; then
         AC_MSG_CHECKING(for libevent)
         if test x_$withval = x_ -o x_$withval = x_yes; then
-            withval="/usr/local /opt/local /usr/lib /usr/pkg /usr/sfw /usr"
+            withval="/usr/local /opt/local /usr/lib /usr/pkg /usr/sfw /usr /usr/local/opt/libevent"
         fi
         for dir in $withval; do
             thedir="$dir"
@@ -393,7 +419,7 @@ if test x_$withval = x_yes -o x_$withval != x_no; then
             		AC_MSG_RESULT(found in $thedir)
                 	CPPFLAGS="$CPPFLAGS -I$thedir -I$thedir/include"
 			# remove evdns from linking
-			ev_files_o=`ls $thedir/*.o | grep -v evdns\.o | grep -v bufferevent_openssl\.o`
+			ev_files_o=`ls $thedir/*.o | $GREP -v evdns\.o | $GREP -v bufferevent_openssl\.o`
 			cp $ev_files_o .
 			LDFLAGS="$ev_files_o $LDFLAGS -lm"
 		else
@@ -439,7 +465,7 @@ fi
 # Checks for header files.
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([time.h arpa/inet.h signal.h string.h strings.h fcntl.h limits.h netinet/in.h netinet/tcp.h stddef.h sys/param.h sys/socket.h sys/un.h syslog.h unistd.h sys/select.h stdarg.h stdint.h netdb.h sys/bitypes.h tcpd.h glob.h grp.h endian.h])
+AC_CHECK_HEADERS([time.h arpa/inet.h signal.h string.h strings.h fcntl.h limits.h netinet/in.h netinet/tcp.h stddef.h sys/param.h sys/socket.h sys/un.h syslog.h unistd.h sys/select.h stdarg.h stdint.h netdb.h sys/bitypes.h tcpd.h glob.h grp.h endian.h sys/random.h])
 
 AC_DEFUN([CHECK_VALIST_DEF],
 [
@@ -505,7 +531,7 @@ if test c${cross_compiling} = cno; then
 AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #define _XOPEN_SOURCE 600
 #include <time.h>
-int main(void) { struct tm tm; char *res; 
+int main(void) { struct tm tm; char *res;
 res = strptime("20070207111842", "%Y%m%d%H%M%S", &tm);
 if (!res) return 1; return 0; }
 ]])] , [eval "ac_cv_c_strptime_works=yes"], [eval "ac_cv_c_strptime_works=no"])
@@ -588,7 +614,7 @@ if test $ac_cv_type_$1 = no; then
 fi
 ])
 
-AC_LIBGTOP_CHECK_TYPE(int8_t, char) 
+AC_LIBGTOP_CHECK_TYPE(int8_t, char)
 AC_LIBGTOP_CHECK_TYPE(int16_t, short)
 AC_LIBGTOP_CHECK_TYPE(int32_t, int)
 AC_LIBGTOP_CHECK_TYPE(int64_t, long long)
@@ -626,7 +652,7 @@ AC_FUNC_FSEEKO
 AC_SYS_LARGEFILE
 AC_CHECK_SIZEOF(void*)
 AC_CHECK_SIZEOF(off_t)
-AC_CHECK_FUNCS([arc4random arc4random_uniform])
+AC_CHECK_FUNCS([getrandom arc4random arc4random_uniform])
 AC_SEARCH_LIBS([setusercontext],[util],[AC_CHECK_HEADERS([login_cap.h])])
 AC_CHECK_FUNCS([tzset alarm chroot dup2 endpwent gethostname memset memcpy pwrite socket strcasecmp strchr strdup strerror strncasecmp strtol writev getaddrinfo getnameinfo freeaddrinfo gai_strerror sigaction sigprocmask strptime strftime localtime_r setusercontext glob initgroups setresuid setreuid setresgid setregid getpwnam mmap ppoll clock_gettime accept4])
 
@@ -643,7 +669,7 @@ AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <sys/socket.h>
 #include <errno.h>
 int main(void)
-{ 
+{
 	int s = socket(AF_INET, SOCK_DGRAM, 0);
 	int r = recvmmsg(s, 0, 0, 0, 0) == -1 && errno == ENOSYS;
 	close(s);
@@ -659,7 +685,7 @@ AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <sys/socket.h>
 #include <errno.h>
 int main(void)
-{ 
+{
 	int s = socket(AF_INET, SOCK_DGRAM, 0);
 	int r = sendmmsg(s, 0, 0, 0) == -1 && errno == ENOSYS;
 	close(s);
@@ -677,9 +703,102 @@ AC_DEFINE([HAVE_SENDMMSG], [1], [Define if sendmmsg exists])]
 esac
 
 # check if setreuid en setregid fail, on MacOSX10.4(darwin8).
-if echo $target_os | grep darwin8 > /dev/null; then
+if echo $target_os | $GREP -i darwin8 > /dev/null; then
 	AC_DEFINE(DARWIN_BROKEN_SETREUID, 1, [Define this if on macOSX10.4-darwin8 and setreuid and setregid do not work])
 fi
+
+# GNU HURD needs _GNU_SOURCE defined for cpu affinity gear
+if echo $target_os | $EGREP -i 'linux|hurd' > /dev/null; then
+  AC_DEFINE([_GNU_SOURCE, 1, [Define this if on Linux or GNU Hurd for cpu affinity interface]])
+fi
+
+# see comment on _GNU_SOURCE above
+AC_CHECK_HEADERS([sched.h sys/cpuset.h])
+
+# Check for cpu_set_t (Linux) and cpuset_t (FreeBSD and NetBSD)
+AC_CHECK_TYPES([cpu_set_t, cpuset_t, cpuid_t],,,[
+AC_INCLUDES_DEFAULT
+#if HAVE_SCHED_H
+# include <sched.h>
+#endif
+#if HAVE_SYS_CPUSET_H
+# include <sys/cpuset.h>
+#endif
+])
+
+AC_DEFUN([AC_CHECK_CPU_OR],
+[AC_REQUIRE([AC_PROG_CC])
+AC_MSG_CHECKING(whether CPU_OR works with three arguments)
+AC_TRY_COMPILE(
+[#ifdef HAVE_SCHED_H
+# include <sched.h>
+#endif
+#ifdef HAVE_SYS_CPUSET_H
+# include <sys/cpuset.h>
+#endif
+#include <string.h>
+#ifdef HAVE_CPUSET_T
+#define MY_CPUSET_TYPE cpuset_t
+#endif
+#ifdef HAVE_CPU_SET_T
+#define MY_CPUSET_TYPE cpu_set_t
+#endif
+void testing (void) {
+	MY_CPUSET_TYPE a, b;
+	memset(&a, 0, sizeof(a));
+	memset(&b, 0, sizeof(b));
+	CPU_OR(&a, &a, &b);
+}], [
+        testing();
+], [
+	AC_MSG_RESULT(yes)
+	AC_DEFINE([CPU_OR_THREE_ARGS], 1, [number of arguments for CPU_OR is three])
+], [
+	AC_MSG_RESULT(no)
+])])
+
+AS_IF([test x"$ac_cv_type_cpuset_t" = xyes -o x"$ac_cv_type_cpu_set_t" = xyes ],[
+	AC_CHECK_FUNC(cpuset_create)
+	AC_CHECK_FUNC(cpuset_destroy)
+	AC_CHECK_FUNC(cpuset_zero)
+	AC_CHECK_FUNC(cpuset_set)
+	AC_CHECK_FUNC(cpuset_clr)
+	AC_CHECK_FUNC(cpuset_isset)
+	AC_CHECK_FUNC(cpuset_size)
+	AC_LIBOBJ(cpuset)
+	AC_CHECK_FUNCS([sysconf])
+	AC_CHECK_CPU_OR
+])
+
+#
+# sched_setaffinity must be checked using proper includes.
+# also needs _GNU_SOURCE on Linux and Hurd; see above.
+# also see https://github.com/NLnetLabs/nsd/issues/82.
+#
+AC_MSG_CHECKING(for sched_setaffinity)
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+  [[
+    #ifdef HAVE_SCHED_H
+    # include <sched.h>
+    #endif
+    #ifdef HAVE_SYS_CPUSET_H
+    #include <sys/cpuset.h>
+    #endif
+    #ifdef HAVE_CPUSET_T
+    #define MY_CPUSET_TYPE cpuset_t
+    #endif
+    #ifdef HAVE_CPU_SET_T
+    #define MY_CPUSET_TYPE cpu_set_t
+    #endif
+    void testing (void) {
+      MY_CPUSET_TYPE set;
+      CPU_ZERO(&set);
+      (void)sched_setaffinity(-1, sizeof(set), &set);
+    }
+]])],
+[  AC_MSG_RESULT(yes)
+   AC_DEFINE(HAVE_SCHED_SETAFFINITY, 1, [Define this if sched_setaffinity is available])],
+[  AC_MSG_RESULT(no)])
 
 #
 # Checking for missing functions we can replace
@@ -694,12 +813,16 @@ AC_REPLACE_FUNCS(strlcpy)
 AC_REPLACE_FUNCS(strptime)
 AC_REPLACE_FUNCS(pselect)
 AC_REPLACE_FUNCS(memmove)
+AC_REPLACE_FUNCS(setproctitle)
 AC_MSG_CHECKING([for reallocarray])
-AC_LINK_IFELSE([AC_LANG_SOURCE(AC_INCLUDES_DEFAULT
+AC_LINK_IFELSE([AC_LANG_SOURCE(
 [[
 #ifndef _OPENBSD_SOURCE
 #define _OPENBSD_SOURCE 1
 #endif
+]]
+AC_INCLUDES_DEFAULT
+[[
 #include <stdlib.h>
 int main(void) {
 	void* p = reallocarray(NULL, 10, 100);
@@ -708,6 +831,12 @@ int main(void) {
 }
 ]])], [AC_MSG_RESULT(yes)
 	AC_DEFINE(HAVE_REALLOCARRAY, 1, [If we have reallocarray(3)])
+	AC_CHECK_DECLS([reallocarray], [], [
+		AC_DEFINE(REALLOCARRAY_NEEDS_DEFINES, 1, [If reallocarray needs defines to appear in the headers])
+	], [
+AC_INCLUDES_DEFAULT
+#include <stdlib.h>
+	])
 ], [
 	AC_MSG_RESULT(no)
 	AC_LIBOBJ(reallocarray)
@@ -749,11 +878,11 @@ else
 fi
 
 AC_MSG_CHECKING(for pselect prototype in sys/select.h)
-AC_EGREP_HEADER([[^a-zA-Z_]*pselect[^a-zA-Z_]], sys/select.h, AC_DEFINE(HAVE_PSELECT_PROTO, 1, 
+AC_EGREP_HEADER([[^a-zA-Z_]*pselect[^a-zA-Z_]], sys/select.h, AC_DEFINE(HAVE_PSELECT_PROTO, 1,
 	[if sys/select.h provides pselect prototype]) AC_MSG_RESULT(yes), AC_MSG_RESULT(no))
 
 AC_MSG_CHECKING(for ctime_r prototype in time.h)
-AC_EGREP_HEADER([[^a-zA-Z_]*ctime_r[^a-zA-Z_]], time.h, AC_DEFINE(HAVE_CTIME_R_PROTO, 1, 
+AC_EGREP_HEADER([[^a-zA-Z_]*ctime_r[^a-zA-Z_]], time.h, AC_DEFINE(HAVE_CTIME_R_PROTO, 1,
 	[if time.h provides ctime_r prototype]) AC_MSG_RESULT(yes), AC_MSG_RESULT(no))
 
 AC_CHECK_TYPE([struct timespec], AC_DEFINE(HAVE_STRUCT_TIMESPEC, 1, [If time.h has a struct timespec (for pselect).]), [], [
@@ -909,7 +1038,7 @@ if test x$HAVE_SSL = x"yes"; then
 	])
 	LIBS="$BAKLIBS"
 
-	if test -n "$ssldir"; then 
+	if test -n "$ssldir"; then
             AC_CHECK_LIB(crypto, HMAC_Update,, [
                     AC_MSG_ERROR([OpenSSL found in $ssldir, but version 0.9.7 or higher is required])
                 ])
@@ -1046,7 +1175,7 @@ AH_BOTTOM([
 /* define before includes as it specifies what standard to use. */
 #if (defined(HAVE_PSELECT) && !defined (HAVE_PSELECT_PROTO)) \
 	|| !defined (HAVE_CTIME_R_PROTO) \
-	|| defined (STRPTIME_NEEDS_DEFINES)
+	|| defined (STRPTIME_NEEDS_DEFINES) || defined(REALLOCARRAY_NEEDS_DEFINES)
 #  ifndef _XOPEN_SOURCE
 #    define _XOPEN_SOURCE 600
 #  endif
@@ -1064,7 +1193,7 @@ AH_BOTTOM([
 #  endif
 #  ifndef __EXTENSIONS__
 #    define __EXTENSIONS__ 1
-#  endif 
+#  endif
 #  ifndef _STDC_C99
 #    define _STDC_C99 1
 #  endif
@@ -1196,12 +1325,22 @@ void* reallocarray(void *ptr, size_t nmemb, size_t size);
 #endif
 #ifndef HAVE_STRPTIME
 #define HAVE_STRPTIME 1
-char *strptime(const char *s, const char *format, struct tm *tm); 
+char *strptime(const char *s, const char *format, struct tm *tm);
 #endif
 #ifndef STRPTIME_WORKS
 #define STRPTIME_WORKS 1
-char *nsd_strptime(const char *s, const char *format, struct tm *tm); 
+char *nsd_strptime(const char *s, const char *format, struct tm *tm);
 #define strptime(a,b,c) nsd_strptime((a),(b),(c))
+#endif
+#if (HAVE_CPU_SET_T || HAVE_CPUSET_T)
+#include "compat/cpuset.h"
+#endif
+#ifndef HAVE_SETPROCTITLE
+#ifdef __linux__
+#define HAVE_SETPROCTITLE 1
+#include <stdarg.h>
+void setproctitle(char *fmt, ...);
+#endif
 #endif
 ])
 AH_BOTTOM(

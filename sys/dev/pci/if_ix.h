@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.h,v 1.40 2020/04/06 08:31:04 mpi Exp $	*/
+/*	$OpenBSD: if_ix.h,v 1.41 2020/06/07 23:52:05 dlg Exp $	*/
 
 /******************************************************************************
 
@@ -167,6 +167,7 @@ struct ix_queue {
  */
 struct tx_ring {
 	struct ix_softc		*sc;
+	struct ifqueue		*ifq;
 	uint32_t		me;
 	uint32_t		watchdog_timer;
 	union ixgbe_adv_tx_desc	*tx_base;
@@ -193,6 +194,7 @@ struct tx_ring {
  */
 struct rx_ring {
 	struct ix_softc		*sc;
+	struct ifiqueue		*ifiq;
 	uint32_t		me;
 	union ixgbe_adv_rx_desc	*rx_base;
 	struct ixgbe_dma_alloc	rxdma;
@@ -205,6 +207,7 @@ struct rx_ring {
 	uint			next_to_refresh;
 	uint			next_to_check;
 	uint			last_desc_filled;
+	struct timeout		rx_refill;
 	struct if_rxring	rx_ring;
 	struct ixgbe_rx_buf	*rx_buffers;
 
@@ -231,7 +234,6 @@ struct ix_softc {
 
 	struct ifmedia		media;
 	struct timeout		timer;
-	struct timeout		rx_refill;
 	int			msix;
 	int			if_flags;
 

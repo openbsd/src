@@ -1,8 +1,9 @@
-#	$OpenBSD: Makefile,v 1.2 2019/12/24 09:37:53 anton Exp $
+#	$OpenBSD: Makefile,v 1.3 2020/06/29 18:25:37 anton Exp $
 
 PROG=		pipe
 
 SRCS+=		pipe.c
+SRCS+=		test-close.c
 SRCS+=		test-kqueue.c
 SRCS+=		test-ping-pong.c
 SRCS+=		test-run-down.c
@@ -13,6 +14,7 @@ DPADD+=		${LIBPTHREAD}
 
 WARNINGS=	yes
 
+TESTS+=	close-race
 TESTS+=	kqueue-read
 TESTS+=	kqueue-read-eof
 TESTS+=	kqueue-write

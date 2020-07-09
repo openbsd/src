@@ -181,8 +181,6 @@
 #define TEST_CLIENT_CERT "../apps/client.pem"
 
 static int verify_callback(int ok, X509_STORE_CTX *ctx);
-static RSA *tmp_rsa_cb(SSL *s, int is_export, int keylength);
-static void free_tmp_rsa(void);
 static int app_verify_callback(X509_STORE_CTX *ctx, void *arg);
 #define APP_CALLBACK_STRING "Test Callback Argument"
 struct app_verify_arg {
@@ -658,8 +656,6 @@ bad:
 		EC_KEY_free(ecdh);
 	}
 
-	SSL_CTX_set_tmp_rsa_callback(s_ctx, tmp_rsa_cb);
-
 	if (!SSL_CTX_use_certificate_file(s_ctx, server_cert,
 	    SSL_FILETYPE_PEM)) {
 		ERR_print_errors(bio_err);
@@ -772,7 +768,6 @@ end:
 	SSL_CTX_free(c_ctx);
 	BIO_free(bio_stdout);
 
-	free_tmp_rsa();
 #ifndef OPENSSL_NO_ENGINE
 	ENGINE_cleanup();
 #endif
@@ -1842,44 +1837,6 @@ app_verify_callback(X509_STORE_CTX *ctx, void *arg)
 		}
 	}
 	return (ok);
-}
-
-static RSA *rsa_tmp = NULL;
-
-static RSA *
-tmp_rsa_cb(SSL *s, int is_export, int keylength)
-{
-	BIGNUM *bn = NULL;
-	if (rsa_tmp == NULL) {
-		bn = BN_new();
-		rsa_tmp = RSA_new();
-		if (!bn || !rsa_tmp || !BN_set_word(bn, RSA_F4)) {
-			BIO_printf(bio_err, "Memory error...");
-			goto end;
-		}
-		BIO_printf(bio_err, "Generating temp (%d bit) RSA key...", keylength);
-		(void)BIO_flush(bio_err);
-		if (!RSA_generate_key_ex(rsa_tmp, keylength, bn, NULL)) {
-			BIO_printf(bio_err, "Error generating key.");
-			RSA_free(rsa_tmp);
-			rsa_tmp = NULL;
-		}
-end:
-		BIO_printf(bio_err, "\n");
-		(void)BIO_flush(bio_err);
-	}
-	if (bn)
-		BN_free(bn);
-	return (rsa_tmp);
-}
-
-static void
-free_tmp_rsa(void)
-{
-	if (rsa_tmp != NULL) {
-		RSA_free(rsa_tmp);
-		rsa_tmp = NULL;
-	}
 }
 
 /* These DH parameters have been generated as follows:

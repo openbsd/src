@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_regulator.c,v 1.13 2019/04/30 19:53:27 patrick Exp $	*/
+/*	$OpenBSD: ofw_regulator.c,v 1.14 2020/06/06 16:59:43 patrick Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -129,6 +129,9 @@ regulator_set(uint32_t phandle, int enable)
 	struct regulator_device *rd;
 	int node;
 
+	if (phandle == 0)
+		return ENODEV;
+
 	node = OF_getnodebyphandle(phandle);
 	if (node == 0)
 		return ENODEV;
@@ -169,6 +172,9 @@ regulator_get_voltage(uint32_t phandle)
 	struct regulator_device *rd;
 	int node;
 
+	if (phandle == 0)
+		return 0;
+
 	LIST_FOREACH(rd, &regulator_devices, rd_list) {
 		if (rd->rd_phandle == phandle)
 			break;
@@ -197,6 +203,9 @@ regulator_set_voltage(uint32_t phandle, uint32_t voltage)
 	struct regulator_device *rd;
 	uint32_t old, delta;
 	int error, node;
+
+	if (phandle == 0)
+		return ENODEV;
 
 	LIST_FOREACH(rd, &regulator_devices, rd_list) {
 		if (rd->rd_phandle == phandle)
@@ -238,6 +247,9 @@ regulator_get_current(uint32_t phandle)
 	struct regulator_device *rd;
 	int node;
 
+	if (phandle == 0)
+		return 0;
+
 	LIST_FOREACH(rd, &regulator_devices, rd_list) {
 		if (rd->rd_phandle == phandle)
 			break;
@@ -266,6 +278,9 @@ regulator_set_current(uint32_t phandle, uint32_t current)
 	struct regulator_device *rd;
 	uint32_t old, delta;
 	int error, node;
+
+	if (phandle == 0)
+		return ENODEV;
 
 	LIST_FOREACH(rd, &regulator_devices, rd_list) {
 		if (rd->rd_phandle == phandle)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mps.c,v 1.28 2019/10/24 12:39:27 tb Exp $	*/
+/*	$OpenBSD: mps.c,v 1.29 2020/06/30 17:11:49 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -47,8 +47,6 @@
 
 struct ber_oid *
 	 mps_table(struct oid *, struct ber_oid *, struct ber_oid *);
-
-extern void control_event_add(struct ctl_conn *, int, int, struct timeval *); /* XXX */
 
 int
 mps_getstr(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
@@ -131,20 +129,6 @@ mps_getreq(struct snmp_message *msg, struct ber_element *root,
 	if (OID_NOTSET(value))
 		goto fail;
 
-	if (value->o_flags & OID_REGISTERED) {
-		struct agentx_pdu	*pdu;
-
-		if ((pdu = snmp_agentx_get_pdu((struct snmp_oid *)o, 1)) == NULL)
-			return (-1);
-		pdu->cookie = msg;
-		if (snmp_agentx_send(value->o_session->handle, pdu) == -1)
-			return (-1);
-
-		control_event_add(value->o_session,
-		    value->o_session->handle->fd, EV_WRITE, NULL);
-		return (1);
-	}
-
 	if (value->o_get == NULL)
 		goto fail;
 
@@ -211,20 +195,6 @@ mps_getnextreq(struct snmp_message *msg, struct ber_element *root,
 	value = smi_nfind(&key);
 	if (value == NULL)
 		goto fail;
-
-	if (value->o_flags & OID_REGISTERED) {
-		struct agentx_pdu	*pdu;
-
-		if ((pdu = snmp_agentx_getnext_pdu((struct snmp_oid *)o, 1)) == NULL)
-			return (-1);
-		pdu->cookie = msg;
-		if (snmp_agentx_send(value->o_session->handle, pdu) == -1)
-			return (-1);
-
-		control_event_add(value->o_session,
-		    value->o_session->handle->fd, EV_WRITE, NULL);
-		return (1);
-	}
 
 	if (value->o_flags & OID_TABLE) {
 		/* Get the next table row for this column */

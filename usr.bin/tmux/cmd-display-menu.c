@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-menu.c,v 1.18 2020/04/13 20:51:57 nicm Exp $ */
+/* $OpenBSD: cmd-display-menu.c,v 1.19 2020/05/16 15:24:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -313,7 +313,7 @@ cmd_display_popup_exec(struct cmd *self, struct cmdq_item *item)
 	else if (args_has(args, 'E'))
 		flags |= POPUP_CLOSEEXIT;
 	if (popup_display(flags, item, px, py, w, h, nlines, lines, shellcmd,
-	    cmd, cwd, tc, target) != 0)
+	    cmd, cwd, tc, target, NULL, NULL) != 0)
 		return (CMD_RETURN_NORMAL);
 	return (CMD_RETURN_WAIT);
 }

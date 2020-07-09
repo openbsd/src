@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid.c,v 1.4 2015/10/03 16:56:52 krw Exp $	*/
+/*	$OpenBSD: softraid.c,v 1.5 2020/06/08 19:17:12 kn Exp $	*/
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  *
@@ -91,4 +91,20 @@ sr_volume(int devfd, char *dev, int *vol, int *disks)
 		    dev, *disks);
 
 	return 1;
+}
+
+void
+sr_status(struct bio_status *bs)
+{
+	int	i;
+
+	for (i = 0; i < bs->bs_msg_count; i++)
+		warnx("%s", bs->bs_msgs[i].bm_msg);
+
+	if (bs->bs_status == BIO_STATUS_ERROR) {
+		if (bs->bs_msg_count == 0)
+			errx(1, "unknown error");
+		else
+			exit(1);
+	}
 }

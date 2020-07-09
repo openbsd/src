@@ -49,6 +49,19 @@ llist_add(struct llist_node *new, struct llist_head *head)
 	return (first == NULL);
 }
 
+static inline bool
+llist_add_batch(struct llist_node *new_first, struct llist_node *new_last,
+    struct llist_head *head)
+{
+	struct llist_node *first;
+
+	do {
+		new_last->next = first = head->first;
+	} while (atomic_cas_ptr(&head->first, first, new_first) != first);
+
+	return (first == NULL);
+}
+
 static inline void
 init_llist_head(struct llist_head *head)
 {
@@ -61,10 +74,21 @@ llist_empty(struct llist_head *head)
 	return (head->first == NULL);
 }
 
+#define llist_for_each_safe(pos, n, node)				\
+	for ((pos) = (node);						\
+	    (pos) != NULL &&						\
+	    ((n) = (pos)->next, pos);					\
+	    (pos) = (n))
+
 #define llist_for_each_entry_safe(pos, n, node, member) 		\
 	for (pos = llist_entry((node), __typeof(*pos), member); 	\
 	    pos != NULL &&						\
 	    (n = llist_entry(pos->member.next, __typeof(*pos), member), pos); \
 	    pos = n)
+
+#define llist_for_each_entry(pos, node, member)				\
+	for ((pos) = llist_entry((node), __typeof(*(pos)), member);	\
+	    (pos) != NULL;						\
+	    (pos) = llist_entry((pos)->member.next, __typeof(*(pos)), member))
 
 #endif

@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.188 2020/03/12 09:26:34 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.194 2020/06/18 08:34:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -45,11 +45,14 @@ struct clients		 clients;
 
 struct tmuxproc		*server_proc;
 static int		 server_fd = -1;
-static int		 server_client_flags;
+static uint64_t		 server_client_flags;
 static int		 server_exit;
 static struct event	 server_ev_accept;
 
 struct cmd_find_state	 marked_pane;
+
+static u_int		 message_next;
+struct message_list	 message_log;
 
 static int	server_loop(void);
 static void	server_send_exit(void);
@@ -158,29 +161,35 @@ server_start(struct tmuxproc *client, int flags, struct event_base *base,
 	struct client	*c;
 	char		*cause = NULL;
 
-	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pair) != 0)
-		fatal("socketpair failed");
-	server_client_flags = flags;
-
 	sigfillset(&set);
 	sigprocmask(SIG_BLOCK, &set, &oldset);
-	switch (fork()) {
-	case -1:
-		fatal("fork failed");
-	case 0:
-		break;
-	default:
-		sigprocmask(SIG_SETMASK, &oldset, NULL);
-		close(pair[1]);
-		return (pair[0]);
+
+	if (~flags & CLIENT_NOFORK) {
+		if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pair) != 0)
+			fatal("socketpair failed");
+
+		switch (fork()) {
+		case -1:
+			fatal("fork failed");
+		case 0:
+			break;
+		default:
+			sigprocmask(SIG_SETMASK, &oldset, NULL);
+			close(pair[1]);
+			return (pair[0]);
+		}
+		close(pair[0]);
+		if (daemon(1, 0) != 0)
+			fatal("daemon failed");
 	}
-	close(pair[0]);
-	if (daemon(1, 0) != 0)
-		fatal("daemon failed");
+
+	server_client_flags = flags;
 	proc_clear_signals(client, 0);
+
 	if (event_reinit(base) != 0)
 		fatalx("event_reinit failed");
 	server_proc = proc_start("server");
+
 	proc_set_signals(server_proc, server_signal);
 	sigprocmask(SIG_SETMASK, &oldset, NULL);
 
@@ -190,18 +199,23 @@ server_start(struct tmuxproc *client, int flags, struct event_base *base,
 	    "tty ps", NULL) != 0)
 		fatal("pledge failed");
 
+	input_key_build();
 	RB_INIT(&windows);
 	RB_INIT(&all_window_panes);
 	TAILQ_INIT(&clients);
 	RB_INIT(&sessions);
 	key_bindings_init();
+	TAILQ_INIT(&message_log);
 
 	gettimeofday(&start_time, NULL);
 
 	server_fd = server_create_socket(flags, &cause);
 	if (server_fd != -1)
 		server_update_socket();
-	c = server_client_create(pair[1]);
+	if (~flags & CLIENT_NOFORK)
+		c = server_client_create(pair[1]);
+	else
+		options_set_number(global_options, "exit-empty", 0);
 
 	if (lockfd >= 0) {
 		unlink(lockfile);
@@ -281,9 +295,8 @@ server_send_exit(void)
 		if (c->flags & CLIENT_SUSPENDED)
 			server_client_lost(c);
 		else {
-			if (c->flags & CLIENT_ATTACHED)
-				notify_client("client-detached", c);
-			proc_send(c->peer, MSG_SHUTDOWN, -1, NULL, 0);
+			c->flags |= CLIENT_EXIT;
+			c->exit_type = CLIENT_EXIT_SHUTDOWN;
 		}
 		c->session = NULL;
 	}
@@ -392,6 +405,7 @@ server_signal(int sig)
 
 	log_debug("%s: %s", __func__, strsignal(sig));
 	switch (sig) {
+	case SIGINT:
 	case SIGTERM:
 		server_exit = 1;
 		server_send_exit();
@@ -480,5 +494,37 @@ server_child_stopped(pid_t pid, int status)
 					kill(pid, SIGCONT);
 			}
 		}
+	}
+	job_check_died(pid, status);
+}
+
+/* Add to message log. */
+void
+server_add_message(const char *fmt, ...)
+{
+	struct message_entry	*msg, *msg1;
+	char			*s;
+	va_list			 ap;
+	u_int			 limit;
+
+	va_start(ap, fmt);
+	xvasprintf(&s, fmt, ap);
+	va_end(ap);
+
+	log_debug("message: %s", s);
+
+	msg = xcalloc(1, sizeof *msg);
+	gettimeofday(&msg->msg_time, NULL);
+	msg->msg_num = message_next++;
+	msg->msg = s;
+	TAILQ_INSERT_TAIL(&message_log, msg, entry);
+
+	limit = options_get_number(global_options, "message-limit");
+	TAILQ_FOREACH_SAFE(msg, &message_log, entry, msg1) {
+		if (msg->msg_num + limit >= message_next)
+			break;
+		free(msg->msg);
+		TAILQ_REMOVE(&message_log, msg, entry);
+		free(msg);
 	}
 }

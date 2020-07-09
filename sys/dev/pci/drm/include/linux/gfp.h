@@ -7,6 +7,8 @@
 #include <sys/malloc.h>
 #include <uvm/uvm_extern.h>
 
+#include <linux/mmzone.h>
+
 #define __GFP_ZERO		M_ZERO
 #define __GFP_DMA32		0x00010000
 #define __GFP_NOWARN		0

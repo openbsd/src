@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-send-keys.c,v 1.61 2020/04/14 13:22:05 nicm Exp $ */
+/* $OpenBSD: cmd-send-keys.c,v 1.65 2020/05/27 14:45:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -71,15 +71,13 @@ cmd_send_keys_inject_key(struct cmdq_item *item, struct cmdq_item *after,
 
 	wme = TAILQ_FIRST(&wp->modes);
 	if (wme == NULL || wme->mode->key_table == NULL) {
-		if (options_get_number(wp->window->options, "xterm-keys"))
-			key |= KEYC_XTERM;
 		if (window_pane_key(wp, tc, s, wl, key, NULL) != 0)
 			return (NULL);
 		return (item);
 	}
 	table = key_bindings_get_table(wme->mode->key_table(wme), 1);
 
-	bd = key_bindings_get(table, key & ~KEYC_XTERM);
+	bd = key_bindings_get(table, key & ~KEYC_MASK_FLAGS);
 	if (bd != NULL) {
 		table->references++;
 		after = key_bindings_dispatch(bd, after, tc, NULL, target);
@@ -93,8 +91,8 @@ cmd_send_keys_inject_string(struct cmdq_item *item, struct cmdq_item *after,
     struct args *args, int i)
 {
 	const char		*s = args->argv[i];
-	struct utf8_data	*ud, *uc;
-	wchar_t			 wc;
+	struct utf8_data	*ud, *loop;
+	utf8_char		 uc;
 	key_code		 key;
 	char			*endptr;
 	long			 n;
@@ -119,10 +117,15 @@ cmd_send_keys_inject_string(struct cmdq_item *item, struct cmdq_item *after,
 	}
 	if (literal) {
 		ud = utf8_fromcstr(s);
-		for (uc = ud; uc->size != 0; uc++) {
-			if (utf8_combine(uc, &wc) != UTF8_DONE)
-				continue;
-			after = cmd_send_keys_inject_key(item, after, wc);
+		for (loop = ud; loop->size != 0; loop++) {
+			if (loop->size == 1 && loop->data[0] <= 0x7f)
+				key = loop->data[0];
+			else {
+				if (utf8_from_data(loop, &uc) != UTF8_DONE)
+					continue;
+				key = uc;
+			}
+			after = cmd_send_keys_inject_key(item, after, key);
 		}
 		free(ud);
 	}

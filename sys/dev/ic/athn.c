@@ -1,4 +1,4 @@
-/*	$OpenBSD: athn.c,v 1.107 2020/04/29 13:13:29 stsp Exp $	*/
+/*	$OpenBSD: athn.c,v 1.108 2020/07/06 11:28:51 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1037,12 +1037,17 @@ athn_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	}
 
 	if (!(k->k_flags & IEEE80211_KEY_GROUP)) {
-		entry = IEEE80211_WEP_NKID + IEEE80211_AID(ni->ni_associd);
+#ifndef IEEE80211_STA_ONLY
+		if (ic->ic_opmode == IEEE80211_M_HOSTAP)
+			entry = IEEE80211_WEP_NKID + IEEE80211_AID(ni->ni_associd);
+		else
+#endif
+			entry = IEEE80211_WEP_NKID;
 		if (entry >= sc->kc_entries - IEEE80211_WEP_NKID)
 			return ENOSPC;
 	} else {
 		entry = k->k_id;
-		if (entry > IEEE80211_WEP_NKID)
+		if (entry >= IEEE80211_WEP_NKID)
 			return ENOSPC;
 	}
 	k->k_priv = (void *)entry;
@@ -3056,10 +3061,6 @@ athn_init(struct ifnet *ifp)
 	else
 		athn_config_pcie(sc);
 
-	/* Reset HW key cache entries. */
-	for (i = 0; i < sc->kc_entries; i++)
-		athn_reset_key(sc, i);
-
 	ops->enable_antenna_diversity(sc);
 
 #ifdef ATHN_BT_COEXISTENCE
@@ -3085,6 +3086,10 @@ athn_init(struct ifnet *ifp)
 
 	/* Enable Rx. */
 	athn_rx_start(sc);
+
+	/* Reset HW key cache entries. */
+	for (i = 0; i < sc->kc_entries; i++)
+		athn_reset_key(sc, i);
 
 	/* Enable interrupts. */
 	athn_enable_interrupts(sc);
@@ -3121,7 +3126,7 @@ athn_stop(struct ifnet *ifp, int disable)
 {
 	struct athn_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	int qid;
+	int qid, i;
 
 	ifp->if_timer = sc->sc_tx_timer = 0;
 	ifp->if_flags &= ~IFF_RUNNING;
@@ -3158,6 +3163,10 @@ athn_stop(struct ifnet *ifp, int disable)
 	AR_WRITE_BARRIER(sc);
 	athn_set_rxfilter(sc, 0);
 	athn_stop_rx_dma(sc);
+
+	/* Reset HW key cache entries. */
+	for (i = 0; i < sc->kc_entries; i++)
+		athn_reset_key(sc, i);
 
 	athn_reset(sc, 0);
 	athn_init_pll(sc, NULL);

@@ -1,4 +1,4 @@
-# $OpenBSD: services,v 1.96 2019/01/27 20:35:06 danj Exp $
+# $OpenBSD: services,v 1.97 2020/06/26 19:51:14 naddy Exp $
 #
 # Network services, Internet style
 # https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt
@@ -182,7 +182,6 @@ kerberos-adm	749/udp				# Kerberos 5 kadmin
 domain-s	853/tcp				# DNS query-response protocol run over TLS/DTLS
 domain-s	853/udp				# DNS query-response protocol run over TLS/DTLS
 rsync		873/tcp				# rsync server
-cddb		888/tcp		cddbp		# Audio CD Database
 imaps		993/tcp				# imap4 protocol over TLS/SSL
 imaps		993/udp				# imap4 protocol over TLS/SSL
 pop3s		995/tcp		spop3		# pop3 protocol over TLS/SSL

@@ -1,0 +1,107 @@
+.\" $OpenBSD: kstat_create.9,v 1.1 2020/07/06 11:48:03 dlg Exp $
+.\"
+.\" Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: July 6 2020 $
+.Dt KSTAT_CREATE 9
+.Os
+.Sh NAME
+.Nm kstat_create ,
+.\" .Nm kstat_set_wlock ,
+.\" .Nm kstat_set_rlock ,
+.\" .Nm kstat_set_mutex ,
+.Nm kstat_install ,
+.Nm kstat_destroy
+.Nd kernel statistics provider API
+.Sh SYNOPSIS
+.In sys/kstat.h
+.Ft struct kstat *
+.Fo kstatap_create
+.Fa "const char *provider"
+.Fa "unsigned int instance"
+.Fa "const char *name"
+.Fa "unsigned int unit"
+.Fa "unsigned int type"
+.Fa "unsigned int flags"
+.Fc
+.\" .Ft void
+.\" .Fn kstat_set_wlock "struct kstat *ks" "struct rwlock *rwl"
+.\" .Ft void
+.\" .Fn kstat_set_rlock "struct kstat *ks" "struct rwlock *rwl"
+.\" .Ft void
+.\" .Fn kstat_set_mutex "struct kstat *ks" "struct mutex *mtx"
+.Ft void
+.Fn kstat_install "struct kstat *ks"
+.Ft void
+.Fn kstat_destroy "struct kstat *ks"
+.Sh DESCRIPTION
+Kernel subsystems can export statistics to userland using the kernel
+statistics (kstat) API.
+.Pp
+The
+.Fn kstat_create
+function allocates a kstat structure and adds it to the list of statistics that userland can query.
+A kstat is uniquely identified by a tuple made up of the
+.Fa provider ,
+.Fa instances ,
+.Fa name ,
+and
+.Fa unit
+arguments.
+The type of information provided by the kstat is identified by the
+.Fa type
+argument.
+The supported kstat types are
+.Bl -tag -width xxx -offset indent
+.It Dv KSTAT_T_RAW
+The kstat provides raw bytes.
+.It Dv KSTAT_T_KV
+The kstat provides a series of
+.Vt struct kstat_kv
+structures that represent key/value information.
+See
+.Xr kstat_kv_init 9
+for more detail.
+.El
+.Pp
+Once a kstat structure has been created, the caller is responsible for initialising the structure.
+.Pp
+After the structure has been initialised,
+.Fn kstat_install
+notifies the kstat subsystem that the kstat structure
+.Fa ks
+can be used to export information to userland.
+.Pp
+.Fn kstat_destroy
+removes the
+.Fa ks
+ kstat structure from the list of exported statistics and frees it.
+.\" might want a kstat_remove...
+.Sh CONTEXT
+.Fn kstat_create ,
+.Fn kstat_install ,
+.\" .Fn kstat_set_wlock ,
+.\" .Fn kstat_set_rlock ,
+.\" .Fn kstat_set_mutex ,
+and
+.Fn kstat_destroy
+can be called during autoconf, or from process context.
+.Sh RETURN VALUES
+.Fn kstat_create
+returns a pointer to an kstat structure on success, of
+.Dv NULL
+on failure.
+.Sh SEE ALSO
+.Xr kstat_kv_init 9

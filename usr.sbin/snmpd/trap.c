@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.34 2019/12/09 16:51:10 martijn Exp $	*/
+/*	$OpenBSD: trap.c,v 1.35 2020/06/30 17:11:49 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -49,98 +49,6 @@ trap_init(void)
 	 * started and re-initialized.
 	 */
 	trap_send(&trapoid, NULL);
-}
-
-int
-trap_agentx(struct agentx_handle *h, struct agentx_pdu *pdu, int *idx,
-    char **varcpy, int *vcpylen)
-{
-	struct agentx_varbind_hdr	 vbhdr;
-	u_int32_t			 d;
-	struct ber_oid			 o, oid;
-	struct ber_oid			 uptime = OID(MIB_sysUpTime);
-	struct ber_oid			 trapoid = OID(MIB_snmpTrapOID);
-	struct ber_element		*varbind, *iter;
-	int				 x = 0, state = 0;
-	int				 ret = AGENTX_ERR_NONE;
-	int				 seensysuptime, seentrapoid;
-	size_t				 len = 0;
-	char				*v = NULL;
-
-	*varcpy = NULL;
-	varbind = NULL;
-	iter = NULL;
-	seensysuptime = seentrapoid = 0;
-
-	if (pdu->hdr->flags & AGENTX_NON_DEFAULT_CONTEXT) {
-		ret = AGENTX_ERR_UNSUPPORTED_CONTEXT;
-		goto done;
-	}
-
-	if ((v = malloc(pdu->hdr->length)) == NULL ||
-	    snmp_agentx_copy_raw(pdu, v, pdu->hdr->length) == -1) {
-		ret = AGENTX_ERR_PROCESSING_ERROR;
-		goto done;
-	}
-
-	smi_scalar_oidlen(&uptime);
-	smi_scalar_oidlen(&trapoid);
-	while (pdu->datalen > sizeof(struct agentx_hdr)) {
-		x++;
-
-		if (snmp_agentx_read_vbhdr(pdu, &vbhdr) == -1) {
-			ret = AGENTX_ERR_PARSE_ERROR;
-			goto done;
-		}
-
-		if (state < 2) {
-			if (snmp_agentx_read_oid(pdu, (struct snmp_oid *)&oid) == -1) {
-				ret = AGENTX_ERR_PARSE_ERROR;
-				goto done;
-			}
-			if (state == 0 && ober_oid_cmp(&oid, &uptime) == 0) {
-				if (snmp_agentx_read_int(pdu, &d) == -1) {
-					ret = AGENTX_ERR_PARSE_ERROR;
-					goto done;
-				}
-				state = 1;
-				continue;
-			} else if (ober_oid_cmp(&oid, &trapoid) == 0) {
-				if (snmp_agentx_read_oid(pdu,
-				    (struct snmp_oid *)&o) == -1) {
-					ret = AGENTX_ERR_PARSE_ERROR;
-					goto done;
-				}
-				state = 2;
-				continue;
-			} else {
-				ret = AGENTX_ERR_PROCESSING_ERROR;
-				goto done;
-			}
-		}
-
-		ret = varbind_convert(pdu, &vbhdr, &varbind, &iter);
-		if (ret != AGENTX_ERR_NONE)
-			goto done;
-	}
-
-	if (varbind != NULL)
-		len = ober_calc_len(varbind);
-	log_debug("trap_agentx: from packetid %d len %zu elements %d",
-	    pdu->hdr->packetid, len, x);
-
-	trap_send(&o, varbind);
-
-	*varcpy = v;
-	*vcpylen = pdu->hdr->length;
-
-	return (AGENTX_ERR_NONE);
- done:
-	if (varbind != NULL)
-		ober_free_elements(varbind);
-	free(v);
-	*idx = x;
-	return (ret);
 }
 
 int

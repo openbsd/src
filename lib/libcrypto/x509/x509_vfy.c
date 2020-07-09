@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.72 2019/03/06 05:06:58 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.73 2020/05/31 17:23:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -117,7 +117,8 @@
 
 static int null_callback(int ok, X509_STORE_CTX *e);
 static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer);
-static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x);
+static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x,
+    int allow_expired);
 static int check_chain_extensions(X509_STORE_CTX *ctx);
 static int check_name_constraints(X509_STORE_CTX *ctx);
 static int check_trust(X509_STORE_CTX *ctx);
@@ -324,7 +325,25 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 		}
 		/* If we were passed a cert chain, use it first */
 		if (ctx->untrusted != NULL) {
-			xtmp = find_issuer(ctx, sktmp, x);
+			/*
+			 * If we do not find a non-expired untrusted cert, peek
+			 * ahead and see if we can satisify this from the trusted
+			 * store. If not, see if we have an expired untrusted cert.
+			 */
+			xtmp = find_issuer(ctx, sktmp, x, 0);
+			if (xtmp == NULL &&
+			    !(ctx->param->flags & X509_V_FLAG_TRUSTED_FIRST)) {
+				ok = ctx->get_issuer(&xtmp, ctx, x);
+				if (ok < 0) {
+					ctx->error = X509_V_ERR_STORE_LOOKUP;
+					goto end;
+				}
+				if (ok > 0) {
+					X509_free(xtmp);
+					break;
+				}
+				xtmp = find_issuer(ctx, sktmp, x, 1);
+			}
 			if (xtmp != NULL) {
 				if (!sk_X509_push(ctx->chain, xtmp)) {
 					X509error(ERR_R_MALLOC_FAILURE);
@@ -562,7 +581,8 @@ X509_verify_cert(X509_STORE_CTX *ctx)
  */
 
 static X509 *
-find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x)
+find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x,
+    int allow_expired)
 {
 	int i;
 	X509 *issuer, *rv = NULL;
@@ -570,9 +590,10 @@ find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x)
 	for (i = 0; i < sk_X509_num(sk); i++) {
 		issuer = sk_X509_value(sk, i);
 		if (ctx->check_issued(ctx, x, issuer)) {
-			rv = issuer;
-			if (x509_check_cert_time(ctx, rv, -1))
-				break;
+			if (x509_check_cert_time(ctx, issuer, -1))
+				return issuer;
+			if (allow_expired)
+				rv = issuer;
 		}
 	}
 	return rv;
@@ -603,7 +624,7 @@ check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
 static int
 get_issuer_sk(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
 {
-	*issuer = find_issuer(ctx, ctx->other_ctx, x);
+	*issuer = find_issuer(ctx, ctx->other_ctx, x, 1);
 	if (*issuer) {
 		CRYPTO_add(&(*issuer)->references, 1, CRYPTO_LOCK_X509);
 		return 1;

@@ -21,15 +21,16 @@
  *
  */
 
-#include <drm/drmP.h>
-#include "radeon.h"
-#include "radeon_asic.h"
+#include <linux/math64.h>
+#include <linux/pci.h>
+#include <linux/seq_file.h>
+
+#include "atom.h"
+#include "ni_dpm.h"
 #include "nid.h"
 #include "r600_dpm.h"
-#include "ni_dpm.h"
-#include "atom.h"
-#include <linux/math64.h>
-#include <linux/seq_file.h>
+#include "radeon.h"
+#include "radeon_asic.h"
 
 #define MC_CG_ARB_FREQ_F0           0x0a
 #define MC_CG_ARB_FREQ_F1           0x0b
@@ -2126,7 +2127,7 @@ static int ni_init_smc_spll_table(struct radeon_device *rdev)
 		if (clk_s & ~(SMC_NISLANDS_SPLL_DIV_TABLE_CLKS_MASK >> SMC_NISLANDS_SPLL_DIV_TABLE_CLKS_SHIFT))
 			ret = -EINVAL;
 
-		if (clk_s & ~(SMC_NISLANDS_SPLL_DIV_TABLE_CLKS_MASK >> SMC_NISLANDS_SPLL_DIV_TABLE_CLKS_SHIFT))
+		if (fb_div & ~(SMC_NISLANDS_SPLL_DIV_TABLE_FBDIV_MASK >> SMC_NISLANDS_SPLL_DIV_TABLE_FBDIV_SHIFT))
 			ret = -EINVAL;
 
 		if (clk_v & ~(SMC_NISLANDS_SPLL_DIV_TABLE_CLKV_MASK >> SMC_NISLANDS_SPLL_DIV_TABLE_CLKV_SHIFT))

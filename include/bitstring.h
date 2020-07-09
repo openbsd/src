@@ -1,4 +1,4 @@
-/*	$OpenBSD: bitstring.h,v 1.5 2003/06/02 19:34:12 millert Exp $	*/
+/*	$OpenBSD: bitstring.h,v 1.6 2020/05/10 00:56:06 guenther Exp $	*/
 /*	$NetBSD: bitstring.h,v 1.5 1997/05/14 15:49:55 pk Exp $	*/
 
 /*
@@ -83,46 +83,46 @@ typedef	unsigned char bitstr_t;
 
 				/* clear bits start ... stop in bitstring */
 #define	bit_nclear(name, start, stop) do { \
-	register bitstr_t *_name = name; \
-	register int _start = start, _stop = stop; \
-	while (_start <= _stop) { \
-		bit_clear(_name, _start); \
-		_start++; \
+	register bitstr_t *__name = (name); \
+	register int __start = (start), __stop = (stop); \
+	while (__start <= __stop) { \
+		bit_clear(__name, __start); \
+		__start++; \
 		} \
 } while(0)
 
 				/* set bits start ... stop in bitstring */
 #define	bit_nset(name, start, stop) do { \
-	register bitstr_t *_name = name; \
-	register int _start = start, _stop = stop; \
-	while (_start <= _stop) { \
-		bit_set(_name, _start); \
-		_start++; \
+	register bitstr_t *__name = (name); \
+	register int __start = (start), __stop = (stop); \
+	while (__start <= __stop) { \
+		bit_set(__name, __start); \
+		__start++; \
 		} \
 } while(0)
 
 				/* find first bit clear in name */
 #define	bit_ffc(name, nbits, value) do { \
-	register bitstr_t *_name = name; \
-	register int _bit, _nbits = nbits, _value = -1; \
-	for (_bit = 0; _bit < _nbits; ++_bit) \
-		if (!bit_test(_name, _bit)) { \
-			_value = _bit; \
+	register bitstr_t *__name = (name); \
+	register int __bit, __nbits = (nbits), __value = -1; \
+	for (__bit = 0; __bit < __nbits; ++__bit) \
+		if (!bit_test(__name, __bit)) { \
+			__value = __bit; \
 			break; \
 		} \
-	*(value) = _value; \
+	*(value) = __value; \
 } while(0)
 
 				/* find first bit set in name */
 #define	bit_ffs(name, nbits, value) do { \
-	register bitstr_t *_name = name; \
-	register int _bit, _nbits = nbits, _value = -1; \
-	for (_bit = 0; _bit < _nbits; ++_bit) \
-		if (bit_test(_name, _bit)) { \
-			_value = _bit; \
+	register bitstr_t *__name = (name); \
+	register int __bit, __nbits = (nbits), __value = -1; \
+	for (__bit = 0; __bit < __nbits; ++__bit) \
+		if (bit_test(__name, __bit)) { \
+			__value = __bit; \
 			break; \
 		} \
-	*(value) = _value; \
+	*(value) = __value; \
 } while(0)
 
 #endif /* !_BITSTRING_H_ */

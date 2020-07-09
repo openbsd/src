@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls_ext_alpn.c,v 1.6 2019/01/18 00:55:15 jsing Exp $	*/
+/*	$OpenBSD: tls_ext_alpn.c,v 1.7 2020/07/03 04:14:10 tb Exp $	*/
 /*
  * Copyright (c) 2015 Doug Hogan <doug@openbsd.org>
  *
@@ -321,9 +321,9 @@ static uint8_t proto_invalid_missing9[] = {
 		int al;							\
 									\
 		CBS_init(&cbs, proto, sizeof(proto));			\
-		CHECK(c_val == tlsext_server_parse(s, &cbs, &al, SSL_TLSEXT_MSG_CH)); \
+		CHECK(c_val == tlsext_server_parse(s, SSL_TLSEXT_MSG_CH, &cbs, &al)); \
 		CBS_init(&cbs, proto, sizeof(proto));			\
-		CHECK(s_val == tlsext_client_parse(s, &cbs, &al, SSL_TLSEXT_MSG_SH)); \
+		CHECK(s_val == tlsext_client_parse(s, SSL_TLSEXT_MSG_SH, &cbs, &al)); \
 	}								\
 } while (0)
 

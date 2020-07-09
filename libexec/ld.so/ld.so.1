@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ld.so.1,v 1.23 2019/02/14 07:26:31 jmc Exp $
+.\"	$OpenBSD: ld.so.1,v 1.24 2020/05/08 10:57:50 jca Exp $
 .\"	$NetBSD: rtld.1,v 1.2 1995/10/08 23:43:28 pk Exp $
 .\"
 .\" Copyright (c) 1995 Paul Kranenburg
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 14 2019 $
+.Dd $Mdocdate: May 8 2020 $
 .Dt LD.SO 1
 .Os
 .Sh NAME
@@ -161,6 +161,7 @@ are recognised and have their usual meaning.
 When set, be verbose about what
 .Nm
 does.
+This variable is ignored for set-user-ID and set-group-ID executables.
 .El
 .Sh FILES
 .Bl -tag -width /var/run/ld.so.hintsXXX -compact

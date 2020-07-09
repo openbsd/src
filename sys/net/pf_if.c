@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.99 2019/11/18 03:23:41 dlg Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.100 2020/06/24 22:03:42 cheloha Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -121,7 +121,7 @@ pfi_kif_get(const char *kif_name)
 		return (NULL);
 
 	strlcpy(kif->pfik_name, kif_name, sizeof(kif->pfik_name));
-	kif->pfik_tzero = time_second;
+	kif->pfik_tzero = gettime();
 	TAILQ_INIT(&kif->pfik_dynaddrs);
 
 	if (!strcmp(kif->pfik_name, "any")) {
@@ -650,7 +650,7 @@ pfi_update_status(const char *name, struct pf_status *pfs)
 		RB_FOREACH(p, pfi_ifhead, &pfi_ifs) {
 			memset(p->pfik_packets, 0, sizeof(p->pfik_packets));
 			memset(p->pfik_bytes, 0, sizeof(p->pfik_bytes));
-			p->pfik_tzero = time_second;
+			p->pfik_tzero = gettime();
 		}
 		return;
 	}
@@ -683,7 +683,7 @@ pfi_update_status(const char *name, struct pf_status *pfs)
 		if (pfs == NULL) {
 			memset(p->pfik_packets, 0, sizeof(p->pfik_packets));
 			memset(p->pfik_bytes, 0, sizeof(p->pfik_bytes));
-			p->pfik_tzero = time_second;
+			p->pfik_tzero = gettime();
 			continue;
 		}
 		for (i = 0; i < 2; i++)
@@ -709,7 +709,7 @@ pfi_get_ifaces(const char *name, struct pfi_kif *buf, int *size)
 			continue;
 		if (*size > n++) {
 			if (!p->pfik_tzero)
-				p->pfik_tzero = time_second;
+				p->pfik_tzero = gettime();
 			pfi_kif_ref(p, PFI_KIF_REF_RULE);
 			if (copyout(p, buf++, sizeof(*buf))) {
 				pfi_kif_unref(p, PFI_KIF_REF_RULE);

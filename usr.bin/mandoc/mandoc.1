@@ -1,4 +1,4 @@
-.\" $OpenBSD: mandoc.1,v 1.167 2020/04/24 11:58:02 schwarze Exp $
+.\" $OpenBSD: mandoc.1,v 1.168 2020/06/15 18:05:25 schwarze Exp $
 .\"
 .\" Copyright (c) 2012, 2014-2020 Ingo Schwarze <schwarze@openbsd.org>
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 24 2020 $
+.Dd $Mdocdate: June 15 2020 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -410,6 +410,23 @@ The file
 is used for an external style-sheet.
 This must be a valid absolute or
 relative URI.
+.It Cm tag Ns Op = Ns Ar term
+Same syntax and semantics as for
+.Sx ASCII Output .
+This is implemented by passing a
+.Ic file://
+URI ending in a fragment identifier to the pager
+rather than passing merely a file name.
+When using this argument, use a pager supporting such URIs, for example
+.Bd -literal -offset 3n
+MANPAGER='lynx -force_html' man -T html -O tag=MANPAGER man
+MANPAGER='w3m -T text/html' man -T html -O tag=toc mandoc
+.Ed
+.Pp
+This argument does not work with
+.Xr more 1
+or
+.Xr less 1 .
 .It Cm toc
 If an input file contains at least two non-standard sections,
 print a table of contents near the beginning of the output.

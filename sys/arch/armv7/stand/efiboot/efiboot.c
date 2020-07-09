@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.29 2020/04/27 20:13:51 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.31 2020/05/17 14:32:12 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -327,22 +327,6 @@ efi_device_path_ncmp(EFI_DEVICE_PATH *dpa, EFI_DEVICE_PATH *dpb, int deptn)
 	return (0);
 }
 
-struct board_id {
-	const char *name;
-	uint32_t board_id;
-};
-
-struct board_id board_id_table[] = {
-	{ "arm,vexpress",			2272 },
-	{ "google,snow",			3774 },
-	{ "google,spring",			3774 },
-	{ "samsung,universal_c210",		2838 },
-	{ "ti,am335x-bone",			3589 },
-	{ "ti,omap3-beagle",			1546 },
-	{ "ti,omap3-beagle-xm",			1546 },
-	{ "ti,omap4-panda",			2791 },
-};
-
 void
 efi_framebuffer(void)
 {
@@ -474,11 +458,12 @@ static EFI_GUID fdt_guid = FDT_TABLE_GUID;
 #define	efi_guidcmp(_a, _b)	memcmp((_a), (_b), sizeof(EFI_GUID))
 
 void *
-efi_makebootargs(char *bootargs, uint32_t *board_id)
+efi_makebootargs(char *bootargs, int howto)
 {
 	u_char bootduid[8];
 	u_char zero[8] = { 0 };
 	uint64_t uefi_system_table = htobe64((uintptr_t)ST);
+	uint32_t boothowto = htobe32(howto);
 	void *node;
 	size_t len;
 	int i;
@@ -500,6 +485,8 @@ efi_makebootargs(char *bootargs, uint32_t *board_id)
 
 	len = strlen(bootargs) + 1;
 	fdt_node_add_property(node, "bootargs", bootargs, len);
+	fdt_node_add_property(node, "openbsd,boothowto",
+	    &boothowto, sizeof(boothowto));
 
 	/* Pass DUID of the boot disk. */
 	if (bootdev_dip) {
@@ -529,14 +516,6 @@ efi_makebootargs(char *bootargs, uint32_t *board_id)
 	efi_console();
 
 	fdt_finalize();
-
-	node = fdt_find_node("/");
-	for (i = 0; i < nitems(board_id_table); i++) {
-		if (fdt_node_is_compatible(node, board_id_table[i].name)) {
-			*board_id = board_id_table[i].board_id;
-			break;
-		}
-	}
 
 	return fdt;
 }

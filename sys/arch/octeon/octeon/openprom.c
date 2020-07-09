@@ -1,4 +1,4 @@
-/*	$OpenBSD: openprom.c,v 1.2 2016/07/05 13:41:46 visa Exp $	*/
+/*	$OpenBSD: openprom.c,v 1.3 2020/07/06 15:18:03 kettenis Exp $	*/
 /*	$NetBSD: openprom.c,v 1.4 2002/01/10 06:21:53 briggs Exp $ */
 
 /*
@@ -55,13 +55,11 @@
 
 #include <dev/ofw/openfirm.h>
 
-#define OPROMMAXPARAM		32
+static int lastnode;			/* speed hack */
+static int optionsnode;			/* node ID of ROM's options */
 
-static	int lastnode;			/* speed hack */
-static	int optionsnode;		/* node ID of ROM's options */
-
-static int openpromcheckid(int, int);
-static int openpromgetstr(int, char *, char **);
+int	openpromcheckid(int, int);
+int	openpromgetstr(int, char *, char **);
 void    openpromattach(int);
 
 void
@@ -115,15 +113,11 @@ int
 openpromioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
 	struct opiocdesc *op;
-	int node, len, ok, error, s;
+	int node, len, ok, error;
 	char *name, *value, *nextprop;
-	static char buf[32];	/* XXX */
 
-	if (optionsnode == 0) {
-		s = splhigh();
+	if (optionsnode == 0)
 		optionsnode = OF_getnodebyname(0, "options");
-		splx(s);
-	}
 
 	/* All too easy... */
 	if (cmd == OPIOCGETOPTNODE) {
@@ -136,9 +130,7 @@ openpromioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	node = op->op_nodeid;
 	if (node != 0 && node != lastnode && node != optionsnode) {
 		/* Not an easy one, must search for it */
-		s = splhigh();
 		ok = openpromcheckid(OF_peer(0), node);
-		splx(s);
 		if (!ok)
 			return (EINVAL);
 		lastnode = node;
@@ -156,10 +148,7 @@ openpromioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 		error = openpromgetstr(op->op_namelen, op->op_name, &name);
 		if (error)
 			break;
-		s = splhigh();
-		strlcpy(buf, name, 32);	/* XXX */
-		len = OF_getproplen(node, buf);
-		splx(s);
+		len = OF_getproplen(node, name);
 		if (len > op->op_buflen) {
 			error = ENOMEM;
 			break;
@@ -169,33 +158,9 @@ openpromioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 		if (len <= 0)
 			break;
 		value = malloc(len, M_TEMP, M_WAITOK);
-		s = splhigh();
-		strlcpy(buf, name, 32);	/* XXX */
-		OF_getprop(node, buf, value, len);
-		splx(s);
+		OF_getprop(node, name, value, len);
 		error = copyout(value, op->op_buf, len);
 		break;
-
-#if 0
-	case OPIOCSET:
-		if ((flags & FWRITE) == 0)
-			return (EBADF);
-		if (node == 0)
-			return (EINVAL);
-		error = openpromgetstr(op->op_namelen, op->op_name, &name);
-		if (error)
-			break;
-		error = openpromgetstr(op->op_buflen, op->op_buf, &value);
-		if (error)
-			break;
-		s = splhigh();
-		strlcpy(buf, name, 32);	/* XXX */
-		len = OF_setprop(node, buf, value, op->op_buflen + 1);
-		splx(s);
-		if (len != op->op_buflen)
-			error = EINVAL;
-		break;
-#endif
 
 	case OPIOCNEXTPROP:
 		if ((flags & FREAD) == 0)
@@ -209,16 +174,13 @@ openpromioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 			error = ENAMETOOLONG;
 			break;
 		}
-		value = nextprop = malloc(OPROMMAXPARAM, M_TEMP,
+		value = nextprop = malloc(OFMAXPARAM, M_TEMP,
 		    M_WAITOK | M_CANFAIL);
 		if (nextprop == NULL) {
 			error = ENOMEM;
 			break;
 		}
-		s = splhigh();
-		strlcpy(buf, name, 32);	/* XXX */
-		error = OF_nextprop(node, buf, nextprop);
-		splx(s);
+		error = OF_nextprop(node, name, nextprop);
 		if (error == -1) {
 			error = EINVAL;
 			break;
@@ -241,9 +203,7 @@ openpromioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	case OPIOCGETNEXT:
 		if ((flags & FREAD) == 0)
 			return (EBADF);
-		s = splhigh();
 		node = OF_peer(node);
-		splx(s);
 		*(int *)data = lastnode = node;
 		break;
 
@@ -252,9 +212,7 @@ openpromioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 			return (EBADF);
 		if (node == 0)
 			return (EINVAL);
-		s = splhigh();
 		node = OF_child(node);
-		splx(s);
 		*(int *)data = lastnode = node;
 		break;
 

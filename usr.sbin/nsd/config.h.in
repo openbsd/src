@@ -15,6 +15,9 @@
 /* Pathname to the NSD configuration file */
 #undef CONFIGFILE
 
+/* number of arguments for CPU_OR is three */
+#undef CPU_OR_THREE_ARGS
+
 /* Define this if on macOSX10.4-darwin8 and setreuid and setregid do not work
    */
 #undef DARWIN_BROKEN_SETREUID
@@ -73,11 +76,24 @@
 /* Define to 1 if you have the `clock_gettime' function. */
 #undef HAVE_CLOCK_GETTIME
 
+/* Define to 1 if the system has the type `cpuid_t'. */
+#undef HAVE_CPUID_T
+
+/* Define to 1 if the system has the type `cpuset_t'. */
+#undef HAVE_CPUSET_T
+
+/* Define to 1 if the system has the type `cpu_set_t'. */
+#undef HAVE_CPU_SET_T
+
 /* Define to 1 if you have the `CRYPTO_memcmp' function. */
 #undef HAVE_CRYPTO_MEMCMP
 
 /* if time.h provides ctime_r prototype */
 #undef HAVE_CTIME_R_PROTO
+
+/* Define to 1 if you have the declaration of `reallocarray', and to 0 if you
+   don't. */
+#undef HAVE_DECL_REALLOCARRAY
 
 /* Define to 1 if you have the declaration of `SSL_CTX_set_ecdh_auto', and to
    0 if you don't. */
@@ -152,6 +168,9 @@
 
 /* Define to 1 if you have the `getpwnam' function. */
 #undef HAVE_GETPWNAM
+
+/* Define to 1 if you have the `getrandom' function. */
+#undef HAVE_GETRANDOM
 
 /* Define to 1 if you have the `glob' function. */
 #undef HAVE_GLOB
@@ -265,8 +284,17 @@
 /* Define if recvmmsg is implemented */
 #undef HAVE_RECVMMSG
 
+/* Define to 1 if you have the <sched.h> header file. */
+#undef HAVE_SCHED_H
+
+/* Define this if sched_setaffinity is available */
+#undef HAVE_SCHED_SETAFFINITY
+
 /* Define if sendmmsg is implemented */
 #undef HAVE_SENDMMSG
+
+/* Define to 1 if you have the `setproctitle' function. */
+#undef HAVE_SETPROCTITLE
 
 /* Define to 1 if you have the `setregid' function. */
 #undef HAVE_SETREGID
@@ -364,17 +392,26 @@
 /* If time.h has a struct timespec (for pselect). */
 #undef HAVE_STRUCT_TIMESPEC
 
+/* Define to 1 if you have the `sysconf' function. */
+#undef HAVE_SYSCONF
+
 /* Define to 1 if you have the <syslog.h> header file. */
 #undef HAVE_SYSLOG_H
 
 /* Define to 1 if you have the <sys/bitypes.h> header file. */
 #undef HAVE_SYS_BITYPES_H
 
+/* Define to 1 if you have the <sys/cpuset.h> header file. */
+#undef HAVE_SYS_CPUSET_H
+
 /* Define to 1 if you have the <sys/mman.h> header file. */
 #undef HAVE_SYS_MMAN_H
 
 /* Define to 1 if you have the <sys/param.h> header file. */
 #undef HAVE_SYS_PARAM_H
+
+/* Define to 1 if you have the <sys/random.h> header file. */
+#undef HAVE_SYS_RANDOM_H
 
 /* Define to 1 if you have the <sys/select.h> header file. */
 #undef HAVE_SYS_SELECT_H
@@ -496,6 +533,9 @@
 
 /* Define this to set ratelimit to off by default. */
 #undef RATELIMIT_DEFAULT_OFF
+
+/* If reallocarray needs defines to appear in the headers */
+#undef REALLOCARRAY_NEEDS_DEFINES
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #undef RETSIGTYPE
@@ -707,7 +747,7 @@
 /* define before includes as it specifies what standard to use. */
 #if (defined(HAVE_PSELECT) && !defined (HAVE_PSELECT_PROTO)) \
 	|| !defined (HAVE_CTIME_R_PROTO) \
-	|| defined (STRPTIME_NEEDS_DEFINES)
+	|| defined (STRPTIME_NEEDS_DEFINES) || defined(REALLOCARRAY_NEEDS_DEFINES)
 #  ifndef _XOPEN_SOURCE
 #    define _XOPEN_SOURCE 600
 #  endif
@@ -725,7 +765,7 @@
 #  endif
 #  ifndef __EXTENSIONS__
 #    define __EXTENSIONS__ 1
-#  endif 
+#  endif
 #  ifndef _STDC_C99
 #    define _STDC_C99 1
 #  endif
@@ -877,12 +917,22 @@ void* reallocarray(void *ptr, size_t nmemb, size_t size);
 #endif
 #ifndef HAVE_STRPTIME
 #define HAVE_STRPTIME 1
-char *strptime(const char *s, const char *format, struct tm *tm); 
+char *strptime(const char *s, const char *format, struct tm *tm);
 #endif
 #ifndef STRPTIME_WORKS
 #define STRPTIME_WORKS 1
-char *nsd_strptime(const char *s, const char *format, struct tm *tm); 
+char *nsd_strptime(const char *s, const char *format, struct tm *tm);
 #define strptime(a,b,c) nsd_strptime((a),(b),(c))
+#endif
+#if (HAVE_CPU_SET_T || HAVE_CPUSET_T)
+#include "compat/cpuset.h"
+#endif
+#ifndef HAVE_SETPROCTITLE
+#ifdef __linux__
+#define HAVE_SETPROCTITLE 1
+#include <stdarg.h>
+void setproctitle(char *fmt, ...);
+#endif
 #endif
 
 

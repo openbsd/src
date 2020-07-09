@@ -8,5 +8,6 @@
 #define module_param_named(name, value, type, perm)
 #define module_param_named_unsafe(name, value, type, perm)
 #define module_param_unsafe(name, type, perm)
+#define module_param_string(name, string, len, perm)
 
 #endif

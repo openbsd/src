@@ -215,8 +215,8 @@ pipeline_find(struct xfrd_tcp_set* set, xfrd_zone_type* zone)
 	/* smaller buf than a full pipeline with 64kb ID array, only need
 	 * the front part with the key info, this front part contains the
 	 * members that the compare function uses. */
-	const size_t keysize = sizeof(struct xfrd_tcp_pipeline) -
-		ID_PIPE_NUM*(sizeof(struct xfrd_zone*) + sizeof(uint16_t));
+	enum { keysize = sizeof(struct xfrd_tcp_pipeline) -
+		ID_PIPE_NUM*(sizeof(struct xfrd_zone*) + sizeof(uint16_t)) };
 	/* void* type for alignment of the struct,
 	 * divide the keysize by ptr-size and then add one to round up */
 	void* buf[ (keysize / sizeof(void*)) + 1 ];

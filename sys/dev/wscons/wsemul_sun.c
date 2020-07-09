@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_sun.c,v 1.32 2015/08/28 00:03:53 deraadt Exp $ */
+/* $OpenBSD: wsemul_sun.c,v 1.34 2020/05/25 09:55:49 jsg Exp $ */
 /* $NetBSD: wsemul_sun.c,v 1.11 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -68,9 +68,9 @@
 #include <dev/wscons/ascii.h>
 
 void	*wsemul_sun_cnattach(const struct wsscreen_descr *, void *,
-    int, int, long);
+    int, int, uint32_t);
 void	*wsemul_sun_attach(int, const struct wsscreen_descr *,
-    void *, int, int, void *, long);
+    void *, int, int, void *, uint32_t);
 u_int	wsemul_sun_output(void *, const u_char *, u_int, int);
 int	wsemul_sun_translate(void *, kbd_t, keysym_t, const u_char **);
 void	wsemul_sun_detach(void *, u_int *, u_int *);
@@ -102,7 +102,7 @@ struct wsemul_sun_emuldata {
 	void *cbcookie;
 	int scrcapabilities;
 	u_int nrows, ncols, crow, ccol;
-	long defattr;			/* default attribute (rendition) */
+	uint32_t defattr;		/* default attribute (rendition) */
 
 	u_int state;			/* processing state */
 	u_int flags;
@@ -110,8 +110,8 @@ struct wsemul_sun_emuldata {
 	int nargs;			/* number of args */
 
 	u_int scrolldist;		/* distance to scroll */
-	long curattr, bkgdattr;		/* currently used attribute */
-	long kernattr;			/* attribute for kernel output */
+	uint32_t curattr, bkgdattr;	/* currently used attribute */
+	uint32_t kernattr;		/* attribute for kernel output */
 	int attrflags, fgcol, bgcol;	/* properties of curattr */
 
 	struct wsemul_inputstate instate;	/* userland input state */
@@ -129,7 +129,7 @@ struct wsemul_sun_emuldata {
 };
 
 void	wsemul_sun_init(struct wsemul_sun_emuldata *,
-	    const struct wsscreen_descr *, void *, int, int, long);
+	    const struct wsscreen_descr *, void *, int, int, uint32_t);
 int	wsemul_sun_jump_scroll(struct wsemul_sun_emuldata *, const u_char *,
 	    u_int, int);
 void	wsemul_sun_reset(struct wsemul_sun_emuldata *);
@@ -146,7 +146,7 @@ int	wsemul_sun_output_percent(struct wsemul_sun_emuldata *,
 int	wsemul_sun_control(struct wsemul_sun_emuldata *,
 	    struct wsemul_inputstate *);
 int	wsemul_sun_selectattribute(struct wsemul_sun_emuldata *, int, int, int,
-	    long *, long *);
+	    uint32_t *, uint32_t *);
 int	wsemul_sun_scrollup(struct wsemul_sun_emuldata *, u_int);
 
 struct wsemul_sun_emuldata wsemul_sun_console_emuldata;
@@ -161,7 +161,7 @@ struct wsemul_sun_emuldata wsemul_sun_console_emuldata;
 void
 wsemul_sun_init(struct wsemul_sun_emuldata *edp,
     const struct wsscreen_descr *type, void *cookie, int ccol, int crow,
-    long defattr)
+    uint32_t defattr)
 {
 	edp->emulops = type->textops;
 	edp->emulcookie = cookie;
@@ -192,7 +192,7 @@ wsemul_sun_reset(struct wsemul_sun_emuldata *edp)
 
 void *
 wsemul_sun_cnattach(const struct wsscreen_descr *type, void *cookie, int ccol,
-    int crow, long defattr)
+    int crow, uint32_t defattr)
 {
 	struct wsemul_sun_emuldata *edp;
 	int res;
@@ -213,12 +213,12 @@ wsemul_sun_cnattach(const struct wsscreen_descr *type, void *cookie, int ccol,
 #define WS_KERNEL_MONOATTR 0
 #endif
 	if (type->capabilities & WSSCREEN_WSCOLORS)
-		res = (*edp->emulops->alloc_attr)(cookie,
+		res = (*edp->emulops->pack_attr)(cookie,
 					    WS_KERNEL_FG, WS_KERNEL_BG,
 					    WS_KERNEL_COLATTR | WSATTR_WSCOLORS,
 					    &edp->kernattr);
 	else
-		res = (*edp->emulops->alloc_attr)(cookie, 0, 0,
+		res = (*edp->emulops->pack_attr)(cookie, 0, 0,
 					    WS_KERNEL_MONOATTR,
 					    &edp->kernattr);
 	if (res)
@@ -236,7 +236,7 @@ wsemul_sun_cnattach(const struct wsscreen_descr *type, void *cookie, int ccol,
 
 void *
 wsemul_sun_attach(int console, const struct wsscreen_descr *type, void *cookie,
-    int ccol, int crow, void *cbcookie, long defattr)
+    int ccol, int crow, void *cbcookie, uint32_t defattr)
 {
 	struct wsemul_sun_emuldata *edp;
 
@@ -402,7 +402,7 @@ wsemul_sun_control(struct wsemul_sun_emuldata *edp,
 {
 	u_int n, src, dst;
 	int flags, fgcol, bgcol;
-	long attr, bkgdattr;
+	uint32_t attr, bkgdattr;
 	int rc = 0;
 
 	switch (instate->inchar) {
@@ -884,7 +884,7 @@ wsemul_sun_jump_scroll(struct wsemul_sun_emuldata *edp, const u_char *data,
  */
 int
 wsemul_sun_selectattribute(struct wsemul_sun_emuldata *edp, int flags,
-    int fgcol, int bgcol, long *attr, long *bkgdattr)
+    int fgcol, int bgcol, uint32_t *attr, uint32_t *bkgdattr)
 {
 	int error;
 
@@ -899,7 +899,7 @@ wsemul_sun_selectattribute(struct wsemul_sun_emuldata *edp, int flags,
 		flags |= WSATTR_WSCOLORS;
 	}
 
-	error = (*edp->emulops->alloc_attr)(edp->emulcookie, fgcol, bgcol,
+	error = (*edp->emulops->pack_attr)(edp->emulcookie, fgcol, bgcol,
 					    flags & WSATTR_WSCOLORS, bkgdattr);
 	if (error)
 		return (error);
@@ -936,7 +936,7 @@ wsemul_sun_selectattribute(struct wsemul_sun_emuldata *edp, int flags,
 			flags |= WSATTR_WSCOLORS;
 		}
 	}
-	error = (*edp->emulops->alloc_attr)(edp->emulcookie, fgcol, bgcol,
+	error = (*edp->emulops->pack_attr)(edp->emulcookie, fgcol, bgcol,
 					    flags, attr);
 	if (error)
 		return (error);

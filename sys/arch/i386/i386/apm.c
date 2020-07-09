@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.123 2020/04/07 13:27:50 visa Exp $	*/
+/*	$OpenBSD: apm.c,v 1.125 2020/06/24 22:03:40 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -50,7 +50,6 @@
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/event.h>
-#include <dev/rndvar.h>
 
 #include <machine/conf.h>
 #include <machine/cpu.h>
@@ -271,7 +270,7 @@ apm_suspend(int state)
 	i8254_startclock();
 	if (initclock_func == i8254_initclocks)
 		rtcstart();		/* in i8254 mode, rtc is profclock */
-	inittodr(time_second);
+	inittodr(gettime());
 
 	config_suspend_all(DVACT_RESUME);
 	cold = 0;

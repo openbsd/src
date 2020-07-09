@@ -16,10 +16,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef HAVE_SCHED_H
+#include <sched.h>
+#endif /* HAVE_SCHED_H */
+#ifdef HAVE_SYS_CPUSET_H
+#include <sys/cpuset.h>
+#endif /* HAVE_SYS_CPUSET_H */
 #ifdef HAVE_SYSLOG_H
 #include <syslog.h>
 #endif /* HAVE_SYSLOG_H */
 #include <unistd.h>
+#ifdef HAVE_SYS_RANDOM_H
+#include <sys/random.h>
+#endif
 
 #include "util.h"
 #include "region-allocator.h"
@@ -260,9 +269,9 @@ xalloc(size_t size)
 
 void *
 xmallocarray(size_t num, size_t size)
-{  
+{
         void *result = reallocarray(NULL, num, size);
-   
+
         if (!result) {
                 log_msg(LOG_ERR, "reallocarray failed: %s", strerror(errno));
                 exit(1);
@@ -831,7 +840,7 @@ mktime_from_utc(const struct tm *tm)
    http://www.tsfr.org/~orc/Code/bsd/bsd-current/cksum/crc.c.
    or http://gobsd.com/code/freebsd/usr.bin/cksum/crc.c
    The polynomial is 0x04c11db7L. */
-static u_long crctab[] = {
+static uint32_t crctab[] = {
 	0x0,
 	0x04c11db7, 0x09823b6e, 0x0d4326d9, 0x130476dc, 0x17c56b6b,
 	0x1a864db2, 0x1e475005, 0x2608edb8, 0x22c9f00f, 0x2f8ad6d6,
@@ -923,8 +932,15 @@ compare_serial(uint32_t a, uint32_t b)
 uint16_t
 qid_generate(void)
 {
+#ifdef HAVE_GETRANDOM
+	uint16_t r;
+	if(getrandom(&r, sizeof(r), 0) == -1) {
+		log_msg(LOG_ERR, "getrandom failed: %s", strerror(errno));
+		exit(1);
+	}
+	return r;
+#elif defined(HAVE_ARC4RANDOM)
     /* arc4random_uniform not needed because range is a power of 2 */
-#ifdef HAVE_ARC4RANDOM
     return (uint16_t) arc4random();
 #else
     return (uint16_t) random();
@@ -934,9 +950,16 @@ qid_generate(void)
 int
 random_generate(int max)
 {
-#ifdef HAVE_ARC4RANDOM_UNIFORM
+#ifdef HAVE_GETRANDOM
+	int r;
+	if(getrandom(&r, sizeof(r), 0) == -1) {
+		log_msg(LOG_ERR, "getrandom failed: %s", strerror(errno));
+		exit(1);
+	}
+	return (int)(((unsigned)r)%max);
+#elif defined(HAVE_ARC4RANDOM_UNIFORM)
     return (int) arc4random_uniform(max);
-#elif HAVE_ARC4RANDOM
+#elif defined(HAVE_ARC4RANDOM)
     return (int) (arc4random() % max);
 #else
     return (int) ((unsigned)random() % max);
@@ -1149,3 +1172,41 @@ error(const char *format, ...)
 	exit(1);
 }
 
+#ifdef HAVE_CPUSET_T
+#if defined(HAVE_SYSCONF) && defined(_SC_NPROCESSORS_CONF)
+/* exists on Linux and FreeBSD */
+int number_of_cpus(void)
+{
+	return (int)sysconf(_SC_NPROCESSORS_CONF);
+}
+#else
+int number_of_cpus(void)
+{
+	return -1;
+}
+#endif
+#ifdef __gnu_hurd__
+/* HURD has no sched_setaffinity implementation, but links an always fail,
+ * with a linker error, we print an error when it is used */
+int set_cpu_affinity(cpuset_t *ATTR_UNUSED(set))
+{
+	log_err("sched_setaffinity: not available on this system");
+	return -1;
+}
+#elif defined(HAVE_SCHED_SETAFFINITY)
+/* Linux */
+int set_cpu_affinity(cpuset_t *set)
+{
+	assert(set != NULL);
+	return sched_setaffinity(getpid(), sizeof(*set), set);
+}
+#else
+/* FreeBSD */
+int set_cpu_affinity(cpuset_t *set)
+{
+	assert(set != NULL);
+	return cpuset_setaffinity(
+		CPU_LEVEL_WHICH, CPU_WHICH_PID, -1, sizeof(*set), set);
+}
+#endif
+#endif /* HAVE_CPUSET_T */

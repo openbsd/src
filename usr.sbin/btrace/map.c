@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.6 2020/04/15 16:59:04 mpi Exp $ */
+/*	$OpenBSD: map.c,v 1.7 2020/07/04 10:16:15 mpi Exp $ */
 
 /*
  * Copyright (c) 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -121,10 +121,9 @@ map_get(struct map *map, const char *key)
 }
 
 struct map *
-map_insert(struct map *map, const char *key, struct bt_arg *bval)
+map_insert(struct map *map, const char *key, struct bt_arg *bval, long val)
 {
 	struct mentry *mep;
-	long val;
 
 	if (map == NULL) {
 		map = calloc(1, sizeof(struct map));
@@ -138,6 +137,10 @@ map_insert(struct map *map, const char *key, struct bt_arg *bval)
 	case B_AT_LONG:
 		free(mep->mval);
 		mep->mval = bval;
+		break;
+	case B_AT_BI_RETVAL:
+		free(mep->mval);
+		mep->mval = ba_new(val, B_AT_LONG);
 		break;
 	case B_AT_MF_COUNT:
 		if (mep->mval == NULL)

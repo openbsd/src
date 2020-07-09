@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.268 2020/04/26 21:57:13 benno Exp $
+#	$OpenBSD: GENERIC,v 1.271 2020/06/23 23:35:39 dlg Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -17,7 +17,7 @@ option		PTRACE		# ptrace(2) system call
 #option		WITNESS		# witness(4) lock checker
 
 #option		KVA_GUARDPAGES	# slow virtual address recycling (+ guarding)
-#option		POOL_DEBUG	# pool corruption detection
+option		POOL_DEBUG	# pool corruption detection
 #option		VFSLCKDEBUG	# VFS locking checks
 
 option		CRYPTO		# Cryptographic framework
@@ -109,6 +109,7 @@ pseudo-device	vether		# Virtual ethernet
 pseudo-device	vxlan		# Virtual extensible LAN
 pseudo-device	vlan		# IEEE 802.1Q VLAN
 pseudo-device	switch		# Switch
+pseudo-device	wg		# WireGuard
 
 pseudo-device	bio	1	# ioctl multiplexing device
 

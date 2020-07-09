@@ -1,4 +1,4 @@
-/*	$OpenBSD: grdc.c,v 1.31 2019/06/28 13:32:52 deraadt Exp $	*/
+/*	$OpenBSD: grdc.c,v 1.33 2020/06/06 17:03:16 cheloha Exp $	*/
 /*
  *
  * Copyright 2002 Amos Shapir.  Public domain.
@@ -16,11 +16,11 @@
 #include <curses.h>
 #include <err.h>
 #include <limits.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
 #include <poll.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 
 #define XLENGTH 58
@@ -35,20 +35,27 @@ short disp[11] = {
 };
 long old[6], next[6], new[6], mask;
 
+volatile sig_atomic_t sigalrmed = 0;
 volatile sig_atomic_t sigtermed = 0;
 volatile sig_atomic_t sigwinched = 0;
 
 int hascolor = 0;
 
+void getwinsize(int *, int *);
 void set(int, int);
 void standt(int);
-void getwinsize(int *, int *);
-__dead void usage(void);
+void __dead usage(void);
+
+void
+sigalrm(int signo)
+{
+	sigalrmed = signo;
+}
 
 void
 sighndl(int signo)
 {
-	sigtermed=signo;
+	sigtermed = signo;
 }
 
 void
@@ -63,8 +70,8 @@ main(int argc, char *argv[])
 	long t, a;
 	int i, j, s, k, rv;
 	int scrol;
-	int n = 0;
-	struct timespec delay, end;
+	unsigned int n = 0;
+	struct timespec delay;
 	struct pollfd pfd;
 	const char *errstr;
 	long scroldelay = 50000000;
@@ -76,7 +83,7 @@ main(int argc, char *argv[])
 		err(1, "pledge");
 
 	scrol = wintoosmall = 0;
-	while ((i = getopt(argc, argv, "sh")) != -1)
+	while ((i = getopt(argc, argv, "sh")) != -1) {
 		switch (i) {
 		case 's':
 			scrol = 1;
@@ -85,13 +92,14 @@ main(int argc, char *argv[])
 		default:
 			usage();
 		}
+	}
 	argv += optind;
 	argc -= optind;
 
 	if (argc > 1)
 		usage();
 	if (argc == 1) {
-		n = strtonum(*argv, 1, INT_MAX, &errstr);
+		n = strtonum(*argv, 1, UINT_MAX, &errstr);
 		if (errstr) {
 			warnx("number of seconds is %s", errstr);
 			usage();
@@ -103,9 +111,9 @@ main(int argc, char *argv[])
 	if (pledge("stdio tty", NULL) == -1)
 		err(1, "pledge");
 
-	signal(SIGINT,sighndl);
-	signal(SIGTERM,sighndl);
-	signal(SIGHUP,sighndl);
+	signal(SIGINT, sighndl);
+	signal(SIGTERM, sighndl);
+	signal(SIGHUP, sighndl);
 	signal(SIGWINCH, sigresize);
 	signal(SIGCONT, sigresize);	/* for resizes during suspend */
 
@@ -117,7 +125,7 @@ main(int argc, char *argv[])
 
 	hascolor = has_colors();
 
-	if(hascolor) {
+	if (hascolor) {
 		start_color();
 		init_pair(1, COLOR_BLACK, COLOR_RED);
 		init_pair(2, COLOR_RED, COLOR_BLACK);
@@ -129,8 +137,10 @@ main(int argc, char *argv[])
 	sigwinched = 1;	/* force initial sizing */
 
 	clock_gettime(CLOCK_REALTIME, &now);
-	if (n)
-		end.tv_sec = now.tv_sec + n - 1;
+	if (n) {
+		signal(SIGALRM, sigalrm);
+		alarm(n);
+	}
 	do {
 		if (sigwinched) {
 			sigwinched = 0;
@@ -150,18 +160,18 @@ main(int argc, char *argv[])
 			if (hascolor && !wintoosmall) {
 				attrset(COLOR_PAIR(3));
 
-				mvaddch(ybase - 1,  xbase - 1, ACS_ULCORNER);
+				mvaddch(ybase - 1, xbase - 1, ACS_ULCORNER);
 				hline(ACS_HLINE, XLENGTH);
-				mvaddch(ybase - 1,  xbase + XLENGTH, ACS_URCORNER);
+				mvaddch(ybase - 1, xbase + XLENGTH, ACS_URCORNER);
 
-				mvaddch(ybase + YDEPTH,  xbase - 1, ACS_LLCORNER);
+				mvaddch(ybase + YDEPTH, xbase - 1, ACS_LLCORNER);
 				hline(ACS_HLINE, XLENGTH);
-				mvaddch(ybase + YDEPTH,  xbase + XLENGTH, ACS_LRCORNER);
+				mvaddch(ybase + YDEPTH, xbase + XLENGTH, ACS_LRCORNER);
 
-				move(ybase,  xbase - 1);
+				move(ybase, xbase - 1);
 				vline(ACS_VLINE, YDEPTH);
 
-				move(ybase,  xbase + XLENGTH);
+				move(ybase, xbase + XLENGTH);
 				vline(ACS_VLINE, YDEPTH);
 
 				attrset(COLOR_PAIR(2));
@@ -171,12 +181,12 @@ main(int argc, char *argv[])
 		}
 		mask = 0;
 		tm = localtime(&now.tv_sec);
-		set(tm->tm_sec%10, 0);
-		set(tm->tm_sec/10, 4);
-		set(tm->tm_min%10, 10);
-		set(tm->tm_min/10, 14);
-		set(tm->tm_hour%10, 20);
-		set(tm->tm_hour/10, 24);
+		set(tm->tm_sec % 10, 0);
+		set(tm->tm_sec / 10, 4);
+		set(tm->tm_min % 10, 10);
+		set(tm->tm_min / 10, 14);
+		set(tm->tm_hour % 10, 20);
+		set(tm->tm_hour / 10, 24);
 		set(10, 7);
 		set(10, 17);
 		if (wintoosmall) {
@@ -184,31 +194,31 @@ main(int argc, char *argv[])
 			printw("%02d:%02d:%02d", tm->tm_hour, tm->tm_min,
 			    tm->tm_sec);
 		} else for (k = 0; k < 6; k++) {
-			if(scrol) {
-				for(i=0; i<5; i++)
-					new[i] = (new[i]&~mask) | (new[i+1]&mask);
-				new[5] = (new[5]&~mask) | (next[k]&mask);
+			if (scrol) {
+				for(i = 0; i < 5; i++)
+					new[i] = (new[i] & ~mask) | (new[i + 1] & mask);
+				new[5] = (new[5] & ~mask) | (next[k] & mask);
 			} else
-				new[k] = (new[k]&~mask) | (next[k]&mask);
+				new[k] = (new[k] & ~mask) | (next[k] & mask);
 			next[k] = 0;
-			for(s=1; s>=0; s--) {
+			for (s = 1; s >= 0; s--) {
 				standt(s);
-				for(i=0; i<6; i++) {
-					if((a = (new[i]^old[i])&(s ? new : old)[i]) != 0) {
-						for(j=0,t=1<<26; t; t>>=1,j++) {
-							if(a&t) {
-								if(!(a&(t<<1))) {
-									move(ybase + i+1, xbase + 2*(j+1));
+				for (i = 0; i < 6; i++) {
+					if ((a = (new[i] ^ old[i]) & (s ? new : old)[i]) != 0) {
+						for (j = 0, t = 1 << 26; t; t >>= 1, j++) {
+							if (a & t) {
+								if (!(a & (t << 1))) {
+									move(ybase + i + 1, xbase + 2 * (j + 1));
 								}
 								addstr("  ");
 							}
 						}
 					}
-					if(!s) {
+					if (!s) {
 						old[i] = new[i];
 					}
 				}
-				if(!s) {
+				if (!s) {
 					refresh();
 				}
 			}
@@ -216,7 +226,7 @@ main(int argc, char *argv[])
 				clock_gettime(CLOCK_REALTIME, &now);
 				delay.tv_sec = 0;
 				delay.tv_nsec = 1000000000 - now.tv_nsec
-				    - (4-k) * scroldelay;
+				    - (4 - k) * scroldelay;
 				if (delay.tv_nsec <= scroldelay &&
 				    delay.tv_nsec > 0)
 					nanosleep(&delay, NULL);
@@ -234,10 +244,8 @@ main(int argc, char *argv[])
 		if (rv == 1) {
 			char q = 0;
 			read(STDIN_FILENO, &q, 1);
-			if (q == 'q') {
-				n = 1;
-				end.tv_sec = now.tv_sec;
-			}
+			if (q == 'q')
+				sigalrmed = 1;
 		}
 		now.tv_sec++;
 
@@ -248,7 +256,7 @@ main(int argc, char *argv[])
 			endwin();
 			errx(1, "terminated by signal %d", sigtermed);
 		}
-	} while (n == 0 || now.tv_sec < end.tv_sec);
+	} while (!sigalrmed);
 	standend();
 	clear();
 	refresh();
@@ -261,12 +269,12 @@ set(int t, int n)
 {
 	int i, m;
 
-	m = 7<<n;
-	for(i=0; i<5; i++) {
-		next[i] |= ((disp[t]>>(4-i)*3)&07)<<n;
-		mask |= (next[i]^old[i])&m;
+	m = 7 << n;
+	for (i = 0; i < 5; i++) {
+		next[i] |= ((disp[t] >> (4 - i) * 3) & 07) << n;
+		mask |= (next[i] ^ old[i]) & m;
 	}
-	if(mask&m)
+	if (mask & m)
 		mask |= m;
 }
 
@@ -274,13 +282,13 @@ void
 standt(int on)
 {
 	if (on) {
-		if(hascolor) {
+		if (hascolor) {
 			attron(COLOR_PAIR(1));
 		} else {
 			attron(A_STANDOUT);
 		}
 	} else {
-		if(hascolor) {
+		if (hascolor) {
 			attron(COLOR_PAIR(2));
 		} else {
 			attroff(A_STANDOUT);
@@ -302,9 +310,9 @@ getwinsize(int *wid, int *ht)
 	}
 }
 
-void
+void __dead
 usage(void)
 {
-	(void)fprintf(stderr, "usage: %s [-s] [number]\n", getprogname());
+	fprintf(stderr, "usage: %s [-s] [number]\n", getprogname());
 	exit(1);
 }

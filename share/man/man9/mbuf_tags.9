@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mbuf_tags.9,v 1.39 2017/05/30 12:24:43 jmc Exp $
+.\"	$OpenBSD: mbuf_tags.9,v 1.41 2020/06/21 15:25:30 jmc Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -15,7 +15,7 @@
 .\" MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
 .\" PURPOSE.
 .\"
-.Dd $Mdocdate: May 30 2017 $
+.Dd $Mdocdate: June 21 2020 $
 .Dt M_TAG_GET 9
 .Os
 .Sh NAME
@@ -122,12 +122,11 @@ The tag contains a
 identifying the security association applied to the packet.
 This tag is primarily used to detect and avoid loops in IPsec
 processing on output.
-.It PACKET_TAG_GIF
+.It PACKET_TAG_WIREGUARD
 Used by the
-.Xr gif 4
+.Xr wg 4
 interface to detect loops in processing.
-The tag contains a pointer to the gif interface that already processed
-the packet.
+The tag contains a pointer to the wg peer that already processed the packet.
 .It PACKET_TAG_GRE
 Used by the
 .Xr gre 4

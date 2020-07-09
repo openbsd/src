@@ -28,7 +28,6 @@
 #define _TTM_TT_H_
 
 #include <linux/types.h>
-#include <drm/drmP.h>
 
 struct ttm_tt;
 struct ttm_mem_reg;
@@ -253,6 +252,7 @@ int ttm_tt_populate(struct ttm_tt *ttm, struct ttm_operation_ctx *ctx);
 void ttm_tt_unpopulate(struct ttm_tt *ttm);
 
 #if IS_ENABLED(CONFIG_AGP)
+#include <linux/agp_backend.h>
 
 /**
  * ttm_agp_tt_create

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_smsc.c,v 1.34 2020/04/08 09:49:32 kettenis Exp $	*/
+/*	$OpenBSD: if_smsc.c,v 1.35 2020/06/09 07:43:39 gerhard Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
 /*-
  * Copyright (c) 2012
@@ -649,16 +649,15 @@ smsc_start(struct ifnet *ifp)
 		return;
 	}
 
-	m_head = ifq_deq_begin(&ifp->if_snd);
+	m_head = ifq_dequeue(&ifp->if_snd);
 	if (m_head == NULL)
 		return;
 
 	if (smsc_encap(sc, m_head, 0)) {
-		ifq_deq_rollback(&ifp->if_snd, m_head);
+		m_freem(m_head);
 		ifq_set_oactive(&ifp->if_snd);
 		return;
 	}
-	ifq_deq_commit(&ifp->if_snd, m_head);
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf)
@@ -1400,6 +1399,7 @@ smsc_encap(struct smsc_softc *sc, struct mbuf *m, int idx)
 
 	err = usbd_transfer(c->sc_xfer);
 	if (err != USBD_IN_PROGRESS) {
+		c->sc_mbuf = NULL;
 		smsc_stop(sc);
 		return (EIO);
 	}

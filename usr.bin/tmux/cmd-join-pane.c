@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-join-pane.c,v 1.44 2020/04/22 21:15:33 nicm Exp $ */
+/* $OpenBSD: cmd-join-pane.c,v 1.46 2020/07/04 14:24:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 George Nachman <tmux@georgester.com>
@@ -136,6 +136,7 @@ cmd_join_pane_exec(struct cmd *self, struct cmdq_item *item)
 
 	layout_close_pane(src_wp);
 
+	server_client_remove_pane(src_wp);
 	window_lost_pane(src_w, src_wp);
 	TAILQ_REMOVE(&src_w->panes, src_wp, entry);
 
@@ -159,7 +160,7 @@ cmd_join_pane_exec(struct cmd *self, struct cmdq_item *item)
 		server_status_session(dst_s);
 
 	if (window_count_panes(src_w) == 0)
-		server_kill_window(src_w);
+		server_kill_window(src_w, 1);
 	else
 		notify_window("window-layout-changed", src_w);
 	notify_window("window-layout-changed", dst_w);

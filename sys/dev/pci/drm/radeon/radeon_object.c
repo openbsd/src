@@ -29,14 +29,17 @@
  *    Thomas Hellstrom <thomas-at-tungstengraphics-dot-com>
  *    Dave Airlie
  */
+
+#include <linux/io.h>
 #include <linux/list.h>
 #include <linux/slab.h>
-#include <drm/drmP.h>
-#include <drm/radeon_drm.h>
+
 #include <drm/drm_cache.h>
+#include <drm/drm_prime.h>
+#include <drm/radeon_drm.h>
+
 #include "radeon.h"
 #include "radeon_trace.h"
-
 
 int radeon_ttm_init(struct radeon_device *rdev);
 void radeon_ttm_fini(struct radeon_device *rdev);
@@ -82,11 +85,9 @@ static void radeon_ttm_bo_destroy(struct ttm_buffer_object *tbo)
 	mutex_unlock(&bo->rdev->gem.mutex);
 	radeon_bo_clear_surface_reg(bo);
 	WARN_ON_ONCE(!list_empty(&bo->va));
-#ifdef notyet
-	if (bo->gem_base.import_attach)
-		drm_prime_gem_destroy(&bo->gem_base, bo->tbo.sg);
-#endif
-	drm_gem_object_release(&bo->gem_base);
+	if (bo->tbo.base.import_attach)
+		drm_prime_gem_destroy(&bo->tbo.base, bo->tbo.sg);
+	drm_gem_object_release(&bo->tbo.base);
 	pool_put(&bo->rdev->ddev->objpl, bo);
 }
 
@@ -182,7 +183,7 @@ void radeon_ttm_placement_from_domain(struct radeon_bo *rbo, u32 domain)
 int radeon_bo_create(struct radeon_device *rdev,
 		     unsigned long size, int byte_align, bool kernel,
 		     u32 domain, u32 flags, struct sg_table *sg,
-		     struct reservation_object *resv,
+		     struct dma_resv *resv,
 		     struct radeon_bo **bo_ptr)
 {
 	struct radeon_bo *bo;
@@ -191,7 +192,7 @@ int radeon_bo_create(struct radeon_device *rdev,
 	size_t acc_size;
 	int r;
 
-	size = PAGE_ALIGN(size);
+	size = roundup2(size, PAGE_SIZE);
 
 	if (kernel) {
 		type = ttm_bo_type_kernel;
@@ -208,7 +209,7 @@ int radeon_bo_create(struct radeon_device *rdev,
 	bo = pool_get(&rdev->ddev->objpl, PR_WAITOK | PR_ZERO);
 	if (bo == NULL)
 		return -ENOMEM;
-	drm_gem_private_object_init(rdev->ddev, &bo->gem_base, size);
+	drm_gem_private_object_init(rdev->ddev, &bo->tbo.base, size);
 	bo->rdev = rdev;
 	bo->surface_reg = -1;
 	INIT_LIST_HEAD(&bo->list);
@@ -316,11 +317,9 @@ struct radeon_bo *radeon_bo_ref(struct radeon_bo *bo)
 void radeon_bo_unref(struct radeon_bo **bo)
 {
 	struct ttm_buffer_object *tbo;
-	struct radeon_device *rdev;
 
 	if ((*bo) == NULL)
 		return;
-	rdev = (*bo)->rdev;
 	tbo = &((*bo)->tbo);
 	ttm_bo_put(tbo);
 	*bo = NULL;
@@ -423,11 +422,13 @@ int radeon_bo_unpin(struct radeon_bo *bo)
 int radeon_bo_evict_vram(struct radeon_device *rdev)
 {
 	/* late 2.6.33 fix IGP hibernate - we need pm ops to do this correct */
-	if (0 && (rdev->flags & RADEON_IS_IGP)) {
+#ifndef CONFIG_HIBERNATION
+	if (rdev->flags & RADEON_IS_IGP) {
 		if (rdev->mc.igp_sideport_enabled == false)
 			/* Useless to evict on IGP chips */
 			return 0;
 	}
+#endif
 	return ttm_bo_evict_mm(&rdev->mman.bdev, TTM_PL_VRAM);
 }
 
@@ -441,13 +442,13 @@ void radeon_bo_force_delete(struct radeon_device *rdev)
 	dev_err(rdev->dev, "Userspace still has active objects !\n");
 	list_for_each_entry_safe(bo, n, &rdev->gem.objects, list) {
 		dev_err(rdev->dev, "%p %p %lu %lu force free\n",
-			&bo->gem_base, bo, (unsigned long)bo->gem_base.size,
-			*((unsigned long *)&bo->gem_base.refcount));
+			&bo->tbo.base, bo, (unsigned long)bo->tbo.base.size,
+			*((unsigned long *)&bo->tbo.base.refcount));
 		mutex_lock(&bo->rdev->gem.mutex);
 		list_del_init(&bo->list);
 		mutex_unlock(&bo->rdev->gem.mutex);
 		/* this should unref the ttm bo */
-		drm_gem_object_put_unlocked(&bo->gem_base);
+		drm_gem_object_put_unlocked(&bo->tbo.base);
 	}
 }
 
@@ -628,9 +629,7 @@ int radeon_bo_get_surface_reg(struct radeon_bo *bo)
 	int steal;
 	int i;
 
-#ifdef notyet
-	lockdep_assert_held(&bo->tbo.resv->lock.base);
-#endif
+	dma_resv_assert_held(bo->tbo.base.resv);
 
 	if (!bo->tiling_flags)
 		return 0;
@@ -756,9 +755,7 @@ void radeon_bo_get_tiling_flags(struct radeon_bo *bo,
 				uint32_t *tiling_flags,
 				uint32_t *pitch)
 {
-#ifdef notyet
-	lockdep_assert_held(&bo->tbo.resv->lock.base);
-#endif
+	dma_resv_assert_held(bo->tbo.base.resv);
 
 	if (tiling_flags)
 		*tiling_flags = bo->tiling_flags;
@@ -769,10 +766,8 @@ void radeon_bo_get_tiling_flags(struct radeon_bo *bo,
 int radeon_bo_check_tiling(struct radeon_bo *bo, bool has_moved,
 				bool force_drop)
 {
-#ifdef notyet
 	if (!force_drop)
-		lockdep_assert_held(&bo->tbo.resv->lock.base);
-#endif
+		dma_resv_assert_held(bo->tbo.base.resv);
 
 	if (!(bo->tiling_flags & RADEON_TILING_SURFACE))
 		return 0;
@@ -894,10 +889,10 @@ int radeon_bo_wait(struct radeon_bo *bo, u32 *mem_type, bool no_wait)
 void radeon_bo_fence(struct radeon_bo *bo, struct radeon_fence *fence,
 		     bool shared)
 {
-	struct reservation_object *resv = bo->tbo.resv;
+	struct dma_resv *resv = bo->tbo.base.resv;
 
 	if (shared)
-		reservation_object_add_shared_fence(resv, &fence->base);
+		dma_resv_add_shared_fence(resv, &fence->base);
 	else
-		reservation_object_add_excl_fence(resv, &fence->base);
+		dma_resv_add_excl_fence(resv, &fence->base);
 }

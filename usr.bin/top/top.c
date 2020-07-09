@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.102 2020/01/06 20:05:10 zhuk Exp $	*/
+/*	$OpenBSD: top.c,v 1.103 2020/06/25 20:38:41 kn Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -569,8 +569,7 @@ restart:
 			 */
 			if (skip + active_procs > system_info.p_active)
 				skip = system_info.p_active - active_procs;
-			for (i = skip; i > 0; i--)
-				skip_next_process(processes);
+			skip_processes(processes, skip);
 			/* now show the top "n" processes. */
 			for (i = 0; i < active_procs; i++) {
 				pid_t pid;

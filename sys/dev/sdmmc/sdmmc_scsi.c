@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.46 2020/02/20 16:26:01 krw Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.47 2020/07/03 13:31:47 krw Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -146,7 +146,7 @@ sdmmc_scsi_attach(struct sdmmc_softc *sc)
 	scbus->sc_link.pool = &scbus->sc_iopool;
 
 	bzero(&saa, sizeof(saa));
-	saa.scsi_link = &scbus->sc_link;
+	saa.saa.saa_sc_link = &scbus->sc_link;
 
 	scbus->sc_child = config_found(&sc->sc_dev, &saa, scsiprint);
 	if (scbus->sc_child == NULL) {

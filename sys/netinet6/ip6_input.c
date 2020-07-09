@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.225 2020/04/12 11:56:53 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.226 2020/05/06 07:08:53 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1142,11 +1142,17 @@ ip6_pullexthdr(struct mbuf *m, size_t off, int nxt)
 	}
 #endif
 
+	if (off + sizeof(ip6e) > m->m_pkthdr.len)
+		return NULL;
+
 	m_copydata(m, off, sizeof(ip6e), (caddr_t)&ip6e);
 	if (nxt == IPPROTO_AH)
 		elen = (ip6e.ip6e_len + 2) << 2;
 	else
 		elen = (ip6e.ip6e_len + 1) << 3;
+
+	if (off + elen > m->m_pkthdr.len)
+		return NULL;
 
 	MGET(n, M_DONTWAIT, MT_DATA);
 	if (n && elen >= MLEN) {

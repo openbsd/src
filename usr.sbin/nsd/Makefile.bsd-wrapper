@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.16 2019/12/21 21:40:01 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.17 2020/06/02 14:41:37 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -28,16 +28,10 @@ PROG=	nsd nsd-checkconf nsd-checkzone nsd-control
 
 MAN=	nsd.8 nsd-checkconf.8 nsd-checkzone.8 nsd-control.8 nsd.conf.5
 
-all:	gnu
+all:	config.status
+	exec ${MAKE}
 
-.ifndef NOMAN
-${MANALL} ${PSALL}: ${MAN}
-
-${MAN}:	gnu
-.endif
-
-gnu:	config.status
-	${MAKE}
+${MAN}:	config.status
 
 .FORCE: .IGNORE
 
@@ -66,8 +60,6 @@ install: maninstall
 	${INSTALL} ${INSTALL_COPY} \
 		-o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 		nsd-control-setup.sh  ${DESTDIR}${BINDIR}/nsd-control-setup
-
-BEFOREMAN= config.status
 
 clean cleandir:
 	-@if [ -e Makefile ]; then ${MAKE} realclean; fi

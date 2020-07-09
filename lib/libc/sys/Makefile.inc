@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.158 2019/11/27 19:45:24 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.159 2020/07/06 13:33:06 pirofti Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -12,7 +12,8 @@ SRCS+=	Ovfork.S brk.S ${CERROR} \
 
 # glue to offer userland wrappers for some syscalls
 SRCS+=	posix_madvise.c pthread_sigmask.c \
-	w_fork.c w_sigaction.c w_sigprocmask.c w_sigsuspend.c w_vfork.c
+	w_fork.c w_sigaction.c w_sigprocmask.c w_sigsuspend.c w_vfork.c \
+	w_clock_gettime.c w_gettimeofday.c microtime.c
 
 # glue for compat with old syscall interfaces.
 SRCS+=	ftruncate.c lseek.c mquery.c mmap.c ptrace.c semctl.c truncate.c \
@@ -43,7 +44,7 @@ SRCS+=	${CANCEL:%=w_%.c} w_pread.c w_preadv.c w_pwrite.c w_pwritev.c
 ASM=	__semctl.o __syscall.o __thrsigdivert.o \
 	access.o acct.o adjfreq.o adjtime.o \
 	bind.o chdir.o chflags.o chflagsat.o chmod.o chown.o chroot.o \
-	clock_getres.o clock_gettime.o clock_settime.o \
+	clock_getres.o clock_settime.o \
 	dup.o dup2.o dup3.o \
 	execve.o \
 	faccessat.o fchdir.o fchflags.o fchmod.o fchmodat.o fchown.o \
@@ -54,7 +55,7 @@ ASM=	__semctl.o __syscall.o __thrsigdivert.o \
 	getgroups.o getitimer.o getpeername.o getpgid.o \
 	getpriority.o getresgid.o getresuid.o \
 	getrlimit.o getrusage.o getsid.o getsockname.o \
-	getsockopt.o gettimeofday.o ioctl.o \
+	getsockopt.o ioctl.o \
 	kevent.o kill.o kqueue.o ktrace.o lchown.o \
 	link.o linkat.o listen.o lstat.o madvise.o \
 	minherit.o mkdir.o mkdirat.o mkfifo.o mkfifoat.o \
@@ -109,7 +110,8 @@ PPSEUDO_NOERR=${PSEUDO_NOERR:.o=.po}
 SPSEUDO_NOERR=${PSEUDO_NOERR:.o=.so}
 DPSEUDO_NOERR=${PSEUDO_NOERR:.o=.do}
 
-HIDDEN= ___realpath.o ___getcwd.o fork.o sigaction.o _ptrace.o ${CANCEL:=.o}
+HIDDEN= ___realpath.o ___getcwd.o fork.o sigaction.o _ptrace.o ${CANCEL:=.o} \
+	clock_gettime.o gettimeofday.o
 PHIDDEN=${HIDDEN:.o=.po}
 SHIDDEN=${HIDDEN:.o=.so}
 DHIDDEN=${HIDDEN:.o=.do}

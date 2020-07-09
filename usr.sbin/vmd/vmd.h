@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.98 2019/12/12 03:53:38 pd Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.99 2020/06/28 16:52:45 pd Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -354,6 +354,21 @@ struct vmd {
 	int			 vmd_ptmfd;
 };
 
+struct vm_dev_pipe {
+	int			 read;
+	int			 write;
+	struct event		 read_ev;
+};
+
+enum pipe_msg_type {
+	I8253_RESET_CHAN_0 = 0,
+	I8253_RESET_CHAN_1 = 1,
+	I8253_RESET_CHAN_2 = 2,
+	NS8250_ZERO_READ,
+	NS8250_RATELIMIT,
+	MC146818_RESCHEDULE_PER
+};
+
 static inline struct sockaddr_in *
 ss2sin(struct sockaddr_storage *ss)
 {
@@ -442,6 +457,9 @@ int	 vmm_pipe(struct vmd_vm *, int, void (*)(int, short, void *));
 /* vm.c */
 int	 start_vm(struct vmd_vm *, int);
 __dead void vm_shutdown(unsigned int);
+void	 vm_pipe_init(struct vm_dev_pipe *, void (*)(int, short, void *));
+void	 vm_pipe_send(struct vm_dev_pipe *, enum pipe_msg_type);
+enum pipe_msg_type vm_pipe_recv(struct vm_dev_pipe *);
 
 /* control.c */
 int	 config_init(struct vmd *);

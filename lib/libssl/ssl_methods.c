@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_methods.c,v 1.12 2020/02/06 16:05:58 jsing Exp $ */
+/* $OpenBSD: ssl_methods.c,v 1.14 2020/07/07 19:31:11 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -70,8 +70,6 @@ static const SSL_METHOD_INTERNAL DTLSv1_client_method_internal_data = {
 	.ssl_connect = ssl3_connect,
 	.ssl_shutdown = ssl3_shutdown,
 	.get_ssl_method = dtls1_get_client_method,
-	.get_timeout = dtls1_default_timeout,
-	.ssl_version = ssl_undefined_void_function,
 	.ssl_renegotiate = ssl3_renegotiate,
 	.ssl_renegotiate_check = ssl3_renegotiate_check,
 	.ssl_pending = ssl3_pending,
@@ -122,8 +120,6 @@ static const SSL_METHOD_INTERNAL DTLSv1_method_internal_data = {
 	.ssl_connect = ssl3_connect,
 	.ssl_shutdown = ssl3_shutdown,
 	.get_ssl_method = dtls1_get_method,
-	.get_timeout = dtls1_default_timeout,
-	.ssl_version = ssl_undefined_void_function,
 	.ssl_renegotiate = ssl3_renegotiate,
 	.ssl_renegotiate_check = ssl3_renegotiate_check,
 	.ssl_pending = ssl3_pending,
@@ -172,8 +168,6 @@ static const SSL_METHOD_INTERNAL DTLSv1_server_method_internal_data = {
 	.ssl_connect = ssl_undefined_function,
 	.ssl_shutdown = ssl3_shutdown,
 	.get_ssl_method = dtls1_get_server_method,
-	.get_timeout = dtls1_default_timeout,
-	.ssl_version = ssl_undefined_void_function,
 	.ssl_renegotiate = ssl3_renegotiate,
 	.ssl_renegotiate_check = ssl3_renegotiate_check,
 	.ssl_pending = ssl3_pending,
@@ -223,8 +217,6 @@ static const SSL_METHOD_INTERNAL TLS_client_method_internal_data = {
 	.ssl_connect = tls13_legacy_connect,
 	.ssl_shutdown = tls13_legacy_shutdown,
 	.get_ssl_method = tls1_get_client_method,
-	.get_timeout = tls1_default_timeout,
-	.ssl_version = ssl_undefined_void_function,
 	.ssl_renegotiate = ssl_undefined_function,
 	.ssl_renegotiate_check = ssl_ok,
 	.ssl_pending = tls13_legacy_pending,
@@ -254,8 +246,6 @@ static const SSL_METHOD_INTERNAL TLS_legacy_client_method_internal_data = {
 	.ssl_connect = ssl3_connect,
 	.ssl_shutdown = ssl3_shutdown,
 	.get_ssl_method = tls1_get_client_method,
-	.get_timeout = tls1_default_timeout,
-	.ssl_version = ssl_undefined_void_function,
 	.ssl_renegotiate = ssl_undefined_function,
 	.ssl_renegotiate_check = ssl_ok,
 	.ssl_pending = ssl3_pending,
@@ -284,8 +274,6 @@ static const SSL_METHOD_INTERNAL TLSv1_client_method_internal_data = {
 	.ssl_connect = ssl3_connect,
 	.ssl_shutdown = ssl3_shutdown,
 	.get_ssl_method = tls1_get_client_method,
-	.get_timeout = tls1_default_timeout,
-	.ssl_version = ssl_undefined_void_function,
 	.ssl_renegotiate = ssl3_renegotiate,
 	.ssl_renegotiate_check = ssl3_renegotiate_check,
 	.ssl_pending = ssl3_pending,
@@ -314,8 +302,6 @@ static const SSL_METHOD_INTERNAL TLSv1_1_client_method_internal_data = {
 	.ssl_connect = ssl3_connect,
 	.ssl_shutdown = ssl3_shutdown,
 	.get_ssl_method = tls1_get_client_method,
-	.get_timeout = tls1_default_timeout,
-	.ssl_version = ssl_undefined_void_function,
 	.ssl_renegotiate = ssl3_renegotiate,
 	.ssl_renegotiate_check = ssl3_renegotiate_check,
 	.ssl_pending = ssl3_pending,
@@ -344,8 +330,6 @@ static const SSL_METHOD_INTERNAL TLSv1_2_client_method_internal_data = {
 	.ssl_connect = ssl3_connect,
 	.ssl_shutdown = ssl3_shutdown,
 	.get_ssl_method = tls1_get_client_method,
-	.get_timeout = tls1_default_timeout,
-	.ssl_version = ssl_undefined_void_function,
 	.ssl_renegotiate = ssl3_renegotiate,
 	.ssl_renegotiate_check = ssl3_renegotiate_check,
 	.ssl_pending = ssl3_pending,
@@ -421,7 +405,37 @@ TLSv1_2_client_method(void)
 
 static const SSL_METHOD *tls1_get_method(int ver);
 
+#if defined(LIBRESSL_HAS_TLS1_3_CLIENT) && defined(LIBRESSL_HAS_TLS1_3_SERVER)
 static const SSL_METHOD_INTERNAL TLS_method_internal_data = {
+	.version = TLS1_3_VERSION,
+	.min_version = TLS1_VERSION,
+	.max_version = TLS1_3_VERSION,
+	.ssl_new = tls1_new,
+	.ssl_clear = tls1_clear,
+	.ssl_free = tls1_free,
+	.ssl_accept = tls13_legacy_accept,
+	.ssl_connect = tls13_legacy_connect,
+	.ssl_shutdown = tls13_legacy_shutdown,
+	.get_ssl_method = tls1_get_client_method,
+	.ssl_renegotiate = ssl_undefined_function,
+	.ssl_renegotiate_check = ssl_ok,
+	.ssl_pending = tls13_legacy_pending,
+	.ssl_read_bytes = tls13_legacy_read_bytes,
+	.ssl_write_bytes = tls13_legacy_write_bytes,
+	.ssl3_enc = &TLSv1_3_enc_data,
+};
+
+static const SSL_METHOD TLS_method_data = {
+	.ssl_dispatch_alert = ssl3_dispatch_alert,
+	.num_ciphers = ssl3_num_ciphers,
+	.get_cipher = ssl3_get_cipher,
+	.get_cipher_by_char = ssl3_get_cipher_by_char,
+	.put_cipher_by_char = ssl3_put_cipher_by_char,
+	.internal = &TLS_method_internal_data,
+};
+#endif
+
+static const SSL_METHOD_INTERNAL TLS_legacy_method_internal_data = {
 	.version = TLS1_2_VERSION,
 	.min_version = TLS1_VERSION,
 	.max_version = TLS1_2_VERSION,
@@ -432,8 +446,6 @@ static const SSL_METHOD_INTERNAL TLS_method_internal_data = {
 	.ssl_connect = ssl3_connect,
 	.ssl_shutdown = ssl3_shutdown,
 	.get_ssl_method = tls1_get_method,
-	.get_timeout = tls1_default_timeout,
-	.ssl_version = ssl_undefined_void_function,
 	.ssl_renegotiate = ssl_undefined_function,
 	.ssl_renegotiate_check = ssl_ok,
 	.ssl_pending = ssl3_pending,
@@ -442,13 +454,13 @@ static const SSL_METHOD_INTERNAL TLS_method_internal_data = {
 	.ssl3_enc = &TLSv1_2_enc_data,
 };
 
-static const SSL_METHOD TLS_method_data = {
+static const SSL_METHOD TLS_legacy_method_data = {
 	.ssl_dispatch_alert = ssl3_dispatch_alert,
 	.num_ciphers = ssl3_num_ciphers,
 	.get_cipher = ssl3_get_cipher,
 	.get_cipher_by_char = ssl3_get_cipher_by_char,
 	.put_cipher_by_char = ssl3_put_cipher_by_char,
-	.internal = &TLS_method_internal_data,
+	.internal = &TLS_legacy_method_internal_data,
 };
 
 static const SSL_METHOD_INTERNAL TLSv1_method_internal_data = {
@@ -462,8 +474,6 @@ static const SSL_METHOD_INTERNAL TLSv1_method_internal_data = {
 	.ssl_connect = ssl3_connect,
 	.ssl_shutdown = ssl3_shutdown,
 	.get_ssl_method = tls1_get_method,
-	.get_timeout = tls1_default_timeout,
-	.ssl_version = ssl_undefined_void_function,
 	.ssl_renegotiate = ssl3_renegotiate,
 	.ssl_renegotiate_check = ssl3_renegotiate_check,
 	.ssl_pending = ssl3_pending,
@@ -492,8 +502,6 @@ static const SSL_METHOD_INTERNAL TLSv1_1_method_internal_data = {
 	.ssl_connect = ssl3_connect,
 	.ssl_shutdown = ssl3_shutdown,
 	.get_ssl_method = tls1_get_method,
-	.get_timeout = tls1_default_timeout,
-	.ssl_version = ssl_undefined_void_function,
 	.ssl_renegotiate = ssl3_renegotiate,
 	.ssl_renegotiate_check = ssl3_renegotiate_check,
 	.ssl_pending = ssl3_pending,
@@ -522,8 +530,6 @@ static const SSL_METHOD_INTERNAL TLSv1_2_method_internal_data = {
 	.ssl_connect = ssl3_connect,
 	.ssl_shutdown = ssl3_shutdown,
 	.get_ssl_method = tls1_get_method,
-	.get_timeout = tls1_default_timeout,
-	.ssl_version = ssl_undefined_void_function,
 	.ssl_renegotiate = ssl3_renegotiate,
 	.ssl_renegotiate_check = ssl3_renegotiate_check,
 	.ssl_pending = ssl3_pending,
@@ -544,6 +550,10 @@ static const SSL_METHOD TLSv1_2_method_data = {
 static const SSL_METHOD *
 tls1_get_method(int ver)
 {
+#if defined(LIBRESSL_HAS_TLS1_3_CLIENT) && defined(LIBRESSL_HAS_TLS1_3_SERVER)
+	if (ver == TLS1_3_VERSION)
+		return (TLS_method());
+#endif
 	if (ver == TLS1_2_VERSION)
 		return (TLSv1_2_method());
 	if (ver == TLS1_1_VERSION)
@@ -562,7 +572,17 @@ SSLv23_method(void)
 const SSL_METHOD *
 TLS_method(void)
 {
-	return &TLS_method_data;
+#if defined(LIBRESSL_HAS_TLS1_3_CLIENT) && defined(LIBRESSL_HAS_TLS1_3_SERVER)
+	return (&TLS_method_data);
+#else
+	return tls_legacy_method();
+#endif
+}
+
+const SSL_METHOD *
+tls_legacy_method(void)
+{
+	return (&TLS_legacy_method_data);
 }
 
 const SSL_METHOD *
@@ -595,8 +615,6 @@ static const SSL_METHOD_INTERNAL TLS_server_method_internal_data = {
 	.ssl_connect = ssl_undefined_function,
 	.ssl_shutdown = tls13_legacy_shutdown,
 	.get_ssl_method = tls1_get_server_method,
-	.get_timeout = tls1_default_timeout,
-	.ssl_version = ssl_undefined_void_function,
 	.ssl_renegotiate = ssl_undefined_function,
 	.ssl_renegotiate_check = ssl_ok,
 	.ssl_pending = tls13_legacy_pending,
@@ -626,8 +644,6 @@ static const SSL_METHOD_INTERNAL TLS_legacy_server_method_internal_data = {
 	.ssl_connect = ssl_undefined_function,
 	.ssl_shutdown = ssl3_shutdown,
 	.get_ssl_method = tls1_get_server_method,
-	.get_timeout = tls1_default_timeout,
-	.ssl_version = ssl_undefined_void_function,
 	.ssl_renegotiate = ssl_undefined_function,
 	.ssl_renegotiate_check = ssl_ok,
 	.ssl_pending = ssl3_pending,
@@ -656,8 +672,6 @@ static const SSL_METHOD_INTERNAL TLSv1_server_method_internal_data = {
 	.ssl_connect = ssl_undefined_function,
 	.ssl_shutdown = ssl3_shutdown,
 	.get_ssl_method = tls1_get_server_method,
-	.get_timeout = tls1_default_timeout,
-	.ssl_version = ssl_undefined_void_function,
 	.ssl_renegotiate = ssl3_renegotiate,
 	.ssl_renegotiate_check = ssl3_renegotiate_check,
 	.ssl_pending = ssl3_pending,
@@ -686,8 +700,6 @@ static const SSL_METHOD_INTERNAL TLSv1_1_server_method_internal_data = {
 	.ssl_connect = ssl_undefined_function,
 	.ssl_shutdown = ssl3_shutdown,
 	.get_ssl_method = tls1_get_server_method,
-	.get_timeout = tls1_default_timeout,
-	.ssl_version = ssl_undefined_void_function,
 	.ssl_renegotiate = ssl3_renegotiate,
 	.ssl_renegotiate_check = ssl3_renegotiate_check,
 	.ssl_pending = ssl3_pending,
@@ -716,8 +728,6 @@ static const SSL_METHOD_INTERNAL TLSv1_2_server_method_internal_data = {
 	.ssl_connect = ssl_undefined_function,
 	.ssl_shutdown = ssl3_shutdown,
 	.get_ssl_method = tls1_get_server_method,
-	.get_timeout = tls1_default_timeout,
-	.ssl_version = ssl_undefined_void_function,
 	.ssl_renegotiate = ssl3_renegotiate,
 	.ssl_renegotiate_check = ssl3_renegotiate_check,
 	.ssl_pending = ssl3_pending,

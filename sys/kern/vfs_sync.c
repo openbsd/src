@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.63 2020/01/20 23:21:56 claudio Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.64 2020/06/24 22:03:41 cheloha Exp $  */
 
 /*
  *  Portions of this code are:
@@ -142,7 +142,7 @@ syncer_thread(void *arg)
 	int s;
 
 	for (;;) {
-		starttime = time_second;
+		starttime = gettime();
 
 		/*
 		 * Push files whose dirty time has expired.
@@ -228,7 +228,7 @@ syncer_thread(void *arg)
 		 * matter as we are just trying to generally pace the
 		 * filesystem activity.
 		 */
-		if (time_second == starttime)
+		if (gettime() == starttime)
 			tsleep_nsec(&lbolt, PPAUSE, "syncer", INFSLP);
 	}
 }

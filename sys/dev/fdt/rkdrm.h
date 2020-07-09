@@ -1,4 +1,4 @@
-/* $OpenBSD: rkdrm.h,v 1.1 2020/02/21 15:44:54 patrick Exp $ */
+/* $OpenBSD: rkdrm.h,v 1.2 2020/06/08 04:47:58 jsg Exp $ */
 /* $NetBSD: rk_drm.h,v 1.1 2019/11/09 23:30:14 jmcneill Exp $ */
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,6 +34,7 @@
 #include <dev/rasops/rasops.h>
 
 #include <drm/drm_fb_helper.h>
+#include <drm/drm_fourcc.h>
 #include <drm/drm_gem_cma_helper.h>
 
 #define DRIVER_AUTHOR		"Jared McNeill"

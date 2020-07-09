@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-pane.c,v 1.59 2020/04/13 20:51:57 nicm Exp $ */
+/* $OpenBSD: cmd-select-pane.c,v 1.63 2020/07/03 07:00:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -87,13 +87,14 @@ cmd_select_pane_exec(struct cmd *self, struct cmdq_item *item)
 	const struct cmd_entry	*entry = cmd_get_entry(self);
 	struct cmd_find_state	*current = cmdq_get_current(item);
 	struct cmd_find_state	*target = cmdq_get_target(item);
+	struct client		*c = cmdq_get_client(item);
 	struct winlink		*wl = target->wl;
 	struct window		*w = wl->window;
 	struct session		*s = target->s;
-	struct window_pane	*wp = target->wp, *lastwp, *markedwp;
+	struct window_pane	*wp = target->wp, *activewp, *lastwp, *markedwp;
+	struct options		*oo = wp->options;
 	char			*title;
 	const char		*style;
-	struct style		*sy;
 	struct options_entry	*o;
 
 	if (entry == &cmd_last_pane_entry || args_has(args, 'l')) {
@@ -128,7 +129,10 @@ cmd_select_pane_exec(struct cmd *self, struct cmdq_item *item)
 	if (args_has(args, 'm') || args_has(args, 'M')) {
 		if (args_has(args, 'm') && !window_pane_visible(wp))
 			return (CMD_RETURN_NORMAL);
-		lastwp = marked_pane.wp;
+		if (server_check_marked())
+			lastwp = marked_pane.wp;
+		else
+			lastwp = NULL;
 
 		if (args_has(args, 'M') || server_is_marked(s, wl, wp))
 			server_clear_marked();
@@ -147,22 +151,18 @@ cmd_select_pane_exec(struct cmd *self, struct cmdq_item *item)
 		return (CMD_RETURN_NORMAL);
 	}
 
-	if (args_has(args, 'P') || args_has(args, 'g')) {
-		if ((style = args_get(args, 'P')) != NULL) {
-			o = options_set_style(wp->options, "window-style", 0,
-			    style);
-			if (o == NULL) {
-				cmdq_error(item, "bad style: %s", style);
-				return (CMD_RETURN_ERROR);
-			}
-			options_set_style(wp->options, "window-active-style", 0,
-			    style);
-			wp->flags |= (PANE_REDRAW|PANE_STYLECHANGED);
+	style = args_get(args, 'P');
+	if (style != NULL) {
+		o = options_set_string(oo, "window-style", 0, "%s", style);
+		if (o == NULL) {
+			cmdq_error(item, "bad style: %s", style);
+			return (CMD_RETURN_ERROR);
 		}
-		if (args_has(args, 'g')) {
-			sy = options_get_style(wp->options, "window-style");
-			cmdq_print(item, "%s", style_tostring(sy));
-		}
+		options_set_string(oo, "window-active-style", 0, "%s", style);
+		wp->flags |= (PANE_REDRAW|PANE_STYLECHANGED);
+	}
+	if (args_has(args, 'g')) {
+		cmdq_print(item, "%s", options_get_string(oo, "window-style"));
 		return (CMD_RETURN_NORMAL);
 	}
 
@@ -197,22 +197,29 @@ cmd_select_pane_exec(struct cmd *self, struct cmdq_item *item)
 
 	if (args_has(args, 'T')) {
 		title = format_single_from_target(item, args_get(args, 'T'));
-		if (screen_set_title(&wp->base, title))
+		if (screen_set_title(&wp->base, title)) {
+			server_redraw_window_borders(wp->window);
 			server_status_window(wp->window);
+		}
 		free(title);
 		return (CMD_RETURN_NORMAL);
 	}
 
-	if (wp == w->active)
+	if (c != NULL && c->session != NULL && (c->flags & CLIENT_ACTIVEPANE))
+		activewp = server_client_get_pane(c);
+	else
+		activewp = w->active;
+	if (wp == activewp)
 		return (CMD_RETURN_NORMAL);
 	if (window_push_zoom(w, args_has(args, 'Z')))
 		server_redraw_window(w);
 	window_redraw_active_switch(w, wp);
-	if (window_set_active_pane(w, wp, 1)) {
+	if (c != NULL && c->session != NULL && (c->flags & CLIENT_ACTIVEPANE))
+		server_client_set_pane(c, wp);
+	else if (window_set_active_pane(w, wp, 1))
 		cmd_find_from_winlink_pane(current, wl, wp, 0);
-		cmdq_insert_hook(s, item, current, "after-select-pane");
-		cmd_select_pane_redraw(w);
-	}
+	cmdq_insert_hook(s, item, current, "after-select-pane");
+	cmd_select_pane_redraw(w);
 	if (window_pop_zoom(w))
 		server_redraw_window(w);
 

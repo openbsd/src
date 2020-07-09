@@ -59,4 +59,27 @@ void	Chacha20_Poly1305_Reinit(void *, const uint8_t *, uint16_t);
 int	Chacha20_Poly1305_Update(void *, const uint8_t *, uint16_t);
 void	Chacha20_Poly1305_Final(uint8_t[POLY1305_TAGLEN], void *);
 
+/* WireGuard crypto */
+#define CHACHA20POLY1305_KEY_SIZE	CHACHA20_KEYSIZE
+#define CHACHA20POLY1305_AUTHTAG_SIZE	POLY1305_TAGLEN
+#define XCHACHA20POLY1305_NONCE_SIZE	24
+
+void chacha20poly1305_encrypt(uint8_t *, const uint8_t *, const size_t,
+	const uint8_t *, const size_t,	const uint64_t,
+	const uint8_t[CHACHA20POLY1305_KEY_SIZE]);
+
+int chacha20poly1305_decrypt(uint8_t *, const uint8_t *, const size_t,
+	const uint8_t *, const size_t, const uint64_t,
+	const uint8_t[CHACHA20POLY1305_KEY_SIZE]);
+
+void xchacha20poly1305_encrypt(uint8_t *, const uint8_t *, const size_t,
+	const uint8_t *, const size_t,
+	const uint8_t[XCHACHA20POLY1305_NONCE_SIZE],
+	const uint8_t[CHACHA20POLY1305_KEY_SIZE]);
+
+int xchacha20poly1305_decrypt(uint8_t *, const uint8_t *, const size_t,
+	const uint8_t *, const size_t,
+	const uint8_t[XCHACHA20POLY1305_NONCE_SIZE],
+	const uint8_t[CHACHA20POLY1305_KEY_SIZE]);
+
 #endif	/* _CHACHAPOLY_H_ */

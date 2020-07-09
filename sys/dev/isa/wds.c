@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.48 2020/02/16 17:39:47 krw Exp $	*/
+/*	$OpenBSD: wds.c,v 1.50 2020/07/04 18:50:55 krw Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -281,6 +281,9 @@ wdsattach(struct device *parent, struct device *self, void *aux)
 
 	wds_inquire_setup_information(sc);
 
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, sc->sc_irq, IST_EDGE,
+	    IPL_BIO, wdsintr, sc, sc->sc_dev.dv_xname);
+
 	/*
 	 * fill in the prototype scsi_link.
 	 */
@@ -293,10 +296,6 @@ wdsattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.openings = 1;
 	sc->sc_link.pool = &sc->sc_iopool;
 
-	sc->sc_ih = isa_intr_establish(ia->ia_ic, sc->sc_irq, IST_EDGE,
-	    IPL_BIO, wdsintr, sc, sc->sc_dev.dv_xname);
-
-	bzero(&saa, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	/*

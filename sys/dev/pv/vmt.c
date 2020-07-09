@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.17 2020/02/16 03:23:05 jmatthew Exp $ */
+/*	$OpenBSD: vmt.c,v 1.19 2020/06/24 22:03:40 cheloha Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -45,7 +45,6 @@
 #include <netinet/in.h>
 
 #include <dev/pv/pvvar.h>
-#include <dev/rndvar.h>
 
 /* "The" magic number, always occupies the EAX register. */
 #define VM_MAGIC			0x564D5868
@@ -510,7 +509,7 @@ vmt_update_guest_uptime(struct vmt_softc *sc)
 {
 	/* host wants uptime in hundredths of a second */
 	if (vm_rpc_send_rpci_tx(sc, "SetGuestInfo  %d %lld00",
-	    VM_GUEST_INFO_UPTIME, (long long)time_uptime) != 0) {
+	    VM_GUEST_INFO_UPTIME, (long long)getuptime()) != 0) {
 		DPRINTF("%s: unable to set guest uptime", DEVNAME(sc));
 		sc->sc_rpc_error = 1;
 	}

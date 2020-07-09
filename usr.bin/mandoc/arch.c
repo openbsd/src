@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.11 2019/05/11 07:18:17 deraadt Exp $ */
+/*	$OpenBSD: arch.c,v 1.12 2020/06/29 19:16:59 schwarze Exp $ */
 /*
  * Copyright (c) 2017, 2019 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -24,7 +24,7 @@ arch_valid(const char *arch, enum mandoc_os os)
 	const char *openbsd_arch[] = {
 		"alpha", "amd64", "arm64", "armv7", "hppa", "i386",
 		"landisk", "loongson", "luna88k", "macppc", "mips64",
-		"octeon", "sgi", "sparc64", NULL
+		"octeon", "powerpc64", "sgi", "sparc64", NULL
 	};
 	const char *netbsd_arch[] = {
 		"acorn26", "acorn32", "algor", "alpha", "amiga",

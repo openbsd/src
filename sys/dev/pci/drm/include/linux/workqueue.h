@@ -1,4 +1,4 @@
-/*	$OpenBSD: workqueue.h,v 1.2 2019/05/11 14:39:13 jsg Exp $	*/
+/*	$OpenBSD: workqueue.h,v 1.3 2020/06/08 04:48:15 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -32,12 +32,15 @@
 struct workqueue_struct;
 
 extern struct workqueue_struct *system_wq;
+extern struct workqueue_struct *system_highpri_wq;
 extern struct workqueue_struct *system_unbound_wq;
 extern struct workqueue_struct *system_long_wq;
 
 #define WQ_HIGHPRI	1
 #define WQ_FREEZABLE	2
 #define WQ_UNBOUND	4
+
+#define WQ_UNBOUND_MAX_ACTIVE	4	/* matches nthreads in drm_linux.c */
 
 static inline struct workqueue_struct *
 alloc_workqueue(const char *name, int flags, int max_active)
@@ -194,5 +197,22 @@ bool flush_delayed_work(struct delayed_work *);
 
 #define destroy_work_on_stack(x)
 #define destroy_delayed_work_on_stack(x)
+
+struct rcu_work {
+	struct work_struct work;
+	struct rcu_head rcu;
+};
+
+static inline void
+INIT_RCU_WORK(struct rcu_work *work, work_func_t func)
+{
+	INIT_WORK(&work->work, func);
+}
+
+static inline bool
+queue_rcu_work(struct workqueue_struct *wq, struct rcu_work *work)
+{
+	return queue_work(wq, &work->work);
+}
 
 #endif

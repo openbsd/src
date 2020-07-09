@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.60 2020/04/28 12:24:20 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.63 2020/07/08 09:20:28 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -109,13 +109,14 @@ struct cfdriver clock_cd = {
 u_int tick_get_timecount(struct timecounter *);
 
 struct timecounter tick_timecounter = {
-	tick_get_timecount, NULL, ~0u, 0, "tick", 0, NULL
+	tick_get_timecount, NULL, ~0u, 0, "tick", 0, NULL, TC_TICK
 };
 
 u_int sys_tick_get_timecount(struct timecounter *);
 
 struct timecounter sys_tick_timecounter = {
-	sys_tick_get_timecount, NULL, ~0u, 0, "sys_tick", 1000, NULL
+	sys_tick_get_timecount, NULL, ~0u, 0, "sys_tick", 1000, NULL,
+	TC_SYS_TICK
 };
 
 /*
@@ -170,7 +171,7 @@ struct cfattach clock_fhc_ca = {
 };
 
 /* Global TOD clock handle & idprom pointer */
-todr_chip_handle_t todr_handle = NULL;
+extern todr_chip_handle_t todr_handle;
 static struct idprom *idprom;
 
 static int	timermatch(struct device *, void *, void *);
@@ -940,7 +941,7 @@ tick_get_timecount(struct timecounter *tc)
 {
 	u_int64_t tick;
 
-	__asm volatile("rd %%tick, %0" : "=r" (tick) :);
+	__asm volatile("rd %%tick, %0" : "=r" (tick));
 
 	return (tick & ~0u);
 }
@@ -950,7 +951,7 @@ sys_tick_get_timecount(struct timecounter *tc)
 {
 	u_int64_t tick;
 
-	__asm volatile("rd %%sys_tick, %0" : "=r" (tick) :);
+	__asm volatile("rd %%sys_tick, %0" : "=r" (tick));
 
 	return (tick & ~0u);
 }

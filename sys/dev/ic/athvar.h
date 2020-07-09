@@ -1,4 +1,4 @@
-/*      $OpenBSD: athvar.h,v 1.32 2011/04/27 16:06:13 deraadt Exp $  */
+/*      $OpenBSD: athvar.h,v 1.33 2020/06/26 19:53:30 cheloha Exp $  */
 /*	$NetBSD: athvar.h,v 1.10 2004/08/10 01:03:53 dyoung Exp $	*/
 
 /*-
@@ -390,7 +390,7 @@ enum {
 #define	ATH_TXQ_UNLOCK(_sc)		mtx_unlock(&(_sc)->sc_txqlock)
 #define	ATH_TXQ_LOCK_ASSERT(_sc)	mtx_assert(&(_sc)->sc_txqlock, MA_OWNED)
 
-#define ATH_TICKS() (tick)
+#define ATH_TICKS() (ticks)
 #define ATH_CALLOUT_INIT(chp) callout_init((chp))
 #define ATH_TASK_INIT(task, func, context)	\
 	do {					\

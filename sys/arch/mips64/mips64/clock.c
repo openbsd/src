@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.41 2016/03/06 19:42:27 mpi Exp $ */
+/*	$OpenBSD: clock.c,v 1.42 2020/06/30 14:56:10 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -43,8 +43,6 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <mips64/mips_cpu.h>
-
-#include <mips64/dev/clockvar.h>
 
 static struct evcount cp0_clock_count;
 static int cp0_clock_irq = 5;

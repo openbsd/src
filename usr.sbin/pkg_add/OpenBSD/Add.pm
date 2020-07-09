@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.183 2019/08/19 12:25:40 espie Exp $
+# $OpenBSD: Add.pm,v 1.184 2020/05/17 14:34:47 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -132,7 +132,13 @@ sub perform_extraction
 				$p->advance($e);
 			}
 			if (keys %$tied > 0) {
-				$handle->{location}{early_close} = 1;
+				# skipped entries should still be read in CACHE mode
+				if (defined $state->cache_directory) {
+					while (my $e = $state->{archive}->next) {
+					}
+				} else {
+					$handle->{location}{early_close} = 1;
+				}
 			}
 			last;
 		}

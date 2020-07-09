@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.57 2020/01/08 15:03:10 mpi Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.59 2020/07/08 21:05:42 deraadt Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -293,13 +293,15 @@ semctl1(struct proc *p, int semid, int semnum, int cmd, union semun *arg,
 		semaptr->sem_perm.gid = sbuf.sem_perm.gid;
 		semaptr->sem_perm.mode = (semaptr->sem_perm.mode & ~0777) |
 		    (sbuf.sem_perm.mode & 0777);
-		semaptr->sem_ctime = time_second;
+		semaptr->sem_ctime = gettime();
 		break;
 
 	case IPC_STAT:
 		if ((error = ipcperm(cred, &semaptr->sem_perm, IPC_R)))
 			return (error);
-		error = ds_copyout(semaptr, arg->buf, sizeof(struct semid_ds));
+		memcpy(&sbuf, semaptr, sizeof sbuf);
+		sbuf.sem_base = NULL;
+		error = ds_copyout(&sbuf, arg->buf, sizeof(struct semid_ds));
 		break;
 
 	case GETNCNT:
@@ -423,7 +425,7 @@ sys_semget(struct proc *p, void *v, register_t *retval)
 			    nsems, seminfo.semmns - semtot));
 			return (ENOSPC);
 		}
-		semaptr_new = pool_get(&sema_pool, PR_WAITOK);
+		semaptr_new = pool_get(&sema_pool, PR_WAITOK | PR_ZERO);
 		semaptr_new->sem_base = mallocarray(nsems, sizeof(struct sem),
 		    M_SEM, M_WAITOK|M_ZERO);
 	}
@@ -478,7 +480,7 @@ sys_semget(struct proc *p, void *v, register_t *retval)
 		    (semseqs[semid] + 1) & 0x7fff;
 		semaptr_new->sem_nsems = nsems;
 		semaptr_new->sem_otime = 0;
-		semaptr_new->sem_ctime = time_second;
+		semaptr_new->sem_ctime = gettime();
 		sema[semid] = semaptr_new;
 		semtot += nsems;
 	} else {
@@ -743,7 +745,7 @@ done:
 		semptr->sempid = p->p_p->ps_pid;
 	}
 
-	semaptr->sem_otime = time_second;
+	semaptr->sem_otime = gettime();
 
 	/* Do a wakeup if any semaphore was up'd. */
 	if (do_wakeup) {

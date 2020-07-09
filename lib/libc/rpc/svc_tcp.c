@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc_tcp.c,v 1.40 2019/06/28 13:32:42 deraadt Exp $ */
+/*	$OpenBSD: svc_tcp.c,v 1.41 2020/07/06 13:33:06 pirofti Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -342,7 +342,7 @@ readtcp(SVCXPRT *xprt, caddr_t buf, int len)
 	 * A timeout is fatal for the connection.
 	 */
 	delta = wait_per_try;
-	clock_gettime(CLOCK_MONOTONIC, &start);
+	WRAP(clock_gettime)(CLOCK_MONOTONIC, &start);
 	pfd[0].fd = sock;
 	pfd[0].events = POLLIN;
 	do {
@@ -351,7 +351,7 @@ readtcp(SVCXPRT *xprt, caddr_t buf, int len)
 		case -1:
 			if (errno != EINTR)
 				goto fatal_err;
-			clock_gettime(CLOCK_MONOTONIC, &after);
+			WRAP(clock_gettime)(CLOCK_MONOTONIC, &after);
 			timespecsub(&after, &start, &duration);
 			timespecsub(&wait_per_try, &duration, &delta);
 			if (delta.tv_sec < 0 || !timespecisset(&delta))

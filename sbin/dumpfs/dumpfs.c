@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumpfs.c,v 1.35 2020/02/17 16:11:25 otto Exp $	*/
+/*	$OpenBSD: dumpfs.c,v 1.36 2020/06/20 07:49:04 otto Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -69,7 +69,7 @@ union {
 #define acg	cgun.cg
 
 int	dumpfs(int, const char *);
-int	dumpcg(const char *, int, int);
+int	dumpcg(const char *, int, u_int);
 int	marshal(const char *);
 int	open_disk(const char *);
 void	pbits(void *, int);
@@ -163,6 +163,7 @@ dumpfs(int fd, const char *name)
 	size_t size;
 	off_t off;
 	int i, j;
+	u_int cg;
 
 	switch (afs.fs_magic) {
 	case FS_UFS2_MAGIC:
@@ -172,7 +173,7 @@ dumpfs(int fd, const char *name)
 		    afs.fs_magic, ctime(&fstime));
 		printf("superblock location\t%jd\tid\t[ %x %x ]\n",
 		    (intmax_t)afs.fs_sblockloc, afs.fs_id[0], afs.fs_id[1]);
-		printf("ncg\t%d\tsize\t%jd\tblocks\t%jd\n",
+		printf("ncg\t%u\tsize\t%jd\tblocks\t%jd\n",
 		    afs.fs_ncg, (intmax_t)fssize, (intmax_t)afs.fs_dsize);
 		break;
 	case FS_UFS1_MAGIC:
@@ -198,7 +199,7 @@ dumpfs(int fd, const char *name)
 		printf("cylgrp\t%s\tinodes\t%s\tfslevel %d\n",
 		    i < 1 ? "static" : "dynamic",
 		    i < 2 ? "4.2/4.3BSD" : "4.4BSD", i);
-		printf("ncg\t%d\tncyl\t%d\tsize\t%d\tblocks\t%d\n",
+		printf("ncg\t%u\tncyl\t%d\tsize\t%d\tblocks\t%d\n",
 		    afs.fs_ncg, afs.fs_ncyl, afs.fs_ffs1_size, afs.fs_ffs1_dsize);
 		break;
 	default:
@@ -223,9 +224,9 @@ dumpfs(int fd, const char *name)
 		    (intmax_t)afs.fs_cstotal.cs_ndir,
 		    (intmax_t)afs.fs_cstotal.cs_nifree, 
 		    (intmax_t)afs.fs_cstotal.cs_nffree);
-		printf("bpg\t%d\tfpg\t%d\tipg\t%d\n",
+		printf("bpg\t%d\tfpg\t%d\tipg\t%u\n",
 		    afs.fs_fpg / afs.fs_frag, afs.fs_fpg, afs.fs_ipg);
-		printf("nindir\t%d\tinopb\t%d\tmaxfilesize\t%ju\n",
+		printf("nindir\t%d\tinopb\t%u\tmaxfilesize\t%ju\n",
 		    afs.fs_nindir, afs.fs_inopb, 
 		    (uintmax_t)afs.fs_maxfilesize);
 		printf("sbsize\t%d\tcgsize\t%d\tcsaddr\t%jd\tcssize\t%d\n",
@@ -238,10 +239,10 @@ dumpfs(int fd, const char *name)
 		printf("nbfree\t%d\tndir\t%d\tnifree\t%d\tnffree\t%d\n",
 		    afs.fs_ffs1_cstotal.cs_nbfree, afs.fs_ffs1_cstotal.cs_ndir,
 		    afs.fs_ffs1_cstotal.cs_nifree, afs.fs_ffs1_cstotal.cs_nffree);
-		printf("cpg\t%d\tbpg\t%d\tfpg\t%d\tipg\t%d\n",
+		printf("cpg\t%d\tbpg\t%d\tfpg\t%d\tipg\t%u\n",
 		    afs.fs_cpg, afs.fs_fpg / afs.fs_frag, afs.fs_fpg,
 		    afs.fs_ipg);
-		printf("nindir\t%d\tinopb\t%d\tnspf\t%d\tmaxfilesize\t%ju\n",
+		printf("nindir\t%d\tinopb\t%u\tnspf\t%d\tmaxfilesize\t%ju\n",
 		    afs.fs_nindir, afs.fs_inopb, afs.fs_nspf,
 		    (uintmax_t)afs.fs_maxfilesize);
 		printf("sbsize\t%d\tcgsize\t%d\tcgoffset %d\tcgmask\t0x%08x\n",
@@ -261,7 +262,7 @@ dumpfs(int fd, const char *name)
 	    afs.fs_sblkno, afs.fs_cblkno, afs.fs_iblkno, afs.fs_dblkno);
 	printf("cgrotor\t%d\tfmod\t%d\tronly\t%d\tclean\t%d\n",
 	    afs.fs_cgrotor, afs.fs_fmod, afs.fs_ronly, afs.fs_clean);
-	printf("avgfpdir %d\tavgfilesize %d\n",
+	printf("avgfpdir %u\tavgfilesize %u\n",
 	    afs.fs_avgfpdir, afs.fs_avgfilesize);
 	printf("flags\t");
 	if (afs.fs_magic == FS_UFS2_MAGIC ||
@@ -296,8 +297,8 @@ dumpfs(int fd, const char *name)
 		if (pread(fd, (char *)afs.fs_csp + i, size, off) != size)
 			goto err;
 	}
-	for (i = 0; i < afs.fs_ncg; i++) {
-		struct csum *cs = &afs.fs_cs(&afs, i);
+	for (cg = 0; cg < afs.fs_ncg; cg++) {
+		struct csum *cs = &afs.fs_cs(&afs, cg);
 		if (i && i % 4 == 0)
 			printf("\n\t");
 		printf("(%d,%d,%d,%d) ",
@@ -312,8 +313,8 @@ dumpfs(int fd, const char *name)
 		printf("blocks in last group %ld\n\n",
 		    (long)((fssize % afs.fs_fpg) / afs.fs_frag));
 	}
-	for (i = 0; i < afs.fs_ncg; i++)
-		if (dumpcg(name, fd, i))
+	for (cg = 0; cg < afs.fs_ncg; cg++)
+		if (dumpcg(name, fd, cg))
 			goto err;
 	return (0);
 
@@ -322,13 +323,13 @@ err:	warn("%s", name);
 }
 
 int
-dumpcg(const char *name, int fd, int c)
+dumpcg(const char *name, int fd, u_int c)
 {
 	time_t cgtime;
 	off_t cur;
 	int i, j;
 
-	printf("\ncg %d:\n", c);
+	printf("\ncg %u:\n", c);
 	cur = (off_t)fsbtodb(&afs, cgtod(&afs, c)) * DEV_BSIZE;
 	if (pread(fd, &acg, afs.fs_bsize, cur) != afs.fs_bsize) {
 		warn("%s: error reading cg", name);
@@ -339,7 +340,7 @@ dumpcg(const char *name, int fd, int c)
 		cgtime = acg.cg_ffs2_time;
 		printf("magic\t%x\ttell\t%jx\ttime\t%s",
 		    acg.cg_magic, (intmax_t)cur, ctime(&cgtime));
-		printf("cgx\t%d\tndblk\t%d\tniblk\t%d\tinitiblk %d\n",
+		printf("cgx\t%u\tndblk\t%u\tniblk\t%u\tinitiblk %u\n",
 		    acg.cg_cgx, acg.cg_ndblk, acg.cg_ffs2_niblk,
 		    acg.cg_initediblk);
 		break;
@@ -349,7 +350,7 @@ dumpcg(const char *name, int fd, int c)
 		    afs.fs_postblformat == FS_42POSTBLFMT ?
 		    ((struct ocg *)&acg)->cg_magic : acg.cg_magic,
 		    (intmax_t)cur, ctime(&cgtime));
-		printf("cgx\t%d\tncyl\t%d\tniblk\t%d\tndblk\t%d\n",
+		printf("cgx\t%u\tncyl\t%d\tniblk\t%d\tndblk\t%u\n",
 		    acg.cg_cgx, acg.cg_ncyl, acg.cg_niblk, acg.cg_ndblk);
 		break;
 	default:
@@ -358,10 +359,10 @@ dumpcg(const char *name, int fd, int c)
 	printf("nbfree\t%d\tndir\t%d\tnifree\t%d\tnffree\t%d\n",
 	    acg.cg_cs.cs_nbfree, acg.cg_cs.cs_ndir,
 	    acg.cg_cs.cs_nifree, acg.cg_cs.cs_nffree);
-	printf("rotor\t%d\tirotor\t%d\tfrotor\t%d\nfrsum",
+	printf("rotor\t%u\tirotor\t%u\tfrotor\t%u\nfrsum",
 	    acg.cg_rotor, acg.cg_irotor, acg.cg_frotor);
 	for (i = 1, j = 0; i < afs.fs_frag; i++) {
-		printf("\t%d", acg.cg_frsum[i]);
+		printf("\t%u", acg.cg_frsum[i]);
 		j += i * acg.cg_frsum[i];
 	}
 	printf("\nsum of frsum: %d", j);
@@ -416,8 +417,8 @@ marshal(const char *name)
 	/* -c unimplemented */
 	printf("-e %d ", afs.fs_maxbpg);
 	printf("-f %d ", afs.fs_fsize);
-	printf("-g %d ", afs.fs_avgfilesize);
-	printf("-h %d ", afs.fs_avgfpdir);
+	printf("-g %u ", afs.fs_avgfilesize);
+	printf("-h %u ", afs.fs_avgfpdir);
 	/* -i unimplemented */
 	printf("-m %d ", afs.fs_minfree);
 	printf("-o ");

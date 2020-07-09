@@ -1,4 +1,4 @@
-/*	$OpenBSD: sparc64_softraid.c,v 1.4 2019/06/28 13:32:48 deraadt Exp $	*/
+/*	$OpenBSD: sparc64_softraid.c,v 1.5 2020/06/08 19:17:12 kn Exp $	*/
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  *
@@ -97,5 +97,6 @@ sr_install_bootldr(int devfd, char *dev)
 			    "softraid volume\n", dev);
 		if (ioctl(devfd, BIOCINSTALLBOOT, &bb) == -1)
 			errx(1, "softraid installboot failed");
+		sr_status(&bb.bb_bio.bio_status);
 	}
 }

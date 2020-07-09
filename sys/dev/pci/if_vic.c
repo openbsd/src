@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.99 2019/11/09 03:53:44 yasuoka Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.100 2020/06/22 02:31:33 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -867,7 +867,9 @@ vic_rx_proc(struct vic_softc *sc, int q)
 		VIC_INC(sc->sc_data->vd_rx[q].nextidx, sc->sc_nrxbuf);
 	}
 
-	if_input(ifp, &ml);
+	if (ifiq_input(&ifp->if_rcv, &ml))
+		if_rxr_livelocked(&sc->sc_rxq[q].ring);
+
 	vic_rx_fill(sc, q);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dma_map, 0, sc->sc_dma_size,

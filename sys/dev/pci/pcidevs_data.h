@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1922 2020/04/25 15:23:48 kevlo Exp 
+ *	OpenBSD: pcidevs,v 1.1928 2020/06/30 04:37:24 jmatthew Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -2456,6 +2456,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "ASM1042A xHCI",
 	},
 	{
+	    PCI_VENDOR_ASMEDIA, PCI_PRODUCT_ASMEDIA_ASM1182E,
+	    "ASM1182e",
+	},
+	{
 	    PCI_VENDOR_ASMEDIA, PCI_PRODUCT_ASMEDIA_ASM1184E,
 	    "ASM1184e",
 	},
@@ -2590,6 +2594,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR9565,
 	    "AR9565",
+	},
+	{
+	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_QCA988X,
+	    "QCA986x/988x",
 	},
 	{
 	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5210_AP,
@@ -9834,6 +9842,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_CALGARY_IOMMU,
 	    "Calgary IOMMU",
+	},
+	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_POWER9_HB,
+	    "POWER9 Host",
 	},
 	{
 	    PCI_VENDOR_ICENSEMBLE, PCI_PRODUCT_ICENSEMBLE_ICE1712,
@@ -20972,8 +20984,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "88SE9172 SATA",
 	},
 	{
+	    PCI_VENDOR_MARVELL2, PCI_PRODUCT_MARVELL2_88SE9215,
+	    "88SE9215 AHCI",
+	},
+	{
 	    PCI_VENDOR_MARVELL2, PCI_PRODUCT_MARVELL2_88SE9230,
 	    "88SE9230 AHCI",
+	},
+	{
+	    PCI_VENDOR_MARVELL2, PCI_PRODUCT_MARVELL2_88SE9235,
+	    "88SE9235 AHCI",
 	},
 	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_ATLAS,
@@ -21138,6 +21158,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_MELLANOX, PCI_PRODUCT_MELLANOX_MT28908VF,
 	    "ConnectX-6 VF",
+	},
+	{
+	    PCI_VENDOR_MELLANOX, PCI_PRODUCT_MELLANOX_MT2892,
+	    "ConnectX-6 Dx",
 	},
 	{
 	    PCI_VENDOR_MELLANOX, PCI_PRODUCT_MELLANOX_CONNECTX_EN,
@@ -27192,6 +27216,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82C101",
 	},
 	{
+	    PCI_VENDOR_SKHYNIX, PCI_PRODUCT_SKHYNIX_SSD,
+	    "BC501 NVMe",
+	},
+	{
 	    PCI_VENDOR_TAMARACK, PCI_PRODUCT_TAMARACK_TC9021,
 	    "TC9021",
 	},
@@ -30722,6 +30750,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_SYMPHONY2,
 	    "Symphony Labs",
+	},
+	{
+	    PCI_VENDOR_SKHYNIX,
+	    "SK hynix",
 	},
 	{
 	    PCI_VENDOR_ADATA,

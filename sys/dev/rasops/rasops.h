@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.h,v 1.23 2018/08/27 09:30:07 kettenis Exp $ */
+/*	$OpenBSD: rasops.h,v 1.25 2020/05/25 09:55:49 jsg Exp $ */
 /* 	$NetBSD: rasops.h,v 1.13 2000/06/13 13:36:54 ad Exp $ */
 
 /*-
@@ -130,12 +130,12 @@ struct rasops_info {
 	void	*ri_switchcookie;
 	struct task ri_switchtask;
 
-	int	(*ri_putchar)(void *, int, int, u_int, long);
+	int	(*ri_putchar)(void *, int, int, u_int, uint32_t);
 	int	(*ri_copycols)(void *, int, int, int, int);
-	int	(*ri_erasecols)(void *, int, int, int, long);
+	int	(*ri_erasecols)(void *, int, int, int, uint32_t);
 	int	(*ri_copyrows)(void *, int, int, int);
-	int	(*ri_eraserows)(void *, int, int, long);
-	int	(*ri_alloc_attr)(void *, int, int, int, long *);
+	int	(*ri_eraserows)(void *, int, int, uint32_t);
+	int	(*ri_pack_attr)(void *, int, int, int, uint32_t *);
 };
 
 #define DELTA(p, d, cast) ((p) = (cast)((caddr_t)(p) + (d)))
@@ -168,10 +168,10 @@ void	rasops32_init(struct rasops_info *);
 /* rasops.c */
 int	rasops_init(struct rasops_info *, int, int);
 int	rasops_reconfig(struct rasops_info *, int, int);
-int	rasops_eraserows(void *, int, int, long);
-int	rasops_erasecols(void *, int, int, int, long);
+int	rasops_eraserows(void *, int, int, uint32_t);
+int	rasops_erasecols(void *, int, int, int, uint32_t);
 
-int	rasops_alloc_screen(void *, void **, int *, int *, long *);
+int	rasops_alloc_screen(void *, void **, int *, int *, uint32_t *);
 void	rasops_free_screen(void *, void *);
 int	rasops_show_screen(void *, void *, int,
 	    void (*)(void *, int, int), void *);

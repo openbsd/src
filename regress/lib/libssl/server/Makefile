@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.1 2017/03/05 14:15:53 jsing Exp $
+#	$OpenBSD: Makefile,v 1.2 2020/05/11 18:18:21 jsing Exp $
 
 PROG=	servertest
-LDADD=	-lssl -lcrypto
+LDADD=	${SSL_INT} -lcrypto
 DPADD=	${LIBSSL} ${LIBCRYPTO}
 WARNINGS=	Yes
 CFLAGS+=	-DLIBRESSL_INTERNAL -Werror

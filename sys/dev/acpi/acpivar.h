@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.107 2020/04/14 20:42:26 kettenis Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.109 2020/05/14 13:07:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -43,6 +43,7 @@ extern int acpi_debug;
 #endif
 
 extern int acpi_hasprocfvs;
+extern int acpi_haspci;
 
 struct klist;
 struct acpiec_softc;
@@ -64,6 +65,13 @@ struct acpi_attach_args {
 	struct aml_node *aaa_node;
 	const char	*aaa_dev;
 	const char	*aaa_cdev;
+	uint64_t	 aaa_addr[4];
+	uint64_t	 aaa_size[4];
+	bus_space_tag_t	 aaa_bst[4];
+	int		 aaa_naddr;
+	uint32_t	 aaa_irq[4];
+	uint32_t	 aaa_irq_flags[4];
+	int		 aaa_nirq;
 };
 
 struct acpi_mem_map {

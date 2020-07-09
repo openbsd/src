@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.48 2020/04/16 05:28:30 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.50 2020/07/03 17:42:50 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -185,8 +185,6 @@ main(int argc, char *argv[])
 
 	if (!debug)
 		daemon(0, 0);
-
-	log_info("startup");
 
 	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
 	    PF_UNSPEC, pipe_main2frontend) == -1)
@@ -697,7 +695,7 @@ configure_interface(struct imsg_configure_address *address)
 	in6_addreq.ifra_flags |= IN6_IFF_AUTOCONF;
 
 	if (address->privacy)
-		in6_addreq.ifra_flags |= IN6_IFF_PRIVACY;
+		in6_addreq.ifra_flags |= IN6_IFF_TEMPORARY;
 
 	log_debug("%s: %s", __func__, if_name);
 

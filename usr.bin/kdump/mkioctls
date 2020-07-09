@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: mkioctls,v 1.41 2019/04/14 10:16:00 jsg Exp $
+#	$OpenBSD: mkioctls,v 1.42 2020/06/22 01:02:30 dlg Exp $
 
 #
 # Copyright (c) 1994
@@ -57,6 +57,7 @@ BEGIN {
 	print "#include <net/if_pppoe.h>"
 	print "#include <net/if_trunk.h>"
 	print "#include <net/if_tun.h>"
+	print "#include <net/if_wg.h>"
 	print "#include <net/pfvar.h>"
 	print "#include <net/pipex.h>"
 	print "#include <sys/disklabel.h>"

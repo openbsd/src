@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.244 2020/02/12 21:15:44 benno Exp $	*/
+/*	$OpenBSD: parse.y,v 1.245 2020/05/14 17:27:38 pvk Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1355,6 +1355,8 @@ flag		: STRING			{
 				$$ = TLSFLAG_TLSV1_1;
 			else if (strcmp("tlsv1.2", $1) == 0)
 				$$ = TLSFLAG_TLSV1_2;
+			else if (strcmp("tlsv1.3", $1) == 0)
+				$$ = TLSFLAG_TLSV1_3;
 			else if (strcmp("cipher-server-preference", $1) == 0)
 				$$ = TLSFLAG_CIPHER_SERVER_PREF;
 			else if (strcmp("client-renegotiation", $1) == 0)

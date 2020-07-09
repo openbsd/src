@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_udp.c,v 1.36 2019/06/28 13:32:42 deraadt Exp $ */
+/*	$OpenBSD: clnt_udp.c,v 1.37 2020/07/06 13:33:06 pirofti Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -265,7 +265,7 @@ send_again:
 	reply_msg.acpted_rply.ar_results.where = resultsp;
 	reply_msg.acpted_rply.ar_results.proc = xresults;
 
-	clock_gettime(CLOCK_MONOTONIC, &start);
+	WRAP(clock_gettime)(CLOCK_MONOTONIC, &start);
 	for (;;) {
 		switch (ppoll(pfd, 1, &wait, NULL)) {
 		case 0:
@@ -283,7 +283,7 @@ send_again:
 			/* FALLTHROUGH */
 		case -1:
 			if (errno == EINTR) {
-				clock_gettime(CLOCK_MONOTONIC, &after);
+				WRAP(clock_gettime)(CLOCK_MONOTONIC, &after);
 				timespecsub(&after, &start, &duration);
 				timespecadd(&time_waited, &duration, &time_waited);
 				if (timespeccmp(&time_waited, &timeout, <))

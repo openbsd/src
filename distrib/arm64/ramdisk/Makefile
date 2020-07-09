@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.18 2019/11/17 06:03:39 jsg Exp $
+#	$OpenBSD: Makefile,v 1.20 2020/05/18 06:20:43 otto Exp $
 
-FS=		miniroot${OSrev}.fs
+FS=		miniroot${OSrev}.img
 FSSIZE=		67584
 FSDISKTYPE=	miniroot
 MOUNT_POINT=	/mnt
@@ -64,7 +64,7 @@ ${FS}: bsd.rd
 	dd if=${PUBOOT}/pine64_plus/u-boot-sunxi-with-spl.bin \
 	    of=/dev/r`cat vnd`c bs=1024 seek=8 conv=sync
 	umount ${MOUNT_POINT}
-	newfs -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
+	newfs -O 1 -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
 	mount /dev/`cat vnd`a ${MOUNT_POINT}
 	install -c -m 555 -o root -g wheel bsd.rd ${MOUNT_POINT}/bsd
 	ln ${MOUNT_POINT}/bsd ${MOUNT_POINT}/bsd.rd

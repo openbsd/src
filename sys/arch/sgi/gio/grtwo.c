@@ -1,4 +1,4 @@
-/*	$OpenBSD: grtwo.c,v 1.13 2017/01/15 20:22:33 fcambus Exp $	*/
+/*	$OpenBSD: grtwo.c,v 1.15 2020/05/25 09:55:48 jsg Exp $	*/
 /* $NetBSD: grtwo.c,v 1.11 2009/11/22 19:09:15 mbalmer Exp $	 */
 
 /*
@@ -94,7 +94,7 @@ struct grtwo_softc {
 
 struct grtwo_devconfig {
 	struct rasops_info		dc_ri;
-	long				dc_defattr;
+	uint32_t			dc_defattr;
 	struct wsdisplay_charcell	*dc_bs;
 
 	uint32_t			dc_addr;
@@ -131,7 +131,7 @@ const struct cfattach grtwo_ca = {
 int	grtwo_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	grtwo_mmap(void *, off_t, int);
 int	grtwo_alloc_screen(void *, const struct wsscreen_descr *, void **,
-	    int *, int *, long *);
+	    int *, int *, uint32_t *);
 void	grtwo_free_screen(void *, void *);
 int	grtwo_show_screen(void *, void *, int, void (*)(void *, int, int),
 	    void *);
@@ -151,11 +151,11 @@ static struct wsdisplay_accessops grtwo_accessops = {
 };
 
 int	grtwo_cursor(void *, int, int, int);
-int	grtwo_putchar(void *, int, int, u_int, long);
+int	grtwo_putchar(void *, int, int, u_int, uint32_t);
 int	grtwo_copycols(void *, int, int, int, int);
-int	grtwo_erasecols(void *, int, int, int, long);
+int	grtwo_erasecols(void *, int, int, int, uint32_t);
 int	grtwo_copyrows(void *, int, int, int);
-int	grtwo_eraserows(void *, int, int, long);
+int	grtwo_eraserows(void *, int, int, uint32_t);
 
 void	grtwo_wait_gfifo(struct grtwo_devconfig *);
 static __inline__
@@ -457,7 +457,7 @@ grtwo_cnattach(struct gio_attach_args *ga)
 {
 	struct rasops_info *ri = &grtwo_console_dc.dc_ri;
 	struct wsdisplay_charcell *cell;
-	long defattr;
+	uint32_t defattr;
 	int rc;
 	int i;
 
@@ -469,7 +469,7 @@ grtwo_cnattach(struct gio_attach_args *ga)
 	if (rc != 0)
 		return rc;
 
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &defattr);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, &defattr);
 	cell = grtwo_console_bs;
 	for (i = ri->ri_cols * ri->ri_rows; i != 0; i--, cell++)
 		cell->attr = defattr;
@@ -562,7 +562,7 @@ grtwo_cursor(void *c, int on, int row, int col)
 }
 
 int
-grtwo_putchar(void *c, int row, int col, u_int ch, long attr)
+grtwo_putchar(void *c, int row, int col, u_int ch, uint32_t attr)
 {
 	struct rasops_info *ri = c;
 	struct grtwo_devconfig *dc = ri->ri_hw;
@@ -709,7 +709,7 @@ grtwo_copycols(void *c, int row, int src, int dst, int ncol)
 }
 
 int
-grtwo_erasecols(void *c, int row, int startcol, int ncol, long attr)
+grtwo_erasecols(void *c, int row, int startcol, int ncol, uint32_t attr)
 {
 	struct rasops_info *ri = c;
 	struct grtwo_devconfig *dc = ri->ri_hw;
@@ -773,7 +773,7 @@ grtwo_copyrows(void *c, int src, int dst, int nrow)
 }
 
 int
-grtwo_eraserows(void *c, int startrow, int nrow, long attr)
+grtwo_eraserows(void *c, int startrow, int nrow, uint32_t attr)
 {
 	struct rasops_info *ri = c;
 	struct grtwo_devconfig *dc = ri->ri_hw;
@@ -813,7 +813,7 @@ grtwo_eraserows(void *c, int startrow, int nrow, long attr)
 
 int
 grtwo_alloc_screen(void *v, const struct wsscreen_descr * type, void **cookiep,
-    int *curxp, int *curyp, long *attrp)
+    int *curxp, int *curyp, uint32_t *attrp)
 {
 	struct grtwo_devconfig *dc = v;
 	struct rasops_info *ri = &dc->dc_ri;
@@ -828,7 +828,7 @@ grtwo_alloc_screen(void *v, const struct wsscreen_descr * type, void **cookiep,
 
 	*cookiep = ri;
 	*curxp = *curyp = 0;
-	ri->ri_ops.alloc_attr(ri, 0, 0, 0, &dc->dc_defattr);
+	ri->ri_ops.pack_attr(ri, 0, 0, 0, &dc->dc_defattr);
 	*attrp = dc->dc_defattr;
 
 	cell = dc->dc_bs;

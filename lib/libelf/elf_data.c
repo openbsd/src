@@ -32,7 +32,7 @@
 
 #include "_libelf.h"
 
-ELFTC_VCSID("$Id: elf_data.c,v 1.2 2019/03/19 02:31:35 jsg Exp $");
+ELFTC_VCSID("$Id: elf_data.c,v 1.3 2020/05/18 06:46:23 jsg Exp $");
 
 Elf_Data *
 elf_getdata(Elf_Scn *s, Elf_Data *ed)
@@ -118,7 +118,8 @@ elf_getdata(Elf_Scn *s, Elf_Data *ed)
 
 	count = (size_t) (sh_size / fsz);
 
-	msz = _libelf_msize(elftype, elfclass, e->e_version);
+	if ((msz = _libelf_msize(elftype, elfclass, e->e_version)) == 0)
+		return (NULL);
 
 	if (count > 0 && msz > SIZE_MAX / count) {
 		LIBELF_SET_ERROR(RANGE, 0);

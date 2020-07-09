@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.76 2019/08/10 01:30:53 mestre Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.77 2020/06/22 15:09:34 mestre Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -171,7 +171,7 @@ ldpe_shutdown(void)
 	msgbuf_clear(&iev_main->ibuf.w);
 	close(iev_main->ibuf.fd);
 
-	control_cleanup(global.csock);
+	control_cleanup();
 	config_clear(leconf);
 
 	if (sysdep.no_pfkey == 0) {

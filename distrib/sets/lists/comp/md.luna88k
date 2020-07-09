@@ -52,10 +52,9 @@
 ./usr/include/luna88k/setjmp.h
 ./usr/include/luna88k/signal.h
 ./usr/include/luna88k/spinlock.h
-./usr/include/luna88k/stdarg.h
 ./usr/include/luna88k/tcb.h
+./usr/include/luna88k/timetc.h
 ./usr/include/luna88k/trap.h
-./usr/include/luna88k/varargs.h
 ./usr/include/luna88k/vmparam.h
 ./usr/include/luna88k/xpio.h
 ./usr/include/m88k
@@ -97,10 +96,8 @@
 ./usr/include/m88k/setjmp.h
 ./usr/include/m88k/signal.h
 ./usr/include/m88k/spinlock.h
-./usr/include/m88k/stdarg.h
 ./usr/include/m88k/tcb.h
 ./usr/include/m88k/trap.h
-./usr/include/m88k/varargs.h
 ./usr/include/m88k/vmparam.h
 ./usr/include/unwind.h
 ./usr/libdata/ldscripts

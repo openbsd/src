@@ -1,7 +1,7 @@
-/*	$OpenBSD: octboot.h,v 1.1 2019/07/17 14:36:32 visa Exp $	*/
+/*	$OpenBSD: octboot.h,v 1.2 2020/05/26 13:21:58 visa Exp $	*/
 
 /*
- * Copyright (c) 2019 Visa Hankala
+ * Copyright (c) 2019-2020 Visa Hankala
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -24,7 +24,8 @@
 #define OCTBOOT_MAX_ARGS	8	/* maximum number of boot arguments */
 
 struct octboot_kexec_args {
-	const char	*path;		/* kernel path */
+	char		*kimg;		/* kernel image buffer */
+	size_t		 klen;		/* size of kernel image */
 	char		*argv[OCTBOOT_MAX_ARGS];
 					/* kernel boot arguments */
 };

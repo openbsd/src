@@ -54,4 +54,9 @@ backlight_force_update(struct backlight_device *bd, int reason)
 
 void backlight_schedule_update_status(struct backlight_device *);
 
+int backlight_enable(struct backlight_device *);
+int backlight_disable(struct backlight_device *);
+
+#define devm_of_find_backlight(x)	NULL
+
 #endif

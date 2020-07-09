@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlmmc.c,v 1.4 2019/09/02 08:21:15 kettenis Exp $	*/
+/*	$OpenBSD: amlmmc.c,v 1.6 2020/05/19 15:47:32 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -497,8 +497,12 @@ amlmmc_bus_clock(sdmmc_chipset_handle_t sch, int freq, int timing)
 	if (freq == 0)
 		return 0;
 
-	/* Convert clock frequency from MHz to Hz. */
+	/* Convert clock frequency from kHz to Hz. */
 	freq = freq * 1000;
+
+	/* Double the clock rate for DDR modes. */
+	if (timing == SDMMC_TIMING_MMC_DDR52)
+		freq = freq * 2;
 
 	if (freq < (sc->sc_clkin1 / SD_EMMC_CLOCK_DIV_MAX)) {
 		div = (sc->sc_clkin0 + freq - 1) / freq;

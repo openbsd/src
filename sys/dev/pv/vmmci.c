@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmci.c,v 1.6 2019/12/31 01:26:56 jsg Exp $	*/
+/*	$OpenBSD: vmmci.c,v 1.8 2020/06/24 22:03:40 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2017 Reyk Floeter <reyk@openbsd.org>
@@ -32,7 +32,6 @@
 #include <dev/pv/virtioreg.h>
 #include <dev/pv/virtiovar.h>
 #include <dev/pv/pvvar.h>
-#include <dev/rndvar.h>
 
 enum vmmci_cmd {
 	VMMCI_NONE = 0,
@@ -175,7 +174,7 @@ vmmci_config_change(struct virtio_softc *vsc)
 		pvbus_reboot(&sc->sc_dev);
 		break;
 	case VMMCI_SYNCRTC:
-		inittodr(time_second);
+		inittodr(gettime());
 		sc->sc_cmd = VMMCI_NONE;
 		break;	
 	default:

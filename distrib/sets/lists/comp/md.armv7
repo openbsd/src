@@ -47,7 +47,6 @@
 ./usr/include/arm/signal.h
 ./usr/include/arm/softintr.h
 ./usr/include/arm/spinlock.h
-./usr/include/arm/stdarg.h
 ./usr/include/arm/swi.h
 ./usr/include/arm/sysarch.h
 ./usr/include/arm/sysreg.h
@@ -99,9 +98,9 @@
 ./usr/include/armv7/setjmp.h
 ./usr/include/armv7/signal.h
 ./usr/include/armv7/spinlock.h
-./usr/include/armv7/stdarg.h
 ./usr/include/armv7/sysarch.h
 ./usr/include/armv7/tcb.h
+./usr/include/armv7/timetc.h
 ./usr/include/armv7/trap.h
 ./usr/include/armv7/vmparam.h
 ./usr/include/ieeefp.h

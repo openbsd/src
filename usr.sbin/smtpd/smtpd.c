@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.332 2020/02/24 16:16:08 millert Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.333 2020/05/06 16:03:30 millert Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1409,6 +1409,8 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 	const char	*pw_dir;
 
 	dsp = dict_xget(env->sc_dispatchers, deliver->dispatcher);
+	if (dsp->type != DISPATCHER_LOCAL)
+		fatalx("non-local dispatcher called from forkmda()");
 
 	log_debug("debug: smtpd: forking mda for session %016"PRIx64
 	    ": %s as %s", id, deliver->userinfo.username,

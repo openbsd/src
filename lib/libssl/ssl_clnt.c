@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.64 2020/03/06 16:36:47 tb Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.70 2020/07/03 04:12:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -775,7 +775,7 @@ ssl3_send_client_hello(SSL *s)
 			goto err;
 
 		/* TLS extensions */
-		if (!tlsext_client_build(s, &client_hello, SSL_TLSEXT_MSG_CH)) {
+		if (!tlsext_client_build(s, SSL_TLSEXT_MSG_CH, &client_hello)) {
 			SSLerror(s, ERR_R_INTERNAL_ERROR);
 			goto err;
 		}
@@ -873,7 +873,7 @@ ssl3_get_server_hello(SSL *s)
 	    sizeof(s->s3->server_random), NULL))
 		goto err;
 
-	if (!SSL_IS_DTLS(s) && !ssl_enabled_version_range(s, NULL, &max_version))
+	if (!ssl_downgrade_max_version(s, &max_version))
 		goto err;
 	if (!SSL_IS_DTLS(s) && max_version >= TLS1_2_VERSION &&
 	    s->version < max_version) {
@@ -903,8 +903,7 @@ ssl3_get_server_hello(SSL *s)
 	if (!CBS_get_u8_length_prefixed(&cbs, &session_id))
 		goto truncated;
 
-	if ((CBS_len(&session_id) > sizeof(s->session->session_id)) ||
-	    (CBS_len(&session_id) > SSL3_SESSION_ID_SIZE)) {
+	if (CBS_len(&session_id) > SSL3_SESSION_ID_SIZE) {
 		al = SSL_AD_ILLEGAL_PARAMETER;
 		SSLerror(s, SSL_R_SSL3_SESSION_ID_TOO_LONG);
 		goto f_err;
@@ -1025,7 +1024,7 @@ ssl3_get_server_hello(SSL *s)
 		goto f_err;
 	}
 
-	if (!tlsext_client_parse(s, &cbs, &al, SSL_TLSEXT_MSG_SH)) {
+	if (!tlsext_client_parse(s, SSL_TLSEXT_MSG_SH, &cbs, &al)) {
 		SSLerror(s, SSL_R_PARSE_TLSEXT);
 		goto f_err;
 	}
@@ -1265,7 +1264,7 @@ ssl3_get_server_kex_dhe(SSL *s, EVP_PKEY **pkey, CBS *cbs)
 	}
 
 	if (alg_a & SSL_aRSA)
-		*pkey = X509_get_pubkey(sc->peer_pkeys[SSL_PKEY_RSA_ENC].x509);
+		*pkey = X509_get_pubkey(sc->peer_pkeys[SSL_PKEY_RSA].x509);
 	else
 		/* XXX - Anonymous DH, so no certificate or pkey. */
 		*pkey = NULL;
@@ -1398,7 +1397,7 @@ ssl3_get_server_kex_ecdhe(SSL *s, EVP_PKEY **pkey, CBS *cbs)
 	 * and ECDSA.
 	 */
 	if (alg_a & SSL_aRSA)
-		*pkey = X509_get_pubkey(sc->peer_pkeys[SSL_PKEY_RSA_ENC].x509);
+		*pkey = X509_get_pubkey(sc->peer_pkeys[SSL_PKEY_RSA].x509);
 	else if (alg_a & SSL_aECDSA)
 		*pkey = X509_get_pubkey(sc->peer_pkeys[SSL_PKEY_ECC].x509);
 	else
@@ -1831,7 +1830,6 @@ int
 ssl3_get_cert_status(SSL *s)
 {
 	CBS			 cert_status, response;
-	size_t			 stow_len;
 	int			 ok, al;
 	long			 n;
 	uint8_t			 status_type;
@@ -1872,13 +1870,11 @@ ssl3_get_cert_status(SSL *s)
 	}
 
 	if (!CBS_stow(&response, &s->internal->tlsext_ocsp_resp,
-	    &stow_len) || stow_len > INT_MAX) {
-		s->internal->tlsext_ocsp_resplen = 0;
+	    &s->internal->tlsext_ocsp_resp_len)) {
  		al = SSL_AD_INTERNAL_ERROR;
  		SSLerror(s, ERR_R_MALLOC_FAILURE);
  		goto f_err;
  	}
-	s->internal->tlsext_ocsp_resplen = (int)stow_len;
 
 	if (s->ctx->internal->tlsext_status_cb) {
 		int ret;
@@ -1937,7 +1933,7 @@ ssl3_send_client_kex_rsa(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 	 * RSA-Encrypted Premaster Secret Message - RFC 5246 section 7.4.7.1.
 	 */
 
-	pkey = X509_get_pubkey(sess_cert->peer_pkeys[SSL_PKEY_RSA_ENC].x509);
+	pkey = X509_get_pubkey(sess_cert->peer_pkeys[SSL_PKEY_RSA].x509);
 	if (pkey == NULL || pkey->type != EVP_PKEY_RSA ||
 	    pkey->pkey.rsa == NULL) {
 		SSLerror(s, ERR_R_INTERNAL_ERROR);
@@ -2342,6 +2338,12 @@ ssl3_send_client_verify_sigalgs(SSL *s, CBB *cert_verify)
 		goto err;
 	}
 	if (!EVP_DigestSignInit(&mctx, &pctx, md, NULL, pkey)) {
+		SSLerror(s, ERR_R_EVP_LIB);
+		goto err;
+	}
+	if (sigalg->key_type == EVP_PKEY_GOSTR01 &&
+	    EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_SIGN,
+	    EVP_PKEY_CTRL_GOST_SIG_FORMAT, GOST_SIG_FORMAT_RS_LE, NULL) <= 0) {
 		SSLerror(s, ERR_R_EVP_LIB);
 		goto err;
 	}

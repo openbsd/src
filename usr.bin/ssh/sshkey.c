@@ -1,4 +1,4 @@
-/* $OpenBSD: sshkey.c,v 1.108 2020/04/11 10:16:11 djm Exp $ */
+/* $OpenBSD: sshkey.c,v 1.110 2020/06/24 15:07:33 markus Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2008 Alexander von Gernler.  All rights reserved.
@@ -122,6 +122,8 @@ static const struct keytype keytypes[] = {
 	    KEY_ECDSA, NID_secp521r1, 0, 0 },
 	{ "sk-ecdsa-sha2-nistp256@openssh.com", "ECDSA-SK", NULL,
 	    KEY_ECDSA_SK, NID_X9_62_prime256v1, 0, 0 },
+	{ "webauthn-sk-ecdsa-sha2-nistp256@openssh.com", "ECDSA-SK", NULL,
+	    KEY_ECDSA_SK, NID_X9_62_prime256v1, 0, 1 },
 	{ "ssh-rsa-cert-v01@openssh.com", "RSA-CERT", NULL,
 	    KEY_RSA_CERT, 0, 1, 0 },
 	{ "rsa-sha2-256-cert-v01@openssh.com", "RSA-CERT",
@@ -3543,9 +3545,11 @@ sshkey_private_deserialize(struct sshbuf *buf, struct sshkey **kp)
 	case KEY_XMSS:
 	case KEY_XMSS_CERT:
 		if ((r = sshbuf_get_cstring(buf, &xmss_name, NULL)) != 0 ||
-		    (r = sshkey_xmss_init(k, xmss_name)) != 0 ||
 		    (r = sshbuf_get_string(buf, &xmss_pk, &pklen)) != 0 ||
 		    (r = sshbuf_get_string(buf, &xmss_sk, &sklen)) != 0)
+			goto out;
+		if (type == KEY_XMSS &&
+		    (r = sshkey_xmss_init(k, xmss_name)) != 0)
 			goto out;
 		if (pklen != sshkey_xmss_pklen(k) ||
 		    sklen != sshkey_xmss_sklen(k)) {

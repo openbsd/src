@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_mira.c,v 1.29 2020/04/17 07:09:05 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_mira.c,v 1.30 2020/05/01 14:04:17 stsp Exp $	*/
 
 /*
  * Copyright (c) 2016 Stefan Sperling <stsp@openbsd.org>
@@ -399,6 +399,9 @@ ieee80211_mira_update_stats(struct ieee80211_mira_node *mn,
 	int sgi = (ni->ni_flags & IEEE80211_NODE_HT_SGI20) ? 1 : 0;
 	uint64_t rate = ieee80211_mira_get_txrate(ni->ni_txmcs, sgi);
 	struct ieee80211_mira_goodput_stats *g = &mn->g[ni->ni_txmcs];
+
+	if (mn->frames == 0)
+		return; /* avoid divide-by-zero in sfer calculation below */
 
 	g->nprobes += mn->agglen;
 	g->nprobe_bytes += mn->ampdu_size;

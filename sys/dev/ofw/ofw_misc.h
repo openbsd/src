@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.h,v 1.12 2020/03/22 14:56:24 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.h,v 1.14 2020/06/25 12:35:21 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -176,5 +176,55 @@ struct endpoint *endpoint_byreg(struct device_ports *, uint32_t, uint32_t);
 struct endpoint *endpoint_remote(struct endpoint *);
 int	endpoint_activate(struct endpoint *, void *);
 void	*endpoint_get_cookie(struct endpoint *);
+
+/* Digital audio interface support */
+
+struct dai_device {
+	int	dd_node;
+	void	*dd_cookie;
+	void	*dd_hw_if;
+	int	(*dd_set_format)(void *, uint32_t, uint32_t, uint32_t);
+	int	(*dd_set_sysclk)(void *, uint32_t);
+
+	LIST_ENTRY(dai_device) dd_list;
+	uint32_t dd_phandle;
+};
+
+void	dai_register(struct dai_device *);
+struct dai_device *dai_byphandle(uint32_t);
+
+#define DAI_FORMAT_I2S			0
+#define DAI_FORMAT_RJ			1
+#define DAI_FORMAT_LJ			2
+#define DAI_FORMAT_DSPA			3
+#define DAI_FORMAT_DSPB			4
+#define DAI_FORMAT_AC97			5
+#define DAI_FORMAT_PDM			6
+#define DAI_FORMAT_MSB			7
+#define DAI_FORMAT_LSB			8
+
+#define DAI_POLARITY_NB			(0 << 0)
+#define DAI_POLARITY_IB			(1 << 0)
+#define DAI_POLARITY_NF			(0 << 1)
+#define DAI_POLARITY_IF			(1 << 1)
+
+#define DAI_CLOCK_CBS			(0 << 0)
+#define DAI_CLOCK_CBM			(1 << 0)
+#define DAI_CLOCK_CFS			(0 << 1)
+#define DAI_CLOCK_CFM			(1 << 1)
+
+/* MII support */
+
+struct mii_bus {
+	int	md_node;
+	void	*md_cookie;
+	int	(*md_readreg)(struct device *, int, int);
+	void	(*md_writereg)(struct device *, int, int, int);
+
+	LIST_ENTRY(mii_bus) md_list;
+};
+
+void	mii_register(struct mii_bus *);
+struct mii_bus *mii_byphandle(uint32_t);
 
 #endif /* _DEV_OFW_MISC_H_ */

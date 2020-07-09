@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppvar.h,v 1.19 2017/01/24 10:08:30 krw Exp $	*/
+/*	$OpenBSD: if_pppvar.h,v 1.20 2020/05/20 06:44:30 mpi Exp $	*/
 /*	$NetBSD: if_pppvar.h,v 1.5 1997/01/03 07:23:29 mikel Exp $	*/
 /*
  * if_pppvar.h - private structures and declarations for PPP.
@@ -113,7 +113,6 @@ struct ppp_softc {
 	struct	mbuf *sc_togo;		/* output packet ready to go */
 	struct	mbuf_list sc_npqueue;	/* output packets not to be sent yet */
 	struct	pppstat sc_stats;	/* count of bytes/pkts sent/rcvd */
-	caddr_t	sc_bpf;			/* hook for BPF */
 	enum	NPmode sc_npmode[NUM_NP]; /* what to do with each NP */
 	struct	compressor *sc_xcomp;	/* transmit compressor */
 	void	*sc_xc_state;		/* transmit compressor state */

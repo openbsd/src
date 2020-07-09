@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.67 2020/04/28 20:37:22 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.85 2020/07/03 04:12:51 tb Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -27,22 +27,57 @@
 
 __BEGIN_HIDDEN_DECLS
 
-#define TLS13_HS_CLIENT		1
-#define TLS13_HS_SERVER		2
+#define TLS13_HS_CLIENT			1
+#define TLS13_HS_SERVER			2
 
-#define TLS13_IO_SUCCESS	 1
-#define TLS13_IO_EOF		 0
-#define TLS13_IO_FAILURE	-1
-#define TLS13_IO_ALERT		-2
-#define TLS13_IO_WANT_POLLIN	-3
-#define TLS13_IO_WANT_POLLOUT	-4
-#define TLS13_IO_WANT_RETRY	-5 /* Retry the previous call immediately. */
-#define TLS13_IO_USE_LEGACY	-6
+#define TLS13_IO_SUCCESS		 1
+#define TLS13_IO_EOF			 0
+#define TLS13_IO_FAILURE		-1
+#define TLS13_IO_ALERT			-2
+#define TLS13_IO_WANT_POLLIN		-3
+#define TLS13_IO_WANT_POLLOUT		-4
+#define TLS13_IO_WANT_RETRY		-5 /* Retry the previous call immediately. */
+#define TLS13_IO_USE_LEGACY		-6
+#define TLS13_IO_RECORD_VERSION		-7
+#define TLS13_IO_RECORD_OVERFLOW	-8
 
 #define TLS13_ERR_VERIFY_FAILED		16
 #define TLS13_ERR_HRR_FAILED		17
 #define TLS13_ERR_TRAILING_DATA		18
 #define TLS13_ERR_NO_SHARED_CIPHER	19
+#define TLS13_ERR_NO_CERTIFICATE	20
+#define TLS13_ERR_NO_PEER_CERTIFICATE	21
+
+#define TLS13_ALERT_LEVEL_WARNING			1
+#define TLS13_ALERT_LEVEL_FATAL				2
+
+#define TLS13_ALERT_CLOSE_NOTIFY			0
+#define TLS13_ALERT_UNEXPECTED_MESSAGE			10
+#define TLS13_ALERT_BAD_RECORD_MAC			20
+#define TLS13_ALERT_RECORD_OVERFLOW			22
+#define TLS13_ALERT_HANDSHAKE_FAILURE			40
+#define TLS13_ALERT_BAD_CERTIFICATE			42
+#define TLS13_ALERT_UNSUPPORTED_CERTIFICATE		43
+#define TLS13_ALERT_CERTIFICATE_REVOKED			44
+#define TLS13_ALERT_CERTIFICATE_EXPIRED			45
+#define TLS13_ALERT_CERTIFICATE_UNKNOWN			46
+#define TLS13_ALERT_ILLEGAL_PARAMETER			47
+#define TLS13_ALERT_UNKNOWN_CA				48
+#define TLS13_ALERT_ACCESS_DENIED			49
+#define TLS13_ALERT_DECODE_ERROR			50
+#define TLS13_ALERT_DECRYPT_ERROR			51
+#define TLS13_ALERT_PROTOCOL_VERSION			70
+#define TLS13_ALERT_INSUFFICIENT_SECURITY		71
+#define TLS13_ALERT_INTERNAL_ERROR			80
+#define TLS13_ALERT_INAPPROPRIATE_FALLBACK		86
+#define TLS13_ALERT_USER_CANCELED			90
+#define TLS13_ALERT_MISSING_EXTENSION			109
+#define TLS13_ALERT_UNSUPPORTED_EXTENSION		110
+#define TLS13_ALERT_UNRECOGNIZED_NAME			112
+#define TLS13_ALERT_BAD_CERTIFICATE_STATUS_RESPONSE	113
+#define TLS13_ALERT_UNKNOWN_PSK_IDENTITY		115
+#define TLS13_ALERT_CERTIFICATE_REQUIRED		116
+#define TLS13_ALERT_NO_APPLICATION_PROTOCOL		120
 
 typedef void (*tls13_alert_cb)(uint8_t _alert_desc, void *_cb_arg);
 typedef ssize_t (*tls13_phh_recv_cb)(void *_cb_arg, CBS *_cbs);
@@ -51,6 +86,7 @@ typedef ssize_t (*tls13_read_cb)(void *_buf, size_t _buflen, void *_cb_arg);
 typedef ssize_t (*tls13_write_cb)(const void *_buf, size_t _buflen,
     void *_cb_arg);
 typedef void (*tls13_handshake_message_cb)(void *_cb_arg);
+typedef int (*tls13_ocsp_status_cb)(void *_cb_arg);
 
 /*
  * Buffers.
@@ -141,10 +177,17 @@ int tls13_key_share_derive(struct tls13_key_share *ks, uint8_t **shared_key,
  */
 struct tls13_record_layer;
 
-struct tls13_record_layer *tls13_record_layer_new(tls13_read_cb wire_read,
-    tls13_write_cb wire_write, tls13_alert_cb alert_cb,
-    tls13_phh_recv_cb phh_recv_cb,
-    tls13_phh_sent_cb phh_sent_cb, void *cb_arg);
+struct tls13_record_layer_callbacks {
+	tls13_read_cb wire_read;
+	tls13_write_cb wire_write;
+	tls13_alert_cb alert_recv;
+	tls13_alert_cb alert_sent;
+	tls13_phh_recv_cb phh_recv;
+	tls13_phh_sent_cb phh_sent;
+};
+
+struct tls13_record_layer *tls13_record_layer_new(
+    const struct tls13_record_layer_callbacks *callbacks, void *cb_arg);
 void tls13_record_layer_free(struct tls13_record_layer *rl);
 void tls13_record_layer_allow_ccs(struct tls13_record_layer *rl, int allow);
 void tls13_record_layer_allow_legacy_alerts(struct tls13_record_layer *rl, int allow);
@@ -155,6 +198,7 @@ void tls13_record_layer_set_hash(struct tls13_record_layer *rl,
     const EVP_MD *hash);
 void tls13_record_layer_set_legacy_version(struct tls13_record_layer *rl,
     uint16_t version);
+void tls13_record_layer_set_retry_after_phh(struct tls13_record_layer *rl, int retry);
 void tls13_record_layer_handshake_completed(struct tls13_record_layer *rl);
 int tls13_record_layer_set_read_traffic_key(struct tls13_record_layer *rl,
     struct tls13_secret *read_key);
@@ -173,6 +217,7 @@ ssize_t tls13_write_application_data(struct tls13_record_layer *rl, const uint8_
     size_t n);
 
 ssize_t tls13_send_alert(struct tls13_record_layer *rl, uint8_t alert_desc);
+ssize_t tls13_send_dummy_ccs(struct tls13_record_layer *rl);
 
 /*
  * Handshake Messages.
@@ -217,6 +262,9 @@ struct tls13_ctx {
 	uint8_t	mode;
 	struct tls13_handshake_stage handshake_stage;
 	int handshake_completed;
+	int middlebox_compat;
+	int send_dummy_ccs;
+	int send_dummy_ccs_after;
 
 	int close_notify_sent;
 	int close_notify_recv;
@@ -233,6 +281,7 @@ struct tls13_ctx {
 
 	tls13_handshake_message_cb handshake_message_sent_cb;
 	tls13_handshake_message_cb handshake_message_recv_cb;
+	tls13_ocsp_status_cb ocsp_status_recv_cb;
 };
 #ifndef TLS13_PHH_LIMIT_TIME
 #define TLS13_PHH_LIMIT_TIME 3600
@@ -262,6 +311,7 @@ int tls13_legacy_read_bytes(SSL *ssl, int type, unsigned char *buf, int len,
     int peek);
 int tls13_legacy_write_bytes(SSL *ssl, int type, const void *buf, int len);
 int tls13_legacy_shutdown(SSL *ssl);
+int tls13_legacy_servername_process(struct tls13_ctx *ctx, uint8_t *alert);
 
 /*
  * Message Types - RFC 8446, Section B.3.
@@ -318,6 +368,7 @@ int tls13_server_hello_send(struct tls13_ctx *ctx, CBB *cbb);
 int tls13_server_hello_sent(struct tls13_ctx *ctx);
 int tls13_server_hello_retry_request_recv(struct tls13_ctx *ctx, CBS *cbs);
 int tls13_server_hello_retry_request_send(struct tls13_ctx *ctx, CBB *cbb);
+int tls13_server_hello_retry_request_sent(struct tls13_ctx *ctx);
 int tls13_server_encrypted_extensions_recv(struct tls13_ctx *ctx, CBS *cbs);
 int tls13_server_encrypted_extensions_send(struct tls13_ctx *ctx, CBB *cbb);
 int tls13_server_certificate_recv(struct tls13_ctx *ctx, CBS *cbs);
@@ -331,9 +382,17 @@ int tls13_server_finished_send(struct tls13_ctx *ctx, CBB *cbb);
 int tls13_server_finished_sent(struct tls13_ctx *ctx);
 
 void tls13_error_clear(struct tls13_error *error);
+int tls13_cert_add(struct tls13_ctx *ctx, CBB *cbb, X509 *cert,
+    int(*build_extensions)(SSL *s, uint16_t msg_type, CBB *cbb));
 
-int tls13_cert_add(CBB *cbb, X509 *cert);
 int tls13_synthetic_handshake_message(struct tls13_ctx *ctx);
+int tls13_clienthello_hash_init(struct tls13_ctx *ctx);
+void tls13_clienthello_hash_clear(struct ssl_handshake_tls13_st *hs);
+int tls13_clienthello_hash_update_bytes(struct tls13_ctx *ctx, void *data,
+    size_t len);
+int tls13_clienthello_hash_update(struct tls13_ctx *ctx, CBS *cbs);
+int tls13_clienthello_hash_finalize(struct tls13_ctx *ctx);
+int tls13_clienthello_hash_validate(struct tls13_ctx *ctx);
 
 int tls13_error_set(struct tls13_error *error, int code, int subcode,
     const char *file, int line, const char *fmt, ...);

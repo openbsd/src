@@ -1,4 +1,4 @@
-/* $OpenBSD: main.c,v 1.29 2017/05/25 20:11:03 tedu Exp $	 */
+/* $OpenBSD: main.c,v 1.34 2020/05/24 17:31:54 espie Exp $	 */
 /* $NetBSD: main.c,v 1.5 1996/03/19 03:21:38 jtc Exp $	 */
 
 /*
@@ -36,7 +36,6 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <paths.h>
-#include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include "defs.h"
@@ -55,13 +54,10 @@ int outline;
 
 int explicit_file_name;
 
-char *action_file_name;
 char *code_file_name;
 char *defines_file_name;
 char *input_file_name = "";
 char *output_file_name;
-char *text_file_name;
-char *union_file_name;
 char *verbose_file_name;
 
 FILE *action_file;	/* a temp file, used to save actions associated    */
@@ -97,55 +93,10 @@ char *rassoc;
 short **derives;
 char *nullable;
 
-void onintr(int);
-void set_signals(void);
 void usage(void);
 void getargs(int, char *[]);
 void create_file_names(void);
 void open_files(void);
-
-volatile sig_atomic_t sigdie;
-
-void
-done(int k)
-{
-	if (action_file)
-		unlink(action_file_name);
-	if (text_file)
-		unlink(text_file_name);
-	if (union_file)
-		unlink(union_file_name);
-	if (sigdie)
-		_exit(k);
-	exit(k);
-}
-
-
-void
-onintr(__unused int signo)
-{
-	sigdie = 1;
-	done(1);
-}
-
-
-void
-set_signals(void)
-{
-#ifdef SIGINT
-	if (signal(SIGINT, SIG_IGN) != SIG_IGN)
-		signal(SIGINT, onintr);
-#endif
-#ifdef SIGTERM
-	if (signal(SIGTERM, SIG_IGN) != SIG_IGN)
-		signal(SIGTERM, onintr);
-#endif
-#ifdef SIGHUP
-	if (signal(SIGHUP, SIG_IGN) != SIG_IGN)
-		signal(SIGHUP, onintr);
-#endif
-}
-
 
 void
 usage(void)
@@ -225,26 +176,9 @@ allocate(size_t n)
 	return (v);
 }
 
-#define TEMPNAME(s, c, d, l)	\
-	(asprintf(&(s), "%.*s/yacc.%xXXXXXXXXXX", (int)(l), (d), (c)))
-
 void
 create_file_names(void)
 {
-	size_t len;
-	char *tmpdir;
-
-	tmpdir = _PATH_TMP;
-
-	len = strlen(tmpdir);
-	if (tmpdir[len - 1] == '/')
-		len--;
-
-	if (TEMPNAME(action_file_name, 'a', tmpdir, len) == -1 ||
-	    TEMPNAME(text_file_name, 'r', tmpdir, len) == -1 ||
-	    TEMPNAME(union_file_name, 'u', tmpdir, len) == -1)
-		no_space();
-
 	if (output_file_name == NULL) {
 		if (asprintf(&output_file_name, "%s%s", file_prefix, OUTPUT_SUFFIX)
 		    == -1)
@@ -297,46 +231,49 @@ create_file_names(void)
 }
 
 
+FILE *
+create_temp(void)
+{
+	FILE *f;
+
+	f = tmpfile();
+	if (f == NULL)
+		tempfile_error();
+	return f;
+}
+
 void
 open_files(void)
 {
-	int fd;
-
 	create_file_names();
 
-	if (input_file == 0) {
+	if (input_file == NULL) {
 		input_file = fopen(input_file_name, "r");
-		if (input_file == 0)
+		if (input_file == NULL)
 			open_error(input_file_name);
 	}
-	fd = mkstemp(action_file_name);
-	if (fd == -1 || (action_file = fdopen(fd, "w")) == NULL)
-		open_error(action_file_name);
+	action_file = create_temp();
 
-	fd = mkstemp(text_file_name);
-	if (fd == -1 || (text_file = fdopen(fd, "w")) == NULL)
-		open_error(text_file_name);
+	text_file = create_temp();
 
 	if (vflag) {
 		verbose_file = fopen(verbose_file_name, "w");
-		if (verbose_file == 0)
+		if (verbose_file == NULL)
 			open_error(verbose_file_name);
 	}
 	if (dflag) {
 		defines_file = fopen(defines_file_name, "w");
 		if (defines_file == NULL)
 			open_write_error(defines_file_name);
-		fd = mkstemp(union_file_name);
-		if (fd == -1 || (union_file = fdopen(fd, "w")) == NULL)
-			open_error(union_file_name);
+		union_file = create_temp();
 	}
 	output_file = fopen(output_file_name, "w");
-	if (output_file == 0)
+	if (output_file == NULL)
 		open_error(output_file_name);
 
 	if (rflag) {
 		code_file = fopen(code_file_name, "w");
-		if (code_file == 0)
+		if (code_file == NULL)
 			open_error(code_file_name);
 	} else
 		code_file = output_file;
@@ -349,7 +286,6 @@ main(int argc, char *argv[])
 	if (pledge("stdio rpath wpath cpath", NULL) == -1)
 		fatal("pledge: invalid arguments");
 
-	set_signals();
 	getargs(argc, argv);
 	open_files();
 	reader();
@@ -358,7 +294,5 @@ main(int argc, char *argv[])
 	make_parser();
 	verbose();
 	output();
-	done(0);
-	/* NOTREACHED */
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.85 2020/04/27 19:28:13 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.87 2020/06/09 21:53:26 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -902,7 +902,6 @@ ikev2_pld_auth(struct iked *env, struct ikev2_payload *pld,
 	struct iked_id			*idp;
 	uint8_t				*buf;
 	size_t				 len;
-	struct iked_sa			*sa = msg->msg_sa;
 	uint8_t				*msgbuf = ibuf_data(msg->msg_data);
 
 	if (ikev2_validate_auth(msg, offset, left, &auth))
@@ -919,10 +918,6 @@ ikev2_pld_auth(struct iked *env, struct ikev2_payload *pld,
 
 	if (!ikev2_msg_frompeer(msg))
 		return (0);
-
-	/* The AUTH payload indicates if the responder wants EAP or not */
-	if (!sa_stateok(sa, IKEV2_STATE_EAP))
-		sa_state(env, sa, IKEV2_STATE_AUTH_REQUEST);
 
 	idp = &msg->msg_parent->msg_auth;
 	if (idp->id_type) {
@@ -1187,10 +1182,12 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 			    " notification: %zu", __func__, len);
 			return (0);
 		}
-		if (!(msg->msg_policy->pol_flags & IKED_POLICY_TRANSPORT)) {
-			log_debug("%s: ignoring transport mode"
-			    " notification (policy)", __func__);
-			return (0);
+		if (msg->msg_parent->msg_response) {
+			if (!(msg->msg_policy->pol_flags & IKED_POLICY_TRANSPORT)) {
+				log_debug("%s: ignoring transport mode"
+				    " notification (policy)", __func__);
+				return (0);
+			}
 		}
 		msg->msg_parent->msg_flags |= IKED_MSG_FLAGS_USE_TRANSPORT;
 		break;

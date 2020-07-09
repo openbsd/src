@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.65 2020/04/15 20:19:25 remi Exp $
+#	$OpenBSD: Makefile,v 1.66 2020/06/21 05:00:17 dlg Exp $
 #
 #  Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
 # 	The Regents of the University of California.  All rights reserved.
@@ -48,7 +48,7 @@ SRCS=	tcpdump.c addrtoname.c privsep.c privsep_fdpass.c privsep_pcap.c \
 	print-bgp.c print-ospf6.c print-ripng.c print-rt6.c print-stp.c \
 	print-etherip.c print-lwres.c print-lldp.c print-cdp.c print-pflog.c \
 	print-pfsync.c pf_print_state.c print-ofp.c ofp_map.c \
-	print-udpencap.c print-carp.c print-nhrp.c \
+	print-udpencap.c print-carp.c print-nhrp.c print-wg.c \
 	print-802_11.c print-iapp.c print-mpls.c print-slow.c print-usbpcap.c \
 	gmt2local.c savestr.c setsignal.c in_cksum.c
 

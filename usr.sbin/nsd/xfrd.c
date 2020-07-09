@@ -200,7 +200,7 @@ xfrd_init(int socket, struct nsd* nsd, int shortsoa, int reload_active,
 
 	xfrd->tcp_set = xfrd_tcp_set_create(xfrd->region);
 	xfrd->tcp_set->tcp_timeout = nsd->tcp_timeout;
-#ifndef HAVE_ARC4RANDOM
+#if !defined(HAVE_ARC4RANDOM) && !defined(HAVE_GETRANDOM)
 	srandom((unsigned long) getpid() * (unsigned long) time(NULL));
 #endif
 
@@ -784,6 +784,8 @@ xfrd_set_timer_refresh(xfrd_zone_type* zone)
 	if(set < xfrd_time())
 		set = 0;
 	else	set -= xfrd_time();
+	if(set > XFRD_TRANSFER_TIMEOUT_MAX)
+		set = XFRD_TRANSFER_TIMEOUT_MAX;
 	xfrd_set_timer(zone, set);
 }
 
@@ -809,22 +811,16 @@ xfrd_set_timer_retry(xfrd_zone_type* zone)
 	/* set timer for next retry or expire timeout if earlier. */
 	if(zone->soa_disk_acquired == 0) {
 		/* if no information, use reasonable timeout */
-#ifdef HAVE_ARC4RANDOM_UNIFORM
 		xfrd_set_timer(zone, zone->fresh_xfr_timeout
-			+ arc4random_uniform(zone->fresh_xfr_timeout));
-#elif HAVE_ARC4RANDOM
-		xfrd_set_timer(zone, zone->fresh_xfr_timeout
-                        + arc4random() % zone->fresh_xfr_timeout);
-#else
-		xfrd_set_timer(zone, zone->fresh_xfr_timeout
-			+ random()%zone->fresh_xfr_timeout);
-#endif
+			+ random_generate(zone->fresh_xfr_timeout));
 	} else if(zone->state == xfrd_zone_expired ||
 		xfrd_time() + (time_t)ntohl(zone->soa_disk.retry)*mult <
 		zone->soa_disk_acquired + (time_t)ntohl(zone->soa_disk.expire))
 	{
 		set_retry = ntohl(zone->soa_disk.retry);
 		set_retry *= mult;
+		if(set_retry > XFRD_TRANSFER_TIMEOUT_MAX)
+			set_retry = XFRD_TRANSFER_TIMEOUT_MAX;
 		if(set_retry > (time_t)zone->zone_options->pattern->max_retry_time)
 			set_retry = zone->zone_options->pattern->max_retry_time;
 		else if(set_retry < (time_t)zone->zone_options->pattern->min_retry_time)
@@ -834,6 +830,8 @@ xfrd_set_timer_retry(xfrd_zone_type* zone)
 		xfrd_set_timer(zone, set_retry);
 	} else {
 		set_retry = ntohl(zone->soa_disk.expire);
+		if(set_retry > XFRD_TRANSFER_TIMEOUT_MAX)
+			set_retry = XFRD_TRANSFER_TIMEOUT_MAX;
 		if(set_retry < XFRD_LOWERBOUND_RETRY)
 			xfrd_set_timer(zone, XFRD_LOWERBOUND_RETRY);
 		else {
@@ -1159,13 +1157,7 @@ xfrd_set_timer(xfrd_zone_type* zone, time_t t)
 	/* only for times far in the future */
 	if(t > 10) {
 		time_t base = t*9/10;
-#ifdef HAVE_ARC4RANDOM_UNIFORM
-		t = base + arc4random_uniform(t-base);
-#elif HAVE_ARC4RANDOM
-		t = base + arc4random() % (t-base);
-#else
-		t = base + random()%(t-base);
-#endif
+		t = base + random_generate(t-base);
 	}
 
 	/* keep existing flags and fd, but re-add with timeout */
@@ -1890,6 +1882,12 @@ xfrd_parse_received_xfr_packet(xfrd_zone_type* zone, buffer_type* packet,
 	}
 
 	buffer_skip(packet, QHEADERSZ);
+	if(qdcount > 64 || ancount > 65530 || nscount > 65530) {
+		/* 0 or 1 question section rr, and 64k limits other counts */
+		DEBUG(DEBUG_XFRD,1, (LOG_ERR, "dropping xfr reply, impossibly "
+			"high record count"));
+		return xfrd_packet_bad;
+	}
 
 	/* skip question section */
 	for(rr_count = 0; rr_count < qdcount; ++rr_count) {
@@ -2466,7 +2464,7 @@ static void
 xfrd_process_stat_info_task(xfrd_state_type* xfrd, struct task_list_d* task)
 {
 	size_t i;
-	stc_type* p = (void*)task->zname + sizeof(struct nsdst);
+	stc_type* p = (void*)((char*)task->zname + sizeof(struct nsdst));
 	stats_add(&xfrd->nsd->st, (struct nsdst*)task->zname);
 	for(i=0; i<xfrd->nsd->child_count; i++) {
 		xfrd->nsd->children[i].query_count += *p++;

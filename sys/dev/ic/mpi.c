@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.213 2020/04/21 19:27:03 krw Exp $ */
+/*	$OpenBSD: mpi.c,v 1.214 2020/06/27 14:29:45 krw Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -363,7 +363,6 @@ mpi_attach(struct mpi_softc *sc)
 	sc->sc_link.openings = MAX(sc->sc_maxcmds / sc->sc_buswidth, 16);
 	sc->sc_link.pool = &sc->sc_iopool;
 
-	memset(&saa, 0, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	/* config_found() returns the scsibus attached to us */

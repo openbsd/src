@@ -1,4 +1,4 @@
-.\" $OpenBSD: sioctl_open.3,v 1.4 2020/04/19 09:54:56 jmc Exp $
+.\" $OpenBSD: sioctl_open.3,v 1.12 2020/06/28 05:39:30 ratchov Exp $
 .\"
 .\" Copyright (c) 2011-2020 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 19 2020 $
+.Dd $Mdocdate: June 28 2020 $
 .Dt SIOCTL_OPEN 3
 .Os
 .Sh NAME
@@ -29,48 +29,76 @@
 .Nd interface to audio parameters
 .Sh SYNOPSIS
 .Fd #include <sndio.h>
-.Ft "struct sioctl_hdl *"
-.Fn "sioctl_open" "const char *name" "unsigned int mode" "int nbio_flag"
-.Ft "void"
-.Fn "sioctl_close" "struct sioctl_hdl *hdl"
-.Ft "int"
-.Fn "sioctl_ondesc" "struct sioctl_hdl *hdl" "void (*cb)(void *arg, struct sioctl_desc *desc, int val)" "void *arg"
-.Ft "void"
-.Fn "sioctl_onval" "struct sioctl_hdl *hdl" "void (*cb)(void *arg, unsigned int addr, unsigned int val)" "void *arg"
-.Ft "int"
-.Fn "sioctl_setval" "struct sioctl_hdl *hdl" "unsigned int addr" "unsigned int val"
-.Ft "int"
-.Fn "sioctl_nfds" "struct sioctl_hdl *hdl"
-.Ft "int"
-.Fn "sioctl_pollfd" "struct sioctl_hdl *hdl" "struct pollfd *pfd" "int events"
-.Ft "int"
-.Fn "sioctl_revents" "struct sioctl_hdl *hdl" "struct pollfd *pfd"
-.Ft "int"
-.Fn "sioctl_eof" "struct sioctl_hdl *hdl"
+.Ft struct sioctl_hdl *
+.Fo sioctl_open
+.Fa "const char *name"
+.Fa "unsigned int mode"
+.Fa "int nbio_flag"
+.Fc
+.Ft void
+.Fo sioctl_close
+.Fa "struct sioctl_hdl *hdl"
+.Fc
+.Ft int
+.Fo sioctl_ondesc
+.Fa "struct sioctl_hdl *hdl"
+.Fa "void (*cb)(void *arg, struct sioctl_desc *desc, int val)"
+.Fa "void *arg"
+.Fc
+.Ft void
+.Fo sioctl_onval
+.Fa "struct sioctl_hdl *hdl"
+.Fa "void (*cb)(void *arg, unsigned int addr, unsigned int val)"
+.Fa "void *arg"
+.Fc
+.Ft int
+.Fo sioctl_setval
+.Fa "struct sioctl_hdl *hdl"
+.Fa "unsigned int addr"
+.Fa "unsigned int val"
+.Fc
+.Ft int
+.Fo sioctl_nfds
+.Fa "struct sioctl_hdl *hdl"
+.Fc
+.Ft int
+.Fo sioctl_pollfd
+.Fa "struct sioctl_hdl *hdl"
+.Fa "struct pollfd *pfd"
+.Fa "int events"
+.Fc
+.Ft int
+.Fo sioctl_revents
+.Fa "struct sioctl_hdl *hdl"
+.Fa "struct pollfd *pfd"
+.Fc
+.Ft int
+.Fo sioctl_eof
+.Fa "struct sioctl_hdl *hdl"
+.Fc
 .Sh DESCRIPTION
 Audio devices may expose a number of controls, like the playback volume control.
 Each control has an integer
 .Em address
 and an integer
 .Em value .
-Depending on the control type, its integer value represents either a
-continuous quantity or a boolean.
+Some values are boolean and can only be switched to either 0 (off) or 1 (on).
 Any control may be changed by submitting
 a new value to its address.
 When values change, asynchronous notifications are sent.
 .Pp
-Controls descriptions are available, allowing them to be grouped and
-represented in a human usable form.
-.Sh Opening and closing the control device
+Control descriptions are available, allowing them to be grouped and
+represented in a human readable form.
+.Ss Opening and closing the control device
 First the application must call the
 .Fn sioctl_open
 function to obtain a handle
 that will be passed as the
-.Ar hdl
+.Fa hdl
 argument to other functions.
 .Pp
 The
-.Ar name
+.Fa name
 parameter gives the device string discussed in
 .Xr sndio 7 .
 In most cases it should be set to SIO_DEVANY to allow
@@ -78,13 +106,16 @@ the user to select it using the
 .Ev AUDIODEVICE
 environment variable.
 The
-.Ar mode
-parameter is a bitmap of the SIOCTL_READ and SIOCTL_WRITE constants
-indicating whether control values can be read and
+.Fa mode
+parameter is a bitmap of the
+.Dv SIOCTL_READ
+and
+.Dv SIOCTL_WRITE
+constants indicating whether control values can be read and
 modified respectively.
 .Pp
 If the
-.Ar nbio_flag
+.Fa nbio_flag
 argument is 1, then the
 .Fn sioctl_setval
 function (see below) may fail instead of blocking and
@@ -96,23 +127,26 @@ The
 .Fn sioctl_close
 function closes the control device and frees any allocated resources
 associated with the handle.
-.Sh Controls descriptions
+.Ss Control descriptions
 The
 .Fn sioctl_ondesc
 function can be used to obtain the description of all available controls
 and their initial values.
-It registers a call-back that is immediately invoked for all
+It registers a callback function that is immediately invoked for all
 controls.
-It's called once with a NULL argument to indicate that the full
+It is called once with a
+.Dv NULL
+argument to indicate that the full
 description was sent and that the caller has a consistent
-representation of the controls set.
+representation of the control set.
 .Pp
-Then, whenever a control description changes, the call-back is
-invoked with the updated information followed by a call with a NULL
+Then, whenever a control description changes, the callback is
+invoked with the updated information followed by a call with a
+.Dv NULL
 argument.
 .Pp
 Controls are described by the
-.Va sioctl_ondesc
+.Vt sioctl_desc
 structure as follows:
 .Bd -literal
 struct sioctl_node {
@@ -123,130 +157,160 @@ struct sioctl_node {
 struct sioctl_desc {
 	unsigned int addr;		/* control address */
 #define SIOCTL_NONE		0	/* deleted */
-#define SIOCTL_NUM		2	/* integer in the 0..127 range */
-#define SIOCTL_SW		3	/* on/off switch (0 or 1) */
+#define SIOCTL_NUM		2	/* integer in the maxval range */
+#define SIOCTL_SW		3	/* on/off switch (1 or 0) */
 #define SIOCTL_VEC		4	/* number, element of vector */
 #define SIOCTL_LIST		5	/* switch, element of a list */
+#define SIOCTL_SEL		6	/* element of a selector */
 	unsigned int type;		/* one of above */
 	char func[SIOCTL_NAMEMAX];	/* function name, ex. "level" */
 	char group[SIOCTL_NAMEMAX];	/* group this control belongs to */
 	struct sioctl_node node0;	/* affected node */
-	struct sioctl_node node1;	/* dito for SIOCTL_{VEC,LIST} */
+	struct sioctl_node node1;	/* dito for SIOCTL_{VEC,LIST,SEL} */
+	unsigned int maxval;		/* max value */
 };
 .Ed
 .Pp
 The
-.Va addr
+.Fa addr
 attribute is the control address, usable with
 .Fn sioctl_setval
 to set its value.
 .Pp
 The
-.Va type
+.Fa type
 attribute indicates what the structure describes.
 Possible types are:
 .Bl -tag -width "SIOCTL_LIST"
-.It SIOCTL_NONE
+.It Dv SIOCTL_NONE
 A previously valid control was deleted.
-.It SIOCTL_NUM
-A continuous control in the 0..SIOCTL_VALMAX range.
+.It Dv SIOCTL_NUM
+An integer control in the range from 0 to
+.Fa maxval ,
+inclusive.
 For instance the volume of the speaker.
-.It SIOCTL_SW
-A on/off switch control.
+.It Dv SIOCTL_SW
+A boolean control.
 For instance the switch to mute the speaker.
-.It SIOCTL_VEC
-Element of an array of continuous controls.
+.It Dv SIOCTL_VEC
+Element of an array of integer controls.
 For instance the knob to control the amount of signal flowing
 from the line input to the speaker.
-.It SIOCTL_LIST
-An element of an array of on/off switches.
+.It Dv SIOCTL_LIST
+An element of an array of boolean switches.
 For instance the line-in position of the
 speaker source selector.
+.It Dv SIOCTL_SEL
+Same as
+.Dv SIOCTL_LIST
+but exactly one element is selected at a time.
 .El
 .Pp
 The
-.Va func
+.Fa func
 attribute is the name of the parameter being controlled.
 There may be no parameters of different types with the same name.
 .Pp
 The
-.Va node0
+.Fa node0
 and
-.Va node1
+.Fa node1
 attributes indicate the names of the controlled nodes, typically
 channels of audio streams.
-.Va node1
+.Fa node1
 is meaningful for
-.Va SIOCTL_VEC
+.Dv SIOCTL_VEC ,
+.Dv SIOCTL_LIST ,
 and
-.Va SIOCTL_LIST
+.Dv SIOCTL_SEL
 only.
 .Pp
 Names in the
-.Va node0
+.Fa node0
 and
-.Va node1
+.Fa node1
 attributes and
-.Va func
-are strings usable as unique identifiers within the the given
-.Va group .
-.Sh Changing and reading control values
+.Fa func
+are strings usable as unique identifiers within the given
+.Fa group .
+.Pp
+The
+.Fa maxval
+attribute indicates the maximum value of this control.
+For boolean control types it is set to 1.
+.Ss Changing and reading control values
 Controls are changed with the
 .Fn sioctl_setval
 function, by giving the index of the control and the new value.
 The
 .Fn sioctl_onval
-function can be used to register a call-back which will be invoked whenever
+function can be used to register a callback which will be invoked whenever
 a control changes.
-Continuous values are in the 0..127 range.
-.Sh "Interface to" Xr poll 2
+Integer values are in the range from 0 to
+.Fa maxval .
+.Ss Interface to poll(2)
 The
 .Fn sioctl_pollfd
 function fills the array
-.Ar pfd
+.Fa pfd
 of
-.Va pollfd
+.Vt pollfd
 structures, used by
 .Xr poll 2 ,
 with
-.Ar events ;
+.Fa events ;
 the latter is a bit-mask of
-.Va POLLIN
+.Dv POLLIN
 and
-.Va POLLOUT
+.Dv POLLOUT
 constants.
 .Fn sioctl_pollfd
 returns the number of
-.Va pollfd
+.Vt pollfd
 structures filled.
 The
 .Fn sioctl_revents
 function returns the bit-mask set by
 .Xr poll 2
 in the
-.Va pfd
+.Fa pfd
 array of
-.Va pollfd
+.Vt pollfd
 structures.
 If
-.Va POLLOUT
+.Dv POLLOUT
 is set,
 .Fn sioctl_setval
 can be called without blocking.
-POLLHUP may be set if an error occurs, even if
-it is not selected with
+.Dv POLLHUP
+may be set if an error occurs, even if it is not selected with
 .Fn sioctl_pollfd .
-POLLIN is not used yet.
+.Dv POLLIN
+is not used yet.
 .Pp
 The
 .Fn sioctl_nfds
 function returns the number of
-.Va pollfd
+.Vt pollfd
 structures the caller must preallocate in order to be sure
 that
 .Fn sioctl_pollfd
 will never overrun.
+.Sh ENVIRONMENT
+.Bl -tag -width AUDIODEVICE
+.It Ev AUDIODEVICE
+The default
+.Xr sndio 7
+device used by
+.Fn sioctl_open .
+.El
 .Sh SEE ALSO
 .Xr sndioctl 1 ,
 .Xr poll 2 ,
+.Xr sio_open 3 ,
 .Xr sndio 7
+.Sh HISTORY
+These functions first appeared in
+.Ox 6.7 .
+.Sh AUTHORS
+.An Alexandre Ratchov Aq Mt ratchov@openbsd.org

@@ -28,8 +28,7 @@
 #include <linux/version.h>
 #include <linux/i2c.h>
 
-#include <drm/drmP.h>
-#include <drm/drm_crtc_helper.h>
+#include <drm/drm_probe_helper.h>
 #include <drm/amdgpu_drm.h>
 #include <drm/drm_edid.h>
 
@@ -38,6 +37,7 @@
 #include "dc.h"
 #include "amdgpu_dm.h"
 #include "amdgpu_dm_irq.h"
+#include "amdgpu_dm_mst_types.h"
 
 #include "dm_helpers.h"
 
@@ -98,11 +98,8 @@ enum dc_edid_status dm_helpers_parse_edid_caps(
 			(struct edid *) edid->raw_edid);
 
 	sad_count = drm_edid_to_sad((struct edid *) edid->raw_edid, &sads);
-	if (sad_count <= 0) {
-		DRM_INFO("SADs count is: %d, don't need to read it\n",
-				sad_count);
+	if (sad_count <= 0)
 		return result;
-	}
 
 	edid_caps->audio_mode_count = sad_count < DC_MAX_AUDIO_DESC_COUNT ? sad_count : DC_MAX_AUDIO_DESC_COUNT;
 	for (i = 0; i < edid_caps->audio_mode_count; ++i) {
@@ -184,18 +181,21 @@ bool dm_helpers_dp_mst_write_payload_allocation_table(
 		bool enable)
 {
 	struct amdgpu_dm_connector *aconnector;
+	struct dm_connector_state *dm_conn_state;
 	struct drm_dp_mst_topology_mgr *mst_mgr;
 	struct drm_dp_mst_port *mst_port;
-	int slots = 0;
 	bool ret;
-	int clock;
-	int bpp = 0;
-	int pbn = 0;
 
-	aconnector = stream->sink->priv;
+	aconnector = (struct amdgpu_dm_connector *)stream->dm_stream_context;
+	/* Accessing the connector state is required for vcpi_slots allocation
+	 * and directly relies on behaviour in commit check
+	 * that blocks before commit guaranteeing that the state
+	 * is not gonna be swapped while still in use in commit tail */
 
 	if (!aconnector || !aconnector->mst_port)
 		return false;
+
+	dm_conn_state = to_dm_connector_state(aconnector->base.state);
 
 	mst_mgr = &aconnector->mst_port->mst_mgr;
 
@@ -205,42 +205,10 @@ bool dm_helpers_dp_mst_write_payload_allocation_table(
 	mst_port = aconnector->port;
 
 	if (enable) {
-		clock = stream->timing.pix_clk_khz;
 
-		switch (stream->timing.display_color_depth) {
-
-		case COLOR_DEPTH_666:
-			bpp = 6;
-			break;
-		case COLOR_DEPTH_888:
-			bpp = 8;
-			break;
-		case COLOR_DEPTH_101010:
-			bpp = 10;
-			break;
-		case COLOR_DEPTH_121212:
-			bpp = 12;
-			break;
-		case COLOR_DEPTH_141414:
-			bpp = 14;
-			break;
-		case COLOR_DEPTH_161616:
-			bpp = 16;
-			break;
-		default:
-			ASSERT(bpp != 0);
-			break;
-		}
-
-		bpp = bpp * 3;
-
-		/* TODO need to know link rate */
-
-		pbn = drm_dp_calc_pbn_mode(clock, bpp);
-
-		slots = drm_dp_find_vcpi_slots(mst_mgr, pbn);
-		ret = drm_dp_mst_allocate_vcpi(mst_mgr, mst_port, pbn, slots);
-
+		ret = drm_dp_mst_allocate_vcpi(mst_mgr, mst_port,
+					       dm_conn_state->pbn,
+					       dm_conn_state->vcpi_slots);
 		if (!ret)
 			return false;
 
@@ -261,6 +229,13 @@ bool dm_helpers_dp_mst_write_payload_allocation_table(
 	return true;
 }
 
+/*
+ * poll pending down reply
+ */
+void dm_helpers_dp_mst_poll_pending_down_reply(
+	struct dc_context *ctx,
+	const struct dc_link *link)
+{}
 
 /*
  * Clear payload allocation table before enable MST DP link.
@@ -274,7 +249,7 @@ void dm_helpers_dp_mst_clear_payload_allocation_table(
  * Polls for ACT (allocation change trigger) handled and sends
  * ALLOCATE_PAYLOAD message.
  */
-bool dm_helpers_dp_mst_poll_for_allocation_change_trigger(
+enum act_return_status dm_helpers_dp_mst_poll_for_allocation_change_trigger(
 		struct dc_context *ctx,
 		const struct dc_stream_state *stream)
 {
@@ -282,22 +257,22 @@ bool dm_helpers_dp_mst_poll_for_allocation_change_trigger(
 	struct drm_dp_mst_topology_mgr *mst_mgr;
 	int ret;
 
-	aconnector = stream->sink->priv;
+	aconnector = (struct amdgpu_dm_connector *)stream->dm_stream_context;
 
 	if (!aconnector || !aconnector->mst_port)
-		return false;
+		return ACT_FAILED;
 
 	mst_mgr = &aconnector->mst_port->mst_mgr;
 
 	if (!mst_mgr->mst_state)
-		return false;
+		return ACT_FAILED;
 
 	ret = drm_dp_check_act_status(mst_mgr);
 
 	if (ret)
-		return false;
+		return ACT_FAILED;
 
-	return true;
+	return ACT_SUCCESS;
 }
 
 bool dm_helpers_dp_mst_send_payload_allocation(
@@ -309,7 +284,7 @@ bool dm_helpers_dp_mst_send_payload_allocation(
 	struct drm_dp_mst_topology_mgr *mst_mgr;
 	struct drm_dp_mst_port *mst_port;
 
-	aconnector = stream->sink->priv;
+	aconnector = (struct amdgpu_dm_connector *)stream->dm_stream_context;
 
 	if (!aconnector || !aconnector->mst_port)
 		return false;
@@ -330,15 +305,92 @@ bool dm_helpers_dp_mst_send_payload_allocation(
 	return true;
 }
 
-void dm_dtn_log_begin(struct dc_context *ctx)
-{}
+void dm_dtn_log_begin(struct dc_context *ctx,
+	struct dc_log_buffer_ctx *log_ctx)
+{
+	static const char msg[] = "[dtn begin]\n";
+
+	if (!log_ctx) {
+		pr_info("%s", msg);
+		return;
+	}
+
+	dm_dtn_log_append_v(ctx, log_ctx, "%s", msg);
+}
 
 void dm_dtn_log_append_v(struct dc_context *ctx,
-		const char *pMsg, ...)
-{}
+	struct dc_log_buffer_ctx *log_ctx,
+	const char *msg, ...)
+{
+	va_list args;
+	size_t total;
+	int n;
 
-void dm_dtn_log_end(struct dc_context *ctx)
-{}
+	if (!log_ctx) {
+		/* No context, redirect to dmesg. */
+		struct va_format vaf;
+
+		vaf.fmt = msg;
+		vaf.va = &args;
+
+		va_start(args, msg);
+		pr_info("%pV", &vaf);
+		va_end(args);
+
+		return;
+	}
+
+	/* Measure the output. */
+	va_start(args, msg);
+	n = vsnprintf(NULL, 0, msg, args);
+	va_end(args);
+
+	if (n <= 0)
+		return;
+
+	/* Reallocate the string buffer as needed. */
+	total = log_ctx->pos + n + 1;
+
+	if (total > log_ctx->size) {
+		char *buf = (char *)kvcalloc(total, sizeof(char), GFP_KERNEL);
+
+		if (buf) {
+			memcpy(buf, log_ctx->buf, log_ctx->pos);
+			kfree(log_ctx->buf);
+
+			log_ctx->buf = buf;
+			log_ctx->size = total;
+		}
+	}
+
+	if (!log_ctx->buf)
+		return;
+
+	/* Write the formatted string to the log buffer. */
+	va_start(args, msg);
+	n = vscnprintf(
+		log_ctx->buf + log_ctx->pos,
+		log_ctx->size - log_ctx->pos,
+		msg,
+		args);
+	va_end(args);
+
+	if (n > 0)
+		log_ctx->pos += n;
+}
+
+void dm_dtn_log_end(struct dc_context *ctx,
+	struct dc_log_buffer_ctx *log_ctx)
+{
+	static const char msg[] = "[dtn end]\n";
+
+	if (!log_ctx) {
+		pr_info("%s", msg);
+		return;
+	}
+
+	dm_dtn_log_append_v(ctx, log_ctx, "%s", msg);
+}
 
 bool dm_helpers_dp_mst_start_top_mgr(
 		struct dc_context *ctx,
@@ -348,8 +400,8 @@ bool dm_helpers_dp_mst_start_top_mgr(
 	struct amdgpu_dm_connector *aconnector = link->priv;
 
 	if (!aconnector) {
-			DRM_ERROR("Failed to found connector for link!");
-			return false;
+		DRM_ERROR("Failed to find connector for link!");
+		return false;
 	}
 
 	if (boot) {
@@ -371,8 +423,8 @@ void dm_helpers_dp_mst_stop_top_mgr(
 	struct amdgpu_dm_connector *aconnector = link->priv;
 
 	if (!aconnector) {
-			DRM_ERROR("Failed to found connector for link!");
-			return;
+		DRM_ERROR("Failed to find connector for link!");
+		return;
 	}
 
 	DRM_INFO("DM_MST: stopping TM on aconnector: %p [id: %d]\n",
@@ -393,7 +445,7 @@ bool dm_helpers_dp_read_dpcd(
 	struct amdgpu_dm_connector *aconnector = link->priv;
 
 	if (!aconnector) {
-		DRM_ERROR("Failed to found connector for link!");
+		DRM_ERROR("Failed to find connector for link!");
 		return false;
 	}
 
@@ -411,7 +463,7 @@ bool dm_helpers_dp_write_dpcd(
 	struct amdgpu_dm_connector *aconnector = link->priv;
 
 	if (!aconnector) {
-		DRM_ERROR("Failed to found connector for link!");
+		DRM_ERROR("Failed to find connector for link!");
 		return false;
 	}
 
@@ -431,7 +483,7 @@ bool dm_helpers_submit_i2c(
 	bool result;
 
 	if (!aconnector) {
-		DRM_ERROR("Failed to found connector for link!");
+		DRM_ERROR("Failed to find connector for link!");
 		return false;
 	}
 
@@ -453,6 +505,32 @@ bool dm_helpers_submit_i2c(
 
 	return result;
 }
+bool dm_helpers_dp_write_dsc_enable(
+		struct dc_context *ctx,
+		const struct dc_stream_state *stream,
+		bool enable
+)
+{
+	uint8_t enable_dsc = enable ? 1 : 0;
+	struct amdgpu_dm_connector *aconnector;
+
+	if (!stream)
+		return false;
+
+	if (stream->signal == SIGNAL_TYPE_DISPLAY_PORT_MST) {
+		aconnector = (struct amdgpu_dm_connector *)stream->dm_stream_context;
+
+		if (!aconnector->dsc_aux)
+			return false;
+
+		return (drm_dp_dpcd_write(aconnector->dsc_aux, DP_DSC_ENABLE, &enable_dsc, 1) >= 0);
+	}
+
+	if (stream->signal == SIGNAL_TYPE_DISPLAY_PORT)
+		return dm_helpers_dp_write_dpcd(ctx, stream->link, DP_DSC_ENABLE, &enable_dsc, 1);
+
+	return false;
+}
 
 bool dm_helpers_is_dp_sink_present(struct dc_link *link)
 {
@@ -460,7 +538,7 @@ bool dm_helpers_is_dp_sink_present(struct dc_link *link)
 	struct amdgpu_dm_connector *aconnector = link->priv;
 
 	if (!aconnector) {
-		BUG_ON("Failed to found connector for link!");
+		BUG_ON("Failed to find connector for link!");
 		return true;
 	}
 
@@ -501,6 +579,20 @@ enum dc_edid_status dm_helpers_read_local_edid(
 
 		/* We don't need the original edid anymore */
 		kfree(edid);
+
+		/* connector->display_info will be parsed from EDID and saved
+		 * into drm_connector->display_info from edid by call stack
+		 * below:
+		 * drm_parse_ycbcr420_deep_color_info
+		 * drm_parse_hdmi_forum_vsdb
+		 * drm_parse_cea_ext
+		 * drm_add_display_info
+		 * drm_connector_update_edid_property
+		 *
+		 * drm_connector->display_info will be used by amdgpu_dm funcs,
+		 * like fill_stream_properties_from_drm_display_mode
+		 */
+		amdgpu_dm_update_connector_after_detect(aconnector);
 
 		edid_status = dm_helpers_parse_edid_caps(
 						ctx,

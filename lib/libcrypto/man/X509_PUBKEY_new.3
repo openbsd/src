@@ -1,7 +1,24 @@
-.\" $OpenBSD: X509_PUBKEY_new.3,v 1.15 2019/06/10 14:58:48 schwarze Exp $
+.\" $OpenBSD: X509_PUBKEY_new.3,v 1.16 2020/06/19 14:04:25 schwarze Exp $
 .\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
-.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2020 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2016 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -48,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 10 2019 $
+.Dd $Mdocdate: June 19 2020 $
 .Dt X509_PUBKEY_NEW 3
 .Os
 .Sh NAME
@@ -273,6 +290,38 @@ if an error occurs.
 and
 .Fn i2d_PUBKEY_bio
 return 1 for success and 0 if an error occurred.
+.Sh ERRORS
+After failure of
+.Fn X509_PUBKEY_get0
+or
+.Fn X509_PUBKEY_get ,
+one of the following diagnostics can be retrieved with
+.Xr ERR_get_error 3 ,
+.Xr ERR_GET_REASON 3 ,
+and
+.Xr ERR_reason_error_string 3 :
+.Bl -tag -width Ds
+.It Dv X509_R_UNSUPPORTED_ALGORITHM Qq "unsupported algorithm"
+The public key uses an algorithm unsupported by
+.Xr EVP_PKEY_set_type 3 .
+.It X509_R_METHOD_NOT_SUPPORTED Qq "method not supported"
+While the algorithm is known to
+.Xr EVP_PKEY_set_type 3 ,
+using it for decoding is not supported.
+.It X509_R_PUBLIC_KEY_DECODE_ERROR Qq "public key decode error"
+Decoding the public key failed.
+.It Dv ERR_R_MALLOC_FAILURE Qq "malloc failure"
+Memory was exhausted when trying to allocate the new
+.Vt EVP_PKEY
+object.
+.El
+.Pp
+If
+.Fa key
+is
+.Dv NULL
+or does not contain a public key,
+these functions fail but no error is pushed onto the stack.
 .Sh SEE ALSO
 .Xr d2i_X509 3 ,
 .Xr EVP_PKEY_asn1_set_public 3 ,

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.18 2017/04/04 00:03:12 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.19 2020/05/17 17:04:28 deraadt Exp $
 
 KERNELS += GENERIC.MP bsd.mp
 
@@ -9,5 +9,5 @@ bootblocks:
 	cp -p ${DESTDIR}/usr/mdec/BOOTX64.EFI ${RELEASEDIR}
 	cp -p ${DESTDIR}/usr/mdec/BOOTIA32.EFI ${RELEASEDIR}
 
-MDEXT=	bsd.rd cd${OSrev}.iso floppy${OSrev}.fs miniroot${OSrev}.fs \
+MDEXT=	bsd.rd cd${OSrev}.iso floppy${OSrev}.img miniroot${OSrev}.img \
 	pxeboot cdboot cdbr BOOTX64.EFI BOOTIA32.EFI

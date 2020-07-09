@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.103 2020/02/28 05:31:42 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.104 2020/05/29 04:42:23 deraadt Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -92,7 +92,6 @@
 #include <machine/segments.h>
 #include <machine/gdt.h>
 #include <machine/pio.h>
-#include <dev/rndvar.h>
 
 #if NLAPIC > 0
 #include <machine/apicvar.h>

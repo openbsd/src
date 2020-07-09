@@ -1,4 +1,4 @@
-/*	$OpenBSD: tran.c,v 1.18 2020/02/27 21:43:46 millert Exp $	*/
+/*	$OpenBSD: tran.c,v 1.29 2020/06/26 15:57:39 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -56,10 +56,14 @@ Cell	*fsloc;		/* FS */
 Cell	*nrloc;		/* NR */
 Cell	*nfloc;		/* NF */
 Cell	*fnrloc;	/* FNR */
+Cell	*ofsloc;	/* OFS */
+Cell	*orsloc;	/* ORS */
+Cell	*rsloc;		/* RS */
 Array	*ARGVtab;	/* symbol table containing ARGV[...] */
 Array	*ENVtab;	/* symbol table containing ENVIRON[...] */
 Cell	*rstartloc;	/* RSTART */
 Cell	*rlengthloc;	/* RLENGTH */
+Cell	*subseploc;	/* SUBSEP */
 Cell	*symtabloc;	/* SYMTAB */
 
 Cell	*nullloc;	/* a guaranteed empty cell */
@@ -67,6 +71,18 @@ Node	*nullnode;	/* zero&null, converted into a node for comparisons */
 Cell	*literal0;
 
 extern Cell **fldtab;
+
+static void
+setfree(Cell *vp)
+{
+	if (&vp->sval == FS || &vp->sval == RS ||
+	    &vp->sval == OFS || &vp->sval == ORS ||
+	    &vp->sval == OFMT || &vp->sval == CONVFMT ||
+	    &vp->sval == FILENAME || &vp->sval == SUBSEP)
+		vp->tval |= DONTFREE;
+	else
+		vp->tval &= ~DONTFREE;
+}
 
 void syminit(void)	/* initialize symbol table with builtin vars */
 {
@@ -77,9 +93,12 @@ void syminit(void)	/* initialize symbol table with builtin vars */
 
 	fsloc = setsymtab("FS", " ", 0.0, STR|DONTFREE, symtab);
 	FS = &fsloc->sval;
-	RS = &setsymtab("RS", "\n", 0.0, STR|DONTFREE, symtab)->sval;
-	OFS = &setsymtab("OFS", " ", 0.0, STR|DONTFREE, symtab)->sval;
-	ORS = &setsymtab("ORS", "\n", 0.0, STR|DONTFREE, symtab)->sval;
+	rsloc = setsymtab("RS", "\n", 0.0, STR|DONTFREE, symtab);
+	RS = &rsloc->sval;
+	ofsloc = setsymtab("OFS", " ", 0.0, STR|DONTFREE, symtab);
+	OFS = &ofsloc->sval;
+	orsloc = setsymtab("ORS", "\n", 0.0, STR|DONTFREE, symtab);
+	ORS = &orsloc->sval;
 	OFMT = &setsymtab("OFMT", "%.6g", 0.0, STR|DONTFREE, symtab)->sval;
 	CONVFMT = &setsymtab("CONVFMT", "%.6g", 0.0, STR|DONTFREE, symtab)->sval;
 	FILENAME = &setsymtab("FILENAME", "", 0.0, STR|DONTFREE, symtab)->sval;
@@ -89,12 +108,14 @@ void syminit(void)	/* initialize symbol table with builtin vars */
 	NR = &nrloc->fval;
 	fnrloc = setsymtab("FNR", "", 0.0, NUM, symtab);
 	FNR = &fnrloc->fval;
-	SUBSEP = &setsymtab("SUBSEP", "\034", 0.0, STR|DONTFREE, symtab)->sval;
+	subseploc = setsymtab("SUBSEP", "\034", 0.0, STR|DONTFREE, symtab);
+	SUBSEP = &subseploc->sval;
 	rstartloc = setsymtab("RSTART", "", 0.0, NUM, symtab);
 	RSTART = &rstartloc->fval;
 	rlengthloc = setsymtab("RLENGTH", "", 0.0, NUM, symtab);
 	RLENGTH = &rlengthloc->fval;
 	symtabloc = setsymtab("SYMTAB", "", 0.0, ARR, symtab);
+	free(symtabloc->sval);
 	symtabloc->sval = (char *) symtab;
 }
 
@@ -107,6 +128,7 @@ void arginit(int ac, char **av)	/* set up ARGV and ARGC */
 	ARGC = &setsymtab("ARGC", "", (Awkfloat) ac, NUM, symtab)->fval;
 	cp = setsymtab("ARGV", "", 0.0, ARR, symtab);
 	ARGVtab = makesymtab(NSYMTAB);	/* could be (int) ARGC as well */
+	free(cp->sval);
 	cp->sval = (char *) ARGVtab;
 	for (i = 0; i < ac; i++) {
 		snprintf(temp, sizeof temp, "%d", i);
@@ -125,6 +147,7 @@ void envinit(char **envp)	/* set up ENVIRON variable */
 
 	cp = setsymtab("ENVIRON", "", 0.0, ARR, symtab);
 	ENVtab = makesymtab(NSYMTAB);
+	free(cp->sval);
 	cp->sval = (char *) ENVtab;
 	for ( ; *envp; envp++) {
 		if ((p = strchr(*envp, '=')) == NULL)
@@ -145,8 +168,8 @@ Array *makesymtab(int n)	/* make a new symbol table */
 	Array *ap;
 	Cell **tp;
 
-	ap = (Array *) malloc(sizeof(Array));
-	tp = (Cell **) calloc(n, sizeof(Cell *));
+	ap = malloc(sizeof(*ap));
+	tp = calloc(n, sizeof(*tp));
 	if (ap == NULL || tp == NULL)
 		FATAL("out of space in makesymtab");
 	ap->nelem = 0;
@@ -172,10 +195,10 @@ void freesymtab(Cell *ap)	/* free a symbol table */
 			if (freeable(cp))
 				xfree(cp->sval);
 			temp = cp->cnext;	/* avoids freeing then using */
-			free(cp); 
+			free(cp);
 			tp->nelem--;
 		}
-		tp->tab[i] = 0;
+		tp->tab[i] = NULL;
 	}
 	if (tp->nelem != 0)
 		WARNING("can't happen: inconsistent element count freeing %s", ap->nval);
@@ -188,7 +211,7 @@ void freeelem(Cell *ap, const char *s)	/* free elem s from ap (i.e., ap["s"] */
 	Array *tp;
 	Cell *p, *prev = NULL;
 	int h;
-	
+
 	tp = (Array *) ap->sval;
 	h = hash(s, tp->size);
 	for (p = tp->tab[h]; p != NULL; prev = p, p = p->cnext)
@@ -212,11 +235,11 @@ Cell *setsymtab(const char *n, const char *s, Awkfloat f, unsigned t, Array *tp)
 	Cell *p;
 
 	if (n != NULL && (p = lookup(n, tp)) != NULL) {
-		   DPRINTF( ("setsymtab found %p: n=%s s=\"%s\" f=%g t=%o\n",
-			(void*)p, NN(p->nval), NN(p->sval), p->fval, p->tval) );
+		DPRINTF("setsymtab found %p: n=%s s=\"%s\" f=%g t=%o\n",
+			(void*)p, NN(p->nval), NN(p->sval), p->fval, p->tval);
 		return(p);
 	}
-	p = (Cell *) malloc(sizeof(Cell));
+	p = malloc(sizeof(*p));
 	if (p == NULL)
 		FATAL("out of space for symbol table at %s", n);
 	p->nval = tostring(n);
@@ -231,8 +254,8 @@ Cell *setsymtab(const char *n, const char *s, Awkfloat f, unsigned t, Array *tp)
 	h = hash(n, tp->size);
 	p->cnext = tp->tab[h];
 	tp->tab[h] = p;
-	   DPRINTF( ("setsymtab set %p: n=%s s=\"%s\" f=%g t=%o\n",
-		(void*)p, p->nval, p->sval, p->fval, p->tval) );
+	DPRINTF("setsymtab set %p: n=%s s=\"%s\" f=%g t=%o\n",
+		(void*)p, p->nval, p->sval, p->fval, p->tval);
 	return(p);
 }
 
@@ -251,7 +274,7 @@ void rehash(Array *tp)	/* rehash items in small table into big one */
 	Cell *cp, *op, **np;
 
 	nsz = GROWTAB * tp->size;
-	np = (Cell **) calloc(nsz, sizeof(Cell *));
+	np = calloc(nsz, sizeof(*np));
 	if (np == NULL)		/* can't do it, but can keep running. */
 		return;		/* someone else will run out later. */
 	for (i = 0; i < tp->size; i++) {
@@ -283,25 +306,35 @@ Awkfloat setfval(Cell *vp, Awkfloat f)	/* set float val of a Cell */
 {
 	int fldno;
 
-	if ((vp->tval & (NUM | STR)) == 0) 
+	f += 0.0;		/* normalise negative zero to positive zero */
+	if ((vp->tval & (NUM | STR)) == 0)
 		funnyvar(vp, "assign to");
 	if (isfld(vp)) {
-		donerec = 0;	/* mark $0 invalid */
+		donerec = false;	/* mark $0 invalid */
 		fldno = atoi(vp->nval);
 		if (fldno > *NF)
 			newfld(fldno);
-		   DPRINTF( ("setting field %d to %g\n", fldno, f) );
+		DPRINTF("setting field %d to %g\n", fldno, f);
+	} else if (&vp->fval == NF) {
+		donerec = false;	/* mark $0 invalid */
+		setlastfld(f);
+		DPRINTF("setting NF to %g\n", f);
 	} else if (isrec(vp)) {
-		donefld = 0;	/* mark $1... invalid */
-		donerec = 1;
+		donefld = false;	/* mark $1... invalid */
+		donerec = true;
+		savefs();
+	} else if (vp == ofsloc) {
+		if (!donerec)
+			recbld();
 	}
 	if (freeable(vp))
 		xfree(vp->sval); /* free any previous string */
-	vp->tval &= ~STR;	/* mark string invalid */
+	vp->tval &= ~(STR|CONVC|CONVO); /* mark string invalid */
+	vp->fmt = NULL;
 	vp->tval |= NUM;	/* mark number ok */
 	if (f == -0)  /* who would have thought this possible? */
 		f = 0;
-	   DPRINTF( ("setfval %p: %s = %g, t=%o\n", (void*)vp, NN(vp->nval), f, vp->tval) );
+	DPRINTF("setfval %p: %s = %g, t=%o\n", (void*)vp, NN(vp->nval), f, vp->tval);
 	return vp->fval = f;
 }
 
@@ -312,54 +345,68 @@ void funnyvar(Cell *vp, const char *rw)
 	if (vp->tval & FCN)
 		FATAL("can't %s %s; it's a function.", rw, vp->nval);
 	WARNING("funny variable %p: n=%s s=\"%s\" f=%g t=%o",
-		vp, vp->nval, vp->sval, vp->fval, vp->tval);
+		(void *)vp, vp->nval, vp->sval, vp->fval, vp->tval);
 }
 
 char *setsval(Cell *vp, const char *s)	/* set string val of a Cell */
 {
 	char *t;
 	int fldno;
+	Awkfloat f;
 
-	   DPRINTF( ("starting setsval %p: %s = \"%s\", t=%o, r,f=%d,%d\n", 
-		(void*)vp, NN(vp->nval), s, vp->tval, donerec, donefld) );
+	DPRINTF("starting setsval %p: %s = \"%s\", t=%o, r,f=%d,%d\n",
+		(void*)vp, NN(vp->nval), s, vp->tval, donerec, donefld);
 	if ((vp->tval & (NUM | STR)) == 0)
 		funnyvar(vp, "assign to");
 	if (isfld(vp)) {
-		donerec = 0;	/* mark $0 invalid */
+		donerec = false;	/* mark $0 invalid */
 		fldno = atoi(vp->nval);
 		if (fldno > *NF)
 			newfld(fldno);
-		   DPRINTF( ("setting field %d to %s (%p)\n", fldno, s, s) );
+		DPRINTF("setting field %d to %s (%p)\n", fldno, s, s);
 	} else if (isrec(vp)) {
-		donefld = 0;	/* mark $1... invalid */
-		donerec = 1;
+		donefld = false;	/* mark $1... invalid */
+		donerec = true;
+		savefs();
+	} else if (vp == ofsloc) {
+		if (!donerec)
+			recbld();
 	}
-	t = tostring(s);	/* in case it's self-assign */
+	t = s ? tostring(s) : tostring("");	/* in case it's self-assign */
 	if (freeable(vp))
 		xfree(vp->sval);
-	vp->tval &= ~NUM;
+	vp->tval &= ~(NUM|CONVC|CONVO);
 	vp->tval |= STR;
-	vp->tval &= ~DONTFREE;
-	   DPRINTF( ("setsval %p: %s = \"%s (%p) \", t=%o r,f=%d,%d\n", 
-		(void*)vp, NN(vp->nval), t,t, vp->tval, donerec, donefld) );
-	return(vp->sval = t);
+	vp->fmt = NULL;
+	setfree(vp);
+	DPRINTF("setsval %p: %s = \"%s (%p) \", t=%o r,f=%d,%d\n",
+		(void*)vp, NN(vp->nval), t, t, vp->tval, donerec, donefld);
+	vp->sval = t;
+	if (&vp->fval == NF) {
+		donerec = false;	/* mark $0 invalid */
+		f = getfval(vp);
+		setlastfld(f);
+		DPRINTF("setting NF to %g\n", f);
+	}
+
+	return(vp->sval);
 }
 
 Awkfloat getfval(Cell *vp)	/* get float val of a Cell */
 {
 	if ((vp->tval & (NUM | STR)) == 0)
 		funnyvar(vp, "read value of");
-	if (isfld(vp) && donefld == 0)
+	if (isfld(vp) && !donefld)
 		fldbld();
-	else if (isrec(vp) && donerec == 0)
+	else if (isrec(vp) && !donerec)
 		recbld();
 	if (!isnum(vp)) {	/* not a number */
 		vp->fval = atof(vp->sval);	/* best guess */
 		if (is_number(vp->sval) && !(vp->tval&CON))
 			vp->tval |= NUM;	/* make NUM only sparingly */
 	}
-	   DPRINTF( ("getfval %p: %s = %g, t=%o\n",
-		(void*)vp, NN(vp->nval), vp->fval, vp->tval) );
+	DPRINTF("getfval %p: %s = %g, t=%o\n",
+		(void*)vp, NN(vp->nval), vp->fval, vp->tval);
 	return(vp->fval);
 }
 
@@ -370,24 +417,85 @@ static char *get_str_val(Cell *vp, char **fmt)        /* get string val of a Cel
 
 	if ((vp->tval & (NUM | STR)) == 0)
 		funnyvar(vp, "read value of");
-	if (isfld(vp) && donefld == 0)
+	if (isfld(vp) && ! donefld)
 		fldbld();
-	else if (isrec(vp) && donerec == 0)
+	else if (isrec(vp) && ! donerec)
 		recbld();
-	if (isstr(vp) == 0) {
-		if (freeable(vp))
-			xfree(vp->sval);
-		if (modf(vp->fval, &dtemp) == 0)	/* it's integral */
-			n = asprintf(&vp->sval, "%.30g", vp->fval);
-		else
-			n = asprintf(&vp->sval, *fmt, vp->fval);
-		if (n == -1)
-			FATAL("out of space in get_str_val");
-		vp->tval &= ~DONTFREE;
-		vp->tval |= STR;
+
+	/*
+	 * ADR: This is complicated and more fragile than is desirable.
+	 * Retrieving a string value for a number associates the string
+	 * value with the scalar.  Previously, the string value was
+	 * sticky, meaning if converted via OFMT that became the value
+	 * (even though POSIX wants it to be via CONVFMT). Or if CONVFMT
+	 * changed after a string value was retrieved, the original value
+	 * was maintained and used.  Also not per POSIX.
+	 *
+	 * We work around this design by adding two additional flags,
+	 * CONVC and CONVO, indicating how the string value was
+	 * obtained (via CONVFMT or OFMT) and _also_ maintaining a copy
+	 * of the pointer to the xFMT format string used for the
+	 * conversion.  This pointer is only read, **never** dereferenced.
+	 * The next time we do a conversion, if it's coming from the same
+	 * xFMT as last time, and the pointer value is different, we
+	 * know that the xFMT format string changed, and we need to
+	 * redo the conversion. If it's the same, we don't have to.
+	 *
+	 * There are also several cases where we don't do a conversion,
+	 * such as for a field (see the checks below).
+	 */
+
+	/* Don't duplicate the code for actually updating the value */
+#define update_str_val(vp) \
+	{ \
+		if (freeable(vp)) \
+			xfree(vp->sval); \
+		if (modf(vp->fval, &dtemp) == 0)	/* it's integral */ \
+			n = asprintf(&vp->sval, "%.30g", vp->fval); \
+		else \
+			n = asprintf(&vp->sval, *fmt, vp->fval); \
+		if (n == -1) \
+			FATAL("out of space in get_str_val"); \
+		vp->tval &= ~DONTFREE; \
+		vp->tval |= STR; \
 	}
-	   DPRINTF( ("getsval %p: %s = \"%s (%p)\", t=%o\n",
-		(void*)vp, NN(vp->nval), vp->sval, vp->sval, vp->tval) );
+
+	if (isstr(vp) == 0) {
+		update_str_val(vp);
+		if (fmt == OFMT) {
+			vp->tval &= ~CONVC;
+			vp->tval |= CONVO;
+		} else {
+			/* CONVFMT */
+			vp->tval &= ~CONVO;
+			vp->tval |= CONVC;
+		}
+		vp->fmt = *fmt;
+	} else if ((vp->tval & DONTFREE) != 0 || ! isnum(vp) || isfld(vp)) {
+		goto done;
+	} else if (isstr(vp)) {
+		if (fmt == OFMT) {
+			if ((vp->tval & CONVC) != 0
+			    || ((vp->tval & CONVO) != 0 && vp->fmt != *fmt)) {
+				update_str_val(vp);
+				vp->tval &= ~CONVC;
+				vp->tval |= CONVO;
+				vp->fmt = *fmt;
+			}
+		} else {
+			/* CONVFMT */
+			if ((vp->tval & CONVO) != 0
+			    || ((vp->tval & CONVC) != 0 && vp->fmt != *fmt)) {
+				update_str_val(vp);
+				vp->tval &= ~CONVO;
+				vp->tval |= CONVC;
+				vp->fmt = *fmt;
+			}
+		}
+	}
+done:
+	DPRINTF("getsval %p: %s = \"%s (%p)\", t=%o\n",
+		(void*)vp, NN(vp->nval), vp->sval, vp->sval, vp->tval);
 	return(vp->sval);
 }
 
@@ -404,22 +512,57 @@ char *getpssval(Cell *vp)     /* get string val of a Cell for print */
 
 char *tostring(const char *s)	/* make a copy of string s */
 {
-	char *p;
-
-	p = strdup(s);
+	char *p = strdup(s);
 	if (p == NULL)
 		FATAL("out of space in tostring on %s", s);
-	return p;
+	return(p);
+}
+
+char *tostringN(const char *s, size_t n)	/* make a copy of string s */
+{
+	char *p;
+
+	p = malloc(n);
+	if (p == NULL)
+		FATAL("out of space in tostringN %zu", n);
+	if (strlcpy(p, s, n) >= n)
+		FATAL("out of space in tostringN on %s", s);
+	return(p);
+}
+
+Cell *catstr(Cell *a, Cell *b) /* concatenate a and b */
+{
+	Cell *c;
+	char *p;
+	char *sa = getsval(a);
+	char *sb = getsval(b);
+	size_t l = strlen(sa) + strlen(sb) + 1;
+	p = malloc(l);
+	if (p == NULL)
+		FATAL("out of space concatenating %s and %s", sa, sb);
+	snprintf(p, l, "%s%s", sa, sb);
+
+	l++;	// add room for ' '
+	char *newbuf = malloc(l);
+	if (newbuf == NULL)
+		FATAL("out of space concatenating %s and %s", sa, sb);
+	// See string() in lex.c; a string "xx" is stored in the symbol
+	// table as "xx ".
+	snprintf(newbuf, l, "%s ", p);
+	c = setsymtab(newbuf, p, 0.0, CON|STR|DONTFREE, symtab);
+	free(p);
+	free(newbuf);
+	return c;
 }
 
 char *qstring(const char *is, int delim)	/* collect string up to next delim */
 {
 	const char *os = is;
 	int c, n;
-	uschar *s = (uschar *) is;
+	const uschar *s = (const uschar *) is;
 	uschar *buf, *bp;
 
-	if ((buf = (uschar *) malloc(strlen(is)+3)) == NULL)
+	if ((buf = malloc(strlen(is)+3)) == NULL)
 		FATAL( "out of space in qstring(%s)", s);
 	for (bp = buf; (c = *s) != delim; s++) {
 		if (c == '\n')
@@ -431,16 +574,16 @@ char *qstring(const char *is, int delim)	/* collect string up to next delim */
 			if (c == 0) {	/* \ at end */
 				*bp++ = '\\';
 				break;	/* for loop */
-			}	
+			}
 			switch (c) {
 			case '\\':	*bp++ = '\\'; break;
 			case 'n':	*bp++ = '\n'; break;
 			case 't':	*bp++ = '\t'; break;
-			case 'v':	*bp++ = '\v'; break;
 			case 'b':	*bp++ = '\b'; break;
 			case 'f':	*bp++ = '\f'; break;
 			case 'r':	*bp++ = '\r'; break;
-			case 'a':	*bp++ = '\007'; break;
+			case 'v':	*bp++ = '\v'; break;
+			case 'a':	*bp++ = '\a'; break;
 			default:
 				if (!isdigit(c)) {
 					*bp++ = c;
@@ -459,4 +602,39 @@ char *qstring(const char *is, int delim)	/* collect string up to next delim */
 	}
 	*bp++ = 0;
 	return (char *) buf;
+}
+
+const char *flags2str(int flags)
+{
+	static const struct ftab {
+		const char *name;
+		int value;
+	} flagtab[] = {
+		{ "NUM", NUM },
+		{ "STR", STR },
+		{ "DONTFREE", DONTFREE },
+		{ "CON", CON },
+		{ "ARR", ARR },
+		{ "FCN", FCN },
+		{ "FLD", FLD },
+		{ "REC", REC },
+		{ "CONVC", CONVC },
+		{ "CONVO", CONVO },
+		{ NULL, 0 }
+	};
+	static char buf[100];
+	int i, len;
+	char *cp = buf;
+
+	for (i = 0; flagtab[i].name != NULL; i++) {
+		if ((flags & flagtab[i].value) != 0) {
+			len = snprintf(cp, sizeof(buf) - (cp - buf),
+			    "%s%s", cp > buf ? "|" : "", flagtab[i].name);
+			if (len < 0 || len >= sizeof(buf) - (cp - buf))
+				FATAL("out of space in flags2str");
+			cp += len;
+		}
+	}
+
+	return buf;
 }

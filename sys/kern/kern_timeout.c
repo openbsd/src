@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.72 2020/02/18 12:13:40 mpi Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.73 2020/07/04 08:06:08 anton Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -49,12 +49,12 @@
  * Locks used to protect global variables in this file:
  *
  *	I	immutable after initialization
- *	t	timeout_mutex
+ *	T	timeout_mutex
  */
 struct mutex timeout_mutex = MUTEX_INITIALIZER(IPL_HIGH);
 
 void *softclock_si;			/* [I] softclock() interrupt handle */
-struct timeoutstat tostat;		/* [t] statistics and totals */
+struct timeoutstat tostat;		/* [T] statistics and totals */
 
 /*
  * Timeouts are kept in a hierarchical timing wheel. The to_time is the value
@@ -860,7 +860,7 @@ char *db_strtimespec(const struct timespec *);
 
 void
 db_show_callout_bucket(struct circq *bucket)
-{
+        {
 	struct circq *p;
 
 	CIRCQ_FOREACH(p, bucket)

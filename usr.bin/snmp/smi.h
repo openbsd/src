@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.h,v 1.1 2019/08/09 06:17:59 martijn Exp $	*/
+/*	$OpenBSD: smi.h,v 1.2 2020/05/19 13:41:01 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -61,23 +61,8 @@ struct oid {
 
 	char			*o_name;
 
-	u_int			 o_flags;
-
-	int			 (*o_get)(struct oid *, struct ber_oid *,
-				    struct ber_element **);
-	int			 (*o_set)(struct oid *, struct ber_oid *,
-				    struct ber_element **);
-	struct ber_oid		*(*o_table)(struct oid *, struct ber_oid *,
-				    struct ber_oid *);
-
-	long long		 o_val;
-	void			*o_data;
-
-	struct ctl_conn		*o_session;
-
 	RB_ENTRY(oid)		 o_element;
 	RB_ENTRY(oid)		 o_keyword;
-	TAILQ_ENTRY(oid)	 o_list;
 };
 
 int smi_init(void);
@@ -85,7 +70,7 @@ unsigned int smi_application(struct ber_element *);
 int smi_string2oid(const char *, struct ber_oid *);
 char *smi_oid2string(struct ber_oid *, char *, size_t, enum smi_oid_lookup);
 void smi_mibtree(struct oid *);
-struct oid *smi_foreach(struct oid *, u_int);
+struct oid *smi_foreach(struct oid *);
 void smi_debug_elements(struct ber_element *);
 char *smi_print_element(struct ber_element *, int, enum smi_output_string,
     enum smi_oid_lookup);

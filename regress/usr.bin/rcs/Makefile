@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.42 2016/09/29 05:58:22 otto Exp $
+#	$OpenBSD: Makefile,v 1.44 2020/07/06 15:24:11 tb Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org>.
 # ksh -> Makefile by Ray Lai <ray@cyth.net>.
@@ -15,7 +15,7 @@ RLOG?=		rlog
 DIFF=		diff -u
 
 CLEANFILES=	RCS blah.c blah.c,v description file1 file2 file3 \
-		file file,v newfile newfile,v test test,v \
+		file file,v newfile newfile,v merge-noeol.out test test,v \
 		test-truncated truncated.out foo foo,v bar bar,v
 
 # XXX - These may need to be done in order.
@@ -46,6 +46,7 @@ LTESTS= ci-initial \
 	rcsdiff \
 	rcsdiff-symbols \
 	merge-eflag \
+	merge-noeol \
 	rcsmerge \
 	rcsmerge-symbols \
 	ci-dflag \
@@ -246,6 +247,36 @@ test-merge-eflag: clean
 	@echo "line1\nfile3new\nline2" > file3
 	@${MERGE} -p -q -e file1 file2 file3 | \
 	    ${DIFF} ${.CURDIR}/merge-eflag.out -
+
+test-merge-noeol: clean
+	@echo "<<<<<<< file1\nline1=======\nline3\n>>>>>>> file3" \
+		> ${.CURDIR}/merge-noeol.out
+	@echo -n "line1" > file1
+	@echo "line2" > file2
+	@echo "line3" > file3
+	@${MERGE} -p -q file1 file2 file3 | \
+	    ${DIFF} ${.CURDIR}/merge-noeol.out -
+	@echo "<<<<<<< file1\nline1\n=======\nline3\n>>>>>>> file3" \
+		> ${.CURDIR}/merge-noeol.out
+	@echo "line1" > file1
+	@echo -n "line2" > file2
+	@echo "line3" > file3
+	@${MERGE} -p -q file1 file2 file3 | \
+	    ${DIFF} ${.CURDIR}/merge-noeol.out -
+	@echo "<<<<<<< file1\nline1\n=======\nline3>>>>>>> file3" \
+		> ${.CURDIR}/merge-noeol.out
+	@echo "line1" > file1
+	@echo "line2" > file2
+	@echo -n "line3" > file3
+	@${MERGE} -p -q file1 file2 file3 | \
+	    ${DIFF} ${.CURDIR}/merge-noeol.out -
+	@echo "<<<<<<< file1\nline1=======\nline3>>>>>>> file3" \
+		> ${.CURDIR}/merge-noeol.out
+	@echo -n "line1" > file1
+	@echo -n "line2" > file2
+	@echo -n "line3" > file3
+	@${MERGE} -p -q file1 file2 file3 | \
+	    ${DIFF} ${.CURDIR}/merge-noeol.out -
 
 test-rcsmerge:
 	@cp -f ${.CURDIR}/rev1 blah.c
@@ -594,9 +625,9 @@ test-ci-parse-keywords2: clean
 
 # Check for correct EOF handling in rcs parser
 test-co-parse-truncated: clean
-	@sh -c 'ulimit -d 5000 && ${CO} -q ${.CURDIR}/test-truncated > truncated.out 2>&1' || \
+	@sh -c 'ulimit -d 5000 && ${CO} -q ${.CURDIR}/test-truncated > ${.CURDIR}/truncated.out 2>&1' || \
 	    case "$$?" in 1) exit 0;; esac && exit 1
-	@grep -q 'co: could not parse admin data' truncated.out
+	@grep -q 'co: could not parse admin data' ${.CURDIR}/truncated.out
 
 test-ci-2files: clean
 	@touch foo bar

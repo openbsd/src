@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.43 2020/01/16 09:59:26 mpi Exp $	*/
+/*	$OpenBSD: video.c,v 1.44 2020/05/16 10:47:22 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -412,6 +412,76 @@ videommap(dev_t dev, off_t off, int prot)
 	return (pa);
 }
 
+void
+filt_videodetach(struct knote *kn)
+{
+	struct video_softc *sc = kn->kn_hook;
+	int s;
+
+	s = splhigh();
+	klist_remove(&sc->sc_rsel.si_note, kn);
+	splx(s);
+}
+
+int
+filt_videoread(struct knote *kn, long hint)
+{
+	struct video_softc *sc = kn->kn_hook;
+
+	if (sc->sc_frames_ready > 0)
+		return (1);
+
+	return (0);
+}
+
+const struct filterops video_filtops = {
+	.f_flags	= FILTEROP_ISFD,
+	.f_attach	= NULL,
+	.f_detach	= filt_videodetach,
+	.f_event	= filt_videoread,
+};
+
+int
+videokqfilter(dev_t dev, struct knote *kn)
+{
+	int unit = VIDEOUNIT(dev);
+	struct video_softc *sc;
+	int s;
+
+	if (unit >= video_cd.cd_ndevs ||
+	    (sc = video_cd.cd_devs[unit]) == NULL)
+		return (ENXIO);
+
+	if (sc->sc_dying)
+		return (ENXIO);
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		kn->kn_fop = &video_filtops;
+		kn->kn_hook = sc;
+		break;
+	default:
+		return (EINVAL);
+	}
+
+	/*
+	 * Start the stream in read() mode if not already started.  If
+	 * the user wanted mmap() mode, he should have called mmap()
+	 * before now.
+	 */
+	if (sc->sc_vidmode == VIDMODE_NONE && sc->hw_if->start_read) {
+		if (sc->hw_if->start_read(sc->hw_hdl))
+			return (ENXIO);
+		sc->sc_vidmode = VIDMODE_READ;
+	}
+
+	s = splhigh();
+	klist_insert(&sc->sc_rsel.si_note, kn);
+	splx(s);
+
+	return (0);
+}
+
 int
 video_submatch(struct device *parent, void *match, void *aux)
 {
@@ -461,7 +531,7 @@ int
 videodetach(struct device *self, int flags)
 {
 	struct video_softc *sc = (struct video_softc *)self;
-	int maj, mn;
+	int s, maj, mn;
 
 	/* locate the major number */
 	for (maj = 0; maj < nchrdev; maj++)
@@ -471,6 +541,10 @@ videodetach(struct device *self, int flags)
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;
 	vdevgone(maj, mn, mn, VCHR);
+
+	s = splhigh();
+	klist_invalidate(&sc->sc_rsel.si_note);
+	splx(s);
 
 	free(sc->sc_fbuffer, M_DEVBUF, sc->sc_fbufferlen);
 

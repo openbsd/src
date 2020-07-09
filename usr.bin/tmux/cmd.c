@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd.c,v 1.160 2020/04/13 16:19:37 nicm Exp $ */
+/* $OpenBSD: cmd.c,v 1.163 2020/06/29 15:53:28 bket Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -40,6 +40,7 @@ extern const struct cmd_entry cmd_clock_mode_entry;
 extern const struct cmd_entry cmd_command_prompt_entry;
 extern const struct cmd_entry cmd_confirm_before_entry;
 extern const struct cmd_entry cmd_copy_mode_entry;
+extern const struct cmd_entry cmd_customize_mode_entry;
 extern const struct cmd_entry cmd_delete_buffer_entry;
 extern const struct cmd_entry cmd_detach_client_entry;
 extern const struct cmd_entry cmd_display_menu_entry;
@@ -130,6 +131,7 @@ const struct cmd_entry *cmd_table[] = {
 	&cmd_command_prompt_entry,
 	&cmd_confirm_before_entry,
 	&cmd_copy_mode_entry,
+	&cmd_customize_mode_entry,
 	&cmd_delete_buffer_entry,
 	&cmd_detach_client_entry,
 	&cmd_display_menu_entry,
@@ -355,25 +357,27 @@ cmd_free_argv(int argc, char **argv)
 char *
 cmd_stringify_argv(int argc, char **argv)
 {
-	char	*buf;
+	char	*buf = NULL, *s;
+	size_t	 len = 0;
 	int	 i;
-	size_t	 len;
 
 	if (argc == 0)
 		return (xstrdup(""));
 
-	len = 0;
-	buf = NULL;
-
 	for (i = 0; i < argc; i++) {
-		len += strlen(argv[i]) + 1;
+		s = args_escape(argv[i]);
+		log_debug("%s: %u %s = %s", __func__, i, argv[i], s);
+
+		len += strlen(s) + 1;
 		buf = xrealloc(buf, len);
 
 		if (i == 0)
 			*buf = '\0';
 		else
 			strlcat(buf, " ", len);
-		strlcat(buf, argv[i], len);
+		strlcat(buf, s, len);
+
+		free(s);
 	}
 	return (buf);
 }
@@ -594,12 +598,7 @@ cmd_list_append(struct cmd_list *cmdlist, struct cmd *cmd)
 void
 cmd_list_move(struct cmd_list *cmdlist, struct cmd_list *from)
 {
-	struct cmd	*cmd, *cmd1;
-
-	TAILQ_FOREACH_SAFE(cmd, from->list, qentry, cmd1) {
-		TAILQ_REMOVE(from->list, cmd, qentry);
-		TAILQ_INSERT_TAIL(cmdlist->list, cmd, qentry);
-	}
+	TAILQ_CONCAT(cmdlist->list, from->list, qentry);
 	cmdlist->group = cmd_list_next_group++;
 }
 

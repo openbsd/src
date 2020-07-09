@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.47 2019/04/01 07:00:52 tedu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.48 2020/05/31 06:23:57 dlg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -508,4 +508,13 @@ blink_led(void *whatever)
 	timeout_set(&blink_tmo, blink_led, NULL);
 	timeout_add(&blink_tmo,
 	    ((averunnable.ldavg[0] + FSCALE) * hz) >> FSHIFT);
+}
+
+unsigned int
+cpu_rnd_messybits(void)
+{
+	struct timespec ts;
+
+	nanotime(&ts);
+	return (ts.tv_nsec ^ (ts.tv_sec << 20));
 }

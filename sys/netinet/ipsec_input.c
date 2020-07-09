@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.170 2020/04/23 19:38:08 tobhe Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.171 2020/06/24 22:03:43 cheloha Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -316,7 +316,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 
 	/* Register first use, setup expiration timer. */
 	if (tdbp->tdb_first_use == 0) {
-		tdbp->tdb_first_use = time_second;
+		tdbp->tdb_first_use = gettime();
 		if (tdbp->tdb_flags & TDBF_FIRSTUSE)
 			timeout_add_sec(&tdbp->tdb_first_tmo,
 			    tdbp->tdb_exp_first_use);
@@ -453,7 +453,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff)
 	af = tdbp->tdb_dst.sa.sa_family;
 	sproto = tdbp->tdb_sproto;
 
-	tdbp->tdb_last_used = time_second;
+	tdbp->tdb_last_used = gettime();
 
 	/* Sanity check */
 	if (m == NULL) {
@@ -984,7 +984,7 @@ ipsec_common_ctlinput(u_int rdomain, int cmd, struct sockaddr *sa,
 
 			/* Store adjusted MTU in tdb */
 			tdbp->tdb_mtu = mtu;
-			tdbp->tdb_mtutimeout = time_second +
+			tdbp->tdb_mtutimeout = gettime() +
 			    ip_mtudisc_timeout;
 			DPRINTF(("%s: spi %08x mtu %d adjust %ld\n", __func__,
 			    ntohl(tdbp->tdb_spi), tdbp->tdb_mtu,
@@ -1039,7 +1039,7 @@ udpencap_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 			if ((adjust = ipsec_hdrsz(tdbp)) != -1) {
 				/* Store adjusted MTU in tdb */
 				tdbp->tdb_mtu = mtu - adjust;
-				tdbp->tdb_mtutimeout = time_second +
+				tdbp->tdb_mtutimeout = gettime() +
 				    ip_mtudisc_timeout;
 				DPRINTF(("%s: spi %08x mtu %d adjust %ld\n",
 				    __func__,

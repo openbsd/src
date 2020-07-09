@@ -10,4 +10,6 @@
 #define AGP_USER_CACHED_MEMORY		BUS_DMA_COHERENT
 #endif
 
+struct drm_agp_head;
+
 #endif

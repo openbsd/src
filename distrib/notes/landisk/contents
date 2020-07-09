@@ -1,8 +1,8 @@
-dnl	$OpenBSD: contents,v 1.16 2017/09/25 10:47:46 jsg Exp $
+dnl	$OpenBSD: contents,v 1.17 2020/05/17 17:04:28 deraadt Exp $
 TopPart
 
 dnl can't use OpenBSDminiroot here - comment is inappropriate
-	miniroot{:--:}OSrev.fs	A miniroot filesystem image to be copied to
+	miniroot{:--:}OSrev.img	A miniroot filesystem image to be copied to
 			the beginning of the disk to allow installing
 			OpenBSD OSREV.
 

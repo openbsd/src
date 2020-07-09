@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_legacy.c,v 1.3 2020/04/28 20:37:22 jsing Exp $ */
+/*	$OpenBSD: tls13_legacy.c,v 1.9 2020/06/24 18:04:33 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -118,6 +118,12 @@ tls13_legacy_error(SSL *ssl)
 		break;
 	case TLS13_ERR_NO_SHARED_CIPHER:
 		reason = SSL_R_NO_SHARED_CIPHER;
+		break;
+	case TLS13_ERR_NO_CERTIFICATE:
+		reason = SSL_R_MISSING_RSA_CERTIFICATE; /* XXX */
+		break;
+	case TLS13_ERR_NO_PEER_CERTIFICATE:
+		reason = SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE;
 		break;
 	}
 
@@ -483,33 +489,60 @@ tls13_legacy_shutdown(SSL *ssl)
 		return 1;
 	}
 
-	/* Send close notify. */
 	if (!ctx->close_notify_sent) {
-		ctx->close_notify_sent = 1;
-		if ((ret = tls13_send_alert(ctx->rl, SSL_AD_CLOSE_NOTIFY)) < 0)
+		/* Enqueue and send close notify. */
+		if (!(ssl->internal->shutdown & SSL_SENT_SHUTDOWN)) {
+			ssl->internal->shutdown |= SSL_SENT_SHUTDOWN;
+			if ((ret = tls13_send_alert(ctx->rl,
+			    TLS13_ALERT_CLOSE_NOTIFY)) < 0)
+				return tls13_legacy_return_code(ssl, ret);
+		}
+		if ((ret = tls13_record_layer_send_pending(ctx->rl)) !=
+		    TLS13_IO_SUCCESS)
 			return tls13_legacy_return_code(ssl, ret);
-	}
-
-	/* Ensure close notify has been sent. */
-	if ((ret = tls13_record_layer_send_pending(ctx->rl)) != TLS13_IO_SUCCESS)
-		return tls13_legacy_return_code(ssl, ret);
-
-	/* Receive close notify. */
-	if (!ctx->close_notify_recv) {
+	} else if (!ctx->close_notify_recv) {
 		/*
-		 * If there is still application data pending then we have no
-		 * option but to discard it here. The application should have
-		 * continued to call SSL_read() instead of SSL_shutdown().
+		 * If there is no application data pending, attempt to read more
+		 * data in order to receive a close notify. This should trigger
+		 * a record to be read from the wire, which may be application
+		 * handshake or alert data. Only one attempt is made to match
+		 * previous semantics.
 		 */
-		/* XXX - tls13_drain_application_data()? */
-		if ((ret = tls13_read_application_data(ctx->rl, buf, sizeof(buf))) > 0)
-			ret = TLS13_IO_WANT_POLLIN;
-		if (ret != TLS13_IO_EOF)
-			return tls13_legacy_return_code(ssl, ret);
+		if (tls13_pending_application_data(ctx->rl) == 0) {
+			if ((ret = tls13_read_application_data(ctx->rl, buf,
+			    sizeof(buf))) < 0)
+				return tls13_legacy_return_code(ssl, ret);
+		}
 	}
 
 	if (ctx->close_notify_recv)
 		return 1;
 
 	return 0;
+}
+
+int
+tls13_legacy_servername_process(struct tls13_ctx *ctx, uint8_t *alert)
+{
+	int legacy_alert = SSL_AD_UNRECOGNIZED_NAME;
+	int ret = SSL_TLSEXT_ERR_NOACK;
+	SSL_CTX *ssl_ctx = ctx->ssl->ctx;
+	SSL *ssl = ctx->ssl;
+
+	if (ssl_ctx->internal->tlsext_servername_callback == NULL)
+		ssl_ctx = ssl->initial_ctx;
+	if (ssl_ctx->internal->tlsext_servername_callback == NULL)
+		return 1;
+
+	ret = ssl_ctx->internal->tlsext_servername_callback(ssl, &legacy_alert,
+	    ssl_ctx->internal->tlsext_servername_arg);
+
+	if (ret == SSL_TLSEXT_ERR_ALERT_FATAL ||
+	    ret == SSL_TLSEXT_ERR_ALERT_WARNING) {
+		if (legacy_alert >= 0 && legacy_alert <= 255)
+			*alert = legacy_alert;
+		return 0;
+	}
+
+	return 1;
 }

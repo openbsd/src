@@ -1,4 +1,4 @@
-.\"	$OpenBSD: su.1,v 1.35 2019/07/12 12:39:10 schwarze Exp $
+.\"	$OpenBSD: su.1,v 1.37 2020/07/08 16:05:27 millert Exp $
 .\"
 .\" Copyright (c) 1988, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)su.1	6.12 (Berkeley) 7/29/91
 .\"
-.Dd $Mdocdate: July 12 2019 $
+.Dd $Mdocdate: July 8 2020 $
 .Dt SU 1
 .Os
 .Sh NAME
@@ -104,9 +104,12 @@ You may only override the default class if you're already root.
 .It Fl f
 If the invoked shell is
 .Xr csh 1 ,
-this option prevents it from reading the
-.Dq Pa .cshrc
-file.
+this option prevents it from executing system or user startup files.
+For other shells, start a regular shell instead of a login shell when
+the
+.Fl l
+option is used.
+Useful to skip reading shell initialization files.
 .It Fl K
 This is shorthand for
 .Dq Nm Fl a Ar passwd ,

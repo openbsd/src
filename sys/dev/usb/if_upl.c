@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.75 2018/10/02 19:49:10 stsp Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.76 2020/06/09 07:43:39 gerhard Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -546,6 +546,7 @@ upl_send(struct upl_softc *sc, struct mbuf *m, int idx)
 	if (err != USBD_IN_PROGRESS) {
 		printf("%s: upl_send error=%s\n", sc->sc_dev.dv_xname,
 		       usbd_errstr(err));
+		c->upl_mbuf = NULL;
 		upl_stop(sc);
 		return (EIO);
 	}
@@ -569,17 +570,15 @@ upl_start(struct ifnet *ifp)
 	if (ifq_is_oactive(&ifp->if_snd))
 		return;
 
-	m_head = ifq_deq_begin(&ifp->if_snd);
+	m_head = ifq_dequeue(&ifp->if_snd);
 	if (m_head == NULL)
 		return;
 
 	if (upl_send(sc, m_head, 0)) {
-		ifq_deq_rollback(&ifp->if_snd, m_head);
+		m_freem(m_head);
 		ifq_set_oactive(&ifp->if_snd);
 		return;
 	}
-
-	ifq_deq_commit(&ifp->if_snd, m_head);
 
 #if NBPFILTER > 0
 	/*

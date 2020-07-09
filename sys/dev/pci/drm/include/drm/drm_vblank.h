@@ -30,7 +30,6 @@
 
 #include <drm/drm_file.h>
 #include <drm/drm_modes.h>
-#include <uapi/drm/drm.h>
 
 struct drm_device;
 struct drm_crtc;
@@ -95,7 +94,7 @@ struct drm_vblank_crtc {
 	/**
 	 * @queue: Wait queue for vblank waiters.
 	 */
-	wait_queue_head_t queue;	/**< VBLANK wait queue */
+	wait_queue_head_t queue;
 	/**
 	 * @disable_timer: Disable timer for the delayed vblank disabling
 	 * hysteresis logic. Vblank disabling is controlled through the
@@ -107,12 +106,23 @@ struct drm_vblank_crtc {
 	/**
 	 * @seqlock: Protect vblank count and time.
 	 */
-	seqlock_t seqlock;		/* protects vblank count and time */
+	seqlock_t seqlock;
 
 	/**
-	 * @count: Current software vblank counter.
+	 * @count:
+	 *
+	 * Current software vblank counter.
+	 *
+	 * Note that for a given vblank counter value drm_crtc_handle_vblank()
+	 * and drm_crtc_vblank_count() or drm_crtc_vblank_count_and_time()
+	 * provide a barrier: Any writes done before calling
+	 * drm_crtc_handle_vblank() will be visible to callers of the later
+	 * functions, iff the vblank count is the same or a later one.
+	 *
+	 * IMPORTANT: This guarantee requires barriers, therefor never access
+	 * this field directly. Use drm_crtc_vblank_count() instead.
 	 */
-	u64 count;
+	atomic64_t count;
 	/**
 	 * @time: Vblank timestamp corresponding to @count.
 	 */
@@ -123,7 +133,7 @@ struct drm_vblank_crtc {
 	 * this refcount reaches 0 can the hardware interrupt be disabled using
 	 * @disable_timer.
 	 */
-	atomic_t refcount;		/* number of users of vblank interruptsper crtc */
+	atomic_t refcount;
 	/**
 	 * @last: Protected by &drm_device.vbl_lock, used for wraparound handling.
 	 */
@@ -156,7 +166,7 @@ struct drm_vblank_crtc {
 	 * call drm_crtc_vblank_off() and drm_crtc_vblank_on(), which explicitly
 	 * save and restore the vblank count.
 	 */
-	unsigned int inmodeset;		/* Display driver is setting mode */
+	unsigned int inmodeset;
 	/**
 	 * @pipe: drm_crtc_index() of the &drm_crtc corresponding to this
 	 * structure.
@@ -164,13 +174,13 @@ struct drm_vblank_crtc {
 	unsigned int pipe;
 	/**
 	 * @framedur_ns: Frame/Field duration in ns, used by
-	 * drm_calc_vbltimestamp_from_scanoutpos() and computed by
+	 * drm_crtc_vblank_helper_get_vblank_timestamp() and computed by
 	 * drm_calc_timestamping_constants().
 	 */
 	int framedur_ns;
 	/**
 	 * @linedur_ns: Line duration in ns, used by
-	 * drm_calc_vbltimestamp_from_scanoutpos() and computed by
+	 * drm_crtc_vblank_helper_get_vblank_timestamp() and computed by
 	 * drm_calc_timestamping_constants().
 	 */
 	int linedur_ns;
@@ -180,8 +190,8 @@ struct drm_vblank_crtc {
 	 *
 	 * Cache of the current hardware display mode. Only valid when @enabled
 	 * is set. This is used by helpers like
-	 * drm_calc_vbltimestamp_from_scanoutpos(). We can't just access the
-	 * hardware mode by e.g. looking at &drm_crtc_state.adjusted_mode,
+	 * drm_crtc_vblank_helper_get_vblank_timestamp(). We can't just access
+	 * the hardware mode by e.g. looking at &drm_crtc_state.adjusted_mode,
 	 * because that one is really hard to get from interrupt context.
 	 */
 	struct drm_display_mode hwmode;
@@ -196,6 +206,7 @@ struct drm_vblank_crtc {
 };
 
 int drm_vblank_init(struct drm_device *dev, unsigned int num_crtcs);
+bool drm_dev_has_vblank(const struct drm_device *dev);
 u64 drm_crtc_vblank_count(struct drm_crtc *crtc);
 u64 drm_crtc_vblank_count_and_time(struct drm_crtc *crtc,
 				   ktime_t *vblanktime);
@@ -219,13 +230,32 @@ u64 drm_crtc_accurate_vblank_count(struct drm_crtc *crtc);
 void drm_vblank_restore(struct drm_device *dev, unsigned int pipe);
 void drm_crtc_vblank_restore(struct drm_crtc *crtc);
 
-bool drm_calc_vbltimestamp_from_scanoutpos(struct drm_device *dev,
-					   unsigned int pipe, int *max_error,
-					   ktime_t *vblank_time,
-					   bool in_vblank_irq);
 void drm_calc_timestamping_constants(struct drm_crtc *crtc,
 				     const struct drm_display_mode *mode);
 wait_queue_head_t *drm_crtc_vblank_waitqueue(struct drm_crtc *crtc);
 void drm_crtc_set_max_vblank_count(struct drm_crtc *crtc,
 				   u32 max_vblank_count);
+
+/*
+ * Helpers for struct drm_crtc_funcs
+ */
+
+typedef bool (*drm_vblank_get_scanout_position_func)(struct drm_crtc *crtc,
+						     bool in_vblank_irq,
+						     int *vpos, int *hpos,
+						     ktime_t *stime,
+						     ktime_t *etime,
+						     const struct drm_display_mode *mode);
+
+bool
+drm_crtc_vblank_helper_get_vblank_timestamp_internal(struct drm_crtc *crtc,
+						     int *max_error,
+						     ktime_t *vblank_time,
+						     bool in_vblank_irq,
+						     drm_vblank_get_scanout_position_func get_scanout_position);
+bool drm_crtc_vblank_helper_get_vblank_timestamp(struct drm_crtc *crtc,
+						 int *max_error,
+						 ktime_t *vblank_time,
+						 bool in_vblank_irq);
+
 #endif

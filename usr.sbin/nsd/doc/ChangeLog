@@ -1,5 +1,265 @@
+8 April 2020: Wouter
+	- Tag for 4.3.1rc2.
+
+7 April 2020: Wouter
+	- Merge PR #91 by gearnode: nsd-control-setup recreate certificates.
+	  The '-r' option recreates certificates.  Without it it creates them
+	  if they do not exist, and does not modify them otherwise.
+
+6 April 2020: Wouter
+	- Merge PR #90 by phicoh: O_CLOEXEC should be FD_CLOEXEC.
+	- Merge PR #92 by tonysgi: Fix typo.
+
+2 April 2020: Wouter
+	- Tag for 4.3.1rc1.
+
+1 April 2020: Wouter
+	- Fix for whitespace in minimal responses test for FreeBSD.
+
+25 March 2020: Wouter
+	- Merge PR #86 from noloader: Use precious variables for GREP, EGREP,
+	  SED, AWK, LEX and YACC.
+	- For PR #86: Fix that programs loaded after CFLAGS and stuff is
+	  set, specifically the compiler, so that it can work if it needs
+	  special flags from that.  Fix that lex only needs to support -i
+	  if actually defined, otherwise the output included in the source
+	  tarball can be used.
+	- Merge PR #72 from noloader: Increase Travis testing coverage
+
+23 March 2020: Wouter
+	- Fix unterminated ifdef in nsd.h.
+	- Fix unknown u_long in util.c for Issue #80 .
+
+20 March 2020: Wouter
+	- Merge PR #83 from noloader: Fix GNU HURD sched_setaffinity compile.
+	- Fix #82: print error when system does not have setaffinity.
+	- Fix #80: NetBSD and implicit declaration of reallocarray.
+	- Fix for #80: Fix reallocarray test to define before include.
+	- Fix for #80: Define alternatives for IFNAMSIZ if it does not exist.
+
+19 March 2020: Wouter
+	- Fix #76: cpuid typedef for Hurd, DragonflyBSD compile.
+	- Fix #75: configure test for sched_setaffinity, and use
+	  cpuset_setaffinity otherwise.  Also test for presence of sysconf.
+	- Fix #74: GNU Hurd fix cast from pointer to integer of different size.
+	- Fix for #74, #75: cpuset test for header contents and provide code.
+	- Fix #78: Fix SO_SETFIB error on FreeBSD.
+
+18 March 2020: Wouter
+	- Fix #70: error: 'fd_set' undeclared.
+	- Fix #71: error: 'for' loop initial declaration used outside C99
+	  mode.
+	- Fix to move declarations out of for loops in event test too.
+	- Fix to move declarations out of for loops in popen3 test too.
+	- Another fix to move declaration out of for loop for event test.
+	- Fix to move declarations out of for loops in cutest regex display.
+
+17 March 2020: Wouter
+	- tag for 4.3.0 release and master branch has version 4.3.1.
+
+10 March 2020: Wouter
+	- repository has version number 4.3.0.  Tag for 4.3.0rc1.
+
+3 March 2020: Wouter
+	- Fix that the retry wait does not exceed one day for zone transfers.
+
+27 February 2020: Wouter
+	- Fix warning on FreeBSD about pointer size cast.
+
+26 February 2020: Wouter
+	- Fixup fix of reuseport TCP for server close of sockets not used
+	  by it.  And the unit test skips when the necessary debug output
+	  is not enabled.
+
+25 February 2020: Wouter
+	- Fix event unit test, signal has to be registered with signal_add,
+	  event_add not for every backend for signals.  The event_initialized
+	  is not possible for every backend, so event_added variable.  The
+	  agent write event fires after a timeout, instead of on event write
+	  so that it does not trigger a sigpipe event when the handlers stop.
+	  Timeout shorted to 0.1 second.  event_get_fd was not implemented,
+	  so used ev_fd.  Debug output printfs added to see what happens.
+	- Fix checkconf test for new drop-updates config option.
+	- Fix errors with reuseport and TCP file descriptors, it was
+	  closing them for server-1 in server-2 and server-3..
+
+7 February 2020: Jeroen
+	- Add feature to drop queries with opcode UPDATE.
+
+6 February 2020: Jeroen
+	- Support SO_BINDTODEVICE on Linux. Specify bindtodevice: yes
+	  to bind sockets directly to the network interface.
+	- Support SO_SETFIB on FreeBSD. Add setfib=<FIB> after an ip-address
+	  option to use the specified FIB for that socket.
+	- Require user to add servers=<range> after an ip-address option to
+	  specify the servers that must listen on that socket.
+
+6 February 2020: Wouter
+	- Merge PR#60: Minor portability fixes from michaelforney, with
+	  avoid pointer arithmetic on void* and avoid unnecessary VLA.
+
+4 February 2020: Wouter
+	- Merge PR#22: minimise-any: prefer polular and not large RRset,
+	  from Daisuke Higashi.
+	- Fix responses for IXFR so that the authority section is not echoed
+	  in the response.
+
+21 January 2020: Wouter
+	- Fix leak in server bitset setup.
+
+16 January 2020: Jeroen
+	- Add zone resource record iterator for future zone-verification port.
+	- Set FD_CLOEXEC on opened sockets.
+	- Add popen3 implementation for future zone-verification port.
+	- Add -r option to cutest so that a subset of tests can be run.
+
+15 January 2020: Jeroen
+	- Add feature to pin server proccesses to specific cpus.
+	- Add feature to pin IP addresses to selected server processes.
+	- Set process title to identify individual processes.
+
+13 January 2020: Wouter
+	- Merge pull request #59 from buddyns: add FreeBSD support
+	  for conf key ip-transparent.
+
+10 January 2020: Wouter
+	- Fix unreachable code in ssl set options code.
+	- Fix bad shift in assertion code analyzer complaint.
+
+6 January 2020: Wouter
+	- Fix #56: Drop sparse TSIG signing support in NSD.
+	  Sign every axfr packet with TSIG, according to the latest
+	  draft-ietf-dnsop-rfc2845bis-06, Section 5.3.1.
+
+12 December 2019: Wouter
+	- Note that use-systemd is not necessary and ignored in man page.
+
+11 December 2019: Wouter
+	- Fix whitespace in nsd.conf.sample.in, patch from Paul Wouters.
+	- use-systemd is ignored in nsd.conf, when NSD is compiled with
+	  libsystemd it always signals readiness, if possible.
+
+9 December 2019: Wouter
+	- Fix to define upper bounds on rr counts read from untrusted packet
+	  data.
+	- Try different annotation for radix_find_prefix_node not reachable.
+	- Separate acl_addr_match_range functions for ip4 and ip6, to
+	  please checkers.
+	- Avoid unused variable warning in new match_range_v4 function.
+
+6 December 2019: Wouter
+	- Fix to define max number of EDNS records we are willing to
+	  spend time on.
+	- Fix size of string len and capacity type cast in udbradtree.
+	- Fix to protect rrcount in tsig_find_rr from overflow.
+	- Annotate radix_find_prefix_node not reachable trail code.
+	- Fix to protect rrcount in packet_find_notify_serial from overflow.
+	- Fix to close socket on error in create_tcp_accept_sock.
+	- Fix to log on failure to chmod for socket for remote control.
+	- Fix to remove unneeded if in open of socket for remote control.
+	- Fix to restore input parameter on call failure in create_dirs.
+	- Please checker by terminating and initialising string read
+	  by remote control.
+	- Fixup of random_generate negative modulo, from previous commit,
+	  and return srandom when random is used if no getrandom.
+
+5 December 2019: Wouter
+	- Fix fname null check of fname in namedb_read_zonefile.
+	- Fix implicit cast of size in udb_radnode_array_grow.
+	- Fix ignore of return value of ssl_printf in remote.c.
+	- Fix unused check of fd in parent_handle_reload_command.
+	- Fix to use getrandom() for randomness, if available.
+	- Attempt to fix signedness of nscount lookup in ixfr query_process.
+	- Fix identical branches for ssl_print of errors in remote.c.
+	- Fix type cast bounds, signedness of opt_rdlen in edns_parse_record.
+	- Fix to separate header and data lines in parse_zone_list_file.
+
+3 December 2019: Wouter
+	- Fix #52: do not log transient network full errors unless higher
+	  verbosity is set.
+	- Fix checkconf test for new error output string.
+	- tag for 4.2.4rc1 release.  This became the 4.2.4 release,
+	  and the master branch continues with 4.2.5 in development.
+
+27 November 2017 Jeroen
+	- Fix regressions in configparser.y
+
+22 November 2019: Wouter
+	- Fix #48: Add make distclean that removes config.h made by configure.
+	  And add maintainer-clean that removes bison and flex output.
+
+18 November 2019: Wouter
+	- Detect fixed time memcmp for openssl 0.9.8 compatibility.
+	- Detect EC_KEY_new_by_curve_name for openssl 0.9.8.
+	- include limits.h for UINT_MAX.
+	- If no recvmmsg, dont use msg_flags member, but errno for error,
+	  where our fallback function left it, msg_flags also does not exist
+	  on some systems.
+	- Remove unused variable warning for portability.
+
+14 November 2019: Wouter
+	- Fix checkconf test with filenames that sort in the same order.
+	- Tag for 4.2.3rc1.  Branch master is 4.2.4 in development.
+
+11 November 2019: Wouter
+	- Fix #44: document that remote-control is a top-level nsd.conf
+	  attribute.
+	- Fix compile on OSX.
+	- Fix for #44: nicer top-level clause documentation.
+
+22 October 2019: Jeroen
+	- Number of different UDP handlers has been reduced to one. recvmmsg
+	  and sendmmsg implementations are now used on all platforms.
+	  Compatible implementations are in place for systems that lack the
+	  system calls.
+	- Socket options are now set in designated functions for easy reuse.
+	- Socket setup has been simplified for easy reuse.
+	- Configuration parser is now aware of the context in which an option
+	  was specified.
+
+21 October 2019: Wouter
+	- For #21 add
+	  contrib/patch_for_s6_startup_and_other_service_supervisors.diff
+	  that adds support for readiness notification with READY_FD from
+	  Cameron Nemo.
+
+17 October 2019: Jeroen
+	- Fix #40: Merge small fixes for confine-to-zone by Greg Bock.
+
+15 October 2019: Jeroen
+	- For #39: Merge confine-to-zone feature contributes by Greg Bock.
+
+26 September 2019: Wouter
+	- Fix #38: log address and failure reason with tls handshake errors,
+	  squelches (the same as unbound) some unless high verbosity is used.
+	- Fixup clang analysis warning in xfrd_parse_received_xfr_packet
+	  master dereference.
+
+25 September 2019: Wouter
+	- The nsd.conf includes are sorted ascending, for include statements
+	  with a '*' from glob.
+
+16 September 2019: Wouter
+	- Fixup warnings during --disable-ipv6 compile.
+	- Fixup unit test executable to run without IPv6.
+
+4 September 2019: Wouter
+	- Fix #35: excessive logging of ixfr failures, it stops the log when
+	  fallback to axfr is possible. log is enabled at high verbosity.
+
+2 September 2019: Wouter
+	- For #21: pidfile "" allows to run NSD without a pidfile, for
+	  startup management tools like daemontools.
+
+28 August 2019: Wouter
+	- In tests check for tls test tool availability.
+
+19 August 2019: Wouter
+	- Tag for 4.2.2 release.  Git master contains 4.2.3 in development.
+
 13 August 2019: Wouter
 	- Fix error message for out of zone data to have more information.
+	- Tag for 4.2.2rc2.
 
 12 August 2019: Wouter
 	- Fix #33: Fix segfault in service of remaining streams on exit.

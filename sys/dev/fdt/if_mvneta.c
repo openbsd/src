@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvneta.c,v 1.8 2019/09/07 13:33:00 patrick Exp $	*/
+/*	$OpenBSD: if_mvneta.c,v 1.12 2020/06/25 12:39:19 patrick Exp $	*/
 /*	$NetBSD: if_mvneta.c,v 1.41 2015/04/15 10:15:40 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
@@ -50,7 +50,6 @@
 #include <dev/ofw/fdt.h>
 
 #include <dev/fdt/if_mvnetareg.h>
-#include <dev/fdt/mvmdiovar.h>
 
 #ifdef __armv7__
 #include <armv7/marvell/mvmbusvar.h>
@@ -128,7 +127,7 @@ struct mvneta_buf {
 
 struct mvneta_softc {
 	struct device sc_dev;
-	struct device *sc_mdio;
+	struct mii_bus *sc_mdio;
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
@@ -164,6 +163,7 @@ struct mvneta_softc {
 	int			 sc_fixed_link;
 	int			 sc_inband_status;
 	int			 sc_phy;
+	int			 sc_phyloc;
 	int			 sc_link;
 	int			 sc_sfp;
 };
@@ -220,14 +220,14 @@ int
 mvneta_miibus_readreg(struct device *dev, int phy, int reg)
 {
 	struct mvneta_softc *sc = (struct mvneta_softc *) dev;
-	return mvmdio_miibus_readreg(sc->sc_mdio, phy, reg);
+	return sc->sc_mdio->md_readreg(sc->sc_mdio->md_cookie, phy, reg);
 }
 
 void
 mvneta_miibus_writereg(struct device *dev, int phy, int reg, int val)
 {
 	struct mvneta_softc *sc = (struct mvneta_softc *) dev;
-	return mvmdio_miibus_writereg(sc->sc_mdio, phy, reg, val);
+	return sc->sc_mdio->md_writereg(sc->sc_mdio->md_cookie, phy, reg, val);
 }
 
 void
@@ -305,13 +305,14 @@ mvneta_enaddr_write(struct mvneta_softc *sc)
 void
 mvneta_wininit(struct mvneta_softc *sc)
 {
-#ifdef __armv7__
 	uint32_t en;
 	int i;
 
+#ifdef __armv7__
 	if (mvmbus_dram_info == NULL)
 		panic("%s: mbus dram information not set up",
 		    sc->sc_dev.dv_xname);
+#endif
 
 	for (i = 0; i < MVNETA_NWINDOW; i++) {
 		MVNETA_WRITE(sc, MVNETA_BASEADDR(i), 0);
@@ -323,6 +324,7 @@ mvneta_wininit(struct mvneta_softc *sc)
 
 	en = MVNETA_BARE_EN_MASK;
 
+#ifdef __armv7__
 	for (i = 0; i < mvmbus_dram_info->numcs; i++) {
 		struct mbus_dram_window *win = &mvmbus_dram_info->cs[i];
 
@@ -334,9 +336,12 @@ mvneta_wininit(struct mvneta_softc *sc)
 
 		en &= ~(1 << i);
 	}
+#else
+	MVNETA_WRITE(sc, MVNETA_S(0), MVNETA_S_SIZE(0));
+	en &= ~(1 << 0);
+#endif
 
 	MVNETA_WRITE(sc, MVNETA_BARE, en);
-#endif
 }
 
 int
@@ -414,14 +419,14 @@ mvneta_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (!sc->sc_fixed_link) {
-		node = OF_getnodebyphandle(OF_getpropint(faa->fa_node,
-		    "phy", 0));
+		sc->sc_phy = OF_getpropint(faa->fa_node, "phy", 0);
+		node = OF_getnodebyphandle(sc->sc_phy);
 		if (!node) {
 			printf("%s: cannot find phy in fdt\n", self->dv_xname);
 			return;
 		}
 
-		if ((sc->sc_phy = OF_getpropint(node, "reg", -1)) == -1) {
+		if ((sc->sc_phyloc = OF_getpropint(node, "reg", -1)) == -1) {
 			printf("%s: cannot extract phy addr\n", self->dv_xname);
 			return;
 		}
@@ -630,16 +635,23 @@ mvneta_attach(struct device *parent, struct device *self, void *aux)
 	ifmedia_init(&sc->sc_mii.mii_media, 0,
 	    mvneta_mediachange, mvneta_mediastatus);
 
-	if (!sc->sc_fixed_link) {
-		extern void *mvmdio_sc;
-		sc->sc_mdio = mvmdio_sc;
+	config_defer(self, mvneta_attach_deferred);
+}
 
+void
+mvneta_attach_deferred(struct device *self)
+{
+	struct mvneta_softc *sc = (struct mvneta_softc *) self;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+
+	if (!sc->sc_fixed_link) {
+		sc->sc_mdio = mii_byphandle(sc->sc_phy);
 		if (sc->sc_mdio == NULL) {
-			config_defer(self, mvneta_attach_deferred);
+			printf("%s: mdio bus not yet attached\n", self->dv_xname);
 			return;
 		}
 
-		mii_attach(self, &sc->sc_mii, 0xffffffff, sc->sc_phy,
+		mii_attach(self, &sc->sc_mii, 0xffffffff, sc->sc_phyloc,
 		    MII_OFFSET_ANY, 0);
 		if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 			printf("%s: no PHY found!\n", self->dv_xname);
@@ -671,40 +683,6 @@ mvneta_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp);
-
-	return;
-}
-
-void
-mvneta_attach_deferred(struct device *self)
-{
-	struct mvneta_softc *sc = (struct mvneta_softc *) self;
-	struct ifnet *ifp = &sc->sc_ac.ac_if;
-
-	extern void *mvmdio_sc;
-	sc->sc_mdio = mvmdio_sc;
-	if (sc->sc_mdio == NULL) {
-		printf("%s: mdio bus not yet attached\n", self->dv_xname);
-		return;
-	}
-
-	mii_attach(self, &sc->sc_mii, 0xffffffff, sc->sc_phy,
-	    MII_OFFSET_ANY, 0);
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
-		printf("%s: no PHY found!\n", self->dv_xname);
-		ifmedia_add(&sc->sc_mii.mii_media,
-		    IFM_ETHER|IFM_MANUAL, 0, NULL);
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL);
-	} else
-		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
-
-	/*
-	 * Call MI attach routines.
-	 */
-	if_attach(ifp);
-	ether_ifattach(ifp);
-
-	return;
 }
 
 void
@@ -1383,9 +1361,10 @@ mvneta_rx_proc(struct mvneta_softc *sc)
 		sc->sc_rx_cons = MVNETA_RX_RING_NEXT(idx);
 	}
 
-	mvneta_fill_rx_ring(sc);
+	if (ifiq_input(&ifp->if_rcv, &ml))
+		if_rxr_livelocked(&sc->sc_rx_ring);
 
-	if_input(ifp, &ml);
+	mvneta_fill_rx_ring(sc);
 }
 
 void

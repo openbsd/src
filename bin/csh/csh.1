@@ -1,4 +1,4 @@
-.\"	$OpenBSD: csh.1,v 1.83 2019/07/29 09:04:36 schwarze Exp $
+.\"	$OpenBSD: csh.1,v 1.84 2020/07/08 16:05:27 millert Exp $
 .\"	$NetBSD: csh.1,v 1.10 1995/03/21 09:02:35 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)csh.1	8.2 (Berkeley) 1/21/94
 .\"
-.Dd $Mdocdate: July 29 2019 $
+.Dd $Mdocdate: July 8 2020 $
 .Dt CSH 1
 .Os
 .Sh NAME
@@ -83,10 +83,8 @@ Any remaining arguments are placed in
 The shell exits if any invoked command terminates abnormally
 or yields a non-zero exit status.
 .It Fl f
-The shell will start faster, because it will neither search for nor
-execute commands from the file
-.Pa .cshrc
-in the invoker's home directory.
+The shell will start faster, because it will not execute user or
+system startup files, load saved history or perform command hashing.
 Note: if the environment variable
 .Ev HOME
 is not set, fast startup is the default.

@@ -367,6 +367,7 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 		SERV_GET_BIN(reuseport, o);
 		SERV_GET_BIN(hide_version, o);
 		SERV_GET_BIN(hide_identity, o);
+		SERV_GET_BIN(drop_updates, o);
 		SERV_GET_BIN(zonefiles_check, o);
 		SERV_GET_BIN(log_time_ascii, o);
 		SERV_GET_BIN(round_robin, o);
@@ -506,6 +507,7 @@ config_test_print_server(nsd_options_type* opt)
 	printf("\treceive-buffer-size: %d\n", opt->receive_buffer_size);
 	printf("\thide-version: %s\n", opt->hide_version?"yes":"no");
 	printf("\thide-identity: %s\n", opt->hide_identity?"yes":"no");
+	printf("\tdrop-updates: %s\n", opt->drop_updates?"yes":"no");
 	printf("\ttcp-reject-overflow: %s\n",
 		opt->tcp_reject_overflow ? "yes" : "no");
 	print_string_var("database:", opt->database);
@@ -514,6 +516,26 @@ config_test_print_server(nsd_options_type* opt)
 	print_string_var("nsid:", opt->nsid);
 	print_string_var("logfile:", opt->logfile);
 	printf("\tserver-count: %d\n", opt->server_count);
+	if(opt->cpu_affinity) {
+		cpu_option_type *n;
+		printf("\tcpu-affinity:");
+		for(n = opt->cpu_affinity; n; n = n->next) {
+			printf(" %d", n->cpu);
+		}
+		printf("\n");
+	}
+	if(opt->cpu_affinity && opt->service_cpu_affinity) {
+		cpu_map_option_type *n;
+		for(n = opt->service_cpu_affinity; n; n = n->next) {
+			if(n->service > 0) {
+				printf("\tserver-%d-cpu-affinity: %d\n",
+				       n->service, n->cpu);
+			} else if(n->service == -1) {
+				printf("\txfrd-cpu-affinity: %d\n",
+				       n->cpu);
+			}
+		}
+	}
 	printf("\ttcp-count: %d\n", opt->tcp_count);
 	printf("\ttcp-query-count: %d\n", opt->tcp_query_count);
 	printf("\ttcp-timeout: %d\n", opt->tcp_timeout);
@@ -540,7 +562,24 @@ config_test_print_server(nsd_options_type* opt)
 	printf("\tverbosity: %d\n", opt->verbosity);
 	for(ip = opt->ip_addresses; ip; ip=ip->next)
 	{
-		print_string_var("ip-address:", ip->address);
+		printf("\tip-address: %s", ip->address);
+		if(ip->servers) {
+			const char *sep;
+			struct range_option *n;
+			printf(" servers=\"");
+			for(n=ip->servers, sep=""; n; n = n->next, sep=" ") {
+				if(n->first == n->last) {
+					printf("%s%d", sep, n->first);
+				} else {
+					printf("%s%d-%d", sep, n->first, n->last);
+				}
+			}
+			printf("\"");
+		}
+		if(ip->fib != -1) {
+			printf(" setfib=%d", ip->fib);
+		}
+		printf("\n");
 	}
 #ifdef RATELIMIT
 	printf("\trrl-size: %d\n", (int)opt->rrl_size);

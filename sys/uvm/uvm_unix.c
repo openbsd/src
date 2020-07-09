@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.67 2019/11/05 08:18:47 mpi Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.68 2020/07/06 13:33:09 pirofti Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -214,7 +214,8 @@ uvm_should_coredump(struct proc *p, struct vm_map_entry *entry)
 {
 	if (!(entry->protection & PROT_WRITE) &&
 	    entry->aref.ar_amap == NULL &&
-	    entry->start != p->p_p->ps_sigcode)
+	    entry->start != p->p_p->ps_sigcode &&
+	    entry->start != p->p_p->ps_timekeep)
 		return 0;
 
 	/*

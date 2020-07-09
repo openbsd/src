@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.60 2020/02/05 16:29:29 krw Exp $ */
+/*	$OpenBSD: qla.c,v 1.63 2020/06/27 14:29:45 krw Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -327,7 +327,7 @@ int
 qla_add_fabric_port(struct qla_softc *sc, struct qla_fc_port *port)
 {
 	struct qla_get_port_db *pdb;
-	
+
 	if (qla_get_port_db(sc, port->loopid, sc->sc_scratch)) {
 		return (1);
 	}
@@ -367,7 +367,7 @@ qla_add_logged_in_port(struct qla_softc *sc, int loopid, u_int32_t portid)
 	struct qla_get_port_db *pdb;
 	u_int64_t node_name, port_name;
 	int flags, ret;
-	
+
 	ret = qla_get_port_db(sc, loopid, sc->sc_scratch);
 	mtx_enter(&sc->sc_port_mtx);
 	if (ret != 0) {
@@ -680,7 +680,7 @@ qla_attach(struct qla_softc *sc)
 	} else {
 		sc->sc_link.adapter_buswidth = QLA_BUSWIDTH;
 	}
-	sc->sc_link.adapter_target = sc->sc_link.adapter_buswidth;
+	sc->sc_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
 	sc->sc_link.openings = sc->sc_maxcmds;
 	sc->sc_link.pool = &sc->sc_iopool;
 	sc->sc_link.port_wwn = sc->sc_port_name;
@@ -694,7 +694,6 @@ qla_attach(struct qla_softc *sc)
 		sc->sc_link.node_wwn &= ~(0xfULL << 56);
 	}
 
-	memset(&saa, 0, sizeof(saa));
 	saa.saa_sc_link = &sc->sc_link;
 
 	/* config_found() returns the scsibus attached to us */
@@ -1760,11 +1759,7 @@ qla_do_update(void *xsc)
 			mtx_enter(&sc->sc_port_mtx);
 			qla_clear_port_lists(sc);
 			TAILQ_INIT(&detach);
-			while (!TAILQ_EMPTY(&sc->sc_ports)) {
-				port = TAILQ_FIRST(&sc->sc_ports);
-				TAILQ_REMOVE(&sc->sc_ports, port, ports);
-				TAILQ_INSERT_TAIL(&detach, port, ports);
-			}
+			TAILQ_CONCAT(&detach, &sc->sc_ports, ports);
 			mtx_leave(&sc->sc_port_mtx);
 
 			while (!TAILQ_EMPTY(&detach)) {

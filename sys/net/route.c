@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.393 2020/04/20 17:25:23 krw Exp $	*/
+/*	$OpenBSD: route.c,v 1.394 2020/06/24 22:03:43 cheloha Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1469,8 +1469,8 @@ rt_timer_add(struct rtentry *rt, void (*func)(struct rtentry *,
 	struct rttimer	*r;
 	long		 current_time;
 
-	current_time = time_uptime;
-	rt->rt_expire = time_uptime + queue->rtq_timeout;
+	current_time = getuptime();
+	rt->rt_expire = getuptime() + queue->rtq_timeout;
 
 	/*
 	 * If there's already a timer with this action, destroy it before
@@ -1513,7 +1513,7 @@ rt_timer_timer(void *arg)
 	struct rttimer		*r;
 	long			 current_time;
 
-	current_time = time_uptime;
+	current_time = getuptime();
 
 	NET_LOCK();
 	LIST_FOREACH(rtq, &rttimer_queue_head, rtq_link) {

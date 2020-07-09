@@ -1,4 +1,4 @@
-/*	$OpenBSD: locking.c,v 1.14 2020/02/09 14:59:20 millert Exp $	*/
+/*	$OpenBSD: locking.c,v 1.15 2020/05/27 03:12:06 millert Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Theo de Raadt <deraadt@theos.com>
@@ -33,7 +33,6 @@
 #include <fcntl.h>
 #include <pwd.h>
 #include <syslog.h>
-#include <time.h>
 #include <unistd.h>
 #include <limits.h>
 #include <errno.h>
@@ -57,9 +56,8 @@ rellock(void)
 int
 getlock(const char *name, struct passwd *pw)
 {
-	struct stat sb, fsb;
+	struct stat sb;
 	int lfd=-1;
-	char buf[8*1024];
 	int tries = 0;
 
 	(void)snprintf(lpath, sizeof lpath, "%s/%s.lock",
@@ -67,58 +65,8 @@ getlock(const char *name, struct passwd *pw)
 
 	if (stat(_PATH_MAILDIR, &sb) != -1 &&
 	    (sb.st_mode & S_IWOTH) == S_IWOTH) {
-		/*
-		 * We have a writeable spool, deal with it as
-		 * securely as possible.
-		 */
-		time_t ctim = -1;
-
-		seteuid(pw->pw_uid);
-		if (lstat(lpath, &sb) != -1)
-			ctim = sb.st_ctime;
-		while (1) {
-			/*
-			 * Deal with existing user.lock files
-			 * or directories or symbolic links that
-			 * should not be here.
-			 */
-			if (readlink(lpath, buf, sizeof buf-1) != -1) {
-				if (lstat(lpath, &sb) != -1 &&
-				    S_ISLNK(sb.st_mode)) {
-					seteuid(sb.st_uid);
-					unlink(lpath);
-					seteuid(pw->pw_uid);
-				}
-				goto again;
-			}
-			if ((lfd = open(lpath, O_CREAT|O_WRONLY|O_EXCL|O_EXLOCK,
-			    S_IRUSR|S_IWUSR)) != -1)
-				break;
-again:
-			if (tries > 10) {
-				mwarn("%s: %s", lpath, strerror(errno));
-				seteuid(0);
-				return(-1);
-			}
-			if (tries > 9 &&
-			    (lfd = open(lpath, O_WRONLY|O_EXLOCK, 0)) != -1) {
-				if (fstat(lfd, &fsb) != -1 &&
-				    lstat(lpath, &sb) != -1) {
-					if (fsb.st_dev == sb.st_dev &&
-					    fsb.st_ino == sb.st_ino &&
-					    ctim == fsb.st_ctime ) {
-						seteuid(fsb.st_uid);
-						baditem(lpath);
-						seteuid(pw->pw_uid);
-					}
-				}
-				close(lfd);
-			}
-			sleep(1U << tries);
-			tries++;
-			continue;
-		}
-		seteuid(0);
+		mwarn("%s: will not deliver to world-writable spool",
+		    _PATH_MAILDIR);
 	} else {
 		/*
 		 * Only root can write the spool directory.
@@ -136,25 +84,6 @@ again:
 		}
 	}
 	return(lfd);
-}
-
-void
-baditem(char *path)
-{
-	char npath[PATH_MAX];
-	int fd;
-
-	if (unlink(path) == 0)
-		return;
-	snprintf(npath, sizeof npath, "%s/mailXXXXXXXXXX", _PATH_MAILDIR);
-	if ((fd = mkstemp(npath)) == -1)
-		return;
-	close(fd);
-	if (rename(path, npath) == -1)
-		unlink(npath);
-	else
-		mwarn("nasty spool item %s renamed to %s", path, npath);
-	/* XXX if we fail to rename, another attempt will happen later */
 }
 
 void

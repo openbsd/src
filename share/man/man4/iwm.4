@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwm.4,v 1.32 2019/11/27 16:41:44 stsp Exp $
+.\" $OpenBSD: iwm.4,v 1.33 2020/05/16 17:03:34 jmc Exp $
 .\"
 .\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 27 2019 $
+.Dd $Mdocdate: May 16 2020 $
 .Dt IWM 4
 .Os
 .Sh NAME
@@ -68,6 +68,10 @@ WPA-Enterprise networks require use of the wpa_supplicant package.
 .\".Nm
 .\"driver offloads both encryption and decryption of unicast data frames to the
 .\"hardware for the CCMP cipher.
+.Pp
+In BSS mode the driver supports background scanning;
+see
+.Xr ifconfig 8 .
 .Pp
 The
 .Nm

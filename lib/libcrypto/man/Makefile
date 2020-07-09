@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.160 2019/11/02 15:12:31 schwarze Exp $
+# $OpenBSD: Makefile,v 1.170 2020/06/24 17:00:38 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -68,6 +68,7 @@ MAN=	\
 	BN_swap.3 \
 	BN_zero.3 \
 	BUF_MEM_new.3 \
+	CMAC_Init.3 \
 	CMS_ContentInfo_new.3 \
 	CMS_add0_cert.3 \
 	CMS_add1_recipient_cert.3 \
@@ -91,6 +92,7 @@ MAN=	\
 	CRYPTO_lock.3 \
 	CRYPTO_memcmp.3 \
 	CRYPTO_set_ex_data.3 \
+	ChaCha.3 \
 	DES_set_key.3 \
 	DH_generate_key.3 \
 	DH_generate_parameters.3 \
@@ -203,6 +205,7 @@ MAN=	\
 	OPENSSL_malloc.3 \
 	OPENSSL_sk_new.3 \
 	OpenSSL_add_all_algorithms.3 \
+	PEM_ASN1_read.3 \
 	PEM_bytes_read_bio.3 \
 	PEM_read.3 \
 	PEM_read_bio_PrivateKey.3 \
@@ -214,9 +217,16 @@ MAN=	\
 	PKCS12_parse.3 \
 	PKCS12_SAFEBAG_new.3 \
 	PKCS5_PBKDF2_HMAC.3 \
+	PKCS7_add_attribute.3 \
+	PKCS7_dataFinal.3 \
+	PKCS7_dataInit.3 \
 	PKCS7_decrypt.3 \
 	PKCS7_encrypt.3 \
+	PKCS7_final.3 \
+	PKCS7_get_signer_info.3 \
 	PKCS7_new.3 \
+	PKCS7_set_content.3 \
+	PKCS7_set_type.3 \
 	PKCS7_sign.3 \
 	PKCS7_sign_add_signer.3 \
 	PKCS7_verify.3 \

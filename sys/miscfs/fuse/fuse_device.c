@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.33 2020/04/07 13:27:51 visa Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.34 2020/05/13 08:13:42 mpi Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -74,13 +74,6 @@ const static struct filterops fuse_rd_filtops = {
 	.f_attach	= NULL,
 	.f_detach	= filt_fuse_rdetach,
 	.f_event	= filt_fuse_read,
-};
-
-const static struct filterops fuse_seltrue_filtops = {
-	.f_flags	= FILTEROP_ISFD,
-	.f_attach	= NULL,
-	.f_detach	= filt_fuse_rdetach,
-	.f_event	= filt_seltrue,
 };
 
 #ifdef FUSE_DEBUG
@@ -555,9 +548,7 @@ fusekqfilter(dev_t dev, struct knote *kn)
 		kn->kn_fop = &fuse_rd_filtops;
 		break;
 	case EVFILT_WRITE:
-		klist = &fd->fd_rsel.si_note;
-		kn->kn_fop = &fuse_seltrue_filtops;
-		break;
+		return (seltrue_kqfilter(dev, kn));
 	default:
 		return (EINVAL);
 	}

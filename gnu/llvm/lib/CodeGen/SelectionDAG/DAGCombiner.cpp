@@ -9904,9 +9904,11 @@ SDValue DAGCombiner::visitTRUNCATE(SDNode *N) {
   // (trunc adde(X, Y, Carry)) -> (adde trunc(X), trunc(Y), Carry)
   // (trunc addcarry(X, Y, Carry)) -> (addcarry trunc(X), trunc(Y), Carry)
   // When the adde's carry is not used.
+  // Don't make an illegal adde: LegalizeDAG can't expand nor promote it.
   if ((N0.getOpcode() == ISD::ADDE || N0.getOpcode() == ISD::ADDCARRY) &&
       N0.hasOneUse() && !N0.getNode()->hasAnyUseOfValue(1) &&
-      (!LegalOperations || TLI.isOperationLegal(N0.getOpcode(), VT))) {
+      ((!LegalOperations && N0.getOpcode() == ISD::ADDCARRY) ||
+       TLI.isOperationLegal(N0.getOpcode(), VT))) {
     SDLoc SL(N);
     auto X = DAG.getNode(ISD::TRUNCATE, SL, VT, N0.getOperand(0));
     auto Y = DAG.getNode(ISD::TRUNCATE, SL, VT, N0.getOperand(1));

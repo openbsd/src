@@ -1,4 +1,4 @@
-/* $OpenBSD: readconf.c,v 1.329 2020/04/24 03:33:21 dtucker Exp $ */
+/* $OpenBSD: readconf.c,v 1.332 2020/07/05 23:59:45 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -721,7 +721,7 @@ match_cfg_line(Options *options, char **condition, struct passwd *pw,
 static void
 rm_env(Options *options, const char *arg, const char *filename, int linenum)
 {
-	int i, j;
+	int i, j, onum_send_env = options->num_send_env;
 	char *cp;
 
 	/* Remove an environment variable */
@@ -743,6 +743,11 @@ rm_env(Options *options, const char *arg, const char *filename, int linenum)
 		}
 		options->num_send_env--;
 		/* NB. don't increment i */
+	}
+	if (onum_send_env != options->num_send_env) {
+		options->send_env = xrecallocarray(options->send_env,
+		    onum_send_env, options->num_send_env,
+		    sizeof(*options->send_env));
 	}
 }
 
@@ -1790,7 +1795,12 @@ parse_keytypes:
 			    filename, linenum);
   parse_agent_path:
 		/* Extra validation if the string represents an env var. */
-		if (arg[0] == '$' && !valid_env_name(arg + 1)) {
+		if ((arg2 = dollar_expand(&r, arg)) == NULL || r)
+			fatal("%.200s line %d: Invalid environment expansion "
+			    "%s.", filename, linenum, arg);
+		free(arg2);
+		/* check for legacy environment format */
+		if (arg[0] == '$' && arg[1] != '{' && !valid_env_name(arg + 1)) {
 			fatal("%.200s line %d: Invalid environment name %s.",
 			    filename, linenum, arg);
 		}
@@ -2190,11 +2200,11 @@ fill_default_options(Options * options)
 	all_key = sshkey_alg_list(0, 0, 1, ',');
 	all_sig = sshkey_alg_list(0, 1, 1, ',');
 	/* remove unsupported algos from default lists */
-	def_cipher = match_filter_whitelist(KEX_CLIENT_ENCRYPT, all_cipher);
-	def_mac = match_filter_whitelist(KEX_CLIENT_MAC, all_mac);
-	def_kex = match_filter_whitelist(KEX_CLIENT_KEX, all_kex);
-	def_key = match_filter_whitelist(KEX_DEFAULT_PK_ALG, all_key);
-	def_sig = match_filter_whitelist(SSH_ALLOWED_CA_SIGALGS, all_sig);
+	def_cipher = match_filter_allowlist(KEX_CLIENT_ENCRYPT, all_cipher);
+	def_mac = match_filter_allowlist(KEX_CLIENT_MAC, all_mac);
+	def_kex = match_filter_allowlist(KEX_CLIENT_KEX, all_kex);
+	def_key = match_filter_allowlist(KEX_DEFAULT_PK_ALG, all_key);
+	def_sig = match_filter_allowlist(SSH_ALLOWED_CA_SIGALGS, all_sig);
 #define ASSEMBLE(what, defaults, all) \
 	do { \
 		if ((r = kex_assemble_names(&options->what, \
@@ -2329,12 +2339,19 @@ parse_forward(struct Forward *fwd, const char *fwdspec, int dynamicfwd, int remo
 {
 	struct fwdarg fwdargs[4];
 	char *p, *cp;
-	int i;
+	int i, err;
 
 	memset(fwd, 0, sizeof(*fwd));
 	memset(fwdargs, 0, sizeof(fwdargs));
 
-	cp = p = xstrdup(fwdspec);
+	/*
+	 * We expand environment variables before checking if we think they're
+	 * paths so that if ${VAR} expands to a fully qualified path it is
+	 * treated as a path.
+	 */
+	cp = p = dollar_expand(&err, fwdspec);
+	if (p == NULL || err)
+		return 0;
 
 	/* skip leading spaces */
 	while (isspace((u_char)*cp))

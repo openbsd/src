@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1150 2020/04/05 15:15:42 krw Exp $
+#	$OpenBSD: install.sub,v 1.1154 2020/05/26 16:21:00 florian Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -195,8 +195,7 @@ show_cols() {
 	rm -rf -- $_cdir
 }
 
-# Echo file $1 to stdout. Skip comment lines and delete everything
-# after the first '#' from other lines. Strip leading and trailing
+# Echo file $1 to stdout. Skip comment lines. Strip leading and trailing
 # whitespace if IFS is set.
 stripcom() {
 	local _file=$1 _line
@@ -2882,13 +2881,6 @@ do_autoinstall() {
 	# Email autoinstall protocol to root on next boot.
 	prep_root_mail /tmp/ai/ai.log "$(hostname) $AI_MODE log"
 
-	# SYSUP-COMPAT
-	if $UU; then
-		cat <<__EOT >>/mnt/etc/rc.firsttime
-[[ ! -e /home/_sysupgrade/keep ]] && rm -f /home/_sysupgrade/*
-__EOT
-	fi
-
 	exec reboot
 }
 
@@ -3227,26 +3219,9 @@ check_unattendedupgrade() {
 		if [[ -n $_d ]]; then
 			make_dev $_d
 			if mount -t ffs -r /dev/${_d}a /mnt; then
-				### NOTYET (uncomment once SYSUP-COMPAT is gone)
-				#[[ -f /mnt/bsd.upgrade && -f /mnt/auto_upgrade.conf ]]
-				#_rc=$?
-				#((_rc == 0)) && cp /mnt/auto_upgrade.conf /
-				### BEGIN SYSUP-COMPAT
-				ls /mnt/bsd.upgrade 
+				[[ -f /mnt/bsd.upgrade && -f /mnt/auto_upgrade.conf ]]
 				_rc=$?
-				if ((_rc == 0)); then
-					if [[ -f /mnt/auto_upgrade.conf ]]; then
-						cp /mnt/auto_upgrade.conf /
-					else
-						cat <<__EOT >/auto_upgrade.conf
-Location of sets = disk
-Pathname to the sets = /home/_sysupgrade/
-Set name(s) = done
-Directory does not contain SHA256.sig. Continue without verification = yes
-__EOT
-					fi
-				fi
-				### END SYSUP-COMPAT 
+				((_rc == 0)) && cp /mnt/auto_upgrade.conf /
 				umount -f /mnt
 			fi
 			rm -f /dev/{r,}$_d?

@@ -957,7 +957,16 @@ answer_domain(struct nsd* nsd, struct query *q, answer_type *answer,
 	rrset_type *rrset;
 
 	if (q->qtype == TYPE_ANY) {
-		int added = 0;
+		rrset_type *preferred_rrset = NULL;
+		rrset_type *normal_rrset = NULL;
+		rrset_type *non_preferred_rrset = NULL;
+
+		/*
+		 * Minimize response size for ANY, with one RRset
+		 * according to RFC 8482(4.1).
+		 * Prefers popular and not large rtypes (A,AAAA,...)
+		 * lowering large ones (DNSKEY,RRSIG,...).
+		 */
 		for (rrset = domain_find_any_rrset(domain, q->zone); rrset; rrset = rrset->next) {
 			if (rrset->zone == q->zone
 #ifdef NSEC3
@@ -972,16 +981,32 @@ answer_domain(struct nsd* nsd, struct query *q, answer_type *answer,
 				 && zone_is_secure(q->zone)
 				 && rrset_rrtype(rrset) == TYPE_RRSIG))
 			{
-				add_rrset(q, answer, ANSWER_SECTION, domain, rrset);
-				++added;
-#ifdef NOTYET
-				/* minimize response size with one RR,
-				 * according to RFC 8482(4.1). */
-				break;
-#endif
+				switch(rrset_rrtype(rrset)) {
+					case TYPE_A:
+					case TYPE_AAAA:
+					case TYPE_SOA:
+					case TYPE_MX:
+					case TYPE_PTR:
+						preferred_rrset = rrset;
+						break;
+					case TYPE_DNSKEY:
+					case TYPE_RRSIG:
+					case TYPE_NSEC:
+						non_preferred_rrset = rrset;
+						break;
+					default:
+						normal_rrset = rrset;
+				}
+				if (preferred_rrset) break;
 			}
 		}
-		if (added == 0) {
+		if (preferred_rrset) {
+			add_rrset(q, answer, ANSWER_SECTION, domain, preferred_rrset);
+		} else if (normal_rrset) {
+			add_rrset(q, answer, ANSWER_SECTION, domain, normal_rrset);
+		} else if (non_preferred_rrset) {
+			add_rrset(q, answer, ANSWER_SECTION, domain, non_preferred_rrset);
+		} else {
 			answer_nodata(q, answer, original);
 			return;
 		}
@@ -1399,6 +1424,8 @@ query_process(query_type *q, nsd_type *nsd)
 	if(q->opcode != OPCODE_QUERY && q->opcode != OPCODE_NOTIFY) {
 		if(query_ratelimit_err(nsd))
 			return QUERY_DISCARDED;
+		if(nsd->options->drop_updates && q->opcode == OPCODE_UPDATE)
+			return QUERY_DISCARDED;
 		return query_error(q, NSD_RC_IMPL);
 	}
 
@@ -1435,8 +1462,15 @@ query_process(query_type *q, nsd_type *nsd)
 		return query_formerr(q, nsd);
 	}
 	if(q->qtype==TYPE_IXFR && NSCOUNT(q->packet) > 0) {
-		int i; /* skip ixfr soa information data here */
-		for(i=0; i< NSCOUNT(q->packet); i++)
+		unsigned int i; /* skip ixfr soa information data here */
+		unsigned int nscount = (unsigned)NSCOUNT(q->packet);
+		/* define a bound on the number of extraneous records allowed,
+		 * we expect 1, a SOA serial record, and no more.
+		 * perhaps RRSIGs (but not needed), otherwise we do not
+		 * understand what this means.  We do not want too many
+		 * because the high iteration counts slow down. */
+		if(nscount > 64) return query_formerr(q, nsd);
+		for(i=0; i< nscount; i++)
 			if(!packet_skip_rr(q->packet, 0))
 				return query_formerr(q, nsd);
 	}

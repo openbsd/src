@@ -383,7 +383,7 @@ elsif ($Is_Cygwin) { # On Cygwin symlink it to CORE to make Makefile happy
     # [als] hard-coded 'libperl' name... not good!
     #@corefiles = <*.h libperl*.* perl*$Config{lib_ext}>;
     @corefiles = <*.h *.inc perl*$Config{lib_ext}>;
-    push(@corefiles,<libperl*.*>) unless defined($ENV{"NOLIBINSTALL"});
+    install($libperl, "$opts{destdir}$Config{glibpth}/$libperl", "0444");
 
     # AIX needs perl.exp installed as well.
     push(@corefiles,'perl.exp') if $^O eq 'aix';

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2018/01/23 22:30:34 bluhm Exp $
+# $OpenBSD: Makefile,v 1.7 2020/05/25 11:08:12 bluhm Exp $
 
 # This regress test uses a vnd device to run mount and unmount.
 # All tests have to be run as root.
@@ -8,6 +8,7 @@ CLEANFILES=	diskimage *.log
 .PHONY: disk mount unconfig clean
 
 disk: unconfig
+	@echo '======== $@ ========'
 	dd if=/dev/null of=diskimage bs=1m seek=1100
 	vnconfig vnd0 diskimage
 	disklabel -wA -T ${.CURDIR}/disktemplate vnd0
@@ -16,13 +17,15 @@ disk: unconfig
 	[ `disklabel vnd0 | grep -c '\<4.2BSD\>'` -eq 15 ]
 
 mount: disk
+	@echo '======== $@ ========'
 	newfs vnd0a
 	mkdir -p /mnt/regress-mount
 	mount /dev/vnd0a /mnt/regress-mount
 
 mount-nested: mount
+	@echo '======== $@ ========'
 .for p in b d e f g h i j k l m n o p
-	newfs vnd0${p}
+	newfs -O 1 vnd0${p}
 .endfor
 	mkdir /mnt/regress-mount/b
 	mount /dev/vnd0b /mnt/regress-mount/b
@@ -32,10 +35,12 @@ mount-nested: mount
 	[ `mount | grep -c '/dev/vnd0. on /mnt/regress-mount\>'` -eq 15 ]
 
 unconfig:
-	@echo '\n======== $@ ========'
+	@echo '======== $@ ========'
 	-umount -f /dev/vnd0a 2>/dev/null || true
 	-rmdir /mnt/regress-mount 2>/dev/null || true
 	-vnconfig -u vnd0 2>/dev/null || true
+
+REGRESS_CLEANUP =	unconfig
 
 # The unmount-nested test uses a disk template to create 15 partitions
 # on a vnd device.  All are initialized with a ffs file system.
@@ -45,8 +50,8 @@ unconfig:
 # does the unmount recursively.  There must be no dangling mount
 # points.
 
-REGRESS_TARGETS+=	run-regress-unmount-nested
-run-regress-unmount-nested: mount-nested
+REGRESS_TARGETS+=	run-unmount-nested
+run-unmount-nested: mount-nested
 	@echo '\n======== $@ ========'
 	! umount /mnt/regress-mount
 	umount -f /mnt/regress-mount
@@ -58,8 +63,8 @@ run-regress-unmount-nested: mount-nested
 # running, unmount with -f.  Run fsck -f to see that everything is
 # clean.
 
-REGRESS_TARGETS+=	run-regress-unmount-busy
-run-regress-unmount-busy: mount
+REGRESS_TARGETS+=	run-unmount-busy
+run-unmount-busy: mount
 	@echo '\n======== $@ ========'
 	cp -r /usr /mnt/regress-mount &
 	sleep 5
@@ -75,7 +80,7 @@ run-regress-unmount-busy: mount
 	! egrep -q 'yes|FILE SYSTEM WAS MODIFIED|MARKING FILE SYSTEM CLEAN' \
 	    fsck-force.log
 
-run-regress-readonly-busy run-regress-readonly-dangling:
+run-readonly-busy run-readonly-dangling:
 	# Remounting a file system read-only that has dangling vnodes fails
 	# currently.  It is marked as clean but has unreferneced files.
 	@echo DISABLED
@@ -86,8 +91,8 @@ run-regress-readonly-busy run-regress-readonly-dangling:
 # run fsck -f to see that a file system marked as clean is really
 # clean.
 
-REGRESS_TARGETS+=	run-regress-readonly-busy
-run-regress-readonly-busy: mount
+REGRESS_TARGETS+=	run-readonly-busy
+run-readonly-busy: mount
 	@echo '\n======== $@ ========'
 	cp -r /usr /mnt/regress-mount &
 	sleep 5
@@ -112,8 +117,8 @@ run-regress-readonly-busy: mount
 # Then the file system cannot be clean after unmounting it.
 # Check that clean flag is not set and repair it with fsck -y.
 
-REGRESS_TARGETS+=	run-regress-readonly-dangling
-run-regress-readonly-dangling: mount
+REGRESS_TARGETS+=	run-readonly-dangling
+run-readonly-dangling: mount
 	@echo '\n======== $@ ========'
 	touch /mnt/regress-mount/file
 	sleep 73 </mnt/regress-mount/file &
@@ -128,10 +133,5 @@ run-regress-readonly-dangling: mount
 	! egrep -q 'File system is clean' fsck-clean.log
 	egrep -q 'yes|FILE SYSTEM WAS MODIFIED|MARKING FILE SYSTEM CLEAN' \
 	    fsck-clean.log fsck-force.log
-
-REGRESS_TARGETS+=	run-regress-cleanup
-run-regress-cleanup:
-	@echo '\n======== $@ ========'
-	${.MAKE} -C ${.CURDIR} unconfig
 
 .include <bsd.regress.mk>
