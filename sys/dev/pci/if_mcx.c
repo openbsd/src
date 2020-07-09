@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.60 2020/07/07 04:42:35 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.61 2020/07/09 01:08:55 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -7202,7 +7202,7 @@ mcx_hwmem_free(struct mcx_softc *sc, struct mcx_hwmem *mhm)
 
 #if NKSTAT > 0
 struct mcx_ppcnt {
-	const char		*name;
+	char			 name[KSTAT_KV_NAMELEN];
 	enum kstat_kv_unit	 unit;
 };
 
@@ -7414,6 +7414,13 @@ struct mcx_kstat_mtmp {
 	struct kstat_kv		ktmp_threshold_hi;
 };
 
+static const struct mcx_kstat_mtmp mcx_kstat_mtmp_tpl = {
+	KSTAT_KV_INITIALIZER("name",		KSTAT_KV_T_ISTR),
+	KSTAT_KV_INITIALIZER("temperature",	KSTAT_KV_T_TEMP),
+	KSTAT_KV_INITIALIZER("lo threshold",	KSTAT_KV_T_TEMP),
+	KSTAT_KV_INITIALIZER("hi threshold",	KSTAT_KV_T_TEMP),
+};
+
 static const struct timeval mcx_kstat_mtmp_rate = { 1, 0 };
 
 static int mcx_kstat_mtmp_read(struct kstat *);
@@ -7453,13 +7460,7 @@ mcx_kstat_attach_tmps(struct mcx_softc *sc)
 		}
 
 		ktmp = malloc(sizeof(*ktmp), M_DEVBUF, M_WAITOK|M_ZERO);
-		kstat_kv_init(&ktmp->ktmp_name, "name", KSTAT_KV_T_ISTR);
-		kstat_kv_init(&ktmp->ktmp_temperature, "temperature",
-		    KSTAT_KV_T_TEMP);
-		kstat_kv_init(&ktmp->ktmp_threshold_lo, "lo threshold",
-		    KSTAT_KV_T_TEMP);
-		kstat_kv_init(&ktmp->ktmp_threshold_hi, "hi threshold",
-		    KSTAT_KV_T_TEMP);
+		*ktmp = mcx_kstat_mtmp_tpl;
 
 		ks->ks_data = ktmp;
 		ks->ks_datalen = sizeof(*ktmp);
