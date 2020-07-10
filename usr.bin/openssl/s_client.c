@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.50 2020/07/10 12:05:52 inoguchi Exp $ */
+/* $OpenBSD: s_client.c,v 1.51 2020/07/10 12:25:57 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -171,8 +171,9 @@
 #define BUFSIZZ 1024*8
 
 static void sc_usage(void);
-static void print_stuff(BIO * berr, SSL * con, int full);
-static int ocsp_resp_cb(SSL * s, void *arg);
+static void print_stuff(BIO *berr, SSL *con, int full);
+static int ocsp_resp_cb(SSL *s, void *arg);
+static int ssl_servername_cb(SSL *s, int *ad, void *arg);
 
 enum {
 	PROTO_OFF = 0,
@@ -183,6 +184,12 @@ enum {
 	PROTO_FTP,
 	PROTO_XMPP,
 };
+
+/* This is a context that we pass to callbacks */
+typedef struct tlsextctx_st {
+	BIO *biodebug;
+	int ack;
+} tlsextctx;
 
 static struct {
 	int af;
@@ -837,25 +844,6 @@ sc_usage(void)
 	fprintf(stderr, "\n");
 	options_usage(s_client_options);
 	fprintf(stderr, "\n");
-}
-
-/* This is a context that we pass to callbacks */
-typedef struct tlsextctx_st {
-	BIO *biodebug;
-	int ack;
-} tlsextctx;
-
-static int
-ssl_servername_cb(SSL * s, int *ad, void *arg)
-{
-	tlsextctx *p = (tlsextctx *) arg;
-	const char *hn = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
-	if (SSL_get_servername_type(s) != -1)
-		p->ack = !SSL_session_reused(s) && hn != NULL;
-	else
-		BIO_printf(bio_err, "Can't use SSL_get_servername\n");
-
-	return SSL_TLSEXT_ERR_OK;
 }
 
 int
@@ -1626,14 +1614,14 @@ s_client_main(int argc, char **argv)
 }
 
 static void
-print_stuff(BIO * bio, SSL * s, int full)
+print_stuff(BIO *bio, SSL *s, int full)
 {
 	X509 *peer = NULL;
 	char *p;
 	static const char *space = "                ";
 	char buf[BUFSIZ];
-	STACK_OF(X509) * sk;
-	STACK_OF(X509_NAME) * sk2;
+	STACK_OF(X509) *sk;
+	STACK_OF(X509_NAME) *sk2;
 	const SSL_CIPHER *c;
 	X509_NAME *xn;
 	int j, i;
@@ -1814,7 +1802,7 @@ print_stuff(BIO * bio, SSL * s, int full)
 }
 
 static int
-ocsp_resp_cb(SSL * s, void *arg)
+ocsp_resp_cb(SSL *s, void *arg)
 {
 	const unsigned char *p;
 	int len;
@@ -1836,5 +1824,18 @@ ocsp_resp_cb(SSL * s, void *arg)
 	BIO_puts(arg, "======================================\n");
 	OCSP_RESPONSE_free(rsp);
 	return 1;
+}
+
+static int
+ssl_servername_cb(SSL *s, int *ad, void *arg)
+{
+	tlsextctx *p = (tlsextctx *) arg;
+	const char *hn = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
+	if (SSL_get_servername_type(s) != -1)
+		p->ack = !SSL_session_reused(s) && hn != NULL;
+	else
+		BIO_printf(bio_err, "Can't use SSL_get_servername\n");
+
+	return SSL_TLSEXT_ERR_OK;
 }
 
