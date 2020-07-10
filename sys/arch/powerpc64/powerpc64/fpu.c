@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.1 2020/06/27 15:04:49 kettenis Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.2 2020/07/10 16:10:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -65,7 +65,11 @@ save_vsx(struct proc *p)
 void
 restore_vsx(struct proc *p)
 {
-	struct fpreg *fp = &p->p_addr->u_pcb.pcb_fpstate;
+	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct fpreg *fp = &pcb->pcb_fpstate;
+
+	if ((pcb->pcb_flags & (PCB_FP|PCB_VEC|PCB_VSX)) == 0)
+		memset(fp, 0, sizeof(*fp));
 
 	mtmsr(mfmsr() | (PSL_FP|PSL_VEC|PSL_VSX));
 
