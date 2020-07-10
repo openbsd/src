@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.47 2020/07/10 14:35:01 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.48 2020/07/10 17:09:37 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -91,6 +91,7 @@ void memreg_add(const struct fdt_reg *);
 void memreg_remove(const struct fdt_reg *);
 
 void parse_bootargs(const char *);
+const char *parse_bootduid(const char *);
 
 paddr_t fdt_pa;
 size_t fdt_size;
@@ -634,6 +635,9 @@ parse_bootargs(const char *bootargs)
 {
 	const char *cp = bootargs;
 
+	if (strncmp(cp, "bootduid=", strlen("bootduid=")) == 0)
+		cp = parse_bootduid(cp + strlen("bootduid="));
+
 	while (*cp != '-')
 		if (*cp++ == '\0')
 			return;
@@ -659,6 +663,34 @@ parse_bootargs(const char *bootargs)
 		}
 		cp++;
 	}
+}
+
+const char *
+parse_bootduid(const char *bootarg)
+{
+	const char *cp = bootarg;
+	uint64_t duid = 0;
+	int digit, count = 0;
+
+	while (count < 16) {
+		if (*cp >= '0' && *cp <= '9')
+			digit = *cp - '0';
+		else if (*cp >= 'a' && *cp <= 'f')
+			digit = *cp - 'a' + 10;
+		else
+			break;
+		duid *= 16;
+		duid += digit;
+		count++;
+		cp++;
+	}
+
+	if (count > 0) {
+		memcpy(&bootduid, &duid, sizeof(bootduid));
+		return cp;
+	}
+
+	return bootarg;
 }
 
 #define PSL_USER \
