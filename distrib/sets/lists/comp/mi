@@ -868,6 +868,7 @@
 ./usr/include/dev/wsfont/spleen16x32.h
 ./usr/include/dev/wsfont/spleen32x64.h
 ./usr/include/dev/wsfont/spleen5x8.h
+./usr/include/dev/wsfont/spleen6x12.h
 ./usr/include/dev/wsfont/spleen8x16.h
 ./usr/include/dev/wsfont/wsfont.h
 ./usr/include/dev/x86emu
