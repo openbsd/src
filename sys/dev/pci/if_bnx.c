@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.128 2020/06/22 02:31:32 dlg Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.129 2020/07/10 13:26:37 patrick Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -877,7 +877,7 @@ bnx_attachhook(struct device *self)
 	ifp->if_watchdog = bnx_watchdog;
 	ifp->if_hardmtu = BNX_MAX_JUMBO_ETHER_MTU_VLAN -
 	    sizeof(struct ether_header);
-	IFQ_SET_MAXLEN(&ifp->if_snd, USABLE_TX_BD - 1);
+	ifq_set_maxlen(&ifp->if_snd, USABLE_TX_BD - 1);
 	bcopy(sc->eaddr, sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
 	bcopy(sc->bnx_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
@@ -5152,7 +5152,7 @@ bnx_intr(void *xsc)
 
 		/* Start moving packets again */
 		if (ifp->if_flags & IFF_RUNNING &&
-		    !IFQ_IS_EMPTY(&ifp->if_snd))
+		    !ifq_empty(&ifp->if_snd))
 			ifq_start(&ifp->if_snd);
 	}
 

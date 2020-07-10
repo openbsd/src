@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.7 2020/06/26 21:02:36 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.8 2020/07/10 13:26:37 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -1433,7 +1433,7 @@ mvpp2_port_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = mvpp2_ioctl;
 	ifp->if_start = mvpp2_start;
 	ifp->if_watchdog = mvpp2_watchdog;
-	IFQ_SET_MAXLEN(&ifp->if_snd, MVPP2_NTXDESC - 1);
+	ifq_set_maxlen(&ifp->if_snd, MVPP2_NTXDESC - 1);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
@@ -1600,7 +1600,7 @@ mvpp2_start(struct ifnet *ifp)
 		return;
 	if (ifq_is_oactive(&ifp->if_snd))
 		return;
-	if (IFQ_IS_EMPTY(&ifp->if_snd))
+	if (ifq_empty(&ifp->if_snd))
 		return;
 	if (!sc->sc_link)
 		return;

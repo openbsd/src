@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ugl.c,v 1.24 2020/06/09 07:43:39 gerhard Exp $	*/
+/*	$OpenBSD: if_ugl.c,v 1.25 2020/07/10 13:26:41 patrick Exp $	*/
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2013 SASANO Takayoshi <uaa@uaa.org.uk>
@@ -528,7 +528,7 @@ ugl_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	m_freem(c->ugl_mbuf);
 	c->ugl_mbuf = NULL;
 
-	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+	if (ifq_empty(&ifp->if_snd) == 0)
 		ugl_start(ifp);
 
 	splx(s);

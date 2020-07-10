@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nep.c,v 1.32 2020/06/22 02:31:32 dlg Exp $	*/
+/*	$OpenBSD: if_nep.c,v 1.33 2020/07/10 13:26:38 patrick Exp $	*/
 /*
  * Copyright (c) 2014, 2015 Mark Kettenis
  *
@@ -1876,7 +1876,7 @@ nep_start(struct ifnet *ifp)
 		return;
 	if (ifq_is_oactive(&ifp->if_snd))
 		return;
-	if (IFQ_IS_EMPTY(&ifp->if_snd))
+	if (ifq_empty(&ifp->if_snd))
 		return;
 
 	idx = sc->sc_tx_prod;

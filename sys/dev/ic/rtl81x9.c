@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.97 2020/07/10 13:22:20 patrick Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.98 2020/07/10 13:26:37 patrick Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -774,7 +774,7 @@ rl_intr(void *arg)
 	/* Re-enable interrupts. */
 	CSR_WRITE_2(sc, RL_IMR, RL_INTRS);
 
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
+	if (!ifq_empty(&ifp->if_snd))
 		rl_start(ifp);
 
 	return (claimed);

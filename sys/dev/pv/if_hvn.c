@@ -279,7 +279,7 @@ hvn_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	}
 
-	IFQ_SET_MAXLEN(&ifp->if_snd, HVN_TX_DESC - 1);
+	ifq_set_maxlen(&ifp->if_snd, HVN_TX_DESC - 1);
 
 	ifmedia_init(&sc->sc_media, IFM_IMASK, hvn_media_change,
 	    hvn_media_status);

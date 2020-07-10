@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.93 2019/09/25 09:30:28 kevlo Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.94 2020/07/10 13:26:38 patrick Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -792,7 +792,7 @@ nge_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = nge_start;
 	ifp->if_watchdog = nge_watchdog;
 	ifp->if_hardmtu = NGE_JUMBO_MTU;
-	IFQ_SET_MAXLEN(&ifp->if_snd, NGE_TX_LIST_CNT - 1);
+	ifq_set_maxlen(&ifp->if_snd, NGE_TX_LIST_CNT - 1);
 	DPRINTFN(5, ("%s: bcopy\n", sc->sc_dv.dv_xname));
 	bcopy(sc->sc_dv.dv_xname, ifp->if_xname, IFNAMSIZ);
 
@@ -1218,7 +1218,7 @@ nge_tick(void *xsc)
 
 		DPRINTF(("%s: gigabit link up\n", sc->sc_dv.dv_xname));
 		sc->nge_link++;
-		if (!IFQ_IS_EMPTY(&ifp->if_snd))
+		if (!ifq_empty(&ifp->if_snd))
 			nge_start(ifp);
 	} else {
 		mii_tick(mii);
@@ -1228,7 +1228,7 @@ nge_tick(void *xsc)
 			if (IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T)
 				DPRINTF(("%s: gigabit link up\n",
 					 sc->sc_dv.dv_xname));
-			if (!IFQ_IS_EMPTY(&ifp->if_snd))
+			if (!ifq_empty(&ifp->if_snd))
 				nge_start(ifp);
 		}
 		
@@ -1310,7 +1310,7 @@ nge_intr(void *arg)
 	/* Re-enable interrupts. */
 	CSR_WRITE_4(sc, NGE_IER, 1);
 
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
+	if (!ifq_empty(&ifp->if_snd))
 		nge_start(ifp);
 
 	/* Data LED off for TBI mode */
@@ -1849,7 +1849,7 @@ nge_watchdog(struct ifnet *ifp)
 	ifp->if_flags &= ~IFF_RUNNING;
 	nge_init(sc);
 
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
+	if (!ifq_empty(&ifp->if_snd))
 		nge_start(ifp);
 }
 

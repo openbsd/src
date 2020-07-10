@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.71 2017/01/22 10:17:38 dlg Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.72 2020/07/10 13:26:38 patrick Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -548,7 +548,7 @@ ixgb_intr(void *arg)
 		}
 	}
 
-	if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
+	if (ifp->if_flags & IFF_RUNNING && !ifq_empty(&ifp->if_snd))
 		ixgb_start(ifp);
 
 	return (claimed);
@@ -1011,7 +1011,7 @@ ixgb_setup_interface(struct ixgb_softc *sc)
 	ifp->if_watchdog = ixgb_watchdog;
 	ifp->if_hardmtu =
 		IXGB_MAX_JUMBO_FRAME_SIZE - ETHER_HDR_LEN - ETHER_CRC_LEN;
-	IFQ_SET_MAXLEN(&ifp->if_snd, sc->num_tx_desc - 1);
+	ifq_set_maxlen(&ifp->if_snd, sc->num_tx_desc - 1);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 

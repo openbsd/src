@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.90 2020/06/09 07:43:39 gerhard Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.91 2020/07/10 13:26:40 patrick Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -788,7 +788,7 @@ kue_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	m_freem(c->kue_mbuf);
 	c->kue_mbuf = NULL;
 
-	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+	if (ifq_empty(&ifp->if_snd) == 0)
 		kue_start(ifp);
 
 	splx(s);
@@ -1073,7 +1073,7 @@ kue_watchdog(struct ifnet *ifp)
 	usbd_get_xfer_status(c->kue_xfer, NULL, NULL, NULL, &stat);
 	kue_txeof(c->kue_xfer, c, stat);
 
-	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+	if (ifq_empty(&ifp->if_snd) == 0)
 		kue_start(ifp);
 	splx(s);
 }

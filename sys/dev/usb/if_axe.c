@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axe.c,v 1.140 2020/06/09 07:43:39 gerhard Exp $	*/
+/*	$OpenBSD: if_axe.c,v 1.141 2020/07/10 13:26:40 patrick Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Jonathan Gray <jsg@openbsd.org>
@@ -1123,7 +1123,7 @@ axe_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	m_freem(c->axe_mbuf);
 	c->axe_mbuf = NULL;
 
-	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+	if (ifq_empty(&ifp->if_snd) == 0)
 		axe_start(ifp);
 
 	splx(s);
@@ -1446,7 +1446,7 @@ axe_watchdog(struct ifnet *ifp)
 	usbd_get_xfer_status(c->axe_xfer, NULL, NULL, NULL, &stat);
 	axe_txeof(c->axe_xfer, c, stat);
 
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
+	if (!ifq_empty(&ifp->if_snd))
 		axe_start(ifp);
 	splx(s);
 }

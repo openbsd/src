@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwxe.c,v 1.16 2020/06/22 02:23:21 dlg Exp $	*/
+/*	$OpenBSD: if_dwxe.c,v 1.17 2020/07/10 13:26:36 patrick Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -434,7 +434,7 @@ dwxe_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = dwxe_ioctl;
 	ifp->if_start = dwxe_start;
 	ifp->if_watchdog = dwxe_watchdog;
-	IFQ_SET_MAXLEN(&ifp->if_snd, DWXE_NTXDESC - 1);
+	ifq_set_maxlen(&ifp->if_snd, DWXE_NTXDESC - 1);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
@@ -594,7 +594,7 @@ dwxe_start(struct ifnet *ifp)
 		return;
 	if (ifq_is_oactive(&ifp->if_snd))
 		return;
-	if (IFQ_IS_EMPTY(&ifp->if_snd))
+	if (ifq_empty(&ifp->if_snd))
 		return;
 	if (!sc->sc_link)
 		return;

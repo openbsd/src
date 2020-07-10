@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.166 2020/06/07 23:52:05 dlg Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.167 2020/07/10 13:26:38 patrick Exp $	*/
 
 /******************************************************************************
 
@@ -1867,7 +1867,7 @@ ixgbe_setup_interface(struct ix_softc *sc)
 	ifp->if_watchdog = ixgbe_watchdog;
 	ifp->if_hardmtu = IXGBE_MAX_FRAME_SIZE -
 	    ETHER_HDR_LEN - ETHER_CRC_LEN;
-	IFQ_SET_MAXLEN(&ifp->if_snd, sc->num_tx_desc - 1);
+	ifq_set_maxlen(&ifp->if_snd, sc->num_tx_desc - 1);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 

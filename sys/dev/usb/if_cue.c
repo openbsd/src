@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.78 2018/10/02 19:49:10 stsp Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.79 2020/07/10 13:26:40 patrick Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -773,7 +773,7 @@ cue_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	m_freem(c->cue_mbuf);
 	c->cue_mbuf = NULL;
 
-	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+	if (ifq_empty(&ifp->if_snd) == 0)
 		cue_start(ifp);
 
 	splx(s);
@@ -1100,7 +1100,7 @@ cue_watchdog(struct ifnet *ifp)
 	usbd_get_xfer_status(c->cue_xfer, NULL, NULL, NULL, &stat);
 	cue_txeof(c->cue_xfer, c, stat);
 
-	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+	if (ifq_empty(&ifp->if_snd) == 0)
 		cue_start(ifp);
 	splx(s);
 }

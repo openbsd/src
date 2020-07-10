@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.120 2020/07/10 13:22:20 patrick Exp $ */
+/*	$OpenBSD: malo.c,v 1.121 2020/07/10 13:26:37 patrick Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -347,7 +347,7 @@ malo_attach(struct malo_softc *sc)
 	ifp->if_watchdog = malo_watchdog;
 	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
-	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
+	ifq_set_maxlen(&ifp->if_snd, IFQ_MAXLEN);
 
 	/* set supported rates */
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;

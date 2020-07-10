@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iec.c,v 1.26 2017/07/19 12:23:16 claudio Exp $	*/
+/*	$OpenBSD: if_iec.c,v 1.27 2020/07/10 13:26:36 patrick Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -408,7 +408,7 @@ iec_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_watchdog = iec_watchdog;
 
 	if_attach(ifp);
-	IFQ_SET_MAXLEN(&ifp->if_snd, IEC_NTXDESC - 1);
+	ifq_set_maxlen(&ifp->if_snd, IEC_NTXDESC - 1);
 	ether_ifattach(ifp);
 
 	/* Establish interrupt handler. */

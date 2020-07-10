@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vte.c,v 1.23 2020/07/10 13:22:21 patrick Exp $	*/
+/*	$OpenBSD: if_vte.c,v 1.24 2020/07/10 13:26:38 patrick Exp $	*/
 /*-
  * Copyright (c) 2010, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -329,7 +329,7 @@ vte_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = vte_ioctl;
 	ifp->if_start = vte_start;
 	ifp->if_watchdog = vte_watchdog;
-	IFQ_SET_MAXLEN(&ifp->if_snd, VTE_TX_RING_CNT - 1);
+	ifq_set_maxlen(&ifp->if_snd, VTE_TX_RING_CNT - 1);
 	bcopy(sc->vte_eaddr, sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
@@ -710,7 +710,7 @@ vte_watchdog(struct ifnet *ifp)
 	ifp->if_oerrors++;
 	vte_init(ifp);
 
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
+	if (!ifq_empty(&ifp->if_snd))
 		vte_start(ifp);
 }
 
@@ -870,7 +870,7 @@ vte_intr(void *arg)
 			vte_txeof(sc);
 		if (status & MISR_EVENT_CNT_OFLOW)
 			vte_stats_update(sc);
-		if (!IFQ_IS_EMPTY(&ifp->if_snd))
+		if (!ifq_empty(&ifp->if_snd))
 			vte_start(ifp);
 		if (--n > 0)
 			status = CSR_READ_2(sc, VTE_MISR);

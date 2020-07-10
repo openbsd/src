@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.66 2020/07/10 13:22:21 patrick Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.67 2020/07/10 13:26:38 patrick Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -592,7 +592,7 @@ ste_intr(void *xsc)
 	/* Re-enable interrupts */
 	CSR_WRITE_2(sc, STE_IMR, STE_INTRS);
 
-	if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
+	if (ifp->if_flags & IFF_RUNNING && !ifq_empty(&ifp->if_snd))
 		ste_start(ifp);
 
 	return claimed;
@@ -786,7 +786,7 @@ ste_stats_update(void *xsc)
 			 * otherwise we get stuck in the wrong link state
 			 */
 			ste_miibus_statchg((struct device *)sc);
-			if (!IFQ_IS_EMPTY(&ifp->if_snd))
+			if (!ifq_empty(&ifp->if_snd))
 				ste_start(ifp);
 		}
 	}
@@ -900,7 +900,7 @@ ste_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = ste_ioctl;
 	ifp->if_start = ste_start;
 	ifp->if_watchdog = ste_watchdog;
-	IFQ_SET_MAXLEN(&ifp->if_snd, STE_TX_LIST_CNT - 1);
+	ifq_set_maxlen(&ifp->if_snd, STE_TX_LIST_CNT - 1);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
@@ -1390,6 +1390,6 @@ ste_watchdog(struct ifnet *ifp)
 	ste_rxeof(sc);
 	ste_init(sc);
 
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
+	if (!ifq_empty(&ifp->if_snd))
 		ste_start(ifp);
 }

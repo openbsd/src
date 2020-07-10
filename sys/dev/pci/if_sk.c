@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.190 2020/06/22 02:31:33 dlg Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.191 2020/07/10 13:26:38 patrick Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -998,7 +998,7 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = sk_start;
 	ifp->if_watchdog = sk_watchdog;
 	ifp->if_hardmtu = SK_JUMBO_MTU;
-	IFQ_SET_MAXLEN(&ifp->if_snd, SK_TX_RING_CNT - 1);
+	ifq_set_maxlen(&ifp->if_snd, SK_TX_RING_CNT - 1);
 	bcopy(sc_if->sk_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
@@ -1929,9 +1929,9 @@ sk_intr(void *xsc)
 
 	CSR_WRITE_4(sc, SK_IMR, sc->sk_intrmask);
 
-	if (ifp0 != NULL && !IFQ_IS_EMPTY(&ifp0->if_snd))
+	if (ifp0 != NULL && !ifq_empty(&ifp0->if_snd))
 		sk_start(ifp0);
-	if (ifp1 != NULL && !IFQ_IS_EMPTY(&ifp1->if_snd))
+	if (ifp1 != NULL && !ifq_empty(&ifp1->if_snd))
 		sk_start(ifp1);
 
 	return (claimed);

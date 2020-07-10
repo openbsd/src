@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.131 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.132 2020/07/10 13:26:37 patrick Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -429,7 +429,7 @@ fxp_attach(struct fxp_softc *sc, const char *intrstr)
 	ifp->if_ioctl = fxp_ioctl;
 	ifp->if_start = fxp_start;
 	ifp->if_watchdog = fxp_watchdog;
-	IFQ_SET_MAXLEN(&ifp->if_snd, FXP_NTXCB - 1);
+	ifq_set_maxlen(&ifp->if_snd, FXP_NTXCB - 1);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
@@ -835,7 +835,7 @@ fxp_intr(void *arg)
 			ifp->if_timer = sc->sc_cbt_cnt ? 5 : 0;
 			sc->sc_cbt_cons = txs;
 
-			if (!IFQ_IS_EMPTY(&ifp->if_snd)) {
+			if (!ifq_empty(&ifp->if_snd)) {
 				/*
 				 * Try to start more packets transmitting.
 				 */

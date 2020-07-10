@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_se.c,v 1.20 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: if_se.c,v 1.21 2020/07/10 13:26:38 patrick Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Christopher Zimmermann <madroach@zakweb.de>
@@ -690,7 +690,7 @@ se_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = se_ioctl;
 	ifp->if_start = se_start;
 	ifp->if_watchdog = se_watchdog;
-	IFQ_SET_MAXLEN(&ifp->if_snd, SE_TX_RING_CNT - 1);
+	ifq_set_maxlen(&ifp->if_snd, SE_TX_RING_CNT - 1);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
@@ -1041,7 +1041,7 @@ se_tick(void *xsc)
 	if ((sc->sc_flags & SE_FLAG_LINK) == 0) {
 		se_miibus_statchg(&sc->sc_dev);
 		if ((sc->sc_flags & SE_FLAG_LINK) != 0 &&
-		    !IFQ_IS_EMPTY(&ifp->if_snd))
+		    !ifq_empty(&ifp->if_snd))
 			se_start(ifp);
 	}
 	splx(s);
@@ -1088,7 +1088,7 @@ se_intr(void *arg)
 	if ((ifp->if_flags & IFF_RUNNING) != 0) {
 		/* Re-enable interrupts */
 		CSR_WRITE_4(sc, IntrMask, SE_INTRS);
-		if (!IFQ_IS_EMPTY(&ifp->if_snd))
+		if (!ifq_empty(&ifp->if_snd))
 			se_start(ifp);
 	}
 
@@ -1402,7 +1402,7 @@ se_watchdog(struct ifnet *ifp)
 
 	s = splnet();
 	se_init(ifp);
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
+	if (!ifq_empty(&ifp->if_snd))
 		se_start(ifp);
 	splx(s);
 }

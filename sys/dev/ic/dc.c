@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.153 2020/07/10 13:22:19 patrick Exp $	*/
+/*	$OpenBSD: dc.c,v 1.154 2020/07/10 13:26:37 patrick Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1698,7 +1698,7 @@ hasmac:
 	ifp->if_ioctl = dc_ioctl;
 	ifp->if_start = dc_start;
 	ifp->if_watchdog = dc_watchdog;
-	IFQ_SET_MAXLEN(&ifp->if_snd, DC_TX_LIST_CNT - 1);
+	ifq_set_maxlen(&ifp->if_snd, DC_TX_LIST_CNT - 1);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
@@ -2358,7 +2358,7 @@ dc_tick(void *xsc)
 	if (!sc->dc_link && mii->mii_media_status & IFM_ACTIVE &&
 	    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
 		sc->dc_link++;
-		if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+		if (ifq_empty(&ifp->if_snd) == 0)
 	 	    dc_start(ifp);
 	}
 
@@ -2488,7 +2488,7 @@ dc_intr(void *arg)
 	/* Re-enable interrupts. */
 	CSR_WRITE_4(sc, DC_IMR, DC_INTRS);
 
-	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+	if (ifq_empty(&ifp->if_snd) == 0)
 		dc_start(ifp);
 
 	return (claimed);
@@ -2959,7 +2959,7 @@ dc_watchdog(struct ifnet *ifp)
 
 	dc_init(sc);
 
-	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+	if (ifq_empty(&ifp->if_snd) == 0)
 		dc_start(ifp);
 }
 

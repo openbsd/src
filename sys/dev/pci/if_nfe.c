@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nfe.c,v 1.121 2019/09/25 09:30:28 kevlo Exp $	*/
+/*	$OpenBSD: if_nfe.c,v 1.122 2020/07/10 13:26:38 patrick Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -320,7 +320,7 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = nfe_ioctl;
 	ifp->if_start = nfe_start;
 	ifp->if_watchdog = nfe_watchdog;
-	IFQ_SET_MAXLEN(&ifp->if_snd, NFE_IFQ_MAXLEN);
+	ifq_set_maxlen(&ifp->if_snd, NFE_IFQ_MAXLEN);
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.87 2020/07/10 13:23:34 patrick Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.88 2020/07/10 13:26:42 patrick Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -147,7 +147,7 @@ pflog_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_start = pflogstart;
 	ifp->if_xflags = IFXF_CLONED;
 	ifp->if_type = IFT_PFLOG;
-	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
+	ifq_set_maxlen(&ifp->if_snd, IFQ_MAXLEN);
 	ifp->if_hdrlen = PFLOG_HDRLEN;
 	if_attach(ifp);
 	if_alloc_sadl(ifp);

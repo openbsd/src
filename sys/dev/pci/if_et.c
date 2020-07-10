@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.38 2020/07/10 13:22:20 patrick Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.39 2020/07/10 13:26:38 patrick Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -245,7 +245,7 @@ et_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = et_ioctl;
 	ifp->if_start = et_start;
 	ifp->if_watchdog = et_watchdog;
-	IFQ_SET_MAXLEN(&ifp->if_snd, ET_TX_NDESC);
+	ifq_set_maxlen(&ifp->if_snd, ET_TX_NDESC);
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;

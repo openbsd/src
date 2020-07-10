@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.48 2020/07/10 13:22:19 patrick Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.49 2020/07/10 13:26:36 patrick Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -448,7 +448,7 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = cpsw_start;
 	ifp->if_ioctl = cpsw_ioctl;
 	ifp->if_watchdog = cpsw_watchdog;
-	IFQ_SET_MAXLEN(&ifp->if_snd, CPSW_NTXDESCS - 1);
+	ifq_set_maxlen(&ifp->if_snd, CPSW_NTXDESCS - 1);
 	memcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
 
 	cpsw_stop(ifp);
@@ -520,7 +520,7 @@ cpsw_start(struct ifnet *ifp)
 
 	if (!ISSET(ifp->if_flags, IFF_RUNNING) ||
 	    ifq_is_oactive(&ifp->if_snd) ||
-	    IFQ_IS_EMPTY(&ifp->if_snd))
+	    ifq_empty(&ifp->if_snd))
 		return;
 
 	if (sc->sc_txnext >= sc->sc_txhead)

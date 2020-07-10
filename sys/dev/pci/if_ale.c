@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ale.c,v 1.47 2020/07/10 13:22:20 patrick Exp $	*/
+/*	$OpenBSD: if_ale.c,v 1.48 2020/07/10 13:26:37 patrick Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -499,7 +499,7 @@ ale_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = ale_ioctl;
 	ifp->if_start = ale_start;
 	ifp->if_watchdog = ale_watchdog;
-	IFQ_SET_MAXLEN(&ifp->if_snd, ALE_TX_RING_CNT - 1);
+	ifq_set_maxlen(&ifp->if_snd, ALE_TX_RING_CNT - 1);
 	bcopy(sc->ale_eaddr, sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
@@ -986,7 +986,7 @@ ale_start(struct ifnet *ifp)
 		return;
 	if ((sc->ale_flags & ALE_FLAG_LINK) == 0)
 		return;
-	if (IFQ_IS_EMPTY(&ifp->if_snd))
+	if (ifq_empty(&ifp->if_snd))
 		return;
 
 	enq = 0;

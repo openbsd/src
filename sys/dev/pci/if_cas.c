@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.52 2020/07/10 13:22:20 patrick Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.53 2020/07/10 13:26:37 patrick Exp $	*/
 
 /*
  *
@@ -493,7 +493,7 @@ cas_config(struct cas_softc *sc)
 	ifp->if_start = cas_start;
 	ifp->if_ioctl = cas_ioctl;
 	ifp->if_watchdog = cas_watchdog;
-	IFQ_SET_MAXLEN(&ifp->if_snd, CAS_NTXDESC - 1);
+	ifq_set_maxlen(&ifp->if_snd, CAS_NTXDESC - 1);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
@@ -1859,7 +1859,7 @@ cas_tint(struct cas_softc *sc, u_int32_t status)
 	if (used == 0)
 		ifp->if_timer = 0;
 
-	if (!IFQ_IS_EMPTY(&ifp->if_snd)) {
+	if (!ifq_empty(&ifp->if_snd)) {
 		KERNEL_LOCK();
 		cas_start(ifp);
 		KERNEL_UNLOCK();

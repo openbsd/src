@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udav.c,v 1.82 2020/02/22 14:01:34 jasper Exp $ */
+/*	$OpenBSD: if_udav.c,v 1.83 2020/07/10 13:26:41 patrick Exp $ */
 /*	$NetBSD: if_udav.c,v 1.3 2004/04/23 17:25:25 itojun Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
@@ -1028,7 +1028,7 @@ udav_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	m_freem(c->udav_mbuf);
 	c->udav_mbuf = NULL;
 
-	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+	if (ifq_empty(&ifp->if_snd) == 0)
 		udav_start(ifp);
 
 	splx(s);
@@ -1194,7 +1194,7 @@ udav_watchdog(struct ifnet *ifp)
 	usbd_get_xfer_status(c->udav_xfer, NULL, NULL, NULL, &stat);
 	udav_txeof(c->udav_xfer, c, stat);
 
-	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+	if (ifq_empty(&ifp->if_snd) == 0)
 		udav_start(ifp);
 	splx(s);
 }
@@ -1394,7 +1394,7 @@ udav_tick_task(void *xsc)
 		DPRINTF(("%s: %s: got link\n",
 			 sc->sc_dev.dv_xname, __func__));
 		sc->sc_link++;
-		if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+		if (ifq_empty(&ifp->if_snd) == 0)
 			   udav_start(ifp);
 	}
 

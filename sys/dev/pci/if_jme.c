@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jme.c,v 1.53 2020/07/10 13:22:20 patrick Exp $	*/
+/*	$OpenBSD: if_jme.c,v 1.54 2020/07/10 13:26:38 patrick Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -662,7 +662,7 @@ jme_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = jme_ioctl;
 	ifp->if_start = jme_start;
 	ifp->if_watchdog = jme_watchdog;
-	IFQ_SET_MAXLEN(&ifp->if_snd, JME_TX_RING_CNT - 1);
+	ifq_set_maxlen(&ifp->if_snd, JME_TX_RING_CNT - 1);
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_IPv4 |
@@ -1205,7 +1205,7 @@ jme_start(struct ifnet *ifp)
 		return;
 	if ((sc->jme_flags & JME_FLAG_LINK) == 0)
 		return;  
-	if (IFQ_IS_EMPTY(&ifp->if_snd))
+	if (ifq_empty(&ifp->if_snd))
 		return;
 
 	for (;;) {

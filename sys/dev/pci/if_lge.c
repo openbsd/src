@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.74 2019/09/25 09:30:28 kevlo Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.75 2020/07/10 13:26:38 patrick Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -499,7 +499,7 @@ lge_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = lge_start;
 	ifp->if_watchdog = lge_watchdog;
 	ifp->if_hardmtu = LGE_JUMBO_MTU;
-	IFQ_SET_MAXLEN(&ifp->if_snd, LGE_TX_LIST_CNT - 1);
+	ifq_set_maxlen(&ifp->if_snd, LGE_TX_LIST_CNT - 1);
 	DPRINTFN(5, ("bcopy\n"));
 	bcopy(sc->sc_dv.dv_xname, ifp->if_xname, IFNAMSIZ);
 
@@ -814,7 +814,7 @@ lge_tick(void *xsc)
 		if (mii->mii_media_status & IFM_ACTIVE &&
 		    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
 			sc->lge_link++;
-			if (!IFQ_IS_EMPTY(&ifp->if_snd))
+			if (!ifq_empty(&ifp->if_snd))
 				lge_start(ifp);
 		}
 	}
@@ -873,7 +873,7 @@ lge_intr(void *arg)
 	/* Re-enable interrupts. */
 	CSR_WRITE_4(sc, LGE_IMR, LGE_IMR_SETRST_CTL0|LGE_IMR_INTR_ENB);
 
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
+	if (!ifq_empty(&ifp->if_snd))
 		lge_start(ifp);
 
 	return (claimed);
@@ -1227,7 +1227,7 @@ lge_watchdog(struct ifnet *ifp)
 	lge_reset(sc);
 	lge_init(sc);
 
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
+	if (!ifq_empty(&ifp->if_snd))
 		lge_start(ifp);
 }
 

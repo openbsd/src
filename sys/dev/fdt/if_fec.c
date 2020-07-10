@@ -1,4 +1,4 @@
-/* $OpenBSD: if_fec.c,v 1.9 2020/06/22 02:23:21 dlg Exp $ */
+/* $OpenBSD: if_fec.c,v 1.10 2020/07/10 13:26:36 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013,2019 Patrick Wildt <patrick@blueri.se>
  *
@@ -857,7 +857,7 @@ fec_start(struct ifnet *ifp)
 		return;
 	if (ifq_is_oactive(&ifp->if_snd))
 		return;
-	if (IFQ_IS_EMPTY(&ifp->if_snd))
+	if (ifq_empty(&ifp->if_snd))
 		return;
 
 	idx = sc->sc_tx_prod;
@@ -1016,7 +1016,7 @@ fec_intr(void *arg)
 		fec_tx_proc(sc);
 
 	/* Try to transmit. */
-	if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
+	if (ifp->if_flags & IFF_RUNNING && !ifq_empty(&ifp->if_snd))
 		fec_start(ifp);
 
 	return 1;

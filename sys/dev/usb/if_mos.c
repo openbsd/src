@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mos.c,v 1.41 2020/06/09 07:43:39 gerhard Exp $	*/
+/*	$OpenBSD: if_mos.c,v 1.42 2020/07/10 13:26:40 patrick Exp $	*/
 
 /*
  * Copyright (c) 2008 Johann Christian Rode <jcrode@gmx.net>
@@ -1012,7 +1012,7 @@ mos_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	m_freem(c->mos_mbuf);
 	c->mos_mbuf = NULL;
 
-	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+	if (ifq_empty(&ifp->if_snd) == 0)
 		mos_start(ifp);
 
 	splx(s);
@@ -1067,7 +1067,7 @@ mos_tick_task(void *xsc)
 		DPRINTF(("%s: %s: got link\n",
 			 sc->mos_dev.dv_xname, __func__));
 		sc->mos_link++;
-		if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+		if (ifq_empty(&ifp->if_snd) == 0)
 			mos_start(ifp);
 	}
 
@@ -1306,7 +1306,7 @@ mos_watchdog(struct ifnet *ifp)
 	usbd_get_xfer_status(c->mos_xfer, NULL, NULL, NULL, &stat);
 	mos_txeof(c->mos_xfer, c, stat);
 
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
+	if (!ifq_empty(&ifp->if_snd))
 		mos_start(ifp);
 	splx(s);
 }

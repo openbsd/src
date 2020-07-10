@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.183 2020/07/10 13:23:34 patrick Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.184 2020/07/10 13:26:42 patrick Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -702,7 +702,7 @@ sppp_attach(struct ifnet *ifp)
 
 	sp->pp_if.if_type = IFT_PPP;
 	sp->pp_if.if_output = sppp_output;
-	IFQ_SET_MAXLEN(&sp->pp_if.if_snd, 50);
+	ifq_set_maxlen(&sp->pp_if.if_snd, 50);
 	mq_init(&sp->pp_cpq, 50, IPL_NET);
 	sp->pp_loopcnt = 0;
 	sp->pp_alivecnt = 0;
@@ -782,7 +782,7 @@ sppp_isempty(struct ifnet *ifp)
 	int empty, s;
 
 	s = splnet();
-	empty = mq_empty(&sp->pp_cpq) && IFQ_IS_EMPTY(&sp->pp_if.if_snd);
+	empty = mq_empty(&sp->pp_cpq) && ifq_empty(&sp->pp_if.if_snd);
 	splx(s);
 	return (empty);
 }

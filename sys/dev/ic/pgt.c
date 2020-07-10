@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgt.c,v 1.98 2020/02/20 15:32:17 cheloha Exp $  */
+/*	$OpenBSD: pgt.c,v 1.99 2020/07/10 13:26:37 patrick Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1239,7 +1239,7 @@ pgt_intr(void *arg)
 		    pgt_read_4(sc, PGT_REG_CTRL_STAT)));
 	}
 
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
+	if (!ifq_empty(&ifp->if_snd))
 		pgt_start(ifp);
 
 	return (1);
@@ -1878,7 +1878,7 @@ pgt_net_attach(struct pgt_softc *sc)
 	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
-	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
+	ifq_set_maxlen(&ifp->if_snd, IFQ_MAXLEN);
 
 	/*
 	 * Set channels
@@ -2116,7 +2116,7 @@ pgt_start(struct ifnet *ifp)
 	 * net80211 management queue.
 	 */
 	for (; sc->sc_dirtyq_count[PGT_QUEUE_DATA_LOW_TX] <
-	    PGT_QUEUE_FULL_THRESHOLD && !IFQ_IS_EMPTY(&ifp->if_snd);) {
+	    PGT_QUEUE_FULL_THRESHOLD && !ifq_empty(&ifp->if_snd);) {
 		pd = TAILQ_FIRST(&sc->sc_freeq[PGT_QUEUE_DATA_LOW_TX]);
 		m = ifq_deq_begin(&ifp->if_snd);
 		if (m == NULL)

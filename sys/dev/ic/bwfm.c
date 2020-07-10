@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.72 2020/06/19 20:56:23 kettenis Exp $ */
+/* $OpenBSD: bwfm.c,v 1.73 2020/07/10 13:26:37 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -352,7 +352,7 @@ bwfm_start(struct ifnet *ifp)
 		return;
 	if (ifq_is_oactive(&ifp->if_snd))
 		return;
-	if (IFQ_IS_EMPTY(&ifp->if_snd))
+	if (ifq_empty(&ifp->if_snd))
 		return;
 
 	/* TODO: return if no link? */

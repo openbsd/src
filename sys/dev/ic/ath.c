@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.120 2020/07/10 13:23:34 patrick Exp $  */
+/*      $OpenBSD: ath.c,v 1.121 2020/07/10 13:26:37 patrick Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -355,7 +355,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 #ifndef __OpenBSD__
 	ifp->if_stop = ath_stop;		/* XXX */
 #endif
-	IFQ_SET_MAXLEN(&ifp->if_snd, ATH_TXBUF * ATH_TXDESC);
+	ifq_set_maxlen(&ifp->if_snd, ATH_TXBUF * ATH_TXDESC);
 
 	ic->ic_softc = sc;
 	ic->ic_newassoc = ath_newassoc;

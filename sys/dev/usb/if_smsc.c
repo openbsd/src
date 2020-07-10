@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_smsc.c,v 1.35 2020/06/09 07:43:39 gerhard Exp $	*/
+/*	$OpenBSD: if_smsc.c,v 1.36 2020/07/10 13:26:40 patrick Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
 /*-
  * Copyright (c) 2012
@@ -1298,7 +1298,7 @@ smsc_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	m_freem(c->sc_mbuf);
 	c->sc_mbuf = NULL;
 
-	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+	if (ifq_empty(&ifp->if_snd) == 0)
 		smsc_start(ifp);
 
 	splx(s);

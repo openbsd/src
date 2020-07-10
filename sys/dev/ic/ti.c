@@ -1,4 +1,4 @@
-/*	$OpenBSD: ti.c,v 1.26 2019/09/25 09:30:28 kevlo Exp $	*/
+/*	$OpenBSD: ti.c,v 1.27 2020/07/10 13:26:37 patrick Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1443,7 +1443,7 @@ ti_attach(struct ti_softc *sc)
 	ifp->if_start = ti_start;
 	ifp->if_watchdog = ti_watchdog;
 	ifp->if_hardmtu = TI_JUMBO_FRAMELEN - ETHER_HDR_LEN;
-	IFQ_SET_MAXLEN(&ifp->if_snd, TI_TX_RING_CNT - 1);
+	ifq_set_maxlen(&ifp->if_snd, TI_TX_RING_CNT - 1);
 	bcopy(sc->sc_dv.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
@@ -1737,7 +1737,7 @@ ti_intr(void *xsc)
 	/* Re-enable interrupts. */
 	CSR_WRITE_4(sc, TI_MB_HOSTINTR, 0);
 
-	if (ifp->if_flags & IFF_RUNNING && !IFQ_IS_EMPTY(&ifp->if_snd))
+	if (ifp->if_flags & IFF_RUNNING && !ifq_empty(&ifp->if_snd))
 		ti_start(ifp);
 
 	return (1);

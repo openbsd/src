@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axen.c,v 1.28 2020/06/09 07:43:39 gerhard Exp $	*/
+/*	$OpenBSD: if_axen.c,v 1.29 2020/07/10 13:26:40 patrick Exp $	*/
 
 /*
  * Copyright (c) 2013 Yojiro UO <yuo@openbsd.org>
@@ -1083,7 +1083,7 @@ axen_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	m_freem(c->axen_mbuf);
 	c->axen_mbuf = NULL;
 
-	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+	if (ifq_empty(&ifp->if_snd) == 0)
 		axen_start(ifp);
 
 	splx(s);
@@ -1399,7 +1399,7 @@ axen_watchdog(struct ifnet *ifp)
 	usbd_get_xfer_status(c->axen_xfer, NULL, NULL, NULL, &stat);
 	axen_txeof(c->axen_xfer, c, stat);
 
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
+	if (!ifq_empty(&ifp->if_snd))
 		axen_start(ifp);
 	splx(s);
 }

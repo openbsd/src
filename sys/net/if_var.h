@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.108 2020/07/10 13:23:34 patrick Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.109 2020/07/10 13:26:42 patrick Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -280,13 +280,6 @@ struct ifg_list {
 };
 
 #define	IFNET_SLOWTIMO	1		/* granularity is 1 second */
-
-/*
- * IFQ compat on ifq API
- */
-
-#define	IFQ_IS_EMPTY(ifq)		ifq_empty(ifq)
-#define	IFQ_SET_MAXLEN(ifq, len)	ifq_set_maxlen(ifq, len)
 
 #define IF_TXMIT_MIN			1
 #define IF_TXMIT_DEFAULT		16

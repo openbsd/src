@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.94 2020/07/10 13:22:22 patrick Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.95 2020/07/10 13:26:42 patrick Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -683,7 +683,7 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	ifp->if_ioctl = pppx_if_ioctl;
 	ifp->if_rtrequest = p2p_rtrequest;
 	ifp->if_type = IFT_PPP;
-	IFQ_SET_MAXLEN(&ifp->if_snd, 1);
+	ifq_set_maxlen(&ifp->if_snd, 1);
 	ifp->if_softc = pxi;
 	/* ifp->if_rdomain = req->pr_rdomain; */
 
@@ -1089,7 +1089,7 @@ pppacopen(dev_t dev, int flags, int mode, struct proc *p)
 	ifp->if_start = pppac_start;
 	ifp->if_ioctl = pppac_ioctl;
 	/* XXXSMP: be sure pppac_start() called under NET_LOCK() */
-	IFQ_SET_MAXLEN(&ifp->if_snd, 1);
+	ifq_set_maxlen(&ifp->if_snd, 1);
 
 	if_counters_alloc(ifp);
 	if_attach(ifp);

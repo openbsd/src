@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvneta.c,v 1.12 2020/06/25 12:39:19 patrick Exp $	*/
+/*	$OpenBSD: if_mvneta.c,v 1.13 2020/07/10 13:26:36 patrick Exp $	*/
 /*	$NetBSD: if_mvneta.c,v 1.41 2015/04/15 10:15:40 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
@@ -621,7 +621,7 @@ mvneta_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_capabilities &= ~IFCAP_CSUM_TCPv4;
 #endif
 
-	IFQ_SET_MAXLEN(&ifp->if_snd, max(MVNETA_TX_RING_CNT - 1, IFQ_MAXLEN));
+	ifq_set_maxlen(&ifp->if_snd, max(MVNETA_TX_RING_CNT - 1, IFQ_MAXLEN));
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, sizeof(ifp->if_xname));
 
 	/*
@@ -728,7 +728,7 @@ mvneta_intr(void *arg)
 	if (ic & MVNETA_PRXTXTI_RBICTAPQ(0))
 		mvneta_rx_proc(sc);
 
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
+	if (!ifq_empty(&ifp->if_snd))
 		mvneta_start(ifp);
 
 	return 1;
@@ -747,7 +747,7 @@ mvneta_start(struct ifnet *ifp)
 		return;
 	if (ifq_is_oactive(&ifp->if_snd))
 		return;
-	if (IFQ_IS_EMPTY(&ifp->if_snd))
+	if (ifq_empty(&ifp->if_snd))
 		return;
 
 	/* If Link is DOWN, can't start TX */

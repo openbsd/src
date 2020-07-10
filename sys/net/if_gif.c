@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.129 2020/06/17 06:45:22 dlg Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.130 2020/07/10 13:26:41 patrick Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -170,7 +170,7 @@ gif_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_output = gif_output;
 	ifp->if_rtrequest = p2p_rtrequest;
 	ifp->if_type   = IFT_GIF;
-	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
+	ifq_set_maxlen(&ifp->if_snd, IFQ_MAXLEN);
 	ifp->if_softc = sc;
 
 	if_attach(ifp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.76 2020/06/09 07:43:39 gerhard Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.77 2020/07/10 13:26:41 patrick Exp $ */
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -510,7 +510,7 @@ upl_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	m_freem(c->upl_mbuf);
 	c->upl_mbuf = NULL;
 
-	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+	if (ifq_empty(&ifp->if_snd) == 0)
 		upl_start(ifp);
 
 	splx(s);
@@ -795,7 +795,7 @@ upl_watchdog(struct ifnet *ifp)
 	upl_stop(sc);
 	upl_init(sc);
 
-	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+	if (ifq_empty(&ifp->if_snd) == 0)
 		upl_start(ifp);
 }
 

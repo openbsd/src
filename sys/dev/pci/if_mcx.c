@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.61 2020/07/09 01:08:55 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.62 2020/07/10 13:26:38 patrick Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -2563,7 +2563,7 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 #if NVLAN > 0
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 #endif
-	IFQ_SET_MAXLEN(&ifp->if_snd, 1024);
+	ifq_set_maxlen(&ifp->if_snd, 1024);
 
 	ifmedia_init(&sc->sc_media, IFM_IMASK, mcx_media_change,
 	    mcx_media_status);

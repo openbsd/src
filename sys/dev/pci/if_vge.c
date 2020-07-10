@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.73 2020/07/10 13:22:21 patrick Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.74 2020/07/10 13:26:38 patrick Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -777,7 +777,7 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 #ifdef VGE_JUMBO
 	ifp->if_hardmtu = VGE_JUMBO_MTU;
 #endif
-	IFQ_SET_MAXLEN(&ifp->if_snd, VGE_IFQ_MAXLEN);
+	ifq_set_maxlen(&ifp->if_snd, VGE_IFQ_MAXLEN);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_IPv4 |
 				IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
@@ -1231,7 +1231,7 @@ vge_tick(void *xsc)
 			else
 				ifp->if_link_state = LINK_STATE_HALF_DUPLEX;
 			if_link_state_change(ifp);
-			if (!IFQ_IS_EMPTY(&ifp->if_snd))
+			if (!ifq_empty(&ifp->if_snd))
 				vge_start(ifp);
 		}
 	}
@@ -1299,7 +1299,7 @@ vge_intr(void *arg)
 	/* Re-enable interrupts */
 	CSR_WRITE_1(sc, VGE_CRS3, VGE_CR3_INT_GMSK);
 
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
+	if (!ifq_empty(&ifp->if_snd))
 		vge_start(ifp);
 
 	return (claimed);
@@ -1412,7 +1412,7 @@ vge_start(struct ifnet *ifp)
 	if (!sc->vge_link || ifq_is_oactive(&ifp->if_snd))
 		return;
 
-	if (IFQ_IS_EMPTY(&ifp->if_snd))
+	if (ifq_empty(&ifp->if_snd))
 		return;
 
 	idx = sc->vge_ldata.vge_tx_prodidx;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.130 2020/07/10 13:22:21 patrick Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.131 2020/07/10 13:26:40 patrick Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -2226,7 +2226,7 @@ atu_watchdog(struct ifnet *ifp)
 		}
 	}
 
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
+	if (!ifq_empty(&ifp->if_snd))
 		atu_start(ifp);
 	splx(s);
 

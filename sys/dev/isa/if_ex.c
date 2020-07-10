@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.46 2017/06/04 20:28:05 naddy Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.47 2020/07/10 13:26:37 patrick Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -590,7 +590,7 @@ ex_intr(void *arg)
  	 * be sent, attempt to send more packets to the network card.
 	 */
 
-	if (send_pkts && IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+	if (send_pkts && ifq_empty(&ifp->if_snd) == 0)
 		ex_start(ifp);
 #ifdef EX_DEBUG
 	exintr_count--;

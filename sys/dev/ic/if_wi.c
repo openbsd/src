@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.173 2020/07/10 13:22:19 patrick Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.174 2020/07/10 13:26:37 patrick Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -512,7 +512,7 @@ wi_intr(void *vsc)
 	if (status == 0)
 		return (0);
 
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
+	if (!ifq_empty(&ifp->if_snd))
 		wi_start(ifp);
 
 	return (1);

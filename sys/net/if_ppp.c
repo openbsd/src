@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.115 2020/07/10 13:22:22 patrick Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.116 2020/07/10 13:26:42 patrick Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -220,7 +220,7 @@ ppp_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_if.if_output = pppoutput;
 	sc->sc_if.if_start = ppp_ifstart;
 	sc->sc_if.if_rtrequest = p2p_rtrequest;
-	IFQ_SET_MAXLEN(&sc->sc_if.if_snd, IFQ_MAXLEN);
+	ifq_set_maxlen(&sc->sc_if.if_snd, IFQ_MAXLEN);
 	mq_init(&sc->sc_inq, IFQ_MAXLEN, IPL_NET);
 	ppp_pkt_list_init(&sc->sc_rawq, IFQ_MAXLEN);
 	if_attach(&sc->sc_if);
@@ -992,7 +992,7 @@ pppintr(void)
 
 	LIST_FOREACH(sc, &ppp_softc_list, sc_list) {
 		if (!(sc->sc_flags & SC_TBUSY) &&
-		    (!IFQ_IS_EMPTY(&sc->sc_if.if_snd))) {
+		    (!ifq_empty(&sc->sc_if.if_snd))) {
 			s = splnet();
 			sc->sc_flags |= SC_TBUSY;
 			splx(s);

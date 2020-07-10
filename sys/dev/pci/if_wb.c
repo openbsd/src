@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.71 2020/07/10 13:22:21 patrick Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.72 2020/07/10 13:26:38 patrick Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -784,7 +784,7 @@ wb_attach(parent, self, aux)
 	ifp->if_ioctl = wb_ioctl;
 	ifp->if_start = wb_start;
 	ifp->if_watchdog = wb_watchdog;
-	IFQ_SET_MAXLEN(&ifp->if_snd, WB_TX_LIST_CNT - 1);
+	ifq_set_maxlen(&ifp->if_snd, WB_TX_LIST_CNT - 1);
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
@@ -1150,7 +1150,7 @@ int wb_intr(arg)
 	/* Re-enable interrupts. */
 	CSR_WRITE_4(sc, WB_IMR, WB_INTRS);
 
-	if (!IFQ_IS_EMPTY(&ifp->if_snd)) {
+	if (!ifq_empty(&ifp->if_snd)) {
 		wb_start(ifp);
 	}
 
@@ -1569,7 +1569,7 @@ void wb_watchdog(ifp)
 #endif
 	wb_init(sc);
 
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
+	if (!ifq_empty(&ifp->if_snd))
 		wb_start(ifp);
 
 	return;

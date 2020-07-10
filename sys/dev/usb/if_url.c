@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.86 2020/02/22 14:01:34 jasper Exp $ */
+/*	$OpenBSD: if_url.c,v 1.87 2020/07/10 13:26:41 patrick Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -887,7 +887,7 @@ url_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	m_freem(c->url_mbuf);
 	c->url_mbuf = NULL;
 
-	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+	if (ifq_empty(&ifp->if_snd) == 0)
 		url_start(ifp);
 
 	splx(s);
@@ -1054,7 +1054,7 @@ url_watchdog(struct ifnet *ifp)
 	usbd_get_xfer_status(c->url_xfer, NULL, NULL, NULL, &stat);
 	url_txeof(c->url_xfer, c, stat);
 
-	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+	if (ifq_empty(&ifp->if_snd) == 0)
 		url_start(ifp);
 	splx(s);
 }
@@ -1238,7 +1238,7 @@ url_tick_task(void *xsc)
 		DPRINTF(("%s: %s: got link\n",
 			 sc->sc_dev.dv_xname, __func__));
 		sc->sc_link++;
-		if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
+		if (ifq_empty(&ifp->if_snd) == 0)
 			   url_start(ifp);
 	}
 

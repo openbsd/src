@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.75 2019/11/07 12:56:34 bluhm Exp $	*/
+/*	$OpenBSD: an.c,v 1.76 2020/07/10 13:26:37 patrick Exp $	*/
 /*	$NetBSD: an.c,v 1.34 2005/06/20 02:49:18 atatat Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -562,7 +562,7 @@ an_intr(void *arg)
 
 		if (ifq_is_oactive(&ifp->if_snd) == 0 &&
 		    sc->sc_ic.ic_state == IEEE80211_S_RUN &&
-		    !IFQ_IS_EMPTY(&ifp->if_snd))
+		    !ifq_empty(&ifp->if_snd))
 			an_start(ifp);
 	}
 

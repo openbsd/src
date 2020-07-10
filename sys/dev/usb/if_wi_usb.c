@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.71 2019/11/27 11:16:59 mpi Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.72 2020/07/10 13:26:41 patrick Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -1138,7 +1138,7 @@ wi_usb_txeof_frm(struct usbd_xfer *xfer, void *priv,
 
 	wi_usb_tx_unlock(sc);
 
-	if (!IFQ_IS_EMPTY(&ifp->if_snd))
+	if (!ifq_empty(&ifp->if_snd))
 		wi_start_usb(ifp);
 
 	splx(s);
