@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.91 2020/07/06 20:37:51 mvs Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.92 2020/07/10 09:26:36 mvs Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -705,6 +705,7 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d", "pppx", unit);
 	ifp->if_mtu = req->pr_peer_mru;	/* XXX */
 	ifp->if_flags = IFF_POINTOPOINT | IFF_MULTICAST | IFF_UP;
+	ifp->if_xflags = IFXF_CLONED;
 	ifp->if_start = pppx_if_start;
 	ifp->if_output = pppx_if_output;
 	ifp->if_ioctl = pppx_if_ioctl;
