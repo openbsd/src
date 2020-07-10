@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.46 2020/07/08 17:48:28 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.47 2020/07/10 14:35:01 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -125,6 +125,16 @@ init_powernv(void *fdt, void *tocbase)
 		fdt_node_property(node, "opal-entry-address", &prop);
 		opal_entry = bemtoh64((uint64_t *)prop);
 		fdt_node_property(node, "compatible", &prop);
+
+		opal_reinit_cpus(OPAL_REINIT_CPUS_HILE_BE);
+
+		/*
+		 * The following call will fail on Power ISA 2.0x CPUs,
+		 * but that is fine since they don't support Radix Tree
+		 * translation.  On Power ISA 3.0 CPUs this will make
+		 * the full TLB available.
+		 */
+		opal_reinit_cpus(OPAL_REINIT_CPUS_MMU_HASH);
 	}
 
 	/* At this point we can call OPAL runtime services and use printf(9). */
