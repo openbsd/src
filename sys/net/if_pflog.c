@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.86 2019/10/17 11:23:49 millert Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.87 2020/07/10 13:23:34 patrick Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -192,7 +192,7 @@ pflog_clone_destroy(struct ifnet *ifp)
 void
 pflogstart(struct ifnet *ifp)
 {
-	IFQ_PURGE(&ifp->if_snd);
+	ifq_purge(&ifp->if_snd);
 }
 
 int

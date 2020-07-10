@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.119 2020/07/10 13:22:19 patrick Exp $  */
+/*      $OpenBSD: ath.c,v 1.120 2020/07/10 13:23:34 patrick Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -737,7 +737,7 @@ ath_stop(struct ifnet *ifp)
 		} else {
 			sc->sc_rxlink = NULL;
 		}
-		IFQ_PURGE(&ifp->if_snd);
+		ifq_purge(&ifp->if_snd);
 #ifndef IEEE80211_STA_ONLY
 		ath_beacon_free(sc);
 #endif

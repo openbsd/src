@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.611 2020/06/30 09:31:38 kn Exp $	*/
+/*	$OpenBSD: if.c,v 1.612 2020/07/10 13:23:34 patrick Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1614,7 +1614,7 @@ if_down(struct ifnet *ifp)
 
 	ifp->if_flags &= ~IFF_UP;
 	getmicrotime(&ifp->if_lastchange);
-	IFQ_PURGE(&ifp->if_snd);
+	ifq_purge(&ifp->if_snd);
 
 	if_linkstate(ifp);
 }

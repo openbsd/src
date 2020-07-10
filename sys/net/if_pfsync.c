@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.272 2020/06/28 06:40:14 sashan Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.273 2020/07/10 13:23:34 patrick Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -418,7 +418,7 @@ pfsync_clone_destroy(struct ifnet *ifp)
 void
 pfsyncstart(struct ifnet *ifp)
 {
-	IFQ_PURGE(&ifp->if_snd);
+	ifq_purge(&ifp->if_snd);
 }
 
 void

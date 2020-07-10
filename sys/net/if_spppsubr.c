@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.182 2020/07/10 13:22:22 patrick Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.183 2020/07/10 13:23:34 patrick Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -768,7 +768,7 @@ sppp_flush(struct ifnet *ifp)
 {
 	struct sppp *sp = (struct sppp*) ifp;
 
-	IFQ_PURGE(&sp->pp_if.if_snd);
+	ifq_purge(&sp->pp_if.if_snd);
 	mq_purge(&sp->pp_cpq);
 }
 

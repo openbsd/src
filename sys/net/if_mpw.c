@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.56 2020/06/17 06:45:22 dlg Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.57 2020/07/10 13:23:34 patrick Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -653,19 +653,19 @@ mpw_start(struct ifnet *ifp)
 	n = sc->sc_neighbor;
 	if (!ISSET(ifp->if_flags, IFF_RUNNING) ||
 	    n == NULL) {
-		IFQ_PURGE(&ifp->if_snd);
+		ifq_purge(&ifp->if_snd);
 		return;
 	}
 
 	rt = rtalloc(sstosa(&n->n_nexthop), RT_RESOLVE, sc->sc_rdomain);
 	if (!rtisvalid(rt)) {
-		IFQ_PURGE(&ifp->if_snd);
+		ifq_purge(&ifp->if_snd);
 		goto rtfree;
 	}
 
 	ifp0 = if_get(rt->rt_ifidx);
 	if (ifp0 == NULL) {
-		IFQ_PURGE(&ifp->if_snd);
+		ifq_purge(&ifp->if_snd);
 		goto rtfree;
 	}
 
