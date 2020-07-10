@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.86 2020/07/10 14:43:18 schwarze Exp $
+.\"	$OpenBSD: printf.3,v 1.87 2020/07/10 17:04:18 deraadt Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -576,9 +576,11 @@ supporting the same modifiers.
 .Cm n
 .Sm on
 .Pp
-The number of bytes written so far is stored into the signed integer
-variable indicated by the pointer argument.
-No argument is converted.
+The number of bytes written so far is stored at the variable indicated
+by the pointer argument.
+The
+.Cm %n
+conversion specifier produces no output.
 .Pp
 Make sure the
 .Ar size
