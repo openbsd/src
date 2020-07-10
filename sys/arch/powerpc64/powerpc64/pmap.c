@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.28 2020/07/10 12:09:53 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.29 2020/07/10 16:09:58 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -323,6 +323,7 @@ pmap_slbd_alloc(pmap_t pm, vaddr_t va)
 
 	slbd->slbd_esid = esid;
 	slbd->slbd_vsid = pmap_vsid++;
+	KASSERT((slbd->slbd_vsid & KERNEL_VSID_BIT) == 0);
 	LIST_INSERT_HEAD(&pm->pm_slbd, slbd, slbd_list);
 
 	/* We're almost certainly going to use it soon. */
