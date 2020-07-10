@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.92 2020/07/10 09:26:36 mvs Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.93 2020/07/10 11:45:08 mvs Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -50,7 +50,6 @@
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/queue.h>
-#include <sys/rwlock.h>
 #include <sys/pool.h>
 #include <sys/mbuf.h>
 #include <sys/errno.h>
@@ -132,9 +131,8 @@ struct pppx_dev {
 	LIST_HEAD(,pppx_if)	pxd_pxis;
 };
 
-struct rwlock			pppx_devs_lk = RWLOCK_INITIALIZER("pppxdevs");
 LIST_HEAD(, pppx_dev)		pppx_devs = LIST_HEAD_INITIALIZER(pppx_devs);
-struct pool			*pppx_if_pl;
+struct pool			pppx_if_pl;
 
 struct pppx_dev			*pppx_dev_lookup(dev_t);
 struct pppx_dev			*pppx_dev2pxd(dev_t);
@@ -218,8 +216,6 @@ pppx_dev_lookup(dev_t dev)
 	struct pppx_dev *pxd;
 	int unit = minor(dev);
 
-	/* must hold pppx_devs_lk */
-
 	LIST_FOREACH(pxd, &pppx_devs, pxd_entry) {
 		if (pxd->pxd_unit == unit)
 			return (pxd);
@@ -233,9 +229,7 @@ pppx_dev2pxd(dev_t dev)
 {
 	struct pppx_dev *pxd;
 
-	rw_enter_read(&pppx_devs_lk);
 	pxd = pppx_dev_lookup(dev);
-	rw_exit_read(&pppx_devs_lk);
 
 	return (pxd);
 }
@@ -243,6 +237,8 @@ pppx_dev2pxd(dev_t dev)
 void
 pppxattach(int n)
 {
+	pool_init(&pppx_if_pl, sizeof(struct pppx_if), 0, IPL_NONE,
+	    PR_WAITOK, "pppxif", NULL);
 	pipex_init();
 }
 
@@ -250,25 +246,12 @@ int
 pppxopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct pppx_dev *pxd;
-	int rv = 0;
-
-	rv = rw_enter(&pppx_devs_lk, RW_WRITE | RW_INTR);
-	if (rv != 0)
-		return (rv);
-
-	pxd = pppx_dev_lookup(dev);
-	if (pxd != NULL) {
-		rv = EBUSY;
-		goto out;
-	}
-
-	if (LIST_EMPTY(&pppx_devs) && pppx_if_pl == NULL) {
-		pppx_if_pl = malloc(sizeof(*pppx_if_pl), M_DEVBUF, M_WAITOK);
-		pool_init(pppx_if_pl, sizeof(struct pppx_if), 0, IPL_NONE,
-		    PR_WAITOK, "pppxif", NULL);
-	}
 
 	pxd = malloc(sizeof(*pxd), M_DEVBUF, M_WAITOK | M_ZERO);
+	if (pppx_dev_lookup(dev) != NULL) {
+		free(pxd, M_DEVBUF, sizeof(*pxd));
+		return (EBUSY);
+	}
 
 	pxd->pxd_unit = minor(dev);
 	mtx_init(&pxd->pxd_rsel_mtx, IPL_NET);
@@ -278,9 +261,7 @@ pppxopen(dev_t dev, int flags, int mode, struct proc *p)
 	mq_init(&pxd->pxd_svcq, 128, IPL_NET);
 	LIST_INSERT_HEAD(&pppx_devs, pxd, pxd_entry);
 
-out:
-	rw_exit(&pppx_devs_lk);
-	return (rv);
+	return 0;
 }
 
 int
@@ -587,8 +568,6 @@ pppxclose(dev_t dev, int flags, int mode, struct proc *p)
 	struct pppx_dev *pxd;
 	struct pppx_if	*pxi;
 
-	rw_enter_write(&pppx_devs_lk);
-
 	pxd = pppx_dev_lookup(dev);
 
 	/* XXX */
@@ -603,13 +582,6 @@ pppxclose(dev_t dev, int flags, int mode, struct proc *p)
 
 	free(pxd, M_DEVBUF, sizeof(*pxd));
 
-	if (LIST_EMPTY(&pppx_devs)) {
-		pool_destroy(pppx_if_pl);
-		free(pppx_if_pl, M_DEVBUF, sizeof(*pppx_if_pl));
-		pppx_if_pl = NULL;
-	}
-
-	rw_exit_write(&pppx_devs_lk);
 	return (0);
 }
 
@@ -676,7 +648,7 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	if (error)
 		return (error);
 
-	pxi = pool_get(pppx_if_pl, PR_WAITOK | PR_ZERO);
+	pxi = pool_get(&pppx_if_pl, PR_WAITOK | PR_ZERO);
 	ifp = &pxi->pxi_if;
 
 	pxi->pxi_session = session;
@@ -777,7 +749,7 @@ remove:
 		panic("%s: inconsistent RB tree", __func__);
 	LIST_REMOVE(pxi, pxi_list);
 out:
-	pool_put(pppx_if_pl, pxi);
+	pool_put(&pppx_if_pl, pxi);
 	pipex_rele_session(session);
 
 	return (error);
@@ -872,7 +844,7 @@ pppx_if_destroy(struct pppx_dev *pxd, struct pppx_if *pxi)
 		panic("%s: inconsistent RB tree", __func__);
 	LIST_REMOVE(pxi, pxi_list);
 
-	pool_put(pppx_if_pl, pxi);
+	pool_put(&pppx_if_pl, pxi);
 }
 
 void
@@ -958,7 +930,6 @@ pppx_if_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		th = mtod(m, struct pppx_hdr *);
 		th->pppx_proto = 0;	/* not used */
 		th->pppx_id = pxi->pxi_session->ppp_id;
-		rw_enter_read(&pppx_devs_lk);
 		error = mq_enqueue(&pxi->pxi_dev->pxd_svcq, m);
 		if (error == 0) {
 			if (pxi->pxi_dev->pxd_waiting) {
@@ -967,7 +938,6 @@ pppx_if_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 			}
 			selwakeup(&pxi->pxi_dev->pxd_rsel);
 		}
-		rw_exit_read(&pppx_devs_lk);
 	}
 
 out:
