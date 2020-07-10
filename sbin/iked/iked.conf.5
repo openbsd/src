@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.69 2020/05/26 20:24:31 tobhe Exp $
+.\" $OpenBSD: iked.conf.5,v 1.70 2020/07/10 20:17:39 tobhe Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 26 2020 $
+.Dd $Mdocdate: July 10 2020 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -831,56 +831,56 @@ and all the traffic arrives with that source address.
 The following authentication types are permitted with the
 .Ic auth
 keyword:
-.Bl -column "Authentication" "Key Length" "Truncated Length" -offset indent
-.It Em "Authentication" Ta Em "Key Length" Ta Em "Truncated Length"
-.It Li hmac-md5 Ta "128 bits" Ta "96 bits"
-.It Li hmac-sha1 Ta "160 bits" Ta "96 bits"
-.It Li hmac-sha2-256 Ta "256 bits" Ta "128 bits"
-.It Li hmac-sha2-384 Ta "384 bits" Ta "192 bits"
-.It Li hmac-sha2-512 Ta "512 bits" Ta "256 bits"
+.Bl -column "Authentication" "Key Length" "Truncated Length" "Default" -offset indent
+.It Em "Authentication" Ta Em "Key Length" Ta Em "Truncated Length" Ta Em "Default"
+.It Li hmac-md5 Ta "128 bits" Ta "96 bits" Ta ""
+.It Li hmac-sha1 Ta "160 bits" Ta "96 bits" Ta "x"
+.It Li hmac-sha2-256 Ta "256 bits" Ta "128 bits" Ta "x"
+.It Li hmac-sha2-384 Ta "384 bits" Ta "192 bits" Ta ""
+.It Li hmac-sha2-512 Ta "512 bits" Ta "256 bits" Ta ""
 .El
 .Pp
 The following pseudo-random function types are permitted with the
 .Ic prf
 keyword:
-.Bl -column "hmac-sha2-512" "Key Length" "[IKE only]" -offset indent
-.It Em "PRF" Ta Em "Key Length" Ta ""
-.It Li hmac-md5 Ta "128 bits" Ta "[IKE only]"
-.It Li hmac-sha1 Ta "160 bits" Ta "[IKE only]"
-.It Li hmac-sha2-256 Ta "256 bits" Ta "[IKE only]"
-.It Li hmac-sha2-384 Ta "384 bits" Ta "[IKE only]"
-.It Li hmac-sha2-512 Ta "512 bits" Ta "[IKE only]"
+.Bl -column "hmac-sha2-512" "Key Length" "Default" "[IKE only]" -offset indent
+.It Em "PRF" Ta Em "Key Length" Ta Em "Default" Ta ""
+.It Li hmac-md5 Ta "128 bits" Ta "" Ta "[IKE only]"
+.It Li hmac-sha1 Ta "160 bits" Ta "x" Ta "[IKE only]"
+.It Li hmac-sha2-256 Ta "256 bits" Ta "x" Ta "[IKE only]"
+.It Li hmac-sha2-384 Ta "384 bits" Ta "" Ta "[IKE only]"
+.It Li hmac-sha2-512 Ta "512 bits" Ta "" Ta "[IKE only]"
 .El
 .Pp
 The following cipher types are permitted with the
 .Ic enc
 keyword:
-.Bl -column "chacha20-poly1305" "Key Length" "[ESP only]" -offset indent
-.It Em "Cipher" Ta Em "Key Length" Ta ""
-.It Li 3des Ta "168 bits" Ta ""
-.It Li aes-128 Ta "128 bits" Ta ""
-.It Li aes-192 Ta "192 bits" Ta ""
-.It Li aes-256 Ta "256 bits" Ta ""
-.It Li aes-128-ctr Ta "160 bits" Ta "[ESP only]"
-.It Li aes-192-ctr Ta "224 bits" Ta "[ESP only]"
-.It Li aes-256-ctr Ta "288 bits" Ta "[ESP only]"
-.It Li aes-128-gcm Ta "160 bits" Ta ""
-.It Li aes-192-gcm Ta "224 bits" Ta "[ESP only]"
-.It Li aes-256-gcm Ta "288 bits" Ta ""
-.It Li aes-128-gcm-12 Ta "160 bits" Ta "[IKE only]"
-.It Li aes-256-gcm-12 Ta "288 bits" Ta "[IKE only]"
-.It Li blowfish Ta "160 bits" Ta "[ESP only]"
-.It Li cast Ta "128 bits" Ta "[ESP only]"
-.It Li chacha20-poly1305 Ta "288 bits" Ta "[ESP only]"
+.Bl -column "chacha20-poly1305" "Key Length" "Default" "[ESP only]" -offset indent
+.It Em "Cipher" Ta Em "Key Length" Ta Em "Default" Ta ""
+.It Li 3des Ta "168 bits" Ta "x" Ta ""
+.It Li aes-128 Ta "128 bits" Ta "x" Ta ""
+.It Li aes-192 Ta "192 bits" Ta "x" Ta ""
+.It Li aes-256 Ta "256 bits" Ta "x" Ta ""
+.It Li aes-128-ctr Ta "160 bits" Ta "" Ta "[ESP only]"
+.It Li aes-192-ctr Ta "224 bits" Ta "" Ta "[ESP only]"
+.It Li aes-256-ctr Ta "288 bits" Ta "" Ta "[ESP only]"
+.It Li aes-128-gcm Ta "160 bits" Ta "x" Ta ""
+.It Li aes-192-gcm Ta "224 bits" Ta "" Ta "[ESP only]"
+.It Li aes-256-gcm Ta "288 bits" Ta "x" Ta ""
+.It Li aes-128-gcm-12 Ta "160 bits" Ta "" Ta "[IKE only]"
+.It Li aes-256-gcm-12 Ta "288 bits" Ta "" Ta "[IKE only]"
+.It Li blowfish Ta "160 bits" Ta "" Ta "[ESP only]"
+.It Li cast Ta "128 bits" Ta "" Ta "[ESP only]"
+.It Li chacha20-poly1305 Ta "288 bits" Ta "" Ta "[ESP only]"
 .El
 .Pp
 The following cipher types provide only authentication,
 not encryption:
-.Bl -column "chacha20-poly1305" "Key Length" "[ESP only]" -offset indent
-.It Li aes-128-gmac Ta "160 bits" Ta "[ESP only]"
-.It Li aes-192-gmac Ta "224 bits" Ta "[ESP only]"
-.It Li aes-256-gmac Ta "288 bits" Ta "[ESP only]"
-.It Li null Ta "" Ta "[ESP only]"
+.Bl -column "chacha20-poly1305" "Key Length" "Default" "[ESP only]" -offset indent
+.It Li aes-128-gmac Ta "160 bits" Ta "" Ta "[ESP only]"
+.It Li aes-192-gmac Ta "224 bits" Ta "" Ta "[ESP only]"
+.It Li aes-256-gmac Ta "288 bits" Ta "" Ta "[ESP only]"
+.It Li null Ta "" Ta "" Ta "[ESP only]"
 .El
 .Pp
 The Extended Sequence Numbers option can be enabled or disabled with the
@@ -888,10 +888,10 @@ The Extended Sequence Numbers option can be enabled or disabled with the
 or
 .Ic noesn
 keywords:
-.Bl -column "noesn" "[ESP only]" -offset indent
-.It Em ESN Ta ""
-.It Li esn Ta "[ESP only]"
-.It Li noesn Ta "[ESP only]"
+.Bl -column "noesn" "Default" "[ESP only]" -offset indent
+.It Em ESN Ta Em "Default" Ta Em ""
+.It Li esn Ta "x" Ta "[ESP only]"
+.It Li noesn Ta "x" Ta "[ESP only]"
 .El
 .Pp
 Transforms followed by
@@ -919,26 +919,26 @@ This is useful in setups where AH cannot be used, e.g. when NAT is involved.
 The following group types are permitted with the
 .Ic group
 keyword:
-.Bl -column "modp1024-160" "Group" "Size" "Type" -offset indent
-.It Em Name Ta Em Group Ta Em Size Ta Em Type
-.It Li modp768 Ta grp1 Ta 768 Ta "MODP" [insecure]
-.It Li modp1024 Ta grp2 Ta 1024 Ta "MODP" [weak]
-.It Li modp1536 Ta grp5 Ta 1536 Ta "MODP" [weak]
-.It Li modp2048 Ta grp14 Ta 2048 Ta "MODP"
-.It Li modp3072 Ta grp15 Ta 3072 Ta "MODP"
-.It Li modp4096 Ta grp16 Ta 4096 Ta "MODP"
-.It Li modp6144 Ta grp17 Ta 6144 Ta "MODP"
-.It Li modp8192 Ta grp18 Ta 8192 Ta "MODP"
-.It Li ecp256 Ta grp19 Ta 256 Ta "ECP"
-.It Li ecp384 Ta grp20 Ta 384 Ta "ECP"
-.It Li ecp521 Ta grp21 Ta 521 Ta "ECP"
-.It Li ecp192 Ta grp25 Ta 192 Ta "ECP"
-.It Li ecp224 Ta grp26 Ta 224 Ta "ECP"
-.It Li brainpool224 Ta grp27 Ta 224 Ta "ECP, brainpoolP224r1"
-.It Li brainpool256 Ta grp28 Ta 256 Ta "ECP, brainpoolP256r1"
-.It Li brainpool384 Ta grp29 Ta 384 Ta "ECP, brainpoolP384r1"
-.It Li brainpool512 Ta grp30 Ta 512 Ta "ECP, brainpoolP512r1"
-.It Li curve25519 Ta grp31 Ta 256 Ta "Curve25519"
+.Bl -column "brainpool224" "Group" "Size" "Curve25519" "Default" "[insecure]" -offset indent
+.It Em Name Ta Em Group Ta Em Size Ta Em Type Ta Em "Default" Ta ""
+.It Li modp768 Ta grp1 Ta 768 Ta "MODP" Ta "" Ta "[insecure]"
+.It Li modp1024 Ta grp2 Ta 1024 Ta "MODP" Ta "x" Ta "[weak]"
+.It Li modp1536 Ta grp5 Ta 1536 Ta "MODP" Ta "x" Ta "[weak]"
+.It Li modp2048 Ta grp14 Ta 2048 Ta "MODP" Ta "x"
+.It Li modp3072 Ta grp15 Ta 3072 Ta "MODP" Ta "x"
+.It Li modp4096 Ta grp16 Ta 4096 Ta "MODP" Ta "x"
+.It Li modp6144 Ta grp17 Ta 6144 Ta "MODP" Ta ""
+.It Li modp8192 Ta grp18 Ta 8192 Ta "MODP" Ta ""
+.It Li ecp256 Ta grp19 Ta 256 Ta "ECP" Ta "x"
+.It Li ecp384 Ta grp20 Ta 384 Ta "ECP" Ta "x"
+.It Li ecp521 Ta grp21 Ta 521 Ta "ECP" Ta "x"
+.It Li ecp192 Ta grp25 Ta 192 Ta "ECP" Ta ""
+.It Li ecp224 Ta grp26 Ta 224 Ta "ECP" Ta ""
+.It Li brainpool224 Ta grp27 Ta 224 Ta "ECP" Ta ""
+.It Li brainpool256 Ta grp28 Ta 256 Ta "ECP" Ta ""
+.It Li brainpool384 Ta grp29 Ta 384 Ta "ECP" Ta ""
+.It Li brainpool512 Ta grp30 Ta 512 Ta "ECP" Ta ""
+.It Li curve25519 Ta grp31 Ta 256 Ta "Curve25519" Ta "x"
 .El
 .Pp
 The currently supported group types are either
