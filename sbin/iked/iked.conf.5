@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.70 2020/07/10 20:17:39 tobhe Exp $
+.\" $OpenBSD: iked.conf.5,v 1.71 2020/07/10 21:23:47 jmc Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -919,8 +919,8 @@ This is useful in setups where AH cannot be used, e.g. when NAT is involved.
 The following group types are permitted with the
 .Ic group
 keyword:
-.Bl -column "brainpool224" "Group" "Size" "Curve25519" "Default" "[insecure]" -offset indent
-.It Em Name Ta Em Group Ta Em Size Ta Em Type Ta Em "Default" Ta ""
+.Bl -column "brainpool224" "Group" "Size" "Curve25519" "Default" -offset indent
+.It Em Name Ta Em Group Ta Em Size Ta Em Type Ta Em Default
 .It Li modp768 Ta grp1 Ta 768 Ta "MODP" Ta "" Ta "[insecure]"
 .It Li modp1024 Ta grp2 Ta 1024 Ta "MODP" Ta "x" Ta "[weak]"
 .It Li modp1536 Ta grp5 Ta 1536 Ta "MODP" Ta "x" Ta "[weak]"
