@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.60 2018/01/27 13:44:03 stsp Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.61 2020/07/10 13:22:19 patrick Exp $	*/
 /*
  * Copyright (c) 2009, 2015 Mark Kettenis
  *
@@ -1132,7 +1132,7 @@ vnet_start(struct ifnet *ifp)
 			break;
 		}
 
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		m = ifq_dequeue(&ifp->if_snd);
 		if (m == NULL) {
 			pool_put(&sc->sc_pool, buf);
 			break;
@@ -1209,7 +1209,7 @@ vnet_start_desc(struct ifnet *ifp)
 			return;
 		}
 
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		m = ifq_dequeue(&ifp->if_snd);
 		if (m == NULL) {
 			pool_put(&sc->sc_pool, buf);
 			return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.70 2019/04/01 06:01:07 naddy Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.71 2020/07/10 13:22:21 patrick Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1289,7 +1289,7 @@ void wb_start(ifp)
 	start_tx = sc->wb_cdata.wb_tx_free;
 
 	while(sc->wb_cdata.wb_tx_free->wb_mbuf == NULL) {
-		IFQ_DEQUEUE(&ifp->if_snd, m_head);
+		m_head = ifq_dequeue(&ifp->if_snd);
 		if (m_head == NULL)
 			break;
 

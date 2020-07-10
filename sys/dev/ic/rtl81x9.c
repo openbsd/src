@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.96 2017/01/22 10:17:38 dlg Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.97 2020/07/10 13:22:20 patrick Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -850,7 +850,7 @@ rl_start(struct ifnet *ifp)
 	int		pkts = 0;
 
 	while (RL_CUR_TXMBUF(sc) == NULL) {
-		IFQ_DEQUEUE(&ifp->if_snd, m_head);
+		m_head = ifq_dequeue(&ifp->if_snd);
 		if (m_head == NULL)
 			break;
 

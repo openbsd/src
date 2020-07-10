@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.42 2017/01/22 10:17:39 dlg Exp $	*/
+/*	$OpenBSD: be.c,v 1.43 2020/07/10 13:22:21 patrick Exp $	*/
 /*	$NetBSD: be.c,v 1.26 2001/03/20 15:39:20 pk Exp $	*/
 
 /*-
@@ -574,7 +574,7 @@ bestart(struct ifnet *ifp)
 	bix = sc->sc_rb.rb_tdhead;
 
 	for (;;) {
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		m = ifq_dequeue(&ifp->if_snd);
 		if (m == NULL)
 			break;
 

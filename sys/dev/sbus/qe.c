@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.40 2017/01/22 10:17:39 dlg Exp $	*/
+/*	$OpenBSD: qe.c,v 1.41 2020/07/10 13:22:21 patrick Exp $	*/
 /*	$NetBSD: qe.c,v 1.16 2001/03/30 17:30:18 christos Exp $	*/
 
 /*-
@@ -446,7 +446,7 @@ qestart(ifp)
 	bix = sc->sc_rb.rb_tdhead;
 
 	for (;;) {
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		m = ifq_dequeue(&ifp->if_snd);
 		if (m == NULL)
 			break;
 

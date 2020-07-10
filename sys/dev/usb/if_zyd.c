@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.123 2020/04/02 17:36:32 stsp Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.124 2020/07/10 13:22:21 patrick Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -2251,7 +2251,7 @@ zyd_start(struct ifnet *ifp)
 			break;
 
 		/* encapsulate and send data frames */
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		m = ifq_dequeue(&ifp->if_snd);
 		if (m == NULL)
 			break;
 #if NBPFILTER > 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.50 2020/06/11 00:56:12 jmatthew Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.51 2020/07/10 13:22:20 patrick Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1503,7 +1503,7 @@ rtwn_start(struct ifnet *ifp)
 			break;
 
 		/* Encapsulate and send data frames. */
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		m = ifq_dequeue(&ifp->if_snd);
 		if (m == NULL)
 			break;
 #if NBPFILTER > 0

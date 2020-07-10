@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.98 2020/02/19 11:05:04 claudio Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.99 2020/07/10 13:22:20 patrick Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1771,7 +1771,7 @@ rt2860_start(struct ifnet *ifp)
 		}
 
 		/* encapsulate and send data frames */
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		m = ifq_dequeue(&ifp->if_snd);
 		if (m == NULL)
 			break;
 #if NBPFILTER > 0

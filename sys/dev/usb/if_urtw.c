@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.68 2019/06/14 11:57:16 kn Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.69 2020/07/10 13:22:21 patrick Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -2440,7 +2440,7 @@ urtw_start(struct ifnet *ifp)
 		} else {
 			if (ic->ic_state != IEEE80211_S_RUN)
 				break;
-			IFQ_DEQUEUE(&ifp->if_snd, m0);
+			m0 = ifq_dequeue(&ifp->if_snd);
 			if (m0 == NULL)
 				break;
 #if NBPFILTER > 0

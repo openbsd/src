@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.97 2019/09/12 12:55:07 stsp Exp $	*/
+/*	$OpenBSD: atw.c,v 1.98 2020/07/10 13:22:19 patrick Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -3603,7 +3603,7 @@ atw_start(struct ifnet *ifp)
 			/* send no data packets until we are associated */
 			if (ic->ic_state != IEEE80211_S_RUN)
 				break;
-			IFQ_DEQUEUE(&ifp->if_snd, m0);
+			m0 = ifq_dequeue(&ifp->if_snd);
 			if (m0 == NULL)
 				break;
 #if NBPFILTER > 0

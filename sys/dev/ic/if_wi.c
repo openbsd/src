@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.172 2020/04/06 19:45:47 cheloha Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.173 2020/07/10 13:22:19 patrick Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2329,7 +2329,7 @@ wi_start(struct ifnet *ifp)
 		return;
 
 nextpkt:
-	IFQ_DEQUEUE(&ifp->if_snd, m0);
+	m0 = ifq_dequeue(&ifp->if_snd);
 	if (m0 == NULL)
 		return;
 

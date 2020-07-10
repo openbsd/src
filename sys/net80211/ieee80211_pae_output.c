@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_output.c,v 1.31 2020/05/31 09:11:12 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_pae_output.c,v 1.32 2020/07/10 13:22:22 patrick Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -124,7 +124,7 @@ ieee80211_send_eapol_key(struct ieee80211com *ic, struct mbuf *m,
 		timeout_add_msec(&ni->ni_eapol_to, 100);
 #endif
 
-	IFQ_ENQUEUE(&ifp->if_snd, m, error);
+	error = ifq_enqueue(&ifp->if_snd, m);
 	if (error)
 		return (error);
 	if_start(ifp);

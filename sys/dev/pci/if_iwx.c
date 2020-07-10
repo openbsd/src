@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.38 2020/07/07 11:54:01 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.39 2020/07/10 13:22:20 patrick Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -6647,7 +6647,7 @@ iwx_start(struct ifnet *ifp)
 		    (ic->ic_xflags & IEEE80211_F_TX_MGMT_ONLY))
 			break;
 
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		m = ifq_dequeue(&ifp->if_snd);
 		if (!m)
 			break;
 		if (m->m_len < sizeof (*eh) &&

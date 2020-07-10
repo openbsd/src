@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.126 2019/09/30 01:53:05 dlg Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.127 2020/07/10 13:22:20 patrick Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -1286,7 +1286,7 @@ ipw_start(struct ifnet *ifp)
 			break;
 		}
 
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		m = ifq_dequeue(&ifp->if_snd);
 		if (m == NULL)
 			break;
 

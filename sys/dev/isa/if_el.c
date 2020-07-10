@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_el.c,v 1.34 2017/01/22 10:17:38 dlg Exp $       */
+/*    $OpenBSD: if_el.c,v 1.35 2020/07/10 13:22:20 patrick Exp $       */
 /*	$NetBSD: if_el.c,v 1.39 1996/05/12 23:52:32 mycroft Exp $	*/
 
 /*
@@ -308,7 +308,7 @@ elstart(ifp)
 	 */
 	for (;;) {
 		/* Dequeue the next datagram. */
-		IFQ_DEQUEUE(&ifp->if_snd, m0);
+		m0 = ifq_dequeue(&ifp->if_snd);
 
 		/* If there's nothing to send, return. */
 		if (m0 == NULL)

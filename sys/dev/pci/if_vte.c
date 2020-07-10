@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vte.c,v 1.22 2018/11/09 14:14:31 claudio Exp $	*/
+/*	$OpenBSD: if_vte.c,v 1.23 2020/07/10 13:22:21 patrick Exp $	*/
 /*-
  * Copyright (c) 2010, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -664,7 +664,7 @@ vte_start(struct ifnet *ifp)
 			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
-		IFQ_DEQUEUE(&ifp->if_snd, m_head);
+		m_head = ifq_dequeue(&ifp->if_snd);
 		if (m_head == NULL)
 			break;
 

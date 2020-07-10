@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jme.c,v 1.52 2019/05/27 20:42:00 jmc Exp $	*/
+/*	$OpenBSD: if_jme.c,v 1.53 2020/07/10 13:22:20 patrick Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1219,7 +1219,7 @@ jme_start(struct ifnet *ifp)
 			break;
 		}
 
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		m = ifq_dequeue(&ifp->if_snd);
 		if (m == NULL)
 			break;
 

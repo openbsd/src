@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.56 2020/04/27 08:21:35 stsp Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.57 2020/07/10 13:22:21 patrick Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -2417,7 +2417,7 @@ athn_usb_start(struct ifnet *ifp)
 			break;
 
 		/* Encapsulate and send data frames. */
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		m = ifq_dequeue(&ifp->if_snd);
 		if (m == NULL)
 			break;
 #if NBPFILTER > 0

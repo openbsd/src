@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.42 2017/03/08 12:02:41 mpi Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.43 2020/07/10 13:22:19 patrick Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -615,7 +615,7 @@ bmac_start(struct ifnet *ifp)
 		if (ifq_is_oactive(&ifp->if_snd))
 			return;
 
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		m = ifq_dequeue(&ifp->if_snd);
 		if (m == NULL)
 			break;
 #if NBPFILTER > 0

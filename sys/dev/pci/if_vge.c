@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.72 2020/01/05 01:07:58 jsg Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.73 2020/07/10 13:22:21 patrick Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -1427,7 +1427,7 @@ vge_start(struct ifnet *ifp)
 			break;
 		}
 
-		IFQ_DEQUEUE(&ifp->if_snd, m_head);
+		m_head = ifq_dequeue(&ifp->if_snd);
 		if (m_head == NULL)
 			break;
 

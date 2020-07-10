@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.30 2019/11/06 03:51:26 dlg Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.31 2020/07/10 13:22:22 patrick Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -779,7 +779,7 @@ switch_port_ifb_start(struct ifnet *ifp)
 	struct mbuf_list	 ml = MBUF_LIST_INITIALIZER();
 
 	for (;;) {
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		m = ifq_dequeue(&ifp->if_snd);
 		if (m == NULL)
 			return;
 

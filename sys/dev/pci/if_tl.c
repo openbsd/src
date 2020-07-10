@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.72 2020/01/05 01:07:58 jsg Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.73 2020/07/10 13:22:21 patrick Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1465,7 +1465,7 @@ tl_start(struct ifnet *ifp)
 	start_tx = sc->tl_cdata.tl_tx_free;
 
 	while(sc->tl_cdata.tl_tx_free != NULL) {
-		IFQ_DEQUEUE(&ifp->if_snd, m_head);
+		m_head = ifq_dequeue(&ifp->if_snd);
 		if (m_head == NULL)
 			break;
 

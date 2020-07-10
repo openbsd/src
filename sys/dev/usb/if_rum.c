@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.124 2019/04/25 01:52:14 kevlo Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.125 2020/07/10 13:22:21 patrick Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -1254,7 +1254,7 @@ rum_start(struct ifnet *ifp)
 			if (ic->ic_state != IEEE80211_S_RUN)
 				break;
 
-			IFQ_DEQUEUE(&ifp->if_snd, m0);
+			m0 = ifq_dequeue(&ifp->if_snd);
 			if (m0 == NULL)
 				break;
 #if NBPFILTER > 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.85 2020/01/04 11:35:03 mpi Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.86 2020/07/10 13:22:21 patrick Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -1377,7 +1377,7 @@ upgt_start(struct ifnet *ifp)
 			if (ic->ic_state != IEEE80211_S_RUN)
 				break;
 
-			IFQ_DEQUEUE(&ifp->if_snd, m);
+			m = ifq_dequeue(&ifp->if_snd);
 			if (m == NULL)
 				break;
 

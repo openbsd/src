@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.312 2020/06/11 11:27:44 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.313 2020/07/10 13:22:20 patrick Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -8035,7 +8035,7 @@ iwm_start(struct ifnet *ifp)
 		    (ic->ic_xflags & IEEE80211_F_TX_MGMT_ONLY))
 			break;
 
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		m = ifq_dequeue(&ifp->if_snd);
 		if (!m)
 			break;
 		if (m->m_len < sizeof (*eh) &&

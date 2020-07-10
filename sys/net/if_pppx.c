@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.93 2020/07/10 11:45:08 mvs Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.94 2020/07/10 13:22:22 patrick Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -858,7 +858,7 @@ pppx_if_start(struct ifnet *ifp)
 		return;
 
 	for (;;) {
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		m = ifq_dequeue(&ifp->if_snd);
 
 		if (m == NULL)
 			break;

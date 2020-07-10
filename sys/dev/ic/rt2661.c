@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2661.c,v 1.96 2020/02/19 11:05:04 claudio Exp $	*/
+/*	$OpenBSD: rt2661.c,v 1.97 2020/07/10 13:22:20 patrick Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1937,7 +1937,7 @@ rt2661_start(struct ifnet *ifp)
 			if (ic->ic_state != IEEE80211_S_RUN)
 				break;
 
-			IFQ_DEQUEUE(&ifp->if_snd, m0);
+			m0 = ifq_dequeue(&ifp->if_snd);
 			if (m0 == NULL)
 				break;
 #if NBPFILTER > 0

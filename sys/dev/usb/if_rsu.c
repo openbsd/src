@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rsu.c,v 1.45 2019/09/12 12:55:07 stsp Exp $	*/
+/*	$OpenBSD: if_rsu.c,v 1.46 2020/07/10 13:22:21 patrick Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1640,7 +1640,7 @@ rsu_start(struct ifnet *ifp)
 			break;
 
 		/* Encapsulate and send data frames. */
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		m = ifq_dequeue(&ifp->if_snd);
 		if (m == NULL)
 			break;
 #if NBPFILTER > 0

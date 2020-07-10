@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.128 2020/01/05 08:58:25 jsg Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.129 2020/07/10 13:22:21 patrick Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2547,7 +2547,7 @@ run_start(struct ifnet *ifp)
 			break;
 
 		/* encapsulate and send data frames */
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		m = ifq_dequeue(&ifp->if_snd);
 		if (m == NULL)
 			break;
 #if NBPFILTER > 0

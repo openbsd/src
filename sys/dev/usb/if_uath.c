@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.84 2019/11/12 07:47:30 mpi Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.85 2020/07/10 13:22:21 patrick Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1482,7 +1482,7 @@ uath_start(struct ifnet *ifp)
 			if (ic->ic_state != IEEE80211_S_RUN)
 				break;
 
-			IFQ_DEQUEUE(&ifp->if_snd, m0);
+			m0 = ifq_dequeue(&ifp->if_snd);
 			if (m0 == NULL)
 				break;
 #if NBPFILTER > 0

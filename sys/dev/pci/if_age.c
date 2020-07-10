@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_age.c,v 1.35 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: if_age.c,v 1.36 2020/07/10 13:22:20 patrick Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -971,7 +971,7 @@ age_start(struct ifnet *ifp)
 			break;
 		}
 
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		m = ifq_dequeue(&ifp->if_snd);
 		if (m == NULL)
 			break;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.61 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.62 2020/07/10 13:22:19 patrick Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -437,7 +437,7 @@ outloop:
 		ifq_set_oactive(&ifp->if_snd);
 		return;
 	}
-	IFQ_DEQUEUE(&ifp->if_snd, m0);
+	m0 = ifq_dequeue(&ifp->if_snd);
 	if (m0 == NULL)
 		return;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.181 2019/11/13 10:15:10 bluhm Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.182 2020/07/10 13:22:22 patrick Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -804,7 +804,7 @@ sppp_dequeue(struct ifnet *ifp)
 	 */
 	m = mq_dequeue(&sp->pp_cpq);
 	if (m == NULL && sppp_ncp_check(sp)) {
-		IFQ_DEQUEUE (&sp->pp_if.if_snd, m);
+		m = ifq_dequeue(&sp->pp_if.if_snd);
 	}
 	splx(s);
 	return m;

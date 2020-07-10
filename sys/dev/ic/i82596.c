@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.53 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.54 2020/07/10 13:22:19 patrick Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -1221,7 +1221,7 @@ i82596_start(ifp)
 			break;
 		}
 
-		IFQ_DEQUEUE(&ifp->if_snd, m0);
+		m0 = ifq_dequeue(&ifp->if_snd);
 		if (m0 == NULL)
 			break;
 

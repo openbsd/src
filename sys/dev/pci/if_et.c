@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.37 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.38 2020/07/10 13:22:20 patrick Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -1070,7 +1070,7 @@ et_start(struct ifnet *ifp)
 
 	trans = 0;
 	for (;;) {
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		m = ifq_dequeue(&ifp->if_snd);
 		if (m == NULL)
 			break;
 

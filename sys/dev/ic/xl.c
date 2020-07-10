@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.133 2020/06/22 02:27:04 dlg Exp $	*/
+/*	$OpenBSD: xl.c,v 1.134 2020/07/10 13:22:20 patrick Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1664,7 +1664,7 @@ xl_start(struct ifnet *ifp)
 	start_tx = sc->xl_cdata.xl_tx_free;
 
 	while (sc->xl_cdata.xl_tx_free != NULL) {
-		IFQ_DEQUEUE(&ifp->if_snd, m_head);
+		m_head = ifq_dequeue(&ifp->if_snd);
 		if (m_head == NULL)
 			break;
 
@@ -1793,7 +1793,7 @@ xl_start_90xB(struct ifnet *ifp)
 			break;
 		}
 
-		IFQ_DEQUEUE(&ifp->if_snd, m_head);
+		m_head = ifq_dequeue(&ifp->if_snd);
 		if (m_head == NULL)
 			break;
 

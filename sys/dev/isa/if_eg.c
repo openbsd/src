@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_eg.c,v 1.49 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: if_eg.c,v 1.50 2020/07/10 13:22:20 patrick Exp $	*/
 /*	$NetBSD: if_eg.c,v 1.26 1996/05/12 23:52:27 mycroft Exp $	*/
 
 /*
@@ -501,7 +501,7 @@ egstart(struct ifnet *ifp)
 
 loop:
 	/* Dequeue the next datagram. */
-	IFQ_DEQUEUE(&ifp->if_snd, m0);
+	m0 = ifq_dequeue(&ifp->if_snd);
 	if (m0 == NULL)
 		return;
 	

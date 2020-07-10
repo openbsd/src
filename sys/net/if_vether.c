@@ -1,4 +1,4 @@
-/* $OpenBSD: if_vether.c,v 1.30 2018/01/09 15:24:24 bluhm Exp $ */
+/* $OpenBSD: if_vether.c,v 1.31 2020/07/10 13:22:22 patrick Exp $ */
 
 /*
  * Copyright (c) 2009 Theo de Raadt
@@ -121,7 +121,7 @@ vetherstart(struct ifnet *ifp)
 	struct mbuf		*m;
 
 	for (;;) {
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		m = ifq_dequeue(&ifp->if_snd);
 		if (m == NULL)
 			return;
 

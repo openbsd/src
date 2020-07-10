@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtd8xx.c,v 1.31 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: mtd8xx.c,v 1.32 2020/07/10 13:22:20 patrick Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -700,7 +700,7 @@ mtd_start(struct ifnet *ifp)
 
 	idx = sc->mtd_cdata.mtd_tx_prod;
 	while (sc->mtd_cdata.mtd_tx_chain[idx].sd_mbuf == NULL) {
-		IFQ_DEQUEUE(&ifp->if_snd, m_head);
+		m_head = ifq_dequeue(&ifp->if_snd);
 		if (m_head == NULL)
 			break;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.152 2020/06/03 11:37:39 jmatthew Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.153 2020/07/10 13:22:21 patrick Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -1910,7 +1910,7 @@ wpi_start(struct ifnet *ifp)
 			break;
 
 		/* Encapsulate and send data frames. */
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		m = ifq_dequeue(&ifp->if_snd);
 		if (m == NULL)
 			break;
 #if NBPFILTER > 0

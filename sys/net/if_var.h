@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.106 2020/07/04 08:06:08 anton Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.107 2020/07/10 13:22:22 patrick Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -285,22 +285,11 @@ struct ifg_list {
  * IFQ compat on ifq API
  */
 
-#define	IFQ_ENQUEUE(ifq, m, err)					\
-do {									\
-	(err) = ifq_enqueue((ifq), (m));				\
-} while (/* CONSTCOND */0)
-
-#define	IFQ_DEQUEUE(ifq, m)						\
-do {									\
-	(m) = ifq_dequeue(ifq);						\
-} while (/* CONSTCOND */0)
-
 #define	IFQ_PURGE(ifq)							\
 do {									\
 	(void)ifq_purge(ifq);						\
 } while (/* CONSTCOND */0)
 
-#define	IFQ_LEN(ifq)			ifq_len(ifq)
 #define	IFQ_IS_EMPTY(ifq)		ifq_empty(ifq)
 #define	IFQ_SET_MAXLEN(ifq, len)	ifq_set_maxlen(ifq, len)
 

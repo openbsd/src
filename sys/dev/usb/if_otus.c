@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.65 2019/11/12 07:47:30 mpi Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.66 2020/07/10 13:22:21 patrick Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1428,7 +1428,7 @@ otus_start(struct ifnet *ifp)
 			break;
 
 		/* Encapsulate and send data frames. */
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		m = ifq_dequeue(&ifp->if_snd);
 		if (m == NULL)
 			break;
 #if NBPFILTER > 0

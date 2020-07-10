@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.77 2020/04/12 11:56:52 mpi Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.78 2020/07/10 13:22:22 patrick Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -314,7 +314,7 @@ vxlan_send_dispatch(void *xsc)
 
 	ml_init(&ml);
 	for (;;) {
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		m = ifq_dequeue(&ifp->if_snd);
 		if (m == NULL)
 			break;
 
