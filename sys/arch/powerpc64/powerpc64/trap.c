@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.24 2020/07/05 12:24:16 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.25 2020/07/10 18:30:28 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -277,6 +277,15 @@ trap(struct trapframe *frame)
 		curpcb->pcb_flags |= PCB_VEC;
 		frame->srr1 |= PSL_VEC;
 		break;
+
+	case EXC_HEA|EXC_USER:
+	{
+		uint32_t heir;
+
+		__asm volatile ("mfspr %0, 339" : "=r"(heir));
+		printf("heir %x\n", heir);
+	}
+		/* FALLTHROUGH */
 
 	default:
 	fatal:

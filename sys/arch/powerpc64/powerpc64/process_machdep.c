@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.2 2020/06/14 17:56:54 kettenis Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.3 2020/07/10 18:30:28 kettenis Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.1 1996/09/30 16:34:53 ws Exp $	*/
 
 /*
@@ -45,30 +45,17 @@
 int
 process_read_regs(struct proc *p, struct reg *regs)
 {
-#if 0
-	struct cpu_info *ci = curcpu();
-	struct trapframe *tf = trapframe(p);
-	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct trapframe *tf = p->p_md.md_regs;
 
-	bcopy(tf->fixreg, regs->gpr, sizeof(regs->gpr));
+	memcpy(regs->r_reg, tf->fixreg, sizeof(regs->r_reg));
 
-	if (!(pcb->pcb_flags & PCB_FPU)) {
-		bzero(regs->fpr, sizeof(regs->fpr));
-	} else {
-		/* XXX What if the state is on the other cpu? */
-		if (p == ci->ci_fpuproc)
-			save_fpu();
-		bcopy(pcb->pcb_fpu.fpr, regs->fpr, sizeof(regs->fpr));
-	}
-
-	regs->pc  = tf->srr0;
-	regs->ps  = tf->srr1; /* is this the correct value for this ? */
-	regs->cnd = tf->cr;
-	regs->lr  = tf->lr;
-	regs->cnt = tf->ctr;
-	regs->xer = tf->xer;
-	regs->mq  = 0; /*  what should this really be? */
-#endif
+	regs->r_lr = tf->lr;
+	regs->r_cr = tf->cr;
+	regs->r_xer = tf->xer;
+	regs->r_ctr = tf->ctr;
+	regs->r_pc = tf->srr0;
+	regs->r_msr = tf->srr1;
+	regs->r_vrsave = tf->vrsave;
 
 	return 0;
 }
