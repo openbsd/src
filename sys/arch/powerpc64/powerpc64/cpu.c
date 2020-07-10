@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.9 2020/07/10 18:30:28 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.10 2020/07/10 18:34:24 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -87,7 +87,9 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 	const char *name = NULL;
-	uint32_t pvr, clock_freq, iline, dline;
+	uint32_t pvr;
+	uint32_t iline;
+	uint32_t dline;
 	int node, level, i;
 
 	printf(" pir %llx", faa->fa_reg[0].addr);
@@ -111,12 +113,6 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	}
 
 	node = faa->fa_node;
-	clock_freq = OF_getpropint(node, "clock-frequency", 0);
-	if (clock_freq != 0) {
-		clock_freq /= 1000000; /* Hz to MHz */
-		printf(", %u MHz", clock_freq);
-	}
-
 	iline = OF_getpropint(node, "i-cache-block-size", 128);
 	dline = OF_getpropint(node, "d-cache-block-size", 128);
 	level = 1;
