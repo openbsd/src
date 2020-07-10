@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.27 2020/07/06 07:26:40 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.28 2020/07/10 12:09:53 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -219,20 +219,6 @@ pmap_pted2avpn(struct pte_desc *pted)
 		(ADDR_VSID_SHIFT - PTE_VSID_SHIFT));
 }
 
-static inline u_int
-pmap_pte2flags(uint64_t pte_lo)
-{
-	return (((pte_lo & PTE_REF) ? PG_PMAP_REF : 0) |
-	    ((pte_lo & PTE_CHG) ? PG_PMAP_MOD : 0));
-}
-
-static inline u_int
-pmap_flags2pte(u_int flags)
-{
-	return (((flags & PG_PMAP_REF) ? PTE_REF : 0) |
-	    ((flags & PG_PMAP_MOD) ? PTE_CHG : 0));
-}
-
 static inline uint64_t
 pmap_kernel_vsid(uint64_t esid)
 {
@@ -255,18 +241,6 @@ pmap_va2vsid(pmap_t pm, vaddr_t va)
 		return slbd->slbd_vsid;
 
 	return 0;
-}
-
-void
-pmap_attr_save(paddr_t pa, uint64_t bits)
-{
-	struct vm_page *pg;
-
-	pg = PHYS_TO_VM_PAGE(pa);
-	if (pg == NULL)
-		return;
-
-	atomic_setbits_int(&pg->pg_flags, pmap_pte2flags(bits));
 }
 
 struct pte *
@@ -592,12 +566,6 @@ void
 pte_zap(struct pte *pte, struct pte_desc *pted)
 {
 	pte_del(pte, pmap_pted2ava(pted));
-
-	if (!PTED_MANAGED(pted))
-		return;
-
-	pmap_attr_save(pted->pted_pte.pte_lo & PTE_RPGN,
-	    pte->pte_lo & (PTE_REF|PTE_CHG));
 }
 
 void
@@ -627,73 +595,6 @@ pmap_fill_pte(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
 		pte->pte_lo |= PTE_M;
 	else
 		pte->pte_lo |= (PTE_M | PTE_I | PTE_G);
-}
-
-int
-pmap_test_attrs(struct vm_page *pg, u_int flagbit)
-{
-	struct pte_desc *pted;
-	uint64_t ptebit = pmap_flags2pte(flagbit);
-	u_int bits = pg->pg_flags & flagbit;
-	int s;
-
-	if (bits == flagbit)
-		return bits;
-
-	mtx_enter(&pg->mdpage.pv_mtx);
-	LIST_FOREACH(pted, &(pg->mdpage.pv_list), pted_pv_list) {
-		struct pte *pte;
-
-		PMAP_HASH_LOCK(s);
-		if ((pte = pmap_ptedinhash(pted)) != NULL)
-			bits |=	pmap_pte2flags(pte->pte_lo & ptebit);
-		PMAP_HASH_UNLOCK(s);
-
-		if (bits == flagbit)
-			break;
-	}
-	mtx_leave(&pg->mdpage.pv_mtx);
-
-	atomic_setbits_int(&pg->pg_flags,  bits);
-
-	return bits;
-}
-
-int
-pmap_clear_attrs(struct vm_page *pg, u_int flagbit)
-{
-	struct pte_desc *pted;
-	uint64_t ptebit = pmap_flags2pte(flagbit);
-	u_int bits = pg->pg_flags & flagbit;
-	int s;
-
-	mtx_enter(&pg->mdpage.pv_mtx);
-	LIST_FOREACH(pted, &(pg->mdpage.pv_list), pted_pv_list) {
-		struct pte *pte;
-
-		PMAP_HASH_LOCK(s);
-		if ((pte = pmap_ptedinhash(pted)) != NULL) {
-			bits |=	pmap_pte2flags(pte->pte_lo & ptebit);
-
-			pte_del(pte, pmap_pted2ava(pted));
-
-			pte->pte_lo &= ~ptebit;
-			eieio();
-			pte->pte_hi |= PTE_VALID;
-			ptesync();
-		}
-		PMAP_HASH_UNLOCK(s);
-	}
-	mtx_leave(&pg->mdpage.pv_mtx);
-
-	/*
-	 * this is done a second time, because while walking the list
-	 * a bit could have been promoted via pmap_attr_save()
-	 */
-	bits |= pg->pg_flags & flagbit;
-	atomic_clearbits_int(&pg->pg_flags, flagbit);
-
-	return bits;
 }
 
 void
@@ -784,9 +685,6 @@ pte_insert(struct pte_desc *pted)
 		vpn |= ((idx ^ vsid) & (ADDR_PIDX >> ADDR_PIDX_SHIFT));
 
 		pte_del(pte, vpn << PAGE_SHIFT);
-
-		pmap_attr_save(pte->pte_lo & PTE_RPGN,
-		    pte->pte_lo & (PTE_REF|PTE_CHG));
 	}
 
 	/* Add a Page Table Entry, section 5.10.1.1. */
@@ -1037,18 +935,18 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		}
 	}
 
+	if ((flags & PROT_WRITE) == 0)
+		prot &= ~PROT_WRITE;
+
 	pmap_fill_pte(pm, va, pa, pted, prot, cache);
 
-	if (pg != NULL)
+	if (pg != NULL) {
 		pmap_enter_pv(pted, pg); /* only managed mem */
 
-	/*
-	 * XXX Preseed modify bits.  This shouldn't be necessary since
-	 * these bits are implemented in hardware.  But something is
-	 * broken and the bits aren't properly propagated.
-	 */
-	if (pg != NULL && flags & PROT_WRITE)
-		atomic_setbits_int(&pg->pg_flags, PG_PMAP_MOD);
+		atomic_setbits_int(&pg->pg_flags, PG_PMAP_REF);
+		if (flags & PROT_WRITE)
+			atomic_setbits_int(&pg->pg_flags, PG_PMAP_MOD);
+	}
 
 	pte_insert(pted);
 
@@ -1136,12 +1034,6 @@ pmap_pted_ro(struct pte_desc *pted, vm_prot_t prot)
 	PMAP_HASH_LOCK(s);
 	if ((pte = pmap_ptedinhash(pted)) != NULL) {
 		pte_del(pte, pmap_pted2ava(pted));
-
-		/* XXX Use pte_zap instead? */
-		if (PTED_MANAGED(pted)) {
-			pmap_attr_save(pte->pte_lo & PTE_RPGN,
-			    pte->pte_lo & (PTE_REF|PTE_CHG));
-		}
 
 		/* Add a Page Table Entry, section 5.10.1.1. */
 		pte->pte_lo = pted->pted_pte.pte_lo;
@@ -1293,25 +1185,67 @@ pmap_kremove(vaddr_t va, vsize_t len)
 int
 pmap_is_referenced(struct vm_page *pg)
 {
-	return pmap_test_attrs(pg, PG_PMAP_REF);
+	return ((pg->pg_flags & PG_PMAP_REF) != 0);
 }
 
 int
 pmap_is_modified(struct vm_page *pg)
 {
-	return pmap_test_attrs(pg, PG_PMAP_MOD);
+	return ((pg->pg_flags & PG_PMAP_MOD) != 0);
 }
 
 int
 pmap_clear_reference(struct vm_page *pg)
 {
-	return pmap_clear_attrs(pg, PG_PMAP_REF);
+	struct pte_desc *pted;
+	int s;
+
+	atomic_clearbits_int(&pg->pg_flags, PG_PMAP_REF);
+
+	mtx_enter(&pg->mdpage.pv_mtx);
+	LIST_FOREACH(pted, &(pg->mdpage.pv_list), pted_pv_list) {
+		struct pte *pte;
+
+		PMAP_HASH_LOCK(s);
+		if ((pte = pmap_ptedinhash(pted)) != NULL)
+			pte_zap(pte, pted);
+		PMAP_HASH_UNLOCK(s);
+	}
+	mtx_leave(&pg->mdpage.pv_mtx);
+
+	return 0;
 }
 
 int
 pmap_clear_modify(struct vm_page *pg)
 {
-	return pmap_clear_attrs(pg, PG_PMAP_MOD);
+	struct pte_desc *pted;
+	int s;
+
+	atomic_clearbits_int(&pg->pg_flags, PG_PMAP_MOD);
+
+	mtx_enter(&pg->mdpage.pv_mtx);
+	LIST_FOREACH(pted, &(pg->mdpage.pv_list), pted_pv_list) {
+		struct pte *pte;
+
+		pted->pted_pte.pte_lo &= ~PTE_PP;
+		pted->pted_pte.pte_lo |= PTE_RO;
+
+		PMAP_HASH_LOCK(s);
+		if ((pte = pmap_ptedinhash(pted)) != NULL) {
+			pte_zap(pte, pted);
+
+			/* Add a Page Table Entry, section 5.10.1.1. */
+			pte->pte_lo = pted->pted_pte.pte_lo;
+			eieio();	/* Order 1st PTE update before 2nd. */
+			pte->pte_hi |= PTE_VALID;
+			ptesync();	/* Ensure updates completed. */
+		}
+		PMAP_HASH_UNLOCK(s);
+	}
+	mtx_leave(&pg->mdpage.pv_mtx);
+
+	return 0;
 }
 
 int
