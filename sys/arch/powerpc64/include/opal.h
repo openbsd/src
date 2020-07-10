@@ -1,4 +1,4 @@
-/*	$OpenBSD: opal.h,v 1.13 2020/07/07 22:43:29 kettenis Exp $	*/
+/*	$OpenBSD: opal.h,v 1.14 2020/07/10 12:38:09 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -42,6 +42,7 @@
 #define OPAL_GET_MSI_64			40
 #define OPAL_PCI_MAP_PE_DMA_WINDOW_REAL	45
 #define OPAL_PCI_RESET			49
+#define OPAL_REINIT_CPUS		70
 #define OPAL_CHECK_TOKEN		80
 #define OPAL_SENSOR_READ		88
 #define OPAL_CONSOLE_FLUSH		117
@@ -109,6 +110,13 @@
 #define OPAL_DEASSERT_RESET		0
 #define OPAL_ASSERT_RESET		1
 
+/* OPAL_REINIT_CPUS */
+#define OPAL_REINIT_CPUS_HILE_BE		0x00000001
+#define OPAL_REINIT_CPUS_HILE_LE		0x00000002
+#define OPAL_REINIT_CPUS_MMU_HASH		0x00000004
+#define OPAL_REINIT_CPUS_MMU_RADIX		0x00000008
+#define OPAL_REINIT_CPUS_TM_SUSPEND_DISABLED	0x00000010
+
 /* OPAL_CHECK_TOKEN */
 #define OPAL_TOKEN_ABSENT		0
 #define OPAL_TOKEN_PRESENT		1
@@ -175,6 +183,7 @@ int64_t	opal_get_msi_64(uint64_t, uint32_t, uint32_t, uint8_t,
 int64_t opal_pci_map_pe_dma_window_real(uint64_t, uint64_t, uint16_t,
 	    uint64_t, uint64_t);
 int64_t opal_pci_reset(uint64_t, uint8_t, uint8_t);
+int64_t	opal_reinit_cpus(uint64_t);
 int64_t	opal_check_token(uint64_t);
 int64_t opal_sensor_read(uint32_t, int, uint32_t *);
 int64_t	opal_console_flush(uint64_t);
