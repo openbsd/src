@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.19 2020/06/27 17:28:58 krw Exp $	*/
+/*	$OpenBSD: vioscsi.c,v 1.20 2020/07/10 19:43:09 krw Exp $	*/
 /*
  * Copyright (c) 2013 Google Inc.
  *
@@ -154,13 +154,13 @@ vioscsi_attach(struct device *parent, struct device *self, void *aux)
 	mtx_init(&sc->sc_vr_mtx, IPL_BIO);
 	scsi_iopool_init(&sc->sc_iopool, sc, vioscsi_req_get, vioscsi_req_put);
 
-	sc->sc_link.openings = vioscsi_alloc_reqs(sc, vsc, qsize);
-	if (sc->sc_link.openings == 0) {
+	int nreqs = vioscsi_alloc_reqs(sc, vsc, qsize);
+	if (nreqs == 0) {
 		printf("\nCan't alloc reqs\n");
 		goto err;
-	} else if (sc->sc_link.openings > cmd_per_lun)
-		sc->sc_link.openings = cmd_per_lun;
+	}
 
+	sc->sc_link.openings = (nreqs > cmd_per_lun) ? cmd_per_lun : nreqs;
 	sc->sc_link.adapter = &vioscsi_switch;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
