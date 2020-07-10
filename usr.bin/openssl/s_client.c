@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.49 2020/07/09 14:09:19 inoguchi Exp $ */
+/* $OpenBSD: s_client.c,v 1.50 2020/07/10 12:05:52 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -173,7 +173,6 @@
 static void sc_usage(void);
 static void print_stuff(BIO * berr, SSL * con, int full);
 static int ocsp_resp_cb(SSL * s, void *arg);
-static BIO *bio_c_out = NULL;
 
 enum {
 	PROTO_OFF = 0,
@@ -876,6 +875,7 @@ s_client_main(int argc, char **argv)
 	int write_tty, read_tty, write_ssl, read_ssl, tty_on, ssl_pending;
 	SSL_CTX *ctx = NULL;
 	int ret = 1, in_init = 1, i;
+	BIO *bio_c_out = NULL;
 	BIO *sbio;
 	int mbuf_len = 0;
 	struct timeval timeout;
@@ -961,14 +961,13 @@ s_client_main(int argc, char **argv)
 			goto end;
 		}
 	}
-	if (bio_c_out == NULL) {
-		if (s_client_config.quiet && !s_client_config.debug &&
-		    !s_client_config.msg) {
-			bio_c_out = BIO_new(BIO_s_null());
-		} else {
-			if (bio_c_out == NULL)
-				bio_c_out = BIO_new_fp(stdout, BIO_NOCLOSE);
-		}
+	if (s_client_config.quiet && !s_client_config.debug &&
+	    !s_client_config.msg) {
+		if ((bio_c_out = BIO_new(BIO_s_null())) == NULL)
+			goto end;
+	} else {
+		if ((bio_c_out = BIO_new_fp(stdout, BIO_NOCLOSE)) == NULL)
+			goto end;
 	}
 
 	ctx = SSL_CTX_new(s_client_config.meth);
@@ -1621,10 +1620,7 @@ s_client_main(int argc, char **argv)
 	freezero(cbuf, BUFSIZZ);
 	freezero(sbuf, BUFSIZZ);
 	freezero(mbuf, BUFSIZZ);
-	if (bio_c_out != NULL) {
-		BIO_free(bio_c_out);
-		bio_c_out = NULL;
-	}
+	BIO_free(bio_c_out);
 
 	return (ret);
 }
@@ -1757,7 +1753,7 @@ print_stuff(BIO * bio, SSL * s, int full)
 		socklen_t ladd_size = sizeof(ladd);
 		sock = SSL_get_fd(s);
 		getsockname(sock, (struct sockaddr *) & ladd, &ladd_size);
-		BIO_printf(bio_c_out, "LOCAL PORT is %u\n",
+		BIO_printf(bio, "LOCAL PORT is %u\n",
 		    ntohs(ladd.sin_port));
 	}
 #endif
