@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.215 2020/07/11 13:34:06 krw Exp $ */
+/*	$OpenBSD: mpi.c,v 1.216 2020/07/11 21:35:55 krw Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -361,6 +361,8 @@ mpi_attach(struct mpi_softc *sc)
 	sc->sc_link.adapter_buswidth = sc->sc_buswidth;
 	sc->sc_link.openings = MAX(sc->sc_maxcmds / sc->sc_buswidth, 16);
 	sc->sc_link.pool = &sc->sc_iopool;
+	sc->sc_link.port_wwn = sc->sc_port_wwn;
+	sc->sc_link.node_wwn = sc->sc_node_wwn;
 
 	saa.saa_sc_link = &sc->sc_link;
 
@@ -872,8 +874,8 @@ mpi_cfg_fc(struct mpi_softc *sc)
 		return (1);
 	}
 
-	sc->sc_link.port_wwn = letoh64(pg0.wwpn);
-	sc->sc_link.node_wwn = letoh64(pg0.wwnn);
+	sc->sc_port_wwn = letoh64(pg0.wwpn);
+	sc->sc_node_wwn = letoh64(pg0.wwnn);
 
 	/* configure port config more to our liking */
 	if (mpi_cfg_header(sc, MPI_CONFIG_REQ_PAGE_TYPE_FC_PORT, 1, 0,
