@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.246 2020/07/11 15:26:15 krw Exp $	*/
+/*	$OpenBSD: ami.c,v 1.247 2020/07/11 19:28:07 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -544,7 +544,8 @@ ami_attach(struct ami_softc *sc)
 
 	saa.saa_sc_link = &sc->sc_link;
 
-	config_found(&sc->sc_dev, &saa, scsiprint);
+	sc->sc_scsibus = (struct scsibus_softc *)config_found(&sc->sc_dev, &saa,
+	    scsiprint);
 
 	/* can't do bioctls, sensors, or pass-through on broken devices */
 	if (sc->sc_flags & AMI_BROKEN)
@@ -2390,7 +2391,7 @@ ami_create_sensors(struct ami_softc *sc)
 
 		/* check if this is the scsibus for the logical disks */
 		ssc = (struct scsibus_softc *)dev;
-		if (ssc->adapter_link == &sc->sc_link)
+		if (ssc == sc->sc_scsibus)
 			break;
 	}
 

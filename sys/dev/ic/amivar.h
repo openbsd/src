@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.58 2010/06/23 04:53:53 dlg Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.59 2020/07/11 19:28:07 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -87,6 +87,7 @@ struct ami_softc {
 	struct device		sc_dev;
 	void			*sc_ih;
 	struct scsi_link	sc_link;
+	struct scsibus_softc	*sc_scsibus;
 
 	int			sc_flags;
 #define AMI_CHECK_SIGN	0x0001
