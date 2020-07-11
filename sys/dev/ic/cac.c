@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.61 2020/06/27 14:29:45 krw Exp $	*/
+/*	$OpenBSD: cac.c,v 1.62 2020/07/11 21:17:11 krw Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -247,7 +247,8 @@ cac_init(struct cac_softc *sc, int startfw)
 
 	saa.saa_sc_link = &sc->sc_link;
 
-	config_found(&sc->sc_dv, &saa, scsiprint);
+	sc->sc_scsibus = (struct scsibus_softc *)config_found(&sc->sc_dv, &saa,
+	    scsiprint);
 
 	(*sc->sc_cl->cl_intr_enable)(sc, 1);
 
@@ -892,7 +893,7 @@ cac_create_sensors(struct cac_softc *sc)
 
 		/* check if this is the scsibus for the logical disks */
 		ssc = (struct scsibus_softc *)dev;
-		if (ssc->adapter_link == &sc->sc_link)
+		if (ssc == sc->sc_scsibus)
 			break;
 		ssc = NULL;
 	}
