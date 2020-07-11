@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.53 2020/07/11 13:34:06 krw Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.54 2020/07/11 14:48:53 krw Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -83,10 +83,29 @@ umass_scsi_attach(struct umass_softc *sc)
 {
 	struct scsibus_attach_args saa;
 	struct umass_scsi_softc *scbus;
+	u_int16_t flags = SDEV_UMASS;
 
 	scbus = malloc(sizeof(*scbus), M_DEVBUF, M_WAITOK | M_ZERO);
 
 	sc->bus = scbus;
+
+	switch (sc->sc_cmd) {
+	case UMASS_CPROTO_RBC:
+	case UMASS_CPROTO_SCSI:
+		DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: SCSI\n"
+				     "sc = 0x%p, scbus = 0x%p\n",
+				     sc->sc_dev.dv_xname, sc, scbus));
+		break;
+	case UMASS_CPROTO_UFI:
+	case UMASS_CPROTO_ATAPI:
+		flags |= SDEV_ATAPI;
+		DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: ATAPI\n"
+				     "sc = 0x%p, scbus = 0x%p\n",
+				     sc->sc_dev.dv_xname, sc, scbus));
+		break;
+	default:
+		break;
+	}
 
 	scsi_iopool_init(&scbus->sc_iopool, scbus, umass_io_get, umass_io_put);
 
@@ -98,27 +117,9 @@ umass_scsi_attach(struct umass_softc *sc)
 	scbus->sc_link.quirks = SDEV_ONLYBIG | sc->sc_busquirks;
 	scbus->sc_link.pool = &scbus->sc_iopool;
 	scbus->sc_link.luns = sc->maxlun + 1;
-	scbus->sc_link.flags = SDEV_UMASS;
+	scbus->sc_link.flags = flags;
 
 	saa.saa_sc_link = &scbus->sc_link;
-
-	switch (sc->sc_cmd) {
-	case UMASS_CPROTO_RBC:
-	case UMASS_CPROTO_SCSI:
-		DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: SCSI\n"
-				     "sc = 0x%p, scbus = 0x%p\n",
-				     sc->sc_dev.dv_xname, sc, scbus));
-		break;
-	case UMASS_CPROTO_UFI:
-	case UMASS_CPROTO_ATAPI:
-		scbus->sc_link.flags |= SDEV_ATAPI;
-		DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: ATAPI\n"
-				     "sc = 0x%p, scbus = 0x%p\n",
-				     sc->sc_dev.dv_xname, sc, scbus));
-		break;
-	default:
-		break;
-	}
 
 	sc->sc_refcnt++;
 	scbus->sc_child = config_found((struct device *)sc, &saa, scsiprint);
