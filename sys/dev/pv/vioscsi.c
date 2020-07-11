@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.20 2020/07/10 19:43:09 krw Exp $	*/
+/*	$OpenBSD: vioscsi.c,v 1.21 2020/07/11 20:15:52 krw Exp $	*/
 /*
  * Copyright (c) 2013 Google Inc.
  *
@@ -50,7 +50,6 @@ struct vioscsi_req {
 struct vioscsi_softc {
 	struct device		 sc_dev;
 	struct scsi_link	 sc_link;
-	struct scsibus		*sc_scsibus;
 	struct scsi_iopool	 sc_iopool;
 	struct mutex		 sc_vr_mtx;
 
@@ -169,7 +168,7 @@ vioscsi_attach(struct device *parent, struct device *self, void *aux)
 
 	saa.saa_sc_link = &sc->sc_link;
 
-	sc->sc_scsibus = (struct scsibus *)config_found(self, &saa, scsiprint);
+	config_found(self, &saa, scsiprint);
 	return;
 
 err:
