@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.64 2020/07/10 13:26:38 patrick Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.65 2020/07/11 00:54:19 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -3891,15 +3891,16 @@ ixl_get_phy_types(struct ixl_softc *sc, uint64_t *phy_types_ptr)
 	switch (rv) {
 	case -1:
 		printf("%s: GET PHY ABILITIES timeout\n", DEVNAME(sc));
-		goto done;
+		goto err;
 	case IXL_AQ_RC_OK:
 		break;
 	case IXL_AQ_RC_EIO:
-		printf("%s: unable to query phy types\n", DEVNAME(sc));
-		break;
+		/* API is too old to handle this command */
+		phy_types = 0;
+		goto done;
 	default:
 		printf("%s: GET PHY ABILITIIES error %u\n", DEVNAME(sc), rv);
-		goto done;
+		goto err;
 	}
 
 	phy = IXL_DMA_KVA(&idm);
@@ -3907,11 +3908,12 @@ ixl_get_phy_types(struct ixl_softc *sc, uint64_t *phy_types_ptr)
 	phy_types = lemtoh32(&phy->phy_type);
 	phy_types |= (uint64_t)phy->phy_type_ext << 32;
 
+done:
 	*phy_types_ptr = phy_types;
 
 	rv = 0;
 
-done:
+err:
 	ixl_dmamem_free(sc, &idm);
 	return (rv);
 }
