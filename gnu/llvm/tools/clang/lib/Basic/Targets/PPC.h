@@ -372,9 +372,13 @@ public:
 
     switch (getTriple().getOS()) {
     case llvm::Triple::FreeBSD:
+      LongDoubleWidth = LongDoubleAlign = 64;
+      LongDoubleFormat = &llvm::APFloat::IEEEdouble();
+      break;
     case llvm::Triple::OpenBSD:
       LongDoubleWidth = LongDoubleAlign = 64;
       LongDoubleFormat = &llvm::APFloat::IEEEdouble();
+      ABI = "elfv2";
       break;
     default:
       break;
