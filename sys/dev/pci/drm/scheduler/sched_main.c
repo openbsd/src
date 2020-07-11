@@ -74,7 +74,7 @@ static void drm_sched_process_job(struct dma_fence *f, struct dma_fence_cb *cb);
 static void drm_sched_rq_init(struct drm_gpu_scheduler *sched,
 			      struct drm_sched_rq *rq)
 {
-	mtx_init(&rq->lock, IPL_TTY);
+	mtx_init(&rq->lock, IPL_NONE);
 	INIT_LIST_HEAD(&rq->entities);
 	rq->current_entity = NULL;
 	rq->sched = sched;
@@ -867,7 +867,7 @@ int drm_sched_init(struct drm_gpu_scheduler *sched,
 	init_waitqueue_head(&sched->wake_up_worker);
 	init_waitqueue_head(&sched->job_scheduled);
 	INIT_LIST_HEAD(&sched->ring_mirror_list);
-	mtx_init(&sched->job_list_lock, IPL_TTY);
+	mtx_init(&sched->job_list_lock, IPL_NONE);
 	atomic_set(&sched->hw_rq_count, 0);
 	INIT_DELAYED_WORK(&sched->work_tdr, drm_sched_job_timedout);
 	atomic_set(&sched->num_jobs, 0);

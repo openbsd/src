@@ -73,7 +73,7 @@ int drm_sched_entity_init(struct drm_sched_entity *entity,
 
 	init_completion(&entity->entity_idle);
 
-	mtx_init(&entity->rq_lock, IPL_TTY);
+	mtx_init(&entity->rq_lock, IPL_NONE);
 	spsc_queue_init(&entity->job_queue);
 
 	atomic_set(&entity->fence_seq, 0);
