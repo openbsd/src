@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6250.c,v 1.8 2020/06/27 14:29:44 krw Exp $	*/
+/*	$OpenBSD: aic6250.c,v 1.9 2020/07/11 13:34:06 krw Exp $	*/
 
 /*
  * Copyright (c) 2010, 2013 Miodrag Vallat.
@@ -202,9 +202,6 @@ aic6250_attach(struct aic6250_softc *sc)
 
 	aic6250_init(sc);	/* init chip and driver */
 
-	/*
-	 * Fill in the prototype scsi_link
-	 */
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_initiator;
 	sc->sc_link.adapter = &aic6250_switch;

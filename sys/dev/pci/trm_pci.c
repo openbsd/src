@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm_pci.c,v 1.7 2020/07/02 13:29:20 krw Exp $
+/*	$OpenBSD: trm_pci.c,v 1.8 2020/07/11 13:34:06 krw Exp $
  * ------------------------------------------------------------
  *       O.S     : OpenBSD
  *    FILE NAME  : trm_pci.c
@@ -170,7 +170,6 @@ trm_pci_attach(struct device *parent, struct device *self, void *aux)
 
 		saa.saa_sc_link = &sc->sc_link;
 
-		/* Tell SCSI layer about our SCSI bus */
 		config_found(&sc->sc_device, &saa, scsiprint);
 	}
 }

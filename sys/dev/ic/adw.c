@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.62 2020/06/27 14:29:44 krw Exp $ */
+/*	$OpenBSD: adw.c,v 1.63 2020/07/11 13:34:06 krw Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -502,9 +502,6 @@ adw_attach(ADW_SOFTC *sc)
 		break;
 	}
 
-	/*
-         * fill in the prototype scsi_link.
-         */
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->chip_scsi_id;
 	sc->sc_link.adapter = &adw_switch;

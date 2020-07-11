@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.56 2020/06/27 14:29:44 krw Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.57 2020/07/11 13:34:05 krw Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -347,7 +347,6 @@ vdsk_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_link.adapter = &vdsk_switch;
 	sc->sc_link.adapter_softc = self;
-	/* Only valid target/lun is 0/0. */
 	sc->sc_link.adapter_buswidth = 1;
 	sc->sc_link.luns = 1;
 	sc->sc_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
@@ -355,6 +354,7 @@ vdsk_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.pool = &sc->sc_iopool;
 
 	saa.saa_sc_link = &sc->sc_link;
+
 	config_found(self, &saa, scsiprint);
 
 	return;

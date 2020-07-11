@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.405 2020/06/27 17:28:58 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.406 2020/07/11 13:34:05 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1810,8 +1810,8 @@ sr_attach(struct device *parent, struct device *self, void *aux)
 
 	saa.saa_sc_link = &sc->sc_link;
 
-	sc->sc_scsibus = (struct scsibus_softc *)config_found(&sc->sc_dev,
-	    &saa, scsiprint);
+	sc->sc_scsibus = (struct scsibus_softc *)config_found(&sc->sc_dev, &saa,
+	    scsiprint);
 
 	softraid_disk_attach = sr_disk_attach;
 

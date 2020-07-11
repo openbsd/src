@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.24 2020/06/27 14:29:44 krw Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.25 2020/07/11 13:34:05 krw Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -214,9 +214,6 @@ spc_attach(struct spc_softc *sc, struct scsi_adapter *adapter)
 
 	spc_init(sc);	/* Init chip and driver */
 
-	/*
-	 * Fill in the adapter.
-	 */
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_initiator;
 	sc->sc_link.adapter = adapter;
@@ -225,9 +222,6 @@ spc_attach(struct spc_softc *sc, struct scsi_adapter *adapter)
 
 	saa.saa_sc_link = &sc->sc_link;
 
-	/*
-	 * ask the adapter what subunits are present
-	 */
 	config_found(&sc->sc_dev, &saa, scsiprint);
 }
 

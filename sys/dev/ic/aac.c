@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.80 2020/06/27 17:28:58 krw Exp $	*/
+/*	$OpenBSD: aac.c,v 1.81 2020/07/11 13:34:06 krw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -266,7 +266,6 @@ aac_attach(struct aac_softc *sc)
 	if (error)
 		return (error);
 
-	/* Fill in the prototype scsi_link. */
 	sc->aac_link.adapter_softc = sc;
 	sc->aac_link.adapter = &aac_switch;
 	sc->aac_link.openings = (sc->total_fibs - 8) /

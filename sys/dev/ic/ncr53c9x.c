@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.72 2020/06/27 17:28:58 krw Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.73 2020/07/11 13:34:06 krw Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -261,9 +261,6 @@ ncr53c9x_attach(sc)
 	sc->sc_state = 0;
 	ncr53c9x_init(sc, 1);
 
-	/*
-	 * fill in the prototype scsi_link.
-	 */
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_id;
 	sc->sc_link.adapter = &ncr53c9x_switch;
@@ -273,9 +270,6 @@ ncr53c9x_attach(sc)
 
 	saa.saa_sc_link = &sc->sc_link;
 
-	/*
-	 * Now try to attach all the sub-devices
-	 */
 	config_found(&sc->sc_dev, &saa, scsiprint);
 }
 

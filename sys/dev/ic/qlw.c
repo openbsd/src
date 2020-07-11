@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.39 2020/07/05 21:54:44 krw Exp $ */
+/*	$OpenBSD: qlw.c,v 1.40 2020/07/11 13:34:06 krw Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -393,7 +393,6 @@ qlw_attach(struct qlw_softc *sc)
 	/* wait for the busses to settle */
 	delay(reset_delay * 1000000);
 
-	/* we should be good to go now, attach scsibus */
 	for (bus = 0; bus < sc->sc_numbusses; bus++) {
 		sc->sc_link[bus].adapter = &qlw_switch;
 		sc->sc_link[bus].adapter_softc = sc;
@@ -405,7 +404,6 @@ qlw_attach(struct qlw_softc *sc)
 
 		saa.saa_sc_link = &sc->sc_link[bus];
 
-		/* config_found() returns the scsibus attached to us */
 		sc->sc_scsibus[bus] = (struct scsibus_softc *)
 		    config_found(&sc->sc_dev, &saa, scsiprint);
 

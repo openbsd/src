@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.21 2020/07/10 19:43:09 krw Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.22 2020/07/11 13:34:06 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -235,21 +235,21 @@ vioblk_attach(struct device *parent, struct device *self, void *aux)
 		printf("\nCan't alloc reqs\n");
 		goto err;
 	}
+	DNPRINTF(1, "%s: qsize: %d\n", __func__, qsize);
+	printf("\n");
 
 	sc->sc_link.openings = sc->sc_nreqs;
 	sc->sc_link.adapter = &vioblk_switch;
 	sc->sc_link.pool = &sc->sc_iopool;
 	sc->sc_link.adapter_softc = self;
-	/* Only valid target/lun is 0/0. */
 	sc->sc_link.adapter_buswidth = 1;
 	sc->sc_link.luns = 1;
 	sc->sc_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
-	DNPRINTF(1, "%s: qsize: %d\n", __func__, qsize);
 	if (virtio_has_feature(vsc, VIRTIO_BLK_F_RO))
 		sc->sc_link.flags |= SDEV_READONLY;
 
 	saa.saa_sc_link = &sc->sc_link;
-	printf("\n");
+
 	config_found(self, &saa, scsiprint);
 
 	return;

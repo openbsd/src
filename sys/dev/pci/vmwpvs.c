@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmwpvs.c,v 1.18 2020/06/27 14:29:45 krw Exp $ */
+/*	$OpenBSD: vmwpvs.c,v 1.19 2020/07/11 13:34:06 krw Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -556,8 +556,6 @@ vmwpvs_attach(struct device *parent, struct device *self, void *aux)
 
 	vmwpvs_write(sc, VMWPVS_R_INTR_MASK, intmask);
 
-	/* controller init is done, lets plug the midlayer in */
-
 	scsi_iopool_init(&sc->sc_iopool, sc, vmwpvs_ccb_get, vmwpvs_ccb_put);
 
 	sc->sc_link.adapter = &vmwpvs_switch;
@@ -569,8 +567,8 @@ vmwpvs_attach(struct device *parent, struct device *self, void *aux)
 
 	saa.saa_sc_link = &sc->sc_link;
 
-	sc->sc_scsibus = (struct scsibus_softc *)config_found(&sc->sc_dev,
-	    &saa, scsiprint);
+	sc->sc_scsibus = (struct scsibus_softc *)config_found(&sc->sc_dev, &saa,
+	    scsiprint);
 
 	return;
 free_ccbs:

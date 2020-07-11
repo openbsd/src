@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.52 2020/06/27 17:28:58 krw Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.53 2020/07/11 13:34:06 krw Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -90,7 +90,6 @@ umass_scsi_attach(struct umass_softc *sc)
 
 	scsi_iopool_init(&scbus->sc_iopool, scbus, umass_io_get, umass_io_put);
 
-	/* Fill in the link. */
 	scbus->sc_link.adapter_buswidth = 2;
 	scbus->sc_link.adapter = &umass_scsi_switch;
 	scbus->sc_link.adapter_softc = sc;

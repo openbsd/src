@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.73 2020/06/27 17:28:58 krw Exp $ */
+/* $OpenBSD: mfii.c,v 1.74 2020/07/11 13:34:06 krw Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -790,8 +790,8 @@ mfii_attach(struct device *parent, struct device *self, void *aux)
 
 	saa.saa_sc_link = &sc->sc_link;
 
-	sc->sc_scsibus = (struct scsibus_softc *)
-	    config_found(&sc->sc_dev, &saa, scsiprint);
+	sc->sc_scsibus = (struct scsibus_softc *)config_found(&sc->sc_dev, &saa,
+	    scsiprint);
 
 	mfii_syspd(sc);
 

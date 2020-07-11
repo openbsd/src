@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.33 2020/06/27 17:28:58 krw Exp $	*/
+/*	$OpenBSD: aic6360.c,v 1.34 2020/07/11 13:34:06 krw Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 #ifdef DDB
@@ -263,9 +263,6 @@ aicattach(struct aic_softc *sc)
 
 	aic_init(sc);	/* init chip and driver */
 
-	/*
-	 * Fill in the prototype scsi_link
-	 */
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_initiator;
 	sc->sc_link.adapter = &aic_switch;

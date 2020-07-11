@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop.c,v 1.28 2020/06/27 17:28:58 krw Exp $	*/
+/*	$OpenBSD: oosiop.c,v 1.29 2020/07/11 13:34:06 krw Exp $	*/
 /*	$NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $	*/
 
 /*
@@ -256,9 +256,6 @@ oosiop_attach(struct oosiop_softc *sc)
 	sc->sc_active = 0;
 	oosiop_write_4(sc, OOSIOP_DSP, sc->sc_scrbase + Ent_wait_reselect);
 
-	/*
-	 * Fill in the sc_link.
-	 */
 	sc->sc_link.adapter = &oosiop_switch;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.openings = 1;	/* XXX */
@@ -269,9 +266,6 @@ oosiop_attach(struct oosiop_softc *sc)
 
 	saa.saa_sc_link = &sc->sc_link;
 
-	/*
-	 * Now try to attach all the sub devices.
-	 */
 	config_found(&sc->sc_dev, &saa, scsiprint);
 }
 

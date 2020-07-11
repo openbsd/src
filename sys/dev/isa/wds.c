@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.50 2020/07/04 18:50:55 krw Exp $	*/
+/*	$OpenBSD: wds.c,v 1.51 2020/07/11 13:34:06 krw Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -284,9 +284,6 @@ wdsattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, sc->sc_irq, IST_EDGE,
 	    IPL_BIO, wdsintr, sc, sc->sc_dev.dv_xname);
 
-	/*
-	 * fill in the prototype scsi_link.
-	 */
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_scsi_dev;
 	sc->sc_link.adapter = &wds_switch;
@@ -298,9 +295,6 @@ wdsattach(struct device *parent, struct device *self, void *aux)
 
 	saa.saa_sc_link = &sc->sc_link;
 
-	/*
-	 * ask the adapter what subunits are present
-	 */
 	config_found(self, &saa, wdsprint);
 }
 

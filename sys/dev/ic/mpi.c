@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.214 2020/06/27 14:29:45 krw Exp $ */
+/*	$OpenBSD: mpi.c,v 1.215 2020/07/11 13:34:06 krw Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -355,7 +355,6 @@ mpi_attach(struct mpi_softc *sc)
 	}
 #endif /* NBIO > 0 */
 
-	/* we should be good to go now, attach scsibus */
 	sc->sc_link.adapter = &mpi_switch;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = sc->sc_target;
@@ -365,8 +364,7 @@ mpi_attach(struct mpi_softc *sc)
 
 	saa.saa_sc_link = &sc->sc_link;
 
-	/* config_found() returns the scsibus attached to us */
-	sc->sc_scsibus = (struct scsibus_softc *) config_found(&sc->sc_dev,
+	sc->sc_scsibus = (struct scsibus_softc *)config_found(&sc->sc_dev,
 	    &saa, scsiprint);
 
 	/* do domain validation */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.72 2020/07/02 15:58:17 krw Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.73 2020/07/11 13:34:06 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -461,7 +461,6 @@ gdt_attach(struct gdt_softc *sc)
 #endif
 	gdt_cnt++;
 
-	/* Fill in the prototype scsi_link. */
 	if (sc->sc_ndevs == 0)
 		sc->sc_link.openings = 0;
 	else

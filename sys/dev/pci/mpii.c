@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.131 2020/07/09 22:48:05 krw Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.132 2020/07/11 13:34:06 krw Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -590,7 +590,6 @@ mpii_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pending = 1;
 	config_pending_incr();
 
-	/* we should be good to go now, attach scsibus */
 	sc->sc_link.adapter = &mpii_switch;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
@@ -601,7 +600,6 @@ mpii_attach(struct device *parent, struct device *self, void *aux)
 
 	saa.saa_sc_link = &sc->sc_link;
 
-	/* config_found() returns the scsibus attached to us */
 	sc->sc_scsibus = (struct scsibus_softc *) config_found(&sc->sc_dev,
 	    &saa, scsiprint);
 

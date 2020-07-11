@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.39 2020/06/27 14:29:45 krw Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.40 2020/07/11 13:34:06 krw Exp $	*/
 
 /*
  * Copyright (c) 2016, 2017 Mike Belopuhov
@@ -302,7 +302,6 @@ xbf_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_link.adapter = &xbf_switch;
 	sc->sc_link.adapter_softc = self;
-	/* Only valid target/lun is 0/0. */
 	sc->sc_link.adapter_buswidth = 1;
 	sc->sc_link.luns = 1;
 	sc->sc_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
@@ -310,6 +309,7 @@ xbf_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.pool = &sc->sc_iopool;
 
 	saa.saa_sc_link = &sc->sc_link;
+
 	sc->sc_scsibus = config_found(self, &saa, scsiprint);
 
 	xen_unplug_emulated(parent, XEN_UNPLUG_IDE | XEN_UNPLUG_IDESEC);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.55 2020/06/27 14:29:45 krw Exp $ */
+/*	$OpenBSD: qle.c,v 1.56 2020/07/11 13:34:06 krw Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -654,7 +654,6 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 		    DEVNAME(sc));
 	}
 
-	/* we should be good to go now, attach scsibus */
 	sc->sc_link.adapter = &qle_switch;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
@@ -679,7 +678,6 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 
 	saa.saa_sc_link = &sc->sc_link;
 
-	/* config_found() returns the scsibus attached to us */
 	sc->sc_scsibus = (struct scsibus_softc *)config_found(&sc->sc_dev,
 	    &saa, scsiprint);
 

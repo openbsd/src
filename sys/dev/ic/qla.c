@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.63 2020/06/27 14:29:45 krw Exp $ */
+/*	$OpenBSD: qla.c,v 1.64 2020/07/11 13:34:06 krw Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -672,7 +672,6 @@ qla_attach(struct qla_softc *sc)
 		    DEVNAME(sc));
 	}
 
-	/* we should be good to go now, attach scsibus */
 	sc->sc_link.adapter = &qla_switch;
 	sc->sc_link.adapter_softc = sc;
 	if (sc->sc_2k_logins) {
@@ -696,7 +695,6 @@ qla_attach(struct qla_softc *sc)
 
 	saa.saa_sc_link = &sc->sc_link;
 
-	/* config_found() returns the scsibus attached to us */
 	sc->sc_scsibus = (struct scsibus_softc *)config_found(&sc->sc_dev,
 	    &saa, scsiprint);
 
