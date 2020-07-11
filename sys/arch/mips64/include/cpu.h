@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.129 2020/05/31 06:23:58 dlg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.130 2020/07/11 15:18:08 visa Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -413,6 +413,7 @@ void	signotify(struct proc *);
 #if defined(_KERNEL) && !defined(_LOCORE)
 
 extern register_t protosr;
+extern int cpu_has_synced_cp0_count;
 extern int cpu_has_userlocal;
 
 #ifdef FPUEMUL

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.125 2020/07/06 13:33:08 pirofti Exp $ */
+/*	$OpenBSD: machdep.c,v 1.126 2020/07/11 15:18:08 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -99,6 +99,7 @@ struct uvm_constraint_range *uvm_md_constraints[] = { NULL };
 vm_map_t exec_map;
 vm_map_t phys_map;
 
+extern struct timecounter cp0_timecounter;
 extern uint8_t dt_blob_start[];
 
 struct boot_desc *octeon_boot_desc;
@@ -133,6 +134,7 @@ void		dumpconf(void);
 vaddr_t		mips_init(register_t, register_t, register_t, register_t);
 int		is_memory_range(paddr_t, psize_t, psize_t);
 void		octeon_memory_init(struct boot_info *);
+void		octeon_sync_tc(vaddr_t, uint64_t, uint64_t);
 int		octeon_cpuspeed(int *);
 void		octeon_tlb_init(void);
 static void	process_bootargs(void);
@@ -588,6 +590,7 @@ mips_init(register_t a0, register_t a1, register_t a2, register_t a3)
 
 	switch (octeon_model_family(prid)) {
 	case OCTEON_MODEL_FAMILY_CN73XX:
+	case OCTEON_MODEL_FAMILY_CN78XX:
 		ioclock_timecounter.tc_priv = (void *)FPA3_CLK_COUNT;
 		break;
 	default:
@@ -596,6 +599,9 @@ mips_init(register_t a0, register_t a1, register_t a2, register_t a3)
 	}
 	ioclock_timecounter.tc_frequency = octeon_ioclock_speed();
 	tc_init(&ioclock_timecounter);
+
+	cpu_has_synced_cp0_count = 1;
+	cp0_timecounter.tc_quality = 1000;
 
 	/*
 	 * Return the new kernel stack pointer.
@@ -695,7 +701,7 @@ octeon_ioclock_speed(void)
 void
 octeon_tlb_init(void)
 {
-	uint64_t cvmmemctl;
+	uint64_t clk_reg, cvmmemctl, frac, cmul, imul, val;
 	uint32_t hwrena = 0;
 	uint32_t pgrain = 0;
 	int chipid;
@@ -716,6 +722,55 @@ octeon_tlb_init(void)
 	 * Make sure Coprocessor 2 is disabled.
 	 */
 	setsr(getsr() & ~SR_COP_2_BIT);
+
+	/*
+	 * Synchronize this core's cycle counter with the system-wide
+	 * IO clock counter.
+	 *
+	 * The IO clock counter's value has to be scaled from the IO clock
+	 * frequency domain to the core clock frequency domain:
+	 *
+	 * cclk / cmul = iclk / imul
+	 * cclk = iclk * cmul / imul
+	 *
+	 * Division is very slow and possibly variable-time on the system,
+	 * so the synchronization routine uses multiplication:
+	 *
+	 * cclk = iclk * cmul * frac / 2^64,
+	 *
+	 * where frac = 2^64 / imul is precomputed.
+	 */
+	switch (octeon_model_family(chipid)) {
+	case OCTEON_MODEL_FAMILY_CN73XX:
+	case OCTEON_MODEL_FAMILY_CN78XX:
+		clk_reg = FPA3_CLK_COUNT;
+		break;
+	default:
+		clk_reg = IPD_CLK_COUNT;
+		break;
+	}
+	switch (octeon_ver) {
+	case OCTEON_2:
+		val = octeon_xkphys_read_8(MIO_RST_BOOT);
+		cmul = (val >> MIO_RST_BOOT_C_MUL_SHIFT) &
+		    MIO_RST_BOOT_C_MUL_MASK;
+		imul = (val >> MIO_RST_BOOT_PNR_MUL_SHIFT) &
+		    MIO_RST_BOOT_PNR_MUL_MASK;
+		break;
+	case OCTEON_3:
+		val = octeon_xkphys_read_8(RST_BOOT);
+		cmul = (val >> RST_BOOT_C_MUL_SHIFT) &
+		    RST_BOOT_C_MUL_MASK;
+		imul = (val >> RST_BOOT_PNR_MUL_SHIFT) &
+		    RST_BOOT_PNR_MUL_MASK;
+		break;
+	default:
+		cmul = 1;
+		imul = 1;
+		break;
+	}
+	frac = ((1ULL << 63) / imul) * 2;
+	octeon_sync_tc(PHYS_TO_XKPHYS(clk_reg, CCA_NC), cmul, frac);
 
 	/*
 	 * If the UserLocal register is available, let userspace

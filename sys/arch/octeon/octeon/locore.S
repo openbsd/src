@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.20 2019/07/17 14:36:32 visa Exp $ */
+/*	$OpenBSD: locore.S,v 1.21 2020/07/11 15:18:08 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -169,6 +169,38 @@ locore_start:
 	jr	ra
 	nop
 	.end	locore_start
+
+/*
+ * void octeon_sync_tc(vaddr_t reg, uint64_t mul, uint64_t frac)
+ */
+LEAF(octeon_sync_tc, 0)
+	/*
+	 * The measurement is done several times in a loop.
+	 * The initial iterations warm up the icache and train the branch
+	 * predictor to reduce jitter.
+	 * The final iteration performs the actual synchronization.
+	 */
+	li	t0, 5				# set number of iterations
+	di	t3				# disable all interrupts
+	MTC0_SR_IE_HAZARD
+1:
+	ld	t1, (a0)			# load data clock counter
+	dmultu	t1, a1				# multiply with mul
+	mflo	t1				# fetch result
+	beqz	a2, 2f				# skip if frac == 2^64
+	subu	t0, 1
+	dmultu	t1, a2				# multiply with frac
+	mfhi	t1				# fetch result divided by 2^64
+2:
+	mtc0	t1, COP_0_COUNT			# set core clock counter
+	MTC0_HAZARD
+	bnez	t0, 1b
+	nop
+	mtc0	t3, COP_0_STATUS_REG		# restore status register
+	MTC0_SR_IE_HAZARD
+	jr	ra
+	nop
+END(octeon_sync_tc)
 
 #if defined(MULTIPROCESSOR)
 LEAF(hw_cpu_spinup_trampoline, 0)

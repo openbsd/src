@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips64_machdep.c,v 1.32 2020/07/06 13:33:08 pirofti Exp $ */
+/*	$OpenBSD: mips64_machdep.c,v 1.33 2020/07/11 15:18:08 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
@@ -264,7 +264,6 @@ delay(int n)
 	}
 }
 
-#ifndef MULTIPROCESSOR
 u_int cp0_get_timecount(struct timecounter *);
 
 struct timecounter cp0_timecounter = {
@@ -283,7 +282,6 @@ cp0_get_timecount(struct timecounter *tc)
 {
 	return (cp0_get_count());
 }
-#endif
 
 /*
  * Calibrate cpu internal counter against the TOD clock if available.
@@ -337,12 +335,13 @@ cpu_initclocks()
 	cp0_calibrate(ci);
 
 #ifndef MULTIPROCESSOR
-	if (cpu_setperf == NULL) {
+	cpu_has_synced_cp0_count = 1;
+#endif
+	if (cpu_setperf == NULL && cpu_has_synced_cp0_count) {
 		cp0_timecounter.tc_frequency =
 		    (uint64_t)ci->ci_hw.clock / CP0_CYCLE_DIVIDER;
 		tc_init(&cp0_timecounter);
 	}
-#endif
 
 #ifdef DIAGNOSTIC
 	if (md_startclock == NULL)

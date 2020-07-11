@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.74 2020/05/29 04:42:24 deraadt Exp $ */
+/*	$OpenBSD: cpu.c,v 1.75 2020/07/11 15:18:08 visa Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -55,6 +55,7 @@ extern void cpu_idle_cycle_wait(void);
 void (*cpu_idle_cycle_func)(void) = cpu_idle_cycle_nop;
 
 vaddr_t	cache_valias_mask;
+int	cpu_has_synced_cp0_count;
 int	cpu_has_userlocal;
 
 struct cfattach cpu_ca = {
