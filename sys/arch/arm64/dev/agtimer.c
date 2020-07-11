@@ -1,4 +1,4 @@
-/* $OpenBSD: agtimer.c,v 1.13 2020/07/06 13:33:06 pirofti Exp $ */
+/* $OpenBSD: agtimer.c,v 1.14 2020/07/11 15:22:44 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
@@ -100,7 +100,7 @@ agtimer_readcnt64(void)
 	 * for the low 32 bits and the new value for the high 32 bits
 	 * upon roll-over of the low 32 bits.
 	 */
-	__asm volatile("isb" : : : "memory");
+	__asm volatile("isb" ::: "memory");
 	__asm volatile("mrs %x0, CNTVCT_EL0" : "=r" (val0));
 	__asm volatile("mrs %x0, CNTVCT_EL0" : "=r" (val1));
 	return ((val0 ^ val1) & 0x100000000ULL) ? val0 : val1;
@@ -129,8 +129,8 @@ agtimer_get_ctrl(void)
 static inline int
 agtimer_set_ctrl(uint32_t val)
 {
-	__asm volatile("msr CNTV_CTL_EL0, %x0" : : "r" (val));
-	__asm volatile("isb" : : : "memory");
+	__asm volatile("msr CNTV_CTL_EL0, %x0" :: "r" (val));
+	__asm volatile("isb" ::: "memory");
 
 	return (0);
 }
@@ -138,8 +138,8 @@ agtimer_set_ctrl(uint32_t val)
 static inline int
 agtimer_set_tval(uint32_t val)
 {
-	__asm volatile("msr CNTV_TVAL_EL0, %x0" : : "r" (val));
-	__asm volatile("isb" : : : "memory");
+	__asm volatile("msr CNTV_TVAL_EL0, %x0" :: "r" (val));
+	__asm volatile("isb" ::: "memory");
 
 	return (0);
 }
