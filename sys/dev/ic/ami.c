@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.245 2020/07/02 15:58:17 krw Exp $	*/
+/*	$OpenBSD: ami.c,v 1.246 2020/07/11 15:26:15 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -477,7 +477,6 @@ ami_attach(struct ami_softc *sc)
 	}
 
 	if (sc->sc_flags & AMI_BROKEN) {
-		sc->sc_link.openings = 1;
 		sc->sc_maxcmds = 1;
 		sc->sc_maxunits = 1;
 	} else {
@@ -491,8 +490,6 @@ ami_attach(struct ami_softc *sc)
 		 */
 		sc->sc_maxcmds -= AMI_MAXIOCTLCMDS + AMI_MAXPROCS *
 		    AMI_MAXRAWCMDS * sc->sc_channels;
-
-		sc->sc_link.openings = sc->sc_maxcmds;
 	}
 
 	if (ami_alloc_ccbs(sc, AMI_MAXCMDS + 1) != 0) {
@@ -520,10 +517,10 @@ ami_attach(struct ami_softc *sc)
 #ifdef AMI_DEBUG
 	printf(", FW %s, BIOS v%s, %dMB RAM\n"
 	    "%s: %d channels, %d %ss, %d logical drives, "
-	    "openings %d, max commands %d, quirks: %04x\n",
+	    "max commands %d, quirks: %04x\n",
 	    sc->sc_fwver, sc->sc_biosver, sc->sc_memory, DEVNAME(sc),
 	    sc->sc_channels, sc->sc_targets, p, sc->sc_nunits,
-	    sc->sc_link.openings, sc->sc_maxcmds, sc->sc_flags);
+	    sc->sc_maxcmds, sc->sc_flags);
 #else
 	printf(", FW %s, BIOS v%s, %dMB RAM\n"
 	    "%s: %d channels, %d %ss, %d logical drives\n",
@@ -538,6 +535,7 @@ ami_attach(struct ami_softc *sc)
 	/* lock around ioctl requests */
 	rw_init(&sc->sc_lock, NULL);
 
+	sc->sc_link.openings = sc->sc_maxcmds;
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter = &ami_switch;
 	sc->sc_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
