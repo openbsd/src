@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvmevar.h,v 1.17 2020/07/11 20:06:04 krw Exp $ */
+/*	$OpenBSD: nvmevar.h,v 1.18 2020/07/11 23:41:51 krw Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -102,6 +102,7 @@ struct nvme_softc {
 	struct scsi_iopool	sc_iopool;
 
 	struct scsi_link	sc_link;
+	struct scsibus_softc	*sc_scsibus;
 };
 
 int	nvme_attach(struct nvme_softc *);
