@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.216 2020/07/07 02:01:43 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.217 2020/07/11 22:59:05 naddy Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -914,7 +914,7 @@ exec_timekeep_map(struct process *pr)
 
 	pr->ps_timekeep = 0; /* no hint */
 	uao_reference(timekeep_object);
-	if (uvm_map(&pr->ps_vmspace->vm_map, &pr->ps_timekeep, round_page(timekeep_sz),
+	if (uvm_map(&pr->ps_vmspace->vm_map, &pr->ps_timekeep, timekeep_sz,
 	    timekeep_object, 0, 0, UVM_MAPFLAG(PROT_READ, PROT_READ,
 	    MAP_INHERIT_COPY, MADV_RANDOM, 0))) {
 		uao_detach(timekeep_object);
