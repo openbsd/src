@@ -1522,7 +1522,8 @@ drm_detach(struct device *self, int flags)
 	if (drm_core_check_feature(dev, DRIVER_GEM)) {
 		drm_gem_destroy(dev);
 
-		pool_destroy(&dev->objpl);
+		if (dev->driver->gem_size > 0)
+			pool_destroy(&dev->objpl);
 	}
 
 	drm_vblank_cleanup(dev);
