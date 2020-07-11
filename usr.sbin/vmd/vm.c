@@ -1720,11 +1720,12 @@ vcpu_exit_eptviolation(struct vm_run_params *vrp)
 	gpa = ve->vee.vee_gpa;
 
 	memset(&ix, 0, sizeof(ix));
-	dodis(instr, &ix);
+	dodis(instr, &ix, ve->vrs.vrs_sregs[VCPU_REGS_CS].vsi_ar & 0x2000 ?
+		SIZE_QWORD : SIZE_DWORD);
 	if (ix.incr && (gpa >= VMM_PCI_MMIO_BAR_BASE && gpa <= VMM_PCI_MMIO_BAR_END)) {
-		fprintf(stderr, "memhandler\n");
 		rax = &vrwp.vrwp_regs.vrs_gprs[ix.reg];
 		mem_handler(ix.dir, gpa, ix.size, rax);
+		fprintf(stderr, "memhandler : %.8llx %d\n", *rax, ix.incr);
 		/* skip this instruction when returning to vm */
 		vrwp.vrwp_regs.vrs_gprs[VCPU_REGS_RIP] += ix.incr;
 		if (ioctl(env->vmd_fd, VMM_IOC_WRITEREGS, &vrwp))
@@ -2345,12 +2346,13 @@ translate_gva(struct vm_exit* exit, uint64_t va, uint64_t* pa, int mode)
 			return (EPERM);
 
 		pte = pte | PG_U;
-		if (mode == PROT_WRITE)
+		if (mode == PROT_WRITE) {
 			pte = pte | PG_M;
-		if (write_mem(pte_paddr, &pte, pte_size)) {
-			log_warn("%s: failed to write back flags to pte",
-			    __func__);
-			return (EIO);
+			if (write_mem(pte_paddr, &pte, pte_size)) {
+				log_warn("%s: failed to write back flags to pte",
+				    __func__);
+				return (EIO);
+			}
 		}
 
 		/* XXX: EINVAL if in 32bit and  PG_PS is 1 but CR4.PSE is 0 */

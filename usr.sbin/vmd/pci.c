@@ -218,7 +218,7 @@ mem_chkint()
 	si.func = ptd.fun;
 	rc = ioctl(env->vmd_fd, VMM_IOC_GETINTR, &si);
 	if (ptd.pending != si.pending) {
-		fprintf(stderr, "pend:%d %d %d\n", ptd.pending, si.pending, rc);
+		//fprintf(stderr, "pend:%d %d %d\n", ptd.pending, si.pending, rc);
 		intr = pci.pci_devices[ptd.id].pd_irq;
 		ptd.pending = si.pending;
 	}
@@ -687,6 +687,8 @@ pci_handle_io(struct vm_run_params *vrp)
 
 	for (i = 0 ; i < pci.pci_dev_ct ; i++) {
 		for (j = 0 ; j < pci.pci_devices[i].pd_bar_ct; j++) {
+			if (pci.pci_devices[i].pd_bartype[j] != PCI_BAR_TYPE_IO)
+				continue;
 			b_lo = PCI_MAPREG_IO_ADDR(pci.pci_devices[i].pd_bar[j]);
 			b_hi = b_lo + VMM_PCI_IO_BAR_SIZE;
 			if (reg >= b_lo && reg < b_hi) {

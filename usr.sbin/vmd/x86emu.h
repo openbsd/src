@@ -133,6 +133,6 @@ enum {
   rGS,
 };
 
-int dodis(uint8_t *, struct insn *ix);
+int dodis(uint8_t *, struct insn *ix, int mode);
 
 #endif

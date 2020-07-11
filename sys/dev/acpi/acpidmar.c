@@ -2779,7 +2779,7 @@ acpidmar_intr_establish(void *ctx, int level, int (*func)(void *),
 	mtx_init(&pic->pic_mutex, level);
 #endif
 
-	return intr_establish(-1, pic, 0, IST_PULSE, level, func, arg, what);
+	return intr_establish(-1, pic, 0, IST_PULSE, level, NULL, func, arg, what);
 }
 
 int

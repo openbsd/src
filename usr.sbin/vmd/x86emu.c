@@ -347,18 +347,18 @@ struct opcode locodes[256] = {
    _(mov,   rvAX,  Ov, __, FLG_MEM),
    _(mov,     Ob, rAL, __, FLG_MEM),
    _(mov,     Ov,rvAX, __, FLG_MEM),
-   _(movsb,   Xb,  Yb, __, FLG_MEM), //rep
-   _(movsv,   Xv,  Yv, __, FLG_MEM), //rep
-   _(cmpsb,   Xb,  Yb, __, FLG_MEM), //repz/repnz
-   _(cmpsv,   Xb,  Yv, __, FLG_MEM), //repz/repnz
+   _(movsb,   Yb,  Xb, __, FLG_MEM), //rep
+   _(movsv,   Yv,  Xv, __, FLG_MEM), //rep
+   _(cmpsb,   Yb,  Xb, __, FLG_MEM), //repz/repnz
+   _(cmpsv,   Yb,  Xv, __, FLG_MEM), //repz/repnz
    _(test,   rAL,  Ib),
    _(test,  rvAX,  Iz),
    _(stosb,   Yb, rAL, __, FLG_MEM), //rep
    _(stosv,   Yv,rvAX, __, FLG_MEM), //rep
    _(lodsb,  rAL,  Xb, __, FLG_MEM),
    _(lodsv, rvAX,  Xv, __, FLG_MEM),
-   _(scasb,  rAL,  Yb, __, FLG_MEM), //repz/repnz
-   _(scasv, rvAX,  Yv, __, FLG_MEM), //repz/repnz
+   _(scasb,   Yb, rAL, __, FLG_MEM), //repz/repnz
+   _(scasv,   Yv,rvAX, __, FLG_MEM), //repz/repnz
 
    /* 0xb0 */
    _(mov,     gb,  Ib),
@@ -642,26 +642,51 @@ mkea(struct istate *i, int sz) {
     printf("(");
     if (rrr == 4) {
       i->sib = getb(i);
+      rrr = sib_bbb(i->sib);
       printf("%d,", 1 << sib_ss(i->sib));
       mkreg(i, SIZE_QWORD, sib_iii(i->sib), REX_X);
-      mkreg(i, SIZE_QWORD, sib_bbb(i->sib), REX_B);
-    }
-    else {
-      mkreg(i, SIZE_QWORD, rrr, REX_B);
     }
     if (mm == 1) {
+      mkreg(i, SIZE_QWORD, rrr, REX_B);
       mkimm(i, SIZE_BYTE, 0, "b[$0x%llx]");
     }
     else if (mm == 2) {
+      mkreg(i, SIZE_QWORD, rrr, REX_B);
       mkimm(i, SIZE_DWORD, 0, "d[$0x%llx]");
     }
     else if (rrr == 5) {
       /* Special case RIP-relative */
       mkimm(i, SIZE_DWORD, 0, "%%rip[$0x%llx]");
     }
+    else
+      mkreg(i, SIZE_QWORD, rrr, REX_B);
+    printf(") ");
+    break;
+  case SIZE_DWORD:
+    printf("(");
+    if (rrr == 4) {
+      i->sib = getb(i);
+      rrr = sib_bbb(i->sib);
+      printf("%d,", 1 << sib_ss(i->sib));
+      mkreg(i, SIZE_DWORD, sib_iii(i->sib), REX_X);
+    }
+    if (mm == 1) {
+      mkreg(i, SIZE_DWORD, rrr, REX_B);
+      mkimm(i, SIZE_BYTE, 0, "b[$0x%llx]");
+    }
+    else if (mm == 2) {
+      mkreg(i, SIZE_DWORD, rrr, REX_B);
+      mkimm(i, SIZE_DWORD, 0, "d[$0x%llx]");
+    }
+    else if (rrr == 5) {
+      /* Special case d32 */
+      mkimm(i, SIZE_DWORD, 0, "d32[$0x%llx]");
+    }
+    else
+      mkreg(i, SIZE_DWORD, rrr, REX_B);
+    printf(") ");
     break;
   }
-  printf(") ");
   return 0;
 }
 
@@ -743,13 +768,13 @@ Vreg(int arg) {
 }
 
 int
-dodis(uint8_t *ib, struct insn *ix) {
+dodis(uint8_t *ib, struct insn *ix, int mode) {
   struct istate i = { 0 };
   struct opcode o;
   int a0, a1;
 
   i.pc = ib;
-  i.mode = SIZE_QWORD;
+  i.mode = mode;
   o = decodeop(&i);
   printf("%c%c dis: %.2x %.2x %.2x %.2x | %-6s", 
 	(i.osz >> 16), (i.asz >> 16), i.seg, i.rep, i.rex, i.op, o.mnem);
