@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.62 2020/07/05 21:54:44 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.63 2020/07/11 14:25:59 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -75,9 +75,6 @@ ahc_attach(struct ahc_softc *ahc)
 
         s = splbio();
 
-	/*
-	 * fill in the prototype scsi_links.
-	 */
 	ahc->sc_channel.adapter_target = ahc->our_id;
 	if (ahc->features & AHC_WIDE)
 		ahc->sc_channel.adapter_buswidth = 16;
@@ -87,7 +84,6 @@ ahc_attach(struct ahc_softc *ahc)
 	ahc->sc_channel.pool = &ahc->sc_iopool;
 
 	if (ahc->features & AHC_TWIN) {
-		/* Configure the second scsi bus */
 		ahc->sc_channel_b = ahc->sc_channel;
 		ahc->sc_channel_b.adapter_target = ahc->our_id_b;
 	}
