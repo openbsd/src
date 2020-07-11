@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.62 2020/06/16 21:49:30 mortimer Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.63 2020/07/11 15:02:52 fcambus Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -1627,28 +1627,43 @@ rasops_vcons_copyrows(void *cookie, int src, int dst, int num)
 	struct rasops_info *ri = scr->rs_ri;
 	int cols = ri->ri_cols;
 	int row, col, rc;
+	int srcofs;
+	int move;
 
+	/* update the scrollback buffer if the entire screen is moving */
 	if (dst == 0 && (src + num == ri->ri_rows) && scr->rs_sbscreens > 0)
 		memmove(&scr->rs_bs[dst], &scr->rs_bs[src * cols],
-		    ((ri->ri_rows * (scr->rs_sbscreens + 1) * cols) -
-		    (src * cols)) * sizeof(struct wsdisplay_charcell));
-	else
+		    ri->ri_rows * scr->rs_sbscreens * cols
+		    * sizeof(struct wsdisplay_charcell));
+
+	/* copy everything */
+	if ((ri->ri_flg & RI_WRONLY) == 0 || !scr->rs_visible) {
 		memmove(&scr->rs_bs[dst * cols + scr->rs_dispoffset],
 		    &scr->rs_bs[src * cols + scr->rs_dispoffset],
 		    num * cols * sizeof(struct wsdisplay_charcell));
 
-	if (!scr->rs_visible)
-		return 0;
+		if (!scr->rs_visible)
+			return 0;
 
-	if ((ri->ri_flg & RI_WRONLY) == 0)
 		return ri->ri_copyrows(ri, src, dst, num);
+	}
 
-	for (row = dst; row < dst + num; row++) {
+	/* smart update, only redraw characters that are different */
+	srcofs = (src - dst) * cols;
+
+	for (move = 0 ; move < num ; move++) {
+		row = srcofs > 0 ? dst + move : dst + num - 1 - move;
 		for (col = 0; col < cols; col++) {
 			int off = row * cols + col + scr->rs_dispoffset;
+			int newc = scr->rs_bs[off+srcofs].uc;
+			int newa = scr->rs_bs[off+srcofs].attr;
 
-			rc = ri->ri_putchar(ri, row, col,
-			    scr->rs_bs[off].uc, scr->rs_bs[off].attr);
+			if (scr->rs_bs[off].uc == newc &&
+			    scr->rs_bs[off].attr == newa)
+				continue;
+			scr->rs_bs[off].uc = newc;
+			scr->rs_bs[off].attr = newa;
+			rc = ri->ri_putchar(ri, row, col, newc, newa);
 			if (rc != 0)
 				return rc;
 		}
