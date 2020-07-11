@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.18 2020/07/05 20:49:40 naddy Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.19 2020/07/11 11:43:57 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -23,7 +23,16 @@
  * User-visible definitions
  */
 
-/* Nothing yet */
+/* 
+ * CTL_MACHDEP definitions.
+ */
+#define CPU_ALTIVEC		1	/* altivec is present */
+#define CPU_MAXID		2	/* number of valid machdep ids */
+
+#define	CTL_MACHDEP_NAMES { \
+	{ 0, 0 }, \
+	{ "altivec", CTLTYPE_INT }, \
+}
 
 #ifdef _KERNEL
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.48 2020/07/10 17:09:37 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.49 2020/07/11 11:43:57 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -26,6 +26,7 @@
 #include <sys/reboot.h>
 #include <sys/signalvar.h>
 #include <sys/syscallargs.h>
+#include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/user.h>
 
@@ -879,11 +880,15 @@ int
 cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
 {
+	int altivec = 1;	/* Altivec is always supported */
+
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return ENOTDIR;		/* overloaded */
 
 	switch (name[0]) {
+	case CPU_ALTIVEC:
+		return (sysctl_rdint(oldp, oldlenp, newp, altivec));
 	default:
 		return EOPNOTSUPP;
 	}
