@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.h,v 1.5 2020/07/04 10:16:15 mpi Exp $ */
+/*	$OpenBSD: btrace.h,v 1.6 2020/07/11 14:52:14 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -40,13 +40,16 @@ int			 kelf_snprintsym(char *, size_t, unsigned long);
 
 /* map.c */
 struct map;
+struct hist;
 void			 map_clear(struct map *);
 void			 map_delete(struct map *, const char *);
 struct bt_arg		*map_get(struct map *, const char *);
 struct map		*map_insert(struct map *, const char *, struct bt_arg *,
-			    long);
+			    struct dt_evt *);
 void			 map_print(struct map *, size_t, const char *);
 void			 map_zero(struct map *);
+struct hist		*hist_increment(struct hist *, const char *, long);
+void			 hist_print(struct hist *, const char *);
 
 /* printf.c */
 int			 stmt_printf(struct bt_stmt *, struct dt_evt *);

@@ -8,8 +8,6 @@ Missing language features:
 - scratch variable ($name)
 - `args', tracepoint arguments support (requires kernel work)
 - str(args->buf, args->count)
-- @ = hist(x)
-- @ = lhist(x, min, max, step)
 - 'argv'
 - $1 support
 

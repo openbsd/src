@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parser.h,v 1.7 2020/04/23 18:36:51 mpi Exp $	*/
+/*	$OpenBSD: bt_parser.h,v 1.8 2020/07/11 14:52:14 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Martin Pieuchot <mpi@openbsd.org>
@@ -101,12 +101,13 @@ struct bt_var {
 struct bt_arg {
 	SLIST_ENTRY(bt_arg)	 ba_next;
 	void			*ba_value;
-	struct bt_arg		*ba_key;	/* key for maps */
+	struct bt_arg		*ba_key;	/* key for maps/histograms */
 	enum  bt_argtype {
 		B_AT_STR = 1,			/* C-style string */
 		B_AT_LONG,			/* Number (integer) */
 		B_AT_VAR,			/* global variable (@var) */
 		B_AT_MAP,			/* global map (@map[]) */
+		B_AT_HIST,			/* histogram */
 
 		B_AT_BI_PID,
 		B_AT_BI_TID,
@@ -140,6 +141,8 @@ struct bt_arg {
 	}			 ba_type;
 };
 
+#define BA_INITIALIZER(v, t)	{ { NULL }, (void *)(v), NULL, (t) }
+
 /*
  * Statements define what should be done with each event recorded
  * by the corresponding probe.
@@ -149,13 +152,14 @@ struct bt_stmt {
 	struct bt_var		*bs_var;	/* for STOREs */
 	SLIST_HEAD(, bt_arg)	 bs_args;
 	enum bt_action {
-		B_AC_STORE = 1,			/* @a = 3 */
-		B_AC_INSERT,			/* @map[key] = 42 */
+		B_AC_BUCKETIZE,			/* @h = hist(42) */
 		B_AC_CLEAR,			/* clear(@map) */
 		B_AC_DELETE,			/* delete(@map[key]) */
 		B_AC_EXIT,			/* exit() */
+		B_AC_INSERT,			/* @map[key] = 42 */
 		B_AC_PRINT,			/* print(@map, 10) */
 		B_AC_PRINTF,			/* printf("hello!\n") */
+		B_AC_STORE,			/* @a = 3 */
 		B_AC_TIME,			/* time("%H:%M:%S  ") */
 		B_AC_ZERO,			/* zero(@map) */
 	}			 bs_act;

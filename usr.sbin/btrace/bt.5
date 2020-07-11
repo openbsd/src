@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bt.5,v 1.5 2020/04/23 18:36:51 mpi Exp $
+.\"	$OpenBSD: bt.5,v 1.6 2020/07/11 14:52:14 mpi Exp $
 .\"
 .\" Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 23 2020 $
+.Dd $Mdocdate: July 11 2020 $
 .Dt BT 5
 .Os
 .Sh NAME
@@ -111,7 +111,7 @@ Thread ID of the current thread
 .Pp
 Functions:
 .Pp
-.Bl -tag -width "delete(@map[key])" -compact
+.Bl -tag -width "lhist(value, min, max, step)"
 .It Fn clear "@map"
 Delete all (key, value) pairs from
 .Va @map
@@ -122,6 +122,20 @@ from
 .Va @map
 .It Fn exit
 Terminate execution with exit code 0
+.It Fn hist "value"
+Increment the bucket corresponding  to
+.Va value
+in a power-of-two histogram
+.It Fn lhist "value" "min" "max" "step"
+Increment the bucket corresponding  to
+.Va value
+in the linear histogram spawning between the positive value
+.Va min
+and
+.Va max
+with buckets of
+.Va step
+size.
 .It Fn print "@map"
 Print all pairs from
 .Va @map
