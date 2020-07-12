@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.247 2020/07/11 19:28:07 krw Exp $	*/
+/*	$OpenBSD: ami.c,v 1.248 2020/07/12 00:48:59 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -579,11 +579,13 @@ ami_attach(struct ami_softc *sc)
 
 		rsc->sc_softc = sc;
 		rsc->sc_channel = rsc - sc->sc_rawsoftcs;
+		rsc->sc_proctarget = -1;
+
+		/* TODO fetch adapter_target from the controller */
+
 		rsc->sc_link.openings = sc->sc_maxcmds;
 		rsc->sc_link.adapter_softc = rsc;
 		rsc->sc_link.adapter = &ami_raw_switch;
-		rsc->sc_proctarget = -1;
-		/* TODO fetch it from the controller */
 		rsc->sc_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
 		rsc->sc_link.adapter_buswidth = 16;
 		rsc->sc_link.pool = &sc->sc_iopool;
