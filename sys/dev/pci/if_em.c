@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.355 2020/07/10 13:26:37 patrick Exp $ */
+/* $OpenBSD: if_em.c,v 1.356 2020/07/12 05:21:34 dlg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -270,9 +270,6 @@ void em_receive_checksum(struct em_softc *, struct em_rx_desc *,
 u_int	em_transmit_checksum_setup(struct em_queue *, struct mbuf *, u_int,
 	    u_int32_t *, u_int32_t *);
 void em_iff(struct em_softc *);
-#ifdef EM_DEBUG
-void em_print_hw_stats(struct em_softc *);
-#endif
 void em_update_link_status(struct em_softc *);
 int  em_get_buf(struct em_queue *, int);
 void em_enable_hw_vlans(struct em_softc *);
@@ -300,6 +297,12 @@ int  em_link_intr_msix(void *);
 void em_enable_queue_intr_msix(struct em_queue *);
 #else
 #define em_allocate_msix(_sc) 	(-1)
+#endif
+
+#if NKSTAT > 0
+void	em_kstat_attach(struct em_softc *);
+int	em_kstat_read(struct kstat *);
+void	em_tbi_adjust_stats(struct em_softc *, uint32_t, uint8_t *);
 #endif
 
 /*********************************************************************
@@ -561,8 +564,8 @@ em_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Initialize statistics */
 	em_clear_hw_cntrs(&sc->hw);
-#ifndef SMALL_KERNEL
-	em_update_stats_counters(sc);
+#if NKSTAT > 0
+	em_kstat_attach(sc);
 #endif
 	sc->hw.get_link_status = 1;
 	if (!defer)
@@ -1467,26 +1470,21 @@ em_iff(struct em_softc *sc)
 void
 em_local_timer(void *arg)
 {
-	struct ifnet   *ifp;
 	struct em_softc *sc = arg;
 	int s;
 
-	ifp = &sc->sc_ac.ac_if;
-
-	s = splnet();
-
-#ifndef SMALL_KERNEL
-	em_update_stats_counters(sc);
-#ifdef EM_DEBUG
-	if (ifp->if_flags & IFF_DEBUG && ifp->if_flags & IFF_RUNNING)
-		em_print_hw_stats(sc);
-#endif
-#endif
-	em_smartspeed(sc);
-
 	timeout_add_sec(&sc->timer_handle, 1);
 
+	s = splnet();
+	em_smartspeed(sc);
 	splx(s);
+
+#if NKSTAT > 0
+	if (sc->kstat != NULL && mtx_enter_try(&sc->kstat_mtx)) {
+		em_kstat_read(sc->kstat);
+		mtx_leave(&sc->kstat_mtx);
+	}
+#endif
 }
 
 void
@@ -2934,8 +2932,8 @@ em_rxeof(struct em_queue *que)
 			last_byte = *(mtod(m, caddr_t) + desc_len - 1);
 			if (TBI_ACCEPT(&sc->hw, status, desc->errors,
 			    pkt_len, last_byte)) {
-#ifndef SMALL_KERNEL
-				em_tbi_adjust_stats(&sc->hw, &sc->stats, 
+#if NKSTAT > 0
+				em_tbi_adjust_stats(sc,
 				    pkt_len, sc->hw.mac_addr);
 #endif
 				if (len > 0)
@@ -3396,228 +3394,365 @@ em_allocate_legacy(struct em_softc *sc)
 	return (0);
 }
 
+#if NKSTAT > 0
+/* this is used to look up the array of kstats quickly */
+enum em_stat {
+	em_stat_crcerrs,
+	em_stat_algnerrc,
+	em_stat_symerrs,
+	em_stat_rxerrc,
+	em_stat_mpc,
+	em_stat_scc,
+	em_stat_ecol,
+	em_stat_mcc,
+	em_stat_latecol,
+	em_stat_colc,
+	em_stat_dc,
+	em_stat_tncrs,
+	em_stat_sec,
+	em_stat_cexterr,
+	em_stat_rlec,
+	em_stat_xonrxc,
+	em_stat_xontxc,
+	em_stat_xoffrxc,
+	em_stat_xofftxc,
+	em_stat_fcruc,
+	em_stat_prc64,
+	em_stat_prc127,
+	em_stat_prc255,
+	em_stat_prc511,
+	em_stat_prc1023,
+	em_stat_prc1522,
+	em_stat_gprc,
+	em_stat_bprc,
+	em_stat_mprc,
+	em_stat_gptc,
+	em_stat_gorc,
+	em_stat_gotc,
+	em_stat_rnbc,
+	em_stat_ruc,
+	em_stat_rfc,
+	em_stat_roc,
+	em_stat_rjc,
+	em_stat_mgtprc,
+	em_stat_mgtpdc,
+	em_stat_mgtptc,
+	em_stat_tor,
+	em_stat_tot,
+	em_stat_tpr,
+	em_stat_tpt,
+	em_stat_ptc64,
+	em_stat_ptc127,
+	em_stat_ptc255,
+	em_stat_ptc511,
+	em_stat_ptc1023,
+	em_stat_ptc1522,
+	em_stat_mptc,
+	em_stat_bptc,
+#if 0
+	em_stat_tsctc,
+	em_stat_tsctf,
+#endif
 
-#ifndef SMALL_KERNEL
+	em_stat_count,
+};
+
+struct em_counter {
+	const char		*name;
+	enum kstat_kv_unit	 unit;
+	uint32_t		 reg;
+};
+
+static const struct em_counter em_counters[em_stat_count] = {
+	[em_stat_crcerrs] =
+	    { "rx crc errs",	KSTAT_KV_U_PACKETS,	E1000_CRCERRS },
+	[em_stat_algnerrc] = /* >= em_82543 */
+	    { "rx align errs",	KSTAT_KV_U_PACKETS,	0 },
+	[em_stat_symerrs] = /* >= em_82543 */
+	    { "rx align errs",	KSTAT_KV_U_PACKETS,	0 },
+	[em_stat_rxerrc] =
+	    { "rx errs",	KSTAT_KV_U_PACKETS,	E1000_RXERRC },
+	[em_stat_mpc] =
+	    { "rx missed",	KSTAT_KV_U_PACKETS,	E1000_MPC },
+	[em_stat_scc] =
+	    { "tx single coll",	KSTAT_KV_U_PACKETS,	E1000_SCC },
+	[em_stat_ecol] =
+	    { "tx excess coll",	KSTAT_KV_U_PACKETS,	E1000_ECOL },
+	[em_stat_mcc] =
+	    { "tx multi coll",	KSTAT_KV_U_PACKETS,	E1000_MCC },
+	[em_stat_latecol] =
+	    { "tx late coll",	KSTAT_KV_U_PACKETS,	E1000_LATECOL },
+	[em_stat_colc] =
+	    { "tx coll",	KSTAT_KV_U_NONE,	E1000_COLC },
+	[em_stat_dc] =
+	    { "tx defers",	KSTAT_KV_U_NONE,	E1000_DC },
+	[em_stat_tncrs] = /* >= em_82543 */
+	    { "tx no CRS",	KSTAT_KV_U_PACKETS,	0 },
+	[em_stat_sec] =
+	    { "seq errs",	KSTAT_KV_U_NONE,	E1000_SEC },
+	[em_stat_cexterr] = /* >= em_82543 */
+	    { "carr ext errs",	KSTAT_KV_U_PACKETS,	0 },
+	[em_stat_rlec] =
+	    { "rx len errs",	KSTAT_KV_U_PACKETS,	E1000_RLEC },
+	[em_stat_xonrxc] =
+	    { "rx xon",		KSTAT_KV_U_PACKETS,	E1000_XONRXC },
+	[em_stat_xontxc] =
+	    { "tx xon",		KSTAT_KV_U_PACKETS,	E1000_XONTXC },
+	[em_stat_xoffrxc] =
+	    { "rx xoff",	KSTAT_KV_U_PACKETS,	E1000_XOFFRXC },
+	[em_stat_xofftxc] =
+	    { "tx xoff",	KSTAT_KV_U_PACKETS,	E1000_XOFFTXC },
+	[em_stat_fcruc] =
+	    { "FC unsupported",	KSTAT_KV_U_PACKETS,	E1000_FCRUC },
+	[em_stat_prc64] =
+	    { "rx 64B",		KSTAT_KV_U_PACKETS,	E1000_PRC64 },
+	[em_stat_prc127] =
+	    { "rx 65-127B",	KSTAT_KV_U_PACKETS,	E1000_PRC127 },
+	[em_stat_prc255] =
+	    { "rx 128-255B",	KSTAT_KV_U_PACKETS,	E1000_PRC255 },
+	[em_stat_prc511] =
+	    { "rx 256-511B",	KSTAT_KV_U_PACKETS,	E1000_PRC511 },
+	[em_stat_prc1023] =
+	    { "rx 512-1023B",	KSTAT_KV_U_PACKETS,	E1000_PRC1023 },
+	[em_stat_prc1522] =
+	    { "rx 1024-maxB",	KSTAT_KV_U_PACKETS,	E1000_PRC1522 },
+	[em_stat_gprc] =
+	    { "rx good",	KSTAT_KV_U_PACKETS,	E1000_GPRC },
+	[em_stat_bprc] =
+	    { "rx bcast",	KSTAT_KV_U_PACKETS,	E1000_BPRC },
+	[em_stat_mprc] =
+	    { "rx mcast",	KSTAT_KV_U_PACKETS,	E1000_MPRC },
+	[em_stat_gptc] =
+	    { "tx good",	KSTAT_KV_U_PACKETS,	E1000_GPTC },
+	[em_stat_gorc] = /* 64bit */
+	    { "rx good",	KSTAT_KV_U_BYTES,	0 },
+	[em_stat_gotc] = /* 64bit */
+	    { "tx good",	KSTAT_KV_U_BYTES,	0 },
+	[em_stat_rnbc] =
+	    { "rx no buffers",	KSTAT_KV_U_PACKETS,	E1000_RNBC },
+	[em_stat_ruc] =
+	    { "rx undersize",	KSTAT_KV_U_PACKETS,	E1000_RUC },
+	[em_stat_rfc] =
+	    { "rx fragments",	KSTAT_KV_U_PACKETS,	E1000_RFC },
+	[em_stat_roc] =
+	    { "rx oversize",	KSTAT_KV_U_PACKETS,	E1000_ROC },
+	[em_stat_rjc] =
+	    { "rx jabbers",	KSTAT_KV_U_PACKETS,	E1000_RJC },
+	[em_stat_mgtprc] =
+	    { "rx mgmt",	KSTAT_KV_U_PACKETS,	E1000_MGTPRC },
+	[em_stat_mgtpdc] =
+	    { "rx mgmt drops",	KSTAT_KV_U_PACKETS,	E1000_MGTPDC },
+	[em_stat_mgtptc] =
+	    { "tx mgmt",	KSTAT_KV_U_PACKETS,	E1000_MGTPTC },
+	[em_stat_tor] = /* 64bit */
+	    { "rx total",	KSTAT_KV_U_BYTES,	0 },
+	[em_stat_tot] = /* 64bit */
+	    { "tx total",	KSTAT_KV_U_BYTES,	0 },
+	[em_stat_tpr] =
+	    { "rx total",	KSTAT_KV_U_PACKETS,	E1000_TPR },
+	[em_stat_tpt] =
+	    { "tx total",	KSTAT_KV_U_PACKETS,	E1000_TPT },
+	[em_stat_ptc64] =
+	    { "tx 64B",		KSTAT_KV_U_PACKETS,	E1000_PTC64 },
+	[em_stat_ptc127] =
+	    { "tx 65-127B",	KSTAT_KV_U_PACKETS,	E1000_PTC127 },
+	[em_stat_ptc255] =
+	    { "tx 128-255B",	KSTAT_KV_U_PACKETS,	E1000_PTC255 },
+	[em_stat_ptc511] =
+	    { "tx 256-511B",	KSTAT_KV_U_PACKETS,	E1000_PTC511 },
+	[em_stat_ptc1023] =
+	    { "tx 512-1023B",	KSTAT_KV_U_PACKETS,	E1000_PTC1023 },
+	[em_stat_ptc1522] =
+	    { "tx 1024-maxB",	KSTAT_KV_U_PACKETS,	E1000_PTC1522 },
+	[em_stat_mptc] =
+	    { "tx mcast",	KSTAT_KV_U_PACKETS,	E1000_MPTC },
+	[em_stat_bptc] =
+	    { "tx bcast",	KSTAT_KV_U_PACKETS,	E1000_BPTC },
+};
+
 /**********************************************************************
  *
  *  Update the board statistics counters. 
  *
  **********************************************************************/
-void
-em_update_stats_counters(struct em_softc *sc)
+int
+em_kstat_read(struct kstat *ks)
 {
-	struct em_queue *que = sc->queues; /* Use only first queue. */
-	struct ifnet   *ifp = &sc->sc_ac.ac_if;
-	uint64_t	colc, rxerrc, crcerrs, algnerrc;
-	uint64_t	ruc, roc, mpc, cexterr;
-	uint64_t	ecol, latecol;
+	struct em_softc *sc = ks->ks_softc;
+	struct em_hw *hw = &sc->hw;
+	struct kstat_kv *kvs = ks->ks_data;
+	uint32_t lo, hi;
+	unsigned int i;
 
-	crcerrs = E1000_READ_REG(&sc->hw, CRCERRS);
-	sc->stats.crcerrs += crcerrs;
-	mpc = E1000_READ_REG(&sc->hw, MPC);
-	sc->stats.mpc += mpc;
-	ecol = E1000_READ_REG(&sc->hw, ECOL);
-	sc->stats.ecol += ecol;
+	for (i = 0; i < nitems(em_counters); i++) {
+		const struct em_counter *c = &em_counters[i];
+		if (c->reg == 0)
+			continue;
 
-	latecol = E1000_READ_REG(&sc->hw, LATECOL);
-	sc->stats.latecol += latecol;
-	colc = E1000_READ_REG(&sc->hw, COLC);
-	sc->stats.colc += colc;
+		kstat_kv_u64(&kvs[i]) += EM_READ_REG(hw,
+		    E1000_REG_TR(hw, c->reg)); /* wtf */
+	}
 
-	ruc = E1000_READ_REG(&sc->hw, RUC);
-	sc->stats.ruc += ruc;
-	roc = E1000_READ_REG(&sc->hw, ROC);
-	sc->stats.roc += roc;
+	/* Handle the exceptions. */
 
-	algnerrc = rxerrc = cexterr = 0;
 	if (sc->hw.mac_type >= em_82543) {
-		algnerrc = E1000_READ_REG(&sc->hw, ALGNERRC);
-		rxerrc = E1000_READ_REG(&sc->hw, RXERRC);
-		cexterr = E1000_READ_REG(&sc->hw, CEXTERR);
+		kstat_kv_u64(&kvs[em_stat_algnerrc]) +=
+		    E1000_READ_REG(hw, ALGNERRC);
+		kstat_kv_u64(&kvs[em_stat_rxerrc]) +=
+		    E1000_READ_REG(hw, RXERRC);
+		kstat_kv_u64(&kvs[em_stat_cexterr]) +=
+		    E1000_READ_REG(hw, CEXTERR);
+		kstat_kv_u64(&kvs[em_stat_tncrs]) +=
+		    E1000_READ_REG(hw, TNCRS);
+#if 0
+		sc->stats.tsctc += 
+		E1000_READ_REG(hw, TSCTC);
+		sc->stats.tsctfc += 
+		E1000_READ_REG(hw, TSCTFC);
+#endif
 	}
-	sc->stats.algnerrc += algnerrc;
-	sc->stats.rxerrc += rxerrc;
-	sc->stats.cexterr += cexterr;
-
-#ifdef EM_DEBUG
-	if (sc->hw.media_type == em_media_type_copper ||
-	    (E1000_READ_REG(&sc->hw, STATUS) & E1000_STATUS_LU)) {
-		sc->stats.symerrs += E1000_READ_REG(&sc->hw, SYMERRS);
-		sc->stats.sec += E1000_READ_REG(&sc->hw, SEC);
-	}
-	sc->stats.scc += E1000_READ_REG(&sc->hw, SCC);
-
-	sc->stats.mcc += E1000_READ_REG(&sc->hw, MCC);
-	sc->stats.dc += E1000_READ_REG(&sc->hw, DC);
-	sc->stats.rlec += E1000_READ_REG(&sc->hw, RLEC);
-	sc->stats.xonrxc += E1000_READ_REG(&sc->hw, XONRXC);
-	sc->stats.xontxc += E1000_READ_REG(&sc->hw, XONTXC);
-	sc->stats.xoffrxc += E1000_READ_REG(&sc->hw, XOFFRXC);
-	sc->stats.xofftxc += E1000_READ_REG(&sc->hw, XOFFTXC);
-	sc->stats.fcruc += E1000_READ_REG(&sc->hw, FCRUC);
-	sc->stats.prc64 += E1000_READ_REG(&sc->hw, PRC64);
-	sc->stats.prc127 += E1000_READ_REG(&sc->hw, PRC127);
-	sc->stats.prc255 += E1000_READ_REG(&sc->hw, PRC255);
-	sc->stats.prc511 += E1000_READ_REG(&sc->hw, PRC511);
-	sc->stats.prc1023 += E1000_READ_REG(&sc->hw, PRC1023);
-	sc->stats.prc1522 += E1000_READ_REG(&sc->hw, PRC1522);
-	sc->stats.gprc += E1000_READ_REG(&sc->hw, GPRC);
-	sc->stats.bprc += E1000_READ_REG(&sc->hw, BPRC);
-	sc->stats.mprc += E1000_READ_REG(&sc->hw, MPRC);
-	sc->stats.gptc += E1000_READ_REG(&sc->hw, GPTC);
 
 	/* For the 64-bit byte counters the low dword must be read first. */
 	/* Both registers clear on the read of the high dword */
 
-	sc->stats.gorcl += E1000_READ_REG(&sc->hw, GORCL); 
-	sc->stats.gorch += E1000_READ_REG(&sc->hw, GORCH);
-	sc->stats.gotcl += E1000_READ_REG(&sc->hw, GOTCL);
-	sc->stats.gotch += E1000_READ_REG(&sc->hw, GOTCH);
+	lo = E1000_READ_REG(hw, GORCL);
+	hi = E1000_READ_REG(hw, GORCH);
+	kstat_kv_u64(&kvs[em_stat_gorc]) +=
+	    ((uint64_t)hi << 32) | (uint64_t)lo;
 
-	sc->stats.rnbc += E1000_READ_REG(&sc->hw, RNBC);
-	sc->stats.rfc += E1000_READ_REG(&sc->hw, RFC);
-	sc->stats.rjc += E1000_READ_REG(&sc->hw, RJC);
+	lo = E1000_READ_REG(hw, GOTCL);
+	hi = E1000_READ_REG(hw, GOTCH);
+	kstat_kv_u64(&kvs[em_stat_gotc]) +=
+	    ((uint64_t)hi << 32) | (uint64_t)lo;
 
-	sc->stats.torl += E1000_READ_REG(&sc->hw, TORL);
-	sc->stats.torh += E1000_READ_REG(&sc->hw, TORH);
-	sc->stats.totl += E1000_READ_REG(&sc->hw, TOTL);
-	sc->stats.toth += E1000_READ_REG(&sc->hw, TOTH);
+	lo = E1000_READ_REG(hw, TORL);
+	hi = E1000_READ_REG(hw, TORH);
+	kstat_kv_u64(&kvs[em_stat_tor]) +=
+	    ((uint64_t)hi << 32) | (uint64_t)lo;
 
-	sc->stats.tpr += E1000_READ_REG(&sc->hw, TPR);
-	sc->stats.tpt += E1000_READ_REG(&sc->hw, TPT);
-	sc->stats.ptc64 += E1000_READ_REG(&sc->hw, PTC64);
-	sc->stats.ptc127 += E1000_READ_REG(&sc->hw, PTC127);
-	sc->stats.ptc255 += E1000_READ_REG(&sc->hw, PTC255);
-	sc->stats.ptc511 += E1000_READ_REG(&sc->hw, PTC511);
-	sc->stats.ptc1023 += E1000_READ_REG(&sc->hw, PTC1023);
-	sc->stats.ptc1522 += E1000_READ_REG(&sc->hw, PTC1522);
-	sc->stats.mptc += E1000_READ_REG(&sc->hw, MPTC);
-	sc->stats.bptc += E1000_READ_REG(&sc->hw, BPTC);
-	sc->stats.sdpc += E1000_READ_REG(&sc->hw, SDPC);
-	sc->stats.mngpdc += E1000_READ_REG(&sc->hw, MGTPDC);
-	sc->stats.mngprc += E1000_READ_REG(&sc->hw, MGTPRC);
-	sc->stats.mngptc += E1000_READ_REG(&sc->hw, MGTPTC);
-	sc->stats.b2ospc += E1000_READ_REG(&sc->hw, B2OSPC);
-	sc->stats.o2bgptc += E1000_READ_REG(&sc->hw, O2BGPTC);
-	sc->stats.b2ogprc += E1000_READ_REG(&sc->hw, B2OGPRC);
-	sc->stats.o2bspc += E1000_READ_REG(&sc->hw, O2BSPC);
-	sc->stats.rpthc += E1000_READ_REG(&sc->hw, RPTHC);
+	lo = E1000_READ_REG(hw, TOTL);
+	hi = E1000_READ_REG(hw, TOTH);
+	kstat_kv_u64(&kvs[em_stat_tot]) +=
+	    ((uint64_t)hi << 32) | (uint64_t)lo;
 
-	if (sc->hw.mac_type >= em_82543) {
-		sc->stats.tncrs += 
-		E1000_READ_REG(&sc->hw, TNCRS);
-		sc->stats.tsctc += 
-		E1000_READ_REG(&sc->hw, TSCTC);
-		sc->stats.tsctfc += 
-		E1000_READ_REG(&sc->hw, TSCTFC);
-	}
-#endif
+	getnanouptime(&ks->ks_updated);
 
-	/* Fill out the OS statistics structure */
-	ifp->if_collisions = colc;
-
-	/* Rx Errors */
-	ifp->if_ierrors =
-	    que->rx.dropped_pkts +
-	    rxerrc +
-	    crcerrs +
-	    algnerrc +
-	    ruc +
-	    roc +
-	    mpc +
-	    cexterr +
-	    sc->rx_overruns;
-
-	/* Tx Errors */
-	ifp->if_oerrors = ecol + latecol +
-	    sc->watchdog_events;
+	return (0);
 }
 
-#ifdef EM_DEBUG
-/**********************************************************************
- *
- *  This routine is called only when IFF_DEBUG is enabled.
- *  This routine provides a way to take a look at important statistics
- *  maintained by the driver and hardware.
- *
- **********************************************************************/
 void
-em_print_hw_stats(struct em_softc *sc)
+em_kstat_attach(struct em_softc *sc)
 {
-	const char * const unit = DEVNAME(sc);
-	struct em_queue *que;
+	struct kstat *ks;
+	struct kstat_kv *kvs;
+	unsigned int i;
 
-	printf("%s: Excessive collisions = %lld\n", unit,
-		(long long)sc->stats.ecol);
-	printf("%s: Symbol errors = %lld\n", unit,
-		(long long)sc->stats.symerrs);
-	printf("%s: Sequence errors = %lld\n", unit,
-		(long long)sc->stats.sec);
-	printf("%s: Defer count = %lld\n", unit,
-		(long long)sc->stats.dc);
+	mtx_init(&sc->kstat_mtx, IPL_SOFTCLOCK);
 
-	printf("%s: Missed Packets = %lld\n", unit,
-		(long long)sc->stats.mpc);
-	printf("%s: Receive No Buffers = %lld\n", unit,
-		(long long)sc->stats.rnbc);
-	/* RLEC is inaccurate on some hardware, calculate our own */
-	printf("%s: Receive Length Errors = %lld\n", unit,
-		((long long)sc->stats.roc +
-		(long long)sc->stats.ruc));
-	printf("%s: Receive errors = %lld\n", unit,
-		(long long)sc->stats.rxerrc);
-	printf("%s: Crc errors = %lld\n", unit,
-		(long long)sc->stats.crcerrs);
-	printf("%s: Alignment errors = %lld\n", unit,
-		(long long)sc->stats.algnerrc);
-	printf("%s: Carrier extension errors = %lld\n", unit,
-		(long long)sc->stats.cexterr);
+	ks = kstat_create(DEVNAME(sc), 0, "em-stats", 0,
+	    KSTAT_T_KV, 0);
+	if (ks == NULL)
+		return;
 
-	printf("%s: RX overruns = %ld\n", unit,
-		sc->rx_overruns);
-	printf("%s: watchdog timeouts = %ld\n", unit,
-		sc->watchdog_events);
-
-	printf("%s: XON Rcvd = %lld\n", unit,
-		(long long)sc->stats.xonrxc);
-	printf("%s: XON Xmtd = %lld\n", unit,
-		(long long)sc->stats.xontxc);
-	printf("%s: XOFF Rcvd = %lld\n", unit,
-		(long long)sc->stats.xoffrxc);
-	printf("%s: XOFF Xmtd = %lld\n", unit,
-		(long long)sc->stats.xofftxc);
-
-	printf("%s: Good Packets Rcvd = %lld\n", unit,
-		(long long)sc->stats.gprc);
-	printf("%s: Good Packets Xmtd = %lld\n", unit,
-		(long long)sc->stats.gptc);
-	printf("%s: Switch Drop Packet Count = %lld\n", unit,
-	    (long long)sc->stats.sdpc);
-	printf("%s: Management Packets Dropped Count  = %lld\n", unit,
-	    (long long)sc->stats.mngptc);
-	printf("%s: Management Packets Received Count  = %lld\n", unit,
-	    (long long)sc->stats.mngprc);
-	printf("%s: Management Packets Transmitted Count  = %lld\n", unit,
-	    (long long)sc->stats.mngptc);
-	printf("%s: OS2BMC Packets Sent by MC Count  = %lld\n", unit,
-	    (long long)sc->stats.b2ospc);
-	printf("%s: OS2BMC Packets Received by MC Count  = %lld\n", unit,
-	    (long long)sc->stats.o2bgptc);
-	printf("%s: OS2BMC Packets Received by Host Count  = %lld\n", unit,
-	    (long long)sc->stats.b2ogprc);
-	printf("%s: OS2BMC Packets Transmitted by Host Count  = %lld\n", unit,
-	    (long long)sc->stats.o2bspc);
-	printf("%s: Multicast Packets Received Count  = %lld\n", unit,
-	    (long long)sc->stats.mprc);
-	printf("%s: Rx Packets to Host Count = %lld\n", unit,
-	    (long long)sc->stats.rpthc);
-	FOREACH_QUEUE(sc, que) {
-		printf("%s: Queue %d Good Packets Received = %d\n", unit,
-		    que->me, E1000_READ_REG(&sc->hw, PQGPRC(que->me)));
+	kvs = mallocarray(nitems(em_counters), sizeof(*kvs),
+	    M_DEVBUF, M_WAITOK|M_ZERO);
+	for (i = 0; i < nitems(em_counters); i++) {
+		const struct em_counter *c = &em_counters[i];
+		kstat_kv_unit_init(&kvs[i], c->name,
+		    KSTAT_KV_T_COUNTER64, c->unit);
 	}
-}
-#endif
 
+	ks->ks_softc = sc;
+	ks->ks_data = kvs;
+	ks->ks_datalen = nitems(em_counters) * sizeof(*kvs);
+	ks->ks_read = em_kstat_read;
+	kstat_set_mutex(ks, &sc->kstat_mtx);
+
+	kstat_install(ks);
+}
+
+/******************************************************************************
+ * Adjusts the statistic counters when a frame is accepted by TBI_ACCEPT
+ *****************************************************************************/
+void
+em_tbi_adjust_stats(struct em_softc *sc, uint32_t frame_len, uint8_t *mac_addr)
+{
+	struct em_hw *hw = &sc->hw;
+	struct kstat *ks = sc->kstat;
+	struct kstat_kv *kvs;
+
+	if (ks == NULL)
+		return;
+
+	/* First adjust the frame length. */
+	frame_len--;
+
+	mtx_enter(&sc->kstat_mtx);
+	kvs = ks->ks_data;
+
+	/*
+	 * We need to adjust the statistics counters, since the hardware
+	 * counters overcount this packet as a CRC error and undercount the
+	 * packet as a good packet
+	 */
+
+	/* This packet should not be counted as a CRC error.	*/
+	kstat_kv_u64(&kvs[em_stat_crcerrs])--;
+	/* This packet does count as a Good Packet Received.	*/
+	kstat_kv_u64(&kvs[em_stat_gprc])++;
+
+	/* Adjust the Good Octets received counters		*/
+	kstat_kv_u64(&kvs[em_stat_gorc]) += frame_len;
+
+	/*
+	 * Is this a broadcast or multicast?  Check broadcast first, since
+	 * the test for a multicast frame will test positive on a broadcast
+	 * frame.
+	 */
+	if (ETHER_IS_BROADCAST(mac_addr)) {
+		/* Broadcast packet */
+		kstat_kv_u64(&kvs[em_stat_bprc])++;
+	} else if (ETHER_IS_MULTICAST(mac_addr)) { 
+		/* Multicast packet */
+		kstat_kv_u64(&kvs[em_stat_mprc])++;
+	}
+
+	if (frame_len == hw->max_frame_size) {
+		/*
+		 * In this case, the hardware has overcounted the number of
+		 * oversize frames.
+		 */
+		kstat_kv_u64(&kvs[em_stat_roc])--;
+	}
+
+	/*
+	 * Adjust the bin counters when the extra byte put the frame in the
+	 * wrong bin. Remember that the frame_len was adjusted above.
+	 */
+	if (frame_len == 64) {
+		kstat_kv_u64(&kvs[em_stat_prc64])++;
+		kstat_kv_u64(&kvs[em_stat_prc127])--;
+	} else if (frame_len == 127) {
+		kstat_kv_u64(&kvs[em_stat_prc127])++;
+		kstat_kv_u64(&kvs[em_stat_prc255])--;
+	} else if (frame_len == 255) {
+		kstat_kv_u64(&kvs[em_stat_prc255])++;
+		kstat_kv_u64(&kvs[em_stat_prc511])--;
+	} else if (frame_len == 511) {
+		kstat_kv_u64(&kvs[em_stat_prc511])++;
+		kstat_kv_u64(&kvs[em_stat_prc1023])--;
+	} else if (frame_len == 1023) {
+		kstat_kv_u64(&kvs[em_stat_prc1023])++;
+		kstat_kv_u64(&kvs[em_stat_prc1522])--;
+	} else if (frame_len == 1522) {
+		kstat_kv_u64(&kvs[em_stat_prc1522])++;
+	}
+
+	mtx_leave(&sc->kstat_mtx);
+}
+#endif /* NKSTAT > 0 */
+
+#ifndef SMALL_KERNEL
 int
 em_allocate_msix(struct em_softc *sc)
 {
