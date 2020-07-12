@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.c,v 1.9 2020/07/10 13:26:42 patrick Exp $ */
+/*	$OpenBSD: if_wg.c,v 1.10 2020/07/12 18:54:23 kn Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -1666,7 +1666,9 @@ wg_decap(struct wg_softc *sc, struct mbuf *m)
 	m->m_pkthdr.ph_ifidx = sc->sc_if.if_index;
 	m->m_pkthdr.ph_rtableid = sc->sc_if.if_rdomain;
 	m->m_flags &= ~(M_MCAST | M_BCAST);
+#if NPF > 0
 	pf_pkt_addr_changed(m);
+#endif /* NPF > 0 */
 
 done:
 	t->t_mbuf = m;
