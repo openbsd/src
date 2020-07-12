@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.113 2020/06/27 17:28:58 krw Exp $ */
+/*	$OpenBSD: arc.c,v 1.114 2020/07/12 11:28:55 krw Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -771,7 +771,6 @@ arc_attach(struct device *parent, struct device *self, void *aux)
 	struct arc_softc		*sc = (struct arc_softc *)self;
 	struct pci_attach_args		*pa = aux;
 	struct scsibus_attach_args	saa;
-	struct device			*child;
 
 	sc->sc_talking = 0;
 	rw_init(&sc->sc_lock, "arcmsg");
@@ -811,8 +810,8 @@ arc_attach(struct device *parent, struct device *self, void *aux)
 
 	saa.saa_sc_link = &sc->sc_link;
 
-	child = config_found(self, &saa, scsiprint);
-	sc->sc_scsibus = (struct scsibus_softc *)child;
+	sc->sc_scsibus = (struct scsibus_softc *)config_found(self, &saa,
+	    scsiprint);
 
 	/* enable interrupts */
 	arc_enable_all_intr(sc);
