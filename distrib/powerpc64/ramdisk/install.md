@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.3 2020/07/10 17:04:49 deraadt Exp $
+#	$OpenBSD: install.md,v 1.4 2020/07/12 22:47:16 kettenis Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@ NEWFSARGS_msdos="-F 16 -L boot"
 MOUNT_ARGS_msdos="-o-l"
 
 md_installboot() {
-	local _disk=/dev/$1, _duid
+	local _disk=/dev/$1 _duid
 
 	_duid=$(disklabel $1 | sed -ne 's/^duid: \(.*\)/\1/p')
 	# Mount MSDOS partition, copy boot kernel and create menu entry
