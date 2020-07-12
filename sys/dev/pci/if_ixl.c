@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.65 2020/07/11 00:54:19 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.66 2020/07/12 04:58:10 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -3918,7 +3918,11 @@ err:
 	return (rv);
 }
 
-/* this returns -1 on failure, or the sff module type */
+/*
+ * this returns -2 on software/driver failure, -1 for problems
+ * talking to the hardware, or the sff module type.
+ */
+
 static int
 ixl_get_module_type(struct ixl_softc *sc)
 {
@@ -3927,7 +3931,7 @@ ixl_get_module_type(struct ixl_softc *sc)
 	int rv;
 
 	if (ixl_dmamem_alloc(sc, &idm, IXL_AQ_BUFLEN, 0) != 0)
-		return (-1);
+		return (-2);
 
 	rv = ixl_get_phy_abilities(sc, &idm);
 	if (rv != IXL_AQ_RC_OK) {
@@ -4061,8 +4065,10 @@ ixl_get_sffpage(struct ixl_softc *sc, struct if_sffpage *sff)
 	int error;
 
 	switch (ixl_get_module_type(sc)) {
+	case -2:
+		return (ENOMEM);
 	case -1:
-		return (EIO);
+		return (ENXIO);
 	case IXL_SFF8024_ID_SFP:
 		ops = &ixl_sfp_ops;
 		break;
