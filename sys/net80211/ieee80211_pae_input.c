@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_input.c,v 1.34 2020/05/31 09:11:12 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_pae_input.c,v 1.35 2020/07/13 08:26:26 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -651,6 +651,8 @@ ieee80211_recv_4way_msg3(struct ieee80211com *ic,
 			ni->ni_port_valid = 1;
 			ieee80211_set_link_state(ic, LINK_STATE_UP);
 			ni->ni_assoc_fail = 0;
+			if (ic->ic_opmode == IEEE80211_M_STA)
+				ic->ic_rsngroupcipher = ni->ni_rsngroupcipher;
 		}
 	}
  deauth:
