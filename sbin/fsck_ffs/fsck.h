@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.h,v 1.32 2018/01/05 09:33:47 otto Exp $	*/
+/*	$OpenBSD: fsck.h,v 1.33 2020/07/13 06:52:53 otto Exp $	*/
 /*	$NetBSD: fsck.h,v 1.13 1996/10/11 20:15:46 thorpej Exp $	*/
 
 /*
@@ -136,7 +136,6 @@ struct bufarea {
 struct bufarea bufhead;		/* head of list of other blks in filesys */
 struct bufarea sblk;		/* file system superblock */
 struct bufarea asblk;		/* alternate file system superblock */
-struct bufarea cgblk;		/* cylinder group blocks */
 struct bufarea *pdirbp;		/* current directory contents */
 struct bufarea *pbp;		/* current inode block */
 struct bufarea *getdatablk(daddr_t, long);
@@ -148,9 +147,7 @@ struct bufarea *getdatablk(daddr_t, long);
 	(bp)->b_flags = 0;
 
 #define	sbdirty()	sblk.b_dirty = 1
-#define	cgdirty()	cgblk.b_dirty = 1
 #define	sblock		(*sblk.b_un.b_fs)
-#define	cgrp		(*cgblk.b_un.b_cg)
 
 enum fixstate {DONTKNOW, NOFIX, FIX, IGNORE};
 
@@ -275,9 +272,13 @@ struct ufs2_dinode ufs2_zino;
 #define	FOUND	0x10
 
 union dinode *ginode(ino_t);
+struct bufarea *cglookup(u_int cg);
 struct inoinfo *getinoinfo(ino_t);
 void getblk(struct bufarea *, daddr_t, long);
 ino_t allocino(ino_t, int);
+void *Malloc(size_t);
+void *Calloc(size_t, size_t);
+void *Reallocarray(void *, size_t, size_t);
 
 int	(*info_fn)(char *, size_t);
 char	*info_filesys;

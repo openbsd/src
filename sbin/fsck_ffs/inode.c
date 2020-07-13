@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.c,v 1.49 2018/09/16 02:43:11 millert Exp $	*/
+/*	$OpenBSD: inode.c,v 1.50 2020/07/13 06:52:53 otto Exp $	*/
 /*	$NetBSD: inode.c,v 1.23 1996/10/11 20:15:47 thorpej Exp $	*/
 
 /*
@@ -370,7 +370,7 @@ setinodebuf(ino_t inum)
 		partialsize = inobufsize;
 	}
 	if (inodebuf == NULL &&
-	    (inodebuf = malloc((unsigned)inobufsize)) == NULL)
+	    (inodebuf = Malloc((unsigned)inobufsize)) == NULL)
 		errexit("Cannot allocate space for inode buffer\n");
 }
 
@@ -401,7 +401,7 @@ cacheino(union dinode *dp, ino_t inumber)
 	blks = howmany(DIP(dp, di_size), sblock.fs_bsize);
 	if (blks > NDADDR)
 		blks = NDADDR + NIADDR;
-	inp = malloc(sizeof(*inp) + (blks ? blks - 1 : 0) * sizeof(daddr_t));
+	inp = Malloc(sizeof(*inp) + (blks ? blks - 1 : 0) * sizeof(daddr_t));
 	if (inp == NULL)
 		errexit("cannot allocate memory for inode cache\n");
 	inpp = &inphead[inumber % numdirs];
@@ -423,10 +423,10 @@ cacheino(union dinode *dp, ino_t inumber)
 			inp->i_blks[NDADDR + i] = DIP(dp, di_ib[i]);
 	if (inplast == listmax) {
 		newlistmax = listmax + 100;
-		newinpsort = reallocarray(inpsort,
+		newinpsort = Reallocarray(inpsort,
 		    (unsigned)newlistmax, sizeof(struct inoinfo *));
 		if (newinpsort == NULL)
-			errexit("cannot increase directory list");
+			errexit("cannot increase directory list\n");
 		inpsort = newinpsort;
 		listmax = newlistmax;
 	}
@@ -582,7 +582,8 @@ allocino(ino_t request, int type)
 {
 	ino_t ino;
 	union dinode *dp;
-	struct cg *cgp = &cgrp;
+	struct bufarea *cgbp;
+	struct cg *cgp;
 	int cg;
 	time_t t;
 	struct inostat *info;
@@ -602,7 +603,7 @@ allocino(ino_t request, int type)
 		unsigned long newalloced, i;
 		newalloced = MINIMUM(sblock.fs_ipg,
 			MAXIMUM(2 * inostathead[cg].il_numalloced, 10));
-		info = calloc(newalloced, sizeof(struct inostat));
+		info = Calloc(newalloced, sizeof(struct inostat));
 		if (info == NULL) {
 			pwarn("cannot alloc %zu bytes to extend inoinfo\n",
 				sizeof(struct inostat) * newalloced);
@@ -619,7 +620,8 @@ allocino(ino_t request, int type)
 		inostathead[cg].il_numalloced = newalloced;
 		info = inoinfo(ino);
 	}
-	getblk(&cgblk, cgtod(&sblock, cg), sblock.fs_cgsize);
+	cgbp = cglookup(cg);
+	cgp = cgbp->b_un.b_cg;
 	if (!cg_chkmagic(cgp))
 		pfatal("CG %d: BAD MAGIC NUMBER\n", cg);
 	setbit(cg_inosused(cgp), ino % sblock.fs_ipg);
@@ -637,7 +639,7 @@ allocino(ino_t request, int type)
 	default:
 		return (0);
 	}
-	cgdirty();
+	dirty(cgbp);
 	dp = ginode(ino);
 	DIP_SET(dp, di_db[0],  allocblk(1));
 	if (DIP(dp, di_db[0]) == 0) {

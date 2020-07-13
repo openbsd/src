@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.49 2020/06/20 07:49:04 otto Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.50 2020/07/13 06:52:53 otto Exp $	*/
 /*	$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $	*/
 
 /*
@@ -65,7 +65,6 @@ pass5(void)
 	u_int c;
 	int inomapsize, blkmapsize;
 	struct fs *fs = &sblock;
-	struct cg *cg = &cgrp;
 	daddr_t dbase, dmax;
 	daddr_t d;
 	long i, k, rewritecg = 0;
@@ -76,6 +75,8 @@ pass5(void)
 	char buf[MAXBSIZE];
 	struct cg *newcg = (struct cg *)buf;
 	struct ocg *ocg = (struct ocg *)buf;
+	struct cg *cg;
+	struct bufarea *cgbp;
 
 	memset(newcg, 0, (size_t)fs->fs_cgsize);
 	if (cvtlevel >= 3) {
@@ -179,7 +180,8 @@ pass5(void)
 	info_fn = pass5_info;
 	for (c = 0; c < fs->fs_ncg; c++) {
 		info_cg = c;
-		getblk(&cgblk, cgtod(fs, c), fs->fs_cgsize);
+		cgbp = cglookup(c);
+		cg = cgbp->b_un.b_cg;
 		if (!cg_chkmagic(cg))
 			pfatal("CG %u: BAD MAGIC NUMBER\n", c);
 		dbase = cgbase(fs, c);
@@ -323,13 +325,13 @@ pass5(void)
 		}
 		if (rewritecg) {
 			memcpy(cg, newcg, (size_t)fs->fs_cgsize);
-			cgdirty();
+			dirty(cgbp);
 			continue;
 		}
 		if (memcmp(newcg, cg, basesize) &&
 		    dofix(&idesc[2], "SUMMARY INFORMATION BAD")) {
 			memcpy(cg, newcg, (size_t)basesize);
-			cgdirty();
+			dirty(cgbp);
 		}
 		if (usedsoftdep) {
 			for (i = 0; i < inomapsize; i++) {
@@ -364,7 +366,7 @@ pass5(void)
 		    dofix(&idesc[1], "BLK(S) MISSING IN BIT MAPS")) {
 			memmove(cg_inosused(cg), cg_inosused(newcg),
 				(size_t)mapsize);
-			cgdirty();
+			dirty(cgbp);
 		}
 	}
 	info_fn = NULL;

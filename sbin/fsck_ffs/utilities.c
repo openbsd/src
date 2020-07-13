@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.53 2020/06/20 07:49:04 otto Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.54 2020/07/13 06:52:53 otto Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -51,7 +51,8 @@
 #include "fsck.h"
 #include "extern.h"
 
-long	diskreads, totalreads;	/* Disk cache statistics */
+long				diskreads, totalreads;	/* Disk cache statistics */
+static struct bufarea		cgblk;			/* backup buffer for cylinder group blocks */
 
 static void rwerror(char *, daddr_t);
 
@@ -174,6 +175,39 @@ bufinit(void)
 	}
 	bufhead.b_size = i;	/* save number of buffers */
 }
+
+/*
+ * Manage cylinder group buffers.
+ */
+static struct bufarea *cgbufs;	/* header for cylinder group cache */
+static int flushtries;		/* number of tries to reclaim memory */
+struct bufarea *
+cglookup(u_int cg)
+{
+	struct bufarea *cgbp;
+	struct cg *cgp;
+
+	if (cgbufs == NULL) {
+		cgbufs = calloc(sblock.fs_ncg, sizeof(struct bufarea));
+		if (cgbufs == NULL)
+			errexit("cannot allocate cylinder group buffers");
+	}
+	cgbp = &cgbufs[cg];
+	if (cgbp->b_un.b_cg != NULL)
+		return (cgbp);
+	cgp = NULL;
+	if (flushtries == 0)
+		cgp = malloc((unsigned int)sblock.fs_cgsize);
+	if (cgp == NULL) {
+		getblk(&cgblk, cgtod(&sblock, cg), sblock.fs_cgsize);
+		return (&cgblk);
+	}
+	cgbp->b_un.b_cg = cgp;
+	initbarea(cgbp);
+	getblk(cgbp, cgtod(&sblock, cg), sblock.fs_cgsize);
+	return (cgbp);
+}
+
 
 /*
  * Manage a cache of directory blocks.
@@ -305,6 +339,15 @@ ckfini(int markclean)
 	}
 	if (bufhead.b_size != cnt)
 		errexit("Panic: lost %d buffers\n", bufhead.b_size - cnt);
+	if (cgbufs != NULL) {	
+		for (cnt = 0; cnt < sblock.fs_ncg; cnt++) {
+			if (cgbufs[cnt].b_un.b_cg == NULL)
+				continue;
+			flush(fswritefd, &cgbufs[cnt]);
+			free(cgbufs[cnt].b_un.b_cg);
+		}
+		free(cgbufs);
+	}
 	pbp = pdirbp = NULL;
 	if (markclean && (sblock.fs_clean & FS_ISCLEAN) == 0) {
 		/*
@@ -400,7 +443,8 @@ allocblk(int frags)
 {
 	daddr_t i, baseblk;
 	int j, k, cg;
-	struct cg *cgp = &cgrp;
+	struct bufarea *cgbp;
+	struct cg *cgp;
 
 	if (frags <= 0 || frags > sblock.fs_frag)
 		return (0);
@@ -416,7 +460,8 @@ allocblk(int frags)
 				continue;
 			}
 			cg = dtog(&sblock, i + j);
-			getblk(&cgblk, cgtod(&sblock, cg), sblock.fs_cgsize);
+			cgbp = cglookup(cg);
+			cgp = cgbp->b_un.b_cg;
 			if (!cg_chkmagic(cgp))
 				pfatal("CG %d: BAD MAGIC NUMBER\n", cg);
 			baseblk = dtogd(&sblock, i + j);
@@ -614,4 +659,68 @@ catchinfo(int signo)
 		writev(info_fd, iov, 4);
 	}
 	errno = save_errno;
+}
+/*
+ * Attempt to flush a cylinder group cache entry.
+ * Return whether the flush was successful.
+ */
+static int
+flushentry(void)
+{
+	struct bufarea *cgbp;
+
+	if (flushtries == sblock.fs_ncg || cgbufs == NULL)
+		return (0);
+	cgbp = &cgbufs[flushtries++];
+	if (cgbp->b_un.b_cg == NULL)
+		return (0);
+	flush(fswritefd, cgbp);
+	free(cgbp->b_un.b_buf);
+	cgbp->b_un.b_buf = NULL;
+	return (1);
+}
+
+/*
+ * Wrapper for malloc() that flushes the cylinder group cache to try
+ * to get space.
+ */
+void *
+Malloc(size_t size)
+{
+	void *retval;
+
+	while ((retval = malloc(size)) == NULL)
+		if (flushentry() == 0)
+			break;
+	return (retval);
+}
+
+/*
+ * Wrapper for calloc() that flushes the cylinder group cache to try
+ * to get space.
+ */
+void*
+Calloc(size_t cnt, size_t size)
+{
+	void *retval;
+
+	while ((retval = calloc(cnt, size)) == NULL)
+		if (flushentry() == 0)
+			break;
+	return (retval);
+}
+
+/*
+ * Wrapper for reallocarray() that flushes the cylinder group cache to try
+ * to get space.
+ */
+void*
+Reallocarray(void *p, size_t cnt, size_t size)
+{
+	void *retval;
+
+	while ((retval = reallocarray(p, cnt, size)) == NULL)
+		if (flushentry() == 0)
+			break;
+	return (retval);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass1.c,v 1.46 2020/06/20 07:49:04 otto Exp $	*/
+/*	$OpenBSD: pass1.c,v 1.47 2020/07/13 06:52:53 otto Exp $	*/
 /*	$NetBSD: pass1.c,v 1.16 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -66,6 +66,8 @@ pass1(void)
 	ino_t inumber, inosused, ninosused;
 	size_t inospace;
 	struct inostat *info;
+	struct bufarea *cgbp;
+	struct cg *cgp;
 	u_int c;
 	struct inodesc idesc;
 	daddr_t i, cgd;
@@ -99,9 +101,10 @@ pass1(void)
 	for (c = 0; c < sblock.fs_ncg; c++) {
 		inumber = c * sblock.fs_ipg;
 		setinodebuf(inumber);
-		getblk(&cgblk, cgtod(&sblock, c), sblock.fs_cgsize);
+		cgbp = cglookup(c);
+		cgp = cgbp->b_un.b_cg;
 		if (sblock.fs_magic == FS_UFS2_MAGIC) {
-			inosused = cgrp.cg_initediblk;
+			inosused = cgp->cg_initediblk;
 			if (inosused > sblock.fs_ipg)
 				inosused = sblock.fs_ipg;
 		} else
@@ -115,7 +118,7 @@ pass1(void)
 		 * read only those inodes in from disk.
 		 */
 		if (preen && usedsoftdep) {
-			cp = &cg_inosused(&cgrp)[(inosused - 1) / CHAR_BIT];
+			cp = &cg_inosused(cgp)[(inosused - 1) / CHAR_BIT];
 			for ( ; inosused != 0; cp--) {
 				if (*cp == 0) {
 					if (inosused > CHAR_BIT)
@@ -140,10 +143,10 @@ pass1(void)
 			inostathead[c].il_stat = 0;
 			continue;
 		}
-		info = calloc((unsigned)inosused, sizeof(struct inostat));
+		info = Calloc((unsigned)inosused, sizeof(struct inostat));
 		inospace = (unsigned)inosused * sizeof(struct inostat);
 		if (info == NULL)
-			errexit("cannot alloc %zu bytes for inoinfo", inospace);
+			errexit("cannot alloc %zu bytes for inoinfo\n", inospace);
 		inostathead[c].il_stat = info;
 		/*
 		 * Scan the allocated inodes.
@@ -179,7 +182,7 @@ pass1(void)
 			struct inostat *ninfo;
 			size_t ninospace;
 
-			ninfo = reallocarray(info, ninosused, sizeof(*ninfo));
+			ninfo = Reallocarray(info, ninosused, sizeof(*ninfo));
 			if (ninfo == NULL) {
 				pfatal("too many inodes %llu, or out of memory\n",
 				    (unsigned long long)ninosused);
@@ -300,7 +303,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	n_files++;
 	ILNCOUNT(inumber) = DIP(dp, di_nlink);
 	if (DIP(dp, di_nlink) <= 0) {
-		zlnp = malloc(sizeof *zlnp);
+		zlnp = Malloc(sizeof *zlnp);
 		if (zlnp == NULL) {
 			pfatal("LINK COUNT TABLE OVERFLOW");
 			if (reply("CONTINUE") == 0) {
@@ -392,7 +395,7 @@ pass1check(struct inodesc *idesc)
 				}
 				return (STOP);
 			}
-			new = malloc(sizeof(struct dups));
+			new = Malloc(sizeof(struct dups));
 			if (new == NULL) {
 				pfatal("DUP TABLE OVERFLOW.");
 				if (reply("CONTINUE") == 0) {
