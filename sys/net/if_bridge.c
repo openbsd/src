@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.340 2020/06/24 22:03:42 cheloha Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.341 2020/07/13 03:21:33 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -273,14 +273,6 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 
 		ifs = ifunit(req->ifbr_ifsname);
-
-		/* try to create the interface if it does't exist */
-		if (ifs == NULL) {
-			error = if_clone_create(req->ifbr_ifsname, 0);
-			if (error == 0)
-				ifs = ifunit(req->ifbr_ifsname);
-		}
-
 		if (ifs == NULL) {			/* no such interface */
 			error = ENOENT;
 			break;
