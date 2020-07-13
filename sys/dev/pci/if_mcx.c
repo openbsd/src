@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.62 2020/07/10 13:26:38 patrick Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.63 2020/07/13 10:40:03 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -73,6 +73,9 @@
 
 #define MCX_HARDMTU			9500
 
+#define MCX_PAGE_SHIFT			12
+#define MCX_PAGE_SIZE			(1 << MCX_PAGE_SHIFT)
+
 /* queue sizes */
 #define MCX_LOG_EQ_SIZE			6 /* one page */
 #define MCX_LOG_CQ_SIZE			12
@@ -100,10 +103,13 @@
 CTASSERT(ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN == MCX_SQ_INLINE_SIZE);
 
 /* doorbell offsets */
-#define MCX_CQ_DOORBELL_OFFSET		0
-#define MCX_CQ_DOORBELL_SIZE		16
-#define MCX_RQ_DOORBELL_OFFSET		64
-#define MCX_SQ_DOORBELL_OFFSET		64
+#define MCX_DOORBELL_AREA_SIZE		MCX_PAGE_SIZE
+
+#define MCX_CQ_DOORBELL_BASE		0
+#define MCX_CQ_DOORBELL_STRIDE		64
+
+#define MCX_WQ_DOORBELL_BASE		MCX_PAGE_SIZE/2
+#define MCX_WQ_DOORBELL_STRIDE		64
 
 #define MCX_WQ_DOORBELL_MASK		0xffff
 
@@ -173,8 +179,6 @@ CTASSERT(ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN == MCX_SQ_INLINE_SIZE);
 #define MCX_ETHER_CAP_50G_CR2		30
 #define MCX_ETHER_CAP_50G_KR2		31
 
-#define MCX_PAGE_SHIFT			12
-#define MCX_PAGE_SIZE			(1 << MCX_PAGE_SHIFT)
 #define MCX_MAX_CQE			32
 
 #define MCX_CMD_QUERY_HCA_CAP		0x100
@@ -2097,15 +2101,28 @@ struct mcx_tx {
 } __aligned(64);
 
 struct mcx_queues {
-	char			 q_intrname[8];
+	char			 q_name[16];
 	void			*q_ihc;
 	struct mcx_softc	*q_sc;
 	int			 q_uar;
+	int			 q_index;
 	struct mcx_rx		 q_rx;
 	struct mcx_tx		 q_tx;
 	struct mcx_cq		 q_cq;
 	struct mcx_eq		 q_eq;
 };
+
+struct mcx_flow_group {
+	int			 g_id;
+	int			 g_table;
+	int			 g_start;
+	int			 g_size;
+};
+
+#define MCX_FLOW_GROUP_PROMISC	 0
+#define MCX_FLOW_GROUP_ALLMULTI	 1
+#define MCX_FLOW_GROUP_MAC	 2
+#define MCX_NUM_FLOW_GROUPS	 3
 
 struct mcx_softc {
 	struct device		 sc_dev;
@@ -2138,8 +2155,8 @@ struct mcx_softc {
 	int			 sc_pd;
 	int			 sc_tdomain;
 	uint32_t		 sc_lkey;
-	int			 sc_tisn;
-	int			 sc_tirn;
+	int			 sc_tis;
+	int			 sc_tir;
 
 	struct mcx_dmamem	 sc_doorbell_mem;
 
@@ -2153,14 +2170,8 @@ struct mcx_softc {
 
 	struct task		 sc_port_change;
 
-	int			 sc_flow_table_id;
-#define MCX_FLOW_GROUP_PROMISC	 0
-#define MCX_FLOW_GROUP_ALLMULTI	 1
-#define MCX_FLOW_GROUP_MAC	 2
-#define MCX_NUM_FLOW_GROUPS	 3
-	int			 sc_flow_group_id[MCX_NUM_FLOW_GROUPS];
-	int			 sc_flow_group_size[MCX_NUM_FLOW_GROUPS];
-	int			 sc_flow_group_start[MCX_NUM_FLOW_GROUPS];
+	int			 sc_mac_flow_table_id;
+	struct mcx_flow_group	 sc_flow_group[MCX_NUM_FLOW_GROUPS];
 	int			 sc_promisc_flow_enabled;
 	int			 sc_allmulti_flow_enabled;
 	int			 sc_mcast_flow_base;
@@ -2173,8 +2184,6 @@ struct mcx_softc {
 
 	struct mcx_queues	 sc_queues[1];
 	unsigned int		 sc_nqueues;
-
-	int			 sc_num_cq;
 
 #if NKSTAT > 0
 	struct kstat		*sc_kstat_ieee8023;
@@ -2215,32 +2224,35 @@ static int	mcx_create_eq(struct mcx_softc *, struct mcx_eq *, int,
 static int	mcx_query_nic_vport_context(struct mcx_softc *);
 static int	mcx_query_special_contexts(struct mcx_softc *);
 static int	mcx_set_port_mtu(struct mcx_softc *, int);
-static int	mcx_create_cq(struct mcx_softc *, struct mcx_cq *, int, int);
+static int	mcx_create_cq(struct mcx_softc *, struct mcx_cq *, int, int,
+		    int);
 static int	mcx_destroy_cq(struct mcx_softc *, struct mcx_cq *);
-static int	mcx_create_sq(struct mcx_softc *, struct mcx_tx *, int, int);
+static int	mcx_create_sq(struct mcx_softc *, struct mcx_tx *, int, int,
+		    int);
 static int	mcx_destroy_sq(struct mcx_softc *, struct mcx_tx *);
 static int	mcx_ready_sq(struct mcx_softc *, struct mcx_tx *);
-static int	mcx_create_rq(struct mcx_softc *, struct mcx_rx *, int);
+static int	mcx_create_rq(struct mcx_softc *, struct mcx_rx *, int, int);
 static int	mcx_destroy_rq(struct mcx_softc *, struct mcx_rx *);
 static int	mcx_ready_rq(struct mcx_softc *, struct mcx_rx *);
-static int	mcx_create_tir(struct mcx_softc *, struct mcx_rx *);
-static int	mcx_destroy_tir(struct mcx_softc *);
-static int	mcx_create_tis(struct mcx_softc *);
-static int	mcx_destroy_tis(struct mcx_softc *);
-static int	mcx_create_flow_table(struct mcx_softc *, int);
-static int	mcx_set_flow_table_root(struct mcx_softc *);
-static int	mcx_destroy_flow_table(struct mcx_softc *);
-static int	mcx_create_flow_group(struct mcx_softc *, int, int,
+static int	mcx_create_tir_direct(struct mcx_softc *, struct mcx_rx *,
+		    int *);
+static int	mcx_destroy_tir(struct mcx_softc *, int);
+static int	mcx_create_tis(struct mcx_softc *, int *);
+static int	mcx_destroy_tis(struct mcx_softc *, int);
+static int	mcx_create_flow_table(struct mcx_softc *, int, int, int *);
+static int	mcx_set_flow_table_root(struct mcx_softc *, int);
+static int	mcx_destroy_flow_table(struct mcx_softc *, int);
+static int	mcx_create_flow_group(struct mcx_softc *, int, int, int,
 		    int, int, struct mcx_flow_match *);
 static int	mcx_destroy_flow_group(struct mcx_softc *, int);
-static int	mcx_set_flow_table_entry(struct mcx_softc *,
-		    struct mcx_rx *, int, int, uint8_t *);
+static int	mcx_set_flow_table_entry_mac(struct mcx_softc *, int, int,
+		    uint8_t *, uint32_t);
 static int	mcx_delete_flow_table_entry(struct mcx_softc *, int, int);
 
 #if 0
-static int	mcx_dump_flow_table(struct mcx_softc *);
-static int	mcx_dump_flow_table_entry(struct mcx_softc *, int);
-static int	mcx_dump_flow_group(struct mcx_softc *);
+static int	mcx_dump_flow_table(struct mcx_softc *, int);
+static int	mcx_dump_flow_table_entry(struct mcx_softc *, int, int);
+static int	mcx_dump_flow_group(struct mcx_softc *, int);
 static int	mcx_dump_rq(struct mcx_softc *);
 static int	mcx_dump_sq(struct mcx_softc *);
 #endif
@@ -2404,7 +2416,7 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 		goto unmap;
 	}
 
-	if (mcx_dmamem_alloc(sc, &sc->sc_doorbell_mem, MCX_PAGE_SIZE,
+	if (mcx_dmamem_alloc(sc, &sc->sc_doorbell_mem, MCX_DOORBELL_AREA_SIZE,
 	    MCX_PAGE_SIZE) != 0) {
 		printf(", unable to allocate doorbell memory\n");
 		goto unmap;
@@ -2587,6 +2599,7 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 
 		vec = i + 1;
 		q->q_sc = sc;
+		q->q_index = i;
 
 		if (mcx_alloc_uar(sc, &q->q_uar) != 0) {
 			printf("%s: unable to alloc uar %d\n",
@@ -2614,10 +2627,10 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 			    DEVNAME(sc), i);
 			goto teardown;
 		}
-		snprintf(q->q_intrname, sizeof(q->q_intrname), "%s:%d",
+		snprintf(q->q_name, sizeof(q->q_name), "%s:%d",
 		    DEVNAME(sc), i);
 		q->q_ihc = pci_intr_establish(sc->sc_pc, ih,
-		    IPL_NET | IPL_MPSAFE, mcx_cq_intr, q, q->q_intrname);
+		    IPL_NET | IPL_MPSAFE, mcx_cq_intr, q, q->q_name);
 	}
 
 	timeout_set(&sc->sc_calibrate, mcx_calibrate, sc);
@@ -2625,11 +2638,13 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 	task_set(&sc->sc_port_change, mcx_port_change, sc);
 	mcx_port_change(sc);
 
-	sc->sc_flow_table_id = -1;
+	sc->sc_mac_flow_table_id = -1;
 	for (i = 0; i < MCX_NUM_FLOW_GROUPS; i++) {
-		sc->sc_flow_group_id[i] = -1;
-		sc->sc_flow_group_size[i] = 0;
-		sc->sc_flow_group_start[i] = 0;
+		struct mcx_flow_group *mfg = &sc->sc_flow_group[i];
+		mfg->g_id = -1;
+		mfg->g_table = -1;
+		mfg->g_size = 0;
+		mfg->g_start = 0;
 	}
 	sc->sc_extra_mcast = 0;
 	memset(sc->sc_mcast_flows, 0, sizeof(sc->sc_mcast_flows));
@@ -3706,7 +3721,6 @@ free:
 static int
 mcx_iff(struct mcx_softc *sc)
 {
-	struct mcx_rx *rx = &sc->sc_queues[0].q_rx;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct mcx_dmamem mxm;
 	struct mcx_cmdq_entry *cqe;
@@ -3716,12 +3730,15 @@ mcx_iff(struct mcx_softc *sc)
 	int error;
 	int token;
 	int insize;
+	uint32_t dest;
+
+	dest = MCX_FLOW_CONTEXT_DEST_TYPE_TIR | sc->sc_tir;
 
 	/* enable or disable the promisc flow */
 	if (ISSET(ifp->if_flags, IFF_PROMISC)) {
 		if (sc->sc_promisc_flow_enabled == 0) {
-			mcx_set_flow_table_entry(sc, rx, MCX_FLOW_GROUP_PROMISC,
-			    0, NULL);
+			mcx_set_flow_table_entry_mac(sc,
+			    MCX_FLOW_GROUP_PROMISC, 0, NULL, dest);
 			sc->sc_promisc_flow_enabled = 1;
 		}
 	} else if (sc->sc_promisc_flow_enabled != 0) {
@@ -3736,8 +3753,8 @@ mcx_iff(struct mcx_softc *sc)
 
 			memset(mcast, 0, sizeof(mcast));
 			mcast[0] = 0x01;
-			mcx_set_flow_table_entry(sc, rx,
-			    MCX_FLOW_GROUP_ALLMULTI, 0, mcast);
+			mcx_set_flow_table_entry_mac(sc,
+			    MCX_FLOW_GROUP_ALLMULTI, 0, mcast, dest);
 			sc->sc_allmulti_flow_enabled = 1;
 		}
 	} else if (sc->sc_allmulti_flow_enabled != 0) {
@@ -4122,7 +4139,7 @@ mcx_set_port_mtu(struct mcx_softc *sc, int mtu)
 }
 
 static int
-mcx_create_cq(struct mcx_softc *sc, struct mcx_cq *cq, int uar, int eqn)
+mcx_create_cq(struct mcx_softc *sc, struct mcx_cq *cq, int uar, int db, int eqn)
 {
 	struct mcx_cmdq_entry *cmde;
 	struct mcx_cq_entry *cqe;
@@ -4175,7 +4192,7 @@ mcx_create_cq(struct mcx_softc *sc, struct mcx_cq *cq, int uar, int eqn)
 	    MCX_CQ_MOD_COUNTER);
 	mbin->cmd_cq_ctx.cq_doorbell = htobe64(
 	    MCX_DMA_DVA(&sc->sc_doorbell_mem) +
-	    MCX_CQ_DOORBELL_OFFSET + (MCX_CQ_DOORBELL_SIZE * sc->sc_num_cq));
+	    MCX_CQ_DOORBELL_BASE + (MCX_CQ_DOORBELL_STRIDE * db));
 
 	/* physical addresses follow the mailbox in data */
 	mcx_cmdq_mboxes_pas(&mxm, sizeof(*mbin), npages, &cq->cq_mem);
@@ -4203,9 +4220,8 @@ mcx_create_cq(struct mcx_softc *sc, struct mcx_cq *cq, int uar, int eqn)
 	cq->cq_cons = 0;
 	cq->cq_count = 0;
 	cq->cq_doorbell = MCX_DMA_KVA(&sc->sc_doorbell_mem) +
-	    MCX_CQ_DOORBELL_OFFSET + (MCX_CQ_DOORBELL_SIZE * sc->sc_num_cq);
+	    MCX_CQ_DOORBELL_BASE + (MCX_CQ_DOORBELL_STRIDE * db);
 	mcx_arm_cq(sc, cq, uar);
-	sc->sc_num_cq++;
 
 free:
 	mcx_dmamem_free(sc, &mxm);
@@ -4256,7 +4272,7 @@ mcx_destroy_cq(struct mcx_softc *sc, struct mcx_cq *cq)
 }
 
 static int
-mcx_create_rq(struct mcx_softc *sc, struct mcx_rx *rx, int cqn)
+mcx_create_rq(struct mcx_softc *sc, struct mcx_rx *rx, int db, int cqn)
 {
 	struct mcx_cmdq_entry *cqe;
 	struct mcx_dmamem mxm;
@@ -4308,7 +4324,7 @@ mcx_create_rq(struct mcx_softc *sc, struct mcx_rx *rx, int cqn)
 	mbin->rq_wq.wq_type = MCX_WQ_CTX_TYPE_CYCLIC;
 	mbin->rq_wq.wq_pd = htobe32(sc->sc_pd);
 	mbin->rq_wq.wq_doorbell = htobe64(MCX_DMA_DVA(&sc->sc_doorbell_mem) +
-	    MCX_RQ_DOORBELL_OFFSET);
+	    MCX_WQ_DOORBELL_BASE + (db * MCX_WQ_DOORBELL_STRIDE));
 	mbin->rq_wq.wq_log_stride = htobe16(4);
 	mbin->rq_wq.wq_log_size = MCX_LOG_RQ_SIZE;
 
@@ -4337,7 +4353,8 @@ mcx_create_rq(struct mcx_softc *sc, struct mcx_rx *rx, int cqn)
 	rx->rx_rqn = mcx_get_id(out->cmd_rqn);
 
 	doorbell = MCX_DMA_KVA(&sc->sc_doorbell_mem);
-	rx->rx_doorbell = (uint32_t *)(doorbell + MCX_RQ_DOORBELL_OFFSET);
+	rx->rx_doorbell = (uint32_t *)(doorbell + MCX_WQ_DOORBELL_BASE +
+	    (db * MCX_WQ_DOORBELL_STRIDE));
 
 free:
 	mcx_dmamem_free(sc, &mxm);
@@ -4441,7 +4458,7 @@ mcx_destroy_rq(struct mcx_softc *sc, struct mcx_rx *rx)
 }
 
 static int
-mcx_create_tir(struct mcx_softc *sc, struct mcx_rx *rx)
+mcx_create_tir_direct(struct mcx_softc *sc, struct mcx_rx *rx, int *tirn)
 {
 	struct mcx_cmdq_entry *cqe;
 	struct mcx_dmamem mxm;
@@ -4490,14 +4507,14 @@ mcx_create_tir(struct mcx_softc *sc, struct mcx_rx *rx)
 		goto free;
 	}
 
-	sc->sc_tirn = mcx_get_id(out->cmd_tirn);
+	*tirn = mcx_get_id(out->cmd_tirn);
 free:
 	mcx_dmamem_free(sc, &mxm);
 	return (error);
 }
 
 static int
-mcx_destroy_tir(struct mcx_softc *sc)
+mcx_destroy_tir(struct mcx_softc *sc, int tirn)
 {
 	struct mcx_cmdq_entry *cqe;
 	struct mcx_cmd_destroy_tir_in *in;
@@ -4512,7 +4529,7 @@ mcx_destroy_tir(struct mcx_softc *sc)
 	in = mcx_cmdq_in(cqe);
 	in->cmd_opcode = htobe16(MCX_CMD_DESTROY_TIR);
 	in->cmd_op_mod = htobe16(0);
-	in->cmd_tirn = htobe32(sc->sc_tirn);
+	in->cmd_tirn = htobe32(tirn);
 
 	mcx_cmdq_post(sc, cqe, 0);
 	error = mcx_cmdq_poll(sc, cqe, 1000);
@@ -4532,12 +4549,12 @@ mcx_destroy_tir(struct mcx_softc *sc)
 		return -1;
 	}
 
-	sc->sc_tirn = 0;
 	return (0);
 }
 
 static int
-mcx_create_sq(struct mcx_softc *sc, struct mcx_tx *tx, int uar, int cqn)
+mcx_create_sq(struct mcx_softc *sc, struct mcx_tx *tx, int uar, int db,
+    int cqn)
 {
 	struct mcx_cmdq_entry *cqe;
 	struct mcx_dmamem mxm;
@@ -4584,12 +4601,12 @@ mcx_create_sq(struct mcx_softc *sc, struct mcx_tx *tx, int uar, int cqn)
 	    (1 << MCX_SQ_CTX_MIN_WQE_INLINE_SHIFT));
 	mbin->sq_cqn = htobe32(cqn);
 	mbin->sq_tis_lst_sz = htobe32(1 << MCX_SQ_CTX_TIS_LST_SZ_SHIFT);
-	mbin->sq_tis_num = htobe32(sc->sc_tisn);
+	mbin->sq_tis_num = htobe32(sc->sc_tis);
 	mbin->sq_wq.wq_type = MCX_WQ_CTX_TYPE_CYCLIC;
 	mbin->sq_wq.wq_pd = htobe32(sc->sc_pd);
 	mbin->sq_wq.wq_uar_page = htobe32(uar);
 	mbin->sq_wq.wq_doorbell = htobe64(MCX_DMA_DVA(&sc->sc_doorbell_mem) +
-	    MCX_SQ_DOORBELL_OFFSET);
+	    MCX_WQ_DOORBELL_BASE + (db * MCX_WQ_DOORBELL_STRIDE));
 	mbin->sq_wq.wq_log_stride = htobe16(MCX_LOG_SQ_ENTRY_SIZE);
 	mbin->sq_wq.wq_log_size = MCX_LOG_SQ_SIZE;
 
@@ -4620,7 +4637,8 @@ mcx_create_sq(struct mcx_softc *sc, struct mcx_tx *tx, int uar, int cqn)
 	tx->tx_sqn = mcx_get_id(out->cmd_sqn);
 
 	doorbell = MCX_DMA_KVA(&sc->sc_doorbell_mem);
-	tx->tx_doorbell = (uint32_t *)(doorbell + MCX_SQ_DOORBELL_OFFSET + 4);
+	tx->tx_doorbell = (uint32_t *)(doorbell + MCX_WQ_DOORBELL_BASE +
+	    (db * MCX_WQ_DOORBELL_STRIDE) + 4);
 free:
 	mcx_dmamem_free(sc, &mxm);
 	return (error);
@@ -4723,7 +4741,7 @@ free:
 }
 
 static int
-mcx_create_tis(struct mcx_softc *sc)
+mcx_create_tis(struct mcx_softc *sc, int *tis)
 {
 	struct mcx_cmdq_entry *cqe;
 	struct mcx_dmamem mxm;
@@ -4771,14 +4789,14 @@ mcx_create_tis(struct mcx_softc *sc)
 		goto free;
 	}
 
-	sc->sc_tisn = mcx_get_id(out->cmd_tisn);
+	*tis = mcx_get_id(out->cmd_tisn);
 free:
 	mcx_dmamem_free(sc, &mxm);
 	return (error);
 }
 
 static int
-mcx_destroy_tis(struct mcx_softc *sc)
+mcx_destroy_tis(struct mcx_softc *sc, int tis)
 {
 	struct mcx_cmdq_entry *cqe;
 	struct mcx_cmd_destroy_tis_in *in;
@@ -4793,7 +4811,7 @@ mcx_destroy_tis(struct mcx_softc *sc)
 	in = mcx_cmdq_in(cqe);
 	in->cmd_opcode = htobe16(MCX_CMD_DESTROY_TIS);
 	in->cmd_op_mod = htobe16(0);
-	in->cmd_tisn = htobe32(sc->sc_tisn);
+	in->cmd_tisn = htobe32(tis);
 
 	mcx_cmdq_post(sc, cqe, 0);
 	error = mcx_cmdq_poll(sc, cqe, 1000);
@@ -4813,7 +4831,6 @@ mcx_destroy_tis(struct mcx_softc *sc)
 		return -1;
 	}
 
-	sc->sc_tisn = 0;
 	return 0;
 }
 
@@ -4860,7 +4877,8 @@ mcx_alloc_flow_counter(struct mcx_softc *sc, int i)
 #endif
 
 static int
-mcx_create_flow_table(struct mcx_softc *sc, int log_size)
+mcx_create_flow_table(struct mcx_softc *sc, int log_size, int level,
+    int *flow_table_id)
 {
 	struct mcx_cmdq_entry *cqe;
 	struct mcx_dmamem mxm;
@@ -4888,6 +4906,7 @@ mcx_create_flow_table(struct mcx_softc *sc, int log_size)
 	mbin = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
 	mbin->cmd_table_type = MCX_FLOW_TABLE_TYPE_RX;
 	mbin->cmd_ctx.ft_log_size = log_size;
+	mbin->cmd_ctx.ft_level = level;
 
 	mcx_cmdq_mboxes_sign(&mxm, 1);
 	mcx_cmdq_post(sc, cqe, 0);
@@ -4909,14 +4928,14 @@ mcx_create_flow_table(struct mcx_softc *sc, int log_size)
 		goto free;
 	}
 
-	sc->sc_flow_table_id = mcx_get_id(out->cmd_table_id);
+	*flow_table_id = mcx_get_id(out->cmd_table_id);
 free:
 	mcx_dmamem_free(sc, &mxm);
 	return (error);
 }
 
 static int
-mcx_set_flow_table_root(struct mcx_softc *sc)
+mcx_set_flow_table_root(struct mcx_softc *sc, int flow_table_id)
 {
 	struct mcx_cmdq_entry *cqe;
 	struct mcx_dmamem mxm;
@@ -4943,7 +4962,7 @@ mcx_set_flow_table_root(struct mcx_softc *sc)
 	}
 	mbin = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
 	mbin->cmd_table_type = MCX_FLOW_TABLE_TYPE_RX;
-	mbin->cmd_table_id = htobe32(sc->sc_flow_table_id);
+	mbin->cmd_table_id = htobe32(flow_table_id);
 
 	mcx_cmdq_mboxes_sign(&mxm, 1);
 	mcx_cmdq_post(sc, cqe, 0);
@@ -4972,7 +4991,7 @@ free:
 }
 
 static int
-mcx_destroy_flow_table(struct mcx_softc *sc)
+mcx_destroy_flow_table(struct mcx_softc *sc, int flow_table_id)
 {
 	struct mcx_cmdq_entry *cqe;
 	struct mcx_dmamem mxm;
@@ -4998,7 +5017,7 @@ mcx_destroy_flow_table(struct mcx_softc *sc)
 	}
 	mb = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
 	mb->cmd_table_type = MCX_FLOW_TABLE_TYPE_RX;
-	mb->cmd_table_id = htobe32(sc->sc_flow_table_id);
+	mb->cmd_table_id = htobe32(flow_table_id);
 
 	mcx_cmdq_mboxes_sign(&mxm, 1);
 	mcx_cmdq_post(sc, cqe, 0);
@@ -5021,7 +5040,6 @@ mcx_destroy_flow_table(struct mcx_softc *sc)
 		goto free;
 	}
 
-	sc->sc_flow_table_id = -1;
 free:
 	mcx_dmamem_free(sc, &mxm);
 	return (error);
@@ -5029,14 +5047,15 @@ free:
 
 
 static int
-mcx_create_flow_group(struct mcx_softc *sc, int group, int start, int size,
-    int match_enable, struct mcx_flow_match *match)
+mcx_create_flow_group(struct mcx_softc *sc, int flow_table_id, int group,
+    int start, int size, int match_enable, struct mcx_flow_match *match)
 {
 	struct mcx_cmdq_entry *cqe;
 	struct mcx_dmamem mxm;
 	struct mcx_cmd_create_flow_group_in *in;
 	struct mcx_cmd_create_flow_group_mb_in *mbin;
 	struct mcx_cmd_create_flow_group_out *out;
+	struct mcx_flow_group *mfg;
 	int error;
 	int token;
 
@@ -5057,7 +5076,7 @@ mcx_create_flow_group(struct mcx_softc *sc, int group, int start, int size,
 	}
 	mbin = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
 	mbin->cmd_table_type = MCX_FLOW_TABLE_TYPE_RX;
-	mbin->cmd_table_id = htobe32(sc->sc_flow_table_id);
+	mbin->cmd_table_id = htobe32(flow_table_id);
 	mbin->cmd_start_flow_index = htobe32(start);
 	mbin->cmd_end_flow_index = htobe32(start + (size - 1));
 
@@ -5084,9 +5103,11 @@ mcx_create_flow_group(struct mcx_softc *sc, int group, int start, int size,
 		goto free;
 	}
 
-	sc->sc_flow_group_id[group] = mcx_get_id(out->cmd_group_id);
-	sc->sc_flow_group_size[group] = size;
-	sc->sc_flow_group_start[group] = start;
+	mfg = &sc->sc_flow_group[group];
+	mfg->g_id = mcx_get_id(out->cmd_group_id);
+	mfg->g_table = flow_table_id;
+	mfg->g_start = start;
+	mfg->g_size = size;
 
 free:
 	mcx_dmamem_free(sc, &mxm);
@@ -5101,6 +5122,7 @@ mcx_destroy_flow_group(struct mcx_softc *sc, int group)
 	struct mcx_cmd_destroy_flow_group_in *in;
 	struct mcx_cmd_destroy_flow_group_mb_in *mb;
 	struct mcx_cmd_destroy_flow_group_out *out;
+	struct mcx_flow_group *mfg;
 	int error;
 	int token;
 
@@ -5120,8 +5142,9 @@ mcx_destroy_flow_group(struct mcx_softc *sc, int group)
 	}
 	mb = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
 	mb->cmd_table_type = MCX_FLOW_TABLE_TYPE_RX;
-	mb->cmd_table_id = htobe32(sc->sc_flow_table_id);
-	mb->cmd_group_id = htobe32(sc->sc_flow_group_id[group]);
+	mfg = &sc->sc_flow_group[group];
+	mb->cmd_table_id = htobe32(mfg->g_table);
+	mb->cmd_group_id = htobe32(mfg->g_id);
 
 	mcx_cmdq_mboxes_sign(&mxm, 2);
 	mcx_cmdq_post(sc, cqe, 0);
@@ -5143,29 +5166,32 @@ mcx_destroy_flow_group(struct mcx_softc *sc, int group)
 		goto free;
 	}
 
-	sc->sc_flow_group_id[group] = -1;
-	sc->sc_flow_group_size[group] = 0;
+	mfg->g_id = -1;
+	mfg->g_table = -1;
+	mfg->g_size = 0;
+	mfg->g_start = 0;
 free:
 	mcx_dmamem_free(sc, &mxm);
 	return (error);
 }
 
 static int
-mcx_set_flow_table_entry(struct mcx_softc *sc, struct mcx_rx *rx,
-    int group, int index, uint8_t *macaddr)
+mcx_set_flow_table_entry_mac(struct mcx_softc *sc, int group, int index,
+    uint8_t *macaddr, uint32_t dest)
 {
 	struct mcx_cmdq_entry *cqe;
 	struct mcx_dmamem mxm;
 	struct mcx_cmd_set_flow_table_entry_in *in;
 	struct mcx_cmd_set_flow_table_entry_mb_in *mbin;
 	struct mcx_cmd_set_flow_table_entry_out *out;
-	uint32_t *dest;
+	struct mcx_flow_group *mfg;
+	uint32_t *pdest;
 	int error;
 	int token;
 
 	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
 	token = mcx_cmdq_token(sc);
-	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mbin) + sizeof(*dest),
+	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mbin) + sizeof(*pdest),
 	    sizeof(*out), token);
 
 	in = mcx_cmdq_in(cqe);
@@ -5178,18 +5204,21 @@ mcx_set_flow_table_entry(struct mcx_softc *sc, struct mcx_rx *rx,
 		    DEVNAME(sc));
 		return (-1);
 	}
+
 	mbin = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
 	mbin->cmd_table_type = MCX_FLOW_TABLE_TYPE_RX;
-	mbin->cmd_table_id = htobe32(sc->sc_flow_table_id);
-	mbin->cmd_flow_index = htobe32(sc->sc_flow_group_start[group] + index);
-	mbin->cmd_flow_ctx.fc_group_id = htobe32(sc->sc_flow_group_id[group]);
+
+	mfg = &sc->sc_flow_group[group];
+	mbin->cmd_table_id = htobe32(mfg->g_table);
+	mbin->cmd_flow_index = htobe32(mfg->g_start + index);
+	mbin->cmd_flow_ctx.fc_group_id = htobe32(mfg->g_id);
 
 	/* flow context ends at offset 0x330, 0x130 into the second mbox */
-	dest = (uint32_t *)
+	pdest = (uint32_t *)
 	    (((char *)mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 1))) + 0x130);
 	mbin->cmd_flow_ctx.fc_action = htobe32(MCX_FLOW_CONTEXT_ACTION_FORWARD);
 	mbin->cmd_flow_ctx.fc_dest_list_size = htobe32(1);
-	*dest = htobe32(sc->sc_tirn | MCX_FLOW_CONTEXT_DEST_TYPE_TIR);
+	*pdest = htobe32(dest);
 
 	/* the only thing we match on at the moment is the dest mac address */
 	if (macaddr != NULL) {
@@ -5231,6 +5260,7 @@ mcx_delete_flow_table_entry(struct mcx_softc *sc, int group, int index)
 	struct mcx_cmd_delete_flow_table_entry_in *in;
 	struct mcx_cmd_delete_flow_table_entry_mb_in *mbin;
 	struct mcx_cmd_delete_flow_table_entry_out *out;
+	struct mcx_flow_group *mfg;
 	int error;
 	int token;
 
@@ -5251,8 +5281,10 @@ mcx_delete_flow_table_entry(struct mcx_softc *sc, int group, int index)
 	}
 	mbin = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
 	mbin->cmd_table_type = MCX_FLOW_TABLE_TYPE_RX;
-	mbin->cmd_table_id = htobe32(sc->sc_flow_table_id);
-	mbin->cmd_flow_index = htobe32(sc->sc_flow_group_start[group] + index);
+
+	mfg = &sc->sc_flow_group[group];
+	mbin->cmd_table_id = htobe32(mfg->g_table);
+	mbin->cmd_flow_index = htobe32(mfg->g_start + index);
 
 	mcx_cmdq_mboxes_sign(&mxm, 2);
 	mcx_cmdq_post(sc, cqe, 0);
@@ -5283,7 +5315,7 @@ free:
 
 #if 0
 int
-mcx_dump_flow_table(struct mcx_softc *sc)
+mcx_dump_flow_table(struct mcx_softc *sc, int flow_table_id)
 {
 	struct mcx_dmamem mxm;
 	struct mcx_cmdq_entry *cqe;
@@ -5315,7 +5347,7 @@ mcx_dump_flow_table(struct mcx_softc *sc)
 
 	mbin = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
 	mbin->cmd_table_type = 0;
-	mbin->cmd_table_id = htobe32(sc->sc_flow_table_id);
+	mbin->cmd_table_id = htobe32(flow_table_id);
 
 	mcx_cmdq_mboxes_sign(&mxm, 1);
 
@@ -5355,7 +5387,7 @@ free:
 	return (error);
 }
 int
-mcx_dump_flow_table_entry(struct mcx_softc *sc, int index)
+mcx_dump_flow_table_entry(struct mcx_softc *sc, int flow_table_id, int index)
 {
 	struct mcx_dmamem mxm;
 	struct mcx_cmdq_entry *cqe;
@@ -5388,7 +5420,7 @@ mcx_dump_flow_table_entry(struct mcx_softc *sc, int index)
 
 	mbin = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
 	mbin->cmd_table_type = 0;
-	mbin->cmd_table_id = htobe32(sc->sc_flow_table_id);
+	mbin->cmd_table_id = htobe32(flow_table_id);
 	mbin->cmd_flow_index = htobe32(index);
 
 	mcx_cmdq_mboxes_sign(&mxm, 1);
@@ -5432,7 +5464,7 @@ free:
 }
 
 int
-mcx_dump_flow_group(struct mcx_softc *sc)
+mcx_dump_flow_group(struct mcx_softc *sc, int flow_table_id)
 {
 	struct mcx_dmamem mxm;
 	struct mcx_cmdq_entry *cqe;
@@ -5464,7 +5496,7 @@ mcx_dump_flow_group(struct mcx_softc *sc)
 
 	mbin = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
 	mbin->cmd_table_type = 0;
-	mbin->cmd_table_id = htobe32(sc->sc_flow_table_id);
+	mbin->cmd_table_id = htobe32(flow_table_id);
 	mbin->cmd_group_id = htobe32(sc->sc_flow_group_id);
 
 	mcx_cmdq_mboxes_sign(&mxm, 1);
@@ -6263,13 +6295,15 @@ mcx_queue_up(struct mcx_softc *sc, struct mcx_queues *q)
 		}
 	}
 
-	if (mcx_create_cq(sc, &q->q_cq, q->q_uar, q->q_eq.eq_n) != 0)
+	if (mcx_create_cq(sc, &q->q_cq, q->q_uar, q->q_index,
+	    q->q_eq.eq_n) != 0)
 		return ENOMEM;
 
-	if (mcx_create_sq(sc, tx, q->q_uar, q->q_cq.cq_n) != 0)
+	if (mcx_create_sq(sc, tx, q->q_uar, q->q_index, q->q_cq.cq_n)
+	    != 0)
 		return ENOMEM;
 
-	if (mcx_create_rq(sc, rx, q->q_cq.cq_n) != 0)
+	if (mcx_create_rq(sc, rx, q->q_index, q->q_cq.cq_n) != 0)
 		return ENOMEM;
 
 	return 0;
@@ -6292,8 +6326,9 @@ mcx_up(struct mcx_softc *sc)
 	struct mcx_tx *tx;
 	int i, start;
 	struct mcx_flow_match match_crit;
+	uint32_t dest;
 
-	if (mcx_create_tis(sc) != 0)
+	if (mcx_create_tis(sc, &sc->sc_tis) != 0)
 		goto down;
 
 	for (i = 0; i < sc->sc_nqueues; i++) {
@@ -6302,24 +6337,28 @@ mcx_up(struct mcx_softc *sc)
 		}
 	}
 
-	if (mcx_create_tir(sc, &sc->sc_queues[0].q_rx) != 0)
+	if (mcx_create_tir_direct(sc, &sc->sc_queues[0].q_rx, &sc->sc_tir) != 0)
 		goto down;
 
-	if (mcx_create_flow_table(sc, MCX_LOG_FLOW_TABLE_SIZE) != 0)
+	if (mcx_create_flow_table(sc, MCX_LOG_FLOW_TABLE_SIZE, 0,
+	    &sc->sc_mac_flow_table_id) != 0)
 		goto down;
+
+	dest = MCX_FLOW_CONTEXT_DEST_TYPE_TIR | sc->sc_tir;
 
 	/* promisc flow group */
 	start = 0;
 	memset(&match_crit, 0, sizeof(match_crit));
-	if (mcx_create_flow_group(sc, MCX_FLOW_GROUP_PROMISC, start, 1,
-	    0, &match_crit) != 0)
+	if (mcx_create_flow_group(sc, sc->sc_mac_flow_table_id,
+	    MCX_FLOW_GROUP_PROMISC, start, 1, 0, &match_crit) != 0)
 		goto down;
 	sc->sc_promisc_flow_enabled = 0;
 	start++;
 
 	/* all multicast flow group */
 	match_crit.mc_dest_mac[0] = 0x01;
-	if (mcx_create_flow_group(sc, MCX_FLOW_GROUP_ALLMULTI, start, 1,
+	if (mcx_create_flow_group(sc, sc->sc_mac_flow_table_id,
+	    MCX_FLOW_GROUP_ALLMULTI, start, 1,
 	    MCX_CREATE_FLOW_GROUP_CRIT_OUTER, &match_crit) != 0)
 		goto down;
 	sc->sc_allmulti_flow_enabled = 0;
@@ -6327,20 +6366,20 @@ mcx_up(struct mcx_softc *sc)
 
 	/* mac address matching flow group */
 	memset(&match_crit.mc_dest_mac, 0xff, sizeof(match_crit.mc_dest_mac));
-	if (mcx_create_flow_group(sc, MCX_FLOW_GROUP_MAC, start,
-	    (1 << MCX_LOG_FLOW_TABLE_SIZE) - start,
+	if (mcx_create_flow_group(sc, sc->sc_mac_flow_table_id,
+	    MCX_FLOW_GROUP_MAC, start, (1 << MCX_LOG_FLOW_TABLE_SIZE) - start,
 	    MCX_CREATE_FLOW_GROUP_CRIT_OUTER, &match_crit) != 0)
 		goto down;
 
 	/* flow table entries for unicast and broadcast */
 	start = 0;
-	if (mcx_set_flow_table_entry(sc, rx, MCX_FLOW_GROUP_MAC, start,
-	    sc->sc_ac.ac_enaddr) != 0)
+	if (mcx_set_flow_table_entry_mac(sc, MCX_FLOW_GROUP_MAC, start,
+	    sc->sc_ac.ac_enaddr, dest) != 0)
 		goto down;
 	start++;
 
-	if (mcx_set_flow_table_entry(sc, rx, MCX_FLOW_GROUP_MAC, start,
-	    etherbroadcastaddr) != 0)
+	if (mcx_set_flow_table_entry_mac(sc, MCX_FLOW_GROUP_MAC, start,
+	    etherbroadcastaddr, dest) != 0)
 		goto down;
 	start++;
 
@@ -6350,13 +6389,13 @@ mcx_up(struct mcx_softc *sc)
 	/* re-add any existing multicast flows */
 	for (i = 0; i < MCX_NUM_MCAST_FLOWS; i++) {
 		if (sc->sc_mcast_flows[i][0] != 0) {
-			mcx_set_flow_table_entry(sc, rx, MCX_FLOW_GROUP_MAC,
+			mcx_set_flow_table_entry_mac(sc, MCX_FLOW_GROUP_MAC,
 			    sc->sc_mcast_flow_base + i,
-			    sc->sc_mcast_flows[i]);
+			    sc->sc_mcast_flows[i], dest);
 		}
 	}
 
-	if (mcx_set_flow_table_root(sc) != 0)
+	if (mcx_set_flow_table_root(sc, sc->sc_mac_flow_table_id) != 0)
 		goto down;
 
 	for (i = 0; i < sc->sc_nqueues; i++) {
@@ -6424,16 +6463,20 @@ mcx_down(struct mcx_softc *sc)
 	timeout_del_barrier(&sc->sc_calibrate);
 
 	for (group = 0; group < MCX_NUM_FLOW_GROUPS; group++) {
-		if (sc->sc_flow_group_id[group] != -1)
+		if (sc->sc_flow_group[group].g_id != -1)
 			mcx_destroy_flow_group(sc,
-			    sc->sc_flow_group_id[group]);
+			    sc->sc_flow_group[group].g_id);
 	}
 
-	if (sc->sc_flow_table_id != -1)
-		mcx_destroy_flow_table(sc);
+	if (sc->sc_mac_flow_table_id != -1) {
+		mcx_destroy_flow_table(sc, sc->sc_mac_flow_table_id);
+		sc->sc_mac_flow_table_id = -1;
+	}
 
-	if (sc->sc_tirn != 0)
-		mcx_destroy_tir(sc);
+	if (sc->sc_tir != 0) {
+		mcx_destroy_tir(sc, sc->sc_tir); 
+		sc->sc_tir = 0;
+	}
 
 	for (i = 0; i < sc->sc_nqueues; i++) {
 		struct mcx_queues *q = &sc->sc_queues[i];
@@ -6461,9 +6504,10 @@ mcx_down(struct mcx_softc *sc)
 		if (cq->cq_n != 0)
 			mcx_destroy_cq(sc, cq);
 	}
-	if (sc->sc_tisn != 0)
-		mcx_destroy_tis(sc);
-	sc->sc_num_cq = 0;
+	if (sc->sc_tis != 0) {
+		mcx_destroy_tis(sc, sc->sc_tis);
+		sc->sc_tis = 0;
+	}
 }
 
 static int
@@ -6473,6 +6517,7 @@ mcx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	uint8_t addrhi[ETHER_ADDR_LEN], addrlo[ETHER_ADDR_LEN];
 	int s, i, error = 0;
+	uint32_t dest;
 
 	s = splnet();
 	switch (cmd) {
@@ -6511,16 +6556,18 @@ mcx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (error != 0)
 				return (error);
 
+			dest = MCX_FLOW_CONTEXT_DEST_TYPE_TIR |
+			    sc->sc_tir;
+
 			for (i = 0; i < MCX_NUM_MCAST_FLOWS; i++) {
 				if (sc->sc_mcast_flows[i][0] == 0) {
 					memcpy(sc->sc_mcast_flows[i], addrlo,
 					    ETHER_ADDR_LEN);
 					if (ISSET(ifp->if_flags, IFF_RUNNING)) {
-						mcx_set_flow_table_entry(sc,
-						    &sc->sc_queues[0].q_rx,
+						mcx_set_flow_table_entry_mac(sc,
 						    MCX_FLOW_GROUP_MAC,
 						    sc->sc_mcast_flow_base + i,
-						    sc->sc_mcast_flows[i]);
+						    sc->sc_mcast_flows[i], dest);
 					}
 					break;
 				}
