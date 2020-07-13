@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.31 2020/07/10 13:22:22 patrick Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.32 2020/07/13 03:28:20 dlg Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -506,6 +506,9 @@ switch_port_add(struct switch_softc *sc, struct ifbreq *req)
 	if ((ifs = ifunit(req->ifbr_ifsname)) == NULL)
 		return (ENOENT);
 
+	if (ifs->if_type != IFT_ETHER)
+		return (EPROTONOSUPPORT);
+
 	if (ifs->if_bridgeidx != 0)
 		return (EBUSY);
 
@@ -517,15 +520,12 @@ switch_port_add(struct switch_softc *sc, struct ifbreq *req)
 			return (EBUSY);
 	}
 
-	if (ifs->if_type == IFT_ETHER) {
-		if ((error = ifpromisc(ifs, 1)) != 0)
-			return (error);
-	}
+	if ((error = ifpromisc(ifs, 1)) != 0)
+		return (error);
 
 	swpo = malloc(sizeof(*swpo), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (swpo == NULL) {
-		if (ifs->if_type == IFT_ETHER)
-			ifpromisc(ifs, 0);
+		ifpromisc(ifs, 0);
 		return (ENOMEM);
 	}
 	swpo->swpo_switch = sc;
