@@ -32,13 +32,14 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.77 2020/04/22 08:47:11 mpi Exp $ */
+/* $OpenBSD: if_em.h,v 1.78 2020/07/13 10:35:55 dlg Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
 
 #include "bpfilter.h"
 #include "vlan.h"
+#include "kstat.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +51,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <sys/socket.h>
 #include <sys/timeout.h>
 #include <sys/atomic.h>
+#include <sys/kstat.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -439,7 +441,6 @@ struct em_softc {
 
 	/* For 82544 PCI-X Workaround */
 	boolean_t	pcix_82544;
-	struct em_hw_stats stats;
 
 	int			 msix;
 	uint32_t		 msix_linkvec;
@@ -447,6 +448,9 @@ struct em_softc {
 	uint32_t		 msix_queuesmask;
 	int			 num_queues;
 	struct em_queue		*queues;
+
+	struct kstat		*kstat;
+	struct mutex		 kstat_mtx;
 };
 
 #define DEVNAME(_sc) ((_sc)->sc_dev.dv_xname)

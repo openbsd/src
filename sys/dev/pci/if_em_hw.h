@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.82 2020/03/23 15:02:51 mpi Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.83 2020/07/13 10:35:55 dlg Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -440,7 +440,6 @@ int32_t em_blink_led_start(struct em_hw *hw);
 void em_clear_hw_cntrs(struct em_hw *hw);
 void em_reset_adaptive(struct em_hw *hw);
 void em_update_adaptive(struct em_hw *hw);
-void em_tbi_adjust_stats(struct em_hw *hw, struct em_hw_stats *stats, uint32_t frame_len, uint8_t *mac_addr);
 void em_get_bus_info(struct em_hw *hw);
 void em_pci_set_mwi(struct em_hw *hw);
 void em_pci_clear_mwi(struct em_hw *hw);

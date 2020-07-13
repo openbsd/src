@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.108 2020/04/22 08:47:11 mpi Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.109 2020/07/13 10:35:55 dlg Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -44,6 +44,7 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/socket.h>
+#include <sys/kstat.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -8027,88 +8028,6 @@ em_clear_hw_cntrs(struct em_hw *hw)
 	temp = E1000_READ_REG(hw, ICTXQMTC);
 	temp = E1000_READ_REG(hw, ICRXDMTC);
 }
-
-#ifndef SMALL_KERNEL
-/******************************************************************************
- * Adjusts the statistic counters when a frame is accepted by TBI_ACCEPT
- *
- * hw - Struct containing variables accessed by shared code
- * frame_len - The length of the frame in question
- * mac_addr - The Ethernet destination address of the frame in question
- *****************************************************************************/
-void
-em_tbi_adjust_stats(struct em_hw *hw, struct em_hw_stats *stats,
-    uint32_t frame_len, uint8_t *mac_addr)
-{
-	uint64_t carry_bit;
-	/* First adjust the frame length. */
-	frame_len--;
-	/*
-	 * We need to adjust the statistics counters, since the hardware
-	 * counters overcount this packet as a CRC error and undercount the
-	 * packet as a good packet
-	 */
-	/* This packet should not be counted as a CRC error.    */
-	stats->crcerrs--;
-	/* This packet does count as a Good Packet Received.    */
-	stats->gprc++;
-
-	/* Adjust the Good Octets received counters             */
-	carry_bit = 0x80000000 & stats->gorcl;
-	stats->gorcl += frame_len;
-	/*
-	 * If the high bit of Gorcl (the low 32 bits of the Good Octets
-	 * Received Count) was one before the addition, AND it is zero after,
-	 * then we lost the carry out, need to add one to Gorch (Good Octets
-	 * Received Count High). This could be simplified if all environments
-	 * supported 64-bit integers.
-	 */
-	if (carry_bit && ((stats->gorcl & 0x80000000) == 0))
-		stats->gorch++;
-	/*
-	 * Is this a broadcast or multicast?  Check broadcast first, since
-	 * the test for a multicast frame will test positive on a broadcast
-	 * frame.
-	 */
-	if ((mac_addr[0] == (uint8_t) 0xff) && (mac_addr[1] == (uint8_t) 0xff))
-		/* Broadcast packet */
-		stats->bprc++;
-	else if (*mac_addr & 0x01)
-		/* Multicast packet */
-		stats->mprc++;
-
-	if (frame_len == hw->max_frame_size) {
-		/*
-		 * In this case, the hardware has overcounted the number of
-		 * oversize frames.
-		 */
-		if (stats->roc > 0)
-			stats->roc--;
-	}
-	/*
-	 * Adjust the bin counters when the extra byte put the frame in the
-	 * wrong bin. Remember that the frame_len was adjusted above.
-	 */
-	if (frame_len == 64) {
-		stats->prc64++;
-		stats->prc127--;
-	} else if (frame_len == 127) {
-		stats->prc127++;
-		stats->prc255--;
-	} else if (frame_len == 255) {
-		stats->prc255++;
-		stats->prc511--;
-	} else if (frame_len == 511) {
-		stats->prc511++;
-		stats->prc1023--;
-	} else if (frame_len == 1023) {
-		stats->prc1023++;
-		stats->prc1522--;
-	} else if (frame_len == 1522) {
-		stats->prc1522++;
-	}
-}
-#endif	/* !SMALL_KERNEL */
 
 /******************************************************************************
  * Gets the current PCI bus type, speed, and width of the hardware
