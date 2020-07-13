@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.c,v 1.10 2020/07/12 18:54:23 kn Exp $ */
+/*	$OpenBSD: if_wg.c,v 1.11 2020/07/13 08:29:34 tb Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -18,6 +18,7 @@
  */
 
 #include "bpfilter.h"
+#include "pf.h"
 
 #include <sys/types.h>
 #include <sys/systm.h>
