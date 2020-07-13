@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-parse.y,v 1.30 2020/06/04 16:06:01 nicm Exp $ */
+/* $OpenBSD: cmd-parse.y,v 1.31 2020/07/13 10:10:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1432,7 +1432,7 @@ yylex_token_variable(char **buf, size_t *len)
 	name[namelen] = '\0';
 
 	envent = environ_find(global_environ, name);
-	if (envent != NULL) {
+	if (envent != NULL && envent->value != NULL) {
 		value = envent->value;
 		log_debug("%s: %s -> %s", __func__, name, value);
 		yylex_append(buf, len, value, strlen(value));
