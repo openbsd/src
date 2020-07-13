@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwx.4,v 1.2 2020/07/07 11:54:49 stsp Exp $
+.\" $OpenBSD: iwx.4,v 1.3 2020/07/13 16:32:56 stsp Exp $
 .\"
 .\" Copyright (c) 2020 Stefan Sperling <stsp@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 7 2020 $
+.Dd $Mdocdate: July 13 2020 $
 .Dt IWX 4
 .Os
 .Sh NAME
@@ -61,10 +61,14 @@ keys are configured using the
 .Qq Cm wpakey
 option.
 WPA-Enterprise networks require use of the wpa_supplicant package.
-.\"The
-.\".Nm
-.\"driver offloads both encryption and decryption of unicast data frames to the
-.\"hardware for the CCMP cipher.
+The
+.Nm
+driver offloads both encryption and decryption of unicast data frames to the
+hardware for the CCMP cipher.
+.Pp
+In BSS mode the driver supports background scanning;
+see
+.Xr ifconfig 8 .
 .Pp
 The
 .Nm
