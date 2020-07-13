@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.406 2020/07/11 13:34:05 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.407 2020/07/13 00:05:39 kn Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3736,7 +3736,7 @@ sr_ioctl_installboot(struct sr_softc *sc, struct sr_discipline *sd,
 	if (omi == NULL) {
 		omi = malloc(sizeof(struct sr_meta_opt_item), M_DEVBUF,
 		    M_WAITOK | M_ZERO);
-		omi->omi_som = malloc(sizeof(struct sr_meta_crypto), M_DEVBUF,
+		omi->omi_som = malloc(sizeof(struct sr_meta_boot), M_DEVBUF,
 		    M_WAITOK | M_ZERO);
 		omi->omi_som->som_type = SR_OPT_BOOT;
 		omi->omi_som->som_length = sizeof(struct sr_meta_boot);
