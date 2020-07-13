@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.248 2020/07/12 00:48:59 krw Exp $	*/
+/*	$OpenBSD: ami.c,v 1.249 2020/07/13 13:43:31 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1547,7 +1547,7 @@ ami_intr(void *v)
 int
 ami_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 {
-	struct ami_softc *sc = (struct ami_softc *)link->adapter_softc;
+	struct ami_softc *sc = link->adapter_softc;
 	/* struct device *dev = (struct device *)link->device_softc; */
 	/* u_int8_t target = link->target; */
 

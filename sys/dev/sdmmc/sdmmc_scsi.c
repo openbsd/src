@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.47 2020/07/03 13:31:47 krw Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.48 2020/07/13 13:43:31 krw Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -598,7 +598,7 @@ sdmmc_scsi_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 		sc = NULL;
 		SLIST_FOREACH(link, &bus_sc->sc_link_list, bus_list) {
 			if (link->device_softc == disk) {
-				sc = (struct sdmmc_softc *)link->adapter_softc;
+				sc = link->adapter_softc;
 				scsi_sc = sc->sc_scsibus;
 				sf = scsi_sc->sc_tgt[link->target].card;
 			}

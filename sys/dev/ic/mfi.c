@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.179 2020/06/27 17:28:58 krw Exp $ */
+/* $OpenBSD: mfi.c,v 1.180 2020/07/13 13:43:31 krw Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1404,7 +1404,7 @@ done:
 int
 mfi_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 {
-	struct mfi_softc	*sc = (struct mfi_softc *)link->adapter_softc;
+	struct mfi_softc	*sc = link->adapter_softc;
 
 	DNPRINTF(MFI_D_IOCTL, "%s: mfi_scsi_ioctl\n", DEVNAME(sc));
 
@@ -1426,7 +1426,7 @@ mfi_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 int
 mfi_ioctl_cache(struct scsi_link *link, u_long cmd,  struct dk_cache *dc)
 {
-	struct mfi_softc	*sc = (struct mfi_softc *)link->adapter_softc;
+	struct mfi_softc	*sc = link->adapter_softc;
 	int			 rv, wrenable, rdenable;
 	struct mfi_ld_prop	 ldp;
 	union mfi_mbox		 mbox;

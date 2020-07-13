@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.c,v 1.40 2020/07/02 13:29:20 krw Exp $
+/*	$OpenBSD: trm.c,v 1.41 2020/07/13 13:43:31 krw Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.c
@@ -317,7 +317,7 @@ trm_scsi_cmd(struct scsi_xfer *xs)
 	target = xs->sc_link->target;
 	lun    = xs->sc_link->lun;
 
-	sc  = (struct trm_softc *)xs->sc_link->adapter_softc;
+	sc  = xs->sc_link->adapter_softc;
 	ioh = sc->sc_iohandle;
 	iot = sc->sc_iotag;
 

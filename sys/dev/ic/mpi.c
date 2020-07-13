@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.216 2020/07/11 21:35:55 krw Exp $ */
+/*	$OpenBSD: mpi.c,v 1.217 2020/07/13 13:43:31 krw Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -2956,7 +2956,7 @@ mpi_req_cfg_page(struct mpi_softc *sc, u_int32_t address, int flags,
 int
 mpi_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 {
-	struct mpi_softc	*sc = (struct mpi_softc *)link->adapter_softc;
+	struct mpi_softc	*sc = link->adapter_softc;
 
 	DNPRINTF(MPI_D_IOCTL, "%s: mpi_scsi_ioctl\n", DEVNAME(sc));
 
@@ -2982,7 +2982,7 @@ mpi_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 int
 mpi_ioctl_cache(struct scsi_link *link, u_long cmd, struct dk_cache *dc)
 {
-	struct mpi_softc	*sc = (struct mpi_softc *)link->adapter_softc;
+	struct mpi_softc	*sc = link->adapter_softc;
 	struct mpi_ccb		*ccb;
 	int			len, rv;
 	struct mpi_cfg_hdr	hdr;

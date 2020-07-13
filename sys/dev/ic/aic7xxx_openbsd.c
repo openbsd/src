@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.63 2020/07/11 14:25:59 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.64 2020/07/13 13:43:31 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -257,7 +257,7 @@ ahc_action(struct scsi_xfer *xs)
 	u_int our_id;
 
 	SC_DEBUG(xs->sc_link, SDEV_DB3, ("ahc_action\n"));
-	ahc = (struct ahc_softc *)xs->sc_link->adapter_softc;
+	ahc = xs->sc_link->adapter_softc;
 
 	target_id = xs->sc_link->target;
 	our_id = SCSI_SCSI_ID(ahc, xs->sc_link);
@@ -311,7 +311,7 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 	xs = scb->xs;
 	xs->error = CAM_REQ_INPROG;
 	xs->status = 0;
-	ahc = (struct ahc_softc *)xs->sc_link->adapter_softc;
+	ahc = xs->sc_link->adapter_softc;
 
 	if (nsegments != 0) {
 		struct	  ahc_dma_seg *sg;
@@ -553,8 +553,8 @@ ahc_timeout(void *arg)
 	int	found;
 	char	channel;
 
-	scb = (struct scb *)arg;
-	ahc = (struct ahc_softc *)scb->xs->sc_link->adapter_softc;
+	scb = arg;
+	ahc = scb->xs->sc_link->adapter_softc;
 
 	s = splbio();
 

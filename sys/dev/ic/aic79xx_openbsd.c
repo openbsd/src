@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.53 2020/07/11 13:34:06 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.54 2020/07/13 13:43:31 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -257,7 +257,7 @@ ahd_action(struct scsi_xfer *xs)
 	u_int16_t quirks;
 
 	SC_DEBUG(xs->sc_link, SDEV_DB3, ("ahd_action\n"));
-	ahd = (struct ahd_softc *)xs->sc_link->adapter_softc;
+	ahd = xs->sc_link->adapter_softc;
 
 	target_id = xs->sc_link->target;
 	our_id = SCSI_SCSI_ID(ahd, xs->sc_link);
@@ -322,7 +322,7 @@ ahd_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 	xs = scb->xs;
 	xs->error = CAM_REQ_INPROG;
 	xs->status = 0;
-	ahd = (struct ahd_softc *)xs->sc_link->adapter_softc;
+	ahd = xs->sc_link->adapter_softc;
 
 	if (nsegments != 0) {
 		void *sg;

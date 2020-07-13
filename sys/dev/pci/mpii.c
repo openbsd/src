@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.132 2020/07/11 13:34:06 krw Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.133 2020/07/13 13:43:31 krw Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -3194,7 +3194,7 @@ done:
 int
 mpii_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 {
-	struct mpii_softc	*sc = (struct mpii_softc *)link->adapter_softc;
+	struct mpii_softc	*sc = link->adapter_softc;
 	struct mpii_device	*dev = sc->sc_devs[link->target];
 
 	DNPRINTF(MPII_D_IOCTL, "%s: mpii_scsi_ioctl\n", DEVNAME(sc));
@@ -3221,7 +3221,7 @@ mpii_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 int
 mpii_ioctl_cache(struct scsi_link *link, u_long cmd, struct dk_cache *dc)
 {
-	struct mpii_softc *sc = (struct mpii_softc *)link->adapter_softc;
+	struct mpii_softc *sc = link->adapter_softc;
 	struct mpii_device *dev = sc->sc_devs[link->target];
 	struct mpii_cfg_raid_vol_pg0 *vpg;
 	struct mpii_msg_raid_action_request *req;
