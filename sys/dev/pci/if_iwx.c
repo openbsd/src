@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.39 2020/07/10 13:22:20 patrick Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.40 2020/07/13 16:18:52 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -801,7 +801,7 @@ iwx_ctxt_info_init(struct iwx_softc *sc, const struct iwx_fw_sects *fws)
 	ctxt_info->hcmd_cfg.cmd_queue_addr =
 		htole64(sc->txq[IWX_DQA_CMD_QUEUE].desc_dma.paddr);
 	ctxt_info->hcmd_cfg.cmd_queue_size =
-		IWX_TFD_QUEUE_CB_SIZE(IWX_CMD_QUEUE_SIZE);
+		IWX_TFD_QUEUE_CB_SIZE(IWX_TX_RING_COUNT);
 
 	/* allocate ucode sections in dram and set addresses */
 	err = iwx_init_fw_sec(sc, fws, &ctxt_info->dram);
@@ -1642,20 +1642,15 @@ iwx_alloc_tx_ring(struct iwx_softc *sc, struct iwx_tx_ring *ring, int qid)
 {
 	bus_addr_t paddr;
 	bus_size_t size;
-	int i, err, qlen;
+	int i, err;
 
 	ring->qid = qid;
 	ring->queued = 0;
 	ring->cur = 0;
 	ring->tail = 0;
 
-	if (qid == IWX_DQA_CMD_QUEUE)
-		qlen = IWX_CMD_QUEUE_SIZE;
-	else
-		qlen = IWX_TX_RING_COUNT;
-
 	/* Allocate TX descriptors (256-byte aligned). */
-	size = qlen * sizeof (struct iwx_tfh_tfd);
+	size = IWX_TX_RING_COUNT * sizeof(struct iwx_tfh_tfd);
 	err = iwx_dma_contig_alloc(sc->sc_dmat, &ring->desc_dma, size, 256);
 	if (err) {
 		printf("%s: could not allocate TX ring DMA memory\n",
@@ -1688,7 +1683,7 @@ iwx_alloc_tx_ring(struct iwx_softc *sc, struct iwx_tx_ring *ring, int qid)
 		goto fail;
 	}
 
-	size = qlen * sizeof(struct iwx_device_cmd);
+	size = IWX_TX_RING_COUNT * sizeof(struct iwx_device_cmd);
 	err = iwx_dma_contig_alloc(sc->sc_dmat, &ring->cmd_dma, size,
 	    IWX_FIRST_TB_SIZE_ALIGN);
 	if (err) {
@@ -1698,7 +1693,7 @@ iwx_alloc_tx_ring(struct iwx_softc *sc, struct iwx_tx_ring *ring, int qid)
 	ring->cmd = ring->cmd_dma.vaddr;
 
 	paddr = ring->cmd_dma.paddr;
-	for (i = 0; i < qlen; i++) {
+	for (i = 0; i < IWX_TX_RING_COUNT; i++) {
 		struct iwx_tx_data *data = &ring->data[i];
 		size_t mapsize;
 
@@ -1730,14 +1725,9 @@ fail:	iwx_free_tx_ring(sc, ring);
 void
 iwx_reset_tx_ring(struct iwx_softc *sc, struct iwx_tx_ring *ring)
 {
-	int i, qlen;
+	int i;
 
-	if (ring->qid == IWX_DQA_CMD_QUEUE)
-		qlen = IWX_CMD_QUEUE_SIZE;
-	else
-		qlen = IWX_TX_RING_COUNT;
-
-	for (i = 0; i < qlen; i++) {
+	for (i = 0; i < IWX_TX_RING_COUNT; i++) {
 		struct iwx_tx_data *data = &ring->data[i];
 
 		if (data->m != NULL) {
@@ -1765,18 +1755,13 @@ iwx_reset_tx_ring(struct iwx_softc *sc, struct iwx_tx_ring *ring)
 void
 iwx_free_tx_ring(struct iwx_softc *sc, struct iwx_tx_ring *ring)
 {
-	int i, qlen;
+	int i;
 
 	iwx_dma_contig_free(&ring->desc_dma);
 	iwx_dma_contig_free(&ring->cmd_dma);
 	iwx_dma_contig_free(&ring->bc_tbl);
 
-	if (ring->qid == IWX_DQA_CMD_QUEUE)
-		qlen = IWX_CMD_QUEUE_SIZE;
-	else
-		qlen = IWX_TX_RING_COUNT;
-
-	for (i = 0; i < qlen; i++) {
+	for (i = 0; i < IWX_TX_RING_COUNT; i++) {
 		struct iwx_tx_data *data = &ring->data[i];
 
 		if (data->m != NULL) {
@@ -3853,7 +3838,7 @@ iwx_send_cmd(struct iwx_softc *sc, struct iwx_host_cmd *hcmd)
 	/* Kick command ring. */
 	DPRINTF(("%s: sending command 0x%x\n", __func__, code));
 	ring->queued++;
-	ring->cur = (ring->cur + 1) % IWX_CMD_QUEUE_SIZE;
+	ring->cur = (ring->cur + 1) % IWX_TX_RING_COUNT;
 	IWX_WRITE(sc, IWX_HBUS_TARG_WRPTR, ring->qid << 16 | ring->cur);
 
 	if (!async) {

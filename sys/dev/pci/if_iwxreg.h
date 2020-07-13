@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.15 2020/06/22 16:25:55 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.16 2020/07/13 16:18:52 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -1402,7 +1402,6 @@ enum iwx_gen2_tx_fifo {
 #define IWX_TX_QUEUE_CFG_TFD_SHORT_FORMAT	(1 << 1)
 
 #define IWX_DEFAULT_QUEUE_SIZE IWX_TFD_QUEUE_SIZE_MAX
-#define IWX_CMD_QUEUE_SIZE 64
 
 /**
  * struct iwx_tx_queue_cfg_cmd - txq hw scheduler config command
