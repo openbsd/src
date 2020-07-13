@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.133 2020/07/13 13:43:31 krw Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.134 2020/07/13 14:25:41 krw Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -3210,7 +3210,7 @@ mpii_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 
 	default:
 		if (sc->sc_ioctl)
-			return (sc->sc_ioctl(link->adapter_softc, cmd, addr));
+			return (sc->sc_ioctl(&sc->sc_dev, cmd, addr));
 
 		break;
 	}

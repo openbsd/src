@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.249 2020/07/13 13:43:31 krw Exp $	*/
+/*	$OpenBSD: ami.c,v 1.250 2020/07/13 14:25:41 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1552,7 +1552,7 @@ ami_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 	/* u_int8_t target = link->target; */
 
 	if (sc->sc_ioctl)
-		return (sc->sc_ioctl(link->adapter_softc, cmd, addr));
+		return (sc->sc_ioctl(&sc->sc_dev, cmd, addr));
 	else
 		return (ENOTTY);
 }
