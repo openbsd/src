@@ -532,7 +532,7 @@ int intel_guc_submission_init(struct intel_guc *guc)
 	if (ret)
 		goto err_workqueue;
 
-	mtx_init(&guc->wq_lock, IPL_TTY);
+	mtx_init(&guc->wq_lock, IPL_NONE);
 
 	return 0;
 

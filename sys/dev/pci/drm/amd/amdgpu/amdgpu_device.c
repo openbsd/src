@@ -2987,13 +2987,13 @@ int amdgpu_device_init(struct amdgpu_device *adev,
 	mtx_init(&adev->gc_cac_idx_lock, IPL_TTY);
 	mtx_init(&adev->se_cac_idx_lock, IPL_TTY);
 	mtx_init(&adev->audio_endpt_idx_lock, IPL_TTY);
-	mtx_init(&adev->mm_stats.lock, IPL_TTY);
+	mtx_init(&adev->mm_stats.lock, IPL_NONE);
 
 	INIT_LIST_HEAD(&adev->shadow_list);
 	rw_init(&adev->shadow_list_lock, "sdwlst");
 
 	INIT_LIST_HEAD(&adev->ring_lru_list);
-	mtx_init(&adev->ring_lru_list_lock, IPL_TTY);
+	mtx_init(&adev->ring_lru_list_lock, IPL_NONE);
 
 	INIT_DELAYED_WORK(&adev->delayed_init_work,
 			  amdgpu_device_delayed_init_work_handler);

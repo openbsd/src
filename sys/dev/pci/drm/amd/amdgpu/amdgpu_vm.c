@@ -2867,7 +2867,7 @@ int amdgpu_vm_init(struct amdgpu_device *adev, struct amdgpu_vm *vm,
 	INIT_LIST_HEAD(&vm->moved);
 	INIT_LIST_HEAD(&vm->idle);
 	INIT_LIST_HEAD(&vm->invalidated);
-	mtx_init(&vm->invalidated_lock, IPL_TTY);
+	mtx_init(&vm->invalidated_lock, IPL_NONE);
 	INIT_LIST_HEAD(&vm->freed);
 
 

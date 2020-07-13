@@ -1293,7 +1293,7 @@ void i915_gem_init_early(struct drm_i915_private *dev_priv)
 	i915_gem_init__mm(dev_priv);
 	i915_gem_init__contexts(dev_priv);
 
-	mtx_init(&dev_priv->fb_tracking.lock, IPL_TTY);
+	mtx_init(&dev_priv->fb_tracking.lock, IPL_NONE);
 }
 
 void i915_gem_cleanup_early(struct drm_i915_private *dev_priv)

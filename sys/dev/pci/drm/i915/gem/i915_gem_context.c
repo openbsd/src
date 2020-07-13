@@ -897,7 +897,7 @@ i915_gem_create_context(struct drm_i915_private *i915, unsigned int flags)
 
 static void init_contexts(struct i915_gem_contexts *gc)
 {
-	mtx_init(&gc->lock, IPL_TTY);
+	mtx_init(&gc->lock, IPL_NONE);
 	INIT_LIST_HEAD(&gc->list);
 
 	INIT_WORK(&gc->free_work, contexts_free_worker);

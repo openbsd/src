@@ -767,7 +767,7 @@ static int gmc_v10_0_sw_init(void *handle)
 	gfxhub_v2_0_init(adev);
 	mmhub_v2_0_init(adev);
 
-	mtx_init(&adev->gmc.invalidate_lock, IPL_TTY);
+	mtx_init(&adev->gmc.invalidate_lock, IPL_NONE);
 
 	r = amdgpu_atomfirmware_get_vram_info(adev,
 		&vram_width, &vram_type, &vram_vendor);

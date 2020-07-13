@@ -35,7 +35,7 @@ struct i915_page_directory *__alloc_pd(size_t sz)
 	if (unlikely(!pd))
 		return NULL;
 
-	mtx_init(&pd->lock, IPL_TTY);
+	mtx_init(&pd->lock, IPL_NONE);
 	return pd;
 }
 
