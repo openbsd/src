@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.57 2020/07/10 13:22:21 patrick Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.58 2020/07/13 08:31:32 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -2085,7 +2085,7 @@ athn_usb_rx_frame(struct athn_usb_softc *usc, struct mbuf *m,
 	    (ni->ni_flags & IEEE80211_NODE_RXPROT) &&
 	    (ni->ni_rsncipher == IEEE80211_CIPHER_CCMP ||
 	    (IEEE80211_IS_MULTICAST(wh->i_addr1) &&
-	    ic->ic_rsngroupcipher == IEEE80211_CIPHER_CCMP))) {
+	    ni->ni_rsngroupcipher == IEEE80211_CIPHER_CCMP))) {
 		if (ar5008_ccmp_decap(sc, m, ni) != 0) {
 			ifp->if_ierrors++;
 			ieee80211_release_node(ic, ni);

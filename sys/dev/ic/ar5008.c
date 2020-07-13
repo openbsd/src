@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.60 2020/07/06 11:28:51 stsp Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.61 2020/07/13 08:31:32 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1005,7 +1005,7 @@ ar5008_rx_process(struct athn_softc *sc, struct mbuf_list *ml)
 	    (ni->ni_flags & IEEE80211_NODE_RXPROT) &&
 	    (ni->ni_rsncipher == IEEE80211_CIPHER_CCMP ||
 	    (IEEE80211_IS_MULTICAST(wh->i_addr1) &&
-	    ic->ic_rsngroupcipher == IEEE80211_CIPHER_CCMP))) {
+	    ni->ni_rsngroupcipher == IEEE80211_CIPHER_CCMP))) {
 		if (ar5008_ccmp_decap(sc, m, ni) != 0) {
 			ifp->if_ierrors++;
 			ieee80211_release_node(ic, ni);
