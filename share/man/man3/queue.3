@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.66 2019/12/30 17:25:39 schwarze Exp $
+.\"	$OpenBSD: queue.3,v 1.67 2020/07/13 01:28:10 schwarze Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)queue.3	8.1 (Berkeley) 12/13/93
 .\"
-.Dd $Mdocdate: December 30 2019 $
+.Dd $Mdocdate: July 13 2020 $
 .Dt SLIST_INIT 3
 .Os
 .Sh NAME
@@ -220,6 +220,16 @@ Insertion of a new entry after any element in the list.
 Removal of an entry from the head of the list.
 .It
 Forward traversal through the list.
+.El
+.Pp
+The following table provides a quick overview
+of which types support which additional macros:
+.Bl -column -offset 6n "LAST, PREV, FOREACH_REVERSE" SLIST LIST SIMPLEQ TAILQ
+.It LAST, PREV, FOREACH_REVERSE Ta -     Ta -    Ta -       Ta TAILQ
+.It INSERT_BEFORE, REPLACE      Ta -     Ta LIST Ta -       Ta TAILQ
+.It INSERT_TAIL, CONCAT         Ta -     Ta -    Ta SIMPLEQ Ta TAILQ
+.It REMOVE_AFTER, REMOVE_HEAD   Ta SLIST Ta -    Ta SIMPLEQ Ta -
+.It REMOVE                      Ta SLIST Ta LIST Ta -       Ta TAILQ
 .El
 .Pp
 Singly-linked lists are the simplest of the four data structures
