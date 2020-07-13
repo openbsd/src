@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwm.4,v 1.33 2020/05/16 17:03:34 jmc Exp $
+.\" $OpenBSD: iwm.4,v 1.34 2020/07/13 16:33:25 stsp Exp $
 .\"
 .\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 16 2020 $
+.Dd $Mdocdate: July 13 2020 $
 .Dt IWM 4
 .Os
 .Sh NAME
@@ -64,10 +64,10 @@ keys are configured using the
 .Qq Cm wpakey
 option.
 WPA-Enterprise networks require use of the wpa_supplicant package.
-.\"The
-.\".Nm
-.\"driver offloads both encryption and decryption of unicast data frames to the
-.\"hardware for the CCMP cipher.
+The
+.Nm
+driver offloads both encryption and decryption of unicast data frames to the
+hardware for the CCMP cipher.
 .Pp
 In BSS mode the driver supports background scanning;
 see
