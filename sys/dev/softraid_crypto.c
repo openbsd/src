@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.138 2019/07/04 18:09:17 bluhm Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.139 2020/07/13 00:06:22 kn Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -882,7 +882,7 @@ done:
 	for (omi = SLIST_FIRST(&som); omi != NULL; omi = omi_next) {
 		omi_next = SLIST_NEXT(omi, omi_link);
 		free(omi->omi_som, M_DEVBUF, 0);
-		free(omi, M_DEVBUF, 0);
+		free(omi, M_DEVBUF, sizeof(struct sr_meta_opt_item));
 	}
 
 	free(sm, M_DEVBUF, SR_META_SIZE * DEV_BSIZE);
