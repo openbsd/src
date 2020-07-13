@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.4 2020/07/06 17:43:23 kettenis Exp $	*/
+/*	$OpenBSD: signal.h,v 1.5 2020/07/13 22:37:37 kettenis Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -42,37 +42,23 @@ typedef int sig_atomic_t;
 
 #include <machine/_types.h>
 
-/*
- * We have to save all registers on every trap, because
- *	1. user could attach this process every time
- *	2. we must be able to restore all user registers in case of fork
- * Actually, we do not save the fp registers on trap, since
- * these are not used by the kernel. They are saved only when switching
- * between processes using the FPU.
- *
- */
-struct trapframe {
-	__register_t fixreg[32];
-	__register_t lr;
-	__register_t cr;
-	__register_t xer;
-	__register_t ctr;
-	__register_t srr0;
-	__register_t srr1;
-	__register_t vrsave;
-	__register_t dar;	/* dar & dsisr are only filled on a DSI trap */
-	__register_t dsisr;
-	__register_t exc;
-};
-
 struct sigcontext {
 	long		sc_cookie;
 	int		sc_mask;	/* saved signal mask */
-	struct trapframe sc_frame;	/* saved registers */
+	__register_t	sc_reg[32];	/* saved registers */
+	__register_t	sc_lr;
+	__register_t	sc_cr;
+	__register_t	sc_xer;
+	__register_t	sc_ctr;
+	__register_t	sc_pc;
+	__register_t	sc_ps;
+	__register_t	sc_vrsave;
 	__uint128_t	sc_vsx[64];
 	__uint64_t	sc_fpscr;
 	__uint64_t	sc_vscr;
 };
+
+#define sc_sp	sc_reg[1]
 
 #endif /* __BSD_VISIBLE || __XPG_VISIBLE >= 420 */
 

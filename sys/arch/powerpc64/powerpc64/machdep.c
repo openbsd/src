@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.49 2020/07/11 11:43:57 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.50 2020/07/13 22:37:37 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -755,13 +755,14 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 
 	/* Save register context. */
 	for (i = 0; i < 32; i++)
-		frame.sf_sc.sc_frame.fixreg[i] = tf->fixreg[i];
-	frame.sf_sc.sc_frame.lr = tf->lr;
-	frame.sf_sc.sc_frame.cr = tf->cr;
-	frame.sf_sc.sc_frame.xer = tf->xer;
-	frame.sf_sc.sc_frame.ctr = tf->ctr;
-	frame.sf_sc.sc_frame.srr0 = tf->srr0;
-	frame.sf_sc.sc_frame.srr1 = tf->srr1;
+		frame.sf_sc.sc_reg[i] = tf->fixreg[i];
+	frame.sf_sc.sc_lr = tf->lr;
+	frame.sf_sc.sc_cr = tf->cr;
+	frame.sf_sc.sc_xer = tf->xer;
+	frame.sf_sc.sc_ctr = tf->ctr;
+	frame.sf_sc.sc_pc = tf->srr0;
+	frame.sf_sc.sc_ps = tf->srr1;
+	frame.sf_sc.sc_vrsave = tf->vrsave;
 
 	/* Copy the saved FPU state into the frame if necessary. */
 	if (pcb->pcb_flags & (PCB_FP|PCB_VEC|PCB_VSX)) {
@@ -826,18 +827,19 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	    offsetof(struct sigcontext, sc_cookie), sizeof (ksc.sc_cookie));
 
 	/* Make sure the processor mode has not been tampered with. */
-	if (ksc.sc_frame.srr1 != PSL_USER)
+	if (ksc.sc_ps != PSL_USER)
 		return EINVAL;
 
 	/* Restore register context. */
 	for (i = 0; i < 32; i++)
-		tf->fixreg[i] = ksc.sc_frame.fixreg[i];
-	tf->lr = ksc.sc_frame.lr;
-	tf->cr = ksc.sc_frame.cr;
-	tf->xer = ksc.sc_frame.xer;
-	tf->ctr = ksc.sc_frame.ctr;
-	tf->srr0 = ksc.sc_frame.srr0;
-	tf->srr1 = ksc.sc_frame.srr1;
+		tf->fixreg[i] = ksc.sc_reg[i];
+	tf->lr = ksc.sc_lr;
+	tf->cr = ksc.sc_cr;
+	tf->xer = ksc.sc_xer;
+	tf->ctr = ksc.sc_ctr;
+	tf->srr0 = ksc.sc_pc;
+	tf->srr1 = ksc.sc_ps;
+	tf->vrsave = ksc.sc_vrsave;
 
 	/* Write saved FPU state back to PCB if necessary. */
 	if (pcb->pcb_flags & (PCB_FP|PCB_VEC|PCB_VSX)) {

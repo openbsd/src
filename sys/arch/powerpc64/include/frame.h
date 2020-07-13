@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.4 2020/06/24 20:49:11 kettenis Exp $	*/
+/*	$OpenBSD: frame.h,v 1.5 2020/07/13 22:37:37 kettenis Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -33,6 +33,29 @@
 
 #ifndef _MACHDEP_FRAME_H
 #define _MACHDEP_FRAME_H
+
+/*
+ * We have to save all registers on every trap, because
+ *	1. user could attach this process every time
+ *	2. we must be able to restore all user registers in case of fork
+ * Actually, we do not save the fp registers on trap, since
+ * these are not used by the kernel. They are saved only when switching
+ * between processes using the FPU.
+ *
+ */
+struct trapframe {
+	__register_t fixreg[32];
+	__register_t lr;
+	__register_t cr;
+	__register_t xer;
+	__register_t ctr;
+	__register_t srr0;
+	__register_t srr1;
+	__register_t vrsave;
+	__register_t dar;	/* dar & dsisr are only filled on a DSI trap */
+	__register_t dsisr;
+	__register_t exc;
+};
 
 /*
  * This is to ensure alignment of the stackpointer
