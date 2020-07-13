@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.40 2020/07/13 16:18:52 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.41 2020/07/13 16:23:53 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -7989,10 +7989,7 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 	task_set(&sc->htprot_task, iwx_htprot_task, sc);
 
 	ic->ic_node_alloc = iwx_node_alloc;
-#ifdef notyet
-	/* TODO: background scans trigger firmware errors */
 	ic->ic_bgscan_start = iwx_bgscan;
-#endif
 	ic->ic_set_key = iwx_set_key;
 	ic->ic_delete_key = iwx_delete_key;
 
