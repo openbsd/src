@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.27 2020/07/11 12:17:59 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.28 2020/07/14 16:54:46 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -174,9 +174,11 @@ trap(struct trapframe *frame)
 		error = uvm_fault(map, trunc_page(va), 0, ftype);
 		KERNEL_UNLOCK();
 		if (error) {
+#ifdef TRAP_DEBUG
 			printf("type %x dar 0x%lx dsisr 0x%lx %s\r\n",
 			    type, frame->dar, frame->dsisr, p->p_p->ps_comm);
 			dumpframe(frame);
+#endif
 
 			if (error == ENOMEM) {
 				sig = SIGKILL;
@@ -215,9 +217,11 @@ trap(struct trapframe *frame)
 		error = uvm_fault(map, trunc_page(va), 0, ftype);
 		KERNEL_UNLOCK();
 		if (error) {
+#ifdef TRAP_DEBUG
 			printf("type %x srr0 0x%lx %s\r\n",
 			    type, frame->srr0, p->p_p->ps_comm);
 			dumpframe(frame);
+#endif
 
 			if (error == ENOMEM) {
 				sig = SIGKILL;
