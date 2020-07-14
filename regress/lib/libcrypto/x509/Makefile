@@ -1,13 +1,16 @@
-#	$OpenBSD: Makefile,v 1.2 2020/06/04 21:21:03 schwarze Exp $
+#	$OpenBSD: Makefile,v 1.3 2020/07/14 18:33:00 jsing Exp $
 
-PROGS =	x509attribute x509name
+PROGS =	verify x509attribute x509name
 LDADD=	-lcrypto
 DPADD=	${LIBCRYPTO}
 WARNINGS=	Yes
 CFLAGS+=	-Wall -Werror
 
-REGRESS_TARGETS=regress-x509attribute regress-x509name
+REGRESS_TARGETS=regress-verify regress-x509attribute regress-x509name
 CLEANFILES+=	x509name.result
+
+regress-verify: verify
+	./verify ${.CURDIR}/../certs
 
 regress-x509attribute: x509attribute
 	./x509attribute
