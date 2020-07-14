@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.5 2020/07/05 12:24:16 kettenis Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.6 2020/07/14 09:42:33 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
@@ -39,9 +39,6 @@ syscall(struct trapframe *frame)
 	nsys = p->p_p->ps_emul->e_nsysent;
 	ap = &frame->fixreg[3];
 
-//	printf("%s: proc %p code %d pc 0x%lx lr 0x%lx\n", __func__, p, code,
-//	       frame->srr0, frame->lr);
-
 	switch (code) {
 	case SYS_syscall:
 	case SYS___syscall:
@@ -70,8 +67,6 @@ syscall(struct trapframe *frame)
 	rval[1] = frame->fixreg[4];
 
 	error = mi_syscall(p, code, callp, args, rval);
-
-//	printf("%s: proc %p retval %lx/%ld error %d\n", __func__, p, rval[0], rval[0], error);
 
 	switch (error) {
 	case 0:
@@ -104,8 +99,6 @@ child_return(void *arg)
 {
 	struct proc *p = (struct proc *)arg;
 	struct trapframe *frame = p->p_md.md_regs;
-
-//	printf("%s: proc %p retval 0/0 error 0\n", __func__, p);
 
 	frame->fixreg[0] = 0;
 	frame->fixreg[3] = 0;
