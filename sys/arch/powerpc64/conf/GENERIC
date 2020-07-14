@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.13 2020/07/07 22:43:29 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.14 2020/07/14 20:39:40 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -26,6 +26,7 @@ opalcons*	at fdt?
 opalsens*	at fdt?
 phb*		at fdt?
 pci*		at phb?
+xics*		at fdt?
 xive*		at fdt?
 
 ppb*		at pci?

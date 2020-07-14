@@ -1,4 +1,4 @@
-# $OpenBSD: files.powerpc64,v 1.20 2020/07/07 22:43:29 kettenis Exp $
+# $OpenBSD: files.powerpc64,v 1.21 2020/07/14 20:39:40 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -85,6 +85,10 @@ file	arch/powerpc64/dev/opalsens.c		opalsens
 device	phb: pcibus
 attach	phb at fdt
 file	arch/powerpc64/dev/phb.c		phb
+
+device	xics
+attach	xics at fdt
+file	arch/powerpc64/dev/xics.c		xics
 
 device	xive
 attach	xive at fdt
