@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.200 2020/04/29 02:25:48 beck Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.201 2020/07/14 06:02:50 beck Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -706,8 +706,14 @@ bwrite(struct buf *bp)
 	 */
 	async = ISSET(bp->b_flags, B_ASYNC);
 	if (!async && mp && ISSET(mp->mnt_flag, MNT_ASYNC)) {
-		bdwrite(bp);
-		return (0);
+		/*
+		 * Don't convert writes from VND on async filesystems
+		 * that already have delayed writes in the upper layer.
+		 */
+		if (!ISSET(bp->b_flags, B_NOCACHE)) {
+			bdwrite(bp);
+			return (0);
+		}
 	}
 
 	/*
