@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.158 2020/07/14 14:33:03 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.159 2020/07/14 18:25:22 deraadt Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -78,7 +78,7 @@ int	filt_ttyread(struct knote *kn, long hint);
 void 	filt_ttyrdetach(struct knote *kn);
 int	filt_ttywrite(struct knote *kn, long hint);
 void 	filt_ttywdetach(struct knote *kn);
-void	ttystats_init(struct itty **, size_t *);
+void	ttystats_init(struct itty **, int *, size_t *);
 int	ttywait_nsec(struct tty *, uint64_t);
 int	ttysleep_nsec(struct tty *, void *, int, char *, uint64_t);
 
@@ -170,6 +170,7 @@ u_char const char_type[] = {
 
 struct ttylist_head ttylist;	/* TAILQ_HEAD */
 int tty_count;
+struct rwlock ttylist_lock = RWLOCK_INITIALIZER("ttylist");
 
 int64_t tk_cancc, tk_nin, tk_nout, tk_rawcc;
 
@@ -2354,8 +2355,11 @@ ttymalloc(int baud)
 	/* output queue doesn't need quoting */
 	clalloc(&tp->t_outq, tp->t_qlen, 0);
 
+	rw_enter_write(&ttylist_lock);
 	TAILQ_INSERT_TAIL(&ttylist, tp, tty_link);
 	++tty_count;
+	rw_exit_write(&ttylist_lock);
+
 	timeout_set(&tp->t_rstrt_to, ttrstrt, tp);
 
 	return(tp);
@@ -2370,12 +2374,14 @@ ttyfree(struct tty *tp)
 {
 	int s;
 
+	rw_enter_write(&ttylist_lock);
 	--tty_count;
 #ifdef DIAGNOSTIC
 	if (tty_count < 0)
 		panic("ttyfree: tty_count < 0");
 #endif
 	TAILQ_REMOVE(&ttylist, tp, tty_link);
+	rw_exit_write(&ttylist_lock);
 
 	s = spltty();
 	klist_invalidate(&tp->t_rsel.si_note);
@@ -2389,15 +2395,19 @@ ttyfree(struct tty *tp)
 }
 
 void
-ttystats_init(struct itty **ttystats, size_t *ttystatssiz)
+ttystats_init(struct itty **ttystats, int *ttycp, size_t *ttystatssiz)
 {
+	int ntty = 0, ttyc;
 	struct itty *itp;
 	struct tty *tp;
 
-	*ttystatssiz = tty_count * sizeof(struct itty);
-	*ttystats = mallocarray(tty_count, sizeof(struct itty),
+	ttyc = tty_count;
+	*ttystatssiz = ttyc * sizeof(struct itty);
+	*ttystats = mallocarray(ttyc, sizeof(struct itty),
 	    M_SYSCTL, M_WAITOK|M_ZERO);
-	for (tp = TAILQ_FIRST(&ttylist), itp = *ttystats; tp;
+
+	rw_enter_write(&ttylist_lock);
+	for (tp = TAILQ_FIRST(&ttylist), itp = *ttystats; tp && ntty++ < ttyc;
 	    tp = TAILQ_NEXT(tp, tty_link), itp++) {
 		itp->t_dev = tp->t_dev;
 		itp->t_rawq_c_cc = tp->t_rawq.c_cc;
@@ -2414,6 +2424,8 @@ ttystats_init(struct itty **ttystats, size_t *ttystatssiz)
 			itp->t_pgrp_pg_id = 0;
 		itp->t_line = tp->t_line;
 	}
+	rw_exit_write(&ttylist_lock);
+	*ttycp = ntty;
 }
 
 /*
@@ -2441,10 +2453,11 @@ sysctl_tty(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	    {
 		struct itty *ttystats;
 		size_t ttystatssiz;
+		int ttyc;
 
-		ttystats_init(&ttystats, &ttystatssiz);
+		ttystats_init(&ttystats, &ttyc, &ttystatssiz);
 		err = sysctl_rdstruct(oldp, oldlenp, newp, ttystats,
-		    tty_count * sizeof(struct itty));
+		    ttyc * sizeof(struct itty));
 		free(ttystats, M_SYSCTL, ttystatssiz);
 		return (err);
 	    }
