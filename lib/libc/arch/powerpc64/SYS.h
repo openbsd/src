@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.2 2020/06/26 17:58:45 kettenis Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.3 2020/07/14 16:48:13 kettenis Exp $	*/
 /*-
  * Copyright (c) 1994
  *	Andrew Cagney.  All rights reserved.
@@ -47,9 +47,9 @@
 
 
 /* offsetof(struct tib, tib_errno) - offsetof(struct tib, __tib_tcb) */
-#define TCB_OFFSET_ERRNO	(-12)
+#define TCB_OFFSET_ERRNO	(-20)
 /* from <powerpc64/tcb.h>: TCB address == %r13 - TCB_OFFSET */
-#define TCB_OFFSET		0x7000
+#define TCB_OFFSET		0x7008
 
 /* offset of errno from %r13 */
 #define R13_OFFSET_ERRNO		(-TCB_OFFSET + TCB_OFFSET_ERRNO)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcb.h,v 1.3 2020/06/26 08:58:31 kettenis Exp $	*/
+/*	$OpenBSD: tcb.h,v 1.4 2020/07/14 16:48:13 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
@@ -32,7 +32,7 @@
 #define TLS_VARIANT	1
 
 /* powerpc offsets the TCB pointer 0x7000 bytes after the data */
-#define TCB_OFFSET	0x7000
+#define TCB_OFFSET	0x7008
 
 register void *__tcb __asm__ ("r13");
 #define TCB_GET()		(__tcb)
