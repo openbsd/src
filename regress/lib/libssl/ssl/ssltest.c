@@ -348,6 +348,7 @@ sv_usage(void)
 	fprintf(stderr, " -no_ecdhe     - disable ECDHE\n");
 	fprintf(stderr, " -dtls1        - use DTLSv1\n");
 	fprintf(stderr, " -tls1         - use TLSv1\n");
+	fprintf(stderr, " -tls1_2       - use TLSv1.2\n");
 	fprintf(stderr, " -CApath arg   - PEM format directory of CA's\n");
 	fprintf(stderr, " -CAfile arg   - PEM format file of CA's\n");
 	fprintf(stderr, " -cert arg     - Server certificate file\n");
@@ -408,7 +409,7 @@ main(int argc, char *argv[])
 	int badop = 0;
 	int bio_pair = 0;
 	int force = 0;
-	int tls1 = 0, dtls1 = 0, ret = 1;
+	int tls1 = 0, tls1_2 = 0, dtls1 = 0, ret = 1;
 	int client_auth = 0;
 	int server_auth = 0, i;
 	struct app_verify_arg app_verify_arg =
@@ -476,6 +477,8 @@ main(int argc, char *argv[])
 			dtls1 = 1;
 		else if (strcmp(*argv, "-tls1") == 0)
 			tls1 = 1;
+		else if (strcmp(*argv, "-tls1_2") == 0)
+			tls1_2 = 1;
 		else if (strncmp(*argv, "-num", 4) == 0) {
 			if (--argc < 1)
 				goto bad;
@@ -579,12 +582,11 @@ bad:
 		goto end;
 	}
 
-	if (!dtls1 && !tls1 &&
-	    number > 1 && !reuse && !force) {
+	if (!dtls1 && !tls1 && !tls1_2 && number > 1 && !reuse && !force) {
 		fprintf(stderr,
 		    "This case cannot work.  Use -f to perform "
 		    "the test anyway (and\n-d to see what happens), "
-		    "or add one of -dtls1, -tls1, -reuse\n"
+		    "or add one of -dtls1, -tls1, -tls1_2, -reuse\n"
 		    "to avoid protocol mismatch.\n");
 		exit(1);
 	}
@@ -607,8 +609,10 @@ bad:
 		meth = DTLSv1_method();
 	else if (tls1)
 		meth = TLSv1_method();
+	else if (tls1_2)
+		meth = TLSv1_2_method();
 	else
-		meth = SSLv23_method();
+		meth = TLS_method();
 
 	c_ctx = SSL_CTX_new(meth);
 	s_ctx = SSL_CTX_new(meth);
