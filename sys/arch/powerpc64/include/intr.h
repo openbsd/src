@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.5 2020/06/14 16:12:09 kettenis Exp $	*/
+/*	$OpenBSD: intr.h,v 1.6 2020/07/14 20:37:18 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -94,5 +94,23 @@ extern void *(*_intr_establish)(uint32_t, int, int,
 extern void (*_setipl)(int);
 
 #include <machine/softintr.h>
+
+struct interrupt_controller {
+	int	ic_node;
+	void	*ic_cookie;
+	void	*(*ic_establish)(void *, int *, int, struct cpu_info *,
+		    int (*)(void *), void *, char *);
+
+	LIST_ENTRY(interrupt_controller) ic_list;
+	uint32_t ic_phandle;
+	uint32_t ic_cells;
+};
+
+void	 interrupt_controller_register(struct interrupt_controller *);
+
+void	*fdt_intr_establish_imap(int, int *, int, int, int (*)(void *),
+	    void *, char *);
+void	*fdt_intr_establish_imap_cpu(int, int *, int, int,
+	    struct cpu_info *, int (*)(void *), void *, char *);
 
 #endif /* _MACHINE_INTR_H_ */

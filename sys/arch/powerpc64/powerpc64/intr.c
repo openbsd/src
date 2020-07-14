@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.2 2020/06/14 16:12:09 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.3 2020/07/14 20:37:18 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -18,9 +18,12 @@
  */
 
 #include <sys/param.h>
+#include <sys/malloc.h>
 #include <sys/systm.h>
 
 #include <machine/intr.h>
+
+#include <dev/ofw/openfirm.h>
 
 /* Dummy implementations. */
 void	dummy_hvi(struct trapframe *);
@@ -171,4 +174,103 @@ dummy_setipl(int new)
 {
 	struct cpu_info *ci = curcpu();
 	ci->ci_cpl = new;
+}
+
+/*
+ * FDT interrupt support.
+ */
+
+#define MAX_INTERRUPT_CELLS	4
+
+struct fdt_intr_handle {
+	struct interrupt_controller *ih_ic;
+	void *ih_ih;
+};
+
+LIST_HEAD(, interrupt_controller) interrupt_controllers =
+	LIST_HEAD_INITIALIZER(interrupt_controllers);
+
+void
+interrupt_controller_register(struct interrupt_controller *ic)
+{
+	ic->ic_cells = OF_getpropint(ic->ic_node, "#interrupt-cells", 0);
+	ic->ic_phandle = OF_getpropint(ic->ic_node, "phandle", 0);
+	if (ic->ic_phandle == 0)
+		return;
+	KASSERT(ic->ic_cells <= MAX_INTERRUPT_CELLS);
+
+	LIST_INSERT_HEAD(&interrupt_controllers, ic, ic_list);
+}
+
+void *
+fdt_intr_establish_imap(int node, int *reg, int nreg, int level,
+    int (*func)(void *), void *cookie, char *name)
+{
+	return fdt_intr_establish_imap_cpu(node, reg, nreg, level, NULL,
+	    func, cookie, name);
+}
+
+void *
+fdt_intr_establish_imap_cpu(int node, int *reg, int nreg, int level,
+    struct cpu_info *ci, int (*func)(void *), void *cookie, char *name)
+{
+	struct interrupt_controller *ic;
+	struct fdt_intr_handle *ih;
+	uint32_t *cell;
+	uint32_t map_mask[4], *map;
+	int len, acells, ncells;
+	void *val = NULL;
+
+	if (nreg != sizeof(map_mask))
+		return NULL;
+
+	if (OF_getpropintarray(node, "interrupt-map-mask", map_mask,
+	    sizeof(map_mask)) != sizeof(map_mask))
+		return NULL;
+
+	len = OF_getproplen(node, "interrupt-map");
+	if (len <= 0)
+		return NULL;
+
+	map = malloc(len, M_DEVBUF, M_WAITOK);
+	OF_getpropintarray(node, "interrupt-map", map, len);
+
+	cell = map;
+	ncells = len / sizeof(uint32_t);
+	while (ncells > 5) {
+		LIST_FOREACH(ic, &interrupt_controllers, ic_list) {
+			if (ic->ic_phandle == cell[4])
+				break;
+		}
+
+		if (ic == NULL)
+			break;
+
+		acells = OF_getpropint(ic->ic_node, "#address-cells", 0);
+		if (ncells >= (5 + acells + ic->ic_cells) &&
+		    (reg[0] & map_mask[0]) == cell[0] &&
+		    (reg[1] & map_mask[1]) == cell[1] &&
+		    (reg[2] & map_mask[2]) == cell[2] &&
+		    (reg[3] & map_mask[3]) == cell[3] &&
+		    ic->ic_establish) {
+			val = ic->ic_establish(ic->ic_cookie, &cell[5 + acells],
+			    level, ci, func, cookie, name);
+			break;
+		}
+
+		cell += (5 + acells + ic->ic_cells);
+		ncells -= (5 + acells + ic->ic_cells);
+	}
+
+	if (val == NULL) {
+		free(map, M_DEVBUF, len);
+		return NULL;
+	}
+
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
+	ih->ih_ic = ic;
+	ih->ih_ih = val;
+
+	free(map, M_DEVBUF, len);
+	return ih;
 }
