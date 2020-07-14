@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.63 2020/07/13 10:40:03 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.64 2020/07/14 04:10:18 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -40,6 +40,7 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
+#include <net/toeplitz.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -82,6 +83,8 @@
 #define MCX_LOG_RQ_SIZE			10
 #define MCX_LOG_SQ_SIZE			11
 
+#define MCX_MAX_QUEUES			1
+
 /* completion event moderation - about 10khz, or 90% of the cq */
 #define MCX_CQ_MOD_PERIOD		50
 #define MCX_CQ_MOD_COUNTER		\
@@ -110,6 +113,10 @@ CTASSERT(ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN == MCX_SQ_INLINE_SIZE);
 
 #define MCX_WQ_DOORBELL_BASE		MCX_PAGE_SIZE/2
 #define MCX_WQ_DOORBELL_STRIDE		64
+/* make sure the doorbells fit */
+CTASSERT(MCX_MAX_QUEUES * MCX_CQ_DOORBELL_STRIDE < MCX_WQ_DOORBELL_BASE);
+CTASSERT(MCX_MAX_QUEUES * MCX_WQ_DOORBELL_STRIDE <
+    MCX_DOORBELL_AREA_SIZE - MCX_WQ_DOORBELL_BASE);
 
 #define MCX_WQ_DOORBELL_MASK		0xffff
 
@@ -218,6 +225,8 @@ CTASSERT(ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN == MCX_SQ_INLINE_SIZE);
 #define MCX_CMD_QUERY_RQ		0x90b
 #define MCX_CMD_CREATE_TIS		0x912
 #define MCX_CMD_DESTROY_TIS		0x914
+#define MCX_CMD_CREATE_RQT		0x916
+#define MCX_CMD_DESTROY_RQT		0x918
 #define MCX_CMD_SET_FLOW_TABLE_ROOT	0x92f
 #define MCX_CMD_CREATE_FLOW_TABLE	0x930
 #define MCX_CMD_DESTROY_FLOW_TABLE	0x931
@@ -1260,6 +1269,8 @@ struct mcx_cmd_create_tir_in {
 struct mcx_cmd_create_tir_mb_in {
 	uint8_t			cmd_reserved0[20];
 	uint32_t		cmd_disp_type;
+#define MCX_TIR_CTX_DISP_TYPE_DIRECT	0
+#define MCX_TIR_CTX_DISP_TYPE_INDIRECT	1
 #define MCX_TIR_CTX_DISP_TYPE_SHIFT	28
 	uint8_t			cmd_reserved1[8];
 	uint32_t		cmd_lro;
@@ -1267,8 +1278,18 @@ struct mcx_cmd_create_tir_mb_in {
 	uint32_t		cmd_inline_rqn;
 	uint32_t		cmd_indir_table;
 	uint32_t		cmd_tdomain;
+#define MCX_TIR_CTX_HASH_TOEPLITZ	2
+#define MCX_TIR_CTX_HASH_SHIFT		28
 	uint8_t			cmd_rx_hash_key[40];
 	uint32_t		cmd_rx_hash_sel_outer;
+#define MCX_TIR_CTX_HASH_SEL_SRC_IP	(1 << 0)
+#define MCX_TIR_CTX_HASH_SEL_DST_IP	(1 << 1)
+#define MCX_TIR_CTX_HASH_SEL_SPORT	(1 << 2)
+#define MCX_TIR_CTX_HASH_SEL_DPORT	(1 << 3)
+#define MCX_TIR_CTX_HASH_SEL_IPV4	(0 << 31)
+#define MCX_TIR_CTX_HASH_SEL_IPV6	(1 << 31)
+#define MCX_TIR_CTX_HASH_SEL_TCP	(0 << 30)
+#define MCX_TIR_CTX_HASH_SEL_UDP	(1 << 30)
 	uint32_t		cmd_rx_hash_sel_inner;
 	uint8_t			cmd_reserved3[152];
 } __packed __aligned(4);
@@ -1328,6 +1349,50 @@ struct mcx_cmd_destroy_tis_in {
 } __packed __aligned(4);
 
 struct mcx_cmd_destroy_tis_out {
+	uint8_t			cmd_status;
+	uint8_t			cmd_reserved0[3];
+	uint32_t		cmd_syndrome;
+	uint8_t			cmd_reserved1[8];
+} __packed __aligned(4);
+
+struct mcx_cmd_create_rqt_in {
+	uint16_t		cmd_opcode;
+	uint8_t			cmd_reserved0[4];
+	uint16_t		cmd_op_mod;
+	uint8_t			cmd_reserved1[8];
+} __packed __aligned(4);
+
+struct mcx_rqt_ctx {
+	uint8_t			cmd_reserved0[20];
+	uint16_t		cmd_reserved1;
+	uint16_t		cmd_rqt_max_size;
+	uint16_t		cmd_reserved2;
+	uint16_t		cmd_rqt_actual_size;
+	uint8_t			cmd_reserved3[212];
+} __packed __aligned(4);
+
+struct mcx_cmd_create_rqt_mb_in {
+	uint8_t			cmd_reserved0[16];
+	struct mcx_rqt_ctx	cmd_rqt;
+} __packed __aligned(4);
+
+struct mcx_cmd_create_rqt_out {
+	uint8_t			cmd_status;
+	uint8_t			cmd_reserved0[3];
+	uint32_t		cmd_syndrome;
+	uint32_t		cmd_rqtn;
+	uint8_t			cmd_reserved1[4];
+} __packed __aligned(4);
+
+struct mcx_cmd_destroy_rqt_in {
+	uint16_t		cmd_opcode;
+	uint8_t			cmd_reserved0[4];
+	uint16_t		cmd_op_mod;
+	uint32_t		cmd_rqtn;
+	uint8_t			cmd_reserved1[4];
+} __packed __aligned(4);
+
+struct mcx_cmd_destroy_rqt_out {
 	uint8_t			cmd_status;
 	uint8_t			cmd_reserved0[3];
 	uint32_t		cmd_syndrome;
@@ -1729,6 +1794,7 @@ struct mcx_flow_match {
 	uint8_t			mc_ip_proto;
 	uint8_t			mc_ip_dscp_ecn;
 	uint8_t			mc_vlan_flags;
+#define MCX_FLOW_MATCH_IP_FRAG	(1 << 5)
 	uint8_t			mc_tcp_flags;
 	uint16_t		mc_tcp_sport;
 	uint16_t		mc_tcp_dport;
@@ -2122,7 +2188,87 @@ struct mcx_flow_group {
 #define MCX_FLOW_GROUP_PROMISC	 0
 #define MCX_FLOW_GROUP_ALLMULTI	 1
 #define MCX_FLOW_GROUP_MAC	 2
-#define MCX_NUM_FLOW_GROUPS	 3
+#define MCX_FLOW_GROUP_RSS_L4	 3
+#define MCX_FLOW_GROUP_RSS_L3	 5
+#define MCX_FLOW_GROUP_RSS_NONE	 6
+#define MCX_NUM_FLOW_GROUPS	 7
+
+#define MCX_HASH_SEL_L3		MCX_TIR_CTX_HASH_SEL_SRC_IP | \
+				MCX_TIR_CTX_HASH_SEL_DST_IP
+#define MCX_HASH_SEL_L4		MCX_HASH_SEL_L3 | MCX_TIR_CTX_HASH_SEL_SPORT | \
+				MCX_TIR_CTX_HASH_SEL_DPORT
+
+#define MCX_RSS_HASH_SEL_V4_TCP MCX_HASH_SEL_L4 | MCX_TIR_CTX_HASH_SEL_TCP  |\
+				MCX_TIR_CTX_HASH_SEL_IPV4
+#define MCX_RSS_HASH_SEL_V6_TCP	MCX_HASH_SEL_L4 | MCX_TIR_CTX_HASH_SEL_TCP | \
+				MCX_TIR_CTX_HASH_SEL_IPV6
+#define MCX_RSS_HASH_SEL_V4_UDP	MCX_HASH_SEL_L4 | MCX_TIR_CTX_HASH_SEL_UDP | \
+				MCX_TIR_CTX_HASH_SEL_IPV4
+#define MCX_RSS_HASH_SEL_V6_UDP	MCX_HASH_SEL_L4 | MCX_TIR_CTX_HASH_SEL_UDP | \
+				MCX_TIR_CTX_HASH_SEL_IPV6
+#define MCX_RSS_HASH_SEL_V4	MCX_HASH_SEL_L3 | MCX_TIR_CTX_HASH_SEL_IPV4
+#define MCX_RSS_HASH_SEL_V6	MCX_HASH_SEL_L3 | MCX_TIR_CTX_HASH_SEL_IPV6
+
+/*
+ * There are a few different pieces involved in configuring RSS.
+ * A Receive Queue Table (RQT) is the indirection table that maps packets to
+ * different rx queues based on a hash value.  We only create one, because
+ * we want to scatter any traffic we can apply RSS to across all our rx
+ * queues.  Anything else will only be delivered to the first rx queue,
+ * which doesn't require an RQT.
+ *
+ * A Transport Interface Receive (TIR) delivers packets to either a single rx
+ * queue or an RQT, and in the latter case, specifies the set of fields
+ * hashed, the hash function, and the hash key.  We need one of these for each
+ * type of RSS traffic - v4 TCP, v6 TCP, v4 UDP, v6 UDP, other v4, other v6,
+ * and one for non-RSS traffic.
+ *
+ * Flow tables hold flow table entries in sequence.  The first entry that
+ * matches a packet is applied, sending the packet to either another flow
+ * table or a TIR.  We use one flow table to select packets based on
+ * destination MAC address, and a second to apply RSS.  The entries in the
+ * first table send matching packets to the second, and the entries in the
+ * RSS table send packets to RSS TIRs if possible, or the non-RSS TIR.
+ *
+ * The flow table entry that delivers packets to an RSS TIR must include match
+ * criteria that ensure packets delivered to the TIR include all the fields
+ * that the TIR hashes on - so for a v4 TCP TIR, the flow table entry must
+ * only accept v4 TCP packets.  Accordingly, we need flow table entries for
+ * each TIR.
+ *
+ * All of this is a lot more flexible than we need, and we can describe most
+ * of the stuff we need with a simple array.
+ *
+ * An RSS config creates a TIR with hashing enabled on a set of fields,
+ * pointing to either the first rx queue or the RQT containing all the rx
+ * queues, and a flow table entry that matches on an ether type and
+ * optionally an ip proto, that delivers packets to the TIR.
+ */
+static struct mcx_rss_rule {
+	int			hash_sel;
+	int			flow_group;
+	int			ethertype;
+	int			ip_proto;
+} mcx_rss_config[] = {
+	/* udp and tcp for v4/v6 */
+	{ MCX_RSS_HASH_SEL_V4_TCP, MCX_FLOW_GROUP_RSS_L4,
+	  ETHERTYPE_IP, IPPROTO_TCP },
+	{ MCX_RSS_HASH_SEL_V6_TCP, MCX_FLOW_GROUP_RSS_L4,
+	  ETHERTYPE_IPV6, IPPROTO_TCP },
+	{ MCX_RSS_HASH_SEL_V4_UDP, MCX_FLOW_GROUP_RSS_L4,
+	  ETHERTYPE_IP, IPPROTO_UDP },
+	{ MCX_RSS_HASH_SEL_V6_UDP, MCX_FLOW_GROUP_RSS_L4,
+	  ETHERTYPE_IPV6, IPPROTO_UDP },
+
+	/* other v4/v6 */
+	{ MCX_RSS_HASH_SEL_V4, MCX_FLOW_GROUP_RSS_L3,
+	  ETHERTYPE_IP, 0 },
+	{ MCX_RSS_HASH_SEL_V6, MCX_FLOW_GROUP_RSS_L3,
+	  ETHERTYPE_IPV6, 0 },
+
+	/* non v4/v6 */
+	{ 0, MCX_FLOW_GROUP_RSS_NONE, 0, 0 }
+};
 
 struct mcx_softc {
 	struct device		 sc_dev;
@@ -2156,7 +2302,8 @@ struct mcx_softc {
 	int			 sc_tdomain;
 	uint32_t		 sc_lkey;
 	int			 sc_tis;
-	int			 sc_tir;
+	int			 sc_tir[nitems(mcx_rss_config)];
+	int			 sc_rqt;
 
 	struct mcx_dmamem	 sc_doorbell_mem;
 
@@ -2167,10 +2314,12 @@ struct mcx_softc {
 	int			 sc_rxbufsz;
 
 	int			 sc_bf_size;
+	int			 sc_max_rqt_size;
 
 	struct task		 sc_port_change;
 
 	int			 sc_mac_flow_table_id;
+	int			 sc_rss_flow_table_id;
 	struct mcx_flow_group	 sc_flow_group[MCX_NUM_FLOW_GROUPS];
 	int			 sc_promisc_flow_enabled;
 	int			 sc_allmulti_flow_enabled;
@@ -2182,7 +2331,7 @@ struct mcx_softc {
 	unsigned int		 sc_calibration_gen;
 	struct timeout		 sc_calibrate;
 
-	struct mcx_queues	 sc_queues[1];
+	struct mcx_queues	 sc_queues[MCX_MAX_QUEUES];
 	unsigned int		 sc_nqueues;
 
 #if NKSTAT > 0
@@ -2236,9 +2385,13 @@ static int	mcx_destroy_rq(struct mcx_softc *, struct mcx_rx *);
 static int	mcx_ready_rq(struct mcx_softc *, struct mcx_rx *);
 static int	mcx_create_tir_direct(struct mcx_softc *, struct mcx_rx *,
 		    int *);
+static int	mcx_create_tir_indirect(struct mcx_softc *, int, uint32_t,
+		    int *);
 static int	mcx_destroy_tir(struct mcx_softc *, int);
 static int	mcx_create_tis(struct mcx_softc *, int *);
 static int	mcx_destroy_tis(struct mcx_softc *, int);
+static int	mcx_create_rqt(struct mcx_softc *, int, int *, int *);
+static int	mcx_destroy_rqt(struct mcx_softc *, int);
 static int	mcx_create_flow_table(struct mcx_softc *, int, int, int *);
 static int	mcx_set_flow_table_root(struct mcx_softc *, int);
 static int	mcx_destroy_flow_table(struct mcx_softc *, int);
@@ -2247,6 +2400,8 @@ static int	mcx_create_flow_group(struct mcx_softc *, int, int, int,
 static int	mcx_destroy_flow_group(struct mcx_softc *, int);
 static int	mcx_set_flow_table_entry_mac(struct mcx_softc *, int, int,
 		    uint8_t *, uint32_t);
+static int	mcx_set_flow_table_entry_proto(struct mcx_softc *, int, int,
+		    int, int, uint32_t);
 static int	mcx_delete_flow_table_entry(struct mcx_softc *, int, int);
 
 #if 0
@@ -2263,10 +2418,11 @@ static void	mcx_cmdq_dump(const struct mcx_cmdq_entry *);
 static void	mcx_cmdq_mbox_dump(struct mcx_dmamem *, int);
 */
 static void	mcx_refill(void *);
-static int	mcx_process_rx(struct mcx_softc *, struct mcx_cq_entry *,
-		    struct mbuf_list *, const struct mcx_calibration *);
-static void	mcx_process_txeof(struct mcx_softc *, struct mcx_cq_entry *,
-		    int *);
+static int	mcx_process_rx(struct mcx_softc *, struct mcx_rx *,
+		    struct mcx_cq_entry *, struct mbuf_list *,
+		    const struct mcx_calibration *);
+static void	mcx_process_txeof(struct mcx_softc *, struct mcx_tx *,
+		    struct mcx_cq_entry *, int *);
 static void	mcx_process_cq(struct mcx_softc *, struct mcx_queues *,
 		    struct mcx_cq *);
 
@@ -2380,7 +2536,7 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 	unsigned int cq_stride;
 	unsigned int cq_size;
 	const char *intrstr;
-	int i;
+	int i, msix;
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
@@ -2559,7 +2715,8 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 	printf(", %s, address %s\n", intrstr,
 	    ether_sprintf(sc->sc_ac.ac_enaddr));
 
-	sc->sc_nqueues = nitems(sc->sc_queues);
+	msix = pci_intr_msix_count(pa->pa_pc, pa->pa_tag);
+	sc->sc_nqueues = 1;
 
 	strlcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
 	ifp->if_softc = sc;
@@ -2639,6 +2796,8 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 	mcx_port_change(sc);
 
 	sc->sc_mac_flow_table_id = -1;
+	sc->sc_rss_flow_table_id = -1;
+	sc->sc_rqt = -1;
 	for (i = 0; i < MCX_NUM_FLOW_GROUPS; i++) {
 		struct mcx_flow_group *mfg = &sc->sc_flow_group[i];
 		mfg->g_id = -1;
@@ -3557,6 +3716,7 @@ mcx_hca_max_caps(struct mcx_softc *sc)
 	 * between the two of them.
 	 */
 	sc->sc_bf_size = (1 << hca->log_bf_reg_size) / 2;
+	sc->sc_max_rqt_size = (1 << hca->log_max_rqt_size);
 
 free:
 	mcx_dmamem_free(sc, &mxm);
@@ -3732,7 +3892,8 @@ mcx_iff(struct mcx_softc *sc)
 	int insize;
 	uint32_t dest;
 
-	dest = MCX_FLOW_CONTEXT_DEST_TYPE_TIR | sc->sc_tir;
+	dest = MCX_FLOW_CONTEXT_DEST_TYPE_TABLE |
+	    sc->sc_rss_flow_table_id;
 
 	/* enable or disable the promisc flow */
 	if (ISSET(ifp->if_flags, IFF_PROMISC)) {
@@ -4514,6 +4675,68 @@ free:
 }
 
 static int
+mcx_create_tir_indirect(struct mcx_softc *sc, int rqtn, uint32_t hash_sel,
+    int *tirn)
+{
+	struct mcx_cmdq_entry *cqe;
+	struct mcx_dmamem mxm;
+	struct mcx_cmd_create_tir_in *in;
+	struct mcx_cmd_create_tir_mb_in *mbin;
+	struct mcx_cmd_create_tir_out *out;
+	int error;
+	int token;
+
+	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
+	token = mcx_cmdq_token(sc);
+	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mbin),
+	    sizeof(*out), token);
+
+	in = mcx_cmdq_in(cqe);
+	in->cmd_opcode = htobe16(MCX_CMD_CREATE_TIR);
+	in->cmd_op_mod = htobe16(0);
+
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1,
+	    &cqe->cq_input_ptr, token) != 0) {
+		printf("%s: unable to allocate create tir mailbox\n",
+		    DEVNAME(sc));
+		return (-1);
+	}
+	mbin = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
+	mbin->cmd_disp_type = htobe32(MCX_TIR_CTX_DISP_TYPE_INDIRECT
+	    << MCX_TIR_CTX_DISP_TYPE_SHIFT);
+	mbin->cmd_indir_table = htobe32(rqtn);
+	mbin->cmd_tdomain = htobe32(sc->sc_tdomain |
+	    MCX_TIR_CTX_HASH_TOEPLITZ << MCX_TIR_CTX_HASH_SHIFT);
+	mbin->cmd_rx_hash_sel_outer = htobe32(hash_sel);
+	stoeplitz_to_key(&mbin->cmd_rx_hash_key,
+	    sizeof(mbin->cmd_rx_hash_key));
+
+	mcx_cmdq_post(sc, cqe, 0);
+	error = mcx_cmdq_poll(sc, cqe, 1000);
+	if (error != 0) {
+		printf("%s: create tir timeout\n", DEVNAME(sc));
+		goto free;
+	}
+	if (mcx_cmdq_verify(cqe) != 0) {
+		printf("%s: create tir command corrupt\n", DEVNAME(sc));
+		goto free;
+	}
+
+	out = mcx_cmdq_out(cqe);
+	if (out->cmd_status != MCX_CQ_STATUS_OK) {
+		printf("%s: create tir failed (%x, %x)\n", DEVNAME(sc),
+		    out->cmd_status, betoh32(out->cmd_syndrome));
+		error = -1;
+		goto free;
+	}
+
+	*tirn = mcx_get_id(out->cmd_tirn);
+free:
+	mcx_dmamem_free(sc, &mxm);
+	return (error);
+}
+
+static int
 mcx_destroy_tir(struct mcx_softc *sc, int tirn)
 {
 	struct mcx_cmdq_entry *cqe;
@@ -4827,6 +5050,112 @@ mcx_destroy_tis(struct mcx_softc *sc, int tis)
 	out = mcx_cmdq_out(cqe);
 	if (out->cmd_status != MCX_CQ_STATUS_OK) {
 		printf("%s: destroy tis failed (%x, %x)\n", DEVNAME(sc),
+		    out->cmd_status, betoh32(out->cmd_syndrome));
+		return -1;
+	}
+
+	return 0;
+}
+
+static int
+mcx_create_rqt(struct mcx_softc *sc, int size, int *rqns, int *rqt)
+{
+	struct mcx_cmdq_entry *cqe;
+	struct mcx_dmamem mxm;
+	struct mcx_cmd_create_rqt_in *in;
+	struct mcx_cmd_create_rqt_mb_in *mbin;
+	struct mcx_cmd_create_rqt_out *out;
+	struct mcx_rqt_ctx *rqt_ctx;
+	int *rqtn;
+	int error;
+	int token;
+	int i;
+
+	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
+	token = mcx_cmdq_token(sc);
+	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mbin) +
+	    (size * sizeof(int)), sizeof(*out), token);
+
+	in = mcx_cmdq_in(cqe);
+	in->cmd_opcode = htobe16(MCX_CMD_CREATE_RQT);
+	in->cmd_op_mod = htobe16(0);
+
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 1,
+	    &cqe->cq_input_ptr, token) != 0) {
+		printf("%s: unable to allocate create rqt mailbox\n",
+		    DEVNAME(sc));
+		return (-1);
+	}
+	mbin = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
+	rqt_ctx = &mbin->cmd_rqt;
+	rqt_ctx->cmd_rqt_max_size = htobe16(sc->sc_max_rqt_size);
+	rqt_ctx->cmd_rqt_actual_size = htobe16(size);
+
+	/* rqt list follows the rqt context */
+	rqtn = (int *)(rqt_ctx + 1);
+	for (i = 0; i < size; i++) {
+		rqtn[i] = htobe32(rqns[i]);
+	}
+
+	mcx_cmdq_mboxes_sign(&mxm, 1);
+	mcx_cmdq_post(sc, cqe, 0);
+	error = mcx_cmdq_poll(sc, cqe, 1000);
+	if (error != 0) {
+		printf("%s: create rqt timeout\n", DEVNAME(sc));
+		goto free;
+	}
+	if (mcx_cmdq_verify(cqe) != 0) {
+		printf("%s: create rqt command corrupt\n", DEVNAME(sc));
+		goto free;
+	}
+
+	out = mcx_cmdq_out(cqe);
+	if (out->cmd_status != MCX_CQ_STATUS_OK) {
+		printf("%s: create rqt failed (%x, %x)\n", DEVNAME(sc),
+		    out->cmd_status, betoh32(out->cmd_syndrome));
+		error = -1;
+		goto free;
+	}
+
+	*rqt = mcx_get_id(out->cmd_rqtn);
+	return (0);
+free:
+	mcx_dmamem_free(sc, &mxm);
+	return (error);
+}
+
+static int
+mcx_destroy_rqt(struct mcx_softc *sc, int rqt)
+{
+	struct mcx_cmdq_entry *cqe;
+	struct mcx_cmd_destroy_rqt_in *in;
+	struct mcx_cmd_destroy_rqt_out *out;
+	int error;
+	int token;
+
+	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
+	token = mcx_cmdq_token(sc);
+	mcx_cmdq_init(sc, cqe, sizeof(*in), sizeof(*out), token);
+
+	in = mcx_cmdq_in(cqe);
+	in->cmd_opcode = htobe16(MCX_CMD_DESTROY_RQT);
+	in->cmd_op_mod = htobe16(0);
+	in->cmd_rqtn = htobe32(rqt);
+
+	mcx_cmdq_post(sc, cqe, 0);
+	error = mcx_cmdq_poll(sc, cqe, 1000);
+	if (error != 0) {
+		printf("%s: destroy rqt timeout\n", DEVNAME(sc));
+		return error;
+	}
+	if (mcx_cmdq_verify(cqe) != 0) {
+		printf("%s: destroy rqt command corrupt\n", DEVNAME(sc));
+		return error;
+	}
+
+	out = mcx_cmdq_out(cqe);
+	if (out->cmd_status != MCX_CQ_STATUS_OK) {
+		printf("%s: destroy rqt failed (%x, %x)\n", DEVNAME(sc),
 		    out->cmd_status, betoh32(out->cmd_syndrome));
 		return -1;
 	}
@@ -5225,6 +5554,80 @@ mcx_set_flow_table_entry_mac(struct mcx_softc *sc, int group, int index,
 		memcpy(mbin->cmd_flow_ctx.fc_match_value.mc_dest_mac, macaddr,
 		    ETHER_ADDR_LEN);
 	}
+
+	mcx_cmdq_mboxes_sign(&mxm, 2);
+	mcx_cmdq_post(sc, cqe, 0);
+	error = mcx_cmdq_poll(sc, cqe, 1000);
+	if (error != 0) {
+		printf("%s: set flow table entry timeout\n", DEVNAME(sc));
+		goto free;
+	}
+	if (mcx_cmdq_verify(cqe) != 0) {
+		printf("%s: set flow table entry command corrupt\n",
+		    DEVNAME(sc));
+		goto free;
+	}
+
+	out = mcx_cmdq_out(cqe);
+	if (out->cmd_status != MCX_CQ_STATUS_OK) {
+		printf("%s: set flow table entry failed (%x, %x)\n",
+		    DEVNAME(sc), out->cmd_status, betoh32(out->cmd_syndrome));
+		error = -1;
+		goto free;
+	}
+
+free:
+	mcx_dmamem_free(sc, &mxm);
+	return (error);
+}
+
+static int
+mcx_set_flow_table_entry_proto(struct mcx_softc *sc, int group, int index,
+    int ethertype, int ip_proto, uint32_t dest)
+{
+	struct mcx_cmdq_entry *cqe;
+	struct mcx_dmamem mxm;
+	struct mcx_cmd_set_flow_table_entry_in *in;
+	struct mcx_cmd_set_flow_table_entry_mb_in *mbin;
+	struct mcx_cmd_set_flow_table_entry_out *out;
+	struct mcx_flow_group *mfg;
+	uint32_t *pdest;
+	int error;
+	int token;
+
+	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
+	token = mcx_cmdq_token(sc);
+	mcx_cmdq_init(sc, cqe, sizeof(*in) + sizeof(*mbin) + sizeof(*pdest),
+	    sizeof(*out), token);
+
+	in = mcx_cmdq_in(cqe);
+	in->cmd_opcode = htobe16(MCX_CMD_SET_FLOW_TABLE_ENTRY);
+	in->cmd_op_mod = htobe16(0);
+
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 2, &cqe->cq_input_ptr, token)
+	    != 0) {
+		printf("%s: unable to allocate set flow table entry mailbox\n",
+		    DEVNAME(sc));
+		return (-1);
+	}
+
+	mbin = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
+	mbin->cmd_table_type = MCX_FLOW_TABLE_TYPE_RX;
+
+	mfg = &sc->sc_flow_group[group];
+	mbin->cmd_table_id = htobe32(mfg->g_table);
+	mbin->cmd_flow_index = htobe32(mfg->g_start + index);
+	mbin->cmd_flow_ctx.fc_group_id = htobe32(mfg->g_id);
+
+	/* flow context ends at offset 0x330, 0x130 into the second mbox */
+	pdest = (uint32_t *)
+	    (((char *)mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 1))) + 0x130);
+	mbin->cmd_flow_ctx.fc_action = htobe32(MCX_FLOW_CONTEXT_ACTION_FORWARD);
+	mbin->cmd_flow_ctx.fc_dest_list_size = htobe32(1);
+	*pdest = htobe32(dest);
+
+	mbin->cmd_flow_ctx.fc_match_value.mc_ethertype = htobe16(ethertype);
+	mbin->cmd_flow_ctx.fc_match_value.mc_ip_proto = ip_proto;
 
 	mcx_cmdq_mboxes_sign(&mxm, 2);
 	mcx_cmdq_post(sc, cqe, 0);
@@ -5907,9 +6310,9 @@ mcx_refill(void *xrx)
 }
 
 void
-mcx_process_txeof(struct mcx_softc *sc, struct mcx_cq_entry *cqe, int *txfree)
+mcx_process_txeof(struct mcx_softc *sc, struct mcx_tx *tx,
+    struct mcx_cq_entry *cqe, int *txfree)
 {
-	struct mcx_tx *tx = &sc->sc_queues[0].q_tx;
 	struct mcx_slot *ms;
 	bus_dmamap_t map;
 	int slot, slots;
@@ -5988,10 +6391,10 @@ mcx_calibrate(void *arg)
 }
 
 static int
-mcx_process_rx(struct mcx_softc *sc, struct mcx_cq_entry *cqe,
-    struct mbuf_list *ml, const struct mcx_calibration *c)
+mcx_process_rx(struct mcx_softc *sc, struct mcx_rx *rx,
+    struct mcx_cq_entry *cqe, struct mbuf_list *ml,
+    const struct mcx_calibration *c)
 {
-	struct mcx_rx *rx = &sc->sc_queues[0].q_rx;
 	struct mcx_slot *ms;
 	struct mbuf *m;
 	uint32_t flags;
@@ -6105,10 +6508,10 @@ mcx_process_cq(struct mcx_softc *sc, struct mcx_queues *q, struct mcx_cq *cq)
 		opcode = (cqe->cq_opcode_owner >> MCX_CQ_ENTRY_OPCODE_SHIFT);
 		switch (opcode) {
 		case MCX_CQ_ENTRY_OPCODE_REQ:
-			mcx_process_txeof(sc, cqe, &txfree);
+			mcx_process_txeof(sc, tx, cqe, &txfree);
 			break;
 		case MCX_CQ_ENTRY_OPCODE_SEND:
-			rxfree += mcx_process_rx(sc, cqe, &ml, c);
+			rxfree += mcx_process_rx(sc, rx, cqe, &ml, c);
 			break;
 		case MCX_CQ_ENTRY_OPCODE_REQ_ERR:
 		case MCX_CQ_ENTRY_OPCODE_SEND_ERR:
@@ -6319,14 +6722,31 @@ destroy_rx_slots:
 }
 
 static int
+mcx_rss_group_entry_count(struct mcx_softc *sc, int group)
+{
+	int i;
+	int count;
+
+	count = 0;
+	for (i = 0; i < nitems(mcx_rss_config); i++) {
+		if (mcx_rss_config[i].flow_group == group)
+			count++;
+	}
+
+	return count;
+}
+
+static int
 mcx_up(struct mcx_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct mcx_rx *rx;
 	struct mcx_tx *tx;
-	int i, start;
+	int i, start, count, flow_group, flow_index;
 	struct mcx_flow_match match_crit;
+	struct mcx_rss_rule *rss;
 	uint32_t dest;
+	int rqns[MCX_MAX_QUEUES];
 
 	if (mcx_create_tis(sc, &sc->sc_tis) != 0)
 		goto down;
@@ -6337,14 +6757,50 @@ mcx_up(struct mcx_softc *sc)
 		}
 	}
 
-	if (mcx_create_tir_direct(sc, &sc->sc_queues[0].q_rx, &sc->sc_tir) != 0)
+	/* RSS flow table and flow groups */
+	if (mcx_create_flow_table(sc, MCX_LOG_FLOW_TABLE_SIZE, 1,
+	    &sc->sc_rss_flow_table_id) != 0)
 		goto down;
 
+	dest = MCX_FLOW_CONTEXT_DEST_TYPE_TABLE |
+	    sc->sc_rss_flow_table_id;
+
+	/* L4 RSS flow group (v4/v6 tcp/udp, no fragments) */
+	memset(&match_crit, 0, sizeof(match_crit));
+	match_crit.mc_ethertype = 0xffff;
+	match_crit.mc_ip_proto = 0xff;
+	match_crit.mc_vlan_flags = MCX_FLOW_MATCH_IP_FRAG;
+	start = 0;
+	count = mcx_rss_group_entry_count(sc, MCX_FLOW_GROUP_RSS_L4);
+	if (count != 0) {
+		if (mcx_create_flow_group(sc, sc->sc_rss_flow_table_id,
+		    MCX_FLOW_GROUP_RSS_L4, start, count,
+		    MCX_CREATE_FLOW_GROUP_CRIT_OUTER, &match_crit) != 0)
+			goto down;
+		start += count;
+	}
+
+	/* L3 RSS flow group (v4/v6, including fragments) */
+	memset(&match_crit, 0, sizeof(match_crit));
+	match_crit.mc_ethertype = 0xffff;
+	count = mcx_rss_group_entry_count(sc, MCX_FLOW_GROUP_RSS_L3);
+	if (mcx_create_flow_group(sc, sc->sc_rss_flow_table_id,
+	    MCX_FLOW_GROUP_RSS_L3, start, count,
+	    MCX_CREATE_FLOW_GROUP_CRIT_OUTER, &match_crit) != 0)
+		goto down;
+	start += count;
+
+	/* non-RSS flow group */
+	count = mcx_rss_group_entry_count(sc, MCX_FLOW_GROUP_RSS_NONE);
+	memset(&match_crit, 0, sizeof(match_crit));
+	if (mcx_create_flow_group(sc, sc->sc_rss_flow_table_id,
+	    MCX_FLOW_GROUP_RSS_NONE, start, count, 0, &match_crit) != 0)
+		goto down;
+
+	/* Root flow table, matching packets based on mac address */
 	if (mcx_create_flow_table(sc, MCX_LOG_FLOW_TABLE_SIZE, 0,
 	    &sc->sc_mac_flow_table_id) != 0)
 		goto down;
-
-	dest = MCX_FLOW_CONTEXT_DEST_TYPE_TIR | sc->sc_tir;
 
 	/* promisc flow group */
 	start = 0;
@@ -6398,6 +6854,44 @@ mcx_up(struct mcx_softc *sc)
 	if (mcx_set_flow_table_root(sc, sc->sc_mac_flow_table_id) != 0)
 		goto down;
 
+	/*
+	 * the RQT can be any size as long as it's a power of two.
+	 * since we also restrict the number of queues to a power of two,
+	 * we can just put each rx queue in once.
+	 */
+	for (i = 0; i < sc->sc_nqueues; i++)
+		rqns[i] = sc->sc_queues[i].q_rx.rx_rqn;
+
+	if (mcx_create_rqt(sc, sc->sc_nqueues, rqns, &sc->sc_rqt) != 0)
+		goto down;
+
+	start = 0;
+	flow_index = 0;
+	flow_group = -1;
+	for (i = 0; i < nitems(mcx_rss_config); i++) {
+		rss = &mcx_rss_config[i];
+		if (rss->flow_group != flow_group) {
+			flow_group = rss->flow_group;
+			flow_index = 0;
+		}
+
+		if (rss->hash_sel == 0) {
+			if (mcx_create_tir_direct(sc, &sc->sc_queues[0].q_rx,
+			    &sc->sc_tir[i]) != 0)
+				goto down;
+		} else {
+			if (mcx_create_tir_indirect(sc, sc->sc_rqt,
+			    rss->hash_sel, &sc->sc_tir[i]) != 0)
+				goto down;
+		}
+
+		if (mcx_set_flow_table_entry_proto(sc, flow_group,
+		    flow_index, rss->ethertype, rss->ip_proto,
+		    MCX_FLOW_CONTEXT_DEST_TYPE_TIR | sc->sc_tir[i]) != 0)
+			goto down;
+		flow_index++;
+	}
+
 	for (i = 0; i < sc->sc_nqueues; i++) {
 		struct mcx_queues *q = &sc->sc_queues[i];
 		rx = &q->q_rx;
@@ -6433,7 +6927,8 @@ static void
 mcx_down(struct mcx_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
-	int group, i;
+	struct mcx_rss_rule *rss;
+	int group, i, flow_group, flow_index;
 
 	CLR(ifp->if_flags, IFF_RUNNING);
 
@@ -6454,6 +6949,22 @@ mcx_down(struct mcx_softc *sc)
 		}
 	}
 
+	flow_group = -1;
+	flow_index = 0;
+	for (i = 0; i < nitems(mcx_rss_config); i++) {
+		rss = &mcx_rss_config[i];
+		if (rss->flow_group != flow_group) {
+			flow_group = rss->flow_group;
+			flow_index = 0;
+		}
+
+		mcx_delete_flow_table_entry(sc, flow_group, flow_index);
+
+		mcx_destroy_tir(sc, sc->sc_tir[i]);
+		sc->sc_tir[i] = 0;
+
+		flow_index++;
+	}
 	intr_barrier(sc->sc_ihc);
 	for (i = 0; i < sc->sc_nqueues; i++) {
 		struct ifqueue *ifq = sc->sc_queues[i].q_tx.tx_ifq;
@@ -6464,18 +6975,20 @@ mcx_down(struct mcx_softc *sc)
 
 	for (group = 0; group < MCX_NUM_FLOW_GROUPS; group++) {
 		if (sc->sc_flow_group[group].g_id != -1)
-			mcx_destroy_flow_group(sc,
-			    sc->sc_flow_group[group].g_id);
+			mcx_destroy_flow_group(sc, group);
 	}
 
 	if (sc->sc_mac_flow_table_id != -1) {
 		mcx_destroy_flow_table(sc, sc->sc_mac_flow_table_id);
 		sc->sc_mac_flow_table_id = -1;
 	}
-
-	if (sc->sc_tir != 0) {
-		mcx_destroy_tir(sc, sc->sc_tir); 
-		sc->sc_tir = 0;
+	if (sc->sc_rss_flow_table_id != -1) {
+		mcx_destroy_flow_table(sc, sc->sc_rss_flow_table_id);
+		sc->sc_rss_flow_table_id = -1;
+	}
+	if (sc->sc_rqt != -1) {
+		mcx_destroy_rqt(sc, sc->sc_rqt);
+		sc->sc_rqt = -1;
 	}
 
 	for (i = 0; i < sc->sc_nqueues; i++) {
@@ -6556,8 +7069,8 @@ mcx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (error != 0)
 				return (error);
 
-			dest = MCX_FLOW_CONTEXT_DEST_TYPE_TIR |
-			    sc->sc_tir;
+			dest = MCX_FLOW_CONTEXT_DEST_TYPE_TABLE |
+			    sc->sc_rss_flow_table_id;
 
 			for (i = 0; i < MCX_NUM_MCAST_FLOWS; i++) {
 				if (sc->sc_mcast_flows[i][0] == 0) {
