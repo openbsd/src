@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.101 2020/06/22 13:14:32 mpi Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.102 2020/07/14 14:33:03 deraadt Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -564,7 +564,8 @@ again:
 				wakeup(&tp->t_rawq);
 				goto block;
 			}
-			(*linesw[tp->t_line].l_rint)(*cp++, tp);
+			if ((*linesw[tp->t_line].l_rint)(*cp++, tp) == EINTR)
+				goto interrupt;
 			cnt++;
 			cc--;
 		}
@@ -591,6 +592,7 @@ block:
 	if (error == 0)
 		goto again;
 
+interrupt:
 	/* adjust for data copied in but not written */
 	uio->uio_resid += cc;
 done:
