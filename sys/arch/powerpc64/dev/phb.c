@@ -1,4 +1,4 @@
-/*	$OpenBSD: phb.c,v 1.11 2020/07/05 17:12:59 kettenis Exp $	*/
+/*	$OpenBSD: phb.c,v 1.12 2020/07/14 20:40:48 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -528,8 +528,26 @@ phb_intr_establish(void *v, pci_intr_handle_t ih, int level,
 			    &sc->sc_bus_memt, ih.ih_intrpin, addr, data);
 		} else
 			pci_msi_enable(ih.ih_pc, ih.ih_tag, addr, data);
+	} else {
+		int bus, dev, fn;
+		uint32_t reg[4];
+		int node;
+
+		phb_decompose_tag(sc, ih.ih_tag, &bus, &dev, &fn);
+
+		reg[0] = bus << 16 | dev << 11 | fn << 8;
+		reg[1] = reg[2] = 0;
+		reg[3] = ih.ih_intrpin;
+
+		/* Host bridge child node holds the interrupt map. */
+		node = OF_child(sc->sc_node);
+		if (node == 0)
+			return NULL;
+
+		cookie = fdt_intr_establish_imap(node, reg, sizeof(reg),
+		    level, func, arg, name);
 	}
-	
+
 	return cookie;
 }
 
