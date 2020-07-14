@@ -469,7 +469,7 @@ static vm_fault_t ttm_bo_vm_fault_idle(struct ttm_buffer_object *bo,
 	ttm_bo_get(bo);
 	uvmfault_unlockall(ufi, NULL, NULL, NULL);
 	(void) dma_fence_wait(bo->moving, true);
-	ttm_bo_unreserve(bo);
+	dma_resv_unlock(bo->base.resv);
 	ttm_bo_put(bo);
 	goto out_unlock;
 
@@ -510,13 +510,7 @@ ttm_bo_vm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps,
 	 * for reserve, and if it fails, retry the fault after waiting
 	 * for the buffer to become unreserved.
 	 */
-	err = ttm_bo_reserve(bo, true, true, NULL);
-	if (unlikely(err != 0)) {
-		if (err != -EBUSY) {
-			uvmfault_unlockall(ufi, NULL, NULL, NULL);
-			return VM_PAGER_OK;
-		}
-
+	if (unlikely(!dma_resv_trylock(bo->base.resv))) {
 		ttm_bo_get(bo);
 		uvmfault_unlockall(ufi, NULL, NULL, NULL);
 		if (!dma_resv_lock_interruptible(bo->base.resv,
@@ -536,18 +530,29 @@ ttm_bo_vm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps,
 	}
 
 	if (bdev->driver->fault_reserve_notify) {
+		struct dma_fence *moving = dma_fence_get(bo->moving);
+
 		err = bdev->driver->fault_reserve_notify(bo);
 		switch (err) {
 		case 0:
 			break;
 		case -EBUSY:
 		case -ERESTARTSYS:
+			dma_fence_put(moving);
 			ret = VM_PAGER_OK;
 			goto out_unlock;
 		default:
+			dma_fence_put(moving);
 			ret = VM_PAGER_ERROR;
 			goto out_unlock;
 		}
+
+		if (bo->moving != moving) {
+			spin_lock(&ttm_bo_glob.lru_lock);
+			ttm_bo_move_to_lru_tail(bo, NULL);
+			spin_unlock(&ttm_bo_glob.lru_lock);
+		}
+		dma_fence_put(moving);
 	}
 
 	/*
@@ -659,7 +664,7 @@ out_io_unlock:
 	ttm_mem_io_unlock(man);
 out_unlock:
 	uvmfault_unlockall(ufi, NULL, NULL, NULL);
-	ttm_bo_unreserve(bo);
+	dma_resv_unlock(bo->base.resv);
 	return ret;
 }
 
