@@ -58,7 +58,7 @@ for protocol in SSLv3 TLSv1.2; do
   for cipher in `$openssl ciphers -v "$protocol+aRSA" |
     awk "/ $protocol / { print \\$1 }"`; do
     echo "Testing $cipher"
-    $ssltest -cipher $cipher
+    $ssltest -cipher $cipher -tls1_2
     if [ $? -ne 0 ] ; then
       echo "Failed $cipher"
       exit 1
