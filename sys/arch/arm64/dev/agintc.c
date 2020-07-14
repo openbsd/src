@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.22 2019/08/02 10:04:59 kettenis Exp $ */
+/* $OpenBSD: agintc.c,v 1.23 2020/07/14 15:34:14 patrick Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -204,11 +204,11 @@ void		agintc_splx(int);
 int		agintc_splraise(int);
 void		agintc_setipl(int);
 void		agintc_calc_mask(void);
-void		agintc_calc_irq(struct agintc_softc	*sc, int irq);
-void		*agintc_intr_establish(int, int, int (*)(void *), void *,
-		    char *);
+void		agintc_calc_irq(struct agintc_softc *sc, int irq);
+void		*agintc_intr_establish(int, int, struct cpu_info *ci,
+		    int (*)(void *), void *, char *);
 void		*agintc_intr_establish_fdt(void *cookie, int *cell, int level,
-		    int (*func)(void *), void *arg, char *name);
+		    struct cpu_info *, int (*func)(void *), void *arg, char *name);
 void		agintc_intr_disestablish(void *);
 void		agintc_irq_handler(void *);
 uint32_t	agintc_iack(void);
@@ -553,16 +553,16 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 	switch (nipi) {
 	case 1:
 		sc->sc_ipi_irq[0] = agintc_intr_establish(ipiirq[0],
-		    IPL_IPI|IPL_MPSAFE, agintc_ipi_combined, sc, "ipi");
+		    IPL_IPI|IPL_MPSAFE, NULL, agintc_ipi_combined, sc, "ipi");
 		sc->sc_ipi_num[ARM_IPI_NOP] = ipiirq[0];
 		sc->sc_ipi_num[ARM_IPI_DDB] = ipiirq[0];
 		break;
 	case 2:
 		sc->sc_ipi_irq[0] = agintc_intr_establish(ipiirq[0],
-		    IPL_IPI|IPL_MPSAFE, agintc_ipi_nop, sc, "ipinop");
+		    IPL_IPI|IPL_MPSAFE, NULL, agintc_ipi_nop, sc, "ipinop");
 		sc->sc_ipi_num[ARM_IPI_NOP] = ipiirq[0];
 		sc->sc_ipi_irq[1] = agintc_intr_establish(ipiirq[1],
-		    IPL_IPI|IPL_MPSAFE, agintc_ipi_ddb, sc, "ipiddb");
+		    IPL_IPI|IPL_MPSAFE, NULL, agintc_ipi_ddb, sc, "ipiddb");
 		sc->sc_ipi_num[ARM_IPI_DDB] = ipiirq[1];
 		break;
 	default:
@@ -967,7 +967,7 @@ agintc_irq_handler(void *frame)
 
 void *
 agintc_intr_establish_fdt(void *cookie, int *cell, int level,
-    int (*func)(void *), void *arg, char *name)
+    struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
 {
 	struct agintc_softc	*sc = agintc_sc;
 	int			 irq;
@@ -983,12 +983,12 @@ agintc_intr_establish_fdt(void *cookie, int *cell, int level,
 	else
 		panic("%s: bogus interrupt type", sc->sc_sbus.sc_dev.dv_xname);
 
-	return agintc_intr_establish(irq, level, func, arg, name);
+	return agintc_intr_establish(irq, level, ci, func, arg, name);
 }
 
 void *
-agintc_intr_establish(int irqno, int level, int (*func)(void *),
-    void *arg, char *name)
+agintc_intr_establish(int irqno, int level, struct cpu_info *ci,
+    int (*func)(void *), void *arg, char *name)
 {
 	struct agintc_softc	*sc = agintc_sc;
 	struct intrhand		*ih;
@@ -998,6 +998,9 @@ agintc_intr_establish(int irqno, int level, int (*func)(void *),
 	    irqno >= LPI_BASE + sc->sc_nlpi)
 		panic("agintc_intr_establish: bogus irqnumber %d: %s",
 		    irqno, name);
+
+	if (ci == NULL)
+		ci = &cpu_info_primary;
 
 	ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK);
 	ih->ih_func = func;
@@ -1215,7 +1218,7 @@ struct agintc_msi_device {
 int	 agintc_msi_match(struct device *, void *, void *);
 void	 agintc_msi_attach(struct device *, struct device *, void *);
 void	*agintc_intr_establish_msi(void *, uint64_t *, uint64_t *,
-	    int , int (*)(void *), void *, char *);
+	    int , struct cpu_info *, int (*)(void *), void *, char *);
 void	 agintc_intr_disestablish_msi(void *);
 
 struct agintc_msi_softc {
@@ -1483,7 +1486,7 @@ agintc_msi_find_device(struct agintc_msi_softc *sc, uint32_t deviceid)
 
 void *
 agintc_intr_establish_msi(void *self, uint64_t *addr, uint64_t *data,
-    int level, int (*func)(void *), void *arg, char *name)
+    int level, struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
 {
 	struct agintc_msi_softc *sc = (struct agintc_msi_softc *)self;
 	struct agintc_msi_device *md;
@@ -1492,6 +1495,9 @@ agintc_intr_establish_msi(void *self, uint64_t *addr, uint64_t *data,
 	uint32_t eventid;
 	void *cookie;
 	int i;
+
+	if (ci == NULL)
+		ci = &cpu_info_primary;
 
 	md = agintc_msi_find_device(sc, deviceid);
 	if (md == NULL)
@@ -1506,7 +1512,7 @@ agintc_intr_establish_msi(void *self, uint64_t *addr, uint64_t *data,
 			continue;
 
 		cookie = agintc_intr_establish(LPI_BASE + i,
-		    level, func, arg, name);
+		    level, ci, func, arg, name);
 		if (cookie == NULL)
 			return NULL;
 

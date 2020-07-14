@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.12 2019/09/29 10:36:52 kettenis Exp $	*/
+/*	$OpenBSD: intr.h,v 1.13 2020/07/14 15:34:15 patrick Exp $	*/
 /*	$NetBSD: intr.h,v 1.12 2003/06/16 20:00:59 thorpej Exp $	*/
 
 /*
@@ -81,6 +81,8 @@
 #include <sys/device.h>
 #include <sys/queue.h>
 
+struct cpu_info;
+
 int     splraise(int);
 int     spllower(int);
 void    splx(int);
@@ -88,8 +90,8 @@ void    splx(int);
 void	arm_do_pending_intr(int);
 void	arm_set_intr_handler(int (*raise)(int), int (*lower)(int),
 	void (*x)(int), void (*setipl)(int),
-	void *(*intr_establish)(int irqno, int level, int (*func)(void *),
-	    void *cookie, char *name),
+	void *(*intr_establish)(int irqno, int level, struct cpu_info *ci,
+	    int (*func)(void *), void *cookie, char *name),
 	void (*intr_disestablish)(void *cookie),
 	const char *(*intr_string)(void *cookie),
 	void (*intr_handle)(void *));
@@ -99,8 +101,8 @@ struct arm_intr_func {
 	int (*lower)(int);
 	void (*x)(int);
 	void (*setipl)(int);
-	void *(*intr_establish)(int irqno, int level, int (*func)(void *),
-	    void *cookie, char *name);
+	void *(*intr_establish)(int irqno, int level, struct cpu_info *,
+	    int (*func)(void *), void *cookie, char *name);
 	void (*intr_disestablish)(void *cookie);
 	const char *(*intr_string)(void *cookie);
 };
@@ -147,15 +149,13 @@ const char *arm_intr_string(void *cookie);
 void arm_clock_register(void (*)(void), void (*)(u_int), void (*)(int),
     void (*)(void));
 
-struct cpu_info;
-
 struct interrupt_controller {
 	int	ic_node;
 	void	*ic_cookie;
-	void	*(*ic_establish)(void *, int *, int, int (*)(void *),
-		    void *, char *);
-	void	*(*ic_establish_msi)(void *, uint64_t *, uint64_t *, int,
+	void	*(*ic_establish)(void *, int *, int, struct cpu_info *,
 		    int (*)(void *), void *, char *);
+	void	*(*ic_establish_msi)(void *, uint64_t *, uint64_t *, int,
+		    struct cpu_info *, int (*)(void *), void *, char *);
 	void	 (*ic_disestablish)(void *);
 	void	 (*ic_enable)(void *);
 	void	 (*ic_disable)(void *);
@@ -171,12 +171,20 @@ void	 arm_intr_init_fdt(void);
 void	 arm_intr_register_fdt(struct interrupt_controller *);
 void	*arm_intr_establish_fdt(int, int, int (*)(void *),
 	    void *, char *);
+void	*arm_intr_establish_fdt_cpu(int, int, struct cpu_info *,
+	    int (*)(void *), void *, char *);
 void	*arm_intr_establish_fdt_idx(int, int, int, int (*)(void *),
 	    void *, char *);
+void	*arm_intr_establish_fdt_idx_cpu(int, int, int, struct cpu_info *,
+	    int (*)(void *), void *, char *);
 void	*arm_intr_establish_fdt_imap(int, int *, int, int, int (*)(void *),
 	    void *, char *);
-void	*arm_intr_establish_fdt_msi(int, uint64_t *, uint64_t *, int ,
+void	*arm_intr_establish_fdt_imap_cpu(int, int *, int, int,
+	    struct cpu_info *, int (*)(void *), void *, char *);
+void	*arm_intr_establish_fdt_msi(int, uint64_t *, uint64_t *, int,
 	    int (*)(void *), void *, char *);
+void	*arm_intr_establish_fdt_msi_cpu(int, uint64_t *, uint64_t *, int,
+	    struct cpu_info *, int (*)(void *), void *, char *);
 void	 arm_intr_disestablish_fdt(void *);
 void	 arm_intr_enable(void *);
 void	 arm_intr_disable(void *);
@@ -184,7 +192,7 @@ void	 arm_intr_route(void *, int, struct cpu_info *);
 void	 arm_intr_cpu_enable(void);
 
 void	*arm_intr_parent_establish_fdt(void *, int *, int,
-	    int (*)(void *), void *, char *);
+	    struct cpu_info *ci, int (*)(void *), void *, char *);
 void	 arm_intr_parent_disestablish_fdt(void *);
 
 void	 arm_send_ipi(struct cpu_info *, int);

@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.15 2020/04/26 10:35:05 kettenis Exp $ */
+/* $OpenBSD: intr.c,v 1.16 2020/07/14 15:34:14 patrick Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -29,8 +29,8 @@
 uint32_t arm_intr_get_parent(int);
 uint32_t arm_intr_map_msi(int, uint64_t *);
 
-void *arm_intr_prereg_establish_fdt(void *, int *, int, int (*)(void *),
-    void *, char *);
+void *arm_intr_prereg_establish_fdt(void *, int *, int, struct cpu_info *,
+    int (*)(void *), void *, char *);
 void arm_intr_prereg_disestablish_fdt(void *);
 
 int arm_dflt_splraise(int);
@@ -170,6 +170,7 @@ struct intr_prereg {
 	uint32_t ip_cell[MAX_INTERRUPT_CELLS];
 
 	int ip_level;
+	struct cpu_info *ip_ci;
 	int (*ip_func)(void *);
 	void *ip_arg;
 	char *ip_name;
@@ -183,7 +184,7 @@ LIST_HEAD(, intr_prereg) prereg_interrupts =
 
 void *
 arm_intr_prereg_establish_fdt(void *cookie, int *cell, int level,
-    int (*func)(void *), void *arg, char *name)
+    struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
 {
 	struct interrupt_controller *ic = cookie;
 	struct intr_prereg *ip;
@@ -194,6 +195,7 @@ arm_intr_prereg_establish_fdt(void *cookie, int *cell, int level,
 	for (i = 0; i < ic->ic_cells; i++)
 		ip->ip_cell[i] = cell[i];
 	ip->ip_level = level;
+	ip->ip_ci = ci;
 	ip->ip_func = func;
 	ip->ip_arg = arg;
 	ip->ip_name = name;
@@ -268,7 +270,8 @@ arm_intr_register_fdt(struct interrupt_controller *ic)
 
 		ip->ip_ic = ic;
 		ip->ip_ih = ic->ic_establish(ic->ic_cookie, ip->ip_cell,
-		    ip->ip_level, ip->ip_func, ip->ip_arg, ip->ip_name);
+		    ip->ip_level, ip->ip_ci, ip->ip_func, ip->ip_arg,
+		    ip->ip_name);
 		if (ip->ip_ih == NULL)
 			printf("can't establish interrupt %s\n", ip->ip_name);
 
@@ -289,8 +292,24 @@ arm_intr_establish_fdt(int node, int level, int (*func)(void *),
 }
 
 void *
+arm_intr_establish_fdt_cpu(int node, int level, struct cpu_info *ci,
+    int (*func)(void *), void *cookie, char *name)
+{
+	return arm_intr_establish_fdt_idx_cpu(node, 0, level, ci, func,
+	    cookie, name);
+}
+
+void *
 arm_intr_establish_fdt_idx(int node, int idx, int level, int (*func)(void *),
     void *cookie, char *name)
+{
+	return arm_intr_establish_fdt_idx_cpu(node, idx, level, NULL, func,
+	    cookie, name);
+}
+
+void *
+arm_intr_establish_fdt_idx_cpu(int node, int idx, int level, struct cpu_info *ci,
+    int (*func)(void *), void *cookie, char *name)
 {
 	struct interrupt_controller *ic;
 	int i, len, ncells, extended = 1;
@@ -343,7 +362,7 @@ arm_intr_establish_fdt_idx(int node, int idx, int level, int (*func)(void *),
 
 		if (i == idx && ncells >= ic->ic_cells && ic->ic_establish) {
 			val = ic->ic_establish(ic->ic_cookie, cell, level,
-			    func, cookie, name);
+			    ci, func, cookie, name);
 			break;
 		}
 
@@ -366,6 +385,14 @@ arm_intr_establish_fdt_idx(int node, int idx, int level, int (*func)(void *),
 void *
 arm_intr_establish_fdt_imap(int node, int *reg, int nreg, int level,
     int (*func)(void *), void *cookie, char *name)
+{
+	return arm_intr_establish_fdt_imap_cpu(node, reg, nreg, level, NULL,
+	    func, cookie, name);
+}
+
+void *
+arm_intr_establish_fdt_imap_cpu(int node, int *reg, int nreg, int level,
+    struct cpu_info *ci, int (*func)(void *), void *cookie, char *name)
 {
 	struct interrupt_controller *ic;
 	struct arm_intr_handle *ih;
@@ -407,7 +434,7 @@ arm_intr_establish_fdt_imap(int node, int *reg, int nreg, int level,
 		    (reg[3] & map_mask[3]) == cell[3] &&
 		    ic->ic_establish) {
 			val = ic->ic_establish(ic->ic_cookie, &cell[5 + acells],
-			    level, func, cookie, name);
+			    level, ci, func, cookie, name);
 			break;
 		}
 
@@ -432,6 +459,15 @@ void *
 arm_intr_establish_fdt_msi(int node, uint64_t *addr, uint64_t *data,
     int level, int (*func)(void *), void *cookie, char *name)
 {
+	return arm_intr_establish_fdt_msi_cpu(node, addr, data, level, NULL,
+	    func, cookie, name);
+}
+
+void *
+arm_intr_establish_fdt_msi_cpu(int node, uint64_t *addr, uint64_t *data,
+    int level, struct cpu_info *ci, int (*func)(void *), void *cookie,
+    char *name)
+{
 	struct interrupt_controller *ic;
 	struct arm_intr_handle *ih;
 	uint32_t phandle;
@@ -447,7 +483,7 @@ arm_intr_establish_fdt_msi(int node, uint64_t *addr, uint64_t *data,
 		return NULL;
 
 	val = ic->ic_establish_msi(ic->ic_cookie, addr, data,
-	    level, func, cookie, name);
+	    level, ci, func, cookie, name);
 
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_ic = ic;
@@ -493,7 +529,7 @@ arm_intr_disable(void *cookie)
  */
 void *
 arm_intr_parent_establish_fdt(void *cookie, int *cell, int level,
-    int (*func)(void *), void *arg, char *name)
+    struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
 {
 	struct interrupt_controller *ic = cookie;
 	struct arm_intr_handle *ih;
@@ -508,7 +544,7 @@ arm_intr_parent_establish_fdt(void *cookie, int *cell, int level,
 	if (ic == NULL)
 		return NULL;
 
-	val = ic->ic_establish(ic->ic_cookie, cell, level, func, arg, name);
+	val = ic->ic_establish(ic->ic_cookie, cell, level, ci, func, arg, name);
 	if (val == NULL)
 		return NULL;
 

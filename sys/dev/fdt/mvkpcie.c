@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvkpcie.c,v 1.4 2020/05/22 21:40:20 kettenis Exp $	*/
+/*	$OpenBSD: mvkpcie.c,v 1.5 2020/07/14 15:34:15 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
@@ -246,7 +246,7 @@ int	mvkpcie_bs_memmap(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 
 int	mvkpcie_intc_intr(void *);
 void	*mvkpcie_intc_intr_establish_msi(void *, uint64_t *, uint64_t *,
-	    int , int (*)(void *), void *, char *);
+	    int , struct cpu_info *, int (*)(void *), void *, char *);
 void	mvkpcie_intc_intr_disestablish_msi(void *);
 void	mvkpcie_intc_recalc_ipl(struct mvkpcie_softc *);
 
@@ -861,11 +861,14 @@ mvkpcie_intc_intr(void *cookie)
 
 void *
 mvkpcie_intc_intr_establish_msi(void *cookie, uint64_t *addr, uint64_t *data,
-    int level, int (*func)(void *), void *arg, char *name)
+    int level, struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
 {
 	struct mvkpcie_softc *sc = (struct mvkpcie_softc *)cookie;
 	struct intrhand *ih;
 	int i, s;
+
+	if (ci != NULL && !CPU_IS_PRIMARY(ci))
+		return NULL;
 
 	for (i = 0; i < nitems(sc->sc_msi_handlers); i++) {
 		if (sc->sc_msi_handlers[i] == NULL)

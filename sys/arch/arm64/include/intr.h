@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.12 2018/08/20 15:02:07 visa Exp $ */
+/*	$OpenBSD: intr.h,v 1.13 2020/07/14 15:34:14 patrick Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -136,10 +136,10 @@ struct cpu_info;
 struct interrupt_controller {
 	int	ic_node;
 	void	*ic_cookie;
-	void	*(*ic_establish)(void *, int *, int, int (*)(void *),
-		    void *, char *);
-	void	*(*ic_establish_msi)(void *, uint64_t *, uint64_t *, int,
+	void	*(*ic_establish)(void *, int *, int, struct cpu_info *,
 		    int (*)(void *), void *, char *);
+	void	*(*ic_establish_msi)(void *, uint64_t *, uint64_t *, int,
+		    struct cpu_info *, int (*)(void *), void *, char *);
 	void	 (*ic_disestablish)(void *);
 	void	 (*ic_enable)(void *);
 	void	 (*ic_disable)(void *);
@@ -155,19 +155,27 @@ void	 arm_intr_init_fdt(void);
 void	 arm_intr_register_fdt(struct interrupt_controller *);
 void	*arm_intr_establish_fdt(int, int, int (*)(void *),
 	    void *, char *);
+void	*arm_intr_establish_fdt_cpu(int, int, struct cpu_info *,
+	    int (*)(void *), void *, char *);
 void	*arm_intr_establish_fdt_idx(int, int, int, int (*)(void *),
 	    void *, char *);
+void	*arm_intr_establish_fdt_idx_cpu(int, int, int, struct cpu_info *,
+	    int (*)(void *), void *, char *);
 void	*arm_intr_establish_fdt_imap(int, int *, int, int, int (*)(void *),
 	    void *, char *);
-void	*arm_intr_establish_fdt_msi(int, uint64_t *, uint64_t *, int ,
+void	*arm_intr_establish_fdt_imap_cpu(int, int *, int, int,
+	    struct cpu_info *, int (*)(void *), void *, char *);
+void	*arm_intr_establish_fdt_msi(int, uint64_t *, uint64_t *, int,
 	    int (*)(void *), void *, char *);
+void	*arm_intr_establish_fdt_msi_cpu(int, uint64_t *, uint64_t *, int,
+	    struct cpu_info *, int (*)(void *), void *, char *);
 void	 arm_intr_disestablish_fdt(void *);
 void	 arm_intr_enable(void *);
 void	 arm_intr_disable(void *);
 void	 arm_intr_route(void *, int, struct cpu_info *);
 void	 arm_intr_cpu_enable(void);
 void	*arm_intr_parent_establish_fdt(void *, int *, int,
-	    int (*)(void *), void *, char *);
+	    struct cpu_info *ci, int (*)(void *), void *, char *);
 void	 arm_intr_parent_disestablish_fdt(void *);
 
 void	 arm_send_ipi(struct cpu_info *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.4 2020/04/12 09:21:19 kettenis Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.5 2020/07/14 15:34:14 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -152,7 +152,7 @@ acpi_intr_establish(int irq, int flags, int level,
 	interrupt[1] = irq - 32;
 	interrupt[2] = 0x4;
 
-	return ic->ic_establish(ic->ic_cookie, interrupt, level,
+	return ic->ic_establish(ic->ic_cookie, interrupt, level, NULL,
 				func, arg, (char *)name);
 }
 

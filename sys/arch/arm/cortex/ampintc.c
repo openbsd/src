@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.27 2019/09/29 10:36:52 kettenis Exp $ */
+/* $OpenBSD: ampintc.c,v 1.28 2020/07/14 15:34:14 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -177,12 +177,12 @@ void		 ampintc_splx(int);
 int		 ampintc_splraise(int);
 void		 ampintc_setipl(int);
 void		 ampintc_calc_mask(void);
-void		*ampintc_intr_establish(int, int, int, int (*)(void *),
-		    void *, char *);
-void		*ampintc_intr_establish_ext(int, int, int (*)(void *),
-		    void *, char *);
-void		*ampintc_intr_establish_fdt(void *, int *, int,
+void		*ampintc_intr_establish(int, int, int, struct cpu_info *,
 		    int (*)(void *), void *, char *);
+void		*ampintc_intr_establish_ext(int, int, struct cpu_info *,
+		    int (*)(void *), void *, char *);
+void		*ampintc_intr_establish_fdt(void *, int *, int,
+		    struct cpu_info *, int (*)(void *), void *, char *);
 void		 ampintc_intr_disestablish(void *);
 void		 ampintc_irq_handler(void *);
 const char	*ampintc_intr_string(void *);
@@ -691,16 +691,16 @@ ampintc_irq_handler(void *frame)
 }
 
 void *
-ampintc_intr_establish_ext(int irqno, int level, int (*func)(void *),
-    void *arg, char *name)
+ampintc_intr_establish_ext(int irqno, int level, struct cpu_info *ci,
+    int (*func)(void *), void *arg, char *name)
 {
 	return ampintc_intr_establish(irqno+32, IST_LEVEL_HIGH, level,
-	    func, arg, name);
+	    ci, func, arg, name);
 }
 
 void *
 ampintc_intr_establish_fdt(void *cookie, int *cell, int level,
-    int (*func)(void *), void *arg, char *name)
+    struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
 {
 	struct ampintc_softc	*sc = (struct ampintc_softc *)cookie;
 	int			 irq;
@@ -723,12 +723,12 @@ ampintc_intr_establish_fdt(void *cookie, int *cell, int level,
 	else
 		type = IST_LEVEL_HIGH;
 
-	return ampintc_intr_establish(irq, type, level, func, arg, name);
+	return ampintc_intr_establish(irq, type, level, ci, func, arg, name);
 }
 
 void *
-ampintc_intr_establish(int irqno, int type, int level, int (*func)(void *),
-    void *arg, char *name)
+ampintc_intr_establish(int irqno, int type, int level, struct cpu_info *ci,
+    int (*func)(void *), void *arg, char *name)
 {
 	struct ampintc_softc	*sc = ampintc;
 	struct intrhand		*ih;
@@ -737,6 +737,11 @@ ampintc_intr_establish(int irqno, int type, int level, int (*func)(void *),
 	if (irqno < 0 || irqno >= sc->sc_nintr)
 		panic("ampintc_intr_establish: bogus irqnumber %d: %s",
 		     irqno, name);
+
+	if (ci == NULL)
+		ci = &cpu_info_primary;
+	else if (!CPU_IS_PRIMARY(ci))
+		return NULL;
 
 	if (irqno < 16) {
 		/* SGI are only EDGE */
@@ -818,7 +823,7 @@ ampintc_intr_string(void *cookie)
 int	 ampintc_msi_match(struct device *, void *, void *);
 void	 ampintc_msi_attach(struct device *, struct device *, void *);
 void	*ampintc_intr_establish_msi(void *, uint64_t *, uint64_t *,
-	    int , int (*)(void *), void *, char *);
+	    int , struct cpu_info *, int (*)(void *), void *, char *);
 void	 ampintc_intr_disestablish_msi(void *);
 
 struct ampintc_msi_softc {
@@ -889,7 +894,7 @@ ampintc_msi_attach(struct device *parent, struct device *self, void *aux)
 
 void *
 ampintc_intr_establish_msi(void *self, uint64_t *addr, uint64_t *data,
-    int level, int (*func)(void *), void *arg, char *name)
+    int level, struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
 {
 	struct ampintc_msi_softc *sc = (struct ampintc_msi_softc *)self;
 	void *cookie;
@@ -900,7 +905,7 @@ ampintc_intr_establish_msi(void *self, uint64_t *addr, uint64_t *data,
 			continue;
 
 		cookie = ampintc_intr_establish(sc->sc_bspi + i,
-		    IST_EDGE_RISING, level, func, arg, name);
+		    IST_EDGE_RISING, level, ci, func, arg, name);
 		if (cookie == NULL)
 			return NULL;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: imxgpio.c,v 1.3 2018/08/08 11:06:47 patrick Exp $ */
+/* $OpenBSD: imxgpio.c,v 1.4 2020/07/14 15:34:15 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -78,8 +78,8 @@ int imxgpio_get_pin(void *, uint32_t *);
 void imxgpio_set_pin(void *, uint32_t *, int);
 
 int imxgpio_intr(void *);
-void *imxgpio_intr_establish(void *, int *, int, int (*)(void *),
-    void *, char *);
+void *imxgpio_intr_establish(void *, int *, int, struct cpu_info *,
+    int (*)(void *), void *, char *);
 void imxgpio_intr_disestablish(void *);
 void imxgpio_recalc_ipl(struct imxgpio_softc *);
 void imxgpio_intr_enable(void *);
@@ -231,7 +231,7 @@ imxgpio_intr(void *cookie)
 
 void *
 imxgpio_intr_establish(void *cookie, int *cells, int ipl,
-    int (*func)(void *), void *arg, char *name)
+    struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
 {
 	struct imxgpio_softc	*sc = (struct imxgpio_softc *)cookie;
 	struct intrhand		*ih;
@@ -246,6 +246,9 @@ imxgpio_intr_establish(void *cookie, int *cells, int ipl,
 	if (sc->sc_handlers[irqno] != NULL)
 		panic("%s: irqnumber %d reused: %s", __func__,
 		     irqno, name);
+
+	if (ci != NULL && !CPU_IS_PRIMARY(ci))
+		return NULL;
 
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_func = func;

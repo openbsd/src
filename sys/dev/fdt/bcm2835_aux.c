@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2835_aux.c,v 1.4 2019/08/29 11:51:48 kettenis Exp $	*/
+/*	$OpenBSD: bcm2835_aux.c,v 1.5 2020/07/14 15:34:15 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -57,8 +57,8 @@ struct cfdriver bcmaux_cd = {
 };
 
 uint32_t bcm_aux_get_frequency(void *, uint32_t *);
-void	*bcm_aux_intr_establish_fdt(void *, int *, int, int (*)(void *),
-    void *, char *);
+void	*bcm_aux_intr_establish_fdt(void *, int *, int, struct cpu_info *,
+    int (*)(void *), void *, char *);
 
 int
 bcmaux_match(struct device *parent, void *match, void *aux)
@@ -115,7 +115,7 @@ bcm_aux_get_frequency(void *cookie, uint32_t *cells)
 
 void *
 bcm_aux_intr_establish_fdt(void *cookie, int *cells, int level,
-    int (*func)(void *), void *arg, char *name)
+    struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
 {
 	struct interrupt_controller *ic = cookie;
 	uint32_t idx = cells[0];
@@ -124,5 +124,5 @@ bcm_aux_intr_establish_fdt(void *cookie, int *cells, int level,
 	if (idx != BCMAUX_UART)
 		return NULL;
 
-	return fdt_intr_establish(ic->ic_node, level, func, arg, name);
+	return fdt_intr_establish_cpu(ic->ic_node, level, ci, func, arg, name);
 }

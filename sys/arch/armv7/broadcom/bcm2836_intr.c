@@ -1,4 +1,4 @@
-/* $OpenBSD: bcm2836_intr.c,v 1.4 2019/10/05 15:44:57 kettenis Exp $ */
+/* $OpenBSD: bcm2836_intr.c,v 1.5 2020/07/14 15:34:15 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2015 Patrick Wildt <patrick@blueri.se>
@@ -110,12 +110,12 @@ int	 bcm_intc_spllower(int new);
 int	 bcm_intc_splraise(int new);
 void	 bcm_intc_setipl(int new);
 void	 bcm_intc_calc_mask(void);
-void	*bcm_intc_intr_establish(int, int, int (*)(void *),
-    void *, char *);
-void	*bcm_intc_intr_establish_fdt(void *, int *, int, int (*)(void *),
-    void *, char *);
-void	*l1_intc_intr_establish_fdt(void *, int *, int, int (*)(void *),
-    void *, char *);
+void	*bcm_intc_intr_establish(int, int, struct cpu_info *,
+    int (*)(void *), void *, char *);
+void	*bcm_intc_intr_establish_fdt(void *, int *, int, struct cpu_info *,
+    int (*)(void *), void *, char *);
+void	*l1_intc_intr_establish_fdt(void *, int *, int, struct cpu_info *,
+    int (*)(void *), void *, char *);
 void	 bcm_intc_intr_disestablish(void *);
 const char *bcm_intc_intr_string(void *);
 void	 bcm_intc_irq_handler(void *);
@@ -479,7 +479,7 @@ bcm_intc_irq_handler(void *frame)
 
 void *
 bcm_intc_intr_establish_fdt(void *cookie, int *cell, int level,
-    int (*func)(void *), void *arg, char *name)
+    struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
 {
 	struct bcm_intc_softc	*sc = (struct bcm_intc_softc *)cookie;
 	int irq;
@@ -496,22 +496,22 @@ bcm_intc_intr_establish_fdt(void *cookie, int *cell, int level,
 	else
 		panic("%s: bogus interrupt type", sc->sc_dev.dv_xname);
 
-	return bcm_intc_intr_establish(irq, level, func, arg, name);
+	return bcm_intc_intr_establish(irq, level, ci, func, arg, name);
 }
 
 void *
 l1_intc_intr_establish_fdt(void *cookie, int *cell, int level,
-    int (*func)(void *), void *arg, char *name)
+    struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
 {
 	int irq;
 
 	irq = cell[0] + LOCAL_START;
-	return bcm_intc_intr_establish(irq, level, func, arg, name);
+	return bcm_intc_intr_establish(irq, level, ci, func, arg, name);
 }
 
 void *
-bcm_intc_intr_establish(int irqno, int level, int (*func)(void *),
-    void *arg, char *name)
+bcm_intc_intr_establish(int irqno, int level, struct cpu_info *ci,
+    int (*func)(void *), void *arg, char *name)
 {
 	struct bcm_intc_softc *sc = bcm_intc;
 	struct intrhand *ih;
@@ -520,6 +520,12 @@ bcm_intc_intr_establish(int irqno, int level, int (*func)(void *),
 	if (irqno < 0 || irqno >= INTC_NIRQ)
 		panic("bcm_intc_intr_establish: bogus irqnumber %d: %s",
 		     irqno, name);
+
+	if (ci == NULL)
+		ci = &cpu_info_primary;
+	else if (!CPU_IS_PRIMARY(ci))
+		return NULL;
+
 	psw = disable_interrupts(PSR_I);
 
 	ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK);

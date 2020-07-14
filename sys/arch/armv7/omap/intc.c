@@ -1,4 +1,4 @@
-/* $OpenBSD: intc.c,v 1.9 2019/10/05 15:44:57 kettenis Exp $ */
+/* $OpenBSD: intc.c,v 1.10 2020/07/14 15:34:15 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -108,8 +108,8 @@ int	intc_spllower(int new);
 int	intc_splraise(int new);
 void	intc_setipl(int new);
 void	intc_calc_mask(void);
-void	*intc_intr_establish_fdt(void *, int *, int, int (*)(void *),
-	    void *, char *);
+void	*intc_intr_establish_fdt(void *, int *, int, struct cpu_info *,
+	    int (*)(void *), void *, char *);
 
 struct cfattach	intc_ca = {
 	sizeof (struct device), intc_match, intc_attach
@@ -353,8 +353,8 @@ intc_irq_handler(void *frame)
 }
 
 void *
-intc_intr_establish(int irqno, int level, int (*func)(void *),
-    void *arg, char *name)
+intc_intr_establish(int irqno, int level, struct cpu_info *ci,
+    int (*func)(void *), void *arg, char *name)
 {
 	int psw;
 	struct intrhand *ih;
@@ -362,6 +362,12 @@ intc_intr_establish(int irqno, int level, int (*func)(void *),
 	if (irqno < 0 || irqno >= INTC_NUM_IRQ)
 		panic("intc_intr_establish: bogus irqnumber %d: %s",
 		     irqno, name);
+
+	if (ci == NULL)
+		ci = &cpu_info_primary;
+	else if (!CPU_IS_PRIMARY(ci))
+		return NULL;
+
 	psw = disable_interrupts(PSR_I);
 
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
@@ -388,9 +394,9 @@ intc_intr_establish(int irqno, int level, int (*func)(void *),
 
 void *
 intc_intr_establish_fdt(void *cookie, int *cell, int level,
-    int (*func)(void *), void *arg, char *name)
+    struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
 {
-	return intc_intr_establish(cell[0], level, func, arg, name);
+	return intc_intr_establish(cell[0], level, ci, func, arg, name);
 }
 
 void

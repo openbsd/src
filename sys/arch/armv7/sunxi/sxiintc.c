@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiintc.c,v 1.6 2019/10/05 15:44:57 kettenis Exp $	*/
+/*	$OpenBSD: sxiintc.c,v 1.7 2020/07/14 15:34:15 patrick Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -149,8 +149,8 @@ int	sxiintc_spllower(int);
 int	sxiintc_splraise(int);
 void	sxiintc_setipl(int);
 void	sxiintc_calc_masks(void);
-void	*sxiintc_intr_establish_fdt(void *, int *, int, int (*)(void *),
-	    void *, char *);
+void	*sxiintc_intr_establish_fdt(void *, int *, int, struct cpu_info *,
+	    int (*)(void *), void *, char *);
 
 struct cfattach	sxiintc_ca = {
 	sizeof (struct device), sxiintc_match, sxiintc_attach
@@ -372,8 +372,8 @@ sxiintc_irq_handler(void *frame)
 }
 
 void *
-sxiintc_intr_establish(int irq, int level, int (*func)(void *),
-    void *arg, char *name)
+sxiintc_intr_establish(int irq, int level, struct cpu_info *ci,
+    int (*func)(void *), void *arg, char *name)
 {
 	int psw;
 	struct intrhand *ih;
@@ -381,6 +381,11 @@ sxiintc_intr_establish(int irq, int level, int (*func)(void *),
 
 	if (irq <= 0 || irq >= NIRQ)
 		panic("intr_establish: bogus irq %d %s\n", irq, name);
+
+	if (ci == NULL)
+		ci = &cpu_info_primary;
+	else if (!CPU_IS_PRIMARY(ci))
+		return NULL;
 
 	DPRINTF(("intr_establish: irq %d level %d [%s]\n", irq, level,
 	    name != NULL ? name : "NULL"));
@@ -413,9 +418,9 @@ sxiintc_intr_establish(int irq, int level, int (*func)(void *),
 
 void *
 sxiintc_intr_establish_fdt(void *cookie, int *cell, int level,
-    int (*func)(void *), void *arg, char *name)
+    struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
 {
-	return sxiintc_intr_establish(cell[0], level, func, arg, name);
+	return sxiintc_intr_establish(cell[0], level, ci, func, arg, name);
 }
 
 void

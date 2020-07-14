@@ -1,4 +1,4 @@
-/* $OpenBSD: fdt.h,v 1.6 2018/08/08 11:06:33 patrick Exp $ */
+/* $OpenBSD: fdt.h,v 1.7 2020/07/14 15:34:14 patrick Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -42,9 +42,13 @@ void *fdt_find_cons(const char *);
 
 #define fdt_intr_enable arm_intr_enable
 #define fdt_intr_establish arm_intr_establish_fdt
+#define fdt_intr_establish_cpu arm_intr_establish_fdt_cpu
 #define fdt_intr_establish_idx arm_intr_establish_fdt_idx
+#define fdt_intr_establish_idx_cpu arm_intr_establish_fdt_idx_cpu
 #define fdt_intr_establish_imap arm_intr_establish_fdt_imap
+#define fdt_intr_establish_imap_cpu arm_intr_establish_fdt_imap_cpu
 #define fdt_intr_establish_msi arm_intr_establish_fdt_msi
+#define fdt_intr_establish_msi_cpu arm_intr_establish_fdt_msi_cpu
 #define fdt_intr_disable arm_intr_disable
 #define fdt_intr_disestablish arm_intr_disestablish_fdt
 #define fdt_intr_get_parent arm_intr_get_parent

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvgicp.c,v 1.1 2019/02/03 14:03:36 patrick Exp $	*/
+/*	$OpenBSD: mvgicp.c,v 1.2 2020/07/14 15:34:15 patrick Exp $	*/
 /*
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
  *
@@ -48,7 +48,7 @@ int	mvgicp_match(struct device *, void *, void *);
 void	mvgicp_attach(struct device *, struct device *, void *);
 
 void *	mvgicp_intr_establish(void *, uint64_t *, uint64_t *,
-	    int, int (*)(void *), void *, char *);
+	    int, struct cpu_info *, int (*)(void *), void *, char *);
 void	mvgicp_intr_disestablish(void *);
 
 struct cfattach mvgicp_ca = {
@@ -119,7 +119,7 @@ mvgicp_attach(struct device *parent, struct device *self, void *aux)
 
 void *
 mvgicp_intr_establish(void *self, uint64_t *addr, uint64_t *data,
-    int level, int (*func)(void *), void *arg, char *name)
+    int level, struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
 {
 	struct mvgicp_softc *sc = (struct mvgicp_softc *)self;
 	struct interrupt_controller *ic = sc->sc_parent_ic;
@@ -160,7 +160,7 @@ mvgicp_intr_establish(void *self, uint64_t *addr, uint64_t *data,
 	interrupt[1] = spi - 32;
 	interrupt[2] = flags;
 	cookie = ic->ic_establish(ic->ic_cookie, interrupt, level,
-	    func, arg, name);
+	    ci, func, arg, name);
 	if (cookie == NULL)
 		return NULL;
 

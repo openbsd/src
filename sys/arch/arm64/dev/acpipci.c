@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.15 2020/06/11 18:13:53 kettenis Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.16 2020/07/14 15:34:14 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -454,7 +454,7 @@ acpipci_intr_establish(void *v, pci_intr_handle_t ih, int level,
 		/* Map Requester ID through IORT to get sideband data. */
 		data = acpipci_iort_map_msi(ih.ih_pc, ih.ih_tag);
 		cookie = ic->ic_establish_msi(ic->ic_cookie, &addr,
-		    &data, level, func, arg, name);
+		    &data, level, NULL, func, arg, name);
 		if (cookie == NULL)
 			return NULL;
 

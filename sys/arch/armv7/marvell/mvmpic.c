@@ -1,4 +1,4 @@
-/* $OpenBSD: mvmpic.c,v 1.3 2018/12/07 21:33:28 patrick Exp $ */
+/* $OpenBSD: mvmpic.c,v 1.4 2020/07/14 15:34:15 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2015 Patrick Wildt <patrick@blueri.se>
@@ -73,7 +73,7 @@ struct intrhand {
 int		 mpic_match(struct device *, void *, void *);
 void		 mpic_attach(struct device *, struct device *, void *);
 void		 mpic_calc_mask(struct mpic_softc *);
-void		*mpic_intr_establish(void *, int *, int,
+void		*mpic_intr_establish(void *, int *, int, struct cpu_info *,
 		    int (*)(void *), void *, char *);
 void		 mpic_intr_disestablish(void *);
 int		 mpic_intr(void *);
@@ -236,7 +236,7 @@ mpic_intr(void *cookie)
 
 void *
 mpic_intr_establish(void *cookie, int *cells, int level,
-    int (*func)(void *), void *arg, char *name)
+    struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
 {
 	struct mpic_softc	*sc = cookie;
 	struct intrhand		*ih;
@@ -250,6 +250,9 @@ mpic_intr_establish(void *cookie, int *cells, int level,
 	if (sc->sc_handlers[irqno] != NULL)
 		panic("%s: irq %d already registered" , __func__,
 		    irqno);
+
+	if (ci != NULL && !CPU_IS_PRIMARY(ci))
+		return NULL;
 
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_func = func;

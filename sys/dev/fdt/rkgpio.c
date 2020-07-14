@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkgpio.c,v 1.4 2020/04/25 10:41:20 kettenis Exp $	*/
+/*	$OpenBSD: rkgpio.c,v 1.5 2020/07/14 15:34:15 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
@@ -96,8 +96,8 @@ int	rkgpio_get_pin(void *, uint32_t *);
 void	rkgpio_set_pin(void *, uint32_t *, int);
 
 int	rkgpio_intr(void *);
-void	*rkgpio_intr_establish(void *, int *, int, int (*)(void *),
-	    void *, char *);
+void	*rkgpio_intr_establish(void *, int *, int, struct cpu_info *,
+	    int (*)(void *), void *, char *);
 void	rkgpio_intr_disestablish(void *);
 void	rkgpio_recalc_ipl(struct rkgpio_softc *);
 void	rkgpio_intr_enable(void *);
@@ -236,7 +236,7 @@ rkgpio_intr(void *cookie)
 
 void *
 rkgpio_intr_establish(void *cookie, int *cells, int ipl,
-    int (*func)(void *), void *arg, char *name)
+    struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
 {
 	struct rkgpio_softc	*sc = (struct rkgpio_softc *)cookie;
 	struct intrhand		*ih;
@@ -251,6 +251,9 @@ rkgpio_intr_establish(void *cookie, int *cells, int ipl,
 	if (sc->sc_handlers[irqno] != NULL)
 		panic("%s: irqnumber %d reused: %s", __func__,
 		     irqno, name);
+
+	if (ci != NULL && !CPU_IS_PRIMARY(ci))
+		return NULL;
 
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_func = func;

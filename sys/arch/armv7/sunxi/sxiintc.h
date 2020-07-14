@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiintc.h,v 1.1 2016/08/05 20:38:17 kettenis Exp $ */
+/*	$OpenBSD: sxiintc.h,v 1.2 2020/07/14 15:34:15 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -37,7 +37,8 @@ int sxiintc_spllower(int);
 void sxiintc_setsoftintr(int);
 
 void sxiintc_irq_handler(void *);
-void *sxiintc_intr_establish(int, int, int (*)(void *), void *, char *);
+void *sxiintc_intr_establish(int, int, struct cpu_info *,
+    int (*)(void *), void *, char *);
 void sxiintc_intr_disestablish(void *);
 const char *sxiintc_intr_string(void *);
 

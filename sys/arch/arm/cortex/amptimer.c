@@ -1,4 +1,4 @@
-/* $OpenBSD: amptimer.c,v 1.8 2020/07/12 20:36:37 naddy Exp $ */
+/* $OpenBSD: amptimer.c,v 1.9 2020/07/14 15:34:14 patrick Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -113,7 +113,8 @@ void		amptimer_startclock(void);
  * interface because it uses an 'internal' interrupt
  * not a peripheral interrupt.
  */
-void	*ampintc_intr_establish(int, int, int, int (*)(void *), void *, char *);
+void	*ampintc_intr_establish(int, int, int, struct cpu_info *,
+	    int (*)(void *), void *, char *);
 
 
 
@@ -361,10 +362,10 @@ amptimer_cpu_initclocks()
 	/* XXX - irq */
 #if defined(USE_GTIMER_CMP)
 	ampintc_intr_establish(27, IST_EDGE_RISING, IPL_CLOCK,
-	    amptimer_intr, NULL, "tick");
+	    NULL, amptimer_intr, NULL, "tick");
 #else
 	ampintc_intr_establish(29, IST_EDGE_RISING, IPL_CLOCK,
-	    amptimer_intr, NULL, "tick");
+	    NULL, amptimer_intr, NULL, "tick");
 #endif
 
 	next = amptimer_readcnt64(sc) + sc->sc_ticks_per_intr;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvicu.c,v 1.4 2019/02/03 14:03:36 patrick Exp $	*/
+/*	$OpenBSD: mvicu.c,v 1.5 2020/07/14 15:34:15 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -93,8 +93,8 @@ struct cfdriver mvicu_cd = {
 };
 
 void	mvicu_register(struct mvicu_softc *, int, int);
-void	*mvicu_intr_establish(void *, int *, int, int (*)(void *),
-	    void *, char *);
+void	*mvicu_intr_establish(void *, int *, int, struct cpu_info *,
+	    int (*)(void *), void *, char *);
 void	mvicu_intr_disestablish(void *);
 
 int
@@ -193,7 +193,7 @@ mvicu_register(struct mvicu_softc *sc, int node, int idx)
 
 void *
 mvicu_intr_establish(void *cookie, int *cell, int level,
-    int (*func)(void *), void *arg, char *name)
+    struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
 {
 	struct mvicu_subnode *sn = cookie;
 	struct mvicu_softc *sc = sn->sn_sc;
@@ -222,7 +222,7 @@ mvicu_intr_establish(void *cookie, int *cell, int level,
 
 	data = flags;
 	cookie = ic->ic_establish_msi(ic->ic_cookie, &addr, &data,
-	    level, func, arg, name);
+	    level, ci, func, arg, name);
 	if (cookie == NULL)
 		return NULL;
 
