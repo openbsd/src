@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.7 2018/02/07 05:47:55 jsing Exp $ */
+/* $OpenBSD: verify.c,v 1.8 2020/07/14 19:08:30 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -71,19 +71,198 @@
 static int cb(int ok, X509_STORE_CTX * ctx);
 static int check(X509_STORE * ctx, char *file, STACK_OF(X509) * uchain,
     STACK_OF(X509) * tchain, STACK_OF(X509_CRL) * crls);
-static int v_verbose = 0, vflags = 0;
+static int vflags = 0;
+
+static struct {
+	char *CAfile;
+	char *CApath;
+	char *crlfile;
+	char *trustfile;
+	char *untfile;
+	int verbose;
+	X509_VERIFY_PARAM *vpm;
+} verify_config;
+
+static int
+verify_opt_args(int argc, char **argv, int *argsused)
+{
+	int oargc = argc;
+	int badarg = 0;
+
+	if (!args_verify(&argv, &argc, &badarg, bio_err, &verify_config.vpm))
+		return (1);
+	if (badarg)
+		return (1);
+
+	*argsused = oargc - argc;
+
+	return (0);
+}
+
+static const struct option verify_options[] = {
+	{
+		.name = "CAfile",
+		.argname = "file",
+		.desc = "Certificate Authority file",
+		.type = OPTION_ARG,
+		.opt.arg = &verify_config.CAfile,
+	},
+	{
+		.name = "CApath",
+		.argname = "path",
+		.desc = "Certificate Authority path",
+		.type = OPTION_ARG,
+		.opt.arg = &verify_config.CApath,
+	},
+	{
+		.name = "CRLfile",
+		.argname = "file",
+		.desc = "Certificate Revocation List file",
+		.type = OPTION_ARG,
+		.opt.arg = &verify_config.crlfile,
+	},
+	{
+		.name = "trusted",
+		.argname = "file",
+		.desc = "Trusted certificates file",
+		.type = OPTION_ARG,
+		.opt.arg = &verify_config.trustfile,
+	},
+	{
+		.name = "untrusted",
+		.argname = "file",
+		.desc = "Untrusted certificates file",
+		.type = OPTION_ARG,
+		.opt.arg = &verify_config.untfile,
+	},
+	{
+		.name = "verbose",
+		.desc = "Verbose",
+		.type = OPTION_FLAG,
+		.opt.flag = &verify_config.verbose,
+	},
+	{
+		.name = NULL,
+		.desc = "",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = verify_opt_args,
+	},
+	{ NULL },
+};
+
+static const struct option verify_shared_options[] = {
+	{
+		.name = "attime",
+		.argname = "epoch",
+		.desc = "Use epoch as the verification time",
+	},
+	{
+		.name = "check_ss_sig",
+		.desc = "Check the root CA self-signed certificate signature",
+	},
+	{
+		.name = "crl_check",
+		.desc = "Enable CRL checking for the leaf certificate",
+	},
+	{
+		.name = "crl_check_all",
+		.desc = "Enable CRL checking for the entire certificate chain",
+	},
+	{
+		.name = "explicit_policy",
+		.desc = "Require explicit policy (per RFC 3280)",
+	},
+	{
+		.name = "extended_crl",
+		.desc = "Enable extended CRL support",
+	},
+	{
+		.name = "ignore_critical",
+		.desc = "Disable critical extension checking",
+	},
+	{
+		.name = "inhibit_any",
+		.desc = "Inhibit any policy (per RFC 3280)",
+	},
+	{
+		.name = "inhibit_map",
+		.desc = "Inhibit policy mapping (per RFC 3280)",
+	},
+	{
+		.name = "issuer_checks",
+		.desc = "Enable debugging of certificate issuer checks",
+	},
+	{
+		.name = "policy",
+		.argname = "name",
+		.desc = "Add given policy to the acceptable set",
+	},
+	{
+		.name = "policy_check",
+		.desc = "Enable certificate policy checking",
+	},
+	{
+		.name = "policy_print",
+		.desc = "Print policy",
+	},
+	{
+		.name = "purpose",
+		.argname = "name",
+		.desc = "Verify for the given purpose",
+	},
+	{
+		.name = "use_deltas",
+		.desc = "Use delta CRLS (if present)",
+	},
+	{
+		.name = "verify_depth",
+		.argname = "num",
+		.desc = "Limit verification to the given depth",
+	},
+	{
+		.name = "x509_strict",
+		.desc = "Use strict X.509 rules (disables workarounds)",
+	},
+	{ NULL },
+};
+
+static void
+verify_usage(void)
+{
+	int i;
+
+	fprintf(stderr,
+	    "usage: verify [-CAfile file] [-CApath directory] [-check_ss_sig]\n"
+	    "    [-CRLfile file] [-crl_check] [-crl_check_all]\n"
+	    "    [-explicit_policy] [-extended_crl]\n"
+	    "    [-ignore_critical] [-inhibit_any] [-inhibit_map]\n"
+	    "    [-issuer_checks] [-policy_check] [-purpose purpose]\n"
+	    "    [-trusted file] [-untrusted file] [-verbose]\n"
+	    "    [-x509_strict] [certificates]\n\n");
+
+	options_usage(verify_options);
+
+	fprintf(stderr, "\nVerification options:\n\n");
+	options_usage(verify_shared_options);
+
+	fprintf(stderr, "\nValid purposes:\n\n");
+	for (i = 0; i < X509_PURPOSE_get_count(); i++) {
+		X509_PURPOSE *ptmp = X509_PURPOSE_get0(i);
+		fprintf(stderr, "  %-18s%s\n", X509_PURPOSE_get0_sname(ptmp),
+		    X509_PURPOSE_get0_name(ptmp));
+	}
+}
 
 int
 verify_main(int argc, char **argv)
 {
-	int i, ret = 1, badarg = 0;
-	char *CApath = NULL, *CAfile = NULL;
-	char *untfile = NULL, *trustfile = NULL, *crlfile = NULL;
-	STACK_OF(X509) * untrusted = NULL, *trusted = NULL;
-	STACK_OF(X509_CRL) * crls = NULL;
+	int i, ret = 1;
+	STACK_OF(X509) *untrusted = NULL, *trusted = NULL;
+	STACK_OF(X509_CRL) *crls = NULL;
 	X509_STORE *cert_ctx = NULL;
 	X509_LOOKUP *lookup = NULL;
-	X509_VERIFY_PARAM *vpm = NULL;
+	char **cert_files = NULL;
+	int argsused;
 
 	if (single_execution) {
 		if (pledge("stdio rpath", NULL) == -1) {
@@ -92,65 +271,31 @@ verify_main(int argc, char **argv)
 		}
 	}
 
+	memset(&verify_config, 0, sizeof(verify_config));
+
+	if (options_parse(argc, argv, verify_options, NULL, &argsused) != 0) {
+		verify_usage();
+		goto end;
+	}
+
+	if (argsused < argc)
+		cert_files = &argv[argsused];
+
 	cert_ctx = X509_STORE_new();
 	if (cert_ctx == NULL)
 		goto end;
 	X509_STORE_set_verify_cb(cert_ctx, cb);
 
-	argc--;
-	argv++;
-	for (;;) {
-		if (argc >= 1) {
-			if (strcmp(*argv, "-CApath") == 0) {
-				if (argc-- < 1)
-					goto end;
-				CApath = *(++argv);
-			} else if (strcmp(*argv, "-CAfile") == 0) {
-				if (argc-- < 1)
-					goto end;
-				CAfile = *(++argv);
-			} else if (args_verify(&argv, &argc, &badarg, bio_err,
-			    &vpm)) {
-				if (badarg)
-					goto end;
-				continue;
-			} else if (strcmp(*argv, "-untrusted") == 0) {
-				if (argc-- < 1)
-					goto end;
-				untfile = *(++argv);
-			} else if (strcmp(*argv, "-trusted") == 0) {
-				if (argc-- < 1)
-					goto end;
-				trustfile = *(++argv);
-			} else if (strcmp(*argv, "-CRLfile") == 0) {
-				if (argc-- < 1)
-					goto end;
-				crlfile = *(++argv);
-			}
-			else if (strcmp(*argv, "-help") == 0)
-				goto end;
-			else if (strcmp(*argv, "-verbose") == 0)
-				v_verbose = 1;
-			else if (argv[0][0] == '-')
-				goto end;
-			else
-				break;
-			argc--;
-			argv++;
-		} else
-			break;
-	}
-
-	if (vpm)
-		X509_STORE_set1_param(cert_ctx, vpm);
+	if (verify_config.vpm)
+		X509_STORE_set1_param(cert_ctx, verify_config.vpm);
 
 	lookup = X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_file());
 	if (lookup == NULL)
-		abort();
-	if (CAfile) {
-		i = X509_LOOKUP_load_file(lookup, CAfile, X509_FILETYPE_PEM);
+		abort(); /* XXX */
+	if (verify_config.CAfile) {
+		i = X509_LOOKUP_load_file(lookup, verify_config.CAfile, X509_FILETYPE_PEM);
 		if (!i) {
-			BIO_printf(bio_err, "Error loading file %s\n", CAfile);
+			BIO_printf(bio_err, "Error loading file %s\n", verify_config.CAfile);
 			ERR_print_errors(bio_err);
 			goto end;
 		}
@@ -159,11 +304,11 @@ verify_main(int argc, char **argv)
 
 	lookup = X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_hash_dir());
 	if (lookup == NULL)
-		abort();
-	if (CApath) {
-		i = X509_LOOKUP_add_dir(lookup, CApath, X509_FILETYPE_PEM);
+		abort(); /* XXX */
+	if (verify_config.CApath) {
+		i = X509_LOOKUP_add_dir(lookup, verify_config.CApath, X509_FILETYPE_PEM);
 		if (!i) {
-			BIO_printf(bio_err, "Error loading directory %s\n", CApath);
+			BIO_printf(bio_err, "Error loading directory %s\n", verify_config.CApath);
 			ERR_print_errors(bio_err);
 			goto end;
 		}
@@ -172,52 +317,39 @@ verify_main(int argc, char **argv)
 
 	ERR_clear_error();
 
-	if (untfile) {
-		untrusted = load_certs(bio_err, untfile, FORMAT_PEM,
+	if (verify_config.untfile) {
+		untrusted = load_certs(bio_err, verify_config.untfile, FORMAT_PEM,
 		    NULL, "untrusted certificates");
 		if (!untrusted)
 			goto end;
 	}
-	if (trustfile) {
-		trusted = load_certs(bio_err, trustfile, FORMAT_PEM,
+	if (verify_config.trustfile) {
+		trusted = load_certs(bio_err, verify_config.trustfile, FORMAT_PEM,
 		    NULL, "trusted certificates");
 		if (!trusted)
 			goto end;
 	}
-	if (crlfile) {
-		crls = load_crls(bio_err, crlfile, FORMAT_PEM,
+	if (verify_config.crlfile) {
+		crls = load_crls(bio_err, verify_config.crlfile, FORMAT_PEM,
 		    NULL, "other CRLs");
 		if (!crls)
 			goto end;
 	}
 	ret = 0;
-	if (argc < 1) {
+	if (cert_files == NULL) {
 		if (1 != check(cert_ctx, NULL, untrusted, trusted, crls))
 			ret = -1;
 	} else {
-		for (i = 0; i < argc; i++)
-			if (1 != check(cert_ctx, argv[i], untrusted, trusted,
+		do {
+			if (1 != check(cert_ctx, *cert_files++, untrusted, trusted,
 			    crls))
 				ret = -1;
+		} while (*cert_files != NULL);
 	}
 
  end:
-	if (ret == 1) {
-		BIO_printf(bio_err, "usage: verify [-verbose] [-CApath path] [-CAfile file] [-purpose purpose] [-crl_check]");
-		BIO_printf(bio_err, " [-attime timestamp]");
-		BIO_printf(bio_err, " cert1 cert2 ...\n");
-
-		BIO_printf(bio_err, "recognized usages:\n");
-		for (i = 0; i < X509_PURPOSE_get_count(); i++) {
-			X509_PURPOSE *ptmp;
-			ptmp = X509_PURPOSE_get0(i);
-			BIO_printf(bio_err, "\t%-10s\t%s\n",
-			    X509_PURPOSE_get0_sname(ptmp),
-			    X509_PURPOSE_get0_name(ptmp));
-		}
-	}
-	if (vpm)
-		X509_VERIFY_PARAM_free(vpm);
+	if (verify_config.vpm)
+		X509_VERIFY_PARAM_free(verify_config.vpm);
 	if (cert_ctx != NULL)
 		X509_STORE_free(cert_ctx);
 	sk_X509_pop_free(untrusted, X509_free);
@@ -318,7 +450,7 @@ cb(int ok, X509_STORE_CTX * ctx)
 	}
 	if (cert_error == X509_V_OK && ok == 2)
 		policies_print(NULL, ctx);
-	if (!v_verbose)
+	if (!verify_config.verbose)
 		ERR_clear_error();
 	return (ok);
 }
