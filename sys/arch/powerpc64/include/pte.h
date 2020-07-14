@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.4 2020/07/01 16:05:48 kettenis Exp $	*/
+/*	$OpenBSD: pte.h,v 1.5 2020/07/14 17:03:13 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -32,7 +32,7 @@ struct pte {
 /* High doubleword: */
 #define PTE_VALID		0x0000000000000001ULL
 #define PTE_HID			0x0000000000000002ULL
-#define PTE_WIRED		0x0000000000000004ULL /* SW */
+#define PTE_WIRED		0x0000000000000008ULL /* SW */
 #define PTE_AVPN		0x3fffffffffffff80ULL
 #define PTE_VSID_SHIFT		12
 

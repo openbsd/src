@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.29 2020/07/10 16:09:58 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.30 2020/07/14 17:03:13 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -530,7 +530,7 @@ pte_lookup(uint64_t vsid, vaddr_t va)
 	pte_hi = (avpn & PTE_AVPN) | PTE_VALID;
 
 	for (i = 0; i < 8; i++) {
-		if (pte[i].pte_hi == pte_hi)
+		if ((pte[i].pte_hi & ~PTE_WIRED) == pte_hi)
 			return &pte[i];
 	}
 
@@ -540,7 +540,7 @@ pte_lookup(uint64_t vsid, vaddr_t va)
 	pte_hi |= PTE_HID;
 
 	for (i = 0; i < 8; i++) {
-		if (pte[i].pte_hi == pte_hi)
+		if ((pte[i].pte_hi & ~PTE_WIRED) == pte_hi)
 			return &pte[i];
 	}
 
@@ -604,7 +604,7 @@ pte_insert(struct pte_desc *pted)
 	struct pte *pte;
 	vaddr_t va;
 	uint64_t vsid, hash;
-	int off, idx, i;
+	int off, try, idx, i;
 	int s;
 
 	PMAP_HASH_LOCK(s);
@@ -660,8 +660,6 @@ pte_insert(struct pte_desc *pted)
 		pte[i].pte_hi |= (PTE_HID|PTE_VALID);
 		ptesync();	/* Ensure updates completed. */
 
-		if (i > 6)
-			printf("%s: secondary %d\n", __func__, i);
 		goto out;
 	}
 
@@ -669,11 +667,23 @@ pte_insert(struct pte_desc *pted)
 
 	/* need decent replacement algorithm */
 	off = mftb();
-	pted->pted_va |= off & (PTED_VA_PTEGIDX_M|PTED_VA_HID_M);
 
-	idx ^= (PTED_HID(pted) ? pmap_ptab_mask : 0);
-	pte = pmap_ptable + (idx * 8);
-	pte += PTED_PTEGIDX(pted); /* increment by index into pteg */
+	for (try = 0; try < 16; try++) {
+		pted->pted_va &= ~(PTED_VA_HID_M|PTED_VA_PTEGIDX_M);
+		pted->pted_va |= off & (PTED_VA_PTEGIDX_M|PTED_VA_HID_M);
+
+		idx ^= (PTED_HID(pted) ? pmap_ptab_mask : 0);
+		pte = pmap_ptable + (idx * 8);
+		pte += PTED_PTEGIDX(pted); /* increment by index into pteg */
+
+		if ((pte->pte_hi & PTE_WIRED) == 0)
+			break;
+	}
+	/*
+	 * Since we only wire unmanaged kernel mappings, we should
+	 * always find a slot that we can replace.
+	 */
+	KASSERT(try < 16);
 
 	if (pte->pte_hi & PTE_VALID) {
 		uint64_t avpn, vpn;
@@ -1152,7 +1162,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	/* Calculate PTE */
 	pmap_fill_pte(pm, va, pa, &pted, prot, cache);
-	pted.pted_va |= PTED_VA_WIRED_M;
+	pted.pted_pte.pte_hi |= PTE_WIRED;
 
 	/* Insert into HTAB */
 	pte_insert(&pted);
