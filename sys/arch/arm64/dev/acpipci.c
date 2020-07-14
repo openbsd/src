@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.16 2020/07/14 15:34:14 patrick Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.17 2020/07/14 15:42:19 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -109,7 +109,7 @@ void	acpipci_conf_write(void *, pcitag_t, int, pcireg_t);
 int	acpipci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *acpipci_intr_string(void *, pci_intr_handle_t);
 void	*acpipci_intr_establish(void *, pci_intr_handle_t, int,
-	    int (*)(void *), void *, char *);
+	    struct cpu_info *, int (*)(void *), void *, char *);
 void	acpipci_intr_disestablish(void *, void *);
 
 uint32_t acpipci_iort_map_msi(pci_chipset_tag_t, pcitag_t);
@@ -432,7 +432,7 @@ acpipci_intr_string(void *v, pci_intr_handle_t ih)
 
 void *
 acpipci_intr_establish(void *v, pci_intr_handle_t ih, int level,
-    int (*func)(void *), void *arg, char *name)
+    struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
 {
 	struct acpipci_softc *sc = v;
 	struct interrupt_controller *ic;
@@ -454,7 +454,7 @@ acpipci_intr_establish(void *v, pci_intr_handle_t ih, int level,
 		/* Map Requester ID through IORT to get sideband data. */
 		data = acpipci_iort_map_msi(ih.ih_pc, ih.ih_tag);
 		cookie = ic->ic_establish_msi(ic->ic_cookie, &addr,
-		    &data, level, NULL, func, arg, name);
+		    &data, level, ci, func, arg, name);
 		if (cookie == NULL)
 			return NULL;
 
@@ -466,6 +466,8 @@ acpipci_intr_establish(void *v, pci_intr_handle_t ih, int level,
 		} else
 			pci_msi_enable(ih.ih_pc, ih.ih_tag, addr, data);
 	} else {
+		if (ci != NULL && !CPU_IS_PRIMARY(ci))
+			return NULL;
 		cookie = acpi_intr_establish(ih.ih_intrpin, 0, level,
 		    func, arg, name);
 	}

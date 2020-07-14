@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpcie.c,v 1.10 2020/02/20 23:50:01 kurt Exp $	*/
+/*	$OpenBSD: rkpcie.c,v 1.11 2020/07/14 15:42:19 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -144,7 +144,7 @@ void	rkpcie_conf_write(void *, pcitag_t, int, pcireg_t);
 int	rkpcie_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *rkpcie_intr_string(void *, pci_intr_handle_t);
 void	*rkpcie_intr_establish(void *, pci_intr_handle_t, int,
-	    int (*)(void *), void *, char *);
+	    struct cpu_info *, int (*)(void *), void *, char *);
 void	rkpcie_intr_disestablish(void *, void *);
 
 /*
@@ -580,7 +580,7 @@ rkpcie_intr_string(void *v, pci_intr_handle_t ih)
 
 void *
 rkpcie_intr_establish(void *v, pci_intr_handle_t ih, int level,
-    int (*func)(void *), void *arg, char *name)
+    struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
 {
 	struct rkpcie_softc *sc = v;
 	void *cookie;
@@ -592,8 +592,8 @@ rkpcie_intr_establish(void *v, pci_intr_handle_t ih, int level,
 
 		/* Assume hardware passes Requester ID as sideband data. */
 		data = pci_requester_id(ih.ih_pc, ih.ih_tag);
-		cookie = fdt_intr_establish_msi(sc->sc_node, &addr,
-		    &data, level, func, arg, name);
+		cookie = fdt_intr_establish_msi_cpu(sc->sc_node, &addr,
+		    &data, level, ci, func, arg, name);
 		if (cookie == NULL)
 			return NULL;
 
@@ -610,8 +610,8 @@ rkpcie_intr_establish(void *v, pci_intr_handle_t ih, int level,
 		    PCIE_CLIENT_INTA_UNMASK | PCIE_CLIENT_INTB_UNMASK |
 		    PCIE_CLIENT_INTC_UNMASK | PCIE_CLIENT_INTD_UNMASK);
 
-		cookie = fdt_intr_establish_idx(sc->sc_node, 1, level,
-		    func, arg, name);
+		cookie = fdt_intr_establish_idx_cpu(sc->sc_node, 1, level,
+		    ci, func, arg, name);
 	}
 
 	return cookie;

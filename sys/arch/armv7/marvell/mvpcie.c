@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvpcie.c,v 1.1 2018/07/09 09:58:40 patrick Exp $	*/
+/*	$OpenBSD: mvpcie.c,v 1.2 2020/07/14 15:42:19 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -201,7 +201,7 @@ int	 mvpcie_intr_map_msix(struct pci_attach_args *, int,
 	    pci_intr_handle_t *);
 const char *mvpcie_intr_string(void *, pci_intr_handle_t);
 void	*mvpcie_intr_establish(void *, pci_intr_handle_t, int,
-	    int (*)(void *), void *, char *);
+	    struct cpu_info *ci, int (*)(void *), void *, char *);
 void	 mvpcie_intr_disestablish(void *, void *);
 
 void
@@ -823,7 +823,7 @@ mvpcie_intr_string(void *v, pci_intr_handle_t ihp)
 
 void *
 mvpcie_intr_establish(void *v, pci_intr_handle_t ihp, int level,
-    int (*func)(void *), void *arg, char *name)
+    struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
 {
 	struct mvpcie_port *po = v;
 	struct mvpcie_intr_handle *ih = (struct mvpcie_intr_handle *)ihp;
@@ -837,8 +837,8 @@ mvpcie_intr_establish(void *v, pci_intr_handle_t ihp, int level,
 	reg[1] = reg[2] = 0;
 	reg[3] = ih->ih_intrpin;
 
-	cookie = arm_intr_establish_fdt_imap(po->po_node, reg,
-	    sizeof(reg), level, func, arg, name);
+	cookie = arm_intr_establish_fdt_imap_cpu(po->po_node, reg,
+	    sizeof(reg), level, ci, func, arg, name);
 
 	free(ih, M_DEVBUF, sizeof(struct mvpcie_intr_handle));
 	return cookie;

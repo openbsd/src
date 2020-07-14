@@ -1,4 +1,4 @@
-/* $OpenBSD: pciecam.c,v 1.9 2019/06/02 18:40:58 kettenis Exp $ */
+/* $OpenBSD: pciecam.c,v 1.10 2020/07/14 15:42:19 patrick Exp $ */
 /*
  * Copyright (c) 2013,2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -102,7 +102,8 @@ pcireg_t pciecam_conf_read(void *, pcitag_t, int);
 void pciecam_conf_write(void *, pcitag_t, int, pcireg_t);
 int pciecam_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *pciecam_intr_string(void *, pci_intr_handle_t);
-void *pciecam_intr_establish(void *, pci_intr_handle_t, int, int (*func)(void *), void *, char *);
+void *pciecam_intr_establish(void *, pci_intr_handle_t, int,
+    struct cpu_info *, int (*func)(void *), void *, char *);
 void pciecam_intr_disestablish(void *, void *);
 int pciecam_bs_map(bus_space_tag_t, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
 
@@ -342,7 +343,7 @@ pciecam_intr_string(void *sc, pci_intr_handle_t ih)
 
 void *
 pciecam_intr_establish(void *self, pci_intr_handle_t ih, int level,
-    int (*func)(void *), void *arg, char *name)
+    struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
 {
 	struct pciecam_softc *sc = (struct pciecam_softc *)self;
 	void *cookie;
@@ -354,8 +355,8 @@ pciecam_intr_establish(void *self, pci_intr_handle_t ih, int level,
 
 		/* Assume hardware passes Requester ID as sideband data. */
 		data = pci_requester_id(ih.ih_pc, ih.ih_tag);
-		cookie = arm_intr_establish_fdt_msi(sc->sc_node, &addr,
-		    &data, level, func, arg, (void *)name);
+		cookie = fdt_intr_establish_msi_cpu(sc->sc_node, &addr,
+		    &data, level, ci, func, arg, (void *)name);
 		if (cookie == NULL)
 			return NULL;
 
@@ -376,8 +377,8 @@ pciecam_intr_establish(void *self, pci_intr_handle_t ih, int level,
 		reg[1] = reg[2] = 0;
 		reg[3] = ih.ih_intrpin;
 
-		cookie = arm_intr_establish_fdt_imap(sc->sc_node, reg,
-		    sizeof(reg), level, func, arg, name);
+		cookie = fdt_intr_establish_imap_cpu(sc->sc_node, reg,
+		    sizeof(reg), level, ci, func, arg, name);
 	}
 
 	return cookie;

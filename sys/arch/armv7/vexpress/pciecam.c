@@ -1,4 +1,4 @@
-/* $OpenBSD: pciecam.c,v 1.1 2018/07/09 09:54:01 patrick Exp $ */
+/* $OpenBSD: pciecam.c,v 1.2 2020/07/14 15:42:19 patrick Exp $ */
 /*
  * Copyright (c) 2013,2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -102,7 +102,8 @@ int pciecam_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 int pciecam_intr_map_msi(struct pci_attach_args *, pci_intr_handle_t *);
 int pciecam_intr_map_msix(struct pci_attach_args *, int, pci_intr_handle_t *);
 const char *pciecam_intr_string(void *, pci_intr_handle_t);
-void *pciecam_intr_establish(void *, pci_intr_handle_t, int, int (*func)(void *), void *, char *);
+void *pciecam_intr_establish(void *, pci_intr_handle_t, int, struct cpu_info *,
+    int (*func)(void *), void *, char *);
 void pciecam_intr_disestablish(void *, void *);
 int pciecam_bs_map(void *, uint64_t, bus_size_t, int, bus_space_handle_t *);
 
@@ -368,7 +369,7 @@ pciecam_intr_string(void *sc, pci_intr_handle_t ihp)
 
 void *
 pciecam_intr_establish(void *self, pci_intr_handle_t ihp, int level,
-    int (*func)(void *), void *arg, char *name)
+    struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
 {
 	struct pciecam_softc *sc = (struct pciecam_softc *)self;
 	struct pciecam_intr_handle *ih = (struct pciecam_intr_handle *)ihp;
@@ -379,8 +380,8 @@ pciecam_intr_establish(void *self, pci_intr_handle_t ihp, int level,
 		pcireg_t reg;
 		int off;
 
-		cookie = arm_intr_establish_fdt_msi(sc->sc_node, &addr,
-		    &data, level, func, arg, (void *)name);
+		cookie = arm_intr_establish_fdt_msi_cpu(sc->sc_node, &addr,
+		    &data, level, ci, func, arg, (void *)name);
 		if (cookie == NULL)
 			return NULL;
 
@@ -415,8 +416,8 @@ pciecam_intr_establish(void *self, pci_intr_handle_t ihp, int level,
 		reg[1] = reg[2] = 0;
 		reg[3] = ih->ih_intrpin;
 
-		cookie = arm_intr_establish_fdt_imap(sc->sc_node, reg,
-		    sizeof(reg), level, func, arg, name);
+		cookie = arm_intr_establish_fdt_imap_cpu(sc->sc_node, reg,
+		    sizeof(reg), level, ci, func, arg, name);
 	}
 
 	free(ih, M_DEVBUF, sizeof(struct pciecam_intr_handle));

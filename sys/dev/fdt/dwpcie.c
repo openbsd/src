@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.21 2020/05/23 22:16:39 patrick Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.22 2020/07/14 15:42:19 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -245,11 +245,8 @@ void	dwpcie_conf_write(void *, pcitag_t, int, pcireg_t);
 int	dwpcie_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *dwpcie_intr_string(void *, pci_intr_handle_t);
 void	*dwpcie_intr_establish(void *, pci_intr_handle_t, int,
-	    int (*)(void *), void *, char *);
+	    struct cpu_info *, int (*)(void *), void *, char *);
 void	dwpcie_intr_disestablish(void *, void *);
-
-void	*dwpcie_armada8k_intr_establish(void *, pci_intr_handle_t, int,
-	    int (*)(void *), void *, char *);
 
 int	dwpcie_bs_iomap(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
@@ -1043,7 +1040,7 @@ dwpcie_intr_string(void *v, pci_intr_handle_t ih)
 
 void *
 dwpcie_intr_establish(void *v, pci_intr_handle_t ih, int level,
-    int (*func)(void *), void *arg, char *name)
+    struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
 {
 	struct dwpcie_softc *sc = v;
 	void *cookie;
@@ -1055,8 +1052,8 @@ dwpcie_intr_establish(void *v, pci_intr_handle_t ih, int level,
 
 		/* Assume hardware passes Requester ID as sideband data. */
 		data = pci_requester_id(ih.ih_pc, ih.ih_tag);
-		cookie = fdt_intr_establish_msi(sc->sc_node, &addr,
-		    &data, level, func, arg, (void *)name);
+		cookie = fdt_intr_establish_msi_cpu(sc->sc_node, &addr,
+		    &data, level, ci, func, arg, (void *)name);
 		if (cookie == NULL)
 			return NULL;
 
@@ -1077,8 +1074,8 @@ dwpcie_intr_establish(void *v, pci_intr_handle_t ih, int level,
 		reg[1] = reg[2] = 0;
 		reg[3] = ih.ih_intrpin;
 
-		cookie = fdt_intr_establish_imap(sc->sc_node, reg,
-		    sizeof(reg), level, func, arg, name);
+		cookie = fdt_intr_establish_imap_cpu(sc->sc_node, reg,
+		    sizeof(reg), level, ci, func, arg, name);
 	}
 
 	return cookie;

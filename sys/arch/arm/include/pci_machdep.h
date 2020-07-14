@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.15 2018/07/09 09:53:06 patrick Exp $ */
+/*	$OpenBSD: pci_machdep.h,v 1.16 2020/07/14 15:42:19 patrick Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -57,7 +57,8 @@ struct arm32_pci_chipset {
 			    int, pci_intr_handle_t *);
 	const char	*(*pc_intr_string)(void *, pci_intr_handle_t);
 	void		*(*pc_intr_establish)(void *, pci_intr_handle_t,
-			    int, int (*)(void *), void *, char *);
+			    int, struct cpu_info *, int (*)(void *), void *,
+			    char *);
 	void		(*pc_intr_disestablish)(void *, void *);
 };
 
@@ -87,7 +88,11 @@ struct arm32_pci_chipset {
 #define	pci_intr_string(c, ih)						\
     (*(c)->pc_intr_string)((c)->pc_intr_v, (ih))
 #define	pci_intr_establish(c, ih, l, h, a, nm)				\
-    (*(c)->pc_intr_establish)((c)->pc_intr_v, (ih), (l), (h), (a), (nm))
+    (*(c)->pc_intr_establish)((c)->pc_intr_v, (ih), (l), NULL, (h), (a),\
+	(nm))
+#define	pci_intr_establish_cpu(c, ih, l, ci, h, a, nm)			\
+    (*(c)->pc_intr_establish)((c)->pc_intr_v, (ih), (l), (ci), (h), (a),\
+	(nm))
 #define	pci_intr_disestablish(c, iv)					\
     (*(c)->pc_intr_disestablish)((c)->pc_intr_v, (iv))
 #define	pci_probe_device_hook(c, a)	(0)
