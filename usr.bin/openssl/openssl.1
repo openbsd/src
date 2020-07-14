@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.122 2020/05/13 10:19:25 inoguchi Exp $
+.\" $OpenBSD: openssl.1,v 1.123 2020/07/14 09:46:17 inoguchi Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: May 13 2020 $
+.Dd $Mdocdate: July 14 2020 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -846,6 +846,61 @@ The default value is
 .It Cm x509_extensions
 The same as
 .Fl extensions .
+.El
+.Tg certhash
+.Sh CERTHASH
+.Bl -hang -width "openssl certhash"
+.It Nm openssl certhash
+.Bk -words
+.Op Fl nv
+.Ar dir ...
+.Ek
+.El
+.Pp
+The
+.Nm certhash
+command calculates a hash value of
+.Qq .pem
+file in the specified directory list and creates symbolic links for each file,
+where the name of the link is the hash value.
+See the
+.Xr SSL_CTX_load_verify_locations 3
+manual page for how hash links are used.
+.Pp
+The links created are of the form
+.Qq HHHHHHHH.D ,
+where each
+.Sq H
+is a hexadecimal character and
+.Sq D
+is a single decimal digit.
+The hashes for CRLs look similar, except the letter
+.Sq r
+appears after the period, like this:
+.Qq HHHHHHHH.rD .
+When processing a directory,
+.Nm certhash
+will first remove all links that have a name in that syntax and invalid
+reference.
+.Pp
+Multiple objects may have the same hash; they will be indicated by
+incrementing the
+.Sq D
+value.
+Duplicates are found by comparing the full SHA256 fingerprint.
+A warning will be displayed if a duplicate is found.
+.Pp
+A warning will also be displayed if there are files that cannot be parsed as
+either a certificate or a CRL.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl n
+Perform a dry-run, and do not make any changes.
+.It Fl v
+Print extra details about the processing.
+.It Ar dir ...
+Specify the directories to process.
 .El
 .Tg ciphers
 .Sh CIPHERS
