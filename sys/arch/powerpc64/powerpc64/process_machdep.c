@@ -1,36 +1,21 @@
-/*	$OpenBSD: process_machdep.c,v 1.3 2020/07/10 18:30:28 kettenis Exp $	*/
-/*	$NetBSD: process_machdep.c,v 1.1 1996/09/30 16:34:53 ws Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.4 2020/07/14 09:41:30 kettenis Exp $	*/
 
 /*
- * Copyright (C) 1995, 1996 Wolfgang Solfrank.
- * Copyright (C) 1995, 1996 TooLs GmbH.
- * All rights reserved.
+ * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by TooLs GmbH.
- * 4. The name of TooLs GmbH may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * THIS SOFTWARE IS PROVIDED BY TOOLS GMBH ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL TOOLS GMBH BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
- * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -54,8 +39,7 @@ process_read_regs(struct proc *p, struct reg *regs)
 	regs->r_xer = tf->xer;
 	regs->r_ctr = tf->ctr;
 	regs->r_pc = tf->srr0;
-	regs->r_msr = tf->srr1;
-	regs->r_vrsave = tf->vrsave;
+	regs->r_ps = tf->srr1;
 
 	return 0;
 }
@@ -63,21 +47,20 @@ process_read_regs(struct proc *p, struct reg *regs)
 int
 process_read_fpregs(struct proc *p, struct fpreg *regs)
 {
-#if 0
-	struct cpu_info *ci = curcpu();
+	struct trapframe *tf = p->p_md.md_regs;
 	struct pcb *pcb = &p->p_addr->u_pcb;
 
-	if (!(pcb->pcb_flags & PCB_FPU)) {
-		bzero(regs->fpr, sizeof(regs->fpr));
-		regs->fpscr = 0;
-	} else {
-		/* XXX What if the state is on the other cpu? */
-		if (p == ci->ci_fpuproc)
-			save_fpu();
-		bcopy(pcb->pcb_fpu.fpr, regs->fpr, sizeof(regs->fpr));
-		regs->fpscr = *(u_int64_t *)&pcb->pcb_fpu.fpcsr;
+	if (tf->srr1 & (PSL_FP|PSL_VEC|PSL_VSX)) {
+		tf->srr1 &= ~(PSL_FP|PSL_VEC|PSL_VSX);
+		save_vsx(p);
 	}
-#endif
+
+	if (pcb->pcb_flags & (PCB_FP|PCB_VEC|PCB_VSX))
+		memcpy(regs, &pcb->pcb_fpstate, sizeof(*regs));
+	else
+		memset(regs, 0, sizeof(*regs));
+
+	regs->fp_vrsave = tf->vrsave;
 
 	return 0;
 }
@@ -92,58 +75,43 @@ process_set_pc(struct proc *p, caddr_t addr)
 {
 	struct trapframe *tf = p->p_md.md_regs;
 	
-	tf->srr0 = (u_int32_t)addr;
+	tf->srr0 = (register_t)addr;
+
 	return 0;
-	
 }
 
 int
 process_sstep(struct proc *p, int sstep)
 {
-#if 0
-	struct trapframe *tf = trapframe(p);
+	struct trapframe *tf = p->p_md.md_regs;
 	
 	if (sstep)
 		tf->srr1 |= PSL_SE;
 	else
 		tf->srr1 &= ~PSL_SE;
-#endif
+
 	return 0;
 }
 
 int
 process_write_regs(struct proc *p, struct reg *regs)
 {
-#if 0
-	struct cpu_info *ci = curcpu();
-	struct trapframe *tf = trapframe(p);
-	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct trapframe *tf = p->p_md.md_regs;
 
-	if ((regs->ps ^ tf->srr1) & PSL_USERSTATIC)
+	regs->r_ps &= ~(PSL_FP|PSL_VEC|PSL_VSX);
+	regs->r_ps |= (tf->srr1 & (PSL_FP|PSL_VEC|PSL_VSX));
+
+	if (regs->r_ps != tf->srr1)
 		return EINVAL;
 
-	bcopy(regs->gpr, tf->fixreg, sizeof(regs->gpr));
+	memcpy(tf->fixreg, regs->r_reg, sizeof(regs->r_reg));
 
-	/* XXX What if the state is on the other cpu? */
-	if (p == ci->ci_fpuproc) {	/* release the fpu */
-		save_fpu();
-		ci->ci_fpuproc = NULL;
-	}
-
-	bcopy(regs->fpr, pcb->pcb_fpu.fpr, sizeof(regs->fpr));
-	if (!(pcb->pcb_flags & PCB_FPU)) {
-		pcb->pcb_fpu.fpcsr = 0;
-		pcb->pcb_flags |= PCB_FPU;
-	}
-
-	tf->srr0 = regs->pc;
-	tf->srr1 = regs->ps;  /* is this the correct value for this ? */
-	tf->cr   = regs->cnd;
-	tf->lr   = regs->lr;
-	tf->ctr  = regs->cnt;
-	tf->xer  = regs->xer;
-	/*  regs->mq = 0; what should this really be? */
-#endif
+	tf->lr = regs->r_lr;
+	tf->cr = regs->r_cr;
+	tf->xer = regs->r_xer;
+	tf->ctr = regs->r_ctr;
+	tf->srr0 = regs->r_pc;
+	tf->srr1 = regs->r_ps;
 
 	return 0;
 }
@@ -151,21 +119,16 @@ process_write_regs(struct proc *p, struct reg *regs)
 int
 process_write_fpregs(struct proc *p, struct fpreg *regs)
 {
-#if 0
-	struct cpu_info *ci = curcpu();
+	struct trapframe *tf = p->p_md.md_regs;
 	struct pcb *pcb = &p->p_addr->u_pcb;
-	u_int64_t fpscr = regs->fpscr;
 
-	/* XXX What if the state is on the other cpu? */
-	if (p == ci->ci_fpuproc) {	/* release the fpu */
-		save_fpu();
-		ci->ci_fpuproc = NULL;
-	}
+	if (tf->srr1 & (PSL_FP|PSL_VEC|PSL_VSX))
+		tf->srr1 &= ~(PSL_FP|PSL_VEC|PSL_VSX);
 
-	bcopy(regs->fpr, pcb->pcb_fpu.fpr, sizeof(regs->fpr));
-	pcb->pcb_fpu.fpcsr = *(double *)&fpscr;
-	pcb->pcb_flags |= PCB_FPU;
-#endif
+	memcpy(&pcb->pcb_fpstate, regs, sizeof(*regs));
+	pcb->pcb_flags |= (PCB_FP|PCB_VEC|PCB_VSX);
+
+	tf->vrsave = regs->fp_vrsave;
 
 	return 0;
 }

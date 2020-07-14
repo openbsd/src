@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.2 2020/06/27 15:04:49 kettenis Exp $	*/
+/*	$OpenBSD: reg.h,v 1.3 2020/07/14 09:41:30 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -26,14 +26,14 @@ struct reg {
 	uint64_t	r_xer;
 	uint64_t	r_ctr;
 	uint64_t	r_pc;
-	uint64_t	r_msr;
-	uint64_t	r_vrsave;
+	uint64_t	r_ps;
 };
 
 struct fpreg {
 	__uint128_t	fp_vsx[64];
 	uint64_t	fp_fpscr;
 	uint64_t	fp_vscr;
+	uint64_t	fp_vrsave;
 };
 
 #endif /* !_MACHINE_REG_H_ */
