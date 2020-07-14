@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.17 2020/07/14 15:34:14 patrick Exp $ */
+/* $OpenBSD: ampintc.c,v 1.18 2020/07/14 15:52:20 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -160,6 +160,7 @@ struct intrhand {
 
 struct intrq {
 	TAILQ_HEAD(, intrhand) iq_list;	/* handler list */
+	struct cpu_info *iq_ci;		/* CPU the IRQ runs on */
 	int iq_irq_max;			/* IRQ to mask while handling */
 	int iq_irq_min;			/* lowest IRQ when shared */
 	int iq_ist;			/* share type */
@@ -174,6 +175,7 @@ void		 ampintc_splx(int);
 int		 ampintc_splraise(int);
 void		 ampintc_setipl(int);
 void		 ampintc_calc_mask(void);
+void		 ampintc_calc_irq(struct ampintc_softc *, int);
 void		*ampintc_intr_establish(int, int, int, struct cpu_info *,
 		    int (*)(void *), void *, char *);
 void		*ampintc_intr_establish_fdt(void *, int *, int,
@@ -453,44 +455,49 @@ ampintc_intr_config(int irqno, int type)
 void
 ampintc_calc_mask(void)
 {
-	struct cpu_info		*ci = curcpu();
-        struct ampintc_softc	*sc = ampintc;
-	struct intrhand		*ih;
+	struct ampintc_softc	*sc = ampintc;
 	int			 irq;
 
-	for (irq = 0; irq < sc->sc_nintr; irq++) {
-		int max = IPL_NONE;
-		int min = IPL_HIGH;
-		TAILQ_FOREACH(ih, &sc->sc_handler[irq].iq_list, ih_list) {
-			if (ih->ih_ipl > max)
-				max = ih->ih_ipl;
+	for (irq = 0; irq < sc->sc_nintr; irq++)
+		ampintc_calc_irq(sc, irq);
+}
 
-			if (ih->ih_ipl < min)
-				min = ih->ih_ipl;
-		}
+void
+ampintc_calc_irq(struct ampintc_softc *sc, int irq)
+{
+	struct cpu_info		*ci = sc->sc_handler[irq].iq_ci;
+	struct intrhand		*ih;
+	int			max = IPL_NONE;
+	int			min = IPL_HIGH;
 
-		if (max == IPL_NONE)
-			min = IPL_NONE;
+	TAILQ_FOREACH(ih, &sc->sc_handler[irq].iq_list, ih_list) {
+		if (ih->ih_ipl > max)
+			max = ih->ih_ipl;
 
-		if (sc->sc_handler[irq].iq_irq_max == max &&
-		    sc->sc_handler[irq].iq_irq_min == min)
-			continue;
-
-		sc->sc_handler[irq].iq_irq_max = max;
-		sc->sc_handler[irq].iq_irq_min = min;
-
-		/* Enable interrupts at lower levels, clear -> enable */
-		/* Set interrupt priority/enable */
-		if (min != IPL_NONE) {
-			ampintc_set_priority(irq, min);
-			ampintc_intr_enable(irq);
-			ampintc_route(irq, IRQ_ENABLE, ci);
-		} else {
-			ampintc_intr_disable(irq);
-			ampintc_route(irq, IRQ_DISABLE, ci);
-		}
+		if (ih->ih_ipl < min)
+			min = ih->ih_ipl;
 	}
-	ampintc_setipl(ci->ci_cpl);
+
+	if (max == IPL_NONE)
+		min = IPL_NONE;
+
+	if (sc->sc_handler[irq].iq_irq_max == max &&
+	    sc->sc_handler[irq].iq_irq_min == min)
+		return;
+
+	sc->sc_handler[irq].iq_irq_max = max;
+	sc->sc_handler[irq].iq_irq_min = min;
+
+	/* Enable interrupts at lower levels, clear -> enable */
+	/* Set interrupt priority/enable */
+	if (min != IPL_NONE) {
+		ampintc_set_priority(irq, min);
+		ampintc_intr_enable(irq);
+		ampintc_route(irq, IRQ_ENABLE, ci);
+	} else {
+		ampintc_intr_disable(irq);
+		ampintc_route(irq, IRQ_DISABLE, ci);
+	}
 }
 
 void
@@ -575,8 +582,8 @@ ampintc_route(int irq, int enable, struct cpu_info *ci)
 void
 ampintc_cpuinit(void)
 {
-	struct ampintc_softc    *sc = ampintc;
-	int			 i;
+	struct ampintc_softc	*sc = ampintc;
+	int			 i, irq;
 
 	/* XXX - this is the only cpu specific call to set this */
 	if (sc->sc_cpu_mask[cpu_number()] == 0) {
@@ -594,6 +601,15 @@ ampintc_cpuinit(void)
 
 	if (sc->sc_cpu_mask[cpu_number()] == 0)
 		panic("could not determine cpu target mask");
+
+	for (irq = 0; irq < sc->sc_nintr; irq++) {
+		if (sc->sc_handler[irq].iq_ci != curcpu())
+			continue;
+		if (sc->sc_handler[irq].iq_irq_min != IPL_NONE)
+			ampintc_route(irq, IRQ_ENABLE, curcpu());
+		else
+			ampintc_route(irq, IRQ_DISABLE, curcpu());
+	}
 }
 
 void
@@ -745,7 +761,15 @@ ampintc_intr_establish(int irqno, int type, int level, struct cpu_info *ci,
 
 	psw = disable_interrupts();
 
+	if (!TAILQ_EMPTY(&sc->sc_handler[irqno].iq_list) &&
+	    sc->sc_handler[irqno].iq_ci != ci) {
+		free(ih, M_DEVBUF, sizeof(*ih));
+		restore_interrupts(psw);
+		return NULL;
+	}
+
 	TAILQ_INSERT_TAIL(&sc->sc_handler[irqno].iq_list, ih, ih_list);
+	sc->sc_handler[irqno].iq_ci = ci;
 
 	if (name != NULL)
 		evcount_attach(&ih->ih_count, name, &ih->ih_irq);
