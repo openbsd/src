@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.50 2020/07/13 22:37:37 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.51 2020/07/14 20:52:44 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -579,6 +579,9 @@ cpu_startup(void)
 
 	printf("%s", version);
 
+	printf("real mem  = %lu (%luMB)\n", ptoa(physmem),
+	    ptoa(physmem)/1024/1024);
+
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
@@ -586,7 +589,6 @@ cpu_startup(void)
 	minaddr = vm_map_min(kernel_map);
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
-
 
 	/*
 	 * Allocate a submap for physio.
@@ -598,6 +600,9 @@ cpu_startup(void)
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
+
+	printf("avail mem = %lu (%luMB)\n", ptoa(uvmexp.free),
+	    ptoa(uvmexp.free)/1024/1024);
 
 	/* Remap the FDT. */
 	pa = trunc_page(fdt_pa);
