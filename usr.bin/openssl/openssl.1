@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.124 2020/07/14 09:49:42 inoguchi Exp $
+.\" $OpenBSD: openssl.1,v 1.125 2020/07/14 09:52:46 inoguchi Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -2638,7 +2638,7 @@ option, or an error occurs if no issuer certificate is specified.
 Use the digest algorithm
 .Ar alg
 for certificate identification in the OCSP request.
-By default SHA-1 is used.
+By default SHA1 is used.
 .It Xo
 .Fl host Ar hostname : Ns Ar port ,
 .Fl path Ar path
@@ -5588,7 +5588,7 @@ The message digest to apply to the data file.
 It supports all the message digest algorithms that are supported by the
 .Nm dgst
 command.
-The default is SHA-1.
+The default is SHA1.
 .It Fl no_nonce
 Specify no nonce in the request.
 The default, to include a 64-bit long pseudo-random nonce,
