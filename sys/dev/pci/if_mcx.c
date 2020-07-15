@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.65 2020/07/15 03:32:51 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.66 2020/07/15 04:36:02 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -2189,9 +2189,9 @@ struct mcx_flow_group {
 #define MCX_FLOW_GROUP_ALLMULTI	 1
 #define MCX_FLOW_GROUP_MAC	 2
 #define MCX_FLOW_GROUP_RSS_L4	 3
-#define MCX_FLOW_GROUP_RSS_L3	 5
-#define MCX_FLOW_GROUP_RSS_NONE	 6
-#define MCX_NUM_FLOW_GROUPS	 7
+#define MCX_FLOW_GROUP_RSS_L3	 4
+#define MCX_FLOW_GROUP_RSS_NONE	 5
+#define MCX_NUM_FLOW_GROUPS	 6
 
 #define MCX_HASH_SEL_L3		MCX_TIR_CTX_HASH_SEL_SRC_IP | \
 				MCX_TIR_CTX_HASH_SEL_DST_IP
