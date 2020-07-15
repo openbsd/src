@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $OpenBSD: check.perl,v 1.1 2020/07/15 03:12:42 beck Exp $
+# $OpenBSD: check.perl,v 1.2 2020/07/15 03:49:59 beck Exp $
 #
 # Copyright (c) 2020 Bob Beck <beck@openbsd.org>
 #
@@ -98,8 +98,10 @@ for ($id = 0; $id < $i; $id++) {
 print "\n\nTested $i certificates\n";
 if ($regressions == 0) {
     print STDERR "SUCCESS - no new regressions ($known known failures)\n";
+    exit 0;
 } else {
     print STDERR "FAILED - $regressions new regressions ($known known failures)\n";
+    exit 1;
 }
 
 
