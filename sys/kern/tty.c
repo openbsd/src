@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.159 2020/07/14 18:25:22 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.160 2020/07/15 02:29:26 deraadt Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -2023,7 +2023,7 @@ ttyretype(struct tty *tp)
 	 * Yield because of expense, or possible ptcwrite() injection flood.
 	 * Also check for interrupt, and return upwards.
 	 */
-	return tsleep_nsec(tp, TTIPRI | PCATCH, "ttyretype", 1);
+	return tsleep(tp, TTIPRI | PCATCH, "ttyretype", 1);
 }
 
 /*
