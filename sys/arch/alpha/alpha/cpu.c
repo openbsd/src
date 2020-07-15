@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.c,v 1.43 2020/05/29 04:42:23 deraadt Exp $ */
+/* $OpenBSD: cpu.c,v 1.44 2020/07/15 08:24:29 fcambus Exp $ */
 /* $NetBSD: cpu.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $ */
 
 /*-
@@ -426,7 +426,7 @@ cpu_boot_secondary_processors(void)
 		ci = cpu_info[i];
 		if (ci == NULL || ci->ci_idle_pcb == NULL)
 			continue;
-		if (ci->ci_flags & CPUF_PRIMARY)
+		if (CPU_IS_PRIMARY(ci))
 			continue;
 		if ((cpus_booted & (1UL << i)) == 0)
 			continue;
