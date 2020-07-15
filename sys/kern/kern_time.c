@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.132 2020/07/09 02:17:07 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.133 2020/07/15 21:20:08 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ settime(const struct timespec *ts)
 	 * setting arbitrary time stamps on files.
 	 */
 	nanotime(&now);
-	if (securelevel > 1 && timespeccmp(ts, &now, <)) {
+	if (securelevel > 1 && timespeccmp(ts, &now, <=)) {
 		printf("denied attempt to set clock back %lld seconds\n",
 		    (long long)now.tv_sec - ts->tv_sec);
 		return (EPERM);
