@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.6 2020/07/14 20:37:18 kettenis Exp $	*/
+/*	$OpenBSD: intr.h,v 1.7 2020/07/15 10:19:42 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -94,6 +94,8 @@ extern void *(*_intr_establish)(uint32_t, int, int,
 extern void (*_setipl)(int);
 
 #include <machine/softintr.h>
+
+struct cpu_info;
 
 struct interrupt_controller {
 	int	ic_node;
