@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.200 2020/04/23 19:38:08 tobhe Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.201 2020/07/15 11:56:29 kn Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -634,7 +634,7 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *so,
 ret:
 	if (buffer != NULL) {
 		bzero(buffer, j + sizeof(struct sadb_msg));
-		free(buffer, M_PFKEY, 0);
+		free(buffer, M_PFKEY, j + sizeof(struct sadb_msg));
 	}
 
 	return (rval);
@@ -1179,7 +1179,7 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 
 		/* Paranoid */
 		explicit_bzero(freeme, sizeof(struct sadb_msg) + len);
-		free(freeme, M_PFKEY, 0);
+		free(freeme, M_PFKEY, sizeof(struct sadb_msg) + len);
 		freeme = NULL;
 	}
 
@@ -2095,7 +2095,7 @@ realret:
 	free(freeme3, M_PFKEY, 0);
 
 	explicit_bzero(message, len);
-	free(message, M_PFKEY, 0);
+	free(message, M_PFKEY, len);
 
 	free(sa1, M_PFKEY, 0);
 
@@ -2306,7 +2306,7 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 ret:
 	if (buffer != NULL) {
 		bzero(buffer, i);
-		free(buffer, M_PFKEY, 0);
+		free(buffer, M_PFKEY, i);
 	}
 
 	return (rval);
@@ -2397,7 +2397,7 @@ pfkeyv2_expire(struct tdb *tdb, u_int16_t type)
  ret:
 	if (buffer != NULL) {
 		bzero(buffer, i);
-		free(buffer, M_PFKEY, 0);
+		free(buffer, M_PFKEY, i);
 	}
 
 	return (rval);
