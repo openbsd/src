@@ -1,4 +1,4 @@
-/*	$OpenBSD: opalsens.c,v 1.1 2020/07/07 22:43:29 kettenis Exp $	*/
+/*	$OpenBSD: opalsens.c,v 1.2 2020/07/15 07:15:00 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -77,7 +77,7 @@ opalsens_attach(struct device *parent, struct device *self, void *aux)
 	if (strcmp(type, "curr") == 0)
 		sc->sc_sensor.type = SENSOR_AMPS;
 	else if (strcmp(type, "energy") == 0)
-		sc->sc_sensor.type = SENSOR_INTEGER;	/* SENSOR_JOULES */
+		sc->sc_sensor.type = SENSOR_ENERGY;
 	else if (strcmp(type, "in") == 0)
 		sc->sc_sensor.type = SENSOR_VOLTS_DC;
 	else if (strcmp(type, "power") == 0)
