@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.31 2020/05/15 14:21:09 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_crypto_tkip.c,v 1.32 2020/07/15 22:49:07 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -537,7 +537,7 @@ ieee80211_michael_mic_failure_timeout(void *arg)
 void
 ieee80211_michael_mic_failure(struct ieee80211com *ic, u_int64_t tsc)
 {
-	extern int ticks;
+	time_t now;
 #ifndef IEEE80211_STA_ONLY
 	int sec;
 #endif
@@ -558,9 +558,9 @@ ieee80211_michael_mic_failure(struct ieee80211com *ic, u_int64_t tsc)
 	 * Activate TKIP countermeasures (see 802.11-2012 11.4.2.4) if less than
 	 * 60 seconds have passed since the most recent previous MIC failure.
 	 */
-	if (ic->ic_tkip_micfail == 0 ||
-	    ticks - (ic->ic_tkip_micfail + 60 * hz) >= 0) {
-		ic->ic_tkip_micfail = ticks;
+	now = getuptime();
+	if (ic->ic_tkip_micfail == 0 || ic->ic_tkip_micfail + 60 >= now) {
+		ic->ic_tkip_micfail = now;
 		ic->ic_tkip_micfail_last_tsc = tsc;
 		return;
 	}
@@ -607,7 +607,7 @@ ieee80211_michael_mic_failure(struct ieee80211com *ic, u_int64_t tsc)
 		break;
 	}
 
-	ic->ic_tkip_micfail = ticks;
+	ic->ic_tkip_micfail = now;
 	ic->ic_tkip_micfail_last_tsc = tsc;
 }
 

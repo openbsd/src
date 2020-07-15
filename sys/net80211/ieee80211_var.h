@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.101 2019/11/09 13:21:04 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.102 2020/07/15 22:49:08 cheloha Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -320,7 +320,7 @@ struct ieee80211com {
 	u_int8_t		ic_nonce[EAPOL_KEY_NONCE_LEN];
 	u_int8_t		ic_psk[IEEE80211_PMK_LEN];
 	struct timeout		ic_rsn_timeout;
-	int			ic_tkip_micfail;
+	time_t			ic_tkip_micfail;
 	u_int64_t		ic_tkip_micfail_last_tsc;
 #ifndef IEEE80211_STA_ONLY
 	struct timeout		ic_tkip_micfail_timeout;
