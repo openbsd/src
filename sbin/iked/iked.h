@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.152 2020/06/03 17:56:42 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.153 2020/07/15 14:45:15 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -455,6 +455,7 @@ struct iked_sa {
 	struct ibuf			*sa_1stmsg;	/* for initiator AUTH */
 	struct ibuf			*sa_2ndmsg;	/* for responder AUTH */
 	struct iked_id			 sa_localauth;	/* local AUTH message */
+	struct iked_id			 sa_peerauth;	/* peer AUTH message */
 	int				 sa_sigsha2;	/* use SHA2 for signatures */
 
 	struct iked_id			 sa_iid;	/* initiator id */
