@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxitemp.c,v 1.7 2020/01/23 23:10:04 kettenis Exp $	*/
+/*	$OpenBSD: sxitemp.c,v 1.8 2020/07/15 11:33:12 dtucker Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -131,7 +131,7 @@ sxitemp_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_ih = fdt_intr_establish(faa->fa_node, IPL_VM,
+	sc->sc_ih = fdt_intr_establish(faa->fa_node, IPL_SOFTCLOCK,
 	    sxitemp_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": can't establish interrupt\n");
