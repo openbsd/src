@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.h,v 1.36 2018/12/10 13:35:54 landry Exp $	*/
+/*	$OpenBSD: sensors.h,v 1.37 2020/07/15 07:13:57 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -53,6 +53,7 @@ enum sensor_type {
 	SENSOR_PRESSURE,		/* pressure (mPa) */
 	SENSOR_ACCEL,			/* acceleration (u m/s^2) */
 	SENSOR_VELOCITY,		/* velocity (u m/s) */
+	SENSOR_ENERGY,			/* energy (uJ) */
 	SENSOR_MAX_TYPES
 };
 
@@ -80,6 +81,7 @@ static const char * const sensor_type_s[SENSOR_MAX_TYPES + 1] = {
 	"pressure",
 	"acceleration",
 	"velocity",
+	"energy",
 	"undefined"
 };
 #endif	/* !_KERNEL */

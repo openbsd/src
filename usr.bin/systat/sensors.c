@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.c,v 1.31 2018/12/10 13:35:54 landry Exp $	*/
+/*	$OpenBSD: sensors.c,v 1.32 2020/07/15 07:13:56 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2007 Deanna Phillips <deanna@openbsd.org>
@@ -290,6 +290,9 @@ showsensor(struct sensinfo *s)
 		break;
 	case SENSOR_VELOCITY:
 		tbprintf("%4.3f m/s", s->sn_value / 1000000.0);
+		break;
+	case SENSOR_ENERGY:
+		tbprintf("%.2f J", s->sn_value / 1000000.0);
 		break;
 	default:
 		tbprintf("%10lld", s->sn_value);
