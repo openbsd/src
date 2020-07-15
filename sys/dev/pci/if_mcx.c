@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.64 2020/07/14 04:10:18 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.65 2020/07/15 03:32:51 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -3345,7 +3345,7 @@ mcx_access_hca_reg(struct mcx_softc *sc, uint16_t reg, int op, void *data,
 	if (out->cmd_status != MCX_CQ_STATUS_OK) {
 		printf("%s: access reg (%s %x) failed (%x, %.6x)\n",
 		    DEVNAME(sc), (op == MCX_REG_OP_WRITE ? "write" : "read"),
-		    reg, out->cmd_status, out->cmd_syndrome);
+		    reg, out->cmd_status, betoh32(out->cmd_syndrome));
 		error = -1;
 		goto free;
 	}
@@ -3967,7 +3967,7 @@ mcx_iff(struct mcx_softc *sc)
 	out = mcx_cmdq_out(cqe);
 	if (out->cmd_status != MCX_CQ_STATUS_OK) {
 		printf(", modify nic vport context failed (%x, %x)\n",
-		    out->cmd_status, out->cmd_syndrome);
+		    out->cmd_status, betoh32(out->cmd_syndrome));
 		error = -1;
 		goto free;
 	}
@@ -4214,7 +4214,7 @@ mcx_query_nic_vport_context(struct mcx_softc *sc)
 	out = mcx_cmdq_out(cqe);
 	if (out->cmd_status != MCX_CQ_STATUS_OK) {
 		printf(", query nic vport context failed (%x, %x)\n",
-		    out->cmd_status, out->cmd_syndrome);
+		    out->cmd_status, betoh32(out->cmd_syndrome));
 		error = -1;
 		goto free;
 	}
@@ -6145,7 +6145,7 @@ mcx_dump_counters(struct mcx_softc *sc)
 	out = mcx_cmdq_out(cqe);
 	if (out->cmd_status != MCX_CQ_STATUS_OK) {
 		printf("%s: query nic vport counters failed (%x, %x)\n",
-		    DEVNAME(sc), out->cmd_status, out->cmd_syndrome);
+		    DEVNAME(sc), out->cmd_status, betoh32(out->cmd_syndrome));
 		error = -1;
 		goto free;
 	}
@@ -6215,7 +6215,7 @@ mcx_dump_flow_counter(struct mcx_softc *sc, int index, const char *what)
 	out = mcx_cmdq_out(cqe);
 	if (out->cmd_status != MCX_CQ_STATUS_OK) {
 		printf("%s: query flow counter failed (%x, %x)\n", DEVNAME(sc),
-		    out->cmd_status, out->cmd_syndrome);
+		    out->cmd_status, betoh32(out->cmd_syndrome));
 		error = -1;
 		goto free;
 	}
