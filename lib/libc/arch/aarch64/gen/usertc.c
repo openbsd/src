@@ -1,6 +1,6 @@
-/*	$OpenBSD: usertc.c,v 1.1 2020/07/06 13:33:05 pirofti Exp $	*/
+/*	$OpenBSD: usertc.c,v 1.2 2020/07/15 22:58:33 kettenis Exp $	*/
 /*
- * Copyright (c) 2020 Paul Irofti <paul@irofti.net>
+ * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,4 +18,30 @@
 #include <sys/types.h>
 #include <sys/timetc.h>
 
-int (*const _tc_get_timecount)(struct timekeep *, u_int *) = NULL;
+static inline u_int
+agtimer_get_timecount(struct timecounter *tc)
+{
+	uint64_t val;
+
+	/*
+	 * No need to work around Cortex-A73 errata 858921 since we
+	 * only look at the low 32 bits here.
+	 */
+	__asm volatile("isb" ::: "memory");
+	__asm volatile("mrs %x0, CNTVCT_EL0" : "=r" (val));
+	return (val & 0xffffffff);
+}
+
+static int
+tc_get_timecount(struct timekeep *tk, u_int *tc)
+{
+	switch (tk->tk_user) {
+	case TC_AGTIMER:
+		*tc = agtimer_get_timecount(NULL);
+		return 0;
+	}
+
+	return -1;
+}
+
+int (*const _tc_get_timecount)(struct timekeep *, u_int *) = tc_get_timecount;
