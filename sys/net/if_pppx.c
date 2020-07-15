@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.95 2020/07/10 13:26:42 patrick Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.96 2020/07/15 13:02:44 mvs Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -1062,11 +1062,12 @@ pppacopen(dev_t dev, int flags, int mode, struct proc *p)
 	struct pppac_softc *sc;
 	struct ifnet *ifp;
 
-	sc = pppac_lookup(dev);
-	if (sc != NULL)
-		return (EBUSY);
-
 	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
+	if (pppac_lookup(dev) != NULL) {
+		free(sc, M_DEVBUF, sizeof(*sc));
+		return (EBUSY);
+	}
+
 	sc->sc_dev = dev;
 
 	mtx_init(&sc->sc_rsel_mtx, IPL_SOFTNET);
