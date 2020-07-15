@@ -1,4 +1,4 @@
-/*	$OpenBSD: hello.c,v 1.22 2020/01/03 17:25:48 denis Exp $ */
+/*	$OpenBSD: hello.c,v 1.23 2020/07/15 14:47:41 denis Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -30,8 +30,6 @@
 #include "ospf6.h"
 #include "log.h"
 #include "ospfe.h"
-
-extern struct ospfd_conf	*oeconf;
 
 /* hello packet handling */
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.17 2020/05/06 15:15:31 claudio Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.18 2020/07/15 14:47:41 denis Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -34,7 +34,6 @@
 #include "ospfe.h"
 #include "rde.h"
 
-extern struct ospfd_conf	*oeconf;
 extern struct imsgev		*iev_rde;
 
 struct ibuf	*prepare_ls_update(struct iface *, int);

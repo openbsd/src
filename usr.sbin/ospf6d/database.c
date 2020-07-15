@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.19 2020/01/03 17:26:16 denis Exp $ */
+/*	$OpenBSD: database.c,v 1.20 2020/07/15 14:47:41 denis Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -30,8 +30,6 @@
 #include "ospf6.h"
 #include "log.h"
 #include "ospfe.h"
-
-extern struct ospfd_conf	*oeconf;
 
 void	db_sum_list_next(struct nbr *);
 
