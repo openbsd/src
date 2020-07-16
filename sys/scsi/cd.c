@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.246 2020/06/30 18:43:36 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.247 2020/07/16 14:44:55 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -696,8 +696,8 @@ cdminphys(struct buf *bp)
 			bp->b_bcount = max;
 	}
 
-	if (link->adapter->dev_minphys != NULL)
-		(*link->adapter->dev_minphys)(bp, link);
+	if (link->bus->sb_adapter->dev_minphys != NULL)
+		(*link->bus->sb_adapter->dev_minphys)(bp, link);
 	else
 		minphys(bp);
 

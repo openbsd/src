@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.178 2020/06/30 18:43:37 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.179 2020/07/16 14:44:55 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1008,8 +1008,8 @@ stminphys(struct buf *bp)
 		return;
 	link = sc->sc_link;
 
-	if (link->adapter->dev_minphys != NULL)
-		(*link->adapter->dev_minphys)(bp, link);
+	if (link->bus->sb_adapter->dev_minphys != NULL)
+		(*link->bus->sb_adapter->dev_minphys)(bp, link);
 	else
 		minphys(bp);
 

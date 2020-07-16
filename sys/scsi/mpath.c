@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath.c,v 1.49 2020/06/27 14:29:45 krw Exp $ */
+/*	$OpenBSD: mpath.c,v 1.50 2020/07/16 14:44:55 krw Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -142,7 +142,7 @@ mpath_xs_stuffup(struct scsi_xfer *xs)
 int
 mpath_probe(struct scsi_link *link)
 {
-	struct mpath_softc *sc = link->adapter_softc;
+	struct mpath_softc *sc = link->bus->sb_adapter_softc;
 	struct mpath_dev *d = sc->sc_devs[link->target];
 
 	if (link->lun != 0 || d == NULL)
@@ -179,7 +179,7 @@ void
 mpath_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
-	struct mpath_softc *sc = link->adapter_softc;
+	struct mpath_softc *sc = link->bus->sb_adapter_softc;
 	struct mpath_dev *d = sc->sc_devs[link->target];
 	struct mpath_path *p;
 	struct scsi_xfer *mxs;
@@ -283,7 +283,7 @@ mpath_done(struct scsi_xfer *mxs)
 {
 	struct scsi_xfer *xs = mxs->cookie;
 	struct scsi_link *link = xs->sc_link;
-	struct mpath_softc *sc = link->adapter_softc;
+	struct mpath_softc *sc = link->bus->sb_adapter_softc;
 	struct mpath_dev *d = sc->sc_devs[link->target];
 	struct mpath_path *p;
 
@@ -394,7 +394,7 @@ mpath_path_status(struct mpath_path *p, int status)
 void
 mpath_minphys(struct buf *bp, struct scsi_link *link)
 {
-	struct mpath_softc *sc = link->adapter_softc;
+	struct mpath_softc *sc = link->bus->sb_adapter_softc;
 	struct mpath_dev *d = sc->sc_devs[link->target];
 	struct mpath_group *g;
 	struct mpath_path *p;
@@ -408,8 +408,9 @@ mpath_minphys(struct buf *bp, struct scsi_link *link)
 	TAILQ_FOREACH(g, &d->d_groups, g_entry) {
 		TAILQ_FOREACH(p, &g->g_paths, p_entry) {
 			/* XXX crossing layers with mutex held */
-			if (p->p_link->adapter->dev_minphys != NULL)
-				p->p_link->adapter->dev_minphys(bp, p->p_link);
+			if (p->p_link->bus->sb_adapter->dev_minphys != NULL)
+				p->p_link->bus->sb_adapter->dev_minphys(bp,
+				    p->p_link);
 		}
 	}
 	mtx_leave(&d->d_mtx);
@@ -427,7 +428,7 @@ mpath_path_probe(struct scsi_link *link)
 	if (ISSET(link->flags, SDEV_UMASS))
 		return (EINVAL);
 
-	if (mpath == link->adapter_softc)
+	if (mpath == link->bus->sb_adapter_softc)
 		return (ENXIO);
 
 	return (0);

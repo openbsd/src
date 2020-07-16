@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.226 2020/07/16 12:38:43 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.227 2020/07/16 14:44:55 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -333,9 +333,9 @@ scsi_get_target_luns(struct scsi_link *link0, struct scsi_lun_array *lunarray)
 
 	/* Initialize dumbscan result. Just in case. */
 	report = NULL;
-	for (i = 0; i < link0->luns; i++)
+	for (i = 0; i < link0->bus->sb_luns; i++)
 		lunarray->luns[i] = i;
-	lunarray->count = link0->luns;
+	lunarray->count = link0->bus->sb_luns;
 	lunarray->dumbscan = 1;
 
 	/*
@@ -774,7 +774,7 @@ scsibus_printlink(struct scsi_link *link)
 	printf("\n");
 	sc_print_addr(link);
 	printf("state %u, luns %u, openings %u\n",
-	    link->state, link->luns, link->openings);
+	    link->state, link->bus->sb_luns, link->openings);
 
 	sc_print_addr(link);
 	printf("flags (0x%04x) ", link->flags);
@@ -1046,7 +1046,7 @@ scsi_probedev(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 	 * point to prevent such helpfulness before it causes confusion.
 	 */
 	if (lun == 0 && ISSET(link->flags, SDEV_UMASS) &&
-	    scsi_get_link(sb, target, 1) == NULL && link->luns > 1 &&
+	    scsi_get_link(sb, target, 1) == NULL && sb->sb_luns > 1 &&
 	    (usbinqbuf = dma_alloc(sizeof(*usbinqbuf), M_NOWAIT)) != NULL) {
 
 		link->lun = 1;
