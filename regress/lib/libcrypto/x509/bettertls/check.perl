@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $OpenBSD: check.perl,v 1.2 2020/07/15 03:49:59 beck Exp $
+# $OpenBSD: check.perl,v 1.3 2020/07/16 01:50:25 beck Exp $
 #
 # Copyright (c) 2020 Bob Beck <beck@openbsd.org>
 #
@@ -25,7 +25,7 @@ if ($num_args != 3) {
 
 my $expected_file=$ARGV[0];
 my $known_file=$ARGV[1];
-my $output_file=$ARGV[1];
+my $output_file=$ARGV[2];
 
 open (OUT, "<$output_file") || die "can't open $output_file";
 open (KNOWN, "<$known_file") || die "can't open $known_file";
@@ -72,25 +72,26 @@ my $id;
 my $regressions = 0;
 my $known = 0;
 for ($id = 0; $id < $i; $id++) {
+    my $cert = $id + 1;
     my $ipknown = ($outip[$id] eq $knownip[$id]);
     my $dnsknown = ($outdns[$id] eq $knowndns[$id]);
     if ($expecteddns[$id] ne $outdns[$id] && $expecteddns[$id] !~ /WEAK/) {
-	print STDERR "$id DNS  expected $expecteddns[$id] known $knowndns[$id] result $outdns[$id]";
+	print STDERR "$cert DNS expected $expecteddns[$id] known $knowndns[$id] result $outdns[$id]";
 	if ($dnsknown) {
-	    print " (known failure)\n";
+	    print STDERR " (known failure)\n";
 	    $known++;
 	} else {
-	    print " (REGRESSED)\n";
+	    print STDERR " (REGRESSED)\n";
 	    $regressions++;
 	}
     }
     if ($expectedip[$id] ne $outip[$id] && $expectedip[$id] !~ /WEAK/) {
-	print "$id IP   expected $expectedip[$id] known $knownip[$id] result $outip[$id]";
+	print STDERR "$cert IP expected $expectedip[$id] known $knownip[$id] result $outip[$id]";
 	if ($ipknown) {
-	    print " (known failure)\n";
+	    print STDERR " (known failure)\n";
 	    $known++;
 	} else {
-	    print " (REGRESSED)\n";
+	    print STDERR " (REGRESSED)\n";
 	    $regressions++;
 	}	
     }
