@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.3 2020/07/16 21:18:09 kettenis Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.4 2020/07/16 21:26:18 kettenis Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -276,7 +276,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		fails = _dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
 	} else {
 		Elf_Addr *plt;
-		int numplt, i;
+		int numplt, n;
 
 		/* Relocate processor-specific tags. */
 		object->Dyn.info[DT_PROC(DT_PPC64_GLINK)] += object->obj_base;
@@ -289,10 +289,9 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 		numplt = object->Dyn.info[DT_PLTRELSZ] / sizeof(Elf_RelA);
 		plt[0] = (uint64_t)_dl_bind_start;
 		plt[1] = (uint64_t)object;
-		// offset 2 as first two entries are rtld parameters
-		for (i = 2; i < numplt+2; i++) {
-			plt[i] = object->Dyn.info[DT_PROC(DT_PPC64_GLINK)] +
-			     i*4 + 24;
+		for (n = 0; n < numplt; n++) {
+			plt[n + 2] = object->Dyn.info[DT_PROC(DT_PPC64_GLINK)] +
+			    n * 4 + 32;
 		}
 	}
 
