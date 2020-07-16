@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.2 2020/06/28 17:58:40 drahn Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.3 2020/07/16 21:18:09 kettenis Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -89,9 +89,10 @@ _dl_start:
 END(_dl_start)
 
 ENTRY(_dl_bind_start)
-	mflr	%r0
-	std	%r0,16(%r1)		# save	lr
-	std	%r2,24(%r1)		# save	toc
+	# r0 contains offset, do not overwrite 
+	# r2 ld.so toc is loaded on entry to this function.
+	mflr	%r12
+	std	%r12,16(%r1)		# save	lr
 
 	stdu	1,-104(%r1)
 
@@ -102,11 +103,11 @@ ENTRY(_dl_bind_start)
 	std	%r7,64(%r1)
 	std	%r8,72(%r1)
 	std	%r9,80(%r1)
-	std	%r10,96(%r1)
+	std	%r10,88(%r1)
 
-	mr	%r3,%r12		# obj
-	mr	%r4,%r11		# reloff
-	bl	_dl_bind		# _rtld_bind(obj, reloff)
+	mr	%r3,%r11		# obj
+	mr	%r4,%r0			# relidx
+	bl	_dl_bind		# _rtld_bind(obj, relidx)
 	mtctr	%r3
 	mr	%r12, %r3
 
@@ -117,7 +118,7 @@ ENTRY(_dl_bind_start)
 	ld	%r7,64(%r1)
 	ld	%r8,72(%r1)
 	ld	%r9,80(%r1)
-	ld	%r10,96(%r1)
+	ld	%r10,88(%r1)
 
 	addi	%r1,%r1,104
 

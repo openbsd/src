@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.2 2020/06/28 20:52:05 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.3 2020/07/16 21:18:09 kettenis Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -272,13 +272,35 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	if (object->Dyn.info[DT_PLTREL] != DT_RELA)
 		return 0;
 
-	fails = _dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
+	if (!lazy) {
+		fails = _dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
+	} else {
+		Elf_Addr *plt;
+		int numplt, i;
+
+		/* Relocate processor-specific tags. */
+		object->Dyn.info[DT_PROC(DT_PPC64_GLINK)] += object->obj_base;
+
+		if (object->Dyn.info[DT_PLTREL] != DT_RELA)
+			_dl_die(" bad relocation type PLTREL not RELA");
+
+		plt = (Elf_Addr *)
+		   (Elf_RelA *)(object->Dyn.info[DT_PLTGOT]);
+		numplt = object->Dyn.info[DT_PLTRELSZ] / sizeof(Elf_RelA);
+		plt[0] = (uint64_t)_dl_bind_start;
+		plt[1] = (uint64_t)object;
+		// offset 2 as first two entries are rtld parameters
+		for (i = 2; i < numplt+2; i++) {
+			plt[i] = object->Dyn.info[DT_PROC(DT_PPC64_GLINK)] +
+			     i*4 + 24;
+		}
+	}
 
 	return fails;
 }
 
 Elf_Addr
-_dl_bind(elf_object_t *object, int reloff)
+_dl_bind(elf_object_t *object, int relidx)
 {
 	const Elf_Sym *sym;
 	struct sym_res sr;
@@ -291,7 +313,7 @@ _dl_bind(elf_object_t *object, int reloff)
 		Elf_Addr newval;
 	} buf;
 
-	relas = (Elf_RelA *)(object->Dyn.info[DT_JMPREL] + reloff);
+	relas = ((Elf_RelA *)object->Dyn.info[DT_JMPREL]) + relidx;
 
 	sym = object->dyn.symtab;
 	sym += ELF_R_SYM(relas->r_info);
@@ -308,7 +330,7 @@ _dl_bind(elf_object_t *object, int reloff)
 		return buf.newval;
 
 	plttable = (Elf_Addr *)(Elf_RelA *)(object->Dyn.info[DT_PLTGOT]);
-	buf.param.kb_addr = &plttable[ reloff / sizeof(Elf_RelA) ];
+	buf.param.kb_addr = &plttable[relidx + 2];
 	buf.param.kb_size = sizeof(Elf_Addr);
 
 	{
