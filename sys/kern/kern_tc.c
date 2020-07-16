@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.62 2020/07/06 13:33:09 pirofti Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.63 2020/07/16 23:06:43 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -35,14 +35,6 @@
 #include <sys/queue.h>
 #include <sys/malloc.h>
 
-/*
- * A large step happens on boot.  This constant detects such steps.
- * It is relatively small so that ntp_update_second gets called enough
- * in the typical 'missed a couple of seconds' case, but doesn't loop
- * forever when the time step is large.
- */
-#define LARGE_STEP	200
-
 u_int dummy_get_timecount(struct timecounter *);
 
 int sysctl_tc_hardware(void *, size_t *, void *, size_t);
@@ -77,6 +69,7 @@ struct timehands {
 	/* These fields must be initialized by the driver. */
 	struct timecounter	*th_counter;		/* [W] */
 	int64_t			th_adjtimedelta;	/* [T,W] */
+	struct bintime		th_next_ntp_update;	/* [T,W] */
 	int64_t			th_adjustment;		/* [W] */
 	u_int64_t		th_scale;		/* [W] */
 	u_int	 		th_offset_count;	/* [W] */
@@ -569,7 +562,6 @@ tc_windup(struct bintime *new_boottime, struct bintime *new_offset,
 	struct timehands *th, *tho;
 	u_int64_t scale;
 	u_int delta, ncount, ogen;
-	int i;
 
 	if (new_boottime != NULL || new_adjtimedelta != NULL)
 		rw_assert_wrlock(&tc_lock);
@@ -633,28 +625,27 @@ tc_windup(struct bintime *new_boottime, struct bintime *new_offset,
 	 */
 	if (new_boottime != NULL)
 		th->th_boottime = *new_boottime;
-	if (new_adjtimedelta != NULL)
+	if (new_adjtimedelta != NULL) {
 		th->th_adjtimedelta = *new_adjtimedelta;
+		/* Reset the NTP update period. */
+		bintimesub(&th->th_offset, &th->th_naptime,
+		    &th->th_next_ntp_update);
+	}
 
 	/*
-	 * Deal with NTP second processing.  The for loop normally
+	 * Deal with NTP second processing.  The while-loop normally
 	 * iterates at most once, but in extreme situations it might
-	 * keep NTP sane if timeouts are not run for several seconds.
-	 * At boot, the time step can be large when the TOD hardware
-	 * has been read, so on really large steps, we call
-	 * ntp_update_second only twice.  We need to call it twice in
-	 * case we missed a leap second.
+	 * keep NTP sane if tc_windup() is not run for several seconds.
 	 */
-	bt = th->th_offset;
-	bintimeadd(&bt, &th->th_boottime, &bt);
-	i = bt.sec - tho->th_microtime.tv_sec;
-	if (i > LARGE_STEP)
-		i = 2;
-	for (; i > 0; i--)
+	bintimesub(&th->th_offset, &th->th_naptime, &bt);
+	while (bintimecmp(&th->th_next_ntp_update, &bt, <=)) {
 		ntp_update_second(th);
+		th->th_next_ntp_update.sec++;
+	}
 
 	/* Update the UTC timestamps used by the get*() functions. */
 	/* XXX shouldn't do this here.  Should force non-`get' versions. */
+	bintimeadd(&th->th_boottime, &th->th_offset, &bt);
 	BINTIME_TO_TIMEVAL(&bt, &th->th_microtime);
 	BINTIME_TO_TIMESPEC(&bt, &th->th_nanotime);
 
