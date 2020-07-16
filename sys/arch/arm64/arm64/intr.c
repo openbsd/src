@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.16 2020/07/14 15:34:14 patrick Exp $ */
+/* $OpenBSD: intr.c,v 1.17 2020/07/16 12:57:30 patrick Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -278,11 +278,6 @@ arm_intr_register_fdt(struct interrupt_controller *ic)
 		LIST_REMOVE(ip, ip_list);
 	}
 }
-
-struct arm_intr_handle {
-	struct interrupt_controller *ih_ic;
-	void *ih_ih;
-};
 
 void *
 arm_intr_establish_fdt(int node, int level, int (*func)(void *),

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.5 2020/07/14 15:34:14 patrick Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.6 2020/07/16 12:57:30 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -138,7 +138,9 @@ acpi_intr_establish(int irq, int flags, int level,
     int (*func)(void *), void *arg, const char *name)
 {
 	struct interrupt_controller *ic;
+	struct arm_intr_handle *aih;
 	uint32_t interrupt[3];
+	void *cookie;
 
 	extern LIST_HEAD(, interrupt_controller) interrupt_controllers;
 	LIST_FOREACH(ic, &interrupt_controllers, ic_list) {
@@ -152,8 +154,16 @@ acpi_intr_establish(int irq, int flags, int level,
 	interrupt[1] = irq - 32;
 	interrupt[2] = 0x4;
 
-	return ic->ic_establish(ic->ic_cookie, interrupt, level, NULL,
-				func, arg, (char *)name);
+	cookie = ic->ic_establish(ic->ic_cookie, interrupt, level, NULL,
+	    func, arg, (char *)name);
+	if (cookie == NULL)
+		return NULL;
+
+	aih = malloc(sizeof(*aih), M_DEVBUF, M_WAITOK);
+	aih->ih_ic = ic;
+	aih->ih_ih = cookie;
+
+	return aih;
 }
 
 void

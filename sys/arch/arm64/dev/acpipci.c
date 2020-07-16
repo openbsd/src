@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.17 2020/07/14 15:42:19 patrick Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.18 2020/07/16 12:57:30 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -436,6 +436,7 @@ acpipci_intr_establish(void *v, pci_intr_handle_t ih, int level,
 {
 	struct acpipci_softc *sc = v;
 	struct interrupt_controller *ic;
+	struct arm_intr_handle *aih;
 	void *cookie;
 
 	extern LIST_HEAD(, interrupt_controller) interrupt_controllers;
@@ -465,6 +466,11 @@ acpipci_intr_establish(void *v, pci_intr_handle_t ih, int level,
 			    &sc->sc_bus_memt, ih.ih_intrpin, addr, data);
 		} else
 			pci_msi_enable(ih.ih_pc, ih.ih_tag, addr, data);
+
+		aih = malloc(sizeof(*aih), M_DEVBUF, M_WAITOK);
+		aih->ih_ic = ic;
+		aih->ih_ih = cookie;
+		cookie = aih;
 	} else {
 		if (ci != NULL && !CPU_IS_PRIMARY(ci))
 			return NULL;
