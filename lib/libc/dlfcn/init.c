@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.8 2020/07/06 13:33:05 pirofti Exp $ */
+/*	$OpenBSD: init.c,v 1.9 2020/07/16 17:47:09 tedu Exp $ */
 /*
  * Copyright (c) 2014,2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -114,6 +114,8 @@ _libc_preinit(int argc, char **argv, char **envp, dl_cb_cb *cb)
 				    _timekeep->tk_version != TK_VERSION)
 					_timekeep = NULL;
 			}
+			if (issetugid() == 0 && getenv("LIBC_NOUSERTC"))
+				_timekeep = NULL;
 			break;
 		}
 	}
