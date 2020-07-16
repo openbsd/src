@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.137 2020/07/10 13:26:38 patrick Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.138 2020/07/16 00:52:33 kevlo Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1285,7 +1285,7 @@ sis_ring_init(struct sis_softc *sc)
 		ld->sis_rx_list[i].sis_ctl = 0;
 	}
 
-	cd->sis_rx_prod = cd->sis_rx_cons;
+	cd->sis_rx_prod = cd->sis_rx_cons = 0;
 	if_rxr_init(&cd->sis_rx_ring, 2, SIS_RX_LIST_CNT - 1);
 	sis_fill_rx_ring(sc);
 
