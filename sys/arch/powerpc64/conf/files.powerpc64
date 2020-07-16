@@ -1,4 +1,4 @@
-# $OpenBSD: files.powerpc64,v 1.21 2020/07/14 20:39:40 kettenis Exp $
+# $OpenBSD: files.powerpc64,v 1.22 2020/07/16 19:37:58 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -37,6 +37,10 @@ file	arch/powerpc64/dev/pci_machdep.c
 
 file	netinet/in_cksum.c
 file	netinet/in4_cksum.c
+
+pseudo-device	kexec
+file	arch/powerpc64/dev/kexec.c		kexec needs-flag
+file	arch/powerpc64/dev/kexec_subr.S		kexec needs-flag
 
 pseudo-device	openprom
 file	arch/powerpc64/powerpc64/openprom.c	openprom needs-flag
