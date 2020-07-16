@@ -1,4 +1,4 @@
-/*	$OpenBSD: strftime.c,v 1.32 2019/06/29 16:12:21 deraadt Exp $ */
+/*	$OpenBSD: strftime.c,v 1.33 2020/07/16 20:08:12 millert Exp $ */
 /*
 ** Copyright (c) 1989, 1993
 **	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,6 @@
 */
 
 #include <fcntl.h>
-#include <locale.h>
 #include <stdio.h>
 
 #include "private.h"
@@ -48,16 +47,7 @@ struct lc_time_T {
 	const char *	date_fmt;
 };
 
-#ifdef LOCALE_HOME
-#include "sys/stat.h"
-static struct lc_time_T		localebuf;
-static struct lc_time_T *	_loc(void);
-#define Locale	_loc()
-#endif /* defined LOCALE_HOME */
-#ifndef LOCALE_HOME
 #define Locale	(&C_time_locale)
-#endif /* !defined LOCALE_HOME */
-
 static const struct lc_time_T	C_time_locale = {
 	{
 		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -124,9 +114,6 @@ strftime(char *s, size_t maxsize, const char *format, const struct tm *t)
 	int	warn;
 
 	tzset();
-#ifdef LOCALE_HOME
-	localebuf.mon[0] = 0;
-#endif /* defined LOCALE_HOME */
 	warn = IN_NONE;
 	p = _fmt(((format == NULL) ? "%c" : format), t, s, s + maxsize, &warn);
 	if (p == s + maxsize) {
@@ -558,135 +545,3 @@ _yconv(int a, int b, int convert_top, int convert_yy, char *pt, const char *ptli
 		pt = _conv(((trail < 0) ? -trail : trail), "%02d", pt, ptlim);
 	return pt;
 }
-
-#ifdef LOCALE_HOME
-static struct lc_time_T *
-_loc(void)
-{
-	static const char	locale_home[] = LOCALE_HOME;
-	static const char	lc_time[] = "LC_TIME";
-	static char *		locale_buf;
-
-	int			fd;
-	int			oldsun;	/* "...ain't got nothin' to do..." */
-	int			len;
-	char *			lbuf;
-	char *			nlbuf;
-	char *			name;
-	char *			p;
-	const char **		ap;
-	const char *		plim;
-	char			filename[PATH_MAX];
-	struct stat		st;
-	size_t			namesize;
-	size_t			bufsize;
-
-	/*
-	** Use localebuf.mon[0] to signal whether locale is already set up.
-	*/
-	if (localebuf.mon[0])
-		return &localebuf;
-	name = setlocale(LC_TIME, (char *) NULL);
-	if (name == NULL || *name == '\0')
-		goto no_locale;
-	/*
-	** If the locale name is the same as our cache, use the cache.
-	*/
-	lbuf = locale_buf;
-	if (lbuf != NULL && strcmp(name, lbuf) == 0) {
-		p = lbuf;
-		for (ap = (const char **) &localebuf;
-			ap < (const char **) (&localebuf + 1);
-				++ap)
-					*ap = p += strlen(p) + 1;
-		return &localebuf;
-	}
-	/*
-	** Slurp the locale file into the cache.
-	*/
-	namesize = strlen(name) + 1;
-	if (sizeof filename <
-		((sizeof locale_home) + namesize + (sizeof lc_time)))
-			goto no_locale;
-	oldsun = 0;
-	len = snprintf(filename, sizeof filename, "%s/%s/%s", locale_home,
-	    name, lc_time);
-	if (len < 0 || len >= sizeof filename)
-		goto no_locale;
-	fd = open(filename, O_RDONLY);
-	if (fd == -1) {
-		/*
-		** Old Sun systems have a different naming and data convention.
-		*/
-		oldsun = 1;
-		len = snprintf(filename, sizeof filename, "%s/%s/%s",
-			locale_home, lc_time, name);
-		if (len < 0 || len >= sizeof filename)
-			goto no_locale;
-		fd = open(filename, O_RDONLY);
-		if (fd  == -1)
-			goto no_locale;
-	}
-	if (fstat(fd, &st) == -1)
-		goto bad_locale;
-	if (st.st_size <= 0)
-		goto bad_locale;
-	bufsize = namesize + st.st_size;
-	locale_buf = NULL;
-	nlbuf = realloc(lbuf, bufsize);
-	if (nlbuf == NULL) {
-		free(lbuf);
-		lbuf = NULL;
-		goto bad_locale;
-	}
-	lbuf = nlbuf;
-	(void) strlcpy(lbuf, name, bufsize);
-	p = lbuf + namesize;
-	plim = p + st.st_size;
-	if (read(fd, p, st.st_size) != st.st_size)
-		goto bad_lbuf;
-	if (close(fd) != 0)
-		goto bad_lbuf;
-	/*
-	** Parse the locale file into localebuf.
-	*/
-	if (plim[-1] != '\n')
-		goto bad_lbuf;
-	for (ap = (const char **) &localebuf;
-		ap < (const char **) (&localebuf + 1);
-			++ap) {
-				if (p == plim)
-					goto bad_lbuf;
-				*ap = p;
-				while (*p != '\n')
-					++p;
-				*p++ = '\0';
-	}
-	if (oldsun) {
-		/*
-		** SunOS 4 used an obsolescent format; see localdtconv(3).
-		** c_fmt had the ``short format for dates and times together''
-		** (SunOS 4 date, "%a %b %e %T %Z %Y" in the C locale);
-		** date_fmt had the ``long format for dates''
-		** (SunOS 4 strftime %C, "%A, %B %e, %Y" in the C locale).
-		** Discard the latter in favor of the former.
-		*/
-		localebuf.date_fmt = localebuf.c_fmt;
-	}
-	/*
-	** Record the successful parse in the cache.
-	*/
-	locale_buf = lbuf;
-
-	return &localebuf;
-
-bad_lbuf:
-	free(lbuf);
-bad_locale:
-	(void) close(fd);
-no_locale:
-	localebuf = C_time_locale;
-	locale_buf = NULL;
-	return &localebuf;
-}
-#endif /* defined LOCALE_HOME */
