@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.66 2020/07/15 04:36:02 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.67 2020/07/16 05:45:03 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -6969,6 +6969,10 @@ mcx_down(struct mcx_softc *sc)
 	for (i = 0; i < sc->sc_nqueues; i++) {
 		struct ifqueue *ifq = sc->sc_queues[i].q_tx.tx_ifq;
 		ifq_barrier(ifq);
+
+		timeout_del_barrier(&sc->sc_queues[i].q_rx.rx_refill);
+
+		intr_barrier(&sc->sc_queues[i].q_ihc);
 	}
 
 	timeout_del_barrier(&sc->sc_calibrate);
