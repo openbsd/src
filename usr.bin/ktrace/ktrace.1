@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.1,v 1.30 2019/05/15 15:36:59 schwarze Exp $
+.\"	$OpenBSD: ktrace.1,v 1.31 2020/07/16 17:47:41 tedu Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)ktrace.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: May 15 2019 $
+.Dd $Mdocdate: July 16 2020 $
 .Dt KTRACE 1
 .Os
 .Sh NAME
@@ -37,13 +37,13 @@
 .Nd enable kernel process tracing
 .Sh SYNOPSIS
 .Nm ktrace
-.Op Fl aBCcdi
+.Op Fl aCcdi
 .Op Fl f Ar trfile
 .Op Fl g Ar pgid
 .Op Fl p Ar pid
 .Op Fl t Ar trstr
 .Nm ktrace
-.Op Fl adi
+.Op Fl aBdiT
 .Op Fl f Ar trfile
 .Op Fl t Ar trstr
 .Ar command
@@ -109,6 +109,8 @@ processes.
 Enable (disable) tracing on the indicated process ID (only one
 .Fl p
 flag is permitted).
+.It Fl T
+Disable userland timekeeping, making time related system calls more prevalent.
 .It Fl t Ar trstr
 Select which information to put into the dump file.
 The argument can contain one or more of the following letters.

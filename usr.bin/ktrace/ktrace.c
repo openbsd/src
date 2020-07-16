@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.c,v 1.36 2019/06/28 13:35:01 deraadt Exp $	*/
+/*	$OpenBSD: ktrace.c,v 1.37 2020/07/16 17:47:41 tedu Exp $	*/
 /*	$NetBSD: ktrace.c,v 1.4 1995/08/31 23:01:44 jtc Exp $	*/
 
 /*-
@@ -100,7 +100,7 @@ main(int argc, char *argv[])
 				usage();
 			}
 	} else {
-		while ((ch = getopt(argc, argv, "aBCcdf:g:ip:t:")) != -1)
+		while ((ch = getopt(argc, argv, "aBCcdf:g:ip:t:T")) != -1)
 			switch ((char)ch) {
 			case 'a':
 				append = 1;
@@ -139,6 +139,9 @@ main(int argc, char *argv[])
 					warnx("unknown facility in %s", optarg);
 					usage();
 				}
+				break;
+			case 'T':
+				putenv("LIBC_NOUSERTC=");
 				break;
 			default:
 				usage();
@@ -240,9 +243,9 @@ usage(void)
 		    " [-u trspec] command\n",
 		    __progname);
 	else
-		fprintf(stderr, "usage: %s [-aBCcdi] [-f trfile] [-g pgid]"
+		fprintf(stderr, "usage: %s [-aCcdi] [-f trfile] [-g pgid]"
 		    " [-p pid] [-t trstr]\n"
-		    "       %s [-adi] [-f trfile] [-t trstr] command\n",
+		    "       %s [-aBdiT] [-f trfile] [-t trstr] command\n",
 		    __progname, __progname);
 	exit(1);
 }
