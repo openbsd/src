@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.30 2020/07/14 17:03:13 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.31 2020/07/16 09:47:16 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -1415,12 +1415,14 @@ pmap_bootstrap(void)
 	/* SLB entry for the kernel. */
 	pmap_set_kernel_slb(idx++, (vaddr_t)_start);
 
-	/* SLB entry for the page tables. */
-	pmap_set_kernel_slb(idx++, (vaddr_t)pmap_ptable);
+	/* SLB entries for the page tables. */
+	for (va = (vaddr_t)pmap_ptable; va < (vaddr_t)pmap_ptable + HTABMEMSZ;
+	     va += SEGMENT_SIZE)
+		pmap_set_kernel_slb(idx++, va);
 
 	/* SLB entries for kernel VA. */
 	for (va = VM_MIN_KERNEL_ADDRESS; va < VM_MAX_KERNEL_ADDRESS;
-	     va += 256 * 1024 * 1024)
+	     va += SEGMENT_SIZE)
 		pmap_set_kernel_slb(idx++, va);
 
 	vmmap = virtual_avail;
