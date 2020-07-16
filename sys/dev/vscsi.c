@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.52 2020/06/27 17:28:58 krw Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.53 2020/07/16 21:18:29 krw Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -162,7 +162,7 @@ void
 vscsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link		*link = xs->sc_link;
-	struct vscsi_softc		*sc = link->adapter_softc;
+	struct vscsi_softc		*sc = link->bus->sb_adapter_softc;
 	struct vscsi_ccb		*ccb = xs->io;
 	int				polled = ISSET(xs->flags, SCSI_POLL);
 	int				running = 0;
@@ -219,7 +219,7 @@ vscsi_done(struct vscsi_softc *sc, struct vscsi_ccb *ccb)
 int
 vscsi_probe(struct scsi_link *link)
 {
-	struct vscsi_softc		*sc = link->adapter_softc;
+	struct vscsi_softc		*sc = link->bus->sb_adapter_softc;
 	int				rv = 0;
 
 	mtx_enter(&sc->sc_state_mtx);
@@ -235,7 +235,7 @@ vscsi_probe(struct scsi_link *link)
 void
 vscsi_free(struct scsi_link *link)
 {
-	struct vscsi_softc		*sc = link->adapter_softc;
+	struct vscsi_softc		*sc = link->bus->sb_adapter_softc;
 
 	mtx_enter(&sc->sc_state_mtx);
 	sc->sc_ref_count--;

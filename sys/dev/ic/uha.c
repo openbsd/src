@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha.c,v 1.33 2020/07/11 13:34:06 krw Exp $	*/
+/*	$OpenBSD: uha.c,v 1.34 2020/07/16 21:18:30 krw Exp $	*/
 /*	$NetBSD: uha.c,v 1.3 1996/10/13 01:37:29 christos Exp $	*/
 
 #undef UHADEBUG
@@ -261,7 +261,7 @@ uha_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
 	struct scsi_link *sc_link = xs->sc_link;
-	struct uha_softc *sc = sc_link->adapter_softc;
+	struct uha_softc *sc = sc_link->bus->sb_adapter_softc;
 	struct uha_mscp *mscp;
 	struct uha_dma_seg *sg;
 	int seg;		/* scatter gather seg being worked on */
@@ -413,7 +413,7 @@ uha_timeout(arg)
 	struct uha_mscp *mscp = arg;
 	struct scsi_xfer *xs = mscp->xs;
 	struct scsi_link *sc_link = xs->sc_link;
-	struct uha_softc *sc = sc_link->adapter_softc;
+	struct uha_softc *sc = sc_link->bus->sb_adapter_softc;
 	int s;
 
 	sc_print_addr(sc_link);

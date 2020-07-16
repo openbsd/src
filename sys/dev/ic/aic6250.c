@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6250.c,v 1.9 2020/07/11 13:34:06 krw Exp $	*/
+/*	$OpenBSD: aic6250.c,v 1.10 2020/07/16 21:18:30 krw Exp $	*/
 
 /*
  * Copyright (c) 2010, 2013 Miodrag Vallat.
@@ -384,7 +384,7 @@ void
 aic6250_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *sc_link = xs->sc_link;
-	struct aic6250_softc *sc = sc_link->adapter_softc;
+	struct aic6250_softc *sc = sc_link->bus->sb_adapter_softc;
 	struct aic6250_acb *acb;
 	int s, flags;
 
@@ -1789,7 +1789,7 @@ aic6250_timeout(void *arg)
 	struct aic6250_acb *acb = arg;
 	struct scsi_xfer *xs = acb->xs;
 	struct scsi_link *sc_link = xs->sc_link;
-	struct aic6250_softc *sc = sc_link->adapter_softc;
+	struct aic6250_softc *sc = sc_link->bus->sb_adapter_softc;
 	int s;
 
 	sc_print_addr(sc_link);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.41 2020/07/14 00:43:29 krw Exp $ */
+/*	$OpenBSD: qlw.c,v 1.42 2020/07/16 21:18:30 krw Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -788,7 +788,7 @@ void
 qlw_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link	*link = xs->sc_link;
-	struct qlw_softc	*sc = link->adapter_softc;
+	struct qlw_softc	*sc = link->bus->sb_adapter_softc;
 	struct qlw_ccb		*ccb;
 	struct qlw_iocb_req0	*iocb;
 	struct qlw_ccb_list	list;

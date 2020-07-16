@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.63 2020/07/11 13:34:06 krw Exp $ */
+/*	$OpenBSD: adw.c,v 1.64 2020/07/16 21:18:29 krw Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -523,7 +523,7 @@ void
 adw_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *sc_link = xs->sc_link;
-	ADW_SOFTC      *sc = sc_link->adapter_softc;
+	ADW_SOFTC      *sc = sc_link->bus->sb_adapter_softc;
 	ADW_CCB        *ccb;
 	int             s, retry = 0;
 
@@ -579,7 +579,7 @@ int
 adw_build_req(struct scsi_xfer *xs, ADW_CCB *ccb, int flags)
 {
 	struct scsi_link *sc_link = xs->sc_link;
-	ADW_SOFTC      *sc = sc_link->adapter_softc;
+	ADW_SOFTC      *sc = sc_link->bus->sb_adapter_softc;
 	bus_dma_tag_t   dmat = sc->sc_dmat;
 	ADW_SCSI_REQ_Q *scsiqp;
 	int             error;
@@ -764,7 +764,7 @@ adw_timeout(void *arg)
 	ADW_CCB        *ccb = arg;
 	struct scsi_xfer *xs = ccb->xs;
 	struct scsi_link *sc_link = xs->sc_link;
-	ADW_SOFTC      *sc = sc_link->adapter_softc;
+	ADW_SOFTC      *sc = sc_link->bus->sb_adapter_softc;
 	int             s;
 
 	sc_print_addr(sc_link);

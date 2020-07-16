@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.114 2020/07/12 11:28:55 krw Exp $ */
+/*	$OpenBSD: arc.c,v 1.115 2020/07/16 21:18:30 krw Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1117,7 +1117,7 @@ void
 arc_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link		*link = xs->sc_link;
-	struct arc_softc		*sc = link->adapter_softc;
+	struct arc_softc		*sc = link->bus->sb_adapter_softc;
 	struct arc_ccb			*ccb;
 	struct arc_msg_scsicmd		*cmd;
 	u_int32_t			reg, cdb_len;

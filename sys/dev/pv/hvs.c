@@ -334,7 +334,7 @@ void
 hvs_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
-	struct hvs_softc *sc = link->adapter_softc;
+	struct hvs_softc *sc = link->bus->sb_adapter_softc;
 	struct hvs_ccb *ccb = xs->io;
 	union hvs_cmd cmd;
 	struct hvs_cmd_io *io = &cmd.io;
@@ -586,7 +586,7 @@ is_inquiry_valid(struct scsi_inquiry_data *inq)
 static inline void
 fixup_inquiry(struct scsi_xfer *xs, struct hvs_srb *srb)
 {
-	struct hvs_softc *sc = xs->sc_link->adapter_softc;
+	struct hvs_softc *sc = xs->sc_link->bus->sb_adapter_softc;
 	struct scsi_inquiry_data *inq = (struct scsi_inquiry_data *)xs->data;
 	int datalen, resplen;
 	char vendor[8];
@@ -620,7 +620,7 @@ void
 hvs_scsi_cmd_done(struct hvs_ccb *ccb)
 {
 	struct scsi_xfer *xs = ccb->ccb_xfer;
-	struct hvs_softc *sc = xs->sc_link->adapter_softc;
+	struct hvs_softc *sc = xs->sc_link->bus->sb_adapter_softc;
 	union hvs_cmd *cmd = ccb->ccb_cmd;
 	struct hvs_srb *srb;
 	bus_dmamap_t map;

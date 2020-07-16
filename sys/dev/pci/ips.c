@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.122 2020/07/11 13:34:06 krw Exp $	*/
+/*	$OpenBSD: ips.c,v 1.123 2020/07/16 21:18:30 krw Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -828,7 +828,7 @@ void
 ips_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
-	struct ips_softc *sc = link->adapter_softc;
+	struct ips_softc *sc = link->bus->sb_adapter_softc;
 	struct ips_driveinfo *di = &sc->sc_info->drive;
 	struct ips_drive *drive;
 	struct scsi_inquiry_data inq;
@@ -960,7 +960,7 @@ void
 ips_scsi_pt_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
-	struct ips_pt *pt = link->adapter_softc;
+	struct ips_pt *pt = link->bus->sb_adapter_softc;
 	struct ips_softc *sc = pt->pt_sc;
 	struct device *dev = link->device_softc;
 	struct ips_ccb *ccb = xs->io;
@@ -1046,7 +1046,7 @@ int
 ips_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 {
 #if NBIO > 0
-	return (ips_ioctl(link->adapter_softc, cmd, addr));
+	return (ips_ioctl(link->bus->sb_adapter_softc, cmd, addr));
 #else
 	return (ENOTTY);
 #endif

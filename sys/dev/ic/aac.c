@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.81 2020/07/11 13:34:06 krw Exp $	*/
+/*	$OpenBSD: aac.c,v 1.82 2020/07/16 21:18:29 krw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -2098,7 +2098,7 @@ aac_eval_mapping(size, cyls, heads, secs)
 void
 aac_copy_internal_data(struct scsi_xfer *xs, u_int8_t *data, size_t size)
 {
-	struct aac_softc *sc = xs->sc_link->adapter_softc;
+	struct aac_softc *sc = xs->sc_link->bus->sb_adapter_softc;
 	size_t copy_cnt;
 
 	AAC_DPRINTF(AAC_D_MISC, ("%s: aac_copy_internal_data\n",
@@ -2118,7 +2118,7 @@ void
 aac_internal_cache_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
-	struct aac_softc *sc = link->adapter_softc;
+	struct aac_softc *sc = link->bus->sb_adapter_softc;
 	struct scsi_inquiry_data inq;
 	struct scsi_sense_data sd;
 	struct scsi_read_cap_data rcd;
@@ -2189,7 +2189,7 @@ void
 aac_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
-	struct aac_softc *sc = link->adapter_softc;
+	struct aac_softc *sc = link->bus->sb_adapter_softc;
 	u_int8_t target = link->target;
 	struct aac_command *cm;
 	u_int32_t blockno, blockcnt;

@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.76 2020/07/13 14:25:41 krw Exp $ */
+/* $OpenBSD: mfii.c,v 1.77 2020/07/16 21:18:30 krw Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -2079,7 +2079,7 @@ void
 mfii_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
-	struct mfii_softc *sc = link->adapter_softc;
+	struct mfii_softc *sc = link->bus->sb_adapter_softc;
 	struct mfii_ccb *ccb = xs->io;
 
 	mfii_scrub_ccb(ccb);
@@ -2168,7 +2168,7 @@ mfii_scsi_cmd_done(struct mfii_softc *sc, struct mfii_ccb *ccb)
 int
 mfii_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 {
-	struct mfii_softc	*sc = link->adapter_softc;
+	struct mfii_softc	*sc = link->bus->sb_adapter_softc;
 
 	DNPRINTF(MFII_D_IOCTL, "%s: mfii_scsi_ioctl\n", DEVNAME(sc));
 
@@ -2190,7 +2190,7 @@ mfii_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 int
 mfii_ioctl_cache(struct scsi_link *link, u_long cmd,  struct dk_cache *dc)
 {
-	struct mfii_softc	*sc = link->adapter_softc;
+	struct mfii_softc	*sc = link->bus->sb_adapter_softc;
 	int			 rv, wrenable, rdenable;
 	struct mfi_ld_prop	 ldp;
 	union mfi_mbox		 mbox;
@@ -2378,7 +2378,7 @@ void
 mfii_pd_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
-	struct mfii_softc *sc = link->adapter_softc;
+	struct mfii_softc *sc = link->bus->sb_adapter_softc;
 	struct mfii_ccb *ccb = xs->io;
 
 	mfii_scrub_ccb(ccb);
@@ -2416,7 +2416,7 @@ done:
 int
 mfii_pd_scsi_probe(struct scsi_link *link)
 {
-	struct mfii_softc *sc = link->adapter_softc;
+	struct mfii_softc *sc = link->bus->sb_adapter_softc;
 	struct mfi_pd_details mpd;
 	union mfi_mbox mbox;
 	int rv;
@@ -2565,7 +2565,7 @@ mfii_scsi_cmd_tmo(void *xsp)
 {
 	struct scsi_xfer *xs = xsp;
 	struct scsi_link *link = xs->sc_link;
-	struct mfii_softc *sc = link->adapter_softc;
+	struct mfii_softc *sc = link->bus->sb_adapter_softc;
 	struct mfii_ccb *ccb = xs->io;
 
 	mtx_enter(&sc->sc_abort_mtx);

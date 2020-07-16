@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.407 2020/07/13 00:05:39 kn Exp $ */
+/* $OpenBSD: softraid.c,v 1.408 2020/07/16 21:18:29 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2326,7 +2326,7 @@ void
 sr_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link	*link = xs->sc_link;
-	struct sr_softc		*sc = link->adapter_softc;
+	struct sr_softc		*sc = link->bus->sb_adapter_softc;
 	struct sr_workunit	*wu = xs->io;
 	struct sr_discipline	*sd;
 
@@ -2428,7 +2428,7 @@ complete:
 int
 sr_scsi_probe(struct scsi_link *link)
 {
-	struct sr_softc		*sc = link->adapter_softc;
+	struct sr_softc		*sc = link->bus->sb_adapter_softc;
 	struct sr_discipline	*sd;
 
 	KASSERT(link->target < SR_MAX_LD && link->lun == 0);
@@ -2449,7 +2449,7 @@ sr_scsi_probe(struct scsi_link *link)
 int
 sr_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 {
-	struct sr_softc		*sc = link->adapter_softc;
+	struct sr_softc		*sc = link->bus->sb_adapter_softc;
 	struct sr_discipline	*sd;
 
 	sd = sc->sc_targets[link->target];

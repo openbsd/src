@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.80 2020/07/12 00:36:01 krw Exp $ */
+/*	$OpenBSD: nvme.c,v 1.81 2020/07/16 21:18:30 krw Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -433,7 +433,7 @@ disable:
 int
 nvme_scsi_probe(struct scsi_link *link)
 {
-	struct nvme_softc *sc = link->adapter_softc;
+	struct nvme_softc *sc = link->bus->sb_adapter_softc;
 	struct nvme_sqe sqe;
 	struct nvm_identify_namespace *identify;
 	struct nvme_dmamem *mem;
@@ -582,7 +582,7 @@ nvme_scsi_cmd(struct scsi_xfer *xs)
 void
 nvme_minphys(struct buf *bp, struct scsi_link *link)
 {
-	struct nvme_softc *sc = link->adapter_softc;
+	struct nvme_softc *sc = link->bus->sb_adapter_softc;
 
 	if (bp->b_bcount > sc->sc_mdts)
 		bp->b_bcount = sc->sc_mdts;
@@ -592,7 +592,7 @@ void
 nvme_scsi_io(struct scsi_xfer *xs, int dir)
 {
 	struct scsi_link *link = xs->sc_link;
-	struct nvme_softc *sc = link->adapter_softc;
+	struct nvme_softc *sc = link->bus->sb_adapter_softc;
 	struct nvme_ccb *ccb = xs->io;
 	bus_dmamap_t dmap = ccb->ccb_dmamap;
 	int i;
@@ -705,7 +705,7 @@ void
 nvme_scsi_sync(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
-	struct nvme_softc *sc = link->adapter_softc;
+	struct nvme_softc *sc = link->bus->sb_adapter_softc;
 	struct nvme_ccb *ccb = xs->io;
 
 	ccb->ccb_done = nvme_scsi_sync_done;
@@ -771,7 +771,7 @@ nvme_scsi_inquiry(struct scsi_xfer *xs)
 {
 	struct scsi_inquiry_data inq;
 	struct scsi_link *link = xs->sc_link;
-	struct nvme_softc *sc = link->adapter_softc;
+	struct nvme_softc *sc = link->bus->sb_adapter_softc;
 	struct nvm_identify_namespace *ns;
 
 	ns = sc->sc_namespaces[link->target].ident;
@@ -798,7 +798,7 @@ nvme_scsi_capacity16(struct scsi_xfer *xs)
 {
 	struct scsi_read_cap_data_16 rcd;
 	struct scsi_link *link = xs->sc_link;
-	struct nvme_softc *sc = link->adapter_softc;
+	struct nvme_softc *sc = link->bus->sb_adapter_softc;
 	struct nvm_identify_namespace *ns;
 	struct nvm_namespace_format *f;
 	u_int64_t nsze;
@@ -832,7 +832,7 @@ nvme_scsi_capacity(struct scsi_xfer *xs)
 {
 	struct scsi_read_cap_data rcd;
 	struct scsi_link *link = xs->sc_link;
-	struct nvme_softc *sc = link->adapter_softc;
+	struct nvme_softc *sc = link->bus->sb_adapter_softc;
 	struct nvm_identify_namespace *ns;
 	struct nvm_namespace_format *f;
 	u_int64_t nsze;
@@ -865,7 +865,7 @@ nvme_scsi_capacity(struct scsi_xfer *xs)
 void
 nvme_scsi_free(struct scsi_link *link)
 {
-	struct nvme_softc *sc = link->adapter_softc;
+	struct nvme_softc *sc = link->bus->sb_adapter_softc;
 	struct nvm_identify_namespace *identify;
 
 	identify = sc->sc_namespaces[link->target].ident;

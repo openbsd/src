@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.73 2020/07/11 13:34:06 krw Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.74 2020/07/16 21:18:30 krw Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -769,7 +769,7 @@ ncr53c9x_free_ecb(void *null, void *ecb)
 int
 ncr53c9x_scsi_probe(struct scsi_link *sc_link)
 {
-	struct ncr53c9x_softc *sc = sc_link->adapter_softc;
+	struct ncr53c9x_softc *sc = sc_link->bus->sb_adapter_softc;
 	struct ncr53c9x_tinfo *ti = &sc->sc_tinfo[sc_link->target];
 	struct ncr53c9x_linfo *li;
 	int64_t lun = sc_link->lun;
@@ -796,7 +796,7 @@ ncr53c9x_scsi_probe(struct scsi_link *sc_link)
 void
 ncr53c9x_scsi_free(struct scsi_link *sc_link)
 {
-	struct ncr53c9x_softc *sc = sc_link->adapter_softc;
+	struct ncr53c9x_softc *sc = sc_link->bus->sb_adapter_softc;
 	struct ncr53c9x_tinfo *ti = &sc->sc_tinfo[sc_link->target];
 	struct ncr53c9x_linfo *li;
 	int64_t lun = sc_link->lun;
@@ -823,7 +823,7 @@ ncr53c9x_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
 	struct scsi_link *sc_link = xs->sc_link;
-	struct ncr53c9x_softc *sc = sc_link->adapter_softc;
+	struct ncr53c9x_softc *sc = sc_link->bus->sb_adapter_softc;
 	struct ncr53c9x_ecb *ecb;
 	struct ncr53c9x_tinfo *ti;
 	struct ncr53c9x_linfo *li;
@@ -2764,7 +2764,7 @@ ncr53c9x_timeout(arg)
 	struct ncr53c9x_ecb *ecb = arg;
 	struct scsi_xfer *xs = ecb->xs;
 	struct scsi_link *sc_link = xs->sc_link;
-	struct ncr53c9x_softc *sc = sc_link->adapter_softc;
+	struct ncr53c9x_softc *sc = sc_link->bus->sb_adapter_softc;
 	struct ncr53c9x_tinfo *ti = &sc->sc_tinfo[sc_link->target];
 	int s;
 

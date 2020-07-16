@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.25 2020/07/11 13:34:05 krw Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.26 2020/07/16 21:18:29 krw Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -405,7 +405,7 @@ void
 spc_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *sc_link = xs->sc_link;
-	struct spc_softc *sc = sc_link->adapter_softc;
+	struct spc_softc *sc = sc_link->bus->sb_adapter_softc;
 	struct spc_acb *acb;
 	int s, flags;
 
@@ -1977,7 +1977,7 @@ spc_timeout(void *arg)
 	struct spc_acb *acb = arg;
 	struct scsi_xfer *xs = acb->xs;
 	struct scsi_link *sc_link = xs->sc_link;
-	struct spc_softc *sc = sc_link->adapter_softc;
+	struct spc_softc *sc = sc_link->bus->sb_adapter_softc;
 	int s;
 
 	sc_print_addr(sc_link);

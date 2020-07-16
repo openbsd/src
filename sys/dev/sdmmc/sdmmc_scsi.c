@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.48 2020/07/13 13:43:31 krw Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.49 2020/07/16 21:18:31 krw Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -305,7 +305,7 @@ void
 sdmmc_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
-	struct sdmmc_softc *sc = link->adapter_softc;
+	struct sdmmc_softc *sc = link->bus->sb_adapter_softc;
 	struct sdmmc_scsi_softc *scbus = sc->sc_scsibus;
 	struct sdmmc_scsi_target *tgt = &scbus->sc_tgt[link->target];
 	struct scsi_read_cap_data rcd;
@@ -388,7 +388,7 @@ void
 sdmmc_inquiry(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
-	struct sdmmc_softc *sc = link->adapter_softc;
+	struct sdmmc_softc *sc = link->bus->sb_adapter_softc;
 	struct sdmmc_scsi_softc *scbus = sc->sc_scsibus;
 	struct sdmmc_scsi_target *tgt = &scbus->sc_tgt[link->target];
 	struct scsi_inquiry_data inq;
@@ -480,7 +480,7 @@ sdmmc_complete_xs(void *arg)
 	struct sdmmc_ccb *ccb = arg;
 	struct scsi_xfer *xs = ccb->ccb_xs;
 	struct scsi_link *link = xs->sc_link;
-	struct sdmmc_softc *sc = link->adapter_softc;
+	struct sdmmc_softc *sc = link->bus->sb_adapter_softc;
 	struct sdmmc_scsi_softc *scbus = sc->sc_scsibus;
 	struct sdmmc_scsi_target *tgt = &scbus->sc_tgt[link->target];
 	int error;
@@ -512,7 +512,7 @@ sdmmc_done_xs(struct sdmmc_ccb *ccb)
 	struct scsi_xfer *xs = ccb->ccb_xs;
 #ifdef SDMMC_DEBUG
 	struct scsi_link *link = xs->sc_link;
-	struct sdmmc_softc *sc = link->adapter_softc;
+	struct sdmmc_softc *sc = link->bus->sb_adapter_softc;
 #endif
 
 	timeout_del(&xs->stimeout);
@@ -547,7 +547,7 @@ sdmmc_stimeout(void *arg)
 void
 sdmmc_minphys(struct buf *bp, struct scsi_link *sl)
 {
-	struct sdmmc_softc *sc = sl->adapter_softc;
+	struct sdmmc_softc *sc = sl->bus->sb_adapter_softc;
 	struct sdmmc_scsi_softc *scbus = sc->sc_scsibus;
 	struct sdmmc_scsi_target *tgt = &scbus->sc_tgt[sl->target];
 	struct sdmmc_function *sf = tgt->card;
@@ -598,7 +598,7 @@ sdmmc_scsi_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 		sc = NULL;
 		SLIST_FOREACH(link, &bus_sc->sc_link_list, bus_list) {
 			if (link->device_softc == disk) {
-				sc = link->adapter_softc;
+				sc = link->bus->sb_adapter_softc;
 				scsi_sc = sc->sc_scsibus;
 				sf = scsi_sc->sc_tgt[link->target].card;
 			}

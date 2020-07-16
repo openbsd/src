@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.56 2020/07/11 13:34:06 krw Exp $ */
+/*	$OpenBSD: qle.c,v 1.57 2020/07/16 21:18:30 krw Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -1275,7 +1275,7 @@ qle_intr(void *xsc)
 int
 qle_scsi_probe(struct scsi_link *link)
 {
-	struct qle_softc *sc = link->adapter_softc;
+	struct qle_softc *sc = link->bus->sb_adapter_softc;
 	int rv = 0;
 
 	mtx_enter(&sc->sc_port_mtx);
@@ -1293,7 +1293,7 @@ void
 qle_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link	*link = xs->sc_link;
-	struct qle_softc	*sc = link->adapter_softc;
+	struct qle_softc	*sc = link->bus->sb_adapter_softc;
 	struct qle_ccb		*ccb;
 	void			*iocb;
 	struct qle_ccb_list	list;

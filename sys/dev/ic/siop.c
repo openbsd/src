@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.80 2020/07/13 13:43:31 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.81 2020/07/16 21:18:30 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -1392,7 +1392,7 @@ siop_cmd_put(void *cookie, void *io)
 int
 siop_scsiprobe(struct scsi_link *link)
 {
-	struct siop_softc *sc = link->adapter_softc;
+	struct siop_softc *sc = link->bus->sb_adapter_softc;
 	struct siop_target *siop_target;
 	const int target = link->target;
 	const int lun = link->lun;
@@ -1458,7 +1458,7 @@ void
 siop_scsicmd(xs)
 	struct scsi_xfer *xs;
 {
-	struct siop_softc *sc = xs->sc_link->adapter_softc;
+	struct siop_softc *sc = xs->sc_link->bus->sb_adapter_softc;
 	struct siop_cmd *siop_cmd;
 	struct siop_target *siop_target;
 	int s, error, i, j;
@@ -2174,7 +2174,7 @@ siop_add_dev(sc, target, lun)
 void
 siop_scsifree(struct scsi_link *link)
 {
-	struct siop_softc *sc = link->adapter_softc;
+	struct siop_softc *sc = link->bus->sb_adapter_softc;
 	int target = link->target;
 	int lun = link->lun;
 	int i;

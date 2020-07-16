@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.84 2020/07/11 13:34:06 krw Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.85 2020/07/16 21:18:30 krw Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -951,7 +951,7 @@ int
 ciss_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 {
 #if NBIO > 0
-	return ciss_ioctl(link->adapter_softc, cmd, addr);
+	return ciss_ioctl(link->bus->sb_adapter_softc, cmd, addr);
 #else
 	return ENOTTY;
 #endif

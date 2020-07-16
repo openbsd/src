@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop.c,v 1.30 2020/07/13 13:43:31 krw Exp $	*/
+/*	$OpenBSD: oosiop.c,v 1.31 2020/07/16 21:18:30 krw Exp $	*/
 /*	$NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $	*/
 
 /*
@@ -723,7 +723,7 @@ oosiop_scsicmd(struct scsi_xfer *xs)
 	int s, err;
 	int dopoll;
 
-	sc = xs->sc_link->adapter_softc;
+	sc = xs->sc_link->bus->sb_adapter_softc;
 
 	s = splbio();
 
@@ -1008,7 +1008,7 @@ oosiop_timeout(void *arg)
 {
 	struct oosiop_cb *cb = arg;
 	struct scsi_xfer *xs = cb->xs;
-	struct oosiop_softc *sc = xs->sc_link->adapter_softc;
+	struct oosiop_softc *sc = xs->sc_link->bus->sb_adapter_softc;
 	int s;
 
 	sc_print_addr(xs->sc_link);

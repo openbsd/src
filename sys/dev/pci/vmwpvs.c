@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmwpvs.c,v 1.19 2020/07/11 13:34:06 krw Exp $ */
+/*	$OpenBSD: vmwpvs.c,v 1.20 2020/07/16 21:18:30 krw Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -846,7 +846,7 @@ void
 vmwpvs_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
-	struct vmwpvs_softc *sc = link->adapter_softc;
+	struct vmwpvs_softc *sc = link->bus->sb_adapter_softc;
 	struct vmwpvs_ccb *ccb = xs->io;
 	bus_dmamap_t dmap = ccb->ccb_dmamap;
 	volatile struct vmwpvw_ring_state *s =

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.51 2020/07/11 13:34:06 krw Exp $	*/
+/*	$OpenBSD: wds.c,v 1.52 2020/07/16 21:18:30 krw Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -868,7 +868,7 @@ void
 wds_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *sc_link = xs->sc_link;
-	struct wds_softc *sc = sc_link->adapter_softc;
+	struct wds_softc *sc = sc_link->bus->sb_adapter_softc;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct wds_scb *scb;
@@ -1147,7 +1147,7 @@ wds_timeout(void *arg)
 	s = splbio();
 	xs = scb->xs;
 	sc_link = xs->sc_link;
-	sc = sc_link->adapter_softc;
+	sc = sc_link->bus->sb_adapter_softc;
 
 	sc_print_addr(sc_link);
 	printf("timed out");

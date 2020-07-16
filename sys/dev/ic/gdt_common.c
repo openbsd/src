@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.73 2020/07/11 13:34:06 krw Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.74 2020/07/16 21:18:30 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -540,7 +540,7 @@ void
 gdt_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
-	struct gdt_softc *sc = link->adapter_softc;
+	struct gdt_softc *sc = link->bus->sb_adapter_softc;
 	u_int8_t target = link->target;
 	struct gdt_ccb *ccb;
 	u_int32_t blockno, blockcnt;
@@ -734,7 +734,7 @@ gdt_exec_ccb(struct gdt_ccb *ccb)
 {
 	struct scsi_xfer *xs = ccb->gc_xs;
 	struct scsi_link *link = xs->sc_link;
-	struct gdt_softc *sc = link->adapter_softc;
+	struct gdt_softc *sc = link->bus->sb_adapter_softc;
 	u_int8_t target = link->target;
 	u_int32_t sg_canz;
 	bus_dmamap_t xfer;
@@ -874,7 +874,7 @@ void
 gdt_internal_cache_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
-	struct gdt_softc *sc = link->adapter_softc;
+	struct gdt_softc *sc = link->bus->sb_adapter_softc;
 	struct scsi_inquiry_data inq;
 	struct scsi_sense_data sd;
 	struct scsi_read_cap_data rcd;
@@ -1289,7 +1289,7 @@ gdt_timeout(void *arg)
 {
 	struct gdt_ccb *ccb = arg;
 	struct scsi_link *link = ccb->gc_xs->sc_link;
-	struct gdt_softc *sc = link->adapter_softc;
+	struct gdt_softc *sc = link->bus->sb_adapter_softc;
 	int s;
 
 	sc_print_addr(link);
@@ -1308,7 +1308,7 @@ gdt_watchdog(void *arg)
 {
 	struct gdt_ccb *ccb = arg;
 	struct scsi_link *link = ccb->gc_xs->sc_link;
-	struct gdt_softc *sc = link->adapter_softc;
+	struct gdt_softc *sc = link->bus->sb_adapter_softc;
 	int s;
 
 	s = splbio();

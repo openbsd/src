@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.36 2020/03/14 18:53:13 krw Exp $ */
+/*	$OpenBSD: ahci.c,v 1.37 2020/07/16 21:18:30 krw Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -3266,7 +3266,6 @@ ahci_hibernate_io(dev_t dev, daddr_t blkno, vaddr_t addr, size_t size,
 		bus_sc = (struct scsibus_softc *)scsibus;
 		SLIST_FOREACH(link, &bus_sc->sc_link_list, bus_list) {
 			if (link->device_softc == disk) {
-				/* link->adapter_softc == sc->sc_atascsi */
 				port = link->target;
 				if (link->lun > 0)
 					my->pmp_port = link->lun - 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.62 2020/07/11 21:17:11 krw Exp $	*/
+/*	$OpenBSD: cac.c,v 1.63 2020/07/16 21:18:30 krw Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -581,7 +581,7 @@ cac_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
 	struct scsi_link *link = xs->sc_link;
-	struct cac_softc *sc = link->adapter_softc;
+	struct cac_softc *sc = link->bus->sb_adapter_softc;
 	struct cac_drive_info *dinfo;
 	struct scsi_inquiry_data inq;
 	struct scsi_sense_data sd;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.218 2020/07/13 14:25:41 krw Exp $ */
+/*	$OpenBSD: mpi.c,v 1.219 2020/07/16 21:18:30 krw Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -1297,7 +1297,7 @@ void
 mpi_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link		*link = xs->sc_link;
-	struct mpi_softc		*sc = link->adapter_softc;
+	struct mpi_softc		*sc = link->bus->sb_adapter_softc;
 	struct mpi_ccb			*ccb;
 	struct mpi_ccb_bundle		*mcb;
 	struct mpi_msg_scsi_io		*io;
@@ -1602,7 +1602,7 @@ mpi_load_xs(struct mpi_ccb *ccb)
 int
 mpi_scsi_probe_virtual(struct scsi_link *link)
 {
-	struct mpi_softc		*sc = link->adapter_softc;
+	struct mpi_softc		*sc = link->bus->sb_adapter_softc;
 	struct mpi_cfg_hdr		hdr;
 	struct mpi_cfg_raid_vol_pg0	*rp0;
 	int				len;
@@ -1635,7 +1635,7 @@ mpi_scsi_probe_virtual(struct scsi_link *link)
 int
 mpi_scsi_probe(struct scsi_link *link)
 {
-	struct mpi_softc		*sc = link->adapter_softc;
+	struct mpi_softc		*sc = link->bus->sb_adapter_softc;
 	struct mpi_ecfg_hdr		ehdr;
 	struct mpi_cfg_sas_dev_pg0	pg0;
 	u_int32_t			address;
@@ -2956,7 +2956,7 @@ mpi_req_cfg_page(struct mpi_softc *sc, u_int32_t address, int flags,
 int
 mpi_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 {
-	struct mpi_softc	*sc = link->adapter_softc;
+	struct mpi_softc	*sc = link->bus->sb_adapter_softc;
 
 	DNPRINTF(MPI_D_IOCTL, "%s: mpi_scsi_ioctl\n", DEVNAME(sc));
 
@@ -2982,7 +2982,7 @@ mpi_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 int
 mpi_ioctl_cache(struct scsi_link *link, u_long cmd, struct dk_cache *dc)
 {
-	struct mpi_softc	*sc = link->adapter_softc;
+	struct mpi_softc	*sc = link->bus->sb_adapter_softc;
 	struct mpi_ccb		*ccb;
 	int			len, rv;
 	struct mpi_cfg_hdr	hdr;

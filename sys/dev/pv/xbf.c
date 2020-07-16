@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.40 2020/07/11 13:34:06 krw Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.41 2020/07/16 21:18:30 krw Exp $	*/
 
 /*
  * Copyright (c) 2016, 2017 Mike Belopuhov
@@ -384,7 +384,7 @@ xbf_intr(void *xsc)
 void
 xbf_scsi_cmd(struct scsi_xfer *xs)
 {
-	struct xbf_softc *sc = xs->sc_link->adapter_softc;
+	struct xbf_softc *sc = xs->sc_link->bus->sb_adapter_softc;
 
 	switch (xs->cmd->opcode) {
 	case READ_BIG:
@@ -449,7 +449,7 @@ xbf_scsi_cmd(struct scsi_xfer *xs)
 int
 xbf_load_cmd(struct scsi_xfer *xs)
 {
-	struct xbf_softc *sc = xs->sc_link->adapter_softc;
+	struct xbf_softc *sc = xs->sc_link->bus->sb_adapter_softc;
 	struct xbf_ccb *ccb = xs->io;
 	struct xbf_sge *sge;
 	union xbf_ring_desc *xrd;
@@ -513,7 +513,7 @@ xbf_load_cmd(struct scsi_xfer *xs)
 int
 xbf_bounce_cmd(struct scsi_xfer *xs)
 {
-	struct xbf_softc *sc = xs->sc_link->adapter_softc;
+	struct xbf_softc *sc = xs->sc_link->bus->sb_adapter_softc;
 	struct xbf_ccb *ccb = xs->io;
 	struct xbf_sge *sge;
 	struct xbf_dma_mem *dma;
@@ -589,7 +589,7 @@ xbf_bounce_cmd(struct scsi_xfer *xs)
 void
 xbf_reclaim_cmd(struct scsi_xfer *xs)
 {
-	struct xbf_softc *sc = xs->sc_link->adapter_softc;
+	struct xbf_softc *sc = xs->sc_link->bus->sb_adapter_softc;
 	struct xbf_ccb *ccb = xs->io;
 	struct xbf_dma_mem *dma = &ccb->ccb_bbuf;
 
@@ -605,7 +605,7 @@ xbf_reclaim_cmd(struct scsi_xfer *xs)
 int
 xbf_submit_cmd(struct scsi_xfer *xs)
 {
-	struct xbf_softc *sc = xs->sc_link->adapter_softc;
+	struct xbf_softc *sc = xs->sc_link->bus->sb_adapter_softc;
 	struct xbf_ccb *ccb = xs->io;
 	union xbf_ring_desc *xrd;
 	struct scsi_rw *rw;
@@ -737,7 +737,7 @@ xbf_poll_cmd(struct scsi_xfer *xs)
 			delay(10);
 		else
 			tsleep_nsec(xs, PRIBIO, "xbfpoll", USEC_TO_NSEC(10));
-		xbf_intr(xs->sc_link->adapter_softc);
+		xbf_intr(xs->sc_link->bus->sb_adapter_softc);
 	} while(--timo > 0);
 
 	return (0);
@@ -821,7 +821,7 @@ xbf_scsi_inq(struct scsi_xfer *xs)
 void
 xbf_scsi_inquiry(struct scsi_xfer *xs)
 {
-	struct xbf_softc *sc = xs->sc_link->adapter_softc;
+	struct xbf_softc *sc = xs->sc_link->bus->sb_adapter_softc;
 	struct scsi_inquiry_data inq;
 	/* char buf[5]; */
 
@@ -852,7 +852,7 @@ xbf_scsi_inquiry(struct scsi_xfer *xs)
 void
 xbf_scsi_capacity(struct scsi_xfer *xs)
 {
-	struct xbf_softc *sc = xs->sc_link->adapter_softc;
+	struct xbf_softc *sc = xs->sc_link->bus->sb_adapter_softc;
 	struct scsi_read_cap_data rcd;
 	uint64_t capacity;
 
@@ -873,7 +873,7 @@ xbf_scsi_capacity(struct scsi_xfer *xs)
 void
 xbf_scsi_capacity16(struct scsi_xfer *xs)
 {
-	struct xbf_softc *sc = xs->sc_link->adapter_softc;
+	struct xbf_softc *sc = xs->sc_link->bus->sb_adapter_softc;
 	struct scsi_read_cap_data_16 rcd;
 
 	bzero(&rcd, sizeof(rcd));

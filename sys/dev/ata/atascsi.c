@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.138 2020/07/11 13:34:06 krw Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.139 2020/07/16 21:18:29 krw Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -215,7 +215,7 @@ atascsi_detach(struct atascsi *as, int flags)
 struct atascsi_port *
 atascsi_lookup_port(struct scsi_link *link)
 {
-	struct atascsi 			*as = link->adapter_softc;
+	struct atascsi 			*as = link->bus->sb_adapter_softc;
 	struct atascsi_host_port 	*ahp;
 
 	if (link->target >= as->as_link.adapter_buswidth)
@@ -231,7 +231,7 @@ atascsi_lookup_port(struct scsi_link *link)
 int
 atascsi_probe(struct scsi_link *link)
 {
-	struct atascsi			*as = link->adapter_softc;
+	struct atascsi			*as = link->bus->sb_adapter_softc;
 	struct atascsi_host_port 	*ahp;
 	struct atascsi_port		*ap;
 	struct ata_xfer			*xa;
@@ -437,7 +437,7 @@ unsupported:
 void
 atascsi_free(struct scsi_link *link)
 {
-	struct atascsi			*as = link->adapter_softc;
+	struct atascsi			*as = link->bus->sb_adapter_softc;
 	struct atascsi_host_port	*ahp;
 	struct atascsi_port		*ap;
 	int				port;
@@ -503,7 +503,7 @@ void
 atascsi_disk_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link	*link = xs->sc_link;
-	struct atascsi		*as = link->adapter_softc;
+	struct atascsi		*as = link->bus->sb_adapter_softc;
 	struct atascsi_port	*ap;
 	struct ata_xfer		*xa = xs->io;
 	int			flags = 0;
@@ -951,7 +951,7 @@ void
 atascsi_disk_write_same_16(struct scsi_xfer *xs)
 {
 	struct scsi_link	*link = xs->sc_link;
-	struct atascsi		*as = link->adapter_softc;
+	struct atascsi		*as = link->bus->sb_adapter_softc;
 	struct atascsi_port	*ap;
 	struct scsi_write_same_16 *cdb;
 	struct ata_xfer		*xa = xs->io;
@@ -1094,7 +1094,7 @@ atascsi_disk_unmap_task(void *xxs)
 {
 	struct scsi_xfer	*xs = xxs;
 	struct scsi_link	*link = xs->sc_link;
-	struct atascsi		*as = link->adapter_softc;
+	struct atascsi		*as = link->bus->sb_adapter_softc;
 	struct atascsi_port	*ap;
 	struct ata_xfer		*xa = xs->io;
 	struct ata_fis_h2d	*fis;
@@ -1171,7 +1171,7 @@ void
 atascsi_disk_sync(struct scsi_xfer *xs)
 {
 	struct scsi_link	*link = xs->sc_link;
-	struct atascsi		*as = link->adapter_softc;
+	struct atascsi		*as = link->bus->sb_adapter_softc;
 	struct atascsi_port	*ap;
 	struct ata_xfer		*xa = xs->io;
 
@@ -1393,7 +1393,7 @@ void
 atascsi_passthru_12(struct scsi_xfer *xs)
 {
 	struct scsi_link	*link = xs->sc_link;
-	struct atascsi		*as = link->adapter_softc;
+	struct atascsi		*as = link->bus->sb_adapter_softc;
 	struct atascsi_port	*ap;
 	struct ata_xfer		*xa = xs->io;
 	struct scsi_ata_passthru_12 *cdb;
@@ -1431,7 +1431,7 @@ void
 atascsi_passthru_16(struct scsi_xfer *xs)
 {
 	struct scsi_link	*link = xs->sc_link;
-	struct atascsi		*as = link->adapter_softc;
+	struct atascsi		*as = link->bus->sb_adapter_softc;
 	struct atascsi_port	*ap;
 	struct ata_xfer		*xa = xs->io;
 	struct scsi_ata_passthru_16 *cdb;
@@ -1517,7 +1517,7 @@ void
 atascsi_disk_start_stop(struct scsi_xfer *xs)
 {
 	struct scsi_link	*link = xs->sc_link;
-	struct atascsi		*as = link->adapter_softc;
+	struct atascsi		*as = link->bus->sb_adapter_softc;
 	struct atascsi_port	*ap;
 	struct ata_xfer		*xa = xs->io;
 	struct scsi_start_stop	*ss = (struct scsi_start_stop *)xs->cmd;
@@ -1560,7 +1560,7 @@ atascsi_disk_start_stop_done(struct ata_xfer *xa)
 {
 	struct scsi_xfer	*xs = xa->atascsi_private;
 	struct scsi_link	*link = xs->sc_link;
-	struct atascsi		*as = link->adapter_softc;
+	struct atascsi		*as = link->bus->sb_adapter_softc;
 	struct atascsi_port	*ap;
 
 	switch (xa->state) {
@@ -1607,7 +1607,7 @@ void
 atascsi_atapi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link	*link = xs->sc_link;
-	struct atascsi		*as = link->adapter_softc;
+	struct atascsi		*as = link->bus->sb_adapter_softc;
 	struct atascsi_port	*ap;
 	struct ata_xfer		*xa = xs->io;
 	struct ata_fis_h2d	*fis;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.136 2020/07/05 19:20:06 krw Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.137 2020/07/16 21:18:29 krw Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -1485,8 +1485,8 @@ device_register(struct device *dev, void *aux)
 		/*
 		 * Bounds check: we know the target and lun widths.
 		 */
-		if (target >= sl->adapter_buswidth ||
-		    lun >= sl->luns) {
+		if (target >= sl->bus->sb_adapter_buswidth ||
+		    lun >= sl->bus->sb_luns) {
 			printf("SCSI disk bootpath component not accepted: "
 			       "target %u; lun %u\n", target, lun);
 			return;

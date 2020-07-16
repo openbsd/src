@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.34 2020/07/11 13:34:06 krw Exp $	*/
+/*	$OpenBSD: aic6360.c,v 1.35 2020/07/16 21:18:30 krw Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 #ifdef DDB
@@ -477,7 +477,7 @@ void
 aic_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *sc_link = xs->sc_link;
-	struct aic_softc *sc = sc_link->adapter_softc;
+	struct aic_softc *sc = sc_link->bus->sb_adapter_softc;
 	struct aic_acb *acb;
 	int s, flags;
 
@@ -1970,7 +1970,7 @@ aic_timeout(void *arg)
 	struct aic_acb *acb = arg;
 	struct scsi_xfer *xs = acb->xs;
 	struct scsi_link *sc_link = xs->sc_link;
-	struct aic_softc *sc = sc_link->adapter_softc;
+	struct aic_softc *sc = sc_link->bus->sb_adapter_softc;
 	int s;
 
 	sc_print_addr(sc_link);

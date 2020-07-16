@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.250 2020/07/13 14:25:41 krw Exp $	*/
+/*	$OpenBSD: ami.c,v 1.251 2020/07/16 21:18:30 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1078,7 +1078,7 @@ ami_done_pt(struct ami_softc *sc, struct ami_ccb *ccb)
 {
 	struct scsi_xfer *xs = ccb->ccb_xs;
 	struct scsi_link *link = xs->sc_link;
-	struct ami_rawsoftc *rsc = link->adapter_softc;
+	struct ami_rawsoftc *rsc = link->bus->sb_adapter_softc;
 	u_int8_t target = link->target, type;
 
 	bus_dmamap_sync(sc->sc_dmat, AMIMEM_MAP(sc->sc_ccbmem_am),
@@ -1207,7 +1207,7 @@ void
 ami_scsi_raw_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
-	struct ami_rawsoftc *rsc = link->adapter_softc;
+	struct ami_rawsoftc *rsc = link->bus->sb_adapter_softc;
 	struct ami_softc *sc = rsc->sc_softc;
 	u_int8_t channel = rsc->sc_channel, target = link->target;
 	struct ami_ccb *ccb;
@@ -1308,7 +1308,7 @@ void
 ami_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
-	struct ami_softc *sc = link->adapter_softc;
+	struct ami_softc *sc = link->bus->sb_adapter_softc;
 	struct device *dev = link->device_softc;
 	struct ami_ccb *ccb;
 	struct ami_iocmd *cmd;
@@ -1547,7 +1547,7 @@ ami_intr(void *v)
 int
 ami_scsi_ioctl(struct scsi_link *link, u_long cmd, caddr_t addr, int flag)
 {
-	struct ami_softc *sc = link->adapter_softc;
+	struct ami_softc *sc = link->bus->sb_adapter_softc;
 	/* struct device *dev = (struct device *)link->device_softc; */
 	/* u_int8_t target = link->target; */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd33c93.c,v 1.15 2020/07/01 00:02:08 krw Exp $	*/
+/*	$OpenBSD: wd33c93.c,v 1.16 2020/07/16 21:18:30 krw Exp $	*/
 /*	$NetBSD: wd33c93.c,v 1.24 2010/11/13 13:52:02 uebayasi Exp $	*/
 
 /*
@@ -538,7 +538,7 @@ void
 wd33c93_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *sc_link = xs->sc_link;
-	struct wd33c93_softc *sc = sc_link->adapter_softc;
+	struct wd33c93_softc *sc = sc_link->bus->sb_adapter_softc;
 	struct wd33c93_acb *acb;
 	int flags, s;
 
@@ -2251,7 +2251,7 @@ wd33c93_timeout(void *arg)
 	struct wd33c93_acb *acb = arg;
 	struct scsi_xfer *xs = acb->xs;
 	struct scsi_link *sc_link = xs->sc_link;
-	struct wd33c93_softc *sc = sc_link->adapter_softc;
+	struct wd33c93_softc *sc = sc_link->bus->sb_adapter_softc;
 	int s, asr, csr;
 
 	s = splbio();

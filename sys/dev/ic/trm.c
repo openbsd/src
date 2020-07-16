@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.c,v 1.41 2020/07/13 13:43:31 krw Exp $
+/*	$OpenBSD: trm.c,v 1.42 2020/07/16 21:18:30 krw Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.c
@@ -317,7 +317,7 @@ trm_scsi_cmd(struct scsi_xfer *xs)
 	target = xs->sc_link->target;
 	lun    = xs->sc_link->lun;
 
-	sc  = xs->sc_link->adapter_softc;
+	sc  = xs->sc_link->bus->sb_adapter_softc;
 	ioh = sc->sc_iohandle;
 	iot = sc->sc_iotag;
 
@@ -618,7 +618,7 @@ trm_timeout(void *arg1)
  	xs   = pSRB->xs;
 
  	if (xs != NULL) {
- 		sc = xs->sc_link->adapter_softc;
+ 		sc = xs->sc_link->bus->sb_adapter_softc;
  		sc_print_addr(xs->sc_link);
  		printf("SCSI OpCode 0x%02x ", xs->cmd->opcode);
 		if (pSRB->SRBFlag & TRM_AUTO_REQSENSE)

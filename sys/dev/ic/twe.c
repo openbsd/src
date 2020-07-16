@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.54 2020/06/27 17:28:58 krw Exp $	*/
+/*	$OpenBSD: twe.c,v 1.55 2020/07/16 21:18:30 krw Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff.  All rights reserved.
@@ -774,7 +774,7 @@ twe_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
 	struct scsi_link *link = xs->sc_link;
-	struct twe_softc *sc = link->adapter_softc;
+	struct twe_softc *sc = link->bus->sb_adapter_softc;
 	struct twe_ccb *ccb = xs->io;
 	struct twe_cmd *cmd;
 	struct scsi_inquiry_data inq;

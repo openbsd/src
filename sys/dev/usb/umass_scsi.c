@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.54 2020/07/11 14:48:53 krw Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.55 2020/07/16 21:18:31 krw Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@ umass_scsi_detach(struct umass_softc *sc, int flags)
 int
 umass_scsi_probe(struct scsi_link *link)
 {
-	struct umass_softc *sc = link->adapter_softc;
+	struct umass_softc *sc = link->bus->sb_adapter_softc;
 	struct usb_device_info udi;
 	size_t len;
 
@@ -179,7 +179,7 @@ void
 umass_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *sc_link = xs->sc_link;
-	struct umass_softc *sc = sc_link->adapter_softc;
+	struct umass_softc *sc = sc_link->bus->sb_adapter_softc;
 	struct scsi_generic *cmd;
 	int cmdlen, dir;
 

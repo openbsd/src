@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.64 2020/07/11 13:34:06 krw Exp $ */
+/*	$OpenBSD: qla.c,v 1.65 2020/07/16 21:18:30 krw Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -942,7 +942,7 @@ qla_intr(void *xsc)
 int
 qla_scsi_probe(struct scsi_link *link)
 {
-	struct qla_softc *sc = link->adapter_softc;
+	struct qla_softc *sc = link->bus->sb_adapter_softc;
 	int rv = 0;
 
 	mtx_enter(&sc->sc_port_mtx);
@@ -964,7 +964,7 @@ void
 qla_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link	*link = xs->sc_link;
-	struct qla_softc	*sc = link->adapter_softc;
+	struct qla_softc	*sc = link->bus->sb_adapter_softc;
 	struct qla_ccb		*ccb;
 	struct qla_iocb_req34	*iocb;
 	struct qla_ccb_list	list;

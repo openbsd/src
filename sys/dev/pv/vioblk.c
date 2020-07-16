@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.22 2020/07/11 13:34:06 krw Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.23 2020/07/16 21:18:30 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -391,7 +391,7 @@ vioblk_reset(struct vioblk_softc *sc)
 void
 vioblk_scsi_cmd(struct scsi_xfer *xs)
 {
-	struct vioblk_softc *sc = xs->sc_link->adapter_softc;
+	struct vioblk_softc *sc = xs->sc_link->bus->sb_adapter_softc;
 	struct virtqueue *vq = &sc->sc_vq[0];
 	struct virtio_softc *vsc = sc->sc_virtio;
 	struct virtio_blk_req *vr;
@@ -586,7 +586,7 @@ vioblk_scsi_inq(struct scsi_xfer *xs)
 void
 vioblk_scsi_capacity(struct scsi_xfer *xs)
 {
-	struct vioblk_softc *sc = xs->sc_link->adapter_softc;
+	struct vioblk_softc *sc = xs->sc_link->bus->sb_adapter_softc;
 	struct scsi_read_cap_data rcd;
 	uint64_t capacity;
 
@@ -606,7 +606,7 @@ vioblk_scsi_capacity(struct scsi_xfer *xs)
 void
 vioblk_scsi_capacity16(struct scsi_xfer *xs)
 {
-	struct vioblk_softc *sc = xs->sc_link->adapter_softc;
+	struct vioblk_softc *sc = xs->sc_link->bus->sb_adapter_softc;
 	struct scsi_read_cap_data_16 rcd;
 
 	bzero(&rcd, sizeof(rcd));

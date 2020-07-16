@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.21 2020/07/11 20:15:52 krw Exp $	*/
+/*	$OpenBSD: vioscsi.c,v 1.22 2020/07/16 21:18:30 krw Exp $	*/
 /*
  * Copyright (c) 2013 Google Inc.
  *
@@ -179,7 +179,7 @@ err:
 void
 vioscsi_scsi_cmd(struct scsi_xfer *xs)
 {
-	struct vioscsi_softc *sc = xs->sc_link->adapter_softc;
+	struct vioscsi_softc *sc = xs->sc_link->bus->sb_adapter_softc;
 	struct virtio_softc *vsc = (struct virtio_softc *)sc->sc_dev.dv_parent;
 	struct vioscsi_req *vr = xs->io;
 	struct virtio_scsi_req_hdr *req = &vr->vr_req;

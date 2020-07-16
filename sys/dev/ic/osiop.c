@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.58 2020/07/11 13:34:06 krw Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.59 2020/07/16 21:18:30 krw Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -372,7 +372,7 @@ osiop_scsicmd(xs)
 {
 	struct scsi_link *periph = xs->sc_link;
 	struct osiop_acb *acb;
-	struct osiop_softc *sc = periph->adapter_softc;
+	struct osiop_softc *sc = periph->bus->sb_adapter_softc;
 	int err, s;
 	int dopoll;
 
