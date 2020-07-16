@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.67 2020/07/16 00:58:02 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.68 2020/07/16 03:04:50 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1268,6 +1268,7 @@ struct ixl_softc {
 	unsigned int		 sc_arq_prod;
 	unsigned int		 sc_arq_cons;
 
+	struct mutex		 sc_link_state_mtx;
 	struct task		 sc_link_state_task;
 	struct ixl_atq		 sc_link_state_atq;
 
@@ -1933,6 +1934,7 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 	if_attach_queues(ifp, nqueues);
 	if_attach_iqueues(ifp, nqueues);
 
+	mtx_init(&sc->sc_link_state_mtx, IPL_NET);
 	task_set(&sc->sc_link_state_task, ixl_link_state_update, sc);
 	ixl_wr(sc, I40E_PFINT_ICR0_ENA,
 	    I40E_PFINT_ICR0_ENA_LINK_STAT_CHANGE_MASK |
@@ -3349,6 +3351,7 @@ ixl_link_state_update_iaq(struct ixl_softc *sc, void *arg)
 	struct ixl_aq_desc *iaq = arg;
 	uint16_t retval;
 	int link_state;
+	int change = 0;
 
 	retval = lemtoh16(&iaq->iaq_retval);
 	if (retval != IXL_AQ_RC_OK) {
@@ -3356,13 +3359,16 @@ ixl_link_state_update_iaq(struct ixl_softc *sc, void *arg)
 		return;
 	}
 
-	NET_LOCK();
 	link_state = ixl_set_link_status(sc, iaq);
+	mtx_enter(&sc->sc_link_state_mtx);
 	if (ifp->if_link_state != link_state) {
 		ifp->if_link_state = link_state;
-		if_link_state_change(ifp);
+		change = 1;
 	}
-	NET_UNLOCK();
+	mtx_leave(&sc->sc_link_state_mtx);
+
+	if (change)
+		if_link_state_change(ifp);
 }
 
 static void
