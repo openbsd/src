@@ -1,4 +1,4 @@
-/*	$OpenBSD: xive.c,v 1.5 2020/06/29 20:34:19 kettenis Exp $	*/
+/*	$OpenBSD: xive.c,v 1.6 2020/07/16 19:10:33 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -138,9 +138,11 @@ xive_unmask(struct xive_softc *sc, struct intrhand *ih)
 
 int	xive_match(struct device *, void *, void *);
 void	xive_attach(struct device *, struct device *, void *);
+int	xive_activate(struct device *, int);
 
 struct cfattach	xive_ca = {
-	sizeof (struct xive_softc), xive_match, xive_attach
+	sizeof (struct xive_softc), xive_match, xive_attach, NULL,
+	xive_activate
 };
 
 struct cfdriver xive_cd = {
@@ -223,6 +225,18 @@ xive_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Synchronize hardware state to software state. */
 	xive_write_1(sc, XIVE_TM_CPPR_HV, ci->ci_cpl);
+}
+
+int
+xive_activate(struct device *self, int act)
+{
+	switch (act) {
+	case DVACT_POWERDOWN:
+		opal_xive_reset(OPAL_XIVE_MODE_EMU);
+		break;
+	}
+
+	return 0;
 }
 
 void *
