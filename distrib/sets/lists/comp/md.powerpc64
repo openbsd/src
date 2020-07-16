@@ -4,9 +4,9 @@
 ./usr/include/powerpc64
 ./usr/include/powerpc64/_float.h
 ./usr/include/powerpc64/_types.h
+./usr/include/powerpc64/apmvar.h
 ./usr/include/powerpc64/asm.h
 ./usr/include/powerpc64/atomic.h
-./usr/include/powerpc64/bootconfig.h
 ./usr/include/powerpc64/bus.h
 ./usr/include/powerpc64/cdefs.h
 ./usr/include/powerpc64/conf.h
@@ -18,7 +18,7 @@
 ./usr/include/powerpc64/exec.h
 ./usr/include/powerpc64/fdt.h
 ./usr/include/powerpc64/fenv.h
-./usr/include/powerpc64/float.h
+./usr/include/powerpc64/fpu.h
 ./usr/include/powerpc64/frame.h
 ./usr/include/powerpc64/ieee.h
 ./usr/include/powerpc64/ieeefp.h
