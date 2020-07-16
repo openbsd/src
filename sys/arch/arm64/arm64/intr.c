@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.17 2020/07/16 12:57:30 patrick Exp $ */
+/* $OpenBSD: intr.c,v 1.18 2020/07/16 13:03:39 patrick Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -373,6 +373,7 @@ arm_intr_establish_fdt_idx_cpu(int node, int idx, int level, struct cpu_info *ci
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_ic = ic;
 	ih->ih_ih = val;
+	ih->ih_cpu = ci;
 
 	return ih;
 }
@@ -445,6 +446,7 @@ arm_intr_establish_fdt_imap_cpu(int node, int *reg, int nreg, int level,
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_ic = ic;
 	ih->ih_ih = val;
+	ih->ih_cpu = ci;
 
 	free(map, M_DEVBUF, len);
 	return ih;
@@ -483,6 +485,7 @@ arm_intr_establish_fdt_msi_cpu(int node, uint64_t *addr, uint64_t *data,
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_ic = ic;
 	ih->ih_ih = val;
+	ih->ih_cpu = ci;
 
 	return ih;
 }
@@ -546,6 +549,7 @@ arm_intr_parent_establish_fdt(void *cookie, int *cell, int level,
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_ic = ic;
 	ih->ih_ih = val;
+	ih->ih_cpu = ci;
 
 	return ih;
 }
@@ -816,9 +820,10 @@ setstatclockrate(int new)
 }
 
 void
-intr_barrier(void *ih)
+intr_barrier(void *cookie)
 {
-	sched_barrier(NULL);
+	struct arm_intr_handle *ih = cookie;
+	sched_barrier(ih->ih_cpu);
 }
 
 /*

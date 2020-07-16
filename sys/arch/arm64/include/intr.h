@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.14 2020/07/16 12:57:30 patrick Exp $ */
+/*	$OpenBSD: intr.h,v 1.15 2020/07/16 13:03:39 patrick Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -93,6 +93,7 @@ void	 arm_set_intr_handler(int (*raise)(int), int (*lower)(int),
 struct arm_intr_handle {
 	struct interrupt_controller *ih_ic;
 	void *ih_ih;
+	struct cpu_info *ih_cpu;
 };
 
 struct arm_intr_func {
