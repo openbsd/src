@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.64 2020/06/03 17:56:42 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.65 2020/07/16 17:16:17 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -420,7 +420,7 @@ sa_new(struct iked *env, uint64_t ispi, uint64_t rspi,
 	} else
 		localid = &sa->sa_rid;
 
-	if (!ibuf_length(localid->id_buf) && pol != NULL &&
+	if (pol != NULL &&
 	    ikev2_policy2id(&pol->pol_localid, localid, 1) != 0) {
 		log_debug("%s: failed to get local id", __func__);
 		ikev2_ike_sa_setreason(sa, "failed to get local id");

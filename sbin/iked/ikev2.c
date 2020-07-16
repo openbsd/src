@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.234 2020/07/15 14:45:15 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.235 2020/07/16 17:16:17 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -854,15 +854,20 @@ ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
 			return (-1);
 		}
 		if (msg->msg_policy != old) {
-			/* move sa to new policy */
-			policy = sa->sa_policy = msg->msg_policy;
+			/* Clean up old policy */
 			TAILQ_REMOVE(&old->pol_sapeers, sa, sa_peer_entry);
-			TAILQ_INSERT_TAIL(&policy->pol_sapeers,
-			    sa, sa_peer_entry);
 			if (old->pol_flags & IKED_POLICY_REFCNT)
 				policy_unref(env, old);
-			if (policy->pol_flags & IKED_POLICY_REFCNT)
-				policy_ref(env, policy);
+
+			/* Update SA with new policy*/
+			if (sa_new(env, sa->sa_hdr.sh_ispi,
+			    sa->sa_hdr.sh_rspi, 0, msg->msg_policy) != sa) {
+				log_warnx("%s: failed to update SA",
+				    SPI_SA(sa, __func__));
+				ikev2_send_auth_failed(env, sa);
+				return (-1);
+			}
+			policy = sa->sa_policy;
 		} else {
 			/* restore */
 			msg->msg_policy = sa->sa_policy = old;
@@ -1505,6 +1510,7 @@ ikev2_policy2id(struct iked_static_id *polid, struct iked_id *id, int srcid)
 	hdr.id_type = id->id_type = polid->id_type;
 	id->id_offset = sizeof(hdr);
 
+	ibuf_free(id->id_buf);
 	if ((id->id_buf = ibuf_new(&hdr, sizeof(hdr))) == NULL)
 		return (-1);
 
