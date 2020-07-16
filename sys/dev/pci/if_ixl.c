@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.66 2020/07/12 04:58:10 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.67 2020/07/16 00:58:02 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1256,7 +1256,6 @@ struct ixl_softc {
 	const struct ixl_aq_regs *
 				 sc_aq_regs;
 
-	struct mutex		 sc_atq_mtx;
 	struct ixl_dmamem	 sc_atq;
 	unsigned int		 sc_atq_prod;
 	unsigned int		 sc_atq_cons;
@@ -1691,8 +1690,6 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pf_id = func & (ari ? 0xff : 0x7);
 
 	/* initialise the adminq */
-
-	mtx_init(&sc->sc_atq_mtx, IPL_NET);
 
 	if (ixl_dmamem_alloc(sc, &sc->sc_atq,
 	    sizeof(struct ixl_aq_desc) * IXL_AQ_NUM, IXL_AQ_ALIGN) != 0) {
