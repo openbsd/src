@@ -1,6 +1,6 @@
 define(MACHINE,powerpc64)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.3 2020/07/06 06:11:27 dlg Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.4 2020/07/16 19:42:47 kettenis Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -81,6 +81,10 @@ _DEV(kstat, 15)
 dnl
 divert(__mddivert)dnl
 dnl
+boot)
+	_recurse ramdisk sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9
+	M kexec	 	c 16 0 600
+	;;
 ramdisk)
 	_recurse std bpf sd0 tty00 tty01 rd0 bio diskmap
 	_recurse cd0 ttyC0 wskbd0 wskbd1 wskbd2 random
