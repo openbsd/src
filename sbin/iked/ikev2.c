@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.235 2020/07/16 17:16:17 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.236 2020/07/16 17:38:24 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1643,7 +1643,6 @@ ikev2_add_ts_payload(struct ibuf *buf, unsigned int type, struct iked_sa *sa)
 
 	if ((tsp = ibuf_advance(buf, sizeof(*tsp))) == NULL)
 		return (-1);
-	tsp->tsp_count = pol->pol_nflows;
 	len = sizeof(*tsp);
 
 	if (type == IKEV2_PAYLOAD_TSi) {
