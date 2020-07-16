@@ -214,6 +214,7 @@ vma_create(struct drm_i915_gem_object *obj,
 		cmp = i915_vma_compare(pos, vm, view);
 		if (cmp == 0) {
 			spin_unlock(&obj->vma.lock);
+			i915_vm_put(vm);
 			i915_vma_free(vma);
 			return pos;
 		}
