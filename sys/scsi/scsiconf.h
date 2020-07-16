@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.190 2020/07/05 20:17:25 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.191 2020/07/16 12:38:44 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -357,9 +357,17 @@ struct scsibus_attach_args {
  * the others, before they have the rest of the fields filled in.
  */
 struct scsibus_softc {
-	struct device sc_dev;
-	struct scsi_link *adapter_link;	/* prototype supplied by adapter */
-	SLIST_HEAD(, scsi_link) sc_link_list;
+	struct device		 sc_dev;
+	SLIST_HEAD(, scsi_link)  sc_link_list;
+	void			*sb_adapter_softc;
+	struct	scsi_adapter	*sb_adapter;
+	struct	scsi_iopool	*sb_pool;
+	u_int16_t		 sb_quirks;
+	u_int16_t		 sb_flags;
+	u_int16_t		 sb_openings;
+	u_int16_t		 sb_adapter_buswidth;
+	u_int16_t		 sb_adapter_target;
+	u_int8_t		 sb_luns;
 };
 
 /*

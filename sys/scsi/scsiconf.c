@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.225 2020/07/05 20:17:25 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.226 2020/07/16 12:38:43 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -136,26 +136,34 @@ scsibusattach(struct device *parent, struct device *self, void *aux)
 {
 	struct scsibus_softc		*sb = (struct scsibus_softc *)self;
 	struct scsibus_attach_args	*saa = aux;
-	struct scsi_link		*sc_link_proto = saa->saa_sc_link;
 
 	if (!cold)
 		scsi_autoconf = 0;
 
-	sc_link_proto->bus = sb;
-	sb->adapter_link = sc_link_proto;
-	if (sb->adapter_link->adapter_buswidth == 0)
-		sb->adapter_link->adapter_buswidth = 8;
-	if (sb->adapter_link->luns == 0)
-		sb->adapter_link->luns = 8;
+	SLIST_INIT(&sb->sc_link_list);
+	sb->sb_adapter_softc = saa->saa_sc_link->adapter_softc;
+	sb->sb_adapter = saa->saa_sc_link->adapter;
+	sb->sb_pool = saa->saa_sc_link->pool;
+	sb->sb_quirks = saa->saa_sc_link->quirks;
+	sb->sb_flags = saa->saa_sc_link->flags;
+	sb->sb_openings = saa->saa_sc_link->openings;
+	sb->sb_adapter_buswidth = saa->saa_sc_link->adapter_buswidth;
+	sb->sb_adapter_target = saa->saa_sc_link->adapter_target;
+	sb->sb_luns = saa->saa_sc_link->luns;
 
-	printf(": %d targets", sb->adapter_link->adapter_buswidth);
-	if (sb->adapter_link->adapter_target <
-	    sb->adapter_link->adapter_buswidth)
-		printf(", initiator %d", sb->adapter_link->adapter_target);
-	if (sb->adapter_link->port_wwn != 0x0 &&
-	    sb->adapter_link->node_wwn != 0x0) {
+	if (sb->sb_adapter_buswidth == 0)
+		sb->sb_adapter_buswidth = 8;
+	if (sb->sb_luns == 0)
+		sb->sb_luns = 8;
+
+	printf(": %d targets", sb->sb_adapter_buswidth);
+	if (sb->sb_adapter_target < sb->sb_adapter_buswidth)
+		printf(", initiator %d", sb->sb_adapter_target);
+	if (saa->saa_sc_link->port_wwn != 0x0 &&
+	    saa->saa_sc_link->node_wwn != 0x0) {
 		printf(", WWPN %016llx, WWNN %016llx",
-		    sb->adapter_link->port_wwn, sb->adapter_link->node_wwn);
+		    saa->saa_sc_link->port_wwn,
+		    saa->saa_sc_link->node_wwn);
 	}
 	printf("\n");
 
@@ -200,8 +208,7 @@ scsi_activate_bus(struct scsibus_softc *sb, int act)
 {
 	int target, r, rv = 0;
 
-	for (target = 0; target < sb->adapter_link->adapter_buswidth;
-	     target++) {
+	for (target = 0; target < sb->sb_adapter_buswidth; target++) {
 		r = scsi_activate_target(sb, target, act);
 		if (r)
 			rv = r;
@@ -387,13 +394,12 @@ int
 scsi_probe(struct scsibus_softc *sb, int target, int lun)
 {
 	struct scsi_lun_array		 lunarray;
-	struct scsi_link		*alink = sb->adapter_link;
 	struct scsi_link		*link0;
 	int				 i, r, rv = 0;
 
 	if (target == -1 && lun == -1) {
 		/* Probe all luns on all targets on bus. */
-		for (i = 0; i < alink->adapter_buswidth; i++) {
+		for (i = 0; i < sb->sb_adapter_buswidth; i++) {
 			r = scsi_probe(sb, i, -1);
 			if (r != 0 && r != EINVAL)
 				rv = r;
@@ -401,8 +407,8 @@ scsi_probe(struct scsibus_softc *sb, int target, int lun)
 		return rv;
 	}
 
-	if (target < 0 || target >= alink->adapter_buswidth ||
-	    target == alink->adapter_target)
+	if (target < 0 || target >= sb->sb_adapter_buswidth ||
+	    target == sb->sb_adapter_target)
 		return EINVAL;
 
 	if (lun == -1) {
@@ -439,7 +445,6 @@ scsi_probe_lun(struct scsibus_softc *sb, int target, int lun)
 int
 scsi_detach(struct scsibus_softc *sb, int target, int lun, int flags)
 {
-	struct scsi_link	*alink = sb->adapter_link;
 	struct scsi_link	*link, *tmp;
 	int			 r, rv = 0;
 
@@ -454,8 +459,8 @@ scsi_detach(struct scsibus_softc *sb, int target, int lun, int flags)
 		return rv;
 	}
 
-	if (target < 0 || target >= alink->adapter_buswidth ||
-	    target == alink->adapter_target)
+	if (target < 0 || target >= sb->sb_adapter_buswidth ||
+	    target == sb->sb_adapter_target)
 		return EINVAL;
 
 	if (lun == -1) {
@@ -501,7 +506,6 @@ scsi_detach_lun(struct scsibus_softc *sb, int target, int lun, int flags)
 int
 scsi_detach_link(struct scsibus_softc *sb, struct scsi_link *link, int flags)
 {
-	struct scsi_link		*alink = sb->adapter_link;
 	int				 rv;
 
 	if (!ISSET(flags, DETACH_FORCE) && ISSET(link->flags, SDEV_OPEN))
@@ -525,8 +529,8 @@ scsi_detach_link(struct scsibus_softc *sb, struct scsi_link *link, int flags)
 	}
 
 	/* 4. Free up its state in the adapter. */
-	if (alink->adapter->dev_free != NULL)
-		alink->adapter->dev_free(link);
+	if (sb->sb_adapter->dev_free != NULL)
+		sb->sb_adapter->dev_free(link);
 
 	/* 5. Free up its state in the midlayer. */
 	if (link->id != NULL)
@@ -834,18 +838,33 @@ scsi_probedev(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 		return EINVAL;
 	}
 
-	*link = *sb->adapter_link;
+	link->state = 0;
+	link->luns = sb->sb_luns;
 	link->target = target;
 	link->lun = lun;
-	link->interpret_sense = scsi_interpret_sense;
+	link->openings = sb->sb_openings;
 	link->node_wwn = link->port_wwn = 0;
+	link->adapter_target = sb->sb_adapter_target;
+	link->adapter_buswidth = sb->sb_adapter_buswidth;
+	link->flags = sb->sb_flags;
+	link->quirks = sb->sb_quirks;
+	link->interpret_sense = scsi_interpret_sense;
+	link->device_softc = NULL;
+	link->adapter = sb->sb_adapter;
+	link->adapter_softc = sb->sb_adapter_softc;
+	link->bus = sb;
+	memset(&link->inqdata, 0, sizeof(link->inqdata));
+	link->id = NULL;
 	TAILQ_INIT(&link->queue);
+	link->running = 0;
+	link->pending = 0;
+	link->pool = sb->sb_pool;
 
 	SC_DEBUG(link, SDEV_DB2, ("scsi_link created.\n"));
 
 	/* Ask the adapter if this will be a valid device. */
-	if (sb->adapter_link->adapter->dev_probe != NULL &&
-	    sb->adapter_link->adapter->dev_probe(link) != 0) {
+	if (sb->sb_adapter->dev_probe != NULL &&
+	    sb->sb_adapter->dev_probe(link) != 0) {
 		if (lun == 0) {
 			SC_DEBUG(link, SDEV_DB2, ("Bad LUN 0. dev_probe() "
 			    "failed.\n"));
@@ -1063,8 +1082,8 @@ bad:
 	if (ISSET(link->flags, SDEV_OWN_IOPL))
 		free(link->pool, M_DEVBUF, sizeof(*link->pool));
 
-	if (sb->adapter_link->adapter->dev_free != NULL)
-		sb->adapter_link->adapter->dev_free(link);
+	if (sb->sb_adapter->dev_free != NULL)
+		sb->sb_adapter->dev_free(link);
 free:
 	free(link, M_DEVBUF, sizeof(*link));
 	return rslt;
