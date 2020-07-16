@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.67 2020/07/16 05:45:03 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.68 2020/07/16 21:49:41 patrick Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -6972,7 +6972,7 @@ mcx_down(struct mcx_softc *sc)
 
 		timeout_del_barrier(&sc->sc_queues[i].q_rx.rx_refill);
 
-		intr_barrier(&sc->sc_queues[i].q_ihc);
+		intr_barrier(sc->sc_queues[i].q_ihc);
 	}
 
 	timeout_del_barrier(&sc->sc_calibrate);
