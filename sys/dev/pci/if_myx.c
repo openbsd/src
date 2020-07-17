@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.110 2020/07/17 02:58:14 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.111 2020/07/17 03:37:36 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -957,9 +957,11 @@ myx_rxrinfo(struct myx_softc *sc, struct if_rxrinfo *ifri)
 
 	ifr[0].ifr_size = MYX_RXSMALL_SIZE;
 	ifr[0].ifr_info = sc->sc_rx_ring[0].mrr_rxr;
+	strlcpy(ifr[0].ifr_name, "small", sizeof(ifr[0].ifr_name));
 
 	ifr[1].ifr_size = MYX_RXBIG_SIZE;
 	ifr[1].ifr_info = sc->sc_rx_ring[1].mrr_rxr;
+	strlcpy(ifr[1].ifr_name, "large", sizeof(ifr[1].ifr_name));
 
 	return (if_rxr_info_ioctl(ifri, nitems(ifr), ifr));
 }
