@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.96 2020/07/15 13:02:44 mvs Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.97 2020/07/17 08:57:27 mvs Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -652,9 +652,6 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	ifp = &pxi->pxi_if;
 
 	pxi->pxi_session = session;
-	/* fake a pipex interface context */
-	pxi->pxi_ifcontext.ifnet_this = ifp;
-	pxi->pxi_ifcontext.pipexmode = PIPEX_ENABLED;
 
 	/* try to set the interface up */
 	unit = pppx_if_next_unit();
@@ -687,10 +684,6 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	ifp->if_softc = pxi;
 	/* ifp->if_rdomain = req->pr_rdomain; */
 
-	error = pipex_link_session(session, &pxi->pxi_ifcontext);
-	if (error)
-		goto remove;
-
 	/* XXXSMP breaks atomicity */
 	NET_UNLOCK();
 	if_attach(ifp);
@@ -702,7 +695,6 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(u_int32_t));
 #endif
-	SET(ifp->if_flags, IFF_RUNNING);
 
 	/* XXX ipv6 support?  how does the caller indicate it wants ipv6
 	 * instead of ipv4?
@@ -740,11 +732,26 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	} else {
 		if_addrhooks_run(ifp);
 	}
+
+	/* fake a pipex interface context */
+	pxi->pxi_ifcontext.ifindex = ifp->if_index;
+	pxi->pxi_ifcontext.pipexmode = PIPEX_ENABLED;
+
+	error = pipex_link_session(session, &pxi->pxi_ifcontext);
+	if (error)
+		goto detach;
+
+	SET(ifp->if_flags, IFF_RUNNING);
 	pxi->pxi_ready = 1;
 
 	return (error);
 
-remove:
+detach:
+	/* XXXSMP breaks atomicity */
+	NET_UNLOCK();
+	if_detach(ifp);
+	NET_LOCK();
+
 	if (RBT_REMOVE(pppx_ifs, &pppx_ifs, pxi) == NULL)
 		panic("%s: inconsistent RB tree", __func__);
 	LIST_REMOVE(pxi, pxi_list);
@@ -1100,7 +1107,7 @@ pppacopen(dev_t dev, int flags, int mode, struct proc *p)
 	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(uint32_t));
 #endif
 
-	pipex_iface_init(&sc->sc_pipex_iface, ifp);
+	pipex_iface_init(&sc->sc_pipex_iface, ifp->if_index);
 
 	return (0);
 }

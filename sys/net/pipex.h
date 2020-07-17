@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.h,v 1.24 2020/07/06 20:37:51 mvs Exp $	*/
+/*	$OpenBSD: pipex.h,v 1.25 2020/07/17 08:57:27 mvs Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -190,7 +190,7 @@ struct pipex_session;
  *      N       net lock
  */
 struct pipex_iface_context {
-	struct	ifnet *ifnet_this;	/* [I] outer interface */
+	int	ifindex;		/* [I] outer interface index */
 	u_int	pipexmode;		/* [N] pipex mode */
 	/* [I] virtual pipex_session entry for multicast routing */
 	struct pipex_session *multicast_session;
@@ -198,7 +198,7 @@ struct pipex_iface_context {
 
 __BEGIN_DECLS
 void                  pipex_init (void);
-void                  pipex_iface_init (struct pipex_iface_context *, struct ifnet *);
+void                  pipex_iface_init (struct pipex_iface_context *, int);
 void                  pipex_iface_fini (struct pipex_iface_context *);
 
 int                   pipex_notify_close_session(struct pipex_session *session);
