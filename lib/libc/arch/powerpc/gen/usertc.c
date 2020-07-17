@@ -1,4 +1,4 @@
-/*	$OpenBSD: usertc.c,v 1.1 2020/07/06 13:33:05 pirofti Exp $	*/
+/*	$OpenBSD: usertc.c,v 1.2 2020/07/17 20:15:43 gkoehler Exp $ */
 /*
  * Copyright (c) 2020 Paul Irofti <paul@irofti.net>
  *
@@ -18,4 +18,24 @@
 #include <sys/types.h>
 #include <sys/timetc.h>
 
-int (*const _tc_get_timecount)(struct timekeep *, u_int *) = NULL;
+static __inline u_int32_t
+ppc_mftbl (void)
+{
+	int ret;
+	__asm volatile ("mftb %0" : "=r" (ret));
+	return ret;
+}
+
+static int
+tc_get_timecount(struct timekeep *tk, u_int *tc)
+{
+	switch (tk->tk_user) {
+	case TC_TB:
+		*tc = ppc_mftbl();
+		return 0;
+	}
+
+	return -1;
+}
+
+int (*const _tc_get_timecount)(struct timekeep *, u_int *) = tc_get_timecount;

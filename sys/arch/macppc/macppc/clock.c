@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.45 2020/07/12 20:32:20 naddy Exp $	*/
+/*	$OpenBSD: clock.c,v 1.46 2020/07/17 20:15:43 gkoehler Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -57,7 +57,7 @@ u_int32_t ns_per_tick = 320;
 static int32_t ticks_per_intr;
 
 static struct timecounter tb_timecounter = {
-	tb_get_timecount, NULL, 0xffffffff, 0, "tb", 0, NULL, 0
+	tb_get_timecount, NULL, 0xffffffff, 0, "tb", 0, NULL, TC_TB
 };
 
 /* calibrate the timecounter frequency for the listed models */
