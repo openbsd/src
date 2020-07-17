@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.51 2020/07/14 20:52:44 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.52 2020/07/17 20:24:07 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -625,6 +625,14 @@ cpu_startup(void)
 		len = fdt_node_property(node, "bootargs", &prop);
 		if (len > 0)
 			parse_bootargs(prop);
+
+		len = fdt_node_property(node, "openbsd,boothowto", &prop);
+		if (len == sizeof(boothowto))
+			boothowto = bemtoh32((uint32_t *)prop);
+
+		len = fdt_node_property(node, "openbsd,bootduid", &prop);
+		if (len == sizeof(bootduid))
+			memcpy(bootduid, prop, sizeof(bootduid));
 	}
 
 	if (boothowto & RB_CONFIG) {
