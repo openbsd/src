@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.68 2020/07/16 21:49:41 patrick Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.69 2020/07/17 03:23:18 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -7460,7 +7460,6 @@ mcx_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	}
 
 	ifmr->ifm_status = IFM_AVALID;
-	/* not sure if this is the right thing to check, maybe paos? */
 	if (proto_oper != 0) {
 		ifmr->ifm_status |= IFM_ACTIVE;
 		ifmr->ifm_active = IFM_ETHER | IFM_AUTO | media_oper;
@@ -7551,26 +7550,20 @@ mcx_port_change(void *xsc)
 {
 	struct mcx_softc *sc = xsc;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
-	struct mcx_reg_paos paos = {
-		.rp_local_port = 1,
-	};
 	struct mcx_reg_ptys ptys = {
 		.rp_local_port = 1,
 		.rp_proto_mask = MCX_REG_PTYS_PROTO_MASK_ETH,
 	};
 	int link_state = LINK_STATE_DOWN;
 
-	if (mcx_access_hca_reg(sc, MCX_REG_PAOS, MCX_REG_OP_READ, &paos,
-	    sizeof(paos)) == 0) {
-		if (paos.rp_oper_status == MCX_REG_PAOS_OPER_STATUS_UP)
-			link_state = LINK_STATE_FULL_DUPLEX;
-	}
-
 	if (mcx_access_hca_reg(sc, MCX_REG_PTYS, MCX_REG_OP_READ, &ptys,
 	    sizeof(ptys)) == 0) {
 		uint32_t proto_oper = betoh32(ptys.rp_eth_proto_oper);
 		uint64_t baudrate = 0;
 		unsigned int i;
+
+		if (proto_oper != 0)
+			link_state = LINK_STATE_FULL_DUPLEX;
 
 		for (i = 0; i < nitems(mcx_eth_cap_map); i++) {
 			const struct mcx_eth_proto_capability *cap;
