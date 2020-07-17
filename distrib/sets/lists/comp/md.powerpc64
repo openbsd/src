@@ -24,6 +24,7 @@
 ./usr/include/powerpc64/ieeefp.h
 ./usr/include/powerpc64/intr.h
 ./usr/include/powerpc64/kcore.h
+./usr/include/powerpc64/kexec.h
 ./usr/include/powerpc64/limits.h
 ./usr/include/powerpc64/mutex.h
 ./usr/include/powerpc64/opal.h
