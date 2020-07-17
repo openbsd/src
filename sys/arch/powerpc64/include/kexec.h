@@ -1,4 +1,4 @@
-/*	$OpenBSD: kexec.h,v 1.1 2020/07/16 19:37:58 kettenis Exp $	*/
+/*	$OpenBSD: kexec.h,v 1.2 2020/07/17 08:57:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Visa Hankala
@@ -31,6 +31,6 @@ struct kexec_args {
 };
 
 #define KIOC_KEXEC		_IOW('K', 1, struct kexec_args)
-#define KIOC_GETBOOTDUID	_IOW('K', 2, char[8])
+#define KIOC_GETBOOTDUID	_IOR('K', 2, char[8])
 
 #endif /* _MACHINE_KEXEC_H_ */
