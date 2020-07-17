@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.168 2020/07/17 06:27:36 dlg Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.169 2020/07/17 06:33:07 dlg Exp $	*/
 
 /******************************************************************************
 
@@ -2934,7 +2934,7 @@ ixgbe_initialize_rss_mapping(struct ix_softc *sc)
 	int i, j, queue_id, table_size, index_mult;
 
 	/* set up random bits */
-	arc4random_buf(&rss_key, sizeof(rss_key));
+	stoeplitz_to_key(&rss_key, sizeof(rss_key));
 
 	/* Set multiplier for RETA setup and table size based on MAC */
 	index_mult = 0x1;
@@ -3071,6 +3071,8 @@ ixgbe_rxeof(struct rx_ring *rxr)
 
 	i = rxr->next_to_check;
 	while (if_rxr_inuse(&rxr->rx_ring) > 0) {
+		uint32_t hash, hashtype;
+
 		bus_dmamap_sync(rxr->rxdma.dma_tag, rxr->rxdma.dma_map,
 		    dsize * i, dsize, BUS_DMASYNC_POSTREAD);
 
@@ -3098,6 +3100,9 @@ ixgbe_rxeof(struct rx_ring *rxr)
 		    IXGBE_RXDADV_PKTTYPE_MASK;
 		vtag = letoh16(rxdesc->wb.upper.vlan);
 		eop = ((staterr & IXGBE_RXD_STAT_EOP) != 0);
+		hash = lemtoh32(&rxdesc->wb.lower.hi_dword.rss);
+		hashtype = lemtoh32(&rxdesc->wb.lower.lo_dword.data) &
+		    IXGBE_RXDADV_RSSTYPE_MASK;
 
 		if (staterr & IXGBE_RXDADV_ERR_FRAME_ERR_MASK) {
 			sc->dropped_pkts++;
@@ -3171,6 +3176,11 @@ ixgbe_rxeof(struct rx_ring *rxr)
 			rxr->rx_bytes += sendmp->m_pkthdr.len;
 
 			ixgbe_rx_checksum(staterr, sendmp, ptype);
+
+			if (hashtype != IXGBE_RXDADV_RSSTYPE_NONE) {
+				sendmp->m_pkthdr.ph_flowid = hash;
+				SET(sendmp->m_pkthdr.csum_flags, M_FLOWID);
+			}
 
 			ml_enqueue(&ml, sendmp);
 		}

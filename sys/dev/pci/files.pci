@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.351 2020/07/17 06:27:36 dlg Exp $
+#	$OpenBSD: files.pci,v 1.352 2020/07/17 06:33:07 dlg Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -343,7 +343,7 @@ file	dev/pci/ixgb_ee.c		ixgb
 file	dev/pci/ixgb_hw.c		ixgb
 
 # Intel 82598 10GbE
-device	ix: ether, ifnet, ifmedia, intrmap
+device	ix: ether, ifnet, ifmedia, intrmap, stoeplitz
 attach	ix at pci
 file	dev/pci/if_ix.c			ix
 file	dev/pci/ixgbe.c			ix
