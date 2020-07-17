@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.h,v 1.41 2020/06/07 23:52:05 dlg Exp $	*/
+/*	$OpenBSD: if_ix.h,v 1.42 2020/07/17 06:27:36 dlg Exp $	*/
 
 /******************************************************************************
 
@@ -234,7 +234,7 @@ struct ix_softc {
 
 	struct ifmedia		media;
 	struct timeout		timer;
-	int			msix;
+	struct intrmap		*sc_intrmap;
 	int			if_flags;
 
 	uint16_t		num_vlans;

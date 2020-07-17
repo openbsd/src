@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.167 2020/07/10 13:26:38 patrick Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.168 2020/07/17 06:27:36 dlg Exp $	*/
 
 /******************************************************************************
 
@@ -115,7 +115,7 @@ void	ixgbe_identify_hardware(struct ix_softc *);
 int	ixgbe_allocate_pci_resources(struct ix_softc *);
 int	ixgbe_allocate_legacy(struct ix_softc *);
 int	ixgbe_allocate_msix(struct ix_softc *);
-int	ixgbe_setup_msix(struct ix_softc *);
+void	ixgbe_setup_msix(struct ix_softc *);
 int	ixgbe_allocate_queues(struct ix_softc *);
 void	ixgbe_free_pci_resources(struct ix_softc *);
 void	ixgbe_local_timer(void *);
@@ -199,7 +199,7 @@ struct cfattach ix_ca = {
 };
 
 int ixgbe_smart_speed = ixgbe_smart_speed_on;
-int ixgbe_enable_msix = 0;
+int ixgbe_enable_msix = 1;
 
 /*********************************************************************
  *  Device identification routine
@@ -301,7 +301,7 @@ ixgbe_attach(struct device *parent, struct device *self, void *aux)
 	bcopy(sc->hw.mac.addr, sc->arpcom.ac_enaddr,
 	    IXGBE_ETH_LENGTH_OF_ADDRESS);
 
-	if (sc->msix > 1)
+	if (sc->sc_intrmap)
 		error = ixgbe_allocate_msix(sc);
 	else
 		error = ixgbe_allocate_legacy(sc);
@@ -604,7 +604,7 @@ ixgbe_rxrinfo(struct ix_softc *sc, struct if_rxrinfo *ifri)
 	for (i = 0; i < sc->num_queues; i++) {
 		rxr = &sc->rx_rings[i];
 		ifr[n].ifr_size = sc->rx_mbuf_sz;
-		snprintf(ifr[n].ifr_name, sizeof(ifr[n].ifr_name), "/%d", i);
+		snprintf(ifr[n].ifr_name, sizeof(ifr[n].ifr_name), "%d", i);
 		ifr[n].ifr_info = rxr->rx_ring;
 		n++;
 	}
@@ -798,7 +798,7 @@ ixgbe_init(void *arg)
 	timeout_add_sec(&sc->timer, 1);
 
 	/* Set up MSI/X routing */
-	if (sc->msix > 1) {
+	if (sc->sc_intrmap) {
 		ixgbe_configure_ivars(sc);
 		/* Set up auto-mask */
 		if (sc->hw.mac.type == ixgbe_mac_82598EB)
@@ -829,7 +829,7 @@ ixgbe_init(void *arg)
 		itr |= IXGBE_EITR_LLI_MOD | IXGBE_EITR_CNT_WDIS;
 	IXGBE_WRITE_REG(&sc->hw, IXGBE_EITR(0), itr);
 
-	if (sc->msix > 1) {
+	if (sc->sc_intrmap) {
 		/* Set moderation on the Link interrupt */
 		IXGBE_WRITE_REG(&sc->hw, IXGBE_EITR(sc->linkvec),
 		    IXGBE_LINK_ITR);
@@ -903,7 +903,7 @@ ixgbe_config_gpie(struct ix_softc *sc)
 		gpie |= 0xf << IXGBE_GPIE_LLI_DELAY_SHIFT;
 	}
 
-	if (sc->msix > 1) {
+	if (sc->sc_intrmap) {
 		/* Enable Enhanced MSIX mode */
 		gpie |= IXGBE_GPIE_MSIX_MODE;
 		gpie |= IXGBE_GPIE_EIAME | IXGBE_GPIE_PBA_SUPPORT |
@@ -1617,6 +1617,7 @@ ixgbe_stop(void *arg)
 		ifq_barrier(ifq);
 		ifq_clr_oactive(ifq);
 
+		intr_barrier(sc->queues[i].tag);
 		timeout_del(&sc->rx_rings[i].rx_refill);
 	}
 
@@ -1717,80 +1718,86 @@ ixgbe_allocate_msix(struct ix_softc *sc)
 {
 	struct ixgbe_osdep	*os = &sc->osdep;
 	struct pci_attach_args	*pa  = &os->os_pa;
-	int			 vec, error = 0;
-	struct ix_queue		*que = sc->queues;
-	const char		*intrstr = NULL;
-	pci_chipset_tag_t	pc = pa->pa_pc;
+	int                      i = 0, error = 0;
+	struct ix_queue         *que;
 	pci_intr_handle_t	ih;
 
-	vec = 0;
-	if (pci_intr_map_msix(pa, vec, &ih)) {
-		printf(": couldn't map interrupt\n");
-		return (ENXIO);
-	}
+	for (i = 0, que = sc->queues; i < sc->num_queues; i++, que++) {
+		if (pci_intr_map_msix(pa, i, &ih)) {
+			printf("ixgbe_allocate_msix: "
+			    "pci_intr_map_msix vec %d failed\n", i);
+			error = ENOMEM;
+			goto fail;
+		}
 
-	que->msix = vec;
-	snprintf(que->name, sizeof(que->name), "%s:%d", sc->dev.dv_xname, vec);
+		que->tag = pci_intr_establish_cpu(pa->pa_pc, ih,
+		    IPL_NET | IPL_MPSAFE, intrmap_cpu(sc->sc_intrmap, i),
+		    ixgbe_queue_intr, que, que->name);
+		if (que->tag == NULL) {
+			printf("ixgbe_allocate_msix: "
+			    "pci_intr_establish vec %d failed\n", i);
+			error = ENOMEM;
+			goto fail;
+		}
 
-	intrstr = pci_intr_string(pc, ih);
-	que->tag = pci_intr_establish(pc, ih, IPL_NET | IPL_MPSAFE,
-	    ixgbe_queue_intr, que, que->name);
-	if (que->tag == NULL) {
-		printf(": couldn't establish interrupt");
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
-		return (ENXIO);
+		que->msix = i;
 	}
 
 	/* Now the link status/control last MSI-X vector */
-	vec++;
-	if (pci_intr_map_msix(pa, vec, &ih)) {
-		printf(": couldn't map link vector\n");
-		error = ENXIO;
+	if (pci_intr_map_msix(pa, i, &ih)) {
+		printf("ixgbe_allocate_msix: "
+		    "pci_intr_map_msix link vector failed\n");
+		error = ENOMEM;
 		goto fail;
 	}
 
-	intrstr = pci_intr_string(pc, ih);
-	sc->tag = pci_intr_establish(pc, ih, IPL_NET | IPL_MPSAFE,
+	sc->tag = pci_intr_establish(pa->pa_pc, ih, IPL_NET | IPL_MPSAFE,
 	    ixgbe_link_intr, sc, sc->dev.dv_xname);
 	if (sc->tag == NULL) {
-		printf(": couldn't establish interrupt");
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
-		error = ENXIO;
+		printf("ixgbe_allocate_msix: "
+		    "pci_intr_establish link vector failed\n");
+		error = ENOMEM;
 		goto fail;
 	}
-
-	sc->linkvec = vec;
-	printf(", %s, %d queue%s", intrstr, vec, (vec > 1) ? "s" : "");
+	sc->linkvec = i;
+	printf(", %s, %d queue%s", pci_intr_string(pa->pa_pc, ih),
+	    i, (i > 1) ? "s" : "");
 
 	return (0);
 fail:
-	pci_intr_disestablish(pc, que->tag);
-	que->tag = NULL;
+	for (que = sc->queues; i > 0; i--, que++) {
+		if (que->tag == NULL)
+			continue;
+		pci_intr_disestablish(pa->pa_pc, que->tag);
+		que->tag = NULL;
+	}
+
 	return (error);
 }
 
-int
+void
 ixgbe_setup_msix(struct ix_softc *sc)
 {
 	struct ixgbe_osdep	*os = &sc->osdep;
 	struct pci_attach_args	*pa = &os->os_pa;
-	pci_intr_handle_t	 dummy;
+	int			 nmsix;
+	unsigned int		 maxq;
 
 	if (!ixgbe_enable_msix)
-		return (0);
+		return;
 
-	/*
-	 * Try a dummy map, maybe this bus doesn't like MSI, this function
-	 * has no side effects.
-	 */
-	if (pci_intr_map_msix(pa, 0, &dummy))
-		return (0);
+	nmsix = pci_intr_msix_count(pa->pa_pc, pa->pa_tag);
+	if (nmsix <= 1)
+		return;
 
-	return (2); /* queue vector + link vector */
+	/* give one vector to events */
+	nmsix--;
+
+	/* XXX the number of queues is limited to what we can keep stats on */
+	maxq = (sc->hw.mac.type == ixgbe_mac_82598EB) ? 8 : 16;
+
+	sc->sc_intrmap = intrmap_create(&sc->dev, nmsix, maxq, 0);
+	sc->num_queues = intrmap_count(sc->sc_intrmap);
 }
 
 int
@@ -1818,7 +1825,7 @@ ixgbe_allocate_pci_resources(struct ix_softc *sc)
 	sc->hw.back = os;
 
 	/* Now setup MSI or MSI/X, return us the number of supported vectors. */
-	sc->msix = ixgbe_setup_msix(sc);
+	ixgbe_setup_msix(sc);
 
 	return (0);
 }
@@ -2159,6 +2166,8 @@ ixgbe_allocate_queues(struct ix_softc *sc)
 		que->sc = sc;
 		que->txr = &sc->tx_rings[i];
 		que->rxr = &sc->rx_rings[i];
+		snprintf(que->name, sizeof(que->name), "%s:%d",
+		    sc->dev.dv_xname, i);
 	}
 
 	return (0);
@@ -3295,7 +3304,7 @@ ixgbe_enable_intr(struct ix_softc *sc)
 	IXGBE_WRITE_REG(hw, IXGBE_EIMS, mask);
 
 	/* With MSI-X we use auto clear */
-	if (sc->msix > 1) {
+	if (sc->sc_intrmap) {
 		mask = IXGBE_EIMS_ENABLE_MASK;
 		/* Don't autoclear Link */
 		mask &= ~IXGBE_EIMS_OTHER;
@@ -3309,7 +3318,7 @@ ixgbe_enable_intr(struct ix_softc *sc)
 void
 ixgbe_disable_intr(struct ix_softc *sc)
 {
-	if (sc->msix > 1)
+	if (sc->sc_intrmap)
 		IXGBE_WRITE_REG(&sc->hw, IXGBE_EIAC, 0);
 	if (sc->hw.mac.type == ixgbe_mac_82598EB) {
 		IXGBE_WRITE_REG(&sc->hw, IXGBE_EIMC, ~0);
