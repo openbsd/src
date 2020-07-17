@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.246 2020/06/22 11:30:23 krw Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.247 2020/07/17 15:21:36 kn Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1576,11 +1576,11 @@ do { \
 			break;
 		case SO_RTABLE:
 			m->m_len = sizeof(u_int);
-			*mtod(m, u_int *) = optval;
+			*mtod(m, u_int *) = inp->inp_rtableid;
 			break;
 		case IPV6_PIPEX:
 			m->m_len = sizeof(int);
-			*mtod(m, int *) = optval;
+			*mtod(m, int *) = inp->inp_pipex;
 			break;
 
 		default:
