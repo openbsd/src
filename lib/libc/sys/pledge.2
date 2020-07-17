@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.58 2020/02/05 10:44:25 ratchov Exp $
+.\" $OpenBSD: pledge.2,v 1.59 2020/07/17 16:23:23 deraadt Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 5 2020 $
+.Dd $Mdocdate: July 17 2020 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -116,6 +116,7 @@ based upon the requests
 .Va inet ,
 .Va pf ,
 .Va route ,
+.Va wroute ,
 .Va tape ,
 .Va tty ,
 .Va video ,
@@ -532,6 +533,10 @@ device:
 .Dv DIOCRSETADDRS ,
 .Dv DIOCXBEGIN ,
 .Dv DIOCXCOMMIT
+.It Va route
+Allow inspection of the routing table.
+.It Va route
+Allow changes to the routing table.
 .It Va audio
 Allows a subset of
 .Xr ioctl 2
