@@ -1,4 +1,4 @@
-/* $OpenBSD: toeplitz.c,v 1.7 2020/06/19 08:48:15 dlg Exp $ */
+/* $OpenBSD: toeplitz.c,v 1.8 2020/07/17 13:13:36 tb Exp $ */
 
 /*
  * Copyright (c) 2009 The DragonFly Project.  All rights reserved.
@@ -69,9 +69,38 @@ static struct stoeplitz_cache	stoeplitz_syskey_cache;
 const struct stoeplitz_cache *const
 				stoeplitz_cache = &stoeplitz_syskey_cache; 
 
+/* parity of n16: count (mod 2) of ones in the binary representation. */
+int
+parity(uint16_t n16)
+{
+	n16 = ((n16 & 0xaaaa) >> 1) ^ (n16 & 0x5555);
+	n16 = ((n16 & 0xcccc) >> 2) ^ (n16 & 0x3333);
+	n16 = ((n16 & 0xf0f0) >> 4) ^ (n16 & 0x0f0f);
+	n16 = ((n16 & 0xff00) >> 8) ^ (n16 & 0x00ff);
+
+	return (n16);
+}
+
+/*
+ * The Toeplitz matrix obtained from a seed is invertible if and only if the
+ * parity of the seed is 1. Generate such a seed uniformly at random.
+ */
+stoeplitz_key
+stoeplitz_random_seed(void)
+{
+	stoeplitz_key seed;
+       
+	seed = arc4random() & UINT16_MAX;
+	if (parity(seed) == 0)
+		seed ^= 1;
+
+	return (seed);
+}
+
 void
 stoeplitz_init(void)
 {
+	stoeplitz_keyseed = stoeplitz_random_seed();
 	stoeplitz_cache_init(&stoeplitz_syskey_cache, stoeplitz_keyseed);
 }
 
