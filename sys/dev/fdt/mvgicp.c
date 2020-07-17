@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvgicp.c,v 1.2 2020/07/14 15:34:15 patrick Exp $	*/
+/*	$OpenBSD: mvgicp.c,v 1.3 2020/07/17 08:07:34 patrick Exp $	*/
 /*
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
  *
@@ -50,6 +50,7 @@ void	mvgicp_attach(struct device *, struct device *, void *);
 void *	mvgicp_intr_establish(void *, uint64_t *, uint64_t *,
 	    int, struct cpu_info *, int (*)(void *), void *, char *);
 void	mvgicp_intr_disestablish(void *);
+void	mvgicp_intr_barrier(void *);
 
 struct cfattach mvgicp_ca = {
 	sizeof(struct mvgicp_softc), mvgicp_match, mvgicp_attach
@@ -112,6 +113,7 @@ mvgicp_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic.ic_cookie = sc;
 	sc->sc_ic.ic_establish_msi = mvgicp_intr_establish;
 	sc->sc_ic.ic_disestablish = mvgicp_intr_disestablish;
+	sc->sc_ic.ic_barrier = mvgicp_intr_barrier;
 	fdt_intr_register(&sc->sc_ic);
 
 	printf("\n");
@@ -123,6 +125,7 @@ mvgicp_intr_establish(void *self, uint64_t *addr, uint64_t *data,
 {
 	struct mvgicp_softc *sc = (struct mvgicp_softc *)self;
 	struct interrupt_controller *ic = sc->sc_parent_ic;
+	struct arm_intr_handle *ih;
 	uint32_t interrupt[3];
 	uint32_t flags;
 	void *cookie;
@@ -164,13 +167,30 @@ mvgicp_intr_establish(void *self, uint64_t *addr, uint64_t *data,
 	if (cookie == NULL)
 		return NULL;
 
-	sc->sc_spi[*data] = cookie;
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
+	ih->ih_ic = ic;
+	ih->ih_ih = cookie;
+
+	sc->sc_spi[*data] = ih;
 	return &sc->sc_spi[*data];
 }
 
 void
 mvgicp_intr_disestablish(void *cookie)
 {
-	fdt_intr_disestablish(*(void **)cookie);
+	struct arm_intr_handle *ih = *(void **)cookie;
+	struct interrupt_controller *ic = ih->ih_ic;
+
+	ic->ic_disestablish(ih->ih_ih);
+	free(ih, M_DEVBUF, sizeof(*ih));
 	*(void **)cookie = NULL;
+}
+
+void
+mvgicp_intr_barrier(void *cookie)
+{
+	struct arm_intr_handle *ih = *(void **)cookie;
+	struct interrupt_controller *ic = ih->ih_ic;
+
+	ic->ic_barrier(ih->ih_ih);
 }

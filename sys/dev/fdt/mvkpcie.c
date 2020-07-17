@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvkpcie.c,v 1.6 2020/07/14 15:42:19 patrick Exp $	*/
+/*	$OpenBSD: mvkpcie.c,v 1.7 2020/07/17 08:07:34 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
@@ -245,6 +245,7 @@ int	mvkpcie_intc_intr(void *);
 void	*mvkpcie_intc_intr_establish_msi(void *, uint64_t *, uint64_t *,
 	    int , struct cpu_info *, int (*)(void *), void *, char *);
 void	mvkpcie_intc_intr_disestablish_msi(void *);
+void	mvkpcie_intc_intr_barrier(void *);
 void	mvkpcie_intc_recalc_ipl(struct mvkpcie_softc *);
 
 struct mvkpcie_dmamem *mvkpcie_dmamem_alloc(struct mvkpcie_softc *, bus_size_t,
@@ -532,6 +533,7 @@ mvkpcie_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_msi_ic.ic_cookie = self;
 	sc->sc_msi_ic.ic_establish_msi = mvkpcie_intc_intr_establish_msi;
 	sc->sc_msi_ic.ic_disestablish = mvkpcie_intc_intr_disestablish_msi;
+	sc->sc_msi_ic.ic_barrier = mvkpcie_intc_intr_barrier;
 	arm_intr_register_fdt(&sc->sc_msi_ic);
 
 	config_found(self, &pba, NULL);
@@ -916,6 +918,15 @@ mvkpcie_intc_intr_disestablish_msi(void *cookie)
 	mvkpcie_intc_recalc_ipl(sc);
 
 	splx(s);
+}
+
+void
+mvkpcie_intc_intr_barrier(void *cookie)
+{
+	struct intrhand *ih = cookie;
+	struct mvkpcie_softc *sc = ih->ih_sc;
+
+	intr_barrier(sc->sc_ih);
 }
 
 void

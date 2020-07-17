@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2835_aux.c,v 1.5 2020/07/14 15:34:15 patrick Exp $	*/
+/*	$OpenBSD: bcm2835_aux.c,v 1.6 2020/07/17 08:07:34 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -97,6 +97,7 @@ bcmaux_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic.ic_cookie = &sc->sc_ic;
 	sc->sc_ic.ic_establish = bcm_aux_intr_establish_fdt;
 	sc->sc_ic.ic_disestablish = fdt_intr_disestablish;
+	sc->sc_ic.ic_barrier = intr_barrier;
 	fdt_intr_register(&sc->sc_ic);
 }
 

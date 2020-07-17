@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.25 2020/07/15 12:36:01 patrick Exp $ */
+/* $OpenBSD: agintc.c,v 1.26 2020/07/17 08:07:33 patrick Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -170,6 +170,7 @@ struct intrhand {
 	int			 ih_irq;		/* IRQ number */
 	struct evcount		 ih_count;
 	char			*ih_name;
+	struct cpu_info		*ih_ci;			/* CPU the IRQ runs on */
 };
 
 struct intrq {
@@ -220,6 +221,7 @@ void		agintc_intr_disable(struct agintc_softc *, int);
 void		agintc_route(struct agintc_softc *, int, int,
 		    struct cpu_info *);
 void		agintc_route_irq(void *, int, struct cpu_info *);
+void		agintc_intr_barrier(void *);
 void		agintc_wait_rwp(struct agintc_softc *sc);
 void		agintc_r_wait_rwp(struct agintc_softc *sc);
 uint32_t	agintc_r_ictlr(void);
@@ -597,6 +599,7 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic.ic_disestablish = agintc_intr_disestablish;
 	sc->sc_ic.ic_route = agintc_route_irq;
 	sc->sc_ic.ic_cpu_enable = agintc_cpuinit;
+	sc->sc_ic.ic_barrier = agintc_intr_barrier;
 	arm_intr_register_fdt(&sc->sc_ic);
 
 	restore_interrupts(psw);
@@ -872,6 +875,14 @@ agintc_route(struct agintc_softc *sc, int irq, int enable, struct cpu_info *ci)
 }
 
 void
+agintc_intr_barrier(void *cookie)
+{
+	struct intrhand		*ih = cookie;
+
+	sched_barrier(ih->ih_ci);
+}
+
+void
 agintc_run_handler(struct intrhand *ih, void *frame, int s)
 {
 	void *arg;
@@ -1006,6 +1017,7 @@ agintc_intr_establish(int irqno, int level, struct cpu_info *ci,
 	ih->ih_flags = level & IPL_FLAGMASK;
 	ih->ih_irq = irqno;
 	ih->ih_name = name;
+	ih->ih_ci = ci;
 
 	psw = disable_interrupts();
 
@@ -1224,6 +1236,7 @@ void	 agintc_msi_attach(struct device *, struct device *, void *);
 void	*agintc_intr_establish_msi(void *, uint64_t *, uint64_t *,
 	    int , struct cpu_info *, int (*)(void *), void *, char *);
 void	 agintc_intr_disestablish_msi(void *);
+void	 agintc_intr_barrier_msi(void *);
 
 struct agintc_msi_softc {
 	struct device			sc_dev;
@@ -1409,6 +1422,7 @@ agintc_msi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic.ic_cookie = sc;
 	sc->sc_ic.ic_establish_msi = agintc_intr_establish_msi;
 	sc->sc_ic.ic_disestablish = agintc_intr_disestablish_msi;
+	sc->sc_ic.ic_barrier = agintc_intr_barrier_msi;
 	arm_intr_register_fdt(&sc->sc_ic);
 	return;
 
@@ -1554,6 +1568,12 @@ agintc_intr_disestablish_msi(void *cookie)
 {
 	agintc_intr_disestablish(*(void **)cookie);
 	*(void **)cookie = NULL;
+}
+
+void
+agintc_intr_barrier_msi(void *cookie)
+{
+	agintc_intr_barrier(*(void **)cookie);
 }
 
 struct agintc_dmamem *

@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.18 2020/07/16 13:03:39 patrick Exp $ */
+/* $OpenBSD: intr.c,v 1.19 2020/07/17 08:07:33 patrick Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -32,6 +32,7 @@ uint32_t arm_intr_map_msi(int, uint64_t *);
 void *arm_intr_prereg_establish_fdt(void *, int *, int, struct cpu_info *,
     int (*)(void *), void *, char *);
 void arm_intr_prereg_disestablish_fdt(void *);
+void arm_intr_prereg_barrier_fdt(void *);
 
 int arm_dflt_splraise(int);
 int arm_dflt_spllower(int);
@@ -220,6 +221,16 @@ arm_intr_prereg_disestablish_fdt(void *cookie)
 }
 
 void
+arm_intr_prereg_barrier_fdt(void *cookie)
+{
+	struct intr_prereg *ip = cookie;
+	struct interrupt_controller *ic = ip->ip_ic;
+
+	if (ip->ip_ic != NULL && ip->ip_ih != NULL)
+		ic->ic_barrier(ip->ip_ih);
+}
+
+void
 arm_intr_init_fdt_recurse(int node)
 {
 	struct interrupt_controller *ic;
@@ -231,6 +242,7 @@ arm_intr_init_fdt_recurse(int node)
 		ic->ic_cookie = ic;
 		ic->ic_establish = arm_intr_prereg_establish_fdt;
 		ic->ic_disestablish = arm_intr_prereg_disestablish_fdt;
+		ic->ic_barrier = arm_intr_prereg_barrier_fdt;
 		arm_intr_register_fdt(ic);
 	}
 
@@ -373,7 +385,6 @@ arm_intr_establish_fdt_idx_cpu(int node, int idx, int level, struct cpu_info *ci
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_ic = ic;
 	ih->ih_ih = val;
-	ih->ih_cpu = ci;
 
 	return ih;
 }
@@ -446,7 +457,6 @@ arm_intr_establish_fdt_imap_cpu(int node, int *reg, int nreg, int level,
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_ic = ic;
 	ih->ih_ih = val;
-	ih->ih_cpu = ci;
 
 	free(map, M_DEVBUF, len);
 	return ih;
@@ -485,7 +495,6 @@ arm_intr_establish_fdt_msi_cpu(int node, uint64_t *addr, uint64_t *data,
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_ic = ic;
 	ih->ih_ih = val;
-	ih->ih_cpu = ci;
 
 	return ih;
 }
@@ -549,7 +558,6 @@ arm_intr_parent_establish_fdt(void *cookie, int *cell, int level,
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_ic = ic;
 	ih->ih_ih = val;
-	ih->ih_cpu = ci;
 
 	return ih;
 }
@@ -823,7 +831,9 @@ void
 intr_barrier(void *cookie)
 {
 	struct arm_intr_handle *ih = cookie;
-	sched_barrier(ih->ih_cpu);
+	struct interrupt_controller *ic = ih->ih_ic;
+
+	ic->ic_barrier(ih->ih_ih);
 }
 
 /*

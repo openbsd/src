@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.13 2020/07/14 15:34:15 patrick Exp $	*/
+/*	$OpenBSD: intr.h,v 1.14 2020/07/17 08:07:34 patrick Exp $	*/
 /*	$NetBSD: intr.h,v 1.12 2003/06/16 20:00:59 thorpej Exp $	*/
 
 /*
@@ -161,6 +161,7 @@ struct interrupt_controller {
 	void	 (*ic_disable)(void *);
 	void	 (*ic_route)(void *, int, struct cpu_info *);
 	void	 (*ic_cpu_enable)(void);
+	void	 (*ic_barrier)(void *);
 
 	LIST_ENTRY(interrupt_controller) ic_list;
 	uint32_t ic_phandle;

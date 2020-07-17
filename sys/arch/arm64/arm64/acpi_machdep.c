@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.7 2020/07/16 13:03:39 patrick Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.8 2020/07/17 08:07:33 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -162,7 +162,6 @@ acpi_intr_establish(int irq, int flags, int level,
 	aih = malloc(sizeof(*aih), M_DEVBUF, M_WAITOK);
 	aih->ih_ic = ic;
 	aih->ih_ih = cookie;
-	aih->ih_cpu = NULL;
 
 	return aih;
 }

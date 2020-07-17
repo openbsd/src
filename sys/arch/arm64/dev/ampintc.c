@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.18 2020/07/14 15:52:20 patrick Exp $ */
+/* $OpenBSD: ampintc.c,v 1.19 2020/07/17 08:07:33 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -156,6 +156,7 @@ struct intrhand {
 	int ih_irq;			/* IRQ number */
 	struct evcount	ih_count;
 	char *ih_name;
+	struct cpu_info *ih_ci;		/* CPU the IRQ runs on */
 };
 
 struct intrq {
@@ -191,6 +192,7 @@ void		 ampintc_intr_disable(int);
 void		 ampintc_intr_config(int, int);
 void		 ampintc_route(int, int, struct cpu_info *);
 void		 ampintc_route_irq(void *, int, struct cpu_info *);
+void		 ampintc_intr_barrier(void *);
 
 int		 ampintc_ipi_combined(void *);
 int		 ampintc_ipi_nop(void *);
@@ -373,6 +375,7 @@ ampintc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic.ic_disestablish = ampintc_intr_disestablish;
 	sc->sc_ic.ic_route = ampintc_route_irq;
 	sc->sc_ic.ic_cpu_enable = ampintc_cpuinit;
+	sc->sc_ic.ic_barrier = ampintc_intr_barrier;
 	arm_intr_register_fdt(&sc->sc_ic);
 
 	/* attach GICv2M frame controller */
@@ -630,6 +633,14 @@ ampintc_route_irq(void *v, int enable, struct cpu_info *ci)
 }
 
 void
+ampintc_intr_barrier(void *cookie)
+{
+	struct intrhand		*ih = cookie;
+
+	sched_barrier(ih->ih_ci);
+}
+
+void
 ampintc_irq_handler(void *frame)
 {
 	struct ampintc_softc	*sc = ampintc;
@@ -758,6 +769,7 @@ ampintc_intr_establish(int irqno, int type, int level, struct cpu_info *ci,
 	ih->ih_flags = level & IPL_FLAGMASK;
 	ih->ih_irq = irqno;
 	ih->ih_name = name;
+	ih->ih_ci = ci;
 
 	psw = disable_interrupts();
 
@@ -833,6 +845,7 @@ void	 ampintc_msi_attach(struct device *, struct device *, void *);
 void	*ampintc_intr_establish_msi(void *, uint64_t *, uint64_t *,
 	    int , struct cpu_info *, int (*)(void *), void *, char *);
 void	 ampintc_intr_disestablish_msi(void *);
+void	 ampintc_intr_barrier_msi(void *);
 
 struct ampintc_msi_softc {
 	struct device			 sc_dev;
@@ -897,6 +910,7 @@ ampintc_msi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic.ic_cookie = sc;
 	sc->sc_ic.ic_establish_msi = ampintc_intr_establish_msi;
 	sc->sc_ic.ic_disestablish = ampintc_intr_disestablish_msi;
+	sc->sc_ic.ic_barrier = ampintc_intr_barrier_msi;
 	arm_intr_register_fdt(&sc->sc_ic);
 }
 
@@ -931,6 +945,12 @@ ampintc_intr_disestablish_msi(void *cookie)
 {
 	ampintc_intr_disestablish(*(void **)cookie);
 	*(void **)cookie = NULL;
+}
+
+void
+ampintc_intr_barrier_msi(void *cookie)
+{
+	ampintc_intr_barrier(*(void **)cookie);
 }
 
 #ifdef MULTIPROCESSOR

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkgpio.c,v 1.5 2020/07/14 15:34:15 patrick Exp $	*/
+/*	$OpenBSD: rkgpio.c,v 1.6 2020/07/17 08:07:34 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
@@ -102,6 +102,7 @@ void	rkgpio_intr_disestablish(void *);
 void	rkgpio_recalc_ipl(struct rkgpio_softc *);
 void	rkgpio_intr_enable(void *);
 void	rkgpio_intr_disable(void *);
+void	rkgpio_intr_barrier(void *);
 
 int
 rkgpio_match(struct device *parent, void *match, void *aux)
@@ -148,6 +149,7 @@ rkgpio_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic.ic_disestablish = rkgpio_intr_disestablish;
 	sc->sc_ic.ic_enable = rkgpio_intr_enable;
 	sc->sc_ic.ic_disable = rkgpio_intr_disable;
+	sc->sc_ic.ic_barrier = rkgpio_intr_barrier;
 	fdt_intr_register(&sc->sc_ic);
 
 	printf("\n");
@@ -389,4 +391,13 @@ rkgpio_intr_disable(void *cookie)
 	s = splhigh();
 	HSET4(sc, GPIO_INTMASK, 1 << ih->ih_irq);
 	splx(s);
+}
+
+void
+rkgpio_intr_barrier(void *cookie)
+{
+	struct intrhand		*ih = cookie;
+	struct rkgpio_softc	*sc = ih->ih_sc;
+
+	intr_barrier(sc->sc_ih);
 }
