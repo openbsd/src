@@ -1,4 +1,4 @@
-/*	$OpenBSD: start.S,v 1.6 2011/06/05 21:49:36 miod Exp $	*/
+/*	$OpenBSD: start.S,v 1.7 2020/07/18 17:13:00 deraadt Exp $	*/
 /*	$NetBSD: start.S,v 1.4 1996/10/17 02:50:40 cgd Exp $	*/
 
 /*  
@@ -69,13 +69,6 @@ XLEAF(_rtt, 0)
 XLEAF(halt, 0)
 	call_pal PAL_halt		/* halt if we ever return */
 END(start)
-
-/*
- * Dummy routine for GCC2.
- */
-LEAF(__main,0)
-	RET
-END(__main)
 
 /*
  * cpu_number
