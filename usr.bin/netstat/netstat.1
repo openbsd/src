@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstat.1,v 1.89 2020/07/18 19:12:52 jmc Exp $
+.\"	$OpenBSD: netstat.1,v 1.90 2020/07/18 21:44:17 jmc Exp $
 .\"	$NetBSD: netstat.1,v 1.11 1995/10/03 21:42:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
@@ -198,14 +198,6 @@ interval as described below.
 Show the state of interfaces which have been auto-configured
 (interfaces statically configured into a system but not
 located at boot-time are not shown).
-.Pp
-If the
-.Fl f Ar address_family
-option (with the
-.Fl s
-option) is present, show per-interface statistics on all interfaces
-for the specified
-.Ar address_family .
 .It Fl l
 With the default display,
 show only listening sockets.
