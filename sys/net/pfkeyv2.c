@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.201 2020/07/15 11:56:29 kn Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.202 2020/07/18 15:07:51 kn Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -985,6 +985,7 @@ pfkeyv2_dump_walker(struct tdb *tdb, void *state, int last)
 {
 	struct dump_state *dump_state = (struct dump_state *) state;
 	void *headers[SADB_EXT_MAX+1], *buffer;
+	int buflen;
 	int rval;
 
 	/* If not satype was specified, dump all TDBs */
@@ -994,7 +995,7 @@ pfkeyv2_dump_walker(struct tdb *tdb, void *state, int last)
 		headers[0] = (void *) dump_state->sadb_msg;
 
 		/* Get the information from the TDB to a PFKEYv2 message */
-		if ((rval = pfkeyv2_get(tdb, headers, &buffer, NULL)) != 0)
+		if ((rval = pfkeyv2_get(tdb, headers, &buffer, &buflen)) != 0)
 			return (rval);
 
 		if (last)
@@ -1005,7 +1006,7 @@ pfkeyv2_dump_walker(struct tdb *tdb, void *state, int last)
 		    PFKEYV2_SENDMESSAGE_UNICAST, dump_state->socket, 0, 0,
 		    tdb->tdb_rdomain);
 
-		free(buffer, M_PFKEY, 0);
+		free(buffer, M_PFKEY, buflen);
 		if (rval)
 			return (rval);
 	}
@@ -2461,7 +2462,7 @@ pfkeyv2_sysctl_walker(struct tdb *tdb, void *arg, int last)
 
 done:
 	if (buffer)
-		free(buffer, M_PFKEY, 0);
+		free(buffer, M_PFKEY, buflen);
 	return (error);
 }
 
@@ -2628,7 +2629,7 @@ pfkeyv2_sysctl_policydumper(struct ipsec_policy *ipo, void *arg,
 
 done:
 	if (buffer)
-		free(buffer, M_PFKEY, 0);
+		free(buffer, M_PFKEY, buflen);
 	return (error);
 }
 
