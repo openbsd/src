@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.1 2020/06/25 04:00:58 drahn Exp $ */
+/*	$OpenBSD: archdep.h,v 1.2 2020/07/18 16:41:43 kettenis Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -57,9 +57,9 @@ _dl_dcbf(Elf_Addr *addr)
 static inline void
 RELOC_DYN(Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
 {
-	if (ELF_R_TYPE(r->r_info) == RELOC_RELATIVE) {
+	if (ELF_R_TYPE(r->r_info) == R_PPC64_RELATIVE) {
 		*p = v + r->r_addend;
-	} else if (ELF_R_TYPE(r->r_info) == RELOC_JMP_SLOT) {
+	} else if (ELF_R_TYPE(r->r_info) == R_PPC64_JMP_SLOT) {
 		Elf_Addr val = v + s->st_value + r->r_addend -
 		    (Elf_Addr)(p);
 		if (((val & 0xfe000000) != 0) &&
@@ -71,7 +71,7 @@ RELOC_DYN(Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
 		val |=  0x48000000;
 		*p = val;
 		_dl_dcbf(p);
-	} else if (ELF_R_TYPE((r)->r_info) == RELOC_GLOB_DAT) {
+	} else if (ELF_R_TYPE((r)->r_info) == R_PPC64_GLOB_DAT) {
 		*p = v + s->st_value + r->r_addend;
 	} else {
 		_dl_exit(6);
