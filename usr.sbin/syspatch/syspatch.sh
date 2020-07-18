@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.163 2020/07/04 18:30:46 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.164 2020/07/18 14:08:07 ajacoutot Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -157,7 +157,7 @@ ls_installed()
 	local _p
 	for _p in ${_PDIR}/${_OSrev}-+([[:digit:]])_+([[:alnum:]_-]); do
 		[[ -f ${_p}/rollback.tgz ]] && echo ${_p##*/${_OSrev}-}
-	done | sort -V
+	done
 }
 
 ls_missing()
@@ -170,20 +170,24 @@ ls_missing()
 	unpriv -f "${_sha}" signify -Veq -x ${_sha}.sig -m ${_sha} -p \
 		/etc/signify/openbsd-${_OSrev}-syspatch.pub >/dev/null
 
-	# if no earlier version of all files contained in the syspatch exists
-	# on the system, it means a missing set so skip it
-	# XXX pipefail
+	# sig file less than 3 lines long doesn't list any patch (new release)
+	(($(grep -c ".*" ${_sha}) < 3)) && return
+
+	set -o pipefail
 	grep -Eo "syspatch${_OSrev}-[[:digit:]]{3}_[[:alnum:]_-]+" ${_sha} |
 		while read _c; do _c=${_c##syspatch${_OSrev}-} &&
 		[[ -n ${_l} ]] && echo ${_c} | grep -qw -- "${_l}" || echo ${_c}
 	done | while read _p; do
 		_cmd="ftp -N syspatch -MVo - \
 			${_MIRROR}/syspatch${_OSrev}-${_p}.tgz"
-		{ unpriv ${_cmd} | tar tzf -; } 2>/dev/null | while read _f; do
+		unpriv "${_cmd}" | tar tzf - | while read _f; do
+			# no earlier version of _all_ files contained in the tgz
+			# exists on the system, it means a missing set: skip it
 			[[ -f /${_f} ]] || continue && echo ${_p} && pkill -u \
 				_syspatch -xf "${_cmd}" || true && break
 		done
-	done | sort -V
+	done | sort -V # only used as a buffer to display all patches at once
+	set +o pipefail
 }
 
 rollback_patch()
@@ -313,7 +317,7 @@ if ((OPTIND == 1)); then
 		[[ ${_D##*/} == ${_OSrev}-+([[:digit:]])_+([[:alnum:]_-]) ]] &&
 			[[ -f ${_D}/rollback.tgz ]] || rm -r ${_D}
 	done
-	_PATCHES=$(ls_missing)
+	_PATCHES=$(ls_missing) # can't use errexit in a for loop
 	for _PATCH in ${_PATCHES}; do
 		apply_patch ${_OSrev}-${_PATCH}
 		_PATCH_APPLIED=true
