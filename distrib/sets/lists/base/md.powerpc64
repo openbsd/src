@@ -428,6 +428,7 @@
 ./usr/libdata/perl5/powerpc64-openbsd/threads.pm
 ./usr/libdata/perl5/powerpc64-openbsd/threads/shared.pm
 ./usr/local/libdata/perl5/site_perl/powerpc64-openbsd
+./usr/mdec/boot
 ./usr/sbin/ZZZ
 ./usr/sbin/apm
 ./usr/sbin/apmd
