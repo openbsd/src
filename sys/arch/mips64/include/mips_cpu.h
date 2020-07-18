@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips_cpu.h,v 1.8 2018/04/09 13:46:15 visa Exp $	*/
+/*	$OpenBSD: mips_cpu.h,v 1.9 2020/07/18 08:37:43 visa Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -373,6 +373,7 @@
  * HWREna register
  */
 #define	HWRENA_ULR		0x20000000u
+#define	HWRENA_CC		0x00000004u
 
 #endif	/* _KERNEL || _STANDALONE */
 

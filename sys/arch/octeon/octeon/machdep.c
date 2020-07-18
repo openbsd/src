@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.126 2020/07/11 15:18:08 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.127 2020/07/18 08:37:44 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -602,6 +602,7 @@ mips_init(register_t a0, register_t a1, register_t a2, register_t a3)
 
 	cpu_has_synced_cp0_count = 1;
 	cp0_timecounter.tc_quality = 1000;
+	cp0_timecounter.tc_user = TC_CP0_COUNT;
 
 	/*
 	 * Return the new kernel stack pointer.
@@ -771,6 +772,9 @@ octeon_tlb_init(void)
 	}
 	frac = ((1ULL << 63) / imul) * 2;
 	octeon_sync_tc(PHYS_TO_XKPHYS(clk_reg, CCA_NC), cmul, frac);
+
+	/* Let userspace access the cycle counter. */
+	hwrena |= HWRENA_CC;
 
 	/*
 	 * If the UserLocal register is available, let userspace
