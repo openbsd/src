@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.h,v 1.5 2016/07/26 22:10:10 patrick Exp $	*/
+/*	$OpenBSD: fdt.h,v 1.6 2020/07/18 09:44:59 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -31,11 +31,13 @@ struct fdt_head {
 
 struct fdt {
 	struct fdt_head *header;
-	void *		tree;
-	void *		strings;
-	void *		memory;
+	char		*tree;
+	char		*strings;
+	char		*memory;
+	char		*end;
 	int		version;
 	int		strings_size;
+	int		struct_size;
 };
 
 struct fdt_reg {
@@ -53,12 +55,15 @@ struct fdt_reg {
 #define FDT_CODE_VERSION 0x11
 
 int	 fdt_init(void *);
+void	 fdt_finalize(void);
 size_t	 fdt_get_size(void *);
 void	*fdt_next_node(void *);
 void	*fdt_child_node(void *);
 char	*fdt_node_name(void *);
 void	*fdt_find_node(char *);
 int	 fdt_node_property(void *, char *, char **);
+int	 fdt_node_set_property(void *, char *, void *, int);
+int	 fdt_node_add_property(void *, char *, void *, int);
 void	*fdt_parent_node(void *);
 void	*fdt_find_phandle(uint32_t);
 int	 fdt_get_reg(void *, int, struct fdt_reg *);

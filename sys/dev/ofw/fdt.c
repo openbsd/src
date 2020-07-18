@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.24 2020/07/06 15:18:03 kettenis Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.25 2020/07/18 09:44:59 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -93,11 +93,28 @@ fdt_init(void *fdt)
 	tree.tree = (char *)fdt + betoh32(tree.header->fh_struct_off);
 	tree.strings = (char *)fdt + betoh32(tree.header->fh_strings_off);
 	tree.memory = (char *)fdt + betoh32(tree.header->fh_reserve_off);
+	tree.end = (char *)fdt + betoh32(tree.header->fh_size);
 	tree.version = version;
 	tree.strings_size = betoh32(tree.header->fh_strings_size);
+	if (tree.version >= 17)
+		tree.struct_size = betoh32(tree.header->fh_struct_size);
 	tree_inited = 1;
 
 	return version;
+}
+
+void
+fdt_finalize(void)
+{
+	char *start = (char *)tree.header;
+
+	tree.header->fh_size = htobe32(tree.end - start);
+	tree.header->fh_struct_off = htobe32(tree.tree - start);
+	tree.header->fh_strings_off = htobe32(tree.strings - start);
+	tree.header->fh_reserve_off = htobe32(tree.memory - start);
+	tree.header->fh_strings_size = htobe32(tree.strings_size);
+	if (tree.version >= 17)
+		tree.header->fh_struct_size = htobe32(tree.struct_size);
 }
 
 /*
@@ -124,6 +141,25 @@ fdt_get_str(u_int32_t num)
 	if (num > tree.strings_size)
 		return NULL;
 	return (tree.strings) ? (tree.strings + num) : NULL;
+}
+
+int
+fdt_add_str(char *name)
+{
+	size_t len = roundup(strlen(name) + 1, sizeof(uint32_t));
+	char *end = tree.strings + tree.strings_size;
+
+	memmove(end + len, end, tree.end - end);
+	tree.strings_size += len;
+	if (tree.tree > tree.strings)
+		tree.tree += len;
+	if (tree.memory > tree.strings)
+		tree.memory += len;
+	tree.end += len;
+	memset(end, 0, len);
+	memcpy(end, name, strlen(name));
+
+	return (end - tree.strings);
 }
 
 /*
@@ -203,6 +239,81 @@ fdt_node_property(void *node, char *name, char **out)
 	return -1;
 }
 
+int
+fdt_node_set_property(void *node, char *name, void *data, int len)
+{
+	uint32_t *ptr, *next;
+	uint32_t nameid;
+	uint32_t curlen;
+	size_t delta;
+	char *tmp;
+
+	if (!tree_inited)
+		return 0;
+
+	ptr = (uint32_t *)node;
+
+	if (betoh32(*ptr) != FDT_NODE_BEGIN)
+		return 0;
+
+	ptr = skip_node_name(ptr + 1);
+
+	while (betoh32(*ptr) == FDT_PROPERTY) {
+		nameid = betoh32(*(ptr + 2)); /* id of name in strings table */
+		tmp = fdt_get_str(nameid);
+		next = skip_property(ptr);
+		if (!strcmp(name, tmp)) {
+			curlen = betoh32(*(ptr + 1));
+			delta = roundup(len, sizeof(uint32_t)) -
+			    roundup(curlen, sizeof(uint32_t));
+			memmove((char *)next + delta, next,
+			    tree.end - (char *)next);
+			tree.struct_size += delta;
+			if (tree.strings > tree.tree)
+				tree.strings += delta;
+			if (tree.memory > tree.tree)
+				tree.memory += delta;
+			tree.end += delta;
+			*(ptr + 1) = htobe32(len);
+			memcpy(ptr + 3, data, len);
+			return 1;
+		}
+		ptr = next;
+	}
+	return 0;
+}
+
+int
+fdt_node_add_property(void *node, char *name, void *data, int len)
+{
+	char *dummy;
+
+	if (!tree_inited)
+		return 0;
+
+	if (fdt_node_property(node, name, &dummy) == -1) {
+		uint32_t *ptr = (uint32_t *)node;
+
+		if (betoh32(*ptr) != FDT_NODE_BEGIN)
+			return 0;
+
+		ptr = skip_node_name(ptr + 1);
+
+		memmove(ptr + 3, ptr, tree.end - (char *)ptr);
+		tree.struct_size += 3 * sizeof(uint32_t);
+		if (tree.strings > tree.tree)
+			tree.strings += 3 * sizeof(uint32_t);
+		if (tree.memory > tree.tree)
+			tree.memory += 3 * sizeof(uint32_t);
+		tree.end += 3 * sizeof(uint32_t);
+		*ptr++ = htobe32(FDT_PROPERTY);
+		*ptr++ = htobe32(0);
+		*ptr++ = htobe32(fdt_add_str(name));
+	}
+
+	return fdt_node_set_property(node, name, data, len);
+}
+
 /*
  * Retrieves next node, skipping all the children nodes of the pointed node,
  * returns pointer to next node, no matter if it exists or not.
@@ -240,7 +351,7 @@ fdt_next_node(void *node)
 	ptr = node;
 
 	if (node == NULL) {
-		ptr = skip_nops(tree.tree);
+		ptr = skip_nops((uint32_t *)tree.tree);
 		return (betoh32(*ptr) == FDT_NODE_BEGIN) ? ptr : NULL;
 	}
 
