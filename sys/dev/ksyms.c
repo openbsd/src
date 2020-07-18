@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksyms.c,v 1.32 2019/01/25 00:19:26 millert Exp $	*/
+/*	$OpenBSD: ksyms.c,v 1.33 2020/07/18 20:21:01 kettenis Exp $	*/
 /*
  * Copyright (c) 1998 Todd C. Miller <millert@openbsd.org>
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
@@ -36,7 +36,7 @@
 
 extern char *esym;				/* end of symbol table */
 #if defined(__sparc64__) || defined(__mips__) || defined(__amd64__) || \
-    defined(__i386__)
+    defined(__i386__) || defined(__powerpc64__)
 extern char *ssym;				/* end of kernel */
 #else
 extern long end;				/* end of kernel */
@@ -58,7 +58,7 @@ ksymsattach(int num)
 {
 
 #if defined(__sparc64__) || defined(__mips__) || defined(__amd64__) || \
-    defined(__i386__)
+    defined(__i386__) || defined(__powerpc64__)
 	if (esym <= ssym) {
 		printf("/dev/ksyms: Symbol table not valid.\n");
 		return;
@@ -72,7 +72,7 @@ ksymsattach(int num)
 
 	do {
 #if defined(__sparc64__) || defined(__mips__) || defined(__amd64__) || \
-    defined(__i386__)
+    defined(__i386__) || defined(__powerpc64__)
 		caddr_t symtab = ssym;
 #else
 		caddr_t symtab = (caddr_t)&end;

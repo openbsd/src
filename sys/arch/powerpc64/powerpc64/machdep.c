@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.52 2020/07/17 20:24:07 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.53 2020/07/18 20:21:01 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -66,7 +66,7 @@ char machine[] = MACHINE;
 
 struct user *proc0paddr;
 
-caddr_t esym;
+caddr_t ssym, esym;
 
 extern char _start[], _end[];
 extern char __bss_start[];
@@ -229,6 +229,8 @@ init_powernv(void *fdt, void *tocbase)
 	db_machine_init();
 	if (initrd_reg.size != 0)
 		memreg_remove(&initrd_reg);
+	ssym = (caddr_t)initrd_reg.addr;
+	esym = ssym + initrd_reg.size;
 #endif
 
 	pmap_bootstrap();
