@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.1 2020/07/04 21:11:04 kettenis Exp $
+#	$OpenBSD: list,v 1.2 2020/07/18 14:49:38 deraadt Exp $
 
 SRCDIRS distrib/special
 
@@ -61,6 +61,7 @@ LINK	instbin					usr/bin/sed
 LINK	instbin					usr/bin/signify
 LINK	instbin					usr/bin/tee
 LINK	instbin					usr/sbin/chroot
+LINK	instbin					usr/sbin/installboot
 LINK	instbin					usr/sbin/pwd_mkdb
 ARGVLINK ksh					-sh
 SPECIAL	rm bin/md5
