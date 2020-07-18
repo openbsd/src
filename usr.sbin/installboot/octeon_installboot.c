@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_installboot.c,v 1.1 2020/06/27 15:35:29 deraadt Exp $	*/
+/*	$OpenBSD: octeon_installboot.c,v 1.2 2020/07/18 16:42:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Joel Sing <jsing@openbsd.org>
@@ -95,7 +95,7 @@ write_filesystem(struct disklabel *dl, char part)
 {
 	static char *fsckfmt = "/sbin/fsck_msdos %s >/dev/null";
 	static char *newfsfmt ="/sbin/newfs_msdos %s >/dev/null";
-	struct ufs_args args;
+	struct msdosfs_args args;
 	char cmd[60];
 	char dst[PATH_MAX];
 	char *src;
