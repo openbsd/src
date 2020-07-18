@@ -1,4 +1,4 @@
-/*	$OpenBSD: kexec.c,v 1.2 2020/07/18 10:23:44 kettenis Exp $	*/
+/*	$OpenBSD: kexec.c,v 1.3 2020/07/18 20:02:34 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Visa Hankala
@@ -92,10 +92,11 @@ kexec_kexec(struct kexec_args *kargs, struct proc *p)
 	Elf_Shdr *sh = NULL;
 	vaddr_t start = VM_MAX_ADDRESS;
 	vaddr_t end = 0;
-	paddr_t start_pa;
+	paddr_t start_pa, initrd_pa;
 	vsize_t align = 0;;
-	caddr_t addr;
-	size_t phsize, shsize, size;
+	caddr_t addr = NULL;
+	caddr_t symaddr = NULL;
+	size_t phsize, shsize, size, symsize;
 	void *node;
 	int error, random, i;
 
@@ -177,14 +178,34 @@ kexec_kexec(struct kexec_args *kargs, struct proc *p)
 	if (random == 0)
 		kargs->boothowto &= ~RB_GOODRANDOM;
 
+	symsize = round_page(kargs->klen);
+	symaddr = km_alloc(symsize, &kv_any, &kp_kexec, &kd_nowait);
+	if (symaddr == NULL) {
+		error = ENOMEM;
+		goto fail;
+	}
+
+	error = kexec_read(kargs, symaddr, kargs->klen, 0);
+	if (error != 0)
+		goto fail;
+
+	pmap_extract(pmap_kernel(), (vaddr_t)symaddr, &initrd_pa);
+
 	node = fdt_find_node("/chosen");
 	if (node) {
 		uint32_t boothowto = htobe32(kargs->boothowto);
+		uint64_t initrd_start = htobe64(initrd_pa);
+		uint64_t initrd_end = htobe64(initrd_pa + kargs->klen);
 
 		fdt_node_add_property(node, "openbsd,boothowto",
 		    &boothowto, sizeof(boothowto));
 		fdt_node_add_property(node, "openbsd,bootduid",
 		    kargs->bootduid, sizeof(kargs->bootduid));
+
+		fdt_node_set_property(node, "linux,initrd-start",
+		    &initrd_start, sizeof(initrd_start));
+		fdt_node_set_property(node, "linux,initrd-end",
+		    &initrd_end, sizeof(initrd_end));
 
 		fdt_finalize();
 	}
@@ -202,6 +223,10 @@ kexec_kexec(struct kexec_args *kargs, struct proc *p)
 		continue;
 
 fail:
+	if (symaddr)
+		km_free(symaddr, symsize, &kv_any, &kp_kexec);
+	if (addr)
+		km_free(addr, size, &kv_any, &kp_kexec);
 	free(sh, M_TEMP, shsize);
 	free(ph, M_TEMP, phsize);
 	return error;
