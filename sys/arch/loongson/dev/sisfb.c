@@ -1,4 +1,4 @@
-/*	$OpenBSD: sisfb.c,v 1.7 2020/05/25 09:55:48 jsg Exp $	*/
+/*	$OpenBSD: sisfb.c,v 1.8 2020/07/18 08:59:28 visa Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -131,7 +131,6 @@ const struct pci_matchid sisfb_devices[] = {
 #define	CRTC_DATA		(0x3d5 - SIS_VGA_PORT_OFFSET)
 
 static inline uint sisfb_crtc_read(struct sisfb *, uint);
-static inline void sisfb_crtc_write(struct sisfb *, uint, uint);
 static inline uint sisfb_seq_read(struct sisfb *, uint);
 static inline void sisfb_seq_write(struct sisfb *, uint, uint);
 
@@ -145,16 +144,6 @@ sisfb_crtc_read(struct sisfb *fb, uint idx)
 	printf("CRTC %04x -> %02x\n", idx, val);
 #endif
 	return val;
-}
-
-static inline void
-sisfb_crtc_write(struct sisfb *fb, uint idx, uint val)
-{
-#ifdef SIS_DEBUG
-	printf("CRTC %04x <- %02x\n", idx, val);
-#endif
-	bus_space_write_1(fb->iot, fb->ioh, CRTC_ADDR, idx);
-	bus_space_write_1(fb->iot, fb->ioh, CRTC_DATA, val);
 }
 
 static inline uint
