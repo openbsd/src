@@ -1,4 +1,4 @@
-/*	$OpenBSD: kexec.c,v 1.1 2020/07/16 19:37:58 kettenis Exp $	*/
+/*	$OpenBSD: kexec.c,v 1.2 2020/07/18 10:23:44 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Visa Hankala
@@ -22,11 +22,14 @@
 #include <sys/exec_elf.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+#include <sys/reboot.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/kexec.h>
 #include <machine/opal.h>
+
+#include <dev/ofw/fdt.h>
 
 int	kexec_kexec(struct kexec_args *, struct proc *);
 int	kexec_read(struct kexec_args *, void *, size_t, off_t);
@@ -93,7 +96,8 @@ kexec_kexec(struct kexec_args *kargs, struct proc *p)
 	vsize_t align = 0;;
 	caddr_t addr;
 	size_t phsize, shsize, size;
-	int error, i;
+	void *node;
+	int error, random, i;
 
 	/*
 	 * Read the headers and validate them.
@@ -160,12 +164,29 @@ kexec_kexec(struct kexec_args *kargs, struct proc *p)
 		}
 	}
 
+	random = 0;
 	for (i = 0; i < eh.e_phnum; i++) {
 		if (ph[i].p_type != PT_OPENBSD_RANDOMIZE)
 			continue;
 
 		/* Assume that the segment is inside a LOAD segment. */
 		arc4random_buf(addr + ph[i].p_vaddr - start, ph[i].p_filesz);
+		random = 1;
+	}
+
+	if (random == 0)
+		kargs->boothowto &= ~RB_GOODRANDOM;
+
+	node = fdt_find_node("/chosen");
+	if (node) {
+		uint32_t boothowto = htobe32(kargs->boothowto);
+
+		fdt_node_add_property(node, "openbsd,boothowto",
+		    &boothowto, sizeof(boothowto));
+		fdt_node_add_property(node, "openbsd,bootduid",
+		    kargs->bootduid, sizeof(kargs->bootduid));
+
+		fdt_finalize();
 	}
 
 	printf("launching kernel\n");

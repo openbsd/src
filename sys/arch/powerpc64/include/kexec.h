@@ -1,4 +1,4 @@
-/*	$OpenBSD: kexec.h,v 1.2 2020/07/17 08:57:39 kettenis Exp $	*/
+/*	$OpenBSD: kexec.h,v 1.3 2020/07/18 10:23:44 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Visa Hankala
@@ -25,12 +25,12 @@
 
 struct kexec_args {
 	char		*kimg;		/* kernel image buffer */
-	size_t		 klen;		/* size of kernel image */
-	char		*argv[KEXEC_MAX_ARGS];
-					/* kernel boot arguments */
+	size_t		klen;		/* size of kernel image */
+	int		boothowto;
+	u_char		bootduid[8];
 };
 
 #define KIOC_KEXEC		_IOW('K', 1, struct kexec_args)
-#define KIOC_GETBOOTDUID	_IOR('K', 2, char[8])
+#define KIOC_GETBOOTDUID	_IOR('K', 2, u_char[8])
 
 #endif /* _MACHINE_KEXEC_H_ */

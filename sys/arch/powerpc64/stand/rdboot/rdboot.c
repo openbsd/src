@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdboot.c,v 1.1 2020/07/16 19:48:58 kettenis Exp $	*/
+/*	$OpenBSD: rdboot.c,v 1.2 2020/07/18 10:23:44 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Visa Hankala
@@ -56,7 +56,7 @@ const char version[] = "0.1";
 int
 main(void)
 {
-	char bootduid[8];
+	u_char bootduid[8];
 	int fd, hasboot;
 
 	fd = open(_PATH_CONSOLE, O_RDWR);
@@ -77,16 +77,12 @@ main(void)
 	strlcpy(cmd.image, KERNEL, sizeof(cmd.image));
 	cmd.timeout = 5;
 
-#if 0
 	if (ioctl(kexecfd, KIOC_GETBOOTDUID, bootduid) == -1) {
-		if (errno != ENOENT)
-			fprintf(stderr, "cannot get bootduid from kernel: %s\n",
-			    strerror(errno));
+		fprintf(stderr, "cannot get bootduid from kernel: %s\n",
+		    strerror(errno));
 	} else {
-		snprintf(cmd.bootdev, sizeof(cmd.bootdev), "%s%sa",
-		    rootdev, isduid(rootdev, OPENDEV_PART) ? "." : "");
+		memcpy(cmd.bootduid, bootduid, sizeof(cmd.bootduid));
 	}
-#endif
 
 	disk_init();
 
@@ -169,13 +165,11 @@ kexec(void)
 {
 	struct kexec_args kargs;
 	struct stat sb;
-	char boothowtostr[32];
-	char rootdev[32];
 	char *kimg = NULL;
 	const char *path;
 	ssize_t n;
 	off_t pos;
-	int argc, fd = -1, ret;
+	int fd = -1, ret;
 
 	path = disk_open(cmd.path);
 	if (path == NULL)
@@ -209,21 +203,8 @@ kexec(void)
 	memset(&kargs, 0, sizeof(kargs));
 	kargs.kimg = kimg;
 	kargs.klen = sb.st_size;
-	argc = 0;
-	if (cmd.boothowto != 0) {
-		snprintf(boothowtostr, sizeof(boothowtostr), "boothowto=%d",
-		    cmd.boothowto);
-		kargs.argv[argc++] = boothowtostr;
-	}
-	if (cmd.hasduid) {
-		snprintf(rootdev, sizeof(rootdev),
-		    "rootdev=%02x%02x%02x%02x%02x%02x%02x%02x",
-		    cmd.bootduid[0], cmd.bootduid[1],
-		    cmd.bootduid[2], cmd.bootduid[3],
-		    cmd.bootduid[4], cmd.bootduid[5],
-		    cmd.bootduid[6], cmd.bootduid[7]);
-		kargs.argv[argc++] = rootdev;
-	}
+	kargs.boothowto = cmd.boothowto;
+	memcpy(kargs.bootduid, cmd.bootduid, sizeof(kargs.bootduid));
 
 	printf("booting %s\n", cmd.path);
 	ret = ioctl(kexecfd, KIOC_KEXEC, &kargs);

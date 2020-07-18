@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.h,v 1.1 2020/07/16 19:48:58 kettenis Exp $	*/
+/*	$OpenBSD: cmd.h,v 1.2 2020/07/18 10:23:44 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -43,7 +43,7 @@ struct cmd_table {
 struct cmd_state {
 	char bootdev[BOOTDEVLEN]; /* device */
 	char image[MAXPATHLEN - 16]; /* image */
-	unsigned char bootduid[8]; /* duid of root disk */
+	u_char bootduid[8]; /* duid of root disk */
 	int boothowto; /* howto */
 	int hasduid;
 	char *conf; /* /etc/boot.conf normally */
