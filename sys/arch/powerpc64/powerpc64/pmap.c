@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.31 2020/07/16 09:47:16 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.32 2020/07/18 13:16:32 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -60,7 +60,7 @@
 
 #include <dev/ofw/fdt.h>
 
-extern char _start[], _etext[], _end[];
+extern char _start[], _etext[], _erodata[], _end[];
 
 #define	PMAP_HASH_LOCK_INIT()		/* nothing */
 #define	PMAP_HASH_LOCK(s)		(void)s
@@ -1393,6 +1393,8 @@ pmap_bootstrap(void)
 	for (pa = start; pa < end; pa += PAGE_SIZE) {
 		if (pa < (paddr_t)_etext)
 			prot = PROT_READ | PROT_EXEC;
+		else if (pa < (paddr_t)_erodata)
+			prot = PROT_READ;
 		else
 			prot = PROT_READ | PROT_WRITE;
 		pmap_kenter_pa(pa, pa, prot);
