@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.202 2020/07/18 15:07:51 kn Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.203 2020/07/18 17:40:38 kn Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -646,7 +646,8 @@ ret:
  * SPD rule was for incoming or outgoing packets).
  */
 int
-pfkeyv2_policy(struct ipsec_acquire *ipa, void **headers, void **buffer)
+pfkeyv2_policy(struct ipsec_acquire *ipa, void **headers, void **buffer,
+    int *bufferlen)
 {
 	union sockaddr_union sunion;
 	struct sadb_protocol *sp;
@@ -681,8 +682,10 @@ pfkeyv2_policy(struct ipsec_acquire *ipa, void **headers, void **buffer)
 	if (!(p = malloc(i, M_PFKEY, M_NOWAIT | M_ZERO))) {
 		rval = ENOMEM;
 		goto ret;
-	} else
+	} else {
 		*buffer = p;
+		*bufferlen = i;
+	}
 
 	if (dir == IPSP_DIRECTION_OUT)
 		headers[SADB_X_EXT_SRC_FLOW] = p;
@@ -1109,6 +1112,7 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 	struct radix_node *rn = NULL;
 	struct pkpcb *kp, *bkp;
 	void *freeme = NULL, *freeme2 = NULL, *freeme3 = NULL;
+	int freeme_sz, freeme2_sz, freeme3_sz;
 	void *bckptr = NULL;
 	void *headers[SADB_EXT_MAX + 1];
 	union sockaddr_union *sunionp;
@@ -1142,8 +1146,8 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 	if (promisc) {
 		struct mbuf *packet;
 
-		if (!(freeme = malloc(sizeof(struct sadb_msg) + len, M_PFKEY,
-		    M_NOWAIT))) {
+		freeme_sz = sizeof(struct sadb_msg) + len;
+		if (!(freeme = malloc(freeme_sz, M_PFKEY, M_NOWAIT))) {
 			rval = ENOMEM;
 			goto ret;
 		}
@@ -1160,8 +1164,7 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 		bcopy(message, freeme + sizeof(struct sadb_msg), len);
 
 		/* Convert to mbuf chain */
-		if ((rval = pfdatatopacket(freeme,
-		    sizeof(struct sadb_msg) + len, &packet)) != 0)
+		if ((rval = pfdatatopacket(freeme, freeme_sz, &packet)) != 0)
 			goto ret;
 
 		/* Send to all promiscuous listeners */
@@ -1179,8 +1182,8 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 		m_freem(packet);
 
 		/* Paranoid */
-		explicit_bzero(freeme, sizeof(struct sadb_msg) + len);
-		free(freeme, M_PFKEY, sizeof(struct sadb_msg) + len);
+		explicit_bzero(freeme, freeme_sz);
+		free(freeme, M_PFKEY, freeme_sz);
 		freeme = NULL;
 	}
 
@@ -1228,8 +1231,8 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 		}
 
 		/* Send a message back telling what the SA (the SPI really) is */
-		if (!(freeme = malloc(sizeof(struct sadb_sa), M_PFKEY,
-		    M_NOWAIT | M_ZERO))) {
+		freeme_sz = sizeof(struct sadb_sa);
+		if (!(freeme = malloc(freeme_sz, M_PFKEY, M_NOWAIT | M_ZERO))) {
 			rval = ENOMEM;
 			NET_UNLOCK();
 			goto ret;
@@ -1294,6 +1297,7 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 			int alg;
 
 			/* Create new TDB */
+			freeme_sz = 0;
 			freeme = tdb_alloc(rdomain);
 			bzero(&ii, sizeof(struct ipsecinit));
 
@@ -1459,6 +1463,7 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 		}
 
 		/* Allocate and initialize new TDB */
+		freeme_sz = 0;
 		freeme = tdb_alloc(rdomain);
 
 		{
@@ -1571,7 +1576,7 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 			goto ret;
 		}
 
-		rval = pfkeyv2_policy(ipa, headers, &freeme);
+		rval = pfkeyv2_policy(ipa, headers, &freeme, &freeme_sz);
 		NET_UNLOCK();
 		if (rval)
 			mode = PFKEYV2_SENDMESSAGE_UNICAST;
@@ -1593,7 +1598,7 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 			goto ret;
 		}
 
-		rval = pfkeyv2_get(sa2, headers, &freeme, NULL);
+		rval = pfkeyv2_get(sa2, headers, &freeme, &freeme_sz);
 		NET_UNLOCK();
 		if (rval)
 			mode = PFKEYV2_SENDMESSAGE_UNICAST;
@@ -1610,15 +1615,14 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 		}
 		keyunlock(kp, s);
 
-		i = sizeof(struct sadb_supported) + sizeof(ealgs);
-
-		if (!(freeme = malloc(i, M_PFKEY, M_NOWAIT | M_ZERO))) {
+		freeme_sz = sizeof(struct sadb_supported) + sizeof(ealgs);
+		if (!(freeme = malloc(freeme_sz, M_PFKEY, M_NOWAIT | M_ZERO))) {
 			rval = ENOMEM;
 			goto ret;
 		}
 
 		ssup = (struct sadb_supported *) freeme;
-		ssup->sadb_supported_len = i / sizeof(uint64_t);
+		ssup->sadb_supported_len = freeme_sz / sizeof(uint64_t);
 
 		{
 			void *p = freeme + sizeof(struct sadb_supported);
@@ -1628,9 +1632,9 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 
 		headers[SADB_EXT_SUPPORTED_ENCRYPT] = freeme;
 
-		i = sizeof(struct sadb_supported) + sizeof(aalgs);
-
-		if (!(freeme2 = malloc(i, M_PFKEY, M_NOWAIT | M_ZERO))) {
+		freeme2_sz = sizeof(struct sadb_supported) + sizeof(aalgs);
+		if (!(freeme2 = malloc(freeme2_sz, M_PFKEY,
+		    M_NOWAIT | M_ZERO))) {
 			rval = ENOMEM;
 			goto ret;
 		}
@@ -1642,7 +1646,7 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 		keyunlock(kp, s);
 
 		ssup = (struct sadb_supported *) freeme2;
-		ssup->sadb_supported_len = i / sizeof(uint64_t);
+		ssup->sadb_supported_len = freeme2_sz / sizeof(uint64_t);
 
 		{
 			void *p = freeme2 + sizeof(struct sadb_supported);
@@ -1652,15 +1656,15 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 
 		headers[SADB_EXT_SUPPORTED_AUTH] = freeme2;
 
-		i = sizeof(struct sadb_supported) + sizeof(calgs);
-
-		if (!(freeme3 = malloc(i, M_PFKEY, M_NOWAIT | M_ZERO))) {
+		freeme3_sz = sizeof(struct sadb_supported) + sizeof(calgs);
+		if (!(freeme3 = malloc(freeme3_sz, M_PFKEY,
+		    M_NOWAIT | M_ZERO))) {
 			rval = ENOMEM;
 			goto ret;
 		}
 
 		ssup = (struct sadb_supported *) freeme3;
-		ssup->sadb_supported_len = i / sizeof(uint64_t);
+		ssup->sadb_supported_len = freeme3_sz / sizeof(uint64_t);
 
 		{
 			void *p = freeme3 + sizeof(struct sadb_supported);
@@ -2091,14 +2095,14 @@ ret:
 
 realret:
 
-	free(freeme, M_PFKEY, 0);
-	free(freeme2, M_PFKEY, 0);
-	free(freeme3, M_PFKEY, 0);
+	free(freeme, M_PFKEY, freeme_sz);
+	free(freeme2, M_PFKEY, freeme2_sz);
+	free(freeme3, M_PFKEY, freeme3_sz);
 
 	explicit_bzero(message, len);
 	free(message, M_PFKEY, len);
 
-	free(sa1, M_PFKEY, 0);
+	free(sa1, M_PFKEY, sizeof(*sa1));
 
 	return (rval);
 }
