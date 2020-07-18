@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.h,v 1.31 2020/07/17 07:49:49 dlg Exp $	*/
+/*	$OpenBSD: ixgbe.h,v 1.32 2020/07/18 07:18:22 dlg Exp $	*/
 
 /******************************************************************************
 
@@ -41,6 +41,7 @@
 
 #include "bpfilter.h"
 #include "vlan.h"
+#include "kstat.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +56,7 @@
 #include <sys/rwlock.h>
 #include <sys/intrmap.h>
 #include <sys/atomic.h>
+#include <sys/kstat.h>
 
 #include <net/if.h>
 #include <net/if_media.h>

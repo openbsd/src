@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.h,v 1.42 2020/07/17 06:27:36 dlg Exp $	*/
+/*	$OpenBSD: if_ix.h,v 1.43 2020/07/18 07:18:22 dlg Exp $	*/
 
 /******************************************************************************
 
@@ -182,10 +182,8 @@ struct tx_ring {
 	}			queue_status;
 	uint32_t		txd_cmd;
 	bus_dma_tag_t		txtag;
-	uint32_t		bytes; /* Used for AIM calc */
-	uint32_t		packets;
-	/* Soft Stats */
-	uint64_t		tx_packets;
+
+	struct kstat		*kstat;
 };
 
 
@@ -211,15 +209,7 @@ struct rx_ring {
 	struct if_rxring	rx_ring;
 	struct ixgbe_rx_buf	*rx_buffers;
 
-	uint32_t		bytes; /* Used for AIM calc */
-	uint32_t		packets;
-
-	/* Soft stats */
-	uint64_t		rx_irq;
-	uint64_t		rx_packets;
-	uint64_t		rx_bytes;
-	uint64_t		rx_discarded;
-	uint64_t		rsc_num;
+	struct kstat		*kstat;
 };
 
 /* Our adapter structure */
@@ -233,7 +223,6 @@ struct ix_softc {
 	void			*tag;
 
 	struct ifmedia		media;
-	struct timeout		timer;
 	struct intrmap		*sc_intrmap;
 	int			if_flags;
 
@@ -288,14 +277,9 @@ struct ix_softc {
 	uint8_t			*mta;
 
 	/* Misc stats maintained by the driver */
-	unsigned long		dropped_pkts;
-	unsigned long		no_tx_map_avail;
-	unsigned long		no_tx_dma_setup;
-	unsigned long		watchdog_events;
-	unsigned long		tso_tx;
-	unsigned long		link_irq;
-
-	struct ixgbe_hw_stats 	stats;
+	struct mutex		 sc_kstat_mtx;
+	struct timeout		 sc_kstat_tmo;
+	struct kstat		*sc_kstat;
 };
 
 #endif /* _IX_H_ */

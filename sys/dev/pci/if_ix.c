@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.171 2020/07/17 07:53:58 tb Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.172 2020/07/18 07:18:22 dlg Exp $	*/
 
 /******************************************************************************
 
@@ -145,15 +145,11 @@ void	ixgbe_rxrefill(void *);
 int	ixgbe_intr(struct ix_softc *sc);
 void	ixgbe_enable_intr(struct ix_softc *);
 void	ixgbe_disable_intr(struct ix_softc *);
-void	ixgbe_update_stats_counters(struct ix_softc *);
 int	ixgbe_txeof(struct tx_ring *);
 int	ixgbe_rxeof(struct rx_ring *);
 void	ixgbe_rx_checksum(uint32_t, struct mbuf *, uint32_t);
 void	ixgbe_iff(struct ix_softc *);
-#ifdef IX_DEBUG
-void	ixgbe_print_hw_stats(struct ix_softc *);
 void	ixgbe_map_queue_statistics(struct ix_softc *);
-#endif
 void	ixgbe_update_link_status(struct ix_softc *);
 int	ixgbe_get_buf(struct rx_ring *, int);
 int	ixgbe_encap(struct tx_ring *, struct mbuf *);
@@ -185,6 +181,13 @@ void	ixgbe_rearm_queue(struct ix_softc *, uint32_t);
 /* MSI-X (multiple vectors interrupt handlers)  */
 int	ixgbe_link_intr(void *);
 int	ixgbe_queue_intr(void *);
+
+#if NKSTAT > 0
+static void	ix_kstats(struct ix_softc *);
+static void	ix_rxq_kstats(struct ix_softc *, struct rx_ring *);
+static void	ix_txq_kstats(struct ix_softc *, struct tx_ring *);
+static void	ix_kstats_tick(void *);
+#endif
 
 /*********************************************************************
  *  OpenBSD Device Interface Entry Points
@@ -246,8 +249,9 @@ ixgbe_attach(struct device *parent, struct device *self, void *aux)
 
 	rw_init(&sc->sfflock, "ixsff");
 
-	/* Set up the timer callout */
-	timeout_set(&sc->timer, ixgbe_local_timer, sc);
+#if NKSTAT > 0
+	ix_kstats(sc);
+#endif
 
 	/* Determine hardware revision */
 	ixgbe_identify_hardware(sc);
@@ -319,9 +323,6 @@ ixgbe_attach(struct device *parent, struct device *self, void *aux)
 	/* Setup OS specific network interface */
 	ixgbe_setup_interface(sc);
 
-	/* Initialize statistics */
-	ixgbe_update_stats_counters(sc);
-
 	/* Get the PCI-E bus info and determine LAN ID */
 	hw->mac.ops.get_bus_info(hw);
 
@@ -376,13 +377,14 @@ ixgbe_detach(struct device *self, int flags)
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 
-	timeout_del(&sc->timer);
 	ixgbe_free_pci_resources(sc);
 
 	ixgbe_free_transmit_structures(sc);
 	ixgbe_free_receive_structures(sc);
 	free(sc->mta, M_DEVBUF, IXGBE_ETH_LENGTH_OF_ADDRESS *
 	    MAX_NUM_MULTICAST_ADDRESSES);
+
+	/* XXX kstat */
 
 	return (0);
 }
@@ -666,7 +668,6 @@ ixgbe_watchdog(struct ifnet * ifp)
 		    i, txr->next_to_clean);
 	}
 	ifp->if_flags &= ~IFF_RUNNING;
-	sc->watchdog_events++;
 
 	ixgbe_init(sc);
 }
@@ -795,8 +796,6 @@ ixgbe_init(void *arg)
 	rxctrl |= IXGBE_RXCTRL_RXEN;
 	sc->hw.mac.ops.enable_rx_dma(&sc->hw, rxctrl);
 
-	timeout_add_sec(&sc->timer, 1);
-
 	/* Set up MSI/X routing */
 	if (sc->sc_intrmap) {
 		ixgbe_configure_ivars(sc);
@@ -856,6 +855,10 @@ ixgbe_init(void *arg)
 	ifp->if_flags |= IFF_RUNNING;
 	for (i = 0; i < sc->num_queues; i++)
 		ifq_clr_oactive(ifp->if_ifqs[i]);
+
+#if NKSTAT > 0
+	ix_kstats_tick(sc);
+#endif
 
 	splx(s);
 }
@@ -1402,7 +1405,6 @@ ixgbe_encap(struct tx_ring *txr, struct mbuf *m_head)
 			break;
 		/* FALLTHROUGH */
 	default:
-		sc->no_tx_dma_setup++;
 		return (0);
 	}
 
@@ -1445,7 +1447,6 @@ ixgbe_encap(struct tx_ring *txr, struct mbuf *m_head)
 
 	txr->next_avail_desc = i;
 
-	++txr->tx_packets;
 	return (ntxc + j);
 
 xmit_fail:
@@ -1518,30 +1519,6 @@ ixgbe_mc_array_itr(struct ixgbe_hw *hw, uint8_t **update_ptr, uint32_t *vmdq)
 }
 
 void
-ixgbe_local_timer(void *arg)
-{
-	struct ix_softc *sc = arg;
-#ifdef IX_DEBUG
-	struct ifnet	*ifp = &sc->arpcom.ac_if;
-#endif
-	int		 s;
-
-	s = splnet();
-
-	ixgbe_update_stats_counters(sc);
-
-#ifdef IX_DEBUG
-	if ((ifp->if_flags & (IFF_RUNNING|IFF_DEBUG)) ==
-	    (IFF_RUNNING|IFF_DEBUG))
-		ixgbe_print_hw_stats(sc);
-#endif
-
-	timeout_add_sec(&sc->timer, 1);
-
-	splx(s);
-}
-
-void
 ixgbe_update_link_status(struct ix_softc *sc)
 {
 	struct ifnet	*ifp = &sc->arpcom.ac_if;
@@ -1595,6 +1572,10 @@ ixgbe_stop(void *arg)
 	/* Tell the stack that the interface is no longer active */
 	ifp->if_flags &= ~IFF_RUNNING;
 
+#if NKSTAT > 0
+	timeout_del(&sc->sc_kstat_tmo);
+#endif
+
 	INIT_DEBUGOUT("ixgbe_stop: begin\n");
 	ixgbe_disable_intr(sc);
 
@@ -1606,7 +1587,6 @@ ixgbe_stop(void *arg)
 	/* Turn off the laser */
 	if (sc->hw.mac.ops.disable_tx_laser)
 		sc->hw.mac.ops.disable_tx_laser(&sc->hw);
-	timeout_del(&sc->timer);
 
 	/* reprogram the RAR[0] in case user changed it. */
 	ixgbe_set_rar(&sc->hw, 0, sc->hw.mac.addr, 0, IXGBE_RAH_AV);
@@ -1909,6 +1889,11 @@ ixgbe_setup_interface(struct ix_softc *sc)
 
 		ifiq->ifiq_softc = rxr;
 		rxr->ifiq = ifiq;
+
+#if NKSTAT > 0
+		ix_txq_kstats(sc, txr);
+		ix_rxq_kstats(sc, rxr);
+#endif
 	}
 
 	sc->max_frame_size = IXGBE_MAX_FRAME_SIZE;
@@ -2914,10 +2899,8 @@ ixgbe_initialize_receive_units(struct ix_softc *sc)
 		rxcsum |= IXGBE_RXCSUM_PCSD;
 	}
 
-#ifdef IX_DEBUG
 	/* Map QPRC/QPRDC/QPTC on a per queue basis */
 	ixgbe_map_queue_statistics(sc);
-#endif
 
 	/* This is useful for calculating UDP/IP fragment checksums */
 	if (!(rxcsum & IXGBE_RXCSUM_PCSD))
@@ -3105,8 +3088,6 @@ ixgbe_rxeof(struct rx_ring *rxr)
 		    IXGBE_RXDADV_RSSTYPE_MASK;
 
 		if (staterr & IXGBE_RXDADV_ERR_FRAME_ERR_MASK) {
-			sc->dropped_pkts++;
-
 			if (rxbuf->fmp) {
 				m_freem(rxbuf->fmp);
 				rxbuf->fmp = NULL;
@@ -3170,11 +3151,6 @@ ixgbe_rxeof(struct rx_ring *rxr)
 			sendmp = NULL;
 			mp->m_next = nxbuf->buf;
 		} else { /* Sending this frame? */
-			rxr->rx_packets++;
-			/* capture data for AIM */
-			rxr->bytes += sendmp->m_pkthdr.len;
-			rxr->rx_bytes += sendmp->m_pkthdr.len;
-
 			ixgbe_rx_checksum(staterr, sendmp, ptype);
 
 			if (hashtype != IXGBE_RXDADV_RSSTYPE_NONE) {
@@ -3526,164 +3502,364 @@ ixgbe_handle_phy(struct ix_softc *sc)
 
 }
 
+#if NKSTAT > 0
+enum ix_counter_idx {
+	ix_counter_crcerrs,
+	ix_counter_lxontxc,
+	ix_counter_lxonrxc,
+	ix_counter_lxofftxc,
+	ix_counter_lxoffrxc,
+	ix_counter_prc64,
+	ix_counter_prc127,
+	ix_counter_prc255,
+	ix_counter_prc511,
+	ix_counter_prc1023,
+	ix_counter_prc1522,
+	ix_counter_gptc,
+	ix_counter_gorc,
+	ix_counter_gotc,
+	ix_counter_ruc,
+	ix_counter_rfc,
+	ix_counter_roc,
+	ix_counter_rjc,
+	ix_counter_tor,
+	ix_counter_tpr,
+	ix_counter_tpt,
+	ix_counter_gprc,
+	ix_counter_bprc,
+	ix_counter_mprc,
+	ix_counter_ptc64,
+	ix_counter_ptc127,
+	ix_counter_ptc255,
+	ix_counter_ptc511,
+	ix_counter_ptc1023,
+	ix_counter_ptc1522,
+	ix_counter_mptc,
+	ix_counter_bptc,
+
+	ix_counter_num,
+};
+
+CTASSERT(KSTAT_KV_U_PACKETS <= 0xff);
+CTASSERT(KSTAT_KV_U_BYTES <= 0xff);
+
+struct ix_counter {
+	char			 name[KSTAT_KV_NAMELEN];
+	uint32_t		 reg;
+	uint8_t			 width;
+	uint8_t			 unit;
+};
+
+static const struct ix_counter ix_counters[ix_counter_num] = {
+	[ix_counter_crcerrs] = {	"crc errs",	IXGBE_CRCERRS,	32,
+					    KSTAT_KV_U_PACKETS },
+	[ix_counter_lxontxc] = {	"tx link xon",	IXGBE_LXONTXC,	32,
+					    KSTAT_KV_U_PACKETS },
+	[ix_counter_lxonrxc] = {	"rx link xon",	0,		32,
+					    KSTAT_KV_U_PACKETS },
+	[ix_counter_lxofftxc] = {	"tx link xoff",	IXGBE_LXOFFTXC,	32,
+					    KSTAT_KV_U_PACKETS },
+	[ix_counter_lxoffrxc] = {	"rx link xoff",	0,		32,
+					    KSTAT_KV_U_PACKETS },
+	[ix_counter_prc64] = {		"rx 64B",	IXGBE_PRC64,	32,
+					    KSTAT_KV_U_PACKETS },
+	[ix_counter_prc127] = {		"rx 65-127B",	IXGBE_PRC127,	32,
+					    KSTAT_KV_U_PACKETS },
+	[ix_counter_prc255] = {		"rx 128-255B",	IXGBE_PRC255,	32,
+					    KSTAT_KV_U_PACKETS },
+	[ix_counter_prc511] = {		"rx 256-511B",	IXGBE_PRC511,	32,
+					    KSTAT_KV_U_PACKETS },
+	[ix_counter_prc1023] = {	"rx 512-1023B",	IXGBE_PRC1023,	32,
+					    KSTAT_KV_U_PACKETS },
+	[ix_counter_prc1522] = {	"rx 1024-maxB",	IXGBE_PRC1522,	32,
+					    KSTAT_KV_U_PACKETS },
+	[ix_counter_gptc] = {		"tx good",	IXGBE_GPTC,	32,
+					    KSTAT_KV_U_PACKETS },
+	[ix_counter_gorc] = {		"rx good",	IXGBE_GORCL,	36,
+					    KSTAT_KV_U_BYTES },
+	[ix_counter_gotc] = {		"tx good",	IXGBE_GOTCL,	36,
+					    KSTAT_KV_U_BYTES },
+	[ix_counter_ruc] = {		"rx undersize",	IXGBE_RUC,	32,
+					    KSTAT_KV_U_PACKETS },
+	[ix_counter_rfc] = {		"rx fragment",	IXGBE_RFC,	32,
+					    KSTAT_KV_U_PACKETS },
+	[ix_counter_roc] = {		"rx oversize",	IXGBE_ROC,	32,
+					    KSTAT_KV_U_PACKETS },
+	[ix_counter_rjc] = {		"rx jabber",	IXGBE_RJC,	32,
+					    KSTAT_KV_U_PACKETS },
+	[ix_counter_tor] = {		"rx total",	IXGBE_TORL,	36,
+					    KSTAT_KV_U_BYTES },
+	[ix_counter_tpr] = {		"rx total",	IXGBE_TPR,	32,
+					    KSTAT_KV_U_PACKETS },
+	[ix_counter_tpt] = {		"tx total",	IXGBE_TPT,	32,
+					    KSTAT_KV_U_PACKETS },
+	[ix_counter_gprc] = {		"rx good",	IXGBE_GPRC,	32,
+					    KSTAT_KV_U_PACKETS },
+	[ix_counter_bprc] = {		"rx bcast",	IXGBE_BPRC,	32,
+					    KSTAT_KV_U_PACKETS },
+	[ix_counter_mprc] = {		"rx mcast",	IXGBE_MPRC,	32,
+					    KSTAT_KV_U_PACKETS },
+	[ix_counter_ptc64] = {		"tx 64B",	IXGBE_PTC64,	32,
+					    KSTAT_KV_U_PACKETS },
+	[ix_counter_ptc127] = {		"tx 65-127B",	IXGBE_PTC127,	32,
+					    KSTAT_KV_U_PACKETS },
+	[ix_counter_ptc255] = {		"tx 128-255B",	IXGBE_PTC255,	32,
+					    KSTAT_KV_U_PACKETS },
+	[ix_counter_ptc511] = {		"tx 256-511B",	IXGBE_PTC511,	32,
+					    KSTAT_KV_U_PACKETS },
+	[ix_counter_ptc1023] = {	"tx 512-1023B",	IXGBE_PTC1023,	32,
+					    KSTAT_KV_U_PACKETS },
+	[ix_counter_ptc1522] = {	"tx 1024-maxB",	IXGBE_PTC1522,	32,
+					    KSTAT_KV_U_PACKETS },
+	[ix_counter_mptc] = {		"tx mcast",	IXGBE_MPTC,	32,
+					    KSTAT_KV_U_PACKETS },
+	[ix_counter_bptc] = {		"tx bcast",	IXGBE_BPTC,	32,
+					    KSTAT_KV_U_PACKETS },
+};
+
+struct ix_rxq_kstats {
+	struct kstat_kv	qprc;
+	struct kstat_kv	qbrc;
+	struct kstat_kv	qprdc;
+};
+
+static const struct ix_rxq_kstats ix_rxq_kstats_tpl = {
+	KSTAT_KV_UNIT_INITIALIZER("packets",
+	    KSTAT_KV_T_COUNTER64, KSTAT_KV_U_PACKETS),
+	KSTAT_KV_UNIT_INITIALIZER("bytes",
+	    KSTAT_KV_T_COUNTER64, KSTAT_KV_U_BYTES),
+	KSTAT_KV_UNIT_INITIALIZER("qdrops",
+	    KSTAT_KV_T_COUNTER64, KSTAT_KV_U_PACKETS),
+};
+
+struct ix_txq_kstats {
+	struct kstat_kv	qptc;
+	struct kstat_kv	qbtc;
+};
+
+static const struct ix_txq_kstats ix_txq_kstats_tpl = {
+	KSTAT_KV_UNIT_INITIALIZER("packets",
+	    KSTAT_KV_T_COUNTER64, KSTAT_KV_U_PACKETS),
+	KSTAT_KV_UNIT_INITIALIZER("bytes",
+	    KSTAT_KV_T_COUNTER64, KSTAT_KV_U_BYTES),
+};
+
+static int	ix_kstats_read(struct kstat *ks);
+static int	ix_rxq_kstats_read(struct kstat *ks);
+static int	ix_txq_kstats_read(struct kstat *ks);
+
+static void
+ix_kstats(struct ix_softc *sc)
+{
+	struct kstat *ks;
+	struct kstat_kv *kvs;
+	unsigned int i;
+
+	mtx_init(&sc->sc_kstat_mtx, IPL_SOFTCLOCK);
+	timeout_set(&sc->sc_kstat_tmo, ix_kstats_tick, sc);
+
+	ks = kstat_create(sc->dev.dv_xname, 0, "ix-stats", 0,
+	    KSTAT_T_KV, 0);
+	if (ks == NULL)
+		return;
+
+	kvs = mallocarray(nitems(ix_counters), sizeof(*kvs),
+	    M_DEVBUF, M_WAITOK|M_ZERO);
+
+	for (i = 0; i < nitems(ix_counters); i++) {
+		const struct ix_counter *ixc = &ix_counters[i];
+
+		kstat_kv_unit_init(&kvs[i], ixc->name,
+		    KSTAT_KV_T_COUNTER64, ixc->unit);
+	}
+
+	kstat_set_mutex(ks, &sc->sc_kstat_mtx);
+	ks->ks_softc = sc;
+	ks->ks_data = kvs;
+	ks->ks_datalen = nitems(ix_counters) * sizeof(*kvs);
+	ks->ks_read = ix_kstats_read;
+
+	sc->sc_kstat = ks;
+	kstat_install(ks);
+}
+
+static void
+ix_rxq_kstats(struct ix_softc *sc, struct rx_ring *rxr)
+{
+	struct ix_rxq_kstats *stats;
+	struct kstat *ks;
+
+	ks = kstat_create(sc->dev.dv_xname, 0, "ix-rxq", rxr->me,
+	    KSTAT_T_KV, 0);
+	if (ks == NULL)
+		return;
+
+	stats = malloc(sizeof(*stats), M_DEVBUF, M_WAITOK|M_ZERO);
+	*stats = ix_rxq_kstats_tpl;
+
+	kstat_set_mutex(ks, &sc->sc_kstat_mtx);
+	ks->ks_softc = rxr;
+	ks->ks_data = stats;
+	ks->ks_datalen = sizeof(*stats);
+	ks->ks_read = ix_rxq_kstats_read;
+
+	rxr->kstat = ks;
+	kstat_install(ks);
+}
+
+static void
+ix_txq_kstats(struct ix_softc *sc, struct tx_ring *txr)
+{
+	struct ix_txq_kstats *stats;
+	struct kstat *ks;
+
+	ks = kstat_create(sc->dev.dv_xname, 0, "ix-txq", txr->me,
+	    KSTAT_T_KV, 0);
+	if (ks == NULL)
+		return;
+
+	stats = malloc(sizeof(*stats), M_DEVBUF, M_WAITOK|M_ZERO);
+	*stats = ix_txq_kstats_tpl;
+
+	kstat_set_mutex(ks, &sc->sc_kstat_mtx);
+	ks->ks_softc = txr;
+	ks->ks_data = stats;
+	ks->ks_datalen = sizeof(*stats);
+	ks->ks_read = ix_txq_kstats_read;
+
+	txr->kstat = ks;
+	kstat_install(ks);
+}
+
 /**********************************************************************
  *
  *  Update the board statistics counters.
  *
  **********************************************************************/
-void
-ixgbe_update_stats_counters(struct ix_softc *sc)
+
+static void
+ix_kstats_tick(void *arg)
 {
-	struct ifnet	*ifp = &sc->arpcom.ac_if;
-	struct ixgbe_hw	*hw = &sc->hw;
-	uint64_t	crcerrs, rlec, total_missed_rx = 0;
-#ifdef IX_DEBUG
-	uint32_t	missed_rx = 0, bprc, lxon, lxoff, total;
-	int		i;
-#endif
-
-	crcerrs = IXGBE_READ_REG(hw, IXGBE_CRCERRS);
-	sc->stats.crcerrs += crcerrs;
-	rlec = IXGBE_READ_REG(hw, IXGBE_RLEC);
-	sc->stats.rlec += rlec;
-
-#ifdef IX_DEBUG
-	for (i = 0; i < 8; i++) {
-		uint32_t mp;
-		mp = IXGBE_READ_REG(hw, IXGBE_MPC(i));
-		/* missed_rx tallies misses for the gprc workaround */
-		missed_rx += mp;
-		/* global total per queue */
-		sc->stats.mpc[i] += mp;
-		/* running comprehensive total for stats display */
-		total_missed_rx += sc->stats.mpc[i];
-		if (hw->mac.type == ixgbe_mac_82598EB)
-			sc->stats.rnbc[i] += IXGBE_READ_REG(hw, IXGBE_RNBC(i));
-	}
-
-	/* Hardware workaround, gprc counts missed packets */
-	sc->stats.gprc += IXGBE_READ_REG(hw, IXGBE_GPRC);
-	sc->stats.gprc -= missed_rx;
-
-	if (hw->mac.type != ixgbe_mac_82598EB) {
-		sc->stats.gorc += IXGBE_READ_REG(hw, IXGBE_GORCL) +
-		    ((uint64_t)IXGBE_READ_REG(hw, IXGBE_GORCH) << 32);
-		sc->stats.gotc += IXGBE_READ_REG(hw, IXGBE_GOTCL) +
-		    ((uint64_t)IXGBE_READ_REG(hw, IXGBE_GOTCH) << 32);
-		sc->stats.tor += IXGBE_READ_REG(hw, IXGBE_TORL) +
-		    ((uint64_t)IXGBE_READ_REG(hw, IXGBE_TORH) << 32);
-		sc->stats.lxonrxc += IXGBE_READ_REG(hw, IXGBE_LXONRXCNT);
-		sc->stats.lxoffrxc += IXGBE_READ_REG(hw, IXGBE_LXOFFRXCNT);
-	} else {
-		sc->stats.lxonrxc += IXGBE_READ_REG(hw, IXGBE_LXONRXC);
-		sc->stats.lxoffrxc += IXGBE_READ_REG(hw, IXGBE_LXOFFRXC);
-		/* 82598 only has a counter in the high register */
-		sc->stats.gorc += IXGBE_READ_REG(hw, IXGBE_GORCH);
-		sc->stats.gotc += IXGBE_READ_REG(hw, IXGBE_GOTCH);
-		sc->stats.tor += IXGBE_READ_REG(hw, IXGBE_TORH);
-	}
-
-	/*
-	 * Workaround: mprc hardware is incorrectly counting
-	 * broadcasts, so for now we subtract those.
-	 */
-	bprc = IXGBE_READ_REG(hw, IXGBE_BPRC);
-	sc->stats.bprc += bprc;
-	sc->stats.mprc += IXGBE_READ_REG(hw, IXGBE_MPRC);
-	if (hw->mac.type == ixgbe_mac_82598EB)
-		sc->stats.mprc -= bprc;
-
-	sc->stats.roc += IXGBE_READ_REG(hw, IXGBE_ROC);
-	sc->stats.prc64 += IXGBE_READ_REG(hw, IXGBE_PRC64);
-	sc->stats.prc127 += IXGBE_READ_REG(hw, IXGBE_PRC127);
-	sc->stats.prc255 += IXGBE_READ_REG(hw, IXGBE_PRC255);
-	sc->stats.prc511 += IXGBE_READ_REG(hw, IXGBE_PRC511);
-	sc->stats.prc1023 += IXGBE_READ_REG(hw, IXGBE_PRC1023);
-	sc->stats.prc1522 += IXGBE_READ_REG(hw, IXGBE_PRC1522);
-
-	lxon = IXGBE_READ_REG(hw, IXGBE_LXONTXC);
-	sc->stats.lxontxc += lxon;
-	lxoff = IXGBE_READ_REG(hw, IXGBE_LXOFFTXC);
-	sc->stats.lxofftxc += lxoff;
-	total = lxon + lxoff;
-
-	sc->stats.gptc += IXGBE_READ_REG(hw, IXGBE_GPTC);
-	sc->stats.mptc += IXGBE_READ_REG(hw, IXGBE_MPTC);
-	sc->stats.ptc64 += IXGBE_READ_REG(hw, IXGBE_PTC64);
-	sc->stats.gptc -= total;
-	sc->stats.mptc -= total;
-	sc->stats.ptc64 -= total;
-	sc->stats.gotc -= total * ETHER_MIN_LEN;
-
-	sc->stats.ruc += IXGBE_READ_REG(hw, IXGBE_RUC);
-	sc->stats.rfc += IXGBE_READ_REG(hw, IXGBE_RFC);
-	sc->stats.rjc += IXGBE_READ_REG(hw, IXGBE_RJC);
-	sc->stats.tpr += IXGBE_READ_REG(hw, IXGBE_TPR);
-	sc->stats.ptc127 += IXGBE_READ_REG(hw, IXGBE_PTC127);
-	sc->stats.ptc255 += IXGBE_READ_REG(hw, IXGBE_PTC255);
-	sc->stats.ptc511 += IXGBE_READ_REG(hw, IXGBE_PTC511);
-	sc->stats.ptc1023 += IXGBE_READ_REG(hw, IXGBE_PTC1023);
-	sc->stats.ptc1522 += IXGBE_READ_REG(hw, IXGBE_PTC1522);
-	sc->stats.bptc += IXGBE_READ_REG(hw, IXGBE_BPTC);
-	for (i = 0; i < 16; i++) {
-		uint32_t dropped;
-
-		dropped = IXGBE_READ_REG(hw, IXGBE_QPRDC(i));
-		sc->stats.qprdc[i] += dropped;
-		missed_rx += dropped;
-		sc->stats.qprc[i] += IXGBE_READ_REG(hw, IXGBE_QPRC(i));
-		sc->stats.qptc[i] += IXGBE_READ_REG(hw, IXGBE_QPTC(i));
-	}
-#endif
-
-	/* Fill out the OS statistics structure */
-	ifp->if_collisions = 0;
-	ifp->if_oerrors = sc->watchdog_events;
-	ifp->if_ierrors = total_missed_rx + crcerrs + rlec;
-}
-
-#ifdef IX_DEBUG
-/**********************************************************************
- *
- *  This routine is called only when ixgbe_display_debug_stats is enabled.
- *  This routine provides a way to take a look at important statistics
- *  maintained by the driver and hardware.
- *
- **********************************************************************/
-void
-ixgbe_print_hw_stats(struct ix_softc * sc)
-{
-	struct ifnet   *ifp = &sc->arpcom.ac_if;
+	struct ix_softc *sc = arg;
 	int i;
 
-	printf("%s: missed pkts %llu, rx len errs %llu, crc errs %llu, "
-	    "dropped pkts %lu, watchdog timeouts %ld, "
-	    "XON rx %llu, XON tx %llu, XOFF rx %llu, XOFF tx %llu, "
-	    "total pkts rx %llu, good pkts rx %llu, good pkts tx %llu, "
-	    "tso tx %lu\n",
-	    ifp->if_xname,
-	    (long long)sc->stats.mpc[0],
-	    (long long)sc->stats.roc + (long long)sc->stats.ruc,
-	    (long long)sc->stats.crcerrs,
-	    sc->dropped_pkts,
-	    sc->watchdog_events,
-	    (long long)sc->stats.lxonrxc,
-	    (long long)sc->stats.lxontxc,
-	    (long long)sc->stats.lxoffrxc,
-	    (long long)sc->stats.lxofftxc,
-	    (long long)sc->stats.tpr,
-	    (long long)sc->stats.gprc,
-	    (long long)sc->stats.gptc,
-	    sc->tso_tx);
+	timeout_add_sec(&sc->sc_kstat_tmo, 1);
 
-	printf("%s: per queue statistics\n", ifp->if_xname);
+	mtx_enter(&sc->sc_kstat_mtx);
+	ix_kstats_read(sc->sc_kstat);
 	for (i = 0; i < sc->num_queues; i++) {
-		printf("\tqueue %d: rx pkts %llu, rx drops %llu, "
-		    "tx pkts %llu\n",
-		    i, sc->stats.qprc[i], sc->stats.qprdc[i],
-		    sc->stats.qptc[i]);
+		ix_rxq_kstats_read(sc->rx_rings[i].kstat);
+		ix_txq_kstats_read(sc->tx_rings[i].kstat);
 	}
+	mtx_leave(&sc->sc_kstat_mtx);
 }
+
+static uint64_t
+ix_read36(struct ixgbe_hw *hw, bus_size_t loreg, bus_size_t hireg)
+{
+	uint64_t lo, hi;
+
+	lo = IXGBE_READ_REG(hw, loreg);
+	hi = IXGBE_READ_REG(hw, hireg);
+
+	return (((hi & 0xf) << 32) | lo);
+}
+
+static int
+ix_kstats_read(struct kstat *ks)
+{
+	struct ix_softc *sc = ks->ks_softc;
+	struct kstat_kv *kvs = ks->ks_data;
+	struct ixgbe_hw	*hw = &sc->hw;
+	unsigned int i;
+
+	for (i = 0; i < nitems(ix_counters); i++) {
+		const struct ix_counter *ixc = &ix_counters[i];
+		uint32_t reg = ixc->reg;
+		uint64_t v;
+
+		if (reg == 0)
+			continue;
+
+		if (ixc->width > 32) {
+			if (sc->hw.mac.type == ixgbe_mac_82598EB)
+				v = IXGBE_READ_REG(hw, reg + 4);
+			else
+				v = ix_read36(hw, reg, reg + 4);
+		} else
+			v = IXGBE_READ_REG(hw, reg);
+
+		kstat_kv_u64(&kvs[i]) += v;
+	}
+
+	/* handle the exceptions */
+	if (sc->hw.mac.type == ixgbe_mac_82598EB) {
+		kstat_kv_u64(&kvs[ix_counter_lxonrxc]) += 
+		    IXGBE_READ_REG(hw, IXGBE_LXONRXC);
+		kstat_kv_u64(&kvs[ix_counter_lxoffrxc]) +=
+		    IXGBE_READ_REG(hw, IXGBE_LXOFFRXC);
+	} else {
+		kstat_kv_u64(&kvs[ix_counter_lxonrxc]) += 
+		    IXGBE_READ_REG(hw, IXGBE_LXONRXCNT);
+		kstat_kv_u64(&kvs[ix_counter_lxoffrxc]) +=
+		    IXGBE_READ_REG(hw, IXGBE_LXOFFRXCNT);
+	}
+
+	getnanouptime(&ks->ks_updated);
+
+	return (0);
+}
+
+int
+ix_rxq_kstats_read(struct kstat *ks)
+{
+	struct ix_rxq_kstats *stats = ks->ks_data;
+	struct rx_ring *rxr = ks->ks_softc;
+	struct ix_softc *sc = rxr->sc;
+	struct ixgbe_hw	*hw = &sc->hw;
+	uint32_t i = rxr->me;
+
+	kstat_kv_u64(&stats->qprc) += IXGBE_READ_REG(hw, IXGBE_QPRC(i));
+	if (sc->hw.mac.type == ixgbe_mac_82598EB) {
+		kstat_kv_u64(&stats->qprdc) +=
+		    IXGBE_READ_REG(hw, IXGBE_RNBC(i));
+		kstat_kv_u64(&stats->qbrc) +=
+		    IXGBE_READ_REG(hw, IXGBE_QBRC(i));
+	} else {
+		kstat_kv_u64(&stats->qprdc) +=
+		    IXGBE_READ_REG(hw, IXGBE_QPRDC(i));
+		kstat_kv_u64(&stats->qbrc) +=
+		    ix_read36(hw, IXGBE_QBRC_L(i), IXGBE_QBRC_H(i));
+	}
+
+	getnanouptime(&ks->ks_updated);
+
+	return (0);
+}
+
+int
+ix_txq_kstats_read(struct kstat *ks)
+{
+	struct ix_txq_kstats *stats = ks->ks_data;
+	struct rx_ring *txr = ks->ks_softc;
+	struct ix_softc *sc = txr->sc;
+	struct ixgbe_hw	*hw = &sc->hw;
+	uint32_t i = txr->me;
+
+	kstat_kv_u64(&stats->qptc) += IXGBE_READ_REG(hw, IXGBE_QPTC(i));
+	if (sc->hw.mac.type == ixgbe_mac_82598EB) {
+		kstat_kv_u64(&stats->qbtc) +=
+		    IXGBE_READ_REG(hw, IXGBE_QBTC(i));
+	} else {
+		kstat_kv_u64(&stats->qbtc) +=
+		    ix_read36(hw, IXGBE_QBTC_L(i), IXGBE_QBTC_H(i));
+	}
+
+	getnanouptime(&ks->ks_updated);
+
+	return (0);
+}
+#endif /* NKVSTAT > 0 */
 
 void
 ixgbe_map_queue_statistics(struct ix_softc *sc)
@@ -3711,4 +3887,3 @@ ixgbe_map_queue_statistics(struct ix_softc *sc)
 		IXGBE_WRITE_REG(&sc->hw, IXGBE_TQSM(i), r);
 	}
 }
-#endif
