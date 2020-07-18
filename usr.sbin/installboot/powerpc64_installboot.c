@@ -1,4 +1,4 @@
-/*	$OpenBSD: powerpc64_installboot.c,v 1.1 2020/07/17 08:03:56 kettenis Exp $	*/
+/*	$OpenBSD: powerpc64_installboot.c,v 1.2 2020/07/18 15:28:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Joel Sing <jsing@openbsd.org>
@@ -56,6 +56,8 @@
 static void	write_filesystem(struct disklabel *, char);
 static int	findmbrfat(int, struct disklabel *);
 
+char	duid[20];
+
 void
 md_init(void)
 {
@@ -78,6 +80,11 @@ md_installboot(int devfd, char *dev)
 	if (dl.d_magic != DISKMAGIC)
 		errx(1, "bad disklabel magic=0x%08x", dl.d_magic);
 
+	snprintf(duid, sizeof duid,
+	    "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx",
+            dl.d_uid[0], dl.d_uid[1], dl.d_uid[2], dl.d_uid[3],
+            dl.d_uid[4], dl.d_uid[5], dl.d_uid[6], dl.d_uid[7]);
+
 	/* Warn on unknown disklabel types. */
 	if (dl.d_type == 0)
 		warnx("disklabel type unknown");
@@ -95,20 +102,21 @@ write_filesystem(struct disklabel *dl, char part)
 {
 	static char *fsckfmt = "/sbin/fsck_msdos %s >/dev/null";
 	static char *newfsfmt ="/sbin/newfs_msdos %s >/dev/null";
-	struct ufs_args args;
+	struct msdosfs_args args;
 	char cmd[60];
+	char dir[PATH_MAX];
 	char dst[PATH_MAX];
 	char *src;
-	size_t mntlen, pathlen, srclen;
+	size_t mntlen, srclen;
 	int rslt;
 
 	src = NULL;
 
 	/* Create directory for temporary mount point. */
-	strlcpy(dst, "/tmp/installboot.XXXXXXXXXX", sizeof(dst));
-	if (mkdtemp(dst) == NULL)
+	strlcpy(dir, "/tmp/installboot.XXXXXXXXXX", sizeof(dst));
+	if (mkdtemp(dir) == NULL)
 		err(1, "mkdtemp('%s') failed", dst);
-	mntlen = strlen(dst);
+	mntlen = strlen(dir);
 
 	/* Mount <duid>.<part> as msdos filesystem. */
 	memset(&args, 0, sizeof(args));
@@ -124,8 +132,9 @@ write_filesystem(struct disklabel *dl, char part)
 
 	args.export_info.ex_root = -2;
 	args.export_info.ex_flags = 0;
+	args.flags = MSDOSFSMNT_LONGNAME;
 
-	if (mount(MOUNT_MSDOS, dst, 0, &args) == -1) {
+	if (mount(MOUNT_MSDOS, dir, 0, &args) == -1) {
 		/* Try fsck'ing it. */
 		rslt = snprintf(cmd, sizeof(cmd), fsckfmt, args.fspec);
 		if (rslt >= sizeof(cmd)) {
@@ -138,7 +147,7 @@ write_filesystem(struct disklabel *dl, char part)
 			warn("system('%s') failed", cmd);
 			goto rmdir;
 		}
-		if (mount(MOUNT_MSDOS, dst, 0, &args) == -1) {
+		if (mount(MOUNT_MSDOS, dir, 0, &args) == -1) {
 			/* Try newfs'ing it. */
 			rslt = snprintf(cmd, sizeof(cmd), newfsfmt,
 			    args.fspec);
@@ -152,7 +161,7 @@ write_filesystem(struct disklabel *dl, char part)
 				warn("system('%s') failed", cmd);
 				goto rmdir;
 			}
-			rslt = mount(MOUNT_MSDOS, dst, 0, &args);
+			rslt = mount(MOUNT_MSDOS, dir, 0, &args);
 			if (rslt == -1) {
 				warn("unable to mount MSDOS partition");
 				goto rmdir;
@@ -163,7 +172,7 @@ write_filesystem(struct disklabel *dl, char part)
 	/*
 	 * Copy /usr/mdec/boot to /mnt/boot.
 	 */
-	pathlen = strlen(dst);
+	strlcpy(dst, dir, sizeof dst);
 	if (strlcat(dst, "/boot", sizeof(dst)) >= sizeof(dst)) {
 		rslt = -1;
 		warn("unable to build /boot path");
@@ -184,18 +193,44 @@ write_filesystem(struct disklabel *dl, char part)
 			goto umount;
 	}
 
+	/*
+	 * Create grub.cfg
+	 */
+	strlcpy(dst, dir, sizeof dst);
+	if (strlcat(dst, "/grub.cfg", sizeof(dst)) >= sizeof(dst)) {
+		rslt = -1;
+		warn("unable to build /grub.cfg path");
+		goto umount;
+	}
+	if (verbose)
+		fprintf(stderr, "%s %s\n",
+		    (nowrite ? "would create" : "creating"), dst);
+	if (!nowrite) {
+		FILE *f;
+
+		f = fopen(dst, "w+");
+		if (f == NULL)
+			goto umount;
+		fprintf(f,
+		    "menuentry \"OpenBSD\" {\n"
+		    "\tlinux /boot bootduid=%s\n"
+		    "\tinitrd /boot\n"
+		    "}\n", duid);
+		fclose(f);
+	}
+
 	rslt = 0;
 
 umount:
-	dst[mntlen] = '\0';
-	if (unmount(dst, MNT_FORCE) == -1)
-		err(1, "unmount('%s') failed", dst);
+	dir[mntlen] = '\0';
+	if (unmount(dir, MNT_FORCE) == -1)
+		err(1, "unmount('%s') failed", dir);
 
 rmdir:
 	free(args.fspec);
 	dst[mntlen] = '\0';
-	if (rmdir(dst) == -1)
-		err(1, "rmdir('%s') failed", dst);
+	if (rmdir(dir) == -1)
+		err(1, "rmdir('%s') failed", dir);
 
 	free(src);
 
