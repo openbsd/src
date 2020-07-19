@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.76 2020/07/19 11:07:14 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.77 2020/07/19 11:13:35 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1235,12 +1235,15 @@ dev_open(struct dev *d)
 		    NULL, -1, 127, d->slot[i].vol);
 	}
 
-	for (a = d->alt_list; a != NULL; a = a->next) {
-		snprintf(name, sizeof(name), "%d", a->idx);
-		dev_addctl(d, "", CTL_SEL,
-		    CTLADDR_ALT_SEL + a->idx,
-		    "server", -1, "device",
-		    name, -1, 1, a->idx == d->alt_num);
+	/* if there are multiple alt devs, add server.device knob */
+	if (d->alt_list->next != NULL) {
+		for (a = d->alt_list; a != NULL; a = a->next) {
+			snprintf(name, sizeof(name), "%d", a->idx);
+			dev_addctl(d, "", CTL_SEL,
+			    CTLADDR_ALT_SEL + a->idx,
+			    "server", -1, "device",
+			    name, -1, 1, a->idx == d->alt_num);
+		}
 	}
 
 	d->pstate = DEV_INIT;
