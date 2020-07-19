@@ -1,4 +1,4 @@
-/*	$OpenBSD: xargs.c,v 1.34 2018/06/12 15:24:31 millert Exp $	*/
+/*	$OpenBSD: xargs.c,v 1.35 2020/07/19 13:19:25 schwarze Exp $	*/
 /*	$FreeBSD: xargs.c,v 1.51 2003/05/03 19:09:11 obrien Exp $	*/
 
 /*-
@@ -41,10 +41,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <langinfo.h>
-#include <locale.h>
 #include <paths.h>
-#include <regex.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -85,8 +82,6 @@ main(int argc, char *argv[])
 	ep = environ;
 	eofstr = "";
 	Jflag = nflag = 0;
-
-	(void)setlocale(LC_MESSAGES, "");
 
 	/*
 	 * POSIX.2 limits the exec line length to ARG_MAX - 2K.  Running that
@@ -507,9 +502,9 @@ run(char **argv)
 	 * followed by a prompt, then prompt them.
 	 */
 	if (tflag || pflag) {
-		(void)fprintf(stderr, "%s", *argv);
+		fprintf(stderr, "%s", *argv);
 		for (avec = argv + 1; *avec != NULL; ++avec)
-			(void)fprintf(stderr, " %s", *avec);
+			fprintf(stderr, " %s", *avec);
 		/*
 		 * If the user has asked to be prompted, do so.
 		 */
@@ -528,8 +523,8 @@ run(char **argv)
 			case 2:
 				break;
 			}
-		(void)fprintf(stderr, "\n");
-		(void)fflush(stderr);
+		fprintf(stderr, "\n");
+		fflush(stderr);
 	}
 exec:
 	switch (pid = vfork()) {
@@ -607,26 +602,19 @@ waitchildren(const char *name, int waitall)
 static int
 prompt(void)
 {
-	regex_t cre;
 	size_t rsize;
-	int match;
 	char *response;
 	FILE *ttyfp;
+	int doit = 0;
 
 	if ((ttyfp = fopen(_PATH_TTY, "r")) == NULL)
 		return (2);	/* Indicate that the TTY failed to open. */
-	(void)fprintf(stderr, "?...");
-	(void)fflush(stderr);
-	if ((response = fgetln(ttyfp, &rsize)) == NULL ||
-	    regcomp(&cre, nl_langinfo(YESEXPR), REG_BASIC) != 0) {
-		(void)fclose(ttyfp);
-		return (0);
-	}
-	response[rsize - 1] = '\0';
-	match = regexec(&cre, response, 0, NULL, 0);
-	(void)fclose(ttyfp);
-	regfree(&cre);
-	return (match == 0);
+	fprintf(stderr, "?...");
+	fflush(stderr);
+	response = fgetln(ttyfp, &rsize);
+	doit = response != NULL && (*response == 'y' || *response == 'Y');
+	fclose(ttyfp);
+	return (doit);
 }
 
 static void

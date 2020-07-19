@@ -1,4 +1,4 @@
-.\"	$OpenBSD: xargs.1,v 1.28 2014/06/04 06:48:33 jmc Exp $
+.\"	$OpenBSD: xargs.1,v 1.29 2020/07/19 13:19:25 schwarze Exp $
 .\"	$FreeBSD: xargs.1,v 1.30 2003/05/21 21:07:28 ru Exp $$
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"	@(#)xargs.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: June 4 2014 $
+.Dd $Mdocdate: July 19 2020 $
 .Dt XARGS 1
 .Os
 .Sh NAME
@@ -213,11 +213,11 @@ at once.
 .It Fl p
 Echo each command to be executed and ask the user whether it should be
 executed.
-An affirmative response,
+If the answer starts with
 .Ql y
-in the POSIX locale,
-causes the command to be executed, any other response causes it to be
-skipped.
+or
+.Ql Y ,
+the command is executed; otherwise it is skipped.
 No commands are executed if the process is not attached to a terminal.
 .It Fl R Ar replacements
 Specify the maximum number of arguments that
@@ -330,8 +330,7 @@ The flags
 are extensions to
 .St -p1003.1-2008 .
 .Pp
-The meanings of the 123, 124, and 125 exit values were taken from
-.Tn GNU
+The meanings of the 123, 124, and 125 exit values were taken from GNU
 .Nm xargs .
 .Sh HISTORY
 The
