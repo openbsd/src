@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.63 2020/07/08 09:20:28 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.64 2020/07/19 20:35:55 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -109,14 +109,14 @@ struct cfdriver clock_cd = {
 u_int tick_get_timecount(struct timecounter *);
 
 struct timecounter tick_timecounter = {
-	tick_get_timecount, NULL, ~0u, 0, "tick", 0, NULL, TC_TICK
+	tick_get_timecount, NULL, ~0u, 0, "tick", 0, NULL, 0
 };
 
 u_int sys_tick_get_timecount(struct timecounter *);
 
 struct timecounter sys_tick_timecounter = {
 	sys_tick_get_timecount, NULL, ~0u, 0, "sys_tick", 1000, NULL,
-	TC_SYS_TICK
+	0
 };
 
 /*
