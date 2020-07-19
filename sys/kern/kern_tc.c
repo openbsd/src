@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.64 2020/07/17 01:36:41 gkoehler Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.65 2020/07/19 23:58:51 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -644,7 +644,6 @@ tc_windup(struct bintime *new_boottime, struct bintime *new_offset,
 	}
 
 	/* Update the UTC timestamps used by the get*() functions. */
-	/* XXX shouldn't do this here.  Should force non-`get' versions. */
 	bintimeadd(&th->th_boottime, &th->th_offset, &bt);
 	BINTIME_TO_TIMEVAL(&bt, &th->th_microtime);
 	BINTIME_TO_TIMESPEC(&bt, &th->th_nanotime);
