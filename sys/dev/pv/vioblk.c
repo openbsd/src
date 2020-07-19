@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.23 2020/07/16 21:18:30 krw Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.24 2020/07/19 18:57:58 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -239,16 +239,16 @@ vioblk_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	sc->sc_link.openings = sc->sc_nreqs;
-	sc->sc_link.adapter = &vioblk_switch;
 	sc->sc_link.pool = &sc->sc_iopool;
-	sc->sc_link.adapter_softc = self;
-	sc->sc_link.adapter_buswidth = 1;
-	sc->sc_link.luns = 1;
-	sc->sc_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
 	if (virtio_has_feature(vsc, VIRTIO_BLK_F_RO))
 		sc->sc_link.flags |= SDEV_READONLY;
 
 	saa.saa_sc_link = &sc->sc_link;
+	saa.saa_adapter = &vioblk_switch;
+	saa.saa_adapter_softc = self;
+	saa.saa_adapter_buswidth = 1;
+	saa.saa_luns = 1;
+	saa.saa_adapter_target = SDEV_NO_ADAPTER_TARGET;
 
 	config_found(self, &saa, scsiprint);
 

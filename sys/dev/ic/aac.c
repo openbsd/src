@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.82 2020/07/16 21:18:29 krw Exp $	*/
+/*	$OpenBSD: aac.c,v 1.83 2020/07/19 18:57:57 krw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -266,15 +266,16 @@ aac_attach(struct aac_softc *sc)
 	if (error)
 		return (error);
 
-	sc->aac_link.adapter_softc = sc;
-	sc->aac_link.adapter = &aac_switch;
 	sc->aac_link.openings = (sc->total_fibs - 8) /
 	    (sc->aac_container_count ? sc->aac_container_count : 1);
-	sc->aac_link.adapter_buswidth = AAC_MAX_CONTAINERS;
-	sc->aac_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
 	sc->aac_link.pool = &sc->aac_iopool;
 
 	saa.saa_sc_link = &sc->aac_link;
+	saa.saa_adapter_softc = sc;
+	saa.saa_adapter = &aac_switch;
+	saa.saa_adapter_buswidth = AAC_MAX_CONTAINERS;
+	saa.saa_adapter_target = SDEV_NO_ADAPTER_TARGET;
+	saa.saa_luns = 8;
 
 	config_found(&sc->aac_dev, &saa, scsiprint);
 

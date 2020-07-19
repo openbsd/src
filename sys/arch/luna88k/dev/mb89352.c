@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.26 2020/07/16 21:18:29 krw Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.27 2020/07/19 18:57:57 krw Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -214,13 +214,14 @@ spc_attach(struct spc_softc *sc, struct scsi_adapter *adapter)
 
 	spc_init(sc);	/* Init chip and driver */
 
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = sc->sc_initiator;
-	sc->sc_link.adapter = adapter;
 	sc->sc_link.openings = 2;
 	sc->sc_link.pool = &sc->sc_iopool;
 
 	saa.saa_sc_link = &sc->sc_link;
+	saa.saa_adapter_softc = sc;
+	saa.saa_adapter_target = sc->sc_initiator;
+	saa.saa_adapter = adapter;
+	saa.saa_luns = saa.saa_adapter_buswidth = 8;
 
 	config_found(&sc->sc_dev, &saa, scsiprint);
 }

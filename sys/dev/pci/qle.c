@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.57 2020/07/16 21:18:30 krw Exp $ */
+/*	$OpenBSD: qle.c,v 1.58 2020/07/19 18:57:58 krw Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -654,10 +654,6 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 		    DEVNAME(sc));
 	}
 
-	sc->sc_link.adapter = &qle_switch;
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
-	sc->sc_link.adapter_buswidth = QLE_MAX_TARGETS;
 	sc->sc_link.openings = sc->sc_maxcmds;
 	sc->sc_link.pool = &sc->sc_iopool;
 	if (sc->sc_nvram_valid) {
@@ -677,6 +673,11 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	saa.saa_sc_link = &sc->sc_link;
+	saa.saa_adapter = &qle_switch;
+	saa.saa_adapter_softc = sc;
+	saa.saa_adapter_target = SDEV_NO_ADAPTER_TARGET;
+	saa.saa_adapter_buswidth = QLE_MAX_TARGETS;
+	saa.saa_luns = 8;
 
 	sc->sc_scsibus = (struct scsibus_softc *)config_found(&sc->sc_dev,
 	    &saa, scsiprint);

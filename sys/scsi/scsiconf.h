@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.191 2020/07/16 12:38:44 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.192 2020/07/19 18:57:58 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -284,15 +284,11 @@ struct scsi_link {
 	u_int		state;
 #define SDEV_S_DYING		(1<<1)
 
-	u_int8_t luns;
 	u_int16_t target;		/* targ of this dev */
 	u_int16_t lun;			/* lun of this dev */
 	u_int16_t openings;		/* available operations per lun */
 	u_int64_t port_wwn;		/* world wide name of port */
 	u_int64_t node_wwn;		/* world wide name of node */
-	u_int16_t adapter_target;	/* what are we on the scsi bus (don't probe!) */
-#define	SDEV_NO_ADAPTER_TARGET	0xffff	/* we are not a target on the scsi bus */
-	u_int16_t adapter_buswidth;	/* number of targets to probe (0 becomes 8) */
 	u_int16_t flags;		/* flags that all devices have */
 #define	SDEV_REMOVABLE		0x0001	/* media is removable */
 #define	SDEV_MEDIA_LOADED	0x0002	/* device figures are still valid */
@@ -317,8 +313,6 @@ struct scsi_link {
 #define SDEV_ONLYBIG		0x4000  /* always use READ_BIG and WRITE_BIG */
 	int	(*interpret_sense)(struct scsi_xfer *);
 	void	*device_softc;		/* needed for call to foo_start */
-	struct	scsi_adapter *adapter;	/* adapter entry points */
-	void	*adapter_softc;		/* needed for call to foo_scsi_cmd */
 	struct	scsibus_softc *bus;	/* link to the scsibus we're on */
 	struct	scsi_inquiry_data inqdata; /* copy of INQUIRY data from probe */
 	struct  devid *id;
@@ -345,7 +339,13 @@ struct scsi_inquiry_pattern {
 };
 
 struct scsibus_attach_args {
-	struct scsi_link *saa_sc_link;
+	struct	scsi_link	*saa_sc_link;
+	struct	scsi_adapter	*saa_adapter;
+	void			*saa_adapter_softc;
+	u_int16_t		 saa_adapter_target;
+#define	SDEV_NO_ADAPTER_TARGET	0xffff
+	u_int16_t		 saa_adapter_buswidth;
+	u_int8_t		 saa_luns;
 };
 
 /*

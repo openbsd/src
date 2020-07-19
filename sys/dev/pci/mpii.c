@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.135 2020/07/16 21:18:30 krw Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.136 2020/07/19 18:57:58 krw Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -590,15 +590,15 @@ mpii_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pending = 1;
 	config_pending_incr();
 
-	sc->sc_link.adapter = &mpii_switch;
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
-	sc->sc_link.adapter_buswidth = sc->sc_max_devices;
-	sc->sc_link.luns = 1;
 	sc->sc_link.openings = sc->sc_max_cmds - 1;
 	sc->sc_link.pool = &sc->sc_iopool;
 
 	saa.saa_sc_link = &sc->sc_link;
+	saa.saa_adapter = &mpii_switch;
+	saa.saa_adapter_softc = sc;
+	saa.saa_adapter_target = SDEV_NO_ADAPTER_TARGET;
+	saa.saa_adapter_buswidth = sc->sc_max_devices;
+	saa.saa_luns = 1;
 
 	sc->sc_scsibus = (struct scsibus_softc *) config_found(&sc->sc_dev,
 	    &saa, scsiprint);

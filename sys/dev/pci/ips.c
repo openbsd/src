@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.123 2020/07/16 21:18:30 krw Exp $	*/
+/*	$OpenBSD: ips.c,v 1.124 2020/07/19 18:57:58 krw Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -720,13 +720,15 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 
 	if (sc->sc_nunits > 0)
 		sc->sc_scsi_link.openings = sc->sc_nccbs / sc->sc_nunits;
-	sc->sc_scsi_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
-	sc->sc_scsi_link.adapter_buswidth = sc->sc_nunits;
-	sc->sc_scsi_link.adapter = &ips_switch;
-	sc->sc_scsi_link.adapter_softc = sc;
 	sc->sc_scsi_link.pool = &sc->sc_iopool;
 
 	saa.saa_sc_link = &sc->sc_scsi_link;
+	saa.saa_adapter_target = SDEV_NO_ADAPTER_TARGET;
+	saa.saa_adapter_buswidth = sc->sc_nunits;
+	saa.saa_adapter = &ips_switch;
+	saa.saa_adapter_softc = sc;
+	saa.saa_luns = 8;
+
 	sc->sc_scsibus = (struct scsibus_softc *)config_found(self, &saa,
 	    scsiprint);
 
@@ -762,13 +764,14 @@ ips_attach(struct device *parent, struct device *self, void *aux)
 
 		link = &pt->pt_link;
 		link->openings = 1;
-		link->adapter_target = IPS_MAXTARGETS;
-		link->adapter_buswidth = lastarget + 1;
-		link->adapter = &ips_pt_switch;
-		link->adapter_softc = pt;
 		link->pool = &sc->sc_iopool;
 
 		saa.saa_sc_link = link;
+		saa.saa_adapter = &ips_pt_switch;
+		saa.saa_adapter_softc = pt;
+		saa.saa_adapter_buswidth =  lastarget + 1;
+		saa.saa_adapter_target = IPS_MAXTARGETS;
+		saa.saa_luns = 8;
 
 		config_found(self, &saa, scsiprint);
 	}

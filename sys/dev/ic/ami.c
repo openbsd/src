@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.251 2020/07/16 21:18:30 krw Exp $	*/
+/*	$OpenBSD: ami.c,v 1.252 2020/07/19 18:57:57 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -536,13 +536,14 @@ ami_attach(struct ami_softc *sc)
 	rw_init(&sc->sc_lock, NULL);
 
 	sc->sc_link.openings = sc->sc_maxcmds;
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter = &ami_switch;
-	sc->sc_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
-	sc->sc_link.adapter_buswidth = sc->sc_maxunits;
 	sc->sc_link.pool = &sc->sc_iopool;
 
 	saa.saa_sc_link = &sc->sc_link;
+	saa.saa_adapter_softc = sc;
+	saa.saa_adapter = &ami_switch;
+	saa.saa_adapter_target = SDEV_NO_ADAPTER_TARGET;
+	saa.saa_adapter_buswidth = sc->sc_maxunits;
+	saa.saa_luns = 8;
 
 	sc->sc_scsibus = (struct scsibus_softc *)config_found(&sc->sc_dev, &saa,
 	    scsiprint);
@@ -584,13 +585,14 @@ ami_attach(struct ami_softc *sc)
 		/* TODO fetch adapter_target from the controller */
 
 		rsc->sc_link.openings = sc->sc_maxcmds;
-		rsc->sc_link.adapter_softc = rsc;
-		rsc->sc_link.adapter = &ami_raw_switch;
-		rsc->sc_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
-		rsc->sc_link.adapter_buswidth = 16;
 		rsc->sc_link.pool = &sc->sc_iopool;
 
 		saa.saa_sc_link = &rsc->sc_link;
+		saa.saa_adapter_softc = rsc;
+		saa.saa_adapter = &ami_raw_switch;
+		saa.saa_adapter_target = SDEV_NO_ADAPTER_TARGET;
+		saa.saa_adapter_buswidth = 16;
+		saa.saa_luns = 8;
 
 		ptbus = (struct scsibus_softc *)config_found(&sc->sc_dev,
 		    &saa, scsiprint);

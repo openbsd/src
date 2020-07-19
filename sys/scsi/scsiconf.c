@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.227 2020/07/16 14:44:55 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.228 2020/07/19 18:57:58 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -141,15 +141,15 @@ scsibusattach(struct device *parent, struct device *self, void *aux)
 		scsi_autoconf = 0;
 
 	SLIST_INIT(&sb->sc_link_list);
-	sb->sb_adapter_softc = saa->saa_sc_link->adapter_softc;
-	sb->sb_adapter = saa->saa_sc_link->adapter;
+	sb->sb_adapter_softc = saa->saa_adapter_softc;
+	sb->sb_adapter = saa->saa_adapter;
 	sb->sb_pool = saa->saa_sc_link->pool;
 	sb->sb_quirks = saa->saa_sc_link->quirks;
 	sb->sb_flags = saa->saa_sc_link->flags;
 	sb->sb_openings = saa->saa_sc_link->openings;
-	sb->sb_adapter_buswidth = saa->saa_sc_link->adapter_buswidth;
-	sb->sb_adapter_target = saa->saa_sc_link->adapter_target;
-	sb->sb_luns = saa->saa_sc_link->luns;
+	sb->sb_adapter_buswidth = saa->saa_adapter_buswidth;
+	sb->sb_adapter_target = saa->saa_adapter_target;
+	sb->sb_luns = saa->saa_luns;
 
 	if (sb->sb_adapter_buswidth == 0)
 		sb->sb_adapter_buswidth = 8;
@@ -839,19 +839,14 @@ scsi_probedev(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 	}
 
 	link->state = 0;
-	link->luns = sb->sb_luns;
 	link->target = target;
 	link->lun = lun;
 	link->openings = sb->sb_openings;
 	link->node_wwn = link->port_wwn = 0;
-	link->adapter_target = sb->sb_adapter_target;
-	link->adapter_buswidth = sb->sb_adapter_buswidth;
 	link->flags = sb->sb_flags;
 	link->quirks = sb->sb_quirks;
 	link->interpret_sense = scsi_interpret_sense;
 	link->device_softc = NULL;
-	link->adapter = sb->sb_adapter;
-	link->adapter_softc = sb->sb_adapter_softc;
 	link->bus = sb;
 	memset(&link->inqdata, 0, sizeof(link->inqdata));
 	link->id = NULL;

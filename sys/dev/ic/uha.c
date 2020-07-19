@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha.c,v 1.34 2020/07/16 21:18:30 krw Exp $	*/
+/*	$OpenBSD: uha.c,v 1.35 2020/07/19 18:57:58 krw Exp $	*/
 /*	$NetBSD: uha.c,v 1.3 1996/10/13 01:37:29 christos Exp $	*/
 
 #undef UHADEBUG
@@ -120,13 +120,14 @@ uha_attach(sc)
 	mtx_init(&sc->sc_mscp_mtx, IPL_BIO);
 	scsi_iopool_init(&sc->sc_iopool, sc, uha_mscp_alloc, uha_mscp_free);
 
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = sc->sc_scsi_dev;
-	sc->sc_link.adapter = &uha_switch;
 	sc->sc_link.openings = 2;
 	sc->sc_link.pool = &sc->sc_iopool;
 
 	saa.saa_sc_link = &sc->sc_link;
+	saa.saa_adapter_softc = sc;
+	saa.saa_adapter_target = sc->sc_scsi_dev;
+	saa.saa_adapter = &uha_switch;
+	saa.saa_luns = saa.saa_adapter_buswidth = 8;
 
 	config_found(&sc->sc_dev, &saa, uhaprint);
 }

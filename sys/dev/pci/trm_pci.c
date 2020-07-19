@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm_pci.c,v 1.8 2020/07/11 13:34:06 krw Exp $
+/*	$OpenBSD: trm_pci.c,v 1.9 2020/07/19 18:57:58 krw Exp $
  * ------------------------------------------------------------
  *       O.S     : OpenBSD
  *    FILE NAME  : trm_pci.c
@@ -161,14 +161,15 @@ trm_pci_attach(struct device *parent, struct device *self, void *aux)
 		if (intrstr != NULL)
 			printf(": %s\n", intrstr);
 
-		sc->sc_link.adapter_softc    = sc;
-		sc->sc_link.adapter_target   = sc->sc_AdaptSCSIID;
 		sc->sc_link.openings         = 30; /* So TagMask (32 bit integer) always has space */
-		sc->sc_link.adapter          = &trm_switch;
-		sc->sc_link.adapter_buswidth = ((sc->sc_config & HCC_WIDE_CARD) == 0) ? 8:16;
 		sc->sc_link.pool	     = &sc->sc_iopool;
 
-		saa.saa_sc_link = &sc->sc_link;
+		saa.saa_sc_link		 = &sc->sc_link;
+		saa.saa_adapter_softc    = sc;
+		saa.saa_adapter_target   = sc->sc_AdaptSCSIID;
+		saa.saa_adapter          = &trm_switch;
+		saa.saa_adapter_buswidth = ((sc->sc_config & HCC_WIDE_CARD) == 0) ? 8:16;
+		saa.saa_luns		 = 8;
 
 		config_found(&sc->sc_device, &saa, scsiprint);
 	}

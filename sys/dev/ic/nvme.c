@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.81 2020/07/16 21:18:30 krw Exp $ */
+/*	$OpenBSD: nvme.c,v 1.82 2020/07/19 18:57:58 krw Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -363,15 +363,15 @@ nvme_attach(struct nvme_softc *sc)
 	sc->sc_namespaces = mallocarray(sc->sc_nn + 1,
 	    sizeof(*sc->sc_namespaces), M_DEVBUF, M_WAITOK|M_ZERO);
 
-	sc->sc_link.adapter = &nvme_switch;
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_buswidth = sc->sc_nn + 1;
-	sc->sc_link.luns = 1;
-	sc->sc_link.adapter_target = 0;
 	sc->sc_link.openings = 64;
 	sc->sc_link.pool = &sc->sc_iopool;
 
 	saa.saa_sc_link = &sc->sc_link;
+	saa.saa_adapter = &nvme_switch;
+	saa.saa_adapter_softc = sc;
+	saa.saa_adapter_buswidth = sc->sc_nn + 1;
+	saa.saa_luns = 1;
+	saa.saa_adapter_target = 0;
 
 	config_found(&sc->sc_dev, &saa, scsiprint);
 

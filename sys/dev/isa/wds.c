@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.52 2020/07/16 21:18:30 krw Exp $	*/
+/*	$OpenBSD: wds.c,v 1.53 2020/07/19 18:57:58 krw Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -284,9 +284,6 @@ wdsattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, sc->sc_irq, IST_EDGE,
 	    IPL_BIO, wdsintr, sc, sc->sc_dev.dv_xname);
 
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = sc->sc_scsi_dev;
-	sc->sc_link.adapter = &wds_switch;
 	/* XXX */
 	/* I don't think the -ASE can handle openings > 1. */
 	/* It gives Vendor Error 26 whenever I try it.     */
@@ -294,6 +291,10 @@ wdsattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_link.pool = &sc->sc_iopool;
 
 	saa.saa_sc_link = &sc->sc_link;
+	saa.saa_adapter_softc = sc;
+	saa.saa_adapter_target = sc->sc_scsi_dev;
+	saa.saa_adapter = &wds_switch;
+	saa.saa_luns = saa.saa_adapter_buswidth = 8;
 
 	config_found(self, &saa, wdsprint);
 }

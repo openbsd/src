@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.35 2020/07/16 21:18:30 krw Exp $	*/
+/*	$OpenBSD: aic6360.c,v 1.36 2020/07/19 18:57:57 krw Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 #ifdef DDB
@@ -263,13 +263,14 @@ aicattach(struct aic_softc *sc)
 
 	aic_init(sc);	/* init chip and driver */
 
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = sc->sc_initiator;
-	sc->sc_link.adapter = &aic_switch;
 	sc->sc_link.openings = 2;
 	sc->sc_link.pool = &sc->sc_iopool;
 
 	saa.saa_sc_link = &sc->sc_link;
+	saa.saa_adapter_softc = sc;
+	saa.saa_adapter_target = sc->sc_initiator;
+	saa.saa_adapter = &aic_switch;
+	saa.saa_luns = saa.saa_adapter_buswidth = 8;
 
 	config_found(&sc->sc_dev, &saa, scsiprint);
 }

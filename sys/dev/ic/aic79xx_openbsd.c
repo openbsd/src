@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.55 2020/07/16 21:18:30 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.56 2020/07/19 18:57:57 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -109,15 +109,15 @@ ahd_attach(struct ahd_softc *ahd)
 	if (ahd->flags & AHD_RESET_BUS_A)
 		ahd_reset_channel(ahd, 'A', TRUE);
 
-	ahd->sc_channel.adapter_target = ahd->our_id;
-	if (ahd->features & AHD_WIDE)
-		ahd->sc_channel.adapter_buswidth = 16;
-	ahd->sc_channel.adapter_softc = ahd;
-	ahd->sc_channel.adapter = &ahd_switch;
 	ahd->sc_channel.openings = 16; /* Must ALWAYS be < 256!! */
 	ahd->sc_channel.pool = &ahd->sc_iopool;
 
 	saa.saa_sc_link = &ahd->sc_channel;
+	saa.saa_adapter_target = ahd->our_id;
+	saa.saa_adapter_buswidth = (ahd->features & AHD_WIDE) ? 16 : 8;
+	saa.saa_adapter_softc = ahd;
+	saa.saa_adapter = &ahd_switch;
+	saa.saa_luns = 8;
 
 	ahd->sc_child = config_found((void *)&ahd->sc_dev, &saa, scsiprint);
 

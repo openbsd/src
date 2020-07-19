@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.77 2020/07/16 21:18:30 krw Exp $ */
+/* $OpenBSD: mfii.c,v 1.78 2020/07/19 18:57:58 krw Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -782,13 +782,14 @@ mfii_attach(struct device *parent, struct device *self, void *aux)
 		goto free_sgl;
 
 	sc->sc_link.openings = sc->sc_max_cmds;
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter = &mfii_switch;
-	sc->sc_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
-	sc->sc_link.adapter_buswidth = sc->sc_info.mci_max_lds;
 	sc->sc_link.pool = &sc->sc_iopool;
 
 	saa.saa_sc_link = &sc->sc_link;
+	saa.saa_adapter_softc = sc;
+	saa.saa_adapter = &mfii_switch;
+	saa.saa_adapter_target = SDEV_NO_ADAPTER_TARGET;
+	saa.saa_adapter_buswidth = sc->sc_info.mci_max_lds;
+	saa.saa_luns = 8;
 
 	sc->sc_scsibus = (struct scsibus_softc *)config_found(&sc->sc_dev, &saa,
 	    scsiprint);
@@ -917,14 +918,15 @@ mfii_syspd(struct mfii_softc *sc)
 		goto free_pdsc;
 
 	link = &sc->sc_pd->pd_link;
-	link->adapter = &mfii_pd_switch;
-	link->adapter_softc = sc;
-	link->adapter_buswidth = MFI_MAX_PD;
-	link->adapter_target = SDEV_NO_ADAPTER_TARGET;
 	link->openings = sc->sc_max_cmds - 1;
 	link->pool = &sc->sc_iopool;
 
 	saa.saa_sc_link = link;
+	saa.saa_adapter =  &mfii_pd_switch;
+	saa.saa_adapter_softc = sc;
+	saa.saa_adapter_buswidth = MFI_MAX_PD;
+	saa.saa_adapter_target = SDEV_NO_ADAPTER_TARGET;
+	saa.saa_luns = 8;
 
 	sc->sc_pd->pd_scsibus = (struct scsibus_softc *)
 	    config_found(&sc->sc_dev, &saa, scsiprint);

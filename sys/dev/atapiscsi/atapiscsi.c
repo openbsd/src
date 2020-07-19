@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.113 2020/07/16 21:18:29 krw Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.114 2020/07/19 18:57:57 krw Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -251,16 +251,16 @@ atapiscsi_attach(struct device *parent, struct device *self, void *aux)
 	WDCDEBUG_PRINT(("driver caps %04x\n", drvp->atapi_cap),
 	    DEBUG_PROBE);
 
-	as->sc_adapterlink.adapter_softc = as;
-	as->sc_adapterlink.adapter_target = SDEV_NO_ADAPTER_TARGET;
-	as->sc_adapterlink.adapter_buswidth = 2;
-	as->sc_adapterlink.adapter = &atapiscsi_switch;
-	as->sc_adapterlink.luns = 1;
 	as->sc_adapterlink.openings = 1;
 	as->sc_adapterlink.flags = SDEV_ATAPI;
 	as->sc_adapterlink.pool = &wdc_xfer_iopool;
 
 	saa.saa_sc_link = &as->sc_adapterlink;
+	saa.saa_adapter_softc = as;
+	saa.saa_adapter_target = SDEV_NO_ADAPTER_TARGET;
+	saa.saa_adapter_buswidth = 2;
+	saa.saa_adapter = &atapiscsi_switch;
+	saa.saa_luns = 1;
 
 	child = config_found((struct device *)as, &saa, scsiprint);
 

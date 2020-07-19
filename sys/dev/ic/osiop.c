@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.59 2020/07/16 21:18:30 krw Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.60 2020/07/19 18:57:58 krw Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -324,14 +324,15 @@ osiop_attach(sc)
 	 */
 	osiop_init(sc);
 
-	sc->sc_link.adapter = &osiop_switch;
-	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.openings = 4;
-	sc->sc_link.adapter_buswidth = OSIOP_NTGT;
-	sc->sc_link.adapter_target = sc->sc_id;
 	sc->sc_link.pool = &sc->sc_iopool;
 
 	saa.saa_sc_link = &sc->sc_link;
+	saa.saa_adapter = &osiop_switch;
+	saa.saa_adapter_softc = sc;
+	saa.saa_adapter_buswidth = OSIOP_NTGT;
+	saa.saa_adapter_target = sc->sc_id;
+	saa.saa_luns = 8;
 
 	config_found(&sc->sc_dev, &saa, scsiprint);
 }

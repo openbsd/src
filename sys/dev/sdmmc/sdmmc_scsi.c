@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.49 2020/07/16 21:18:31 krw Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.50 2020/07/19 18:57:58 krw Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -137,16 +137,16 @@ sdmmc_scsi_attach(struct sdmmc_softc *sc)
 
 	sc->sc_scsibus = scbus;
 
-	scbus->sc_link.adapter_target = SDMMC_SCSIID_HOST;
-	scbus->sc_link.adapter_buswidth = scbus->sc_ntargets;
-	scbus->sc_link.adapter_softc = sc;
-	scbus->sc_link.luns = 1;
 	scbus->sc_link.openings = 1;
-	scbus->sc_link.adapter = &sdmmc_switch;
 	scbus->sc_link.pool = &scbus->sc_iopool;
 
 	bzero(&saa, sizeof(saa));
 	saa.saa.saa_sc_link = &scbus->sc_link;
+	saa.saa.saa_adapter_target = SDMMC_SCSIID_HOST;
+	saa.saa.saa_adapter_buswidth = scbus->sc_ntargets;
+	saa.saa.saa_adapter_softc = sc;
+	saa.saa.saa_luns = 1;
+	saa.saa.saa_adapter = &sdmmc_switch;
 
 	scbus->sc_child = config_found(&sc->sc_dev, &saa, scsiprint);
 	if (scbus->sc_child == NULL) {

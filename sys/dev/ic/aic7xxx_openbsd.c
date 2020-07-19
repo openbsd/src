@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.65 2020/07/16 21:18:30 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.66 2020/07/19 18:57:57 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -75,17 +75,11 @@ ahc_attach(struct ahc_softc *ahc)
 
         s = splbio();
 
-	ahc->sc_channel.adapter_target = ahc->our_id;
-	if (ahc->features & AHC_WIDE)
-		ahc->sc_channel.adapter_buswidth = 16;
-	ahc->sc_channel.adapter_softc = ahc;
-	ahc->sc_channel.adapter = &ahc_switch;
 	ahc->sc_channel.openings = 16;
 	ahc->sc_channel.pool = &ahc->sc_iopool;
 
 	if (ahc->features & AHC_TWIN) {
 		ahc->sc_channel_b = ahc->sc_channel;
-		ahc->sc_channel_b.adapter_target = ahc->our_id_b;
 	}
 
 #ifndef DEBUG
@@ -103,22 +97,30 @@ ahc_attach(struct ahc_softc *ahc)
 	if ((ahc->features & AHC_TWIN) && ahc->flags & AHC_RESET_BUS_B)
 		ahc_reset_channel(ahc, 'B', TRUE);
 
+	saa.saa_adapter_buswidth = (ahc->features & AHC_WIDE) ? 16 :8;
+	saa.saa_adapter_softc = ahc;
+	saa.saa_adapter = &ahc_switch;
+	saa.saa_luns = saa.saa_adapter_buswidth = 8;
 	if ((ahc->flags & AHC_PRIMARY_CHANNEL) == 0) {
 		saa.saa_sc_link = &ahc->sc_channel;
+		saa.saa_adapter_target = ahc->our_id;
 		ahc->sc_child = (struct scsibus_softc *)config_found(
 		    (void *)&ahc->sc_dev, &saa, scsiprint);
 		if (ahc->features & AHC_TWIN) {
 			saa.saa_sc_link = &ahc->sc_channel_b;
+			saa.saa_adapter_target = ahc->our_id;
 			ahc->sc_child_b = (struct scsibus_softc *)config_found(
 			    (void *)&ahc->sc_dev, &saa, scsiprint);
 		}
 	} else {
 		if (ahc->features & AHC_TWIN) {
 			saa.saa_sc_link = &ahc->sc_channel_b;
+			saa.saa_adapter_target = ahc->our_id;
 			ahc->sc_child = (struct scsibus_softc *)config_found(
 			    (void *)&ahc->sc_dev, &saa, scsiprint);
 		}
 		saa.saa_sc_link = &ahc->sc_channel;
+		saa.saa_adapter_target = ahc->our_id;
 		ahc->sc_child_b = (struct scsibus_softc *)config_found(
 		    (void *)&ahc->sc_dev, &saa, scsiprint);
 	}

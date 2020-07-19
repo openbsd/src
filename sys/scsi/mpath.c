@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath.c,v 1.50 2020/07/16 14:44:55 krw Exp $ */
+/*	$OpenBSD: mpath.c,v 1.51 2020/07/19 18:57:58 krw Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -119,14 +119,14 @@ mpath_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	sc->sc_link.adapter = &mpath_switch;
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = SDEV_NO_ADAPTER_TARGET;
-	sc->sc_link.adapter_buswidth = MPATH_BUSWIDTH;
-	sc->sc_link.luns = 1;
 	sc->sc_link.openings = 1024; /* XXX magical */
 
 	saa.saa_sc_link = &sc->sc_link;
+	saa.saa_adapter = &mpath_switch;
+	saa.saa_adapter_softc = sc;
+	saa.saa_adapter_target = SDEV_NO_ADAPTER_TARGET;
+	saa.saa_adapter_buswidth = MPATH_BUSWIDTH;
+	saa.saa_luns = 1;
 
 	sc->sc_scsibus = (struct scsibus_softc *)config_found(&sc->sc_dev,
 	    &saa, scsiprint);
