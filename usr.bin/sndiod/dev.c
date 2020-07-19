@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.75 2020/06/28 05:21:39 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.76 2020/07/19 11:07:14 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1022,7 +1022,7 @@ dev_new(char *path, struct aparams *par,
 	dev_addname(d,path);
 	d->num = dev_sndnum++;
 	d->opt_list = NULL;
-	d->alt_num = 1;
+	d->alt_num = -1;
 
 	/*
 	 * XXX: below, we allocate a midi input buffer, since we don't
