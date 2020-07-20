@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.67 2020/07/20 21:51:34 cheloha Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.68 2020/07/20 22:40:53 deraadt Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -475,10 +475,11 @@ tc_setrealtimeclock(const struct timespec *ts)
 void
 tc_setclock(const struct timespec *ts)
 {
-	struct bintime elapsed, naptime, old_naptime, uptime, utc;
+	struct bintime naptime, old_naptime, uptime, utc;
 	struct timespec tmp;
 	static int first = 1;
 #ifndef SMALL_KERNEL
+	struct bintime elapsed;
 	long long adj_ticks;
 #endif
 
