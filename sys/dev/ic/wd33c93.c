@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd33c93.c,v 1.17 2020/07/19 18:57:58 krw Exp $	*/
+/*	$OpenBSD: wd33c93.c,v 1.18 2020/07/20 14:41:13 krw Exp $	*/
 /*	$NetBSD: wd33c93.c,v 1.24 2010/11/13 13:52:02 uebayasi Exp $	*/
 
 /*
@@ -202,15 +202,15 @@ wd33c93_attach(struct wd33c93_softc *sc, struct scsi_adapter *adapter)
 		printf("\n");
 	}
 
-	sc->sc_link.openings = 2;
-	sc->sc_link.pool = &wd33c93_iopool;
-
-	saa.saa_sc_link = &sc->sc_link;
 	saa.saa_adapter_softc = sc;
 	saa.saa_adapter_target = sc->sc_id;
 	saa.saa_adapter_buswidth = SBIC_NTARG;
 	saa.saa_adapter = adapter;
 	saa.saa_luns = SBIC_NLUN;
+	saa.saa_openings = 2;
+	saa.saa_pool = &wd33c93_iopool;
+	saa.saa_quirks = saa.saa_flags = 0;
+	saa.saa_wwpn = saa.saa_wwnn = 0;
 
 	config_found(&sc->sc_dev, &saa, scsiprint);
 	timeout_add_sec(&sc->sc_watchdog, 60);

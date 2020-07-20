@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.23 2020/07/19 18:57:58 krw Exp $	*/
+/*	$OpenBSD: vioscsi.c,v 1.24 2020/07/20 14:41:14 krw Exp $	*/
 /*
  * Copyright (c) 2013 Google Inc.
  *
@@ -159,15 +159,15 @@ vioscsi_attach(struct device *parent, struct device *self, void *aux)
 		goto err;
 	}
 
-	sc->sc_link.openings = (nreqs > cmd_per_lun) ? cmd_per_lun : nreqs;
-	sc->sc_link.pool = &sc->sc_iopool;
-
-	saa.saa_sc_link = &sc->sc_link;
 	saa.saa_adapter = &vioscsi_switch;
 	saa.saa_adapter_softc = sc;
 	saa.saa_adapter_target = SDEV_NO_ADAPTER_TARGET;
 	saa.saa_adapter_buswidth = max_target;
 	saa.saa_luns = 8;
+	saa.saa_openings = (nreqs > cmd_per_lun) ? cmd_per_lun : nreqs;
+	saa.saa_pool = &sc->sc_iopool;
+	saa.saa_quirks = saa.saa_flags = 0;
+	saa.saa_wwpn = saa.saa_wwnn = 0;
 
 	config_found(self, &saa, scsiprint);
 	return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.65 2020/07/19 18:57:57 krw Exp $ */
+/*	$OpenBSD: adw.c,v 1.66 2020/07/20 14:41:13 krw Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -502,15 +502,15 @@ adw_attach(ADW_SOFTC *sc)
 		break;
 	}
 
-	sc->sc_link.openings = 4;
-	sc->sc_link.pool = &sc->sc_iopool;
-
-	saa.saa_sc_link = &sc->sc_link;
 	saa.saa_adapter_softc = sc;
 	saa.saa_adapter_target = sc->chip_scsi_id;
 	saa.saa_adapter = &adw_switch;
 	saa.saa_adapter_buswidth = ADW_MAX_TID+1;
 	saa.saa_luns = 8;
+	saa.saa_openings = 4;
+	saa.saa_pool = &sc->sc_iopool;
+	saa.saa_quirks = saa.saa_flags = 0;
+	saa.saa_wwpn = saa.saa_wwnn = 0;
 
 	config_found(&sc->sc_dev, &saa, scsiprint);
 }

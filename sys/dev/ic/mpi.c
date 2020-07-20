@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.220 2020/07/19 18:57:57 krw Exp $ */
+/*	$OpenBSD: mpi.c,v 1.221 2020/07/20 14:41:13 krw Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -355,17 +355,16 @@ mpi_attach(struct mpi_softc *sc)
 	}
 #endif /* NBIO > 0 */
 
-	sc->sc_link.openings = MAX(sc->sc_maxcmds / sc->sc_buswidth, 16);
-	sc->sc_link.pool = &sc->sc_iopool;
-	sc->sc_link.port_wwn = sc->sc_port_wwn;
-	sc->sc_link.node_wwn = sc->sc_node_wwn;
-
-	saa.saa_sc_link = &sc->sc_link;
 	saa.saa_adapter = &mpi_switch;
 	saa.saa_adapter_softc = sc;
 	saa.saa_adapter_target = sc->sc_target;
 	saa.saa_adapter_buswidth = sc->sc_buswidth;
 	saa.saa_luns = 8;
+	saa.saa_openings = MAX(sc->sc_maxcmds / sc->sc_buswidth, 16);
+	saa.saa_pool = &sc->sc_iopool;
+	saa.saa_wwpn = sc->sc_port_wwn;
+	saa.saa_wwnn = sc->sc_node_wwn;
+	saa.saa_quirks = saa.saa_flags = 0;
 
 	sc->sc_scsibus = (struct scsibus_softc *)config_found(&sc->sc_dev,
 	    &saa, scsiprint);

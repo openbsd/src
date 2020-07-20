@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.192 2020/07/19 18:57:58 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.193 2020/07/20 14:41:14 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -339,9 +339,14 @@ struct scsi_inquiry_pattern {
 };
 
 struct scsibus_attach_args {
-	struct	scsi_link	*saa_sc_link;
 	struct	scsi_adapter	*saa_adapter;
 	void			*saa_adapter_softc;
+	struct	scsi_iopool	*saa_pool;
+	u_int64_t		 saa_wwpn;
+	u_int64_t		 saa_wwnn;
+	u_int16_t		 saa_quirks;
+	u_int16_t		 saa_flags;
+	u_int16_t		 saa_openings;
 	u_int16_t		 saa_adapter_target;
 #define	SDEV_NO_ADAPTER_TARGET	0xffff
 	u_int16_t		 saa_adapter_buswidth;

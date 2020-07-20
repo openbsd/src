@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.75 2020/07/19 18:57:58 krw Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.76 2020/07/20 14:41:13 krw Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -261,15 +261,15 @@ ncr53c9x_attach(sc)
 	sc->sc_state = 0;
 	ncr53c9x_init(sc, 1);
 
-	sc->sc_link.openings = 2;
-	sc->sc_link.pool = &ecb_iopool;
-
-	saa.saa_sc_link = &sc->sc_link;
 	saa.saa_adapter_softc = sc;
 	saa.saa_adapter_target = sc->sc_id;
 	saa.saa_adapter = &ncr53c9x_switch;
 	saa.saa_adapter_buswidth = sc->sc_ntarg;
 	saa.saa_luns = 8;
+	saa.saa_openings = 2;
+	saa.saa_pool = &ecb_iopool;
+	saa.saa_quirks = saa.saa_flags = 0;
+	saa.saa_wwpn = saa.saa_wwnn = 0;
 
 	config_found(&sc->sc_dev, &saa, scsiprint);
 }

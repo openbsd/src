@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.43 2020/07/19 18:57:58 krw Exp $ */
+/*	$OpenBSD: qlw.c,v 1.44 2020/07/20 14:41:13 krw Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -397,12 +397,12 @@ qlw_attach(struct qlw_softc *sc)
 	saa.saa_adapter_softc = sc;
 	saa.saa_adapter_buswidth = QLW_MAX_TARGETS;
 	saa.saa_luns = QLW_MAX_LUNS;
+	saa.saa_pool = &sc->sc_iopool;
+	saa.saa_quirks = saa.saa_flags = 0;
+	saa.saa_wwpn = saa.saa_wwnn = 0;
 	for (bus = 0; bus < sc->sc_numbusses; bus++) {
 		saa.saa_adapter_target = sc->sc_initiator[bus];
-		sc->sc_link[bus].openings = sc->sc_max_queue_depth[bus];
-		sc->sc_link[bus].pool = &sc->sc_iopool;
-
-		saa.saa_sc_link = &sc->sc_link[bus];
+		saa.saa_openings = sc->sc_max_queue_depth[bus];
 
 		sc->sc_scsibus[bus] = (struct scsibus_softc *)
 		    config_found(&sc->sc_dev, &saa, scsiprint);

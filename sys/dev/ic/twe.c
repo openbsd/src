@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.56 2020/07/19 18:57:58 krw Exp $	*/
+/*	$OpenBSD: twe.c,v 1.57 2020/07/20 14:41:13 krw Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff.  All rights reserved.
@@ -394,15 +394,15 @@ twe_attach(sc)
 
 	/* TODO: fetch & print cache params? */
 
-	sc->sc_link.openings = TWE_MAXCMDS / nunits;
-	sc->sc_link.pool = &sc->sc_iopool;
-
-	saa.saa_sc_link = &sc->sc_link;
 	saa.saa_adapter_softc = sc;
 	saa.saa_adapter = &twe_switch;
 	saa.saa_adapter_target = SDEV_NO_ADAPTER_TARGET;
 	saa.saa_adapter_buswidth = TWE_MAX_UNITS;
 	saa.saa_luns = 8;
+	saa.saa_openings = TWE_MAXCMDS / nunits;
+	saa.saa_pool = &sc->sc_iopool;
+	saa.saa_quirks = saa.saa_flags = 0;
+	saa.saa_wwpn = saa.saa_wwnn = 0;
 
 	config_found(&sc->sc_dev, &saa, scsiprint);
 

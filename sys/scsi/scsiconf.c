@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.228 2020/07/19 18:57:58 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.229 2020/07/20 14:41:14 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -143,10 +143,10 @@ scsibusattach(struct device *parent, struct device *self, void *aux)
 	SLIST_INIT(&sb->sc_link_list);
 	sb->sb_adapter_softc = saa->saa_adapter_softc;
 	sb->sb_adapter = saa->saa_adapter;
-	sb->sb_pool = saa->saa_sc_link->pool;
-	sb->sb_quirks = saa->saa_sc_link->quirks;
-	sb->sb_flags = saa->saa_sc_link->flags;
-	sb->sb_openings = saa->saa_sc_link->openings;
+	sb->sb_pool = saa->saa_pool;
+	sb->sb_quirks = saa->saa_quirks;
+	sb->sb_flags = saa->saa_flags;
+	sb->sb_openings = saa->saa_openings;
 	sb->sb_adapter_buswidth = saa->saa_adapter_buswidth;
 	sb->sb_adapter_target = saa->saa_adapter_target;
 	sb->sb_luns = saa->saa_luns;
@@ -159,11 +159,9 @@ scsibusattach(struct device *parent, struct device *self, void *aux)
 	printf(": %d targets", sb->sb_adapter_buswidth);
 	if (sb->sb_adapter_target < sb->sb_adapter_buswidth)
 		printf(", initiator %d", sb->sb_adapter_target);
-	if (saa->saa_sc_link->port_wwn != 0x0 &&
-	    saa->saa_sc_link->node_wwn != 0x0) {
-		printf(", WWPN %016llx, WWNN %016llx",
-		    saa->saa_sc_link->port_wwn,
-		    saa->saa_sc_link->node_wwn);
+	if (saa->saa_wwpn != 0x0 && saa->saa_wwnn != 0x0) {
+		printf(", WWPN %016llx, WWNN %016llx", saa->saa_wwpn,
+		    saa->saa_wwnn);
 	}
 	printf("\n");
 

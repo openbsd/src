@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop.c,v 1.32 2020/07/19 18:57:58 krw Exp $	*/
+/*	$OpenBSD: oosiop.c,v 1.33 2020/07/20 14:41:13 krw Exp $	*/
 /*	$NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $	*/
 
 /*
@@ -256,16 +256,16 @@ oosiop_attach(struct oosiop_softc *sc)
 	sc->sc_active = 0;
 	oosiop_write_4(sc, OOSIOP_DSP, sc->sc_scrbase + Ent_wait_reselect);
 
-	sc->sc_link.openings = 1;	/* XXX */
-	sc->sc_link.pool = &sc->sc_iopool;
-	sc->sc_link.quirks = ADEV_NODOORLOCK;
-
-	saa.saa_sc_link = &sc->sc_link;
 	saa.saa_adapter = &oosiop_switch;
 	saa.saa_adapter_softc = sc;
 	saa.saa_adapter_buswidth = OOSIOP_NTGT;
 	saa.saa_adapter_target = sc->sc_id;
 	saa.saa_luns = 8;
+	saa.saa_openings = 1;	/* XXX */
+	saa.saa_pool = &sc->sc_iopool;
+	saa.saa_quirks = ADEV_NODOORLOCK;
+	saa.saa_flags = 0;
+	saa.saa_wwpn = saa.saa_wwnn = 0;
 
 	config_found(&sc->sc_dev, &saa, scsiprint);
 }

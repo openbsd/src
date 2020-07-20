@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.56 2020/07/19 18:57:58 krw Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.57 2020/07/20 14:41:14 krw Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -109,17 +109,16 @@ umass_scsi_attach(struct umass_softc *sc)
 
 	scsi_iopool_init(&scbus->sc_iopool, scbus, umass_io_get, umass_io_put);
 
-	scbus->sc_link.openings = 1;
-	scbus->sc_link.quirks = SDEV_ONLYBIG | sc->sc_busquirks;
-	scbus->sc_link.pool = &scbus->sc_iopool;
-	scbus->sc_link.flags = flags;
-
-	saa.saa_sc_link = &scbus->sc_link;
 	saa.saa_adapter_buswidth = 2;
 	saa.saa_adapter = &umass_scsi_switch;
 	saa.saa_adapter_softc = sc;
 	saa.saa_adapter_target = UMASS_SCSIID_HOST;
 	saa.saa_luns = sc->maxlun + 1;
+	saa.saa_openings = 1;
+	saa.saa_quirks = SDEV_ONLYBIG | sc->sc_busquirks;
+	saa.saa_pool = &scbus->sc_iopool;
+	saa.saa_flags = flags;
+	saa.saa_wwpn = saa.saa_wwnn = 0;
 
 	sc->sc_refcnt++;
 	scbus->sc_child = config_found((struct device *)sc, &saa, scsiprint);

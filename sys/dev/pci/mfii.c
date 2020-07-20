@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.78 2020/07/19 18:57:58 krw Exp $ */
+/* $OpenBSD: mfii.c,v 1.79 2020/07/20 14:41:13 krw Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -781,15 +781,15 @@ mfii_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_ih == NULL)
 		goto free_sgl;
 
-	sc->sc_link.openings = sc->sc_max_cmds;
-	sc->sc_link.pool = &sc->sc_iopool;
-
-	saa.saa_sc_link = &sc->sc_link;
 	saa.saa_adapter_softc = sc;
 	saa.saa_adapter = &mfii_switch;
 	saa.saa_adapter_target = SDEV_NO_ADAPTER_TARGET;
 	saa.saa_adapter_buswidth = sc->sc_info.mci_max_lds;
 	saa.saa_luns = 8;
+	saa.saa_openings = sc->sc_max_cmds;
+	saa.saa_pool = &sc->sc_iopool;
+	saa.saa_quirks = saa.saa_flags = 0;
+	saa.saa_wwpn = saa.saa_wwnn = 0;
 
 	sc->sc_scsibus = (struct scsibus_softc *)config_found(&sc->sc_dev, &saa,
 	    scsiprint);
@@ -908,7 +908,6 @@ int
 mfii_syspd(struct mfii_softc *sc)
 {
 	struct scsibus_attach_args saa;
-	struct scsi_link *link;
 
 	sc->sc_pd = malloc(sizeof(*sc->sc_pd), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (sc->sc_pd == NULL)
@@ -917,16 +916,15 @@ mfii_syspd(struct mfii_softc *sc)
 	if (mfii_dev_handles_update(sc) != 0)
 		goto free_pdsc;
 
-	link = &sc->sc_pd->pd_link;
-	link->openings = sc->sc_max_cmds - 1;
-	link->pool = &sc->sc_iopool;
-
-	saa.saa_sc_link = link;
 	saa.saa_adapter =  &mfii_pd_switch;
 	saa.saa_adapter_softc = sc;
 	saa.saa_adapter_buswidth = MFI_MAX_PD;
 	saa.saa_adapter_target = SDEV_NO_ADAPTER_TARGET;
 	saa.saa_luns = 8;
+	saa.saa_openings = sc->sc_max_cmds - 1;
+	saa.saa_pool = &sc->sc_iopool;
+	saa.saa_quirks = saa.saa_flags = 0;
+	saa.saa_wwpn = saa.saa_wwnn = 0;
 
 	sc->sc_pd->pd_scsibus = (struct scsibus_softc *)
 	    config_found(&sc->sc_dev, &saa, scsiprint);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.59 2020/07/19 18:57:57 krw Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.60 2020/07/20 14:41:12 krw Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -345,15 +345,16 @@ vdsk_attach(struct device *parent, struct device *self, void *aux)
 
 	scsi_iopool_init(&sc->sc_iopool, sc, vdsk_io_get, vdsk_io_put);
 
-	sc->sc_link.openings = sc->sc_vd->vd_nentries - 1;
-	sc->sc_link.pool = &sc->sc_iopool;
 
-	saa.saa_sc_link = &sc->sc_link;
 	saa.saa_adapter = &vdsk_switch;
 	saa.saa_adapter_softc = self;
 	saa.saa_adapter_buswidth = 1;
 	saa.saa_luns = 1;
 	saa.saa_adapter_target = SDEV_NO_ADAPTER_TARGET;
+	saa.saa_openings = sc->sc_vd->vd_nentries - 1;
+	saa.saa_pool = &sc->sc_iopool;
+	saa.saa_quirks = saa.flags = 0;
+	saa.saa.wwpn = saa.saa_wwnn = 0;
 
 	config_found(self, &saa, scsiprint);
 

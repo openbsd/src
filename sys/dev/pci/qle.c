@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.58 2020/07/19 18:57:58 krw Exp $ */
+/*	$OpenBSD: qle.c,v 1.59 2020/07/20 14:41:14 krw Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -654,30 +654,29 @@ qle_attach(struct device *parent, struct device *self, void *aux)
 		    DEVNAME(sc));
 	}
 
-	sc->sc_link.openings = sc->sc_maxcmds;
-	sc->sc_link.pool = &sc->sc_iopool;
-	if (sc->sc_nvram_valid) {
-		sc->sc_link.port_wwn = betoh64(sc->sc_nvram.port_name);
-		sc->sc_link.node_wwn = betoh64(sc->sc_nvram.node_name);
-	} else {
-		sc->sc_link.port_wwn = QLE_DEFAULT_PORT_NAME;
-		sc->sc_link.node_wwn = 0;
-	}
-	if (sc->sc_link.node_wwn == 0) {
-		/*
-		 * mask out the port number from the port name to get
-		 * the node name.
-		 */
-		sc->sc_link.node_wwn = sc->sc_link.port_wwn;
-		sc->sc_link.node_wwn &= ~(0xfULL << 56);
-	}
-
-	saa.saa_sc_link = &sc->sc_link;
 	saa.saa_adapter = &qle_switch;
 	saa.saa_adapter_softc = sc;
 	saa.saa_adapter_target = SDEV_NO_ADAPTER_TARGET;
 	saa.saa_adapter_buswidth = QLE_MAX_TARGETS;
 	saa.saa_luns = 8;
+	saa.saa_openings = sc->sc_maxcmds;
+	saa.saa_pool = &sc->sc_iopool;
+	if (sc->sc_nvram_valid) {
+		saa.saa_wwpn = betoh64(sc->sc_nvram.port_name);
+		saa.saa_wwnn = betoh64(sc->sc_nvram.node_name);
+	} else {
+		saa.saa_wwpn = QLE_DEFAULT_PORT_NAME;
+		saa.saa_wwnn = 0;
+	}
+	if (saa.saa_wwnn == 0) {
+		/*
+		 * mask out the port number from the port name to get
+		 * the node name.
+		 */
+		saa.saa_wwnn = saa.saa_wwpn;
+		saa.saa_wwnn &= ~(0xfULL << 56);
+	}
+	saa.saa_quirks = saa.saa_flags = 0;
 
 	sc->sc_scsibus = (struct scsibus_softc *)config_found(&sc->sc_dev,
 	    &saa, scsiprint);

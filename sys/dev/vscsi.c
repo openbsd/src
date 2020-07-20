@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.54 2020/07/19 18:57:57 krw Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.55 2020/07/20 14:41:12 krw Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -145,15 +145,15 @@ vscsi_attach(struct device *parent, struct device *self, void *aux)
 	rw_init(&sc->sc_ioc_lock, "vscsiioc");
 	scsi_iopool_init(&sc->sc_iopool, sc, vscsi_ccb_get, vscsi_ccb_put);
 
-	sc->sc_link.openings = 16;
-	sc->sc_link.pool = &sc->sc_iopool;
-
-	saa.saa_sc_link = &sc->sc_link;
 	saa.saa_adapter = &vscsi_switch;
 	saa.saa_adapter_softc = sc;
 	saa.saa_adapter_target = SDEV_NO_ADAPTER_TARGET;
 	saa.saa_adapter_buswidth = 256;
 	saa.saa_luns = 8;
+	saa.saa_openings = 16;
+	saa.saa_pool = &sc->sc_iopool;
+	saa.saa_quirks = saa.saa_flags = 0;
+	saa.saa_wwpn = saa.saa_wwnn = 0;
 
 	sc->sc_scsibus = (struct scsibus_softc *)config_found(&sc->sc_dev,
 	    &saa, scsiprint);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.82 2020/07/19 18:57:58 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.83 2020/07/20 14:41:13 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -210,15 +210,15 @@ siop_attach(sc)
 	siop_dump_script(sc);
 #endif
 
-	sc->sc_c.sc_link.openings = SIOP_NTAG;
-	sc->sc_c.sc_link.pool = &sc->iopool;
-
-	saa.saa_sc_link = &sc->sc_c.sc_link;
 	saa.saa_adapter_softc = sc;
 	saa.saa_adapter = &siop_switch;
 	saa.saa_adapter_target = sc->sc_c.sc_id;
 	saa.saa_adapter_buswidth = (sc->sc_c.features & SF_BUS_WIDE) ? 16 : 8;
 	saa.saa_luns = 8;
+	saa.saa_openings = SIOP_NTAG;
+	saa.saa_pool = &sc->iopool;
+	saa.saa_quirks = saa.saa_flags = 0;
+	saa.saa_wwpn = saa.saa_wwnn = 0;
 
 	config_found((struct device*)sc, &saa, scsiprint);
 }

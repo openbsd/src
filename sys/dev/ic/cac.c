@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.64 2020/07/19 18:57:57 krw Exp $	*/
+/*	$OpenBSD: cac.c,v 1.65 2020/07/20 14:41:13 krw Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -236,17 +236,17 @@ cac_init(struct cac_softc *sc, int startfw)
 		return (-1);
 	}
 
-	sc->sc_link.openings = CAC_MAX_CCBS / sc->sc_nunits;
-	if (sc->sc_link.openings < 4 )
-		sc->sc_link.openings = 4;
-	sc->sc_link.pool = &sc->sc_iopool;
-
-	saa.saa_sc_link = &sc->sc_link;
 	saa.saa_adapter_softc = sc;
 	saa.saa_adapter = &cac_switch;
 	saa.saa_adapter_target = SDEV_NO_ADAPTER_TARGET;
 	saa.saa_adapter_buswidth = cinfo.num_drvs;
 	saa.saa_luns = 8;
+	saa.saa_openings = CAC_MAX_CCBS / sc->sc_nunits;
+	if (saa.saa_openings < 4 )
+		saa.saa_openings = 4;
+	saa.saa_pool = &sc->sc_iopool;
+	saa.saa_quirks = saa.saa_flags = 0;
+	saa.saa_wwpn = saa.saa_wwnn = 0;
 
 	sc->sc_scsibus = (struct scsibus_softc *)config_found(&sc->sc_dv, &saa,
 	    scsiprint);

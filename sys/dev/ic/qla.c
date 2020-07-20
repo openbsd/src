@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.66 2020/07/19 18:57:58 krw Exp $ */
+/*	$OpenBSD: qla.c,v 1.67 2020/07/20 14:41:13 krw Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -672,20 +672,6 @@ qla_attach(struct qla_softc *sc)
 		    DEVNAME(sc));
 	}
 
-	sc->sc_link.openings = sc->sc_maxcmds;
-	sc->sc_link.pool = &sc->sc_iopool;
-	sc->sc_link.port_wwn = sc->sc_port_name;
-	sc->sc_link.node_wwn = sc->sc_node_name;
-	if (sc->sc_link.node_wwn == 0) {
-		/*
-		 * mask out the port number from the port name to get
-		 * the node name.
-		 */
-		sc->sc_link.node_wwn = sc->sc_link.port_wwn;
-		sc->sc_link.node_wwn &= ~(0xfULL << 56);
-	}
-
-	saa.saa_sc_link = &sc->sc_link;
 	saa.saa_adapter = &qla_switch;
 	saa.saa_adapter_softc = sc;
 	if (sc->sc_2k_logins) {
@@ -695,6 +681,19 @@ qla_attach(struct qla_softc *sc)
 	}
 	saa.saa_adapter_target = SDEV_NO_ADAPTER_TARGET;
 	saa.saa_luns = 8;
+	saa.saa_openings = sc->sc_maxcmds;
+	saa.saa_pool = &sc->sc_iopool;
+	saa.saa_wwpn = sc->sc_port_name;
+	saa.saa_wwnn = sc->sc_node_name;
+	if (saa.saa_wwnn == 0) {
+		/*
+		 * mask out the port number from the port name to get
+		 * the node name.
+		 */
+		saa.saa_wwnn = saa.saa_wwpn;
+		saa.saa_wwnn &= ~(0xfULL << 56);
+	}
+	saa.saa_quirks = saa.saa_flags = 0;
 
 	sc->sc_scsibus = (struct scsibus_softc *)config_found(&sc->sc_dev,
 	    &saa, scsiprint);

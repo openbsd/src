@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.86 2020/07/19 18:57:57 krw Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.87 2020/07/20 14:41:13 krw Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -353,15 +353,15 @@ ciss_attach(struct ciss_softc *sc)
 
 	sc->sc_flush = CISS_FLUSH_ENABLE;
 
-	sc->sc_link.openings = sc->maxcmd;
-	sc->sc_link.pool = &sc->sc_iopool;
-
-	saa.saa_sc_link = &sc->sc_link;
 	saa.saa_adapter_softc = sc;
 	saa.saa_adapter = &ciss_switch;
 	saa.saa_luns = 1;
 	saa.saa_adapter_target = SDEV_NO_ADAPTER_TARGET;
 	saa.saa_adapter_buswidth = sc->maxunits;
+	saa.saa_openings = sc->maxcmd;
+	saa.saa_pool = &sc->sc_iopool;
+	saa.saa_quirks = saa.saa_flags = 0;
+	saa.saa_wwpn = saa.saa_wwnn = 0;
 
 	scsibus = (struct scsibus_softc *)config_found_sm(&sc->sc_dev,
 	    &saa, scsiprint, NULL);

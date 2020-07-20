@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.116 2020/07/19 18:57:58 krw Exp $ */
+/*	$OpenBSD: arc.c,v 1.117 2020/07/20 14:41:13 krw Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -801,15 +801,15 @@ arc_attach(struct device *parent, struct device *self, void *aux)
 		goto unmap_pci;
 	}
 
-	sc->sc_link.openings = sc->sc_req_count;
-	sc->sc_link.pool = &sc->sc_iopool;
-
-	saa.saa_sc_link = &sc->sc_link;
 	saa.saa_adapter = &arc_switch;
 	saa.saa_adapter_softc = sc;
 	saa.saa_adapter_target = SDEV_NO_ADAPTER_TARGET;
 	saa.saa_adapter_buswidth = ARC_MAX_TARGET;
 	saa.saa_luns = 8;
+	saa.saa_openings = sc->sc_req_count;
+	saa.saa_pool = &sc->sc_iopool;
+	saa.saa_quirks = saa.saa_flags = 0;
+	saa.saa_wwpn = saa.saa_wwnn = 0;
 
 	sc->sc_scsibus = (struct scsibus_softc *)config_found(self, &saa,
 	    scsiprint);

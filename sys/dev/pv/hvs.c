@@ -308,15 +308,15 @@ hvs_attach(struct device *parent, struct device *self, void *aux)
 
 	task_set(&sc->sc_probetask, hvs_scsi_probe, sc);
 
-	sc->sc_link.openings = sc->sc_nccb;
-	sc->sc_link.pool = &sc->sc_iopool;
-
-	saa.saa_sc_link = &sc->sc_link;
 	saa.saa_adapter = &hvs_switch;
 	saa.saa_adapter_softc = self;
 	saa.saa_luns = sc->sc_flags & HVSF_SCSI ? 64 : 1;
 	saa.saa_adapter_buswidth = 2;
 	saa.saa_adapter_target = SDEV_NO_ADAPTER_TARGET;
+	saa.saa_openings = sc->sc_nccb;
+	saa.saa_pool = &sc->sc_iopool;
+	saa.saa_quirks = saa.saa_flags = 0;
+	saa.saa_wwpn = saa.saa_wwnn = 0;
 
 	sc->sc_scsibus = config_found(self, &saa, scsiprint);
 

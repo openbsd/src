@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.75 2020/07/19 18:57:57 krw Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.76 2020/07/20 14:41:13 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -461,20 +461,20 @@ gdt_attach(struct gdt_softc *sc)
 #endif
 	gdt_cnt++;
 
-	if (sc->sc_ndevs == 0)
-		sc->sc_link.openings = 0;
-	else
-		sc->sc_link.openings = (GDT_MAXCMDS - GDT_CMD_RESERVE) /
-		    sc->sc_ndevs;
-	sc->sc_link.pool = &sc->sc_iopool;
-
-	saa.saa_sc_link = &sc->sc_link;
 	saa.saa_adapter_softc = sc;
 	saa.saa_adapter = &gdt_switch;
 	saa.saa_adapter_buswidth =
 	    (sc->sc_class & GDT_FC) ? GDT_MAXID : GDT_MAX_HDRIVES;
 	saa.saa_adapter_target = SDEV_NO_ADAPTER_TARGET;
 	saa.saa_luns = 8;
+	if (sc->sc_ndevs == 0)
+		saa.saa_openings = 0;
+	else
+		saa.saa_openings = (GDT_MAXCMDS - GDT_CMD_RESERVE) /
+		    sc->sc_ndevs;
+	saa.saa_pool = &sc->sc_iopool;
+	saa.saa_quirks = saa.saa_flags = 0;
+	saa.saa_wwpn = saa.saa_wwnn = 0;
 
 	config_found(&sc->sc_dev, &saa, scsiprint);
 
