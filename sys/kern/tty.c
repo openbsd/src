@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.161 2020/07/20 14:34:16 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.162 2020/07/20 18:42:30 deraadt Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -1334,21 +1334,18 @@ ttyblock(struct tty *tp)
 }
 
 void
-ttrstrt(void *tp_arg)
+ttrstrt(void *arg)
 {
-	struct tty *tp;
+	struct tty *tp = (struct tty *)arg;
 	int s;
 
 #ifdef DIAGNOSTIC
-	if (tp_arg == NULL)
+	if (tp == NULL)
 		panic("ttrstrt");
 #endif
-	tp = tp_arg;
 	s = spltty();
-
 	CLR(tp->t_state, TS_TIMEOUT);
 	ttstart(tp);
-
 	splx(s);
 }
 
