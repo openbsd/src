@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.237 2020/07/20 08:09:30 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.238 2020/07/20 08:19:59 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -4598,22 +4598,27 @@ iwn5000_set_gains(struct iwn_softc *sc)
 	cmd.code = sc->noise_gain;
 	cmd.ngroups = 1;
 	cmd.isvalid = 1;
-	/* Get first available RX antenna as referential. */
-	ant = IWN_LSB(sc->rxchainmask);
+	/* Get first available RX antenna as referential.
+	 * IWN_LSB() return values start with 1, but
+	 * antenna gain array cmd.gain[] and noise array
+	 * calib->noise[] start with 0. */
+	ant = IWN_LSB(sc->rxchainmask) - 1;
+
 	/* Set differential gains for other antennas. */
 	for (i = ant + 1; i < 3; i++) {
 		if (sc->chainmask & (1 << i)) {
 			/* The delta is relative to antenna "ant". */
 			delta = ((int32_t)calib->noise[ant] -
 			    (int32_t)calib->noise[i]) / div;
+			DPRINTF(("Ant[%d] vs. Ant[%d]: delta %d\n", ant, i, delta));
 			/* Limit to [-4.5dB,+4.5dB]. */
-			cmd.gain[i - 1] = MIN(abs(delta), 3);
+			cmd.gain[i] = MIN(abs(delta), 3);
 			if (delta < 0)
-				cmd.gain[i - 1] |= 1 << 2;	/* sign bit */
+				cmd.gain[i] |= 1 << 2;	/* sign bit */
+			DPRINTF(("Setting differential gains for antenna %d: %x\n",
+				i, cmd.gain[i]));
 		}
 	}
-	DPRINTF(("setting differential gains: %x/%x (%x)\n",
-	    cmd.gain[0], cmd.gain[1], sc->chainmask));
 	return iwn_cmd(sc, IWN_CMD_PHY_CALIB, &cmd, sizeof cmd, 1);
 }
 
