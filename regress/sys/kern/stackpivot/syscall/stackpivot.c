@@ -16,16 +16,18 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "../pivot.h"
 
 void doexit() {
-    exit(0);
+    _exit(0);
 }
 
 int main() {
     /* set up an alt stack on the heap that just calls doexit */
     size_t *newstack = calloc(10, sizeof(size_t));
+    printf("%p\n", newstack);
     newstack[0] = (size_t)doexit;
     pivot(newstack);
     return 0;
