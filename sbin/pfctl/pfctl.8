@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.180 2020/01/15 14:39:41 kn Exp $
+.\" $OpenBSD: pfctl.8,v 1.181 2020/07/20 14:21:51 kn Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 15 2020 $
+.Dd $Mdocdate: July 20 2020 $
 .Dt PFCTL 8
 .Os
 .Sh NAME
@@ -403,7 +403,10 @@ Show the contents of the source tracking table.
 Show filter information (statistics and counters).
 When used together with
 .Fl v ,
-source tracking statistics are also shown.
+source tracking statistics, the firewall's 32-bit hostid number and the
+main ruleset's MD5 checksum for use with
+.Xr pfsync 4
+are also shown.
 .It Fl s Cm labels
 Show per-rule statistics (label, evaluations, packets total, bytes total,
 packets in, bytes in, packets out, bytes out, state creations) of
