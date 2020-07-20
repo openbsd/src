@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.102 2020/07/14 14:33:03 deraadt Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.103 2020/07/20 14:34:16 deraadt Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -564,7 +564,8 @@ again:
 				wakeup(&tp->t_rawq);
 				goto block;
 			}
-			if ((*linesw[tp->t_line].l_rint)(*cp++, tp) == EINTR)
+			if ((*linesw[tp->t_line].l_rint)(*cp++, tp) == 1 &&
+			    tsleep(tp, TTIPRI | PCATCH, "ttyretype", 1) == EINTR)
 				goto interrupt;
 			cnt++;
 			cc--;

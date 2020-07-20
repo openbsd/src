@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.160 2020/07/15 02:29:26 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.161 2020/07/20 14:34:16 deraadt Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -228,8 +228,8 @@ ttyclose(struct tty *tp)
 
 
 /*
- * Process input of a single character received on a tty.  Returns 0 for
- * simple operations, 1 for costly ones (ptcwrite needs to know).
+ * Process input of a single character received on a tty.  Returns 0 normally,
+ * 1 if a costly operation was reached.
  */
 int
 ttyinput(int c, struct tty *tp)
@@ -2019,11 +2019,7 @@ ttyretype(struct tty *tp)
 
 	tp->t_rocount = tp->t_rawq.c_cc;
 	tp->t_rocol = 0;
-	/*
-	 * Yield because of expense, or possible ptcwrite() injection flood.
-	 * Also check for interrupt, and return upwards.
-	 */
-	return tsleep(tp, TTIPRI | PCATCH, "ttyretype", 1);
+	return (1);
 }
 
 /*
