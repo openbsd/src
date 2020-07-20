@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.65 2020/07/19 23:58:51 cheloha Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.66 2020/07/20 21:43:02 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -440,28 +440,30 @@ tc_getprecision(void)
 void
 tc_setrealtimeclock(const struct timespec *ts)
 {
-	struct timespec ts2;
-	struct bintime bt, bt2;
+	struct bintime boottime, old_utc, uptime, utc;
+	struct timespec tmp;
 	int64_t zero = 0;
+
+	TIMESPEC_TO_BINTIME(ts, &utc);
 
 	rw_enter_write(&tc_lock);
 	mtx_enter(&windup_mtx);
-	binuptime(&bt2);
-	TIMESPEC_TO_BINTIME(ts, &bt);
-	bintimesub(&bt, &bt2, &bt);
-	bintimeadd(&bt2, &timehands->th_boottime, &bt2);
 
+	binuptime(&uptime);
+	bintimesub(&utc, &uptime, &boottime);
+	bintimeadd(&timehands->th_boottime, &uptime, &old_utc);
 	/* XXX fiddle all the little crinkly bits around the fiords... */
-	tc_windup(&bt, NULL, &zero);
+	tc_windup(&boottime, NULL, &zero);
+
 	mtx_leave(&windup_mtx);
 	rw_exit_write(&tc_lock);
 
 	enqueue_randomness(ts->tv_sec);
 
 	if (timestepwarnings) {
-		BINTIME_TO_TIMESPEC(&bt2, &ts2);
+		BINTIME_TO_TIMESPEC(&old_utc, &tmp);
 		log(LOG_INFO, "Time stepped from %lld.%09ld to %lld.%09ld\n",
-		    (long long)ts2.tv_sec, ts2.tv_nsec,
+		    (long long)tmp.tv_sec, tmp.tv_nsec,
 		    (long long)ts->tv_sec, ts->tv_nsec);
 	}
 }
@@ -473,8 +475,8 @@ tc_setrealtimeclock(const struct timespec *ts)
 void
 tc_setclock(const struct timespec *ts)
 {
-	struct bintime bt, old_naptime, naptime;
-	struct timespec earlier;
+	struct bintime elapsed, naptime, old_naptime, uptime, utc;
+	struct timespec tmp;
 	static int first = 1;
 #ifndef SMALL_KERNEL
 	long long adj_ticks;
@@ -492,26 +494,29 @@ tc_setclock(const struct timespec *ts)
 
 	enqueue_randomness(ts->tv_sec);
 
+	TIMESPEC_TO_BINTIME(ts, &utc);
+
 	mtx_enter(&windup_mtx);
-	TIMESPEC_TO_BINTIME(ts, &bt);
-	bintimesub(&bt, &timehands->th_boottime, &bt);
+
+	bintimesub(&utc, &timehands->th_boottime, &uptime);
 	old_naptime = timehands->th_naptime;
 	/* XXX fiddle all the little crinkly bits around the fiords... */
-	tc_windup(NULL, &bt, NULL);
+	tc_windup(NULL, &uptime, NULL);
 	naptime = timehands->th_naptime;
+
 	mtx_leave(&windup_mtx);
 
 	if (bintimecmp(&old_naptime, &naptime, ==)) {
-		BINTIME_TO_TIMESPEC(&bt, &earlier);
+		BINTIME_TO_TIMESPEC(&uptime, &tmp);
 		printf("%s: cannot rewind uptime to %lld.%09ld\n",
-		    __func__, (long long)earlier.tv_sec, earlier.tv_nsec);
+		    __func__, (long long)tmp.tv_sec, tmp.tv_nsec);
 	}
 
 #ifndef SMALL_KERNEL
 	/* convert the bintime to ticks */
-	bintimesub(&naptime, &old_naptime, &bt);
-	adj_ticks = (uint64_t)hz * bt.sec +
-	    (((uint64_t)1000000 * (uint32_t)(bt.frac >> 32)) >> 32) / tick;
+	bintimesub(&naptime, &old_naptime, &elapsed);
+	adj_ticks = (uint64_t)hz * elapsed.sec +
+	    (((uint64_t)1000000 * (uint32_t)(elapsed.frac >> 32)) >> 32) / tick;
 	if (adj_ticks > 0) {
 		if (adj_ticks > INT_MAX)
 			adj_ticks = INT_MAX;
