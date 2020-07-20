@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.66 2020/07/20 21:43:02 cheloha Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.67 2020/07/20 21:51:34 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -530,6 +530,8 @@ tc_update_timekeep(void)
 {
 	static struct timecounter *last_tc = NULL;
 	struct timehands *th;
+
+	MUTEX_ASSERT_LOCKED(&windup_mtx);
 
 	if (timekeep == NULL)
 		return;
