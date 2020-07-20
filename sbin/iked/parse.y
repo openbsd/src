@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.102 2020/06/25 13:05:58 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.103 2020/07/20 13:15:24 sthen Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -2929,7 +2929,7 @@ create_ike(char *name, int af, uint8_t ipproto,
 	for (ipa = hosts->src, ipb = hosts->dst; ipa && ipb;
 	    ipa = ipa->next, ipb = ipb->next) {
 		if ((flow = calloc(1, sizeof(struct iked_flow))) == NULL)
-			fatalx("%s: falied to alloc flow.", __func__);
+			fatalx("%s: failed to alloc flow.", __func__);
 
 		memcpy(&flow->flow_src.addr, &ipa->address,
 		    sizeof(ipa->address));
