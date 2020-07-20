@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.690 2020/07/06 04:09:46 dlg Exp $
+#	$OpenBSD: files,v 1.691 2020/07/20 00:15:59 deraadt Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -1029,7 +1029,6 @@ file lib/libkern/explicit_bzero.c
 file lib/libkern/timingsafe_bcmp.c
 file lib/libkern/arch/${MACHINE_ARCH}/strchr.S | lib/libkern/strchr.c
 file lib/libkern/arch/${MACHINE_ARCH}/strrchr.S | lib/libkern/strrchr.c
-file lib/libkern/arch/${MACHINE_ARCH}/__main.S | lib/libkern/__main.c
 file lib/libkern/arch/${MACHINE_ARCH}/imax.S | lib/libkern/imax.c
 file lib/libkern/arch/${MACHINE_ARCH}/imin.S | lib/libkern/imin.c
 file lib/libkern/arch/${MACHINE_ARCH}/lmax.S | lib/libkern/lmax.c
