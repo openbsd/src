@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.235 2020/07/20 08:00:38 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.236 2020/07/20 08:04:41 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2678,7 +2678,7 @@ iwn_ampdu_tx_done(struct iwn_softc *sc, struct iwn_tx_ring *txq,
 		ieee80211_tx_compressed_bar(ic, ni, tid, ssn);
 	else if (!SEQ_LT(seq, ba->ba_winstart)) {
 		/*
-		 * Move window forward if SSN lies beyond end of window,
+		 * Move window forward if SEQ lies beyond end of window,
 		 * otherwise we can't record the ACK for this frame.
 		 * Non-acked frames which left holes in the bitmap near
 		 * the beginning of the window must be discarded.
