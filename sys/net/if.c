@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.613 2020/07/17 08:56:41 mvs Exp $	*/
+/*	$OpenBSD: if.c,v 1.614 2020/07/20 13:55:32 mvs Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -523,8 +523,9 @@ void
 if_attachhead(struct ifnet *ifp)
 {
 	if_attach_common(ifp);
-	NET_LOCK();
+	KERNEL_ASSERT_LOCKED();
 	TAILQ_INSERT_HEAD(&ifnet, ifp, if_list);
+	NET_LOCK();
 	if_attachsetup(ifp);
 	NET_UNLOCK();
 }
@@ -533,8 +534,9 @@ void
 if_attach(struct ifnet *ifp)
 {
 	if_attach_common(ifp);
-	NET_LOCK();
+	KERNEL_ASSERT_LOCKED();
 	TAILQ_INSERT_TAIL(&ifnet, ifp, if_list);
+	NET_LOCK();
 	if_attachsetup(ifp);
 	NET_UNLOCK();
 }
@@ -1145,6 +1147,7 @@ if_detach(struct ifnet *ifp)
 	pfi_detach_ifnet(ifp);
 #endif
 
+	KERNEL_ASSERT_LOCKED();
 	/* Remove the interface from the list of all interfaces.  */
 	TAILQ_REMOVE(&ifnet, ifp, if_list);
 
