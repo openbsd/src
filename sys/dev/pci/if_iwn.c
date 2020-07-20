@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.234 2020/07/10 13:22:20 patrick Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.235 2020/07/20 08:00:38 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2569,6 +2569,7 @@ iwn_ampdu_tx_done(struct iwn_softc *sc, struct iwn_tx_ring *txq,
 	int txfail = (status != IWN_TX_STATUS_SUCCESS &&
 	    status != IWN_TX_STATUS_DIRECT_DONE);
 	struct ieee80211_tx_ba *ba;
+	uint16_t seq;
 
 	sc->sc_tx_timer = 0;
 
@@ -2654,10 +2655,8 @@ iwn_ampdu_tx_done(struct iwn_softc *sc, struct iwn_tx_ring *txq,
 	if (ba->ba_state != IEEE80211_BA_AGREED)
 		return;
 
-	/* This is a final single-frame Tx attempt. */
-	DPRINTFN(3, ("%s: final tx status=0x%x qid=%d queued=%d idx=%d ssn=%u "
-	    "bitmap=0x%llx\n", __func__, status, desc->qid, txq->queued,
-	    desc->idx, ssn, ba->ba_bitmap));
+	/* This was a final single-frame Tx attempt for frame SSN-1. */
+	seq = (ssn - 1) & 0xfff;
 
 	/*
 	 * Skip rate control if our Tx rate is fixed.
@@ -2677,22 +2676,22 @@ iwn_ampdu_tx_done(struct iwn_softc *sc, struct iwn_tx_ring *txq,
 
 	if (txfail)
 		ieee80211_tx_compressed_bar(ic, ni, tid, ssn);
-	else if (!SEQ_LT(ssn, ba->ba_winstart)) {
+	else if (!SEQ_LT(seq, ba->ba_winstart)) {
 		/*
 		 * Move window forward if SSN lies beyond end of window,
 		 * otherwise we can't record the ACK for this frame.
 		 * Non-acked frames which left holes in the bitmap near
 		 * the beginning of the window must be discarded.
 		 */
-		uint16_t s = ssn;
+		uint16_t s = seq;
 		while (SEQ_LT(ba->ba_winend, s)) {
 			ieee80211_output_ba_move_window(ic, ni, tid, s);
 			iwn_ampdu_txq_advance(sc, txq, desc->qid,
 			    IWN_AGG_SSN_TO_TXQ_IDX(s));
 			s = (s + 1) % 0xfff;
 		}
-		/* SSN should now be within window; set corresponding bit. */
-		ieee80211_output_ba_record_ack(ic, ni, tid, ssn);
+		/* SEQ should now be within window; set corresponding bit. */
+		ieee80211_output_ba_record_ack(ic, ni, tid, seq);
 	}
 
 	/* Move window forward up to the first hole in the bitmap. */
