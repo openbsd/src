@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.84 2020/07/20 14:41:12 krw Exp $	*/
+/*	$OpenBSD: aac.c,v 1.85 2020/07/20 20:38:10 krw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -274,7 +274,7 @@ aac_attach(struct aac_softc *sc)
 	saa.saa_luns = 8;
 	saa.saa_openings = (sc->total_fibs - 8) /
 	    (sc->aac_container_count ? sc->aac_container_count : 1);
-	saa.saa.pool = &sc->aac_iopool;
+	saa.saa_pool = &sc->aac_iopool;
 	saa.saa_wwpn = saa.saa_wwnn = 0;
 	saa.saa_quirks = saa.saa_flags = 0;
 
