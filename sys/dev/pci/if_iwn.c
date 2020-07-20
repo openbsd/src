@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.236 2020/07/20 08:04:41 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.237 2020/07/20 08:09:30 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2379,19 +2379,22 @@ iwn_rx_compressed_ba(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	 * Multiple BA notifications in a row may be using this number, with
 	 * additional bits being set in cba->bitmap. It is unclear how the
 	 * firmware decides to shift this window forward.
+	 * We rely on ba->ba_winstart instead.
 	 */
 	seq = le16toh(cba->seq) >> IEEE80211_SEQ_SEQ_SHIFT;
 
 	/*
 	 * The firmware's new BA window starting sequence number
 	 * corresponds to the first hole in cba->bitmap, implying
-	 * that all frames between 'seq' and 'ssn' have been acked.
+	 * that all frames between 'seq' and 'ssn' (non-inclusive)
+	 * have been acked.
 	 */
 	ssn = le16toh(cba->ssn);
 
 	/* Skip rate control if our Tx rate is fixed. */
-	if (ic->ic_fixed_mcs != -1)
-		iwn_ampdu_rate_control(sc, ni, txq, cba->tid, seq, ssn);
+	if (ic->ic_fixed_mcs == -1)
+		iwn_ampdu_rate_control(sc, ni, txq, cba->tid, ba->ba_winstart,
+		    ssn);
 
 	/*
 	 * SSN corresponds to the first (perhaps not yet transmitted) frame
