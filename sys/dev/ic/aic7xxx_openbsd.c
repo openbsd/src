@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.67 2020/07/20 14:41:13 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.68 2020/07/20 16:09:48 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -75,10 +75,6 @@ ahc_attach(struct ahc_softc *ahc)
 
         s = splbio();
 
-	if (ahc->features & AHC_TWIN) {
-		ahc->sc_channel_b = ahc->sc_channel;
-	}
-
 #ifndef DEBUG
 	if (bootverbose) {
 		char ahc_info[256];
@@ -107,13 +103,13 @@ ahc_attach(struct ahc_softc *ahc)
 		ahc->sc_child = (struct scsibus_softc *)config_found(
 		    (void *)&ahc->sc_dev, &saa, scsiprint);
 		if (ahc->features & AHC_TWIN) {
-			saa.saa_adapter_target = ahc->our_id;
+			saa.saa_adapter_target = ahc->our_id_b;
 			ahc->sc_child_b = (struct scsibus_softc *)config_found(
 			    (void *)&ahc->sc_dev, &saa, scsiprint);
 		}
 	} else {
 		if (ahc->features & AHC_TWIN) {
-			saa.saa_adapter_target = ahc->our_id;
+			saa.saa_adapter_target = ahc->our_id_b;
 			ahc->sc_child = (struct scsibus_softc *)config_found(
 			    (void *)&ahc->sc_dev, &saa, scsiprint);
 		}
