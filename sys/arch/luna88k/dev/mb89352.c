@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.28 2020/07/20 14:41:12 krw Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.29 2020/07/20 20:33:10 krw Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -221,7 +221,7 @@ spc_attach(struct spc_softc *sc, struct scsi_adapter *adapter)
 	saa.saa_openings = 2;
 	saa.saa_pool = &sc->sc_iopool;
 	saa.saa_flags = saa.saa_quirks = 0;
-	saa.saa.wwpn = saa.saa_wwnn = 0;
+	saa.saa_wwpn = saa.saa_wwnn = 0;
 
 	config_found(&sc->sc_dev, &saa, scsiprint);
 }

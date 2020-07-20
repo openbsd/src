@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.60 2020/07/20 14:41:12 krw Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.61 2020/07/20 20:33:10 krw Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -354,7 +354,7 @@ vdsk_attach(struct device *parent, struct device *self, void *aux)
 	saa.saa_openings = sc->sc_vd->vd_nentries - 1;
 	saa.saa_pool = &sc->sc_iopool;
 	saa.saa_quirks = saa.flags = 0;
-	saa.saa.wwpn = saa.saa_wwnn = 0;
+	saa.saa_wwpn = saa.saa_wwnn = 0;
 
 	config_found(self, &saa, scsiprint);
 
