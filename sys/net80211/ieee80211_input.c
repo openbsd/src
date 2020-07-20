@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.218 2020/06/01 08:51:13 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.219 2020/07/20 07:45:44 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1937,7 +1937,7 @@ ieee80211_recv_probe_req(struct ieee80211com *ic, struct mbuf *m,
 		return;
 	}
 	/* refuse wildcard SSID if we're hiding our SSID in beacons */
-	if (ssid[1] == 0 && (ic->ic_flags & IEEE80211_F_HIDENWID)) {
+	if (ssid[1] == 0 && (ic->ic_userflags & IEEE80211_F_HIDENWID)) {
 		DPRINTF(("wildcard SSID rejected"));
 		ic->ic_stats.is_rx_ssidmismatch++;
 		return;
