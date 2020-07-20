@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-wg.c,v 1.4 2020/06/21 07:14:17 tb Exp $ */
+/*	$OpenBSD: print-wg.c,v 1.5 2020/07/20 02:24:24 kn Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -63,7 +63,6 @@ struct wg_data {
 uint32_t
 wg_match(const u_char *bp, u_int length)
 {
-	u_int caplen;
 	uint32_t type;
 
 	if (length < sizeof(type))
