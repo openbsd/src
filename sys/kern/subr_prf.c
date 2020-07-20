@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.99 2019/07/20 23:06:51 mpi Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.100 2020/07/20 17:55:28 deraadt Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -649,17 +649,17 @@ vsnprintf(char *buf, size_t size, const char *fmt, va_list ap)
 	    (u_long)va_arg(ap, u_int))
 
 #define KPRINTF_PUTCHAR(C) do {					\
-	int chr = (C);							\
-	ret += 1;							\
-	if (oflags & TOBUFONLY) {					\
-		if ((vp != NULL) && (sbuf == tailp)) {			\
-			if (!(oflags & TOCOUNT))				\
-				goto overflow;				\
-		} else							\
-			*sbuf++ = chr;					\
-	} else {							\
-		kputchar(chr, oflags, (struct tty *)vp);			\
-	}								\
+	int chr = (C);						\
+	ret += 1;						\
+	if (oflags & TOBUFONLY) {				\
+		if ((vp != NULL) && (sbuf == tailp)) {		\
+			if (!(oflags & TOCOUNT))		\
+				goto overflow;			\
+		} else						\
+			*sbuf++ = chr;				\
+	} else {						\
+		kputchar(chr, oflags, (struct tty *)vp);	\
+	}							\
 } while(0)
 
 int
