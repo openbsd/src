@@ -1,4 +1,4 @@
-/* $OpenBSD: wsfontload.c,v 1.21 2019/06/28 13:32:51 deraadt Exp $ */
+/* $OpenBSD: wsfontload.c,v 1.22 2020/07/20 14:09:24 fcambus Exp $ */
 /* $NetBSD: wsfontload.c,v 1.2 2000/01/05 18:46:43 ad Exp $ */
 
 /*
@@ -141,7 +141,8 @@ main(int argc, char *argv[])
 
 	if (list) {
 		i = 0;
-		p = " # Name                             Encoding  W  H";
+		p = " # Name                             Encoding" \
+		    "  W  H    Chars";
 		do {
 			f.index = i;
 			res = ioctl(wsfd, WSDISPLAYIO_LSFONT, &f);
@@ -151,10 +152,11 @@ main(int argc, char *argv[])
 						puts(p);
 						p = NULL;
 					}
-					printf("%2d %-32s %8s %2d %2d\n",
+					printf("%2d %-32s %8s %2d %2d %8d\n",
 					    f.index, f.name,
 					    encodings[f.encoding].name,
-					    f.fontwidth, f.fontheight);
+					    f.fontwidth, f.fontheight,
+					    f.numchars);
 				}
 			}
 			i++;
