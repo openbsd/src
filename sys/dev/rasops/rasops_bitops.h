@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops_bitops.h,v 1.8 2020/05/25 09:55:49 jsg Exp $ */
+/*	$OpenBSD: rasops_bitops.h,v 1.9 2020/07/20 12:40:45 fcambus Exp $ */
 /* 	$NetBSD: rasops_bitops.h,v 1.6 2000/04/12 14:22:30 pk Exp $	*/
 
 /*-
@@ -266,8 +266,8 @@ NAME(copycols)(void *cookie, int row, int src, int dst, int num)
 #endif
 				GETBITS(sp, sb, lnum, tmp);
 				PUTBITS(tmp, rnum, lnum, dp);
- 			}
- 		}
+			}
+		}
 	} else {
 		/* Copy left-to-right */
 		srp = (int32_t *)(ri->ri_bits + row + ((src >> 3) & ~3));
@@ -301,9 +301,9 @@ NAME(copycols)(void *cookie, int row, int src, int dst, int num)
 			if (rmask) {
 				GETBITS(sp, sb, rnum, tmp);
 				PUTBITS(tmp, 0, rnum, dp);
- 			}
- 		}
- 	}
+			}
+		}
+	}
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops32.c,v 1.11 2020/07/15 08:34:25 fcambus Exp $	*/
+/*	$OpenBSD: rasops32.c,v 1.12 2020/07/20 12:40:45 fcambus Exp $	*/
 /*	$NetBSD: rasops32.c,v 1.7 2000/04/12 14:22:29 pk Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/rasops/rasops.h>
 
-int 	rasops32_putchar(void *, int, int, u_int, uint32_t);
+int	rasops32_putchar(void *, int, int, u_int, uint32_t);
 
 /*
  * Initialize a 'rasops_info' descriptor for this depth.
@@ -46,7 +46,6 @@ int 	rasops32_putchar(void *, int, int, u_int, uint32_t);
 void
 rasops32_init(struct rasops_info *ri)
 {
-
 	if (ri->ri_rnum == 0) {
 		ri->ri_rnum = 8;
 		ri->ri_rpos = 0;
