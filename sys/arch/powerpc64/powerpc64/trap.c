@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.28 2020/07/14 16:54:46 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.29 2020/07/20 17:18:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -85,6 +85,10 @@ trap(struct trapframe *frame)
 		type |= EXC_USER;
 		p->p_md.md_regs = frame;
 		refreshcreds(p);
+		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
+		    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
+		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
+			goto out;
 	}
 
 	switch (type) {
@@ -289,7 +293,7 @@ trap(struct trapframe *frame)
 		panic("trap type %x srr1 %lx at %lx lr %lx",
 		    type, frame->srr1, frame->srr0, frame->lr);
 	}
-
+out:
 	userret(p);
 }
 
