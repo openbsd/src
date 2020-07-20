@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.238 2020/07/20 08:19:59 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.239 2020/07/20 08:22:06 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -4598,10 +4598,11 @@ iwn5000_set_gains(struct iwn_softc *sc)
 	cmd.code = sc->noise_gain;
 	cmd.ngroups = 1;
 	cmd.isvalid = 1;
-	/* Get first available RX antenna as referential.
-	 * IWN_LSB() return values start with 1, but
-	 * antenna gain array cmd.gain[] and noise array
-	 * calib->noise[] start with 0. */
+	/*
+	 * Get first available RX antenna as referential.
+	 * IWN_LSB() return values start with 1, but antenna gain array
+	 * cmd.gain[] and noise array calib->noise[] start with 0.
+	 */
 	ant = IWN_LSB(sc->rxchainmask) - 1;
 
 	/* Set differential gains for other antennas. */
