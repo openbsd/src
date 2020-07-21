@@ -1,7 +1,7 @@
-NAME 3
-DESCRIPTION 6
-npara 9
-filled 11
-fpara 13
-unfilled 18
-upara 21
+NAME paragraph.mandoc_ascii 3
+DESCRIPTION paragraph.mandoc_ascii 6
+npara paragraph.mandoc_ascii 9
+filled paragraph.mandoc_ascii 11
+fpara paragraph.mandoc_ascii 13
+unfilled paragraph.mandoc_ascii 18
+upara paragraph.mandoc_ascii 21

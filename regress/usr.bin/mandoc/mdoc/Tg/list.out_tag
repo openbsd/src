@@ -1,6 +1,6 @@
-NAME 3
-DESCRIPTION 6
-dashlist 8
-dashitem 9
-taglist 10
-tagitem 11
+NAME list.mandoc_ascii 3
+DESCRIPTION list.mandoc_ascii 6
+dashlist list.mandoc_ascii 8
+dashitem list.mandoc_ascii 9
+taglist list.mandoc_ascii 10
+tagitem list.mandoc_ascii 11

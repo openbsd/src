@@ -1,5 +1,5 @@
-NAME 3
-DESCRIPTION 6
-two 10
-ERRORS 12
-ENOENT 13
+NAME tag.mandoc_ascii 3
+DESCRIPTION tag.mandoc_ascii 6
+two tag.mandoc_ascii 10
+ERRORS tag.mandoc_ascii 12
+ENOENT tag.mandoc_ascii 13

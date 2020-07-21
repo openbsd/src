@@ -1,8 +1,8 @@
-NAME 3
-DESCRIPTION 6
-Subsection 9
-DESCRIPTION 14
-examples 17
-example 20
-Sub-section 23
-WEIRD_SECTION 26
+NAME tag.mandoc_ascii 3
+DESCRIPTION tag.mandoc_ascii 6
+Subsection tag.mandoc_ascii 9
+DESCRIPTION tag.mandoc_ascii 14
+examples tag.mandoc_ascii 17
+example tag.mandoc_ascii 20
+Sub-section tag.mandoc_ascii 23
+WEIRD_SECTION tag.mandoc_ascii 26

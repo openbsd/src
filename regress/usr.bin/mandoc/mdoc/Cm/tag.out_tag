@@ -1,9 +1,9 @@
-NAME 3
-DESCRIPTION 6
-one 9
-two 9
-three 12
-hyphen 14
-minus 17
-backslash 20
-four 22
+NAME tag.mandoc_ascii 3
+DESCRIPTION tag.mandoc_ascii 6
+one tag.mandoc_ascii 9
+two tag.mandoc_ascii 9
+three tag.mandoc_ascii 12
+hyphen tag.mandoc_ascii 14
+minus tag.mandoc_ascii 17
+backslash tag.mandoc_ascii 20
+four tag.mandoc_ascii 22

@@ -1,6 +1,6 @@
-NAME 3
-DESCRIPTION 6
-outer 11
-inner 13
-outer 17
-inner 19
+NAME nested.mandoc_ascii 3
+DESCRIPTION nested.mandoc_ascii 6
+outer nested.mandoc_ascii 11
+inner nested.mandoc_ascii 13
+outer nested.mandoc_ascii 17
+inner nested.mandoc_ascii 19
