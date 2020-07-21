@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.353 2020/06/24 22:03:42 cheloha Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.354 2020/07/21 14:13:17 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -741,7 +741,9 @@ pf_hash_rule_addr(MD5_CTX *ctx, struct pf_rule_addr *pfr)
 			PF_MD5_UPD(pfr, addr.iflags);
 			break;
 		case PF_ADDR_TABLE:
-			PF_MD5_UPD(pfr, addr.v.tblname);
+			if (strncmp(pfr->addr.v.tblname, PF_OPTIMIZER_TABLE_PFX,
+			    strlen(PF_OPTIMIZER_TABLE_PFX)))
+				PF_MD5_UPD(pfr, addr.v.tblname);
 			break;
 		case PF_ADDR_ADDRMASK:
 			/* XXX ignore af? */
