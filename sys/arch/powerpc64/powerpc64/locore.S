@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.31 2020/07/10 12:38:09 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.32 2020/07/21 21:27:11 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -278,6 +278,7 @@ OPAL_CALL(OPAL_PCI_SET_PE, opal_pci_set_pe)
 OPAL_CALL(OPAL_PCI_SET_XIVE_PE, opal_pci_set_xive_pe)
 OPAL_CALL(OPAL_GET_MSI_32, opal_get_msi_32)
 OPAL_CALL(OPAL_GET_MSI_64, opal_get_msi_64)
+OPAL_CALL(OPAL_START_CPU, opal_start_cpu)
 OPAL_CALL(OPAL_PCI_MAP_PE_DMA_WINDOW_REAL, opal_pci_map_pe_dma_window_real)
 OPAL_CALL(OPAL_PCI_RESET, opal_pci_reset)
 OPAL_CALL(OPAL_REINIT_CPUS, opal_reinit_cpus)
