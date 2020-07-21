@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-null.c,v 1.23 2018/10/22 16:12:45 kn Exp $	*/
+/*	$OpenBSD: print-null.c,v 1.24 2020/07/21 01:09:03 kn Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994, 1995, 1996, 1997
@@ -118,6 +118,11 @@ null_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 #endif
 
 	ts_print(&h->ts);
+
+	if (caplen < NULL_HDRLEN) {
+		printf("[|null]");
+		goto out;
+	}
 
 	/*
 	 * Some printers want to get back at the link level addresses,
