@@ -1,6 +1,5 @@
 #
-#	$OpenBSD: Makefile,v 1.44 2019/05/11 07:18:15 deraadt Exp $
-#
+#	$OpenBSD: Makefile,v 1.45 2020/07/21 04:08:37 deraadt Exp $
 #
 # Copyright (c) 1997 Tobias Weingartner
 #
