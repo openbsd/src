@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.60 2019/07/02 21:17:24 jcs Exp $ */
+/* $OpenBSD: acpiec.c,v 1.61 2020/07/21 03:48:06 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -374,7 +374,7 @@ acpiec_gpehandler(struct acpi_softc *acpi_sc, int gpe, void *arg)
 	} while (sc->sc_gotsci);
 
 	/* Unmask the GPE which was blocked at interrupt time */
-	s = spltty();
+	s = splbio();
 	mask = (1L << (gpe & 7));
 	en = acpi_read_pmreg(acpi_sc, ACPIREG_GPE_EN, gpe>>3);
 	acpi_write_pmreg(acpi_sc, ACPIREG_GPE_EN, gpe>>3, en | mask);

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.388 2020/06/24 22:03:41 cheloha Exp $ */
+/* $OpenBSD: acpi.c,v 1.389 2020/07/21 03:48:06 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1124,7 +1124,7 @@ acpi_attach_common(struct acpi_softc *sc, paddr_t base)
 #endif /* SMALL_KERNEL */
 
 	/* Initialize GPE handlers */
-	s = spltty();
+	s = splbio();
 	acpi_init_gpes(sc);
 	splx(s);
 
@@ -1796,7 +1796,7 @@ acpi_addtask(struct acpi_softc *sc, void (*handler)(void *, int),
 	wq->arg0 = arg0;
 	wq->arg1 = arg1;
 	
-	s = spltty();
+	s = splbio();
 	SIMPLEQ_INSERT_TAIL(&acpi_taskq, wq, next);
 	splx(s);
 }
@@ -1807,7 +1807,7 @@ acpi_dotask(struct acpi_softc *sc)
 	struct acpi_taskq *wq;
 	int s;
 
-	s = spltty();
+	s = splbio();
 	if (SIMPLEQ_EMPTY(&acpi_taskq)) {
 		splx(s);
 
@@ -2011,7 +2011,7 @@ acpi_pbtn_task(void *arg0, int dummy)
 	dnprintf(1,"power button pressed\n");
 
 	/* Reset the latch and re-enable the GPE */
-	s = spltty();
+	s = splbio();
 	en = acpi_read_pmreg(sc, ACPIREG_PM1_EN, 0);
 	acpi_write_pmreg(sc, ACPIREG_PM1_EN,  0,
 	    en | ACPI_PM1_PWRBTN_EN);
@@ -2042,7 +2042,7 @@ acpi_sbtn_task(void *arg0, int dummy)
 	aml_notify_dev(ACPI_DEV_SBD, 0x80);
 
 	/* Reset the latch and re-enable the GPE */
-	s = spltty();
+	s = splbio();
 	en = acpi_read_pmreg(sc, ACPIREG_PM1_EN, 0);
 	acpi_write_pmreg(sc, ACPIREG_PM1_EN,  0,
 	    en | ACPI_PM1_SLPBTN_EN);
@@ -2843,7 +2843,7 @@ acpi_thread(void *arg)
 		sc->sc_threadwaiting = 1;
 
 		/* Enable Sleep/Power buttons if they exist */
-		s = spltty();
+		s = splbio();
 		en = acpi_read_pmreg(sc, ACPIREG_PM1_EN, 0);
 		if (!(sc->sc_fadt->flags & FADT_PWR_BUTTON))
 			en |= ACPI_PM1_PWRBTN_EN;
@@ -2857,7 +2857,7 @@ acpi_thread(void *arg)
 	}
 
 	while (thread->running) {
-		s = spltty();
+		s = splbio();
 		while (sc->sc_threadwaiting) {
 			dnprintf(10, "acpi thread going to sleep...\n");
 			rw_exit_write(&sc->sc_lck);
@@ -3431,7 +3431,7 @@ acpiopen(dev_t dev, int flag, int mode, struct proc *p)
 	    !(sc = acpi_cd.cd_devs[APMUNIT(dev)]))
 		return (ENXIO);
 
-	s = spltty();
+	s = splbio();
 	switch (APMDEV(dev)) {
 	case APMDEV_CTL:
 		if (!(flag & FWRITE)) {
@@ -3470,7 +3470,7 @@ acpiclose(dev_t dev, int flag, int mode, struct proc *p)
 	    !(sc = acpi_cd.cd_devs[APMUNIT(dev)]))
 		return (ENXIO);
 
-	s = spltty();
+	s = splbio();
 	switch (APMDEV(dev)) {
 	case APMDEV_CTL:
 		sc->sc_flags &= ~SCFLAG_OWRITE;
@@ -3503,7 +3503,7 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	    !(sc = acpi_cd.cd_devs[APMUNIT(dev)]))
 		return (ENXIO);
 
-	s = spltty();
+	s = splbio();
 	/* fake APM */
 	switch (cmd) {
 	case APM_IOC_SUSPEND:
@@ -3651,7 +3651,7 @@ acpi_filtdetach(struct knote *kn)
 	struct acpi_softc *sc = kn->kn_hook;
 	int s;
 
-	s = spltty();
+	s = splbio();
 	klist_remove(sc->sc_note, kn);
 	splx(s);
 }
@@ -3685,7 +3685,7 @@ acpikqfilter(dev_t dev, struct knote *kn)
 
 	kn->kn_hook = sc;
 
-	s = spltty();
+	s = splbio();
 	klist_insert(sc->sc_note, kn);
 	splx(s);
 

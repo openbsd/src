@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.251 2020/05/09 10:34:25 jca Exp $ */
+/* $OpenBSD: dsdt.c,v 1.252 2020/07/21 03:48:06 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -527,7 +527,7 @@ acpi_poll(void *arg)
 {
 	int s;
 
-	s = spltty();
+	s = splbio();
 	acpi_addtask(acpi_softc, acpi_poll_notify_task, NULL, 0);
 	acpi_softc->sc_threadwaiting = 0;
 	wakeup(acpi_softc);
