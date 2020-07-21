@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.71 2020/07/10 21:23:47 jmc Exp $
+.\" $OpenBSD: iked.conf.5,v 1.72 2020/07/21 12:33:02 kn Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 10 2020 $
+.Dd $Mdocdate: July 21 2020 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -1013,6 +1013,19 @@ ikev2 "subnet" esp from 10.0.3.0/24 to 10.0.4.0/24 \e
 	peer 192.168.1.0/24
 ikev2 esp from 10.0.5.0/30 to 10.0.5.4/30 peer 192.168.1.2
 ikev2 esp from 10.0.5.8/30 to 10.0.5.12/30 peer 192.168.1.3
+.Ed
+.Pp
+This example encrypts a
+.Xr gre 4
+tunnel from local machine A (2001:db8::aa:1) to peer D (2001:db8::dd:4) based on
+FQDN-based public key authentication;
+.Ar transport
+mode avoids double encapsulation:
+.Bd -literal -offset indent
+ikev2 transport \e
+	proto gre \e
+	from 2001:db8::aa:1 to 2001:db8::dd:4 \e
+	peer D.example.com
 .Ed
 .Sh SEE ALSO
 .Xr enc 4 ,
