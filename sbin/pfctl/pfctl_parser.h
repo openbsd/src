@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.116 2020/01/15 11:52:50 sashan Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.117 2020/07/21 14:10:51 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -184,7 +184,6 @@ struct pf_opt_tbl {
 	struct node_tinithead	 pt_nodes;
 	struct pfr_buffer	*pt_buf;
 };
-#define PF_OPT_TABLE_PREFIX	"__automatic_"
 
 /* optimizer pf_rule container */
 struct pf_opt_rule {

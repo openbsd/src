@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.493 2019/11/17 08:25:05 otto Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.494 2020/07/21 14:10:51 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -476,6 +476,7 @@ union pf_rule_ptr {
 
 #define	PF_ANCHOR_NAME_SIZE	 64
 #define	PF_ANCHOR_MAXPATH	(MAXPATHLEN - PF_ANCHOR_NAME_SIZE - 1)
+#define	PF_OPTIMIZER_TABLE_PFX	"__automatic_"
 
 struct pf_rule {
 	struct pf_rule_addr	 src;
