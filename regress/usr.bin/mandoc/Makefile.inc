@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.27 2020/03/13 00:31:05 schwarze Exp $
+# $OpenBSD: Makefile.inc,v 1.28 2020/07/21 15:12:07 schwarze Exp $
 
 .include "Makefile.sub"
 
@@ -83,9 +83,9 @@ htmlval: ${_HTMLVALS}
 	@${DIFF} ${.CURDIR}/${.IMPSRC:S/mandoc_ascii$/out_ascii/} ${.IMPSRC}
 
 .in.mandoc_tag:
-	@MANPAGER="${BSDSRCDIR}/regress/usr.bin/mandoc/copyless \
-	    ${.TARGET:S/.mandoc_tag$//}" \
-	    ${MAN} -l ${MOPTS} -Tascii -Ios=OpenBSD ${.IMPSRC}
+	@${MAN} -l ${MOPTS} -Ios=OpenBSD -Tascii \
+	    -O outfilename=${.TARGET:S/tag$/ascii/},tagfilename=${.TARGET} \
+	    ${.IMPSRC}
 
 .mandoc_tag.diff_tag:
 	@${DIFF} ${.CURDIR}/${.IMPSRC:S/mandoc_tag$/out_tag/} ${.IMPSRC}
