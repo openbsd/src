@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdarg.h,v 1.9 2019/12/12 15:55:36 visa Exp $ */
+/*	$OpenBSD: stdarg.h,v 1.10 2020/07/21 23:09:00 daniel Exp $ */
 /*
  * Copyright (c) 2003, 2004  Marc espie <espie@openbsd.org>
  *
@@ -20,8 +20,6 @@
 
 #include <sys/cdefs.h>
 
-#if (defined(__GNUC__) && __GNUC__ >= 3) || defined(__PCC__)
-
 /* Define __gnuc_va_list.  */
 
 #ifndef __GNUC_VA_LIST
@@ -39,10 +37,6 @@ typedef __builtin_va_list __gnuc_va_list;
 #define __va_copy(dst, src)	__builtin_va_copy((dst),(src))
 
 typedef __gnuc_va_list va_list;
-
-#else
-#error "unsupported compiler"
-#endif
 
 #if __ISO_C_VISIBLE >= 1999
 #define	va_copy(dst, src)	__va_copy((dst), (src))
