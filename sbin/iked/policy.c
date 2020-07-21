@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.65 2020/07/16 17:16:17 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.66 2020/07/21 08:03:39 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -563,7 +563,10 @@ childsa_free(struct iked_childsa *csa)
 		return;
 
 	if (csa->csa_loaded)
-		log_info("%s: csa %p is still loaded", __func__, csa);
+		log_info("%s: CHILD SA spi %s is still loaded",
+		    csa->csa_ikesa ? SPI_SA(csa->csa_ikesa, __func__) :
+		    __func__,
+		    print_spi(csa->csa_spi.spi, csa->csa_spi.spi_size));
 	if ((csb = csa->csa_bundled) != NULL)
 		csb->csa_bundled = NULL;
 	if ((csb = csa->csa_peersa) != NULL)

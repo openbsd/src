@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.67 2020/07/19 12:16:43 tobhe Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.68 2020/07/21 08:03:39 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1483,7 +1483,8 @@ pfkey_sa_delete(int fd, struct iked_childsa *sa)
 	if (pfkey_map(pfkey_satype, sa->csa_saproto, &satype) == -1)
 		return (-1);
 
-	if (pfkey_sa(fd, satype, SADB_DELETE, sa) == -1)
+	if (pfkey_sa(fd, satype, SADB_DELETE, sa) == -1 &&
+	    pfkey_sa_check_exists(fd, sa) == 0)
 		return (-1);
 
 	sa->csa_loaded = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.153 2020/07/15 14:45:15 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.154 2020/07/21 08:03:38 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -499,6 +499,7 @@ struct iked_sa {
 #define IKED_IKE_SA_KEEPALIVE_TIMEOUT	 20
 
 	struct iked_timer		 sa_rekey;	/* rekey timeout */
+	int				 sa_tmpfail;
 
 	struct iked_msgqueue		 sa_requests;	/* request queue */
 #define IKED_RETRANSMIT_TIMEOUT		 2		/* 2 seconds */
@@ -602,6 +603,7 @@ struct iked_message {
 #define IKED_MSG_FLAGS_INVALID_KE			0x0040
 #define IKED_MSG_FLAGS_IPCOMP_SUPPORTED			0x0080
 #define IKED_MSG_FLAGS_USE_TRANSPORT			0x0100
+#define IKED_MSG_FLAGS_TEMPORARY_FAILURE		0x0200
 
 
 struct iked_user {

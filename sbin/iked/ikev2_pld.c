@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.87 2020/06/09 21:53:26 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.88 2020/07/21 08:03:39 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1123,6 +1123,14 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 		log_debug("%s: rekey %s spi %s", __func__,
 		    print_map(n.n_protoid, ikev2_saproto_map),
 		    print_spi(rekey->spi, n.n_spisize));
+		break;
+	case IKEV2_N_TEMPORARY_FAILURE:
+		if (!msg->msg_e) {
+			log_debug("%s: IKEV2_N_TEMPORARY_FAILURE not encrypted",
+			    __func__);
+			return (-1);
+		}
+		msg->msg_parent->msg_flags |= IKED_MSG_FLAGS_TEMPORARY_FAILURE;
 		break;
 	case IKEV2_N_IPCOMP_SUPPORTED:
 		if (!msg->msg_e) {

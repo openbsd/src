@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.236 2020/07/16 17:38:24 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.237 2020/07/21 08:03:38 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -106,6 +106,7 @@ int	 ikev2_resp_create_child_sa(struct iked *, struct iked_message *);
 void	 ikev2_ike_sa_rekey(struct iked *, void *);
 void	 ikev2_ike_sa_rekey_timeout(struct iked *, void *);
 void	 ikev2_ike_sa_rekey_schedule(struct iked *, struct iked_sa *);
+void	 ikev2_ike_sa_rekey_schedule_fast(struct iked *, struct iked_sa *);
 void	 ikev2_ike_sa_alive(struct iked *, void *);
 void	 ikev2_ike_sa_keepalive(struct iked *, void *);
 
@@ -2710,6 +2711,9 @@ ikev2_handle_notifies(struct iked *env, struct iked_message *msg)
 	if (msg->msg_flags & IKED_MSG_FLAGS_USE_TRANSPORT)
 		sa->sa_use_transport_mode = 1;
 
+	if ((msg->msg_flags & IKED_MSG_FLAGS_TEMPORARY_FAILURE)
+	    && sa->sa_nexti != NULL)
+		sa->sa_tmpfail = 1;
 	return (0);
 }
 
@@ -3577,10 +3581,10 @@ ikev2_ike_sa_rekey(struct iked *env, void *arg)
 	if (sa->sa_stateflags & IKED_REQ_CHILDSA) {
 		/*
 		 * We cannot initiate multiple concurrent CREATE_CHILD_SA
-		 * exchanges, so retry in one minute.
+		 * exchanges, so retry again fast.
 		 */
 		log_info("%s: busy, delaying rekey", SPI_SA(sa, __func__));
-		timer_add(env, &sa->sa_rekey, 60);
+		ikev2_ike_sa_rekey_schedule_fast(env, sa);
 		return;
 	}
 
@@ -3648,6 +3652,7 @@ ikev2_ike_sa_rekey(struct iked *env, void *arg)
 		sa->sa_stateflags |= IKED_REQ_CHILDSA;
 		sa->sa_nexti = nsa;
 		nsa->sa_previ = sa;
+		sa->sa_tmpfail = 0;
 		nsa = NULL;
 	}
 done:
@@ -3696,6 +3701,17 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 	if (!ikev2_msg_frompeer(msg) ||
 	    (sa->sa_stateflags & IKED_REQ_CHILDSA) == 0)
 		return (0);
+
+	if (sa->sa_nexti != NULL && sa->sa_tmpfail) {
+		sa->sa_stateflags &= ~IKED_REQ_CHILDSA;
+		ikev2_ike_sa_setreason(sa->sa_nexti, "tmpfail");
+		sa_free(env, sa->sa_nexti);
+		sa->sa_nexti = NULL;
+		timer_set(env, &sa->sa_rekey, ikev2_ike_sa_rekey, sa);
+		ikev2_ike_sa_rekey_schedule_fast(env, sa);
+		log_info("%s: IKESA rekey delayed", SPI_SA(sa, __func__));
+		return (0);
+	}
 
 	if (msg->msg_prop == NULL ||
 	    TAILQ_EMPTY(&msg->msg_proposals)) {
@@ -4395,6 +4411,19 @@ ikev2_ike_sa_rekey_schedule(struct iked *env, struct iked_sa *sa)
 {
 	timer_add(env, &sa->sa_rekey, (sa->sa_policy->pol_rekey * 850 +
 	    arc4random_uniform(100)) / 1000);
+}
+
+/* rekey delayed, so re-try after short delay (1% of configured) */
+void
+ikev2_ike_sa_rekey_schedule_fast(struct iked *env, struct iked_sa *sa)
+{
+	int timeout = sa->sa_policy->pol_rekey / 100; /* 1% */
+
+	if (timeout > 60)
+		timeout = 60;	/* max */
+	else if (timeout < 4)
+		timeout = 4;	/* min */
+	timer_add(env, &sa->sa_rekey, timeout);
 }
 
 void
@@ -6023,6 +6052,8 @@ ikev2_rekey_sa(struct iked *env, struct iked_spi *rekey)
 	}
 	if (sa->sa_stateflags & IKED_REQ_CHILDSA)
 		return (-1);	/* busy, retry later */
+	if (sa->sa_tmpfail)
+		return (-1);	/* peer is busy, retry later */
 	if (csa->csa_allocated)	/* Peer SPI died first, get the local one */
 		rekey->spi = csa->csa_peerspi;
 	if (ikev2_send_create_child_sa(env, sa, rekey, rekey->spi_protoid))
