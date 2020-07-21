@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.186 2020/07/06 10:07:02 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.187 2020/07/21 05:24:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -514,7 +514,10 @@ screen_write_vnputs(struct screen_write_ctx *ctx, ssize_t maxlen,
 
 			if (*ptr == '\001')
 				gc.attr ^= GRID_ATTR_CHARSET;
-			else if (*ptr > 0x1f && *ptr < 0x7f) {
+			else if (*ptr == '\n') {
+				screen_write_linefeed(ctx, 0, 8);
+				screen_write_carriagereturn(ctx);
+			} else if (*ptr > 0x1f && *ptr < 0x7f) {
 				size++;
 				screen_write_putc(ctx, &gc, *ptr);
 			}

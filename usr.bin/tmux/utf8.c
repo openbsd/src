@@ -1,4 +1,4 @@
-/* $OpenBSD: utf8.c,v 1.55 2020/06/09 10:37:00 nicm Exp $ */
+/* $OpenBSD: utf8.c,v 1.56 2020/07/21 05:24:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -336,6 +336,20 @@ utf8_stravis(char **dst, const char *src, int flag)
 
 	buf = xreallocarray(NULL, 4, strlen(src) + 1);
 	len = utf8_strvis(buf, src, strlen(src), flag);
+
+	*dst = xrealloc(buf, len + 1);
+	return (len);
+}
+
+/* Same as utf8_strvis but allocate the buffer. */
+int
+utf8_stravisx(char **dst, const char *src, size_t srclen, int flag)
+{
+	char	*buf;
+	int	 len;
+
+	buf = xreallocarray(NULL, 4, srclen + 1);
+	len = utf8_strvis(buf, src, srclen, flag);
 
 	*dst = xrealloc(buf, len + 1);
 	return (len);
