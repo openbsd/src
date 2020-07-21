@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2020/04/09 19:59:38 tobhe Exp $
+#	$OpenBSD: Makefile,v 1.12 2020/07/21 13:15:34 tobhe Exp $
 
 # Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
 #
@@ -63,8 +63,9 @@ TEST_FLOWS = \
 	fi
 
 TEST_PING = \
+	if [[ "${IPV}" == "6" ]]; then ping="ping6"; else ping="ping"; fi; \
 	dump=`ssh ${LEFT_SSH} "tcpdump -n -c2 -i enc0 -w '/tmp/test.pcap' > /dev/null & \
-	     ping -c 5 ${RIGHT_ADDR} > /dev/null && tcpdump -n -r /tmp/test.pcap" && rm -f /tmp/test.pcap`; \
+	     $$ping -c 5 ${RIGHT_ADDR} > /dev/null && tcpdump -n -r /tmp/test.pcap" && rm -f /tmp/test.pcap`; \
 	rtol=`echo "$$dump" \
 	    | sed -n "/(authentic,confidential): SPI 0x[0-9a-f]\{8\}: ${LEFT_ADDR} > ${RIGHT_ADDR}/p"`; \
 	ltor=`echo "$$dump" \
