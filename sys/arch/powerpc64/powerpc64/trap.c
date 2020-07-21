@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.29 2020/07/20 17:18:51 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.30 2020/07/21 21:16:05 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -159,11 +159,14 @@ trap(struct trapframe *frame)
 
 	case EXC_DSE|EXC_USER:
 		pm = p->p_vmspace->vm_map.pmap;
+		KERNEL_LOCK();
 		slbd = pmap_slbd_lookup(pm, frame->dar);
 		if (slbd) {
 			pmap_slbd_cache(pm, slbd);
+			KERNEL_UNLOCK();
 			break;
 		}
+		KERNEL_UNLOCK();
 		frame->dsisr = 0;
 		/* FALLTHROUGH */
 
@@ -206,11 +209,14 @@ trap(struct trapframe *frame)
 
 	case EXC_ISE|EXC_USER:
 		pm = p->p_vmspace->vm_map.pmap;
+		KERNEL_LOCK();
 		slbd = pmap_slbd_lookup(pm, frame->srr0);
 		if (slbd) {
 			pmap_slbd_cache(pm, slbd);
+			KERNEL_UNLOCK();
 			break;
 		}
+		KERNEL_UNLOCK();
 		/* FALLTHROUGH */
 
 	case EXC_ISI|EXC_USER:
