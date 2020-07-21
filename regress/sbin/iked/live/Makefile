@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2020/07/21 13:15:34 tobhe Exp $
+#	$OpenBSD: Makefile,v 1.13 2020/07/21 13:45:13 tobhe Exp $
 
 # Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
 #
@@ -14,7 +14,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-REGRESS_SETUP_ONCE =	setup_certs
+REGRESS_SETUP_ONCE =	setup
 REGRESS_CLEANUP =	cleanup
 CLEANFILES =		*.conf *.cnf *.csr *.key *.crt *.srl
 
@@ -136,10 +136,12 @@ SETUP_CA = \
 cleanup:
 	-ssh ${LEFT_SSH} 'rm -f /tmp/test.conf; ipsecctl -F; pkill iked; \
 	    rm -f /etc/iked/ca/*; rm -f /etc/iked/certs/*; rm -f /etc/iked/private/*; \
-	    sysctl "net.inet.esp.udpencap_port=4500"'
+	    sysctl "net.inet.esp.udpencap_port=4500"; \
+	    rm -f /tmp/pf.conf; pfctl -d; pfctl -f /etc/pf.conf;'
 	-ssh ${RIGHT_SSH} 'rm -f /tmp/test.conf; ipsecctl -F; pkill iked; \
 	    rm -f /etc/iked/ca/*; rm -f /etc/iked/certs/*; rm -f /etc/iked/private/*; \
-	    sysctl "net.inet.esp.udpencap_port=4500"'
+	    sysctl "net.inet.esp.udpencap_port=4500"; \
+	    rm -f /tmp/pf.conf; pfctl -d; pfctl -f /etc/pf.conf;'
 
 setup_certs: ca-both.crt left-from-ca-both.crt left.key right-from-ca-both.crt \
     right.key ca-left.crt right-from-ca-left.crt ca-right.crt left-from-ca-right.crt
@@ -157,6 +159,14 @@ setup_certs: ca-both.crt left-from-ca-both.crt left.key right-from-ca-both.crt \
 	    put ca-both.crt ca\n" | sftp ${RIGHT_SSH} -q; \
 	ssh ${LEFT_SSH} "openssl rsa -in /etc/iked/private/local.key -pubout > /etc/iked/local.pub"; \
 	ssh ${RIGHT_SSH} "openssl rsa -in /etc/iked/private/local.key -pubout > /etc/iked/local.pub"
+
+setup_pf: pf.in
+	echo "cd /tmp\nput ${.CURDIR}/pf.in pf.conf" | sftp -q ${LEFT_SSH}
+	echo "cd /tmp\nput ${.CURDIR}/pf.in pf.conf" | sftp -q ${RIGHT_SSH}
+	-ssh ${LEFT_SSH} "pfctl -f /tmp/pf.conf; pfctl -e"
+	-ssh ${RIGHT_SSH} "pfctl -f /tmp/pf.conf; pfctl -e"
+
+setup: setup_pf setup_certs
 
 .PHONY: setup_certs
 
