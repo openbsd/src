@@ -1,4 +1,4 @@
-/*	$OpenBSD: xive.c,v 1.6 2020/07/16 19:10:33 kettenis Exp $	*/
+/*	$OpenBSD: xive.c,v 1.7 2020/07/21 20:22:03 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -382,11 +382,13 @@ xive_hvi(struct trapframe *frame)
 			KASSERT(lirq < XIVE_NUM_IRQS);
 			ih = sc->sc_handler[lirq];
 			if (ih != NULL) {
+				KERNEL_LOCK();
 				intr_enable();
 				handled = ih->ih_func(ih->ih_arg);
 				intr_disable();
 				if (handled)
 					ih->ih_count.ec_count++;
+				KERNEL_UNLOCK();
 				xive_eoi(sc, ih);
 			}
 			eq->eq_idx = (eq->eq_idx + 1) & XIVE_EQ_IDX_MASK;
