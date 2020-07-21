@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.32 2020/07/18 13:16:32 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.33 2020/07/21 21:01:34 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -62,6 +62,45 @@
 
 extern char _start[], _etext[], _erodata[], _end[];
 
+#ifdef MULTIPROCESSOR
+
+struct mutex pmap_hash_lock;
+
+#define PMAP_HASH_LOCK_INIT()	mtx_init(&pmap_hash_lock, IPL_HIGH)
+
+#define	PMAP_HASH_LOCK(s)						\
+do {									\
+	(void)s;							\
+	mtx_enter(&pmap_hash_lock);					\
+} while (0)
+
+#define	PMAP_HASH_UNLOCK(s)						\
+do {									\
+	mtx_leave(&pmap_hash_lock);					\
+} while (0)
+
+#define	PMAP_VP_LOCK_INIT(pm)	mtx_init(&pm->pm_mtx, IPL_VM)
+
+#define	PMAP_VP_LOCK(pm)						\
+do {									\
+	if (pm != pmap_kernel())					\
+		mtx_enter(&pm->pm_mtx);					\
+} while (0)
+
+#define	PMAP_VP_UNLOCK(pm)						\
+do {									\
+	if (pm != pmap_kernel())					\
+		mtx_leave(&pm->pm_mtx);					\
+} while (0)
+
+#define PMAP_VP_ASSERT_LOCKED(pm)					\
+do {									\
+	if (pm != pmap_kernel())					\
+		MUTEX_ASSERT_LOCKED(&pm->pm_mtx);			\
+} while (0)
+
+#else
+
 #define	PMAP_HASH_LOCK_INIT()		/* nothing */
 #define	PMAP_HASH_LOCK(s)		(void)s
 #define	PMAP_HASH_UNLOCK(s)		/* nothing */
@@ -70,6 +109,8 @@ extern char _start[], _etext[], _erodata[], _end[];
 #define	PMAP_VP_LOCK(pm)		/* nothing */
 #define	PMAP_VP_UNLOCK(pm)		/* nothing */
 #define	PMAP_VP_ASSERT_LOCKED(pm)	/* nothing */
+
+#endif
 
 struct pmap kernel_pmap_store;
 
@@ -307,7 +348,7 @@ pmap_slbd_cache(pmap_t pm, struct slb_desc *slbd)
 	pm->pm_slb[idx].slb_slbv = slbv;
 }
 
-int pmap_vsid = 1;
+u_int pmap_vsid;
 
 struct slb_desc *
 pmap_slbd_alloc(pmap_t pm, vaddr_t va)
@@ -322,7 +363,7 @@ pmap_slbd_alloc(pmap_t pm, vaddr_t va)
 		return NULL;
 
 	slbd->slbd_esid = esid;
-	slbd->slbd_vsid = pmap_vsid++;
+	slbd->slbd_vsid = atomic_inc_int_nv(&pmap_vsid);
 	KASSERT((slbd->slbd_vsid & KERNEL_VSID_BIT) == 0);
 	LIST_INSERT_HEAD(&pm->pm_slbd, slbd, slbd_list);
 
@@ -1011,14 +1052,14 @@ pmap_pted_syncicache(struct pte_desc *pted)
 	vaddr_t va = pted->pted_va & ~PAGE_MASK;
 
 	if (pted->pted_pmap != pmap_kernel()) {
-		pmap_kenter_pa(zero_page, pa, PROT_READ | PROT_WRITE);
-		va = zero_page;
+		va = zero_page + cpu_number() * PAGE_SIZE;
+		pmap_kenter_pa(va, pa, PROT_READ | PROT_WRITE);
 	}
 
 	__syncicache((void *)va, PAGE_SIZE);
 
 	if (pted->pted_pmap != pmap_kernel())
-		pmap_kremove(zero_page, PAGE_SIZE);
+		pmap_kremove(va, PAGE_SIZE);
 }
 
 void
@@ -1354,11 +1395,9 @@ pmap_set_kernel_slb(int idx, vaddr_t va)
 }
 
 void
-pmap_bootstrap(void)
+pmap_bootstrap_cpu(void)
 {
-	paddr_t start, end, pa;
 	vaddr_t va;
-	vm_prot_t prot;
 	int idx = 0;
 
 	/* Clear SLB. */
@@ -1367,6 +1406,29 @@ pmap_bootstrap(void)
 
 	/* Clear TLB. */
 	tlbia();
+
+	/* Set partition table. */
+	mtptcr((paddr_t)pmap_pat | PATSIZE);
+
+	/* SLB entry for the kernel. */
+	pmap_set_kernel_slb(idx++, (vaddr_t)_start);
+
+	/* SLB entries for the page tables. */
+	for (va = (vaddr_t)pmap_ptable; va < (vaddr_t)pmap_ptable + HTABMEMSZ;
+	     va += SEGMENT_SIZE)
+		pmap_set_kernel_slb(idx++, va);
+
+	/* SLB entries for kernel VA. */
+	for (va = VM_MIN_KERNEL_ADDRESS; va < VM_MAX_KERNEL_ADDRESS;
+	     va += SEGMENT_SIZE)
+		pmap_set_kernel_slb(idx++, va);
+}
+
+void
+pmap_bootstrap(void)
+{
+	paddr_t start, end, pa;
+	vm_prot_t prot;
 
 #define HTABENTS 2048
 
@@ -1412,20 +1474,8 @@ pmap_bootstrap(void)
 	pmap_pat = pmap_steal_avail(PATMEMSZ, PATMEMSZ);
 	memset(pmap_pat, 0, PATMEMSZ);
 	pmap_pat[0].pate_htab = (paddr_t)pmap_ptable | HTABSIZE;
-	mtptcr((paddr_t)pmap_pat | PATSIZE);
 
-	/* SLB entry for the kernel. */
-	pmap_set_kernel_slb(idx++, (vaddr_t)_start);
-
-	/* SLB entries for the page tables. */
-	for (va = (vaddr_t)pmap_ptable; va < (vaddr_t)pmap_ptable + HTABMEMSZ;
-	     va += SEGMENT_SIZE)
-		pmap_set_kernel_slb(idx++, va);
-
-	/* SLB entries for kernel VA. */
-	for (va = VM_MIN_KERNEL_ADDRESS; va < VM_MAX_KERNEL_ADDRESS;
-	     va += SEGMENT_SIZE)
-		pmap_set_kernel_slb(idx++, va);
+	pmap_bootstrap_cpu();
 
 	vmmap = virtual_avail;
 	virtual_avail += PAGE_SIZE;
