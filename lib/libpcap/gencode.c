@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.52 2018/12/09 15:07:06 denis Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.53 2020/07/21 22:44:55 dlg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -770,7 +770,7 @@ init_linktype(type)
 		return;
 
 	case DLT_LOOP:
-		off_linktype = -1;
+		off_linktype = 0;
 		off_nl = 4;
 		return;
 
