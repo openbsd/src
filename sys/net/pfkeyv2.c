@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.203 2020/07/18 17:40:38 kn Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.204 2020/07/21 07:54:43 tobhe Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -633,7 +633,7 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *so,
 
 ret:
 	if (buffer != NULL) {
-		bzero(buffer, j + sizeof(struct sadb_msg));
+		explicit_bzero(buffer, j + sizeof(struct sadb_msg));
 		free(buffer, M_PFKEY, j + sizeof(struct sadb_msg));
 	}
 
@@ -1009,6 +1009,7 @@ pfkeyv2_dump_walker(struct tdb *tdb, void *state, int last)
 		    PFKEYV2_SENDMESSAGE_UNICAST, dump_state->socket, 0, 0,
 		    tdb->tdb_rdomain);
 
+		explicit_bzero(buffer, buflen);
 		free(buffer, M_PFKEY, buflen);
 		if (rval)
 			return (rval);
@@ -1112,7 +1113,7 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 	struct radix_node *rn = NULL;
 	struct pkpcb *kp, *bkp;
 	void *freeme = NULL, *freeme2 = NULL, *freeme3 = NULL;
-	int freeme_sz, freeme2_sz, freeme3_sz;
+	int freeme_sz = 0, freeme2_sz = 0, freeme3_sz = 0;
 	void *bckptr = NULL;
 	void *headers[SADB_EXT_MAX + 1];
 	union sockaddr_union *sunionp;
@@ -1185,6 +1186,7 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 		explicit_bzero(freeme, freeme_sz);
 		free(freeme, M_PFKEY, freeme_sz);
 		freeme = NULL;
+		freeme_sz = 0;
 	}
 
 	/* Validate message format */
@@ -2095,6 +2097,7 @@ ret:
 
 realret:
 
+	explicit_bzero(freeme, freeme_sz);
 	free(freeme, M_PFKEY, freeme_sz);
 	free(freeme2, M_PFKEY, freeme2_sz);
 	free(freeme3, M_PFKEY, freeme3_sz);
@@ -2310,7 +2313,7 @@ pfkeyv2_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw,
 	rval = 0;
 ret:
 	if (buffer != NULL) {
-		bzero(buffer, i);
+		explicit_bzero(buffer, i);
 		free(buffer, M_PFKEY, i);
 	}
 
@@ -2401,7 +2404,7 @@ pfkeyv2_expire(struct tdb *tdb, u_int16_t type)
 
  ret:
 	if (buffer != NULL) {
-		bzero(buffer, i);
+		explicit_bzero(buffer, i);
 		free(buffer, M_PFKEY, i);
 	}
 
@@ -2465,8 +2468,10 @@ pfkeyv2_sysctl_walker(struct tdb *tdb, void *arg, int last)
 	}
 
 done:
-	if (buffer)
+	if (buffer != NULL) {
+		explicit_bzero(buffer, buflen);
 		free(buffer, M_PFKEY, buflen);
+	}
 	return (error);
 }
 
