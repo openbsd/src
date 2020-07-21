@@ -1,4 +1,4 @@
-/* $OpenBSD: main.c,v 1.254 2020/07/20 14:25:22 schwarze Exp $ */
+/* $OpenBSD: main.c,v 1.255 2020/07/21 15:08:48 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2012, 2014-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -152,7 +152,7 @@ main(int argc, char *argv[])
 	    strcmp(progname, BINM_MAKEWHATIS) == 0)
 		return mandocdb(argc, argv);
 
-	if (pledge("stdio rpath tmppath tty proc exec", NULL) == -1) {
+	if (pledge("stdio rpath wpath cpath tmppath tty proc exec", NULL) == -1) {
 		mandoc_msg(MANDOCERR_PLEDGE, 0, 0, "%s", strerror(errno));
 		return mandoc_msg_getrc();
 	}
@@ -355,7 +355,9 @@ main(int argc, char *argv[])
 
 	if (outmode == OUTMODE_FLN ||
 	    outmode == OUTMODE_LST ||
-	    !isatty(STDOUT_FILENO))
+	    (conf.output.outfilename == NULL &&
+	     conf.output.tagfilename == NULL &&
+	     isatty(STDOUT_FILENO) == 0))
 		outst.use_pager = 0;
 
 	if (outst.use_pager &&
@@ -368,12 +370,16 @@ main(int argc, char *argv[])
 			conf.output.indent = 3;
 	}
 
-	if (outst.use_pager == 0) {
-		if (pledge("stdio rpath", NULL) == -1) {
-			mandoc_msg(MANDOCERR_PLEDGE, 0, 0,
-			    "%s", strerror(errno));
-			return mandoc_msg_getrc();
-		}
+	if (outst.use_pager == 0)
+		c = pledge("stdio rpath", NULL);
+	else if (conf.output.outfilename != NULL ||
+	    conf.output.tagfilename != NULL)
+		c = pledge("stdio rpath wpath cpath", NULL);
+	else
+		c = pledge("stdio rpath tmppath tty proc exec", NULL);
+	if (c == -1) {
+		mandoc_msg(MANDOCERR_PLEDGE, 0, 0, "%s", strerror(errno));
+		return mandoc_msg_getrc();
 	}
 
 	/* Parse arguments. */
@@ -620,7 +626,9 @@ out:
 		manconf_free(&conf);
 
 	if (outst.tag_files != NULL) {
-		if (term_tag_close() != -1)
+		if (term_tag_close() != -1 &&
+		    conf.output.outfilename == NULL &&
+		    conf.output.tagfilename == NULL)
 			run_pager(&outst, conf.output.tag);
 		term_tag_unlink();
 	} else if (outst.had_output && outst.outtype != OUTT_LINT)
@@ -815,7 +823,15 @@ process_onefile(struct mparse *mp, struct manpage *resp, int startdir,
 
 	if (outst->use_pager) {
 		outst->use_pager = 0;
-		outst->tag_files = term_tag_init();
+		outst->tag_files = term_tag_init(conf->output.outfilename,
+		    conf->output.tagfilename);
+		if ((conf->output.outfilename != NULL ||
+		     conf->output.tagfilename != NULL) &&
+		    pledge("stdio rpath cpath", NULL) == -1) {
+			mandoc_msg(MANDOCERR_PLEDGE, 0, 0,
+			    "%s", strerror(errno));
+			exit(mandoc_msg_getrc());
+		}
 	}
 	if (outst->had_output && outst->outtype <= OUTT_UTF8) {
 		if (outst->outdata == NULL)

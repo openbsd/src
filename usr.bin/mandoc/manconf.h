@@ -1,4 +1,4 @@
-/* $OpenBSD: manconf.h,v 1.8 2020/04/02 22:10:27 schwarze Exp $ */
+/* $OpenBSD: manconf.h,v 1.9 2020/07/21 15:08:49 schwarze Exp $ */
 /*
  * Copyright (c) 2011,2015,2017,2018,2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -31,9 +31,11 @@ struct	manpaths {
 struct	manoutput {
 	char	 *includes;
 	char	 *man;
+	char	 *outfilename;
 	char	 *paper;
 	char	 *style;
 	char	 *tag;
+	char	 *tagfilename;
 	size_t	  indent;
 	size_t	  width;
 	int	  fragment;

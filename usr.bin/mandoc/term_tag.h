@@ -1,4 +1,4 @@
-/* $OpenBSD: term_tag.h,v 1.2 2020/04/02 22:10:27 schwarze Exp $ */
+/* $OpenBSD: term_tag.h,v 1.3 2020/07/21 15:08:49 schwarze Exp $ */
 /*
  * Copyright (c) 2015, 2018, 2019, 2020 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -19,8 +19,8 @@
  */
 
 struct	tag_files {
-	char	 ofn[20];	/* Output file name. */
-	char	 tfn[20];	/* Tag file name. */
+	char	 ofn[80];	/* Output file name. */
+	char	 tfn[80];	/* Tag file name. */
 	FILE	*tfs;		/* Tag file object. */
 	int	 ofd;		/* Original output file descriptor. */
 	pid_t	 tcpgid;	/* Process group controlling the terminal. */
@@ -28,7 +28,7 @@ struct	tag_files {
 };
 
 
-struct tag_files	*term_tag_init(void);
+struct tag_files	*term_tag_init(const char *, const char *);
 void			 term_tag_write(struct roff_node *, size_t);
 int			 term_tag_close(void);
 void			 term_tag_unlink(void);
