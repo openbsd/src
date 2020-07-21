@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.19 2020/07/11 11:43:57 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.20 2020/07/21 21:36:58 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -48,11 +48,15 @@
 
 #include <sys/device.h>
 #include <sys/sched.h>
+#include <sys/srp.h>
 
 struct cpu_info {
 	struct device	*ci_dev;
 	struct cpu_info	*ci_next;
 	struct schedstate_percpu ci_schedstate;
+
+	uint32_t	ci_cpuid;
+	uint32_t	ci_pir;
 
 	struct proc	*ci_curproc;
 	struct pcb	*ci_curpcb;
@@ -77,20 +81,54 @@ struct cpu_info {
 	int		ci_want_resched;
 
 	uint32_t	ci_randseed;
+
+#ifdef MULTIPROCESSOR
+	struct srp_hazard ci_srp_hazards[SRP_HAZARD_NUM];
+	void		*ci_initstack_end;
+	volatile int		ci_flags;
+#endif
 };
 
-extern struct cpu_info cpu_info_primary;
+#define CPUF_PRIMARY 		(1 << 0)
+#define CPUF_AP	 		(1 << 1)
+#define CPUF_IDENTIFY		(1 << 2)
+#define CPUF_IDENTIFIED		(1 << 3)
+#define CPUF_PRESENT		(1 << 4)
+#define CPUF_GO			(1 << 5)
+#define CPUF_RUNNING		(1 << 6)
+
+extern struct cpu_info cpu_info[];
+extern struct cpu_info *cpu_info_primary;
 
 register struct cpu_info *__curcpu asm("r13");
 #define curcpu()	__curcpu
 
+#define CPU_INFO_ITERATOR	int
+
+#ifndef MULTIPROCESSOR
+
 #define MAXCPUS			1
 #define CPU_IS_PRIMARY(ci)	1
+#define cpu_number()		0
+
 #define CPU_INFO_UNIT(ci)	0
-#define CPU_INFO_ITERATOR	int
 #define CPU_INFO_FOREACH(cii, ci) \
 	for (cii = 0, ci = curcpu(); ci != NULL; ci = NULL)
-#define cpu_number()		0
+
+#else
+
+#define MAXCPUS			16
+#define CPU_IS_PRIMARY(ci)	((ci) == cpu_info_primary)
+#define cpu_number()		(curcpu()->ci_cpuid)
+
+#define CPU_INFO_UNIT(ci)	((ci)->ci_dev ? (ci)->ci_dev->dv_unit : 0)
+#define CPU_INFO_FOREACH(cii, ci) \
+	for (cii = 0, ci = &cpu_info[0]; cii < ncpus; cii++, ci++)
+
+void	cpu_boot_secondary_processors(void);
+void	cpu_startclock(void);
+
+#endif
 
 #define clockframe trapframe
 
@@ -153,5 +191,9 @@ intr_restore(u_long msr)
 }
 
 #endif /* _KERNEL */
+
+#ifdef MULTIPROCESSOR
+#include <sys/mplock.h>
+#endif /* MULTIPROCESSOR */
 
 #endif /* _MACHINE_CPU_H_ */

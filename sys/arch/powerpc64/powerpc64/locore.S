@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.32 2020/07/21 21:27:11 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.33 2020/07/21 21:36:58 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -21,6 +21,7 @@
 #include <sys/errno.h>
 #include <sys/syscall.h>
 
+#include <machine/param.h>
 #include <machine/opal.h>
 #include <machine/psl.h>
 
@@ -52,6 +53,38 @@ sigfillsiz:
 	.long	esigfill - sigfill
 
 	.text
+
+#ifdef MULTIPROCESSOR
+
+	.globl cpu_hatch
+cpu_hatch:
+	bl	1f
+1:	mflr	%r31
+	addis	%r2, %r31, (.TOC. - 1b)@ha
+	addi	%r2, %r2, (.TOC. - 1b)@l
+
+	addis	%r1, %r2, tmpstack_end@toc@ha
+	addi	%r1, %r1, tmpstack_end@toc@l
+	addi	%r1, %r1, -32
+
+	bl	cpu_bootstrap
+
+	ld	%r1, CI_INITSTACK_END(%r13)
+	addi	%r1, %r1, -32
+
+	bl	cpu_start_secondary
+	b	.
+
+	.data
+
+	.align PAGE_SHIFT
+tmpstack:
+	.space PAGE_SIZE
+tmpstack_end:
+
+	.text
+
+#endif
 
 	.globl cpu_idle_enter
 cpu_idle_enter:

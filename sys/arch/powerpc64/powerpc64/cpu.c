@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.11 2020/07/10 23:22:48 gkoehler Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.12 2020/07/21 21:36:58 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -17,12 +17,16 @@
  */
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/fdt.h>
+#include <machine/opal.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
@@ -53,7 +57,8 @@ struct cpu_version cpu_version[] = {
 char cpu_model[64];
 uint64_t tb_freq = 512000000;	/* POWER8, POWER9 */
 
-struct cpu_info cpu_info_primary;
+struct cpu_info cpu_info[MAXCPUS];
+struct cpu_info *cpu_info_primary = &cpu_info[0];
 
 int	cpu_match(struct device *, void *, void *);
 void	cpu_attach(struct device *, struct device *, void *);
@@ -65,6 +70,8 @@ struct cfattach cpu_ca = {
 struct cfdriver cpu_cd = {
 	NULL, "cpu", DV_DULL
 };
+
+void	cpu_hatch(void);
 
 int
 cpu_match(struct device *parent, void *cfdata, void *aux)
@@ -86,11 +93,17 @@ void
 cpu_attach(struct device *parent, struct device *dev, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
+	struct cpu_info *ci;
 	const char *name = NULL;
 	uint32_t pvr, clock_freq, iline, dline;
 	int node, level, i;
 
-	printf(" pir %llx", faa->fa_reg[0].addr);
+	ci = &cpu_info[dev->dv_unit];
+	ci->ci_dev = dev;
+	ci->ci_cpuid = dev->dv_unit;
+	ci->ci_pir = faa->fa_reg[0].addr;
+
+	printf(" pir %x", ci->ci_pir);
 
 	pvr = mfpvr();
 
@@ -156,8 +169,128 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		level++;
 	}
 
+#ifdef MULTIPROCESSOR
+	if (dev->dv_unit != 0) {
+		int timeout = 10000;
+
+		sched_init_cpu(ci);
+		ncpus++;
+
+		ci->ci_initstack_end = km_alloc(PAGE_SIZE, &kv_any, &kp_zero,
+		    &kd_waitok) + PAGE_SIZE;
+
+		opal_start_cpu(ci->ci_pir, (vaddr_t)cpu_hatch);
+
+		atomic_setbits_int(&ci->ci_flags, CPUF_IDENTIFY);
+		membar_sync();
+
+		while ((ci->ci_flags & CPUF_IDENTIFIED) == 0 &&
+		    --timeout)
+			delay(1000);
+		if (timeout == 0) {
+			printf(" failed to identify");
+			ci->ci_flags = 0;
+		}
+	}
+#endif
+
 	printf("\n");
 
 	/* Update timebase frequency to reflect reality. */
 	tb_freq = OF_getpropint(faa->fa_node, "timebase-frequency", tb_freq);
 }
+
+#ifdef MULTIPROCESSOR
+
+void
+cpu_bootstrap(void)
+{
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+	uint32_t pir = mfpir();
+	uint64_t msr;
+
+	CPU_INFO_FOREACH(cii, ci) {
+		if (pir == ci->ci_pir)
+			break;
+	}
+
+	/* Store pointer to our struct cpu_info. */
+	__asm volatile ("mtsprg0 %0" :: "r"(ci));
+	__asm volatile ("mr %%r13, %0" :: "r"(ci));
+
+	/* We're now ready to take traps. */
+	msr = mfmsr();
+	mtmsr(msr | (PSL_ME|PSL_RI));
+
+#define LPCR_LPES	0x0000000000000008UL
+#define LPCR_HVICE	0x0000000000000002UL
+
+	mtlpcr(LPCR_LPES | LPCR_HVICE);
+	isync();
+
+	pmap_bootstrap_cpu();
+
+	/* Enable translation. */
+	msr = mfmsr();
+	mtmsr(msr | (PSL_DR|PSL_IR));
+	isync();
+}
+
+void
+cpu_start_secondary(void)
+{
+	struct cpu_info *ci = curcpu();
+	int s;
+
+	atomic_setbits_int(&ci->ci_flags, CPUF_PRESENT);
+
+	while ((ci->ci_flags & CPUF_IDENTIFY) == 0)
+		CPU_BUSY_CYCLE();
+
+	atomic_setbits_int(&ci->ci_flags, CPUF_IDENTIFIED);
+	membar_sync();
+
+	while ((ci->ci_flags & CPUF_GO) == 0)
+		CPU_BUSY_CYCLE();
+
+	s = splhigh();
+	cpu_startclock();
+
+	nanouptime(&ci->ci_schedstate.spc_runtime);
+
+	atomic_setbits_int(&ci->ci_flags, CPUF_RUNNING);
+	membar_sync();
+
+	spllower(IPL_NONE);
+
+	SCHED_LOCK(s);
+	cpu_switchto(NULL, sched_chooseproc());
+}
+
+void
+cpu_boot_secondary(struct cpu_info *ci)
+{
+	atomic_setbits_int(&ci->ci_flags, CPUF_GO);
+	membar_sync();
+
+	while ((ci->ci_flags & CPUF_RUNNING) == 0)
+		CPU_BUSY_CYCLE();
+}
+
+void
+cpu_boot_secondary_processors(void)
+{
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+
+	CPU_INFO_FOREACH(cii, ci) {
+		if (CPU_IS_PRIMARY(ci))
+			continue;
+
+		ci->ci_randseed = (arc4random() & 0x7fffffff) + 1;
+		cpu_boot_secondary(ci);
+	}
+}
+
+#endif
