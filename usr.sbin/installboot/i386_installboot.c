@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_installboot.c,v 1.37 2020/06/27 15:35:29 deraadt Exp $	*/
+/*	$OpenBSD: i386_installboot.c,v 1.38 2020/07/22 05:06:38 deraadt Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -255,6 +255,7 @@ write_filesystem(struct disklabel *dl, char part)
 
 	args.export_info.ex_root = -2;	/* unchecked anyway on DOS fs */
 	args.export_info.ex_flags = 0;
+	args.flags = MSDOSFSMNT_LONGNAME;
 
 	if (mount(MOUNT_MSDOS, dst, 0, &args) == -1) {
 		/* Try fsck'ing it. */

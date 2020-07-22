@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_installboot.c,v 1.5 2020/06/27 15:35:29 deraadt Exp $	*/
+/*	$OpenBSD: armv7_installboot.c,v 1.6 2020/07/22 05:06:38 deraadt Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -95,7 +95,7 @@ write_filesystem(struct disklabel *dl, char part)
 {
 	static char *fsckfmt = "/sbin/fsck_msdos %s >/dev/null";
 	static char *newfsfmt ="/sbin/newfs_msdos %s >/dev/null";
-	struct ufs_args args;
+	struct msdosfs_args args;
 	char cmd[60];
 	char dst[PATH_MAX];
 	char *src;
@@ -124,6 +124,7 @@ write_filesystem(struct disklabel *dl, char part)
 
 	args.export_info.ex_root = -2;
 	args.export_info.ex_flags = 0;
+	args.flags = MSDOSFSMNT_LONGNAME;
 
 	if (mount(MOUNT_MSDOS, dst, 0, &args) == -1) {
 		/* Try fsck'ing it. */

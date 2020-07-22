@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_installboot.c,v 1.2 2020/07/18 16:42:00 deraadt Exp $	*/
+/*	$OpenBSD: octeon_installboot.c,v 1.3 2020/07/22 05:06:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2011 Joel Sing <jsing@openbsd.org>
@@ -124,6 +124,7 @@ write_filesystem(struct disklabel *dl, char part)
 
 	args.export_info.ex_root = -2;
 	args.export_info.ex_flags = 0;
+	args.flags = MSDOSFSMNT_LONGNAME;
 
 	if (mount(MOUNT_MSDOS, dst, 0, &args) == -1) {
 		/* Try fsck'ing it. */
