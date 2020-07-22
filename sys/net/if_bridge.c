@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.342 2020/07/22 01:12:38 dlg Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.343 2020/07/22 20:37:35 mvs Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -477,7 +477,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if ((bp = bs->bs_root_port) == NULL)
 			brop->ifbop_root_port = 0;
 		else
-			brop->ifbop_root_port = bp->bp_ifp->if_index;
+			brop->ifbop_root_port = bp->bp_ifindex;
 		brop->ifbop_maxage = bs->bs_bridge_max_age >> 8;
 		brop->ifbop_hellotime = bs->bs_bridge_htime >> 8;
 		brop->ifbop_fwddelay = bs->bs_bridge_fdelay >> 8;

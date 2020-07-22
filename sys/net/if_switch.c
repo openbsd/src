@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.33 2020/07/22 00:51:57 dlg Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.34 2020/07/22 20:37:35 mvs Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -460,7 +460,7 @@ switch_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 		if ((bp = bs->bs_root_port) == NULL)
 			brop->ifbop_root_port = 0;
 		else
-			brop->ifbop_root_port = bp->bp_ifp->if_index;
+			brop->ifbop_root_port = bp->bp_ifindex;
 		brop->ifbop_maxage = bs->bs_bridge_max_age >> 8;
 		brop->ifbop_hellotime = bs->bs_bridge_htime >> 8;
 		brop->ifbop_fwddelay = bs->bs_bridge_fdelay >> 8;
