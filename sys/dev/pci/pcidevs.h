@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1929 2020/07/19 00:26:00 daniel Exp 
+ *	OpenBSD: pcidevs,v 1.1930 2020/07/22 10:43:14 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -347,6 +347,7 @@
 #define	PCI_VENDOR_ROCKCHIP	0x1d87		/* Rockchip */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram */
 #define	PCI_VENDOR_AMPERE	0x1def		/* Ampere */
+#define	PCI_VENDOR_SSSTC	0x1e95		/* SSSTC */
 #define	PCI_VENDOR_TEHUTI	0x1fc9		/* Tehuti Networks */
 #define	PCI_VENDOR_SUNIX2	0x1fd4		/* Sunix */
 #define	PCI_VENDOR_HINT	0x3388		/* Hint */
@@ -725,6 +726,14 @@
 #define	PCI_PRODUCT_AMD_15_3X_PCIE_2	0x1425		/* 15h PCIE */
 #define	PCI_PRODUCT_AMD_15_3X_PCIE_3	0x1426		/* 15h PCIE */
 #define	PCI_PRODUCT_AMD_16_PCIE	0x1439		/* 16h PCIE */
+#define	PCI_PRODUCT_AMD_17_6X_DF_0	0x1448		/* 17h/6xh Data Fabric */
+#define	PCI_PRODUCT_AMD_17_6X_DF_1	0x1449		/* 17h/6xh Data Fabric */
+#define	PCI_PRODUCT_AMD_17_6X_DF_2	0x144a		/* 17h/6xh Data Fabric */
+#define	PCI_PRODUCT_AMD_17_6X_DF_3	0x144b		/* 17h/6xh Data Fabric */
+#define	PCI_PRODUCT_AMD_17_6X_DF_4	0x144c		/* 17h/6xh Data Fabric */
+#define	PCI_PRODUCT_AMD_17_6X_DF_5	0x144d		/* 17h/6xh Data Fabric */
+#define	PCI_PRODUCT_AMD_17_6X_DF_6	0x144e		/* 17h/6xh Data Fabric */
+#define	PCI_PRODUCT_AMD_17_6X_DF_7	0x144f		/* 17h/6xh Data Fabric */
 #define	PCI_PRODUCT_AMD_17_RC	0x1450		/* 17h Root Complex */
 #define	PCI_PRODUCT_AMD_17_IOMMU	0x1451		/* 17h IOMMU */
 #define	PCI_PRODUCT_AMD_17_PCIE_1	0x1452		/* 17h PCIE */
@@ -805,6 +814,12 @@
 #define	PCI_PRODUCT_AMD_15_0X_MISC	0x1603		/* 15/0xh Misc Cfg */
 #define	PCI_PRODUCT_AMD_15_0X_CPU_PM	0x1604		/* 15/0xh CPU Power */
 #define	PCI_PRODUCT_AMD_15_0X_HB	0x1605		/* 15/0xh Host */
+#define	PCI_PRODUCT_AMD_17_6X_RC	0x1630		/* 17h/6xh Root Complex */
+#define	PCI_PRODUCT_AMD_17_6X_IOMMU	0x1631		/* 17h/6xh IOMMU */
+#define	PCI_PRODUCT_AMD_17_6X_HB	0x1632		/* 17h/6xh Host */
+#define	PCI_PRODUCT_AMD_17_6X_PCIE_1	0x1634		/* 17h/6xh PCIE */
+#define	PCI_PRODUCT_AMD_17_6X_PCIE_2	0x1635		/* 17h/6xh PCIE */
+#define	PCI_PRODUCT_AMD_17_6X_XHCI	0x1639		/* 17h/6xh xHCI */
 #define	PCI_PRODUCT_AMD_14_LINK	0x1700		/* 14h Link Cfg */
 #define	PCI_PRODUCT_AMD_14_ADDR	0x1701		/* 14h Address Map */
 #define	PCI_PRODUCT_AMD_14_DRAM	0x1702		/* 14h DRAM Cfg */
@@ -1141,6 +1156,8 @@
 #define	PCI_PRODUCT_ATI_PICASSO	0x15d8		/* Picasso */
 #define	PCI_PRODUCT_ATI_RAVEN_VEGA	0x15dd		/* Radeon Vega */
 #define	PCI_PRODUCT_ATI_RAVEN_VEGA_HDA	0x15de		/* Radeon Vega HD Audio */
+#define	PCI_PRODUCT_ATI_RENOIR	0x1636		/* Renoir */
+#define	PCI_PRODUCT_ATI_RENOIR_HDA	0x1637		/* Renoir HD Audio */
 #define	PCI_PRODUCT_ATI_RADEON_HD6500D_HDA	0x1714		/* Radeon HD 6500D HD Audio */
 #define	PCI_PRODUCT_ATI_RADEON_M241P	0x3150		/* Mobility Radeon X600 */
 #define	PCI_PRODUCT_ATI_FIREMV_2400_1	0x3151		/* FireMV 2400 */
@@ -7537,6 +7554,9 @@
 #define	PCI_PRODUCT_SONY_CXD3222	0x8039		/* CXD3222 FireWire */
 #define	PCI_PRODUCT_SONY_MEMSTICK_SLOT	0x808a		/* Memory Stick Slot */
 #define	PCI_PRODUCT_SONY_RS780	0x9602		/* RS780 */
+
+/* Solid State Storage Technology Corporation products */
+#define	PCI_PRODUCT_SSSTC_CL1	0x9100		/* CL1 */
 
 /* Stallion Technologies products */
 #define	PCI_PRODUCT_STALLION_EASYIO	0x0003		/* EasyIO */
