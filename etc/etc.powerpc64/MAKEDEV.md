@@ -1,6 +1,6 @@
 define(MACHINE,powerpc64)dnl
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.4 2020/07/16 19:42:47 kettenis Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.5 2020/07/22 14:04:35 deraadt Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
@@ -92,6 +92,7 @@ ramdisk)
 
 _std(1, 2, 3, 4)
 	M openprom	c 92 0 600
+	M opalcons0	c 56 0 600
 	;;
 dnl
 dnl powerpc64 specific targets
