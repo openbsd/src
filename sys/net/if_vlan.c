@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.203 2020/02/01 10:27:40 jmatthew Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.204 2020/07/22 01:30:54 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -119,7 +119,6 @@ void	vlanattach(int count);
 int	vlan_clone_create(struct if_clone *, int);
 int	vlan_clone_destroy(struct ifnet *);
 
-int	vlan_input(struct ifnet *, struct mbuf *, void *);
 int	vlan_enqueue(struct ifnet *, struct mbuf *);
 void	vlan_start(struct ifqueue *ifq);
 int	vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr);
@@ -358,44 +357,45 @@ vlan_inject(struct mbuf *m, uint16_t type, uint16_t tag)
 	return (m);
  }
 
-/*
- * vlan_input() returns 1 if it has consumed the packet, 0 otherwise.
- */
-int
-vlan_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
+struct mbuf *
+vlan_input(struct ifnet *ifp0, struct mbuf *m)
 {
 	struct vlan_softc *sc;
+	struct ifnet *ifp;
 	struct ether_vlan_header *evl;
-	struct ether_header *eh;
 	struct vlan_list *tagh, *list;
-	uint16_t tag;
+	uint16_t vtag, tag;
 	uint16_t etype;
 	int rxprio;
 
-	eh = mtod(m, struct ether_header *);
-	etype = ntohs(eh->ether_type);
-
 	if (m->m_flags & M_VLANTAG) {
+		vtag = m->m_pkthdr.ether_vtag;
 		etype = ETHERTYPE_VLAN;
 		tagh = vlan_tagh;
-	} else if ((etype == ETHERTYPE_VLAN) || (etype == ETHERTYPE_QINQ)) {
-		if (m->m_len < sizeof(*evl) &&
-		    (m = m_pullup(m, sizeof(*evl))) == NULL) {
-			ifp0->if_ierrors++;
-			return (1);
+	} else {
+		if (m->m_len < sizeof(*evl)) {
+			m = m_pullup(m, sizeof(*evl));
+			if (m == NULL)
+				return (NULL);
 		}
 
 		evl = mtod(m, struct ether_vlan_header *);
-		m->m_pkthdr.ether_vtag = ntohs(evl->evl_tag);
-		tagh = etype == ETHERTYPE_QINQ ? svlan_tagh : vlan_tagh;
-	} else {
-		/* Skip non-VLAN packets. */
-		return (0);
+		vtag = bemtoh16(&evl->evl_tag);
+		etype = bemtoh16(&evl->evl_encap_proto);
+		switch (etype) {
+		case ETHERTYPE_VLAN:
+			tagh = vlan_tagh;
+			break;
+		case ETHERTYPE_QINQ:
+			tagh = svlan_tagh;
+			break;
+		default:
+			panic("%s: unexpected etype 0x%04x", __func__, etype);
+			/* NOTREACHED */
+		}
 	}
 
-	/* From now on ether_vtag is fine */
-	tag = EVL_VLANOFTAG(m->m_pkthdr.ether_vtag);
-
+	tag = EVL_VLANOFTAG(vtag);
 	list = &tagh[TAG_HASH(tag)];
 	smr_read_enter();
 	SMR_SLIST_FOREACH(sc, list, sc_list) {
@@ -407,7 +407,11 @@ vlan_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 	}
 	smr_read_leave();
 
-	if (sc == NULL || !ISSET(sc->sc_if.if_flags, IFF_RUNNING)) {
+	if (sc == NULL)
+		return (m); /* decline, let bridge have a go */
+
+	ifp = &sc->sc_if;
+	if (!ISSET(ifp->if_flags, IFF_RUNNING)) {
 		m_freem(m);
 		goto leave;
 	}
@@ -417,11 +421,11 @@ vlan_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 	 * the given source interface and vlan tag, remove the
 	 * encapsulation.
 	 */
-	if (m->m_flags & M_VLANTAG) {
-		m->m_flags &= ~M_VLANTAG;
+	if (ISSET(m->m_flags, M_VLANTAG)) {
+		CLR(m->m_flags, M_VLANTAG);
 	} else {
-		eh->ether_type = evl->evl_proto;
-		memmove((char *)eh + EVL_ENCAPLEN, eh, sizeof(*eh));
+		memmove((caddr_t)evl + EVL_ENCAPLEN, evl,
+		    offsetof(struct ether_vlan_header, evl_encap_proto));
 		m_adj(m, EVL_ENCAPLEN);
 	}
 
@@ -440,11 +444,10 @@ vlan_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 		break;
 	}
 
-	if_vinput(&sc->sc_if, m);
+	if_vinput(ifp, m);
 leave:
-	if (sc != NULL)
-		refcnt_rele_wake(&sc->sc_refcnt);
-	return (1);
+	refcnt_rele_wake(&sc->sc_refcnt);
+	return (NULL);
 }
 
 int
@@ -530,8 +533,6 @@ vlan_up(struct vlan_softc *sc)
 	/* configure the parent to handle packets for this vlan */
 	vlan_multi_apply(sc, ifp0, SIOCADDMULTI);
 
-	if_ih_insert(ifp0, vlan_input, NULL);
-
 	/* we're running now */
 	SET(ifp->if_flags, IFF_RUNNING);
 	vlan_link_state(sc, ifp0->if_link_state, ifp0->if_baudrate);
@@ -574,7 +575,6 @@ vlan_down(struct vlan_softc *sc)
 
 	ifp0 = if_get(sc->sc_ifidx0);
 	if (ifp0 != NULL) {
-		if_ih_remove(ifp0, vlan_input, NULL);
 		if (ISSET(sc->sc_flags, IFVF_PROMISC))
 			ifpromisc(ifp0, 0);
 		vlan_multi_apply(sc, ifp0, SIOCDELMULTI);

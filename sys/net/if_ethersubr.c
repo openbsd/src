@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.263 2020/07/22 00:37:24 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.264 2020/07/22 01:30:54 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -102,6 +102,11 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
+#endif
+
+#include "vlan.h"
+#if NVLAN > 0
+#include <net/if_vlan_var.h>
 #endif
 
 #include "pppoe.h"
@@ -357,10 +362,32 @@ ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 	u_int16_t etype;
 	struct arpcom *ac;
 	const struct ether_brport *eb;
+	unsigned int sdelim = 0;
 
 	/* Drop short frames */
 	if (m->m_len < ETHER_HDR_LEN)
 		goto dropanyway;
+
+	/*
+	 * Let vlan(4) and svlan(4) look at "service delimited"
+	 * packets. If a virtual interface does not exist to take
+	 * those packets, they're returned to ether_input() so a
+	 * bridge can have a go at forwarding them.
+	 */
+
+ 	eh = mtod(m, struct ether_header *);
+	etype = ntohs(eh->ether_type);
+
+	if (ISSET(m->m_flags, M_VLANTAG) ||
+	    etype == ETHERTYPE_VLAN || etype == ETHERTYPE_QINQ) {
+#if NVLAN > 0
+		m = vlan_input(ifp, m);
+		if (m == NULL)
+			return (1);
+#endif /* NVLAN > 0 */
+
+		sdelim = 1;
+	}
 
 	/*
 	 * Give the packet to a bridge interface, ie, bridge(4),
@@ -382,6 +409,14 @@ ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 		}
 	}
 	smr_read_leave();
+
+	/*
+	 * If the packet has a tag, and a bridge didn't want it,
+	 * it's not for this port.
+	 */
+
+	if (sdelim)
+		goto dropanyway;
 
 	eh = mtod(m, struct ether_header *);
 
@@ -408,15 +443,6 @@ ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 			m->m_flags |= M_MCAST;
 		ifp->if_imcasts++;
 	}
-
-	/*
-	 * HW vlan tagged packets that were not collected by vlan(4) must
-	 * be dropped now.
-	 */
-	if (m->m_flags & M_VLANTAG)
-		goto dropanyway;
-
-	etype = ntohs(eh->ether_type);
 
 	switch (etype) {
 	case ETHERTYPE_IP:

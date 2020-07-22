@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan_var.h,v 1.41 2019/04/27 04:46:03 dlg Exp $	*/
+/*	$OpenBSD: if_vlan_var.h,v 1.42 2020/07/22 01:30:54 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -47,6 +47,7 @@ struct	vlanreq {
 };
 
 #ifdef _KERNEL
+struct mbuf	*vlan_input(struct ifnet *, struct mbuf *);
 struct mbuf	*vlan_inject(struct mbuf *, uint16_t, uint16_t);
 #endif /* _KERNEL */
 
