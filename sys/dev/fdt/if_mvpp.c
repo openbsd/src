@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.12 2020/07/22 19:57:59 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.13 2020/07/22 20:50:16 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -380,7 +380,7 @@ void	mvpp2_prs_sram_next_lu_set(struct mvpp2_prs_entry *, uint32_t);
 void	mvpp2_prs_shadow_set(struct mvpp2_softc *, int, uint32_t);
 int	mvpp2_prs_hw_write(struct mvpp2_softc *, struct mvpp2_prs_entry *);
 int	mvpp2_prs_hw_read(struct mvpp2_softc *, struct mvpp2_prs_entry *);
-struct mvpp2_prs_entry *mvpp2_prs_flow_find(struct mvpp2_softc *, int);
+int	mvpp2_prs_flow_find(struct mvpp2_softc *, int);
 int	mvpp2_prs_tcam_first_free(struct mvpp2_softc *, uint8_t, uint8_t);
 void	mvpp2_prs_mac_drop_all_set(struct mvpp2_softc *, uint32_t, int);
 void	mvpp2_prs_mac_promisc_set(struct mvpp2_softc *, uint32_t, int);
@@ -3341,38 +3341,27 @@ mvpp2_prs_hw_read(struct mvpp2_softc *sc, struct mvpp2_prs_entry *pe)
 	return 0;
 }
 
-struct mvpp2_prs_entry *
+int
 mvpp2_prs_flow_find(struct mvpp2_softc *sc, int flow)
 {
-	struct mvpp2_prs_entry *pe;
-	uint32_t word, enable;
+	struct mvpp2_prs_entry pe;
 	uint8_t bits;
 	int tid;
 
-	pe = malloc(sizeof(*pe), M_TEMP, M_NOWAIT);
-	if (pe == NULL)
-		return NULL;
-
-	mvpp2_prs_tcam_lu_set(pe, MVPP2_PRS_LU_FLOWS);
 	for (tid = MVPP2_PRS_TCAM_SRAM_SIZE - 1; tid >= 0; tid--) {
 		if (!sc->sc_prs_shadow[tid].valid ||
 		    sc->sc_prs_shadow[tid].lu != MVPP2_PRS_LU_FLOWS)
 			continue;
 
-		pe->index = tid;
-		mvpp2_prs_hw_read(sc, pe);
+		pe.index = tid;
+		mvpp2_prs_hw_read(sc, &pe);
+		bits = mvpp2_prs_sram_ai_get(&pe);
 
-		mvpp2_prs_tcam_data_word_get(pe, 0, &word, &enable);
-		if ((word != 0) || (enable != 0))
-			continue;
-
-		bits = mvpp2_prs_sram_ai_get(pe);
 		if ((bits & MVPP2_PRS_FLOW_ID_MASK) == flow)
-			return pe;
+			return tid;
 	}
 
-	free(pe, M_TEMP, sizeof(*pe));
-	return NULL;
+	return -1;
 }
 
 int
@@ -4121,31 +4110,31 @@ mvpp2_prs_tag_mode_set(struct mvpp2_softc *sc, int port_id, int type)
 int
 mvpp2_prs_def_flow(struct mvpp2_port *port)
 {
-	struct mvpp2_prs_entry *pe;
+	struct mvpp2_prs_entry pe;
 	int tid;
 
-	pe = mvpp2_prs_flow_find(port->sc, port->sc_id);
-	if (pe == NULL) {
+	memset(&pe, 0, sizeof(pe));
+
+	tid = mvpp2_prs_flow_find(port->sc, port->sc_id);
+	if (tid < 0) {
 		tid = mvpp2_prs_tcam_first_free(port->sc,
 		    MVPP2_PE_LAST_FREE_TID, MVPP2_PE_FIRST_FREE_TID);
 		if (tid < 0)
 			return tid;
 
-		pe = malloc(sizeof(*pe), M_TEMP, M_NOWAIT);
-		if (pe == NULL)
-			return ENOMEM;
-
-		mvpp2_prs_tcam_lu_set(pe, MVPP2_PRS_LU_FLOWS);
-		pe->index = tid;
-		mvpp2_prs_sram_ai_update(pe, port->sc_id,
+		pe.index = tid;
+		mvpp2_prs_sram_ai_update(&pe, port->sc_id,
 		    MVPP2_PRS_FLOW_ID_MASK);
-		mvpp2_prs_sram_bits_set(pe, MVPP2_PRS_SRAM_LU_DONE_BIT, 1);
-		mvpp2_prs_shadow_set(port->sc, pe->index, MVPP2_PRS_LU_FLOWS);
+		mvpp2_prs_sram_bits_set(&pe, MVPP2_PRS_SRAM_LU_DONE_BIT, 1);
+		mvpp2_prs_shadow_set(port->sc, pe.index, MVPP2_PRS_LU_FLOWS);
+	} else {
+		pe.index = tid;
+		mvpp2_prs_hw_read(port->sc, &pe);
 	}
 
-	mvpp2_prs_tcam_port_map_set(pe, (1 << port->sc_id));
-	mvpp2_prs_hw_write(port->sc, pe);
-	free(pe, M_TEMP, sizeof(*pe));
+	mvpp2_prs_tcam_lu_set(&pe, MVPP2_PRS_LU_FLOWS);
+	mvpp2_prs_tcam_port_map_set(&pe, (1 << port->sc_id));
+	mvpp2_prs_hw_write(port->sc, &pe);
 	return 0;
 }
 
