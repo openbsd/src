@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.25 2020/07/20 14:41:14 krw Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.26 2020/07/22 13:16:05 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -109,7 +109,6 @@ struct vioblk_softc {
 	bus_dma_segment_t        sc_reqs_segs[1];
 	int			 sc_nreqs;
 
-	struct scsi_link	 sc_link;
 	struct scsi_iopool	 sc_iopool;
 	struct mutex		 sc_vr_mtx;
 	SLIST_HEAD(, virtio_blk_req) sc_freelist;

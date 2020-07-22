@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxxvar.h,v 1.34 2020/07/05 21:54:44 krw Exp $	*/
+/*	$OpenBSD: aic7xxxvar.h,v 1.35 2020/07/22 13:16:04 krw Exp $	*/
 /*
  * Core definitions and data structures shareable across OS platforms.
  *
@@ -38,7 +38,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxxvar.h,v 1.34 2020/07/05 21:54:44 krw Exp $
+ * $Id: aic7xxxvar.h,v 1.35 2020/07/22 13:16:04 krw Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.h,v 1.50 2003/12/17 00:02:09 gibbs Exp $
  */
@@ -935,8 +935,6 @@ typedef void ahc_callback_t (void *);
 struct ahc_softc {
 	struct device		  sc_dev;
 
-	struct scsi_link	  sc_channel;
-	struct scsi_link	  sc_channel_b;
 	struct scsibus_softc	 *sc_child;
 	struct scsibus_softc	 *sc_child_b;
 

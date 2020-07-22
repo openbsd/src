@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360var.h,v 1.9 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: aic6360var.h,v 1.10 2020/07/22 13:16:04 krw Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 /*
@@ -123,8 +123,6 @@ struct aic_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	int sc_irq, sc_drq;
-
-	struct scsi_link sc_link;	/* prototype for subdevs */
 
 	TAILQ_HEAD(, aic_acb) free_list, ready_list, nexus_list;
 	struct aic_acb *sc_nexus;	/* current command */

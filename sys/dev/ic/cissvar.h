@@ -1,4 +1,4 @@
-/*	$OpenBSD: cissvar.h,v 1.15 2013/05/30 16:15:02 deraadt Exp $	*/
+/*	$OpenBSD: cissvar.h,v 1.16 2020/07/22 13:16:04 krw Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -28,7 +28,6 @@ struct ciss_ld {
 
 struct ciss_softc {
 	struct device	sc_dev;
-	struct scsi_link sc_link;
 	struct timeout	sc_hb;
 	void		*sc_ih;
 	int		sc_flush;

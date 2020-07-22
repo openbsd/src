@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlavar.h,v 1.11 2017/06/05 04:57:37 dlg Exp $ */
+/*	$OpenBSD: qlavar.h,v 1.12 2020/07/22 13:16:04 krw Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -123,8 +123,6 @@ struct qla_softc {
 	bus_space_handle_t	sc_ioh;
 	bus_size_t		sc_ios;
 	bus_dma_tag_t		sc_dmat;
-
-	struct scsi_link	sc_link;
 
 	struct scsibus_softc	*sc_scsibus;
 

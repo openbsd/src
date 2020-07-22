@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.115 2020/07/20 14:41:12 krw Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.116 2020/07/22 13:16:04 krw Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -147,7 +147,6 @@ enum atapi_state { as_none, as_data, as_completed };
 
 struct atapiscsi_softc {
 	struct device  sc_dev;
-	struct  scsi_link  sc_adapterlink;
 	struct channel_softc *chp;
 	enum atapi_state protocol_phase;
 

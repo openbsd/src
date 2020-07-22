@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath.c,v 1.52 2020/07/20 14:41:14 krw Exp $ */
+/*	$OpenBSD: mpath.c,v 1.53 2020/07/22 13:16:05 krw Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -66,7 +66,6 @@ struct mpath_dev {
 
 struct mpath_softc {
 	struct device		sc_dev;
-	struct scsi_link	sc_link;
 	struct scsibus_softc	*sc_scsibus;
 	struct mpath_dev	*sc_devs[MPATH_BUSWIDTH];
 };

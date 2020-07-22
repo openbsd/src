@@ -1,4 +1,4 @@
-/*	$OpenBSD: twevar.h,v 1.13 2020/02/15 18:02:00 krw Exp $	*/
+/*	$OpenBSD: twevar.h,v 1.14 2020/07/22 13:16:04 krw Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -51,7 +51,6 @@ typedef TAILQ_HEAD(twe_queue_head, twe_ccb)	twe_queue_head;
 struct twe_softc {
 	struct device	sc_dev;
 	void		*sc_ih;
-	struct scsi_link sc_link;
 	struct proc	*sc_thread;
 	int		sc_thread_on;
 

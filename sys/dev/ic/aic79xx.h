@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.h,v 1.27 2017/12/12 12:33:36 krw Exp $	*/
+/*	$OpenBSD: aic79xx.h,v 1.28 2020/07/22 13:16:04 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -1045,7 +1045,6 @@ struct ahd_completion
 
 struct ahd_softc {
 	struct device		sc_dev;
-	struct scsi_link	sc_channel;
 	struct device *		sc_child;
 
 	bus_space_tag_t		tags[2];

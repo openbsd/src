@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpivar.h,v 1.40 2020/07/11 21:35:55 krw Exp $ */
+/*	$OpenBSD: mpivar.h,v 1.41 2020/07/22 13:16:04 krw Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -103,7 +103,6 @@ SLIST_HEAD(mpi_ccb_list, mpi_ccb);
 
 struct mpi_softc {
 	struct device		sc_dev;
-	struct scsi_link	sc_link;
 
 	u_int64_t		sc_port_wwn;
 	u_int64_t		sc_node_wwn;

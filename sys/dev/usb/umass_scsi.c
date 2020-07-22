@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.57 2020/07/20 14:41:14 krw Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.58 2020/07/22 13:16:05 krw Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -53,7 +53,6 @@
 
 struct umass_scsi_softc {
 	struct device		*sc_child;
-	struct scsi_link	sc_link;
 	struct scsi_iopool	sc_iopool;
 	int			sc_open;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.142 2020/07/20 14:41:12 krw Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.143 2020/07/22 13:16:04 krw Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -44,7 +44,6 @@ struct atascsi {
 
 	struct atascsi_methods	*as_methods;
 	struct scsi_adapter	as_switch;
-	struct scsi_link	as_link;
 	struct scsibus_softc	*as_scsibus;
 
 	int			as_capability;

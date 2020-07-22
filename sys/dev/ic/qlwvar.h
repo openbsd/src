@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlwvar.h,v 1.10 2014/03/15 13:08:52 kettenis Exp $ */
+/*	$OpenBSD: qlwvar.h,v 1.11 2020/07/22 13:16:04 krw Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -93,7 +93,6 @@ struct qlw_softc {
 	bus_size_t		sc_ios;
 	bus_dma_tag_t		sc_dmat;
 
-	struct scsi_link	sc_link[2];
 	struct scsibus_softc	*sc_scsibus[2];
 	int			sc_running;
 

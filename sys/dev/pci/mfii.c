@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.79 2020/07/20 14:41:13 krw Exp $ */
+/* $OpenBSD: mfii.c,v 1.80 2020/07/22 13:16:04 krw Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -241,7 +241,6 @@ struct mfii_pd_dev_handles {
 };
 
 struct mfii_pd_softc {
-	struct scsi_link	pd_link;
 	struct scsibus_softc	*pd_scsibus;
 	struct mfii_pd_dev_handles *pd_dev_handles;
 	uint8_t			pd_timeout;
@@ -300,7 +299,6 @@ struct mfii_softc {
 	struct mfii_ccb_list	sc_abort_list;
 	struct task		sc_abort_task;
 
-	struct scsi_link	sc_link;
 	struct scsibus_softc	*sc_scsibus;
 	struct mfii_pd_softc	*sc_pd;
 	struct scsi_iopool	sc_iopool;

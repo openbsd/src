@@ -1,4 +1,4 @@
-/* $OpenBSD: oosiopvar.h,v 1.5 2011/04/03 12:42:36 krw Exp $ */
+/* $OpenBSD: oosiopvar.h,v 1.6 2020/07/22 13:16:04 krw Exp $ */
 /* $NetBSD: oosiopvar.h,v 1.2 2003/05/03 18:11:23 wiz Exp $ */
 
 /*
@@ -132,8 +132,6 @@ struct oosiop_softc {
 	u_int8_t	sc_minperiod;
 
 	struct oosiop_target sc_tgt[OOSIOP_NTGT];
-
-	struct scsi_link sc_link;
 
 	/* Lists of command blocks */
 	TAILQ_HEAD(oosiop_cb_queue, oosiop_cb) sc_free_cb,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.51 2020/07/20 14:41:14 krw Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.52 2020/07/22 13:16:05 krw Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -68,7 +68,6 @@ struct sdmmc_ccb {
 TAILQ_HEAD(sdmmc_ccb_list, sdmmc_ccb);
 
 struct sdmmc_scsi_softc {
-	struct scsi_link sc_link;
 	struct device *sc_child;
 	struct sdmmc_scsi_target *sc_tgt;
 	int sc_ntargets;

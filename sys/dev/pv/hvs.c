@@ -215,7 +215,6 @@ struct hvs_softc {
 	int			 sc_initiator;
 
 	struct scsi_iopool	 sc_iopool;
-	struct scsi_link         sc_link;
 	struct device		*sc_scsibus;
 	struct task		 sc_probetask;
 };

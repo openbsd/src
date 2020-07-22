@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmwpvs.c,v 1.22 2020/07/20 14:41:14 krw Exp $ */
+/*	$OpenBSD: vmwpvs.c,v 1.23 2020/07/22 13:16:05 krw Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -321,7 +321,6 @@ struct vmwpvs_softc {
 
 	u_int			sc_bus_width;
 
-	struct scsi_link	sc_link;
 	struct scsi_iopool	sc_iopool;
 	struct scsibus_softc	*sc_scsibus;
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.55 2020/07/20 14:41:12 krw Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.56 2020/07/22 13:16:04 krw Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -56,7 +56,6 @@ enum vscsi_state {
 
 struct vscsi_softc {
 	struct device		sc_dev;
-	struct scsi_link	sc_link;
 	struct scsibus_softc	*sc_scsibus;
 
 	struct mutex		sc_state_mtx;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.54 2020/07/20 14:41:13 krw Exp $	*/
+/*	$OpenBSD: wds.c,v 1.55 2020/07/22 13:16:04 krw Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -117,7 +117,6 @@ struct wds_softc {
 	TAILQ_HEAD(, wds_scb) sc_free_scb, sc_waiting_scb;
 	int sc_numscbs, sc_mbofull;
 	int sc_scsi_dev;
-	struct scsi_link sc_link;	/* prototype for subdevs */
 
 	struct mutex		sc_scb_mtx;
 	struct scsi_iopool	sc_iopool;

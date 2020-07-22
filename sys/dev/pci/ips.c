@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.125 2020/07/20 14:41:13 krw Exp $	*/
+/*	$OpenBSD: ips.c,v 1.126 2020/07/22 13:16:04 krw Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -383,14 +383,11 @@ struct dmamem {
 struct ips_softc {
 	struct device		sc_dev;
 
-	struct scsi_link	sc_scsi_link;
 	struct scsibus_softc *	sc_scsibus;
 
 	struct ips_pt {
 		struct ips_softc *	pt_sc;
 		int			pt_chan;
-
-		struct scsi_link	pt_link;
 
 		int			pt_proctgt;
 		char			pt_procdev[16];

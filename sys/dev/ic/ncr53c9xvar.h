@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9xvar.h,v 1.23 2014/01/18 23:09:04 dlg Exp $	*/
+/*	$OpenBSD: ncr53c9xvar.h,v 1.24 2020/07/22 13:16:04 krw Exp $	*/
 /*	$NetBSD: ncr53c9xvar.h,v 1.13 1998/05/26 23:17:34 thorpej Exp $	*/
 
 /*-
@@ -257,8 +257,6 @@ struct ncr53c9x_glue {
 
 struct ncr53c9x_softc {
 	struct device sc_dev;			/* us as a device */
-
-	struct scsi_link sc_link;		/* scsi link struct */
 
 	struct ncr53c9x_glue *sc_glue;		/* glue to MD code */
 

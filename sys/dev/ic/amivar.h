@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.59 2020/07/11 19:28:07 krw Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.60 2020/07/22 13:16:04 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -75,7 +75,6 @@ struct ami_ccb {
 TAILQ_HEAD(ami_ccb_list, ami_ccb);
 
 struct ami_rawsoftc {
-	struct scsi_link	sc_link;
 	struct ami_softc	*sc_softc;
 	u_int8_t		sc_channel;
 
@@ -86,7 +85,6 @@ struct ami_rawsoftc {
 struct ami_softc {
 	struct device		sc_dev;
 	void			*sc_ih;
-	struct scsi_link	sc_link;
 	struct scsibus_softc	*sc_scsibus;
 
 	int			sc_flags;

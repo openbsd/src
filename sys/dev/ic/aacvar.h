@@ -1,4 +1,4 @@
-/*	$OpenBSD: aacvar.h,v 1.14 2019/10/05 20:41:27 jan Exp $	*/
+/*	$OpenBSD: aacvar.h,v 1.15 2020/07/22 13:16:04 krw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -315,7 +315,6 @@ struct aac_softc
 {
 	struct device aac_dev;
 	void   *aac_ih;
-	struct	scsi_link aac_link;	/* Virtual SCSI bus for cache devs */
 
 	bus_space_tag_t aac_memt;
 	bus_space_handle_t aac_memh;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdtvar.h,v 1.24 2020/02/15 01:58:01 krw Exp $	*/
+/*	$OpenBSD: gdtvar.h,v 1.25 2020/07/22 13:16:04 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -104,7 +104,6 @@ gdt_ccb_set_cmd(struct gdt_ccb *ccb, int flag)
 struct gdt_softc {
 	struct	device sc_dev;
 	void   *sc_ih;
-	struct	scsi_link sc_link;	/* Virtual SCSI bus for cache devs */
 
 	int	sc_class;		/* Controller class */
 #define GDT_ISA		0x01

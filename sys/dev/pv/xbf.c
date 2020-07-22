@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.43 2020/07/20 14:41:14 krw Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.44 2020/07/22 13:16:05 krw Exp $	*/
 
 /*
  * Copyright (c) 2016, 2017 Mike Belopuhov
@@ -201,7 +201,6 @@ struct xbf_softc {
 	struct mutex		 sc_ccb_sqlck;
 
 	struct scsi_iopool	 sc_iopool;
-	struct scsi_link         sc_link;
 	struct device		*sc_scsibus;
 };
 

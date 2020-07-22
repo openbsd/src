@@ -1,4 +1,4 @@
-/* $OpenBSD: mfivar.h,v 1.54 2014/08/15 02:27:02 yasuoka Exp $ */
+/* $OpenBSD: mfivar.h,v 1.55 2020/07/22 13:16:04 krw Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -117,7 +117,6 @@ struct mfi_pd_link {
 };
 
 struct mfi_pd_softc {
-	struct scsi_link	pd_link;
 	struct scsibus_softc	*pd_scsibus;
 	struct mfi_pd_link	*pd_links[MFI_MAX_PD];
 };
@@ -125,7 +124,6 @@ struct mfi_pd_softc {
 struct mfi_softc {
 	struct device		sc_dev;
 	void			*sc_ih;
-	struct scsi_link	sc_link;
 	struct scsi_iopool	sc_iopool;
 
 	const struct mfi_iop_ops *sc_iop;

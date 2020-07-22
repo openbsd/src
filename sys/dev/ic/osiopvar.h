@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiopvar.h,v 1.11 2010/06/28 04:39:57 dlg Exp $	*/
+/*	$OpenBSD: osiopvar.h,v 1.12 2020/07/22 13:16:04 krw Exp $	*/
 /*	$NetBSD: osiopvar.h,v 1.3 2002/05/14 02:58:35 matt Exp $	*/
 
 /*
@@ -216,7 +216,6 @@ struct osiop_softc {
 				        nexus_list;
 	struct mutex free_list_mtx;
 
-	struct scsi_link    sc_link;
 	struct scsi_iopool  sc_iopool;
 
 	struct osiop_tinfo sc_tinfo[OSIOP_NTGT];

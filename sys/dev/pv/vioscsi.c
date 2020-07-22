@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.24 2020/07/20 14:41:14 krw Exp $	*/
+/*	$OpenBSD: vioscsi.c,v 1.25 2020/07/22 13:16:05 krw Exp $	*/
 /*
  * Copyright (c) 2013 Google Inc.
  *
@@ -49,7 +49,6 @@ struct vioscsi_req {
 
 struct vioscsi_softc {
 	struct device		 sc_dev;
-	struct scsi_link	 sc_link;
 	struct scsi_iopool	 sc_iopool;
 	struct mutex		 sc_vr_mtx;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.117 2020/07/20 14:41:13 krw Exp $ */
+/*	$OpenBSD: arc.c,v 1.118 2020/07/22 13:16:04 krw Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -543,7 +543,6 @@ struct arc_ccb {
 struct arc_softc {
 	struct device		sc_dev;
 	const struct arc_iop	*sc_iop;
-	struct scsi_link	sc_link;
 
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_tag;

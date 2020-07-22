@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.137 2020/07/20 14:41:13 krw Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.138 2020/07/22 13:16:04 krw Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -158,8 +158,6 @@ struct mpii_softc {
 	pcitag_t		sc_tag;
 
 	void			*sc_ih;
-
-	struct scsi_link	sc_link;
 
 	int			sc_flags;
 #define MPII_F_RAID		(1<<1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopvar_common.h,v 1.31 2020/07/01 00:02:08 krw Exp $ */
+/*	$OpenBSD: siopvar_common.h,v 1.32 2020/07/22 13:16:04 krw Exp $ */
 /*	$NetBSD: siopvar_common.h,v 1.33 2005/11/18 23:10:32 bouyer Exp $ */
 
 /*
@@ -129,7 +129,6 @@ struct siop_common_target {
 /* Driver internal state */
 struct siop_common_softc {
 	struct device sc_dev;
-	struct scsi_link sc_link;	/* link to upper level */
 	u_int16_t sc_id;		/* adapter's target on bus */
 	int features;			/* chip's features */
 	int ram_size;

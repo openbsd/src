@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.170 2020/02/13 15:11:32 krw Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.171 2020/07/22 13:16:04 krw Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -625,7 +625,6 @@ struct sr_softc {
 	struct ksensordev	sc_sensordev;
 	struct sensor_task	*sc_sensor_task;
 
-	struct scsi_link	sc_link;	/* scsi prototype link */
 	struct scsibus_softc	*sc_scsibus;
 
 	/* The target lookup has to be cheap since it happens for each I/O. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.59 2020/07/20 14:41:14 krw Exp $ */
+/*	$OpenBSD: qle.c,v 1.60 2020/07/22 13:16:05 krw Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -163,8 +163,6 @@ struct qle_softc {
 	bus_space_handle_t	sc_ioh;
 	bus_size_t		sc_ios;
 	bus_dma_tag_t		sc_dmat;
-
-	struct scsi_link        sc_link;
 
 	struct scsibus_softc	*sc_scsibus;
 
