@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.h,v 1.29 2019/11/07 07:36:32 dlg Exp $	*/
+/*	$OpenBSD: if_trunk.h,v 1.30 2020/07/22 02:16:02 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -172,6 +172,7 @@ struct trunk_port {
 	int	(*tp_ioctl)(struct ifnet *, u_long, caddr_t);
 	int	(*tp_output)(struct ifnet *, struct mbuf *, struct sockaddr *,
 		    struct rtentry *);
+	void	(*tp_input)(struct ifnet *, struct mbuf *);
 
 	SLIST_ENTRY(trunk_port)		tp_entries;
 };

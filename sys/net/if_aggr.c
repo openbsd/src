@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.32 2020/07/10 13:26:41 patrick Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.33 2020/07/22 02:16:01 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -332,6 +332,7 @@ struct aggr_port {
 	uint32_t		 p_mtu;
 
 	int (*p_ioctl)(struct ifnet *, u_long, caddr_t);
+	void (*p_input)(struct ifnet *, struct mbuf *);
 	int (*p_output)(struct ifnet *, struct mbuf *, struct sockaddr *,
 	    struct rtentry *);
 
@@ -723,13 +724,14 @@ aggr_eh_is_slow(const struct ether_header *eh)
 	    eh->ether_type == htons(ETHERTYPE_SLOW));
 }
 
-static int
-aggr_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
+static void
+aggr_input(struct ifnet *ifp0, struct mbuf *m)
 {
-	struct ether_header *eh;
-	struct aggr_port *p = cookie;
+	struct arpcom *ac0 = (struct arpcom *)ifp0;
+	struct aggr_port *p = ac0->ac_trunkport;
 	struct aggr_softc *sc = p->p_aggr;
 	struct ifnet *ifp = &sc->sc_if;
+	struct ether_header *eh;
 	int hlen = sizeof(*eh);
 
 	if (!ISSET(ifp->if_flags, IFF_RUNNING))
@@ -745,7 +747,7 @@ aggr_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 			m = m_pullup(m, hlen);
 			if (m == NULL) {
 				/* short++ */
-				return (1);
+				return;
 			}
 			eh = mtod(m, struct ether_header *);
 		}
@@ -756,7 +758,7 @@ aggr_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 		case SLOWPROTOCOLS_SUBTYPE_LACP_MARKER:
 			if (mq_enqueue(&p->p_rxm_mq, m) == 0)
 				task_add(systq, &p->p_rxm_task);
-			return (1);
+			return;
 		default:
 			break;
 		}
@@ -770,11 +772,10 @@ aggr_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 
 	if_vinput(ifp, m);
 
-	return (1);
+	return;
 
 drop:
 	m_freem(m);
-	return (1);
 }
 
 static int
@@ -1072,6 +1073,10 @@ aggr_add_port(struct aggr_softc *sc, const struct trunk_reqport *rp)
 	if (ifp0->if_type != IFT_ETHER)
 		return (EPROTONOSUPPORT);
 
+	error = ether_brport_isset(ifp0);
+	if (error != 0)
+		return (error);
+
 	if (ifp0->if_hardmtu < ifp->if_mtu)
 		return (ENOBUFS);
 
@@ -1103,6 +1108,7 @@ aggr_add_port(struct aggr_softc *sc, const struct trunk_reqport *rp)
 	CTASSERT(sizeof(p->p_lladdr) == sizeof(ac0->ac_enaddr));
 	memcpy(p->p_lladdr, ac0->ac_enaddr, sizeof(p->p_lladdr));
 	p->p_ioctl = ifp0->if_ioctl;
+	p->p_input = ifp0->if_input;
 	p->p_output = ifp0->if_output;
 
 	error = aggr_group(sc, p, SIOCADDMULTI);
@@ -1161,12 +1167,18 @@ aggr_add_port(struct aggr_softc *sc, const struct trunk_reqport *rp)
 
 	aggr_update_capabilities(sc);
 
+	/*
+         * use (and modification) of ifp->if_input and ac->ac_trunkport
+         * is protected by NET_LOCK.
+	 */
+
 	ac0->ac_trunkport = p;
+
 	/* make sure p is visible before handlers can run */
 	membar_producer();
 	ifp0->if_ioctl = aggr_p_ioctl;
+	ifp0->if_input = aggr_input;
 	ifp0->if_output = aggr_p_output;
-	if_ih_insert(ifp0, aggr_input, p);
 
 	aggr_mux(sc, p, LACP_MUX_E_BEGIN);
 	aggr_rxm(sc, p, LACP_RXM_E_BEGIN);
@@ -1385,10 +1397,13 @@ aggr_p_dtor(struct aggr_softc *sc, struct aggr_port *p, const char *op)
 	timeout_del(&p->p_current_while_timer);
 	timeout_del(&p->p_wait_while_timer);
 
-	if_ih_remove(ifp0, aggr_input, p);
+	/*
+         * use (and modification) of ifp->if_input and ac->ac_trunkport
+         * is protected by NET_LOCK.
+	 */
 
 	ac0->ac_trunkport = NULL;
-
+	ifp0->if_input = p->p_input;
 	ifp0->if_ioctl = p->p_ioctl;
 	ifp0->if_output = p->p_output;
 

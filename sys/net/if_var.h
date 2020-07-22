@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.109 2020/07/10 13:26:42 patrick Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.110 2020/07/22 02:16:02 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -159,7 +159,7 @@ struct ifnet {				/* and the entries */
 	struct	task if_linkstatetask;	/* [I] task to do route updates */
 
 	/* procedure handles */
-	SRPL_HEAD(, ifih) if_inputs;	/* [K] input routines (dequeue) */
+	void	(*if_input)(struct ifnet *, struct mbuf *);
 	int	(*if_output)(struct ifnet *, struct mbuf *, struct sockaddr *,
 		     struct rtentry *);	/* output routine (enqueue) */
 					/* link level output function */
@@ -345,11 +345,6 @@ void	ifa_add(struct ifnet *, struct ifaddr *);
 void	ifa_del(struct ifnet *, struct ifaddr *);
 void	ifa_update_broadaddr(struct ifnet *, struct ifaddr *,
 	    struct sockaddr *);
-
-void	if_ih_insert(struct ifnet *, int (*)(struct ifnet *, struct mbuf *,
-	    void *), void *);
-void	if_ih_remove(struct ifnet *, int (*)(struct ifnet *, struct mbuf *,
-	    void *), void *);
 
 void	if_addrhook_add(struct ifnet *, struct task *);
 void	if_addrhook_del(struct ifnet *, struct task *);

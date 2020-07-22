@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.77 2020/07/22 00:29:00 dlg Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.78 2020/07/22 02:16:02 dlg Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -253,7 +253,7 @@ int	ether_multiaddr(struct sockaddr *, u_int8_t[], u_int8_t[]);
 void	ether_ifattach(struct ifnet *);
 void	ether_ifdetach(struct ifnet *);
 int	ether_ioctl(struct ifnet *, struct arpcom *, u_long, caddr_t);
-int	ether_input(struct ifnet *, struct mbuf *, void *);
+void	ether_input(struct ifnet *, struct mbuf *);
 int	ether_resolve(struct ifnet *, struct mbuf *, struct sockaddr *,
 	    struct rtentry *, struct ether_header *);
 struct mbuf *

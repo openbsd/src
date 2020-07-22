@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.147 2020/07/10 13:22:22 patrick Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.148 2020/07/22 02:16:02 dlg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -76,7 +76,7 @@ int	 trunk_ether_delmulti(struct trunk_softc *, struct ifreq *);
 void	 trunk_ether_purgemulti(struct trunk_softc *);
 int	 trunk_ether_cmdmulti(struct trunk_port *, u_long);
 int	 trunk_ioctl_allports(struct trunk_softc *, u_long, caddr_t);
-int	 trunk_input(struct ifnet *, struct mbuf *, void *);
+void	 trunk_input(struct ifnet *, struct mbuf *);
 void	 trunk_start(struct ifnet *);
 void	 trunk_init(struct ifnet *);
 void	 trunk_stop(struct ifnet *);
@@ -380,9 +380,11 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 	if (tr->tr_port_create != NULL)
 		error = (*tr->tr_port_create)(tp);
 
-	ac0->ac_trunkport = tp;
 	/* Change input handler of the physical interface. */
-	if_ih_insert(ifp, trunk_input, tp);
+	tp->tp_input = ifp->if_input;
+	NET_ASSERT_LOCKED();
+	ac0->ac_trunkport = tp;
+	ifp->if_input = trunk_input;
 
 	return (error);
 }
@@ -413,7 +415,8 @@ trunk_port_destroy(struct trunk_port *tp)
 	struct arpcom *ac0 = (struct arpcom *)ifp;
 
 	/* Restore previous input handler. */
-	if_ih_remove(ifp, trunk_input, tp);
+	NET_ASSERT_LOCKED();
+	ifp->if_input = tp->tp_input;
 	ac0->ac_trunkport = NULL;
 
 	/* Remove multicast addresses from this port */
@@ -649,15 +652,24 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = EPROTONOSUPPORT;
 			break;
 		}
+
 		/*
+		 * Use of ifp->if_input and ac->ac_trunkport is
+		 * protected by NET_LOCK, but that may not be true
+		 * in the future. The below comment and code flow is
+		 * maintained to help in that future.
+		 *
 		 * Serialize modifications to the trunk and trunk
 		 * ports via the ifih SRP: detaching trunk_input
 		 * from the trunk port will require all currently
 		 * running trunk_input's on this port to finish
 		 * granting us an exclusive access to it.
 		 */
-		SLIST_FOREACH(tp, &tr->tr_ports, tp_entries)
-			if_ih_remove(tp->tp_if, trunk_input, tp);
+		NET_ASSERT_LOCKED();
+		SLIST_FOREACH(tp, &tr->tr_ports, tp_entries) {
+			/* if_ih_remove(tp->tp_if, trunk_input, tp); */
+			tp->tp_if->if_input = tp->tp_input;
+		}
 		if (tr->tr_proto != TRUNK_PROTO_NONE)
 			error = tr->tr_detach(tr);
 		if (error != 0)
@@ -671,9 +683,11 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				tr->tr_proto = trunk_protos[i].ti_proto;
 				if (tr->tr_proto != TRUNK_PROTO_NONE)
 					error = trunk_protos[i].ti_attach(tr);
-				SLIST_FOREACH(tp, &tr->tr_ports, tp_entries)
-					if_ih_insert(tp->tp_if,
-					    trunk_input, tp);
+				SLIST_FOREACH(tp, &tr->tr_ports, tp_entries) {
+					/* if_ih_insert(tp->tp_if,
+					    trunk_input, tp); */
+					tp->tp_if->if_input = trunk_input;
+				}
 				/* Update trunk capabilities */
 				tr->tr_capabilities = trunk_capabilities(tr);
 				goto out;
@@ -1118,13 +1132,17 @@ trunk_stop(struct ifnet *ifp)
 		(*tr->tr_stop)(tr);
 }
 
-int
-trunk_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
+void
+trunk_input(struct ifnet *ifp, struct mbuf *m)
 {
-	struct trunk_softc *tr;
+	struct arpcom *ac0 = (struct arpcom *)ifp;
 	struct trunk_port *tp;
+	struct trunk_softc *tr;
 	struct ifnet *trifp = NULL;
 	struct ether_header *eh;
+
+	if (m->m_len < sizeof(*eh))
+		goto bad;
 
 	eh = mtod(m, struct ether_header *);
 	if (ETHER_IS_MULTICAST(eh->ether_dhost))
@@ -1134,7 +1152,7 @@ trunk_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 	if (ifp->if_type != IFT_IEEE8023ADLAG)
 		goto bad;
 
-	tp = (struct trunk_port *)cookie;
+	tp = (struct trunk_port *)ac0->ac_trunkport;
 	if ((tr = (struct trunk_softc *)tp->tp_trunk) == NULL)
 		goto bad;
 
@@ -1147,7 +1165,7 @@ trunk_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 		 * We stop here if the packet has been consumed
 		 * by the protocol routine.
 		 */
-		return (1);
+		return;
 	}
 
 	if ((trifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
@@ -1163,19 +1181,18 @@ trunk_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 		if (bcmp(&tr->tr_ac.ac_enaddr, eh->ether_dhost,
 		    ETHER_ADDR_LEN)) {
 			m_freem(m);
-			return (1);
+			return;
 		}
 	}
 
 
 	if_vinput(trifp, m);
-	return (1);
+	return;
 
  bad:
 	if (trifp != NULL)
 		trifp->if_ierrors++;
 	m_freem(m);
-	return (1);
 }
 
 int

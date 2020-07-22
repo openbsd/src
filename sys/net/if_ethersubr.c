@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.265 2020/07/22 01:50:39 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.266 2020/07/22 02:16:01 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -355,12 +355,22 @@ ether_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 }
 
 /*
- * Process a received Ethernet packet;
- * the packet is in the mbuf chain m without
- * the ether header, which is provided separately.
+ * Process a received Ethernet packet.
+ *
+ * Ethernet input has several "phases" of filtering packets to
+ * support virtual/pseudo interfaces before actual layer 3 protocol
+ * handling.
+ *
+ * First phase:
+ *
+ * The first phase supports drivers that aggregate multiple Ethernet
+ * ports into a single logical interface, ie, aggr(4) and trunk(4).
+ * These drivers intercept packets by swapping out the if_input handler
+ * on the "port" interfaces to steal the packets before they get here
+ * to ether_input().
  */
-int
-ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
+void
+ether_input(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ether_header *eh;
 	void (*input)(struct ifnet *, struct mbuf *);
@@ -374,6 +384,8 @@ ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 		goto dropanyway;
 
 	/*
+	 * Second phase: service delimited packet filtering.
+	 *
 	 * Let vlan(4) and svlan(4) look at "service delimited"
 	 * packets. If a virtual interface does not exist to take
 	 * those packets, they're returned to ether_input() so a
@@ -388,13 +400,15 @@ ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 #if NVLAN > 0
 		m = vlan_input(ifp, m);
 		if (m == NULL)
-			return (1);
+			return;
 #endif /* NVLAN > 0 */
 
 		sdelim = 1;
 	}
 
 	/*
+	 * Third phase: bridge processing.
+	 *
 	 * Give the packet to a bridge interface, ie, bridge(4),
 	 * switch(4), or tpmr(4), if it is configured. A bridge
 	 * may take the packet and forward it to another port, or it
@@ -410,12 +424,14 @@ ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 		m = (*eb->eb_input)(ifp, m, eb->eb_port);
 		if (m == NULL) {
 			smr_read_leave();
-			return (1);
+			return;
 		}
 	}
 	smr_read_leave();
 
 	/*
+	 * Fourth phase: drop service delimited packets.
+	 *
 	 * If the packet has a tag, and a bridge didn't want it,
 	 * it's not for this port.
 	 */
@@ -423,9 +439,13 @@ ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 	if (sdelim)
 		goto dropanyway;
 
-	eh = mtod(m, struct ether_header *);
+	/*
+	 * Fifth phase: destination address check.
+	 *
+	 * Is the packet specifically addressed to this port?
+	 */
 
-	/* Is the packet for us? */
+	eh = mtod(m, struct ether_header *);
 	if (memcmp(ac->ac_enaddr, eh->ether_dhost, ETHER_ADDR_LEN) != 0) {
 #if NCARP > 0
 		/*
@@ -435,13 +455,15 @@ ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 		    !SRPL_EMPTY_LOCKED(&ifp->if_carp)) {
 			m = carp_input(ifp, m);
 			if (m == NULL)
-				return (1);
+				return;
 
 			eh = mtod(m, struct ether_header *);
 		}
 #endif
 
-		/* If not, it must be multicast or broadcast to go further */
+		/*
+		 * If not, it must be multicast or broadcast to go further.
+		 */
 		if (!ETHER_IS_MULTICAST(eh->ether_dhost))
 			goto dropanyway;
 
@@ -461,6 +483,13 @@ ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 			m->m_flags |= M_MCAST;
 		ifp->if_imcasts++;
 	}
+
+ 	/*
+	 * Sixth phase: protocol demux.
+	 *
+	 * At this point it is known that the packet is destined
+	 * for layer 3 protocol handling on the local port.
+ 	 */
 
 	switch (etype) {
 	case ETHERTYPE_IP:
@@ -498,7 +527,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 
 			if ((session = pipex_pppoe_lookup_session(m)) != NULL) {
 				pipex_pppoe_input(m, session);
-				return (1);
+				return;
 			}
 		}
 #endif
@@ -506,7 +535,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 			niq_enqueue(&pppoediscinq, m);
 		else
 			niq_enqueue(&pppoeinq, m);
-		return (1);
+		return;
 #endif
 #ifdef MPLS
 	case ETHERTYPE_MPLS:
@@ -517,7 +546,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 #if NBPE > 0
 	case ETHERTYPE_PBB:
 		bpe_input(ifp, m);
-		return (1);
+		return;
 #endif
 	default:
 		goto dropanyway;
@@ -525,10 +554,10 @@ ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 
 	m_adj(m, sizeof(*eh));
 	(*input)(ifp, m);
-	return (1);
+	return;
 dropanyway:
 	m_freem(m);
-	return (1);
+	return;
 }
 
 int
@@ -640,11 +669,10 @@ ether_ifattach(struct ifnet *ifp)
 	ifp->if_addrlen = ETHER_ADDR_LEN;
 	ifp->if_hdrlen = ETHER_HDR_LEN;
 	ifp->if_mtu = ETHERMTU;
+	ifp->if_input = ether_input;
 	if (ifp->if_output == NULL)
 		ifp->if_output = ether_output;
 	ifp->if_rtrequest = ether_rtrequest;
-
-	if_ih_insert(ifp, ether_input, NULL);
 
 	if (ifp->if_hardmtu == 0)
 		ifp->if_hardmtu = ETHERMTU;
@@ -665,10 +693,6 @@ ether_ifdetach(struct ifnet *ifp)
 
 	/* Undo pseudo-driver changes. */
 	if_deactivate(ifp);
-
-	if_ih_remove(ifp, ether_input, NULL);
-
-	KASSERT(SRPL_EMPTY_LOCKED(&ifp->if_inputs));
 
 	for (enm = LIST_FIRST(&ac->ac_multiaddrs);
 	    enm != NULL;

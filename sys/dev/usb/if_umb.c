@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.35 2020/07/10 13:26:41 patrick Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.36 2020/07/22 02:16:02 dlg Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -137,7 +137,7 @@ void		 umb_close_bulkpipes(struct umb_softc *);
 int		 umb_ioctl(struct ifnet *, u_long, caddr_t);
 int		 umb_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 		    struct rtentry *);
-int		 umb_input(struct ifnet *, struct mbuf *, void *);
+void		 umb_input(struct ifnet *, struct mbuf *);
 void		 umb_start(struct ifnet *);
 void		 umb_rtrequest(struct ifnet *, int, struct rtentry *);
 void		 umb_watchdog(struct ifnet *);
@@ -522,9 +522,9 @@ umb_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof (struct ncm_pointer16);
 	ifp->if_mtu = 1500;		/* use a common default */
 	ifp->if_hardmtu = sc->sc_maxpktlen;
+	ifp->if_input = umb_input;
 	ifp->if_output = umb_output;
 	if_attach(ifp);
-	if_ih_insert(ifp, umb_input, NULL);
 	if_alloc_sadl(ifp);
 	ifp->if_softc = sc;
 #if NBPFILTER > 0
@@ -575,7 +575,6 @@ umb_detach(struct device *self, int flags)
 		sc->sc_resp_buf = NULL;
 	}
 	if (ifp->if_softc != NULL) {
-		if_ih_remove(ifp, umb_input, NULL);
 		if_detach(ifp);
 	}
 
@@ -775,21 +774,21 @@ umb_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	return if_enqueue(ifp, m);
 }
 
-int
-umb_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
+void
+umb_input(struct ifnet *ifp, struct mbuf *m)
 {
 	uint32_t af;
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
-		return 1;
+		return;
 	}
 	if (m->m_pkthdr.len < sizeof (struct ip) + sizeof(af)) {
 		ifp->if_ierrors++;
 		DPRINTFN(4, "%s: dropping short packet (len %d)\n", __func__,
 		    m->m_pkthdr.len);
 		m_freem(m);
-		return 1;
+		return;
 	}
 	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 
@@ -802,20 +801,19 @@ umb_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 	switch (af) {
 	case AF_INET:
 		ipv4_input(ifp, m);
-		return 1;
+		return;
 #ifdef INET6
 	case AF_INET6:
 		ipv6_input(ifp, m);
-		return 1;
+		return;
 #endif /* INET6 */
 	default:
 		ifp->if_ierrors++;
 		DPRINTFN(4, "%s: dropping packet with bad IP version (af %d)\n",
 		    __func__, af);
 		m_freem(m);
-		return 1;
+		return;
 	}
-	return 1;
 }
 
 static inline int

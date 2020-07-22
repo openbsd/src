@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.90 2020/01/08 09:09:10 claudio Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.91 2020/07/22 02:16:01 dlg Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -143,7 +143,7 @@
 int	loioctl(struct ifnet *, u_long, caddr_t);
 void	loopattach(int);
 void	lortrequest(struct ifnet *, int, struct rtentry *);
-int	loinput(struct ifnet *, struct mbuf *, void *);
+void	loinput(struct ifnet *, struct mbuf *);
 int	looutput(struct ifnet *,
 	    struct mbuf *, struct sockaddr *, struct rtentry *);
 
@@ -175,6 +175,7 @@ loop_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_xflags = IFXF_CLONED;
 	ifp->if_rtrequest = lortrequest;
 	ifp->if_ioctl = loioctl;
+	ifp->if_input = loinput;
 	ifp->if_output = looutput;
 	ifp->if_type = IFT_LOOP;
 	ifp->if_hdrlen = sizeof(u_int32_t);
@@ -188,7 +189,6 @@ loop_clone_create(struct if_clone *ifc, int unit)
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(u_int32_t));
 #endif
-	if_ih_insert(ifp, loinput, NULL);
 	return (0);
 }
 
@@ -218,7 +218,6 @@ loop_clone_destroy(struct ifnet *ifp)
 		rdomain = ifp->if_rdomain;
 	}
 
-	if_ih_remove(ifp, loinput, NULL);
 	if_detach(ifp);
 
 	free(ifp, M_DEVBUF, sizeof(*ifp));
@@ -228,8 +227,8 @@ loop_clone_destroy(struct ifnet *ifp)
 	return (0);
 }
 
-int
-loinput(struct ifnet *ifp, struct mbuf *m, void *cookie)
+void
+loinput(struct ifnet *ifp, struct mbuf *m)
 {
 	int error;
 
@@ -239,8 +238,6 @@ loinput(struct ifnet *ifp, struct mbuf *m, void *cookie)
 	error = if_input_local(ifp, m, m->m_pkthdr.ph_family);
 	if (error)
 		ifp->if_ierrors++;
-
-	return (1);
 }
 
 int
