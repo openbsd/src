@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.76 2020/07/15 08:24:29 fcambus Exp $ */
+/*	$OpenBSD: cpu.c,v 1.77 2020/07/22 08:04:41 fcambus Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -121,7 +121,7 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	 * instead.
 	 * XXX The MP boot sequence needs to be reworked to avoid this.
 	 */
-	if (!ISSET(ci->ci_flags, CPUF_PRIMARY)) {
+	if (!CPU_IS_PRIMARY(ci)) {
 		ci->ci_l1inst = cpu_info_primary.ci_l1inst;
 		ci->ci_l1data = cpu_info_primary.ci_l1data;
 		ci->ci_l2 = cpu_info_primary.ci_l2;
