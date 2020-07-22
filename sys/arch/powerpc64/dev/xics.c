@@ -1,4 +1,4 @@
-/*	$OpenBSD: xics.c,v 1.1 2020/07/14 20:39:40 kettenis Exp $	*/
+/*	$OpenBSD: xics.c,v 1.2 2020/07/22 16:49:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -48,6 +48,8 @@ struct cfdriver xics_cd = {
 
 void	*xics_intr_establish(void *, int *, int,
 	    struct cpu_info *, int (*)(void *), void *, char *);
+void	xics_intr_send_ipi(void *);
+
 int
 xics_match(struct device *parent, void *match, void *aux)
 {
@@ -67,6 +69,7 @@ xics_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic.ic_node = faa->fa_node;
 	sc->sc_ic.ic_cookie = self;
 	sc->sc_ic.ic_establish = xics_intr_establish;
+	sc->sc_ic.ic_send_ipi = xics_intr_send_ipi;
 	interrupt_controller_register(&sc->sc_ic);
 }
 
@@ -77,5 +80,11 @@ xics_intr_establish(void *cookie, int *cell, int level,
 	uint32_t girq = cell[0];
 	int type = cell[1];
 
-	return intr_establish(girq, type, level, func, arg, name);
+	return _intr_establish(girq, type, level, func, arg, name);
+}
+
+void
+xics_intr_send_ipi(void *cookie)
+{
+	return _intr_send_ipi(cookie);
 }

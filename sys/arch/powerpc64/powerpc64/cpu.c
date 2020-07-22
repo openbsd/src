@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.12 2020/07/21 21:36:58 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.13 2020/07/22 16:49:13 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -72,6 +72,7 @@ struct cfdriver cpu_cd = {
 };
 
 void	cpu_hatch(void);
+int	cpu_intr(void *);
 
 int
 cpu_match(struct device *parent, void *cfdata, void *aux)
@@ -102,6 +103,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	ci->ci_dev = dev;
 	ci->ci_cpuid = dev->dv_unit;
 	ci->ci_pir = faa->fa_reg[0].addr;
+	ci->ci_node = faa->fa_node;
 
 	printf(" pir %x", ci->ci_pir);
 
@@ -285,12 +287,29 @@ cpu_boot_secondary_processors(void)
 	CPU_INFO_ITERATOR cii;
 
 	CPU_INFO_FOREACH(cii, ci) {
+		/* Set up IPI handler. */
+		ci->ci_ipi = fdt_intr_establish_idx_cpu(ci->ci_node, 0,
+		    IPL_IPI, ci, cpu_intr, ci, ci->ci_dev->dv_xname);
+
 		if (CPU_IS_PRIMARY(ci))
 			continue;
 
 		ci->ci_randseed = (arc4random() & 0x7fffffff) + 1;
 		cpu_boot_secondary(ci);
 	}
+}
+
+int
+cpu_intr(void *arg)
+{
+	return 1;
+}
+
+void
+cpu_kick(struct cpu_info *ci)
+{
+	if (ci != curcpu())
+		intr_send_ipi(ci);
 }
 
 #endif

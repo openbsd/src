@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.20 2020/07/21 21:36:58 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.21 2020/07/22 16:49:13 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -57,6 +57,7 @@ struct cpu_info {
 
 	uint32_t	ci_cpuid;
 	uint32_t	ci_pir;
+	int		ci_node;
 
 	struct proc	*ci_curproc;
 	struct pcb	*ci_curpcb;
@@ -86,6 +87,7 @@ struct cpu_info {
 	struct srp_hazard ci_srp_hazards[SRP_HAZARD_NUM];
 	void		*ci_initstack_end;
 	volatile int		ci_flags;
+	void		*ci_ipi;
 #endif
 };
 
@@ -115,6 +117,8 @@ register struct cpu_info *__curcpu asm("r13");
 #define CPU_INFO_FOREACH(cii, ci) \
 	for (cii = 0, ci = curcpu(); ci != NULL; ci = NULL)
 
+#define cpu_kick(ci)
+
 #else
 
 #define MAXCPUS			16
@@ -125,6 +129,7 @@ register struct cpu_info *__curcpu asm("r13");
 #define CPU_INFO_FOREACH(cii, ci) \
 	for (cii = 0, ci = &cpu_info[0]; cii < ncpus; cii++, ci++)
 
+void	cpu_kick(struct cpu_info *);
 void	cpu_boot_secondary_processors(void);
 void	cpu_startclock(void);
 
@@ -139,7 +144,6 @@ void	cpu_startclock(void);
 #define aston(p)		((p)->p_md.md_astpending = 1)
 #define need_proftick(p)	aston(p)
 
-#define cpu_kick(ci)
 #define cpu_unidle(ci)
 #define CPU_BUSY_CYCLE()	do {} while (0)
 #define signotify(p)		setsoftast()

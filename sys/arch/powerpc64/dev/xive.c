@@ -1,4 +1,4 @@
-/*	$OpenBSD: xive.c,v 1.7 2020/07/21 20:22:03 kettenis Exp $	*/
+/*	$OpenBSD: xive.c,v 1.8 2020/07/22 16:49:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -94,7 +94,7 @@ struct xive_softc {
 	bus_dma_tag_t		sc_dmat;
 
 	struct intrhand		*sc_handler[XIVE_NUM_IRQS];
-	struct xive_eq		sc_eq[XIVE_NUM_PRIORITIES];
+	struct xive_eq		sc_eq[MAXCPUS][XIVE_NUM_PRIORITIES];
 
 	uint32_t		sc_page_size;
 	uint32_t		sc_lirq;
@@ -152,6 +152,7 @@ struct cfdriver xive_cd = {
 void	xive_hvi(struct trapframe *);
 void 	*xive_intr_establish(uint32_t, int, int,
 	    int (*)(void *), void *, const char *);
+void	xive_intr_send_ipi(void *);
 void	xive_setipl(int);
 
 int
@@ -167,7 +168,8 @@ xive_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct xive_softc *sc = (struct xive_softc *)self;
 	struct fdt_attach_args *faa = aux;
-	struct cpu_info *ci = curcpu();
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
 	int64_t error;
 	int i;
 
@@ -194,25 +196,29 @@ xive_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	for (i = 0; i < XIVE_NUM_PRIORITIES; i++) {
-		sc->sc_eq[i].eq_queue = xive_dmamem_alloc(sc->sc_dmat,
-		    1 << XIVE_EQ_SIZE, 1 << XIVE_EQ_SIZE);
-		if (sc->sc_eq[i].eq_queue == NULL) {
-			printf("%s: can't allocate event queue\n",
-			    sc->sc_dev.dv_xname);
-			return;
-		}
+	CPU_INFO_FOREACH(cii, ci) {
+		for (i = 0; i < XIVE_NUM_PRIORITIES; i++) {
+			sc->sc_eq[ci->ci_cpuid][i].eq_queue =
+			    xive_dmamem_alloc(sc->sc_dmat,
+			    1 << XIVE_EQ_SIZE, 1 << XIVE_EQ_SIZE);
+			if (sc->sc_eq[ci->ci_cpuid][i].eq_queue == NULL) {
+				printf("%s: can't allocate event queue\n",
+				    sc->sc_dev.dv_xname);
+				return;
+			}
 
-		error = opal_xive_set_queue_info(mfpir(), i,
-		    XIVE_DMA_DVA(sc->sc_eq[i].eq_queue), XIVE_EQ_SIZE,
-		    OPAL_XIVE_EQ_ENABLED | OPAL_XIVE_EQ_ALWAYS_NOTIFY);
-		if (error != OPAL_SUCCESS) {
-			printf("%s: can't enable event queue\n",
-			    sc->sc_dev.dv_xname);
-			return;
-		}
+			error = opal_xive_set_queue_info(ci->ci_pir, i,
+			    XIVE_DMA_DVA(sc->sc_eq[ci->ci_cpuid][i].eq_queue),
+			    XIVE_EQ_SIZE, OPAL_XIVE_EQ_ENABLED |
+			    OPAL_XIVE_EQ_ALWAYS_NOTIFY);
+			if (error != OPAL_SUCCESS) {
+				printf("%s: can't enable event queue\n",
+				    sc->sc_dev.dv_xname);
+				return;
+			}
 
-		sc->sc_eq[i].eq_gen = XIVE_EQ_GEN_MASK;
+			sc->sc_eq[ci->ci_cpuid][i].eq_gen = XIVE_EQ_GEN_MASK;
+		}
 	}
 
 	/* There can be only one. */
@@ -221,10 +227,11 @@ xive_attach(struct device *parent, struct device *self, void *aux)
 
 	_hvi = xive_hvi;
 	_intr_establish = xive_intr_establish;
+	_intr_send_ipi = xive_intr_send_ipi;
 	_setipl = xive_setipl;
 
 	/* Synchronize hardware state to software state. */
-	xive_write_1(sc, XIVE_TM_CPPR_HV, ci->ci_cpl);
+	xive_write_1(sc, XIVE_TM_CPPR_HV, curcpu()->ci_cpl);
 }
 
 int
@@ -307,6 +314,17 @@ xive_intr_establish(uint32_t girq, int type, int level,
 }
 
 void
+xive_intr_send_ipi(void *cookie)
+{
+	struct xive_softc *sc = xive_sc;
+	struct intrhand *ih = cookie;
+
+	if (ih && ih->ih_esb_trig)
+		bus_space_write_8(sc->sc_iot, ih->ih_esb_trig,
+		    XIVE_ESB_STORE_TRIGGER, 0);
+}
+
+void
 xive_eoi(struct xive_softc *sc, struct intrhand *ih)
 {
 	uint64_t eoi;
@@ -375,20 +393,22 @@ xive_hvi(struct trapframe *frame)
 		eieio();
 
 		KASSERT(cppr < XIVE_NUM_PRIORITIES);
-		eq = &sc->sc_eq[cppr];
+		eq = &sc->sc_eq[ci->ci_cpuid][cppr];
 		event = XIVE_DMA_KVA(eq->eq_queue);
 		while ((event[eq->eq_idx] & XIVE_EQ_GEN_MASK) == eq->eq_gen) {
 			lirq = event[eq->eq_idx] & ~XIVE_EQ_GEN_MASK;
 			KASSERT(lirq < XIVE_NUM_IRQS);
 			ih = sc->sc_handler[lirq];
 			if (ih != NULL) {
-				KERNEL_LOCK();
+				if (ih->ih_ipl != IPL_IPI)
+					KERNEL_LOCK();
 				intr_enable();
 				handled = ih->ih_func(ih->ih_arg);
 				intr_disable();
 				if (handled)
 					ih->ih_count.ec_count++;
-				KERNEL_UNLOCK();
+				if (ih->ih_ipl != IPL_IPI)
+					KERNEL_UNLOCK();
 				xive_eoi(sc, ih);
 			}
 			eq->eq_idx = (eq->eq_idx + 1) & XIVE_EQ_IDX_MASK;
