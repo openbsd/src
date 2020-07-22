@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.9 2020/07/22 19:53:11 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.10 2020/07/22 19:54:05 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -4142,7 +4142,7 @@ mvpp2_prs_def_flow(struct mvpp2_port *port)
 		mvpp2_prs_shadow_set(port->sc, pe->index, MVPP2_PRS_LU_FLOWS);
 	}
 
-	mvpp2_prs_tcam_port_map_set (pe,(1 << port->sc_id));
+	mvpp2_prs_tcam_port_map_set(pe, (1 << port->sc_id));
 	mvpp2_prs_hw_write(port->sc, pe);
 	free(pe, M_TEMP, sizeof(*pe));
 	return 0;
