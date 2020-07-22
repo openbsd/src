@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tpmr.c,v 1.12 2020/07/22 00:48:29 dlg Exp $ */
+/*	$OpenBSD: if_tpmr.c,v 1.13 2020/07/22 02:43:06 kn Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -48,6 +48,7 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
+#include <net/if_bridge.h>
 #include <net/if_media.h> /* if_trunk.h uses ifmedia bits */
 #include <crypto/siphash.h> /* if_trunk.h uses siphash bits */
 #include <net/if_trunk.h>
@@ -131,10 +132,10 @@ static int	tpmr_get_trunk(struct tpmr_softc *, struct trunk_reqall *);
 static void	tpmr_p_dtor(struct tpmr_softc *, struct tpmr_port *,
 		    const char *);
 static int	tpmr_add_port(struct tpmr_softc *,
-		    const struct trunk_reqport *);
+		    const struct ifbreq *);
 static int	tpmr_get_port(struct tpmr_softc *, struct trunk_reqport *);
 static int	tpmr_del_port(struct tpmr_softc *,
-		    const struct trunk_reqport *);
+		    const struct ifbreq *);
 
 static struct if_clone tpmr_cloner =
     IF_CLONE_INITIALIZER("tpmr", tpmr_clone_create, tpmr_clone_destroy);
@@ -438,19 +439,19 @@ tpmr_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCGTRUNKPORT:
 		error = tpmr_get_port(sc, (struct trunk_reqport *)data);
 		break;
-	case SIOCSTRUNKPORT:
+	case SIOCBRDGADD:
 		error = suser(curproc);
 		if (error != 0)
 			break;
 
-		error = tpmr_add_port(sc, (struct trunk_reqport *)data);
+		error = tpmr_add_port(sc, (struct ifbreq *)data);
 		break;
-	case SIOCSTRUNKDELPORT:
+	case SIOCBRDGDEL:
 		error = suser(curproc);
 		if (error != 0)
 			break;
 
-		error = tpmr_del_port(sc, (struct trunk_reqport *)data);
+		error = tpmr_del_port(sc, (struct ifbreq *)data);
 		break;
 
 	default:
@@ -518,7 +519,7 @@ tpmr_get_trunk(struct tpmr_softc *sc, struct trunk_reqall *ra)
 }
 
 static int
-tpmr_add_port(struct tpmr_softc *sc, const struct trunk_reqport *rp)
+tpmr_add_port(struct tpmr_softc *sc, const struct ifbreq *req)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	struct ifnet *ifp0;
@@ -531,7 +532,7 @@ tpmr_add_port(struct tpmr_softc *sc, const struct trunk_reqport *rp)
 	if (sc->sc_nports >= nitems(sc->sc_ports))
 		return (ENOSPC);
 
-	ifp0 = ifunit(rp->rp_portname);
+	ifp0 = ifunit(req->ifbr_ifsname);
 	if (ifp0 == NULL)
 		return (EINVAL);
 
@@ -645,12 +646,12 @@ tpmr_get_port(struct tpmr_softc *sc, struct trunk_reqport *rp)
 }
 
 static int
-tpmr_del_port(struct tpmr_softc *sc, const struct trunk_reqport *rp)
+tpmr_del_port(struct tpmr_softc *sc, const struct ifbreq *req)
 {
 	struct tpmr_port *p;
 
 	NET_ASSERT_LOCKED();
-	p = tpmr_trunkport(sc, rp->rp_portname);
+	p = tpmr_trunkport(sc, req->ifbr_ifsname);
 	if (p == NULL)
 		return (EINVAL);
 

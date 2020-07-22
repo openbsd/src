@@ -1,4 +1,4 @@
-.\" $OpenBSD: tpmr.4,v 1.4 2019/08/20 08:21:03 dlg Exp $
+.\" $OpenBSD: tpmr.4,v 1.5 2020/07/22 02:43:06 kn Exp $
 .\"
 .\" Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 20 2019 $
+.Dd $Mdocdate: July 22 2020 $
 .Dt TPMR 4
 .Os
 .Sh NAME
@@ -30,8 +30,8 @@ driver implements an 802.1Q (originally 802.1aj) Two-Port MAC Relay
 A TPMR is a simplified Ethernet bridge that provides a subset of
 the functionality as found in
 .Xr bridge 4 .
-A TPMR has exactly two ports, and unconditionally relays Ethernet
-packets between the two ports.
+A TPMR has exactly two members, and unconditionally relays Ethernet
+packets between the them.
 .Pp
 .Nm
 interfaces can be created at runtime using the
@@ -51,12 +51,12 @@ and
 .Xr netstart 8
 using the following options:
 .Bl -tag -width Ds
-.It Cm trunkport Ar child-iface
+.It Cm add Ar child-iface
 Add
 .Ar child-iface
-as a port.
-.It Cm -trunkport Ar child-iface
-Remove the port
+as a member.
+.It Cm del Ar child-iface
+Remove the member
 .Ar child-iface .
 .It Cm link0
 Disable the filtering of Ethernet frames destined for the TPMR
@@ -102,7 +102,7 @@ is used to connect to the 1000baseSX switch, the following configuration
 can be used:
 .Bd -literal
 # ifconfig tpmr0 create
-# ifconfig tpmr0 trunkport fxp0 trunkport em0
+# ifconfig tpmr0 add fxp0 add em0
 # ifconfig fxp0 up
 # ifconfig em0 up
 # ifconfig tpmr0 up
@@ -154,7 +154,7 @@ Configure the etherip interface:
 .Pp
 Add the etherip interface and physical interface to the TPMR:
 .Bd -literal -offset indent
-# ifconfig tpmr0 trunkport em1 trunkport etherip0 up
+# ifconfig tpmr0 add em1 add etherip0 up
 .Ed
 .Pp
 An equivalent setup using MPLS pseudowires instead of IP as the
