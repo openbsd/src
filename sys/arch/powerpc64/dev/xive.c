@@ -1,4 +1,4 @@
-/*	$OpenBSD: xive.c,v 1.8 2020/07/22 16:49:13 kettenis Exp $	*/
+/*	$OpenBSD: xive.c,v 1.9 2020/07/22 19:09:15 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -400,15 +400,26 @@ xive_hvi(struct trapframe *frame)
 			KASSERT(lirq < XIVE_NUM_IRQS);
 			ih = sc->sc_handler[lirq];
 			if (ih != NULL) {
-				if (ih->ih_ipl != IPL_IPI)
+#ifdef MULTIPROCESSOR
+				int need_lock;
+
+				if (ih->ih_flags & IPL_MPSAFE)
+					need_lock = 0;
+				else
+					need_lock = (ih->ih_ipl < IPL_SCHED);
+
+				if (need_lock)
 					KERNEL_LOCK();
+#endif
 				intr_enable();
 				handled = ih->ih_func(ih->ih_arg);
 				intr_disable();
 				if (handled)
 					ih->ih_count.ec_count++;
-				if (ih->ih_ipl != IPL_IPI)
+#ifdef MULTIPROCESSOR
+				if (need_lock)
 					KERNEL_UNLOCK();
+#endif
 				xive_eoi(sc, ih);
 			}
 			eq->eq_idx = (eq->eq_idx + 1) & XIVE_EQ_IDX_MASK;
