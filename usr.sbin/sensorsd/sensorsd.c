@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.66 2019/06/28 13:32:50 deraadt Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.67 2020/07/22 15:33:49 bluhm Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -94,7 +94,7 @@ void		 reparse_cfg(int);
 TAILQ_HEAD(sdlimhead_t, sdlim_t);
 struct sdlimhead_t sdlims = TAILQ_HEAD_INITIALIZER(sdlims);
 
-char			 *configfile;
+char			 *configfile, *configdb;
 volatile sig_atomic_t	  reload = 0;
 int			  debug = 0;
 
@@ -125,10 +125,9 @@ main(int argc, char *argv[])
 			debug = 1;
 			break;
 		case 'f':
-			configfile = optarg;
-			if (access(configfile, R_OK) != 0)
-				err(1, "access configuration file %s",
-				    configfile);
+			configfile = realpath(optarg, NULL);
+			if (configfile == NULL)
+				err(1, "configuration file %s", optarg);
 			break;
 		default:
 			usage();
@@ -143,8 +142,13 @@ main(int argc, char *argv[])
 	if (configfile == NULL)
 		if (asprintf(&configfile, "/etc/sensorsd.conf") == -1)
 			err(1, "out of memory");
+	if (asprintf(&configdb, "%s.db", configfile) == -1)
+		err(1, "out of memory");
 
+	chdir("/");
 	if (unveil(configfile, "r") == -1)
+		err(1, "unveil");
+	if (unveil(configdb, "r") == -1)
 		err(1, "unveil");
 	if (unveil("/", "x") == -1)
 		err(1, "unveil");
@@ -158,7 +162,7 @@ main(int argc, char *argv[])
 
 	parse_config(configfile);
 
-	if (debug == 0 && daemon(0, 0) == -1)
+	if (debug == 0 && daemon(1, 0) == -1)
 		err(1, "unable to fork");
 
 	signal(SIGHUP, reparse_cfg);
