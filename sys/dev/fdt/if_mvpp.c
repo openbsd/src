@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.14 2020/07/22 20:58:40 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.15 2020/07/22 21:14:05 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -62,6 +62,9 @@
 #include <sys/sockio.h>
 #include <sys/timeout.h>
 
+#include <uvm/uvm_extern.h>
+
+#include <machine/cpufunc.h>
 #include <machine/bus.h>
 #include <machine/fdt.h>
 
@@ -158,9 +161,11 @@ struct mvpp2_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh_base;
 	bus_space_handle_t	sc_ioh_iface;
+	paddr_t			sc_ioh_paddr;
 	bus_size_t		sc_iosize_base;
 	bus_size_t		sc_iosize_iface;
 	bus_dma_tag_t		sc_dmat;
+	struct regmap		*sc_rm;
 
 	uint32_t		sc_tclk;
 
@@ -305,6 +310,8 @@ void	mvpp2_rxq_short_pool_set(struct mvpp2_port *, int, int);
 void	mvpp2_mac_config(struct mvpp2_port *);
 void	mvpp2_xlg_config(struct mvpp2_port *);
 void	mvpp2_gmac_config(struct mvpp2_port *);
+void	mvpp2_comphy_config(struct mvpp2_port *);
+void	mvpp2_gop_config(struct mvpp2_port *);
 
 struct mvpp2_dmamem *
 	mvpp2_dmamem_alloc(struct mvpp2_softc *, bus_size_t, bus_size_t);
@@ -443,6 +450,14 @@ mvpp2_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc_iosize_base = faa->fa_reg[0].size;
 
+	if (!pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_ioh_base,
+	    &sc->sc_ioh_paddr)) {
+		printf(": can't extract address\n");
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh_base,
+		    sc->sc_iosize_base);
+		return;
+	}
+
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[1].addr,
 	    faa->fa_reg[1].size, 0, &sc->sc_ioh_iface)) {
 		printf(": can't map registers\n");
@@ -451,6 +466,9 @@ mvpp2_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	sc->sc_iosize_iface = faa->fa_reg[1].size;
+
+	sc->sc_rm = regmap_byphandle(OF_getpropint(faa->fa_node,
+	    "marvell,system-controller", 0));
 
 	clock_enable_all(faa->fa_node);
 	sc->sc_tclk = clock_get_frequency(faa->fa_node, "pp_clk");
@@ -1413,17 +1431,15 @@ mvpp2_port_attach(struct device *parent, struct device *self, void *aux)
 		mvpp2_xlg_write(sc, MV_XLG_PORT_MAC_CTRL0_REG,
 		    mvpp2_xlg_read(sc, MV_XLG_PORT_MAC_CTRL0_REG) &
 		    ~MV_XLG_MAC_CTRL0_MACRESETN_MASK);
-		if (sc->sc_phy_mode == PHY_MODE_10GBASER) {
-			reg = mvpp2_mpcs_read(sc, MVPP22_MPCS_CLOCK_RESET);
-			reg |= MVPP22_MPCS_CLK_DIV_PHASE_SET_MASK;
-			reg &= ~MVPP22_MPCS_TX_SD_CLK_RESET_MASK;
-			reg &= ~MVPP22_MPCS_RX_SD_CLK_RESET_MASK;
-			reg &= ~MVPP22_MPCS_MAC_CLK_RESET_MASK;
-			mvpp2_mpcs_write(sc, MVPP22_MPCS_CLOCK_RESET, reg);
-		} else if (sc->sc_phy_mode == PHY_MODE_XAUI)
-			mvpp2_xpcs_write(sc, MVPP22_XPCS_GLOBAL_CFG_0_REG,
-			    mvpp2_xpcs_read(sc, MVPP22_XPCS_GLOBAL_CFG_0_REG) &
-			    ~MVPP22_XPCS_PCSRESET);
+		reg = mvpp2_mpcs_read(sc, MVPP22_MPCS_CLOCK_RESET);
+		reg |= MVPP22_MPCS_CLK_DIV_PHASE_SET_MASK;
+		reg &= ~MVPP22_MPCS_TX_SD_CLK_RESET_MASK;
+		reg &= ~MVPP22_MPCS_RX_SD_CLK_RESET_MASK;
+		reg &= ~MVPP22_MPCS_MAC_CLK_RESET_MASK;
+		mvpp2_mpcs_write(sc, MVPP22_MPCS_CLOCK_RESET, reg);
+		reg = mvpp2_xpcs_read(sc, MVPP22_XPCS_GLOBAL_CFG_0_REG);
+		reg &= ~MVPP22_XPCS_PCSRESET;
+		mvpp2_xpcs_write(sc, MVPP22_XPCS_GLOBAL_CFG_0_REG, reg);
 	}
 
 	timeout_set(&sc->sc_tick, mvpp2_tick, sc);
@@ -2347,18 +2363,19 @@ mvpp2_mac_config(struct mvpp2_port *sc)
 		mvpp2_xlg_write(sc, MV_XLG_PORT_MAC_CTRL0_REG,
 		    mvpp2_xlg_read(sc, MV_XLG_PORT_MAC_CTRL0_REG) &
 		    ~MV_XLG_MAC_CTRL0_MACRESETN_MASK);
-		if (sc->sc_phy_mode == PHY_MODE_10GBASER) {
-			reg = mvpp2_mpcs_read(sc, MVPP22_MPCS_CLOCK_RESET);
-			reg |= MVPP22_MPCS_CLK_DIV_PHASE_SET_MASK;
-			reg &= ~MVPP22_MPCS_TX_SD_CLK_RESET_MASK;
-			reg &= ~MVPP22_MPCS_RX_SD_CLK_RESET_MASK;
-			reg &= ~MVPP22_MPCS_MAC_CLK_RESET_MASK;
-			mvpp2_mpcs_write(sc, MVPP22_MPCS_CLOCK_RESET, reg);
-		} else if (sc->sc_phy_mode == PHY_MODE_XAUI)
-			mvpp2_xpcs_write(sc, MVPP22_XPCS_GLOBAL_CFG_0_REG,
-			    mvpp2_xpcs_read(sc, MVPP22_XPCS_GLOBAL_CFG_0_REG) &
-			    ~MVPP22_XPCS_PCSRESET);
+		reg = mvpp2_mpcs_read(sc, MVPP22_MPCS_CLOCK_RESET);
+		reg |= MVPP22_MPCS_CLK_DIV_PHASE_SET_MASK;
+		reg &= ~MVPP22_MPCS_TX_SD_CLK_RESET_MASK;
+		reg &= ~MVPP22_MPCS_RX_SD_CLK_RESET_MASK;
+		reg &= ~MVPP22_MPCS_MAC_CLK_RESET_MASK;
+		mvpp2_mpcs_write(sc, MVPP22_MPCS_CLOCK_RESET, reg);
+		reg = mvpp2_xpcs_read(sc, MVPP22_XPCS_GLOBAL_CFG_0_REG);
+		reg &= ~MVPP22_XPCS_PCSRESET;
+		mvpp2_xpcs_write(sc, MVPP22_XPCS_GLOBAL_CFG_0_REG, reg);
 	}
+
+	mvpp2_comphy_config(sc);
+	mvpp2_gop_config(sc);
 
 	if (sc->sc_gop_id == 0) {
 		if (sc->sc_phy_mode == PHY_MODE_10GBASER) {
@@ -2368,10 +2385,11 @@ mvpp2_mac_config(struct mvpp2_port *sc)
 			reg |= MVPP22_MPCS_RX_SD_CLK_RESET_MASK;
 			reg |= MVPP22_MPCS_MAC_CLK_RESET_MASK;
 			mvpp2_mpcs_write(sc, MVPP22_MPCS_CLOCK_RESET, reg);
-		} else if (sc->sc_phy_mode == PHY_MODE_XAUI)
-			mvpp2_xpcs_write(sc, MVPP22_XPCS_GLOBAL_CFG_0_REG,
-			    mvpp2_xpcs_read(sc, MVPP22_XPCS_GLOBAL_CFG_0_REG) |
-			    MVPP22_XPCS_PCSRESET);
+		} else if (sc->sc_phy_mode == PHY_MODE_XAUI) {
+			reg = mvpp2_xpcs_read(sc, MVPP22_XPCS_GLOBAL_CFG_0_REG);
+			reg |= MVPP22_XPCS_PCSRESET;
+			mvpp2_xpcs_write(sc, MVPP22_XPCS_GLOBAL_CFG_0_REG, reg);
+		}
 
 		reg = mvpp2_xlg_read(sc, MV_XLG_PORT_MAC_CTRL3_REG);
 		reg &= ~MV_XLG_MAC_CTRL3_MACMODESELECT_MASK;
@@ -2514,6 +2532,147 @@ mvpp2_gmac_config(struct mvpp2_port *sc)
 	while (mvpp2_gmac_read(sc, MVPP2_PORT_CTRL2_REG) &
 	    MVPP2_PORT_CTRL2_PORTMACRESET_MASK)
 		;
+}
+
+#define COMPHY_BASE		0x120000
+#define COMPHY_SIP_POWER_ON	0x82000001
+#define COMPHY_SIP_POWER_OFF	0x82000002
+#define COMPHY_SPEED(x)		((x) << 2)
+#define  COMPHY_SPEED_1_25G		0 /* SGMII 1G */
+#define  COMPHY_SPEED_2_5G		1
+#define  COMPHY_SPEED_3_125G		2 /* SGMII 2.5G */
+#define  COMPHY_SPEED_5G		3
+#define  COMPHY_SPEED_5_15625G		4 /* XFI 5G */
+#define  COMPHY_SPEED_6G		5
+#define  COMPHY_SPEED_10_3125G		6 /* XFI 10G */
+#define COMPHY_UNIT(x)		((x) << 8)
+#define COMPHY_MODE(x)		((x) << 12)
+#define  COMPHY_MODE_SATA		1
+#define  COMPHY_MODE_SGMII		2 /* SGMII 1G */
+#define  COMPHY_MODE_HS_SGMII		3 /* SGMII 2.5G */
+#define  COMPHY_MODE_USB3H		4
+#define  COMPHY_MODE_USB3D		5
+#define  COMPHY_MODE_PCIE		6
+#define  COMPHY_MODE_RXAUI		7
+#define  COMPHY_MODE_XFI		8
+#define  COMPHY_MODE_SFI		9
+#define  COMPHY_MODE_USB3		10
+#define  COMPHY_MODE_AP			11
+
+void
+mvpp2_comphy_config(struct mvpp2_port *sc)
+{
+	int node, phys[2], lane, unit;
+	uint32_t mode;
+
+	if (OF_getpropintarray(sc->sc_node, "phys", phys, sizeof(phys)) !=
+	    sizeof(phys))
+		return;
+	node = OF_getnodebyphandle(phys[0]);
+	if (!node)
+		return;
+
+	lane = OF_getpropint(node, "reg", 0);
+	unit = phys[1];
+
+	switch (sc->sc_phy_mode) {
+	case PHY_MODE_XAUI:
+		mode = COMPHY_MODE(COMPHY_MODE_RXAUI) |
+		    COMPHY_UNIT(unit);
+		break;
+	case PHY_MODE_10GBASER:
+		mode = COMPHY_MODE(COMPHY_MODE_XFI) |
+		    COMPHY_SPEED(COMPHY_SPEED_10_3125G) |
+		    COMPHY_UNIT(unit);
+		break;
+	case PHY_MODE_2500BASEX:
+		mode = COMPHY_MODE(COMPHY_MODE_HS_SGMII) |
+		    COMPHY_SPEED(COMPHY_SPEED_3_125G) |
+		    COMPHY_UNIT(unit);
+		break;
+	case PHY_MODE_1000BASEX:
+	case PHY_MODE_SGMII:
+		mode = COMPHY_MODE(COMPHY_MODE_SGMII) |
+		    COMPHY_SPEED(COMPHY_SPEED_1_25G) |
+		    COMPHY_UNIT(unit);
+		break;
+	default:
+		return;
+	}
+
+	smc_call(COMPHY_SIP_POWER_ON, sc->sc->sc_ioh_paddr + COMPHY_BASE,
+	    lane, mode);
+}
+
+void
+mvpp2_gop_config(struct mvpp2_port *sc)
+{
+	uint32_t reg;
+
+	if (sc->sc->sc_rm == NULL)
+		return;
+
+	if (sc->sc_phy_mode == PHY_MODE_RGMII ||
+	    sc->sc_phy_mode == PHY_MODE_RGMII_ID ||
+	    sc->sc_phy_mode == PHY_MODE_RGMII_RXID ||
+	    sc->sc_phy_mode == PHY_MODE_RGMII_TXID) {
+		if (sc->sc_gop_id == 0)
+			return;
+		reg = regmap_read_4(sc->sc->sc_rm, GENCONF_PORT_CTRL0);
+		reg |= GENCONF_PORT_CTRL0_BUS_WIDTH_SELECT;
+		regmap_write_4(sc->sc->sc_rm, GENCONF_PORT_CTRL0, reg);
+		reg = regmap_read_4(sc->sc->sc_rm, GENCONF_CTRL0);
+		if (sc->sc_gop_id == 2)
+			reg |= GENCONF_CTRL0_PORT0_RGMII |
+			    GENCONF_CTRL0_PORT1_RGMII;
+		else if (sc->sc_gop_id == 3)
+			reg |= GENCONF_CTRL0_PORT1_RGMII_MII;
+		regmap_write_4(sc->sc->sc_rm, GENCONF_CTRL0, reg);
+	} else if (sc->sc_phy_mode == PHY_MODE_2500BASEX ||
+	    sc->sc_phy_mode == PHY_MODE_1000BASEX ||
+	    sc->sc_phy_mode == PHY_MODE_SGMII) {
+		reg = regmap_read_4(sc->sc->sc_rm, GENCONF_PORT_CTRL0);
+		reg |= GENCONF_PORT_CTRL0_BUS_WIDTH_SELECT |
+		    GENCONF_PORT_CTRL0_RX_DATA_SAMPLE;
+		regmap_write_4(sc->sc->sc_rm, GENCONF_PORT_CTRL0, reg);
+		if (sc->sc_gop_id > 1) {
+			reg = regmap_read_4(sc->sc->sc_rm, GENCONF_CTRL0);
+			if (sc->sc_gop_id == 2)
+				reg &= ~GENCONF_CTRL0_PORT0_RGMII;
+			else if (sc->sc_gop_id == 3)
+				reg &= ~GENCONF_CTRL0_PORT1_RGMII_MII;
+			regmap_write_4(sc->sc->sc_rm, GENCONF_CTRL0, reg);
+		}
+	} else if (sc->sc_phy_mode == PHY_MODE_10GBASER) {
+		if (sc->sc_gop_id != 0)
+			return;
+		reg = mvpp2_xpcs_read(sc, MVPP22_XPCS_GLOBAL_CFG_0_REG);
+		reg &= ~MVPP22_XPCS_PCSMODE_MASK;
+		reg &= ~MVPP22_XPCS_LANEACTIVE_MASK;
+		reg |= 2 << MVPP22_XPCS_LANEACTIVE_OFFS;
+		mvpp2_xpcs_write(sc, MVPP22_XPCS_GLOBAL_CFG_0_REG, reg);
+		reg = mvpp2_mpcs_read(sc, MVPP22_MPCS40G_COMMON_CONTROL);
+		reg &= ~MVPP22_MPCS_FORWARD_ERROR_CORRECTION_MASK;
+		mvpp2_mpcs_write(sc, MVPP22_MPCS40G_COMMON_CONTROL, reg);
+		reg = mvpp2_mpcs_read(sc, MVPP22_MPCS_CLOCK_RESET);
+		reg &= ~MVPP22_MPCS_CLK_DIVISION_RATIO_MASK;
+		reg |= MVPP22_MPCS_CLK_DIVISION_RATIO_DEFAULT;
+		mvpp2_mpcs_write(sc, MVPP22_MPCS_CLOCK_RESET, reg);
+	} else
+		return;
+
+	reg = regmap_read_4(sc->sc->sc_rm, GENCONF_PORT_CTRL1);
+	reg |= GENCONF_PORT_CTRL1_RESET(sc->sc_gop_id) |
+	    GENCONF_PORT_CTRL1_EN(sc->sc_gop_id);
+	regmap_write_4(sc->sc->sc_rm, GENCONF_PORT_CTRL1, reg);
+
+	reg = regmap_read_4(sc->sc->sc_rm, GENCONF_PORT_CTRL0);
+	reg |= GENCONF_PORT_CTRL0_CLK_DIV_PHASE_CLR;
+	regmap_write_4(sc->sc->sc_rm, GENCONF_PORT_CTRL0, reg);
+
+	reg = regmap_read_4(sc->sc->sc_rm, GENCONF_SOFT_RESET1);
+	reg |= GENCONF_SOFT_RESET1_GOP;
+	regmap_write_4(sc->sc->sc_rm, GENCONF_SOFT_RESET1, reg);
 }
 
 void
