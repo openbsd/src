@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.11 2020/07/22 19:56:42 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.12 2020/07/22 19:57:59 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -1214,11 +1214,11 @@ mvpp2_prs_ip4_init(struct mvpp2_softc *sc)
 	int ret;
 
 	ret = mvpp2_prs_ip4_proto(sc, IPPROTO_TCP, MVPP2_PRS_RI_L4_TCP,
-			MVPP2_PRS_RI_L4_PROTO_MASK);
+	    MVPP2_PRS_RI_L4_PROTO_MASK);
 	if (ret)
 		return ret;
 	ret = mvpp2_prs_ip4_proto(sc, IPPROTO_UDP, MVPP2_PRS_RI_L4_UDP,
-			MVPP2_PRS_RI_L4_PROTO_MASK);
+	    MVPP2_PRS_RI_L4_PROTO_MASK);
 	if (ret)
 		return ret;
 	ret = mvpp2_prs_ip4_proto(sc, IPPROTO_IGMP,
