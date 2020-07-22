@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.636 2020/05/31 06:23:57 dlg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.637 2020/07/22 08:33:43 fcambus Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2106,7 +2106,7 @@ identifycpu(struct cpu_info *ci)
 			    cpu_device);
 	}
 
-	if (ci->ci_flags & CPUF_PRIMARY) {
+	if (CPU_IS_PRIMARY(ci)) {
 		if (cpu_ecxfeature & CPUIDECX_RDRAND)
 			has_rdrand = 1;
 		if (ci->ci_feature_sefflags_ebx & SEFF0EBX_RDSEED)
