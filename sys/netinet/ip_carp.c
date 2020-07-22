@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.345 2020/05/21 05:24:59 dlg Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.346 2020/07/22 01:50:39 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -208,7 +208,6 @@ void	carp_hmac_generate(struct carp_vhost_entry *, u_int32_t *,
 	    unsigned char *, u_int8_t);
 int	carp_hmac_verify(struct carp_vhost_entry *, u_int32_t *,
 	    unsigned char *);
-int	carp_input(struct ifnet *, struct mbuf *, void *);
 void	carp_proto_input_c(struct ifnet *, struct mbuf *,
 	    struct carp_header *, int, sa_family_t);
 int	carp_proto_input_if(struct ifnet *, struct mbuf **, int *, int);
@@ -949,9 +948,6 @@ carpdetach(void *arg)
 
 	cif = &ifp0->if_carp;
 
-	/* Restore previous input handler. */
-	if_ih_remove(ifp0, carp_input, NULL);
-
 	SRPL_REMOVE_LOCKED(&carp_sc_rc, cif, sc, carp_softc, sc_list);
 	sc->sc_carpdev = NULL;
 
@@ -1376,22 +1372,13 @@ carp_vhe_match(struct carp_softc *sc, uint8_t *ena)
 	return (match);
 }
 
-int
-carp_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
+struct mbuf *
+carp_input(struct ifnet *ifp0, struct mbuf *m)
 {
 	struct ether_header *eh;
 	struct srpl *cif;
 	struct carp_softc *sc;
 	struct srp_ref sr;
-
-#if NVLAN > 0
-	/*
-	 * If the underlying interface removed the VLAN header itself,
-	 * it's not for us.
-	 */
-	if (ISSET(m->m_flags, M_VLANTAG))
-		return (0);
-#endif
 
 	eh = mtod(m, struct ether_header *);
 	cif = &ifp0->if_carp;
@@ -1426,7 +1413,7 @@ carp_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 		SRPL_LEAVE(&sr);
 
 		if (!ETHER_IS_MULTICAST(eh->ether_dhost))
-			return (0);
+			return (m);
 
 		/*
 		 * XXX Should really check the list of multicast addresses
@@ -1446,14 +1433,14 @@ carp_input(struct ifnet *ifp0, struct mbuf *m, void *cookie)
 		}
 		SRPL_LEAVE(&sr);
 
-		return (0);
+		return (m);
 	}
 
 	if_vinput(&sc->sc_if, m);
 out:
 	SRPL_LEAVE(&sr);
 
-	return (1);
+	return (NULL);
 }
 
 int
@@ -1731,9 +1718,6 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp0)
 	if (sc->sc_naddrs || sc->sc_naddrs6)
 		sc->sc_if.if_flags |= IFF_UP;
 	carp_set_enaddr(sc);
-
-	/* Change input handler of the physical interface. */
-	if_ih_insert(ifp0, carp_input, NULL);
 
 	carp_carpdev_state(sc);
 

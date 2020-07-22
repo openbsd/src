@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.h,v 1.48 2019/12/08 11:08:22 sashan Exp $	*/
+/*	$OpenBSD: ip_carp.h,v 1.49 2020/07/22 01:50:39 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -206,6 +206,8 @@ carp_strict_addr_chk(struct ifnet *ifp_a, struct ifnet *ifp_b)
 	    (ifp_a->if_type == IFT_CARP && ifp_b->if_type == IFT_CARP &&
 	    ifp_a->if_carpdev == ifp_b->if_carpdev));
 }
+
+struct mbuf	*carp_input(struct ifnet *, struct mbuf *);
 
 int		 carp_proto_input(struct mbuf **, int *, int, int);
 void		 carp_carpdev_state(void *);

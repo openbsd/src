@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.264 2020/07/22 01:30:54 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.265 2020/07/22 01:50:39 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -107,6 +107,11 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include "vlan.h"
 #if NVLAN > 0
 #include <net/if_vlan_var.h>
+#endif
+
+#include "carp.h"
+#if NCARP > 0
+#include <netinet/ip_carp.h>
 #endif
 
 #include "pppoe.h"
@@ -422,6 +427,19 @@ ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 
 	/* Is the packet for us? */
 	if (memcmp(ac->ac_enaddr, eh->ether_dhost, ETHER_ADDR_LEN) != 0) {
+#if NCARP > 0
+		/*
+		 * If it's not for this port, it could be for carp(4).
+		 */
+		if (ifp->if_type != IFT_CARP &&
+		    !SRPL_EMPTY_LOCKED(&ifp->if_carp)) {
+			m = carp_input(ifp, m);
+			if (m == NULL)
+				return (1);
+
+			eh = mtod(m, struct ether_header *);
+		}
+#endif
 
 		/* If not, it must be multicast or broadcast to go further */
 		if (!ETHER_IS_MULTICAST(eh->ether_dhost))
