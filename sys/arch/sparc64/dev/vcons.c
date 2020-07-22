@@ -1,4 +1,4 @@
-/*	$OpenBSD: vcons.c,v 1.17 2018/06/27 11:38:59 kettenis Exp $	*/
+/*	$OpenBSD: vcons.c,v 1.18 2020/07/22 14:02:31 deraadt Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -119,7 +119,7 @@ vcons_attach(struct device *parent, struct device *self, void *aux)
 		if (vcons_is_output) 
 			cn_tab->cn_putc = vcons_cnputc;
 
-		printf(", console");
+		printf(": console");
 	}
 
 	printf("\n");
