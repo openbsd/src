@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.34 2020/07/22 12:38:38 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.35 2020/07/22 20:39:02 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -717,6 +717,8 @@ pte_insert(struct pte_desc *pted)
 
 		if ((pte->pte_hi & PTE_WIRED) == 0)
 			break;
+
+		off++;
 	}
 	/*
 	 * Since we only wire unmanaged kernel mappings, we should
