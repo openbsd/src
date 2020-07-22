@@ -1,3 +1,4 @@
+/*	$OpenBSD: idgen.c,v 1.8 2020/07/22 13:54:30 tobhe Exp $	*/
 /*
  * Copyright (c) 2008 Damien Miller <djm@mindrot.org>
  *

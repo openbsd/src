@@ -1,3 +1,4 @@
+/*	$OpenBSD: blake2s.c,v 1.2 2020/07/22 13:54:30 tobhe Exp $	*/
 /*
  * Copyright (C) 2012 Samuel Neves <sneves@dei.uc.pt>. All Rights Reserved.
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.

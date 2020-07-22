@@ -1,3 +1,4 @@
+/*	$OpenBSD: curve25519.h,v 1.2 2020/07/22 13:54:30 tobhe Exp $	*/
 /*
  * Copyright (C) 2019-2020 Matt Dunwoodie <ncon@noconroy.net>
  *

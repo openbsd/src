@@ -1,3 +1,4 @@
+/*	$OpenBSD: aes.h,v 1.4 2020/07/22 13:54:30 tobhe Exp $	*/
 /*
  * Copyright (c) 2016 Thomas Pornin <pornin@bolet.org>
  * Copyright (c) 2016 Mike Belopuhov
