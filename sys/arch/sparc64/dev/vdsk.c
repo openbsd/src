@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.62 2020/07/21 02:04:33 krw Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.63 2020/07/22 22:06:00 krw Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -160,7 +160,6 @@ struct vdsk_softc {
 	struct vdsk_soft_desc *sc_vsd;
 
 	struct scsi_iopool sc_iopool;
-	struct scsi_link sc_link;
 
 	uint32_t	sc_vdisk_block_size;
 	uint64_t	sc_vdisk_size;
