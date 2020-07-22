@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.261 2019/11/24 07:50:55 claudio Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.262 2020/07/22 00:29:00 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -86,6 +86,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <sys/errno.h>
 #include <sys/syslog.h>
 #include <sys/timeout.h>
+#include <sys/smr.h>
 
 #include <net/if.h>
 #include <net/netisr.h>
@@ -463,6 +464,58 @@ ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 dropanyway:
 	m_freem(m);
 	return (1);
+}
+
+int
+ether_brport_isset(struct ifnet *ifp)
+{
+	struct arpcom *ac = (struct arpcom *)ifp;
+
+	KERNEL_ASSERT_LOCKED();
+	if (SMR_PTR_GET_LOCKED(&ac->ac_brport) != NULL)
+		return (EBUSY);
+
+	return (0);
+}
+
+void
+ether_brport_set(struct ifnet *ifp, const struct ether_brport *eb)
+{
+	struct arpcom *ac = (struct arpcom *)ifp;
+
+	KERNEL_ASSERT_LOCKED();
+	KASSERTMSG(SMR_PTR_GET_LOCKED(&ac->ac_brport) == NULL,
+	    "%s setting an already set brport", ifp->if_xname);
+
+	SMR_PTR_SET_LOCKED(&ac->ac_brport, eb);
+}
+
+void
+ether_brport_clr(struct ifnet *ifp)
+{
+	struct arpcom *ac = (struct arpcom *)ifp;
+
+	KERNEL_ASSERT_LOCKED();
+	KASSERTMSG(SMR_PTR_GET_LOCKED(&ac->ac_brport) != NULL,
+	    "%s clearing an already clear brport", ifp->if_xname);
+
+	SMR_PTR_SET_LOCKED(&ac->ac_brport, NULL);
+}
+
+const struct ether_brport *
+ether_brport_get(struct ifnet *ifp)
+{
+	struct arpcom *ac = (struct arpcom *)ifp;
+	SMR_ASSERT_CRITICAL();
+	return (SMR_PTR_GET(&ac->ac_brport));
+}
+
+const struct ether_brport *
+ether_brport_get_locked(struct ifnet *ifp)
+{
+	struct arpcom *ac = (struct arpcom *)ifp;
+	KERNEL_ASSERT_LOCKED();
+	return (SMR_PTR_GET_LOCKED(&ac->ac_brport));
 }
 
 /*
