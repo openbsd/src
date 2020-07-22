@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.33 2020/07/21 21:01:34 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.34 2020/07/22 12:38:38 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -703,8 +703,6 @@ pte_insert(struct pte_desc *pted)
 
 		goto out;
 	}
-
-	printf("%s: replacing!\n", __func__);
 
 	/* need decent replacement algorithm */
 	off = mftb();
