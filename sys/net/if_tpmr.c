@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tpmr.c,v 1.13 2020/07/22 02:43:06 kn Exp $ */
+/*	$OpenBSD: if_tpmr.c,v 1.14 2020/07/22 04:08:46 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -219,6 +219,23 @@ tpmr_clone_destroy(struct ifnet *ifp)
 }
 
 static int
+tpmr_vlan_filter(const struct mbuf *m)
+{
+	const struct ether_header *eh;
+
+	eh = mtod(m, struct ether_header *);
+	switch (ntohs(eh->ether_type)) {
+	case ETHERTYPE_VLAN:
+	case ETHERTYPE_QINQ:
+		return (1);
+	default:
+		break;
+	}
+
+	return (0);
+}
+
+static int
 tpmr_8021q_filter(const struct mbuf *m)
 {
 	const struct ether_header *eh;
@@ -312,6 +329,10 @@ tpmr_input(struct ifnet *ifp0, struct mbuf *m, void *brport)
 		}
 	}
 #endif
+
+	if (!ISSET(ifp->if_flags, IFF_LINK2) &&
+	    tpmr_vlan_filter(m))
+		goto drop;
 
 	if (!ISSET(ifp->if_flags, IFF_LINK0) &&
 	    tpmr_8021q_filter(m))

@@ -1,4 +1,4 @@
-.\" $OpenBSD: tpmr.4,v 1.5 2020/07/22 02:43:06 kn Exp $
+.\" $OpenBSD: tpmr.4,v 1.6 2020/07/22 04:08:46 dlg Exp $
 .\"
 .\" Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
 .\"
@@ -30,8 +30,8 @@ driver implements an 802.1Q (originally 802.1aj) Two-Port MAC Relay
 A TPMR is a simplified Ethernet bridge that provides a subset of
 the functionality as found in
 .Xr bridge 4 .
-A TPMR has exactly two members, and unconditionally relays Ethernet
-packets between the them.
+A TPMR has exactly two member ports, and unconditionally relays
+Ethernet packets between the them.
 .Pp
 .Nm
 interfaces can be created at runtime using the
@@ -70,6 +70,13 @@ Disable the filtering of IPv4 and IPv6 packets with
 .Xr pf 4 .
 .It Cm -link1
 Enable the filtering of IPv4 and IPv6 packets with
+.Xr pf 4 .
+Packets will appear to enter or leave the member port interfaces.
+This is the default.
+.It Cm link2
+Disable the filtering of 802.1Q VLAN and QinQ SVLAN packets.
+.It Cm -link2
+Enable the filtering of 802.1Q VLAN and QinQ SVLAN packets.
 .Xr pf 4 .
 Packets will appear to enter or leave the member port interfaces.
 This is the default.
