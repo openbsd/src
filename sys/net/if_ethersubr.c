@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.262 2020/07/22 00:29:00 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.263 2020/07/22 00:37:24 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -356,12 +356,33 @@ ether_input(struct ifnet *ifp, struct mbuf *m, void *cookie)
 	void (*input)(struct ifnet *, struct mbuf *);
 	u_int16_t etype;
 	struct arpcom *ac;
+	const struct ether_brport *eb;
 
 	/* Drop short frames */
 	if (m->m_len < ETHER_HDR_LEN)
 		goto dropanyway;
 
+	/*
+	 * Give the packet to a bridge interface, ie, bridge(4),
+	 * switch(4), or tpmr(4), if it is configured. A bridge
+	 * may take the packet and forward it to another port, or it
+	 * may return it here to ether_input() to support local
+	 * delivery to this port.
+	 */
+
 	ac = (struct arpcom *)ifp;
+
+	smr_read_enter();
+	eb = SMR_PTR_GET(&ac->ac_brport);
+	if (eb != NULL) {
+		m = (*eb->eb_input)(ifp, m, eb->eb_port);
+		if (m == NULL) {
+			smr_read_leave();
+			return (1);
+		}
+	}
+	smr_read_leave();
+
 	eh = mtod(m, struct ether_header *);
 
 	/* Is the packet for us? */
