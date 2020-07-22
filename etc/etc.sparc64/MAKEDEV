@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.94 2020/07/06 06:11:27 dlg Exp 
+#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.95 2020/07/22 14:04:37 deraadt Exp 
 #	OpenBSD: MAKEDEV.common,v 1.111 2020/07/06 06:11:26 dlg Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -248,6 +248,7 @@ std)
 	M openprom	c 70 0 600
 	M mdesc		c 70 1 640 kmem
 	M pri		c 70 2 640 kmem
+	M vcons0	c 125 0 600
 	;;
 
 kstat)
