@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.10 2020/07/22 19:54:05 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.11 2020/07/22 19:56:42 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -67,6 +67,7 @@
 
 #include <net/if.h>
 #include <net/if_media.h>
+#include <net/ppp_defs.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
@@ -834,7 +835,7 @@ mvpp2_prs_etype_init(struct mvpp2_softc *sc)
 	memset(&pe, 0, sizeof(pe));
 	mvpp2_prs_tcam_lu_set(&pe, MVPP2_PRS_LU_L2);
 	pe.index = tid;
-	mvpp2_prs_match_etype(&pe, 0, MV_ETH_P_PPP_SES);
+	mvpp2_prs_match_etype(&pe, 0, ETHERTYPE_PPPOE);
 	mvpp2_prs_sram_shift_set(&pe, MVPP2_PPPOE_HDR_SIZE,
 	    MVPP2_PRS_SRAM_OP_SEL_SHIFT_ADD);
 	mvpp2_prs_sram_next_lu_set(&pe, MVPP2_PRS_LU_PPPOE);
@@ -855,7 +856,7 @@ mvpp2_prs_etype_init(struct mvpp2_softc *sc)
 	memset(&pe, 0, sizeof(pe));
 	mvpp2_prs_tcam_lu_set(&pe, MVPP2_PRS_LU_L2);
 	pe.index = tid;
-	mvpp2_prs_match_etype(&pe, 0, MV_ETH_P_ARP);
+	mvpp2_prs_match_etype(&pe, 0, ETHERTYPE_ARP);
 	mvpp2_prs_sram_next_lu_set(&pe, MVPP2_PRS_LU_FLOWS);
 	mvpp2_prs_sram_bits_set(&pe, MVPP2_PRS_SRAM_LU_GEN_BIT, 1);
 	mvpp2_prs_sram_ri_update(&pe, MVPP2_PRS_RI_L3_ARP,
@@ -901,7 +902,7 @@ mvpp2_prs_etype_init(struct mvpp2_softc *sc)
 	memset(&pe, 0, sizeof(pe));
 	mvpp2_prs_tcam_lu_set(&pe, MVPP2_PRS_LU_L2);
 	pe.index = tid;
-	mvpp2_prs_match_etype(&pe, 0, MV_ETH_P_IP);
+	mvpp2_prs_match_etype(&pe, 0, ETHERTYPE_IP);
 	mvpp2_prs_tcam_data_byte_set(&pe, MVPP2_ETH_TYPE_LEN,
 	    MVPP2_PRS_IPV4_HEAD | MVPP2_PRS_IPV4_IHL,
 	    MVPP2_PRS_IPV4_HEAD_MASK | MVPP2_PRS_IPV4_IHL_MASK);
@@ -949,7 +950,7 @@ mvpp2_prs_etype_init(struct mvpp2_softc *sc)
 	memset(&pe, 0, sizeof(pe));
 	mvpp2_prs_tcam_lu_set(&pe, MVPP2_PRS_LU_L2);
 	pe.index = tid;
-	mvpp2_prs_match_etype(&pe, 0, MV_ETH_P_IPV6);
+	mvpp2_prs_match_etype(&pe, 0, ETHERTYPE_IPV6);
 	mvpp2_prs_sram_shift_set(&pe, MVPP2_ETH_TYPE_LEN + 8 +
 	    MVPP2_MAX_L3_ADDR_SIZE, MVPP2_PRS_SRAM_OP_SEL_SHIFT_ADD);
 	mvpp2_prs_sram_next_lu_set(&pe, MVPP2_PRS_LU_IP6);
@@ -994,19 +995,19 @@ mvpp2_prs_vlan_init(struct mvpp2_softc *sc)
 	sc->sc_prs_double_vlans = mallocarray(MVPP2_PRS_DBL_VLANS_MAX,
 	    sizeof(*sc->sc_prs_double_vlans), M_DEVBUF, M_WAITOK | M_ZERO);
 
-	ret = mvpp2_prs_double_vlan_add(sc, MV_ETH_P_8021Q, MV_ETH_P_8021AD,
+	ret = mvpp2_prs_double_vlan_add(sc, ETHERTYPE_VLAN, ETHERTYPE_QINQ,
 	    MVPP2_PRS_PORT_MASK);
 	if (ret)
 		return ret;
-	ret = mvpp2_prs_double_vlan_add(sc, MV_ETH_P_8021Q, MV_ETH_P_8021Q,
+	ret = mvpp2_prs_double_vlan_add(sc, ETHERTYPE_VLAN, ETHERTYPE_VLAN,
 	    MVPP2_PRS_PORT_MASK);
 	if (ret)
 		return ret;
-	ret = mvpp2_prs_vlan_add(sc, MV_ETH_P_8021AD, MVPP2_PRS_SINGLE_VLAN_AI,
+	ret = mvpp2_prs_vlan_add(sc, ETHERTYPE_QINQ, MVPP2_PRS_SINGLE_VLAN_AI,
 	    MVPP2_PRS_PORT_MASK);
 	if (ret)
 		return ret;
-	ret = mvpp2_prs_vlan_add(sc, MV_ETH_P_8021Q, MVPP2_PRS_SINGLE_VLAN_AI,
+	ret = mvpp2_prs_vlan_add(sc, ETHERTYPE_VLAN, MVPP2_PRS_SINGLE_VLAN_AI,
 	    MVPP2_PRS_PORT_MASK);
 	if (ret)
 		return ret;
@@ -1050,7 +1051,7 @@ mvpp2_prs_pppoe_init(struct mvpp2_softc *sc)
 	memset(&pe, 0, sizeof(struct mvpp2_prs_entry));
 	mvpp2_prs_tcam_lu_set(&pe, MVPP2_PRS_LU_PPPOE);
 	pe.index = tid;
-	mvpp2_prs_match_etype(&pe, 0, MV_PPP_IP);
+	mvpp2_prs_match_etype(&pe, 0, PPP_IP);
 	mvpp2_prs_sram_next_lu_set(&pe, MVPP2_PRS_LU_IP4);
 	mvpp2_prs_sram_ri_update(&pe, MVPP2_PRS_RI_L3_IP4_OPT,
 	    MVPP2_PRS_RI_L3_PROTO_MASK);
@@ -1084,7 +1085,7 @@ mvpp2_prs_pppoe_init(struct mvpp2_softc *sc)
 	memset(&pe, 0, sizeof(struct mvpp2_prs_entry));
 	mvpp2_prs_tcam_lu_set(&pe, MVPP2_PRS_LU_PPPOE);
 	pe.index = tid;
-	mvpp2_prs_match_etype(&pe, 0, MV_PPP_IPV6);
+	mvpp2_prs_match_etype(&pe, 0, PPP_IPV6);
 	mvpp2_prs_sram_next_lu_set(&pe, MVPP2_PRS_LU_IP6);
 	mvpp2_prs_sram_ri_update(&pe, MVPP2_PRS_RI_L3_IP6,
 	    MVPP2_PRS_RI_L3_PROTO_MASK);
@@ -1121,20 +1122,20 @@ mvpp2_prs_ip6_init(struct mvpp2_softc *sc)
 	struct mvpp2_prs_entry pe;
 	int tid, ret;
 
-	ret = mvpp2_prs_ip6_proto(sc, MV_IPPR_TCP, MVPP2_PRS_RI_L4_TCP,
+	ret = mvpp2_prs_ip6_proto(sc, IPPROTO_TCP, MVPP2_PRS_RI_L4_TCP,
 	    MVPP2_PRS_RI_L4_PROTO_MASK);
 	if (ret)
 		return ret;
-	ret = mvpp2_prs_ip6_proto(sc, MV_IPPR_UDP, MVPP2_PRS_RI_L4_UDP,
+	ret = mvpp2_prs_ip6_proto(sc, IPPROTO_UDP, MVPP2_PRS_RI_L4_UDP,
 	    MVPP2_PRS_RI_L4_PROTO_MASK);
 	if (ret)
 		return ret;
-	ret = mvpp2_prs_ip6_proto(sc, MV_IPPR_ICMPV6,
+	ret = mvpp2_prs_ip6_proto(sc, IPPROTO_ICMPV6,
 	    MVPP2_PRS_RI_CPU_CODE_RX_SPEC | MVPP2_PRS_RI_UDF3_RX_SPECIAL,
 	    MVPP2_PRS_RI_CPU_CODE_MASK | MVPP2_PRS_RI_UDF3_MASK);
 	if (ret)
 		return ret;
-	ret = mvpp2_prs_ip6_proto(sc, MV_IPPR_IPIP, MVPP2_PRS_RI_UDF7_IP6_LITE,
+	ret = mvpp2_prs_ip6_proto(sc, IPPROTO_IPIP, MVPP2_PRS_RI_UDF7_IP6_LITE,
 	    MVPP2_PRS_RI_UDF7_MASK);
 	if (ret)
 		return ret;
@@ -1212,15 +1213,15 @@ mvpp2_prs_ip4_init(struct mvpp2_softc *sc)
 	struct mvpp2_prs_entry pe;
 	int ret;
 
-	ret = mvpp2_prs_ip4_proto(sc, MV_IPPR_TCP, MVPP2_PRS_RI_L4_TCP,
+	ret = mvpp2_prs_ip4_proto(sc, IPPROTO_TCP, MVPP2_PRS_RI_L4_TCP,
 			MVPP2_PRS_RI_L4_PROTO_MASK);
 	if (ret)
 		return ret;
-	ret = mvpp2_prs_ip4_proto(sc, MV_IPPR_UDP, MVPP2_PRS_RI_L4_UDP,
+	ret = mvpp2_prs_ip4_proto(sc, IPPROTO_UDP, MVPP2_PRS_RI_L4_UDP,
 			MVPP2_PRS_RI_L4_PROTO_MASK);
 	if (ret)
 		return ret;
-	ret = mvpp2_prs_ip4_proto(sc, MV_IPPR_IGMP,
+	ret = mvpp2_prs_ip4_proto(sc, IPPROTO_IGMP,
 	    MVPP2_PRS_RI_CPU_CODE_RX_SPEC | MVPP2_PRS_RI_UDF3_RX_SPECIAL,
 	    MVPP2_PRS_RI_CPU_CODE_MASK | MVPP2_PRS_RI_UDF3_MASK);
 	if (ret)
@@ -3539,7 +3540,7 @@ mvpp2_prs_dsa_tag_ethertype_set(struct mvpp2_softc *sc, uint32_t port,
 		memset(&pe, 0, sizeof(pe));
 		mvpp2_prs_tcam_lu_set(&pe, MVPP2_PRS_LU_DSA);
 		pe.index = tid;
-		mvpp2_prs_match_etype(&pe, 0, MV_ETH_P_EDSA);
+		mvpp2_prs_match_etype(&pe, 0, 0xdada);
 		mvpp2_prs_match_etype(&pe, 2, 0);
 		mvpp2_prs_sram_ri_update(&pe, MVPP2_PRS_RI_DSA_MASK,
 		    MVPP2_PRS_RI_DSA_MASK);
@@ -3788,8 +3789,8 @@ mvpp2_prs_ip4_proto(struct mvpp2_softc *sc, uint16_t proto, uint32_t ri,
 	struct mvpp2_prs_entry pe;
 	int tid;
 
-	if ((proto != MV_IPPR_TCP) && (proto != MV_IPPR_UDP) &&
-	    (proto != MV_IPPR_IGMP))
+	if ((proto != IPPROTO_TCP) && (proto != IPPROTO_UDP) &&
+	    (proto != IPPROTO_IGMP))
 		return EINVAL;
 
 	tid = mvpp2_prs_tcam_first_free(sc, MVPP2_PE_FIRST_FREE_TID,
@@ -3884,8 +3885,8 @@ mvpp2_prs_ip6_proto(struct mvpp2_softc *sc, uint16_t proto, uint32_t ri,
 	struct mvpp2_prs_entry pe;
 	int tid;
 
-	if ((proto != MV_IPPR_TCP) && (proto != MV_IPPR_UDP) &&
-	    (proto != MV_IPPR_ICMPV6) && (proto != MV_IPPR_IPIP))
+	if ((proto != IPPROTO_TCP) && (proto != IPPROTO_UDP) &&
+	    (proto != IPPROTO_ICMPV6) && (proto != IPPROTO_IPIP))
 		return EINVAL;
 
 	tid = mvpp2_prs_tcam_first_free(sc, MVPP2_PE_FIRST_FREE_TID,

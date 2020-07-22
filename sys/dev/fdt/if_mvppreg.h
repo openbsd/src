@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvppreg.h,v 1.2 2020/07/22 19:53:11 patrick Exp $	*/
+/*	$OpenBSD: if_mvppreg.h,v 1.3 2020/07/22 19:56:42 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -2055,21 +2055,5 @@ enum MvPortDuplex {
   MV_PORT_DUPLEX_HALF,
   MV_PORT_DUPLEX_FULL
 };
-
-/* L2 and L3 protocol macros */
-#define MV_IPPR_TCP                         0
-#define MV_IPPR_UDP                         1
-#define MV_IPPR_IPIP                        2
-#define MV_IPPR_ICMPV6                      3
-#define MV_IPPR_IGMP                        4
-#define MV_ETH_P_IP                         5
-#define MV_ETH_P_IPV6                       6
-#define MV_ETH_P_PPP_SES                    7
-#define MV_ETH_P_ARP                        8
-#define MV_ETH_P_8021Q                      9
-#define MV_ETH_P_8021AD                     10
-#define MV_ETH_P_EDSA                       11
-#define MV_PPP_IP                           12
-#define MV_PPP_IPV6                         13
 
 #endif /* __MVPP2_LIB_HW__ */
