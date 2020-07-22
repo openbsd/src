@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.21 2020/07/22 16:49:13 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.22 2020/07/22 20:41:26 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -86,8 +86,18 @@ struct cpu_info {
 #ifdef MULTIPROCESSOR
 	struct srp_hazard ci_srp_hazards[SRP_HAZARD_NUM];
 	void		*ci_initstack_end;
-	volatile int		ci_flags;
 	void		*ci_ipi;
+	int		ci_ipi_reason;
+	volatile int	ci_flags;
+#endif
+
+#ifdef DDB
+	volatile int    ci_ddb_paused;
+#define	CI_DDB_RUNNING	0
+#define	CI_DDB_SHOULDSTOP	1
+#define	CI_DDB_STOPPED		2
+#define	CI_DDB_ENTERDDB		3
+#define	CI_DDB_INDDB		4
 #endif
 };
 

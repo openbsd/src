@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.4 2020/07/22 16:49:13 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.5 2020/07/22 20:41:26 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -376,9 +376,16 @@ fdt_intr_establish_imap_cpu(int node, int *reg, int nreg, int level,
 #ifdef MULTIPROCESSOR
 
 void
-intr_send_ipi(struct cpu_info *ci)
+intr_send_ipi(struct cpu_info *ci, int reason)
 {
 	struct fdt_intr_handle *ih = ci->ci_ipi;
+
+	if (ci == curcpu() && reason == IPI_NOP)
+		return;
+
+	/* Never overwrite IPI_DDB with IPI_NOP. */
+	if (reason == IPI_DDB)
+		ci->ci_ipi_reason = reason;
 
 	if (ih && ih->ih_ic)
 		ih->ih_ic->ic_send_ipi(ih->ih_ih);

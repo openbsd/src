@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.4 2020/06/12 22:01:01 gkoehler Exp $*/
+/*	$OpenBSD: db_machdep.h,v 1.5 2020/07/22 20:41:26 kettenis Exp $*/
 /*	$NetBSD: db_machdep.h,v 1.13 1996/04/29 20:50:08 leo Exp $	*/
 
 /*
@@ -74,5 +74,14 @@ extern db_regs_t ddb_regs;		/* register state */
 
 struct trapframe;
 void db_ktrap(int, db_regs_t *);
+
+#define DDB_STATE_NOT_RUNNING	0  
+#define DDB_STATE_RUNNING	1
+#define DDB_STATE_EXITING	2
+
+/*
+ * We define some of our own commands
+ */
+#define DB_MACHINE_COMMANDS
 
 #endif /* _MACHINE_DB_MACHDEP_H_ */
