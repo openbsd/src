@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvppreg.h,v 1.1 2020/06/25 12:09:11 patrick Exp $	*/
+/*	$OpenBSD: if_mvppreg.h,v 1.2 2020/07/22 19:53:11 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -52,9 +52,7 @@
 #ifndef __MVPP2_LIB_HW__
 #define __MVPP2_LIB_HW__
 
-#ifndef BIT
-#define BIT(nr)         (1 << (nr))
-#endif
+#define BIT(nr)		(1U << (nr))
 
 /* PP2v2 registers offsets */
 #define MVPP22_SMI_OFFSET                                  0x1200

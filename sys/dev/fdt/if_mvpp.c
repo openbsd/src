@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.8 2020/07/10 13:26:37 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.9 2020/07/22 19:53:11 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -3173,10 +3173,10 @@ mvpp2_prs_sram_ri_update(struct mvpp2_prs_entry *pe, uint32_t bits, uint32_t mas
 	int i;
 
 	for (i = 0; i < MVPP2_PRS_SRAM_RI_CTRL_BITS; i++) {
-		if (!(mask & (1 << i)))
+		if (!(mask & BIT(i)))
 			continue;
 
-		if (bits & (1 << i))
+		if (bits & BIT(i))
 			mvpp2_prs_sram_bits_set(pe, ri_off + i, 1);
 		else
 			mvpp2_prs_sram_bits_clear(pe, ri_off + i, 1);
@@ -3198,10 +3198,10 @@ mvpp2_prs_sram_ai_update(struct mvpp2_prs_entry *pe, uint32_t bits, uint32_t mas
 	int i;
 
 	for (i = 0; i < MVPP2_PRS_SRAM_AI_CTRL_BITS; i++) {
-		if (!(mask & (1 << i)))
+		if (!(mask & BIT(i)))
 			continue;
 
-		if (bits & (1 << i))
+		if (bits & BIT(i))
 			mvpp2_prs_sram_bits_set(pe, ai_off + i, 1);
 		else
 			mvpp2_prs_sram_bits_clear(pe, ai_off + i, 1);
