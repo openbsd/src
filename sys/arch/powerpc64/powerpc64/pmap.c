@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.35 2020/07/22 20:39:02 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.36 2020/07/23 15:09:09 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -320,6 +320,8 @@ pmap_slbd_lookup(pmap_t pm, vaddr_t va)
 	uint64_t esid = va >> ADDR_ESID_SHIFT;
 	struct slb_desc *slbd;
 
+	PMAP_VP_ASSERT_LOCKED(pm);
+
 	LIST_FOREACH(slbd, &pm->pm_slbd, slbd_list) {
 		if (slbd->slbd_esid == esid)
 			return slbd;
@@ -333,6 +335,8 @@ pmap_slbd_cache(pmap_t pm, struct slb_desc *slbd)
 {
 	uint64_t slbe, slbv;
 	int idx;
+
+	PMAP_VP_ASSERT_LOCKED(pm);
 
 	for (idx = 0; idx < nitems(pm->pm_slb); idx++) {
 		if (pm->pm_slb[idx].slb_slbe == 0)
@@ -348,6 +352,23 @@ pmap_slbd_cache(pmap_t pm, struct slb_desc *slbd)
 	pm->pm_slb[idx].slb_slbv = slbv;
 }
 
+int
+pmap_slbd_fault(pmap_t pm, vaddr_t va)
+{
+	struct slb_desc *slbd;
+
+	PMAP_VP_LOCK(pm);
+	slbd = pmap_slbd_lookup(pm, va);
+	if (slbd) {
+		pmap_slbd_cache(pm, slbd);
+		PMAP_VP_UNLOCK(pm);
+		return 0;
+	}
+	PMAP_VP_UNLOCK(pm);
+
+	return EFAULT;
+}
+
 u_int pmap_vsid;
 
 struct slb_desc *
@@ -357,6 +378,7 @@ pmap_slbd_alloc(pmap_t pm, vaddr_t va)
 	struct slb_desc *slbd;
 
 	KASSERT(pm != pmap_kernel());
+	PMAP_VP_ASSERT_LOCKED(pm);
 
 	slbd = pool_get(&pmap_slbd_pool, PR_NOWAIT | PR_ZERO);
 	if (slbd == NULL)
@@ -379,15 +401,21 @@ pmap_set_user_slb(pmap_t pm, vaddr_t va, vaddr_t *kva, vsize_t *len)
 	struct cpu_info *ci = curcpu();
 	struct slb_desc *slbd;
 	uint64_t slbe, slbv;
+	uint64_t vsid;
 
 	KASSERT(pm != pmap_kernel());
 
+	PMAP_VP_LOCK(pm);
 	slbd = pmap_slbd_lookup(pm, va);
 	if (slbd == NULL) {
 		slbd = pmap_slbd_alloc(pm, va);
-		if (slbd == NULL)
+		if (slbd == NULL) {
+			PMAP_VP_UNLOCK(pm);
 			return EFAULT;
+		}
 	}
+	vsid = slbd->slbd_vsid;
+	PMAP_VP_UNLOCK(pm);
 
 	/*
 	 * We might get here while another process is sleeping while
@@ -401,7 +429,7 @@ pmap_set_user_slb(pmap_t pm, vaddr_t va, vaddr_t *kva, vsize_t *len)
 	}
 
 	slbe = (USER_ESID << SLBE_ESID_SHIFT) | SLBE_VALID | 31;
-	slbv = slbd->slbd_vsid << SLBV_VSID_SHIFT;
+	slbv = vsid << SLBV_VSID_SHIFT;
 
 	ci->ci_kernel_slb[31].slb_slbe = slbe;
 	ci->ci_kernel_slb[31].slb_slbv = slbv;
@@ -1313,7 +1341,9 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pa)
 		return 1;
 	}
 
+	PMAP_VP_LOCK(pm);
 	vsid = pmap_va2vsid(pm, va);
+	PMAP_VP_UNLOCK(pm);
 	if (vsid == 0)
 		return 0;
 
