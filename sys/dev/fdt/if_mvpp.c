@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.15 2020/07/22 21:14:05 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.16 2020/07/23 10:10:15 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -1256,7 +1256,7 @@ mvpp2_prs_ip4_init(struct mvpp2_softc *sc)
 	pe.index = MVPP2_PE_IP4_PROTO_UN;
 	mvpp2_prs_sram_next_lu_set(&pe, MVPP2_PRS_LU_IP4);
 	mvpp2_prs_sram_shift_set(&pe, 12, MVPP2_PRS_SRAM_OP_SEL_SHIFT_ADD);
-	mvpp2_prs_sram_offset_set( &pe, MVPP2_PRS_SRAM_UDF_TYPE_L4,
+	mvpp2_prs_sram_offset_set(&pe, MVPP2_PRS_SRAM_UDF_TYPE_L4,
 	    sizeof(struct ip) - 4, MVPP2_PRS_SRAM_OP_SEL_UDF_ADD);
 	mvpp2_prs_sram_ai_update(&pe, MVPP2_PRS_IPV4_DIP_AI_BIT,
 	    MVPP2_PRS_IPV4_DIP_AI_BIT);
@@ -3944,7 +3944,7 @@ mvpp2_prs_ip4_proto(struct mvpp2_softc *sc, uint16_t proto, uint32_t ri,
 	pe.index = tid;
 	mvpp2_prs_sram_next_lu_set(&pe, MVPP2_PRS_LU_IP4);
 	mvpp2_prs_sram_shift_set(&pe, 12, MVPP2_PRS_SRAM_OP_SEL_SHIFT_ADD);
-	mvpp2_prs_sram_offset_set( &pe, MVPP2_PRS_SRAM_UDF_TYPE_L4,
+	mvpp2_prs_sram_offset_set(&pe, MVPP2_PRS_SRAM_UDF_TYPE_L4,
 	    sizeof(struct ip) - 4, MVPP2_PRS_SRAM_OP_SEL_UDF_ADD);
 	mvpp2_prs_sram_ai_update(&pe, MVPP2_PRS_IPV4_DIP_AI_BIT,
 	    MVPP2_PRS_IPV4_DIP_AI_BIT);
@@ -4041,7 +4041,7 @@ mvpp2_prs_ip6_proto(struct mvpp2_softc *sc, uint16_t proto, uint32_t ri,
 	mvpp2_prs_sram_next_lu_set(&pe, MVPP2_PRS_LU_FLOWS);
 	mvpp2_prs_sram_bits_set(&pe, MVPP2_PRS_SRAM_LU_GEN_BIT, 1);
 	mvpp2_prs_sram_ri_update(&pe, ri, ri_mask);
-	mvpp2_prs_sram_offset_set( &pe, MVPP2_PRS_SRAM_UDF_TYPE_L4,
+	mvpp2_prs_sram_offset_set(&pe, MVPP2_PRS_SRAM_UDF_TYPE_L4,
 	    sizeof(struct ip6_hdr) - 6, MVPP2_PRS_SRAM_OP_SEL_UDF_ADD);
 	mvpp2_prs_tcam_data_byte_set(&pe, 0, proto, MVPP2_PRS_TCAM_PROTO_MASK);
 	mvpp2_prs_tcam_ai_update(&pe, MVPP2_PRS_IPV6_NO_EXT_AI_BIT,
