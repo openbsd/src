@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.33 2020/07/23 15:09:09 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.34 2020/07/23 16:01:08 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -32,6 +32,7 @@
 
 #ifdef DDB
 #include <machine/db_machdep.h>
+#include <ddb/db_output.h>
 #endif
 
 void	decr_intr(struct trapframe *); /* clock.c */
@@ -294,6 +295,11 @@ trap(struct trapframe *frame)
 
 	default:
 	fatal:
+#ifdef DDB
+		db_printf("trap type %x srr1 %lx at %lx lr %lx\n",
+		    type, frame->srr1, frame->srr0, frame->lr);
+		db_ktrap(0, frame);
+#endif
 		panic("trap type %x srr1 %lx at %lx lr %lx",
 		    type, frame->srr1, frame->srr0, frame->lr);
 	}
