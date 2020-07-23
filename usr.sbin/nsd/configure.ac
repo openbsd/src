@@ -5,7 +5,7 @@ dnl
 sinclude(acx_nlnetlabs.m4)
 sinclude(dnstap/dnstap.m4)
 
-AC_INIT(NSD,4.3.1,nsd-bugs@nlnetlabs.nl)
+AC_INIT(NSD,4.3.2,nsd-bugs@nlnetlabs.nl)
 AC_CONFIG_HEADER([config.h])
 
 #
@@ -18,6 +18,9 @@ AC_ARG_VAR(GREP, [location of the grep program])
 AC_ARG_VAR(EGREP, [location of the egrep program])
 AC_ARG_VAR(LEX, [location of the lex program with GNU extensions (flex)])
 AC_ARG_VAR(YACC, [location of the yacc program with GNU extensions (bison)])
+
+cmdln="`echo $@ | sed -e 's/\\\\/\\\\\\\\/g' | sed -e 's/"/\\\\"/'g`"
+AC_DEFINE_UNQUOTED(CONFCMDLINE, ["$cmdln"], [Command line arguments used with configure])
 
 CFLAGS="$CFLAGS"
 AC_AIX

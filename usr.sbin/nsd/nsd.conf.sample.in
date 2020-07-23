@@ -118,6 +118,9 @@ server:
 	# facility LOG_DAEMON).  stderr disappears when daemon goes to bg.
 	# logfile: "@logfile@"
 
+	# log only to syslog.
+	# log-only-syslog: no
+
 	# File to store pid for nsd in.
 	# pidfile: "@pidfile@"
 
@@ -354,6 +357,10 @@ remote-control:
 	#min-refresh-time: 0
 	#max-retry-time: 1209600
 	#min-retry-time: 0
+	# Lower bound of expire interval in seconds.  The value can be "refresh+retry+1"
+	# in which case the lower bound of expire interval is the sum of the refresh and
+	# retry values (limited to the bounds given with the above parameters), plus 1.
+	#min-expire-time: 0
 
 	# Slave server tries zone transfer to all masters and picks highest
 	# zone version available, for when masters have different versions.

@@ -396,6 +396,31 @@ nsec3_chain_find_prev(struct zone* zone, struct domain* domain)
 	return NULL;
 }
 
+
+/** clear hash tree. Called from nsec3_clear_precompile() only. */
+static void
+hash_tree_clear(rbtree_type* tree)
+{
+	if(!tree) return;
+
+	/* Previously (before commit 4ca61188b3f7a0e077476875810d18a5d439871f
+	 * and/or svn commit 4776) prehashes and corresponding rbtree nodes
+	 * were part of struct nsec3_domain_data. Clearing the hash_tree would
+	 * then mean setting the key value of the nodes to NULL to indicate
+	 * absence of the prehash.
+	 * But since prehash structs are separatly allocated, this is no longer
+	 * necessary as currently the prehash structs are simply recycled and 
+	 * NULLed.
+	 *
+	 * rbnode_type* n;
+	 * for(n=rbtree_first(tree); n!=RBTREE_NULL; n=rbtree_next(n)) {
+	 *	n->key = NULL;
+	 * }
+	 */
+	tree->count = 0;
+	tree->root = RBTREE_NULL;
+}
+
 void
 nsec3_clear_precompile(struct namedb* db, zone_type* zone)
 {

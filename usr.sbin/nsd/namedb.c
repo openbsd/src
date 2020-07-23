@@ -289,21 +289,6 @@ domain_table_deldomain(namedb_type* db, domain_type* domain)
 	}
 }
 
-/** clear hash tree */
-void
-hash_tree_clear(rbtree_type* tree)
-{
-	rbnode_type* n;
-	if(!tree) return;
-
-	/* note that elements are no longer in the tree */
-	for(n=rbtree_first(tree); n!=RBTREE_NULL; n=rbtree_next(n)) {
-		n->key = NULL;
-	}
-	tree->count = 0;
-	tree->root = RBTREE_NULL;
-}
-
 void hash_tree_delete(region_type* region, rbtree_type* tree)
 {
 	region_recycle(region, tree, sizeof(rbtree_type));
@@ -316,7 +301,9 @@ void zone_add_domain_in_hash_tree(region_type* region, rbtree_type** tree,
 {
 	if(!*tree)
 		*tree = rbtree_create(region, cmpf);
-	if(node->key) return;
+	if(node->key && node->key == domain
+	&& rbtree_search(*tree, domain) == node)
+		return;
 	memset(node, 0, sizeof(rbnode_type));
 	node->key = domain;
 	rbtree_insert(*tree, node);

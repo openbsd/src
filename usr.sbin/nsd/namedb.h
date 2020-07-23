@@ -231,7 +231,6 @@ void zone_add_domain_in_hash_tree(region_type* region, rbtree_type** tree,
 	int (*cmpf)(const void*, const void*), domain_type* domain,
 	rbnode_type* node);
 void zone_del_domain_in_hash_tree(rbtree_type* tree, rbnode_type* node);
-void hash_tree_clear(rbtree_type* tree);
 void hash_tree_delete(region_type* region, rbtree_type* tree);
 void prehash_clear(domain_table_type* table);
 void prehash_add(domain_table_type* table, domain_type* domain);

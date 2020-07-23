@@ -317,6 +317,7 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 		ZONE_GET_INT(min_refresh_time, o, zone->pattern);
 		ZONE_GET_INT(max_retry_time, o, zone->pattern);
 		ZONE_GET_INT(min_retry_time, o, zone->pattern);
+		ZONE_GET_INT(min_expire_time, o, zone->pattern);
 		ZONE_GET_INT(size_limit_xfr, o, zone->pattern);
 #ifdef RATELIMIT
 		ZONE_GET_RRL(rrl_whitelist, o, zone->pattern);
@@ -348,6 +349,7 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 		ZONE_GET_INT(min_refresh_time, o, p);
 		ZONE_GET_INT(max_retry_time, o, p);
 		ZONE_GET_INT(min_retry_time, o, p);
+		ZONE_GET_INT(min_expire_time, o, p);
 		ZONE_GET_INT(size_limit_xfr, o, p);
 #ifdef RATELIMIT
 		ZONE_GET_RRL(rrl_whitelist, o, p);
@@ -375,6 +377,7 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 		SERV_GET_BIN(confine_to_zone, o);
 		SERV_GET_BIN(refuse_any, o);
 		SERV_GET_BIN(tcp_reject_overflow, o);
+		SERV_GET_BIN(log_only_syslog, o);
 		/* str */
 		SERV_GET_PATH(final, database, o);
 		SERV_GET_STR(identity, o);
@@ -482,6 +485,10 @@ static void print_zone_content_elems(pattern_options_type* pat)
 		printf("\tmax-retry-time: %d\n", pat->max_retry_time);
 	if(!pat->min_retry_time_is_default)
 		printf("\tmin-retry-time: %d\n", pat->min_retry_time);
+	if(pat->min_expire_time_expr == REFRESHPLUSRETRYPLUS1)
+		printf("\tmin-expire-time: " REFRESHPLUSRETRYPLUS1_STR "\n");
+	else if(pat->min_expire_time_expr == EXPIRE_TIME_HAS_VALUE)
+		printf("\tmin-expire-time: %d\n", pat->min_expire_time);
 	if(pat->size_limit_xfr != 0)
 		printf("\tsize-limit-xfr: %llu\n",
 			(long long unsigned)pat->size_limit_xfr);
@@ -515,6 +522,7 @@ config_test_print_server(nsd_options_type* opt)
 	print_string_var("version:", opt->version);
 	print_string_var("nsid:", opt->nsid);
 	print_string_var("logfile:", opt->logfile);
+	printf("\tlog-only-syslog: %s\n", opt->log_only_syslog?"yes":"no");
 	printf("\tserver-count: %d\n", opt->server_count);
 	if(opt->cpu_affinity) {
 		cpu_option_type *n;

@@ -1,4 +1,4 @@
-.TH "nsd.conf" "5" "Apr 16, 2020" "NLnet Labs" "nsd 4.3.1"
+.TH "nsd.conf" "5" "Jul 14, 2020" "NLnet Labs" "nsd 4.3.2"
 .\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -138,7 +138,7 @@ clause. There may only be one
 .B server: 
 clause.
 .TP
-.B ip\-address:\fR <ip4 or ip6>[@port] [servers]
+.B ip\-address:\fR <ip4 or ip6>[@port] [servers] [bindtodevice] [setfib]
 NSD will bind to the listed ip\-address. Can be given multiple times 
 to bind multiple ip\-addresses. Optionally, a port number can be given.
 If none are given NSD listens to the wildcard interface. Same as commandline option
@@ -156,7 +156,7 @@ send to the internet, and it picks the wrong one.  Typically needed for
 anycast instances.  Use ip-transparent to be able to list addresses that
 turn on later (typical for certain load-balancing).
 .TP
-.B interface:\fR <ip4 or ip6>[@port] [servers] [setfib]
+.B interface:\fR <ip4 or ip6>[@port] [servers] [bindtodevice] [setfib]
 Same as ip\-address (for easy of compatibility with unbound.conf).
 .TP
 .B ip\-transparent:\fR <yes or no>
@@ -175,11 +175,6 @@ stack.  Only really useful if you also configure a server\-count higher
 than 1 (such as, equal to the number of cpus).  The default is no. 
 It works on Linux, but does not work on FreeBSD, and likely does not
 work on other systems.
-.TP
-.B bindtodevice:\fR <yes or no>
-Use the SO_BINDTODEVICE socket option to bind the socket to the device to
-ensure responses go out the same interface the corresponding query came in on
-and skip interface selection by the kernel.
 .TP
 .B send\-buffer\-size:\fR <number>
 Set the send buffer size for query-servicing sockets.  Set to 0 to use the default settings.
@@ -241,6 +236,12 @@ Log messages to the logfile. The default is to log to stderr and
 syslog (with facility LOG_DAEMON). Same as commandline option 
 .BR \-l .
 .TP
+.B log\-only\-syslog:\fR <yes or no>
+Log messages only to syslog.  Useful with systemd so that print to stderr
+does not cause duplicate log strings in journald.  Before syslog has
+been opened, the server uses stderr.  Stderr is also used if syslog is
+not available.  Default is no.
+.TP
 .B server\-count:\fR <number>
 Start this many NSD servers. Default is 1. Same as commandline 
 option 
@@ -277,6 +278,7 @@ Default is 0, meaning there is no maximum.
 .TP
 .B tcp\-timeout:\fR <number>
 Overrides the default TCP timeout. This also affects zone transfers over TCP.
+The default is 120 seconds.
 .TP
 .B tcp-mss:\fR <number>
 Maximum segment size (MSS) of TCP socket on which the server responds
@@ -393,7 +395,7 @@ Prevent NSD from replying with the identity string on CHAOS class
 queries.  Default is no.
 .TP
 .B drop\-updates:\fR <yes or no>
-If set to yes, drop received packets with the UPDATE opcode.
+If set to yes, drop received packets with the UPDATE opcode.  Default is no.
 .TP
 .B use\-systemd:\fR <yes or no>
 This option is deprecated and ignored.  If compiled with libsystemd,
@@ -736,12 +738,20 @@ SOA record is used, but this option restricts that value.
 Limit refresh time for secondary zones.
 .TP
 .B max\-retry\-time:\fR <seconds>
-Limit retry time for secondary zones.  This is the timeout after a failed
-fetch attempt for the zone.  Normally the value from the SOA record is used,
-but this option restricts that value.
+Limit retry time for secondary zones.  This is the timer which retries after
+a failed fetch attempt for the zone.  Normally the value from the SOA record is
+used, followed by an exponential backoff, but this option restricts that value.
 .TP
 .B min\-retry\-time:\fR <seconds>
 Limit retry time for secondary zones.
+.TP
+.B min\-expire\-time:\fR <seconds or refresh+retry+1>
+Limit expire time for secondary zones.  The value can be expressed either by a
+number of seconds, or the string "refresh+retry+1".  With the latter the expire
+time will be lower bound to the refresh plus the retry value from the SOA
+record, plus 1.  The refresh and retry values will be subject to the bounds
+configured with max\-refresh\-time, min\-refresh\-time, max\-retry\-time and
+min\-retry\-time if given.
 .TP
 .B zonestats:\fR <name>
 When compiled with \-\-enable\-zone\-stats NSD can collect statistics per zone.

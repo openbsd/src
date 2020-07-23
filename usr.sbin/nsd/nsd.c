@@ -113,6 +113,31 @@ version(void)
 {
 	fprintf(stderr, "%s version %s\n", PACKAGE_NAME, PACKAGE_VERSION);
 	fprintf(stderr, "Written by NLnet Labs.\n\n");
+	fprintf(stderr, "Configure line: %s\n", CONFCMDLINE);
+#ifdef USE_MINI_EVENT
+	fprintf(stderr, "Event loop: internal (uses select)\n");
+#else
+#  if defined(HAVE_EV_LOOP) || defined(HAVE_EV_DEFAULT_LOOP)
+	fprintf(stderr, "Event loop: %s %s (uses %s)\n",
+		"libev",
+		nsd_event_vs(),
+		nsd_event_method());
+#  else
+	fprintf(stderr, "Event loop: %s %s (uses %s)\n",
+		"libevent",
+		nsd_event_vs(),
+		nsd_event_method());
+#  endif
+#endif
+#ifdef HAVE_SSL
+	fprintf(stderr, "Linked with %s\n\n",
+#  ifdef SSLEAY_VERSION
+		SSLeay_version(SSLEAY_VERSION)
+#  else
+		OpenSSL_version(OPENSSL_VERSION)
+#  endif
+		);
+#endif
 	fprintf(stderr,
 		"Copyright (C) 2001-2006 NLnet Labs.  This is free software.\n"
 		"There is NO warranty; not even for MERCHANTABILITY or FITNESS\n"
@@ -357,7 +382,7 @@ find_device(
 			len  = strlen(ifa->ifa_name);
 		}
 		if (len < sizeof(sock->device)) {
-			strlcpy(sock->device, ifa->ifa_name, len);
+			strlcpy(sock->device, ifa->ifa_name, len+1);
 			return 1;
 		}
 	}
@@ -522,12 +547,12 @@ print_sockets(
 		addrport2str(&udp[i].addr.ai_addr, sockbuf, sizeof(sockbuf));
 		print_socket_servers(&udp[i], serverbuf, serverbufsz);
 		nsd_bitset_or(servers, servers, udp[i].servers);
-		log_msg(LOG_NOTICE, fmt, sockbuf, "udp", serverbuf);
+		VERBOSITY(3, (LOG_NOTICE, fmt, sockbuf, "udp", serverbuf));
 		assert(tcp[i].servers->size == servercnt);
 		addrport2str(&tcp[i].addr.ai_addr, sockbuf, sizeof(sockbuf));
 		print_socket_servers(&tcp[i], serverbuf, serverbufsz);
 		nsd_bitset_or(servers, servers, tcp[i].servers);
-		log_msg(LOG_NOTICE, fmt, sockbuf, "tcp", serverbuf);
+		VERBOSITY(3, (LOG_NOTICE, fmt, sockbuf, "tcp", serverbuf));
 	}
 
 
@@ -641,9 +666,14 @@ unlinkpid(const char* file)
 			close(fd);
 
 		/* unlink pidfile */
-		if (unlink(file) == -1)
-			log_msg(LOG_WARNING, "failed to unlink pidfile %s: %s",
-				file, strerror(errno));
+		if (unlink(file) == -1) {
+			/* this unlink may not work if the pidfile is located
+			 * outside of the chroot/workdir or we no longer
+			 * have permissions */
+			VERBOSITY(3, (LOG_WARNING,
+				"failed to unlink pidfile %s: %s",
+				file, strerror(errno)));
+		}
 	}
 }
 
@@ -1287,7 +1317,9 @@ main(int argc, char *argv[])
 
 	/* Set up the logging */
 	log_open(LOG_PID, FACILITY, nsd.log_filename);
-	if (!nsd.log_filename)
+	if(nsd.options->log_only_syslog)
+		log_set_log_function(log_only_syslog);
+	else if (!nsd.log_filename)
 		log_set_log_function(log_syslog);
 	else if (nsd.uid && nsd.gid) {
 		if(chown(nsd.log_filename, nsd.uid, nsd.gid) != 0)

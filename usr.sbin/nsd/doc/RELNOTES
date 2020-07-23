@@ -1,5 +1,45 @@
 NSD RELEASE NOTES
 
+4.3.2
+================
+FEATURES:
+	- Fix #96: log-only-syslog: yes sets to only use syslog, fixes
+	  that the default configuration and systemd results in duplicate
+	  log messages.
+	- Fix #107: nsd -v shows configure line, openssl version and libevent version.
+	- Fix #103 with #110: min-expire-time option.  To provide a lower
+	  bound for expire period.  Expressed in number of seconds or
+	  refresh+retry+1.
+BUG FIXES:
+	- Fix for posix shell syntax for trap in nsd-control-setup
+	- Fix to omit the listen-on lines from log at startup, unless verbose.
+	- Fix uninitialised values for bindtodevice option at startup with
+	  reuseport and multiple interfaces.
+	- Fix #95: Removed make test check because tpkg not included in
+	  release tarballs.
+	- Fix unused parameter compile warnings.
+	- Fix #97: EDNS unknown version: query not in response.
+	- Fix #99: Fix copying of socket properties with reuseport enabled.
+	- Document default value for tcp-timeout.
+	- Merge PR#102 from and0x000: add missing default in documentation
+	  for drop-updates.
+	- Fix unlink of pidfile warning if not possible due to permissions,
+	  nsd can display the message at high verbosity levels.
+	- Removed contrib/nsd.service, example is too complicated and not
+	  useful.
+	- Do not log EAGAIN errors for sendmmsg, to stop log spam on OpenBSD.
+	- Merge #108 from Nomis: Make the max-retry-time description clearer.
+	- Retry when udp send buffer is full to wait until buffer space is
+	  available.
+	- Remove errno reset behaviour from sendmmsg and recvmmsg
+	  replacement functions.
+	- Fix unit test for different nsd-control-setup -h exit code.
+	- Merge #112 from jaredmauch: log old and new serials when NSD
+	  rejects an IXFR due to an old serial number.
+	- Fix #106: Adhere better to xfrd bounds.  Refresh and retry times.
+	- Fix #105: Clearing hash_tree means just emptying the tree.
+
+
 4.3.1
 ================
 BUG FIXES:

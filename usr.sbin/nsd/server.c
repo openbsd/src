@@ -1304,10 +1304,16 @@ server_init(struct nsd *nsd)
 		nsd->tcp = xrealloc(nsd->tcp, ifs * sizeof(*nsd->tcp));
 		region_add_cleanup(nsd->region, free, nsd->udp);
 		region_add_cleanup(nsd->region, free, nsd->tcp);
+		if(ifs > nsd->ifs) {
+			memset(&nsd->udp[nsd->ifs], 0,
+				(ifs-nsd->ifs)*sizeof(*nsd->udp));
+			memset(&nsd->tcp[nsd->ifs], 0,
+				(ifs-nsd->ifs)*sizeof(*nsd->tcp));
+		}
 
 		for(i = nsd->ifs; i < ifs; i++) {
-			nsd->udp[i].addr = nsd->udp[i%nsd->ifs].addr;
-			nsd->udp[i].servers = nsd->udp[i%nsd->ifs].servers;
+			nsd->udp[i] = nsd->udp[i%nsd->ifs];
+			nsd->udp[i].s = -1;
 			if(open_udp_socket(nsd, &nsd->udp[i], &reuseport) == -1) {
 				return -1;
 			}
@@ -2713,6 +2719,51 @@ server_process_query_udp(struct nsd *nsd, struct query *query)
 #endif
 }
 
+const char*
+nsd_event_vs(void)
+{
+#ifdef USE_MINI_EVENT
+	return "";
+#else
+	return event_get_version();
+#endif
+}
+
+#if !defined(USE_MINI_EVENT) && defined(EV_FEATURE_BACKENDS)
+static const char* ub_ev_backend2str(int b)
+{
+	switch(b) {
+	case EVBACKEND_SELECT:	return "select";
+	case EVBACKEND_POLL:	return "poll";
+	case EVBACKEND_EPOLL:	return "epoll";
+	case EVBACKEND_KQUEUE:	return "kqueue";
+	case EVBACKEND_DEVPOLL: return "devpoll";
+	case EVBACKEND_PORT:	return "evport";
+	}
+	return "unknown";
+}
+#endif
+
+const char*
+nsd_event_method(void)
+{
+#ifdef USE_MINI_EVENT
+	return "select";
+#else
+	struct event_base* b = nsd_child_event_base();
+	const char* m = "?";
+#  ifdef EV_FEATURE_BACKENDS
+	m = ub_ev_backend2str(ev_backend((struct ev_loop*)b));
+#  elif defined(HAVE_EVENT_BASE_GET_METHOD)
+	m = event_base_get_method(b);
+#  endif
+#  ifdef MEMCLEAN
+	event_base_free(b);
+#  endif
+	return m;
+#endif
+}
+
 struct event_base*
 nsd_child_event_base(void)
 {
@@ -3003,7 +3054,7 @@ server_child(struct nsd *nsd)
 static void remaining_tcp_timeout(int ATTR_UNUSED(fd), short event, void* arg)
 {
 	int* timed_out = (int*)arg;
-        assert(event & EV_TIMEOUT);
+        assert(event & EV_TIMEOUT); (void)event;
 	/* wake up the service tcp thread, note event is no longer
 	 * registered */
 	*timed_out = 1;
@@ -3120,15 +3171,12 @@ static int
 nsd_recvmmsg(int sockfd, struct mmsghdr *msgvec, unsigned int vlen,
              int flags, struct timespec *timeout)
 {
-	int orig_errno;
 	unsigned int vpos = 0;
 	ssize_t rcvd;
 
 	/* timeout is ignored, ensure caller does not expect it to work */
-	assert(timeout == NULL);
+	assert(timeout == NULL); (void)timeout;
 
-	orig_errno = errno;
-	errno = 0;
 	while(vpos < vlen) {
 		rcvd = recvfrom(sockfd,
 		                msgvec[vpos].msg_hdr.msg_iov->iov_base,
@@ -3149,7 +3197,6 @@ nsd_recvmmsg(int sockfd, struct mmsghdr *msgvec, unsigned int vlen,
 		/* error will be picked up next time */
 		return (int)vpos;
 	} else if(errno == 0) {
-		errno = orig_errno;
 		return 0;
 	} else if(errno == EAGAIN) {
 		return 0;
@@ -3166,12 +3213,9 @@ nsd_recvmmsg(int sockfd, struct mmsghdr *msgvec, unsigned int vlen,
 static int
 nsd_sendmmsg(int sockfd, struct mmsghdr *msgvec, unsigned int vlen, int flags)
 {
-	int orig_errno;
 	unsigned int vpos = 0;
 	ssize_t snd;
 
-	orig_errno = errno;
-	errno = 0;
 	while(vpos < vlen) {
 		assert(msgvec[vpos].msg_hdr.msg_iovlen == 1);
 		snd = sendto(sockfd,
@@ -3191,7 +3235,6 @@ nsd_sendmmsg(int sockfd, struct mmsghdr *msgvec, unsigned int vlen, int flags)
 	if(vpos) {
 		return (int)vpos;
 	} else if(errno == 0) {
-		errno = orig_errno;
 		return 0;
 	}
 
@@ -3322,13 +3365,36 @@ handle_udp(int fd, short event, void* arg)
 	while(i<recvcount) {
 		sent = nsd_sendmmsg(fd, &msgs[i], recvcount-i, 0);
 		if(sent == -1) {
+			if(errno == ENOBUFS ||
+#ifdef EWOULDBLOCK
+				errno == EWOULDBLOCK ||
+#endif
+				errno == EAGAIN) {
+				/* block to wait until send buffer avail */
+				int flag;
+				if((flag = fcntl(fd, F_GETFL)) == -1) {
+					log_msg(LOG_ERR, "cannot fcntl F_GETFL: %s", strerror(errno));
+					flag = 0;
+				}
+				flag &= ~O_NONBLOCK;
+				if(fcntl(fd, F_SETFL, flag) == -1)
+					log_msg(LOG_ERR, "cannot fcntl F_SETFL 0: %s", strerror(errno));
+				sent = nsd_sendmmsg(fd, &msgs[i], recvcount-i, 0);
+				flag |= O_NONBLOCK;
+				if(fcntl(fd, F_SETFL, flag) == -1)
+					log_msg(LOG_ERR, "cannot fcntl F_SETFL O_NONBLOCK: %s", strerror(errno));
+				if(sent != -1) {
+					i += sent;
+					continue;
+				}
+			}
 			/* don't log transient network full errors, unless
 			 * on higher verbosity */
 			if(!(errno == ENOBUFS && verbosity < 1) &&
 #ifdef EWOULDBLOCK
-			   !(errno == EWOULDBLOCK && verbosity < 1) &&
+			   errno != EWOULDBLOCK &&
 #endif
-			   !(errno == EAGAIN && verbosity < 1)) {
+			   errno != EAGAIN) {
 				const char* es = strerror(errno);
 				char a[48];
 				addr2str(&queries[i]->addr, a, sizeof(a));

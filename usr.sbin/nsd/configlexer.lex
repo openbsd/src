@@ -215,6 +215,7 @@ identity{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_IDENTITY;}
 version{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_VERSION;}
 nsid{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_NSID;}
 logfile{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_LOGFILE;}
+log-only-syslog{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_LOG_ONLY_SYSLOG;}
 server-count{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_SERVER_COUNT;}
 tcp-count{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_TCP_COUNT;}
 tcp-reject-overflow{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_TCP_REJECT_OVERFLOW;}
@@ -290,6 +291,7 @@ max-refresh-time{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_MAX_REFRESH_TIM
 min-refresh-time{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_MIN_REFRESH_TIME;}
 max-retry-time{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_MAX_RETRY_TIME;}
 min-retry-time{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_MIN_RETRY_TIME;}
+min-expire-time{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_MIN_EXPIRE_TIME;}
 multi-master-check{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_MULTI_MASTER_CHECK;}
 tls-service-key{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_SERVICE_KEY;}
 tls-service-ocsp{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_SERVICE_OCSP;}

@@ -9,6 +9,9 @@
 /* NSD default chroot directory */
 #undef CHROOTDIR
 
+/* Command line arguments used with configure */
+#undef CONFCMDLINE
+
 /* NSD config dir */
 #undef CONFIGDIR
 

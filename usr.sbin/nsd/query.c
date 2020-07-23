@@ -1530,7 +1530,17 @@ query_process(query_type *q, nsd_type *nsd)
 		 * BADVERS is created with Ext. RCODE, followed by RCODE.
 		 * Ext. RCODE is set to 1, RCODE must be 0 (getting 0x10 = 16).
 		 * Thus RCODE = NOERROR = NSD_RC_OK. */
-		return query_error(q, NSD_RC_OK);
+		RCODE_SET(q->packet, NSD_RC_OK);
+		buffer_clear(q->packet);
+		buffer_set_position(q->packet,
+			QHEADERSZ + 4 + q->qname->name_size);
+		QR_SET(q->packet);
+		AD_CLR(q->packet);
+		QDCOUNT_SET(q->packet, 1);
+		ANCOUNT_SET(q->packet, 0);
+		NSCOUNT_SET(q->packet, 0);
+		ARCOUNT_SET(q->packet, 0);
+		return QUERY_PROCESSED;
 	}
 
 	query_prepare_response(q);

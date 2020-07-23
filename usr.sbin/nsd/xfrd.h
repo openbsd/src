@@ -246,6 +246,85 @@ enum xfrd_packet_result {
 
 #define XFRD_TRANSFER_TIMEOUT_START 10 /* empty zone timeout is between x and 2*x seconds */
 #define XFRD_TRANSFER_TIMEOUT_MAX 86400 /* empty zone timeout max expbackoff */
+#define XFRD_LOWERBOUND_REFRESH 1 /* seconds, smallest refresh timeout */
+#define XFRD_LOWERBOUND_RETRY 1 /* seconds, smallest retry timeout */
+
+/*
+ * return refresh period
+ * within configured and defined lower and upper bounds
+ */
+static inline time_t
+within_refresh_bounds(xfrd_zone_type* zone, time_t refresh)
+{
+	return (time_t)zone->zone_options->pattern->max_refresh_time < refresh
+	     ? (time_t)zone->zone_options->pattern->max_refresh_time
+	     : (time_t)zone->zone_options->pattern->min_refresh_time > refresh
+	     ? (time_t)zone->zone_options->pattern->min_refresh_time
+	     : XFRD_LOWERBOUND_REFRESH > refresh
+	     ? XFRD_LOWERBOUND_REFRESH : refresh;
+}
+
+/*
+ * return the zone's refresh period (from the on disk stored SOA)
+ * within configured and defined lower and upper bounds
+ */
+static inline time_t
+bound_soa_disk_refresh(xfrd_zone_type* zone)
+{
+	return within_refresh_bounds(zone, ntohl(zone->soa_disk.refresh));
+}
+
+/*
+ * return retry period
+ * within configured and defined lower and upper bounds
+ */
+static inline time_t
+within_retry_bounds(xfrd_zone_type* zone, time_t retry)
+{
+	return (time_t)zone->zone_options->pattern->max_retry_time < retry
+	     ? (time_t)zone->zone_options->pattern->max_retry_time
+	     : (time_t)zone->zone_options->pattern->min_retry_time > retry
+	     ? (time_t)zone->zone_options->pattern->min_retry_time
+	     : XFRD_LOWERBOUND_RETRY > retry
+	     ? XFRD_LOWERBOUND_RETRY : retry;
+}
+
+/*
+ * return the zone's retry period (from the on disk stored SOA)
+ * within configured and defined lower and upper bounds
+ */
+static inline time_t
+bound_soa_disk_retry(xfrd_zone_type* zone)
+{
+	return within_retry_bounds(zone, ntohl(zone->soa_disk.retry));
+}
+
+/*
+ * return expire period
+ * within configured and defined lower bounds
+ */
+static inline time_t
+within_expire_bounds(xfrd_zone_type* zone, time_t expire)
+{
+	switch (zone->zone_options->pattern->min_expire_time_expr) {
+	case EXPIRE_TIME_HAS_VALUE:
+		return (time_t)zone->zone_options->pattern->min_expire_time > expire
+		     ? (time_t)zone->zone_options->pattern->min_expire_time : expire;
+
+	case REFRESHPLUSRETRYPLUS1:
+		return bound_soa_disk_refresh(zone) + bound_soa_disk_retry(zone) + 1 > expire
+		     ? bound_soa_disk_refresh(zone) + bound_soa_disk_retry(zone) + 1 : expire;
+	default:
+		return expire;
+	}
+}
+
+/* return the zone's expire period (from the on disk stored SOA) */
+static inline time_t
+bound_soa_disk_expire(xfrd_zone_type* zone)
+{
+	return within_expire_bounds(zone, ntohl(zone->soa_disk.expire));
+}
 
 extern xfrd_state_type* xfrd;
 

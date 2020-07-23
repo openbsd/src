@@ -78,6 +78,7 @@ struct nsd_options {
 	const char* identity;
 	const char* version;
 	const char* logfile;
+	int log_only_syslog;
 	int server_count;
 	struct cpu_option* cpu_affinity;
 	struct cpu_map_option* service_cpu_affinity;
@@ -192,6 +193,17 @@ struct cpu_map_option {
 };
 
 /*
+ * Defines for min_expire_time_expr value
+ */
+#define EXPIRE_TIME_HAS_VALUE     0
+#define EXPIRE_TIME_IS_DEFAULT    1
+#define REFRESHPLUSRETRYPLUS1     2
+#define REFRESHPLUSRETRYPLUS1_STR "refresh+retry+1"
+#define expire_time_is_default(x) (!(  (x) == REFRESHPLUSRETRYPLUS1 \
+                                    || (x) == EXPIRE_TIME_HAS_VALUE ))
+
+
+/*
  * Pattern of zone options, used to contain options for zone(s).
  */
 struct pattern_options {
@@ -221,6 +233,12 @@ struct pattern_options {
 	uint8_t max_retry_time_is_default;
 	uint32_t min_retry_time;
 	uint8_t min_retry_time_is_default;
+	uint32_t min_expire_time;
+	/* min_expir_time_expr is either a known value (REFRESHPLUSRETRYPLUS1
+	 * or EXPIRE_EXPR_HAS_VALUE) or else min_expire_time is the default.
+	 * This can be tested with expire_time_is_default(x) define.
+	 */
+	uint8_t min_expire_time_expr;
 	uint64_t size_limit_xfr;
 	uint8_t multi_master_check;
 } ATTR_PACKED;

@@ -33,6 +33,7 @@ extern config_parser_state_type *cfg_parser;
 
 static void append_acl(struct acl_options **list, struct acl_options *acl);
 static int parse_boolean(const char *str, int *bln);
+static int parse_expire_expr(const char *str, long long *num, uint8_t *expr);
 static int parse_number(const char *str, long long *num);
 static int parse_range(const char *str, long long *low, long long *high);
 %}
@@ -76,6 +77,7 @@ static int parse_range(const char *str, long long *low, long long *high);
 %token VAR_ZONELISTFILE
 %token VAR_DATABASE
 %token VAR_LOGFILE
+%token VAR_LOG_ONLY_SYSLOG
 %token VAR_PIDFILE
 %token VAR_DIFFFILE
 %token VAR_XFRDFILE
@@ -160,6 +162,7 @@ static int parse_range(const char *str, long long *low, long long *high);
 %token VAR_MIN_REFRESH_TIME
 %token VAR_MAX_RETRY_TIME
 %token VAR_MIN_RETRY_TIME
+%token VAR_MIN_EXPIRE_TIME
 %token VAR_MULTI_MASTER_CHECK
 %token VAR_SIZE_LIMIT_XFR
 %token VAR_ZONESTATS
@@ -291,6 +294,8 @@ server_option:
     }
   | VAR_LOGFILE STRING
     { cfg_parser->opt->logfile = region_strdup(cfg_parser->opt->region, $2); }
+  | VAR_LOG_ONLY_SYSLOG boolean
+    { cfg_parser->opt->log_only_syslog = $2; }
   | VAR_TCP_COUNT number
     {
       if ($2 > 0) {
@@ -854,7 +859,19 @@ pattern_or_zone_option:
     {
       cfg_parser->pattern->min_retry_time = $2;
       cfg_parser->pattern->min_retry_time_is_default = 0;
-    } ;
+    } 
+  | VAR_MIN_EXPIRE_TIME STRING
+    {
+      long long num;
+      uint8_t expr;
+
+      if (!parse_expire_expr($2, &num, &expr)) {
+        yyerror("expected an expire time in seconds or \"refresh+retry+1\"");
+        YYABORT; /* trigger a parser error */
+      }
+      cfg_parser->pattern->min_expire_time = num;
+      cfg_parser->pattern->min_expire_time_expr = expr;
+    };
 
 ip_address:
     STRING
@@ -913,6 +930,21 @@ parse_boolean(const char *str, int *bln)
 	}
 
 	return 1;
+}
+
+static int
+parse_expire_expr(const char *str, long long *num, uint8_t *expr)
+{
+	if(parse_number(str, num)) {
+		*expr = EXPIRE_TIME_HAS_VALUE;
+		return 1;
+	}
+	if(strcmp(str, REFRESHPLUSRETRYPLUS1_STR) == 0) {
+		*num = 0;
+		*expr = REFRESHPLUSRETRYPLUS1;
+		return 1;
+	}
+	return 0;
 }
 
 static int

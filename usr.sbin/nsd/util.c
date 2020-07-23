@@ -181,6 +181,17 @@ log_syslog(int priority, const char *message)
 }
 
 void
+log_only_syslog(int priority, const char *message)
+{
+#ifdef HAVE_SYSLOG_H
+	syslog(priority, "%s", message);
+#else /* !HAVE_SYSLOG_H */
+	/* no syslog, use stderr */
+	log_file(priority, message);
+#endif
+}
+
+void
 log_set_log_function(log_function_type *log_function)
 {
 	current_log_function = log_function;

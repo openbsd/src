@@ -75,6 +75,11 @@ log_function_type log_file;
 log_function_type log_syslog;
 
 /*
+ * The function used to log to syslog only.
+ */
+log_function_type log_only_syslog;
+
+/*
  * Set the logging function to use (log_file or log_syslog).
  */
 void log_set_log_function(log_function_type *log_function);

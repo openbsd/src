@@ -81,7 +81,7 @@ MANUALS=nsd.8 nsd-checkconf.8 nsd-checkzone.8 nsd-control.8 nsd.conf.5
 COMMON_OBJ=answer.o axfr.o buffer.o configlexer.o configparser.o dname.o dns.o edns.o iterated_hash.o lookup3.o namedb.o nsec3.o options.o packet.o query.o rbtree.o radtree.o rdata.o region-allocator.o rrl.o tsig.o tsig-openssl.o udb.o udbradtree.o udbzone.o util.o bitset.o popen3.o
 XFRD_OBJ=xfrd-disk.o xfrd-notify.o xfrd-tcp.o xfrd.o remote.o $(DNSTAP_OBJ)
 NSD_OBJ=$(COMMON_OBJ) $(XFRD_OBJ) difffile.o ipc.o mini_event.o netio.o nsd.o server.o dbaccess.o dbcreate.o zlexer.o zonec.o zparser.o
-ALL_OBJ=$(NSD_OBJ) nsd-checkconf.o nsd-checkzone.o nsd-control.o nsd-mem.o
+ALL_OBJ=$(NSD_OBJ) nsd-checkconf.o nsd-checkzone.o nsd-control.o nsd-mem.o xfr-inspect.o
 NSD_CHECKCONF_OBJ=$(COMMON_OBJ) nsd-checkconf.o
 NSD_CHECKZONE_OBJ=$(COMMON_OBJ) $(XFRD_OBJ) dbaccess.o dbcreate.o difffile.o ipc.o mini_event.o netio.o server.o zonec.o zparser.o zlexer.o nsd-checkzone.o
 NSD_CONTROL_OBJ=$(COMMON_OBJ) nsd-control.o
@@ -192,9 +192,6 @@ audit: nsd nsd-checkconf nsd-checkzone nsd-control nsd-mem checksec
 	./checksec --file=nsd-checkzone
 	./checksec --file=nsd-control
 	./checksec --file=nsd-mem
-
-test check: cutest
-	./cutest
 
 clean:
 	rm -f *.o $(TARGETS) $(MANUALS) cutest popen3_echo udb-inspect xfr-inspect nsd-mem
