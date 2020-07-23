@@ -161,26 +161,26 @@ setup_socket(
 	struct addrinfo *hints)
 {
 	int ret;
-	char *sep = NULL;
-	char *host, host_buf[INET6_ADDRSTRLEN + 1 /* '\0' */];
+	char *host;
+	char host_buf[sizeof("65535") + INET6_ADDRSTRLEN + 1 /* '\0' */];
 	const char *service;
-	char service_buf[6 + 1 /* '\0' */]; /* 65535 */
 	struct addrinfo *addr = NULL;
 
 	sock->fib = -1;
 	if(node) {
+		char *sep;
+
+		if(strlcpy(host_buf, node, sizeof(host_buf)) >= sizeof(host_buf)) {
+			error("cannot parse address '%s': %s", node,
+			    strerror(ENAMETOOLONG));
+		}
+
 		host = host_buf;
-		sep = strchr(node, '@');
-		if(sep) {
-			size_t len = (sep - node) + 1;
-			if (len > sizeof(host_buf)) {
-				len = sizeof(host_buf);
-			}
-			strlcpy(host_buf, node, len);
-			strlcpy(service_buf, sep + 1, sizeof(service_buf));
-			service = service_buf;
+		sep = strchr(host_buf, '@');
+		if(sep != NULL) {
+			*sep = '\0';
+			service = sep + 1;
 		} else {
-			strlcpy(host_buf, node, sizeof(host_buf));
 			service = port;
 		}
 	} else {
@@ -373,16 +373,11 @@ find_device(
 	}
 
 	if(ifa != NULL) {
-		char *colon;
-		size_t len;
-
-		if((colon = strchr(ifa->ifa_name, ':')) != NULL) {
-			len = (size_t)((uintptr_t)colon - (uintptr_t)ifa->ifa_name);
-		} else {
-			len  = strlen(ifa->ifa_name);
-		}
-		if (len < sizeof(sock->device)) {
-			strlcpy(sock->device, ifa->ifa_name, len+1);
+		size_t len = strlcpy(sock->device, ifa->ifa_name, sizeof(sock->device));
+		if(len < sizeof(sock->device)) {
+			char *colon = strchr(sock->device, ':');
+			if(colon != NULL)
+				*colon = '\0';
 			return 1;
 		}
 	}

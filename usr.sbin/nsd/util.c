@@ -701,10 +701,10 @@ b32_ntop(uint8_t const *src, size_t srclength, char *target, size_t targsize)
 	}
 	if(srclength)
 	{
-		if(targsize < strlen(buf)+1)
+		size_t tlen = strlcpy(target, buf, targsize);
+		if (tlen >= targsize)
 			return -1;
-		strlcpy(target, buf, targsize);
-		len += strlen(buf);
+		len += tlen;
 	}
 	else if(targsize < 1)
 		return -1;
