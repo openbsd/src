@@ -1,4 +1,4 @@
-/* $OpenBSD: join.c,v 1.32 2018/11/14 15:16:09 martijn Exp $	*/
+/* $OpenBSD: join.c,v 1.33 2020/07/23 20:13:01 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -43,8 +43,6 @@
 #include <unistd.h>
 #include <wchar.h>
 
-#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
-
 /*
  * There's a structure per input file which encapsulates the state of the
  * file.  We repeatedly read lines from each file until we've read in all
@@ -53,7 +51,7 @@
  */
 typedef struct {
 	char *line;			/* line */
-	u_long linealloc;		/* line allocated count */
+	size_t linealloc;		/* bytes allocated for line */
 	char **fields;			/* line field(s) */
 	u_long fieldcnt;		/* line field(s) count */
 	u_long fieldalloc;		/* line field(s) allocated count */
@@ -271,9 +269,8 @@ slurp(INPUT *F)
 {
 	LINE *lp, *lastlp, tmp;
 	ssize_t len;
-	size_t linesize;
 	u_long cnt;
-	char *bp, *fieldp, *line;
+	char *bp, *fieldp;
 
 	/*
 	 * Read all of the lines from an input file that have the same
@@ -281,8 +278,6 @@ slurp(INPUT *F)
 	 */
 
 	F->setcnt = 0;
-	line = NULL;
-	linesize = 0;
 	for (lastlp = NULL; ; ++F->setcnt) {
 		/*
 		 * If we're out of space to hold line structures, allocate
@@ -320,23 +315,12 @@ slurp(INPUT *F)
 			F->pushbool = 0;
 			continue;
 		}
-		if ((len = getline(&line, &linesize, F->fp)) == -1)
+		if ((len = getline(&(lp->line), &(lp->linealloc), F->fp)) == -1)
 			break;
 
-		/* Remove trailing newline, if it exists, and copy line. */
-		if (line[len - 1] == '\n')
-			len--;
-		if (lp->linealloc <= len + 1) {
-			char *p;
-			u_long newsize = lp->linealloc +
-			    MAXIMUM(100, len + 1 - lp->linealloc);
-			if ((p = realloc(lp->line, newsize)) == NULL)
-				err(1, NULL);
-			lp->line = p;
-			lp->linealloc = newsize;
-		}
-		memcpy(lp->line, line, len);
-		lp->line[len] = '\0';
+		/* Remove the trailing newline, if any. */
+		if (lp->line[len - 1] == '\n')
+			lp->line[--len] = '\0';
 
 		/* Split the line into fields, allocate space as necessary. */
 		lp->fieldcnt = 0;
@@ -363,7 +347,6 @@ slurp(INPUT *F)
 			break;
 		}
 	}
-	free(line);
 }
 
 char *
