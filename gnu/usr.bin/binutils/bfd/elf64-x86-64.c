@@ -2772,7 +2772,7 @@ elf64_x86_64_section_from_shdr (bfd *abfd,
 #define TARGET_LITTLE_NAME		    "elf64-x86-64"
 #define ELF_ARCH			    bfd_arch_i386
 #define ELF_MACHINE_CODE		    EM_X86_64
-#define ELF_MAXPAGESIZE			    0x100000
+#define ELF_MAXPAGESIZE			    0x1000
 
 #define elf_backend_can_gc_sections	    1
 #define elf_backend_can_refcount	    1
