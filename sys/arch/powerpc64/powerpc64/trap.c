@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.31 2020/07/23 07:45:28 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.32 2020/07/23 09:49:33 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -122,7 +122,7 @@ trap(struct trapframe *frame)
 			ftype = PROT_READ;
 		KERNEL_LOCK();
 		error = uvm_fault(map, trunc_page(va), 0, ftype);
-#ifdef MULTIPTOCESSOR
+#ifdef MULTIPROCESSOR
 		/*
 		 * The uvm_fault() call above might sleep and
 		 * therefore witch from one CPU to another.  We must
