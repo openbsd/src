@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.36 2020/07/23 15:09:09 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.37 2020/07/23 18:51:24 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -910,7 +910,7 @@ pmap_vp_destroy(pmap_t pm)
 	struct pte_desc *pted;
 	int i, j;
 
-	LIST_FOREACH(slbd, &pm->pm_slbd, slbd_list) {
+	while ((slbd = LIST_FIRST(&pm->pm_slbd))) {
 		vp1 = slbd->slbd_vp;
 		if (vp1 == NULL)
 			continue;
@@ -933,9 +933,11 @@ pmap_vp_destroy(pmap_t pm)
 		}
 		slbd->slbd_vp = NULL;
 		pool_put(&pmap_vp_pool, vp1);
-	}
 
-	/* XXX Free SLB descriptors. */
+		LIST_REMOVE(slbd, slbd_list);
+		pool_put(&pmap_slbd_pool, slbd);
+		/* XXX Free VSID. */
+	}
 }
 
 void
