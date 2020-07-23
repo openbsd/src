@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.70 2020/07/17 03:37:37 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.71 2020/07/23 01:24:53 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -78,7 +78,7 @@
 #define MCX_PAGE_SIZE			(1 << MCX_PAGE_SHIFT)
 
 /* queue sizes */
-#define MCX_LOG_EQ_SIZE			6 /* one page */
+#define MCX_LOG_EQ_SIZE			7
 #define MCX_LOG_CQ_SIZE			12
 #define MCX_LOG_RQ_SIZE			10
 #define MCX_LOG_SQ_SIZE			11
