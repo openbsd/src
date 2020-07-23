@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.62 2019/12/03 09:14:37 jca Exp $	*/
+/*	$OpenBSD: util.c,v 1.63 2020/07/23 20:19:27 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -91,7 +91,7 @@ grep_tree(char **argv)
 			/* skip "./" if implied */
 			if (argv == dot_argv && p->fts_pathlen >= 2)
 				path += 2;
-			c += procfile(path);
+			c |= procfile(path);
 			break;
 		}
 	}
@@ -106,7 +106,8 @@ procfile(char *fn)
 {
 	str_t ln;
 	file_t *f;
-	int c, t, z, nottext;
+	int t, z, nottext, overflow = 0;
+	unsigned long long c;
 
 	mcount = mlimit;
 
@@ -158,7 +159,10 @@ procfile(char *fn)
 			enqueue(&ln);
 			linesqueued++;
 		}
-		c += t;
+		if (ULLONG_MAX - c < (unsigned long long)t)
+			overflow = 1;
+		else
+			c += t;
 		if (mflag && mcount <= 0)
 			break;
 	}
@@ -169,7 +173,7 @@ procfile(char *fn)
 	if (cflag) {
 		if (!hflag)
 			printf("%s:", ln.file);
-		printf("%u\n", c);
+		printf("%llu%s\n", c, overflow ? "+" : "");
 	}
 	if (lflag && c != 0)
 		printf("%s\n", fn);
@@ -179,7 +183,7 @@ procfile(char *fn)
 	    binbehave == BIN_FILE_BIN && nottext && !qflag)
 		printf("Binary file %s matches\n", fn);
 
-	return c;
+	return overflow || c != 0;
 }
 
 

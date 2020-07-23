@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.64 2019/12/03 09:14:37 jca Exp $	*/
+/*	$OpenBSD: grep.c,v 1.65 2020/07/23 20:19:27 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -517,7 +517,7 @@ main(int argc, char *argv[])
 		c = grep_tree(argv);
 	else
 		for (c = 0; argc--; ++argv)
-			c += procfile(*argv);
+			c |= procfile(*argv);
 
 	exit(c ? (file_err ? (qflag ? 0 : 2) : 0) : (file_err ? 2 : 1));
 }
