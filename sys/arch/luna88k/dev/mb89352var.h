@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352var.h,v 1.6 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: mb89352var.h,v 1.7 2020/07/23 00:08:10 krw Exp $	*/
 /*	$NetBSD: mb89352var.h,v 1.6 2003/08/02 12:48:09 tsutsui Exp $	*/
 /*	NecBSD: mb89352var.h,v 1.4 1998/03/14 07:31:22 kmatsuda Exp 	*/
 
@@ -115,8 +115,6 @@ struct spc_softc {
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
-
-	struct scsi_link sc_link;	/* prototype for subdevs */
 
 	TAILQ_HEAD(, spc_acb) free_list, ready_list, nexus_list;
 	struct spc_acb *sc_nexus;	/* current command */
