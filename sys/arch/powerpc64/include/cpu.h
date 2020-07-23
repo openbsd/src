@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.22 2020/07/22 20:41:26 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.23 2020/07/23 16:21:44 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -131,7 +131,7 @@ register struct cpu_info *__curcpu asm("r13");
 
 #else
 
-#define MAXCPUS			16
+#define MAXCPUS			48
 #define CPU_IS_PRIMARY(ci)	((ci) == cpu_info_primary)
 #define cpu_number()		(curcpu()->ci_cpuid)
 
