@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.38 2020/07/14 18:33:34 jsing Exp $
+#	$OpenBSD: Makefile,v 1.39 2020/07/23 17:15:35 schwarze Exp $
 
 SUBDIR += aead
 SUBDIR += aeswrap
@@ -33,6 +33,7 @@ SUBDIR += init
 SUBDIR += md4
 SUBDIR += md5
 SUBDIR += pbkdf2
+SUBDIR += pem
 SUBDIR += pkcs7
 SUBDIR += poly1305
 SUBDIR += rand

@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_info.c,v 1.22 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: pem_info.c,v 1.23 2020/07/23 17:15:35 schwarze Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -101,29 +101,28 @@ PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk, pem_password_cb *cb,
 	void *pp;
 	unsigned char *data = NULL;
 	const unsigned char *p;
-	long len, error = 0;
+	long len;
 	int ok = 0;
-	STACK_OF(X509_INFO) *ret = NULL;
-	unsigned int i, raw, ptype;
-	d2i_of_void *d2i = 0;
+	int num_in, ptype, raw;
+	STACK_OF(X509_INFO) *ret = sk;
+	d2i_of_void *d2i = NULL;
 
-	if (sk == NULL) {
+	if (ret == NULL) {
 		if ((ret = sk_X509_INFO_new_null()) == NULL) {
 			PEMerror(ERR_R_MALLOC_FAILURE);
-			return 0;
+			return NULL;
 		}
-	} else
-		ret = sk;
+	}
+	num_in = sk_X509_INFO_num(ret);
 
 	if ((xi = X509_INFO_new()) == NULL)
 		goto err;
 	for (;;) {
 		raw = 0;
 		ptype = 0;
-		i = PEM_read_bio(bp, &name, &header, &data, &len);
-		if (i == 0) {
-			error = ERR_GET_REASON(ERR_peek_last_error());
-			if (error == PEM_R_NO_START_LINE) {
+		if (!PEM_read_bio(bp, &name, &header, &data, &len)) {
+			if (ERR_GET_REASON(ERR_peek_last_error()) ==
+			    PEM_R_NO_START_LINE) {
 				ERR_clear_error();
 				break;
 			}
@@ -286,22 +285,19 @@ start:
 	ok = 1;
 
 err:
-	if (xi != NULL)
-		X509_INFO_free(xi);
 	if (!ok) {
-		for (i = 0; ((int)i) < sk_X509_INFO_num(ret); i++) {
-			xi = sk_X509_INFO_value(ret, i);
-			X509_INFO_free(xi);
-		}
+		while (sk_X509_INFO_num(ret) > num_in)
+			X509_INFO_free(sk_X509_INFO_pop(ret));
 		if (ret != sk)
 			sk_X509_INFO_free(ret);
 		ret = NULL;
 	}
-
+	X509_INFO_free(xi);
 	free(name);
 	free(header);
 	free(data);
-	return (ret);
+
+	return ret;
 }
 
 
