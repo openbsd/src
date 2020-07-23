@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic_acpi.c,v 1.14 2020/05/08 11:18:01 kettenis Exp $ */
+/* $OpenBSD: dwiic_acpi.c,v 1.15 2020/07/23 09:21:51 jsg Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -62,6 +62,7 @@ struct cfattach dwiic_acpi_ca = {
 };
 
 const char *dwiic_hids[] = {
+	"AMDI0010",
 	"APMC0D0F",
 	"INT33C2",
 	"INT33C3",
