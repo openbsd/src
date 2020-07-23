@@ -1,4 +1,4 @@
-.\" $OpenBSD: PEM_ASN1_read.3,v 1.1 2020/06/12 11:37:42 schwarze Exp $
+.\" $OpenBSD: PEM_ASN1_read.3,v 1.2 2020/07/23 17:34:53 schwarze Exp $
 .\"
 .\" Copyright (c) 2020 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 12 2020 $
+.Dd $Mdocdate: July 23 2020 $
 .Dt PEM_ASN1_READ 3
 .Os
 .Sh NAME
@@ -164,7 +164,8 @@ Additional types of errors can result from
 .Xr PEM_bytes_read_bio 3 ,
 .Xr PEM_read 3 ,
 .Xr PEM_read_bio_PrivateKey 3 ,
-.Xr PEM_read_SSL_SESSION 3
+.Xr PEM_read_SSL_SESSION 3 ,
+.Xr PEM_X509_INFO_read 3
 .Sh HISTORY
 These functions first appeared in SSLeay 0.5.1
 and have been available since

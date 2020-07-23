@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_INFO_new.3,v 1.1 2019/08/19 13:52:53 schwarze Exp $
+.\" $OpenBSD: X509_INFO_new.3,v 1.2 2020/07/23 17:34:53 schwarze Exp $
 .\" Copyright (c) 2019 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 19 2019 $
+.Dd $Mdocdate: July 23 2020 $
 .Dt X509_INFO_NEW 3
 .Os
 .Sh NAME
@@ -60,6 +60,7 @@ object or
 .Dv NULL
 if an error occurs.
 .Sh SEE ALSO
+.Xr PEM_X509_INFO_read 3 ,
 .Xr X509_CRL_new 3 ,
 .Xr X509_new 3
 .Sh HISTORY
