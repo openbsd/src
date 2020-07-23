@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.65 2020/07/20 12:40:45 fcambus Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.66 2020/07/23 09:17:03 tim Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -216,11 +216,11 @@ rasops_init(struct rasops_info *ri, int wantrows, int wantcols)
 		wsfont_init();
 
 		if (ri->ri_width >= 120 * 32)
-			/* Screen width larger than 3840px, 32px wide font */
+			/* Screen width of at least 3840px, 32px wide font */
 			cookie = wsfont_find(NULL, 32, 0, 0);
 
 		if (cookie <= 0 && ri->ri_width >= 120 * 16)
-			/* Screen width larger than 1920px, 16px wide font */
+			/* Screen width of at least 1920px, 16px wide font */
 			cookie = wsfont_find(NULL, 16, 0, 0);
 
 		if (cookie <= 0 && ri->ri_width > 80 * 12)
