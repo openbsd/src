@@ -1,4 +1,4 @@
-.\" $OpenBSD: fw_update.1,v 1.3 2016/05/27 20:37:34 tj Exp $
+.\" $OpenBSD: fw_update.1,v 1.4 2020/07/24 16:33:42 jmc Exp $
 .\"
 .\" Copyright (c) 2011 Alexander Hall <alexander@beard.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 27 2016 $
+.Dd $Mdocdate: July 24 2020 $
 .Dt FW_UPDATE 1
 .Os
 .Sh NAME
@@ -67,7 +67,7 @@ Dry run.
 Do not actually install or update any firmware packages;
 just report the steps that would be taken.
 .It Fl p Ar path
-Use the firmware found at
+Use the firmware found at package repository
 .Ar path ,
 being either a local directory or a URL,
 instead of the default location.
