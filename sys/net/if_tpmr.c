@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tpmr.c,v 1.15 2020/07/24 00:43:09 kn Exp $ */
+/*	$OpenBSD: if_tpmr.c,v 1.16 2020/07/24 00:45:40 kn Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -132,7 +132,6 @@ static void	tpmr_p_dtor(struct tpmr_softc *, struct tpmr_port *,
 		    const char *);
 static int	tpmr_add_port(struct tpmr_softc *,
 		    const struct ifbreq *);
-static int	tpmr_get_port(struct tpmr_softc *, struct trunk_reqport *);
 static int	tpmr_del_port(struct tpmr_softc *,
 		    const struct ifbreq *);
 
@@ -439,9 +438,6 @@ tpmr_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCGTRUNKOPTS:
 		break;
 
-	case SIOCGTRUNKPORT:
-		error = tpmr_get_port(sc, (struct trunk_reqport *)data);
-		break;
 	case SIOCBRDGADD:
 		error = suser(curproc);
 		if (error != 0)
@@ -581,21 +577,6 @@ tpmr_trunkport(struct tpmr_softc *sc, const char *name)
 }
 
 static int
-tpmr_get_port(struct tpmr_softc *sc, struct trunk_reqport *rp)
-{
-	struct tpmr_port *p;
-
-	NET_ASSERT_LOCKED();
-	p = tpmr_trunkport(sc, rp->rp_portname);
-	if (p == NULL)
-		return (EINVAL);
-
-	/* XXX */
-
-	return (0);
-}
-
-static int
 tpmr_del_port(struct tpmr_softc *sc, const struct ifbreq *req)
 {
 	struct tpmr_port *p;
@@ -630,21 +611,6 @@ tpmr_p_ioctl(struct ifnet *ifp0, u_long cmd, caddr_t data)
 	case SIOCSIFADDR:
 		error = EBUSY;
 		break;
-
-	case SIOCGTRUNKPORT: {
-		struct trunk_reqport *rp = (struct trunk_reqport *)data;
-		struct tpmr_softc *sc = p->p_tpmr;
-		struct ifnet *ifp = &sc->sc_if;
-
-		if (strncmp(rp->rp_ifname, rp->rp_portname,
-		    sizeof(rp->rp_ifname)) != 0)
-			return (EINVAL);
-
-		CTASSERT(sizeof(rp->rp_ifname) == sizeof(ifp->if_xname));
-		memcpy(rp->rp_ifname, ifp->if_xname, sizeof(rp->rp_ifname));
-
-		break;
-	}
 
 	default:
 		error = (*p->p_ioctl)(ifp0, cmd, data);
