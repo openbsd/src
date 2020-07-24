@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-pane.c,v 1.63 2020/07/03 07:00:12 nicm Exp $ */
+/* $OpenBSD: cmd-select-pane.c,v 1.64 2020/07/24 07:05:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -198,6 +198,7 @@ cmd_select_pane_exec(struct cmd *self, struct cmdq_item *item)
 	if (args_has(args, 'T')) {
 		title = format_single_from_target(item, args_get(args, 'T'));
 		if (screen_set_title(&wp->base, title)) {
+			notify_pane("pane-title-changed", wp);
 			server_redraw_window_borders(wp->window);
 			server_status_window(wp->window);
 		}

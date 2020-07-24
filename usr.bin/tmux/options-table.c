@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.132 2020/05/22 15:08:38 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.133 2020/07/24 07:05:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1121,6 +1121,7 @@ const struct options_table_entry options_table[] = {
 	OPTIONS_TABLE_PANE_HOOK("pane-focus-out", ""),
 	OPTIONS_TABLE_PANE_HOOK("pane-mode-changed", ""),
 	OPTIONS_TABLE_PANE_HOOK("pane-set-clipboard", ""),
+	OPTIONS_TABLE_PANE_HOOK("pane-title-changed", ""),
 	OPTIONS_TABLE_HOOK("session-closed", ""),
 	OPTIONS_TABLE_HOOK("session-created", ""),
 	OPTIONS_TABLE_HOOK("session-renamed", ""),
