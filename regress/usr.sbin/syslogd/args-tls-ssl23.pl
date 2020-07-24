@@ -23,7 +23,7 @@ our %args = (
 	loggrep => {
 	    qr/listen sock: (127.0.0.1|::1) \d+/ => 1,
 	    get_testgrep() => 1,
-	    qr/ssl version: TLSv1_2$/ => 1,
+	    qr/ssl version: TLSv1_3$/ => 1,
 	},
 	sslversion => "SSLv23",
     },
