@@ -26,6 +26,7 @@
 ./usr/include/powerpc64/kcore.h
 ./usr/include/powerpc64/kexec.h
 ./usr/include/powerpc64/limits.h
+./usr/include/powerpc64/mplock.h
 ./usr/include/powerpc64/mutex.h
 ./usr/include/powerpc64/opal.h
 ./usr/include/powerpc64/openpromio.h
