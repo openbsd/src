@@ -20,7 +20,7 @@ our %args = (
 	    qr/Logging to FORWTLS \@tls:\/\/localhost:\d+/ => '>=4',
 	    qr/syslogd\[\d+\]: loghost .* connection error: /.
 		qr/certificate verification failed: /.
-		qr/self signed certificate in certificate chain/ => 1,
+		qr/unable to get local issuer certificate/ => 1,
 	    get_testgrep() => 1,
 	},
 	cacrt => "default",
@@ -32,7 +32,8 @@ our %args = (
 	exit => 255,
 	loggrep => {
 	    qr/listen sock: (127.0.0.1|::1) \d+/ => 1,
-	    qr/SSL accept attempt failed because of handshake problems/ => 1,
+	    qr/SSL accept attempt failed error:/.
+		qr/.*ST_ACCEPT:tlsv1 alert unknown ca/ => 1,
 	    get_testgrep() => 0,
 	},
     },
