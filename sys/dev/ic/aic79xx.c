@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.65 2019/01/31 18:01:14 millert Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.66 2020/07/24 12:43:31 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -1376,7 +1376,7 @@ ahd_handle_seqint(struct ahd_softc *ahd, u_int intstat)
 			       ahd_lookup_phase_entry(lastphase)->phasemsg,
 			       SCB_GET_TAG(scb));
 			ahd_print_path(ahd, scb);
-			printf("%s seen Data Phase.  Length = %ld.  "
+			printf("%s seen Data Phase.  Length = %d.  "
 			       "NumSGs = %d.\n",
 			       ahd_inb(ahd, SEQ_FLAGS) & DPHASE
 			       ? "Have" : "Haven't",

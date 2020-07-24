@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.61 2020/07/20 14:41:13 krw Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.62 2020/07/24 12:43:31 krw Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -1975,7 +1975,7 @@ osiop_dump_acb(acb)
 	}
 
 	b = (u_int8_t *)&acb->ds->scsi_cmd;
-	printf("(%d:%d) status %2x cmdlen %2ld cmd ",
+	printf("(%d:%d) status %2x cmdlen %2u cmd ",
 	    acb->xs->sc_link->target,
 	    acb->xs->sc_link->lun,
 	    acb->status,

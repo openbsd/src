@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahd_pci.c,v 1.25 2019/01/31 18:01:14 millert Exp $	*/
+/*	$OpenBSD: ahd_pci.c,v 1.26 2020/07/24 12:43:31 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -427,7 +427,7 @@ ahd_pci_attach(struct device *parent, struct device *self, void *aux)
 		}
 
 #ifdef AHD_DEBUG
-		printf("%s: doing memory mapping tag0 0x%x, tag1 0x%x, shs0 "
+		printf("%s: doing memory mapping tag0 %p, tag1 %p, shs0 "
 		    "0x%lx, shs1 0x%lx\n", ahd_name(ahd), ahd->tags[0],
 		    ahd->tags[1], ahd->bshs[0], ahd->bshs[1]);
 #endif
@@ -445,7 +445,7 @@ ahd_pci_attach(struct device *parent, struct device *self, void *aux)
 		    NULL, 0) == 0);
 
 #ifdef AHD_DEBUG
-		printf("%s: doing io mapping tag0 0x%x, tag1 0x%x, shs0 0x%lx, "
+		printf("%s: doing io mapping tag0 %p, tag1 %p, shs0 0x%lx, "
 		    "shs1 0x%lx\n", ahd_name(ahd), ahd->tags[0], ahd->tags[1],
 		    ahd->bshs[0], ahd->bshs[1]);
 #endif

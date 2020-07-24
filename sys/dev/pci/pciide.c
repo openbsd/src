@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.360 2020/01/24 03:29:55 tedu Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.361 2020/07/24 12:43:31 krw Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -1517,8 +1517,8 @@ pciide_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmactl_write = pciide_dmactl_write;
 	sc->sc_dmatbl_write = pciide_dmatbl_write;
 
-	WDCDEBUG_PRINT((" sc_pc=%p, sc_tag=%p, pa_class=0x%x\n", sc->sc_pc,
-	    sc->sc_tag, pa->pa_class), DEBUG_PROBE);
+	WDCDEBUG_PRINT((" sc_pc=%p, sc_tag=0x%x, pa_class=0x%x\n", sc->sc_pc,
+	    (u_int32_t)sc->sc_tag, pa->pa_class), DEBUG_PROBE);
 
 	if (pciide_skip_ata)
 		sc->sc_wdcdev.quirks |= WDC_QUIRK_NOATA;

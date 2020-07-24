@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.c,v 1.48 2020/07/20 14:41:13 krw Exp $	*/
+/*	$OpenBSD: adv.c,v 1.49 2020/07/24 12:43:31 krw Exp $	*/
 /*	$NetBSD: adv.c,v 1.6 1998/10/28 20:39:45 dante Exp $	*/
 
 /*
@@ -628,8 +628,8 @@ adv_scsi_cmd(xs)
 
 #ifdef ASC_DEBUG
 	printf("id = %d, lun = %d, cmd = %d, ccb = 0x%lX \n",
-			sc_link->scsipi_scsi.target,
-			sc_link->scsipi_scsi.lun, xs->cmd->opcode,
+			sc_link->target,
+			sc_link->lun, xs->cmd->opcode,
 			(unsigned long)ccb);
 #endif
 	/*
@@ -783,8 +783,8 @@ adv_narrow_isr_callback(sc, qdonep)
 #ifdef ASC_DEBUG
 	printf(" - ccb=0x%lx, id=%d, lun=%d, cmd=%d, ",
 			(unsigned long)ccb,
-			xs->sc_link->scsipi_scsi.target,
-			xs->sc_link->scsipi_scsi.lun, xs->cmd->opcode);
+			xs->sc_link->target,
+			xs->sc_link->lun, xs->cmd->opcode);
 #endif
 	timeout_del(&xs->stimeout);
 

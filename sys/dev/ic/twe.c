@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.57 2020/07/20 14:41:13 krw Exp $	*/
+/*	$OpenBSD: twe.c,v 1.58 2020/07/24 12:43:31 krw Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff.  All rights reserved.
@@ -574,7 +574,7 @@ twe_cmd(ccb, flags, wait)
 			for (i = 0; i < dmap->dm_nsegs; i++, sgp++) {
 				sgp->twes_addr = htole32(dmap->dm_segs[i].ds_addr);
 				sgp->twes_len  = htole32(dmap->dm_segs[i].ds_len);
-				TWE_DPRINTF(TWE_D_DMA, ("%x[%x] ",
+				TWE_DPRINTF(TWE_D_DMA, ("%lx[%lx] ",
 				    dmap->dm_segs[i].ds_addr,
 				    dmap->dm_segs[i].ds_len));
 			}

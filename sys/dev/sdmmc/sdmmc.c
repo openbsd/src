@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.55 2020/05/13 17:31:16 cheloha Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.56 2020/07/24 12:43:32 krw Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -30,6 +30,10 @@
 #include <sys/rwlock.h>
 #include <sys/systm.h>
 #include <sys/time.h>
+
+#ifdef SDMMC_DEBUG
+#include <sys/proc.h>
+#endif
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>

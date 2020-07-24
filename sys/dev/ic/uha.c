@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha.c,v 1.36 2020/07/20 14:41:13 krw Exp $	*/
+/*	$OpenBSD: uha.c,v 1.37 2020/07/24 12:43:31 krw Exp $	*/
 /*	$NetBSD: uha.c,v 1.3 1996/10/13 01:37:29 christos Exp $	*/
 
 #undef UHADEBUG
@@ -314,7 +314,7 @@ uha_scsi_cmd(xs)
 		 * Set up the scatter gather block
 		 */
 		SC_DEBUG(sc_link, SDEV_DB4,
-		    ("%d @0x%x:- ", xs->datalen, xs->data));
+		    ("%d @%p- ", xs->datalen, xs->data));
 		datalen = xs->datalen;
 		thiskv = (int) xs->data;
 		thisphys = KVTOPHYS(thiskv);
@@ -325,7 +325,7 @@ uha_scsi_cmd(xs)
 			/* put in the base address */
 			sg->seg_addr = thisphys;
 
-			SC_DEBUGN(sc_link, SDEV_DB4, ("0x%x", thisphys));
+			SC_DEBUGN(sc_link, SDEV_DB4, ("0x%lx", thisphys));
 
 			/* do it at least once */
 			nextphys = thisphys;

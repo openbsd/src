@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.118 2020/07/22 13:16:04 krw Exp $ */
+/*	$OpenBSD: arc.c,v 1.119 2020/07/24 12:43:31 krw Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -1553,7 +1553,7 @@ arc_chipA_firmware(struct arc_softc *sc)
 	DNPRINTF(ARC_D_INIT, "%s: sdram_size: %d\n", DEVNAME(sc),
 	    letoh32(fwinfo.sdram_size));
 	DNPRINTF(ARC_D_INIT, "%s: sata_ports: %d\n", DEVNAME(sc),
-	    letoh32(fwinfo.sata_ports), letoh32(fwinfo.sata_ports));
+	    letoh32(fwinfo.sata_ports));
 
 	scsi_strvis(string, fwinfo.vendor, sizeof(fwinfo.vendor));
 	DNPRINTF(ARC_D_INIT, "%s: vendor: \"%s\"\n", DEVNAME(sc), string);
@@ -1637,7 +1637,7 @@ arc_chipC_firmware(struct arc_softc *sc)
 	DNPRINTF(ARC_D_INIT, "%s: sdram_size: %d\n", DEVNAME(sc),
 	    letoh32(fwinfo.sdram_size));
 	DNPRINTF(ARC_D_INIT, "%s: sata_ports: %d\n", DEVNAME(sc),
-	    letoh32(fwinfo.sata_ports), letoh32(fwinfo.sata_ports));
+	    letoh32(fwinfo.sata_ports));
 
 	scsi_strvis(string, fwinfo.vendor, sizeof(fwinfo.vendor));
 	DNPRINTF(ARC_D_INIT, "%s: vendor: \"%s\"\n", DEVNAME(sc), string);
@@ -1711,7 +1711,7 @@ arc_chipD_firmware(struct arc_softc *sc)
 	DNPRINTF(ARC_D_INIT, "%s: sdram_size: %d\n", DEVNAME(sc),
 	    letoh32(fwinfo.sdram_size));
 	DNPRINTF(ARC_D_INIT, "%s: sata_ports: %d\n", DEVNAME(sc),
-	    letoh32(fwinfo.sata_ports), letoh32(fwinfo.sata_ports));
+	    letoh32(fwinfo.sata_ports));
 
 	scsi_strvis(string, fwinfo.vendor, sizeof(fwinfo.vendor));
 	DNPRINTF(ARC_D_INIT, "%s: vendor: \"%s\"\n", DEVNAME(sc), string);
@@ -2279,7 +2279,7 @@ arc_msgbuf(struct arc_softc *sc, void *wptr, size_t wbuflen, void *rptr,
 	int				i;
 #endif
 
-	DPRINTF("%s: arc_msgbuf wbuflen: %d rbuflen: %d\n",
+	DPRINTF("%s: arc_msgbuf wbuflen: %zu rbuflen: %zu\n",
 	    DEVNAME(sc), wbuflen, rbuflen);
 
 	switch(sc->sc_adp_type) {
@@ -2483,8 +2483,8 @@ arc_msgbuf(struct arc_softc *sc, void *wptr, size_t wbuflen, void *rptr,
 	}
 
 	if (bufhdr->len != htole16(rbuflen)) {
-		DNPRINTF(ARC_D_DB, "%s:  get_len: 0x%x, req_len: 0x%x\n",
-			DEVNAME(sc), bufhdr->len, rbuflen);
+		DNPRINTF(ARC_D_DB, "%s:  get_len: 0x%x, req_len: 0x%zu\n",
+		    DEVNAME(sc), bufhdr->len, rbuflen);
 	}
 
 	bcopy(rbuf + sizeof(struct arc_fw_bufhdr), rptr, bufhdr->len);
@@ -2711,7 +2711,7 @@ arc_read(struct arc_softc *sc, bus_size_t r)
 	    BUS_SPACE_BARRIER_READ);
 	v = bus_space_read_4(sc->sc_iot, sc->sc_ioh, r);
 
-	DNPRINTF(ARC_D_RW, "%s: arc_read 0x%x 0x%08x\n", DEVNAME(sc), r, v);
+	DNPRINTF(ARC_D_RW, "%s: arc_read 0x%lx 0x%08x\n", DEVNAME(sc), r, v);
 
 	return (v);
 }
@@ -2727,7 +2727,7 @@ arc_read_region(struct arc_softc *sc, bus_size_t r, void *buf, size_t len)
 void
 arc_write(struct arc_softc *sc, bus_size_t r, u_int32_t v)
 {
-	DNPRINTF(ARC_D_RW, "%s: arc_write 0x%x 0x%08x\n", DEVNAME(sc), r, v);
+	DNPRINTF(ARC_D_RW, "%s: arc_write 0x%lx 0x%08x\n", DEVNAME(sc), r, v);
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, r, v);
 	bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, 4,
@@ -2748,7 +2748,7 @@ arc_wait_eq(struct arc_softc *sc, bus_size_t r, u_int32_t mask,
 {
 	int				i;
 
-	DNPRINTF(ARC_D_RW, "%s: arc_wait_eq 0x%x 0x%08x 0x%08x\n",
+	DNPRINTF(ARC_D_RW, "%s: arc_wait_eq 0x%lx 0x%08x 0x%08x\n",
 	    DEVNAME(sc), r, mask, target);
 
 	for (i = 0; i < 10000; i++) {
@@ -2766,7 +2766,7 @@ arc_wait_ne(struct arc_softc *sc, bus_size_t r, u_int32_t mask,
 {
 	int				i;
 
-	DNPRINTF(ARC_D_RW, "%s: arc_wait_ne 0x%x 0x%08x 0x%08x\n",
+	DNPRINTF(ARC_D_RW, "%s: arc_wait_ne 0x%lx 0x%08x 0x%08x\n",
 	    DEVNAME(sc), r, mask, target);
 
 	for (i = 0; i < 10000; i++) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.65 2020/07/20 14:41:13 krw Exp $	*/
+/*	$OpenBSD: cac.c,v 1.66 2020/07/24 12:43:31 krw Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -746,7 +746,7 @@ void
 cac_l0_submit(struct cac_softc *sc, struct cac_ccb *ccb)
 {
 #ifdef CAC_DEBUG
-	printf("submit-%x ", ccb->ccb_paddr);
+	printf("submit-%lx ", ccb->ccb_paddr);
 #endif
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 0,
 	    sc->sc_dmamap->dm_mapsize,
@@ -764,7 +764,7 @@ cac_l0_completed(sc)
 	if (!(off = cac_inl(sc, CAC_REG_DONE_FIFO)))
 		return NULL;
 #ifdef CAC_DEBUG
-	printf("compl-%x ", off);
+	printf("compl-%lx ", off);
 #endif
 	orig_off = off;
 

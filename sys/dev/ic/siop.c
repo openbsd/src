@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.83 2020/07/20 14:41:13 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.84 2020/07/24 12:43:31 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -1927,8 +1927,8 @@ siop_morecbd(sc)
 		TAILQ_INSERT_TAIL(&sc->free_list, &newcbd->cmds[i], next);
 		splx(s);
 #ifdef SIOP_DEBUG
-		printf("tables[%d]: in=0x%x out=0x%x status=0x%x "
-		    "offset=0x%x\n", i,
+		printf("tables[%d]: in=0x%x out=0x%x status=0x%x\n",
+		    i,
 		    siop_ctoh32(&sc->sc_c,
 			newcbd->cmds[i].cmd_tables->t_msgin.addr),
 		    siop_ctoh32(&sc->sc_c,

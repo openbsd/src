@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.253 2020/07/20 14:41:13 krw Exp $	*/
+/*	$OpenBSD: ami.c,v 1.254 2020/07/24 12:43:31 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -210,14 +210,14 @@ ami_read(struct ami_softc *sc, bus_size_t r)
 	    BUS_SPACE_BARRIER_READ);
 	rv = bus_space_read_4(sc->sc_iot, sc->sc_ioh, r);
 
-	AMI_DPRINTF(AMI_D_CMD, ("ari 0x%x 0x08%x ", r, rv));
+	AMI_DPRINTF(AMI_D_CMD, ("ari 0x%lx 0x08%x ", r, rv));
 	return (rv);
 }
 
 void
 ami_write(struct ami_softc *sc, bus_size_t r, u_int32_t v)
 {
-	AMI_DPRINTF(AMI_D_CMD, ("awo 0x%x 0x%08x ", r, v));
+	AMI_DPRINTF(AMI_D_CMD, ("awo 0x%lx 0x%08x ", r, v));
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, r, v);
 	bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, 4,

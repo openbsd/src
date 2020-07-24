@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.76 2020/07/20 14:41:13 krw Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.77 2020/07/24 12:43:31 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -811,7 +811,7 @@ gdt_exec_ccb(struct gdt_ccb *ccb)
 				    GDT_SG_LEN,
 				    xfer->dm_segs[i].ds_len);
 				GDT_DPRINTF(GDT_D_IO,
-				    ("#%d va %p pa %p len %x\n", i, buf,
+				    ("#%d pa %lx len %lx\n", i,
 				    xfer->dm_segs[i].ds_addr,
 				    xfer->dm_segs[i].ds_len));
 			}
