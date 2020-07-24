@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.64 2019/07/02 09:04:53 yasuoka Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.65 2020/07/24 14:06:33 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -97,6 +97,8 @@ u_int64_t		 pf_hash(struct pf_addr *, struct pf_addr *,
 int			 pf_get_sport(struct pf_pdesc *, struct pf_rule *,
 			    struct pf_addr *, u_int16_t *, u_int16_t,
 			    u_int16_t, struct pf_src_node **);
+int			 pf_map_addr_states_increase(sa_family_t,
+				struct pf_pool *, struct pf_addr *);
 int			 pf_get_transaddr_af(struct pf_rule *,
 			    struct pf_pdesc *, struct pf_src_node **);
 int			 pf_map_addr_sticky(sa_family_t, struct pf_rule *,
@@ -319,6 +321,12 @@ pf_map_addr_sticky(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 		sns[type] = NULL;
 		return (-1);
 	}
+
+	if ((rpool->opts & PF_POOL_TYPEMASK) == PF_POOL_LEASTSTATES) {
+		if (pf_map_addr_states_increase(af, rpool, naddr) == -1)
+			return (-1);
+	}
+
 	if (!PF_AZERO(cached, af))
 		pf_addrcpy(naddr, cached, af);
 	if (pf_status.debug >= LOG_DEBUG) {
@@ -345,6 +353,7 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 	struct pf_addr		 faddr;
 	struct pf_addr		*raddr = &rpool->addr.v.a.addr;
 	struct pf_addr		*rmask = &rpool->addr.v.a.mask;
+	struct pfi_kif		*kif;
 	u_int64_t		 states;
 	u_int16_t		 weight;
 	u_int64_t		 load;
@@ -539,6 +548,7 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 
 		states = rpool->states;
 		weight = rpool->weight;
+		kif = rpool->kif;
 
 		if ((rpool->addr.type == PF_ADDR_TABLE &&
 		    rpool->addr.p.tbl->pfrkt_refcntcost > 0) ||
@@ -581,6 +591,7 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 			if (cload < load) {
 				states = rpool->states;
 				weight = rpool->weight;
+				kif = rpool->kif;
 				load = cload;
 
 				pf_addrcpy(naddr, &rpool->counter, af);
@@ -591,29 +602,10 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 		} while (pf_match_addr(1, &faddr, rmask, &rpool->counter, af) &&
 		    (states > 0));
 
-		if (rpool->addr.type == PF_ADDR_TABLE) {
-			if (pfr_states_increase(rpool->addr.p.tbl,
-			    naddr, af) == -1) {
-				if (pf_status.debug >= LOG_DEBUG) {
-					log(LOG_DEBUG,"pf: pf_map_addr: "
-					    "selected address ");
-					pf_print_host(naddr, 0, af);
-					addlog(". Failed to increase count!\n");
-				}
-				return (1);
-			}
-		} else if (rpool->addr.type == PF_ADDR_DYNIFTL) {
-			if (pfr_states_increase(rpool->addr.p.dyn->pfid_kt,
-			    naddr, af) == -1) {
-				if (pf_status.debug >= LOG_DEBUG) {
-					log(LOG_DEBUG, "pf: pf_map_addr: "
-					    "selected address ");
-					pf_print_host(naddr, 0, af);
-					addlog(". Failed to increase count!\n");
-				}
-				return (1);
-			}
-		}
+		if (pf_map_addr_states_increase(af, rpool, naddr) == -1)
+			return (1);
+		/* revert the kif which was set by pfr_pool_get() */
+		rpool->kif = kif;
 		break;
 	}
 
@@ -642,6 +634,38 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 		addlog("\n");
 	}
 
+	return (0);
+}
+
+int
+pf_map_addr_states_increase(sa_family_t af, struct pf_pool *rpool,
+    struct pf_addr *naddr)
+{
+	if (rpool->addr.type == PF_ADDR_TABLE) {
+		if (pfr_states_increase(rpool->addr.p.tbl,
+		    naddr, af) == -1) {
+			if (pf_status.debug >= LOG_DEBUG) {
+				log(LOG_DEBUG,
+				    "pf: pf_map_addr_states_increase: "
+				    "selected address ");
+				pf_print_host(naddr, 0, af);
+				addlog(". Failed to increase count!\n");
+			}
+			return (1);
+		}
+	} else if (rpool->addr.type == PF_ADDR_DYNIFTL) {
+		if (pfr_states_increase(rpool->addr.p.dyn->pfid_kt,
+		    naddr, af) == -1) {
+			if (pf_status.debug >= LOG_DEBUG) {
+				log(LOG_DEBUG,
+				    "pf: pf_map_addr_states_increase: "
+				    "selected address ");
+				pf_print_host(naddr, 0, af);
+				addlog(". Failed to increase count!\n");
+			}
+			return (1);
+		}
+	}
 	return (0);
 }
 
