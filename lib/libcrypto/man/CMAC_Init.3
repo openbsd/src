@@ -1,4 +1,4 @@
-.\" $OpenBSD: CMAC_Init.3,v 1.1 2020/06/24 16:06:27 schwarze Exp $
+.\" $OpenBSD: CMAC_Init.3,v 1.2 2020/07/24 16:38:47 jmc Exp $
 .\"
 .\" Copyright (c) 2020 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 24 2020 $
+.Dd $Mdocdate: July 24 2020 $
 .Dt CMAC_INIT 3
 .Os
 .Sh NAME
@@ -105,7 +105,7 @@ selects the given block
 .Fa cipher
 for use by
 .Fa ctx .
-Funtions to obtain suitable
+Functions to obtain suitable
 .Vt EVP_CIPHER
 objects are listed in the CIPHER LISTING section of the
 .Xr EVP_Cipher 3
@@ -188,7 +188,7 @@ Calling
 .Fn CMAC_resume
 after
 .Fn CMAC_Final
-allows to subsequently append additional data with
+subsequently appends additional data with
 .Fn CMAC_Update .
 .Pp
 .Fn CMAC_CTX_copy
