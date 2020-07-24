@@ -1,7 +1,9 @@
-#	$OpenBSD: BOOT,v 1.7 2019/09/07 14:03:52 visa Exp $
+#	$OpenBSD: BOOT,v 1.8 2020/07/24 14:54:38 visa Exp $
 
 machine		octeon mips64
 maxusers	4
+
+option		BOOT_QUIET
 
 option		SMALL_KERNEL
 option		NO_PROPOLICE
