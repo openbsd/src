@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tpmr.c,v 1.16 2020/07/24 00:45:40 kn Exp $ */
+/*	$OpenBSD: if_tpmr.c,v 1.17 2020/07/24 03:20:50 kn Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -49,9 +49,6 @@
 #include <netinet/if_ether.h>
 
 #include <net/if_bridge.h>
-#include <net/if_media.h> /* if_trunk.h uses ifmedia bits */
-#include <crypto/siphash.h> /* if_trunk.h uses siphash bits */
-#include <net/if_trunk.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -76,7 +73,6 @@ static const uint8_t	ether_8021_prefix[ETHER_ADDR_LEN - 1] =
  */
 
 #define TPMR_NUM_PORTS		2
-#define TPMR_TRUNK_PROTO	TRUNK_PROTO_NONE
 
 struct tpmr_softc;
 
@@ -425,17 +421,6 @@ tpmr_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (ISSET(ifp->if_flags, IFF_RUNNING))
 				error = tpmr_down(sc);
 		}
-		break;
-
-	case SIOCSTRUNKOPTS:
-		error = suser(curproc);
-		if (error != 0)
-			break;
-
-		error = EPROTONOSUPPORT;
-		break;
-
-	case SIOCGTRUNKOPTS:
 		break;
 
 	case SIOCBRDGADD:
