@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tpmr.c,v 1.14 2020/07/22 04:08:46 dlg Exp $ */
+/*	$OpenBSD: if_tpmr.c,v 1.15 2020/07/24 00:43:09 kn Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -128,7 +128,6 @@ static int	tpmr_p_ioctl(struct ifnet *, u_long, caddr_t);
 static int	tpmr_p_output(struct ifnet *, struct mbuf *,
 		    struct sockaddr *, struct rtentry *);
 
-static int	tpmr_get_trunk(struct tpmr_softc *, struct trunk_reqall *);
 static void	tpmr_p_dtor(struct tpmr_softc *, struct tpmr_port *,
 		    const char *);
 static int	tpmr_add_port(struct tpmr_softc *,
@@ -429,23 +428,6 @@ tpmr_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 
-	case SIOCSTRUNK:
-		error = suser(curproc);
-		if (error != 0)
-			break;
-
-		if (((struct trunk_reqall *)data)->ra_proto !=
-		    TRUNK_PROTO_LACP) {
-			error = EPROTONOSUPPORT;
-			break;
-		}
-
-		/* nop */
-		break;
-	case SIOCGTRUNK:
-		error = tpmr_get_trunk(sc, (struct trunk_reqall *)data);
-		break;
-
 	case SIOCSTRUNKOPTS:
 		error = suser(curproc);
 		if (error != 0)
@@ -482,59 +464,6 @@ tpmr_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	if (error == ENETRESET)
 		error = tpmr_iff(sc);
-
-	return (error);
-}
-
-static int
-tpmr_get_trunk(struct tpmr_softc *sc, struct trunk_reqall *ra)
-{
-	struct ifnet *ifp = &sc->sc_if;
-	size_t size = ra->ra_size;
-	caddr_t ubuf = (caddr_t)ra->ra_port;
-	int error = 0;
-	int i;
-
-	ra->ra_proto = TPMR_TRUNK_PROTO;
-	memset(&ra->ra_psc, 0, sizeof(ra->ra_psc));
-
-	ra->ra_ports = sc->sc_nports;
-	for (i = 0; i < nitems(sc->sc_ports); i++) {
-		struct trunk_reqport rp;
-		struct ifnet *ifp0;
-		struct tpmr_port *p = SMR_PTR_GET_LOCKED(&sc->sc_ports[i]);
-		if (p == NULL)
-			continue;
-
-		if (size < sizeof(rp))
-			break;
-
-		ifp0 = p->p_ifp0;
-
-		CTASSERT(sizeof(rp.rp_ifname) == sizeof(ifp->if_xname));
-		CTASSERT(sizeof(rp.rp_portname) == sizeof(ifp0->if_xname));
-
-		memset(&rp, 0, sizeof(rp));
-		memcpy(rp.rp_ifname, ifp->if_xname, sizeof(rp.rp_ifname));
-		memcpy(rp.rp_portname, ifp0->if_xname, sizeof(rp.rp_portname));
-
-		if (!ISSET(ifp0->if_flags, IFF_RUNNING))
-			SET(rp.rp_flags, TRUNK_PORT_DISABLED);
-		else {
-			SET(rp.rp_flags, TRUNK_PORT_ACTIVE);
-			if (LINK_STATE_IS_UP(ifp0->if_link_state)) {
-				SET(rp.rp_flags, TRUNK_PORT_COLLECTING |
-				    TRUNK_PORT_DISTRIBUTING);
-			}
-		}
-
-		error = copyout(&rp, ubuf, sizeof(rp));
-		if (error != 0)
-			break;
-
-		ubuf += sizeof(rp);
-		size -= sizeof(rp);
-	}
 
 	return (error);
 }
