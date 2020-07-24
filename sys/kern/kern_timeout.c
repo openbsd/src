@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.74 2020/07/24 04:53:04 kn Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.75 2020/07/24 21:01:33 cheloha Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -65,7 +65,8 @@ struct timeoutstat tostat;		/* [T] statistics and totals */
 #define WHEELBITS 8
 
 struct circq timeout_wheel[BUCKETS];	/* [T] Queues of timeouts */
-struct circq timeout_todo;		/* [T] Due or needs scheduling */
+struct circq timeout_new;		/* [T] New, unscheduled timeouts */
+struct circq timeout_todo;		/* [T] Due or needs rescheduling */
 struct circq timeout_proc;		/* [T] Due + needs process context */
 
 #define MASKWHEEL(wheel, time) (((time) >> ((wheel)*WHEELBITS)) & WHEELMASK)
@@ -203,6 +204,7 @@ timeout_startup(void)
 {
 	int b;
 
+	CIRCQ_INIT(&timeout_new);
 	CIRCQ_INIT(&timeout_todo);
 	CIRCQ_INIT(&timeout_proc);
 	for (b = 0; b < nitems(timeout_wheel); b++)
@@ -266,13 +268,13 @@ timeout_add(struct timeout *new, int to_ticks)
 	if (ISSET(new->to_flags, TIMEOUT_ONQUEUE)) {
 		if (new->to_time - ticks < old_time - ticks) {
 			CIRCQ_REMOVE(&new->to_list);
-			CIRCQ_INSERT_TAIL(&timeout_todo, &new->to_list);
+			CIRCQ_INSERT_TAIL(&timeout_new, &new->to_list);
 		}
 		tostat.tos_readded++;
 		ret = 0;
 	} else {
 		SET(new->to_flags, TIMEOUT_ONQUEUE);
-		CIRCQ_INSERT_TAIL(&timeout_todo, &new->to_list);
+		CIRCQ_INSERT_TAIL(&timeout_new, &new->to_list);
 	}
 	tostat.tos_added++;
 	mtx_leave(&timeout_mutex);
@@ -449,7 +451,7 @@ timeout_proc_barrier(void *arg)
 void
 timeout_hardclock_update(void)
 {
-	int need_softclock;
+	int need_softclock = 1;
 
 	mtx_enter(&timeout_mutex);
 
@@ -462,7 +464,9 @@ timeout_hardclock_update(void)
 				MOVEBUCKET(3, ticks);
 		}
 	}
-	need_softclock = !CIRCQ_EMPTY(&timeout_todo);
+
+	if (CIRCQ_EMPTY(&timeout_new) && CIRCQ_EMPTY(&timeout_todo))
+		need_softclock = 0;
 
 	mtx_leave(&timeout_mutex);
 
@@ -507,6 +511,7 @@ softclock(void *arg)
 	int delta, needsproc;
 
 	mtx_enter(&timeout_mutex);
+	CIRCQ_CONCAT(&timeout_todo, &timeout_new);
 	while (!CIRCQ_EMPTY(&timeout_todo)) {
 		to = timeout_from_circq(CIRCQ_FIRST(&timeout_todo));
 		CIRCQ_REMOVE(&to->to_list);
@@ -652,6 +657,8 @@ db_show_callout_bucket(struct circq *bucket)
 			where = "softint";
 		else if (bucket == &timeout_proc)
 			where = "thread";
+		else if (bucket == &timeout_new)
+			where = "new";
 		else {
 			snprintf(buf, sizeof(buf), "%3ld/%1ld",
 			    (bucket - timeout_wheel) % WHEELSIZE,
@@ -672,6 +679,7 @@ db_show_callout(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 	db_printf("ticks now: %d\n", ticks);
 	db_printf("%9s  %7s  %*s  func\n", "ticks", "wheel", width, "arg");
 
+	db_show_callout_bucket(&timeout_new);
 	db_show_callout_bucket(&timeout_todo);
 	db_show_callout_bucket(&timeout_proc);
 	for (b = 0; b < nitems(timeout_wheel); b++)
