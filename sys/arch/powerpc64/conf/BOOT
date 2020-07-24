@@ -1,7 +1,9 @@
-# $OpenBSD: BOOT,v 1.2 2020/07/19 12:12:08 kettenis Exp $
+# $OpenBSD: BOOT,v 1.3 2020/07/24 14:27:47 kettenis Exp $
 
 machine		powerpc64
 maxusers	4
+
+option		BOOT_QUIET
 
 option		SMALL_KERNEL
 option		NO_PROPOLICE

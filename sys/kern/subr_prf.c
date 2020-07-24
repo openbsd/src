@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.100 2020/07/20 17:55:28 deraadt Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.101 2020/07/24 14:27:47 kettenis Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -138,6 +138,14 @@ int splassert_ctl = 1;
 
 void (*v_putc)(int) = cnputc;	/* start with cnputc (normal cons) */
 
+/*
+ * Silence kernel printf when masquerading as a bootloader.
+ */
+#ifdef BOOT_QUIET
+int printf_flags = TOLOG;
+#else
+int printf_flags = TOCONS | TOLOG;
+#endif
 
 /*
  * functions
@@ -181,6 +189,9 @@ panic(const char *fmt, ...)
 
 	/* do not trigger assertions, we know that we are inconsistent */
 	splassert_ctl = 0;
+
+	/* make sure we see kernel printf output */
+	printf_flags |= TOCONS;
 
 	bootopt = RB_AUTOBOOT | RB_DUMP;
 	va_start(ap, fmt);
@@ -500,10 +511,9 @@ printf(const char *fmt, ...)
 	va_list ap;
 	int retval;
 
-
 	va_start(ap, fmt);
 	mtx_enter(&kprintf_mutex);
-	retval = kprintf(fmt, TOCONS | TOLOG, NULL, NULL, ap);
+	retval = kprintf(fmt, printf_flags, NULL, NULL, ap);
 	mtx_leave(&kprintf_mutex);
 	va_end(ap);
 	if (!panicstr)
