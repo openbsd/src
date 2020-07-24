@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1093 2020/06/24 22:03:42 cheloha Exp $ */
+/*	$OpenBSD: pf.c,v 1.1094 2020/07/24 18:17:15 mvs Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3081,7 +3081,7 @@ pf_match_tag(struct mbuf *m, struct pf_rule *r, int *tag)
 int
 pf_match_rcvif(struct mbuf *m, struct pf_rule *r)
 {
-	struct ifnet *ifp;
+	struct ifnet *ifp, *ifp0;
 	struct pfi_kif *kif;
 
 	ifp = if_get(m->m_pkthdr.ph_ifidx);
@@ -3089,9 +3089,11 @@ pf_match_rcvif(struct mbuf *m, struct pf_rule *r)
 		return (0);
 
 #if NCARP > 0
-	if (ifp->if_type == IFT_CARP && ifp->if_carpdev)
-		kif = (struct pfi_kif *)ifp->if_carpdev->if_pf_kif;
-	else
+	if (ifp->if_type == IFT_CARP &&
+	    (ifp0 = if_get(ifp->if_carpdevidx)) != NULL) {
+		kif = (struct pfi_kif *)ifp0->if_pf_kif;
+		if_put(ifp0);
+	} else
 #endif /* NCARP */
 		kif = (struct pfi_kif *)ifp->if_pf_kif;
 
@@ -5926,7 +5928,8 @@ pf_routable(struct pf_addr *addr, sa_family_t af, struct pfi_kif *kif,
 
 				ifp = if_get(rt->rt_ifidx);
 				if (ifp != NULL && ifp->if_type == IFT_CARP &&
-				    ifp->if_carpdev == kif->pfik_ifp)
+				    ifp->if_carpdevidx ==
+				    kif->pfik_ifp->if_index)
 					ret = 1;
 				if_put(ifp);
 #endif /* NCARP */
@@ -6852,6 +6855,7 @@ pf_counters_inc(int action, struct pf_pdesc *pd, struct pf_state *s,
 int
 pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 {
+	struct ifnet		*ifp0;
 	struct pfi_kif		*kif;
 	u_short			 action, reason = 0;
 	struct pf_rule		*a = NULL, *r = &pf_default_rule;
@@ -6866,9 +6870,11 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 		return (PF_PASS);
 
 #if NCARP > 0
-	if (ifp->if_type == IFT_CARP && ifp->if_carpdev)
-		kif = (struct pfi_kif *)ifp->if_carpdev->if_pf_kif;
-	else
+	if (ifp->if_type == IFT_CARP &&
+		(ifp0 = if_get(ifp->if_carpdevidx)) != NULL) {
+		kif = (struct pfi_kif *)ifp0->if_pf_kif;
+		if_put(ifp0);
+	} else
 #endif /* NCARP */
 		kif = (struct pfi_kif *)ifp->if_pf_kif;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.110 2020/07/22 02:16:02 dlg Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.111 2020/07/24 18:17:15 mvs Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -139,10 +139,11 @@ struct ifnet {				/* and the entries */
 	caddr_t	if_pf_kif;		/* pf interface abstraction */
 	union {
 		struct srpl carp_s;	/* carp if list (used by !carp ifs) */
-		struct ifnet *carp_d;	/* ptr to carpdev (used by carp ifs) */
+		int carp_idx;		/* index of carpdev (used by carp
+						ifs) */
 	} if_carp_ptr;
 #define if_carp		if_carp_ptr.carp_s
-#define if_carpdev	if_carp_ptr.carp_d
+#define if_carpdevidx	if_carp_ptr.carp_idx
 	unsigned int if_index;		/* [I] unique index for this if */
 	short	if_timer;		/* time 'til if_watchdog called */
 	unsigned short if_flags;	/* [N] up/down, broadcast, etc. */
