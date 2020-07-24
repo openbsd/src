@@ -1,6 +1,6 @@
-#	$OpenBSD: Syslogd.pm,v 1.24 2019/09/10 19:58:13 bluhm Exp $
+#	$OpenBSD: Syslogd.pm,v 1.25 2020/07/24 22:12:00 bluhm Exp $
 
-# Copyright (c) 2010-2019 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2020 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2014 Florian Riehm <mail@friehm.de>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -31,6 +31,8 @@ use Time::HiRes qw(time alarm sleep);
 sub new {
 	my $class = shift;
 	my %args = @_;
+	$args{ktraceexec} = "ktrace" if $args{ktrace};
+	$args{ktraceexec} = $ENV{KTRACE} if $ENV{KTRACE};
 	$args{ktracefile} ||= "syslogd.ktrace";
 	$args{fstatfile} ||= "syslogd.fstat";
 	$args{logfile} ||= "syslogd.log";
@@ -191,9 +193,9 @@ sub child {
 		push @libevent, "$_=1" if delete $ENV{$_};
 	}
 	push @libevent, "EVENT_SHOW_METHOD=1" if @libevent;
-	my @ktrace = $ENV{KTRACE} || ();
-	@ktrace = "ktrace" if $self->{ktrace} && !@ktrace;
-	push @ktrace, "-i", "-f", $self->{ktracefile} if @ktrace;
+	my @ktrace;
+	@ktrace = ($self->{ktraceexec}, "-i", "-f", $self->{ktracefile})
+	    if $self->{ktraceexec};
 	my @cmd = (@sudo, @libevent, @ktrace, $self->{execfile},
 	    "-f", $self->{conffile});
 	push @cmd, "-d" if !$self->{foreground} && !$self->{daemon};

@@ -1,6 +1,6 @@
-#	$OpenBSD: Server.pm,v 1.11 2017/01/31 18:02:54 bluhm Exp $
+#	$OpenBSD: Server.pm,v 1.12 2020/07/24 22:12:00 bluhm Exp $
 
-# Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2020 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -29,6 +29,8 @@ use IO::Socket::SSL;
 sub new {
 	my $class = shift;
 	my %args = @_;
+	$args{ktracepid} = "ktrace" if $args{ktrace};
+	$args{ktracepid} = $ENV{KTRACE} if $ENV{KTRACE};
 	$args{ktracefile} ||= "server.ktrace";
 	$args{logfile} ||= "server.log";
 	$args{up} ||= "Accepted";
