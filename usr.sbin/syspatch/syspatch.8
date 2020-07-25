@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syspatch.8,v 1.20 2019/06/15 16:54:19 ajacoutot Exp $
+.\"	$OpenBSD: syspatch.8,v 1.21 2020/07/25 15:45:44 solene Exp $
 .\"
 .\" Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 15 2019 $
+.Dd $Mdocdate: July 25 2020 $
 .Dt SYSPATCH 8
 .Os
 .Sh NAME
@@ -62,6 +62,8 @@ Directories containing the rollback tarball and original signed
 .Xr diff 1
 of installed patches.
 .El
+.Sh EXIT STATUS
+.Ex -std syspatch
 .Sh SEE ALSO
 .Xr signify 1 ,
 .Xr installurl 5 ,
