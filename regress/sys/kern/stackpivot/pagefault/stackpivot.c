@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <unistd.h>
 #include <sys/mman.h>
 
 #include "../pivot.h"
@@ -31,15 +32,14 @@ size_t dowork() {
     size_t i;
     for (i = 0; i < scansize; ++i)
         b += *scan++;
+
+    // We should be killed before we get here
+    pivot(realstack);
     return b;
 }
 
 void doexit() {
-    exit(0);
-}
-
-void unpivot() {
-    pivot(realstack);
+    _exit(0);
 }
 
 int main() {
@@ -55,7 +55,6 @@ int main() {
     /* set up a basic alt stack on the heap that does some work */
     size_t *newstack = calloc(10, sizeof(size_t));
     newstack[0] = (size_t)dowork;
-    newstack[1] = (size_t)unpivot;
     pivot(newstack);
     return 0;
 }

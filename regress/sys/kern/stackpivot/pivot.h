@@ -10,6 +10,10 @@ static void pivot(size_t *newstack) {
     asm("mov %0, %%esp; retl;" ::"r"(newstack));
 #elif defined(__mips64__)
     asm("move $sp, %0; ld $ra, 0($sp); jr $ra;" ::"r"(newstack));
+#elif defined(__powerpc64__)
+    asm("mr %%r1, %0; ld %%r3, 0(%%r1); mtlr %%r3; blr;" ::"r"(newstack));
+#elif defined(__powerpc__)
+    asm("mr %%r1, %0; lwz %%r3, 0(%%r1); mtlr %%r3; blr;" ::"r"(newstack));
 #endif
 }
 
