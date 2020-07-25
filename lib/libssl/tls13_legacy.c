@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_legacy.c,v 1.10 2020/07/14 18:55:59 jsing Exp $ */
+/*	$OpenBSD: tls13_legacy.c,v 1.11 2020/07/25 17:44:30 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -207,6 +207,9 @@ tls13_legacy_read_bytes(SSL *ssl, int type, unsigned char *buf, int len, int pee
 			return ret;
 		return tls13_legacy_return_code(ssl, TLS13_IO_WANT_POLLIN);
 	}
+
+	tls13_record_layer_set_retry_after_phh(ctx->rl,
+	    (ctx->ssl->internal->mode & SSL_MODE_AUTO_RETRY) != 0);
 
 	if (type != SSL3_RT_APPLICATION_DATA) {
 		SSLerror(ssl, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
