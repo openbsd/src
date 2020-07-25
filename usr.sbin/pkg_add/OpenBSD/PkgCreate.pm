@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.167 2020/01/26 12:50:17 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.168 2020/07/25 12:08:17 ajacoutot Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1306,7 +1306,7 @@ sub add_description
 		chomp;
 		if ($state->safe($_) ne $_) {
 			$state->errsay(
-			    "DESC contains weird characters: #1 on line #2", 
+			    "DESCR contains weird characters: #1 on line #2", 
 			    $_, $.);
 		$errors++;
 		}
