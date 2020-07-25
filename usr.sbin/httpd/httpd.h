@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.146 2020/02/09 09:44:04 florian Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.147 2020/07/25 21:12:49 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -121,24 +121,12 @@ struct ctl_flags {
 	uint8_t		 cf_tls_sid[TLS_MAX_SESSION_ID_LENGTH];
 };
 
-enum key_type {
-	KEY_TYPE_NONE		= 0,
-	KEY_TYPE_COOKIE,
-	KEY_TYPE_HEADER,
-	KEY_TYPE_PATH,
-	KEY_TYPE_QUERY,
-	KEY_TYPE_URL,
-	KEY_TYPE_MAX
-};
-
 TAILQ_HEAD(kvlist, kv);
 RB_HEAD(kvtree, kv);
 
 struct kv {
 	char			*kv_key;
 	char			*kv_value;
-
-	enum key_type		 kv_type;
 
 #define KV_FLAG_INVALID		 0x01
 #define KV_FLAG_GLOBBING	 0x02
