@@ -1,8 +1,8 @@
-/* $OpenBSD: db_disasm.c,v 1.3 2020/07/25 12:26:09 tobhe Exp $ */
-/* $NetBSD: db_disasm.c,v 1.10 2020/07/09 23:43:41 ryo Exp $ */
+/*	$OpenBSD: disasm.h,v 1.1 2020/07/25 12:26:09 tobhe Exp $ */
+/*	$NetBSD: disasm.h,v 1.1 2018/04/01 04:35:03 ryo Exp $	*/
 
 /*
- * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
+ * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,37 +27,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-#include <machine/db_machdep.h>
-#include <ddb/db_interface.h>
-#include <ddb/db_sym.h>
-#include <ddb/db_output.h>
-#include <ddb/db_access.h>
+#ifndef _ARM64_DISASM_H_
+#define _ARM64_DISASM_H_
 
-#include <arch/arm64/arm64/disasm.h>
+typedef struct {
+	db_expr_t (*di_readword)(db_expr_t);
+	void (*di_printaddr)(db_expr_t);
+	int (*di_printf)(const char *, ...)
+	    __attribute__((__format__(__kprintf__,1,2)));
+} disasm_interface_t;
 
-static db_expr_t
-db_disasm_readword(db_expr_t address)
-{
-	return db_get_value(address, sizeof(uint32_t), false);
-}
+void disasm_insn(const disasm_interface_t *, vaddr_t, uint32_t);
+vaddr_t disasm(const disasm_interface_t *, vaddr_t);
 
-static void
-db_disasm_printaddr(db_expr_t address)
-{
-	db_printf("%lx <", address);
-	db_printsym((vaddr_t)address, DB_STGY_ANY, db_printf);
-	db_printf(">");
-}
-
-static const disasm_interface_t db_disasm_interface = {
-	.di_readword = db_disasm_readword,
-	.di_printaddr = db_disasm_printaddr,
-	.di_printf = db_printf
-};
-
-vaddr_t
-db_disasm(vaddr_t loc, int altfmt)
-{
-	return disasm(&db_disasm_interface, loc);
-}
+#endif /* _ARM64_DISASM_H_ */
