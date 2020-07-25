@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.37 2020/07/23 18:51:24 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.38 2020/07/25 10:11:38 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -1411,26 +1411,32 @@ pmap_proc_iflush(struct process *pr, vaddr_t va, vsize_t len)
 }
 
 void
-pmap_set_kernel_slb(int idx, vaddr_t va)
+pmap_set_kernel_slb(vaddr_t va)
 {
-	struct cpu_info *ci = curcpu();
-	uint64_t esid, slbe, slbv;
+	uint64_t esid;
+	int idx;
 
 	esid = va >> ADDR_ESID_SHIFT;
-	kernel_slb_desc[idx].slbd_esid = esid;
-	slbe = (esid << SLBE_ESID_SHIFT) | SLBE_VALID | idx;
-	slbv = pmap_kernel_vsid(esid) << SLBV_VSID_SHIFT;
-	slbmte(slbv, slbe);
 
-	ci->ci_kernel_slb[idx].slb_slbe = slbe;
-	ci->ci_kernel_slb[idx].slb_slbv = slbv;
+	for (idx = 0; idx < 31; idx++) {
+		if (kernel_slb_desc[idx].slbd_vsid == 0)
+			break;
+		if (kernel_slb_desc[idx].slbd_esid == esid)
+			return;
+	}
+	KASSERT(idx < 31);
+
+	kernel_slb_desc[idx].slbd_esid = esid;
+	kernel_slb_desc[idx].slbd_vsid = pmap_kernel_vsid(esid);
 }
 
 void
 pmap_bootstrap_cpu(void)
 {
-	vaddr_t va;
-	int idx = 0;
+	struct cpu_info *ci = curcpu();
+	uint64_t esid, vsid;
+	uint64_t slbe, slbv;
+	int idx;
 
 	/* Clear SLB. */
 	slbia();
@@ -1442,18 +1448,21 @@ pmap_bootstrap_cpu(void)
 	/* Set partition table. */
 	mtptcr((paddr_t)pmap_pat | PATSIZE);
 
-	/* SLB entry for the kernel. */
-	pmap_set_kernel_slb(idx++, (vaddr_t)_start);
+	/* Load SLB. */
+	for (idx = 0; idx < 31; idx++) {
+		if (kernel_slb_desc[idx].slbd_vsid == 0)
+			break;
 
-	/* SLB entries for the page tables. */
-	for (va = (vaddr_t)pmap_ptable; va < (vaddr_t)pmap_ptable + HTABMEMSZ;
-	     va += SEGMENT_SIZE)
-		pmap_set_kernel_slb(idx++, va);
+		esid = kernel_slb_desc[idx].slbd_esid;
+		vsid = kernel_slb_desc[idx].slbd_vsid;
 
-	/* SLB entries for kernel VA. */
-	for (va = VM_MIN_KERNEL_ADDRESS; va < VM_MAX_KERNEL_ADDRESS;
-	     va += SEGMENT_SIZE)
-		pmap_set_kernel_slb(idx++, va);
+		slbe = (esid << SLBE_ESID_SHIFT) | SLBE_VALID | idx;
+		slbv = vsid << SLBV_VSID_SHIFT;
+		slbmte(slbv, slbe);
+
+		ci->ci_kernel_slb[idx].slb_slbe = slbe;
+		ci->ci_kernel_slb[idx].slb_slbv = slbv;
+	}
 }
 
 void
@@ -1461,6 +1470,7 @@ pmap_bootstrap(void)
 {
 	paddr_t start, end, pa;
 	vm_prot_t prot;
+	vaddr_t va;
 
 #define HTABENTS 2048
 
@@ -1506,6 +1516,19 @@ pmap_bootstrap(void)
 	pmap_pat = pmap_steal_avail(PATMEMSZ, PATMEMSZ);
 	memset(pmap_pat, 0, PATMEMSZ);
 	pmap_pat[0].pate_htab = (paddr_t)pmap_ptable | HTABSIZE;
+
+	/* SLB entry for the kernel. */
+	pmap_set_kernel_slb((vaddr_t)_start);
+
+	/* SLB entries for the page tables. */
+	for (va = (vaddr_t)pmap_ptable; va < (vaddr_t)pmap_ptable + HTABMEMSZ;
+	     va += SEGMENT_SIZE)
+		pmap_set_kernel_slb(va);
+
+	/* SLB entries for kernel VA. */
+	for (va = VM_MIN_KERNEL_ADDRESS; va < VM_MAX_KERNEL_ADDRESS;
+	     va += SEGMENT_SIZE)
+		pmap_set_kernel_slb(va);
 
 	pmap_bootstrap_cpu();
 
