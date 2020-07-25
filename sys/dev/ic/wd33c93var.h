@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd33c93var.h,v 1.2 2014/06/27 17:51:08 miod Exp $	*/
+/*	$OpenBSD: wd33c93var.h,v 1.3 2020/07/25 13:50:49 krw Exp $	*/
 /*	$NetBSD: wd33c93var.h,v 1.10 2009/05/12 14:25:18 cegger Exp $	*/
 
 /*
@@ -120,7 +120,6 @@ struct wd33c93_softc {
 	struct device	sc_dev;
 
 	struct timeout sc_watchdog;
-	struct scsi_link sc_link;
 	void	*sc_driver;		/* driver specific field */
 
 	int	target;			/* Currently active target */
