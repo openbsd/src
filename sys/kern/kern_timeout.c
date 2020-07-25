@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.75 2020/07/24 21:01:33 cheloha Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.76 2020/07/25 00:48:04 cheloha Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -258,7 +258,7 @@ timeout_add(struct timeout *new, int to_ticks)
 	/* Initialize the time here, it won't change. */
 	old_time = new->to_time;
 	new->to_time = to_ticks + ticks;
-	CLR(new->to_flags, TIMEOUT_TRIGGERED | TIMEOUT_SCHEDULED);
+	CLR(new->to_flags, TIMEOUT_TRIGGERED);
 
 	/*
 	 * If this timeout already is scheduled and now is moved
@@ -387,7 +387,7 @@ timeout_del(struct timeout *to)
 		tostat.tos_cancelled++;
 		ret = 1;
 	}
-	CLR(to->to_flags, TIMEOUT_TRIGGERED | TIMEOUT_SCHEDULED);
+	CLR(to->to_flags, TIMEOUT_TRIGGERED);
 	tostat.tos_deleted++;
 	mtx_leave(&timeout_mutex);
 
@@ -483,7 +483,7 @@ timeout_run(struct timeout *to)
 
 	MUTEX_ASSERT_LOCKED(&timeout_mutex);
 
-	CLR(to->to_flags, TIMEOUT_ONQUEUE | TIMEOUT_SCHEDULED);
+	CLR(to->to_flags, TIMEOUT_ONQUEUE);
 	SET(to->to_flags, TIMEOUT_TRIGGERED);
 
 	fn = to->to_func;
@@ -507,14 +507,21 @@ void
 softclock(void *arg)
 {
 	struct circq *bucket;
-	struct timeout *to;
-	int delta, needsproc;
+	struct timeout *first_new, *to;
+	int delta, needsproc, new;
+
+	first_new = NULL;
+	new = 0;
 
 	mtx_enter(&timeout_mutex);
+	if (!CIRCQ_EMPTY(&timeout_new))
+		first_new = timeout_from_circq(CIRCQ_FIRST(&timeout_new));
 	CIRCQ_CONCAT(&timeout_todo, &timeout_new);
 	while (!CIRCQ_EMPTY(&timeout_todo)) {
 		to = timeout_from_circq(CIRCQ_FIRST(&timeout_todo));
 		CIRCQ_REMOVE(&to->to_list);
+		if (to == first_new)
+			new = 1;
 
 		/*
 		 * If due run it or defer execution to the thread,
@@ -524,14 +531,12 @@ softclock(void *arg)
 		if (delta > 0) {
 			bucket = &BUCKET(delta, to->to_time);
 			CIRCQ_INSERT_TAIL(bucket, &to->to_list);
-			if (ISSET(to->to_flags, TIMEOUT_SCHEDULED))
-				tostat.tos_rescheduled++;
-			else
-				SET(to->to_flags, TIMEOUT_SCHEDULED);
 			tostat.tos_scheduled++;
+			if (!new)
+				tostat.tos_rescheduled++;
 			continue;
 		}
-		if (ISSET(to->to_flags, TIMEOUT_SCHEDULED) && delta < 0)
+		if (!new && delta < 0)
 			tostat.tos_late++;
 		if (ISSET(to->to_flags, TIMEOUT_PROC)) {
 			CIRCQ_INSERT_TAIL(&timeout_proc, &to->to_list);
