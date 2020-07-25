@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_info.c,v 1.23 2020/07/23 17:15:35 schwarze Exp $ */
+/* $OpenBSD: pem_info.c,v 1.24 2020/07/25 11:53:37 schwarze Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -128,7 +128,6 @@ PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk, pem_password_cb *cb,
 			}
 			goto err;
 		}
-start:
 		if ((strcmp(name, PEM_STRING_X509) == 0) ||
 		    (strcmp(name, PEM_STRING_X509_OLD) == 0)) {
 			d2i = (D2I_OF(void))d2i_X509;
@@ -137,7 +136,6 @@ start:
 					goto err;
 				if ((xi = X509_INFO_new()) == NULL)
 					goto err;
-				goto start;
 			}
 			pp = &(xi->x509);
 		} else if ((strcmp(name, PEM_STRING_X509_TRUSTED) == 0)) {
@@ -147,7 +145,6 @@ start:
 					goto err;
 				if ((xi = X509_INFO_new()) == NULL)
 					goto err;
-				goto start;
 			}
 			pp = &(xi->x509);
 		} else if (strcmp(name, PEM_STRING_X509_CRL) == 0) {
@@ -157,7 +154,6 @@ start:
 					goto err;
 				if ((xi = X509_INFO_new()) == NULL)
 					goto err;
-				goto start;
 			}
 			pp = &(xi->crl);
 		} else
@@ -169,12 +165,9 @@ start:
 					goto err;
 				if ((xi = X509_INFO_new()) == NULL)
 					goto err;
-				goto start;
 			}
-
 			xi->enc_data = NULL;
 			xi->enc_len = 0;
-
 			xi->x_pkey = X509_PKEY_new();
 			if (xi->x_pkey == NULL)
 				goto err;
@@ -192,12 +185,9 @@ start:
 					goto err;
 				if ((xi = X509_INFO_new()) == NULL)
 					goto err;
-				goto start;
 			}
-
 			xi->enc_data = NULL;
 			xi->enc_len = 0;
-
 			xi->x_pkey = X509_PKEY_new();
 			if (xi->x_pkey == NULL)
 				goto err;
@@ -215,12 +205,9 @@ start:
 					goto err;
 				if ((xi = X509_INFO_new()) == NULL)
 					goto err;
-				goto start;
 			}
-
 			xi->enc_data = NULL;
 			xi->enc_len = 0;
-
 			xi->x_pkey = X509_PKEY_new();
 			if (xi->x_pkey == NULL)
 				goto err;
