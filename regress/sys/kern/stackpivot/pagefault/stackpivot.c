@@ -54,6 +54,7 @@ int main() {
 
     /* set up a basic alt stack on the heap that does some work */
     size_t *newstack = calloc(10, sizeof(size_t));
+    printf("non-MAP_STACK stack at %p\n", newstack);
     newstack[0] = (size_t)dowork;
     pivot(newstack);
     return 0;

@@ -27,7 +27,7 @@ void doexit() {
 int main() {
     /* set up an alt stack on the heap that just calls doexit */
     size_t *newstack = calloc(10, sizeof(size_t));
-    printf("%p\n", newstack);
+    printf("non-MAP_STACK stack at %p\n", newstack);
     newstack[0] = (size_t)doexit;
     pivot(newstack);
     return 0;
