@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_acct.c,v 1.42 2019/10/22 21:19:22 cheloha Exp $	*/
+/*	$OpenBSD: kern_acct.c,v 1.43 2020/07/26 13:27:24 rob Exp $	*/
 /*	$NetBSD: kern_acct.c,v 1.42 1996/02/04 02:15:12 christos Exp $	*/
 
 /*-
@@ -233,7 +233,7 @@ acct_process(struct proc *p)
 	else
 		acct.ac_tty = NODEV;
 
-	/* (8) The boolean flags that tell how the process terminated, etc. */
+	/* (8) The boolean flags that tell how process terminated or misbehaved. */
 	acct.ac_flag = pr->ps_acflag;
 
 	/*

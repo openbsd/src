@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acct.2,v 1.18 2015/09/10 17:55:21 schwarze Exp $
+.\"	$OpenBSD: acct.2,v 1.19 2020/07/26 13:27:23 rob Exp $
 .\"	$NetBSD: acct.2,v 1.6 1995/02/27 12:31:47 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)acct.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: July 26 2020 $
 .Dt ACCT 2
 .Os
 .Sh NAME
@@ -51,14 +51,13 @@ is
 accounting is disabled.
 If
 .Fa file
-is an existing, NUL-terminated pathname, record collection is enabled
-and for every process initiated which terminates under normal conditions
+is an existing, NUL-terminated pathname, record collection is enabled.
+For every process initiated which terminates under normal conditions or
+misbehaves in very specific ways (e.g. file access prevented by unveil),
 an accounting record is appended to
 .Fa file .
 Abnormal conditions of termination are reboots or other
 fatal system problems.
-Records for processes which never terminate cannot be produced by
-.Fn acct .
 .Fn acct
 is only available on kernels compiled with the
 .Cm ACCOUNTING
