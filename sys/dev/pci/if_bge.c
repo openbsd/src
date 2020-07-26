@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.391 2020/07/10 13:26:37 patrick Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.392 2020/07/26 17:44:15 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -3235,7 +3235,8 @@ bge_reset(struct bge_softc *sc)
 		write_op = bge_writereg_ind;
 
 	if (BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5700 &&
-	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5701) {
+	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5701 &&
+	    !(sc->bge_flags & BGE_NO_EEPROM)) {
 		CSR_WRITE_4(sc, BGE_NVRAM_SWARB, BGE_NVRAMSWARB_SET1);
 		for (i = 0; i < 8000; i++) {
 			if (CSR_READ_4(sc, BGE_NVRAM_SWARB) &
