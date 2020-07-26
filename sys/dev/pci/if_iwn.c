@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.239 2020/07/20 08:22:06 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.240 2020/07/26 12:23:32 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2512,6 +2512,9 @@ iwn_rx_statistics(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	sc->noise = iwn_get_noise(&stats->rx.general);
 
 	/* Test that RSSI and noise are present in stats report. */
+	if (sc->noise == -127)
+		return;
+
 	if (letoh32(stats->rx.general.flags) != 1) {
 		DPRINTF(("received statistics without RSSI\n"));
 		return;
@@ -3053,7 +3056,7 @@ iwn_notif_intr(struct iwn_softc *sc)
 
 			bus_dmamap_sync(sc->sc_dmat, data->map, sizeof (*desc),
 			    sizeof (*scan), BUS_DMASYNC_POSTREAD);
-			DPRINTFN(2, ("scanning channel %d status %x\n",
+			DPRINTFN(2, ("scan start: chan %d status %x\n",
 			    scan->chan, letoh32(scan->status)));
 
 			if (sc->sc_flags & IWN_FLAG_BGSCAN)
@@ -3070,7 +3073,7 @@ iwn_notif_intr(struct iwn_softc *sc)
 
 			bus_dmamap_sync(sc->sc_dmat, data->map, sizeof (*desc),
 			    sizeof (*scan), BUS_DMASYNC_POSTREAD);
-			DPRINTF(("scan finished nchan=%d status=%d chan=%d\n",
+			DPRINTFN(2, ("scan stop: nchan=%d status=%d chan=%d\n",
 			    scan->nchan, scan->status, scan->chan));
 
 			if (scan->status == 1 && scan->chan <= 14 &&
@@ -5397,7 +5400,6 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags, int bgscan)
 	buflen = (uint8_t *)chan - buf;
 	hdr->len = htole16(buflen);
 
-	DPRINTF(("sending scan command nchan=%d\n", hdr->nchan));
 	error = iwn_cmd(sc, IWN_CMD_SCAN, buf, buflen, 1);
 	if (error == 0) {
 		/*
