@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.103 2020/06/25 20:38:41 kn Exp $	*/
+/*	$OpenBSD: top.c,v 1.104 2020/07/26 21:59:16 kn Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -131,6 +131,7 @@ struct statics  statics;
 #define CMD_up		25
 #define CMD_pagedown	26
 #define CMD_pageup	27
+#define CMD_grep2	28
 
 static void
 usage(void)
@@ -631,7 +632,7 @@ rundisplay(void)
 	char ch, *iptr;
 	int change, i;
 	struct pollfd pfd[1];
-	static char command_chars[] = "\f qh?en#sdkriIuSopCHg+P109)(";
+	static char command_chars[] = "\f qh?en#sdkriIuSopCHg+P109)(/";
 
 	/*
 	 * assume valid command unless told
@@ -937,6 +938,7 @@ rundisplay(void)
 			break;
 
 		case CMD_grep:
+		case CMD_grep2:
 			new_message(MT_standout,
 			    "Grep command name: ");
 			if (readline(tempbuf, sizeof(tempbuf)) > 0) {
