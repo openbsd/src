@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.42 2020/07/27 13:06:13 inoguchi Exp $ */
+/* $OpenBSD: s_server.c,v 1.43 2020/07/27 13:46:48 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1044,7 +1044,8 @@ s_server_main(int argc, char *argv[])
 	s_server_config.server_verify = SSL_VERIFY_NONE;
 	s_server_config.socket_type = SOCK_STREAM;
 	s_server_config.tlscstatp.timeout = -1;
-	s_server_config.tlsextcbp.extension_error = SSL_TLSEXT_ERR_ALERT_WARNING;
+	s_server_config.tlsextcbp.extension_error =
+	    SSL_TLSEXT_ERR_ALERT_WARNING;
 
 	local_argc = argc;
 	local_argv = argv;
@@ -1064,7 +1065,8 @@ s_server_main(int argc, char *argv[])
 		goto end;
 	}
 
-	if (!app_passwd(bio_err, s_server_config.passarg, s_server_config.dpassarg, &pass, &dpass)) {
+	if (!app_passwd(bio_err, s_server_config.passarg,
+	    s_server_config.dpassarg, &pass, &dpass)) {
 		BIO_printf(bio_err, "Error getting password\n");
 		goto end;
 	}
@@ -1074,13 +1076,15 @@ s_server_main(int argc, char *argv[])
 		s_server_config.key_file2 = s_server_config.cert_file2;
 
 	if (s_server_config.nocert == 0) {
-		s_key = load_key(bio_err, s_server_config.key_file, s_server_config.key_format, 0, pass,
+		s_key = load_key(bio_err, s_server_config.key_file,
+		    s_server_config.key_format, 0, pass,
 		    "server certificate private key file");
 		if (!s_key) {
 			ERR_print_errors(bio_err);
 			goto end;
 		}
-		s_cert = load_cert(bio_err, s_server_config.cert_file, s_server_config.cert_format,
+		s_cert = load_cert(bio_err, s_server_config.cert_file,
+		    s_server_config.cert_format,
 		    NULL, "server certificate file");
 
 		if (!s_cert) {
@@ -1088,13 +1092,15 @@ s_server_main(int argc, char *argv[])
 			goto end;
 		}
 		if (s_server_config.tlsextcbp.servername) {
-			s_key2 = load_key(bio_err, s_server_config.key_file2, s_server_config.key_format, 0, pass,
+			s_key2 = load_key(bio_err, s_server_config.key_file2,
+			    s_server_config.key_format, 0, pass,
 			    "second server certificate private key file");
 			if (!s_key2) {
 				ERR_print_errors(bio_err);
 				goto end;
 			}
-			s_cert2 = load_cert(bio_err, s_server_config.cert_file2, s_server_config.cert_format,
+			s_cert2 = load_cert(bio_err, s_server_config.cert_file2,
+			    s_server_config.cert_format,
 			    NULL, "second server certificate file");
 
 			if (!s_cert2) {
@@ -1106,7 +1112,8 @@ s_server_main(int argc, char *argv[])
 	alpn_ctx.data = NULL;
 	if (s_server_config.alpn_in) {
 		unsigned short len;
-		alpn_ctx.data = next_protos_parse(&len, s_server_config.alpn_in);
+		alpn_ctx.data = next_protos_parse(&len,
+		    s_server_config.alpn_in);
 		if (alpn_ctx.data == NULL)
 			goto end;
 		alpn_ctx.len = len;
@@ -1117,13 +1124,15 @@ s_server_main(int argc, char *argv[])
 		if (s_server_config.dkey_file == NULL)
 			s_server_config.dkey_file = s_server_config.dcert_file;
 
-		s_dkey = load_key(bio_err, s_server_config.dkey_file, s_server_config.dkey_format,
+		s_dkey = load_key(bio_err, s_server_config.dkey_file,
+		    s_server_config.dkey_format,
 		    0, dpass, "second certificate private key file");
 		if (!s_dkey) {
 			ERR_print_errors(bio_err);
 			goto end;
 		}
-		s_dcert = load_cert(bio_err, s_server_config.dcert_file, s_server_config.dcert_format,
+		s_dcert = load_cert(bio_err, s_server_config.dcert_file,
+		    s_server_config.dcert_format,
 		    NULL, "second server certificate file");
 
 		if (!s_dcert) {
@@ -1132,7 +1141,8 @@ s_server_main(int argc, char *argv[])
 		}
 	}
 	if (bio_s_out == NULL) {
-		if (s_server_config.quiet && !s_server_config.debug && !s_server_config.msg) {
+		if (s_server_config.quiet && !s_server_config.debug &&
+		    !s_server_config.msg) {
 			bio_s_out = BIO_new(BIO_s_null());
 		} else {
 			if (bio_s_out == NULL)
@@ -1172,7 +1182,8 @@ s_server_main(int argc, char *argv[])
 			ERR_print_errors(bio_err);
 			goto end;
 		}
-		BIO_printf(bio_err, "id_prefix '%s' set.\n", s_server_config.session_id_prefix);
+		BIO_printf(bio_err, "id_prefix '%s' set.\n",
+		    s_server_config.session_id_prefix);
 	}
 	SSL_CTX_set_quiet_shutdown(ctx, 1);
 	if (s_server_config.bugs)
@@ -1197,8 +1208,8 @@ s_server_main(int argc, char *argv[])
 		SSL_CTX_set_tlsext_use_srtp(ctx, s_server_config.srtp_profiles);
 #endif
 
-
-	if ((!SSL_CTX_load_verify_locations(ctx, s_server_config.CAfile, s_server_config.CApath)) ||
+	if ((!SSL_CTX_load_verify_locations(ctx, s_server_config.CAfile,
+	    s_server_config.CApath)) ||
 	    (!SSL_CTX_set_default_verify_paths(ctx))) {
 		/* BIO_printf(bio_err,"X509_load_verify_locations\n"); */
 		ERR_print_errors(bio_err);
@@ -1214,9 +1225,11 @@ s_server_main(int argc, char *argv[])
 			goto end;
 		}
 
-		if (!SSL_CTX_set_min_proto_version(ctx2, s_server_config.min_version))
+		if (!SSL_CTX_set_min_proto_version(ctx2,
+		    s_server_config.min_version))
 			goto end;
-		if (!SSL_CTX_set_max_proto_version(ctx2, s_server_config.max_version))
+		if (!SSL_CTX_set_max_proto_version(ctx2,
+		    s_server_config.max_version))
 			goto end;
 		SSL_CTX_clear_mode(ctx2, SSL_MODE_AUTO_RETRY);
 	}
@@ -1230,12 +1243,15 @@ s_server_main(int argc, char *argv[])
 			else if (strlen(s_server_config.session_id_prefix) >= 16)
 				BIO_printf(bio_err,
 				    "warning: id_prefix is too long if you use SSLv2\n");
-			if (!SSL_CTX_set_generate_session_id(ctx2, generate_session_id)) {
-				BIO_printf(bio_err, "error setting 'id_prefix'\n");
+			if (!SSL_CTX_set_generate_session_id(ctx2,
+			    generate_session_id)) {
+				BIO_printf(bio_err,
+				    "error setting 'id_prefix'\n");
 				ERR_print_errors(bio_err);
 				goto end;
 			}
-			BIO_printf(bio_err, "id_prefix '%s' set.\n", s_server_config.session_id_prefix);
+			BIO_printf(bio_err, "id_prefix '%s' set.\n",
+			    s_server_config.session_id_prefix);
 		}
 		SSL_CTX_set_quiet_shutdown(ctx2, 1);
 		if (s_server_config.bugs)
@@ -1256,7 +1272,8 @@ s_server_main(int argc, char *argv[])
 		else
 			SSL_CTX_sess_set_cache_size(ctx2, 128);
 
-		if ((!SSL_CTX_load_verify_locations(ctx2, s_server_config.CAfile, s_server_config.CApath)) ||
+		if ((!SSL_CTX_load_verify_locations(ctx2,
+		    s_server_config.CAfile, s_server_config.CApath)) ||
 		    (!SSL_CTX_set_default_verify_paths(ctx2))) {
 			ERR_print_errors(bio_err);
 		}
@@ -1304,9 +1321,11 @@ s_server_main(int argc, char *argv[])
 				DH *dh2 = NULL;
 
 				if (s_server_config.cert_file2 != NULL)
-					dh2 = load_dh_param(s_server_config.cert_file2);
+					dh2 = load_dh_param(
+					    s_server_config.cert_file2);
 				if (dh2 != NULL) {
-					BIO_printf(bio_s_out, "Setting temp DH parameters\n");
+					BIO_printf(bio_s_out,
+					    "Setting temp DH parameters\n");
 					(void) BIO_flush(bio_s_out);
 
 					DH_free(dh);
@@ -1365,14 +1384,16 @@ s_server_main(int argc, char *argv[])
 			ERR_print_errors(bio_err);
 			goto end;
 		}
-		if (ctx2 && !SSL_CTX_set_cipher_list(ctx2, s_server_config.cipher)) {
+		if (ctx2 && !SSL_CTX_set_cipher_list(ctx2,
+		    s_server_config.cipher)) {
 			BIO_printf(bio_err, "error setting cipher list\n");
 			ERR_print_errors(bio_err);
 			goto end;
 		}
 	}
 	SSL_CTX_set_verify(ctx, s_server_config.server_verify, verify_callback);
-	SSL_CTX_set_session_id_context(ctx, (void *) &s_server_session_id_context,
+	SSL_CTX_set_session_id_context(ctx,
+	    (void *) &s_server_session_id_context,
 	    sizeof s_server_session_id_context);
 
 	/* Set DTLS cookie generation and verification callbacks */
@@ -1380,28 +1401,36 @@ s_server_main(int argc, char *argv[])
 	SSL_CTX_set_cookie_verify_cb(ctx, verify_cookie_callback);
 
 	if (ctx2) {
-		SSL_CTX_set_verify(ctx2, s_server_config.server_verify, verify_callback);
-		SSL_CTX_set_session_id_context(ctx2, (void *) &s_server_session_id_context,
+		SSL_CTX_set_verify(ctx2, s_server_config.server_verify,
+		    verify_callback);
+		SSL_CTX_set_session_id_context(ctx2,
+		    (void *) &s_server_session_id_context,
 		    sizeof s_server_session_id_context);
 
 		s_server_config.tlsextcbp.biodebug = bio_s_out;
 		SSL_CTX_set_tlsext_servername_callback(ctx2, ssl_servername_cb);
-		SSL_CTX_set_tlsext_servername_arg(ctx2, &s_server_config.tlsextcbp);
+		SSL_CTX_set_tlsext_servername_arg(ctx2,
+		    &s_server_config.tlsextcbp);
 		SSL_CTX_set_tlsext_servername_callback(ctx, ssl_servername_cb);
-		SSL_CTX_set_tlsext_servername_arg(ctx, &s_server_config.tlsextcbp);
+		SSL_CTX_set_tlsext_servername_arg(ctx,
+		    &s_server_config.tlsextcbp);
 	}
 
 	if (s_server_config.CAfile != NULL) {
-		SSL_CTX_set_client_CA_list(ctx, SSL_load_client_CA_file(s_server_config.CAfile));
+		SSL_CTX_set_client_CA_list(ctx,
+		    SSL_load_client_CA_file(s_server_config.CAfile));
 		if (ctx2)
-			SSL_CTX_set_client_CA_list(ctx2, SSL_load_client_CA_file(s_server_config.CAfile));
+			SSL_CTX_set_client_CA_list(ctx2,
+			    SSL_load_client_CA_file(s_server_config.CAfile));
 	}
 	BIO_printf(bio_s_out, "ACCEPT\n");
 	(void) BIO_flush(bio_s_out);
 	if (s_server_config.www)
-		do_server(s_server_config.port, s_server_config.socket_type, &accept_socket, www_body, s_server_config.context);
+		do_server(s_server_config.port, s_server_config.socket_type,
+		    &accept_socket, www_body, s_server_config.context);
 	else
-		do_server(s_server_config.port, s_server_config.socket_type, &accept_socket, sv_body, s_server_config.context);
+		do_server(s_server_config.port, s_server_config.socket_type,
+		    &accept_socket, sv_body, s_server_config.context);
 	print_stats(bio_s_out, ctx);
 	ret = 0;
  end:
@@ -1445,10 +1474,14 @@ print_stats(BIO *bio, SSL_CTX *ssl_ctx)
 	    SSL_CTX_sess_accept_renegotiate(ssl_ctx));
 	BIO_printf(bio, "%4ld server accepts that finished\n",
 	    SSL_CTX_sess_accept_good(ssl_ctx));
-	BIO_printf(bio, "%4ld session cache hits\n", SSL_CTX_sess_hits(ssl_ctx));
-	BIO_printf(bio, "%4ld session cache misses\n", SSL_CTX_sess_misses(ssl_ctx));
-	BIO_printf(bio, "%4ld session cache timeouts\n", SSL_CTX_sess_timeouts(ssl_ctx));
-	BIO_printf(bio, "%4ld callback cache hits\n", SSL_CTX_sess_cb_hits(ssl_ctx));
+	BIO_printf(bio, "%4ld session cache hits\n",
+	    SSL_CTX_sess_hits(ssl_ctx));
+	BIO_printf(bio, "%4ld session cache misses\n",
+	    SSL_CTX_sess_misses(ssl_ctx));
+	BIO_printf(bio, "%4ld session cache timeouts\n",
+	    SSL_CTX_sess_timeouts(ssl_ctx));
+	BIO_printf(bio, "%4ld callback cache hits\n",
+	    SSL_CTX_sess_cb_hits(ssl_ctx));
 	BIO_printf(bio, "%4ld cache full overflows (%ld allowed)\n",
 	    SSL_CTX_sess_cache_full(ssl_ctx),
 	    SSL_CTX_sess_get_cache_size(ssl_ctx));
@@ -1485,7 +1518,8 @@ sv_body(char *hostname, int s, unsigned char *context)
 		if (s_server_config.tlsextstatus) {
 			SSL_CTX_set_tlsext_status_cb(ctx, cert_status_cb);
 			s_server_config.tlscstatp.err = bio_err;
-			SSL_CTX_set_tlsext_status_arg(ctx, &s_server_config.tlscstatp);
+			SSL_CTX_set_tlsext_status_arg(ctx,
+			    &s_server_config.tlscstatp);
 		}
 		if (context)
 			SSL_set_session_id_context(con, context,
@@ -1500,11 +1534,13 @@ sv_body(char *hostname, int s, unsigned char *context)
 		if (s_server_config.enable_timeouts) {
 			timeout.tv_sec = 0;
 			timeout.tv_usec = DGRAM_RCV_TIMEOUT;
-			BIO_ctrl(sbio, BIO_CTRL_DGRAM_SET_RECV_TIMEOUT, 0, &timeout);
+			BIO_ctrl(sbio, BIO_CTRL_DGRAM_SET_RECV_TIMEOUT, 0,
+			    &timeout);
 
 			timeout.tv_sec = 0;
 			timeout.tv_usec = DGRAM_SND_TIMEOUT;
-			BIO_ctrl(sbio, BIO_CTRL_DGRAM_SET_SEND_TIMEOUT, 0, &timeout);
+			BIO_ctrl(sbio, BIO_CTRL_DGRAM_SET_SEND_TIMEOUT, 0,
+			    &timeout);
 		}
 		if (s_server_config.socket_mtu > 28) {
 			SSL_set_options(con, SSL_OP_NO_QUERY_MTU);
@@ -1567,7 +1603,8 @@ sv_body(char *hostname, int s, unsigned char *context)
 
 			i = poll(pfd, 2, ptimeout);
 
-			if ((SSL_version(con) == DTLS1_VERSION) && DTLSv1_handle_timeout(con) > 0) {
+			if ((SSL_version(con) == DTLS1_VERSION) &&
+			    DTLSv1_handle_timeout(con) > 0) {
 				BIO_printf(bio_err, "TIMEOUT occured\n");
 			}
 			if (i <= 0)
@@ -1638,7 +1675,9 @@ sv_body(char *hostname, int s, unsigned char *context)
 				if ((buf[0] == 'R') &&
 				    ((buf[1] == '\n') || (buf[1] == '\r'))) {
 					SSL_set_verify(con,
-					    SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE, NULL);
+					    SSL_VERIFY_PEER |
+					    SSL_VERIFY_CLIENT_ONCE,
+					    NULL);
 					SSL_renegotiate(con);
 					i = SSL_do_handshake(con);
 					printf("SSL_do_handshake -> %d\n", i);
@@ -1650,11 +1689,14 @@ sv_body(char *hostname, int s, unsigned char *context)
 					 */
 				}
 				if (buf[0] == 'P') {
-					static const char *str = "Lets print some clear text\n";
-					BIO_write(SSL_get_wbio(con), str, strlen(str));
+					static const char *str =
+					    "Lets print some clear text\n";
+					BIO_write(SSL_get_wbio(con), str,
+					    strlen(str));
 				}
 				if (buf[0] == 'S') {
-					print_stats(bio_s_out, SSL_get_SSL_CTX(con));
+					print_stats(bio_s_out,
+					    SSL_get_SSL_CTX(con));
 				}
 			}
 			l = k = 0;
@@ -1751,7 +1793,8 @@ sv_body(char *hostname, int s, unsigned char *context)
  err:
 	if (con != NULL) {
 		BIO_printf(bio_s_out, "shutting down SSL\n");
-		SSL_set_shutdown(con, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
+		SSL_set_shutdown(con,
+		    SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
 		SSL_free(con);
 	}
 	BIO_printf(bio_s_out, "CONNECTION CLOSED\n");
@@ -1819,7 +1862,8 @@ init_ssl_connection(SSL *con)
 		= SSL_get_selected_srtp_profile(con);
 
 		if (srtp_profile)
-			BIO_printf(bio_s_out, "SRTP Extension negotiated, profile=%s\n",
+			BIO_printf(bio_s_out,
+			    "SRTP Extension negotiated, profile=%s\n",
 			    srtp_profile->name);
 	}
 #endif
@@ -1829,7 +1873,8 @@ init_ssl_connection(SSL *con)
 	    SSL_get_secure_renegotiation_support(con) ? "" : " NOT");
 	if (s_server_config.keymatexportlabel != NULL) {
 		BIO_printf(bio_s_out, "Keying material exporter:\n");
-		BIO_printf(bio_s_out, "    Label: '%s'\n", s_server_config.keymatexportlabel);
+		BIO_printf(bio_s_out, "    Label: '%s'\n",
+		    s_server_config.keymatexportlabel);
 		BIO_printf(bio_s_out, "    Length: %i bytes\n",
 		    s_server_config.keymatexportlen);
 		exportedkeymat = malloc(s_server_config.keymatexportlen);
@@ -1950,8 +1995,10 @@ www_body(char *hostname, int s, unsigned char *context)
 			goto end;
 		}
 		/* else we have data */
-		if (((s_server_config.www == 1) && (strncmp("GET ", buf, 4) == 0)) ||
-		    ((s_server_config.www == 2) && (strncmp("GET /stats ", buf, 11) == 0))) {
+		if (((s_server_config.www == 1) &&
+		    (strncmp("GET ", buf, 4) == 0)) ||
+		    ((s_server_config.www == 2) &&
+		    (strncmp("GET /stats ", buf, 11) == 0))) {
 			char *p;
 			X509 *peer;
 			STACK_OF(SSL_CIPHER) *sk;
@@ -1977,7 +2024,8 @@ www_body(char *hostname, int s, unsigned char *context)
 			 * The following is evil and should not really be
 			 * done
 			 */
-			BIO_printf(io, "Ciphers supported in s_server binary\n");
+			BIO_printf(io,
+			    "Ciphers supported in s_server binary\n");
 			sk = SSL_get_ciphers(con);
 			j = sk_SSL_CIPHER_num(sk);
 			for (i = 0; i < j; i++) {
@@ -1991,14 +2039,16 @@ www_body(char *hostname, int s, unsigned char *context)
 			BIO_puts(io, "\n");
 			p = SSL_get_shared_ciphers(con, buf, bufsize);
 			if (p != NULL) {
-				BIO_printf(io, "---\nCiphers common between both SSL end points:\n");
+				BIO_printf(io,
+				    "---\nCiphers common between both SSL end points:\n");
 				j = i = 0;
 				while (*p) {
 					if (*p == ':') {
 						BIO_write(io, space, 26 - j);
 						i++;
 						j = 0;
-						BIO_write(io, ((i % 3) ? " " : "\n"), 1);
+						BIO_write(io,
+						    ((i % 3) ?  " " : "\n"), 1);
 					} else {
 						BIO_write(io, p, 1);
 						j++;
@@ -2024,11 +2074,13 @@ www_body(char *hostname, int s, unsigned char *context)
 				X509_print(io, peer);
 				PEM_write_bio_X509(io, peer);
 			} else
-				BIO_puts(io, "no client certificate available\n");
+				BIO_puts(io,
+				    "no client certificate available\n");
 			BIO_puts(io, "</BODY></HTML>\r\n\r\n");
 			break;
-		} else if ((s_server_config.www == 2 || s_server_config.www == 3)
-		    && (strncmp("GET /", buf, 5) == 0)) {
+		} else if ((s_server_config.www == 2 ||
+		    s_server_config.www == 3) &&
+		    (strncmp("GET /", buf, 5) == 0)) {
 			BIO *file;
 			char *p, *e;
 			static const char *text = "HTTP/1.0 200 ok\r\nContent-type: text/plain\r\n\r\n";
@@ -2049,30 +2101,35 @@ www_body(char *hostname, int s, unsigned char *context)
 					dot = (e[0] == '.') ? 3 : 0;
 					break;
 				case 3:
-					dot = (e[0] == '/' || e[0] == '\\') ? -1 : 0;
+					dot = (e[0] == '/' || e[0] == '\\') ?
+					    -1 : 0;
 					break;
 				}
 				if (dot == 0)
-					dot = (e[0] == '/' || e[0] == '\\') ? 1 : 0;
+					dot = (e[0] == '/' || e[0] == '\\') ?
+					    1 : 0;
 			}
-			dot = (dot == 3) || (dot == -1);	/* filename contains
-								 * ".." component */
+			dot = (dot == 3) || (dot == -1);  /* filename contains
+							   * ".." component */
 
 			if (*e == '\0') {
 				BIO_puts(io, text);
-				BIO_printf(io, "'%s' is an invalid file name\r\n", p);
+				BIO_printf(io,
+				    "'%s' is an invalid file name\r\n", p);
 				break;
 			}
 			*e = '\0';
 
 			if (dot) {
 				BIO_puts(io, text);
-				BIO_printf(io, "'%s' contains '..' reference\r\n", p);
+				BIO_printf(io,
+				    "'%s' contains '..' reference\r\n", p);
 				break;
 			}
 			if (*p == '/') {
 				BIO_puts(io, text);
-				BIO_printf(io, "'%s' is an invalid path\r\n", p);
+				BIO_printf(io,
+				    "'%s' is an invalid path\r\n", p);
 				break;
 			}
 			/* if a directory, do the index thang */
@@ -2129,7 +2186,8 @@ www_body(char *hostname, int s, unsigned char *context)
 						if (!BIO_should_retry(io))
 							goto write_error;
 						else {
-							BIO_printf(bio_s_out, "rwrite W BLOCK\n");
+							BIO_printf(bio_s_out,
+							    "rwrite W BLOCK\n");
 						}
 					} else {
 						j += k;
@@ -2194,9 +2252,12 @@ static int
 ssl_servername_cb(SSL *s, int *ad, void *arg)
 {
 	tlsextctx *p = (tlsextctx *) arg;
-	const char *servername = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
+	const char *servername = SSL_get_servername(s,
+	    TLSEXT_NAMETYPE_host_name);
+
 	if (servername && p->biodebug)
-		BIO_printf(p->biodebug, "Hostname in TLS extension: \"%s\"\n", servername);
+		BIO_printf(p->biodebug, "Hostname in TLS extension: \"%s\"\n",
+		    servername);
 
 	if (!p->servername)
 		return SSL_TLSEXT_ERR_NOACK;
@@ -2259,7 +2320,8 @@ cert_status_cb(SSL *s, void *arg)
 			    sk_OPENSSL_STRING_value(aia, 0));
 	} else {
 		if (!srctx->host) {
-			BIO_puts(srctx->err, "cert_status: no AIA and no default responder URL\n");
+			BIO_puts(srctx->err,
+			    "cert_status: no AIA and no default responder URL\n");
 			goto done;
 		}
 		host = srctx->host;
@@ -2274,7 +2336,8 @@ cert_status_cb(SSL *s, void *arg)
 		goto err;
 	if (X509_STORE_get_by_subject(&inctx, X509_LU_X509,
 		X509_get_issuer_name(x), &obj) <= 0) {
-		BIO_puts(err, "cert_status: Can't retrieve issuer certificate.\n");
+		BIO_puts(err,
+		    "cert_status: Can't retrieve issuer certificate.\n");
 		X509_STORE_CTX_cleanup(&inctx);
 		goto done;
 	}
