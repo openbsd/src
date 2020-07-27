@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.15 2020/04/02 09:16:43 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.16 2020/07/27 14:29:45 tobhe Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1128,7 +1128,7 @@ ta_parse(X509 **xp, const char *fn, const unsigned char *pkey, size_t pkeysz)
 		if ((opk = X509_get_pubkey(*xp)) == NULL)
 			cryptowarnx("%s: RFC 6487 (trust anchor): "
 			    "missing pubkey", fn);
-		else if (!EVP_PKEY_cmp(pk, opk))
+		else if (EVP_PKEY_cmp(pk, opk) != 1)
 			cryptowarnx("%s: RFC 6487 (trust anchor): "
 			    "pubkey does not match TAL pubkey", fn);
 		else
@@ -1136,8 +1136,7 @@ ta_parse(X509 **xp, const char *fn, const unsigned char *pkey, size_t pkeysz)
 
 		EVP_PKEY_free(pk);
 		EVP_PKEY_free(opk);
-	} else
-		rc = 1;
+	}
 
 	if (rc == 0) {
 		cert_free(p);
