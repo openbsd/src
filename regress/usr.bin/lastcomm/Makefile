@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.6 2019/09/23 08:34:07 bluhm Exp $
+# $OpenBSD: Makefile,v 1.7 2020/07/27 13:40:02 rob Exp $
 
 # Start with a clean /var/account/acct accounting file and turn on
 # process accounting with accton(8).  Each test executes a command
 # with a unique name and checks the flags in the lastcomm(1) output.
-# Run tests with fork, map, core, xsig, pledge, trap accounting.
+# Run tests with fork, map, core, xsig, pledge, unveil, trap accounting.
 
 .if ! (make(clean) || make(cleandir) || make(obj))
 
@@ -20,7 +20,7 @@ REGRESS_SKIP_TARGETS +=	run-syscallwx
 REGRESS_EXPECTED_FAILURES +=	run-callstack run-syscallwx
 .endif
 
-PROGS=			crash trapstack callstack syscallwx
+PROGS=			crash trapstack callstack syscallwx unveil
 WARNINGS=		Yes
 LDADD_syscallwx=	-z wxneeded
 CLEANFILES=		regress-*
@@ -94,6 +94,14 @@ run-pledge:
 	ulimit -c 0; ! ./regress-pledge -MOpenBSD::Pledge -e\
 	    'pledge("stdio") or die $$!; chdir("/")'
 	lastcomm regress-pledge | grep -q ' -XP '
+
+REGRESS_TARGETS +=	run-unveil
+run-unveil: unveil
+	@echo '\n======== $@ ========'
+	# Attempt to open veiled file, check -U flag.
+	cp -f unveil regress-unveil
+	./regress-unveil
+	lastcomm regress-unveil | grep -q ' -U '
 
 REGRESS_TARGETS +=	run-trap
 run-trap: crash
