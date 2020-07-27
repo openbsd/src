@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.64 2020/07/15 14:45:15 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.65 2020/07/27 14:22:53 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1420,7 +1420,7 @@ ca_validate_pubkey(struct iked *env, struct iked_static_id *id,
 	if (localkey == NULL)
 		goto sslerr;
 
-	if (peerkey && !EVP_PKEY_cmp(peerkey, localkey)) {
+	if (peerkey && EVP_PKEY_cmp(peerkey, localkey) != 1) {
 		log_debug("%s: public key does not match %s", __func__, file);
 		goto done;
 	}
