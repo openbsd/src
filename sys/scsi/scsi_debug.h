@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_debug.h,v 1.21 2019/09/30 11:27:37 krw Exp $	*/
+/*	$OpenBSD: scsi_debug.h,v 1.22 2020/07/27 19:19:50 krw Exp $	*/
 /*	$NetBSD: scsi_debug.h,v 1.7 1996/10/12 23:23:16 christos Exp $	*/
 
 /*
@@ -36,8 +36,8 @@
 extern u_int32_t scsidebug_buses, scsidebug_targets, scsidebug_luns;
 extern int scsidebug_level;
 
-extern const char *flagnames[16];
-extern const char *quirknames[16];
+extern const char *flagnames[];
+extern const char *quirknames[];
 extern const char *devicetypenames[32];
 
 struct scsi_xfer;
@@ -45,7 +45,7 @@ struct scsi_xfer;
 void	scsi_show_sense(struct scsi_xfer *);
 void	scsi_show_xs(struct scsi_xfer *);
 void	scsi_show_mem(u_char *, int);
-void	scsi_show_flags(u_int16_t, const char **);
+void	scsi_show_flags(u_int32_t, const char **);
 
 /*
  * This is the usual debug macro for use with the above bits

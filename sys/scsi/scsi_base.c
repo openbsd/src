@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.267 2020/07/27 13:08:25 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.268 2020/07/27 19:19:49 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -2643,7 +2643,7 @@ u_int32_t scsidebug_targets = SCSIDEBUG_TARGETS;
 u_int32_t scsidebug_luns = SCSIDEBUG_LUNS;
 int scsidebug_level = SCSIDEBUG_LEVEL;
 
-const char *flagnames[16] = {
+const char *flagnames[] = {
 	"REMOVABLE",
 	"MEDIA LOADED",
 	"READONLY",
@@ -2654,31 +2654,30 @@ const char *flagnames[16] = {
 	"DB4",
 	"EJECTING",
 	"ATAPI",
-	"FLAG0x0400",
+	"",
 	"UMASS",
 	"VIRTUAL",
-	"OWN",
-	"FLAG0x4000",
-	"FLAG0x8000"
+	"OWN_IOPL",
+	NULL
 };
 
-const char *quirknames[16] = {
+const char *quirknames[] = {
 	"AUTOSAVE",
 	"NOSYNC",
 	"NOWIDE",
 	"NOTAGS",
-	"QUIRK0x0010",
-	"QUIRK0x0020",
-	"QUIRK0x0040",
-	"QUIRK0x0080",
+	"",
+	"",
+	"",
+	"",
 	"NOSYNCCACHE",
 	"NOSENSE",
 	"LITTLETOC",
 	"NOCAPACITY",
-	"QUIRK0x1000",
+	"",
 	"NODOORLOCK",
 	"ONLYBIG",
-	"QUIRK0x8000",
+	NULL
 };
 
 const char *devicetypenames[32] = {
@@ -2797,21 +2796,29 @@ scsi_show_mem(u_char *address, int num)
 }
 
 void
-scsi_show_flags(u_int16_t flags, const char **names)
+scsi_show_flags(u_int32_t flags, const char **names)
 {
-	int i, first;
+	int		i, first, exhausted;
+	u_int32_t	unnamed;
 
-	first = 1;
 	printf("<");
-	for (i = 0; i < 16; i++) {
-		if (ISSET(flags, 1 << i)) {
-			if (first == 0)
-				printf(", ");
-			else
-				first = 0;
-			printf("%s", names[i]);
+	for (first = 1, exhausted = 0, unnamed = 0, i = 0; i < 32; i++) {
+		if (!ISSET(flags, 1 << i))
+			continue;
+		if (exhausted == 0 && names[i] == NULL)
+			exhausted = 1;
+		if (exhausted || strlen(names[i]) == 0) {
+			SET(unnamed, 1 << i);
+			continue;
 		}
+		if (first == 0)
+			printf(", ");
+		else
+			first = 0;
+		printf("%s", names[i]);
 	}
+	if (unnamed != 0)
+		printf("%s0x%08x", first ? "" : ", ", unnamed);
 	printf(">");
 }
 #endif /* SCSIDEBUG */
