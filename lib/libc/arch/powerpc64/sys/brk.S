@@ -1,4 +1,4 @@
-/* $OpenBSD: brk.S,v 1.2 2020/06/26 10:31:44 kettenis Exp $ */
+/* $OpenBSD: brk.S,v 1.3 2020/07/27 07:10:36 kettenis Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -37,7 +37,7 @@ PSEUDO_PREFIX(,brk,break)
 	addis %r5, %r2, .LC0@toc@ha
 	ld  %r5, .LC0@toc@l(%r5)		/* # %r5 = &_end */
 
-	cmplw	%r3, %r5
+	cmpld	%r3, %r5
 	bge+	.L_brk_call
 	mr	%r3, %r5
 
@@ -59,7 +59,7 @@ PSEUDO_PREFIX(,brk,break)
 
 	/* update, __curbrk and return */
 .L_brk_ok:
-	stw	%r7, 0(%r6)	/* # remember, %r6=&__curbrk, %r3=new value */
+	std	%r7, 0(%r6)	/* # remember, %r6=&__curbrk, %r3=new value */
 	mr	%r3, 0		/* # return 0 */
 	blr
 END(brk)
