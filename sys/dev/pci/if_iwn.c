@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.240 2020/07/26 12:23:32 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.241 2020/07/27 07:24:03 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -901,7 +901,7 @@ iwn_mem_write_2(struct iwn_softc *sc, uint32_t addr, uint16_t data)
 }
 
 #ifdef IWN_DEBUG
- 
+
 static __inline void
 iwn_mem_read_region_4(struct iwn_softc *sc, uint32_t addr, uint32_t *data,
     int count)
@@ -1810,7 +1810,7 @@ iwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		if (error != 0)
 			printf("%s: RXON command failed\n",
 			    sc->sc_dev.dv_xname);
-	}		 
+	}
 
 	switch (nstate) {
 	case IEEE80211_S_SCAN:
@@ -2103,7 +2103,7 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	m->m_data = head;
 	m->m_pkthdr.len = m->m_len = len;
 
-	/* 
+	/*
 	 * Grab a reference to the source node. Note that control frames are
 	 * shorter than struct ieee80211_frame but ieee80211_find_rxnode()
 	 * is being careful about control frames.
@@ -2865,7 +2865,7 @@ iwn_tx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 		    data->txmcs == data->ni->ni_txmcs) {
 			wn->mn.frames++;
 			wn->mn.ampdu_size = len;
-			wn->mn.agglen = 1; 
+			wn->mn.agglen = 1;
 			if (ackfailcnt > 0)
 				wn->mn.retries++;
 			if (txfail)
@@ -3446,7 +3446,7 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 			ridx = iwn_mcs2ridx[ni->ni_txmcs];
 		else
 			ridx = wn->ridx[ni->ni_txrate];
-	}	
+	}
 	rinfo = &iwn_rates[ridx];
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
@@ -5239,7 +5239,7 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags, int bgscan)
 	    IWN_RXCHAIN_DRIVER_FORCE;
 	if ((flags & IEEE80211_CHAN_5GHZ) &&
 	    sc->hw_type == IWN_HW_REV_TYPE_4965) {
-		/* 
+		/*
 		 * On 4965 ant A and C must be avoided in 5GHz because of a
 		 * HW bug which causes very weak RSSI values being reported.
 		 */
@@ -5262,7 +5262,7 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags, int bgscan)
 		hdr->flags = htole32(IWN_RXON_24GHZ | IWN_RXON_AUTO);
 		if (bgscan && sc->hw_type == IWN_HW_REV_TYPE_4965 &&
 		    sc->rxon.chan > 14) {
-			/* 
+			/*
 			 * 4965 firmware can crash when sending probe requests
 			 * with CCK rates while associated to a 5GHz AP.
 			 * Send probe requests at 6Mbps OFDM as a workaround.
@@ -5430,10 +5430,10 @@ iwn_scan_abort(struct iwn_softc *sc)
 }
 
 int
-iwn_bgscan(struct ieee80211com *ic) 
+iwn_bgscan(struct ieee80211com *ic)
 {
 	struct iwn_softc *sc = ic->ic_softc;
-	int error; 
+	int error;
 
 	if (sc->sc_flags & IWN_FLAG_SCANNING)
 		return 0;
@@ -5452,7 +5452,7 @@ iwn_auth(struct iwn_softc *sc, int arg)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni = ic->ic_bss;
 	int error, ridx;
-	int bss_switch = 
+	int bss_switch =
 	    (!IEEE80211_ADDR_EQ(sc->bss_node_addr, etheranyaddr) &&
 	    !IEEE80211_ADDR_EQ(sc->bss_node_addr, ni->ni_macaddr));
 
@@ -5514,7 +5514,7 @@ iwn_auth(struct iwn_softc *sc, int arg)
 		return error;
 	}
 
-	/* 
+	/*
 	 * Make sure the firmware gets to see a beacon before we send
 	 * the auth request. Otherwise the Tx attempt can fail due to
 	 * the firmware's built-in regulatory domain enforcement.
