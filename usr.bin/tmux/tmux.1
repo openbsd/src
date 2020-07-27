@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.789 2020/07/13 07:04:17 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.790 2020/07/27 08:03:10 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 13 2020 $
+.Dd $Mdocdate: July 27 2020 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -5378,6 +5378,7 @@ The following keys are also available:
 .It Xo Ic display-message
 .Op Fl aIpv
 .Op Fl c Ar target-client
+.Op Fl d Ar delay
 .Op Fl t Ar target-pane
 .Op Ar message
 .Xc
@@ -5387,7 +5388,14 @@ If
 .Fl p
 is given, the output is printed to stdout, otherwise it is displayed in the
 .Ar target-client
-status line.
+status line for up to
+.Ar delay
+milliseconds.
+If
+.Ar delay
+is not given, the
+.Ic message-time
+option is used; a delay of zero waits for a key press.
 The format of
 .Ar message
 is described in the

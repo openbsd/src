@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-keys.c,v 1.60 2020/07/06 07:27:39 nicm Exp $ */
+/* $OpenBSD: cmd-list-keys.c,v 1.61 2020/07/27 08:03:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -114,7 +114,7 @@ cmd_list_keys_print_notes(struct cmdq_item *item, struct args *args,
 			note = xstrdup(bd->note);
 		tmp = utf8_padcstr(key, keywidth + 1);
 		if (args_has(args, '1') && tc != NULL)
-			status_message_set(tc, 1, "%s%s%s", prefix, tmp, note);
+			status_message_set(tc, -1, 1, "%s%s%s", prefix, tmp, note);
 		else
 			cmdq_print(item, "%s%s%s", prefix, tmp, note);
 		free(tmp);
