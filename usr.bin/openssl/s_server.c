@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.40 2020/07/27 12:19:51 inoguchi Exp $ */
+/* $OpenBSD: s_server.c,v 1.41 2020/07/27 12:29:51 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -181,10 +181,10 @@ static int sv_body(char *hostname, int s, unsigned char *context);
 static int www_body(char *hostname, int s, unsigned char *context);
 static void close_accept_socket(void);
 static void sv_usage(void);
-static int init_ssl_connection(SSL * s);
-static void print_stats(BIO * bp, SSL_CTX * ctx);
+static int init_ssl_connection(SSL *s);
+static void print_stats(BIO *bp, SSL_CTX *ctx);
 static int
-generate_session_id(const SSL * ssl, unsigned char *id,
+generate_session_id(const SSL *ssl, unsigned char *id,
     unsigned int *id_len);
 #ifndef OPENSSL_NO_DH
 static DH *load_dh_param(const char *dhfile);
@@ -1006,7 +1006,7 @@ static int local_argc = 0;
 static char **local_argv;
 
 static int
-ssl_servername_cb(SSL * s, int *ad, void *arg)
+ssl_servername_cb(SSL *s, int *ad, void *arg)
 {
 	tlsextctx *p = (tlsextctx *) arg;
 	const char *servername = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
@@ -1039,7 +1039,7 @@ ssl_servername_cb(SSL * s, int *ad, void *arg)
  */
 
 static int
-cert_status_cb(SSL * s, void *arg)
+cert_status_cb(SSL *s, void *arg)
 {
 	tlsextstatusctx *srctx = arg;
 	BIO *err = srctx->err;
@@ -1047,14 +1047,14 @@ cert_status_cb(SSL * s, void *arg)
 	int use_ssl;
 	unsigned char *rspder = NULL;
 	int rspderlen;
-	STACK_OF(OPENSSL_STRING) * aia = NULL;
+	STACK_OF(OPENSSL_STRING) *aia = NULL;
 	X509 *x = NULL;
 	X509_STORE_CTX inctx;
 	X509_OBJECT obj;
 	OCSP_REQUEST *req = NULL;
 	OCSP_RESPONSE *resp = NULL;
 	OCSP_CERTID *id = NULL;
-	STACK_OF(X509_EXTENSION) * exts;
+	STACK_OF(X509_EXTENSION) *exts;
 	int ret = SSL_TLSEXT_ERR_NOACK;
 	int i;
 
@@ -1605,7 +1605,7 @@ s_server_main(int argc, char *argv[])
 }
 
 static void
-print_stats(BIO * bio, SSL_CTX * ssl_ctx)
+print_stats(BIO *bio, SSL_CTX *ssl_ctx)
 {
 	BIO_printf(bio, "%4ld items in the session cache\n",
 	    SSL_CTX_sess_number(ssl_ctx));
@@ -1948,7 +1948,7 @@ close_accept_socket(void)
 }
 
 static int
-init_ssl_connection(SSL * con)
+init_ssl_connection(SSL *con)
 {
 	int i;
 	const char *str;
@@ -2130,7 +2130,7 @@ www_body(char *hostname, int s, unsigned char *context)
 		    ((s_server_config.www == 2) && (strncmp("GET /stats ", buf, 11) == 0))) {
 			char *p;
 			X509 *peer;
-			STACK_OF(SSL_CIPHER) * sk;
+			STACK_OF(SSL_CIPHER) *sk;
 			static const char *space = "                          ";
 
 			BIO_puts(io, "HTTP/1.0 200 ok\r\nContent-type: text/html\r\n\r\n");
@@ -2343,7 +2343,7 @@ www_body(char *hostname, int s, unsigned char *context)
 
 #define MAX_SESSION_ID_ATTEMPTS 10
 static int
-generate_session_id(const SSL * ssl, unsigned char *id,
+generate_session_id(const SSL *ssl, unsigned char *id,
     unsigned int *id_len)
 {
 	unsigned int count = 0;
