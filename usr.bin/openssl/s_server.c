@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.41 2020/07/27 12:29:51 inoguchi Exp $ */
+/* $OpenBSD: s_server.c,v 1.42 2020/07/27 13:06:13 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -177,21 +177,22 @@
 #include "s_apps.h"
 #include "timeouts.h"
 
-static int sv_body(char *hostname, int s, unsigned char *context);
-static int www_body(char *hostname, int s, unsigned char *context);
-static void close_accept_socket(void);
+static void s_server_init(void);
 static void sv_usage(void);
-static int init_ssl_connection(SSL *s);
 static void print_stats(BIO *bp, SSL_CTX *ctx);
-static int
-generate_session_id(const SSL *ssl, unsigned char *id,
-    unsigned int *id_len);
+static int sv_body(char *hostname, int s, unsigned char *context);
+static void close_accept_socket(void);
+static int init_ssl_connection(SSL *s);
 #ifndef OPENSSL_NO_DH
 static DH *load_dh_param(const char *dhfile);
 #endif
-
-static void s_server_init(void);
-
+static int www_body(char *hostname, int s, unsigned char *context);
+static int generate_session_id(const SSL *ssl, unsigned char *id,
+    unsigned int *id_len);
+static int ssl_servername_cb(SSL *s, int *ad, void *arg);
+static int cert_status_cb(SSL * s, void *arg);
+static int alpn_cb(SSL *s, const unsigned char **out, unsigned char *outlen,
+    const unsigned char *in, unsigned int inlen, void *arg);
 /* static int load_CA(SSL_CTX *ctx, char *file);*/
 
 #define BUFSIZZ	16*1024
@@ -205,7 +206,9 @@ static int s_server_session_id_context = 1;	/* anything will do */
 static SSL_CTX *ctx = NULL;
 static SSL_CTX *ctx2 = NULL;
 static BIO *bio_s_out = NULL;
-static int cert_status_cb(SSL * s, void *arg);
+
+static int local_argc = 0;
+static char **local_argv;
 
 /* This is a context that we pass to callbacks */
 typedef struct tlsextctx_st {
@@ -223,6 +226,12 @@ typedef struct tlsextstatusctx_st {
 	BIO *err;
 	int verbose;
 } tlsextstatusctx;
+
+/* This the context that we pass to alpn_cb */
+typedef struct tlsextalpnctx_st {
+	unsigned char *data;
+	unsigned short len;
+} tlsextalpnctx;
 
 static struct {
 	char *alpn_in;
@@ -1000,191 +1009,6 @@ sv_usage(void)
 	fprintf(stderr, "\n");
 	options_usage(s_server_options);
 	fprintf(stderr, "\n");
-}
-
-static int local_argc = 0;
-static char **local_argv;
-
-static int
-ssl_servername_cb(SSL *s, int *ad, void *arg)
-{
-	tlsextctx *p = (tlsextctx *) arg;
-	const char *servername = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
-	if (servername && p->biodebug)
-		BIO_printf(p->biodebug, "Hostname in TLS extension: \"%s\"\n", servername);
-
-	if (!p->servername)
-		return SSL_TLSEXT_ERR_NOACK;
-
-	if (servername) {
-		if (strcmp(servername, p->servername))
-			return p->extension_error;
-		if (ctx2) {
-			BIO_printf(p->biodebug, "Switching server context.\n");
-			SSL_set_SSL_CTX(s, ctx2);
-		}
-	}
-	return SSL_TLSEXT_ERR_OK;
-}
-
-/* Certificate Status callback. This is called when a client includes a
- * certificate status request extension.
- *
- * This is a simplified version. It examines certificates each time and
- * makes one OCSP responder query for each request.
- *
- * A full version would store details such as the OCSP certificate IDs and
- * minimise the number of OCSP responses by caching them until they were
- * considered "expired".
- */
-
-static int
-cert_status_cb(SSL *s, void *arg)
-{
-	tlsextstatusctx *srctx = arg;
-	BIO *err = srctx->err;
-	char *host = NULL, *port = NULL, *path = NULL;
-	int use_ssl;
-	unsigned char *rspder = NULL;
-	int rspderlen;
-	STACK_OF(OPENSSL_STRING) *aia = NULL;
-	X509 *x = NULL;
-	X509_STORE_CTX inctx;
-	X509_OBJECT obj;
-	OCSP_REQUEST *req = NULL;
-	OCSP_RESPONSE *resp = NULL;
-	OCSP_CERTID *id = NULL;
-	STACK_OF(X509_EXTENSION) *exts;
-	int ret = SSL_TLSEXT_ERR_NOACK;
-	int i;
-
-	if (srctx->verbose)
-		BIO_puts(err, "cert_status: callback called\n");
-	/* Build up OCSP query from server certificate */
-	x = SSL_get_certificate(s);
-	aia = X509_get1_ocsp(x);
-	if (aia) {
-		if (!OCSP_parse_url(sk_OPENSSL_STRING_value(aia, 0),
-			&host, &port, &path, &use_ssl)) {
-			BIO_puts(err, "cert_status: can't parse AIA URL\n");
-			goto err;
-		}
-		if (srctx->verbose)
-			BIO_printf(err, "cert_status: AIA URL: %s\n",
-			    sk_OPENSSL_STRING_value(aia, 0));
-	} else {
-		if (!srctx->host) {
-			BIO_puts(srctx->err, "cert_status: no AIA and no default responder URL\n");
-			goto done;
-		}
-		host = srctx->host;
-		path = srctx->path;
-		port = srctx->port;
-		use_ssl = srctx->use_ssl;
-	}
-
-	if (!X509_STORE_CTX_init(&inctx,
-		SSL_CTX_get_cert_store(SSL_get_SSL_CTX(s)),
-		NULL, NULL))
-		goto err;
-	if (X509_STORE_get_by_subject(&inctx, X509_LU_X509,
-		X509_get_issuer_name(x), &obj) <= 0) {
-		BIO_puts(err, "cert_status: Can't retrieve issuer certificate.\n");
-		X509_STORE_CTX_cleanup(&inctx);
-		goto done;
-	}
-	req = OCSP_REQUEST_new();
-	if (!req)
-		goto err;
-	id = OCSP_cert_to_id(NULL, x, obj.data.x509);
-	X509_free(obj.data.x509);
-	X509_STORE_CTX_cleanup(&inctx);
-	if (!id)
-		goto err;
-	if (!OCSP_request_add0_id(req, id))
-		goto err;
-	id = NULL;
-	/* Add any extensions to the request */
-	SSL_get_tlsext_status_exts(s, &exts);
-	for (i = 0; i < sk_X509_EXTENSION_num(exts); i++) {
-		X509_EXTENSION *ext = sk_X509_EXTENSION_value(exts, i);
-		if (!OCSP_REQUEST_add_ext(req, ext, -1))
-			goto err;
-	}
-	resp = process_responder(err, req, host, path, port, use_ssl, NULL,
-	    srctx->timeout);
-	if (!resp) {
-		BIO_puts(err, "cert_status: error querying responder\n");
-		goto done;
-	}
-	rspderlen = i2d_OCSP_RESPONSE(resp, &rspder);
-	if (rspderlen <= 0)
-		goto err;
-	SSL_set_tlsext_status_ocsp_resp(s, rspder, rspderlen);
-	if (srctx->verbose) {
-		BIO_puts(err, "cert_status: ocsp response sent:\n");
-		OCSP_RESPONSE_print(err, resp, 2);
-	}
-	ret = SSL_TLSEXT_ERR_OK;
- done:
-	if (ret != SSL_TLSEXT_ERR_OK)
-		ERR_print_errors(err);
-	if (aia) {
-		free(host);
-		free(path);
-		free(port);
-		X509_email_free(aia);
-	}
-	if (id)
-		OCSP_CERTID_free(id);
-	if (req)
-		OCSP_REQUEST_free(req);
-	if (resp)
-		OCSP_RESPONSE_free(resp);
-	return ret;
- err:
-	ret = SSL_TLSEXT_ERR_ALERT_FATAL;
-	goto done;
-}
-
-/* This the context that we pass to alpn_cb */
-typedef struct tlsextalpnctx_st {
-	unsigned char *data;
-	unsigned short len;
-} tlsextalpnctx;
-
-static int
-alpn_cb(SSL *s, const unsigned char **out, unsigned char *outlen,
-    const unsigned char *in, unsigned int inlen, void *arg)
-{
-	tlsextalpnctx *alpn_ctx = arg;
-
-	if (!s_server_config.quiet) {
-		/* We can assume that in is syntactically valid. */
-		unsigned i;
-
-		BIO_printf(bio_s_out,
-		    "ALPN protocols advertised by the client: ");
-		for (i = 0; i < inlen; ) {
-			if (i)
-				BIO_write(bio_s_out, ", ", 2);
-			BIO_write(bio_s_out, &in[i + 1], in[i]);
-			i += in[i] + 1;
-		}
-		BIO_write(bio_s_out, "\n", 1);
-	}
-
-	if (SSL_select_next_proto((unsigned char**)out, outlen, alpn_ctx->data,
-	    alpn_ctx->len, in, inlen) != OPENSSL_NPN_NEGOTIATED)
-		return (SSL_TLSEXT_ERR_NOACK);
-
-	if (!s_server_config.quiet) {
-		BIO_printf(bio_s_out, "ALPN protocols selected: ");
-		BIO_write(bio_s_out, *out, *outlen);
-		BIO_write(bio_s_out, "\n", 1);
-	}
-
-	return (SSL_TLSEXT_ERR_OK);
 }
 
 int
@@ -2343,8 +2167,7 @@ www_body(char *hostname, int s, unsigned char *context)
 
 #define MAX_SESSION_ID_ATTEMPTS 10
 static int
-generate_session_id(const SSL *ssl, unsigned char *id,
-    unsigned int *id_len)
+generate_session_id(const SSL *ssl, unsigned char *id, unsigned int *id_len)
 {
 	unsigned int count = 0;
 	do {
@@ -2365,4 +2188,180 @@ generate_session_id(const SSL *ssl, unsigned char *id,
 	if (count >= MAX_SESSION_ID_ATTEMPTS)
 		return 0;
 	return 1;
+}
+
+static int
+ssl_servername_cb(SSL *s, int *ad, void *arg)
+{
+	tlsextctx *p = (tlsextctx *) arg;
+	const char *servername = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
+	if (servername && p->biodebug)
+		BIO_printf(p->biodebug, "Hostname in TLS extension: \"%s\"\n", servername);
+
+	if (!p->servername)
+		return SSL_TLSEXT_ERR_NOACK;
+
+	if (servername) {
+		if (strcmp(servername, p->servername))
+			return p->extension_error;
+		if (ctx2) {
+			BIO_printf(p->biodebug, "Switching server context.\n");
+			SSL_set_SSL_CTX(s, ctx2);
+		}
+	}
+	return SSL_TLSEXT_ERR_OK;
+}
+
+/* Certificate Status callback. This is called when a client includes a
+ * certificate status request extension.
+ *
+ * This is a simplified version. It examines certificates each time and
+ * makes one OCSP responder query for each request.
+ *
+ * A full version would store details such as the OCSP certificate IDs and
+ * minimise the number of OCSP responses by caching them until they were
+ * considered "expired".
+ */
+
+static int
+cert_status_cb(SSL *s, void *arg)
+{
+	tlsextstatusctx *srctx = arg;
+	BIO *err = srctx->err;
+	char *host = NULL, *port = NULL, *path = NULL;
+	int use_ssl;
+	unsigned char *rspder = NULL;
+	int rspderlen;
+	STACK_OF(OPENSSL_STRING) *aia = NULL;
+	X509 *x = NULL;
+	X509_STORE_CTX inctx;
+	X509_OBJECT obj;
+	OCSP_REQUEST *req = NULL;
+	OCSP_RESPONSE *resp = NULL;
+	OCSP_CERTID *id = NULL;
+	STACK_OF(X509_EXTENSION) *exts;
+	int ret = SSL_TLSEXT_ERR_NOACK;
+	int i;
+
+	if (srctx->verbose)
+		BIO_puts(err, "cert_status: callback called\n");
+	/* Build up OCSP query from server certificate */
+	x = SSL_get_certificate(s);
+	aia = X509_get1_ocsp(x);
+	if (aia) {
+		if (!OCSP_parse_url(sk_OPENSSL_STRING_value(aia, 0),
+			&host, &port, &path, &use_ssl)) {
+			BIO_puts(err, "cert_status: can't parse AIA URL\n");
+			goto err;
+		}
+		if (srctx->verbose)
+			BIO_printf(err, "cert_status: AIA URL: %s\n",
+			    sk_OPENSSL_STRING_value(aia, 0));
+	} else {
+		if (!srctx->host) {
+			BIO_puts(srctx->err, "cert_status: no AIA and no default responder URL\n");
+			goto done;
+		}
+		host = srctx->host;
+		path = srctx->path;
+		port = srctx->port;
+		use_ssl = srctx->use_ssl;
+	}
+
+	if (!X509_STORE_CTX_init(&inctx,
+		SSL_CTX_get_cert_store(SSL_get_SSL_CTX(s)),
+		NULL, NULL))
+		goto err;
+	if (X509_STORE_get_by_subject(&inctx, X509_LU_X509,
+		X509_get_issuer_name(x), &obj) <= 0) {
+		BIO_puts(err, "cert_status: Can't retrieve issuer certificate.\n");
+		X509_STORE_CTX_cleanup(&inctx);
+		goto done;
+	}
+	req = OCSP_REQUEST_new();
+	if (!req)
+		goto err;
+	id = OCSP_cert_to_id(NULL, x, obj.data.x509);
+	X509_free(obj.data.x509);
+	X509_STORE_CTX_cleanup(&inctx);
+	if (!id)
+		goto err;
+	if (!OCSP_request_add0_id(req, id))
+		goto err;
+	id = NULL;
+	/* Add any extensions to the request */
+	SSL_get_tlsext_status_exts(s, &exts);
+	for (i = 0; i < sk_X509_EXTENSION_num(exts); i++) {
+		X509_EXTENSION *ext = sk_X509_EXTENSION_value(exts, i);
+		if (!OCSP_REQUEST_add_ext(req, ext, -1))
+			goto err;
+	}
+	resp = process_responder(err, req, host, path, port, use_ssl, NULL,
+	    srctx->timeout);
+	if (!resp) {
+		BIO_puts(err, "cert_status: error querying responder\n");
+		goto done;
+	}
+	rspderlen = i2d_OCSP_RESPONSE(resp, &rspder);
+	if (rspderlen <= 0)
+		goto err;
+	SSL_set_tlsext_status_ocsp_resp(s, rspder, rspderlen);
+	if (srctx->verbose) {
+		BIO_puts(err, "cert_status: ocsp response sent:\n");
+		OCSP_RESPONSE_print(err, resp, 2);
+	}
+	ret = SSL_TLSEXT_ERR_OK;
+ done:
+	if (ret != SSL_TLSEXT_ERR_OK)
+		ERR_print_errors(err);
+	if (aia) {
+		free(host);
+		free(path);
+		free(port);
+		X509_email_free(aia);
+	}
+	if (id)
+		OCSP_CERTID_free(id);
+	if (req)
+		OCSP_REQUEST_free(req);
+	if (resp)
+		OCSP_RESPONSE_free(resp);
+	return ret;
+ err:
+	ret = SSL_TLSEXT_ERR_ALERT_FATAL;
+	goto done;
+}
+
+static int
+alpn_cb(SSL *s, const unsigned char **out, unsigned char *outlen,
+    const unsigned char *in, unsigned int inlen, void *arg)
+{
+	tlsextalpnctx *alpn_ctx = arg;
+
+	if (!s_server_config.quiet) {
+		/* We can assume that in is syntactically valid. */
+		unsigned i;
+
+		BIO_printf(bio_s_out,
+		    "ALPN protocols advertised by the client: ");
+		for (i = 0; i < inlen; ) {
+			if (i)
+				BIO_write(bio_s_out, ", ", 2);
+			BIO_write(bio_s_out, &in[i + 1], in[i]);
+			i += in[i] + 1;
+		}
+		BIO_write(bio_s_out, "\n", 1);
+	}
+
+	if (SSL_select_next_proto((unsigned char**)out, outlen, alpn_ctx->data,
+	    alpn_ctx->len, in, inlen) != OPENSSL_NPN_NEGOTIATED)
+		return (SSL_TLSEXT_ERR_NOACK);
+
+	if (!s_server_config.quiet) {
+		BIO_printf(bio_s_out, "ALPN protocols selected: ");
+		BIO_write(bio_s_out, *out, *outlen);
+		BIO_write(bio_s_out, "\n", 1);
+	}
+
+	return (SSL_TLSEXT_ERR_OK);
 }
