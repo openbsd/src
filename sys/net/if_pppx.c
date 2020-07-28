@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.97 2020/07/17 08:57:27 mvs Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.98 2020/07/28 09:53:36 mvs Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -115,9 +115,16 @@ int pppxdebug = 0;
 
 struct pppx_if;
 
+/*
+ * Locks used to protect struct members and global data
+ *       I       immutable after creation
+ *       K       kernel lock
+ *       N       net lock
+ */
+
 struct pppx_dev {
-	LIST_ENTRY(pppx_dev)	pxd_entry;
-	int			pxd_unit;
+	LIST_ENTRY(pppx_dev)	pxd_entry;	/* [K] */
+	int			pxd_unit;	/* [I] */
 
 	/* kq shizz */
 	struct selinfo		pxd_rsel;
@@ -127,34 +134,36 @@ struct pppx_dev {
 
 	/* queue of packets for userland to service - protected by splnet */
 	struct mbuf_queue	pxd_svcq;
-	int			pxd_waiting;
-	LIST_HEAD(,pppx_if)	pxd_pxis;
+	int			pxd_waiting;	/* [N] */
+	LIST_HEAD(,pppx_if)	pxd_pxis;	/* [N] */
 };
 
-LIST_HEAD(, pppx_dev)		pppx_devs = LIST_HEAD_INITIALIZER(pppx_devs);
+LIST_HEAD(, pppx_dev)		pppx_devs =
+				    LIST_HEAD_INITIALIZER(pppx_devs); /* [K] */
 struct pool			pppx_if_pl;
 
 struct pppx_dev			*pppx_dev_lookup(dev_t);
 struct pppx_dev			*pppx_dev2pxd(dev_t);
 
 struct pppx_if_key {
-	int			pxik_session_id;
-	int			pxik_protocol;
+	int			pxik_session_id;	/* [I] */
+	int			pxik_protocol;		/* [I] */
 };
 
 struct pppx_if {
-	struct pppx_if_key	pxi_key; /* must be first in the struct */
+	struct pppx_if_key	pxi_key;		/* [I] must be first
+							    in the struct */
 
-	RBT_ENTRY(pppx_if)	pxi_entry;
-	LIST_ENTRY(pppx_if)	pxi_list;
+	RBT_ENTRY(pppx_if)	pxi_entry;		/* [N] */
+	LIST_ENTRY(pppx_if)	pxi_list;		/* [N] */
 
-	int			pxi_ready;
+	int			pxi_ready;		/* [N] */
 
-	int			pxi_unit;
+	int			pxi_unit;		/* [I] */
 	struct ifnet		pxi_if;
-	struct pppx_dev		*pxi_dev;
-	struct pipex_session	*pxi_session;
-	struct pipex_iface_context	pxi_ifcontext;
+	struct pppx_dev		*pxi_dev;		/* [I] */
+	struct pipex_session	*pxi_session;		/* [I] */
+	struct pipex_iface_context	pxi_ifcontext;	/* [N] */
 };
 
 static inline int
@@ -163,7 +172,7 @@ pppx_if_cmp(const struct pppx_if *a, const struct pppx_if *b)
 	return memcmp(&a->pxi_key, &b->pxi_key, sizeof(a->pxi_key));
 }
 
-RBT_HEAD(pppx_ifs, pppx_if)	pppx_ifs = RBT_INITIALIZER(&pppx_ifs);
+RBT_HEAD(pppx_ifs, pppx_if) pppx_ifs = RBT_INITIALIZER(&pppx_ifs); /* [N] */
 RBT_PROTOTYPE(pppx_ifs, pppx_if, pxi_entry, pppx_if_cmp);
 
 int		pppx_if_next_unit(void);
@@ -995,12 +1004,19 @@ RBT_GENERATE(pppx_ifs, pppx_if, pxi_entry, pppx_if_cmp);
 
 #include <net/if_tun.h>
 
+/*
+ * Locks used to protect struct members and global data
+ *       I       immutable after creation
+ *       K       kernel lock
+ *       N       net lock
+ */
+
 struct pppac_softc {
 	struct ifnet	sc_if;
-	unsigned int	sc_dead;
-	dev_t		sc_dev;
+	unsigned int	sc_dead;	/* [N] */
+	dev_t		sc_dev;		/* [I] */
 	LIST_ENTRY(pppac_softc)
-			sc_entry;
+			sc_entry;	/* [K] */
 
 	struct mutex	sc_rsel_mtx;
 	struct selinfo	sc_rsel;
@@ -1014,7 +1030,7 @@ struct pppac_softc {
 			sc_mq;
 };
 
-LIST_HEAD(pppac_list, pppac_softc);
+LIST_HEAD(pppac_list, pppac_softc);	/* [K] */
 
 static void	filt_pppac_rdetach(struct knote *);
 static int	filt_pppac_read(struct knote *, long);
