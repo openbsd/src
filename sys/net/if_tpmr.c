@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tpmr.c,v 1.17 2020/07/24 03:20:50 kn Exp $ */
+/*	$OpenBSD: if_tpmr.c,v 1.18 2020/07/28 07:41:19 kn Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -130,6 +130,7 @@ static int	tpmr_add_port(struct tpmr_softc *,
 		    const struct ifbreq *);
 static int	tpmr_del_port(struct tpmr_softc *,
 		    const struct ifbreq *);
+static int	tpmr_port_list(struct tpmr_softc *, struct ifbifconf *);
 
 static struct if_clone tpmr_cloner =
     IF_CLONE_INITIALIZER("tpmr", tpmr_clone_create, tpmr_clone_destroy);
@@ -437,6 +438,13 @@ tpmr_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 		error = tpmr_del_port(sc, (struct ifbreq *)data);
 		break;
+	case SIOCBRDGIFS:
+		error = tpmr_port_list(sc, (struct ifbifconf *)data);
+		break;
+	/* stub for ifconfig(8) brconfig.c:bridge_rules() */
+	case SIOCBRDGGRL:
+		((struct ifbrlconf *)data)->ifbrl_len = 0;
+		break;
 
 	default:
 		error = ENOTTY;
@@ -574,6 +582,49 @@ tpmr_del_port(struct tpmr_softc *sc, const struct ifbreq *req)
 	tpmr_p_dtor(sc, p, "del");
 
 	return (0);
+}
+
+
+static int
+tpmr_port_list(struct tpmr_softc *sc, struct ifbifconf *bifc)
+{
+	struct tpmr_port *p;
+	struct ifbreq breq;
+	int i = 0, total = nitems(sc->sc_ports), n = 0, error = 0;
+
+	NET_ASSERT_LOCKED();
+
+	if (bifc->ifbic_len == 0) {
+		n = total;
+		goto done;
+	}
+
+	for (i = 0; i < total; i++) {
+		memset(&breq, 0, sizeof(breq));
+
+		if (bifc->ifbic_len < sizeof(breq))
+			break;
+
+		p = SMR_PTR_GET_LOCKED(&sc->sc_ports[i]);
+		if (p == NULL)
+			continue;
+		strlcpy(breq.ifbr_ifsname, p->p_ifp0->if_xname, IFNAMSIZ);
+
+		/* flag as span port so ifconfig(8)'s brconfig.c:bridge_list()
+		 * stays quiet wrt. STP */
+		breq.ifbr_ifsflags = IFBIF_SPAN;
+		strlcpy(breq.ifbr_name, sc->sc_if.if_xname, IFNAMSIZ);
+		if ((error = copyout(&breq, bifc->ifbic_req + n,
+		    sizeof(breq))) != 0)
+			goto done;
+
+		bifc->ifbic_len -= sizeof(breq);
+		n++;
+	}
+
+done:
+	bifc->ifbic_len = n * sizeof(breq);
+	return (error);
 }
 
 static int
