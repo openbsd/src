@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.16 2020/07/27 14:29:45 tobhe Exp $ */
+/*	$OpenBSD: cert.c,v 1.17 2020/07/28 07:35:04 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -135,21 +135,84 @@ sbgp_addr(struct parse *p,
 }
 
 /*
+ * Parse the SIA notify URL, 4.8.8.1.
+ * Returns zero on failure, non-zero on success.
+ */
+static int
+sbgp_sia_resource_notify(struct parse *p,
+	const unsigned char *d, size_t dsz)
+{
+	if (p->res->notify != NULL) {
+		warnx("%s: RFC 6487 section 4.8.8: SIA: "
+		    "Notify location already specified", p->fn);
+		return 0;
+	}
+
+	/* Make sure it's a https:// address. */
+	if (dsz <= 8 || strncasecmp(d, "https://", 8)) {
+		warnx("%s: RFC8182 section 3.2: not using https schema", p->fn);
+		return 0;
+	}
+
+	if ((p->res->notify = strndup((const char *)d, dsz)) == NULL)
+		err(1, NULL);
+
+	return 1;
+}
+
+/*
  * Parse the SIA manifest, 4.8.8.1.
- * There may be multiple different resources at this location, so throw
- * out all but the matching resource type.
  * Returns zero on failure, non-zero on success.
  */
 static int
 sbgp_sia_resource_mft(struct parse *p,
 	const unsigned char *d, size_t dsz)
 {
+	enum rtype rt;
+
+	if (p->res->mft != NULL) {
+		warnx("%s: RFC 6487 section 4.8.8: SIA: "
+		    "MFT location already specified", p->fn);
+		return 0;
+	}
+	if ((p->res->mft = strndup((const char *)d, dsz)) == NULL)
+		err(1, NULL);
+
+	/* Make sure it's an MFT rsync address. */
+	if (!rsync_uri_parse(NULL, NULL, NULL,
+	    NULL, NULL, NULL, &rt, p->res->mft)) {
+		warnx("%s: RFC 6487 section 4.8.8: SIA: "
+		    "failed to parse rsync URI", p->fn);
+		free(p->res->mft);
+		p->res->mft = NULL;
+		return 0;
+	}
+	if (rt != RTYPE_MFT) {
+		warnx("%s: RFC 6487 section 4.8.8: SIA: "
+		    "invalid rsync URI suffix", p->fn);
+		free(p->res->mft);
+		p->res->mft = NULL;
+		return 0;
+	}
+	return 1;
+}
+
+/*
+ * Parse the SIA entries, 4.8.8.1.
+ * There may be multiple different resources at this location, so throw
+ * out all but the matching resource type. Currently only two entries
+ * are of interest: rpkiManifest and rpkiNotify.
+ * Returns zero on failure, non-zero on success.
+ */
+static int
+sbgp_sia_resource_entry(struct parse *p,
+	const unsigned char *d, size_t dsz)
+{
 	ASN1_SEQUENCE_ANY	*seq;
 	const ASN1_TYPE		*t;
 	int			 rc = 0, ptag;
-	char			buf[128];
+	char			 buf[128];
 	long			 plen;
-	enum rtype		 rt;
 
 	if ((seq = d2i_ASN1_SEQUENCE_ANY(NULL, &d, dsz)) == NULL) {
 		cryptowarnx("%s: RFC 6487 section 4.8.8: SIA: "
@@ -174,23 +237,6 @@ sbgp_sia_resource_mft(struct parse *p,
 	}
 	OBJ_obj2txt(buf, sizeof(buf), t->value.object, 1);
 
-	/*
-	 * Ignore all but manifest.
-	 * Things we may want to consider later:
-	 *  - 1.3.6.1.5.5.7.48.13 (rpkiNotify)
-	 *  - 1.3.6.1.5.5.7.48.5 (CA repository)
-	 */
-
-	if (strcmp(buf, "1.3.6.1.5.5.7.48.10")) {
-		rc = 1;
-		goto out;
-	}
-	if (p->res->mft != NULL) {
-		warnx("%s: RFC 6487 section 4.8.8: SIA: "
-		    "MFT location already specified", p->fn);
-		goto out;
-	}
-
 	t = sk_ASN1_TYPE_value(seq, 1);
 	if (t->type != V_ASN1_OTHER) {
 		warnx("%s: RFC 6487 section 4.8.8: SIA: "
@@ -206,28 +252,19 @@ sbgp_sia_resource_mft(struct parse *p,
 	if (!ASN1_frame(p, dsz, &d, &plen, &ptag))
 		goto out;
 
-	if ((p->res->mft = strndup((const char *)d, plen)) == NULL)
-		err(1, NULL);
-
-	/* Make sure it's an MFT rsync address. */
-
-	if (!rsync_uri_parse(NULL, NULL, NULL,
-	    NULL, NULL, NULL, &rt, p->res->mft)) {
-		warnx("%s: RFC 6487 section 4.8.8: SIA: "
-		    "failed to parse rsync URI", p->fn);
-		free(p->res->mft);
-		p->res->mft = NULL;
-		goto out;
-	}
-	if (rt != RTYPE_MFT) {
-		warnx("%s: RFC 6487 section 4.8.8: SIA: "
-		    "invalid rsync URI suffix", p->fn);
-		free(p->res->mft);
-		p->res->mft = NULL;
-		goto out;
-	}
-
-	rc = 1;
+	/*
+	 * Ignore all but manifest and RRDP notify URL.
+	 * Things we may see:
+	 *  - 1.3.6.1.5.5.7.48.10 (rpkiManifest)
+	 *  - 1.3.6.1.5.5.7.48.13 (rpkiNotify)
+	 *  - 1.3.6.1.5.5.7.48.5 (CA repository)
+	 */
+	if (strcmp(buf, "1.3.6.1.5.5.7.48.10") == 0)
+		rc = sbgp_sia_resource_mft(p, d, plen);
+	else if (strcmp(buf, "1.3.6.1.5.5.7.48.13") == 0)
+		rc = sbgp_sia_resource_notify(p, d, plen);
+	else
+		rc = 1;	/* silently ignore */
 out:
 	sk_ASN1_TYPE_pop_free(seq, ASN1_TYPE_free);
 	return rc;
@@ -260,7 +297,7 @@ sbgp_sia_resource(struct parse *p, const unsigned char *d, size_t dsz)
 		}
 		d = t->value.asn1_string->data;
 		dsz = t->value.asn1_string->length;
-		if (!sbgp_sia_resource_mft(p, d, dsz))
+		if (!sbgp_sia_resource_entry(p, d, dsz))
 			goto out;
 	}
 
@@ -1161,6 +1198,7 @@ cert_free(struct cert *p)
 
 	free(p->crl);
 	free(p->mft);
+	free(p->notify);
 	free(p->ips);
 	free(p->as);
 	free(p->aki);
@@ -1221,6 +1259,7 @@ cert_buffer(char **b, size_t *bsz, size_t *bmax, const struct cert *p)
 		cert_as_buffer(b, bsz, bmax, &p->as[i]);
 
 	io_str_buffer(b, bsz, bmax, p->mft);
+	io_str_buffer(b, bsz, bmax, p->notify);
 
 	has_crl = (p->crl != NULL);
 	io_simple_buffer(b, bsz, bmax, &has_crl, sizeof(int));
@@ -1294,6 +1333,7 @@ cert_read(int fd)
 		cert_as_read(fd, &p->as[i]);
 
 	io_str_read(fd, &p->mft);
+	io_str_read(fd, &p->notify);
 	io_simple_read(fd, &has_crl, sizeof(int));
 	if (has_crl)
 		io_str_read(fd, &p->crl);
