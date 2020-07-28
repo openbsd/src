@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.494 2020/07/21 14:10:51 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.495 2020/07/28 16:47:42 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1845,6 +1845,8 @@ int	pfr_ina_rollback(struct pfr_table *, u_int32_t, int *, int);
 int	pfr_ina_commit(struct pfr_table *, u_int32_t, int *, int *, int);
 int	pfr_ina_define(struct pfr_table *, struct pfr_addr *, int, int *,
 	    int *, u_int32_t, int);
+struct pfr_ktable
+	*pfr_ktable_select_active(struct pfr_ktable *);
 
 extern struct pfi_kif		*pfi_all;
 

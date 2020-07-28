@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.65 2020/07/24 14:06:33 yasuoka Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.66 2020/07/28 16:47:41 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -353,6 +353,7 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 	struct pf_addr		 faddr;
 	struct pf_addr		*raddr = &rpool->addr.v.a.addr;
 	struct pf_addr		*rmask = &rpool->addr.v.a.mask;
+	struct pfr_ktable	*kt;
 	struct pfi_kif		*kif;
 	u_int64_t		 states;
 	u_int16_t		 weight;
@@ -405,18 +406,17 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 		pf_poolmask(naddr, raddr, rmask, saddr, af);
 		break;
 	case PF_POOL_RANDOM:
-		if (rpool->addr.type == PF_ADDR_TABLE) {
-			cnt = rpool->addr.p.tbl->pfrkt_cnt;
-			if (cnt == 0)
-				rpool->tblidx = 0;
+		if (rpool->addr.type == PF_ADDR_TABLE ||
+		    rpool->addr.type == PF_ADDR_DYNIFTL) {
+			if (rpool->addr.type == PF_ADDR_TABLE)
+				kt = rpool->addr.p.tbl;
 			else
-				rpool->tblidx = (int)arc4random_uniform(cnt);
-			memset(&rpool->counter, 0, sizeof(rpool->counter));
-			if (pfr_pool_get(rpool, &raddr, &rmask, af))
+				kt = rpool->addr.p.dyn->pfid_kt;
+			kt = pfr_ktable_select_active(kt);
+			if (kt == NULL)
 				return (1);
-			pf_addrcpy(naddr, &rpool->counter, af);
-		} else if (rpool->addr.type == PF_ADDR_DYNIFTL) {
-			cnt = rpool->addr.p.dyn->pfid_kt->pfrkt_cnt;
+
+			cnt = kt->pfrkt_cnt;
 			if (cnt == 0)
 				rpool->tblidx = 0;
 			else
@@ -462,18 +462,18 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 	case PF_POOL_SRCHASH:
 		hashidx =
 		    pf_hash(saddr, (struct pf_addr *)&hash, &rpool->key, af);
-		if (rpool->addr.type == PF_ADDR_TABLE) {
-			cnt = rpool->addr.p.tbl->pfrkt_cnt;
-			if (cnt == 0)
-				rpool->tblidx = 0;
+
+		if (rpool->addr.type == PF_ADDR_TABLE ||
+		    rpool->addr.type == PF_ADDR_DYNIFTL) {
+			if (rpool->addr.type == PF_ADDR_TABLE)
+				kt = rpool->addr.p.tbl;
 			else
-				rpool->tblidx = (int)(hashidx % cnt);
-			memset(&rpool->counter, 0, sizeof(rpool->counter));
-			if (pfr_pool_get(rpool, &raddr, &rmask, af))
+				kt = rpool->addr.p.dyn->pfid_kt;
+			kt = pfr_ktable_select_active(kt);
+			if (kt == NULL)
 				return (1);
-			pf_addrcpy(naddr, &rpool->counter, af);
-		} else if (rpool->addr.type == PF_ADDR_DYNIFTL) {
-			cnt = rpool->addr.p.dyn->pfid_kt->pfrkt_cnt;
+
+			cnt = kt->pfrkt_cnt;
 			if (cnt == 0)
 				rpool->tblidx = 0;
 			else

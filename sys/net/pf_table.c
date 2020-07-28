@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.133 2020/06/24 22:03:43 cheloha Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.134 2020/07/28 16:47:41 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -2108,9 +2108,8 @@ pfr_kentry_byaddr(struct pfr_ktable *kt, struct pf_addr *a, sa_family_t af,
 	struct sockaddr_in6	 tmp6;
 #endif /* INET6 */
 
-	if (!(kt->pfrkt_flags & PFR_TFLAG_ACTIVE) && kt->pfrkt_root != NULL)
-		kt = kt->pfrkt_root;
-	if (!(kt->pfrkt_flags & PFR_TFLAG_ACTIVE))
+	kt = pfr_ktable_select_active(kt);
+	if (kt == NULL)
 		return (0);
 
 	switch (af) {
@@ -2153,9 +2152,8 @@ pfr_update_stats(struct pfr_ktable *kt, struct pf_addr *a, struct pf_pdesc *pd,
 	int			 dir_idx = (pd->dir == PF_OUT);
 	int			 op_idx;
 
-	if (!(kt->pfrkt_flags & PFR_TFLAG_ACTIVE) && kt->pfrkt_root != NULL)
-		kt = kt->pfrkt_root;
-	if (!(kt->pfrkt_flags & PFR_TFLAG_ACTIVE))
+	kt = pfr_ktable_select_active(kt);
+	if (kt == NULL)
 		return;
 
 	switch (af) {
@@ -2308,9 +2306,8 @@ pfr_pool_get(struct pf_pool *rpool, struct pf_addr **raddr,
 		kt = rpool->addr.p.dyn->pfid_kt;
 	else
 		return (-1);
-	if (!(kt->pfrkt_flags & PFR_TFLAG_ACTIVE) && kt->pfrkt_root != NULL)
-		kt = kt->pfrkt_root;
-	if (!(kt->pfrkt_flags & PFR_TFLAG_ACTIVE))
+	kt = pfr_ktable_select_active(kt);
+	if (kt == NULL)
 		return (-1);
 
 	counter = &rpool->counter;
@@ -2564,4 +2561,15 @@ pfr_ktable_winfo_update(struct pfr_ktable *kt, struct pfr_kentry *p) {
 		if (kt->pfrkt_maxweight < weight)
 			kt->pfrkt_maxweight = weight;
 	}
+}
+
+struct pfr_ktable *
+pfr_ktable_select_active(struct pfr_ktable *kt)
+{
+	if (!(kt->pfrkt_flags & PFR_TFLAG_ACTIVE) && kt->pfrkt_root != NULL)
+		kt = kt->pfrkt_root;
+	if (!(kt->pfrkt_flags & PFR_TFLAG_ACTIVE))
+		return (NULL);
+
+	return (kt);
 }
