@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.239 2020/07/03 17:42:50 florian Exp $	*/
+/*	$OpenBSD: in6.c,v 1.240 2020/07/28 17:54:15 florian Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1337,11 +1337,7 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 		return (NULL);
 	}
 
-	/*
-	 * We search for all addresses on all interfaces from the beginning.
-	 * Comparing an interface with the outgoing interface will be done
-	 * only at the final stage of tiebreaking.
-	 */
+	/* We search for all addresses on all interfaces from the beginning. */
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if (ifp->if_rdomain != rdomain)
 			continue;
@@ -1363,35 +1359,12 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 			continue;
 
 		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
-			int tlen = -1, dscopecmp, bscopecmp, matchcmp;
+			int tlen = -1;
 
 			if (ifa->ifa_addr->sa_family != AF_INET6)
 				continue;
 
 			src_scope = in6_addrscope(IFA_IN6(ifa));
-
-#ifdef ADDRSELECT_DEBUG		/* should be removed after stabilization */
-		{
-			char adst[INET6_ADDRSTRLEN], asrc[INET6_ADDRSTRLEN];
-			char bestaddr[INET6_ADDRSTRLEN];
-
-
-			dscopecmp = IN6_ARE_SCOPE_CMP(src_scope, dst_scope);
-			printf("%s: dst=%s bestaddr=%s, "
-			    "newaddr=%s, scope=%x, dcmp=%d, bcmp=%d, "
-			    "matchlen=%d, flgs=%x\n", __func__,
-			    inet_ntop(AF_INET6, dst, adst, sizeof(adst)),
-			    (ia6_best == NULL) ? "none" :
-			    inet_ntop(AF_INET6, &ia6_best->ia_addr.sin6_addr,
-			    bestaddr, sizeof(bestaddr)),
-			    inet_ntop(AF_INET6, IFA_IN6(ifa),
-			    asrc, sizeof(asrc)),
-			    src_scope, dscopecmp, ia6_best ?
-			    IN6_ARE_SCOPE_CMP(src_scope, best_scope) : -1,
-			    in6_matchlen(IFA_IN6(ifa), dst),
-			    ifatoia6(ifa)->ia6_flags);
-		}
-#endif
 
 			/*
 			 * Don't use an address before completing DAD
@@ -1401,7 +1374,16 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 			    (IN6_IFF_TENTATIVE|IN6_IFF_DUPLICATED))
 				continue;
 
-			/* XXX: is there any case to allow anycasts? */
+			/*
+			 * RFC 6724 allows anycast addresses as source address
+			 * because the restriction was removed in RFC 4291.
+			 * However RFC 4443 states that ICMPv6 responses
+			 * MUST use a unicast source address.
+			 *
+			 * XXX Skip anycast addresses for now since
+			 * icmp6_reflect() uses this function for source
+			 * address selection.
+			 */
 			if (ifatoia6(ifa)->ia6_flags & IN6_IFF_ANYCAST)
 				continue;
 
@@ -1421,26 +1403,26 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 			 */
 
 			/*
-			 * If ia6_best has a smaller scope than dst and
-			 * the current address has a larger one than
-			 * (or equal to) dst, always replace ia6_best.
-			 * Also, if the current address has a smaller scope
-			 * than dst, ignore it unless ia6_best also has a
-			 * smaller scope.
+			 * Rule 2: Prefer appropriate scope.
+			 * Find the address with the smallest scope that is
+			 * bigger (or equal) to the scope of the destination
+			 * address.
+			 * Accept an address with smaller scope than the
+			 * destination if non exists with bigger scope.
 			 */
-			if (IN6_ARE_SCOPE_CMP(best_scope, dst_scope) < 0 &&
-			    IN6_ARE_SCOPE_CMP(src_scope, dst_scope) >= 0)
-				goto replace;
-			if (IN6_ARE_SCOPE_CMP(src_scope, dst_scope) < 0 &&
-			    IN6_ARE_SCOPE_CMP(best_scope, dst_scope) >= 0)
-				continue;
+			if (best_scope < src_scope) {
+				if (best_scope < dst_scope)
+					goto replace;
+				else
+					continue;
+			} else if (src_scope < best_scope) {
+				if (src_scope < dst_scope)
+					continue;
+				else
+					goto replace;
+			}
 
-			/*
-			 * A deprecated address SHOULD NOT be used in new
-			 * communications if an alternate (non-deprecated)
-			 * address is available and has sufficient scope.
-			 * RFC 2462, Section 5.5.4.
-			 */
+			/* Rule 3: Avoid deprecated addresses. */
 			if (ifatoia6(ifa)->ia6_flags & IN6_IFF_DEPRECATED) {
 				/*
 				 * Ignore any deprecated addresses if
@@ -1456,120 +1438,42 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 				if ((ia6_best->ia6_flags & IN6_IFF_DEPRECATED)
 				    == 0)
 					continue;
-			}
-
-			/*
-			 * A non-deprecated address is always preferred
-			 * to a deprecated one regardless of scopes and
-			 * address matching.
-			 */
-			if ((ia6_best->ia6_flags & IN6_IFF_DEPRECATED) &&
-			    (ifatoia6(ifa)->ia6_flags &
-			     IN6_IFF_DEPRECATED) == 0)
+			} else if ((ia6_best->ia6_flags & IN6_IFF_DEPRECATED))
 				goto replace;
 
-			/* RFC 3484 5. Rule 5: Prefer outgoing interface */
+			/*
+			 * Rule 4: Prefer home addresses.
+			 * We do not support home addresses.
+			 */
+
+			/* Rule 5: Prefer outgoing interface */
 			if (ia6_best->ia_ifp == oifp && ifp != oifp)
 				continue;
 			if (ia6_best->ia_ifp != oifp && ifp == oifp)
 				goto replace;
 
 			/*
-			 * At this point, we have two cases:
-			 * 1. we are looking at a non-deprecated address,
-			 *    and ia6_best is also non-deprecated.
-			 * 2. we are looking at a deprecated address,
-			 *    and ia6_best is also deprecated.
-			 * Also, we do not have to consider a case where
-			 * the scope of if_best is larger(smaller) than dst and
-			 * the scope of the current address is smaller(larger)
-			 * than dst. Such a case has already been covered.
-			 * Tiebreaking is done according to the following
-			 * items:
-			 * - the scope comparison between the address and
-			 *   dst (dscopecmp)
-			 * - the scope comparison between the address and
-			 *   ia6_best (bscopecmp)
-			 * - if the address match dst longer than ia6_best
-			 *   (matchcmp)
-			 * - if the address is on the outgoing I/F (outI/F)
-			 *
-			 * Roughly speaking, the selection policy is
-			 * - the most important item is scope. The same scope
-			 *   is best. Then search for a larger scope.
-			 *   Smaller scopes are the last resort.
-			 * - A deprecated address is chosen only when we have
-			 *   no address that has an enough scope, but is
-			 *   prefered to any addresses of smaller scopes.
-			 * - Longest address match against dst is considered
-			 *   only for addresses that has the same scope of dst.
-			 * - If there is no other reasons to choose one,
-			 *   addresses on the outgoing I/F are preferred.
-			 *
-			 * The precise decision table is as follows:
-			 * dscopecmp bscopecmp matchcmp outI/F | replace?
-			 *    !equal     equal      N/A    Yes |      Yes (1)
-			 *    !equal     equal      N/A     No |       No (2)
-			 *    larger    larger      N/A    N/A |       No (3)
-			 *    larger   smaller      N/A    N/A |      Yes (4)
-			 *   smaller    larger      N/A    N/A |      Yes (5)
-			 *   smaller   smaller      N/A    N/A |       No (6)
-			 *     equal   smaller      N/A    N/A |      Yes (7)
-			 *     equal    larger       (already done)
-			 *     equal     equal   larger    N/A |      Yes (8)
-			 *     equal     equal  smaller    N/A |       No (9)
-			 *     equal     equal    equal    Yes |      Yes (a)
-			 *     equal     equal    equal     No |       No (b)
+			 * Rule 5.5: Prefer addresses in a prefix advertised
+			 * by the next-hop.
+			 * We do not track this information.
 			 */
-			dscopecmp = IN6_ARE_SCOPE_CMP(src_scope, dst_scope);
-			bscopecmp = IN6_ARE_SCOPE_CMP(src_scope, best_scope);
-
-			if (dscopecmp && bscopecmp == 0) {
-				if (oifp == ifp) /* (1) */
-					goto replace;
-				continue; /* (2) */
-			}
-			if (dscopecmp > 0) {
-				if (bscopecmp > 0) /* (3) */
-					continue;
-				goto replace; /* (4) */
-			}
-			if (dscopecmp < 0) {
-				if (bscopecmp > 0) /* (5) */
-					goto replace;
-				continue; /* (6) */
-			}
-
-			/* now dscopecmp must be 0 */
-			if (bscopecmp < 0)
-				goto replace; /* (7) */
 
 			/*
-			 * At last both dscopecmp and bscopecmp must be 0.
-			 * We need address matching against dst for
-			 * tiebreaking.
-			 * Privacy addresses are preferred over public
-			 * addresses (RFC3484 requires a config knob for
-			 * this which we don't provide).
+			 * Rule 6: Prefer matching label.
+			 * We do not implement policy tables.
 			 */
-			if (oifp == ifp) {
-				/* Do not replace temporary autoconf addresses
-				 * with non-temporary addresses. */
-				if ((ia6_best->ia6_flags & IN6_IFF_TEMPORARY)
-				    && !(ifatoia6(ifa)->ia6_flags &
-				    IN6_IFF_TEMPORARY))
-					continue;
 
-				/* Replace non-temporary autoconf addresses
-				 * with temporary addresses. */
-				if (!(ia6_best->ia6_flags & IN6_IFF_TEMPORARY)
-				    && (ifatoia6(ifa)->ia6_flags &
-				    IN6_IFF_TEMPORARY))
-					goto replace;
-			}
+			/* Rule 7: Prefer temporary addresses. */
+			if ((ia6_best->ia6_flags & IN6_IFF_TEMPORARY) &&
+			    !(ifatoia6(ifa)->ia6_flags & IN6_IFF_TEMPORARY))
+				continue;
+			if (!(ia6_best->ia6_flags & IN6_IFF_TEMPORARY) &&
+			    (ifatoia6(ifa)->ia6_flags & IN6_IFF_TEMPORARY))
+				goto replace;
+
+			/* Rule 8: Use longest matching prefix. */
 			tlen = in6_matchlen(IFA_IN6(ifa), dst);
-			matchcmp = tlen - blen;
-			if (matchcmp > 0) { /* (8) */
+			if (tlen > blen) {
 #if NCARP > 0
 				/*
 				 * Don't let carp interfaces win a tie against
@@ -1589,12 +1493,7 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 #endif
 				goto replace;
 			}
-			if (matchcmp < 0) /* (9) */
-				continue;
-			if (oifp == ifp) /* (a) */
-				goto replace;
-			continue; /* (b) */
-
+			continue;
 		  replace:
 			ia6_best = ifatoia6(ifa);
 			blen = tlen >= 0 ? tlen :
