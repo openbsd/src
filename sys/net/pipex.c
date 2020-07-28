@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.120 2020/07/17 08:57:27 mvs Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.121 2020/07/28 12:53:20 mvs Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -83,19 +83,24 @@ struct pool pipex_session_pool;
 struct pool mppe_key_pool;
 
 /*
- * static/global variables
+ * Global data
+ * Locks used to protect global data
+ *       A       atomic operation
+ *       I       immutable after creation
+ *       N       net lock
  */
-int	pipex_enable = 0;
-struct pipex_hash_head
-    pipex_session_list,				/* master session list */
-    pipex_close_wait_list,			/* expired session list */
-    pipex_peer_addr_hashtable[PIPEX_HASH_SIZE],	/* peer's address hash */
-    pipex_id_hashtable[PIPEX_HASH_SIZE];	/* peer id hash */
 
-struct radix_node_head	*pipex_rd_head4 = NULL;
-struct radix_node_head	*pipex_rd_head6 = NULL;
+int	pipex_enable = 0;			/* [N] */
+struct pipex_hash_head
+    pipex_session_list,				/* [N] master session list */
+    pipex_close_wait_list,			/* [N] expired session list */
+    pipex_peer_addr_hashtable[PIPEX_HASH_SIZE],	/* [N] peer's address hash */
+    pipex_id_hashtable[PIPEX_HASH_SIZE];	/* [N] peer id hash */
+
+struct radix_node_head	*pipex_rd_head4 = NULL;	/* [N] */
+struct radix_node_head	*pipex_rd_head6 = NULL;	/* [N] */
 struct timeout pipex_timer_ch;		/* callout timer context */
-int pipex_prune = 1;			/* walk list every seconds */
+int pipex_prune = 1;			/* [I] walk list every seconds */
 
 /* pipex traffic queue */
 struct mbuf_queue pipexinq = MBUF_QUEUE_INITIALIZER(IFQ_MAXLEN, IPL_NET);
@@ -105,7 +110,7 @@ struct mbuf_queue pipexoutq = MBUF_QUEUE_INITIALIZER(IFQ_MAXLEN, IPL_NET);
 #define ph_ppp_proto ether_vtag
 
 #ifdef PIPEX_DEBUG
-int pipex_debug = 0;		/* systcl net.inet.ip.pipex_debug */
+int pipex_debug = 0;		/* [A] systcl net.inet.ip.pipex_debug */
 #endif
 
 /* PPP compression == MPPE is assumed, so don't answer CCP Reset-Request. */
@@ -430,6 +435,8 @@ pipex_link_session(struct pipex_session *session,
 {
 	struct pipex_hash_head *chain;
 
+	NET_ASSERT_LOCKED();
+
 	if (!iface->pipexmode)
 		return (ENXIO);
 	if (pipex_lookup_by_session_id(session->protocol,
@@ -465,6 +472,7 @@ pipex_unlink_session(struct pipex_session *session)
 {
 	session->ifindex = 0;
 
+	NET_ASSERT_LOCKED();
 	LIST_REMOVE(session, id_chain);
 #if defined(PIPEX_PPTP) || defined(PIPEX_L2TP)
 	switch (session->protocol) {
