@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.68 2020/07/20 16:09:48 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.69 2020/07/28 21:33:14 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -251,7 +251,9 @@ ahc_action(struct scsi_xfer *xs)
 	u_int target_id;
 	u_int our_id;
 
-	SC_DEBUG(xs->sc_link, SDEV_DB3, ("ahc_action\n"));
+#ifdef AHC_DEBUG
+	printf("%s: ahc_action\n", ahc_name(ahc));
+#endif
 	ahc = xs->sc_link->bus->sb_adapter_softc;
 
 	target_id = xs->sc_link->target;
@@ -269,7 +271,9 @@ ahc_action(struct scsi_xfer *xs)
 	hscb->control = 0;
 	ahc->scb_data->scbindex[hscb->tag] = NULL;
 
-	SC_DEBUG(xs->sc_link, SDEV_DB3, ("start scb(%p)\n", scb));
+#ifdef AHC_DEBUG
+	printf("%s: start scb(%p)\n", ahc_name(ahc), scb);
+#endif
 	scb->xs = xs;
 	timeout_set(&xs->stimeout, ahc_timeout, scb);
 
@@ -457,7 +461,9 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 	 * If we can't use interrupts, poll for completion
 	 */
 poll:
-	SC_DEBUG(xs->sc_link, SDEV_DB3, ("cmd_poll\n"));
+#ifdef AHC_DEBUG
+	printf("%s: cmd_poll\n"", ahc_name(ahc));
+#endif
 
 	do {
 		if (ahc_poll(ahc, xs->timeout)) {

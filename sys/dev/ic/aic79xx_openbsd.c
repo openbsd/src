@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.57 2020/07/20 14:41:13 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.58 2020/07/28 21:33:14 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -256,7 +256,9 @@ ahd_action(struct scsi_xfer *xs)
 	struct	ahd_tmode_tstate *tstate;
 	u_int16_t quirks;
 
-	SC_DEBUG(xs->sc_link, SDEV_DB3, ("ahd_action\n"));
+#ifdef AHD_DEBUG
+	printf("%s: ahd_action\n", ahd_name(ahd));
+#endif
 	ahd = xs->sc_link->bus->sb_adapter_softc;
 
 	target_id = xs->sc_link->target;
@@ -284,7 +286,9 @@ ahd_action(struct scsi_xfer *xs)
 	scb->hscb->control = 0;
 	ahd->scb_data.scbindex[SCB_GET_TAG(scb)] = NULL;
 
-	SC_DEBUG(xs->sc_link, SDEV_DB3, ("start scb(%p)\n", scb));
+#ifdef AHD_DEBUG
+	printf("%s: start scb(%p)\n", ahd_name(ahd), scb);
+#endif
 
 	scb->xs = xs;
 	timeout_set(&xs->stimeout, ahd_timeout, scb);
@@ -431,7 +435,9 @@ ahd_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 	/*
 	 * If we can't use interrupts, poll for completion
 	 */
-	SC_DEBUG(xs->sc_link, SDEV_DB3, ("cmd_poll\n"));
+#ifdef AHD_DEBUG
+	printf("%s: cmd_poll\n", ahd_name(ahd));
+#endif
 
 	do {
 		if (ahd_poll(ahd, xs->timeout)) {

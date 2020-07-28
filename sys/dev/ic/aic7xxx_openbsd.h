@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.h,v 1.29 2020/07/05 21:54:44 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.h,v 1.30 2020/07/28 21:33:14 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.h,v 1.7 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -62,7 +62,6 @@
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_message.h>
-#include <scsi/scsi_debug.h>
 #include <scsi/scsiconf.h>
 
 #include <uvm/uvm_extern.h>

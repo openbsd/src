@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.h,v 1.20 2017/12/12 12:33:36 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.h,v 1.21 2020/07/28 21:33:14 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -85,7 +85,6 @@
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_message.h>
-#include <scsi/scsi_debug.h>
 #include <scsi/scsiconf.h>
 
 #include <uvm/uvm_extern.h>
