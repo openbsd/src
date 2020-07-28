@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.34 2020/07/22 20:37:35 mvs Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.35 2020/07/28 07:37:05 kn Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -564,8 +564,10 @@ switch_port_list(struct switch_softc *sc, struct ifbifconf *bifc)
 	TAILQ_FOREACH(swpo, &sc->sc_swpo_list, swpo_list_next)
 		total++;
 
-	if (bifc->ifbic_len == 0)
+	if (bifc->ifbic_len == 0) {
+		n = total;
 		goto done;
+	}
 
 	TAILQ_FOREACH(swpo, &sc->sc_swpo_list, swpo_list_next) {
 		memset(&breq, 0, sizeof(breq));
