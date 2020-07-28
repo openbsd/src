@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.66 2020/07/24 12:43:31 krw Exp $	*/
+/*	$OpenBSD: cac.c,v 1.67 2020/07/28 22:26:32 krw Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -722,8 +722,9 @@ cac_scsi_cmd(xs)
 		return;
 
 	default:
-		SC_DEBUG(link, SDEV_DB1, ("unsupported scsi command %#x "
-		    "tgt %d ", xs->cmd->opcode, target));
+#ifdef CAC_DEBUG
+		printf("unsupported scsi command %#x tgt %d ", xs->cmd->opcode, target);
+#endif
 		xs->error = XS_DRIVER_STUFFUP;
 	}
 
