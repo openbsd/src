@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.348 2020/07/28 09:22:37 bluhm Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.349 2020/07/28 16:44:34 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1140,7 +1140,9 @@ carp_send_ad(struct carp_vhost_entry *vhe)
 
 		error = ip_output(m, NULL, NULL, IP_RAWOUTPUT, &sc->sc_imo,
 		    NULL, 0);
-		if (error) {
+		if (error &&
+		    /* when unicast, the peer's down is not our fault */
+		    !(!IN_MULTICAST(sc->sc_peer.s_addr) && error == EHOSTDOWN)){
 			if (error == ENOBUFS)
 				carpstat_inc(carps_onomem);
 			else
