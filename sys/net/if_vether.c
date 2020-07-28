@@ -1,4 +1,4 @@
-/* $OpenBSD: if_vether.c,v 1.32 2020/07/10 13:26:42 patrick Exp $ */
+/* $OpenBSD: if_vether.c,v 1.33 2020/07/28 09:52:32 mvs Exp $ */
 
 /*
  * Copyright (c) 2009 Theo de Raadt
@@ -88,6 +88,7 @@ vether_clone_create(struct if_clone *ifc, int unit)
 
 	ifp->if_hardmtu = ETHER_MAX_HARDMTU_LEN;
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
+	ifp->if_xflags = IFXF_CLONED;
 
 	ifmedia_init(&sc->sc_media, 0, vether_media_change,
 	    vether_media_status);
