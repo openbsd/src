@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.394 2020/06/24 22:03:43 cheloha Exp $	*/
+/*	$OpenBSD: route.c,v 1.395 2020/07/28 11:16:32 kn Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -932,7 +932,8 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 			ifafree(ifa);
 			rtfree(rt->rt_parent);
 			rt_putgwroute(rt);
-			free(rt->rt_gateway, M_RTABLE, 0);
+			free(rt->rt_gateway, M_RTABLE,
+			    ROUNDUP(rt->rt_gateway->sa_len));
 			free(ndst, M_RTABLE, ndst->sa_len);
 			pool_put(&rtentry_pool, rt);
 			return (error);
@@ -964,7 +965,8 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 			ifafree(ifa);
 			rtfree(rt->rt_parent);
 			rt_putgwroute(rt);
-			free(rt->rt_gateway, M_RTABLE, 0);
+			free(rt->rt_gateway, M_RTABLE,
+			    ROUNDUP(rt->rt_gateway->sa_len));
 			free(ndst, M_RTABLE, ndst->sa_len);
 			pool_put(&rtentry_pool, rt);
 			return (EEXIST);
