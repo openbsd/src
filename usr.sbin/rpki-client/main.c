@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.72 2020/06/30 12:52:44 job Exp $ */
+/*	$OpenBSD: main.c,v 1.73 2020/07/28 13:52:18 beck Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -937,10 +937,10 @@ proc_parser_mft(struct entity *entp, X509_STORE *store, X509_STORE_CTX *ctx,
 }
 
 /*
- * Certificates are from manifests (has a digest and is signed with another
- * certificate) or TALs (has a pkey and is self-signed).  Parse the certificate,
- * make sure its signatures are valid (with CRLs), then validate the RPKI
- * content.  This returns a certificate (which must not be freed) or NULL on
+ * Certificates are from manifests (has a digest and is signed with
+ * another certificate) Parse the certificate, make sure its
+ * signatures are valid (with CRLs), then validate the RPKI content.
+ * This returns a certificate (which must not be freed) or NULL on
  * parse failure.
  */
 static struct cert *
@@ -956,17 +956,16 @@ proc_parser_cert(const struct entity *entp,
 	STACK_OF(X509)		*chain;
 	STACK_OF(X509_CRL)	*crls;
 
-	assert(!entp->has_dgst != !entp->has_pkey);
+	assert(entp->has_dgst);
+	assert(!entp->has_pkey);
 
 	/* Extract certificate data and X509. */
 
-	cert = entp->has_dgst ? cert_parse(&x509, entp->uri, entp->dgst) :
-	    ta_parse(&x509, entp->uri, entp->pkey, entp->pkeysz);
+	cert = cert_parse(&x509, entp->uri, entp->dgst);
 	if (cert == NULL)
 		return NULL;
 
-	if (entp->has_dgst)
-		a = valid_ski_aki(entp->uri, auths, cert->ski, cert->aki);
+	a = valid_ski_aki(entp->uri, auths, cert->ski, cert->aki);
 	build_chain(a, &chain);
 	build_crls(a, crlt, &crls);
 
@@ -983,40 +982,30 @@ proc_parser_cert(const struct entity *entp,
 	    X509_V_FLAG_IGNORE_CRITICAL | X509_V_FLAG_CRL_CHECK);
 	X509_STORE_CTX_set0_crls(ctx, crls);
 
-	/*
-	 * FIXME: can we pass any options to the verification that make
-	 * the depth-zero self-signed bits verify properly?
-	 */
-
 	if (X509_verify_cert(ctx) <= 0) {
 		c = X509_STORE_CTX_get_error(ctx);
-		if (c != X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT ||
-		    !entp->has_pkey) {
-			warnx("%s: %s", entp->uri,
-			    X509_verify_cert_error_string(c));
-			X509_STORE_CTX_cleanup(ctx);
-			cert_free(cert);
-			sk_X509_free(chain);
-			sk_X509_CRL_free(crls);
-			X509_free(x509);
-			return NULL;
-		}
+		warnx("%s: %s", entp->uri,
+		    X509_verify_cert_error_string(c));
+		X509_STORE_CTX_cleanup(ctx);
+		cert_free(cert);
+		sk_X509_free(chain);
+		sk_X509_CRL_free(crls);
+		X509_free(x509);
+		return NULL;
 	}
+
 	X509_STORE_CTX_cleanup(ctx);
 	sk_X509_free(chain);
 	sk_X509_CRL_free(crls);
 
 	/* Validate the cert to get the parent */
-	if (!(entp->has_pkey ?
-		valid_ta(entp->uri, auths, cert) :
-		valid_cert(entp->uri, auths, cert))) {
+	if (!valid_cert(entp->uri, auths, cert)) {
 		X509_free(x509); // needed? XXX
 		return cert;
 	}
 
 	/*
-	 * Only on success of all do we add the certificate to the store
-	 * of trusted certificates, both X509 and RPKI semantic.
+	 * Add validated certs to the RPKI auth tree.
 	 */
 
 	cert->valid = 1;
@@ -1025,11 +1014,7 @@ proc_parser_cert(const struct entity *entp,
 	if (na == NULL)
 		err(1, NULL);
 
-	if (entp->has_pkey) {
-		if ((tal = strdup(entp->descr)) == NULL)
-			err(1, NULL);
-	} else
-		tal = a->tal;
+	tal = a->tal;
 
 	na->parent = a;
 	na->cert = cert;
@@ -1041,10 +1026,106 @@ proc_parser_cert(const struct entity *entp,
 	if (RB_INSERT(auth_tree, auths, na) != NULL)
 		err(1, "auth tree corrupted");
 
-	/* only a ta goes into the store */
-	if (a == NULL)
-		X509_STORE_add_cert(store, x509);
+	return cert;
+}
 
+
+/*
+ * Root certificates come from TALs (has a pkey and is self-signed).
+ * Parse the certificate, ensure that it's public key matches the
+ * known public key from the TAL, and then validate the RPKI
+ * content. If valid, we add it as a trusted root (trust anchor) to
+ * "store".
+ *
+ * This returns a certificate (which must not be freed) or NULL on
+ * parse failure.
+ */
+static struct cert *
+proc_parser_root_cert(const struct entity *entp,
+    X509_STORE *store, X509_STORE_CTX *ctx,
+    struct auth_tree *auths, struct crl_tree *crlt)
+{
+	char			subject[256];
+	ASN1_TIME		*notBefore, *notAfter;
+	X509_NAME		*name;
+	struct cert		*cert;
+	X509			*x509;
+	struct auth		*na;
+	char			*tal;
+
+	assert(!entp->has_dgst);
+	assert(entp->has_pkey);
+
+	/* Extract certificate data and X509. */
+
+	cert = ta_parse(&x509, entp->uri, entp->pkey, entp->pkeysz);
+	if (cert == NULL)
+		return NULL;
+
+	if ((name = X509_get_subject_name(x509)) == NULL) {
+		warnx("%s Unable to get certificate subject", entp->uri);
+		goto badcert;
+	}
+	if (X509_NAME_oneline(name, subject, sizeof(subject)) == NULL) {
+		warnx("%s: Unable to parse certificate subject name",
+		    entp->uri);
+		goto badcert;
+	}
+	if ((notBefore = X509_get_notBefore(x509)) == NULL) {
+		warnx("%s: certificate has invalid notBefore, subject='%s'",
+		    entp->uri, subject);
+		goto badcert;
+	}
+	if ((notAfter = X509_get_notAfter(x509)) == NULL) {
+		warnx("%s: certificate has invalid notAfter, subject='%s'",
+		    entp->uri, subject);
+		goto badcert;
+	}
+	if (X509_cmp_current_time(notBefore) != -1) {
+		warnx("%s: certificate not yet valid, subject='%s'", entp->uri,
+		    subject);
+		goto badcert;
+	}
+	if (X509_cmp_current_time(notAfter) != 1)  {
+		warnx("%s: certificate has expired, subject='%s'", entp->uri,
+		    subject);
+		goto badcert;
+	}
+	if (!valid_ta(entp->uri, auths, cert)) {
+		warnx("%s: certificate not a valid ta, subject='%s'",
+		    entp->uri, subject);
+		goto badcert;
+	}
+
+	/*
+	 * Add valid roots to the RPKI auth tree and as a trusted root
+	 * for chain validation to the X509_STORE.
+	 */
+
+	cert->valid = 1;
+
+	na = malloc(sizeof(*na));
+	if (na == NULL)
+		err(1, NULL);
+
+	if ((tal = strdup(entp->descr)) == NULL)
+		err(1, NULL);
+
+	na->parent = NULL;
+	na->cert = cert;
+	na->tal = tal;
+	na->fn = strdup(entp->uri);
+	if (na->fn == NULL)
+		err(1, NULL);
+
+	if (RB_INSERT(auth_tree, auths, na) != NULL)
+		err(1, "auth tree corrupted");
+
+	X509_STORE_add_cert(store, x509);
+
+	return cert;
+ badcert:
+	X509_free(x509); // needed? XXX
 	return cert;
 }
 
@@ -1236,8 +1317,12 @@ proc_parser(int fd)
 			tal_free(tal);
 			break;
 		case RTYPE_CER:
-			cert = proc_parser_cert(entp, store, ctx,
-			    &auths, &crlt);
+			if (entp->has_dgst)
+				cert = proc_parser_cert(entp, store, ctx,
+				    &auths, &crlt);
+			else
+				cert = proc_parser_root_cert(entp, store, ctx,
+				    &auths, &crlt);
 			c = (cert != NULL);
 			io_simple_buffer(&b, &bsz, &bmax, &c, sizeof(int));
 			if (cert != NULL)
