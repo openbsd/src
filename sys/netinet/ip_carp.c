@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.347 2020/07/24 18:17:15 mvs Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.348 2020/07/28 09:22:37 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1964,7 +1964,7 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 	struct carpreq carpr;
 	struct ifaddr *ifa = (struct ifaddr *)addr;
 	struct ifreq *ifr = (struct ifreq *)addr;
-	struct ifnet *ifp0;
+	struct ifnet *ifp0 = NULL;
 	int i, error = 0;
 
 	switch (cmd) {
@@ -2025,7 +2025,7 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 			sc->sc_peer.s_addr = INADDR_CARP_GROUP;
 		else
 			sc->sc_peer.s_addr = carpr.carpr_peer.s_addr;
-		if (ifp0->if_index != sc->sc_carpdevidx) {
+		if (ifp0 != NULL && ifp0->if_index != sc->sc_carpdevidx) {
 			if ((error = carp_set_ifp(sc, ifp0)))
 				return (error);
 		}
