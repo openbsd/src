@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.50 2020/03/24 07:53:24 anton Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.51 2020/07/29 05:53:52 anton Exp $	*/
 /*      $NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $      */
 
 /*
@@ -308,8 +308,11 @@ wsmuxclose(dev_t dev, int flags, int mode, struct proc *p)
 int
 wsmux_mux_close(struct wsevsrc *me)
 {
-	wsmux_do_close((struct wsmux_softc *)me);
-	me->me_evp = NULL;
+	struct wsmux_softc *sc = (struct wsmux_softc *)me;
+
+	wsmux_do_close(sc);
+	sc->sc_base.me_evp = NULL;
+
 	return (0);
 }
 
@@ -333,7 +336,6 @@ wsmux_do_close(struct wsmux_softc *sc)
 		}
 #endif
 		(void)wsevsrc_close(me);
-		me->me_evp = NULL;
 	}
 	rw_exit_read(&sc->sc_lock);
 }

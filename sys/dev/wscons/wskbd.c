@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.105 2020/04/26 11:17:56 bru Exp $ */
+/* $OpenBSD: wskbd.c,v 1.106 2020/07/29 05:53:52 anton Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -889,9 +889,9 @@ wskbd_mux_close(struct wsevsrc *me)
 {
 	struct wskbd_softc *sc = (struct wskbd_softc *)me;
 
-	sc->sc_base.me_evp = NULL;
-	sc->sc_translating = 1;
 	(void)wskbd_enable(sc, 0);
+	sc->sc_translating = 1;
+	sc->sc_base.me_evp = NULL;
 
 	return (0);
 }

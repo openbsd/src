@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.65 2020/05/29 04:42:25 deraadt Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.66 2020/07/29 05:53:52 anton Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -567,8 +567,8 @@ wsmouse_mux_close(struct wsevsrc *me)
 {
 	struct wsmouse_softc *sc = (struct wsmouse_softc *)me;
 
-	sc->sc_base.me_evp = NULL;
 	(*sc->sc_accessops->disable)(sc->sc_accesscookie);
+	sc->sc_base.me_evp = NULL;
 
 	return (0);
 }
