@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.274 2020/07/10 13:26:42 patrick Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.275 2020/07/29 12:08:15 mvs Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -198,7 +198,7 @@ void	pfsync_out_tdb(struct tdb *, void *);
 
 struct pfsync_softc {
 	struct ifnet		 sc_if;
-	struct ifnet		*sc_sync_if;
+	unsigned int		 sc_sync_ifidx;
 
 	struct pool		 sc_pool;
 
@@ -369,6 +369,7 @@ int
 pfsync_clone_destroy(struct ifnet *ifp)
 {
 	struct pfsync_softc *sc = ifp->if_softc;
+	struct ifnet *ifp0;
 	struct pfsync_deferral *pd;
 
 	NET_LOCK();
@@ -379,10 +380,11 @@ pfsync_clone_destroy(struct ifnet *ifp)
 	if (sc->sc_link_demoted)
 		carp_group_demote_adj(&sc->sc_if, -1, "pfsync destroy");
 #endif
-	if (sc->sc_sync_if) {
-		if_linkstatehook_del(sc->sc_sync_if, &sc->sc_ltask);
-		if_detachhook_del(sc->sc_sync_if, &sc->sc_dtask);
+	if ((ifp0 = if_get(sc->sc_sync_ifidx)) != NULL) {
+		if_linkstatehook_del(ifp0, &sc->sc_ltask);
+		if_detachhook_del(ifp0, &sc->sc_dtask);
 	}
+	if_put(ifp0);
 
 	/* XXXSMP breaks atomicity */
 	NET_UNLOCK();
@@ -425,11 +427,14 @@ void
 pfsync_syncdev_state(void *arg)
 {
 	struct pfsync_softc *sc = arg;
+	struct ifnet *ifp;
 
-	if (!sc->sc_sync_if || !(sc->sc_if.if_flags & IFF_UP))
+	if ((sc->sc_if.if_flags & IFF_UP) == 0)
+		return;
+	if ((ifp = if_get(sc->sc_sync_ifidx)) == NULL)
 		return;
 
-	if (sc->sc_sync_if->if_link_state == LINK_STATE_DOWN) {
+	if (ifp->if_link_state == LINK_STATE_DOWN) {
 		sc->sc_if.if_flags &= ~IFF_RUNNING;
 		if (!sc->sc_link_demoted) {
 #if NCARP > 0
@@ -449,17 +454,23 @@ pfsync_syncdev_state(void *arg)
 
 		pfsync_request_full_update(sc);
 	}
+
+	if_put(ifp);
 }
 
 void
 pfsync_ifdetach(void *arg)
 {
 	struct pfsync_softc *sc = arg;
+	struct ifnet *ifp;
 
-	if_linkstatehook_del(sc->sc_sync_if, &sc->sc_ltask);
-	if_detachhook_del(sc->sc_sync_if, &sc->sc_dtask);
+	if ((ifp = if_get(sc->sc_sync_ifidx)) != NULL) {
+		if_linkstatehook_del(ifp, &sc->sc_ltask);
+		if_detachhook_del(ifp, &sc->sc_dtask);
+	}
+	if_put(ifp);
 
-	sc->sc_sync_if = NULL;
+	sc->sc_sync_ifidx = 0;
 }
 
 int
@@ -702,11 +713,11 @@ pfsync_input(struct mbuf **mp, int *offp, int proto, int af)
 
 	/* verify that we have a sync interface configured */
 	if (sc == NULL || !ISSET(sc->sc_if.if_flags, IFF_RUNNING) ||
-	    sc->sc_sync_if == NULL || !pf_status.running)
+	    sc->sc_sync_ifidx == 0 || !pf_status.running)
 		goto done;
 
 	/* verify that the packet came in on the right interface */
-	if (sc->sc_sync_if->if_index != m->m_pkthdr.ph_ifidx) {
+	if (sc->sc_sync_ifidx != m->m_pkthdr.ph_ifidx) {
 		pfsyncstat_inc(pfsyncs_badif);
 		goto done;
 	}
@@ -1290,7 +1301,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct ip_moptions *imo = &sc->sc_imo;
 	struct pfsyncreq pfsyncr;
-	struct ifnet    *sifp;
+	struct ifnet *ifp0, *sifp;
 	struct ip *ip;
 	int error;
 
@@ -1319,20 +1330,27 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 	case SIOCSIFMTU:
-		if (!sc->sc_sync_if ||
-		    ifr->ifr_mtu <= PFSYNC_MINPKT ||
-		    ifr->ifr_mtu > sc->sc_sync_if->if_mtu)
+		if ((ifp0 = if_get(sc->sc_sync_ifidx)) == NULL)
 			return (EINVAL);
+		error = 0;
+		if (ifr->ifr_mtu <= PFSYNC_MINPKT ||
+		    ifr->ifr_mtu > ifp0->if_mtu) {
+			error = EINVAL;
+		}
+		if_put(ifp0);
+		if (error)
+			return error;
 		if (ifr->ifr_mtu < ifp->if_mtu)
 			pfsync_sendout();
 		ifp->if_mtu = ifr->ifr_mtu;
 		break;
 	case SIOCGETPFSYNC:
 		bzero(&pfsyncr, sizeof(pfsyncr));
-		if (sc->sc_sync_if) {
+		if ((ifp0 = if_get(sc->sc_sync_ifidx)) != NULL) {
 			strlcpy(pfsyncr.pfsyncr_syncdev,
-			    sc->sc_sync_if->if_xname, IFNAMSIZ);
+			    ifp0->if_xname, IFNAMSIZ);
 		}
+		if_put(ifp0);
 		pfsyncr.pfsyncr_syncpeer = sc->sc_sync_peer;
 		pfsyncr.pfsyncr_maxupdates = sc->sc_maxupdates;
 		pfsyncr.pfsyncr_defer = sc->sc_defer;
@@ -1357,13 +1375,12 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		sc->sc_defer = pfsyncr.pfsyncr_defer;
 
 		if (pfsyncr.pfsyncr_syncdev[0] == 0) {
-			if (sc->sc_sync_if) {
-				if_linkstatehook_del(sc->sc_sync_if,
-				    &sc->sc_ltask);
-				if_detachhook_del(sc->sc_sync_if,
-				    &sc->sc_dtask);
+			if ((ifp0 = if_get(sc->sc_sync_ifidx)) != NULL) {
+				if_linkstatehook_del(ifp0, &sc->sc_ltask);
+				if_detachhook_del(ifp0, &sc->sc_dtask);
 			}
-			sc->sc_sync_if = NULL;
+			if_put(ifp0);
+			sc->sc_sync_ifidx = 0;
 			if (imo->imo_num_memberships > 0) {
 				in_delmulti(imo->imo_membership[
 				    --imo->imo_num_memberships]);
@@ -1375,41 +1392,42 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if ((sifp = ifunit(pfsyncr.pfsyncr_syncdev)) == NULL)
 			return (EINVAL);
 
-		if (sifp->if_mtu < sc->sc_if.if_mtu ||
-		    (sc->sc_sync_if != NULL &&
-		    sifp->if_mtu < sc->sc_sync_if->if_mtu) ||
+		ifp0 = if_get(sc->sc_sync_ifidx);
+
+		if (sifp->if_mtu < sc->sc_if.if_mtu || (ifp0 != NULL &&
+		    sifp->if_mtu < ifp0->if_mtu) ||
 		    sifp->if_mtu < MCLBYTES - sizeof(struct ip))
 			pfsync_sendout();
 
-		if (sc->sc_sync_if) {
-			if_linkstatehook_del(sc->sc_sync_if, &sc->sc_ltask);
-			if_detachhook_del(sc->sc_sync_if, &sc->sc_dtask);
+		if (ifp0) {
+			if_linkstatehook_del(ifp0, &sc->sc_ltask);
+			if_detachhook_del(ifp0, &sc->sc_dtask);
 		}
-		sc->sc_sync_if = sifp;
+		if_put(ifp0);
+		sc->sc_sync_ifidx = sifp->if_index;
 
 		if (imo->imo_num_memberships > 0) {
 			in_delmulti(imo->imo_membership[--imo->imo_num_memberships]);
 			imo->imo_ifidx = 0;
 		}
 
-		if (sc->sc_sync_if &&
-		    sc->sc_sync_peer.s_addr == INADDR_PFSYNC_GROUP) {
+		if (sc->sc_sync_peer.s_addr == INADDR_PFSYNC_GROUP) {
 			struct in_addr addr;
 
-			if (!(sc->sc_sync_if->if_flags & IFF_MULTICAST)) {
-				sc->sc_sync_if = NULL;
+			if (!(sifp->if_flags & IFF_MULTICAST)) {
+				sc->sc_sync_ifidx = 0;
 				return (EADDRNOTAVAIL);
 			}
 
 			addr.s_addr = INADDR_PFSYNC_GROUP;
 
 			if ((imo->imo_membership[0] =
-			    in_addmulti(&addr, sc->sc_sync_if)) == NULL) {
-				sc->sc_sync_if = NULL;
+			    in_addmulti(&addr, sifp)) == NULL) {
+				sc->sc_sync_ifidx = 0;
 				return (ENOBUFS);
 			}
 			imo->imo_num_memberships++;
-			imo->imo_ifidx = sc->sc_sync_if->if_index;
+			imo->imo_ifidx = sc->sc_sync_ifidx;
 			imo->imo_ttl = PFSYNC_DFLTTL;
 			imo->imo_loop = 0;
 		}
@@ -1426,8 +1444,8 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ip->ip_src.s_addr = INADDR_ANY;
 		ip->ip_dst.s_addr = sc->sc_sync_peer.s_addr;
 
-		if_linkstatehook_add(sc->sc_sync_if, &sc->sc_ltask);
-		if_detachhook_add(sc->sc_sync_if, &sc->sc_dtask);
+		if_linkstatehook_add(sifp, &sc->sc_ltask);
+		if_detachhook_add(sifp, &sc->sc_dtask);
 
 		pfsync_request_full_update(sc);
 
@@ -1590,9 +1608,9 @@ pfsync_sendout(void)
 
 	if (!ISSET(sc->sc_if.if_flags, IFF_RUNNING) ||
 #if NBPFILTER > 0
-	    (ifp->if_bpf == NULL && sc->sc_sync_if == NULL)) {
+	    (ifp->if_bpf == NULL && sc->sc_sync_ifidx == 0)) {
 #else
-	    sc->sc_sync_if == NULL) {
+	    sc->sc_sync_ifidx == 0) {
 #endif
 		pfsync_drop(sc);
 		return;
@@ -1724,7 +1742,7 @@ pfsync_sendout(void)
 		m->m_len = m->m_pkthdr.len = sc->sc_len;
 	}
 
-	if (sc->sc_sync_if == NULL) {
+	if (sc->sc_sync_ifidx == 0) {
 		sc->sc_len = PFSYNC_MINPKT;
 		m_freem(m);
 		return;
@@ -2005,7 +2023,7 @@ pfsync_cancel_full_update(struct pfsync_softc *sc)
 void
 pfsync_request_full_update(struct pfsync_softc *sc)
 {
-	if (sc->sc_sync_if && ISSET(sc->sc_if.if_flags, IFF_RUNNING)) {
+	if (sc->sc_sync_ifidx != 0 && ISSET(sc->sc_if.if_flags, IFF_RUNNING)) {
 		/* Request a full state table update. */
 		sc->sc_ureq_sent = getuptime();
 #if NCARP > 0
