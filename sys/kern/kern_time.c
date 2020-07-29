@@ -274,8 +274,8 @@ sys_nanosleep(struct proc *p, void *v, register_t *retval)
 		syscallarg(const struct timespec *) rqtp;
 		syscallarg(struct timespec *) rmtp;
 	} */ *uap = v;
-	struct sleep_state sls;
-	struct timespec elapsed, end, remainder, request, start, stop;
+	struct timespec elapsed, remainder, request, start, stop;
+	uint64_t nsecs;
 	struct timespec *rmtp;
 	int copyout_error, error;
 
@@ -291,22 +291,18 @@ sys_nanosleep(struct proc *p, void *v, register_t *retval)
 	if (request.tv_sec < 0 || !timespecisvalid(&request))
 		return (EINVAL);
 
-	nanouptime(&start);
-	timespecadd(&start, &request, &end);
-	if (end.tv_sec < 0) {
-		end.tv_sec = LLONG_MAX;
-		end.tv_nsec = 999999999;
-	}
-
-	/*
-	 * TODO This should be refactored into an absolute sleep routine.
-	 */
-	sleep_setup(&sls, &chan, PWAIT | PCATCH, "nanosleep");
-	KASSERT((curproc->p_flag & P_TIMEOUT) == 0);
-	sls.sls_timeout = 1;
-	timeout_at_ts(&curproc->p_sleep_to, CLOCK_MONOTONIC, &end);
-	sleep_setup_signal(&sls);
-	error = sleep_finish_all(&sls, 1);
+	do {
+		getnanouptime(&start);
+		nsecs = MAX(1, MIN(TIMESPEC_TO_NSEC(&request), MAXTSLP));
+		error = tsleep_nsec(&chan, PWAIT | PCATCH, "nanosleep", nsecs);
+		getnanouptime(&stop);
+		timespecsub(&stop, &start, &elapsed);
+		timespecsub(&request, &elapsed, &request);
+		if (request.tv_sec < 0)
+			timespecclear(&request);
+		if (error != EWOULDBLOCK)
+			break;
+	} while (timespecisset(&request));
 
 	if (error == ERESTART)
 		error = EINTR;
@@ -315,12 +311,7 @@ sys_nanosleep(struct proc *p, void *v, register_t *retval)
 
 	if (rmtp) {
 		memset(&remainder, 0, sizeof(remainder));
-		nanouptime(&stop);
-		timespecsub(&stop, &start, &elapsed);
-		if (timespeccmp(&elapsed, &request, <))
-			timespecsub(&request, &elapsed, &remainder);
-		else
-			timespecclear(&remainder);
+		remainder = request;
 		copyout_error = copyout(&remainder, rmtp, sizeof(remainder));
 		if (copyout_error)
 			error = copyout_error;
@@ -709,60 +700,6 @@ itimerdecr(struct itimerspec *itp, long nsec)
 		timespecadd(&itp->it_value, &itp->it_interval, &itp->it_value);
 	mtx_leave(&itimer_mtx);
 	return (0);
-}
-
-uint64_t
-itimer_advance(const struct timespec *last, const struct timespec *intvl,
-    const struct timespec *now, struct timespec *next)
-{
-	struct timespec base, diff, minbase, intvl_product, intvl_product_max;
-	uint64_t intvl_nsecs, missed, quo;
-
-	/* Typical case: no additional intervals have elapsed. */
-	timespecadd(last, intvl, next);
-	if (timespeccmp(now, next, <))
-		return 0;
-
-	/*
-	 * Find a base within interval product range of the current time.
-	 * The last expiration time is effectively always within range, but
-	 * for sake of correctness we handle cases where longer expanses of
-	 * time have elapsed.
-	 */
-	missed = 0;
-	intvl_nsecs = TIMESPEC_TO_NSEC(intvl);
-	quo = UINT64_MAX / intvl_nsecs;
-	NSEC_TO_TIMESPEC(quo * intvl_nsecs, &intvl_product_max);
-	timespecsub(now, &intvl_product_max, &minbase);
-	base = *last;
-	while (timespeccmp(&base, &minbase, <)) {
-		timespecadd(&base, &intvl_product_max, &base);
-		missed = MAX(missed, missed + quo);
-	}
-
-	/*
-	 * We have a base within range.  Now find the particular interval
-	 * product that, when summed with the base, will get us just past
-	 * the current time.
-	 *
-	 * If the product would overflow an unsigned 64-bit integer we
-	 * advance the base by one interval and retry.  This can happen
-	 * at most once.
-	 */
-	for (;;) {
-		timespecsub(now, &base, &diff);
-		quo = TIMESPEC_TO_NSEC(&diff) / intvl_nsecs;
-		if (intvl_nsecs * quo <= UINT64_MAX - intvl_nsecs)
-			break;
-		timespecadd(&base, intvl, &base);
-		missed = MAX(missed, missed + 1);
-	}
-
-	NSEC_TO_TIMESPEC(intvl_nsecs * (quo + 1), &intvl_product);
-	timespecadd(&base, &intvl_product, next);
-	missed = MAX(missed, missed + quo);
-
-	return missed;
 }
 
 /*

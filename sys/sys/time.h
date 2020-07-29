@@ -309,8 +309,6 @@ int	clock_gettime(struct proc *, clockid_t, struct timespec *);
 
 int	itimerfix(struct timeval *);
 int	itimerdecr(struct itimerspec *, long);
-uint64_t itimer_advance(const struct timespec *, const struct timespec *,
-    const struct timespec *, struct timespec *);
 int	settime(const struct timespec *);
 int	ratecheck(struct timeval *, const struct timeval *);
 int	ppsratecheck(struct timeval *, int *, int);
