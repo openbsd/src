@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.69 2020/07/28 21:33:14 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.70 2020/07/29 15:25:34 deraadt Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -462,7 +462,7 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 	 */
 poll:
 #ifdef AHC_DEBUG
-	printf("%s: cmd_poll\n"", ahc_name(ahc));
+	printf("%s: cmd_poll\n", ahc_name(ahc));
 #endif
 
 	do {
