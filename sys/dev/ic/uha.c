@@ -1,8 +1,5 @@
-/*	$OpenBSD: uha.c,v 1.37 2020/07/24 12:43:31 krw Exp $	*/
+/*	$OpenBSD: uha.c,v 1.38 2020/07/29 12:09:47 krw Exp $	*/
 /*	$NetBSD: uha.c,v 1.3 1996/10/13 01:37:29 christos Exp $	*/
-
-#undef UHADEBUG
-
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
  *
@@ -210,7 +207,10 @@ uha_done(sc, mscp)
 	struct scsi_sense_data *s1, *s2;
 	struct scsi_xfer *xs = mscp->xs;
 
-	SC_DEBUG(xs->sc_link, SDEV_DB2, ("uha_done\n"));
+#ifdef UHADEBUG
+	printf("%s: uha_done\n", sc->sc_dev.dv_xname);
+#endif
+
 	/*
 	 * Otherwise, put the results of the operation
 	 * into the xfer and call whoever started it
@@ -270,7 +270,9 @@ uha_scsi_cmd(xs)
 	int bytes_this_seg, bytes_this_page, datalen, flags;
 	int s;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("uha_scsi_cmd\n"));
+#ifdef UHADEBUG
+	printf("%s: uha_scsi_cmd\n", sc->sc_dev.dv_xname);
+#endif
 	/*
 	 * get a mscp (mbox-out) to use. If the transfer
 	 * is from a buf (possibly from interrupt time)
@@ -313,8 +315,9 @@ uha_scsi_cmd(xs)
 		/*
 		 * Set up the scatter gather block
 		 */
-		SC_DEBUG(sc_link, SDEV_DB4,
-		    ("%d @%p- ", xs->datalen, xs->data));
+#ifdef UHADEBUG
+		printf("%s: %d @%p- ", sc->sc_dev.dv_xname, xs->datalen, xs->data);
+#endif
 		datalen = xs->datalen;
 		thiskv = (int) xs->data;
 		thisphys = KVTOPHYS(thiskv);
@@ -325,7 +328,9 @@ uha_scsi_cmd(xs)
 			/* put in the base address */
 			sg->seg_addr = thisphys;
 
-			SC_DEBUGN(sc_link, SDEV_DB4, ("0x%lx", thisphys));
+#ifdef UHADEBUG
+			printf("0x%lx", thisphys);
+#endif
 
 			/* do it at least once */
 			nextphys = thisphys;
@@ -352,14 +357,17 @@ uha_scsi_cmd(xs)
 			/*
 			 * next page isn't contiguous, finish the seg
 			 */
-			SC_DEBUGN(sc_link, SDEV_DB4,
-			    ("(0x%x)", bytes_this_seg));
+#ifdef UHADEBUG
+			printf("(0x%x)", bytes_this_seg);
+#endif
 			sg->seg_len = bytes_this_seg;
 			sg++;
 			seg++;
 		}
 
-		SC_DEBUGN(sc_link, SDEV_DB4, ("\n"));
+#ifdef UHADEBUG
+		printf("\n");
+#endif
 		if (datalen) {
 			/*
 			 * there's still data, must have run out of segs!
