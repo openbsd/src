@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.117 2020/07/28 15:58:45 mglocker Exp $ */
+/* $OpenBSD: xhci.c,v 1.118 2020/07/29 16:37:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -73,11 +73,9 @@ struct xhci_pipe {
 	int			 halted;
 	size_t			 free_trbs;
 	int			 skip;
-enum {
-	TRB_PROCESSED_NO,
-	TRB_PROCESSED_YES,
-	TRB_PROCESSED_SHORT
-};
+#define TRB_PROCESSED_NO	0
+#define TRB_PROCESSED_YES 	1
+#define TRB_PROCESSED_SHORT	2
 	uint8_t			 trb_processed[XHCI_MAX_XFER];
 };
 
