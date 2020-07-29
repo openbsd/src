@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.25 2020/01/22 06:24:07 tedu Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.26 2020/07/29 12:13:28 kn Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -762,13 +762,7 @@ bridge_holdcnt(const char *value, int d)
 int
 is_bridge()
 {
-	struct ifreq ifr;
 	struct ifbaconf ifbac;
-
-	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-
-	if (ioctl(sock, SIOCGIFFLAGS, (caddr_t)&ifr) == -1)
-		return (0);
 
 	ifbac.ifbac_len = 0;
 	strlcpy(ifbac.ifbac_name, ifname, sizeof(ifbac.ifbac_name));
@@ -783,14 +777,9 @@ is_bridge()
 void
 bridge_status(void)
 {
-	struct ifreq ifr;
 	struct ifbrparam bp1, bp2;
 
 	if (!is_bridge() || is_switch())
-		return;
-
-	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-	if (ioctl(sock, SIOCGIFFLAGS, (caddr_t)&ifr) == -1)
 		return;
 
 	bridge_cfg("\t");
@@ -1184,13 +1173,7 @@ switch_cfg(char *delim)
 void
 switch_status(void)
 {
-	struct ifreq ifr;
-
 	if (!is_switch())
-		return;
-
-	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-	if (ioctl(sock, SIOCGIFFLAGS, (caddr_t)&ifr) == -1)
 		return;
 
 	switch_cfg("\t");
