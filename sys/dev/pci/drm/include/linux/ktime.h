@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktime.h,v 1.4 2020/07/07 04:05:25 cheloha Exp $	*/
+/*	$OpenBSD: ktime.h,v 1.5 2020/07/29 09:52:21 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -22,42 +22,40 @@
 #include <linux/time.h>
 #include <linux/jiffies.h>
 
-typedef struct timeval ktime_t;
+typedef int64_t ktime_t;
 
-static inline struct timeval
+static inline ktime_t
 ktime_get(void)
 {
-	struct timeval tv;
-	
-	microuptime(&tv);
-	return tv;
+	struct timespec ts;
+	nanouptime(&ts);
+	return TIMESPEC_TO_NSEC(&ts);
 }
 
-static inline struct timeval
+static inline ktime_t
 ktime_get_raw(void)
 {
-	struct timeval tv;
-	
-	microuptime(&tv);
-	return tv;
+	struct timespec ts;
+	nanouptime(&ts);
+	return TIMESPEC_TO_NSEC(&ts);
 }
 
 static inline int64_t
-ktime_to_ms(struct timeval tv)
+ktime_to_ms(ktime_t k)
 {
-	return timeval_to_ms(&tv);
+	return k / NSEC_PER_MSEC;
 }
 
 static inline int64_t
-ktime_to_us(struct timeval tv)
+ktime_to_us(ktime_t k)
 {
-	return timeval_to_us(&tv);
+	return k / NSEC_PER_USEC;
 }
 
 static inline int64_t
-ktime_to_ns(struct timeval tv)
+ktime_to_ns(ktime_t k)
 {
-	return timeval_to_ns(&tv);
+	return k;
 }
 
 static inline int64_t
@@ -67,70 +65,70 @@ ktime_get_raw_ns(void)
 }
 
 static inline struct timespec64
-ktime_to_timespec64(struct timeval tv)
+ktime_to_timespec64(ktime_t k)
 {
 	struct timespec64 ts;
-	ts.tv_sec = tv.tv_sec;
-	ts.tv_nsec = tv.tv_usec * NSEC_PER_USEC;
+	ts.tv_sec = k / NSEC_PER_SEC;
+	ts.tv_nsec = k % NSEC_PER_SEC;
+	if (ts.tv_nsec < 0) {
+		ts.tv_sec--;
+		ts.tv_nsec += NSEC_PER_SEC;
+	}
 	return ts;
 }
 
-static inline struct timeval
-ktime_sub(struct timeval a, struct timeval b)
+static inline ktime_t
+ktime_sub(ktime_t a, ktime_t b)
 {
-	struct timeval res;
-	timersub(&a, &b, &res);
-	return res;
+	return a - b;
 }
 
-static inline struct timeval
-ktime_add(struct timeval a, struct timeval b)
+static inline ktime_t
+ktime_add(ktime_t a, ktime_t b)
 {
-	struct timeval res;
-	timeradd(&a, &b, &res);
-	return res;
+	return a + b;
 }
 
-static inline struct timeval
-ktime_add_us(struct timeval tv, int64_t us)
+static inline ktime_t
+ktime_add_us(ktime_t k, uint64_t us)
 {
-	return ns_to_timeval(timeval_to_ns(&tv) + (us * NSEC_PER_USEC));
+	return k + (us * NSEC_PER_USEC);
 }
 
-static inline struct timeval
-ktime_add_ns(struct timeval tv, int64_t ns)
+static inline ktime_t
+ktime_add_ns(ktime_t k, int64_t ns)
 {
-	return ns_to_timeval(timeval_to_ns(&tv) + ns);
+	return k + ns;
 }
 
-static inline struct timeval
-ktime_sub_ns(struct timeval tv, int64_t ns)
+static inline ktime_t
+ktime_sub_ns(ktime_t k, int64_t ns)
 {
-	return ns_to_timeval(timeval_to_ns(&tv) - ns);
+	return k - ns;
 }
 
 static inline int64_t
-ktime_us_delta(struct timeval a, struct timeval b)
+ktime_us_delta(ktime_t a, ktime_t b)
 {
 	return ktime_to_us(ktime_sub(a, b));
 }
 
 static inline int64_t
-ktime_ms_delta(struct timeval a, struct timeval b)
+ktime_ms_delta(ktime_t a, ktime_t b)
 {
 	return ktime_to_ms(ktime_sub(a, b));
 }
 
 static inline bool
-ktime_after(const struct timeval a, const struct timeval b)
+ktime_after(ktime_t a, ktime_t b)
 {
-	return timercmp(&a, &b, >);
+	return a > b;
 }
 
-static inline struct timeval
+static inline ktime_t
 ns_to_ktime(uint64_t ns)
 {
-	return ns_to_timeval(ns);
+	return ns;
 }
 
 #include <linux/timekeeping.h>
