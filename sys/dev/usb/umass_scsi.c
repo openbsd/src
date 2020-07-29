@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.58 2020/07/22 13:16:05 krw Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.59 2020/07/29 23:56:42 krw Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -184,8 +184,6 @@ umass_scsi_cmd(struct scsi_xfer *xs)
 #ifdef UMASS_DEBUG
 	microtime(&sc->tv);
 #endif
-
-	DIF(UDMASS_UPPER, sc_link->flags |= SCSIDEBUG_LEVEL);
 
 	DPRINTF(UDMASS_CMD, ("%s: umass_scsi_cmd: at %lld.%06ld: %d:%d "
 		"xs=%p cmd=0x%02x datalen=%d (quirks=0x%x, poll=%d)\n",
