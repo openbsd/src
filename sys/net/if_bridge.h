@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.68 2020/07/22 20:37:35 mvs Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.69 2020/07/29 12:09:31 mvs Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -329,7 +329,7 @@ struct bstp_tcn_unit {
 
 struct bstp_port {
 	LIST_ENTRY(bstp_port)	bp_next;
-	int			bp_ifindex;	/* parent interface index */
+	unsigned int		bp_ifindex;	/* parent interface index */
 	struct bstp_state	*bp_bs;
 	struct task		bp_ltask;	/* if linkstate hook */
 	u_int8_t		bp_active;

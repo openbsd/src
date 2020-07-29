@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.121 2020/07/28 12:53:20 mvs Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.122 2020/07/29 12:09:31 mvs Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -145,7 +145,7 @@ pipex_init(void)
 }
 
 void
-pipex_iface_init(struct pipex_iface_context *pipex_iface, int ifindex)
+pipex_iface_init(struct pipex_iface_context *pipex_iface, u_int ifindex)
 {
 	struct pipex_session *session;
 
