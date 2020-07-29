@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.66 2020/07/28 16:47:41 yasuoka Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.67 2020/07/29 02:32:13 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -322,13 +322,13 @@ pf_map_addr_sticky(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 		return (-1);
 	}
 
-	if ((rpool->opts & PF_POOL_TYPEMASK) == PF_POOL_LEASTSTATES) {
-		if (pf_map_addr_states_increase(af, rpool, naddr) == -1)
+
+	if (!PF_AZERO(cached, af)) {
+		pf_addrcpy(naddr, cached, af);
+		if ((rpool->opts & PF_POOL_TYPEMASK) == PF_POOL_LEASTSTATES &&
+		    pf_map_addr_states_increase(af, rpool, cached) == -1)
 			return (-1);
 	}
-
-	if (!PF_AZERO(cached, af))
-		pf_addrcpy(naddr, cached, af);
 	if (pf_status.debug >= LOG_DEBUG) {
 		log(LOG_DEBUG, "pf: pf_map_addr: "
 		    "src tracking (%u) maps ", type);
@@ -651,7 +651,7 @@ pf_map_addr_states_increase(sa_family_t af, struct pf_pool *rpool,
 				pf_print_host(naddr, 0, af);
 				addlog(". Failed to increase count!\n");
 			}
-			return (1);
+			return (-1);
 		}
 	} else if (rpool->addr.type == PF_ADDR_DYNIFTL) {
 		if (pfr_states_increase(rpool->addr.p.dyn->pfid_kt,
@@ -663,7 +663,7 @@ pf_map_addr_states_increase(sa_family_t af, struct pf_pool *rpool,
 				pf_print_host(naddr, 0, af);
 				addlog(". Failed to increase count!\n");
 			}
-			return (1);
+			return (-1);
 		}
 	}
 	return (0);
