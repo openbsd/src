@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxxvar.h,v 1.35 2020/07/22 13:16:04 krw Exp $	*/
+/*	$OpenBSD: aic7xxxvar.h,v 1.36 2020/07/29 16:57:22 krw Exp $	*/
 /*
  * Core definitions and data structures shareable across OS platforms.
  *
@@ -38,7 +38,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxxvar.h,v 1.35 2020/07/22 13:16:04 krw Exp $
+ * $Id: aic7xxxvar.h,v 1.36 2020/07/29 16:57:22 krw Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.h,v 1.50 2003/12/17 00:02:09 gibbs Exp $
  */
@@ -48,8 +48,6 @@
 
 #ifndef _AIC7XXXVAR_H_
 #define _AIC7XXXVAR_H_
-
-#undef AHC_DEBUG
 
 /* Register Definitions */
 #include <dev/microcode/aic7xxx/aic7xxx_reg.h>
