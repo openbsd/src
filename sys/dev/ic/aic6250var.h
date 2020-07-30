@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6250var.h,v 1.3 2017/04/30 16:45:45 mpi Exp $	*/
+/*	$OpenBSD: aic6250var.h,v 1.4 2020/07/30 13:14:38 krw Exp $	*/
 
 /*
  * Copyright (c) 2010, 2013 Miodrag Vallat.
@@ -124,8 +124,6 @@ struct aic6250_softc {
 
 	uint8_t	(*sc_read)(struct aic6250_softc *, uint);
 	void	(*sc_write)(struct aic6250_softc *, uint, uint8_t);
-
-	struct scsi_link sc_link;	/* prototype for subdevs */
 
 	TAILQ_HEAD(, aic6250_acb) free_list, ready_list, nexus_list;
 	struct aic6250_acb *sc_nexus;	/* current command */
