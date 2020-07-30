@@ -1,4 +1,4 @@
-.\"	$OpenBSD: utf8.7,v 1.7 2018/05/17 16:44:23 schwarze Exp $
+.\"	$OpenBSD: utf8.7,v 1.8 2020/07/30 19:49:10 schwarze Exp $
 .\"
 .\" Copyright (c) 2017 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 17 2018 $
+.Dd $Mdocdate: July 30 2020 $
 .Dt UTF8 7
 .Os
 .Sh NAME
@@ -49,6 +49,40 @@ Encodings using more bytes than required are invalid.
 In particular, 11000000 and 11000001 are not valid start bytes,
 the byte after 11100000 must be at least 10100000,
 and the byte after 11110000 must be at least 10010000.
+.Pp
+The ranges U+D800 to U+DFFF and U+110000 to U+1FFFFF
+do not contain valid Unicode codepoints.
+Consequently, the corresponding three- and four-byte UTF-8 sequences
+are invalid.
+The highest valid byte after 11101101 is 10011111,
+the highest valid byte of the form 1111.... is 11110100,
+and the highest valid byte after 11110100 is 10001111.
+.Pp
+To summarize, the following is a complete list of bytes
+that are invalid in all contexts:
+.Pp
+.Bl -tag -width 5n -offset 4n -compact
+.It c0\(enc1
+two-byte sequence that has to be encoded as a single byte
+.It f5\(enf7
+four-byte sequence beyond the Unicode range
+.It f8\(enff
+invalid sequence of five or more bytes
+.El
+.Pp
+The following is a complete list of invalid two-byte combinations
+of the form 11...... 10...... that consist of two valid bytes:
+.Pp
+.Bl -tag -width 9n -offset 4n -compact
+.It e080\(ene09f
+three-byte sequence that has to be encoded as two bytes
+.It eda0\(enedbf
+start of a UTF-16 surrogate, which is not valid UTF-8
+.It f080\(enf08f
+four-byte sequence that has to be encoded as three bytes
+.It f490\(enf4bf
+four-byte sequence beyond the Unicode range
+.El
 .Sh SEE ALSO
 .Xr locale 1 ,
 .Xr ascii 7
