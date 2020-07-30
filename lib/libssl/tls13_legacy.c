@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_legacy.c,v 1.11 2020/07/25 17:44:30 jsing Exp $ */
+/*	$OpenBSD: tls13_legacy.c,v 1.12 2020/07/30 16:57:53 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -295,11 +295,8 @@ tls13_use_legacy_stack(struct tls13_ctx *ctx)
 		return 0;
 	if (!ssl3_setup_buffers(s))
 		return 0;
-	if (!ssl_init_wbio_buffer(s, 0))
+	if (!ssl_init_wbio_buffer(s, 1))
 		return 0;
-
-	if (s->bbio != s->wbio)
-		s->wbio = BIO_push(s->bbio, s->wbio);
 
 	/* Stash any unprocessed data from the last record. */
 	tls13_record_layer_rbuf(ctx->rl, &cbs);
