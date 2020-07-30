@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.28 2020/07/21 15:12:07 schwarze Exp $
+# $OpenBSD: Makefile.inc,v 1.29 2020/07/30 21:32:19 schwarze Exp $
 
 .include "Makefile.sub"
 
@@ -77,53 +77,53 @@ htmlval: ${_HTMLVALS}
 		.out_ascii .out_lint .out_utf8
 
 .in.mandoc_ascii:
-	@${MANDOC} ${MOPTS} -Ios=OpenBSD -Tascii ${.IMPSRC} > ${.TARGET}
+	${MANDOC} ${MOPTS} -Ios=OpenBSD -Tascii ${.IMPSRC} > ${.TARGET}
 
 .mandoc_ascii.diff_ascii:
-	@${DIFF} ${.CURDIR}/${.IMPSRC:S/mandoc_ascii$/out_ascii/} ${.IMPSRC}
+	${DIFF} ${.CURDIR}/${.IMPSRC:S/mandoc_ascii$/out_ascii/} ${.IMPSRC}
 
 .in.mandoc_tag:
-	@${MAN} -l ${MOPTS} -Ios=OpenBSD -Tascii \
+	${MAN} -l ${MOPTS} -Ios=OpenBSD -Tascii \
 	    -O outfilename=${.TARGET:S/tag$/ascii/},tagfilename=${.TARGET} \
 	    ${.IMPSRC}
 
 .mandoc_tag.diff_tag:
-	@${DIFF} ${.CURDIR}/${.IMPSRC:S/mandoc_tag$/out_tag/} ${.IMPSRC}
-	@${DIFF} ${.CURDIR}/${.IMPSRC:S/mandoc_tag$/out_ascii/} \
+	${DIFF} ${.CURDIR}/${.IMPSRC:S/mandoc_tag$/out_tag/} ${.IMPSRC}
+	${DIFF} ${.CURDIR}/${.IMPSRC:S/mandoc_tag$/out_ascii/} \
 	    ${.IMPSRC:S/mandoc_tag$/mandoc_ascii/}
 
 .in.mandoc_utf8:
-	@${MANDOC} ${MOPTS} -Ios=OpenBSD -Tutf8 ${.IMPSRC} > ${.TARGET}
+	${MANDOC} ${MOPTS} -Ios=OpenBSD -Tutf8 ${.IMPSRC} > ${.TARGET}
 
 .mandoc_utf8.diff_utf8:
-	@${DIFF} ${.CURDIR}/${.IMPSRC:S/mandoc_utf8$/out_utf8/} ${.IMPSRC}
+	${DIFF} ${.CURDIR}/${.IMPSRC:S/mandoc_utf8$/out_utf8/} ${.IMPSRC}
 
 .in.mandoc_html:
-	@${MANDOC} ${MOPTS} -Thtml ${.IMPSRC} | \
+	${MANDOC} ${MOPTS} -Thtml ${.IMPSRC} | \
 		sed -n '/BEGINTEST/,/ENDTEST/p' | sed '1d;$$d' > ${.TARGET}
 
 .mandoc_html.diff_html:
-	@${DIFF} ${.CURDIR}/${.IMPSRC:S/mandoc_html$/out_html/} ${.IMPSRC}
+	${DIFF} ${.CURDIR}/${.IMPSRC:S/mandoc_html$/out_html/} ${.IMPSRC}
 
 .in.mandoc_markdown:
-	@${MANDOC} ${MOPTS} -Ios=OpenBSD -Tmarkdown ${.IMPSRC} > ${.TARGET}
+	${MANDOC} ${MOPTS} -Ios=OpenBSD -Tmarkdown ${.IMPSRC} > ${.TARGET}
 
 .mandoc_markdown.diff_markdown:
-	@${DIFF} ${.CURDIR}/${.IMPSRC:S/mandoc_markdown$/out_markdown/} \
+	${DIFF} ${.CURDIR}/${.IMPSRC:S/mandoc_markdown$/out_markdown/} \
 		${.IMPSRC}
 
 .in.in_man:
-	@${MANDOC} ${MOPTS} -Ios=OpenBSD -Tman ${.IMPSRC} > ${.TARGET}
+	${MANDOC} ${MOPTS} -Ios=OpenBSD -Tman ${.IMPSRC} > ${.TARGET}
 
 .in_man.mandoc_man:
-	@${MANDOC} -man -Tascii -Omdoc ${.IMPSRC} > ${.TARGET}
+	${MANDOC} -man -Tascii -Omdoc ${.IMPSRC} > ${.TARGET}
 
 .in.mandoc_lint:
-	@-${MANDOC} ${MOPTS} -Ios=OpenBSD -Tlint -Wall ${.IMPSRC} 2>&1 | \
+	-${MANDOC} ${MOPTS} -Ios=OpenBSD -Tlint -Wall ${.IMPSRC} 2>&1 | \
 		sed -E 's/^mandoc: \/[^:]+\//mandoc: /' > ${.TARGET}
 
 .mandoc_lint.diff_lint:
-	@${DIFF} ${.CURDIR}/${.IMPSRC:S/mandoc_lint$/out_lint/} ${.IMPSRC}
+	${DIFF} ${.CURDIR}/${.IMPSRC:S/mandoc_lint$/out_lint/} ${.IMPSRC}
 
 # --- single-file targets ---
 
@@ -131,7 +131,7 @@ htmlval: ${_HTMLVALS}
 .  if empty(SKIP_ASCII:MALL) && empty(SKIP_ASCII:M${t})
 .    if empty(SKIP_TMAN:MALL) && empty(SKIP_TMAN:M${t})
 ${t}.diff_man: ${t}.mandoc_man
-	@${DIFF} ${.CURDIR}/${t}.out_ascii ${.ALLSRC}
+	${DIFF} ${.CURDIR}/${t}.out_ascii ${.ALLSRC}
 .    else
 ${t}.diff_man:
 .    endif
@@ -144,7 +144,7 @@ ${t}: ${t}.diff_tag ${t}.diff_man
 ${t}:
 .  endif
 ${t}.validate_html: ${t}.in
-	@-${MANDOC} ${MOPTS} -Thtml ${.ALLSRC} | validate
+	-${MANDOC} ${MOPTS} -Thtml ${.ALLSRC} | validate
 .endfor
 
 .for t in ${TAG_TARGETS}
@@ -175,32 +175,32 @@ clean: ${_CLEAN_TARGETS}
 
 ascii-clean:
 .if !empty(_ASCIIFILES)
-	@rm -f ${_ASCIIFILES} ${_TAGFILES}
+	rm -f ${_ASCIIFILES} ${_TAGFILES}
 .endif
 
 utf8-clean:
 .if !empty(_UTF8FILES)
-	@rm -f ${_UTF8FILES}
+	rm -f ${_UTF8FILES}
 .endif
 
 html-clean:
 .if !empty(_HTMLFILES)
-	@rm -f ${_HTMLFILES}
+	rm -f ${_HTMLFILES}
 .endif
 
 markdown-clean:
 .if !empty(_MARKDOWNFILES)
-	@rm -f ${_MARKDOWNFILES}
+	rm -f ${_MARKDOWNFILES}
 .endif
 
 tman-clean:
 .if !empty(_MANFILES)
-	@rm -f ${_MANFILES}
+	rm -f ${_MANFILES}
 .endif
 
 lint-clean:
 .if !empty(_LINTFILES)
-	@rm -f ${_LINTFILES}
+	rm -f ${_LINTFILES}
 .endif
 
 .PHONY: ${_ASCIIDIFFS} ${_TAGDIFFS} ${_UTF8DIFFS} ${_HTMLDIFFS} \
