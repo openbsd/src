@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.147 2020/07/25 21:12:49 benno Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.148 2020/07/30 21:06:19 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -710,7 +710,6 @@ void		 event_again(struct event *, int, short,
 int		 expand_string(char *, size_t, const char *, const char *);
 const char	*url_decode(char *);
 char		*url_encode(const char *);
-const char	*canonicalize_host(const char *, char *, size_t);
 const char	*canonicalize_path(const char *, char *, size_t);
 size_t		 path_info(char *);
 char		*escape_html(const char *);

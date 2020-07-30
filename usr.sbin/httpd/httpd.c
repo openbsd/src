@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.68 2018/09/09 21:06:51 bluhm Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.69 2020/07/30 21:06:19 benno Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -549,59 +549,6 @@ expand_string(char *label, size_t len, const char *srch, const char *repl)
 	free(tmp);
 
 	return (0);
-}
-
-const char *
-canonicalize_host(const char *host, char *name, size_t len)
-{
-	struct sockaddr_in	 sin4;
-	struct sockaddr_in6	 sin6;
-	size_t			 i, j;
-	size_t			 plen;
-	char			 c;
-
-	if (len < 2)
-		goto fail;
-
-	/*
-	 * Canonicalize an IPv4/6 address
-	 */
-	if (inet_pton(AF_INET, host, &sin4) == 1)
-		return (inet_ntop(AF_INET, &sin4, name, len));
-	if (inet_pton(AF_INET6, host, &sin6) == 1)
-		return (inet_ntop(AF_INET6, &sin6, name, len));
-
-	/*
-	 * Canonicalize a hostname
-	 */
-
-	/* 1. remove repeated dots and convert upper case to lower case */
-	plen = strlen(host);
-	memset(name, 0, len);
-	for (i = j = 0; i < plen; i++) {
-		if (j >= (len - 1))
-			goto fail;
-		c = tolower((unsigned char)host[i]);
-		if ((c == '.') && (j == 0 || name[j - 1] == '.'))
-			continue;
-		name[j++] = c;
-	}
-
-	/* 2. remove trailing dots */
-	for (i = j; i > 0; i--) {
-		if (name[i - 1] != '.')
-			break;
-		name[i - 1] = '\0';
-		j--;
-	}
-	if (j <= 0)
-		goto fail;
-
-	return (name);
-
- fail:
-	errno = EINVAL;
-	return (NULL);
 }
 
 const char *
