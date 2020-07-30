@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.84 2020/07/24 12:43:31 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.85 2020/07/30 00:03:25 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -48,7 +48,6 @@
 #include <dev/ic/siopvar.h>
 
 #ifndef SIOP_DEBUG
-#undef SIOP_DEBUG
 #undef SIOP_DEBUG_DR
 #undef SIOP_DEBUG_INTR
 #undef SIOP_DEBUG_SCHED
