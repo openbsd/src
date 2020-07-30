@@ -10276,6 +10276,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "HD Graphics P4000",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_2,
+	    "Wi-Fi 6 AX201",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80303,
 	    "80303 IOP",
 	},
