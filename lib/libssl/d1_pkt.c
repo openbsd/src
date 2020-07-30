@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.73 2020/03/13 16:40:42 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.74 2020/07/30 16:53:01 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -1175,28 +1175,29 @@ int
 do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 {
 	unsigned char *p;
-	int i, mac_size, clear = 0;
 	SSL3_RECORD_INTERNAL *wr;
 	SSL3_BUFFER_INTERNAL *wb;
 	SSL_SESSION *sess;
-	int bs;
+	int mac_size = 0;
+	int bs, ret;
 	CBB cbb;
 
 	memset(&cbb, 0, sizeof(cbb));
 
-	/* first check if there is a SSL3_BUFFER_INTERNAL still being written
-	 * out.  This will happen with non blocking IO */
+	/*
+	 * First check if there is a SSL3_BUFFER_INTERNAL still being written
+	 * out.  This will happen with non blocking IO.
+	 */
 	if (S3I(s)->wbuf.left != 0) {
 		OPENSSL_assert(0); /* XDTLS:  want to see if we ever get here */
 		return (ssl3_write_pending(s, type, buf, len));
 	}
 
-	/* If we have an alert to send, lets send it */
+	/* If we have an alert to send, let's send it */
 	if (S3I(s)->alert_dispatch) {
-		i = s->method->ssl_dispatch_alert(s);
-		if (i <= 0)
-			return (i);
-		/* if it went, fall through and send more stuff */
+		if ((ret = s->method->ssl_dispatch_alert(s)) <= 0)
+			return (ret);
+		/* If it went, fall through and send more stuff. */
 	}
 
 	if (len == 0)
@@ -1206,15 +1207,9 @@ do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 	wb = &(S3I(s)->wbuf);
 	sess = s->session;
 
-	if ((sess == NULL) || (s->internal->enc_write_ctx == NULL) ||
-	    (EVP_MD_CTX_md(s->internal->write_hash) == NULL))
-		clear = 1;
-
-	if (clear)
-		mac_size = 0;
-	else {
-		mac_size = EVP_MD_CTX_size(s->internal->write_hash);
-		if (mac_size < 0)
+	if (sess != NULL && s->internal->enc_write_ctx != NULL &&
+	    EVP_MD_CTX_md(s->internal->write_hash) != NULL) {
+		if ((mac_size = EVP_MD_CTX_size(s->internal->write_hash)) < 0)
 			goto err;
 	}
 
