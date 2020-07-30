@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.69 2020/07/29 12:09:31 mvs Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.70 2020/07/30 11:32:06 mvs Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -384,7 +384,7 @@ struct bstp_port {
  * Software state for each bridge STP.
  */
 struct bstp_state {
-	struct ifnet		*bs_ifp;
+	unsigned int		bs_ifindex;
 	struct bstp_pri_vector	bs_bridge_pv;
 	struct bstp_pri_vector	bs_root_pv;
 	struct bstp_port	*bs_root_port;
@@ -407,7 +407,6 @@ struct bstp_state {
 	struct timeval		bs_last_tc_time;
 	LIST_HEAD(, bstp_port)	bs_bplist;
 };
-#define	bs_ifflags		bs_ifp->if_flags
 
 /*
  * Bridge interface list
@@ -502,7 +501,9 @@ void	bridge_tunneluntag(struct mbuf *);
 void	bridge_copyaddr(struct sockaddr *, struct sockaddr *);
 void	bridge_copytag(struct bridge_tunneltag *, struct bridge_tunneltag *);
 
-struct bstp_state *bstp_create(struct ifnet *);
+struct bstp_state *bstp_create(void);
+void	bstp_enable(struct bstp_state *bs, unsigned int);
+void	bstp_disable(struct bstp_state *bs);
 void	bstp_destroy(struct bstp_state *);
 void	bstp_initialization(struct bstp_state *);
 void	bstp_stop(struct bstp_state *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.36 2020/07/28 09:52:32 mvs Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.37 2020/07/30 11:32:06 mvs Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -169,7 +169,7 @@ switch_clone_create(struct if_clone *ifc, int unit)
 	TAILQ_INIT(&sc->sc_swpo_list);
 
 	sc->sc_unit = unit;
-	sc->sc_stp = bstp_create(&sc->sc_if);
+	sc->sc_stp = bstp_create();
 	if (!sc->sc_stp) {
 		free(sc, M_DEVBUF, sizeof(*sc));
 		return (ENOMEM);
@@ -444,11 +444,19 @@ switch_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 		breq->ifbr_protected = swpo->swpo_protected;
 		break;
 	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) == IFF_UP)
-			ifp->if_flags |= IFF_RUNNING;
+		if ((ifp->if_flags & IFF_UP) == IFF_UP) {
+			if ((ifp->if_flags & IFF_RUNNING) == 0) {
+				ifp->if_flags |= IFF_RUNNING;
+				bstp_enable(sc->sc_stp, ifp->if_index);
+			}
+		}
 
-		if ((ifp->if_flags & IFF_UP) == 0)
-			ifp->if_flags &= ~IFF_RUNNING;
+		if ((ifp->if_flags & IFF_UP) == 0) {
+			if ((ifp->if_flags & IFF_RUNNING) == IFF_RUNNING) {
+				ifp->if_flags &= ~IFF_RUNNING;
+				bstp_disable(sc->sc_stp);
+			}
+		}
 
 		break;
 	case SIOCBRDGRTS:

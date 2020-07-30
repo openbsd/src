@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.74 2020/07/22 20:37:34 mvs Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.75 2020/07/30 11:32:06 mvs Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -284,8 +284,16 @@ int	bstp_same_bridgeid(u_int64_t, u_int64_t);
 void
 bstp_transmit(struct bstp_state *bs, struct bstp_port *bp)
 {
-	if ((bs->bs_ifflags & IFF_RUNNING) == 0 || bp == NULL)
+	struct ifnet *ifp;
+
+	if ((ifp = if_get(bs->bs_ifindex)) == NULL)
 		return;
+
+	if ((ifp->if_flags & IFF_RUNNING) == 0 || bp == NULL) {
+		if_put(ifp);
+		return;
+	}
+	if_put(ifp);
 
 	/*
 	 * a PDU can only be sent if we have tx quota left and the
@@ -1696,12 +1704,17 @@ void
 bstp_tick(void *arg)
 {
 	struct bstp_state *bs = (struct bstp_state *)arg;
+	struct ifnet *ifp;
 	struct bstp_port *bp;
 	int s;
 
+	if ((ifp = if_get(bs->bs_ifindex)) == NULL)
+		return;
+
 	s = splnet();
-	if ((bs->bs_ifflags & IFF_RUNNING) == 0) {
+	if ((ifp->if_flags & IFF_RUNNING) == 0) {
 		splx(s);
+		if_put(ifp);
 		return;
 	}
 
@@ -1738,10 +1751,11 @@ bstp_tick(void *arg)
 			bp->bp_txcount--;
 	}
 
-	if (bs->bs_ifp->if_flags & IFF_RUNNING)
+	if (ifp->if_flags & IFF_RUNNING)
 		timeout_add_sec(&bs->bs_bstptimeout, 1);
 
 	splx(s);
+	if_put(ifp);
 }
 
 void
@@ -1922,14 +1936,13 @@ bstp_initialization(struct bstp_state *bs)
 }
 
 struct bstp_state *
-bstp_create(struct ifnet *ifp)
+bstp_create(void)
 {
 	struct bstp_state *bs;
 
 	bs = malloc(sizeof(*bs), M_DEVBUF, M_WAITOK|M_ZERO);
 	LIST_INIT(&bs->bs_bplist);
 
-	bs->bs_ifp = ifp;
 	bs->bs_bridge_max_age = BSTP_DEFAULT_MAX_AGE;
 	bs->bs_bridge_htime = BSTP_DEFAULT_HELLO_TIME;
 	bs->bs_bridge_fdelay = BSTP_DEFAULT_FORWARD_DELAY;
@@ -1954,6 +1967,21 @@ bstp_destroy(struct bstp_state *bs)
 		panic("bstp still active");
 
 	free(bs, M_DEVBUF, sizeof *bs);
+}
+
+void
+bstp_enable(struct bstp_state *bs, unsigned int ifindex)
+{
+	bs->bs_ifindex = ifindex;
+	bstp_initialization(bs);
+}
+
+void
+bstp_disable(struct bstp_state *bs)
+{
+	if (timeout_initialized(&bs->bs_bstptimeout))
+		timeout_del(&bs->bs_bstptimeout);
+	bs->bs_ifindex = 0;
 }
 
 void
