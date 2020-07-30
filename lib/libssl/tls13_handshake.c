@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.63 2020/06/02 13:57:09 tb Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.64 2020/07/30 16:23:17 tb Exp $	*/
 /*
  * Copyright (c) 2018-2019 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -343,6 +343,12 @@ tls13_handshake_perform(struct tls13_ctx *ctx)
 	const struct tls13_handshake_action *action;
 	int ret;
 
+	if (!ctx->handshake_started) {
+		ctx->handshake_started = 1;
+		if (ctx->info_cb != NULL)
+			ctx->info_cb(ctx, TLS13_INFO_HANDSHAKE_STARTED, 1);
+	}
+
 	for (;;) {
 		if ((action = tls13_handshake_active_action(ctx)) == NULL)
 			return TLS13_IO_FAILURE;
@@ -350,6 +356,9 @@ tls13_handshake_perform(struct tls13_ctx *ctx)
 		if (action->handshake_complete) {
 			ctx->handshake_completed = 1;
 			tls13_record_layer_handshake_completed(ctx->rl);
+			if (ctx->info_cb != NULL)
+				ctx->info_cb(ctx,
+				    TLS13_INFO_HANDSHAKE_COMPLETED, 1);
 			return TLS13_IO_SUCCESS;
 		}
 

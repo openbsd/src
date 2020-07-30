@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.85 2020/07/03 04:12:51 tb Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.86 2020/07/30 16:23:17 tb Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -79,6 +79,9 @@ __BEGIN_HIDDEN_DECLS
 #define TLS13_ALERT_CERTIFICATE_REQUIRED		116
 #define TLS13_ALERT_NO_APPLICATION_PROTOCOL		120
 
+#define TLS13_INFO_HANDSHAKE_STARTED			SSL_CB_HANDSHAKE_START
+#define TLS13_INFO_HANDSHAKE_COMPLETED			SSL_CB_HANDSHAKE_DONE
+
 typedef void (*tls13_alert_cb)(uint8_t _alert_desc, void *_cb_arg);
 typedef ssize_t (*tls13_phh_recv_cb)(void *_cb_arg, CBS *_cbs);
 typedef void (*tls13_phh_sent_cb)(void *_cb_arg);
@@ -86,6 +89,7 @@ typedef ssize_t (*tls13_read_cb)(void *_buf, size_t _buflen, void *_cb_arg);
 typedef ssize_t (*tls13_write_cb)(const void *_buf, size_t _buflen,
     void *_cb_arg);
 typedef void (*tls13_handshake_message_cb)(void *_cb_arg);
+typedef void (*tls13_info_cb)(void *_cb_arg, int _state, int _ret);
 typedef int (*tls13_ocsp_status_cb)(void *_cb_arg);
 
 /*
@@ -261,6 +265,7 @@ struct tls13_ctx {
 	struct ssl_handshake_tls13_st *hs;
 	uint8_t	mode;
 	struct tls13_handshake_stage handshake_stage;
+	int handshake_started;
 	int handshake_completed;
 	int middlebox_compat;
 	int send_dummy_ccs;
@@ -281,6 +286,7 @@ struct tls13_ctx {
 
 	tls13_handshake_message_cb handshake_message_sent_cb;
 	tls13_handshake_message_cb handshake_message_recv_cb;
+	tls13_info_cb info_cb;
 	tls13_ocsp_status_cb ocsp_status_recv_cb;
 };
 #ifndef TLS13_PHH_LIMIT_TIME

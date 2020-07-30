@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.52 2020/07/03 04:12:51 tb Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.53 2020/07/30 16:23:17 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -178,6 +178,19 @@ tls13_legacy_handshake_message_sent_cb(void *arg)
 	tls13_handshake_msg_data(ctx->hs_msg, &cbs);
 	s->internal->msg_callback(1, TLS1_3_VERSION, SSL3_RT_HANDSHAKE,
 	    CBS_data(&cbs), CBS_len(&cbs), s, s->internal->msg_callback_arg);
+}
+
+static void
+tls13_legacy_info_cb(void *arg, int state, int ret)
+{
+	struct tls13_ctx *ctx = arg;
+	SSL *s = ctx->ssl;
+	void (*cb)(const SSL *, int, int);
+
+	if ((cb = s->internal->info_callback) == NULL)
+		cb = s->ctx->internal->info_callback;
+	if (cb != NULL)
+		cb(s, state, ret);
 }
 
 static int
@@ -388,6 +401,7 @@ tls13_ctx_new(int mode)
 
 	ctx->handshake_message_sent_cb = tls13_legacy_handshake_message_sent_cb;
 	ctx->handshake_message_recv_cb = tls13_legacy_handshake_message_recv_cb;
+	ctx->info_cb = tls13_legacy_info_cb;
 	ctx->ocsp_status_recv_cb = tls13_legacy_ocsp_status_recv_cb;
 
 	ctx->middlebox_compat = 1;
