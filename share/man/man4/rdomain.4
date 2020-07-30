@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdomain.4,v 1.13 2020/02/01 15:00:20 kn Exp $
+.\"	$OpenBSD: rdomain.4,v 1.14 2020/07/30 21:44:34 kn Exp $
 .\"
 .\" Copyright (c) 2015 Peter Hessler <phessler@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 1 2020 $
+.Dd $Mdocdate: July 30 2020 $
 .Dt RDOMAIN 4
 .Os
 .Sh NAME
@@ -98,7 +98,7 @@ Put em0 and lo4 in rdomain 4:
 # ifconfig em0 192.0.2.100/24
 .Ed
 .Pp
-Set a default route and localhost reject route within rdomain 4:
+Set a default route and localhost reject route within rtable 4:
 .Bd -literal -offset indent
 # route -T4 -qn add -net 127 127.0.0.1 -reject
 # route -T4 -n add default 192.0.2.1
@@ -106,7 +106,7 @@ Set a default route and localhost reject route within rdomain 4:
 .Pp
 Start
 .Xr sshd 8
-in rdomain 4:
+in rtable 4:
 .Pp
 .Dl # route -T4 exec /usr/sbin/sshd
 .Pp
