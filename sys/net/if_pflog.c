@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.88 2020/07/10 13:26:42 patrick Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.89 2020/07/30 03:30:04 dlg Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -88,17 +88,10 @@ struct if_clone	pflog_cloner =
 
 int		  npflogifs = 0;
 struct ifnet	**pflogifs = NULL;	/* for fast access */
-struct mbuf	 *pflog_mhdr = NULL, *pflog_mptr = NULL;
 
 void
 pflogattach(int npflog)
 {
-	if (pflog_mhdr == NULL)
-		if ((pflog_mhdr = m_get(M_DONTWAIT, MT_HEADER)) == NULL)
-			panic("pflogattach: no mbuf");
-	if (pflog_mptr == NULL)
-		if ((pflog_mptr = m_get(M_DONTWAIT, MT_DATA)) == NULL)
-			panic("pflogattach: no mbuf");
 	if_clone_attach(&pflog_cloner);
 }
 
@@ -291,7 +284,9 @@ pflog_packet(struct pf_pdesc *pd, u_int8_t reason, struct pf_rule *rm,
 void
 pflog_mtap(caddr_t if_bpf, struct pfloghdr *pfloghdr, struct mbuf *m)
 {
-	struct mbuf		*mp, *mhdr, *mptr;
+	struct mbuf		 mhdr;
+	struct m_hdr		 mptr;
+	struct mbuf		*mp;
 	u_char			*mdst;
 	int			 afto, hlen, off;
 
@@ -300,26 +295,23 @@ pflog_mtap(caddr_t if_bpf, struct pfloghdr *pfloghdr, struct mbuf *m)
 	u_int16_t		 osport = 0, odport = 0;
 	u_int8_t		 proto = 0;
 
-	mhdr = pflog_mhdr;
-	mptr = pflog_mptr;
-
 	afto = pfloghdr->af != pfloghdr->naf;
 
 	/*
 	 * temporary mbuf will hold an ip/ip6 header and 8 bytes
 	 * of the protocol header
 	 */
-	m_inithdr(mhdr);
-	mhdr->m_len = 0;	/* XXX not done in m_inithdr() */
+	m_inithdr(&mhdr);
+	mhdr.m_len = 0;	/* XXX not done in m_inithdr() */
 
 #ifdef INET6
 	/* offset for a new header */
 	if (afto && pfloghdr->af == AF_INET)
-		mhdr->m_data += sizeof(struct ip6_hdr) -
+		mhdr.m_data += sizeof(struct ip6_hdr) -
 		    sizeof(struct ip);
 #endif /* INET6 */
 
-	mdst = mtod(mhdr, char *);
+	mdst = mtod(&mhdr, char *);
 	switch (pfloghdr->af) {
 	case AF_INET: {
 		struct ip	*h;
@@ -360,18 +352,18 @@ pflog_mtap(caddr_t if_bpf, struct pfloghdr *pfloghdr, struct mbuf *m)
 		hlen += 8;
 	}
 
-	mhdr->m_len += hlen;
-	mhdr->m_pkthdr.len = mhdr->m_len;
+	mhdr.m_len = hlen;
+	mhdr.m_pkthdr.len = hlen;
 
 	/* create a chain mhdr -> mptr, mptr->m_data = (m->m_data+hlen) */
 	mp = m_getptr(m, hlen, &off);
 	if (mp != NULL) {
-		bcopy(mp, mptr, sizeof(*mptr));
-		mptr->m_data += off;
-		mptr->m_len -= off;
-		mptr->m_flags &= ~M_PKTHDR;
-		mhdr->m_next = mptr;
-		mhdr->m_pkthdr.len += m->m_pkthdr.len - hlen;
+		mptr.mh_flags = 0;
+		mptr.mh_data = mp->m_data + off;
+		mptr.mh_len = mp->m_len - off;
+		mptr.mh_next = mp->m_next;
+
+		mhdr.m_next = (struct mbuf *)&mptr;
 	}
 
 	/*
@@ -379,7 +371,7 @@ pflog_mtap(caddr_t if_bpf, struct pfloghdr *pfloghdr, struct mbuf *m)
 	 * counting the packet here again.
 	 */
 	if (pf_setup_pdesc(&pd, pfloghdr->af, pfloghdr->dir, NULL,
-	    mhdr, NULL) != PF_PASS)
+	    &mhdr, NULL) != PF_PASS)
 		goto copy;
 	pd.naf = pfloghdr->naf;
 
@@ -416,6 +408,7 @@ pflog_mtap(caddr_t if_bpf, struct pfloghdr *pfloghdr, struct mbuf *m)
 #endif /* INET6 */
 
 	m = pd.m;
+	KASSERT(m == &mhdr);
  copy:
 	bpf_mtap_hdr(if_bpf, pfloghdr, sizeof(*pfloghdr), m,
 	    BPF_DIRECTION_OUT);
