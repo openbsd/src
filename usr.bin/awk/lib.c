@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.39 2020/06/26 15:57:39 millert Exp $	*/
+/*	$OpenBSD: lib.c,v 1.40 2020/07/30 17:45:44 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -32,7 +32,6 @@ THIS SOFTWARE.
 #include <stdarg.h>
 #include <limits.h>
 #include "awk.h"
-#include "ytab.h"
 
 char	EMPTY[] = { '\0' };
 FILE	*infile	= NULL;

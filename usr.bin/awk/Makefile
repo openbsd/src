@@ -1,22 +1,22 @@
-#	$OpenBSD: Makefile,v 1.17 2020/06/10 21:01:50 millert Exp $
+#	$OpenBSD: Makefile,v 1.18 2020/07/30 17:45:44 millert Exp $
 
 PROG=	awk
-SRCS=	ytab.c lex.c b.c main.c parse.c proctab.c tran.c lib.c run.c
+SRCS=	awkgram.tab.c lex.c b.c main.c parse.c proctab.c tran.c lib.c run.c
 LDADD=	-lm
 DPADD=	${LIBM}
-CLEANFILES+=proctab.c maketab ytab.c ytab.h
+CLEANFILES+=proctab.c maketab awkgram.tab.c awkgram.tab.h
 CFLAGS+=-I. -I${.CURDIR} -DHAS_ISBLANK -DNDEBUG
 HOSTCFLAGS+=-I. -I${.CURDIR} -DHAS_ISBLANK -DNDEBUG
 
-ytab.c ytab.h: awkgram.y
-	${YACC} -o ytab.c -d ${.CURDIR}/awkgram.y
+awkgram.tab.c awkgram.tab.h: awkgram.y
+	${YACC} -o awkgram.tab.c -d ${.CURDIR}/awkgram.y
 
-BUILDFIRST = ytab.h
+BUILDFIRST = awkgram.tab.h
 
 proctab.c: maketab
-	./maketab ytab.h >proctab.c
+	./maketab awkgram.tab.h >proctab.c
 
-maketab: ytab.h maketab.c
+maketab: awkgram.tab.h maketab.c
 	${HOSTCC} ${HOSTCFLAGS} ${.CURDIR}/maketab.c -o $@
 
 .include <bsd.prog.mk>

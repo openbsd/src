@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.43 2020/07/02 19:06:22 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.44 2020/07/30 17:45:44 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -23,7 +23,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 ****************************************************************/
 
-const char	*version = "version 20200702";
+const char	*version = "version 20200730";
 
 #define DEBUG
 #include <stdio.h>
@@ -34,7 +34,6 @@ const char	*version = "version 20200702";
 #include <signal.h>
 #include <unistd.h>
 #include "awk.h"
-#include "ytab.h"
 
 extern	char	**environ;
 extern	int	nfields;
@@ -289,7 +288,7 @@ int pgetc(void)		/* get 1 character from awk program */
 char *cursource(void)	/* current source file name */
 {
 	if (npfile > 0)
-		return pfile[curpfile];
+		return pfile[curpfile < npfile ? curpfile : curpfile - 1];
 	else
 		return NULL;
 }

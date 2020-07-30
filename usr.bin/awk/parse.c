@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.11 2020/06/26 15:57:39 millert Exp $	*/
+/*	$OpenBSD: parse.c,v 1.12 2020/07/30 17:45:44 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -28,7 +28,7 @@ THIS SOFTWARE.
 #include <string.h>
 #include <stdlib.h>
 #include "awk.h"
-#include "ytab.h"
+#include "awkgram.tab.h"
 
 Node *nodealloc(int n)
 {

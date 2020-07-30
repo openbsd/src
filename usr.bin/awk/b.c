@@ -1,4 +1,4 @@
-/*	$OpenBSD: b.c,v 1.33 2020/07/13 14:03:52 millert Exp $	*/
+/*	$OpenBSD: b.c,v 1.34 2020/07/30 17:45:44 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -33,7 +33,7 @@ THIS SOFTWARE.
 #include <string.h>
 #include <stdlib.h>
 #include "awk.h"
-#include "ytab.h"
+#include "awkgram.tab.h"
 
 #define MAXLIN 22
 

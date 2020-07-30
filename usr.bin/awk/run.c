@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.65 2020/07/20 18:57:19 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.66 2020/07/30 17:45:44 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -39,7 +39,7 @@ THIS SOFTWARE.
 #include <sys/types.h>
 #include <sys/wait.h>
 #include "awk.h"
-#include "ytab.h"
+#include "awkgram.tab.h"
 
 static void stdinit(void);
 static void flush_all(void);

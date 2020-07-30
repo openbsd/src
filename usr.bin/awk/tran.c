@@ -1,4 +1,4 @@
-/*	$OpenBSD: tran.c,v 1.29 2020/06/26 15:57:39 millert Exp $	*/
+/*	$OpenBSD: tran.c,v 1.30 2020/07/30 17:45:44 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -30,7 +30,6 @@ THIS SOFTWARE.
 #include <string.h>
 #include <stdlib.h>
 #include "awk.h"
-#include "ytab.h"
 
 #define	FULLTAB	2	/* rehash when table gets this x full */
 #define	GROWTAB 4	/* grow table by this factor */
