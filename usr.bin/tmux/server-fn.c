@@ -1,4 +1,4 @@
-/* $OpenBSD: server-fn.c,v 1.127 2020/07/04 14:24:02 nicm Exp $ */
+/* $OpenBSD: server-fn.c,v 1.128 2020/07/30 07:32:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -341,6 +341,7 @@ server_destroy_pane(struct window_pane *wp, int notify)
 
 		time(&t);
 		ctime_r(&t, tim);
+		tim[strcspn(tim, "\n")] = '\0';
 
 		if (WIFEXITED(wp->status)) {
 			screen_write_nputs(&ctx, -1, &gc,
