@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.197 2020/03/24 02:48:45 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.198 2020/07/31 14:48:47 deraadt Exp $
 
 machine		i386
 maxusers	4
@@ -101,8 +101,8 @@ wdc1		at isa? port 0x170 irq 15 flags 0x00
 #wdc*		at pcmcia?
 wd*		at wdc? flags 0x0000
 wd*		at pciide? flags 0x0000
-atapiscsi*	at wdc?
-atapiscsi*	at pciide?
+#atapiscsi*	at wdc?
+#atapiscsi*	at pciide?
 
 #ahc0		at isa?			# Adaptec 284x SCSI controllers
 #ahd*		at pci?			# Adaptec 79?? SCSI controllers
