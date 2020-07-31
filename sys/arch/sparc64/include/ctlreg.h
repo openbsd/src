@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctlreg.h,v 1.29 2017/10/24 17:06:51 kettenis Exp $	*/
+/*	$OpenBSD: ctlreg.h,v 1.30 2020/07/31 11:19:12 kettenis Exp $	*/
 /*	$NetBSD: ctlreg.h,v 1.28 2001/08/06 23:55:34 eeh Exp $ */
 
 /*
@@ -705,6 +705,7 @@ void flush(void *p)
 extern u_int64_t stick(void);
 
 extern void tick_enable(void);
+extern void sys_tick_enable(void);
 
 extern void tickcmpr_set(u_int64_t);
 extern void sys_tickcmpr_set(u_int64_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.65 2020/07/24 16:22:33 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.66 2020/07/31 11:19:12 kettenis Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -109,13 +109,15 @@ struct cfdriver clock_cd = {
 u_int tick_get_timecount(struct timecounter *);
 
 struct timecounter tick_timecounter = {
-	tick_get_timecount, NULL, ~0u, 0, "tick", 0
+	tick_get_timecount, NULL, ~0u, 0, "tick", 0,
+	NULL, TC_TICK
 };
 
 u_int sys_tick_get_timecount(struct timecounter *);
 
 struct timecounter sys_tick_timecounter = {
-	sys_tick_get_timecount, NULL, ~0u, 0, "sys_tick", 1000
+	sys_tick_get_timecount, NULL, ~0u, 0, "sys_tick", 1000,
+	NULL, TC_SYS_TICK
 };
 
 /*
@@ -580,9 +582,6 @@ cpu_initclocks(void)
 		/* Default to 200MHz clock XXXXX */
 		cpu_clockrate = 200000000;
 
-	if ((sparc_rdpr_tick() & TICK_NPT) == 0)
-		tick_timecounter.tc_user = TC_TICK;
-
 	tick_timecounter.tc_frequency = cpu_clockrate;
 	tc_init(&tick_timecounter);
 
@@ -596,9 +595,6 @@ cpu_initclocks(void)
 
 	sys_tick_rate = getpropint(findroot(), "stick-frequency", 0);
 	if (sys_tick_rate > 0 && impl != IMPL_HUMMINGBIRD) {
-		if ((sparc_rd_sys_tick() & TICK_NPT) == 0)
-			sys_tick_timecounter.tc_user = TC_SYS_TICK;
-
 		sys_tick_timecounter.tc_frequency = sys_tick_rate;
 		tc_init(&sys_tick_timecounter);
 	}
@@ -697,7 +693,8 @@ cpu_initclocks(void)
 	     timerreg_4u.t_mapintr[1]|INTMAP_V); 
 
 	statmin = statint - (statvar >> 1);
-	
+
+	tick_enable();
 }
 
 /*
@@ -896,6 +893,8 @@ tick_start(void)
 	struct cpu_info *ci = curcpu();
 	u_int64_t s;
 
+	tick_enable();
+
 	/*
 	 * Try to make the tick interrupts as synchronously as possible on
 	 * all CPUs to avoid inaccuracies for migrating processes.
@@ -913,6 +912,11 @@ sys_tick_start(void)
 	struct cpu_info *ci = curcpu();
 	u_int64_t s;
 
+	if (CPU_ISSUN4U || CPU_ISSUN4US) {
+		tick_enable();
+		sys_tick_enable();
+	}
+
 	/*
 	 * Try to make the tick interrupts as synchronously as possible on
 	 * all CPUs to avoid inaccuracies for migrating processes.
@@ -929,6 +933,8 @@ stick_start(void)
 {
 	struct cpu_info *ci = curcpu();
 	u_int64_t s;
+
+	tick_enable();
 
 	/*
 	 * Try to make the tick interrupts as synchronously as possible on

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.189 2020/05/18 08:26:28 claudio Exp $	*/
+/*	$OpenBSD: locore.s,v 1.190 2020/07/31 11:19:12 kettenis Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -7495,7 +7495,7 @@ ENTRY(write_user_windows)
 END(write_user_windows)
 
 /*
- * Clear the Nonpriviliged Trap (NPT( bit of %tick such that it can be
+ * Clear the Nonprivileged Trap (NPT) bit of %tick such that it can be
  * read from userland.  This requires us to read the current value and
  * write it back with the bit cleared.  As a result we will lose a
  * couple of ticks.  In order to limit the number of lost ticks, we
@@ -7548,6 +7548,26 @@ ENTRY(tickcmpr_set)
 	retl
 	 nop
 END(tickcmpr_set)
+
+ENTRY(sys_tick_enable)
+	rdpr	%pstate, %o0
+	andn	%o0, PSTATE_IE, %o1
+	wrpr	%o1, 0, %pstate		! disable interrupts
+	rd	%sys_tick, %o2
+	brgez,pn %o2, 1f
+	 clr	%o1
+	mov	1, %o1
+	sllx	%o1, 63, %o1
+	ba,pt	%xcc, 1f
+	 nop
+	.align	64
+1:	rd	%sys_tick, %o2
+	wr	%o2, %o1, %sys_tick
+	rd	%sys_tick, %g0
+
+	retl
+	 wrpr	%o0, 0, %pstate		! restore interrupts
+END(sys_tick_enable)
 
 ENTRY(sys_tickcmpr_set)
 	ba	1f
