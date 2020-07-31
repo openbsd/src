@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.677 2020/05/28 16:02:56 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.678 2020/07/31 12:12:11 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1205,8 +1205,12 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 	lease = calloc(1, sizeof(*lease));
 	if (lease == NULL) {
 		log_warn("%s: lease", log_procname);
-		return NULL;
+		return NULL;	/* Can't even DECLINE. */
 	}
+
+	/*  Copy the lease addresses. */
+	lease->address.s_addr = packet->yiaddr.s_addr;
+	lease->next_server.s_addr = packet->siaddr.s_addr;
 
 	/* Copy the lease options. */
 	for (i = 0; i < DHO_COUNT; i++) {
@@ -1273,7 +1277,6 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 	 * If this lease is trying to sell us an address we are already
 	 * using, decline it.
 	 */
-	lease->address.s_addr = packet->yiaddr.s_addr;
 	memset(ifname, 0, sizeof(ifname));
 	if (addressinuse(ifi->name, lease->address, ifname) != 0 &&
 	    strncmp(ifname, ifi->name, IF_NAMESIZE) != 0) {
@@ -1281,9 +1284,6 @@ packet_to_lease(struct interface_info *ifi, struct option_data *options)
 		    inet_ntoa(lease->address), ifname);
 		goto decline;
 	}
-
-	/* Save the siaddr (a.k.a. next-server) info. */
-	lease->next_server.s_addr = packet->siaddr.s_addr;
 
 	/* If the server name was filled out, copy it. */
 	if ((lease->options[DHO_DHCP_OPTION_OVERLOAD].len == 0 ||
