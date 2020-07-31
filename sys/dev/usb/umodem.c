@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.65 2020/02/22 14:01:35 jasper Exp $ */
+/*	$OpenBSD: umodem.c,v 1.66 2020/07/31 10:49:33 mglocker Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -424,7 +424,6 @@ umodem_close(void *addr, int portno)
 	DPRINTF(("umodem_close: sc=%p\n", sc));
 
 	if (sc->sc_notify_pipe != NULL) {
-		usbd_abort_pipe(sc->sc_notify_pipe);
 		err = usbd_close_pipe(sc->sc_notify_pipe);
 		if (err)
 			printf("%s: close notify pipe failed: %s\n",
@@ -702,7 +701,6 @@ umodem_detach(struct device *self, int flags)
 	DPRINTF(("umodem_detach: sc=%p flags=%d\n", sc, flags));
 
 	if (sc->sc_notify_pipe != NULL) {
-		usbd_abort_pipe(sc->sc_notify_pipe);
 		usbd_close_pipe(sc->sc_notify_pipe);
 		sc->sc_notify_pipe = NULL;
 	}

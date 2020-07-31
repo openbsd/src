@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rum.c,v 1.125 2020/07/10 13:22:21 patrick Exp $	*/
+/*	$OpenBSD: if_rum.c,v 1.126 2020/07/31 10:49:32 mglocker Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -441,14 +441,10 @@ rum_detach(struct device *self, int flags)
 		usbd_free_xfer(sc->amrr_xfer);
 		sc->amrr_xfer = NULL;
 	}
-	if (sc->sc_rx_pipeh != NULL) {
-		usbd_abort_pipe(sc->sc_rx_pipeh);
+	if (sc->sc_rx_pipeh != NULL)
 		usbd_close_pipe(sc->sc_rx_pipeh);
-	}
-	if (sc->sc_tx_pipeh != NULL) {
-		usbd_abort_pipe(sc->sc_tx_pipeh);
+	if (sc->sc_tx_pipeh != NULL)
 		usbd_close_pipe(sc->sc_tx_pipeh);
-	}
 
 	rum_free_rx_list(sc);
 	rum_free_tx_list(sc);
@@ -2091,12 +2087,10 @@ rum_stop(struct ifnet *ifp, int disable)
 		sc->amrr_xfer = NULL;
 	}
 	if (sc->sc_rx_pipeh != NULL) {
-		usbd_abort_pipe(sc->sc_rx_pipeh);
 		usbd_close_pipe(sc->sc_rx_pipeh);
 		sc->sc_rx_pipeh = NULL;
 	}
 	if (sc->sc_tx_pipeh != NULL) {
-		usbd_abort_pipe(sc->sc_tx_pipeh);
 		usbd_close_pipe(sc->sc_tx_pipeh);
 		sc->sc_tx_pipeh = NULL;
 	}

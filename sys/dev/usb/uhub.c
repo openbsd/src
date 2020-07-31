@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.94 2020/03/16 13:17:17 mpi Exp $ */
+/*	$OpenBSD: uhub.c,v 1.95 2020/07/31 10:49:33 mglocker Exp $ */
 /*	$NetBSD: uhub.c,v 1.64 2003/02/08 03:32:51 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -456,7 +456,6 @@ uhub_detach(struct device *self, int flags)
 	if (hub == NULL)		/* Must be partially working */
 		return (0);
 
-	usbd_abort_pipe(sc->sc_ipipe);
 	usbd_close_pipe(sc->sc_ipipe);
 
 	for (port = 0; port < hub->nports; port++) {

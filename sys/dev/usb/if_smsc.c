@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_smsc.c,v 1.36 2020/07/10 13:26:40 patrick Exp $	*/
+/*	$OpenBSD: if_smsc.c,v 1.37 2020/07/31 10:49:32 mglocker Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
 /*-
  * Copyright (c) 2012
@@ -698,7 +698,6 @@ smsc_stop(struct smsc_softc *sc)
 
 	/* Stop transfers. */
 	if (sc->sc_ep[SMSC_ENDPT_RX] != NULL) {
-		usbd_abort_pipe(sc->sc_ep[SMSC_ENDPT_RX]);
 		err = usbd_close_pipe(sc->sc_ep[SMSC_ENDPT_RX]);
 		if (err) {
 			printf("%s: close rx pipe failed: %s\n",
@@ -708,7 +707,6 @@ smsc_stop(struct smsc_softc *sc)
 	}
 
 	if (sc->sc_ep[SMSC_ENDPT_TX] != NULL) {
-		usbd_abort_pipe(sc->sc_ep[SMSC_ENDPT_TX]);
 		err = usbd_close_pipe(sc->sc_ep[SMSC_ENDPT_TX]);
 		if (err) {
 			printf("%s: close tx pipe failed: %s\n",
@@ -718,7 +716,6 @@ smsc_stop(struct smsc_softc *sc)
 	}
 
 	if (sc->sc_ep[SMSC_ENDPT_INTR] != NULL) {
-		usbd_abort_pipe(sc->sc_ep[SMSC_ENDPT_INTR]);
 		err = usbd_close_pipe(sc->sc_ep[SMSC_ENDPT_INTR]);
 		if (err) {
 			printf("%s: close intr pipe failed: %s\n",

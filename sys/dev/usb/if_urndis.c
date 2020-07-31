@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.71 2020/07/10 13:26:41 patrick Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.72 2020/07/31 10:49:33 mglocker Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -1140,7 +1140,6 @@ urndis_stop(struct urndis_softc *sc)
 	ifq_clr_oactive(&ifp->if_snd);
 
 	if (sc->sc_bulkin_pipe != NULL) {
-		usbd_abort_pipe(sc->sc_bulkin_pipe);
 		err = usbd_close_pipe(sc->sc_bulkin_pipe);
 		if (err)
 			printf("%s: close rx pipe failed: %s\n",
@@ -1149,7 +1148,6 @@ urndis_stop(struct urndis_softc *sc)
 	}
 
 	if (sc->sc_bulkout_pipe != NULL) {
-		usbd_abort_pipe(sc->sc_bulkout_pipe);
 		err = usbd_close_pipe(sc->sc_bulkout_pipe);
 		if (err)
 			printf("%s: close tx pipe failed: %s\n",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.74 2020/03/11 13:04:02 jasper Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.75 2020/07/31 10:49:33 mglocker Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -399,7 +399,6 @@ uplcom_detach(struct device *self, int flags)
 	DPRINTF(("uplcom_detach: sc=%p flags=%d\n", sc, flags));
 
 	if (sc->sc_intr_pipe != NULL) {
-		usbd_abort_pipe(sc->sc_intr_pipe);
 		usbd_close_pipe(sc->sc_intr_pipe);
 		free(sc->sc_intr_buf, M_USBDEV, sc->sc_isize);
 		sc->sc_intr_pipe = NULL;
@@ -708,7 +707,6 @@ uplcom_close(void *addr, int portno)
 	DPRINTF(("uplcom_close: close\n"));
 
 	if (sc->sc_intr_pipe != NULL) {
-		usbd_abort_pipe(sc->sc_intr_pipe);
 		err = usbd_close_pipe(sc->sc_intr_pipe);
 		if (err)
 			printf("%s: close interrupt pipe failed: %s\n",

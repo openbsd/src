@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.117 2020/02/05 16:01:32 deraadt Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.118 2020/07/31 10:49:33 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>
@@ -440,7 +440,6 @@ umsm_detach(struct device *self, int flags)
 
 	/* close the interrupt endpoint if that is opened */
 	if (sc->sc_intr_pipe != NULL) {
-		usbd_abort_pipe(sc->sc_intr_pipe);
 		usbd_close_pipe(sc->sc_intr_pipe);
 		free(sc->sc_intr_buf, M_USBDEV, sc->sc_isize);
 		sc->sc_intr_pipe = NULL;
@@ -496,7 +495,6 @@ umsm_close(void *addr, int portno)
 		return;
 
 	if (sc->sc_intr_pipe != NULL) {
-		usbd_abort_pipe(sc->sc_intr_pipe);
 		err = usbd_close_pipe(sc->sc_intr_pipe);
 		if (err)
 			printf("%s: close interrupt pipe failed: %s\n",

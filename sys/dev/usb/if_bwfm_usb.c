@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_usb.c,v 1.18 2020/02/25 14:24:58 patrick Exp $ */
+/* $OpenBSD: if_bwfm_usb.c,v 1.19 2020/07/31 10:49:32 mglocker Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -414,12 +414,10 @@ bwfm_usb_preinit(struct bwfm_softc *bwfm)
 
 cleanup:
 	if (sc->sc_rx_pipeh) {
-		usbd_abort_pipe(sc->sc_rx_pipeh);
 		usbd_close_pipe(sc->sc_rx_pipeh);
 		sc->sc_rx_pipeh = NULL;
 	}
 	if (sc->sc_tx_pipeh) {
-		usbd_abort_pipe(sc->sc_tx_pipeh);
 		usbd_close_pipe(sc->sc_tx_pipeh);
 		sc->sc_tx_pipeh = NULL;
 	}
@@ -626,14 +624,10 @@ bwfm_usb_detach(struct device *self, int flags)
 
 	bwfm_detach(&sc->sc_sc, flags);
 
-	if (sc->sc_rx_pipeh != NULL) {
-		usbd_abort_pipe(sc->sc_rx_pipeh);
+	if (sc->sc_rx_pipeh != NULL)
 		usbd_close_pipe(sc->sc_rx_pipeh);
-	}
-	if (sc->sc_tx_pipeh != NULL) {
-		usbd_abort_pipe(sc->sc_tx_pipeh);
+	if (sc->sc_tx_pipeh != NULL)
 		usbd_close_pipe(sc->sc_tx_pipeh);
-	}
 
 	bwfm_usb_free_rx_list(sc);
 	bwfm_usb_free_tx_list(sc);
@@ -743,7 +737,6 @@ bwfm_usb_load_microcode(struct bwfm_usb_softc *sc, const u_char *ucode, size_t s
 	return 0;
 err:
 	if (sc->sc_tx_pipeh != NULL) {
-		usbd_abort_pipe(sc->sc_tx_pipeh);
 		usbd_close_pipe(sc->sc_tx_pipeh);
 		sc->sc_tx_pipeh = NULL;
 	}

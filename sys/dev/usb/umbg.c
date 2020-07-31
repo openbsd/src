@@ -1,4 +1,4 @@
-/*	$OpenBSD: umbg.c,v 1.26 2019/03/22 12:04:25 sthen Exp $ */
+/*	$OpenBSD: umbg.c,v 1.27 2020/07/31 10:49:33 mglocker Exp $ */
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -299,7 +299,6 @@ umbg_detach(struct device *self, int flags)
 	usb_rem_task(sc->sc_udev, &sc->sc_task);
 
 	if (sc->sc_bulkin_pipe != NULL) {
-		usbd_abort_pipe(sc->sc_bulkin_pipe);
 		err = usbd_close_pipe(sc->sc_bulkin_pipe);
 		if (err)
 			printf("%s: close rx pipe failed: %s\n",
@@ -307,7 +306,6 @@ umbg_detach(struct device *self, int flags)
 		sc->sc_bulkin_pipe = NULL;
 	}
 	if (sc->sc_bulkout_pipe != NULL) {
-		usbd_abort_pipe(sc->sc_bulkout_pipe);
 		err = usbd_close_pipe(sc->sc_bulkout_pipe);
 		if (err)
 			printf("%s: close tx pipe failed: %s\n",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: umct.c,v 1.47 2017/12/30 20:47:00 guenther Exp $	*/
+/*	$OpenBSD: umct.c,v 1.48 2020/07/31 10:49:33 mglocker Exp $	*/
 /*	$NetBSD: umct.c,v 1.10 2003/02/23 04:20:07 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -295,7 +295,6 @@ umct_detach(struct device *self, int flags)
 	DPRINTF(("umct_detach: sc=%p flags=%d\n", sc, flags));
 
         if (sc->sc_intr_pipe != NULL) {
-                usbd_abort_pipe(sc->sc_intr_pipe);
                 usbd_close_pipe(sc->sc_intr_pipe);
 		free(sc->sc_intr_buf, M_USBDEV, sc->sc_isize);
                 sc->sc_intr_pipe = NULL;
@@ -552,7 +551,6 @@ umct_close(void *addr, int portno)
 	DPRINTF(("umct_close: close\n"));
 
 	if (sc->sc_intr_pipe != NULL) {
-		usbd_abort_pipe(sc->sc_intr_pipe);
 		err = usbd_close_pipe(sc->sc_intr_pipe);
 		if (err)
 			printf("%s: close interrupt pipe failed: %s\n",

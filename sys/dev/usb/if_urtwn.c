@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.92 2020/07/06 10:38:54 jsg Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.93 2020/07/31 10:49:33 mglocker Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -615,15 +615,12 @@ urtwn_close_pipes(struct urtwn_softc *sc)
 	int i;
 
 	/* Close Rx pipe. */
-	if (sc->rx_pipe != NULL) {
-		usbd_abort_pipe(sc->rx_pipe);
+	if (sc->rx_pipe != NULL)
 		usbd_close_pipe(sc->rx_pipe);
-	}
 	/* Close Tx pipes. */
 	for (i = 0; i < R92C_MAX_EPOUT; i++) {
 		if (sc->tx_pipe[i] == NULL)
 			continue;
-		usbd_abort_pipe(sc->tx_pipe[i]);
 		usbd_close_pipe(sc->tx_pipe[i]);
 	}
 }

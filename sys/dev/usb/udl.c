@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.93 2020/05/25 09:55:49 jsg Exp $ */
+/*	$OpenBSD: udl.c,v 1.94 2020/07/31 10:49:33 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -438,10 +438,8 @@ udl_detach(struct device *self, int flags)
 	/*
 	 * Close bulk TX pipe.
 	 */
-	if (sc->sc_tx_pipeh != NULL) {
-		usbd_abort_pipe(sc->sc_tx_pipeh);
+	if (sc->sc_tx_pipeh != NULL)
 		usbd_close_pipe(sc->sc_tx_pipeh);
-	}
 
 	/*
 	 * Free command buffer.

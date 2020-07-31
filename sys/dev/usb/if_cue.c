@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.79 2020/07/10 13:26:40 patrick Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.80 2020/07/31 10:49:32 mglocker Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1129,7 +1129,6 @@ cue_stop(struct cue_softc *sc)
 
 	/* Stop transfers. */
 	if (sc->cue_ep[CUE_ENDPT_RX] != NULL) {
-		usbd_abort_pipe(sc->cue_ep[CUE_ENDPT_RX]);
 		err = usbd_close_pipe(sc->cue_ep[CUE_ENDPT_RX]);
 		if (err) {
 			printf("%s: close rx pipe failed: %s\n",
@@ -1139,7 +1138,6 @@ cue_stop(struct cue_softc *sc)
 	}
 
 	if (sc->cue_ep[CUE_ENDPT_TX] != NULL) {
-		usbd_abort_pipe(sc->cue_ep[CUE_ENDPT_TX]);
 		err = usbd_close_pipe(sc->cue_ep[CUE_ENDPT_TX]);
 		if (err) {
 			printf("%s: close tx pipe failed: %s\n",
@@ -1149,7 +1147,6 @@ cue_stop(struct cue_softc *sc)
 	}
 
 	if (sc->cue_ep[CUE_ENDPT_INTR] != NULL) {
-		usbd_abort_pipe(sc->cue_ep[CUE_ENDPT_INTR]);
 		err = usbd_close_pipe(sc->cue_ep[CUE_ENDPT_INTR]);
 		if (err) {
 			printf("%s: close intr pipe failed: %s\n",

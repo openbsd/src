@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.110 2020/07/10 13:26:40 patrick Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.111 2020/07/31 10:49:32 mglocker Exp $ */
 /*	$NetBSD: if_aue.c,v 1.82 2003/03/05 17:37:36 shiba Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1518,7 +1518,6 @@ aue_stop(struct aue_softc *sc)
 
 	/* Stop transfers. */
 	if (sc->aue_ep[AUE_ENDPT_RX] != NULL) {
-		usbd_abort_pipe(sc->aue_ep[AUE_ENDPT_RX]);
 		err = usbd_close_pipe(sc->aue_ep[AUE_ENDPT_RX]);
 		if (err) {
 			printf("%s: close rx pipe failed: %s\n",
@@ -1528,7 +1527,6 @@ aue_stop(struct aue_softc *sc)
 	}
 
 	if (sc->aue_ep[AUE_ENDPT_TX] != NULL) {
-		usbd_abort_pipe(sc->aue_ep[AUE_ENDPT_TX]);
 		err = usbd_close_pipe(sc->aue_ep[AUE_ENDPT_TX]);
 		if (err) {
 			printf("%s: close tx pipe failed: %s\n",
@@ -1538,7 +1536,6 @@ aue_stop(struct aue_softc *sc)
 	}
 
 	if (sc->aue_ep[AUE_ENDPT_INTR] != NULL) {
-		usbd_abort_pipe(sc->aue_ep[AUE_ENDPT_INTR]);
 		err = usbd_close_pipe(sc->aue_ep[AUE_ENDPT_INTR]);
 		if (err) {
 			printf("%s: close intr pipe failed: %s\n",

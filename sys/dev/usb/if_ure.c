@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ure.c,v 1.16 2020/07/10 13:26:41 patrick Exp $	*/
+/*	$OpenBSD: if_ure.c,v 1.17 2020/07/31 10:49:33 mglocker Exp $	*/
 /*-
  * Copyright (c) 2015, 2016, 2019 Kevin Lo <kevlo@openbsd.org>
  * All rights reserved.
@@ -825,7 +825,6 @@ ure_stop(struct ure_softc *sc)
 	sc->ure_flags &= ~URE_FLAG_LINK;
 
 	if (sc->ure_ep[URE_ENDPT_RX] != NULL) {
-		usbd_abort_pipe(sc->ure_ep[URE_ENDPT_RX]);
 		err = usbd_close_pipe(sc->ure_ep[URE_ENDPT_RX]);
 		if (err) {
 			printf("%s: close rx pipe failed: %s\n",
@@ -835,7 +834,6 @@ ure_stop(struct ure_softc *sc)
 	}
 
 	if (sc->ure_ep[URE_ENDPT_TX] != NULL) {
-		usbd_abort_pipe(sc->ure_ep[URE_ENDPT_TX]);
 		err = usbd_close_pipe(sc->ure_ep[URE_ENDPT_TX]);
 		if (err) {
 			printf("%s: close tx pipe failed: %s\n",

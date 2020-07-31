@@ -1,4 +1,4 @@
-/*	$OpenBSD: uticom.c,v 1.33 2018/03/15 00:42:41 kevlo Exp $	*/
+/*	$OpenBSD: uticom.c,v 1.34 2020/07/31 10:49:33 mglocker Exp $	*/
 /*
  * Copyright (c) 2005 Dmitry Komissaroff <dxi@mail.ru>.
  *
@@ -453,7 +453,6 @@ uticom_detach(struct device *self, int flags)
 	}
 
 	if (sc->sc_intr_pipe != NULL) {
-		usbd_abort_pipe(sc->sc_intr_pipe);
 		usbd_close_pipe(sc->sc_intr_pipe);
 		free(sc->sc_intr_buf, M_USBDEV, sc->sc_isize);
 		sc->sc_intr_pipe = NULL;
@@ -750,7 +749,6 @@ uticom_close(void *addr, int portno)
 	DPRINTF(("%s: uticom_close: close\n", sc->sc_dev.dv_xname));
 
 	if (sc->sc_intr_pipe != NULL) {
-		usbd_abort_pipe(sc->sc_intr_pipe);
 		err = usbd_close_pipe(sc->sc_intr_pipe);
 		if (err)
 			printf("%s: close interrupt pipe failed: %s\n",
@@ -912,7 +910,6 @@ finish:
 	usbd_free_buffer(oxfer);
 	usbd_free_xfer(oxfer);
 	oxfer = NULL;
-	usbd_abort_pipe(pipe);
 	usbd_close_pipe(pipe);
 	free(buffer, M_USBDEV, buffer_size);
 	return err;

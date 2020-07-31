@@ -1,4 +1,4 @@
-/*	$OpenBSD: usps.c,v 1.9 2017/04/08 02:57:25 deraadt Exp $   */
+/*	$OpenBSD: usps.c,v 1.10 2020/07/31 10:49:33 mglocker Exp $   */
 
 /*
  * Copyright (c) 2011 Yojiro UO <yuo@nui.org>
@@ -297,7 +297,6 @@ usps_detach(struct device *self, int flags)
 
 	s = splusb();
 	if (sc->sc_ipipe != NULL) {
-		usbd_abort_pipe(sc->sc_ipipe);
 		usbd_close_pipe(sc->sc_ipipe);
 		if (sc->sc_intrbuf != NULL)
 			free(sc->sc_intrbuf, M_USBDEV, sc->sc_isize);

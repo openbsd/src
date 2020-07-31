@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.150 2019/10/06 17:11:51 mpi Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.151 2020/07/31 10:49:33 mglocker Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1403,10 +1403,8 @@ usb_free_device(struct usbd_device *dev)
 
 	DPRINTF(("%s: %p\n", __func__, dev));
 
-	if (dev->default_pipe != NULL) {
-		usbd_abort_pipe(dev->default_pipe);
+	if (dev->default_pipe != NULL)
 		usbd_close_pipe(dev->default_pipe);
-	}
 	if (dev->ifaces != NULL) {
 		nifc = dev->cdesc->bNumInterface;
 		for (ifcidx = 0; ifcidx < nifc; ifcidx++)

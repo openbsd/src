@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.70 2020/03/08 19:24:15 claudio Exp $ */
+/*	$OpenBSD: ucom.c,v 1.71 2020/07/31 10:49:33 mglocker Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -217,12 +217,10 @@ ucom_detach(struct device *self, int flags)
 		 sc, flags, tp, sc->sc_bulkin_no, sc->sc_bulkout_no));
 
 	if (sc->sc_bulkin_pipe != NULL) {
-		usbd_abort_pipe(sc->sc_bulkin_pipe);
 		usbd_close_pipe(sc->sc_bulkin_pipe);
 		sc->sc_bulkin_pipe = NULL;
 	}
 	if (sc->sc_bulkout_pipe != NULL) {
-		usbd_abort_pipe(sc->sc_bulkout_pipe);
 		usbd_close_pipe(sc->sc_bulkout_pipe);
 		sc->sc_bulkout_pipe = NULL;
 	}
@@ -1196,12 +1194,10 @@ ucom_cleanup(struct ucom_softc *sc)
 
 	ucom_shutdown(sc);
 	if (sc->sc_bulkin_pipe != NULL) {
-		usbd_abort_pipe(sc->sc_bulkin_pipe);
 		usbd_close_pipe(sc->sc_bulkin_pipe);
 		sc->sc_bulkin_pipe = NULL;
 	}
 	if (sc->sc_bulkout_pipe != NULL) {
-		usbd_abort_pipe(sc->sc_bulkout_pipe);
 		usbd_close_pipe(sc->sc_bulkout_pipe);
 		sc->sc_bulkout_pipe = NULL;
 	}

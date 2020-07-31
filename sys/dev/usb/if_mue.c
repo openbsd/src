@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mue.c,v 1.9 2020/07/10 13:26:40 patrick Exp $	*/
+/*	$OpenBSD: if_mue.c,v 1.10 2020/07/31 10:49:32 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2018 Kevin Lo <kevlo@openbsd.org>
@@ -1347,7 +1347,6 @@ mue_stop(struct mue_softc *sc)
 
 	/* Stop transfers. */
 	if (sc->mue_ep[MUE_ENDPT_RX] != NULL) {
-		usbd_abort_pipe(sc->mue_ep[MUE_ENDPT_RX]);
 		err = usbd_close_pipe(sc->mue_ep[MUE_ENDPT_RX]);
 		if (err) {
 			printf("%s: close rx pipe failed: %s\n",
@@ -1357,7 +1356,6 @@ mue_stop(struct mue_softc *sc)
 	}
 
 	if (sc->mue_ep[MUE_ENDPT_TX] != NULL) {
-		usbd_abort_pipe(sc->mue_ep[MUE_ENDPT_TX]);
 		err = usbd_close_pipe(sc->mue_ep[MUE_ENDPT_TX]);
 		if (err) {
 			printf("%s: close tx pipe failed: %s\n",
@@ -1367,7 +1365,6 @@ mue_stop(struct mue_softc *sc)
 	}
 
 	if (sc->mue_ep[MUE_ENDPT_INTR] != NULL) {
-		usbd_abort_pipe(sc->mue_ep[MUE_ENDPT_INTR]);
 		err = usbd_close_pipe(sc->mue_ep[MUE_ENDPT_INTR]);
 		if (err) {
 			printf("%s: close intr pipe failed: %s\n",

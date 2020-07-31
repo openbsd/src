@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rsu.c,v 1.46 2020/07/10 13:22:21 patrick Exp $	*/
+/*	$OpenBSD: if_rsu.c,v 1.47 2020/07/31 10:49:32 mglocker Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -381,7 +381,6 @@ rsu_close_pipes(struct rsu_softc *sc)
 	for (i = 0; i < sc->npipes; i++) {
 		if (sc->pipe[i] == NULL)
 			continue;
-		usbd_abort_pipe(sc->pipe[i]);
 		usbd_close_pipe(sc->pipe[i]);
 	}
 }

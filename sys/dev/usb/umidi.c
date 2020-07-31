@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.53 2020/03/16 16:12:43 jasper Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.54 2020/07/31 10:49:33 mglocker Exp $	*/
 /*	$NetBSD: umidi.c,v 1.16 2002/07/11 21:14:32 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -367,7 +367,6 @@ static void
 free_pipe(struct umidi_endpoint *ep)
 {
 	DPRINTF(("%s: %s %p\n", ep->sc->sc_dev.dv_xname, __func__, ep));
-	usbd_abort_pipe(ep->pipe);
 	usbd_close_pipe(ep->pipe);
 	usbd_free_xfer(ep->xfer);
 }

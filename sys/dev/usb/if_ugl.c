@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ugl.c,v 1.25 2020/07/10 13:26:41 patrick Exp $	*/
+/*	$OpenBSD: if_ugl.c,v 1.26 2020/07/31 10:49:32 mglocker Exp $	*/
 /*	$NetBSD: if_upl.c,v 1.19 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 2013 SASANO Takayoshi <uaa@uaa.org.uk>
@@ -817,19 +817,16 @@ ugl_stop(struct ugl_softc *sc)
 
 	/* Stop transfers. */
 	if (sc->sc_ep[UGL_ENDPT_RX] != NULL) {
-		usbd_abort_pipe(sc->sc_ep[UGL_ENDPT_RX]);
 		usbd_close_pipe(sc->sc_ep[UGL_ENDPT_RX]);
 		sc->sc_ep[UGL_ENDPT_RX] = NULL;
 	}
 
 	if (sc->sc_ep[UGL_ENDPT_TX] != NULL) {
-		usbd_abort_pipe(sc->sc_ep[UGL_ENDPT_TX]);
 		usbd_close_pipe(sc->sc_ep[UGL_ENDPT_TX]);
 		sc->sc_ep[UGL_ENDPT_TX] = NULL;
 	}
 
 	if (sc->sc_ep[UGL_ENDPT_INTR] != NULL) {
-		usbd_abort_pipe(sc->sc_ep[UGL_ENDPT_INTR]);
 		usbd_close_pipe(sc->sc_ep[UGL_ENDPT_INTR]);
 		sc->sc_ep[UGL_ENDPT_INTR] = NULL;
 	}

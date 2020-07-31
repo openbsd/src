@@ -1,4 +1,4 @@
-/* $OpenBSD: umcs.c,v 1.7 2020/03/17 09:34:52 mpi Exp $ */
+/* $OpenBSD: umcs.c,v 1.8 2020/07/31 10:49:33 mglocker Exp $ */
 /* $NetBSD: umcs.c,v 1.8 2014/08/23 21:37:56 martin Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.c 260559 2014-01-12 11:44:28Z hselasky $ */
 
@@ -471,7 +471,6 @@ umcs_detach(struct device *self, int flags)
 	task_del(systq, &sc->sc_status_task);
 
 	if (sc->sc_ipipe != NULL) {
-		usbd_abort_pipe(sc->sc_ipipe);
 		usbd_close_pipe(sc->sc_ipipe);
 		sc->sc_ipipe = NULL;
 	}

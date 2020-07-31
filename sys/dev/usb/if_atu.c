@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.131 2020/07/10 13:26:40 patrick Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.132 2020/07/31 10:49:32 mglocker Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -2252,7 +2252,6 @@ atu_stop(struct ifnet *ifp, int disable)
 
 	/* Stop transfers. */
 	if (sc->atu_ep[ATU_ENDPT_RX] != NULL) {
-		usbd_abort_pipe(sc->atu_ep[ATU_ENDPT_RX]);
 		err = usbd_close_pipe(sc->atu_ep[ATU_ENDPT_RX]);
 		if (err) {
 			DPRINTF(("%s: close rx pipe failed: %s\n",
@@ -2262,7 +2261,6 @@ atu_stop(struct ifnet *ifp, int disable)
 	}
 
 	if (sc->atu_ep[ATU_ENDPT_TX] != NULL) {
-		usbd_abort_pipe(sc->atu_ep[ATU_ENDPT_TX]);
 		err = usbd_close_pipe(sc->atu_ep[ATU_ENDPT_TX]);
 		if (err) {
 			DPRINTF(("%s: close tx pipe failed: %s\n",
