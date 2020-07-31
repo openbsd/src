@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.118 2020/07/29 16:37:12 deraadt Exp $ */
+/* $OpenBSD: xhci.c,v 1.119 2020/07/31 19:27:57 mglocker Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -3111,13 +3111,6 @@ xhci_device_isoc_start(struct usbd_xfer *xfer)
 
 	KASSERT(!(xfer->rqflags & URQ_REQUEST));
 
-	if (sc->sc_bus.dying || xp->halted)
-		return (USBD_IOERROR);
-
-	/* Why would you do that anyway? */
-	if (sc->sc_bus.use_polling)
-		return (USBD_INVAL);
-
 	/*
 	 * To allow continuous transfers, above we start all transfers
 	 * immediately. However, we're still going to get usbd_start_next call
@@ -3126,6 +3119,13 @@ xhci_device_isoc_start(struct usbd_xfer *xfer)
 	 */
 	if (xx->ntrb > 0)
 		return (USBD_IN_PROGRESS);
+
+	if (sc->sc_bus.dying || xp->halted)
+		return (USBD_IOERROR);
+
+	/* Why would you do that anyway? */
+	if (sc->sc_bus.use_polling)
+		return (USBD_INVAL);
 
 	paddr = DMAADDR(&xfer->dmabuf, 0);
 
