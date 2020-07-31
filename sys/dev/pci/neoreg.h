@@ -1,4 +1,4 @@
-/*      $OpenBSD: neoreg.h,v 1.2 2004/11/22 04:27:14 deraadt Exp $       */
+/*      $OpenBSD: neoreg.h,v 1.3 2020/07/31 14:58:53 deraadt Exp $       */
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -117,8 +117,8 @@
 #define NM_COEFF_SIZES  2*8
 
 struct neo_firmware {
-	const u_int16_t coefficientSizes[NM_COEFF_SIZES];
-	const char coefficients[NM_TOTAL_COEFF_COUNT*4];
+	u_int16_t coefficientSizes[NM_COEFF_SIZES];
+	char coefficients[NM_TOTAL_COEFF_COUNT*4];
 };
 
 

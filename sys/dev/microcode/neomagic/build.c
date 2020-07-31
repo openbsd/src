@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.2 2005/05/17 18:48:52 jason Exp $	*/
+/*	$OpenBSD: build.c,v 1.3 2020/07/31 14:58:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -48,7 +48,7 @@ main(int argc, char *argv[])
 		err(1, "%s", FILENAME);
 	if (rlen != sizeof nf)
 		errx(1, "%s: short write", FILENAME);
-	printf("created %s length %d\n", FILENAME, sizeof nf);
+	printf("created %s length %zd\n", FILENAME, sizeof nf);
 	close(fd);
 	return (0);
 }
