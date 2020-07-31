@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.20 2020/06/07 19:23:33 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.21 2020/07/31 07:11:35 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -54,6 +54,7 @@ void kd_free(struct kcov_dev *);
 struct kcov_dev *kd_lookup(int);
 
 static struct kcov_dev *kd_curproc(int);
+static uint64_t kd_claim(struct kcov_dev *, int);
 
 TAILQ_HEAD(, kcov_dev) kd_list = TAILQ_HEAD_INITIALIZER(kd_list);
 
@@ -80,11 +81,8 @@ __sanitizer_cov_trace_pc(void)
 	if (kd == NULL)
 		return;
 
-	idx = kd->kd_buf[0];
-	if (idx + 1 <= kd->kd_nmemb) {
-		kd->kd_buf[idx + 1] = (uintptr_t)__builtin_return_address(0);
-		kd->kd_buf[0] = idx + 1;
-	}
+	if ((idx = kd_claim(kd, 1)))
+		kd->kd_buf[idx] = (uintptr_t)__builtin_return_address(0);
 }
 
 /*
@@ -105,13 +103,11 @@ trace_cmp(uint64_t type, uint64_t arg1, uint64_t arg2, uintptr_t pc)
 	if (kd == NULL)
 		return;
 
-	idx = kd->kd_buf[0];
-	if (idx * 4 + 4 <= kd->kd_nmemb) {
-		kd->kd_buf[idx * 4 + 1] = type;
-		kd->kd_buf[idx * 4 + 2] = arg1;
-		kd->kd_buf[idx * 4 + 3] = arg2;
-		kd->kd_buf[idx * 4 + 4] = pc;
-		kd->kd_buf[0] = idx + 1;
+	if ((idx = kd_claim(kd, 4))) {
+		kd->kd_buf[idx] = type;
+		kd->kd_buf[idx + 1] = arg1;
+		kd->kd_buf[idx + 2] = arg2;
+		kd->kd_buf[idx + 3] = pc;
 	}
 }
 
@@ -417,4 +413,26 @@ kd_curproc(int mode)
 		return (NULL);
 	return (kd);
 
+}
+
+/*
+ * Claim stride number of elements in the coverage buffer. Returns the index of
+ * the first claimed element. If the claim cannot be fulfilled, zero is
+ * returned.
+ */
+static uint64_t
+kd_claim(struct kcov_dev *kd, int stride)
+{
+	uint64_t idx, was;
+
+	idx = kd->kd_buf[0];
+	for (;;) {
+		if (idx * stride + stride > kd->kd_nmemb)
+			return (0);
+
+		was = atomic_cas_ulong(&kd->kd_buf[0], idx, idx + 1);
+		if (was == idx)
+			return (idx * stride + 1);
+		idx = was;
+	}
 }
