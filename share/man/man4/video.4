@@ -1,4 +1,4 @@
-.\" $OpenBSD: video.4,v 1.17 2017/02/02 18:38:26 feinerer Exp $
+.\" $OpenBSD: video.4,v 1.18 2020/07/31 18:17:17 mglocker Exp $
 .\"
 .\" Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 2 2017 $
+.Dd $Mdocdate: July 31 2020 $
 .Dt VIDEO 4
 .Os
 .Sh NAME
@@ -373,9 +373,10 @@ system call.
 .El
 .Pp
 The
-.Xr select 2
-and
+.Xr select 2 ,
 .Xr poll 2
+and
+.Xr kqueue 2
 system calls are supported for this access type.
 They will signal when a frame is ready for reading without blocking.
 .Sh MMAP
@@ -429,9 +430,10 @@ ioctl command.
 .El
 .Pp
 The
-.Xr select 2
-and
+.Xr select 2 ,
 .Xr poll 2
+and
+.Xr kqueue 2
 system calls are supported for this access type.
 They will signal when at least one frame is ready for dequeuing,
 allowing to call the
