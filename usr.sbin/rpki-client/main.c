@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.73 2020/07/28 13:52:18 beck Exp $ */
+/*	$OpenBSD: main.c,v 1.74 2020/07/31 09:57:38 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1552,7 +1552,8 @@ repo_cleanup(const char *cachedir, struct repotab *rt)
 				break;
 			case FTS_NS:
 			case FTS_ERR:
-				warnc(e->fts_errno, "fts_read %s", e->fts_path);
+				warnx("fts_read %s: %s", e->fts_path,
+				    strerror(e->fts_errno));
 				break;
 			default:
 				warnx("unhandled[%x] %s", e->fts_info,
