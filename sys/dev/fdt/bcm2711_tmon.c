@@ -63,10 +63,13 @@ int
 bcmtmon_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
-	
-	return (OF_is_compatible(faa->fa_node, "brcm,bcm2711-avs-monitor") ||
+
+	if (OF_is_compatible(faa->fa_node, "brcm,bcm2711-avs-monitor") ||
 	    OF_is_compatible(faa->fa_node, "brcm,avs-tmon-bcm2711") ||
-	    OF_is_compatible(faa->fa_node, "brcm,avs-tmon-bcm2838"));
+	    OF_is_compatible(faa->fa_node, "brcm,avs-tmon-bcm2838"))
+		return 10;	/* Must beat syscon(4). */
+
+	return 0;
 }
 
 void
