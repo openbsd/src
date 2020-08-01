@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.45 2020/05/29 14:26:01 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.46 2020/08/01 14:31:23 inoguchi Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -606,9 +606,9 @@ __EOF__
 	ca_key=$ca_dir/private/ca_key.pem ca_pass=test-ca-pass
 	
 	if [ $mingw = 0 ] ; then
-		subj='/C=JP/ST=Tokyo/O=TEST_DUMMY_COMPANY/CN=testCA.test_dummy.com/'
+		subj='/C=JP/ST=Tokyo/O=TEST_DUMMY_COMPANY/CN=testCA.test-dummy.com/'
 	else
-		subj='//C=JP\ST=Tokyo\O=TEST_DUMMY_COMPANY\CN=testCA.test_dummy.com\'
+		subj='//C=JP\ST=Tokyo\O=TEST_DUMMY_COMPANY\CN=testCA.test-dummy.com\'
 	fi
 	
 	$openssl_bin req -new -x509 -batch -newkey rsa:2048 \
@@ -633,9 +633,9 @@ __EOF__
 	tsa_pass=test-tsa-pass
 	
 	if [ $mingw = 0 ] ; then
-		subj='/C=JP/ST=Tokyo/O=TEST_DUMMY_COMPANY/CN=testTSA.test_dummy.com/'
+		subj='/C=JP/ST=Tokyo/O=TEST_DUMMY_COMPANY/CN=testTSA.test-dummy.com/'
 	else
-		subj='//C=JP\ST=Tokyo\O=TEST_DUMMY_COMPANY\CN=testTSA.test_dummy.com\'
+		subj='//C=JP\ST=Tokyo\O=TEST_DUMMY_COMPANY\CN=testTSA.test-dummy.com\'
 	fi
 	
 	$openssl_bin req -new -keyout $tsa_key -out $tsa_csr \
@@ -667,9 +667,9 @@ __EOF__
 	ocsp_key=$ocsp_dir/private/ocsp_key.pem
 	
 	if [ $mingw = 0 ] ; then
-		subj='/C=JP/ST=Tokyo/O=TEST_DUMMY_COMPANY/CN=testOCSP.test_dummy.com/'
+		subj='/C=JP/ST=Tokyo/O=TEST_DUMMY_COMPANY/CN=testOCSP.test-dummy.com/'
 	else
-		subj='//C=JP\ST=Tokyo\O=TEST_DUMMY_COMPANY\CN=testOCSP.test_dummy.com\'
+		subj='//C=JP\ST=Tokyo\O=TEST_DUMMY_COMPANY\CN=testOCSP.test-dummy.com\'
 	fi
 	
 	$openssl_bin req -new -keyout $ocsp_key -nodes -out $ocsp_csr \
@@ -698,9 +698,9 @@ __EOF__
 	sv_rsa_pass=test-server-pass
 	
 	if [ $mingw = 0 ] ; then
-		subj='/C=JP/ST=Tokyo/O=TEST_DUMMY_COMPANY/CN=localhost.test_dummy.com/'
+		subj='/C=JP/ST=Tokyo/O=TEST_DUMMY_COMPANY/CN=localhost.test-dummy.com/'
 	else
-		subj='//C=JP\ST=Tokyo\O=TEST_DUMMY_COMPANY\CN=localhost.test_dummy.com\'
+		subj='//C=JP\ST=Tokyo\O=TEST_DUMMY_COMPANY\CN=localhost.test-dummy.com\'
 	fi
 	
 	start_message "genrsa ... generate server key#1"
@@ -712,7 +712,7 @@ __EOF__
 
 	$openssl_bin req -new -subj $subj -sha256 \
 		-key $sv_rsa_key -keyform pem -passin pass:$sv_rsa_pass \
-		-addext 'subjectAltName = DNS:localhost.test_dummy.com' \
+		-addext 'subjectAltName = DNS:localhost.test-dummy.com' \
 		-out $sv_rsa_csr -outform pem
 	check_exit_status $?
 	
@@ -737,7 +737,7 @@ __EOF__
 JP
 Tokyo
 TEST_DUMMY_COMPANY
-revoke.test_dummy.com
+revoke.test-dummy.com
 __EOF__
 	check_exit_status $?
 
@@ -748,9 +748,9 @@ __EOF__
 	sv_ecdsa_pass=test-ecdsa-pass
 
 	if [ $mingw = 0 ] ; then
-		subj='/C=JP/ST=Tokyo/O=TEST_DUMMY_COMPANY/CN=ecdsa.test_dummy.com/'
+		subj='/C=JP/ST=Tokyo/O=TEST_DUMMY_COMPANY/CN=ecdsa.test-dummy.com/'
 	else
-		subj='//C=JP\ST=Tokyo\O=TEST_DUMMY_COMPANY\CN=ecdsa.test_dummy.com\'
+		subj='//C=JP\ST=Tokyo\O=TEST_DUMMY_COMPANY\CN=ecdsa.test-dummy.com\'
 	fi
 	
 	start_message "ecparam ... generate server key#3"
@@ -762,7 +762,7 @@ __EOF__
 
 	$openssl_bin req -new -subj $subj -sha256 \
 		-key $sv_ecdsa_key -keyform pem -passin pass:$sv_ecdsa_pass \
-		-addext 'subjectAltName = DNS:ecdsa.test_dummy.com' \
+		-addext 'subjectAltName = DNS:ecdsa.test-dummy.com' \
 		-out $sv_ecdsa_csr -outform pem
 	check_exit_status $?
 	
@@ -781,9 +781,9 @@ __EOF__
 	sv_gost_pass=test-gost-pass
 
 	if [ $mingw = 0 ] ; then
-		subj='/C=JP/ST=Tokyo/O=TEST_DUMMY_COMPANY/CN=gost.test_dummy.com/'
+		subj='/C=JP/ST=Tokyo/O=TEST_DUMMY_COMPANY/CN=gost.test-dummy.com/'
 	else
-		subj='//C=JP\ST=Tokyo\O=TEST_DUMMY_COMPANY\CN=gost.test_dummy.com\'
+		subj='//C=JP\ST=Tokyo\O=TEST_DUMMY_COMPANY\CN=gost.test-dummy.com\'
 	fi
 	
 	start_message "genpkey ... generate server key#4"
@@ -796,7 +796,7 @@ __EOF__
 
 	$openssl_bin req -new -subj $subj -streebog512 \
 		-key $sv_gost_key -keyform pem -passin pass:$sv_gost_pass \
-		-addext 'subjectAltName = DNS:gost.test_dummy.com' \
+		-addext 'subjectAltName = DNS:gost.test-dummy.com' \
 		-out $sv_gost_csr -outform pem
 	check_exit_status $?
 	
@@ -933,7 +933,7 @@ __EOF__
 countryName = JP
 stateOrProvinceName = Tokyo
 organizationName = TEST_DUMMY_COMPANY
-commonName = spkac.test_dummy.com
+commonName = spkac.test-dummy.com
 __EOF__
 	cat $spkacfile >> $spkacreq
 	
@@ -975,9 +975,9 @@ __EOF__
 	cl_rsa_pass=test-user1-pass
 	
 	if [ $mingw = 0 ] ; then
-		subj='/C=JP/ST=Tokyo/O=TEST_DUMMY_COMPANY/CN=user1.test_dummy.com/'
+		subj='/C=JP/ST=Tokyo/O=TEST_DUMMY_COMPANY/CN=user1.test-dummy.com/'
 	else
-		subj='//C=JP\ST=Tokyo\O=TEST_DUMMY_COMPANY\CN=user1.test_dummy.com\'
+		subj='//C=JP\ST=Tokyo\O=TEST_DUMMY_COMPANY\CN=user1.test-dummy.com\'
 	fi
 	
 	$openssl_bin req -new -keyout $cl_rsa_key -out $cl_rsa_csr \
@@ -991,9 +991,9 @@ __EOF__
 	cl_ecdsa_pass=test-user1-pass
 	
 	if [ $mingw = 0 ] ; then
-		subj='/C=JP/ST=Tokyo/O=TEST_DUMMY_COMPANY/CN=user2.test_dummy.com/'
+		subj='/C=JP/ST=Tokyo/O=TEST_DUMMY_COMPANY/CN=user2.test-dummy.com/'
 	else
-		subj='//C=JP\ST=Tokyo\O=TEST_DUMMY_COMPANY\CN=user2.test_dummy.com\'
+		subj='//C=JP\ST=Tokyo\O=TEST_DUMMY_COMPANY\CN=user2.test-dummy.com\'
 	fi
 	
 	$openssl_bin ecparam -name prime256v1 -genkey -out $cl_ecdsa_key
@@ -1011,9 +1011,9 @@ __EOF__
 	cl_gost_pass=test-user1-pass
 	
 	if [ $mingw = 0 ] ; then
-		subj='/C=JP/ST=Tokyo/O=TEST_DUMMY_COMPANY/CN=user3.test_dummy.com/'
+		subj='/C=JP/ST=Tokyo/O=TEST_DUMMY_COMPANY/CN=user3.test-dummy.com/'
 	else
-		subj='//C=JP\ST=Tokyo\O=TEST_DUMMY_COMPANY\CN=user3.test_dummy.com\'
+		subj='//C=JP\ST=Tokyo\O=TEST_DUMMY_COMPANY\CN=user3.test-dummy.com\'
 	fi
 	
 	$openssl_bin genpkey -algorithm GOST2001 -pkeyopt paramset:A \
@@ -1130,10 +1130,10 @@ __EOF__
 		-signer $cl_rsa_cert -inkey $cl_rsa_key -keyform pem \
 		-keyopt rsa_padding_mode:pss \
 		-passin pass:$cl_rsa_pass -md sha256 \
-		-from user1@test_dummy.com -to server@test_dummy.com \
+		-from user1@test-dummy.com -to server@test-dummy.com \
 		-subject "test openssl cms" \
-		-receipt_request_from server@test_dummy.com \
-		-receipt_request_to user1@test_dummy.com
+		-receipt_request_from server@test-dummy.com \
+		-receipt_request_to user1@test-dummy.com
 	check_exit_status $?
 	
 	# encrypt
@@ -1283,7 +1283,7 @@ __EOF__
 		-out $smime_sig -outform smime \
 		-signer $cl_rsa_cert -inkey $cl_rsa_key -keyform pem \
 		-passin pass:$cl_rsa_pass -md sha256 \
-		-from user1@test_dummy.com -to server@test_dummy.com \
+		-from user1@test-dummy.com -to server@test-dummy.com \
 		-subject "test openssl smime"
 	check_exit_status $?
 	
