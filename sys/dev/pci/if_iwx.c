@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.41 2020/07/13 16:23:53 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.42 2020/08/01 16:14:05 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -278,6 +278,7 @@ void	iwx_disable_interrupts(struct iwx_softc *);
 void	iwx_ict_reset(struct iwx_softc *);
 int	iwx_set_hw_ready(struct iwx_softc *);
 int	iwx_prepare_card_hw(struct iwx_softc *);
+void	iwx_force_power_gating(struct iwx_softc *);
 void	iwx_apm_config(struct iwx_softc *);
 int	iwx_apm_init(struct iwx_softc *);
 void	iwx_apm_stop(struct iwx_softc *);
@@ -769,6 +770,7 @@ iwx_ctxt_info_init(struct iwx_softc *sc, const struct iwx_fw_sects *fws)
 	struct iwx_context_info *ctxt_info;
 	struct iwx_context_info_rbd_cfg *rx_cfg;
 	uint32_t control_flags = 0, rb_size;
+	uint64_t paddr;
 	int err;
 
 	ctxt_info = sc->ctxt_info_dma.vaddr;
@@ -819,8 +821,16 @@ iwx_ctxt_info_init(struct iwx_softc *sc, const struct iwx_fw_sects *fws)
 		}
 	}
 
+	/*
+	 * Write the context info DMA base address. The device expects a
+	 * 64-bit address but a simple bus_space_write_8 to this register
+	 * won't work on some devices, such as the AX201.
+	 */
+	paddr = sc->ctxt_info_dma.paddr;
+	IWX_WRITE(sc, IWX_CSR_CTXT_INFO_BA, paddr & 0xffffffff);
+	IWX_WRITE(sc, IWX_CSR_CTXT_INFO_BA + 4, paddr >> 32);
+
 	/* kick FW self load */
-	IWX_WRITE_8(sc, IWX_CSR_CTXT_INFO_BA, sc->ctxt_info_dma.paddr);
 	if (!iwx_nic_lock(sc))
 		return EBUSY;
 	iwx_write_prph(sc, IWX_UREG_CPU_INIT_RUN, 1);
@@ -1960,28 +1970,34 @@ iwx_prepare_card_hw(struct iwx_softc *sc)
 }
 
 void
+iwx_force_power_gating(struct iwx_softc *sc)
+{
+	iwx_set_bits_prph(sc, IWX_HPM_HIPM_GEN_CFG,
+	    IWX_HPM_HIPM_GEN_CFG_CR_FORCE_ACTIVE);
+	DELAY(20);
+	iwx_set_bits_prph(sc, IWX_HPM_HIPM_GEN_CFG,
+	    IWX_HPM_HIPM_GEN_CFG_CR_PG_EN |
+	    IWX_HPM_HIPM_GEN_CFG_CR_SLP_EN);
+	DELAY(20);
+	iwx_clear_bits_prph(sc, IWX_HPM_HIPM_GEN_CFG,
+	    IWX_HPM_HIPM_GEN_CFG_CR_FORCE_ACTIVE);
+}
+
+void
 iwx_apm_config(struct iwx_softc *sc)
 {
 	pcireg_t lctl, cap;
 
 	/*
-	 * HW bug W/A for instability in PCIe bus L0S->L1 transition.
-	 * Check if BIOS (or OS) enabled L1-ASPM on this device.
-	 * If so (likely), disable L0S, so device moves directly L0->L1;
-	 *    costs negligible amount of power savings.
-	 * If not (unlikely), enable L0S, so there is at least some
-	 *    power savings, even without L1.
+	 * L0S states have been found to be unstable with our devices
+	 * and in newer hardware they are not officially supported at
+	 * all, so we must always set the L0S_DISABLED bit.
 	 */
+	IWX_SETBITS(sc, IWX_CSR_GIO_REG, IWX_CSR_GIO_REG_VAL_L0S_DISABLED);
+
 	lctl = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
 	    sc->sc_cap_off + PCI_PCIE_LCSR);
-	if (lctl & PCI_PCIE_LCSR_ASPM_L1) {
-		IWX_SETBITS(sc, IWX_CSR_GIO_REG,
-		    IWX_CSR_GIO_REG_VAL_L0S_ENABLED);
-	} else {
-		IWX_CLRBITS(sc, IWX_CSR_GIO_REG,
-		    IWX_CSR_GIO_REG_VAL_L0S_ENABLED);
-	}
-
+	sc->sc_pm_support = !(lctl & PCI_PCIE_LCSR_ASPM_L0S);
 	cap = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
 	    sc->sc_cap_off + PCI_PCIE_DCSR2);
 	sc->sc_ltr_enabled = (cap & PCI_PCIE_DCSR2_LTREN) ? 1 : 0;
@@ -2179,6 +2195,7 @@ int
 iwx_start_hw(struct iwx_softc *sc)
 {
 	int err;
+	int t = 0;
 
 	err = iwx_prepare_card_hw(sc);
 	if (err)
@@ -2188,18 +2205,46 @@ iwx_start_hw(struct iwx_softc *sc)
 	IWX_SETBITS(sc, IWX_CSR_RESET, IWX_CSR_RESET_REG_FLAG_SW_RESET);
 	DELAY(5000);
 
+	if (sc->sc_integrated) {
+		IWX_SETBITS(sc, IWX_CSR_GP_CNTRL,
+		    IWX_CSR_GP_CNTRL_REG_FLAG_INIT_DONE);
+		DELAY(20);
+		if (!iwx_poll_bit(sc, IWX_CSR_GP_CNTRL,
+		    IWX_CSR_GP_CNTRL_REG_FLAG_MAC_CLOCK_READY,
+		    IWX_CSR_GP_CNTRL_REG_FLAG_MAC_CLOCK_READY, 25000)) {
+			printf("%s: timeout waiting for clock stabilization\n",
+			    DEVNAME(sc));
+			return ETIMEDOUT;
+		}
+
+		iwx_force_power_gating(sc);
+
+		/* Reset the entire device */
+		IWX_SETBITS(sc, IWX_CSR_RESET, IWX_CSR_RESET_REG_FLAG_SW_RESET);
+		DELAY(5000);
+	}
+
 	err = iwx_apm_init(sc);
 	if (err)
 		return err;
 
 	iwx_init_msix_hw(sc);
 
+	while (t < 150000 && !iwx_set_hw_ready(sc)) {
+		DELAY(200);
+		t += 200;
+		if (iwx_set_hw_ready(sc)) {
+			break;
+		}
+	}
+	if (t >= 150000)
+		return ETIMEDOUT;
+
 	iwx_enable_rfkill_int(sc);
 	iwx_check_rfkill(sc);
 
 	return 0;
 }
-
 
 void
 iwx_stop_device(struct iwx_softc *sc)
@@ -2949,11 +2994,7 @@ iwx_start_fw(struct iwx_softc *sc)
 
 	IWX_WRITE(sc, IWX_CSR_INT, ~0);
 
-	err = iwx_nic_init(sc);
-	if (err) {
-		printf("%s: unable to init nic\n", DEVNAME(sc));
-		return err;
-	}
+	iwx_disable_interrupts(sc);
 
 	/* make sure rfkill handshake bits are cleared */
 	IWX_WRITE(sc, IWX_CSR_UCODE_DRV_GP1_CLR, IWX_CSR_UCODE_SW_BIT_RFKILL);
@@ -2962,6 +3003,13 @@ iwx_start_fw(struct iwx_softc *sc)
 
 	/* clear (again), then enable firwmare load interrupt */
 	IWX_WRITE(sc, IWX_CSR_INT, ~0);
+
+	err = iwx_nic_init(sc);
+	if (err) {
+		printf("%s: unable to init nic\n", DEVNAME(sc));
+		return err;
+	}
+
 	iwx_enable_fwload_interrupt(sc);
 
 	return iwx_load_firmware(sc);
@@ -7655,13 +7703,67 @@ typedef void *iwx_match_t;
 
 static const struct pci_matchid iwx_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_1 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_2 },
+};
+
+static const struct pci_matchid iwx_subsystem_id_ax200[] = {
+	{ PCI_VENDOR_INTEL,	0x0080 },
+};
+
+static const struct pci_matchid iwx_subsystem_id_ax201[] = {
+	{ PCI_VENDOR_INTEL,	0x0070 },
+	{ PCI_VENDOR_INTEL,	0x0074 },
+	{ PCI_VENDOR_INTEL,	0x0078 },
+	{ PCI_VENDOR_INTEL,	0x007c },
+	{ PCI_VENDOR_INTEL,	0x0310 },
+	{ PCI_VENDOR_INTEL,	0x2074 },
+	{ PCI_VENDOR_INTEL,	0x4070 },
+	/* TODO: There are more ax201 devices with "main" product ID 0x06f0 */
 };
 
 int
 iwx_match(struct device *parent, iwx_match_t match __unused, void *aux)
 {
-	return pci_matchbyid((struct pci_attach_args *)aux, iwx_devices,
-	    nitems(iwx_devices));
+	struct pci_attach_args *pa = aux;
+	pcireg_t subid;
+	pci_vendor_id_t svid;
+	pci_product_id_t spid;
+	int i;
+
+	if (!pci_matchbyid(pa, iwx_devices, nitems(iwx_devices)))
+		return 0;
+
+	/*
+	 * Some PCI product IDs are shared among devices which use distinct
+	 * chips or firmware. We need to match the subsystem ID as well to
+	 * ensure that we have in fact found a supported device.
+	 */
+	subid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+	svid = PCI_VENDOR(subid);
+	spid = PCI_PRODUCT(subid);
+
+	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_INTEL_WL_22500_1: /* AX200 */
+		for (i = 0; i < nitems(iwx_subsystem_id_ax200); i++) {
+			if (svid == iwx_subsystem_id_ax200[i].pm_vid &&
+			    spid == iwx_subsystem_id_ax200[i].pm_pid)
+				return 1;
+
+		}
+		break;
+	case PCI_PRODUCT_INTEL_WL_22500_2: /* AX201 */
+		for (i = 0; i < nitems(iwx_subsystem_id_ax201); i++) {
+			if (svid == iwx_subsystem_id_ax201[i].pm_vid &&
+			    spid == iwx_subsystem_id_ax201[i].pm_pid)
+				return 1;
+
+		}
+		break;
+	default:
+		break;
+	}
+
+	return 0;
 }
 
 int
@@ -7807,7 +7909,10 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf(", %s\n", intrstr);
 
-	iwx_disable_interrupts(sc);
+	/* Clear pending interrupts. */
+	IWX_WRITE(sc, IWX_CSR_INT_MASK, 0);
+	IWX_WRITE(sc, IWX_CSR_INT, ~0);
+	IWX_WRITE(sc, IWX_CSR_FH_INT_STATUS, ~0);
 
 	sc->sc_hw_rev = IWX_READ(sc, IWX_CSR_HW_REV);
 	switch (PCI_PRODUCT(pa->pa_id)) {
@@ -7819,6 +7924,17 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_ltr_delay = IWX_SOC_FLAGS_LTR_APPLY_DELAY_NONE;
 		sc->sc_low_latency_xtal = 0;
 		sc->sc_xtal_latency = 0;
+		sc->sc_tx_with_siso_diversity = 0;
+		sc->sc_uhb_supported = 0;
+		break;
+	case PCI_PRODUCT_INTEL_WL_22500_2:
+		sc->sc_fwname = "iwx-QuZ-a0-hr-b0-48";
+		sc->sc_device_family = IWX_DEVICE_FAMILY_22000;
+		sc->sc_fwdmasegsz = IWX_FWDMASEGSZ_8000;
+		sc->sc_integrated = 1;
+		sc->sc_ltr_delay = IWX_SOC_FLAGS_LTR_APPLY_DELAY_200;
+		sc->sc_low_latency_xtal = 0;
+		sc->sc_xtal_latency = 5000;
 		sc->sc_tx_with_siso_diversity = 0;
 		sc->sc_uhb_supported = 0;
 		break;
@@ -7930,9 +8046,6 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_nswq = taskq_create("iwxns", 1, IPL_NET, 0);
 	if (sc->sc_nswq == NULL)
 		goto fail4;
-
-	/* Clear pending interrupts. */
-	IWX_WRITE(sc, IWX_CSR_INT, 0xffffffff);
 
 	ic->ic_phytype = IEEE80211_T_OFDM;	/* not only, but not used */
 	ic->ic_opmode = IEEE80211_M_STA;	/* default to BSS mode */
