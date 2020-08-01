@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.12 2019/05/19 09:34:59 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.13 2020/08/01 08:44:57 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -16,6 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
+#include <sys/event.h>
 #include <sys/ioctl.h>
 #include <sys/kcov.h>
 #include <sys/mman.h>
@@ -36,13 +38,15 @@ struct context {
 	unsigned long c_bufsize;
 };
 
-static int test_close(const struct context *);
-static int test_coverage(const struct context *);
-static int test_dying(const struct context *);
-static int test_exec(const struct context *);
-static int test_fork(const struct context *);
-static int test_open(const struct context *);
-static int test_state(const struct context *);
+static int test_close(struct context *);
+static int test_coverage(struct context *);
+static int test_dying(struct context *);
+static int test_exec(struct context *);
+static int test_fork(struct context *);
+static int test_open(struct context *);
+static int test_remote(struct context *);
+static int test_remote_close(struct context *);
+static int test_state(struct context *);
 
 static int check_coverage(const unsigned long *, int, unsigned long, int);
 static void do_syscall(void);
@@ -59,17 +63,19 @@ main(int argc, char *argv[])
 {
 	struct {
 		const char *name;
-		int (*fn)(const struct context *);
+		int (*fn)(struct context *);
 		int coverage;		/* test must produce coverage */
 	} tests[] = {
-		{ "close",	test_close,	0 },
-		{ "coverage",	test_coverage,	1 },
-		{ "dying",	test_dying,	1 },
-		{ "exec",	test_exec,	1 },
-		{ "fork",	test_fork,	1 },
-		{ "open",	test_open,	0 },
-		{ "state",	test_state,	1 },
-		{ NULL,		NULL,		0 },
+		{ "close",		test_close,		0 },
+		{ "coverage",		test_coverage,		1 },
+		{ "dying",		test_dying,		1 },
+		{ "exec",		test_exec,		1 },
+		{ "fork",		test_fork,		1 },
+		{ "open",		test_open,		0 },
+		{ "remote",		test_remote,		1 },
+		{ "remote-close",	test_remote_close,	0 },
+		{ "state",		test_state,		1 },
+		{ NULL,			NULL,			0 },
 	};
 	struct context ctx;
 	const char *errstr;
@@ -154,7 +160,10 @@ main(int argc, char *argv[])
 
 	if (munmap(cover, ctx.c_bufsize * sizeof(unsigned long)) == -1)
 		err(1, "munmap");
-	close(ctx.c_fd);
+	if (ctx.c_fd != -1) {
+		if (close(ctx.c_fd) == -1)
+			err(1, "close");
+	}
 
 	return error;
 }
@@ -260,7 +269,7 @@ kcov_disable(int fd)
  * Close before mmap.
  */
 static int
-test_close(const struct context *ctx)
+test_close(struct context *ctx)
 {
 	int fd;
 
@@ -273,7 +282,7 @@ test_close(const struct context *ctx)
  * Coverage of current thread.
  */
 static int
-test_coverage(const struct context *ctx)
+test_coverage(struct context *ctx)
 {
 	kcov_enable(ctx->c_fd, ctx->c_mode);
 	do_syscall();
@@ -284,7 +293,7 @@ test_coverage(const struct context *ctx)
 static void *
 closer(void *arg)
 {
-	const struct context *ctx = arg;
+	struct context *ctx = arg;
 
 	close(ctx->c_fd);
 	return NULL;
@@ -294,7 +303,7 @@ closer(void *arg)
  * Close kcov descriptor in another thread during tracing.
  */
 static int
-test_dying(const struct context *ctx)
+test_dying(struct context *ctx)
 {
 	pthread_t th;
 	int error;
@@ -306,22 +315,24 @@ test_dying(const struct context *ctx)
 	if ((error = pthread_join(th, NULL)))
 		errc(1, error, "pthread_join");
 
+	error = 0;
 	if (close(ctx->c_fd) == -1) {
 		if (errno != EBADF)
 			err(1, "close");
 	} else {
 		warnx("expected kcov descriptor to be closed");
-		return 1;
+		error = 1;
 	}
+	ctx->c_fd = -1;
 
-	return 0;
+	return error;
 }
 
 /*
  * Coverage of thread after exec.
  */
 static int
-test_exec(const struct context *ctx)
+test_exec(struct context *ctx)
 {
 	pid_t pid;
 	int status;
@@ -356,7 +367,7 @@ test_exec(const struct context *ctx)
  * Coverage of thread after fork.
  */
 static int
-test_fork(const struct context *ctx)
+test_fork(struct context *ctx)
 {
 	pid_t pid;
 	int status;
@@ -391,7 +402,7 @@ test_fork(const struct context *ctx)
  * Open /dev/kcov more than once.
  */
 static int
-test_open(const struct context *ctx)
+test_open(struct context *ctx)
 {
 	unsigned long *cover;
 	int fd;
@@ -419,10 +430,75 @@ test_open(const struct context *ctx)
 }
 
 /*
+ * Remote taskq coverage. One reliable way to trigger a task on behalf of the
+ * running process is to monitor a kqueue file descriptor using kqueue.
+ */
+static int
+test_remote(struct context *ctx)
+{
+	struct kio_remote_attach remote = {
+		.subsystem	= KCOV_REMOTE_COMMON,
+		.id		= 0,
+	};
+	struct kevent kev;
+	int kq1, kq2, pip[2];
+	int x = 0;
+
+	if (ioctl(ctx->c_fd, KIOREMOTEATTACH, &remote) == -1)
+		err(1, "ioctl: KIOREMOTEATTACH");
+	kcov_enable(ctx->c_fd, ctx->c_mode);
+
+	kq1 = kqueue();
+	if (kq1 == -1)
+		err(1, "kqueue");
+	kq2 = kqueue();
+	if (kq1 == -1)
+		err(1, "kqueue");
+	EV_SET(&kev, kq2, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
+	if (kevent(kq1, &kev, 1, NULL, 0, NULL) == -1)
+		err(1, "kqueue");
+
+	if (pipe(pip) == -1)
+		err(1, "pipe");
+
+	EV_SET(&kev, pip[0], EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, NULL);
+	if (kevent(kq2, &kev, 1, NULL, 0, NULL) == -1)
+		err(1, "kqueue");
+	(void)write(pip[1], &x, sizeof(x));
+
+	if (kevent(kq1, NULL, 0, &kev, 1, NULL) == -1)
+		err(1, "kevent");
+
+	kcov_disable(ctx->c_fd);
+
+	return 0;
+}
+
+/*
+ * Close with remote coverage enabled.
+ */
+static int
+test_remote_close(struct context *ctx)
+{
+	struct kio_remote_attach remote = {
+		.subsystem	= KCOV_REMOTE_COMMON,
+		.id		= 0,
+	};
+
+	if (ioctl(ctx->c_fd, KIOREMOTEATTACH, &remote) == -1)
+		err(1, "ioctl: KIOREMOTEATTACH");
+	kcov_enable(ctx->c_fd, ctx->c_mode);
+	if (close(ctx->c_fd) == -1)
+		err(1, "close");
+	ctx->c_fd = kcov_open();
+	return 0;
+}
+
+/*
  * State transitions.
  */
 static int
-test_state(const struct context *ctx)
+test_state(struct context *ctx)
 {
 	if (ioctl(ctx->c_fd, KIOENABLE, &ctx->c_mode) == -1) {
 		warn("KIOSETBUFSIZE -> KIOENABLE");
