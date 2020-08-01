@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.25 2020/07/30 16:53:01 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.26 2020/08/01 16:38:17 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -617,13 +617,12 @@ ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
 }
 
 static int
-ssl3_create_record(SSL *s, unsigned char *p, int type, const unsigned char *buf,
-    unsigned int len)
+ssl3_create_record(SSL *s, unsigned char *p, uint16_t version, uint8_t type,
+    const unsigned char *buf, unsigned int len)
 {
 	SSL3_RECORD_INTERNAL *wr = &(S3I(s)->wrec);
 	SSL_SESSION *sess = s->session;
 	int eivlen, mac_size = 0;
-	uint16_t version;
 	CBB cbb;
 
 	memset(&cbb, 0, sizeof(cbb));
@@ -633,15 +632,6 @@ ssl3_create_record(SSL *s, unsigned char *p, int type, const unsigned char *buf,
 		if ((mac_size = EVP_MD_CTX_size(s->internal->write_hash)) < 0)
 			goto err;
 	}
-
-	/*
-	 * Some servers hang if initial client hello is larger than 256
-	 * bytes and record version number > TLS 1.0.
-	 */
-	version = s->version;
-	if (S3I(s)->hs.state == SSL3_ST_CW_CLNT_HELLO_B && !s->internal->renegotiate &&
-	    TLS1_get_version(s) > TLS1_VERSION)
-		version = TLS1_VERSION;
 
 	if (!CBB_init_fixed(&cbb, p, SSL3_RT_HEADER_LENGTH))
 		goto err;
@@ -733,6 +723,7 @@ do_ssl3_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 	unsigned char *p;
 	int need_empty_fragment = 0;
 	int prefix_len = 0;
+	uint16_t version;
 	size_t align;
 	int ret;
 
@@ -763,6 +754,15 @@ do_ssl3_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 		return 0;
 
 	/*
+	 * Some servers hang if initial client hello is larger than 256
+	 * bytes and record version number > TLS 1.0.
+	 */
+	version = s->version;
+	if (S3I(s)->hs.state == SSL3_ST_CW_CLNT_HELLO_B && !s->internal->renegotiate &&
+	    TLS1_get_version(s) > TLS1_VERSION)
+		version = TLS1_VERSION;
+
+	/*
 	 * Countermeasure against known-IV weakness in CBC ciphersuites
 	 * (see http://www.openssl.org/~bodo/tls-cbc.txt). Note that this
 	 * is unnecessary for AEAD.
@@ -789,7 +789,7 @@ do_ssl3_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 	wb->offset = align;
 
 	if (need_empty_fragment) {
-		if (!ssl3_create_record(s, p, type, buf, 0))
+		if (!ssl3_create_record(s, p, version, type, buf, 0))
 			goto err;
 
 		prefix_len = wr->length;
@@ -804,7 +804,7 @@ do_ssl3_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 		S3I(s)->empty_fragment_done = 1;
 	}
 
-	if (!ssl3_create_record(s, p, type, buf, len))
+	if (!ssl3_create_record(s, p, version, type, buf, len))
 		goto err;
 
 	wb->left = prefix_len + wr->length;
