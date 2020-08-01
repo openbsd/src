@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.26 2020/08/01 16:38:17 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.27 2020/08/01 16:50:16 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -622,7 +622,7 @@ ssl3_create_record(SSL *s, unsigned char *p, uint16_t version, uint8_t type,
 {
 	SSL3_RECORD_INTERNAL *wr = &(S3I(s)->wrec);
 	SSL_SESSION *sess = s->session;
-	int eivlen, mac_size = 0;
+	int eivlen = 0, mac_size = 0;
 	CBB cbb;
 
 	memset(&cbb, 0, sizeof(cbb));
@@ -645,7 +645,6 @@ ssl3_create_record(SSL *s, unsigned char *p, uint16_t version, uint8_t type,
 	p += SSL3_RT_HEADER_LENGTH;
 
 	/* Explicit IV length. */
-	eivlen = 0;
 	if (s->internal->enc_write_ctx && SSL_USE_EXPLICIT_IV(s)) {
 		int mode = EVP_CIPHER_CTX_mode(s->internal->enc_write_ctx);
 		if (mode == EVP_CIPH_CBC_MODE) {
@@ -658,22 +657,12 @@ ssl3_create_record(SSL *s, unsigned char *p, uint16_t version, uint8_t type,
 		eivlen = s->internal->aead_write_ctx->variable_nonce_len;
 	}
 
-	/* lets setup the record stuff. */
 	wr->type = type;
 	wr->data = p + eivlen;
 	wr->length = (int)len;
-	wr->input = (unsigned char *)buf;
-
-	/* we now 'read' from wr->input, wr->length bytes into wr->data */
-
-	memcpy(wr->data, wr->input, wr->length);
 	wr->input = wr->data;
 
-	/*
-	 * We should still have the output to wr->data and the input
-	 * from wr->input.  Length should be wr->length.
-	 * wr->data still points in the wb->buf.
-	 */
+	memcpy(wr->data, buf, len);
 
 	if (mac_size != 0) {
 		if (tls1_mac(s, &(p[wr->length + eivlen]), 1) < 0)
@@ -681,15 +670,9 @@ ssl3_create_record(SSL *s, unsigned char *p, uint16_t version, uint8_t type,
 		wr->length += mac_size;
 	}
 
-	wr->input = p;
 	wr->data = p;
-
-	if (eivlen) {
-		/* if (RAND_pseudo_bytes(p, eivlen) <= 0)
-			goto err;
-		*/
-		wr->length += eivlen;
-	}
+	wr->input = p;
+	wr->length += eivlen;
 
 	/* tls1_enc can only have an error on read */
 	tls1_enc(s, 1);
@@ -700,9 +683,10 @@ ssl3_create_record(SSL *s, unsigned char *p, uint16_t version, uint8_t type,
 	if (!CBB_finish(&cbb, NULL, NULL))
 		goto err;
 
-	/* we should now have
-	 * wr->data pointing to the encrypted data, which is
-	 * wr->length long */
+	/*
+	 * We should now have wr->data pointing to the encrypted data,
+	 * which is wr->length long.
+	 */
 	wr->type = type; /* not needed but helps for debugging */
 	wr->length += SSL3_RT_HEADER_LENGTH;
 
