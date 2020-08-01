@@ -1,4 +1,4 @@
-/*	$OpenBSD: timeout.h,v 1.37 2020/07/25 00:48:03 cheloha Exp $	*/
+/*	$OpenBSD: timeout.h,v 1.38 2020/08/01 08:40:20 anton Exp $	*/
 /*
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -62,6 +62,9 @@ struct timeout {
 	void *to_arg;				/* function argument */
 	int to_time;				/* ticks on event */
 	int to_flags;				/* misc flags */
+#if 1 /* NKCOV > 0 */
+	struct process *to_process;		/* kcov identifier */
+#endif
 };
 
 /*

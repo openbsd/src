@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kcov.4,v 1.7 2019/01/20 09:57:23 anton Exp $
+.\"	$OpenBSD: kcov.4,v 1.8 2020/08/01 08:40:20 anton Exp $
 .\"
 .\" Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 20 2019 $
+.Dd $Mdocdate: August 1 2020 $
 .Dt KCOV 4
 .Os
 .Sh NAME
@@ -58,7 +58,9 @@ entries.
 The first entry contains the number of entries in the array,
 excluding the first entry.
 .It Dv KIOENABLE Fa int *mode
-Enable code coverage tracing for the current thread.
+Enable code coverage tracing for the current thread or any remote
+subsystem attached using
+.Dv KIOREMOTEATTACH .
 The
 .Fa mode
 must be one of the following:
@@ -94,6 +96,35 @@ multiplying the first entry by 4.
 .El
 .It Dv KIODISABLE Fa void
 Disable code coverage tracing for the current thread.
+.It Dv KIOREMOTEATTACH Fa struct kio_remote_attach *remote
+Attach collection of remote coverage from other kernel threads, identified
+by a subsystem.
+Collection of remote coverage is mutually exclusive with coverage collection
+of the current thread.
+The
+.Va remote
+argument is a pointer to the following structure:
+.Bd -literal
+struct kio_remote_attach {
+	int	subsystem;
+	int	id;
+};
+.Ed
+.Pp
+The
+.Va subsystem
+field must be one of the following:
+.Bl -ohang
+.It Dv KCOV_REMOTE_COMMON
+Collect coverage from tasks and timeouts scheduled by the current process,
+see
+.Xr task_add 9
+and
+.Xr timeout 9 .
+The
+.Fa id
+field is ignored.
+.El
 .El
 .Sh FILES
 .Bl -tag -width /dev/kcov -compact
@@ -155,7 +186,8 @@ main(void)
 }
 .Ed
 .Sh SEE ALSO
-.Xr files.conf 5
+.Xr files.conf 5 ,
+.Xr kcov_remote_register 9
 .Sh HISTORY
 The
 .Nm

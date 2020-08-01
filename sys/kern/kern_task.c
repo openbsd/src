@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_task.c,v 1.30 2020/06/11 06:06:55 dlg Exp $ */
+/*	$OpenBSD: kern_task.c,v 1.31 2020/08/01 08:40:20 anton Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -24,6 +24,11 @@
 #include <sys/task.h>
 #include <sys/proc.h>
 #include <sys/witness.h>
+
+#include "kcov.h"
+#if NKCOV > 0
+#include <sys/kcov.h>
+#endif
 
 #ifdef WITNESS
 
@@ -357,6 +362,9 @@ task_add(struct taskq *tq, struct task *w)
 		rv = 1;
 		SET(w->t_flags, TASK_ONQUEUE);
 		TAILQ_INSERT_TAIL(&tq->tq_worklist, w, t_entry);
+#if NKCOV > 0
+		w->t_process = curproc->p_p;
+#endif
 	}
 	mtx_leave(&tq->tq_mtx);
 
@@ -433,7 +441,13 @@ taskq_thread(void *xtq)
 
 	while (taskq_next_work(tq, &work)) {
 		WITNESS_LOCK(&tq->tq_lock_object, 0);
+#if NKCOV > 0
+		kcov_remote_enter(KCOV_REMOTE_COMMON, work.t_process);
+#endif
 		(*work.t_func)(work.t_arg);
+#if NKCOV > 0
+		kcov_remote_leave(KCOV_REMOTE_COMMON, work.t_process);
+#endif
 		WITNESS_UNLOCK(&tq->tq_lock_object, 0);
 		sched_pause(yield);
 	}

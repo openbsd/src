@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.76 2020/07/25 00:48:04 cheloha Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.77 2020/08/01 08:40:20 anton Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -41,6 +41,11 @@
 #include <ddb/db_interface.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
+#endif
+
+#include "kcov.h"
+#if NKCOV > 0
+#include <sys/kcov.h>
 #endif
 
 /*
@@ -276,6 +281,9 @@ timeout_add(struct timeout *new, int to_ticks)
 		SET(new->to_flags, TIMEOUT_ONQUEUE);
 		CIRCQ_INSERT_TAIL(&timeout_new, &new->to_list);
 	}
+#if NKCOV > 0
+	new->to_process = curproc->p_p;
+#endif
 	tostat.tos_added++;
 	mtx_leave(&timeout_mutex);
 
@@ -492,7 +500,13 @@ timeout_run(struct timeout *to)
 
 	mtx_leave(&timeout_mutex);
 	timeout_sync_enter(needsproc);
+#if NKCOV > 0
+	kcov_remote_enter(KCOV_REMOTE_COMMON, to->to_process);
+#endif
 	fn(arg);
+#if NKCOV > 0
+	kcov_remote_leave(KCOV_REMOTE_COMMON, to->to_process);
+#endif
 	timeout_sync_leave(needsproc);
 	mtx_enter(&timeout_mutex);
 }
