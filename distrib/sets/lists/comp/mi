@@ -3039,6 +3039,7 @@
 ./usr/share/man/man9/intr_barrier.9
 ./usr/share/man/man9/intrmap_create.9
 ./usr/share/man/man9/intro.9
+./usr/share/man/man9/kcov_remote_register.9
 ./usr/share/man/man9/km_alloc.9
 ./usr/share/man/man9/knote.9
 ./usr/share/man/man9/kstat_create.9
