@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.74 2018/10/18 15:46:28 cheloha Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.75 2020/08/01 23:41:55 gnezdo Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -695,14 +695,11 @@ igmp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 			return (EPERM);
 		return (igmp_sysctl_igmpstat(oldp, oldlenp, newp));
 	default:
-		if (name[0] < IGMPCTL_MAXID) {
-			NET_LOCK();
-			error = sysctl_int_arr(igmpctl_vars, name, namelen,
-			    oldp, oldlenp, newp, newlen);
-			NET_UNLOCK();
-			return (error);
-		}
-		return (ENOPROTOOPT);
+		NET_LOCK();
+		error = sysctl_int_arr(igmpctl_vars, nitems(igmpctl_vars), name,
+		    namelen, oldp, oldlenp, newp, newlen);
+		NET_UNLOCK();
+		return (error);
 	}
 	/* NOTREACHED */
 }

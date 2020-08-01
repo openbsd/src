@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.226 2020/05/06 07:08:53 mpi Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.227 2020/08/01 23:41:56 gnezdo Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1438,14 +1438,11 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case IPV6CTL_SOIIKEY:
 		return (ip6_sysctl_soiikey(oldp, oldlenp, newp, newlen));
 	default:
-		if (name[0] < IPV6CTL_MAXID) {
-			NET_LOCK();
-			error = sysctl_int_arr(ipv6ctl_vars, name, namelen,
-			    oldp, oldlenp, newp, newlen);
-			NET_UNLOCK();
-			return (error);
-		}
-		return (EOPNOTSUPP);
+		NET_LOCK();
+		error = sysctl_int_arr(ipv6ctl_vars, nitems(ipv6ctl_vars), name,
+		    namelen, oldp, oldlenp, newp, newlen);
+		NET_UNLOCK();
+		return (error);
 	}
 	/* NOTREACHED */
 }

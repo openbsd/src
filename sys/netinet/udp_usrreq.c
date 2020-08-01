@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.259 2020/06/21 05:19:27 dlg Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.260 2020/08/01 23:41:56 gnezdo Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1295,14 +1295,11 @@ udp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (udp_sysctl_udpstat(oldp, oldlenp, newp));
 
 	default:
-		if (name[0] < UDPCTL_MAXID) {
-			NET_LOCK();
-			error = sysctl_int_arr(udpctl_vars, name, namelen,
-			    oldp, oldlenp, newp, newlen);
-			NET_UNLOCK();
-			return (error);
-		}
-		return (ENOPROTOOPT);
+		NET_LOCK();
+		error = sysctl_int_arr(udpctl_vars, nitems(udpctl_vars), name,
+		    namelen, oldp, oldlenp, newp, newlen);
+		NET_UNLOCK();
+		return (error);
 	}
 	/* NOTREACHED */
 }

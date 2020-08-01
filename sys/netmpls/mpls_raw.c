@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpls_raw.c,v 1.16 2019/11/05 08:26:38 claudio Exp $	*/
+/*	$OpenBSD: mpls_raw.c,v 1.17 2020/08/01 23:41:56 gnezdo Exp $	*/
 
 /*
  * Copyright (C) 1999, 2000 and 2001 AYAME Project, WIDE Project.
@@ -57,16 +57,13 @@ int
 mpls_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
-	if (name[0] >= MPLSCTL_MAXID)
-		return (EOPNOTSUPP);
-
 	/* Almost all sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
 
 	switch (name[0]) {
 	default:
-		return sysctl_int_arr(mplsctl_vars, name, namelen,
-		    oldp, oldlenp, newp, newlen);
+		return sysctl_int_arr(mplsctl_vars, nitems(mplsctl_vars), name,
+		    namelen, oldp, oldlenp, newp, newlen);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.181 2018/11/28 08:15:29 claudio Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.182 2020/08/01 23:41:55 gnezdo Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -891,14 +891,10 @@ icmp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		break;
 
 	default:
-		if (name[0] < ICMPCTL_MAXID) {
-			NET_LOCK();
-			error = sysctl_int_arr(icmpctl_vars, name, namelen,
-			    oldp, oldlenp, newp, newlen);
-			NET_UNLOCK();
-			break;
-		}
-		error = ENOPROTOOPT;
+		NET_LOCK();
+		error = sysctl_int_arr(icmpctl_vars, nitems(icmpctl_vars), name,
+		    namelen, oldp, oldlenp, newp, newlen);
+		NET_UNLOCK();
 		break;
 	}
 

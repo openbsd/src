@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.230 2019/11/29 16:41:01 nayden Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.231 2020/08/01 23:41:56 gnezdo Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1908,14 +1908,11 @@ icmp6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case ICMPV6CTL_STATS:
 		return icmp6_sysctl_icmp6stat(oldp, oldlenp, newp);
 	default:
-		if (name[0] < ICMPV6CTL_MAXID) {
-			NET_LOCK();
-			error = sysctl_int_arr(icmpv6ctl_vars, name, namelen,
-			    oldp, oldlenp, newp, newlen);
-			NET_UNLOCK();
-			return (error);
-		}
-		return ENOPROTOOPT;
+		NET_LOCK();
+		error = sysctl_int_arr(icmpv6ctl_vars, nitems(icmpv6ctl_vars),
+		    name, namelen, oldp, oldlenp, newp, newlen);
+		NET_UNLOCK();
+		return (error);
 	}
 	/* NOTREACHED */
 }

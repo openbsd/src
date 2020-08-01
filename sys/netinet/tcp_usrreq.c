@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.173 2020/06/18 14:52:51 mpi Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.174 2020/08/01 23:41:55 gnezdo Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -1115,14 +1115,11 @@ tcp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (error);
 
 	default:
-		if (name[0] < TCPCTL_MAXID) {
-			NET_LOCK();
-			error = sysctl_int_arr(tcpctl_vars, name, namelen,
-			    oldp, oldlenp, newp, newlen);
-			NET_UNLOCK();
-			return (error);
-		}
-		return (ENOPROTOOPT);
+		NET_LOCK();
+		error = sysctl_int_arr(tcpctl_vars, nitems(tcpctl_vars), name,
+		     namelen, oldp, oldlenp, newp, newlen);
+		NET_UNLOCK();
+		return (error);
 	}
 	/* NOTREACHED */
 }

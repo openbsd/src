@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.171 2020/06/24 22:03:43 cheloha Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.172 2020/08/01 23:41:55 gnezdo Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -743,14 +743,11 @@ ipsec_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case IPCTL_IPSEC_STATS:
 		return (ipsec_sysctl_ipsecstat(oldp, oldlenp, newp));
 	default:
-		if (name[0] < IPSEC_MAXID) {
-			NET_LOCK();
-			error = sysctl_int_arr(ipsecctl_vars, name, namelen,
-			    oldp, oldlenp, newp, newlen);
-			NET_UNLOCK();
-			return (error);
-		}
-		return (EOPNOTSUPP);
+		NET_LOCK();
+		error = sysctl_int_arr(ipsecctl_vars, nitems(ipsecctl_vars),
+		    name, namelen, oldp, oldlenp, newp, newlen);
+		NET_UNLOCK();
+		return (error);
 	}
 }
 
@@ -768,14 +765,11 @@ esp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case ESPCTL_STATS:
 		return (esp_sysctl_espstat(oldp, oldlenp, newp));
 	default:
-		if (name[0] < ESPCTL_MAXID) {
-			NET_LOCK();
-			error = sysctl_int_arr(espctl_vars, name, namelen,
-			    oldp, oldlenp, newp, newlen);
-			NET_UNLOCK();
-			return (error);
-		}
-		return (ENOPROTOOPT);
+		NET_LOCK();
+		error = sysctl_int_arr(espctl_vars, nitems(espctl_vars), name,
+		    namelen, oldp, oldlenp, newp, newlen);
+		NET_UNLOCK();
+		return (error);
 	}
 }
 
@@ -805,14 +799,11 @@ ah_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case AHCTL_STATS:
 		return ah_sysctl_ahstat(oldp, oldlenp, newp);
 	default:
-		if (name[0] < AHCTL_MAXID) {
-			NET_LOCK();
-			error = sysctl_int_arr(ahctl_vars, name, namelen,
-			    oldp, oldlenp, newp, newlen);
-			NET_UNLOCK();
-			return (error);
-		}
-		return (ENOPROTOOPT);
+		NET_LOCK();
+		error = sysctl_int_arr(ahctl_vars, nitems(ahctl_vars), name,
+		    namelen, oldp, oldlenp, newp, newlen);
+		NET_UNLOCK();
+		return (error);
 	}
 }
 
@@ -841,14 +832,11 @@ ipcomp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case IPCOMPCTL_STATS:
 		return ipcomp_sysctl_ipcompstat(oldp, oldlenp, newp);
 	default:
-		if (name[0] < IPCOMPCTL_MAXID) {
-			NET_LOCK();
-			error = sysctl_int_arr(ipcompctl_vars, name, namelen,
-			    oldp, oldlenp, newp, newlen);
-			NET_UNLOCK();
-			return (error);
-		}
-		return (ENOPROTOOPT);
+		NET_LOCK();
+		error = sysctl_int_arr(ipcompctl_vars, nitems(ipcompctl_vars), name,
+		    namelen, oldp, oldlenp, newp, newlen);
+		NET_UNLOCK();
+		return (error);
 	}
 }
 
