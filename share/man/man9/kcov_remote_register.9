@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kcov_remote_register.9,v 1.1 2020/08/01 08:40:20 anton Exp $
+.\"	$OpenBSD: kcov_remote_register.9,v 1.2 2020/08/01 15:45:19 jmc Exp $
 .\"
 .\" Copyright (c) 2020 Anton Lindqvist <anton@openbsd.org>
 .\"
@@ -22,7 +22,7 @@
 .Nm kcov_remote_unregister ,
 .Nm kcov_remote_enter ,
 .Nm kcov_remote_leave
-.Nd Remote kernel code coverage collection interface
+.Nd remote kernel code coverage collection interface
 .Sh SYNOPSIS
 .In sys/kcov.h
 .Ft void
@@ -40,9 +40,8 @@ kernel subsystems using
 The
 .Fa subsystem
 must be one of the following:
-.Bd -literal
-#define KCOV_REMOTE_COMMON	0
-.Ed
+.Pp
+.Dl #define KCOV_REMOTE_COMMON 0
 .Pp
 The
 .Va id
@@ -64,7 +63,7 @@ unregisters an existing instance of the given
 if present.
 If one or many threads are currently within a remote section,
 .Fn kcov_remote_unregister
-will sleep until all the sections has been left.
+will sleep until all the sections have been left.
 .Pp
 .Fn kcov_remote_enter
 enters a remote section.
