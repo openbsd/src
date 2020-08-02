@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.c,v 1.10 2020/03/24 14:09:14 martijn Exp $	*/
+/*	$OpenBSD: snmp.c,v 1.11 2020/08/02 20:14:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -157,10 +157,11 @@ snmp_get(struct snmp_agent *agent, struct ber_oid *oid, size_t len)
 	if ((varbind = ober_printf_elements(pdu, "tddd{", BER_CLASS_CONTEXT,
 	    SNMP_C_GETREQ, arc4random() & 0x7fffffff, 0, 0)) == NULL)
 		goto fail;
-	for (i = 0; i < len; i++)
+	for (i = 0; i < len; i++) {
 		varbind = ober_printf_elements(varbind, "{O0}", &oid[i]);
 		if (varbind == NULL)
 			goto fail;
+	}
 
 	return snmp_resolve(agent, pdu, 1);
 fail:
@@ -179,10 +180,11 @@ snmp_getnext(struct snmp_agent *agent, struct ber_oid *oid, size_t len)
 	if ((varbind = ober_printf_elements(pdu, "tddd{", BER_CLASS_CONTEXT,
 	    SNMP_C_GETNEXTREQ, arc4random() & 0x7fffffff, 0, 0)) == NULL)
 		goto fail;
-	for (i = 0; i < len; i++)
+	for (i = 0; i < len; i++) {
 		varbind = ober_printf_elements(varbind, "{O0}", &oid[i]);
 		if (varbind == NULL)
 			goto fail;
+	}
 
 	return snmp_resolve(agent, pdu, 1);
 fail:
@@ -238,10 +240,11 @@ snmp_getbulk(struct snmp_agent *agent, struct ber_oid *oid, size_t len,
 	    SNMP_C_GETBULKREQ, arc4random() & 0x7fffffff, non_repeaters,
 	    max_repetitions)) == NULL)
 		goto fail;
-	for (i = 0; i < len; i++)
+	for (i = 0; i < len; i++) {
 		varbind = ober_printf_elements(varbind, "{O0}", &oid[i]);
 		if (varbind == NULL)
 			goto fail;
+	}
 
 	return snmp_resolve(agent, pdu, 1);
 fail:
