@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.41 2020/06/14 16:00:11 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.42 2020/08/02 15:38:50 deraadt Exp $
 
 MAN=	cdboot.8
 
@@ -36,7 +36,7 @@ SRCS+=	aes_xts.c bcrypt_pbkdf.c blowfish.c explicit_bzero.c hmac_sha1.c \
 	pkcs5_pbkdf2.c rijndael.c sha1.c sha2.c softraid.c
 
 .PATH:	${S}/lib/libkern/arch/i386 ${S}/lib/libkern
-SRCS+=	divdi3.c moddi3.c qdivrem.c
+SRCS+=	ashldi3.c ashrdi3.c divdi3.c lshrdi3.c moddi3.c qdivrem.c
 
 .PATH:	${S}/lib/libz
 SRCS+=	adler32.c crc32.c inflate.c inftrees.c

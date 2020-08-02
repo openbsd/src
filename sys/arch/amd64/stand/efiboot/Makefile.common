@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.common,v 1.20 2020/03/05 16:36:30 otto Exp $
+#	$OpenBSD: Makefile.common,v 1.21 2020/08/02 15:38:52 deraadt Exp $
 
 S=		${.CURDIR}/../../../../..
 SADIR=		${.CURDIR}/../..
@@ -48,7 +48,7 @@ SRCS+=	aes_xts.c bcrypt_pbkdf.c blowfish.c explicit_bzero.c hmac_sha1.c \
 SRCS+=	adler32.c crc32.c inflate.c inftrees.c
 
 .PATH:	${S}/lib/libkern
-SRCS+=	divdi3.c moddi3.c qdivrem.c
+SRCS+=	ashldi3.c ashrdi3.c divdi3.c lshrdi3.c moddi3.c qdivrem.c
 SRCS+=	strlcpy.c
 
 .PATH:	${SADIR}/libsa

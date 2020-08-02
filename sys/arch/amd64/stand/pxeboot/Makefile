@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.39 2020/06/14 16:00:11 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.40 2020/08/02 15:38:52 deraadt Exp $
 
 MAN=	pxeboot.8
 
@@ -43,7 +43,8 @@ SRCS+=	bootp.c bootparam.c
 SRCS+=	ufs.c ufs2.c nfs.c tftp.c
 
 .PATH:	${S}/lib/libkern/arch/amd64 ${S}/lib/libkern
-SRCS+=	divdi3.c moddi3.c qdivrem.c udivdi3.c umoddi3.c
+SRCS+=	ashldi3.c ashrdi3.c divdi3.c lshrdi3.c moddi3.c qdivrem.c
+SRCS+=	udivdi3.c umoddi3.c
 
 .PATH:	${S}/lib/libz
 SRCS+=	adler32.c crc32.c inflate.c inftrees.c
