@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.137 2019/11/29 16:41:02 nayden Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.138 2020/08/02 11:15:51 kn Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -160,6 +160,10 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 	TAILQ_FOREACH(in6p, &rawin6pcbtable.inpt_queue, inp_queue) {
 		if (in6p->inp_socket->so_state & SS_CANTRCVMORE)
 			continue;
+		if (rtable_l2(in6p->inp_rtableid) !=
+		    rtable_l2(m->m_pkthdr.ph_rtableid))
+			continue;
+
 		if (!(in6p->inp_flags & INP_IPV6))
 			continue;
 		if ((in6p->inp_ipv6.ip6_nxt || proto == IPPROTO_ICMPV6) &&
