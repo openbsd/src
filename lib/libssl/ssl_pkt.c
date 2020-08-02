@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.27 2020/08/01 16:50:16 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.28 2020/08/02 07:33:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -674,8 +674,8 @@ ssl3_create_record(SSL *s, unsigned char *p, uint16_t version, uint8_t type,
 	wr->input = p;
 	wr->length += eivlen;
 
-	/* tls1_enc can only have an error on read */
-	tls1_enc(s, 1);
+	if (tls1_enc(s, 1) != 1)
+		goto err;
 
 	/* record length after mac and block padding */
 	if (!CBB_add_u16(&cbb, wr->length))

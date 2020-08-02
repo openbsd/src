@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.75 2020/08/01 16:50:16 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.76 2020/08/02 07:33:15 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -1254,8 +1254,8 @@ do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 	wr->input = p;
 	wr->length += eivlen;
 
-	/* tls1_enc can only have an error on read */
-	tls1_enc(s, 1);
+	if (tls1_enc(s, 1) != 1)
+		goto err;
 
 	if (!CBB_add_u16(&cbb, wr->length))
 		goto err;
