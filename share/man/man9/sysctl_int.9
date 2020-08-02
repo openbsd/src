@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl_int.9,v 1.6 2018/01/12 04:36:45 deraadt Exp $
+.\"	$OpenBSD: sysctl_int.9,v 1.7 2020/08/02 04:24:45 gnezdo Exp $
 .\"
 .\" Copyright (c) 2006 Michael Shalayeff
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 12 2018 $
+.Dd $Mdocdate: August 2 2020 $
 .Dt SYSCTL_INT 9
 .Os
 .Sh NAME
@@ -36,7 +36,7 @@
 .Ft int
 .Fn sysctl_int "void *oldp" "size_t *oldlenp" "void *newp" "size_t newlen" "int *valp"
 .Ft int
-.Fn sysctl_int_arr "int **valpp" "int *name" "u_int namelen" "void *oldp" "size_t *oldlenp" "void *newp" "size_t newlen"
+.Fn sysctl_int_arr "int **valpp" "u_int valplen" "int *name" "u_int namelen" "void *oldp" "size_t *oldlenp" "void *newp" "size_t newlen"
 .Ft int
 .Fn sysctl_quad "void *oldp" "size_t *oldlenp" "void *newp" "size_t newlen" "int64_t *valp"
 .Ft int
