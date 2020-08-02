@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vgone.9,v 1.8 2013/07/17 20:21:55 schwarze Exp $
+.\"     $OpenBSD: vgone.9,v 1.9 2020/08/02 19:32:08 tim Exp $
 .\"
 .\" Copyright (C) 2001 Chad David <davidc@acns.ab.ca>. All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man9/vgone.9,v 1.2 2001/12/14 09:11:13 ru Exp $
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: August 2 2020 $
 .Dt VGONE 9
 .Os
 .Sh NAME
@@ -49,17 +49,13 @@ prepare a vnode for reuse by another file system.
 The preparation includes the cleaning of all file system specific data and
 the removal from its mount point vnode list.
 .Pp
-The difference between
 .Fn vgone
-and
+is identical to
 .Fn vgonel
-is that
-.Fn vgone
-locks the vnode interlock and then calls
-.Fn vgonel
-while
-.Fn vgonel
-expects the interlock to already be locked.
+with a
+.Fa p
+value of
+.Dv curproc .
 .Sh SEE ALSO
 .Xr vclean 9 ,
 .Xr vnode 9 ,
