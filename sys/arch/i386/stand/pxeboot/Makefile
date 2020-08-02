@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.34 2020/06/14 16:00:11 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.35 2020/08/02 15:39:05 deraadt Exp $
 
 MAN=	pxeboot.8
 
@@ -41,7 +41,7 @@ SRCS+=	aes_xts.c bcrypt_pbkdf.c blowfish.c explicit_bzero.c hmac_sha1.c \
 	pkcs5_pbkdf2.c rijndael.c sha1.c sha2.c softraid.c
 
 .PATH:	${S}/lib/libkern/arch/i386
-SRCS+=	divdi3.c moddi3.c qdivrem.c udivdi3.c umoddi3.c
+SRCS+=	ashldi3.c ashrdi3.c divdi3.c lshrdi3.c moddi3.c qdivrem.c udivdi3.c umoddi3.c
 
 .PATH:	${S}/lib/libkern
 SRCS+=	strlcpy.c

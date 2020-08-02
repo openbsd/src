@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.73 2020/06/14 16:00:11 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.74 2020/08/02 15:39:03 deraadt Exp $
 
 COPTS?=
 MAN?=	boot.8
@@ -54,7 +54,7 @@ SRCS+=	aes_xts.c bcrypt_pbkdf.c blowfish.c explicit_bzero.c hmac_sha1.c \
 .endif
 
 .PATH:	${S}/lib/libkern
-SRCS+=	divdi3.c moddi3.c qdivrem.c
+SRCS+=	ashldi3.c ashrdi3.c divdi3.c lshrdi3.c moddi3.c qdivrem.c 
 SRCS+=	strlcpy.c
 
 .PATH:	${S}/lib/libz
