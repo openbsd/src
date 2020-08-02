@@ -1,4 +1,4 @@
-/* $OpenBSD: bcrypt_pbkdf.c,v 1.15 2019/11/21 16:13:39 tedu Exp $ */
+/* $OpenBSD: bcrypt_pbkdf.c,v 1.16 2020/08/02 18:35:48 tb Exp $ */
 /*
  * Copyright (c) 2013 Ted Unangst <tedu@openbsd.org>
  *
@@ -78,7 +78,7 @@ bcrypt_hash(uint8_t *sha2pass, uint8_t *sha2salt, uint8_t *out)
 		cdata[i] = Blowfish_stream2word(ciphertext, sizeof(ciphertext),
 		    &j);
 	for (i = 0; i < 64; i++)
-		blf_enc(&state, cdata, sizeof(cdata) / sizeof(uint64_t));
+		blf_enc(&state, cdata, BCRYPT_WORDS / 2);
 
 	/* copy out */
 	for (i = 0; i < BCRYPT_WORDS; i++) {
