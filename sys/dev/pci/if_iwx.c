@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.42 2020/08/01 16:14:05 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.43 2020/08/02 11:11:07 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -7706,10 +7706,6 @@ static const struct pci_matchid iwx_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_2 },
 };
 
-static const struct pci_matchid iwx_subsystem_id_ax200[] = {
-	{ PCI_VENDOR_INTEL,	0x0080 },
-};
-
 static const struct pci_matchid iwx_subsystem_id_ax201[] = {
 	{ PCI_VENDOR_INTEL,	0x0070 },
 	{ PCI_VENDOR_INTEL,	0x0074 },
@@ -7744,13 +7740,7 @@ iwx_match(struct device *parent, iwx_match_t match __unused, void *aux)
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_INTEL_WL_22500_1: /* AX200 */
-		for (i = 0; i < nitems(iwx_subsystem_id_ax200); i++) {
-			if (svid == iwx_subsystem_id_ax200[i].pm_vid &&
-			    spid == iwx_subsystem_id_ax200[i].pm_pid)
-				return 1;
-
-		}
-		break;
+		return 1; /* match any device */
 	case PCI_PRODUCT_INTEL_WL_22500_2: /* AX201 */
 		for (i = 0; i < nitems(iwx_subsystem_id_ax201); i++) {
 			if (svid == iwx_subsystem_id_ax201[i].pm_vid &&
