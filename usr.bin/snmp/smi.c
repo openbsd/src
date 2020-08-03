@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.9 2020/05/31 20:38:28 martijn Exp $	*/
+/*	$OpenBSD: smi.c,v 1.10 2020/08/03 14:45:54 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -24,10 +24,12 @@
 #include <arpa/inet.h>
 
 #include <ctype.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <strings.h>
+#include <wctype.h>
 
 #include "ber.h"
 #include "mib.h"
@@ -36,8 +38,11 @@
 
 #define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
+char *smi_displayhint_os(struct textconv *, int, const char *, size_t, int);
+
 int smi_oid_cmp(struct oid *, struct oid *);
 int smi_key_cmp(struct oid *, struct oid *);
+int smi_textconv_cmp(struct textconv *, struct textconv *);
 struct oid * smi_findkey(char *);
 
 RB_HEAD(oidtree, oid);
@@ -47,6 +52,10 @@ struct oidtree smi_oidtree;
 RB_HEAD(keytree, oid);
 RB_PROTOTYPE(keytree, oid, o_keyword, smi_key_cmp)
 struct keytree smi_keytree;
+
+RB_HEAD(textconvtree, textconv);
+RB_PROTOTYPE(textconvtree, textconv, tc_entry, smi_textconv_cmp);
+struct textconvtree smi_tctree;
 
 int
 smi_init(void)
@@ -58,7 +67,7 @@ smi_init(void)
 }
 
 void
-smi_debug_elements(struct ber_element *root)
+smi_debug_elements(struct ber_element *root, int utf8)
 {
 	static int	 indent = 0;
 	char		*value;
@@ -181,8 +190,8 @@ smi_debug_elements(struct ber_element *root)
 	fprintf(stderr, "(%u) encoding %u ",
 	    root->be_type, root->be_encoding);
 
-	if ((value = smi_print_element(root, 1, smi_os_default,
-	    smi_oidl_numeric)) == NULL)
+	if ((value = smi_print_element(NULL, root, 1, smi_os_default,
+	    smi_oidl_numeric, utf8)) == NULL)
 		goto invalid;
 
 	switch (root->be_encoding) {
@@ -228,18 +237,21 @@ smi_debug_elements(struct ber_element *root)
 
 	if (constructed && root->be_sub) {
 		indent += 2;
-		smi_debug_elements(root->be_sub);
+		smi_debug_elements(root->be_sub, utf8);
 		indent -= 2;
 	}
 	if (root->be_next)
-		smi_debug_elements(root->be_next);
+		smi_debug_elements(root->be_next, utf8);
 }
 
 char *
-smi_print_element(struct ber_element *root, int print_hint,
-    enum smi_output_string output_string, enum smi_oid_lookup lookup)
+smi_print_element(struct ber_oid *oid, struct ber_element *root, int print_hint,
+    enum smi_output_string output_string, enum smi_oid_lookup lookup, int utf8)
 {
 	char		*str = NULL, *buf, *p;
+	struct oid	 okey;
+	struct oid	*object = NULL;
+	struct textconv	 tckey;
 	size_t		 len, i, slen;
 	long long	 v, ticks;
 	int		 d;
@@ -248,6 +260,20 @@ smi_print_element(struct ber_element *root, int print_hint,
 	char		 strbuf[BUFSIZ];
 	char		*hint;
 	int		 days, hours, min, sec, csec;
+
+	if (oid != NULL) {
+		bcopy(oid, &(okey.o_id), sizeof(okey));
+		do {
+			object = RB_FIND(oidtree, &smi_oidtree, &okey);
+			okey.o_id.bo_n--;
+		} while (object == NULL && okey.o_id.bo_n > 0);
+		if (object != NULL && object->o_textconv == NULL &&
+		    object->o_tcname != NULL) {
+			tckey.tc_name = object->o_tcname;
+			object->o_textconv = RB_FIND(textconvtree, &smi_tctree,
+			    &tckey);
+		}
+	}
 
 	switch (root->be_encoding) {
 	case BER_TYPE_BOOLEAN:
@@ -379,6 +405,10 @@ smi_print_element(struct ber_element *root, int print_hint,
 			else
 				str = strdup("Unknown status at this OID");
 		} else {
+			if (object != NULL && object->o_textconv != NULL &&
+			    object->o_textconv->tc_syntax == root->be_encoding)
+				return smi_displayhint_os(object->o_textconv,
+				    print_hint, buf, root->be_len, utf8);
 			for (i = 0; i < root->be_len; i++) {
 				if (!isprint(buf[i])) {
 					if (output_string == smi_os_default)
@@ -575,6 +605,15 @@ smi_mibtree(struct oid *oids)
 	}
 }
 
+void
+smi_textconvtree(struct textconv *textconvs)
+{
+	size_t		 i = 0;
+
+	for (i = 0; textconvs[i].tc_name != NULL; i++)
+		RB_INSERT(textconvtree, &smi_tctree, &(textconvs[i]));
+}
+
 struct oid *
 smi_findkey(char *name)
 {
@@ -595,6 +634,83 @@ smi_foreach(struct oid *oid)
 	if (oid == NULL)
 		return RB_MIN(oidtree, &smi_oidtree);
 	return RB_NEXT(oidtree, &smi_oidtree, oid);
+}
+
+#define REPLACEMENT "\357\277\275"
+char *
+smi_displayhint_os(struct textconv *tc, int print_hint, const char *src,
+    size_t srclen, int utf8)
+{
+	size_t octetlength, i = 0, j = 0;
+	unsigned long ulval;
+	int clen;
+	char *displayformat;
+	char *rbuf, *dst;
+	wchar_t wc;
+
+	errno = 0;
+	ulval = strtoul(tc->tc_display_hint, &displayformat, 10);
+	octetlength = ulval;
+	if (!isdigit(tc->tc_display_hint[0]) ||
+	    (errno != 0 && (ulval == 0 || ulval == ULONG_MAX)) ||
+	    (unsigned long) octetlength != ulval) {
+		errno = EINVAL;
+		return NULL;
+	}
+		
+	if (displayformat[0] == 't') {
+		if (print_hint) {
+			rbuf = malloc(octetlength + sizeof("STRING: "));
+			if (rbuf == NULL)
+				return NULL;
+			memcpy(rbuf, "STRING: ", sizeof("STRING: ") - 1);
+			dst = rbuf + sizeof("STRING: ") - 1;
+		} else {
+			dst = rbuf = malloc(octetlength + 1);
+			if (rbuf == NULL)
+				return NULL;
+		}
+		while (j < octetlength && i < srclen) {
+			clen = mbtowc(&wc, &(src[i]), srclen - i);
+			switch (clen) {
+			case 0:
+				dst[j++] = '.';
+				i++;
+				break;
+			case -1:
+				mbtowc(NULL, NULL, MB_CUR_MAX);
+				if (utf8) {
+					if (octetlength - j <
+					    sizeof(REPLACEMENT) - 1) {
+						dst[j] = '\0';
+						return rbuf;
+					}
+					memcpy(&(dst[j]), REPLACEMENT,
+					    sizeof(REPLACEMENT) - 1);
+					j += sizeof(REPLACEMENT) - 1;
+				} else
+					dst[j++] = '?';
+				i++;
+				break;
+			default:
+				if (!iswprint(wc) || (!utf8 && clen > 1))
+					dst[j++] = '.';
+				else if (octetlength - j < (size_t)clen) {
+					dst[j] = '\0';
+					return rbuf;
+				} else {
+					memcpy(&(dst[j]), &(src[i]), clen);
+					j += clen;
+				}
+				i += clen;
+				break;
+			}
+		}
+		dst[j] = '\0';
+		return rbuf;
+	}
+	errno = EINVAL;
+	return NULL;
 }
 
 int
@@ -618,5 +734,12 @@ smi_key_cmp(struct oid *a, struct oid *b)
 	return (strcasecmp(a->o_name, b->o_name));
 }
 
+int
+smi_textconv_cmp(struct textconv *a, struct textconv *b)
+{
+	return strcmp(a->tc_name, b->tc_name);
+}
+
 RB_GENERATE(oidtree, oid, o_element, smi_oid_cmp)
 RB_GENERATE(keytree, oid, o_keyword, smi_key_cmp)
+RB_GENERATE(textconvtree, textconv, tc_entry, smi_textconv_cmp);

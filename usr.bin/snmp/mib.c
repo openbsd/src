@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.2 2020/05/19 13:41:01 martijn Exp $	*/
+/*	$OpenBSD: mib.c,v 1.3 2020/08/03 14:45:54 martijn Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -27,9 +27,11 @@
 #include "smi.h"
 
 static struct oid mib_tree[] = MIB_TREE;
+static struct textconv textconv_tree[] = TEXTCONV_TREE;
 
 void
 mib_init(void)
 {
 	smi_mibtree(mib_tree);
+	smi_textconvtree(textconv_tree);
 }

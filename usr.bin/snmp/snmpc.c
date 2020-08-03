@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.27 2020/06/30 19:26:40 martijn Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.28 2020/08/03 14:45:54 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -29,6 +29,7 @@
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <locale.h>
 #include <netdb.h>
 #include <poll.h>
 #include <stdio.h>
@@ -103,6 +104,7 @@ struct ber_oid *walk_skip = NULL;
 size_t walk_skip_len = 0;
 enum smi_oid_lookup oid_lookup = smi_oidl_short;
 enum smi_output_string output_string = smi_os_default;
+int utf8 = 0;
 
 int
 main(int argc, char *argv[])
@@ -128,6 +130,18 @@ main(int argc, char *argv[])
 	char *strtolp;
 	int ch;
 	size_t i;
+
+	/*
+	 * Determine if output can handle UTF-8 based on locale.
+	 */
+	setlocale(LC_CTYPE, "");
+	utf8 = MB_CUR_MAX > 1;
+	/*
+	 * SMIv2 allows for UTF-8 text at some locations.
+	 * Set it explicitly so we can handle it on the input side.
+	 */
+	if (setlocale(LC_CTYPE, "en_US.UTF-8") == NULL)
+		errx(1, "setlocale(LC_CTYPE, \"en_US.UTF-8\") failed");
 
 	if (pledge("stdio inet dns unix", NULL) == -1)
 		err(1, "pledge");
@@ -1069,7 +1083,8 @@ snmpc_print(struct ber_element *elm)
 	}
 
 	elm = elm->be_next;
-	value = smi_print_element(elm, smi_print_hint, output_string, oid_lookup);
+	value = smi_print_element(&oid, elm, smi_print_hint, output_string,
+	    oid_lookup, utf8);
 	if (value == NULL)
 		return 0;
 

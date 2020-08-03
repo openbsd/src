@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.h,v 1.2 2020/05/19 13:41:01 martijn Exp $	*/
+/*	$OpenBSD: smi.h,v 1.3 2020/08/03 14:45:54 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -59,10 +59,19 @@ struct oid {
 #define o_oid			 o_id.bo_id
 #define o_oidlen		 o_id.bo_n
 
-	char			*o_name;
+	const char		*o_name;
+	const char		*o_tcname;
+	struct textconv		*o_textconv;
 
 	RB_ENTRY(oid)		 o_element;
 	RB_ENTRY(oid)		 o_keyword;
+};
+
+struct textconv {
+	const char		*tc_name;
+	const char		*tc_display_hint;
+	unsigned int		 tc_syntax;
+	RB_ENTRY(textconv)	 tc_entry;
 };
 
 int smi_init(void);
@@ -70,7 +79,8 @@ unsigned int smi_application(struct ber_element *);
 int smi_string2oid(const char *, struct ber_oid *);
 char *smi_oid2string(struct ber_oid *, char *, size_t, enum smi_oid_lookup);
 void smi_mibtree(struct oid *);
+void smi_textconvtree(struct textconv *);
 struct oid *smi_foreach(struct oid *);
-void smi_debug_elements(struct ber_element *);
-char *smi_print_element(struct ber_element *, int, enum smi_output_string,
-    enum smi_oid_lookup);
+void smi_debug_elements(struct ber_element *, int);
+char *smi_print_element(struct ber_oid *, struct ber_element *, int,
+    enum smi_output_string, enum smi_oid_lookup, int);
