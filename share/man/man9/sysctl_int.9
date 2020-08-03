@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl_int.9,v 1.7 2020/08/02 04:24:45 gnezdo Exp $
+.\"	$OpenBSD: sysctl_int.9,v 1.8 2020/08/03 13:56:02 schwarze Exp $
 .\"
 .\" Copyright (c) 2006 Michael Shalayeff
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 2 2020 $
+.Dd $Mdocdate: August 3 2020 $
 .Dt SYSCTL_INT 9
 .Os
 .Sh NAME
@@ -34,25 +34,88 @@
 .In sys/types.h
 .In sys/sysctl.h
 .Ft int
-.Fn sysctl_int "void *oldp" "size_t *oldlenp" "void *newp" "size_t newlen" "int *valp"
+.Fo sysctl_int
+.Fa "void *oldp"
+.Fa "size_t *oldlenp"
+.Fa "void *newp"
+.Fa "size_t newlen"
+.Fa "int *valp"
+.Fc
 .Ft int
-.Fn sysctl_int_arr "int **valpp" "u_int valplen" "int *name" "u_int namelen" "void *oldp" "size_t *oldlenp" "void *newp" "size_t newlen"
+.Fo sysctl_int_arr
+.Fa "int **valpp"
+.Fa "u_int valplen"
+.Fa "int *name"
+.Fa "u_int namelen"
+.Fa "void *oldp"
+.Fa "size_t *oldlenp"
+.Fa "void *newp"
+.Fa "size_t newlen"
+.Fc
 .Ft int
-.Fn sysctl_quad "void *oldp" "size_t *oldlenp" "void *newp" "size_t newlen" "int64_t *valp"
+.Fo sysctl_quad
+.Fa "void *oldp"
+.Fa "size_t *oldlenp"
+.Fa "void *newp"
+.Fa "size_t newlen"
+.Fa "int64_t *valp"
+.Fc
 .Ft int
-.Fn sysctl_string "void *oldp" "size_t *oldlenp" "void *newp" "size_t newlen" "char *str" "int maxlen"
+.Fo sysctl_string
+.Fa "void *oldp"
+.Fa "size_t *oldlenp"
+.Fa "void *newp"
+.Fa "size_t newlen"
+.Fa "char *str"
+.Fa "int maxlen"
+.Fc
 .Ft int
-.Fn sysctl_tstring "void *oldp" "size_t *oldlenp" "void *newp" "size_t newlen" "char *str" "int maxlen"
+.Fo sysctl_tstring
+.Fa "void *oldp"
+.Fa "size_t *oldlenp"
+.Fa "void *newp"
+.Fa "size_t newlen"
+.Fa "char *str"
+.Fa "int maxlen"
+.Fc
 .Ft int
-.Fn sysctl_rdint "void *oldp" "size_t *oldlenp" "void *newp" "int val"
+.Fo sysctl_rdint
+.Fa "void *oldp"
+.Fa "size_t *oldlenp"
+.Fa "void *newp"
+.Fa "int val"
+.Fc
 .Ft int
-.Fn sysctl_rdquad "void *oldp" "size_t *oldlenp" "void *newp" "int64_t val"
+.Fo sysctl_rdquad
+.Fa "void *oldp"
+.Fa "size_t *oldlenp"
+.Fa "void *newp"
+.Fa "int64_t val"
+.Fc
 .Ft int
-.Fn sysctl_rdstring "void *oldp" "size_t *oldlenp" "void *newp" "const char *str"
+.Fo sysctl_rdstring
+.Fa "void *oldp"
+.Fa "size_t *oldlenp"
+.Fa "void *newp"
+.Fa "const char *str"
+.Fc
 .Ft int
-.Fn sysctl_rdstruct "void *oldp" "size_t *oldlenp" "void *newp" "const void *sp" "int len"
+.Fo sysctl_rdstruct
+.Fa "void *oldp"
+.Fa "size_t *oldlenp"
+.Fa "void *newp"
+.Fa "const void *sp"
+.Fa "int len"
+.Fc
 .Ft int
-.Fn sysctl_struct "void *oldp" "size_t *oldlenp" "void *newp" "size_t newlen" "void *sp" "int len"
+.Fo sysctl_struct
+.Fa "void *oldp"
+.Fa "size_t *oldlenp"
+.Fa "void *newp"
+.Fa "size_t newlen"
+.Fa "void *sp"
+.Fa "int len"
+.Fc
 .Sh DESCRIPTION
 These functions and data structures aim to simplify and partially
 implement operations for the kernel and user implementations of the
