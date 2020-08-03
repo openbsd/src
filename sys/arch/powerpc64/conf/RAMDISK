@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.4 2020/07/14 20:39:40 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.5 2020/08/03 19:05:46 deraadt Exp $
 
 machine		powerpc64
 maxusers	4
@@ -42,6 +42,12 @@ usb*		at xhci?
 
 scsibus*	at scsi?
 sd*		at scsibus?
+st*		at scsibus?             # SCSI tape drives
+cd*		at scsibus?             # SCSI CD-ROM drives
+ch*		at scsibus?             # SCSI autochangers
+safte*		at scsibus?             # SCSI accessed fault-tolerant enclosures
+ses*		at scsibus?             # SCSI enclosure services
+uk*		at scsibus?             # unknown SCSI
 
 # USB devices
 uhub*		at usb?			# USB Hubs
