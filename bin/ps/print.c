@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.74 2019/06/23 17:18:50 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.75 2020/08/03 00:09:01 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -156,7 +156,7 @@ command(const struct kinfo_proc *kp, VARENT *ve)
 					}
 				}
 			}
-			if (argv == NULL || argv[0] == '\0' ||
+			if (argv == NULL || argv[0] == NULL ||
 			    strcmp(cmdpart(argv[0]), kp->p_comm)) {
 				if (wantspace) {
 					putchar(' ');
