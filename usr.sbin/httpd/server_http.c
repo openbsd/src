@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.139 2020/05/22 07:18:17 bentley Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.140 2020/08/03 10:59:53 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2018 Reyk Floeter <reyk@openbsd.org>
@@ -1273,8 +1273,7 @@ server_response(struct httpd *httpd, struct client *clt)
 				    hostname, FNM_CASEFOLD);
 			}
 			if (ret == 0 &&
-			    (portval == -1 ||
-			    (portval != -1 && portval == srv_conf->port))) {
+			    (portval == -1 || portval == srv_conf->port)) {
 				/* Replace host configuration */
 				clt->clt_srv_conf = srv_conf;
 				srv_conf = NULL;
