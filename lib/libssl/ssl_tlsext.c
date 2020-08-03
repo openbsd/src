@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.80 2020/08/03 19:43:16 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.81 2020/08/03 19:46:55 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -913,6 +913,9 @@ tlsext_ocsp_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 	const unsigned char *p;
 	uint8_t status_type;
 	int ret = 0;
+
+	if (msg_type != SSL_TLSEXT_MSG_CH)
+		goto err;
 
 	if (!CBS_get_u8(cbs, &status_type))
 		goto err;
