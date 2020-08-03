@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.3 2020/07/02 11:01:21 jsg Exp $	*/
+/*	$OpenBSD: time.h,v 1.4 2020/08/03 07:02:08 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -28,11 +28,6 @@
 
 #define USEC_PER_MSEC	1000L
 #define USEC_PER_SEC	1000000L
-
-extern int64_t timeval_to_ms(const struct timeval *);
-extern int64_t timeval_to_ns(const struct timeval *);
-extern int64_t timeval_to_us(const struct timeval *);
-extern struct timeval ns_to_timeval(const int64_t);
 
 struct timespec64 {
 	time_t	tv_sec;

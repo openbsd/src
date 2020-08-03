@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.61 2020/07/02 11:01:21 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.62 2020/08/03 07:02:08 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -301,47 +301,6 @@ kthread_stop(struct proc *p)
 	}
 	LIST_REMOVE(thread, next);
 	free(thread, M_DRM, sizeof(*thread));
-}
-
-int64_t
-timeval_to_ns(const struct timeval *tv)
-{
-	return ((int64_t)tv->tv_sec * NSEC_PER_SEC) +
-		tv->tv_usec * NSEC_PER_USEC;
-}
-
-struct timeval
-ns_to_timeval(const int64_t nsec)
-{
-	struct timeval tv;
-	int32_t rem;
-
-	if (nsec == 0) {
-		tv.tv_sec = 0;
-		tv.tv_usec = 0;
-		return (tv);
-	}
-
-	tv.tv_sec = nsec / NSEC_PER_SEC;
-	rem = nsec % NSEC_PER_SEC;
-	if (rem < 0) {
-		tv.tv_sec--;
-		rem += NSEC_PER_SEC;
-	}
-	tv.tv_usec = rem / 1000;
-	return (tv);
-}
-
-int64_t
-timeval_to_ms(const struct timeval *tv)
-{
-	return ((int64_t)tv->tv_sec * 1000) + (tv->tv_usec / 1000);
-}
-
-int64_t
-timeval_to_us(const struct timeval *tv)
-{
-	return ((int64_t)tv->tv_sec * 1000000) + tv->tv_usec;
 }
 
 extern char *hw_vendor, *hw_prod, *hw_ver;
