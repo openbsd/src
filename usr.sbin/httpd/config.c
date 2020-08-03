@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.57 2019/05/08 19:57:45 reyk Exp $	*/
+/*	$OpenBSD: config.c,v 1.58 2020/08/03 10:55:58 benno Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -135,9 +135,7 @@ config_getreset(struct httpd *env, struct imsg *imsg)
 int
 config_getcfg(struct httpd *env, struct imsg *imsg)
 {
-	struct privsep		*ps = env->sc_ps;
 	struct ctl_flags	 cf;
-	unsigned int		 what;
 
 	if (IMSG_DATA_SIZE(imsg) != sizeof(cf))
 		return (0); /* ignore */
@@ -147,8 +145,6 @@ config_getcfg(struct httpd *env, struct imsg *imsg)
 	env->sc_opts = cf.cf_opts;
 	env->sc_flags = cf.cf_flags;
 	memcpy(env->sc_tls_sid, cf.cf_tls_sid, sizeof(env->sc_tls_sid));
-
-	what = ps->ps_what[privsep_process];
 
 	if (privsep_process != PROC_PARENT)
 		proc_compose(env->sc_ps, PROC_PARENT,
@@ -683,7 +679,6 @@ config_getserver(struct httpd *env, struct imsg *imsg)
 		if ((srv->srv_conf.return_uri = get_data(p + s,
 		    srv->srv_conf.return_uri_len)) == NULL)
 			goto fail;
-		s += srv->srv_conf.return_uri_len;
 	}
 
 	return (0);
