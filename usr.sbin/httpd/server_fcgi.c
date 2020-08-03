@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.81 2020/02/09 09:44:04 florian Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.82 2020/08/03 10:58:38 benno Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -684,7 +684,7 @@ server_fcgi_header(struct client *clt, unsigned int code)
 
 	/* Date header is mandatory and should be added as late as possible */
 	key.kv_key = "Date";
-	if ((kv = kv_find(&resp->http_headers, &key)) == NULL &&
+	if (kv_find(&resp->http_headers, &key) == NULL &&
 	    (server_http_time(time(NULL), tmbuf, sizeof(tmbuf)) <= 0 ||
 	    kv_add(&resp->http_headers, "Date", tmbuf) == NULL))
 		return (-1);
