@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SMR_LIST_INIT.9,v 1.6 2020/08/03 05:25:41 dlg Exp $
+.\"	$OpenBSD: SMR_LIST_INIT.9,v 1.7 2020/08/03 05:29:05 dlg Exp $
 .\"
 .\" Copyright (c) 2019 Visa Hankala
 .\"
@@ -177,7 +177,7 @@ The writer has to use either
 or
 .Xr smr_call 9
 to ensure that the element can no longer be accessed by readers.
-.Sh SINGLY-LINKED LISTS
+.Ss Singly-Linked Lists
 The
 .Fn SMR_SLIST_ENTRY
 macro declares a structure that connects the elements in the list.
@@ -246,7 +246,7 @@ removes the list element
 .Fa elm
 from the list
 .Fa head .
-.Sh LISTS
+.Ss Linked Lists
 The
 .Fn SMR_LIST_ENTRY
 macro declares a structure that connects the elements in the list.
@@ -313,7 +313,7 @@ removes the element
 .Fa elm
 from the list
 .Fa head .
-.Sh TAIL QUEUES
+.Ss Tail Queues
 The
 .Fn SMR_TAILQ_ENTRY
 macro declares a structure that connects the elements in
