@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cpumem_get.9,v 1.9 2016/10/25 08:09:22 jmc Exp $
+.\"	$OpenBSD: cpumem_get.9,v 1.10 2020/08/03 05:15:53 dlg Exp $
 .\"
 .\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 25 2016 $
+.Dd $Mdocdate: August 3 2020 $
 .Dt CPUMEM_GET 9
 .Os
 .Sh NAME
@@ -65,7 +65,7 @@ defined)
 systems that provides no overhead compared to direct access to a
 data structure.
 This allows the API to be used without affecting the performance
-uni-processor systems.
+on uni-processor systems.
 .Ss Per CPU Memory Allocation and Deallocation
 .Fn cpumem_get
 allocates memory for each CPU from the
