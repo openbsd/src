@@ -635,7 +635,7 @@
 ./usr/include
 ./usr/lib
 ./usr/lib/libc.so.96.0
-./usr/lib/libcbor.so.0.6
+./usr/lib/libcbor.so.1.0
 ./usr/lib/libcrypto.so.46.1
 ./usr/lib/libcurses.so.14.0
 ./usr/lib/libedit.so.5.2
