@@ -64,3 +64,7 @@ __ashrdi3(quad_t a, qshift_t shift)
 	}
 	return (aa.q);
 }
+
+#ifdef __ARM_EABI__
+__strong_alias(__aeabi_lasr, __ashrdi3);
+#endif

@@ -55,3 +55,7 @@ __lshldi3(quad_t a, qshift_t shift)
 	}
 	return (aa.q);
 }
+
+#ifdef __ARM_EABI__
+__strong_alias(__aeabi_llsl, __lshldi3);
+#endif
