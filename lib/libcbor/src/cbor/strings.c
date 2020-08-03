@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 Pavel Kalvoda <me@pavelkalvoda.com>
+ * Copyright (c) 2014-2020 Pavel Kalvoda <me@pavelkalvoda.com>
  *
  * libcbor is free software; you can redistribute it and/or modify
  * it under the terms of the MIT license. See LICENSE for details.
@@ -91,9 +91,9 @@ bool cbor_string_add_chunk(cbor_item_t *item, cbor_item_t *chunk) {
       return false;
     }
 
-    size_t new_chunk_capacity = data->chunk_capacity == 0
-                               ? 1
-                               : CBOR_BUFFER_GROWTH * (data->chunk_capacity);
+    size_t new_chunk_capacity =
+        data->chunk_capacity == 0 ? 1
+                                  : CBOR_BUFFER_GROWTH * (data->chunk_capacity);
     cbor_item_t **new_chunks_data = _cbor_realloc_multiple(
         data->chunks, sizeof(cbor_item_t *), new_chunk_capacity);
 

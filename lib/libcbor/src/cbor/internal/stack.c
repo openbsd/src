@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 Pavel Kalvoda <me@pavelkalvoda.com>
+ * Copyright (c) 2014-2020 Pavel Kalvoda <me@pavelkalvoda.com>
  *
  * libcbor is free software; you can redistribute it and/or modify
  * it under the terms of the MIT license. See LICENSE for details.
@@ -21,6 +21,7 @@ void _cbor_stack_pop(struct _cbor_stack *stack) {
 struct _cbor_stack_record *_cbor_stack_push(struct _cbor_stack *stack,
                                             cbor_item_t *item,
                                             size_t subitems) {
+  if (stack->size == CBOR_MAX_STACK_SIZE) return NULL;
   struct _cbor_stack_record *new_top =
       _CBOR_MALLOC(sizeof(struct _cbor_stack_record));
   if (new_top == NULL) return NULL;

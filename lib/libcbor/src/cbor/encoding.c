@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 Pavel Kalvoda <me@pavelkalvoda.com>
+ * Copyright (c) 2014-2020 Pavel Kalvoda <me@pavelkalvoda.com>
  *
  * libcbor is free software; you can redistribute it and/or modify
  * it under the terms of the MIT license. See LICENSE for details.
@@ -129,20 +129,20 @@ size_t cbor_encode_half(float value, unsigned char *buffer,
   /* Assuming value is normalized */
   uint32_t val = ((union _cbor_float_helper){.as_float = value}).as_uint;
   uint16_t res;
-  uint8_t exp = (uint8_t)((val & 0x7F800000) >>
-                          23); /* 0b0111_1111_1000_0000_0000_0000_0000_0000 */
+  uint8_t exp = (uint8_t)((val & 0x7F800000u) >>
+                          23u); /* 0b0111_1111_1000_0000_0000_0000_0000_0000 */
   uint32_t mant =
-      val & 0x7FFFFF; /* 0b0000_0000_0111_1111_1111_1111_1111_1111 */
-  if (exp == 0xFF) {  /* Infinity or NaNs */
+      val & 0x7FFFFFu; /* 0b0000_0000_0111_1111_1111_1111_1111_1111 */
+  if (exp == 0xFF) {   /* Infinity or NaNs */
     if (value != value) {
-      res = (uint16_t)0x00e700; /* Not IEEE semantics - required by CBOR
+      res = (uint16_t)0x007e00; /* Not IEEE semantics - required by CBOR
                                    [s. 3.9] */
     } else {
-      res =
-          (uint16_t)((val & 0x80000000) >> 16 | 0x7C00 | (mant ? 1 : 0) << 15);
+      res = (uint16_t)((val & 0x80000000u) >> 16u | 0x7C00u |
+                       (mant ? 1u : 0u) << 15u);
     }
   } else if (exp == 0x00) { /* Zeroes or subnorms */
-    res = (uint16_t)((val & 0x80000000) >> 16 | mant >> 13);
+    res = (uint16_t)((val & 0x80000000u) >> 16u | mant >> 13u);
   } else { /* Normal numbers */
     int8_t logical_exp = (int8_t)(exp - 127);
     assert(logical_exp == exp - 127);
@@ -157,12 +157,12 @@ size_t cbor_encode_half(float value, unsigned char *buffer,
       /* Offset the remaining decimal places by shifting the significand, the
          value is lost. This is an implementation decision that works around the
          absence of standard half-float in the language. */
-      res = (uint16_t)(val & 0x80000000) >> 16 |
-            (uint16_t)(1 << (24 + logical_exp));
+      res = (uint16_t)((val & 0x80000000u) >> 16u) |  // Extract sign bit
+            (uint16_t)(1u << (24u + logical_exp));
     } else {
-      res = (uint16_t)((val & 0x80000000) >> 16 |
-                       ((((uint8_t)logical_exp) + 15) << 10) |
-                       (uint16_t)(mant >> 13));
+      res = (uint16_t)((val & 0x80000000u) >> 16u |
+                       ((((uint8_t)logical_exp) + 15u) << 10u) |
+                       (uint16_t)(mant >> 13u));
     }
   }
   return _cbor_encode_uint16(res, buffer, buffer_size, 0xE0);

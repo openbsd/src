@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 Pavel Kalvoda <me@pavelkalvoda.com>
+ * Copyright (c) 2014-2020 Pavel Kalvoda <me@pavelkalvoda.com>
  *
  * libcbor is free software; you can redistribute it and/or modify
  * it under the terms of the MIT license. See LICENSE for details.
@@ -58,6 +58,11 @@ double cbor_float_get_float(const cbor_item_t *item) {
   return NAN; /* Compiler complaints */
 }
 
+bool cbor_get_bool(const cbor_item_t *item) {
+  assert(cbor_is_bool(item));
+  return item->metadata.float_ctrl_metadata.ctrl == CBOR_CTRL_TRUE;
+}
+
 void cbor_set_float2(cbor_item_t *item, float value) {
   assert(cbor_is_float(item));
   assert(cbor_float_get_width(item) == CBOR_FLOAT_16);
@@ -82,9 +87,10 @@ void cbor_set_ctrl(cbor_item_t *item, uint8_t value) {
   item->metadata.float_ctrl_metadata.ctrl = value;
 }
 
-bool cbor_ctrl_is_bool(const cbor_item_t *item) {
+void cbor_set_bool(cbor_item_t *item, bool value) {
   assert(cbor_is_bool(item));
-  return item->metadata.float_ctrl_metadata.ctrl == CBOR_CTRL_TRUE;
+  item->metadata.float_ctrl_metadata.ctrl =
+      value ? CBOR_CTRL_TRUE : CBOR_CTRL_FALSE;
 }
 
 cbor_item_t *cbor_new_ctrl() {

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2019/11/15 03:19:39 deraadt Exp $
+# $OpenBSD: Makefile,v 1.3 2020/08/03 02:34:31 djm Exp $
 
 .PATH: ${.CURDIR}/src ${.CURDIR}/src/cbor ${.CURDIR}/src/cbor/internal
 
@@ -10,6 +10,7 @@ SRCS=	cbor.c
 
 WARNINGS=yes
 CDIAGFLAGS+=	-Wall -Wextra -Wno-unused-parameter
+CDIAGFLAGS+=	-Wno-missing-field-initializers
 #CDIAGFLAGS+=	-Werror
 
 # cbor/

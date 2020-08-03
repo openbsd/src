@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 Pavel Kalvoda <me@pavelkalvoda.com>
+ * Copyright (c) 2014-2020 Pavel Kalvoda <me@pavelkalvoda.com>
  *
  * libcbor is free software; you can redistribute it and/or modify
  * it under the terms of the MIT license. See LICENSE for details.
@@ -70,6 +70,13 @@ double cbor_float_get_float8(const cbor_item_t *item);
  */
 double cbor_float_get_float(const cbor_item_t *item);
 
+/** Get value from a boolean ctrl item
+ *
+ * @param item[borrow] A ctrl item
+ * @return boolean value
+ */
+bool cbor_get_bool(const cbor_item_t *item);
+
 /** Constructs a new ctrl item
  *
  * The width cannot be changed once the item is created
@@ -134,6 +141,13 @@ cbor_item_t *cbor_build_bool(bool value);
  */
 void cbor_set_ctrl(cbor_item_t *item, uint8_t value);
 
+/** Assign a boolean value to a boolean ctrl item
+ *
+ * @param item[borrow] A ctrl item
+ * @param value The simple value to assign.
+ */
+void cbor_set_bool(cbor_item_t *item, bool value);
+
 /** Assigns a float value
  *
  * @param item[borrow] A half precision float
@@ -161,13 +175,6 @@ void cbor_set_float8(cbor_item_t *item, double value);
  * @return the simple value
  */
 uint8_t cbor_ctrl_value(const cbor_item_t *item);
-
-/** Is this ctrl item a boolean?
- *
- * @param item[borrow] A ctrl item
- * @return Is this ctrl item a boolean?
- */
-bool cbor_ctrl_is_bool(const cbor_item_t *item);
 
 /** Constructs a new float
  *

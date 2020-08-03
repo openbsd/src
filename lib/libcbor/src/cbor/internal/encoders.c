@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2019 Pavel Kalvoda <me@pavelkalvoda.com>
+ * Copyright (c) 2014-2020 Pavel Kalvoda <me@pavelkalvoda.com>
  *
  * libcbor is free software; you can redistribute it and/or modify
  * it under the terms of the MIT license. See LICENSE for details.
@@ -67,7 +67,7 @@ size_t _cbor_encode_uint64(uint64_t value, unsigned char *buffer,
     buffer[0] = 0x1B + offset;
 
 #ifdef IS_BIG_ENDIAN
-      memcpy(buffer + 1, &value, 8);
+    memcpy(buffer + 1, &value, 8);
 #else
     buffer[1] = value >> 56;
     buffer[2] = value >> 48;
