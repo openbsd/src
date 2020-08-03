@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.h,v 1.69 2020/06/18 23:27:58 dlg Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.70 2020/08/03 03:21:24 dlg Exp $	*/
 /*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
 
 /*
@@ -237,6 +237,7 @@ struct bpf_hdr {
 #define		BPF_MEM		0x60
 #define		BPF_LEN		0x80
 #define		BPF_MSH		0xa0
+#define		BPF_RND		0xc0
 
 /* alu/jmp fields */
 #define BPF_OP(code)	((code) & 0xf0)

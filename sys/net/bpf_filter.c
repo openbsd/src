@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf_filter.c,v 1.33 2017/09/08 05:36:53 deraadt Exp $	*/
+/*	$OpenBSD: bpf_filter.c,v 1.34 2020/08/03 03:21:24 dlg Exp $	*/
 /*	$NetBSD: bpf_filter.c,v 1.12 1996/02/13 22:00:00 christos Exp $	*/
 
 /*
@@ -197,6 +197,10 @@ _bpf_filter(const struct bpf_insn *pc, const struct bpf_ops *ops,
 
 		case BPF_LDX|BPF_W|BPF_LEN:
 			X = wirelen;
+			continue;
+
+		case BPF_LD|BPF_W|BPF_RND:
+			A = arc4random();
 			continue;
 
 		case BPF_LD|BPF_W|BPF_IND:
@@ -414,6 +418,7 @@ bpf_validate(struct bpf_insn *f, int len)
 					return 0;
 				break;
 			case BPF_LEN:
+			case BPF_RND:
 				break;
 			default:
 				return 0;
