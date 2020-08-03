@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SMR_LIST_INIT.9,v 1.5 2020/04/07 13:38:14 visa Exp $
+.\"	$OpenBSD: SMR_LIST_INIT.9,v 1.6 2020/08/03 05:25:41 dlg Exp $
 .\"
 .\" Copyright (c) 2019 Visa Hankala
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 7 2020 $
+.Dd $Mdocdate: August 3 2020 $
 .Dt SMR_LIST_INIT 9
 .Os
 .Sh NAME
@@ -72,6 +72,7 @@
 .Nd SMR list macros
 .Sh SYNOPSIS
 .In sys/smr.h
+.Fn SMR_SLIST_ENTRY "TYPE"
 .Ft void
 .Fn SMR_SLIST_INIT "SMR_SLIST_HEAD *head"
 .Ft TYPE *
@@ -97,6 +98,7 @@
 .Fn SMR_SLIST_REMOVE_AFTER_LOCKED "struct TYPE *elm" "FIELDNAME"
 .Ft void
 .Fn SMR_SLIST_REMOVE_LOCKED "SMR_SLIST_HEAD *head" "struct TYPE *elm" "TYPE" "FIELDNAME"
+.Fn SMR_LIST_ENTRY "TYPE"
 .Ft void
 .Fn SMR_LIST_INIT "SMR_LIST_HEAD *head"
 .Ft TYPE *
@@ -120,6 +122,7 @@
 .Fn SMR_LIST_INSERT_BEFORE_LOCKED "struct TYPE *listelm" "struct TYPE *elm" "FIELDNAME"
 .Ft void
 .Fn SMR_LIST_REMOVE_LOCKED "struct TYPE *elm" "FIELDNAME"
+.Fn SMR_TAILQ_ENTRY "TYPE"
 .Ft void
 .Fn SMR_TAILQ_INIT "SMR_TAILQ_HEAD *head"
 .Ft TYPE *
@@ -175,6 +178,10 @@ or
 .Xr smr_call 9
 to ensure that the element can no longer be accessed by readers.
 .Sh SINGLY-LINKED LISTS
+The
+.Fn SMR_SLIST_ENTRY
+macro declares a structure that connects the elements in the list.
+.Pp
 .Fn SMR_SLIST_INIT
 initialies the list
 .Fa head
@@ -240,6 +247,10 @@ removes the list element
 from the list
 .Fa head .
 .Sh LISTS
+The
+.Fn SMR_LIST_ENTRY
+macro declares a structure that connects the elements in the list.
+.Pp
 .Fn SMR_LIST_INIT
 initialies the list
 .Fa head
@@ -303,6 +314,11 @@ removes the element
 from the list
 .Fa head .
 .Sh TAIL QUEUES
+The
+.Fn SMR_TAILQ_ENTRY
+macro declares a structure that connects the elements in
+the tail queue.
+.Pp
 .Fn SMR_TAILQ_INIT
 initialies the tail queue
 .Fa head
