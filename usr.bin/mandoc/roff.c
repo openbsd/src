@@ -1,4 +1,4 @@
-/* $OpenBSD: roff.c,v 1.246 2020/04/08 11:54:14 schwarze Exp $ */
+/* $OpenBSD: roff.c,v 1.247 2020/08/03 10:52:38 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -190,6 +190,7 @@ static	int		 roff_cc(ROFF_ARGS);
 static	int		 roff_ccond(struct roff *, int, int);
 static	int		 roff_char(ROFF_ARGS);
 static	int		 roff_cond(ROFF_ARGS);
+static	int		 roff_cond_checkend(ROFF_ARGS);
 static	int		 roff_cond_text(ROFF_ARGS);
 static	int		 roff_cond_sub(ROFF_ARGS);
 static	int		 roff_ds(ROFF_ARGS);
@@ -2032,14 +2033,13 @@ roff_parse(struct roff *r, char *buf, int *pos, int ln, int ppos)
 
 /* --- handling of request blocks ----------------------------------------- */
 
+/*
+ * Close a macro definition block or an "ignore" block.
+ */
 static int
 roff_cblock(ROFF_ARGS)
 {
-
-	/*
-	 * A block-close `..' should only be invoked as a child of an
-	 * ignore macro, otherwise raise a warning and just ignore it.
-	 */
+	int	 rr;
 
 	if (r->last == NULL) {
 		mandoc_msg(MANDOCERR_BLK_NOTOPEN, ln, ppos, "..");
@@ -2048,26 +2048,38 @@ roff_cblock(ROFF_ARGS)
 
 	switch (r->last->tok) {
 	case ROFF_am:
-		/* ROFF_am1 is remapped to ROFF_am in roff_block(). */
 	case ROFF_ami:
 	case ROFF_de:
-		/* ROFF_de1 is remapped to ROFF_de in roff_block(). */
 	case ROFF_dei:
 	case ROFF_ig:
 		break;
+	case ROFF_am1:
+	case ROFF_de1:
+		/* Remapped in roff_block(). */
+		abort();
 	default:
 		mandoc_msg(MANDOCERR_BLK_NOTOPEN, ln, ppos, "..");
 		return ROFF_IGN;
+	}
+
+	roffnode_pop(r);
+	roffnode_cleanscope(r);
+
+	/*
+	 * If a conditional block with braces is still open,
+	 * check for "\}" block end markers.
+	 */
+
+	if (r->last != NULL && r->last->endspan < 0) {
+		rr = 1;  /* If arguments follow "\}", warn about them. */
+		roff_cond_checkend(r, tok, buf, ln, ppos, pos, &rr);
 	}
 
 	if (buf->buf[pos] != '\0')
 		mandoc_msg(MANDOCERR_ARG_SKIP, ln, pos,
 		    ".. %s", buf->buf + pos);
 
-	roffnode_pop(r);
-	roffnode_cleanscope(r);
 	return ROFF_IGN;
-
 }
 
 /*
@@ -2080,7 +2092,7 @@ roffnode_cleanscope(struct roff *r)
 	int inloop;
 
 	inloop = 0;
-	while (r->last != NULL) {
+	while (r->last != NULL && r->last->endspan > 0) {
 		if (--r->last->endspan != 0)
 			break;
 		inloop += roffnode_pop(r);
@@ -2089,7 +2101,7 @@ roffnode_cleanscope(struct roff *r)
 }
 
 /*
- * Handle the closing \} of a conditional block.
+ * Handle the closing "\}" of a conditional block.
  * Apart from generating warnings, this only pops nodes.
  * Return the number of loops ended.
  */
@@ -2309,13 +2321,20 @@ roff_block_text(ROFF_ARGS)
 	return ROFF_IGN;
 }
 
+/*
+ * Check for a closing "\}" and handle it.
+ * In this function, the final "int *offs" argument is used for
+ * different purposes than elsewhere:
+ * Input: *offs == 0: caller wants to discard arguments following \}
+ *        *offs == 1: caller wants to preserve text following \}
+ * Output: *offs = 0: tell caller to discard input line
+ *         *offs = 1: tell caller to use input line
+ */
 static int
-roff_cond_sub(ROFF_ARGS)
+roff_cond_checkend(ROFF_ARGS)
 {
-	struct roffnode	*bl;
 	char		*ep;
 	int		 endloop, irc, rr;
-	enum roff_tok	 t;
 
 	irc = ROFF_IGN;
 	rr = r->last->rule;
@@ -2325,23 +2344,26 @@ roff_cond_sub(ROFF_ARGS)
 		irc |= endloop;
 
 	/*
-	 * If `\}' occurs on a macro line without a preceding macro,
-	 * drop the line completely.
+	 * If "\}" occurs on a macro line without a preceding macro or
+	 * a text line contains nothing else, drop the line completely.
 	 */
 
 	ep = buf->buf + pos;
-	if (ep[0] == '\\' && ep[1] == '}')
+	if (ep[0] == '\\' && ep[1] == '}' && (ep[2] == '\0' || *offs == 0))
 		rr = 0;
 
 	/*
-	 * The closing delimiter `\}' rewinds the conditional scope
+	 * The closing delimiter "\}" rewinds the conditional scope
 	 * but is otherwise ignored when interpreting the line.
 	 */
 
 	while ((ep = strchr(ep, '\\')) != NULL) {
 		switch (ep[1]) {
 		case '}':
-			memmove(ep, ep + 2, strlen(ep + 2) + 1);
+			if (rr)
+				ep[1] = '&';
+			else
+				memmove(ep, ep + 2, strlen(ep + 2) + 1);
 			if (roff_ccond(r, ln, ep - buf->buf))
 				irc |= endloop;
 			break;
@@ -2353,7 +2375,22 @@ roff_cond_sub(ROFF_ARGS)
 			break;
 		}
 	}
+	*offs = rr;
+	return irc;
+}
 
+/*
+ * Parse and process a request or macro line in conditional scope.
+ */
+static int
+roff_cond_sub(ROFF_ARGS)
+{
+	struct roffnode	*bl;
+	int		 irc, rr;
+	enum roff_tok	 t;
+
+	rr = 0;  /* If arguments follow "\}", skip them. */
+	irc = roff_cond_checkend(r, tok, buf, ln, ppos, pos, &rr);
 	t = roff_parse(r, buf->buf, &pos, ln, ppos);
 
 	/* For now, let high level macros abort .ce mode. */
@@ -2390,48 +2427,16 @@ roff_cond_sub(ROFF_ARGS)
 	return irc;
 }
 
+/*
+ * Parse and process a text line in conditional scope.
+ */
 static int
 roff_cond_text(ROFF_ARGS)
 {
-	char		*ep;
-	int		 endloop, irc, rr;
+	int	 irc, rr;
 
-	irc = ROFF_IGN;
-	rr = r->last->rule;
-	endloop = tok != ROFF_while ? ROFF_IGN :
-	    rr ? ROFF_LOOPCONT : ROFF_LOOPEXIT;
-	if (roffnode_cleanscope(r))
-		irc |= endloop;
-
-	/*
-	 * If `\}' occurs on a text line with neither preceding
-	 * nor following characters, drop the line completely.
-	 */
-
-	ep = buf->buf + pos;
-	if (strcmp(ep, "\\}") == 0)
-		rr = 0;
-
-	/*
-	 * The closing delimiter `\}' rewinds the conditional scope
-	 * but is otherwise ignored when interpreting the line.
-	 */
-
-	while ((ep = strchr(ep, '\\')) != NULL) {
-		switch (ep[1]) {
-		case '}':
-			memmove(ep, ep + 2, strlen(ep + 2) + 1);
-			if (roff_ccond(r, ln, ep - buf->buf))
-				irc |= endloop;
-			break;
-		case '\0':
-			++ep;
-			break;
-		default:
-			ep += 2;
-			break;
-		}
-	}
+	rr = 1;  /* If arguments follow "\}", preserve them. */
+	irc = roff_cond_checkend(r, tok, buf, ln, ppos, pos, &rr);
 	if (rr)
 		irc |= ROFF_CONT;
 	return irc;

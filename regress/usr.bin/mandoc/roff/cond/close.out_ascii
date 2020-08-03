@@ -12,6 +12,14 @@ DDEESSCCRRIIPPTTIIOONN
 
        closing after plain text
 
+       text line contains closing brace only
+
+       text line contains closing brace and additional words
+
+       request line contains closing brace only
+
+       request line contains closing brace and additional args
+
        conditional content  following words with whitespace
 
        conditional contentfollowing words without whitespace
@@ -21,6 +29,15 @@ DDEESSCCRRIIPPTTIIOONN
        preceding words
 
        non-standard multi-line style following words
+
+       preceding words text line block end  with additional words following
+       words
+
+       two closes on the same text line
+
+       preceding words close on request line following words
+
+       preceding words two closes oonntthheesame macro line
 
        still open at the end of the file
 

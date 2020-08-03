@@ -1,0 +1,2 @@
+mandoc: de.in:11:4: ERROR: skipping all arguments: .. \&ignored
+mandoc: de.in:18:2: ERROR: skipping unknown macro: .m3

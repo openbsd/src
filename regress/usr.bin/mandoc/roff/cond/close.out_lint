@@ -1,2 +1,3 @@
-mandoc: close.in:31:2: ERROR: appending missing end of block: if
-mandoc: close.in:31:9: WARNING: skipping paragraph macro: sp after PP
+mandoc: close.in:65:1: ERROR: escaped character not allowed in a name: BR\&
+mandoc: close.in:68:2: ERROR: appending missing end of block: if
+mandoc: close.in:68:9: WARNING: skipping paragraph macro: sp after PP

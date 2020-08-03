@@ -1,4 +1,4 @@
-.\" $OpenBSD: close.in,v 1.4 2018/11/26 17:44:29 schwarze Exp $
+.\" $OpenBSD: close.in,v 1.5 2020/08/03 10:52:39 schwarze Exp $
 .TH COND-CLOSE 1 "November 26, 2018"
 .SH NAME
 cond-close \- closing conditional macros
@@ -11,6 +11,22 @@ closing after an ignored macro
 .PP
 .if t \{text \}
 closing after plain text
+.PP
+.if t \{text
+\}
+text line contains closing brace only
+.PP
+.if t \{text
+\} plus something
+text line contains closing brace and additional words
+.PP
+.if t \{text
+.\}
+request line contains closing brace only
+.PP
+.if t \{text
+.\}with following args
+request line contains closing brace and additional args
 .PP
 .if n \{conditional content \} following words with whitespace
 .PP
@@ -27,6 +43,27 @@ preceding words
 non-standard multi-line style
 \}
 following words
+.PP
+preceding words
+.if n \{text line block end
+\} with additional words
+following words
+.PP
+.if n \{two
+.if n \{closes
+on\} the\} same
+text line
+.PP
+preceding words
+.if n \{close on request line
+.\}with following args
+following words
+.PP
+preceding words
+.if n \{two
+.if n \{closes
+.BR\}on\}the same
+macro line
 .PP
 .if n \{
 still open at the end of the file

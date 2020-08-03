@@ -1,0 +1,19 @@
+.\" $OpenBSD: de.in,v 1.1 2020/08/03 10:52:39 schwarze Exp $
+.TH COND-DE 1 "August 3, 2020"
+.SH NAME
+cond-de \- close macro definition and conditional block on the same line
+.SH DESCRIPTION
+.if n \{.de m1
+first content
+.. \}
+.if n \{.de m2
+second content
+.. \}ignored
+.if t \{.de m3
+does not show up
+.. \}ignored
+initial text
+.m1
+.m2
+.m3
+final text
