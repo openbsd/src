@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.69 2020/07/30 21:06:19 benno Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.70 2020/08/03 11:05:24 benno Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1059,50 +1059,6 @@ kv_free(struct kv *kv)
 }
 
 struct kv *
-kv_inherit(struct kv *dst, struct kv *src)
-{
-	memset(dst, 0, sizeof(*dst));
-	memcpy(dst, src, sizeof(*dst));
-	TAILQ_INIT(&dst->kv_children);
-
-	if (src->kv_key != NULL) {
-		if ((dst->kv_key = strdup(src->kv_key)) == NULL) {
-			kv_free(dst);
-			return (NULL);
-		}
-	}
-	if (src->kv_value != NULL) {
-		if ((dst->kv_value = strdup(src->kv_value)) == NULL) {
-			kv_free(dst);
-			return (NULL);
-		}
-	}
-
-	return (dst);
-}
-
-int
-kv_log(struct evbuffer *log, struct kv *kv)
-{
-	char	*msg;
-
-	if (log == NULL)
-		return (0);
-	if (asprintf(&msg, " [%s%s%s]",
-	    kv->kv_key == NULL ? "(unknown)" : kv->kv_key,
-	    kv->kv_value == NULL ? "" : ": ",
-	    kv->kv_value == NULL ? "" : kv->kv_value) == -1)
-		return (-1);
-	if (evbuffer_add(log, msg, strlen(msg)) == -1) {
-		free(msg);
-		return (-1);
-	}
-	free(msg);
-
-	return (0);
-}
-
-struct kv *
 kv_find(struct kvtree *keys, struct kv *kv)
 {
 	struct kv	*match;
@@ -1270,22 +1226,6 @@ print_host(struct sockaddr_storage *ss, char *buf, size_t len)
 		buf[0] = '\0';
 		return (NULL);
 	}
-	return (buf);
-}
-
-const char *
-print_time(struct timeval *a, struct timeval *b, char *buf, size_t len)
-{
-	struct timeval		tv;
-	unsigned long		h, sec, min;
-
-	timerclear(&tv);
-	timersub(a, b, &tv);
-	sec = tv.tv_sec % 60;
-	min = tv.tv_sec / 60 % 60;
-	h = tv.tv_sec / 60 / 60;
-
-	snprintf(buf, len, "%.2lu:%.2lu:%.2lu", h, min, sec);
 	return (buf);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.148 2020/07/30 21:06:19 benno Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.149 2020/08/03 11:05:24 benno Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -731,8 +731,6 @@ void		 kv_delete(struct kvtree *, struct kv *);
 struct kv	*kv_extend(struct kvtree *, struct kv *, char *);
 void		 kv_purge(struct kvtree *);
 void		 kv_free(struct kv *);
-struct kv	*kv_inherit(struct kv *, struct kv *);
-int		 kv_log(struct evbuffer *, struct kv *);
 struct kv	*kv_find(struct kvtree *, struct kv *);
 int		 kv_cmp(struct kv *, struct kv *);
 struct media_type
@@ -751,7 +749,6 @@ struct auth	*auth_add(struct serverauth *, struct auth *);
 struct auth	*auth_byid(struct serverauth *, uint32_t);
 void		 auth_free(struct serverauth *, struct auth *);
 const char	*print_host(struct sockaddr_storage *, char *, size_t);
-const char	*print_time(struct timeval *, struct timeval *, char *, size_t);
 const char	*printb_flags(const uint32_t, const char *);
 void		 getmonotime(struct timeval *);
 
