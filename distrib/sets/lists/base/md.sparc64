@@ -80,8 +80,8 @@
 ./usr/lib/gcc-lib/sparc64-unknown-openbsd6.7/4.2.1/libgcc.a
 ./usr/lib/gcc-lib/sparc64-unknown-openbsd6.7/4.2.1/specs
 ./usr/lib/libLLVM.so.3.0
-./usr/lib/libc++.so.4.0
-./usr/lib/libc++abi.so.2.1
+./usr/lib/libc++.so.5.0
+./usr/lib/libc++abi.so.3.0
 ./usr/lib/libcompiler_rt.a
 ./usr/lib/libstdc++.so.57.0
 ./usr/libdata/perl5/sparc64-openbsd
