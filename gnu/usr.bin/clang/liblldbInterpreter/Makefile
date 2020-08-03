@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2019/01/27 16:59:42 patrick Exp $
+# $OpenBSD: Makefile,v 1.3 2020/08/03 14:45:30 patrick Exp $
 
 LIB=	lldbInterpreter
 NOPIC=
@@ -18,6 +18,7 @@ SRCS=	CommandAlias.cpp \
 	OptionGroupBoolean.cpp \
 	OptionGroupFile.cpp \
 	OptionGroupFormat.cpp \
+	OptionGroupPythonClassWithDict.cpp \
 	OptionGroupOutputFile.cpp \
 	OptionGroupPlatform.cpp \
 	OptionGroupString.cpp \
@@ -33,7 +34,7 @@ SRCS=	CommandAlias.cpp \
 	OptionValueDictionary.cpp \
 	OptionValueEnumeration.cpp \
 	OptionValueFileSpec.cpp \
-	OptionValueFileSpecLIst.cpp \
+	OptionValueFileSpecList.cpp \
 	OptionValueFormat.cpp \
 	OptionValueFormatEntity.cpp \
 	OptionValueLanguage.cpp \
@@ -50,7 +51,7 @@ SRCS=	CommandAlias.cpp \
 	Property.cpp \
 	ScriptInterpreter.cpp \
 
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Interpreter
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Interpreter
 
 install:
 	@# Nothing here so far ...
@@ -59,3 +60,4 @@ install:
 
 CPPFLAGS+=	${LLDB_INCLUDES}
 CPPFLAGS+=	${CLANG_INCLUDES}
+CPPFLAGS+=	-I${.OBJDIR}/../include/lldb/Interpreter

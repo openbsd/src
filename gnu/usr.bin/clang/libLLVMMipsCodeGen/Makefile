@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2019/10/25 00:40:56 mortimer Exp $
+# $OpenBSD: Makefile,v 1.8 2020/08/03 14:45:26 patrick Exp $
 
 LIB=	LLVMMipsCodeGen
 NOPROFILE=
@@ -46,4 +46,4 @@ SRCS+=	MicroMipsSizeReduction.cpp \
 	MipsTargetMachine.cpp \
 	MipsTargetObjectFile.cpp
 
-.PATH:	${.CURDIR}/../../../llvm/lib/Target/Mips
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/Target/Mips

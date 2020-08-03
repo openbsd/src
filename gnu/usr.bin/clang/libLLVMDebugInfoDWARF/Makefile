@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2019/03/05 09:44:40 jsg Exp $
+# $OpenBSD: Makefile,v 1.7 2020/08/03 14:45:25 patrick Exp $
 
 LIB=	LLVMDebugInfoDWARF
 NOPROFILE=
@@ -33,4 +33,4 @@ SRCS+=	DWARFAbbreviationDeclaration.cpp \
 	DWARFUnit.cpp \
 	DWARFVerifier.cpp
 
-.PATH:	${.CURDIR}/../../../llvm/lib/DebugInfo/DWARF
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/DebugInfo/DWARF

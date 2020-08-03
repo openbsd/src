@@ -1,14 +1,15 @@
-# $OpenBSD: Makefile,v 1.7 2019/06/23 22:07:42 patrick Exp $
+# $OpenBSD: Makefile,v 1.8 2020/08/03 14:45:28 patrick Exp $
 
 LIB=	clangDriver
 NOPIC=
 NOPROFILE=
 
 CPPFLAGS+=	${CLANG_INCLUDES}
-CPPFLAGS+=	-I${LLVM_SRCS}/tools/clang/lib/Driver
+CPPFLAGS+=	-I${CLANG_SRCS}/lib/Driver
 
 .include <bsd.own.mk>
-SRCS=	AMDGPU.cpp \
+SRCS=	AIX.cpp \
+	AMDGPU.cpp \
 	AVR.cpp \
 	Action.cpp \
 	Ananas.cpp \
@@ -26,6 +27,7 @@ SRCS=	AMDGPU.cpp \
 	DragonFly.cpp \
 	Driver.cpp \
 	DriverOptions.cpp \
+	Flang.cpp \
 	FreeBSD.cpp \
 	Fuchsia.cpp \
 	Gnu.cpp \
@@ -33,6 +35,7 @@ SRCS=	AMDGPU.cpp \
 	Haiku.cpp \
 	Hexagon.cpp \
 	Hurd.cpp \
+	InterfaceStubs.cpp \
 	Job.cpp \
 	Linux.cpp \
 	MSP430.cpp \
@@ -45,6 +48,8 @@ SRCS=	AMDGPU.cpp \
 	NaCl.cpp \
 	NetBSD.cpp \
 	OpenBSD.cpp \
+	OptionUtils.cpp \
+	PPCLinux.cpp \
 	PS4CPU.cpp \
 	Phases.cpp \
 	RISCVToolchain.cpp \
@@ -58,8 +63,8 @@ SRCS=	AMDGPU.cpp \
 	XCore.cpp \
 	XRayArgs.cpp
 
-.PATH:	${.CURDIR}/../../../llvm/tools/clang/lib/Driver
-.PATH:	${.CURDIR}/../../../llvm/tools/clang/lib/Driver/ToolChains
+.PATH:	${.CURDIR}/../../../llvm/clang/lib/Driver
+.PATH:	${.CURDIR}/../../../llvm/clang/lib/Driver/ToolChains
 
 install:
 	@# Nothing here so far ...

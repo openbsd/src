@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2017/07/09 15:28:36 espie Exp $
+# $OpenBSD: Makefile,v 1.3 2020/08/03 14:45:29 patrick Exp $
 
 LIB=	clangParse
 NOPIC=
@@ -23,7 +23,7 @@ SRCS=	ParseAST.cpp \
 	ParseTentative.cpp \
 	Parser.cpp
 
-.PATH:	${.CURDIR}/../../../llvm/tools/clang/lib/Parse
+.PATH:	${.CURDIR}/../../../llvm/clang/lib/Parse
 
 install:
 	@# Nothing here so far ...

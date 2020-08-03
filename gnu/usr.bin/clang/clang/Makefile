@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.15 2019/05/16 15:38:56 schwarze Exp $
+# $OpenBSD: Makefile,v 1.16 2020/08/03 14:45:22 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -25,9 +25,9 @@ maninstall:
 	rm -f cpp.1 && ln clang.1 cpp.1; }
 .endif
 
-CPPFLAGS+=	-I${.CURDIR}/../../../llvm/tools/clang/include
+CPPFLAGS+=	-I${.CURDIR}/../../../llvm/clang/include
 
-.PATH:	${.CURDIR}/../../../llvm/tools/clang/tools/driver
+.PATH:	${.CURDIR}/../../../llvm/clang/tools/driver
 
 LLVM_LIBDEPS=	LLVM \
 		clangFrontendTool \

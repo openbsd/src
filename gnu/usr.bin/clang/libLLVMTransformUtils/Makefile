@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.11 2019/06/23 22:07:41 patrick Exp $
+# $OpenBSD: Makefile,v 1.12 2020/08/03 14:45:28 patrick Exp $
 
 LIB=	LLVMTransformUtils
 NOPROFILE=
@@ -17,7 +17,9 @@ SRCS+=	ASanStackFrameLayout.cpp \
 	CloneFunction.cpp \
 	CloneModule.cpp \
 	CodeExtractor.cpp \
+	CodeMoverUtils.cpp \
 	CtorUtils.cpp \
+	Debugify.cpp \
 	DemoteRegToStack.cpp \
 	EntryExitInstrumenter.cpp \
 	EscapeEnumerator.cpp \
@@ -28,6 +30,7 @@ SRCS+=	ASanStackFrameLayout.cpp \
 	GlobalStatus.cpp \
 	TransformUtilsGuardUtils.cpp \
 	ImportedFunctionsInliningStatistics.cpp \
+	InjectTLIMappings.cpp \
 	InlineFunction.cpp \
 	InstructionNamer.cpp \
 	IntegerDivision.cpp \
@@ -47,6 +50,7 @@ SRCS+=	ASanStackFrameLayout.cpp \
 	LowerSwitch.cpp \
 	Mem2Reg.cpp \
 	MetaRenamer.cpp \
+	MisExpect.cpp \
 	ModuleUtils.cpp \
 	NameAnonGlobals.cpp \
 	PredicateInfo.cpp \
@@ -57,6 +61,7 @@ SRCS+=	ASanStackFrameLayout.cpp \
 	SimplifyCFG.cpp \
 	SimplifyIndVar.cpp \
 	SimplifyLibCalls.cpp \
+	SizeOpts.cpp \
 	SplitModule.cpp \
 	StripNonLineTableDebugInfo.cpp \
 	SymbolRewriter.cpp \
@@ -71,6 +76,6 @@ TransformUtilsGuardUtils.cpp:
 TransformUtilsUtils.cpp:
 	ln -s ${LLVM_SRCS}/lib/Transforms/Utils/Utils.cpp $@
 
-.PATH:	${.CURDIR}/../../../llvm/lib/Transforms/Utils
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/Transforms/Utils
 
 CLEANFILES+= TransformUtilsUtils.cpp

@@ -1,12 +1,12 @@
-# $OpenBSD: Makefile,v 1.3 2019/06/23 22:07:42 patrick Exp $
+# $OpenBSD: Makefile,v 1.4 2020/08/03 14:45:28 patrick Exp $
 
 LIB=	clangBasicTargets
 NOPIC=
 NOPROFILE=
 
 CPPFLAGS+=	${CLANG_INCLUDES}
-CPPFLAGS+=	-I${LLVM_SRCS}/tools/clang/lib/Basic
-CPPFLAGS+=	-I${LLVM_SRCS}/tools/clang/lib/Basic/Targets
+CPPFLAGS+=	-I${CLANG_SRCS}/lib/Basic
+CPPFLAGS+=	-I${CLANG_SRCS}/lib/Basic/Targets
 
 .include <bsd.own.mk>
 SRCS=	AArch64.cpp \
@@ -33,7 +33,7 @@ SRCS=	AArch64.cpp \
 	X86.cpp \
 	XCore.cpp
 
-.PATH:	${.CURDIR}/../../../llvm/tools/clang/lib/Basic/Targets
+.PATH:	${.CURDIR}/../../../llvm/clang/lib/Basic/Targets
 
 install:
 	@# Nothing here so far ...

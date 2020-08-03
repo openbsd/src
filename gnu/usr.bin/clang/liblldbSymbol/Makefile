@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2019/06/23 22:07:44 patrick Exp $
+# $OpenBSD: Makefile,v 1.3 2020/08/03 14:45:31 patrick Exp $
 
 LIB=	lldbSymbol
 NOPIC=
@@ -9,22 +9,26 @@ SRCS=	ArmUnwindInfo.cpp \
 	Block.cpp \
 	ClangASTContext.cpp \
 	ClangASTImporter.cpp \
+	ClangASTMetadata.cpp \
 	ClangExternalASTSourceCallbacks.cpp \
-	ClangExternalASTSourceCommon.cpp \
 	ClangUtil.cpp \
+	CompactUnwindInfo.cpp \
+	CompileUnit.cpp \
 	CompilerDecl.cpp \
 	CompilerDeclContext.cpp \
 	CompilerType.cpp \
-	CompileUnit.cpp \
-	CompactUnwindInfo.cpp \
+	CxxModuleHandler.cpp \
+	DWARFCallFrameInfo.cpp \
 	DebugMacros.cpp \
 	Declaration.cpp \
-	DWARFCallFrameInfo.cpp \
-	Function.cpp \
+	DeclVendor.cpp \
 	FuncUnwinders.cpp \
+	Function.cpp \
 	LineEntry.cpp \
 	LineTable.cpp \
+	LocateSymbolFile.cpp \
 	ObjectFile.cpp \
+	PostfixExpression.cpp \
 	Symbol.cpp \
 	SymbolContext.cpp \
 	SymbolFile.cpp \
@@ -38,9 +42,8 @@ SRCS=	ArmUnwindInfo.cpp \
 	UnwindTable.cpp \
 	Variable.cpp \
 	VariableList.cpp \
-	VerifyDecl.cpp \
 
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Symbol
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Symbol
 
 install:
 	@# Nothing here so far ...

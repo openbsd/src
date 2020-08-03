@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2019/06/23 22:07:40 patrick Exp $
+# $OpenBSD: Makefile,v 1.9 2020/08/03 14:45:26 patrick Exp $
 
 LIB=	LLVMInstrumentation
 NOPROFILE=
@@ -10,16 +10,18 @@ SRCS+=	AddressSanitizer.cpp \
 	CGProfile.cpp \
 	ControlHeightReduction.cpp \
 	DataFlowSanitizer.cpp \
-	EfficiencySanitizer.cpp \
 	GCOVProfiling.cpp \
 	HWAddressSanitizer.cpp \
 	IndirectCallPromotion.cpp \
 	Instrumentation.cpp \
+	InstrOrderFile.cpp \
 	InstrProfiling.cpp \
 	MemorySanitizer.cpp \
 	PGOInstrumentation.cpp \
 	PGOMemOPSizeOpt.cpp \
+	PoisonChecking.cpp \
 	SanitizerCoverage.cpp \
-	ThreadSanitizer.cpp
+	ThreadSanitizer.cpp \
+	ValueProfileCollector.cpp
 
-.PATH:	${.CURDIR}/../../../llvm/lib/Transforms/Instrumentation
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/Transforms/Instrumentation

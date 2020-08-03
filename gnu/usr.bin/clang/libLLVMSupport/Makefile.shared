@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.shared,v 1.2 2019/06/23 22:07:41 patrick Exp $
+# $OpenBSD: Makefile.shared,v 1.3 2020/08/03 14:45:27 patrick Exp $
 
 LIB=	LLVMSupport
 
@@ -8,6 +8,7 @@ CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Support
 
 
 SRCS+=	AArch64TargetParser.cpp \
+	ABIBreak.cpp \
 	AMDGPUMetadata.cpp \
 	APFloat.cpp \
 	APInt.cpp \
@@ -26,6 +27,7 @@ SRCS+=	AArch64TargetParser.cpp \
 	BuryPointer.cpp \
 	circular_raw_ostream.cpp \
 	COM.cpp \
+	CRC.cpp \
 	CachePruning.cpp \
 	Chrono.cpp \
 	CodeGenCoverage.cpp \
@@ -43,6 +45,7 @@ SRCS+=	AArch64TargetParser.cpp \
 	SupportError.cpp \
 	ErrorHandling.cpp \
 	FileCheck.cpp \
+	FileCollector.cpp \
 	FileUtilities.cpp \
 	FileOutputBuffer.cpp \
 	FoldingSet.cpp \
@@ -56,7 +59,6 @@ SRCS+=	AArch64TargetParser.cpp \
 	IntervalMap.cpp \
 	ItaniumManglingCanonicalizer.cpp \
 	JSON.cpp \
-	JamCRC.cpp \
 	KnownBits.cpp \
 	LEB128.cpp \
 	LineIterator.cpp \
@@ -68,7 +70,7 @@ SRCS+=	AArch64TargetParser.cpp \
 	MemoryBuffer.cpp \
 	MD5.cpp \
 	NativeFormatting.cpp \
-	Options.cpp \
+	Optional.cpp \
 	Parallel.cpp \
 	PluginLoader.cpp \
 	PrettyStackTrace.cpp \
@@ -77,6 +79,7 @@ SRCS+=	AArch64TargetParser.cpp \
 	ScaledNumber.cpp \
 	ScopedPrinter.cpp \
 	SHA1.cpp \
+	Signposts.cpp \
 	SmallPtrSet.cpp \
 	SmallVector.cpp \
 	SourceMgr.cpp \
@@ -92,6 +95,7 @@ SRCS+=	AArch64TargetParser.cpp \
 	TarWriter.cpp \
 	TargetParser.cpp \
 	ThreadPool.cpp \
+	TimeProfiler.cpp \
 	Timer.cpp \
 	ToolOutputFile.cpp \
 	TrigramIndex.cpp \
@@ -112,7 +116,6 @@ SRCS+=	AArch64TargetParser.cpp \
 	Errno.cpp \
 	Host.cpp \
 	Memory.cpp \
-	Mutex.cpp \
 	Path.cpp \
 	Process.cpp \
 	Program.cpp \
@@ -127,6 +130,7 @@ SRCS+=	AArch64TargetParser.cpp \
 	VirtualFileSystem.cpp \
 	Watchdog.cpp \
 	WithColor.cpp \
+	Z3Solver.cpp \
 	xxhash.cpp
 
 SupportError.cpp:
@@ -135,6 +139,6 @@ SupportError.cpp:
 SupportLowLevelType.cpp:
 	ln -s ${LLVM_SRCS}/lib/Support/LowLevelType.cpp $@
 
-.PATH:	${.CURDIR}/../../../llvm/lib/Support
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/Support
 
 CLEANFILES+= SupportError.cpp SupportLowLevelType.cpp

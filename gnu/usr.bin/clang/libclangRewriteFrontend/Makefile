@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2017/07/09 15:28:36 espie Exp $
+# $OpenBSD: Makefile,v 1.3 2020/08/03 14:45:29 patrick Exp $
 
 LIB=	clangRewriteFrontend
 NOPIC=
@@ -16,7 +16,7 @@ SRCS=	FixItRewriter.cpp \
 	RewriteObjC.cpp \
 	RewriteTest.cpp
 
-.PATH:	${.CURDIR}/../../../llvm/tools/clang/lib/Frontend/Rewrite
+.PATH:	${.CURDIR}/../../../llvm/clang/lib/Frontend/Rewrite
 
 install:
 	@# Nothing here so far ...

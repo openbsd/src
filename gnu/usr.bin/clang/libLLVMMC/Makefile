@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2019/03/05 09:44:40 jsg Exp $
+# $OpenBSD: Makefile,v 1.8 2020/08/03 14:45:26 patrick Exp $
 
 LIB=	LLVMMC
 NOPROFILE=
@@ -12,12 +12,13 @@ SRCS+=	ConstantPools.cpp \
 	MCAsmInfoCOFF.cpp \
 	MCAsmInfoDarwin.cpp \
 	MCAsmInfoELF.cpp \
+	MCAsmInfoWasm.cpp \
+	MCAsmInfoXCOFF.cpp \
 	MCAsmMacro.cpp \
 	MCAsmStreamer.cpp \
 	MCAssembler.cpp \
 	MCCodeEmitter.cpp \
 	MCCodeView.cpp \
-	MCCodePadder.cpp \
 	MCContext.cpp \
 	MCDwarf.cpp \
 	MCELFObjectTargetWriter.cpp \
@@ -43,6 +44,7 @@ SRCS+=	ConstantPools.cpp \
 	MCSectionELF.cpp \
 	MCSectionMachO.cpp \
 	MCSectionWasm.cpp \
+	MCSectionXCOFF.cpp \
 	MCStreamer.cpp \
 	MCSubtargetInfo.cpp \
 	MCSymbol.cpp \
@@ -53,10 +55,13 @@ SRCS+=	ConstantPools.cpp \
 	MCWin64EH.cpp \
 	MCWinCOFFStreamer.cpp \
 	MCWinEH.cpp \
+	MCXCOFFObjectTargetWriter.cpp \
+	MCXCOFFStreamer.cpp \
 	MachObjectWriter.cpp \
 	StringTableBuilder.cpp \
 	SubtargetFeature.cpp \
 	WasmObjectWriter.cpp \
-	WinCOFFObjectWriter.cpp
+	WinCOFFObjectWriter.cpp \
+	XCOFFObjectWriter.cpp
 
-.PATH:	${.CURDIR}/../../../llvm/lib/MC
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/MC

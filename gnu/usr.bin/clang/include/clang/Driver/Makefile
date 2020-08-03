@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.3 2017/07/09 15:28:34 espie Exp $
+# $OpenBSD: Makefile,v 1.4 2020/08/03 14:45:22 patrick Exp $
 
 .include <bsd.own.mk>
 
 TBLGEN=	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen
-CLANG_INC=${.CURDIR}/../../../../../llvm/tools/clang/include
+CLANG_INC=${.CURDIR}/../../../../../llvm/clang/include
 
 GEN= Options.inc
 
@@ -17,7 +17,7 @@ clean cleandir:
 
 Options.inc: ${CLANG_INC}/clang/Driver/Options.td
 	${TBLGEN} -I${CLANG_INC}/clang/Driver \
-		-I${.CURDIR}/../../../../../llvm/include -gen-opt-parser-defs \
+		-I${.CURDIR}/../../../../../llvm/llvm/include -gen-opt-parser-defs \
 		-o ${.TARGET} ${.ALLSRC}
 
 .include <bsd.obj.mk>

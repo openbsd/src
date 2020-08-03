@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2019/06/23 22:07:42 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2020/08/03 14:45:28 patrick Exp $
 
 LIB=	clangAnalysis
 NOPIC=
@@ -21,16 +21,18 @@ SRCS=	AnalysisDeclContext.cpp \
 	ExprMutationAnalyzer.cpp \
 	LiveVariables.cpp \
 	ObjCNoReturn.cpp \
+	PathDiagnostic.cpp \
 	PostOrderCFGView.cpp \
 	ProgramPoint.cpp \
 	ReachableCode.cpp \
+	RetainSummaryManager.cpp \
 	ThreadSafety.cpp \
 	ThreadSafetyCommon.cpp \
 	ThreadSafetyLogical.cpp \
 	ThreadSafetyTIL.cpp \
 	UninitializedValues.cpp
 
-.PATH:	${.CURDIR}/../../../llvm/tools/clang/lib/Analysis
+.PATH:	${.CURDIR}/../../../llvm/clang/lib/Analysis
 
 install:
 	@# Nothing here so far ...

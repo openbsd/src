@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2017/07/09 15:28:36 espie Exp $
+# $OpenBSD: Makefile,v 1.3 2020/08/03 14:45:28 patrick Exp $
 
 LIB=	clangEdit
 NOPIC=
@@ -11,7 +11,7 @@ SRCS=	Commit.cpp \
 	EditedSource.cpp \
 	RewriteObjCFoundationAPI.cpp
 
-.PATH:	${.CURDIR}/../../../llvm/tools/clang/lib/Edit
+.PATH:	${.CURDIR}/../../../llvm/clang/lib/Edit
 
 install:
 	@# Nothing here so far ...

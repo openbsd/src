@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2019/03/05 09:44:42 jsg Exp $
+# $OpenBSD: Makefile,v 1.5 2020/08/03 14:45:27 patrick Exp $
 
 LIB=	LLVMTarget
 NOPROFILE=
@@ -11,4 +11,4 @@ SRCS+=	Target.cpp \
 	TargetMachine.cpp \
 	TargetMachineC.cpp
 
-.PATH:	${.CURDIR}/../../../llvm/lib/Target
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/Target

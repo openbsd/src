@@ -1,13 +1,12 @@
-# $OpenBSD: Makefile,v 1.1 2019/01/29 00:18:23 jsg Exp $
+# $OpenBSD: Makefile,v 1.2 2020/08/03 14:45:23 patrick Exp $
 
 .include <bsd.own.mk>
 
-LLVM_SRCS=	${.CURDIR}/../../../../../llvm
+LLVM_SRCS=	${.CURDIR}/../../../../../llvm/llvm
 
 HDRS=	AMDGPUGenAsmMatcher.inc AMDGPUGenAsmWriter.inc \
 	AMDGPUGenCallingConv.inc AMDGPUGenDAGISel.inc \
 	AMDGPUGenDisassemblerTables.inc AMDGPUGenInstrInfo.inc \
-	AMDGPUGenIntrinsicEnums.inc AMDGPUGenIntrinsicImpl.inc \
 	AMDGPUGenMCCodeEmitter.inc AMDGPUGenMCPseudoLowering.inc \
 	AMDGPUGenRegisterBank.inc AMDGPUGenRegisterInfo.inc \
 	AMDGPUGenSearchableTables.inc AMDGPUGenSubtargetInfo.inc
@@ -49,14 +48,6 @@ AMDGPUGenDisassemblerTables.inc: ${LLVM_SRCS}/lib/Target/AMDGPU/AMDGPU.td
 		-o ${.TARGET} ${.ALLSRC}
 AMDGPUGenInstrInfo.inc: ${LLVM_SRCS}/lib/Target/AMDGPU/AMDGPU.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-instr-info \
-		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/AMDGPU \
-		-o ${.TARGET} ${.ALLSRC}
-AMDGPUGenIntrinsicEnums.inc: ${LLVM_SRCS}/lib/Target/AMDGPU/AMDGPU.td
-	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-tgt-intrinsic-enums \
-		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/AMDGPU \
-		-o ${.TARGET} ${.ALLSRC}
-AMDGPUGenIntrinsicImpl.inc: ${LLVM_SRCS}/lib/Target/AMDGPU/AMDGPU.td
-	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-tgt-intrinsic-impl \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/AMDGPU \
 		-o ${.TARGET} ${.ALLSRC}
 AMDGPUGenMCCodeEmitter.inc: ${LLVM_SRCS}/lib/Target/AMDGPU/AMDGPU.td

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2019/03/05 09:44:41 jsg Exp $
+# $OpenBSD: Makefile,v 1.4 2020/08/03 14:45:27 patrick Exp $
 
 LIB=	LLVMPowerPCDisassembler
 NOPROFILE=
@@ -8,4 +8,4 @@ CPPFLAGS+=      -I${.OBJDIR}/../include/llvm/PowerPC \
 
 SRCS+=	PPCDisassembler.cpp
 
-.PATH:	${.CURDIR}/../../../llvm/lib/Target/PowerPC/Disassembler
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/Target/PowerPC/Disassembler

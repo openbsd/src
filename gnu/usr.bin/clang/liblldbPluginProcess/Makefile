@@ -1,11 +1,12 @@
-# $OpenBSD: Makefile,v 1.6 2019/12/21 13:16:25 mortimer Exp $
+# $OpenBSD: Makefile,v 1.7 2020/08/03 14:45:30 patrick Exp $
 
 LIB=	lldbPluginProcess
 NOPIC=
 NOPROFILE=
 
 .include <bsd.own.mk>
-SRCS=	CrashReason.cpp \
+SRCS=	AuxVector.cpp \
+	CrashReason.cpp \
 	DynamicRegisterInfo.cpp \
 	FreeBSDSignals.cpp \
 	GDBRemoteClientBase.cpp \
@@ -85,6 +86,8 @@ SRCS=	CrashReason.cpp \
 	RegisterContextPOSIX_s390x.cpp \
 	RegisterContextPOSIX_x86.cpp \
 	RegisterContextThreadMemory.cpp \
+	RegisterContextWindows_i386.cpp \
+	RegisterContextWindows_x86_64.cpp \
 	RegisterInfoPOSIX_arm.cpp \
 	RegisterInfoPOSIX_arm64.cpp \
 	RegisterInfoPOSIX_ppc64le.cpp \
@@ -98,13 +101,13 @@ SRCS=	CrashReason.cpp \
 	UnwindLLDB.cpp \
 	UnwindMacOSXFrameBackchain.cpp \
 
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/Process/Utility
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/Process/elf-core
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/Process/gdb-remote
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/Process/mach-core
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/Process/minidump
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/Process/POSIX
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/Process/OpenBSD
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Process/Utility
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Process/elf-core
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Process/gdb-remote
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Process/mach-core
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Process/minidump
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Process/POSIX
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Process/OpenBSD
 
 install:
 	@# Nothing here so far ...
@@ -113,3 +116,4 @@ install:
 
 CPPFLAGS+=	${LLDB_INCLUDES}
 CPPFLAGS+=	${CLANG_INCLUDES}
+CPPFLAGS+=	-I${.OBJDIR}/../include/lldb/Plugins

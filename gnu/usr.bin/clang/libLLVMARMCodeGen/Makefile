@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2019/03/05 09:44:39 jsg Exp $
+# $OpenBSD: Makefile,v 1.8 2020/08/03 14:45:24 patrick Exp $
 
 LIB=	LLVMARMCodeGen
 NOPROFILE=
@@ -9,9 +9,9 @@ SRCS+=	A15SDOptimizer.cpp \
 	ARMAsmPrinter.cpp \
 	ARMBaseInstrInfo.cpp \
 	ARMBaseRegisterInfo.cpp \
+	ARMBasicBlockInfo.cpp \
+	ARMCallingConv.cpp \
 	ARMCallLowering.cpp \
-	ARMCodeGenPrepare.cpp \
-	ARMComputeBlockSize.cpp \
 	ARMConstantIslandPass.cpp \
 	ARMConstantPoolValue.cpp \
 	ARMExpandPseudoInsts.cpp \
@@ -24,6 +24,7 @@ SRCS+=	A15SDOptimizer.cpp \
 	ARMInstructionSelector.cpp \
 	ARMLegalizerInfo.cpp \
 	ARMLoadStoreOptimizer.cpp \
+	ARMLowOverheadLoops.cpp \
 	ARMMCInstLower.cpp \
 	ARMMachineFunctionInfo.cpp \
 	ARMMacroFusion.cpp \
@@ -37,6 +38,9 @@ SRCS+=	A15SDOptimizer.cpp \
 	ARMTargetObjectFile.cpp \
 	ARMTargetTransformInfo.cpp \
 	MLxExpansionPass.cpp \
+	MVEGatherScatterLowering.cpp \
+	MVETailPredication.cpp \
+	MVEVPTBlockPass.cpp \
 	Thumb1FrameLowering.cpp \
 	Thumb1InstrInfo.cpp \
 	ThumbRegisterInfo.cpp \
@@ -44,4 +48,4 @@ SRCS+=	A15SDOptimizer.cpp \
 	Thumb2InstrInfo.cpp \
 	Thumb2SizeReduction.cpp
 
-.PATH:	${.CURDIR}/../../../llvm/lib/Target/ARM
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/Target/ARM

@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile,v 1.3 2017/07/09 15:28:34 espie Exp $
+# $OpenBSD: Makefile,v 1.4 2020/08/03 14:45:22 patrick Exp $
 
 .include <bsd.own.mk>
 
 TBLGEN= ${.OBJDIR}/../../../clang-tblgen/clang-tblgen
-CLANG_INC=${.CURDIR}/../../../../../llvm/tools/clang/include
+CLANG_INC=${.CURDIR}/../../../../../llvm/clang/include
 
 GEN= AttrPCHRead.inc AttrPCHWrite.inc
 

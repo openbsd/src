@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.1 2019/01/27 16:59:41 patrick Exp $
+# $OpenBSD: Makefile,v 1.2 2020/08/03 14:45:23 patrick Exp $
 
 .include <bsd.own.mk>
 
-LLVM_SRCS=	${.CURDIR}/../../../../../../llvm
+LLVM_SRCS=	${.CURDIR}/../../../../../../llvm/llvm
 
 DEFS=	InstCombineTables.inc
 

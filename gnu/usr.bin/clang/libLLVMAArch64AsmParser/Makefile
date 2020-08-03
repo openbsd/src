@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2019/03/05 09:44:39 jsg Exp $
+# $OpenBSD: Makefile,v 1.4 2020/08/03 14:45:23 patrick Exp $
 
 LIB=	LLVMAArch64AsmParser
 NOPROFILE=
@@ -8,4 +8,4 @@ CPPFLAGS+=	-I${.OBJDIR}/../include/llvm/AArch64 \
 
 SRCS+=	AArch64AsmParser.cpp
 
-.PATH:	${.CURDIR}/../../../llvm/lib/Target/AArch64/AsmParser
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/Target/AArch64/AsmParser

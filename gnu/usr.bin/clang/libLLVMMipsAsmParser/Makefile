@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2019/03/05 09:44:41 jsg Exp $
+# $OpenBSD: Makefile,v 1.4 2020/08/03 14:45:26 patrick Exp $
 
 LIB=	LLVMMipsAsmParser
 NOPROFILE=
@@ -8,4 +8,4 @@ CPPFLAGS+=	-I${.OBJDIR}/../include/llvm/Mips \
 
 SRCS+=	MipsAsmParser.cpp
 
-.PATH:	${.CURDIR}/../../../llvm/lib/Target/Mips/AsmParser
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/Target/Mips/AsmParser

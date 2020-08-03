@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2019/06/23 22:07:39 patrick Exp $
+# $OpenBSD: Makefile,v 1.10 2020/08/03 14:45:24 patrick Exp $
 
 LIB=	LLVMAArch64CodeGen
 NOPROFILE=
@@ -10,6 +10,7 @@ SRCS+=	AArch64A57FPLoadBalancing.cpp \
 	AArch64AdvSIMDScalarPass.cpp \
 	AArch64AsmPrinter.cpp \
 	AArch64BranchTargets.cpp \
+	AArch64CallingConvention.cpp \
 	AArch64CallLowering.cpp \
 	AArch64CleanupLocalDynamicTLSPass.cpp \
 	AArch64CollectLOH.cpp \
@@ -18,6 +19,7 @@ SRCS+=	AArch64A57FPLoadBalancing.cpp \
 	AArch64ConditionOptimizer.cpp \
 	AArch64ConditionalCompares.cpp \
 	AArch64DeadRegisterDefinitionsPass.cpp \
+	AArch64ExpandImm.cpp \
 	AArch64ExpandPseudoInsts.cpp \
 	AArch64FalkorHWPFFix.cpp \
 	AArch64FastISel.cpp \
@@ -41,10 +43,12 @@ SRCS+=	AArch64A57FPLoadBalancing.cpp \
 	AArch64SIMDInstrOpt.cpp \
 	AArch64SelectionDAGInfo.cpp \
 	AArch64SpeculationHardening.cpp \
+	AArch64StackTagging.cpp \
+	AArch64StackTaggingPreRA.cpp \
 	AArch64StorePairSuppress.cpp \
 	AArch64Subtarget.cpp \
 	AArch64TargetMachine.cpp \
 	AArch64TargetObjectFile.cpp \
 	AArch64TargetTransformInfo.cpp
 
-.PATH:	${.CURDIR}/../../../llvm/lib/Target/AArch64
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/Target/AArch64

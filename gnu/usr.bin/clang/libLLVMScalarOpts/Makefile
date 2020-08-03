@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.11 2019/06/23 22:07:41 patrick Exp $
+# $OpenBSD: Makefile,v 1.12 2020/08/03 14:45:27 patrick Exp $
 
 LIB=	LLVMScalarOpts
 NOPROFILE=
@@ -34,6 +34,7 @@ SRCS+=	ADCE.cpp \
 	LoopDataPrefetch.cpp \
 	LoopDeletion.cpp \
 	LoopDistribute.cpp \
+	LoopFuse.cpp \
 	LoopIdiomRecognize.cpp \
 	LoopInstSimplify.cpp \
 	LoopInterchange.cpp \
@@ -50,8 +51,11 @@ SRCS+=	ADCE.cpp \
 	LoopUnswitch.cpp \
 	LoopVersioningLICM.cpp \
 	LowerAtomic.cpp \
+	LowerConstantIntrinsics.cpp \
 	LowerExpectIntrinsic.cpp \
 	LowerGuardIntrinsic.cpp \
+	LowerMatrixIntrinsics.cpp \
+	LowerWidenableCondition.cpp \
 	MakeGuardsExplicit.cpp \
 	MemCpyOptimizer.cpp \
 	MergeICmps.cpp \
@@ -81,6 +85,6 @@ SRCS+=	ADCE.cpp \
 ScalarSCCP.cpp:
 	ln -s ${LLVM_SRCS}/lib/Transforms/Scalar/SCCP.cpp $@
 
-.PATH:	${.CURDIR}/../../../llvm/lib/Transforms/Scalar
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/Transforms/Scalar
 
 CLEANFILES+= ScalarSCCP.cpp

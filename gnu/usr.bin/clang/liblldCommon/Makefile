@@ -1,13 +1,15 @@
-# $OpenBSD: Makefile,v 1.1 2018/04/06 14:44:04 patrick Exp $
+# $OpenBSD: Makefile,v 1.2 2020/08/03 14:45:29 patrick Exp $
 
 LIB=	lldCommon
 NOPROFILE=
 
-CPPFLAGS+=	-I${LLVM_SRCS}/tools/lld/include
+CPPFLAGS+=	-I${LLD_SRCS}/include
 
 .include <bsd.own.mk>
 SRCS=	Args.cpp \
+	DWARF.cpp \
 	ErrorHandler.cpp \
+	Filesystem.cpp \
 	Memory.cpp \
 	Reproduce.cpp \
 	Strings.cpp \
@@ -15,7 +17,7 @@ SRCS=	Args.cpp \
 	Threads.cpp \
 	Version.cpp
 
-.PATH:	${.CURDIR}/../../../llvm/tools/lld/Common
+.PATH:	${.CURDIR}/../../../llvm/lld/Common
 
 install:
 	@# Nothing here so far ...

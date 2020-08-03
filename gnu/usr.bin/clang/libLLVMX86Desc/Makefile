@@ -1,11 +1,15 @@
-# $OpenBSD: Makefile,v 1.5 2019/03/05 09:44:42 jsg Exp $
+# $OpenBSD: Makefile,v 1.6 2020/08/03 14:45:28 patrick Exp $
 
 LIB=	LLVMX86Desc
 NOPROFILE=
 
 CPPFLAGS+=	-I${.OBJDIR}/../include/llvm/X86 -I${LLVM_SRCS}/lib/Target/X86
 
-SRCS+=	X86AsmBackend.cpp \
+SRCS+=	X86ATTInstPrinter.cpp \
+	X86IntelInstPrinter.cpp \
+	X86InstComments.cpp \
+	X86InstPrinterCommon.cpp \
+	X86AsmBackend.cpp \
 	X86MCTargetDesc.cpp \
 	X86MCAsmInfo.cpp \
 	X86MCCodeEmitter.cpp \
@@ -15,4 +19,4 @@ SRCS+=	X86AsmBackend.cpp \
 	X86WinCOFFStreamer.cpp \
 	X86WinCOFFTargetStreamer.cpp
 
-.PATH:	${.CURDIR}/../../../llvm/lib/Target/X86/MCTargetDesc
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/Target/X86/MCTargetDesc

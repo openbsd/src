@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2019/06/23 22:07:43 patrick Exp $
+# $OpenBSD: Makefile,v 1.3 2020/08/03 14:45:29 patrick Exp $
 
 LIB=	lldbBreakpoint
 NOPIC=
@@ -15,6 +15,7 @@ SRCS=	Breakpoint.cpp \
 	BreakpointLocationList.cpp \
 	BreakpointName.cpp \
 	BreakpointOptions.cpp \
+	BreakpointPrecondition.cpp \
 	BreakpointResolver.cpp \
 	BreakpointResolverAddress.cpp \
 	BreakpointResolverFileLine.cpp \
@@ -30,7 +31,7 @@ SRCS=	Breakpoint.cpp \
 	WatchpointList.cpp \
 	WatchpointOptions.cpp \
 
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Breakpoint
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Breakpoint
 
 install:
 	@# Nothing here so far ...

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.17 2019/05/17 14:50:41 schwarze Exp $
+# $OpenBSD: Makefile,v 1.18 2020/08/03 14:45:31 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -15,10 +15,10 @@ maninstall:
 .endif
 
 CPPFLAGS+=	${CLANG_INCLUDES}
-CPPFLAGS+=	-I${.CURDIR}/../../../llvm/tools/lld/include
+CPPFLAGS+=	-I${.CURDIR}/../../../llvm/lld/include
 
-.PATH:	${.CURDIR}/../../../llvm/tools/lld/tools/lld
-.PATH:	${.CURDIR}/../../../llvm/tools/lld/docs
+.PATH:	${.CURDIR}/../../../llvm/lld/tools/lld
+.PATH:	${.CURDIR}/../../../llvm/lld/docs
 
 LLVM_LIBDEPS=	LLVM \
 		lldELF \

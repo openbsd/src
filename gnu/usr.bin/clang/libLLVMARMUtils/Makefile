@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2019/03/05 09:44:40 jsg Exp $
+# $OpenBSD: Makefile,v 1.3 2020/08/03 14:45:24 patrick Exp $
 
 LIB=	LLVMARMUtils
 NOPROFILE=
@@ -7,4 +7,4 @@ CPPFLAGS+=	-I${.OBJDIR}/../include/llvm/ARM -I${LLVM_SRCS}/lib/Target/ARM
 
 SRCS+=	ARMBaseInfo.cpp
 
-.PATH:	${.CURDIR}/../../../llvm/lib/Target/ARM/Utils
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/Target/ARM/Utils

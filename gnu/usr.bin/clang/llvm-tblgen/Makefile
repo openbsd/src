@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2019/06/23 22:07:45 patrick Exp $
+# $OpenBSD: Makefile,v 1.11 2020/08/03 14:45:31 patrick Exp $
 
 PROG=	llvm-tblgen
 NOMAN=
@@ -11,6 +11,7 @@ SRCS=	AsmMatcherEmitter.cpp \
 	CTagsEmitter.cpp \
 	CallingConvEmitter.cpp \
 	CodeEmitterGen.cpp \
+	CodeExpander.cpp \
 	CodeGenDAGPatterns.cpp \
 	CodeGenHwModes.cpp \
 	CodeGenInstruction.cpp \
@@ -23,17 +24,28 @@ SRCS=	AsmMatcherEmitter.cpp \
 	DAGISelMatcherGen.cpp \
 	DAGISelMatcherOpt.cpp \
 	DAGISelMatcher.cpp \
+	DFAEmitter.cpp \
 	DFAPacketizerEmitter.cpp \
 	DisassemblerEmitter.cpp \
 	ExegesisEmitter.cpp \
 	FastISelEmitter.cpp \
 	FixedLenDecoderEmitter.cpp \
+	GICombinerEmitter.cpp \
+	GIMatchDag.cpp \
+	GIMatchDagEdge.cpp \
+	GIMatchDagInstr.cpp \
+	GIMatchDagOperands.cpp \
+	GIMatchDagPredicate.cpp \
+	GIMatchDagPredicateDependencyEdge.cpp \
+	GIMatchTree.cpp \
 	GlobalISelEmitter.cpp \
 	InfoByHwMode.cpp \
 	InstrDocsEmitter.cpp \
 	InstrInfoEmitter.cpp \
 	IntrinsicEmitter.cpp \
+	OptEmitter.cpp \
 	OptParserEmitter.cpp \
+	OptRSTEmitter.cpp \
 	PredicateExpander.cpp \
 	PseudoLoweringEmitter.cpp \
 	RISCVCompressInstEmitter.cpp \
@@ -52,7 +64,8 @@ SRCS=	AsmMatcherEmitter.cpp \
 	X86ModRMFilters.cpp \
 	X86RecognizableInstr.cpp
 
-.PATH:	${.CURDIR}/../../../llvm/utils/TableGen
+.PATH:	${.CURDIR}/../../../llvm/llvm/utils/TableGen
+.PATH:	${.CURDIR}/../../../llvm/llvm/utils/TableGen/GlobalISel
 
 LLVM_LIBDEPS=	LLVMTableGen LLVMSupport
 

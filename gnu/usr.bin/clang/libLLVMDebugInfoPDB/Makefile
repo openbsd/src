@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2019/06/23 22:07:40 patrick Exp $
+# $OpenBSD: Makefile,v 1.5 2020/08/03 14:45:25 patrick Exp $
 
 LIB=	LLVMDebugInfoPDB
 NOPROFILE=
@@ -19,10 +19,12 @@ SRCS+=	DbiModuleDescriptor.cpp \
 	IPDBSourceFile.cpp \
 	InfoStream.cpp \
 	InfoStreamBuilder.cpp \
+	InjectedSourceStream.cpp \
 	ModuleDebugStream.cpp \
 	NamedStreamMap.cpp \
 	NativeCompilandSymbol.cpp \
 	NativeEnumGlobals.cpp \
+	NativeEnumInjectedSources.cpp \
 	NativeEnumModules.cpp \
 	NativeEnumTypes.cpp \
 	NativeExeSymbol.cpp \
@@ -90,7 +92,7 @@ SRCS+=	DbiModuleDescriptor.cpp \
 DebugInfoPDBEnumTables.cpp:
 	ln -s ${LLVM_SRCS}/lib/DebugInfo/PDB/Native/EnumTables.cpp $@
 
-.PATH:	${.CURDIR}/../../../llvm/lib/DebugInfo/PDB
-.PATH:	${.CURDIR}/../../../llvm/lib/DebugInfo/PDB/Native
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/DebugInfo/PDB
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/DebugInfo/PDB/Native
 
 CLEANFILES+= DebugInfoPDBEnumTables.cpp

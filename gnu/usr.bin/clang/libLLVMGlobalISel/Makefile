@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2019/06/23 22:07:40 patrick Exp $
+# $OpenBSD: Makefile,v 1.8 2020/08/03 14:45:26 patrick Exp $
 
 LIB=	LLVMGlobalISel
 NOPROFILE=
@@ -8,6 +8,7 @@ SRCS+=	CSEInfo.cpp \
 	CallLowering.cpp \
 	GlobalISel.cpp \
 	GISelChangeObserver.cpp \
+	GISelKnownBits.cpp \
 	Combiner.cpp \
 	CombinerHelper.cpp \
 	IRTranslator.cpp \
@@ -28,6 +29,6 @@ SRCS+=	CSEInfo.cpp \
 GlobalISelUtils.cpp:
 	ln -s ${LLVM_SRCS}/lib/CodeGen/GlobalISel/Utils.cpp $@
 
-.PATH:	${.CURDIR}/../../../llvm/lib/CodeGen/GlobalISel
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/CodeGen/GlobalISel
 
 CLEANFILES+= GlobalISelUtils.cpp

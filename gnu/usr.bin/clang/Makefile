@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.12 2019/11/09 16:45:48 mortimer Exp $
+# $OpenBSD: Makefile,v 1.13 2020/08/03 14:45:22 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -43,11 +43,20 @@ SUBDIR+=libclangFrontendTool
 
 SUBDIR+=clang
 
+SUBDIR+=include/lld/ELF
+
 SUBDIR+=liblldCommon
 SUBDIR+=liblldCore
 SUBDIR+=liblldELF
 
 SUBDIR+=lld
+
+SUBDIR+=lldb-tblgen
+SUBDIR+=include/lldb/Commands
+SUBDIR+=include/lldb/Core
+SUBDIR+=include/lldb/Interpreter
+SUBDIR+=include/lldb/Plugins
+SUBDIR+=include/lldb/Target
 
 SUBDIR+=liblldbABI
 SUBDIR+=liblldbAPI

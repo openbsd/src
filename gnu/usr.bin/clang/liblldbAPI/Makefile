@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2019/06/23 22:07:42 patrick Exp $
+# $OpenBSD: Makefile,v 1.3 2020/08/03 14:45:29 patrick Exp $
 
 LIB=	lldbAPI
 NOPIC=
@@ -25,12 +25,12 @@ SRCS=	SBAddress.cpp \
 	SBEvent.cpp \
 	SBExecutionContext.cpp \
 	SBExpressionOptions.cpp \
+	SBFile.cpp \
 	SBFileSpec.cpp \
 	SBFileSpecList.cpp \
 	SBFrame.cpp \
 	SBFunction.cpp \
 	SBHostOS.cpp \
-	SBInitializerOptions.cpp \
 	SBInstruction.cpp \
 	SBInstructionList.cpp \
 	SBLanguageRuntime.cpp \
@@ -46,6 +46,7 @@ SRCS=	SBAddress.cpp \
 	SBProcessInfo.cpp \
 	SBQueue.cpp \
 	SBQueueItem.cpp \
+	SBReproducer.cpp \
 	SBSection.cpp \
 	SBSourceManager.cpp \
 	SBStream.cpp \
@@ -75,7 +76,7 @@ SRCS=	SBAddress.cpp \
 	SBWatchpoint.cpp \
 	SystemInitializerFull.cpp
 
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/API
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/API
 
 install:
 	@# Nothing here so far ...

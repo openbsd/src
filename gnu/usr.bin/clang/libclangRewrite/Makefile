@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2017/07/09 15:28:36 espie Exp $
+# $OpenBSD: Makefile,v 1.4 2020/08/03 14:45:29 patrick Exp $
 
 LIB=	clangRewrite
 NOPIC=
@@ -13,7 +13,7 @@ SRCS=	DeltaTree.cpp \
 	Rewriter.cpp \
 	TokenRewriter.cpp
 
-.PATH:	${.CURDIR}/../../../llvm/tools/clang/lib/Rewrite
+.PATH:	${.CURDIR}/../../../llvm/clang/lib/Rewrite
 
 install:
 	@# Nothing here so far ...

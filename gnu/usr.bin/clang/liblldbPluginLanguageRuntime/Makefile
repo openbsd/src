@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2019/06/23 22:07:43 patrick Exp $
+# $OpenBSD: Makefile,v 1.3 2020/08/03 14:45:30 patrick Exp $
 
 LIB=	lldbPluginLanguageRuntime
 NOPIC=
@@ -13,15 +13,19 @@ SRCS=	AppleObjCClassDescriptorV2.cpp \
 	AppleObjCTrampolineHandler.cpp \
 	AppleObjCTypeEncodingParser.cpp \
 	AppleThreadPlanStepThroughObjCTrampoline.cpp \
+	CPPLanguageRuntime.cpp \
 	ItaniumABILanguageRuntime.cpp \
+	ObjCLanguageRuntime.cpp \
 	RenderScriptExpressionOpts.cpp \
 	RenderScriptRuntime.cpp \
 	RenderScriptScriptGroup.cpp \
 	RenderScriptx86ABIFixups.cpp \
 
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/LanguageRuntime/CPlusPlus/ItaniumABI
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/LanguageRuntime/ObjC/AppleObjCRuntime
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/LanguageRuntime/RenderScript/RenderScriptRuntime
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/LanguageRuntime/CPlusPlus
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/LanguageRuntime/CPlusPlus/ItaniumABI
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/LanguageRuntime/ObjC
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/LanguageRuntime/ObjC/AppleObjCRuntime
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/LanguageRuntime/RenderScript/RenderScriptRuntime
 
 install:
 	@# Nothing here so far ...

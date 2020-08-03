@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2019/03/05 09:44:41 jsg Exp $
+# $OpenBSD: Makefile,v 1.4 2020/08/03 14:45:26 patrick Exp $
 
 LIB=	LLVMObjCARCOpts
 NOPROFILE=
@@ -15,4 +15,4 @@ SRCS+=	ObjCARC.cpp \
 	ProvenanceAnalysisEvaluator.cpp \
 	PtrState.cpp
 
-.PATH:	${.CURDIR}/../../../llvm/lib/Transforms/ObjCARC
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/Transforms/ObjCARC

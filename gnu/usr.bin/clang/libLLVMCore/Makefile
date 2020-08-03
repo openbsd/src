@@ -1,11 +1,13 @@
-# $OpenBSD: Makefile,v 1.9 2019/06/23 22:07:39 patrick Exp $
+# $OpenBSD: Makefile,v 1.10 2020/08/03 14:45:25 patrick Exp $
 
 LIB=	LLVMCore
 NOPROFILE=
 
-CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/IR
+CPPFLAGS+=	-I${.OBJDIR}/../include/llvm/IR \
+		-I${LLVM_SRCS}/include/llvm/IR
 
-SRCS+=	AsmWriter.cpp \
+SRCS+=	AbstractCallSite.cpp \
+	AsmWriter.cpp \
 	Attributes.cpp \
 	AutoUpgrade.cpp \
 	BasicBlock.cpp \
@@ -22,8 +24,8 @@ SRCS+=	AsmWriter.cpp \
 	DiagnosticHandler.cpp \
 	DiagnosticInfo.cpp \
 	DiagnosticPrinter.cpp \
-	DomTreeUpdater.cpp \
 	Dominators.cpp \
+	FPEnv.cpp \
 	Function.cpp \
 	GVMaterializer.cpp \
 	Globals.cpp \
@@ -49,6 +51,7 @@ SRCS+=	AsmWriter.cpp \
 	PassRegistry.cpp \
 	PassTimingInfo.cpp \
 	ProfileSummary.cpp \
+	RemarkStreamer.cpp \
 	SafepointIRVerifier.cpp \
 	Statepoint.cpp \
 	Type.cpp \
@@ -62,14 +65,6 @@ SRCS+=	AsmWriter.cpp \
 CoreCore.cpp:
 	ln -s ${LLVM_SRCS}/lib/IR/Core.cpp $@
 
-.PATH:	${.CURDIR}/../../../llvm/lib/IR
-
-Attributes.o: AttributesCompatFunc.inc
-
-AttributesCompatFunc.inc: AttributesCompatFunc.td
-	${.OBJDIR}/../llvm-tblgen/llvm-tblgen -gen-attrs \
-		-I${LLVM_SRCS}/include/llvm/IR -I${LLVM_SRCS}/lib/Target \
-		-I${LLVM_SRCS}/include \
-		-o ${.TARGET} ${.ALLSRC}
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/IR
 
 CLEANFILES+= CoreCore.cpp

@@ -1,23 +1,24 @@
-# $OpenBSD: Makefile,v 1.7 2019/06/23 22:07:42 patrick Exp $
+# $OpenBSD: Makefile,v 1.8 2020/08/03 14:45:29 patrick Exp $
 
 LIB=	lldELF
 NOPROFILE=
 
-CPPFLAGS+=	-I${LLVM_SRCS}/tools/lld/include
-CPPFLAGS+=	-I${LLVM_SRCS}/tools/lld/ELF
+CPPFLAGS+=	-I${.OBJDIR}/../include/lld/ELF
+CPPFLAGS+=	-I${LLD_SRCS}/include
+CPPFLAGS+=	-I${LLD_SRCS}/ELF
 
 .include <bsd.own.mk>
 SRCS=	AArch64.cpp \
 	AArch64ErrataFix.cpp \
 	AMDGPU.cpp \
 	ARM.cpp \
+	ARMErrataFix.cpp \
 	AVR.cpp \
 	CallGraphSort.cpp \
 	DWARF.cpp \
 	Driver.cpp \
 	DriverUtils.cpp \
 	EhFrame.cpp \
-	Filesystem.cpp \
 	Hexagon.cpp \
 	ICF.cpp \
 	InputFiles.cpp \
@@ -46,15 +47,8 @@ SRCS=	AArch64.cpp \
 	X86.cpp \
 	X86_64.cpp
 
-.PATH:	${.CURDIR}/../../../llvm/tools/lld/ELF
-.PATH:	${.CURDIR}/../../../llvm/tools/lld/ELF/Arch
-
-Driver.o: Options.inc
-
-Options.inc: Options.td
-	${.OBJDIR}/../llvm-tblgen/llvm-tblgen -gen-opt-parser-defs \
-		-I ${LLVM_SRCS}/include \
-		-o ${.TARGET} ${.ALLSRC}
+.PATH:	${.CURDIR}/../../../llvm/lld/ELF
+.PATH:	${.CURDIR}/../../../llvm/lld/ELF/Arch
 
 install:
 	@# Nothing here so far ...

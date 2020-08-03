@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2019/03/05 09:44:41 jsg Exp $
+# $OpenBSD: Makefile,v 1.8 2020/08/03 14:45:26 patrick Exp $
 
 LIB=	LLVMObject
 NOPROFILE=
@@ -13,6 +13,7 @@ SRCS+=	Archive.cpp \
 	ELF.cpp \
 	ELFObjectFile.cpp \
 	ObjectError.cpp \
+	ObjectMinidump.cpp \
 	IRObjectFile.cpp \
 	IRSymtab.cpp \
 	MachOObjectFile.cpp \
@@ -21,14 +22,22 @@ SRCS+=	Archive.cpp \
 	Object.cpp \
 	ObjectFile.cpp \
 	RecordStreamer.cpp \
+	RelocationResolver.cpp \
 	SymbolicFile.cpp \
 	SymbolSize.cpp \
+	TapiFile.cpp \
+	TapiUniversal.cpp \
 	WasmObjectFile.cpp \
-	WindowsResource.cpp
+	WindowsMachineFlag.cpp \
+	WindowsResource.cpp \
+	XCOFFObjectFile.cpp
 
 ObjectError.cpp:
 	ln -s ${LLVM_SRCS}/lib/Object/Error.cpp $@
 
-.PATH:	${.CURDIR}/../../../llvm/lib/Object
+ObjectMinidump.cpp:
+	ln -s ${LLVM_SRCS}/lib/Object/Minidump.cpp $@
 
-CLEANFILES+= ObjectError.cpp
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/Object
+
+CLEANFILES+= ObjectError.cpp ObjectMinidump.cpp

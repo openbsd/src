@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2019/03/05 09:44:41 jsg Exp $
+# $OpenBSD: Makefile,v 1.5 2020/08/03 14:45:27 patrick Exp $
 
 LIB=	LLVMProfileData
 NOPROFILE=
@@ -13,4 +13,4 @@ SRCS+=	InstrProf.cpp \
 	SampleProfReader.cpp \
 	SampleProfWriter.cpp
 
-.PATH:	${.CURDIR}/../../../llvm/lib/ProfileData
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/ProfileData

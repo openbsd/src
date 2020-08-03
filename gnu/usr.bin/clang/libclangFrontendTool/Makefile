@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2017/07/09 15:28:36 espie Exp $
+# $OpenBSD: Makefile,v 1.3 2020/08/03 14:45:29 patrick Exp $
 
 LIB=	clangFrontendTool
 NOPIC=
@@ -9,7 +9,7 @@ CPPFLAGS+=	${CLANG_INCLUDES}
 .include <bsd.own.mk>
 SRCS=	ExecuteCompilerInvocation.cpp
 
-.PATH:	${.CURDIR}/../../../llvm/tools/clang/lib/FrontendTool
+.PATH:	${.CURDIR}/../../../llvm/clang/lib/FrontendTool
 
 install:
 	@# Nothing here so far ...

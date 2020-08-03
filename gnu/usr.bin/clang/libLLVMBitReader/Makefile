@@ -1,14 +1,14 @@
-# $OpenBSD: Makefile,v 1.4 2019/03/05 09:44:40 jsg Exp $
+# $OpenBSD: Makefile,v 1.5 2020/08/03 14:45:25 patrick Exp $
 
 LIB=	LLVMBitReader
 NOPROFILE=
 
 CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Bitcode
 
-SRCS+=	BitReader.cpp \
+SRCS+=	BitcodeAnalyzer.cpp\
+	BitReader.cpp \
 	BitcodeReader.cpp \
-	BitstreamReader.cpp \
 	MetadataLoader.cpp \
 	ValueList.cpp
 
-.PATH:	${.CURDIR}/../../../llvm/lib/Bitcode/Reader
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/Bitcode/Reader

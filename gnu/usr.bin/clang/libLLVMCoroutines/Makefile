@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2019/03/05 09:44:40 jsg Exp $
+# $OpenBSD: Makefile,v 1.4 2020/08/03 14:45:25 patrick Exp $
 
 LIB=	LLVMCoroutines
 NOPROFILE=
@@ -13,4 +13,4 @@ SRCS+=	Coroutines.cpp \
 	CoroFrame.cpp \
 	CoroSplit.cpp
 
-.PATH:	${.CURDIR}/../../../llvm/lib/Transforms/Coroutines
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/Transforms/Coroutines

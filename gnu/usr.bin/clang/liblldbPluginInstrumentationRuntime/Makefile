@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2018/10/04 11:43:29 patrick Exp $
+# $OpenBSD: Makefile,v 1.2 2020/08/03 14:45:30 patrick Exp $
 
 LIB=	lldbPluginInstrumentationRuntime
 NOPIC=
@@ -10,10 +10,10 @@ SRCS=	ASanRuntime.cpp \
 	TSanRuntime.cpp \
 	UBSanRuntime.cpp \
 
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/InstrumentationRuntime/ASan
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/InstrumentationRuntime/MainThreadChecker
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/InstrumentationRuntime/TSan
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/InstrumentationRuntime/UBSan
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/InstrumentationRuntime/ASan
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/InstrumentationRuntime/MainThreadChecker
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/InstrumentationRuntime/TSan
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/InstrumentationRuntime/UBSan
 
 install:
 	@# Nothing here so far ...

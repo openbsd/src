@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2019/06/23 22:07:45 patrick Exp $
+# $OpenBSD: Makefile,v 1.4 2020/08/03 14:45:31 patrick Exp $
 
 LIB=	lldbUtility
 NOPIC=
@@ -20,16 +20,18 @@ SRCS=	ArchSpec.cpp \
 	Environment.cpp \
 	Event.cpp \
 	FileSpec.cpp \
+	GDBRemote.cpp \
 	IOObject.cpp \
-	JSON.cpp \
 	LLDBAssert.cpp \
 	Listener.cpp \
 	Log.cpp \
 	Logging.cpp \
 	NameMatches.cpp \
+	ProcessInfo.cpp \
 	RegisterValue.cpp \
 	RegularExpression.cpp \
 	Reproducer.cpp \
+	ReproducerInstrumentation.cpp \
 	Scalar.cpp \
 	SelectHelper.cpp \
 	SharingPtr.cpp \
@@ -37,7 +39,6 @@ SRCS=	ArchSpec.cpp \
 	Status.cpp \
 	Stream.cpp \
 	StreamCallback.cpp \
-	StreamGDBRemote.cpp \
 	StreamString.cpp \
 	StringExtractor.cpp \
 	StringExtractorGDBRemote.cpp \
@@ -46,13 +47,14 @@ SRCS=	ArchSpec.cpp \
 	StructuredData.cpp \
 	TildeExpressionResolver.cpp \
 	Timer.cpp \
-	UserID.cpp \
-	UriParser.cpp \
 	UUID.cpp \
+	UriParser.cpp \
+	UserID.cpp \
+	UserIDResolver.cpp \
 	VASprintf.cpp \
 	VMRange.cpp \
 
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Utility
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Utility
 
 install:
 	@# Nothing here so far ...

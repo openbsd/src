@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2019/06/23 22:07:44 patrick Exp $
+# $OpenBSD: Makefile,v 1.3 2020/08/03 14:45:30 patrick Exp $
 
 LIB=	lldbPluginPlatform
 NOPIC=
@@ -14,7 +14,6 @@ SRCS=	AdbClient.cpp \
 	PlatformDarwin.cpp \
 	PlatformDarwinKernel.cpp \
 	PlatformFreeBSD.cpp \
-	PlatformKalimba.cpp \
 	PlatformLinux.cpp \
 	PlatformMacOSX.cpp \
 	PlatformNetBSD.cpp \
@@ -29,16 +28,15 @@ SRCS=	AdbClient.cpp \
 	PlatformWindows.cpp \
 	PlatformiOSSimulator.cpp \
 
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/Platform/Android
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/Platform/FreeBSD
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/Platform/Kalimba
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/Platform/Linux
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/Platform/MacOSX
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/Platform/NetBSD
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/Platform/OpenBSD
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/Platform/POSIX
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/Platform/Windows
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/Platform/gdb-server
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Platform/Android
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Platform/FreeBSD
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Platform/Linux
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Platform/MacOSX
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Platform/NetBSD
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Platform/OpenBSD
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Platform/POSIX
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Platform/Windows
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Platform/gdb-server
 
 install:
 	@# Nothing here so far ...

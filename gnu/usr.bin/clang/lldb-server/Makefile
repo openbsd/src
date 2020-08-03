@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2019/11/09 16:45:48 mortimer Exp $
+# $OpenBSD: Makefile,v 1.2 2020/08/03 14:45:31 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -17,8 +17,8 @@ SRCS=	Acceptor.cpp \
 LDADD+=	-lcurses -ledit -lpanel
 
 
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/tools/lldb-server
+.PATH:	${.CURDIR}/../../../llvm/lldb/source
+.PATH:	${.CURDIR}/../../../llvm/lldb/tools/lldb-server
 
 LLVM_LIBDEPS=	clangAST \
     clangAnalysis \

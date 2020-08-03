@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2019/06/23 22:07:39 patrick Exp $
+# $OpenBSD: Makefile,v 1.4 2020/08/03 14:45:24 patrick Exp $
 
 LIB=	LLVMAMDGPUCodeGen
 NOPROFILE=
@@ -20,9 +20,9 @@ SRCS+=	AMDGPUAliasAnalysis.cpp \
 	AMDGPUHSAMetadataStreamer.cpp \
 	AMDGPUInstrInfo.cpp \
 	AMDGPUInstructionSelector.cpp \
-	AMDGPUIntrinsicInfo.cpp \
 	AMDGPUISelDAGToDAG.cpp \
 	AMDGPUISelLowering.cpp \
+	AMDGPUGlobalISelUtils.cpp \
 	AMDGPULegalizerInfo.cpp \
 	AMDGPULibCalls.cpp \
 	AMDGPULibFunc.cpp \
@@ -36,7 +36,7 @@ SRCS+=	AMDGPUAliasAnalysis.cpp \
 	AMDGPUMCInstLower.cpp \
 	AMDGPUOpenCLEnqueuedBlockLowering.cpp \
 	AMDGPUPromoteAlloca.cpp \
-	AMDGPURegAsmNames.inc.cpp \
+	AMDGPUPropagateAttributes.cpp \
 	AMDGPURegisterBankInfo.cpp \
 	AMDGPURegisterInfo.cpp \
 	AMDGPURewriteOutArguments.cpp \
@@ -49,9 +49,12 @@ SRCS+=	AMDGPUAliasAnalysis.cpp \
 	AMDGPUInline.cpp \
 	AMDGPUPerfHintAnalysis.cpp \
 	AMDILCFGStructurizer.cpp \
+	AMDGPUPrintfRuntimeBinding.cpp \
 	GCNDPPCombine.cpp \
 	GCNHazardRecognizer.cpp \
 	GCNILPSched.cpp \
+	GCNRegBankReassign.cpp \
+	GCNNSAReassign.cpp \
 	GCNIterativeScheduler.cpp \
 	GCNMinRegStrategy.cpp \
 	GCNRegPressure.cpp \
@@ -72,10 +75,9 @@ SRCS+=	AMDGPUAliasAnalysis.cpp \
 	R600RegisterInfo.cpp \
 	SIAddIMGInit.cpp \
 	SIAnnotateControlFlow.cpp \
-	SIDebuggerInsertNops.cpp \
 	SIFixSGPRCopies.cpp \
 	SIFixVGPRCopies.cpp \
-	SIFixWWMLiveness.cpp \
+	SIPreAllocateWWMRegs.cpp \
 	SIFixupVectorISel.cpp \
 	SIFoldOperands.cpp \
 	SIFormMemoryClauses.cpp \
@@ -87,6 +89,7 @@ SRCS+=	AMDGPUAliasAnalysis.cpp \
 	SILoadStoreOptimizer.cpp \
 	SILowerControlFlow.cpp \
 	SILowerI1Copies.cpp \
+	SILowerSGPRSpills.cpp \
 	SIMachineFunctionInfo.cpp \
 	SIMachineScheduler.cpp \
 	SIMemoryLegalizer.cpp \
@@ -98,4 +101,4 @@ SRCS+=	AMDGPUAliasAnalysis.cpp \
 	SIShrinkInstructions.cpp \
 	SIWholeQuadMode.cpp
 
-.PATH:	${.CURDIR}/../../../llvm/lib/Target/AMDGPU
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/Target/AMDGPU

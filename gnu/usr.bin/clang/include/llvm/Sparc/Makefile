@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.3 2017/07/09 15:28:34 espie Exp $
+# $OpenBSD: Makefile,v 1.4 2020/08/03 14:45:23 patrick Exp $
 
 .include <bsd.own.mk>
 
-LLVM_SRCS=	${.CURDIR}/../../../../../llvm
+LLVM_SRCS=	${.CURDIR}/../../../../../llvm/llvm
 
 HDRS=	SparcGenAsmMatcher.inc SparcGenAsmWriter.inc \
 	SparcGenCodeEmitter.inc SparcGenCallingConv.inc \

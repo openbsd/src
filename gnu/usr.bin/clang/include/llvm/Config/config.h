@@ -129,9 +129,6 @@
 /* Define if mallinfo() is available on this platform. */
 /* #undef HAVE_MALLINFO */
 
-/* Define to 1 if you have the <malloc.h> header file. */
-#define HAVE_MALLOC_H 1
-
 /* Define to 1 if you have the <malloc/malloc.h> header file. */
 /* #undef HAVE_MALLOC_MALLOC_H */
 
@@ -158,9 +155,6 @@
 
 /* Have pthread_rwlock_init */
 #define HAVE_PTHREAD_RWLOCK_INIT 1
-
-/* Define to 1 if you have the `realpath' function. */
-#define HAVE_REALPATH 1
 
 /* Define to 1 if you have the `sbrk' function. */
 #define HAVE_SBRK 1
@@ -329,10 +323,10 @@
 #define PACKAGE_NAME "LLVM"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "LLVM 8.0.1"
+#define PACKAGE_STRING "LLVM 10.0.0"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "8.0.1"
+#define PACKAGE_VERSION "10.0.0"
 
 /* Define to the vendor of this package. */
 /* #undef PACKAGE_VENDOR */
@@ -340,16 +334,25 @@
 /* Define as the return type of signal handlers (`int' or `void'). */
 #define RETSIGTYPE void
 
+/* Define if std::is_trivially_copyable is supported */
+#define HAVE_STD_IS_TRIVIALLY_COPYABLE 1
+
 /* Define to a function implementing stricmp */
 /* #undef stricmp */
 
 /* Define to a function implementing strdup */
 /* #undef strdup */
 
+/* Define if we have z3 and want to build it */
+#define LLVM_WITH_Z3 0
+
 /* Whether GlobalISel rule coverage is being collected */
 #define LLVM_GISEL_COV_ENABLED 0
 
 /* Define to the default GlobalISel coverage file prefix */
 /* #undef LLVM_GISEL_COV_PREFIX */
+
+/* Whether Timers signpost passes in Xcode Instruments */
+#define LLVM_SUPPORT_XCODE_SIGNPOSTS 0
 
 #endif

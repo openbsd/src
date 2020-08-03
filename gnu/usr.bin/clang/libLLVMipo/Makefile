@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.11 2019/06/23 22:07:41 patrick Exp $
+# $OpenBSD: Makefile,v 1.12 2020/08/03 14:45:28 patrick Exp $
 
 LIB=	LLVMipo
 NOPROFILE=
@@ -8,6 +8,7 @@ CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Transforms/IPO
 
 SRCS+=	ArgumentPromotion.cpp \
 	AlwaysInliner.cpp \
+	Attributor.cpp \
 	BarrierNoopPass.cpp \
 	BlockExtractor.cpp \
 	CalledValuePropagation.cpp \
@@ -46,6 +47,6 @@ SRCS+=	ArgumentPromotion.cpp \
 ipoSCCP.cpp:
 	ln -s ${LLVM_SRCS}/lib/Transforms/IPO/SCCP.cpp $@
 
-.PATH:	${.CURDIR}/../../../llvm/lib/Transforms/IPO
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/Transforms/IPO
 
 CLEANFILES+= ipoSCCP.cpp

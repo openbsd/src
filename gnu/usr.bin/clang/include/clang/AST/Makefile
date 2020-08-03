@@ -1,15 +1,19 @@
-# $OpenBSD: Makefile,v 1.4 2019/06/23 22:07:37 patrick Exp $
+# $OpenBSD: Makefile,v 1.5 2020/08/03 14:45:22 patrick Exp $
 
 .include <bsd.own.mk>
 
 TBLGEN=	${.OBJDIR}/../../../clang-tblgen/clang-tblgen
-CLANG_INC=${.CURDIR}/../../../../../llvm/tools/clang/include
+CLANG_SRCS=${.CURDIR}/../../../../../llvm/clang
+CLANG_INC=${CLANG_SRCS}/include
 
 GEN= AttrImpl.inc AttrTextNodeDump.inc AttrNodeTraverse.inc
 GEN+=AttrVisitor.inc Attrs.inc
 GEN+=CommentCommandInfo.inc CommentCommandList.inc
 GEN+=CommentHTMLNamedCharacterReferences.inc CommentHTMLTags.inc
-GEN+=CommentHTMLTagsProperties.inc CommentNodes.inc DeclNodes.inc StmtNodes.inc
+GEN+=CommentHTMLTagsProperties.inc CommentNodes.inc DeclNodes.inc
+GEN+=StmtNodes.inc TypeNodes.inc Opcodes.inc
+GEN+=AbstractBasicReader.inc AbstractBasicWriter.inc
+GEN+=AbstractTypeReader.inc AbstractTypeWriter.inc
 
 all: ${GEN}
 
@@ -61,15 +65,39 @@ CommentHTMLTagsProperties.inc: ${CLANG_INC}/clang/AST/CommentHTMLTags.td
 		-o ${.TARGET} ${.ALLSRC}
 
 CommentNodes.inc: ${CLANG_INC}/clang/Basic/CommentNodes.td
-	${TBLGEN} -gen-clang-comment-nodes \
+	${TBLGEN} -I${CLANG_INC} -gen-clang-comment-nodes \
 		-o ${.TARGET} ${.ALLSRC}
 
 DeclNodes.inc: ${CLANG_INC}/clang/Basic/DeclNodes.td
-	${TBLGEN} -gen-clang-decl-nodes \
+	${TBLGEN} -I${CLANG_INC} -gen-clang-decl-nodes \
 		-o ${.TARGET} ${.ALLSRC}
 
 StmtNodes.inc: ${CLANG_INC}/clang/Basic/StmtNodes.td
-	${TBLGEN} -gen-clang-stmt-nodes \
+	${TBLGEN} -I${CLANG_INC} -gen-clang-stmt-nodes \
 		-o ${.TARGET} ${.ALLSRC}
-		
+
+TypeNodes.inc: ${CLANG_INC}/clang/Basic/TypeNodes.td
+	${TBLGEN} -I${CLANG_INC} -gen-clang-type-nodes \
+		-o ${.TARGET} ${.ALLSRC}
+
+Opcodes.inc: ${CLANG_SRCS}/lib/AST/Interp/Opcodes.td
+	${TBLGEN} -gen-clang-opcodes \
+		-o ${.TARGET} ${.ALLSRC}
+
+AbstractBasicReader.inc: ${CLANG_INC}/clang/AST/PropertiesBase.td
+	${TBLGEN} -I${CLANG_INC} -gen-clang-basic-reader \
+		-o ${.TARGET} ${.ALLSRC}
+
+AbstractBasicWriter.inc: ${CLANG_INC}/clang/AST/PropertiesBase.td
+	${TBLGEN} -I${CLANG_INC} -gen-clang-basic-writer \
+		-o ${.TARGET} ${.ALLSRC}
+
+AbstractTypeReader.inc: ${CLANG_INC}/clang/AST/TypeProperties.td
+	${TBLGEN} -I${CLANG_INC} -gen-clang-type-reader \
+		-o ${.TARGET} ${.ALLSRC}
+
+AbstractTypeWriter.inc: ${CLANG_INC}/clang/AST/TypeProperties.td
+	${TBLGEN} -I${CLANG_INC} -gen-clang-type-writer \
+		-o ${.TARGET} ${.ALLSRC}
+
 .include <bsd.obj.mk>

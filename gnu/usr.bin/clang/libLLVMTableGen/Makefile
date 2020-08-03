@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2019/02/26 23:39:51 jsg Exp $
+# $OpenBSD: Makefile,v 1.5 2020/08/03 14:45:27 patrick Exp $
 
 LIB=	LLVMTableGen
 NOPIC=
@@ -20,7 +20,7 @@ SRCS=	TableGenError.cpp \
 TableGenError.cpp:
 	ln -s ${LLVM_SRCS}/lib/TableGen/Error.cpp $@
 
-.PATH:	${.CURDIR}/../../../llvm/lib/TableGen
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/TableGen
 
 install:
 	@# Nothing here so far ...

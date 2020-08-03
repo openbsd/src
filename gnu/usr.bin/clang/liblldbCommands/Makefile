@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2019/06/23 22:07:43 patrick Exp $
+# $OpenBSD: Makefile,v 1.4 2020/08/03 14:45:29 patrick Exp $
 
 LIB=	lldbCommands
 NOPIC=
@@ -10,7 +10,6 @@ SRCS=	CommandCompletions.cpp \
 	CommandObjectApropos.cpp \
 	CommandObjectBreakpoint.cpp \
 	CommandObjectBreakpointCommand.cpp \
-	CommandObjectBugreport.cpp \
 	CommandObjectCommands.cpp \
 	CommandObjectDisassemble.cpp \
 	CommandObjectExpression.cpp \
@@ -37,7 +36,7 @@ SRCS=	CommandCompletions.cpp \
 	CommandObjectWatchpointCommand.cpp \
 	CommandObjectLanguage.cpp \
 
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Commands
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Commands
 
 install:
 	@# Nothing here so far ...
@@ -46,3 +45,4 @@ install:
 
 CPPFLAGS+=	${LLDB_INCLUDES}
 CPPFLAGS+=	${CLANG_INCLUDES}
+CPPFLAGS+=	-I${.OBJDIR}/../include/lldb/Commands

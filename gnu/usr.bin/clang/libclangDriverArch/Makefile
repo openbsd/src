@@ -1,11 +1,11 @@
-# $OpenBSD: Makefile,v 1.1 2019/01/27 16:59:42 patrick Exp $
+# $OpenBSD: Makefile,v 1.2 2020/08/03 14:45:28 patrick Exp $
 
 LIB=	clangDriverArch
 NOPIC=
 NOPROFILE=
 
 CPPFLAGS+=	${CLANG_INCLUDES}
-CPPFLAGS+=	-I${LLVM_SRCS}/tools/clang/lib/Driver
+CPPFLAGS+=	-I${CLANG_SRCS}/lib/Driver
 
 .include <bsd.own.mk>
 SRCS=	AArch64.cpp \
@@ -17,7 +17,7 @@ SRCS=	AArch64.cpp \
 	SystemZ.cpp \
 	X86.cpp
 
-.PATH:	${.CURDIR}/../../../llvm/tools/clang/lib/Driver/ToolChains/Arch
+.PATH:	${.CURDIR}/../../../llvm/clang/lib/Driver/ToolChains/Arch
 
 install:
 	@# Nothing here so far ...

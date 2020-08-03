@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2019/06/23 22:07:44 patrick Exp $
+# $OpenBSD: Makefile,v 1.4 2020/08/03 14:45:31 patrick Exp $
 
 LIB=	lldbPluginSymbolFile
 NOPIC=
@@ -6,6 +6,7 @@ NOPROFILE=
 
 .include <bsd.own.mk>
 SRCS=	AppleDWARFIndex.cpp \
+	CodeViewRegisterMapping.cpp \
 	CompileUnitIndex.cpp \
 	DIERef.cpp \
 	DWARFASTParserClang.cpp \
@@ -13,17 +14,14 @@ SRCS=	AppleDWARFIndex.cpp \
 	DWARFAttribute.cpp \
 	DWARFBaseDIE.cpp \
 	DWARFCompileUnit.cpp \
+	DWARFContext.cpp \
 	DWARFDIE.cpp \
-	DWARFDIECollection.cpp \
 	DWARFDataExtractor.cpp \
 	DWARFDebugAbbrev.cpp \
 	DWARFDebugArangeSet.cpp \
 	DWARFDebugAranges.cpp \
 	DWARFDebugInfo.cpp \
 	DWARFDebugInfoEntry.cpp \
-	DWARFDebugLine.cpp \
-	DWARFDebugMacinfo.cpp \
-	DWARFDebugMacinfoEntry.cpp \
 	DWARFDebugMacro.cpp \
 	DWARFDebugRanges.cpp \
 	DWARFDeclContext.cpp \
@@ -31,6 +29,7 @@ SRCS=	AppleDWARFIndex.cpp \
 	DWARFFormValue.cpp \
 	DWARFIndex.cpp \
 	DWARFLocationExpression.cpp \
+	DWARFTypeUnit.cpp \
 	DWARFUnit.cpp \
 	DebugNamesDWARFIndex.cpp \
 	HashedNameToDIE.cpp \
@@ -40,6 +39,7 @@ SRCS=	AppleDWARFIndex.cpp \
 	PDBASTParser.cpp \
 	PDBLocationToDWARFExpression.cpp \
 	PdbAstBuilder.cpp \
+	PdbFPOProgramToDWARFExpression.cpp \
 	PdbIndex.cpp \
 	PdbSymUid.cpp \
 	PdbUtil.cpp \
@@ -55,11 +55,11 @@ SRCS=	AppleDWARFIndex.cpp \
 	UdtRecordCompleter.cpp \
 	UniqueDWARFASTType.cpp \
 
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/SymbolFile/Breakpad
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/SymbolFile/DWARF
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/SymbolFile/NativePDB
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/SymbolFile/PDB
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Plugins/SymbolFile/Symtab
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/SymbolFile/Breakpad
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/SymbolFile/DWARF
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/SymbolFile/NativePDB
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/SymbolFile/PDB
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/SymbolFile/Symtab
 
 install:
 	@# Nothing here so far ...
@@ -68,3 +68,4 @@ install:
 
 CPPFLAGS+=	${LLDB_INCLUDES}
 CPPFLAGS+=	${CLANG_INCLUDES}
+CPPFLAGS+=	-I${.OBJDIR}/../include/lldb/Plugins

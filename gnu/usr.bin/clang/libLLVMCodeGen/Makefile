@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.12 2019/06/23 22:07:39 patrick Exp $
+# $OpenBSD: Makefile,v 1.13 2020/08/03 14:45:25 patrick Exp $
 
 LIB=	LLVMCodeGen
 NOPROFILE=
@@ -17,6 +17,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	CFIInstrInserter.cpp \
 	CalcSpillWeights.cpp \
 	CallingConvLower.cpp \
+	CFGuardLongjmp.cpp \
 	CodeGen.cpp \
 	CodeGenPrepare.cpp \
 	CriticalAntiDepBreaker.cpp \
@@ -27,11 +28,11 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	EarlyIfConversion.cpp \
 	EdgeBundles.cpp \
 	ExecutionDomainFix.cpp \
-	ExpandISelPseudos.cpp \
 	ExpandMemCmp.cpp \
 	ExpandPostRAPseudos.cpp \
 	ExpandReductions.cpp \
 	FEntryInserter.cpp \
+	FinalizeISel.cpp \
 	FaultMaps.cpp \
 	FuncletLayout.cpp \
 	GCMetadata.cpp \
@@ -39,6 +40,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	GCRootLowering.cpp \
 	GCStrategy.cpp \
 	GlobalMerge.cpp \
+	HardwareLoops.cpp \
 	IfConversion.cpp \
 	ImplicitNullChecks.cpp \
 	IndirectBrExpandPass.cpp \
@@ -85,6 +87,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MachineInstrBundle.cpp \
 	MachineLICM.cpp \
 	MachineLoopInfo.cpp \
+	MachineLoopUtils.cpp \
 	MachineModuleInfo.cpp \
 	MachineModuleInfoImpls.cpp \
 	MachineOperand.cpp \
@@ -97,12 +100,17 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	MachineSSAUpdater.cpp \
 	MachineScheduler.cpp \
 	MachineSink.cpp \
+	MachineSizeOpts.cpp \
 	MachineTraceMetrics.cpp \
 	MachineVerifier.cpp \
+	ModuloSchedule.cpp \
 	MacroFusion.cpp \
 	MIRCanonicalizerPass.cpp \
+	MIRNamerPass.cpp \
 	MIRPrinter.cpp \
 	MIRPrintingPass.cpp \
+	MIRVRegNamerUtils.cpp \
+	NonRelocatableStringpool.cpp \
 	OptimizePHIs.cpp \
 	PHIElimination.cpp \
 	PHIEliminationUtils.cpp \
@@ -147,10 +155,12 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	SpillPlacement.cpp \
 	SplitKit.cpp \
 	StackColoring.cpp \
-	StackProtector.cpp \
-	StackSlotColoring.cpp \
 	StackMapLivenessAnalysis.cpp \
 	StackMaps.cpp \
+	StackProtector.cpp \
+	StackSlotColoring.cpp \
+	SwiftErrorValueTracking.cpp \
+	SwitchLoweringUtils.cpp \
 	TailDuplication.cpp \
 	TailDuplicator.cpp \
 	TargetFrameLoweringImpl.cpp \
@@ -162,6 +172,7 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	TargetRegisterInfo.cpp \
 	TargetSchedule.cpp \
 	TargetSubtargetInfo.cpp \
+	TypePromotion.cpp \
 	TwoAddressInstructionPass.cpp \
 	UnreachableBlockElim.cpp \
 	ValueTypes.cpp \
@@ -176,6 +187,6 @@ CodeGenAnalysis.cpp:
 CodeGenLowLevelType.cpp:
 	ln -s ${LLVM_SRCS}/lib/CodeGen/LowLevelType.cpp $@
 
-.PATH:	${.CURDIR}/../../../llvm/lib/CodeGen
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/CodeGen
 
 CLEANFILES+= CodeGenAnalysis.cpp CodeGenLowLevelType.cpp

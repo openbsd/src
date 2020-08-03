@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2019/03/05 09:44:39 jsg Exp $
+# $OpenBSD: Makefile,v 1.5 2020/08/03 14:45:24 patrick Exp $
 
 LIB=	LLVMAArch64Desc
 NOPROFILE=
@@ -9,6 +9,7 @@ CPPFLAGS+=	-I${.OBJDIR}/../include/llvm/AArch64 \
 SRCS+=	AArch64AsmBackend.cpp \
 	AArch64ELFObjectWriter.cpp \
 	AArch64ELFStreamer.cpp \
+	AArch64InstPrinter.cpp \
 	AArch64MachObjectWriter.cpp \
 	AArch64MCAsmInfo.cpp \
 	AArch64MCCodeEmitter.cpp \
@@ -18,4 +19,4 @@ SRCS+=	AArch64AsmBackend.cpp \
 	AArch64WinCOFFObjectWriter.cpp \
 	AArch64WinCOFFStreamer.cpp
 
-.PATH:	${.CURDIR}/../../../llvm/lib/Target/AArch64/MCTargetDesc
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/Target/AArch64/MCTargetDesc

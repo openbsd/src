@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2019/03/05 09:44:39 jsg Exp $
+# $OpenBSD: Makefile,v 1.3 2020/08/03 14:45:24 patrick Exp $
 
 LIB=	LLVMAMDGPUInfo
 NOPROFILE=
@@ -8,4 +8,4 @@ CPPFLAGS+=	-I${.OBJDIR}/../include/llvm/AMDGPU \
 
 SRCS+=	AMDGPUTargetInfo.cpp
 
-.PATH:	${.CURDIR}/../../../llvm/lib/Target/AMDGPU/TargetInfo
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/Target/AMDGPU/TargetInfo

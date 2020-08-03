@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2018/10/04 11:43:29 patrick Exp $
+# $OpenBSD: Makefile,v 1.2 2020/08/03 14:45:30 patrick Exp $
 
 LIB=	lldbInitialization
 NOPIC=
@@ -9,7 +9,7 @@ SRCS=	SystemInitializerCommon.cpp \
 	SystemInitializer.cpp \
 	SystemLifetimeManager.cpp \
 
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Initialization
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Initialization
 
 install:
 	@# Nothing here so far ...

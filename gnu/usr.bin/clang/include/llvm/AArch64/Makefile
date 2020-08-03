@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.4 2018/04/06 14:44:04 patrick Exp $
+# $OpenBSD: Makefile,v 1.5 2020/08/03 14:45:23 patrick Exp $
 
 .include <bsd.own.mk>
 
-LLVM_SRCS=	${.CURDIR}/../../../../../llvm
+LLVM_SRCS=	${.CURDIR}/../../../../../llvm/llvm
 
 HDRS=	AArch64GenAsmMatcher.inc AArch64GenAsmWriter.inc \
 	AArch64GenAsmWriter1.inc \
@@ -12,7 +12,7 @@ HDRS=	AArch64GenAsmMatcher.inc AArch64GenAsmWriter.inc \
 	AArch64GenSubtargetInfo.inc \
 	AArch64GenMCCodeEmitter.inc AArch64GenMCPseudoLowering.inc \
 	AArch64GenSystemOperands.inc AArch64GenRegisterBank.inc \
-	AArch64GenGlobalISel.inc
+	AArch64GenGlobalISel.inc AArch64GenGICombiner.inc
 
 all: ${HDRS}
 
@@ -94,6 +94,12 @@ AArch64GenRegisterBank.inc: ${LLVM_SRCS}/lib/Target/AArch64/AArch64.td
 
 AArch64GenGlobalISel.inc: ${LLVM_SRCS}/lib/Target/AArch64/AArch64.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-global-isel \
+		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/AArch64 \
+		-o ${.TARGET} ${.ALLSRC}
+
+AArch64GenGICombiner.inc: ${LLVM_SRCS}/lib/Target/AArch64/AArch64.td
+	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-global-isel-combiner \
+		-combiners="AArch64PreLegalizerCombinerHelper" \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/AArch64 \
 		-o ${.TARGET} ${.ALLSRC}
 

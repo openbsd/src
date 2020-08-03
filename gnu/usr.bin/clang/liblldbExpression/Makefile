@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2018/10/04 11:43:29 patrick Exp $
+# $OpenBSD: Makefile,v 1.2 2020/08/03 14:45:29 patrick Exp $
 
 LIB=	lldbExpression
 NOPIC=
@@ -9,10 +9,8 @@ NOPROFILE=
 SRCS=	DiagnosticManager.cpp \
 	DWARFExpression.cpp \
 	Expression.cpp \
-	ExpressionSourceCode.cpp \
 	ExpressionVariable.cpp \
 	FunctionCaller.cpp \
-	IRDynamicChecks.cpp \
 	IRExecutionUnit.cpp \
 	IRInterpreter.cpp \
 	IRMemoryMap.cpp \
@@ -22,7 +20,7 @@ SRCS=	DiagnosticManager.cpp \
 	UserExpression.cpp \
 	UtilityFunction.cpp \
 
-.PATH:	${.CURDIR}/../../../llvm/tools/lldb/source/Expression
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Expression
 
 install:
 	@# Nothing here so far ...
