@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scanner.l,v 1.26 2018/12/09 15:07:06 denis Exp $	*/
+/*	$OpenBSD: scanner.l,v 1.27 2020/08/03 03:29:58 dlg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -220,6 +220,7 @@ or|"||"		return OR;
 not		return '!';
 
 len|length	return LEN;
+rnd|random	return RND;
 inbound		return INBOUND;
 outbound	return OUTBOUND;
 

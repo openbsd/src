@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.h,v 1.19 2018/12/09 15:07:06 denis Exp $	*/
+/*	$OpenBSD: gencode.h,v 1.20 2020/08/03 03:29:58 dlg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -155,6 +155,7 @@ struct qual {
 struct arth *gen_loadi(int);
 struct arth *gen_load(int, struct arth *, int);
 struct arth *gen_loadlen(void);
+struct arth *gen_loadrnd(void);
 struct arth *gen_neg(struct arth *);
 struct arth *gen_arth(int, struct arth *, struct arth *);
 

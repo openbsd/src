@@ -1,4 +1,4 @@
-/*	$OpenBSD: optimize.c,v 1.20 2018/04/26 16:22:40 guenther Exp $	*/
+/*	$OpenBSD: optimize.c,v 1.21 2020/08/03 03:29:58 dlg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -894,6 +894,7 @@ opt_stmt(s, val, alter)
 		break;
 
 	case BPF_LD|BPF_LEN:
+	case BPF_LD|BPF_RND:
 		v = F(s->code, 0L, 0L);
 		vstore(s, &val[A_ATOM], v, alter);
 		break;

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: pcap-filter.5,v 1.3 2019/12/17 15:22:48 jca Exp $
+.\"     $OpenBSD: pcap-filter.5,v 1.4 2020/08/03 03:29:58 dlg Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -20,7 +20,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: December 17 2019 $
+.Dd $Mdocdate: August 3 2020 $
 .Dt PCAP-FILTER 5
 .Os
 .Sh NAME
@@ -692,7 +692,7 @@ is an arithmetic expression composed of integer constants
 .Sq | ,
 .Sq << ,
 .Sq >> ) ,
-a length operator, and special packet data accessors.
+a length operator, a random operator, and special packet data accessors.
 Note that all comparisons are unsigned, so that, for example,
 0x80000000 and 0xffffffff are > 0.
 To access data inside the packet, use the following syntax:
@@ -742,6 +742,9 @@ it can be either one, two, or four, and defaults to one.
 The length operator, indicated by the keyword
 .Ar len ,
 gives the length of the packet.
+The random operator, indicated by the keyword
+.Ar random ,
+generates a random number.
 .Pp
 For example,
 .Dq ether[0] & 1 != 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf_image.c,v 1.10 2018/06/03 10:29:28 sthen Exp $	*/
+/*	$OpenBSD: bpf_image.c,v 1.11 2020/08/03 03:29:58 dlg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1994, 1995, 1996
@@ -80,6 +80,11 @@ bpf_image(p, n)
 	case BPF_LD|BPF_W|BPF_LEN:
 		op = "ld";
 		fmt = "#pktlen";
+		break;
+
+	case BPF_LD|BPF_W|BPF_RND:
+		op = "ld";
+		fmt = "#random";
 		break;
 
 	case BPF_LD|BPF_W|BPF_IND:

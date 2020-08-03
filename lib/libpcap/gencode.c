@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.53 2020/07/21 22:44:55 dlg Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.54 2020/08/03 03:29:58 dlg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -2861,6 +2861,22 @@ gen_loadlen()
 	struct slist *s;
 
 	s = new_stmt(BPF_LD|BPF_LEN);
+	s->next = new_stmt(BPF_ST);
+	s->next->s.k = regno;
+	a->s = s;
+	a->regno = regno;
+
+	return a;
+}
+
+struct arth *
+gen_loadrnd()
+{
+	int regno = alloc_reg();
+	struct arth *a = (struct arth *)newchunk(sizeof(*a));
+	struct slist *s;
+
+	s = new_stmt(BPF_LD|BPF_RND);
 	s->next = new_stmt(BPF_ST);
 	s->next->s.k = regno;
 	a->s = s;
