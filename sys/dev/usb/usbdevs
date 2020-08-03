@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.719 2020/07/22 11:12:40 jsg Exp $
+$OpenBSD: usbdevs,v 1.720 2020/08/03 14:25:44 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -406,6 +406,7 @@ vendor NEODIO		0x0aec  Neodio
 vendor OPTION		0x0af0  Option
 vendor ASUS		0x0b05	ASUS
 vendor TODOS		0x0b0c	Todos Data System
+vendor GEARHEAD		0x0b38	Gear Head
 vendor OCT		0x0b39	Omnidirectional Control Technology
 vendor TEKRAM		0x0b3b	Tekram Technology
 vendor HAL		0x0b41	HAL Corporation
@@ -2054,6 +2055,10 @@ product GARMIN GPSMAP62S	0x2459	GPSmap 62s
 
 /* GCT Semiconductor products */
 product GCTSEMICON INSTALL	0x7f40	GDM720x MASS storage mode	
+
+/* Gear Head products */
+product GEARHEAD GHKB		0x0003	Gear Head Keyboard
+product GEARHEAD GHKB107	0x0010	Gear Head 107-Key Keyboard
 
 /* GEMPLUS products */
 product GEMPLUS PROXPU		0x5501	Prox-PU/CU
