@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.79 2020/08/03 19:27:57 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.80 2020/08/03 19:43:16 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -853,8 +853,12 @@ tlsext_sni_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 int
 tlsext_ocsp_client_needs(SSL *s, uint16_t msg_type)
 {
-	return (s->tlsext_status_type == TLSEXT_STATUSTYPE_ocsp &&
-	    s->version != DTLS1_VERSION);
+	if (SSL_IS_DTLS(s))
+		return 0;
+	if (msg_type != SSL_TLSEXT_MSG_CH)
+		return 0;
+
+	return (s->tlsext_status_type == TLSEXT_STATUSTYPE_ocsp);
 }
 
 int
