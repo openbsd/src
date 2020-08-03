@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.78 2020/07/03 07:17:26 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.79 2020/08/03 19:27:57 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1018,6 +1018,17 @@ tlsext_ocsp_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 	uint8_t status_type;
 
 	if (version >= TLS1_3_VERSION) {
+		if (msg_type == SSL_TLSEXT_MSG_CR) {
+			/*
+			 * RFC 8446, 4.4.2.1 - the server may request an OCSP
+			 * response with an empty status_request.
+			 */
+			if (CBS_len(cbs) == 0)
+				return 1;
+
+			SSLerror(s, SSL_R_LENGTH_MISMATCH);
+			return 0;
+		}
 		if (!CBS_get_u8(cbs, &status_type)) {
 			SSLerror(s, SSL_R_LENGTH_MISMATCH);
 			return 0;
