@@ -1,4 +1,4 @@
-.\"     $OpenBSD: pcap-filter.5,v 1.4 2020/08/03 03:29:58 dlg Exp $
+.\"     $OpenBSD: pcap-filter.5,v 1.5 2020/08/03 03:40:02 dlg Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -333,6 +333,9 @@ True if the packet has a length greater than or equal to
 .Ar length .
 This is equivalent to
 .Cm len >= Ar length .
+.It Cm sample Ar samplerate
+True if the packet has been randomly selected or sampled at a rate of 1 per
+.Ar samplerate .
 .It Cm ip proto Ar protocol
 True if the packet is an IPv4 packet (see
 .Xr ip 4 )

@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: grammar.y,v 1.21 2020/08/03 03:29:58 dlg Exp $	*/
+/*	$OpenBSD: grammar.y,v 1.22 2020/08/03 03:40:02 dlg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -113,7 +113,7 @@ pcap_parse()
 %token	GEQ LEQ NEQ
 %token	ID EID HID HID6
 %token	LSH RSH
-%token  LEN RND
+%token  LEN RND SAMPLE
 %token  IPV6 ICMPV6 AH ESP
 %token	VLAN MPLS
 
@@ -283,6 +283,7 @@ other:	  pqual TK_BROADCAST	{ $$ = gen_broadcast($1); }
 	| MPLS			{ $$ = gen_mpls(-1); }
 	| pfvar			{ $$ = $1; }
 	| pqual p80211		{ $$ = $2; }
+	| SAMPLE NUM		{ $$ = gen_sample($2); }
 	;
 
 pfvar:	  PF_IFNAME ID		{ $$ = gen_pf_ifname($2); }

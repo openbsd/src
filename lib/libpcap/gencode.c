@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.54 2020/08/03 03:29:58 dlg Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.55 2020/08/03 03:40:02 dlg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -3451,6 +3451,27 @@ gen_vlan(vlan_num)
 		gen_and(b0, b1);
 		b0 = b1;
 	}
+
+	return (b0);
+}
+
+struct block *
+gen_sample(int rate)
+{
+	struct block *b0;
+	long long threshold = 0x100000000LL; /* 0xffffffff + 1 */
+
+	if (rate < 2) {
+		bpf_error("sample %d is too low", rate);
+		/*NOTREACHED*/
+	}
+	if (rate > (1 << 20)) {
+		bpf_error("sample %d is too high", rate);
+		/*NOTREACHED*/
+	}
+
+	threshold /= rate;
+	b0 = gen_relation(BPF_JGT, gen_loadrnd(), gen_loadi(threshold), 1);
 
 	return (b0);
 }

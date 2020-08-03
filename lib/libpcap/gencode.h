@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.h,v 1.20 2020/08/03 03:29:58 dlg Exp $	*/
+/*	$OpenBSD: gencode.h,v 1.21 2020/08/03 03:40:02 dlg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -178,6 +178,7 @@ struct block *gen_byteop(int, int, int);
 struct block *gen_broadcast(int);
 struct block *gen_multicast(int);
 struct block *gen_inbound(int);
+struct block *gen_sample(int);
 
 struct block *gen_vlan(int);
 struct block *gen_mpls(int);
