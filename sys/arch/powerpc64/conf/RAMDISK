@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.5 2020/08/03 19:05:46 deraadt Exp $
+# $OpenBSD: RAMDISK,v 1.6 2020/08/04 23:19:30 deraadt Exp $
 
 machine		powerpc64
 maxusers	4
@@ -19,6 +19,9 @@ option		MSDOSFS
 option		INET6
 option		EXT2FS
 option		NFSCLIENT
+option		CD9660
+option		MSDOSFS
+option		INET6
 option		CRYPTO
 
 config		bsd	root on rd0a swap on rd0b
