@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.14 2020/07/22 20:41:26 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.15 2020/08/04 11:48:57 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -20,6 +20,7 @@
 #include <sys/atomic.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/timeout.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -59,6 +60,9 @@ uint64_t tb_freq = 512000000;	/* POWER8, POWER9 */
 
 struct cpu_info cpu_info[MAXCPUS];
 struct cpu_info *cpu_info_primary = &cpu_info[0];
+
+struct timeout cpu_darn_to;
+void	cpu_darn(void *);
 
 int	cpu_match(struct device *, void *, void *);
 void	cpu_attach(struct device *, struct device *, void *);
@@ -171,6 +175,15 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		level++;
 	}
 
+	if (CPU_IS_PRIMARY(ci)) {
+		switch (CPU_VERSION(pvr)) {
+		case CPU_IBMPOWER9:
+			timeout_set(&cpu_darn_to, cpu_darn, NULL);
+			cpu_darn(NULL);
+			break;
+		}
+	}
+
 #ifdef MULTIPROCESSOR
 	if (dev->dv_unit != 0) {
 		int timeout = 10000;
@@ -200,6 +213,20 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 
 	/* Update timebase frequency to reflect reality. */
 	tb_freq = OF_getpropint(faa->fa_node, "timebase-frequency", tb_freq);
+}
+
+void
+cpu_darn(void *arg)
+{
+	uint64_t value;
+
+	__asm volatile ("darn %0, 1" : "=r"(value));
+	if (value != UINT64_MAX) {
+		enqueue_randomness(value);
+		enqueue_randomness(value >> 32);
+	}
+
+	timeout_add_msec(&cpu_darn_to, 10);
 }
 
 #ifdef MULTIPROCESSOR
