@@ -1,4 +1,4 @@
-/* $OpenBSD: proc.c,v 1.17 2020/05/16 16:07:55 nicm Exp $ */
+/* $OpenBSD: proc.c,v 1.18 2020/08/04 08:50:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -226,6 +226,7 @@ proc_set_signals(struct tmuxproc *tp, void (*signalcb)(int))
 	sigaction(SIGTSTP, &sa, NULL);
 	sigaction(SIGTTIN, &sa, NULL);
 	sigaction(SIGTTOU, &sa, NULL);
+	sigaction(SIGQUIT, &sa, NULL);
 
 	signal_set(&tp->ev_sigint, SIGINT, proc_signal_cb, tp);
 	signal_add(&tp->ev_sigint, NULL);
