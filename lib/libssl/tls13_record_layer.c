@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.49 2020/06/01 19:51:31 tb Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.50 2020/08/04 14:34:54 inoguchi Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -434,6 +434,8 @@ tls13_record_layer_set_traffic_key(const EVP_AEAD *aead, EVP_AEAD_CTX *aead_ctx,
 	struct tls13_secret context = { .data = "", .len = 0 };
 	struct tls13_secret key = { .data = NULL, .len = 0 };
 	int ret = 0;
+
+	EVP_AEAD_CTX_cleanup(aead_ctx);
 
 	freezero(iv->data, iv->len);
 	iv->data = NULL;
