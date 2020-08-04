@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.39 2020/07/30 12:52:54 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.40 2020/08/04 16:28:16 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -860,6 +860,7 @@ pmap_create(void)
 
 	pm = pool_get(&pmap_pmap_pool, PR_WAITOK | PR_ZERO);
 	pm->pm_refs = 1;
+	PMAP_VP_LOCK_INIT(pm);
 	LIST_INIT(&pm->pm_slbd);
 	return pm;
 }
