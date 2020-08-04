@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.122 2020/07/29 12:09:31 mvs Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.123 2020/08/04 09:32:05 mvs Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -101,10 +101,6 @@ struct radix_node_head	*pipex_rd_head4 = NULL;	/* [N] */
 struct radix_node_head	*pipex_rd_head6 = NULL;	/* [N] */
 struct timeout pipex_timer_ch;		/* callout timer context */
 int pipex_prune = 1;			/* [I] walk list every seconds */
-
-/* pipex traffic queue */
-struct mbuf_queue pipexinq = MBUF_QUEUE_INITIALIZER(IFQ_MAXLEN, IPL_NET);
-struct mbuf_queue pipexoutq = MBUF_QUEUE_INITIALIZER(IFQ_MAXLEN, IPL_NET);
 
 /* borrow an mbuf pkthdr field */
 #define ph_ppp_proto ether_vtag
@@ -725,82 +721,6 @@ pipex_lookup_by_session_id(int protocol, int session_id)
 }
 
 /***********************************************************************
- * Queue and Software Interrupt Handler
- ***********************************************************************/
-void
-pipexintr(void)
-{
-	struct pipex_session *pkt_session;
-	u_int16_t proto;
-	struct mbuf *m;
-	struct mbuf_list ml;
-
-	/* ppp output */
-	mq_delist(&pipexoutq, &ml);
-	while ((m = ml_dequeue(&ml)) != NULL) {
-		pkt_session = m->m_pkthdr.ph_cookie;
-		if (pkt_session == NULL) {
-			m_freem(m);
-			continue;
-		}
-		proto = m->m_pkthdr.ph_ppp_proto;
-
-		m->m_pkthdr.ph_cookie = NULL;
-		m->m_pkthdr.ph_ppp_proto = 0;
-
-		if (pkt_session->is_multicast != 0) {
-			struct pipex_session *session;
-			struct mbuf *m0;
-
-			LIST_FOREACH(session, &pipex_session_list,
-			    session_list) {
-				if (session->pipex_iface !=
-				    pkt_session->pipex_iface)
-					continue;
-				if (session->ip_forward == 0 &&
-				    session->ip6_forward == 0)
-					continue;
-				m0 = m_copym(m, 0, M_COPYALL, M_NOWAIT);
-				if (m0 == NULL) {
-					session->stat.oerrors++;
-					continue;
-				}
-				pipex_ppp_output(m0, session, proto);
-			}
-			m_freem(m);
-		} else
-			pipex_ppp_output(m, pkt_session, proto);
-	}
-
-	/* ppp input */
-	mq_delist(&pipexinq, &ml);
-	while ((m = ml_dequeue(&ml)) != NULL) {
-		pkt_session = m->m_pkthdr.ph_cookie;
-		if (pkt_session == NULL) {
-			m_freem(m);
-			continue;
-		}
-		pipex_ppp_input(m, pkt_session, 0);
-	}
-}
-
-Static int
-pipex_ppp_enqueue(struct mbuf *m0, struct pipex_session *session,
-    struct mbuf_queue *mq)
-{
-	m0->m_pkthdr.ph_cookie = session;
-	/* XXX need to support other protocols */
-	m0->m_pkthdr.ph_ppp_proto = PPP_IP;
-
-	if (mq_enqueue(mq, m0) != 0)
-		return (1);
-
-	schednetisr(NETISR_PIPEX);
-
-	return (0);
-}
-
-/***********************************************************************
  * Timer functions
  ***********************************************************************/
 Static void
@@ -852,13 +772,6 @@ pipex_timer(void *ignored_arg)
 			/* FALLTHROUGH */
 
 		case PIPEX_STATE_CLOSED:
-			/*
-			 * mbuf queued in pipexinq or pipexoutq may have a
-			 * refererce to this session.
-			 */
-			if (!mq_empty(&pipexinq) || !mq_empty(&pipexoutq))
-				continue;
-
 			pipex_destroy_session(session);
 			break;
 
@@ -958,12 +871,29 @@ pipex_ip_output(struct mbuf *m0, struct pipex_session *session)
 			if (m0 == NULL)
 				goto dropped;
 		}
-	} else
+
+		pipex_ppp_output(m0, session, PPP_IP);
+	} else {
+		struct pipex_session *session_tmp;
+		struct mbuf *m;
+
 		m0->m_flags &= ~(M_BCAST|M_MCAST);
 
-	/* output ip packets to the session tunnel */
-	if (pipex_ppp_enqueue(m0, session, &pipexoutq))
-		goto dropped;
+		LIST_FOREACH(session_tmp, &pipex_session_list, session_list) {
+			if (session_tmp->pipex_iface != session->pipex_iface)
+				continue;
+			if (session_tmp->ip_forward == 0 &&
+			    session_tmp->ip6_forward == 0)
+				continue;
+			m = m_copym(m0, 0, M_COPYALL, M_NOWAIT);
+			if (m == NULL) {
+				session_tmp->stat.oerrors++;
+				continue;
+			}
+			pipex_ppp_output(m, session_tmp, PPP_IP);
+		}
+		m_freem(m0);
+	}
 
 	return;
 drop:
@@ -1241,7 +1171,7 @@ drop:
 
 Static struct mbuf *
 pipex_common_input(struct pipex_session *session, struct mbuf *m0, int hlen,
-    int plen, int useq)
+    int plen)
 {
 	int proto, ppphlen;
 	u_char code;
@@ -1289,19 +1219,12 @@ pipex_common_input(struct pipex_session *session, struct mbuf *m0, int hlen,
 			m_adj(m0, plen - m0->m_pkthdr.len);
 	}
 
-	if (!useq) {
-		pipex_ppp_input(m0, session, 0);
-		return (NULL);
-	}
+	pipex_ppp_input(m0, session, 0);
 
-	/* input ppp packets to kernel session */
-	if (pipex_ppp_enqueue(m0, session, &pipexinq) != 0)
-		goto dropped;
-	else
-		return (NULL);
+	return (NULL);
+
 drop:
 	m_freem(m0);
-dropped:
 	session->stat.ierrors++;
 	return (NULL);
 
@@ -1398,7 +1321,7 @@ pipex_pppoe_input(struct mbuf *m0, struct pipex_session *session)
 	    sizeof(struct pipex_pppoe_header), (caddr_t)&pppoe);
 
 	hlen = sizeof(struct ether_header) + sizeof(struct pipex_pppoe_header);
-	if ((m0 = pipex_common_input(session, m0, hlen, ntohs(pppoe.length), 0))
+	if ((m0 = pipex_common_input(session, m0, hlen, ntohs(pppoe.length)))
 	    == NULL)
 		return (NULL);
 	m_freem(m0);
@@ -1694,7 +1617,7 @@ pipex_pptp_input(struct mbuf *m0, struct pipex_session *session)
 			pipex_pptp_output(NULL, session, 0, 1);
 	}
 
-	if ((m0 = pipex_common_input(session, m0, hlen, ntohs(gre->len), 1))
+	if ((m0 = pipex_common_input(session, m0, hlen, ntohs(gre->len)))
 	    == NULL) {
 		/* ok,  The packet is for PIPEX */
 		if (!rewind)
@@ -2129,7 +2052,7 @@ pipex_l2tp_input(struct mbuf *m0, int off0, struct pipex_session *session,
 
 	length -= hlen + offset;
 	hlen += off0 + offset;
-	if ((m0 = pipex_common_input(session, m0, hlen, length, 1)) == NULL) {
+	if ((m0 = pipex_common_input(session, m0, hlen, length)) == NULL) {
 		/* ok,  The packet is for PIPEX */
 		if (!rewind)
 			session->proto.l2tp.nr_gap += nseq;
@@ -3052,12 +2975,6 @@ pipex_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			return (ENOTDIR);
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &pipex_enable));
-	case PIPEXCTL_INQ:
-	        return (sysctl_mq(name + 1, namelen - 1,
-		    oldp, oldlenp, newp, newlen, &pipexinq));
-	case PIPEXCTL_OUTQ:
-	        return (sysctl_mq(name + 1, namelen - 1,
-		    oldp, oldlenp, newp, newlen, &pipexoutq));
 	default:
 		return (ENOPROTOOPT);
 	}

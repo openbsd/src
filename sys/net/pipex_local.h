@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.38 2020/07/29 12:09:31 mvs Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.39 2020/08/04 09:32:05 mvs Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -403,7 +403,8 @@ void                  pipex_ip_input (struct mbuf *, struct pipex_session *);
 #ifdef INET6
 void                  pipex_ip6_input (struct mbuf *, struct pipex_session *);
 #endif
-struct mbuf           *pipex_common_input(struct pipex_session *, struct mbuf *, int, int, int);
+struct mbuf           *pipex_common_input(struct pipex_session *,
+                          struct mbuf *, int, int);
 
 #ifdef PIPEX_PPPOE
 void                  pipex_pppoe_output (struct mbuf *, struct pipex_session *);

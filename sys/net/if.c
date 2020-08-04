@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.616 2020/07/24 18:17:14 mvs Exp $	*/
+/*	$OpenBSD: if.c,v 1.617 2020/08/04 09:32:05 mvs Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -906,13 +906,6 @@ if_netisr(void *unused)
 		if (n & (1 << NETISR_PPPOE)) {
 			KERNEL_LOCK();
 			pppoeintr();
-			KERNEL_UNLOCK();
-		}
-#endif
-#ifdef PIPEX
-		if (n & (1 << NETISR_PIPEX)) {
-			KERNEL_LOCK();
-			pipexintr();
 			KERNEL_UNLOCK();
 		}
 #endif

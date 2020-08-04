@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.h,v 1.26 2020/07/29 12:09:31 mvs Exp $	*/
+/*	$OpenBSD: pipex.h,v 1.27 2020/08/04 09:32:05 mvs Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -33,15 +33,11 @@
  * Names for pipex sysctl objects
  */
 #define PIPEXCTL_ENABLE		1
-#define PIPEXCTL_INQ		2
-#define PIPEXCTL_OUTQ		3
-#define PIPEXCTL_MAXID		4
+#define PIPEXCTL_MAXID		2
 
 #define PIPEXCTL_NAMES { \
         { 0, 0 }, \
         { "enable", CTLTYPE_INT }, \
-        { "inq", CTLTYPE_NODE }, \
-        { "outq", CTLTYPE_NODE }, \
 }
 
 #define PIPEX_PROTO_L2TP		1	/* protocol L2TP */

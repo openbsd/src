@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.2,v 1.40 2020/05/17 05:48:39 ratchov Exp $
+.\"	$OpenBSD: sysctl.2,v 1.41 2020/08/04 09:32:05 mvs Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 17 2020 $
+.Dd $Mdocdate: August 4 2020 $
 .Dt SYSCTL 2
 .Os
 .Sh NAME
@@ -2033,35 +2033,11 @@ The currently defined variable names are:
 .Bl -column "Third level name" "integer" "Changeable" -offset indent
 .It Sy "Third level name" Ta Sy "Type" Ta Sy "Changeable"
 .It Dv PIPEXCTL_ENABLE Ta integer Ta yes
-.It Dv PIPEXCTL_INQ Ta node Ta not applicable
-.It Dv PIPEXCTL_OUTQ Ta node Ta not applicable
 .El
 .Bl -tag -width "123456"
 .It Dv PIPEXCTL_ENABLE
 If set to 1, enable PIPEX processing.
 The default is 0.
-.It Dv PIPEXCTL_INQ Pq Va net.pipex.inq
-Fourth level comprises an array of
-.Vt struct ifqueue
-structures containing information about the PIPEX packet input queue.
-The forth level names for the elements of
-.Vt struct ifqueue
-are the same as described in
-.Li ip.arpq
-in the
-.Dv PF_INET
-section.
-.It Dv PIPEXCTL_OUTQ Pq Va net.pipex.outq
-Fourth level comprises an array of
-.Vt struct ifqueue
-structures containing information about PIPEX packet output queue.
-The forth level names for the elements of
-.Vt struct ifqueue
-are the same as described in
-.Li ip.arpq
-in the
-.Dv PF_INET
-section.
 .El
 .El
 .Ss CTL_VFS
