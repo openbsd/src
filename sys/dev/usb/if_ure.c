@@ -1,6 +1,7 @@
-/*	$OpenBSD: if_ure.c,v 1.17 2020/07/31 10:49:33 mglocker Exp $	*/
+/*	$OpenBSD: if_ure.c,v 1.18 2020/08/04 14:45:46 kevlo Exp $	*/
 /*-
  * Copyright (c) 2015, 2016, 2019 Kevin Lo <kevlo@openbsd.org>
+ * Copyright (c) 2020 Jonathon Fletcher <jonathon.fletcher@gmail.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -117,11 +118,14 @@ void		ure_miibus_writereg(struct device *, int, int, int);
 void		ure_lock_mii(struct ure_softc *);
 void		ure_unlock_mii(struct ure_softc *);
 
-int		ure_encap(struct ure_softc *, struct mbuf *);
+int		ure_encap_txpkt(struct mbuf *, char *, uint32_t);
+int		ure_encap_xfer(struct ifnet *, struct ure_softc *,
+		    struct ure_chain *);
 void		ure_rxeof(struct usbd_xfer *, void *, usbd_status);
 void		ure_txeof(struct usbd_xfer *, void *, usbd_status);
-int		ure_rx_list_init(struct ure_softc *);
-int		ure_tx_list_init(struct ure_softc *);
+int		ure_xfer_list_init(struct ure_softc *, struct ure_chain *,
+		    uint32_t, int);
+void		ure_xfer_list_free(struct ure_softc *, struct ure_chain *, int);
 
 void		ure_tick_task(void *);
 void		ure_tick(void *);
@@ -625,12 +629,36 @@ void
 ure_watchdog(struct ifnet *ifp)
 {
 	struct ure_softc	*sc = ifp->if_softc;
+	struct ure_chain	*c;
+	usbd_status		err;
+	int			i, s;
+
+	ifp->if_timer = 0;
 
 	if (usbd_is_dying(sc->ure_udev))
 		return;
 
+	if ((ifp->if_flags & (IFF_RUNNING|IFF_UP)) != (IFF_RUNNING|IFF_UP))
+		return;
+
+	sc = ifp->if_softc;
+	s = splnet();
+
 	ifp->if_oerrors++;
-	printf("%s: watchdog timeout\n", sc->ure_dev.dv_xname);
+	DPRINTF(("%s: watchdog timeout\n", sc->ure_dev.dv_xname));
+
+	for (i = 0; i < URE_TX_LIST_CNT; i++) {
+		c = &sc->ure_cdata.ure_tx_chain[i];
+		if (c->uc_cnt > 0) {
+			usbd_get_xfer_status(c->uc_xfer, NULL, NULL, NULL,
+			    &err);
+			ure_txeof(c->uc_xfer, c, err);
+		}
+	}
+
+	if (ifq_is_oactive(&ifp->if_snd))
+		ifq_restart(&ifp->if_snd);
+	splx(s);
 }
 
 void
@@ -653,17 +681,25 @@ ure_init(void *xsc)
 	else
 		ure_rtl8153_nic_reset(sc);
 
-	if (ure_rx_list_init(sc) == ENOBUFS) {
+	if (ure_xfer_list_init(sc, sc->ure_cdata.ure_rx_chain,
+		sc->ure_rxbufsz, URE_RX_LIST_CNT) == ENOBUFS) {
 		printf("%s: rx list init failed\n", sc->ure_dev.dv_xname);
 		splx(s);
 		return;
 	}
 
-	if (ure_tx_list_init(sc) == ENOBUFS) {
+	if (ure_xfer_list_init(sc, sc->ure_cdata.ure_tx_chain,
+		sc->ure_txbufsz, URE_TX_LIST_CNT) == ENOBUFS) {
 		printf("%s: tx list init failed\n", sc->ure_dev.dv_xname);
 		splx(s);
 		return;
 	}
+
+	/* Initialize the SLIST we are using for the multiple tx buffers */
+	SLIST_INIT(&sc->ure_cdata.ure_tx_free);
+	for (i = 0; i < URE_TX_LIST_CNT; i++)
+		SLIST_INSERT_HEAD(&sc->ure_cdata.ure_tx_free,
+		    &sc->ure_cdata.ure_tx_chain[i], uc_list);
 
 	/* Set MAC address. */
 	ure_write_1(sc, URE_PLA_CRWECR, URE_MCU_TYPE_PLA, URE_CRWECR_CONFIG);
@@ -739,9 +775,9 @@ ure_init(void *xsc)
 
 	/* Start up the receive pipe. */
 	for (i = 0; i < URE_RX_LIST_CNT; i++) {
-		c = &sc->ure_cdata.rx_chain[i];
+		c = &sc->ure_cdata.ure_rx_chain[i];
 		usbd_setup_xfer(c->uc_xfer, sc->ure_ep[URE_ENDPT_RX],
-		    c, c->uc_buf, sc->ure_rxbufsz,
+		    c, c->uc_buf, c->uc_bufmax,
 		    USBD_SHORT_XFER_OK | USBD_NO_COPY,
 		    USBD_NO_TIMEOUT, ure_rxeof);
 		usbd_transfer(c->uc_xfer);
@@ -763,34 +799,90 @@ void
 ure_start(struct ifnet *ifp)
 {
 	struct ure_softc	*sc = ifp->if_softc;
-	struct mbuf		*m_head = NULL;
+	struct ure_cdata	*cd = &sc->ure_cdata;
+	struct ure_chain	*c;
+	struct mbuf		*m = NULL;
+	uint32_t		new_buflen;
+	int			s, mlen;
 
-	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd) ||
-	    !(sc->ure_flags & URE_FLAG_LINK))
+	if (!(sc->ure_flags & URE_FLAG_LINK) ||
+		(ifp->if_flags & (IFF_RUNNING|IFF_UP)) !=
+		    (IFF_RUNNING|IFF_UP)) {
 		return;
+	}
 
-	for (;;) {
-		if (sc->ure_cdata.tx_cnt == sc->ure_tx_list_cnt) {
-			ifq_set_oactive(&ifp->if_snd);
+	s = splnet();
+
+	c = SLIST_FIRST(&cd->ure_tx_free);
+	while (c != NULL) {
+		m = ifq_deq_begin(&ifp->if_snd);
+		if (m == NULL)
+			break;
+
+		mlen = m->m_pkthdr.len;
+
+		/* Discard packet larger than buffer. */
+		if (mlen + sizeof(struct ure_txpkt) >= c->uc_bufmax) {
+			ifq_deq_commit(&ifp->if_snd, m);
+			m_freem(m);
+			ifp->if_oerrors++;
+			continue;
+		}
+
+		/* 
+		 * If packet larger than remaining space, send buffer and
+		 * continue.
+		 */
+		new_buflen = roundup(c->uc_buflen, URE_TX_BUF_ALIGN);
+		if (new_buflen + sizeof(struct ure_txpkt) + mlen >=
+		    c->uc_bufmax) {
+			ifq_deq_rollback(&ifp->if_snd, m);
+			SLIST_REMOVE_HEAD(&cd->ure_tx_free, uc_list);
+			if (ure_encap_xfer(ifp, sc, c)) {
+				SLIST_INSERT_HEAD(&cd->ure_tx_free, c,
+				    uc_list);
+				break;
+			}
+			c = SLIST_FIRST(&cd->ure_tx_free);
+			continue;
+		}
+
+		/* Append packet to current buffer. */
+		mlen = ure_encap_txpkt(m, c->uc_buf + new_buflen,
+		    c->uc_bufmax - new_buflen);
+		if (mlen <= 0) {
+			ifq_deq_rollback(&ifp->if_snd, m);
 			break;
 		}
 
-		m_head = ifq_dequeue(&ifp->if_snd);
-		if (m_head == NULL)
-			break;
-
-		if (ure_encap(sc, m_head)) {
-			m_freem(m_head);
-			ifq_set_oactive(&ifp->if_snd);
-			break;
-		}
+		ifq_deq_commit(&ifp->if_snd, m);
+		c->uc_cnt += 1;
+		c->uc_buflen = new_buflen + mlen;
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
-		ifp->if_timer = 5;
+
+		m_freem(m);
 	}
+
+	if (c != NULL) {
+		/* Send current buffer unless empty */
+		if (c->uc_buflen > 0 && c->uc_cnt > 0) {
+			SLIST_REMOVE_HEAD(&cd->ure_tx_free, uc_list);
+			if (ure_encap_xfer(ifp, sc, c)) {
+				SLIST_INSERT_HEAD(&cd->ure_tx_free, c,
+				    uc_list);
+			}
+			c = SLIST_FIRST(&cd->ure_tx_free);
+		}
+	}
+
+	ifp->if_timer = 5;
+	if (c == NULL)
+		ifq_set_oactive(&ifp->if_snd);
+	splx(s);
 }
 
 void
@@ -810,9 +902,9 @@ ure_tick(void *xsc)
 void
 ure_stop(struct ure_softc *sc)
 {
-	usbd_status		err;
+	struct ure_cdata	*cd;
 	struct ifnet		*ifp;
-	int			i;
+	usbd_status		err;
 
 	ure_reset(sc);
 
@@ -842,25 +934,54 @@ ure_stop(struct ure_softc *sc)
 		sc->ure_ep[URE_ENDPT_TX] = NULL;
 	}
 
-	for (i = 0; i < URE_RX_LIST_CNT; i++) {
-		if (sc->ure_cdata.rx_chain[i].uc_mbuf != NULL) {
-			m_freem(sc->ure_cdata.rx_chain[i].uc_mbuf);
-			sc->ure_cdata.rx_chain[i].uc_mbuf = NULL;
-		}
-		if (sc->ure_cdata.rx_chain[i].uc_xfer != NULL) {
-			usbd_free_xfer(sc->ure_cdata.rx_chain[i].uc_xfer);
-			sc->ure_cdata.rx_chain[i].uc_xfer = NULL;
+	cd = &sc->ure_cdata;
+	ure_xfer_list_free(sc, cd->ure_rx_chain, URE_RX_LIST_CNT);
+	ure_xfer_list_free(sc, cd->ure_tx_chain, URE_TX_LIST_CNT);
+}
+
+int
+ure_xfer_list_init(struct ure_softc *sc, struct ure_chain *ch,
+    uint32_t bufsize, int listlen)
+{
+	struct ure_chain	*c;
+	int			i;
+
+	for (i = 0; i < listlen; i++) {
+		c = &ch[i];
+		c->uc_sc = sc;
+		c->uc_idx = i;
+		c->uc_buflen = 0;
+		c->uc_bufmax = bufsize;
+		c->uc_cnt = 0;
+		if (c->uc_xfer == NULL) {
+			c->uc_xfer = usbd_alloc_xfer(sc->ure_udev);
+			if (c->uc_xfer == NULL)
+				return (ENOBUFS);
+			c->uc_buf = usbd_alloc_buffer(c->uc_xfer, c->uc_bufmax);
+			if (c->uc_buf == NULL) {
+				usbd_free_xfer(c->uc_xfer);
+				c->uc_xfer = NULL;
+				return (ENOBUFS);
+			}
 		}
 	}
 
-	for (i = 0; i < sc->ure_tx_list_cnt; i++) {
-		if (sc->ure_cdata.tx_chain[i].uc_mbuf != NULL) {
-			m_freem(sc->ure_cdata.tx_chain[i].uc_mbuf);
-			sc->ure_cdata.tx_chain[i].uc_mbuf = NULL;
+	return (0);
+}
+
+void
+ure_xfer_list_free(struct ure_softc *sc, struct ure_chain *ch, int listlen)
+{
+	int	i;
+
+	for (i = 0; i < listlen; i++) {
+		if (ch[i].uc_buf != NULL) {
+			ch[i].uc_buf = NULL;
 		}
-		if (sc->ure_cdata.tx_chain[i].uc_xfer != NULL) {
-			usbd_free_xfer(sc->ure_cdata.tx_chain[i].uc_xfer);
-			sc->ure_cdata.tx_chain[i].uc_xfer = NULL;
+		ch[i].uc_cnt = 0;
+		if (ch[i].uc_xfer != NULL) {
+			usbd_free_xfer(ch[i].uc_xfer);
+			ch[i].uc_xfer = NULL;
 		}
 	}
 }
@@ -1456,21 +1577,8 @@ ure_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 
-	switch (uaa->product) {
-	case USB_PRODUCT_REALTEK_RTL8152:
-		sc->ure_flags |= URE_FLAG_8152;
-		sc->ure_rxbufsz = URE_8152_RXBUFSZ;
-		sc->ure_tx_list_cnt = 1;
-		break;
-	case USB_PRODUCT_REALTEK_RTL8156:
-		sc->ure_flags |= URE_FLAG_8156;
-		sc->ure_rxbufsz = URE_8153_RXBUFSZ;
-		sc->ure_tx_list_cnt = URE_TX_LIST_CNT;
-		break;
-	default:
-		sc->ure_rxbufsz = URE_8153_RXBUFSZ;
-		sc->ure_tx_list_cnt = 1;
-	}
+	sc->ure_txbufsz = URE_TX_BUFSZ;
+	sc->ure_rxbufsz = URE_8153_RX_BUFSZ;
 
 	s = splnet();
 
@@ -1480,10 +1588,14 @@ ure_attach(struct device *parent, struct device *self, void *aux)
 	ver = ure_read_2(sc, URE_PLA_TCR1, URE_MCU_TYPE_PLA) & URE_VERSION_MASK;
 	switch (ver) {
 	case 0x4c00:
+		sc->ure_flags = URE_FLAG_8152;
+		sc->ure_rxbufsz = URE_8152_RX_BUFSZ;
 		sc->ure_chip |= URE_CHIP_VER_4C00;
 		printf("RTL8152 (0x4c00)");
 		break;
 	case 0x4c10:
+		sc->ure_flags = URE_FLAG_8152;
+		sc->ure_rxbufsz = URE_8152_RX_BUFSZ;
 		sc->ure_chip |= URE_CHIP_VER_4C10;
 		printf("RTL8152 (0x4c10)");
 		break;
@@ -1505,18 +1617,18 @@ ure_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case 0x6000:
 		sc->ure_flags = URE_FLAG_8153B;
-		sc->ure_tx_list_cnt = URE_TX_LIST_CNT;
 		printf("RTL8153B (0x6000)");
 		break;
 	case 0x6010:
 		sc->ure_flags = URE_FLAG_8153B;
-		sc->ure_tx_list_cnt = URE_TX_LIST_CNT;
 		printf("RTL8153B (0x6010)");
 		break;
 	case 0x7020:
+		sc->ure_flags = URE_FLAG_8156;
 		printf("RTL8156 (0x7020)");
 		break;
 	case 0x7030:
+		sc->ure_flags = URE_FLAG_8156;
 		printf("RTL8156 (0x7030)");
 		break;
 	default:
@@ -1639,9 +1751,9 @@ ure_detach(struct device *self, int flags)
 void
 ure_tick_task(void *xsc)
 {
-	int			s;
 	struct ure_softc	*sc = xsc;
 	struct mii_data		*mii;
+	int			s;
 
 	if (sc == NULL)
 		return;
@@ -1719,7 +1831,7 @@ ure_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 			goto done;
 		}
 
-		buf += roundup(pktlen, 8);
+		buf += roundup(pktlen, URE_RX_BUF_ALIGN);
 
 		memcpy(&rxhdr, buf, sizeof(rxhdr));
 		total_len -= sizeof(rxhdr);
@@ -1732,7 +1844,7 @@ ure_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 			goto done;
 		}
 
-		total_len -= roundup(pktlen, 8);
+		total_len -= roundup(pktlen, URE_RX_BUF_ALIGN);
 		buf += sizeof(rxhdr);
 
 		m = m_devget(buf, pktlen, ETHER_ALIGN);
@@ -1797,18 +1909,27 @@ ure_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	if (usbd_is_dying(sc->ure_udev))
 		return;
 
-	DPRINTFN(2, ("tx completion\n"));
+	if (status != USBD_NORMAL_COMPLETION)
+		DPRINTF(("%s: %s uc_idx=%u : %s\n", sc->ure_dev.dv_xname,
+			__func__, c->uc_idx, usbd_errstr(status)));
 
 	s = splnet();
-	sc->ure_cdata.tx_cnt--;
+
+	c->uc_cnt = 0;
+	c->uc_buflen = 0;
+
+	SLIST_INSERT_HEAD(&sc->ure_cdata.ure_tx_free, c, uc_list);
+
 	if (status != USBD_NORMAL_COMPLETION) {
 		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED) {
 			splx(s);
 			return;
 		}
+
 		ifp->if_oerrors++;
 		printf("%s: usb error on tx: %s\n", sc->ure_dev.dv_xname,
 		    usbd_errstr(status));
+
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(
 			    sc->ure_ep[URE_ENDPT_TX]);
@@ -1817,83 +1938,19 @@ ure_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	}
 
 	ifp->if_timer = 0;
-	ifq_clr_oactive(&ifp->if_snd);
-
-	m_freem(c->uc_mbuf);
-	c->uc_mbuf = NULL;
-
-	if (!ifq_empty(&ifp->if_snd))
-		ure_start(ifp);
-
+	if (ifq_is_oactive(&ifp->if_snd))
+		ifq_restart(&ifp->if_snd);
 	splx(s);
 }
 
 int
-ure_tx_list_init(struct ure_softc *sc)
+ure_encap_txpkt(struct mbuf *m, char *buf, uint32_t maxlen)
 {
-	struct ure_cdata *cd;
-	struct ure_chain *c;
-	int i;
-
-	cd = &sc->ure_cdata;
-	for (i = 0; i < sc->ure_tx_list_cnt; i++) {
-		c = &cd->tx_chain[i];
-		c->uc_sc = sc;
-		c->uc_idx = i;
-		c->uc_mbuf = NULL;
-		if (c->uc_xfer == NULL) {
-			c->uc_xfer = usbd_alloc_xfer(sc->ure_udev);
-			if (c->uc_xfer == NULL)
-				return ENOBUFS;
-			c->uc_buf = usbd_alloc_buffer(c->uc_xfer, URE_TXBUFSZ);
-			if (c->uc_buf == NULL) {
-				usbd_free_xfer(c->uc_xfer);
-				return ENOBUFS;
-			}
-		}
-	}
-
-	cd->tx_prod = cd->tx_cnt = 0;
-
-	return (0);
-}
-
-int
-ure_rx_list_init(struct ure_softc *sc)
-{
-	struct ure_cdata *cd;
-	struct ure_chain *c;
-	int i;
-
-	cd = &sc->ure_cdata;
-	for (i = 0; i < URE_RX_LIST_CNT; i++) {
-		c = &cd->rx_chain[i];
-		c->uc_sc = sc;
-		c->uc_idx = i;
-		c->uc_mbuf = NULL;
-		if (c->uc_xfer == NULL) {
-			c->uc_xfer = usbd_alloc_xfer(sc->ure_udev);
-			if (c->uc_xfer == NULL)
-				return ENOBUFS;
-			c->uc_buf = usbd_alloc_buffer(c->uc_xfer,
-			    sc->ure_rxbufsz);
-			if (c->uc_buf == NULL) {
-				usbd_free_xfer(c->uc_xfer);
-				return ENOBUFS;
-			}
-		}
-	}
-
-	return (0);
-}
-
-int
-ure_encap(struct ure_softc *sc, struct mbuf *m)
-{
-	struct ure_chain	*c;
-	usbd_status		err;
 	struct ure_txpkt	txhdr;
-	uint32_t		frm_len = 0, cflags = 0;
+	uint32_t		len = sizeof(txhdr), cflags = 0;
+
+	if (len + m->m_pkthdr.len > maxlen)
+		return (-1);
 
 	if ((m->m_pkthdr.csum_flags &
 	    (M_IPV4_CSUM_OUT | M_TCP_CSUM_OUT | M_UDP_CSUM_OUT)) != 0) {
@@ -1909,35 +1966,33 @@ ure_encap(struct ure_softc *sc, struct mbuf *m)
 		cflags |= swap16(m->m_pkthdr.ether_vtag | URE_TXPKT_VLAN_TAG);
 #endif
 
-	c = &sc->ure_cdata.tx_chain[sc->ure_cdata.tx_prod];
-
-	/* header */
 	txhdr.ure_pktlen = htole32(m->m_pkthdr.len | URE_TXPKT_TX_FS |
 	    URE_TXPKT_TX_LS);
 	txhdr.ure_vlan = htole32(cflags);
-	memcpy(c->uc_buf, &txhdr, sizeof(txhdr));
-	frm_len = sizeof(txhdr);
+	memcpy(buf, &txhdr, len);
 
-	/* packet */
-	m_copydata(m, 0, m->m_pkthdr.len, c->uc_buf + frm_len);
-	frm_len += m->m_pkthdr.len;
+	m_copydata(m, 0, m->m_pkthdr.len, buf + len);
+	len += m->m_pkthdr.len;
 
-	c->uc_mbuf = m;
+	return (len);
+}
 
-	DPRINTFN(2, ("tx %d bytes\n", frm_len));
+int
+ure_encap_xfer(struct ifnet *ifp, struct ure_softc *sc, struct ure_chain *c)
+{
+	usbd_status	err;
+
 	usbd_setup_xfer(c->uc_xfer, sc->ure_ep[URE_ENDPT_TX], c, c->uc_buf,
-	    frm_len, USBD_FORCE_SHORT_XFER | USBD_NO_COPY, 10000, ure_txeof);
+	    c->uc_buflen, USBD_FORCE_SHORT_XFER | USBD_NO_COPY, 10000,
+	    ure_txeof);
 
 	err = usbd_transfer(c->uc_xfer);
-	if (err != 0 && err != USBD_IN_PROGRESS) {
-		c->uc_mbuf = NULL;
+	if (err != USBD_IN_PROGRESS) {
+		c->uc_cnt = 0;
+		c->uc_buflen = 0;
 		ure_stop(sc);
 		return (EIO);
 	}
-
-	sc->ure_cdata.tx_cnt++;
-	sc->ure_cdata.tx_prod = (sc->ure_cdata.tx_prod + 1) %
-	    sc->ure_tx_list_cnt;
 
 	return (0);
 }

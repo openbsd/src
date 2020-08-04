@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urereg.h,v 1.8 2019/12/07 08:45:28 kevlo Exp $	*/
+/*	$OpenBSD: if_urereg.h,v 1.9 2020/08/04 14:45:46 kevlo Exp $	*/
 /*-
  * Copyright (c) 2015, 2016, 2019 Kevin Lo <kevlo@openbsd.org>
  * All rights reserved.
@@ -494,28 +494,30 @@ struct ure_txpkt {
 #define URE_ENDPT_TX		1
 #define URE_ENDPT_MAX		2
 
-#define	URE_TX_LIST_CNT		8
+#define	URE_TX_LIST_CNT		1
 #define	URE_RX_LIST_CNT		1
-#define	URE_RX_BUF_ALIGN	sizeof(uint64_t)
+#define	URE_TX_BUF_ALIGN	4
+#define	URE_RX_BUF_ALIGN	8
 
-#define	URE_TXBUFSZ		16384
-#define	URE_8152_RXBUFSZ	16384
-#define	URE_8153_RXBUFSZ	32768
+#define	URE_TX_BUFSZ		16384
+#define	URE_8152_RX_BUFSZ	16384
+#define	URE_8153_RX_BUFSZ	32768
 
 struct ure_chain {
 	struct ure_softc	*uc_sc;
 	struct usbd_xfer	*uc_xfer;
 	char			*uc_buf;
-	struct mbuf		*uc_mbuf;
-	int			uc_accum;
-	int			uc_idx;
+	uint32_t		uc_cnt;
+	uint32_t		uc_buflen;
+	uint32_t		uc_bufmax;
+	SLIST_ENTRY(ure_chain)  uc_list;
+	uint8_t			uc_idx;
 };
 
 struct ure_cdata {
-	struct ure_chain	tx_chain[URE_TX_LIST_CNT];
-	struct ure_chain	rx_chain[URE_RX_LIST_CNT];
-	int			tx_prod;
-	int			tx_cnt;
+	struct ure_chain	ure_rx_chain[URE_RX_LIST_CNT];
+	struct ure_chain	ure_tx_chain[URE_TX_LIST_CNT];
+	SLIST_HEAD(ure_list_head, ure_chain)    ure_tx_free;
 };
 
 struct ure_softc {
@@ -541,7 +543,7 @@ struct ure_softc {
 
 	struct timeval		ure_rx_notice;
 	int			ure_rxbufsz;
-	int			ure_tx_list_cnt;
+	int			ure_txbufsz;
 
 	int			ure_phyno;
 
