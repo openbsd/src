@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.353 2020/07/26 18:34:10 kn Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.354 2020/08/05 14:55:40 kn Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: July 26 2020 $
+.Dd $Mdocdate: August 5 2020 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -204,6 +204,7 @@ At least the following devices can be created on demand:
 .Xr svlan 4 ,
 .Xr switch 4 ,
 .Xr tap 4 ,
+.Xr tpmr 4 ,
 .Xr trunk 4 ,
 .Xr tun 4 ,
 .Xr vether 4 ,
@@ -830,6 +831,51 @@ If
 is set to zero, then entries will not be expired.
 .It Cm up
 Start the bridge forwarding packets.
+.El
+.Sh TPMR
+.nr nS 1
+.Bk -words
+.Nm ifconfig
+.Ar tpmr-interface
+.Op Cm add Ar child-iface
+.Op Cm del Ar child-iface
+.Op Oo Fl Oc Ns Cm link0
+.Op Oo Fl Oc Ns Cm link1
+.Op Oo Fl Oc Ns Cm link2
+.Ek
+The following options are available for a
+.Xr tpmr 4
+interface:
+.Bl -tag -width Ds
+.It Cm add Ar child-iface
+Add
+.Ar child-iface
+as a member.
+.It Cm del Ar child-iface
+Remove the member
+.Ar child-iface .
+.It Cm link0
+Disable the filtering of Ethernet frames destined for the TPMR
+component reserved addresses, as specified by IEEE 802.1Q.
+.It Cm -link0
+Enable the filtering of Ethernet frames destined for the TPMR
+component reserved addresses, as specified by IEEE 802.1Q.
+This is the default.
+.It Cm link1
+Disable the filtering of IPv4 and IPv6 packets with
+.Xr pf 4 .
+.It Cm -link1
+Enable the filtering of IPv4 and IPv6 packets with
+.Xr pf 4 .
+Packets will appear to enter or leave the member port interfaces.
+This is the default.
+.It Cm link2
+Disable the filtering of 802.1Q VLAN and QinQ SVLAN packets.
+.It Cm -link2
+Enable the filtering of 802.1Q VLAN and QinQ SVLAN packets.
+.Xr pf 4 .
+Packets will appear to enter or leave the member port interfaces.
+This is the default.
 .El
 .Sh CARP
 .nr nS 1
