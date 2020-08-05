@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vgone.9,v 1.9 2020/08/02 19:32:08 tim Exp $
+.\"     $OpenBSD: vgone.9,v 1.10 2020/08/05 11:10:24 tim Exp $
 .\"
 .\" Copyright (C) 2001 Chad David <davidc@acns.ab.ca>. All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man9/vgone.9,v 1.2 2001/12/14 09:11:13 ru Exp $
 .\"
-.Dd $Mdocdate: August 2 2020 $
+.Dd $Mdocdate: August 5 2020 $
 .Dt VGONE 9
 .Os
 .Sh NAME
@@ -45,9 +45,14 @@
 .Fn vgone
 and
 .Fn vgonel
-prepare a vnode for reuse by another file system.
+prepare the vnode
+.Fa vp
+for reuse by another file system.
 The preparation includes the cleaning of all file system specific data and
 the removal from its mount point vnode list.
+The
+.Fa p
+argument specifies the process responsible for the call.
 .Pp
 .Fn vgone
 is identical to
