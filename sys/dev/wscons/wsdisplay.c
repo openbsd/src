@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.141 2020/05/25 09:55:49 jsg Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.142 2020/08/05 13:50:25 fcambus Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1046,10 +1046,15 @@ wsdisplayioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 #endif
 
 	if (ISWSDISPLAYCTL(dev)) {
-	       	if (cmd != WSDISPLAYIO_GTYPE)
+		switch (cmd) {
+		case WSDISPLAYIO_GTYPE:
+		case WSDISPLAYIO_GETSCREENTYPE:
+			/* pass to the first screen */
+			dev = makedev(major(dev), WSDISPLAYMINOR(unit, 0));
+			break;
+		default:
 			return (wsdisplay_cfg_ioctl(sc, cmd, data, flag, p));
-		/* pass WSDISPLAYIO_GTYPE to the first screen */
-		dev = makedev(major(dev), WSDISPLAYMINOR(unit, 0));
+		}
 	}
 
 	if (WSDISPLAYSCREEN(dev) >= WSDISPLAY_MAXSCREEN)
