@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.26 2020/07/29 12:13:28 kn Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.27 2020/08/05 06:12:43 kn Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -54,6 +54,7 @@ void bridge_ifclrflag(const char *, u_int32_t);
 
 void bridge_list(char *);
 void bridge_cfg(const char *);
+void switch_cfg(const char *);
 void bridge_badrule(int, char **, int);
 void bridge_showrule(struct ifbrlreq *);
 int is_switch(void);
@@ -778,15 +779,22 @@ void
 bridge_status(void)
 {
 	struct ifbrparam bp1, bp2;
+	int isswitch = is_switch();
 
-	if (!is_bridge() || is_switch())
+	if (!is_bridge())
 		return;
 
-	bridge_cfg("\t");
+	if (isswitch)
+		switch_cfg("\t");
+	else
+		bridge_cfg("\t");
 
 	bridge_list("\t");
 
 	if (aflag && !ifaliases)
+		return;
+
+	if (isswitch)
 		return;
 
 	strlcpy(bp1.ifbrp_name, ifname, sizeof(bp1.ifbrp_name));
@@ -1146,8 +1154,8 @@ is_switch()
 	return (1);
 }
 
-static void
-switch_cfg(char *delim)
+void
+switch_cfg(const char *delim)
 {
 	struct ifbrparam bp;
 
@@ -1168,20 +1176,6 @@ switch_cfg(char *delim)
 		err(1, "%s", ifname);
 
 	printf(" maxgroup %d\n", bp.ifbrp_maxgroup);
-}
-
-void
-switch_status(void)
-{
-	if (!is_switch())
-		return;
-
-	switch_cfg("\t");
-
-	bridge_list("\t");
-
-	if (aflag && !ifaliases)
-		return;
 }
 
 void

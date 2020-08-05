@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.424 2020/07/03 17:42:50 florian Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.425 2020/08/05 06:12:43 kn Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3507,7 +3507,6 @@ status(int link, struct sockaddr_dl *sdl, int ls)
 	phys_status(0);
 #ifndef SMALL
 	bridge_status();
-	switch_status();
 #endif
 }
 
