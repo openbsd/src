@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.6 2020/08/04 23:19:30 deraadt Exp $
+# $OpenBSD: RAMDISK,v 1.7 2020/08/05 05:49:07 deraadt Exp $
 
 machine		powerpc64
 maxusers	4
@@ -15,8 +15,6 @@ option		USBVERBOSE
 
 option		FFS
 option		FFS2
-option		MSDOSFS
-option		INET6
 option		EXT2FS
 option		NFSCLIENT
 option		CD9660
