@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.204 2020/07/21 07:54:43 tobhe Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.205 2020/08/05 21:04:54 tobhe Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -2378,7 +2378,7 @@ pfkeyv2_expire(struct tdb *tdb, u_int16_t type)
 	export_sa(&p, tdb);
 
 	headers[SADB_EXT_LIFETIME_CURRENT] = p;
-	export_lifetime(&p, tdb, 2);
+	export_lifetime(&p, tdb, PFKEYV2_LIFETIME_CURRENT);
 
 	headers[type] = p;
 	export_lifetime(&p, tdb, type == SADB_EXT_LIFETIME_SOFT ?
