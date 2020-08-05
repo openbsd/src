@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.27 2020/08/05 06:12:43 kn Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.28 2020/08/05 06:22:11 kn Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -775,15 +775,28 @@ is_bridge()
 	return (1);
 }
 
+/* no tpmr(4) specific ioctls, name is enough if ifconfig.c:printif() passed */
+int
+is_tpmr(void)
+{
+	return (strncmp(ifname, "tpmr", sizeof("tpmr") - 1) == 0);
+}
+
 void
 bridge_status(void)
 {
 	struct ifbrparam bp1, bp2;
-	int isswitch = is_switch();
+	int isswitch;
+
+	if (is_tpmr()) {
+		bridge_list("\t");
+		return;
+	}
 
 	if (!is_bridge())
 		return;
 
+	isswitch = is_switch();
 	if (isswitch)
 		switch_cfg("\t");
 	else
