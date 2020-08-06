@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.77 2020/08/01 08:40:20 anton Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.78 2020/08/06 17:54:08 cheloha Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -240,6 +240,7 @@ timeout_set_flags(struct timeout *to, void (*fn)(void *), void *arg, int flags)
 {
 	to->to_func = fn;
 	to->to_arg = arg;
+	to->to_process = NULL;
 	to->to_flags = flags | TIMEOUT_INITIALIZED;
 }
 
@@ -432,6 +433,7 @@ timeout_barrier(struct timeout *to)
 		struct timeout barrier;
 
 		timeout_set_proc(&barrier, timeout_proc_barrier, &c);
+		barrier.to_process = curproc->p_p;
 
 		mtx_enter(&timeout_mutex);
 		SET(barrier.to_flags, TIMEOUT_ONQUEUE);
@@ -501,11 +503,12 @@ timeout_run(struct timeout *to)
 	mtx_leave(&timeout_mutex);
 	timeout_sync_enter(needsproc);
 #if NKCOV > 0
-	kcov_remote_enter(KCOV_REMOTE_COMMON, to->to_process);
+	struct process *kcov_process = to->to_process;
+	kcov_remote_enter(KCOV_REMOTE_COMMON, kcov_process);
 #endif
 	fn(arg);
 #if NKCOV > 0
-	kcov_remote_leave(KCOV_REMOTE_COMMON, to->to_process);
+	kcov_remote_leave(KCOV_REMOTE_COMMON, kcov_process);
 #endif
 	timeout_sync_leave(needsproc);
 	mtx_enter(&timeout_mutex);
