@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.66 2020/07/21 08:03:39 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.67 2020/08/06 22:04:04 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -605,7 +605,6 @@ sa_lookup(struct iked *env, uint64_t ispi, uint64_t rspi,
 	struct iked_sa	*sa, key;
 
 	key.sa_hdr.sh_ispi = ispi;
-	/* key.sa_hdr.sh_rspi = rspi; */
 	key.sa_hdr.sh_initiator = initiator;
 
 	if ((sa = RB_FIND(iked_sas, &env->sc_sas, &key)) != NULL) {
