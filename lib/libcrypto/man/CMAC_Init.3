@@ -1,4 +1,4 @@
-.\" $OpenBSD: CMAC_Init.3,v 1.3 2020/08/06 15:40:29 schwarze Exp $
+.\" $OpenBSD: CMAC_Init.3,v 1.4 2020/08/06 22:17:49 schwarze Exp $
 .\"
 .\" Copyright (c) 2020 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -192,7 +192,7 @@ allows the user to subsequently append additional data with
 .Fn CMAC_Update .
 Otherwise, unless
 .Fn CMAC_Init
-is called to start over from scratch,
+is called to start from scratch,
 .Fn CMAC_Update
 can no longer be used after
 .Fn CMAC_Final .
