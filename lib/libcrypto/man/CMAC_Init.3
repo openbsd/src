@@ -1,4 +1,4 @@
-.\" $OpenBSD: CMAC_Init.3,v 1.2 2020/07/24 16:38:47 jmc Exp $
+.\" $OpenBSD: CMAC_Init.3,v 1.3 2020/08/06 15:40:29 schwarze Exp $
 .\"
 .\" Copyright (c) 2020 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 24 2020 $
+.Dd $Mdocdate: August 6 2020 $
 .Dt CMAC_INIT 3
 .Os
 .Sh NAME
@@ -188,8 +188,14 @@ Calling
 .Fn CMAC_resume
 after
 .Fn CMAC_Final
-subsequently appends additional data with
+allows the user to subsequently append additional data with
 .Fn CMAC_Update .
+Otherwise, unless
+.Fn CMAC_Init
+is called to start over from scratch,
+.Fn CMAC_Update
+can no longer be used after
+.Fn CMAC_Final .
 .Pp
 .Fn CMAC_CTX_copy
 performs a deep copy of the already initialized
