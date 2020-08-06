@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.88 2020/01/24 18:51:45 espie Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.89 2020/08/06 17:57:32 naddy Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -2021,9 +2021,9 @@ do_mount(struct exportlist *ep, struct grouplist *grp, int exflags,
 #endif
 			}
 			/* back up over the last component */
-			while (*cp == '/' && cp > dirp)
+			while (cp > dirp && *cp == '/')
 				cp--;
-			while (*(cp - 1) != '/' && cp > dirp)
+			while (cp > dirp && *(cp - 1) != '/')
 				cp--;
 			if (cp == dirp) {
 				if (debug)
