@@ -1,4 +1,4 @@
-/*	$OpenBSD: flex.skl,v 1.16 2017/05/02 19:16:19 millert Exp $	*/
+/*	$OpenBSD: flex.skl,v 1.17 2020/08/06 17:23:29 deraadt Exp $	*/
 
 %# -*-C-*- vi: set ft=c:
 %# This file is processed in several stages.
@@ -1308,30 +1308,33 @@ m4_ifdef( [[<M4_YY_BISON_LLOC>]],
 m4_ifdef( [[M4_YY_USES_REJECT]],
 [[
         /* Create the reject buffer large enough to save one state per allowed character. */
-        if ( ! YY_G(yy_state_buf) )
-            YY_G(yy_state_buf) = (yy_state_type *)yyalloc(YY_STATE_BUF_SIZE  M4_YY_CALL_LAST_ARG);
-            if ( ! YY_G(yy_state_buf) )
-                YY_FATAL_ERROR( "out of dynamic memory in yylex()" );
+		if ( ! YY_G(yy_state_buf) )
+			YY_G(yy_state_buf) = (yy_state_type *)
+				yyalloc(YY_STATE_BUF_SIZE  M4_YY_CALL_LAST_ARG);
+	        if ( ! YY_G(yy_state_buf) )
+	                YY_FATAL_ERROR( "out of dynamic memory in yylex()" );
 ]])
 
 		if ( ! YY_G(yy_start) )
 			YY_G(yy_start) = 1;	/* first start state */
 
-		if ( ! yyin )
+		if ( ! yyin ) {
 %if-c-only
 			yyin = stdin;
 %endif
 %if-c++-only
 			yyin = & std::cin;
 %endif
+		}
 
-		if ( ! yyout )
+		if ( ! yyout ) {
 %if-c-only
 			yyout = stdout;
 %endif
 %if-c++-only
 			yyout = & std::cout;
 %endif
+		}
 
 		if ( ! YY_CURRENT_BUFFER ) {
 			yyensure_buffer_stack (M4_YY_CALL_ONLY_ARG);
@@ -1340,7 +1343,7 @@ m4_ifdef( [[M4_YY_USES_REJECT]],
 		}
 
 		yy_load_buffer_state( M4_YY_CALL_ONLY_ARG );
-		}
+	}
 
 	{
 %% [7.0] user's declarations go here
