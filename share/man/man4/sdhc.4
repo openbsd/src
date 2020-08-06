@@ -1,16 +1,17 @@
-.\"	$OpenBSD: sdhc.4,v 1.6 2016/01/11 22:08:46 kettenis Exp $
+.\"	$OpenBSD: sdhc.4,v 1.7 2020/08/06 10:10:16 jsg Exp $
 .\"
 .\" Theo de Raadt, 2006. Public Domain.
 .\"
-.Dd $Mdocdate: January 11 2016 $
+.Dd $Mdocdate: August 6 2020 $
 .Dt SDHC 4
 .Os
 .Sh NAME
 .Nm sdhc
 .Nd SD Host Controller
 .Sh SYNOPSIS
-.Cd "sdhc* at pci?"
 .Cd "sdhc* at acpi?"
+.Cd "sdhc* at fdt?"
+.Cd "sdhc* at pci?"
 .Cd "sdmmc* at sdhc?"
 .Sh DESCRIPTION
 The
