@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.210 2020/04/03 20:11:47 patrick Exp $ */
+/*	$OpenBSD: ehci.c,v 1.211 2020/08/06 14:06:12 mglocker Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1852,10 +1852,6 @@ ehci_root_ctrl_start(struct usbd_xfer *xfer)
 			USETW(ehci_devd.idVendor, sc->sc_id_vendor);
 			memcpy(buf, &ehci_devd, l);
 			break;
-		/*
-		 * We can't really operate at another speed, but the spec says
-		 * we need this descriptor.
-		 */
 		case UDESC_DEVICE_QUALIFIER:
 			if ((value & 0xff) != 0) {
 				err = USBD_IOERROR;
