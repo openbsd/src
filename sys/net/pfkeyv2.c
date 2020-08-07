@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.205 2020/08/05 21:04:54 tobhe Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.206 2020/08/07 20:12:15 tobhe Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -793,7 +793,8 @@ ret:
  * Get all the information contained in an SA to a PFKEYV2 message.
  */
 int
-pfkeyv2_get(struct tdb *tdb, void **headers, void **buffer, int *lenp)
+pfkeyv2_get(struct tdb *tdb, void **headers, void **buffer, int *lenp,
+    int *lenused)
 {
 	int rval, i;
 	void *p;
@@ -974,6 +975,8 @@ pfkeyv2_get(struct tdb *tdb, void **headers, void **buffer, int *lenp)
 	headers[SADB_X_EXT_COUNTER] = p;
 	export_counter(&p, tdb);
 
+	if (lenused)
+		*lenused = p - *buffer;
 	rval = 0;
 
  ret:
@@ -998,7 +1001,7 @@ pfkeyv2_dump_walker(struct tdb *tdb, void *state, int last)
 		headers[0] = (void *) dump_state->sadb_msg;
 
 		/* Get the information from the TDB to a PFKEYv2 message */
-		if ((rval = pfkeyv2_get(tdb, headers, &buffer, &buflen)) != 0)
+		if ((rval = pfkeyv2_get(tdb, headers, &buffer, &buflen, NULL)) != 0)
 			return (rval);
 
 		if (last)
@@ -1600,7 +1603,7 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 			goto ret;
 		}
 
-		rval = pfkeyv2_get(sa2, headers, &freeme, &freeme_sz);
+		rval = pfkeyv2_get(sa2, headers, &freeme, &freeme_sz, NULL);
 		NET_UNLOCK();
 		if (rval)
 			mode = PFKEYV2_SENDMESSAGE_UNICAST;
@@ -2424,7 +2427,7 @@ pfkeyv2_sysctl_walker(struct tdb *tdb, void *arg, int last)
 	struct pfkeyv2_sysctl_walk *w = (struct pfkeyv2_sysctl_walk *)arg;
 	void *buffer = NULL;
 	int error = 0;
-	int buflen, i;
+	int usedlen, buflen, i;
 
 	if (w->w_satype != SADB_SATYPE_UNSPEC &&
 	    w->w_satype != tdb->tdb_satype)
@@ -2435,9 +2438,10 @@ pfkeyv2_sysctl_walker(struct tdb *tdb, void *arg, int last)
 		struct sadb_msg msg;
 
 		bzero(headers, sizeof(headers));
-		if ((error = pfkeyv2_get(tdb, headers, &buffer, &buflen)) != 0)
+		if ((error = pfkeyv2_get(tdb, headers, &buffer, &buflen,
+		    &usedlen)) != 0)
 			goto done;
-		if (w->w_len < sizeof(msg) + buflen) {
+		if (w->w_len < sizeof(msg) + usedlen) {
 			error = ENOMEM;
 			goto done;
 		}
@@ -2446,7 +2450,7 @@ pfkeyv2_sysctl_walker(struct tdb *tdb, void *arg, int last)
 		msg.sadb_msg_version = PF_KEY_V2;
 		msg.sadb_msg_satype = tdb->tdb_satype;
 		msg.sadb_msg_type = SADB_DUMP;
-		msg.sadb_msg_len = (sizeof(msg) + buflen) / sizeof(uint64_t);
+		msg.sadb_msg_len = (sizeof(msg) + usedlen) / sizeof(uint64_t);
 		if ((error = copyout(&msg, w->w_where, sizeof(msg))) != 0)
 			goto done;
 		w->w_where += sizeof(msg);
@@ -2456,12 +2460,12 @@ pfkeyv2_sysctl_walker(struct tdb *tdb, void *arg, int last)
 			if (headers[i])
 				((struct sadb_ext *)
 				    headers[i])->sadb_ext_type = i;
-		if ((error = copyout(buffer, w->w_where, buflen)) != 0)
+		if ((error = copyout(buffer, w->w_where, usedlen)) != 0)
 			goto done;
-		w->w_where += buflen;
-		w->w_len -= buflen;
+		w->w_where += usedlen;
+		w->w_len -= usedlen;
 	} else {
-		if ((error = pfkeyv2_get(tdb, NULL, NULL, &buflen)) != 0)
+		if ((error = pfkeyv2_get(tdb, NULL, NULL, &buflen, NULL)) != 0)
 			return (error);
 		w->w_len += buflen;
 		w->w_len += sizeof(struct sadb_msg);
