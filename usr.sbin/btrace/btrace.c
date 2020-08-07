@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.21 2020/07/11 14:52:14 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.22 2020/08/07 14:04:59 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -860,7 +860,7 @@ ba_read(struct bt_arg *ba)
 const char *
 ba2hash(struct bt_arg *ba, struct dt_evt *dtev)
 {
-	static char buf[256];
+	static char buf[KLEN];
 	char *hash;
 	int l, len;
 
@@ -905,7 +905,7 @@ const char *
 ba2bucket(struct bt_arg *ba, struct bt_arg *brange, struct dt_evt *dtev,
     long *pstep)
 {
-	static char buf[256];
+	static char buf[KLEN];
 	long val, bucket;
 	int l;
 
