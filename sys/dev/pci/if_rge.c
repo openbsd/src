@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rge.c,v 1.5 2020/07/22 00:48:02 kevlo Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.6 2020/08/07 13:53:58 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020 Kevin Lo <kevlo@openbsd.org>
@@ -104,6 +104,7 @@ uint16_t	rge_read_mac_ocp(struct rge_softc *, uint16_t);
 void		rge_write_ephy(struct rge_softc *, uint16_t, uint16_t);
 uint16_t	rge_read_ephy(struct rge_softc *, uint16_t);
 void		rge_write_phy(struct rge_softc *, uint16_t, uint16_t, uint16_t);
+uint16_t	rge_read_phy(struct rge_softc *, uint16_t, uint16_t);
 void		rge_write_phy_ocp(struct rge_softc *, uint16_t, uint16_t);
 uint16_t	rge_read_phy_ocp(struct rge_softc *, uint16_t);
 int		rge_get_link_status(struct rge_softc *);
@@ -853,27 +854,34 @@ rge_ifmedia_upd(struct ifnet *ifp)
 	anar = gig = 0;
 	switch (IFM_SUBTYPE(ifm->ifm_media)) {
 	case IFM_AUTO:
-		anar |= ANAR_TX_FD | ANAR_TX | ANAR_10_FD | ANAR_10;
-		gig |= GTCR_ADV_1000TFDX | GTCR_ADV_1000THDX;
+		anar = ANAR_TX_FD | ANAR_TX | ANAR_10_FD | ANAR_10;
+		gig = GTCR_ADV_1000TFDX | GTCR_ADV_1000THDX;
 		val |= RGE_ADV_2500TFDX;
 		break;
 	case IFM_2500_T:
-		anar |= ANAR_TX_FD | ANAR_TX | ANAR_10_FD | ANAR_10;
-		gig |= GTCR_ADV_1000TFDX | GTCR_ADV_1000THDX;
+		anar = ANAR_TX_FD | ANAR_TX | ANAR_10_FD | ANAR_10;
+		gig = GTCR_ADV_1000TFDX | GTCR_ADV_1000THDX;
 		val |= RGE_ADV_2500TFDX;
 		ifp->if_baudrate = IF_Mbps(2500);
 		break;
 	case IFM_1000_T:
-		anar |= ANAR_TX_FD | ANAR_TX | ANAR_10_FD | ANAR_10;
-		gig |= GTCR_ADV_1000TFDX | GTCR_ADV_1000THDX;
+		anar = ANAR_TX_FD | ANAR_TX | ANAR_10_FD | ANAR_10;
+		gig = GTCR_ADV_1000TFDX | GTCR_ADV_1000THDX;
 		ifp->if_baudrate = IF_Gbps(1);
 		break;
 	case IFM_100_TX:
-		anar |= ANAR_TX | ANAR_TX_FD;
+		gig = rge_read_phy(sc, 0, MII_100T2CR) &
+		    ~(GTCR_ADV_1000TFDX | GTCR_ADV_1000THDX);
+		anar = ((ifm->ifm_media & IFM_GMASK) == IFM_FDX) ?
+		    ANAR_TX | ANAR_TX_FD | ANAR_10_FD | ANAR_10 :
+		    ANAR_TX | ANAR_10_FD | ANAR_10;
 		ifp->if_baudrate = IF_Mbps(100);
 		break;
 	case IFM_10_T:
-		anar |= ANAR_10 | ANAR_10_FD;
+		gig = rge_read_phy(sc, 0, MII_100T2CR) &
+		    ~(GTCR_ADV_1000TFDX | GTCR_ADV_1000THDX);
+		anar = ((ifm->ifm_media & IFM_GMASK) == IFM_FDX) ?
+		    ANAR_10_FD | ANAR_10 : ANAR_10;
 		ifp->if_baudrate = IF_Mbps(10);
 		break;
 	default:
@@ -884,7 +892,8 @@ rge_ifmedia_upd(struct ifnet *ifp)
 	rge_write_phy(sc, 0, MII_ANAR, anar | ANAR_PAUSE_ASYM | ANAR_FC);
 	rge_write_phy(sc, 0, MII_100T2CR, gig);
 	rge_write_phy_ocp(sc, 0xa5d4, val);
-	rge_write_phy(sc, 0, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
+	rge_write_phy(sc, 0, MII_BMCR, BMCR_RESET | BMCR_AUTOEN |
+	    BMCR_STARTNEG);
 
 	return (0);
 }
@@ -1468,6 +1477,9 @@ rge_phy_config(struct rge_softc *sc)
 	default:
 		break;	/* Can't happen. */
 	}
+
+	rge_write_phy(sc, 0x0a5b, 0x12,
+	    rge_read_phy(sc, 0x0a5b, 0x12) & ~0x8000);
 
 	/* Disable EEE. */
 	RGE_MAC_CLRBIT(sc, 0xe040, 0x0003);
@@ -2304,6 +2316,21 @@ rge_write_phy(struct rge_softc *sc, uint16_t addr, uint16_t reg, uint16_t val)
 	rge_write_phy_ocp(sc, phyaddr, val);
 }
 
+uint16_t
+rge_read_phy(struct rge_softc *sc, uint16_t addr, uint16_t reg)
+{
+	uint16_t off, phyaddr;
+
+	phyaddr = addr ? addr : RGE_PHYBASE + (reg / 8);
+	phyaddr <<= 4;
+
+	off = addr ? reg : 0x10 + (reg % 8);
+
+	phyaddr += (off - 16) << 1;
+
+	return (rge_read_phy_ocp(sc, phyaddr));
+}
+
 void
 rge_write_phy_ocp(struct rge_softc *sc, uint16_t reg, uint16_t val)
 {
@@ -2312,7 +2339,6 @@ rge_write_phy_ocp(struct rge_softc *sc, uint16_t reg, uint16_t val)
 
 	tmp = (reg >> 1) << RGE_PHYOCP_ADDR_SHIFT;
 	tmp |= RGE_PHYOCP_BUSY | val;
-	//printf("%s: data32 = %x\n", sc->sc_dev.dv_xname, tmp);
 	RGE_WRITE_4(sc, RGE_PHYOCP, tmp);
 
 	for (i = 0; i < RGE_TIMEOUT; i++) {
