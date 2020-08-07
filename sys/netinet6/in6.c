@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.241 2020/08/04 17:05:52 anton Exp $	*/
+/*	$OpenBSD: in6.c,v 1.242 2020/08/07 18:09:16 florian Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1498,7 +1498,38 @@ in6_ifawithscope(struct ifnet *oifp, struct in6_addr *dst, u_int rdomain)
 					continue;
 #endif
 				goto replace;
-			}
+			} else if (tlen < blen)
+				continue;
+
+			/*
+			 * If the eight rules fail to choose a single address,
+			 * the tiebreaker is implementation-specific.
+			 */
+
+			 /* Prefer address with highest pltime. */
+			if (ia6_best->ia6_updatetime +
+			    ia6_best->ia6_lifetime.ia6t_pltime <
+			    ifatoia6(ifa)->ia6_updatetime +
+			    ifatoia6(ifa)->ia6_lifetime.ia6t_pltime)
+				goto replace;
+			else if (ia6_best->ia6_updatetime +
+			    ia6_best->ia6_lifetime.ia6t_pltime >
+			    ifatoia6(ifa)->ia6_updatetime +
+			    ifatoia6(ifa)->ia6_lifetime.ia6t_pltime)
+				continue;
+
+			/* Prefer address with highest vltime. */
+			if (ia6_best->ia6_updatetime +
+			    ia6_best->ia6_lifetime.ia6t_vltime <
+			    ifatoia6(ifa)->ia6_updatetime +
+			    ifatoia6(ifa)->ia6_lifetime.ia6t_vltime)
+				goto replace;
+			else if (ia6_best->ia6_updatetime +
+			    ia6_best->ia6_lifetime.ia6t_vltime >
+			    ifatoia6(ifa)->ia6_updatetime +
+			    ifatoia6(ifa)->ia6_lifetime.ia6t_vltime)
+				continue;
+
 			continue;
 		  replace:
 			ia6_best = ifatoia6(ifa);
