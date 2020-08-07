@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timeout.9,v 1.50 2020/01/03 02:16:38 cheloha Exp $
+.\"	$OpenBSD: timeout.9,v 1.51 2020/08/07 00:45:25 cheloha Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 3 2020 $
+.Dd $Mdocdate: August 7 2020 $
 .Dt TIMEOUT_SET 9
 .Os
 .Sh NAME
@@ -35,8 +35,6 @@
 .Nm timeout_add_nsec ,
 .Nm timeout_add_usec ,
 .Nm timeout_add_tv ,
-.Nm timeout_add_ts ,
-.Nm timeout_add_bt ,
 .Nm timeout_del ,
 .Nm timeout_del_barrier ,
 .Nm timeout_barrier ,
@@ -74,10 +72,6 @@
 .Fn timeout_triggered "struct timeout *to"
 .Ft int
 .Fn timeout_add_tv "struct timeout *to" "struct timeval *"
-.Ft int
-.Fn timeout_add_ts "struct timeout *to" "struct timespec *"
-.Ft int
-.Fn timeout_add_bt "struct timeout *to" "struct bintime *"
 .Ft int
 .Fn timeout_add_sec "struct timeout *to" "int sec"
 .Ft int
@@ -212,8 +206,6 @@ functions clear the triggered state for that timeout.
 .Pp
 When possible, use the
 .Fn timeout_add_tv ,
-.Fn timeout_add_ts ,
-.Fn timeout_add_bt ,
 .Fn timeout_add_sec ,
 .Fn timeout_add_msec ,
 .Fn timeout_add_usec ,
@@ -257,8 +249,6 @@ context.
 .Fn timeout_add_nsec ,
 .Fn timeout_add_usec ,
 .Fn timeout_add_tv ,
-.Fn timeout_add_ts ,
-.Fn timeout_add_bt ,
 .Fn timeout_del ,
 .Fn timeout_pending ,
 .Fn timeout_initialized ,
@@ -289,10 +279,8 @@ flag was given at initialization.
 .Fn timeout_add_msec ,
 .Fn timeout_add_nsec ,
 .Fn timeout_add_usec ,
-.Fn timeout_add_tv ,
-.Fn timeout_add_ts ,
 and
-.Fn timeout_add_bt
+.Fn timeout_add_tv
 will return 1 if the timeout
 .Fa to
 was added to the timeout schedule or 0 if it was already queued.

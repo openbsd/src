@@ -1,4 +1,4 @@
-/*	$OpenBSD: timeout.h,v 1.38 2020/08/01 08:40:20 anton Exp $	*/
+/*	$OpenBSD: timeout.h,v 1.39 2020/08/07 00:45:25 cheloha Exp $	*/
 /*
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -113,15 +113,11 @@ int timeout_sysctl(void *, size_t *, void *, size_t);
 
 #define TIMEOUT_INITIALIZER(_f, _a) TIMEOUT_INITIALIZER_FLAGS((_f), (_a), 0)
 
-struct bintime;
-
 void timeout_set(struct timeout *, void (*)(void *), void *);
 void timeout_set_flags(struct timeout *, void (*)(void *), void *, int);
 void timeout_set_proc(struct timeout *, void (*)(void *), void *);
 int timeout_add(struct timeout *, int);
 int timeout_add_tv(struct timeout *, const struct timeval *);
-int timeout_add_ts(struct timeout *, const struct timespec *);
-int timeout_add_bt(struct timeout *, const struct bintime *);
 int timeout_add_sec(struct timeout *, int);
 int timeout_add_msec(struct timeout *, int);
 int timeout_add_usec(struct timeout *, int);
