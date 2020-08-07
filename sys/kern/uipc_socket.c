@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.247 2020/06/22 13:14:32 mpi Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.248 2020/08/07 14:35:38 cheloha Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -51,6 +51,7 @@
 #include <sys/pool.h>
 #include <sys/atomic.h>
 #include <sys/rwlock.h>
+#include <sys/time.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -1199,7 +1200,7 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	if (max && max < 0)
 		return (EINVAL);
 
-	if (tv && (tv->tv_sec < 0 || tv->tv_usec < 0))
+	if (tv && (tv->tv_sec < 0 || !timerisvalid(tv)))
 		return (EINVAL);
 
 	/* Find sosp, the drain socket where data will be spliced into. */
