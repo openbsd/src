@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.12 2020/08/08 10:06:49 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.13 2020/08/08 10:21:22 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -169,9 +169,6 @@ tls13_slow_failing_tests = TestGroup("slow, failing TLSv1.3 tests", [
     Test("test-tls13-pkcs-signature.py"),
     # 8 tests fail: 'tls13 signature rsa_pss_{pss,rsae}_sha{256,384,512}
     Test("test-tls13-rsapss-signatures.py"),
-
-    # ExpectNewSessionTicket
-    Test("test-tls13-session-resumption.py"),
 ])
 
 tls13_unsupported_tests = TestGroup("TLSv1.3 tests for unsupported features", [
@@ -191,6 +188,9 @@ tls13_unsupported_tests = TestGroup("TLSv1.3 tests for unsupported features", [
     # broken test script
     # UnboundLocalError: local variable 'cert' referenced before assignment
     Test("test-tls13-post-handshake-auth.py"),
+
+    # ExpectNewSessionTicket
+    Test("test-tls13-session-resumption.py"),
 
     # Server must be configured to support only rsa_pss_rsae_sha512
     Test("test-tls13-signature-algorithms.py"),
