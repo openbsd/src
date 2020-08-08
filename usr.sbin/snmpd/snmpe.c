@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.62 2020/05/02 14:22:31 martijn Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.63 2020/08/08 13:39:57 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -400,124 +400,112 @@ int
 snmpe_parsevarbinds(struct snmp_message *msg)
 {
 	struct snmp_stats	*stats = &snmpd_env->sc_stats;
+	struct ber_element	*varbind, *value, *rvarbind = NULL;
+	struct ber_element	*pvarbind = NULL, *end;
 	char			 buf[BUFSIZ];
 	struct ber_oid		 o;
-	int			 ret = 0;
+	int			 i;
 
 	msg->sm_errstr = "invalid varbind element";
 
-	if (msg->sm_i == 0) {
-		msg->sm_i = 1;
-		msg->sm_a = msg->sm_varbind;
-		msg->sm_last = NULL;
-	}
+	varbind = msg->sm_varbind;
+	msg->sm_varbindresp = NULL;
+	end = NULL;
 
-	 for (; msg->sm_a != NULL && msg->sm_i < SNMPD_MAXVARBIND;
-	    msg->sm_a = msg->sm_next, msg->sm_i++) {
-		msg->sm_next = msg->sm_a->be_next;
-
-		if (msg->sm_a->be_class != BER_CLASS_UNIVERSAL ||
-		    msg->sm_a->be_type != BER_TYPE_SEQUENCE)
-			continue;
-		if ((msg->sm_b = msg->sm_a->be_sub) == NULL)
-			continue;
-
-		for (msg->sm_state = 0; msg->sm_state < 2 && msg->sm_b != NULL;
-		    msg->sm_b = msg->sm_b->be_next) {
-			switch (msg->sm_state++) {
-			case 0:
-				if (ober_get_oid(msg->sm_b, &o) != 0)
-					goto varfail;
-				if (o.bo_n < BER_MIN_OID_LEN ||
-				    o.bo_n > BER_MAX_OID_LEN)
-					goto varfail;
-				if (msg->sm_context == SNMP_C_SETREQ)
-					stats->snmp_intotalsetvars++;
-				else
-					stats->snmp_intotalreqvars++;
-				log_debug("%s: %s: oid %s",
-				    __func__, msg->sm_host,
-				    smi_oid2string(&o, buf, sizeof(buf), 0));
-				break;
-			case 1:
-				msg->sm_c = NULL;
-				msg->sm_end = NULL;
-
-				switch (msg->sm_context) {
-
-				case SNMP_C_GETNEXTREQ:
-					msg->sm_c = ober_add_sequence(NULL);
-					ret = mps_getnextreq(msg, msg->sm_c,
-					    &o);
-					if (ret == 0 || ret == 1)
-						break;
-					ober_free_elements(msg->sm_c);
-					msg->sm_error = SNMP_ERROR_NOSUCHNAME;
-					goto varfail;
-
-				case SNMP_C_GETREQ:
-					msg->sm_c = ober_add_sequence(NULL);
-					ret = mps_getreq(msg, msg->sm_c, &o,
-					    msg->sm_version);
-					if (ret == 0 || ret == 1)
-						break;
-					msg->sm_error = SNMP_ERROR_NOSUCHNAME;
-					ober_free_elements(msg->sm_c);
-					goto varfail;
-
-				case SNMP_C_SETREQ:
-					if (snmpd_env->sc_readonly == 0) {
-						ret = mps_setreq(msg,
-						    msg->sm_b, &o);
-						if (ret == 0)
-							break;
-					}
-					msg->sm_error = SNMP_ERROR_READONLY;
-					goto varfail;
-
-				case SNMP_C_GETBULKREQ:
-					ret = mps_getbulkreq(msg, &msg->sm_c,
-					    &msg->sm_end, &o,
-					    (msg->sm_i <= msg->sm_nonrepeaters)
-					    ? 1 : msg->sm_maxrepetitions);
-					if (ret == 0 || ret == 1)
-						break;
-					msg->sm_error = SNMP_ERROR_NOSUCHNAME;
-					goto varfail;
-
-				default:
-					goto varfail;
-				}
-				if (msg->sm_c == NULL)
-					break;
-				if (msg->sm_end == NULL)
-					msg->sm_end = msg->sm_c;
-				if (msg->sm_last == NULL)
-					msg->sm_varbindresp = msg->sm_c;
-				else
-					ober_link_elements(msg->sm_last, msg->sm_c);
-				msg->sm_last = msg->sm_end;
-				break;
-			}
-		}
-		if (msg->sm_state < 2)  {
-			log_debug("%s: state %d", __func__, msg->sm_state);
+	for (i = 1; varbind != NULL && i < SNMPD_MAXVARBIND;
+	    varbind = varbind->be_next, i++) {
+		if (ober_scanf_elements(varbind, "{oe}", &o, &value) == -1) {
+			stats->snmp_inasnparseerrs++;
+			msg->sm_errstr = "invalid varbind";
 			goto varfail;
 		}
+		if (o.bo_n < BER_MIN_OID_LEN || o.bo_n > BER_MAX_OID_LEN)
+			goto varfail;
+
+		log_debug("%s: %s: oid %s", __func__, msg->sm_host,
+		    smi_oid2string(&o, buf, sizeof(buf), 0));
+
+		/*
+		 * XXX intotalreqvars should only be incremented after all are
+		 * succeeded
+		 */
+		switch (msg->sm_context) {
+		case SNMP_C_GETNEXTREQ:
+			if ((rvarbind = ober_add_sequence(NULL)) == NULL)
+				goto varfail;
+			if (mps_getnextreq(msg, rvarbind, &o) != 0) {
+				msg->sm_error = SNMP_ERROR_NOSUCHNAME;
+				ober_free_elements(rvarbind);
+				goto varfail;
+			}
+			stats->snmp_intotalreqvars++;
+			break;
+		case SNMP_C_GETREQ:
+			if ((rvarbind = ober_add_sequence(NULL)) == NULL)
+				goto varfail;
+			if (mps_getreq(msg, rvarbind, &o,
+			    msg->sm_version) != 0) {
+				msg->sm_error = SNMP_ERROR_NOSUCHNAME;
+				ober_free_elements(rvarbind);
+				goto varfail;
+			}
+			stats->snmp_intotalreqvars++;
+			break;
+		case SNMP_C_SETREQ:
+			if (snmpd_env->sc_readonly == 0) {
+				/*
+				 * XXX A set varbind should only be committed if
+				 * all variables are staged
+				 */
+				if (mps_setreq(msg, value, &o) == 0) {
+					/* XXX Adjust after fixing staging */
+					stats->snmp_intotalsetvars++;
+					break;
+				}
+			}
+			msg->sm_error = SNMP_ERROR_READONLY;
+			goto varfail;
+		case SNMP_C_GETBULKREQ:
+			if ((rvarbind = ober_add_sequence(NULL)) == NULL)
+				goto varfail;
+			if (mps_getbulkreq(msg, &rvarbind, &end, &o,
+			    (i <= msg->sm_nonrepeaters)
+			    ? 1 : msg->sm_maxrepetitions) != 0) {
+				msg->sm_error = SNMP_ERROR_NOSUCHNAME;
+				goto varfail;
+			}
+			/*
+			 * XXX This should be the amount of returned
+			 * vars
+			 */
+			stats->snmp_intotalreqvars++;
+			break;
+
+		default:
+			goto varfail;
+		}
+		if (rvarbind == NULL)
+			break;
+		if (pvarbind == NULL)
+			msg->sm_varbindresp = rvarbind;
+		else
+			ober_link_elements(pvarbind, rvarbind);
+		pvarbind = end == NULL ? rvarbind : end;
+		break;
 	}
 
 	msg->sm_errstr = "none";
 	msg->sm_error = 0;
 	msg->sm_errorindex = 0;
 
-	return (ret);
+	return 0;
  varfail:
 	log_debug("%s: %s: %s, error index %d", __func__,
-	    msg->sm_host, msg->sm_errstr, msg->sm_i);
+	    msg->sm_host, msg->sm_errstr, i);
 	if (msg->sm_error == 0)
 		msg->sm_error = SNMP_ERROR_GENERR;
-	msg->sm_errorindex = msg->sm_i;
-	return (-1);
+	msg->sm_errorindex = i;
+	return -1;
 }
 
 void
@@ -749,8 +737,8 @@ void
 snmpe_dispatchmsg(struct snmp_message *msg)
 {
 	/* dispatched to subagent */
-	if (snmpe_parsevarbinds(msg) == 1)
-		return;
+	/* XXX Do proper error handling */
+	(void) snmpe_parsevarbinds(msg);
 
 	/* respond directly */
 	msg->sm_context = SNMP_C_GETRESP;

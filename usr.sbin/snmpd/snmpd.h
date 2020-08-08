@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.87 2020/06/30 17:11:49 martijn Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.88 2020/08/08 13:39:57 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -394,19 +394,10 @@ struct snmp_message {
 	struct ber_element	*sm_req;
 	struct ber_element	*sm_resp;
 
-	int			 sm_i;
-	struct ber_element	*sm_a;
-	struct ber_element	*sm_b;
-	struct ber_element	*sm_c;
-	struct ber_element	*sm_next;
-	struct ber_element	*sm_last;
-	struct ber_element	*sm_end;
-
 	u_int8_t		 sm_data[READ_BUF_SIZE];
 	size_t			 sm_datalen;
 
 	u_int			 sm_version;
-	u_int			 sm_state;
 
 	/* V1, V2c */
 	char			 sm_community[SNMPD_MAXCOMMUNITYLEN];
