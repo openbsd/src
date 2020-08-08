@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.229 2020/07/20 14:41:14 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.230 2020/08/08 13:08:23 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -72,10 +72,10 @@
  */
 void	scsi_get_target_luns(struct scsi_link *, struct scsi_lun_array *);
 int	scsi_probedev(struct scsibus_softc *, int, int, int);
-void	scsi_add_link(struct scsibus_softc *, struct scsi_link *);
-void	scsi_remove_link(struct scsibus_softc *, struct scsi_link *);
-int	scsi_activate_link(struct scsibus_softc *, struct scsi_link *, int);
-int	scsi_detach_link(struct scsibus_softc *, struct scsi_link *, int);
+void	scsi_add_link(struct scsi_link *);
+void	scsi_remove_link(struct scsi_link *);
+int	scsi_activate_link(struct scsi_link *, int);
+int	scsi_detach_link(struct scsi_link *, int);
 
 void	scsi_devid(struct scsi_link *);
 int	scsi_devid_pg80(struct scsi_link *);
@@ -222,7 +222,7 @@ scsi_activate_target(struct scsibus_softc *sb, int target, int act)
 
 	SLIST_FOREACH(link, &sb->sc_link_list, bus_list) {
 		if (link->target == target) {
-			r = scsi_activate_link(sb, link, act);
+			r = scsi_activate_link(link, act);
 			if (r)
 				rv = r;
 		}
@@ -239,11 +239,11 @@ scsi_activate_lun(struct scsibus_softc *sb, int target, int lun, int act)
 	if (link == NULL)
 		return 0;
 
-	return scsi_activate_link(sb, link, act);
+	return scsi_activate_link(link, act);
 }
 
 int
-scsi_activate_link(struct scsibus_softc *sb, struct scsi_link *link, int act)
+scsi_activate_link(struct scsi_link *link, int act)
 {
 	struct device			*dev;
 	int				 rv = 0;
@@ -450,7 +450,7 @@ scsi_detach(struct scsibus_softc *sb, int target, int lun, int flags)
 		/* Detach all links from bus. */
 		while (!SLIST_EMPTY(&sb->sc_link_list)) {
 			link = SLIST_FIRST(&sb->sc_link_list);
-			r = scsi_detach_link(sb, link, flags);
+			r = scsi_detach_link(link, flags);
 			if (r != 0 && r != ENXIO)
 				rv = r;
 		}
@@ -465,7 +465,7 @@ scsi_detach(struct scsibus_softc *sb, int target, int lun, int flags)
 		/* Detach all links from target. */
 		SLIST_FOREACH_SAFE(link, &sb->sc_link_list, bus_list, tmp) {
 			if (link->target == target) {
-				r = scsi_detach_link(sb, link, flags);
+				r = scsi_detach_link(link, flags);
 				if (r != 0 && r != ENXIO)
 					rv = r;
 			}
@@ -478,7 +478,7 @@ scsi_detach(struct scsibus_softc *sb, int target, int lun, int flags)
 	if (link == NULL)
 		return EINVAL;
 	else
-		return scsi_detach_link(sb, link, flags);
+		return scsi_detach_link(link, flags);
 }
 
 int
@@ -502,8 +502,9 @@ scsi_detach_lun(struct scsibus_softc *sb, int target, int lun, int flags)
 }
 
 int
-scsi_detach_link(struct scsibus_softc *sb, struct scsi_link *link, int flags)
+scsi_detach_link(struct scsi_link *link, int flags)
 {
+	struct scsibus_softc		*sb = link->bus;
 	int				 rv;
 
 	if (!ISSET(flags, DETACH_FORCE) && ISSET(link->flags, SDEV_OPEN))
@@ -533,7 +534,7 @@ scsi_detach_link(struct scsibus_softc *sb, struct scsi_link *link, int flags)
 	/* 5. Free up its state in the midlayer. */
 	if (link->id != NULL)
 		devid_free(link->id);
-	scsi_remove_link(sb, link);
+	scsi_remove_link(link);
 	free(link, M_DEVBUF, sizeof(*link));
 
 	return 0;
@@ -553,15 +554,15 @@ scsi_get_link(struct scsibus_softc *sb, int target, int lun)
 }
 
 void
-scsi_add_link(struct scsibus_softc *sb, struct scsi_link *link)
+scsi_add_link(struct scsi_link *link)
 {
-	SLIST_INSERT_HEAD(&sb->sc_link_list, link, bus_list);
+	SLIST_INSERT_HEAD(&link->bus->sc_link_list, link, bus_list);
 }
 
 void
-scsi_remove_link(struct scsibus_softc *sb, struct scsi_link *link)
+scsi_remove_link(struct scsi_link *link)
 {
-	SLIST_REMOVE(&sb->sc_link_list, link, scsi_link, bus_list);
+	SLIST_REMOVE(&link->bus->sc_link_list, link, scsi_link, bus_list);
 }
 
 void
@@ -1049,7 +1050,7 @@ scsi_probedev(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 		dma_free(usbinqbuf, sizeof(*usbinqbuf));
 	}
 
-	scsi_add_link(sb, link);
+	scsi_add_link(link);
 
 	/*
 	 * Generate a TEST_UNIT_READY command. This gives drivers waiting for
