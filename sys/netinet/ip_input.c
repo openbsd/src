@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.349 2020/08/01 23:41:55 gnezdo Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.350 2020/08/08 07:42:31 florian Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -618,20 +618,6 @@ ip_deliver(struct mbuf **mp, int *offp, int nxt, int af)
 			IPSTAT_INC(tooshort);
 			goto bad;
 		}
-
-#ifdef INET6
-		/* draft-itojun-ipv6-tcp-to-anycast */
-		if (af == AF_INET6 &&
-		    ISSET((*mp)->m_flags, M_ACAST) && (nxt == IPPROTO_TCP)) {
-			if ((*mp)->m_len >= sizeof(struct ip6_hdr)) {
-				icmp6_error(*mp, ICMP6_DST_UNREACH,
-					ICMP6_DST_UNREACH_ADDR,
-					offsetof(struct ip6_hdr, ip6_dst));
-				*mp = NULL;
-			}
-			goto bad;
-		}
-#endif /* INET6 */
 
 #ifdef IPSEC
 		if (ipsec_in_use) {
