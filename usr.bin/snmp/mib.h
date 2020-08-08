@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.3 2020/08/08 07:18:08 martijn Exp $	*/
+/*	$OpenBSD: mib.h,v 1.4 2020/08/08 08:37:57 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -111,31 +111,56 @@
 #define MIB_authenticationFailure	MIB_snmpTraps, 5
 #define MIB_egpNeighborLoss		MIB_snmpTraps, 6
 
-/* SNMP-USER-BASED-SM-MIB */
-#define MIB_framework			MIB_snmpModules, 10
-#define MIB_frameworkObjects		MIB_framework, 2
-#define OIDIDX_snmpEngine		9
-#define MIB_snmpEngine			MIB_frameworkObjects, 1
+/* SNMP-FRAMEWORK-MIB */
+#define MIB_snmpFrameworkMIB		MIB_snmpModules, 10
+#define MIB_snmpFrameworkAdmin		MIB_snmpFrameworkMIB, 1
+#define MIB_snmpFrameworkMIBObjects	MIB_snmpFrameworkMIB, 2
+#define MIB_snmpFrameworkMIBConformance	MIB_snmpFrameworkMIB, 3
+#define MIB_snmpEngine			MIB_snmpFrameworkMIBObjects, 1
 #define MIB_snmpEngineID		MIB_snmpEngine, 1
 #define MIB_snmpEngineBoots		MIB_snmpEngine, 2
 #define MIB_snmpEngineTime		MIB_snmpEngine, 3
-#define MIB_snmpEngineMaxMsgSize	MIB_snmpEngine, 4
-#define MIB_usm				MIB_snmpModules, 15
-#define MIB_usmObjects			MIB_usm, 1
-#define MIB_usmStats			MIB_usmObjects, 1
-#define OIDIDX_usmStats			9
-#define OIDVAL_usmErrSecLevel		1
-#define OIDVAL_usmErrTimeWindow		2
-#define OIDVAL_usmErrUserName		3
-#define OIDVAL_usmErrEngineId		4
-#define OIDVAL_usmErrDigest		5
-#define OIDVAL_usmErrDecrypt		6
-#define MIB_usmStatsUnsupportedSecLevels MIB_usmStats, OIDVAL_usmErrSecLevel
-#define MIB_usmStatsNotInTimeWindow	MIB_usmStats, OIDVAL_usmErrTimeWindow
-#define MIB_usmStatsUnknownUserNames	MIB_usmStats, OIDVAL_usmErrUserName
-#define MIB_usmStatsUnknownEngineId	MIB_usmStats, OIDVAL_usmErrEngineId
-#define MIB_usmStatsWrongDigests	MIB_usmStats, OIDVAL_usmErrDigest
-#define MIB_usmStatsDecryptionErrors	MIB_usmStats, OIDVAL_usmErrDecrypt
+#define MIB_snmpEngineMaxMessageSize	MIB_snmpEngine, 4
+#define MIB_snmpAuthProtocols		MIB_snmpFrameworkAdmin, 1
+#define MIB_snmpPrivProtocols		MIB_snmpFrameworkAdmin, 2
+#define MIB_snmpFrameworkMIBCompliances	MIB_snmpFrameworkMIBConformance, 1
+#define MIB_snmpFrameworkMIBGroups	MIB_snmpFrameworkMIBConformance, 2
+
+/* SNMP-USER-BASED-SM-MIB */
+#define MIB_snmpUsmMIB			MIB_snmpModules, 15
+#define MIB_usmMIBObjects		MIB_snmpUsmMIB, 1
+#define MIB_usmMIBConformance		MIB_snmpUsmMIB, 2
+#define MIB_usmNoAuthProtocol		MIB_snmpAuthProtocols, 1
+#define MIB_usmHMACMD5AuthProtocol	MIB_snmpAuthProtocols, 2
+#define MIB_usmHMACSHAAuthProtocol	MIB_snmpAuthProtocols, 3
+#define MIB_usmNoPrivProtocol		MIB_snmpPrivProtocols, 1
+#define MIB_usmDESPrivProtocol		MIB_snmpPrivProtocols, 2
+#define MIB_usmStats			MIB_usmMIBObjects, 1
+#define MIB_usmStatsUnsupportedSecLevels MIB_usmStats, 1
+#define MIB_usmStatsNotInTimeWindows	MIB_usmStats, 2
+#define MIB_usmStatsUnknownUserNames	MIB_usmStats, 3
+#define MIB_usmStatsUnknownEngineIDs	MIB_usmStats, 4
+#define MIB_usmStatsWrongDigests	MIB_usmStats, 5
+#define MIB_usmStatsDecryptionErrors	MIB_usmStats, 6
+#define MIB_usmUser			MIB_usmMIBObjects, 2
+#define MIB_usmUserSpinLock		MIB_usmUser, 1
+#define MIB_usmUserTable		MIB_usmUser, 2
+#define MIB_usmUserEntry		MIB_usmUserTable, 1
+#define MIB_usmUserEngineID		MIB_usmUserEntry, 1
+#define MIB_usmUserName			MIB_usmUserEntry, 2
+#define MIB_usmUserSecurityName		MIB_usmUserEntry, 3
+#define MIB_usmUserCloneFrom		MIB_usmUserEntry, 4
+#define MIB_usmUserAuthProtocol		MIB_usmUserEntry, 5
+#define MIB_usmUserAuthKeyChange	MIB_usmUserEntry, 6
+#define MIB_usmUserOwnAuthKeyChange	MIB_usmUserEntry, 7
+#define MIB_usmUserPrivProtocol		MIB_usmUserEntry, 8
+#define MIB_usmUserPrivKeyChange	MIB_usmUserEntry, 9
+#define MIB_usmUserOwnPrivKeyChange	MIB_usmUserEntry, 10
+#define MIB_usmUserPublic		MIB_usmUserEntry, 11
+#define MIB_usmUserStorageType		MIB_usmUserEntry, 12
+#define MIB_usmUserStatus		MIB_usmUserEntry, 13
+#define MIB_usmMIBCompliances		MIB_usmMIBConformance, 1
+#define MIB_usmMIBGroups		MIB_usmMIBConformance, 2
 
 /* HOST-RESOURCES-MIB */
 #define MIB_host			MIB_mib_2, 25
@@ -815,22 +840,53 @@
 	{ MIBDECL(authenticationFailure) },		\
 	{ MIBDECL(egpNeighborLoss) },			\
 							\
-	{ MIBDECL(framework) },				\
-	{ MIBDECL(frameworkObjects) },			\
+	{ MIBDECL(snmpFrameworkMIB) },			\
+	{ MIBDECL(snmpFrameworkAdmin) },		\
+	{ MIBDECL(snmpFrameworkMIBObjects) },		\
+	{ MIBDECL(snmpFrameworkMIBConformance) },	\
 	{ MIBDECL(snmpEngine) },			\
 	{ MIBDECL(snmpEngineID) },			\
 	{ MIBDECL(snmpEngineBoots) },			\
 	{ MIBDECL(snmpEngineTime) },			\
-	{ MIBDECL(snmpEngineMaxMsgSize) },		\
-	{ MIBDECL(usm) },				\
-	{ MIBDECL(usmObjects) },			\
+	{ MIBDECL(snmpEngineMaxMessageSize) },		\
+	{ MIBDECL(snmpAuthProtocols) },			\
+	{ MIBDECL(snmpPrivProtocols) },			\
+	{ MIBDECL(snmpFrameworkMIBCompliances) },	\
+	{ MIBDECL(snmpFrameworkMIBGroups) },		\
+							\
+	{ MIBDECL(snmpUsmMIB) },			\
+	{ MIBDECL(usmMIBObjects) },			\
+	{ MIBDECL(usmMIBConformance) },			\
+	{ MIBDECL(usmNoAuthProtocol) },			\
+	{ MIBDECL(usmHMACMD5AuthProtocol) },		\
+	{ MIBDECL(usmHMACSHAAuthProtocol) },		\
+	{ MIBDECL(usmNoPrivProtocol) },			\
+	{ MIBDECL(usmDESPrivProtocol) },		\
 	{ MIBDECL(usmStats) },				\
-	{ MIBDECL(usmStatsUnsupportedSecLevels) },	\
-	{ MIBDECL(usmStatsNotInTimeWindow) },		\
+	{ MIBDECL(usmStatsNotInTimeWindows) },		\
 	{ MIBDECL(usmStatsUnknownUserNames) },		\
-	{ MIBDECL(usmStatsUnknownEngineId) },		\
+	{ MIBDECL(usmStatsUnknownEngineIDs) },		\
 	{ MIBDECL(usmStatsWrongDigests) },		\
 	{ MIBDECL(usmStatsDecryptionErrors) },		\
+	{ MIBDECL(usmUser) },				\
+	{ MIBDECL(usmUserSpinLock) },			\
+	{ MIBDECL(usmUserTable) },			\
+	{ MIBDECL(usmUserEntry) },			\
+	{ MIBDECL(usmUserEngineID) },			\
+	{ MIBDECL(usmUserName), "SnmpAdminString" },	\
+	{ MIBDECL(usmUserSecurityName), "SnmpAdminString" }, \
+	{ MIBDECL(usmUserCloneFrom), },			\
+	{ MIBDECL(usmUserAuthProtocol), },		\
+	{ MIBDECL(usmUserAuthKeyChange), },		\
+	{ MIBDECL(usmUserOwnAuthKeyChange), },		\
+	{ MIBDECL(usmUserPrivProtocol), },		\
+	{ MIBDECL(usmUserPrivKeyChange), },		\
+	{ MIBDECL(usmUserOwnPrivKeyChange), },		\
+	{ MIBDECL(usmUserPublic), },			\
+	{ MIBDECL(usmUserStorageType), },		\
+	{ MIBDECL(usmUserStatus), },			\
+	{ MIBDECL(usmMIBCompliances), },		\
+	{ MIBDECL(usmMIBGroups), },			\
 							\
 	{ MIBDECL(host) },				\
 	{ MIBDECL(hrSystem) },				\
