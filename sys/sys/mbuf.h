@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.249 2020/06/21 11:44:12 dlg Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.250 2020/08/08 19:53:02 florian Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -190,7 +190,6 @@ struct mbuf {
 /* mbuf pkthdr flags, also in m_flags */
 #define M_VLANTAG	0x0020	/* ether_vtag is valid */
 #define M_LOOP		0x0040	/* packet has been sent from local machine */
-#define M_ACAST		0x0080	/* received as IPv6 anycast */
 #define M_BCAST		0x0100	/* sent/received as link-level broadcast */
 #define M_MCAST		0x0200	/* sent/received as link-level multicast */
 #define M_CONF		0x0400  /* payload was encrypted (ESP-transport) */
@@ -203,14 +202,13 @@ struct mbuf {
 #ifdef _KERNEL
 #define M_BITS \
     ("\20\1M_EXT\2M_PKTHDR\3M_EOR\4M_EXTWR\5M_PROTO1\6M_VLANTAG\7M_LOOP" \
-    "\10M_ACAST\11M_BCAST\12M_MCAST\13M_CONF\14M_AUTH\15M_TUNNEL" \
+    "\11M_BCAST\12M_MCAST\13M_CONF\14M_AUTH\15M_TUNNEL" \
     "\16M_ZEROIZE\17M_COMP\20M_LINK0")
 #endif
 
 /* flags copied when copying m_pkthdr */
 #define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_PROTO1|M_BCAST|M_MCAST|M_CONF|M_COMP|\
-			 M_AUTH|M_LOOP|M_TUNNEL|M_LINK0|M_VLANTAG|M_ACAST|\
-			 M_ZEROIZE)
+			 M_AUTH|M_LOOP|M_TUNNEL|M_LINK0|M_VLANTAG|M_ZEROIZE)
 
 /* Checksumming flags */
 #define	M_IPV4_CSUM_OUT		0x0001	/* IPv4 checksum needed */
