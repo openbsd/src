@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.2 2020/08/03 14:45:54 martijn Exp $	*/
+/*	$OpenBSD: mib.h,v 1.3 2020/08/08 07:18:08 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -751,7 +751,7 @@
 	{ MIBDECL(sysDescr) },				\
 	{ MIBDECL(sysOID) },				\
 	{ MIBDECL(sysUpTime) },				\
-	{ MIBDECL(sysContact), "SnmpAdminString" },	\
+	{ MIBDECL(sysContact), "DisplayString" },	\
 	{ MIBDECL(sysName) },				\
 	{ MIBDECL(sysLocation) },			\
 	{ MIBDECL(sysServices) },			\
@@ -1349,6 +1349,7 @@
 
 #define TEXTCONV_TREE {					\
 	{ "SnmpAdminString", "255t", BER_TYPE_OCTETSTRING }, \
+	{ "DisplayString", "255a", BER_TYPE_OCTETSTRING }, \
 	{ NULL, NULL }					\
 }
 
