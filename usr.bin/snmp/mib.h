@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.4 2020/08/08 08:37:57 martijn Exp $	*/
+/*	$OpenBSD: mib.h,v 1.5 2020/08/08 08:57:29 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -161,6 +161,17 @@
 #define MIB_usmUserStatus		MIB_usmUserEntry, 13
 #define MIB_usmMIBCompliances		MIB_usmMIBConformance, 1
 #define MIB_usmMIBGroups		MIB_usmMIBConformance, 2
+
+/* SNMP-USM-AES-MIB */
+#define MIB_snmpUsmAesMIB		MIB_snmpModules, 20
+#define MIB_usmAesCfb128Protocol	MIB_snmpPrivProtocols, 4
+
+/* SNMP-USM-HMAC-SHA2-MIB */
+#define MIB_snmpUsmHmacSha2MIB		MIB_mib_2, 235
+#define MIB_usmHMAC128SHA224AuthProtocol MIB_snmpAuthProtocols, 4
+#define MIB_usmHMAC192SHA256AuthProtocol MIB_snmpAuthProtocols, 5
+#define MIB_usmHMAC256SHA384AuthProtocol MIB_snmpAuthProtocols, 6
+#define MIB_usmHMAC384SHA512AuthProtocol MIB_snmpAuthProtocols, 7
 
 /* HOST-RESOURCES-MIB */
 #define MIB_host			MIB_mib_2, 25
@@ -887,6 +898,15 @@
 	{ MIBDECL(usmUserStatus), },			\
 	{ MIBDECL(usmMIBCompliances), },		\
 	{ MIBDECL(usmMIBGroups), },			\
+							\
+	{ MIBDECL(snmpUsmAesMIB), },			\
+	{ MIBDECL(usmAesCfb128Protocol), },		\
+							\
+	{ MIBDECL(snmpUsmHmacSha2MIB), },		\
+	{ MIBDECL(usmHMAC128SHA224AuthProtocol), },	\
+	{ MIBDECL(usmHMAC192SHA256AuthProtocol), },	\
+	{ MIBDECL(usmHMAC256SHA384AuthProtocol), },	\
+	{ MIBDECL(usmHMAC384SHA512AuthProtocol), },	\
 							\
 	{ MIBDECL(host) },				\
 	{ MIBDECL(hrSystem) },				\
