@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.11 2020/06/24 07:29:21 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.12 2020/08/08 10:06:49 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -65,7 +65,6 @@ class TestGroup:
 tls13_unsupported_ciphers = [
     "-e", "TLS 1.3 with ffdhe2048",
     "-e", "TLS 1.3 with ffdhe3072",
-    "-e", "TLS 1.3 with secp521r1",   # XXX: why is this curve problematic?
     "-e", "TLS 1.3 with x448",
 ]
 
@@ -205,11 +204,8 @@ tls12_exclude_legacy_protocols = [
     "-e", "Protocol (3, 1) in SSLv2 compatible ClientHello",
     "-e", "Protocol (3, 2) in SSLv2 compatible ClientHello",
     "-e", "Protocol (3, 3) in SSLv2 compatible ClientHello",
-    "-e", "Protocol (3, 1) with secp521r1 group",   # XXX
     "-e", "Protocol (3, 1) with x448 group",
-    "-e", "Protocol (3, 2) with secp521r1 group",   # XXX
     "-e", "Protocol (3, 2) with x448 group",
-    "-e", "Protocol (3, 3) with secp521r1 group",   # XXX
     "-e", "Protocol (3, 3) with x448 group",
 ]
 
@@ -575,6 +571,8 @@ class TlsServer:
                     "s_server",
                     "-accept",
                     str(port),
+                    "-groups",
+                    "X25519:P-256:P-521:P-384",
                     "-key",
                     "localhost.key",
                     "-cert",
