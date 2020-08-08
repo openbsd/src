@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.133 2020/07/15 21:20:08 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.134 2020/08/08 01:01:26 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -453,18 +453,14 @@ sys_adjtime(struct proc *p, void *v, register_t *retval)
 		if (!timerisvalid(&atv))
 			return (EINVAL);
 
-		if (atv.tv_sec >= 0) {
-			if (atv.tv_sec > INT64_MAX / 1000000)
-				return EINVAL;
-			adjustment = atv.tv_sec * 1000000;
-			if (atv.tv_usec > INT64_MAX - adjustment)
-				return EINVAL;
-			adjustment += atv.tv_usec;
-		} else {
-			if (atv.tv_sec < INT64_MIN / 1000000)
-				return EINVAL;
-			adjustment = atv.tv_sec * 1000000 + atv.tv_usec;
-		}
+		if (atv.tv_sec > INT64_MAX / 1000000)
+			return EINVAL;
+		if (atv.tv_sec < INT64_MIN / 1000000)
+			return EINVAL;
+		adjustment = atv.tv_sec * 1000000;
+		if (adjustment > INT64_MAX - atv.tv_usec)
+			return EINVAL;
+		adjustment += atv.tv_usec;
 
 		rw_enter_write(&tc_lock);
 	}
