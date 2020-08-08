@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmp.1,v 1.13 2020/04/23 21:28:09 jmc Exp $
+.\" $OpenBSD: snmp.1,v 1.14 2020/08/08 07:11:47 martijn Exp $
 .\"
 .\" Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 23 2020 $
+.Dd $Mdocdate: August 8 2020 $
 .Dt SNMP 1
 .Os
 .Sh NAME
@@ -523,6 +523,31 @@ Actually a normal integer for compatibility with netsnmp.
 .It Cm x
 A hex string.
 Similar to a decimal string, but in hexadecimal format.
+.El
+.Sh ENVIRONMENT
+.Bl -tag -width LC_CTYPE
+.It Ev LC_CTYPE
+The character encoding
+.Xr locale 1
+used for output.
+It decides whether objects having a display format of UTF-8 are printed as
+UTF-8, and whether each byte invalid according to the object's display format is
+printed as a UTF-8 replacement character
+.Pq Sq \[uFFFD] .
+.Pp
+If unset or set to
+.Qq C ,
+.Qq POSIX ,
+or an unsupported value, for objects having a display format of UTF-8, each
+.Em printable
+non-ASCII character is replaced with a single dot
+.Pq Sq \&. .
+Each byte invalid according to the object's display format is printed as a
+question mark
+.Pq Sq \&? .
+.Pp
+Each non-printable character is always replaced with a single dot
+.Pq Sq \&. .
 .El
 .Sh SEE ALSO
 .Xr snmpd 8
