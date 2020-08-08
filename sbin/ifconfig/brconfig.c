@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.28 2020/08/05 06:22:11 kn Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.29 2020/08/08 12:38:21 kn Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -419,18 +419,13 @@ void
 bridge_timeout(const char *arg, int d)
 {
 	struct ifbrparam bp;
-	long newtime;
-	char *endptr;
+	const char *errstr;
 
-	errno = 0;
-	newtime = strtol(arg, &endptr, 0);
-	if (arg[0] == '\0' || endptr[0] != '\0' ||
-	    (newtime & ~INT_MAX) != 0L ||
-	    (errno == ERANGE && newtime == LONG_MAX))
-		errx(1, "invalid arg for timeout: %s", arg);
+	bp.ifbrp_ctime = strtonum(arg, 0, UINT32_MAX, &errstr);
+	if (errstr)
+		err(1, "timeout %s is: %s", arg, errstr);
 
 	strlcpy(bp.ifbrp_name, ifname, sizeof(bp.ifbrp_name));
-	bp.ifbrp_ctime = newtime;
 	if (ioctl(sock, SIOCBRDGSTO, (caddr_t)&bp) == -1)
 		err(1, "%s", ifname);
 }
@@ -439,17 +434,13 @@ void
 bridge_maxage(const char *arg, int d)
 {
 	struct ifbrparam bp;
-	unsigned long v;
-	char *endptr;
+	const char *errstr;
 
-	errno = 0;
-	v = strtoul(arg, &endptr, 0);
-	if (arg[0] == '\0' || endptr[0] != '\0' || v > 0xffUL ||
-	    (errno == ERANGE && v == ULONG_MAX))
-		errx(1, "invalid arg for maxage: %s", arg);
+	bp.ifbrp_maxage = strtonum(arg, 0, UINT8_MAX, &errstr);
+	if (errstr)
+		errx(1, "maxage %s is: %s", arg, errstr);
 
 	strlcpy(bp.ifbrp_name, ifname, sizeof(bp.ifbrp_name));
-	bp.ifbrp_maxage = v;
 	if (ioctl(sock, SIOCBRDGSMA, (caddr_t)&bp) == -1)
 		err(1, "%s", ifname);
 }
@@ -458,17 +449,13 @@ void
 bridge_priority(const char *arg, int d)
 {
 	struct ifbrparam bp;
-	unsigned long v;
-	char *endptr;
+	const char *errstr;
 
-	errno = 0;
-	v = strtoul(arg, &endptr, 0);
-	if (arg[0] == '\0' || endptr[0] != '\0' || v > 0xffffUL ||
-	    (errno == ERANGE && v == ULONG_MAX))
-		errx(1, "invalid arg for spanpriority: %s", arg);
+	bp.ifbrp_prio  = strtonum(arg, 0, UINT16_MAX, &errstr);
+	if (errstr)
+		errx(1, "spanpriority %s is: %s", arg, errstr);
 
 	strlcpy(bp.ifbrp_name, ifname, sizeof(bp.ifbrp_name));
-	bp.ifbrp_prio = v;
 	if (ioctl(sock, SIOCBRDGSPRI, (caddr_t)&bp) == -1)
 		err(1, "%s", ifname);
 }
@@ -479,7 +466,7 @@ bridge_protect(const char *ifsname, const char *val)
 	struct ifbreq breq;
 	unsigned long v;
 	char *optlist, *str;
-	char *endptr;
+	const char *errstr;
 
 	strlcpy(breq.ifbr_name, ifname, sizeof(breq.ifbr_name));
 	strlcpy(breq.ifbr_ifsname, ifsname, sizeof(breq.ifbr_ifsname));
@@ -492,11 +479,9 @@ bridge_protect(const char *ifsname, const char *val)
 
 	str = strtok(optlist, ",");
 	while (str != NULL) {
-		errno = 0;
-		v = strtoul(str, &endptr, 0);
-		if (str[0] == '\0' || endptr[0] != '\0' || v == 0 || v > 31 ||
-		    (errno == ERANGE && v == ULONG_MAX))
-			err(1, "invalid value for protected domain: %s", str);
+		v = strtonum(str, 1, 31, &errstr);
+		if (errstr)
+			err(1, "protected domain %s is: %s", str, errstr);
 		breq.ifbr_protected |= (1 << (v - 1));
 		str = strtok(NULL, ",");
 	}
@@ -545,17 +530,14 @@ void
 bridge_fwddelay(const char *arg, int d)
 {
 	struct ifbrparam bp;
-	unsigned long v;
-	char *endptr;
+	const char *errstr;
 
-	errno = 0;
-	v = strtoul(arg, &endptr, 0);
-	if (arg[0] == '\0' || endptr[0] != '\0' || v > 0xffUL ||
-	    (errno == ERANGE && v == ULONG_MAX))
-		errx(1, "invalid arg for fwddelay: %s", arg);
+	bp.ifbrp_fwddelay = strtonum(arg, 0, UINT8_MAX, &errstr);
+	if (errstr)
+		errx(1, "fwddelay %s is: %s", arg, errstr);
 
 	strlcpy(bp.ifbrp_name, ifname, sizeof(bp.ifbrp_name));
-	bp.ifbrp_fwddelay = v;
+
 	if (ioctl(sock, SIOCBRDGSFD, (caddr_t)&bp) == -1)
 		err(1, "%s", ifname);
 }
@@ -564,17 +546,14 @@ void
 bridge_hellotime(const char *arg, int d)
 {
 	struct ifbrparam bp;
-	unsigned long v;
-	char *endptr;
+	const char *errstr;
 
-	errno = 0;
-	v = strtoul(arg, &endptr, 0);
-	if (arg[0] == '\0' || endptr[0] != '\0' || v > 0xffUL ||
-	    (errno == ERANGE && v == ULONG_MAX))
-		errx(1, "invalid arg for hellotime: %s", arg);
+	bp.ifbrp_hellotime = strtonum(arg, 0, UINT8_MAX, &errstr);
+	if (errstr)
+		errx(1, "hellotime %s is: %s", arg, errstr);
 
 	strlcpy(bp.ifbrp_name, ifname, sizeof(bp.ifbrp_name));
-	bp.ifbrp_hellotime = v;
+
 	if (ioctl(sock, SIOCBRDGSHT, (caddr_t)&bp) == -1)
 		err(1, "%s", ifname);
 }
@@ -584,16 +563,13 @@ bridge_maxaddr(const char *arg, int d)
 {
 	struct ifbrparam bp;
 	unsigned long newsize;
-	char *endptr;
+	const char *errstr;
 
-	errno = 0;
-	newsize = strtoul(arg, &endptr, 0);
-	if (arg[0] == '\0' || endptr[0] != '\0' || newsize > 0xffffffffUL ||
-	    (errno == ERANGE && newsize == ULONG_MAX))
-		errx(1, "invalid arg for maxaddr: %s", arg);
+	bp.ifbrp_csize = strtonum(arg, 0, UINT32_MAX, &errstr);
+	if (errstr)
+		errx(1, "maxaddr %s is: %s", arg, errstr);
 
 	strlcpy(bp.ifbrp_name, ifname, sizeof(bp.ifbrp_name));
-	bp.ifbrp_csize = newsize;
 	if (ioctl(sock, SIOCBRDGSCACHE, (caddr_t)&bp) == -1)
 		err(1, "%s", ifname);
 }
@@ -619,18 +595,14 @@ void
 bridge_ifprio(const char *ifsname, const char *val)
 {
 	struct ifbreq breq;
-	unsigned long v;
-	char *endptr;
+	const char *errstr;
+
+	breq.ifbr_priority = strtonum(val, 0, UINT8_MAX, &errstr);
+	if (errstr)
+		errx(1, "ifpriority %s is: %s", val, errstr);
 
 	strlcpy(breq.ifbr_name, ifname, sizeof(breq.ifbr_name));
 	strlcpy(breq.ifbr_ifsname, ifsname, sizeof(breq.ifbr_ifsname));
-
-	errno = 0;
-	v = strtoul(val, &endptr, 0);
-	if (val[0] == '\0' || endptr[0] != '\0' || v > 0xffUL ||
-	    (errno == ERANGE && v == ULONG_MAX))
-		err(1, "invalid arg for ifpriority: %s", val);
-	breq.ifbr_priority = v;
 
 	if (ioctl(sock, SIOCBRDGSIFPRIO, (caddr_t)&breq) == -1)
 		err(1, "%s: %s", ifname, val);
@@ -640,19 +612,14 @@ void
 bridge_ifcost(const char *ifsname, const char *val)
 {
 	struct ifbreq breq;
-	unsigned long v;
-	char *endptr;
+	const char *errstr;
+
+	breq.ifbr_path_cost = strtonum(val, 0, UINT32_MAX, &errstr);
+	if (errstr)
+		errx(1, "ifcost %s is: %s", val, errstr);
 
 	strlcpy(breq.ifbr_name, ifname, sizeof(breq.ifbr_name));
 	strlcpy(breq.ifbr_ifsname, ifsname, sizeof(breq.ifbr_ifsname));
-
-	errno = 0;
-	v = strtoul(val, &endptr, 0);
-	if (val[0] == '\0' || endptr[0] != '\0' || v > 0xffffffffUL ||
-	    (errno == ERANGE && v == ULONG_MAX))
-		errx(1, "invalid arg for ifcost: %s", val);
-
-	breq.ifbr_path_cost = v;
 
 	if (ioctl(sock, SIOCBRDGSIFCOST, (caddr_t)&breq) == -1)
 		err(1, "%s: %s", ifname, val);
@@ -750,7 +717,7 @@ bridge_holdcnt(const char *value, int d)
 
 	bp.ifbrp_txhc = strtonum(value, 0, UINT8_MAX, &errstr);
 	if (errstr)
-		err(1, "holdcnt %s %s", value, errstr);
+		err(1, "holdcnt %s is: %s", value, errstr);
 
 	strlcpy(bp.ifbrp_name, ifname, sizeof(bp.ifbrp_name));
 	if (ioctl(sock, SIOCBRDGSTXHC, (caddr_t)&bp) == -1)
@@ -1213,18 +1180,14 @@ void
 switch_portno(const char *ifsname, const char *val)
 {
 	struct ifbreq breq;
-	uint32_t newportidx;
-	char *endptr;
+	const char *errstr;
+
+	breq.ifbr_portno = strtonum(val, 0, UINT32_MAX, &errstr);
+	if (errstr)
+		errx(1, "portno %s is: %s", val, errstr);
 
 	strlcpy(breq.ifbr_name, ifname, sizeof(breq.ifbr_name));
 	strlcpy(breq.ifbr_ifsname, ifsname, sizeof(breq.ifbr_ifsname));
-
-	errno = 0;
-	newportidx = strtol(val, &endptr, 0);
-	if (val[0] == '\0' || endptr[0] != '\0' || errno == ERANGE)
-		errx(1, "invalid arg for portidx: %s", val);
-
-	breq.ifbr_portno = newportidx;
 	if (ioctl(sock, SIOCSWSPORTNO, (caddr_t)&breq) == -1) {
 		if (errno == EEXIST)
 			return;
