@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.5 2020/08/08 08:57:29 martijn Exp $	*/
+/*	$OpenBSD: mib.h,v 1.6 2020/08/08 13:13:19 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -31,6 +31,7 @@
  * - optional: write the implementation in mib.c
  */
 
+#define MIB_ccitt			0
 /* From the SNMPv2-SMI MIB */
 #define MIB_iso				1
 #define MIB_org				MIB_iso, 3
@@ -39,6 +40,17 @@
 #define MIB_directory			MIB_internet, 1
 #define MIB_mgmt			MIB_internet, 2
 #define MIB_mib_2			MIB_mgmt, 1	/* XXX mib-2 */
+#define MIB_transmission		MIB_mib_2, 10
+#define MIB_experimental		MIB_internet, 3
+#define MIB_private			MIB_internet, 4
+#define MIB_enterprises			MIB_private, 1
+#define MIB_security			MIB_internet, 5
+#define MIB_snmpV2			MIB_internet, 6
+#define MIB_snmpDomains			MIB_snmpV2, 1
+#define MIB_snmpProxys			MIB_snmpV2, 2
+#define MIB_snmpModules			MIB_snmpV2, 3
+#define MIB_zeroDotZero			0, 0
+
 #define MIB_system			MIB_mib_2, 1
 #define OIDIDX_system			7
 #define MIB_sysDescr			MIB_system, 1
@@ -57,7 +69,6 @@
 #define MIB_sysORID			MIB_sysOREntry, 2
 #define MIB_sysORDescr			MIB_sysOREntry, 3
 #define MIB_sysORUpTime			MIB_sysOREntry, 4
-#define MIB_transmission		MIB_mib_2, 10
 #define MIB_snmp			MIB_mib_2, 11
 #define OIDIDX_snmp			7
 #define MIB_snmpInPkts			MIB_snmp, 1
@@ -90,14 +101,6 @@
 #define MIB_snmpEnableAuthenTraps	MIB_snmp, 30
 #define MIB_snmpSilentDrops		MIB_snmp, 31
 #define MIB_snmpProxyDrops		MIB_snmp, 32
-#define MIB_experimental		MIB_internet, 3
-#define MIB_private			MIB_internet, 4
-#define MIB_enterprises			MIB_private, 1
-#define MIB_security			MIB_internet, 5
-#define MIB_snmpV2			MIB_internet, 6
-#define MIB_snmpDomains			MIB_snmpV2, 1
-#define MIB_snmpProxies			MIB_snmpV2, 2
-#define MIB_snmpModules			MIB_snmpV2, 3
 #define MIB_snmpMIB			MIB_snmpModules, 1
 #define MIB_snmpMIBObjects		MIB_snmpMIB, 1
 #define MIB_snmpTrap			MIB_snmpMIBObjects, 4
@@ -776,6 +779,8 @@
 #define MIB_localTest			MIB_openBSD, 42
 
 #define MIB_TREE			{		\
+	{ MIBDECL(ccitt) },				\
+							\
 	{ MIBDECL(iso) },				\
 	{ MIBDECL(org) },				\
 	{ MIBDECL(dod) },				\
@@ -783,6 +788,17 @@
 	{ MIBDECL(directory) },				\
 	{ MIBDECL(mgmt) },				\
 	{ MIBDECL(mib_2) },				\
+	{ MIBDECL(transmission) },			\
+	{ MIBDECL(experimental) },			\
+	{ MIBDECL(private) },				\
+	{ MIBDECL(enterprises) },			\
+	{ MIBDECL(security) },				\
+	{ MIBDECL(snmpV2) },				\
+	{ MIBDECL(snmpDomains) },			\
+	{ MIBDECL(snmpProxys) },			\
+	{ MIBDECL(snmpModules) },			\
+	{ MIBDECL(zeroDotZero) },			\
+							\
 	{ MIBDECL(system) },				\
 	{ MIBDECL(sysDescr) },				\
 	{ MIBDECL(sysOID) },				\
@@ -798,7 +814,6 @@
 	{ MIBDECL(sysORID) },				\
 	{ MIBDECL(sysORDescr) },			\
 	{ MIBDECL(sysORUpTime) },			\
-	{ MIBDECL(transmission) },			\
 	{ MIBDECL(snmp) },				\
 	{ MIBDECL(snmpInPkts) },			\
 	{ MIBDECL(snmpOutPkts) },			\
@@ -830,14 +845,6 @@
 	{ MIBDECL(snmpEnableAuthenTraps) },		\
 	{ MIBDECL(snmpSilentDrops) },			\
 	{ MIBDECL(snmpProxyDrops) },			\
-	{ MIBDECL(experimental) },			\
-	{ MIBDECL(private) },				\
-	{ MIBDECL(enterprises) },			\
-	{ MIBDECL(security) },				\
-	{ MIBDECL(snmpV2) },				\
-	{ MIBDECL(snmpDomains) },			\
-	{ MIBDECL(snmpProxies) },			\
-	{ MIBDECL(snmpModules) },			\
 	{ MIBDECL(snmpMIB) },				\
 	{ MIBDECL(snmpMIBObjects) },			\
 	{ MIBDECL(snmpTrap) },				\
