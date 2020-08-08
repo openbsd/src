@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.c,v 1.49 2020/07/24 12:43:31 krw Exp $	*/
+/*	$OpenBSD: adv.c,v 1.50 2020/08/08 12:40:55 krw Exp $	*/
 /*	$NetBSD: adv.c,v 1.6 1998/10/28 20:39:45 dante Exp $	*/
 
 /*
@@ -103,8 +103,8 @@ adv_alloc_ccbs(sc)
 	int             error, rseg;
 
 	/*
-         * Allocate the control blocks.
-         */
+	 * Allocate the control blocks.
+	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct adv_control),
 			   NBPG, 0, &seg, 1, &rseg,
 			   BUS_DMA_NOWAIT | BUS_DMA_ZERO)) != 0) {
@@ -120,8 +120,8 @@ adv_alloc_ccbs(sc)
 		return (error);
 	}
 	/*
-         * Create and load the DMA map used for the control blocks.
-         */
+	 * Create and load the DMA map used for the control blocks.
+	 */
 	if ((error = bus_dmamap_create(sc->sc_dmat, sizeof(struct adv_control),
 			   1, sizeof(struct adv_control), 0, BUS_DMA_NOWAIT,
 				       &sc->sc_dmamap_control)) != 0) {
@@ -203,8 +203,8 @@ adv_init_ccb(sc, ccb)
 	int             error;
 
 	/*
-         * Create the DMA map for this CCB.
-         */
+	 * Create the DMA map for this CCB.
+	 */
 	error = bus_dmamap_create(sc->sc_dmat,
 				  (ASC_MAX_SG_LIST - 1) * PAGE_SIZE,
 			 ASC_MAX_SG_LIST, (ASC_MAX_SG_LIST - 1) * PAGE_SIZE,
@@ -307,9 +307,9 @@ adv_alloc_overrunbuf(dvname, dmat)
 
 
 	/*
-         * if an overrun buffer has been already allocated don't allocate it
-         * again. Instead return the address of the allocated buffer.
-         */
+	 * if an overrun buffer has been already allocated don't allocate it
+	 * again. Instead return the address of the allocated buffer.
+	 */
 	if (overrunbuf)
 		return (overrunbuf);
 
@@ -366,8 +366,8 @@ adv_init(sc)
 		panic("adv_init: adv_find_signature failed");
 
 	/*
-         * Read the board configuration
-         */
+	 * Read the board configuration
+	 */
 	AscInitASC_SOFTC(sc);
 	warn = AscInitFromEEP(sc);
 	if (warn) {
@@ -410,8 +410,8 @@ adv_init(sc)
 		sc->scsi_reset_wait = ASC_MAX_SCSI_RESET_WAIT;
 
 	/*
-         * Modify the board configuration
-         */
+	 * Modify the board configuration
+	 */
 	warn = AscInitFromASC_SOFTC(sc);
 	if (warn) {
 		printf("%s -set: ", sc->sc_dev.dv_xname);
@@ -447,8 +447,8 @@ adv_attach(sc)
 	int				i, error;
 
 	/*
-         * Initialize board RISC chip and enable interrupts.
-         */
+	 * Initialize board RISC chip and enable interrupts.
+	 */
 	switch (AscInitDriver(sc)) {
 	case 0:
 		/* AllOK */
@@ -480,15 +480,15 @@ adv_attach(sc)
 	scsi_iopool_init(&sc->sc_iopool, sc, adv_ccb_alloc, adv_ccb_free);
 
 	/*
-         * Allocate the Control Blocks.
-         */
+	 * Allocate the Control Blocks.
+	 */
 	error = adv_alloc_ccbs(sc);
 	if (error)
 		return; /* (error) */ ;
 
 	/*
-         * Create and initialize the Control Blocks.
-         */
+	 * Create and initialize the Control Blocks.
+	 */
 	i = adv_create_ccbs(sc, sc->sc_control->ccbs, ADV_MAX_CCB);
 	if (i == 0) {
 		printf("%s: unable to create control blocks\n",
@@ -528,10 +528,10 @@ adv_scsi_cmd(xs)
 	int             flags, error, nsegs;
 
 	/*
-         * get a ccb to use. If the transfer
-         * is from a buf (possibly from interrupt time)
-         * then we can't allow it to sleep
-         */
+	 * get a ccb to use. If the transfer
+	 * is from a buf (possibly from interrupt time)
+	 * then we can't allow it to sleep
+	 */
 
 	flags = xs->flags;
 	ccb = xs->io;
@@ -540,8 +540,8 @@ adv_scsi_cmd(xs)
 	ccb->timeout = xs->timeout;
 
 	/*
-         * Build up the request
-         */
+	 * Build up the request
+	 */
 	memset(&ccb->scsiq, 0, sizeof(ASC_SCSI_Q));
 
 	ccb->scsiq.q2.ccb_ptr = (ulong) ccb;
@@ -557,12 +557,12 @@ adv_scsi_cmd(xs)
 	ccb->scsiq.q1.sense_len = sizeof(struct scsi_sense_data);
 
 	/*
-         * If  there  are  any  outstanding  requests  for  the  current target,
-         * then  every  255th request  send an  ORDERED request.  This heuristic
-         * tries  to  retain  the  benefit  of request  sorting while preventing
-         * request starvation. 255 is the max number of tags or pending commands
-         * a device may have outstanding.
-         */
+	 * If  there  are  any  outstanding  requests  for  the  current target,
+	 * then  every  255th request  send an  ORDERED request.  This heuristic
+	 * tries  to  retain  the  benefit  of request  sorting while preventing
+	 * request starvation. 255 is the max number of tags or pending commands
+	 * a device may have outstanding.
+	 */
 	sc->reqcnt[sc_link->target]++;
 	if ((sc->reqcnt[sc_link->target] > 0) &&
 	    (sc->reqcnt[sc_link->target] % 255) == 0) {
@@ -574,8 +574,8 @@ adv_scsi_cmd(xs)
 
 	if (xs->datalen) {
 		/*
-                 * Map the DMA transfer.
-                 */
+		 * Map the DMA transfer.
+		 */
 		error = bus_dmamap_load(dmat,
 		      ccb->dmamap_xfer, xs->data, xs->datalen, NULL,
 					(flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
@@ -620,8 +620,8 @@ adv_scsi_cmd(xs)
 		ccb->scsiq.q1.data_cnt = 0;
 	} else {
 		/*
-                 * No data xfer, use non S/G values.
-                 */
+		 * No data xfer, use non S/G values.
+		 */
 		ccb->scsiq.q1.data_addr = 0;
 		ccb->scsiq.q1.data_cnt = 0;
 	}
@@ -633,14 +633,14 @@ adv_scsi_cmd(xs)
 			(unsigned long)ccb);
 #endif
 	/*
-         * Usually return SUCCESSFULLY QUEUED
-         */
+	 * Usually return SUCCESSFULLY QUEUED
+	 */
 	if ((flags & SCSI_POLL) == 0)
 		return;
 
 	/*
-         * If we can't use interrupts, poll on completion
-         */
+	 * If we can't use interrupts, poll on completion
+	 */
 	if (adv_poll(sc, xs, ccb->timeout)) {
 		adv_timeout(ccb);
 		if (adv_poll(sc, xs, ccb->timeout))
@@ -715,9 +715,9 @@ adv_timeout(arg)
 	s = splbio();
 
 	/*
-         * If it has been through before, then a previous abort has failed,
-         * don't try abort again, reset the bus instead.
-         */
+	 * If it has been through before, then a previous abort has failed,
+	 * don't try abort again, reset the bus instead.
+	 */
 	if (ccb->flags & CCB_ABORT) {
 		/* abort timed out */
 		printf(" AGAIN. Resetting Bus\n");
@@ -789,9 +789,9 @@ adv_narrow_isr_callback(sc, qdonep)
 	timeout_del(&xs->stimeout);
 
 	/*
-         * If we were a data transfer, unload the map that described
-         * the data buffer.
-         */
+	 * If we were a data transfer, unload the map that described
+	 * the data buffer.
+	 */
 	if (xs->datalen) {
 		bus_dmamap_sync(dmat, ccb->dmamap_xfer,
 		    0, ccb->dmamap_xfer->dm_mapsize,
@@ -804,8 +804,8 @@ adv_narrow_isr_callback(sc, qdonep)
 		return;
 	}
 	/*
-         * 'qdonep' contains the command's ending status.
-         */
+	 * 'qdonep' contains the command's ending status.
+	 */
 #ifdef ASC_DEBUG
 	printf("d_s=%d, h_s=%d", qdonep->d3.done_stat, qdonep->d3.host_stat);
 #endif
@@ -824,9 +824,9 @@ adv_narrow_isr_callback(sc, qdonep)
 		}
 
 		/*
-                 * If an INQUIRY command completed successfully, then call
-                 * the AscInquiryHandling() function to patch bugged boards.
-                 */
+		 * If an INQUIRY command completed successfully, then call
+		 * the AscInquiryHandling() function to patch bugged boards.
+		 */
 		if ((xs->cmd->opcode == SCSICMD_Inquiry) &&
 		    (xs->sc_link->lun == 0) &&
 		    (xs->datalen - qdonep->remain_bytes) >= 8) {

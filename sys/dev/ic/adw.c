@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.66 2020/07/20 14:41:13 krw Exp $ */
+/*	$OpenBSD: adw.c,v 1.67 2020/08/08 12:40:55 krw Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -98,8 +98,8 @@ adw_alloc_controls(ADW_SOFTC *sc)
 	int             error, rseg;
 
 	/*
-         * Allocate the control structure.
-         */
+	 * Allocate the control structure.
+	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct adw_control),
 	    NBPG, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT | BUS_DMA_ZERO)) != 0) {
 		printf("%s: unable to allocate control structures,"
@@ -115,8 +115,8 @@ adw_alloc_controls(ADW_SOFTC *sc)
 	}
 
 	/*
-         * Create and load the DMA map used for the control blocks.
-         */
+	 * Create and load the DMA map used for the control blocks.
+	 */
 	if ((error = bus_dmamap_create(sc->sc_dmat, sizeof(struct adw_control),
 			   1, sizeof(struct adw_control), 0, BUS_DMA_NOWAIT,
 				       &sc->sc_dmamap_control)) != 0) {
@@ -143,8 +143,8 @@ adw_alloc_carriers(ADW_SOFTC *sc)
 	int             error, rseg;
 
 	/*
-         * Allocate the control structure.
-         */
+	 * Allocate the control structure.
+	 */
 	sc->sc_control->carriers =
 	    malloc(ADW_MAX_CARRIER * sizeof(ADW_CARRIER), M_DEVBUF,
 		M_NOWAIT);
@@ -169,8 +169,8 @@ adw_alloc_carriers(ADW_SOFTC *sc)
 	}
 
 	/*
-         * Create and load the DMA map used for the control blocks.
-         */
+	 * Create and load the DMA map used for the control blocks.
+	 */
 	if ((error = bus_dmamap_create(sc->sc_dmat,
 			sizeof(ADW_CARRIER) * ADW_MAX_CARRIER, 1,
 			sizeof(ADW_CARRIER) * ADW_MAX_CARRIER, 0,BUS_DMA_NOWAIT,
@@ -252,8 +252,8 @@ adw_init_ccb(ADW_SOFTC *sc, ADW_CCB *ccb)
 	int	hashnum, error;
 
 	/*
-         * Create the DMA map for this CCB.
-         */
+	 * Create the DMA map for this CCB.
+	 */
 	error = bus_dmamap_create(sc->sc_dmat,
 				  (ADW_MAX_SG_LIST - 1) * PAGE_SIZE,
 			 ADW_MAX_SG_LIST, (ADW_MAX_SG_LIST - 1) * PAGE_SIZE,
@@ -419,8 +419,8 @@ adw_attach(ADW_SOFTC *sc)
 	scsi_iopool_init(&sc->sc_iopool, sc, adw_ccb_alloc, adw_ccb_free);
 
 	/*
-         * Allocate the Control Blocks.
-         */
+	 * Allocate the Control Blocks.
+	 */
 	error = adw_alloc_controls(sc);
 	if (error)
 		return; /* (error) */ ;
@@ -529,10 +529,10 @@ adw_scsi_cmd(struct scsi_xfer *xs)
 	int             s, retry = 0;
 
 	/*
-         * get a ccb to use. If the transfer
-         * is from a buf (possibly from interrupt time)
-         * then we can't allow it to sleep
-         */
+	 * get a ccb to use. If the transfer
+	 * is from a buf (possibly from interrupt time)
+	 * then we can't allow it to sleep
+	 */
 
 	ccb = xs->io;
 
@@ -559,8 +559,8 @@ retryagain:
 			return;
 
 		/*
-	         * If we can't use interrupts, poll on completion
-	         */
+		 * If we can't use interrupts, poll on completion
+		 */
 		if (adw_poll(sc, xs, ccb->timeout)) {
 			adw_timeout(ccb);
 			if (adw_poll(sc, xs, ccb->timeout))
@@ -620,8 +620,8 @@ adw_build_req(struct scsi_xfer *xs, ADW_CCB *ccb, int flags)
 	 */
 	if (xs->datalen) {
 		/*
-                 * Map the DMA transfer.
-                 */
+		 * Map the DMA transfer.
+		 */
 		error = bus_dmamap_load(dmat,
 		      ccb->dmamap_xfer, xs->data, xs->datalen, NULL,
 			(flags & SCSI_NOSLEEP) ?
@@ -656,8 +656,8 @@ adw_build_req(struct scsi_xfer *xs, ADW_CCB *ccb, int flags)
 		adw_build_sglist(ccb, scsiqp, ccb->sg_block);
 	} else {
 		/*
-                 * No data xfer, use non S/G values.
-                 */
+		 * No data xfer, use non S/G values.
+		 */
 		scsiqp->data_cnt = 0;
 		scsiqp->vdata_addr = 0;
 		scsiqp->data_addr = 0;
@@ -865,7 +865,7 @@ adw_reset_bus(ADW_SOFTC *sc)
 	AdwResetSCSIBus(sc); /* XXX - should check return value? */
 	while((ccb = TAILQ_LAST(&sc->sc_pending_ccb,
 			adw_pending_ccb)) != NULL) {
-	        timeout_del(&ccb->xs->stimeout);
+		timeout_del(&ccb->xs->stimeout);
 		TAILQ_REMOVE(&sc->sc_pending_ccb, ccb, chain);
 		TAILQ_INSERT_HEAD(&sc->sc_waiting_ccb, ccb, chain);
 	}
@@ -964,15 +964,15 @@ adw_isr_callback(ADW_SOFTC *sc, ADW_SCSI_REQ_Q *scsiq)
 	timeout_del(&xs->stimeout);
 
 	/*
-         * If we were a data transfer, unload the map that described
-         * the data buffer.
-         */
+	 * If we were a data transfer, unload the map that described
+	 * the data buffer.
+	 */
 	dmat = sc->sc_dmat;
 	if (xs->datalen) {
 		bus_dmamap_sync(dmat, ccb->dmamap_xfer,
 		    0, ccb->dmamap_xfer->dm_mapsize,
 		    ((xs->flags & SCSI_DATA_IN) ?
-		        BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE));
+		    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE));
 		bus_dmamap_unload(dmat, ccb->dmamap_xfer);
 	}
 
@@ -1152,7 +1152,7 @@ adw_async_callback(ADW_SOFTC *sc, u_int8_t code)
 	case ADW_ASYNC_CARRIER_READY_FAILURE:
 		/*
 		 * Carrier Ready failure.
-	         *
+		 *
 		 * A warning only - RISC too busy to realize it's been
 		 * tickled. Occurs in normal operation under heavy
 		 * load, so a message is printed only when ADW_DEBUG'ing
@@ -1163,7 +1163,7 @@ adw_async_callback(ADW_SOFTC *sc, u_int8_t code)
 		break;
 
 	default:
-	        printf("%s: Unknown Async callback code (ignored): 0x%02x\n",
+		printf("%s: Unknown Async callback code (ignored): 0x%02x\n",
 		    sc->sc_dev.dv_xname, code);
 		break;
 	}

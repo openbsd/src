@@ -1,4 +1,4 @@
-/*	$OpenBSD: adwlib.c,v 1.26 2020/02/18 20:24:52 krw Exp $ */
+/*	$OpenBSD: adwlib.c,v 1.27 2020/08/08 12:40:55 krw Exp $ */
 /* $NetBSD: adwlib.c,v 1.20 2000/07/04 04:17:03 itojun Exp $        */
 
 /*
@@ -67,17 +67,17 @@
 
 int AdwRamSelfTest(bus_space_tag_t, bus_space_handle_t, u_int8_t);
 int AdwLoadMCode(bus_space_tag_t, bus_space_handle_t, u_int16_t *,
-								u_int8_t);
+    u_int8_t);
 int AdwASC3550Cabling(bus_space_tag_t, bus_space_handle_t, ADW_DVC_CFG *);
 int AdwASC38C0800Cabling(bus_space_tag_t, bus_space_handle_t,
-								ADW_DVC_CFG *);
+    ADW_DVC_CFG *);
 int AdwASC38C1600Cabling(bus_space_tag_t, bus_space_handle_t,
-								ADW_DVC_CFG *);
+    ADW_DVC_CFG *);
 
 u_int16_t AdwGetEEPROMConfig(bus_space_tag_t, bus_space_handle_t,
-     							ADW_EEPROM *);
+    ADW_EEPROM *);
 void AdwSetEEPROMConfig(bus_space_tag_t, bus_space_handle_t,
-					                 ADW_EEPROM *);
+    ADW_EEPROM *);
 u_int16_t AdwReadEEPWord(bus_space_tag_t, bus_space_handle_t, int);
 void AdwWaitEEPCmd(bus_space_tag_t, bus_space_handle_t);
 
@@ -2199,7 +2199,7 @@ AdwInquiryHandling(ADW_SOFTC *sc, ADW_SCSI_REQ_Q *scsiq)
 
 	tid = scsiq->target_id;
 
-        inq = (ADW_SCSI_INQUIRY *) scsiq->vdata_addr;
+	inq = (ADW_SCSI_INQUIRY *) scsiq->vdata_addr;
 
 	/*
 	 * WDTR, SDTR, and Tag Queuing cannot be enabled for old devices.
@@ -2304,7 +2304,7 @@ AdwInquiryHandling(ADW_SOFTC *sc, ADW_SCSI_REQ_Q *scsiq)
 			 * and WDTR messages to negotiate synchronous speed
 			 * and offset, transfer width, and protocol options.
 			 */
-                         if((inq->Clocking) & INQ_CLOCKING_DT_ONLY){
+			if((inq->Clocking) & INQ_CLOCKING_DT_ONLY){
 				ADW_READ_WORD_LRAM(iot, ioh, ADW_MC_PPR_ABLE,
 						sc->ppr_able);
 				sc->ppr_able |= tidmask;
