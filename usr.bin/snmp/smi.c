@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.11 2020/08/08 07:18:08 martijn Exp $	*/
+/*	$OpenBSD: smi.c,v 1.12 2020/08/08 13:02:54 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -591,17 +591,11 @@ smi_oid2string(struct ber_oid *o, char *buf, size_t len,
 void
 smi_mibtree(struct oid *oids)
 {
-	struct oid	*oid, *decl;
 	size_t		 i;
 
-	for (i = 0; oids[i].o_oid[0] != 0; i++) {
-		oid = &oids[i];
-		if (oid->o_name != NULL) {
-			RB_INSERT(oidtree, &smi_oidtree, oid);
-			RB_INSERT(keytree, &smi_keytree, oid);
-			continue;
-		}
-		decl = RB_FIND(oidtree, &smi_oidtree, oid);
+	for (i = 0; oids[i].o_name != NULL; i++) {
+		RB_INSERT(oidtree, &smi_oidtree, &(oids[i]));
+		RB_INSERT(keytree, &smi_keytree, &(oids[i]));
 	}
 }
 
