@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.6 2020/08/08 13:13:19 martijn Exp $	*/
+/*	$OpenBSD: mib.h,v 1.7 2020/08/08 14:01:31 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -32,7 +32,7 @@
  */
 
 #define MIB_ccitt			0
-/* From the SNMPv2-SMI MIB */
+/* SNMPv2-SMI MIB */
 #define MIB_iso				1
 #define MIB_org				MIB_iso, 3
 #define MIB_dod				MIB_org, 6
@@ -51,10 +51,12 @@
 #define MIB_snmpModules			MIB_snmpV2, 3
 #define MIB_zeroDotZero			0, 0
 
+/* SNMPv2-MIB */
+#define MIB_snmpMIB			MIB_snmpModules, 1
+#define MIB_snmpMIBObjects		MIB_snmpMIB, 1
 #define MIB_system			MIB_mib_2, 1
-#define OIDIDX_system			7
 #define MIB_sysDescr			MIB_system, 1
-#define MIB_sysOID			MIB_system, 2
+#define MIB_sysObjectID			MIB_system, 2
 #define MIB_sysUpTime			MIB_system, 3
 #define MIB_sysContact			MIB_system, 4
 #define MIB_sysName			MIB_system, 5
@@ -63,20 +65,41 @@
 #define MIB_sysORLastChange		MIB_system, 8
 #define MIB_sysORTable			MIB_system, 9
 #define MIB_sysOREntry			MIB_sysORTable, 1
-#define OIDIDX_sysOR			9
-#define OIDIDX_sysOREntry		10
 #define MIB_sysORIndex			MIB_sysOREntry, 1
 #define MIB_sysORID			MIB_sysOREntry, 2
 #define MIB_sysORDescr			MIB_sysOREntry, 3
 #define MIB_sysORUpTime			MIB_sysOREntry, 4
 #define MIB_snmp			MIB_mib_2, 11
-#define OIDIDX_snmp			7
 #define MIB_snmpInPkts			MIB_snmp, 1
-#define MIB_snmpOutPkts			MIB_snmp, 2
 #define MIB_snmpInBadVersions		MIB_snmp, 3
 #define MIB_snmpInBadCommunityNames	MIB_snmp, 4
 #define MIB_snmpInBadCommunityUses	MIB_snmp, 5
 #define MIB_snmpInASNParseErrs		MIB_snmp, 6
+#define MIB_snmpEnableAuthenTraps	MIB_snmp, 30
+#define MIB_snmpSilentDrops		MIB_snmp, 31
+#define MIB_snmpProxyDrops		MIB_snmp, 32
+#define MIB_snmpTrap			MIB_snmpMIBObjects, 4
+#define MIB_snmpTrapOID			MIB_snmpTrap, 1
+#define MIB_snmpTrapEnterprise		MIB_snmpTrap, 3
+#define MIB_snmpTraps			MIB_snmpMIBObjects, 5
+#define MIB_coldStart			MIB_snmpTraps, 1
+#define MIB_warmStart			MIB_snmpTraps, 2
+#define MIB_authenticationFailure	MIB_snmpTraps, 5
+#define MIB_snmpSet			MIB_snmpMIBObjects, 6
+#define MIB_snmpSetSerialNo		MIB_snmpSet, 1
+#define MIB_snmpMIBConformance		MIB_snmpMIB, 2
+#define MIB_snmpMIBCompliances		MIB_snmpMIBConformance, 1
+#define MIB_snmpMIBGroups		MIB_snmpMIBConformance, 2
+#define MIB_snmpBasicCompliance		MIB_snmpMIBCompliances, 2
+#define MIB_snmpBasicComplianceRev2	MIB_snmpMIBCompliances, 3
+#define MIB_snmpGroup			MIB_snmpMIBGroups, 8
+#define MIB_snmpCommunityGroup		MIB_snmpMIBGroups, 9
+#define MIB_snmpSetGroup		MIB_snmpMIBGroups, 5
+#define MIB_systemGroup			MIB_snmpMIBGroups, 6
+#define MIB_snmpBasicNotificationsGroup	MIB_snmpMIBGroups, 7
+#define MIB_snmpWarmStartNotificationGroup MIB_snmpMIBGroups, 11
+#define MIB_snmpNotificationGroup	MIB_snmpMIBGroups, 12
+#define MIB_snmpOutPkts			MIB_snmp, 2
 #define MIB_snmpInTooBigs		MIB_snmp, 8
 #define MIB_snmpInNoSuchNames		MIB_snmp, 9
 #define MIB_snmpInBadValues		MIB_snmp, 10
@@ -98,20 +121,10 @@
 #define MIB_snmpOutSetRequests		MIB_snmp, 27
 #define MIB_snmpOutGetResponses		MIB_snmp, 28
 #define MIB_snmpOutTraps		MIB_snmp, 29
-#define MIB_snmpEnableAuthenTraps	MIB_snmp, 30
-#define MIB_snmpSilentDrops		MIB_snmp, 31
-#define MIB_snmpProxyDrops		MIB_snmp, 32
-#define MIB_snmpMIB			MIB_snmpModules, 1
-#define MIB_snmpMIBObjects		MIB_snmpMIB, 1
-#define MIB_snmpTrap			MIB_snmpMIBObjects, 4
-#define MIB_snmpTrapOID			MIB_snmpTrap, 1
-#define MIB_snmpTrapEnterprise		MIB_snmpTrap, 3
-#define MIB_snmpTraps			MIB_snmpMIBObjects, 5
-#define MIB_coldStart			MIB_snmpTraps, 1
-#define MIB_warmStart			MIB_snmpTraps, 2
+#define MIB_snmpObsoleteGroup		MIB_snmpMIBGroups, 10
+
 #define MIB_linkDown			MIB_snmpTraps, 3
 #define MIB_linkUp			MIB_snmpTraps, 4
-#define MIB_authenticationFailure	MIB_snmpTraps, 5
 #define MIB_egpNeighborLoss		MIB_snmpTraps, 6
 
 /* SNMP-FRAMEWORK-MIB */
@@ -799,28 +812,55 @@
 	{ MIBDECL(snmpModules) },			\
 	{ MIBDECL(zeroDotZero) },			\
 							\
+	{ MIBDECL(snmpMIB) },				\
+	{ MIBDECL(snmpMIBObjects) },			\
 	{ MIBDECL(system) },				\
-	{ MIBDECL(sysDescr) },				\
-	{ MIBDECL(sysOID) },				\
+	{ MIBDECL(sysDescr), "DisplayString" },		\
+	{ MIBDECL(sysObjectID) },			\
 	{ MIBDECL(sysUpTime) },				\
 	{ MIBDECL(sysContact), "DisplayString" },	\
-	{ MIBDECL(sysName) },				\
-	{ MIBDECL(sysLocation) },			\
+	{ MIBDECL(sysName), "DisplayString" },		\
+	{ MIBDECL(sysLocation), "DisplayString" },	\
 	{ MIBDECL(sysServices) },			\
 	{ MIBDECL(sysORLastChange) },			\
 	{ MIBDECL(sysORTable) },			\
 	{ MIBDECL(sysOREntry) },			\
 	{ MIBDECL(sysORIndex) },			\
 	{ MIBDECL(sysORID) },				\
-	{ MIBDECL(sysORDescr) },			\
+	{ MIBDECL(sysORDescr), "DisplayString" },	\
 	{ MIBDECL(sysORUpTime) },			\
 	{ MIBDECL(snmp) },				\
 	{ MIBDECL(snmpInPkts) },			\
-	{ MIBDECL(snmpOutPkts) },			\
 	{ MIBDECL(snmpInBadVersions) },			\
 	{ MIBDECL(snmpInBadCommunityNames) },		\
 	{ MIBDECL(snmpInBadCommunityUses) },		\
 	{ MIBDECL(snmpInASNParseErrs) },		\
+	{ MIBDECL(snmpEnableAuthenTraps) },		\
+	{ MIBDECL(snmpSilentDrops) },			\
+	{ MIBDECL(snmpProxyDrops) },			\
+	{ MIBDECL(snmpTrap) },				\
+	{ MIBDECL(snmpTrapOID) },			\
+	{ MIBDECL(snmpTrapEnterprise) },		\
+	{ MIBDECL(snmpTraps) },				\
+	{ MIBDECL(coldStart) },				\
+	{ MIBDECL(warmStart) },				\
+	{ MIBDECL(authenticationFailure) },		\
+	{ MIBDECL(snmpSet) },				\
+	{ MIBDECL(snmpSetSerialNo) },			\
+	{ MIBDECL(snmpMIBConformance) },		\
+	{ MIBDECL(snmpMIBCompliances) },		\
+	{ MIBDECL(snmpMIBGroups) },			\
+	{ MIBDECL(snmpBasicCompliance) },		\
+	{ MIBDECL(snmpBasicComplianceRev2) },		\
+	{ MIBDECL(snmpGroup) },				\
+	{ MIBDECL(snmpCommunityGroup) },		\
+	{ MIBDECL(snmpSetGroup) },			\
+	{ MIBDECL(systemGroup) },			\
+	{ MIBDECL(snmpBasicNotificationsGroup) },	\
+	{ MIBDECL(snmpWarmStartNotificationGroup) },	\
+	{ MIBDECL(snmpNotificationGroup) },		\
+	{ MIBDECL(snmpSetSerialNo) },			\
+	{ MIBDECL(snmpOutPkts) },			\
 	{ MIBDECL(snmpInTooBigs) },			\
 	{ MIBDECL(snmpInNoSuchNames) },			\
 	{ MIBDECL(snmpInBadValues) },			\
@@ -842,20 +882,10 @@
 	{ MIBDECL(snmpOutSetRequests) },		\
 	{ MIBDECL(snmpOutGetResponses) },		\
 	{ MIBDECL(snmpOutTraps) },			\
-	{ MIBDECL(snmpEnableAuthenTraps) },		\
-	{ MIBDECL(snmpSilentDrops) },			\
-	{ MIBDECL(snmpProxyDrops) },			\
-	{ MIBDECL(snmpMIB) },				\
-	{ MIBDECL(snmpMIBObjects) },			\
-	{ MIBDECL(snmpTrap) },				\
-	{ MIBDECL(snmpTrapOID) },			\
-	{ MIBDECL(snmpTrapEnterprise) },		\
-	{ MIBDECL(snmpTraps) },				\
-	{ MIBDECL(coldStart) },				\
-	{ MIBDECL(warmStart) },				\
+	{ MIBDECL(snmpObsoleteGroup) },			\
+							\
 	{ MIBDECL(linkDown) },				\
 	{ MIBDECL(linkUp) },				\
-	{ MIBDECL(authenticationFailure) },		\
 	{ MIBDECL(egpNeighborLoss) },			\
 							\
 	{ MIBDECL(snmpFrameworkMIB) },			\
