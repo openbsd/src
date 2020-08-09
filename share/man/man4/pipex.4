@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pipex.4,v 1.12 2020/04/03 07:46:04 mpi Exp $
+.\"	$OpenBSD: pipex.4,v 1.13 2020/08/09 14:35:31 mvs Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\" Copyright (c) 2010 SUENAGA Hiroki <hsuenaga@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 3 2020 $
+.Dd $Mdocdate: August 9 2020 $
 .Dt PIPEX 4
 .Os
 .Sh NAME
@@ -288,3 +288,8 @@ The
 .Nm
 was written by
 .An Internet Initiative Japan Inc .
+.Sh BUGS
+.Xr pppx 4
+does not allow sessions with
+.Ic pr_timeout_sec
+set to any value other than 0.

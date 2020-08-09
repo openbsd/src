@@ -1,4 +1,4 @@
-.\"	$OpenBSD: npppd.conf.5,v 1.27 2020/04/23 21:10:54 jmc Exp $
+.\"	$OpenBSD: npppd.conf.5,v 1.28 2020/08/09 14:35:32 mvs Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 23 2020 $
+.Dd $Mdocdate: August 9 2020 $
 .Dt NPPPD.CONF 5
 .Os
 .Sh NAME
@@ -325,6 +325,9 @@ The link is disconnected if there are no data packets sent or received
 for more than the amount of the
 .Ar idle-timeout .
 The default is 0, which disables the idle timer.
+This value must be 0 for
+.Xr pppx 4
+sessions.
 .It Ic tcp-mss-adjust Ar yes | no
 If
 .Dq yes
