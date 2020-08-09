@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.231 2020/08/09 13:29:08 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.232 2020/08/09 15:06:01 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -61,10 +61,17 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
+int	scsibusmatch(struct device *, void *, void *);
+void	scsibusattach(struct device *, struct device *, void *);
+int	scsibusactivate(struct device *, int);
+int	scsibusdetach(struct device *, int);
+int	scsibussubmatch(struct device *, void *, void *);
+int	scsibusprint(void *, const char *);
 #if NBIO > 0
 #include <sys/ioctl.h>
 #include <sys/scsiio.h>
 #include <dev/biovar.h>
+int	scsibusbioctl(struct device *, u_long, caddr_t);
 #endif /* NBIO > 0 */
 
 void	scsi_get_target_luns(struct scsi_link *, struct scsi_lun_array *);
@@ -80,20 +87,9 @@ int	scsi_devid_pg80(struct scsi_link *);
 int	scsi_devid_pg83(struct scsi_link *);
 int	scsi_devid_wwn(struct scsi_link *);
 
-int	scsibusmatch(struct device *, void *, void *);
-void	scsibusattach(struct device *, struct device *, void *);
-int	scsibusactivate(struct device *, int);
-int	scsibusdetach(struct device *, int);
-int	scsibussubmatch(struct device *, void *, void *);
-int	scsibusprint(void *, const char *);
-
 int	scsi_activate_bus(struct scsibus_softc *, int);
 int	scsi_activate_target(struct scsibus_softc *, int, int);
 int	scsi_activate_lun(struct scsibus_softc *, int, int, int);
-
-#if NBIO > 0
-int	scsibus_bioctl(struct device *, u_long, caddr_t);
-#endif /* NBIO > 0 */
 
 int	scsi_autoconf = SCSI_AUTOCONF;
 
@@ -245,7 +241,7 @@ scsibusattach(struct device *parent, struct device *self, void *aux)
 	SLIST_INIT(&sb->sc_link_list);
 
 #if NBIO > 0
-	if (bio_register(&sb->sc_dev, scsibus_bioctl) != 0)
+	if (bio_register(&sb->sc_dev, scsibusbioctl) != 0)
 		printf("%s: unable to register bio\n", sb->sc_dev.dv_xname);
 #endif /* NBIO > 0 */
 
@@ -259,6 +255,85 @@ scsibusactivate(struct device *dev, int act)
 
 	return scsi_activate(sb, -1, -1, act);
 }
+
+int
+scsibusdetach(struct device *dev, int type)
+{
+	struct scsibus_softc		*sb = (struct scsibus_softc *)dev;
+	int				 error;
+
+#if NBIO > 0
+	bio_unregister(&sb->sc_dev);
+#endif /* NBIO > 0 */
+
+	error = scsi_detach(sb, -1, -1, type);
+	if (error != 0)
+		return error;
+
+	KASSERT(SLIST_EMPTY(&sb->sc_link_list));
+
+	return 0;
+}
+
+int
+scsibussubmatch(struct device *parent, void *match, void *aux)
+{
+	struct cfdata			*cf = match;
+	struct scsi_attach_args		*sa = aux;
+	struct scsi_link		*link = sa->sa_sc_link;
+
+	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != link->target)
+		return 0;
+	if (cf->cf_loc[1] != -1 && cf->cf_loc[1] != link->lun)
+		return 0;
+
+	return (*cf->cf_attach->ca_match)(parent, match, aux);
+}
+
+/*
+ * Print out autoconfiguration information for a subdevice.
+ *
+ * This is a slight abuse of 'standard' autoconfiguration semantics,
+ * because 'print' functions don't normally print the colon and
+ * device information.  However, in this case that's better than
+ * either printing redundant information before the attach message,
+ * or having the device driver call a special function to print out
+ * the standard device information.
+ */
+int
+scsibusprint(void *aux, const char *pnp)
+{
+	struct scsi_attach_args		*sa = aux;
+
+	if (pnp != NULL)
+		printf("%s", pnp);
+
+	scsi_print_link(sa->sa_sc_link);
+
+	return UNCONF;
+}
+
+#if NBIO > 0
+int
+scsibusbioctl(struct device *dev, u_long cmd, caddr_t addr)
+{
+	struct scsibus_softc		*sb = (struct scsibus_softc *)dev;
+	struct sbioc_device		*sdev;
+
+	switch (cmd) {
+	case SBIOCPROBE:
+		sdev = (struct sbioc_device *)addr;
+		return scsi_probe(sb, sdev->sd_target, sdev->sd_lun);
+
+	case SBIOCDETACH:
+		sdev = (struct sbioc_device *)addr;
+		return scsi_detach(sb, sdev->sd_target, sdev->sd_lun, 0);
+
+	default:
+		return ENOTTY;
+	}
+}
+#endif /* NBIO > 0 */
 
 int
 scsi_activate(struct scsibus_softc *sb, int target, int lun, int act)
@@ -334,62 +409,6 @@ scsi_activate_link(struct scsi_link *link, int act)
 	}
 	return rv;
 }
-
-int
-scsibusdetach(struct device *dev, int type)
-{
-	struct scsibus_softc		*sb = (struct scsibus_softc *)dev;
-	int				 error;
-
-#if NBIO > 0
-	bio_unregister(&sb->sc_dev);
-#endif /* NBIO > 0 */
-
-	error = scsi_detach(sb, -1, -1, type);
-	if (error != 0)
-		return error;
-
-	KASSERT(SLIST_EMPTY(&sb->sc_link_list));
-
-	return 0;
-}
-
-int
-scsibussubmatch(struct device *parent, void *match, void *aux)
-{
-	struct cfdata			*cf = match;
-	struct scsi_attach_args		*sa = aux;
-	struct scsi_link		*link = sa->sa_sc_link;
-
-	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != link->target)
-		return 0;
-	if (cf->cf_loc[1] != -1 && cf->cf_loc[1] != link->lun)
-		return 0;
-
-	return (*cf->cf_attach->ca_match)(parent, match, aux);
-}
-
-#if NBIO > 0
-int
-scsibus_bioctl(struct device *dev, u_long cmd, caddr_t addr)
-{
-	struct scsibus_softc		*sb = (struct scsibus_softc *)dev;
-	struct sbioc_device		*sdev;
-
-	switch (cmd) {
-	case SBIOCPROBE:
-		sdev = (struct sbioc_device *)addr;
-		return scsi_probe(sb, sdev->sd_target, sdev->sd_lun);
-
-	case SBIOCDETACH:
-		sdev = (struct sbioc_device *)addr;
-		return scsi_detach(sb, sdev->sd_target, sdev->sd_lun, 0);
-
-	default:
-		return ENOTTY;
-	}
-}
-#endif /* NBIO > 0 */
 
 void
 scsi_get_target_luns(struct scsi_link *link0, struct scsi_lun_array *lunarray)
@@ -966,7 +985,7 @@ scsi_strvis(u_char *dst, u_char *src, int len)
 }
 
 void
-scsibus_printlink(struct scsi_link *link)
+scsi_print_link(struct scsi_link *link)
 {
 	char				 visbuf[65];
 	struct scsi_inquiry_data	*inqbuf;
@@ -1053,29 +1072,6 @@ scsibus_printlink(struct scsi_link *link)
 	printf("quirks (0x%04x) ", link->quirks);
 	scsi_show_flags(link->quirks, quirknames);
 #endif /* SCSIDEBUG */
-}
-
-/*
- * Print out autoconfiguration information for a subdevice.
- *
- * This is a slight abuse of 'standard' autoconfiguration semantics,
- * because 'print' functions don't normally print the colon and
- * device information.  However, in this case that's better than
- * either printing redundant information before the attach message,
- * or having the device driver call a special function to print out
- * the standard device information.
- */
-int
-scsibusprint(void *aux, const char *pnp)
-{
-	struct scsi_attach_args		*sa = aux;
-
-	if (pnp != NULL)
-		printf("%s", pnp);
-
-	scsibus_printlink(sa->sa_sc_link);
-
-	return UNCONF;
 }
 
 /*
