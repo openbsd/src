@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.134 2020/08/08 01:01:26 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.135 2020/08/09 19:15:47 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -682,6 +682,20 @@ itimerdecr(struct itimerspec *itp, long nsec)
 	NSEC_TO_TIMESPEC(nsec, &decrement);
 
 	mtx_enter(&itimer_mtx);
+
+	/*
+	 * Double-check that the timer is enabled.  A different thread
+	 * in setitimer(2) may have disabled it while we were entering
+	 * the mutex.
+	 */
+	if (!timespecisset(&itp->it_value)) {
+		mtx_leave(&itimer_mtx);
+		return (1);
+	}
+
+	/*
+	 * The timer is enabled.  Update and reload it as needed.
+	 */
 	timespecsub(&itp->it_value, &decrement, &itp->it_value);
 	if (itp->it_value.tv_sec >= 0 && timespecisset(&itp->it_value)) {
 		mtx_leave(&itimer_mtx);
