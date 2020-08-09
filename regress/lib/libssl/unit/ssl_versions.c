@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_versions.c,v 1.8 2020/08/09 16:29:27 jsing Exp $ */
+/* $OpenBSD: ssl_versions.c,v 1.9 2020/08/09 16:30:29 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -493,14 +493,14 @@ static struct min_max_version_test min_max_version_tests[] = {
 		.minver = 0,
 		.maxver = 0,
 		.want_minver = TLS1_VERSION,
-		.want_maxver = TLS1_2_VERSION,
+		.want_maxver = TLS1_3_VERSION,
 	},
 	{
 		.ssl_method = TLS_method,
 		.minver = TLS1_VERSION,
 		.maxver = 0,
 		.want_minver = TLS1_VERSION,
-		.want_maxver = TLS1_2_VERSION,
+		.want_maxver = TLS1_3_VERSION,
 	},
 	{
 		.ssl_method = TLS_method,
@@ -514,7 +514,7 @@ static struct min_max_version_test min_max_version_tests[] = {
 		.minver = 0,
 		.maxver = TLS1_3_VERSION,
 		.want_minver = TLS1_VERSION,
-		.want_maxver = TLS1_2_VERSION,
+		.want_maxver = TLS1_3_VERSION,
 	},
 	{
 		.ssl_method = TLS_method,
@@ -528,21 +528,21 @@ static struct min_max_version_test min_max_version_tests[] = {
 		.minver = TLS1_1_VERSION,
 		.maxver = 0,
 		.want_minver = TLS1_1_VERSION,
-		.want_maxver = TLS1_2_VERSION,
+		.want_maxver = TLS1_3_VERSION,
 	},
 	{
 		.ssl_method = TLS_method,
 		.minver = TLS1_2_VERSION,
 		.maxver = 0,
 		.want_minver = TLS1_2_VERSION,
-		.want_maxver = TLS1_2_VERSION,
+		.want_maxver = TLS1_3_VERSION,
 	},
 	{
 		.ssl_method = TLS_method,
 		.minver = 0x0300,
 		.maxver = 0,
 		.want_minver = TLS1_VERSION,
-		.want_maxver = TLS1_2_VERSION,
+		.want_maxver = TLS1_3_VERSION,
 	},
 	{
 		.ssl_method = TLS_method,
@@ -556,7 +556,7 @@ static struct min_max_version_test min_max_version_tests[] = {
 		.minver = 0,
 		.maxver = 0x0305,
 		.want_minver = TLS1_VERSION,
-		.want_maxver = TLS1_2_VERSION,
+		.want_maxver = TLS1_3_VERSION,
 	},
 	{
 		.ssl_method = TLS_method,
