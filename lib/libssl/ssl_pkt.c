@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.29 2020/08/09 16:02:58 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.30 2020/08/09 16:54:16 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -836,9 +836,8 @@ ssl3_write_pending(SSL *s, int type, const unsigned char *buf, unsigned int len)
 		errno = 0;
 		if (s->wbio != NULL) {
 			s->internal->rwstate = SSL_WRITING;
-			i = BIO_write(s->wbio,
-			(char *)&(wb->buf[wb->offset]),
-			(unsigned int)wb->left);
+			i = BIO_write(s->wbio, (char *)&(wb->buf[wb->offset]),
+			    (unsigned int)wb->left);
 		} else {
 			SSLerror(s, SSL_R_BIO_NOT_SET);
 			i = -1;
