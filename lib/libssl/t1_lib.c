@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.168 2020/07/07 19:31:11 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.169 2020/08/09 16:25:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -242,7 +242,14 @@ static const uint16_t eccurves_list[] = {
 };
 #endif
 
-static const uint16_t eccurves_default[] = {
+static const uint16_t eccurves_client_default[] = {
+	29,			/* X25519 (29) */
+	23,			/* secp256r1 (23) */
+	24,			/* secp384r1 (24) */
+	25,			/* secp521r1 (25) */
+};
+
+static const uint16_t eccurves_server_default[] = {
 	29,			/* X25519 (29) */
 	23,			/* secp256r1 (23) */
 	24,			/* secp384r1 (24) */
@@ -366,9 +373,15 @@ tls1_get_group_list(SSL *s, int client_groups, const uint16_t **pgroups,
 
 	*pgroups = s->internal->tlsext_supportedgroups;
 	*pgroupslen = s->internal->tlsext_supportedgroups_length;
-	if (*pgroups == NULL) {
-		*pgroups = eccurves_default;
-		*pgroupslen = sizeof(eccurves_default) / 2;
+	if (*pgroups != NULL)
+		return;
+
+	if (!s->server) {
+		*pgroups = eccurves_client_default;
+		*pgroupslen = sizeof(eccurves_client_default) / 2;
+	} else {
+		*pgroups = eccurves_server_default;
+		*pgroupslen = sizeof(eccurves_server_default) / 2;
 	}
 }
 
