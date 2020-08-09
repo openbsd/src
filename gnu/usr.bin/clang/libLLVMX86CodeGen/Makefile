@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.14 2020/08/03 14:45:28 patrick Exp $
+# $OpenBSD: Makefile,v 1.15 2020/08/09 15:56:40 patrick Exp $
 
 LIB=	LLVMX86CodeGen
 NOPROFILE=
@@ -28,6 +28,7 @@ SRCS+=	X86AsmPrinter.cpp \
 	X86ISelDAGToDAG.cpp \
 	X86ISelLowering.cpp \
 	X86IndirectBranchTracking.cpp \
+	X86IndirectThunks.cpp \
 	X86InstrFMA3Info.cpp \
 	X86InstrFoldTables.cpp \
 	X86InstrInfo.cpp \
@@ -35,13 +36,14 @@ SRCS+=	X86AsmPrinter.cpp \
 	X86InterleavedAccess.cpp \
 	X86InsertPrefetch.cpp \
 	X86LegalizerInfo.cpp \
+	X86LoadValueInjectionLoadHardening.cpp \
+	X86LoadValueInjectionRetHardening.cpp \
 	X86MCInstLower.cpp \
 	X86MachineFunctionInfo.cpp \
 	X86MacroFusion.cpp \
 	X86PadShortFunction.cpp \
 	X86RegisterBankInfo.cpp \
 	X86RegisterInfo.cpp \
-	X86RetpolineThunks.cpp \
 	X86ReturnProtectorLowering.cpp \
 	X86SelectionDAGInfo.cpp \
 	X86ShuffleDecodeConstantPool.cpp \

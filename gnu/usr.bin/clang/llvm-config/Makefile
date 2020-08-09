@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2020/08/03 14:45:31 patrick Exp $
+# $OpenBSD: Makefile,v 1.4 2020/08/09 15:56:40 patrick Exp $
 
 PROG=	llvm-config
 BINDIR= /usr/bin
@@ -13,12 +13,16 @@ SRCS=	llvm-config.cpp
 
 CPPFLAGS+= -I${.CURDIR}
 
-llvm-config.o: BuildVariables.inc LibraryDependencies.inc
+llvm-config.o: BuildVariables.inc ExtensionDependencies.inc LibraryDependencies.inc
 
 BuildVariables.inc: ${.CURDIR}/BuildVariables.inc.def
 	cp ${.CURDIR}/BuildVariables.inc.def ${.OBJDIR}/BuildVariables.inc
 	echo "#define LLVM_TARGETS_BUILT \"${LLVM_ARCH} AMDGPU\"" >> \
 	    ${.OBJDIR}/BuildVariables.inc
+
+ExtensionDependencies.inc:
+	cp ${.CURDIR}/ExtensionDependencies.inc \
+	    ${.OBJDIR}/ExtensionDependencies.inc
 
 LibraryDependencies.inc:
 	cp ${.CURDIR}/LibraryDependencies.inc.${LLVM_ARCH} \
