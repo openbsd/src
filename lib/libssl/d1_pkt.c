@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.76 2020/08/02 07:33:15 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.77 2020/08/09 15:46:28 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -1229,13 +1229,18 @@ do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 
 	p += DTLS1_RT_HEADER_LENGTH;
 
-	/*
-	 * Make space for the explicit IV in case of CBC.
-	 * (this is a bit of a boundary violation, but what the heck).
-	 */
-	if (s->internal->enc_write_ctx &&
-	    (EVP_CIPHER_mode(s->internal->enc_write_ctx->cipher) & EVP_CIPH_CBC_MODE))
-		eivlen = EVP_CIPHER_block_size(s->internal->enc_write_ctx->cipher);
+	/* Explicit IV length. */
+	if (s->internal->enc_write_ctx && SSL_USE_EXPLICIT_IV(s)) {
+		int mode = EVP_CIPHER_CTX_mode(s->internal->enc_write_ctx);
+		if (mode == EVP_CIPH_CBC_MODE) {
+			eivlen = EVP_CIPHER_CTX_iv_length(s->internal->enc_write_ctx);
+			if (eivlen <= 1)
+				eivlen = 0;
+		}
+	} else if (s->internal->aead_write_ctx != NULL &&
+	    s->internal->aead_write_ctx->variable_nonce_in_record) {
+		eivlen = s->internal->aead_write_ctx->variable_nonce_len;
+	}
 
 	wr->type = type;
 	wr->data = p + eivlen;
