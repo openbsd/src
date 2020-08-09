@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.77 2020/08/09 15:46:28 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.78 2020/08/09 16:02:58 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -1177,10 +1177,12 @@ do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 	SSL3_RECORD_INTERNAL *wr = &(S3I(s)->wrec);
 	SSL3_BUFFER_INTERNAL *wb = &(S3I(s)->wbuf);
 	SSL_SESSION *sess = s->session;
-	int eivlen = 0, mac_size = 0;
-	unsigned char *p;
+	int block_size = 0, eivlen = 0, mac_size = 0;
+	size_t pad_len, record_len;
+	CBB cbb, fragment;
+	size_t out_len;
+	uint8_t *p;
 	int ret;
-	CBB cbb;
 
 	memset(&cbb, 0, sizeof(cbb));
 
@@ -1209,26 +1211,6 @@ do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 			goto err;
 	}
 
-	/* DTLS implements explicit IV, so no need for empty fragments. */
-
-	p = wb->buf;
-	wb->offset = 0;
-
-	if (!CBB_init_fixed(&cbb, p, DTLS1_RT_HEADER_LENGTH))
-		goto err;
-
-	/* Write the header. */
-	if (!CBB_add_u8(&cbb, type))
-		goto err;
-	if (!CBB_add_u16(&cbb, s->version))
-		goto err;
-	if (!CBB_add_u16(&cbb, D1I(s)->w_epoch))
-		goto err;
-	if (!CBB_add_bytes(&cbb, &(S3I(s)->write_sequence[2]), 6))
-		goto err;
-
-	p += DTLS1_RT_HEADER_LENGTH;
-
 	/* Explicit IV length. */
 	if (s->internal->enc_write_ctx && SSL_USE_EXPLICIT_IV(s)) {
 		int mode = EVP_CIPHER_CTX_mode(s->internal->enc_write_ctx);
@@ -1241,6 +1223,41 @@ do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 	    s->internal->aead_write_ctx->variable_nonce_in_record) {
 		eivlen = s->internal->aead_write_ctx->variable_nonce_len;
 	}
+
+	/* Determine length of record fragment. */
+	record_len = eivlen + len + mac_size;
+	if (s->internal->enc_write_ctx != NULL) {
+		block_size = EVP_CIPHER_CTX_block_size(s->internal->enc_write_ctx);
+		if (block_size <= 0 || block_size > EVP_MAX_BLOCK_LENGTH)
+			goto err;
+		if (block_size > 1) {
+			pad_len = block_size - (record_len % block_size);
+			record_len += pad_len;
+		}
+	} else if (s->internal->aead_write_ctx != NULL) {
+		record_len += s->internal->aead_write_ctx->tag_len;
+	}
+
+	/* DTLS implements explicit IV, so no need for empty fragments. */
+
+	wb->offset = 0;
+
+	if (!CBB_init_fixed(&cbb, wb->buf, wb->len))
+		goto err;
+
+	/* Write the header. */
+	if (!CBB_add_u8(&cbb, type))
+		goto err;
+	if (!CBB_add_u16(&cbb, s->version))
+		goto err;
+	if (!CBB_add_u16(&cbb, D1I(s)->w_epoch))
+		goto err;
+	if (!CBB_add_bytes(&cbb, &(S3I(s)->write_sequence[2]), 6))
+		goto err;
+	if (!CBB_add_u16_length_prefixed(&cbb, &fragment))
+		goto err;
+	if (!CBB_add_space(&fragment, &p, record_len))
+		goto err;
 
 	wr->type = type;
 	wr->data = p + eivlen;
@@ -1262,10 +1279,13 @@ do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 	if (tls1_enc(s, 1) != 1)
 		goto err;
 
-	if (!CBB_add_u16(&cbb, wr->length))
+	if (wr->length != record_len)
 		goto err;
-	if (!CBB_finish(&cbb, NULL, NULL))
+
+	if (!CBB_finish(&cbb, NULL, &out_len))
 		goto err;
+
+	wb->left = out_len;
 
 	/*
 	 * We should now have wr->data pointing to the encrypted data,
@@ -1275,8 +1295,6 @@ do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 	wr->length += DTLS1_RT_HEADER_LENGTH;
 
 	tls1_record_sequence_increment(S3I(s)->write_sequence);
-
-	wb->left = wr->length;
 
 	/*
 	 * Memorize arguments so that ssl3_write_pending can detect

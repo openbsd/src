@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.28 2020/08/02 07:33:15 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.29 2020/08/09 16:02:58 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -617,32 +617,21 @@ ssl3_write_bytes(SSL *s, int type, const void *buf_, int len)
 }
 
 static int
-ssl3_create_record(SSL *s, unsigned char *p, uint16_t version, uint8_t type,
+ssl3_create_record(SSL *s, CBB *cbb, uint16_t version, uint8_t type,
     const unsigned char *buf, unsigned int len)
 {
 	SSL3_RECORD_INTERNAL *wr = &(S3I(s)->wrec);
 	SSL_SESSION *sess = s->session;
-	int eivlen = 0, mac_size = 0;
-	CBB cbb;
-
-	memset(&cbb, 0, sizeof(cbb));
+	int block_size = 0, eivlen = 0, mac_size = 0;
+	size_t pad_len, record_len;
+	CBB fragment;
+	uint8_t *p;
 
 	if (sess != NULL && s->internal->enc_write_ctx != NULL &&
 	    EVP_MD_CTX_md(s->internal->write_hash) != NULL) {
 		if ((mac_size = EVP_MD_CTX_size(s->internal->write_hash)) < 0)
 			goto err;
 	}
-
-	if (!CBB_init_fixed(&cbb, p, SSL3_RT_HEADER_LENGTH))
-		goto err;
-
-	/* Write the header. */
-	if (!CBB_add_u8(&cbb, type))
-		goto err;
-	if (!CBB_add_u16(&cbb, version))
-		goto err;
-
-	p += SSL3_RT_HEADER_LENGTH;
 
 	/* Explicit IV length. */
 	if (s->internal->enc_write_ctx && SSL_USE_EXPLICIT_IV(s)) {
@@ -657,6 +646,31 @@ ssl3_create_record(SSL *s, unsigned char *p, uint16_t version, uint8_t type,
 		eivlen = s->internal->aead_write_ctx->variable_nonce_len;
 	}
 
+	/* Determine length of record fragment. */
+	record_len = eivlen + len + mac_size;
+	if (s->internal->enc_write_ctx != NULL) {
+		block_size = EVP_CIPHER_CTX_block_size(s->internal->enc_write_ctx);
+		if (block_size <= 0 || block_size > EVP_MAX_BLOCK_LENGTH)
+			goto err;
+		if (block_size > 1) {
+			pad_len = block_size - (record_len % block_size);
+			record_len += pad_len;
+		}
+	} else if (s->internal->aead_write_ctx != NULL) {
+		record_len += s->internal->aead_write_ctx->tag_len;
+	}
+
+	/* Write the header. */
+	if (!CBB_add_u8(cbb, type))
+		goto err;
+	if (!CBB_add_u16(cbb, version))
+		goto err;
+	if (!CBB_add_u16_length_prefixed(cbb, &fragment))
+		goto err;
+	if (!CBB_add_space(&fragment, &p, record_len))
+		goto err;
+
+	/* Set up the record. */
 	wr->type = type;
 	wr->data = p + eivlen;
 	wr->length = (int)len;
@@ -677,10 +691,10 @@ ssl3_create_record(SSL *s, unsigned char *p, uint16_t version, uint8_t type,
 	if (tls1_enc(s, 1) != 1)
 		goto err;
 
-	/* record length after mac and block padding */
-	if (!CBB_add_u16(&cbb, wr->length))
+	if (wr->length != record_len)
 		goto err;
-	if (!CBB_finish(&cbb, NULL, NULL))
+
+	if (!CBB_flush(cbb))
 		goto err;
 
 	/*
@@ -693,23 +707,21 @@ ssl3_create_record(SSL *s, unsigned char *p, uint16_t version, uint8_t type,
 	return 1;
 
  err:
-	CBB_cleanup(&cbb);
-
 	return 0;
 }
 
 static int
 do_ssl3_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 {
-	SSL3_RECORD_INTERNAL *wr = &(S3I(s)->wrec);
 	SSL3_BUFFER_INTERNAL *wb = &(S3I(s)->wbuf);
 	SSL_SESSION *sess = s->session;
-	unsigned char *p;
 	int need_empty_fragment = 0;
-	int prefix_len = 0;
+	size_t align, out_len;
 	uint16_t version;
-	size_t align;
+	CBB cbb;
 	int ret;
+
+	memset(&cbb, 0, sizeof(cbb));
 
 	if (wb->buf == NULL)
 		if (!ssl3_setup_write_buffer(s))
@@ -768,30 +780,24 @@ do_ssl3_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 	if (need_empty_fragment)
 		align += SSL3_RT_HEADER_LENGTH;
 	align = (-align) & (SSL3_ALIGN_PAYLOAD - 1);
-
-	p = wb->buf + align;
 	wb->offset = align;
 
+	if (!CBB_init_fixed(&cbb, wb->buf + align, wb->len - align))
+		goto err;
+
 	if (need_empty_fragment) {
-		if (!ssl3_create_record(s, p, version, type, buf, 0))
+		if (!ssl3_create_record(s, &cbb, version, type, buf, 0))
 			goto err;
-
-		prefix_len = wr->length;
-		if (prefix_len > (SSL3_RT_HEADER_LENGTH +
-		    SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD)) {
-			/* insufficient space */
-			SSLerror(s, ERR_R_INTERNAL_ERROR);
-			goto err;
-		}
-		p = wb->buf + wb->offset + prefix_len;
-
 		S3I(s)->empty_fragment_done = 1;
 	}
 
-	if (!ssl3_create_record(s, p, version, type, buf, len))
+	if (!ssl3_create_record(s, &cbb, version, type, buf, len))
 		goto err;
 
-	wb->left = prefix_len + wr->length;
+	if (!CBB_finish(&cbb, NULL, &out_len))
+		goto err;
+
+	wb->left = out_len;
 
 	/*
 	 * Memorize arguments so that ssl3_write_pending can detect
@@ -806,6 +812,8 @@ do_ssl3_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 	return ssl3_write_pending(s, type, buf, len);
 
  err:
+	CBB_cleanup(&cbb);
+
 	return -1;
 }
 
