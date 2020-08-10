@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.232 2020/08/09 15:06:01 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.233 2020/08/10 12:12:44 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ void	scsibusattach(struct device *, struct device *, void *);
 int	scsibusactivate(struct device *, int);
 int	scsibusdetach(struct device *, int);
 int	scsibussubmatch(struct device *, void *, void *);
-int	scsibusprint(void *, const char *);
+int	scsibussubprint(void *, const char *);
 #if NBIO > 0
 #include <sys/ioctl.h>
 #include <sys/scsiio.h>
@@ -301,7 +301,7 @@ scsibussubmatch(struct device *parent, void *match, void *aux)
  * the standard device information.
  */
 int
-scsibusprint(void *aux, const char *pnp)
+scsibussubprint(void *aux, const char *pnp)
 {
 	struct scsi_attach_args		*sa = aux;
 
@@ -408,61 +408,6 @@ scsi_activate_link(struct scsi_link *link, int act)
 		break;
 	}
 	return rv;
-}
-
-void
-scsi_get_target_luns(struct scsi_link *link0, struct scsi_lun_array *lunarray)
-{
-	struct scsi_report_luns_data	*report;
-	int				 i, nluns, rv = 0;
-
-	/* Initialize dumbscan result. Just in case. */
-	report = NULL;
-	for (i = 0; i < link0->bus->sb_luns; i++)
-		lunarray->luns[i] = i;
-	lunarray->count = link0->bus->sb_luns;
-	lunarray->dumbscan = 1;
-
-	/*
-	 * ATAPI, USB and pre-SPC (i.e. pre-SCSI-3) devices can't ask
-	 * for a report of valid LUNs.
-	 */
-	if ((link0->flags & (SDEV_UMASS | SDEV_ATAPI)) != 0 ||
-	    SID_ANSII_REV(&link0->inqdata) < SCSI_REV_SPC)
-		goto dumbscan;
-
-	report = dma_alloc(sizeof(*report), PR_WAITOK);
-	if (report == NULL)
-		goto dumbscan;
-
-	rv = scsi_report_luns(link0, REPORT_NORMAL, report,
-	    sizeof(*report), scsi_autoconf | SCSI_SILENT |
-	    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY |
-	    SCSI_IGNORE_MEDIA_CHANGE, 10000);
-	if (rv != 0)
-		goto dumbscan;
-
-	/*
-	 * XXX In theory we should check if data is full, which
-	 * would indicate it needs to be enlarged and REPORT
-	 * LUNS tried again. Solaris tries up to 3 times with
-	 * larger sizes for data.
-	 */
-
-	/* Return the reported Type-0 LUNs. Type-0 only! */
-	lunarray->count = 0;
-	lunarray->dumbscan = 0;
-	nluns = _4btol(report->length) / RPL_LUNDATA_SIZE;
-	for (i = 0; i < nluns; i++) {
-		if (report->luns[i].lundata[0] != 0)
-			continue;
-		lunarray->luns[lunarray->count++] =
-		    report->luns[i].lundata[RPL_LUNDATA_T0LUN];
-	}
-
-dumbscan:
-	if (report != NULL)
-		dma_free(report, sizeof(*report));
 }
 
 int
@@ -752,7 +697,7 @@ scsi_probe_link(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 
 	if ((cf = config_search(scsibussubmatch, (struct device *)sb,
 	    &sa)) == 0) {
-		scsibusprint(&sa, sb->sc_dev.dv_xname);
+		scsibussubprint(&sa, sb->sc_dev.dv_xname);
 		printf(" not configured\n");
 		goto free_devid;
 	}
@@ -789,7 +734,7 @@ scsi_probe_link(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 	    scsi_autoconf | SCSI_IGNORE_ILLEGAL_REQUEST |
 	    SCSI_IGNORE_NOT_READY | SCSI_IGNORE_MEDIA_CHANGE);
 
-	config_attach((struct device *)sb, cf, &sa, scsibusprint);
+	config_attach((struct device *)sb, cf, &sa, scsibussubprint);
 
 	return 0;
 
@@ -930,6 +875,61 @@ void
 scsi_remove_link(struct scsi_link *link)
 {
 	SLIST_REMOVE(&link->bus->sc_link_list, link, scsi_link, bus_list);
+}
+
+void
+scsi_get_target_luns(struct scsi_link *link0, struct scsi_lun_array *lunarray)
+{
+	struct scsi_report_luns_data	*report;
+	int				 i, nluns, rv = 0;
+
+	/* Initialize dumbscan result. Just in case. */
+	report = NULL;
+	for (i = 0; i < link0->bus->sb_luns; i++)
+		lunarray->luns[i] = i;
+	lunarray->count = link0->bus->sb_luns;
+	lunarray->dumbscan = 1;
+
+	/*
+	 * ATAPI, USB and pre-SPC (i.e. pre-SCSI-3) devices can't ask
+	 * for a report of valid LUNs.
+	 */
+	if ((link0->flags & (SDEV_UMASS | SDEV_ATAPI)) != 0 ||
+	    SID_ANSII_REV(&link0->inqdata) < SCSI_REV_SPC)
+		goto dumbscan;
+
+	report = dma_alloc(sizeof(*report), PR_WAITOK);
+	if (report == NULL)
+		goto dumbscan;
+
+	rv = scsi_report_luns(link0, REPORT_NORMAL, report,
+	    sizeof(*report), scsi_autoconf | SCSI_SILENT |
+	    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY |
+	    SCSI_IGNORE_MEDIA_CHANGE, 10000);
+	if (rv != 0)
+		goto dumbscan;
+
+	/*
+	 * XXX In theory we should check if data is full, which
+	 * would indicate it needs to be enlarged and REPORT
+	 * LUNS tried again. Solaris tries up to 3 times with
+	 * larger sizes for data.
+	 */
+
+	/* Return the reported Type-0 LUNs. Type-0 only! */
+	lunarray->count = 0;
+	lunarray->dumbscan = 0;
+	nluns = _4btol(report->length) / RPL_LUNDATA_SIZE;
+	for (i = 0; i < nluns; i++) {
+		if (report->luns[i].lundata[0] != 0)
+			continue;
+		lunarray->luns[lunarray->count++] =
+		    report->luns[i].lundata[RPL_LUNDATA_T0LUN];
+	}
+
+dumbscan:
+	if (report != NULL)
+		dma_free(report, sizeof(*report));
 }
 
 void
