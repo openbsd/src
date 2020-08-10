@@ -1,4 +1,4 @@
-/* $OpenBSD: ipifuncs.c,v 1.21 2019/05/06 12:56:30 visa Exp $ */
+/* $OpenBSD: ipifuncs.c,v 1.22 2020/08/10 15:22:53 visa Exp $ */
 /* $NetBSD: ipifuncs.c,v 1.40 2008/04/28 20:23:10 martin Exp $ */
 
 /*-
@@ -54,7 +54,7 @@ unsigned int ipi_irq = 0;
 unsigned int ipi_mailbox[MAXCPUS];
 
 /* Variables needed for SMP rendezvous. */
-struct mutex smp_ipi_mtx;
+struct mutex smp_rv_mtx;
 volatile unsigned long smp_rv_map;
 void (*volatile smp_rv_action_func)(void *arg);
 void * volatile smp_rv_func_arg;
@@ -82,7 +82,7 @@ mips64_ipi_init(void)
 	int error;
 
 	if (!cpuid) {
-		mtx_init(&smp_ipi_mtx, IPL_IPI);
+		mtx_init(&smp_rv_mtx, IPL_HIGH);
 		evcount_attach(&ipi_count, "ipi", &ipi_irq);
 	}
 
@@ -226,8 +226,7 @@ smp_rendezvous_cpus(unsigned long map,
 		return;
 	}
 
-	/* obtain rendezvous lock */
-        mtx_enter(&smp_ipi_mtx);
+	mtx_enter(&smp_rv_mtx);
 
 	/* set static function pointers */
 	smp_rv_map = map;
@@ -248,8 +247,7 @@ smp_rendezvous_cpus(unsigned long map,
 
 	smp_rv_action_func = NULL;
 
-	/* release lock */
-	mtx_leave(&smp_ipi_mtx);
+	mtx_leave(&smp_rv_mtx);
 }
 
 void
