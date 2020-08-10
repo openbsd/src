@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.50 2020/08/04 14:34:54 inoguchi Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.51 2020/08/10 18:54:45 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -530,8 +530,9 @@ static int
 tls13_record_layer_open_record_protected(struct tls13_record_layer *rl)
 {
 	CBS header, enc_record;
+	ssize_t inner_len;
 	uint8_t *content = NULL;
-	ssize_t content_len = 0;
+	size_t content_len = 0;
 	uint8_t content_type;
 	size_t out_len;
 
@@ -572,22 +573,22 @@ tls13_record_layer_open_record_protected(struct tls13_record_layer *rl)
 	 * Time to hunt for that elusive content type!
 	 */
 	/* XXX - CBS from end? CBS_get_end_u8()? */
-	content_len = out_len - 1;
-	while (content_len >= 0 && content[content_len] == 0)
-		content_len--;
-	if (content_len < 0)
+	inner_len = out_len - 1;
+	while (inner_len >= 0 && content[inner_len] == 0)
+		inner_len--;
+	if (inner_len < 0)
 		goto err;
-	if (content_len > TLS13_RECORD_MAX_PLAINTEXT_LEN) {
+	if (inner_len > TLS13_RECORD_MAX_PLAINTEXT_LEN) {
 		rl->alert = SSL_AD_RECORD_OVERFLOW;
 		goto err;
 	}
-	content_type = content[content_len];
+	content_type = content[inner_len];
 
 	tls13_record_layer_rbuf_free(rl);
 
 	rl->rbuf_content_type = content_type;
 	rl->rbuf = content;
-	rl->rbuf_len = content_len;
+	rl->rbuf_len = inner_len;
 
 	CBS_init(&rl->rbuf_cbs, rl->rbuf, rl->rbuf_len);
 
