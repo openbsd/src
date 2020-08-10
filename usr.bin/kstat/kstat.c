@@ -1,4 +1,4 @@
-/* $OpenBSD: kstat.c,v 1.3 2020/08/10 06:39:52 dlg Exp $ */
+/* $OpenBSD: kstat.c,v 1.4 2020/08/10 06:51:40 dlg Exp $ */
 
 /*
  * Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
@@ -66,6 +66,43 @@ struct kstat_filter {
 };
 
 TAILQ_HEAD(kstat_filters, kstat_filter);
+
+struct kstat_entry {
+	struct kstat_req	kstat;
+	RBT_ENTRY(kstat_entry)	entry;
+	int			serrno;
+};
+
+RBT_HEAD(kstat_tree, kstat_entry);
+
+static inline int
+kstat_cmp(const struct kstat_entry *ea, const struct kstat_entry *eb)
+{
+	const struct kstat_req *a = &ea->kstat;
+	const struct kstat_req *b = &eb->kstat;
+	int rv;
+
+	rv = strncmp(a->ks_provider, b->ks_provider, sizeof(a->ks_provider));
+	if (rv != 0)
+		return (rv);
+	if (a->ks_instance > b->ks_instance)
+		return (1);
+	if (a->ks_instance < b->ks_instance)
+		return (-1);
+
+	rv = strncmp(a->ks_name, b->ks_name, sizeof(a->ks_name));
+	if (rv != 0)
+		return (rv);
+	if (a->ks_unit > b->ks_unit)
+		return (1);
+	if (a->ks_unit < b->ks_unit)
+		return (-1);
+
+	return (0);
+}
+
+RBT_PROTOTYPE(kstat_tree, kstat_entry, entry, kstat_cmp);
+RBT_GENERATE(kstat_tree, kstat_entry, entry, kstat_cmp);
 
 static struct kstat_filter *
 		kstat_filter_parse(char *);
@@ -211,43 +248,6 @@ kstat_filter_entry(struct kstat_filters *kfs, const struct kstat_req *ksreq)
 
 	return (0);
 }
-
-struct kstat_entry {
-	struct kstat_req	kstat;
-	RBT_ENTRY(kstat_entry)	entry;
-	int			serrno;
-};
-
-RBT_HEAD(kstat_tree, kstat_entry);
-
-static inline int
-kstat_cmp(const struct kstat_entry *ea, const struct kstat_entry *eb)
-{
-	const struct kstat_req *a = &ea->kstat;
-	const struct kstat_req *b = &eb->kstat;
-	int rv;
-
-	rv = strncmp(a->ks_provider, b->ks_provider, sizeof(a->ks_provider));
-	if (rv != 0)
-		return (rv);
-	if (a->ks_instance > b->ks_instance)
-		return (1);
-	if (a->ks_instance < b->ks_instance)
-		return (-1);
-
-	rv = strncmp(a->ks_name, b->ks_name, sizeof(a->ks_name));
-	if (rv != 0)
-		return (rv);
-	if (a->ks_unit > b->ks_unit)
-		return (1);
-	if (a->ks_unit < b->ks_unit)
-		return (-1);
-
-	return (0);
-}
-
-RBT_PROTOTYPE(kstat_tree, kstat_entry, entry, kstat_cmp);
-RBT_GENERATE(kstat_tree, kstat_entry, entry, kstat_cmp);
 
 static int
 printable(int ch)
