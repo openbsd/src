@@ -1,4 +1,4 @@
-/* $OpenBSD: kstat.c,v 1.2 2020/08/10 01:13:28 dlg Exp $ */
+/* $OpenBSD: kstat.c,v 1.3 2020/08/10 06:39:52 dlg Exp $ */
 
 /*
  * Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
@@ -22,6 +22,7 @@
 #include <inttypes.h>
 #include <fnmatch.h>
 #include <fcntl.h>
+#include <unistd.h>
 #include <errno.h>
 #include <err.h>
 #include <vis.h>
@@ -71,7 +72,9 @@ static struct kstat_filter *
 static int	kstat_filter_entry(struct kstat_filters *,
 		    const struct kstat_req *);
 
-static void	kstat_list(int, unsigned int, struct kstat_filters *);
+static void	kstat_list(struct kstat_tree *, int, unsigned int,
+		    struct kstat_filters *);
+static void	kstat_print(struct kstat_tree *);
 
 __dead static void
 usage(void)
@@ -88,6 +91,7 @@ int
 main(int argc, char *argv[])
 {
 	struct kstat_filters kfs = TAILQ_HEAD_INITIALIZER(kfs);
+	struct kstat_tree kt = RBT_INITIALIZER();
 	unsigned int version;
 	int fd;
 	int i;
@@ -104,7 +108,8 @@ main(int argc, char *argv[])
 	if (ioctl(fd, KSTATIOC_VERSION, &version) == -1)
 		err(1, "kstat version");
 
-	kstat_list(fd, version, &kfs);
+	kstat_list(&kt, fd, version, &kfs);
+	kstat_print(&kt);
 
 	return (0);
 }
@@ -405,13 +410,13 @@ kstat_kv(const void *d, ssize_t len)
 }
 
 static void
-kstat_list(int fd, unsigned int version, struct kstat_filters *kfs)
+kstat_list(struct kstat_tree *kt, int fd, unsigned int version,
+    struct kstat_filters *kfs)
 {
 	struct kstat_entry *kse;
 	struct kstat_req *ksreq;
 	size_t len;
 	uint64_t id = 0;
-	struct kstat_tree kstat_tree = RBT_INITIALIZER();
 
 	for (;;) {
 		kse = malloc(sizeof(*kse));
@@ -445,7 +450,7 @@ kstat_list(int fd, unsigned int version, struct kstat_filters *kfs)
 			continue;
 		}
 
-		if (RBT_INSERT(kstat_tree, &kstat_tree, kse) != NULL)
+		if (RBT_INSERT(kstat_tree, kt, kse) != NULL)
 			errx(1, "duplicate kstat entry");
 
 		if (kse->serrno != 0)
@@ -461,8 +466,15 @@ kstat_list(int fd, unsigned int version, struct kstat_filters *kfs)
 				err(1, "find id %llu", ksreq->ks_id);
 		}
 	}
+}
 
-	RBT_FOREACH(kse, kstat_tree, &kstat_tree) {
+static void
+kstat_print(struct kstat_tree *kt)
+{
+	struct kstat_entry *kse;
+	struct kstat_req *ksreq;
+
+	RBT_FOREACH(kse, kstat_tree, kt) {
 		ksreq = &kse->kstat;
 		printf("%s:%u:%s:%u\n",
 		    ksreq->ks_provider, ksreq->ks_instance,
