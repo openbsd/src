@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.85 2020/05/27 05:02:21 jsg Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.86 2020/08/10 04:11:48 jmatthew Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
@@ -187,8 +187,6 @@ struct cfdriver acpicpu_cd = {
 };
 
 extern int setperf_prio;
-
-struct acpicpu_softc *acpicpu_sc[MAXCPUS];
 
 #if 0
 void
@@ -672,7 +670,6 @@ acpicpu_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node;
-	acpicpu_sc[sc->sc_dev.dv_unit] = sc;
 
 	SLIST_INIT(&sc->sc_cstates);
 
@@ -979,7 +976,7 @@ acpicpu_fetch_pss(struct acpicpu_pss **pss)
 	 * the bios ensures this...
 	 */
 
-	sc = acpicpu_sc[0];
+	sc = (struct acpicpu_softc *)cpu_info_primary.ci_acpicpudev;
 	if (!sc)
 		return 0;
 	*pss = sc->sc_pss;
@@ -1024,7 +1021,7 @@ acpicpu_set_notify(void (*func)(struct acpicpu_pss *, int))
 {
 	struct acpicpu_softc    *sc;
 
-	sc = acpicpu_sc[0];
+	sc = (struct acpicpu_softc *)cpu_info_primary.ci_acpicpudev;
 	if (sc != NULL)
 		sc->sc_notify = func;
 }
@@ -1034,7 +1031,7 @@ acpicpu_setperf_ppc_change(struct acpicpu_pss *pss, int npss)
 {
 	struct acpicpu_softc    *sc;
 
-	sc = acpicpu_sc[0];
+	sc = (struct acpicpu_softc *)cpu_info_primary.ci_acpicpudev;
 
 	if (sc != NULL)
 		cpu_setperf(sc->sc_level);
@@ -1048,7 +1045,7 @@ acpicpu_setperf(int level)
 	int			idx, len;
 	uint32_t		status = 0;
 
-	sc = acpicpu_sc[cpu_number()];
+	sc = (struct acpicpu_softc *)curcpu()->ci_acpicpudev;
 
 	dnprintf(10, "%s: acpicpu setperf level %d\n",
 	    sc->sc_devnode->name, level);
