@@ -1,4 +1,4 @@
-.\" $OpenBSD: kstat_create.9,v 1.1 2020/07/06 11:48:03 dlg Exp $
+.\" $OpenBSD: kstat_create.9,v 1.2 2020/08/10 11:33:58 schwarze Exp $
 .\"
 .\" Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 6 2020 $
+.Dd $Mdocdate: August 10 2020 $
 .Dt KSTAT_CREATE 9
 .Os
 .Sh NAME
@@ -28,7 +28,7 @@
 .Sh SYNOPSIS
 .In sys/kstat.h
 .Ft struct kstat *
-.Fo kstatap_create
+.Fo kstat_create
 .Fa "const char *provider"
 .Fa "unsigned int instance"
 .Fa "const char *name"
@@ -52,7 +52,9 @@ statistics (kstat) API.
 .Pp
 The
 .Fn kstat_create
-function allocates a kstat structure and adds it to the list of statistics that userland can query.
+function allocates a
+.Vt kstat
+structure and adds it to the list of statistics that userland can query.
 A kstat is uniquely identified by a tuple made up of the
 .Fa provider ,
 .Fa instances ,
@@ -76,18 +78,21 @@ See
 for more detail.
 .El
 .Pp
-Once a kstat structure has been created, the caller is responsible for initialising the structure.
+Once a
+.Vt kstat
+structure has been created,
+the caller is responsible for initialising the structure.
 .Pp
 After the structure has been initialised,
 .Fn kstat_install
-notifies the kstat subsystem that the kstat structure
+notifies the kstat subsystem that
 .Fa ks
 can be used to export information to userland.
 .Pp
 .Fn kstat_destroy
-removes the
+removes
 .Fa ks
- kstat structure from the list of exported statistics and frees it.
+from the list of exported statistics and frees it.
 .\" might want a kstat_remove...
 .Sh CONTEXT
 .Fn kstat_create ,
@@ -100,8 +105,15 @@ and
 can be called during autoconf, or from process context.
 .Sh RETURN VALUES
 .Fn kstat_create
-returns a pointer to an kstat structure on success, of
+returns a pointer to a
+.Vt kstat
+structure on success, or
 .Dv NULL
 on failure.
 .Sh SEE ALSO
 .Xr kstat_kv_init 9
+.Sh HISTORY
+These functions first appeared in
+.Ox 6.8 .
+.Sh AUTHORS
+.An David Gwynne Aq Mt dlg@openbsd.org

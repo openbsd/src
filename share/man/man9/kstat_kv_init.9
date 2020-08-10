@@ -1,4 +1,4 @@
-.\" $OpenBSD: kstat_kv_init.9,v 1.1 2020/07/06 11:48:03 dlg Exp $
+.\" $OpenBSD: kstat_kv_init.9,v 1.2 2020/08/10 11:33:58 schwarze Exp $
 .\"
 .\" Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 6 2020 $
+.Dd $Mdocdate: August 10 2020 $
 .Dt KSTAT_KV_INIT 9
 .Os
 .Sh NAME
@@ -48,11 +48,13 @@
 .Fa "enum kstat_kv_unit unit"
 .Fc
 .Sh DESCRIPTION
-The kstat key/value data API supports the creation and maintenance
-of kstat_kv structures that can be exported to userland using the
-kstat API.
+The kstat key/value data API supports the creation and maintenance of
+.Vt kstat_kv
+structures that can be exported to userland using the kstat API.
 .Pp
-A kstat key/value data payload for a kstat structure
+A kstat key/value data payload for a
+.Vt kstat
+structure
 .Po
 created using
 .Xr kstat_create 9
@@ -62,7 +64,9 @@ as the
 .Fa type
 argument
 .Pc
-is a series of kstat_kv structures in memory.
+is a series of
+.Vt kstat_kv
+structures in memory.
 kstat_kv values are typed, and the memory used to store values of
 different types is either inline as part of the structure, or is
 extra bytes following a structure of a specified length.
@@ -70,7 +74,7 @@ extra bytes following a structure of a specified length.
 .\" kstat_kv structures contain the following fields:
 .Pp
 .Fn kstat_kv_init
-initialises the kstat_kv structure
+initialises
 .Fa kv
 with a name specified as
 .Fa key .
@@ -78,7 +82,7 @@ The type of the value is specified as
 .Fa type .
 .Pp
 .Fn kstat_kv_unit_init
-initialises the kstat_kv structure
+initialises
 .Fa kv
 with a name specified as
 .Fa key .
@@ -87,18 +91,26 @@ The integer or counter type of the value is specified as
 and specifies the units for the values in
 .Fa unit .
 .Pp
-A kstat_kv structure can be initialised at compile time with the
+A
+.Vt kstat_kv
+structure can be initialised at compile time with the
 .Fn KSTAT_KV_INITIALIZER
 macro.
-The kstat_kv structure will be declared with the name
+The
+.Vt kstat_kv
+structure will be declared with the name
 .Fa key
 with the type of the values as
 .Fa type .
 .Pp
-A kstat_kv structure can be initialised at compile time with the
+A
+.Vt kstat_kv
+structure can be initialised at compile time with the
 .Fn KSTAT_KV_UNIT_INITIALIZER
 macro.
-The kstat_kv structure will be declared with the name
+The
+.Vt kstat_kv
+structure will be declared with the name
 .Fa key
 with the integer or counter type of the values as
 .Fa type ,
@@ -106,3 +118,8 @@ and specifies the units for the values in
 .Fa unit .
 .Sh SEE ALSO
 .Xr kstat_create 9
+.Sh HISTORY
+These functions first appeared in
+.Ox 6.8 .
+.Sh AUTHORS
+.An David Gwynne Aq Mt dlg@openbsd.org
