@@ -589,6 +589,9 @@
 ./usr/include/llvm/CodeGen/Passes.h
 ./usr/include/llvm/CodeGen/PreISelIntrinsicLowering.h
 ./usr/include/llvm/CodeGen/PseudoSourceValue.h
+./usr/include/llvm/CodeGen/RDFGraph.h
+./usr/include/llvm/CodeGen/RDFLiveness.h
+./usr/include/llvm/CodeGen/RDFRegisters.h
 ./usr/include/llvm/CodeGen/ReachingDefAnalysis.h
 ./usr/include/llvm/CodeGen/RegAllocPBQP.h
 ./usr/include/llvm/CodeGen/RegAllocRegistry.h
