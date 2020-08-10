@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.93 2020/07/04 10:39:25 mglocker Exp $ */
+/* $OpenBSD: pms.c,v 1.94 2020/08/10 21:55:59 mglocker Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -2292,7 +2292,12 @@ pms_sync_elantech_v1(struct pms_softc *sc, int data)
 	}
 
 	if (data < 0 || data >= nitems(elantech->parity) ||
-	    elantech->parity[data] != p)
+	/*
+	 * FW 0x20022 sends inverted parity bits on cold boot, returning
+	 * to normal after suspend & resume, so the parity check is
+	 * disabled for this one.
+	 */
+	    (elantech->fw_version != 0x20022 && elantech->parity[data] != p))
 		return (-1);
 
 	return (0);
