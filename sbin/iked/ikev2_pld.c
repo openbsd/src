@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.88 2020/07/21 08:03:39 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.89 2020/08/10 19:33:58 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -54,8 +54,8 @@ int	 ikev2_pld_sa(struct iked *, struct ikev2_payload *,
 	    struct iked_message *, size_t, size_t);
 int	 ikev2_validate_xform(struct iked_message *, size_t, size_t,
 	    struct ikev2_transform *);
-int	 ikev2_pld_xform(struct iked *, struct ikev2_sa_proposal *,
-	    struct iked_message *, size_t, size_t);
+int	 ikev2_pld_xform(struct iked *, struct iked_message *,
+	    size_t, size_t);
 int	 ikev2_validate_attr(struct iked_message *, size_t, size_t,
 	    struct ikev2_attribute *);
 int	 ikev2_pld_attr(struct iked *, struct ikev2_transform *,
@@ -430,7 +430,7 @@ ikev2_pld_sa(struct iked *env, struct ikev2_payload *pld,
 		 * Parse the attached transforms
 		 */
 		if (sap.sap_transforms &&
-		    ikev2_pld_xform(env, &sap, msg, offset, total) != 0) {
+		    ikev2_pld_xform(env, msg, offset, total) != 0) {
 			log_debug("%s: invalid proposal transforms", __func__);
 			return (-1);
 		}
@@ -472,8 +472,8 @@ ikev2_validate_xform(struct iked_message *msg, size_t offset, size_t total,
 }
 
 int
-ikev2_pld_xform(struct iked *env, struct ikev2_sa_proposal *sap,
-    struct iked_message *msg, size_t offset, size_t total)
+ikev2_pld_xform(struct iked *env, struct iked_message *msg,
+    size_t offset, size_t total)
 {
 	struct ikev2_transform		 xfrm;
 	char				 id[BUFSIZ];
@@ -540,7 +540,7 @@ ikev2_pld_xform(struct iked *env, struct ikev2_sa_proposal *sap,
 	offset += xfrm_length;
 	total -= xfrm_length;
 	if (xfrm.xfrm_more == IKEV2_XFORM_MORE)
-		ret = ikev2_pld_xform(env, sap, msg, offset, total);
+		ret = ikev2_pld_xform(env, msg, offset, total);
 	else if (total != 0) {
 		/* No more transforms but still some data left. */
 		log_debug("%s: less data than specified, %zu bytes left",
