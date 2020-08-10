@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.186 2020/08/10 05:47:37 jsg Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.187 2020/08/10 06:25:02 jsg Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -753,14 +753,6 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 
 		fs = (struct fs *) bp->b_data;
 		sbloc = sbtry[i];
-
-#if 0
-		if (fs->fs_magic == FS_UFS2_MAGIC) {
-			printf("ffs_mountfs(): Sorry, no UFS2 support (yet)\n");
-			error = EFTYPE;
-			goto out;
-		}
-#endif
 
 		/*
 		 * Do not look for an FFS1 file system at SBLOCK_UFS2. Doing so
