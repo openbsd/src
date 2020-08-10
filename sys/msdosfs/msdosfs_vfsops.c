@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.93 2020/01/24 03:49:34 tedu Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.94 2020/08/10 05:18:46 jsg Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -321,7 +321,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p,
 	pmp->pm_BlkPerSec = pmp->pm_BytesPerSec / DEV_BSIZE;
 
 	if (!pmp->pm_BytesPerSec || !SecPerClust) {
-		error = EFTYPE;
+		error = EINVAL;
 		goto error_exit;
 	}
 
@@ -451,7 +451,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p,
 	 * must be a power of 2
 	 */
 	if (pmp->pm_bpcluster ^ (1 << pmp->pm_cnshift)) {
-		error = EFTYPE;
+		error = EINVAL;
 		goto error_exit;
 	}
 
