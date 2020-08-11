@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.79 2020/08/11 19:13:35 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.80 2020/08/11 19:21:54 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -1427,14 +1427,14 @@ dtls1_reset_seq_numbers(SSL *s, int rw)
 	unsigned int seq_bytes = sizeof(S3I(s)->read_sequence);
 
 	if (rw & SSL3_CC_READ) {
-		seq = S3I(s)->read_sequence;
 		D1I(s)->r_epoch++;
+		seq = S3I(s)->read_sequence;
 		memcpy(&(D1I(s)->bitmap), &(D1I(s)->next_bitmap), sizeof(DTLS1_BITMAP));
 		memset(&(D1I(s)->next_bitmap), 0, sizeof(DTLS1_BITMAP));
 	} else {
+		D1I(s)->w_epoch++;
 		seq = S3I(s)->write_sequence;
 		memcpy(D1I(s)->last_write_sequence, seq, sizeof(S3I(s)->write_sequence));
-		D1I(s)->w_epoch++;
 	}
 
 	memset(seq, 0, seq_bytes);
