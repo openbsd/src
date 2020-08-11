@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.137 2020/08/11 18:29:58 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.138 2020/08/11 22:00:51 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -597,6 +597,10 @@ sys_setitimer(struct proc *p, void *v, register_t *retval)
 	}
 	if (itvp == 0)
 		return (0);
+
+	if (which != ITIMER_REAL)
+		mtx_enter(&itimer_mtx);
+
 	if (which == ITIMER_REAL) {
 		struct timespec cts;
 
@@ -607,12 +611,11 @@ sys_setitimer(struct proc *p, void *v, register_t *retval)
 			timeout_add(&pr->ps_realit_to, timo);
 			timespecadd(&aits.it_value, &cts, &aits.it_value);
 		}
-		pr->ps_timer[ITIMER_REAL] = aits;
-	} else {
-		mtx_enter(&itimer_mtx);
-		pr->ps_timer[which] = aits;
-		mtx_leave(&itimer_mtx);
 	}
+	pr->ps_timer[which] = aits;
+
+	if (which != ITIMER_REAL)
+		mtx_leave(&itimer_mtx);
 
 	return (0);
 }
