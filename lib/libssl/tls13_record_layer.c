@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.51 2020/08/10 18:54:45 tb Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.52 2020/08/11 19:25:40 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -576,8 +576,11 @@ tls13_record_layer_open_record_protected(struct tls13_record_layer *rl)
 	inner_len = out_len - 1;
 	while (inner_len >= 0 && content[inner_len] == 0)
 		inner_len--;
-	if (inner_len < 0)
+	if (inner_len < 0) {
+		/* Unexpected message per RFC 8446 section 5.4. */
+		rl->alert = TLS13_ALERT_UNEXPECTED_MESSAGE;
 		goto err;
+	}
 	if (inner_len > TLS13_RECORD_MAX_PLAINTEXT_LEN) {
 		rl->alert = SSL_AD_RECORD_OVERFLOW;
 		goto err;
