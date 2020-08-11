@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.154 2020/07/21 08:03:38 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.155 2020/08/11 20:51:06 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -525,9 +525,9 @@ RB_HEAD(iked_addrpool6, iked_sa);
 struct iked_certreq {
 	struct ibuf			*cr_data;
 	uint8_t				 cr_type;
-	SLIST_ENTRY(iked_certreq)	 cr_entry;
+	SIMPLEQ_ENTRY(iked_certreq)	 cr_entry;
 };
-SLIST_HEAD(iked_certreqs, iked_certreq);
+SIMPLEQ_HEAD(iked_certreqs, iked_certreq);
 
 struct iked_message {
 	struct ibuf		*msg_data;

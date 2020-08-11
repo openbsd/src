@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.237 2020/07/21 08:03:38 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.238 2020/08/11 20:51:06 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -3066,7 +3066,7 @@ ikev2_handle_certreq(struct iked* env, struct iked_message *msg)
 	 * We could alternatively extract the CA from the peer certificate
 	 * to find a matching local one.
 	 */
-	if (SLIST_EMPTY(&msg->msg_certreqs)) {
+	if (SIMPLEQ_EMPTY(&msg->msg_certreqs)) {
 		if (sa->sa_policy->pol_certreqtype)
 			crtype = sa->sa_policy->pol_certreqtype;
 		else
@@ -3075,9 +3075,8 @@ ikev2_handle_certreq(struct iked* env, struct iked_message *msg)
 		    crtype, 0, ibuf_data(env->sc_certreq),
 		    ibuf_size(env->sc_certreq), PROC_CERT);
 	} else {
-		while ((cr = SLIST_FIRST(&msg->msg_certreqs))) {
-
-			if (SLIST_NEXT(cr, cr_entry) != NULL)
+		while ((cr = SIMPLEQ_FIRST(&msg->msg_certreqs))) {
+			if (SIMPLEQ_NEXT(cr, cr_entry) != NULL)
 				more = 1;
 			else
 				more = 0;
@@ -3088,7 +3087,7 @@ ikev2_handle_certreq(struct iked* env, struct iked_message *msg)
 			    PROC_CERT);
 
 			ibuf_release(cr->cr_data);
-			SLIST_REMOVE_HEAD(&msg->msg_certreqs, cr_entry);
+			SIMPLEQ_REMOVE_HEAD(&msg->msg_certreqs, cr_entry);
 			free(cr);
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.90 2020/08/10 19:35:39 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.91 2020/08/11 20:51:06 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -873,7 +873,7 @@ ikev2_pld_certreq(struct iked *env, struct ikev2_payload *pld,
 		return (-1);
 	}
 	cr->cr_type = cert.cert_type;
-	SLIST_INSERT_HEAD(&msg->msg_parent->msg_certreqs, cr, cr_entry);
+	SIMPLEQ_INSERT_TAIL(&msg->msg_parent->msg_certreqs, cr, cr_entry);
 
 	return (0);
 }
