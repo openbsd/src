@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.57 2019/02/10 16:42:35 phessler Exp $ */
+/* $OpenBSD: d1_both.c,v 1.58 2020/08/11 19:13:35 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -417,7 +417,7 @@ dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 	}
 
 	msg_hdr = &D1I(s)->r_msg_hdr;
-	memset(msg_hdr, 0x00, sizeof(struct hm_header_st));
+	memset(msg_hdr, 0, sizeof(struct hm_header_st));
 
 again:
 	i = dtls1_get_message_fragment(s, st1, stn, max, ok);
@@ -441,7 +441,7 @@ again:
 		s->internal->msg_callback(0, s->version, SSL3_RT_HANDSHAKE, p, msg_len,
 		    s, s->internal->msg_callback_arg);
 
-	memset(msg_hdr, 0x00, sizeof(struct hm_header_st));
+	memset(msg_hdr, 0, sizeof(struct hm_header_st));
 
 	/* Don't change sequence numbers while listening */
 	if (!D1I(s)->listen)
@@ -1249,7 +1249,7 @@ dtls1_get_message_header(unsigned char *data, struct hm_header_st *msg_hdr)
 void
 dtls1_get_ccs_header(unsigned char *data, struct ccs_header_st *ccs_hdr)
 {
-	memset(ccs_hdr, 0x00, sizeof(struct ccs_header_st));
+	memset(ccs_hdr, 0, sizeof(struct ccs_header_st));
 
 	ccs_hdr->type = *(data++);
 }
