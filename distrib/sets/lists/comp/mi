@@ -2422,6 +2422,7 @@
 ./usr/share/man/man3/fido_cred_verify.3
 ./usr/share/man/man3/fido_credman_metadata_new.3
 ./usr/share/man/man3/fido_dev_get_assert.3
+./usr/share/man/man3/fido_dev_get_touch_begin.3
 ./usr/share/man/man3/fido_dev_info_manifest.3
 ./usr/share/man/man3/fido_dev_make_cred.3
 ./usr/share/man/man3/fido_dev_open.3
