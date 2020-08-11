@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2020/08/10 21:08:26 patrick Exp $
+# $OpenBSD: Makefile,v 1.2 2020/08/11 03:23:47 jsg Exp $
 
 .include <bsd.own.mk>
 
@@ -184,7 +184,7 @@ GEN_SRCS+=	floatdidf \
 .endif
 
 .for file in ${GEN_SRCS}
-.	if exists(${.CURDIR}/${RTARCH}/${file}.S)
+.	if exists(${.CURDIR}/../../llvm/compiler-rt/lib/builtins/${RTARCH}/${file}.S)
 SRCS+=	${file}.S
 .	else
 SRCS+=	${file}.c
