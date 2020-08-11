@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2020/08/11 03:23:47 jsg Exp $
+# $OpenBSD: Makefile,v 1.3 2020/08/11 06:38:59 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -280,7 +280,6 @@ SRCS+=	comparetf2.c \
 SRCS+=	atomic_lock_free.c \
 	divtc3.c \
 	fixtfdi.c \
-	fixtfti.c \
 	fixunstfdi.c \
 	floatditf.c \
 	floatunditf.c \
