@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.136 2020/08/11 15:41:50 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.137 2020/08/11 18:29:58 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -580,9 +580,15 @@ sys_setitimer(struct proc *p, void *v, register_t *retval)
 	if (which < ITIMER_REAL || which > ITIMER_PROF)
 		return (EINVAL);
 	itvp = SCARG(uap, itv);
-	if (itvp && (error = copyin((void *)itvp, (void *)&aitv,
-	    sizeof(struct itimerval))))
-		return (error);
+	if (itvp) {
+		error = copyin(itvp, &aitv, sizeof(struct itimerval));
+		if (error)
+			return (error);
+		if (itimerfix(&aitv.it_value) || itimerfix(&aitv.it_interval))
+			return (EINVAL);
+		TIMEVAL_TO_TIMESPEC(&aitv.it_value, &aits.it_value);
+		TIMEVAL_TO_TIMESPEC(&aitv.it_interval, &aits.it_interval);
+	}
 	if (oitv != NULL) {
 		SCARG(&getargs, which) = which;
 		SCARG(&getargs, itv) = oitv;
@@ -591,10 +597,6 @@ sys_setitimer(struct proc *p, void *v, register_t *retval)
 	}
 	if (itvp == 0)
 		return (0);
-	if (itimerfix(&aitv.it_value) || itimerfix(&aitv.it_interval))
-		return (EINVAL);
-	TIMEVAL_TO_TIMESPEC(&aitv.it_value, &aits.it_value);
-	TIMEVAL_TO_TIMESPEC(&aitv.it_interval, &aits.it_interval);
 	if (which == ITIMER_REAL) {
 		struct timespec cts;
 
