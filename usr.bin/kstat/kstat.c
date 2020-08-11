@@ -1,4 +1,4 @@
-/* $OpenBSD: kstat.c,v 1.4 2020/08/10 06:51:40 dlg Exp $ */
+/* $OpenBSD: kstat.c,v 1.5 2020/08/11 01:07:47 dlg Exp $ */
 
 /*
  * Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
@@ -112,14 +112,15 @@ static int	kstat_filter_entry(struct kstat_filters *,
 static void	kstat_list(struct kstat_tree *, int, unsigned int,
 		    struct kstat_filters *);
 static void	kstat_print(struct kstat_tree *);
+static void	kstat_read(struct kstat_tree *, int);
 
 __dead static void
 usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [name|provider:0:name:unit ...]\n",
-	    __progname);
+	fprintf(stderr, "usage: %s [-w wait] "
+	    "[name|provider:0:name:unit ...]\n", __progname);
 
 	exit(1);
 }
@@ -131,9 +132,28 @@ main(int argc, char *argv[])
 	struct kstat_tree kt = RBT_INITIALIZER();
 	unsigned int version;
 	int fd;
+	const char *errstr;
+	int ch;
+	struct timespec interval = { 0, 0 };
 	int i;
 
-	for (i = 1; i < argc; i++) {
+	while ((ch = getopt(argc, argv, "w:")) != -1) {
+		switch (ch) {
+		case 'w':
+			interval.tv_sec = strtonum(optarg, 1, 100000000,
+			    &errstr);
+			if (errstr != NULL)
+				errx(1, "wait %s: %s", optarg, errstr);
+			break;
+		default:
+			usage();
+		}
+	}
+
+	argc -= optind;
+	argv += optind;
+
+	for (i = 0; i < argc; i++) {
 		struct kstat_filter *kf = kstat_filter_parse(argv[i]);
 		TAILQ_INSERT_TAIL(&kfs, kf, kf_entry);
 	}
@@ -147,6 +167,16 @@ main(int argc, char *argv[])
 
 	kstat_list(&kt, fd, version, &kfs);
 	kstat_print(&kt);
+
+	if (interval.tv_sec == 0)
+		return (0);
+
+	for (;;) {
+		nanosleep(&interval, NULL);
+
+		kstat_read(&kt, fd);
+		kstat_print(&kt);
+	}
 
 	return (0);
 }
@@ -494,5 +524,18 @@ kstat_print(struct kstat_tree *kt)
 			hexdump(ksreq->ks_data, ksreq->ks_datalen);
 			break;
 		}
+	}
+}
+
+static void
+kstat_read(struct kstat_tree *kt, int fd)
+{
+	struct kstat_entry *kse;
+	struct kstat_req *ksreq;
+
+	RBT_FOREACH(kse, kstat_tree, kt) {
+		ksreq = &kse->kstat;
+		if (ioctl(fd, KSTATIOC_FIND_ID, ksreq) == -1)
+			err(1, "update id %llu", ksreq->ks_id);
 	}
 }
