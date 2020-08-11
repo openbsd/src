@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.135 2020/08/09 19:15:47 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.136 2020/08/11 15:41:50 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -526,10 +526,13 @@ sys_getitimer(struct proc *p, void *v, register_t *retval)
 		return (EINVAL);
 	itimer = &p->p_p->ps_timer[which];
 	memset(&aitv, 0, sizeof(aitv));
-	mtx_enter(&itimer_mtx);
+
+	if (which != ITIMER_REAL)
+		mtx_enter(&itimer_mtx);
 	TIMESPEC_TO_TIMEVAL(&aitv.it_interval, &itimer->it_interval);
 	TIMESPEC_TO_TIMEVAL(&aitv.it_value, &itimer->it_value);
-	mtx_leave(&itimer_mtx);
+	if (which != ITIMER_REAL)
+		mtx_leave(&itimer_mtx);
 
 	if (which == ITIMER_REAL) {
 		struct timeval now;
