@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.282 2020/07/07 19:31:11 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.283 2020/08/11 18:40:24 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -960,7 +960,7 @@ typedef struct dtls1_state_internal_st {
 	unsigned short handshake_read_seq;
 
 	/* save last sequence number for retransmissions */
-	unsigned char last_write_sequence[8];
+	unsigned char last_write_sequence[SSL3_SEQUENCE_SIZE];
 
 	/* Received handshake records (processed and unprocessed) */
 	record_pqueue unprocessed_rcds;
