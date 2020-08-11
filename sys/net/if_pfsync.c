@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.275 2020/07/29 12:08:15 mvs Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.276 2020/08/11 23:40:54 kn Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -253,7 +253,7 @@ void	pfsync_update_net_tdb(struct pfsync_tdb *);
 int	pfsyncoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
 	    struct rtentry *);
 int	pfsyncioctl(struct ifnet *, u_long, caddr_t);
-void	pfsyncstart(struct ifnet *);
+void	pfsyncstart(struct ifqueue *);
 void	pfsync_syncdev_state(void *);
 void	pfsync_ifdetach(void *);
 
@@ -339,12 +339,12 @@ pfsync_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_softc = sc;
 	ifp->if_ioctl = pfsyncioctl;
 	ifp->if_output = pfsyncoutput;
-	ifp->if_start = pfsyncstart;
+	ifp->if_qstart = pfsyncstart;
 	ifp->if_type = IFT_PFSYNC;
 	ifq_set_maxlen(&ifp->if_snd, IFQ_MAXLEN);
 	ifp->if_hdrlen = sizeof(struct pfsync_header);
 	ifp->if_mtu = ETHERMTU;
-	ifp->if_xflags = IFXF_CLONED;
+	ifp->if_xflags = IFXF_CLONED | IFXF_MPSAFE;
 	timeout_set_proc(&sc->sc_tmo, pfsync_timeout, NULL);
 	timeout_set_proc(&sc->sc_bulk_tmo, pfsync_bulk_update, NULL);
 	timeout_set_proc(&sc->sc_bulkfail_tmo, pfsync_bulk_fail, NULL);
@@ -418,9 +418,9 @@ pfsync_clone_destroy(struct ifnet *ifp)
  * Start output on the pfsync interface.
  */
 void
-pfsyncstart(struct ifnet *ifp)
+pfsyncstart(struct ifqueue *ifq)
 {
-	ifq_purge(&ifp->if_snd);
+	ifq_purge(ifq);
 }
 
 void
