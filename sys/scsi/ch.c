@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.65 2020/06/30 18:43:37 krw Exp $	*/
+/*	$OpenBSD: ch.c,v 1.66 2020/08/11 15:23:57 krw Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_changer.h>
+#include <scsi/scsi_debug.h>
 #include <scsi/scsiconf.h>
 
 #define CHRETRIES	2

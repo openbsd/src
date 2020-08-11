@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.179 2020/07/16 14:44:55 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.180 2020/08/11 15:23:57 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -69,6 +69,7 @@
 #include <sys/vnode.h>
 
 #include <scsi/scsi_all.h>
+#include <scsi/scsi_debug.h>
 #include <scsi/scsi_tape.h>
 #include <scsi/scsiconf.h>
 

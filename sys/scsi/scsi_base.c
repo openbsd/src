@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.268 2020/07/27 19:19:49 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.269 2020/08/11 15:23:57 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 #include <sys/task.h>
 
 #include <scsi/scsi_all.h>
+#include <scsi/scsi_debug.h>
 #include <scsi/scsi_disk.h>
 #include <scsi/scsiconf.h>
 

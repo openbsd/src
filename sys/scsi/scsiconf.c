@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.233 2020/08/10 12:12:44 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.234 2020/08/11 15:23:57 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -59,6 +59,7 @@
 #include <sys/atomic.h>
 
 #include <scsi/scsi_all.h>
+#include <scsi/scsi_debug.h>
 #include <scsi/scsiconf.h>
 
 int	scsibusmatch(struct device *, void *, void *);

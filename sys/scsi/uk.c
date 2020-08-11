@@ -1,4 +1,4 @@
-/*	$OpenBSD: uk.c,v 1.24 2019/12/07 15:16:24 krw Exp $	*/
+/*	$OpenBSD: uk.c,v 1.25 2020/08/11 15:23:57 krw Exp $	*/
 /*	$NetBSD: uk.c,v 1.15 1996/03/17 00:59:57 thorpej Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 #include <sys/vnode.h>
 
 #include <scsi/scsi_all.h>
+#include <scsi/scsi_debug.h>
 #include <scsi/scsiconf.h>
 
 #define	UKUNIT(z)	(minor(z))

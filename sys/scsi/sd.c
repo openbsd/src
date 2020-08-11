@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.313 2020/07/16 14:44:55 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.314 2020/08/11 15:23:57 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -70,6 +70,7 @@
 #include <sys/reboot.h>
 
 #include <scsi/scsi_all.h>
+#include <scsi/scsi_debug.h>
 #include <scsi/scsi_disk.h>
 #include <scsi/scsiconf.h>
 #include <scsi/sdvar.h>
