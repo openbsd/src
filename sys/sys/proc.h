@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.297 2020/07/06 13:33:09 pirofti Exp $	*/
+/*	$OpenBSD: proc.h,v 1.298 2020/08/11 14:57:56 cheloha Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -150,9 +150,11 @@ struct unveil;
 /*
  * Locks used to protect struct members in this file:
  *	a	atomic operations
+ *	K	kernel lock
  *	m	this process' `ps_mtx'
  *	p	this process' `ps_lock'
  *	R	rlimit_lock
+ *	T	itimer_mtx
  */
 struct process {
 	/*
@@ -216,7 +218,8 @@ struct process {
 	struct	rusage *ps_ru;		/* sum of stats for dead threads. */
 	struct	tusage ps_tu;		/* accumulated times. */
 	struct	rusage ps_cru;		/* sum of stats for reaped children */
-	struct	itimerspec ps_timer[3];	/* timers, indexed by ITIMER_* */
+	struct	itimerspec ps_timer[3];	/* [K] ITIMER_REAL timer */
+					/* [T] ITIMER_{VIRTUAL,PROF} timers */
 	struct	timeout ps_rucheck_to;	/* [] resource limit check timer */
 	time_t	ps_nextxcpu;		/* when to send next SIGXCPU, */
 					/* in seconds of process runtime */
@@ -269,7 +272,7 @@ struct process {
 	int	ps_refcnt;		/* Number of references. */
 
 	struct	timespec ps_start;	/* starting uptime. */
-	struct	timeout ps_realit_to;	/* real-time itimer trampoline. */
+	struct	timeout ps_realit_to;	/* [K] ITIMER_REAL timeout */
 };
 
 #define	ps_session	ps_pgrp->pg_session
