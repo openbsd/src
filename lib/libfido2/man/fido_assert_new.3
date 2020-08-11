@@ -2,13 +2,14 @@
 .\" Use of this source code is governed by a BSD-style
 .\" license that can be found in the LICENSE file.
 .\"
-.Dd $Mdocdate: February 7 2020 $
+.Dd $Mdocdate: August 11 2020 $
 .Dt FIDO_ASSERT_NEW 3
 .Os
 .Sh NAME
 .Nm fido_assert_new ,
 .Nm fido_assert_free ,
 .Nm fido_assert_count ,
+.Nm fido_assert_rp_id ,
 .Nm fido_assert_user_display_name ,
 .Nm fido_assert_user_icon ,
 .Nm fido_assert_user_name ,
@@ -17,12 +18,15 @@
 .Nm fido_assert_hmac_secret_ptr ,
 .Nm fido_assert_user_id_ptr ,
 .Nm fido_assert_sig_ptr ,
+.Nm fido_assert_id_ptr ,
 .Nm fido_assert_authdata_len ,
 .Nm fido_assert_clientdata_hash_len ,
 .Nm fido_assert_hmac_secret_len ,
 .Nm fido_assert_user_id_len ,
 .Nm fido_assert_sig_len ,
-.Nm fido_assert_sigcount
+.Nm fido_assert_id_len ,
+.Nm fido_assert_sigcount ,
+.Nm fido_assert_flags
 .Nd FIDO 2 assertion API
 .Sh SYNOPSIS
 .In fido.h
@@ -32,6 +36,8 @@
 .Fn fido_assert_free "fido_assert_t **assert_p"
 .Ft size_t
 .Fn fido_assert_count "const fido_assert_t *assert"
+.Ft const char *
+.Fn fido_assert_rp_id "const fido_assert_t *assert"
 .Ft const char *
 .Fn fido_assert_user_display_name "const fido_assert_t *assert" "size_t idx"
 .Ft const char *
@@ -48,6 +54,8 @@
 .Fn fido_assert_user_id_ptr "const fido_assert_t *assert" "size_t idx"
 .Ft const unsigned char *
 .Fn fido_assert_sig_ptr "const fido_assert_t *assert" "size_t idx"
+.Ft const unsigned char *
+.Fn fido_assert_id_ptr "const fido_assert_t *assert" "size_t idx"
 .Ft size_t
 .Fn fido_assert_authdata_len "const fido_assert_t *assert" "size_t idx"
 .Ft size_t
@@ -58,8 +66,12 @@
 .Fn fido_assert_user_id_len "const fido_assert_t *assert" "size_t idx"
 .Ft size_t
 .Fn fido_assert_sig_len "const fido_assert_t *assert" "size_t idx"
+.Ft size_t
+.Fn fido_assert_id_len "const fido_assert_t *assert" "size_t idx"
 .Ft uint32_t
 .Fn fido_assert_sigcount "const fido_assert_t *assert" "size_t idx"
+.Ft uint8_t
+.Fn fido_assert_flags "const fido_assert_t *assert" "size_t idx"
 .Sh DESCRIPTION
 FIDO 2 assertions are abstracted in
 .Em libfido2
@@ -110,6 +122,12 @@ function returns the number of statements in
 .Fa assert .
 .Pp
 The
+.Fn fido_assert_rp_id
+function returns a pointer to a NUL-terminated string holding the
+relying party ID of
+.Fa assert .
+.Pp
+The
 .Fn fido_assert_user_display_name ,
 .Fn fido_assert_user_icon ,
 and
@@ -126,10 +144,11 @@ The
 .Fn fido_assert_user_id_ptr ,
 .Fn fido_assert_authdata_ptr ,
 .Fn fido_assert_hmac_secret_ptr ,
+.Fn fido_assert_sig_ptr ,
 and
-.Fn fido_assert_sig_ptr
+.Fn fido_assert_id_ptr
 functions return pointers to the user ID, authenticator data,
-hmac-secret, and signature attributes of statement
+hmac-secret, signature, and credential ID attributes of statement
 .Fa idx
 in
 .Fa assert .
@@ -137,14 +156,22 @@ The
 .Fn fido_assert_user_id_len ,
 .Fn fido_assert_authdata_len ,
 .Fn fido_assert_hmac_secret_len ,
+.Fn fido_assert_sig_len ,
 and
-.Fn fido_assert_sig_len
+.Fn fido_assert_id_len
 functions can be used to retrieve the corresponding length of a
 specific attribute.
 .Pp
 The
 .Fn fido_assert_sigcount
 function can be used to obtain the signature counter of statement
+.Fa idx
+in
+.Fa assert .
+.Pp
+The
+.Fn fido_assert_flags
+function returns the authenticator data flags of statement
 .Fa idx
 in
 .Fa assert .

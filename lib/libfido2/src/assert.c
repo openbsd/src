@@ -313,7 +313,7 @@ fido_dev_get_assert(fido_dev_t *dev, fido_assert_t *assert, const char *pin)
 			goto fail;
 		}
 	}
- 
+
 	r = fido_dev_get_assert_wait(dev, assert, pk, ecdh, pin, -1);
 	if (r == FIDO_OK && assert->ext & FIDO_EXT_HMAC_SECRET)
 		if (decrypt_hmac_secrets(assert, ecdh) < 0) {
@@ -362,8 +362,8 @@ check_extensions(int authdata_ext, int ext)
 	return (0);
 }
 
-static int
-get_signed_hash(int cose_alg, fido_blob_t *dgst, const fido_blob_t *clientdata,
+int
+fido_get_signed_hash(int cose_alg, fido_blob_t *dgst, const fido_blob_t *clientdata,
     const fido_blob_t *authdata_cbor)
 {
 	cbor_item_t		*item = NULL;
@@ -578,9 +578,9 @@ fido_assert_verify(const fido_assert_t *assert, size_t idx, int cose_alg,
 		goto out;
 	}
 
-	if (get_signed_hash(cose_alg, &dgst, &assert->cdh,
+	if (fido_get_signed_hash(cose_alg, &dgst, &assert->cdh,
 	    &stmt->authdata_cbor) < 0) {
-		fido_log_debug("%s: get_signed_hash", __func__);
+		fido_log_debug("%s: fido_get_signed_hash", __func__);
 		r = FIDO_ERR_INTERNAL;
 		goto out;
 	}

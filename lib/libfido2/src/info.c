@@ -217,6 +217,12 @@ parse_reply_element(const cbor_item_t *key, const cbor_item_t *val, void *arg)
 		return (cbor_decode_uint64(val, &ci->maxmsgsiz));
 	case 6: /* pinProtocols */
 		return (decode_protocols(val, &ci->protocols));
+	case 7: /* maxCredentialCountInList */
+		return (cbor_decode_uint64(val, &ci->maxcredcntlst));
+	case 8: /* maxCredentialIdLength */
+		return (cbor_decode_uint64(val, &ci->maxcredidlen));
+	case 14: /* fwVersion */
+		return (cbor_decode_uint64(val, &ci->fwversion));
 	default: /* ignore */
 		fido_log_debug("%s: cbor type", __func__);
 		return (0);
@@ -394,6 +400,24 @@ uint64_t
 fido_cbor_info_maxmsgsiz(const fido_cbor_info_t *ci)
 {
 	return (ci->maxmsgsiz);
+}
+
+uint64_t
+fido_cbor_info_maxcredcntlst(const fido_cbor_info_t *ci)
+{
+	return (ci->maxcredcntlst);
+}
+
+uint64_t
+fido_cbor_info_maxcredidlen(const fido_cbor_info_t *ci)
+{
+	return (ci->maxcredidlen);
+}
+
+uint64_t
+fido_cbor_info_fwversion(const fido_cbor_info_t *ci)
+{
+	return (ci->fwversion);
 }
 
 const uint8_t *

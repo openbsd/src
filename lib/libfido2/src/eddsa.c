@@ -23,6 +23,8 @@ EVP_PKEY_new_raw_public_key(int type, ENGINE *e, const unsigned char *key,
 	(void)key;
 	(void)keylen;
 
+	fido_log_debug("%s: unimplemented", __func__);
+
 	return (NULL);
 }
 
@@ -33,6 +35,8 @@ EVP_PKEY_get_raw_public_key(const EVP_PKEY *pkey, unsigned char *pub,
 	(void)pkey;
 	(void)pub;
 	(void)len;
+
+	fido_log_debug("%s: unimplemented", __func__);
 
 	return (0);
 }
@@ -47,6 +51,8 @@ EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret, size_t siglen,
 	(void)tbs;
 	(void)tbslen;
 
+	fido_log_debug("%s: unimplemented", __func__);
+
 	return (0);
 }
 #endif /* LIBRESSL_VERSION_NUMBER || OPENSSL_VERSION_NUMBER < 0x10101000L */
@@ -55,6 +61,8 @@ EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret, size_t siglen,
 EVP_MD_CTX *
 EVP_MD_CTX_new(void)
 {
+	fido_log_debug("%s: unimplemented", __func__);
+
 	return (NULL);
 }
 

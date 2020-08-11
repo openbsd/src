@@ -407,7 +407,7 @@ bio_rx_enroll_begin(fido_dev_t *dev, fido_bio_template_t *t,
 		fido_log_debug("%s: bio_parse_template_id", __func__);
 		return (r);
 	}
-    
+
 	return (FIDO_OK);
 }
 
@@ -500,7 +500,7 @@ bio_rx_enroll_continue(fido_dev_t *dev, fido_bio_enroll_t *e, int ms)
 		fido_log_debug("%s: bio_parse_enroll_status", __func__);
 		return (r);
 	}
-    
+
 	return (FIDO_OK);
 }
 

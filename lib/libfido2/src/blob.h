@@ -10,6 +10,10 @@
 #include <cbor.h>
 #include <stdlib.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 typedef struct fido_blob {
 	unsigned char	*ptr;
 	size_t		 len;
@@ -27,5 +31,9 @@ int fido_blob_is_empty(const fido_blob_t *);
 int fido_blob_set(fido_blob_t *, const unsigned char *, size_t);
 void fido_blob_free(fido_blob_t **);
 void fido_free_blob_array(fido_blob_array_t *);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* __cplusplus */
 
 #endif /* !_BLOB_H */

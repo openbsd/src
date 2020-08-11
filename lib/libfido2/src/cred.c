@@ -203,48 +203,6 @@ fido_check_rp_id(const char *id, const unsigned char *obtained_hash)
 }
 
 static int
-get_signed_hash_packed(fido_blob_t *dgst, const fido_blob_t *clientdata,
-    const fido_blob_t *authdata_cbor)
-{
-	cbor_item_t		*item = NULL;
-	unsigned char		*authdata_ptr = NULL;
-	size_t			 authdata_len;
-	struct cbor_load_result	 cbor;
-	SHA256_CTX		 ctx;
-	int			 ok = -1;
-
-	if ((item = cbor_load(authdata_cbor->ptr, authdata_cbor->len,
-	    &cbor)) == NULL) {
-		fido_log_debug("%s: cbor_load", __func__);
-		goto fail;
-	}
-
-	if (cbor_isa_bytestring(item) == false ||
-	    cbor_bytestring_is_definite(item) == false) {
-		fido_log_debug("%s: cbor type", __func__);
-		goto fail;
-	}
-
-	authdata_ptr = cbor_bytestring_handle(item);
-	authdata_len = cbor_bytestring_length(item);
-
-	if (dgst->len != SHA256_DIGEST_LENGTH || SHA256_Init(&ctx) == 0 ||
-	    SHA256_Update(&ctx, authdata_ptr, authdata_len) == 0 ||
-	    SHA256_Update(&ctx, clientdata->ptr, clientdata->len) == 0 ||
-	    SHA256_Final(dgst->ptr, &ctx) == 0) {
-		fido_log_debug("%s: sha256", __func__);
-		goto fail;
-	}
-
-	ok = 0;
-fail:
-	if (item != NULL)
-		cbor_decref(&item);
-
-	return (ok);
-}
-
-static int
 get_signed_hash_u2f(fido_blob_t *dgst, const unsigned char *rp_id,
     size_t rp_id_len, const fido_blob_t *clientdata, const fido_blob_t *id,
     const es256_pk_t *pk)
@@ -358,9 +316,9 @@ fido_cred_verify(const fido_cred_t *cred)
 	}
 
 	if (!strcmp(cred->fmt, "packed")) {
-		if (get_signed_hash_packed(&dgst, &cred->cdh,
+		if (fido_get_signed_hash(COSE_ES256, &dgst, &cred->cdh,
 		    &cred->authdata_cbor) < 0) {
-			fido_log_debug("%s: get_signed_hash_packed", __func__);
+			fido_log_debug("%s: fido_get_signed_hash", __func__);
 			r = FIDO_ERR_INTERNAL;
 			goto out;
 		}
@@ -390,7 +348,7 @@ out:
 int
 fido_cred_verify_self(const fido_cred_t *cred)
 {
-	unsigned char	buf[SHA256_DIGEST_LENGTH];
+	unsigned char	buf[1024]; /* XXX */
 	fido_blob_t	dgst;
 	int		ok = -1;
 	int		r;
@@ -433,9 +391,9 @@ fido_cred_verify_self(const fido_cred_t *cred)
 	}
 
 	if (!strcmp(cred->fmt, "packed")) {
-		if (get_signed_hash_packed(&dgst, &cred->cdh,
+		if (fido_get_signed_hash(cred->attcred.type, &dgst, &cred->cdh,
 		    &cred->authdata_cbor) < 0) {
-			fido_log_debug("%s: get_signed_hash_packed", __func__);
+			fido_log_debug("%s: fido_get_signed_hash", __func__);
 			r = FIDO_ERR_INTERNAL;
 			goto out;
 		}
@@ -1007,6 +965,18 @@ size_t
 fido_cred_id_len(const fido_cred_t *cred)
 {
 	return (cred->attcred.id.len);
+}
+
+const unsigned char *
+fido_cred_aaguid_ptr(const fido_cred_t *cred)
+{
+	return (cred->attcred.aaguid);
+}
+
+size_t
+fido_cred_aaguid_len(const fido_cred_t *cred)
+{
+	return (sizeof(cred->attcred.aaguid));
 }
 
 int

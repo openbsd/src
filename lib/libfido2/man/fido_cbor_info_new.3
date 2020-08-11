@@ -2,7 +2,7 @@
 .\" Use of this source code is governed by a BSD-style
 .\" license that can be found in the LICENSE file.
 .\"
-.Dd $Mdocdate: February 7 2020 $
+.Dd $Mdocdate: August 11 2020 $
 .Dt FIDO_CBOR_INFO_NEW 3
 .Os
 .Sh NAME
@@ -20,7 +20,10 @@
 .Nm fido_cbor_info_protocols_len ,
 .Nm fido_cbor_info_versions_len ,
 .Nm fido_cbor_info_options_len ,
-.Nm fido_cbor_info_maxmsgsiz
+.Nm fido_cbor_info_maxmsgsiz ,
+.Nm fido_cbor_info_maxcredcntlst ,
+.Nm fido_cbor_info_maxcredidlen ,
+.Nm fido_cbor_info_fwversion
 .Nd FIDO 2 CBOR Info API
 .Sh SYNOPSIS
 .In fido.h
@@ -54,6 +57,12 @@
 .Fn fido_cbor_info_options_len "const fido_cbor_info_t *ci"
 .Ft uint64_t
 .Fn fido_cbor_info_maxmsgsiz "const fido_cbor_info_t *ci"
+.Ft uint64_t
+.Fn fido_cbor_info_maxcredcntlst "const fido_cbor_info_t *ci"
+.Ft uint64_t
+.Fn fido_cbor_info_maxcredidlen "const fido_cbor_info_t *ci"
+.Ft uint64_t
+.Fn fido_cbor_info_fwversion "const fido_cbor_info_t *ci"
 .Sh DESCRIPTION
 The
 .Fn fido_cbor_info_new
@@ -100,8 +109,8 @@ The
 .Fn fido_cbor_info_protocols_ptr ,
 and
 .Fn fido_cbor_info_versions_ptr
-functions return pointers to the AAGUID, supported extensions,
-PIN protocol and CTAP version strings of
+functions return pointers to the authenticator attestation GUID,
+supported extensions, PIN protocol and CTAP version strings of
 .Fa ci .
 The corresponding length of a given attribute can be
 obtained by
@@ -124,7 +133,24 @@ The length of the options array is returned by
 .Pp
 The
 .Fn fido_cbor_info_maxmsgsiz
-function returns the maximum message size of
+function returns the maximum message size attribute of
+.Fa ci .
+.Pp
+The
+.Fn fido_cbor_info_maxcredcntlst
+function returns the maximum supported number of credentials in
+a single credential ID list as reported in
+.Fa ci .
+.Pp
+The
+.Fn fido_cbor_info_maxcredidlen
+function returns the maximum supported length of a credential ID
+as reported in
+.Fa ci .
+.Pp
+The
+.Fn fido_cbor_info_fwversion
+function returns the firmware version attribute of
 .Fa ci .
 .Pp
 A complete example of how to use these functions can be found in the

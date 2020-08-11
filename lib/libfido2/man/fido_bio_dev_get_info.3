@@ -2,7 +2,7 @@
 .\" Use of this source code is governed by a BSD-style
 .\" license that can be found in the LICENSE file.
 .\"
-.Dd $Mdocdate: February 7 2020 $
+.Dd $Mdocdate: August 11 2020 $
 .Dt FIDO_BIO_DEV_GET_INFO 3
 .Os
 .Sh NAME
@@ -35,6 +35,8 @@
 The functions described in this page allow biometric
 templates on a FIDO2 authenticator to be listed, created,
 removed, and customised.
+Please note that not all FIDO2 authenticators support biometric
+enrollment.
 For a description of the types involved, please refer to
 .Xr fido_bio_info_new 3 ,
 .Xr fido_bio_enroll_new 3 ,
@@ -118,3 +120,11 @@ is returned.
 .Xr fido_bio_enroll_new 3 ,
 .Xr fido_bio_info_new 3 ,
 .Xr fido_bio_template 3
+.Sh CAVEATS
+Biometric enrollment is a tentative feature of FIDO 2.1.
+Applications willing to strictly abide by FIDO 2.0 should refrain
+from using biometric enrollment.
+Applications using biometric enrollment should ensure it is
+supported by the authenticator prior to using the API.
+Since FIDO 2.1 hasn't been finalised, there is a chance the
+functionality and associated data structures may change.

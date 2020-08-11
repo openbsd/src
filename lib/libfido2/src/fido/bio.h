@@ -21,6 +21,10 @@
 #include <fido/param.h>
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 #ifdef _FIDO_INTERNAL
 struct fido_bio_template {
 	fido_blob_t id;
@@ -99,5 +103,9 @@ void fido_bio_enroll_free(fido_bio_enroll_t **);
 void fido_bio_info_free(fido_bio_info_t **);
 void fido_bio_template_array_free(fido_bio_template_array_t **);
 void fido_bio_template_free(fido_bio_template_t **);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* __cplusplus */
 
 #endif /* !_FIDO_BIO_H */

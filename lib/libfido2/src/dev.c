@@ -10,6 +10,8 @@
 #include <sys/random.h>
 #endif
 
+#include <openssl/sha.h>
+
 #include <fcntl.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -106,10 +108,52 @@ find_manifest_func_node(dev_manifest_func_t f, dev_manifest_func_node_t **curr,
 	}
 }
 
+#ifdef FIDO_FUZZ
+static void
+set_random_report_len(fido_dev_t *dev)
+{
+	dev->rx_len = CTAP_MIN_REPORT_LEN +
+	    uniform_random(CTAP_MAX_REPORT_LEN - CTAP_MIN_REPORT_LEN + 1);
+	dev->tx_len = CTAP_MIN_REPORT_LEN +
+	    uniform_random(CTAP_MAX_REPORT_LEN - CTAP_MIN_REPORT_LEN + 1);
+}
+#endif
+
+static void
+fido_dev_set_flags(fido_dev_t *dev, const fido_cbor_info_t *info)
+{
+	char * const	*ptr;
+	size_t		 len;
+
+	ptr = fido_cbor_info_extensions_ptr(info);
+	len = fido_cbor_info_extensions_len(info);
+
+	for (size_t i = 0; i < len; i++) {
+		if (strcmp(ptr[i], "credProtect") == 0) {
+			dev->flags |= FIDO_DEV_SUPPORTS_CRED_PROT;
+		}
+	}
+
+	ptr = fido_cbor_info_options_name_ptr(info);
+	len = fido_cbor_info_options_len(info);
+
+	for (size_t i = 0; i < len; i++) {
+		/*
+		 * clientPin: PIN supported and set;
+		 * noclientPin: PIN supported but not set.
+		 */
+		if (strcmp(ptr[i], "clientPin") == 0 ||
+		    strcmp(ptr[i], "noclientPin") == 0) {
+			dev->flags |= FIDO_DEV_SUPPORTS_PIN;
+		}
+	}
+}
+
 static int
 fido_dev_open_tx(fido_dev_t *dev, const char *path)
 {
-	const uint8_t cmd = CTAP_CMD_INIT;
+	const uint8_t	cmd = CTAP_CMD_INIT;
+	int		r;
 
 	if (dev->io_handle != NULL) {
 		fido_log_debug("%s: handle=%p", __func__, dev->io_handle);
@@ -131,14 +175,44 @@ fido_dev_open_tx(fido_dev_t *dev, const char *path)
 		return (FIDO_ERR_INTERNAL);
 	}
 
+	if (dev->io_own) {
+		dev->rx_len = CTAP_MAX_REPORT_LEN;
+		dev->tx_len = CTAP_MAX_REPORT_LEN;
+	} else {
+		dev->rx_len = fido_hid_report_in_len(dev->io_handle);
+		dev->tx_len = fido_hid_report_out_len(dev->io_handle);
+	}
+
+#ifdef FIDO_FUZZ
+	set_random_report_len(dev);
+#endif
+
+	if (dev->rx_len < CTAP_MIN_REPORT_LEN ||
+	    dev->rx_len > CTAP_MAX_REPORT_LEN) {
+		fido_log_debug("%s: invalid rx_len %zu", __func__, dev->rx_len);
+		r = FIDO_ERR_RX;
+		goto fail;
+	}
+
+	if (dev->tx_len < CTAP_MIN_REPORT_LEN ||
+	    dev->tx_len > CTAP_MAX_REPORT_LEN) {
+		fido_log_debug("%s: invalid tx_len %zu", __func__, dev->tx_len);
+		r = FIDO_ERR_TX;
+		goto fail;
+	}
+
 	if (fido_tx(dev, cmd, &dev->nonce, sizeof(dev->nonce)) < 0) {
 		fido_log_debug("%s: fido_tx", __func__);
-		dev->io.close(dev->io_handle);
-		dev->io_handle = NULL;
-		return (FIDO_ERR_TX);
+		r = FIDO_ERR_TX;
+		goto fail;
 	}
 
 	return (FIDO_OK);
+fail:
+	dev->io.close(dev->io_handle);
+	dev->io_handle = NULL;
+
+	return (r);
 }
 
 static int
@@ -166,6 +240,7 @@ fido_dev_open_rx(fido_dev_t *dev, int ms)
 		goto fail;
 	}
 
+	dev->flags = 0;
 	dev->cid = dev->attr.cid;
 
 	if (fido_dev_is_fido2(dev)) {
@@ -177,6 +252,8 @@ fido_dev_open_rx(fido_dev_t *dev, int ms)
 		if (fido_dev_get_cbor_info_wait(dev, info, ms) != FIDO_OK) {
 			fido_log_debug("%s: falling back to u2f", __func__);
 			fido_dev_force_u2f(dev);
+		} else {
+			fido_dev_set_flags(dev, info);
 		}
 	}
 
@@ -303,8 +380,112 @@ fido_dev_close(fido_dev_t *dev)
 int
 fido_dev_cancel(fido_dev_t *dev)
 {
+	if (fido_dev_is_fido2(dev) == false)
+		return (FIDO_ERR_INVALID_ARGUMENT);
+
 	if (fido_tx(dev, CTAP_CMD_CANCEL, NULL, 0) < 0)
 		return (FIDO_ERR_TX);
+
+	return (FIDO_OK);
+}
+
+int
+fido_dev_get_touch_begin(fido_dev_t *dev)
+{
+	fido_blob_t	 f;
+	cbor_item_t	*argv[9];
+	const char	*clientdata = FIDO_DUMMY_CLIENTDATA;
+	const uint8_t	 user_id = FIDO_DUMMY_USER_ID;
+	unsigned char	 cdh[SHA256_DIGEST_LENGTH];
+	fido_rp_t	 rp;
+	fido_user_t	 user;
+	int		 r = FIDO_ERR_INTERNAL;
+
+	memset(&f, 0, sizeof(f));
+	memset(argv, 0, sizeof(argv));
+	memset(cdh, 0, sizeof(cdh));
+	memset(&rp, 0, sizeof(rp));
+	memset(&user, 0, sizeof(user));
+
+	if (fido_dev_is_fido2(dev) == false)
+		return (u2f_get_touch_begin(dev));
+
+	if (SHA256((const void *)clientdata, strlen(clientdata), cdh) != cdh) {
+		fido_log_debug("%s: sha256", __func__);
+		return (FIDO_ERR_INTERNAL);
+	}
+
+	if ((rp.id = strdup(FIDO_DUMMY_RP_ID)) == NULL ||
+	    (user.name = strdup(FIDO_DUMMY_USER_NAME)) == NULL) {
+		fido_log_debug("%s: strdup", __func__);
+		goto fail;
+	}
+
+	if (fido_blob_set(&user.id, &user_id, sizeof(user_id)) < 0) {
+		fido_log_debug("%s: fido_blob_set", __func__);
+		goto fail;
+	}
+
+	if ((argv[0] = cbor_build_bytestring(cdh, sizeof(cdh))) == NULL ||
+	    (argv[1] = cbor_encode_rp_entity(&rp)) == NULL ||
+	    (argv[2] = cbor_encode_user_entity(&user)) == NULL ||
+	    (argv[3] = cbor_encode_pubkey_param(COSE_ES256)) == NULL) {
+		fido_log_debug("%s: cbor encode", __func__);
+		goto fail;
+	}
+
+	if (fido_dev_supports_pin(dev)) {
+		if ((argv[7] = cbor_new_definite_bytestring()) == NULL ||
+		    (argv[8] = cbor_encode_pin_opt()) == NULL) {
+			fido_log_debug("%s: cbor encode", __func__);
+			goto fail;
+		}
+	}
+
+	if (cbor_build_frame(CTAP_CBOR_MAKECRED, argv, nitems(argv), &f) < 0 ||
+	    fido_tx(dev, CTAP_CMD_CBOR, f.ptr, f.len) < 0) {
+		fido_log_debug("%s: fido_tx", __func__);
+		r = FIDO_ERR_TX;
+		goto fail;
+	}
+
+	r = FIDO_OK;
+fail:
+	cbor_vector_free(argv, nitems(argv));
+	free(f.ptr);
+	free(rp.id);
+	free(user.name);
+	free(user.id.ptr);
+
+	return (r);
+}
+
+int
+fido_dev_get_touch_status(fido_dev_t *dev, int *touched, int *pin_set, int ms)
+{
+	int r;
+
+	*touched = 0;
+	*pin_set = 0;
+
+	if (fido_dev_is_fido2(dev) == false)
+		return (u2f_get_touch_status(dev, touched, ms));
+
+	switch ((r = fido_rx_cbor_status(dev, ms))) {
+	case FIDO_ERR_PIN_INVALID:
+	case FIDO_ERR_PIN_AUTH_INVALID:
+		*pin_set = 1;
+		/* FALLTHROUGH */
+	case FIDO_ERR_PIN_NOT_SET:
+		*touched = 1;
+		break;
+	case FIDO_ERR_RX:
+		/* ignore */
+		break;
+	default:
+		fido_log_debug("%s: fido_rx_cbor_status", __func__);
+		return (r);
+	}
 
 	return (FIDO_OK);
 }
@@ -313,7 +494,7 @@ int
 fido_dev_set_io_functions(fido_dev_t *dev, const fido_dev_io_t *io)
 {
 	if (dev->io_handle != NULL) {
-		fido_log_debug("%s: NULL handle", __func__);
+		fido_log_debug("%s: non-NULL handle", __func__);
 		return (FIDO_ERR_INVALID_ARGUMENT);
 	}
 
@@ -324,6 +505,21 @@ fido_dev_set_io_functions(fido_dev_t *dev, const fido_dev_io_t *io)
 	}
 
 	dev->io = *io;
+	dev->io_own = true;
+
+	return (FIDO_OK);
+}
+
+int
+fido_dev_set_transport_functions(fido_dev_t *dev, const fido_dev_transport_t *t)
+{
+	if (dev->io_handle != NULL) {
+		fido_log_debug("%s: non-NULL handle", __func__);
+		return (FIDO_ERR_INVALID_ARGUMENT);
+	}
+
+	dev->transport = *t;
+	dev->io_own = true;
 
 	return (FIDO_OK);
 }
@@ -349,8 +545,6 @@ fido_dev_new(void)
 		&fido_hid_close,
 		&fido_hid_read,
 		&fido_hid_write,
-		NULL,
-		NULL,
 	};
 
 	return (dev);
@@ -374,6 +568,8 @@ fido_dev_new_with_info(const fido_dev_info_t *di)
 	}
 
 	dev->io = di->io;
+	dev->transport = di->transport;
+
 	if ((dev->path = strdup(di->path)) == NULL) {
 		fido_log_debug("%s: strdup", __func__);
 		fido_dev_free(&dev);
@@ -433,10 +629,23 @@ fido_dev_is_fido2(const fido_dev_t *dev)
 	return (dev->attr.flags & FIDO_CAP_CBOR);
 }
 
+bool
+fido_dev_supports_pin(const fido_dev_t *dev)
+{
+	return (dev->flags & FIDO_DEV_SUPPORTS_PIN);
+}
+
+bool
+fido_dev_supports_cred_prot(const fido_dev_t *dev)
+{
+	return (dev->flags & FIDO_DEV_SUPPORTS_CRED_PROT);
+}
+
 void
 fido_dev_force_u2f(fido_dev_t *dev)
 {
-	dev->attr.flags &= ~FIDO_CAP_CBOR;
+	dev->attr.flags &= (uint8_t)~FIDO_CAP_CBOR;
+	dev->flags = 0;
 }
 
 void

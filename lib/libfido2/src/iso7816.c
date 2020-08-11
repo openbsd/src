@@ -23,8 +23,8 @@ iso7816_new(uint8_t ins, uint8_t p1, uint16_t payload_len)
 	apdu->payload_ptr = apdu->payload;
 	apdu->header.ins = ins;
 	apdu->header.p1 = p1;
-	apdu->header.lc2 = (payload_len >> 8) & 0xff;
-	apdu->header.lc3 = payload_len & 0xff;
+	apdu->header.lc2 = (uint8_t)((payload_len >> 8) & 0xff);
+	apdu->header.lc3 = (uint8_t)(payload_len & 0xff);
 
 	return (apdu);
 }
@@ -51,7 +51,7 @@ iso7816_add(iso7816_apdu_t *apdu, const void *buf, size_t cnt)
 
 	memcpy(apdu->payload_ptr, buf, cnt);
 	apdu->payload_ptr += cnt;
-	apdu->payload_len -= (uint16_t)cnt;
+	apdu->payload_len = (uint16_t)(apdu->payload_len - cnt);
 
 	return (0);
 }

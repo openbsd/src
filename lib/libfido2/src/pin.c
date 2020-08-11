@@ -53,7 +53,7 @@ fido_dev_get_pin_token_tx(fido_dev_t *dev, const char *pin,
 
 	if ((argv[0] = cbor_build_uint8(1)) == NULL ||
 	    (argv[1] = cbor_build_uint8(5)) == NULL ||
-	    (argv[2] = es256_pk_encode(pk, 0)) == NULL ||
+	    (argv[2] = es256_pk_encode(pk, 1)) == NULL ||
 	    (argv[5] = cbor_encode_pin_hash_enc(ecdh, p)) == NULL) {
 		fido_log_debug("%s: cbor encode", __func__);
 		r = FIDO_ERR_INTERNAL;
@@ -89,7 +89,7 @@ fido_dev_get_uv_token_tx(fido_dev_t *dev, const es256_pk_t *pk)
 
 	if ((argv[0] = cbor_build_uint8(1)) == NULL ||
 	    (argv[1] = cbor_build_uint8(6)) == NULL ||
-	    (argv[2] = es256_pk_encode(pk, 0)) == NULL) {
+	    (argv[2] = es256_pk_encode(pk, 1)) == NULL) {
 		fido_log_debug("%s: cbor encode", __func__);
 		r = FIDO_ERR_INTERNAL;
 		goto fail;
@@ -240,7 +240,7 @@ pad64(const char *pin, fido_blob_t **ppin)
 	if ((*ppin = fido_blob_new()) == NULL)
 		return (FIDO_ERR_INTERNAL);
 
-	ppin_len = (pin_len + 63) & ~63;
+	ppin_len = (pin_len + 63U) & ~63U;
 	if (ppin_len < pin_len || ((*ppin)->ptr = calloc(1, ppin_len)) == NULL) {
 		fido_blob_free(ppin);
 		return (FIDO_ERR_INTERNAL);
@@ -285,7 +285,7 @@ fido_dev_change_pin_tx(fido_dev_t *dev, const char *pin, const char *oldpin)
 
 	if ((argv[0] = cbor_build_uint8(1)) == NULL ||
 	    (argv[1] = cbor_build_uint8(4)) == NULL ||
-	    (argv[2] = es256_pk_encode(pk, 0)) == NULL ||
+	    (argv[2] = es256_pk_encode(pk, 1)) == NULL ||
 	    (argv[3] = cbor_encode_change_pin_auth(ecdh, ppin, opin)) == NULL ||
 	    (argv[4] = cbor_encode_pin_enc(ecdh, ppin)) == NULL ||
 	    (argv[5] = cbor_encode_pin_hash_enc(ecdh, opin)) == NULL) {
@@ -339,7 +339,7 @@ fido_dev_set_pin_tx(fido_dev_t *dev, const char *pin)
 
 	if ((argv[0] = cbor_build_uint8(1)) == NULL ||
 	    (argv[1] = cbor_build_uint8(3)) == NULL ||
-	    (argv[2] = es256_pk_encode(pk, 0)) == NULL ||
+	    (argv[2] = es256_pk_encode(pk, 1)) == NULL ||
 	    (argv[3] = cbor_encode_set_pin_auth(ecdh, ppin)) == NULL ||
 	    (argv[4] = cbor_encode_pin_enc(ecdh, ppin)) == NULL) {
 		fido_log_debug("%s: cbor encode", __func__);

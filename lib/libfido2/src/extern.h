@@ -12,6 +12,10 @@
 #include "fido/types.h"
 #include "blob.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 /* aes256 */
 int aes256_cbc_dec(const fido_blob_t *, const fido_blob_t *, fido_blob_t *);
 int aes256_cbc_enc(const fido_blob_t *, const fido_blob_t *, fido_blob_t *);
@@ -84,6 +88,8 @@ void *fido_hid_open(const char *);
 void  fido_hid_close(void *);
 int fido_hid_read(void *, unsigned char *, size_t, int);
 int fido_hid_write(void *, const unsigned char *, size_t);
+size_t fido_hid_report_in_len(void *);
+size_t fido_hid_report_out_len(void *);
 
 /* generic i/o */
 int fido_rx_cbor_status(fido_dev_t *, int);
@@ -111,6 +117,8 @@ void fido_log_xxd(const void *, size_t);
 /* u2f */
 int u2f_register(fido_dev_t *, fido_cred_t *, int);
 int u2f_authenticate(fido_dev_t *, fido_assert_t *, int);
+int u2f_get_touch_begin(fido_dev_t *);
+int u2f_get_touch_status(fido_dev_t *, int *, int);
 
 /* unexposed fido ops */
 int fido_dev_authkey(fido_dev_t *, es256_pk_t *);
@@ -134,6 +142,8 @@ int fido_verify_sig_rs256(const fido_blob_t *, const rs256_pk_t *,
     const fido_blob_t *);
 int fido_verify_sig_eddsa(const fido_blob_t *, const eddsa_pk_t *,
     const fido_blob_t *);
+int fido_get_signed_hash(int, fido_blob_t *, const fido_blob_t *,
+    const fido_blob_t *);
 
 /* hid device manifest */
 int fido_hid_manifest(fido_dev_info_t *, size_t, size_t *);
@@ -142,5 +152,24 @@ int fido_hid_manifest(fido_dev_info_t *, size_t, size_t *);
 typedef int (*dev_manifest_func_t)(fido_dev_info_t *, size_t, size_t *);
 int fido_dev_register_manifest_func(const dev_manifest_func_t);
 void fido_dev_unregister_manifest_func(const dev_manifest_func_t);
+
+/* fuzzing instrumentation */
+#ifdef FIDO_FUZZ
+uint32_t uniform_random(uint32_t);
+#endif
+
+/* internal device capability flags */
+#define FIDO_DEV_SUPPORTS_PIN		0x01
+#define FIDO_DEV_SUPPORTS_CRED_PROT	0x02
+
+/* miscellanea */
+#define FIDO_DUMMY_CLIENTDATA	""
+#define FIDO_DUMMY_RP_ID	"localhost"
+#define FIDO_DUMMY_USER_NAME	"dummy"
+#define FIDO_DUMMY_USER_ID	1
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* __cplusplus */
 
 #endif /* !_EXTERN_H */

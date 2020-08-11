@@ -92,7 +92,7 @@ es256_pk_encode(const es256_pk_t *pk, int ecdh)
 
 	/* alg */
 	if ((argv[1].key = cbor_build_uint8(3)) == NULL ||
-	    (argv[1].value = cbor_build_negint8(-alg - 1)) == NULL ||
+	    (argv[1].value = cbor_build_negint8((uint8_t)(-alg - 1))) == NULL ||
 	    !cbor_map_add(item, argv[1]))
 		goto fail;
 
@@ -267,8 +267,12 @@ es256_pk_to_EVP_PKEY(const es256_pk_t *k)
 	const int	 nid = NID_X9_62_prime256v1;
 	int		 ok = -1;
 
-	if ((bnctx = BN_CTX_new()) == NULL ||
-	    (x = BN_CTX_get(bnctx)) == NULL ||
+	if ((bnctx = BN_CTX_new()) == NULL)
+		goto fail;
+
+	BN_CTX_start(bnctx);
+
+	if ((x = BN_CTX_get(bnctx)) == NULL ||
 	    (y = BN_CTX_get(bnctx)) == NULL)
 		goto fail;
 
@@ -301,12 +305,16 @@ es256_pk_to_EVP_PKEY(const es256_pk_t *k)
 
 	ok = 0;
 fail:
-	if (bnctx != NULL)
+	if (bnctx != NULL) {
+		BN_CTX_end(bnctx);
 		BN_CTX_free(bnctx);
+	}
+
 	if (ec != NULL)
 		EC_KEY_free(ec);
 	if (q != NULL)
 		EC_POINT_free(q);
+
 	if (ok < 0 && pkey != NULL) {
 		EVP_PKEY_free(pkey);
 		pkey = NULL;
@@ -318,7 +326,7 @@ fail:
 int
 es256_pk_from_EC_KEY(es256_pk_t *pk, const EC_KEY *ec)
 {
-	BN_CTX		*ctx = NULL;
+	BN_CTX		*bnctx = NULL;
 	BIGNUM		*x = NULL;
 	BIGNUM		*y = NULL;
 	const EC_POINT	*q = NULL;
@@ -327,15 +335,17 @@ es256_pk_from_EC_KEY(es256_pk_t *pk, const EC_KEY *ec)
 	int		 n;
 
 	if ((q = EC_KEY_get0_public_key(ec)) == NULL ||
-	    (g = EC_KEY_get0_group(ec)) == NULL)
+	    (g = EC_KEY_get0_group(ec)) == NULL ||
+	    (bnctx = BN_CTX_new()) == NULL)
 		goto fail;
 
-	if ((ctx = BN_CTX_new()) == NULL ||
-	    (x = BN_CTX_get(ctx)) == NULL ||
-	    (y = BN_CTX_get(ctx)) == NULL)
+	BN_CTX_start(bnctx);
+
+	if ((x = BN_CTX_get(bnctx)) == NULL ||
+	    (y = BN_CTX_get(bnctx)) == NULL)
 		goto fail;
 
-	if (EC_POINT_get_affine_coordinates_GFp(g, q, x, y, ctx) == 0 ||
+	if (EC_POINT_get_affine_coordinates_GFp(g, q, x, y, bnctx) == 0 ||
 	    (n = BN_num_bytes(x)) < 0 || (size_t)n > sizeof(pk->x) ||
 	    (n = BN_num_bytes(y)) < 0 || (size_t)n > sizeof(pk->y)) {
 		fido_log_debug("%s: EC_POINT_get_affine_coordinates_GFp",
@@ -351,8 +361,10 @@ es256_pk_from_EC_KEY(es256_pk_t *pk, const EC_KEY *ec)
 
 	ok = FIDO_OK;
 fail:
-	if (ctx != NULL)
-		BN_CTX_free(ctx);
+	if (bnctx != NULL) {
+		BN_CTX_end(bnctx);
+		BN_CTX_free(bnctx);
+	}
 
 	return (ok);
 }
@@ -367,7 +379,12 @@ es256_sk_to_EVP_PKEY(const es256_sk_t *k)
 	const int	 nid = NID_X9_62_prime256v1;
 	int		 ok = -1;
 
-	if ((bnctx = BN_CTX_new()) == NULL || (d = BN_CTX_get(bnctx)) == NULL ||
+	if ((bnctx = BN_CTX_new()) == NULL)
+		goto fail;
+
+	BN_CTX_start(bnctx);
+
+	if ((d = BN_CTX_get(bnctx)) == NULL ||
 	    BN_bin2bn(k->d, sizeof(k->d), d) == NULL) {
 		fido_log_debug("%s: BN_bin2bn", __func__);
 		goto fail;
@@ -389,10 +406,14 @@ es256_sk_to_EVP_PKEY(const es256_sk_t *k)
 
 	ok = 0;
 fail:
-	if (bnctx != NULL)
+	if (bnctx != NULL) {
+		BN_CTX_end(bnctx);
 		BN_CTX_free(bnctx);
+	}
+
 	if (ec != NULL)
 		EC_KEY_free(ec);
+
 	if (ok < 0 && pkey != NULL) {
 		EVP_PKEY_free(pkey);
 		pkey = NULL;

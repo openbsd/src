@@ -10,23 +10,30 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 struct fido_dev;
 
 typedef void *fido_dev_io_open_t(const char *);
 typedef void  fido_dev_io_close_t(void *);
 typedef int   fido_dev_io_read_t(void *, unsigned char *, size_t, int);
 typedef int   fido_dev_io_write_t(void *, const unsigned char *, size_t);
-typedef int   fido_dev_io_rx_t(struct fido_dev *, uint8_t, unsigned char *, size_t, int);
-typedef int   fido_dev_io_tx_t(struct fido_dev *, uint8_t, const unsigned char *, size_t);
+typedef int   fido_dev_rx_t(struct fido_dev *, uint8_t, unsigned char *, size_t, int);
+typedef int   fido_dev_tx_t(struct fido_dev *, uint8_t, const unsigned char *, size_t);
 
 typedef struct fido_dev_io {
 	fido_dev_io_open_t  *open;
 	fido_dev_io_close_t *close;
 	fido_dev_io_read_t  *read;
 	fido_dev_io_write_t *write;
-	fido_dev_io_rx_t    *rx;
-	fido_dev_io_tx_t    *tx;
 } fido_dev_io_t;
+
+typedef struct fido_dev_transport {
+	fido_dev_rx_t *rx;
+	fido_dev_tx_t *tx;
+} fido_dev_transport_t;
 
 typedef enum {
 	FIDO_OPT_OMIT = 0, /* use authenticator's default */
@@ -168,21 +175,25 @@ typedef struct fido_byte_array {
 } fido_byte_array_t;
 
 typedef struct fido_cbor_info {
-	fido_str_array_t  versions;   /* supported versions: fido2|u2f */
-	fido_str_array_t  extensions; /* list of supported extensions */
-	unsigned char     aaguid[16]; /* aaguid */
-	fido_opt_array_t  options;    /* list of supported options */
-	uint64_t          maxmsgsiz;  /* maximum message size */
-	fido_byte_array_t protocols;  /* supported pin protocols */
+	fido_str_array_t  versions;      /* supported versions: fido2|u2f */
+	fido_str_array_t  extensions;    /* list of supported extensions */
+	unsigned char     aaguid[16];    /* aaguid */
+	fido_opt_array_t  options;       /* list of supported options */
+	uint64_t          maxmsgsiz;     /* maximum message size */
+	fido_byte_array_t protocols;     /* supported pin protocols */
+	uint64_t          maxcredcntlst; /* max number of credentials in list */
+	uint64_t          maxcredidlen;  /* max credential ID length */
+	uint64_t          fwversion;     /* firmware version */
 } fido_cbor_info_t;
 
 typedef struct fido_dev_info {
-	char          *path;         /* device path */
-	int16_t        vendor_id;    /* 2-byte vendor id */
-	int16_t        product_id;   /* 2-byte product id */
-	char          *manufacturer; /* manufacturer string */
-	char          *product;      /* product string */
-	fido_dev_io_t  io;           /* i/o functions */
+	char                 *path;         /* device path */
+	int16_t               vendor_id;    /* 2-byte vendor id */
+	int16_t               product_id;   /* 2-byte product id */
+	char                 *manufacturer; /* manufacturer string */
+	char                 *product;      /* product string */
+	fido_dev_io_t         io;           /* i/o functions */
+	fido_dev_transport_t  transport;    /* transport functions */
 } fido_dev_info_t;
 
 PACKED_TYPE(fido_ctap_info_t,
@@ -198,12 +209,17 @@ struct fido_ctap_info {
 })
 
 typedef struct fido_dev {
-	uint64_t          nonce;     /* issued nonce */
-	fido_ctap_info_t  attr;      /* device attributes */
-	uint32_t          cid;       /* assigned channel id */
-	char             *path;      /* device path */
-	void             *io_handle; /* abstract i/o handle */
-	fido_dev_io_t     io;        /* i/o functions */
+	uint64_t              nonce;     /* issued nonce */
+	fido_ctap_info_t      attr;      /* device attributes */
+	uint32_t              cid;       /* assigned channel id */
+	char                 *path;      /* device path */
+	void                 *io_handle; /* abstract i/o handle */
+	fido_dev_io_t         io;        /* i/o functions */
+	bool                  io_own;    /* device has own io/transport */
+	size_t                rx_len;    /* length of HID input reports */
+	size_t                tx_len;    /* length of HID output reports */
+	int                   flags;     /* internal flags; see FIDO_DEV_* */
+	fido_dev_transport_t  transport; /* transport functions */
 } fido_dev_t;
 
 #else
@@ -217,5 +233,9 @@ typedef struct es256_sk es256_sk_t;
 typedef struct rs256_pk rs256_pk_t;
 typedef struct eddsa_pk eddsa_pk_t;
 #endif /* _FIDO_INTERNAL */
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* __cplusplus */
 
 #endif /* !_FIDO_TYPES_H */

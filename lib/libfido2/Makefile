@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2020/02/07 00:57:49 djm Exp $
+# $OpenBSD: Makefile,v 1.6 2020/08/11 08:44:53 djm Exp $
 
 .PATH:	${.CURDIR}/man ${.CURDIR}/src
 
@@ -30,7 +30,7 @@ MAN+=	fido_cbor_info_new.3 fido_cred_exclude.3 fido_cred_new.3
 MAN+=	fido_cred_set_authdata.3 fido_cred_verify.3 fido_credman_metadata_new.3
 MAN+=	fido_dev_get_assert.3 fido_dev_info_manifest.3 fido_dev_make_cred.3
 MAN+=	fido_dev_open.3 fido_dev_set_io_functions.3 fido_dev_set_pin.3
-MAN+=	fido_init.3 fido_strerr.3 rs256_pk_new.3
+MAN+=	fido_init.3 fido_strerr.3 rs256_pk_new.3 fido_dev_get_touch_begin.3
 
 includes:
 	@for i in $(HDRS); do \

@@ -18,6 +18,10 @@
 #include <fido.h>
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 es256_pk_t *es256_pk_new(void);
 void es256_pk_free(es256_pk_t **);
 EVP_PKEY *es256_pk_to_EVP_PKEY(const es256_pk_t *);
@@ -36,5 +40,9 @@ int es256_sk_create(es256_sk_t *);
 int es256_pk_set_x(es256_pk_t *, const unsigned char *);
 int es256_pk_set_y(es256_pk_t *, const unsigned char *);
 #endif
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* __cplusplus */
 
 #endif /* !_FIDO_ES256_H */

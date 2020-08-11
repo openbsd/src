@@ -21,6 +21,7 @@
 #define FIDO_ERR_MISSING_PARAMETER	0x14
 #define FIDO_ERR_LIMIT_EXCEEDED		0x15
 #define FIDO_ERR_UNSUPPORTED_EXTENSION	0x16
+#define FIDO_ERR_FP_DATABASE_FULL	0x17
 #define FIDO_ERR_CREDENTIAL_EXCLUDED	0x19
 #define FIDO_ERR_PROCESSING		0x21
 #define FIDO_ERR_INVALID_CREDENTIAL	0x22
@@ -49,6 +50,7 @@
 #define FIDO_ERR_REQUEST_TOO_LARGE	0x39
 #define FIDO_ERR_ACTION_TIMEOUT		0x3a
 #define FIDO_ERR_UP_REQUIRED		0x3b
+#define FIDO_ERR_UV_BLOCKED		0x3c
 #define FIDO_ERR_ERR_OTHER		0x7f
 #define FIDO_ERR_SPEC_LAST		0xdf
 
@@ -64,6 +66,14 @@
 #define FIDO_ERR_USER_PRESENCE_REQUIRED	-8
 #define FIDO_ERR_INTERNAL		-9
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 const char *fido_strerr(int);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* __cplusplus */
 
 #endif /* _FIDO_ERR_H */

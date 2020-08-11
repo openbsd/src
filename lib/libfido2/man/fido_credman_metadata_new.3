@@ -2,7 +2,7 @@
 .\" Use of this source code is governed by a BSD-style
 .\" license that can be found in the LICENSE file.
 .\"
-.Dd $Mdocdate: February 7 2020 $
+.Dd $Mdocdate: August 11 2020 $
 .Dt FIDO_CREDMAN_METADATA_NEW 3
 .Os
 .Sh NAME
@@ -72,7 +72,8 @@ The credential management API of
 .Em libfido2
 allows resident credentials on a FIDO2 authenticator to be listed,
 inspected, and removed.
-Please note that not all authenticators support credential management.
+Please note that not all FIDO2 authenticators support credential
+management.
 To obtain information on what an authenticator supports, please
 refer to
 .Xr fido_cbor_info_new 3 .
@@ -297,3 +298,11 @@ should have their return values checked for NULL.
 .Sh SEE ALSO
 .Xr fido_cbor_info_new 3 ,
 .Xr fido_cred_new 3
+.Sh CAVEATS
+Credential management is a tentative feature of FIDO 2.1.
+Applications willing to strictly abide by FIDO 2.0 should refrain
+from using credential management.
+Applications using credential management should ensure it is
+supported by the authenticator prior to using the API.
+Since FIDO 2.1 hasn't been finalised, there is a chance the
+functionality and associated data structures may change.

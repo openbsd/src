@@ -21,6 +21,10 @@
 #include <fido/param.h>
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 #ifdef _FIDO_INTERNAL
 struct fido_credman_metadata {
 	uint64_t rk_existing;
@@ -78,5 +82,9 @@ uint64_t fido_credman_rk_remaining(const fido_credman_metadata_t *);
 void fido_credman_metadata_free(fido_credman_metadata_t **);
 void fido_credman_rk_free(fido_credman_rk_t **);
 void fido_credman_rp_free(fido_credman_rp_t **);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif /* __cplusplus */
 
 #endif /* !_FIDO_CREDMAN_H */

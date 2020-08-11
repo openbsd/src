@@ -230,7 +230,8 @@ fido_credman_get_dev_metadata(fido_dev_t *dev, fido_credman_metadata_t *metadata
 static int
 credman_parse_rk(const cbor_item_t *key, const cbor_item_t *val, void *arg)
 {
-	fido_cred_t *cred = arg;
+	fido_cred_t	*cred = arg;
+	uint64_t	 prot;
 
 	if (cbor_isa_uint(key) == false ||
 	    cbor_int_get_width(key) != CBOR_INT_8) {
@@ -248,6 +249,11 @@ credman_parse_rk(const cbor_item_t *key, const cbor_item_t *val, void *arg)
 		    &cred->attcred.pubkey) < 0)
 			return (-1);
 		cred->type = cred->attcred.type; /* XXX */
+		return (0);
+	case 10:
+		if (cbor_decode_uint64(val, &prot) < 0 || prot > INT_MAX ||
+		    fido_cred_set_prot(cred, (int)prot) != FIDO_OK)
+			return (-1);
 		return (0);
 	default:
 		fido_log_debug("%s: cbor type", __func__);
