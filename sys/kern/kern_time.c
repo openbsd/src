@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.139 2020/08/12 14:41:09 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.140 2020/08/12 15:31:27 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -516,6 +516,7 @@ sys_getitimer(struct proc *p, void *v, register_t *retval)
 		syscallarg(int) which;
 		syscallarg(struct itimerval *) itv;
 	} */ *uap = v;
+	struct itimerspec its;
 	struct itimerval aitv;
 	struct itimerspec *itimer;
 	int which;
@@ -529,29 +530,30 @@ sys_getitimer(struct proc *p, void *v, register_t *retval)
 
 	if (which != ITIMER_REAL)
 		mtx_enter(&itimer_mtx);
-	TIMESPEC_TO_TIMEVAL(&aitv.it_interval, &itimer->it_interval);
-	TIMESPEC_TO_TIMEVAL(&aitv.it_value, &itimer->it_value);
+	its = *itimer;
 	if (which != ITIMER_REAL)
 		mtx_leave(&itimer_mtx);
 
 	if (which == ITIMER_REAL) {
-		struct timeval now;
+		struct timespec now;
 
-		getmicrouptime(&now);
+		getnanouptime(&now);
 		/*
 		 * Convert from absolute to relative time in .it_value
 		 * part of real time timer.  If time for real time timer
 		 * has passed return 0, else return difference between
 		 * current time and time for the timer to go off.
 		 */
-		if (timerisset(&aitv.it_value)) {
-			if (timercmp(&aitv.it_value, &now, <))
-				timerclear(&aitv.it_value);
+		if (timespecisset(&its.it_value)) {
+			if (timespeccmp(&its.it_value, &now, <))
+				timespecclear(&its.it_value);
 			else
-				timersub(&aitv.it_value, &now,
-				    &aitv.it_value);
+				timespecsub(&its.it_value, &now,
+				    &its.it_value);
 		}
 	}
+	TIMESPEC_TO_TIMEVAL(&aitv.it_value, &its.it_value);
+	TIMESPEC_TO_TIMEVAL(&aitv.it_interval, &its.it_interval);
 
 	return (copyout(&aitv, SCARG(uap, itv), sizeof (struct itimerval)));
 }
