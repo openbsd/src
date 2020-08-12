@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.99 2020/08/10 10:55:43 mvs Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.100 2020/08/12 08:41:39 mvs Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -881,9 +881,6 @@ pppx_if_start(struct ifnet *ifp)
 
 		proto = *mtod(m, int *);
 		m_adj(m, sizeof(proto));
-
-		ifp->if_obytes += m->m_pkthdr.len;
-		ifp->if_opackets++;
 
 		pipex_ppp_output(m, pxi->pxi_session, proto);
 	}

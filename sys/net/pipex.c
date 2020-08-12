@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.123 2020/08/04 09:32:05 mvs Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.124 2020/08/12 08:41:39 mvs Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -839,14 +839,6 @@ Static void
 pipex_ip_output(struct mbuf *m0, struct pipex_session *session)
 {
 	int is_idle;
-	struct ifnet *ifp;
-
-	if ((ifp = if_get(session->ifindex)) != NULL) {
-		/* output succeed here as a interface */
-		ifp->if_opackets++;
-		ifp->if_obytes+=m0->m_pkthdr.len;
-	}
-	if_put(ifp);
 
 	if (session->is_multicast == 0) {
 		/*
