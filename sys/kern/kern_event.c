@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.141 2020/07/04 08:33:43 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.142 2020/08/12 13:49:24 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -66,7 +66,7 @@ void	KQRELE(struct kqueue *);
 int	kqueue_sleep(struct kqueue *, struct timespec *);
 int	kqueue_scan(struct kqueue *kq, int maxevents,
 		    struct kevent *ulistp, struct timespec *timeout,
-		    struct proc *p, int *retval);
+		    struct kevent *kev, struct proc *p, int *retval);
 
 int	kqueue_read(struct file *, struct uio *, int);
 int	kqueue_write(struct file *, struct uio *, int);
@@ -638,7 +638,7 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 	KQREF(kq);
 	FRELE(fp, p);
 	error = kqueue_scan(kq, SCARG(uap, nevents), SCARG(uap, eventlist),
-	    tsp, p, &n);
+	    tsp, kev, p, &n);
 	KQRELE(kq);
 	*retval = n;
 	return (error);
@@ -896,12 +896,14 @@ kqueue_sleep(struct kqueue *kq, struct timespec *tsp)
 
 int
 kqueue_scan(struct kqueue *kq, int maxevents, struct kevent *ulistp,
-    struct timespec *tsp, struct proc *p, int *retval)
+    struct timespec *tsp, struct kevent *kev, struct proc *p, int *retval)
 {
 	struct kevent *kevp;
 	struct knote mend, mstart, *kn;
-	int s, count, nkev = 0, error = 0;
-	struct kevent kev[KQ_NEVENTS];
+	int s, count, nkev, error = 0;
+
+	nkev = 0;
+	kevp = kev;
 
 	count = maxevents;
 	if (count == 0)
@@ -911,12 +913,14 @@ kqueue_scan(struct kqueue *kq, int maxevents, struct kevent *ulistp,
 	memset(&mend, 0, sizeof(mend));
 
 retry:
+	KASSERT(count == maxevents);
+	KASSERT(nkev == 0);
+
 	if (kq->kq_state & KQ_DYING) {
 		error = EBADF;
 		goto done;
 	}
 
-	kevp = &kev[0];
 	s = splhigh();
 	if (kq->kq_count == 0) {
 		if (tsp != NULL && !timespecisset(tsp)) {
@@ -1019,7 +1023,7 @@ retry:
 			    sizeof(struct kevent) * nkev);
 			ulistp += nkev;
 			nkev = 0;
-			kevp = &kev[0];
+			kevp = kev;
 			s = splhigh();
 			if (error)
 				break;
