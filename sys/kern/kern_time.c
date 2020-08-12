@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.138 2020/08/11 22:00:51 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.139 2020/08/12 14:41:09 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -604,13 +604,13 @@ sys_setitimer(struct proc *p, void *v, register_t *retval)
 	if (which == ITIMER_REAL) {
 		struct timespec cts;
 
-		timeout_del(&pr->ps_realit_to);
 		getnanouptime(&cts);
 		if (timespecisset(&aits.it_value)) {
 			timo = tstohz(&aits.it_value);
 			timeout_add(&pr->ps_realit_to, timo);
 			timespecadd(&aits.it_value, &cts, &aits.it_value);
-		}
+		} else
+			timeout_del(&pr->ps_realit_to);
 	}
 	pr->ps_timer[which] = aits;
 
