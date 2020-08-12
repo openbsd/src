@@ -523,6 +523,16 @@ static bool r600_read_disabled_bios(struct radeon_device *rdev)
 	uint32_t ctxsw_vid_lower_gpio_cntl;
 	uint32_t lower_gpio_enable;
 	bool r;
+	
+	/*
+	 * Some machines with RV610 running amd64 pass initial checks but later
+	 * fail atombios specific checks.  Return early here so the bios will be
+	 * read from 0xc0000 in radeon_read_platform_bios() instead.
+	 * RV610 0x1002:0x94C3 0x1028:0x0402 0x00
+	 * RV610 0x1002:0x94C1 0x1028:0x0D02 0x00
+	 */
+	if (rdev->family == CHIP_RV610)
+		return false;
 
 	viph_control = RREG32(RADEON_VIPH_CONTROL);
 	bus_cntl = RREG32(R600_BUS_CNTL);
