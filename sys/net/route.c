@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.395 2020/07/28 11:16:32 kn Exp $	*/
+/*	$OpenBSD: route.c,v 1.396 2020/08/13 04:26:11 jmatthew Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -663,6 +663,7 @@ rtdeletemsg(struct rtentry *rt, struct ifnet *ifp, u_int tableid)
 {
 	int			error;
 	struct rt_addrinfo	info;
+	struct sockaddr_rtlabel sa_rl;
 	struct sockaddr_in6	sa_mask;
 
 	KASSERT(rt->rt_ifidx == ifp->if_index);
@@ -677,8 +678,13 @@ rtdeletemsg(struct rtentry *rt, struct ifnet *ifp, u_int tableid)
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 	if (!ISSET(rt->rt_flags, RTF_HOST))
 		info.rti_info[RTAX_NETMASK] = rt_plen2mask(rt, &sa_mask);
+	info.rti_info[RTAX_LABEL] = rtlabel_id2sa(rt->rt_labelid, &sa_rl);
+	info.rti_flags = rt->rt_flags;
+	info.rti_info[RTAX_IFP] = sdltosa(ifp->if_sadl);
+	info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
 	error = rtrequest_delete(&info, rt->rt_priority, ifp, &rt, tableid);
-	rtm_send(rt, RTM_DELETE, error, tableid);
+	rtm_miss(RTM_DELETE, &info, info.rti_flags, rt->rt_priority,
+	    rt->rt_ifidx, error, tableid);
 	if (error == 0)
 		rtfree(rt);
 	return (error);
