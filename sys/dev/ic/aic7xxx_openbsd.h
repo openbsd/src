@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.h,v 1.30 2020/07/28 21:33:14 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.h,v 1.31 2020/08/13 12:11:15 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.h,v 1.7 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -86,7 +86,7 @@
 /****************************** Platform Macros *******************************/
 
 #define	SCSI_IS_SCSIBUS_B(ahc, sc_link)	\
-	(((sc_link)->bus != NULL) && ((sc_link)->bus == (ahc)->sc_child_b))
+	(((ahc)->sc_child != NULL) && ((sc_link)->bus != (ahc)->sc_child))
 #define	SCSI_SCSI_ID(ahc, sc_link)	\
 	(SCSI_IS_SCSIBUS_B(ahc, sc_link) ? ahc->our_id_b : ahc->our_id)
 #define	SCSI_CHANNEL(ahc, sc_link)	\
