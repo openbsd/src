@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.153 2020/04/02 01:01:13 jca Exp $
+#	$OpenBSD: files.sparc64,v 1.154 2020/08/13 10:04:37 jca Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -473,3 +473,4 @@ file	arch/sparc64/dev/mgiic.c		mgiic
 
 # 128 bits math
 file	lib/libkern/lshrti3.c
+file	lib/libkern/multi3.c
