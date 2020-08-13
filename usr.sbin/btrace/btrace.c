@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.22 2020/08/07 14:04:59 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.23 2020/08/13 11:35:21 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -634,6 +634,7 @@ builtin_stack(struct dt_evt *dtev, int kernel)
 		n += kelf_snprintsym(buf + n, sizeof(buf) - 1 - n,
 		    st->st_pc[i]);
 	}
+	snprintf(buf + n, sizeof(buf) - 1 - n, "\n");
 
 	return buf;
 }
@@ -643,7 +644,9 @@ builtin_arg(struct dt_evt *dtev, enum bt_argtype dat)
 {
 	static char buf[sizeof("18446744073709551615")]; /* UINT64_MAX */
 
-	snprintf(buf, sizeof(buf) - 1, "%lu", dtev->dtev_sysargs[dat - B_AT_BI_ARG0]);
+	snprintf(buf, sizeof(buf) - 1, "%lu",
+	    dtev->dtev_sysargs[dat - B_AT_BI_ARG0]);
+
 	return buf;
 }
 
