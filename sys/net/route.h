@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.181 2020/03/10 21:35:41 krw Exp $	*/
+/*	$OpenBSD: route.h,v 1.182 2020/08/13 04:58:22 jmatthew Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -297,6 +297,8 @@ struct rt_msghdr {
 #define ROUTE_PRIOFILTER 3	/* only pass updates with a priority higher or
 				   equal (actual value lower) to the specified
 				   priority. */
+#define ROUTE_FLAGFILTER 4	/* do not pass updates for routes with flags
+				   in this bitmask. */
 
 #define ROUTE_FILTER(m)	(1 << (m))
 #define RTABLE_ANY	0xffffffff
