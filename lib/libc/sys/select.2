@@ -1,4 +1,4 @@
-.\"	$OpenBSD: select.2,v 1.42 2016/09/17 01:01:42 guenther Exp $
+.\"	$OpenBSD: select.2,v 1.43 2020/08/13 01:00:03 cheloha Exp $
 .\"	$NetBSD: select.2,v 1.5 1995/06/27 22:32:28 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)select.2	8.2 (Berkeley) 3/25/94
 .\"
-.Dd $Mdocdate: September 17 2016 $
+.Dd $Mdocdate: August 13 2020 $
 .Dt SELECT 2
 .Os
 .Sh NAME
@@ -290,9 +290,7 @@ Calculating the delta is easily done by calling
 before and after the call to
 .Fn select ,
 and using
-.Fn timersub
-(as described in
-.Xr getitimer 2 ) .
+.Xr timersub 3 .
 .Pp
 Internally to the kernel,
 .Fn select
