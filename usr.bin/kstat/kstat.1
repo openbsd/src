@@ -1,0 +1,100 @@
+.\"	$OpenBSD: kstat.1,v 1.1 2020/08/13 12:37:16 schwarze Exp $
+.\"
+.\" Copyright (c) 2020 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: August 13 2020 $
+.Dt KSTAT 1
+.Os
+.Sh NAME
+.Nm kstat
+.Nd display kernel statistics
+.Sh SYNOPSIS
+.Nm kstat
+.Op Fl w Ar wait
+.Oo
+.Ar name |
+.Sm off
+.Ar provider : instance : name : unit
+.Sm on
+.Oc
+.Ar ...
+.Sh DESCRIPTION
+The
+.Nm
+utility displays statistics collected by the kernel.
+By default, all available data is displayed.
+If at least one argument is given, the display is restricted to data
+that matches at least one of the arguments.
+.Pp
+The options are as follows:
+.Bl -tag -width provider
+.It Fl w Ar wait
+Show statistics at intervals of
+.Ar wait
+seconds.
+.El
+.Pp
+The components of arguments are as follows:
+.Bl -tag -width provider
+.It Ar provider
+The name of the device providing the statistical data.
+Pattern matching with
+.Xr fnmatch 3
+is supported.
+.It Ar instance
+An unsigned integer number.
+Currently, all statistics use an instance number of 0.
+.It Ar name
+A string identifying the kind of data to be shown.
+Pattern matching with
+.Xr fnmatch 3
+is supported.
+.It Ar unit
+An unsigned integer number, used for example if a network device has
+multiple rings.
+.El
+.Pp
+If an empty string is given for any of the components,
+all values of the respective property are accepted.
+.Pp
+A complete list of four-component arguments supported on the current
+machine can be displayed by calling
+.Nm
+without any argument.
+.Sh FILES
+.Bl -tag -width /dev/kstat
+.It Pa /dev/kstat
+pseudo-device providing kernel statistics
+.El
+.Sh EXIT STATUS
+.Ex -std
+.Sh EXAMPLES
+Show receive queue statistics for all interfaces
+and transmit queue statistics for all
+.Xr em 4
+interfaces:
+.Pp
+.Dl $ kstat rxq em*::txq:
+.Sh SEE ALSO
+.Xr netstat 1 ,
+.Xr systat 1
+.\" XXX .Xr kstat 4 -- add this when that page is written
+.Sh HISTORY
+The
+.Nm
+utility first appeared in
+.Ox 6.8 .
+.Sh AUTHORS
+.An David Gwynne Aq Mt dlg@openbsd.org
