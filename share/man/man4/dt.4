@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dt.4,v 1.5 2020/05/18 07:03:44 jmc Exp $
+.\"	$OpenBSD: dt.4,v 1.6 2020/08/13 11:26:39 mpi Exp $
 .\"
 .\" Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 18 2020 $
+.Dd $Mdocdate: August 13 2020 $
 .Dt DT 4
 .Os
 .Sh NAME
@@ -33,12 +33,68 @@ This device can only be opened when the
 .Va kern.allowdt
 .Xr sysctl 2
 variable is set.
-.\"Sh IOCTL INTERFACE
-.\"
+.Sh IOCTL INTERFACE
+The
+.Xr ioctl 2
+command codes below are defined in
+.In dev/dt/dtvar.h .
+.Bl -tag -width xxxxxx
+.It Dv DTIOCGPLIST Fa "struct dtioc_probe *dtpr"
+Get available probe entries.
+.Bd -literal
+struct dtioc_probe {
+	size_t		 	 dtpr_size;
+	struct dtioc_probe_info	*dtpr_probes;
+};
+.Ed
+.Pp
+If
+.Va dtpr_size
+is non-zero, as many probes as possible that can fit into this size
+will be copied into the supplied buffer.
+On exit,
+.Va dtpr_size
+is always set to the total size required to hold all probe entries
+(i.e., it is set to
+.Li sizeof(struct dtioc_probe_info) * dt_nprobes ) .
+.It Dv DTIOCGSTATS Fa "struct dtioc_stat *dtst"
+Get statistics for current recording.
+.Bd -literal
+struct dtioc_stat {
+	uint64_t		 dtst_readevt;
+	uint64_t		 dtst_dropevt;
+};
+.Ed
+.It Dv DTIOCRECORD Fa "int on"
+Start or stop recording.
+.It Dv DTIOCPRBENABLE Fa "struct dtioc_req *dtrq"
+Enable the given probe for recording.
+.Bd -literal
+struct dtioc_req {
+	uint32_t		 dtrq_pbn;
+	struct dt_filter	 dtrq_filter;
+	uint32_t		 dtrq_rate;
+	uint64_t		 dtrq_evtflags;
+};
+.Ed
+.El
 .Sh FILES
 .Bl -tag -width /dev/dt -compact
 .It Pa /dev/dt
 dynamic tracing device.
+.El
+.Sh ERRORS
+An open of
+.Pa /dev/dt
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EPERM
+the
+.Va kern.allowdt
+.Xr sysctl 2
+variable wasn't set.
+.It Bq Er ENOMEM
+not enough memory space was available.
 .El
 .Sh SEE ALSO
 .Xr ioctl 2
