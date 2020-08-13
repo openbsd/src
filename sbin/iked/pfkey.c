@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.68 2020/07/21 08:03:39 tobhe Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.69 2020/08/13 21:36:38 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1893,6 +1893,18 @@ pfkey_process(struct iked *env, struct pfkey_message *pm)
 			log_debug("%s: bad address family", __func__);
 			free(reply);
 			return (0);
+		}
+
+		switch (hdr->sadb_msg_satype) {
+		case SADB_SATYPE_AH:
+			flow.flow_saproto = IKEV2_SAPROTO_AH;
+			break;
+		case SADB_SATYPE_ESP:
+			flow.flow_saproto = IKEV2_SAPROTO_ESP;
+			break;
+		case SADB_X_SATYPE_IPCOMP:
+			flow.flow_saproto = IKEV2_SAPROTO_IPCOMP;
+			break;
 		}
 
 		if ((sa_proto = pfkey_find_ext(reply, rlen,
