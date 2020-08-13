@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.9 2020/08/07 14:04:59 mpi Exp $ */
+/*	$OpenBSD: map.c,v 1.10 2020/08/13 11:31:47 mpi Exp $ */
 
 /*
  * Copyright (c) 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -289,7 +289,7 @@ hist_print_bucket(char *buf, size_t buflen, long upb, long hstep)
 		/* Power-of-two histogram */
 		if (upb < 0) {
 			l = snprintf(buf, buflen, "(..., 0)");
-		} else if (upb < 2) {
+		} else if (upb == 0) {
 			l = snprintf(buf, buflen, "[%lu]", upb);
 		} else {
 			long lob = upb / 2;
