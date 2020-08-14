@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_puc.c,v 1.24 2018/04/15 00:10:59 jcs Exp $	*/
+/*	$OpenBSD: com_puc.c,v 1.25 2020/08/14 18:14:11 jcs Exp $	*/
 
 /*
  * Copyright (c) 1997 - 1999, Jason Downs.  All rights reserved.
@@ -108,6 +108,9 @@ com_puc_attach(parent, self, aux)
 			sc->sc_frequency = puc_port_types[i].freq;
 			break;
 		}
+
+	if (pa->type == PUC_PORT_COM_XR17V35X)
+		sc->sc_uarttype = COM_UART_XR17V35X;
 
 	com_attach_subr(sc);
 }

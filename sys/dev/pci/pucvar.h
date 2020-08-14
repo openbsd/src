@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucvar.h,v 1.16 2018/05/02 19:11:01 phessler Exp $	*/
+/*	$OpenBSD: pucvar.h,v 1.17 2020/08/14 18:14:11 jcs Exp $	*/
 /*	$NetBSD: pucvar.h,v 1.2 1999/02/06 06:29:54 cgd Exp $	*/
 
 /*
@@ -60,7 +60,7 @@ struct puc_port_type {
 		PUC_PORT_COM_MUL8,
 		PUC_PORT_COM_MUL10,
 		PUC_PORT_COM_MUL128,
-		PUC_PORT_COM_125MHZ,
+		PUC_PORT_COM_XR17V35X,
 	} type;
 	u_int32_t	freq;
 };
@@ -72,6 +72,7 @@ static const struct puc_port_type puc_port_types[] = {
 	{ PUC_PORT_COM_MUL8,	COM_FREQ * 8	},
 	{ PUC_PORT_COM_MUL10,	COM_FREQ * 10	},
 	{ PUC_PORT_COM_MUL128,	COM_FREQ * 128	},
+	{ PUC_PORT_COM_XR17V35X, 125000000	},
 };
 
 #define PUC_IS_LPT(type)	((type) == PUC_PORT_LPT)
@@ -117,7 +118,11 @@ struct puc_softc {
 		struct device   *dev;
 		/* filled in by port attachments */
 		void	*intrhand;
+		int	(*real_intrhand)(void *);
+		void	*real_intrhand_arg;
 	} sc_ports[PUC_MAX_PORTS];
+
+	int			sc_xr17v35x;
 };
 
 const struct puc_device_description *

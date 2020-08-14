@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.111 2020/01/05 01:07:59 jsg Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.112 2020/08/14 18:14:11 jcs Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -2083,10 +2083,10 @@ const struct puc_device_description puc_devs[] = {
 	    {   PCI_VENDOR_EXAR, PCI_PRODUCT_EXAR_XR17V354,	0, 0 },
 	    {   0xffff, 0xffff,					0, 0 },
 	    {
-		{ PUC_PORT_COM_MUL8, 0x10, 0x0000 },
-		{ PUC_PORT_COM_MUL8, 0x10, 0x0400 },
-		{ PUC_PORT_COM_MUL8, 0x10, 0x0800 },
-		{ PUC_PORT_COM_MUL8, 0x10, 0x0C00 },
+		{ PUC_PORT_COM_XR17V35X, 0x10, 0x0000 },
+		{ PUC_PORT_COM_XR17V35X, 0x10, 0x0400 },
+		{ PUC_PORT_COM_XR17V35X, 0x10, 0x0800 },
+		{ PUC_PORT_COM_XR17V35X, 0x10, 0x0C00 },
 	    },
 	},
 
