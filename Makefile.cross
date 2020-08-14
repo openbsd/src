@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.cross,v 1.108 2020/05/30 19:22:00 drahn Exp $
+# $OpenBSD: Makefile.cross,v 1.109 2020/08/14 16:55:07 patrick Exp $
 
 cross-tools:	cross-includes cross-binutils cross-gcc cross-lib
 cross-distrib:	cross-tools cross-bin cross-share cross-sys cross-etc-root-var
@@ -338,8 +338,13 @@ cross-lib:	${CROSSGCC}
 	    BSDOBJDIR=${CROSSDIR}/usr/obj \
 	    BUILD_CLANG=${BUILD_CLANG}; \
 	export MACHINE MACHINE_ARCH MACHINE_CPU BSDOBJDIR BUILD_CLANG; \
+	(cd ${.CURDIR}/gnu/lib/libcompiler_rt; \
+	    eval ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
+		${MAKE} all ;\
+	    eval ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} DESTDIR=${CROSSDIR} \
+		${MAKE} install); \
 	(cd ${.CURDIR}/lib; \
-	    for lib in csu libcompiler_rt libc; do \
+	    for lib in csu libc; do \
 	    (cd $$lib; \
 	        eval ${CROSSENV} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 		    ${MAKE} all ;\
