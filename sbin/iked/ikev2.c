@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.240 2020/08/14 16:06:59 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.241 2020/08/14 16:16:05 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -4666,7 +4666,7 @@ ikev2_sa_initiator_dh(struct iked_sa *sa, struct iked_message *msg,
 		if ((sa->sa_dhiexchange = ibuf_new(NULL,
 		    dh_getlen(sa->sa_dhgroup))) == NULL) {
 			log_info("%s: failed to alloc dh exchange",
-			    SPI_SA(msg->msg_sa, __func__));
+			    SPI_SA(sa, __func__));
 			return (-1);
 		}
 		if (dh_create_exchange(sa->sa_dhgroup,
