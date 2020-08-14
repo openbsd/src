@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.22 2020/08/01 08:40:20 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.23 2020/08/14 11:51:07 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -643,11 +643,13 @@ kcov_remote_detach(struct kcov_dev *kd, struct kcov_remote *kr)
 {
 	mtx_enter(&kr_mtx);
 	KASSERT(kd == kr->kr_kd);
-	kd->kd_kr = NULL;
-	kr->kr_kd = NULL;
-	kr->kr_state = KCOV_STATE_NONE;
-	if (kr->kr_subsystem == KCOV_REMOTE_COMMON)
+	if (kr->kr_subsystem == KCOV_REMOTE_COMMON) {
 		kr_free(kr);
+	} else {
+		kr->kr_state = KCOV_STATE_NONE;
+		kd->kd_kr = NULL;
+		kr->kr_kd = NULL;
+	}
 	mtx_leave(&kr_mtx);
 }
 
