@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlmmc.c,v 1.6 2020/05/19 15:47:32 kettenis Exp $	*/
+/*	$OpenBSD: amlmmc.c,v 1.7 2020/08/14 15:15:27 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -34,6 +34,7 @@
 #include <dev/sdmmc/sdmmcvar.h>
 
 #define SD_EMMC_CLOCK		0x0000
+#define  SD_EMMC_CLOCK_ALWAYS_ON	(1 << 28)
 #define  SD_EMMC_CLOCK_RX_PHASE_0	(0 << 12)
 #define  SD_EMMC_CLOCK_RX_PHASE_90	(1 << 12)
 #define  SD_EMMC_CLOCK_RX_PHASE_180	(2 << 12)
@@ -52,10 +53,14 @@
 #define SD_EMMC_DELAY1		0x0004
 #define SD_EMMC_DELAY2		0x0008
 #define SD_EMMC_ADJUST		0x000c
+#define  SD_EMMC_ADJUST_ADJ_FIXED	(1 << 13)
+#define  SD_EMMC_ADJUST_ADJ_DELAY_MASK	(0x3f << 16)
+#define  SD_EMMC_ADJUST_ADJ_DELAY_SHIFT	16
 #define SD_EMMC_START		0x0040
 #define  SD_EMMC_START_START		(1 << 1)
 #define  SD_EMMC_START_STOP		(0 << 1)
 #define SD_EMMC_CFG		0x0044
+#define  SD_EMMC_CFG_ERR_ABORT		(1 << 27)
 #define  SD_EMMC_CFG_AUTO_CLK		(1 << 23)
 #define  SD_EMMC_CFG_STOP_CLOCK		(1 << 22)
 #define  SD_EMMC_CFG_SDCLK_ALWAYS_ON	(1 << 18)
@@ -173,6 +178,7 @@ int	amlmmc_bus_clock(sdmmc_chipset_handle_t, int, int);
 int	amlmmc_bus_width(sdmmc_chipset_handle_t, int);
 void	amlmmc_exec_command(sdmmc_chipset_handle_t, struct sdmmc_command *);
 int	amlmmc_signal_voltage(sdmmc_chipset_handle_t, int);
+int	amlmmc_execute_tuning(sdmmc_chipset_handle_t, int);
 
 struct sdmmc_chip_functions amlmmc_chip_functions = {
 	.host_reset = amlmmc_host_reset,
@@ -184,6 +190,7 @@ struct sdmmc_chip_functions amlmmc_chip_functions = {
 	.bus_width = amlmmc_bus_width,
 	.exec_command = amlmmc_exec_command,
 	.signal_voltage = amlmmc_signal_voltage,
+	.execute_tuning = amlmmc_execute_tuning,
 };
 
 int
@@ -255,21 +262,10 @@ amlmmc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_vqmmc = OF_getpropint(sc->sc_node, "vqmmc-supply", 0);
 	sc->sc_pwrseq = OF_getpropint(sc->sc_node, "mmc-pwrseq", 0);
 
-	/* Configure clock mode. */
-	cfg = HREAD4(sc, SD_EMMC_CFG);
-	cfg &= ~SD_EMMC_CFG_SDCLK_ALWAYS_ON;
-	cfg |= SD_EMMC_CFG_AUTO_CLK;
-	HWRITE4(sc, SD_EMMC_CFG, cfg);
-
-	amlmmc_bus_width(sc, 1);
-
 	/* Initialize timings and block size. */
-	cfg = HREAD4(sc, SD_EMMC_CFG);
-	cfg &= ~SD_EMMC_CFG_RC_CC_MASK;
+	cfg = SD_EMMC_CFG_ERR_ABORT;
 	cfg |= SD_EMMC_CFG_RC_CC_16;
-	cfg &= ~SD_EMMC_CFG_RESP_TIMEOUT_MASK;
 	cfg |= SD_EMMC_CFG_RESP_TIMEOUT_256;
-	cfg &= ~SD_EMMC_CFG_BL_LEN_MASK;
 	cfg |= SD_EMMC_CFG_BL_LEN_512;
 	HWRITE4(sc, SD_EMMC_CFG, cfg);
 
@@ -296,6 +292,8 @@ amlmmc_attach(struct device *parent, struct device *self, void *aux)
 		saa.caps |= SMC_CAPS_SD_HIGHSPEED;
 	if (OF_getproplen(sc->sc_node, "mmc-ddr-1_8v") == 0)
 		saa.caps |= SMC_CAPS_MMC_DDR52;
+	if (OF_getproplen(sc->sc_node, "mmc-hs200-1_8v") == 0)
+		saa.caps |= SMC_CAPS_MMC_HS200;
 
 	width = OF_getpropint(faa->fa_node, "bus-width", 1);
 	if (width >= 8)
@@ -492,6 +490,10 @@ amlmmc_bus_clock(sdmmc_chipset_handle_t sch, int freq, int timing)
 	struct amlmmc_softc *sc = sch;
 	uint32_t div, clock;
 
+	/* XXX The ODROID-N2 eMMC doesn't work properly above 150 MHz. */
+	if (freq > 150000)
+		freq = 150000;
+
 	pinctrl_byname(sc->sc_node, "clk-gate");
 	
 	if (freq == 0)
@@ -521,6 +523,7 @@ amlmmc_bus_clock(sdmmc_chipset_handle_t sch, int freq, int timing)
 	else
 		HCLR4(sc, SD_EMMC_CFG, SD_EMMC_CFG_DDR);
 
+	clock |= SD_EMMC_CLOCK_ALWAYS_ON;
 	clock |= SD_EMMC_CLOCK_CO_PHASE_180;
 	clock |= SD_EMMC_CLOCK_TX_PHASE_0;
 	clock |= SD_EMMC_CLOCK_RX_PHASE_0;
@@ -726,4 +729,60 @@ amlmmc_signal_voltage(sdmmc_chipset_handle_t sch, int signal_voltage)
 {
 	/* XXX Check/set signaling voltage. */
 	return 0;
+}
+
+int
+amlmmc_execute_tuning(sdmmc_chipset_handle_t sch, int timing)
+{
+	struct amlmmc_softc *sc = sch;
+	struct sdmmc_command cmd;
+	uint32_t adjust, cfg, div;
+	int opcode, delay;
+	char data[128];
+
+	switch (timing) {
+	case SDMMC_TIMING_MMC_HS200:
+		opcode = MMC_SEND_TUNING_BLOCK_HS200;
+		break;
+	case SDMMC_TIMING_UHS_SDR50:
+	case SDMMC_TIMING_UHS_SDR104:
+		opcode = MMC_SEND_TUNING_BLOCK;
+		break;
+	default:
+		return EINVAL;
+	}
+
+	cfg = HREAD4(sc, SD_EMMC_CFG);
+	div = HREAD4(sc, SD_EMMC_CLOCK) & SD_EMMC_CLOCK_DIV_MAX;
+
+	adjust = HREAD4(sc, SD_EMMC_ADJUST);
+	adjust |= SD_EMMC_ADJUST_ADJ_FIXED;
+	HWRITE4(sc, SD_EMMC_ADJUST, adjust);
+
+	for (delay = 0; delay < div; delay++) {
+		adjust &= ~SD_EMMC_ADJUST_ADJ_DELAY_MASK;
+		adjust |= (delay << SD_EMMC_ADJUST_ADJ_DELAY_SHIFT);
+		HWRITE4(sc, SD_EMMC_ADJUST, adjust);
+
+		memset(&cmd, 0, sizeof(cmd));
+		cmd.c_opcode = opcode;
+		cmd.c_arg = 0;
+		cmd.c_flags = SCF_CMD_ADTC | SCF_CMD_READ | SCF_RSP_R1;
+		if (cfg & SD_EMMC_CFG_BUS_WIDTH_8) {
+			cmd.c_blklen = cmd.c_datalen = 128;
+		} else {
+			cmd.c_blklen = cmd.c_datalen = 64;
+		}
+		cmd.c_data = data;
+
+		amlmmc_exec_command(sch, &cmd);
+		if (cmd.c_error == 0)
+			return 0;
+	}
+
+	adjust = HREAD4(sc, SD_EMMC_ADJUST);
+	adjust &= ~SD_EMMC_ADJUST_ADJ_FIXED;
+	HWRITE4(sc, SD_EMMC_ADJUST, adjust);
+
+	return EIO;
 }
