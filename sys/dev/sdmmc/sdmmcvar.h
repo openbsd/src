@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcvar.h,v 1.33 2020/07/03 13:31:47 krw Exp $	*/
+/*	$OpenBSD: sdmmcvar.h,v 1.34 2020/08/14 14:49:04 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -36,6 +36,7 @@ struct sdmmc_csd {
 	int	capacity;	/* total number of sectors */
 	int	sector_size;	/* sector size in bytes */
 	int	read_bl_len;	/* block length for reads */
+	int	tran_speed;	/* transfer speed (kbit/s) */
 	int	ccc;		/* Card Command Class for SD */
 	/* ... */
 };
@@ -177,10 +178,11 @@ struct sdmmc_softc {
 #define SMF_SD_MODE		0x0001	/* host in SD mode (MMC otherwise) */
 #define SMF_IO_MODE		0x0002	/* host in I/O mode (SD mode only) */
 #define SMF_MEM_MODE		0x0004	/* host in memory mode (SD or MMC) */
-#define SMF_CARD_PRESENT	0x0010	/* card presence noticed */
-#define SMF_CARD_ATTACHED	0x0020	/* card driver(s) attached */
-#define	SMF_STOP_AFTER_MULTIPLE	0x0040	/* send a stop after a multiple cmd */
-#define SMF_CONFIG_PENDING	0x0080	/* config_pending_incr() called */
+#define SMF_UHS_MODE		0x0010	/* host in UHS mode */
+#define SMF_CARD_PRESENT	0x0020	/* card presence noticed */
+#define SMF_CARD_ATTACHED	0x0040	/* card driver(s) attached */
+#define SMF_STOP_AFTER_MULTIPLE	0x0080	/* send a stop after a multiple cmd */
+#define SMF_CONFIG_PENDING	0x0100	/* config_pending_incr() called */
 
 	uint32_t sc_caps;		/* host capability */
 #define SMC_CAPS_AUTO_STOP	0x0001	/* send CMD12 automagically by host */

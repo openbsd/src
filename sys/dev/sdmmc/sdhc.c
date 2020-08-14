@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.68 2020/06/14 18:37:16 patrick Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.69 2020/08/14 14:49:04 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -121,26 +121,18 @@ void	sdhc_dump_regs(struct sdhc_host *);
 #endif
 
 struct sdmmc_chip_functions sdhc_functions = {
-	/* host controller reset */
-	sdhc_host_reset,
-	/* host controller capabilities */
-	sdhc_host_ocr,
-	sdhc_host_maxblklen,
-	/* card detection */
-	sdhc_card_detect,
-	/* bus power and clock frequency */
-	sdhc_bus_power,
-	sdhc_bus_clock,
-	sdhc_bus_width,
-	/* command execution */
-	sdhc_exec_command,
-	/* card interrupt */
-	sdhc_card_intr_mask,
-	sdhc_card_intr_ack,
-	/* UHS functions */
-	sdhc_signal_voltage,
-	/* hibernate */
-	sdhc_hibernate_init,
+	.host_reset = sdhc_host_reset,
+	.host_ocr = sdhc_host_ocr,
+	.host_maxblklen = sdhc_host_maxblklen,
+	.card_detect = sdhc_card_detect,
+	.bus_power = sdhc_bus_power,
+	.bus_clock = sdhc_bus_clock,
+	.bus_width = sdhc_bus_width,
+	.exec_command = sdhc_exec_command,
+	.card_intr_mask = sdhc_card_intr_mask,
+	.card_intr_ack = sdhc_card_intr_ack,
+	.signal_voltage = sdhc_signal_voltage,
+	.hibernate_init = sdhc_hibernate_init,
 };
 
 struct cfdriver sdhc_cd = {

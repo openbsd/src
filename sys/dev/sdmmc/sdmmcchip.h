@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcchip.h,v 1.13 2018/12/29 11:37:30 patrick Exp $	*/
+/*	$OpenBSD: sdmmcchip.h,v 1.14 2020/08/14 14:49:04 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -45,7 +45,8 @@ struct sdmmc_chip_functions {
 	void	(*card_intr_mask)(sdmmc_chipset_handle_t, int);
 	void	(*card_intr_ack)(sdmmc_chipset_handle_t);
 	/* UHS functions */
-	int		(*signal_voltage)(sdmmc_chipset_handle_t, int);
+	int	(*signal_voltage)(sdmmc_chipset_handle_t, int);
+	int	(*execute_tuning)(sdmmc_chipset_handle_t, int);
 	/* hibernate */
 	int	(*hibernate_init)(sdmmc_chipset_handle_t, void *);
 };
@@ -79,6 +80,8 @@ struct sdmmc_chip_functions {
 /* UHS functions */
 #define sdmmc_chip_signal_voltage(tag, handle, voltage)			\
 	((tag)->signal_voltage((handle), (voltage)))
+#define sdmmc_chip_execute_tuning(tag, handle, timing)			\
+	((tag)->execute_tuning((handle), (timing)))
 
 /* clock frequencies for sdmmc_chip_bus_clock() */
 #define SDMMC_SDCLK_OFF		0
@@ -92,7 +95,10 @@ struct sdmmc_chip_functions {
 
 #define SDMMC_TIMING_LEGACY	0
 #define SDMMC_TIMING_HIGHSPEED	1
-#define SDMMC_TIMING_MMC_DDR52	2
+#define SDMMC_TIMING_UHS_SDR50	2
+#define SDMMC_TIMING_UHS_SDR104	3
+#define SDMMC_TIMING_MMC_DDR52	4
+#define SDMMC_TIMING_MMC_HS200	5
 
 #define SDMMC_MAX_FUNCTIONS	8
 
