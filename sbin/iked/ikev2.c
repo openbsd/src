@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.241 2020/08/14 16:16:05 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.242 2020/08/14 16:20:42 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -818,7 +818,6 @@ ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
 	struct iked_id		*id;
 	struct ibuf		*authmsg;
 	struct iked_policy	*old;
-	struct iked_policy	*policy = sa->sa_policy;
 	uint8_t			*cert = NULL;
 	size_t			 certlen = 0;
 	int			 certtype = IKEV2_CERT_NONE;
@@ -867,7 +866,6 @@ ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
 				ikev2_send_auth_failed(env, sa);
 				return (-1);
 			}
-			policy = sa->sa_policy;
 		} else {
 			/* restore */
 			msg->msg_policy = sa->sa_policy = old;
