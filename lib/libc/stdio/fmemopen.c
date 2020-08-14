@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmemopen.c,v 1.3 2015/08/31 02:53:57 guenther Exp $	*/
+/*	$OpenBSD: fmemopen.c,v 1.4 2020/08/14 12:00:33 millert Exp $	*/
 
 /*
  * Copyright (c) 2011 Martin Pieuchot <mpi@openbsd.org>
@@ -144,7 +144,7 @@ fmemopen(void *buf, size_t size, const char *mode)
 	}
 
 	st->pos = 0;
-	st->len = (oflags & O_WRONLY) ? 0 : size;
+	st->len = (oflags & O_TRUNC) ? 0 : size;
 	st->size = size;
 	st->update = oflags & O_RDWR;
 
