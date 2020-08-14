@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.104 2020/07/20 21:24:46 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.105 2020/08/14 16:09:32 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -2567,7 +2567,6 @@ create_ike(char *name, int af, uint8_t ipproto,
     struct ipsec_addr_wrap *ikecfg)
 {
 	char			 idstr[IKED_ID_SIZE];
-	unsigned int		 idtype = IKEV2_ID_NONE;
 	struct ipsec_addr_wrap	*ipa, *ipb, *ippn;
 	struct iked_auth	*ikeauth;
 	struct iked_policy	 pol;
@@ -2979,24 +2978,11 @@ create_ike(char *name, int af, uint8_t ipproto,
 		cfg->cfg.address.addr_af = ipa->af;
 	}
 
-	if (dstid) {
+	if (dstid)
 		strlcpy(idstr, dstid, sizeof(idstr));
-		idtype = pol.pol_peerid.id_type;
-	} else if (!pol.pol_peer.addr_net) {
+	else if (!pol.pol_peer.addr_net)
 		print_host((struct sockaddr *)&pol.pol_peer.addr, idstr,
 		    sizeof(idstr));
-		switch (pol.pol_peer.addr.ss_family) {
-		case AF_INET:
-			idtype = IKEV2_ID_IPV4;
-			break;
-		case AF_INET6:
-			idtype = IKEV2_ID_IPV6;
-			break;
-		default:
-			log_warnx("%s: unknown address family", __func__);
-			break;
-		}
-	}
 
 	ikeauth = &pol.pol_auth;
 	switch (ikeauth->auth_method) {
