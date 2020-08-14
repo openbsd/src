@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.33 2020/07/21 21:36:58 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.34 2020/08/14 12:14:06 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -346,7 +346,7 @@ opal_call:
 	std	%r31, 12(%r1)
 	mfmsr	%r31
 
-	/* Disable transaltion and external interrupts */
+	/* Disable translation and external interrupts */
 	andi.	%r2, %r31, ~(PSL_DR|PSL_IR|PSL_EE)@l
 	mtmsr	%r2
 	isync
