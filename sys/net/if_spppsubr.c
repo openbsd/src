@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.184 2020/07/10 13:26:42 patrick Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.185 2020/08/14 12:17:34 kn Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -68,7 +68,6 @@
 # define UNTIMEOUT(fun, arg, handle)	\
 	timeout_del(&(handle))
 
-#define LOOPALIVECNT			3	/* loopback detection tries */
 #define MAXALIVECNT			3	/* max. missed alive packets */
 #define	NORECV_TIME			15	/* before we get worried */
 
