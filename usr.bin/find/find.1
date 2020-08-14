@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.98 2019/09/02 21:18:41 deraadt Exp $
+.\"	$OpenBSD: find.1,v 1.99 2020/08/14 17:44:53 jmc Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	from: @(#)find.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: September 2 2019 $
+.Dd $Mdocdate: August 14 2020 $
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -565,11 +565,11 @@ Print out a list of all the files which are not both newer than
 and owned by
 .Dq wnj :
 .Pp
-.Dl "$ find / \e! \e( -newer ttt -user wnj \e)"
+.Dl "$ find / ! \e( -newer ttt -user wnj \e)"
 .Pp
 Print out a list of all core files on local file systems:
 .Pp
-.Dl "$ find / \e! -fstype local -prune -o -name '*.core'"
+.Dl "$ find / ! -fstype local -prune -o -name '*.core'"
 .Pp
 Find all files in
 .Pa /usr/src
@@ -680,7 +680,6 @@ In particular, the characters
 .Ql \&? ,
 .Ql \&( ,
 .Ql \&) ,
-.Ql \&! ,
 .Ql \e ,
 and
 .Ql \&;
