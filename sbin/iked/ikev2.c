@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.239 2020/08/12 20:37:30 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.240 2020/08/14 16:06:59 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -815,7 +815,7 @@ int
 ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
     struct iked_message *msg)
 {
-	struct iked_id		*id, *certid;
+	struct iked_id		*id;
 	struct ibuf		*authmsg;
 	struct iked_policy	*old;
 	struct iked_policy	*policy = sa->sa_policy;
@@ -833,13 +833,11 @@ ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
 	    sa->sa_policy->pol_auth.auth_eap)
 		sa_state(env, sa, IKEV2_STATE_EAP);
 
-	if (sa->sa_hdr.sh_initiator) {
+	if (sa->sa_hdr.sh_initiator)
 		id = &sa->sa_rid;
-		certid = &sa->sa_rcert;
-	} else {
+	else
 		id = &sa->sa_iid;
-		certid = &sa->sa_icert;
-	}
+
 	/* try to relookup the policy based on the peerid */
 	if (msg->msg_id.id_type && !sa->sa_hdr.sh_initiator) {
 		old = sa->sa_policy;
