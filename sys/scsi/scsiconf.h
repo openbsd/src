@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.193 2020/07/20 14:41:14 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.194 2020/08/14 16:45:48 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -501,7 +501,7 @@ void	scsi_strvis(u_char *, u_char *, int);
 int	scsi_delay(struct scsi_xfer *, int);
 
 int	scsi_probe(struct scsibus_softc *, int, int);
-void	scsi_probe_bus(struct scsibus_softc *);
+int	scsi_probe_bus(struct scsibus_softc *);
 int	scsi_probe_target(struct scsibus_softc *, int);
 int	scsi_probe_lun(struct scsibus_softc *, int, int);
 

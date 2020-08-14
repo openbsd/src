@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.234 2020/08/11 15:23:57 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.235 2020/08/14 16:45:48 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -82,6 +82,7 @@ void	scsi_print_link(struct scsi_link *);
 int	scsi_probe_link(struct scsibus_softc *, int, int, int);
 int	scsi_activate_link(struct scsi_link *, int);
 int	scsi_detach_link(struct scsi_link *, int);
+int	scsi_detach_bus(struct scsibus_softc *, int);
 
 void	scsi_devid(struct scsi_link *);
 int	scsi_devid_pg80(struct scsi_link *);
@@ -246,7 +247,7 @@ scsibusattach(struct device *parent, struct device *self, void *aux)
 		printf("%s: unable to register bio\n", sb->sc_dev.dv_xname);
 #endif /* NBIO > 0 */
 
-	scsi_probe(sb, -1, -1);
+	scsi_probe_bus(sb);
 }
 
 int
@@ -254,7 +255,7 @@ scsibusactivate(struct device *dev, int act)
 {
 	struct scsibus_softc *sb = (struct scsibus_softc *)dev;
 
-	return scsi_activate(sb, -1, -1, act);
+	return scsi_activate_bus(sb, act);
 }
 
 int
@@ -267,7 +268,7 @@ scsibusdetach(struct device *dev, int type)
 	bio_unregister(&sb->sc_dev);
 #endif /* NBIO > 0 */
 
-	error = scsi_detach(sb, -1, -1, type);
+	error = scsi_detach_bus(sb, type);
 	if (error != 0)
 		return error;
 
@@ -341,23 +342,21 @@ scsi_activate(struct scsibus_softc *sb, int target, int lun, int act)
 {
 	if (target == -1 && lun == -1)
 		return scsi_activate_bus(sb, act);
-
-	if (target == -1)
-		return 0;
-
-	if (lun == -1)
+	else if (lun == -1)
 		return scsi_activate_target(sb, target, act);
-
-	return scsi_activate_lun(sb, target, lun, act);
+	else
+		return scsi_activate_lun(sb, target, lun, act);
 }
 
 int
 scsi_activate_bus(struct scsibus_softc *sb, int act)
 {
-	int target, r, rv = 0;
+	struct scsi_link		*link;
+	int				 r, rv = 0;
 
-	for (target = 0; target < sb->sb_adapter_buswidth; target++) {
-		r = scsi_activate_target(sb, target, act);
+	/*  Activate all links on the bus. */
+	SLIST_FOREACH(link, &sb->sc_link_list, bus_list) {
+		r = scsi_activate_link(link, act);
 		if (r)
 			rv = r;
 	}
@@ -370,6 +369,7 @@ scsi_activate_target(struct scsibus_softc *sb, int target, int act)
 	struct scsi_link		*link;
 	int				 r, rv = 0;
 
+	/*  Activate all links on the target. */
 	SLIST_FOREACH(link, &sb->sc_link_list, bus_list) {
 		if (link->target == target) {
 			r = scsi_activate_link(link, act);
@@ -385,6 +385,7 @@ scsi_activate_lun(struct scsibus_softc *sb, int target, int lun, int act)
 {
 	struct scsi_link *link;
 
+	/*  Activate the (target, lun) link.*/
 	link = scsi_get_link(sb, target, lun);
 	if (link == NULL)
 		return 0;
@@ -414,69 +415,63 @@ scsi_activate_link(struct scsi_link *link, int act)
 int
 scsi_probe(struct scsibus_softc *sb, int target, int lun)
 {
-	struct scsi_lun_array		 lunarray;
-	struct scsi_link		*link0;
-	int				 i, r, rv = 0;
-
-	if (target == -1 && lun == -1) {
-		/* Probe all luns on all targets on bus. */
-		for (i = 0; i < sb->sb_adapter_buswidth; i++) {
-			r = scsi_probe(sb, i, -1);
-			if (r != 0 && r != EINVAL)
-				rv = r;
-		}
-		return rv;
-	}
-
-	if (target < 0 || target >= sb->sb_adapter_buswidth ||
-	    target == sb->sb_adapter_target)
-		return EINVAL;
-
-	if (lun == -1) {
-		/* Probe all luns on the target. */
-		scsi_probe_link(sb, target, 0, 0);
-		link0 = scsi_get_link(sb, target, 0);
-		if (link0 == NULL)
-			return EINVAL;
-		scsi_get_target_luns(link0, &lunarray);
-		for (i = 0; i < lunarray.count; i++) {
-			r = scsi_probe_link(sb, target, lunarray.luns[i],
-			    lunarray.dumbscan);
-			if (r == EINVAL && lunarray.dumbscan == 1)
-				return 0;
-			if (r != 0 && r != EINVAL)
-				rv = r;
-		}
-		return rv;
-	}
-
-	/* Probe lun on target. *NOT* a dumbscan! */
-	return scsi_probe_link(sb, target, lun, 0);
+	if (target == -1 && lun == -1)
+		return scsi_probe_bus(sb);
+	else if (lun == -1)
+		return scsi_probe_target(sb, target);
+	else
+		return scsi_probe_lun(sb, target, lun);
 }
 
-void
+int
 scsi_probe_bus(struct scsibus_softc *sb)
 {
-	scsi_probe(sb, -1, -1);
+	int		target, r, rv = 0;
+
+	/* Probe all possible targets on bus. */
+	for (target = 0; target < sb->sb_adapter_buswidth; target++) {
+		r = scsi_probe_target(sb, target);
+		if (r != 0 && r != EINVAL)
+			rv = r;
+	}
+	return rv;
 }
 
 int
 scsi_probe_target(struct scsibus_softc *sb, int target)
 {
-	/* Wild card target not allowed. */
-	if (target == -1)
+	struct scsi_lun_array		 lunarray;
+	struct scsi_link		*link0;
+	int				 i, r, rv = 0;
+
+	if (target < 0 || target == sb->sb_adapter_target)
 		return EINVAL;
-	else
-		return scsi_probe(sb, target, -1);
+
+	/* Probe all possible luns on target. */
+	scsi_probe_link(sb, target, 0, 0);
+	link0 = scsi_get_link(sb, target, 0);
+	if (link0 == NULL)
+		return EINVAL;
+	scsi_get_target_luns(link0, &lunarray);
+	for (i = 0; i < lunarray.count; i++) {
+		r = scsi_probe_link(sb, target, lunarray.luns[i],
+		    lunarray.dumbscan);
+		if (r == EINVAL && lunarray.dumbscan == 1)
+			return 0;
+		if (r != 0 && r != EINVAL)
+			rv = r;
+	}
+	return rv;
 }
 
 int
 scsi_probe_lun(struct scsibus_softc *sb, int target, int lun)
 {
-	if (target == -1 || lun == -1)
+	if (target < 0 || target == sb->sb_adapter_target || lun < 0)
 		return EINVAL;
-	else
-		return scsi_probe(sb, target, lun);
+
+	/* Probe lun on target. *NOT* a dumbscan! */
+	return scsi_probe_link(sb, target, lun, 0);
 }
 
 /*
@@ -756,62 +751,58 @@ free:
 int
 scsi_detach(struct scsibus_softc *sb, int target, int lun, int flags)
 {
-	struct scsi_link	*link, *tmp;
+	if (target == -1 && lun == -1)
+		return scsi_detach_bus(sb, flags);
+	else if (lun == -1)
+		return scsi_detach_target(sb, target, flags);
+	else
+		return scsi_detach_lun(sb, target, lun, flags);
+}
+
+int
+scsi_detach_bus(struct scsibus_softc *sb, int flags)
+{
+	struct scsi_link	*link;
 	int			 r, rv = 0;
 
-	if (target == -1 && lun == -1) {
-		/* Detach all links from bus. */
-		while (!SLIST_EMPTY(&sb->sc_link_list)) {
-			link = SLIST_FIRST(&sb->sc_link_list);
-			r = scsi_detach_link(link, flags);
-			if (r != 0 && r != ENXIO)
-				rv = r;
-		}
-		return rv;
+	/* Detach all links from bus. */
+	while (!SLIST_EMPTY(&sb->sc_link_list)) {
+		link = SLIST_FIRST(&sb->sc_link_list);
+		r = scsi_detach_link(link, flags);
+		if (r != 0 && r != ENXIO)
+			rv = r;
 	}
-
-	if (target < 0 || target >= sb->sb_adapter_buswidth ||
-	    target == sb->sb_adapter_target)
-		return EINVAL;
-
-	if (lun == -1) {
-		/* Detach all links from target. */
-		SLIST_FOREACH_SAFE(link, &sb->sc_link_list, bus_list, tmp) {
-			if (link->target == target) {
-				r = scsi_detach_link(link, flags);
-				if (r != 0 && r != ENXIO)
-					rv = r;
-			}
-		}
-		return rv;
-	}
-
-	/* Detach specific link from target. */
-	link = scsi_get_link(sb, target, lun);
-	if (link == NULL)
-		return EINVAL;
-	else
-		return scsi_detach_link(link, flags);
+	return rv;
 }
 
 int
 scsi_detach_target(struct scsibus_softc *sb, int target, int flags)
 {
-	/* Wildcard value is not allowed! */
-	if (target == -1)
-		return EINVAL;
-	else
-		return scsi_detach(sb, target, -1, flags);
+	struct scsi_link	*link, *tmp;
+	int			 r, rv = 0;
+
+	/* Detach all links from target. */
+	SLIST_FOREACH_SAFE(link, &sb->sc_link_list, bus_list, tmp) {
+		if (link->target == target) {
+			r = scsi_detach_link(link, flags);
+			if (r != 0 && r != ENXIO)
+				rv = r;
+		}
+	}
+	return rv;
 }
 
 int
 scsi_detach_lun(struct scsibus_softc *sb, int target, int lun, int flags)
 {
-	/* Wildcard values are not allowed! */
-	if (target == -1 || lun == -1)
+	struct scsi_link	*link;
+
+	/* Detach (target, lun) link. */
+	link = scsi_get_link(sb, target, lun);
+	if (link == NULL)
 		return EINVAL;
-	else
-		return scsi_detach(sb, target, lun, flags);
+
+	return scsi_detach_link(link, flags);
 }
 
 int
