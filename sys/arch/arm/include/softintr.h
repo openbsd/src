@@ -1,4 +1,4 @@
-/*	$OpenBSD: softintr.h,v 1.5 2010/12/21 14:56:23 claudio Exp $	*/
+/*	$OpenBSD: softintr.h,v 1.6 2020/08/14 16:51:09 kettenis Exp $	*/
 /*	$NetBSD: softintr.h,v 1.1 2002/01/29 22:54:14 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
 #include <sys/mutex.h>
 
 /*
- * Generic software interrupt support for all ARM platforms.
+ * Generic software interrupt support.
  *
  * To use this code, include <arm/softintr.h> from your platform's
  * <machine/intr.h>.

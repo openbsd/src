@@ -1,4 +1,4 @@
-/*	$OpenBSD: softintr.h,v 1.1 2016/12/17 23:38:33 patrick Exp $	*/
+/*	$OpenBSD: softintr.h,v 1.2 2020/08/14 16:51:09 kettenis Exp $	*/
 /*	$NetBSD: softintr.h,v 1.1 2002/01/29 22:54:14 thorpej Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
 #include <sys/queue.h>
 
 /*
- * Generic software interrupt support for all AArch64 platforms.
+ * Generic software interrupt support.
  *
  * To use this code, include <machine/softintr.h> from your platform's
  * <machine/intr.h>.
