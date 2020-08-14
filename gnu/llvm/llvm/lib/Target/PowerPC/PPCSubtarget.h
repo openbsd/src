@@ -320,7 +320,6 @@ public:
   bool isTargetELF() const { return TargetTriple.isOSBinFormatELF(); }
   bool isTargetMachO() const { return TargetTriple.isOSBinFormatMachO(); }
   bool isTargetLinux() const { return TargetTriple.isOSLinux(); }
-  bool isTargetOpenBSD() const { return TargetTriple.isOSOpenBSD(); }
 
   bool isDarwinABI() const { return isTargetMachO() || isDarwin(); }
   bool isAIXABI() const { return TargetTriple.isOSAIX(); }

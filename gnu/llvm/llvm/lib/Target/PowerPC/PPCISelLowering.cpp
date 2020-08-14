@@ -15299,14 +15299,6 @@ bool PPCTargetLowering::allowsMisalignedMemoryAccesses(EVT VT,
   if (VT == MVT::ppcf128)
     return false;
 
-  if (Subtarget.isTargetOpenBSD()) {
-    // Traditional PowerPC does not support unaligned memory access
-    // for floating-point and the OpenBSD kernel does not emulate
-    // all possible floating-point load and store instructions.
-    if (VT == MVT::f32 || VT == MVT::f64)
-      return false;
-  }
-
   if (Fast)
     *Fast = true;
 
