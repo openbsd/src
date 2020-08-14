@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.100 2020/08/12 08:41:39 mvs Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.101 2020/08/14 11:05:38 mvs Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -191,7 +191,7 @@ int		pppx_set_session_descr(struct pppx_dev *,
 		    struct pipex_session_descr_req *);
 
 void		pppx_if_destroy(struct pppx_dev *, struct pppx_if *);
-void		pppx_if_start(struct ifnet *);
+void		pppx_if_qstart(struct ifqueue *);
 int		pppx_if_output(struct ifnet *, struct mbuf *,
 		    struct sockaddr *, struct rtentry *);
 int		pppx_if_ioctl(struct ifnet *, u_long, caddr_t);
@@ -683,13 +683,12 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d", "pppx", unit);
 	ifp->if_mtu = req->pr_peer_mru;	/* XXX */
 	ifp->if_flags = IFF_POINTOPOINT | IFF_MULTICAST | IFF_UP;
-	ifp->if_xflags = IFXF_CLONED;
-	ifp->if_start = pppx_if_start;
+	ifp->if_xflags = IFXF_CLONED | IFXF_MPSAFE;
+	ifp->if_qstart = pppx_if_qstart;
 	ifp->if_output = pppx_if_output;
 	ifp->if_ioctl = pppx_if_ioctl;
 	ifp->if_rtrequest = p2p_rtrequest;
 	ifp->if_type = IFT_PPP;
-	ifq_set_maxlen(&ifp->if_snd, 1);
 	ifp->if_softc = pxi;
 	/* ifp->if_rdomain = req->pr_rdomain; */
 
@@ -864,26 +863,21 @@ pppx_if_destroy(struct pppx_dev *pxd, struct pppx_if *pxi)
 }
 
 void
-pppx_if_start(struct ifnet *ifp)
+pppx_if_qstart(struct ifqueue *ifq)
 {
+	struct ifnet *ifp = ifq->ifq_if;
 	struct pppx_if *pxi = (struct pppx_if *)ifp->if_softc;
 	struct mbuf *m;
 	int proto;
 
-	if (!ISSET(ifp->if_flags, IFF_RUNNING))
-		return;
-
-	for (;;) {
-		m = ifq_dequeue(&ifp->if_snd);
-
-		if (m == NULL)
-			break;
-
+	NET_LOCK();
+	while ((m = ifq_dequeue(ifq)) != NULL) {
 		proto = *mtod(m, int *);
 		m_adj(m, sizeof(proto));
 
 		pipex_ppp_output(m, pxi->pxi_session, proto);
 	}
+	NET_UNLOCK();
 }
 
 int
