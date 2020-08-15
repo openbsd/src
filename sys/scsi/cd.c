@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.248 2020/08/11 15:23:57 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.249 2020/08/15 17:50:45 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -101,7 +101,6 @@ struct cd_softc {
 	int			 sc_flags;
 #define	CDF_ANCIENT	0x10		/* disk is ancient; for cdminphys */
 #define	CDF_DYING	0x40		/* dying, when deactivated */
-#define CDF_WAITING	0x100
 	struct scsi_link	*sc_link;	/* contains targ, lun, etc. */
 	struct cd_parms {
 		u_int32_t secsize;
@@ -602,9 +601,7 @@ cdstart(struct scsi_xfer *xs)
 
 	scsi_xs_exec(xs);
 
-	if (ISSET(sc->sc_flags, CDF_WAITING))
-		CLR(sc->sc_flags, CDF_WAITING);
-	else if (bufq_peek(&sc->sc_bufq))
+	if (bufq_peek(&sc->sc_bufq))
 		scsi_xsh_add(&sc->sc_xsh);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.180 2020/08/11 15:23:57 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.181 2020/08/15 17:50:45 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -171,7 +171,6 @@ struct st_softc {
 #define	ST_2FM_AT_EOD		0x00000400
 #define	ST_MOUNTED		0x00000800
 #define	ST_DONTBUFFER		0x00001000
-#define	ST_WAITING		0x00002000
 #define	ST_DYING		0x00004000
 #define	ST_BOD_DETECTED		0x00008000
 #define	ST_MODE_DENSITY		0x00010000
@@ -937,9 +936,7 @@ ststart(struct scsi_xfer *xs)
 	/*
 	 * should we try do more work now?
 	 */
-	if (ISSET(st->flags, ST_WAITING))
-		CLR(st->flags, ST_WAITING);
-	else if (bufq_peek(&st->sc_bufq))
+	if (bufq_peek(&st->sc_bufq))
 		scsi_xsh_add(&st->sc_xsh);
 }
 
