@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.242 2020/08/14 16:20:42 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.243 2020/08/15 11:31:17 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -2964,14 +2964,13 @@ ikev2_send_error(struct iked *env, struct iked_sa *sa,
     struct iked_message *msg, uint8_t exchange)
 {
 	struct ibuf			*buf = NULL;
-	ssize_t				 len;
 	int				 ret = -1;
 
 	if (msg->msg_error == 0)
 		return (0);
 	if ((buf = ibuf_static()) == NULL)
 		goto done;
-	if ((len = ikev2_add_error(env, buf, msg)) == 0)
+	if (ikev2_add_error(env, buf, msg) == 0)
 		goto done;
 	ret = ikev2_send_ike_e(env, sa, buf, IKEV2_PAYLOAD_NOTIFY,
 	    exchange, 1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.67 2020/08/06 22:04:04 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.68 2020/08/15 11:31:17 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -128,7 +128,7 @@ struct iked_policy *
 policy_test(struct iked *env, struct iked_policy *key)
 {
 	struct iked_policy	*p = NULL, *pol = NULL;
-	struct iked_flow	*flow = NULL, *flowkey;
+	struct iked_flow	*flowkey;
 	unsigned int		 cnt = 0;
 
 	p = TAILQ_FIRST(&env->sc_policies);
@@ -159,8 +159,8 @@ policy_test(struct iked *env, struct iked_policy *key)
 			if (key->pol_nflows &&
 			    (flowkey = RB_MIN(iked_flows,
 			    &key->pol_flows)) != NULL &&
-			    (flow = RB_FIND(iked_flows, &p->pol_flows,
-			    flowkey)) == NULL) {
+			    RB_FIND(iked_flows, &p->pol_flows,
+			    flowkey) == NULL) {
 				p = TAILQ_NEXT(p, pol_entry);
 				continue;
 			}

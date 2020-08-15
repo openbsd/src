@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.39 2020/04/10 20:58:33 tobhe Exp $	*/
+/*	$OpenBSD: util.c,v 1.40 2020/08/15 11:31:17 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -710,7 +710,7 @@ expand_string(char *label, size_t len, const char *srch, const char *repl)
 		log_debug("%s: calloc", __func__);
 		return (-1);
 	}
-	p = q = label;
+	p = label;
 	while ((q = strstr(p, srch)) != NULL) {
 		*q = '\0';
 		if ((strlcat(tmp, p, len) >= len) ||
