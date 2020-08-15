@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.77 2020/07/10 13:26:36 patrick Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.78 2020/08/15 10:44:48 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -1235,7 +1235,20 @@ cnmac_recv(struct cnmac_softc *sc, uint64_t *work, struct mbuf_list *ml)
 		goto drop;
 	}
 
-	cn30xxipd_offload(word2, &m->m_pkthdr.csum_flags);
+	m->m_pkthdr.csum_flags = 0;
+	if (__predict_true(!ISSET(word2, PIP_WQE_WORD2_IP_NI))) {
+		/* Check IP checksum status. */
+		if (!ISSET(word2, PIP_WQE_WORD2_IP_V6) &&
+		    !ISSET(word2, PIP_WQE_WORD2_IP_IE))
+			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
+
+		/* Check TCP/UDP checksum status. */
+		if (ISSET(word2, PIP_WQE_WORD2_IP_TU) &&
+		    !ISSET(word2, PIP_WQE_WORD2_IP_FR) &&
+		    !ISSET(word2, PIP_WQE_WORD2_IP_LE))
+			m->m_pkthdr.csum_flags |=
+			    M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
+	}
 
 	ml_enqueue(ml, m);
 
