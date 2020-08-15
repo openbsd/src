@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.13 2020/08/08 10:21:22 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.14 2020/08/15 16:17:55 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -80,6 +80,7 @@ tls13_tests = TestGroup("TLSv1.3 tests", [
     Test("test-tls13-nociphers.py"),
     Test("test-tls13-record-padding.py"),
     Test("test-tls13-shuffled-extentions.py"),
+    Test("test-tls13-zero-content-type.py"),
 
     # The skipped tests fail due to a bug in BIO_gets() which masks the retry
     # signalled from an SSL_read() failure. Testing with httpd(8) shows we're
