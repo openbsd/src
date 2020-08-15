@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxipd.c,v 1.13 2020/08/15 10:44:48 visa Exp $	*/
+/*	$OpenBSD: cn30xxipd.c,v 1.14 2020/08/15 11:12:28 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -29,14 +29,9 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/mbuf.h>
 
 #include <machine/octeonvar.h>
 
-#include <octeon/dev/cn30xxciureg.h>
-#include <octeon/dev/cn30xxfpavar.h>
-#include <octeon/dev/cn30xxgmxreg.h>
-#include <octeon/dev/cn30xxpipreg.h>
 #include <octeon/dev/cn30xxipdreg.h>
 #include <octeon/dev/cn30xxipdvar.h>
 
