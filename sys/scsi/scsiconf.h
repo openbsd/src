@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.194 2020/08/14 16:45:48 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.195 2020/08/16 13:39:21 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -53,7 +53,6 @@
 #include <sys/queue.h>
 #include <sys/timeout.h>
 #include <sys/mutex.h>
-#include <scsi/scsi_debug.h>
 
 static __inline void _lto2b(u_int32_t val, u_int8_t *bytes);
 static __inline void _lto3b(u_int32_t val, u_int8_t *bytes);
