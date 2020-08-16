@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlmmc.c,v 1.7 2020/08/14 15:15:27 kettenis Exp $	*/
+/*	$OpenBSD: amlmmc.c,v 1.8 2020/08/16 14:09:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -727,8 +727,27 @@ wait:
 int
 amlmmc_signal_voltage(sdmmc_chipset_handle_t sch, int signal_voltage)
 {
-	/* XXX Check/set signaling voltage. */
-	return 0;
+	struct amlmmc_softc *sc = sch;
+	uint32_t vccq;
+
+	if (sc->sc_vqmmc == 0)
+		return ENODEV;
+
+	switch (signal_voltage) {
+	case SDMMC_SIGNAL_VOLTAGE_180:
+		vccq = 1800000;
+		break;
+	case SDMMC_SIGNAL_VOLTAGE_330:
+		vccq = 3300000;
+		break;
+	default:
+		return EINVAL;
+	}
+
+	if (regulator_get_voltage(sc->sc_vqmmc) == vccq)
+		return 0;
+
+	return regulator_set_voltage(sc->sc_vqmmc, vccq);
 }
 
 int
