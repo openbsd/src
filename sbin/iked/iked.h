@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.155 2020/08/11 20:51:06 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.156 2020/08/16 09:09:17 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -779,7 +779,7 @@ int	 config_getpfkey(struct iked *, struct imsg *);
 int	 config_setuser(struct iked *, struct iked_user *, enum privsep_procid);
 int	 config_getuser(struct iked *, struct imsg *);
 int	 config_setcompile(struct iked *, enum privsep_procid);
-int	 config_getcompile(struct iked *, struct imsg *);
+int	 config_getcompile(struct iked *);
 int	 config_setocsp(struct iked *);
 int	 config_getocsp(struct iked *, struct imsg *);
 int	 config_setkeys(struct iked *);
@@ -1128,8 +1128,8 @@ __dead void fatalx(const char *, ...)
 /* ocsp.c */
 int	 ocsp_connect(struct iked *env);
 int	 ocsp_receive_fd(struct iked *, struct imsg *);
-int	 ocsp_validate_cert(struct iked *, struct iked_static_id *,
-    void *, size_t, struct iked_sahdr, uint8_t);
+int	 ocsp_validate_cert(struct iked *, void *, size_t,
+    struct iked_sahdr, uint8_t);
 
 /* parse.y */
 int	 parse_config(const char *, struct iked *);

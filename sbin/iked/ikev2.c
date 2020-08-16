@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.243 2020/08/15 11:31:17 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.244 2020/08/16 09:09:17 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -162,7 +162,7 @@ ssize_t	 ikev2_add_notify(struct ibuf *, struct ikev2_payload **, ssize_t,
 	    uint16_t);
 ssize_t	 ikev2_add_mobike(struct ibuf *, struct ikev2_payload **, ssize_t);
 ssize_t	 ikev2_add_fragmentation(struct ibuf *, struct ikev2_payload **,
-	    struct iked_message *, ssize_t);
+	    ssize_t);
 ssize_t	 ikev2_add_transport_mode(struct iked *, struct ibuf *,
 	    struct ikev2_payload **, ssize_t, struct iked_sa *);
 int	 ikev2_update_sa_addresses(struct iked *, struct iked_sa *);
@@ -170,7 +170,7 @@ int	 ikev2_resp_informational(struct iked *, struct iked_sa *,
 	    struct iked_message *);
 
 void	ikev2_ctl_reset_id(struct iked *, struct imsg *, unsigned int);
-void	ikev2_ctl_show_sa(struct iked *, struct imsg *);
+void	ikev2_ctl_show_sa(struct iked *);
 
 static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	ikev2_dispatch_parent },
@@ -253,7 +253,7 @@ ikev2_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_CFG_USER:
 		return (config_getuser(env, imsg));
 	case IMSG_COMPILE:
-		return (config_getcompile(env, imsg));
+		return (config_getcompile(env));
 	default:
 		break;
 	}
@@ -428,7 +428,7 @@ ikev2_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 		ikev2_ctl_reset_id(env, imsg, imsg->hdr.type);
 		break;
 	case IMSG_CTL_SHOW_SA:
-		ikev2_ctl_show_sa(env, imsg);
+		ikev2_ctl_show_sa(env);
 		break;
 	default:
 		return (-1);
@@ -485,7 +485,7 @@ ikev2_ctl_reset_id(struct iked *env, struct imsg *imsg, unsigned int type)
 }
 
 void
-ikev2_ctl_show_sa(struct iked *env, struct imsg *imsg)
+ikev2_ctl_show_sa(struct iked *env)
 {
 	ikev2_info(env, 0);
 }
@@ -1225,7 +1225,7 @@ ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
 
 	/* Fragmentation Notify */
 	if (env->sc_frag) {
-		if ((len = ikev2_add_fragmentation(buf, &pld, &req, len))
+		if ((len = ikev2_add_fragmentation(buf, &pld, len))
 		    == -1)
 			goto done;
 	}
@@ -1894,7 +1894,7 @@ ikev2_add_mobike(struct ibuf *e, struct ikev2_payload **pld, ssize_t len)
 
 ssize_t
 ikev2_add_fragmentation(struct ibuf *buf, struct ikev2_payload **pld,
-    struct iked_message *msg, ssize_t len)
+    ssize_t len)
 {
 	return ikev2_add_notify(buf, pld, len, IKEV2_N_FRAGMENTATION_SUPPORTED);
 }
@@ -2789,7 +2789,7 @@ ikev2_resp_ike_sa_init(struct iked *env, struct iked_message *msg)
 
 	/* Fragmentation Notify*/
 	if (sa->sa_frag) {
-		if ((len = ikev2_add_fragmentation(buf, &pld, &resp, len))
+		if ((len = ikev2_add_fragmentation(buf, &pld, len))
 		    == -1)
 			goto done;
 	}

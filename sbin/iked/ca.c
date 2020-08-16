@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.66 2020/08/14 21:13:15 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.67 2020/08/16 09:09:16 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -447,7 +447,7 @@ ca_getcert(struct iked *env, struct imsg *imsg)
 	case IKEV2_CERT_X509_CERT:
 		ret = ca_validate_cert(env, &id, ptr, len);
 		if (ret == 0 && env->sc_ocsp_url) {
-			ret = ocsp_validate_cert(env, &id, ptr, len, sh, type);
+			ret = ocsp_validate_cert(env, ptr, len, sh, type);
 			if (ret == 0)
 				return (0);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.91 2020/08/11 20:51:06 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.92 2020/08/16 09:09:17 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -89,7 +89,7 @@ int	 ikev2_pld_delete(struct iked *, struct ikev2_payload *,
 int	 ikev2_validate_ts(struct iked_message *, size_t, size_t,
 	    struct ikev2_tsp *);
 int	 ikev2_pld_ts(struct iked *, struct ikev2_payload *,
-	    struct iked_message *, size_t, size_t, unsigned int);
+	    struct iked_message *, size_t, size_t);
 int	 ikev2_validate_auth(struct iked_message *, size_t, size_t,
 	    struct ikev2_auth *);
 int	 ikev2_pld_auth(struct iked *, struct ikev2_payload *,
@@ -248,8 +248,7 @@ ikev2_pld_payloads(struct iked *env, struct iked_message *msg,
 			break;
 		case IKEV2_PAYLOAD_TSi | IKED_E:
 		case IKEV2_PAYLOAD_TSr | IKED_E:
-			ret = ikev2_pld_ts(env, &pld, msg, offset, left,
-			    payload);
+			ret = ikev2_pld_ts(env, &pld, msg, offset, left);
 			break;
 		case IKEV2_PAYLOAD_SK:
 			ret = ikev2_pld_e(env, &pld, msg, offset, left);
@@ -1526,7 +1525,7 @@ ikev2_validate_ts(struct iked_message *msg, size_t offset, size_t left,
 
 int
 ikev2_pld_ts(struct iked *env, struct ikev2_payload *pld,
-    struct iked_message *msg, size_t offset, size_t left, unsigned int payload)
+    struct iked_message *msg, size_t offset, size_t left)
 {
 	struct ikev2_tsp		 tsp;
 	struct ikev2_ts			 ts;

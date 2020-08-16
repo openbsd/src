@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.59 2020/08/14 21:13:15 tobhe Exp $	*/
+/*	$OpenBSD: config.c,v 1.60 2020/08/16 09:09:17 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -843,7 +843,7 @@ config_setcompile(struct iked *env, enum privsep_procid id)
 }
 
 int
-config_getcompile(struct iked *env, struct imsg *imsg)
+config_getcompile(struct iked *env)
 {
 	/*
 	 * Do any necessary steps after configuration, for now we
