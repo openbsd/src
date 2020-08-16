@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wsfontload.8,v 1.20 2017/04/03 18:43:41 fcambus Exp $
+.\"	$OpenBSD: wsfontload.8,v 1.21 2020/08/16 14:52:36 fcambus Exp $
 .\"	$NetBSD: wsfontload.8,v 1.5 1999/04/06 04:54:22 cgd Exp $
 .\"
 .\" Copyright (c) 1999, 2001
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 3 2017 $
+.Dd $Mdocdate: August 16 2020 $
 .Dt WSFONTLOAD 8
 .Os
 .Sh NAME
@@ -85,8 +85,8 @@ Default is
 .Pa /dev/ttyCcfg .
 .It Fl h Ar height
 Sets the height of a font character in pixels.
-Default is 16 for text-mode VGA compatible displays,
-and 22 for raster displays.
+Default is to match the currently loaded font height for raster displays,
+and 16 for text-mode VGA compatible displays.
 .It Fl l
 Specifies to print out a list of loaded fonts, no other
 arguments should be specified.
@@ -97,8 +97,8 @@ If none is given, the
 name is used to create one.
 .It Fl w Ar width
 Sets the width of a font character in pixels.
-Default is 8 for text-mode VGA compatible displays,
-and 12 for raster displays.
+Default is to match the currently loaded font width for raster displays,
+and 8 for text-mode VGA compatible displays.
 .El
 .Pp
 .\" Typically, the
