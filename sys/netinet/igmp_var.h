@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp_var.h,v 1.13 2017/04/14 20:46:31 bluhm Exp $	*/
+/*	$OpenBSD: igmp_var.h,v 1.14 2020/08/17 16:25:34 gnezdo Exp $	*/
 /*	$NetBSD: igmp_var.h,v 1.9 1996/02/13 23:41:31 christos Exp $	*/
 
 /*
@@ -71,10 +71,6 @@ struct igmpstat {
 #define IGMPCTL_NAMES { \
 	{ 0, 0 }, \
 	{ "stats",	CTLTYPE_STRUCT } \
-}
-
-#define IGMPCTL_VARS { \
-	NULL \
 }
 
 #ifdef _KERNEL
