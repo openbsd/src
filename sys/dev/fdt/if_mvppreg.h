@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvppreg.h,v 1.7 2020/08/17 21:02:37 patrick Exp $	*/
+/*	$OpenBSD: if_mvppreg.h,v 1.8 2020/08/17 21:12:06 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -576,10 +576,6 @@
 #define     MVPP2_PORT_CTRL4_LEDS_NUMBER		BIT(10)
 
 #define MVPP2_CAUSE_TXQ_SENT_DESC_ALL_MASK	0xff
-
-/* Descriptor ring Macros */
-#define MVPP2_QUEUE_NEXT_DESC(q, index) \
-	(((index) < (q)->LastDesc) ? ((index) + 1) : 0)
 
 /* MPCS registers */
 #define MVPP22_MPCS40G_COMMON_CONTROL			0x14
