@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugold.c,v 1.14 2017/10/05 17:29:00 stsp Exp $   */
+/*	$OpenBSD: ugold.c,v 1.15 2020/08/17 04:26:57 gnezdo Exp $   */
 
 /*
  * Copyright (c) 2013 Takayoshi SASANO <uaa@openbsd.org>
@@ -119,7 +119,7 @@ ugold_match(struct device *parent, void *match, void *aux)
 	/*
 	 * XXX Only match the sensor interface.
 	 *
-	 * Does it makes sense to attach various uhidev(4) to these
+	 * Does it make sense to attach various uhidev(4) to these
 	 * non-standard HID devices?
 	 */
 	uhidev_get_report_desc(uha->parent, &desc, &size);
