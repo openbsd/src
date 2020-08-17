@@ -1,4 +1,4 @@
-/*	$OpenBSD: foldit.c,v 1.7 2013/11/12 22:51:18 deraadt Exp $	*/
+/*	$OpenBSD: foldit.c,v 1.8 2020/08/17 18:41:23 martijn Exp $	*/
 /*	$NetBSD: foldit.c,v 1.4 1994/12/20 16:13:02 jtc Exp $	*/
 
 /*-
@@ -38,6 +38,7 @@ int
 foldit(char *chunk, int col, int max)
 {
 	char *cp;
+	int first = (col != 0);
 
 	/*
 	 * Keep track of column position. Insert hidden newline
@@ -61,8 +62,11 @@ again:
 			col++;
 		}
 		if (col > (max - 2)) {
+			if (!first)
+				return (col);
 			printf("\\\n");
 			col = 0;
+			first = 0;
 			goto again;
 		} 
 		cp++;
