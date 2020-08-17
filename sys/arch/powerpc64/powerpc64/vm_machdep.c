@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.4 2020/06/30 20:31:54 kettenis Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.5 2020/08/17 16:55:41 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -67,7 +67,6 @@ void
 cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
     void (*func)(void *), void *arg)
 {
-	pmap_t pm = p2->p_vmspace->vm_map.pmap;
 	struct pcb *pcb = &p2->p_addr->u_pcb;
 	struct trapframe *tf;
 	struct callframe *cf;
@@ -77,7 +76,10 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 	/* Copy the pcb. */
 	*pcb = p1->p_addr->u_pcb;
 
-	pmap_extract(pmap_kernel(), (vaddr_t)&pm->pm_slb,
+	/* XXX This should not be necessary but things explodes without it. */
+	memset(&pcb->pcb_slb, 0, sizeof(pcb->pcb_slb));
+
+	pmap_extract(pmap_kernel(), (vaddr_t)&pcb->pcb_slb,
 	    &p2->p_md.md_user_slb_pa);
 	pmap_activate(p2);
 

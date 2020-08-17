@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.55 2020/07/21 21:36:58 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.56 2020/08/17 16:55:41 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -738,6 +738,7 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	frame->srr0 = pack->ep_entry;
 	frame->srr1 = PSL_USER;
 
+	memset(&pcb->pcb_slb, 0, sizeof(pcb->pcb_slb));
 	memset(&pcb->pcb_fpstate, 0, sizeof(pcb->pcb_fpstate));
 	pcb->pcb_flags = 0;
 }

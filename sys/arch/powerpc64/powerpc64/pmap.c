@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.40 2020/08/04 16:28:16 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.41 2020/08/17 16:55:41 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -50,6 +50,8 @@
 #include <sys/param.h>
 #include <sys/atomic.h>
 #include <sys/pool.h>
+#include <sys/proc.h>
+#include <sys/user.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -333,23 +335,24 @@ pmap_slbd_lookup(pmap_t pm, vaddr_t va)
 void
 pmap_slbd_cache(pmap_t pm, struct slb_desc *slbd)
 {
+	struct pcb *pcb = &curproc->p_addr->u_pcb;
 	uint64_t slbe, slbv;
 	int idx;
 
-	PMAP_VP_ASSERT_LOCKED(pm);
+	KASSERT(curproc->p_vmspace->vm_map.pmap == pm);
 
-	for (idx = 0; idx < nitems(pm->pm_slb); idx++) {
-		if (pm->pm_slb[idx].slb_slbe == 0)
+	for (idx = 0; idx < nitems(pcb->pcb_slb); idx++) {
+		if (pcb->pcb_slb[idx].slb_slbe == 0)
 			break;
 	}
-	if (idx == nitems(pm->pm_slb))
-		idx = arc4random_uniform(nitems(pm->pm_slb));
+	if (idx == nitems(pcb->pcb_slb))
+		idx = arc4random_uniform(nitems(pcb->pcb_slb));
 
 	slbe = (slbd->slbd_esid << SLBE_ESID_SHIFT) | SLBE_VALID | idx;
 	slbv = slbd->slbd_vsid << SLBV_VSID_SHIFT;
 
-	pm->pm_slb[idx].slb_slbe = slbe;
-	pm->pm_slb[idx].slb_slbv = slbv;
+	pcb->pcb_slb[idx].slb_slbe = slbe;
+	pcb->pcb_slb[idx].slb_slbv = slbv;
 }
 
 int
