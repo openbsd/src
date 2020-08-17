@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvppreg.h,v 1.8 2020/08/17 21:12:06 patrick Exp $	*/
+/*	$OpenBSD: if_mvppreg.h,v 1.9 2020/08/17 21:32:44 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -281,24 +281,19 @@
 #define MVPP2_BM_PHY_ALLOC_REG(pool)		(0x6400 + ((pool) * 4))
 #define     MVPP2_BM_PHY_ALLOC_GRNTD_MASK	BIT(0)
 #define MVPP2_BM_VIRT_ALLOC_REG			0x6440
+#define MVPP22_BM_ADDR_HIGH_ALLOC_REG		0x6444
+#define     MVPP22_BM_ADDR_HIGH_PHYS_MASK	0xff
+#define     MVPP22_BM_ADDR_HIGH_VIRT_MASK	0xff00
+#define     MVPP22_BM_ADDR_HIGH_VIRT_SHIFT	8
 #define MVPP2_BM_PHY_RLS_REG(pool)		(0x6480 + ((pool) * 4))
 #define     MVPP2_BM_PHY_RLS_MC_BUFF_MASK	BIT(0)
 #define     MVPP2_BM_PHY_RLS_PRIO_EN_MASK	BIT(1)
 #define     MVPP2_BM_PHY_RLS_GRNTD_MASK		BIT(2)
 #define MVPP2_BM_VIRT_RLS_REG			0x64c0
-#define MVPP2_BM_MC_RLS_REG			0x64c4
-#define     MVPP2_BM_MC_ID_MASK			0xfff
-#define     MVPP2_BM_FORCE_RELEASE_MASK		BIT(12)
-
-#define MVPP22_BM_PHY_VIRT_HIGH_ALLOC_REG	0x6444
-#define MVPP22_BM_PHY_HIGH_ALLOC_OFFSET		0
-#define MVPP22_BM_VIRT_HIGH_ALLOC_OFFSET	8
-#define MVPP22_BM_VIRT_HIGH_ALLOC_MASK		0xff00
-
-#define MVPP22_BM_PHY_VIRT_HIGH_RLS_REG		0x64c4
-
-#define MVPP22_BM_PHY_HIGH_RLS_OFFSET		0
-#define MVPP22_BM_VIRT_HIGH_RLS_OFFST		8
+#define MVPP22_BM_ADDR_HIGH_RLS_REG		0x64c4
+#define     MVPP22_BM_ADDR_HIGH_PHYS_RLS_MASK	0xff
+#define     MVPP22_BM_ADDR_HIGH_VIRT_RLS_MASK	0xff00
+#define     MVPP22_BM_ADDR_HIGH_VIRT_RLS_SHIFT	8
 
 #define MVPP22_BM_POOL_BASE_HIGH_REG		0x6310
 #define MVPP22_BM_POOL_BASE_HIGH_MASK		0xff

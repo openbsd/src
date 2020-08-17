@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.17 2020/08/17 21:02:37 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.18 2020/08/17 21:32:44 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -524,7 +524,7 @@ mvpp2_axi_config(struct mvpp2_softc *sc)
 {
 	uint32_t reg;
 
-	mvpp2_write(sc, MVPP22_BM_PHY_VIRT_HIGH_RLS_REG, 0);
+	mvpp2_write(sc, MVPP22_BM_ADDR_HIGH_RLS_REG, 0);
 
 	reg = (MVPP22_AXI_CODE_CACHE_WR_CACHE << MVPP22_AXI_ATTR_CACHE_OFFS) |
 	    (MVPP22_AXI_CODE_DOMAIN_OUTER_DOM << MVPP22_AXI_ATTR_DOMAIN_OFFS);
@@ -626,11 +626,10 @@ mvpp2_bm_pool_init(struct mvpp2_softc *sc)
 			bm->free_cons = (bm->free_cons + 1) % MVPP2_BM_SIZE;
 
 			phys = rxb->mb_map->dm_segs[0].ds_addr;
-			mvpp2_write(sc, MVPP22_BM_PHY_VIRT_HIGH_RLS_REG,
+			mvpp2_write(sc, MVPP22_BM_ADDR_HIGH_RLS_REG,
 			    (((virt >> 32) & MVPP22_ADDR_HIGH_MASK)
-			    << MVPP22_BM_VIRT_HIGH_RLS_OFFST) |
-			    (((phys >> 32) & MVPP22_ADDR_HIGH_MASK)
-			    << MVPP22_BM_PHY_HIGH_RLS_OFFSET));
+			    << MVPP22_BM_ADDR_HIGH_VIRT_RLS_SHIFT) |
+			    ((phys >> 32) & MVPP22_ADDR_HIGH_MASK));
 			mvpp2_write(sc, MVPP2_BM_VIRT_RLS_REG,
 			    virt & 0xffffffff);
 			mvpp2_write(sc, MVPP2_BM_PHY_RLS_REG(i),
@@ -2168,11 +2167,10 @@ mvpp2_rx_refill(struct mvpp2_port *sc)
 		bm->free_cons = (bm->free_cons + 1) % MVPP2_BM_SIZE;
 
 		phys = rxb->mb_map->dm_segs[0].ds_addr;
-		mvpp2_write(sc->sc, MVPP22_BM_PHY_VIRT_HIGH_RLS_REG,
+		mvpp2_write(sc->sc, MVPP22_BM_ADDR_HIGH_RLS_REG,
 		    (((virt >> 32) & MVPP22_ADDR_HIGH_MASK)
-		    << MVPP22_BM_VIRT_HIGH_RLS_OFFST) |
-		    (((phys >> 32) & MVPP22_ADDR_HIGH_MASK)
-		    << MVPP22_BM_PHY_HIGH_RLS_OFFSET));
+		    << MVPP22_BM_ADDR_HIGH_VIRT_RLS_SHIFT) |
+		    ((phys >> 32) & MVPP22_ADDR_HIGH_MASK));
 		mvpp2_write(sc->sc, MVPP2_BM_VIRT_RLS_REG,
 		    virt & 0xffffffff);
 		mvpp2_write(sc->sc, MVPP2_BM_PHY_RLS_REG(pool),
