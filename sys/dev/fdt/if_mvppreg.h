@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvppreg.h,v 1.11 2020/08/17 22:03:32 patrick Exp $	*/
+/*	$OpenBSD: if_mvppreg.h,v 1.12 2020/08/17 22:14:51 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -1155,10 +1155,6 @@ enum mvpp2_prs_lookup {
 #define MVPP2_CLS_FLOWS_TBL_SIZE	512
 #define MVPP2_CLS_FLOWS_TBL_DATA_WORDS	3
 #define MVPP2_CLS_LKP_TBL_SIZE		64
-
-/* BM cookie (32 bits) definition */
-#define MVPP2_BM_COOKIE_POOL_OFFS	8
-#define MVPP2_BM_COOKIE_CPU_OFFS	24
 
 /*
  * The MVPP2_TX_DESC and MVPP2_RX_DESC structures describe the
