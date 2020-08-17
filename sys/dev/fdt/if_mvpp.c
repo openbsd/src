@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.18 2020/08/17 21:32:44 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.19 2020/08/17 22:03:32 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -1497,12 +1497,12 @@ mvpp2_port_attach(struct device *parent, struct device *self, void *aux)
 	    sc->sc_phy_mode == PHY_MODE_RGMII_ID ||
 	    sc->sc_phy_mode == PHY_MODE_RGMII_RXID ||
 	    sc->sc_phy_mode == PHY_MODE_RGMII_TXID) {
-		reg = mvpp2_gmac_read(sc, MV_GMAC_INTERRUPT_MASK_REG);
-		reg |= MV_GMAC_INTERRUPT_CAUSE_LINK_CHANGE;
-		mvpp2_gmac_write(sc, MV_GMAC_INTERRUPT_MASK_REG, reg);
-		reg = mvpp2_gmac_read(sc, MV_GMAC_INTERRUPT_SUM_MASK_REG);
-		reg |= MV_GMAC_INTERRUPT_SUM_CAUSE_LINK_CHANGE;
-		mvpp2_gmac_write(sc, MV_GMAC_INTERRUPT_SUM_MASK_REG, reg);
+		reg = mvpp2_gmac_read(sc, MVPP2_GMAC_INT_MASK_REG);
+		reg |= MVPP2_GMAC_INT_CAUSE_LINK_CHANGE;
+		mvpp2_gmac_write(sc, MVPP2_GMAC_INT_MASK_REG, reg);
+		reg = mvpp2_gmac_read(sc, MVPP2_GMAC_INT_SUM_MASK_REG);
+		reg |= MVPP2_GMAC_INT_SUM_CAUSE_LINK_CHANGE;
+		mvpp2_gmac_write(sc, MVPP2_GMAC_INT_SUM_MASK_REG, reg);
 	}
 
 	if (sc->sc_gop_id == 0) {
@@ -1973,8 +1973,8 @@ mvpp2_link_intr(void *arg)
 	    sc->sc_phy_mode == PHY_MODE_RGMII_ID ||
 	    sc->sc_phy_mode == PHY_MODE_RGMII_RXID ||
 	    sc->sc_phy_mode == PHY_MODE_RGMII_TXID) {
-		reg = mvpp2_gmac_read(sc, MV_GMAC_INTERRUPT_CAUSE_REG);
-		if (reg & MV_GMAC_INTERRUPT_CAUSE_LINK_CHANGE)
+		reg = mvpp2_gmac_read(sc, MVPP2_GMAC_INT_CAUSE_REG);
+		if (reg & MVPP2_GMAC_INT_CAUSE_LINK_CHANGE)
 			event = 1;
 	}
 

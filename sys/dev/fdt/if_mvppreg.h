@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvppreg.h,v 1.10 2020/08/17 21:54:39 patrick Exp $	*/
+/*	$OpenBSD: if_mvppreg.h,v 1.11 2020/08/17 22:03:32 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -376,16 +376,12 @@
 #define     MVPP2_GMAC_TX_FIFO_MIN_TH_ALL_MASK	0x1fc0
 #define     MVPP2_GMAC_TX_FIFO_MIN_TH_MASK(v)	(((v) << 6) & \
 	MVPP2_GMAC_TX_FIFO_MIN_TH_ALL_MASK)
-
-/* Port Interrupts */
-#define MV_GMAC_INTERRUPT_CAUSE_REG			0x0020
-#define MV_GMAC_INTERRUPT_MASK_REG			0x0024
-#define     MV_GMAC_INTERRUPT_CAUSE_LINK_CHANGE		BIT(1)
-
-/* Port Interrupt Summary */
-#define MV_GMAC_INTERRUPT_SUM_CAUSE_REG			0x00A0
-#define MV_GMAC_INTERRUPT_SUM_MASK_REG			0x00A4
-#define     MV_GMAC_INTERRUPT_SUM_CAUSE_LINK_CHANGE	BIT(1)
+#define MVPP2_GMAC_INT_CAUSE_REG		0x20
+#define MVPP2_GMAC_INT_MASK_REG			0x24
+#define     MVPP2_GMAC_INT_CAUSE_LINK_CHANGE	BIT(1)
+#define MVPP2_GMAC_INT_SUM_CAUSE_REG		0xa0
+#define MVPP2_GMAC_INT_SUM_MASK_REG		0xa4
+#define     MVPP2_GMAC_INT_SUM_CAUSE_LINK_CHANGE BIT(1)
 
 /* Port Mac Control0 */
 #define MVPP2_PORT_CTRL0_REG				0x0000
