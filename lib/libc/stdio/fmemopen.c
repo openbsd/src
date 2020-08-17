@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmemopen.c,v 1.4 2020/08/14 12:00:33 millert Exp $	*/
+/*	$OpenBSD: fmemopen.c,v 1.5 2020/08/17 16:17:39 millert Exp $	*/
 
 /*
  * Copyright (c) 2011 Martin Pieuchot <mpi@openbsd.org>
@@ -30,6 +30,7 @@ struct state {
 	size_t		 size;		/* allocated size */
 	size_t		 len;		/* length of the data */
 	int		 update;	/* open for update */
+	int		 append;	/* open for append */
 };
 
 static int
@@ -50,6 +51,9 @@ fmemopen_write(void *v, const char *b, int l)
 {
 	struct state	*st = v;
 	int		i;
+
+	if (st->append)
+		st->pos = st->len;
 
 	for (i = 0; i < l && i + st->pos < st->size; i++)
 		st->string[st->pos + i] = b[i];
@@ -147,6 +151,7 @@ fmemopen(void *buf, size_t size, const char *mode)
 	st->len = (oflags & O_TRUNC) ? 0 : size;
 	st->size = size;
 	st->update = oflags & O_RDWR;
+	st->append = oflags & O_APPEND;
 
 	if (buf == NULL) {
 		if ((st->string = malloc(size)) == NULL) {
@@ -173,7 +178,7 @@ fmemopen(void *buf, size_t size, const char *mode)
 
 	fp->_flags = (short)flags;
 	fp->_file = -1;
-	fp->_cookie = (void *)st;
+	fp->_cookie = st;
 	fp->_read = (flags & __SWR) ? NULL : fmemopen_read;
 	fp->_write = (flags & __SRD) ? NULL : fmemopen_write;
 	fp->_seek = fmemopen_seek;
