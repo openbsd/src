@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.27 2020/01/06 12:37:30 kettenis Exp $ */
+/* $OpenBSD: trap.c,v 1.28 2020/08/17 08:09:03 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -65,6 +65,14 @@ void do_el0_error(struct trapframe *);
 
 void dumpregs(struct trapframe*);
 
+/* Check whether we're executing an unprivileged load/store instruction. */
+static inline int
+is_unpriv_ldst(uint64_t elr)
+{
+	uint32_t insn = *(uint32_t *)elr;
+	return ((insn & 0x3f200c00) == 0x38000800);
+}
+
 static void
 data_abort(struct trapframe *frame, uint64_t esr, uint64_t far,
     int lower, int exe)
@@ -104,8 +112,18 @@ data_abort(struct trapframe *frame, uint64_t esr, uint64_t far,
 		/* The top bit tells us which range to use */
 		if ((far >> 63) == 1)
 			map = kernel_map;
-		else
+		else {
+			/*
+			 * Only allow user-space access using
+			 * unprivileged load/store instructions.
+			 */
+			if (!is_unpriv_ldst(frame->tf_elr)) {
+				panic("attempt to access user address"
+				      " 0x%llx from EL1", far);
+			}
+
 			map = &p->p_vmspace->vm_map;
+		}
 	}
 
 	if (exe)
