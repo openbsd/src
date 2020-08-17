@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvppreg.h,v 1.9 2020/08/17 21:32:44 patrick Exp $	*/
+/*	$OpenBSD: if_mvppreg.h,v 1.10 2020/08/17 21:54:39 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -948,11 +948,17 @@
 /* Marvell tag types */
 enum mvpp2_tag_type {
 	MVPP2_TAG_TYPE_NONE = 0,
-	MVPP2_TAG_TYPE_MH = 1,
-	MVPP2_TAG_TYPE_DSA = 2,
+	MVPP2_TAG_TYPE_MH   = 1,
+	MVPP2_TAG_TYPE_DSA  = 2,
 	MVPP2_TAG_TYPE_EDSA = 3,
 	MVPP2_TAG_TYPE_VLAN = 4,
 	MVPP2_TAG_TYPE_LAST = 5
+};
+
+/* L2 cast enum */
+enum mvpp2_prs_l2_cast {
+	MVPP2_PRS_L2_UNI_CAST,
+	MVPP2_PRS_L2_MULTI_CAST,
 };
 
 /* L3 cast enum */
