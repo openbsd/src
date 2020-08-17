@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gre.c,v 1.32 2020/08/17 06:29:29 dlg Exp $	*/
+/*	$OpenBSD: print-gre.c,v 1.33 2020/08/17 06:32:31 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -740,7 +740,7 @@ vxlan_print(const u_char *p, u_int length)
 	if (flags & VXLAN_I) {
 		uint32_t vni = (htonl(vh->vni) & VXLAN_VNI_MASK) >>
 		    VXLAN_VNI_SHIFT;
-		printf(" vni %u", vni >> VXLAN_VNI_SHIFT);
+		printf(" vni %u", vni);
 	}
 
 	if (flags & VXLAN_P)
