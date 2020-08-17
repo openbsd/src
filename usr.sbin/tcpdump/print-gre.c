@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gre.c,v 1.33 2020/08/17 06:32:31 dlg Exp $	*/
+/*	$OpenBSD: print-gre.c,v 1.34 2020/08/17 07:09:25 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -808,6 +808,58 @@ struct geneve_header {
 #define GENEVE_VNI_RESERVED	(~GENEVE_VNI_MASK)
 };
 
+struct geneve_option {
+	uint16_t	class;
+	uint8_t		type;
+	uint8_t		flags;
+#define GENEVE_OPTION_LENGTH_SHIFT	0
+#define GENEVE_OPTION_LENGTH_MASK	(0x1fU << GENEVE_OPTION_LENGTH_SHIFT)
+};
+
+static void
+geneve_options_print(const u_char *p, u_int l)
+{
+	if (l == 0)
+		return;
+
+	do {
+		struct geneve_option *go;
+		unsigned int len, i;
+
+		if (l < sizeof(*go))
+			goto trunc;
+
+		go = (struct geneve_option *)p;
+		p += sizeof(*go);
+		l -= sizeof(*go);
+
+		printf("\n\toption class %u type %u", ntohs(go->class),
+		    go->type);
+
+		len = (go->flags & GENEVE_OPTION_LENGTH_MASK) >>
+		    GENEVE_OPTION_LENGTH_SHIFT;
+		if (len > 0) {
+			printf(":");
+			for (i = 0; i < len; i++) {
+				uint32_t w;
+
+				if (l < sizeof(w))
+					goto trunc;
+
+				w = EXTRACT_32BITS(p);
+				p += sizeof(w);
+				l -= sizeof(w);
+
+				printf(" %08x", w);
+			}
+		}
+	} while (l > 0);
+
+	return;
+trunc:
+	printf("[|geneve option]");
+}
+
 void
 geneve_print(const u_char *p, u_int length)
 {
@@ -828,6 +880,7 @@ geneve_print(const u_char *p, u_int length)
 	gh = (const struct geneve_header *)p;
 
 	p += sizeof(*gh);
+	l -= sizeof(*gh);
 	length -= sizeof(*gh);
 
 	flags = ntohs(gh->flags);
@@ -849,13 +902,20 @@ geneve_print(const u_char *p, u_int length)
 	optlen = (flags & GENEVE_OPT_LEN_MASK) >> GENEVE_OPT_LEN_SHIFT;
 	optlen *= GENEVE_OPT_LEN_UNITS;
 
-	if (length < optlen)
+	if (l < optlen)
 		goto trunc;
+	if (length < optlen) {
+		printf(" ip truncated");
+		return;
+	}
+
+	if (optlen > 0)
+		geneve_options_print(p, optlen);
 
 	p += optlen;
 	length -= optlen;
 
-	printf(": ");
+	printf("\n    ");
 
 	proto = ntohs(gh->protocol);
 	switch (proto) {
