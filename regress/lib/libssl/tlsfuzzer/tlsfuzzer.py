@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.15 2020/08/17 08:01:53 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.16 2020/08/17 08:19:20 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -487,6 +487,7 @@ class TestRunner:
 
         self.stats = []
         self.failed = []
+        self.missing = []
 
         self.timing = timing
         self.verbose = verbose
@@ -514,13 +515,13 @@ class TestRunner:
         else:
             print(f"{script[:68]:<72}", end=" ", flush=True)
         start = timer()
-        script = os.path.join(self.scriptdir, script)
-        if not os.path.exists(script):
-            # likely an outdated py3-tlsfuzzer package
+        scriptpath = os.path.join(self.scriptdir, script)
+        if not os.path.exists(scriptpath):
+            self.missing.append(script)
             print("MISSING")
             return
         test = subprocess.run(
-            ["python3", os.path.join(self.scriptdir, script)] + args,
+            ["python3", scriptpath] + args,
             capture_output=not self.verbose,
             text=True,
         )
@@ -558,6 +559,10 @@ class TestRunner:
         if self.failed:
             print("Failed tests:")
             print('\n'.join(self.failed))
+
+        if self.missing:
+            print("Missing tests (outdated package?):")
+            print('\n'.join(self.missing))
 
 class TlsServer:
     """ Spawns an s_server listening on localhost:port if necessary. """
