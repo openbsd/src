@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.14 2020/08/15 16:17:55 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.15 2020/08/17 08:01:53 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -514,6 +514,11 @@ class TestRunner:
         else:
             print(f"{script[:68]:<72}", end=" ", flush=True)
         start = timer()
+        script = os.path.join(self.scriptdir, script)
+        if not os.path.exists(script):
+            # likely an outdated py3-tlsfuzzer package
+            print("MISSING")
+            return
         test = subprocess.run(
             ["python3", os.path.join(self.scriptdir, script)] + args,
             capture_output=not self.verbose,
