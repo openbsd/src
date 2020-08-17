@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gre.c,v 1.31 2020/04/15 20:19:25 remi Exp $	*/
+/*	$OpenBSD: print-gre.c,v 1.32 2020/08/17 06:29:29 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -784,4 +784,101 @@ vxlan_print(const u_char *p, u_int length)
 	return;
 trunc:
 	printf(" [|vxlan]");
+}
+
+/*
+ * Geneve: Generic Network Virtualization Encapsulation
+ * draft-ietf-nvo3-geneve-16
+ */
+
+struct geneve_header {
+	uint16_t	flags;
+#define GENEVE_VER_SHIFT	14
+#define GENEVE_VER_MASK		(0x3U << GENEVE_VER_SHIFT)
+#define GENEVE_VER_0		(0x0U << GENEVE_VER_SHIFT)
+#define GENEVE_OPT_LEN_SHIFT	8
+#define GENEVE_OPT_LEN_MASK	(0x3fU << GENEVE_OPT_LEN_SHIFT)
+#define GENEVE_OPT_LEN_UNITS	4
+#define GENEVE_O		0x0080	/* Control packet */
+#define GENEVE_C		0x0040	/* Critical options present */
+	uint16_t		protocol;
+	uint32_t	vni;
+#define GENEVE_VNI_SHIFT	8
+#define GENEVE_VNI_MASK		(0xffffffU << GENEVE_VNI_SHIFT)
+#define GENEVE_VNI_RESERVED	(~GENEVE_VNI_MASK)
+};
+
+void
+geneve_print(const u_char *p, u_int length)
+{
+	const struct geneve_header *gh;
+	uint16_t flags, ver, optlen, proto;
+	uint32_t vni;
+	int l = snapend - p;
+
+	printf("geneve");
+
+	if (l < sizeof(*gh))
+		goto trunc;
+	if (length < sizeof(*gh)) {
+		printf(" ip truncated");
+		return;
+	}
+
+	gh = (const struct geneve_header *)p;
+
+	p += sizeof(*gh);
+	length -= sizeof(*gh);
+
+	flags = ntohs(gh->flags);
+	ver = flags & GENEVE_VER_MASK;
+	if (ver != GENEVE_VER_0) {
+		printf(" unknown version %u", ver >> GENEVE_VER_SHIFT);
+		return;
+	}
+
+	vni = (htonl(gh->vni) & GENEVE_VNI_MASK) >> GENEVE_VNI_SHIFT;
+	printf(" vni %u", vni);
+
+	if (flags & GENEVE_O)
+		printf(" Control");
+
+	if (flags & GENEVE_C)
+		printf(" Critical");
+
+	optlen = (flags & GENEVE_OPT_LEN_MASK) >> GENEVE_OPT_LEN_SHIFT;
+	optlen *= GENEVE_OPT_LEN_UNITS;
+
+	if (length < optlen)
+		goto trunc;
+
+	p += optlen;
+	length -= optlen;
+
+	printf(": ");
+
+	proto = ntohs(gh->protocol);
+	switch (proto) {
+	case ETHERTYPE_IP:
+		ip_print(p, length);
+		break;
+	case ETHERTYPE_IPV6:
+		ip6_print(p, length);
+		break;
+	case ETHERTYPE_MPLS:
+	case ETHERTYPE_MPLS_MCAST:
+		mpls_print(p, length);
+		break;
+	case ETHERTYPE_TRANSETHER:
+		ether_tryprint(p, length, 0);
+		break;
+
+	default:
+		printf("geneve-protocol-0x%x", proto);
+		break;
+	}
+
+	return;
+trunc:
+	printf(" [|geneve]");
 }

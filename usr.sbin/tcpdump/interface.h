@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.h,v 1.85 2020/06/21 05:00:17 dlg Exp $	*/
+/*	$OpenBSD: interface.h,v 1.86 2020/08/17 06:29:29 dlg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Id: interface.h,v 1.85 2020/06/21 05:00:17 dlg Exp $ (LBL)
+ * @(#) $Id: interface.h,v 1.86 2020/08/17 06:29:29 dlg Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -66,6 +66,7 @@ extern char *device;		/* as specified by -i  */
 #define PT_VXLAN	12	/* Virtual eXtensible Local Area Network */
 #define PT_ERSPAN	13	/* GRE ERSPAN Type I or II */
 #define PT_WIREGUARD	14	/* WireGuard tunnel */
+#define PT_GENEVE	15	/* Geneve */
 
 #ifndef min
 #define min(a,b) ((a)>(b)?(b):(a))
@@ -217,6 +218,7 @@ extern void ppp_ether_if_print(u_char *, const struct pcap_pkthdr *,
 	const u_char *);
 extern void gre_print(const u_char *, u_int);
 extern void vxlan_print(const u_char *, u_int);
+extern void geneve_print(const u_char *, u_int);
 extern void nsh_print(const u_char *, u_int);
 extern void nhrp_print(const u_char *, u_int);
 extern void icmp_print(const u_char *, u_int, const u_char *);
