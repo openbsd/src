@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.138 2020/06/08 04:47:58 jsg Exp $
+#	$OpenBSD: Makefile.i386,v 1.139 2020/08/17 17:23:59 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -38,7 +38,7 @@ CMACHFLAGS+=	-fno-stack-protector
 .endif
 .if ${IDENT:M-DSMALL_KERNEL}
 SORTR=		cat
-COPTS?=		-Oz -mtune=i486 -mno-retpoline
+COPTS?=		-Oz -mno-retpoline
 .elif ${COMPILER_VERSION:Mclang}
 CMACHFLAGS+=	-mretpoline
 .endif
