@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvppreg.h,v 1.5 2020/08/17 16:25:05 patrick Exp $	*/
+/*	$OpenBSD: if_mvppreg.h,v 1.6 2020/08/17 19:08:23 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -1699,13 +1699,20 @@
 #define MV_SMI_PHY_ADDRESS_PHYAD_MASK	(0x1F << MV_SMI_PHY_ADDRESS_PHYAD_OFFS)
 
 /* Marvell tag types */
-enum Mvpp2TagType {
+enum mvpp2_tag_type {
 	MVPP2_TAG_TYPE_NONE = 0,
 	MVPP2_TAG_TYPE_MH = 1,
 	MVPP2_TAG_TYPE_DSA = 2,
 	MVPP2_TAG_TYPE_EDSA = 3,
 	MVPP2_TAG_TYPE_VLAN = 4,
 	MVPP2_TAG_TYPE_LAST = 5
+};
+
+/* L3 cast enum */
+enum mvpp2_prs_l3_cast {
+	MVPP2_PRS_L3_UNI_CAST,
+	MVPP2_PRS_L3_MULTI_CAST,
+	MVPP2_PRS_L3_BROAD_CAST
 };
 
 /* Parser constants */
@@ -1763,7 +1770,7 @@ enum Mvpp2TagType {
 #define MVPP2_PE_DSA_TAGGED		(MVPP2_PRS_TCAM_SRAM_SIZE - 16)
 #define MVPP2_PE_DSA_UNTAGGED		(MVPP2_PRS_TCAM_SRAM_SIZE - 15)
 #define MVPP2_PE_ETYPE_EDSA_TAGGED	(MVPP2_PRS_TCAM_SRAM_SIZE - 14)
-#define MVPP2_PE_ETYPE_EDSA_UNTAGGED (MVPP2_PRS_TCAM_SRAM_SIZE - 13)
+#define MVPP2_PE_ETYPE_EDSA_UNTAGGED	(MVPP2_PRS_TCAM_SRAM_SIZE - 13)
 #define MVPP2_PE_ETYPE_DSA_TAGGED	(MVPP2_PRS_TCAM_SRAM_SIZE - 12)
 #define MVPP2_PE_ETYPE_DSA_UNTAGGED	(MVPP2_PRS_TCAM_SRAM_SIZE - 11)
 #define MVPP2_PE_MH_DEFAULT		(MVPP2_PRS_TCAM_SRAM_SIZE - 10)
@@ -1819,42 +1826,42 @@ enum Mvpp2TagType {
 #define MVPP2_PRS_SRAM_LU_GEN_BIT		111
 
 /* Sram result info bits assignment */
-#define MVPP2_PRS_RI_MAC_ME_MASK	0x1
-#define MVPP2_PRS_RI_DSA_MASK		0x2
-#define MVPP2_PRS_RI_VLAN_MASK		0xc
-#define MVPP2_PRS_RI_VLAN_NONE		~(BIT(2) | BIT(3))
-#define MVPP2_PRS_RI_VLAN_SINGLE	BIT(2)
-#define MVPP2_PRS_RI_VLAN_DOUBLE	BIT(3)
-#define MVPP2_PRS_RI_VLAN_TRIPLE	(BIT(2) | BIT(3))
-#define MVPP2_PRS_RI_CPU_CODE_MASK	0x70
-#define MVPP2_PRS_RI_CPU_CODE_RX_SPEC	BIT(4)
-#define MVPP2_PRS_RI_L2_CAST_MASK	0x600
-#define MVPP2_PRS_RI_L2_UCAST		~(BIT(9) | BIT(10))
-#define MVPP2_PRS_RI_L2_MCAST		BIT(9)
-#define MVPP2_PRS_RI_L2_BCAST		BIT(10)
-#define MVPP2_PRS_RI_PPPOE_MASK		0x800
-#define MVPP2_PRS_RI_L3_PROTO_MASK	0x7000
-#define MVPP2_PRS_RI_L3_UN		~(BIT(12) | BIT(13) | BIT(14))
-#define MVPP2_PRS_RI_L3_IP4		BIT(12)
-#define MVPP2_PRS_RI_L3_IP4_OPT		BIT(13)
-#define MVPP2_PRS_RI_L3_IP4_OTHER	(BIT(12) | BIT(13))
-#define MVPP2_PRS_RI_L3_IP6		BIT(14)
-#define MVPP2_PRS_RI_L3_IP6_EXT		(BIT(12) | BIT(14))
-#define MVPP2_PRS_RI_L3_ARP		(BIT(13) | BIT(14))
-#define MVPP2_PRS_RI_L3_ADDR_MASK	0x18000
-#define MVPP2_PRS_RI_L3_UCAST		~(BIT(15) | BIT(16))
-#define MVPP2_PRS_RI_L3_MCAST		BIT(15)
-#define MVPP2_PRS_RI_L3_BCAST		(BIT(15) | BIT(16))
-#define MVPP2_PRS_RI_IP_FRAG_MASK	0x20000
-#define MVPP2_PRS_RI_UDF3_MASK		0x300000
-#define MVPP2_PRS_RI_UDF3_RX_SPECIAL	BIT(21)
-#define MVPP2_PRS_RI_L4_PROTO_MASK	0x1c00000
-#define MVPP2_PRS_RI_L4_TCP		BIT(22)
-#define MVPP2_PRS_RI_L4_UDP		BIT(23)
-#define MVPP2_PRS_RI_L4_OTHER		(BIT(22) | BIT(23))
-#define MVPP2_PRS_RI_UDF7_MASK		0x60000000
-#define MVPP2_PRS_RI_UDF7_IP6_LITE	BIT(29)
-#define MVPP2_PRS_RI_DROP_MASK		0x80000000
+#define MVPP2_PRS_RI_MAC_ME_MASK		0x1
+#define MVPP2_PRS_RI_DSA_MASK			0x2
+#define MVPP2_PRS_RI_VLAN_MASK			0xc
+#define MVPP2_PRS_RI_VLAN_NONE			~(BIT(2) | BIT(3))
+#define MVPP2_PRS_RI_VLAN_SINGLE		BIT(2)
+#define MVPP2_PRS_RI_VLAN_DOUBLE		BIT(3)
+#define MVPP2_PRS_RI_VLAN_TRIPLE		(BIT(2) | BIT(3))
+#define MVPP2_PRS_RI_CPU_CODE_MASK		0x70
+#define MVPP2_PRS_RI_CPU_CODE_RX_SPEC		BIT(4)
+#define MVPP2_PRS_RI_L2_CAST_MASK		0x600
+#define MVPP2_PRS_RI_L2_UCAST			~(BIT(9) | BIT(10))
+#define MVPP2_PRS_RI_L2_MCAST			BIT(9)
+#define MVPP2_PRS_RI_L2_BCAST			BIT(10)
+#define MVPP2_PRS_RI_PPPOE_MASK			0x800
+#define MVPP2_PRS_RI_L3_PROTO_MASK		0x7000
+#define MVPP2_PRS_RI_L3_UN			~(BIT(12) | BIT(13) | BIT(14))
+#define MVPP2_PRS_RI_L3_IP4			BIT(12)
+#define MVPP2_PRS_RI_L3_IP4_OPT			BIT(13)
+#define MVPP2_PRS_RI_L3_IP4_OTHER		(BIT(12) | BIT(13))
+#define MVPP2_PRS_RI_L3_IP6			BIT(14)
+#define MVPP2_PRS_RI_L3_IP6_EXT			(BIT(12) | BIT(14))
+#define MVPP2_PRS_RI_L3_ARP			(BIT(13) | BIT(14))
+#define MVPP2_PRS_RI_L3_ADDR_MASK		0x18000
+#define MVPP2_PRS_RI_L3_UCAST			~(BIT(15) | BIT(16))
+#define MVPP2_PRS_RI_L3_MCAST			BIT(15)
+#define MVPP2_PRS_RI_L3_BCAST			(BIT(15) | BIT(16))
+#define MVPP2_PRS_RI_IP_FRAG_MASK		0x20000
+#define MVPP2_PRS_RI_UDF3_MASK			0x300000
+#define MVPP2_PRS_RI_UDF3_RX_SPECIAL		BIT(21)
+#define MVPP2_PRS_RI_L4_PROTO_MASK		0x1c00000
+#define MVPP2_PRS_RI_L4_TCP			BIT(22)
+#define MVPP2_PRS_RI_L4_UDP			BIT(23)
+#define MVPP2_PRS_RI_L4_OTHER			(BIT(22) | BIT(23))
+#define MVPP2_PRS_RI_UDF7_MASK			0x60000000
+#define MVPP2_PRS_RI_UDF7_IP6_LITE		BIT(29)
+#define MVPP2_PRS_RI_DROP_MASK			0x80000000
 
 /* Sram additional info bits assignment */
 #define MVPP2_PRS_IPV4_DIP_AI_BIT		BIT(0)
@@ -1873,7 +1880,7 @@ enum Mvpp2TagType {
 #define MVPP2_PRS_DSA		0
 
 /* MAC entries, shadow udf */
-enum Mvpp2PrsUdf {
+enum mvpp2_prs_udf {
 	MVPP2_PRS_UDF_MAC_DEF,
 	MVPP2_PRS_UDF_MAC_RANGE,
 	MVPP2_PRS_UDF_L2_DEF,
@@ -1882,7 +1889,7 @@ enum Mvpp2PrsUdf {
 };
 
 /* Lookup ID */
-enum Mvpp2PrsLookup {
+enum mvpp2_prs_lookup {
 	MVPP2_PRS_LU_MH,
 	MVPP2_PRS_LU_MAC,
 	MVPP2_PRS_LU_DSA,
@@ -1893,13 +1900,6 @@ enum Mvpp2PrsLookup {
 	MVPP2_PRS_LU_IP6,
 	MVPP2_PRS_LU_FLOWS,
 	MVPP2_PRS_LU_LAST,
-};
-
-/* L3 cast enum */
-enum Mvpp2PrsL3Cast {
-	MVPP2_PRS_L3_UNI_CAST,
-	MVPP2_PRS_L3_MULTI_CAST,
-	MVPP2_PRS_L3_BROAD_CAST
 };
 
 /* Classifier constants */
@@ -2022,55 +2022,6 @@ typedef struct {
 #define MVPP2_B_HDR_INFO_IS_LAST(info)	((info & MVPP2_B_HDR_INFO_LAST_MASK) >> MVPP2_B_HDR_INFO_LAST_OFFS)
 
 /* SerDes */
-#define MVPP2_SFI_LANE_COUNT 1
-
-/* Net Complex */
-enum MvNetcTopology {
-	MV_NETC_GE_MAC0_RXAUI_L23 = BIT(0),
-	MV_NETC_GE_MAC0_RXAUI_L45 = BIT(1),
-	MV_NETC_GE_MAC0_XAUI = BIT(2),
-	MV_NETC_GE_MAC2_SGMII = BIT(3),
-	MV_NETC_GE_MAC3_SGMII = BIT(4),
-	MV_NETC_GE_MAC3_RGMII = BIT(5),
-};
-
-enum MvNetcPhase {
-	MV_NETC_FIRST_PHASE,
-	MV_NETC_SECOND_PHASE,
-};
-
-enum MvNetcSgmiiXmiMode {
-	MV_NETC_GBE_SGMII,
-	MV_NETC_GBE_XMII,
-};
-
-enum MvNetcMiiMode {
-	MV_NETC_GBE_RGMII,
-	MV_NETC_GBE_MII,
-};
-
-enum MvNetcLanes {
-	MV_NETC_LANE_23,
-	MV_NETC_LANE_45,
-};
-
-/* Port related */
-enum MvReset {
-	RESET,
-	UNRESET
-};
-
-enum Mvpp2Command {
-	MVPP2_START,	/* Start */
-	MVPP2_STOP,	/* Stop */
-	MVPP2_PAUSE,	/* Pause */
-	MVPP2_RESTART	/* Restart */
-};
-
-enum MvPortDuplex {
-	MV_PORT_DUPLEX_AN,
-	MV_PORT_DUPLEX_HALF,
-	MV_PORT_DUPLEX_FULL
-};
+#define MVPP2_SFI_LANE_COUNT		1
 
 #endif /* __MVPP2_LIB_HW__ */
