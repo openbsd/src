@@ -1,4 +1,4 @@
-/* $OpenBSD: armreg.h,v 1.11 2020/06/05 22:14:25 kettenis Exp $ */
+/* $OpenBSD: armreg.h,v 1.12 2020/08/17 08:12:18 kettenis Exp $ */
 /*-
  * Copyright (c) 2013, 2014 Andrew Turner
  * Copyright (c) 2015 The FreeBSD Foundation
@@ -451,6 +451,7 @@
 #define	SCTLR_nTWI	0x00010000
 #define	SCTLR_nTWE	0x00040000
 #define	SCTLR_WXN	0x00080000
+#define	SCTLR_SPAN	0x00800000
 #define	SCTLR_EOE	0x01000000
 #define	SCTLR_EE	0x02000000
 #define	SCTLR_UCI	0x04000000
@@ -478,6 +479,7 @@
 #define	PSR_D		0x00000200
 #define	PSR_IL		0x00100000
 #define	PSR_SS		0x00200000
+#define	PSR_PAN		0x00400000
 #define	PSR_V		0x10000000
 #define	PSR_C		0x20000000
 #define	PSR_Z		0x40000000

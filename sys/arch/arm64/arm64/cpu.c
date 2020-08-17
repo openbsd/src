@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.38 2020/06/04 21:18:16 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.39 2020/08/17 08:12:17 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -321,6 +321,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	struct fdt_attach_args *faa = aux;
 	struct cpu_info *ci;
 	uint64_t mpidr = READ_SPECIALREG(mpidr_el1);
+	uint64_t id_aa64mmfr1, sctlr;
 	uint32_t opp;
 
 	KASSERT(faa->fa_nreg > 0);
@@ -391,6 +392,14 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		if (OF_getproplen(ci->ci_node, "clocks") > 0) {
 			cpu_node = ci->ci_node;
 			cpu_cpuspeed = cpu_clockspeed;
+		}
+
+		/* Enable PAN. */
+		id_aa64mmfr1 = READ_SPECIALREG(id_aa64mmfr1_el1);
+		if (ID_AA64MMFR1_PAN(id_aa64mmfr1) != ID_AA64MMFR1_PAN_NONE) {
+			sctlr = READ_SPECIALREG(sctlr_el1);
+			sctlr &= ~SCTLR_SPAN;
+			WRITE_SPECIALREG(sctlr_el1, sctlr);
 		}
 
 		/* Initialize debug registers. */
@@ -522,6 +531,7 @@ cpu_boot_secondary(struct cpu_info *ci)
 void
 cpu_start_secondary(struct cpu_info *ci)
 {
+	uint64_t id_aa64mmfr1, sctlr;
 	uint64_t tcr;
 	int s;
 
@@ -543,6 +553,14 @@ cpu_start_secondary(struct cpu_info *ci)
 	tcr |= TCR_T0SZ(64 - USER_SPACE_BITS);
 	tcr |= TCR_A1;
 	WRITE_SPECIALREG(tcr_el1, tcr);
+
+	/* Enable PAN. */
+	id_aa64mmfr1 = READ_SPECIALREG(id_aa64mmfr1_el1);
+	if (ID_AA64MMFR1_PAN(id_aa64mmfr1) != ID_AA64MMFR1_PAN_NONE) {
+		sctlr = READ_SPECIALREG(sctlr_el1);
+		sctlr &= ~SCTLR_SPAN;
+		WRITE_SPECIALREG(sctlr_el1, sctlr);
+	}
 
 	/* Initialize debug registers. */
 	WRITE_SPECIALREG(mdscr_el1, DBG_MDSCR_TDCC);
