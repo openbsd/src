@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.67 2020/08/18 13:38:24 visa Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.68 2020/08/18 13:41:49 visa Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -95,6 +95,7 @@ const struct filterops logread_filtops = {
 
 int dosendsyslog(struct proc *, const char *, size_t, int, enum uio_seg);
 void logtick(void *);
+size_t msgbuf_getlen(struct msgbuf *);
 
 void
 initmsgbuf(caddr_t buf, size_t bufsize)
@@ -160,6 +161,20 @@ msgbuf_putchar(struct msgbuf *mbp, const char c)
 		mbp->msg_bufd++;
 	}
 	splx(s);
+}
+
+size_t
+msgbuf_getlen(struct msgbuf *mbp)
+{
+	long len;
+	int s;
+
+	s = splhigh();
+	len = mbp->msg_bufx - mbp->msg_bufr;
+	if (len < 0)
+		len += mbp->msg_bufs;
+	splx(s);
+	return (len);
 }
 
 int
@@ -296,14 +311,10 @@ filt_logrdetach(struct knote *kn)
 int
 filt_logread(struct knote *kn, long hint)
 {
-	struct  msgbuf *p = (struct  msgbuf *)kn->kn_hook;
-	int s, event = 0;
+	struct msgbuf *mbp = kn->kn_hook;
 
-	s = splhigh();
-	kn->kn_data = (int)(p->msg_bufx - p->msg_bufr);
-	event = (p->msg_bufx != p->msg_bufr);
-	splx(s);
-	return (event);
+	kn->kn_data = msgbuf_getlen(mbp);
+	return (kn->kn_data != 0);
 }
 
 void
@@ -356,19 +367,13 @@ int
 logioctl(dev_t dev, u_long com, caddr_t data, int flag, struct proc *p)
 {
 	struct file *fp;
-	long l;
-	int error, s;
+	int error;
 
 	switch (com) {
 
 	/* return number of characters immediately available */
 	case FIONREAD:
-		s = splhigh();
-		l = msgbufp->msg_bufx - msgbufp->msg_bufr;
-		splx(s);
-		if (l < 0)
-			l += msgbufp->msg_bufs;
-		*(int *)data = l;
+		*(int *)data = (int)msgbuf_getlen(msgbufp);
 		break;
 
 	case FIONBIO:
