@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.374 2020/08/01 23:41:55 gnezdo Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.375 2020/08/18 04:48:11 gnezdo Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -877,6 +877,13 @@ sysctl_int_lower(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int *va
 int
 sysctl_int(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int *valp)
 {
+	return (sysctl_int_bounded(oldp, oldlenp, newp, newlen, valp, 0, 0));
+}
+
+int
+sysctl_int_bounded(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int *valp,
+    int minimum, int maximum)
+{
 	int error = 0;
 	int val;
 
@@ -890,8 +897,12 @@ sysctl_int(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int *valp)
 		error = copyout(&val, oldp, sizeof(int));
 	if (error == 0 && newp)
 		error = copyin(newp, &val, sizeof(int));
-	if (error == 0)
+	if (error != 0)
+		return (error);
+	if (minimum == maximum || (minimum <= val && val <= maximum))
 		*valp = val;
+	else
+		error = EINVAL;
 	return (error);
 }
 
@@ -925,6 +936,26 @@ sysctl_int_arr(int **valpp, u_int valplen, int *name, u_int namelen, void *oldp,
 	if (name[0] < 0 || name[0] >= valplen || valpp[name[0]] == NULL)
 		return (EOPNOTSUPP);
 	return (sysctl_int(oldp, oldlenp, newp, newlen, valpp[name[0]]));
+}
+
+/*
+ * Array of bounded integer values.
+ */
+int
+sysctl_bounded_arr(const struct sysctl_bounded_args *valpp, u_int valplen,
+    int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
+    size_t newlen)
+{
+	u_int i;
+	if (namelen != 1)
+		return (ENOTDIR);
+	for (i = 0; i < valplen; ++i) {
+		if (valpp[i].mib == name[0]) {
+			return (sysctl_int_bounded(oldp, oldlenp, newp, newlen,
+			    valpp[i].var, valpp[i].minimum, valpp[i].maximum));
+		}
+	}
+	return (EOPNOTSUPP);
 }
 
 /*

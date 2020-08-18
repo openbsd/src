@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.207 2020/08/01 23:41:56 gnezdo Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.208 2020/08/18 04:48:12 gnezdo Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -981,6 +981,17 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 #endif	/* DEBUG */
 
 /*
+ * Exported sysctl variable with valid bounds. Both bounds are inclusive to
+ * allow full range of values.
+ */
+struct sysctl_bounded_args {
+	int mib;     /* identifier shared with userspace as a CTL_ #define */
+	int *var;    /* never NULL */
+	int minimum; /* checking is disabled if minimum == maximum  */
+	int maximum;
+};
+
+/*
  * Internal sysctl function calling convention:
  *
  *	(*sysctlfn)(name, namelen, oldval, oldlenp, newval, newlen);
@@ -992,9 +1003,12 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 typedef int (sysctlfn)(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 
 int sysctl_int(void *, size_t *, void *, size_t, int *);
+int sysctl_int_bounded(void *, size_t *, void *, size_t, int *, int, int);
 int sysctl_int_lower(void *, size_t *, void *, size_t, int *);
 int sysctl_rdint(void *, size_t *, void *, int);
 int sysctl_int_arr(int **, u_int, int*, u_int, void *, size_t *, void *, size_t);
+int sysctl_bounded_arr(const struct sysctl_bounded_args *, u_int,
+    int *, u_int, void *, size_t *, void *, size_t);
 int sysctl_quad(void *, size_t *, void *, size_t, int64_t *);
 int sysctl_rdquad(void *, size_t *, void *, int64_t);
 int sysctl_string(void *, size_t *, void *, size_t, char *, size_t);
