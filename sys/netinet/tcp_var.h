@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.134 2019/07/12 19:43:51 bluhm Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.135 2020/08/18 05:21:21 gnezdo Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -494,35 +494,6 @@ struct	tcpstat {
 	{ "synuselimit", 	CTLTYPE_INT }, \
 	{ "rootonly", CTLTYPE_STRUCT }, \
 	{ "synhashsize", 	CTLTYPE_INT }, \
-}
-
-#define	TCPCTL_VARS { \
-	NULL, \
-	&tcp_do_rfc1323, \
-	&tcptv_keep_init, \
-	&tcp_keepidle, \
-	&tcp_keepintvl, \
-	NULL, \
-	NULL, \
-	NULL, \
-	NULL, \
-	NULL, \
-	NULL, \
-	&tcp_mssdflt, \
-	&tcp_rst_ppslim, \
-	&tcp_ack_on_push, \
-	NULL, \
-	&tcp_syn_cache_limit, \
-	&tcp_syn_bucket_limit, \
-	&tcp_do_rfc3390, \
-	NULL, \
-	NULL, \
-	NULL, \
-	NULL, \
-	NULL, \
-	NULL, \
-	NULL, \
-	NULL \
 }
 
 struct tcp_ident_mapping {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.174 2020/08/01 23:41:55 gnezdo Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.175 2020/08/18 05:21:21 gnezdo Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -110,7 +110,22 @@ u_int	tcp_sendspace = TCP_SENDSPACE;
 u_int	tcp_recvspace = TCP_RECVSPACE;
 u_int	tcp_autorcvbuf_inc = 16 * 1024;
 
-int *tcpctl_vars[TCPCTL_MAXID] = TCPCTL_VARS;
+const struct sysctl_bounded_args tcpctl_vars[] = {
+	{ TCPCTL_RFC1323, &tcp_do_rfc1323, 0, 1 },
+	{ TCPCTL_KEEPINITTIME, &tcptv_keep_init, 1, 3*TCPTV_KEEP_INIT },
+	{ TCPCTL_KEEPIDLE, &tcp_keepidle, 1, 5*TCPTV_KEEP_IDLE },
+	{ TCPCTL_KEEPINTVL, &tcp_keepintvl, 1, 3*TCPTV_KEEPINTVL },
+	{ TCPCTL_SACK, &tcp_do_sack, 0, 1 },
+	{ TCPCTL_MSSDFLT, &tcp_mssdflt, TCP_MSS, 65535 },
+	{ TCPCTL_RSTPPSLIMIT, &tcp_rst_ppslim, 1, 1000*1000 },
+	{ TCPCTL_ACK_ON_PUSH, &tcp_ack_on_push, 0, 1 },
+#ifdef TCP_ECN
+	{ TCPCTL_ECN, &tcp_do_ecn, 0, 1 },
+#endif
+	{ TCPCTL_SYN_CACHE_LIMIT, &tcp_syn_cache_limit, 1, 1000*1000 },
+	{ TCPCTL_SYN_BUCKET_LIMIT, &tcp_syn_bucket_limit, 1, INT_MAX },
+	{ TCPCTL_RFC3390, &tcp_do_rfc3390, 0, 2 },
+};
 
 struct	inpcbtable tcbtable;
 
@@ -981,13 +996,6 @@ tcp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (ENOTDIR);
 
 	switch (name[0]) {
-	case TCPCTL_SACK:
-		NET_LOCK();
-		error = sysctl_int(oldp, oldlenp, newp, newlen,
-		    &tcp_do_sack);
-		NET_UNLOCK();
-		return (error);
-
 	case TCPCTL_SLOWHZ:
 		return (sysctl_rdint(oldp, oldlenp, newp, PR_SLOWHZ));
 
@@ -1026,14 +1034,6 @@ tcp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		NET_UNLOCK();
 		return (error);
 
-#ifdef TCP_ECN
-	case TCPCTL_ECN:
-		NET_LOCK();
-		error = sysctl_int(oldp, oldlenp, newp, newlen,
-		   &tcp_do_ecn);
-		NET_UNLOCK();
-		return (error);
-#endif
 	case TCPCTL_REASS_LIMIT:
 		NET_LOCK();
 		nval = tcp_reass_limit;
@@ -1060,19 +1060,6 @@ tcp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 
 	case TCPCTL_STATS:
 		return (tcp_sysctl_tcpstat(oldp, oldlenp, newp));
-
-	case TCPCTL_SYN_BUCKET_LIMIT:
-		NET_LOCK();
-		nval = tcp_syn_bucket_limit;
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &nval);
-		if (!error && nval != tcp_syn_bucket_limit) {
-			if (nval > 0)
-				tcp_syn_bucket_limit = nval;
-			else
-				error = EINVAL;
-		}
-		NET_UNLOCK();
-		return (error);
 
 	case TCPCTL_SYN_USE_LIMIT:
 		NET_LOCK();
@@ -1116,7 +1103,7 @@ tcp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 
 	default:
 		NET_LOCK();
-		error = sysctl_int_arr(tcpctl_vars, nitems(tcpctl_vars), name,
+		error = sysctl_bounded_arr(tcpctl_vars, nitems(tcpctl_vars), name,
 		     namelen, oldp, oldlenp, newp, newlen);
 		NET_UNLOCK();
 		return (error);
