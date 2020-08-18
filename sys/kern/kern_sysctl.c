@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.375 2020/08/18 04:48:11 gnezdo Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.376 2020/08/18 18:19:30 gnezdo Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -881,8 +881,8 @@ sysctl_int(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int *valp)
 }
 
 int
-sysctl_int_bounded(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int *valp,
-    int minimum, int maximum)
+sysctl_int_bounded(void *oldp, size_t *oldlenp, void *newp, size_t newlen,
+    int *valp, int minimum, int maximum)
 {
 	int error = 0;
 	int val;
@@ -897,7 +897,7 @@ sysctl_int_bounded(void *oldp, size_t *oldlenp, void *newp, size_t newlen, int *
 		error = copyout(&val, oldp, sizeof(int));
 	if (error == 0 && newp)
 		error = copyin(newp, &val, sizeof(int));
-	if (error != 0)
+	if (error)
 		return (error);
 	if (minimum == maximum || (minimum <= val && val <= maximum))
 		*valp = val;

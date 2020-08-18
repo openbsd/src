@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.175 2020/08/18 05:21:21 gnezdo Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.176 2020/08/18 18:19:30 gnezdo Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -112,17 +112,17 @@ u_int	tcp_autorcvbuf_inc = 16 * 1024;
 
 const struct sysctl_bounded_args tcpctl_vars[] = {
 	{ TCPCTL_RFC1323, &tcp_do_rfc1323, 0, 1 },
-	{ TCPCTL_KEEPINITTIME, &tcptv_keep_init, 1, 3*TCPTV_KEEP_INIT },
-	{ TCPCTL_KEEPIDLE, &tcp_keepidle, 1, 5*TCPTV_KEEP_IDLE },
-	{ TCPCTL_KEEPINTVL, &tcp_keepintvl, 1, 3*TCPTV_KEEPINTVL },
+	{ TCPCTL_KEEPINITTIME, &tcptv_keep_init, 1, 3 * TCPTV_KEEP_INIT },
+	{ TCPCTL_KEEPIDLE, &tcp_keepidle, 1, 5 * TCPTV_KEEP_IDLE },
+	{ TCPCTL_KEEPINTVL, &tcp_keepintvl, 1, 3 * TCPTV_KEEPINTVL },
 	{ TCPCTL_SACK, &tcp_do_sack, 0, 1 },
 	{ TCPCTL_MSSDFLT, &tcp_mssdflt, TCP_MSS, 65535 },
-	{ TCPCTL_RSTPPSLIMIT, &tcp_rst_ppslim, 1, 1000*1000 },
+	{ TCPCTL_RSTPPSLIMIT, &tcp_rst_ppslim, 1, 1000 * 1000 },
 	{ TCPCTL_ACK_ON_PUSH, &tcp_ack_on_push, 0, 1 },
 #ifdef TCP_ECN
 	{ TCPCTL_ECN, &tcp_do_ecn, 0, 1 },
 #endif
-	{ TCPCTL_SYN_CACHE_LIMIT, &tcp_syn_cache_limit, 1, 1000*1000 },
+	{ TCPCTL_SYN_CACHE_LIMIT, &tcp_syn_cache_limit, 1, 1000 * 1000 },
 	{ TCPCTL_SYN_BUCKET_LIMIT, &tcp_syn_bucket_limit, 1, INT_MAX },
 	{ TCPCTL_RFC3390, &tcp_do_rfc3390, 0, 2 },
 };
