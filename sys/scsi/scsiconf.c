@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.235 2020/08/14 16:45:48 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.236 2020/08/18 16:30:38 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -762,12 +762,11 @@ scsi_detach(struct scsibus_softc *sb, int target, int lun, int flags)
 int
 scsi_detach_bus(struct scsibus_softc *sb, int flags)
 {
-	struct scsi_link	*link;
+	struct scsi_link	*link, *tmp;
 	int			 r, rv = 0;
 
 	/* Detach all links from bus. */
-	while (!SLIST_EMPTY(&sb->sc_link_list)) {
-		link = SLIST_FIRST(&sb->sc_link_list);
+	SLIST_FOREACH_SAFE(link, &sb->sc_link_list, bus_list, tmp) {
 		r = scsi_detach_link(link, flags);
 		if (r != 0 && r != ENXIO)
 			rv = r;
