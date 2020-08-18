@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.67 2020/08/16 09:09:16 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.68 2020/08/18 21:02:49 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -220,7 +220,7 @@ ca_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_OCSP_FD:
 		ocsp_receive_fd(env, imsg);
 		break;
-	case IMSG_OCSP_URL:
+	case IMSG_OCSP_CFG:
 		config_getocsp(env, imsg);
 		break;
 	case IMSG_PRIVKEY:

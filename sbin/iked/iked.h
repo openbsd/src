@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.156 2020/08/16 09:09:17 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.157 2020/08/18 21:02:49 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -713,6 +713,8 @@ struct iked {
 
 	struct iked_ocsp_requests	 sc_ocsp;
 	char				*sc_ocsp_url;
+	long				 sc_ocsp_tolerate;
+	long				 sc_ocsp_maxage;
 
 	struct iked_addrpool		 sc_addrpool;
 	struct iked_addrpool6		 sc_addrpool6;

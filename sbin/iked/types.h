@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.35 2020/04/09 19:55:20 tobhe Exp $	*/
+/*	$OpenBSD: types.h,v 1.36 2020/08/18 21:02:49 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -117,7 +117,7 @@ enum imsg_type {
 	IMSG_CERTVALID,
 	IMSG_CERTINVALID,
 	IMSG_OCSP_FD,
-	IMSG_OCSP_URL,
+	IMSG_OCSP_CFG,
 	IMSG_AUTH,
 	IMSG_PRIVKEY,
 	IMSG_PUBKEY

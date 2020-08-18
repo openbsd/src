@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.72 2020/07/21 12:33:02 kn Exp $
+.\" $OpenBSD: iked.conf.5,v 1.73 2020/08/18 21:02:49 tobhe Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 21 2020 $
+.Dd $Mdocdate: August 18 2020 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -163,13 +163,30 @@ Currently
 only supports MOBIKE when acting as a responder.
 .It Ic set nomobike
 Disables MOBIKE support.
-.It Ic set ocsp Ar URL
+.It Ic set ocsp Ar URL Op Ic tolerate Ar time Op Ic maxage Ar time
 Enable OCSP and set the URL of the OCSP responder.
 Please note that the matching responder and issuer certificates
 have to be placed in
 .Pa /etc/iked/ocsp/responder.crt
 and
 .Pa /etc/iked/ocsp/issuer.crt .
+.Pp
+The optional
+.Ic tolerate
+parameter specifies how much the OCSP reponse attribute
+.Sq thisUpdate
+may be in the future and how much
+.Sq nextUpdate
+may be in the past, with respect to the local time.
+The optional
+.Ic maxage
+parameter specifies how much
+.Sq thisUpdate
+may be in the past.
+If
+.Ic tolerate
+is set to 0 then the times are not verified at all.
+This is the default setting.
 .It Ic user Ar name password
 .Xr iked 8
 supports user-based authentication by tunneling the Extensible

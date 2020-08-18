@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.60 2020/08/16 09:09:17 tobhe Exp $	*/
+/*	$OpenBSD: config.c,v 1.61 2020/08/18 21:02:49 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -904,25 +904,61 @@ config_getfragmentation(struct iked *env, struct imsg *imsg)
 int
 config_setocsp(struct iked *env)
 {
+	struct iovec		 iov[3];
+	int			 iovcnt = 0;
+
 	if (env->sc_opts & IKED_OPT_NOACTION)
 		return (0);
-	proc_compose(&env->sc_ps, PROC_CERT,
-	    IMSG_OCSP_URL, env->sc_ocsp_url,
-	    env->sc_ocsp_url ? strlen(env->sc_ocsp_url) : 0);
 
-	return (0);
+	iov[0].iov_base = &env->sc_ocsp_tolerate;
+	iov[0].iov_len = sizeof(env->sc_ocsp_tolerate);
+	iovcnt++;
+	iov[1].iov_base = &env->sc_ocsp_maxage;
+	iov[1].iov_len = sizeof(env->sc_ocsp_maxage);
+	iovcnt++;
+	if (env->sc_ocsp_url) {
+		iov[2].iov_base = env->sc_ocsp_url;
+		iov[2].iov_len = strlen(env->sc_ocsp_url);
+		iovcnt++;
+	}
+	return (proc_composev(&env->sc_ps, PROC_CERT, IMSG_OCSP_CFG,
+	    iov, iovcnt));
 }
 
 int
 config_getocsp(struct iked *env, struct imsg *imsg)
 {
+	size_t			 have, need;
+	u_int8_t		*ptr;
+
 	free(env->sc_ocsp_url);
-	if (IMSG_DATA_SIZE(imsg) > 0)
-		env->sc_ocsp_url = get_string(imsg->data, IMSG_DATA_SIZE(imsg));
+	ptr = (u_int8_t *)imsg->data;
+	have = IMSG_DATA_SIZE(imsg);
+
+	/* get tolerate */
+	need = sizeof(env->sc_ocsp_tolerate);
+	if (have < need)
+		fatalx("bad 'tolerate' length imsg received");
+	memcpy(&env->sc_ocsp_tolerate, ptr, need);
+	ptr += need;
+	have -= need;
+
+	/* get maxage */
+	need = sizeof(env->sc_ocsp_maxage);
+	if (have < need)
+		fatalx("bad 'maxage' length imsg received");
+	memcpy(&env->sc_ocsp_maxage, ptr, need);
+	ptr += need;
+	have -= need;
+
+	/* get url */
+	if (have > 0)
+		env->sc_ocsp_url = get_string(ptr, have);
 	else
 		env->sc_ocsp_url = NULL;
-	log_debug("%s: ocsp_url %s", __func__,
-	    env->sc_ocsp_url ? env->sc_ocsp_url : "none");
+	log_debug("%s: ocsp_url %s tolerate %ld maxage %ld", __func__,
+	    env->sc_ocsp_url ? env->sc_ocsp_url : "none",
+	    env->sc_ocsp_tolerate, env->sc_ocsp_maxage);
 	return (0);
 }
 

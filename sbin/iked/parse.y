@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.105 2020/08/14 16:09:32 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.106 2020/08/18 21:02:49 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -100,6 +100,8 @@ static int		 decouple = 0;
 static int		 mobike = 1;
 static int		 fragmentation = 0;
 static char		*ocsp_url = NULL;
+static long		 ocsp_tolerate = 0;
+static long		 ocsp_maxage = -1;
 
 struct ipsec_xf {
 	const char	*name;
@@ -441,6 +443,7 @@ typedef struct {
 %token	INCLUDE LIFETIME BYTES INET INET6 QUICK SKIP DEFAULT
 %token	IPCOMP OCSP IKELIFETIME MOBIKE NOMOBIKE RDOMAIN
 %token	FRAGMENTATION NOFRAGMENTATION
+%token	TOLERATE MAXAGE
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.string>		string
@@ -511,6 +514,21 @@ set		: SET ACTIVE	{ passive = 0; }
 				yyerror("cannot set ocsp_url");
 				YYERROR;
 			}
+		}
+		| SET OCSP STRING TOLERATE time_spec {
+			if ((ocsp_url = strdup($3)) == NULL) {
+				yyerror("cannot set ocsp_url");
+				YYERROR;
+			}
+			ocsp_tolerate = $5;
+		}
+		| SET OCSP STRING TOLERATE time_spec MAXAGE time_spec {
+			if ((ocsp_url = strdup($3)) == NULL) {
+				yyerror("cannot set ocsp_url");
+				YYERROR;
+			}
+			ocsp_tolerate = $5;
+			ocsp_maxage = $7;
 		}
 		;
 
@@ -1291,6 +1309,7 @@ lookup(char *s)
 		{ "ipcomp",		IPCOMP },
 		{ "lifetime",		LIFETIME },
 		{ "local",		LOCAL },
+		{ "maxage",		MAXAGE },
 		{ "mobike",		MOBIKE },
 		{ "name",		NAME },
 		{ "noesn",		NOESN },
@@ -1313,6 +1332,7 @@ lookup(char *s)
 		{ "tap",		TAP },
 		{ "tcpmd5",		TCPMD5 },
 		{ "to",			TO },
+		{ "tolerate",		TOLERATE },
 		{ "transport",		TRANSPORT },
 		{ "tunnel",		TUNNEL },
 		{ "user",		USER }
@@ -1695,6 +1715,9 @@ parse_config(const char *filename, struct iked *x_env)
 	free(ocsp_url);
 
 	mobike = 1;
+	ocsp_tolerate = 0;
+	ocsp_url = NULL;
+	ocsp_maxage = -1;
 	fragmentation = 0;
 	decouple = passive = 0;
 	ocsp_url = NULL;
@@ -1711,6 +1734,8 @@ parse_config(const char *filename, struct iked *x_env)
 	env->sc_mobike = mobike;
 	env->sc_frag = fragmentation;
 	env->sc_ocsp_url = ocsp_url;
+	env->sc_ocsp_tolerate = ocsp_tolerate;
+	env->sc_ocsp_maxage = ocsp_maxage;
 
 	if (!rules)
 		log_warnx("%s: no valid configuration rules found",

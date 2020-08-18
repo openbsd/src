@@ -1,4 +1,4 @@
-/*	$OpenBSD: ocsp.c,v 1.11 2020/08/17 16:49:28 tobhe Exp $ */
+/*	$OpenBSD: ocsp.c,v 1.12 2020/08/18 21:02:49 tobhe Exp $ */
 
 /*
  * Copyright (c) 2014 Markus Friedl
@@ -416,14 +416,13 @@ ocsp_callback(int fd, short event, void *arg)
 void
 ocsp_parse_response(struct iked_ocsp *ocsp, OCSP_RESPONSE *resp)
 {
-	int status;
-	X509_STORE *store = NULL;
-	STACK_OF(X509) *verify_other = NULL;
-	OCSP_BASICRESP *bs = NULL;
-	int verify_flags = 0;
-	ASN1_GENERALIZEDTIME *rev, *thisupd, *nextupd;
-	int reason = 0;
-	int error = 1;
+	struct iked		*env = ocsp->ocsp_env;
+	X509_STORE		*store = NULL;
+	STACK_OF(X509)		*verify_other = NULL;
+	OCSP_BASICRESP		*bs = NULL;
+	ASN1_GENERALIZEDTIME	*rev, *thisupd, *nextupd;
+	int			 reason = 0, error = 1, verify_flags = 0;
+	int			 status;
 
 	if (!resp) {
 		log_warnx("%s: error querying OCSP responder", __func__);
@@ -475,8 +474,14 @@ ocsp_parse_response(struct iked_ocsp *ocsp, OCSP_RESPONSE *resp)
 		log_warnx("%s: no status found", __func__);
 		goto done;
 	}
+	if (env->sc_ocsp_tolerate &&
+	    !OCSP_check_validity(thisupd, nextupd, env->sc_ocsp_tolerate,
+	    env->sc_ocsp_maxage)) {
+		log_warnx("%s: status times invalid", __func__);
+		ca_sslerror(__func__);
+		goto done;
+	}
 	log_debug("%s: status: %s", __func__, OCSP_cert_status_str(status));
-
 	if (status == V_OCSP_CERTSTATUS_GOOD)
 		error = 0;
 
