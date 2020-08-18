@@ -20,7 +20,7 @@ ndelay(unsigned long nsecs)
 static inline void
 usleep_range(unsigned long min, unsigned long max)
 {
-	DELAY(min);
+	DELAY((min + max) / 2);
 }
 
 static inline void
