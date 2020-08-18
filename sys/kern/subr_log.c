@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.66 2020/04/07 13:27:51 visa Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.67 2020/08/18 13:38:24 visa Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -151,7 +151,6 @@ msgbuf_putchar(struct msgbuf *mbp, const char c)
 
 	s = splhigh();
 	mbp->msg_bufc[mbp->msg_bufx++] = c;
-	mbp->msg_bufl = lmin(mbp->msg_bufl+1, mbp->msg_bufs);
 	if (mbp->msg_bufx < 0 || mbp->msg_bufx >= mbp->msg_bufs)
 		mbp->msg_bufx = 0;
 	/* If the buffer is full, keep the most recent data. */
