@@ -52,11 +52,11 @@ poll: Interrupted system call
 	select read write, timeout=-1
 		1 fd(s) ready, writeable
 	select read, timeout=-1
-		0 fd(s) ready
+select: Interrupted system call
 	select write, timeout=-1
 		1 fd(s) ready, writeable
 	select (none), timeout=-1
-		0 fd(s) ready
+select: Interrupted system call
 
 Testing full FIFO:
 	poll POLLIN|POLLOUT, timeout=-1
@@ -74,7 +74,7 @@ poll: Interrupted system call
 	select write, timeout=-1
 		1 fd(s) ready, writeable
 	select (none), timeout=-1
-		0 fd(s) ready
+select: Interrupted system call
 	received 'test' from FIFO
 
 Opened fifo fi.fo.fum (nonblocking)
@@ -130,11 +130,11 @@ poll: Interrupted system call
 	select read write, timeout=-1
 		1 fd(s) ready, writeable
 	select read, timeout=-1
-		0 fd(s) ready
+select: Interrupted system call
 	select write, timeout=-1
 		1 fd(s) ready, writeable
 	select (none), timeout=-1
-		0 fd(s) ready
+select: Interrupted system call
 
 Testing full FIFO:
 	poll POLLIN|POLLOUT, timeout=-1
@@ -152,7 +152,7 @@ poll: Interrupted system call
 	select write, timeout=-1
 		1 fd(s) ready, writeable
 	select (none), timeout=-1
-		0 fd(s) ready
+select: Interrupted system call
 	received 'test' from FIFO
 
 Opened fifo for reading fi.fo.fum (nonblocking)
@@ -207,7 +207,7 @@ Opened fifo for reading fi.fo.fum (nonblocking)
 
 Testing EOF FIFO behavior (pass 8):
 	select read write, timeout=-1
-		0 fd(s) ready
+		1 fd(s) ready, readable
 	received EOF from FIFO
 
 Testing EOF FIFO behavior (pass 9):
@@ -219,7 +219,7 @@ Opened fifo for reading fi.fo.fum (nonblocking)
 
 Testing EOF FIFO behavior (pass 10):
 	select read, timeout=-1
-		0 fd(s) ready
+		1 fd(s) ready, readable
 	received EOF from FIFO
 
 Testing EOF FIFO behavior (pass 11):
@@ -231,22 +231,22 @@ Opened fifo for reading fi.fo.fum (nonblocking)
 
 Testing EOF FIFO behavior (pass 12):
 	select write, timeout=-1
-		0 fd(s) ready
+select: Interrupted system call
 	received EOF from FIFO
 
 Testing EOF FIFO behavior (pass 13):
 	select write, timeout=-1
-		0 fd(s) ready
+select: Interrupted system call
 	received EOF from FIFO
 
 Opened fifo for reading fi.fo.fum (nonblocking)
 
 Testing EOF FIFO behavior (pass 14):
 	select (none), timeout=-1
-		0 fd(s) ready
+select: Interrupted system call
 	received EOF from FIFO
 
 Testing EOF FIFO behavior (pass 15):
 	select (none), timeout=-1
-		0 fd(s) ready
+select: Interrupted system call
 	received EOF from FIFO

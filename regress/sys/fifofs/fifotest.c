@@ -326,7 +326,6 @@ doselect(pid_t writer, int rfd, int wfd, int timeout)
 		tv.tv_usec = (timeout % 1000) * 1000;
 		tvp = &tv;
 	}
-	tv.tv_sec = tv.tv_usec = 0;
 	maxfd = rfd > wfd ? rfd : wfd;
 	if (rfd != -1) {
 		rfds = calloc(howmany(maxfd + 1, NFDBITS), sizeof(fd_mask));
@@ -350,7 +349,7 @@ doselect(pid_t writer, int rfd, int wfd, int timeout)
 	if (writer != -1)
 		kill(writer, SIGUSR1);
 	alarm(2);
-	nready = select(maxfd + 1, rfds, wfds, NULL, &tv);
+	nready = select(maxfd + 1, rfds, wfds, NULL, tvp);
 	alarm(0);
 	if (nready < 0) {
 		printf("select: %s\n", strerror(errno));
