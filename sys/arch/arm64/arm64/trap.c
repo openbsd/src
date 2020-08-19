@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.28 2020/08/17 08:09:03 kettenis Exp $ */
+/* $OpenBSD: trap.c,v 1.29 2020/08/19 10:10:58 mpi Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -97,9 +97,7 @@ data_abort(struct trapframe *frame, uint64_t esr, uint64_t far,
 		switch (esr & ISS_DATA_DFSC_MASK) {
 		case ISS_DATA_DFSC_ALIGN:
 			sv.sival_ptr = (void *)far;
-			KERNEL_LOCK();
 			trapsignal(p, SIGBUS, 0, BUS_ADRALN, sv);
-			KERNEL_UNLOCK();
 			return;
 		default:
 			break;
@@ -170,9 +168,7 @@ data_abort(struct trapframe *frame, uint64_t esr, uint64_t far,
 			}
 			sv.sival_ptr = (void *)far;
 
-			KERNEL_LOCK();
 			trapsignal(p, sig, 0, code, sv);
-			KERNEL_UNLOCK();
 		} else {
 			if (curcpu()->ci_idepth == 0 &&
 			    pcb->pcb_onfault != 0) {
@@ -272,9 +268,7 @@ do_el0_sync(struct trapframe *frame)
 		vfp_save();
 		curcpu()->ci_flush_bp();
 		sv.sival_ptr = (void *)frame->tf_elr;
-		KERNEL_LOCK();
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
-		KERNEL_UNLOCK();
 		break;
 	case EXCP_FP_SIMD:
 	case EXCP_TRAP_FP:
@@ -292,17 +286,13 @@ do_el0_sync(struct trapframe *frame)
 		vfp_save();
 		curcpu()->ci_flush_bp();
 		sv.sival_ptr = (void *)frame->tf_elr;
-		KERNEL_LOCK();
 		trapsignal(p, SIGBUS, 0, BUS_ADRALN, sv);
-		KERNEL_UNLOCK();
 		break;
 	case EXCP_SP_ALIGN:
 		vfp_save();
 		curcpu()->ci_flush_bp();
 		sv.sival_ptr = (void *)frame->tf_sp;
-		KERNEL_LOCK();
 		trapsignal(p, SIGBUS, 0, BUS_ADRALN, sv);
-		KERNEL_UNLOCK();
 		break;
 	case EXCP_DATA_ABORT_L:
 		vfp_save();
@@ -311,16 +301,12 @@ do_el0_sync(struct trapframe *frame)
 	case EXCP_BRK:
 		vfp_save();
 		sv.sival_ptr = (void *)frame->tf_elr;
-		KERNEL_LOCK();
 		trapsignal(p, SIGTRAP, 0, TRAP_BRKPT, sv);
-		KERNEL_UNLOCK();
 		break;
 	case EXCP_SOFTSTP_EL0:
 		vfp_save();
 		sv.sival_ptr = (void *)frame->tf_elr;
-		KERNEL_LOCK();
 		trapsignal(p, SIGTRAP, 0, TRAP_TRACE, sv);
-		KERNEL_UNLOCK();
 		break;
 	default:
 		// panic("Unknown userland exception %x esr_el1 %lx\n", exception,

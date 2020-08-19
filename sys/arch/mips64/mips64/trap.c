@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.145 2020/05/23 07:18:50 visa Exp $	*/
+/*	$OpenBSD: trap.c,v 1.146 2020/08/19 10:10:58 mpi Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -926,9 +926,7 @@ fault_common_no_miss:
 	p->p_md.md_regs->cause = trapframe->cause;
 	p->p_md.md_regs->badvaddr = trapframe->badvaddr;
 	sv.sival_ptr = (void *)trapframe->badvaddr;
-	KERNEL_LOCK();
 	trapsignal(p, signal, ucode, sicode, sv);
-	KERNEL_UNLOCK();
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.258 2020/06/15 13:18:33 visa Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.259 2020/08/19 10:10:57 mpi Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -802,6 +802,7 @@ trapsignal(struct proc *p, int signum, u_long trapno, int code,
 	struct sigacts *ps = pr->ps_sigacts;
 	int mask;
 
+	KERNEL_LOCK();
 	switch (signum) {
 	case SIGILL:
 	case SIGBUS:
@@ -842,6 +843,7 @@ trapsignal(struct proc *p, int signum, u_long trapno, int code,
 			sigexit(p, signum);
 		ptsignal(p, signum, STHREAD);
 	}
+	KERNEL_UNLOCK();
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: undefined.c,v 1.13 2019/03/13 09:28:21 patrick Exp $	*/
+/*	$OpenBSD: undefined.c,v 1.14 2020/08/19 10:10:58 mpi Exp $	*/
 /*	$NetBSD: undefined.c,v 1.22 2003/11/29 22:21:29 bjh21 Exp $	*/
 
 /*
@@ -113,9 +113,7 @@ gdb_trapper(u_int addr, u_int insn, struct trapframe *frame, int code, uint32_t 
 	if (insn == GDB_BREAKPOINT || insn == GDB5_BREAKPOINT) {
 		if (code == FAULT_USER) {
 			sv.sival_int = addr;
-			KERNEL_LOCK();
 			trapsignal(p, SIGTRAP, 0, TRAP_BRKPT, sv);
-			KERNEL_UNLOCK();
 			return 0;
 		}
 	}
@@ -174,9 +172,7 @@ undefinedinstruction(trapframe_t *frame)
 	if (__predict_false((fault_pc & 3) != 0)) {
 		/* Give the user an illegal instruction signal. */
 		sv.sival_int = (u_int32_t) fault_pc;
-		KERNEL_LOCK();
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
-		KERNEL_UNLOCK();
 		userret(p);
 		return;
 	}
@@ -260,9 +256,7 @@ undefinedinstruction(trapframe_t *frame)
 		}
 
 		sv.sival_int = frame->tf_pc;
-		KERNEL_LOCK();
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
-		KERNEL_UNLOCK();
 	}
 
 	if ((fault_code & FAULT_USER) == 0)

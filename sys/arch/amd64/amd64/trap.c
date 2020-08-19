@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.79 2020/01/21 03:06:39 mlarkin Exp $	*/
+/*	$OpenBSD: trap.c,v 1.80 2020/08/19 10:10:57 mpi Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -391,9 +391,7 @@ usertrap(struct trapframe *frame)
 	}
 
 	sv.sival_ptr = (void *)frame->tf_rip;
-	KERNEL_LOCK();
 	trapsignal(p, sig, type, code, sv);
-	KERNEL_UNLOCK();
 
 out:
 	userret(p);

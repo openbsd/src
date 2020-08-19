@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.146 2019/09/06 12:22:01 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.147 2020/08/19 10:10:58 mpi Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -328,9 +328,7 @@ trap(int type, struct trapframe *frame)
 		fpp[0] &= ~(((u_int64_t)HPPA_FPU_T) << 32);
 
 		sv.sival_int = va;
-		KERNEL_LOCK();
 		trapsignal(p, SIGFPE, type & ~T_USER, flt, sv);
-		KERNEL_UNLOCK();
 		}
 		break;
 
@@ -340,30 +338,22 @@ trap(int type, struct trapframe *frame)
 
 	case T_EMULATION | T_USER:
 		sv.sival_int = va;
-		KERNEL_LOCK();
 		trapsignal(p, SIGILL, type & ~T_USER, ILL_COPROC, sv);
-		KERNEL_UNLOCK();
 		break;
 
 	case T_OVERFLOW | T_USER:
 		sv.sival_int = va;
-		KERNEL_LOCK();
 		trapsignal(p, SIGFPE, type & ~T_USER, FPE_INTOVF, sv);
-		KERNEL_UNLOCK();
 		break;
 
 	case T_CONDITION | T_USER:
 		sv.sival_int = va;
-		KERNEL_LOCK();
 		trapsignal(p, SIGFPE, type & ~T_USER, FPE_INTDIV, sv);
-		KERNEL_UNLOCK();
 		break;
 
 	case T_PRIV_OP | T_USER:
 		sv.sival_int = va;
-		KERNEL_LOCK();
 		trapsignal(p, SIGILL, type & ~T_USER, ILL_PRVOPC, sv);
-		KERNEL_UNLOCK();
 		break;
 
 	case T_PRIV_REG | T_USER:
@@ -386,9 +376,7 @@ trap(int type, struct trapframe *frame)
 			frame->tf_ipsw |= PSL_N;
 		} else {
 			sv.sival_int = va;
-			KERNEL_LOCK();
 			trapsignal(p, SIGILL, type & ~T_USER, ILL_PRVREG, sv);
-			KERNEL_UNLOCK();
 		}
 		break;
 
@@ -397,9 +385,7 @@ trap(int type, struct trapframe *frame)
 	case T_LOWERPL | T_USER:
 	case T_DATAPID | T_USER:
 		sv.sival_int = va;
-		KERNEL_LOCK();
 		trapsignal(p, SIGSEGV, vftype, SEGV_ACCERR, sv);
-		KERNEL_UNLOCK();
 		break;
 
 	/*
@@ -416,9 +402,7 @@ trap(int type, struct trapframe *frame)
 		}
 
 		sv.sival_int = va;
-		KERNEL_LOCK();
 		trapsignal(p, SIGSEGV, vftype, SEGV_ACCERR, sv);
-		KERNEL_UNLOCK();
 		break;
 
 	case T_ITLBMISSNA:
@@ -460,9 +444,7 @@ trap(int type, struct trapframe *frame)
 			KERNEL_UNLOCK();
 		} else if (type & T_USER) {
 			sv.sival_int = va;
-			KERNEL_LOCK();
 			trapsignal(p, SIGILL, type & ~T_USER, ILL_ILLTRP, sv);
-			KERNEL_UNLOCK();
 		} else
 			panic("trap: %s @ 0x%lx:0x%lx for 0x%x:0x%lx irr 0x%08x",
 			    tts, frame->tf_iisq_head, frame->tf_iioq_head,
@@ -501,9 +483,7 @@ datacc:
 		if ((type & T_USER && va >= VM_MAXUSER_ADDRESS) ||
 		   (type & T_USER && map->pmap->pm_space != space)) {
 			sv.sival_int = va;
-			KERNEL_LOCK();
 			trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
-			KERNEL_UNLOCK();
 			break;
 		}
 
@@ -537,9 +517,7 @@ datacc:
 					sicode = BUS_OBJERR;
 				}
 				sv.sival_int = va;
-				KERNEL_LOCK();
 				trapsignal(p, signal, vftype, sicode, sv);
-				KERNEL_UNLOCK();
 			} else {
 				if (p && p->p_addr->u_pcb.pcb_onfault) {
 					frame->tf_iioq_tail = 4 +
@@ -573,9 +551,7 @@ datacc:
 	case T_DATALIGN | T_USER:
 datalign_user:
 		sv.sival_int = va;
-		KERNEL_LOCK();
 		trapsignal(p, SIGBUS, vftype, BUS_ADRALN, sv);
-		KERNEL_UNLOCK();
 		break;
 
 	case T_INTERRUPT:
@@ -597,9 +573,7 @@ datalign_user:
 		}
 		if (type & T_USER) {
 			sv.sival_int = va;
-			KERNEL_LOCK();
 			trapsignal(p, SIGILL, type & ~T_USER, ILL_ILLOPC, sv);
-			KERNEL_UNLOCK();
 			break;
 		}
 		/* FALLTHROUGH */

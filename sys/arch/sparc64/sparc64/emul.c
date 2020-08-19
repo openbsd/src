@@ -1,4 +1,4 @@
-/*	$OpenBSD: emul.c,v 1.24 2018/08/08 08:42:49 kn Exp $	*/
+/*	$OpenBSD: emul.c,v 1.25 2020/08/19 10:10:58 mpi Exp $	*/
 /*	$NetBSD: emul.c,v 1.8 2001/06/29 23:58:40 eeh Exp $	*/
 
 /*-
@@ -306,9 +306,7 @@ emul_qf(int32_t insv, struct proc *p, union sigval sv, struct trapframe *tf)
 
 	if (asi < ASI_PRIMARY) {
 		/* privileged asi */
-		KERNEL_LOCK();
 		trapsignal(p, SIGILL, 0, ILL_PRVOPC, sv);
-		KERNEL_UNLOCK();
 		return (0);
 	}
 	if (asi > ASI_SECONDARY_NOFAULT_LITTLE ||
@@ -319,17 +317,13 @@ emul_qf(int32_t insv, struct proc *p, union sigval sv, struct trapframe *tf)
 
 	if ((freg & 3) != 0) {
 		/* only valid for %fN where N % 4 = 0 */
-		KERNEL_LOCK();
 		trapsignal(p, SIGILL, 0, ILL_ILLOPN, sv);
-		KERNEL_UNLOCK();
 		return (0);
 	}
 
 	if ((addr & 3) != 0) {
 		/* request is not aligned */
-		KERNEL_LOCK();
 		trapsignal(p, SIGBUS, 0, BUS_ADRALN, sv);
-		KERNEL_UNLOCK();
 		return (0);
 	}
 
@@ -366,10 +360,8 @@ emul_qf(int32_t insv, struct proc *p, union sigval sv, struct trapframe *tf)
 	return (1);
 
 segv:
-	KERNEL_LOCK();
 	trapsignal(p, SIGSEGV, isload ? PROT_READ : PROT_WRITE,
 	    SEGV_MAPERR, sv);
-	KERNEL_UNLOCK();
 	return (0);
 }
 

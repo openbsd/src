@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.142 2019/12/08 12:25:30 mpi Exp $	*/
+/*	$OpenBSD: trap.c,v 1.143 2020/08/19 10:10:58 mpi Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -274,74 +274,54 @@ trap(struct trapframe *frame)
 
 	case T_TSSFLT|T_USER:
 		sv.sival_int = frame->tf_eip;
-		KERNEL_LOCK();
 		trapsignal(p, SIGBUS, type &~ T_USER, BUS_OBJERR, sv);
-		KERNEL_UNLOCK();
 		goto out;
 
 	case T_SEGNPFLT|T_USER:
 	case T_STKFLT|T_USER:
 		sv.sival_int = frame->tf_eip;
-		KERNEL_LOCK();
 		trapsignal(p, SIGSEGV, type &~ T_USER, SEGV_MAPERR, sv);
-		KERNEL_UNLOCK();
 		goto out;
 
 	case T_ALIGNFLT|T_USER:
 		sv.sival_int = frame->tf_eip;
-		KERNEL_LOCK();
 		trapsignal(p, SIGBUS, type &~ T_USER, BUS_ADRALN, sv);
-		KERNEL_UNLOCK();
 		goto out;
 
 	case T_PRIVINFLT|T_USER:	/* privileged instruction fault */
 		sv.sival_int = frame->tf_eip;
-		KERNEL_LOCK();
 		trapsignal(p, SIGILL, type &~ T_USER, ILL_PRVOPC, sv);
-		KERNEL_UNLOCK();
 		goto out;
 
 	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
 		sv.sival_int = frame->tf_eip;
-		KERNEL_LOCK();
 		trapsignal(p, SIGILL, type &~ T_USER, ILL_COPROC, sv);
-		KERNEL_UNLOCK();
 		goto out;
 
 	case T_DNA|T_USER: {
 		printf("pid %d killed due to lack of floating point\n",
 		    p->p_p->ps_pid);
 		sv.sival_int = frame->tf_eip;
-		KERNEL_LOCK();
 		trapsignal(p, SIGKILL, type &~ T_USER, FPE_FLTINV, sv);
-		KERNEL_UNLOCK();
 		goto out;
 	}
 
 	case T_BOUND|T_USER:
 		sv.sival_int = frame->tf_eip;
-		KERNEL_LOCK();
 		trapsignal(p, SIGFPE, type &~ T_USER, FPE_FLTSUB, sv);
-		KERNEL_UNLOCK();
 		goto out;
 	case T_OFLOW|T_USER:
 		sv.sival_int = frame->tf_eip;
-		KERNEL_LOCK();
 		trapsignal(p, SIGFPE, type &~ T_USER, FPE_INTOVF, sv);
-		KERNEL_UNLOCK();
 		goto out;
 	case T_DIVIDE|T_USER:
 		sv.sival_int = frame->tf_eip;
-		KERNEL_LOCK();
 		trapsignal(p, SIGFPE, type &~ T_USER, FPE_INTDIV, sv);
-		KERNEL_UNLOCK();
 		goto out;
 
 	case T_ARITHTRAP|T_USER:
 		sv.sival_int = frame->tf_eip;
-		KERNEL_LOCK();
 		trapsignal(p, SIGFPE, frame->tf_err, FPE_INTOVF, sv);
-		KERNEL_UNLOCK();
 		goto out;
 
 	case T_XFTRAP|T_USER:
@@ -455,15 +435,11 @@ trap(struct trapframe *frame)
 
 	case T_BPTFLT|T_USER:		/* bpt instruction fault */
 		sv.sival_int = rcr2();
-		KERNEL_LOCK();
 		trapsignal(p, SIGTRAP, type &~ T_USER, TRAP_BRKPT, sv);
-		KERNEL_UNLOCK();
 		break;
 	case T_TRCTRAP|T_USER:		/* trace trap */
 		sv.sival_int = rcr2();
-		KERNEL_LOCK();
 		trapsignal(p, SIGTRAP, type &~ T_USER, TRAP_TRACE, sv);
-		KERNEL_UNLOCK();
 		break;
 
 #if NISA > 0

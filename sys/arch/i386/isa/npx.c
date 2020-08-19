@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.70 2018/07/30 14:19:12 kettenis Exp $	*/
+/*	$OpenBSD: npx.c,v 1.71 2020/08/19 10:10:58 mpi Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -529,9 +529,7 @@ npxintr(void *arg)
 		else
 			code = x86fpflags_to_siginfo(addr->sv_87.sv_ex_sw);
 		sv.sival_int = frame->if_eip;
-		KERNEL_LOCK();
 		trapsignal(p, SIGFPE, T_ARITHTRAP, code, sv);
-		KERNEL_UNLOCK();
 	} else {
 		/*
 		 * Nested interrupt.  These losers occur when:
@@ -582,9 +580,7 @@ npxtrap(struct trapframe *frame)
 	addr->sv_xmm.sv_ex_tw = addr->sv_xmm.sv_env.en_tw;
 	code = x86fpflags_to_siginfo (statbits);
 	sv.sival_int = frame->tf_eip;
-	KERNEL_LOCK();
 	trapsignal(p, SIGFPE, frame->tf_err, code, sv);
-	KERNEL_UNLOCK();
 }
 
 static int

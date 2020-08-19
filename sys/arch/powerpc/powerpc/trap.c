@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.114 2019/09/06 13:45:04 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.115 2020/08/19 10:10:58 mpi Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -254,9 +254,7 @@ trap(struct trapframe *frame)
 	switch (type) {
 	case EXC_TRC|EXC_USER:		
 		sv.sival_int = frame->srr0;
-		KERNEL_LOCK();
 		trapsignal(p, SIGTRAP, type, TRAP_TRACE, sv);
-		KERNEL_UNLOCK();
 		break;
 	case EXC_MCHK:
 		if ((fb = p->p_addr->u_pcb.pcb_onfault)) {
@@ -354,9 +352,7 @@ trap(struct trapframe *frame)
 /* XXX Likely that returning from this trap is bogus... */
 /* XXX Have to make sure that sigreturn does the right thing. */
 		sv.sival_int = frame->srr0;
-		KERNEL_LOCK();
 		trapsignal(p, SIGSEGV, PROT_EXEC, SEGV_MAPERR, sv);
-		KERNEL_UNLOCK();
 		break;
 
 	case EXC_SC|EXC_USER:
@@ -455,9 +451,7 @@ trap(struct trapframe *frame)
 			frame->srr0 += 4;
 		else {
 			sv.sival_int = frame->srr0;
-			KERNEL_LOCK();
 			trapsignal(p, SIGBUS, PROT_EXEC, BUS_ADRALN, sv);
-			KERNEL_UNLOCK();
 		}
 		break;
 
@@ -481,15 +475,11 @@ brain_damage:
 	case EXC_PGM|EXC_USER:
 		if (frame->srr1 & (1<<(31-14))) {
 			sv.sival_int = frame->srr0;
-			KERNEL_LOCK();
 			trapsignal(p, SIGTRAP, type, TRAP_BRKPT, sv);
-			KERNEL_UNLOCK();
 			break;
 		}
 		sv.sival_int = frame->srr0;
-		KERNEL_LOCK();
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
-		KERNEL_UNLOCK();
 		break;
 
 	case EXC_PGM:
@@ -519,17 +509,13 @@ brain_damage:
 		break;
 #else  /* ALTIVEC */
 		sv.sival_int = frame->srr0;
-		KERNEL_LOCK();
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
-		KERNEL_UNLOCK();
 		break;
 #endif
 
 	case EXC_VECAST|EXC_USER:
 		sv.sival_int = frame->srr0;
-		KERNEL_LOCK();
 		trapsignal(p, SIGFPE, 0, FPE_FLTRES, sv);
-		KERNEL_UNLOCK();
 		break;
 
 	case EXC_AST|EXC_USER:

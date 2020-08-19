@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.20 2017/01/21 05:42:03 guenther Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.21 2020/08/19 10:10:58 mpi Exp $	*/
 /*	$NetBSD: fpu.c,v 1.11 2000/12/06 01:47:50 mrg Exp $ */
 
 /*
@@ -214,9 +214,7 @@ fpu_cleanup(p, fs)
 	case FSR_TT_IEEE:
 		if ((i = fsr & FSR_CX) == 0)
 			panic("fpu ieee trap, but no exception");
-		KERNEL_LOCK();
 		trapsignal(p, SIGFPE, fpu_codes[i - 1], fpu_types[i - 1], sv);
-		KERNEL_UNLOCK();
 		break;		/* XXX should return, but queue remains */
 
 	case FSR_TT_UNFIN:
@@ -240,9 +238,7 @@ fpu_cleanup(p, fs)
 		    p->p_p->ps_comm, p->p_p->ps_pid);
 		uprintf("%s[%d]: fpu hardware error\n",
 		    p->p_p->ps_comm, p->p_p->ps_pid);
-		KERNEL_LOCK();
 		trapsignal(p, SIGFPE, -1, FPE_FLTINV, sv);	/* ??? */
-		KERNEL_UNLOCK();
 		goto out;
 
 	default:
@@ -265,17 +261,13 @@ fpu_cleanup(p, fs)
 			continue;
 
 		case FPE:
-			KERNEL_LOCK();
 			trapsignal(p, SIGFPE,
 			    fpu_codes[(fs->fs_fsr & FSR_CX) - 1],
 			    fpu_types[(fs->fs_fsr & FSR_CX) - 1], sv);
-			KERNEL_UNLOCK();
 			break;
 
 		case NOTFPU:
-			KERNEL_LOCK();
 			trapsignal(p, SIGILL, 0, ILL_COPROC, sv);
-			KERNEL_UNLOCK();
 			break;
 
 		default:

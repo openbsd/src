@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.111 2019/12/11 07:21:40 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.112 2020/08/19 10:10:58 mpi Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -587,9 +587,7 @@ user_fault:
 
 	if (sig) {
 		sv.sival_ptr = (void *)fault_addr;
-		KERNEL_LOCK();
 		trapsignal(p, sig, fault_code, fault_type, sv);
-		KERNEL_UNLOCK();
 		/*
 		 * don't want multiple faults - we are going to
 		 * deliver signal.
@@ -1121,9 +1119,7 @@ m88110_user_fault:
 	if (sig) {
 deliver:
 		sv.sival_ptr = (void *)fault_addr;
-		KERNEL_LOCK();
 		trapsignal(p, sig, fault_code, fault_type, sv);
-		KERNEL_UNLOCK();
 	}
 
 userexit:

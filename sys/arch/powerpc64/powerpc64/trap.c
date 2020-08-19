@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.34 2020/07/23 16:01:08 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.35 2020/08/19 10:10:58 mpi Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -205,9 +205,7 @@ trap(struct trapframe *frame)
 				code = SEGV_MAPERR;
 			}
 			sv.sival_ptr = (void *)va;
-			KERNEL_LOCK();
 			trapsignal(p, sig, 0, code, sv);
-			KERNEL_UNLOCK();
 		}
 		break;
 
@@ -246,9 +244,7 @@ trap(struct trapframe *frame)
 				code = SEGV_MAPERR;
 			}
 			sv.sival_ptr = (void *)va;
-			KERNEL_LOCK();
 			trapsignal(p, sig, 0, code, sv);
-			KERNEL_UNLOCK();
 		}
 		break;
 
@@ -264,9 +260,7 @@ trap(struct trapframe *frame)
 
 	case EXC_ALI|EXC_USER:
 		sv.sival_ptr = (void *)frame->dar;
-		KERNEL_LOCK();
 		trapsignal(p, SIGBUS, 0, BUS_ADRALN, sv);
-		KERNEL_UNLOCK();
 		break;
 
 	case EXC_PGM|EXC_USER:
@@ -274,9 +268,7 @@ trap(struct trapframe *frame)
 		dumpframe(frame);
 
 		sv.sival_ptr = (void *)frame->srr0;
-		KERNEL_LOCK();
 		trapsignal(p, SIGTRAP, 0, TRAP_BRKPT, sv);
-		KERNEL_UNLOCK();
 		break;
 
 	case EXC_FPU|EXC_USER:

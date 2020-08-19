@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.88 2019/09/06 12:22:01 deraadt Exp $ */
+/* $OpenBSD: trap.c,v 1.89 2020/08/19 10:10:57 mpi Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -488,9 +488,7 @@ do_fault:
 	printtrap(a0, a1, a2, entry, framep, 1, user);
 #endif
 	sv.sival_ptr = v;
-	KERNEL_LOCK();
 	trapsignal(p, i, ucode, typ, sv);
-	KERNEL_UNLOCK();
 out:
 	if (user) {
 		/* Do any deferred user pmap operations. */
