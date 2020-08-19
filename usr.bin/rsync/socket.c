@@ -1,4 +1,4 @@
-/*	$Id: socket.c,v 1.27 2019/08/09 13:11:26 claudio Exp $ */
+/*	$Id: socket.c,v 1.28 2020/08/19 11:10:42 kn Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -101,6 +101,8 @@ inet_connect(int *sd, const struct source *src, const char *host,
 
 	c = connect(*sd, (const struct sockaddr *)&src->sa, src->salen);
 	if (c == -1) {
+		if (errno == EADDRNOTAVAIL)
+			return 0;
 		if (errno == ECONNREFUSED || errno == EHOSTUNREACH) {
 			WARNX("connect refused: %s, %s",
 			    src->ip, host);
