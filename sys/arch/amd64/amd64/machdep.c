@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.267 2020/06/03 06:54:04 dlg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.268 2020/08/19 19:24:03 gnezdo Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -469,6 +469,11 @@ bios_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	/* NOTREACHED */
 }
 
+const struct sysctl_bounded_args cpuctl_vars[] = {
+	{ CPU_LIDACTION, &lid_action, 0, 2 },
+	{ CPU_PWRACTION, &pwr_action, 0, 2 },
+};
+
 /*
  * machine dependent system variables.
  */
@@ -481,7 +486,7 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	extern int amd64_has_xcrypt;
 	dev_t consdev;
 	dev_t dev;
-	int val, error;
+	int error;
 
 	switch (name[0]) {
 	case CPU_CONSDEV:
@@ -529,26 +534,6 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 #endif
 	case CPU_XCRYPT:
 		return (sysctl_rdint(oldp, oldlenp, newp, amd64_has_xcrypt));
-	case CPU_LIDACTION:
-		val = lid_action;
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &val);
-		if (!error) {
-			if (val < 0 || val > 2)
-				error = EINVAL;
-			else
-				lid_action = val;
-		}
-		return (error);
-	case CPU_PWRACTION:
-		val = pwr_action;
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &val);
-		if (!error) {
-			if (val < 0 || val > 2)
-				error = EINVAL;
-			else
-				pwr_action = val;
-		}
-		return (error);
 #if NPCKBC > 0 && NUKBD > 0
 	case CPU_FORCEUKBD:
 		if (forceukbd)
@@ -564,7 +549,8 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case CPU_INVARIANTTSC:
 		return (sysctl_rdint(oldp, oldlenp, newp, tsc_is_invariant));
 	default:
-		return (EOPNOTSUPP);
+		return (sysctl_bounded_arr(cpuctl_vars, nitems(cpuctl_vars),
+		    name, namelen, oldp, oldlenp, newp, newlen));
 	}
 	/* NOTREACHED */
 }
