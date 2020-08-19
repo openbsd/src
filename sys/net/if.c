@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.618 2020/08/05 11:07:34 mvs Exp $	*/
+/*	$OpenBSD: if.c,v 1.619 2020/08/19 11:23:59 kn Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2160,9 +2160,7 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 	case SIOCBRDGSIFCOST:
 	case SIOCBRDGSTXHC:
 	case SIOCBRDGSPROTO:
-	case SIOCSWGDPID:
 	case SIOCSWSPORTNO:
-	case SIOCSWGMAXFLOW:
 #endif
 		if ((error = suser(p)) != 0)
 			break;
