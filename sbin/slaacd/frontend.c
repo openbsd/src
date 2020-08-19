@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.33 2020/07/03 17:42:50 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.34 2020/08/19 05:55:08 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -520,9 +520,6 @@ update_iface(uint32_t if_index, char* if_name)
 	imsg_ifinfo.soii = !(xflags & IFXF_INET6_NOSOII);
 	get_lladdr(if_name, &imsg_ifinfo.hw_address, &imsg_ifinfo.ll_address);
 
-	memcpy(&nd_opt_source_link_addr, &imsg_ifinfo.hw_address,
-	    sizeof(nd_opt_source_link_addr));
-
 	frontend_imsg_compose_main(IMSG_UPDATE_IF, 0, &imsg_ifinfo,
 	    sizeof(imsg_ifinfo));
 }
@@ -1023,8 +1020,19 @@ send_solicitation(uint32_t if_index)
 {
 	struct in6_pktinfo		*pi;
 	struct cmsghdr			*cm;
+	struct ether_addr		 hw_address;
+	struct sockaddr_in6		 ll_address;
+	char				 if_name[IF_NAMESIZE];
 
 	log_debug("%s(%u)", __func__, if_index);
+
+	if (if_indextoname(if_index, if_name) == NULL)
+		return;
+
+	get_lladdr(if_name, &hw_address, &ll_address);
+
+	memcpy(&nd_opt_source_link_addr, &hw_address,
+	    sizeof(nd_opt_source_link_addr));
 
 	dst.sin6_scope_id = if_index;
 
