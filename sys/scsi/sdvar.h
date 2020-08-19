@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdvar.h,v 1.47 2020/08/15 17:50:45 krw Exp $	*/
+/*	$OpenBSD: sdvar.h,v 1.48 2020/08/19 14:53:39 krw Exp $	*/
 /*	$NetBSD: sdvar.h,v 1.7 1998/08/17 00:49:03 mycroft Exp $	*/
 
 /*-
@@ -59,7 +59,6 @@ struct sd_softc {
 	int			flags;
 #define	SDF_ANCIENT	0x10		/* disk is ancient; for sdminphys */
 #define	SDF_DIRTY	0x20		/* disk is dirty; needs cache flush */
-#define	SDF_DYING	0x40		/* dying, when deactivated */
 #define	SDF_THIN	0x01		/* disk is thin provisioned */
 	struct scsi_link	*sc_link; /* contains our targ, lun, etc. */
 	struct disk_parms {
