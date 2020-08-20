@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.93 2020/08/19 19:09:26 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.94 2020/08/20 19:28:01 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -989,7 +989,6 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 {
 	struct ikev2_notify	 n;
 	uint8_t			*buf, md[SHA_DIGEST_LENGTH];
-	size_t			 len;
 	uint32_t		 spi32;
 	uint64_t		 spi64;
 	struct iked_spi		*rekey;
@@ -1005,11 +1004,11 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 	    print_map(n.n_protoid, ikev2_saproto_map), n.n_spisize,
 	    print_map(type, ikev2_n_map));
 
-	len = left - sizeof(n);
-	if ((buf = ibuf_seek(msg->msg_data, offset + sizeof(n), len)) == NULL)
+	left -= sizeof(n);
+	if ((buf = ibuf_seek(msg->msg_data, offset + sizeof(n), left)) == NULL)
 		return (-1);
 
-	print_hex(buf, 0, len);
+	print_hex(buf, 0, left);
 
 	if (!ikev2_msg_frompeer(msg))
 		return (0);
@@ -1017,14 +1016,14 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 	switch (type) {
 	case IKEV2_N_NAT_DETECTION_SOURCE_IP:
 	case IKEV2_N_NAT_DETECTION_DESTINATION_IP:
-		if (len != sizeof(md)) {
+		if (left != sizeof(md)) {
 			log_debug("%s: malformed payload: hash size mismatch"
-			    " (%zu != %zu)", __func__, len, sizeof(md));
+			    " (%zu != %zu)", __func__, left, sizeof(md));
 			return (-1);
 		}
 		if (ikev2_nat_detection(env, msg, md, sizeof(md), type) == -1)
 			return (-1);
-		if (memcmp(buf, md, len) != 0) {
+		if (memcmp(buf, md, left) != 0) {
 			log_debug("%s: %s detected NAT", __func__,
 			    print_map(type, ikev2_n_map));
 			if (type == IKEV2_N_NAT_DETECTION_SOURCE_IP)
@@ -1074,13 +1073,13 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 			    __func__);
 			return (-1);
 		}
-		if (len != sizeof(msg->msg_parent->msg_group)) {
+		if (left != sizeof(msg->msg_parent->msg_group)) {
 			log_debug("%s: malformed payload: group size mismatch"
-			    " (%zu != %zu)", __func__, len,
+			    " (%zu != %zu)", __func__, left,
 			    sizeof(msg->msg_parent->msg_group));
 			return (-1);
 		}
-		memcpy(&msg->msg_parent->msg_group, buf, len);
+		memcpy(&msg->msg_parent->msg_group, buf, left);
 		msg->msg_parent->msg_flags |= IKED_MSG_FLAGS_INVALID_KE;
 		break;
 	case IKEV2_N_NO_ADDITIONAL_SAS:
@@ -1096,7 +1095,7 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 			log_debug("%s: N_REKEY_SA not encrypted", __func__);
 			return (-1);
 		}
-		if (len != n.n_spisize) {
+		if (left != n.n_spisize) {
 			log_debug("%s: malformed notification", __func__);
 			return (-1);
 		}
@@ -1108,11 +1107,11 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 		}
 		switch (n.n_spisize) {
 		case 4:
-			memcpy(&spi32, buf, len);
+			memcpy(&spi32, buf, left);
 			rekey->spi = betoh32(spi32);
 			break;
 		case 8:
-			memcpy(&spi64, buf, len);
+			memcpy(&spi64, buf, left);
 			rekey->spi = betoh64(spi64);
 			break;
 		default:
@@ -1141,7 +1140,7 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 			    __func__);
 			return (-1);
 		}
-		if (len < sizeof(msg->msg_parent->msg_cpi) +
+		if (left < sizeof(msg->msg_parent->msg_cpi) +
 		    sizeof(msg->msg_parent->msg_transform)) {
 			log_debug("%s: ignoring malformed ipcomp notification",
 			    __func__);
@@ -1153,11 +1152,11 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 		    buf + sizeof(msg->msg_parent->msg_cpi),
 		    sizeof(msg->msg_parent->msg_transform));
 
-		log_debug("%s: %s cpi 0x%x, transform %s, len %zu", __func__,
+		log_debug("%s: %s cpi 0x%x, transform %s, length %zu", __func__,
 		    msg->msg_parent->msg_response ? "res" : "req",
 		    betoh16(msg->msg_parent->msg_cpi),
 		    print_map(msg->msg_parent->msg_transform,
-		    ikev2_ipcomp_map), len);
+		    ikev2_ipcomp_map), left);
 
 		msg->msg_parent->msg_flags |= IKED_MSG_FLAGS_IPCOMP_SUPPORTED;
 		break;
@@ -1175,9 +1174,9 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 			    __func__);
 			return (-1);
 		}
-		if (len != 0) {
+		if (left != 0) {
 			log_debug("%s: ignoring malformed mobike"
-			    " notification: %zu", __func__, len);
+			    " notification: %zu", __func__, left);
 			return (0);
 		}
 		msg->msg_parent->msg_flags |= IKED_MSG_FLAGS_MOBIKE;
@@ -1188,9 +1187,9 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 			    __func__);
 			return (-1);
 		}
-		if (len != 0) {
+		if (left != 0) {
 			log_debug("%s: ignoring malformed transport mode"
-			    " notification: %zu", __func__, len);
+			    " notification: %zu", __func__, left);
 			return (0);
 		}
 		if (msg->msg_parent->msg_response) {
@@ -1210,12 +1209,12 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 		}
 		if (!msg->msg_sa->sa_mobike) {
 			log_debug("%s: ignoring update sa addresses"
-			    " notification w/o mobike: %zu", __func__, len);
+			    " notification w/o mobike: %zu", __func__, left);
 			return (0);
 		}
-		if (len != 0) {
+		if (left != 0) {
 			log_debug("%s: ignoring malformed update sa addresses"
-			    " notification: %zu", __func__, len);
+			    " notification: %zu", __func__, left);
 			return (0);
 		}
 		msg->msg_parent->msg_update_sa_addresses = 1;
@@ -1228,16 +1227,16 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 		}
 		if (!msg->msg_sa->sa_mobike) {
 			log_debug("%s: ignoring cookie2 notification"
-			    " w/o mobike: %zu", __func__, len);
+			    " w/o mobike: %zu", __func__, left);
 			return (0);
 		}
-		if (len < IKED_COOKIE2_MIN || len > IKED_COOKIE2_MAX) {
+		if (left < IKED_COOKIE2_MIN || left > IKED_COOKIE2_MAX) {
 			log_debug("%s: ignoring malformed cookie2"
-			    " notification: %zu", __func__, len);
+			    " notification: %zu", __func__, left);
 			return (0);
 		}
 		ibuf_release(msg->msg_cookie2);	/* should not happen */
-		if ((msg->msg_cookie2 = ibuf_new(buf, len)) == NULL) {
+		if ((msg->msg_cookie2 = ibuf_new(buf, left)) == NULL) {
 			log_debug("%s: failed to get peer cookie2", __func__);
 			return (-1);
 		}
@@ -1249,16 +1248,16 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 			    __func__);
 			return (-1);
 		}
-		if (len < IKED_COOKIE_MIN || len > IKED_COOKIE_MAX) {
+		if (left < IKED_COOKIE_MIN || left > IKED_COOKIE_MAX) {
 			log_debug("%s: ignoring malformed cookie"
-			    " notification: %zu", __func__, len);
+			    " notification: %zu", __func__, left);
 			return (0);
 		}
-		log_debug("%s: received cookie, len %zu", __func__, len);
-		print_hex(buf, 0, len);
+		log_debug("%s: received cookie, len %zu", __func__, left);
+		print_hex(buf, 0, left);
 
 		ibuf_release(msg->msg_cookie);
-		if ((msg->msg_cookie = ibuf_new(buf, len)) == NULL) {
+		if ((msg->msg_cookie = ibuf_new(buf, left)) == NULL) {
 			log_debug("%s: failed to get peer cookie", __func__);
 			return (-1);
 		}
@@ -1270,9 +1269,9 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 			    __func__);
 			return (-1);
 		}
-		if (len != 0) {
+		if (left != 0) {
 			log_debug("%s: ignoring malformed fragmentation"
-			    " notification: %zu", __func__, len);
+			    " notification: %zu", __func__, left);
 			return (0);
 		}
 		msg->msg_parent->msg_flags |= IKED_MSG_FLAGS_FRAGMENTATION;
@@ -1289,19 +1288,19 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 			    "duplicate notify", __func__);
 			return (-1);
 		}
-		if (len < sizeof(signature_hash) ||
-		    len % sizeof(signature_hash)) {
+		if (left < sizeof(signature_hash) ||
+		    left % sizeof(signature_hash)) {
 			log_debug("%s: malformed signature hash notification"
-			     "(%zu bytes)", __func__, len);
+			     "(%zu bytes)", __func__, left);
 			return (0);
 		}
-		while (len >= sizeof(signature_hash)) {
+		while (left >= sizeof(signature_hash)) {
 			memcpy(&signature_hash, buf, sizeof(signature_hash));
 			signature_hash = betoh16(signature_hash);
 			log_debug("%s: signature hash %s (%x)", __func__,
 			    print_map(signature_hash, ikev2_sighash_map),
 			    signature_hash);
-			len -= sizeof(signature_hash);
+			left -= sizeof(signature_hash);
 			buf += sizeof(signature_hash);
 			if (signature_hash == IKEV2_SIGHASH_SHA2_256)
 				msg->msg_parent->msg_flags
