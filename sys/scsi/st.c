@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.182 2020/08/19 14:53:39 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.183 2020/08/20 01:47:45 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -67,7 +67,6 @@
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
-#include <sys/atomic.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_debug.h>
@@ -172,6 +171,7 @@ struct st_softc {
 #define	ST_2FM_AT_EOD		0x00000400
 #define	ST_MOUNTED		0x00000800
 #define	ST_DONTBUFFER		0x00001000
+#define	ST_DYING		0x00004000
 #define	ST_BOD_DETECTED		0x00008000
 #define	ST_MODE_DENSITY		0x00010000
 #define	ST_MODE_BLKSIZE		0x00040000
@@ -321,7 +321,7 @@ stactivate(struct device *self, int act)
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
-		atomic_setbits_int(&st->sc_link->state, SDEV_S_DYING);
+		SET(st->flags, ST_DYING);
 		scsi_xsh_del(&st->sc_xsh);
 		break;
 	}
@@ -362,7 +362,7 @@ stopen(dev_t dev, int flags, int fmt, struct proc *p)
 	st = stlookup(STUNIT(dev));
 	if (st == NULL)
 		return ENXIO;
-	if (ISSET(st->sc_link->state, SDEV_S_DYING)) {
+	if (ISSET(st->flags, ST_DYING)) {
 		error = ENXIO;
 		goto done;
 	}
@@ -441,7 +441,7 @@ stclose(dev_t dev, int flags, int mode, struct proc *p)
 	st = stlookup(STUNIT(dev));
 	if (st == NULL)
 		return ENXIO;
-	if (ISSET(st->sc_link->state, SDEV_S_DYING)) {
+	if (ISSET(st->flags, ST_DYING)) {
 		error = ENXIO;
 		goto done;
 	}
@@ -729,7 +729,7 @@ ststrategy(struct buf *bp)
 		bp->b_error = ENXIO;
 		goto bad;
 	}
-	if (ISSET(st->sc_link->state, SDEV_S_DYING)) {
+	if (ISSET(st->flags, ST_DYING)) {
 		bp->b_error = ENXIO;
 		goto bad;
 	}
@@ -804,7 +804,7 @@ ststart(struct scsi_xfer *xs)
 
 	SC_DEBUG(link, SDEV_DB2, ("ststart\n"));
 
-	if (ISSET(st->sc_link->state, SDEV_S_DYING)) {
+	if (ISSET(st->flags, ST_DYING)) {
 		scsi_xs_put(xs);
 		return;
 	}
@@ -1049,7 +1049,7 @@ stioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 	if (st == NULL)
 		return ENXIO;
 
-	if (ISSET(st->sc_link->state, SDEV_S_DYING)) {
+	if (ISSET(st->flags, ST_DYING)) {
 		error = ENXIO;
 		goto done;
 	}

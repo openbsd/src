@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.250 2020/08/19 14:53:39 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.251 2020/08/20 01:47:45 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -67,7 +67,6 @@
 #include <sys/scsiio.h>
 #include <sys/dkio.h>
 #include <sys/vnode.h>
-#include <sys/atomic.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/cd.h>
@@ -101,6 +100,7 @@ struct cd_softc {
 
 	int			 sc_flags;
 #define	CDF_ANCIENT	0x10		/* disk is ancient; for cdminphys */
+#define	CDF_DYING	0x40		/* dying, when deactivated */
 	struct scsi_link	*sc_link;	/* contains targ, lun, etc. */
 	struct cd_parms {
 		u_int32_t secsize;
@@ -251,7 +251,7 @@ cdactivate(struct device *self, int act)
 			    SCSI_SILENT | SCSI_AUTOCONF);
 		break;
 	case DVACT_DEACTIVATE:
-		atomic_setbits_int(&sc->sc_link->state, SDEV_S_DYING);
+		SET(sc->sc_flags, CDF_DYING);
 		scsi_xsh_del(&sc->sc_xsh);
 		break;
 	}
@@ -292,7 +292,7 @@ cdopen(dev_t dev, int flag, int fmt, struct proc *p)
 	sc = cdlookup(unit);
 	if (sc == NULL)
 		return ENXIO;
-	if (ISSET(sc->sc_link->state, SDEV_S_DYING)) {
+	if (ISSET(sc->sc_flags, CDF_DYING)) {
 		device_unref(&sc->sc_dev);
 		return ENXIO;
 	}
@@ -402,7 +402,7 @@ cdclose(dev_t dev, int flag, int fmt, struct proc *p)
 	sc = cdlookup(DISKUNIT(dev));
 	if (sc == NULL)
 		return ENXIO;
-	if (ISSET(sc->sc_link->state, SDEV_S_DYING)) {
+	if (ISSET(sc->sc_flags, CDF_DYING)) {
 		device_unref(&sc->sc_dev);
 		return ENXIO;
 	}
@@ -451,7 +451,7 @@ cdstrategy(struct buf *bp)
 		bp->b_error = ENXIO;
 		goto bad;
 	}
-	if (ISSET(sc->sc_link->state, SDEV_S_DYING)) {
+	if (ISSET(sc->sc_flags, CDF_DYING)) {
 		bp->b_error = ENXIO;
 		goto bad;
 	}
@@ -524,7 +524,7 @@ cdstart(struct scsi_xfer *xs)
 
 	SC_DEBUG(link, SDEV_DB2, ("cdstart\n"));
 
-	if (ISSET(sc->sc_link->state, SDEV_S_DYING)) {
+	if (ISSET(sc->sc_flags, CDF_DYING)) {
 		scsi_xs_put(xs);
 		return;
 	}
@@ -729,7 +729,7 @@ cdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	sc = cdlookup(DISKUNIT(dev));
 	if (sc == NULL)
 		return ENXIO;
-	if (ISSET(sc->sc_link->state, SDEV_S_DYING)) {
+	if (ISSET(sc->sc_flags, CDF_DYING)) {
 		device_unref(&sc->sc_dev);
 		return ENXIO;
 	}
