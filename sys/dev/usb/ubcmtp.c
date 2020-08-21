@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubcmtp.c,v 1.21 2020/07/31 10:49:33 mglocker Exp $ */
+/*	$OpenBSD: ubcmtp.c,v 1.22 2020/08/21 17:42:45 mglocker Exp $ */
 
 /*
  * Copyright (c) 2013-2014, joshua stein <jcs@openbsd.org>
@@ -47,7 +47,6 @@
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdevs.h>
-#include <dev/usb/uhidev.h>
 #include <dev/usb/usbhid.h>
 
 #include <dev/wscons/wsconsio.h>
@@ -328,7 +327,6 @@ struct ubcmtp_softc {
 
 	struct ubcmtp_dev	*dev_type;
 
-	struct uhidev		sc_hdev;
 	struct usbd_device	*sc_udev;
 	struct device		*sc_wsmousedev;
 
