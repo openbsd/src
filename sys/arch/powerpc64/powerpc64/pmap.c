@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.41 2020/08/17 16:55:41 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.42 2020/08/21 13:42:02 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -372,7 +372,7 @@ pmap_slbd_fault(pmap_t pm, vaddr_t va)
 	return EFAULT;
 }
 
-u_int pmap_vsid;
+u_long pmap_vsid;
 
 struct slb_desc *
 pmap_slbd_alloc(pmap_t pm, vaddr_t va)
@@ -388,7 +388,7 @@ pmap_slbd_alloc(pmap_t pm, vaddr_t va)
 		return NULL;
 
 	slbd->slbd_esid = esid;
-	slbd->slbd_vsid = atomic_inc_int_nv(&pmap_vsid);
+	slbd->slbd_vsid = atomic_inc_long_nv(&pmap_vsid);
 	KASSERT((slbd->slbd_vsid & KERNEL_VSID_BIT) == 0);
 	LIST_INSERT_HEAD(&pm->pm_slbd, slbd, slbd_list);
 
