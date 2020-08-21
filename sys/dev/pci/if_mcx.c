@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.71 2020/07/23 01:24:53 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.72 2020/08/21 04:47:52 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -203,8 +203,10 @@ CTASSERT(MCX_MAX_QUEUES * MCX_WQ_DOORBELL_STRIDE <
 #define MCX_CMD_QUERY_SPECIAL_CONTEXTS	0x203
 #define MCX_CMD_CREATE_EQ		0x301
 #define MCX_CMD_DESTROY_EQ		0x302
+#define MCX_CMD_QUERY_EQ		0x303
 #define MCX_CMD_CREATE_CQ		0x400
 #define MCX_CMD_DESTROY_CQ		0x401
+#define MCX_CMD_QUERY_CQ		0x402
 #define MCX_CMD_QUERY_NIC_VPORT_CONTEXT	0x754
 #define MCX_CMD_MODIFY_NIC_VPORT_CONTEXT \
 					0x755
@@ -1151,19 +1153,18 @@ struct mcx_cmd_query_special_ctx_out {
 
 struct mcx_eq_ctx {
 	uint32_t		eq_status;
-#define MCX_EQ_CTX_ST_SHIFT		8
-#define MCX_EQ_CTX_ST_MASK		(0xf << MCX_EQ_CTX_ST_SHIFT)
-#define MCX_EQ_CTX_ST_ARMED		(0x9 << MCX_EQ_CTX_ST_SHIFT)
-#define MCX_EQ_CTX_ST_FIRED		(0xa << MCX_EQ_CTX_ST_SHIFT)
+#define MCX_EQ_CTX_STATE_SHIFT		8
+#define MCX_EQ_CTX_STATE_MASK		(0xf << MCX_EQ_CTX_STATE_SHIFT)
+#define MCX_EQ_CTX_STATE_ARMED		0x9
+#define MCX_EQ_CTX_STATE_FIRED		0xa
 #define MCX_EQ_CTX_OI_SHIFT		17
 #define MCX_EQ_CTX_OI			(1 << MCX_EQ_CTX_OI_SHIFT)
 #define MCX_EQ_CTX_EC_SHIFT		18
 #define MCX_EQ_CTX_EC			(1 << MCX_EQ_CTX_EC_SHIFT)
 #define MCX_EQ_CTX_STATUS_SHIFT		28
 #define MCX_EQ_CTX_STATUS_MASK		(0xf << MCX_EQ_CTX_STATUS_SHIFT)
-#define MCX_EQ_CTX_STATUS_OK		(0x0 << MCX_EQ_CTX_STATUS_SHIFT)
-#define MCX_EQ_CTX_STATUS_EQ_WRITE_FAILURE \
-					(0xa << MCX_EQ_CTX_STATUS_SHIFT)
+#define MCX_EQ_CTX_STATUS_OK		0x0
+#define MCX_EQ_CTX_STATUS_EQ_WRITE_FAILURE 0xa
 	uint32_t		eq_reserved1;
 	uint32_t		eq_page_offset;
 #define MCX_EQ_CTX_PAGE_OFFSET_SHIFT	5
@@ -1211,6 +1212,21 @@ struct mcx_cmd_create_eq_out {
 	uint32_t		cmd_syndrome;
 	uint32_t		cmd_eqn;
 	uint8_t			cmd_reserved1[4];
+} __packed __aligned(4);
+
+struct mcx_cmd_query_eq_in {
+	uint16_t		cmd_opcode;
+	uint8_t			cmd_reserved0[4];
+	uint16_t		cmd_op_mod;
+	uint32_t		cmd_eqn;
+	uint8_t			cmd_reserved1[4];
+} __packed __aligned(4);
+
+struct mcx_cmd_query_eq_out {
+	uint8_t			cmd_status;
+	uint8_t			cmd_reserved0[3];
+	uint32_t		cmd_syndrome;
+	uint8_t			cmd_reserved1[8];
 } __packed __aligned(4);
 
 struct mcx_eq_entry {
@@ -1401,6 +1417,16 @@ struct mcx_cmd_destroy_rqt_out {
 
 struct mcx_cq_ctx {
 	uint32_t		cq_status;
+#define MCX_CQ_CTX_STATUS_SHIFT		28
+#define MCX_CQ_CTX_STATUS_MASK		(0xf << MCX_CQ_CTX_STATUS_SHIFT)
+#define MCX_CQ_CTX_STATUS_OK		0x0
+#define MCX_CQ_CTX_STATUS_OVERFLOW	0x9
+#define MCX_CQ_CTX_STATUS_WRITE_FAIL	0xa
+#define MCX_CQ_CTX_STATE_SHIFT		8
+#define MCX_CQ_CTX_STATE_MASK		(0xf << MCX_CQ_CTX_STATE_SHIFT)
+#define MCX_CQ_CTX_STATE_SOLICITED	0x6
+#define MCX_CQ_CTX_STATE_ARMED		0x9
+#define MCX_CQ_CTX_STATE_FIRED		0xa
 	uint32_t		cq_reserved1;
 	uint32_t		cq_page_offset;
 	uint32_t		cq_uar_size;
@@ -1451,6 +1477,21 @@ struct mcx_cmd_destroy_cq_in {
 } __packed __aligned(4);
 
 struct mcx_cmd_destroy_cq_out {
+	uint8_t			cmd_status;
+	uint8_t			cmd_reserved0[3];
+	uint32_t		cmd_syndrome;
+	uint8_t			cmd_reserved1[8];
+} __packed __aligned(4);
+
+struct mcx_cmd_query_cq_in {
+	uint16_t		cmd_opcode;
+	uint8_t			cmd_reserved0[4];
+	uint16_t		cmd_op_mod;
+	uint32_t		cmd_cqn;
+	uint8_t			cmd_reserved1[4];
+} __packed __aligned(4);
+
+struct mcx_cmd_query_cq_out {
 	uint8_t			cmd_status;
 	uint8_t			cmd_reserved0[3];
 	uint32_t		cmd_syndrome;
@@ -1537,6 +1578,10 @@ struct mcx_sq_ctx {
 #define MCX_SQ_CTX_FLUSH_IN_ERROR		(1 << 28)
 #define MCX_SQ_CTX_MIN_WQE_INLINE_SHIFT		24
 #define MCX_SQ_CTX_STATE_SHIFT			20
+#define MCX_SQ_CTX_STATE_MASK			(0xf << 20)
+#define MCX_SQ_CTX_STATE_RST			0
+#define MCX_SQ_CTX_STATE_RDY			1
+#define MCX_SQ_CTX_STATE_ERR			3
 	uint32_t		sq_user_index;
 	uint32_t		sq_cqn;
 	uint32_t		sq_reserved1[5];
@@ -1646,6 +1691,10 @@ struct mcx_rq_ctx {
 #define MCX_RQ_CTX_VLAN_STRIP_DIS		(1 << 28)
 #define MCX_RQ_CTX_MEM_RQ_TYPE_SHIFT		24
 #define MCX_RQ_CTX_STATE_SHIFT			20
+#define MCX_RQ_CTX_STATE_MASK			(0xf << 20)
+#define MCX_RQ_CTX_STATE_RST			0
+#define MCX_RQ_CTX_STATE_RDY			1
+#define MCX_RQ_CTX_STATE_ERR			3
 #define MCX_RQ_CTX_FLUSH_IN_ERROR		(1 << 18)
 	uint32_t		rq_user_index;
 	uint32_t		rq_cqn;
@@ -2176,6 +2225,9 @@ struct mcx_queues {
 	struct mcx_tx		 q_tx;
 	struct mcx_cq		 q_cq;
 	struct mcx_eq		 q_eq;
+#if NKSTAT > 0
+	struct kstat		*q_kstat;
+#endif
 };
 
 struct mcx_flow_group {
@@ -2404,12 +2456,17 @@ static int	mcx_set_flow_table_entry_proto(struct mcx_softc *, int, int,
 		    int, int, uint32_t);
 static int	mcx_delete_flow_table_entry(struct mcx_softc *, int, int);
 
+#if NKSTAT > 0
+static int	mcx_query_rq(struct mcx_softc *, struct mcx_rx *, struct mcx_rq_ctx *);
+static int	mcx_query_sq(struct mcx_softc *, struct mcx_tx *, struct mcx_sq_ctx *);
+static int	mcx_query_cq(struct mcx_softc *, struct mcx_cq *, struct mcx_cq_ctx *);
+static int	mcx_query_eq(struct mcx_softc *, struct mcx_eq *, struct mcx_eq_ctx *);
+#endif
+
 #if 0
 static int	mcx_dump_flow_table(struct mcx_softc *, int);
 static int	mcx_dump_flow_table_entry(struct mcx_softc *, int, int);
 static int	mcx_dump_flow_group(struct mcx_softc *, int);
-static int	mcx_dump_rq(struct mcx_softc *);
-static int	mcx_dump_sq(struct mcx_softc *);
 #endif
 
 
@@ -5951,156 +6008,6 @@ free:
 	return (error);
 }
 
-int
-mcx_dump_rq(struct mcx_softc *sc)
-{
-	struct mcx_dmamem mxm;
-	struct mcx_cmdq_entry *cqe;
-	struct mcx_cmd_query_rq_in *in;
-	struct mcx_cmd_query_rq_out *out;
-	struct mcx_cmd_query_rq_mb_out *mbout;
-	uint8_t token = mcx_cmdq_token(sc);
-	int error;
-
-	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
-	mcx_cmdq_init(sc, cqe, sizeof(*in), sizeof(*out) + sizeof(*mbout) + 16,
-	    token);
-
-	in = mcx_cmdq_in(cqe);
-	in->cmd_opcode = htobe16(MCX_CMD_QUERY_RQ);
-	in->cmd_op_mod = htobe16(0);
-	in->cmd_rqn = htobe32(sc->sc_rqn);
-
-	CTASSERT(sizeof(*mbout) <= MCX_CMDQ_MAILBOX_DATASIZE*2);
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 2,
-	    &cqe->cq_output_ptr, token) != 0) {
-		printf(", unable to allocate query flow group mailboxes\n");
-		return (-1);
-	}
-
-	mcx_cmdq_mboxes_sign(&mxm, 1);
-
-	mcx_cmdq_post(sc, cqe, 0);
-	error = mcx_cmdq_poll(sc, cqe, 1000);
-	if (error != 0) {
-		printf("%s: query rq timeout\n", DEVNAME(sc));
-		goto free;
-	}
-	error = mcx_cmdq_verify(cqe);
-	if (error != 0) {
-		printf("%s: query rq reply corrupt\n", DEVNAME(sc));
-		goto free;
-	}
-
-	out = mcx_cmdq_out(cqe);
-	switch (out->cmd_status) {
-	case MCX_CQ_STATUS_OK:
-		break;
-	default:
-		printf("%s: query rq failed (%x/%x)\n", DEVNAME(sc),
-		    out->cmd_status, betoh32(out->cmd_syndrome));
-		error = -1;
-		goto free;
-	}
-
-        mbout = (struct mcx_cmd_query_rq_mb_out *)
-	    (mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0)));
-	printf("%s: rq: state %d, ui %d, cqn %d, s/s %d/%d/%d, hw %d, sw %d\n",
-	    DEVNAME(sc),
-	    (betoh32(mbout->cmd_ctx.rq_flags) >> MCX_RQ_CTX_STATE_SHIFT) & 0x0f,
-	    betoh32(mbout->cmd_ctx.rq_user_index),
-	    betoh32(mbout->cmd_ctx.rq_cqn),
-	    betoh16(mbout->cmd_ctx.rq_wq.wq_log_stride),
-	    mbout->cmd_ctx.rq_wq.wq_log_page_sz,
-	    mbout->cmd_ctx.rq_wq.wq_log_size,
-	    betoh32(mbout->cmd_ctx.rq_wq.wq_hw_counter),
-	    betoh32(mbout->cmd_ctx.rq_wq.wq_sw_counter));
-
-free:
-	mcx_cq_mboxes_free(sc, &mxm);
-	return (error);
-}
-
-int
-mcx_dump_sq(struct mcx_softc *sc)
-{
-	struct mcx_dmamem mxm;
-	struct mcx_cmdq_entry *cqe;
-	struct mcx_cmd_query_sq_in *in;
-	struct mcx_cmd_query_sq_out *out;
-	struct mcx_cmd_query_sq_mb_out *mbout;
-	uint8_t token = mcx_cmdq_token(sc);
-	int error;
-	int i;
-	uint8_t *dump;
-
-	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
-	mcx_cmdq_init(sc, cqe, sizeof(*in), sizeof(*out) + sizeof(*mbout) + 16,
-	    token);
-
-	in = mcx_cmdq_in(cqe);
-	in->cmd_opcode = htobe16(MCX_CMD_QUERY_SQ);
-	in->cmd_op_mod = htobe16(0);
-	in->cmd_sqn = htobe32(tx->tx_sqn);
-
-	CTASSERT(sizeof(*mbout) <= MCX_CMDQ_MAILBOX_DATASIZE*2);
-	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 2,
-	    &cqe->cq_output_ptr, token) != 0) {
-		printf(", unable to allocate query sq mailboxes\n");
-		return (-1);
-	}
-
-	mcx_cmdq_mboxes_sign(&mxm, 1);
-
-	mcx_cmdq_post(sc, cqe, 0);
-	error = mcx_cmdq_poll(sc, cqe, 1000);
-	if (error != 0) {
-		printf("%s: query sq timeout\n", DEVNAME(sc));
-		goto free;
-	}
-	error = mcx_cmdq_verify(cqe);
-	if (error != 0) {
-		printf("%s: query sq reply corrupt\n", DEVNAME(sc));
-		goto free;
-	}
-
-	out = mcx_cmdq_out(cqe);
-	switch (out->cmd_status) {
-	case MCX_CQ_STATUS_OK:
-		break;
-	default:
-		printf("%s: query sq failed (%x/%x)\n", DEVNAME(sc),
-		    out->cmd_status, betoh32(out->cmd_syndrome));
-		error = -1;
-		goto free;
-	}
-
-        mbout = (struct mcx_cmd_query_sq_mb_out *)
-	    (mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0)));
-/*
-	printf("%s: rq: state %d, ui %d, cqn %d, s/s %d/%d/%d, hw %d, sw %d\n",
-	    DEVNAME(sc),
-	    (betoh32(mbout->cmd_ctx.rq_flags) >> MCX_RQ_CTX_STATE_SHIFT) & 0x0f,
-	    betoh32(mbout->cmd_ctx.rq_user_index),
-	    betoh32(mbout->cmd_ctx.rq_cqn),
-	    betoh16(mbout->cmd_ctx.rq_wq.wq_log_stride),
-	    mbout->cmd_ctx.rq_wq.wq_log_page_sz,
-	    mbout->cmd_ctx.rq_wq.wq_log_size,
-	    betoh32(mbout->cmd_ctx.rq_wq.wq_hw_counter),
-	    betoh32(mbout->cmd_ctx.rq_wq.wq_sw_counter));
-*/
-	dump = (uint8_t *)mbout;
-	for (i = 0; i < MCX_CMDQ_MAILBOX_DATASIZE; i++) {
-		printf("%.2x ", dump[i]);
-		if (i % 16 == 15)
-			printf("\n");
-	}
-
-free:
-	mcx_cq_mboxes_free(sc, &mxm);
-	return (error);
-}
-
 static int
 mcx_dump_counters(struct mcx_softc *sc)
 {
@@ -6236,6 +6143,251 @@ free:
 }
 
 #endif
+
+#if NKSTAT > 0
+
+int
+mcx_query_rq(struct mcx_softc *sc, struct mcx_rx *rx, struct mcx_rq_ctx *rq_ctx)
+{
+	struct mcx_dmamem mxm;
+	struct mcx_cmdq_entry *cqe;
+	struct mcx_cmd_query_rq_in *in;
+	struct mcx_cmd_query_rq_out *out;
+	struct mcx_cmd_query_rq_mb_out *mbout;
+	uint8_t token = mcx_cmdq_token(sc);
+	int error;
+
+	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
+	mcx_cmdq_init(sc, cqe, sizeof(*in), sizeof(*out) + sizeof(*mbout) + 16,
+	    token);
+
+	in = mcx_cmdq_in(cqe);
+	in->cmd_opcode = htobe16(MCX_CMD_QUERY_RQ);
+	in->cmd_op_mod = htobe16(0);
+	in->cmd_rqn = htobe32(rx->rx_rqn);
+
+	CTASSERT(sizeof(*mbout) <= MCX_CMDQ_MAILBOX_DATASIZE*2);
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 2,
+	    &cqe->cq_output_ptr, token) != 0) {
+		printf("%s: unable to allocate query rq mailboxes\n", DEVNAME(sc));
+		return (-1);
+	}
+
+	mcx_cmdq_mboxes_sign(&mxm, 1);
+
+	mcx_cmdq_post(sc, cqe, 0);
+	error = mcx_cmdq_poll(sc, cqe, 1000);
+	if (error != 0) {
+		printf("%s: query rq timeout\n", DEVNAME(sc));
+		goto free;
+	}
+	error = mcx_cmdq_verify(cqe);
+	if (error != 0) {
+		printf("%s: query rq reply corrupt\n", DEVNAME(sc));
+		goto free;
+	}
+
+	out = mcx_cmdq_out(cqe);
+	switch (out->cmd_status) {
+	case MCX_CQ_STATUS_OK:
+		break;
+	default:
+		printf("%s: query rq failed (%x/%x)\n", DEVNAME(sc),
+		    out->cmd_status, betoh32(out->cmd_syndrome));
+		error = -1;
+		goto free;
+	}
+
+        mbout = (struct mcx_cmd_query_rq_mb_out *)
+	    (mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0)));
+	memcpy(rq_ctx, &mbout->cmd_ctx, sizeof(*rq_ctx));
+
+free:
+	mcx_cq_mboxes_free(sc, &mxm);
+	return (error);
+}
+
+int
+mcx_query_sq(struct mcx_softc *sc, struct mcx_tx *tx, struct mcx_sq_ctx *sq_ctx)
+{
+	struct mcx_dmamem mxm;
+	struct mcx_cmdq_entry *cqe;
+	struct mcx_cmd_query_sq_in *in;
+	struct mcx_cmd_query_sq_out *out;
+	struct mcx_cmd_query_sq_mb_out *mbout;
+	uint8_t token = mcx_cmdq_token(sc);
+	int error;
+
+	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
+	mcx_cmdq_init(sc, cqe, sizeof(*in), sizeof(*out) + sizeof(*mbout) + 16,
+	    token);
+
+	in = mcx_cmdq_in(cqe);
+	in->cmd_opcode = htobe16(MCX_CMD_QUERY_SQ);
+	in->cmd_op_mod = htobe16(0);
+	in->cmd_sqn = htobe32(tx->tx_sqn);
+
+	CTASSERT(sizeof(*mbout) <= MCX_CMDQ_MAILBOX_DATASIZE*2);
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 2,
+	    &cqe->cq_output_ptr, token) != 0) {
+		printf("%s: unable to allocate query sq mailboxes\n", DEVNAME(sc));
+		return (-1);
+	}
+
+	mcx_cmdq_mboxes_sign(&mxm, 1);
+
+	mcx_cmdq_post(sc, cqe, 0);
+	error = mcx_cmdq_poll(sc, cqe, 1000);
+	if (error != 0) {
+		printf("%s: query sq timeout\n", DEVNAME(sc));
+		goto free;
+	}
+	error = mcx_cmdq_verify(cqe);
+	if (error != 0) {
+		printf("%s: query sq reply corrupt\n", DEVNAME(sc));
+		goto free;
+	}
+
+	out = mcx_cmdq_out(cqe);
+	switch (out->cmd_status) {
+	case MCX_CQ_STATUS_OK:
+		break;
+	default:
+		printf("%s: query sq failed (%x/%x)\n", DEVNAME(sc),
+		    out->cmd_status, betoh32(out->cmd_syndrome));
+		error = -1;
+		goto free;
+	}
+
+        mbout = (struct mcx_cmd_query_sq_mb_out *)
+	    (mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0)));
+	memcpy(sq_ctx, &mbout->cmd_ctx, sizeof(*sq_ctx));
+
+free:
+	mcx_cq_mboxes_free(sc, &mxm);
+	return (error);
+}
+
+int
+mcx_query_cq(struct mcx_softc *sc, struct mcx_cq *cq, struct mcx_cq_ctx *cq_ctx)
+{
+	struct mcx_dmamem mxm;
+	struct mcx_cmdq_entry *cqe;
+	struct mcx_cmd_query_cq_in *in;
+	struct mcx_cmd_query_cq_out *out;
+	struct mcx_cq_ctx *ctx;
+	uint8_t token = mcx_cmdq_token(sc);
+	int error;
+
+	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
+	mcx_cmdq_init(sc, cqe, sizeof(*in), sizeof(*out) + sizeof(*ctx) + 16,
+	    token);
+
+	in = mcx_cmdq_in(cqe);
+	in->cmd_opcode = htobe16(MCX_CMD_QUERY_CQ);
+	in->cmd_op_mod = htobe16(0);
+	in->cmd_cqn = htobe32(cq->cq_n);
+
+	CTASSERT(sizeof(*ctx) <= MCX_CMDQ_MAILBOX_DATASIZE*2);
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 2,
+	    &cqe->cq_output_ptr, token) != 0) {
+		printf("%s: unable to allocate query cq mailboxes\n", DEVNAME(sc));
+		return (-1);
+	}
+
+	mcx_cmdq_mboxes_sign(&mxm, 1);
+
+	mcx_cmdq_post(sc, cqe, 0);
+	error = mcx_cmdq_poll(sc, cqe, 1000);
+	if (error != 0) {
+		printf("%s: query cq timeout\n", DEVNAME(sc));
+		goto free;
+	}
+	error = mcx_cmdq_verify(cqe);
+	if (error != 0) {
+		printf("%s: query cq reply corrupt\n", DEVNAME(sc));
+		goto free;
+	}
+
+	out = mcx_cmdq_out(cqe);
+	switch (out->cmd_status) {
+	case MCX_CQ_STATUS_OK:
+		break;
+	default:
+		printf("%s: query cq failed (%x/%x)\n", DEVNAME(sc),
+		    out->cmd_status, betoh32(out->cmd_syndrome));
+		error = -1;
+		goto free;
+	}
+
+        ctx = (struct mcx_cq_ctx *)(mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0)));
+	memcpy(cq_ctx, ctx, sizeof(*cq_ctx));
+free:
+	mcx_cq_mboxes_free(sc, &mxm);
+	return (error);
+}
+
+int
+mcx_query_eq(struct mcx_softc *sc, struct mcx_eq *eq, struct mcx_eq_ctx *eq_ctx)
+{
+	struct mcx_dmamem mxm;
+	struct mcx_cmdq_entry *cqe;
+	struct mcx_cmd_query_eq_in *in;
+	struct mcx_cmd_query_eq_out *out;
+	struct mcx_eq_ctx *ctx;
+	uint8_t token = mcx_cmdq_token(sc);
+	int error;
+
+	cqe = MCX_DMA_KVA(&sc->sc_cmdq_mem);
+	mcx_cmdq_init(sc, cqe, sizeof(*in), sizeof(*out) + sizeof(*ctx) + 16,
+	    token);
+
+	in = mcx_cmdq_in(cqe);
+	in->cmd_opcode = htobe16(MCX_CMD_QUERY_EQ);
+	in->cmd_op_mod = htobe16(0);
+	in->cmd_eqn = htobe32(eq->eq_n);
+
+	CTASSERT(sizeof(*ctx) <= MCX_CMDQ_MAILBOX_DATASIZE*2);
+	if (mcx_cmdq_mboxes_alloc(sc, &mxm, 2,
+	    &cqe->cq_output_ptr, token) != 0) {
+		printf("%s: unable to allocate query eq mailboxes\n", DEVNAME(sc));
+		return (-1);
+	}
+
+	mcx_cmdq_mboxes_sign(&mxm, 1);
+
+	mcx_cmdq_post(sc, cqe, 0);
+	error = mcx_cmdq_poll(sc, cqe, 1000);
+	if (error != 0) {
+		printf("%s: query eq timeout\n", DEVNAME(sc));
+		goto free;
+	}
+	error = mcx_cmdq_verify(cqe);
+	if (error != 0) {
+		printf("%s: query eq reply corrupt\n", DEVNAME(sc));
+		goto free;
+	}
+
+	out = mcx_cmdq_out(cqe);
+	switch (out->cmd_status) {
+	case MCX_CQ_STATUS_OK:
+		break;
+	default:
+		printf("%s: query eq failed (%x/%x)\n", DEVNAME(sc),
+		    out->cmd_status, betoh32(out->cmd_syndrome));
+		error = -1;
+		goto free;
+	}
+
+        ctx = (struct mcx_eq_ctx *)(mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0)));
+	memcpy(eq_ctx, ctx, sizeof(*eq_ctx));
+free:
+	mcx_cq_mboxes_free(sc, &mxm);
+	return (error);
+}
+
+#endif /* NKSTAT > 0 */
+
 
 int
 mcx_rx_fill_slots(struct mcx_softc *sc, struct mcx_rx *rx,
@@ -7890,6 +8042,7 @@ static const struct mcx_kstat_ppcnt mcx_kstat_ppcnt_rfc3635 = {
 static int	mcx_kstat_ppcnt_read(struct kstat *);
 
 static void	mcx_kstat_attach_tmps(struct mcx_softc *sc);
+static void	mcx_kstat_attach_queues(struct mcx_softc *sc);
 
 static struct kstat *
 mcx_kstat_attach_ppcnt(struct mcx_softc *sc,
@@ -7937,6 +8090,7 @@ mcx_kstat_attach(struct mcx_softc *sc)
 	    &mcx_kstat_ppcnt_rfc3635);
 
 	mcx_kstat_attach_tmps(sc);
+	mcx_kstat_attach_queues(sc);
 }
 
 static int
@@ -8086,4 +8240,236 @@ mcx_kstat_mtmp_read(struct kstat *ks)
 
 	return (0);
 }
+
+struct mcx_queuestat {
+	char			 name[KSTAT_KV_NAMELEN];
+	enum kstat_kv_type	 type;
+};
+
+static const struct mcx_queuestat mcx_queue_kstat_tpl[] = {
+	{ "RQ SW prod",		KSTAT_KV_T_COUNTER64 },
+	{ "RQ HW prod",		KSTAT_KV_T_COUNTER64 },
+	{ "RQ HW cons",		KSTAT_KV_T_COUNTER64 },
+	{ "RQ HW state",	KSTAT_KV_T_ISTR },
+
+	{ "SQ SW prod",		KSTAT_KV_T_COUNTER64 },
+	{ "SQ SW cons",		KSTAT_KV_T_COUNTER64 },
+	{ "SQ HW prod",		KSTAT_KV_T_COUNTER64 },
+	{ "SQ HW cons",		KSTAT_KV_T_COUNTER64 },
+	{ "SQ HW state",	KSTAT_KV_T_ISTR },
+
+	{ "CQ SW cons",		KSTAT_KV_T_COUNTER64 },
+	{ "CQ HW prod",		KSTAT_KV_T_COUNTER64 },
+	{ "CQ HW cons",		KSTAT_KV_T_COUNTER64 },
+	{ "CQ HW notify",	KSTAT_KV_T_COUNTER64 },
+	{ "CQ HW solicit",	KSTAT_KV_T_COUNTER64 },
+	{ "CQ HW status",	KSTAT_KV_T_ISTR },
+	{ "CQ HW state",	KSTAT_KV_T_ISTR },
+
+	{ "EQ SW cons",		KSTAT_KV_T_COUNTER64 },
+	{ "EQ HW prod",		KSTAT_KV_T_COUNTER64 },
+	{ "EQ HW cons",		KSTAT_KV_T_COUNTER64 },
+	{ "EQ HW status",	KSTAT_KV_T_ISTR },
+	{ "EQ HW state",	KSTAT_KV_T_ISTR },
+};
+
+static int	mcx_kstat_queue_read(struct kstat *);
+
+static void
+mcx_kstat_attach_queues(struct mcx_softc *sc)
+{
+	struct kstat *ks;
+	struct kstat_kv *kvs;
+	int q, i;
+
+	for (q = 0; q < sc->sc_nqueues; q++) {
+		ks = kstat_create(DEVNAME(sc), 0, "mcx-queues", q,
+		    KSTAT_T_KV, 0);
+		if (ks == NULL) {
+			/* unable to attach queue stats %u, q */
+			continue;
+		}
+
+		kvs = mallocarray(nitems(mcx_queue_kstat_tpl),
+		    sizeof(*kvs), M_DEVBUF, M_WAITOK);
+
+		for (i = 0; i < nitems(mcx_queue_kstat_tpl); i++) {
+			const struct mcx_queuestat *tpl =
+			    &mcx_queue_kstat_tpl[i];
+
+			kstat_kv_init(&kvs[i], tpl->name, tpl->type);
+		}
+
+		ks->ks_softc = &sc->sc_queues[q];
+		ks->ks_data = kvs;
+		ks->ks_datalen = nitems(mcx_queue_kstat_tpl) * sizeof(*kvs);
+		ks->ks_read = mcx_kstat_queue_read;
+
+		sc->sc_queues[q].q_kstat = ks;
+		kstat_install(ks);
+	}
+}
+
+static int
+mcx_kstat_queue_read(struct kstat *ks)
+{
+	struct mcx_queues *q = ks->ks_softc;
+	struct mcx_softc *sc = q->q_sc;
+	struct kstat_kv *kvs = ks->ks_data;
+	union {
+		struct mcx_rq_ctx rq;
+		struct mcx_sq_ctx sq;
+		struct mcx_cq_ctx cq;
+		struct mcx_eq_ctx eq;
+	} u;
+	const char *text;
+	int error = 0;
+
+	KERNEL_LOCK();
+	
+	if (mcx_query_rq(sc, &q->q_rx, &u.rq) != 0) {
+		error = EIO;
+		goto out;
+	}
+
+	kstat_kv_u64(kvs++) = q->q_rx.rx_prod;
+	kstat_kv_u64(kvs++) = bemtoh32(&u.rq.rq_wq.wq_sw_counter);
+	kstat_kv_u64(kvs++) = bemtoh32(&u.rq.rq_wq.wq_hw_counter);
+	switch ((bemtoh32(&u.rq.rq_flags) & MCX_RQ_CTX_STATE_MASK) >>
+	    MCX_RQ_CTX_STATE_SHIFT) {
+	case MCX_RQ_CTX_STATE_RST:
+		text = "RST";
+		break;
+	case MCX_RQ_CTX_STATE_RDY:
+		text = "RDY";
+		break;
+	case MCX_RQ_CTX_STATE_ERR:
+		text = "ERR";
+		break;
+	default:
+		text = "unknown";
+		break;
+	}
+	strlcpy(kstat_kv_istr(kvs), text, sizeof(kstat_kv_istr(kvs)));
+	kvs++;
+
+	if (mcx_query_sq(sc, &q->q_tx, &u.sq) != 0) {
+		error = EIO;
+		goto out;
+	}
+
+	kstat_kv_u64(kvs++) = q->q_tx.tx_prod;
+	kstat_kv_u64(kvs++) = q->q_tx.tx_cons;
+	kstat_kv_u64(kvs++) = bemtoh32(&u.sq.sq_wq.wq_sw_counter);
+	kstat_kv_u64(kvs++) = bemtoh32(&u.sq.sq_wq.wq_hw_counter);
+	switch ((bemtoh32(&u.sq.sq_flags) & MCX_SQ_CTX_STATE_MASK) >>
+	    MCX_SQ_CTX_STATE_SHIFT) {
+	case MCX_SQ_CTX_STATE_RST:
+		text = "RST";
+		break;
+	case MCX_SQ_CTX_STATE_RDY:
+		text = "RDY";
+		break;
+	case MCX_SQ_CTX_STATE_ERR:
+		text = "ERR";
+		break;
+	default:
+		text = "unknown";
+		break;
+	}
+	strlcpy(kstat_kv_istr(kvs), text, sizeof(kstat_kv_istr(kvs)));
+	kvs++;
+
+	if (mcx_query_cq(sc, &q->q_cq, &u.cq) != 0) {
+		error = EIO;
+		goto out;
+	}
+
+	kstat_kv_u64(kvs++) = q->q_cq.cq_cons;
+	kstat_kv_u64(kvs++) = bemtoh32(&u.cq.cq_producer_counter);
+	kstat_kv_u64(kvs++) = bemtoh32(&u.cq.cq_consumer_counter);
+	kstat_kv_u64(kvs++) = bemtoh32(&u.cq.cq_last_notified);
+	kstat_kv_u64(kvs++) = bemtoh32(&u.cq.cq_last_solicit);
+
+	switch ((bemtoh32(&u.cq.cq_status) & MCX_CQ_CTX_STATUS_MASK) >>
+	    MCX_CQ_CTX_STATUS_SHIFT) {
+	case MCX_CQ_CTX_STATUS_OK:
+		text = "OK";
+		break;
+	case MCX_CQ_CTX_STATUS_OVERFLOW:
+		text = "overflow";
+		break;
+	case MCX_CQ_CTX_STATUS_WRITE_FAIL:
+		text = "write fail";
+		break;
+	default:
+		text = "unknown";
+		break;
+	}
+	strlcpy(kstat_kv_istr(kvs), text, sizeof(kstat_kv_istr(kvs)));
+	kvs++;
+
+	switch ((bemtoh32(&u.cq.cq_status) & MCX_CQ_CTX_STATE_MASK) >>
+	    MCX_CQ_CTX_STATE_SHIFT) {
+	case MCX_CQ_CTX_STATE_SOLICITED:
+		text = "solicited";
+		break;
+	case MCX_CQ_CTX_STATE_ARMED:
+		text = "armed";
+		break;
+	case MCX_CQ_CTX_STATE_FIRED:
+		text = "fired";
+		break;
+	default:
+		text = "unknown";
+		break;
+	}
+	strlcpy(kstat_kv_istr(kvs), text, sizeof(kstat_kv_istr(kvs)));
+	kvs++;
+
+	if (mcx_query_eq(sc, &q->q_eq, &u.eq) != 0) {
+		error = EIO;
+		goto out;
+	}
+
+	kstat_kv_u64(kvs++) = q->q_eq.eq_cons;
+	kstat_kv_u64(kvs++) = bemtoh32(&u.eq.eq_producer_counter);
+	kstat_kv_u64(kvs++) = bemtoh32(&u.eq.eq_consumer_counter);
+
+	switch ((bemtoh32(&u.eq.eq_status) & MCX_EQ_CTX_STATUS_MASK) >>
+	    MCX_EQ_CTX_STATUS_SHIFT) {
+	case MCX_EQ_CTX_STATUS_EQ_WRITE_FAILURE:
+		text = "write fail";
+		break;
+	case MCX_EQ_CTX_STATUS_OK:
+		text = "OK";
+		break;
+	default:
+		text = "unknown";
+		break;
+	}
+	strlcpy(kstat_kv_istr(kvs), text, sizeof(kstat_kv_istr(kvs)));
+	kvs++;
+
+	switch ((bemtoh32(&u.eq.eq_status) & MCX_EQ_CTX_STATE_MASK) >>
+	    MCX_EQ_CTX_STATE_SHIFT) {
+	case MCX_EQ_CTX_STATE_ARMED:
+		text = "armed";
+		break;
+	case MCX_EQ_CTX_STATE_FIRED:
+		text = "fired";
+		break;
+	default:
+		text = "unknown";
+		break;
+	}
+	strlcpy(kstat_kv_istr(kvs), text, sizeof(kstat_kv_istr(kvs)));
+	kvs++;
+
+	nanouptime(&ks->ks_updated);
+out:
+	KERNEL_UNLOCK();
+	return (error);
+}
+
 #endif /* NKSTAT > 0 */
