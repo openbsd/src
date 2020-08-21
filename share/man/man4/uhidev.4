@@ -1,4 +1,4 @@
-.\" $OpenBSD: uhidev.4,v 1.11 2020/08/21 17:42:45 mglocker Exp $
+.\" $OpenBSD: uhidev.4,v 1.12 2020/08/21 19:02:46 mglocker Exp $
 .\" $NetBSD: uhidev.4,v 1.2 2001/12/29 03:06:41 augustss Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,11 +36,13 @@
 .Nd USB Human Interface Device support
 .Sh SYNOPSIS
 .Cd "uhidev*  at uhub?"
+.Cd "fido*    at uhidev?"
 .Cd "ucycom*  at uhidev?"
 .Cd "ugold*   at uhidev?"
 .Cd "uhid*    at uhidev?"
 .Cd "ukbd*    at uhidev?"
 .Cd "ums*     at uhidev?"
+.Cd "umstc*   at uhidev?"
 .Cd "umt*     at uhidev?"
 .Cd "uoaklux* at uhidev?"
 .Cd "uoakrh*  at uhidev?"
@@ -66,12 +68,14 @@ kinds of devices and
 .Nm
 only dispatches data to them based on the report id.
 .Sh SEE ALSO
+.Xr fido 4 ,
 .Xr intro 4 ,
 .Xr ucycom 4 ,
 .Xr ugold 4 ,
 .Xr uhid 4 ,
 .Xr ukbd 4 ,
 .Xr ums 4 ,
+.Xr umstc 4 ,
 .Xr umt 4 ,
 .Xr uoaklux 4 ,
 .Xr uoakrh 4 ,
