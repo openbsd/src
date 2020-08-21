@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.36 2020/08/18 21:02:49 tobhe Exp $	*/
+/*	$OpenBSD: types.h,v 1.37 2020/08/21 14:30:17 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -42,7 +42,6 @@
 #define IKED_PUBKEY		"local.pub"
 
 #define IKED_OCSP_RESPCERT	"ocsp/responder.crt"
-#define IKED_OCSP_ISSUER	"ocsp/issuer.crt"
 
 #define IKED_OPT_VERBOSE	0x00000001
 #define IKED_OPT_NOACTION	0x00000002

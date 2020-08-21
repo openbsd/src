@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.73 2020/08/18 21:02:49 tobhe Exp $
+.\" $OpenBSD: iked.conf.5,v 1.74 2020/08/21 14:30:17 tobhe Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 18 2020 $
+.Dd $Mdocdate: August 21 2020 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -164,12 +164,13 @@ only supports MOBIKE when acting as a responder.
 .It Ic set nomobike
 Disables MOBIKE support.
 .It Ic set ocsp Ar URL Op Ic tolerate Ar time Op Ic maxage Ar time
-Enable OCSP and set the URL of the OCSP responder.
-Please note that the matching responder and issuer certificates
+Enable OCSP and set the fallback URL of the OCSP responder.
+This fallback will be used if the trusted CA from
+.Pa /etc/iked/ca/
+does not have an OCSP-URL extension.
+Please note that the matching responder certificates
 have to be placed in
-.Pa /etc/iked/ocsp/responder.crt
-and
-.Pa /etc/iked/ocsp/issuer.crt .
+.Pa /etc/iked/ocsp/responder.crt .
 .Pp
 The optional
 .Ic tolerate

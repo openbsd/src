@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.157 2020/08/18 21:02:49 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.158 2020/08/21 14:30:17 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1128,10 +1128,10 @@ __dead void fatalx(const char *, ...)
 	    __attribute__((__format__ (printf, 1, 2)));
 
 /* ocsp.c */
-int	 ocsp_connect(struct iked *env);
+int	 ocsp_connect(struct iked *env, struct imsg *);
 int	 ocsp_receive_fd(struct iked *, struct imsg *);
-int	 ocsp_validate_cert(struct iked *, void *, size_t,
-    struct iked_sahdr, uint8_t);
+int	 ocsp_validate_cert(struct iked *, void *, size_t, struct iked_sahdr,
+    uint8_t, X509 *);
 
 /* parse.y */
 int	 parse_config(const char *, struct iked *);

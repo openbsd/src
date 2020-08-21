@@ -1,4 +1,4 @@
-/*	$OpenBSD: ocsp.c,v 1.12 2020/08/18 21:02:49 tobhe Exp $ */
+/*	$OpenBSD: ocsp.c,v 1.13 2020/08/21 14:30:17 tobhe Exp $ */
 
 /*
  * Copyright (c) 2014 Markus Friedl
@@ -71,20 +71,30 @@ int		 ocsp_validate_finish(struct iked_ocsp *, int);
 
 /* async connect to configure ocsp-responder */
 int
-ocsp_connect(struct iked *env)
+ocsp_connect(struct iked *env, struct imsg *imsg)
 {
 	struct ocsp_connect	*oc = NULL;
 	struct addrinfo		 hints, *res0 = NULL, *res;
 	char			*host = NULL, *port = NULL, *path = NULL;
+	char			*url, *freeme = NULL;
 	int			use_ssl, fd = -1, ret = -1, error;
 
-	if (env->sc_ocsp_url == 0) {
+	if (IMSG_DATA_SIZE(imsg) > 0)
+		url = freeme = get_string(imsg->data, IMSG_DATA_SIZE(imsg));
+	else if (env->sc_ocsp_url)
+		url = env->sc_ocsp_url;
+	else {
 		log_warnx("%s: no ocsp url", __func__);
 		goto done;
 	}
-	if (!OCSP_parse_url(env->sc_ocsp_url, &host, &port, &path, &use_ssl)) {
+	if (!OCSP_parse_url(url, &host, &port, &path, &use_ssl)) {
 		log_warnx("%s: error parsing OCSP-request-URL: %s", __func__,
-		    env->sc_ocsp_url);
+		    url);
+		goto done;
+	}
+	if (use_ssl) {
+		log_warnx("%s: OCSP over SSL not supported: %s", __func__,
+		    url);
 		goto done;
 	}
 
@@ -139,6 +149,7 @@ ocsp_connect(struct iked *env)
  done:
 	if (res0)
 		freeaddrinfo(res0);
+	free(freeme);
 	free(host);
 	free(port);
 	free(path);
@@ -206,14 +217,20 @@ ocsp_connect_finish(struct iked *env, int fd, struct ocsp_connect *oc)
 /* validate the certifcate stored in 'data' by querying the ocsp-responder */
 int
 ocsp_validate_cert(struct iked *env, void *data, size_t len,
-    struct iked_sahdr sh, uint8_t type)
+    struct iked_sahdr sh, u_int8_t type, X509 *issuer)
 {
+	struct iovec		 iov[1];
+	STACK_OF(OPENSSL_STRING) *aia; /* Authority Information Access */
 	struct iked_ocsp_entry	*ioe;
 	struct iked_ocsp	*ocsp;
 	OCSP_CERTID		*id = NULL;
-	BIO			*rawcert = NULL, *bissuer = NULL;
-	X509			*cert = NULL, *issuer = NULL;
+	char			*url;
+	BIO			*rawcert = NULL;
+	X509			*cert = NULL;
+	int			 ret, iovcnt = 0;
 
+	if (issuer == NULL)
+		return (-1);
 	if ((ioe = calloc(1, sizeof(*ioe))) == NULL)
 		return (-1);
 	if ((ocsp = calloc(1, sizeof(*ocsp))) == NULL) {
@@ -227,8 +244,6 @@ ocsp_validate_cert(struct iked *env, void *data, size_t len,
 
 	if ((rawcert = BIO_new_mem_buf(data, len)) == NULL ||
 	    (cert = d2i_X509_bio(rawcert, NULL)) == NULL ||
-	    (bissuer = BIO_new_file(IKED_OCSP_ISSUER, "r")) == NULL ||
-	    (issuer = PEM_read_bio_X509(bissuer, NULL, NULL, NULL)) == NULL ||
 	    (ocsp->ocsp_cbio = BIO_new(BIO_s_socket())) == NULL ||
 	    (ocsp->ocsp_req = OCSP_REQUEST_new()) == NULL ||
 	    (id = OCSP_cert_to_id(NULL, cert, issuer)) == NULL ||
@@ -239,16 +254,27 @@ ocsp_validate_cert(struct iked *env, void *data, size_t len,
 	ocsp->ocsp_id = id;
 
 	BIO_free(rawcert);
-	BIO_free(bissuer);
 	X509_free(cert);
-	X509_free(issuer);
 
 	ioe->ioe_ocsp = ocsp;
 	TAILQ_INSERT_TAIL(&env->sc_ocsp, ioe, ioe_entry);
 
+	/* pass optional ocsp-url from issuer */
+	if ((aia = X509_get1_ocsp(issuer)) != NULL) {
+		url = sk_OPENSSL_STRING_value(aia, 0);
+		log_debug("%s: aia %s", __func__, url);
+		iov[0].iov_base = url;
+		iov[0].iov_len = strlen(url);
+		iovcnt = 1;
+	}
 	/* request connection to ocsp-responder */
-	proc_compose(&env->sc_ps, PROC_PARENT, IMSG_OCSP_FD, NULL, 0);
-	return (0);
+	ret = proc_composev(&env->sc_ps, PROC_PARENT, IMSG_OCSP_FD,
+	    iov, iovcnt);
+
+	if (aia)
+		X509_email_free(aia);	/* free stack of openssl strings */
+
+	return (ret);
 
  err:
 	ca_sslerror(__func__);
@@ -259,10 +285,6 @@ ocsp_validate_cert(struct iked *env, void *data, size_t len,
 		X509_free(cert);
 	if (id != NULL)
 		OCSP_CERTID_free(id);
-	if (bissuer != NULL)
-		BIO_free(bissuer);
-	if (issuer != NULL)
-		X509_free(issuer);
 	ocsp_validate_finish(ocsp, 0);	/* failed */
 	return (-1);
 }

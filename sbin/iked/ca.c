@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.68 2020/08/18 21:02:49 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.69 2020/08/21 14:30:17 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -64,7 +64,7 @@ int	 ca_x509_subject_cmp(X509 *, struct iked_static_id *);
 int	 ca_validate_pubkey(struct iked *, struct iked_static_id *,
 	    void *, size_t, struct iked_id *);
 int	 ca_validate_cert(struct iked *, struct iked_static_id *,
-	    void *, size_t);
+	    void *, size_t, X509 **);
 int	 ca_privkey_to_method(struct iked_id *);
 struct ibuf *
 	 ca_x509_serialize(X509 *);
@@ -416,6 +416,7 @@ ca_setauth(struct iked *env, struct iked_sa *sa,
 int
 ca_getcert(struct iked *env, struct imsg *imsg)
 {
+	X509			*issuer = NULL;
 	struct iked_sahdr	 sh;
 	uint8_t			 type;
 	uint8_t			*ptr;
@@ -445,11 +446,18 @@ ca_getcert(struct iked *env, struct imsg *imsg)
 
 	switch (type) {
 	case IKEV2_CERT_X509_CERT:
-		ret = ca_validate_cert(env, &id, ptr, len);
-		if (ret == 0 && env->sc_ocsp_url) {
-			ret = ocsp_validate_cert(env, ptr, len, sh, type);
-			if (ret == 0)
-				return (0);
+		if (env->sc_ocsp_url == NULL)
+			ret = ca_validate_cert(env, &id, ptr, len, NULL);
+		else {
+			ret = ca_validate_cert(env, &id, ptr, len, &issuer);
+			if (ret == 0) {
+				ret = ocsp_validate_cert(env, ptr, len, sh,
+				    type, issuer);
+				X509_free(issuer);
+				if (ret == 0)
+					return (0);
+			} else
+				X509_free(issuer);
 		}
 		break;
 	case IKEV2_CERT_RSA_KEY:
@@ -818,7 +826,7 @@ ca_reload(struct iked *env)
 
 		x509 = xo->data.x509;
 
-		(void)ca_validate_cert(env, NULL, x509, 0);
+		(void)ca_validate_cert(env, NULL, x509, 0, NULL);
 	}
 
 	if (!env->sc_certreqtype)
@@ -1455,7 +1463,7 @@ ca_validate_pubkey(struct iked *env, struct iked_static_id *id,
 
 int
 ca_validate_cert(struct iked *env, struct iked_static_id *id,
-    void *data, size_t len)
+    void *data, size_t len, X509 **issuerp)
 {
 	struct ca_store	*store = env->sc_priv;
 	X509_STORE_CTX	 csc;
@@ -1465,6 +1473,8 @@ ca_validate_cert(struct iked *env, struct iked_static_id *id,
 	int		 ret = -1, result, error;
 	const char	*errstr = "failed";
 
+	if (issuerp)
+		*issuerp = NULL;
 	if (len == 0) {
 		/* Data is already an X509 certificate */
 		cert = (X509 *)data;
@@ -1519,6 +1529,12 @@ ca_validate_cert(struct iked *env, struct iked_static_id *id,
 
 	result = X509_verify_cert(&csc);
 	error = csc.error;
+	if (error == 0 && issuerp) {
+		if (X509_STORE_CTX_get1_issuer(issuerp, &csc, cert) != 1) {
+			log_debug("%s: cannot get issuer", __func__);
+			*issuerp = NULL;
+		}
+	}
 	X509_STORE_CTX_cleanup(&csc);
 	if (error != 0) {
 		errstr = X509_verify_cert_error_string(error);
