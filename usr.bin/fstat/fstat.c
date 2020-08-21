@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.99 2019/02/05 02:17:32 deraadt Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.100 2020/08/21 22:13:15 millert Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <millert@openbsd.org>
@@ -805,6 +805,8 @@ socktrans(struct kinfo_file *kf)
 				hide((void *)(uintptr_t)kf->unp_conn);
 			}
 		}
+		if (kf->unp_path[0] != '\0')
+			printf(" %s", kf->unp_path);
 		break;
 	case AF_MPLS:
 		/* print protocol number and socket address */
