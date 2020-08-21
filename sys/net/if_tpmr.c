@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tpmr.c,v 1.19 2020/07/29 12:07:58 kn Exp $ */
+/*	$OpenBSD: if_tpmr.c,v 1.20 2020/08/21 22:59:27 kn Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -169,7 +169,6 @@ tpmr_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_flags = IFF_POINTOPOINT;
 	ifp->if_xflags = IFXF_CLONED | IFXF_MPSAFE;
 	ifp->if_link_state = LINK_STATE_DOWN;
-	ifq_set_maxlen(&ifp->if_snd, IFQ_MAXLEN);
 
 	if_counters_alloc(ifp);
 	if_attach(ifp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.33 2020/07/22 02:16:01 dlg Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.34 2020/08/21 22:59:27 kn Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -561,7 +561,6 @@ aggr_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST | IFF_SIMPLEX;
 	ifp->if_xflags = IFXF_CLONED | IFXF_MPSAFE;
 	ifp->if_link_state = LINK_STATE_DOWN;
-	ifq_set_maxlen(&ifp->if_snd, IFQ_MAXLEN);
 	ether_fakeaddr(ifp);
 
 	if_counters_alloc(ifp);

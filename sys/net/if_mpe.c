@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.96 2020/07/10 13:26:41 patrick Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.97 2020/08/21 22:59:27 kn Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -112,7 +112,6 @@ mpe_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_start = mpe_start;
 	ifp->if_type = IFT_MPLS;
 	ifp->if_hdrlen = MPE_HDRLEN;
-	ifq_set_maxlen(&ifp->if_snd, IFQ_MAXLEN);
 
 	sc->sc_dead = 0;
 

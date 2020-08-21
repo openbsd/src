@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpip.c,v 1.11 2020/07/10 13:26:41 patrick Exp $ */
+/*	$OpenBSD: if_mpip.c,v 1.12 2020/08/21 22:59:27 kn Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -117,7 +117,6 @@ mpip_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_rtrequest = p2p_rtrequest;
 	ifp->if_mtu = 1500;
 	ifp->if_hardmtu = 65535;
-	ifq_set_maxlen(&ifp->if_snd, IFQ_MAXLEN);
 
 	if_attach(ifp);
 	if_counters_alloc(ifp);

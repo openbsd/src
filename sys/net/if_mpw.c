@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpw.c,v 1.58 2020/07/10 13:26:41 patrick Exp $ */
+/*	$OpenBSD: if_mpw.c,v 1.59 2020/08/21 22:59:27 kn Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -111,7 +111,6 @@ mpw_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_output = mpw_output;
 	ifp->if_start = mpw_start;
 	ifp->if_hardmtu = ETHER_MAX_HARDMTU_LEN;
-	ifq_set_maxlen(&ifp->if_snd, IFQ_MAXLEN);
 	ether_fakeaddr(ifp);
 
 	sc->sc_dead = 0;

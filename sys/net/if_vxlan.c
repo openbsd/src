@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.80 2020/07/28 09:52:32 mvs Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.81 2020/08/21 22:59:27 kn Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -151,7 +151,6 @@ vxlan_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_softc = sc;
 	ifp->if_ioctl = vxlanioctl;
 	ifp->if_start = vxlanstart;
-	ifq_set_maxlen(&ifp->if_snd, IFQ_MAXLEN);
 
 	ifp->if_hardmtu = ETHER_MAX_HARDMTU_LEN;
 	ifp->if_capabilities = IFCAP_VLAN_MTU;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.116 2020/07/10 13:26:42 patrick Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.117 2020/08/21 22:59:27 kn Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -220,7 +220,6 @@ ppp_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_if.if_output = pppoutput;
 	sc->sc_if.if_start = ppp_ifstart;
 	sc->sc_if.if_rtrequest = p2p_rtrequest;
-	ifq_set_maxlen(&sc->sc_if.if_snd, IFQ_MAXLEN);
 	mq_init(&sc->sc_inq, IFQ_MAXLEN, IPL_NET);
 	ppp_pkt_list_init(&sc->sc_rawq, IFQ_MAXLEN);
 	if_attach(&sc->sc_if);
