@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.202 2020/06/01 01:52:21 jcs Exp $
+.\"	$OpenBSD: usb.4,v 1.203 2020/08/21 20:38:56 mglocker Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 1 2020 $
+.Dd $Mdocdate: August 21 2020 $
 .Dt USB 4
 .Os
 .Sh NAME
@@ -249,6 +249,8 @@ D-Link DSB-R100 USB radio device
 FIDO/U2F security keys
 .It Xr ubcmtp 4
 Broadcom trackpad mouse
+.It Xr ugold 4
+TEMPer gold HID thermometer and hygrometer
 .It Xr uhid 4
 Generic driver for Human Interface Devices
 .It Xr uhidev 4
@@ -293,8 +295,6 @@ Research In Motion BlackBerry
 USB generic device support
 .It Xr ugl 4
 Genesys Logic based host-to-host adapters
-.It Xr ugold 4
-TEMPer gold HID thermometer and hygrometer
 .It Xr uonerng 4
 Moonbase Otago OneRNG TRNG
 .It Xr uow 4
