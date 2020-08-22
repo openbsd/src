@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.100 2020/08/21 22:13:15 millert Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.101 2020/08/22 18:34:29 millert Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <millert@openbsd.org>
@@ -408,8 +408,7 @@ fstat_dofile(struct kinfo_file *kf)
 		vtrans(kf);
 		break;
 	case DTYPE_SOCKET:
-		if (checkfile == 0)
-			socktrans(kf);
+		socktrans(kf);
 		break;
 	case DTYPE_PIPE:
 		if (checkfile == 0)
@@ -750,6 +749,21 @@ socktrans(struct kinfo_file *kf)
 #define	STYPEMAX 5
 	char *stype, stypebuf[24];
 
+	if (checkfile) {
+		struct filearg *fa;
+
+		if (kf->so_type != AF_UNIX)
+			return;
+		SLIST_FOREACH(fa, &fileargs, next) {
+			if (fa->dev != 0)
+				continue;
+			if (strcmp(kf->unp_path, fa->name) == 0)
+				break;
+		}
+		if (fa == NULL)
+			return;
+	}
+
 	PREFIX(kf->fd_fd);
 
 	if (kf->so_type > STYPEMAX) {
@@ -914,12 +928,19 @@ getfname(char *filename)
 			}
 		}
 	}
+	if (!fuser && S_ISSOCK(sb.st_mode)) {
+		char *newname = realpath(filename, NULL);
+		if (newname != NULL)
+			filename = newname;
+	}
 
-	if ((cur = malloc(sizeof(*cur))) == NULL)
+	if ((cur = calloc(1, sizeof(*cur))) == NULL)
 		err(1, NULL);
 
-	cur->ino = sb.st_ino;
-	cur->dev = sb.st_dev & 0xffff;
+	if (!S_ISSOCK(sb.st_mode)) {
+		cur->ino = sb.st_ino;
+		cur->dev = sb.st_dev & 0xffff;
+	}
 	cur->name = filename;
 	TAILQ_INIT(&cur->fusers);
 	SLIST_INSERT_HEAD(&fileargs, cur, next);
