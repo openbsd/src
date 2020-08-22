@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.23 2020/08/22 12:27:37 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.24 2020/08/22 12:28:23 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -983,7 +983,7 @@ mvpp2_prs_etype_init(struct mvpp2_softc *sc)
 	mvpp2_prs_hw_write(sc, &pe);
 
 	/* Default entry for MVPP2_PRS_LU_L2 - Unknown ethtype */
-	memset(&pe, 0, sizeof(struct mvpp2_prs_entry));
+	memset(&pe, 0, sizeof(pe));
 	mvpp2_prs_tcam_lu_set(&pe, MVPP2_PRS_LU_L2);
 	pe.index = MVPP2_PE_ETH_TYPE_UN;
 	mvpp2_prs_tcam_port_map_set(&pe, MVPP2_PRS_PORT_MASK);
@@ -1029,7 +1029,7 @@ mvpp2_prs_vlan_init(struct mvpp2_softc *sc)
 	if (ret)
 		return ret;
 
-	memset(&pe, 0, sizeof(struct mvpp2_prs_entry));
+	memset(&pe, 0, sizeof(pe));
 	mvpp2_prs_tcam_lu_set(&pe, MVPP2_PRS_LU_VLAN);
 	pe.index = MVPP2_PE_VLAN_DBL;
 	mvpp2_prs_sram_next_lu_set(&pe, MVPP2_PRS_LU_L2);
@@ -1042,7 +1042,7 @@ mvpp2_prs_vlan_init(struct mvpp2_softc *sc)
 	mvpp2_prs_shadow_set(sc, pe.index, MVPP2_PRS_LU_VLAN);
 	mvpp2_prs_hw_write(sc, &pe);
 
-	memset(&pe, 0, sizeof(struct mvpp2_prs_entry));
+	memset(&pe, 0, sizeof(pe));
 	mvpp2_prs_tcam_lu_set(&pe, MVPP2_PRS_LU_VLAN);
 	pe.index = MVPP2_PE_VLAN_NONE;
 	mvpp2_prs_sram_next_lu_set(&pe, MVPP2_PRS_LU_L2);
@@ -1065,7 +1065,7 @@ mvpp2_prs_pppoe_init(struct mvpp2_softc *sc)
 	if (tid < 0)
 		return tid;
 
-	memset(&pe, 0, sizeof(struct mvpp2_prs_entry));
+	memset(&pe, 0, sizeof(pe));
 	mvpp2_prs_tcam_lu_set(&pe, MVPP2_PRS_LU_PPPOE);
 	pe.index = tid;
 	mvpp2_prs_match_etype(&pe, 0, PPP_IP);
@@ -1099,7 +1099,7 @@ mvpp2_prs_pppoe_init(struct mvpp2_softc *sc)
 	if (tid < 0)
 		return tid;
 
-	memset(&pe, 0, sizeof(struct mvpp2_prs_entry));
+	memset(&pe, 0, sizeof(pe));
 	mvpp2_prs_tcam_lu_set(&pe, MVPP2_PRS_LU_PPPOE);
 	pe.index = tid;
 	mvpp2_prs_match_etype(&pe, 0, PPP_IPV6);
@@ -1118,7 +1118,7 @@ mvpp2_prs_pppoe_init(struct mvpp2_softc *sc)
 	if (tid < 0)
 		return tid;
 
-	memset(&pe, 0, sizeof(struct mvpp2_prs_entry));
+	memset(&pe, 0, sizeof(pe));
 	mvpp2_prs_tcam_lu_set(&pe, MVPP2_PRS_LU_PPPOE);
 	pe.index = tid;
 	mvpp2_prs_sram_ri_update(&pe, MVPP2_PRS_RI_L3_UN,
@@ -1165,7 +1165,7 @@ mvpp2_prs_ip6_init(struct mvpp2_softc *sc)
 	if (tid < 0)
 		return tid;
 
-	memset(&pe, 0, sizeof(struct mvpp2_prs_entry));
+	memset(&pe, 0, sizeof(pe));
 	mvpp2_prs_tcam_lu_set(&pe, MVPP2_PRS_LU_IP6);
 	pe.index = tid;
 	mvpp2_prs_sram_next_lu_set(&pe, MVPP2_PRS_LU_FLOWS);
@@ -1179,7 +1179,7 @@ mvpp2_prs_ip6_init(struct mvpp2_softc *sc)
 	mvpp2_prs_shadow_set(sc, pe.index, MVPP2_PRS_LU_IP4);
 	mvpp2_prs_hw_write(sc, &pe);
 
-	memset(&pe, 0, sizeof(struct mvpp2_prs_entry));
+	memset(&pe, 0, sizeof(pe));
 	mvpp2_prs_tcam_lu_set(&pe, MVPP2_PRS_LU_IP6);
 	pe.index = MVPP2_PE_IP6_PROTO_UN;
 	mvpp2_prs_sram_next_lu_set(&pe, MVPP2_PRS_LU_FLOWS);
@@ -1194,7 +1194,7 @@ mvpp2_prs_ip6_init(struct mvpp2_softc *sc)
 	mvpp2_prs_shadow_set(sc, pe.index, MVPP2_PRS_LU_IP4);
 	mvpp2_prs_hw_write(sc, &pe);
 
-	memset(&pe, 0, sizeof(struct mvpp2_prs_entry));
+	memset(&pe, 0, sizeof(pe));
 	mvpp2_prs_tcam_lu_set(&pe, MVPP2_PRS_LU_IP6);
 	pe.index = MVPP2_PE_IP6_EXT_PROTO_UN;
 	mvpp2_prs_sram_next_lu_set(&pe, MVPP2_PRS_LU_FLOWS);
@@ -1207,7 +1207,7 @@ mvpp2_prs_ip6_init(struct mvpp2_softc *sc)
 	mvpp2_prs_shadow_set(sc, pe.index, MVPP2_PRS_LU_IP4);
 	mvpp2_prs_hw_write(sc, &pe);
 
-	memset(&pe, 0, sizeof(struct mvpp2_prs_entry));
+	memset(&pe, 0, sizeof(pe));
 	mvpp2_prs_tcam_lu_set(&pe, MVPP2_PRS_LU_IP6);
 	pe.index = MVPP2_PE_IP6_ADDR_UN;
 	mvpp2_prs_sram_next_lu_set(&pe, MVPP2_PRS_LU_IP6);
@@ -1250,7 +1250,7 @@ mvpp2_prs_ip4_init(struct mvpp2_softc *sc)
 	if (ret)
 		return ret;
 
-	memset(&pe, 0, sizeof(struct mvpp2_prs_entry));
+	memset(&pe, 0, sizeof(pe));
 	mvpp2_prs_tcam_lu_set(&pe, MVPP2_PRS_LU_IP4);
 	pe.index = MVPP2_PE_IP4_PROTO_UN;
 	mvpp2_prs_sram_next_lu_set(&pe, MVPP2_PRS_LU_IP4);
@@ -1266,7 +1266,7 @@ mvpp2_prs_ip4_init(struct mvpp2_softc *sc)
 	mvpp2_prs_shadow_set(sc, pe.index, MVPP2_PRS_LU_IP4);
 	mvpp2_prs_hw_write(sc, &pe);
 
-	memset(&pe, 0, sizeof(struct mvpp2_prs_entry));
+	memset(&pe, 0, sizeof(pe));
 	mvpp2_prs_tcam_lu_set(&pe, MVPP2_PRS_LU_IP4);
 	pe.index = MVPP2_PE_IP4_ADDR_UN;
 	mvpp2_prs_sram_next_lu_set(&pe, MVPP2_PRS_LU_FLOWS);
@@ -3781,7 +3781,7 @@ mvpp2_prs_vlan_add(struct mvpp2_softc *sc, uint16_t tpid, int ai, uint32_t port_
 			goto error;
 		}
 
-		memset(pe, 0, sizeof(struct mvpp2_prs_entry));
+		memset(pe, 0, sizeof(*pe));
 		mvpp2_prs_tcam_lu_set(pe, MVPP2_PRS_LU_VLAN);
 		pe->index = tid;
 		mvpp2_prs_match_etype(pe, 0, tpid);
@@ -3896,7 +3896,7 @@ mvpp2_prs_double_vlan_add(struct mvpp2_softc *sc, uint16_t tpid1, uint16_t tpid2
 			goto error;
 		}
 
-		memset(pe, 0, sizeof(struct mvpp2_prs_entry));
+		memset(pe, 0, sizeof(*pe));
 		mvpp2_prs_tcam_lu_set(pe, MVPP2_PRS_LU_VLAN);
 		pe->index = tid;
 		sc->sc_prs_double_vlans[ai] = 1;
@@ -3936,7 +3936,7 @@ mvpp2_prs_ip4_proto(struct mvpp2_softc *sc, uint16_t proto, uint32_t ri,
 	if (tid < 0)
 		return tid;
 
-	memset(&pe, 0, sizeof(struct mvpp2_prs_entry));
+	memset(&pe, 0, sizeof(pe));
 	mvpp2_prs_tcam_lu_set(&pe, MVPP2_PRS_LU_IP4);
 	pe.index = tid;
 	mvpp2_prs_sram_next_lu_set(&pe, MVPP2_PRS_LU_IP4);
@@ -3981,7 +3981,7 @@ mvpp2_prs_ip4_cast(struct mvpp2_softc *sc, uint16_t l3_cast)
 	if (tid < 0)
 		return tid;
 
-	memset(&pe, 0, sizeof(struct mvpp2_prs_entry));
+	memset(&pe, 0, sizeof(pe));
 	mvpp2_prs_tcam_lu_set(&pe, MVPP2_PRS_LU_IP4);
 	pe.index = tid;
 
@@ -4032,7 +4032,7 @@ mvpp2_prs_ip6_proto(struct mvpp2_softc *sc, uint16_t proto, uint32_t ri,
 	if (tid < 0)
 		return tid;
 
-	memset(&pe, 0, sizeof(struct mvpp2_prs_entry));
+	memset(&pe, 0, sizeof(pe));
 	mvpp2_prs_tcam_lu_set(&pe, MVPP2_PRS_LU_IP6);
 	pe.index = tid;
 	mvpp2_prs_sram_next_lu_set(&pe, MVPP2_PRS_LU_FLOWS);
@@ -4063,7 +4063,7 @@ mvpp2_prs_ip6_cast(struct mvpp2_softc *sc, uint16_t l3_cast)
 	if (tid < 0)
 		return tid;
 
-	memset(&pe, 0, sizeof(struct mvpp2_prs_entry));
+	memset(&pe, 0, sizeof(pe));
 	mvpp2_prs_tcam_lu_set(&pe, MVPP2_PRS_LU_IP6);
 	pe.index = tid;
 	mvpp2_prs_sram_next_lu_set(&pe, MVPP2_PRS_LU_IP6);
