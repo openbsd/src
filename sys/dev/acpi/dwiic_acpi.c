@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic_acpi.c,v 1.15 2020/07/23 09:21:51 jsg Exp $ */
+/* $OpenBSD: dwiic_acpi.c,v 1.16 2020/08/22 22:29:28 kettenis Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -369,11 +369,9 @@ dwiic_acpi_found_hid(struct aml_node *node, void *arg)
 	DPRINTF(("%s: found HID %s at %s\n", sc->sc_dev.dv_xname, dev,
 	    aml_nodename(node)));
 
-	if (aml_evalname(acpi_softc, node->parent, "_CRS", 0, NULL, &res)) {
-		printf("%s: no _CRS method at %s\n", sc->sc_dev.dv_xname,
-		    aml_nodename(node->parent));
-		return (0);
-	}
+	if (aml_evalname(acpi_softc, node->parent, "_CRS", 0, NULL, &res))
+		return 0;
+
 	if (res.type != AML_OBJTYPE_BUFFER || res.length < 5) {
 		printf("%s: invalid _CRS object (type %d len %d)\n",
 		    sc->sc_dev.dv_xname, res.type, res.length);
