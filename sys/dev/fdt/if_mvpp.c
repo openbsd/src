@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.20 2020/08/22 12:24:26 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.21 2020/08/22 12:25:09 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -3268,13 +3268,13 @@ mvpp2_prs_tcam_ai_update(struct mvpp2_prs_entry *pe, uint32_t bits, uint32_t ena
 	int i, ai_idx = MVPP2_PRS_TCAM_AI_BYTE;
 
 	for (i = 0; i < MVPP2_PRS_AI_BITS; i++) {
-		if (!(enable & (i << 1)))
+		if (!(enable & BIT(i)))
 			continue;
 
-		if (bits & (i << 1))
-			pe->tcam.byte[ai_idx] |= 1 << i;
+		if (bits & BIT(i))
+			pe->tcam.byte[ai_idx] |= BIT(i);
 		else
-			pe->tcam.byte[ai_idx] &= ~(1 << i);
+			pe->tcam.byte[ai_idx] &= ~BIT(i);
 	}
 
 	pe->tcam.byte[MVPP2_PRS_TCAM_EN_OFFS(ai_idx)] |= enable;
