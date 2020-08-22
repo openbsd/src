@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.24 2020/08/22 12:28:23 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.25 2020/08/22 12:29:44 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -1046,7 +1046,8 @@ mvpp2_prs_vlan_init(struct mvpp2_softc *sc)
 	mvpp2_prs_tcam_lu_set(&pe, MVPP2_PRS_LU_VLAN);
 	pe.index = MVPP2_PE_VLAN_NONE;
 	mvpp2_prs_sram_next_lu_set(&pe, MVPP2_PRS_LU_L2);
-	mvpp2_prs_sram_ri_update(&pe, MVPP2_PRS_RI_VLAN_NONE, MVPP2_PRS_RI_VLAN_MASK);
+	mvpp2_prs_sram_ri_update(&pe, MVPP2_PRS_RI_VLAN_NONE,
+	    MVPP2_PRS_RI_VLAN_MASK);
 	mvpp2_prs_tcam_port_map_set(&pe, MVPP2_PRS_PORT_MASK);
 	mvpp2_prs_shadow_set(sc, pe.index, MVPP2_PRS_LU_VLAN);
 	mvpp2_prs_hw_write(sc, &pe);
@@ -3945,8 +3946,9 @@ mvpp2_prs_ip4_proto(struct mvpp2_softc *sc, uint16_t proto, uint32_t ri,
 	    sizeof(struct ip) - 4, MVPP2_PRS_SRAM_OP_SEL_UDF_ADD);
 	mvpp2_prs_sram_ai_update(&pe, MVPP2_PRS_IPV4_DIP_AI_BIT,
 	    MVPP2_PRS_IPV4_DIP_AI_BIT);
-	mvpp2_prs_sram_ri_update(&pe, ri | MVPP2_PRS_RI_IP_FRAG_MASK, ri_mask |
-	    MVPP2_PRS_RI_IP_FRAG_MASK);
+	mvpp2_prs_sram_ri_update(&pe, ri, ri_mask | MVPP2_PRS_RI_IP_FRAG_MASK);
+	mvpp2_prs_tcam_data_byte_set(&pe, 2, 0x00, MVPP2_PRS_TCAM_PROTO_MASK_L);
+	mvpp2_prs_tcam_data_byte_set(&pe, 3, 0x00, MVPP2_PRS_TCAM_PROTO_MASK);
 	mvpp2_prs_tcam_data_byte_set(&pe, 5, proto, MVPP2_PRS_TCAM_PROTO_MASK);
 	mvpp2_prs_tcam_ai_update(&pe, 0, MVPP2_PRS_IPV4_DIP_AI_BIT);
 	mvpp2_prs_tcam_port_map_set(&pe, MVPP2_PRS_PORT_MASK);
@@ -3962,8 +3964,10 @@ mvpp2_prs_ip4_proto(struct mvpp2_softc *sc, uint16_t proto, uint32_t ri,
 	pe.sram.word[MVPP2_PRS_SRAM_RI_WORD] = 0x0;
 	pe.sram.word[MVPP2_PRS_SRAM_RI_CTRL_WORD] = 0x0;
 	mvpp2_prs_sram_ri_update(&pe, ri, ri_mask);
-	mvpp2_prs_tcam_data_byte_set(&pe, 2, 0x00, MVPP2_PRS_TCAM_PROTO_MASK_L);
-	mvpp2_prs_tcam_data_byte_set(&pe, 3, 0x00, MVPP2_PRS_TCAM_PROTO_MASK);
+	mvpp2_prs_sram_ri_update(&pe, ri | MVPP2_PRS_RI_IP_FRAG_MASK,
+	    ri_mask | MVPP2_PRS_RI_IP_FRAG_MASK);
+	mvpp2_prs_tcam_data_byte_set(&pe, 2, 0x00, 0x0);
+	mvpp2_prs_tcam_data_byte_set(&pe, 3, 0x00, 0x0);
 	mvpp2_prs_shadow_set(sc, pe.index, MVPP2_PRS_LU_IP4);
 	mvpp2_prs_hw_write(sc, &pe);
 
@@ -4059,7 +4063,8 @@ mvpp2_prs_ip6_cast(struct mvpp2_softc *sc, uint16_t l3_cast)
 	if (l3_cast != MVPP2_PRS_L3_MULTI_CAST)
 		return EINVAL;
 
-	tid = mvpp2_prs_tcam_first_free(sc, MVPP2_PE_FIRST_FREE_TID, MVPP2_PE_LAST_FREE_TID);
+	tid = mvpp2_prs_tcam_first_free(sc, MVPP2_PE_FIRST_FREE_TID,
+	    MVPP2_PE_LAST_FREE_TID);
 	if (tid < 0)
 		return tid;
 
