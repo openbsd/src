@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.182 2020/08/01 23:41:55 gnezdo Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.183 2020/08/22 17:55:54 gnezdo Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -123,7 +123,14 @@ static struct timeval icmperrppslim_last;
 static struct rttimer_queue *icmp_redirect_timeout_q = NULL;
 struct cpumem *icmpcounters;
 
-int *icmpctl_vars[ICMPCTL_MAXID] = ICMPCTL_VARS;
+const struct sysctl_bounded_args icmpctl_vars[] =  {
+	{ ICMPCTL_MASKREPL, &icmpmaskrepl, 0, 1 },
+	{ ICMPCTL_BMCASTECHO, &icmpbmcastecho, 0, 1 },
+	{ ICMPCTL_ERRPPSLIMIT, &icmperrppslim, -1, INT_MAX },
+	{ ICMPCTL_REDIRACCEPT, &icmp_rediraccept, 0, 1 },
+	{ ICMPCTL_TSTAMPREPL, &icmptstamprepl, 0, 1 },
+};
+
 
 void icmp_mtudisc_timeout(struct rtentry *, struct rttimer *);
 int icmp_ratelimit(const struct in_addr *, const int, const int);
@@ -892,8 +899,8 @@ icmp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 
 	default:
 		NET_LOCK();
-		error = sysctl_int_arr(icmpctl_vars, nitems(icmpctl_vars), name,
-		    namelen, oldp, oldlenp, newp, newlen);
+		error = sysctl_bounded_arr(icmpctl_vars, nitems(icmpctl_vars),
+		    name, namelen, oldp, oldlenp, newp, newlen);
 		NET_UNLOCK();
 		break;
 	}
