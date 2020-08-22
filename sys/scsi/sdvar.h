@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdvar.h,v 1.49 2020/08/20 01:47:45 krw Exp $	*/
+/*	$OpenBSD: sdvar.h,v 1.50 2020/08/22 15:07:11 krw Exp $	*/
 /*	$NetBSD: sdvar.h,v 1.7 1998/08/17 00:49:03 mycroft Exp $	*/
 
 /*-
@@ -72,7 +72,6 @@ struct sd_softc {
 		u_int32_t	unmap_descs;	/* maximum descriptors/unmap */
 	} params;
 	void *sc_sdhook;		/* our shutdown hook */
-	struct timeout sc_timeout;
 
 	struct scsi_xshandler sc_xsh;
 };

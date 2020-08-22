@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.317 2020/08/20 01:47:45 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.318 2020/08/22 15:07:11 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -197,8 +197,6 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	scsi_xsh_set(&sc->sc_xsh, link, sdstart);
-	timeout_set(&sc->sc_timeout, (void (*)(void *))scsi_xsh_add,
-	    &sc->sc_xsh);
 
 	/* Spin up non-UMASS devices ready or not. */
 	if (!ISSET(link->flags, SDEV_UMASS))
@@ -292,7 +290,6 @@ sdactivate(struct device *self, int act)
 		break;
 	case DVACT_DEACTIVATE:
 		SET(sc->flags, SDF_DYING);
-		timeout_del(&sc->sc_timeout);
 		scsi_xsh_del(&sc->sc_xsh);
 		break;
 	}
@@ -526,7 +523,6 @@ sdclose(dev_t dev, int flag, int fmt, struct proc *p)
 			CLR(link->flags, SDEV_EJECTING);
 		}
 
-		timeout_del(&sc->sc_timeout);
 		scsi_xsh_del(&sc->sc_xsh);
 	}
 

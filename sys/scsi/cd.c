@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.251 2020/08/20 01:47:45 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.252 2020/08/22 15:07:11 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -108,7 +108,6 @@ struct cd_softc {
 	}			 params;
 	struct bufq		 sc_bufq;
 	struct scsi_xshandler	 sc_xsh;
-	struct timeout		 sc_timeout;
 };
 
 void	cdstart(struct scsi_xfer *);
@@ -224,8 +223,6 @@ cdattach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	scsi_xsh_set(&sc->sc_xsh, link, cdstart);
-	timeout_set(&sc->sc_timeout, (void (*)(void *))scsi_xsh_add,
-	    &sc->sc_xsh);
 
 	/* Attach disk. */
 	sc->sc_dk.dk_flags = DKF_NOLABELREAD;
@@ -425,7 +422,6 @@ cdclose(dev_t dev, int flag, int fmt, struct proc *p)
 			CLR(sc->sc_link->flags, SDEV_EJECTING);
 		}
 
-		timeout_del(&sc->sc_timeout);
 		scsi_xsh_del(&sc->sc_xsh);
 	}
 

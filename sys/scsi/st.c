@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.183 2020/08/20 01:47:45 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.184 2020/08/22 15:07:11 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -195,7 +195,6 @@ struct st_softc {
 
 	struct mode mode;
 	struct bufq sc_bufq;
-	struct timeout sc_timeout;
 	struct scsi_xshandler sc_xsh;
 };
 
@@ -295,8 +294,6 @@ stattach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	scsi_xsh_set(&st->sc_xsh, link, ststart);
-	timeout_set(&st->sc_timeout, (void (*)(void *))scsi_xsh_set,
-	    &st->sc_xsh);
 
 	/* Set up the buf queue for this device. */
 	bufq_init(&st->sc_bufq, BUFQ_FIFO);
@@ -467,7 +464,6 @@ stclose(dev_t dev, int flags, int mode, struct proc *p)
 		break;
 	}
 	CLR(link->flags, SDEV_OPEN);
-	timeout_del(&st->sc_timeout);
 	scsi_xsh_del(&st->sc_xsh);
 
 done:
