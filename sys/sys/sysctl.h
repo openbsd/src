@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.208 2020/08/18 04:48:12 gnezdo Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.209 2020/08/22 11:47:22 kn Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -957,7 +957,7 @@ struct kinfo_file {
 #define	CTL_DEBUG_MAXID		20
 
 #ifdef	_KERNEL
-#ifdef	DEBUG
+#ifdef DEBUG_SYSCTL
 /*
  * CTL_DEBUG variables.
  *
@@ -978,7 +978,7 @@ extern struct ctldebug debug0, debug1, debug2, debug3, debug4;
 extern struct ctldebug debug5, debug6, debug7, debug8, debug9;
 extern struct ctldebug debug10, debug11, debug12, debug13, debug14;
 extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
-#endif	/* DEBUG */
+#endif	/* DEBUG_SYSCTL */
 
 /*
  * Exported sysctl variable with valid bounds. Both bounds are inclusive to
@@ -1037,7 +1037,7 @@ int kern_sysctl(int *, u_int, void *, size_t *, void *, size_t,
 		     struct proc *);
 int hw_sysctl(int *, u_int, void *, size_t *, void *, size_t,
 		   struct proc *);
-#ifdef DEBUG
+#ifdef DEBUG_SYSCTL
 int debug_sysctl(int *, u_int, void *, size_t *, void *, size_t,
 		      struct proc *);
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.376 2020/08/18 18:19:30 gnezdo Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.377 2020/08/22 11:47:23 kn Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -213,7 +213,7 @@ sys_sysctl(struct proc *p, void *v, register_t *retval)
 	case CTL_MACHDEP:
 		fn = cpu_sysctl;
 		break;
-#ifdef DEBUG
+#ifdef DEBUG_SYSCTL
 	case CTL_DEBUG:
 		fn = debug_sysctl;
 		break;
@@ -809,7 +809,7 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	/* NOTREACHED */
 }
 
-#ifdef DEBUG
+#ifdef DEBUG_SYSCTL
 /*
  * Debugging related system variables.
  */
@@ -848,7 +848,7 @@ debug_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	}
 	/* NOTREACHED */
 }
-#endif /* DEBUG */
+#endif /* DEBUG_SYSCTL */
 
 /*
  * Reads, or writes that lower the value
