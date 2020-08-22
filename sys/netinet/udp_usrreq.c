@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.261 2020/08/05 21:15:38 mglocker Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.262 2020/08/22 17:54:57 gnezdo Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -127,7 +127,11 @@ u_int	udp_sendspace = 9216;		/* really max datagram size */
 u_int	udp_recvspace = 40 * (1024 + sizeof(struct sockaddr_in));
 					/* 40 1K datagrams */
 
-int *udpctl_vars[UDPCTL_MAXID] = UDPCTL_VARS;
+const struct sysctl_bounded_args udpctl_vars[] = {
+	{ UDPCTL_CHECKSUM, &udpcksum, 0, 1 },
+	{ UDPCTL_RECVSPACE, &udp_recvspace, 0, INT_MAX },
+	{ UDPCTL_SENDSPACE, &udp_sendspace, 0, INT_MAX },
+};
 
 struct	inpcbtable udbtable;
 struct	cpumem *udpcounters;
@@ -1296,8 +1300,8 @@ udp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 
 	default:
 		NET_LOCK();
-		error = sysctl_int_arr(udpctl_vars, nitems(udpctl_vars), name,
-		    namelen, oldp, oldlenp, newp, newlen);
+		error = sysctl_bounded_arr(udpctl_vars, nitems(udpctl_vars),
+		    name, namelen, oldp, oldlenp, newp, newlen);
 		NET_UNLOCK();
 		return (error);
 	}
