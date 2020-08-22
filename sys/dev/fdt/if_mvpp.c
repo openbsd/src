@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.19 2020/08/17 22:03:32 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.20 2020/08/22 12:24:26 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -3259,10 +3259,7 @@ mvpp2_prs_tcam_data_cmp(struct mvpp2_prs_entry *pe, int offset, uint16_t data)
 
 	tcam_data = (pe->tcam.byte[byte_offset + 1] << 8) |
 	    pe->tcam.byte[byte_offset];
-	if (tcam_data != data)
-		return 0;
-
-	return 1;
+	return tcam_data == data;
 }
 
 void
