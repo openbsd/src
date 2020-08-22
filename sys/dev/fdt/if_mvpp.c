@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.21 2020/08/22 12:25:09 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.22 2020/08/22 12:26:04 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -3324,7 +3324,6 @@ mvpp2_prs_sram_bits_clear(struct mvpp2_prs_entry *pe, uint32_t bit, uint32_t val
 void
 mvpp2_prs_sram_ri_update(struct mvpp2_prs_entry *pe, uint32_t bits, uint32_t mask)
 {
-	int ri_off = MVPP2_PRS_SRAM_RI_OFFS;
 	int i;
 
 	for (i = 0; i < MVPP2_PRS_SRAM_RI_CTRL_BITS; i++) {
@@ -3332,9 +3331,11 @@ mvpp2_prs_sram_ri_update(struct mvpp2_prs_entry *pe, uint32_t bits, uint32_t mas
 			continue;
 
 		if (bits & BIT(i))
-			mvpp2_prs_sram_bits_set(pe, ri_off + i, 1);
+			mvpp2_prs_sram_bits_set(pe,
+			    MVPP2_PRS_SRAM_RI_OFFS + i, 1);
 		else
-			mvpp2_prs_sram_bits_clear(pe, ri_off + i, 1);
+			mvpp2_prs_sram_bits_clear(pe,
+			    MVPP2_PRS_SRAM_RI_OFFS + i, 1);
 
 		mvpp2_prs_sram_bits_set(pe, MVPP2_PRS_SRAM_RI_CTRL_OFFS + i, 1);
 	}
@@ -3349,7 +3350,6 @@ mvpp2_prs_sram_ri_get(struct mvpp2_prs_entry *pe)
 void
 mvpp2_prs_sram_ai_update(struct mvpp2_prs_entry *pe, uint32_t bits, uint32_t mask)
 {
-	int ai_off = MVPP2_PRS_SRAM_AI_OFFS;
 	int i;
 
 	for (i = 0; i < MVPP2_PRS_SRAM_AI_CTRL_BITS; i++) {
@@ -3357,9 +3357,11 @@ mvpp2_prs_sram_ai_update(struct mvpp2_prs_entry *pe, uint32_t bits, uint32_t mas
 			continue;
 
 		if (bits & BIT(i))
-			mvpp2_prs_sram_bits_set(pe, ai_off + i, 1);
+			mvpp2_prs_sram_bits_set(pe,
+			    MVPP2_PRS_SRAM_AI_OFFS + i, 1);
 		else
-			mvpp2_prs_sram_bits_clear(pe, ai_off + i, 1);
+			mvpp2_prs_sram_bits_clear(pe,
+			    MVPP2_PRS_SRAM_AI_OFFS + i, 1);
 
 		mvpp2_prs_sram_bits_set(pe, MVPP2_PRS_SRAM_AI_CTRL_OFFS + i, 1);
 	}
