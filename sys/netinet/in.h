@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.137 2019/11/04 23:52:28 dlg Exp $	*/
+/*	$OpenBSD: in.h,v 1.138 2020/08/22 17:55:30 gnezdo Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -735,50 +735,6 @@ struct ip_mreq {
 	{ "arptimeout", CTLTYPE_INT }, \
 	{ "arpdown", CTLTYPE_INT }, \
 	{ "arpq", CTLTYPE_NODE }, \
-}
-#define	IPCTL_VARS { \
-	NULL, \
-	&ipforwarding, \
-	&ipsendredirects, \
-	&ip_defttl, \
-	NULL, \
-	NULL, \
-	&ip_directedbcast, \
-	&ipport_firstauto, \
-	&ipport_lastauto, \
-	&ipport_hifirstauto, \
-	&ipport_hilastauto, \
-	&ip_maxqueue, \
-	NULL /* encdebug */, \
-	NULL /* ipsecstat */, \
-	NULL /* ipsec_expire_acquire */, \
-	NULL /* ipsec_keep_invalid */, \
-	NULL /* ipsec_require_pfs */, \
-	NULL /* ipsec_soft_allocations */, \
-	NULL /* ipsec_exp_allocations */, \
-	NULL /* ipsec_soft_bytes */, \
-	NULL /* ipsec_exp_bytes */, \
-	NULL /* ipsec_exp_timeout */, \
-	NULL /* ipsec_soft_timeout */, \
-	NULL /* ipsec_soft_first_use */, \
-	NULL /* ipsec_exp_first_use */, \
-	NULL, \
-	NULL, \
-	NULL, \
-	NULL, \
-	NULL, \
-	NULL, \
-	&ipmforwarding, \
-	&ipmultipath, \
-	NULL, \
-	NULL, \
-	NULL, \
-	&la_hold_total, \
-	NULL, \
-	NULL, \
-	&arpt_keep, \
-	&arpt_down, \
-	NULL, \
 }
 
 #endif /* __BSD_VISIBLE */
