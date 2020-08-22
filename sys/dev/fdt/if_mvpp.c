@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.25 2020/08/22 12:29:44 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.26 2020/08/22 12:31:48 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -4365,6 +4365,13 @@ mvpp2_cls_port_config(struct mvpp2_port *port)
 void
 mvpp2_cls_oversize_rxq_set(struct mvpp2_port *port)
 {
+	uint32_t val;
+
 	mvpp2_write(port->sc, MVPP2_CLS_OVERSIZE_RXQ_LOW_REG(port->sc_id),
 	    (port->sc_id * 32) & MVPP2_CLS_OVERSIZE_RXQ_LOW_MASK);
+	mvpp2_write(port->sc, MVPP2_CLS_SWFWD_P2HQ_REG(port->sc_id),
+	    (port->sc_id * 32) >> MVPP2_CLS_OVERSIZE_RXQ_LOW_BITS);
+	val = mvpp2_read(port->sc, MVPP2_CLS_SWFWD_PCTRL_REG);
+	val &= ~MVPP2_CLS_SWFWD_PCTRL_MASK(port->sc_id);
+	mvpp2_write(port->sc, MVPP2_CLS_SWFWD_PCTRL_REG, val);
 }
