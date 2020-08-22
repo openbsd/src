@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.22 2020/08/22 12:26:04 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.23 2020/08/22 12:27:37 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -4312,7 +4312,7 @@ mvpp2_cls_init(struct mvpp2_softc *sc)
 	int index;
 
 	mvpp2_write(sc, MVPP2_CLS_MODE_REG, MVPP2_CLS_MODE_ACTIVE_MASK);
-	memset(&fe.data, 0, MVPP2_CLS_FLOWS_TBL_DATA_WORDS);
+	memset(&fe.data, 0, sizeof(fe.data));
 	for (index = 0; index < MVPP2_CLS_FLOWS_TBL_SIZE; index++) {
 		fe.index = index;
 		mvpp2_cls_flow_write(sc, &fe);
