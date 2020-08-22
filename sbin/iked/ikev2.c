@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.244 2020/08/16 09:09:17 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.245 2020/08/22 21:40:24 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -3407,8 +3407,8 @@ ikev2_send_create_child_sa(struct iked *env, struct iked_sa *sa,
 		log_debug("%s: creating new CHILD SAs", __func__);
 
 	/* XXX cannot initiate multiple concurrent CREATE_CHILD_SA exchanges */
-	if (sa->sa_stateflags & IKED_REQ_CHILDSA) {
-		log_debug("%s: another CREATE_CHILD_SA exchange already active",
+	if (sa->sa_stateflags & (IKED_REQ_CHILDSA|IKED_REQ_INF)) {
+		log_debug("%s: another exchange already active",
 		    __func__);
 		return (-1);
 	}
@@ -3573,7 +3573,7 @@ ikev2_ike_sa_rekey(struct iked *env, void *arg)
 		goto done;
 	}
 
-	if (sa->sa_stateflags & IKED_REQ_CHILDSA) {
+	if (sa->sa_stateflags & (IKED_REQ_CHILDSA|IKED_REQ_INF)) {
 		/*
 		 * We cannot initiate multiple concurrent CREATE_CHILD_SA
 		 * exchanges, so retry again fast.
@@ -3694,7 +3694,7 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 	int				 pfs = 0, ret = -1;
 
 	if (!ikev2_msg_frompeer(msg) ||
-	    (sa->sa_stateflags & IKED_REQ_CHILDSA) == 0)
+	    (sa->sa_stateflags & (IKED_REQ_CHILDSA|IKED_REQ_INF)) == 0)
 		return (0);
 
 	if (sa->sa_nexti != NULL && sa->sa_tmpfail) {
@@ -5996,7 +5996,7 @@ ikev2_acquire_sa(struct iked *env, struct iked_flow *acquire)
 			log_warnx("%s: flow without SA", __func__);
 			return (0);
 		}
-		if (sa->sa_stateflags & IKED_REQ_CHILDSA)
+		if (sa->sa_stateflags & (IKED_REQ_CHILDSA|IKED_REQ_INF))
 			return (-1);	/* busy, retry later */
 		if (ikev2_send_create_child_sa(env, sa, NULL,
 		    flow->flow_saproto) != 0)
@@ -6045,7 +6045,7 @@ ikev2_rekey_sa(struct iked *env, struct iked_spi *rekey)
 		    print_spi(rekey->spi, rekey->spi_size));
 		return (0);
 	}
-	if (sa->sa_stateflags & IKED_REQ_CHILDSA)
+	if (sa->sa_stateflags & (IKED_REQ_CHILDSA|IKED_REQ_INF))
 		return (-1);	/* busy, retry later */
 	if (sa->sa_tmpfail)
 		return (-1);	/* peer is busy, retry later */
@@ -6074,7 +6074,7 @@ ikev2_drop_sa(struct iked *env, struct iked_spi *drop)
 		return (0);
 
 	sa = csa->csa_ikesa;
-	if (sa && (sa->sa_stateflags & IKED_REQ_CHILDSA)) {
+	if (sa && (sa->sa_stateflags & (IKED_REQ_CHILDSA|IKED_REQ_INF))) {
 		/* XXXX might loop, should we add a counter? */
 		log_debug("%s: parent SA busy", __func__);
 		return (-1);	/* busy, retry later */
