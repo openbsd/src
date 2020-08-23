@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.68 2020/08/15 11:31:17 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.69 2020/08/23 19:16:08 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -36,6 +36,8 @@
 static __inline int
 	 sa_cmp(struct iked_sa *, struct iked_sa *);
 static __inline int
+	 sa_dstid_cmp(struct iked_sa *, struct iked_sa *);
+static __inline int
 	 user_cmp(struct iked_user *, struct iked_user *);
 static __inline int
 	 childsa_cmp(struct iked_childsa *, struct iked_childsa *);
@@ -56,6 +58,7 @@ policy_init(struct iked *env)
 	TAILQ_INIT(&env->sc_ocsp);
 	RB_INIT(&env->sc_users);
 	RB_INIT(&env->sc_sas);
+	RB_INIT(&env->sc_dstid_sas);
 	RB_INIT(&env->sc_activesas);
 	RB_INIT(&env->sc_activeflows);
 }
@@ -488,10 +491,20 @@ sa_free(struct iked *env, struct iked_sa *sa)
 	/* IKE rekeying running? (old sa freed before new sa) */
 	if (sa->sa_nexti) {
 		RB_REMOVE(iked_sas, &env->sc_sas, sa->sa_nexti);
+		if (sa->sa_nexti->sa_dstid_entry_valid) {
+			log_info("%s: nexti established? %s",
+			    SPI_SA(sa, __func__), SPI_SA(sa->sa_nexti, NULL));
+			sa_dstid_remove(env, sa->sa_nexti);
+		}
 		config_free_sa(env, sa->sa_nexti);
 	}
 	if (sa->sa_nextr) {
 		RB_REMOVE(iked_sas, &env->sc_sas, sa->sa_nextr);
+		if (sa->sa_nextr->sa_dstid_entry_valid) {
+			log_info("%s: nextr established? %s",
+			    SPI_SA(sa, __func__), SPI_SA(sa->sa_nextr, NULL));
+			sa_dstid_remove(env, sa->sa_nextr);
+		}
 		config_free_sa(env, sa->sa_nextr);
 	}
 	/* reset matching backpointers (new sa freed before old sa) */
@@ -520,6 +533,8 @@ sa_free(struct iked *env, struct iked_sa *sa)
 		}
 	}
 	RB_REMOVE(iked_sas, &env->sc_sas, sa);
+	if (sa->sa_dstid_entry_valid)
+		sa_dstid_remove(env, sa);
 	config_free_sa(env, sa);
 }
 
@@ -646,6 +661,102 @@ sa_cmp(struct iked_sa *a, struct iked_sa *b)
 #endif
 
 	return (0);
+}
+
+static struct iked_id *
+sa_dstid_checked(struct iked_sa *sa)
+{
+	struct iked_id *id;
+
+	id = IKESA_DSTID(sa);
+	if (id == NULL || id->id_buf == NULL ||
+	    ibuf_data(id->id_buf) == NULL)
+		return (NULL);
+	if (ibuf_size(id->id_buf) <= id->id_offset)
+		return (NULL);
+	return (id);
+}
+
+struct iked_sa *
+sa_dstid_lookup(struct iked *env, struct iked_sa *key)
+{
+	struct iked_sa *sa;
+
+	if (sa_dstid_checked(key) == NULL)
+		fatalx("%s: no id for key %p", __func__, key);
+	sa = RB_FIND(iked_dstid_sas, &env->sc_dstid_sas, key);
+	if (sa != NULL && !sa->sa_dstid_entry_valid)
+		fatalx("%s: sa %p not estab (key %p)", __func__, sa, key);
+	return (sa);
+}
+
+struct iked_sa *
+sa_dstid_insert(struct iked *env, struct iked_sa *sa)
+{
+	struct iked_sa *osa;
+
+	if (sa->sa_dstid_entry_valid)
+		fatalx("%s: sa %p is estab", __func__, sa);
+	if (sa_dstid_checked(sa) == NULL)
+		fatalx("%s: no id for sa %p", __func__, sa);
+	osa = RB_FIND(iked_dstid_sas, &env->sc_dstid_sas, sa);
+	if (osa == NULL) {
+		osa = RB_INSERT(iked_dstid_sas, &env->sc_dstid_sas, sa);
+		if (osa && osa != sa) {
+			log_warnx("%s: duplicate IKE SA", SPI_SA(sa, __func__));
+			return (osa);
+		}
+		sa->sa_dstid_entry_valid = 1;
+		return (NULL);
+	}
+	if (!osa->sa_dstid_entry_valid)
+		fatalx("%s: osa %p not estab (sa %p)", __func__, osa, sa);
+	return (osa);
+}
+
+void
+sa_dstid_remove(struct iked *env, struct iked_sa *sa)
+{
+	if (!sa->sa_dstid_entry_valid)
+		fatalx("%s: sa %p is not estab", __func__, sa);
+	if (sa_dstid_checked(sa) == NULL)
+		fatalx("%s: no id for sa %p", __func__, sa);
+	RB_REMOVE(iked_dstid_sas, &env->sc_dstid_sas, sa);
+	sa->sa_dstid_entry_valid = 0;
+}
+
+static __inline int
+sa_dstid_cmp(struct iked_sa *a, struct iked_sa *b)
+{
+	struct iked_id          *aid = NULL, *bid = NULL;
+	size_t			 alen, blen;
+	uint8_t			*aptr, *bptr;
+
+	aid = sa_dstid_checked(a);
+	bid = sa_dstid_checked(b);
+	if (aid == NULL || bid == NULL)
+		fatalx("corrupt IDs");
+	if (aid->id_type > bid->id_type)
+		return (-1);
+	else if (aid->id_type < bid->id_type)
+		return (1);
+	alen = ibuf_size(aid->id_buf);
+	blen = ibuf_size(bid->id_buf);
+	aptr = ibuf_data(aid->id_buf);
+	bptr = ibuf_data(bid->id_buf);
+	if (aptr == NULL || bptr == NULL)
+		fatalx("corrupt ID bufs");
+	if (alen <= aid->id_offset || blen <= bid->id_offset)
+		fatalx("corrupt ID lens");
+	aptr += aid->id_offset;
+	alen -= aid->id_offset;
+	bptr += bid->id_offset;
+	blen -= bid->id_offset;
+	if (alen > blen)
+		return (-1);
+	if (alen < blen)
+		return (1);
+	return (memcmp(aptr, bptr, alen));
 }
 
 static __inline int
@@ -921,6 +1032,7 @@ flow_equal(struct iked_flow *a, struct iked_flow *b)
 }
 
 RB_GENERATE(iked_sas, iked_sa, sa_entry, sa_cmp);
+RB_GENERATE(iked_dstid_sas, iked_sa, sa_dstid_entry, sa_dstid_cmp);
 RB_GENERATE(iked_addrpool, iked_sa, sa_addrpool_entry, sa_addrpool_cmp);
 RB_GENERATE(iked_addrpool6, iked_sa, sa_addrpool6_entry, sa_addrpool6_cmp);
 RB_GENERATE(iked_users, iked_user, usr_entry, user_cmp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.106 2020/08/18 21:02:49 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.107 2020/08/23 19:16:08 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -98,6 +98,7 @@ static int		 rules = 0;
 static int		 passive = 0;
 static int		 decouple = 0;
 static int		 mobike = 1;
+static int		 enforcesingleikesa = 0;
 static int		 fragmentation = 0;
 static char		*ocsp_url = NULL;
 static long		 ocsp_tolerate = 0;
@@ -443,6 +444,7 @@ typedef struct {
 %token	INCLUDE LIFETIME BYTES INET INET6 QUICK SKIP DEFAULT
 %token	IPCOMP OCSP IKELIFETIME MOBIKE NOMOBIKE RDOMAIN
 %token	FRAGMENTATION NOFRAGMENTATION
+%token	ENFORCESINGLEIKESA NOENFORCESINGLEIKESA
 %token	TOLERATE MAXAGE
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
@@ -509,6 +511,8 @@ set		: SET ACTIVE	{ passive = 0; }
 		| SET NOFRAGMENTATION	{ fragmentation = 0; }
 		| SET MOBIKE	{ mobike = 1; }
 		| SET NOMOBIKE	{ mobike = 0; }
+		| SET ENFORCESINGLEIKESA	{ enforcesingleikesa = 1; }
+		| SET NOENFORCESINGLEIKESA	{ enforcesingleikesa = 0; }
 		| SET OCSP STRING		{
 			if ((ocsp_url = strdup($3)) == NULL) {
 				yyerror("cannot set ocsp_url");
@@ -1292,6 +1296,7 @@ lookup(char *s)
 		{ "dstid",		DSTID },
 		{ "eap",		EAP },
 		{ "enc",		ENCXF },
+		{ "enforcesingleikesa",	ENFORCESINGLEIKESA },
 		{ "esn",		ESN },
 		{ "esp",		ESP },
 		{ "file",		FILENAME },
@@ -1312,6 +1317,7 @@ lookup(char *s)
 		{ "maxage",		MAXAGE },
 		{ "mobike",		MOBIKE },
 		{ "name",		NAME },
+		{ "noenforcesingleikesa",	NOENFORCESINGLEIKESA },
 		{ "noesn",		NOESN },
 		{ "nofragmentation",	NOFRAGMENTATION },
 		{ "nomobike",		NOMOBIKE },
@@ -1715,6 +1721,7 @@ parse_config(const char *filename, struct iked *x_env)
 	free(ocsp_url);
 
 	mobike = 1;
+	enforcesingleikesa = 0;
 	ocsp_tolerate = 0;
 	ocsp_url = NULL;
 	ocsp_maxage = -1;
@@ -1732,6 +1739,7 @@ parse_config(const char *filename, struct iked *x_env)
 	env->sc_passive = passive ? 1 : 0;
 	env->sc_decoupled = decouple ? 1 : 0;
 	env->sc_mobike = mobike;
+	env->sc_enforcesingleikesa = enforcesingleikesa;
 	env->sc_frag = fragmentation;
 	env->sc_ocsp_url = ocsp_url;
 	env->sc_ocsp_tolerate = ocsp_tolerate;

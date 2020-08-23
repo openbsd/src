@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.159 2020/08/23 15:14:25 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.160 2020/08/23 19:16:08 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -508,7 +508,10 @@ struct iked_sa {
 #define IKED_RESPONSE_TIMEOUT		 120		/* 2 minutes */
 
 	TAILQ_ENTRY(iked_sa)		 sa_peer_entry;
-	RB_ENTRY(iked_sa)		 sa_entry;
+	RB_ENTRY(iked_sa)		 sa_entry;	/* all SAs */
+
+	RB_ENTRY(iked_sa)		 sa_dstid_entry;	/* SAs by DSTID */
+	int				 sa_dstid_entry_valid;		/* sa_dstid_entry valid */
 
 	struct iked_addr		*sa_addrpool;	/* address from pool */
 	RB_ENTRY(iked_sa)		 sa_addrpool_entry;	/* pool entries */
@@ -519,6 +522,7 @@ struct iked_sa {
 #define IKED_IKE_SA_LAST_RECVD_TIMEOUT	 300		/* 5 minutes */
 };
 RB_HEAD(iked_sas, iked_sa);
+RB_HEAD(iked_dstid_sas, iked_sa);
 RB_HEAD(iked_addrpool, iked_sa);
 RB_HEAD(iked_addrpool6, iked_sa);
 
@@ -691,6 +695,7 @@ struct iked {
 	struct iked_policy		*sc_defaultcon;
 
 	struct iked_sas			 sc_sas;
+	struct iked_dstid_sas		 sc_dstid_sas;
 	struct iked_activesas		 sc_activesas;
 	struct iked_flows		 sc_activeflows;
 	struct iked_users		 sc_users;
@@ -718,6 +723,8 @@ struct iked {
 
 	struct iked_addrpool		 sc_addrpool;
 	struct iked_addrpool6		 sc_addrpool6;
+
+	int				 sc_enforcesingleikesa;
 };
 
 struct iked_socket {
@@ -788,6 +795,8 @@ int	 config_setkeys(struct iked *);
 int	 config_getkey(struct iked *, struct imsg *);
 int	 config_setmobike(struct iked *);
 int	 config_getmobike(struct iked *, struct imsg *);
+int	 config_setenforcesingleikesa(struct iked *);
+int	 config_getenforcesingleikesa(struct iked *, struct imsg *);
 int	 config_setfragmentation(struct iked *);
 int	 config_getfragmentation(struct iked *, struct imsg *);
 int	 config_setnattport(struct iked *);
@@ -821,9 +830,15 @@ struct iked_sa *
 	 sa_lookup(struct iked *, uint64_t, uint64_t, unsigned int);
 struct iked_user *
 	 user_lookup(struct iked *, const char *);
+struct iked_sa *
+	 sa_dstid_lookup(struct iked *, struct iked_sa *);
+struct iked_sa *
+	 sa_dstid_insert(struct iked *, struct iked_sa *);
+void	 sa_dstid_remove(struct iked *, struct iked_sa *);
 int	 proposals_negotiate(struct iked_proposals *, struct iked_proposals *,
 	    struct iked_proposals *, int);
 RB_PROTOTYPE(iked_sas, iked_sa, sa_entry, sa_cmp);
+RB_PROTOTYPE(iked_dstid_sas, iked_sa, sa_dstid_entry, sa_dstid_cmp);
 RB_PROTOTYPE(iked_addrpool, iked_sa, sa_addrpool_entry, sa_addrpool_cmp);
 RB_PROTOTYPE(iked_addrpool6, iked_sa, sa_addrpool6_entry, sa_addrpool6_cmp);
 RB_PROTOTYPE(iked_users, iked_user, user_entry, user_cmp);

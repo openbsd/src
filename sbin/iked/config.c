@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.61 2020/08/18 21:02:49 tobhe Exp $	*/
+/*	$OpenBSD: config.c,v 1.62 2020/08/23 19:16:07 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -898,6 +898,30 @@ config_getfragmentation(struct iked *env, struct imsg *imsg)
 	memcpy(&boolval, imsg->data, sizeof(boolval));
 	env->sc_frag = boolval;
 	log_debug("%s: %sfragmentation", __func__, env->sc_frag ? "" : "no ");
+	return (0);
+}
+
+int
+config_setenforcesingleikesa(struct iked *env)
+{
+	unsigned int boolval;
+
+	boolval = env->sc_enforcesingleikesa;
+	proc_compose(&env->sc_ps, PROC_IKEV2, IMSG_CTL_ENFORCESINGLEIKESA,
+	    &boolval, sizeof(boolval));
+	return (0);
+}
+
+int
+config_getenforcesingleikesa(struct iked *env, struct imsg *imsg)
+{
+	unsigned int boolval;
+
+	IMSG_SIZE_CHECK(imsg, &boolval);
+	memcpy(&boolval, imsg->data, sizeof(boolval));
+	env->sc_enforcesingleikesa = boolval;
+	log_debug("%s: %senforcesingleikesa", __func__,
+	    env->sc_enforcesingleikesa ? "" : "no ");
 	return (0);
 }
 

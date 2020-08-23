@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.246 2020/08/23 15:14:25 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.247 2020/08/23 19:16:08 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -80,6 +80,8 @@ int	 ikev2_init_ike_sa_peer(struct iked *, struct iked_policy *,
 int	 ikev2_init_ike_auth(struct iked *, struct iked_sa *);
 int	 ikev2_init_auth(struct iked *, struct iked_message *);
 int	 ikev2_init_done(struct iked *, struct iked_sa *);
+
+int	 ikev2_record_dstid(struct iked *, struct iked_sa *);
 
 void	 ikev2_enable_timer(struct iked *, struct iked_sa *);
 void	 ikev2_disable_timer(struct iked *, struct iked_sa *);
@@ -238,6 +240,8 @@ ikev2_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		return (0);
 	case IMSG_CTL_MOBIKE:
 		return (config_getmobike(env, imsg));
+	case IMSG_CTL_ENFORCESINGLEIKESA:
+		return (config_getenforcesingleikesa(env, imsg));
 	case IMSG_CTL_FRAGMENTATION:
 		return (config_getfragmentation(env, imsg));
 	case IMSG_CTL_NATTPORT:
@@ -1466,6 +1470,7 @@ ikev2_init_done(struct iked *env, struct iked_sa *sa)
 		timer_del(env, &sa->sa_timer);
 		ikev2_enable_timer(env, sa);
 		ikev2_log_established(sa);
+		ikev2_record_dstid(env, sa);
 	}
 
 	if (ret)
@@ -2960,6 +2965,40 @@ ikev2_add_error(struct iked *env, struct ibuf *buf, struct iked_message *msg)
 }
 
 int
+ikev2_record_dstid(struct iked *env, struct iked_sa *sa)
+{
+	struct iked_sa *osa;
+
+	osa = sa_dstid_lookup(env, sa);
+	if (osa == sa)
+		return (0);
+	if (osa != NULL) {
+		sa_dstid_remove(env, osa);
+		if (env->sc_enforcesingleikesa &&
+		    osa->sa_state != IKEV2_STATE_CLOSED) {
+			log_info("%sreplaced by IKESA %s (identical DSTID)",
+			    SPI_SA(osa, NULL),
+			    print_spi(sa->sa_hdr.sh_ispi, 8));
+			if (osa->sa_state == IKEV2_STATE_ESTABLISHED)
+				ikev2_disable_timer(env, osa);
+			ikev2_ike_sa_setreason(osa, "sa replaced");
+			ikev2_ikesa_delete(env, osa, 1);
+			timer_add(env, &sa->sa_timer,
+			    3 * IKED_RETRANSMIT_TIMEOUT);
+		}
+	}
+	osa = sa_dstid_insert(env, sa);
+	if (osa != NULL) {
+		/* XXX how can this fail */
+		log_info("%s: could not replace old IKESA %s",
+		    SPI_SA(sa, __func__),
+		    print_spi(osa->sa_hdr.sh_ispi, 8));
+		return (-1);
+	}
+	return (0);
+}
+
+int
 ikev2_send_error(struct iked *env, struct iked_sa *sa,
     struct iked_message *msg, uint8_t exchange)
 {
@@ -3228,6 +3267,7 @@ ikev2_resp_ike_auth(struct iked *env, struct iked_sa *sa)
 		timer_del(env, &sa->sa_timer);
 		ikev2_enable_timer(env, sa);
 		ikev2_log_established(sa);
+		ikev2_record_dstid(env, sa);
 	}
 
  done:
@@ -4008,6 +4048,10 @@ ikev2_ikesa_enable(struct iked *env, struct iked_sa *sa, struct iked_sa *nsa)
 		RB_INSERT(iked_addrpool6, &env->sc_addrpool6, nsa);
 	}
 	/* Transfer other attributes */
+        if (sa->sa_dstid_entry_valid) {
+		sa_dstid_remove(env, sa);
+		sa_dstid_insert(env, nsa);
+	}
 	if (sa->sa_tag) {
 		nsa->sa_tag = sa->sa_tag;
 		sa->sa_tag = NULL;
@@ -6628,6 +6672,9 @@ ikev2_info(struct iked *env, int dolog)
 	}
 	RB_FOREACH(flow, iked_flows, &env->sc_activeflows) {
 		ikev2_info_flow(env, dolog, "iked_flows", flow);
+	}
+	RB_FOREACH(sa, iked_dstid_sas, &env->sc_dstid_sas) {
+		ikev2_info_sa(env, dolog, "iked_dstid_sas", sa);
 	}
 	if (dolog)
 		return;
