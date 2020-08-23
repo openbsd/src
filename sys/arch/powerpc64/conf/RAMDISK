@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.7 2020/08/05 05:49:07 deraadt Exp $
+# $OpenBSD: RAMDISK,v 1.8 2020/08/23 21:48:08 kettenis Exp $
 
 machine		powerpc64
 maxusers	4
@@ -31,6 +31,7 @@ opalcons*	at fdt?
 phb*		at fdt?
 pci*		at phb?
 xics*		at fdt?
+xicp*		at fdt?
 xive*		at fdt?
 
 ppb*		at pci?
