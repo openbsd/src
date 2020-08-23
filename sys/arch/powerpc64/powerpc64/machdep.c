@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.56 2020/08/17 16:55:41 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.57 2020/08/23 10:07:51 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -171,11 +171,8 @@ init_powernv(void *fdt, void *tocbase)
 	msr = mfmsr();
 	mtmsr(msr | (PSL_ME|PSL_RI));
 
-#define LPCR_LPES	0x0000000000000008UL
-#define LPCR_HVICE	0x0000000000000002UL
-
-	mtlpcr(LPCR_LPES | LPCR_HVICE);
-	isync();
+	cpu_init_features();
+	cpu_init();
 
 	/* Add all memory. */
 	node = fdt_find_node("/");

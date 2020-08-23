@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.16 2020/08/14 12:13:01 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.17 2020/08/23 10:07:51 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -56,6 +56,9 @@ struct cpu_version cpu_version[] = {
 };
 
 char cpu_model[64];
+uint32_t cpu_features;
+uint32_t cpu_features2;
+
 uint64_t tb_freq = 512000000;	/* POWER8, POWER9 */
 
 struct cpu_info cpu_info[MAXCPUS];
@@ -175,13 +178,9 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		level++;
 	}
 
-	if (CPU_IS_PRIMARY(ci)) {
-		switch (CPU_VERSION(pvr)) {
-		case CPU_IBMPOWER9:
-			timeout_set(&cpu_darn_to, cpu_darn, NULL);
-			cpu_darn(NULL);
-			break;
-		}
+	if (CPU_IS_PRIMARY(ci) && (cpu_features2 & PPC_FEATURE2_DARN)) {
+		timeout_set(&cpu_darn_to, cpu_darn, NULL);
+		cpu_darn(NULL);
 	}
 
 #ifdef MULTIPROCESSOR
@@ -213,6 +212,31 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 
 	/* Update timebase frequency to reflect reality. */
 	tb_freq = OF_getpropint(faa->fa_node, "timebase-frequency", tb_freq);
+}
+
+void
+cpu_init_features(void)
+{
+	uint32_t pvr = mfpvr();
+
+	switch (CPU_VERSION(pvr)) {
+	case CPU_IBMPOWER9:
+		cpu_features2 |= PPC_FEATURE2_ARCH_3_00;
+		cpu_features2 |= PPC_FEATURE2_DARN;
+		break;
+	}
+}
+
+void
+cpu_init(void)
+{
+	uint64_t lpcr = LPCR_LPES;
+
+	if (cpu_features2 & PPC_FEATURE2_ARCH_3_00)
+		lpcr |= LPCR_HVICE;
+
+	mtlpcr(lpcr);
+	isync();
 }
 
 void
@@ -252,11 +276,7 @@ cpu_bootstrap(void)
 	msr = mfmsr();
 	mtmsr(msr | (PSL_ME|PSL_RI));
 
-#define LPCR_LPES	0x0000000000000008UL
-#define LPCR_HVICE	0x0000000000000002UL
-
-	mtlpcr(LPCR_LPES | LPCR_HVICE);
-	isync();
+	cpu_init();
 
 	pmap_bootstrap_cpu();
 

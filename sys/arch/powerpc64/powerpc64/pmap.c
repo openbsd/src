@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.42 2020/08/21 13:42:02 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.43 2020/08/23 10:07:51 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -1451,8 +1451,13 @@ pmap_bootstrap_cpu(void)
 	/* Clear TLB. */
 	tlbia();
 
-	/* Set partition table. */
-	mtptcr((paddr_t)pmap_pat | PATSIZE);
+	if (cpu_features2 & PPC_FEATURE2_ARCH_3_00) {
+		/* Set partition table. */
+		mtptcr((paddr_t)pmap_pat | PATSIZE);
+	} else {
+		/* Set page table. */
+		mtsdr1((paddr_t)pmap_ptable | HTABSIZE);
+	}
 
 	/* Load SLB. */
 	for (idx = 0; idx < 31; idx++) {
