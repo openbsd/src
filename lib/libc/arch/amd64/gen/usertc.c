@@ -1,4 +1,4 @@
-/*	$OpenBSD: usertc.c,v 1.2 2020/07/08 09:17:48 kettenis Exp $ */
+/*	$OpenBSD: usertc.c,v 1.3 2020/08/23 21:38:47 cheloha Exp $ */
 /*
  * Copyright (c) 2020 Paul Irofti <paul@irofti.net>
  *
@@ -19,10 +19,10 @@
 #include <sys/timetc.h>
 
 static inline u_int
-rdtsc(void)
+rdtsc_lfence(void)
 {
 	uint32_t hi, lo;
-	asm volatile("rdtsc" : "=a"(lo), "=d"(hi));
+	asm volatile("lfence; rdtsc" : "=a"(lo), "=d"(hi));
 	return ((uint64_t)lo)|(((uint64_t)hi)<<32);
 }
 
@@ -31,7 +31,7 @@ tc_get_timecount(struct timekeep *tk, u_int *tc)
 {
 	switch (tk->tk_user) {
 	case TC_TSC:
-		*tc = rdtsc();
+		*tc = rdtsc_lfence();
 		return 0;
 	}
 

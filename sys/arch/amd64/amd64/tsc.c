@@ -1,4 +1,4 @@
-/*	$OpenBSD: tsc.c,v 1.19 2020/07/06 13:33:06 pirofti Exp $	*/
+/*	$OpenBSD: tsc.c,v 1.20 2020/08/23 21:38:47 cheloha Exp $	*/
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * Copyright (c) 2016,2017 Reyk Floeter <reyk@openbsd.org>
@@ -211,7 +211,7 @@ cpu_recalibrate_tsc(struct timecounter *tc)
 u_int
 tsc_get_timecount(struct timecounter *tc)
 {
-	return rdtsc() + curcpu()->ci_tsc_skew;
+	return rdtsc_lfence() + curcpu()->ci_tsc_skew;
 }
 
 void
