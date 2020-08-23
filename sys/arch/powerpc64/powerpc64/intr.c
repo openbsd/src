@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.5 2020/07/22 20:41:26 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.6 2020/08/23 13:50:34 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -26,6 +26,7 @@
 #include <dev/ofw/openfirm.h>
 
 /* Dummy implementations. */
+void	dummy_exi(struct trapframe *);
 void	dummy_hvi(struct trapframe *);
 void	*dummy_intr_establish(uint32_t, int, int,
 	    int (*)(void *), void *, const char *);
@@ -36,11 +37,18 @@ void	dummy_setipl(int);
  * The function pointers are overridden when the driver for the real
  * interrupt controller attaches.
  */
+void	(*_exi)(struct trapframe *) = dummy_exi;
 void	(*_hvi)(struct trapframe *) = dummy_hvi;
 void	*(*_intr_establish)(uint32_t, int, int,
 	    int (*)(void *), void *, const char *) = dummy_intr_establish;
 void	(*_intr_send_ipi)(void *) = dummy_intr_send_ipi;
 void	(*_setipl)(int) = dummy_setipl;
+
+void
+exi_intr(struct trapframe *frame)
+{
+	(*_exi)(frame);
+}
 
 void
 hvi_intr(struct trapframe *frame)
@@ -159,9 +167,15 @@ splassert_check(int wantipl, const char *func)
 #endif
 
 void
+dummy_exi(struct trapframe *frame)
+{
+	panic("Unhandled external interrupt");
+}
+
+void
 dummy_hvi(struct trapframe *frame)
 {
-	panic("Unhandled Hypervisor Virtualization interrupt");
+	panic("Unhandled hypervisor virtualization interrupt");
 }
 
 void *

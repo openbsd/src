@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.35 2020/08/19 10:10:58 mpi Exp $	*/
+/*	$OpenBSD: trap.c,v 1.36 2020/08/23 13:50:34 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -36,6 +36,7 @@
 #endif
 
 void	decr_intr(struct trapframe *); /* clock.c */
+void	exi_intr(struct trapframe *);  /* intr.c */
 void	hvi_intr(struct trapframe *);  /* intr.c */
 void	syscall(struct trapframe *);   /* syscall.c */
 
@@ -62,6 +63,12 @@ trap(struct trapframe *frame)
 		uvmexp.intrs++;
 		ci->ci_idepth++;
 		decr_intr(frame);
+		ci->ci_idepth--;
+		return;
+	case EXC_EXI:
+		uvmexp.intrs++;
+		ci->ci_idepth++;
+		exi_intr(frame);
 		ci->ci_idepth--;
 		return;
 	case EXC_HVI:

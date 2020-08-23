@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.9 2020/07/22 20:41:26 kettenis Exp $	*/
+/*	$OpenBSD: intr.h,v 1.10 2020/08/23 13:50:34 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -95,6 +95,7 @@ void	*intr_establish(uint32_t, int, int,
 
 void	intr_send_ipi(struct cpu_info *, int);
 
+extern void (*_exi)(struct trapframe *);
 extern void (*_hvi)(struct trapframe *);
 extern void *(*_intr_establish)(uint32_t, int, int,
 	    int (*)(void *), void *, const char *);
