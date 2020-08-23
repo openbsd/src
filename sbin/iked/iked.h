@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.158 2020/08/21 14:30:17 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.159 2020/08/23 15:14:25 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -679,7 +679,7 @@ struct iked {
 	char				 sc_conffile[PATH_MAX];
 
 	uint32_t			 sc_opts;
-	enum natt_mode			 natt_mode;
+	enum natt_mode			 sc_nattmode;
 	uint8_t				 sc_passive;
 	uint8_t				 sc_decoupled;
 	in_port_t			 sc_nattport;

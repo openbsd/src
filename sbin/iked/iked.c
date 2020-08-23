@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.44 2020/08/21 14:30:17 tobhe Exp $	*/
+/*	$OpenBSD: iked.c,v 1.45 2020/08/23 15:14:25 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -133,7 +133,7 @@ main(int argc, char *argv[])
 		fatal("calloc: env");
 
 	env->sc_opts = opts;
-	env->natt_mode = natt_mode;
+	env->sc_nattmode = natt_mode;
 	env->sc_nattport = port;
 
 	ps = &env->sc_ps;
@@ -232,17 +232,17 @@ parent_configure(struct iked *env)
 	ss.ss_family = AF_INET;
 
 	/* see comment on config_setsocket() */
-	if (env->natt_mode != NATT_FORCE)
+	if (env->sc_nattmode != NATT_FORCE)
 		config_setsocket(env, &ss, htons(IKED_IKE_PORT), PROC_IKEV2);
-	if (env->natt_mode != NATT_DISABLE)
+	if (env->sc_nattmode != NATT_DISABLE)
 		config_setsocket(env, &ss, htons(env->sc_nattport), PROC_IKEV2);
 
 	bzero(&ss, sizeof(ss));
 	ss.ss_family = AF_INET6;
 
-	if (env->natt_mode != NATT_FORCE)
+	if (env->sc_nattmode != NATT_FORCE)
 		config_setsocket(env, &ss, htons(IKED_IKE_PORT), PROC_IKEV2);
-	if (env->natt_mode != NATT_DISABLE)
+	if (env->sc_nattmode != NATT_DISABLE)
 		config_setsocket(env, &ss, htons(env->sc_nattport), PROC_IKEV2);
 
 	/*

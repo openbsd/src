@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.245 2020/08/22 21:40:24 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.246 2020/08/23 15:14:25 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1230,7 +1230,7 @@ ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
 			goto done;
 	}
 
-	if (env->natt_mode != NATT_DISABLE) {
+	if (env->sc_nattmode != NATT_DISABLE) {
 		if (ntohs(port) == env->sc_nattport) {
 			/* Enforce NAT-T on the initiator side */
 			log_debug("%s: enforcing NAT-T", __func__);
@@ -2050,7 +2050,7 @@ ikev2_nat_detection(struct iked *env, struct iked_message *msg,
 		goto done;
 	}
 
-	if (env->natt_mode == NATT_FORCE) {
+	if (env->sc_nattmode == NATT_FORCE) {
 		/* Enforce NAT-T/UDP-encapsulation by distorting the digest */
 		rnd = arc4random();
 		EVP_DigestUpdate(&ctx, &rnd, sizeof(rnd));
@@ -2794,7 +2794,7 @@ ikev2_resp_ike_sa_init(struct iked *env, struct iked_message *msg)
 			goto done;
 	}
 
-	if ((env->natt_mode != NATT_DISABLE) &&
+	if ((env->sc_nattmode != NATT_DISABLE) &&
 	    msg->msg_local.ss_family != AF_UNSPEC) {
 		if ((len = ikev2_add_nat_detection(env, buf, &pld, &resp, len))
 		    == -1)
