@@ -1,4 +1,4 @@
-/*	$OpenBSD: opal.h,v 1.15 2020/07/21 21:27:11 kettenis Exp $	*/
+/*	$OpenBSD: opal.h,v 1.16 2020/08/23 13:46:15 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -31,6 +31,8 @@
 #define OPAL_POLL_EVENTS		10
 #define OPAL_PCI_CONFIG_READ_WORD	15
 #define OPAL_PCI_CONFIG_WRITE_WORD	18
+#define OPAL_SET_XIVE			19
+#define OPAL_GET_XIVE			20
 #define OPAL_PCI_EEH_FREEZE_STATUS	23
 #define OPAL_PCI_EEH_FREEZE_CLEAR	26
 #define OPAL_PCI_PHB_MMIO_ENABLE	27
@@ -164,17 +166,19 @@ int64_t	opal_cec_power_down(uint64_t);
 int64_t	opal_cec_reboot(void);
 int64_t	opal_handle_interrupt(uint32_t, uint64_t *);
 int64_t	opal_poll_events(uint64_t *);
-int64_t opal_pci_config_read_word(uint64_t, uint64_t, uint64_t, uint32_t *);
-int64_t opal_pci_config_write_word(uint64_t, uint64_t, uint64_t, uint32_t);
-int64_t opal_pci_eeh_freeze_status(uint64_t, uint64_t, uint8_t *,
+int64_t	opal_pci_config_read_word(uint64_t, uint64_t, uint64_t, uint32_t *);
+int64_t	opal_pci_config_write_word(uint64_t, uint64_t, uint64_t, uint32_t);
+int64_t	opal_set_xive(uint32_t, uint16_t, uint8_t);
+int64_t	opal_get_xive(uint32_t, uint16_t *, uint8_t *);
+int64_t	opal_pci_eeh_freeze_status(uint64_t, uint64_t, uint8_t *,
 	    uint16_t *, uint64_t *);
-int64_t opal_pci_eeh_freeze_clear(uint64_t, uint64_t, uint64_t);
-int64_t opal_pci_phb_mmio_enable(uint64_t, uint16_t, uint16_t, uint16_t);
-int64_t opal_pci_set_phb_mem_window(uint64_t, uint16_t, uint16_t,
+int64_t	opal_pci_eeh_freeze_clear(uint64_t, uint64_t, uint64_t);
+int64_t	opal_pci_phb_mmio_enable(uint64_t, uint16_t, uint16_t, uint16_t);
+int64_t	opal_pci_set_phb_mem_window(uint64_t, uint16_t, uint16_t,
 	    uint64_t, uint64_t, uint64_t);
-int64_t opal_pci_map_pe_mmio_window(uint64_t, uint64_t, uint16_t,
+int64_t	opal_pci_map_pe_mmio_window(uint64_t, uint64_t, uint16_t,
 	    uint16_t, uint16_t);
-int64_t opal_pci_set_pe(uint64_t, uint64_t, uint64_t, uint8_t, uint8_t,
+int64_t	opal_pci_set_pe(uint64_t, uint64_t, uint64_t, uint8_t, uint8_t,
 	    uint8_t, uint8_t);
 int64_t	opal_pci_set_xive_pe(uint64_t, uint64_t, uint32_t);
 int64_t	opal_get_msi_32(uint64_t, uint32_t, uint32_t, uint8_t,
@@ -182,12 +186,12 @@ int64_t	opal_get_msi_32(uint64_t, uint32_t, uint32_t, uint8_t,
 int64_t	opal_get_msi_64(uint64_t, uint32_t, uint32_t, uint8_t,
 	    uint64_t *, uint32_t *);
 int64_t	opal_start_cpu(uint64_t, uint64_t);
-int64_t opal_pci_map_pe_dma_window_real(uint64_t, uint64_t, uint16_t,
+int64_t	opal_pci_map_pe_dma_window_real(uint64_t, uint64_t, uint16_t,
 	    uint64_t, uint64_t);
-int64_t opal_pci_reset(uint64_t, uint8_t, uint8_t);
+int64_t	opal_pci_reset(uint64_t, uint8_t, uint8_t);
 int64_t	opal_reinit_cpus(uint64_t);
 int64_t	opal_check_token(uint64_t);
-int64_t opal_sensor_read(uint32_t, int, uint32_t *);
+int64_t	opal_sensor_read(uint32_t, int, uint32_t *);
 int64_t	opal_console_flush(uint64_t);
 int64_t	opal_xive_reset(uint64_t);
 int64_t	opal_xive_get_irq_info(uint32_t, uint64_t *, uint64_t *,
@@ -202,7 +206,7 @@ int64_t	opal_xive_get_vp_info(uint64_t, uint64_t *, uint64_t *,
 	    uint64_t *, uint32_t *);
 int64_t	opal_xive_set_vp_info(uint64_t, uint64_t, uint64_t);
 int64_t	opal_xive_dump(uint32_t, uint32_t);
-int64_t opal_sensor_read_u64(uint32_t, int, uint64_t *);
+int64_t	opal_sensor_read_u64(uint32_t, int, uint64_t *);
 
 void	opal_printf(const char *fmt, ...);
 

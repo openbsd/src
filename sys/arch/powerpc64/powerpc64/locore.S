@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.34 2020/08/14 12:14:06 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.35 2020/08/23 13:46:15 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -302,6 +302,8 @@ OPAL_CALL(OPAL_HANDLE_INTERRUPT, opal_handle_interrupt)
 OPAL_CALL(OPAL_POLL_EVENTS, opal_poll_events)
 OPAL_CALL(OPAL_PCI_CONFIG_READ_WORD, opal_pci_config_read_word)
 OPAL_CALL(OPAL_PCI_CONFIG_WRITE_WORD, opal_pci_config_write_word)
+OPAL_CALL(OPAL_SET_XIVE, opal_set_xive)
+OPAL_CALL(OPAL_GET_XIVE, opal_get_xive)
 OPAL_CALL(OPAL_PCI_EEH_FREEZE_STATUS, opal_pci_eeh_freeze_status)
 OPAL_CALL(OPAL_PCI_EEH_FREEZE_CLEAR, opal_pci_eeh_freeze_clear)
 OPAL_CALL(OPAL_PCI_PHB_MMIO_ENABLE, opal_pci_phb_mmio_enable)
