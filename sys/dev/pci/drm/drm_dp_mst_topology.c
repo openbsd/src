@@ -5424,7 +5424,9 @@ static const struct i2c_algorithm drm_dp_mst_i2c_algo = {
 static int drm_dp_mst_register_i2c_bus(struct drm_dp_mst_port *port)
 {
 	struct drm_dp_aux *aux = &port->aux;
+#ifdef __linux__
 	struct device *parent_dev = port->mgr->dev->dev;
+#endif
 
 	aux->ddc.algo = &drm_dp_mst_i2c_algo;
 	aux->ddc.algo_data = aux;
