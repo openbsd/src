@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.64 2020/08/17 15:48:28 martijn Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.65 2020/08/23 07:39:57 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -68,7 +68,6 @@ snmpe(struct privsep *ps, struct privsep_proc *p)
 {
 	struct snmpd		*env = ps->ps_env;
 	struct address		*h;
-	struct listen_sock	*so;
 #ifdef DEBUG
 	char		 buf[BUFSIZ];
 	struct oid	*oid;
@@ -82,14 +81,9 @@ snmpe(struct privsep *ps, struct privsep_proc *p)
 #endif
 
 	/* bind SNMP UDP/TCP sockets */
-	TAILQ_FOREACH(h, &env->sc_addresses, entry) {
-		if ((so = calloc(1, sizeof(*so))) == NULL)
-			fatal("snmpe: %s", __func__);
-		if ((so->s_fd = snmpe_bind(h)) == -1)
+	TAILQ_FOREACH(h, &env->sc_addresses, entry)
+		if ((h->fd = snmpe_bind(h)) == -1)
 			fatal("snmpe: failed to bind SNMP socket");
-		so->s_ipproto = h->ipproto;
-		TAILQ_INSERT_TAIL(&env->sc_sockets, so, entry);
-	}
 
 	proc_run(ps, p, procs, nitems(procs), snmpe_init, NULL);
 }
@@ -99,7 +93,7 @@ void
 snmpe_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 {
 	struct snmpd		*env = ps->ps_env;
-	struct listen_sock	*so;
+	struct address		*h;
 
 	kr_init();
 	trap_init();
@@ -107,17 +101,17 @@ snmpe_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 	usm_generate_keys();
 
 	/* listen for incoming SNMP UDP/TCP messages */
-	TAILQ_FOREACH(so, &env->sc_sockets, entry) {
-		if (so->s_ipproto == IPPROTO_TCP) {
-			if (listen(so->s_fd, 5) < 0)
+	TAILQ_FOREACH(h, &env->sc_addresses, entry) {
+		if (h->ipproto == IPPROTO_TCP) {
+			if (listen(h->fd, 5) < 0)
 				fatalx("snmpe: failed to listen on socket");
-			event_set(&so->s_ev, so->s_fd, EV_READ, snmpe_acceptcb, so);
-			evtimer_set(&so->s_evt, snmpe_acceptcb, so);
+			event_set(&h->ev, h->fd, EV_READ, snmpe_acceptcb, h);
+			evtimer_set(&h->evt, snmpe_acceptcb, h);
 		} else {
-			event_set(&so->s_ev, so->s_fd, EV_READ|EV_PERSIST,
+			event_set(&h->ev, h->fd, EV_READ|EV_PERSIST,
 			    snmpe_recvmsg, env);
 		}
-		event_add(&so->s_ev, NULL);
+		event_add(&h->ev, NULL);
 	}
 
 	/* no filesystem visibility */
@@ -130,13 +124,13 @@ snmpe_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 void
 snmpe_shutdown(void)
 {
-	struct listen_sock *so;
+	struct address *h;
 
-	TAILQ_FOREACH(so, &snmpd_env->sc_sockets, entry) {
-		event_del(&so->s_ev);
-		if (so->s_ipproto == IPPROTO_TCP)
-			event_del(&so->s_evt);
-		close(so->s_fd);
+	TAILQ_FOREACH(h, &snmpd_env->sc_addresses, entry) {
+		event_del(&h->ev);
+		if (h->ipproto == IPPROTO_TCP)
+			event_del(&h->evt);
+		close(h->fd);
 	}
 	kr_shutdown();
 }
@@ -509,13 +503,13 @@ snmpe_parsevarbinds(struct snmp_message *msg)
 void
 snmpe_acceptcb(int fd, short type, void *arg)
 {
-	struct listen_sock	*so = arg;
-	struct sockaddr_storage ss;
-	socklen_t len = sizeof(ss);
+	struct address		*h = arg;
+	struct sockaddr_storage	 ss;
+	socklen_t		 len = sizeof(ss);
 	struct snmp_message	*msg;
 	int afd;
 
-	event_add(&so->s_ev, NULL);
+	event_add(&h->ev, NULL);
 	if ((type & EV_TIMEOUT))
 		return;
 
@@ -525,8 +519,8 @@ snmpe_acceptcb(int fd, short type, void *arg)
 		if (errno == ENFILE || errno == EMFILE) {
 			struct timeval evtpause = { 1, 0 };
 
-			event_del(&so->s_ev);
-			evtimer_add(&so->s_evt, &evtpause);
+			event_del(&h->ev);
+			evtimer_add(&h->evt, &evtpause);
 		} else if (errno != EAGAIN && errno != EINTR)
 			log_debug("%s: accept4", __func__);
 		return;

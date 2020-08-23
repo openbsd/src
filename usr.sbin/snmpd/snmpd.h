@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.88 2020/08/08 13:39:57 martijn Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.89 2020/08/23 07:39:57 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -482,6 +482,9 @@ struct address {
 	struct sockaddr_storage	 ss;
 	in_port_t		 port;
 	int			 ipproto;
+	int			 fd;
+	struct event		 ev;
+	struct event		 evt;
 
 	TAILQ_ENTRY(address)	 entry;
 
@@ -491,15 +494,6 @@ struct address {
 	struct address		*sa_srcaddr;
 };
 TAILQ_HEAD(addresslist, address);
-
-struct listen_sock {
-	int				s_fd;
-	int				s_ipproto;
-	struct event			s_ev;
-	struct event			s_evt;
-	TAILQ_ENTRY(listen_sock)	entry;
-};
-TAILQ_HEAD(socklist, listen_sock);
 
 enum usmauth {
 	AUTH_NONE = 0,
@@ -545,7 +539,6 @@ struct snmpd {
 
 	const char		*sc_confpath;
 	struct addresslist	 sc_addresses;
-	struct socklist		 sc_sockets;
 	struct timeval		 sc_starttime;
 	u_int32_t		 sc_engine_boots;
 

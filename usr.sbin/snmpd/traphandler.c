@@ -1,4 +1,4 @@
-/*	$OpenBSD: traphandler.c,v 1.16 2020/03/11 06:53:42 martijn Exp $	*/
+/*	$OpenBSD: traphandler.c,v 1.17 2020/08/23 07:39:57 martijn Exp $	*/
 
 /*
  * Copyright (c) 2014 Bret Stephen Lambert <blambert@openbsd.org>
@@ -74,17 +74,13 @@ traphandler(struct privsep *ps, struct privsep_proc *p)
 {
 	struct snmpd		*env = ps->ps_env;
 	struct address		*h;
-	struct listen_sock	*so;
 
 	if (env->sc_traphandler) {
 		TAILQ_FOREACH(h, &env->sc_addresses, entry) {
 			if (h->ipproto != IPPROTO_UDP)
 				continue;
-			if ((so = calloc(1, sizeof(*so))) == NULL)
-				fatal("%s", __func__);
-			if ((so->s_fd = traphandler_bind(h)) == -1)
+			if ((h->fd = traphandler_bind(h)) == -1)
 				fatal("could not create trap listener socket");
-			TAILQ_INSERT_TAIL(&env->sc_sockets, so, entry);
 		}
 	}
 
@@ -95,7 +91,7 @@ void
 traphandler_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 {
 	struct snmpd		*env = ps->ps_env;
-	struct listen_sock	*so;
+	struct address		*h;
 
 	if (pledge("stdio id proc recvfd exec", NULL) == -1)
 		fatal("pledge");
@@ -104,10 +100,10 @@ traphandler_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 		return;
 
 	/* listen for SNMP trap messages */
-	TAILQ_FOREACH(so, &env->sc_sockets, entry) {
-		event_set(&so->s_ev, so->s_fd, EV_READ|EV_PERSIST,
+	TAILQ_FOREACH(h, &env->sc_addresses, entry) {
+		event_set(&h->ev, h->fd, EV_READ|EV_PERSIST,
 		    traphandler_recvmsg, ps);
-		event_add(&so->s_ev, NULL);
+		event_add(&h->ev, NULL);
 	}
 }
 
@@ -141,11 +137,11 @@ traphandler_bind(struct address *addr)
 void
 traphandler_shutdown(void)
 {
-	struct listen_sock	*so;
+	struct address		*h;
 
-	TAILQ_FOREACH(so, &snmpd_env->sc_sockets, entry) {
-		event_del(&so->s_ev);
-		close(so->s_fd);
+	TAILQ_FOREACH(h, &snmpd_env->sc_addresses, entry) {
+		event_del(&h->ev);
+		close(h->fd);
 	}
 }
 

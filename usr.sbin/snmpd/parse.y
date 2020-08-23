@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.58 2020/06/30 17:11:49 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.59 2020/08/23 07:39:57 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -997,7 +997,6 @@ parse_config(const char *filename, u_int flags)
 	conf->sc_flags = flags;
 	conf->sc_confpath = filename;
 	TAILQ_INIT(&conf->sc_addresses);
-	TAILQ_INIT(&conf->sc_sockets);
 	strlcpy(conf->sc_rdcommunity, "public", SNMPD_MAXCOMMUNITYLEN);
 	strlcpy(conf->sc_rwcommunity, "private", SNMPD_MAXCOMMUNITYLEN);
 	strlcpy(conf->sc_trcommunity, "public", SNMPD_MAXCOMMUNITYLEN);
