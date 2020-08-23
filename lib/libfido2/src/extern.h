@@ -159,8 +159,9 @@ uint32_t uniform_random(uint32_t);
 #endif
 
 /* internal device capability flags */
-#define FIDO_DEV_SUPPORTS_PIN		0x01
-#define FIDO_DEV_SUPPORTS_CRED_PROT	0x02
+#define FIDO_DEV_PIN_SET	0x01
+#define FIDO_DEV_PIN_UNSET	0x02
+#define FIDO_DEV_CRED_PROT	0x04
 
 /* miscellanea */
 #define FIDO_DUMMY_CLIENTDATA	""

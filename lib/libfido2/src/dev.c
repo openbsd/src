@@ -123,30 +123,27 @@ static void
 fido_dev_set_flags(fido_dev_t *dev, const fido_cbor_info_t *info)
 {
 	char * const	*ptr;
+	const bool	*val;
 	size_t		 len;
 
 	ptr = fido_cbor_info_extensions_ptr(info);
 	len = fido_cbor_info_extensions_len(info);
 
-	for (size_t i = 0; i < len; i++) {
-		if (strcmp(ptr[i], "credProtect") == 0) {
-			dev->flags |= FIDO_DEV_SUPPORTS_CRED_PROT;
-		}
-	}
+	for (size_t i = 0; i < len; i++)
+		if (strcmp(ptr[i], "credProtect") == 0)
+			dev->flags |= FIDO_DEV_CRED_PROT;
 
 	ptr = fido_cbor_info_options_name_ptr(info);
+	val = fido_cbor_info_options_value_ptr(info);
 	len = fido_cbor_info_options_len(info);
 
-	for (size_t i = 0; i < len; i++) {
-		/*
-		 * clientPin: PIN supported and set;
-		 * noclientPin: PIN supported but not set.
-		 */
-		if (strcmp(ptr[i], "clientPin") == 0 ||
-		    strcmp(ptr[i], "noclientPin") == 0) {
-			dev->flags |= FIDO_DEV_SUPPORTS_PIN;
+	for (size_t i = 0; i < len; i++)
+		if (strcmp(ptr[i], "clientPin") == 0) {
+			if (val[i] == true)
+				dev->flags |= FIDO_DEV_PIN_SET;
+			else
+				dev->flags |= FIDO_DEV_PIN_UNSET;
 		}
-	}
 }
 
 static int
@@ -461,12 +458,11 @@ fail:
 }
 
 int
-fido_dev_get_touch_status(fido_dev_t *dev, int *touched, int *pin_set, int ms)
+fido_dev_get_touch_status(fido_dev_t *dev, int *touched, int ms)
 {
 	int r;
 
 	*touched = 0;
-	*pin_set = 0;
 
 	if (fido_dev_is_fido2(dev) == false)
 		return (u2f_get_touch_status(dev, touched, ms));
@@ -474,8 +470,6 @@ fido_dev_get_touch_status(fido_dev_t *dev, int *touched, int *pin_set, int ms)
 	switch ((r = fido_rx_cbor_status(dev, ms))) {
 	case FIDO_ERR_PIN_INVALID:
 	case FIDO_ERR_PIN_AUTH_INVALID:
-		*pin_set = 1;
-		/* FALLTHROUGH */
 	case FIDO_ERR_PIN_NOT_SET:
 		*touched = 1;
 		break;
@@ -632,13 +626,19 @@ fido_dev_is_fido2(const fido_dev_t *dev)
 bool
 fido_dev_supports_pin(const fido_dev_t *dev)
 {
-	return (dev->flags & FIDO_DEV_SUPPORTS_PIN);
+	return (dev->flags & (FIDO_DEV_PIN_SET|FIDO_DEV_PIN_UNSET));
+}
+
+bool
+fido_dev_has_pin(const fido_dev_t *dev)
+{
+	return (dev->flags & FIDO_DEV_PIN_SET);
 }
 
 bool
 fido_dev_supports_cred_prot(const fido_dev_t *dev)
 {
-	return (dev->flags & FIDO_DEV_SUPPORTS_CRED_PROT);
+	return (dev->flags & FIDO_DEV_CRED_PROT);
 }
 
 void

@@ -159,6 +159,7 @@ _fido_dev_get_cbor_info
 _fido_dev_get_retry_count
 _fido_dev_get_touch_begin
 _fido_dev_get_touch_status
+_fido_dev_has_pin
 _fido_dev_info_free
 _fido_dev_info_manifest
 _fido_dev_info_manufacturer_string

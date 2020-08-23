@@ -2,7 +2,7 @@
 .\" Use of this source code is governed by a BSD-style
 .\" license that can be found in the LICENSE file.
 .\"
-.Dd $Mdocdate: August 11 2020 $
+.Dd $Mdocdate: August 23 2020 $
 .Dt FIDO_DEV_GET_TOUCH_BEGIN 3
 .Os
 .Sh NAME
@@ -14,7 +14,7 @@
 .Ft int
 .Fn fido_dev_get_touch_begin "fido_dev_t *dev"
 .Ft int
-.Fn fido_dev_get_touch_status "fido_dev_t *dev" "int *touched" "int *pin_set" "int ms"
+.Fn fido_dev_get_touch_status "fido_dev_t *dev" "int *touched" "int ms"
 .Sh DESCRIPTION
 The functions described in this page allow an application to
 asynchronously wait for touch on a FIDO authenticator.

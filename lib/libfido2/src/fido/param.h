@@ -53,16 +53,10 @@
 #define CTAP_INIT_HEADER_LEN		7
 #define CTAP_CONT_HEADER_LEN		5
 
-/*
- * Maximal length of a CTAP HID report in bytes, excluding report ID (if
- * required on the given platform).
- */
+/* Maximum length of a CTAP HID report in bytes. */
 #define CTAP_MAX_REPORT_LEN		64
 
-/*
- * Minimal HID report length needed to transmit an INIT header + one byte of
- * payload data.
- */
+/* Minimum length of a CTAP HID report in bytes. */
 #define CTAP_MIN_REPORT_LEN		(CTAP_INIT_HEADER_LEN + 1)
 
 /* Randomness device on UNIX-like platforms. */
