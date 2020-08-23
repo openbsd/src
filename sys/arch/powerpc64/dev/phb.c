@@ -1,4 +1,4 @@
-/*	$OpenBSD: phb.c,v 1.12 2020/07/14 20:40:48 kettenis Exp $	*/
+/*	$OpenBSD: phb.c,v 1.13 2020/08/23 10:11:17 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -111,7 +111,8 @@ phb_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "ibm,ioda3-phb");
+	return (OF_is_compatible(faa->fa_node, "ibm,ioda2-phb") ||
+	    OF_is_compatible(faa->fa_node, "ibm,ioda3-phb"));
 }
 
 void
@@ -251,7 +252,7 @@ phb_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Enable all the 64-bit mmio windows we found.
 	 */
-	m64ranges[0] = 1; m64ranges[1] = 0;
+	m64ranges[0] = 0; m64ranges[1] = 16;
 	OF_getpropintarray(sc->sc_node, "ibm,opal-available-m64-ranges",
 	    m64ranges, sizeof(m64ranges));
 	window = m64ranges[0];
