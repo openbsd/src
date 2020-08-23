@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1930 2020/07/22 10:43:14 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1932 2020/08/23 19:24:22 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3107,6 +3107,7 @@
 #define	PCI_PRODUCT_IBM_4810_BSP	0x0295		/* 4810 BSP */
 #define	PCI_PRODUCT_IBM_4810_SCC	0x0297		/* 4810 SCC */
 #define	PCI_PRODUCT_IBM_CALGARY_IOMMU	0x02a1		/* Calgary IOMMU */
+#define	PCI_PRODUCT_IBM_POWER8_HB	0x03dc		/* POWER8 Host */
 #define	PCI_PRODUCT_IBM_POWER9_HB	0x04c1		/* POWER9 Host */
 
 /* IC Ensemble */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1930 2020/07/22 10:43:14 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1932 2020/08/23 19:24:22 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -9922,6 +9922,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_CALGARY_IOMMU,
 	    "Calgary IOMMU",
+	},
+	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_POWER8_HB,
+	    "POWER8 Host",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_POWER9_HB,
