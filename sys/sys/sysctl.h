@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.209 2020/08/22 11:47:22 kn Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.210 2020/08/23 09:35:32 kn Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -974,10 +974,6 @@ struct ctldebug {
 	char	*debugname;	/* name of debugging variable */
 	int	*debugvar;	/* pointer to debugging variable */
 };
-extern struct ctldebug debug0, debug1, debug2, debug3, debug4;
-extern struct ctldebug debug5, debug6, debug7, debug8, debug9;
-extern struct ctldebug debug10, debug11, debug12, debug13, debug14;
-extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 #endif	/* DEBUG_SYSCTL */
 
 /*

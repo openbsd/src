@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.302 2020/08/22 11:47:23 kn Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.303 2020/08/23 09:35:32 kn Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -866,7 +866,7 @@ vdrop(struct vnode *vp)
  */
 #ifdef DEBUG_SYSCTL
 int busyprt = 0;	/* print out busy vnodes */
-struct ctldebug debug1 = { "busyprt", &busyprt };
+struct ctldebug debug_vfs_busyprt = { "vfs_busyprt", &busyprt };
 #endif
 
 int

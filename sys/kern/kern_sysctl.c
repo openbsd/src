@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.377 2020/08/22 11:47:23 kn Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.378 2020/08/23 09:35:32 kn Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -813,13 +813,14 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 /*
  * Debugging related system variables.
  */
-extern struct ctldebug debug0, debug1;
-struct ctldebug debug2, debug3, debug4;
+extern struct ctldebug debug_vfs_busyprt;
+struct ctldebug debug1, debug2, debug3, debug4;
 struct ctldebug debug5, debug6, debug7, debug8, debug9;
 struct ctldebug debug10, debug11, debug12, debug13, debug14;
 struct ctldebug debug15, debug16, debug17, debug18, debug19;
 static struct ctldebug *debugvars[CTL_DEBUG_MAXID] = {
-	&debug0, &debug1, &debug2, &debug3, &debug4,
+	&debug_vfs_busyprt,
+	&debug1, &debug2, &debug3, &debug4,
 	&debug5, &debug6, &debug7, &debug8, &debug9,
 	&debug10, &debug11, &debug12, &debug13, &debug14,
 	&debug15, &debug16, &debug17, &debug18, &debug19,
