@@ -1,4 +1,4 @@
-/*	$OpenBSD: ums.c,v 1.44 2020/06/17 23:43:08 bru Exp $ */
+/*	$OpenBSD: ums.c,v 1.45 2020/08/23 11:08:02 mglocker Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -128,6 +128,8 @@ ums_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_hdev.sc_udev = uaa->device;
 	sc->sc_hdev.sc_report_id = uha->reportid;
+
+	usbd_set_idle(uha->parent->sc_udev, uha->parent->sc_ifaceno, 0, 0);
 
 	quirks = usbd_get_quirks(sc->sc_hdev.sc_udev)->uq_flags;
 	uhidev_get_report_desc(uha->parent, &desc, &size);

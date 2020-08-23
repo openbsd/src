@@ -1,4 +1,4 @@
-/*	$OpenBSD: utpms.c,v 1.7 2016/06/05 20:02:36 bru Exp $	*/
+/*	$OpenBSD: utpms.c,v 1.8 2020/08/23 11:08:02 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -300,6 +300,8 @@ utpms_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_datalen = UTPMS_DATA_LEN;
 	sc->sc_hdev.sc_udev = uha->uaa->device;
+
+	usbd_set_idle(uha->parent->sc_udev, uha->parent->sc_ifaceno, 0, 0);
 
 	/* Fill in device-specific parameters. */
 	if ((udd = usbd_get_device_descriptor(uha->parent->sc_udev)) != NULL) {

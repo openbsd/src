@@ -1,4 +1,4 @@
-/*	$OpenBSD: uwacom.c,v 1.1 2016/09/12 08:12:06 mpi Exp $	*/
+/*	$OpenBSD: uwacom.c,v 1.2 2020/08/23 11:08:02 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2016 Frank Groeneveld <frank@frankgroeneveld.nl>
@@ -26,6 +26,7 @@
 #include <dev/usb/usbhid.h>
 
 #include <dev/usb/usbdi.h>
+#include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/uhidev.h>
 
@@ -101,6 +102,8 @@ uwacom_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_hdev.sc_udev = uaa->device;
 	sc->sc_hdev.sc_report_id = uha->reportid;
+
+	usbd_set_idle(uha->parent->sc_udev, uha->parent->sc_ifaceno, 0, 0);
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
 	repid = uha->reportid;

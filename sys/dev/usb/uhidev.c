@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.80 2020/07/31 10:49:33 mglocker Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.81 2020/08/23 11:08:02 mglocker Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -150,8 +150,6 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iface = uaa->iface;
 	sc->sc_ifaceno = uaa->ifaceno;
 	id = usbd_get_interface_descriptor(sc->sc_iface);
-
-	usbd_set_idle(sc->sc_udev, sc->sc_ifaceno, 0, 0);
 
 	sc->sc_iep_addr = sc->sc_oep_addr = -1;
 	for (i = 0; i < id->bNumEndpoints; i++) {

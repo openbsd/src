@@ -1,4 +1,4 @@
-/*	$OpenBSD: umstc.c,v 1.1 2020/05/31 18:15:37 jcs Exp $ */
+/*	$OpenBSD: umstc.c,v 1.2 2020/08/23 11:08:02 mglocker Exp $ */
 
 /*
  * Copyright (c) 2020 joshua stein <jcs@jcs.org>
@@ -30,6 +30,7 @@
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
 #include <dev/usb/usbdi.h>
+#include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/uhidev.h>
 
@@ -98,6 +99,8 @@ umstc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_hdev.sc_udev = uaa->device;
 	sc->sc_hdev.sc_report_id = uha->reportid;
+
+	usbd_set_idle(uha->parent->sc_udev, uha->parent->sc_ifaceno, 0, 0);
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
 	repid = uha->reportid;

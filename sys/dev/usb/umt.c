@@ -1,4 +1,4 @@
-/* $OpenBSD: umt.c,v 1.1 2018/08/25 20:31:31 jcs Exp $ */
+/* $OpenBSD: umt.c,v 1.2 2020/08/23 11:08:02 mglocker Exp $ */
 /*
  * USB multitouch touchpad driver for devices conforming to
  * Windows Precision Touchpad standard
@@ -29,6 +29,7 @@
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
 #include <dev/usb/usbdi.h>
+#include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/uhidev.h>
 
@@ -148,6 +149,8 @@ umt_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_hdev.sc_intr = umt_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
+
+	usbd_set_idle(uha->parent->sc_udev, uha->parent->sc_ifaceno, 0, 0);
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
 	umt_find_winptp_reports(uha->parent, desc, size, sc);
