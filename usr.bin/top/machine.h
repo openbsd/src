@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.h,v 1.29 2020/06/25 20:38:41 kn Exp $	 */
+/* $OpenBSD: machine.h,v 1.30 2020/08/23 21:11:55 kn Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -77,6 +77,8 @@ struct process_select {
 	uid_t           uid;	/* only this uid (unless uid == -1) */
 	uid_t           huid;	/* hide this uid (unless huid == -1) */
 	pid_t           pid;	/* only this pid (unless pid == -1) */
+	int             rtableid;	/* only this rtable (unless rtableid == -1) */
+	int             hrtableid;	/* hide this rtable (unless hrtableid == -1) */
 	char           *command;/* only this command (unless == NULL) */
 };
 

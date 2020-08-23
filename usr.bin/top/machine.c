@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.107 2020/07/06 16:27:59 kn Exp $	 */
+/* $OpenBSD: machine.c,v 1.108 2020/08/23 21:11:55 kn Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -414,7 +414,7 @@ get_process_info(struct system_info *si, struct process_select *sel,
     int (*compare) (const void *, const void *))
 {
 	int show_idle, show_system, show_threads, show_uid, show_pid, show_cmd;
-	int hide_uid;
+	int show_rtable, hide_rtable, hide_uid;
 	int total_procs, active_procs;
 	struct kinfo_proc **prefp, *pp;
 	int what = KERN_PROC_ALL;
@@ -446,6 +446,8 @@ get_process_info(struct system_info *si, struct process_select *sel,
 	show_uid = sel->uid != (uid_t)-1;
 	hide_uid = sel->huid != (uid_t)-1;
 	show_pid = sel->pid != (pid_t)-1;
+	show_rtable = sel->rtableid != -1;
+	hide_rtable = sel->hrtableid != -1;
 	show_cmd = sel->command != NULL;
 
 	/* count up process states and get pointers to interesting procs */
@@ -474,6 +476,8 @@ get_process_info(struct system_info *si, struct process_select *sel,
 			    (!hide_uid || pp->p_ruid != sel->huid) &&
 			    (!show_uid || pp->p_ruid == sel->uid) &&
 			    (!show_pid || pp->p_pid == sel->pid) &&
+			    (!hide_rtable || pp->p_rtableid != sel->hrtableid) &&
+			    (!show_rtable || pp->p_rtableid == sel->rtableid) &&
 			    (!show_cmd || cmd_matches(pp, sel->command))) {
 				*prefp++ = pp;
 				active_procs++;

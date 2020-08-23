@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.63 2020/07/26 21:59:16 kn Exp $	 */
+/* $OpenBSD: display.c,v 1.64 2020/08/23 21:11:55 kn Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -824,6 +824,8 @@ show_help(void)
 	    "r count pid  - renice process `pid' to nice value `count'\n"
 	    "S            - toggle the display of system processes\n"
 	    "s time       - change delay between displays to `time' seconds\n"
+	    "T [-]rtable  - show processes associated with routing table `rtable'\n"
+	    "               (T+ shows all, T -rtable hides rtable)\n"
 	    "u [-]user    - show processes for `user' (u+ shows all, u -user hides user)\n"
 	    "\n");
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.104 2020/07/26 21:59:16 kn Exp $	*/
+/*	$OpenBSD: top.c,v 1.105 2020/08/23 21:11:55 kn Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -29,6 +29,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <curses.h>
 #include <err.h>
 #include <errno.h>
@@ -132,6 +133,7 @@ struct statics  statics;
 #define CMD_pagedown	26
 #define CMD_pageup	27
 #define CMD_grep2	28
+#define CMD_rtable	29
 
 static void
 usage(void)
@@ -140,7 +142,7 @@ usage(void)
 
 	fprintf(stderr,
 	    "usage: %s [-1bCHIinqSu] [-d count] [-g string] [-o [-]field] "
-	    "[-p pid] [-s time]\n\t[-U [-]user] [number]\n",
+	    "[-p pid] [-s time]\n\t[-T [-]rtable] [-U [-]user] [number]\n",
 	    __progname);
 }
 
@@ -207,13 +209,39 @@ filterpid(char buf[], int hl)
 	return 0;
 }
 
+static int
+filterrtable(char buf[])
+{
+	const char *errstr;
+	char *bufp = buf;
+	uint32_t *rtableidp;
+	uint32_t rtableid;
+
+	if (bufp[0] == '-') {
+		bufp++;
+		rtableidp = &ps.hrtableid;
+		ps.rtableid = -1;
+	} else {
+		rtableidp = &ps.rtableid;
+		ps.hrtableid = -1;
+	}
+
+	rtableid = strtonum(bufp, 0, RT_TABLEID_MAX, &errstr);
+	if (errstr == NULL) {
+		*rtableidp = rtableid;
+		return 0;
+	}
+
+	return -1;
+}
+
 static void
 parseargs(int ac, char **av)
 {
 	char *endp;
 	int i;
 
-	while ((i = getopt(ac, av, "1SHICbinqus:d:p:U:o:g:")) != -1) {
+	while ((i = getopt(ac, av, "1SHICbinqus:d:p:U:o:g:T:")) != -1) {
 		switch (i) {
 		case '1':
 			combine_cpus = 1;
@@ -305,6 +333,12 @@ parseargs(int ac, char **av)
 				err(1, NULL);
 			break;
 
+		case 'T':
+			if (filterrtable(optarg) == -1)
+				new_message(MT_delayed,
+				    "%s: invalid routing table", optarg);
+			break;
+
 		default:
 			usage();
 			exit(1);
@@ -357,6 +391,8 @@ main(int argc, char *argv[])
 	ps.uid = (uid_t)-1;
 	ps.huid = (uid_t)-1;
 	ps.pid = (pid_t)-1;
+	ps.rtableid = -1;
+	ps.hrtableid = -1;
 	ps.command = NULL;
 
 	/* get preset options from the environment */
@@ -632,7 +668,7 @@ rundisplay(void)
 	char ch, *iptr;
 	int change, i;
 	struct pollfd pfd[1];
-	static char command_chars[] = "\f qh?en#sdkriIuSopCHg+P109)(/";
+	static char command_chars[] = "\f qh?en#sdkriIuSopCHg+P109)(/T";
 
 	/*
 	 * assume valid command unless told
@@ -973,6 +1009,8 @@ rundisplay(void)
 			ps.uid = (uid_t)-1;	/* uid */
 			ps.huid = (uid_t)-1;
 			ps.pid = (pid_t)-1;	/* pid */
+			ps.rtableid = -1;	/* rtableid */
+			ps.hrtableid = -1;
 			ps.system = old_system;
 			ps.command = NULL;	/* grep */
 			hlpid = (pid_t)-1;
@@ -996,6 +1034,24 @@ rundisplay(void)
 			skip -= max_topn / 2;
 			if (skip < 0)
 				skip = 0;
+			break;
+		case CMD_rtable:
+			new_message(MT_standout,
+			    "Routing table: ");
+			if (readline(tempbuf, sizeof(tempbuf)) > 0) {
+				if (tempbuf[0] == '+' && tempbuf[1] == '\0') {
+					ps.rtableid = -1;
+					ps.hrtableid = -1;
+				} else if (filterrtable(tempbuf) == -1) {
+					new_message(MT_standout,
+					    " %s: invalid routing table",
+					    tempbuf[0] == '-' ? tempbuf + 1 :
+					    tempbuf);
+					no_command = true;
+				}
+				putr();
+			} else
+				clear_message();
 			break;
 		default:
 			new_message(MT_standout, " BAD CASE IN SWITCH!");
