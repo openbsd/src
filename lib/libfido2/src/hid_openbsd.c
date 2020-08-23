@@ -202,7 +202,7 @@ waitfd(int fd, int ms)
 			return 0;
 		else if (r == 0)
 			break;
-		else if (r != EINTR) {
+		else if (errno != EINTR) {
 			fido_log_debug("%s: poll: %s",
 			    __func__, strerror(errno));
 			return -1;
