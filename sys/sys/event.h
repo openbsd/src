@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.44 2020/06/22 13:14:32 mpi Exp $	*/
+/*	$OpenBSD: event.h,v 1.45 2020/08/23 07:05:29 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -41,7 +41,7 @@
 #define EVFILT_DEVICE		(-8)	/* devices */
 #define EVFILT_EXCEPT		(-9)	/* exceptional conditions */
 
-#define EVFILT_SYSCOUNT		8
+#define EVFILT_SYSCOUNT		9
 
 #define EV_SET(kevp, a, b, c, d, e, f) do {	\
 	struct kevent *__kevp = (kevp);		\
