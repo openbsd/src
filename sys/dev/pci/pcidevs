@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1931 2020/07/30 08:28:44 stsp Exp $
+$OpenBSD: pcidevs,v 1.1932 2020/08/23 19:24:22 kettenis Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -3102,6 +3102,7 @@ product IBM SERVERAID2		0x01bd	ServeRAID
 product IBM 4810_BSP		0x0295	4810 BSP
 product IBM 4810_SCC		0x0297	4810 SCC
 product IBM CALGARY_IOMMU	0x02a1	Calgary IOMMU
+product IBM POWER8_HB		0x03dc	POWER8 Host
 product IBM POWER9_HB		0x04c1	POWER9 Host
 
 /* IC Ensemble */
