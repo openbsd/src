@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.637 2020/07/22 08:33:43 fcambus Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.638 2020/08/23 01:12:04 gnezdo Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3543,6 +3543,10 @@ idt_vec_free(int vec)
 	unsetgate(&idt[vec]);
 }
 
+const struct sysctl_bounded_args cpuctl_vars[] = {
+	{ CPU_LIDACTION, &lid_action, 0, 2 },
+};
+
 /*
  * machine dependent system variables.
  */
@@ -3551,7 +3555,6 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
 {
 	dev_t dev;
-	int val, error;
 
 	switch (name[0]) {
 	case CPU_CONSDEV:
@@ -3610,18 +3613,11 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_rdint(oldp, oldlenp, newp, i386_has_sse2));
 	case CPU_XCRYPT:
 		return (sysctl_rdint(oldp, oldlenp, newp, i386_has_xcrypt));
-	case CPU_LIDACTION:
-		val = lid_action;
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &val);
-		if (!error) {
-			if (val < 0 || val > 2)
-				error = EINVAL;
-			else
-				lid_action = val;
-		}
-		return (error);
 #if NPCKBC > 0 && NUKBD > 0
 	case CPU_FORCEUKBD:
+		{
+		int error;
+
 		if (forceukbd)
 			return (sysctl_rdint(oldp, oldlenp, newp, forceukbd));
 
@@ -3629,9 +3625,11 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		if (forceukbd)
 			pckbc_release_console();
 		return (error);
+		}
 #endif
 	default:
-		return (EOPNOTSUPP);
+		return (sysctl_bounded_arr(cpuctl_vars, nitems(cpuctl_vars),
+		    name, namelen, oldp, oldlenp, newp, newlen));
 	}
 	/* NOTREACHED */
 }
