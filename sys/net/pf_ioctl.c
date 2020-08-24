@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.355 2020/08/24 15:30:58 kn Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.356 2020/08/24 15:41:15 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -97,7 +97,7 @@ int			 pf_rollback_rules(u_int32_t, char *);
 void			 pf_remove_queues(void);
 int			 pf_commit_queues(void);
 void			 pf_free_queues(struct pf_queuehead *);
-int			 pf_setup_pfsync_matching(struct pf_ruleset *);
+void			 pf_calc_chksum(struct pf_ruleset *);
 void			 pf_hash_rule(MD5_CTX *, struct pf_rule *);
 void			 pf_hash_rule_addr(MD5_CTX *, struct pf_rule_addr *);
 int			 pf_commit_rules(u_int32_t, char *);
@@ -337,6 +337,9 @@ pf_purge_rule(struct pf_rule *rule)
 	ruleset->rules.active.ticket++;
 	pf_calc_skip_steps(ruleset->rules.active.ptr);
 	pf_remove_if_empty_ruleset(ruleset);
+
+	if (ruleset == &pf_main_ruleset)
+		pf_calc_chksum(ruleset);
 }
 
 u_int16_t
@@ -807,7 +810,6 @@ pf_commit_rules(u_int32_t ticket, char *anchor)
 	struct pf_ruleset	*rs;
 	struct pf_rule		*rule;
 	struct pf_rulequeue	*old_rules;
-	int			 error;
 	u_int32_t		 old_rcount;
 
 	/* Make sure any expired rules get removed from active rules first. */
@@ -818,12 +820,8 @@ pf_commit_rules(u_int32_t ticket, char *anchor)
 	    ticket != rs->rules.inactive.ticket)
 		return (EBUSY);
 
-	/* Calculate checksum for the main ruleset */
-	if (rs == &pf_main_ruleset) {
-		error = pf_setup_pfsync_matching(rs);
-		if (error != 0)
-			return (error);
-	}
+	if (rs == &pf_main_ruleset)
+		pf_calc_chksum(rs);
 
 	/* Swap rules, keep the old. */
 	old_rules = rs->rules.active.ptr;
@@ -851,8 +849,8 @@ pf_commit_rules(u_int32_t ticket, char *anchor)
 	return (pf_commit_queues());
 }
 
-int
-pf_setup_pfsync_matching(struct pf_ruleset *rs)
+void
+pf_calc_chksum(struct pf_ruleset *rs)
 {
 	MD5_CTX			 ctx;
 	struct pf_rule		*rule;
@@ -868,7 +866,6 @@ pf_setup_pfsync_matching(struct pf_ruleset *rs)
 
 	MD5Final(digest, &ctx);
 	memcpy(pf_status.pf_chksum, digest, sizeof(pf_status.pf_chksum));
-	return (0);
 }
 
 int
