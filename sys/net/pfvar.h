@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.495 2020/07/28 16:47:42 yasuoka Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.496 2020/08/24 15:30:58 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -924,7 +924,6 @@ struct pf_ruleset {
 		struct pf_rulequeue	 queues[2];
 		struct {
 			struct pf_rulequeue	*ptr;
-			struct pf_rule		**ptr_array;
 			u_int32_t		 rcount;
 			u_int32_t		 ticket;
 			int			 open;

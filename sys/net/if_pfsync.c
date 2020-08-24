@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.277 2020/08/21 22:59:27 kn Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.278 2020/08/24 15:30:58 kn Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -500,6 +500,7 @@ pfsync_state_import(struct pfsync_state *sp, int flags)
 	struct pfi_kif	*kif;
 	int pool_flags;
 	int error = ENOMEM;
+	int n = 0;
 
 	if (sp->creatorid == 0) {
 		DPFPRINTF(LOG_NOTICE, "pfsync_state_import: "
@@ -524,9 +525,11 @@ pfsync_state_import(struct pfsync_state *sp, int flags)
 	 */
 	if (sp->rule != htonl(-1) && sp->anchor == htonl(-1) &&
 	    (flags & (PFSYNC_SI_IOCTL | PFSYNC_SI_CKSUM)) && ntohl(sp->rule) <
-	    pf_main_ruleset.rules.active.rcount)
-		r = pf_main_ruleset.rules.active.ptr_array[ntohl(sp->rule)];
-	else
+	    pf_main_ruleset.rules.active.rcount) {
+		TAILQ_FOREACH(r, pf_main_ruleset.rules.active.ptr, entries)
+			if (ntohl(sp->rule) == n++)
+				break;
+	} else
 		r = &pf_default_rule;
 
 	if ((r->max_states && r->states_cur >= r->max_states))

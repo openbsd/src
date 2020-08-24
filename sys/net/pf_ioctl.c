@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.354 2020/07/21 14:13:17 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.355 2020/08/24 15:30:58 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -805,7 +805,7 @@ int
 pf_commit_rules(u_int32_t ticket, char *anchor)
 {
 	struct pf_ruleset	*rs;
-	struct pf_rule		*rule, **old_array;
+	struct pf_rule		*rule;
 	struct pf_rulequeue	*old_rules;
 	int			 error;
 	u_int32_t		 old_rcount;
@@ -828,13 +828,10 @@ pf_commit_rules(u_int32_t ticket, char *anchor)
 	/* Swap rules, keep the old. */
 	old_rules = rs->rules.active.ptr;
 	old_rcount = rs->rules.active.rcount;
-	old_array = rs->rules.active.ptr_array;
 
 	rs->rules.active.ptr = rs->rules.inactive.ptr;
-	rs->rules.active.ptr_array = rs->rules.inactive.ptr_array;
 	rs->rules.active.rcount = rs->rules.inactive.rcount;
 	rs->rules.inactive.ptr = old_rules;
-	rs->rules.inactive.ptr_array = old_array;
 	rs->rules.inactive.rcount = old_rcount;
 
 	rs->rules.active.ticket = rs->rules.inactive.ticket;
@@ -844,9 +841,6 @@ pf_commit_rules(u_int32_t ticket, char *anchor)
 	/* Purge the old rule list. */
 	while ((rule = TAILQ_FIRST(old_rules)) != NULL)
 		pf_rm_rule(old_rules, rule);
-	if (rs->rules.inactive.ptr_array)
-		free(rs->rules.inactive.ptr_array, M_TEMP, 0);
-	rs->rules.inactive.ptr_array = NULL;
 	rs->rules.inactive.rcount = 0;
 	rs->rules.inactive.open = 0;
 	pf_remove_if_empty_ruleset(rs);
@@ -865,21 +859,10 @@ pf_setup_pfsync_matching(struct pf_ruleset *rs)
 	u_int8_t		 digest[PF_MD5_DIGEST_LENGTH];
 
 	MD5Init(&ctx);
-	if (rs->rules.inactive.ptr_array)
-		free(rs->rules.inactive.ptr_array, M_TEMP, 0);
-	rs->rules.inactive.ptr_array = NULL;
 
 	if (rs->rules.inactive.rcount) {
-		rs->rules.inactive.ptr_array =
-		    mallocarray(rs->rules.inactive.rcount, sizeof(caddr_t),
-		    M_TEMP, M_NOWAIT);
-
-		if (!rs->rules.inactive.ptr_array)
-			return (ENOMEM);
-
 		TAILQ_FOREACH(rule, rs->rules.inactive.ptr, entries) {
 			pf_hash_rule(&ctx, rule);
-			(rs->rules.inactive.ptr_array)[rule->nr] = rule;
 		}
 	}
 
