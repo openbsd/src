@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-term.c,v 1.82 2020/06/05 09:32:15 nicm Exp $ */
+/* $OpenBSD: tty-term.c,v 1.83 2020/08/24 05:22:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -302,6 +302,8 @@ tty_term_strip(const char *s)
 				ptr++;
 			if (*ptr == '>')
 				ptr++;
+			if (*ptr == '\0')
+				break;
 		}
 
 		buf[len++] = *ptr;
