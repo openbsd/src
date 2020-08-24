@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.111 2020/05/16 16:58:11 jmc Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.112 2020/08/24 15:49:10 tracey Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 16 2020 $
+.Dd $Mdocdate: August 24 2020 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -284,12 +284,13 @@ will neither display nor generate a directory index.
 Enable FastCGI instead of serving files.
 Valid options are:
 .Bl -tag -width Ds
-.It Ic socket Ar socket
+.It Ic socket Oo Cm tcp Oc Ar socket Oo Ar port Oc
 .Nm httpd
 passes HTTP requests to a FastCGI handler listening on the socket
 .Ar socket .
-The socket can either be a UNIX domain socket or a TCP socket listening
-on localhost (127.0.0.1).
+The
+.Ar socket
+can either be a UNIX domain socket or a TCP socket.
 If the FastCGI handler is listening on a UNIX domain socket,
 .Ar socket
 is a local path name within the
@@ -301,7 +302,10 @@ and defaults to
 Alternatively if
 the FastCGI handler is listening on a TCP socket,
 .Ar socket
-starts with a colon followed by the TCP port number.
+is a hostname or an IP address.
+If the
+.Ar port
+is not specified, it defaults to port 9000.
 .It Ic strip Ar number
 Strip
 .Ar number

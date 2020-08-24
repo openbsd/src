@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.114 2020/02/09 09:44:04 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.115 2020/08/24 15:49:11 tracey Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -27,6 +27,7 @@
 %{
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <sys/stat.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
@@ -116,6 +117,7 @@ struct server	*server_inherit(struct server *, struct server_config *,
 int		 listen_on(const char *, int, struct portrange *);
 int		 getservice(char *);
 int		 is_if_in_group(const char *, const char *);
+int		 get_fastcgi_dest(struct server_config *, const char *, char *);
 
 typedef struct {
 	union {
@@ -144,6 +146,7 @@ typedef struct {
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.port>	port
+%type	<v.string>	fcgiport
 %type	<v.number>	opttls optmatch
 %type	<v.tv>		timeout
 %type	<v.string>	numberstring optstring
@@ -648,15 +651,39 @@ fcgiflags_l	: fcgiflags optcommanl fcgiflags_l
 		| fcgiflags optnl
 		;
 
-fcgiflags	: SOCKET STRING		{
-			if (strlcpy(srv_conf->socket, $2,
-			    sizeof(srv_conf->socket)) >=
-			    sizeof(srv_conf->socket)) {
-				yyerror("fastcgi socket too long");
+fcgiflags	: SOCKET STRING {
+			struct sockaddr_un *sun;
+			sun = (struct sockaddr_un *)&srv_conf->fastcgi_ss;
+			memset(sun, 0, sizeof(*sun));
+			sun->sun_family = AF_UNIX;
+			if (strlcpy(sun->sun_path, $2, sizeof(sun->sun_path))
+			    >= sizeof(sun->sun_path)) {
+				yyerror("socket path too long");
 				free($2);
 				YYERROR;
 			}
+			srv_conf->fastcgi_ss.ss_len =
+			    sizeof(struct sockaddr_un);
 			free($2);
+			srv_conf->flags |= SRVFLAG_SOCKET;
+		}
+		| SOCKET TCP STRING {
+			if (get_fastcgi_dest(srv_conf, $3, FCGI_DEFAULT_PORT)
+			    == -1) {
+				free($3);
+				YYERROR;
+			}
+			free($3);
+			srv_conf->flags |= SRVFLAG_SOCKET;
+		}
+		| SOCKET TCP STRING fcgiport {
+			if (get_fastcgi_dest(srv_conf, $3, $4) == -1) {
+				free($3);
+				free($4);
+				YYERROR;
+			}
+			free($3);
+			free($4);
 			srv_conf->flags |= SRVFLAG_SOCKET;
 		}
 		| PARAM STRING STRING	{
@@ -1083,6 +1110,19 @@ optmatch	: /* empty */		{ $$ = 0; }
 		;
 
 optstring	: /* empty */		{ $$ = NULL; }
+		| STRING		{ $$ = $1; }
+		;
+
+fcgiport	: NUMBER		{
+			if ($1 <= 0 || $1 > (int)USHRT_MAX) {
+				yyerror("invalid port: %lld", $1);
+				YYERROR;
+			}
+			if (asprintf(&$$, "%lld", $1) == -1) {
+				yyerror("out of memory");
+				YYERROR;
+			}
+		}
 		| STRING		{ $$ = $1; }
 		;
 
@@ -2378,4 +2418,27 @@ is_if_in_group(const char *ifname, const char *groupname)
 end:
 	close(s);
 	return (ret);
+}
+
+int
+get_fastcgi_dest(struct server_config *xsrv_conf, const char *node, char *port)
+{
+	struct addrinfo		 hints, *res;
+	int			 s;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+
+	if ((s = getaddrinfo(node, port, &hints, &res)) != 0) {
+		yyerror("getaddrinfo: %s\n", gai_strerror(s));
+		return -1;
+	}
+
+	memset(&(xsrv_conf)->fastcgi_ss, 0, sizeof(xsrv_conf->fastcgi_ss));
+	memcpy(&(xsrv_conf)->fastcgi_ss, res->ai_addr, res->ai_addrlen);
+
+	freeaddrinfo(res);
+
+	return (0);
 }
