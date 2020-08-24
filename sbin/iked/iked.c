@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.46 2020/08/23 19:16:07 tobhe Exp $	*/
+/*	$OpenBSD: iked.c,v 1.47 2020/08/24 21:00:21 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -263,10 +263,7 @@ parent_configure(struct iked *env)
 	if (pledge("stdio rpath proc dns inet route sendfd", NULL) == -1)
 		fatal("pledge");
 
-	config_setmobike(env);
-	config_setenforcesingleikesa(env);
-	config_setfragmentation(env);
-	config_setnattport(env);
+	config_setstatic(env);
 	config_setcoupled(env, env->sc_decoupled ? 0 : 1);
 	config_setocsp(env);
 	/* Must be last */
@@ -298,10 +295,7 @@ parent_reload(struct iked *env, int reset, const char *filename)
 		/* Re-compile policies and skip steps */
 		config_setcompile(env, PROC_IKEV2);
 
-		config_setmobike(env);
-		config_setenforcesingleikesa(env);
-		config_setfragmentation(env);
-		config_setnattport(env);
+		config_setstatic(env);
 		config_setcoupled(env, env->sc_decoupled ? 0 : 1);
 		config_setocsp(env);
  		/* Must be last */

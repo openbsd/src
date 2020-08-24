@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.247 2020/08/23 19:16:08 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.248 2020/08/24 21:00:21 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -238,14 +238,6 @@ ikev2_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 			    IKED_INITIATOR_INITIAL);
 		}
 		return (0);
-	case IMSG_CTL_MOBIKE:
-		return (config_getmobike(env, imsg));
-	case IMSG_CTL_ENFORCESINGLEIKESA:
-		return (config_getenforcesingleikesa(env, imsg));
-	case IMSG_CTL_FRAGMENTATION:
-		return (config_getfragmentation(env, imsg));
-	case IMSG_CTL_NATTPORT:
-		return (config_getnattport(env, imsg));
 	case IMSG_UDP_SOCKET:
 		return (config_getsocket(env, imsg, ikev2_msg_cb));
 	case IMSG_PFKEY_SOCKET:
@@ -258,6 +250,8 @@ ikev2_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		return (config_getuser(env, imsg));
 	case IMSG_COMPILE:
 		return (config_getcompile(env));
+	case IMSG_CTL_STATIC:
+		return (config_getstatic(env, imsg));
 	default:
 		break;
 	}

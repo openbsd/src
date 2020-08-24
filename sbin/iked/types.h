@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.38 2020/08/23 19:16:08 tobhe Exp $	*/
+/*	$OpenBSD: types.h,v 1.39 2020/08/24 21:00:21 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -99,12 +99,9 @@ enum imsg_type {
 	IMSG_CTL_DECOUPLE,
 	IMSG_CTL_ACTIVE,
 	IMSG_CTL_PASSIVE,
-	IMSG_CTL_MOBIKE,
-	IMSG_CTL_ENFORCESINGLEIKESA,
-	IMSG_CTL_FRAGMENTATION,
-	IMSG_CTL_NATTPORT,
 	IMSG_CTL_RESET_ID,
 	IMSG_CTL_SHOW_SA,
+	IMSG_CTL_STATIC,
 	IMSG_COMPILE,
 	IMSG_UDP_SOCKET,
 	IMSG_PFKEY_SOCKET,

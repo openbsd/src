@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.160 2020/08/23 19:16:08 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.161 2020/08/24 21:00:21 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -679,6 +679,13 @@ enum natt_mode {
 	NATT_FORCE,	/* send/recv with only NAT-T port */
 };
 
+struct iked_static {
+	int			 st_enforcesingleikesa;
+	uint8_t			 st_frag;	/* fragmentation */
+	uint8_t			 st_mobike;	/* MOBIKE */
+	in_port_t		 st_nattport;
+};
+
 struct iked {
 	char				 sc_conffile[PATH_MAX];
 
@@ -686,10 +693,13 @@ struct iked {
 	enum natt_mode			 sc_nattmode;
 	uint8_t				 sc_passive;
 	uint8_t				 sc_decoupled;
-	in_port_t			 sc_nattport;
 
-	uint8_t				 sc_mobike;	/* MOBIKE */
-	uint8_t				 sc_frag;	/* fragmentation */
+	struct iked_static		 sc_static;
+
+#define sc_enforcesingleikesa	sc_static.st_enforcesingleikesa
+#define sc_frag			sc_static.st_frag
+#define sc_mobike		sc_static.st_mobike
+#define sc_nattport		sc_static.st_nattport
 
 	struct iked_policies		 sc_policies;
 	struct iked_policy		*sc_defaultcon;
@@ -724,7 +734,6 @@ struct iked {
 	struct iked_addrpool		 sc_addrpool;
 	struct iked_addrpool6		 sc_addrpool6;
 
-	int				 sc_enforcesingleikesa;
 };
 
 struct iked_socket {
@@ -793,14 +802,8 @@ int	 config_setocsp(struct iked *);
 int	 config_getocsp(struct iked *, struct imsg *);
 int	 config_setkeys(struct iked *);
 int	 config_getkey(struct iked *, struct imsg *);
-int	 config_setmobike(struct iked *);
-int	 config_getmobike(struct iked *, struct imsg *);
-int	 config_setenforcesingleikesa(struct iked *);
-int	 config_getenforcesingleikesa(struct iked *, struct imsg *);
-int	 config_setfragmentation(struct iked *);
-int	 config_getfragmentation(struct iked *, struct imsg *);
-int	 config_setnattport(struct iked *);
-int	 config_getnattport(struct iked *, struct imsg *);
+int	 config_setstatic(struct iked *);
+int	 config_getstatic(struct iked *, struct imsg *);
 
 /* policy.c */
 void	 policy_init(struct iked *);

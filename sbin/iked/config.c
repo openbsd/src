@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.62 2020/08/23 19:16:07 tobhe Exp $	*/
+/*	$OpenBSD: config.c,v 1.63 2020/08/24 21:00:21 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -856,72 +856,25 @@ config_getcompile(struct iked *env)
 }
 
 int
-config_setmobike(struct iked *env)
+config_setstatic(struct iked *env)
 {
-	unsigned int boolval;
-
-	boolval = env->sc_mobike;
-	proc_compose(&env->sc_ps, PROC_IKEV2, IMSG_CTL_MOBIKE,
-	    &boolval, sizeof(boolval));
+	proc_compose(&env->sc_ps, PROC_IKEV2, IMSG_CTL_STATIC,
+	    &env->sc_static, sizeof(env->sc_static));
 	return (0);
 }
 
 int
-config_getmobike(struct iked *env, struct imsg *imsg)
+config_getstatic(struct iked *env, struct imsg *imsg)
 {
-	unsigned int boolval;
+	IMSG_SIZE_CHECK(imsg, &env->sc_static);
+	memcpy(&env->sc_static, imsg->data, sizeof(env->sc_static));
 
-	IMSG_SIZE_CHECK(imsg, &boolval);
-	memcpy(&boolval, imsg->data, sizeof(boolval));
-	env->sc_mobike = boolval;
-	log_debug("%s: %smobike", __func__, env->sc_mobike ? "" : "no ");
-	return (0);
-}
-
-int
-config_setfragmentation(struct iked *env)
-{
-	unsigned int boolval;
-
-	boolval = env->sc_frag;
-	proc_compose(&env->sc_ps, PROC_IKEV2, IMSG_CTL_FRAGMENTATION,
-	    &boolval, sizeof(boolval));
-	return (0);
-}
-
-int
-config_getfragmentation(struct iked *env, struct imsg *imsg)
-{
-	unsigned int boolval;
-
-	IMSG_SIZE_CHECK(imsg, &boolval);
-	memcpy(&boolval, imsg->data, sizeof(boolval));
-	env->sc_frag = boolval;
-	log_debug("%s: %sfragmentation", __func__, env->sc_frag ? "" : "no ");
-	return (0);
-}
-
-int
-config_setenforcesingleikesa(struct iked *env)
-{
-	unsigned int boolval;
-
-	boolval = env->sc_enforcesingleikesa;
-	proc_compose(&env->sc_ps, PROC_IKEV2, IMSG_CTL_ENFORCESINGLEIKESA,
-	    &boolval, sizeof(boolval));
-	return (0);
-}
-
-int
-config_getenforcesingleikesa(struct iked *env, struct imsg *imsg)
-{
-	unsigned int boolval;
-
-	IMSG_SIZE_CHECK(imsg, &boolval);
-	memcpy(&boolval, imsg->data, sizeof(boolval));
-	env->sc_enforcesingleikesa = boolval;
 	log_debug("%s: %senforcesingleikesa", __func__,
 	    env->sc_enforcesingleikesa ? "" : "no ");
+	log_debug("%s: %sfragmentation", __func__, env->sc_frag ? "" : "no ");
+	log_debug("%s: %smobike", __func__, env->sc_mobike ? "" : "no ");
+	log_debug("%s: nattport %u", __func__, env->sc_nattport);
+
 	return (0);
 }
 
@@ -1049,29 +1002,6 @@ config_setkeys(struct iked *env)
 	EVP_PKEY_free(key);
 
 	return (ret);
-}
-
-int
-config_setnattport(struct iked *env)
-{
-	in_port_t nattport;
-
-	nattport = env->sc_nattport;
-	proc_compose(&env->sc_ps, PROC_IKEV2, IMSG_CTL_NATTPORT,
-	    &nattport, sizeof(nattport));
-	return (0);
-}
-
-int
-config_getnattport(struct iked *env, struct imsg *imsg)
-{
-	in_port_t nattport;
-
-	IMSG_SIZE_CHECK(imsg, &nattport);
-	memcpy(&nattport, imsg->data, sizeof(nattport));
-	env->sc_nattport = nattport;
-	log_debug("%s: nattport %u", __func__, env->sc_nattport);
-	return (0);
 }
 
 int
