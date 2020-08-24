@@ -1,4 +1,4 @@
-.\"	$OpenBSD: trunk.4,v 1.30 2018/08/12 23:50:31 ccardenas Exp $
+.\"	$OpenBSD: trunk.4,v 1.31 2020/08/24 07:34:00 kn Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 12 2018 $
+.Dd $Mdocdate: August 24 2020 $
 .Dt TRUNK 4
 .Os
 .Sh NAME
@@ -34,15 +34,6 @@ A
 interface can be created using the
 .Ic ifconfig trunk Ns Ar N Ic create
 command.
-It can use different link aggregation protocols specified
-using the
-.Ic trunkproto Ar proto
-option.
-Child interfaces can be added using the
-.Ic trunkport Ar child-iface
-option and removed using the
-.Ic -trunkport Ar child-iface
-option.
 .Pp
 The driver currently supports the trunk protocols
 .Ic broadcast ,
