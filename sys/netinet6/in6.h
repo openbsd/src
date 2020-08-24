@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.106 2020/06/24 22:03:44 cheloha Exp $	*/
+/*	$OpenBSD: in6.h,v 1.107 2020/08/24 16:40:07 gnezdo Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -651,63 +651,6 @@ ifatoia6(struct ifaddr *ifa)
 	{ "mrtmif", CTLTYPE_STRUCT }, \
 	{ "mrtmfc", CTLTYPE_STRUCT }, \
 	{ "soiikey", CTLTYPE_STRING }, /* binary string */ \
-}
-
-#define IPV6CTL_VARS { \
-	NULL, \
-	&ip6_forwarding, \
-	&ip6_sendredirects, \
-	&ip6_defhlim, \
-	NULL, \
-	NULL, \
-	NULL, \
-	NULL, \
-	NULL, \
-	&ip6_maxfragpackets, \
-	NULL, \
-	NULL, \
-	NULL, \
-	NULL, \
-	&ip6_log_interval, \
-	&ip6_hdrnestlimit, \
-	&ip6_dad_count, \
-	&ip6_auto_flowlabel, \
-	&ip6_defmcasthlim, \
-	NULL, \
-	NULL, \
-	&ip6_use_deprecated, \
-	NULL, \
-	NULL, \
-	NULL, \
-	NULL, \
-	NULL, \
-	NULL, \
-	NULL, \
-	NULL, \
-	NULL, \
-	NULL, \
-	NULL, \
-	NULL, \
-	NULL, \
-	NULL, \
-	NULL, \
-	NULL, \
-	NULL, \
-	NULL, \
-	NULL, \
-	&ip6_maxfrags, \
-	&ip6_mforwarding, \
-	&ip6_multipath, \
-	&ip6_mcast_pmtu, \
-	&ip6_neighborgcthresh, \
-	NULL, \
-	NULL, \
-	&ip6_maxdynroutes, \
-	NULL, \
-	NULL, \
-	NULL, \
-	NULL, \
-	NULL, \
 }
 
 __BEGIN_DECLS
