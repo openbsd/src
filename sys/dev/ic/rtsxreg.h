@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsxreg.h,v 1.4 2017/09/06 13:07:38 jcs Exp $	*/
+/*	$OpenBSD: rtsxreg.h,v 1.5 2020/08/24 15:06:10 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -387,8 +387,7 @@
 #define	RTSX_PPBUF_SIZE		256
 
 #define	RTSX_SUPPORT_VOLTAGE	(MMC_OCR_3_3V_3_4V|MMC_OCR_3_2V_3_3V|\
-				MMC_OCR_3_1V_3_2V|MMC_OCR_3_0V_3_1V|\
-				SD_OCR_SDHC_CAP)
+				MMC_OCR_3_1V_3_2V|MMC_OCR_3_0V_3_1V)
 
 #define	RTSX_CFG_PCI		0x1C
 #define	RTSX_CFG_ASIC		0x10

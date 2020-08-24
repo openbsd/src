@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmcreg.h,v 1.12 2020/08/14 14:49:04 kettenis Exp $	*/
+/*	$OpenBSD: sdmmcreg.h,v 1.13 2020/08/24 15:06:10 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -44,6 +44,7 @@
 #define SD_SEND_RELATIVE_ADDR		3	/* R6 */
 #define SD_SEND_SWITCH_FUNC		6	/* R1 */
 #define SD_SEND_IF_COND			8	/* R7 */
+#define SD_VOLTAGE_SWITCH		11	/* R1 */
 
 /* SD application commands */			/* response type */
 #define SD_APP_SET_BUS_WIDTH		6	/* R1 */
@@ -52,9 +53,11 @@
 
 /* OCR bits */
 #define MMC_OCR_MEM_READY		(1<<31)	/* memory power-up status bit */
-#define MMC_OCR_ACCESS_MODE_MASK	0x60000000 /* bits 30:29 */
-#define MMC_OCR_SECTOR_MODE		(1<<30)
-#define MMC_OCR_BYTE_MODE		(1<<29)
+#define MMC_OCR_HCS			(1<<30)	/* SD only */
+#define MMC_OCR_ACCESS_MODE_MASK	(3<<29)	/* MMC only */
+#define MMC_OCR_ACCESS_MODE_BYTE	(0<<29)	/* MMC only */
+#define MMC_OCR_ACCESS_MODE_SECTOR	(2<<29)	/* MMC only */
+#define MMC_OCR_S18A			(1<<24)
 #define MMC_OCR_3_5V_3_6V		(1<<23)
 #define MMC_OCR_3_4V_3_5V		(1<<22)
 #define MMC_OCR_3_3V_3_4V		(1<<21)
@@ -73,7 +76,6 @@
 #define MMC_OCR_2_0V_2_1V		(1<<8)
 #define MMC_OCR_1_65V_1_95V		(1<<7)
 
-#define SD_OCR_SDHC_CAP			(1<<30)
 #define SD_OCR_VOL_MASK			0xFF8000 /* bits 23:15 */
 
 /* R1 response type bits */

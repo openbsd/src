@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.57 2020/08/15 13:21:02 kettenis Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.58 2020/08/24 15:06:10 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -111,6 +111,10 @@ sdmmc_attach(struct device *parent, struct device *self, void *aux)
 		printf(": 1-bit");
 	if (ISSET(saa->caps, SMC_CAPS_SD_HIGHSPEED))
 		printf(", sd high-speed");
+	if (ISSET(saa->caps, SMC_CAPS_UHS_SDR50))
+		printf(", sdr50");
+	if (ISSET(saa->caps, SMC_CAPS_UHS_SDR104))
+		printf(", sdr104");
 	if (ISSET(saa->caps, SMC_CAPS_MMC_HIGHSPEED))
 		printf(", mmc high-speed");
 	if (ISSET(saa->caps, SMC_CAPS_MMC_DDR52))
