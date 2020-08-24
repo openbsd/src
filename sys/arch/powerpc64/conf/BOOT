@@ -1,4 +1,4 @@
-# $OpenBSD: BOOT,v 1.5 2020/08/03 19:05:46 deraadt Exp $
+# $OpenBSD: BOOT,v 1.6 2020/08/24 13:20:34 kettenis Exp $
 
 machine		powerpc64
 maxusers	4
@@ -53,6 +53,12 @@ uk*		at scsibus?             # unknown SCSI
 # USB devices
 uhub*		at usb?			# USB Hubs
 uhub*		at uhub?		# USB Hubs
+uhidev*		at uhub?		# Human Interface Devices
+uhid*		at uhidev?		# USB generic HID support
+ukbd*		at uhidev?		# USB keyboard
+wskbd*		at ukbd? mux 1
+ums*		at uhidev?		# USB mouse
+wsmouse* 	at ums? mux 0
 umass*		at uhub?		# USB Mass Storage devices
 
 pseudo-device	loop 1
@@ -62,3 +68,4 @@ pseudo-device	bpfilter 1
 pseudo-device	rd 1
 pseudo-device	bio 1
 pseudo-device	kexec
+pseudo-device	wsmux 2
