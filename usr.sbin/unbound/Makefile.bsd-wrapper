@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.19 2020/06/02 14:41:13 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.20 2020/08/24 15:33:33 florian Exp $
 
 .include <bsd.own.mk>
 
@@ -17,7 +17,8 @@ CONFIGURE_OPTS_UNBOUND=	--enable-allsymbols \
 			--with-rootkey-file=/var/unbound/db/root.key \
 			--with-conf-file=${CHROOTDIR}/etc/unbound.conf \
 			--with-username=_unbound \
-			--disable-shared
+			--disable-shared \
+			--disable-explicit-port-randomisation
 
 # do not remove, breaks unwind(8)
 CONFIGURE_OPTS_UNBOUND+= --without-pthreads
