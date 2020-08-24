@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlmmc.c,v 1.8 2020/08/16 14:09:54 kettenis Exp $	*/
+/*	$OpenBSD: amlmmc.c,v 1.9 2020/08/24 15:15:08 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -147,6 +147,7 @@ struct amlmmc_softc {
 	uint32_t		sc_vqmmc;
 	uint32_t		sc_pwrseq;
 	uint32_t		sc_vdd;
+	uint32_t		sc_ocr;
 
 	int			sc_blklen;
 	struct device		*sc_sdmmc;
@@ -262,6 +263,9 @@ amlmmc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_vqmmc = OF_getpropint(sc->sc_node, "vqmmc-supply", 0);
 	sc->sc_pwrseq = OF_getpropint(sc->sc_node, "mmc-pwrseq", 0);
 
+	/* XXX Pretend we only support 3.3V for now. */
+	sc->sc_ocr = MMC_OCR_3_2V_3_3V | MMC_OCR_3_3V_3_4V;
+
 	/* Initialize timings and block size. */
 	cfg = SD_EMMC_CFG_ERR_ABORT;
 	cfg |= SD_EMMC_CFG_RC_CC_16;
@@ -294,6 +298,15 @@ amlmmc_attach(struct device *parent, struct device *self, void *aux)
 		saa.caps |= SMC_CAPS_MMC_DDR52;
 	if (OF_getproplen(sc->sc_node, "mmc-hs200-1_8v") == 0)
 		saa.caps |= SMC_CAPS_MMC_HS200;
+	if (OF_getproplen(sc->sc_node, "sd-uhs-sdr50") == 0)
+		saa.caps |= SMC_CAPS_UHS_SDR50;
+#ifdef notyet
+	if (OF_getproplen(sc->sc_node, "sd-uhs-sdr104") == 0)
+		saa.caps |= SMC_CAPS_UHS_SDR104;
+#endif
+
+	if (saa.caps & SMC_CAPS_UHS_MASK)
+		sc->sc_ocr |= MMC_OCR_S18A;
 
 	width = OF_getpropint(faa->fa_node, "bus-width", 1);
 	if (width >= 8)
@@ -433,7 +446,8 @@ amlmmc_host_reset(sdmmc_chipset_handle_t sch)
 uint32_t
 amlmmc_host_ocr(sdmmc_chipset_handle_t sch)
 {
-	return MMC_OCR_3_2V_3_3V | MMC_OCR_3_3V_3_4V;
+	struct amlmmc_softc *sc = sch;
+	return sc->sc_ocr;
 }
 
 int
