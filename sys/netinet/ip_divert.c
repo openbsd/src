@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.62 2020/08/01 23:41:55 gnezdo Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.63 2020/08/24 16:00:31 gnezdo Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -57,7 +57,10 @@ u_int   divert_recvspace = DIVERT_RECVSPACE;
 #define DIVERTHASHSIZE	128
 #endif
 
-int *divertctl_vars[DIVERTCTL_MAXID] = DIVERTCTL_VARS;
+const struct sysctl_bounded_args divertctl_vars[] = {
+	{ DIVERTCTL_RECVSPACE, &divert_recvspace, 0, INT_MAX },
+	{ DIVERTCTL_SENDSPACE, &divert_sendspace, 0, INT_MAX },
+};
 
 int divbhashsize = DIVERTHASHSIZE;
 
@@ -392,8 +395,9 @@ divert_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (divert_sysctl_divstat(oldp, oldlenp, newp));
 	default:
 		NET_LOCK();
-		error = sysctl_int_arr(divertctl_vars, nitems(divertctl_vars),
-		    name, namelen, oldp, oldlenp, newp, newlen);
+		error = sysctl_bounded_arr(divertctl_vars,
+		    nitems(divertctl_vars), name, namelen, oldp, oldlenp, newp,
+		    newlen);
 		NET_UNLOCK();
 		return (error);
 	}

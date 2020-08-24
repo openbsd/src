@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.61 2020/08/01 23:41:56 gnezdo Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.62 2020/08/24 16:00:31 gnezdo Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -58,7 +58,10 @@ u_int   divert6_recvspace = DIVERT_RECVSPACE;
 #define DIVERTHASHSIZE	128
 #endif
 
-int *divert6ctl_vars[DIVERT6CTL_MAXID] = DIVERT6CTL_VARS;
+const struct sysctl_bounded_args divert6ctl_vars[] = {
+	{ DIVERT6CTL_RECVSPACE, &divert6_recvspace, 0, INT_MAX },
+	{ DIVERT6CTL_SENDSPACE, &divert6_sendspace, 0, INT_MAX },
+};
 
 int divb6hashsize = DIVERTHASHSIZE;
 
@@ -398,8 +401,9 @@ divert6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (divert6_sysctl_div6stat(oldp, oldlenp, newp));
 	default:
 		NET_LOCK();
-		error = sysctl_int_arr(divert6ctl_vars, nitems(divert6ctl_vars),
-		    name, namelen, oldp, oldlenp, newp, newlen);
+		error = sysctl_bounded_arr(divert6ctl_vars,
+		    nitems(divert6ctl_vars), name, namelen, oldp, oldlenp,
+		    newp, newlen);
 		NET_UNLOCK();
 		return (error);
 	}

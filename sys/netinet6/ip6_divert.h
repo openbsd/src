@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.h,v 1.9 2017/11/02 14:01:18 florian Exp $ */
+/*      $OpenBSD: ip6_divert.h,v 1.10 2020/08/24 16:00:31 gnezdo Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -40,13 +40,6 @@ struct div6stat {
 	{ "recvspace",	CTLTYPE_INT }, \
 	{ "sendspace",	CTLTYPE_INT }, \
 	{ "stats",	CTLTYPE_STRUCT } \
-}
-
-#define	DIVERT6CTL_VARS { \
-	NULL, \
-	&divert6_recvspace, \
-	&divert6_sendspace, \
-	NULL \
 }
 
 #ifdef _KERNEL
