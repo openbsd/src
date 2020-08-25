@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.133 2020/07/24 07:05:37 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.134 2020/08/25 11:35:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -170,6 +170,14 @@ static const char *options_table_status_format_default[] = {
 	  .default_str = default_value,	\
 	  .separator = "" \
 	}
+
+/* Map of name conversions. */
+const struct options_name_map options_other_names[] = {
+	{ "display-panes-color", "display-panes-colour" },
+	{ "display-panes-active-color", "display-panes-active-colour" },
+	{ "clock-mode-color", "clock-mode-colour" },
+	{ NULL, NULL }
+};
 
 /* Top-level options. */
 const struct options_table_entry options_table[] = {

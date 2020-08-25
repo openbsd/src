@@ -1,4 +1,4 @@
-/* $OpenBSD: colour.c,v 1.18 2019/06/27 15:17:41 nicm Exp $ */
+/* $OpenBSD: colour.c,v 1.19 2020/08/25 11:35:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -185,6 +185,12 @@ colour_fromstring(const char *s)
 
 	if (strncasecmp(s, "colour", (sizeof "colour") - 1) == 0) {
 		n = strtonum(s + (sizeof "colour") - 1, 0, 255, &errstr);
+		if (errstr != NULL)
+			return (-1);
+		return (n | COLOUR_FLAG_256);
+	}
+	if (strncasecmp(s, "color", (sizeof "color") - 1) == 0) {
+		n = strtonum(s + (sizeof "color") - 1, 0, 255, &errstr);
 		if (errstr != NULL)
 			return (-1);
 		return (n | COLOUR_FLAG_256);
