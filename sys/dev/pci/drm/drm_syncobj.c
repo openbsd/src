@@ -241,8 +241,6 @@ struct drm_syncobj *drm_syncobj_find(struct drm_file *file_private,
 }
 EXPORT_SYMBOL(drm_syncobj_find);
 
-#ifdef notyet
-
 static void drm_syncobj_fence_add_wait(struct drm_syncobj *syncobj,
 				       struct syncobj_wait_entry *wait)
 {
@@ -279,8 +277,6 @@ static void drm_syncobj_remove_wait(struct drm_syncobj *syncobj,
 	spin_unlock(&syncobj->lock);
 }
 
-#endif /* notyet */
-
 /**
  * drm_syncobj_add_point - add new timeline point to the syncobj
  * @syncobj: sync object to add timeline point do
@@ -295,8 +291,6 @@ void drm_syncobj_add_point(struct drm_syncobj *syncobj,
 			   struct dma_fence *fence,
 			   uint64_t point)
 {
-	STUB();
-#ifdef notyet
 	struct syncobj_wait_entry *cur, *tmp;
 	struct dma_fence *prev;
 
@@ -318,7 +312,6 @@ void drm_syncobj_add_point(struct drm_syncobj *syncobj,
 	/* Walk the chain once to trigger garbage collection */
 	dma_fence_chain_for_each(fence, prev);
 	dma_fence_put(prev);
-#endif
 }
 EXPORT_SYMBOL(drm_syncobj_add_point);
 
@@ -363,13 +356,10 @@ EXPORT_SYMBOL(drm_syncobj_replace_fence);
  */
 static void drm_syncobj_assign_null_handle(struct drm_syncobj *syncobj)
 {
-	STUB();
-#ifdef notyet
 	struct dma_fence *fence = dma_fence_get_stub();
 
 	drm_syncobj_replace_fence(syncobj, fence);
 	dma_fence_put(fence);
-#endif
 }
 
 /* 5s default for wait submission */
@@ -393,9 +383,6 @@ int drm_syncobj_find_fence(struct drm_file *file_private,
 			   u32 handle, u64 point, u64 flags,
 			   struct dma_fence **fence)
 {
-	STUB();
-	return -ENOSYS;
-#ifdef notyet
 	struct drm_syncobj *syncobj = drm_syncobj_find(file_private, handle);
 	struct syncobj_wait_entry wait;
 	u64 timeout = nsecs_to_jiffies64(DRM_SYNCOBJ_WAIT_FOR_SUBMIT_TIMEOUT);
@@ -420,7 +407,11 @@ int drm_syncobj_find_fence(struct drm_file *file_private,
 		return ret;
 
 	memset(&wait, 0, sizeof(wait));
+#ifdef __linux__
 	wait.task = current;
+#else
+	wait.task = curproc;
+#endif
 	wait.point = point;
 	drm_syncobj_fence_add_wait(syncobj, &wait);
 
@@ -450,7 +441,6 @@ int drm_syncobj_find_fence(struct drm_file *file_private,
 		drm_syncobj_remove_wait(syncobj, &wait);
 
 	return ret;
-#endif
 }
 EXPORT_SYMBOL(drm_syncobj_find_fence);
 
@@ -925,7 +915,6 @@ drm_syncobj_transfer_ioctl(struct drm_device *dev, void *data,
 	return ret;
 }
 
-#ifdef notyet
 static void syncobj_wait_fence_func(struct dma_fence *fence,
 				    struct dma_fence_cb *cb)
 {
@@ -934,13 +923,10 @@ static void syncobj_wait_fence_func(struct dma_fence *fence,
 
 	wake_up_process(wait->task);
 }
-#endif
 
 static void syncobj_wait_syncobj_func(struct drm_syncobj *syncobj,
 				      struct syncobj_wait_entry *wait)
 {
-	STUB();
-#ifdef notyet
 	struct dma_fence *fence;
 
 	/* This happens inside the syncobj lock */
@@ -958,7 +944,6 @@ static void syncobj_wait_syncobj_func(struct drm_syncobj *syncobj,
 
 	wake_up_process(wait->task);
 	list_del_init(&wait->node);
-#endif
 }
 
 static signed long drm_syncobj_array_wait_timeout(struct drm_syncobj **syncobjs,
@@ -968,9 +953,6 @@ static signed long drm_syncobj_array_wait_timeout(struct drm_syncobj **syncobjs,
 						  signed long timeout,
 						  uint32_t *idx)
 {
-	STUB();
-	return -ENOSYS;
-#ifdef notyet
 	struct syncobj_wait_entry *entries;
 	struct dma_fence *fence;
 	uint64_t *points;
@@ -1109,7 +1091,6 @@ err_free_points:
 	kfree(points);
 
 	return timeout;
-#endif
 }
 
 /**
@@ -1372,8 +1353,6 @@ int
 drm_syncobj_timeline_signal_ioctl(struct drm_device *dev, void *data,
 				  struct drm_file *file_private)
 {
-	return -ENOSYS;
-#ifdef notyet
 	struct drm_syncobj_timeline_array *args = data;
 	struct drm_syncobj **syncobjs;
 	struct dma_fence_chain **chains;
@@ -1441,15 +1420,11 @@ out:
 	drm_syncobj_array_free(syncobjs, args->count_handles);
 
 	return ret;
-#endif
 }
 
 int drm_syncobj_query_ioctl(struct drm_device *dev, void *data,
 			    struct drm_file *file_private)
 {
-	STUB();
-	return -ENOSYS;
-#ifdef notyet
 	struct drm_syncobj_timeline_array *args = data;
 	struct drm_syncobj **syncobjs;
 	uint64_t __user *points = u64_to_user_ptr(args->points);
@@ -1514,5 +1489,4 @@ int drm_syncobj_query_ioctl(struct drm_device *dev, void *data,
 	drm_syncobj_array_free(syncobjs, args->count_handles);
 
 	return ret;
-#endif
 }
