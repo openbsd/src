@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.115 2020/08/24 15:49:11 tracey Exp $	*/
+/*	$OpenBSD: parse.y,v 1.116 2020/08/25 13:50:40 tracey Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1123,7 +1123,15 @@ fcgiport	: NUMBER		{
 				YYERROR;
 			}
 		}
-		| STRING		{ $$ = $1; }
+		| STRING		{
+			if (getservice($1) <= 0) {
+				yyerror("invalid port: %s", $1);
+				free($1);
+				YYERROR;
+			}
+
+			$$ = $1;
+		}
 		;
 
 tcpip		: TCP '{' optnl tcpflags_l '}'
@@ -2366,10 +2374,8 @@ getservice(char *n)
 		s = getservbyname(n, "tcp");
 		if (s == NULL)
 			s = getservbyname(n, "udp");
-		if (s == NULL) {
-			yyerror("unknown port %s", n);
+		if (s == NULL)
 			return (-1);
-		}
 		return (s->s_port);
 	}
 
