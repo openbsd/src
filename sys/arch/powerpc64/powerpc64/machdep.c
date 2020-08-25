@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.57 2020/08/23 10:07:51 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.58 2020/08/25 17:49:58 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -888,6 +888,8 @@ cpu_switchto(struct proc *old, struct proc *new)
 			tf->srr1 &= ~(PSL_FP|PSL_VEC|PSL_VSX);
 			save_vsx(old);
 		}
+
+		pmap_clear_user_slb();
 	}
 
 	cpu_switchto_asm(old, new);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.14 2020/08/17 16:55:41 kettenis Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.15 2020/08/25 17:49:58 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -69,6 +69,7 @@ void	pmap_bootstrap_cpu(void);
 
 int	pmap_slbd_fault(pmap_t, vaddr_t);
 int	pmap_set_user_slb(pmap_t, vaddr_t, vaddr_t *, vsize_t *);
+void	pmap_clear_user_slb(void);
 void	pmap_unset_user_slb(void);
 
 #ifdef DDB

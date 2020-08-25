@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.43 2020/08/23 10:07:51 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.44 2020/08/25 17:49:58 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -452,11 +452,9 @@ pmap_set_user_slb(pmap_t pm, vaddr_t va, vaddr_t *kva, vsize_t *len)
 }
 
 void
-pmap_unset_user_slb(void)
+pmap_clear_user_slb(void)
 {
 	struct cpu_info *ci = curcpu();
-
-	curpcb->pcb_userva = 0;
 
 	if (ci->ci_kernel_slb[31].slb_slbe != 0) {
 		isync();
@@ -466,6 +464,13 @@ pmap_unset_user_slb(void)
 
 	ci->ci_kernel_slb[31].slb_slbe = 0;
 	ci->ci_kernel_slb[31].slb_slbv = 0;
+}
+
+void
+pmap_unset_user_slb(void)
+{
+	curpcb->pcb_userva = 0;
+	pmap_clear_user_slb();
 }
 
 /*
