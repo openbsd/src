@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.161 2020/08/24 21:00:21 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.162 2020/08/25 15:08:08 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -680,6 +680,7 @@ enum natt_mode {
 };
 
 struct iked_static {
+	uint64_t		 st_alive_timeout;
 	int			 st_enforcesingleikesa;
 	uint8_t			 st_frag;	/* fragmentation */
 	uint8_t			 st_mobike;	/* MOBIKE */
@@ -696,6 +697,7 @@ struct iked {
 
 	struct iked_static		 sc_static;
 
+#define sc_alive_timeout	sc_static.st_alive_timeout
 #define sc_enforcesingleikesa	sc_static.st_enforcesingleikesa
 #define sc_frag			sc_static.st_frag
 #define sc_mobike		sc_static.st_mobike

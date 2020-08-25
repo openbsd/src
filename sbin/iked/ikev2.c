@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.248 2020/08/24 21:00:21 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.249 2020/08/25 15:08:08 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1428,7 +1428,7 @@ ikev2_enable_timer(struct iked *env, struct iked_sa *sa)
 {
 	sa->sa_last_recvd = gettime();
 	timer_set(env, &sa->sa_timer, ikev2_ike_sa_alive, sa);
-	timer_add(env, &sa->sa_timer, IKED_IKE_SA_ALIVE_TIMEOUT);
+	timer_add(env, &sa->sa_timer, env->sc_alive_timeout);
 	timer_set(env, &sa->sa_keepalive, ikev2_ike_sa_keepalive, sa);
 	if (sa->sa_usekeepalive)
 		timer_add(env, &sa->sa_keepalive,
@@ -4479,7 +4479,7 @@ ikev2_ike_sa_alive(struct iked *env, void *arg)
 		    __func__,
 		    csa->csa_dir == IPSP_DIRECTION_IN ? "incoming" : "outgoing",
 		    print_spi(csa->csa_spi.spi, csa->csa_spi.spi_size), diff);
-		if (diff < IKED_IKE_SA_ALIVE_TIMEOUT) {
+		if (diff < env->sc_alive_timeout) {
 			if (csa->csa_dir == IPSP_DIRECTION_IN) {
 				foundin = 1;
 				break;
@@ -4512,7 +4512,7 @@ ikev2_ike_sa_alive(struct iked *env, void *arg)
 	}
 
 	/* re-register */
-	timer_add(env, &sa->sa_timer, IKED_IKE_SA_ALIVE_TIMEOUT);
+	timer_add(env, &sa->sa_timer, env->sc_alive_timeout);
 }
 
 void
