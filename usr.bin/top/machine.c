@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.108 2020/08/23 21:11:55 kn Exp $	 */
+/* $OpenBSD: machine.c,v 1.109 2020/08/25 07:27:34 kn Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -414,7 +414,7 @@ get_process_info(struct system_info *si, struct process_select *sel,
     int (*compare) (const void *, const void *))
 {
 	int show_idle, show_system, show_threads, show_uid, show_pid, show_cmd;
-	int show_rtable, hide_rtable, hide_uid;
+	int show_rtableid, hide_rtableid, hide_uid;
 	int total_procs, active_procs;
 	struct kinfo_proc **prefp, *pp;
 	int what = KERN_PROC_ALL;
@@ -446,8 +446,8 @@ get_process_info(struct system_info *si, struct process_select *sel,
 	show_uid = sel->uid != (uid_t)-1;
 	hide_uid = sel->huid != (uid_t)-1;
 	show_pid = sel->pid != (pid_t)-1;
-	show_rtable = sel->rtableid != -1;
-	hide_rtable = sel->hrtableid != -1;
+	show_rtableid = sel->rtableid != -1;
+	hide_rtableid = sel->hrtableid != -1;
 	show_cmd = sel->command != NULL;
 
 	/* count up process states and get pointers to interesting procs */
@@ -476,8 +476,8 @@ get_process_info(struct system_info *si, struct process_select *sel,
 			    (!hide_uid || pp->p_ruid != sel->huid) &&
 			    (!show_uid || pp->p_ruid == sel->uid) &&
 			    (!show_pid || pp->p_pid == sel->pid) &&
-			    (!hide_rtable || pp->p_rtableid != sel->hrtableid) &&
-			    (!show_rtable || pp->p_rtableid == sel->rtableid) &&
+			    (!hide_rtableid || pp->p_rtableid != sel->hrtableid) &&
+			    (!show_rtableid || pp->p_rtableid == sel->rtableid) &&
 			    (!show_cmd || cmd_matches(pp, sel->command))) {
 				*prefp++ = pp;
 				active_procs++;
@@ -550,7 +550,7 @@ format_next_process(struct handle *hndl, const char *(*get_userid)(uid_t, int),
 	struct kinfo_proc *pp;
 	int cputime;
 	double pct;
-	char buf[16];
+	char second_buf[16];
 
 	/* find and remember the next proc structure */
 	pp = *(hndl->next_proc++);
@@ -560,18 +560,16 @@ format_next_process(struct handle *hndl, const char *(*get_userid)(uid_t, int),
 	/* calculate the base for cpu percentages */
 	pct = (double)pp->p_pctcpu / fscale;
 
-	if (pp->p_wmesg[0])
-		p_wait = pp->p_wmesg;
-	else
-		p_wait = "-";
-
 	if (get_userid == NULL)
-		snprintf(buf, sizeof(buf), "%8d", pp->p_tid);
+		snprintf(second_buf, sizeof(second_buf), "%8d", pp->p_tid);
 	else
-		snprintf(buf, sizeof(buf), "%s", (*get_userid)(pp->p_ruid, 0));
+		strlcpy(second_buf, (*get_userid)(pp->p_ruid, 0),
+		    sizeof(second_buf));
+
+	p_wait = pp->p_wmesg[0] ? pp->p_wmesg : "-";
 
 	/* format this entry */
-	snprintf(fmt, sizeof(fmt), Proc_format, pp->p_pid, buf,
+	snprintf(fmt, sizeof(fmt), Proc_format, pp->p_pid, second_buf,
 	    pp->p_priority - PZERO, pp->p_nice - NZERO,
 	    format_k(pagetok(PROCSIZE(pp))),
 	    format_k(pagetok(pp->p_vm_rssize)),
