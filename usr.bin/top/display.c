@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.64 2020/08/23 21:11:55 kn Exp $	 */
+/* $OpenBSD: display.c,v 1.65 2020/08/26 16:21:28 kn Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -826,6 +826,7 @@ show_help(void)
 	    "s time       - change delay between displays to `time' seconds\n"
 	    "T [-]rtable  - show processes associated with routing table `rtable'\n"
 	    "               (T+ shows all, T -rtable hides rtable)\n"
+	    "t            - toggle the display of routing tables\n"
 	    "u [-]user    - show processes for `user' (u+ shows all, u -user hides user)\n"
 	    "\n");
 

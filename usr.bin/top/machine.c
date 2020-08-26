@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.109 2020/08/25 07:27:34 kn Exp $	 */
+/* $OpenBSD: machine.c,v 1.110 2020/08/26 16:21:28 kn Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -75,8 +75,9 @@ struct handle {
 static char header[] =
 	"  PID X        PRI NICE  SIZE   RES STATE     WAIT      TIME    CPU COMMAND";
 
-/* 0123456   -- field to fill in starts at header+6 */
+/* offsets in the header line to start alternative columns */
 #define UNAME_START 6
+#define RTABLE_START 46
 
 #define Proc_format \
 	"%5d %-8.8s %3d %4d %5s %5s %-9s %-7.7s %6s %5.2f%% %s"
@@ -226,16 +227,16 @@ machine_init(struct statics *statics)
 }
 
 char *
-format_header(char *second_field)
+format_header(char *second_field, char *eighth_field)
 {
-	char *field_name, *thread_field = "     TID";
-	char *ptr;
-
-	field_name = second_field ? second_field : thread_field;
+	char *second_fieldp = second_field, *eighth_fieldp = eighth_field, *ptr;
 
 	ptr = header + UNAME_START;
-	while (*field_name != '\0')
-		*ptr++ = *field_name++;
+	while (*second_fieldp != '\0')
+		*ptr++ = *second_fieldp++;
+	ptr = header + RTABLE_START;
+	while (*eighth_fieldp != '\0')
+		*ptr++ = *eighth_fieldp++;
 	return (header);
 }
 
@@ -544,13 +545,12 @@ skip_processes(struct handle *hndl, int n)
 
 char *
 format_next_process(struct handle *hndl, const char *(*get_userid)(uid_t, int),
-    pid_t *pid)
+    int rtable, pid_t *pid)
 {
-	char *p_wait;
 	struct kinfo_proc *pp;
 	int cputime;
 	double pct;
-	char second_buf[16];
+	char second_buf[16], eighth_buf[8];
 
 	/* find and remember the next proc structure */
 	pp = *(hndl->next_proc++);
@@ -566,7 +566,11 @@ format_next_process(struct handle *hndl, const char *(*get_userid)(uid_t, int),
 		strlcpy(second_buf, (*get_userid)(pp->p_ruid, 0),
 		    sizeof(second_buf));
 
-	p_wait = pp->p_wmesg[0] ? pp->p_wmesg : "-";
+	if (rtable)
+		snprintf(eighth_buf, sizeof(eighth_buf), "%7d", pp->p_rtableid);
+	else
+		strlcpy(eighth_buf, pp->p_wmesg[0] ? pp->p_wmesg : "-",
+		    sizeof(eighth_buf));
 
 	/* format this entry */
 	snprintf(fmt, sizeof(fmt), Proc_format, pp->p_pid, second_buf,
@@ -575,7 +579,7 @@ format_next_process(struct handle *hndl, const char *(*get_userid)(uid_t, int),
 	    format_k(pagetok(pp->p_vm_rssize)),
 	    (pp->p_stat == SSLEEP && pp->p_slptime > maxslp) ?
 	    "idle" : state_abbr(pp),
-	    p_wait, format_time(cputime), 100.0 * pct,
+	    eighth_buf, format_time(cputime), 100.0 * pct,
 	    printable(format_comm(pp)));
 
 	*pid = pp->p_pid;

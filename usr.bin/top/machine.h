@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.h,v 1.30 2020/08/23 21:11:55 kn Exp $	 */
+/* $OpenBSD: machine.h,v 1.31 2020/08/26 16:21:28 kn Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -77,6 +77,7 @@ struct process_select {
 	uid_t           uid;	/* only this uid (unless uid == -1) */
 	uid_t           huid;	/* hide this uid (unless huid == -1) */
 	pid_t           pid;	/* only this pid (unless pid == -1) */
+	int             rtable;	/* show routing tables */
 	int             rtableid;	/* only this rtable (unless rtableid == -1) */
 	int             hrtableid;	/* hide this rtable (unless hrtableid == -1) */
 	char           *command;/* only this command (unless == NULL) */
@@ -87,14 +88,14 @@ extern int      display_init(struct statics *);
 
 /* machine.c */
 extern int      machine_init(struct statics *);
-extern char    *format_header(char *);
+extern char    *format_header(char *, char *);
 extern void     get_system_info(struct system_info *);
 extern struct handle
 *get_process_info(struct system_info *, struct process_select *,
 		 int (*) (const void *, const void *));
 extern void     skip_processes(struct handle *, int);
 extern char    *format_next_process(struct handle *,
-		 const char *(*)(uid_t, int), pid_t *);
+		 const char *(*)(uid_t, int), int, pid_t *);
 extern uid_t    proc_owner(pid_t);
 
 extern struct kinfo_proc	*getprocs(int, int, int *);
