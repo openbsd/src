@@ -1,4 +1,4 @@
-/*	$OpenBSD: aoa.c,v 1.10 2020/06/06 21:01:30 gkoehler Exp $	*/
+/*	$OpenBSD: aoa.c,v 1.11 2020/08/26 03:29:06 visa Exp $	*/
 
 /*-
  * Copyright (c) 2005 Tsubai Masanari.  All rights reserved.
@@ -56,8 +56,6 @@ int aoa_match(struct device *, void *, void *);
 void aoa_attach(struct device *, struct device *, void *);
 void aoa_defer(struct device *);
 void aoa_set_volume(struct aoa_softc *, int, int);
-
-extern char *hw_prod;
 
 struct cfattach aoa_ca = {
 	sizeof(struct aoa_softc), aoa_match, aoa_attach

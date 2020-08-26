@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvbus.c,v 1.21 2020/05/29 04:42:25 deraadt Exp $	*/
+/*	$OpenBSD: pvbus.c,v 1.22 2020/08/26 03:29:06 visa Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -43,7 +43,6 @@
 
 int has_hv_cpuid = 0;
 
-extern char *hw_vendor;
 extern void rdrand(void *);
 
 int	 pvbus_activate(struct device *, int);

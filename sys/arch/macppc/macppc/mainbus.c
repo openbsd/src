@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.25 2015/09/06 16:46:53 deraadt Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.26 2020/08/26 03:29:06 visa Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -46,9 +46,6 @@ struct cfattach mainbus_ca = {
 struct cfdriver mainbus_cd = {
 	NULL, "mainbus", DV_DULL
 };
-
-/* hw.product sysctl see sys/kern/kern_sysctl.c */
-extern char *hw_prod, *hw_ver, *hw_vendor;
 
 #define HH_REG_CONF 	0x90
 

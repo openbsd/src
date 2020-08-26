@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.206 2020/07/10 13:26:37 patrick Exp $	*/
+/*	$OpenBSD: re.c,v 1.207 2020/08/26 03:29:06 visa Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -198,8 +198,6 @@ void	in_delayed_cksum(struct mbuf *);
 struct cfdriver re_cd = {
 	0, "re", DV_IFNET
 };
-
-extern char *hw_vendor, *hw_prod;
 
 #define EE_SET(x)					\
 	CSR_WRITE_1(sc, RL_EECMD,			\

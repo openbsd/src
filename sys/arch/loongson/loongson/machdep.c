@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.89 2020/06/05 13:35:20 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.90 2020/08/26 03:29:05 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2014 Miodrag Vallat.
@@ -516,7 +516,6 @@ mips_init(uint64_t argc, uint64_t argv, uint64_t envp, uint64_t cv,
 
 	extern char start[], edata[], end[];
 	extern char exception[], e_exception[];
-	extern char *hw_vendor, *hw_prod;
 	extern void xtlb_miss;
 
 #ifdef MULTIPROCESSOR

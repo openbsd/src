@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.61 2020/07/21 03:48:06 deraadt Exp $ */
+/* $OpenBSD: acpiec.c,v 1.62 2020/08/26 03:29:06 visa Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -76,8 +76,6 @@ void		acpiec_unlock(struct acpiec_softc *);
 #define		EC_CMD_QR	0x84	/* Query */
 
 int	acpiec_reg(struct acpiec_softc *);
-
-extern char	*hw_vendor, *hw_prod;
 
 struct cfattach acpiec_ca = {
 	sizeof(struct acpiec_softc), acpiec_match, acpiec_attach

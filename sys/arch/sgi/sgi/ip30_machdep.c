@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_machdep.c,v 1.69 2018/01/29 14:51:57 visa Exp $	*/
+/*	$OpenBSD: ip30_machdep.c,v 1.70 2020/08/26 03:29:06 visa Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Miodrag Vallat.
@@ -47,8 +47,6 @@
 #include <sgi/pci/iocreg.h>
 
 #include <dev/ic/comvar.h>
-
-extern char *hw_prod;
 
 extern int	mbprint(void *, const char *);
 

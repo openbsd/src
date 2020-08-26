@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip32_machdep.c,v 1.23 2018/12/13 16:35:07 visa Exp $ */
+/*	$OpenBSD: ip32_machdep.c,v 1.24 2020/08/26 03:29:06 visa Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -49,7 +49,6 @@
 
 #include <dev/ic/comvar.h>
 
-extern char *hw_prod;
 extern int tlb_set_wired_get_random(int);	/* tlbhandler.S */
 
 void crime_configure_memory(void);

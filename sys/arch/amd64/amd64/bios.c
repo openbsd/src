@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.42 2020/05/29 04:42:23 deraadt Exp $	*/
+/*	$OpenBSD: bios.c,v 1.43 2020/08/26 03:29:05 visa Exp $	*/
 /*
  * Copyright (c) 2006 Gordon Willem Klok <gklok@cogeco.ca>
  *
@@ -53,10 +53,6 @@ struct cfdriver bios_cd = {
 };
 
 struct smbios_entry smbios_entry;
-/*
- * used by hw_sysctl
- */
-extern char *hw_vendor, *hw_prod, *hw_uuid, *hw_serial, *hw_ver;
 
 const char *smbios_uninfo[] = {
 	"System",

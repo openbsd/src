@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.137 2020/07/16 21:18:29 krw Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.138 2020/08/26 03:29:06 visa Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -121,9 +121,6 @@ int	fbnode;		/* node ID of ROM's console output device */
 int	optionsnode;	/* node ID of ROM's options */
 
 static	int rootnode;
-
-/* for hw.product/vendor see sys/kern/kern_sysctl.c */
-extern char *hw_prod, *hw_vendor;
 
 static	char *str2hex(char *, long *);
 static	int mbprint(void *, const char *);

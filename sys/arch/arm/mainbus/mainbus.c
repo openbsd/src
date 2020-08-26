@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.22 2020/04/29 15:25:07 kettenis Exp $ */
+/* $OpenBSD: mainbus.c,v 1.23 2020/08/26 03:29:05 visa Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -87,8 +87,6 @@ mainbus_match(struct device *parent, void *cfdata, void *aux)
 	return (1);
 }
 
-extern char *hw_prod;
-extern char *hw_serial;
 extern struct bus_space armv7_bs_tag;
 void platform_init_mainbus(struct device *);
 

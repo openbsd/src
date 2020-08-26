@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.147 2020/05/29 04:42:25 deraadt Exp $	*/
+/*	$OpenBSD: systm.h,v 1.148 2020/08/26 03:29:07 visa Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -80,6 +80,12 @@ extern const char osversion[];
 extern const char osrelease[];
 extern int cold;		/* cold start flag initialized in locore */
 extern int db_active;		/* running currently inside ddb(4) */
+
+extern char *hw_vendor;		/* sysctl hw.vendor */
+extern char *hw_prod;		/* sysctl hw.product */
+extern char *hw_uuid;		/* sysctl hw.uuid */
+extern char *hw_serial;		/* sysctl hw.serialno */
+extern char *hw_ver;		/* sysctl hw.version */
 
 extern int ncpus;		/* number of CPUs used */
 extern int ncpusfound;		/* number of CPUs found */

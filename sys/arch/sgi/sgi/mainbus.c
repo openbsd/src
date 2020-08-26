@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.13 2012/09/29 21:46:02 miod Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.14 2020/08/26 03:29:06 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -62,7 +62,6 @@ void
 mbattach(struct device *parent, struct device *self, void *aux)
 {
 	struct cpu_attach_args caa;
-	extern char *hw_prod;
 
 	if (hw_prod != NULL)
 		printf(": %s", hw_prod);

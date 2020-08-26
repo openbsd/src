@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip22_machdep.c,v 1.22 2016/10/09 11:25:40 tom Exp $	*/
+/*	$OpenBSD: ip22_machdep.c,v 1.23 2020/08/26 03:29:06 visa Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -55,8 +55,6 @@
 #include <sgi/localbus/tccreg.h>
 #include <sgi/localbus/tccvar.h>
 #endif
-
-extern char *hw_prod;
 
 int	hpc_old = 0;
 int	bios_year;

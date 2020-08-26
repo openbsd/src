@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.192 2020/06/05 14:25:05 naddy Exp $ */
+/* $OpenBSD: machdep.c,v 1.193 2020/08/26 03:29:05 visa Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -189,9 +189,6 @@ int	alpha_fp_sync_complete = 0;	/* fp fixup if sync even without /s */
 #if NIOASIC > 0
 int	alpha_led_blink = 1;
 #endif
-
-/* used by hw_sysctl */
-extern char *hw_serial;
 
 /*
  * XXX This should be dynamically sized, but we have the chicken-egg problem!

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.163 2020/06/05 13:35:21 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.164 2020/08/26 03:29:06 visa Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -144,7 +144,6 @@ mips_init(int argc, void *argv, caddr_t boot_esym)
 	u_int cpufamily;
 	struct cpu_info *ci;
 	extern char start[], edata[], end[];
-	extern char *hw_vendor;
 #ifndef CPU_R8000
 	extern char cache_err[], exception[], e_exception[];
 	vaddr_t xtlb_handler;
