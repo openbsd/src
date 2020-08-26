@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.116 2020/08/25 13:50:40 tracey Exp $	*/
+/*	$OpenBSD: parse.y,v 1.117 2020/08/26 06:50:20 florian Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -224,7 +224,8 @@ main		: PREFORK NUMBER	{
 		;
 
 server		: SERVER optmatch STRING	{
-			struct server	*s;
+			struct server		*s;
+			struct sockaddr_un	*sun;
 
 			if (!loadcfg) {
 				free($3);
@@ -280,6 +281,12 @@ server		: SERVER optmatch STRING	{
 			strlcpy(s->srv_conf.tls_ecdhe_curves,
 			    HTTPD_TLS_ECDHE_CURVES,
 			    sizeof(s->srv_conf.tls_ecdhe_curves));
+
+			sun = (struct sockaddr_un *)&s->srv_conf.fastcgi_ss;
+			sun->sun_family = AF_UNIX;
+			(void)strlcpy(sun->sun_path, HTTPD_FCGI_SOCKET,
+			    sizeof(sun->sun_path));
+			sun->sun_len = sizeof(struct sockaddr_un);
 
 			s->srv_conf.hsts_max_age = SERVER_HSTS_DEFAULT_AGE;
 
@@ -500,7 +507,8 @@ serveroptsl	: LISTEN ON STRING opttls port	{
 		| authenticate
 		| filter
 		| LOCATION optmatch STRING	{
-			struct server	*s;
+			struct server		*s;
+			struct sockaddr_un	*sun;
 
 			if (srv->srv_conf.ss.ss_family == AF_UNSPEC) {
 				yyerror("listen address not specified");
@@ -539,6 +547,12 @@ serveroptsl	: LISTEN ON STRING opttls port	{
 				free(s);
 				YYERROR;
 			}
+
+			sun = (struct sockaddr_un *)&s->srv_conf.fastcgi_ss;
+			sun->sun_family = AF_UNIX;
+			(void)strlcpy(sun->sun_path, HTTPD_FCGI_SOCKET,
+			    sizeof(sun->sun_path));
+			sun->sun_len = sizeof(struct sockaddr_un);
 
 			s->srv_conf.id = ++last_server_id;
 			/* A location entry uses the parent id */
@@ -665,7 +679,6 @@ fcgiflags	: SOCKET STRING {
 			srv_conf->fastcgi_ss.ss_len =
 			    sizeof(struct sockaddr_un);
 			free($2);
-			srv_conf->flags |= SRVFLAG_SOCKET;
 		}
 		| SOCKET TCP STRING {
 			if (get_fastcgi_dest(srv_conf, $3, FCGI_DEFAULT_PORT)
@@ -674,7 +687,6 @@ fcgiflags	: SOCKET STRING {
 				YYERROR;
 			}
 			free($3);
-			srv_conf->flags |= SRVFLAG_SOCKET;
 		}
 		| SOCKET TCP STRING fcgiport {
 			if (get_fastcgi_dest(srv_conf, $3, $4) == -1) {
@@ -684,7 +696,6 @@ fcgiflags	: SOCKET STRING {
 			}
 			free($3);
 			free($4);
-			srv_conf->flags |= SRVFLAG_SOCKET;
 		}
 		| PARAM STRING STRING	{
 			struct fastcgi_param	*param;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.59 2020/08/24 15:49:10 tracey Exp $	*/
+/*	$OpenBSD: config.c,v 1.60 2020/08/26 06:50:20 florian Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -495,20 +495,6 @@ config_getserver_config(struct httpd *env, struct server *srv,
 		f = SRVFLAG_AUTO_INDEX|SRVFLAG_NO_AUTO_INDEX;
 		if ((srv_conf->flags & f) == 0)
 			srv_conf->flags |= parent->flags & f;
-
-		f = SRVFLAG_SOCKET|SRVFLAG_FCGI;
-		if ((srv_conf->flags & f) == SRVFLAG_FCGI) {
-			struct sockaddr_un *sun;
-			sun = (struct sockaddr_un *) &srv_conf->fastcgi_ss;
-
-			memset(sun, 0, sizeof(*sun));
-			sun->sun_family = AF_UNIX;
-			(void)strlcpy(sun->sun_path, HTTPD_FCGI_SOCKET,
-			    sizeof(sun->sun_path));
-			srv_conf->fastcgi_ss.ss_len =
-			    sizeof(struct sockaddr_un);
-			srv_conf->flags |= f;
-		}
 
 		f = SRVFLAG_ROOT;
 		if ((srv_conf->flags & f) == 0) {
