@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.59 2020/07/29 23:56:42 krw Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.60 2020/08/26 13:57:20 krw Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@ umass_scsi_attach(struct umass_softc *sc)
 {
 	struct scsibus_attach_args saa;
 	struct umass_scsi_softc *scbus;
-	u_int16_t flags = SDEV_UMASS;
+	u_int16_t flags = 0;
 
 	scbus = malloc(sizeof(*scbus), M_DEVBUF, M_WAITOK | M_ZERO);
 
@@ -114,9 +114,9 @@ umass_scsi_attach(struct umass_softc *sc)
 	saa.saa_adapter_target = UMASS_SCSIID_HOST;
 	saa.saa_luns = sc->maxlun + 1;
 	saa.saa_openings = 1;
-	saa.saa_quirks = SDEV_ONLYBIG | sc->sc_busquirks;
+	saa.saa_quirks = sc->sc_busquirks;
 	saa.saa_pool = &scbus->sc_iopool;
-	saa.saa_flags = flags;
+	saa.saa_flags = SDEV_UMASS | flags;
 	saa.saa_wwpn = saa.saa_wwnn = 0;
 
 	sc->sc_refcnt++;

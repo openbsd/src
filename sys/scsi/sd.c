@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.318 2020/08/22 15:07:11 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.319 2020/08/26 13:57:20 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -689,11 +689,7 @@ sdstart(struct scsi_xfer *xs)
 	nsecs = howmany(bp->b_bcount, sc->sc_dk.dk_label->d_secsize);
 	read = bp->b_flags & B_READ;
 
-	/*
-	 *  Fill out the scsi command.  If the transfer will
-	 *  fit in a "small" cdb, use it.
-	 */
-	if (!ISSET(link->flags, SDEV_ATAPI) &&
+	if (!ISSET(link->flags, SDEV_ATAPI | SDEV_UMASS) &&
 	    !ISSET(link->quirks, SDEV_ONLYBIG) &&
 	    ((secno & 0x1fffff) == secno) &&
 	    ((nsecs & 0xff) == nsecs))

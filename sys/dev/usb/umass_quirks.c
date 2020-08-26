@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_quirks.c,v 1.33 2020/06/22 15:54:55 tobhe Exp $	*/
+/*	$OpenBSD: umass_quirks.c,v 1.34 2020/08/26 13:57:20 krw Exp $	*/
 /*	$NetBSD: umass_quirks.c,v 1.67 2004/06/28 07:49:16 mycroft Exp $	*/
 
 /*
@@ -189,7 +189,7 @@ const struct umass_quirk umass_quirks[] = {
 	{ { USB_VENDOR_IRIVER, USB_PRODUCT_IRIVER_IFP_1XX },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
-	  SDEV_ONLYBIG,
+	  0,
 	  UMATCH_VENDOR_PRODUCT,
 	  NULL, NULL
 	},
@@ -285,7 +285,7 @@ const struct umass_quirk umass_quirks[] = {
 	{ { USB_VENDOR_OLYMPUS, USB_PRODUCT_OLYMPUS_C700 },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
-	  SDEV_ONLYBIG | SDEV_NOSYNCCACHE,
+	  SDEV_NOSYNCCACHE,
 	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
 	  NULL, NULL
 	},

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.221 2020/07/20 14:41:13 krw Exp $ */
+/*	$OpenBSD: mpi.c,v 1.222 2020/08/26 13:57:19 krw Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -1682,7 +1682,6 @@ mpi_scsi_probe(struct scsi_link *link)
 		DNPRINTF(MPI_D_MISC, "%s: target %d is an ATAPI device\n",
 		    DEVNAME(sc), link->target);
 		link->flags |= SDEV_ATAPI;
-		link->quirks |= SDEV_ONLYBIG;
 	}
 
 	return (0);

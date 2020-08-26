@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.143 2020/07/22 13:16:04 krw Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.144 2020/08/26 13:57:19 krw Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -258,7 +258,6 @@ atascsi_probe(struct scsi_link *link)
 		break;
 	case ATA_PORT_T_ATAPI:
 		link->flags |= SDEV_ATAPI;
-		link->quirks |= SDEV_ONLYBIG;
 		break;
 	case ATA_PORT_T_PM:
 		if (link->lun != 0) {
