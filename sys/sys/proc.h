@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.298 2020/08/11 14:57:56 cheloha Exp $	*/
+/*	$OpenBSD: proc.h,v 1.299 2020/08/26 03:19:09 visa Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -154,6 +154,7 @@ struct unveil;
  *	m	this process' `ps_mtx'
  *	p	this process' `ps_lock'
  *	R	rlimit_lock
+ *	S	scheduler lock
  *	T	itimer_mtx
  */
 struct process {
@@ -201,7 +202,7 @@ struct process {
 	u_int	ps_flags;		/* [a] PS_* flags. */
 	int	ps_siglist;		/* Signals pending for the process. */
 
-	struct	proc *ps_single;	/* Single threading to this thread. */
+	struct	proc *ps_single;	/* [S] Thread for single-threading. */
 	u_int	ps_singlecount;		/* [a] Not yet suspended threads. */
 
 	int	ps_traceflag;		/* Kernel trace points. */
