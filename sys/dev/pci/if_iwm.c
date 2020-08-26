@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.313 2020/07/10 13:22:20 patrick Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.314 2020/08/26 17:12:00 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -6666,6 +6666,7 @@ iwm_deauth(struct iwm_softc *sc)
 			return err;
 		}
 		sc->sc_flags &= ~IWM_FLAG_STA_ACTIVE;
+		sc->sc_rx_ba_sessions = 0;
 	}
 
 	tfd_queue_msk = 0;
@@ -6743,6 +6744,7 @@ iwm_disassoc(struct iwm_softc *sc)
 			return err;
 		}
 		sc->sc_flags &= ~IWM_FLAG_STA_ACTIVE;
+		sc->sc_rx_ba_sessions = 0;
 	}
 
 	return 0;
@@ -8116,6 +8118,8 @@ iwm_stop(struct ifnet *ifp)
 	sc->sc_flags &= ~IWM_FLAG_TE_ACTIVE;
 	sc->sc_flags &= ~IWM_FLAG_HW_ERR;
 	sc->sc_flags &= ~IWM_FLAG_SHUTDOWN;
+
+	sc->sc_rx_ba_sessions = 0;
 
 	sc->sc_newstate(ic, IEEE80211_S_INIT, -1);
 

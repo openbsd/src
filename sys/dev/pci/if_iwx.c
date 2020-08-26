@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.43 2020/08/02 11:11:07 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.44 2020/08/26 17:12:00 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5736,6 +5736,7 @@ iwx_deauth(struct iwx_softc *sc)
 			return err;
 		}
 		sc->sc_flags &= ~IWX_FLAG_STA_ACTIVE;
+		sc->sc_rx_ba_sessions = 0;
 	}
 
 	if (sc->sc_flags & IWX_FLAG_BINDING_ACTIVE) {
@@ -5801,6 +5802,7 @@ iwx_disassoc(struct iwx_softc *sc)
 			return err;
 		}
 		sc->sc_flags &= ~IWX_FLAG_STA_ACTIVE;
+		sc->sc_rx_ba_sessions = 0;
 	}
 
 	return 0;
@@ -6759,6 +6761,8 @@ iwx_stop(struct ifnet *ifp)
 	sc->sc_flags &= ~IWX_FLAG_TE_ACTIVE;
 	sc->sc_flags &= ~IWX_FLAG_HW_ERR;
 	sc->sc_flags &= ~IWX_FLAG_SHUTDOWN;
+
+	sc->sc_rx_ba_sessions = 0;
 
 	sc->sc_newstate(ic, IEEE80211_S_INIT, -1);
 
