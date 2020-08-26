@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.162 2020/08/25 15:08:08 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.163 2020/08/26 14:49:48 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -909,6 +909,7 @@ int	 ikev2_childsa_delete(struct iked *, struct iked_sa *,
 void	 ikev2_ikesa_recv_delete(struct iked *, struct iked_sa *);
 void	 ikev2_ike_sa_timeout(struct iked *env, void *);
 void	 ikev2_ike_sa_setreason(struct iked_sa *, char *);
+void	 ikev2_reset_alive_timer(struct iked *);
 int	 ikev2_ike_sa_delete(struct iked *, struct iked_sa *);
 
 struct ibuf *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.249 2020/08/25 15:08:08 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.250 2020/08/26 14:49:48 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1428,7 +1428,8 @@ ikev2_enable_timer(struct iked *env, struct iked_sa *sa)
 {
 	sa->sa_last_recvd = gettime();
 	timer_set(env, &sa->sa_timer, ikev2_ike_sa_alive, sa);
-	timer_add(env, &sa->sa_timer, env->sc_alive_timeout);
+	if (env->sc_alive_timeout > 0)
+		timer_add(env, &sa->sa_timer, env->sc_alive_timeout);
 	timer_set(env, &sa->sa_keepalive, ikev2_ike_sa_keepalive, sa);
 	if (sa->sa_usekeepalive)
 		timer_add(env, &sa->sa_keepalive,
@@ -1436,6 +1437,20 @@ ikev2_enable_timer(struct iked *env, struct iked_sa *sa)
 	timer_set(env, &sa->sa_rekey, ikev2_ike_sa_rekey, sa);
 	if (sa->sa_policy->pol_rekey)
 		ikev2_ike_sa_rekey_schedule(env, sa);
+}
+
+void
+ikev2_reset_alive_timer(struct iked *env)
+{
+	struct iked_sa			*sa;
+
+	RB_FOREACH(sa, iked_sas, &env->sc_sas) {
+		if (sa->sa_state != IKEV2_STATE_ESTABLISHED)
+			continue;
+		timer_del(env, &sa->sa_timer);
+		if (env->sc_alive_timeout > 0)
+			timer_add(env, &sa->sa_timer, env->sc_alive_timeout);
+	}
 }
 
 void
@@ -4467,6 +4482,9 @@ ikev2_ike_sa_alive(struct iked *env, void *arg)
 	uint64_t			 last_used, diff;
 	int				 foundin = 0, foundout = 0;
 	int				 ikeidle = 0;
+
+	if (env->sc_alive_timeout == 0)
+		return;
 
 	/* check for incoming traffic on any child SA */
 	TAILQ_FOREACH(csa, &sa->sa_childsas, csa_entry) {
