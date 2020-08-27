@@ -1,4 +1,4 @@
-/* $OpenBSD: roff.c,v 1.247 2020/08/03 10:52:38 schwarze Exp $ */
+/* $OpenBSD: roff.c,v 1.248 2020/08/27 12:58:00 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -2360,7 +2360,9 @@ roff_cond_checkend(ROFF_ARGS)
 	while ((ep = strchr(ep, '\\')) != NULL) {
 		switch (ep[1]) {
 		case '}':
-			if (rr)
+			if (ep[2] == '\0')
+				ep[0] = '\0';
+			else if (rr)
 				ep[1] = '&';
 			else
 				memmove(ep, ep + 2, strlen(ep + 2) + 1);
