@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.39 2020/08/04 09:32:05 mvs Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.40 2020/08/27 10:47:52 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -169,7 +169,8 @@ struct pipex_session {
 	uint16_t	ip_forward:1,	/* [N] {en|dis}ableIP forwarding */
 			ip6_forward:1,	/* [I] {en|dis}able IPv6 forwarding */
 			is_multicast:1,	/* [I] virtual entry for multicast */
-			reserved:13;
+			is_pppx:1,	/* [I] interface is point2point(pppx) */
+			reserved:12;
 	uint16_t	protocol;		/* [I] tunnel protocol (PK) */
 	uint16_t	session_id;		/* [I] session-id (PK) */
 	uint16_t	peer_session_id;	/* [I] peer's session-id */
@@ -182,8 +183,8 @@ struct pipex_session {
 	struct sockaddr_in6 ip6_address; /* [I] remote IPv6 address */
 	int		ip6_prefixlen;   /* [I] remote IPv6 prefixlen */
 
-	struct pipex_iface_context* pipex_iface; /* [N] context for interface */
 	u_int		ifindex;		/* [N] interface index */
+	void		*ownersc;		/* [I] owner context */
 
 	uint32_t	ppp_flags;		/* [I] configure flags */
 #ifdef PIPEX_MPPE
@@ -285,6 +286,7 @@ extern struct pipex_hash_head	pipex_session_list;
 extern struct pipex_hash_head	pipex_close_wait_list;
 extern struct pipex_hash_head	pipex_peer_addr_hashtable[];
 extern struct pipex_hash_head	pipex_id_hashtable[];
+extern struct pool		pipex_session_pool;
 
 
 #define PIPEX_ID_HASHTABLE(key)						\
@@ -375,24 +377,21 @@ extern struct pipex_hash_head	pipex_id_hashtable[];
 #define PIPEX_TCP_OPTLEN 40
 #define	PIPEX_L2TP_MINLEN	8
 
-void                  pipex_iface_start (struct pipex_iface_context *);
-void                  pipex_iface_stop (struct pipex_iface_context *);
+void                  pipex_destroy_all_sessions (void *);
 int                   pipex_init_session(struct pipex_session **,
                                              struct pipex_session_req *);
 void                  pipex_rele_session(struct pipex_session *);
 int                   pipex_link_session(struct pipex_session *,
-                                             struct pipex_iface_context *);
+                          struct ifnet *, void *);
 void                  pipex_unlink_session(struct pipex_session *);
-int                   pipex_add_session (struct pipex_session_req *, struct pipex_iface_context *);
 int                   pipex_close_session (struct pipex_session_close_req *,
                           struct pipex_iface_context *);
 int                   pipex_config_session (struct pipex_session_config_req *,
-                          struct pipex_iface_context *);
+                          void *);
 int                   pipex_get_stat (struct pipex_session_stat_req *,
-                          struct pipex_iface_context *);
+                          void *);
 int                   pipex_get_closed (struct pipex_session_list_req *,
-                          struct pipex_iface_context *);
-int                   pipex_destroy_session (struct pipex_session *);
+                          void *);
 struct pipex_session  *pipex_lookup_by_ip_address (struct in_addr);
 struct pipex_session  *pipex_lookup_by_session_id (int, int);
 void                  pipex_ip_output (struct mbuf *, struct pipex_session *);

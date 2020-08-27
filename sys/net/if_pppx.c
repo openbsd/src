@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.101 2020/08/14 11:05:38 mvs Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.102 2020/08/27 10:47:52 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -163,7 +163,6 @@ struct pppx_if {
 	struct ifnet		pxi_if;
 	struct pppx_dev		*pxi_dev;		/* [I] */
 	struct pipex_session	*pxi_session;		/* [I] */
-	struct pipex_iface_context	pxi_ifcontext;	/* [N] */
 };
 
 static inline int
@@ -181,12 +180,6 @@ int		pppx_add_session(struct pppx_dev *,
 		    struct pipex_session_req *);
 int		pppx_del_session(struct pppx_dev *,
 		    struct pipex_session_close_req *);
-int		pppx_config_session(struct pppx_dev *,
-		    struct pipex_session_config_req *);
-int		pppx_get_stat(struct pppx_dev *,
-		    struct pipex_session_stat_req *);
-int		pppx_get_closed(struct pppx_dev *,
-		    struct pipex_session_list_req *);
 int		pppx_set_session_descr(struct pppx_dev *,
 		    struct pipex_session_descr_req *);
 
@@ -424,17 +417,6 @@ pppxioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	NET_LOCK();
 	switch (cmd) {
-	case PIPEXSMODE:
-		/*
-		 * npppd always enables on open, and only disables before
-		 * closing. we cheat and let open and close do that, so lie
-		 * to npppd.
-		 */
-		break;
-	case PIPEXGMODE:
-		*(int *)addr = 1;
-		break;
-
 	case PIPEXASESSION:
 		error = pppx_add_session(pxd,
 		    (struct pipex_session_req *)addr);
@@ -443,21 +425,6 @@ pppxioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case PIPEXDSESSION:
 		error = pppx_del_session(pxd,
 		    (struct pipex_session_close_req *)addr);
-		break;
-
-	case PIPEXCSESSION:
-		error = pppx_config_session(pxd,
-		    (struct pipex_session_config_req *)addr);
-		break;
-
-	case PIPEXGSTAT:
-		error = pppx_get_stat(pxd,
-		    (struct pipex_session_stat_req *)addr);
-		break;
-
-	case PIPEXGCLOSED:
-		error = pppx_get_closed(pxd,
-		    (struct pipex_session_list_req *)addr);
 		break;
 
 	case PIPEXSIFDESCR:
@@ -472,7 +439,7 @@ pppxioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		break;
 
 	default:
-		error = ENOTTY;
+		error = pipex_ioctl(pxd, cmd, addr);
 		break;
 	}
 	NET_UNLOCK();
@@ -741,11 +708,7 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 		if_addrhooks_run(ifp);
 	}
 
-	/* fake a pipex interface context */
-	pxi->pxi_ifcontext.ifindex = ifp->if_index;
-	pxi->pxi_ifcontext.pipexmode = PIPEX_ENABLED;
-
-	error = pipex_link_session(session, &pxi->pxi_ifcontext);
+	error = pipex_link_session(session, ifp, pxd);
 	if (error)
 		goto detach;
 
@@ -783,40 +746,6 @@ pppx_del_session(struct pppx_dev *pxd, struct pipex_session_close_req *req)
 
 	pppx_if_destroy(pxd, pxi);
 	return (0);
-}
-
-int
-pppx_config_session(struct pppx_dev *pxd,
-    struct pipex_session_config_req *req)
-{
-	struct pppx_if *pxi;
-
-	pxi = pppx_if_find(pxd, req->pcr_session_id, req->pcr_protocol);
-	if (pxi == NULL)
-		return (EINVAL);
-
-	return pipex_config_session(req, &pxi->pxi_ifcontext);
-}
-
-int
-pppx_get_stat(struct pppx_dev *pxd, struct pipex_session_stat_req *req)
-{
-	struct pppx_if *pxi;
-
-	pxi = pppx_if_find(pxd, req->psr_session_id, req->psr_protocol);
-	if (pxi == NULL)
-		return (EINVAL);
-
-	return pipex_get_stat(req, &pxi->pxi_ifcontext);
-}
-
-int
-pppx_get_closed(struct pppx_dev *pxd, struct pipex_session_list_req *req)
-{
-	/* XXX: Only opened sessions exist for pppx(4) */
-	memset(req, 0, sizeof(*req));
-
-	return 0;
 }
 
 int
@@ -1014,8 +943,8 @@ struct pppac_softc {
 	struct mutex	sc_wsel_mtx;
 	struct selinfo	sc_wsel;
 
-	struct pipex_iface_context
-			sc_pipex_iface;
+	struct pipex_session
+			*sc_multicast_session;
 
 	struct mbuf_queue
 			sc_mq;
@@ -1047,6 +976,10 @@ static struct pppac_list pppac_devs = LIST_HEAD_INITIALIZER(pppac_devs);
 
 static int	pppac_ioctl(struct ifnet *, u_long, caddr_t);
 
+static int	pppac_add_session(struct pppac_softc *,
+		    struct pipex_session_req *);
+static int	pppac_del_session(struct pppac_softc *,
+		    struct pipex_session_close_req *);
 static int	pppac_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 		    struct rtentry *);
 static void	pppac_qstart(struct ifqueue *);
@@ -1075,12 +1008,19 @@ pppacopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct pppac_softc *sc;
 	struct ifnet *ifp;
+	struct pipex_session *session;
 
 	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
 	if (pppac_lookup(dev) != NULL) {
 		free(sc, M_DEVBUF, sizeof(*sc));
 		return (EBUSY);
 	}
+
+	/* virtual pipex_session entry for multicast */
+	session = pool_get(&pipex_session_pool, PR_WAITOK | PR_ZERO);
+	session->is_multicast = 1;
+	session->ownersc = sc;
+	sc->sc_multicast_session = session;
 
 	sc->sc_dev = dev;
 
@@ -1111,8 +1051,6 @@ pppacopen(dev_t dev, int flags, int mode, struct proc *p)
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(uint32_t));
 #endif
-
-	pipex_iface_init(&sc->sc_pipex_iface, ifp->if_index);
 
 	return (0);
 }
@@ -1245,6 +1183,7 @@ pppacioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	struct pppac_softc *sc = pppac_lookup(dev);
 	int error = 0;
 
+	NET_LOCK();
 	switch (cmd) {
 	case TUNSIFMODE: /* make npppd happy */
 		break;
@@ -1255,10 +1194,18 @@ pppacioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 		*(int *)data = mq_hdatalen(&sc->sc_mq);
 		break;
 
+	case PIPEXASESSION:
+		error = pppac_add_session(sc, (struct pipex_session_req *)data);
+		break;
+	case PIPEXDSESSION:
+		error = pppac_del_session(sc,
+		    (struct pipex_session_close_req *)data);
+		break;
 	default:
-		error = pipex_ioctl(&sc->sc_pipex_iface, cmd, data);
+		error = pipex_ioctl(sc, cmd, data);
 		break;
 	}
+	NET_UNLOCK();
 
 	return (error);
 }
@@ -1373,7 +1320,10 @@ pppacclose(dev_t dev, int flags, int mode, struct proc *p)
 
 	if_detach(ifp);
 
-	pipex_iface_fini(&sc->sc_pipex_iface);
+	pool_put(&pipex_session_pool, sc->sc_multicast_session);
+	NET_LOCK();
+	pipex_destroy_all_sessions(sc);
+	NET_UNLOCK();
 
 	LIST_REMOVE(sc, sc_entry);
 	free(sc, M_DEVBUF, sizeof(*sc));
@@ -1417,6 +1367,37 @@ pppac_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 }
 
 static int
+pppac_add_session(struct pppac_softc *sc, struct pipex_session_req *req)
+{
+	int error;
+	struct pipex_session *session;
+
+	error = pipex_init_session(&session, req);
+	if (error != 0)
+		return (error);
+	error = pipex_link_session(session, &sc->sc_if, sc);
+	if (error != 0)
+		pipex_rele_session(session);
+
+	return (error);
+}
+
+static int
+pppac_del_session(struct pppac_softc *sc, struct pipex_session_close_req *req)
+{
+	struct pipex_session *session;
+
+	session = pipex_lookup_by_session_id(req->pcr_protocol,
+	    req->pcr_session_id);
+	if (session == NULL || session->ownersc != sc)
+		return (EINVAL);
+	pipex_unlink_session(session);
+	pipex_rele_session(session);
+
+	return (0);
+}
+
+static int
 pppac_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
     struct rtentry *rt)
 {
@@ -1452,7 +1433,10 @@ pppac_qstart(struct ifqueue *ifq)
 {
 	struct ifnet *ifp = ifq->ifq_if;
 	struct pppac_softc *sc = ifp->if_softc;
-	struct mbuf *m;
+	struct mbuf *m, *m0;
+	struct pipex_session *session;
+	struct ip ip;
+	int rv;
 
 	NET_LOCK();
 	while ((m = ifq_dequeue(ifq)) != NULL) {
@@ -1463,19 +1447,45 @@ pppac_qstart(struct ifqueue *ifq)
 		}
 #endif
 
-		m = pipex_output(m, m->m_pkthdr.ph_family, 0,
-		    &sc->sc_pipex_iface);
-		if (m == NULL)
+		switch (m->m_pkthdr.ph_family) {
+		case AF_INET:
+			if (m->m_pkthdr.len < sizeof(struct ip))
+				goto bad;
+			m_copydata(m, 0, sizeof(struct ip), (caddr_t)&ip);
+			if (IN_MULTICAST(ip.ip_dst.s_addr)) {
+				/* pass a copy to pipex */
+				m0 = m_copym(m, 0, M_COPYALL, M_NOWAIT);
+				if (m0 != NULL)
+					pipex_ip_output(m0,
+					    sc->sc_multicast_session);
+				else
+					goto bad;
+			} else {
+				session = pipex_lookup_by_ip_address(ip.ip_dst);
+				if (session != NULL) {
+					pipex_ip_output(m, session);
+					m = NULL;
+				}
+			}
+			break;
+		}
+		if (m == NULL)	/* handled by pipex */
 			continue;
 
 		m = m_prepend(m, sizeof(uint32_t), M_DONTWAIT);
-		if (m == NULL) {
-			/* oh well */
-			continue;
-		}
+		if (m == NULL)
+			goto bad;
 		*mtod(m, uint32_t *) = htonl(m->m_pkthdr.ph_family);
 
-		mq_enqueue(&sc->sc_mq, m); /* qdrop */
+		rv = mq_enqueue(&sc->sc_mq, m);
+		if (rv == 1)
+			counters_inc(ifp->if_counters, ifc_collisions);
+		continue;
+bad:
+		counters_inc(ifp->if_counters, ifc_oerrors);
+		if (m != NULL)
+			m_freem(m);
+		continue;
 	}
 	NET_UNLOCK();
 

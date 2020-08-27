@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.h,v 1.27 2020/08/04 09:32:05 mvs Exp $	*/
+/*	$OpenBSD: pipex.h,v 1.28 2020/08/27 10:47:52 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -194,13 +194,8 @@ struct pipex_iface_context {
 
 __BEGIN_DECLS
 void                  pipex_init (void);
-void                  pipex_iface_init (struct pipex_iface_context *, u_int);
 void                  pipex_iface_fini (struct pipex_iface_context *);
 
-int                   pipex_notify_close_session(struct pipex_session *session);
-int                   pipex_notify_close_session_all(void);
-
-struct mbuf           *pipex_output (struct mbuf *, int, int, struct pipex_iface_context *);
 struct pipex_session  *pipex_pppoe_lookup_session (struct mbuf *);
 struct mbuf           *pipex_pppoe_input (struct mbuf *, struct pipex_session *);
 struct pipex_session  *pipex_pptp_lookup_session (struct mbuf *);
@@ -214,7 +209,7 @@ struct mbuf           *pipex_l2tp_input (struct mbuf *, int off, struct pipex_se
 struct pipex_session  *pipex_l2tp_userland_lookup_session_ipv4 (struct mbuf *, struct in_addr);
 struct pipex_session  *pipex_l2tp_userland_lookup_session_ipv6 (struct mbuf *, struct in6_addr);
 struct mbuf           *pipex_l2tp_userland_output (struct mbuf *, struct pipex_session *);
-int                   pipex_ioctl (struct pipex_iface_context *, u_long, caddr_t);
+int                   pipex_ioctl (void *, u_long, caddr_t);
 void                  pipex_session_init_mppe_recv(struct pipex_session *, int,
 int, u_char *);
 void                  pipex_session_init_mppe_send(struct pipex_session *, int,
