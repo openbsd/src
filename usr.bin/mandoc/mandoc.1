@@ -1,4 +1,4 @@
-.\" $OpenBSD: mandoc.1,v 1.170 2020/07/20 14:52:12 schwarze Exp $
+.\" $OpenBSD: mandoc.1,v 1.171 2020/08/27 14:28:08 schwarze Exp $
 .\"
 .\" Copyright (c) 2012, 2014-2020 Ingo Schwarze <schwarze@openbsd.org>
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 20 2020 $
+.Dd $Mdocdate: August 27 2020 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -423,10 +423,17 @@ MANPAGER='lynx -force_html' man -T html -O tag=MANPAGER man
 MANPAGER='w3m -T text/html' man -T html -O tag=toc mandoc
 .Ed
 .Pp
-This argument does not work with
+Consequently, for HTML output, this argument does not work with
 .Xr more 1
 or
 .Xr less 1 .
+For example,
+.Ql MANPAGER=less man -T html -O tag=toc mandoc
+does not work because
+.Xr less 1
+does not support
+.Ic file://
+URIs.
 .It Cm toc
 If an input file contains at least two non-standard sections,
 print a table of contents near the beginning of the output.
