@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.791 2020/08/20 16:57:40 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.792 2020/08/27 06:55:54 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 20 2020 $
+.Dd $Mdocdate: August 27 2020 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -4773,6 +4773,7 @@ The following variables are available, where appropriate:
 .It Li "pane_in_mode" Ta "" Ta "1 if pane is in a mode"
 .It Li "pane_index" Ta "#P" Ta "Index of pane"
 .It Li "pane_input_off" Ta "" Ta "1 if input to pane is disabled"
+.It Li "pane_last" Ta "" Ta "1 if last pane"
 .It Li "pane_left" Ta "" Ta "Left of pane"
 .It Li "pane_marked" Ta "" Ta "1 if this is the marked pane"
 .It Li "pane_marked_set" Ta "" Ta "1 if a marked pane is set"
