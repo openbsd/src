@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cpumem_get.9,v 1.10 2020/08/03 05:15:53 dlg Exp $
+.\"	$OpenBSD: cpumem_get.9,v 1.11 2020/08/27 09:29:16 fcambus Exp $
 .\"
 .\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 3 2020 $
+.Dd $Mdocdate: August 27 2020 $
 .Dt CPUMEM_GET 9
 .Os
 .Sh NAME
@@ -58,7 +58,7 @@
 The per CPU memory API provides wrappers around the allocation of
 and access to per CPU memory.
 .Pp
-An alternate implemention of the API is provided on uni-processor
+An alternate implementation of the API is provided on uni-processor
 (i.e. when the kernel is not built with
 .Dv MULTIPROCESSOR
 defined)
