@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.81 2020/08/23 11:08:02 mglocker Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.82 2020/08/27 17:33:07 patrick Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -517,6 +517,7 @@ uhidev_open(struct uhidev *scd)
 		error = EIO;
 		goto out1;
 	}
+	usbd_clear_endpoint_stall(sc->sc_ipipe);
 
 	DPRINTF(("uhidev_open: sc->sc_ipipe=%p\n", sc->sc_ipipe));
 
@@ -536,13 +537,14 @@ uhidev_open(struct uhidev *scd)
 
 		err = usbd_open_pipe(sc->sc_iface, sc->sc_oep_addr,
 		    0, &sc->sc_opipe);
-
 		if (err != USBD_NORMAL_COMPLETION) {
 			DPRINTF(("uhidev_open: usbd_open_pipe failed, "
 			    "error=%d\n", err));
 			error = EIO;
 			goto out2;
 		}
+		usbd_clear_endpoint_stall(sc->sc_opipe);
+
 		DPRINTF(("uhidev_open: sc->sc_opipe=%p\n", sc->sc_opipe));
 
 		sc->sc_oxfer = usbd_alloc_xfer(sc->sc_udev);
