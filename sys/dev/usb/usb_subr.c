@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.151 2020/07/31 10:49:33 mglocker Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.152 2020/08/27 19:34:37 mglocker Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1381,7 +1381,7 @@ usbd_get_cdesc(struct usbd_device *dev, int index, u_int *lenp)
 		err = usbd_get_desc(dev, UDESC_CONFIG, index,
 		    USB_CONFIG_DESCRIPTOR_SIZE, &cdescr);
 		if (err || cdescr.bDescriptorType != UDESC_CONFIG)
-			return (0);
+			return (NULL);
 		len = UGETW(cdescr.wTotalLength);
 		DPRINTFN(5,("%s: index=%d, len=%u\n", __func__, index, len));
 		if (lenp)
@@ -1390,7 +1390,7 @@ usbd_get_cdesc(struct usbd_device *dev, int index, u_int *lenp)
 		err = usbd_get_desc(dev, UDESC_CONFIG, index, len, cdesc);
 		if (err) {
 			free(cdesc, M_TEMP, len);
-			return (0);
+			return (NULL);
 		}
 	}
 	return (cdesc);
