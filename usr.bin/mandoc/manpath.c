@@ -1,4 +1,4 @@
-/*	$OpenBSD: manpath.c,v 1.29 2020/07/21 15:08:49 schwarze Exp $ */
+/*	$OpenBSD: manpath.c,v 1.30 2020/08/27 14:59:42 schwarze Exp $ */
 /*
  * Copyright (c) 2011,2014,2015,2017-2019 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -225,8 +225,12 @@ int
 manconf_output(struct manoutput *conf, const char *cp, int fromfile)
 {
 	const char *const toks[] = {
+	    /* Tokens requiring an argument. */
 	    "includes", "man", "paper", "style", "indent", "width",
-	    "tag", "outfilename", "tagfilename",
+	    "outfilename", "tagfilename",
+	    /* Token taking an optional argument. */
+	    "tag",
+	    /* Tokens not taking arguments. */
 	    "fragment", "mdoc", "noval", "toc"
 	};
 	const size_t ntoks = sizeof(toks) / sizeof(toks[0]);
@@ -309,25 +313,29 @@ manconf_output(struct manoutput *conf, const char *cp, int fromfile)
 		    "-O width=%s is %s", cp, errstr);
 		return -1;
 	case 6:
-		if (conf->tag != NULL) {
-			oldval = mandoc_strdup(conf->tag);
-			break;
-		}
-		conf->tag = mandoc_strdup(cp);
-		return 0;
-	case 7:
 		if (conf->outfilename != NULL) {
 			oldval = mandoc_strdup(conf->outfilename);
 			break;
 		}
 		conf->outfilename = mandoc_strdup(cp);
 		return 0;
-	case 8:
+	case 7:
 		if (conf->tagfilename != NULL) {
 			oldval = mandoc_strdup(conf->tagfilename);
 			break;
 		}
 		conf->tagfilename = mandoc_strdup(cp);
+		return 0;
+	/*
+	 * If the index of the following token changes,
+	 * do not forget to adjust the range check above the switch.
+	 */
+	case 8:
+		if (conf->tag != NULL) {
+			oldval = mandoc_strdup(conf->tag);
+			break;
+		}
+		conf->tag = mandoc_strdup(cp);
 		return 0;
 	case 9:
 		conf->fragment = 1;
