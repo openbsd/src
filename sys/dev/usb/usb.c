@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.124 2019/10/06 17:11:51 mpi Exp $	*/
+/*	$OpenBSD: usb.c,v 1.125 2020/08/27 19:55:00 mglocker Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -740,7 +740,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 		usb_config_descriptor_t *cdesc;
 		struct iovec iov;
 		struct uio uio;
-		size_t len;
+		size_t len, cdesc_len;
 
 		if (addr < 1 || addr >= USB_MAX_DEVICES)
 			return (EINVAL);
@@ -755,7 +755,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 		    USB_TASK_TYPE_GENERIC);
 		usb_add_task(sc->sc_bus->root_hub, &udf_task);
 		usb_wait_task(sc->sc_bus->root_hub, &udf_task);
-		len = udf->udf_size;
+		len = cdesc_len = udf->udf_size;
 		cdesc = (usb_config_descriptor_t *)udf->udf_data;
 		*udf = save_udf;
 		if (cdesc == NULL)
@@ -772,7 +772,7 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, struct proc *p)
 		uio.uio_rw = UIO_READ;
 		uio.uio_procp = p;
 		error = uiomove((void *)cdesc, len, &uio);
-		free(cdesc, M_TEMP, UGETW(cdesc->wTotalLength));
+		free(cdesc, M_TEMP, cdesc_len);
 		return (error);
 	}
 
