@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicpu.c,v 1.87 2020/08/26 17:10:49 kettenis Exp $ */
+/* $OpenBSD: acpicpu.c,v 1.88 2020/08/27 01:08:55 jmatthew Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
@@ -652,9 +652,16 @@ acpicpu_match(struct device *parent, void *match, void *aux)
 {
 	struct acpi_attach_args	*aa = aux;
 	struct cfdata		*cf = match;
+	struct acpi_softc	*acpi = (struct acpi_softc *)parent;
 
-	if (acpi_matchhids(aa, acpicpu_hids, cf->cf_driver->cd_name))
+	if (acpi_matchhids(aa, acpicpu_hids, cf->cf_driver->cd_name)) {
+		/*
+		 * Record that we've seen a Device() CPU object,
+		 * so we won't attach any Processor() nodes.
+		 */
+		acpi->sc_skip_processor = 1;
 		return (1);
+	}
 
 	/* sanity */
 	if (aa->aaa_name == NULL ||

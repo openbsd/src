@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.110 2020/08/16 16:08:10 gnezdo Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.111 2020/08/27 01:08:55 jmatthew Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -278,6 +278,8 @@ struct acpi_softc {
 	int			sc_pse;		/* passive cooling enabled */
 
 	int			sc_flags;
+
+	int			sc_skip_processor;
 };
 
 extern struct acpi_softc *acpi_softc;

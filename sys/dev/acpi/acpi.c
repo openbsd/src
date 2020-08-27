@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.390 2020/08/16 16:08:10 gnezdo Exp $ */
+/* $OpenBSD: acpi.c,v 1.391 2020/08/27 01:08:55 jmatthew Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1213,8 +1213,6 @@ acpi_attach_common(struct acpi_softc *sc, paddr_t base)
 	/* check if we're running on a sony */
 	aml_find_node(&aml_root, "GBRT", acpi_foundsony, sc);
 
-	aml_walknodes(&aml_root, AML_WALK_PRE, acpi_add_device, sc);
-
 #ifndef SMALL_KERNEL
 	/* try to find smart battery first */
 	aml_find_node(&aml_root, "_HID", acpi_foundsbs, sc);
@@ -1222,6 +1220,8 @@ acpi_attach_common(struct acpi_softc *sc, paddr_t base)
 
 	/* attach battery, power supply and button devices */
 	aml_find_node(&aml_root, "_HID", acpi_foundhid, sc);
+
+	aml_walknodes(&aml_root, AML_WALK_PRE, acpi_add_device, sc);
 
 #ifndef SMALL_KERNEL
 #if NWD > 0
@@ -2176,6 +2176,8 @@ acpi_add_device(struct aml_node *node, void *arg)
 
 	switch (node->value->type) {
 	case AML_OBJTYPE_PROCESSOR:
+		if (sc->sc_skip_processor != 0)
+			return 0;
 		if (nacpicpus >= ncpus)
 			return 0;
 		if (aml_evalnode(sc, aaa.aaa_node, 0, NULL, &res) == 0) {
