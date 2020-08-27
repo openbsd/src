@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.3 2019/12/12 13:09:35 bluhm Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.4 2020/08/27 16:54:23 patrick Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -238,19 +238,39 @@ protect_writeable(uint64_t addr, size_t len)
 {
 	uint64_t end = addr + len;
 	uint64_t *cr3, *p;
-	size_t off;
+	uint64_t cr0;
+	size_t idx;
 
+	__asm volatile("movq %%cr0, %0;" : "=r"(cr0) : :);
+	if ((cr0 & CR0_PG) == 0)
+		return;
 	__asm volatile("movq %%cr3, %0;" : "=r"(cr3) : :);
 
 	for (addr &= ~(uint64_t)PAGE_MASK; addr < end; addr += PAGE_SIZE) {
-		off = (addr & L4_MASK) >> L4_SHIFT;
-		p = (void *)(cr3[off] & ~(uint64_t)PAGE_MASK);
-		off = (addr & L3_MASK) >> L3_SHIFT;
-		p = (void *)(p[off] & ~(uint64_t)PAGE_MASK);
-		off = (addr & L2_MASK) >> L2_SHIFT;
-		p = (void *)(p[off] & ~(uint64_t)PAGE_MASK);
-		off = (addr & L1_MASK) >> L1_SHIFT;
-		p[off] |= PG_RW;
+		idx = (addr & L4_MASK) >> L4_SHIFT;
+		if ((p[idx] & PG_RW) == 0)
+			p[idx] |= PG_RW;
+		if (p[idx] & PG_PS)
+			continue;
+		p = (uint64_t *)(cr3[idx] & PG_FRAME);
+
+		idx = (addr & L3_MASK) >> L3_SHIFT;
+		if ((p[idx] & PG_RW) == 0)
+			p[idx] |= PG_RW;
+		if (p[idx] & PG_PS)
+			continue;
+		p = (uint64_t *)(p[idx] & PG_FRAME);
+
+		idx = (addr & L2_MASK) >> L2_SHIFT;
+		if ((p[idx] & PG_RW) == 0)
+			p[idx] |= PG_RW;
+		if (p[idx] & PG_PS)
+			continue;
+		p = (uint64_t *)(p[idx] & PG_FRAME);
+
+		idx = (addr & L1_MASK) >> L1_SHIFT;
+		if ((p[idx] & PG_RW) == 0)
+			p[idx] |= PG_RW;
 	}
 
 	/* tlb flush */
