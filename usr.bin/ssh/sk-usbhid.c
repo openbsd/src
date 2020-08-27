@@ -157,7 +157,8 @@ pick_first_device(void)
 /* Check if the specified key handle exists on a given device. */
 static int
 try_device(fido_dev_t *dev, const uint8_t *message, size_t message_len,
-    const char *application, const uint8_t *key_handle, size_t key_handle_len)
+    const char *application, const uint8_t *key_handle, size_t key_handle_len,
+    uint8_t flags, const char *pin)
 {
 	fido_assert_t *assert = NULL;
 	int r = FIDO_ERR_INTERNAL;
@@ -185,7 +186,7 @@ try_device(fido_dev_t *dev, const uint8_t *message, size_t message_len,
 		skdebug(__func__, "fido_assert_up: %s", fido_strerr(r));
 		goto out;
 	}
-	r = fido_dev_get_assert(dev, assert, NULL);
+	r = fido_dev_get_assert(dev, assert, pin);
 	skdebug(__func__, "fido_dev_get_assert: %s", fido_strerr(r));
 	if (r == FIDO_ERR_USER_PRESENCE_REQUIRED) {
 		/* U2F tokens may return this */
@@ -200,7 +201,8 @@ try_device(fido_dev_t *dev, const uint8_t *message, size_t message_len,
 /* Iterate over configured devices looking for a specific key handle */
 static fido_dev_t *
 find_device(const char *path, const uint8_t *message, size_t message_len,
-    const char *application, const uint8_t *key_handle, size_t key_handle_len)
+    const char *application, const uint8_t *key_handle, size_t key_handle_len,
+    uint8_t flags, const char *pin)
 {
 	fido_dev_info_t *devlist = NULL;
 	fido_dev_t *dev = NULL;
@@ -254,7 +256,7 @@ find_device(const char *path, const uint8_t *message, size_t message_len,
 			continue;
 		}
 		if (try_device(dev, message, message_len, application,
-		    key_handle, key_handle_len) == 0) {
+		    key_handle, key_handle_len, flags, pin) == 0) {
 			skdebug(__func__, "found key");
 			break;
 		}
@@ -564,19 +566,23 @@ sk_enroll(uint32_t alg, const uint8_t *challenge, size_t challenge_len,
 		skdebug(__func__, "fido_dev_open: %s", fido_strerr(r));
 		goto out;
 	}
-	if ((flags & SSH_SK_RESIDENT_KEY) != 0) {
+	if ((flags & (SSH_SK_RESIDENT_KEY|SSH_SK_USER_VERIFICATION_REQD)) != 0) {
 		if (check_sk_extensions(dev, "credProtect", &credprot) < 0) {
 			skdebug(__func__, "check_sk_extensions failed");
 			goto out;
 		}
 		if (credprot == 0) {
 			skdebug(__func__, "refusing to create unprotected "
-			    "resident key");
+			    "resident/verify-required key");
 			ret = SSH_SK_ERR_UNSUPPORTED;
 			goto out;
 		}
-		if ((r = fido_cred_set_prot(cred,
-		    FIDO_CRED_PROT_UV_OPTIONAL_WITH_ID)) != FIDO_OK) {
+		if ((flags & SSH_SK_USER_VERIFICATION_REQD))
+			credprot = FIDO_CRED_PROT_UV_REQUIRED;
+		else
+			credprot = FIDO_CRED_PROT_UV_OPTIONAL_WITH_ID;
+
+		if ((r = fido_cred_set_prot(cred, credprot)) != FIDO_OK) {
 			skdebug(__func__, "fido_cred_set_prot: %s",
 			    fido_strerr(r));
 			ret = fidoerr_to_skerr(r);
@@ -820,7 +826,7 @@ sk_sign(uint32_t alg, const uint8_t *data, size_t datalen,
 		goto out;
 	}
 	if ((dev = find_device(device, message, sizeof(message),
-	    application, key_handle, key_handle_len)) == NULL) {
+	    application, key_handle, key_handle_len, flags, pin)) == NULL) {
 		skdebug(__func__, "couldn't find device for key handle");
 		goto out;
 	}
@@ -849,8 +855,15 @@ sk_sign(uint32_t alg, const uint8_t *data, size_t datalen,
 		skdebug(__func__, "fido_assert_set_up: %s", fido_strerr(r));
 		goto out;
 	}
-	if ((r = fido_dev_get_assert(dev, assert, NULL)) != FIDO_OK) {
+	if (pin == NULL && (flags & SSH_SK_USER_VERIFICATION_REQD) &&
+	    (r = fido_assert_set_uv(assert, FIDO_OPT_TRUE)) != FIDO_OK) {
+		skdebug(__func__, "fido_assert_set_uv: %s", fido_strerr(r));
+		ret = FIDO_ERR_PIN_REQUIRED;
+		goto out;
+	}
+	if ((r = fido_dev_get_assert(dev, assert, pin)) != FIDO_OK) {
 		skdebug(__func__, "fido_dev_get_assert: %s", fido_strerr(r));
+		ret = fidoerr_to_skerr(r);
 		goto out;
 	}
 	if ((response = calloc(1, sizeof(*response))) == NULL) {
@@ -972,8 +985,9 @@ read_rks(const char *devpath, const char *pin,
 				continue;
 			}
 			skdebug(__func__, "Device %s RP \"%s\" slot %zu: "
-			    "type %d", devpath, fido_credman_rp_id(rp, i), j,
-			    fido_cred_type(cred));
+			    "type %d flags 0x%02x prot 0x%02x", devpath,
+			    fido_credman_rp_id(rp, i), j, fido_cred_type(cred),
+			    fido_cred_flags(cred), fido_cred_prot(cred));
 
 			/* build response entry */
 			if ((srk = calloc(1, sizeof(*srk))) == NULL ||
