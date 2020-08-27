@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.c,v 1.12 2020/08/21 22:59:27 kn Exp $ */
+/*	$OpenBSD: if_wg.c,v 1.13 2020/08/27 21:27:17 kn Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -2655,6 +2655,7 @@ wg_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_output = wg_output;
 
 	ifp->if_type = IFT_WIREGUARD;
+	ifp->if_rtrequest = p2p_rtrequest;
 
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
