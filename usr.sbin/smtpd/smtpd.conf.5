@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.250 2020/04/25 09:20:38 eric Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.251 2020/08/27 08:58:30 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: April 25 2020 $
+.Dd $Mdocdate: August 27 2020 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -604,7 +604,7 @@ Specify that session may originate from authenticated user or user list
 no matter the source IP address.
 .It Xo
 .Op Ic \&!
-.Cm from auth
+.Cm from auth regex
 .Ar user | Pf < Ar user Ns >
 .Xc
 Specify that session may originate from authenticated regex or regex list
