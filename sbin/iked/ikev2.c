@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.250 2020/08/26 14:49:48 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.251 2020/08/27 16:26:51 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -290,6 +290,7 @@ ikev2_dispatch_cert(int fd, struct privsep_proc *p, struct imsg *imsg)
 
 		break;
 	case IMSG_CERTVALID:
+	case IMSG_CERTINVALID:
 		/* Ignore invalid or unauthenticated SAs */
 		if ((sa = ikev2_getimsgdata(env, imsg,
 		    &sh, &type, &ptr, &len)) == NULL ||
@@ -312,24 +313,20 @@ ikev2_dispatch_cert(int fd, struct privsep_proc *p, struct imsg *imsg)
 			break;
 		}
 
-		if (sa->sa_peerauth.id_type && ikev2_auth_verify(env, sa))
-			break;
+		if (imsg->hdr.type == IMSG_CERTVALID) {
+			if (sa->sa_peerauth.id_type && ikev2_auth_verify(env, sa))
+				break;
 
-		log_debug("%s: peer certificate is valid", __func__);
-		sa_stateflags(sa, IKED_REQ_CERTVALID);
+			log_debug("%s: peer certificate is valid", __func__);
+			sa_stateflags(sa, IKED_REQ_CERTVALID);
 
-		if (ikev2_ike_auth(env, sa) != 0)
-			log_debug("%s: failed to send ike auth", __func__);
-		break;
-	case IMSG_CERTINVALID:
-		/* Ignore invalid or unauthenticated SAs */
-		if ((sa = ikev2_getimsgdata(env, imsg,
-		    &sh, &type, &ptr, &len)) == NULL ||
-		    sa->sa_state < IKEV2_STATE_EAP)
-			break;
-		log_warnx("%s: peer certificate is invalid",
-			SPI_SA(sa, __func__));
-		ikev2_send_auth_failed(env, sa);
+			if (ikev2_ike_auth(env, sa) != 0)
+				log_debug("%s: failed to send ike auth", __func__);
+		} else {
+			log_warnx("%s: peer certificate is invalid",
+				SPI_SA(sa, __func__));
+			ikev2_send_auth_failed(env, sa);
+		}
 		break;
 	case IMSG_CERT:
 		if ((sa = ikev2_getimsgdata(env, imsg,
