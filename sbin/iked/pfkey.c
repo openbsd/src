@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.69 2020/08/13 21:36:38 tobhe Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.70 2020/08/28 13:37:52 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1921,7 +1921,7 @@ pfkey_process(struct iked *env, struct pfkey_message *pm)
 		    print_host(sdst, NULL, 0), print_host(dmask, NULL, 0),
 		    print_host(speer, NULL, 0));
 
-		ret = ikev2_acquire_sa(env, &flow);
+		ret = ikev2_child_sa_acquire(env, &flow);
 
 out:
 		if (errmsg)
@@ -1968,9 +1968,9 @@ out:
 		    "rekeying" : "deletion");
 
 		if (sa_ltime->sadb_lifetime_exttype == SADB_EXT_LIFETIME_SOFT)
-			ret = ikev2_rekey_sa(env, &spi);
+			ret = ikev2_child_sa_rekey(env, &spi);
 		else
-			ret = ikev2_drop_sa(env, &spi);
+			ret = ikev2_child_sa_drop(env, &spi);
 		break;
 	}
 	return (ret);

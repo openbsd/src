@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.163 2020/08/26 14:49:48 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.164 2020/08/28 13:37:52 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -929,10 +929,10 @@ struct ikev2_payload *
 	 ikev2_add_payload(struct ibuf *);
 int	 ikev2_next_payload(struct ikev2_payload *, size_t,
 	    uint8_t);
-int	 ikev2_acquire_sa(struct iked *, struct iked_flow *);
+int	 ikev2_child_sa_acquire(struct iked *, struct iked_flow *);
+int	 ikev2_child_sa_drop(struct iked *, struct iked_spi *);
+int	 ikev2_child_sa_rekey(struct iked *, struct iked_spi *);
 void	 ikev2_disable_rekeying(struct iked *, struct iked_sa *);
-int	 ikev2_rekey_sa(struct iked *, struct iked_spi *);
-int	 ikev2_drop_sa(struct iked *, struct iked_spi *);
 int	 ikev2_print_id(struct iked_id *, char *, size_t);
 int	 ikev2_print_static_id(struct iked_static_id *, char *, size_t);
 

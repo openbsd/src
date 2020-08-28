@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.251 2020/08/27 16:26:51 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.252 2020/08/28 13:37:52 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -6007,7 +6007,7 @@ ikev2_valid_proposal(struct iked_proposal *prop,
 
 /* return 0 if processed, -1 if busy */
 int
-ikev2_acquire_sa(struct iked *env, struct iked_flow *acquire)
+ikev2_child_sa_acquire(struct iked *env, struct iked_flow *acquire)
 {
 	struct iked_flow	*flow;
 	struct iked_sa		*sa;
@@ -6074,7 +6074,7 @@ ikev2_disable_rekeying(struct iked *env, struct iked_sa *sa)
 
 /* return 0 if processed, -1 if busy */
 int
-ikev2_rekey_sa(struct iked *env, struct iked_spi *rekey)
+ikev2_child_sa_rekey(struct iked *env, struct iked_spi *rekey)
 {
 	struct iked_childsa		*csa, key;
 	struct iked_sa			*sa;
@@ -6112,7 +6112,7 @@ ikev2_rekey_sa(struct iked *env, struct iked_spi *rekey)
 
 /* return 0 if processed, -1 if busy */
 int
-ikev2_drop_sa(struct iked *env, struct iked_spi *drop)
+ikev2_child_sa_drop(struct iked *env, struct iked_spi *drop)
 {
 	struct ibuf			*buf = NULL;
 	struct iked_childsa		*csa, key;
