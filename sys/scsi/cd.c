@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.254 2020/08/28 15:18:14 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.255 2020/08/28 18:57:16 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -111,6 +111,8 @@ struct cd_softc {
 
 void	cdstart(struct scsi_xfer *);
 void	cd_buf_done(struct scsi_xfer *);
+void	cd_cmd_rw6(struct scsi_xfer *, int, u_int64_t, u_int);
+void	cd_cmd_rw10(struct scsi_xfer *, int, u_int64_t, u_int);
 void	cdminphys(struct buf *);
 int	cdgetdisklabel(dev_t, struct cd_softc *, struct disklabel *, int);
 int	cd_setchan(struct cd_softc *, int, int, int, int, int);
@@ -482,6 +484,30 @@ done:
 		device_unref(&sc->sc_dev);
 }
 
+void
+cd_cmd_rw6(struct scsi_xfer *xs, int read, u_int64_t secno, u_int nsecs)
+{
+	struct scsi_rw *cmd = (struct scsi_rw *)xs->cmd;
+
+	cmd->opcode = read ? READ_COMMAND : WRITE_COMMAND;
+	_lto3b(secno, cmd->addr);
+	cmd->length = nsecs & 0xff;
+
+	xs->cmdlen = sizeof(*cmd);
+}
+
+void
+cd_cmd_rw10(struct scsi_xfer *xs, int read, u_int64_t secno, u_int nsecs)
+{
+	struct scsi_rw_big *cmd = (struct scsi_rw_big *)xs->cmd;
+
+	cmd->opcode = read ? READ_BIG : WRITE_BIG;
+	_lto4b(secno, cmd->addr);
+	_lto2b(nsecs, cmd->length);
+
+	xs->cmdlen = sizeof(*cmd);
+}
+
 /*
  * cdstart looks to see if there is a buf waiting for the device
  * and that the device is not already busy. If both are true,
@@ -504,8 +530,6 @@ cdstart(struct scsi_xfer *xs)
 	struct scsi_link	*link = xs->sc_link;
 	struct cd_softc		*sc = link->device_softc;
 	struct buf		*bp;
-	struct scsi_rw_big	*cmd_big;
-	struct scsi_rw		*cmd_small;
 	struct partition	*p;
 	u_int64_t		 secno, nsecs;
 	int			 read;
@@ -554,22 +578,12 @@ cdstart(struct scsi_xfer *xs)
 		/*
 		 * We can fit in a small cdb.
 		 */
-		cmd_small = (struct scsi_rw *)xs->cmd;
-		cmd_small->opcode = read ?
-		    READ_COMMAND : WRITE_COMMAND;
-		_lto3b(secno, cmd_small->addr);
-		cmd_small->length = nsecs & 0xff;
-		xs->cmdlen = sizeof(*cmd_small);
+		cd_cmd_rw6(xs, read, secno, nsecs);
 	} else {
 		/*
 		 * Need a large cdb.
 		 */
-		cmd_big = (struct scsi_rw_big *)xs->cmd;
-		cmd_big->opcode = read ?
-		    READ_BIG : WRITE_BIG;
-		_lto4b(secno, cmd_big->addr);
-		_lto2b(nsecs, cmd_big->length);
-		xs->cmdlen = sizeof(*cmd_big);
+		cd_cmd_rw10(xs, read, secno, nsecs);
 	}
 
 	xs->flags |= (read ? SCSI_DATA_IN : SCSI_DATA_OUT);
