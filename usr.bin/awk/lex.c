@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.25 2020/07/30 17:45:44 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.26 2020/08/28 16:29:16 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -75,6 +75,7 @@ const Keyword keywords[] = {	/* keep sorted: binary searched */
 	{ "log",	FLOG,		BLTIN },
 	{ "lshift",	FLSHIFT,	BLTIN },
 	{ "match",	MATCHFCN,	MATCHFCN },
+	{ "mktime",	FMKTIME,	BLTIN },
 	{ "next",	NEXT,		NEXT },
 	{ "nextfile",	NEXTFILE,	NEXTFILE },
 	{ "or",		FFOR,		BLTIN },

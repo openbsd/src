@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.56 2020/07/24 01:57:06 millert Exp $
+.\"	$OpenBSD: awk.1,v 1.57 2020/08/28 16:29:16 millert Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -22,7 +22,7 @@
 .\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 24 2020 $
+.Dd $Mdocdate: August 28 2020 $
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -684,6 +684,41 @@ This version of
 provides the following functions for obtaining and formatting time
 stamps.
 .Bl -tag -width indent
+.It Fn mktime datespec
+Converts
+.Fa datespec
+into a timestamp in the same form as a value returned by
+.Fn systime .
+The
+.Fa datespec
+is a string composed of six or seven numbers separated by whitespace:
+.Bd -literal -offset indent
+YYYY MM DD HH MM SS [DST]
+.Ed
+.Pp
+The fields in
+.Fa datespec
+are as follows:
+.Bl -tag -width "YYYY"
+.It YYY
+Year: a four-digit year, including the century.
+.It MM
+Month: a number from 1 to 12.
+.It DD
+Day: a number from 1 to 31.
+.It HH
+Hour: a number from 0 to 23.
+.It MM
+Minute: a number from 0 to 59.
+.It SS
+Second: a number from 0 to 60 (permitting a leap second).
+.It DST
+Daylight Saving Time: a positive or zero value indicates that
+DST is or is not in effect.
+If DST is not specified, or is negative,
+.Fn mktime
+will attempt to determine the correct value.
+.El
 .It Fn strftime "[format [, timestamp]]"
 Formats
 .Ar timestamp
@@ -696,6 +731,8 @@ manual page, as well as any arbitrary text.
 The
 .Ar timestamp
 must be in the same form as a value returned by
+.Fn mktime
+and
 .Fn systime .
 If
 .Ar timestamp
@@ -935,6 +972,7 @@ as well as the functions
 .Fn xor ,
 .Fn lshift ,
 .Fn rshift ,
+.Fn mktime ,
 .Fn strftime
 and
 .Fn systime
