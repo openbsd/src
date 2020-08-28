@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.12 2018/04/09 13:46:15 visa Exp $ */
+/*	$OpenBSD: mainbus.c,v 1.13 2020/08/28 15:07:55 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -29,7 +29,9 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
+#include <dev/ofw/openfirm.h>
 #include <machine/autoconf.h>
 #include <machine/octeonvar.h>
 
@@ -62,14 +64,29 @@ void
 mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct cpu_attach_args caa;
+	char model[128];
+	int len, node;
 #ifdef MULTIPROCESSOR
 	struct cpu_hwinfo hw;
 	int cpuid;
 #endif
 
-	printf(": board %u rev %u.%u\n", octeon_boot_info->board_type,
+	printf(": board %u rev %u.%u", octeon_boot_info->board_type,
 	    octeon_boot_info->board_rev_major,
 	    octeon_boot_info->board_rev_minor);
+
+	node = OF_peer(0);
+	if (node != 0) {
+		len = OF_getprop(node, "model", model, sizeof(model));
+		if (len > 0) {
+			printf(", model %s", model);
+			hw_prod = malloc(len, M_DEVBUF, M_NOWAIT);
+			if (hw_prod != NULL)
+				strlcpy(hw_prod, model, len);
+		}
+	}
+
+	printf("\n");
 
 	bzero(&caa, sizeof caa);
 	caa.caa_maa.maa_name = "cpu";
