@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.76 2019/11/27 17:37:32 akoshibe Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.77 2020/08/28 12:01:48 mvs Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -4680,7 +4680,9 @@ swofp_forward_ofs(struct switch_softc *sc, struct switch_flow_classify *swfcl,
 int
 swofp_input(struct switch_softc *sc, struct mbuf *m)
 {
-	struct swofp_ofs	*swofs = sc->sc_ofs;
+#if NBPFILTER > 0
+	struct swofp_ofs        *swofs = sc->sc_ofs;
+#endif
 	struct ofp_header	*oh;
 	ofp_msg_handler		 handler;
 	uint16_t		 ohlen;
@@ -4722,7 +4724,9 @@ swofp_input(struct switch_softc *sc, struct mbuf *m)
 int
 swofp_output(struct switch_softc *sc, struct mbuf *m)
 {
+#if NBPFILTER > 0
 	struct swofp_ofs	*swofs = sc->sc_ofs;
+#endif
 
 	if (sc->sc_swdev == NULL) {
 		m_freem(m);

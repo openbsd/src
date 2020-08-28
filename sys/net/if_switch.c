@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.37 2020/07/30 11:32:06 mvs Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.38 2020/08/28 12:01:48 mvs Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -1509,6 +1509,7 @@ switch_flow_classifier_dump(struct switch_softc *sc,
 int
 switch_mtap(caddr_t arg, struct mbuf *m, int dir, uint64_t datapath_id)
 {
+#if NBPFILTER > 0
 	struct dlt_openflow_hdr	 of;
 
 	of.of_datapath_id = htobe64(datapath_id);
@@ -1516,6 +1517,9 @@ switch_mtap(caddr_t arg, struct mbuf *m, int dir, uint64_t datapath_id)
 	    DLT_OPENFLOW_TO_SWITCH : DLT_OPENFLOW_TO_CONTROLLER);
 
 	return (bpf_mtap_hdr(arg, (caddr_t)&of, sizeof(of), m, dir));
+#else
+	return (0);
+#endif
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.220 2020/07/21 08:38:59 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.221 2020/08/28 12:01:48 mvs Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -522,8 +522,10 @@ ieee80211_inputm(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 
 		/* Do not process "no data" frames any further. */
 		if (subtype & IEEE80211_FC0_SUBTYPE_NODATA) {
+#if NBPFILTER > 0
 			if (ic->ic_rawbpf)
 				bpf_mtap(ic->ic_rawbpf, m, BPF_DIRECTION_IN);
+#endif
 			goto out;
 		}
 

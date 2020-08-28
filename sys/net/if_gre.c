@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.159 2020/08/21 22:59:27 kn Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.160 2020/08/28 12:01:48 mvs Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -1009,7 +1009,9 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af, uint8_t otos,
 	void (*input)(struct ifnet *, struct mbuf *);
 	struct mbuf *(*patch)(const struct gre_tunnel *, struct mbuf *,
 	    uint8_t *, uint8_t);
+#if NBPFILTER > 0
 	int bpf_af = AF_UNSPEC; /* bpf */
+#endif
 	int mcast = 0;
 	uint8_t itos;
 

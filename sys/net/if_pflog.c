@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.90 2020/08/21 22:59:27 kn Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.91 2020/08/28 12:01:48 mvs Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -48,7 +48,9 @@
 #include <net/if.h>
 #include <net/if_var.h>
 #include <net/if_types.h>
+#if NBPFILTER > 0
 #include <net/bpf.h>
+#endif
 
 #include <netinet/in.h>
 #include <netinet/ip.h>
@@ -409,6 +411,9 @@ pflog_mtap(caddr_t if_bpf, struct pfloghdr *pfloghdr, struct mbuf *m)
 	m = pd.m;
 	KASSERT(m == &mhdr);
  copy:
+#if NBPFILTER > 0
 	bpf_mtap_hdr(if_bpf, pfloghdr, sizeof(*pfloghdr), m,
 	    BPF_DIRECTION_OUT);
+#endif
+	return;
 }

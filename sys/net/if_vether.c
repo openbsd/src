@@ -1,4 +1,4 @@
-/* $OpenBSD: if_vether.c,v 1.35 2020/08/21 22:59:27 kn Exp $ */
+/* $OpenBSD: if_vether.c,v 1.36 2020/08/28 12:01:48 mvs Exp $ */
 
 /*
  * Copyright (c) 2009 Theo de Raadt
@@ -118,11 +118,12 @@ vether_clone_destroy(struct ifnet *ifp)
 void
 vetherqstart(struct ifqueue *ifq)
 {
-	struct ifnet		*ifp = ifq->ifq_if;
 	struct mbuf		*m;
 
 	while ((m = ifq_dequeue(ifq)) != NULL) {
 #if NBPFILTER > 0
+		struct ifnet	*ifp = ifq->ifq_if;
+
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif /* NBPFILTER > 0 */
