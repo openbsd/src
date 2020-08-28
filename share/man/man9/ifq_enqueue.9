@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ifq_enqueue.9,v 1.10 2018/12/11 01:33:40 dlg Exp $
+.\"     $OpenBSD: ifq_enqueue.9,v 1.11 2020/08/28 09:15:16 fcambus Exp $
 .\"
 .\"  Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 11 2018 $
+.Dd $Mdocdate: August 28 2020 $
 .Dt IFQ_ENQUEUE 9
 .Os
 .Sh NAME
@@ -55,7 +55,7 @@
 .Ft void
 .Fn ifq_barrier "struct ifqueue *ifq"
 .Sh DESCRIPTION
-The ifqueue API provides implementions of data structures and
+The ifqueue API provides implementations of data structures and
 operations for the network stack to queue mbufs for a network driver
 to dequeue from its start routine for transmission.
 .Bl -tag -width Ds

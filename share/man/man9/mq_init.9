@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mq_init.9,v 1.12 2020/06/21 05:43:48 dlg Exp $
+.\"     $OpenBSD: mq_init.9,v 1.13 2020/08/28 09:15:16 fcambus Exp $
 .\"
 .\"  Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 21 2020 $
+.Dd $Mdocdate: August 28 2020 $
 .Dt MQ_INIT 9
 .Os
 .Sh NAME
@@ -67,7 +67,7 @@
 .Ft struct mbuf_queue
 .Fn MBUF_QUEUE_INITIALIZER "unsigned int maxlen" "int ipl"
 .Sh DESCRIPTION
-The mbuf queue API provides implementions of data structures and operations
+The mbuf queue API provides implementations of data structures and operations
 for queueing mbufs and lists of mbufs between contexts.
 .Pp
 mbuf_queue data structures provide a superset of the functionality
