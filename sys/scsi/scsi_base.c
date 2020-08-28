@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.270 2020/08/19 22:46:19 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.271 2020/08/28 15:18:14 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -2677,7 +2677,7 @@ const char *quirknames[] = {
 	"NOCAPACITY",
 	"",
 	"NODOORLOCK",
-	"ONLYBIG",
+	"",
 	NULL
 };
 

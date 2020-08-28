@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.253 2020/08/26 13:57:20 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.254 2020/08/28 15:18:14 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -99,7 +99,6 @@ struct cd_softc {
 	struct disk		 sc_dk;
 
 	int			 sc_flags;
-#define	CDF_ANCIENT	0x10		/* disk is ancient; for cdminphys */
 #define	CDF_DYING	0x40		/* dying, when deactivated */
 	struct scsi_link	*sc_link;	/* contains targ, lun, etc. */
 	struct cd_parms {
@@ -212,13 +211,6 @@ cdattach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->sc_dk.dk_name = sc->sc_dev.dv_xname;
 	bufq_init(&sc->sc_bufq, BUFQ_DEFAULT);
-
-	/*
-	 * Note if this device is ancient.  This is used in cdminphys().
-	 */
-	if (!ISSET(link->flags, SDEV_ATAPI) &&
-	    SID_ANSII_REV(&link->inqdata) == SCSI_REV_0)
-		SET(sc->sc_flags, CDF_ANCIENT);
 
 	printf("\n");
 
@@ -556,6 +548,7 @@ cdstart(struct scsi_xfer *xs)
 	read = (bp->b_flags & B_READ);
 
 	if (!ISSET(link->flags, SDEV_ATAPI | SDEV_UMASS) &&
+	    (SID_ANSII_REV(&link->inqdata) < SCSI_REV_2) &&
 	    ((secno & 0x1fffff) == secno) &&
 	    ((nsecs & 0xff) == nsecs)) {
 		/*
@@ -678,7 +671,8 @@ cdminphys(struct buf *bp)
 	 * ancient device gets confused by length == 0.  A length of 0
 	 * in a 10-byte read/write actually means 0 blocks.
 	 */
-	if (ISSET(sc->sc_flags, CDF_ANCIENT)) {
+	if (!ISSET(link->flags, SDEV_ATAPI | SDEV_UMASS) &&
+	    SID_ANSII_REV(&link->inqdata) < SCSI_REV_2) {
 		max = sc->sc_dk.dk_label->d_secsize * 0xff;
 
 		if (bp->b_bcount > max)

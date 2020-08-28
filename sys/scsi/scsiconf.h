@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.196 2020/08/26 13:57:20 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.197 2020/08/28 15:18:14 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -309,7 +309,6 @@ struct scsi_link {
 #define	ADEV_LITTLETOC		0x0400	/* little-endian TOC - ATAPI */
 #define	ADEV_NOCAPACITY		0x0800	/* no READ CD CAPACITY */
 #define	ADEV_NODOORLOCK		0x2000	/* can't lock door */
-#define SDEV_ONLYBIG		0x4000  /* avoid 6 byte READ/WRITE on sd(4) */
 	int	(*interpret_sense)(struct scsi_xfer *);
 	void	*device_softc;		/* needed for call to foo_start */
 	struct	scsibus_softc *bus;	/* link to the scsibus we're on */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.319 2020/08/26 13:57:20 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.320 2020/08/28 15:18:14 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -179,16 +179,6 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	if (ISSET(link->flags, SDEV_ATAPI) && ISSET(link->flags,
 	    SDEV_REMOVABLE))
 		SET(link->quirks, SDEV_NOSYNCCACHE);
-
-	if (!ISSET(link->inqdata.flags, SID_RelAdr))
-		SET(link->quirks, SDEV_ONLYBIG);
-
-	/*
-	 * Note if this device is ancient. This is used in sdminphys().
-	 */
-	if (!ISSET(link->flags, SDEV_ATAPI) &&
-	    SID_ANSII_REV(&link->inqdata) == SCSI_REV_0)
-		SET(sc->flags, SDF_ANCIENT);
 
 	/*
 	 * Use the subdriver to request information regarding the drive. We
@@ -690,7 +680,7 @@ sdstart(struct scsi_xfer *xs)
 	read = bp->b_flags & B_READ;
 
 	if (!ISSET(link->flags, SDEV_ATAPI | SDEV_UMASS) &&
-	    !ISSET(link->quirks, SDEV_ONLYBIG) &&
+	    (SID_ANSII_REV(&link->inqdata) < SCSI_REV_2) &&
 	    ((secno & 0x1fffff) == secno) &&
 	    ((nsecs & 0xff) == nsecs))
 		sd_cmd_rw6(xs, read, secno, nsecs);
@@ -816,7 +806,8 @@ sdminphys(struct buf *bp)
 	 * ancient device gets confused by length == 0.  A length of 0
 	 * in a 10-byte read/write actually means 0 blocks.
 	 */
-	if (ISSET(sc->flags, SDF_ANCIENT)) {
+	if (!ISSET(link->flags, SDEV_ATAPI | SDEV_UMASS) &&
+	    SID_ANSII_REV(&link->inqdata) < SCSI_REV_2) {
 		max = sc->sc_dk.dk_label->d_secsize * 0xff;
 
 		if (bp->b_bcount > max)
