@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.206 2020/08/07 20:12:15 tobhe Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.207 2020/08/28 12:43:59 tobhe Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -2100,7 +2100,8 @@ ret:
 
 realret:
 
-	explicit_bzero(freeme, freeme_sz);
+	if (freeme != NULL)
+		explicit_bzero(freeme, freeme_sz);
 	free(freeme, M_PFKEY, freeme_sz);
 	free(freeme2, M_PFKEY, freeme2_sz);
 	free(freeme3, M_PFKEY, freeme3_sz);
