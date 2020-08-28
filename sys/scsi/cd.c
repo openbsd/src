@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.255 2020/08/28 18:57:16 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.256 2020/08/28 21:01:54 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -541,11 +541,6 @@ cdstart(struct scsi_xfer *xs)
 		return;
 	}
 
-	/*
-	 * If the device has become invalid, abort all the
-	 * reads and writes until all files have been closed and
-	 * re-opened
-	 */
 	if (!ISSET(link->flags, SDEV_MEDIA_LOADED)) {
 		bufq_drain(&sc->sc_bufq);
 		scsi_xs_put(xs);
@@ -557,36 +552,9 @@ cdstart(struct scsi_xfer *xs)
 		scsi_xs_put(xs);
 		return;
 	}
-
-	/*
-	 * We have a buf, now we should make a command
-	 *
-	 * First, translate the block to absolute and put it in terms
-	 * of the logical blocksize of the device.
-	 */
-	secno = DL_BLKTOSEC(sc->sc_dk.dk_label, bp->b_blkno);
-	p = &sc->sc_dk.dk_label->d_partitions[DISKPART(bp->b_dev)];
-	secno += DL_GETPOFFSET(p);
-	nsecs = howmany(bp->b_bcount, sc->sc_dk.dk_label->d_secsize);
-
 	read = (bp->b_flags & B_READ);
 
-	if (!ISSET(link->flags, SDEV_ATAPI | SDEV_UMASS) &&
-	    (SID_ANSII_REV(&link->inqdata) < SCSI_REV_2) &&
-	    ((secno & 0x1fffff) == secno) &&
-	    ((nsecs & 0xff) == nsecs)) {
-		/*
-		 * We can fit in a small cdb.
-		 */
-		cd_cmd_rw6(xs, read, secno, nsecs);
-	} else {
-		/*
-		 * Need a large cdb.
-		 */
-		cd_cmd_rw10(xs, read, secno, nsecs);
-	}
-
-	xs->flags |= (read ? SCSI_DATA_IN : SCSI_DATA_OUT);
+	SET(xs->flags, (read ? SCSI_DATA_IN : SCSI_DATA_OUT));
 	xs->timeout = 30000;
 	xs->data = bp->b_data;
 	xs->datalen = bp->b_bcount;
@@ -594,11 +562,23 @@ cdstart(struct scsi_xfer *xs)
 	xs->cookie = bp;
 	xs->bp = bp;
 
-	/* Instrumentation. */
-	disk_busy(&sc->sc_dk);
+	p = &sc->sc_dk.dk_label->d_partitions[DISKPART(bp->b_dev)];
+	secno = DL_GETPOFFSET(p) + DL_BLKTOSEC(sc->sc_dk.dk_label, bp->b_blkno);
+	nsecs = howmany(bp->b_bcount, sc->sc_dk.dk_label->d_secsize);
 
+	if (!ISSET(link->flags, SDEV_ATAPI | SDEV_UMASS) &&
+	    (SID_ANSII_REV(&link->inqdata) < SCSI_REV_2) &&
+	    ((secno & 0x1fffff) == secno) &&
+	    ((nsecs & 0xff) == nsecs)) {
+		cd_cmd_rw6(xs, read, secno, nsecs);
+	} else {
+		cd_cmd_rw10(xs, read, secno, nsecs);
+	}
+
+	disk_busy(&sc->sc_dk);
 	scsi_xs_exec(xs);
 
+	/* Move onto the next io. */
 	if (bufq_peek(&sc->sc_bufq))
 		scsi_xsh_add(&sc->sc_xsh);
 }

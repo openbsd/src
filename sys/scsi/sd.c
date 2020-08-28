@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.320 2020/08/28 15:18:14 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.321 2020/08/28 21:01:54 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -671,13 +671,19 @@ sdstart(struct scsi_xfer *xs)
 		scsi_xs_put(xs);
 		return;
 	}
+	read = bp->b_flags & B_READ;
 
-	secno = DL_BLKTOSEC(sc->sc_dk.dk_label, bp->b_blkno);
+	SET(xs->flags, (read ? SCSI_DATA_IN : SCSI_DATA_OUT));
+	xs->timeout = 60000;
+	xs->data = bp->b_data;
+	xs->datalen = bp->b_bcount;
+	xs->done = sd_buf_done;
+	xs->cookie = bp;
+	xs->bp = bp;
 
 	p = &sc->sc_dk.dk_label->d_partitions[DISKPART(bp->b_dev)];
-	secno += DL_GETPOFFSET(p);
+	secno = DL_GETPOFFSET(p) + DL_BLKTOSEC(sc->sc_dk.dk_label, bp->b_blkno);
 	nsecs = howmany(bp->b_bcount, sc->sc_dk.dk_label->d_secsize);
-	read = bp->b_flags & B_READ;
 
 	if (!ISSET(link->flags, SDEV_ATAPI | SDEV_UMASS) &&
 	    (SID_ANSII_REV(&link->inqdata) < SCSI_REV_2) &&
@@ -693,22 +699,9 @@ sdstart(struct scsi_xfer *xs)
 	else
 		sd_cmd_rw16(xs, read, secno, nsecs);
 
-	SET(xs->flags, (read ? SCSI_DATA_IN : SCSI_DATA_OUT));
-	xs->timeout = 60000;
-	xs->data = bp->b_data;
-	xs->datalen = bp->b_bcount;
-
-	xs->done = sd_buf_done;
-	xs->cookie = bp;
-	xs->bp = bp;
-
-	/* Instrumentation. */
 	disk_busy(&sc->sc_dk);
-
-	/* Mark disk as dirty. */
 	if (!read)
 		SET(sc->flags, SDF_DIRTY);
-
 	scsi_xs_exec(xs);
 
 	/* Move onto the next io. */
