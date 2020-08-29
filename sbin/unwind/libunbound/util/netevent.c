@@ -470,7 +470,7 @@ comm_point_send_udp_msg_if(struct comm_point *c, sldns_buffer* packet,
 	msg.msg_iovlen = 1;
 	msg.msg_control = control.buf;
 #ifndef S_SPLINT_S
-	msg.msg_controllen = sizeof(control);
+	msg.msg_controllen = sizeof(control.buf);
 #endif /* S_SPLINT_S */
 	msg.msg_flags = 0;
 
@@ -480,7 +480,7 @@ comm_point_send_udp_msg_if(struct comm_point *c, sldns_buffer* packet,
 #ifdef IP_PKTINFO
 		void* cmsg_data;
 		msg.msg_controllen = CMSG_SPACE(sizeof(struct in_pktinfo));
-		log_assert(msg.msg_controllen <= sizeof(control));
+		log_assert(msg.msg_controllen <= sizeof(control.buf));
 		cmsg->cmsg_level = IPPROTO_IP;
 		cmsg->cmsg_type = IP_PKTINFO;
 		memmove(CMSG_DATA(cmsg), &r->pktinfo.v4info,
@@ -491,7 +491,7 @@ comm_point_send_udp_msg_if(struct comm_point *c, sldns_buffer* packet,
 		cmsg->cmsg_len = CMSG_LEN(sizeof(struct in_pktinfo));
 #elif defined(IP_SENDSRCADDR)
 		msg.msg_controllen = CMSG_SPACE(sizeof(struct in_addr));
-		log_assert(msg.msg_controllen <= sizeof(control));
+		log_assert(msg.msg_controllen <= sizeof(control.buf));
 		cmsg->cmsg_level = IPPROTO_IP;
 		cmsg->cmsg_type = IP_SENDSRCADDR;
 		memmove(CMSG_DATA(cmsg), &r->pktinfo.v4addr,
@@ -504,7 +504,7 @@ comm_point_send_udp_msg_if(struct comm_point *c, sldns_buffer* packet,
 	} else if(r->srctype == 6) {
 		void* cmsg_data;
 		msg.msg_controllen = CMSG_SPACE(sizeof(struct in6_pktinfo));
-		log_assert(msg.msg_controllen <= sizeof(control));
+		log_assert(msg.msg_controllen <= sizeof(control.buf));
 		cmsg->cmsg_level = IPPROTO_IPV6;
 		cmsg->cmsg_type = IPV6_PKTINFO;
 		memmove(CMSG_DATA(cmsg), &r->pktinfo.v6info,
@@ -516,7 +516,7 @@ comm_point_send_udp_msg_if(struct comm_point *c, sldns_buffer* packet,
 	} else {
 		/* try to pass all 0 to use default route */
 		msg.msg_controllen = CMSG_SPACE(sizeof(struct in6_pktinfo));
-		log_assert(msg.msg_controllen <= sizeof(control));
+		log_assert(msg.msg_controllen <= sizeof(control.buf));
 		cmsg->cmsg_level = IPPROTO_IPV6;
 		cmsg->cmsg_type = IPV6_PKTINFO;
 		memset(CMSG_DATA(cmsg), 0, sizeof(struct in6_pktinfo));
@@ -616,7 +616,7 @@ comm_point_udp_ancil_callback(int fd, short event, void* arg)
 		msg.msg_iovlen = 1;
 		msg.msg_control = ancil.buf;
 #ifndef S_SPLINT_S
-		msg.msg_controllen = sizeof(ancil);
+		msg.msg_controllen = sizeof(ancil.buf);
 #endif /* S_SPLINT_S */
 		msg.msg_flags = 0;
 		rcv = recvmsg(fd, &msg, 0);
@@ -1033,34 +1033,8 @@ tcp_callback_reader(struct comm_point* c)
 }
 
 #ifdef HAVE_SSL
-/** log certificate details */
-static void
-log_cert(unsigned level, const char* str, X509* cert)
-{
-	BIO* bio;
-	char nul = 0;
-	char* pp = NULL;
-	long len;
-	if(verbosity < level) return;
-	bio = BIO_new(BIO_s_mem());
-	if(!bio) return;
-	X509_print_ex(bio, cert, 0, (unsigned long)-1
-		^(X509_FLAG_NO_SUBJECT
-                        |X509_FLAG_NO_ISSUER|X509_FLAG_NO_VALIDITY
-			|X509_FLAG_NO_EXTENSIONS|X509_FLAG_NO_AUX
-			|X509_FLAG_NO_ATTRIBUTES));
-	BIO_write(bio, &nul, (int)sizeof(nul));
-	len = BIO_get_mem_data(bio, &pp);
-	if(len != 0 && pp) {
-		verbose(level, "%s: \n%s", str, pp);
-	}
-	BIO_free(bio);
-}
-#endif /* HAVE_SSL */
-
-#ifdef HAVE_SSL
 /** true if the ssl handshake error has to be squelched from the logs */
-static int
+int
 squelch_err_ssl_handshake(unsigned long err)
 {
 	if(verbosity >= VERB_QUERY)
@@ -3189,7 +3163,10 @@ comm_point_send_reply(struct comm_reply *repinfo)
 		if(repinfo->c->tcp_parent->dtenv != NULL &&
 		   repinfo->c->tcp_parent->dtenv->log_client_response_messages)
 			dt_msg_send_client_response(repinfo->c->tcp_parent->dtenv,
-			&repinfo->addr, repinfo->c->type, repinfo->c->buffer);
+			&repinfo->addr, repinfo->c->type,
+			( repinfo->c->tcp_req_info
+			? repinfo->c->tcp_req_info->spool_buffer
+			: repinfo->c->buffer ));
 #endif
 		if(repinfo->c->tcp_req_info) {
 			tcp_req_info_send_reply(repinfo->c->tcp_req_info);

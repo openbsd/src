@@ -17,7 +17,7 @@
 /* #undef COMPAT_SHA512 */
 
 /* Command line arguments used with configure */
-#define CONFCMDLINE "--enable-allsymbols --with-ssl=/usr --with-libevent=/usr --with-libexpat=/usr --without-pythonmodule --with-chroot-dir=/var/unbound --with-pidfile= --with-rootkey-file=/var/unbound/db/root.key --with-conf-file=/var/unbound/etc/unbound.conf --with-username=_unbound --disable-shared --without-pthreads"
+#define CONFCMDLINE "--enable-allsymbols --with-ssl=/usr --with-libevent=/usr --with-libexpat=/usr --without-pythonmodule --with-chroot-dir=/var/unbound --with-pidfile= --with-rootkey-file=/var/unbound/db/root.key --with-conf-file=/var/unbound/etc/unbound.conf --with-username=_unbound --disable-shared --disable-explicit-port-randomisation --without-pthreads"
 
 /* Pathname to the Unbound configuration file */
 #define CONFIGFILE "/var/unbound/etc/unbound.conf"
@@ -28,6 +28,9 @@
 
 /* Whether daemon is deprecated */
 /* #undef DEPRECATED_DAEMON */
+
+/* Define this to enable kernel based UDP source port randomization. */
+#define DISABLE_EXPLICIT_PORT_RANDOMISATION 1
 
 /* default dnstap socket path */
 /* #undef DNSTAP_SOCKET_PATH */
@@ -176,6 +179,9 @@
 
 /* Define to 1 if you have the `endservent' function. */
 #define HAVE_ENDSERVENT 1
+
+/* Define to 1 if you have the `ENGINE_cleanup' function. */
+#define HAVE_ENGINE_CLEANUP 1
 
 /* Define to 1 if you have the `ERR_free_strings' function. */
 #define HAVE_ERR_FREE_STRINGS 1
@@ -381,6 +387,9 @@
 /* Define to 1 if you have the <openssl/conf.h> header file. */
 #define HAVE_OPENSSL_CONF_H 1
 
+/* Define to 1 if you have the <openssl/core_names.h> header file. */
+/* #undef HAVE_OPENSSL_CORE_NAMES_H */
+
 /* Define to 1 if you have the <openssl/dh.h> header file. */
 #define HAVE_OPENSSL_DH_H 1
 
@@ -466,7 +475,7 @@
 /* #undef HAVE_SHA512_UPDATE */
 
 /* Define to 1 if you have the `shmget' function. */
-/* undef HAVE_SHMGET */
+/* #undef HAVE_SHMGET */
 
 /* Define to 1 if you have the `sigprocmask' function. */
 #define HAVE_SIGPROCMASK 1
@@ -495,8 +504,9 @@
 /* Define to 1 if you have the `SSL_CTX_set_security_level' function. */
 /* #undef HAVE_SSL_CTX_SET_SECURITY_LEVEL */
 
-/* Define to 1 if you have the `SSL_CTX_set_tlsext_ticket_key_cb' function. */
-/* #undef HAVE_SSL_CTX_SET_TLSEXT_TICKET_KEY_CB */
+/* Define to 1 if you have the `SSL_CTX_set_tlsext_ticket_key_evp_cb'
+   function. */
+/* #undef HAVE_SSL_CTX_SET_TLSEXT_TICKET_KEY_EVP_CB */
 
 /* Define to 1 if you have the `SSL_get0_peername' function. */
 /* #undef HAVE_SSL_GET0_PEERNAME */
@@ -590,6 +600,9 @@
 
 /* Define to 1 if you have the <sys/wait.h> header file. */
 #define HAVE_SYS_WAIT_H 1
+
+/* Define to 1 if you have the <TargetConditionals.h> header file. */
+/* #undef HAVE_TARGETCONDITIONALS_H */
 
 /* Define to 1 if you have the <time.h> header file. */
 #define HAVE_TIME_H 1
@@ -692,7 +705,7 @@
 #define PACKAGE_NAME "unbound"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "unbound 1.10.0"
+#define PACKAGE_STRING "unbound 1.11.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "unbound"
@@ -701,7 +714,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.10.0"
+#define PACKAGE_VERSION "1.11.0"
 
 /* default pidfile location */
 #define PIDFILE ""
@@ -723,7 +736,7 @@
 #define ROOT_CERT_FILE "/var/unbound/etc/icannbundle.pem"
 
 /* version number for resource files */
-#define RSRC_PACKAGE_VERSION 1,10,0,0
+#define RSRC_PACKAGE_VERSION 1,11,0,0
 
 /* Directory to chdir to */
 #define RUN_DIR "/var/unbound/etc"
@@ -806,6 +819,9 @@
 /* Define to 1 to use ipset support */
 /* #undef USE_IPSET */
 
+/* Define if you enable libevent */
+#define USE_LIBEVENT 1
+
 /* Define if you want to use internal select based events */
 /* #undef USE_MINI_EVENT */
 
@@ -854,6 +870,9 @@
 
 /* the version of the windows API enabled */
 #define WINVER 0x0502
+
+/* Define if you want dynlib module. */
+/* #undef WITH_DYNLIBMODULE */
 
 /* Define if you want Python module. */
 /* #undef WITH_PYTHONMODULE */
