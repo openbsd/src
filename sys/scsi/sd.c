@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.323 2020/08/29 16:07:19 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.324 2020/08/29 17:10:06 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -586,7 +586,8 @@ done:
 }
 
 int
-sd_cmd_rw6(struct scsi_generic *generic, int read, u_int64_t secno, u_int nsecs)
+sd_cmd_rw6(struct scsi_generic *generic, int read, u_int64_t secno,
+    u_int32_t nsecs)
 {
 	struct scsi_rw *cmd = (struct scsi_rw *)generic;
 
@@ -598,7 +599,8 @@ sd_cmd_rw6(struct scsi_generic *generic, int read, u_int64_t secno, u_int nsecs)
 }
 
 int
-sd_cmd_rw10(struct scsi_generic *generic, int read, u_int64_t secno, u_int nsecs)
+sd_cmd_rw10(struct scsi_generic *generic, int read, u_int64_t secno,
+    u_int32_t nsecs)
 {
 	struct scsi_rw_big *cmd = (struct scsi_rw_big *)generic;
 
@@ -610,7 +612,8 @@ sd_cmd_rw10(struct scsi_generic *generic, int read, u_int64_t secno, u_int nsecs
 }
 
 int
-sd_cmd_rw12(struct scsi_generic *generic, int read, u_int64_t secno, u_int nsecs)
+sd_cmd_rw12(struct scsi_generic *generic, int read, u_int64_t secno,
+    u_int32_t nsecs)
 {
 	struct scsi_rw_12 *cmd = (struct scsi_rw_12 *)generic;
 
@@ -622,7 +625,8 @@ sd_cmd_rw12(struct scsi_generic *generic, int read, u_int64_t secno, u_int nsecs
 }
 
 int
-sd_cmd_rw16(struct scsi_generic *generic, int read, u_int64_t secno, u_int nsecs)
+sd_cmd_rw16(struct scsi_generic *generic, int read, u_int64_t secno,
+    u_int32_t nsecs)
 {
 	struct scsi_rw_16 *cmd = (struct scsi_rw_16 *)generic;
 
