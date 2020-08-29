@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.47 2020/05/25 16:52:15 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.48 2020/08/29 22:29:27 jca Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -726,6 +726,7 @@ open_ports(void)
 {
 	struct addrinfo	 hints, *res0;
 	int		 udp4sock = -1, udp6sock = -1, error;
+	int		 opt = 1;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET;
@@ -736,6 +737,9 @@ open_ports(void)
 	if (!error && res0) {
 		if ((udp4sock = socket(res0->ai_family, res0->ai_socktype,
 		    res0->ai_protocol)) != -1) {
+			if (setsockopt(udp4sock, SOL_SOCKET, SO_REUSEADDR,
+			    &opt, sizeof(opt)) == -1)
+				log_warn("setting SO_REUSEADDR on socket");
 			if (bind(udp4sock, res0->ai_addr, res0->ai_addrlen)
 			    == -1) {
 				close(udp4sock);
@@ -751,6 +755,9 @@ open_ports(void)
 	if (!error && res0) {
 		if ((udp6sock = socket(res0->ai_family, res0->ai_socktype,
 		    res0->ai_protocol)) != -1) {
+			if (setsockopt(udp6sock, SOL_SOCKET, SO_REUSEADDR,
+			    &opt, sizeof(opt)) == -1)
+				log_warn("setting SO_REUSEADDR on socket");
 			if (bind(udp6sock, res0->ai_addr, res0->ai_addrlen)
 			    == -1) {
 				close(udp6sock);
