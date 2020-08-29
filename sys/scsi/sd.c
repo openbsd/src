@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.321 2020/08/28 21:01:54 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.322 2020/08/29 02:03:31 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -103,10 +103,10 @@ void	viscpy(u_char *, u_char *, int);
 int	sd_ioctl_inquiry(struct sd_softc *, struct dk_inquiry *);
 int	sd_ioctl_cache(struct sd_softc *, long, struct dk_cache *);
 
-void	sd_cmd_rw6(struct scsi_xfer *, int, u_int64_t, u_int);
-void	sd_cmd_rw10(struct scsi_xfer *, int, u_int64_t, u_int);
-void	sd_cmd_rw12(struct scsi_xfer *, int, u_int64_t, u_int);
-void	sd_cmd_rw16(struct scsi_xfer *, int, u_int64_t, u_int);
+int	sd_cmd_rw6(struct scsi_generic *, int, u_int64_t, u_int);
+int	sd_cmd_rw10(struct scsi_generic *, int, u_int64_t, u_int);
+int	sd_cmd_rw12(struct scsi_generic *, int, u_int64_t, u_int);
+int	sd_cmd_rw16(struct scsi_generic *, int, u_int64_t, u_int);
 
 void	sd_buf_done(struct scsi_xfer *);
 
@@ -585,52 +585,52 @@ done:
 		device_unref(&sc->sc_dev);
 }
 
-void
-sd_cmd_rw6(struct scsi_xfer *xs, int read, u_int64_t secno, u_int nsecs)
+int
+sd_cmd_rw6(struct scsi_generic *generic, int read, u_int64_t secno, u_int nsecs)
 {
-	struct scsi_rw *cmd = (struct scsi_rw *)xs->cmd;
+	struct scsi_rw *cmd = (struct scsi_rw *)generic;
 
 	cmd->opcode = read ? READ_COMMAND : WRITE_COMMAND;
 	_lto3b(secno, cmd->addr);
 	cmd->length = nsecs;
 
-	xs->cmdlen = sizeof(*cmd);
+	return sizeof(*cmd);
 }
 
-void
-sd_cmd_rw10(struct scsi_xfer *xs, int read, u_int64_t secno, u_int nsecs)
+int
+sd_cmd_rw10(struct scsi_generic *generic, int read, u_int64_t secno, u_int nsecs)
 {
-	struct scsi_rw_big *cmd = (struct scsi_rw_big *)xs->cmd;
+	struct scsi_rw_big *cmd = (struct scsi_rw_big *)generic;
 
 	cmd->opcode = read ? READ_BIG : WRITE_BIG;
 	_lto4b(secno, cmd->addr);
 	_lto2b(nsecs, cmd->length);
 
-	xs->cmdlen = sizeof(*cmd);
+	return sizeof(*cmd);
 }
 
-void
-sd_cmd_rw12(struct scsi_xfer *xs, int read, u_int64_t secno, u_int nsecs)
+int
+sd_cmd_rw12(struct scsi_generic *generic, int read, u_int64_t secno, u_int nsecs)
 {
-	struct scsi_rw_12 *cmd = (struct scsi_rw_12 *)xs->cmd;
+	struct scsi_rw_12 *cmd = (struct scsi_rw_12 *)generic;
 
 	cmd->opcode = read ? READ_12 : WRITE_12;
 	_lto4b(secno, cmd->addr);
 	_lto4b(nsecs, cmd->length);
 
-	xs->cmdlen = sizeof(*cmd);
+	return sizeof(*cmd);
 }
 
-void
-sd_cmd_rw16(struct scsi_xfer *xs, int read, u_int64_t secno, u_int nsecs)
+int
+sd_cmd_rw16(struct scsi_generic *generic, int read, u_int64_t secno, u_int nsecs)
 {
-	struct scsi_rw_16 *cmd = (struct scsi_rw_16 *)xs->cmd;
+	struct scsi_rw_16 *cmd = (struct scsi_rw_16 *)generic;
 
 	cmd->opcode = read ? READ_16 : WRITE_16;
 	_lto8b(secno, cmd->addr);
 	_lto4b(nsecs, cmd->length);
 
-	xs->cmdlen = sizeof(*cmd);
+	return sizeof(*cmd);
 }
 
 /*
@@ -689,15 +689,15 @@ sdstart(struct scsi_xfer *xs)
 	    (SID_ANSII_REV(&link->inqdata) < SCSI_REV_2) &&
 	    ((secno & 0x1fffff) == secno) &&
 	    ((nsecs & 0xff) == nsecs))
-		sd_cmd_rw6(xs, read, secno, nsecs);
+		xs->cmdlen = sd_cmd_rw6(xs->cmd, read, secno, nsecs);
 	else if (((secno & 0xffffffff) == secno) &&
 	    ((nsecs & 0xffff) == nsecs))
-		sd_cmd_rw10(xs, read, secno, nsecs);
+		xs->cmdlen = sd_cmd_rw10(xs->cmd, read, secno, nsecs);
 	else if (((secno & 0xffffffff) == secno) &&
 	    ((nsecs & 0xffffffff) == nsecs))
-		sd_cmd_rw12(xs, read, secno, nsecs);
+		xs->cmdlen = sd_cmd_rw12(xs->cmd, read, secno, nsecs);
 	else
-		sd_cmd_rw16(xs, read, secno, nsecs);
+		xs->cmdlen = sd_cmd_rw16(xs->cmd, read, secno, nsecs);
 
 	disk_busy(&sc->sc_dk);
 	if (!read)
@@ -1339,7 +1339,7 @@ sddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 		xs->data = va;
 		xs->datalen = nwrt * sectorsize;
 
-		sd_cmd_rw10(xs, 0, blkno, nwrt); /* XXX */
+		xs->cmdlen = sd_cmd_rw10(xs->cmd, 0, blkno, nwrt); /* XXX */
 
 		rv = scsi_xs_sync(xs);
 		scsi_xs_put(xs);
