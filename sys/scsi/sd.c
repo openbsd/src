@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.324 2020/08/29 17:10:06 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.325 2020/08/29 18:20:12 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -676,7 +676,7 @@ sdstart(struct scsi_xfer *xs)
 		scsi_xs_put(xs);
 		return;
 	}
-	read = bp->b_flags & B_READ;
+	read = ISSET(bp->b_flags, B_READ);
 
 	SET(xs->flags, (read ? SCSI_DATA_IN : SCSI_DATA_OUT));
 	xs->timeout = 60000;
