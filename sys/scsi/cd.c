@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.259 2020/08/29 18:20:12 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.260 2020/08/29 19:34:07 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -113,6 +113,7 @@ void	cdstart(struct scsi_xfer *);
 void	cd_buf_done(struct scsi_xfer *);
 int	cd_cmd_rw6(struct scsi_generic *, int, u_int64_t, u_int32_t);
 int	cd_cmd_rw10(struct scsi_generic *, int, u_int64_t, u_int32_t);
+int	cd_cmd_rw12(struct scsi_generic *, int, u_int64_t, u_int32_t);
 void	cdminphys(struct buf *);
 int	cdgetdisklabel(dev_t, struct cd_softc *, struct disklabel *, int);
 int	cd_setchan(struct cd_softc *, int, int, int, int, int);
@@ -510,6 +511,19 @@ cd_cmd_rw10(struct scsi_generic *generic, int read, u_int64_t secno,
 	return sizeof(*cmd);
 }
 
+int
+cd_cmd_rw12(struct scsi_generic *generic, int read, u_int64_t secno,
+    u_int32_t nsecs)
+{
+	struct scsi_rw_12 *cmd = (struct scsi_rw_12 *)generic;
+
+	cmd->opcode = read ? READ_12 : WRITE_12;
+	_lto4b(secno, cmd->addr);
+	_lto4b(nsecs, cmd->length);
+
+	return sizeof(*cmd);
+}
+
 /*
  * cdstart looks to see if there is a buf waiting for the device
  * and that the device is not already busy. If both are true,
@@ -572,11 +586,13 @@ cdstart(struct scsi_xfer *xs)
 	if (!ISSET(link->flags, SDEV_ATAPI | SDEV_UMASS) &&
 	    (SID_ANSII_REV(&link->inqdata) < SCSI_REV_2) &&
 	    ((secno & 0x1fffff) == secno) &&
-	    ((nsecs & 0xff) == nsecs)) {
+	    ((nsecs & 0xff) == nsecs))
 		xs->cmdlen = cd_cmd_rw6(xs->cmd, read, secno, nsecs);
-	} else {
+	else if (((secno & 0xffffffff) == secno) &&
+	    ((nsecs & 0xffff) == nsecs))
 		xs->cmdlen = cd_cmd_rw10(xs->cmd, read, secno, nsecs);
-	}
+	else
+		xs->cmdlen = cd_cmd_rw12(xs->cmd, read, secno, nsecs);
 
 	disk_busy(&sc->sc_dk);
 	scsi_xs_exec(xs);
