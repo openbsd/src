@@ -92,7 +92,7 @@
 /* #define OPENSSL_NO_SRTP */
 #define OPENSSL_NO_SSL3
 #define OPENSSL_NO_SSL3_METHOD
-/* #define OPENSSL_NO_SSL_TRACE */
+#define OPENSSL_NO_SSL_TRACE
 /* #define OPENSSL_NO_STDIO */
 /* #define OPENSSL_NO_TLS */
 /* #define OPENSSL_NO_TLS1 */
