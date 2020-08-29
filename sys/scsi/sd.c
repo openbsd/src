@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.322 2020/08/29 02:03:31 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.323 2020/08/29 16:07:19 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -103,10 +103,10 @@ void	viscpy(u_char *, u_char *, int);
 int	sd_ioctl_inquiry(struct sd_softc *, struct dk_inquiry *);
 int	sd_ioctl_cache(struct sd_softc *, long, struct dk_cache *);
 
-int	sd_cmd_rw6(struct scsi_generic *, int, u_int64_t, u_int);
-int	sd_cmd_rw10(struct scsi_generic *, int, u_int64_t, u_int);
-int	sd_cmd_rw12(struct scsi_generic *, int, u_int64_t, u_int);
-int	sd_cmd_rw16(struct scsi_generic *, int, u_int64_t, u_int);
+int	sd_cmd_rw6(struct scsi_generic *, int, u_int64_t, u_int32_t);
+int	sd_cmd_rw10(struct scsi_generic *, int, u_int64_t, u_int32_t);
+int	sd_cmd_rw12(struct scsi_generic *, int, u_int64_t, u_int32_t);
+int	sd_cmd_rw16(struct scsi_generic *, int, u_int64_t, u_int32_t);
 
 void	sd_buf_done(struct scsi_xfer *);
 
@@ -653,8 +653,9 @@ sdstart(struct scsi_xfer *xs)
 	struct sd_softc			*sc = link->device_softc;
 	struct buf			*bp;
 	struct partition		*p;
-	int				 nsecs, read;
 	u_int64_t			 secno;
+	u_int32_t			 nsecs;
+	int				 read;
 
 	if (ISSET(sc->flags, SDF_DYING)) {
 		scsi_xs_put(xs);

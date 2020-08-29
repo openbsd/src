@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.257 2020/08/29 02:03:31 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.258 2020/08/29 16:07:19 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -111,8 +111,8 @@ struct cd_softc {
 
 void	cdstart(struct scsi_xfer *);
 void	cd_buf_done(struct scsi_xfer *);
-int	cd_cmd_rw6(struct scsi_generic *, int, u_int64_t, u_int);
-int	cd_cmd_rw10(struct scsi_generic *, int, u_int64_t, u_int);
+int	cd_cmd_rw6(struct scsi_generic *, int, u_int64_t, u_int32_t);
+int	cd_cmd_rw10(struct scsi_generic *, int, u_int64_t, u_int32_t);
 void	cdminphys(struct buf *);
 int	cdgetdisklabel(dev_t, struct cd_softc *, struct disklabel *, int);
 int	cd_setchan(struct cd_softc *, int, int, int, int, int);
@@ -485,7 +485,8 @@ done:
 }
 
 int
-cd_cmd_rw6(struct scsi_generic *generic, int read, u_int64_t secno, u_int nsecs)
+cd_cmd_rw6(struct scsi_generic *generic, int read, u_int64_t secno,
+    u_int32_t nsecs)
 {
 	struct scsi_rw *cmd = (struct scsi_rw *)generic;
 
@@ -497,7 +498,8 @@ cd_cmd_rw6(struct scsi_generic *generic, int read, u_int64_t secno, u_int nsecs)
 }
 
 int
-cd_cmd_rw10(struct scsi_generic *generic, int read, u_int64_t secno, u_int nsecs)
+cd_cmd_rw10(struct scsi_generic *generic, int read, u_int64_t secno,
+    u_int32_t nsecs)
 {
 	struct scsi_rw_big *cmd = (struct scsi_rw_big *)generic;
 
@@ -531,7 +533,8 @@ cdstart(struct scsi_xfer *xs)
 	struct cd_softc		*sc = link->device_softc;
 	struct buf		*bp;
 	struct partition	*p;
-	u_int64_t		 secno, nsecs;
+	u_int64_t		 secno;
+	u_int32_t		 nsecs;
 	int			 read;
 
 	SC_DEBUG(link, SDEV_DB2, ("cdstart\n"));
