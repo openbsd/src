@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.2 2020/08/26 22:27:02 kettenis Exp $	*/
+/*	$OpenBSD: disk.c,v 1.3 2020/08/29 11:46:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019 Visa Hankala
@@ -40,6 +40,8 @@ int	disk_proberoot(const char *);
 
 int mounted = 0;
 int rdroot = -1;		/* fd that points to the root of the ramdisk */
+
+const u_char zeroduid[8];
 
 void
 disk_init(void)
@@ -105,7 +107,7 @@ disk_init(void)
 
 		/* Otherwise pick the first potential root disk. */
 		if (disk_proberoot(devname)) {
-			if (strlen(cmd.bootdev) == 0) {
+			if (memcmp(cmd.bootduid, zeroduid, 8) == 0) {
 				snprintf(cmd.bootdev, sizeof(cmd.bootdev),
 				    "%sa", devname);
 			}
