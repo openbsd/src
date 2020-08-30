@@ -1,3 +1,8 @@
+B= mot: machin mot: truc
+C= machin: mot truc: mot
+E= foo sbar sbarr
+F= foo bar barr
+G= foo barbarian barr
 S= sourceforge/%SUBDIR%/
 T= sourceforge/%SUBDIR%/
 X= http://heanet.dl.sourceforge.net/
