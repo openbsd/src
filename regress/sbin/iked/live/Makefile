@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2020/08/29 20:04:14 tobhe Exp $
+#	$OpenBSD: Makefile,v 1.15 2020/08/30 18:31:49 tobhe Exp $
 
 # Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
 #
@@ -93,31 +93,30 @@ SETUP_CONFIGS = \
 	if [[ "$$flowtype" = "ipcomp" ]]; then \
 		ipcomp="ipcomp"; \
 	fi; \
-	configstr=""; \
+	global=""; \
 	if [ "$$fragmentation" = true ]; then \
-		configstr="set fragmentation"; \
+		global="$${global}set fragmentation\n"; \
 	fi; \
-	configstr=""; \
 	if [ "$$singleikesa" = true ]; then \
-		configstr="set enforcesingleikesa"; \
+		global="$${global}set enforcesingleikesa\n"; \
 	fi; \
-	echo "FRAGMENTATION=\"$$configstr\"" > $@_left.conf; \
-	echo "TMODE=\"$$tmode\"" >> $@_left.conf; \
+	echo "TMODE=\"$$tmode\"" > $@_left.conf; \
 	echo "LOCAL_ADDR=\"${LEFT_ADDR}\"" >> $@_left.conf; \
 	echo "PEER_ADDR=\"${RIGHT_ADDR}\"" >> $@_left.conf; \
 	echo "IPCOMP=\"$$ipcomp\"" >> $@_left.conf; \
 	echo "SRCID=\"$$leftid\"" >> $@_left.conf; \
 	echo "AUTH=\"$$authstr\"" >> $@_left.conf; \
+	echo "$$global" >> $@_left.conf; \
 	cat ${.CURDIR}/iked.in >> $@_left.conf; \
 	chmod 0600 $@_left.conf; \
 	echo "cd /tmp\nput $@_left.conf test.conf" | sftp -q ${LEFT_SSH}; \
-	echo "FRAGMENTATION=\"$$configstr\"" > $@_right.conf; \
-	echo "TMODE=\"$$tmode\"" >> $@_right.conf; \
+	echo "TMODE=\"$$tmode\"" > $@_right.conf; \
 	echo "LOCAL_ADDR=\"${RIGHT_ADDR}\"" >> $@_right.conf; \
 	echo "PEER_ADDR=\"${LEFT_ADDR}\"" >> $@_right.conf; \
 	echo "IPCOMP=\"$$ipcomp\"" >> $@_right.conf; \
 	echo "SRCID=\"$$rightid\"" >> $@_right.conf; \
 	echo "AUTH=\"$$authstr\"" >> $@_right.conf; \
+	echo "$$global" >> $@_right.conf; \
 	cat ${.CURDIR}/iked.in >> $@_right.conf; \
 	chmod 0600 $@_right.conf; \
 	echo "cd /tmp\nput $@_right.conf test.conf" | sftp -q ${RIGHT_SSH}
