@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.27 2020/03/28 12:32:53 kettenis Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.28 2020/08/30 05:23:49 uaa Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -1158,6 +1158,7 @@ sxiccmu_a80_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
 
 /* Allwinner H3/H5 */
 #define H3_PLL_CPUX_CTRL_REG		0x0000
+#define H3_PLL_CPUX_ENABLE		(1 << 31)
 #define H3_PLL_CPUX_LOCK		(1 << 28)
 #define H3_PLL_CPUX_OUT_EXT_DIVP(x)	(((x) >> 16) & 0x3)
 #define H3_PLL_CPUX_OUT_EXT_DIVP_MASK	(0x3 << 16)
@@ -1176,6 +1177,8 @@ sxiccmu_a80_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
 #define H3_CPUX_CLK_SRC_SEL_LOSC	(0x0 << 16)
 #define H3_CPUX_CLK_SRC_SEL_OSC24M	(0x1 << 16)
 #define H3_CPUX_CLK_SRC_SEL_PLL_CPUX	(0x2 << 16)
+#define H3_PLL_STABLE_TIME_REG1		0x0204
+#define H3_PLL_STABLE_TIME_REG1_TIME(x)	(((x) >> 0) & 0xffff)
 
 uint32_t
 sxiccmu_h3_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
@@ -1632,7 +1635,7 @@ sxiccmu_h3_set_frequency(struct sxiccmu_softc *sc, uint32_t idx, uint32_t freq)
 {
 	struct sxiccmu_clock clock;
 	uint32_t parent, parent_freq;
-	uint32_t reg;
+	uint32_t reg, lock_time;
 	int k, n;
 	int error;
 
@@ -1644,7 +1647,12 @@ sxiccmu_h3_set_frequency(struct sxiccmu_softc *sc, uint32_t idx, uint32_t freq)
 		while (n >= 1 && (24000000 * n * k) > freq)
 			n--;
 
+		/* Gate the PLL first */
 		reg = SXIREAD4(sc, H3_PLL_CPUX_CTRL_REG);
+		reg &= ~H3_PLL_CPUX_ENABLE;
+		SXIWRITE4(sc, H3_PLL_CPUX_CTRL_REG, reg);
+
+		/* Set factors and external divider. */
 		reg &= ~H3_PLL_CPUX_OUT_EXT_DIVP_MASK;
 		reg &= ~H3_PLL_CPUX_FACTOR_N_MASK;
 		reg &= ~H3_PLL_CPUX_FACTOR_K_MASK;
@@ -1653,10 +1661,13 @@ sxiccmu_h3_set_frequency(struct sxiccmu_softc *sc, uint32_t idx, uint32_t freq)
 		reg |= ((k - 1) << H3_PLL_CPUX_FACTOR_K_SHIFT);
 		SXIWRITE4(sc, H3_PLL_CPUX_CTRL_REG, reg);
 
-		/* Wait for PLL to lock. */
-		while ((SXIREAD4(sc, H3_PLL_CPUX_CTRL_REG) &
-		    H3_PLL_CPUX_LOCK) == 0)
-			delay(1);
+		/* Ungate the PLL */
+		reg |= H3_PLL_CPUX_ENABLE;
+		SXIWRITE4(sc, H3_PLL_CPUX_CTRL_REG, reg);
+
+		/* Wait for PLL to lock. (LOCK flag is unreliable) */
+		lock_time = SXIREAD4(sc, H3_PLL_STABLE_TIME_REG1);
+		delay(H3_PLL_STABLE_TIME_REG1_TIME(lock_time));
 
 		return 0;
 	case H3_CLK_CPUX:
@@ -1665,6 +1676,8 @@ sxiccmu_h3_set_frequency(struct sxiccmu_softc *sc, uint32_t idx, uint32_t freq)
 		reg &= ~H3_CPUX_CLK_SRC_SEL;
 		reg |= H3_CPUX_CLK_SRC_SEL_OSC24M;
 		SXIWRITE4(sc, H3_CPUX_AXI_CFG_REG, reg);
+		/* Must wait at least 8 cycles of the current clock. */
+		delay(1);
 
 		error = sxiccmu_h3_set_frequency(sc, H3_CLK_PLL_CPUX, freq);
 
@@ -1673,6 +1686,8 @@ sxiccmu_h3_set_frequency(struct sxiccmu_softc *sc, uint32_t idx, uint32_t freq)
 		reg &= ~H3_CPUX_CLK_SRC_SEL;
 		reg |= H3_CPUX_CLK_SRC_SEL_PLL_CPUX;
 		SXIWRITE4(sc, H3_CPUX_AXI_CFG_REG, reg);
+		/* Must wait at least 8 cycles of the current clock. */
+		delay(1);
 		return error;
 	case H3_CLK_MMC0:
 	case H3_CLK_MMC1:
