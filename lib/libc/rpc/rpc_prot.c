@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_prot.c,v 1.15 2017/01/21 08:29:13 krw Exp $ */
+/*	$OpenBSD: rpc_prot.c,v 1.16 2020/08/30 23:15:31 mortimer Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -45,8 +45,6 @@
 #include <rpc/rpc.h>
 
 /* * * * * * * * * * * * * * XDR Authentication * * * * * * * * * * * */
-
-struct opaque_auth _null_auth;
 
 /*
  * XDR an opaque authentication struct
