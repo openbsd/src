@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.4 2017/07/22 09:37:21 anton Exp $	*/
+/*	$OpenBSD: proc.h,v 1.5 2020/08/30 22:23:47 mortimer Exp $	*/
 /*	$NetBSD: proc.h,v 1.7 1995/04/29 23:21:35 mycroft Exp $	*/
 
 /*-
@@ -88,13 +88,13 @@ struct process {
 #define	JOBDIR		0100	/* print job's dir if not the same */
 #define	AREASON		0200
 
-struct process proclist;	/* list head of all processes */
-bool    pnoprocesses;		/* pchild found nothing to wait for */
+extern struct process proclist;	  /* list head of all processes */
+extern bool    pnoprocesses;	  /* pchild found nothing to wait for */
 
-struct process *pholdjob;	/* one level stack of current jobs */
+extern struct process *pholdjob;  /* one level stack of current jobs */
 
-struct process *pcurrjob;	/* current job */
-struct process *pcurrent;	/* current job in table */
-struct process *pprevious;	/* previous job in table */
+extern struct process *pcurrjob;  /* current job */
+extern struct process *pcurrent;  /* current job in table */
+extern struct process *pprevious; /* previous job in table */
 
-int    pmaxindex;		/* current maximum job index */
+extern int    pmaxindex;	  /* current maximum job index */

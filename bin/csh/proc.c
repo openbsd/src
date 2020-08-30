@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.33 2019/06/28 13:34:58 deraadt Exp $	*/
+/*	$OpenBSD: proc.c,v 1.34 2020/08/30 22:23:47 mortimer Exp $	*/
 /*	$NetBSD: proc.c,v 1.9 1995/04/29 23:21:33 mycroft Exp $	*/
 
 /*-
@@ -45,6 +45,17 @@
 #include "extern.h"
 
 #define BIGINDEX	9	/* largest desirable job index */
+
+struct process proclist;        /* list head of all processes */
+bool    pnoprocesses;           /* pchild found nothing to wait for */
+
+struct process *pholdjob;       /* one level stack of current jobs */
+
+struct process *pcurrjob;       /* current job */
+struct process *pcurrent;       /* current job in table */
+struct process *pprevious;      /* previous job in table */
+
+int    pmaxindex;               /* current maximum job index */
 
 static struct rusage zru;
 

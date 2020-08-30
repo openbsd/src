@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.c,v 1.46 2019/06/28 13:34:58 deraadt Exp $	*/
+/*	$OpenBSD: csh.c,v 1.47 2020/08/30 22:23:47 mortimer Exp $	*/
 /*	$NetBSD: csh.c,v 1.14 1995/04/29 23:21:28 mycroft Exp $	*/
 
 /*-
@@ -61,6 +61,80 @@
  * June, 1991
  */
 
+/* Globals from csh.h */
+struct timespec time0;
+struct rusage ru0;
+struct Bin B;
+struct Ain lineloc;
+struct whyle *whyles;
+struct varent shvhed, aliases;
+struct wordent *alhistp;
+struct wordent *alhistt;
+struct wordent paraml;
+struct Hist Histlist;
+FILE   *cshin, *cshout, *csherr;
+bool    chkstop;
+bool    didfds;
+bool    doneinp;
+bool    exiterr;
+bool    child;
+bool    haderr;
+bool    intty;
+bool    intact;
+bool    justpr;
+bool    loginsh;
+bool    neednote;
+bool    noexec;
+bool    pjobs;
+bool    setintr;
+bool    timflg;
+bool    havhash;
+bool    needprompt;
+Char   *arginp;
+int     onelflg;
+Char   *ffile;
+Char   *doldol;
+int     backpid;
+uid_t   uid, euid;
+gid_t   gid, egid;
+time_t  chktim;
+pid_t   shpgrp;
+pid_t   tpgrp;
+pid_t   opgrp;
+int     SHIN;
+int     SHOUT;
+int     SHERR;
+int     OLDSTD;
+jmp_buf reslab;
+int     exitset;
+Char   *gointr;
+sig_t   parintr;
+sig_t   parterm;
+bool    cantell;
+Char   *lap;
+Char  **alvec;
+int     gflag;
+Char   *pargs;
+long    pnleft;
+Char   *pargcp;
+int     eventno;
+int     lastev;
+Char    HIST;
+Char    HISTSUB;
+char   *bname;
+Char   *Vsav;
+Char   *Vdp;
+Char   *Vexpath;
+char  **Vt;
+Char  **evalvec;
+Char   *evalp;
+Char   *word_chars;
+Char   *STR_SHELLPATH;
+Char   *STR_BSHELL;
+Char   *STR_WORD_CHARS;
+Char  **STR_environ;
+
+/* Locals */
 Char   *dumphist[] = {STRhistory, STRmh, 0, 0};
 Char   *loadhist[] = {STRsource, STRmh, STRtildothist, 0};
 

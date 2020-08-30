@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.24 2019/06/28 13:34:58 deraadt Exp $	*/
+/*	$OpenBSD: dir.c,v 1.25 2020/08/30 22:23:47 mortimer Exp $	*/
 /*	$NetBSD: dir.c,v 1.9 1995/03/21 09:02:42 cgd Exp $	*/
 
 /*-
@@ -53,6 +53,7 @@ static void	 dnewcwd(struct directory *);
 static void	 dset(Char *);
 
 struct directory dhead;		/* "head" of loop */
+struct directory *dcwd;		/* the one we are in now */
 int     printd;			/* force name to be printed */
 
 static int dirflag = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.h,v 1.3 2003/06/02 23:32:07 millert Exp $	*/
+/*	$OpenBSD: dir.h,v 1.4 2020/08/30 22:23:47 mortimer Exp $	*/
 /*	$NetBSD: dir.h,v 1.6 1995/03/21 09:02:44 cgd Exp $	*/
 
 /*-
@@ -41,4 +41,4 @@ struct directory {
     unsigned short *di_count;	/* refcount of processes */
     Char   *di_name;		/* actual name */
 };
-struct directory *dcwd;		/* the one we are in now */
+extern struct directory *dcwd;		/* the one we are in now */
