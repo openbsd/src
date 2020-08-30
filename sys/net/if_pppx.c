@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.103 2020/08/30 19:45:20 mvs Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.104 2020/08/30 19:48:16 mvs Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -62,7 +62,6 @@
 
 #include <net/if.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <net/if_dl.h>
