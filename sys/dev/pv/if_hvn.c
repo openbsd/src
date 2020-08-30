@@ -451,7 +451,7 @@ hvn_stop(struct hvn_softc *sc)
 	}
 
 	ifq_barrier(&ifp->if_snd);
-	intr_barrier(sc->sc_chan);
+	sched_barrier(NULL);
 
 	ifq_clr_oactive(&ifp->if_snd);
 }
