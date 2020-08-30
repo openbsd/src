@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.197 2020/08/28 15:18:14 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.198 2020/08/30 19:41:25 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -296,19 +296,19 @@ struct scsi_link {
 #define	SDEV_DBX		0x00f0	/* debugging flags (scsi_debug.h) */
 #define	SDEV_EJECTING		0x0100	/* eject on device close */
 #define	SDEV_ATAPI		0x0200	/* device is ATAPI */
-#define SDEV_UMASS		0x0800	/* device is UMASS SCSI */
-#define SDEV_VIRTUAL		0x1000	/* device is virtualised on the hba */
-#define SDEV_OWN_IOPL		0x2000	/* scsibus */
+#define SDEV_UMASS		0x0400	/* device is UMASS SCSI */
+#define SDEV_VIRTUAL		0x0800	/* device is virtualised on the hba */
+#define SDEV_OWN_IOPL		0x1000	/* scsibus */
 	u_int16_t quirks;		/* per-device oddities */
 #define	SDEV_AUTOSAVE		0x0001	/* do implicit SAVEDATAPOINTER on disconnect */
 #define	SDEV_NOSYNC		0x0002	/* does not grok SDTR */
 #define	SDEV_NOWIDE		0x0004	/* does not grok WDTR */
 #define	SDEV_NOTAGS		0x0008	/* lies about having tagged queueing */
-#define	SDEV_NOSYNCCACHE	0x0100	/* no SYNCHRONIZE_CACHE */
-#define	ADEV_NOSENSE		0x0200	/* No request sense - ATAPI */
-#define	ADEV_LITTLETOC		0x0400	/* little-endian TOC - ATAPI */
-#define	ADEV_NOCAPACITY		0x0800	/* no READ CD CAPACITY */
-#define	ADEV_NODOORLOCK		0x2000	/* can't lock door */
+#define	SDEV_NOSYNCCACHE	0x0010	/* no SYNCHRONIZE_CACHE */
+#define	ADEV_NOSENSE		0x0020	/* No request sense - ATAPI */
+#define	ADEV_LITTLETOC		0x0040	/* little-endian TOC - ATAPI */
+#define	ADEV_NOCAPACITY		0x0080	/* no READ CD CAPACITY */
+#define	ADEV_NODOORLOCK		0x0100	/* can't lock door */
 	int	(*interpret_sense)(struct scsi_xfer *);
 	void	*device_softc;		/* needed for call to foo_start */
 	struct	scsibus_softc *bus;	/* link to the scsibus we're on */

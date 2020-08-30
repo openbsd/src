@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.271 2020/08/28 15:18:14 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.272 2020/08/30 19:41:25 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -2655,7 +2655,6 @@ const char *flagnames[] = {
 	"DB4",
 	"EJECTING",
 	"ATAPI",
-	"",
 	"UMASS",
 	"VIRTUAL",
 	"OWN_IOPL",
@@ -2667,17 +2666,11 @@ const char *quirknames[] = {
 	"NOSYNC",
 	"NOWIDE",
 	"NOTAGS",
-	"",
-	"",
-	"",
-	"",
 	"NOSYNCCACHE",
 	"NOSENSE",
 	"LITTLETOC",
 	"NOCAPACITY",
-	"",
 	"NODOORLOCK",
-	"",
 	NULL
 };
 
