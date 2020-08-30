@@ -1,4 +1,4 @@
-/*	$OpenBSD: xive.c,v 1.10 2020/08/23 12:48:53 kettenis Exp $	*/
+/*	$OpenBSD: xive.c,v 1.11 2020/08/30 19:07:00 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -379,18 +379,18 @@ xive_hvi(struct trapframe *frame)
 	while (1) {
 		ack = xive_read_2(sc, XIVE_TM_SPC_ACK_HV);
 
-		/* Synchronize software state to hardware state. */
-		cppr = ack;
-		new = xive_ipl(cppr);
-		KASSERT(new >= ci->ci_cpl);
-		ci->ci_cpl = new;
-
 		he = (ack & XIVE_TM_SPC_ACK_HE_MASK);
 		if (he == XIVE_TM_SPC_ACK_HE_NONE)
 			break;
 		KASSERT(he == XIVE_TM_SPC_ACK_HE_PHYS);
 
 		eieio();
+
+		/* Synchronize software state to hardware state. */
+		cppr = ack;
+		new = xive_ipl(cppr);
+		ci->ci_cpl = new;
+		KASSERT(new > old);
 
 		KASSERT(cppr < XIVE_NUM_PRIORITIES);
 		eq = &sc->sc_eq[ci->ci_cpuid][cppr];
@@ -428,10 +428,12 @@ xive_hvi(struct trapframe *frame)
 			if (eq->eq_idx == 0)
 				eq->eq_gen ^= XIVE_EQ_GEN_MASK;
 		}
-	}
 
-	ci->ci_cpl = old;
-	xive_write_1(sc, XIVE_TM_CPPR_HV, xive_prio(old));
+		ci->ci_cpl = old;
+		xive_write_1(sc, XIVE_TM_CPPR_HV, xive_prio(old));
+
+		eieio();
+	}
 }
 
 struct xive_dmamem *
