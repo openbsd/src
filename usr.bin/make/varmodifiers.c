@@ -1,4 +1,4 @@
-/*	$OpenBSD: varmodifiers.c,v 1.47 2017/07/10 07:10:29 bluhm Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.48 2020/08/30 12:16:04 tb Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -1215,21 +1215,7 @@ get_patternarg(const char **p, SymTable *ctxt, bool err, int endc)
 static void *
 get_spatternarg(const char **p, SymTable *ctxt, bool err, int endc)
 {
-	VarPattern *pattern;
-
-	pattern = common_get_patternarg(p, ctxt, err, endc, true);
-	if (pattern != NULL && pattern->leftLen > 0) {
-		if (pattern->lhs[pattern->leftLen-1] == '$') {
-			    pattern->leftLen--;
-			    pattern->flags |= VAR_MATCH_END;
-		}
-		if (pattern->lhs[0] == '^') {
-			    pattern->lhs++;
-			    pattern->leftLen--;
-			    pattern->flags |= VAR_MATCH_START;
-		}
-	}
-	return pattern;
+	return common_get_patternarg(p, ctxt, err, endc, true);
 }
 
 static void
@@ -1304,6 +1290,17 @@ common_get_patternarg(const char **p, SymTable *ctxt, bool err, int endc,
 	    &pattern->leftLen, NULL);
 	pattern->lbuffer = pattern->lhs;
 	if (pattern->lhs != NULL) {
+		if (dosubst && pattern->leftLen > 0) {
+			if (pattern->lhs[pattern->leftLen-1] == '$') {
+				    pattern->leftLen--;
+				    pattern->flags |= VAR_MATCH_END;
+			}
+			if (pattern->lhs[0] == '^') {
+				    pattern->lhs++;
+				    pattern->leftLen--;
+				    pattern->flags |= VAR_MATCH_START;
+			}
+		}
 		pattern->rhs = VarGetPattern(ctxt, err, &s, delim, delim,
 		    &pattern->rightLen, dosubst ? pattern: NULL);
 		if (pattern->rhs != NULL) {
