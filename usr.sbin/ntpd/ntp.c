@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.165 2020/06/22 06:11:34 otto Exp $ */
+/*	$OpenBSD: ntp.c,v 1.166 2020/08/30 16:21:29 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -89,6 +89,7 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 	struct stat		 stb;
 	struct ctl_conn		*cc;
 	time_t			 nextaction, last_sensor_scan = 0, now;
+	time_t			 last_action = 0, interval;
 	void			*newp;
 
 	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, PF_UNSPEC,
@@ -402,6 +403,7 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 		for (; nfds > 0 && j < idx_clients; j++) {
 			if (pfd[j].revents & (POLLIN|POLLERR)) {
 				nfds--;
+				last_action = now;
 				if (client_dispatch(idx2peer[j - idx_peers],
 				    conf->settime, conf->automatic) == -1) {
 					log_warn("pipe write error (settime)");
@@ -417,8 +419,24 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 		for (s = TAILQ_FIRST(&conf->ntp_sensors); s != NULL;
 		    s = next_s) {
 			next_s = TAILQ_NEXT(s, entry);
-			if (s->next <= getmonotime())
+			if (s->next <= now) {
+				last_action = now;
 				sensor_query(s);
+			}
+		}
+
+		/*
+		 * Compute maximum of scale_interval(INTERVAL_QUERY_NORMAL),
+		 * if we did not process a time message for three times that
+		 * interval, stop advertising we're synced.
+		 */
+		interval = INTERVAL_QUERY_NORMAL * conf->scale;
+		interval += SCALE_INTERVAL(interval) - 1;
+		if (conf->status.synced && last_action + 3 * interval < now) {
+			log_info("clock is now unsynced");
+			conf->status.synced = 0;
+			conf->scale = 1;
+			priv_dns(IMSG_UNSYNCED, NULL, 0);
 		}
 	}
 
@@ -853,7 +871,7 @@ scale_interval(time_t requested)
 	time_t interval, r;
 
 	interval = requested * conf->scale;
-	r = arc4random_uniform(MAXIMUM(5, interval / 10));
+	r = arc4random_uniform(SCALE_INTERVAL(interval));
 	return (interval + r);
 }
 

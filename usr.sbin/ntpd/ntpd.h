@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.149 2020/02/12 19:14:56 otto Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.150 2020/08/30 16:21:29 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -343,6 +343,8 @@ time_t	 scale_interval(time_t);
 time_t	 error_interval(void);
 extern struct ntpd_conf *conf;
 extern struct ctl_conns  ctl_conns;
+
+#define  SCALE_INTERVAL(x)	 MAXIMUM(5, (x) / 10)
 
 /* parse.y */
 int	 parse_config(const char *, struct ntpd_conf *);
