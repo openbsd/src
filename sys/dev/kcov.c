@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.26 2020/08/29 08:41:11 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.27 2020/08/30 13:18:10 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -726,7 +726,7 @@ kr_barrier(struct kcov_remote *kr)
 	MUTEX_ASSERT_LOCKED(&kcov_mtx);
 
 	while (kr->kr_nsections > 0)
-		msleep_nsec(kr, &kcov_mtx, PWAIT, "kcov", INFSLP);
+		msleep_nsec(kr, &kcov_mtx, PWAIT, "kcovbar", INFSLP);
 }
 
 struct kcov_remote *
