@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.125 2020/08/27 10:47:52 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.126 2020/08/30 19:45:20 mvs Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -912,8 +912,7 @@ pipex_ip_input(struct mbuf *m0, struct pipex_session *session)
 		bpf_mtap_af(ifp->if_bpf, AF_INET, m0, BPF_DIRECTION_IN);
 #endif
 
-	ifp->if_ipackets++;
-	ifp->if_ibytes += len;
+	counters_pkt(ifp->if_counters, ifc_ipackets, ifc_ibytes, len);
 	session->stat.ipackets++;
 	session->stat.ibytes += len;
 	ipv4_input(ifp, m0);
@@ -962,8 +961,7 @@ pipex_ip6_input(struct mbuf *m0, struct pipex_session *session)
 		bpf_mtap_af(ifp->if_bpf, AF_INET6, m0, BPF_DIRECTION_IN);
 #endif
 
-	ifp->if_ipackets++;
-	ifp->if_ibytes += len;
+	counters_pkt(ifp->if_counters, ifc_ipackets, ifc_ibytes, len);
 	session->stat.ipackets++;
 	session->stat.ibytes += len;
 	ipv6_input(ifp, m0);

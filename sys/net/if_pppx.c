@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.102 2020/08/27 10:47:52 yasuoka Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.103 2020/08/30 19:45:20 mvs Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -658,6 +658,7 @@ pppx_add_session(struct pppx_dev *pxd, struct pipex_session_req *req)
 	ifp->if_type = IFT_PPP;
 	ifp->if_softc = pxi;
 	/* ifp->if_rdomain = req->pr_rdomain; */
+	if_counters_alloc(ifp);
 
 	/* XXXSMP breaks atomicity */
 	NET_UNLOCK();
@@ -878,7 +879,7 @@ pppx_if_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 
 out:
 	if (error)
-		ifp->if_oerrors++;
+		counters_inc(ifp->if_counters, ifc_oerrors);
 	return (error);
 }
 
