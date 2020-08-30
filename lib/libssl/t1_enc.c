@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.122 2020/03/16 15:25:14 tb Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.123 2020/08/30 15:40:20 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -350,11 +350,17 @@ tls1_change_cipher_state_aead(SSL *s, char is_read, const unsigned char *key,
 		if (!tls1_aead_ctx_init(&s->internal->aead_read_ctx))
 			return 0;
 		aead_ctx = s->internal->aead_read_ctx;
+
+		if (!tls12_record_layer_set_read_aead(s->internal->rl, aead_ctx))
+			return 0;
 	} else {
 		ssl_clear_cipher_write_state(s);
 		if (!tls1_aead_ctx_init(&s->internal->aead_write_ctx))
 			return 0;
 		aead_ctx = s->internal->aead_write_ctx;
+
+		if (!tls12_record_layer_set_write_aead(s->internal->rl, aead_ctx))
+			return 0;
 	}
 
 	if (!EVP_AEAD_CTX_init(&aead_ctx->ctx, aead, key, key_len,
@@ -408,14 +414,16 @@ tls1_change_cipher_state_cipher(SSL *s, char is_read,
 	EVP_MD_CTX *mac_ctx;
 	EVP_PKEY *mac_key;
 	const EVP_MD *mac;
+	int stream_mac;
 	int mac_type;
 
 	cipher = S3I(s)->tmp.new_sym_enc;
 	mac = S3I(s)->tmp.new_hash;
 	mac_type = S3I(s)->tmp.new_mac_pkey_type;
+	stream_mac = S3I(s)->hs.new_cipher->algorithm2 & TLS1_STREAM_MAC;
 
 	if (is_read) {
-		if (S3I(s)->hs.new_cipher->algorithm2 & TLS1_STREAM_MAC)
+		if (stream_mac)
 			s->internal->mac_flags |= SSL_MAC_FLAG_READ_MAC_STREAM;
 		else
 			s->internal->mac_flags &= ~SSL_MAC_FLAG_READ_MAC_STREAM;
@@ -428,8 +436,12 @@ tls1_change_cipher_state_cipher(SSL *s, char is_read,
 		if ((mac_ctx = EVP_MD_CTX_new()) == NULL)
 			goto err;
 		s->read_hash = mac_ctx;
+
+		if (!tls12_record_layer_set_read_cipher_hash(s->internal->rl,
+		    cipher_ctx, mac_ctx, stream_mac))
+			goto err;
 	} else {
-		if (S3I(s)->hs.new_cipher->algorithm2 & TLS1_STREAM_MAC)
+		if (stream_mac)
 			s->internal->mac_flags |= SSL_MAC_FLAG_WRITE_MAC_STREAM;
 		else
 			s->internal->mac_flags &= ~SSL_MAC_FLAG_WRITE_MAC_STREAM;
@@ -450,6 +462,10 @@ tls1_change_cipher_state_cipher(SSL *s, char is_read,
 		if ((mac_ctx = EVP_MD_CTX_new()) == NULL)
 			goto err;
 		s->internal->write_hash = mac_ctx;
+
+		if (!tls12_record_layer_set_write_cipher_hash(s->internal->rl,
+		    cipher_ctx, mac_ctx, stream_mac))
+			goto err;
 	}
 
 	EVP_CipherInit_ex(cipher_ctx, cipher, NULL, key, iv, !is_read);
@@ -677,9 +693,8 @@ tls1_enc(SSL *s, int send)
 	int bs, i, j, k, ret, mac_size = 0;
 
 	if (send) {
-		aead = s->internal->aead_write_ctx;
-		rec = &S3I(s)->wrec;
-		seq = S3I(s)->write_sequence;
+		/* No longer supported. */
+		return -1;
 	} else {
 		aead = s->internal->aead_read_ctx;
 		rec = &S3I(s)->rrec;
@@ -946,9 +961,8 @@ tls1_mac(SSL *ssl, unsigned char *md, int send)
 	int t;
 
 	if (send) {
-		rec = &(ssl->s3->internal->wrec);
-		seq = &(ssl->s3->internal->write_sequence[0]);
-		hash = ssl->internal->write_hash;
+		/* No longer supported. */
+		return -1;
 	} else {
 		rec = &(ssl->s3->internal->rrec);
 		seq = &(ssl->s3->internal->read_sequence[0]);

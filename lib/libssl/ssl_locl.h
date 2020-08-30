@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.283 2020/08/11 18:40:24 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.284 2020/08/30 15:40:20 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -475,6 +475,34 @@ typedef struct ssl_handshake_tls13_st {
 
 } SSL_HANDSHAKE_TLS13;
 
+struct tls12_record_layer;
+
+struct tls12_record_layer *tls12_record_layer_new(void);
+void tls12_record_layer_free(struct tls12_record_layer *rl);
+void tls12_record_layer_set_version(struct tls12_record_layer *rl,
+    uint16_t version);
+void tls12_record_layer_set_read_epoch(struct tls12_record_layer *rl,
+    uint16_t epoch);
+void tls12_record_layer_set_write_epoch(struct tls12_record_layer *rl,
+    uint16_t epoch);
+void tls12_record_layer_clear_read_state(struct tls12_record_layer *rl);
+void tls12_record_layer_clear_write_state(struct tls12_record_layer *rl);
+void tls12_record_layer_set_read_seq_num(struct tls12_record_layer *rl,
+    uint8_t *seq_num);
+void tls12_record_layer_set_write_seq_num(struct tls12_record_layer *rl,
+    uint8_t *seq_num);
+int tls12_record_layer_set_read_aead(struct tls12_record_layer *rl,
+    SSL_AEAD_CTX *aead_ctx);
+int tls12_record_layer_set_write_aead(struct tls12_record_layer *rl,
+    SSL_AEAD_CTX *aead_ctx);
+int tls12_record_layer_set_read_cipher_hash(struct tls12_record_layer *rl,
+    EVP_CIPHER_CTX *cipher_ctx, EVP_MD_CTX *hash_ctx, int stream_mac);
+int tls12_record_layer_set_write_cipher_hash(struct tls12_record_layer *rl,
+    EVP_CIPHER_CTX *cipher_ctx, EVP_MD_CTX *hash_ctx, int stream_mac);
+int tls12_record_layer_seal_record(struct tls12_record_layer *rl,
+    uint8_t content_type, const uint8_t *content, size_t content_len,
+    CBB *out);
+
 typedef struct ssl_ctx_internal_st {
 	uint16_t min_version;
 	uint16_t max_version;
@@ -736,6 +764,8 @@ typedef struct ssl_internal_st {
 	EVP_CIPHER_CTX *enc_write_ctx;		/* cryptographic state */
 	EVP_MD_CTX *write_hash;			/* used for mac generation */
 
+	struct tls12_record_layer *rl;
+
 	/* session info */
 
 	/* extra application data */
@@ -826,7 +856,6 @@ typedef struct ssl3_state_internal_st {
 	int empty_fragment_done;
 
 	SSL3_RECORD_INTERNAL rrec;	/* each decoded record goes in here */
-	SSL3_RECORD_INTERNAL wrec;	/* goes out from here */
 
 	/* storage for Alert/Handshake protocol data received but not
 	 * yet processed by ssl3_read_bytes: */
