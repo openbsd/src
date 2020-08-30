@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.44 2020/08/25 17:49:58 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.45 2020/08/30 18:55:04 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -661,6 +661,9 @@ pmap_fill_pte(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
 
 	pte->pte_hi = (pmap_pted2avpn(pted) & PTE_AVPN) | PTE_VALID;
 	pte->pte_lo = (pa & PTE_RPGN);
+
+	if (pm == pmap_kernel())
+		pte->pte_hi |= PTE_WIRED;
 
 	if (prot & PROT_WRITE)
 		pte->pte_lo |= PTE_RW;
