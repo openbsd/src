@@ -10983,7 +10983,6 @@ SDValue DAGCombiner::visitTRUNCATE(SDNode *N) {
   // (trunc adde(X, Y, Carry)) -> (adde trunc(X), trunc(Y), Carry)
   // (trunc addcarry(X, Y, Carry)) -> (addcarry trunc(X), trunc(Y), Carry)
   // When the adde's carry is not used.
-  // Don't make an illegal adde: LegalizeDAG can't expand nor promote it.
   if ((N0.getOpcode() == ISD::ADDE || N0.getOpcode() == ISD::ADDCARRY) &&
       N0.hasOneUse() && !N0.getNode()->hasAnyUseOfValue(1) &&
       // We only do for addcarry before legalize operation
