@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.80 2020/07/03 04:12:50 tb Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.81 2020/08/31 14:04:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -920,11 +920,11 @@ ssl3_get_client_hello(SSL *s)
 
 		CBS_dup(&cbs, &ext_block);
 
-		i = ssl_get_prev_session(s, &session_id, &ext_block);
+		i = ssl_get_prev_session(s, &session_id, &ext_block, &al);
 		if (i == 1) { /* previous session */
 			s->internal->hit = 1;
 		} else if (i == -1)
-			goto err;
+			goto f_err;
 		else {
 			/* i == 0 */
 			if (!ssl_get_new_session(s, 1))

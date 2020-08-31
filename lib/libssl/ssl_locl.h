@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.284 2020/08/30 15:40:20 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.285 2020/08/31 14:04:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1161,7 +1161,8 @@ int ssl_cert_add1_chain_cert(CERT *c, X509 *cert);
 SESS_CERT *ssl_sess_cert_new(void);
 void ssl_sess_cert_free(SESS_CERT *sc);
 int ssl_get_new_session(SSL *s, int session);
-int ssl_get_prev_session(SSL *s, CBS *session_id, CBS *ext_block);
+int ssl_get_prev_session(SSL *s, CBS *session_id, CBS *ext_block,
+    int *alert);
 int ssl_cipher_id_cmp(const SSL_CIPHER *a, const SSL_CIPHER *b);
 SSL_CIPHER *OBJ_bsearch_ssl_cipher_id(SSL_CIPHER *key, SSL_CIPHER const *base,
     int num);
@@ -1397,7 +1398,7 @@ int ssl_check_clienthello_tlsext_late(SSL *s);
 int ssl_check_serverhello_tlsext(SSL *s);
 
 int tls1_process_ticket(SSL *s, CBS *session_id, CBS *ext_block,
-    SSL_SESSION **ret);
+    int *alert, SSL_SESSION **ret);
 
 long ssl_get_algorithm2(SSL *s);
 

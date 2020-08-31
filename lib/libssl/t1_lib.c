@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.169 2020/08/09 16:25:54 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.170 2020/08/31 14:04:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -122,7 +122,7 @@
 #include "ssl_sigalgs.h"
 #include "ssl_tlsext.h"
 
-static int tls_decrypt_ticket(SSL *s, CBS *session_id, CBS *ticket,
+static int tls_decrypt_ticket(SSL *s, CBS *session_id, CBS *ticket, int *alert,
     SSL_SESSION **psess);
 
 SSL3_ENC_METHOD TLSv1_enc_data = {
@@ -782,7 +782,8 @@ ssl_check_serverhello_tlsext(SSL *s)
  *   Otherwise, s->internal->tlsext_ticket_expected is set to 0.
  */
 int
-tls1_process_ticket(SSL *s, CBS *session_id, CBS *ext_block, SSL_SESSION **ret)
+tls1_process_ticket(SSL *s, CBS *session_id, CBS *ext_block, int *alert,
+    SSL_SESSION **ret)
 {
 	CBS extensions, ext_data;
 	uint16_t ext_type = 0;
@@ -805,13 +806,17 @@ tls1_process_ticket(SSL *s, CBS *session_id, CBS *ext_block, SSL_SESSION **ret)
 	if (CBS_len(ext_block) == 0)
 		return 0;
 
-	if (!CBS_get_u16_length_prefixed(ext_block, &extensions))
+	if (!CBS_get_u16_length_prefixed(ext_block, &extensions)) {
+		*alert = SSL_AD_DECODE_ERROR;
 		return -1;
+	}
 
 	while (CBS_len(&extensions) > 0) {
 		if (!CBS_get_u16(&extensions, &ext_type) ||
-		    !CBS_get_u16_length_prefixed(&extensions, &ext_data))
+		    !CBS_get_u16_length_prefixed(&extensions, &ext_data)) {
+			*alert = SSL_AD_DECODE_ERROR;
 			return -1;
+		}
 
 		if (ext_type == TLSEXT_TYPE_session_ticket)
 			break;
@@ -839,7 +844,7 @@ tls1_process_ticket(SSL *s, CBS *session_id, CBS *ext_block, SSL_SESSION **ret)
 		return 2;
 	}
 
-	r = tls_decrypt_ticket(s, session_id, &ext_data, ret);
+	r = tls_decrypt_ticket(s, session_id, &ext_data, alert, ret);
 	switch (r) {
 	case 2: /* ticket couldn't be decrypted */
 		s->internal->tlsext_ticket_expected = 1;
@@ -868,7 +873,8 @@ tls1_process_ticket(SSL *s, CBS *session_id, CBS *ext_block, SSL_SESSION **ret)
  *    4: same as 3, but the ticket needs to be renewed.
  */
 static int
-tls_decrypt_ticket(SSL *s, CBS *session_id, CBS *ticket, SSL_SESSION **psess)
+tls_decrypt_ticket(SSL *s, CBS *session_id, CBS *ticket, int *alert,
+    SSL_SESSION **psess)
 {
 	CBS ticket_name, ticket_iv, ticket_encdata, ticket_hmac;
 	SSL_SESSION *sess = NULL;
@@ -883,6 +889,7 @@ tls_decrypt_ticket(SSL *s, CBS *session_id, CBS *ticket, SSL_SESSION **psess)
 	int slen, hlen;
 	int renew_ticket = 0;
 	int ret = -1;
+	int alert_desc = SSL_AD_INTERNAL_ERROR;
 
 	*psess = NULL;
 
@@ -956,8 +963,10 @@ tls_decrypt_ticket(SSL *s, CBS *session_id, CBS *ticket, SSL_SESSION **psess)
 		goto derr;
 	if (!CBS_get_bytes(ticket, &ticket_hmac, hlen))
 		goto derr;
-	if (CBS_len(ticket) != 0)
+	if (CBS_len(ticket) != 0) {
+		alert_desc = SSL_AD_DECODE_ERROR;
 		goto err;
+	}
 
 	/* Check HMAC of encrypted ticket. */
 	if (HMAC_Update(hctx, CBS_data(&ticket_name),
@@ -1020,6 +1029,7 @@ tls_decrypt_ticket(SSL *s, CBS *session_id, CBS *ticket, SSL_SESSION **psess)
 	goto done;
 
  err:
+	*alert = alert_desc;
 	ret = -1;
 	goto done;
 

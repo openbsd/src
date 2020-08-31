@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.85 2019/04/22 15:12:20 jsing Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.86 2020/08/31 14:04:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -435,10 +435,10 @@ sess_id_done:
  *     to 1 if the server should issue a new session ticket (to 0 otherwise).
  */
 int
-ssl_get_prev_session(SSL *s, CBS *session_id, CBS *ext_block)
+ssl_get_prev_session(SSL *s, CBS *session_id, CBS *ext_block, int *alert)
 {
 	SSL_SESSION *ret = NULL;
-	int fatal = 0;
+	int alert_desc = SSL_AD_INTERNAL_ERROR, fatal = 0;
 	int try_session_cache = 1;
 	int r;
 
@@ -451,7 +451,7 @@ ssl_get_prev_session(SSL *s, CBS *session_id, CBS *ext_block)
 		try_session_cache = 0;
 
 	/* Sets s->internal->tlsext_ticket_expected. */
-	r = tls1_process_ticket(s, session_id, ext_block, &ret);
+	r = tls1_process_ticket(s, session_id, ext_block, &alert_desc, &ret);
 	switch (r) {
 	case -1: /* Error during processing */
 		fatal = 1;
@@ -591,9 +591,10 @@ err:
 			s->internal->tlsext_ticket_expected = 1;
 		}
 	}
-	if (fatal)
+	if (fatal) {
+		*alert = alert_desc;
 		return -1;
-	else
+	} else
 		return 0;
 }
 
