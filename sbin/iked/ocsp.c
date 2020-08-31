@@ -1,4 +1,4 @@
-/*	$OpenBSD: ocsp.c,v 1.13 2020/08/21 14:30:17 tobhe Exp $ */
+/*	$OpenBSD: ocsp.c,v 1.14 2020/08/31 17:45:30 tobhe Exp $ */
 
 /*
  * Copyright (c) 2014 Markus Friedl
@@ -51,6 +51,7 @@ struct iked_ocsp {
 };
 
 struct ocsp_connect {
+	struct iked_sahdr	 oc_sh;
 	struct iked_socket	 oc_sock;
 	char			*oc_path;
 };
@@ -74,13 +75,26 @@ int
 ocsp_connect(struct iked *env, struct imsg *imsg)
 {
 	struct ocsp_connect	*oc = NULL;
+	struct iked_sahdr	 sh;
 	struct addrinfo		 hints, *res0 = NULL, *res;
+	uint8_t			*ptr;
+	size_t			 len;
 	char			*host = NULL, *port = NULL, *path = NULL;
 	char			*url, *freeme = NULL;
 	int			use_ssl, fd = -1, ret = -1, error;
 
-	if (IMSG_DATA_SIZE(imsg) > 0)
-		url = freeme = get_string(imsg->data, IMSG_DATA_SIZE(imsg));
+	IMSG_SIZE_CHECK(imsg, &sh);
+
+	ptr = (uint8_t *)imsg->data;
+	len = IMSG_DATA_SIZE(imsg);
+
+	memcpy(&sh, ptr, sizeof(sh));
+
+	ptr += sizeof(sh);
+	len -= sizeof(sh);
+
+	if (len > 0)
+		url = freeme = get_string(ptr, len);
 	else if (env->sc_ocsp_url)
 		url = env->sc_ocsp_url;
 	else {
@@ -128,6 +142,7 @@ ocsp_connect(struct iked *env, struct imsg *imsg)
 
 	oc->oc_sock.sock_fd = fd;
 	oc->oc_sock.sock_env = env;
+	oc->oc_sh = sh;
 	oc->oc_path = path;
 	path = NULL;
 
@@ -189,18 +204,23 @@ ocsp_connect_cb(int fd, short event, void *arg)
 int
 ocsp_connect_finish(struct iked *env, int fd, struct ocsp_connect *oc)
 {
-	struct iovec		 iov[1];
-	int			 iovcnt = 1, ret;
+	struct iovec		 iov[2];
+	int			 iovcnt = 0, ret;
+
+	iov[iovcnt].iov_base = &oc->oc_sh;
+	iov[iovcnt].iov_len = sizeof(oc->oc_sh);
+	iovcnt++;
 
 	if (oc && fd >= 0) {
 		/* the imsg framework will close the FD after send */
-		iov[0].iov_base = oc->oc_path;
-		iov[0].iov_len = strlen(oc->oc_path);
+		iov[iovcnt].iov_base = oc->oc_path;
+		iov[iovcnt].iov_len = strlen(oc->oc_path);
+		iovcnt++;
 		ret = proc_composev_imsg(&env->sc_ps, PROC_CERT, -1,
 		    IMSG_OCSP_FD, -1, fd, iov, iovcnt);
 	} else {
-		ret = proc_compose_imsg(&env->sc_ps, PROC_CERT, -1,
-		    IMSG_OCSP_FD, -1, -1, NULL, 0);
+		ret = proc_composev_imsg(&env->sc_ps, PROC_CERT, -1,
+		    IMSG_OCSP_FD, -1, -1, iov, iovcnt);
 		if (fd >= 0)
 			close(fd);
 	}
@@ -219,7 +239,7 @@ int
 ocsp_validate_cert(struct iked *env, void *data, size_t len,
     struct iked_sahdr sh, u_int8_t type, X509 *issuer)
 {
-	struct iovec		 iov[1];
+	struct iovec		 iov[2];
 	STACK_OF(OPENSSL_STRING) *aia; /* Authority Information Access */
 	struct iked_ocsp_entry	*ioe;
 	struct iked_ocsp	*ocsp;
@@ -259,13 +279,18 @@ ocsp_validate_cert(struct iked *env, void *data, size_t len,
 	ioe->ioe_ocsp = ocsp;
 	TAILQ_INSERT_TAIL(&env->sc_ocsp, ioe, ioe_entry);
 
+	/* pass SA header */
+	iov[iovcnt].iov_base = &ocsp->ocsp_sh;
+	iov[iovcnt].iov_len = sizeof(ocsp->ocsp_sh);
+	iovcnt++;
+
 	/* pass optional ocsp-url from issuer */
 	if ((aia = X509_get1_ocsp(issuer)) != NULL) {
 		url = sk_OPENSSL_STRING_value(aia, 0);
 		log_debug("%s: aia %s", __func__, url);
-		iov[0].iov_base = url;
-		iov[0].iov_len = strlen(url);
-		iovcnt = 1;
+		iov[iovcnt].iov_base = url;
+		iov[iovcnt].iov_len = strlen(url);
+		iovcnt++;
 	}
 	/* request connection to ocsp-responder */
 	ret = proc_composev(&env->sc_ps, PROC_PARENT, IMSG_OCSP_FD,
@@ -318,14 +343,33 @@ int
 ocsp_receive_fd(struct iked *env, struct imsg *imsg)
 {
 	struct iked_ocsp_entry	*ioe = NULL;
-	struct iked_ocsp	*ocsp = NULL;
+	struct iked_ocsp	*ocsp = NULL, *ocsp_tmp;
 	struct iked_socket	*sock;
+	struct iked_sahdr	 sh;
+	uint8_t			*ptr;
 	char			*path = NULL;
+	size_t			 len;
 	int			 ret = -1;
 
 	log_debug("%s: received socket fd %d", __func__, imsg->fd);
-	if ((ioe = TAILQ_FIRST(&env->sc_ocsp)) == NULL) {
-		log_debug("%s: oops, no request for", __func__);
+
+	IMSG_SIZE_CHECK(imsg, &sh);
+
+	ptr = (uint8_t *)imsg->data;
+	len = IMSG_DATA_SIZE(imsg);
+
+	memcpy(&sh, ptr, sizeof(sh));
+
+	ptr += sizeof(sh);
+	len -= sizeof(sh);
+
+	TAILQ_FOREACH(ioe, &env->sc_ocsp, ioe_entry) {
+		ocsp_tmp = ioe->ioe_ocsp;
+		if (memcmp(&ocsp_tmp->ocsp_sh, &sh, sizeof(sh)) == 0)
+			break;
+	}
+	if (ioe == NULL) {
+		log_debug("%s: no pending request found", __func__);
 		close(imsg->fd);
 		return (-1);
 	}
@@ -342,7 +386,7 @@ ocsp_receive_fd(struct iked *env, struct imsg *imsg)
 	ocsp->ocsp_sock = sock;
 
 	/* fetch 'path' and 'fd' from imsg */
-	if ((path = get_string(imsg->data, IMSG_DATA_SIZE(imsg))) == NULL)
+	if ((path = get_string(ptr, len)) == NULL)
 		goto done;
 
 	BIO_set_fd(ocsp->ocsp_cbio, imsg->fd, BIO_NOCLOSE);
