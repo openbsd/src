@@ -1,4 +1,4 @@
-/*	$OpenBSD: ocsp.c,v 1.15 2020/08/31 21:02:22 tobhe Exp $ */
+/*	$OpenBSD: ocsp.c,v 1.16 2020/08/31 21:05:49 tobhe Exp $ */
 
 /*
  * Copyright (c) 2014 Markus Friedl
@@ -368,12 +368,16 @@ ocsp_receive_fd(struct iked *env, struct imsg *imsg)
 	}
 	if (ioe == NULL) {
 		log_debug("%s: no pending request found", __func__);
-		close(imsg->fd);
+		if (imsg->fd != -1)
+			close(imsg->fd);
 		return (-1);
 	}
 	TAILQ_REMOVE(&env->sc_ocsp, ioe, ioe_entry);
 	ocsp = ioe->ioe_ocsp;
 	free(ioe);
+
+	if (imsg->fd == -1)
+		goto done;
 
 	if ((sock = calloc(1, sizeof(*sock))) == NULL)
 		fatal("ocsp_receive_fd: calloc sock");
