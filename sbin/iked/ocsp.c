@@ -1,4 +1,4 @@
-/*	$OpenBSD: ocsp.c,v 1.14 2020/08/31 17:45:30 tobhe Exp $ */
+/*	$OpenBSD: ocsp.c,v 1.15 2020/08/31 21:02:22 tobhe Exp $ */
 
 /*
  * Copyright (c) 2014 Markus Friedl
@@ -325,13 +325,11 @@ ocsp_free(struct iked_ocsp *ocsp)
 		}
 		if (ocsp->ocsp_cbio != NULL)
 			BIO_free_all(ocsp->ocsp_cbio);
-		if (ocsp->ocsp_id != NULL)
-			OCSP_CERTID_free(ocsp->ocsp_id);
 
-		/* XXX not sure about ownership XXX */
 		if (ocsp->ocsp_req_ctx != NULL)
 			OCSP_REQ_CTX_free(ocsp->ocsp_req_ctx);
-		else if (ocsp->ocsp_req != NULL)
+
+		if (ocsp->ocsp_req != NULL)
 			OCSP_REQUEST_free(ocsp->ocsp_req);
 
 		free(ocsp);
