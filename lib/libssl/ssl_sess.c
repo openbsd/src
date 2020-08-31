@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.86 2020/08/31 14:04:51 tb Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.87 2020/08/31 14:34:01 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -440,7 +440,6 @@ ssl_get_prev_session(SSL *s, CBS *session_id, CBS *ext_block, int *alert)
 	SSL_SESSION *ret = NULL;
 	int alert_desc = SSL_AD_INTERNAL_ERROR, fatal = 0;
 	int try_session_cache = 1;
-	int r;
 
 	/* This is used only by servers. */
 
@@ -451,16 +450,15 @@ ssl_get_prev_session(SSL *s, CBS *session_id, CBS *ext_block, int *alert)
 		try_session_cache = 0;
 
 	/* Sets s->internal->tlsext_ticket_expected. */
-	r = tls1_process_ticket(s, session_id, ext_block, &alert_desc, &ret);
-	switch (r) {
-	case -1: /* Error during processing */
+	switch (tls1_process_ticket(s, session_id, ext_block, &alert_desc, &ret)) {
+	case TLS1_TICKET_FATAL_ERROR:
 		fatal = 1;
 		goto err;
-	case 0: /* No ticket found */
-	case 1: /* Zero length ticket found */
+	case TLS1_TICKET_NONE:
+	case TLS1_TICKET_EMPTY:
 		break; /* Ok to carry on processing session id. */
-	case 2: /* Ticket found but not decrypted. */
-	case 3: /* Ticket decrypted, *ret has been set. */
+	case TLS1_TICKET_NOT_DECRYPTED:
+	case TLS1_TICKET_DECRYPTED:
 		try_session_cache = 0;
 		break;
 	default:
