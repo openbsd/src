@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.210 2020/08/23 09:35:32 kn Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.211 2020/09/01 01:53:50 gnezdo Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -1002,7 +1002,6 @@ int sysctl_int(void *, size_t *, void *, size_t, int *);
 int sysctl_int_bounded(void *, size_t *, void *, size_t, int *, int, int);
 int sysctl_int_lower(void *, size_t *, void *, size_t, int *);
 int sysctl_rdint(void *, size_t *, void *, int);
-int sysctl_int_arr(int **, u_int, int*, u_int, void *, size_t *, void *, size_t);
 int sysctl_bounded_arr(const struct sysctl_bounded_args *, u_int,
     int *, u_int, void *, size_t *, void *, size_t);
 int sysctl_quad(void *, size_t *, void *, size_t, int64_t *);
