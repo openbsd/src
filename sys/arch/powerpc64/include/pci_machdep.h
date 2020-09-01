@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.2 2020/06/10 16:31:27 kettenis Exp $ */
+/*	$OpenBSD: pci_machdep.h,v 1.3 2020/09/01 19:09:47 kettenis Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -28,6 +28,9 @@
 
 typedef struct ppc64_pci_chipset *pci_chipset_tag_t;
 typedef uint64_t pcitag_t;
+
+#define PCITAG_NODE(x)		((x) >> 32)
+#define PCITAG_OFFSET(x)	((x) & 0xffffffff)
 
 /* Supported interrupt types. */
 #define PCI_NONE		0

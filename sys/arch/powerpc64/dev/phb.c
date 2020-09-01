@@ -1,4 +1,4 @@
-/*	$OpenBSD: phb.c,v 1.13 2020/08/23 10:11:17 kettenis Exp $	*/
+/*	$OpenBSD: phb.c,v 1.14 2020/09/01 19:09:47 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -390,11 +390,40 @@ phb_bus_maxdevs(void *v, int bus)
 	return 32;
 }
 
+int
+phb_find_node(int node, int bus, int device, int function)
+{
+	uint32_t reg[5];
+	uint32_t phys_hi;
+	int child;
+
+	phys_hi = ((bus << 16) | (device << 11) | (function << 8));
+
+	for (child = OF_child(node); child; child = OF_peer(child)) {
+		if (OF_getpropintarray(child, "reg",
+		    reg, sizeof(reg)) != sizeof(reg))
+			continue;
+
+		if (reg[0] == phys_hi)
+			return child;
+
+		node = phb_find_node(child, bus, device, function);
+		if (node)
+			return node;
+	}
+
+	return 0;
+}
+
 pcitag_t
 phb_make_tag(void *v, int bus, int device, int function)
 {
-	/* Return OPAL bus_dev_func. */
-	return ((bus << 8) | (device << 3) | (function << 0));
+	struct phb_softc *sc = v;
+	int node;
+
+	node = phb_find_node(sc->sc_node, bus, device, function);
+	return (((pcitag_t)node << 32) |
+	    (bus << 8) | (device << 3) | (function << 0));
 }
 
 void
@@ -423,6 +452,7 @@ phb_conf_read(void *v, pcitag_t tag, int reg)
 	uint16_t pci_error_state;
 	uint8_t freeze_state;
 
+	tag = PCITAG_OFFSET(tag);
 	error = opal_pci_config_read_word(sc->sc_phb_id,
 	    tag, reg, opal_phys(&data));
 	if (error == OPAL_SUCCESS && data != 0xffffffff)
@@ -446,6 +476,7 @@ phb_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 {
 	struct phb_softc *sc = v;
 
+	tag = PCITAG_OFFSET(tag);
 	opal_pci_config_write_word(sc->sc_phb_id, tag, reg, data);
 }
 
