@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.4 2020/08/27 16:54:23 patrick Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.5 2020/09/01 18:03:09 patrick Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -248,9 +248,9 @@ protect_writeable(uint64_t addr, size_t len)
 
 	for (addr &= ~(uint64_t)PAGE_MASK; addr < end; addr += PAGE_SIZE) {
 		idx = (addr & L4_MASK) >> L4_SHIFT;
-		if ((p[idx] & PG_RW) == 0)
-			p[idx] |= PG_RW;
-		if (p[idx] & PG_PS)
+		if ((cr3[idx] & PG_RW) == 0)
+			cr3[idx] |= PG_RW;
+		if (cr3[idx] & PG_PS)
 			continue;
 		p = (uint64_t *)(cr3[idx] & PG_FRAME);
 
