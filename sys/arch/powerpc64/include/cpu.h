@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.24 2020/08/23 10:07:51 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.25 2020/09/01 20:06:49 gkoehler Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -154,9 +154,10 @@ void	cpu_startclock(void);
 #define aston(p)		((p)->p_md.md_astpending = 1)
 #define need_proftick(p)	aston(p)
 
+void signotify(struct proc *);
+
 #define cpu_unidle(ci)
 #define CPU_BUSY_CYCLE()	do {} while (0)
-#define signotify(p)		setsoftast()
 
 #define curpcb			curcpu()->ci_curpcb
 
@@ -183,8 +184,6 @@ void need_resched(struct cpu_info *);
 
 void delay(u_int);
 #define DELAY(x)	delay(x)
-
-#define setsoftast()		aston(curcpu()->ci_curproc)
 
 #define PROC_STACK(p)		((p)->p_md.md_regs->fixreg[1])
 #define PROC_PC(p)		((p)->p_md.md_regs->srr0)
