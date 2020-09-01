@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.90 2020/08/26 03:29:05 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.91 2020/09/01 02:22:52 gnezdo Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2014 Miodrag Vallat.
@@ -1015,6 +1015,10 @@ cpu_startup()
 	}
 }
 
+const struct sysctl_bounded_args cpuctl_vars[] = {
+	{ CPU_LIDACTION, &lid_action, 0, 2 },
+};
+
 /*
  * Machine dependent system variables.
  */
@@ -1022,26 +1026,8 @@ int
 cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
 {
-	int val, error;
-
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return ENOTDIR;		/* Overloaded */
-
-	switch (name[0]) {
-	case CPU_LIDACTION:
-		val = lid_action;
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &val);
-		if (!error) {
-			if (val < 0 || val > 2)
-				error = EINVAL;
-			else
-				lid_action = val;
-		}
-		return error;
-	default:
-		return EOPNOTSUPP;
-	}
+	return (sysctl_bounded_arr(cpuctl_vars, nitems(cpuctl_vars),
+	    name, namelen, oldp, oldlenp, newp, newlen));
 }
 
 int	waittime = -1;
