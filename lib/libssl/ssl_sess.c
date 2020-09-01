@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.90 2020/09/01 06:02:51 tb Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.91 2020/09/01 06:05:09 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -385,7 +385,7 @@ ssl_get_new_session(SSL *s, int session)
 			return (0);
 		}
 
-sess_id_done:
+ sess_id_done:
 		if (s->tlsext_hostname) {
 			ss->tlsext_hostname = strdup(s->tlsext_hostname);
 			if (ss->tlsext_hostname == NULL) {
