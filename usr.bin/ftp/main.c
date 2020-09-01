@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.131 2020/02/11 18:41:39 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.132 2020/09/01 12:33:48 jca Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -80,6 +80,112 @@
 
 #include "cmds.h"
 #include "ftp_var.h"
+
+int	trace;
+int	hash;
+int	mark;
+int	sendport;
+int	verbose;
+int	connected;
+int	fromatty;
+int	interactive;
+#ifndef SMALL
+int	confirmrest;
+int	debug;
+int	bell;
+char   *altarg;
+#endif /* !SMALL */
+int	doglob;
+int	autologin;
+int	proxy;
+int	proxflag;
+int	gatemode;
+char   *gateserver;
+int	sunique;
+int	runique;
+int	mcase;
+int	ntflag;
+int	mapflag;
+int	preserve;
+int	progress;
+int	code;
+int	crflag;
+char	pasv[BUFSIZ];
+int	passivemode;
+int	activefallback;
+char	ntin[17];
+char	ntout[17];
+char	mapin[PATH_MAX];
+char	mapout[PATH_MAX];
+char	typename[32];
+int	type;
+int	curtype;
+char	structname[32];
+int	stru;
+char	formname[32];
+int	form;
+char	modename[32];
+int	mode;
+char	bytename[32];
+int	bytesize;
+int	anonftp;
+int	dirchange;
+unsigned int retry_connect;
+int	ttywidth;
+int	epsv4;
+int	epsv4bad;
+
+#ifndef SMALL
+int	  editing;
+EditLine *el;
+History  *hist;
+char	 *cursor_pos;
+size_t	  cursor_argc;
+size_t	  cursor_argo;
+int	  resume;
+char	 *srcaddr;
+#endif /* !SMALL */
+
+char	 *cookiefile;
+
+off_t	bytes;
+off_t	filesize;
+char   *direction;
+
+char   *hostname;
+int	unix_server;
+int	unix_proxy;
+
+char *ftpport;
+char *httpport;
+#ifndef NOSSL
+char *httpsport;
+#endif /* !SMALL */
+char *httpuseragent;
+char *gateport;
+
+jmp_buf	toplevel;
+
+#ifndef SMALL
+char	line[FTPBUFLEN];
+char	*argbase;
+char	*stringbase;
+char	argbuf[FTPBUFLEN];
+StringList *marg_sl;
+int	margc;
+int	options;
+#endif /* !SMALL */
+
+int	cpend;
+int	mflag;
+
+#ifndef SMALL
+int macnum;
+struct macel macros[16];
+char macbuf[4096];
+#endif /* !SMALL */
+
+FILE	*ttyout;
 
 int connect_timeout;
 
