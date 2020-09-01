@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.89 2020/09/01 06:01:30 tb Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.90 2020/09/01 06:02:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -577,7 +577,7 @@ ssl_get_prev_session(SSL *s, CBS *session_id, CBS *ext_block, int *alert)
 	s->verify_result = s->session->verify_result;
 	return 1;
 
-err:
+ err:
 	if (sess != NULL) {
 		SSL_SESSION_free(sess);
 		if (!try_session_cache) {
@@ -591,8 +591,8 @@ err:
 	if (fatal) {
 		*alert = alert_desc;
 		return -1;
-	} else
-		return 0;
+	}
+	return 0;
 }
 
 int
