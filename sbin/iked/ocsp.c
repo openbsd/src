@@ -1,4 +1,4 @@
-/*	$OpenBSD: ocsp.c,v 1.16 2020/08/31 21:05:49 tobhe Exp $ */
+/*	$OpenBSD: ocsp.c,v 1.17 2020/09/01 08:38:42 tobhe Exp $ */
 
 /*
  * Copyright (c) 2014 Markus Friedl
@@ -489,29 +489,31 @@ ocsp_parse_response(struct iked_ocsp *ocsp, OCSP_RESPONSE *resp)
 	STACK_OF(X509)		*verify_other = NULL;
 	OCSP_BASICRESP		*bs = NULL;
 	ASN1_GENERALIZEDTIME	*rev, *thisupd, *nextupd;
-	int			 reason = 0, error = 1, verify_flags = 0;
+	const char		*errstr;
+	int			 reason = 0, valid = 0, verify_flags = 0;
 	int			 status;
 
 	if (!resp) {
-		log_warnx("%s: error querying OCSP responder", __func__);
+		errstr = "error querying OCSP responder";
 		goto done;
 	}
 
 	status = OCSP_response_status(resp);
 	if (status != OCSP_RESPONSE_STATUS_SUCCESSFUL) {
-		log_warnx("%s: responder error: %s (%i)\n", __func__,
-		    OCSP_response_status_str(status), status);
+		errstr = OCSP_response_status_str(status);
 		goto done;
 	}
 
 	verify_other = ocsp_load_certs(IKED_OCSP_RESPCERT);
 	verify_flags |= OCSP_TRUSTOTHER;
-	if (!verify_other)
+	if (!verify_other) {
+		errstr = "no verify_other";
 		goto done;
+	}
 
 	bs = OCSP_response_get1_basic(resp);
 	if (!bs) {
-		log_warnx("%s: error parsing response", __func__);
+		errstr = "error parsing response";
 		goto done;
 	}
 
@@ -520,7 +522,7 @@ ocsp_parse_response(struct iked_ocsp *ocsp, OCSP_RESPONSE *resp)
 		if (status == -1)
 			log_warnx("%s: no nonce in response", __func__);
 		else {
-			log_warnx("%s: nonce verify error", __func__);
+			errstr = "nonce verify error";
 			goto done;
 		}
 	}
@@ -529,31 +531,34 @@ ocsp_parse_response(struct iked_ocsp *ocsp, OCSP_RESPONSE *resp)
 	status = OCSP_basic_verify(bs, verify_other, store, verify_flags);
 	if (status < 0)
 		status = OCSP_basic_verify(bs, NULL, store, 0);
-
 	if (status <= 0) {
 		ca_sslerror(__func__);
-		log_warnx("%s: response verify failure", __func__);
+		errstr = "response verify failure";
 		goto done;
-	} else
-		log_debug("%s: response verify ok", __func__);
+	}
+	log_debug("%s: response verify ok", __func__);
 
 	if (!OCSP_resp_find_status(bs, ocsp->ocsp_id, &status, &reason,
 	    &rev, &thisupd, &nextupd)) {
-		log_warnx("%s: no status found", __func__);
+		errstr = "no status found";
 		goto done;
 	}
 	if (env->sc_ocsp_tolerate &&
 	    !OCSP_check_validity(thisupd, nextupd, env->sc_ocsp_tolerate,
 	    env->sc_ocsp_maxage)) {
-		log_warnx("%s: status times invalid", __func__);
 		ca_sslerror(__func__);
+		errstr = "status times invalid";
 		goto done;
 	}
-	log_debug("%s: status: %s", __func__, OCSP_cert_status_str(status));
-	if (status == V_OCSP_CERTSTATUS_GOOD)
-		error = 0;
-
+	errstr = OCSP_cert_status_str(status);
+	if (status == V_OCSP_CERTSTATUS_GOOD) {
+		log_debug("%s: status: %s", __func__, errstr);
+		valid = 1;
+	}
  done:
+	if (!valid) {
+		log_debug("%s: status: %s", __func__, errstr);
+	}
 	if (store)
 		X509_STORE_free(store);
 	if (verify_other)
@@ -563,7 +568,7 @@ ocsp_parse_response(struct iked_ocsp *ocsp, OCSP_RESPONSE *resp)
 	if (bs)
 		OCSP_BASICRESP_free(bs);
 
-	ocsp_validate_finish(ocsp, error == 0);
+	ocsp_validate_finish(ocsp, valid);
 }
 
 /*
