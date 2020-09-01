@@ -1,4 +1,4 @@
-/* $OpenBSD: toeplitz.c,v 1.8 2020/07/17 13:13:36 tb Exp $ */
+/* $OpenBSD: toeplitz.c,v 1.9 2020/09/01 19:18:26 tb Exp $ */
 
 /*
  * Copyright (c) 2009 The DragonFly Project.  All rights reserved.
@@ -67,7 +67,7 @@
 static stoeplitz_key		stoeplitz_keyseed = STOEPLITZ_KEYSEED;
 static struct stoeplitz_cache	stoeplitz_syskey_cache;
 const struct stoeplitz_cache *const
-				stoeplitz_cache = &stoeplitz_syskey_cache; 
+				stoeplitz_cache = &stoeplitz_syskey_cache;
 
 /* parity of n16: count (mod 2) of ones in the binary representation. */
 int
@@ -89,7 +89,7 @@ stoeplitz_key
 stoeplitz_random_seed(void)
 {
 	stoeplitz_key seed;
-       
+
 	seed = arc4random() & UINT16_MAX;
 	if (parity(seed) == 0)
 		seed ^= 1;
