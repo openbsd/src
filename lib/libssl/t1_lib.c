@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.171 2020/08/31 14:34:01 tb Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.172 2020/09/01 05:32:11 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -844,18 +844,7 @@ tls1_process_ticket(SSL *s, CBS *session_id, CBS *ext_block, int *alert,
 		return TLS1_TICKET_NOT_DECRYPTED;
 	}
 
-	switch (tls_decrypt_ticket(s, session_id, &ext_data, alert, ret)) {
-	case TLS1_TICKET_NOT_DECRYPTED:
-		s->internal->tlsext_ticket_expected = 1;
-		return TLS1_TICKET_NOT_DECRYPTED;
-	case TLS1_TICKET_DECRYPTED:
-		return TLS1_TICKET_DECRYPTED;
-	case TLS1_TICKET_DECRYPTED_RENEW:
-		s->internal->tlsext_ticket_expected = 1;
-		return TLS1_TICKET_DECRYPTED;
-	default:
-		return TLS1_TICKET_FATAL_ERROR;
-	}
+	return tls_decrypt_ticket(s, session_id, &ext_data, alert, ret);
 }
 
 /* tls_decrypt_ticket attempts to decrypt a session ticket.
@@ -869,7 +858,6 @@ tls1_process_ticket(SSL *s, CBS *session_id, CBS *ext_block, int *alert,
  *    TLS1_TICKET_FATAL_ERROR: error from parsing or decrypting the ticket.
  *    TLS1_TICKET_NOT_DECRYPTED: the ticket couldn't be decrypted.
  *    TLS1_TICKET_DECRYPTED: a ticket was decrypted and *psess was set.
- *    TLS1_TICKET_DECRYPTED_RENEW: same as 3, but the ticket needs to be renewed.
  */
 static int
 tls_decrypt_ticket(SSL *s, CBS *session_id, CBS *ticket, int *alert,
@@ -1017,13 +1005,14 @@ tls_decrypt_ticket(SSL *s, CBS *session_id, CBS *ticket, int *alert,
 	sess = NULL;
 
 	if (renew_ticket)
-		ret = TLS1_TICKET_DECRYPTED_RENEW;
-	else
-		ret = TLS1_TICKET_DECRYPTED;
+		s->internal->tlsext_ticket_expected = 1;
+
+	ret = TLS1_TICKET_DECRYPTED;
 
 	goto done;
 
  derr:
+	s->internal->tlsext_ticket_expected = 1;
 	ret = TLS1_TICKET_NOT_DECRYPTED;
 	goto done;
 
