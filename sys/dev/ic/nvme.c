@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.83 2020/07/20 14:41:13 krw Exp $ */
+/*	$OpenBSD: nvme.c,v 1.84 2020/09/01 12:17:53 krw Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -538,13 +538,13 @@ nvme_scsi_cmd(struct scsi_xfer *xs)
 {
 	switch (xs->cmd->opcode) {
 	case READ_COMMAND:
-	case READ_BIG:
+	case READ_10:
 	case READ_12:
 	case READ_16:
 		nvme_scsi_io(xs, SCSI_DATA_IN);
 		return;
 	case WRITE_COMMAND:
-	case WRITE_BIG:
+	case WRITE_10:
 	case WRITE_12:
 	case WRITE_16:
 		nvme_scsi_io(xs, SCSI_DATA_OUT);

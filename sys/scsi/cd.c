@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.260 2020/08/29 19:34:07 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.261 2020/09/01 12:17:53 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -71,7 +71,7 @@
 #include <scsi/scsi_all.h>
 #include <scsi/cd.h>
 #include <scsi/scsi_debug.h>
-#include <scsi/scsi_disk.h>	/* rw_big and start_stop come from there */
+#include <scsi/scsi_disk.h>	/* rw_10 and start_stop come from there */
 #include <scsi/scsiconf.h>
 
 
@@ -502,9 +502,9 @@ int
 cd_cmd_rw10(struct scsi_generic *generic, int read, u_int64_t secno,
     u_int32_t nsecs)
 {
-	struct scsi_rw_big *cmd = (struct scsi_rw_big *)generic;
+	struct scsi_rw_10 *cmd = (struct scsi_rw_10 *)generic;
 
-	cmd->opcode = read ? READ_BIG : WRITE_BIG;
+	cmd->opcode = read ? READ_10 : WRITE_10;
 	_lto4b(secno, cmd->addr);
 	_lto2b(nsecs, cmd->length);
 

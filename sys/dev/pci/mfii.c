@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.80 2020/07/22 13:16:04 krw Exp $ */
+/* $OpenBSD: mfii.c,v 1.81 2020/09/01 12:17:53 krw Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -2090,11 +2090,11 @@ mfii_scsi_cmd(struct scsi_xfer *xs)
 
 	switch (xs->cmd->opcode) {
 	case READ_COMMAND:
-	case READ_BIG:
+	case READ_10:
 	case READ_12:
 	case READ_16:
 	case WRITE_COMMAND:
-	case WRITE_BIG:
+	case WRITE_10:
 	case WRITE_12:
 	case WRITE_16:
 		if (mfii_scsi_cmd_io(sc, xs) != 0)

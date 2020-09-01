@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.53 2020/07/25 16:34:30 krw Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.54 2020/09/01 12:17:53 krw Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -287,16 +287,16 @@ sdmmc_scsi_decode_rw(struct scsi_xfer *xs, u_int32_t *blocknop,
     u_int32_t *blockcntp)
 {
 	struct scsi_rw *rw;
-	struct scsi_rw_big *rwb;
-	
+	struct scsi_rw_10 *rw10;
+
 	if (xs->cmdlen == 6) {
 		rw = (struct scsi_rw *)xs->cmd;
 		*blocknop = _3btol(rw->addr) & (SRW_TOPADDR << 16 | 0xffff);
 		*blockcntp = rw->length ? rw->length : 0x100;
 	} else {
-		rwb = (struct scsi_rw_big *)xs->cmd;
-		*blocknop = _4btol(rwb->addr);
-		*blockcntp = _2btol(rwb->length);
+		rw10 = (struct scsi_rw_10 *)xs->cmd;
+		*blocknop = _4btol(rw10->addr);
+		*blockcntp = _2btol(rw10->length);
 	}
 }
 
@@ -330,9 +330,9 @@ sdmmc_scsi_cmd(struct scsi_xfer *xs)
 
 	switch (xs->cmd->opcode) {
 	case READ_COMMAND:
-	case READ_BIG:
+	case READ_10:
 	case WRITE_COMMAND:
-	case WRITE_BIG:
+	case WRITE_10:
 		/* Deal with I/O outside the switch. */
 		break;
 

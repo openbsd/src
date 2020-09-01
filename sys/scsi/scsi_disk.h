@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_disk.h,v 1.40 2019/12/03 15:58:28 krw Exp $	*/
+/*	$OpenBSD: scsi_disk.h,v 1.41 2020/09/01 12:17:53 krw Exp $	*/
 /*	$NetBSD: scsi_disk.h,v 1.10 1996/07/05 16:19:05 christos Exp $	*/
 
 /*
@@ -164,7 +164,7 @@ struct scsi_rw {
 	u_int8_t control;
 };
 
-struct scsi_rw_big {
+struct scsi_rw_10 {
 	u_int8_t opcode;
 	u_int8_t byte2;
 #define	SRWB_RELADDR	0x01
@@ -292,8 +292,8 @@ struct scsi_synchronize_cache {
 #define WRITE_COMMAND		0x0a
 #define READ_CAPACITY		0x25
 #define READ_CAPACITY_16	0x9e
-#define READ_BIG		0x28
-#define WRITE_BIG		0x2a
+#define READ_10			0x28
+#define WRITE_10		0x2a
 #define READ_12			0xa8
 #define WRITE_12		0xaa
 #define READ_16			0x88

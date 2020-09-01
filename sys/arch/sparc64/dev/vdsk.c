@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.63 2020/07/22 22:06:00 krw Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.64 2020/09/01 12:17:52 krw Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -928,12 +928,12 @@ vdsk_scsi_cmd(struct scsi_xfer *xs)
 	int desc;
 
 	switch (xs->cmd->opcode) {
-	case READ_BIG:
 	case READ_COMMAND:
+	case READ_10:
 	case READ_12:
 	case READ_16:
-	case WRITE_BIG:
 	case WRITE_COMMAND:
+	case WRITE_10:
 	case WRITE_12:
 	case WRITE_16:
 	case SYNCHRONIZE_CACHE:
@@ -996,7 +996,7 @@ vdsk_submit_cmd(struct scsi_xfer *xs)
 	struct ldc_map *map = sc->sc_lm;
 	struct vio_dring_msg dm;
 	struct scsi_rw *rw;
-	struct scsi_rw_big *rwb;
+	struct scsi_rw_10 *rw10;
 	struct scsi_rw_12 *rw12;
 	struct scsi_rw_16 *rw16;
 	u_int64_t lba;
@@ -1009,15 +1009,15 @@ vdsk_submit_cmd(struct scsi_xfer *xs)
 	int desc;
 
 	switch (xs->cmd->opcode) {
-	case READ_BIG:
 	case READ_COMMAND:
+	case READ_10:
 	case READ_12:
 	case READ_16:
 		operation = VD_OP_BREAD;
 		break;
 
-	case WRITE_BIG:
 	case WRITE_COMMAND:
+	case WRITE_10:
 	case WRITE_12:
 	case WRITE_16:
 		operation = VD_OP_BWRITE;
@@ -1037,9 +1037,9 @@ vdsk_submit_cmd(struct scsi_xfer *xs)
 		lba = _3btol(rw->addr) & (SRW_TOPADDR << 16 | 0xffff);
 		sector_count = rw->length ? rw->length : 0x100;
 	} else if (xs->cmdlen == 10) {
-		rwb = (struct scsi_rw_big *)xs->cmd;
-		lba = _4btol(rwb->addr);
-		sector_count = _2btol(rwb->length);
+		rw10 = (struct scsi_rw_10 *)xs->cmd;
+		lba = _4btol(rw10->addr);
+		sector_count = _2btol(rw10->length);
 	} else if (xs->cmdlen == 12) {
 		rw12 = (struct scsi_rw_12 *)xs->cmd;
 		lba = _4btol(rw12->addr);

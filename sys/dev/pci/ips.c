@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.127 2020/07/24 12:43:31 krw Exp $	*/
+/*	$OpenBSD: ips.c,v 1.128 2020/09/01 12:17:53 krw Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -835,7 +835,7 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 	struct scsi_read_cap_data rcd;
 	struct scsi_sense_data sd;
 	struct scsi_rw *rw;
-	struct scsi_rw_big *rwb;
+	struct scsi_rw_10 *rw10;
 	struct ips_ccb *ccb = xs->io;
 	struct ips_cmd *cmd;
 	int target = link->target;
@@ -860,9 +860,9 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 
 	/* Fake SCSI commands */
 	switch (xs->cmd->opcode) {
-	case READ_BIG:
+	case READ_10:
 	case READ_COMMAND:
-	case WRITE_BIG:
+	case WRITE_10:
 	case WRITE_COMMAND:
 		if (xs->cmdlen == sizeof(struct scsi_rw)) {
 			rw = (void *)xs->cmd;
@@ -870,9 +870,9 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 			    (SRW_TOPADDR << 16 | 0xffff);
 			blkcnt = rw->length ? rw->length : 0x100;
 		} else {
-			rwb = (void *)xs->cmd;
-			blkno = _4btol(rwb->addr);
-			blkcnt = _2btol(rwb->length);
+			rw10 = (void *)xs->cmd;
+			blkno = _4btol(rw10->addr);
+			blkcnt = _2btol(rw10->length);
 		}
 
 		if (blkno >= letoh32(drive->seccnt) || blkno + blkcnt >

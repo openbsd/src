@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.67 2020/07/28 22:26:32 krw Exp $	*/
+/*	$OpenBSD: cac.c,v 1.68 2020/09/01 12:17:53 krw Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -590,7 +590,7 @@ cac_scsi_cmd(xs)
 	u_int8_t target = link->target;
 	u_int32_t blockno, blockcnt, size;
 	struct scsi_rw *rw;
-	struct scsi_rw_big *rwb;
+	struct scsi_rw_10 *rw10;
 	int op, flags, s, error;
 	const char *p;
 
@@ -669,9 +669,9 @@ cac_scsi_cmd(xs)
 		break;
 
 	case READ_COMMAND:
-	case READ_BIG:
+	case READ_10:
 	case WRITE_COMMAND:
-	case WRITE_BIG:
+	case WRITE_10:
 
 		flags = 0;
 		/* A read or write operation. */
@@ -681,9 +681,9 @@ cac_scsi_cmd(xs)
 			    (SRW_TOPADDR << 16 | 0xffff);
 			blockcnt = rw->length ? rw->length : 0x100;
 		} else {
-			rwb = (struct scsi_rw_big *)xs->cmd;
-			blockno = _4btol(rwb->addr);
-			blockcnt = _2btol(rwb->length);
+			rw10 = (struct scsi_rw_10 *)xs->cmd;
+			blockno = _4btol(rw10->addr);
+			blockcnt = _2btol(rw10->length);
 		}
 		size = CAC_GET2(dinfo->ncylinders) *
 		    CAC_GET1(dinfo->nheads) * CAC_GET1(dinfo->nsectors);
@@ -696,12 +696,12 @@ cac_scsi_cmd(xs)
 
 		switch (xs->cmd->opcode) {
 		case READ_COMMAND:
-		case READ_BIG:
+		case READ_10:
 			op = CAC_CMD_READ;
 			flags = CAC_CCB_DATA_IN;
 			break;
 		case WRITE_COMMAND:
-		case WRITE_BIG:
+		case WRITE_10:
 			op = CAC_CMD_WRITE;
 			flags = CAC_CCB_DATA_OUT;
 			break;

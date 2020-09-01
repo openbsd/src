@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.12 2019/01/10 18:59:56 sf Exp $  */
+/*	$OpenBSD: vioscsi.c,v 1.13 2020/09/01 12:17:54 krw Exp $  */
 
 /*
  * Copyright (c) 2017 Carlos Cardenas <ccardenas@openbsd.org>
@@ -115,8 +115,8 @@ vioscsi_op_names(uint8_t type)
 	case WRITE_COMMAND: return "WRITE_COMMAND";
 	case READ_CAPACITY: return "READ_CAPACITY";
 	case READ_CAPACITY_16: return "READ_CAPACITY_16";
-	case READ_BIG: return "READ_BIG";
-	case WRITE_BIG: return "WRITE_BIG";
+	case READ_10: return "READ_10";
+	case WRITE_10: return "WRITE_10";
 	case READ_12: return "READ_12";
 	case WRITE_12: return "WRITE_12";
 	case READ_16: return "READ_16";
@@ -1013,10 +1013,10 @@ vioscsi_handle_read_10(struct vioscsi_dev *dev,
 	uint16_t read_10_len;
 	off_t chunk_offset;
 	struct ioinfo *info;
-	struct scsi_rw_big *read_10;
+	struct scsi_rw_10 *read_10;
 
 	memset(&resp, 0, sizeof(resp));
-	read_10 = (struct scsi_rw_big *)(req->cdb);
+	read_10 = (struct scsi_rw_10 *)(req->cdb);
 	read_lba = _4btol(read_10->addr);
 	read_10_len = _2btol(read_10->length);
 	chunk_offset = 0;
@@ -2254,7 +2254,7 @@ vioscsi_notifyq(struct vioscsi_dev *dev)
 				}
 			}
 			break;
-		case READ_BIG:
+		case READ_10:
 			ret = vioscsi_handle_read_10(dev, &req, &acct);
 			if (ret) {
 				if (write_mem(q_gpa, vr, vr_sz)) {

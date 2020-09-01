@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.325 2020/08/29 18:20:12 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.326 2020/09/01 12:17:53 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -602,9 +602,9 @@ int
 sd_cmd_rw10(struct scsi_generic *generic, int read, u_int64_t secno,
     u_int32_t nsecs)
 {
-	struct scsi_rw_big *cmd = (struct scsi_rw_big *)generic;
+	struct scsi_rw_10 *cmd = (struct scsi_rw_10 *)generic;
 
-	cmd->opcode = read ? READ_BIG : WRITE_BIG;
+	cmd->opcode = read ? READ_10 : WRITE_10;
 	_lto4b(secno, cmd->addr);
 	_lto2b(nsecs, cmd->length);
 

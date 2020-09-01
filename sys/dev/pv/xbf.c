@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.44 2020/07/22 13:16:05 krw Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.45 2020/09/01 12:17:53 krw Exp $	*/
 
 /*
  * Copyright (c) 2016, 2017 Mike Belopuhov
@@ -386,12 +386,12 @@ xbf_scsi_cmd(struct scsi_xfer *xs)
 	struct xbf_softc *sc = xs->sc_link->bus->sb_adapter_softc;
 
 	switch (xs->cmd->opcode) {
-	case READ_BIG:
 	case READ_COMMAND:
+	case READ_10:
 	case READ_12:
 	case READ_16:
-	case WRITE_BIG:
 	case WRITE_COMMAND:
+	case WRITE_10:
 	case WRITE_12:
 	case WRITE_16:
 		if (sc->sc_state != XBF_CONNECTED) {
@@ -608,7 +608,7 @@ xbf_submit_cmd(struct scsi_xfer *xs)
 	struct xbf_ccb *ccb = xs->io;
 	union xbf_ring_desc *xrd;
 	struct scsi_rw *rw;
-	struct scsi_rw_big *rwb;
+	struct scsi_rw_10 *rw10;
 	struct scsi_rw_12 *rw12;
 	struct scsi_rw_16 *rw16;
 	uint64_t lba = 0;
@@ -618,15 +618,15 @@ xbf_submit_cmd(struct scsi_xfer *xs)
 	int desc, error;
 
 	switch (xs->cmd->opcode) {
-	case READ_BIG:
 	case READ_COMMAND:
+	case READ_10:
 	case READ_12:
 	case READ_16:
 		operation = XBF_OP_READ;
 		break;
 
-	case WRITE_BIG:
 	case WRITE_COMMAND:
+	case WRITE_10:
 	case WRITE_12:
 	case WRITE_16:
 		operation = XBF_OP_WRITE;
@@ -649,9 +649,9 @@ xbf_submit_cmd(struct scsi_xfer *xs)
 		lba = _3btol(rw->addr) & (SRW_TOPADDR << 16 | 0xffff);
 		nblk = rw->length ? rw->length : 0x100;
 	} else if (xs->cmdlen == 10) {
-		rwb = (struct scsi_rw_big *)xs->cmd;
-		lba = _4btol(rwb->addr);
-		nblk = _2btol(rwb->length);
+		rw10 = (struct scsi_rw_10 *)xs->cmd;
+		lba = _4btol(rw10->addr);
+		nblk = _2btol(rw10->length);
 	} else if (xs->cmdlen == 12) {
 		rw12 = (struct scsi_rw_12 *)xs->cmd;
 		lba = _4btol(rw12->addr);

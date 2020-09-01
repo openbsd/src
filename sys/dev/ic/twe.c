@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.58 2020/07/24 12:43:31 krw Exp $	*/
+/*	$OpenBSD: twe.c,v 1.59 2020/09/01 12:17:53 krw Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff.  All rights reserved.
@@ -784,7 +784,7 @@ twe_scsi_cmd(xs)
 	u_int8_t target = link->target;
 	u_int32_t blockno, blockcnt;
 	struct scsi_rw *rw;
-	struct scsi_rw_big *rwb;
+	struct scsi_rw_10 *rw10;
 	int error, op, flags, wait;
 	twe_lock_t lock;
 
@@ -853,9 +853,9 @@ twe_scsi_cmd(xs)
 		return;
 
 	case READ_COMMAND:
-	case READ_BIG:
+	case READ_10:
 	case WRITE_COMMAND:
-	case WRITE_BIG:
+	case WRITE_10:
 	case SYNCHRONIZE_CACHE:
 		lock = TWE_LOCK(sc);
 
@@ -870,12 +870,12 @@ twe_scsi_cmd(xs)
 				    (SRW_TOPADDR << 16 | 0xffff);
 				blockcnt = rw->length ? rw->length : 0x100;
 			} else {
-				rwb = (struct scsi_rw_big *)xs->cmd;
-				blockno = _4btol(rwb->addr);
-				blockcnt = _2btol(rwb->length);
+				rw10 = (struct scsi_rw_10 *)xs->cmd;
+				blockno = _4btol(rw10->addr);
+				blockcnt = _2btol(rw10->length);
 				/* reflect DPO & FUA flags */
-				if (xs->cmd->opcode == WRITE_BIG &&
-				    rwb->byte2 & 0x18)
+				if (xs->cmd->opcode == WRITE_10 &&
+				    rw10->byte2 & 0x18)
 					flags = TWE_FLAGS_CACHEDISABLE;
 			}
 			if (blockno >= sc->sc_hdr[target].hd_size ||
@@ -892,9 +892,9 @@ twe_scsi_cmd(xs)
 
 		switch (xs->cmd->opcode) {
 		case READ_COMMAND:	op = TWE_CMD_READ;	break;
-		case READ_BIG:		op = TWE_CMD_READ;	break;
+		case READ_10:		op = TWE_CMD_READ;	break;
 		case WRITE_COMMAND:	op = TWE_CMD_WRITE;	break;
-		case WRITE_BIG:		op = TWE_CMD_WRITE;	break;
+		case WRITE_10:		op = TWE_CMD_WRITE;	break;
 		default:		op = TWE_CMD_NOP;	break;
 		}
 

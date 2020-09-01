@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.410 2020/07/20 14:41:12 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.411 2020/09/01 12:17:52 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -2353,10 +2353,10 @@ sr_scsi_cmd(struct scsi_xfer *xs)
 
 	switch (xs->cmd->opcode) {
 	case READ_COMMAND:
-	case READ_BIG:
+	case READ_10:
 	case READ_16:
 	case WRITE_COMMAND:
-	case WRITE_BIG:
+	case WRITE_10:
 	case WRITE_16:
 		DNPRINTF(SR_D_CMD, "%s: sr_scsi_cmd: READ/WRITE %02x\n",
 		    DEVNAME(sc), xs->cmd->opcode);
@@ -4597,7 +4597,7 @@ sr_validate_io(struct sr_workunit *wu, daddr_t *blkno, char *func)
 	}
 
 	if (xs->cmdlen == 10)
-		*blkno = _4btol(((struct scsi_rw_big *)xs->cmd)->addr);
+		*blkno = _4btol(((struct scsi_rw_10 *)xs->cmd)->addr);
 	else if (xs->cmdlen == 16)
 		*blkno = _8btol(((struct scsi_rw_16 *)xs->cmd)->addr);
 	else if (xs->cmdlen == 6)

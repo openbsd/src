@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.185 2020/07/24 12:43:31 krw Exp $ */
+/* $OpenBSD: mfi.c,v 1.186 2020/09/01 12:17:53 krw Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1152,7 +1152,7 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 	struct mfi_softc	*sc = link->bus->sb_adapter_softc;
 	struct mfi_ccb		*ccb = xs->io;
 	struct scsi_rw		*rw;
-	struct scsi_rw_big	*rwb;
+	struct scsi_rw_10	*rw10;
 	struct scsi_rw_16	*rw16;
 	uint64_t		blockno;
 	uint32_t		blockcnt;
@@ -1176,11 +1176,11 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 
 	switch (xs->cmd->opcode) {
 	/* IO path */
-	case READ_BIG:
-	case WRITE_BIG:
-		rwb = (struct scsi_rw_big *)xs->cmd;
-		blockno = (uint64_t)_4btol(rwb->addr);
-		blockcnt = _2btol(rwb->length);
+	case READ_10:
+	case WRITE_10:
+		rw10 = (struct scsi_rw_10 *)xs->cmd;
+		blockno = (uint64_t)_4btol(rw10->addr);
+		blockcnt = _2btol(rw10->length);
 		if (mfi_scsi_io(sc, ccb, xs, blockno, blockcnt))
 			goto stuffup;
 		break;

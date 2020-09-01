@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.85 2020/07/20 20:38:10 krw Exp $	*/
+/*	$OpenBSD: aac.c,v 1.86 2020/09/01 12:17:52 krw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -722,11 +722,11 @@ aac_bio_command(struct aac_softc *sc, struct aac_command **cmp)
 
 	switch(xs->cmd->opcode) {
 	case READ_COMMAND:
-	case READ_BIG:
+	case READ_10:
 		opcode = READ_COMMAND;
 		break;
 	case WRITE_COMMAND:
-	case WRITE_BIG:
+	case WRITE_10:
 		opcode = WRITE_COMMAND;
 		break;
 	default:
@@ -2196,7 +2196,7 @@ aac_scsi_cmd(struct scsi_xfer *xs)
 	struct aac_command *cm;
 	u_int32_t blockno, blockcnt;
 	struct scsi_rw *rw;
-	struct scsi_rw_big *rwb;
+	struct scsi_rw_10 *rw10;
 	int s;
 
 	s = splbio();
@@ -2257,9 +2257,9 @@ aac_scsi_cmd(struct scsi_xfer *xs)
 		goto ready;
 
 	case READ_COMMAND:
-	case READ_BIG:
+	case READ_10:
 	case WRITE_COMMAND:
-	case WRITE_BIG:
+	case WRITE_10:
 		AAC_DPRINTF(AAC_D_CMD, ("rw opc %#x ", xs->cmd->opcode));
 
 		/* A read or write operation. */
@@ -2269,9 +2269,9 @@ aac_scsi_cmd(struct scsi_xfer *xs)
 				(SRW_TOPADDR << 16 | 0xffff);
 			blockcnt = rw->length ? rw->length : 0x100;
 		} else {
-			rwb = (struct scsi_rw_big *)xs->cmd;
-			blockno = _4btol(rwb->addr);
-			blockcnt = _2btol(rwb->length);
+			rw10 = (struct scsi_rw_10 *)xs->cmd;
+			blockno = _4btol(rw10->addr);
+			blockcnt = _2btol(rw10->length);
 		}
 
 		AAC_DPRINTF(AAC_D_CMD, ("opcode=%d blkno=%d bcount=%d ",

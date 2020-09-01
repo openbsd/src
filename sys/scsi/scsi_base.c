@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.272 2020/08/30 19:41:25 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.273 2020/09/01 12:17:53 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -2612,11 +2612,11 @@ scsi_cmd_rw_decode(struct scsi_generic *cmd, u_int64_t *blkno,
 		*nblks = rw->length ? rw->length : 0x100;
 		break;
 	}
-	case READ_BIG:
-	case WRITE_BIG: {
-		struct scsi_rw_big *rwb = (struct scsi_rw_big *)cmd;
-		*blkno = _4btol(rwb->addr);
-		*nblks = _2btol(rwb->length);
+	case READ_10:
+	case WRITE_10: {
+		struct scsi_rw_10 *rw10 = (struct scsi_rw_10 *)cmd;
+		*blkno = _4btol(rw10->addr);
+		*nblks = _2btol(rw10->length);
 		break;
 	}
 	case READ_12:

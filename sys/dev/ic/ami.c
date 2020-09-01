@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.254 2020/07/24 12:43:31 krw Exp $	*/
+/*	$OpenBSD: ami.c,v 1.255 2020/09/01 12:17:52 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1320,7 +1320,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 	u_int8_t target = link->target;
 	u_int32_t blockno, blockcnt;
 	struct scsi_rw *rw;
-	struct scsi_rw_big *rwb;
+	struct scsi_rw_10 *rw10;
 	bus_dma_segment_t *sgd;
 	int error;
 	int i;
@@ -1340,9 +1340,9 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 
 	switch (xs->cmd->opcode) {
 	case READ_COMMAND:
-	case READ_BIG:
+	case READ_10:
 	case WRITE_COMMAND:
-	case WRITE_BIG:
+	case WRITE_10:
 		/* deal with io outside the switch */
 		break;
 
@@ -1441,9 +1441,9 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		blockno = _3btol(rw->addr) & (SRW_TOPADDR << 16 | 0xffff);
 		blockcnt = rw->length ? rw->length : 0x100;
 	} else {
-		rwb = (struct scsi_rw_big *)xs->cmd;
-		blockno = _4btol(rwb->addr);
-		blockcnt = _2btol(rwb->length);
+		rw10 = (struct scsi_rw_10 *)xs->cmd;
+		blockno = _4btol(rw10->addr);
+		blockcnt = _2btol(rw10->length);
 	}
 
 	if (blockno >= sc->sc_hdr[target].hd_size ||
