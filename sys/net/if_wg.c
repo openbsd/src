@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.c,v 1.13 2020/08/27 21:27:17 kn Exp $ */
+/*	$OpenBSD: if_wg.c,v 1.14 2020/09/01 19:06:59 tb Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -2022,7 +2022,13 @@ wg_input(void *_sc, struct mbuf *m, struct ip *ip, struct ip6_hdr *ip6,
 	/* m has a IP/IPv6 header of hlen length, we don't need it anymore. */
 	m_adj(m, hlen);
 
-	if (m_defrag(m, M_NOWAIT) != 0)
+	/*
+	 * Ensure mbuf is contiguous over full length of packet. This is done
+	 * os we can directly read the handshake values in wg_handshake, and so
+	 * we can decrypt a transport packet by passing a single buffer to
+	 * noise_remote_decrypt in wg_decap.
+	 */
+	if ((m = m_pullup(m, m->m_pkthdr.len)) == NULL)
 		return NULL;
 
 	if ((m->m_pkthdr.len == sizeof(struct wg_pkt_initiation) &&
