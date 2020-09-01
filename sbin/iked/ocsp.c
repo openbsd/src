@@ -1,4 +1,4 @@
-/*	$OpenBSD: ocsp.c,v 1.17 2020/09/01 08:38:42 tobhe Exp $ */
+/*	$OpenBSD: ocsp.c,v 1.18 2020/09/01 17:06:11 tobhe Exp $ */
 
 /*
  * Copyright (c) 2014 Markus Friedl
@@ -126,8 +126,8 @@ ocsp_connect(struct iked *env, struct imsg *imsg)
 	hints.ai_socktype = SOCK_STREAM;
 	error = getaddrinfo(host, port, &hints, &res0);
 	if (error) {
-		log_debug("%s: getaddrinfo(%s, %s) failed",
-		    __func__, host, port);
+		log_warn("%s: getaddrinfo(%s, %s) failed",
+		    SPI_SH(&sh, __func__), host, port);
 		goto done;
 	}
 	/* XXX just pick the first answer. we could loop instead */
@@ -155,8 +155,8 @@ ocsp_connect(struct iked *env, struct imsg *imsg)
 			event_add(&oc->oc_sock.sock_ev, NULL);
 			ret = 0;
 		} else
-			log_debug("%s: error while connecting: %s", __func__,
-			    strerror(errno));
+			log_warn("%s: connect(%s, %s)",
+			    SPI_SH(&oc->oc_sh, __func__), host, port);
 	} else {
 		ocsp_connect_finish(env, fd, oc);
 		ret = 0;
@@ -188,8 +188,8 @@ ocsp_connect_cb(int fd, short event, void *arg)
 	if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &len) == -1) {
 		log_warn("%s: getsockopt SOL_SOCKET SO_ERROR", __func__);
 	} else if (error) {
-		log_debug("%s: error while connecting: %s", __func__,
-		    strerror(error));
+		log_warnx("%s: error while connecting: %s",
+		    SPI_SH(&oc->oc_sh, __func__), strerror(error));
 	} else {
 		send_fd = fd;
 	}
@@ -219,6 +219,7 @@ ocsp_connect_finish(struct iked *env, int fd, struct ocsp_connect *oc)
 		ret = proc_composev_imsg(&env->sc_ps, PROC_CERT, -1,
 		    IMSG_OCSP_FD, -1, fd, iov, iovcnt);
 	} else {
+		log_info("%s: connect failed", SPI_SH(&oc->oc_sh, __func__));
 		ret = proc_composev_imsg(&env->sc_ps, PROC_CERT, -1,
 		    IMSG_OCSP_FD, -1, -1, iov, iovcnt);
 		if (fd >= 0)
@@ -520,7 +521,8 @@ ocsp_parse_response(struct iked_ocsp *ocsp, OCSP_RESPONSE *resp)
 	status = OCSP_check_nonce(ocsp->ocsp_req, bs);
 	if (status <= 0) {
 		if (status == -1)
-			log_warnx("%s: no nonce in response", __func__);
+			log_warnx("%s: no nonce in response",
+			    SPI_SH(&ocsp->ocsp_sh, __func__));
 		else {
 			errstr = "nonce verify error";
 			goto done;
@@ -536,7 +538,7 @@ ocsp_parse_response(struct iked_ocsp *ocsp, OCSP_RESPONSE *resp)
 		errstr = "response verify failure";
 		goto done;
 	}
-	log_debug("%s: response verify ok", __func__);
+	log_debug("%s: response verify ok", SPI_SH(&ocsp->ocsp_sh, __func__));
 
 	if (!OCSP_resp_find_status(bs, ocsp->ocsp_id, &status, &reason,
 	    &rev, &thisupd, &nextupd)) {
@@ -546,13 +548,14 @@ ocsp_parse_response(struct iked_ocsp *ocsp, OCSP_RESPONSE *resp)
 	if (env->sc_ocsp_tolerate &&
 	    !OCSP_check_validity(thisupd, nextupd, env->sc_ocsp_tolerate,
 	    env->sc_ocsp_maxage)) {
-		ca_sslerror(__func__);
+		ca_sslerror(SPI_SH(&ocsp->ocsp_sh, __func__));
 		errstr = "status times invalid";
 		goto done;
 	}
 	errstr = OCSP_cert_status_str(status);
 	if (status == V_OCSP_CERTSTATUS_GOOD) {
-		log_debug("%s: status: %s", __func__, errstr);
+		log_debug("%s: status: %s", SPI_SH(&ocsp->ocsp_sh, __func__),
+		    errstr);
 		valid = 1;
 	}
  done:
