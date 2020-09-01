@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.1 2020/06/07 20:08:49 kettenis Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.2 2020/09/01 18:46:59 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -222,7 +222,7 @@ paddr_t
 generic_space_mmap(bus_space_tag_t t, bus_addr_t addr, off_t off,
     int prot, int flags)
 {
-	return (addr + off);
+	return (addr + off) | PMAP_NOCACHE;
 }
 
 uint16_t
