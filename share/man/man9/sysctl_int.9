@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl_int.9,v 1.8 2020/08/03 13:56:02 schwarze Exp $
+.\"	$OpenBSD: sysctl_int.9,v 1.9 2020/09/01 01:57:15 gnezdo Exp $
 .\"
 .\" Copyright (c) 2006 Michael Shalayeff
 .\" All rights reserved.
@@ -15,12 +15,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 3 2020 $
+.Dd $Mdocdate: September 1 2020 $
 .Dt SYSCTL_INT 9
 .Os
 .Sh NAME
 .Nm sysctl_int ,
-.Nm sysctl_int_arr ,
+.Nm sysctl_bounded_arr ,
 .Nm sysctl_quad ,
 .Nm sysctl_string ,
 .Nm sysctl_tstring ,
@@ -42,8 +42,8 @@
 .Fa "int *valp"
 .Fc
 .Ft int
-.Fo sysctl_int_arr
-.Fa "int **valpp"
+.Fo sysctl_bounded_arr
+.Fa "const struct sysctl_bounded_args *valpp"
 .Fa "u_int valplen"
 .Fa "int *name"
 .Fa "u_int namelen"
@@ -213,7 +213,16 @@ The value pointed to by
 has to be no less than four.
 .It Fn sysctl_rdint "void *oldp" "size_t *oldlenp" "void *newp" "int val"
 A read-only version of the above.
-.\" .It sysctl_int_arr
+.It Fn sysctl_bounded_arr "const struct sysctl_bounded_args *valpp" "u_int valplen" "int *name" "u_int namelen" "void *oldp" "size_t *oldlenp" "void *newp" "size_t newlen"
+Asserts the new value is in the range specified by the element of
+.Ar valpp
+with the value of the
+.Va mib
+field equal to
+.Ar name[0] ,
+before invoking
+.Fn sysctl_int
+to read/write as normal.
 .It Fn sysctl_quad "void *oldp" "size_t *oldlenp" "void *newp" "size_t newlen" "int64_t *valp"
 The variable referenced is a 64-bit integer.
 Read or write returning the previous value in the user memory location
