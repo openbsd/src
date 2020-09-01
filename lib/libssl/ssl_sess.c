@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.93 2020/09/01 17:25:17 tb Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.94 2020/09/01 17:30:45 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -492,13 +492,14 @@ ssl_session_by_id(SSL *s, CBS *session_id)
 }
 
 /*
- * ssl_get_prev attempts to find an SSL_SESSION to be used to resume this
- * connection. It is only called by servers.
+ * ssl_get_prev_session attempts to find an SSL_SESSION to be used to resume
+ * this connection. It is only called by servers.
  *
  *   session_id: points at the session ID in the ClientHello. This code will
  *       read past the end of this in order to parse out the session ticket
  *       extension, if any.
  *   ext_block: a CBS for the ClientHello extensions block.
+ *   alert: alert that the caller should send in case of failure.
  *
  * Returns:
  *   -1: error
@@ -508,8 +509,8 @@ ssl_session_by_id(SSL *s, CBS *session_id)
  *   - If a session is found then s->session is pointed at it (after freeing
  *     an existing session if need be) and s->verify_result is set from the
  *     session.
- *   - Both for new and resumed sessions, s->internal->tlsext_ticket_expected is set
- *     to 1 if the server should issue a new session ticket (to 0 otherwise).
+ *   - For both new and resumed sessions, s->internal->tlsext_ticket_expected
+ *     indicates whether the server should issue a new session ticket or not.
  */
 int
 ssl_get_prev_session(SSL *s, CBS *session_id, CBS *ext_block, int *alert)
