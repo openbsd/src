@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.94 2020/09/01 17:30:45 tb Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.95 2020/09/01 17:45:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -452,9 +452,6 @@ ssl_session_from_callback(SSL *s, CBS *session_id)
 	if ((sess = s->session_ctx->internal->get_session_cb(s,
 	    CBS_data(session_id), CBS_len(session_id), &copy)) == NULL)
 		return NULL;
-
-	s->session_ctx->internal->stats.sess_cb_hit++;
-
 	/*
 	 * The copy handler may have set copy == 0 to indicate that the session
 	 * structures are shared between threads and that it handles the
@@ -463,6 +460,8 @@ ssl_session_from_callback(SSL *s, CBS *session_id)
 	 */
 	if (copy)
 		CRYPTO_add(&sess->references, 1, CRYPTO_LOCK_SSL_SESSION);
+
+	s->session_ctx->internal->stats.sess_cb_hit++;
 
 	/* Add the externally cached session to the internal cache as well. */
 	if (!(s->session_ctx->internal->session_cache_mode &
