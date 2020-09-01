@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.91 2020/09/01 06:05:09 tb Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.92 2020/09/01 12:40:53 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -420,7 +420,6 @@ ssl_get_new_session(SSL *s, int session)
  *   session_id: points at the session ID in the ClientHello. This code will
  *       read past the end of this in order to parse out the session ticket
  *       extension, if any.
- *   session_id_len: the length of the session ID.
  *   ext_block: a CBS for the ClientHello extensions block.
  *
  * Returns:
@@ -438,6 +437,7 @@ int
 ssl_get_prev_session(SSL *s, CBS *session_id, CBS *ext_block, int *alert)
 {
 	SSL_SESSION *sess = NULL;
+	size_t session_id_len;
 	int alert_desc = SSL_AD_INTERNAL_ERROR, fatal = 0;
 	int try_session_cache = 1;
 
@@ -450,7 +450,7 @@ ssl_get_prev_session(SSL *s, CBS *session_id, CBS *ext_block, int *alert)
 		try_session_cache = 0;
 
 	/* Sets s->internal->tlsext_ticket_expected. */
-	switch (tls1_process_ticket(s, session_id, ext_block, &alert_desc, &sess)) {
+	switch (tls1_process_ticket(s, ext_block, &alert_desc, &sess)) {
 	case TLS1_TICKET_FATAL_ERROR:
 		fatal = 1;
 		goto err;
@@ -458,8 +458,21 @@ ssl_get_prev_session(SSL *s, CBS *session_id, CBS *ext_block, int *alert)
 	case TLS1_TICKET_EMPTY:
 		break; /* Ok to carry on processing session id. */
 	case TLS1_TICKET_NOT_DECRYPTED:
+		try_session_cache = 0;
+		goto err;
 	case TLS1_TICKET_DECRYPTED:
 		try_session_cache = 0;
+
+		/*
+		 * The session ID is used by some clients to detect that the
+		 * ticket has been accepted so we copy it into sess.
+		 */
+		if (!CBS_write_bytes(session_id, sess->session_id,
+		    sizeof(sess->session_id), &session_id_len)) {
+			fatal = 1;
+			goto err;
+		}
+		sess->session_id_length = (unsigned int)session_id_len;
 		break;
 	default:
 		SSLerror(s, ERR_R_INTERNAL_ERROR);

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.287 2020/09/01 05:32:11 tb Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.288 2020/09/01 12:40:53 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1403,8 +1403,7 @@ int ssl_check_serverhello_tlsext(SSL *s);
 #define TLS1_TICKET_NOT_DECRYPTED	 2
 #define TLS1_TICKET_DECRYPTED		 3
 
-int tls1_process_ticket(SSL *s, CBS *session_id, CBS *ext_block,
-    int *alert, SSL_SESSION **ret);
+int tls1_process_ticket(SSL *s, CBS *ext_block, int *alert, SSL_SESSION **ret);
 
 long ssl_get_algorithm2(SSL *s);
 
