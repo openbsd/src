@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.92 2020/09/01 12:40:53 tb Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.93 2020/09/01 17:25:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -413,6 +413,84 @@ ssl_get_new_session(SSL *s, int session)
 	return (1);
 }
 
+static SSL_SESSION *
+ssl_session_from_cache(SSL *s, CBS *session_id)
+{
+	SSL_SESSION *sess;
+	SSL_SESSION data;
+
+	if ((s->session_ctx->internal->session_cache_mode &
+	     SSL_SESS_CACHE_NO_INTERNAL_LOOKUP))
+		return NULL;
+
+	data.ssl_version = s->version;
+	data.session_id_length = CBS_len(session_id);
+	memcpy(data.session_id, CBS_data(session_id), CBS_len(session_id));
+
+	CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
+	sess = lh_SSL_SESSION_retrieve(s->session_ctx->internal->sessions, &data);
+	if (sess != NULL)
+		CRYPTO_add(&sess->references, 1, CRYPTO_LOCK_SSL_SESSION);
+	CRYPTO_r_unlock(CRYPTO_LOCK_SSL_CTX);
+
+	if (sess == NULL)
+		s->session_ctx->internal->stats.sess_miss++;
+
+	return sess;
+}
+
+static SSL_SESSION *
+ssl_session_from_callback(SSL *s, CBS *session_id)
+{
+	SSL_SESSION *sess;
+	int copy;
+
+	if (s->session_ctx->internal->get_session_cb == NULL)
+		return NULL;
+
+	copy = 1;
+	if ((sess = s->session_ctx->internal->get_session_cb(s,
+	    CBS_data(session_id), CBS_len(session_id), &copy)) == NULL)
+		return NULL;
+
+	s->session_ctx->internal->stats.sess_cb_hit++;
+
+	/*
+	 * The copy handler may have set copy == 0 to indicate that the session
+	 * structures are shared between threads and that it handles the
+	 * reference count itself. If it didn't set copy to zero, we must
+	 * increment the reference count.
+	 */
+	if (copy)
+		CRYPTO_add(&sess->references, 1, CRYPTO_LOCK_SSL_SESSION);
+
+	/* Add the externally cached session to the internal cache as well. */
+	if (!(s->session_ctx->internal->session_cache_mode &
+	    SSL_SESS_CACHE_NO_INTERNAL_STORE)) {
+		/*
+		 * The following should not return 1,
+		 * otherwise, things are very strange.
+		 */
+		SSL_CTX_add_session(s->session_ctx, sess);
+	}
+
+	return sess;
+}
+
+static SSL_SESSION *
+ssl_session_by_id(SSL *s, CBS *session_id)
+{
+	SSL_SESSION *sess;
+
+	if (CBS_len(session_id) == 0)
+		return NULL;
+
+	if ((sess = ssl_session_from_cache(s, session_id)) == NULL)
+		sess = ssl_session_from_callback(s, session_id);
+
+	return sess;
+}
+
 /*
  * ssl_get_prev attempts to find an SSL_SESSION to be used to resume this
  * connection. It is only called by servers.
@@ -439,15 +517,12 @@ ssl_get_prev_session(SSL *s, CBS *session_id, CBS *ext_block, int *alert)
 	SSL_SESSION *sess = NULL;
 	size_t session_id_len;
 	int alert_desc = SSL_AD_INTERNAL_ERROR, fatal = 0;
-	int try_session_cache = 1;
+	int ticket_decrypted = 0;
 
 	/* This is used only by servers. */
 
 	if (CBS_len(session_id) > SSL_MAX_SSL_SESSION_ID_LENGTH)
 		goto err;
-
-	if (CBS_len(session_id) == 0)
-		try_session_cache = 0;
 
 	/* Sets s->internal->tlsext_ticket_expected. */
 	switch (tls1_process_ticket(s, ext_block, &alert_desc, &sess)) {
@@ -456,12 +531,13 @@ ssl_get_prev_session(SSL *s, CBS *session_id, CBS *ext_block, int *alert)
 		goto err;
 	case TLS1_TICKET_NONE:
 	case TLS1_TICKET_EMPTY:
-		break; /* Ok to carry on processing session id. */
+		if ((sess = ssl_session_by_id(s, session_id)) == NULL)
+			goto err;
+		break;
 	case TLS1_TICKET_NOT_DECRYPTED:
-		try_session_cache = 0;
 		goto err;
 	case TLS1_TICKET_DECRYPTED:
-		try_session_cache = 0;
+		ticket_decrypted = 1;
 
 		/*
 		 * The session ID is used by some clients to detect that the
@@ -479,66 +555,6 @@ ssl_get_prev_session(SSL *s, CBS *session_id, CBS *ext_block, int *alert)
 		fatal = 1;
 		goto err;
 	}
-
-	if (try_session_cache && sess == NULL &&
-	    !(s->session_ctx->internal->session_cache_mode &
-	     SSL_SESS_CACHE_NO_INTERNAL_LOOKUP)) {
-		SSL_SESSION data;
-
-		data.ssl_version = s->version;
-		data.session_id_length = CBS_len(session_id);
-		memcpy(data.session_id, CBS_data(session_id),
-		    CBS_len(session_id));
-
-		CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
-		sess = lh_SSL_SESSION_retrieve(s->session_ctx->internal->sessions, &data);
-		if (sess != NULL) {
-			/* Don't allow other threads to steal it. */
-			CRYPTO_add(&sess->references, 1,
-			    CRYPTO_LOCK_SSL_SESSION);
-		}
-		CRYPTO_r_unlock(CRYPTO_LOCK_SSL_CTX);
-
-		if (sess == NULL)
-			s->session_ctx->internal->stats.sess_miss++;
-	}
-
-	if (try_session_cache && sess == NULL &&
-	    s->session_ctx->internal->get_session_cb != NULL) {
-		int copy = 1;
-
-		if ((sess = s->session_ctx->internal->get_session_cb(s,
-		    CBS_data(session_id), CBS_len(session_id), &copy))) {
-			s->session_ctx->internal->stats.sess_cb_hit++;
-
-			/*
-			 * Increment reference count now if the session
-			 * callback asks us to do so (note that if the session
-			 * structures returned by the callback are shared
-			 * between threads, it must handle the reference count
-			 * itself [i.e. copy == 0], or things won't be
-			 * thread-safe).
-			 */
-			if (copy)
-				CRYPTO_add(&sess->references, 1,
-				    CRYPTO_LOCK_SSL_SESSION);
-
-			/*
-			 * Add the externally cached session to the internal
-			 * cache as well if and only if we are supposed to.
-			 */
-			if (!(s->session_ctx->internal->session_cache_mode &
-			    SSL_SESS_CACHE_NO_INTERNAL_STORE))
-				/*
-				 * The following should not return 1,
-				 * otherwise, things are very strange.
-				 */
-				SSL_CTX_add_session(s->session_ctx, sess);
-		}
-	}
-
-	if (sess == NULL)
-		goto err;
 
 	/* Now sess is non-NULL and we own one of its reference counts. */
 
@@ -576,7 +592,7 @@ ssl_get_prev_session(SSL *s, CBS *session_id, CBS *ext_block, int *alert)
 	if (sess->timeout < (time(NULL) - sess->time)) {
 		/* timeout */
 		s->session_ctx->internal->stats.sess_timeout++;
-		if (try_session_cache) {
+		if (!ticket_decrypted) {
 			/* session was from the cache, so remove it */
 			SSL_CTX_remove_session(s->session_ctx, sess);
 		}
@@ -591,15 +607,13 @@ ssl_get_prev_session(SSL *s, CBS *session_id, CBS *ext_block, int *alert)
 	return 1;
 
  err:
-	if (sess != NULL) {
-		SSL_SESSION_free(sess);
-		if (!try_session_cache) {
-			/*
-			 * The session was from a ticket, so we should
-			 * issue a ticket for the new session.
-			 */
-			s->internal->tlsext_ticket_expected = 1;
-		}
+	SSL_SESSION_free(sess);
+	if (ticket_decrypted) {
+		/*
+		 * The session was from a ticket. Issue a ticket for the new
+		 * session.
+		 */
+		s->internal->tlsext_ticket_expected = 1;
 	}
 	if (fatal) {
 		*alert = alert_desc;
