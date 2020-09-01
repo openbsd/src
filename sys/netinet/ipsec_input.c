@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.172 2020/08/01 23:41:55 gnezdo Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.173 2020/09/01 01:53:34 gnezdo Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -108,9 +108,17 @@ int esp_enable = 1;
 int ah_enable = 1;
 int ipcomp_enable = 0;
 
-int *espctl_vars[ESPCTL_MAXID] = ESPCTL_VARS;
-int *ahctl_vars[AHCTL_MAXID] = AHCTL_VARS;
-int *ipcompctl_vars[IPCOMPCTL_MAXID] = IPCOMPCTL_VARS;
+const struct sysctl_bounded_args espctl_vars[] = {
+	{ESPCTL_ENABLE, &esp_enable, 0, 1},
+	{ESPCTL_UDPENCAP_ENABLE, &udpencap_enable, 0, 1},
+	{ESPCTL_UDPENCAP_PORT, &udpencap_port, 0, 65535},
+};
+const struct sysctl_bounded_args ahctl_vars[] = {
+	{AHCTL_ENABLE, &ah_enable, 0, 1},
+};
+const struct sysctl_bounded_args ipcompctl_vars[] = {
+	{IPCOMPCTL_ENABLE, &ipcomp_enable, 0, 1},
+};
 
 struct cpumem *espcounters;
 struct cpumem *ahcounters;
@@ -121,7 +129,20 @@ char ipsec_def_enc[20];
 char ipsec_def_auth[20];
 char ipsec_def_comp[20];
 
-int *ipsecctl_vars[IPSEC_MAXID] = IPSECCTL_VARS;
+const struct sysctl_bounded_args ipsecctl_vars[] = {
+	{ IPSEC_ENCDEBUG, &encdebug, 0, 1 },
+	{ IPSEC_EXPIRE_ACQUIRE, &ipsec_expire_acquire, 0, INT_MAX },
+	{ IPSEC_EMBRYONIC_SA_TIMEOUT, &ipsec_keep_invalid, 0, INT_MAX },
+	{ IPSEC_REQUIRE_PFS, &ipsec_require_pfs, 0, 1 },
+	{ IPSEC_SOFT_ALLOCATIONS, &ipsec_soft_allocations, 0, INT_MAX },
+	{ IPSEC_ALLOCATIONS, &ipsec_exp_allocations, 0, INT_MAX },
+	{ IPSEC_SOFT_BYTES, &ipsec_soft_bytes, 0, INT_MAX },
+	{ IPSEC_BYTES, &ipsec_exp_bytes, 0, INT_MAX },
+	{ IPSEC_TIMEOUT, &ipsec_exp_timeout, 0, INT_MAX },
+	{ IPSEC_SOFT_TIMEOUT, &ipsec_soft_timeout,0, INT_MAX },
+	{ IPSEC_SOFT_FIRSTUSE, &ipsec_soft_first_use, 0, INT_MAX },
+	{ IPSEC_FIRSTUSE, &ipsec_exp_first_use, 0, INT_MAX },
+};
 
 int esp_sysctl_espstat(void *, size_t *, void *);
 int ah_sysctl_ahstat(void *, size_t *, void *);
@@ -744,7 +765,7 @@ ipsec_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (ipsec_sysctl_ipsecstat(oldp, oldlenp, newp));
 	default:
 		NET_LOCK();
-		error = sysctl_int_arr(ipsecctl_vars, nitems(ipsecctl_vars),
+		error = sysctl_bounded_arr(ipsecctl_vars, nitems(ipsecctl_vars),
 		    name, namelen, oldp, oldlenp, newp, newlen);
 		NET_UNLOCK();
 		return (error);
@@ -766,8 +787,8 @@ esp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (esp_sysctl_espstat(oldp, oldlenp, newp));
 	default:
 		NET_LOCK();
-		error = sysctl_int_arr(espctl_vars, nitems(espctl_vars), name,
-		    namelen, oldp, oldlenp, newp, newlen);
+		error = sysctl_bounded_arr(espctl_vars, nitems(espctl_vars),
+		    name, namelen, oldp, oldlenp, newp, newlen);
 		NET_UNLOCK();
 		return (error);
 	}
@@ -800,7 +821,7 @@ ah_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return ah_sysctl_ahstat(oldp, oldlenp, newp);
 	default:
 		NET_LOCK();
-		error = sysctl_int_arr(ahctl_vars, nitems(ahctl_vars), name,
+		error = sysctl_bounded_arr(ahctl_vars, nitems(ahctl_vars), name,
 		    namelen, oldp, oldlenp, newp, newlen);
 		NET_UNLOCK();
 		return (error);
@@ -833,8 +854,9 @@ ipcomp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return ipcomp_sysctl_ipcompstat(oldp, oldlenp, newp);
 	default:
 		NET_LOCK();
-		error = sysctl_int_arr(ipcompctl_vars, nitems(ipcompctl_vars), name,
-		    namelen, oldp, oldlenp, newp, newlen);
+		error = sysctl_bounded_arr(ipcompctl_vars,
+		    nitems(ipcompctl_vars), name, namelen, oldp, oldlenp,
+		    newp, newlen);
 		NET_UNLOCK();
 		return (error);
 	}

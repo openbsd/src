@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.h,v 1.46 2017/11/08 16:29:20 visa Exp $	*/
+/*	$OpenBSD: ip_esp.h,v 1.47 2020/09/01 01:53:34 gnezdo Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -82,14 +82,6 @@ struct espstat {
 	{ "udpencap", CTLTYPE_INT }, \
 	{ "udpencap_port", CTLTYPE_INT }, \
 	{ "stats", CTLTYPE_STRUCT }, \
-}
-
-#define ESPCTL_VARS { \
-	NULL, \
-	&esp_enable, \
-	&udpencap_enable, \
-	&udpencap_port, \
-	NULL \
 }
 
 #ifdef _KERNEL
