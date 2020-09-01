@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.172 2020/09/01 05:32:11 tb Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.173 2020/09/01 05:38:48 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1012,6 +1012,7 @@ tls_decrypt_ticket(SSL *s, CBS *session_id, CBS *ticket, int *alert,
 	goto done;
 
  derr:
+	ERR_clear_error();
 	s->internal->tlsext_ticket_expected = 1;
 	ret = TLS1_TICKET_NOT_DECRYPTED;
 	goto done;
@@ -1026,9 +1027,6 @@ tls_decrypt_ticket(SSL *s, CBS *session_id, CBS *ticket, int *alert,
 	EVP_CIPHER_CTX_free(cctx);
 	HMAC_CTX_free(hctx);
 	SSL_SESSION_free(sess);
-
-	if (ret == TLS1_TICKET_NOT_DECRYPTED)
-		ERR_clear_error();
 
 	return ret;
 }
