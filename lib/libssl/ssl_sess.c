@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.95 2020/09/01 17:45:17 tb Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.96 2020/09/01 19:17:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -422,6 +422,8 @@ ssl_session_from_cache(SSL *s, CBS *session_id)
 	if ((s->session_ctx->internal->session_cache_mode &
 	     SSL_SESS_CACHE_NO_INTERNAL_LOOKUP))
 		return NULL;
+
+	memset(&data, 0, sizeof(data));
 
 	data.ssl_version = s->version;
 	data.session_id_length = CBS_len(session_id);
