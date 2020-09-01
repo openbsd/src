@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.h,v 1.48 2018/12/25 19:28:25 denis Exp $	*/
+/*	$OpenBSD: icmp6.h,v 1.49 2020/09/01 01:53:13 gnezdo Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 /*
@@ -533,28 +533,6 @@ struct icmp6stat {
 	{ "mtudisc_hiwat", CTLTYPE_INT }, \
 	{ "mtudisc_lowat", CTLTYPE_INT }, \
 	{ "nd6_debug", CTLTYPE_INT }, \
-}
-
-#define ICMPV6CTL_VARS { \
-	NULL, \
-	NULL, \
-	NULL, \
-	&icmp6_redirtimeout, \
-	NULL, \
-	NULL, \
-	NULL, \
-	NULL, \
-	&nd6_delay, \
-	&nd6_umaxtries, \
-	&nd6_mmaxtries, \
-	NULL, \
-	NULL, \
-	NULL, \
-	&icmp6errppslim, \
-	&nd6_maxnudhint, \
-	&icmp6_mtudisc_hiwat, \
-	&icmp6_mtudisc_lowat, \
-	&nd6_debug, \
 }
 
 #define RTF_PROBEMTU	RTF_PROTO1

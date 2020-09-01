@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.231 2020/08/01 23:41:56 gnezdo Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.232 2020/09/01 01:53:13 gnezdo Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1875,7 +1875,17 @@ icmp6_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 	if_put(ifp);
 }
 
-int *icmpv6ctl_vars[ICMPV6CTL_MAXID] = ICMPV6CTL_VARS;
+const struct sysctl_bounded_args icmpv6ctl_vars[] = {
+	{ ICMPV6CTL_REDIRTIMEOUT, &icmp6_redirtimeout, 0, INT_MAX },
+	{ ICMPV6CTL_ND6_DELAY, &nd6_delay, 0, INT_MAX },
+	{ ICMPV6CTL_ND6_UMAXTRIES, &nd6_umaxtries, 0, INT_MAX },
+	{ ICMPV6CTL_ND6_MMAXTRIES, &nd6_mmaxtries, 0, INT_MAX },
+	{ ICMPV6CTL_ERRPPSLIMIT, &icmp6errppslim, -1, 1000 },
+	{ ICMPV6CTL_ND6_MAXNUDHINT, &nd6_maxnudhint, 0, INT_MAX },
+	{ ICMPV6CTL_MTUDISC_HIWAT, &icmp6_mtudisc_hiwat, -1, INT_MAX },
+	{ ICMPV6CTL_MTUDISC_LOWAT, &icmp6_mtudisc_lowat, -1, INT_MAX },
+	{ ICMPV6CTL_ND6_DEBUG, &nd6_debug, 0, 1 },
+};
 
 int
 icmp6_sysctl_icmp6stat(void *oldp, size_t *oldlenp, void *newp)
@@ -1909,8 +1919,9 @@ icmp6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return icmp6_sysctl_icmp6stat(oldp, oldlenp, newp);
 	default:
 		NET_LOCK();
-		error = sysctl_int_arr(icmpv6ctl_vars, nitems(icmpv6ctl_vars),
-		    name, namelen, oldp, oldlenp, newp, newlen);
+		error = sysctl_bounded_arr(icmpv6ctl_vars,
+		    nitems(icmpv6ctl_vars), name, namelen, oldp, oldlenp, newp,
+		    newlen);
 		NET_UNLOCK();
 		return (error);
 	}
