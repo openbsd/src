@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-panes.c,v 1.36 2020/09/01 08:48:26 nicm Exp $ */
+/* $OpenBSD: cmd-display-panes.c,v 1.37 2020/09/01 08:50:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -168,7 +168,7 @@ cmd_display_panes_draw_pane(struct screen_redraw_ctx *ctx,
 		px += 6;
 	}
 
-	if (sy < 6)
+	if (sy <= 6)
 		goto out;
 	tty_attributes(tty, &fgc, &grid_default_cell, NULL);
 	if (rlen != 0 && sx >= rlen) {
