@@ -1,0 +1,13 @@
+.\" $OpenBSD: spacing-nogroff.in,v 1.1 2020/09/01 18:24:10 schwarze Exp $
+.TH TBL-LAYOUT-SPACING 1 "September 1, 2020"
+.SH NAME
+tbl-layout-spacing-nogroff \- excessive spacing modifier
+.SH DESCRIPTION
+initial text
+.TS
+box tab(:);
+R 10 L.
+a:b
+.TE
+.sp
+final text

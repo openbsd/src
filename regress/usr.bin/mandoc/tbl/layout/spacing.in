@@ -1,0 +1,43 @@
+.\" $OpenBSD: spacing.in,v 1.1 2020/09/01 18:24:10 schwarze Exp $
+.TH TBL-LAYOUT-SPACING 1 "September 1, 2020"
+.SH NAME
+tbl-layout-spacing \- spacing modifiers
+.SH DESCRIPTION
+default spacing:
+.TS
+box tab(:);
+R L.
+a:b
+.TE
+.sp
+spacing 0:
+.TS
+box tab(:);
+R 0 L.
+a:b
+.TE
+.sp
+spacing 1:
+.TS
+box tab(:);
+R 1 L.
+a:b
+.TE
+.sp
+spacing 2:
+.TS
+allbox tab(:);
+R 2 L.
+a:b
+.TE
+.sp
+spacing 5:
+.TS
+allbox tab(:);
+R 5|| L.
+a:b
+.TE
+.sp
+leaked tab settings:
+.br
+a	b	c	d	e	f

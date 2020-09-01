@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc_msg.c,v 1.9 2020/04/24 11:58:02 schwarze Exp $ */
+/* $OpenBSD: mandoc_msg.c,v 1.10 2020/09/01 18:24:10 schwarze Exp $ */
 /*
  * Copyright (c) 2014-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -188,6 +188,7 @@ static	const char *const type_message[MANDOCERR_MAX] = {
 	"empty tbl layout",
 	"invalid character in tbl layout",
 	"unmatched parenthesis in tbl layout",
+	"ignoring excessive spacing in tbl layout",
 	"tbl without any data cells",
 	"ignoring data in spanned tbl cell",
 	"ignoring extra tbl data cells",

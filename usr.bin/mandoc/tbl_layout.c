@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_layout.c,v 1.35 2018/12/14 05:17:45 schwarze Exp $ */
+/*	$OpenBSD: tbl_layout.c,v 1.36 2020/09/01 18:24:10 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2014, 2015, 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -63,6 +63,7 @@ mods(struct tbl_node *tbl, struct tbl_cell *cp,
 		int ln, const char *p, int *pos)
 {
 	char		*endptr;
+	unsigned long	 spacing;
 	size_t		 sz;
 
 mod:
@@ -91,7 +92,11 @@ mod:
 	/* Parse numerical spacing from modifier string. */
 
 	if (isdigit((unsigned char)p[*pos])) {
-		cp->spacing = strtoull(p + *pos, &endptr, 10);
+		if ((spacing = strtoul(p + *pos, &endptr, 10)) > 9)
+			mandoc_msg(MANDOCERR_TBLLAYOUT_SPC, ln, *pos,
+			    "%lu", spacing);
+		else
+			cp->spacing = spacing;
 		*pos = endptr - p;
 		goto mod;
 	}
