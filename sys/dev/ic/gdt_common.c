@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.78 2020/09/01 12:17:53 krw Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.79 2020/09/02 21:16:29 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -912,7 +912,7 @@ gdt_internal_cache_cmd(struct scsi_xfer *xs)
 		    (sc->sc_hdr[target].hd_devtype & 4) ? T_CDROM : T_DIRECT;
 		inq.dev_qual2 =
 		    (sc->sc_hdr[target].hd_devtype & 1) ? SID_REMOVABLE : 0;
-		inq.version = 2;
+		inq.version = SCSI_REV_2;
 		inq.response_format = 2;
 		inq.additional_length = 32;
 		inq.flags |= SID_CmdQue;

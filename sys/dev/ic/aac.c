@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.86 2020/09/01 12:17:52 krw Exp $	*/
+/*	$OpenBSD: aac.c,v 1.87 2020/09/02 21:16:29 krw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -2157,7 +2157,7 @@ aac_internal_cache_cmd(struct scsi_xfer *xs)
 		/* XXX How do we detect removable/CD-ROM devices?  */
 		inq.device = T_DIRECT;
 		inq.dev_qual2 = 0;
-		inq.version = 2;
+		inq.version = SCSI_REV_2;
 		inq.response_format = 2;
 		inq.additional_length = 32;
 		inq.flags |= SID_CmdQue;

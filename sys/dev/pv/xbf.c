@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.45 2020/09/01 12:17:53 krw Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.46 2020/09/02 21:16:29 krw Exp $	*/
 
 /*
  * Copyright (c) 2016, 2017 Mike Belopuhov
@@ -835,7 +835,7 @@ xbf_scsi_inquiry(struct scsi_xfer *xs)
 		break;
 	}
 
-	inq.version = 0x05; /* SPC-3 */
+	inq.version = SCSI_REV_SPC3;
 	inq.response_format = 2;
 	inq.additional_length = 32;
 	inq.flags |= SID_CmdQue;

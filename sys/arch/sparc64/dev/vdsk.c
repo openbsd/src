@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.64 2020/09/01 12:17:52 krw Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.65 2020/09/02 21:16:29 krw Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -1169,7 +1169,7 @@ vdsk_scsi_inquiry(struct scsi_xfer *xs)
 		break;
 	}
 
-	inq.version = 0x05; /* SPC-3 */
+	inq.version = SCSI_REV_SPC3;
 	inq.response_format = 2;
 	inq.additional_length = 32;
 	inq.flags |= SID_CmdQue;

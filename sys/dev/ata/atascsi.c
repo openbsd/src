@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.145 2020/09/01 12:17:52 krw Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.146 2020/09/02 21:16:29 krw Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -708,7 +708,7 @@ atascsi_disk_inquiry(struct scsi_xfer *xs)
 	bzero(&inq, sizeof(inq));
 
 	inq.device = T_DIRECT;
-	inq.version = 0x05; /* SPC-3 */
+	inq.version = SCSI_REV_SPC3;
 	inq.response_format = 2;
 	inq.additional_length = 32;
 	inq.flags |= SID_CmdQue;
@@ -1733,7 +1733,7 @@ atascsi_pmp_inq(struct scsi_xfer *xs)
 
 	bzero(&inq, sizeof(inq));
 	inq.device = 0x1E;	/* "well known logical unit" seems reasonable */
-	inq.version = 0x05;	/* SPC-3? */
+	inq.version = SCSI_REV_SPC3;
 	inq.response_format = 2;
 	inq.additional_length = 32;
 	inq.flags |= SID_CmdQue;
