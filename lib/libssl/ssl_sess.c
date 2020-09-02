@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.96 2020/09/01 19:17:36 tb Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.97 2020/09/02 08:04:06 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -561,11 +561,13 @@ ssl_get_prev_session(SSL *s, CBS *session_id, CBS *ext_block, int *alert)
 	/* Now sess is non-NULL and we own one of its reference counts. */
 
 	if (sess->sid_ctx_length != s->sid_ctx_length ||
-	    timingsafe_memcmp(sess->sid_ctx,
-		s->sid_ctx, sess->sid_ctx_length) != 0) {
-		/* We have the session requested by the client, but we don't
-		 * want to use it in this context. */
-		goto err; /* treat like cache miss */
+	    timingsafe_memcmp(sess->sid_ctx, s->sid_ctx,
+	    sess->sid_ctx_length) != 0) {
+		/*
+		 * We have the session requested by the client, but we don't
+		 * want to use it in this context. Treat it like a cache miss.
+		 */
+		goto err;
 	}
 
 	if ((s->verify_mode & SSL_VERIFY_PEER) && s->sid_ctx_length == 0) {
@@ -592,10 +594,9 @@ ssl_get_prev_session(SSL *s, CBS *session_id, CBS *ext_block, int *alert)
 	}
 
 	if (sess->timeout < (time(NULL) - sess->time)) {
-		/* timeout */
 		s->session_ctx->internal->stats.sess_timeout++;
 		if (!ticket_decrypted) {
-			/* session was from the cache, so remove it */
+			/* The session was from the cache, so remove it. */
 			SSL_CTX_remove_session(s->session_ctx, sess);
 		}
 		goto err;
@@ -606,6 +607,7 @@ ssl_get_prev_session(SSL *s, CBS *session_id, CBS *ext_block, int *alert)
 	SSL_SESSION_free(s->session);
 	s->session = sess;
 	s->verify_result = s->session->verify_result;
+
 	return 1;
 
  err:
