@@ -1,4 +1,4 @@
-/*	$OpenBSD: kexec.c,v 1.4 2020/08/29 09:17:17 kettenis Exp $	*/
+/*	$OpenBSD: kexec.c,v 1.5 2020/09/02 16:07:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Visa Hankala
@@ -22,6 +22,7 @@
 #include <sys/exec_elf.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+#include <sys/mount.h>
 #include <sys/reboot.h>
 
 #include <uvm/uvm_extern.h>
@@ -189,6 +190,8 @@ kexec_kexec(struct kexec_args *kargs, struct proc *p)
 	error = kexec_read(kargs, symaddr, kargs->klen, 0);
 	if (error != 0)
 		goto fail;
+
+	vfs_shutdown(p);
 
 	shp = (Elf64_Shdr *)(symaddr + eh.e_shoff);
 	shstr = symaddr + shp[eh.e_shstrndx].sh_offset;
