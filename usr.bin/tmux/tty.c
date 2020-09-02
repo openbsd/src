@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.383 2020/09/02 13:46:36 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.384 2020/09/02 17:19:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1905,9 +1905,9 @@ tty_set_selection(struct tty *tty, const char *buf, size_t len)
 	char	*encoded;
 	size_t	 size;
 
-	if (!tty_term_has(tty->term, TTYC_MS))
-		return;
 	if (~tty->flags & TTY_STARTED)
+		return;
+	if (!tty_term_has(tty->term, TTYC_MS))
 		return;
 
 	size = 4 * ((len + 2) / 3) + 1; /* storage for base64 */
