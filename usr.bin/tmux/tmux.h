@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1076 2020/08/25 11:35:32 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1077 2020/09/02 13:46:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2126,6 +2126,7 @@ int	tty_open(struct tty *, char **);
 void	tty_close(struct tty *);
 void	tty_free(struct tty *);
 void	tty_update_features(struct tty *);
+void	tty_set_selection(struct tty *, const char *, size_t);
 void	tty_write(void (*)(struct tty *, const struct tty_ctx *),
 	    struct tty_ctx *);
 void	tty_cmd_alignmenttest(struct tty *, const struct tty_ctx *);

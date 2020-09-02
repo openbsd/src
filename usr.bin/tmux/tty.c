@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.382 2020/06/05 09:32:15 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.383 2020/09/02 13:46:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1896,19 +1896,27 @@ tty_cmd_cells(struct tty *tty, const struct tty_ctx *ctx)
 void
 tty_cmd_setselection(struct tty *tty, const struct tty_ctx *ctx)
 {
-	char	*buf;
-	size_t	 off;
+	tty_set_selection(tty, ctx->ptr, ctx->num);
+}
+
+void
+tty_set_selection(struct tty *tty, const char *buf, size_t len)
+{
+	char	*encoded;
+	size_t	 size;
 
 	if (!tty_term_has(tty->term, TTYC_MS))
 		return;
+	if (~tty->flags & TTY_STARTED)
+		return;
 
-	off = 4 * ((ctx->num + 2) / 3) + 1; /* storage for base64 */
-	buf = xmalloc(off);
+	size = 4 * ((len + 2) / 3) + 1; /* storage for base64 */
+	encoded = xmalloc(size);
 
-	b64_ntop(ctx->ptr, ctx->num, buf, off);
-	tty_putcode_ptr2(tty, TTYC_MS, "", buf);
+	b64_ntop(buf, len, encoded, size);
+	tty_putcode_ptr2(tty, TTYC_MS, "", encoded);
 
-	free(buf);
+	free(encoded);
 }
 
 void
