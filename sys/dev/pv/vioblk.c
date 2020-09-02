@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.27 2020/09/01 12:17:53 krw Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.28 2020/09/02 22:00:26 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -573,7 +573,7 @@ vioblk_scsi_inq(struct scsi_xfer *xs)
 	bzero(&inqd, sizeof(inqd));
 
 	inqd.device = T_DIRECT;
-	inqd.version = 0x05; /* SPC-3 */
+	inqd.version = SCSI_REV_SPC3;
 	inqd.response_format = 2;
 	inqd.additional_length = 32;
 	inqd.flags |= SID_CmdQue;

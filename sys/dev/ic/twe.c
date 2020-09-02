@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.59 2020/09/01 12:17:53 krw Exp $	*/
+/*	$OpenBSD: twe.c,v 1.60 2020/09/02 22:00:26 krw Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff.  All rights reserved.
@@ -829,7 +829,7 @@ twe_scsi_cmd(xs)
 		    (sc->sc_hdr[target].hd_devtype & 4) ? T_CDROM : T_DIRECT;
 		inq.dev_qual2 =
 		    (sc->sc_hdr[target].hd_devtype & 1) ? SID_REMOVABLE : 0;
-		inq.version = 2;
+		inq.version = SCSI_REV_2;
 		inq.response_format = 2;
 		inq.additional_length = 32;
 		strlcpy(inq.vendor, "3WARE  ", sizeof inq.vendor);
