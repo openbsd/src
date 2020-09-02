@@ -1,4 +1,4 @@
-/*	$OpenBSD: ocsp.c,v 1.18 2020/09/01 17:06:11 tobhe Exp $ */
+/*	$OpenBSD: ocsp.c,v 1.19 2020/09/02 16:39:59 tobhe Exp $ */
 
 /*
  * Copyright (c) 2014 Markus Friedl
@@ -56,6 +56,8 @@ struct ocsp_connect {
 	char			*oc_path;
 };
 
+#define OCSP_TIMEOUT	30
+
 /* priv */
 void		 ocsp_connect_cb(int, short, void *);
 int		 ocsp_connect_finish(struct iked *, int, struct ocsp_connect *);
@@ -77,6 +79,7 @@ ocsp_connect(struct iked *env, struct imsg *imsg)
 	struct ocsp_connect	*oc = NULL;
 	struct iked_sahdr	 sh;
 	struct addrinfo		 hints, *res0 = NULL, *res;
+	struct timeval		 tv;
 	uint8_t			*ptr;
 	size_t			 len;
 	char			*host = NULL, *port = NULL, *path = NULL;
@@ -150,9 +153,11 @@ ocsp_connect(struct iked *env, struct imsg *imsg)
 	if (connect(fd, res->ai_addr, res->ai_addrlen) == -1) {
 		/* register callback for ansync connect */
 		if (errno == EINPROGRESS) {
+			tv.tv_sec = OCSP_TIMEOUT;
+			tv.tv_usec = 0;
 			event_set(&oc->oc_sock.sock_ev, fd, EV_WRITE,
 			    ocsp_connect_cb, oc);
-			event_add(&oc->oc_sock.sock_ev, NULL);
+			event_add(&oc->oc_sock.sock_ev, &tv);
 			ret = 0;
 		} else
 			log_warn("%s: connect(%s, %s)",
@@ -184,6 +189,12 @@ ocsp_connect_cb(int fd, short event, void *arg)
 	int			 error, send_fd = -1;
 	socklen_t		 len;
 
+	if (event == EV_TIMEOUT) {
+		log_info("%s: timeout, giving up",
+		    SPI_SH(&oc->oc_sh, __func__));
+		goto done;
+	}
+
 	len = sizeof(error);
 	if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &len) == -1) {
 		log_warn("%s: getsockopt SOL_SOCKET SO_ERROR", __func__);
@@ -193,6 +204,7 @@ ocsp_connect_cb(int fd, short event, void *arg)
 	} else {
 		send_fd = fd;
 	}
+ done:
 	ocsp_connect_finish(oc->oc_sock.sock_env, send_fd, oc);
 
 	/* if we did not send the fd, we need to close it ourself */
@@ -345,6 +357,7 @@ ocsp_receive_fd(struct iked *env, struct imsg *imsg)
 	struct iked_ocsp	*ocsp = NULL, *ocsp_tmp;
 	struct iked_socket	*sock;
 	struct iked_sahdr	 sh;
+	struct timeval		 tv;
 	uint8_t			*ptr;
 	char			*path = NULL;
 	size_t			 len;
@@ -400,8 +413,10 @@ ocsp_receive_fd(struct iked *env, struct imsg *imsg)
 	if (!OCSP_REQ_CTX_set1_req(ocsp->ocsp_req_ctx, ocsp->ocsp_req))
 		goto done;
 
+	tv.tv_sec = OCSP_TIMEOUT;
+	tv.tv_usec = 0;
 	event_set(&sock->sock_ev, sock->sock_fd, EV_WRITE, ocsp_callback, ocsp);
-	event_add(&sock->sock_ev, NULL);
+	event_add(&sock->sock_ev, &tv);
 	ret = 0;
  done:
 	if (ret == -1)
@@ -460,8 +475,15 @@ ocsp_callback(int fd, short event, void *arg)
 {
 	struct iked_ocsp	*ocsp = arg;
 	struct iked_socket	*sock = ocsp->ocsp_sock;
+	struct timeval		 tv;
 	OCSP_RESPONSE		*resp = NULL;
 
+	if (event == EV_TIMEOUT) {
+		log_info("%s: timeout, giving up",
+		    SPI_SH(&ocsp->ocsp_sh, __func__));
+		ocsp_validate_finish(ocsp, 0);
+		return;
+	}
 	/*
 	 * Only call OCSP_sendreq_nbio() if should_read/write is
 	 * either not requested or read/write can be called.
@@ -478,7 +500,9 @@ ocsp_callback(int fd, short event, void *arg)
 	else if (BIO_should_write(ocsp->ocsp_cbio))
 		event_set(&sock->sock_ev, sock->sock_fd, EV_WRITE,
 		    ocsp_callback, ocsp);
-	event_add(&sock->sock_ev, NULL);
+	tv.tv_sec = OCSP_TIMEOUT;
+	tv.tv_usec = 0;
+	event_add(&sock->sock_ev, &tv);
 }
 
 /* parse the actual OCSP response */
