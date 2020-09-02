@@ -12,8 +12,14 @@ DDEESSCCRRIIPPTTIIOONN
        normal text
                                              Text adjusted to the right margin
                            works in just the same way and isn't filled either.
-       final text
+
+       Now entering
+       explicit no-fill mode.
+                                    Text is still
+                                     not filled.
+
+       final text in fill mode
 
 
 
-OpenBSD                         January 4, 2019                    CE-BASIC(1)
+OpenBSD                        September 2, 2020                   CE-BASIC(1)

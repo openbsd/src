@@ -1,5 +1,5 @@
-.\" $OpenBSD: basic.in,v 1.1 2019/01/04 01:06:44 schwarze Exp $
-.TH CE-BASIC 1 "January 4, 2019"
+.\" $OpenBSD: basic.in,v 1.2 2020/09/02 16:36:48 schwarze Exp $
+.TH CE-BASIC 1 "September 2, 2020"
 .SH NAME
 ce-basic \- basic usage of the centering request
 .SH DESCRIPTION
@@ -13,5 +13,15 @@ text
 .rj 2
 Text adjusted to the right margin
 works in just the same way and isn't filled either.
+.PP
+.nf
+Now entering
+explicit no-fill mode.
+.ce 2
+Text is still
+not filled.
+.PP
+.fi
 final
 text
+in fill mode

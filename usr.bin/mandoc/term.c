@@ -1,7 +1,7 @@
-/*	$OpenBSD: term.c,v 1.141 2019/06/03 20:23:39 schwarze Exp $ */
+/* $OpenBSD: term.c,v 1.142 2020/09/02 16:36:48 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2010-2019 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010-2020 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -36,8 +36,7 @@ static	void		 bufferc(struct termp *, char);
 static	void		 encode(struct termp *, const char *, size_t);
 static	void		 encode1(struct termp *, int);
 static	void		 endline(struct termp *);
-static	void		 term_field(struct termp *, size_t, size_t,
-				size_t, size_t);
+static	void		 term_field(struct termp *, size_t, size_t);
 static	void		 term_fill(struct termp *, size_t *, size_t *,
 				size_t);
 
@@ -125,8 +124,7 @@ term_flushln(struct termp *p)
 		 * and with the BRNEVER flag, never break it at all.
 		 */
 
-		vtarget = p->flags & TERMP_BRNEVER ? SIZE_MAX :
-		    (p->flags & TERMP_NOBREAK) == 0 ? vfield :
+		vtarget = (p->flags & TERMP_NOBREAK) == 0 ? vfield :
 		    p->maxrmargin > p->viscol + vbl ?
 		    p->maxrmargin - p->viscol - vbl : 0;
 
@@ -135,7 +133,8 @@ term_flushln(struct termp *p)
 		 * If there is whitespace only, print nothing.
 		 */
 
-		term_fill(p, &nbr, &vbr, vtarget);
+		term_fill(p, &nbr, &vbr,
+		    p->flags & TERMP_BRNEVER ? SIZE_MAX : vtarget);
 		if (nbr == 0)
 			break;
 
@@ -154,7 +153,7 @@ term_flushln(struct termp *p)
 
 		/* Finally, print the field content. */
 
-		term_field(p, vbl, nbr, vbr, vtarget);
+		term_field(p, vbl, nbr);
 
 		/*
 		 * If there is no text left in the field, exit the loop.
@@ -343,12 +342,10 @@ term_fill(struct termp *p, size_t *nbr, size_t *vbr, size_t vtarget)
 /*
  * Print the contents of one field
  * with an indentation of	 vbl	  visual columns,
- * an input string length of	 nbr	  characters,
- * an output width of		 vbr	  visual columns,
- * and a desired field width of	 vtarget  visual columns.
+ * and an input string length of nbr	  characters.
  */
 static void
-term_field(struct termp *p, size_t vbl, size_t nbr, size_t vbr, size_t vtarget)
+term_field(struct termp *p, size_t vbl, size_t nbr)
 {
 	size_t	 ic;	/* Character position in the input buffer. */
 	size_t	 vis;	/* Visual position of the current character. */
