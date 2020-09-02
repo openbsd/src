@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.125 2020/08/27 19:55:00 mglocker Exp $	*/
+/*	$OpenBSD: usb.c,v 1.126 2020/09/02 12:36:12 mglocker Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -516,7 +516,7 @@ usb_fill_udc_task(void *arg)
 	struct usb_device_cdesc *udc = (struct usb_device_cdesc *)arg;
 	struct usb_softc *sc;
 	struct usbd_device *dev;
-	int addr = udc->udc_addr;
+	int addr = udc->udc_addr, cdesc_len;
 	usb_config_descriptor_t *cdesc;
 
 	/* check that the bus and device are still present */
@@ -530,11 +530,11 @@ usb_fill_udc_task(void *arg)
 		return;
 
 	cdesc = usbd_get_cdesc(sc->sc_bus->devices[addr],
-	    udc->udc_config_index, 0);
+	    udc->udc_config_index, &cdesc_len);
 	if (cdesc == NULL)
 		return;
 	udc->udc_desc = *cdesc;
-	free(cdesc, M_TEMP, UGETW(cdesc->wTotalLength));
+	free(cdesc, M_TEMP, cdesc_len);
 }
 
 void
