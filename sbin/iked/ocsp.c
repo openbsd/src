@@ -1,4 +1,4 @@
-/*	$OpenBSD: ocsp.c,v 1.19 2020/09/02 16:39:59 tobhe Exp $ */
+/*	$OpenBSD: ocsp.c,v 1.20 2020/09/03 14:50:40 tobhe Exp $ */
 
 /*
  * Copyright (c) 2014 Markus Friedl
@@ -54,6 +54,7 @@ struct ocsp_connect {
 	struct iked_sahdr	 oc_sh;
 	struct iked_socket	 oc_sock;
 	char			*oc_path;
+	char			*oc_url;
 };
 
 #define OCSP_TIMEOUT	30
@@ -147,6 +148,7 @@ ocsp_connect(struct iked *env, struct imsg *imsg)
 	oc->oc_sock.sock_env = env;
 	oc->oc_sh = sh;
 	oc->oc_path = path;
+	oc->oc_url = strdup(url);
 	path = NULL;
 
 	log_debug("%s: connect(%s, %s)", __func__, host, port);
@@ -231,13 +233,19 @@ ocsp_connect_finish(struct iked *env, int fd, struct ocsp_connect *oc)
 		ret = proc_composev_imsg(&env->sc_ps, PROC_CERT, -1,
 		    IMSG_OCSP_FD, -1, fd, iov, iovcnt);
 	} else {
-		log_info("%s: connect failed", SPI_SH(&oc->oc_sh, __func__));
+		if (oc)
+			log_info("%s: connect failed for %s",
+			    SPI_SH(&oc->oc_sh, __func__),
+			    oc->oc_url ? oc->oc_url : "unknown");
+		else
+			log_info("%s: connect failed", __func__);
 		ret = proc_composev_imsg(&env->sc_ps, PROC_CERT, -1,
 		    IMSG_OCSP_FD, -1, -1, iov, iovcnt);
 		if (fd >= 0)
 			close(fd);
 	}
 	if (oc) {
+		free(oc->oc_url);
 		free(oc->oc_path);
 		free(oc);
 	}
