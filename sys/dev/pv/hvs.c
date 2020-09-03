@@ -600,7 +600,7 @@ fixup_inquiry(struct scsi_xfer *xs, struct hvs_srb *srb)
 	    !is_inquiry_valid(inq) && datalen >= 4 &&
 	    (inq->version == 0 || inq->response_format == 0)) {
 		inq->version = SCSI_REV_SPC3;
-		inq->response_format = 2;
+		inq->response_format = SID_SCSI2_RESPONSE;
 	} else if (datalen >= SID_INQUIRY_HDR + SID_SCSI2_ALEN) {
 		/*
 		 * Upgrade SPC2 to SPC3 if host is Win8 or WS2012 R2

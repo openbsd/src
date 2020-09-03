@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.46 2020/09/02 21:16:29 krw Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.47 2020/09/03 12:41:29 krw Exp $	*/
 
 /*
  * Copyright (c) 2016, 2017 Mike Belopuhov
@@ -836,7 +836,7 @@ xbf_scsi_inquiry(struct scsi_xfer *xs)
 	}
 
 	inq.version = SCSI_REV_SPC3;
-	inq.response_format = 2;
+	inq.response_format = SID_SCSI2_RESPONSE;
 	inq.additional_length = 32;
 	inq.flags |= SID_CmdQue;
 	bcopy("Xen     ", inq.vendor, sizeof(inq.vendor));

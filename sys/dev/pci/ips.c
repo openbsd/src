@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.129 2020/09/02 21:16:29 krw Exp $	*/
+/*	$OpenBSD: ips.c,v 1.130 2020/09/03 12:41:29 krw Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -915,7 +915,7 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 		bzero(&inq, sizeof(inq));
 		inq.device = T_DIRECT;
 		inq.version = SCSI_REV_2;
-		inq.response_format = 2;
+		inq.response_format = SID_SCSI2_RESPONSE;
 		inq.additional_length = 32;
 		inq.flags |= SID_CmdQue;
 		strlcpy(inq.vendor, "IBM", sizeof(inq.vendor));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.28 2020/09/02 22:00:26 krw Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.29 2020/09/03 12:41:29 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -574,7 +574,7 @@ vioblk_scsi_inq(struct scsi_xfer *xs)
 
 	inqd.device = T_DIRECT;
 	inqd.version = SCSI_REV_SPC3;
-	inqd.response_format = 2;
+	inqd.response_format = SID_SCSI2_RESPONSE;
 	inqd.additional_length = 32;
 	inqd.flags |= SID_CmdQue;
 	bcopy("VirtIO  ", inqd.vendor, sizeof(inqd.vendor));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.79 2020/09/02 21:16:29 krw Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.80 2020/09/03 12:41:29 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -913,7 +913,7 @@ gdt_internal_cache_cmd(struct scsi_xfer *xs)
 		inq.dev_qual2 =
 		    (sc->sc_hdr[target].hd_devtype & 1) ? SID_REMOVABLE : 0;
 		inq.version = SCSI_REV_2;
-		inq.response_format = 2;
+		inq.response_format = SID_SCSI2_RESPONSE;
 		inq.additional_length = 32;
 		inq.flags |= SID_CmdQue;
 		strlcpy(inq.vendor, "ICP	   ", sizeof inq.vendor);
