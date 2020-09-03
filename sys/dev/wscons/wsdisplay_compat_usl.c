@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay_compat_usl.c,v 1.32 2017/01/23 04:43:46 deraadt Exp $ */
+/* $OpenBSD: wsdisplay_compat_usl.c,v 1.33 2020/09/03 15:30:17 kettenis Exp $ */
 /* $NetBSD: wsdisplay_compat_usl.c,v 1.12 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -303,14 +303,14 @@ wsdisplay_usl_ioctl1(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
 	    case VT_ACTIVATE:
 		if ((flag & FWRITE) == 0)
 			return (EACCES);
-		idx = *(int *)data - 1;
+		idx = *(long *)data - 1;
 		if (idx < 0)
 			return (EINVAL);
 		return (wsdisplay_switch((struct device *)sc, idx, 1));
 	    case VT_WAITACTIVE:
 		if ((flag & FWRITE) == 0)
 			return (EACCES);
-		idx = *(int *)data - 1;
+		idx = *(long *)data - 1;
 		if (idx < 0)
 			return (EINVAL);
 		return (wsscreen_switchwait(sc, idx));
@@ -375,7 +375,7 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 	    case VT_RELDISP:
 		if ((flag & FWRITE) == 0)
 			return (EACCES);
-#define d (*(int *)data)
+#define d ((int)(*(long *)data))
 		sd = usl_sync_get(scr);
 		if (!sd)
 			return (EINVAL);
@@ -417,7 +417,7 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 		if ((flag & FWRITE) == 0)
 			return (EACCES);
 		req = WSDISPLAYIO_SMODE;
-#define d (*(int *)data)
+#define d ((int)(*(long *)data))
 		switch (d) {
 		    case KD_GRAPHICS:
 			intarg = WSDISPLAYIO_MODE_MAPPED;
@@ -435,7 +435,7 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 		if ((flag & FWRITE) == 0)
 			return (EACCES);
 		req = WSKBDIO_COMPLEXBELL;
-#define d (*(int *)data)
+#define d ((int)(*(long *)data))
 		if (d) {
 #define PCVT_SYSBEEPF	1193182
 			if (d >> 16) {
@@ -458,7 +458,7 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 			return (EACCES);
 		req = WSKBDIO_SETLEDS;
 		intarg = 0;
-#define d (*(int *)data)
+#define d ((int)(*(long *)data))
 		if (d & LED_CAP)
 			intarg |= WSKBD_LED_CAPS;
 		if (d & LED_NUM)
@@ -477,7 +477,7 @@ wsdisplay_usl_ioctl2(struct wsdisplay_softc *sc, struct wsscreen *scr,
 		if ((flag & FWRITE) == 0)
 			return (EACCES);
 		req = WSKBDIO_SETMODE;
-		switch (*(int *)data) {
+		switch ((int)(*(long *)data)) {
 		    case K_RAW:
 			intarg = WSKBD_RAW;
 			break;
