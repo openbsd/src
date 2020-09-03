@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.55 2019/08/03 14:57:51 jcs Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.56 2020/09/03 21:38:46 cheloha Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -413,6 +413,36 @@ u_int32_t lapic_frac_usec_per_cycle;
 u_int64_t lapic_frac_cycle_per_usec;
 u_int32_t lapic_delaytab[26];
 
+void lapic_timer_oneshot(uint32_t, uint32_t);
+void lapic_timer_periodic(uint32_t, uint32_t);
+
+/*
+ * Start the local apic countdown timer.
+ *
+ * First set the mode, mask, and vector.  Then set the
+ * divisor.  Last, set the cycle count: this restarts
+ * the countdown.
+ */
+static inline void
+lapic_timer_start(uint32_t mode, uint32_t mask, uint32_t cycles)
+{
+	lapic_writereg(LAPIC_LVTT, mode | mask | LAPIC_TIMER_VECTOR);
+	lapic_writereg(LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
+	lapic_writereg(LAPIC_ICR_TIMER, cycles);
+}
+
+void
+lapic_timer_oneshot(uint32_t mask, uint32_t cycles)
+{
+	lapic_timer_start(LAPIC_LVTT_TM_ONESHOT, mask, cycles);
+}
+
+void
+lapic_timer_periodic(uint32_t mask, uint32_t cycles)
+{
+	lapic_timer_start(LAPIC_LVTT_TM_PERIODIC, mask, cycles);
+}
+
 void
 lapic_clockintr(void *arg, struct intrframe frame)
 {
@@ -430,17 +460,7 @@ lapic_clockintr(void *arg, struct intrframe frame)
 void
 lapic_startclock(void)
 {
-	/*
-	 * Start local apic countdown timer running, in repeated mode.
-	 *
-	 * Mask the clock interrupt and set mode,
-	 * then set divisor,
-	 * then unmask and set the vector.
-	 */
-	lapic_writereg(LAPIC_LVTT, LAPIC_LVTT_TM|LAPIC_LVTT_M);
-	lapic_writereg(LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
-	lapic_writereg(LAPIC_ICR_TIMER, lapic_tval);
-	lapic_writereg(LAPIC_LVTT, LAPIC_LVTT_TM|LAPIC_TIMER_VECTOR);
+	lapic_timer_periodic(0, lapic_tval);
 }
 
 void
@@ -498,9 +518,7 @@ lapic_calibrate_timer(struct cpu_info *ci)
 	 * Configure timer to one-shot, interrupt masked,
 	 * large positive number.
 	 */
-	lapic_writereg(LAPIC_LVTT, LAPIC_LVTT_M);
-	lapic_writereg(LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
-	lapic_writereg(LAPIC_ICR_TIMER, 0x80000000);
+	lapic_timer_oneshot(LAPIC_LVTT_M, 0x80000000);
 
 	s = intr_disable();
 
@@ -540,10 +558,7 @@ skip_calibration:
 		lapic_tval = (lapic_per_second * 2) / hz;
 		lapic_tval = (lapic_tval / 2) + (lapic_tval & 0x1);
 
-		lapic_writereg(LAPIC_LVTT, LAPIC_LVTT_TM | LAPIC_LVTT_M |
-		    LAPIC_TIMER_VECTOR);
-		lapic_writereg(LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
-		lapic_writereg(LAPIC_ICR_TIMER, lapic_tval);
+		lapic_timer_periodic(LAPIC_LVTT_M, lapic_tval);
 
 		/*
 		 * Compute fixed-point ratios between cycles and
