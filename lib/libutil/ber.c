@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.16 2020/09/03 17:01:15 martijn Exp $ */
+/*	$OpenBSD: ber.c,v 1.17 2020/09/03 19:09:57 martijn Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -1258,8 +1258,10 @@ ober_read_element(struct ber *ber, struct ber_element *elm)
 		}
 	case BER_TYPE_INTEGER:
 	case BER_TYPE_ENUMERATED:
-		if (len > (ssize_t)sizeof(long long))
+		if (len > (ssize_t)sizeof(long long)) {
+			errno = ERANGE;
 			return -1;
+		}
 		for (i = 0; i < len; i++) {
 			if (ober_getc(ber, &c) != 1)
 				return -1;
