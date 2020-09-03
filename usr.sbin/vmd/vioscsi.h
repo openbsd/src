@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.h,v 1.2 2018/01/16 06:10:45 ccardenas Exp $  */
+/*	$OpenBSD: vioscsi.h,v 1.3 2020/09/03 13:11:49 krw Exp $  */
 
 /*
  * Copyright (c) 2017 Carlos Cardenas <ccardenas@openbsd.org>
@@ -38,7 +38,6 @@
 #define SENSE_ILLEGAL_CDB_FIELD		0x24
 #define SENSE_MEDIUM_NOT_PRESENT	0x3a
 
-#define INQUIRY_RESPONSE_FORMAT		0x02
 #define INQUIRY_VENDOR			"OpenBSD "
 #define INQUIRY_VENDOR_LEN		8
 #define INQUIRY_PRODUCT			"VMM CD-ROM      "

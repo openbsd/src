@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.13 2020/09/01 12:17:54 krw Exp $  */
+/*	$OpenBSD: vioscsi.c,v 1.14 2020/09/03 13:11:49 krw Exp $  */
 
 /*
  * Copyright (c) 2017 Carlos Cardenas <ccardenas@openbsd.org>
@@ -281,7 +281,7 @@ vioscsi_handle_inquiry(struct vioscsi_dev *dev,
 	inq_data->device = T_CDROM;
 	inq_data->dev_qual2 = SID_REMOVABLE;
 	/* Leave version zero to say we don't comply */
-	inq_data->response_format = INQUIRY_RESPONSE_FORMAT;
+	inq_data->response_format = SID_SCSI2_RESPONSE;
 	inq_data->additional_length = SID_SCSI2_ALEN;
 	memcpy(inq_data->vendor, INQUIRY_VENDOR, INQUIRY_VENDOR_LEN);
 	memcpy(inq_data->product, INQUIRY_PRODUCT, INQUIRY_PRODUCT_LEN);
