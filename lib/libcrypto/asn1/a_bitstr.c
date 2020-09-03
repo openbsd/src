@@ -1,4 +1,4 @@
-/* $OpenBSD: a_bitstr.c,v 1.29 2018/10/20 16:07:09 tb Exp $ */
+/* $OpenBSD: a_bitstr.c,v 1.30 2020/09/03 17:19:27 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -215,8 +215,6 @@ ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value)
 			ASN1error(ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
-		if (w + 1 - a->length > 0)
-			memset(c + a->length, 0, w + 1 - a->length);
 		a->data = c;
 		a->length = w + 1;
 	}
