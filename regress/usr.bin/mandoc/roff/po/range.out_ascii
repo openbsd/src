@@ -1,0 +1,19 @@
+PO-RANGE(1)                 General Commands Manual                PO-RANGE(1)
+
+NNAAMMEE
+     ppoo--rraannggee - page offsets out of range
+
+DDEESSCCRRIIPPTTIIOONN
+     initial text
+
+too small
+
+     back in range
+
+                                                                 too large
+
+               back in range
+
+     final text
+
+OpenBSD                          July 4, 2017                          OpenBSD

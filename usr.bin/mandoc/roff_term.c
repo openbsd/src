@@ -1,6 +1,6 @@
-/*	$OpenBSD: roff_term.c,v 1.20 2020/09/03 17:37:06 schwarze Exp $ */
+/* $OpenBSD: roff_term.c,v 1.21 2020/09/03 20:33:20 schwarze Exp $ */
 /*
- * Copyright (c) 2010,2014,2015,2017-2019 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010,2014,2015,2017-2020 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -155,9 +155,13 @@ static void
 roff_term_pre_po(ROFF_TERM_ARGS)
 {
 	struct roffsu	 su;
-	static int	 po, polast;
+	static int	 po, pouse, polast;
 	int		 ponew;
 
+	/* Revert the currently active page offset. */
+	p->tcol->offset -= pouse;
+
+	/* Determine the requested page offset. */
 	if (n->child != NULL &&
 	    a2roffsu(n->child->string, &su, SCALE_EM) != NULL) {
 		ponew = term_hen(p, &su);
@@ -166,11 +170,15 @@ roff_term_pre_po(ROFF_TERM_ARGS)
 			ponew += po;
 	} else
 		ponew = polast;
+
+	/* Remeber both the previous and the newly requested offset. */
 	polast = po;
 	po = ponew;
 
-	ponew = po - polast + (int)p->tcol->offset;
-	p->tcol->offset = ponew > 0 ? ponew : 0;
+	/* Truncate to the range [-offset, 60], remember, and apply it. */
+	pouse = po >= 60 ? 60 :
+	    po < -(int)p->tcol->offset ? -p->tcol->offset : po;
+	p->tcol->offset += pouse;
 }
 
 static void

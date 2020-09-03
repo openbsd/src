@@ -1,0 +1,24 @@
+.\" $OpenBSD: range.in,v 1.1 2020/09/03 20:33:20 schwarze Exp $
+.Dd $Mdocdate: September 3 2020 $
+.Dt PO-RANGE 1
+.Os
+.Sh NAME
+.Nm po-range
+.Nd page offsets out of range
+.Sh DESCRIPTION
+initial text
+.Pp
+.po -10n
+too small
+.Pp
+.po +10n
+back in range
+.Pp
+.po 80n
+too large
+.Pp
+.po -70n
+back in range
+.Pp
+.po 0
+final text
