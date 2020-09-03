@@ -1,4 +1,4 @@
-/*	$OpenBSD: xive.c,v 1.11 2020/08/30 19:07:00 kettenis Exp $	*/
+/*	$OpenBSD: xive.c,v 1.12 2020/09/03 20:02:02 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -232,6 +232,7 @@ xive_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Synchronize hardware state to software state. */
 	xive_write_1(sc, XIVE_TM_CPPR_HV, xive_prio(curcpu()->ci_cpl));
+	eieio();
 }
 
 int
@@ -355,8 +356,10 @@ xive_setipl(int new)
 
 	msr = intr_disable();
 	ci->ci_cpl = new;
-	if (newprio != oldprio)
+	if (newprio != oldprio) {
 		xive_write_1(sc, XIVE_TM_CPPR_HV, newprio);
+		eieio();
+	}
 	intr_restore(msr);
 }
 
@@ -431,7 +434,6 @@ xive_hvi(struct trapframe *frame)
 
 		ci->ci_cpl = old;
 		xive_write_1(sc, XIVE_TM_CPPR_HV, xive_prio(old));
-
 		eieio();
 	}
 }
