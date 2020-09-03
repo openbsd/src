@@ -1,4 +1,4 @@
-/*	$OpenBSD: roff_term.c,v 1.19 2019/01/04 03:24:30 schwarze Exp $ */
+/*	$OpenBSD: roff_term.c,v 1.20 2020/09/03 17:37:06 schwarze Exp $ */
 /*
  * Copyright (c) 2010,2014,2015,2017-2019 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -208,6 +208,7 @@ roff_term_pre_ti(ROFF_TERM_ARGS)
 {
 	struct roffsu	 su;
 	const char	*cp;
+	const size_t	 maxoff = 72;
 	int		 len, sign;
 
 	roff_term_pre_br(p, n);
@@ -228,17 +229,26 @@ roff_term_pre_ti(ROFF_TERM_ARGS)
 		return;
 	len = term_hen(p, &su);
 
-	if (sign == 0) {
+	switch (sign) {
+	case 1:
+		if (p->tcol->offset + len <= maxoff)
+			p->ti = len;
+		else if (p->tcol->offset < maxoff)
+			p->ti = maxoff - p->tcol->offset;
+		else
+			p->ti = 0;
+		break;
+	case -1:
+		if ((size_t)len < p->tcol->offset)
+			p->ti = -len;
+		else
+			p->ti = -p->tcol->offset;
+		break;
+	default:
+		if ((size_t)len > maxoff)
+			len = maxoff;
 		p->ti = len - p->tcol->offset;
-		p->tcol->offset = len;
-	} else if (sign == 1) {
-		p->ti = len;
-		p->tcol->offset += len;
-	} else if ((size_t)len < p->tcol->offset) {
-		p->ti = -len;
-		p->tcol->offset -= len;
-	} else {
-		p->ti = -p->tcol->offset;
-		p->tcol->offset = 0;
+		break;
 	}
+	p->tcol->offset += p->ti;
 }

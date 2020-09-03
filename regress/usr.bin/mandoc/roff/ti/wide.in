@@ -1,0 +1,19 @@
+.\" $OpenBSD: wide.in,v 1.1 2020/09/03 17:37:06 schwarze Exp $
+.TH TI-WIDE 1 "September 3, 2020"
+.SH NAME
+ti-wide \- excessive temporary indentation
+.SH DESCRIPTION
+Absolute .ti of more than 72n:
+.ti 80n
+max
+.RS 40n
+Indented block plus excessive relative indentation:
+.ti +40n
+max
+.RE
+.RS 66n
+Block beyond 72n:
+.ti +4n
+same
+.RE
+Back to normal.
