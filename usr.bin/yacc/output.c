@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.27 2020/05/23 21:08:38 espie Exp $	*/
+/*	$OpenBSD: output.c,v 1.28 2020/09/03 04:19:53 tb Exp $	*/
 /*	$NetBSD: output.c,v 1.4 1996/03/19 03:21:41 jtc Exp $	*/
 
 /*
@@ -905,7 +905,7 @@ output_debug(void)
 	    "\t{", symbol_prefix);
 	j = 80;
 	for (i = 0; i <= max; ++i) {
-		if ((s = symnam[i]) != '\0') {
+		if ((s = symnam[i]) != NULL) {
 			if (s[0] == '"') {
 				k = 7;
 				while (*++s != '"') {
