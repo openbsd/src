@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpipvar.h,v 1.3 2017/11/05 04:57:28 visa Exp $	*/
+/*	$OpenBSD: cn30xxpipvar.h,v 1.4 2020/09/04 15:18:05 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -29,11 +29,16 @@
 #ifndef _CN30XXPIPVAR_H_
 #define _CN30XXPIPVAR_H_
 
+#include <sys/kstat.h>
+
+#include "kstat.h"
+
 /* XXX */
 struct cn30xxpip_softc {
 	int			sc_port;
 	bus_space_tag_t		sc_regt;
 	bus_space_handle_t	sc_regh;
+	bus_space_handle_t	sc_regh_stat;
 	int			sc_tag_type;
 	int			sc_receive_group;
 	size_t			sc_ip_offset;
@@ -54,7 +59,10 @@ void			cn30xxpip_gbl_ctl_debug(struct cn30xxpip_softc *);
 int			cn30xxpip_port_config(struct cn30xxpip_softc *);
 void			cn30xxpip_prt_cfg_enable(struct cn30xxpip_softc *,
 			    uint64_t, int);
-void			cn30xxpip_stats(struct cn30xxpip_softc *,
-			    struct ifnet *, int);
+void			cn30xxpip_stats_init(struct cn30xxpip_softc *);
+#if NKSTAT > 0
+void			cn30xxpip_kstat_read(struct cn30xxpip_softc *,
+			    struct kstat_kv *);
+#endif
 
 #endif /* !_CN30XXPIPVAR_H_ */

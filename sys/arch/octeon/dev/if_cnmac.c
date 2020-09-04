@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.78 2020/08/15 10:44:48 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.79 2020/09/04 15:18:05 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -169,6 +169,12 @@ int	cnmac_intr(void *);
 
 int	cnmac_mbuf_alloc(int);
 
+#if NKSTAT > 0
+void	cnmac_kstat_attach(struct cnmac_softc *);
+int	cnmac_kstat_read(struct kstat *);
+void	cnmac_kstat_tick(struct cnmac_softc *);
+#endif
+
 /* device parameters */
 int	cnmac_param_pko_cmd_w0_n2 = 1;
 
@@ -276,8 +282,6 @@ cnmac_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_soft_req_thresh = 15/* XXX */;
 	sc->sc_ext_callback_cnt = 0;
 
-	cn30xxgmx_stats_init(sc->sc_gmx_port);
-
 	task_set(&sc->sc_free_task, cnmac_free_task, sc);
 	timeout_set(&sc->sc_tick_misc_ch, cnmac_tick_misc, sc);
 	timeout_set(&sc->sc_tick_free_ch, cnmac_tick_free, sc);
@@ -324,6 +328,10 @@ cnmac_attach(struct device *parent, struct device *self, void *aux)
 	ether_ifattach(ifp);
 
 	cnmac_buf_init(sc);
+
+#if NKSTAT > 0
+	cnmac_kstat_attach(sc);
+#endif
 
 	sc->sc_ih = octeon_intr_establish(POW_WORKQ_IRQ(sc->sc_powgroup),
 	    IPL_NET | IPL_MPSAFE, cnmac_intr, sc, sc->sc_dev.dv_xname);
@@ -1001,6 +1009,8 @@ cnmac_init(struct ifnet *ifp)
 	}
 	cnmac_mediachange(ifp);
 
+	cn30xxpip_stats_init(sc->sc_pip);
+	cn30xxgmx_stats_init(sc->sc_gmx_port);
 	cn30xxgmx_set_mac_addr(sc->sc_gmx_port, sc->sc_arpcom.ac_enaddr);
 	cn30xxgmx_set_filter(sc->sc_gmx_port);
 
@@ -1060,9 +1070,6 @@ cnmac_configure(struct cnmac_softc *sc)
 	cn30xxpko_port_config(sc->sc_pko);
 	cn30xxpko_port_enable(sc->sc_pko, 1);
 	cn30xxpow_config(sc->sc_pow, sc->sc_powgroup);
-
-	cn30xxgmx_tx_stats_rd_clr(sc->sc_gmx_port, 1);
-	cn30xxgmx_rx_stats_rd_clr(sc->sc_gmx_port, 1);
 
 	cn30xxgmx_port_enable(sc->sc_gmx_port, 1);
 
@@ -1382,16 +1389,117 @@ void
 cnmac_tick_misc(void *arg)
 {
 	struct cnmac_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int s;
 
 	s = splnet();
-
-	cn30xxgmx_stats(sc->sc_gmx_port);
-	cn30xxpip_stats(sc->sc_pip, ifp, sc->sc_port);
 	mii_tick(&sc->sc_mii);
-
 	splx(s);
+
+#if NKSTAT > 0
+	cnmac_kstat_tick(sc);
+#endif
 
 	timeout_add_sec(&sc->sc_tick_misc_ch, 1);
 }
+
+#if NKSTAT > 0
+#define KVE(n, t) \
+	KSTAT_KV_UNIT_INITIALIZER((n), KSTAT_KV_T_COUNTER64, (t))
+
+static const struct kstat_kv cnmac_kstat_tpl[cnmac_stat_count] = {
+	[cnmac_stat_rx_toto_gmx]= KVE("rx total gmx",	KSTAT_KV_U_BYTES),
+	[cnmac_stat_rx_totp_gmx]= KVE("rx total gmx",	KSTAT_KV_U_PACKETS),
+	[cnmac_stat_rx_toto_pip]= KVE("rx total pip",	KSTAT_KV_U_BYTES),
+	[cnmac_stat_rx_totp_pip]= KVE("rx total pip",	KSTAT_KV_U_PACKETS),
+	[cnmac_stat_rx_h64]	= KVE("rx 64B",		KSTAT_KV_U_PACKETS),
+	[cnmac_stat_rx_h127]	= KVE("rx 65-127B",	KSTAT_KV_U_PACKETS),
+	[cnmac_stat_rx_h255]	= KVE("rx 128-255B",	KSTAT_KV_U_PACKETS),
+	[cnmac_stat_rx_h511]	= KVE("rx 256-511B",	KSTAT_KV_U_PACKETS),
+	[cnmac_stat_rx_h1023]	= KVE("rx 512-1023B",	KSTAT_KV_U_PACKETS),
+	[cnmac_stat_rx_h1518]	= KVE("rx 1024-1518B",	KSTAT_KV_U_PACKETS),
+	[cnmac_stat_rx_hmax]	= KVE("rx 1519-maxB",	KSTAT_KV_U_PACKETS),
+	[cnmac_stat_rx_bcast]	= KVE("rx bcast",	KSTAT_KV_U_PACKETS),
+	[cnmac_stat_rx_mcast]	= KVE("rx mcast",	KSTAT_KV_U_PACKETS),
+	[cnmac_stat_rx_qdpo]	= KVE("rx qos drop",	KSTAT_KV_U_BYTES),
+	[cnmac_stat_rx_qdpp]	= KVE("rx qos drop",	KSTAT_KV_U_PACKETS),
+	[cnmac_stat_rx_fcs]	= KVE("rx fcs err",	KSTAT_KV_U_PACKETS),
+	[cnmac_stat_rx_frag]	= KVE("rx fcs undersize",KSTAT_KV_U_PACKETS),
+	[cnmac_stat_rx_undersz]	= KVE("rx undersize",	KSTAT_KV_U_PACKETS),
+	[cnmac_stat_rx_jabber]	= KVE("rx jabber",	KSTAT_KV_U_PACKETS),
+	[cnmac_stat_rx_oversz]	= KVE("rx oversize",	KSTAT_KV_U_PACKETS),
+	[cnmac_stat_rx_raw]	= KVE("rx raw",		KSTAT_KV_U_PACKETS),
+	[cnmac_stat_rx_bad]	= KVE("rx bad",		KSTAT_KV_U_PACKETS),
+	[cnmac_stat_rx_drop]	= KVE("rx drop",	KSTAT_KV_U_PACKETS),
+	[cnmac_stat_rx_ctl]	= KVE("rx control",	KSTAT_KV_U_PACKETS),
+	[cnmac_stat_rx_dmac]	= KVE("rx dmac",	KSTAT_KV_U_PACKETS),
+	[cnmac_stat_tx_toto]	= KVE("tx total",	KSTAT_KV_U_BYTES),
+	[cnmac_stat_tx_totp]	= KVE("tx total",	KSTAT_KV_U_PACKETS),
+	[cnmac_stat_tx_hmin]	= KVE("tx min-63B",	KSTAT_KV_U_PACKETS),
+	[cnmac_stat_tx_h64]	= KVE("tx 64B",		KSTAT_KV_U_PACKETS),
+	[cnmac_stat_tx_h127]	= KVE("tx 65-127B",	KSTAT_KV_U_PACKETS),
+	[cnmac_stat_tx_h255]	= KVE("tx 128-255B",	KSTAT_KV_U_PACKETS),
+	[cnmac_stat_tx_h511]	= KVE("tx 256-511B",	KSTAT_KV_U_PACKETS),
+	[cnmac_stat_tx_h1023]	= KVE("tx 512-1023B",	KSTAT_KV_U_PACKETS),
+	[cnmac_stat_tx_h1518]	= KVE("tx 1024-1518B",	KSTAT_KV_U_PACKETS),
+	[cnmac_stat_tx_hmax]	= KVE("tx 1519-maxB",	KSTAT_KV_U_PACKETS),
+	[cnmac_stat_tx_bcast]	= KVE("tx bcast",	KSTAT_KV_U_PACKETS),
+	[cnmac_stat_tx_mcast]	= KVE("tx mcast",	KSTAT_KV_U_PACKETS),
+	[cnmac_stat_tx_coll]	= KVE("tx coll",	KSTAT_KV_U_PACKETS),
+	[cnmac_stat_tx_defer]	= KVE("tx defer",	KSTAT_KV_U_PACKETS),
+	[cnmac_stat_tx_scol]	= KVE("tx scoll",	KSTAT_KV_U_PACKETS),
+	[cnmac_stat_tx_mcol]	= KVE("tx mcoll",	KSTAT_KV_U_PACKETS),
+	[cnmac_stat_tx_ctl]	= KVE("tx control",	KSTAT_KV_U_PACKETS),
+	[cnmac_stat_tx_uflow]	= KVE("tx underflow",	KSTAT_KV_U_PACKETS),
+};
+
+void
+cnmac_kstat_attach(struct cnmac_softc *sc)
+{
+	struct kstat *ks;
+	struct kstat_kv *kvs;
+
+	mtx_init(&sc->sc_kstat_mtx, IPL_SOFTCLOCK);
+
+	ks = kstat_create(sc->sc_dev.dv_xname, 0, "cnmac-stats", 0,
+	    KSTAT_T_KV, 0);
+	if (ks == NULL)
+		return;
+
+	kvs = malloc(sizeof(cnmac_kstat_tpl), M_DEVBUF, M_WAITOK | M_ZERO);
+	memcpy(kvs, cnmac_kstat_tpl, sizeof(cnmac_kstat_tpl));
+
+	kstat_set_mutex(ks, &sc->sc_kstat_mtx);
+	ks->ks_softc = sc;
+	ks->ks_data = kvs;
+	ks->ks_datalen = sizeof(cnmac_kstat_tpl);
+	ks->ks_read = cnmac_kstat_read;
+
+	sc->sc_kstat = ks;
+	kstat_install(ks);
+}
+
+int
+cnmac_kstat_read(struct kstat *ks)
+{
+	struct cnmac_softc *sc = ks->ks_softc;
+	struct kstat_kv *kvs = ks->ks_data;
+
+	cn30xxpip_kstat_read(sc->sc_pip, kvs);
+	cn30xxgmx_kstat_read(sc->sc_gmx_port, kvs);
+
+	getnanouptime(&ks->ks_updated);
+
+	return 0;
+}
+
+void
+cnmac_kstat_tick(struct cnmac_softc *sc)
+{
+	if (sc->sc_kstat == NULL)
+		return;
+	if (!mtx_enter_try(&sc->sc_kstat_mtx))
+		return;
+	cnmac_kstat_read(sc->sc_kstat);
+	mtx_leave(&sc->sc_kstat_mtx);
+}
+#endif

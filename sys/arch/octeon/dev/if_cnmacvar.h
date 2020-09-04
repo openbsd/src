@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmacvar.h,v 1.18 2017/11/18 05:53:02 visa Exp $	*/
+/*	$OpenBSD: if_cnmacvar.h,v 1.19 2020/09/04 15:18:05 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -25,6 +25,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/kstat.h>
+#include <sys/mutex.h>
+
+#include "kstat.h"
 
 #define IS_MAC_MULTICASTBIT(addr) \
         ((addr)[0] & 0x01)
@@ -108,4 +113,7 @@ struct cnmac_softc {
 	size_t			sc_ip_offset;
 
 	struct timeval		sc_rxerr_log_last;
+
+	struct mutex		sc_kstat_mtx;
+	struct kstat		*sc_kstat;
 };

@@ -3,7 +3,7 @@
  * DONT EDIT THIS FILE
  */
 
-/*	$OpenBSD: cn30xxpipreg.h,v 1.7 2019/09/22 05:13:59 visa Exp $	*/
+/*	$OpenBSD: cn30xxpipreg.h,v 1.8 2020/09/04 15:18:05 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -99,6 +99,20 @@
 
 #define PIP_BASE 0x00011800a0000000ULL
 #define PIP_SIZE 0x1e50ULL
+
+#define PIP_STAT_SIZE				0x50
+#define PIP_STAT_BASE(i)			(0x800 + PIP_STAT_SIZE * (i))
+
+#define PIP_STAT0_PRT					0x00
+#define PIP_STAT1_PRT					0x08
+#define PIP_STAT2_PRT					0x10
+#define PIP_STAT3_PRT					0x18
+#define PIP_STAT4_PRT					0x20
+#define PIP_STAT5_PRT					0x28
+#define PIP_STAT6_PRT					0x30
+#define PIP_STAT7_PRT					0x38
+#define PIP_STAT8_PRT					0x40
+#define PIP_STAT9_PRT					0x48
 
 #define	PIP_BIST_STATUS_OFFSET				0x0ULL
 #define	PIP_INT_REG_OFFSET				0x8ULL

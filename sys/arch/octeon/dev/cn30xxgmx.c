@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.44 2020/07/04 09:00:09 visa Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.45 2020/09/04 15:18:05 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -433,41 +433,28 @@ cn30xxgmx_link_enable(struct cn30xxgmx_port_softc *sc, int enable)
 	return 0;
 }
 
-/* XXX RGMII specific */
-int
+void
 cn30xxgmx_stats_init(struct cn30xxgmx_port_softc *sc)
 {
-        _GMX_PORT_WR8(sc, GMX0_RX0_STATS_PKTS, 0x0ULL);
-        _GMX_PORT_WR8(sc, GMX0_RX0_STATS_PKTS_DRP, 0x0ULL);
-        _GMX_PORT_WR8(sc, GMX0_RX0_STATS_PKTS_BAD, 0x0ULL);
-        _GMX_PORT_WR8(sc, GMX0_TX0_STAT0, 0x0ULL);
-        _GMX_PORT_WR8(sc, GMX0_TX0_STAT1, 0x0ULL);
-        _GMX_PORT_WR8(sc, GMX0_TX0_STAT3, 0x0ULL);
-        _GMX_PORT_WR8(sc, GMX0_TX0_STAT9, 0x0ULL);
-	return 0;
-}
+	_GMX_PORT_WR8(sc, GMX0_RX0_STATS_CTL, 1);
+	_GMX_PORT_WR8(sc, GMX0_TX0_STATS_CTL, 1);
 
-int
-cn30xxgmx_tx_stats_rd_clr(struct cn30xxgmx_port_softc *sc, int enable)
-{
-	_GMX_PORT_WR8(sc, GMX0_TX0_STATS_CTL, enable ? 0x1ULL : 0x0ULL);
-	return 0;
-}
-
-int
-cn30xxgmx_rx_stats_rd_clr(struct cn30xxgmx_port_softc *sc, int enable)
-{
-	_GMX_PORT_WR8(sc, GMX0_RX0_STATS_CTL, enable ? 0x1ULL : 0x0ULL);
-	return 0;
-}
-
-void
-cn30xxgmx_rx_stats_dec_bad(struct cn30xxgmx_port_softc *sc)
-{
-	uint64_t tmp;
-
-        tmp = _GMX_PORT_RD8(sc, GMX0_RX0_STATS_PKTS_BAD);
-	_GMX_PORT_WR8(sc, GMX0_RX0_STATS_PKTS_BAD, tmp - 1);
+	_GMX_PORT_WR8(sc, GMX0_RX0_STATS_PKTS, 0);
+	_GMX_PORT_WR8(sc, GMX0_RX0_STATS_OCTS, 0);
+	_GMX_PORT_WR8(sc, GMX0_RX0_STATS_PKTS_CTL, 0);
+	_GMX_PORT_WR8(sc, GMX0_RX0_STATS_PKTS_DMAC, 0);
+	_GMX_PORT_WR8(sc, GMX0_RX0_STATS_PKTS_DRP, 0);
+	_GMX_PORT_WR8(sc, GMX0_RX0_STATS_PKTS_BAD, 0);
+	_GMX_PORT_WR8(sc, GMX0_TX0_STAT0, 0);
+	_GMX_PORT_WR8(sc, GMX0_TX0_STAT1, 0);
+	_GMX_PORT_WR8(sc, GMX0_TX0_STAT2, 0);
+	_GMX_PORT_WR8(sc, GMX0_TX0_STAT3, 0);
+	_GMX_PORT_WR8(sc, GMX0_TX0_STAT4, 0);
+	_GMX_PORT_WR8(sc, GMX0_TX0_STAT5, 0);
+	_GMX_PORT_WR8(sc, GMX0_TX0_STAT6, 0);
+	_GMX_PORT_WR8(sc, GMX0_TX0_STAT7, 0);
+	_GMX_PORT_WR8(sc, GMX0_TX0_STAT8, 0);
+	_GMX_PORT_WR8(sc, GMX0_TX0_STAT9, 0);
 }
 
 int
@@ -1258,23 +1245,60 @@ cn30xxgmx_sgmii_timing(struct cn30xxgmx_port_softc *sc)
 	return 0;
 }
 
+#if NKSTAT > 0
 void
-cn30xxgmx_stats(struct cn30xxgmx_port_softc *sc)
+cn30xxgmx_kstat_read(struct cn30xxgmx_port_softc *sc, struct kstat_kv *kvs)
 {
-	struct ifnet *ifp = &sc->sc_port_ac->ac_if;
-	uint64_t tmp;
+	uint64_t val;
 
-	ifp->if_ierrors +=
-	    (uint32_t)_GMX_PORT_RD8(sc, GMX0_RX0_STATS_PKTS_BAD);
-	ifp->if_iqdrops +=
+	kstat_kv_u64(&kvs[cnmac_stat_rx_totp_gmx]) +=
+	    (uint32_t)_GMX_PORT_RD8(sc, GMX0_RX0_STATS_PKTS);
+	kstat_kv_u64(&kvs[cnmac_stat_rx_toto_gmx]) +=
+	    (uint32_t)_GMX_PORT_RD8(sc, GMX0_RX0_STATS_OCTS);
+	kstat_kv_u64(&kvs[cnmac_stat_rx_ctl]) +=
+	    (uint32_t)_GMX_PORT_RD8(sc, GMX0_RX0_STATS_PKTS_CTL);
+	kstat_kv_u64(&kvs[cnmac_stat_rx_dmac]) +=
+	    (uint32_t)_GMX_PORT_RD8(sc, GMX0_RX0_STATS_PKTS_DMAC);
+	kstat_kv_u64(&kvs[cnmac_stat_rx_drop]) +=
 	    (uint32_t)_GMX_PORT_RD8(sc, GMX0_RX0_STATS_PKTS_DRP);
-	tmp = _GMX_PORT_RD8(sc, GMX0_TX0_STAT0);
-	ifp->if_oerrors +=
-	    (uint32_t)tmp + ((uint32_t)(tmp >> 32) * 16);
-	ifp->if_collisions += ((uint32_t)tmp) * 16;
-	tmp = _GMX_PORT_RD8(sc, GMX0_TX0_STAT1);
-	ifp->if_collisions +=
-	    ((uint32_t)tmp * 2) + (uint32_t)(tmp >> 32);
-	tmp = _GMX_PORT_RD8(sc, GMX0_TX0_STAT9);
-	ifp->if_oerrors += (uint32_t)(tmp >> 32);
+	kstat_kv_u64(&kvs[cnmac_stat_rx_bad]) +=
+	    (uint32_t)_GMX_PORT_RD8(sc, GMX0_RX0_STATS_PKTS_BAD);
+
+	val = _GMX_PORT_RD8(sc, GMX0_TX0_STAT0);
+	kstat_kv_u64(&kvs[cnmac_stat_tx_coll]) += (uint32_t)val;
+	kstat_kv_u64(&kvs[cnmac_stat_tx_defer]) += val >> 32;
+
+	val = _GMX_PORT_RD8(sc, GMX0_TX0_STAT1);
+	kstat_kv_u64(&kvs[cnmac_stat_tx_mcol]) += (uint32_t)val;
+	kstat_kv_u64(&kvs[cnmac_stat_tx_scol]) += val >> 32;
+
+	kstat_kv_u64(&kvs[cnmac_stat_tx_toto]) +=
+	    (uint32_t)_GMX_PORT_RD8(sc, GMX0_TX0_STAT2);
+	kstat_kv_u64(&kvs[cnmac_stat_tx_totp]) +=
+	    (uint32_t)_GMX_PORT_RD8(sc, GMX0_TX0_STAT3);
+
+	val = _GMX_PORT_RD8(sc, GMX0_TX0_STAT4);
+	kstat_kv_u64(&kvs[cnmac_stat_tx_hmin]) += (uint32_t)val;
+	kstat_kv_u64(&kvs[cnmac_stat_tx_h64]) += val >> 32;
+
+	val = _GMX_PORT_RD8(sc, GMX0_TX0_STAT5);
+	kstat_kv_u64(&kvs[cnmac_stat_tx_h127]) += (uint32_t)val;
+	kstat_kv_u64(&kvs[cnmac_stat_tx_h255]) += val >> 32;
+
+	val = _GMX_PORT_RD8(sc, GMX0_TX0_STAT6);
+	kstat_kv_u64(&kvs[cnmac_stat_tx_h511]) += (uint32_t)val;
+	kstat_kv_u64(&kvs[cnmac_stat_tx_h1023]) += val >> 32;
+
+	val = _GMX_PORT_RD8(sc, GMX0_TX0_STAT7);
+	kstat_kv_u64(&kvs[cnmac_stat_tx_h1518]) += (uint32_t)val;
+	kstat_kv_u64(&kvs[cnmac_stat_tx_hmax]) += val >> 32;
+
+	val = _GMX_PORT_RD8(sc, GMX0_TX0_STAT8);
+	kstat_kv_u64(&kvs[cnmac_stat_tx_bcast]) += (uint32_t)val;
+	kstat_kv_u64(&kvs[cnmac_stat_tx_mcast]) += val >> 32;
+
+	val = _GMX_PORT_RD8(sc, GMX0_TX0_STAT9);
+	kstat_kv_u64(&kvs[cnmac_stat_tx_ctl]) += (uint32_t)val;
+	kstat_kv_u64(&kvs[cnmac_stat_tx_uflow]) += val >> 32;
 }
+#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonvar.h,v 1.48 2020/06/27 01:01:36 jsg Exp $	*/
+/*	$OpenBSD: octeonvar.h,v 1.49 2020/09/04 15:18:05 visa Exp $	*/
 /*	$NetBSD: maltavar.h,v 1.3 2002/03/18 10:10:16 simonb Exp $	*/
 
 /*-
@@ -154,6 +154,53 @@ struct octeon_fau_map {
 #define	OCTEON_POW_QOS_XXX_7		7
 
 #define	OCTEON_POW_GROUP_MAX		16
+
+enum cnmac_stat {
+	cnmac_stat_rx_toto_gmx,
+	cnmac_stat_rx_totp_gmx,
+	cnmac_stat_rx_toto_pip,
+	cnmac_stat_rx_totp_pip,
+	cnmac_stat_rx_h64,
+	cnmac_stat_rx_h127,
+	cnmac_stat_rx_h255,
+	cnmac_stat_rx_h511,
+	cnmac_stat_rx_h1023,
+	cnmac_stat_rx_h1518,
+	cnmac_stat_rx_hmax,
+	cnmac_stat_rx_bcast,
+	cnmac_stat_rx_mcast,
+	cnmac_stat_rx_qdpo,
+	cnmac_stat_rx_qdpp,
+	cnmac_stat_rx_fcs,
+	cnmac_stat_rx_frag,
+	cnmac_stat_rx_undersz,
+	cnmac_stat_rx_jabber,
+	cnmac_stat_rx_oversz,
+	cnmac_stat_rx_raw,
+	cnmac_stat_rx_bad,
+	cnmac_stat_rx_drop,
+	cnmac_stat_rx_ctl,
+	cnmac_stat_rx_dmac,
+	cnmac_stat_tx_toto,
+	cnmac_stat_tx_totp,
+	cnmac_stat_tx_hmin,
+	cnmac_stat_tx_h64,
+	cnmac_stat_tx_h127,
+	cnmac_stat_tx_h255,
+	cnmac_stat_tx_h511,
+	cnmac_stat_tx_h1023,
+	cnmac_stat_tx_h1518,
+	cnmac_stat_tx_hmax,
+	cnmac_stat_tx_bcast,
+	cnmac_stat_tx_mcast,
+	cnmac_stat_tx_coll,
+	cnmac_stat_tx_defer,
+	cnmac_stat_tx_scol,
+	cnmac_stat_tx_mcol,
+	cnmac_stat_tx_ctl,
+	cnmac_stat_tx_uflow,
+	cnmac_stat_count
+};
 
 /*
  * Octeon board types known to work with OpenBSD/octeon.
