@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.252 2020/08/28 13:37:52 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.253 2020/09/04 19:32:27 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -6119,7 +6119,6 @@ ikev2_child_sa_drop(struct iked *env, struct iked_spi *drop)
 	struct iked_sa			*sa;
 	struct ikev2_delete		*del;
 	uint32_t			 spi32;
-	int				 acquired;
 
 	key.csa_spi = *drop;
 	csa = RB_FIND(iked_activesas, &env->sc_activesas, &key);
@@ -6145,7 +6144,6 @@ ikev2_child_sa_drop(struct iked *env, struct iked_spi *drop)
 		spi32 = htobe32(csa->csa_spi.spi);
 	else
 		spi32 = htobe32(csa->csa_peerspi);
-	acquired = csa->csa_acquired;
 
 	if (ikev2_childsa_delete(env, sa, csa->csa_saproto,
 	    csa->csa_peerspi, NULL, 0))
@@ -6169,15 +6167,6 @@ ikev2_child_sa_drop(struct iked *env, struct iked_spi *drop)
 		goto done;
 
 	sa->sa_stateflags |= IKED_REQ_INF;
-
-	/* Don't automatically re-initiate Child SAs that have been acquired */
-	if (acquired)
-		goto done;
-
-	/* Initiate Child SA creation */
-	if (ikev2_send_create_child_sa(env, sa, NULL, drop->spi_protoid))
-		log_warnx("%s: failed to initiate a CREATE_CHILD_SA exchange",
-		    __func__);
 
 done:
 	ibuf_release(buf);
