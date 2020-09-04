@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkgrf.c,v 1.3 2019/11/29 21:59:55 patrick Exp $	*/
+/*	$OpenBSD: rkgrf.c,v 1.4 2020/09/04 01:10:29 jmatthew Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -58,6 +58,7 @@ rkgrf_match(struct device *parent, void *match, void *aux)
 	return (OF_is_compatible(faa->fa_node, "rockchip,rk3288-grf") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3288-pmu") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3288-sgrf") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3308-grf") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3399-grf") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3399-pmugrf"));
 }
