@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-load-buffer.c,v 1.61 2020/09/02 13:46:35 nicm Exp $ */
+/* $OpenBSD: cmd-load-buffer.c,v 1.62 2020/09/04 12:24:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -96,12 +96,10 @@ cmd_load_buffer_exec(struct cmd *self, struct cmdq_item *item)
 	const char			*bufname = args_get(args, 'b');
 	char				*path;
 
-	cdata = xmalloc(sizeof *cdata);
+	cdata = xcalloc(1, sizeof *cdata);
 	cdata->item = item;
 	if (bufname != NULL)
 		cdata->name = xstrdup(bufname);
-	else
-		cdata->name = NULL;
 	if (args_has(args, 'w') && tc != NULL) {
 		cdata->client = tc;
 		cdata->client->references++;
