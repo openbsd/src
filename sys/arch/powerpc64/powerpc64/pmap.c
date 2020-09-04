@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.45 2020/08/30 18:55:04 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.46 2020/09/04 17:27:42 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -1496,6 +1496,10 @@ pmap_bootstrap(void)
 	pmap_ptab_cnt = HTABENTS;
 	while (pmap_ptab_cnt * 2 < physmem)
 		pmap_ptab_cnt <<= 1;
+
+	/* Make sure the page tables don't use more than 8 SLB entries. */
+	while (HTABMEMSZ > 8 * SEGMENT_SIZE)
+		pmap_ptab_cnt >>= 1;
 
 	/*
 	 * allocate suitably aligned memory for HTAB
