@@ -1,4 +1,4 @@
-/* $OpenBSD: viomb.c,v 1.6 2020/06/27 07:20:57 bket Exp $	 */
+/* $OpenBSD: viomb.c,v 1.7 2020/09/04 13:10:16 bket Exp $	 */
 /* $NetBSD: viomb.c,v 1.1 2011/10/30 12:12:21 hannken Exp $	 */
 
 /*
@@ -371,10 +371,7 @@ viomb_deflate(struct viomb_softc *sc)
 	virtio_enqueue_commit(vsc, vq, slot, VRING_NOTIFY);
 	return;
 err:
-	while ((p = TAILQ_LAST(&b->bl_pglist, pglist))) {
-		TAILQ_REMOVE(&b->bl_pglist, p, pageq);
-		TAILQ_INSERT_HEAD(&sc->sc_balloon_pages, p, pageq);
-	}
+	TAILQ_CONCAT(&sc->sc_balloon_pages, &b->bl_pglist, pageq);
 	return;
 }
 
