@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.112 2020/08/24 15:49:10 tracey Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.113 2020/09/05 11:49:38 tb Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 24 2020 $
+.Dd $Mdocdate: September 5 2020 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -649,12 +649,10 @@ is empty, OCSP stapling will not be used.
 The default is to not use OCSP stapling.
 .It Ic protocols Ar string
 Specify the TLS protocols to enable for this server.
-If not specified, the value
-.Qq default
-will be used (secure protocols; TLSv1.2-only).
 Refer to the
 .Xr tls_config_parse_protocols 3
-function for other valid protocol string values.
+function for valid protocol string values.
+By default, TLSv1.3 and TLSv1.2 will be used.
 .It Ic ticket lifetime Ar seconds
 Enable TLS session tickets with a
 .Ar seconds
