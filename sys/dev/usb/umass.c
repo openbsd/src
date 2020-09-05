@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.77 2020/06/24 07:46:10 patrick Exp $ */
+/*	$OpenBSD: umass.c,v 1.78 2020/09/05 14:21:52 krw Exp $ */
 /*	$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $	*/
 
 /*
@@ -819,13 +819,13 @@ umass_adjust_transfer(struct umass_softc *sc)
 {
 	switch (sc->sc_cmd) {
 	case UMASS_CPROTO_UFI:
-		sc->cbw.bCDBLength = UFI_COMMAND_LENGTH; 
+		sc->cbw.bCDBLength = UFI_COMMAND_LENGTH;
 		/* Adjust the length field in certain scsi commands. */
 		switch (sc->cbw.CBWCDB[0]) {
 		case INQUIRY:
-			if (sc->transfer_datalen > 36) {
-				sc->transfer_datalen = 36;
-				sc->cbw.CBWCDB[4] = 36;
+			if (sc->transfer_datalen > SID_SCSI2_HDRLEN + SID_SCSI2_ALEN) {
+				sc->transfer_datalen = SID_SCSI2_HDRLEN + SID_SCSI2_ALEN;
+				sc->cbw.CBWCDB[4] = sc->transfer_datalen;
 			}
 			break;
 		case MODE_SENSE_BIG:

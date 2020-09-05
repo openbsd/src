@@ -590,7 +590,8 @@ fixup_inquiry(struct scsi_xfer *xs, struct hvs_srb *srb)
 	int datalen, resplen;
 	char vendor[8];
 
-	resplen = srb->srb_datalen >= 5 ? inq->additional_length + 5 : 0;
+	resplen = srb->srb_datalen >= SID_SCSI2_HDRLEN ?
+	    SID_SCSI2_HDRLEN + inq->additional_length : 0;
 	datalen = MIN(resplen, srb->srb_datalen);
 
 	/* Fixup wrong response from WS2012 */
@@ -601,7 +602,7 @@ fixup_inquiry(struct scsi_xfer *xs, struct hvs_srb *srb)
 	    (inq->version == 0 || inq->response_format == 0)) {
 		inq->version = SCSI_REV_SPC3;
 		inq->response_format = SID_SCSI2_RESPONSE;
-	} else if (datalen >= SID_INQUIRY_HDR + SID_SCSI2_ALEN) {
+	} else if (datalen >= SID_SCSI2_HDRLEN + SID_SCSI2_ALEN) {
 		/*
 		 * Upgrade SPC2 to SPC3 if host is Win8 or WS2012 R2
 		 * to support UNMAP feature.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.62 2020/09/02 23:41:01 krw Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.63 2020/09/05 14:21:52 krw Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -252,8 +252,8 @@ struct scsi_inquiry_data {
 #define SID_TrmIOP		0x40	/* obsolete */
 #define SID_AENC		0x80	/* obsolete */
 	u_int8_t additional_length;
-#define SID_INQUIRY_HDR	5	/* Bytes up to & including additional_length */
-#define SID_SCSI2_ALEN	31	/* Additional bytes of basic SCSI2 info */
+#define SID_SCSI2_HDRLEN	5	/* Bytes up to & including additional_length */
+#define SID_SCSI2_ALEN		31	/* Additional bytes of basic SCSI2 info */
 	u_int8_t spc3_flags;
 #define SPC3_SID_PROTECT	0x01	/* 0 == Type 0, 1 == Type 1, 2 or 3 */
 #define SPC3_SID_RESERVED	0x06

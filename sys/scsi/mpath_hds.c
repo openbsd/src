@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_hds.c,v 1.23 2020/06/30 18:43:37 krw Exp $ */
+/*	$OpenBSD: mpath_hds.c,v 1.24 2020/09/05 14:21:52 krw Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -261,7 +261,7 @@ hds_inquiry(struct scsi_link *link, int *mode)
 {
 	struct scsi_xfer *xs;
 	u_int8_t *buf;
-	size_t len = link->inqdata.additional_length + 5;
+	size_t len = SID_SCSI2_HDRLEN + link->inqdata.additional_length;
 	int error;
 
 	if (len < HDS_INQ_TYPE_OFFSET + sizeof(int))
@@ -296,7 +296,7 @@ hds_info(struct hds_softc *sc)
 	struct scsi_link *link = sc->sc_path.p_link;
 	struct scsi_xfer *xs;
 	u_int8_t *buf;
-	size_t len = link->inqdata.additional_length + 5;
+	size_t len = SID_SCSI2_HDRLEN + link->inqdata.additional_length;
 	char ldev[9], ctrl, port;
 	int error;
 
