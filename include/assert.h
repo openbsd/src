@@ -1,4 +1,4 @@
-/*	$OpenBSD: assert.h,v 1.13 2011/06/26 21:11:41 espie Exp $	*/
+/*	$OpenBSD: assert.h,v 1.14 2020/09/05 10:41:31 bentley Exp $	*/
 /*	$NetBSD: assert.h,v 1.6 1994/10/26 00:55:44 cgd Exp $	*/
 
 /*-
@@ -61,6 +61,11 @@
 
 #ifndef _ASSERT_H_
 #define _ASSERT_H_
+
+#if __ISO_C_VISIBLE >= 2011 && !defined(__cplusplus)
+#define static_assert _Static_assert
+#endif
+
 __BEGIN_DECLS
 __dead void __assert(const char *, int, const char *);
 __dead void __assert2(const char *, int, const char *, const char *);
