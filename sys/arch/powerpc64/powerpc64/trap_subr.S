@@ -1,4 +1,4 @@
-/* $OpenBSD: trap_subr.S,v 1.14 2020/06/27 14:34:08 kettenis Exp $ */
+/* $OpenBSD: trap_subr.S,v 1.15 2020/09/05 18:36:37 kettenis Exp $ */
 /* $NetBSD: trap_subr.S,v 1.20 2002/04/22 23:20:08 kleink Exp $	*/
 
 /*-
@@ -255,7 +255,7 @@ restore_kernsrs:
 	GET_CPUINFO(%r3);						\
 	ld	%r3, (savearea+CPUSAVE_SRR1)(%r3);			\
 	mtcr	%r3;							\
-	bf	17,1f;			/* branch if PSL_PR is false */	\
+	bf	17, 1f;			/* branch if PSL_PR is false */	\
 /* Restore user SRs */							\
 	GET_CPUINFO(%r3);						\
 	std	%r27, (savearea+CPUSAVE_R27)(%r3);			\
@@ -389,9 +389,9 @@ trapexit:
 	mtmsr	%r3
 	isync
 /* Test AST pending: */
-	ld	%r5,FRAME_SRR1+32(%r1)
+	ld	%r5, FRAME_SRR1+32(%r1)
 	mtcr	%r5
-	bf	17,1f			/* branch if PSL_PR is false */
+	bf	17, 1f			/* branch if PSL_PR is false */
 
 	GET_CPUINFO(%r3)		/* get per-CPU pointer */
 	ld	%r4, CI_CURPROC(%r3)
