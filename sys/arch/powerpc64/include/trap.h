@@ -148,8 +148,9 @@
 
 #define DSISR_STORE		(1UL << 25)
 
-/* Magic pointer to store trap handler entry point */
+/* Magic pointers to store trap handler entry points */
 #define	TRAP_ENTRY	0x1f8
 #define	TRAP_HVENTRY	0x1f0
+#define	TRAP_SLBENTRY	0x1e8
 
 #endif	/* _MACHINE_TRAP_H_ */

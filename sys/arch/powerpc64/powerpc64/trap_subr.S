@@ -1,4 +1,4 @@
-/* $OpenBSD: trap_subr.S,v 1.15 2020/09/05 18:36:37 kettenis Exp $ */
+/* $OpenBSD: trap_subr.S,v 1.16 2020/09/05 19:21:10 kettenis Exp $ */
 /* $NetBSD: trap_subr.S,v 1.20 2002/04/22 23:20:08 kleink Exp $	*/
 
 /*-
@@ -305,6 +305,158 @@ hvtrapcode:
 	li	%r1, 0xe0
 	blrl
 hvtrapcodeend:
+
+/*
+ * For SLB misses: do special things for the kernel
+ *
+ * Note: SPRG1 is always safe to overwrite any time the MMU was on, which is
+ * the only time this can be called.
+ */
+	.globl slbtrapcode, slbtrapcodeend
+slbtrapcode:
+	/* 0x00 */
+	mtsprg1	%r1			/* save SP */
+	GET_CPUINFO(%r1)
+	std	%r2, (CI_SLBSAVE+16)(%r1)	/* save r2 */
+	mfcr	%r2
+	/* 0x10 */
+	std	%r2, (CI_SLBSAVE+104)(%r1)	/* save CR */
+	mfsrr1	%r2			/* test kernel mode */
+	mtcr	%r2
+	bf	17, 1f			/* branch if PSL_PR is false */
+	/* 0x20 */
+	/* User mode */
+	ld	%r2, (CI_SLBSAVE+104)(%r1)
+	mtcr	%r2				/* restore CR */
+	ld	%r2, (CI_SLBSAVE+16)(%r1) 	/* restore r2 */
+	mflr	%r1
+	/* 0x30 */
+	mtsprg2 %r1				/* save LR in SPRG2 */
+	ld	%r1, TRAP_ENTRY(0)
+	mtlr	%r1
+	li	%r1, 0x80		/* How to get the vector from LR */
+	/* 0x40 */
+	blrl				/* Branch to generictrap */
+1:	mflr	%r2			/* Save the old LR in r2 */
+	/* Kernel mode */
+	ld	%r1, TRAP_SLBENTRY(0)
+	mtlr	%r1
+	/* 0x50 */
+	GET_CPUINFO(%r1)
+	blrl					/* Branch to kern_slbtrap */
+/* must fit in 128 bytes! */
+slbtrapcodeend:
+
+/*
+ * On entry:
+ * SPRG1: SP
+ * r1: pcpu
+ * r2: LR
+ * LR: branch address in trap region
+ */
+	.globl kern_slbtrap
+kern_slbtrap:
+	std	%r2, (CI_SLBSAVE+136)(%r1) /* old LR */
+	std	%r3, (CI_SLBSAVE+24)(%r1) /* save R3 */
+
+	/* Check if this needs to be handled as a regular trap (userseg miss) */
+	mfdar	%r2
+	lis	%r3, SEGMENT_MASK@h
+	ori	%r3, %r3, SEGMENT_MASK@l
+	andc	%r2, %r2, %r3	/* R2 = segment base address */
+	lis	%r3, USER_ADDR@highesta
+	ori	%r3, %r3, USER_ADDR@highera
+	sldi	%r3, %r3, 32
+	oris	%r3, %r3, USER_ADDR@ha
+	ori	%r3, %r3, USER_ADDR@l
+	cmpd	%r2, %r3	/* Compare fault base to USER_ADDR */
+	bne	1f
+
+	/* User seg miss, handle as a regular trap */
+	ld	%r2, (CI_SLBSAVE+104)(%r1) /* Restore CR */
+	mtcr	%r2
+	ld	%r2, (CI_SLBSAVE+16)(%r1) /* Restore R2,R3 */
+	ld	%r3, (CI_SLBSAVE+24)(%r1)
+	ld	%r1, (CI_SLBSAVE+136)(%r1) /* Save the old LR in r1 */
+	mtsprg2 %r1			/* And then in SPRG2 */
+	li	%r1, 0x80		/* How to get the vector from LR */
+	b	generictrap		/* Retain old LR using b */
+
+1:	/* Real kernel SLB miss */
+	std	%r0, (CI_SLBSAVE+0)(%r1) /* free all volatile regs */
+	mfsprg1	%r2			/* Old R1 */
+	std	%r2, (CI_SLBSAVE+8)(%r1)
+	/* R2, R3 already saved */
+	std	%r4, (CI_SLBSAVE+32)(%r1)
+	std	%r5, (CI_SLBSAVE+40)(%r1)
+	std	%r6, (CI_SLBSAVE+48)(%r1)
+	std	%r7, (CI_SLBSAVE+56)(%r1)
+	std	%r8, (CI_SLBSAVE+64)(%r1)
+	std	%r9, (CI_SLBSAVE+72)(%r1)
+	std	%r10, (CI_SLBSAVE+80)(%r1)
+	std	%r11, (CI_SLBSAVE+88)(%r1)
+	std	%r12, (CI_SLBSAVE+96)(%r1)
+	/* CR already saved */
+	mfxer	%r2			/* save XER */
+	std	%r2, (CI_SLBSAVE+112)(%r1)
+	mflr	%r2			/* save LR (SP already saved) */
+	std	%r2, (CI_SLBSAVE+120)(%r1)
+	mfctr	%r2			/* save CTR */
+	std	%r2, (CI_SLBSAVE+128)(%r1)
+
+	/* Call handler */
+	addi	%r1, %r1, CI_SLBSTACK-48+1024
+	li	%r2, ~15
+	and	%r1, %r1, %r2
+	GET_TOCBASE(%r2)
+	mfdar	%r3
+	bl	pmap_spill_kernel_slb
+	nop
+
+	/* Save r28-31, restore r4-r12 */
+	GET_CPUINFO(%r1)
+	ld	%r4, (CI_SLBSAVE+32)(%r1)
+	ld	%r5, (CI_SLBSAVE+40)(%r1)
+	ld	%r6, (CI_SLBSAVE+48)(%r1)
+	ld	%r7, (CI_SLBSAVE+56)(%r1)
+	ld	%r8, (CI_SLBSAVE+64)(%r1)
+	ld	%r9, (CI_SLBSAVE+72)(%r1)
+	ld	%r10, (CI_SLBSAVE+80)(%r1)
+	ld	%r11, (CI_SLBSAVE+88)(%r1)
+	ld	%r12, (CI_SLBSAVE+96)(%r1)
+	std	%r28, (CI_SLBSAVE+64)(%r1)
+	std	%r29, (CI_SLBSAVE+72)(%r1)
+	std	%r30, (CI_SLBSAVE+80)(%r1)
+	std	%r31, (CI_SLBSAVE+88)(%r1)
+
+	/* Restore kernel mapping */
+	bl	restore_kernsrs
+
+	/* Restore remaining registers */
+	ld	%r28, (CI_SLBSAVE+64)(%r1)
+	ld	%r29, (CI_SLBSAVE+72)(%r1)
+	ld	%r30, (CI_SLBSAVE+80)(%r1)
+	ld	%r31, (CI_SLBSAVE+88)(%r1)
+
+	ld	%r2, (CI_SLBSAVE+104)(%r1)
+	mtcr	%r2
+	ld	%r2, (CI_SLBSAVE+112)(%r1)
+	mtxer	%r2
+	ld	%r2, (CI_SLBSAVE+120)(%r1)
+	mtlr	%r2
+	ld	%r2, (CI_SLBSAVE+128)(%r1)
+	mtctr	%r2
+	ld	%r2, (CI_SLBSAVE+136)(%r1)
+	mtlr	%r2
+
+	/* Restore r0-r3 */
+	ld	%r0, (CI_SLBSAVE+0)(%r1)
+	ld	%r2, (CI_SLBSAVE+16)(%r1)
+	ld	%r3, (CI_SLBSAVE+24)(%r1)
+	mfsprg1	%r1
+
+	/* Back to whatever we were doing */
+	rfid
 
 /*
  * generichvtrap makes a hypervisor trap look like a normal trap.

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.12 2020/07/21 21:36:58 kettenis Exp $
+#	$OpenBSD: genassym.cf,v 1.13 2020/09/05 19:21:10 kettenis Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -35,11 +35,14 @@ include <sys/proc.h>
 
 include <machine/intr.h>
 include <machine/pcb.h>
+include <machine/pte.h>
 
 struct	cpu_info
 member	ci_curpcb
 member	ci_curproc
 member	ci_tempsave
+member	ci_slbsave
+member	ci_slbstack
 member	ci_kernel_slb
 member	ci_user_slb_pa
 define	CPUSAVE_SRR0	0
@@ -138,3 +141,6 @@ member	sf_r31
 member	sf_cr
 
 export	IPL_NONE
+
+export	SEGMENT_MASK
+export	USER_ADDR

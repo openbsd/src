@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.59 2020/09/01 20:06:49 gkoehler Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.60 2020/09/05 19:21:10 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -76,8 +76,10 @@ extern uint64_t opal_entry;
 
 extern char trapcode[], trapcodeend[];
 extern char hvtrapcode[], hvtrapcodeend[];
+extern char slbtrapcode[], slbtrapcodeend[];
 extern char generictrap[];
 extern char generichvtrap[];
+extern char kern_slbtrap[];
 
 extern char initstack[];
 
@@ -161,8 +163,12 @@ init_powernv(void *fdt, void *tocbase)
 	memcpy((void *)EXC_HFAC, hvtrapcode, hvtrapcodeend - hvtrapcode);
 	memcpy((void *)EXC_HVI, hvtrapcode, hvtrapcodeend - hvtrapcode);
 
+	/* SLB trap needs special handling as well. */
+	memcpy((void *)EXC_DSE, slbtrapcode, slbtrapcodeend - slbtrapcode);
+
 	*((void **)TRAP_ENTRY) = generictrap;
 	*((void **)TRAP_HVENTRY) = generichvtrap;
+	*((void **)TRAP_SLBENTRY) = kern_slbtrap;
 
 	/* Make the stubs visible to the CPU. */
 	__syncicache(EXC_RSVD, EXC_LAST - EXC_RSVD);

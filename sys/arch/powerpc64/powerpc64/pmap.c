@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.46 2020/09/04 17:27:42 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.47 2020/09/05 19:21:10 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -152,7 +152,8 @@ struct slb_desc {
 	struct pmapvp1	*slbd_vp;
 };
 
-struct slb_desc	kernel_slb_desc[32];
+/* Preallocated SLB entries for the kernel. */
+struct slb_desc	kernel_slb_desc[16 + VM_KERNEL_SPACE_SIZE / SEGMENT_SIZE];
 
 struct slb_desc *pmap_slbd_lookup(pmap_t, vaddr_t);
 
@@ -1432,16 +1433,52 @@ pmap_set_kernel_slb(vaddr_t va)
 
 	esid = va >> ADDR_ESID_SHIFT;
 
-	for (idx = 0; idx < 31; idx++) {
+	for (idx = 0; idx < nitems(kernel_slb_desc); idx++) {
 		if (kernel_slb_desc[idx].slbd_vsid == 0)
 			break;
 		if (kernel_slb_desc[idx].slbd_esid == esid)
 			return;
 	}
-	KASSERT(idx < 31);
+	KASSERT(idx < nitems(kernel_slb_desc));
 
 	kernel_slb_desc[idx].slbd_esid = esid;
 	kernel_slb_desc[idx].slbd_vsid = pmap_kernel_vsid(esid);
+}
+
+/*
+ * Handle SLB entry spills for the kernel.  This function runs without
+ * belt and suspenders in real-mode on a small per-CPU stack.
+ */
+void
+pmap_spill_kernel_slb(vaddr_t va)
+{
+	struct cpu_info *ci = curcpu();
+	uint64_t esid;
+	uint64_t slbe, slbv;
+	int idx;
+
+	esid = va >> ADDR_ESID_SHIFT;
+
+	for (idx = 0; idx < 31; idx++) {
+		if (ci->ci_kernel_slb[idx].slb_slbe == 0)
+			break;
+		slbe = (esid << SLBE_ESID_SHIFT) | SLBE_VALID | idx;
+		if (ci->ci_kernel_slb[idx].slb_slbe == slbe)
+			return;
+	}
+
+	/*
+	 * If no free slot was found, randomly replace an entry in
+	 * slot 15-30.
+	 */
+	if (idx == 31)
+		idx = 15 + mftb() % 16;
+
+	slbe = (esid << SLBE_ESID_SHIFT) | SLBE_VALID | idx;
+	slbv = pmap_kernel_vsid(esid) << SLBV_VSID_SHIFT;
+
+	ci->ci_kernel_slb[idx].slb_slbe = slbe;
+	ci->ci_kernel_slb[idx].slb_slbv = slbv;
 }
 
 void
