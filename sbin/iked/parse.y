@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.109 2020/08/25 16:26:54 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.110 2020/09/05 19:14:32 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -30,6 +30,7 @@
 #include <sys/stat.h>
 #include <net/if.h>
 #include <netinet/in.h>
+#include <netinet/ip_ipsp.h>
 #include <arpa/inet.h>
 
 #include <ctype.h>
@@ -2998,6 +2999,8 @@ create_ike(char *name, int af, uint8_t ipproto,
 			flow->flow_prenat.addr_af = 0;
 		}
 
+		flow->flow_dir = IPSP_DIRECTION_OUT;
+		flow->flow_saproto = saproto;
 		flow->flow_ipproto = ipproto;
 		flow->flow_rdomain = rdomain;
 
