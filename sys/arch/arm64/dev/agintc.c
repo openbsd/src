@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.26 2020/07/17 08:07:33 patrick Exp $ */
+/* $OpenBSD: agintc.c,v 1.27 2020/09/05 14:47:21 deraadt Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -1121,7 +1121,9 @@ int
 agintc_ipi_ddb(void *v)
 {
 	/* XXX */
+#ifdef DDB
 	db_enter();
+#endif
 	return 1;
 }
 
