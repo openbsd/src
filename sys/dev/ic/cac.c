@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.70 2020/09/03 12:41:29 krw Exp $	*/
+/*	$OpenBSD: cac.c,v 1.71 2020/09/05 13:05:06 krw Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -632,7 +632,7 @@ cac_scsi_cmd(xs)
 		inq.dev_qual2 = 0;
 		inq.version = SCSI_REV_2;
 		inq.response_format = SID_SCSI2_RESPONSE;
-		inq.additional_length = 32;
+		inq.additional_length = SID_SCSI2_ALEN;
 		inq.flags |= SID_CmdQue;
 		strlcpy(inq.vendor, "Compaq  ", sizeof inq.vendor);
 		switch (CAC_GET1(dinfo->mirror)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.86 2020/09/03 12:41:29 krw Exp $ */
+/*	$OpenBSD: nvme.c,v 1.87 2020/09/05 13:05:06 krw Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -781,7 +781,7 @@ nvme_scsi_inquiry(struct scsi_xfer *xs)
 	inq.device = T_DIRECT;
 	inq.version = SCSI_REV_SPC4;
 	inq.response_format = SID_SCSI2_RESPONSE;
-	inq.additional_length = 32;
+	inq.additional_length = SID_SCSI2_ALEN;
 	inq.flags |= SID_CmdQue;
 	memcpy(inq.vendor, "NVMe    ", sizeof(inq.vendor));
 	memcpy(inq.product, sc->sc_identify.mn, sizeof(inq.product));

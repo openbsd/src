@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.66 2020/09/03 12:41:28 krw Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.67 2020/09/05 13:05:06 krw Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -1171,7 +1171,7 @@ vdsk_scsi_inquiry(struct scsi_xfer *xs)
 
 	inq.version = SCSI_REV_SPC3;
 	inq.response_format = SID_SCSI2_RESPONSE;
-	inq.additional_length = 32;
+	inq.additional_length = SID_SCSI2_ALEN;
 	inq.flags |= SID_CmdQue;
 	bcopy("SUN     ", inq.vendor, sizeof(inq.vendor));
 	bcopy("Virtual Disk    ", inq.product, sizeof(inq.product));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.56 2020/09/03 12:41:29 krw Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.57 2020/09/05 13:05:07 krw Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -438,7 +438,7 @@ sdmmc_inquiry(struct scsi_xfer *xs)
 	inq.dev_qual2 = SID_REMOVABLE;
 	inq.version = SCSI_REV_2;
 	inq.response_format = SID_SCSI2_RESPONSE;
-	inq.additional_length = 32;
+	inq.additional_length = SID_SCSI2_ALEN;
 	memcpy(inq.vendor, vendor, sizeof(inq.vendor));
 	memcpy(inq.product, product, sizeof(inq.product));
 	memcpy(inq.revision, revision, sizeof(inq.revision));

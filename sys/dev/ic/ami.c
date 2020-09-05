@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.257 2020/09/03 12:41:29 krw Exp $	*/
+/*	$OpenBSD: ami.c,v 1.258 2020/09/05 13:05:06 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1403,7 +1403,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		inq.dev_qual2 = 0;
 		inq.version = SCSI_REV_2;
 		inq.response_format = SID_SCSI2_RESPONSE;
-		inq.additional_length = 32;
+		inq.additional_length = SID_SCSI2_ALEN;
 		inq.flags |= SID_CmdQue;
 		strlcpy(inq.vendor, "AMI    ", sizeof(inq.vendor));
 		snprintf(inq.product, sizeof(inq.product),

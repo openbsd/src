@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.80 2020/09/03 12:41:29 krw Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.81 2020/09/05 13:05:06 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -914,7 +914,7 @@ gdt_internal_cache_cmd(struct scsi_xfer *xs)
 		    (sc->sc_hdr[target].hd_devtype & 1) ? SID_REMOVABLE : 0;
 		inq.version = SCSI_REV_2;
 		inq.response_format = SID_SCSI2_RESPONSE;
-		inq.additional_length = 32;
+		inq.additional_length = SID_SCSI2_ALEN;
 		inq.flags |= SID_CmdQue;
 		strlcpy(inq.vendor, "ICP	   ", sizeof inq.vendor);
 		snprintf(inq.product, sizeof inq.product, "Host drive  #%02d",

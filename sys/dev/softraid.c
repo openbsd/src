@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.413 2020/09/03 12:41:28 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.414 2020/09/05 13:05:06 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -4027,7 +4027,7 @@ sr_raid_inquiry(struct sr_workunit *wu)
 	inq.dev_qual2 = 0;
 	inq.version = SCSI_REV_2;
 	inq.response_format = SID_SCSI2_RESPONSE;
-	inq.additional_length = 32;
+	inq.additional_length = SID_SCSI2_ALEN;
 	inq.flags |= SID_CmdQue;
 	strlcpy(inq.vendor, sd->sd_meta->ssdi.ssd_vendor,
 	    sizeof(inq.vendor));

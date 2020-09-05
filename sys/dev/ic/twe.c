@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.61 2020/09/03 12:41:29 krw Exp $	*/
+/*	$OpenBSD: twe.c,v 1.62 2020/09/05 13:05:06 krw Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff.  All rights reserved.
@@ -831,7 +831,7 @@ twe_scsi_cmd(xs)
 		    (sc->sc_hdr[target].hd_devtype & 1) ? SID_REMOVABLE : 0;
 		inq.version = SCSI_REV_2;
 		inq.response_format = SID_SCSI2_RESPONSE;
-		inq.additional_length = 32;
+		inq.additional_length = SID_SCSI2_ALEN;
 		strlcpy(inq.vendor, "3WARE  ", sizeof inq.vendor);
 		snprintf(inq.product, sizeof inq.product, "Host drive  #%02d",
 		    target);
