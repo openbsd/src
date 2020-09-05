@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.17 2020/08/24 13:20:34 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.18 2020/09/05 13:55:45 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -30,11 +30,12 @@ xics*		at fdt?
 xicp*		at fdt?
 xive*		at fdt?
 
-ppb*		at pci?
-pci*		at ppb?
 ahci*		at pci?
 bge*		at pci?
+mpii*		at pci?
 nvme*		at pci?
+ppb*		at pci?
+pci*		at ppb?
 xhci*		at pci?
 usb*		at xhci?
 
