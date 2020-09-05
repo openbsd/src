@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.253 2020/09/04 19:32:27 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.254 2020/09/05 19:17:36 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -6038,7 +6038,7 @@ ikev2_child_sa_acquire(struct iked *env, struct iked_flow *acquire)
 		    p->pol_name);
 
 		if (ikev2_init_ike_sa_peer(env, p,
-		    acquire->flow_peer, NULL) != 0)
+		    &p->pol_peer, NULL) != 0)
 			log_warnx("%s: failed to initiate a "
 			    "IKE_SA_INIT exchange for policy '%s'",
 			    __func__, p->pol_name);
