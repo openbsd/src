@@ -1,4 +1,4 @@
-/*	$OpenBSD: assert.h,v 1.14 2020/09/05 10:41:31 bentley Exp $	*/
+/*	$OpenBSD: assert.h,v 1.15 2020/09/06 12:57:25 millert Exp $	*/
 /*	$NetBSD: assert.h,v 1.6 1994/10/26 00:55:44 cgd Exp $	*/
 
 /*-
@@ -62,7 +62,7 @@
 #ifndef _ASSERT_H_
 #define _ASSERT_H_
 
-#if __ISO_C_VISIBLE >= 2011 && !defined(__cplusplus)
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112
 #define static_assert _Static_assert
 #endif
 
