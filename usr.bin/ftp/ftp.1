@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp.1,v 1.119 2020/02/11 18:41:39 deraadt Exp $
+.\"	$OpenBSD: ftp.1,v 1.120 2020/09/06 09:01:01 tb Exp $
 .\"	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: February 11 2020 $
+.Dd $Mdocdate: September 6 2020 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -261,6 +261,12 @@ Don't perform server certificate validation.
 Require the server to present a valid OCSP stapling in the TLS handshake.
 .It Cm noverifytime
 Disable validation of certificate times and OCSP validation.
+.It Cm protocols Ns = Ns Ar protocol_list
+Specify the supported TLS protocols that will be used by
+.Nm
+(see
+.Xr tls_config_parse_protocols 3
+for details).
 .It Cm session Ns = Ns Ar /path/to/session
 Specify a file to use for TLS session data.
 If this file has a non-zero length, the session data will be read from this file
