@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.254 2020/09/05 19:17:36 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.255 2020/09/06 19:08:58 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -4763,7 +4763,8 @@ ikev2_sa_negotiate_common(struct iked *env, struct iked_sa *sa, struct iked_mess
 	    &msg->msg_policy->pol_proposals, &msg->msg_proposals, 0) != 0) {
 		log_info("%s: proposals_negotiate", __func__);
 		return (-1);
-	} else if (sa_stateok(sa, IKEV2_STATE_SA_INIT))
+	}
+	if (sa_stateok(sa, IKEV2_STATE_SA_INIT))
 		sa_stateflags(sa, IKED_REQ_SA);
 
 	if (sa->sa_encr == NULL) {
