@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.66 2020/09/06 15:51:28 martijn Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.67 2020/09/06 17:29:35 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -46,7 +46,6 @@ void	 snmpe_tryparse(int, struct snmp_message *);
 int	 snmpe_parsevarbinds(struct snmp_message *);
 void	 snmpe_response(struct snmp_message *);
 void	 snmpe_sig_handler(int sig, short, void *);
-int	 snmpe_dispatch_parent(int, struct privsep_proc *, struct imsg *);
 int	 snmpe_bind(struct address *);
 void	 snmpe_recvmsg(int fd, short, void *);
 void	 snmpe_readcb(int fd, short, void *);
@@ -60,7 +59,7 @@ struct imsgev	*iev_parent;
 static const struct timeval	snmpe_tcp_timeout = { 10, 0 }; /* 10s */
 
 static struct privsep_proc procs[] = {
-	{ "parent",	PROC_PARENT,	snmpe_dispatch_parent }
+	{ "parent",	PROC_PARENT }
 };
 
 void
@@ -133,17 +132,6 @@ snmpe_shutdown(void)
 		close(h->fd);
 	}
 	kr_shutdown();
-}
-
-int
-snmpe_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
-{
-	switch (imsg->hdr.type) {
-	default:
-		break;
-	}
-
-	return (-1);
 }
 
 int
