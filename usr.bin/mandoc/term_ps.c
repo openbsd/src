@@ -1,7 +1,7 @@
-/*	$OpenBSD: term_ps.c,v 1.55 2017/11/10 14:16:28 espie Exp $ */
+/* $OpenBSD: term_ps.c,v 1.56 2020/09/06 14:44:19 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2014, 2015, 2016, 2017 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2014,2015,2016,2017,2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2017 Marc Espie <espie@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -1248,7 +1248,10 @@ ps_endline(struct termp *p)
 
 	ps_closepage(p);
 
-	p->tcol->offset -= p->ti;
+	if ((int)p->tcol->offset > p->ti)
+		p->tcol->offset -= p->ti;
+	else 
+		p->tcol->offset = 0;
 	p->ti = 0;
 }
 

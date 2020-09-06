@@ -1,7 +1,7 @@
-/*	$OpenBSD: term_ascii.c,v 1.50 2019/07/19 21:45:37 schwarze Exp $ */
+/* $OpenBSD: term_ascii.c,v 1.51 2020/09/06 14:44:19 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2014, 2015, 2017, 2018 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2014,2015,2017,2018,2020 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -222,7 +222,10 @@ ascii_endline(struct termp *p)
 {
 
 	p->line++;
-	p->tcol->offset -= p->ti;
+	if ((int)p->tcol->offset > p->ti)
+		p->tcol->offset -= p->ti;
+	else
+		p->tcol->offset = 0;
 	p->ti = 0;
 	putchar('\n');
 }
@@ -379,7 +382,10 @@ locale_endline(struct termp *p)
 {
 
 	p->line++;
-	p->tcol->offset -= p->ti;
+	if ((int)p->tcol->offset > p->ti)
+		p->tcol->offset -= p->ti;
+	else 
+		p->tcol->offset = 0;
 	p->ti = 0;
 	putwchar(L'\n');
 }
