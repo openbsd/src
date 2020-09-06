@@ -1,4 +1,4 @@
-/*	$OpenBSD: traphandler.c,v 1.17 2020/08/23 07:39:57 martijn Exp $	*/
+/*	$OpenBSD: traphandler.c,v 1.18 2020/09/06 15:51:28 martijn Exp $	*/
 
 /*
  * Copyright (c) 2014 Bret Stephen Lambert <blambert@openbsd.org>
@@ -77,7 +77,7 @@ traphandler(struct privsep *ps, struct privsep_proc *p)
 
 	if (env->sc_traphandler) {
 		TAILQ_FOREACH(h, &env->sc_addresses, entry) {
-			if (h->ipproto != IPPROTO_UDP)
+			if (h->type != SOCK_DGRAM)
 				continue;
 			if ((h->fd = traphandler_bind(h)) == -1)
 				fatal("could not create trap listener socket");
@@ -112,9 +112,17 @@ traphandler_bind(struct address *addr)
 {
 	int			 s;
 	char			 buf[512];
+	struct sockaddr_in	*sin;
+	struct sockaddr_in6	*sin6;
 
-	if ((s = snmpd_socket_af(&addr->ss, htons(SNMPD_TRAPPORT),
-	    IPPROTO_UDP)) == -1)
+	if (addr->ss.ss_family == AF_INET) {
+		sin = (struct sockaddr_in *)&(addr->ss);
+		sin->sin_port = htons(162);
+	} else {
+		sin6 = (struct sockaddr_in6 *)&(addr->ss);
+		sin6->sin6_port = htons(162);
+	}
+	if ((s = snmpd_socket_af(&addr->ss, SOCK_DGRAM)) == -1)
 		return (-1);
 
 	if (fcntl(s, F_SETFL, O_NONBLOCK) == -1)
@@ -126,7 +134,7 @@ traphandler_bind(struct address *addr)
 	if (print_host(&addr->ss, buf, sizeof(buf)) == NULL)
 		goto bad;
 
-	log_info("traphandler: listening on %s:%d", buf, SNMPD_TRAPPORT);
+	log_info("traphandler: listening on %s:%s", buf, SNMPD_TRAPPORT);
 
 	return (s);
  bad:

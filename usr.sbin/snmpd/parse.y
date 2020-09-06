@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.59 2020/08/23 07:39:57 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.60 2020/09/06 15:51:28 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -91,16 +91,11 @@ char		*symget(const char *);
 
 struct snmpd			*conf = NULL;
 static int			 errors = 0;
-static struct addresslist	*hlist;
 static struct usmuser		*user = NULL;
 
-struct address	*host_v4(const char *);
-struct address	*host_v6(const char *);
-int		 host_dns(const char *, struct addresslist *,
-		    int, in_port_t, struct ber_oid *, char *,
-		    struct address *, int);
-int		 host(const char *, struct addresslist *,
-		    int, in_port_t, struct ber_oid *, char *, char *, int);
+int		 host(const char *, const char *, int,
+		    struct sockaddr_storage *, int);
+int		 listen_add(struct sockaddr_storage *, int);
 
 typedef struct {
 	union {
@@ -199,13 +194,26 @@ yesno		:  STRING			{
 		;
 
 main		: LISTEN ON STRING proto	{
-			if (host($3, &conf->sc_addresses, 16, SNMPD_PORT, NULL,
-			    NULL, NULL, $4) <= 0) {
-				yyerror("invalid ip address: %s", $3);
+			struct sockaddr_storage ss[16];
+			int nhosts, i;
+
+			nhosts = host($3, SNMPD_PORT, $4, ss, nitems(ss));
+			if (nhosts < 1) {
+				yyerror("invalid address: %s", $3);
 				free($3);
 				YYERROR;
 			}
+			if (nhosts > (int)nitems(ss))
+				log_warn("%s resolves to more than %zu hosts",
+				    $3, nitems(ss));
 			free($3);
+
+			for (i = 0; i < nhosts; i++) {
+				if (listen_add(&(ss[i]), $4) == -1) {
+					yyerror("calloc");
+					YYERROR;
+				}
+			}
 		}
 		| READONLY COMMUNITY STRING	{
 			if (strlcpy(conf->sc_rdcommunity, $3,
@@ -240,11 +248,7 @@ main		: LISTEN ON STRING proto	{
 			}
 			free($3);
 		}
-		| TRAP RECEIVER			{
-			hlist = &conf->sc_trapreceivers;
-		} host				{
-			hlist = NULL;
-		}
+		| TRAP RECEIVER	host
 		| TRAP HANDLE hostcmn trapoid cmd {
 			struct trapcmd *cmd = $5.data;
 
@@ -420,13 +424,40 @@ srcaddr		: /* empty */				{ $$ = NULL; }
 		;
 
 hostdef		: STRING hostoid hostcmn srcaddr	{
-			if (host($1, hlist, 1,
-			    SNMPD_TRAPPORT, $2, $3, $4, IPPROTO_UDP) <= 0) {
+			struct sockaddr_storage ss;
+			struct trap_address *tr;
+
+			if ((tr = calloc(1, sizeof(*tr))) == NULL) {
+				yyerror("calloc");
+				YYERROR;
+			}
+
+			if (host($1, SNMPD_TRAPPORT, SOCK_DGRAM, &ss, 1) <= 0) {
 				yyerror("invalid host: %s", $1);
 				free($1);
+				free($2);
+				free($3);
+				free($4);
+				free(tr);
 				YYERROR;
 			}
 			free($1);
+			memcpy(&(tr->ss), &ss, sizeof(ss));
+			if ($4 != NULL) {
+				if (host($1, "0", SOCK_DGRAM, &ss, 1) <= 0) {
+					yyerror("invalid host: %s", $1);
+					free($2);
+					free($3);
+					free($4);
+					free(tr);
+					YYERROR;
+				}
+				free($4);
+				memcpy(&(tr->ss_local), &ss, sizeof(ss));
+			}
+			tr->sa_oid = $2;
+			tr->sa_community = $3;
+			TAILQ_INSERT_TAIL(&(conf->sc_trapreceivers), tr, entry);
 		}
 		;
 
@@ -510,9 +541,9 @@ enc		: STRING			{
 		}
 		;
 
-proto		: /* empty */			{ $$ = IPPROTO_UDP; }
-		| TCP				{ $$ = IPPROTO_TCP; }
-		| UDP				{ $$ = IPPROTO_UDP; }
+proto		: /* empty */			{ $$ = SOCK_DGRAM; }
+		| TCP				{ $$ = SOCK_STREAM; }
+		| UDP				{ $$ = SOCK_DGRAM; }
 		;
 
 cmd		: STRING		{
@@ -985,6 +1016,7 @@ popfile(void)
 struct snmpd *
 parse_config(const char *filename, u_int flags)
 {
+	struct sockaddr_storage ss;
 	struct sym	*sym, *next;
 	struct address	*h;
 	int found;
@@ -1017,15 +1049,19 @@ parse_config(const char *filename, u_int flags)
 
 	/* Setup default listen addresses */
 	if (TAILQ_EMPTY(&conf->sc_addresses)) {
-		host("0.0.0.0", &conf->sc_addresses, 1, SNMPD_PORT,
-		    NULL, NULL, NULL, IPPROTO_UDP);
-		host("::", &conf->sc_addresses, 1, SNMPD_PORT,
-		    NULL, NULL, NULL, IPPROTO_UDP);
+		if (host("0.0.0.0", SNMPD_PORT, SOCK_DGRAM, &ss, 1) != 1)
+			fatal("Unexpected resolving of 0.0.0.0");
+		if (listen_add(&ss, SOCK_DGRAM) == -1)
+			fatal("calloc");
+		if (host("::", SNMPD_PORT, SOCK_DGRAM, &ss, 1) != 1)
+			fatal("Unexpected resolving of ::");
+		if (listen_add(&ss, SOCK_DGRAM) == -1)
+			fatal("calloc");
 	}
 	if (conf->sc_traphandler) {
 		found = 0;
 		TAILQ_FOREACH(h, &conf->sc_addresses, entry) {
-			if (h->ipproto == IPPROTO_UDP)
+			if (h->type == SOCK_DGRAM)
 				found = 1;
 		}
 		if (!found) {
@@ -1128,167 +1164,57 @@ symget(const char *nam)
 	return (NULL);
 }
 
-struct address *
-host_v4(const char *s)
-{
-	struct in_addr		 ina;
-	struct sockaddr_in	*sain;
-	struct address		*h;
-
-	bzero(&ina, sizeof(ina));
-	if (inet_pton(AF_INET, s, &ina) != 1)
-		return (NULL);
-
-	if ((h = calloc(1, sizeof(*h))) == NULL)
-		fatal(__func__);
-	sain = (struct sockaddr_in *)&h->ss;
-	sain->sin_len = sizeof(struct sockaddr_in);
-	sain->sin_family = AF_INET;
-	sain->sin_addr.s_addr = ina.s_addr;
-
-	return (h);
-}
-
-struct address *
-host_v6(const char *s)
-{
-	struct addrinfo		 hints, *res;
-	struct sockaddr_in6	*sa_in6;
-	struct address		*h = NULL;
-
-	bzero(&hints, sizeof(hints));
-	hints.ai_family = AF_INET6;
-	hints.ai_socktype = SOCK_DGRAM; /* dummy */
-	hints.ai_flags = AI_NUMERICHOST;
-	if (getaddrinfo(s, "0", &hints, &res) == 0) {
-		if ((h = calloc(1, sizeof(*h))) == NULL)
-			fatal(__func__);
-		sa_in6 = (struct sockaddr_in6 *)&h->ss;
-		sa_in6->sin6_len = sizeof(struct sockaddr_in6);
-		sa_in6->sin6_family = AF_INET6;
-		memcpy(&sa_in6->sin6_addr,
-		    &((struct sockaddr_in6 *)res->ai_addr)->sin6_addr,
-		    sizeof(sa_in6->sin6_addr));
-		sa_in6->sin6_scope_id =
-		    ((struct sockaddr_in6 *)res->ai_addr)->sin6_scope_id;
-
-		freeaddrinfo(res);
-	}
-
-	return (h);
-}
-
 int
-host_dns(const char *s, struct addresslist *al, int max,
-    in_port_t port, struct ber_oid *oid, char *cmn,
-    struct address *src, int ipproto)
+host(const char *s, const char *port, int type, struct sockaddr_storage *ss,
+    int max)
 {
 	struct addrinfo		 hints, *res0, *res;
-	int			 error, cnt = 0;
-	struct sockaddr_in	*sain;
-	struct sockaddr_in6	*sin6;
-	struct address		*h;
+	int			 error, i;
 
 	bzero(&hints, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
-	hints.ai_socktype = SOCK_DGRAM; /* DUMMY */
-	hints.ai_flags = AI_ADDRCONFIG;
-	error = getaddrinfo(s, NULL, &hints, &res0);
+	hints.ai_socktype = type;
+	error = getaddrinfo(s, port, &hints, &res0);
 	if (error == EAI_AGAIN || error == EAI_NODATA || error == EAI_NONAME)
-		return (0);
+		return 0;
 	if (error) {
-		log_warnx("host_dns: could not parse \"%s\": %s", s,
-		    gai_strerror(error));
-		return (-1);
+		log_warnx("Could not parse \"%s\": %s", s, gai_strerror(error));
+		return -1;
 	}
 
-	for (res = res0; res && cnt < max; res = res->ai_next) {
+	for (i = 0, res = res0; res; res = res->ai_next, i++) {
 		if (res->ai_family != AF_INET &&
 		    res->ai_family != AF_INET6)
 			continue;
-		if (src != NULL && src->ss.ss_family != res->ai_family)
+		if (i >= max)
 			continue;
-		if ((h = calloc(1, sizeof(*h))) == NULL)
-			fatal(__func__);
 
-		h->port = port;
-		h->ipproto = ipproto;
-		if (oid != NULL) {
-			if ((h->sa_oid = calloc(1, sizeof(*oid))) == NULL)
-				fatal(__func__);
-			bcopy(oid, h->sa_oid, sizeof(*oid));
-		}
-		if (cmn != NULL) {
-			if ((h->sa_community = strdup(cmn)) == NULL)
-				fatal(__func__);
-		}
-
-		h->ss.ss_family = res->ai_family;
-		if (res->ai_family == AF_INET) {
-			sain = (struct sockaddr_in *)&h->ss;
-			sain->sin_len = sizeof(struct sockaddr_in);
-			sain->sin_addr.s_addr = ((struct sockaddr_in *)
-			    res->ai_addr)->sin_addr.s_addr;
-		} else {
-			sin6 = (struct sockaddr_in6 *)&h->ss;
-			sin6->sin6_len = sizeof(struct sockaddr_in6);
-			memcpy(&sin6->sin6_addr, &((struct sockaddr_in6 *)
-			    res->ai_addr)->sin6_addr, sizeof(struct in6_addr));
-		}
-
-		h->sa_srcaddr = src;
-
-		TAILQ_INSERT_TAIL(al, h, entry);
-		cnt++;
-	}
-	if (cnt == max && res) {
-		log_warnx("host_dns: %s resolves to more than %d hosts",
-		    s, max);
+		bcopy(res->ai_addr, &(ss[i]), res->ai_addrlen);
 	}
 	freeaddrinfo(res0);
-	if (oid != NULL)
-		free(oid);
-	if (cmn != NULL)
-		free(cmn);
-	return (cnt);
+
+	return i;
 }
 
 int
-host(const char *s, struct addresslist *al, int max,
-    in_port_t port, struct ber_oid *oid, char *cmn, char *srcaddr, int ipproto)
+listen_add(struct sockaddr_storage *ss, int type)
 {
-	struct address	*h, *src = NULL;
+	struct sockaddr_in *sin;
+	struct sockaddr_in6 *sin6;
+	struct address *h;
 
-	if (srcaddr != NULL) {
-		src = host_v4(srcaddr);
-		if (src == NULL)
-			src = host_v6(srcaddr);
-		if (src == NULL) {
-			log_warnx("invalid source-address %s", srcaddr);
-			return (-1);
-		}
+	if ((h = calloc(1, sizeof(*h))) == NULL)
+		return -1;
+	bcopy(ss, &(h->ss), sizeof(*ss));
+	if (ss->ss_family == AF_INET) {
+		sin = (struct sockaddr_in *)ss;
+		h->port = ntohs(sin->sin_port);
+	} else {
+		sin6 = (struct sockaddr_in6*)ss;
+		h->port = ntohs(sin6->sin6_port);
 	}
+	h->type = type;
+	TAILQ_INSERT_TAIL(&(conf->sc_addresses), h, entry);
 
-	h = host_v4(s);
-
-	/* IPv6 address? */
-	if (h == NULL)
-		h = host_v6(s);
-
-	if (h != NULL) {
-		h->port = port;
-		h->sa_oid = oid;
-		h->sa_community = cmn;
-		h->ipproto = ipproto;
-		if (src != NULL && h->ss.ss_family != src->ss.ss_family) {
-			log_warnx("host and source-address family mismatch");
-			return (-1);
-		}
-		h->sa_srcaddr = src;
-
-		TAILQ_INSERT_TAIL(al, h, entry);
-		return (1);
-	}
-
-	return (host_dns(s, al, max, port, oid, cmn, src, ipproto));
+	return 0;
 }

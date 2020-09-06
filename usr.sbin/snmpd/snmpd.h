@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.89 2020/08/23 07:39:57 martijn Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.90 2020/09/06 15:51:28 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -48,8 +48,8 @@
 #define CONF_FILE		"/etc/snmpd.conf"
 #define SNMPD_SOCKET		"/var/run/snmpd.sock"
 #define SNMPD_USER		"_snmpd"
-#define SNMPD_PORT		161
-#define SNMPD_TRAPPORT		162
+#define SNMPD_PORT		"161"
+#define SNMPD_TRAPPORT		"162"
 
 #define SNMPD_MAXSTRLEN		484
 #define SNMPD_MAXCOMMUNITYLEN	SNMPD_MAXSTRLEN
@@ -481,19 +481,24 @@ struct snmp_stats {
 struct address {
 	struct sockaddr_storage	 ss;
 	in_port_t		 port;
-	int			 ipproto;
+	int			 type;
 	int			 fd;
 	struct event		 ev;
 	struct event		 evt;
 
 	TAILQ_ENTRY(address)	 entry;
-
-	/* For SNMP trap receivers etc. */
-	char			*sa_community;
-	struct ber_oid		*sa_oid;
-	struct address		*sa_srcaddr;
 };
 TAILQ_HEAD(addresslist, address);
+
+struct trap_address {
+	struct sockaddr_storage	 ss;
+	struct sockaddr_storage	 ss_local;
+	char			*sa_community;
+	struct ber_oid		*sa_oid;
+
+	TAILQ_ENTRY(trap_address) entry;
+};
+TAILQ_HEAD(trap_addresslist, trap_address);
 
 enum usmauth {
 	AUTH_NONE = 0,
@@ -551,7 +556,7 @@ struct snmpd {
 
 	struct snmp_stats	 sc_stats;
 
-	struct addresslist	 sc_trapreceivers;
+	struct trap_addresslist	 sc_trapreceivers;
 
 	int			 sc_ncpu;
 	int64_t			*sc_cpustates;
@@ -706,7 +711,7 @@ char		*smi_print_element(struct ber_element *);
 void		 timer_init(void);
 
 /* snmpd.c */
-int		 snmpd_socket_af(struct sockaddr_storage *, in_port_t, int);
+int		 snmpd_socket_af(struct sockaddr_storage *, int);
 u_long		 snmpd_engine_time(void);
 char		*tohexstr(u_int8_t *, int);
 

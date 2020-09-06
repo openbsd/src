@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.35 2020/06/30 17:11:49 martijn Exp $	*/
+/*	$OpenBSD: trap.c,v 1.36 2020/09/06 15:51:28 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Reyk Floeter <reyk@openbsd.org>
@@ -55,7 +55,7 @@ int
 trap_send(struct ber_oid *oid, struct ber_element *elm)
 {
 	int			 ret = 0, s;
-	struct address		*tr;
+	struct trap_address	*tr;
 	struct ber_element	*root, *b, *c, *trap;
 	struct ber		 ber;
 	char			*cmn;
@@ -104,14 +104,13 @@ trap_send(struct ber_oid *oid, struct ber_element *elm)
 				continue;
 		}
 
-		if ((s = snmpd_socket_af(&tr->ss, htons(tr->port),
-		    IPPROTO_UDP)) == -1) {
+		if ((s = snmpd_socket_af(&tr->ss, SOCK_DGRAM)) == -1) {
 			ret = -1;
 			goto done;
 		}
-		if (tr->sa_srcaddr != NULL) {
-			if (bind(s, (struct sockaddr *)&tr->sa_srcaddr->ss,
-			    tr->sa_srcaddr->ss.ss_len) == -1) {
+		if (tr->ss_local.ss_family != 0) {
+			if (bind(s, (struct sockaddr *)&(tr->ss_local),
+			    tr->ss_local.ss_len) == -1) {
 				ret = -1;
 				goto done;
 			}
