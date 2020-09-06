@@ -1,4 +1,4 @@
-/*	$OpenBSD: tsc.c,v 1.20 2020/08/23 21:38:47 cheloha Exp $	*/
+/*	$OpenBSD: tsc.c,v 1.21 2020/09/06 20:50:00 cheloha Exp $	*/
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * Copyright (c) 2016,2017 Reyk Floeter <reyk@openbsd.org>
@@ -44,6 +44,7 @@ volatile int64_t	tsc_sync_val;
 volatile struct cpu_info	*tsc_sync_cpu;
 
 u_int		tsc_get_timecount(struct timecounter *tc);
+void		tsc_delay(int usecs);
 
 #include "lapic.h"
 #if NLAPIC > 0
@@ -252,7 +253,8 @@ tsc_timecounter_init(struct cpu_info *ci, uint64_t cpufreq)
 		tsc_timecounter.tc_quality = -1000;
 		tsc_timecounter.tc_user = 0;
 		tsc_is_invariant = 0;
-	}
+	} else
+		delay_func = tsc_delay;
 
 	tc_init(&tsc_timecounter);
 }
@@ -342,4 +344,15 @@ tsc_sync_ap(struct cpu_info *ci)
 {
 	tsc_post_ap(ci);
 	tsc_post_ap(ci);
+}
+
+void
+tsc_delay(int usecs)
+{
+	uint64_t interval, start;
+
+	interval = (uint64_t)usecs * tsc_frequency / 1000000;
+	start = rdtsc_lfence();
+	while (rdtsc_lfence() - start < interval)
+		CPU_BUSY_CYCLE();
 }
