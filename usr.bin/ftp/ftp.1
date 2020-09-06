@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp.1,v 1.120 2020/09/06 09:01:01 tb Exp $
+.\"	$OpenBSD: ftp.1,v 1.121 2020/09/06 09:15:04 tb Exp $
 .\"	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -262,7 +262,7 @@ Require the server to present a valid OCSP stapling in the TLS handshake.
 .It Cm noverifytime
 Disable validation of certificate times and OCSP validation.
 .It Cm protocols Ns = Ns Ar protocol_list
-Specify the supported TLS protocols that will be used by
+Specify the TLS protocols that will be supported by
 .Nm
 (see
 .Xr tls_config_parse_protocols 3
