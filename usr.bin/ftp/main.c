@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.132 2020/09/01 12:33:48 jca Exp $	*/
+/*	$OpenBSD: main.c,v 1.133 2020/09/06 09:00:37 tb Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -209,6 +209,8 @@ char * const ssl_verify_opts[] = {
 	"noverifytime",
 #define SSL_SESSION		8
 	"session",
+#define SSL_PROTOCOLS		9
+	"protocols",
 	NULL
 };
 
@@ -221,6 +223,7 @@ process_ssl_options(char *cp)
 	const char *errstr;
 	long long depth;
 	char *str;
+	uint32_t protocols;
 
 	while (*cp) {
 		switch (getsubopt(&cp, ssl_verify_opts, &str)) {
@@ -278,6 +281,14 @@ process_ssl_options(char *cp)
 			    tls_session_fd) == -1)
 				errx(1, "failed to set session: %s",
 				    tls_config_error(tls_config));
+			break;
+		case SSL_PROTOCOLS:
+			if (str == NULL)
+				errx(1, "missing protocol name");
+			if (tls_config_parse_protocols(&protocols, str) != 0)
+				errx(1, "failed to parse TLS protocols");
+			if (tls_config_set_protocols(tls_config, protocols) != 0)
+				errx(1, "failed to set TLS protocols");
 			break;
 		default:
 			errx(1, "unknown -S suboption `%s'",
