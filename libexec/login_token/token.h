@@ -1,4 +1,4 @@
-/*	$OpenBSD: token.h,v 1.4 2002/09/06 18:19:14 deraadt Exp $	*/
+/*	$OpenBSD: token.h,v 1.5 2020/09/06 17:08:29 mortimer Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -64,7 +64,7 @@ struct token_types {
 	u_int	defmode;	/* default mode (if none specified) */
 };
 
-struct token_types *tt;		/* what type we are running as now */
+extern struct token_types *tt;		/* what type we are running as now */
 
 /*
  * Options
