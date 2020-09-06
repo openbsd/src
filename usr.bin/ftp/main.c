@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.134 2020/09/06 09:03:13 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.135 2020/09/06 09:49:11 tb Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -288,7 +288,8 @@ process_ssl_options(char *cp)
 			if (tls_config_parse_protocols(&protocols, str) != 0)
 				errx(1, "failed to parse TLS protocols");
 			if (tls_config_set_protocols(tls_config, protocols) != 0)
-				errx(1, "failed to set TLS protocols");
+				errx(1, "failed to set TLS protocols: %s",
+				    tls_config_error(tls_config));
 			break;
 		default:
 			errx(1, "unknown -S suboption `%s'",
