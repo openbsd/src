@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.133 2020/09/06 09:00:37 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.134 2020/09/06 09:03:13 tb Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -221,8 +221,8 @@ static void
 process_ssl_options(char *cp)
 {
 	const char *errstr;
-	long long depth;
 	char *str;
+	int depth;
 	uint32_t protocols;
 
 	while (*cp) {
@@ -262,7 +262,7 @@ process_ssl_options(char *cp)
 			if (errstr)
 				errx(1, "certificate validation depth is %s",
 				    errstr);
-			tls_config_set_verify_depth(tls_config, (int)depth);
+			tls_config_set_verify_depth(tls_config, depth);
 			break;
 		case SSL_MUSTSTAPLE:
 			tls_config_ocsp_require_stapling(tls_config);
