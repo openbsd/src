@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.262 2019/06/28 13:32:42 deraadt Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.263 2020/09/06 06:41:03 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -749,7 +749,7 @@ zapcacheregion(struct dir_info *d, void *p, size_t len)
 }
 
 static void *
-map(struct dir_info *d, void *hint, size_t sz, int zero_fill)
+map(struct dir_info *d, size_t sz, int zero_fill)
 {
 	size_t psz = sz >> MALLOC_PAGESHIFT;
 	struct region_info *r, *big = NULL;
@@ -762,7 +762,7 @@ map(struct dir_info *d, void *hint, size_t sz, int zero_fill)
 	if (sz != PAGEROUND(sz))
 		wrterror(d, "map round");
 
-	if (hint == NULL && psz > d->free_regions_size) {
+	if (psz > d->free_regions_size) {
 		_MALLOC_LEAVE(d);
 		p = MMAP(sz, d->mmap_flag);
 		_MALLOC_ENTER(d);
@@ -774,8 +774,6 @@ map(struct dir_info *d, void *hint, size_t sz, int zero_fill)
 	for (i = 0; i < d->malloc_cache; i++) {
 		r = &d->free_regions[(i + d->rotor) & (d->malloc_cache - 1)];
 		if (r->p != NULL) {
-			if (hint != NULL && r->p != hint)
-				continue;
 			if (r->size == psz) {
 				p = r->p;
 				r->p = NULL;
@@ -807,8 +805,6 @@ map(struct dir_info *d, void *hint, size_t sz, int zero_fill)
 			memset(p, SOME_FREEJUNK, sz);
 		return p;
 	}
-	if (hint != NULL)
-		return MAP_FAILED;
 	if (d->free_regions_size > d->malloc_cache)
 		wrterror(d, "malloc cache");
 	_MALLOC_LEAVE(d);
@@ -892,7 +888,7 @@ omalloc_make_chunks(struct dir_info *d, int bits, int listnum)
 	void *pp;
 
 	/* Allocate a new bucket */
-	pp = map(d, NULL, MALLOC_PAGESIZE, 0);
+	pp = map(d, MALLOC_PAGESIZE, 0);
 	if (pp == MAP_FAILED)
 		return NULL;
 
@@ -1136,7 +1132,7 @@ omalloc(struct dir_info *pool, size_t sz, int zero_fill, void *f)
 		}
 		sz += mopts.malloc_guard;
 		psz = PAGEROUND(sz);
-		p = map(pool, NULL, psz, zero_fill);
+		p = map(pool, psz, zero_fill);
 		if (p == MAP_FAILED) {
 			errno = ENOMEM;
 			return NULL;
@@ -1576,6 +1572,14 @@ orealloc(struct dir_info **argpool, void *p, size_t newsz, void *f)
 		size_t roldsz = PAGEROUND(goldsz);
 		size_t rnewsz = PAGEROUND(gnewsz);
 
+		if (rnewsz < roldsz && rnewsz > roldsz / 2 &&
+		    roldsz - rnewsz < pool->malloc_cache * MALLOC_PAGESIZE &&
+		    !mopts.malloc_guard) {
+
+			ret = p;
+			goto done;
+		}
+
 		if (rnewsz > roldsz) {
 			/* try to extend existing region */
 			if (!mopts.malloc_guard) {
@@ -1583,10 +1587,7 @@ orealloc(struct dir_info **argpool, void *p, size_t newsz, void *f)
 				size_t needed = rnewsz - roldsz;
 
 				STATS_INC(pool->cheap_realloc_tries);
-				q = map(pool, hint, needed, 0);
-				if (q == hint)
-					goto gotit;
-				zapcacheregion(pool, hint, needed);
+				//zapcacheregion(pool, hint, needed);
 				q = MQUERY(hint, needed, pool->mmap_flag);
 				if (q == hint)
 					q = MMAPA(hint, needed, pool->mmap_flag);
@@ -1618,17 +1619,13 @@ gotit:
 		} else if (rnewsz < roldsz) {
 			/* shrink number of pages */
 			if (mopts.malloc_guard) {
-				if (mprotect((char *)r->p + roldsz -
-				    mopts.malloc_guard, mopts.malloc_guard,
-				    PROT_READ | PROT_WRITE))
-					wrterror(pool, "mprotect");
 				if (mprotect((char *)r->p + rnewsz -
 				    mopts.malloc_guard, mopts.malloc_guard,
 				    PROT_NONE))
 					wrterror(pool, "mprotect");
 			}
-			unmap(pool, (char *)r->p + rnewsz, roldsz - rnewsz, 0,
-			    pool->malloc_junk);
+			if (munmap((char *)r->p + rnewsz, roldsz - rnewsz))
+				wrterror(pool, "munmap %p", (char *)r->p + rnewsz);
 			r->size = gnewsz;
 			if (MALLOC_MOVE_COND(gnewsz)) {
 				void *pp = MALLOC_MOVE(r->p, gnewsz);
@@ -1800,7 +1797,7 @@ orecallocarray(struct dir_info **argpool, void *p, size_t oldsize,
 				    info->bits[info->offset + chunknum],
 				    oldsize);
 		}
-	} else if (oldsize != sz - mopts.malloc_guard)
+	} else if (oldsize < (sz - mopts.malloc_guard) / 2)
 		wrterror(pool, "recorded old size %zu != %zu",
 		    sz - mopts.malloc_guard, oldsize);
 
@@ -1937,7 +1934,7 @@ mapalign(struct dir_info *d, size_t alignment, size_t sz, int zero_fill)
 	if (alignment > SIZE_MAX - sz)
 		return MAP_FAILED;
 
-	p = map(d, NULL, sz + alignment, zero_fill);
+	p = map(d, sz + alignment, zero_fill);
 	if (p == MAP_FAILED)
 		return MAP_FAILED;
 	q = (char *)(((uintptr_t)p + alignment - 1) & ~(alignment - 1));
