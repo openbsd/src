@@ -835,7 +835,6 @@ u2f_get_touch_status(fido_dev_t *dev, int *touched, int ms)
 
 	switch ((reply[reply_len - 2] << 8) | reply[reply_len - 1]) {
 	case SW_CONDITIONS_NOT_SATISFIED:
-		usleep(200 * 1000); /* per spec (Chrome) */
 		if ((r = u2f_get_touch_begin(dev)) != FIDO_OK) {
 			fido_log_debug("%s: u2f_get_touch_begin", __func__);
 			return (r);
