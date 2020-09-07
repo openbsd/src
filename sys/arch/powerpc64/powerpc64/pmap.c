@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.47 2020/09/05 19:21:10 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.48 2020/09/07 18:51:47 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -373,7 +373,44 @@ pmap_slbd_fault(pmap_t pm, vaddr_t va)
 	return EFAULT;
 }
 
-u_long pmap_vsid;
+#define NUM_VSID (1 << 20)
+uint32_t pmap_vsid[NUM_VSID / 32];
+
+uint64_t
+pmap_allo_vsid(void)
+{
+	uint32_t bits;
+	uint32_t vsid, bit;
+
+	for (;;) {
+		do {
+			vsid = arc4random() & (NUM_VSID - 1);
+			bit = (vsid & (32 - 1));
+			bits = pmap_vsid[vsid / 32];
+		} while (bits & (1U << bit));
+
+		if (atomic_cas_uint(&pmap_vsid[vsid / 32], bits,
+		    bits | (1U << bit)) == bits)
+			return vsid;
+	}
+}
+
+void
+pmap_free_vsid(uint64_t vsid)
+{
+	uint32_t bits;
+	int bit;
+
+	KASSERT(vsid < NUM_VSID);
+
+	bit = (vsid & (32 - 1));
+	for (;;) {
+		bits = pmap_vsid[vsid / 32];
+		if (atomic_cas_uint(&pmap_vsid[vsid / 32], bits,
+		    bits & ~(1U << bit)) == bits)
+			break;
+	}
+}
 
 struct slb_desc *
 pmap_slbd_alloc(pmap_t pm, vaddr_t va)
@@ -389,7 +426,7 @@ pmap_slbd_alloc(pmap_t pm, vaddr_t va)
 		return NULL;
 
 	slbd->slbd_esid = esid;
-	slbd->slbd_vsid = atomic_inc_long_nv(&pmap_vsid);
+	slbd->slbd_vsid = pmap_allo_vsid();
 	KASSERT((slbd->slbd_vsid & KERNEL_VSID_BIT) == 0);
 	LIST_INSERT_HEAD(&pm->pm_slbd, slbd, slbd_list);
 
@@ -950,8 +987,8 @@ pmap_vp_destroy(pmap_t pm)
 		pool_put(&pmap_vp_pool, vp1);
 
 		LIST_REMOVE(slbd, slbd_list);
+		pmap_free_vsid(slbd->slbd_vsid);
 		pool_put(&pmap_slbd_pool, slbd);
-		/* XXX Free VSID. */
 	}
 }
 
@@ -1591,6 +1628,11 @@ pmap_bootstrap(void)
 		pmap_set_kernel_slb(va);
 
 	pmap_bootstrap_cpu();
+
+	pmap_vsid[0] |= (1U << 0);
+#if VSID_VRMA < NUM_VSID
+	pmap_vsid[VSID_VRMA / 32] |= (1U << (VSID_VRMA % 32));
+#endif
 
 	vmmap = virtual_avail;
 	virtual_avail += PAGE_SIZE;
