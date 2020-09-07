@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.174 2020/09/01 12:40:53 tb Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.175 2020/09/07 08:04:29 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -870,7 +870,6 @@ tls_decrypt_ticket(SSL *s, CBS *ticket, int *alert, SSL_SESSION **psess)
 	SSL_CTX *tctx = s->initial_ctx;
 	int slen, hlen;
 	int alert_desc = SSL_AD_INTERNAL_ERROR;
-	int renew_ticket = 0;
 	int ret = TLS1_TICKET_FATAL_ERROR;
 
 	*psess = NULL;
@@ -904,8 +903,10 @@ tls_decrypt_ticket(SSL *s, CBS *ticket, int *alert, SSL_SESSION **psess)
 			goto err;
 		if (rv == 0)
 			goto derr;
-		if (rv == 2)
-			renew_ticket = 1;
+		if (rv == 2) {
+			/* Renew ticket. */
+			s->internal->tlsext_ticket_expected = 1;
+		}
 
 		/*
 		 * Now that the cipher context is initialised, we can extract
@@ -988,11 +989,7 @@ tls_decrypt_ticket(SSL *s, CBS *ticket, int *alert, SSL_SESSION **psess)
 	*psess = sess;
 	sess = NULL;
 
-	if (renew_ticket)
-		s->internal->tlsext_ticket_expected = 1;
-
 	ret = TLS1_TICKET_DECRYPTED;
-
 	goto done;
 
  derr:
