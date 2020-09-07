@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2020/08/30 18:31:49 tobhe Exp $
+#	$OpenBSD: Makefile,v 1.16 2020/09/07 17:38:13 tobhe Exp $
 
 # Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
 #
@@ -63,16 +63,20 @@ TEST_FLOWS = \
 	fi
 
 TEST_PING = \
+	_ret=1; \
 	if [[ "${IPV}" == "6" ]]; then ping="ping6"; else ping="ping"; fi; \
-	dump=`ssh ${LEFT_SSH} "tcpdump -n -c2 -i enc0 -w '/tmp/test.pcap' > /dev/null & \
-	     $$ping -c 5 ${RIGHT_ADDR} > /dev/null && tcpdump -n -r /tmp/test.pcap" && rm -f /tmp/test.pcap`; \
+	dump=`ssh ${LEFT_SSH} "tcpdump -n -c2 -i enc0 -w /tmp/test.pcap > /dev/null & \
+	    $$ping -w 1 -n -c 5 ${RIGHT_ADDR} > /dev/null && \
+	    tcpdump -n -r /tmp/test.pcap && rm -f /tmp/test.pcap; \
+	    kill -9 \\$$! > /dev/null 2>&1 || true"`; \
 	rtol=`echo "$$dump" \
 	    | sed -n "/(authentic,confidential): SPI 0x[0-9a-f]\{8\}: ${LEFT_ADDR} > ${RIGHT_ADDR}/p"`; \
 	ltor=`echo "$$dump" \
 	    | sed -n "/(authentic,confidential): SPI 0x[0-9a-f]\{8\}: ${RIGHT_ADDR} > ${LEFT_ADDR}/p"`; \
 	if [[ -z "$$rtol" || -z "$$ltor" ]]; then \
-		echo "error: no esp traffic."; \
-		exit 1; \
+		_ret=1; \
+	else \
+		_ret=0; \
 	fi; \
 	echo "$$dump"
 
@@ -179,7 +183,7 @@ setup_pf: pf.in
 	-ssh ${LEFT_SSH} "pfctl -f /tmp/pf.conf; pfctl -e"
 	-ssh ${RIGHT_SSH} "pfctl -f /tmp/pf.conf; pfctl -e"
 
-setup: setup_pf setup_certs
+setup: cleanup setup_pf setup_certs
 
 .PHONY: setup_certs
 
@@ -210,7 +214,13 @@ ca-right.crt ca-right.key:
 left-from-ca-right.crt left.key: ca-right.crt ca-right.key
 	caname=ca-right; name=left; ${SETUP_CERT}
 
-REGRESS_TARGETS = run-cert-single-ca
+REGRESS_TARGETS = run-ping-fail
+run-ping-fail:
+	@echo '======= $@ ========'
+	${TEST_PING}; \
+	if [[ $$_ret -ne 1 ]]; then exit 1; fi
+
+REGRESS_TARGETS += run-cert-single-ca
 run-cert-single-ca:
 	@echo '======= $@ ========'
 	flowtype=esp;
@@ -219,7 +229,8 @@ run-cert-single-ca:
 	    ${SETUP_CONFIGS}
 	${SETUP_START}
 	flowtype=esp; ${TEST_FLOWS}
-	${TEST_PING}
+	${TEST_PING}; \
+	if [[ $$_ret -ne 0 ]]; then exit 1; fi
 
 REGRESS_TARGETS += run-cert-multi-ca
 run-cert-multi-ca:
@@ -230,7 +241,8 @@ run-cert-multi-ca:
 	    ${SETUP_CONFIGS}
 	${SETUP_START}
 	flowtype=esp; ${TEST_FLOWS}
-	${TEST_PING}
+	${TEST_PING}; \
+	if [[ $$_ret -ne 0 ]]; then exit 1; fi
 
 REGRESS_TARGETS += run-cert-second-altname
 run-cert-second-altname:
@@ -241,7 +253,8 @@ run-cert-second-altname:
 	    ${SETUP_CONFIGS}
 	${SETUP_START}
 	flowtype=esp; ${TEST_FLOWS}
-	${TEST_PING}
+	${TEST_PING}; \
+	if [[ $$_ret -ne 0 ]]; then exit 1; fi
 
 REGRESS_TARGETS += run-psk
 run-psk:
@@ -253,7 +266,8 @@ run-psk:
 	    ${SETUP_CONFIGS}
 	${SETUP_START}
 	flowtype=esp; ${TEST_FLOWS}
-	${TEST_PING}
+	${TEST_PING}; \
+	if [[ $$_ret -ne 0 ]]; then exit 1; fi
 
 REGRESS_TARGETS += run-fragmentation
 run-fragmentation:
@@ -265,7 +279,8 @@ run-fragmentation:
 	    ${SETUP_CONFIGS}
 	${SETUP_START}
 	flowtype=esp; ${TEST_FLOWS}
-	${TEST_PING}
+	${TEST_PING}; \
+	if [[ $$_ret -ne 0 ]]; then exit 1; fi
 
 REGRESS_TARGETS += run-transport
 run-transport:
@@ -278,7 +293,8 @@ run-transport:
 	${SETUP_START}
 	tmode=transport; flowtype=esp; \
 	  ${TEST_FLOWS}
-	${TEST_PING}
+	${TEST_PING}; \
+	if [[ $$_ret -ne 0 ]]; then exit 1; fi
 
 REGRESS_TARGETS += run-singleikesa
 run-singleikesa:
@@ -303,7 +319,8 @@ run-ipcomp:
 	    ${SETUP_SYSCTL}
 	${SETUP_START}
 	flowtype=ipcomp; ${TEST_FLOWS}
-	${TEST_PING}
+	${TEST_PING}; \
+	if [[ $$_ret -ne 0 ]]; then exit 1; fi
 
 REGRESS_TARGETS += run-udpencap-port
 run-udpencap-port:
@@ -317,7 +334,8 @@ run-udpencap-port:
 	iked_flags=-p9999; \
 	    ${SETUP_START};
 	flowtype=esp; ${TEST_FLOWS}; \
-	    ${TEST_PING}
+	    ${TEST_PING}; \
+	    if [[ $$_ret -ne 0 ]]; then exit 1; fi
 	sysctl="net.inet.esp.udpencap_port=4500"; \
 	    ${SETUP_SYSCTL};
 
