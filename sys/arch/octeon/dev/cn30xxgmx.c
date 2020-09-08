@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.46 2020/09/08 13:54:48 visa Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.47 2020/09/08 15:46:36 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -103,7 +103,7 @@ int	cn30xxgmx_match(struct device *, void *, void *);
 void	cn30xxgmx_attach(struct device *, struct device *, void *);
 int	cn30xxgmx_print(void *, const char *);
 int	cn30xxgmx_port_phy_addr(int);
-int	cn30xxgmx_init(struct cn30xxgmx_softc *);
+void	cn30xxgmx_init(struct cn30xxgmx_softc *);
 int	cn30xxgmx_rx_frm_ctl_xable(struct cn30xxgmx_port_softc *,
 	    uint64_t, int);
 void	cn30xxgmx_agl_init(struct cn30xxgmx_port_softc *);
@@ -218,24 +218,31 @@ cn30xxgmx_attach(struct device *parent, struct device *self, void *aux)
 	int port;
 	int status;
 
-	printf("\n");
-
 	sc->sc_regt = aa->aa_bust; /* XXX why there are iot? */
 	sc->sc_unitno = aa->aa_unitno;
 
-	status = bus_space_map(sc->sc_regt, aa->aa_addr,
-	    GMX0_BASE_IF_SIZE(sc->sc_nports), 0, &sc->sc_regh);
-	if (status != 0)
-		panic(": can't map register");
+	status = bus_space_map(sc->sc_regt, aa->aa_addr, GMX_BLOCK_SIZE,
+	    0, &sc->sc_regh);
+	if (status != 0) {
+		printf(": can't map registers\n");
+		return;
+	}
 
 	cn30xxgmx_init(sc);
+
+	if (sc->sc_nports == 0) {
+		printf(": no active ports found\n");
+		goto error;
+	}
 
 	sc->sc_ports = mallocarray(sc->sc_nports, sizeof(*sc->sc_ports),
 	    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->sc_ports == NULL) {
-		printf("%s: out of memory\n", sc->sc_dev.dv_xname);
-		return;
+		printf(": out of memory\n");
+		goto error;
 	}
+
+	printf("\n");
 
 	for (i = 0; i < sc->sc_nports; i++) {
 		if (sc->sc_port_types[i] == GMX_AGL_PORT)
@@ -254,8 +261,11 @@ cn30xxgmx_attach(struct device *parent, struct device *self, void *aux)
 		status = bus_space_map(sc->sc_regt,
 		    aa->aa_addr + GMX0_BASE_PORT_SIZE * i,
 		    GMX0_BASE_PORT_SIZE, 0, &port_sc->sc_port_regh);
-		if (status != 0)
-			panic(": can't map port register");
+		if (status != 0) {
+			printf("%s port %d: can't map registers\n",
+			    sc->sc_dev.dv_xname, port);
+			continue;
+		}
 
 		switch (port_sc->sc_port_type) {
 		case GMX_AGL_PORT:
@@ -275,8 +285,11 @@ cn30xxgmx_attach(struct device *parent, struct device *self, void *aux)
 		case GMX_SGMII_PORT:
 			if (bus_space_map(sc->sc_regt,
 			    PCS_BASE(sc->sc_unitno, i), PCS_SIZE, 0,
-			    &port_sc->sc_port_pcs_regh))
-				panic("could not map PCS registers");
+			    &port_sc->sc_port_pcs_regh)) {
+				printf("%s port %d: can't map PCS registers\n",
+				    sc->sc_dev.dv_xname, port);
+				continue;
+			}
 			break;
 		default:
 			/* nothing */
@@ -297,6 +310,10 @@ cn30xxgmx_attach(struct device *parent, struct device *self, void *aux)
 
 		config_found(self, &gmx_aa, cn30xxgmx_print);
 	}
+	return;
+
+error:
+	bus_space_unmap(sc->sc_regt, sc->sc_regh, GMX_BLOCK_SIZE);
 }
 
 int
@@ -321,10 +338,9 @@ cn30xxgmx_print(void *aux, const char *pnp)
 	return UNCONF;
 }
 
-int
+void
 cn30xxgmx_init(struct cn30xxgmx_softc *sc)
 {
-	int result = 0;
 	uint64_t inf_mode;
 	int i, id;
 
@@ -334,13 +350,8 @@ cn30xxgmx_init(struct cn30xxgmx_softc *sc)
 	case OCTEON_MODEL_FAMILY_CN31XX:
 		inf_mode = bus_space_read_8(sc->sc_regt, sc->sc_regh,
 		    GMX0_INF_MODE);
-		if ((inf_mode & INF_MODE_EN) == 0) {
-			printf("ports are disabled\n");
-			sc->sc_nports = 0;
-			result = 1;
+		if ((inf_mode & INF_MODE_EN) == 0)
 			break;
-		}
-
 		/*
 		 * CN31XX-HM-1.01
 		 * 14.1 Packet Interface Introduction
@@ -365,13 +376,8 @@ cn30xxgmx_init(struct cn30xxgmx_softc *sc)
 	case OCTEON_MODEL_FAMILY_CN50XX:
 		inf_mode = bus_space_read_8(sc->sc_regt, sc->sc_regh,
 		    GMX0_INF_MODE);
-		if ((inf_mode & INF_MODE_EN) == 0) {
-			printf("ports are disabled\n");
-			sc->sc_nports = 0;
-			result = 1;
+		if ((inf_mode & INF_MODE_EN) == 0)
 			break;
-		}
-
 		/*
 		 * CN30XX-HM-1.0
 		 * 13.1 Packet Interface Introduction
@@ -404,12 +410,8 @@ cn30xxgmx_init(struct cn30xxgmx_softc *sc)
 
 		inf_mode = bus_space_read_8(sc->sc_regt, sc->sc_regh,
 		    GMX0_INF_MODE);
-		if ((inf_mode & INF_MODE_EN) == 0) {
-			printf("ports are disabled\n");
-			sc->sc_nports = 0;
-			result = 1;
+		if ((inf_mode & INF_MODE_EN) == 0)
 			break;
-		}
 
 		if (sc->sc_unitno == 0)
 			qlm_cfg = octeon_xkphys_read_8(MIO_QLM_CFG(2));
@@ -420,21 +422,15 @@ cn30xxgmx_init(struct cn30xxgmx_softc *sc)
 			for (i = 0; i < sc->sc_nports; i++)
 				sc->sc_port_types[i] = GMX_SGMII_PORT;
 		} else if ((qlm_cfg & MIO_QLM_CFG_CFG) == 3) {
-			printf("XAUI interface is not supported\n");
-			sc->sc_nports = 0;
-			result = 1;
+			printf(": XAUI interface is not supported");
 		} else {
 			/* The interface is disabled. */
-			sc->sc_nports = 0;
-			result = 1;
 		}
 		break;
 	}
 	case OCTEON_MODEL_FAMILY_CN71XX:
 		if (sc->sc_unitno == 4) {
 			uint64_t val;
-
-			sc->sc_nports = 0;
 
 			val = bus_space_read_8(sc->sc_regt, sc->sc_regh,
 			    AGL_PRT_CTL(0));
@@ -443,19 +439,13 @@ cn30xxgmx_init(struct cn30xxgmx_softc *sc)
 				sc->sc_nports = 1;
 				sc->sc_port_types[0] = GMX_AGL_PORT;
 			}
-			if (sc->sc_nports == 0)
-				result = 1;
 			break;
 		}
 
 		inf_mode = bus_space_read_8(sc->sc_regt, sc->sc_regh,
 		    GMX0_INF_MODE);
-		if ((inf_mode & INF_MODE_EN) == 0) {
-			printf("ports are disabled\n");
-			sc->sc_nports = 0;
-			result = 1;
+		if ((inf_mode & INF_MODE_EN) == 0)
 			break;
-		}
 
 		switch (inf_mode & INF_MODE_MODE) {
 		case INF_MODE_MODE_SGMII:
@@ -467,21 +457,16 @@ cn30xxgmx_init(struct cn30xxgmx_softc *sc)
 		case INF_MODE_MODE_XAUI:
 #endif
 		default:
-			sc->sc_nports = 0;
-			result = 1;
+			break;
 		}
 		break;
 	case OCTEON_MODEL_FAMILY_CN38XX:
 	case OCTEON_MODEL_FAMILY_CN56XX:
 	case OCTEON_MODEL_FAMILY_CN58XX:
 	default:
-		printf("unsupported octeon model: 0x%x\n", octeon_get_chipid());
-		sc->sc_nports = 0;
-		result = 1;
+		printf(": unsupported octeon model: 0x%x", id);
 		break;
 	}
-
-	return result;
 }
 
 /* XXX RGMII specific */
