@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcivar.h,v 1.73 2020/06/17 01:43:04 dlg Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.74 2020/09/08 20:13:52 kettenis Exp $	*/
 /*	$NetBSD: pcivar.h,v 1.23 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -236,6 +236,8 @@ int	pci_mem_find(pci_chipset_tag_t, pcitag_t, int, bus_addr_t *,
 int	pci_get_capability(pci_chipset_tag_t, pcitag_t, int,
 	    int *, pcireg_t *);
 int	pci_get_ht_capability(pci_chipset_tag_t, pcitag_t, int,
+	    int *, pcireg_t *);
+int	pci_get_ext_capability(pci_chipset_tag_t, pcitag_t, int,
 	    int *, pcireg_t *);
 
 struct msix_vector;

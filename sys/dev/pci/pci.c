@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.118 2020/06/26 10:16:00 dlg Exp $	*/
+/*	$OpenBSD: pci.c,v 1.119 2020/09/08 20:13:52 kettenis Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -672,6 +672,38 @@ pci_get_ht_capability(pci_chipset_tag_t pc, pcitag_t tag, int capid,
 			return (1);
 		}
 		ofs = PCI_CAPLIST_NEXT(reg);
+	}
+
+	return (0);
+}
+
+int
+pci_get_ext_capability(pci_chipset_tag_t pc, pcitag_t tag, int capid,
+    int *offset, pcireg_t *value)
+{
+	pcireg_t reg;
+	unsigned int ofs;
+
+	/* Make sure this is a PCI Express device. */
+	if (pci_get_capability(pc, tag, PCI_CAP_PCIEXPRESS, NULL, NULL) == 0)
+		return (0);
+
+	/* Scan PCI Express extended capabilities. */
+	ofs = PCI_PCIE_ECAP;
+	while (ofs != 0) {
+#ifdef DIAGNOSTIC
+		if ((ofs & 3) || (ofs < PCI_PCIE_ECAP))
+			panic("pci_get_ext_capability");
+#endif
+		reg = pci_conf_read(pc, tag, ofs);
+		if (PCI_PCIE_ECAP_ID(reg) == capid) {
+			if (offset)
+				*offset = ofs;
+			if (value)
+				*value = reg;
+			return (1);
+		}
+		ofs = PCI_PCIE_ECAP_NEXT(reg);
 	}
 
 	return (0);
