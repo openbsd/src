@@ -1,4 +1,4 @@
-/*	$OpenBSD: rktemp.c,v 1.5 2019/07/02 20:14:44 kettenis Exp $	*/
+/*	$OpenBSD: rktemp.c,v 1.6 2020/09/08 01:29:58 jmatthew Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -153,6 +153,7 @@ struct rktemp_entry rk3328_temps[] = {
 	{ 125000, 675 },
 };
 
+const char *rk3308_names[] = { "CPU", "GPU" };
 const char *rk3328_names[] = { "CPU" };
 
 /* RK3399 conversion table. */
@@ -233,6 +234,7 @@ rktemp_match(struct device *parent, void *match, void *aux)
 	struct fdt_attach_args *faa = aux;
 
 	return (OF_is_compatible(faa->fa_node, "rockchip,rk3288-tsadc") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3308-tsadc") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3328-tsadc") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3399-tsadc"));
 }
@@ -267,6 +269,11 @@ rktemp_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_ntemps = nitems(rk3288_temps);
 		sc->sc_nsensors = 3;
 		names = rk3288_names;
+	} else if (OF_is_compatible(node, "rockchip,rk3308-tsadc")) {
+		sc->sc_temps = rk3328_temps;
+		sc->sc_ntemps = nitems(rk3328_temps);
+		sc->sc_nsensors = 2;
+		names = rk3308_names;
 	} else if (OF_is_compatible(node, "rockchip,rk3328-tsadc")) {
 		sc->sc_temps = rk3328_temps;
 		sc->sc_ntemps = nitems(rk3328_temps);
