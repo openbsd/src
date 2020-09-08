@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.274 2020/09/05 14:21:52 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.275 2020/09/08 12:36:42 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1102,6 +1102,9 @@ scsi_mode_sense(struct scsi_link *link, int pg_code,
 	error = scsi_xs_sync(xs);
 	scsi_xs_put(xs);
 
+	if (error == 0 && !VALID_MODE_HDR(&data->hdr))
+		error = EIO;
+
 #ifdef SCSIDEBUG
 	sc_print_addr(link);
 	if (error == 0) {
@@ -1158,7 +1161,7 @@ scsi_mode_sense_big(struct scsi_link *link, int pg_code,
 	error = scsi_xs_sync(xs);
 	scsi_xs_put(xs);
 
-	if (_2btol(data->hdr_big.data_length) < 6)
+	if (error == 0 && !VALID_MODE_HDR_BIG(&data->hdr_big))
 		error = EIO;
 
 #ifdef SCSIDEBUG

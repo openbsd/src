@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.63 2020/09/05 14:21:52 krw Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.64 2020/09/08 12:36:42 krw Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -503,6 +503,7 @@ struct scsi_mode_header {
 	u_int8_t dev_spec;
 	u_int8_t blk_desc_len;
 };
+#define VALID_MODE_HDR(_x)	((_x)->data_length >= 3)
 
 struct scsi_mode_header_big {
 	u_int8_t data_length[2];	/* Sense data length */
@@ -513,6 +514,7 @@ struct scsi_mode_header_big {
 	u_int8_t reserved2;
 	u_int8_t blk_desc_len[2];
 };
+#define VALID_MODE_HDR_BIG(_x)	(_2btol((_x)->data_length) >= 6)
 
 /* Both disks and tapes use dev_spec to report READONLY status. */
 #define	SMH_DSP_WRITE_PROT	0x80
