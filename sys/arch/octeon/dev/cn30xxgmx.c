@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.45 2020/09/04 15:18:05 visa Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.46 2020/09/08 13:54:48 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -73,6 +73,19 @@
 #define	_GMX_PORT_WR8(sc, off, v) \
 	bus_space_write_8((sc)->sc_port_gmx->sc_regt, (sc)->sc_port_regh, (off), (v))
 
+#define AGL_GMX_RD8(sc, reg) \
+	bus_space_read_8((sc)->sc_port_gmx->sc_regt, \
+	    (sc)->sc_port_gmx->sc_regh, (reg))
+#define AGL_GMX_WR8(sc, reg, val) \
+	bus_space_write_8((sc)->sc_port_gmx->sc_regt, \
+	    (sc)->sc_port_gmx->sc_regh, (reg), (val))
+#define AGL_GMX_PORT_RD8(sc, reg) \
+	bus_space_read_8((sc)->sc_port_gmx->sc_regt, \
+	    (sc)->sc_port_regh, (reg))
+#define AGL_GMX_PORT_WR8(sc, reg, val) \
+	bus_space_write_8((sc)->sc_port_gmx->sc_regt, \
+	    (sc)->sc_port_regh, (reg), (val))
+
 #define PCS_READ_8(sc, reg) \
 	bus_space_read_8((sc)->sc_port_gmx->sc_regt, (sc)->sc_port_pcs_regh, \
 	    (reg))
@@ -93,6 +106,10 @@ int	cn30xxgmx_port_phy_addr(int);
 int	cn30xxgmx_init(struct cn30xxgmx_softc *);
 int	cn30xxgmx_rx_frm_ctl_xable(struct cn30xxgmx_port_softc *,
 	    uint64_t, int);
+void	cn30xxgmx_agl_init(struct cn30xxgmx_port_softc *);
+int	cn30xxgmx_agl_enable(struct cn30xxgmx_port_softc *, int);
+int	cn30xxgmx_agl_speed(struct cn30xxgmx_port_softc *);
+int	cn30xxgmx_agl_timing(struct cn30xxgmx_port_softc *);
 int	cn30xxgmx_rgmii_enable(struct cn30xxgmx_port_softc *, int);
 int	cn30xxgmx_rgmii_speed(struct cn30xxgmx_port_softc *);
 int	cn30xxgmx_rgmii_speed_newlink(struct cn30xxgmx_port_softc *,
@@ -113,6 +130,12 @@ int	cn30xxgmx_rgmii_speed_newlink_log(struct cn30xxgmx_port_softc *,
 static const int	cn30xxgmx_rx_adr_cam_regs[] = {
 	GMX0_RX0_ADR_CAM0, GMX0_RX0_ADR_CAM1, GMX0_RX0_ADR_CAM2,
 	GMX0_RX0_ADR_CAM3, GMX0_RX0_ADR_CAM4, GMX0_RX0_ADR_CAM5
+};
+
+struct cn30xxgmx_port_ops cn30xxgmx_port_ops_agl = {
+	.port_ops_enable = cn30xxgmx_agl_enable,
+	.port_ops_speed = cn30xxgmx_agl_speed,
+	.port_ops_timing = cn30xxgmx_agl_timing,
 };
 
 struct cn30xxgmx_port_ops cn30xxgmx_port_ops_mii = {
@@ -146,7 +169,8 @@ struct cn30xxgmx_port_ops *cn30xxgmx_port_ops[] = {
 	[GMX_GMII_PORT] = &cn30xxgmx_port_ops_gmii,
 	[GMX_RGMII_PORT] = &cn30xxgmx_port_ops_rgmii,
 	[GMX_SGMII_PORT] = &cn30xxgmx_port_ops_sgmii,
-	[GMX_SPI42_PORT] = &cn30xxgmx_port_ops_spi42
+	[GMX_SPI42_PORT] = &cn30xxgmx_port_ops_spi42,
+	[GMX_AGL_PORT] = &cn30xxgmx_port_ops_agl,
 };
 
 struct cfattach octgmx_ca = {sizeof(struct cn30xxgmx_softc),
@@ -214,7 +238,10 @@ cn30xxgmx_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	for (i = 0; i < sc->sc_nports; i++) {
-		port = GMX_PORT_NUM(sc->sc_unitno, i);
+		if (sc->sc_port_types[i] == GMX_AGL_PORT)
+			port = 24;
+		else
+			port = GMX_PORT_NUM(sc->sc_unitno, i);
 		if (cn30xxsmi_get_phy(cn30xxgmx_get_phy_phandle(sc->sc_unitno,
 		    i), port, &smi, &phy_addr))
 			continue;
@@ -231,6 +258,10 @@ cn30xxgmx_attach(struct device *parent, struct device *self, void *aux)
 			panic(": can't map port register");
 
 		switch (port_sc->sc_port_type) {
+		case GMX_AGL_PORT:
+			cn30xxgmx_agl_init(port_sc);
+			break;
+
 		case GMX_MII_PORT:
 		case GMX_GMII_PORT:
 		case GMX_RGMII_PORT: {
@@ -273,6 +304,7 @@ cn30xxgmx_print(void *aux, const char *pnp)
 {
 	struct cn30xxgmx_attach_args *ga = aux;
 	static const char *types[] = {
+		[GMX_AGL_PORT] = "AGL",
 		[GMX_MII_PORT] = "MII",
 		[GMX_GMII_PORT] = "GMII",
 		[GMX_RGMII_PORT] = "RGMII",
@@ -284,7 +316,7 @@ cn30xxgmx_print(void *aux, const char *pnp)
 		printf("%s at %s", ga->ga_name, pnp);
 #endif
 
-	printf(": %s", types[ga->ga_port_type]);
+	printf(": port %d %s", ga->ga_portno, types[ga->ga_port_type]);
 
 	return UNCONF;
 }
@@ -296,17 +328,19 @@ cn30xxgmx_init(struct cn30xxgmx_softc *sc)
 	uint64_t inf_mode;
 	int i, id;
 
-	inf_mode = bus_space_read_8(sc->sc_regt, sc->sc_regh, GMX0_INF_MODE);
-	if ((inf_mode & INF_MODE_EN) == 0) {
-		printf("ports are disabled\n");
-		sc->sc_nports = 0;
-		return 1;
-	}
-
 	id = octeon_get_chipid();
 
 	switch (octeon_model_family(id)) {
 	case OCTEON_MODEL_FAMILY_CN31XX:
+		inf_mode = bus_space_read_8(sc->sc_regt, sc->sc_regh,
+		    GMX0_INF_MODE);
+		if ((inf_mode & INF_MODE_EN) == 0) {
+			printf("ports are disabled\n");
+			sc->sc_nports = 0;
+			result = 1;
+			break;
+		}
+
 		/*
 		 * CN31XX-HM-1.01
 		 * 14.1 Packet Interface Introduction
@@ -329,6 +363,15 @@ cn30xxgmx_init(struct cn30xxgmx_softc *sc)
 		break;
 	case OCTEON_MODEL_FAMILY_CN30XX:
 	case OCTEON_MODEL_FAMILY_CN50XX:
+		inf_mode = bus_space_read_8(sc->sc_regt, sc->sc_regh,
+		    GMX0_INF_MODE);
+		if ((inf_mode & INF_MODE_EN) == 0) {
+			printf("ports are disabled\n");
+			sc->sc_nports = 0;
+			result = 1;
+			break;
+		}
+
 		/*
 		 * CN30XX-HM-1.0
 		 * 13.1 Packet Interface Introduction
@@ -359,6 +402,15 @@ cn30xxgmx_init(struct cn30xxgmx_softc *sc)
 	case OCTEON_MODEL_FAMILY_CN61XX: {
 		uint64_t qlm_cfg;
 
+		inf_mode = bus_space_read_8(sc->sc_regt, sc->sc_regh,
+		    GMX0_INF_MODE);
+		if ((inf_mode & INF_MODE_EN) == 0) {
+			printf("ports are disabled\n");
+			sc->sc_nports = 0;
+			result = 1;
+			break;
+		}
+
 		if (sc->sc_unitno == 0)
 			qlm_cfg = octeon_xkphys_read_8(MIO_QLM_CFG(2));
 		else
@@ -379,6 +431,32 @@ cn30xxgmx_init(struct cn30xxgmx_softc *sc)
 		break;
 	}
 	case OCTEON_MODEL_FAMILY_CN71XX:
+		if (sc->sc_unitno == 4) {
+			uint64_t val;
+
+			sc->sc_nports = 0;
+
+			val = bus_space_read_8(sc->sc_regt, sc->sc_regh,
+			    AGL_PRT_CTL(0));
+			if ((val & AGL_PRT_CTL_MODE_M) ==
+			    AGL_PRT_CTL_MODE_RGMII) {
+				sc->sc_nports = 1;
+				sc->sc_port_types[0] = GMX_AGL_PORT;
+			}
+			if (sc->sc_nports == 0)
+				result = 1;
+			break;
+		}
+
+		inf_mode = bus_space_read_8(sc->sc_regt, sc->sc_regh,
+		    GMX0_INF_MODE);
+		if ((inf_mode & INF_MODE_EN) == 0) {
+			printf("ports are disabled\n");
+			sc->sc_nports = 0;
+			result = 1;
+			break;
+		}
+
 		switch (inf_mode & INF_MODE_MODE) {
 		case INF_MODE_MODE_SGMII:
 			sc->sc_nports = 4;
@@ -752,6 +830,191 @@ cn30xxgmx_reset_flowctl(struct cn30xxgmx_port_softc *sc)
 		cn30xxgmx_rx_pause_enable(sc, 0);
 	}
 
+	return 0;
+}
+
+void
+cn30xxgmx_agl_init(struct cn30xxgmx_port_softc *sc)
+{
+	uint64_t val;
+	int port = 0;
+
+	/* Disable link for initialization. */
+	val = AGL_GMX_PORT_RD8(sc, AGL_GMX_PRT_CFG);
+	CLR(val, AGL_GMX_PRT_CFG_EN);
+	AGL_GMX_PORT_WR8(sc, AGL_GMX_PRT_CFG, val);
+	(void)AGL_GMX_PORT_RD8(sc, AGL_GMX_PRT_CFG);
+
+	val = AGL_GMX_RD8(sc, AGL_PRT_CTL(port));
+	CLR(val, AGL_PRT_CTL_CLKRST);
+	CLR(val, AGL_PRT_CTL_DLLRST);
+	CLR(val, AGL_PRT_CTL_CLKTX_BYP);
+	CLR(val, AGL_PRT_CTL_CLKTX_SET_M);
+	CLR(val, AGL_PRT_CTL_CLKRX_BYP);
+	CLR(val, AGL_PRT_CTL_CLKRX_SET_M);
+	CLR(val, AGL_PRT_CTL_REFCLK_SEL_M);
+	AGL_GMX_WR8(sc, AGL_PRT_CTL(port), val);
+	(void)AGL_GMX_RD8(sc, AGL_PRT_CTL(port));
+
+	/* Let the DLL settle. */
+	delay(5);
+
+	val = AGL_GMX_RD8(sc, AGL_PRT_CTL(port));
+	CLR(val, AGL_PRT_CTL_DRV_BYP);
+	AGL_GMX_WR8(sc, AGL_PRT_CTL(port), val);
+	(void)AGL_GMX_RD8(sc, AGL_PRT_CTL(port));
+
+	val = AGL_GMX_RD8(sc, AGL_PRT_CTL(port));
+	SET(val, AGL_PRT_CTL_COMP);
+	AGL_GMX_WR8(sc, AGL_PRT_CTL(port), val);
+	(void)AGL_GMX_RD8(sc, AGL_PRT_CTL(port));
+
+	/* Let the compensation controller settle. */
+	delay(20);
+
+	val = AGL_GMX_RX_FRM_CTL_PRE_ALIGN
+	    | AGL_GMX_RX_FRM_CTL_PAD_LEN
+	    | AGL_GMX_RX_FRM_CTL_VLAN_LEN
+	    | AGL_GMX_RX_FRM_CTL_PRE_FREE
+	    | AGL_GMX_RX_FRM_CTL_MCST
+	    | AGL_GMX_RX_FRM_CTL_BCK
+	    | AGL_GMX_RX_FRM_CTL_DRP
+	    | AGL_GMX_RX_FRM_CTL_PRE_STRP
+	    | AGL_GMX_RX_FRM_CTL_PRE_CHK;
+	AGL_GMX_PORT_WR8(sc, AGL_GMX_RX_FRM_CTL, val);
+	(void)AGL_GMX_PORT_RD8(sc, AGL_GMX_RX_FRM_CTL);
+}
+
+void
+cn30xxgmx_agl_up(struct cn30xxgmx_port_softc *sc)
+{
+	uint64_t val;
+
+	val = AGL_GMX_PORT_RD8(sc, AGL_GMX_PRT_CFG);
+	SET(val, AGL_GMX_PRT_CFG_RX_EN);
+	SET(val, AGL_GMX_PRT_CFG_TX_EN);
+	AGL_GMX_PORT_WR8(sc, AGL_GMX_PRT_CFG, val);
+
+	val = AGL_GMX_PORT_RD8(sc, AGL_GMX_PRT_CFG);
+	SET(val, AGL_GMX_PRT_CFG_EN);
+	AGL_GMX_PORT_WR8(sc, AGL_GMX_PRT_CFG, val);
+	(void)AGL_GMX_PORT_RD8(sc, AGL_GMX_PRT_CFG);
+}
+
+void
+cn30xxgmx_agl_down(struct cn30xxgmx_port_softc *sc)
+{
+	uint64_t val;
+	int timeout;
+
+	val = AGL_GMX_PORT_RD8(sc, AGL_GMX_PRT_CFG);
+	CLR(val, AGL_GMX_PRT_CFG_EN);
+	AGL_GMX_PORT_WR8(sc, AGL_GMX_PRT_CFG, val);
+
+	val = AGL_GMX_PORT_RD8(sc, AGL_GMX_PRT_CFG);
+	CLR(val, AGL_GMX_PRT_CFG_RX_EN);
+	CLR(val, AGL_GMX_PRT_CFG_TX_EN);
+	AGL_GMX_PORT_WR8(sc, AGL_GMX_PRT_CFG, val);
+	(void)AGL_GMX_PORT_RD8(sc, AGL_GMX_PRT_CFG);
+
+	/* Wait until the port is idle. */
+	for (timeout = 1000; timeout > 0; timeout--) {
+		const uint64_t idlemask = AGL_GMX_PRT_CFG_RX_IDLE |
+		    AGL_GMX_PRT_CFG_TX_IDLE;
+		val = AGL_GMX_PORT_RD8(sc, AGL_GMX_PRT_CFG);
+		if ((val & idlemask) == idlemask)
+			break;
+		delay(1000);
+	}
+}
+
+int
+cn30xxgmx_agl_enable(struct cn30xxgmx_port_softc *sc, int enable)
+{
+	if (enable)
+		cn30xxgmx_agl_up(sc);
+	else
+		cn30xxgmx_agl_down(sc);
+	return 0;
+}
+
+int
+cn30xxgmx_agl_speed(struct cn30xxgmx_port_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_port_ac->ac_if;
+	uint64_t clk_cnt, prt_cfg, val;
+	unsigned int maxlen;
+	int port = 0;
+
+	cn30xxgmx_agl_down(sc);
+
+	prt_cfg = AGL_GMX_PORT_RD8(sc, AGL_GMX_PRT_CFG);
+
+	if (ISSET(sc->sc_port_mii->mii_media_active, IFM_FDX))
+		SET(prt_cfg, AGL_GMX_PRT_CFG_DUPLEX);
+	else
+		CLR(prt_cfg, AGL_GMX_PRT_CFG_DUPLEX);
+
+	switch (ifp->if_baudrate) {
+	case IF_Mbps(10):
+		CLR(prt_cfg, AGL_GMX_PRT_CFG_SPEED);
+		SET(prt_cfg, AGL_GMX_PRT_CFG_SPEED_MSB);
+		CLR(prt_cfg, AGL_GMX_PRT_CFG_SLOTTIME);
+		SET(prt_cfg, AGL_GMX_PRT_CFG_BURST);
+		clk_cnt = 50;
+		break;
+	case IF_Mbps(100):
+		CLR(prt_cfg, AGL_GMX_PRT_CFG_SPEED);
+		CLR(prt_cfg, AGL_GMX_PRT_CFG_SPEED_MSB);
+		CLR(prt_cfg, AGL_GMX_PRT_CFG_SLOTTIME);
+		SET(prt_cfg, AGL_GMX_PRT_CFG_BURST);
+		clk_cnt = 5;
+		break;
+	case IF_Gbps(1):
+	default:
+		SET(prt_cfg, AGL_GMX_PRT_CFG_SPEED);
+		CLR(prt_cfg, AGL_GMX_PRT_CFG_SPEED_MSB);
+		SET(prt_cfg, AGL_GMX_PRT_CFG_SLOTTIME);
+		if (ISSET(sc->sc_port_mii->mii_media_active, IFM_FDX))
+			SET(prt_cfg, AGL_GMX_PRT_CFG_BURST);
+		else
+			CLR(prt_cfg, AGL_GMX_PRT_CFG_BURST);
+		clk_cnt = 1;
+		break;
+	}
+
+	AGL_GMX_PORT_WR8(sc, AGL_GMX_PRT_CFG, prt_cfg);
+	(void)AGL_GMX_PORT_RD8(sc, AGL_GMX_PRT_CFG);
+
+	val = AGL_GMX_PORT_RD8(sc, AGL_GMX_TX_CLK);
+	CLR(val, AGL_GMX_TX_CLK_CLK_CNT_M);
+	SET(val, clk_cnt << AGL_GMX_TX_CLK_CLK_CNT_S);
+	AGL_GMX_PORT_WR8(sc, AGL_GMX_TX_CLK, val);
+	(void)AGL_GMX_PORT_RD8(sc, AGL_GMX_TX_CLK);
+
+	maxlen = roundup(ifp->if_hardmtu + ETHER_HDR_LEN + ETHER_CRC_LEN +
+	    ETHER_VLAN_ENCAP_LEN, 8);
+	AGL_GMX_PORT_WR8(sc, AGL_GMX_RX_JABBER, maxlen);
+	AGL_GMX_PORT_WR8(sc, AGL_GMX_RX_FRM_MAX, maxlen);
+	(void)AGL_GMX_PORT_RD8(sc, AGL_GMX_RX_FRM_MAX);
+
+	cn30xxgmx_agl_up(sc);
+
+	val = AGL_GMX_RD8(sc, AGL_PRT_CTL(port));
+	SET(val, AGL_PRT_CTL_CLKRST);
+	AGL_GMX_WR8(sc, AGL_PRT_CTL(port), val);
+
+	val = AGL_GMX_RD8(sc, AGL_PRT_CTL(port));
+	SET(val, AGL_PRT_CTL_ENABLE);
+	AGL_GMX_WR8(sc, AGL_PRT_CTL(port), val);
+	(void)AGL_GMX_RD8(sc, AGL_PRT_CTL(port));
+
+	return 0;
+}
+
+int
+cn30xxgmx_agl_timing(struct cn30xxgmx_port_softc *sc)
+{
 	return 0;
 }
 

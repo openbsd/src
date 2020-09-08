@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmxvar.h,v 1.10 2020/09/04 15:18:05 visa Exp $	*/
+/*	$OpenBSD: cn30xxgmxvar.h,v 1.11 2020/09/08 13:54:48 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -45,6 +45,7 @@
 #define GMX_RGMII_PORT	3
 #define GMX_SGMII_PORT	4
 #define GMX_SPI42_PORT	5
+#define GMX_AGL_PORT	6
 
 #define GMX_FRM_MAX_SIZ	0x600
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxpko.c,v 1.6 2017/11/05 04:57:28 visa Exp $	*/
+/*	$OpenBSD: cn30xxpko.c,v 1.7 2020/09/08 13:54:48 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -140,7 +140,8 @@ int
 cn30xxpko_port_config(struct cn30xxpko_softc *sc)
 {
 	paddr_t buf_ptr = 0;
-	uint64_t mem_queue_ptrs;
+	uint64_t mem_queue_ptrs, val;
+	int i;
 
 	KASSERT(sc->sc_port < 32);
 
@@ -149,6 +150,22 @@ cn30xxpko_port_config(struct cn30xxpko_softc *sc)
 		return 1;
 
 	KASSERT(buf_ptr != 0);
+
+	if (sc->sc_port == 24) {
+		/* Set up PKO for AGL port. */
+		_PKO_WR8(sc, PKO_REG_READ_IDX_OFFSET, 1ULL << 8);
+		for (i = 0; i < 40; i++) {
+			val = _PKO_RD8(sc, PKO_MEM_PORT_PTRS_OFFSET);
+			if ((val & PKO_MEM_PORT_PTRS_PID_M) == 24) {
+				CLR(val, PKO_MEM_PORT_PTRS_EID_M);
+				SET(val, 10ULL << PKO_MEM_PORT_PTRS_EID_S);
+				CLR(val, PKO_MEM_PORT_PTRS_BP_PORT_M);
+				SET(val, 40ULL << PKO_MEM_PORT_PTRS_BP_PORT_S);
+				_PKO_WR8(sc, PKO_MEM_PORT_PTRS_OFFSET, val);
+				break;
+			}
+		}
+	}
 
 	/* assume one queue maped one port */
 	mem_queue_ptrs = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: octpip.c,v 1.2 2019/09/28 22:20:25 deraadt Exp $	*/
+/*	$OpenBSD: octpip.c,v 1.3 2020/09/08 13:54:48 visa Exp $	*/
 
 /*
  * Copyright (c) 2019 Visa Hankala
@@ -57,6 +57,7 @@ octpip_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct iobus_attach_args iaa;
 	struct fdt_attach_args *faa = aux;
+	paddr_t addr;
 	uint32_t ifindex;
 	int node;
 
@@ -65,14 +66,20 @@ octpip_attach(struct device *parent, struct device *self, void *aux)
 	for (node = OF_child(faa->fa_node); node != 0; node = OF_peer(node)) {
 		if (!OF_is_compatible(node, "cavium,octeon-3860-pip-interface"))
 			continue;
+
 		ifindex = OF_getpropint(node, "reg", (uint32_t)-1);
-		if (ifindex >= 16)
+		if (ifindex < 2)
+			addr = GMX0_BASE_PORT0 + GMX_BLOCK_SIZE * ifindex;
+		else if (ifindex == 4)
+			addr = AGL_BASE;
+		else
 			continue;
+
 		memset(&iaa, 0, sizeof(iaa));
 		iaa.aa_name = "octgmx";
 		iaa.aa_bust = faa->fa_iot;
 		iaa.aa_dmat = faa->fa_dmat;
-		iaa.aa_addr = GMX0_BASE_PORT0 + GMX_BLOCK_SIZE * ifindex;
+		iaa.aa_addr = addr;
 		iaa.aa_irq = -1;
 		iaa.aa_unitno = ifindex;
 		config_found(self, &iaa, octpip_print);
