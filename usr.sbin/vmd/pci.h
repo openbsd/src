@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.h,v 1.7 2017/09/17 23:07:56 pd Exp $	*/
+/*	$OpenBSD: pci.h,v 1.8 2020/09/08 20:09:43 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -32,43 +32,44 @@ typedef int (*pci_iobar_fn_t)(int dir, uint16_t reg, uint32_t *data, uint8_t *,
     void *, uint8_t);
 typedef int (*pci_mmiobar_fn_t)(int dir, uint32_t ofs, uint32_t *data);
 
-union pci_dev {
-	uint32_t pd_cfg_space[PCI_CONFIG_SPACE_SIZE / 4];
 
-	struct {
-		uint16_t pd_vid;
-		uint16_t pd_did;
-		uint16_t pd_cmd;
-		uint16_t pd_status;
-		uint8_t pd_rev;
-		uint8_t pd_prog_if;
-		uint8_t pd_subclass;
-		uint8_t pd_class;
-		uint8_t pd_cache_size;
-		uint8_t pd_lat_timer;
-		uint8_t pd_header_type;
-		uint8_t pd_bist;
-		uint32_t pd_bar[PCI_MAX_BARS];
-		uint32_t pd_cardbus_cis;
-		uint16_t pd_subsys_vid;
-		uint16_t pd_subsys_id;
-		uint32_t pd_exp_rom_addr;
-		uint8_t pd_cap;
-		uint32_t pd_reserved0 : 24;
-		uint32_t pd_reserved1;
-		uint8_t pd_irq;
-		uint8_t pd_int;
-		uint8_t pd_min_grant;
-		uint8_t pd_max_grant;
+struct pci_dev {
+	union {
+		uint32_t pd_cfg_space[PCI_CONFIG_SPACE_SIZE / 4];
+		struct {
+			uint16_t pd_vid;
+			uint16_t pd_did;
+			uint16_t pd_cmd;
+			uint16_t pd_status;
+			uint8_t pd_rev;
+			uint8_t pd_prog_if;
+			uint8_t pd_subclass;
+			uint8_t pd_class;
+			uint8_t pd_cache_size;
+			uint8_t pd_lat_timer;
+			uint8_t pd_header_type;
+			uint8_t pd_bist;
+			uint32_t pd_bar[PCI_MAX_BARS];
+			uint32_t pd_cardbus_cis;
+			uint16_t pd_subsys_vid;
+			uint16_t pd_subsys_id;
+			uint32_t pd_exp_rom_addr;
+			uint8_t pd_cap;
+			uint32_t pd_reserved0 : 24;
+			uint32_t pd_reserved1;
+			uint8_t pd_irq;
+			uint8_t pd_int;
+			uint8_t pd_min_grant;
+			uint8_t pd_max_grant;
+		} __packed;
+	};
+	uint8_t pd_bar_ct;
+	pci_cs_fn_t pd_csfunc;
 
-		uint8_t pd_bar_ct;
-		pci_cs_fn_t pd_csfunc;
-
-		uint8_t pd_bartype[PCI_MAX_BARS];
-		uint32_t pd_barsize[PCI_MAX_BARS];
-		void *pd_barfunc[PCI_MAX_BARS];
-		void *pd_bar_cookie[PCI_MAX_BARS];
-	} __packed;
+	uint8_t pd_bartype[PCI_MAX_BARS];
+	uint32_t pd_barsize[PCI_MAX_BARS];
+	void *pd_barfunc[PCI_MAX_BARS];
+	void *pd_bar_cookie[PCI_MAX_BARS];
 };
 
 struct pci {
@@ -79,7 +80,7 @@ struct pci {
 	uint32_t pci_addr_reg;
 	uint32_t pci_data_reg;
 
-	union pci_dev pci_devices[PCI_CONFIG_MAX_DEV];
+	struct pci_dev pci_devices[PCI_CONFIG_MAX_DEV];
 };
 
 void pci_handle_address_reg(struct vm_run_params *);
