@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.70 2020/08/28 13:37:52 tobhe Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.71 2020/09/09 21:25:42 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -352,17 +352,6 @@ pfkey_flow(int sd, uint8_t satype, uint8_t action, struct iked_flow *flow)
 	iov_cnt++;
 
 	if (action != SADB_X_DELFLOW && flow->flow_local != NULL) {
-#if 0
-		/* local ip */
-		iov[iov_cnt].iov_base = &sa_local;
-		iov[iov_cnt].iov_len = sizeof(sa_local);
-		iov_cnt++;
-		iov[iov_cnt].iov_base = &slocal;
-		iov[iov_cnt].iov_len = ROUNDUP(slocal.ss_len);
-		smsg.sadb_msg_len += sa_local.sadb_address_len;
-		iov_cnt++;
-#endif
-
 		/* remote peer */
 		iov[iov_cnt].iov_base = &sa_peer;
 		iov[iov_cnt].iov_len = sizeof(sa_peer);

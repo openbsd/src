@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.69 2020/08/23 19:16:08 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.70 2020/09/09 21:25:42 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -647,18 +647,6 @@ sa_cmp(struct iked_sa *a, struct iked_sa *b)
 		return (-1);
 	if (a->sa_hdr.sh_ispi < b->sa_hdr.sh_ispi)
 		return (1);
-
-#if 0
-	/* Responder SPI is not yet set in the local IKE SADB */
-	if ((b->sa_type == IKED_SATYPE_LOCAL && b->sa_hdr.sh_rspi == 0) ||
-	    (a->sa_type == IKED_SATYPE_LOCAL && a->sa_hdr.sh_rspi == 0))
-		return (0);
-
-	if (a->sa_hdr.sh_rspi > b->sa_hdr.sh_rspi)
-		return (-1);
-	if (a->sa_hdr.sh_rspi < b->sa_hdr.sh_rspi)
-		return (1);
-#endif
 
 	return (0);
 }
