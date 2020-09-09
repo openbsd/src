@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp.c,v 1.15 2018/02/07 05:49:36 jsing Exp $ */
+/* $OpenBSD: ocsp.c,v 1.16 2020/09/09 12:53:42 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -102,49 +102,655 @@ static OCSP_RESPONSE *query_responder(BIO * err, BIO * cbio, char *path,
     STACK_OF(CONF_VALUE) * headers,
     OCSP_REQUEST * req, int req_timeout);
 
+static struct {
+	int accept_count;
+	int add_nonce;
+	char *CAfile;
+	char *CApath;
+	X509 *cert;
+	const EVP_MD *cert_id_md;
+	STACK_OF(CONF_VALUE) * headers;
+	char *host;
+	STACK_OF(OCSP_CERTID) * ids;
+	int ignore_err;
+	X509 *issuer;
+	char *keyfile;
+	long maxage;
+	int ndays;
+	int nmin;
+	int no_usage;
+	int noverify;
+	long nsec;
+	char *outfile;
+	char *path;
+	char *port;
+	char *rca_filename;
+	char *rcertfile;
+	OCSP_REQUEST *req;
+	int req_text;
+	int req_timeout;
+	char *reqin;
+	STACK_OF(OPENSSL_STRING) * reqnames;
+	char *reqout;
+	int resp_text;
+	char *respin;
+	char *respout;
+	unsigned long rflags;
+	char *ridx_filename;
+	char *rkeyfile;
+	char *rsignfile;
+	char *sign_certfile;
+	unsigned long sign_flags;
+	char *signfile;
+	int use_ssl;
+	char *verify_certfile;
+	unsigned long verify_flags;
+} ocsp_config;
+
+static int
+ocsp_opt_cert(char *arg)
+{
+	X509_free(ocsp_config.cert);
+	ocsp_config.cert = load_cert(bio_err, arg, FORMAT_PEM, NULL,
+	    "certificate");
+	if (ocsp_config.cert == NULL) {
+		ocsp_config.no_usage = 1;
+		return (1);
+	}
+	if (ocsp_config.cert_id_md == NULL)
+		ocsp_config.cert_id_md = EVP_sha1();
+	if (!add_ocsp_cert(&ocsp_config.req, ocsp_config.cert,
+	    ocsp_config.cert_id_md, ocsp_config.issuer, ocsp_config.ids)) {
+		ocsp_config.no_usage = 1;
+		return (1);
+	}
+	if (!sk_OPENSSL_STRING_push(ocsp_config.reqnames, arg)) {
+		ocsp_config.no_usage = 1;
+		return (1);
+	}
+	return (0);
+}
+	
+static int
+ocsp_opt_cert_id_md(int argc, char **argv, int *argsused)
+{
+	char *name = argv[0];
+
+	if (*name++ != '-')
+		return (1);
+
+	if ((ocsp_config.cert_id_md = EVP_get_digestbyname(name)) == NULL)
+		return (1);
+
+	*argsused = 1;
+	return (0);
+}
+
+static int
+ocsp_opt_header(int argc, char **argv, int *argsused)
+{
+	if (argc < 3 || argv[1] == NULL || argv[2] == NULL)
+		return (1);
+
+	if (!X509V3_add_value(argv[1], argv[2], &ocsp_config.headers)) {
+		ocsp_config.no_usage = 1;
+		return (1);
+	}
+
+	*argsused = 3;
+	return (0);
+}
+
+static int
+ocsp_opt_host(char *arg)
+{
+	if (ocsp_config.use_ssl != -1)
+		return (1);
+
+	ocsp_config.host = arg;
+	return (0);
+}
+
+static int
+ocsp_opt_issuer(char *arg)
+{
+	X509_free(ocsp_config.issuer);
+	ocsp_config.issuer = load_cert(bio_err, arg, FORMAT_PEM, NULL,
+	    "issuer certificate");
+	if (ocsp_config.issuer == NULL) {
+		ocsp_config.no_usage = 1;
+		return (1);
+	}
+	return (0);
+}
+
+static int
+ocsp_opt_ndays(char *arg)
+{
+	const char *errstr = NULL;
+
+	ocsp_config.ndays = strtonum(arg, 0, INT_MAX, &errstr);
+	if (errstr != NULL) {
+		BIO_printf(bio_err, "Illegal update period %s: %s\n",
+		    arg, errstr);
+		return (1);
+	}
+	return (0);
+}
+
+static int
+ocsp_opt_nmin(char *arg)
+{
+	const char *errstr = NULL;
+
+	ocsp_config.nmin = strtonum(arg, 0, INT_MAX, &errstr);
+	if (errstr != NULL) {
+		BIO_printf(bio_err, "Illegal update period %s: %s\n",
+		    arg, errstr);
+		return (1);
+	}
+
+	if (ocsp_config.ndays != -1)
+		return (1);
+
+	ocsp_config.ndays = 0;
+	return (0);
+}
+
+static int
+ocsp_opt_nrequest(char *arg)
+{
+	const char *errstr = NULL;
+
+	ocsp_config.accept_count = strtonum(arg, 0, INT_MAX, &errstr);
+	if (errstr != NULL) {
+		BIO_printf(bio_err, "Illegal accept count %s: %s\n",
+		    arg, errstr);
+		return (1);
+	}
+	return (0);
+}
+
+static int
+ocsp_opt_port(char *arg)
+{
+	if (ocsp_config.use_ssl != -1)
+		return (1);
+
+	ocsp_config.port = arg;
+	return (0);
+}
+
+static int
+ocsp_opt_serial(char *arg)
+{
+	if (ocsp_config.cert_id_md == NULL)
+		ocsp_config.cert_id_md = EVP_sha1();
+	if (!add_ocsp_serial(&ocsp_config.req, arg, ocsp_config.cert_id_md,
+	    ocsp_config.issuer, ocsp_config.ids)) {
+		ocsp_config.no_usage = 1;
+		return (1);
+	}
+	if (!sk_OPENSSL_STRING_push(ocsp_config.reqnames, arg)) {
+		ocsp_config.no_usage = 1;
+		return (1);
+	}
+	return (0);
+}
+
+static int
+ocsp_opt_status_age(char *arg)
+{
+	const char *errstr = NULL;
+
+	ocsp_config.maxage = strtonum(arg, 0, LONG_MAX, &errstr);
+	if (errstr != NULL) {
+		BIO_printf(bio_err, "Illegal validity age %s: %s\n",
+		    arg, errstr);
+		return (1);
+	}
+	return (0);
+}
+
+static int
+ocsp_opt_text(void)
+{
+	ocsp_config.req_text = 1;
+	ocsp_config.resp_text = 1;
+	return (0);
+}
+
+static int
+ocsp_opt_timeout(char *arg)
+{
+	const char *errstr = NULL;
+
+	ocsp_config.req_timeout = strtonum(arg, 0, INT_MAX, &errstr);
+	if (errstr != NULL) {
+		BIO_printf(bio_err, "Illegal timeout value %s: %s\n",
+		    arg, errstr);
+		return (1);
+	}
+	return (0);
+}
+
+static int
+ocsp_opt_url(char *arg)
+{
+	if (ocsp_config.host == NULL && ocsp_config.port == NULL &&
+	    ocsp_config.path == NULL) {
+		if (!OCSP_parse_url(arg, &ocsp_config.host, &ocsp_config.port,
+		    &ocsp_config.path, &ocsp_config.use_ssl)) {
+			BIO_printf(bio_err, "Error parsing URL\n");
+			return (1);
+		}
+	}
+	return (0);
+}
+
+static int
+ocsp_opt_vafile(char *arg)
+{
+	ocsp_config.verify_certfile = arg;
+	ocsp_config.verify_flags |= OCSP_TRUSTOTHER;
+	return (0);
+}
+
+static int
+ocsp_opt_validity_period(char *arg)
+{
+	const char *errstr = NULL;
+
+	ocsp_config.nsec = strtonum(arg, 0, LONG_MAX, &errstr);
+	if (errstr != NULL) {
+		BIO_printf(bio_err, "Illegal validity period %s: %s\n",
+		    arg, errstr);
+		return (1);
+	}
+	return (0);
+}
+
+static const struct option ocsp_options[] = {
+	{
+		.name = "CA",
+		.argname = "file",
+		.desc = "CA certificate corresponding to the revocation information",
+		.type = OPTION_ARG,
+		.opt.arg = &ocsp_config.rca_filename,
+	},
+	{
+		.name = "CAfile",
+		.argname = "file",
+		.desc = "Trusted certificates file",
+		.type = OPTION_ARG,
+		.opt.arg = &ocsp_config.CAfile,
+	},
+	{
+		.name = "CApath",
+		.argname = "directory",
+		.desc = "Trusted certificates directory",
+		.type = OPTION_ARG,
+		.opt.arg = &ocsp_config.CApath,
+	},
+	{
+		.name = "cert",
+		.argname = "file",
+		.desc = "Certificate to check",
+		.type = OPTION_ARG_FUNC,
+		.opt.argfunc = ocsp_opt_cert,
+	},
+	{
+		.name = "header",
+		.argname = "name value",
+		.desc = "Add the header name with the value to the request",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = ocsp_opt_header,
+	},
+	{
+		.name = "host",
+		.argname = "hostname:port",
+		.desc = "Send OCSP request to host on port",
+		.type = OPTION_ARG_FUNC,
+		.opt.argfunc = ocsp_opt_host,
+	},
+	{
+		.name = "ignore_err",
+		.desc = "Ignore the invalid response",
+		.type = OPTION_FLAG,
+		.opt.flag = &ocsp_config.ignore_err,
+	},
+	{
+		.name = "index",
+		.argname = "indexfile",
+		.desc = "Certificate status index file",
+		.type = OPTION_ARG,
+		.opt.arg = &ocsp_config.ridx_filename,
+	},
+	{
+		.name = "issuer",
+		.argname = "file",
+		.desc = "Issuer certificate",
+		.type = OPTION_ARG_FUNC,
+		.opt.argfunc = ocsp_opt_issuer,
+	},
+	{
+		.name = "ndays",
+		.argname = "days",
+		.desc = "Number of days before next update",
+		.type = OPTION_ARG_FUNC,
+		.opt.argfunc = ocsp_opt_ndays,
+	},
+	{
+		.name = "nmin",
+		.argname = "minutes",
+		.desc = "Number of minutes before next update",
+		.type = OPTION_ARG_FUNC,
+		.opt.argfunc = ocsp_opt_nmin,
+	},
+	{
+		.name = "no_cert_checks",
+		.desc = "Don't do additional checks on signing certificate",
+		.type = OPTION_UL_VALUE_OR,
+		.opt.ulvalue = &ocsp_config.verify_flags,
+		.ulvalue = OCSP_NOCHECKS,
+	},
+	{
+		.name = "no_cert_verify",
+		.desc = "Don't check signing certificate",
+		.type = OPTION_UL_VALUE_OR,
+		.opt.ulvalue = &ocsp_config.verify_flags,
+		.ulvalue = OCSP_NOVERIFY,
+	},
+	{
+		.name = "no_certs",
+		.desc = "Don't include any certificates in signed request",
+		.type = OPTION_UL_VALUE_OR,
+		.opt.ulvalue = &ocsp_config.sign_flags,
+		.ulvalue = OCSP_NOCERTS,
+	},
+	{
+		.name = "no_chain",
+		.desc = "Don't use certificates in the response",
+		.type = OPTION_UL_VALUE_OR,
+		.opt.ulvalue = &ocsp_config.verify_flags,
+		.ulvalue = OCSP_NOCHAIN,
+	},
+	{
+		.name = "no_explicit",
+		.desc = "Don't check the explicit trust for OCSP signing",
+		.type = OPTION_UL_VALUE_OR,
+		.opt.ulvalue = &ocsp_config.verify_flags,
+		.ulvalue = OCSP_NOEXPLICIT,
+	},
+	{
+		.name = "no_intern",
+		.desc = "Don't search certificates contained in response for signer",
+		.type = OPTION_UL_VALUE_OR,
+		.opt.ulvalue = &ocsp_config.verify_flags,
+		.ulvalue = OCSP_NOINTERN,
+	},
+	{
+		.name = "no_nonce",
+		.desc = "Don't add OCSP nonce to request",
+		.type = OPTION_VALUE,
+		.opt.value = &ocsp_config.add_nonce,
+		.value = 0,
+	},
+	{
+		.name = "no_signature_verify",
+		.desc = "Don't check signature on response",
+		.type = OPTION_UL_VALUE_OR,
+		.opt.ulvalue = &ocsp_config.verify_flags,
+		.ulvalue = OCSP_NOSIGS,
+	},
+	{
+		.name = "nonce",
+		.desc = "Add OCSP nonce to request",
+		.type = OPTION_VALUE,
+		.opt.value = &ocsp_config.add_nonce,
+		.value = 2,
+	},
+	{
+		.name = "noverify",
+		.desc = "Don't verify response at all",
+		.type = OPTION_FLAG,
+		.opt.flag = &ocsp_config.noverify,
+	},
+	{
+		.name = "nrequest",
+		.argname = "number",
+		.desc = "Number of requests to accept (default unlimited)",
+		.type = OPTION_ARG_FUNC,
+		.opt.argfunc = ocsp_opt_nrequest,
+	},
+	{
+		.name = "out",
+		.argname = "file",
+		.desc = "Output filename",
+		.type = OPTION_ARG,
+		.opt.arg = &ocsp_config.outfile,
+	},
+	{
+		.name = "path",
+		.argname = "path",
+		.desc = "Path to use in OCSP request",
+		.type = OPTION_ARG,
+		.opt.arg = &ocsp_config.path,
+	},
+	{
+		.name = "port",
+		.argname = "portnum",
+		.desc = "Port to run responder on",
+		.type = OPTION_ARG_FUNC,
+		.opt.argfunc = ocsp_opt_port,
+	},
+	{
+		.name = "req_text",
+		.desc = "Print text form of request",
+		.type = OPTION_FLAG,
+		.opt.flag = &ocsp_config.req_text,
+	},
+	{
+		.name = "reqin",
+		.argname = "file",
+		.desc = "Read DER encoded OCSP request from \"file\"",
+		.type = OPTION_ARG,
+		.opt.arg = &ocsp_config.reqin,
+	},
+	{
+		.name = "reqout",
+		.argname = "file",
+		.desc = "Write DER encoded OCSP request to \"file\"",
+		.type = OPTION_ARG,
+		.opt.arg = &ocsp_config.reqout,
+	},
+	{
+		.name = "resp_key_id",
+		.desc = "Identify response by signing certificate key ID",
+		.type = OPTION_UL_VALUE_OR,
+		.opt.ulvalue = &ocsp_config.rflags,
+		.ulvalue = OCSP_RESPID_KEY,
+	},
+	{
+		.name = "resp_no_certs",
+		.desc = "Don't include any certificates in response",
+		.type = OPTION_UL_VALUE_OR,
+		.opt.ulvalue = &ocsp_config.rflags,
+		.ulvalue = OCSP_NOCERTS,
+	},
+	{
+		.name = "resp_text",
+		.desc = "Print text form of response",
+		.type = OPTION_FLAG,
+		.opt.flag = &ocsp_config.resp_text,
+	},
+	{
+		.name = "respin",
+		.argname = "file",
+		.desc = "Read DER encoded OCSP response from \"file\"",
+		.type = OPTION_ARG,
+		.opt.arg = &ocsp_config.respin,
+	},
+	{
+		.name = "respout",
+		.argname = "file",
+		.desc = "Write DER encoded OCSP response to \"file\"",
+		.type = OPTION_ARG,
+		.opt.arg = &ocsp_config.respout,
+	},
+	{
+		.name = "rkey",
+		.argname = "file",
+		.desc = "Responder key to sign responses with",
+		.type = OPTION_ARG,
+		.opt.arg = &ocsp_config.rkeyfile,
+	},
+	{
+		.name = "rother",
+		.argname = "file",
+		.desc = "Other certificates to include in response",
+		.type = OPTION_ARG,
+		.opt.arg = &ocsp_config.rcertfile,
+	},
+	{
+		.name = "rsigner",
+		.argname = "file",
+		.desc = "Responder certificate to sign responses with",
+		.type = OPTION_ARG,
+		.opt.arg = &ocsp_config.rsignfile,
+	},
+	{
+		.name = "serial",
+		.argname = "num",
+		.desc = "Serial number to check",
+		.type = OPTION_ARG_FUNC,
+		.opt.argfunc = ocsp_opt_serial,
+	},
+	{
+		.name = "sign_other",
+		.argname = "file",
+		.desc = "Additional certificates to include in signed request",
+		.type = OPTION_ARG,
+		.opt.arg = &ocsp_config.sign_certfile,
+	},
+	{
+		.name = "signer",
+		.argname = "file",
+		.desc = "Certificate to sign OCSP request with",
+		.type = OPTION_ARG,
+		.opt.arg = &ocsp_config.signfile,
+	},
+	{
+		.name = "signkey",
+		.argname = "file",
+		.desc = "Private key to sign OCSP request with",
+		.type = OPTION_ARG,
+		.opt.arg = &ocsp_config.keyfile,
+	},
+	{
+		.name = "status_age",
+		.argname = "age",
+		.desc = "Maximum status age in seconds",
+		.type = OPTION_ARG_FUNC,
+		.opt.argfunc = ocsp_opt_status_age,
+	},
+	{
+		.name = "text",
+		.desc = "Print text form of request and response",
+		.type = OPTION_FUNC,
+		.opt.func = ocsp_opt_text,
+	},
+	{
+		.name = "timeout",
+		.argname = "seconds",
+		.desc = "Connection timeout to the OCSP responder in seconds",
+		.type = OPTION_ARG_FUNC,
+		.opt.argfunc = ocsp_opt_timeout,
+	},
+	{
+		.name = "trust_other",
+		.desc = "Don't verify additional certificates",
+		.type = OPTION_UL_VALUE_OR,
+		.opt.ulvalue = &ocsp_config.verify_flags,
+		.ulvalue = OCSP_TRUSTOTHER,
+	},
+	{
+		.name = "url",
+		.argname = "responder_url",
+		.desc = "OCSP responder URL",
+		.type = OPTION_ARG_FUNC,
+		.opt.argfunc = ocsp_opt_url,
+	},
+	{
+		.name = "VAfile",
+		.argname = "file",
+		.desc = "Explicitly trusted responder certificates",
+		.type = OPTION_ARG_FUNC,
+		.opt.argfunc = ocsp_opt_vafile,
+	},
+	{
+		.name = "validity_period",
+		.argname = "n",
+		.desc = "Maximum validity discrepancy in seconds",
+		.type = OPTION_ARG_FUNC,
+		.opt.argfunc = ocsp_opt_validity_period,
+	},
+	{
+		.name = "verify_other",
+		.argname = "file",
+		.desc = "Additional certificates to search for signer",
+		.type = OPTION_ARG,
+		.opt.arg = &ocsp_config.verify_certfile,
+	},
+	{
+		.name = NULL,
+		.desc = "",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = ocsp_opt_cert_id_md,
+	},
+	{ NULL },
+};
+
+static void
+ocsp_usage(void)
+{
+	fprintf(stderr, "usage: ocsp "
+	    "[-CA file] [-CAfile file] [-CApath directory] [-cert file]\n"
+	    "    [-dgst alg] [-header name value] [-host hostname:port]\n"
+	    "    [-ignore_err] [-index indexfile] [-issuer file]\n"
+	    "    [-ndays days] [-nmin minutes] [-no_cert_checks]\n"
+	    "    [-no_cert_verify] [-no_certs] [-no_chain] [-no_explicit]\n"
+	    "    [-no_intern] [-no_nonce] [-no_signature_verify] [-nonce]\n"
+	    "    [-noverify] [-nrequest number] [-out file] [-path path]\n"
+	    "    [-port portnum] [-req_text] [-reqin file] [-reqout file]\n"
+	    "    [-resp_key_id] [-resp_no_certs] [-resp_text] [-respin file]\n"
+	    "    [-respout file] [-rkey file] [-rother file] [-rsigner file]\n"
+	    "    [-serial num] [-sign_other file] [-signer file]\n"
+	    "    [-signkey file] [-status_age age] [-text]\n"
+	    "    [-timeout seconds] [-trust_other] [-url responder_url]\n"
+	    "    [-VAfile file] [-validity_period nsec] [-verify_other file]\n");
+	fprintf(stderr, "\n");
+	options_usage(ocsp_options);
+	fprintf(stderr, "\n");
+}
+
 int
 ocsp_main(int argc, char **argv)
 {
-	char **args;
-	char *host = NULL, *port = NULL, *path = NULL;
-	char *reqin = NULL, *respin = NULL;
-	char *reqout = NULL, *respout = NULL;
-	char *signfile = NULL, *keyfile = NULL;
-	char *rsignfile = NULL, *rkeyfile = NULL;
-	char *outfile = NULL;
-	int add_nonce = 1, noverify = 0, use_ssl = -1;
-	STACK_OF(CONF_VALUE) * headers = NULL;
-	OCSP_REQUEST *req = NULL;
 	OCSP_RESPONSE *resp = NULL;
 	OCSP_BASICRESP *bs = NULL;
-	X509 *issuer = NULL, *cert = NULL;
 	X509 *signer = NULL, *rsigner = NULL;
 	EVP_PKEY *key = NULL, *rkey = NULL;
 	BIO *acbio = NULL, *cbio = NULL;
 	BIO *derbio = NULL;
 	BIO *out = NULL;
-	int req_timeout = -1;
-	int req_text = 0, resp_text = 0;
-	long nsec = MAX_VALIDITY_PERIOD, maxage = -1;
-	char *CAfile = NULL, *CApath = NULL;
 	X509_STORE *store = NULL;
 	STACK_OF(X509) * sign_other = NULL, *verify_other = NULL, *rother = NULL;
-	char *sign_certfile = NULL, *verify_certfile = NULL, *rcertfile = NULL;
-	unsigned long sign_flags = 0, verify_flags = 0, rflags = 0;
 	int ret = 1;
-	int accept_count = -1;
 	int badarg = 0;
 	int i;
-	int ignore_err = 0;
-	STACK_OF(OPENSSL_STRING) * reqnames = NULL;
-	STACK_OF(OCSP_CERTID) * ids = NULL;
 	X509 *rca_cert = NULL;
-	char *ridx_filename = NULL;
-	char *rca_filename = NULL;
 	CA_DB *rdb = NULL;
-	int nmin = 0, ndays = -1;
-	const EVP_MD *cert_id_md = NULL;
-	const char *errstr = NULL;
 
 	if (single_execution) {
 		if (pledge("stdio cpath wpath rpath inet dns tty", NULL) == -1) {
@@ -153,359 +759,36 @@ ocsp_main(int argc, char **argv)
 		}
 	}
 
-	args = argv + 1;
-	reqnames = sk_OPENSSL_STRING_new_null();
-	ids = sk_OCSP_CERTID_new_null();
-	while (!badarg && *args && *args[0] == '-') {
-		if (!strcmp(*args, "-out")) {
-			if (args[1]) {
-				args++;
-				outfile = *args;
-			} else
-				badarg = 1;
-		} else if (!strcmp(*args, "-timeout")) {
-			if (args[1]) {
-				args++;
-				req_timeout = strtonum(*args, 0,
-				    INT_MAX, &errstr);
-				if (errstr) {
-					BIO_printf(bio_err,
-					    "Illegal timeout value %s: %s\n",
-					    *args, errstr);
-					badarg = 1;
-				}
-			} else
-				badarg = 1;
-		} else if (!strcmp(*args, "-url")) {
-			if (args[1] && host == NULL && port == NULL &&
-			    path == NULL) {
-				args++;
-				if (!OCSP_parse_url(*args, &host, &port, &path, &use_ssl)) {
-					BIO_printf(bio_err, "Error parsing URL\n");
-					badarg = 1;
-				}
-			} else
-				badarg = 1;
-		} else if (!strcmp(*args, "-host")) {
-			if (args[1] && use_ssl == -1) {
-				args++;
-				host = *args;
-			} else
-				badarg = 1;
-		} else if (!strcmp(*args, "-port")) {
-			if (args[1] && use_ssl == -1) {
-				args++;
-				port = *args;
-			} else
-				badarg = 1;
-		} else if (!strcmp(*args, "-header")) {
-			if (args[1] && args[2]) {
-				if (!X509V3_add_value(args[1], args[2], &headers))
-					goto end;
-				args += 2;
-			} else
-				badarg = 1;
-		} else if (!strcmp(*args, "-ignore_err"))
-			ignore_err = 1;
-		else if (!strcmp(*args, "-noverify"))
-			noverify = 1;
-		else if (!strcmp(*args, "-nonce"))
-			add_nonce = 2;
-		else if (!strcmp(*args, "-no_nonce"))
-			add_nonce = 0;
-		else if (!strcmp(*args, "-resp_no_certs"))
-			rflags |= OCSP_NOCERTS;
-		else if (!strcmp(*args, "-resp_key_id"))
-			rflags |= OCSP_RESPID_KEY;
-		else if (!strcmp(*args, "-no_certs"))
-			sign_flags |= OCSP_NOCERTS;
-		else if (!strcmp(*args, "-no_signature_verify"))
-			verify_flags |= OCSP_NOSIGS;
-		else if (!strcmp(*args, "-no_cert_verify"))
-			verify_flags |= OCSP_NOVERIFY;
-		else if (!strcmp(*args, "-no_chain"))
-			verify_flags |= OCSP_NOCHAIN;
-		else if (!strcmp(*args, "-no_cert_checks"))
-			verify_flags |= OCSP_NOCHECKS;
-		else if (!strcmp(*args, "-no_explicit"))
-			verify_flags |= OCSP_NOEXPLICIT;
-		else if (!strcmp(*args, "-trust_other"))
-			verify_flags |= OCSP_TRUSTOTHER;
-		else if (!strcmp(*args, "-no_intern"))
-			verify_flags |= OCSP_NOINTERN;
-		else if (!strcmp(*args, "-text")) {
-			req_text = 1;
-			resp_text = 1;
-		} else if (!strcmp(*args, "-req_text"))
-			req_text = 1;
-		else if (!strcmp(*args, "-resp_text"))
-			resp_text = 1;
-		else if (!strcmp(*args, "-reqin")) {
-			if (args[1]) {
-				args++;
-				reqin = *args;
-			} else
-				badarg = 1;
-		} else if (!strcmp(*args, "-respin")) {
-			if (args[1]) {
-				args++;
-				respin = *args;
-			} else
-				badarg = 1;
-		} else if (!strcmp(*args, "-signer")) {
-			if (args[1]) {
-				args++;
-				signfile = *args;
-			} else
-				badarg = 1;
-		} else if (!strcmp(*args, "-VAfile")) {
-			if (args[1]) {
-				args++;
-				verify_certfile = *args;
-				verify_flags |= OCSP_TRUSTOTHER;
-			} else
-				badarg = 1;
-		} else if (!strcmp(*args, "-sign_other")) {
-			if (args[1]) {
-				args++;
-				sign_certfile = *args;
-			} else
-				badarg = 1;
-		} else if (!strcmp(*args, "-verify_other")) {
-			if (args[1]) {
-				args++;
-				verify_certfile = *args;
-			} else
-				badarg = 1;
-		} else if (!strcmp(*args, "-CAfile")) {
-			if (args[1]) {
-				args++;
-				CAfile = *args;
-			} else
-				badarg = 1;
-		} else if (!strcmp(*args, "-CApath")) {
-			if (args[1]) {
-				args++;
-				CApath = *args;
-			} else
-				badarg = 1;
-		} else if (!strcmp(*args, "-validity_period")) {
-			if (args[1]) {
-				args++;
-				nsec = strtonum(*args, 0, LONG_MAX, &errstr);
-				if (errstr) {
-					BIO_printf(bio_err,
-					    "Illegal validity period %s: %s\n",
-					    *args, errstr);
-					badarg = 1;
-				}
-			} else
-				badarg = 1;
-		} else if (!strcmp(*args, "-status_age")) {
-			if (args[1]) {
-				args++;
-				maxage = strtonum(*args, 0, LONG_MAX, &errstr);
-				if (errstr) {
-					BIO_printf(bio_err,
-					    "Illegal validity age %s: %s\n",
-					    *args, errstr);
-					badarg = 1;
-				}
-			} else
-				badarg = 1;
-		} else if (!strcmp(*args, "-signkey")) {
-			if (args[1]) {
-				args++;
-				keyfile = *args;
-			} else
-				badarg = 1;
-		} else if (!strcmp(*args, "-reqout")) {
-			if (args[1]) {
-				args++;
-				reqout = *args;
-			} else
-				badarg = 1;
-		} else if (!strcmp(*args, "-respout")) {
-			if (args[1]) {
-				args++;
-				respout = *args;
-			} else
-				badarg = 1;
-		} else if (!strcmp(*args, "-path")) {
-			if (args[1] && use_ssl == -1) {
-				args++;
-				path = *args;
-			} else
-				badarg = 1;
-		} else if (!strcmp(*args, "-issuer")) {
-			if (args[1]) {
-				args++;
-				X509_free(issuer);
-				issuer = load_cert(bio_err, *args, FORMAT_PEM,
-				    NULL, "issuer certificate");
-				if (!issuer)
-					goto end;
-			} else
-				badarg = 1;
-		} else if (!strcmp(*args, "-cert")) {
-			if (args[1]) {
-				args++;
-				X509_free(cert);
-				cert = load_cert(bio_err, *args, FORMAT_PEM,
-				    NULL, "certificate");
-				if (!cert)
-					goto end;
-				if (!cert_id_md)
-					cert_id_md = EVP_sha1();
-				if (!add_ocsp_cert(&req, cert, cert_id_md, issuer, ids))
-					goto end;
-				if (!sk_OPENSSL_STRING_push(reqnames, *args))
-					goto end;
-			} else
-				badarg = 1;
-		} else if (!strcmp(*args, "-serial")) {
-			if (args[1]) {
-				args++;
-				if (!cert_id_md)
-					cert_id_md = EVP_sha1();
-				if (!add_ocsp_serial(&req, *args, cert_id_md, issuer, ids))
-					goto end;
-				if (!sk_OPENSSL_STRING_push(reqnames, *args))
-					goto end;
-			} else
-				badarg = 1;
-		} else if (!strcmp(*args, "-index")) {
-			if (args[1]) {
-				args++;
-				ridx_filename = *args;
-			} else
-				badarg = 1;
-		} else if (!strcmp(*args, "-CA")) {
-			if (args[1]) {
-				args++;
-				rca_filename = *args;
-			} else
-				badarg = 1;
-		} else if (!strcmp(*args, "-nmin")) {
-			if (args[1]) {
-				args++;
-				nmin = strtonum(*args, 0, INT_MAX, &errstr);
-				if (errstr) {
-					BIO_printf(bio_err,
-					    "Illegal update period %s: %s\n",
-					    *args, errstr);
-					badarg = 1;
-				}
-			}
-			if (ndays == -1)
-				ndays = 0;
-			else
-				badarg = 1;
-		} else if (!strcmp(*args, "-nrequest")) {
-			if (args[1]) {
-				args++;
-				accept_count = strtonum(*args, 0, INT_MAX, &errstr);
-				if (errstr) {
-					BIO_printf(bio_err,
-					    "Illegal accept count %s: %s\n",
-					    *args, errstr);
-					badarg = 1;
-				}
-			} else
-				badarg = 1;
-		} else if (!strcmp(*args, "-ndays")) {
-			if (args[1]) {
-				args++;
-				ndays = strtonum(*args, 0, INT_MAX, &errstr);
-				if (errstr) {
-					BIO_printf(bio_err,
-					    "Illegal update period %s: %s\n",
-					    *args, errstr);
-					badarg = 1;
-				}
-			} else
-				badarg = 1;
-		} else if (!strcmp(*args, "-rsigner")) {
-			if (args[1]) {
-				args++;
-				rsignfile = *args;
-			} else
-				badarg = 1;
-		} else if (!strcmp(*args, "-rkey")) {
-			if (args[1]) {
-				args++;
-				rkeyfile = *args;
-			} else
-				badarg = 1;
-		} else if (!strcmp(*args, "-rother")) {
-			if (args[1]) {
-				args++;
-				rcertfile = *args;
-			} else
-				badarg = 1;
-		} else if ((cert_id_md = EVP_get_digestbyname((*args) + 1)) == NULL) {
+	memset(&ocsp_config, 0, sizeof(ocsp_config));
+	ocsp_config.accept_count = -1;
+	ocsp_config.add_nonce = 1;
+	if ((ocsp_config.ids = sk_OCSP_CERTID_new_null()) == NULL)
+		goto end;
+	ocsp_config.maxage = -1;
+	ocsp_config.ndays = -1;
+	ocsp_config.nsec = MAX_VALIDITY_PERIOD;
+	ocsp_config.req_timeout = -1;
+	if ((ocsp_config.reqnames = sk_OPENSSL_STRING_new_null()) == NULL)
+		goto end;
+	ocsp_config.use_ssl = -1;
+
+	if (options_parse(argc, argv, ocsp_options, NULL, NULL) != 0) {
+		if (ocsp_config.no_usage)
+			goto end;
+		else
 			badarg = 1;
-		}
-		args++;
 	}
 
 	/* Have we anything to do? */
-	if (!req && !reqin && !respin && !(port && ridx_filename))
+	if (!ocsp_config.req && !ocsp_config.reqin && !ocsp_config.respin && !(ocsp_config.port && ocsp_config.ridx_filename))
 		badarg = 1;
 
 	if (badarg) {
-		BIO_printf(bio_err, "OCSP utility\n");
-		BIO_printf(bio_err, "Usage ocsp [options]\n");
-		BIO_printf(bio_err, "where options are\n");
-		BIO_printf(bio_err, "-out file          output filename\n");
-		BIO_printf(bio_err, "-issuer file       issuer certificate\n");
-		BIO_printf(bio_err, "-cert file         certificate to check\n");
-		BIO_printf(bio_err, "-serial n          serial number to check\n");
-		BIO_printf(bio_err, "-signer file       certificate to sign OCSP request with\n");
-		BIO_printf(bio_err, "-signkey file      private key to sign OCSP request with\n");
-		BIO_printf(bio_err, "-sign_other file   additional certificates to include in signed request\n");
-		BIO_printf(bio_err, "-no_certs          don't include any certificates in signed request\n");
-		BIO_printf(bio_err, "-req_text          print text form of request\n");
-		BIO_printf(bio_err, "-resp_text         print text form of response\n");
-		BIO_printf(bio_err, "-text              print text form of request and response\n");
-		BIO_printf(bio_err, "-reqout file       write DER encoded OCSP request to \"file\"\n");
-		BIO_printf(bio_err, "-respout file      write DER encoded OCSP reponse to \"file\"\n");
-		BIO_printf(bio_err, "-reqin file        read DER encoded OCSP request from \"file\"\n");
-		BIO_printf(bio_err, "-respin file       read DER encoded OCSP reponse from \"file\"\n");
-		BIO_printf(bio_err, "-nonce             add OCSP nonce to request\n");
-		BIO_printf(bio_err, "-no_nonce          don't add OCSP nonce to request\n");
-		BIO_printf(bio_err, "-url URL           OCSP responder URL\n");
-		BIO_printf(bio_err, "-host host:n       send OCSP request to host on port n\n");
-		BIO_printf(bio_err, "-path              path to use in OCSP request\n");
-		BIO_printf(bio_err, "-CApath dir        trusted certificates directory\n");
-		BIO_printf(bio_err, "-CAfile file       trusted certificates file\n");
-		BIO_printf(bio_err, "-VAfile file       validator certificates file\n");
-		BIO_printf(bio_err, "-validity_period n maximum validity discrepancy in seconds\n");
-		BIO_printf(bio_err, "-status_age n      maximum status age in seconds\n");
-		BIO_printf(bio_err, "-noverify          don't verify response at all\n");
-		BIO_printf(bio_err, "-verify_other file additional certificates to search for signer\n");
-		BIO_printf(bio_err, "-trust_other       don't verify additional certificates\n");
-		BIO_printf(bio_err, "-no_intern         don't search certificates contained in response for signer\n");
-		BIO_printf(bio_err, "-no_signature_verify don't check signature on response\n");
-		BIO_printf(bio_err, "-no_cert_verify    don't check signing certificate\n");
-		BIO_printf(bio_err, "-no_chain          don't chain verify response\n");
-		BIO_printf(bio_err, "-no_cert_checks    don't do additional checks on signing certificate\n");
-		BIO_printf(bio_err, "-port num		 port to run responder on\n");
-		BIO_printf(bio_err, "-index file	 certificate status index file\n");
-		BIO_printf(bio_err, "-CA file		 CA certificate\n");
-		BIO_printf(bio_err, "-rsigner file	 responder certificate to sign responses with\n");
-		BIO_printf(bio_err, "-rkey file	 responder key to sign responses with\n");
-		BIO_printf(bio_err, "-rother file	 other certificates to include in response\n");
-		BIO_printf(bio_err, "-resp_no_certs     don't include any certificates in response\n");
-		BIO_printf(bio_err, "-nmin n		 number of minutes before next update\n");
-		BIO_printf(bio_err, "-ndays n		 number of days before next update\n");
-		BIO_printf(bio_err, "-resp_key_id       identify reponse by signing certificate key ID\n");
-		BIO_printf(bio_err, "-nrequest n        number of requests to accept (default unlimited)\n");
-		BIO_printf(bio_err, "-<dgst alg>     use specified digest in the request\n");
+		ocsp_usage();
 		goto end;
 	}
-	if (outfile)
-		out = BIO_new_file(outfile, "w");
+	if (ocsp_config.outfile)
+		out = BIO_new_file(ocsp_config.outfile, "w");
 	else
 		out = BIO_new_fp(stdout, BIO_NOCLOSE);
 
@@ -513,45 +796,45 @@ ocsp_main(int argc, char **argv)
 		BIO_printf(bio_err, "Error opening output file\n");
 		goto end;
 	}
-	if (!req && (add_nonce != 2))
-		add_nonce = 0;
+	if (!ocsp_config.req && (ocsp_config.add_nonce != 2))
+		ocsp_config.add_nonce = 0;
 
-	if (!req && reqin) {
-		derbio = BIO_new_file(reqin, "rb");
+	if (!ocsp_config.req && ocsp_config.reqin) {
+		derbio = BIO_new_file(ocsp_config.reqin, "rb");
 		if (!derbio) {
 			BIO_printf(bio_err, "Error Opening OCSP request file\n");
 			goto end;
 		}
-		req = d2i_OCSP_REQUEST_bio(derbio, NULL);
+		ocsp_config.req = d2i_OCSP_REQUEST_bio(derbio, NULL);
 		BIO_free(derbio);
-		if (!req) {
+		if (!ocsp_config.req) {
 			BIO_printf(bio_err, "Error reading OCSP request\n");
 			goto end;
 		}
 	}
-	if (!req && port) {
-		acbio = init_responder(port);
+	if (!ocsp_config.req && ocsp_config.port) {
+		acbio = init_responder(ocsp_config.port);
 		if (!acbio)
 			goto end;
 	}
-	if (rsignfile && !rdb) {
-		if (!rkeyfile)
-			rkeyfile = rsignfile;
-		rsigner = load_cert(bio_err, rsignfile, FORMAT_PEM,
+	if (ocsp_config.rsignfile && !rdb) {
+		if (!ocsp_config.rkeyfile)
+			ocsp_config.rkeyfile = ocsp_config.rsignfile;
+		rsigner = load_cert(bio_err, ocsp_config.rsignfile, FORMAT_PEM,
 		    NULL, "responder certificate");
 		if (!rsigner) {
 			BIO_printf(bio_err, "Error loading responder certificate\n");
 			goto end;
 		}
-		rca_cert = load_cert(bio_err, rca_filename, FORMAT_PEM,
+		rca_cert = load_cert(bio_err, ocsp_config.rca_filename, FORMAT_PEM,
 		    NULL, "CA certificate");
-		if (rcertfile) {
-			rother = load_certs(bio_err, rcertfile, FORMAT_PEM,
+		if (ocsp_config.rcertfile) {
+			rother = load_certs(bio_err, ocsp_config.rcertfile, FORMAT_PEM,
 			    NULL, "responder other certificates");
 			if (!rother)
 				goto end;
 		}
-		rkey = load_key(bio_err, rkeyfile, FORMAT_PEM, 0, NULL,
+		rkey = load_key(bio_err, ocsp_config.rkeyfile, FORMAT_PEM, 0, NULL,
 		    "responder private key");
 		if (!rkey)
 			goto end;
@@ -562,80 +845,80 @@ ocsp_main(int argc, char **argv)
 redo_accept:
 
 	if (acbio) {
-		if (!do_responder(&req, &cbio, acbio, port))
+		if (!do_responder(&ocsp_config.req, &cbio, acbio, ocsp_config.port))
 			goto end;
-		if (!req) {
+		if (!ocsp_config.req) {
 			resp = OCSP_response_create(OCSP_RESPONSE_STATUS_MALFORMEDREQUEST, NULL);
 			send_ocsp_response(cbio, resp);
 			goto done_resp;
 		}
 	}
-	if (!req && (signfile || reqout || host || add_nonce || ridx_filename)) {
+	if (!ocsp_config.req && (ocsp_config.signfile || ocsp_config.reqout || ocsp_config.host || ocsp_config.add_nonce || ocsp_config.ridx_filename)) {
 		BIO_printf(bio_err, "Need an OCSP request for this operation!\n");
 		goto end;
 	}
-	if (req && add_nonce)
-		OCSP_request_add1_nonce(req, NULL, -1);
+	if (ocsp_config.req && ocsp_config.add_nonce)
+		OCSP_request_add1_nonce(ocsp_config.req, NULL, -1);
 
-	if (signfile) {
-		if (!keyfile)
-			keyfile = signfile;
-		signer = load_cert(bio_err, signfile, FORMAT_PEM,
+	if (ocsp_config.signfile) {
+		if (!ocsp_config.keyfile)
+			ocsp_config.keyfile = ocsp_config.signfile;
+		signer = load_cert(bio_err, ocsp_config.signfile, FORMAT_PEM,
 		    NULL, "signer certificate");
 		if (!signer) {
 			BIO_printf(bio_err, "Error loading signer certificate\n");
 			goto end;
 		}
-		if (sign_certfile) {
-			sign_other = load_certs(bio_err, sign_certfile, FORMAT_PEM,
+		if (ocsp_config.sign_certfile) {
+			sign_other = load_certs(bio_err, ocsp_config.sign_certfile, FORMAT_PEM,
 			    NULL, "signer certificates");
 			if (!sign_other)
 				goto end;
 		}
-		key = load_key(bio_err, keyfile, FORMAT_PEM, 0, NULL,
+		key = load_key(bio_err, ocsp_config.keyfile, FORMAT_PEM, 0, NULL,
 		    "signer private key");
 		if (!key)
 			goto end;
 
-		if (!OCSP_request_sign(req, signer, key, NULL, sign_other, sign_flags)) {
+		if (!OCSP_request_sign(ocsp_config.req, signer, key, NULL, sign_other, ocsp_config.sign_flags)) {
 			BIO_printf(bio_err, "Error signing OCSP request\n");
 			goto end;
 		}
 	}
-	if (req_text && req)
-		OCSP_REQUEST_print(out, req, 0);
+	if (ocsp_config.req_text && ocsp_config.req)
+		OCSP_REQUEST_print(out, ocsp_config.req, 0);
 
-	if (reqout) {
-		derbio = BIO_new_file(reqout, "wb");
+	if (ocsp_config.reqout) {
+		derbio = BIO_new_file(ocsp_config.reqout, "wb");
 		if (!derbio) {
-			BIO_printf(bio_err, "Error opening file %s\n", reqout);
+			BIO_printf(bio_err, "Error opening file %s\n", ocsp_config.reqout);
 			goto end;
 		}
-		i2d_OCSP_REQUEST_bio(derbio, req);
+		i2d_OCSP_REQUEST_bio(derbio, ocsp_config.req);
 		BIO_free(derbio);
 	}
-	if (ridx_filename && (!rkey || !rsigner || !rca_cert)) {
+	if (ocsp_config.ridx_filename && (!rkey || !rsigner || !rca_cert)) {
 		BIO_printf(bio_err, "Need a responder certificate, key and CA for this operation!\n");
 		goto end;
 	}
-	if (ridx_filename && !rdb) {
-		rdb = load_index(ridx_filename, NULL);
+	if (ocsp_config.ridx_filename && !rdb) {
+		rdb = load_index(ocsp_config.ridx_filename, NULL);
 		if (!rdb)
 			goto end;
 		if (!index_index(rdb))
 			goto end;
 	}
 	if (rdb) {
-		i = make_ocsp_response(&resp, req, rdb, rca_cert, rsigner, rkey, rother, rflags, nmin, ndays);
+		i = make_ocsp_response(&resp, ocsp_config.req, rdb, rca_cert, rsigner, rkey, rother, ocsp_config.rflags, ocsp_config.nmin, ocsp_config.ndays);
 		if (cbio)
 			send_ocsp_response(cbio, resp);
-	} else if (host) {
-		resp = process_responder(bio_err, req, host, path ? path : "/",
-		    port, use_ssl, headers, req_timeout);
+	} else if (ocsp_config.host) {
+		resp = process_responder(bio_err, ocsp_config.req, ocsp_config.host, ocsp_config.path ? ocsp_config.path : "/",
+		    ocsp_config.port, ocsp_config.use_ssl, ocsp_config.headers, ocsp_config.req_timeout);
 		if (!resp)
 			goto end;
-	} else if (respin) {
-		derbio = BIO_new_file(respin, "rb");
+	} else if (ocsp_config.respin) {
+		derbio = BIO_new_file(ocsp_config.respin, "rb");
 		if (!derbio) {
 			BIO_printf(bio_err, "Error Opening OCSP response file\n");
 			goto end;
@@ -653,10 +936,10 @@ redo_accept:
 
 done_resp:
 
-	if (respout) {
-		derbio = BIO_new_file(respout, "wb");
+	if (ocsp_config.respout) {
+		derbio = BIO_new_file(ocsp_config.respout, "wb");
 		if (!derbio) {
-			BIO_printf(bio_err, "Error opening file %s\n", respout);
+			BIO_printf(bio_err, "Error opening file %s\n", ocsp_config.respout);
 			goto end;
 		}
 		i2d_OCSP_RESPONSE_bio(derbio, resp);
@@ -667,24 +950,24 @@ done_resp:
 	if (i != OCSP_RESPONSE_STATUS_SUCCESSFUL) {
 		BIO_printf(bio_err, "Responder Error: %s (%d)\n",
 		    OCSP_response_status_str(i), i);
-		if (ignore_err)
+		if (ocsp_config.ignore_err)
 			goto redo_accept;
 		ret = 1;
 		goto end;
 	}
-	if (resp_text)
+	if (ocsp_config.resp_text)
 		OCSP_RESPONSE_print(out, resp, 0);
 
 	/* If running as responder don't verify our own response */
 	if (cbio) {
-		if (accept_count > 0)
-			accept_count--;
+		if (ocsp_config.accept_count > 0)
+			ocsp_config.accept_count--;
 		/* Redo if more connections needed */
-		if (accept_count) {
+		if (ocsp_config.accept_count) {
 			BIO_free_all(cbio);
 			cbio = NULL;
-			OCSP_REQUEST_free(req);
-			req = NULL;
+			OCSP_REQUEST_free(ocsp_config.req);
+			ocsp_config.req = NULL;
 			OCSP_RESPONSE_free(resp);
 			resp = NULL;
 			goto redo_accept;
@@ -692,11 +975,11 @@ done_resp:
 		goto end;
 	}
 	if (!store)
-		store = setup_verify(bio_err, CAfile, CApath);
+		store = setup_verify(bio_err, ocsp_config.CAfile, ocsp_config.CApath);
 	if (!store)
 		goto end;
-	if (verify_certfile) {
-		verify_other = load_certs(bio_err, verify_certfile, FORMAT_PEM,
+	if (ocsp_config.verify_certfile) {
+		verify_other = load_certs(bio_err, ocsp_config.verify_certfile, FORMAT_PEM,
 		    NULL, "validator certificate");
 		if (!verify_other)
 			goto end;
@@ -707,8 +990,8 @@ done_resp:
 		BIO_printf(bio_err, "Error parsing response\n");
 		goto end;
 	}
-	if (!noverify) {
-		if (req && ((i = OCSP_check_nonce(req, bs)) <= 0)) {
+	if (!ocsp_config.noverify) {
+		if (ocsp_config.req && ((i = OCSP_check_nonce(ocsp_config.req, bs)) <= 0)) {
 			if (i == -1)
 				BIO_printf(bio_err, "WARNING: no nonce in response\n");
 			else {
@@ -716,7 +999,7 @@ done_resp:
 				goto end;
 			}
 		}
-		i = OCSP_basic_verify(bs, verify_other, store, verify_flags);
+		i = OCSP_basic_verify(bs, verify_other, store, ocsp_config.verify_flags);
 		if (i < 0)
 			i = OCSP_basic_verify(bs, NULL, store, 0);
 
@@ -727,7 +1010,7 @@ done_resp:
 			BIO_printf(bio_err, "Response verify OK\n");
 
 	}
-	if (!print_ocsp_summary(out, bs, req, reqnames, ids, nsec, maxage))
+	if (!print_ocsp_summary(out, bs, ocsp_config.req, ocsp_config.reqnames, ocsp_config.ids, ocsp_config.nsec, ocsp_config.maxage))
 		goto end;
 
 	ret = 0;
@@ -738,27 +1021,27 @@ done_resp:
 	X509_STORE_free(store);
 	EVP_PKEY_free(key);
 	EVP_PKEY_free(rkey);
-	X509_free(issuer);
-	X509_free(cert);
+	X509_free(ocsp_config.issuer);
+	X509_free(ocsp_config.cert);
 	X509_free(rsigner);
 	X509_free(rca_cert);
 	free_index(rdb);
 	BIO_free_all(cbio);
 	BIO_free_all(acbio);
 	BIO_free(out);
-	OCSP_REQUEST_free(req);
+	OCSP_REQUEST_free(ocsp_config.req);
 	OCSP_RESPONSE_free(resp);
 	OCSP_BASICRESP_free(bs);
-	sk_OPENSSL_STRING_free(reqnames);
-	sk_OCSP_CERTID_free(ids);
+	sk_OPENSSL_STRING_free(ocsp_config.reqnames);
+	sk_OCSP_CERTID_free(ocsp_config.ids);
 	sk_X509_pop_free(sign_other, X509_free);
 	sk_X509_pop_free(verify_other, X509_free);
-	sk_CONF_VALUE_pop_free(headers, X509V3_conf_free);
+	sk_CONF_VALUE_pop_free(ocsp_config.headers, X509V3_conf_free);
 
-	if (use_ssl != -1) {
-		free(host);
-		free(port);
-		free(path);
+	if (ocsp_config.use_ssl != -1) {
+		free(ocsp_config.host);
+		free(ocsp_config.port);
+		free(ocsp_config.path);
 	}
 	return (ret);
 }
@@ -1213,5 +1496,4 @@ process_responder(BIO * err, OCSP_REQUEST * req,
 	SSL_CTX_free(ctx);
 	return resp;
 }
-
 #endif
