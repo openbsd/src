@@ -3,7 +3,7 @@ TP-BROKEN(1)                General Commands Manual               TP-BROKEN(1)
 
 
 NNAAMMEE
-       TP-broken - broken tagged paragraph
+       TP-broken - broken tagged paragraphs
 
 DDEESSCCRRIIPPTTIIOONN
        regular text
@@ -14,4 +14,4 @@ DDEESSCCRRIIPPTTIIOONN
 
 
 
-OpenBSD                        December 16, 2014                  TP-BROKEN(1)
+OpenBSD                        September 9, 2020                  TP-BROKEN(1)

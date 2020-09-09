@@ -1,12 +1,24 @@
-.\" $OpenBSD: macrotag.in,v 1.3 2017/07/04 14:53:24 schwarze Exp $
-.TH TP-MACROTAG 1 "September 20, 2011"
+.\" $OpenBSD: macrotag.in,v 1.4 2020/09/09 16:57:05 schwarze Exp $
+.TH TP-MACROTAG 1 "September 9, 2020"
 .SH NAME
-TP-macrotag \- macro in the head of a tagged paragraph
+TP-macrotag \- macros in the head of tagged paragraphs
 .SH DESCRIPTION
 regular
 text
 .TP
 .B longindent
+indented
+text
+.TP
+.B
+.I
+next-line
+indented
+text
+.TP
+.B
+.SM
+bold small
 indented
 text
 .PP

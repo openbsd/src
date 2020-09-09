@@ -1,7 +1,7 @@
-/*	$OpenBSD: man_macro.c,v 1.106 2019/01/05 18:59:37 schwarze Exp $ */
+/* $OpenBSD: man_macro.c,v 1.107 2020/09/09 16:57:05 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2012-2015, 2017-2019 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2012-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2013 Franco Fichtner <franco@lastsummer.de>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -105,9 +105,11 @@ man_unscope(struct roff_man *man, const struct roff_node *to)
 				mandoc_msg(MANDOCERR_BLK_LINE,
 				    n->line, n->pos,
 				    "EOF breaks %s", roff_name[n->tok]);
-				if (man->flags & MAN_ELINE)
-					man->flags &= ~MAN_ELINE;
-				else {
+				if (man->flags & MAN_ELINE) {
+					if ((man_macro(n->parent->tok)->flags &
+					    MAN_ESCOPED) == 0)
+						man->flags &= ~MAN_ELINE;
+				} else {
 					assert(n->type == ROFFT_HEAD);
 					n = n->parent;
 					man->flags &= ~MAN_BLINE;
