@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp.c,v 1.17 2020/09/09 13:04:23 inoguchi Exp $ */
+/* $OpenBSD: ocsp.c,v 1.18 2020/09/09 13:08:38 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -1479,7 +1479,7 @@ process_responder(BIO *err, OCSP_REQUEST *req,
 		BIO_set_conn_port(cbio, port);
 	if (use_ssl == 1) {
 		BIO *sbio;
-		ctx = SSL_CTX_new(SSLv23_client_method());
+		ctx = SSL_CTX_new(TLS_client_method());
 		if (ctx == NULL) {
 			BIO_printf(err, "Error creating SSL context.\n");
 			goto end;
