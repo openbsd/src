@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ogx.c,v 1.1 2019/11/04 14:58:40 visa Exp $	*/
+/*	$OpenBSD: if_ogx.c,v 1.2 2020/09/09 15:53:25 visa Exp $	*/
 
 /*
  * Copyright (c) 2019 Visa Hankala
@@ -20,6 +20,8 @@
  * Driver for OCTEON III network processor.
  */
 
+#include "bpfilter.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/atomic.h>
@@ -33,6 +35,10 @@
 #include <net/if_media.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#endif
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
