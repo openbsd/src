@@ -1,4 +1,4 @@
-# $OpenBSD: usb_hid_usages,v 1.5 2012/07/09 18:27:28 yuo Exp $
+# $OpenBSD: usb_hid_usages,v 1.6 2020/09/09 02:26:54 pamela Exp $
 # $NetBSD: usb_hid_usages,v 1.3 2007/05/24 18:05:11 plunky Exp $
 #
 # USB HID usage table
@@ -14,13 +14,21 @@
 	0x00	Undefined
 	0x01	Pointer
 	0x02	Mouse
-	0x03	Reserved
 	0x04	Joystick
 	0x05	Game Pad
 	0x06	Keyboard
 	0x07	Keypad
 	0x08	Multi-axis Controller
 	0x09	Tablet PC System Controls
+	0x0A	Water Cooling Device
+	0x0B	Computer Chassis Device
+	0x0C	Wireless Radio Controls
+	0x0D	Portable Device Control
+	0x0E	System Multi-Axis Controller
+	0x0F	Spatial Controller
+	0x10	Assistive Control
+	0x11	Device Dock
+	0x12	Dockable Device
 	0x30	X
 	0x31	Y
 	0x32	Z
@@ -41,10 +49,14 @@
 	0x42	Vz
 	0x43	Vbrx
 	0x44	Vbry
-	0x45	Vbrx
+	0x45	Vbrz
 	0x46	Vno
 	0x47	Feature Notification
 	0x48	Resolution Multiplier
+	0x49	Qx
+	0x4A	Qy
+	0x4B	Qz
+	0x4C	Qw
 	0x80	System Control
 	0x81	System Power Down
 	0x82	System Sleep
@@ -65,6 +77,14 @@
 	0x91	D-pad Down
 	0x92	D-pad Right
 	0x93	D-pad Left
+	0x94	Index Trigger
+	0x95	Palm Trigger
+	0x96	Thumbstick
+	0x97	System Function Shift
+	0x98	System Function Shift Lock
+	0x99	System Function Shift Lock Indicator
+	0x9A	System Dismiss Notification
+	0x9B	System Do Not Disturb
 	0xA0	System Dock
 	0xA1	System Undock
 	0xA2	System Setup
@@ -82,6 +102,25 @@
 	0xB5	System Display Toggle Int/Ext
 	0xB6	System Display Swap Primary/Secondary
 	0xB7	System Display LCD Autoscale
+	0xC0	Sensor Zone
+	0xC1	RPM
+	0xC2	Coolant Level
+	0xC3	Coolant Critical Level
+	0xC4	Coolant Pump
+	0xC5	Chassis Enclosure
+	0xC6	Wireless Radio Button
+	0xC7	Wireless Radio LED
+	0xC8	Wireless Radio Slider Switch
+	0xC9	System Display Rotation Lock Button
+	0xCA	System Display Rotation Lock Slider Switch
+	0xCB	Control Enable
+	0xD0	Dockable Device Unique ID
+	0xD1	Dockable Device Vendor ID
+	0xD2	Dockable Device Primary Usage Page
+	0xD3	Dockable Device Primary Usage ID
+	0xD4	Dockable Device Docking State
+	0xD5	Dockable Device Display Occlusion
+	0xD6	Dockable Device Object Type
 
 2	Simulation Controls
 	0x00	Undefined
@@ -103,20 +142,19 @@
 	0x23	Cyclic Trim
 	0x24	Flight Yoke
 	0x25	Track Control
-	0x26	Driving Control
 	0xB0	Aileron
 	0xB1	Aileron Trim
 	0xB2	Anti-Torque Control
-	0xB3	Auto-pilot Enable
+	0xB3	Autopilot Enable
 	0xB4	Chaff Release
 	0xB5	Collective Control
 	0xB6	Dive Brake
-	0xB7	Electronic Counter Measures
+	0xB7	Electronic Countermeasures
 	0xB8	Elevator
 	0xB9	Elevator Trim
 	0xBA	Rudder
 	0xBB	Throttle
-	0xBC	Flight Communication
+	0xBC	Flight Communications
 	0xBD	Flare Release
 	0xBE	Landing Gear
 	0xBF	Toe Brake
@@ -220,9 +258,11 @@
 	0x36	Gun Safety
 	0x37	Gamepad Fire/Jump
 	0x39	Gamepad Trigger
+	0x3A	Form-fitting Gamepad
 
 6	Device Controls
 	0x00	Undefined
+	0x06	Background/Nonuser Controls
 	0x20	Battery Strength
 	0x21	Wireless Channel
 	0x22	Wireless ID
@@ -230,6 +270,22 @@
 	0x24	Security Code Character Entered
 	0x25	Security Code Character Erased
 	0x26	Security Code Cleared
+	0x27	Sequence ID
+	0x28	Sequence ID Reset
+	0x29	RF Signal Strength
+	0x2A	Software Version
+	0x2B	Protocol Version
+	0x2C	Hardware Version
+	0x2D	Major
+	0x2E	Minor
+	0x2F	Revision
+	0x30	Handedness
+	0x31	Either Hand
+	0x32	Left Hand
+	0x33	Right Hand
+	0x34	Both Hands
+	0x40	Grip Pose Offset
+	0x41	Pointer Pose Offset
 
 7	Keyboard
 	0x00	No Event
@@ -531,7 +587,24 @@
 	0x4B	Generic Indicator
 	0x4C	System Suspend
 	0x4D	External Power Connected
-	0x4C-FFFF	Reserved
+	0x4E	Indicator Blue
+	0x4F	Indicator Orange
+	0x50	Good Status
+	0x51	Warning Status
+	0x52	RGB LED
+	0x53	Red LED Channel
+	0x54	Blue LED Channel
+	0x55	Green LED Channel
+	0x56	LED Intensity
+	0x60	Player Indicator
+	0x61	Player 1
+	0x62	Player 2
+	0x63	Player 3
+	0x64	Player 4
+	0x65	Player 5
+	0x66	Player 6
+	0x67	Player 7
+	0x68	Player 8
 
 9	Button
 	0x00	No Button Pressed
@@ -608,6 +681,40 @@
 	0xBD	Phone Key B
 	0xBE	Phone Key C
 	0xBF	Phone Key D
+	0xC0	Phone Call History Key
+	0xC1	Phone Caller ID Key
+	0xC2	Phone Settings Key
+	0xF0	Host Control
+	0xF1	Host Available
+	0xF2	Host Call Active
+	0xF3	Activate Handset Audio
+	0xF4	Ring Type
+	0xF5	Re-dialable Phone Number
+	0xF8	Stop Ring Tone
+	0xF9	PSTN Ring Tone
+	0xFA	Host Ring Tone
+	0xFB	Alert Sound Error
+	0xFC	Alert Sound Confirm
+	0xFD	Alert Sound Notification
+	0xFE	Silent Ring
+	0x108	Email Message Waiting
+	0x109	Voicemail Message Waiting
+	0x10A	Host Hold
+	0x110	Incoming Call History Count
+	0x111	Outgoing Call History Count
+	0x112	Incoming Call History
+	0x113	Outgoing Call History
+	0x114	Phone Locale
+	0x140	Phone Time Second
+	0x141	Phone Time Minute
+	0x142	Phone Time Hour
+	0x143	Phone Time Day
+	0x144	Phone Date Month
+	0x145	Phone Date Year
+	0x146	Handset Nickname
+	0x147	Address Book ID
+	0x14A	Call Duration
+	0x14B	Dual Mode Phone
 
 12	Consumer
 	0x00	Unassigned
@@ -628,7 +735,7 @@
 	0x35	Illumination
 	0x36	Function Buttons
 	0x40	Menu
-	0x41	Menu  Pick
+	0x41	Menu Pick
 	0x42	Menu Up
 	0x43	Menu Down
 	0x44	Menu Left
@@ -643,6 +750,31 @@
 	0x64	Broadcast Mode
 	0x65	Snapshot
 	0x66	Still
+	0x67	Picture-in-Picture Toggle
+	0x68	Picture-in-Picture Swap
+	0x69	Red Menu Button
+	0x6A	Green Menu Button
+	0x6B	Blue Menu Button
+	0x6C	Yellow Menu Button
+	0x6D	Aspect
+	0x6E	3D Mode Select
+	0x6F	Display Brightness Increment
+	0x70	Display Brightness Decrement
+	0x71	Display Brightness
+	0x72	Display Backlight Toggle
+	0x73	Display Set Brightness to Minimum
+	0x74	Display Set Brightness to Maximum
+	0x75	Display Set Auto Brightness
+	0x76	Camera Access Enabled
+	0x77	Camera Access Disabled
+	0x78	Camera Access Toggle
+	0x79	Keyboard Brightness Increment
+	0x7A	Keyboard Brightness Decrement
+	0x7B	Keyboard Backlight Set Level
+	0x7C	Keyboard Backlight OOC
+	0x7D	Keyboard Backlight Set Minimum
+	0x7E	Keyboard Backlight Set Maximum
+	0x7F	Keyboard Backlight Auto
 	0x80	Selection
 	0x81	Assign Selection
 	0x82	Mode Step
@@ -689,7 +821,7 @@
 	0xB7	Stop
 	0xB8	Eject
 	0xB9	Random Play
-	0xBA	Select DisC
+	0xBA	Select Disc
 	0xBB	Enter Disc
 	0xBC	Repeat
 	0xBD	Tracking
@@ -710,6 +842,15 @@
 	0xCC	Stop/Eject
 	0xCD	Play/Pause
 	0xCE	Play/Skip
+	0xCF	Voice Command
+	0xD0	Invoke Capture Interface
+	0xD1	Start or Stop Game Recording
+	0xD2	Historical Game Capture
+	0xD3	Capture Game Screenshot
+	0xD4	Show or Hide Recording Indicator
+	0xD5	Start or Stop Microphone Capture
+	0xD6	Start or Stop Camera Capture
+	0xD7	Start or Stop Game Broadcast
 	0xE0	Volume
 	0xE1	Balance
 	0xE2	Mute
@@ -729,7 +870,7 @@
 	0xF5	Slow
 	0x100	Fan Enable
 	0x101	Fan Speed
-	0x102	Light
+	0x102	Light Enable
 	0x103	Light Illumination Level
 	0x104	Climate Control Enable
 	0x105	Room Temperature
@@ -834,6 +975,10 @@
 	0x1C5	AL Online Activity Browser
 	0x1C6	AL Research/Search Browser
 	0x1C7	AL Audio Player
+	0x1C8	AL Message Status
+	0x1C9	AL Contact Sync
+	0x1CA	AL Navigation
+	0x1CB	AL Context-aware Desktop Assistant
 	0x200	Generic GUI Application Controls
 	0x201	AC New
 	0x202	AC Open
@@ -939,7 +1084,7 @@
 	0x276	AC Select Row
 	0x277	AC Select Table
 	0x278	AC Select Object
-	0x279	AC Redo
+	0x279	AC Redo/Repeat
 	0x27A	AC Sort
 	0x27B	AC Sort Ascending
 	0x27C	AC Sort Descending
@@ -957,7 +1102,7 @@
 	0x288	AC Send To
 	0x289	AC Reply
 	0x28A	AC Reply All
-	0x28B	AC Fwd
+	0x28B	AC Forward Message
 	0x28C	AC Send
 	0x28D	AC Attach File
 	0x28E	AC Upload
@@ -975,6 +1120,52 @@
 	0x29A	AC Split
 	0x29B	AC Distribute Horizontally
 	0x29C	AC Distribute Vertically
+	0x29D	AC Next Keyboard Layout Select
+	0x29E	AC Navigation Guidance
+	0x29F	AC Desktop Show All Windows
+	0x2A0	AC Soft Key Left
+	0x2A1	AC Soft Key Right
+	0x2A2	AC Desktop Show All Applications
+	0x2B0	AC Idle Keep Alive
+	0x2C0	Extended Keyboard Attributes Collection
+	0x2C1	Keyboard Form Factor
+	0x2C2	Keyboard Key Type
+	0x2C3	Keyboard Physical Layout
+	0x2C4	Vendor-Specific Keyboard Physical Layout
+	0x2C5	Keyboard IETF Language Tag Index
+	0x2C6	Implemented Keyboard Input Assist Controls
+	0x2C7	Keyboard Input Assist Previous
+	0x2C8	Keyboard Input Assist Next
+	0x2C9	Keyboard Input Assist Previous Group
+	0x2CA	Keyboard Input Assist Next Group
+	0x2CB	Keyboard Input Assist Accept
+	0x2CC	Keyboard Input Assist Cancel
+	0x2D0	Privacy Screen Toggle
+	0x2D1	Privacy Screen Level Decrement
+	0x2D2	Privacy Screen Level Increment
+	0x2D3	Privacy Screen Level Minimum
+	0x2D4	Privacy Screen Level Maximum
+	0x500	Contact Edited
+	0x501	Contact Added
+	0x502	Contact Record Active
+	0x503	Contact Index
+	0x504	Contact Nickname
+	0x505	Contact First Name
+	0x506	Contact Last Name
+	0x507	Contact Full Name
+	0x508	Contact Phone Number Personal
+	0x509	Contact Phone Number Business
+	0x50A	Contact Phone Number Mobile
+	0x50B	Contact Phone Number Pager
+	0x50C	Contact Phone Number Fax
+	0x50D	Contact Phone Number Other
+	0x50E	Contact Email Personal
+	0x50F	Contact Email Business
+	0x510	Contact Email Other
+	0x511	Contact Email Main
+	0x512	Contact Speed Dial Number
+	0x513	Contact Status Flag
+	0x514	Contact Misc.
 
 13	Digitizer
 	0x00	Undefined
@@ -985,17 +1176,19 @@
 	0x05	Touch Pad
 	0x06	White Board
 	0x07	Coordinate Measuring Machine
-	0x08	3-D Digitizer
+	0x08	3D Digitizer
 	0x09	Stereo Plotter
 	0x0A	Articulated Arm
 	0x0B	Armature
 	0x0C	Multiple Point Digitizer
 	0x0D	Free Space Wand
 	0x0E	Device Configuration
+	0x0F	Capacitive Heat Map Digitizer
 	0x20	Stylus
 	0x21	Puck
 	0x22	Finger
 	0x23	Device Settings
+	0x24	Character Gesture
 	0x30	Tip Pressure
 	0x31	Barrel Pressure
 	0x32	In Range
@@ -1027,6 +1220,81 @@
 	0x53	Device Identifier
 	0x54	Contact Count
 	0x55	Contact Count Maximum
+	0x56	Scan Time
+	0x57	Surface Switch
+	0x58	Button Switch
+	0x59	Pad Type
+	0x5A	Secondary Barrel Switch
+	0x5B	Transducer Serial Number
+	0x5C	Preferred Color
+	0x5D	Preferred Color is Locked
+	0x5E	Preferred Line Width
+	0x5F	Preferred Line Width is Locked
+	0x60	Latency Mode
+	0x61	Gesture Character Quality
+	0x62	Character Gesture Data Length
+	0x63	Character Gesture Data
+	0x64	Gesture Character Encoding
+	0x65	UTF8 Character Gesture Encoding
+	0x66	UTF16 Little Endian Character Gesture Encoding
+	0x67	UTF16 Big Endian Character Gesture Encoding
+	0x68	UTF32 Little Endian Character Gesture Encoding
+	0x69	UTF32 Big Endian Character Gesture Encoding
+	0x6A	Capacitive Heat Map Protocol Vendor ID
+	0x6B	Capacitive Heat Map Protocol Version
+	0x6C	Capacitive Heat Map Frame Data
+	0x6D	Gesture Character Enable
+	0x70	Preferred Line Style
+	0x71	Preferred Line Style is Locked
+	0x72	Ink
+	0x73	Pencil
+	0x74	Highlighter
+	0x75	Chisel Marker
+	0x76	Brush
+	0x77	No Preference
+	0x80	Digitizer Diagnostic
+	0x81	Digitizer Error
+	0x82	Err Normal Status
+	0x83	Err Transducers Exceeded
+	0x84	Err Full Trans Features Unavailable
+	0x85	Err Charge Low
+	0x90	Transducer Software Info
+	0x91	Transducer Vendor Id
+	0x92	Transducer Product Id
+	0x93	Device Supported Protocols
+	0x94	Transducer Supported Protocols
+	0x95	No Protocol
+	0x96	Wacom AES Protocol
+	0x97	USI Protocol
+	0x98	Microsoft Pen Protocol
+	0xA0	Supported Report Rates
+	0xA1	Report Rate
+	0xA2	Transducer Connected
+	0xA3	Switch Disabled
+	0xA4	Switch Unimplemented
+	0xA5	Transducer Switches
+
+14	Haptics
+	0x00	Undefined
+	0x01	Simple Haptic Controller
+	0x10	Waveform List
+	0x11	Duration List
+	0x20	Auto Trigger
+	0x21	Manual Trigger
+	0x22	Auto Trigger Associated Control
+	0x23	Intensity
+	0x24	Repeat Count
+	0x25	Retrigger Period
+	0x26	Waveform Vendor Page
+	0x27	Waveform Vendor ID
+	0x28	Waveform Cutoff Time
+	0x1001	Waveform None
+	0x1002	Waveform Stop
+	0x1003	Waveform Click
+	0x1004	Waveform Buzz Continuous
+	0x1005	Waveform Rumble Continuous
+	0x1006	Waveform Press
+	0x1007	Waveform Release
 
 15	Physical Interface Device
 	0x00	Undefined
@@ -1139,10 +1407,47 @@
 16	Unicode
 	*	Unicode Char u%04x
 
-20	Alphanumeric Display
+18	Eye and Head Trackers
+	0x00	Undefined
+	0x01	Eye Tracker
+	0x02	Head Tracker
+	0x10	Tracking Data
+	0x11	Capabilities
+	0x12	Configuration
+	0x13	Status
+	0x14	Control
+	0x20	Sensor Timestamp
+	0x21	Position X
+	0x22	Position Y
+	0x23	Position Z
+	0x24	Gaze Point
+	0x25	Left Eye Position
+	0x26	Right Eye Position
+	0x27	Head Position
+	0x28	Head Direction Point
+	0x29	Rotation about X axis
+	0x2A	Rotation about Y axis
+	0x2B	Rotation about Z axis
+	0x100	Tracker Quality
+	0x101	Minimum Tracking Distance
+	0x102	Optimum Tracking Distance
+	0x103	Maximum Tracking Distance
+	0x104	Maximum Screen Plane Width
+	0x105	Maximum Screen Plane Height
+	0x200	Display Manufacturer ID
+	0x201	Display Product ID
+	0x202	Display Serial Number
+	0x203	Display Manufacturer Date
+	0x204	Calibrated Screen Width
+	0x205	Calibrated Screen Height
+	0x300	Sampling Frequency
+	0x301	Configuration Status
+	0x400	Device Mode Request
+
+20	Auxiliary Display
 	0x00	Undefined
 	0x01	Alphanumeric Display
-	0x02	Bitmapped Display
+	0x02	Auxiliary Display
 	0x20	Display Attributes Report
 	0x21	ASCII Character Set
 	0x22	Data Read Back
@@ -1191,6 +1496,7 @@
 	0x4D	Char Attr Blink
 	0x80	Bitmap Size X
 	0x81	Bitmap Size Y
+	0x82	Max Blit Size
 	0x83	Bit Depth Format
 	0x84	Display Orientation
 	0x85	Palette Report
@@ -1209,6 +1515,674 @@
 	0x93	Soft Button Offset 1
 	0x94	Soft Button Offset 2
 	0x95	Soft Button Report
+	0xC2	Soft Keys
+	0xCC	Display Data Extensions
+	0xCF	Character Mapping
+	0xDD	Unicode Equivalent
+	0xDF	Character Page Mapping
+	0xFF	Request Report
+
+32	Sensors
+	0x00	Undefined
+	0x01	Sensor
+	0x10	Biometric
+	0x11	Biometric: Human Presence
+	0x12	Biometric: Human Proximity
+	0x13	Biometric: Human Touch
+	0x14	Biometric: Blood Pressure
+	0x15	Biometric: Body Temperature
+	0x16	Biometric: Heart Rate
+	0x17	Biometric: Heart Rate Variability
+	0x18	Biometric: Peripheral Oxygen Saturation
+	0x19	Biometric: Respiratory Rate
+	0x20	Electrical
+	0x21	Electrical: Capacitance
+	0x22	Electrical: Current
+	0x23	Electrical: Power
+	0x24	Electrical: Inductance
+	0x25	Electrical: Resistance
+	0x26	Electrical: Voltage
+	0x27	Electrical: Potentiometer
+	0x28	Electrical: Frequency
+	0x29	Electrical: Period
+	0x30	Environmental
+	0x31	Environmental: Atmospheric Pressure
+	0x32	Environmental: Humidity
+	0x33	Environmental: Temperature
+	0x34	Environmental: Wind Direction
+	0x35	Environmental: Wind Speed
+	0x36	Environmental: Air Quality
+	0x37	Environmental: Heat Index
+	0x38	Environmental: Surface Temperature
+	0x39	Environmental: Volatile Organic Compounds
+	0x3A	Environmental: Object Presence
+	0x3B	Environmental: Object Proximity
+	0x40	Light
+	0x41	Light: Ambient Light
+	0x42	Light: Consumer Infrared
+	0x43	Light: Infrared Light
+	0x44	Light: Visible Light
+	0x45	Light: Ultraviolet Light
+	0x50	Location
+	0x51	Location: Broadcast
+	0x52	Location: Dead Reckoning
+	0x53	Location: GPS (Global Positioning System)
+	0x54	Location: Lookup
+	0x55	Location: Other
+	0x56	Location: Static
+	0x57	Location: Triangulation
+	0x60	Mechanical
+	0x61	Mechanical: Boolean Switch
+	0x62	Mechanical: Boolean Switch Array
+	0x63	Mechanical: Multivalue Switch
+	0x64	Mechanical: Force
+	0x65	Mechanical: Pressure
+	0x66	Mechanical: Strain
+	0x67	Mechanical: Weight
+	0x68	Mechanical: Haptic Vibrator
+	0x69	Mechanical: Hall Effect Switch
+	0x70	Motion
+	0x71	Motion: Accelerometer 1D
+	0x72	Motion: Accelerometer 2D
+	0x73	Motion: Accelerometer 3D
+	0x74	Motion: Gyrometer 1D
+	0x75	Motion: Gyrometer 2D
+	0x76	Motion: Gyrometer 3D
+	0x77	Motion: Motion Detector
+	0x78	Motion: Speedometer
+	0x79	Motion: Accelerometer
+	0x7A	Motion: Gyrometer
+	0x7B	Motion: Gravity Vector
+	0x7C	Motion: Linear Accelerometer
+	0x80	Orientation
+	0x81	Orientation: Compass 1D
+	0x82	Orientation: Compass 2D
+	0x83	Orientation: Compass 3D
+	0x84	Orientation: Inclinometer 1D
+	0x85	Orientation: Inclinometer 2D
+	0x86	Orientation: Inclinometer 3D
+	0x87	Orientation: Distance 1D
+	0x88	Orientation: Distance 2D
+	0x89	Orientation: Distance 3D
+	0x8A	Orientation: Device Orientation
+	0x8B	Orientation: Compass
+	0x8C	Orientation: Inclinometer
+	0x8D	Orientation: Distance
+	0x8E	Orientation: Relative Orientation
+	0x8F	Orientation: Simple Orientation
+	0x90	Scanner
+	0x91	Scanner: Barcode
+	0x92	Scanner: RFID
+	0x93	Scanner: NFC
+	0xA0	Time
+	0xA1	Time: Alarm Timer
+	0xA2	Time: Real Time Clock
+	0xB0	Personal Activity
+	0xB1	Personal Activity: Activity Detection
+	0xB2	Personal Activity: Device Position
+	0xB3	Personal Activity: Pedometer
+	0xB4	Personal Activity: Step Detection
+	0xC0	Orientation Extended
+	0xC1	Orientation Extended: Geomagnetic Orientation
+	0xC2	Orientation Extended: Magnetometer
+	0xD0	Gesture
+	0xD1	Gesture: Chassis Flip Gesture
+	0xD2	Gesture: Hinge Fold Gesture
+	0xE0	Other
+	0xE1	Other: Custom
+	0xE2	Other: Generic
+	0xE3	Other: Generic Enumerator
+	0xE4	Other: Hinge Angle
+	0xF0	Vendor Reserved 1
+	0xF1	Vendor Reserved 2
+	0xF2	Vendor Reserved 3
+	0xF3	Vendor Reserved 4
+	0xF4	Vendor Reserved 5
+	0xF5	Vendor Reserved 6	
+	0xF6	Vendor Reserved 7
+	0xF7	Vendor Reserved 8
+	0xF8	Vendor Reserved 9
+	0xF9	Vendor Reserved 10
+	0xFA	Vendor Reserved 11
+	0xFB	Vendor Reserved 12
+	0xFC	Vendor Reserved 13
+	0xFD	Vendor Reserved 14
+	0xFE	Vendor Reserved 15
+	0xFF	Vendor Reserved 16
+	0x200	Event
+	0x201	Event: Sensor State
+	0x202	Event: Sensor Event
+	0x300	Property
+	0x301	Property: Friendly Name
+	0x302	Property: Persistent Unique ID
+	0x303	Property: Sensor Status
+	0x304	Property: Minimum Report Interval
+	0x305	Property: Sensor Manufacturer
+	0x306	Property: Sensor Model
+	0x307	Property: Sensor Serial Number
+	0x308	Property: Sensor Description
+	0x309	Property: Sensor Connection Type
+	0x30A	Property: Sensor Device Path
+	0x30B	Property: Hardware Revision
+	0x30C	Property: Firmware Version
+	0x30D	Property: Release Date
+	0x30E	Property: Report Interval
+	0x30F	Property: Change Sensitivity Absolute
+	0x310	Property: Change Sensitivity Percent of Range
+	0x311	Property: Change Sensitivity Percent Relative
+	0x312	Property: Accuracy
+	0x313	Property: Resolution
+	0x314	Property: Maximum
+	0x315	Property: Minimum
+	0x316	Property: Reporting State
+	0x317	Property: Sampling Rate
+	0x318	Property: Response Curve
+	0x319	Property: Power State
+	0x31A	Property: Maximum FIFO Events
+	0x31B	Property: Report Latency
+	0x31C	Property: Flush FIFO Events
+	0x31D	Property: Maximum Power Consumption
+	0x31E	Property: Is Primary
+	0x400	Data Field: Location
+	0x402	Data Field: Altitude Antenna Sea Level
+	0x403	Data Field: Differential Reference Station ID
+	0x404	Data Field: Altitude Ellipsoid Error
+	0x405	Data Field: Altitude Ellipsoid
+	0x406	Data Field: Altitude Sea Level Error
+	0x407	Data Field: Altitude Sea Level
+	0x408	Data Field: Differential GPS Data Age
+	0x409	Data Field: Error Radius
+	0x40A	Data Field: Fix Quality
+	0x40B	Data Field: Fix Type
+	0x40C	Data Field: Geoidal Separation	
+	0x40D	Data Field: GPS Operation Mode
+	0x40E	Data Field: GPS Selection Mode
+	0x40F	Data Field: GPS Status
+	0x410	Data Field: Position Dilution of Precision
+	0x411	Data Field: Horizontal Dilution of Precision
+	0x412	Data Field: Vertical Dilution of Precision
+	0x413	Data Field: Latitude
+	0x414	Data Field: Longitude
+	0x415	Data Field: True Heading
+	0x416	Data Field: Magnetic Heading
+	0x417	Data Field: Magnetic Variation
+	0x418	Data Field: Speed
+	0x419	Data Field: Satellites in View
+	0x41A	Data Field: Satellites in View Azimuth
+	0x41B	Data Field: Satellites in View Elevation
+	0x41C	Data Field: Satellites in View IDs
+	0x41D	Data Field: Satellites in View PRNs
+	0x41E	Data Field: Satellites in View S/N Ratios
+	0x41F	Data Field: Satellites Used Count
+	0x420	Data Field: Satellites Used PRNs
+	0x421	Data Field: NMEA Sentence
+	0x422	Data Field: Address Line 1
+	0x423	Data Field: Address Line 2
+	0x424	Data Field: City
+	0x425	Data Field: State or Province
+	0x426	Data Field: Country or Region
+	0x427	Data Field: Postal Code
+	0x42A	Property: Location
+	0x42B	Property: Location Desired Accuracy
+	0x430	Data Field: Environmental
+	0x431	Data Field: Atmospheric Pressure
+	0x433	Data Field: Relative Humidity
+	0x434	Data Field: Temperature
+	0x435	Data Field: Wind Direction
+	0x436	Data Field: Wind Speed
+	0x437	Data Field: Air Quality Index
+	0x438	Data Field: Equivalent CO2
+	0x439	Data Field: Volatile Organic Compound Concentration
+	0x43A	Data Field: Object Presence
+	0x43B	Data Field: Object Proximity Range
+	0x43C	Data Field: Object Proximity Out of Range
+	0x440	Property: Environmental
+	0x441	Property: Reference Pressure
+	0x450	Data Field: Motion
+	0x451	Data Field: Motion State
+	0x452	Data Field: Acceleration
+	0x453	Data Field: Acceleration Axis X
+	0x454	Data Field: Acceleration Axis Y
+	0x455	Data Field: Acceleration Axis Z
+	0x456	Data Field: Angular Velocity
+	0x457	Data Field: Angular Velocity about X Axis
+	0x458	Data Field: Angular Velocity about Y Axis
+	0x459	Data Field: Angular Velocity about Z Axis
+	0x45A	Data Field: Angular Position
+	0x45B	Data Field: Angular Position about X Axis
+	0x45C	Data Field: Angular Position about Y Axis
+	0x45D	Data Field: Angular Position about Z Axis
+	0x45E	Data Field: Motion Speed
+	0x45F	Data Field: Motion Intensity
+	0x470	Data Field: Orientation
+	0x471	Data Field: Heading
+	0x472	Data Field: Heading X Axis
+	0x473	Data Field: Heading Y Axis
+	0x474	Data Field: Heading Z Axis
+	0x475	Data Field: Heading Compensated Magnetic North
+	0x476	Data Field: Heading Compensated True North
+	0x477	Data Field: Heading Magnetic North
+	0x478	Data Field: Heading True North
+	0x479	Data Field: Distance
+	0x47A	Data Field: Distance X Axis
+	0x47B	Data Field: Distance Y Axis
+	0x47C	Data Field: Distance Z Axis
+	0x47D	Data Field: Distance Out-of-Range
+	0x47E	Data Field: Tilt
+	0x47F	Data Field: Tilt X Axis
+	0x480	Data Field: Tilt Y Axis
+	0x481	Data Field: Tilt Z Axis
+	0x482	Data Field: Rotation Matrix
+	0x483	Data Field: Quaternion
+	0x484	Data Field: Magnetic Flux
+	0x485	Data Field: Magnetic Flux X Axis
+	0x486	Data Field: Magnetic Flux Y Axis
+	0x487	Data Field: Magnetic Flux Z Axis
+	0x488	Data Field: Magnetometer Accuracy
+	0x489	Data Field: Simple Orientation Direction
+	0x490	Data Field: Mechanical
+	0x491	Data Field: Boolean Switch State
+	0x492	Data Field: Boolean Switch Array States
+	0x493	Data Field: Multivalue Switch Value
+	0x494	Data Field: Force
+	0x495	Data Field: Absolute Pressure
+	0x496	Data Field: Gauge Pressure
+	0x497	Data Field: Strain
+	0x498	Data Field: Weight
+	0x4A0	Property: Mechanical
+	0x4A1	Property: Vibration State
+	0x4A2	Property: Forward Vibration Speed
+	0x4A3	Property: Backward Vibration Speed
+	0x4B0	Data Field: Biometric
+	0x4B1	Data Field: Human Presence
+	0x4B2	Data Field: Human Proximity Range
+	0x4B3	Data Field: Human Proximity Out of Range
+	0x4B4	Data Field: Human Touch State
+	0x4B5	Data Field: Blood Pressure
+	0x4B6	Data Field: Blood Pressure Diastolic
+	0x4B7	Data Field: Blood Pressure Systolic
+	0x4B8	Data Field: Heart Rate	
+	0x4B9	Data Field: Resting Heart Rate	
+	0x4BA	Data Field: Heartbeat Interval
+	0x4BB	Data Field: Respiratory Rate
+	0x4BC	Data Field: SpO2
+	0x4D0	Data Field: Light
+	0x4D1	Data Field: Illuminance
+	0x4D2	Data Field: Color Temperature
+	0x4D3	Data Field: Chromaticity
+	0x4D4	Data Field: Chromaticity X
+	0x4D5	Data Field: Chromaticity Y
+	0x4D6	Data Field: Consumer IR Sentence Receive
+	0x4D7	Data Field: Infrared Light
+	0x4D8	Data Field: Red Light
+	0x4D9	Data Field: Green Light
+	0x4DA	Data Field: Blue Light
+	0x4DB	Data Field: Ultraviolet A Light
+	0x4DC	Data Field: Ultraviolet B Light
+	0x4DD	Data Field: Ultraviolet Index
+	0x4DE	Data Field: Near Infrared Light
+	0x4DF	Property: Light
+	0x4E0	Property: Consumer IR Sentence Send
+	0x4E2	Property: Auto Brightness Preferred
+	0x4E3	Property: Auto Color Preferred
+	0x4F0	Data Field: Scanner
+	0x4F1	Data Field: RFID Tag 40 Bit
+	0x4F2	Data Field: NFC Sentence Receive
+	0x4F8	Property: Scanner
+	0x4F9	Property: NFC Sentence Send
+	0x500	Data Field: Electrical
+	0x501	Data Field: Capacitance
+	0x502	Data Field: Current
+	0x503	Data Field: Electrical Power
+	0x504	Data Field: Inductance
+	0x505	Data Field: Resistance
+	0x506	Data Field: Voltage
+	0x507	Data Field: Frequency
+	0x508	Data Field: Period
+	0x509	Data Field: Percent of Range
+	0x520	Data Field: Time
+	0x521	Data Field: Year
+	0x522	Data Field: Month
+	0x523	Data Field: Day
+	0x524	Data Field: Day of Week
+	0x525	Data Field: Hour
+	0x526	Data Field: Minute
+	0x527	Data Field: Second
+	0x528	Data Field: Millisecond
+	0x529	Data Field: Timestamp
+	0x52A	Data Field: Julian Day of Year
+	0x52B	Data Field: Time Since System Boot
+	0x530	Property: Time
+	0x531	Property: Time Zone Offset from UTC
+	0x532	Property: Time Zone Name
+	0x533	Property: Daylight Savings Time Observed
+	0x534	Property: Time Trim Adjustment
+	0x535	Property: Arm Alarm
+	0x540	Data Field: Custom
+	0x541	Data Field: Custom Usage
+	0x542	Data Field: Custom Boolean Array
+	0x543	Data Field: Custom Value
+	0x544	Data Field: Custom Value 1
+	0x545	Data Field: Custom Value 2
+	0x546	Data Field: Custom Value 3
+	0x547	Data Field: Custom Value 4
+	0x548	Data Field: Custom Value 5
+	0x549	Data Field: Custom Value 6
+	0x54A	Data Field: Custom Value 7
+	0x54B	Data Field: Custom Value 8
+	0x54C	Data Field: Custom Value 9
+	0x54D	Data Field: Custom Value 10
+	0x54E	Data Field: Custom Value 11
+	0x54F	Data Field: Custom Value 12
+	0x550	Data Field: Custom Value 13
+	0x551	Data Field: Custom Value 14
+	0x552	Data Field: Custom Value 15
+	0x553	Data Field: Custom Value 16
+	0x554	Data Field: Custom Value 17
+	0x555	Data Field: Custom Value 18
+	0x556	Data Field: Custom Value 19
+	0x557	Data Field: Custom Value 20
+	0x558	Data Field: Custom Value 21
+	0x559	Data Field: Custom Value 22
+	0x55A	Data Field: Custom Value 23
+	0x55B	Data Field: Custom Value 24
+	0x55C	Data Field: Custom Value 25
+	0x55D	Data Field: Custom Value 26
+	0x55E	Data Field: Custom Value 27
+	0x55F	Data Field: Custom Value 28
+	0x560	Data Field: Generic
+	0x561	Data Field: Generic GUID or PROPERTYKEY
+	0x562	Data Field: Generic Category GUID
+	0x563	Data Field: Generic Type GUID
+	0x564	Data Field: Generic Event PROPERTYKEY
+	0x565	Data Field: Generic Property PROPERTYKEY
+	0x566	Data Field: Generic Data Field PROPERTYKEY
+	0x567	Data Field: Generic Event
+	0x568	Data Field: Generic Property
+	0x569	Data Field: Generic Data Field
+	0x56A	Data Field: Enumerator Table Row Index
+	0x56B	Data Field: Enumerator Table Row Count
+	0x56C	Data Field: Generic GUID or PROPERTYKEY kind
+	0x56D	Data Field: Generic GUID
+	0x56E	Data Field: Generic PROPERTYKEY
+	0x56F	Data Field: Generic Top Level Collection ID
+	0x570	Data Field: Generic Report ID
+	0x571	Data Field: Generic Report Item Position Index
+	0x572	Data Field: Generic Firmware VARTYPE
+	0x573	Data Field: Generic Unit of Measure
+	0x574	Data Field: Generic Unit Exponent
+	0x575	Data Field: Generic Report Size
+	0x576	Data Field: Generic Report Count
+	0x580	Property: Generic
+	0x581	Property: Enumerator Table Row Index
+	0x582	Property: Enumerator Table Row Count
+	0x590	Data Field: Personal Activity
+	0x591	Data Field: Activity Type
+	0x592	Data Field: Activity State
+	0x593	Data Field: Device Position
+	0x594	Data Field: Step Count
+	0x595	Data Field: Step Count Reset
+	0x596	Data Field: Step Duration
+	0x597	Data Field: Step Type
+	0x5A0	Property: Minimum Activity Detection Interval
+	0x5A1	Property: Supported Activity Types
+	0x5A2	Property: Subscribed Activity Types
+	0x5A3	Property: Supported Step Types
+	0x5A4	Property: Subscribed Step Types
+	0x5A5	Property: Floor Height
+	0x5B0	Data Field: Custom Type ID
+	0x5C0	Property: Custom
+	0x5C1	Property: Custom Value 1
+	0x5C2	Property: Custom Value 2
+	0x5C3	Property: Custom Value 3
+	0x5C4	Property: Custom Value 4
+	0x5C5	Property: Custom Value 5
+	0x5C6	Property: Custom Value 6
+	0x5C7	Property: Custom Value 7
+	0x5C8	Property: Custom Value 8
+	0x5C9	Property: Custom Value 9
+	0x5CA	Property: Custom Value 10
+	0x5CB	Property: Custom Value 11
+	0x5CC	Property: Custom Value 12
+	0x5CD	Property: Custom Value 13
+	0x5CE	Property: Custom Value 14
+	0x5CF	Property: Custom Value 15
+	0x5D0	Property: Custom Value 16
+	0x5E0	Data Field: Hinge
+	0x5E1	Data Field: Hinge Angle
+	0x5F0	Data Field: Gesture Sensor
+	0x5F1	Data Field: Gesture State
+	0x5F2	Data Field: Hinge Fold Initial Angle
+	0x5F3	Data Field: Hinge Fold Final Angle
+	0x5F4	Data Field: Hinge Fold Contributing Panel
+	0x5F5	Data Field: Hinge Fold Type
+	0x800	Sensor State: Undefined
+	0x801	Sensor State: Ready
+	0x802	Sensor State: Not Available
+	0x803	Sensor State: No Data
+	0x804	Sensor State: Initializing
+	0x805	Sensor State: Access Denied
+	0x806	Sensor State: Error
+	0x810	Sensor Event: Unknown
+	0x811	Sensor Event: State Changed
+	0x812	Sensor Event: Property Changed
+	0x813	Sensor Event: Data Updated
+	0x814	Sensor Event: Poll Response
+	0x815	Sensor Event: Change Sensitivity
+	0x816	Sensor Event: Range Maximum Reached
+	0x817	Sensor Event: Range Minimum Reached
+	0x818	Sensor Event: High Threshold Cross Upward
+	0x819	Sensor Event: High Threshold Cross Downward
+	0x81A	Sensor Event: Low Threshold Cross Upward
+	0x81B	Sensor Event: Low Threshold Cross Downward
+	0x81C	Sensor Event: Zero Threshold Cross Upward
+	0x81D	Sensor Event: Zero Threshold Cross Downward
+	0x81E	Sensor Event: Period Exceeded
+	0x81F	Sensor Event: Frequency Exceeded
+	0x820	Sensor Event: Complex Trigger
+	0x830	Connection Type: PC Integrated
+	0x831	Connection Type: PC Attached
+	0x832	Connection Type: PC External
+	0x840	Reporting State: Report No Events
+	0x841	Reporting State: Report All Events
+	0x842	Reporting State: Report Threshold Events
+	0x843	Reporting State: Wake On No Events
+	0x844	Reporting State: Wake On All Events
+	0x845	Reporting State: Wake On Threshold Events
+	0x850	Power State: Undefined
+	0x851	Power State: D0 Full Power
+	0x852	Power State: D1 Low Power
+	0x853	Power State: D2 Standby Power with Wakeup
+	0x854	Power State: D3 Sleep with Wakeup
+	0x855	Power State: D4 Power Off
+	0x870	Fix Quality: No Fix
+	0x871	Fix Quality: GPS
+	0x872	Fix Quality: DGPS
+	0x880	Fix Type: No Fix
+	0x881	Fix Type: GPS SPS Mode, Fix Valid
+	0x882	Fix Type: DGPS SPS Mode, Fix Valid
+	0x883	Fix Type: GPS PPS Mode, Fix Valid
+	0x884	Fix Type: Real Time Kinematic
+	0x885	Fix Type: Float RTK
+	0x886	Fix Type: Estimated (dead reckoned)
+	0x887	Fix Type: Manual Input Mode
+	0x888	Fix Type: Simulator Mode
+	0x890	GPS Operation Mode: Manual
+	0x891	GPS Operation Mode: Automatic
+	0x8A0	GPS Selection Mode: Autonomous
+	0x8A1	GPS Selection Mode: DGPS
+	0x8A2	GPS Selection Mode: Estimated (dead reckoned)
+	0x8A3	GPS Selection Mode: Manual Input
+	0x8A4	GPS Selection Mode: Simulator
+	0x8A5	GPS Selection Mode: Data Not Valid
+	0x8B0	GPS Status Data: Valid
+	0x8B1	GPS Status Data: Not Valid
+	0x860	Accuracy: Default
+	0x861	Accuracy: High
+	0x862	Accuracy: Medium
+	0x863	Accuracy: Low
+	0x8C0	Day of Week: Sunday
+	0x8C1	Day of Week: Monday
+	0x8C2	Day of Week: Tuesday
+	0x8C3	Day of Week: Wednesday
+	0x8C4	Day of Week: Thursday
+	0x8C5	Day of Week: Friday
+	0x8C6	Day of Week: Saturday
+	0x8D0	Kind: Category
+	0x8D1	Kind: Type
+	0x8D2	Kind: Event
+	0x8D3	Kind: Property
+	0x8D4	Kind: Data Field
+	0x8E0	Magnetometer Accuracy: Low
+	0x8E1	Magnetometer Accuracy: Medium
+	0x8E2	Magnetometer Accuracy: High
+	0x8F0	Simple Orientation Direction: Not Rotated
+	0x8F1	Simple Orientation Direction: Rotated 90 Degrees CCW
+	0x8F2	Simple Orientation Direction: Rotated 180 Degrees CCW
+	0x8F3	Simple Orientation Direction: Rotated 270 Degrees CCW
+	0x8F4	Simple Orientation Direction: Face Up
+	0x8F5	Simple Orientation Direction: Face Down
+	0x900	VT_NULL
+	0x901	VT_BOOL
+	0x902	VT_UI1
+	0x903	VT_I1
+	0x904	VT_UI2
+	0x905	VT_I2
+	0x906	VT_UI4
+	0x907	VT_I4
+	0x908	VT_UI8
+	0x909	VT_I8
+	0x90A	VT_R4
+	0x90B	VT_R8
+	0x90C	VT_WSTR
+	0x90D	VT_STR
+	0x90E	VT_CLSID
+	0x90F	VT_VECTOR VT_UI1
+	0x910	VT_F16E0
+	0x911	VT_F16E1
+	0x912	VT_F16E2
+	0x913	VT_F16E3
+	0x914	VT_F16E4
+	0x915	VT_F16E5
+	0x916	VT_F16E6
+	0x917	VT_F16E7
+	0x918	VT_F16E8
+	0x919	VT_F16E9
+	0x91A	VT_F16EA
+	0x91B	VT_F16EB
+	0x91C	VT_F16EC
+	0x91D	VT_F16ED
+	0x91E	VT_F16EE
+	0x91F	VT_F16EF
+	0x920	VT_F32E0
+	0x921	VT_F32E1
+	0x922	VT_F32E2
+	0x923	VT_F32E3
+	0x924	VT_F32E4
+	0x925	VT_F32E5
+	0x926	VT_F32E6
+	0x927	VT_F32E7
+	0x928	VT_F32E8
+	0x929	VT_F32E9
+	0x92A	VT_F32EA
+	0x92B	VT_F32EB
+	0x92C	VT_F32EC
+	0x92D	VT_F32ED
+	0x92E	VT_F32EE
+	0x92F	VT_F32EF
+	0x930	Activity Type: Unknown
+	0x931	Activity Type: Stationary
+	0x932	Activity Type: Fidgeting
+	0x933	Activity Type: Walking
+	0x934	Activity Type: Running	
+	0x935	Activity Type: In Vehicle
+	0x936	Activity Type: Biking
+	0x937	Activity Type: Idle
+	0x940	Unit: Not Specified
+	0x941	Unit: Lux
+	0x942	Unit: Degrees Kelvin
+	0x943	Unit: Degrees Celsius
+	0x944	Unit: Pascal
+	0x945	Unit: Newton
+	0x946	Unit: Meters/Second
+	0x947	Unit: Kilogram
+	0x948	Unit: Meter
+	0x949	Unit: Meters/Second/Second
+	0x94A	Unit: Farad
+	0x94B	Unit: Ampere
+	0x94C	Unit: Watt
+	0x94D	Unit: Henry
+	0x94E	Unit: Ohm
+	0x94F	Unit: Volt
+	0x950	Unit: Hertz
+	0x951	Unit: Bar
+	0x952	Unit: Degrees Anti-clockwise
+	0x953	Unit: Degrees Clockwise
+	0x954	Unit: Degrees
+	0x955	Unit: Degrees/Second
+	0x956	Unit: Degrees/Second/Second
+	0x957	Unit: Knot
+	0x958	Unit: Percent
+	0x959	Unit: Second
+	0x95A	Unit: Millisecond
+	0x95B	Unit: G
+	0x95C	Unit: Bytes
+	0x95D	Unit: Milligauss
+	0x95E	Unit: Bits
+	0x960	Activity State: No State Change
+	0x961	Activity State: Start Activity
+	0x962	Activity State: End Activity
+	0x970	Exponent 0
+	0x971	Exponent 1
+	0x972	Exponent 2
+	0x973	Exponent 3
+	0x974	Exponent 4
+	0x975	Exponent 5
+	0x976	Exponent 6
+	0x977	Exponent 7
+	0x978	Exponent 8
+	0x979	Exponent 9
+	0x97A	Exponent A
+	0x97B	Exponent B
+	0x97C	Exponent C
+	0x97D	Exponent D
+	0x97E	Exponent E
+	0x97F	Exponent F
+	0x980	Device Position: Unknown
+	0x981	Device Position: Unchanged
+	0x982	Device Position: On Desk
+	0x983	Device Position: In Hand
+	0x984	Device Position: Moving in Bag
+	0x985	Device Position: Stationary in Bag
+	0x990	Step Type: Unknown
+	0x991	Step Type: Running
+	0x992	Step Type: Walking
+	0x9A0	Gesture State: Unknown
+	0x9A1	Gesture State: Started
+	0x9A2	Gesture State: Completed
+	0x9A3	Gesture State: Cancelled
+	0x9B0	Hinge Fold Contributing Panel: Unknown
+	0x9B1	Hinge Fold Contributing Panel: Panel 1
+	0x9B2	Hinge Fold Contributing Panel: Panel 2
+	0x9B3	Hinge Fold Contributing Panel: Both
+	0x9B4	Hinge Fold Type: Unknown
+	0x9B5	Hinge Fold Type: Increasing
+	0x9B6	Hinge Fold Type: Decreasing
+	0x1000	Modifier: Change Sensitivity Absolute
+	0x2000	Modifier: Maximum
+	0x3000	Modifier: Minimum
+	0x4000	Modifier: Accuracy
+	0x5000	Modifier: Resolution
+	0x6000	Modifier: Threshold High
+	0x7000	Modifier: Threshold Low
+	0x8000	Modifier: Calibration Offset
+	0x9000	Modifier: Calibration Multiplier
+	0xA000	Modifier: Report Interval
+	0xB000	Modifier: Frequency Max
+	0xC000	Modifier: Period Max
+	0xD000	Modifier: Change Sensitivity Percent of Range
+	0xE000	Modifier: Change Sensitivity Percent Relative
+	0xF000	Modifier: Vendor Reserved
 
 64	Medical Instrument
 	0x00	Undefined
@@ -1241,6 +2215,88 @@
 	0x89	2-D Mode Adjust
 	0xA0	Soft Control Select
 	0xA1	Soft Control Adjust
+
+65	Braille Display
+	0x00	Undefined
+	0x01	Braille Display
+	0x02	Braille Row
+	0x03	8 Dot Braille Cell
+	0x04	6 Dot Braille Cell
+	0x05	Number of Braille Cells
+	0x06	Screen Reader Control
+	0x07	Screen Reader Identifier
+	0xFA	Router Set 1
+	0xFB	Router Set 2
+	0xFC	Router Set 3
+	0x100	Router Key
+	0x101	Row Router Key
+	0x200	Braille Buttons
+	0x201	Braille Keyboard Dot 1
+	0x202	Braille Keyboard Dot 2
+	0x203	Braille Keyboard Dot 3
+	0x204	Braille Keyboard Dot 4
+	0x205	Braille Keyboard Dot 5
+	0x206	Braille Keyboard Dot 6
+	0x207	Braille Keyboard Dot 7
+	0x208	Braille Keyboard Dot 8
+	0x209	Braille Keyboard Space
+	0x20A	Braille Keyboard Left Space
+	0x20B	Braille Keyboard Right Space
+	0x20C	Braille Face Controls
+	0x20D	Braille Left Controls
+	0x20E	Braille Right Controls
+	0x20F	Braille Top Controls
+	0x210	Braille Joystick Center
+	0x211	Braille Joystick Up
+	0x212	Braille Joystick Down
+	0x213	Braille Joystick Left
+	0x214	Braille Joystick Right
+	0x215	Braille D-Pad Center
+	0x216	Braille D-Pad Up
+	0x217	Braille D-Pad Down
+	0x218	Braille D-Pad Left
+	0x219	Braille D-Pad Right
+	0x21A	Braille Pan Left
+	0x21B	Braille Pan Right
+	0x21C	Braille Rocker Up
+	0x21D	Braille Rocker Down
+	0x21E	Braille Rocker Press
+
+89	Lighting and Illumination
+	0x00	Undefined
+	0x01	LampArray
+	0x02	LampArrayAttributesReport
+	0x03	LampCount
+	0x04	BoundingBoxWidthInMicrometers
+	0x05	BoundingBoxHeightInMicrometers
+	0x06	BoundingBoxDepthInMicrometers
+	0x07	LampArrayKind
+	0x08	MinUpdateIntervalInMicroseconds
+	0x20	LampAttributesRequestReport
+	0x21	LampId
+	0x22	LampAttributesResponseReport
+	0x23	PositionXInMicrometers
+	0x24	PositionYInMicrometers
+	0x25	PositionZInMicrometers
+	0x26	LampPurposes
+	0x27	UpdateLatencyInMicroseconds
+	0x28	RedLevelCount
+	0x29	GreenLevelCount
+	0x2A	BlueLevelCount
+	0x2B	IntensityLevelCount
+	0x2C	IsProgrammable
+	0x2D	InputBinding
+	0x50	LampMultiUpdateReport
+	0x51	RedUpdateChannel
+	0x52	GreenUpdateChannel
+	0x53	BlueUpdateChannel
+	0x54	IntensityUpdateChannel
+	0x55	LampUpdateFlags
+	0x60	LampRangeUpdateReport
+	0x61	LampIdStart
+	0x62	LampIdEnd
+	0x70	LampArrayControlReport
+	0x71	AutonomousMode	
 
 128	Monitor
 	0x00	Undefined
@@ -1341,8 +2397,8 @@
 	0x21	OutletID
 	0x22	Gang
 	0x23	GangID
-	0x24	Sink
-	0x25	SinkID
+	0x24	PowerSummary	
+	0x25	PowerSummaryID
 	0x30	Voltage
 	0x31	Current
 	0x32	Frequency
@@ -1369,7 +2425,7 @@
 	0x56	DelayBeforeStartup
 	0x57	DelayBeforeShutdown
 	0x58	Test
-	0x59	Vendorspecificcommand
+	0x59	ModuleReset
 	0x5A	AudibleAlarmControl
 	0x60	Present
 	0x61	Good
@@ -1748,8 +2804,19 @@
 	0x24	Track JIS Data
 
 144	Camera Control
+	0x00	Undefined
+	0x20	Camera Auto-focus
+	0x21	Camera Shutter
 
 145	Arcade Device
+
+146	Gaming Device
+
+61904	FIDO Alliance
+	0x00	Undefined
+	0x01	U2F Authenticator Device
+	0x20	Input Report Data
+	0x21	Output Report Data
 
 # Some Microsoft non-standard extensions
 0xFF00	Microsoft
