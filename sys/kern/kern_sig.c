@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.260 2020/08/26 03:16:53 visa Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.261 2020/09/09 16:29:14 mpi Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1484,6 +1484,22 @@ sigexit(struct proc *p, int signum)
 	}
 	exit1(p, 0, signum, EXIT_NORMAL);
 	/* NOTREACHED */
+}
+
+/*
+ * Return 1 if `sig', a given signal, is ignored or masked for `p', a given
+ * thread, and 0 otherwise.
+ */
+int
+sigismasked(struct proc *p, int sig)
+{
+	struct process *pr = p->p_p;
+
+	if ((pr->ps_sigacts->ps_sigignore & sigmask(sig)) ||
+	    (p->p_sigmask & sigmask(sig)))
+	    	return 1;
+
+	return 0;
 }
 
 int nosuidcoredump = 1;
