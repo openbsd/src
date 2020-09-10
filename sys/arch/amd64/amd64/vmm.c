@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.273 2020/04/19 19:29:52 krw Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.274 2020/09/10 17:03:03 mpi Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -559,6 +559,34 @@ vmmclose(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 /*
+ * vm_find_vcpu
+ *
+ * Lookup VMM VCPU by ID number
+ *
+ * Parameters:
+ *  vm: vm structure
+ *  id: index id of vcpu
+ *
+ * Returns pointer to vcpu structure if successful, NULL otherwise
+ */
+static struct vcpu *
+vm_find_vcpu(struct vm *vm, uint32_t id)
+{
+	struct vcpu *vcpu;
+
+	if (vm == NULL)
+		return NULL;
+	rw_enter_read(&vm->vm_vcpu_lock);
+	SLIST_FOREACH(vcpu, &vm->vm_vcpu_list, vc_vcpu_link) {
+		if (vcpu->vc_id == id)
+			break;
+	}
+	rw_exit_read(&vm->vm_vcpu_lock);
+	return vcpu;
+}
+
+
+/*
  * vm_resetcpu
  *
  * Resets the vcpu defined in 'vrp' to power-on-init register state
@@ -591,12 +619,7 @@ vm_resetcpu(struct vm_resetcpu_params *vrp)
 		return (error);
 	}
 
-	rw_enter_read(&vm->vm_vcpu_lock);
-	SLIST_FOREACH(vcpu, &vm->vm_vcpu_list, vc_vcpu_link) {
-		if (vcpu->vc_id == vrp->vrp_vcpu_id)
-			break;
-	}
-	rw_exit_read(&vm->vm_vcpu_lock);
+	vcpu = vm_find_vcpu(vm, vrp->vrp_vcpu_id);
 
 	if (vcpu == NULL) {
 		DPRINTF("%s: vcpu id %u of vm %u not found\n", __func__,
@@ -657,12 +680,7 @@ vm_intr_pending(struct vm_intr_params *vip)
 		return (error);
 	}
 
-	rw_enter_read(&vm->vm_vcpu_lock);
-	SLIST_FOREACH(vcpu, &vm->vm_vcpu_list, vc_vcpu_link) {
-		if (vcpu->vc_id == vip->vip_vcpu_id)
-			break;
-	}
-	rw_exit_read(&vm->vm_vcpu_lock);
+	vcpu = vm_find_vcpu(vm, vip->vip_vcpu_id);
 	rw_exit_read(&vmm_softc->vm_lock);
 
 	if (vcpu == NULL)
@@ -722,12 +740,7 @@ vm_rwvmparams(struct vm_rwvmparams_params *vpp, int dir) {
 		return (error);
 	}
 
-	rw_enter_read(&vm->vm_vcpu_lock);
-	SLIST_FOREACH(vcpu, &vm->vm_vcpu_list, vc_vcpu_link) {
-		if (vcpu->vc_id == vpp->vpp_vcpu_id)
-			break;
-	}
-	rw_exit_read(&vm->vm_vcpu_lock);
+	vcpu = vm_find_vcpu(vm, vpp->vpp_vcpu_id);
 	rw_exit_read(&vmm_softc->vm_lock);
 
 	if (vcpu == NULL)
@@ -786,12 +799,7 @@ vm_rwregs(struct vm_rwregs_params *vrwp, int dir)
 		return (error);
 	}
 
-	rw_enter_read(&vm->vm_vcpu_lock);
-	SLIST_FOREACH(vcpu, &vm->vm_vcpu_list, vc_vcpu_link) {
-		if (vcpu->vc_id == vrwp->vrwp_vcpu_id)
-			break;
-	}
-	rw_exit_read(&vm->vm_vcpu_lock);
+	vcpu = vm_find_vcpu(vm, vrwp->vrwp_vcpu_id);
 	rw_exit_read(&vmm_softc->vm_lock);
 
 	if (vcpu == NULL)
@@ -858,12 +866,7 @@ vm_mprotect_ept(struct vm_mprotect_ept_params *vmep)
 		return (ret);
 	}
 
-	rw_enter_read(&vm->vm_vcpu_lock);
-	SLIST_FOREACH(vcpu, &vm->vm_vcpu_list, vc_vcpu_link) {
-		if (vcpu->vc_id == vmep->vmep_vcpu_id)
-			break;
-	}
-	rw_exit_read(&vm->vm_vcpu_lock);
+	vcpu = vm_find_vcpu(vm, vmep->vmep_vcpu_id);
 
 	if (vcpu == NULL) {
 		DPRINTF("%s: vcpu id %u of vm %u not found\n", __func__,
