@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.16 2020/08/17 08:19:20 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.17 2020/09/10 08:24:31 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -107,6 +107,12 @@ tls13_slow_tests = TestGroup("slow TLSv1.3 tests", [
         "-x", "max size payload (2**14) of Finished msg, with 16348 bytes of left padding, cipher TLS_AES_128_GCM_SHA256",
         "-x", "max size payload (2**14) of Finished msg, with 16348 bytes of left padding, cipher TLS_CHACHA20_POLY1305_SHA256",
     ]),
+    # We don't accept an empty ECPF extension since it must advertise the
+    # uncompressed point format. Exclude this extension type from the test.
+    Test(
+        "test-tls13-large-number-of-extensions.py",
+        tls13_args = ["--exc", "11"],
+    ),
 ])
 
 tls13_extra_cert_tests = TestGroup("TLSv1.3 certificate tests", [
@@ -163,7 +169,6 @@ tls13_slow_failing_tests = TestGroup("slow, failing TLSv1.3 tests", [
     # The following two tests fail Test (skip empty extensions for the first one):
     # 'empty unassigned extensions, ids in range from 2 to 4118'
     # 'unassigned extensions with random payload, ids in range from 2 to 1046'
-    Test("test-tls13-large-number-of-extensions.py"), # 2 fail: empty/random payload
 
     # 6 tests fail: 'rsa_pkcs1_{md5,sha{1,224,256,384,512}} signature'
     # We send server hello, but the test expects handshake_failure
