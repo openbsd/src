@@ -1,4 +1,4 @@
-/*	$OpenBSD: octiic.c,v 1.1 2019/04/23 13:53:47 visa Exp $	*/
+/*	$OpenBSD: octiic.c,v 1.2 2020/09/10 16:29:04 visa Exp $	*/
 
 /*
  * Copyright (c) 2019 Visa Hankala
@@ -25,13 +25,15 @@
 #include <sys/device.h>
 #include <sys/stdint.h>
 
-#include <dev/i2c/i2cvar.h>
-#include <dev/ofw/fdt.h>
-#include <dev/ofw/openfirm.h>
-
 #include <machine/bus.h>
 #include <machine/fdt.h>
 #include <machine/octeonvar.h>
+
+#include <dev/i2c/i2cvar.h>
+
+#include <dev/ofw/fdt.h>
+#include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_misc.h>
 
 struct octiic_softc {
 	struct device		 sc_dev;
@@ -39,6 +41,7 @@ struct octiic_softc {
 	bus_space_tag_t		 sc_iot;
 	bus_space_handle_t	 sc_ioh;
 
+	struct i2c_bus		 sc_i2c_bus;
 	struct i2c_controller	 sc_i2c_tag;
 	struct rwlock		 sc_i2c_lock;
 
@@ -188,6 +191,10 @@ octiic_attach(struct device *parent, struct device *self, void *aux)
 	iba.iba_name = "iic";
 	iba.iba_tag = &sc->sc_i2c_tag;
 	config_found(self, &iba, iicbus_print);
+
+	sc->sc_i2c_bus.ib_node = sc->sc_node;
+	sc->sc_i2c_bus.ib_ic = &sc->sc_i2c_tag;
+	i2c_register(&sc->sc_i2c_bus);
 }
 
 int
