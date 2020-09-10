@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.64 2020/05/17 18:29:25 denis Exp $ */
+/*	$OpenBSD: kroute.c,v 1.65 2020/09/10 05:18:16 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -102,6 +102,7 @@ kr_init(int fs, u_int rdomain, int redis_label_or_prefix, u_int8_t fib_prio)
 	int		opt = 0, rcvbuf, default_rcvbuf;
 	socklen_t	optlen;
 	int		filter_prio = fib_prio;
+	int		filter_flags = RTF_LLINFO | RTF_BROADCAST;
 
 	kr_state.fib_sync = fs;
 	kr_state.rdomain = rdomain;
@@ -127,6 +128,12 @@ kr_init(int fs, u_int rdomain, int redis_label_or_prefix, u_int8_t fib_prio)
 	if (setsockopt(kr_state.fd, AF_ROUTE, ROUTE_PRIOFILTER, &filter_prio,
 	    sizeof(filter_prio)) == -1) {
 		log_warn("%s: setsockopt AF_ROUTE ROUTE_PRIOFILTER", __func__);
+		/* not fatal */
+	}
+
+	if (setsockopt(kr_state.fd, AF_ROUTE, ROUTE_FLAGFILTER, &filter_flags,
+	    sizeof(filter_flags)) == -1) {
+		log_warn("%s: setsockopt AF_ROUTE ROUTE_FLAGFILTER", __func__);
 		/* not fatal */
 	}
 
