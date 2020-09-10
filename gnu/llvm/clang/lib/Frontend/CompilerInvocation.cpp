@@ -3175,6 +3175,9 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
       Diags.Report(diag::err_drv_invalid_value) << A->getAsString(Args) << Val;
   }
 
+  if (Args.hasArg(OPT_fexperimental_strict_floating_point))
+    Opts.ExpStrictFP = true;
+
   LangOptions::FPRoundingModeKind FPRM = LangOptions::FPR_ToNearest;
   if (Args.hasArg(OPT_frounding_math)) {
     FPRM = LangOptions::FPR_Dynamic;
