@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2020/09/07 17:38:13 tobhe Exp $
+#	$OpenBSD: Makefile,v 1.17 2020/09/10 20:40:18 tobhe Exp $
 
 # Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
 #
@@ -183,7 +183,7 @@ setup_pf: pf.in
 	-ssh ${LEFT_SSH} "pfctl -f /tmp/pf.conf; pfctl -e"
 	-ssh ${RIGHT_SSH} "pfctl -f /tmp/pf.conf; pfctl -e"
 
-setup: cleanup setup_pf setup_certs
+setup: setup_pf setup_certs
 
 .PHONY: setup_certs
 
@@ -217,6 +217,8 @@ left-from-ca-right.crt left.key: ca-right.crt ca-right.key
 REGRESS_TARGETS = run-ping-fail
 run-ping-fail:
 	@echo '======= $@ ========'
+	ssh ${LEFT_SSH} "ipsecctl -F; pkill iked || true"
+	ssh ${RIGHT_SSH} "ipsecctl -F; pkill iked || true"
 	${TEST_PING}; \
 	if [[ $$_ret -ne 1 ]]; then exit 1; fi
 
