@@ -1,4 +1,4 @@
-/*	$OpenBSD: octiic.c,v 1.2 2020/09/10 16:29:04 visa Exp $	*/
+/*	$OpenBSD: octiic.c,v 1.3 2020/09/10 16:40:40 visa Exp $	*/
 
 /*
  * Copyright (c) 2019 Visa Hankala
@@ -29,6 +29,7 @@
 #include <machine/fdt.h>
 #include <machine/octeonvar.h>
 
+#define _I2C_PRIVATE
 #include <dev/i2c/i2cvar.h>
 
 #include <dev/ofw/fdt.h>
@@ -190,6 +191,8 @@ octiic_attach(struct device *parent, struct device *self, void *aux)
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_name = "iic";
 	iba.iba_tag = &sc->sc_i2c_tag;
+	iba.iba_bus_scan = octiic_i2c_scan;
+	iba.iba_bus_scan_arg = sc;
 	config_found(self, &iba, iicbus_print);
 
 	sc->sc_i2c_bus.ib_node = sc->sc_node;
@@ -332,6 +335,36 @@ octiic_i2c_write_byte(void *cookie, uint8_t data, int flags)
 		error = octiic_i2c_send_stop(sc, flags);
 
 	return error;
+}
+
+void
+octiic_i2c_scan(struct device *self, struct i2cbus_attach_args *iba, void *arg)
+{
+	struct i2c_attach_args ia;
+	char name[32];
+	uint32_t reg[1];
+	struct octiic_softc *sc = arg;
+	int node;
+
+	for (node = OF_child(sc->sc_node); node != 0; node = OF_peer(node)) {
+		memset(name, 0, sizeof(name));
+		memset(reg, 0, sizeof(reg));
+
+		if (OF_getprop(node, "compatible", name, sizeof(name)) == -1)
+			continue;
+		if (name[0] == '\0')
+			continue;
+
+		if (OF_getprop(node, "reg", &reg, sizeof(reg)) != sizeof(reg))
+			continue;
+
+		memset(&ia, 0, sizeof(ia));
+		ia.ia_tag = iba->iba_tag;
+		ia.ia_addr = reg[0];
+		ia.ia_name = name;
+		ia.ia_cookie = &node;
+		config_found(self, &ia, iic_print);
+	}
 }
 
 int
