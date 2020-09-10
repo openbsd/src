@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.60 2020/09/06 15:51:28 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.61 2020/09/10 17:54:47 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -40,9 +40,11 @@
 #include <err.h>
 #include <errno.h>
 #include <event.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <stdint.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <netdb.h>
 #include <string.h>
@@ -92,6 +94,7 @@ char		*symget(const char *);
 struct snmpd			*conf = NULL;
 static int			 errors = 0;
 static struct usmuser		*user = NULL;
+static char			*snmpd_port = SNMPD_PORT;
 
 int		 host(const char *, const char *, int,
 		    struct sockaddr_storage *, int);
@@ -122,11 +125,11 @@ typedef struct {
 %token	SYSTEM CONTACT DESCR LOCATION NAME OBJECTID SERVICES RTFILTER
 %token	READONLY READWRITE OCTETSTRING INTEGER COMMUNITY TRAP RECEIVER
 %token	SECLEVEL NONE AUTH ENC USER AUTHKEY ENCKEY ERROR DISABLED
-%token	HANDLE DEFAULT SRCADDR TCP UDP PFADDRFILTER
+%token	HANDLE DEFAULT SRCADDR TCP UDP PFADDRFILTER PORT
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.string>	hostcmn
-%type	<v.string>	srcaddr
+%type	<v.string>	srcaddr port
 %type	<v.number>	optwrite yesno seclevel proto
 %type	<v.data>	objtype cmd
 %type	<v.oid>		oid hostoid trapoid
@@ -193,28 +196,7 @@ yesno		:  STRING			{
 		}
 		;
 
-main		: LISTEN ON STRING proto	{
-			struct sockaddr_storage ss[16];
-			int nhosts, i;
-
-			nhosts = host($3, SNMPD_PORT, $4, ss, nitems(ss));
-			if (nhosts < 1) {
-				yyerror("invalid address: %s", $3);
-				free($3);
-				YYERROR;
-			}
-			if (nhosts > (int)nitems(ss))
-				log_warn("%s resolves to more than %zu hosts",
-				    $3, nitems(ss));
-			free($3);
-
-			for (i = 0; i < nhosts; i++) {
-				if (listen_add(&(ss[i]), $4) == -1) {
-					yyerror("calloc");
-					YYERROR;
-				}
-			}
-		}
+main		: LISTEN ON listenproto
 		| READONLY COMMUNITY STRING	{
 			if (strlcpy(conf->sc_rdcommunity, $3,
 			    sizeof(conf->sc_rdcommunity)) >=
@@ -292,6 +274,132 @@ main		: LISTEN ON STRING proto	{
 				YYERROR;
 			}
 			user = NULL;
+		}
+		;
+
+listenproto	: UDP listen_udp
+		| TCP listen_tcp
+		| listen_empty
+
+listen_udp	: STRING port			{
+			struct sockaddr_storage ss[16];
+			int nhosts, i;
+
+			nhosts = host($1, $2, SOCK_DGRAM, ss, nitems(ss));
+			if (nhosts < 1) {
+				yyerror("invalid address: %s", $1);
+				free($1);
+				if ($2 != snmpd_port)
+					free($2);
+				YYERROR;
+			}
+			if (nhosts > (int)nitems(ss))
+				log_warn("%s:%s resolves to more than %zu hosts",
+				    $1, $2, nitems(ss));
+
+			free($1);
+			if ($2 != snmpd_port)
+				free($2);
+			for (i = 0; i < nhosts; i++) {
+				if (listen_add(&(ss[i]), SOCK_DGRAM) == -1) {
+					yyerror("calloc");
+					YYERROR;
+				}
+			}
+		}
+
+listen_tcp	: STRING port			{
+			struct sockaddr_storage ss[16];
+			int nhosts, i;
+
+			nhosts = host($1, $2, SOCK_STREAM, ss, nitems(ss));
+			if (nhosts < 1) {
+				yyerror("invalid address: %s", $1);
+				free($1);
+				if ($2 != snmpd_port)
+					free($2);
+				YYERROR;
+			}
+			if (nhosts > (int)nitems(ss))
+				log_warn("%s:%s resolves to more than %zu hosts",
+				    $1, $2, nitems(ss));
+
+			free($1);
+			if ($2 != snmpd_port)
+				free($2);
+			for (i = 0; i < nhosts; i++) {
+				if (listen_add(&(ss[i]), SOCK_STREAM) == -1) {
+					yyerror("calloc");
+					YYERROR;
+				}
+			}
+		}
+
+/* Remove after deprecation period and replace with listen_udp */
+listen_empty	: STRING port proto		{
+			struct sockaddr_storage ss[16];
+			int nhosts, i;
+
+			nhosts = host($1, $2, $3, ss, nitems(ss));
+			if (nhosts < 1) {
+				yyerror("invalid address: %s", $1);
+				free($1);
+				if ($2 != snmpd_port)
+					free($2);
+				YYERROR;
+			}
+			if (nhosts > (int)nitems(ss))
+				log_warn("%s:%s resolves to more than %zu hosts",
+				    $1, $2, nitems(ss));
+
+			free($1);
+			if ($2 != snmpd_port)
+				free($2);
+			for (i = 0; i < nhosts; i++) {
+				if (listen_add(&(ss[i]), $3) == -1) {
+					yyerror("calloc");
+					YYERROR;
+				}
+			}
+		}
+
+port		: /* empty */			{
+			$$ = snmpd_port;
+		}
+		| PORT STRING			{
+			$$ = $2;
+		}
+		| PORT NUMBER			{
+			char *number;
+
+			if ($2 > UINT16_MAX) {
+				yyerror("port number too large");
+				YYERROR;
+			}
+			if ($2 < 1) {
+				yyerror("port number too small");
+				YYERROR;
+			}
+			if (asprintf(&number, "%"PRId64, $2) == -1) {
+				yyerror("malloc");
+				YYERROR;
+			}
+			$$ = number;
+		}
+		;
+
+proto		: /* empty */			{
+			$$ = SOCK_DGRAM;
+		}
+		| UDP				{
+			log_warnx("udp as last keyword on listen on line is "
+			    "deprecated");
+			$$ = SOCK_DGRAM;
+		}
+		| TCP				{
+			log_warnx("tcp as last keyword on listen on line is "
+			    "deprecated");
+			$$ = SOCK_STREAM;
 		}
 		;
 
@@ -541,11 +649,6 @@ enc		: STRING			{
 		}
 		;
 
-proto		: /* empty */			{ $$ = SOCK_DGRAM; }
-		| TCP				{ $$ = SOCK_STREAM; }
-		| UDP				{ $$ = SOCK_DGRAM; }
-		;
-
 cmd		: STRING		{
 			struct trapcmd	*cmd;
 			size_t		 span, limit;
@@ -646,6 +749,7 @@ lookup(char *s)
 		{ "none",			NONE },
 		{ "oid",			OBJECTID },
 		{ "on",				ON },
+		{ "port",			PORT },
 		{ "read-only",			READONLY },
 		{ "read-write",			READWRITE },
 		{ "receiver",			RECEIVER },

@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.43 2020/06/30 17:11:49 martijn Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.44 2020/09/10 17:54:47 martijn Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 30 2020 $
+.Dd $Mdocdate: September 10 2020 $
 .Dt SNMPD.CONF 5
 .Os
 .Sh NAME
@@ -95,7 +95,7 @@ Routing table information will not be available, but CPU use will be
 reduced during bulk updates.
 The default is
 .Ic no .
-.It Ic listen on Ar address Op Ic tcp | udp
+.It Ic listen on Oo Ic tcp | udp Oc Ar address Op Ic port Ar port
 Specify the local address
 .Xr snmpd 8
 should listen on for incoming SNMP messages.
