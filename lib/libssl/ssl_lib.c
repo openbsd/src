@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.221 2020/08/30 15:40:19 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.222 2020/09/11 13:20:32 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -225,13 +225,13 @@ SSL_clear(SSL *s)
 int
 SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth)
 {
-	STACK_OF(SSL_CIPHER)	*sk;
+	STACK_OF(SSL_CIPHER) *ciphers;
 
 	ctx->method = meth;
 
-	sk = ssl_create_cipher_list(ctx->method, &(ctx->cipher_list),
-	    &(ctx->internal->cipher_list_by_id), SSL_DEFAULT_CIPHER_LIST);
-	if ((sk == NULL) || (sk_SSL_CIPHER_num(sk) <= 0)) {
+	ciphers = ssl_create_cipher_list(ctx->method, &ctx->cipher_list,
+	    &ctx->internal->cipher_list_by_id, SSL_DEFAULT_CIPHER_LIST);
+	if (ciphers == NULL || sk_SSL_CIPHER_num(ciphers) <= 0) {
 		SSLerrorx(SSL_R_SSL_LIBRARY_HAS_NO_CIPHERS);
 		return (0);
 	}
@@ -1361,18 +1361,15 @@ ssl_has_ecc_ciphers(SSL *s)
 const char *
 SSL_get_cipher_list(const SSL *s, int n)
 {
-	SSL_CIPHER		*c;
-	STACK_OF(SSL_CIPHER)	*sk;
+	STACK_OF(SSL_CIPHER) *ciphers;
+	const SSL_CIPHER *cipher;
 
-	if (s == NULL)
+	if ((ciphers = SSL_get_ciphers(s)) == NULL)
 		return (NULL);
-	sk = SSL_get_ciphers(s);
-	if ((sk == NULL) || (sk_SSL_CIPHER_num(sk) <= n))
+	if ((cipher = sk_SSL_CIPHER_value(ciphers, n)) == NULL)
 		return (NULL);
-	c = sk_SSL_CIPHER_value(sk, n);
-	if (c == NULL)
-		return (NULL);
-	return (c->name);
+
+	return (cipher->name);
 }
 
 STACK_OF(SSL_CIPHER) *
@@ -1385,22 +1382,21 @@ SSL_CTX_get_ciphers(const SSL_CTX *ctx)
 int
 SSL_CTX_set_cipher_list(SSL_CTX *ctx, const char *str)
 {
-	STACK_OF(SSL_CIPHER)	*sk;
+	STACK_OF(SSL_CIPHER) *ciphers;
 
-	sk = ssl_create_cipher_list(ctx->method, &ctx->cipher_list,
-	    &ctx->internal->cipher_list_by_id, str);
 	/*
-	 * ssl_create_cipher_list may return an empty stack if it
-	 * was unable to find a cipher matching the given rule string
-	 * (for example if the rule string specifies a cipher which
-	 * has been disabled). This is not an error as far as
-	 * ssl_create_cipher_list is concerned, and hence
+	 * ssl_create_cipher_list may return an empty stack if it was unable to
+	 * find a cipher matching the given rule string (for example if the
+	 * rule string specifies a cipher which has been disabled). This is not
+	 * an error as far as ssl_create_cipher_list is concerned, and hence
 	 * ctx->cipher_list and ctx->internal->cipher_list_by_id has been
 	 * updated.
 	 */
-	if (sk == NULL)
+	ciphers = ssl_create_cipher_list(ctx->method, &ctx->cipher_list,
+	    &ctx->internal->cipher_list_by_id, str);
+	if (ciphers == NULL) {
 		return (0);
-	else if (sk_SSL_CIPHER_num(sk) == 0) {
+	} else if (sk_SSL_CIPHER_num(ciphers) == 0) {
 		SSLerrorx(SSL_R_NO_CIPHER_MATCH);
 		return (0);
 	}
@@ -1411,42 +1407,41 @@ SSL_CTX_set_cipher_list(SSL_CTX *ctx, const char *str)
 int
 SSL_set_cipher_list(SSL *s, const char *str)
 {
-	STACK_OF(SSL_CIPHER)	*sk;
+	STACK_OF(SSL_CIPHER) *ciphers;
 
-	sk = ssl_create_cipher_list(s->ctx->method, &s->cipher_list,
-	&s->internal->cipher_list_by_id, str);
-	/* see comment in SSL_CTX_set_cipher_list */
-	if (sk == NULL)
+	/* See comment in SSL_CTX_set_cipher_list. */
+	ciphers = ssl_create_cipher_list(s->ctx->method, &s->cipher_list,
+	    &s->internal->cipher_list_by_id, str);
+	if (ciphers == NULL) {
 		return (0);
-	else if (sk_SSL_CIPHER_num(sk) == 0) {
+	} else if (sk_SSL_CIPHER_num(ciphers) == 0) {
 		SSLerror(s, SSL_R_NO_CIPHER_MATCH);
 		return (0);
 	}
 	return (1);
 }
 
-/* works well for SSLv2, not so good for SSLv3 */
 char *
 SSL_get_shared_ciphers(const SSL *s, char *buf, int len)
 {
-	char			*end;
-	STACK_OF(SSL_CIPHER)	*sk;
-	SSL_CIPHER		*c;
-	size_t			 curlen = 0;
-	int			 i;
+	STACK_OF(SSL_CIPHER) *ciphers;
+	const SSL_CIPHER *cipher;
+	size_t curlen = 0;
+	char *end;
+	int i;
 
 	if (s->session == NULL || s->session->ciphers == NULL || len < 2)
 		return (NULL);
 
-	sk = s->session->ciphers;
-	if (sk_SSL_CIPHER_num(sk) == 0)
+	ciphers = s->session->ciphers;
+	if (sk_SSL_CIPHER_num(ciphers) == 0)
 		return (NULL);
 
 	buf[0] = '\0';
-	for (i = 0; i < sk_SSL_CIPHER_num(sk); i++) {
-		c = sk_SSL_CIPHER_value(sk, i);
+	for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
+		cipher = sk_SSL_CIPHER_value(ciphers, i);
 		end = buf + curlen;
-		if (strlcat(buf, c->name, len) >= len ||
+		if (strlcat(buf, cipher->name, len) >= len ||
 		    (curlen = strlcat(buf, ":", len)) >= len) {
 			/* remove truncated cipher from list */
 			*end = '\0';
