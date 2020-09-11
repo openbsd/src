@@ -1,4 +1,4 @@
-/*      $OpenBSD: codepatch.c,v 1.4 2017/07/10 00:59:24 mortimer Exp $    */
+/*      $OpenBSD: codepatch.c,v 1.5 2020/09/11 09:27:10 mpi Exp $    */
 /*
  * Copyright (c) 2014-2015 Stefan Fritsch <sf@sfritsch.de>
  *
@@ -16,6 +16,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <machine/codepatch.h>
 #include <machine/cpu.h>
 #include <uvm/uvm_extern.h>

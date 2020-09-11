@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.55 2018/07/30 14:19:12 kettenis Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.56 2020/09/11 09:27:10 mpi Exp $	*/
 
 /*
  * Copyright (c) 2011 Mike Larkin <mlarkin@openbsd.org>
@@ -17,6 +17,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/device.h>

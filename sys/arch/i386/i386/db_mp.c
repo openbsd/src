@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_mp.c,v 1.12 2019/11/06 07:34:35 mpi Exp $	*/
+/*	$OpenBSD: db_mp.c,v 1.13 2020/09/11 09:27:10 mpi Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Andreas Gunnarsson <andreas@openbsd.org>
@@ -16,6 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/mutex.h>
 

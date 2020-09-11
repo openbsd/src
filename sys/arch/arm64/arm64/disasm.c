@@ -1,4 +1,4 @@
-/*	$OpenBSD: disasm.c,v 1.1 2020/07/25 12:26:09 tobhe Exp $ */
+/*	$OpenBSD: disasm.c,v 1.2 2020/09/11 09:27:10 mpi Exp $ */
 /*	$NetBSD: disasm.c,v 1.8 2020/05/26 05:25:21 ryo Exp $	*/
 
 /*
@@ -28,6 +28,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/types.h>
 
 #include <machine/db_machdep.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidebug.c,v 1.31 2018/06/29 17:39:18 kettenis Exp $ */
+/* $OpenBSD: acpidebug.c,v 1.32 2020/09/11 09:27:10 mpi Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@openbsd.org>
  *
@@ -15,13 +15,14 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/malloc.h>
+#include <machine/bus.h>
 #include <machine/db_machdep.h>
 #include <ddb/db_output.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_lex.h>
-
-#include <machine/bus.h>
-#include <sys/malloc.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>

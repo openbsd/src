@@ -1,4 +1,4 @@
-/*	$OpenBSD: set_memory.h,v 1.2 2020/06/08 04:48:14 jsg Exp $	*/
+/*	$OpenBSD: set_memory.h,v 1.3 2020/09/11 09:27:10 mpi Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -18,6 +18,7 @@
 #ifndef _ASM_SET_MEMORY_H
 #define _ASM_SET_MEMORY_H
 
+#include <sys/systm.h>
 #include <sys/atomic.h>
 
 #include <sys/param.h>		/* for PAGE_SIZE on i386 */

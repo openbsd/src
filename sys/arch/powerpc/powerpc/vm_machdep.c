@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.49 2017/02/12 04:55:08 guenther Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.50 2020/09/11 09:27:10 mpi Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 1996/09/30 16:34:57 ws Exp $	*/
 
 /*
@@ -32,6 +32,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/exec.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
