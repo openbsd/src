@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2019/03/28 22:24:13 bluhm Exp $
+# $OpenBSD: Makefile,v 1.4 2020/09/11 22:48:00 bluhm Exp $
 
 # Connect a client to a server.  Both can be current libressl, or
 # openssl 1.0.2, or openssl 1.1.  Create lists of supported ciphers
@@ -6,54 +6,16 @@
 # certificate with compatible type.  Check that client and server
 # have used correct cipher by grepping in their session print out.
 
-check-cipher-ADH-AES128-GCM-SHA256-client-openssl11-server-openssl11 \
-check-cipher-ADH-AES128-SHA-client-openssl11-server-openssl11 \
-check-cipher-ADH-AES128-SHA256-client-openssl11-server-openssl11 \
-check-cipher-ADH-AES256-GCM-SHA384-client-openssl11-server-openssl11 \
-check-cipher-ADH-AES256-SHA-client-openssl11-server-openssl11 \
-check-cipher-ADH-AES256-SHA256-client-openssl11-server-openssl11 \
-check-cipher-ADH-CAMELLIA128-SHA-client-openssl11-server-openssl11 \
-check-cipher-ADH-CAMELLIA128-SHA256-client-openssl11-server-openssl11 \
-check-cipher-ADH-CAMELLIA256-SHA-client-openssl11-server-openssl11 \
-check-cipher-ADH-CAMELLIA256-SHA256-client-openssl11-server-openssl11 \
-check-cipher-AECDH-AES128-SHA-client-openssl11-server-openssl11 \
-check-cipher-AECDH-AES256-SHA-client-openssl11-server-openssl11 \
-check-cipher-AES128-GCM-SHA256-client-openssl11-server-openssl11 \
-check-cipher-AES128-SHA-client-openssl11-server-openssl11 \
-check-cipher-AES128-SHA256-client-openssl11-server-openssl11 \
-check-cipher-AES256-GCM-SHA384-client-openssl11-server-openssl11 \
-check-cipher-AES256-SHA-client-openssl11-server-openssl11 \
-check-cipher-AES256-SHA256-client-openssl11-server-openssl11 \
-check-cipher-CAMELLIA128-SHA-client-openssl11-server-openssl11 \
-check-cipher-CAMELLIA128-SHA256-client-openssl11-server-openssl11 \
-check-cipher-CAMELLIA256-SHA-client-openssl11-server-openssl11 \
-check-cipher-CAMELLIA256-SHA256-client-openssl11-server-openssl11 \
-check-cipher-DHE-RSA-AES128-GCM-SHA256-client-openssl11-server-openssl11 \
-check-cipher-DHE-RSA-AES128-SHA-client-openssl11-server-openssl11 \
-check-cipher-DHE-RSA-AES128-SHA256-client-openssl11-server-openssl11 \
-check-cipher-DHE-RSA-AES256-GCM-SHA384-client-openssl11-server-openssl11 \
-check-cipher-DHE-RSA-AES256-SHA-client-openssl11-server-openssl11 \
-check-cipher-DHE-RSA-AES256-SHA256-client-openssl11-server-openssl11 \
-check-cipher-DHE-RSA-CAMELLIA128-SHA-client-openssl11-server-openssl11 \
-check-cipher-DHE-RSA-CAMELLIA128-SHA256-client-openssl11-server-openssl11 \
-check-cipher-DHE-RSA-CAMELLIA256-SHA-client-openssl11-server-openssl11 \
-check-cipher-DHE-RSA-CAMELLIA256-SHA256-client-openssl11-server-openssl11 \
-check-cipher-DHE-RSA-CHACHA20-POLY1305-client-openssl11-server-openssl11 \
-check-cipher-ECDHE-ECDSA-AES128-GCM-SHA256-client-openssl11-server-openssl11 \
-check-cipher-ECDHE-ECDSA-AES128-SHA-client-openssl11-server-openssl11 \
-check-cipher-ECDHE-ECDSA-AES128-SHA256-client-openssl11-server-openssl11 \
-check-cipher-ECDHE-ECDSA-AES256-GCM-SHA384-client-openssl11-server-openssl11 \
-check-cipher-ECDHE-ECDSA-AES256-SHA-client-openssl11-server-openssl11 \
-check-cipher-ECDHE-ECDSA-AES256-SHA384-client-openssl11-server-openssl11 \
-check-cipher-ECDHE-ECDSA-CHACHA20-POLY1305-client-openssl11-server-openssl11 \
-check-cipher-ECDHE-RSA-AES128-GCM-SHA256-client-openssl11-server-openssl11 \
-check-cipher-ECDHE-RSA-AES128-SHA-client-openssl11-server-openssl11 \
-check-cipher-ECDHE-RSA-AES128-SHA256-client-openssl11-server-openssl11 \
-check-cipher-ECDHE-RSA-AES256-GCM-SHA384-client-openssl11-server-openssl11 \
-check-cipher-ECDHE-RSA-AES256-SHA-client-openssl11-server-openssl11 \
-check-cipher-ECDHE-RSA-AES256-SHA384-client-openssl11-server-openssl11 \
-check-cipher-ECDHE-RSA-CHACHA20-POLY1305-client-openssl11-server-openssl11:
-	# openssl11 always prints TLS_AES_256_GCM_SHA384 as cipher in out file
+run-cipher-GOST2001-GOST89-GOST89-client-libressl-server-libressl \
+run-cipher-GOST2012256-GOST89-GOST89-client-libressl-server-libressl \
+client-cipher-GOST2012256-GOST89-GOST89-client-libressl-server-libressl.out \
+client-cipher-GOST2001-GOST89-GOST89-client-libressl-server-libressl.out \
+server-cipher-GOST2001-GOST89-GOST89-client-libressl-server-libressl.out \
+server-cipher-GOST2012256-GOST89-GOST89-client-libressl-server-libressl.out \
+check-cipher-GOST2001-GOST89-GOST89-client-libressl-server-libressl \
+check-cipher-GOST2012256-GOST89-GOST89-client-libressl-server-libressl:
+	@echo '\n======== $@ ========'
+	# gost does not work with libressl TLS 1.3 right now
 	@echo DISABLED
 
 LIBRARIES =		libressl
@@ -165,8 +127,27 @@ check-cipher-${cipher}-client-${clib}-server-${slib}: \
     client-cipher-${cipher}-client-${clib}-server-${slib}.out \
     server-cipher-${cipher}-client-${clib}-server-${slib}.out
 	@echo '\n======== $@ ========'
-	grep -q ' Cipher *: ${cipher}$$' ${@:S/^check/server/}.out
+.if "${clib}" != "openssl" && "${slib}" != "openssl" && \
+    "${cipher:C/AEAD-(AES.*-GCM|CHACHA.*-POLY.*)-SHA.*/TLS1_3/}" != TLS1_3
+	# client and server 1.3 capable, not TLS 1.3 cipher
+.if "${clib}" == "openssl11"
+	# openssl 1.1 generic client cipher
+	grep -q ' Cipher *: TLS_AES_256_GCM_SHA384$$' ${@:S/^check/client/}.out
+.else
+	# libressl generic client cipher
+	grep -q ' Cipher *: AEAD-AES256-GCM-SHA384$$' ${@:S/^check/client/}.out
+.endif
+.if "${slib}" == "openssl11"
+	# openssl 1.1 generic server cipher
+	grep -q ' Cipher *: TLS_AES_256_GCM_SHA384$$' ${@:S/^check/server/}.out
+.else
+	# libressl generic server cipher
+	grep -q ' Cipher *: AEAD-AES256-GCM-SHA384$$' ${@:S/^check/server/}.out
+.endif
+.else
 	grep -q ' Cipher *: ${cipher}$$' ${@:S/^check/client/}.out
+	grep -q ' Cipher *: ${cipher}$$' ${@:S/^check/server/}.out
+.endif
 
 .endfor
 .endfor

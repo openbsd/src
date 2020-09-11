@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.8 2019/03/21 17:52:26 bluhm Exp $	*/
+/*	$OpenBSD: client.c,v 1.9 2020/09/11 22:48:00 bluhm Exp $	*/
 /*
  * Copyright (c) 2018-2019 Alexander Bluhm <bluhm@openbsd.org>
  *
@@ -51,7 +51,6 @@ main(int argc, char *argv[])
 	char buf[256];
 	char *ca = NULL, *crt = NULL, *key = NULL, *ciphers = NULL;
 	char *host_port, *host = "127.0.0.1", *port = "0";
-
 
 	while ((ch = getopt(argc, argv, "C:c:k:Ll:sv")) != -1) {
 		switch (ch) {
