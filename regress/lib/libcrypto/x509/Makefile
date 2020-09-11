@@ -1,16 +1,21 @@
-#	$OpenBSD: Makefile,v 1.3 2020/07/14 18:33:00 jsing Exp $
+#	$OpenBSD: Makefile,v 1.4 2020/09/11 18:34:29 beck Exp $
 
-PROGS =	verify x509attribute x509name
-LDADD=	-lcrypto
+PROGS =	constraints verify x509attribute x509name
+LDADD=	-Wl,-Bstatic -lcrypto -Wl,-Bdynamic
 DPADD=	${LIBCRYPTO}
 WARNINGS=	Yes
-CFLAGS+=	-Wall -Werror
+CFLAGS+=	-DLIBRESSL_INTERNAL -Wall -Werror -I$(BSDSRCDIR)/lib/libcrypto/x509
 
-REGRESS_TARGETS=regress-verify regress-x509attribute regress-x509name
+SUBDIR += bettertls
+
+REGRESS_TARGETS=regress-constraints regress-verify regress-x509attribute regress-x509name
 CLEANFILES+=	x509name.result
 
 regress-verify: verify
 	./verify ${.CURDIR}/../certs
+
+regress-constraints: constraints
+	./constraints
 
 regress-x509attribute: x509attribute
 	./x509attribute
