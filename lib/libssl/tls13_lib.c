@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.53 2020/07/30 16:23:17 tb Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.54 2020/09/11 15:03:36 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -137,12 +137,12 @@ tls13_alert_sent_cb(uint8_t alert_desc, void *arg)
 {
 	struct tls13_ctx *ctx = arg;
 
-	if (alert_desc == SSL_AD_CLOSE_NOTIFY) {
+	if (alert_desc == TLS13_ALERT_CLOSE_NOTIFY) {
 		ctx->close_notify_sent = 1;
 		return;
 	}
 
-	if (alert_desc == SSL_AD_USER_CANCELLED) {
+	if (alert_desc == TLS13_ALERT_USER_CANCELED) {
 		return;
 	}
 
