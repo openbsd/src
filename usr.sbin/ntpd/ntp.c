@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.166 2020/08/30 16:21:29 otto Exp $ */
+/*	$OpenBSD: ntp.c,v 1.167 2020/09/11 07:09:41 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -402,12 +402,29 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 
 		for (; nfds > 0 && j < idx_clients; j++) {
 			if (pfd[j].revents & (POLLIN|POLLERR)) {
+				struct ntp_peer *pp = idx2peer[j - idx_peers];
+
 				nfds--;
-				last_action = now;
-				if (client_dispatch(idx2peer[j - idx_peers],
-				    conf->settime, conf->automatic) == -1) {
-					log_warn("pipe write error (settime)");
-					ntp_quit = 1;
+				switch (client_dispatch(pp, conf->settime,
+				    conf->automatic)) {
+				case -1:
+					log_debug("no reply from %s "
+					    "received", log_sockaddr(
+					    (struct sockaddr *) &pp->addr->ss));
+					if (pp->trustlevel >=
+					    TRUSTLEVEL_BADPEER &&
+					    (pp->trustlevel /= 2) <
+					    TRUSTLEVEL_BADPEER)
+						log_info("peer %s now invalid",
+						    log_sockaddr(
+						    (struct sockaddr *)
+						    &pp->addr->ss));
+					break;
+				case 0: /* invalid replies are ignored */
+					break;
+				case 1:
+					last_action = now;
+					break;
 				}
 			}
 		}
@@ -433,7 +450,7 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 		interval = INTERVAL_QUERY_NORMAL * conf->scale;
 		interval += SCALE_INTERVAL(interval) - 1;
 		if (conf->status.synced && last_action + 3 * interval < now) {
-			log_info("clock is now unsynced");
+			log_info("clock is now unsynced due to lack of replies");
 			conf->status.synced = 0;
 			conf->scale = 1;
 			priv_dns(IMSG_UNSYNCED, NULL, 0);

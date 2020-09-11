@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.113 2020/01/30 15:55:41 otto Exp $ */
+/*	$OpenBSD: client.c,v 1.114 2020/09/11 07:09:41 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -264,6 +264,12 @@ handle_auto(uint8_t trusted, double offset)
 	priv_settime(offset, "");
 }
 
+
+/*
+ * -1: Not processed, not an NTP message (e.g. icmp induced  ECONNREFUSED)
+ *  0: Not prrocessed due to validation issues
+ *  1: NTP message validated and processed
+ */
 int
 client_dispatch(struct ntp_peer *p, u_int8_t settime, u_int8_t automatic)
 {
@@ -278,7 +284,7 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime, u_int8_t automatic)
 	} cmsgbuf;
 	struct cmsghdr		*cmsg;
 	ssize_t			 size;
-	double			 T1, T2, T3, T4;
+	double			 T1, T2, T3, T4, offset, delay;
 	time_t			 interval;
 
 	memset(&somsg, 0, sizeof(somsg));
@@ -297,7 +303,7 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime, u_int8_t automatic)
 		    errno == ENOPROTOOPT || errno == ENOENT) {
 			client_log_error(p, "recvmsg", errno);
 			set_next(p, error_interval());
-			return (0);
+			return (-1);
 		} else
 			fatal("recvfrom");
 	}
@@ -418,16 +424,6 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime, u_int8_t automatic)
 	} else
 		p->reply[p->shift].status.send_refid = msg.xmttime.fractionl;
 
-	if (p->trustlevel < TRUSTLEVEL_PATHETIC)
-		interval = scale_interval(INTERVAL_QUERY_PATHETIC);
-	else if (p->trustlevel < TRUSTLEVEL_AGGRESSIVE)
-		interval = (conf->settime && conf->automatic) ?
-		    INTERVAL_QUERY_ULTRA_VIOLENCE :
-		    scale_interval(INTERVAL_QUERY_AGGRESSIVE);
-	else
-		interval = scale_interval(INTERVAL_QUERY_NORMAL);
-
-	set_next(p, interval);
 	p->state = STATE_REPLY_RECEIVED;
 
 	/* every received reply which we do not discard increases trust */
@@ -439,11 +435,8 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime, u_int8_t automatic)
 		p->trustlevel++;
 	}
 
-	log_debug("reply from %s: offset %f delay %f, "
-	    "next query %llds",
-	    log_sockaddr((struct sockaddr *)&p->addr->ss),
-	    p->reply[p->shift].offset, p->reply[p->shift].delay,
-	    (long long)interval);
+	offset = p->reply[p->shift].offset;
+	delay = p->reply[p->shift].delay;
 
 	client_update(p);
 	if (settime) {
@@ -453,10 +446,27 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime, u_int8_t automatic)
 			priv_settime(p->reply[p->shift].offset, "");
 	}
 
+	if (p->trustlevel < TRUSTLEVEL_PATHETIC)
+		interval = scale_interval(INTERVAL_QUERY_PATHETIC);
+	else if (p->trustlevel < TRUSTLEVEL_AGGRESSIVE)
+		interval = (conf->settime && conf->automatic) ?
+		    INTERVAL_QUERY_ULTRA_VIOLENCE :
+		    scale_interval(INTERVAL_QUERY_AGGRESSIVE);
+	else
+		interval = scale_interval(INTERVAL_QUERY_NORMAL);
+
+	log_debug("reply from %s: offset %f delay %f, "
+	    "next query %llds",
+	    log_sockaddr((struct sockaddr *)&p->addr->ss),
+	    offset, delay,
+	    (long long)interval);
+
+	set_next(p, interval);
+
 	if (++p->shift >= OFFSET_ARRAY_SIZE)
 		p->shift = 0;
 
-	return (0);
+	return (1);
 }
 
 int
