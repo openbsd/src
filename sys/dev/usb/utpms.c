@@ -1,4 +1,4 @@
-/*	$OpenBSD: utpms.c,v 1.9 2020/08/25 14:01:58 deraadt Exp $	*/
+/*	$OpenBSD: utpms.c,v 1.10 2020/09/11 19:18:01 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -311,6 +311,12 @@ utpms_attach(struct device *parent, struct device *self, void *aux)
 		for (i = 0; i < nitems(utpms_devices); i++) {
 			pd = &utpms_devices[i];
 			if (product == pd->product && vendor == pd->vendor) {
+				sc->sc_noise = pd->noise;
+				sc->sc_threshold = pd->threshold;
+				sc->sc_x_factor = pd->x_factor;
+				sc->sc_x_sensors = pd->x_sensors;
+				sc->sc_y_factor = pd->y_factor;
+				sc->sc_y_sensors = pd->y_sensors;
 				switch (pd->type) {
 				case FOUNTAIN:
 					printf(": Fountain");
@@ -326,12 +332,6 @@ utpms_attach(struct device *parent, struct device *self, void *aux)
 					break;
 				}
 				printf(" Trackpad\n");
-				sc->sc_noise = pd->noise;
-				sc->sc_threshold = pd->threshold;
-				sc->sc_x_factor = pd->x_factor;
-				sc->sc_x_sensors = pd->x_sensors;
-				sc->sc_y_factor = pd->y_factor;
-				sc->sc_y_sensors = pd->y_sensors;
 				break;
 			}
 		}
