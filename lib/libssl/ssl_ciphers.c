@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_ciphers.c,v 1.4 2020/05/31 18:03:32 jsing Exp $ */
+/*	$OpenBSD: ssl_ciphers.c,v 1.5 2020/09/11 15:28:07 jsing Exp $ */
 /*
  * Copyright (c) 2015-2017 Doug Hogan <doug@openbsd.org>
  * Copyright (c) 2015-2018 Joel Sing <jsing@openbsd.org>
@@ -23,7 +23,7 @@
 #include "ssl_locl.h"
 
 int
-ssl_cipher_is_permitted(const SSL_CIPHER *cipher, uint16_t min_ver,
+ssl_cipher_allowed_in_version_range(const SSL_CIPHER *cipher, uint16_t min_ver,
     uint16_t max_ver)
 {
 	/* XXX: We only support DTLSv1 which is effectively TLSv1.1 */
@@ -65,10 +65,9 @@ ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *ciphers, CBB *cbb)
 	for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
 		if ((cipher = sk_SSL_CIPHER_value(ciphers, i)) == NULL)
 			return 0;
-
-		if (!ssl_cipher_is_permitted(cipher, min_vers, max_vers))
+		if (!ssl_cipher_allowed_in_version_range(cipher, min_vers,
+		    max_vers))
 			continue;
-
 		if (!CBB_add_u16(cbb, ssl3_cipher_get_value(cipher)))
 			return 0;
 

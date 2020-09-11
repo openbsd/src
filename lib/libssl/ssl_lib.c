@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.222 2020/09/11 13:20:32 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.223 2020/09/11 15:28:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1298,7 +1298,8 @@ SSL_get1_supported_ciphers(SSL *s)
 	for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
 		if ((cipher = sk_SSL_CIPHER_value(ciphers, i)) == NULL)
 			goto err;
-		if (!ssl_cipher_is_permitted(cipher, min_vers, max_vers))
+		if (!ssl_cipher_allowed_in_version_range(cipher, min_vers,
+		    max_vers))
 			continue;
 		if (!sk_SSL_CIPHER_push(supported_ciphers, cipher))
 			goto err;
