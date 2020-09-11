@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.223 2020/09/11 15:28:08 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.224 2020/09/11 17:23:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1253,21 +1253,15 @@ ssl_cipher_ptr_id_cmp(const SSL_CIPHER * const *ap,
 		return ((l > 0) ? 1:-1);
 }
 
-/*
- * Return a STACK of the ciphers available for the SSL and in order of
- * preference.
- */
 STACK_OF(SSL_CIPHER) *
 SSL_get_ciphers(const SSL *s)
 {
-	if (s != NULL) {
-		if (s->cipher_list != NULL) {
-			return (s->cipher_list);
-		} else if ((s->ctx != NULL) && (s->ctx->cipher_list != NULL)) {
-			return (s->ctx->cipher_list);
-		}
-	}
-	return (NULL);
+	if (s == NULL)
+		return (NULL);
+	if (s->cipher_list != NULL)
+		return (s->cipher_list);
+
+	return (s->ctx->cipher_list);
 }
 
 STACK_OF(SSL_CIPHER) *
