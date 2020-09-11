@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.70 2020/07/03 04:12:50 tb Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.71 2020/09/11 17:36:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -802,12 +802,11 @@ ssl3_get_server_hello(SSL *s)
 	uint16_t server_version, cipher_suite;
 	uint16_t min_version, max_version;
 	uint8_t compression_method;
-	STACK_OF(SSL_CIPHER) *sk;
 	const SSL_CIPHER *cipher;
 	const SSL_METHOD *method;
 	unsigned long alg_k;
 	size_t outlen;
-	int i, al, ok;
+	int al, ok;
 	long n;
 
 	s->internal->first_packet = 1;
@@ -981,9 +980,7 @@ ssl3_get_server_hello(SSL *s)
 		goto f_err;
 	}
 
-	sk = ssl_get_ciphers_by_id(s);
-	i = sk_SSL_CIPHER_find(sk, cipher);
-	if (i < 0) {
+	if (!ssl_cipher_in_list(SSL_get_ciphers(s), cipher)) {
 		/* we did not say we would use this cipher */
 		al = SSL_AD_ILLEGAL_PARAMETER;
 		SSLerror(s, SSL_R_WRONG_CIPHER_RETURNED);

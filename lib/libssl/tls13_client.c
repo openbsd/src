@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.66 2020/07/03 04:12:51 tb Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.67 2020/09/11 17:36:27 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -304,8 +304,7 @@ tls13_server_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 	 * hello and that it matches the TLS version selected.
 	 */
 	cipher = ssl3_get_cipher_by_value(cipher_suite);
-	if (cipher == NULL ||
-	    sk_SSL_CIPHER_find(ssl_get_ciphers_by_id(s), cipher) < 0) {
+	if (cipher == NULL || !ssl_cipher_in_list(SSL_get_ciphers(s), cipher)) {
 		ctx->alert = TLS13_ALERT_ILLEGAL_PARAMETER;
 		goto err;
 	}

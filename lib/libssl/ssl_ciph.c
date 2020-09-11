@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.117 2020/04/19 14:54:14 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.118 2020/09/11 17:36:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1184,12 +1184,11 @@ ssl_aes_is_accelerated(void)
 STACK_OF(SSL_CIPHER) *
 ssl_create_cipher_list(const SSL_METHOD *ssl_method,
     STACK_OF(SSL_CIPHER) **cipher_list,
-    STACK_OF(SSL_CIPHER) **cipher_list_by_id,
     const char *rule_str)
 {
 	int ok, num_of_ciphers, num_of_alias_max, num_of_group_aliases;
 	unsigned long disabled_mkey, disabled_auth, disabled_enc, disabled_mac, disabled_ssl;
-	STACK_OF(SSL_CIPHER) *cipherstack, *tmp_cipher_list;
+	STACK_OF(SSL_CIPHER) *cipherstack;
 	const char *rule_p;
 	CIPHER_ORDER *co_list = NULL, *head = NULL, *tail = NULL, *curr;
 	const SSL_CIPHER **ca_list = NULL;
@@ -1199,7 +1198,7 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	/*
 	 * Return with error if nothing to do.
 	 */
-	if (rule_str == NULL || cipher_list == NULL || cipher_list_by_id == NULL)
+	if (rule_str == NULL || cipher_list == NULL)
 		return NULL;
 
 	/*
@@ -1358,19 +1357,9 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 
 	free(co_list);	/* Not needed any longer */
 
-	tmp_cipher_list = sk_SSL_CIPHER_dup(cipherstack);
-	if (tmp_cipher_list == NULL) {
-		sk_SSL_CIPHER_free(cipherstack);
-		return NULL;
-	}
 	sk_SSL_CIPHER_free(*cipher_list);
 	*cipher_list = cipherstack;
-	sk_SSL_CIPHER_free(*cipher_list_by_id);
-	*cipher_list_by_id = tmp_cipher_list;
-	(void)sk_SSL_CIPHER_set_cmp_func(*cipher_list_by_id,
-	    ssl_cipher_ptr_id_cmp);
 
-	sk_SSL_CIPHER_sort(*cipher_list_by_id);
 	return (cipherstack);
 }
 

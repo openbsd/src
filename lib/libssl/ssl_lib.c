@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.224 2020/09/11 17:23:44 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.225 2020/09/11 17:36:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -230,7 +230,7 @@ SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth)
 	ctx->method = meth;
 
 	ciphers = ssl_create_cipher_list(ctx->method, &ctx->cipher_list,
-	    &ctx->internal->cipher_list_by_id, SSL_DEFAULT_CIPHER_LIST);
+	    SSL_DEFAULT_CIPHER_LIST);
 	if (ciphers == NULL || sk_SSL_CIPHER_num(ciphers) <= 0) {
 		SSLerrorx(SSL_R_SSL_LIBRARY_HAS_NO_CIPHERS);
 		return (0);
@@ -529,9 +529,7 @@ SSL_free(SSL *s)
 
 	BUF_MEM_free(s->internal->init_buf);
 
-	/* add extra stuff */
 	sk_SSL_CIPHER_free(s->cipher_list);
-	sk_SSL_CIPHER_free(s->internal->cipher_list_by_id);
 
 	/* Make the next call work :-) */
 	if (s->session != NULL) {
@@ -1240,19 +1238,6 @@ ssl_cipher_id_cmp(const SSL_CIPHER *a, const SSL_CIPHER *b)
 		return ((l > 0) ? 1:-1);
 }
 
-int
-ssl_cipher_ptr_id_cmp(const SSL_CIPHER * const *ap,
-    const SSL_CIPHER * const *bp)
-{
-	long	l;
-
-	l = (*ap)->id - (*bp)->id;
-	if (l == 0L)
-		return (0);
-	else
-		return ((l > 0) ? 1:-1);
-}
-
 STACK_OF(SSL_CIPHER) *
 SSL_get_ciphers(const SSL *s)
 {
@@ -1305,24 +1290,6 @@ SSL_get1_supported_ciphers(SSL *s)
  err:
 	sk_SSL_CIPHER_free(supported_ciphers);
 	return NULL;
-}
-
-/*
- * Return a STACK of the ciphers available for the SSL and in order of
- * algorithm id.
- */
-STACK_OF(SSL_CIPHER) *
-ssl_get_ciphers_by_id(SSL *s)
-{
-	if (s != NULL) {
-		if (s->internal->cipher_list_by_id != NULL) {
-			return (s->internal->cipher_list_by_id);
-		} else if ((s->ctx != NULL) &&
-		    (s->ctx->internal->cipher_list_by_id != NULL)) {
-			return (s->ctx->internal->cipher_list_by_id);
-		}
-	}
-	return (NULL);
 }
 
 /* See if we have any ECC cipher suites. */
@@ -1384,11 +1351,9 @@ SSL_CTX_set_cipher_list(SSL_CTX *ctx, const char *str)
 	 * find a cipher matching the given rule string (for example if the
 	 * rule string specifies a cipher which has been disabled). This is not
 	 * an error as far as ssl_create_cipher_list is concerned, and hence
-	 * ctx->cipher_list and ctx->internal->cipher_list_by_id has been
-	 * updated.
+	 * ctx->cipher_list has been updated.
 	 */
-	ciphers = ssl_create_cipher_list(ctx->method, &ctx->cipher_list,
-	    &ctx->internal->cipher_list_by_id, str);
+	ciphers = ssl_create_cipher_list(ctx->method, &ctx->cipher_list, str);
 	if (ciphers == NULL) {
 		return (0);
 	} else if (sk_SSL_CIPHER_num(ciphers) == 0) {
@@ -1405,8 +1370,7 @@ SSL_set_cipher_list(SSL *s, const char *str)
 	STACK_OF(SSL_CIPHER) *ciphers;
 
 	/* See comment in SSL_CTX_set_cipher_list. */
-	ciphers = ssl_create_cipher_list(s->ctx->method, &s->cipher_list,
-	    &s->internal->cipher_list_by_id, str);
+	ciphers = ssl_create_cipher_list(s->ctx->method, &s->cipher_list, str);
 	if (ciphers == NULL) {
 		return (0);
 	} else if (sk_SSL_CIPHER_num(ciphers) == 0) {
@@ -1794,7 +1758,7 @@ SSL_CTX_new(const SSL_METHOD *meth)
 		goto err;
 
 	ssl_create_cipher_list(ret->method, &ret->cipher_list,
-	    &ret->internal->cipher_list_by_id, SSL_DEFAULT_CIPHER_LIST);
+	    SSL_DEFAULT_CIPHER_LIST);
 	if (ret->cipher_list == NULL ||
 	    sk_SSL_CIPHER_num(ret->cipher_list) <= 0) {
 		SSLerrorx(SSL_R_LIBRARY_HAS_NO_CIPHERS);
@@ -1891,7 +1855,6 @@ SSL_CTX_free(SSL_CTX *ctx)
 
 	X509_STORE_free(ctx->cert_store);
 	sk_SSL_CIPHER_free(ctx->cipher_list);
-	sk_SSL_CIPHER_free(ctx->internal->cipher_list_by_id);
 	ssl_cert_free(ctx->internal->cert);
 	sk_X509_NAME_pop_free(ctx->internal->client_CA, X509_NAME_free);
 	sk_X509_pop_free(ctx->extra_certs, X509_free);
@@ -2483,15 +2446,9 @@ SSL_dup(SSL *s)
 
 	X509_VERIFY_PARAM_inherit(ret->param, s->param);
 
-	/* dup the cipher_list and cipher_list_by_id stacks */
 	if (s->cipher_list != NULL) {
 		if ((ret->cipher_list =
 		    sk_SSL_CIPHER_dup(s->cipher_list)) == NULL)
-			goto err;
-	}
-	if (s->internal->cipher_list_by_id != NULL) {
-		if ((ret->internal->cipher_list_by_id =
-		    sk_SSL_CIPHER_dup(s->internal->cipher_list_by_id)) == NULL)
 			goto err;
 	}
 
