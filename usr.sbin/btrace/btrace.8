@@ -1,4 +1,4 @@
-.\"	$OpenBSD: btrace.8,v 1.1 2020/01/21 16:24:55 mpi Exp $
+.\"	$OpenBSD: btrace.8,v 1.2 2020/09/11 08:16:15 mpi Exp $
 .\"
 .\" Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 21 2020 $
+.Dd $Mdocdate: September 11 2020 $
 .Dt BTRACE 8
 .Os
 .Sh NAME
@@ -23,6 +23,7 @@
 .Sh SYNOPSIS
 .Nm btrace
 .Op Fl lv
+.Op Fl p Ar pid
 .Op Fl e Ar program | Ar file
 .Sh DESCRIPTION
 The
@@ -45,6 +46,10 @@ Execute
 .Ar program .
 .It Fl l
 List all available probes.
+.It Fl p Ar pid
+Enable tracing on the indicated process ID (only one
+.Fl p
+flag is permitted).
 .It Fl v
 Verbose mode.
 Causes
