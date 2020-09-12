@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.62 2020/06/30 18:43:37 krw Exp $ */
+/*	$OpenBSD: safte.c,v 1.63 2020/09/12 15:54:51 krw Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -108,12 +108,9 @@ int64_t	safte_temp2uK(u_int8_t, int);
 int
 safte_match(struct device *parent, void *match, void *aux)
 {
-	struct scsi_inquiry_data	*inqbuf;
 	struct scsi_attach_args		*sa = aux;
 	struct scsi_inquiry_data	*inq = &sa->sa_sc_link->inqdata;
-	struct scsi_xfer		*xs;
 	struct safte_inq		*si;
-	int				 error, flags = 0, length;
 
 	if (inq == NULL)
 		return 0;
@@ -128,43 +125,13 @@ safte_match(struct device *parent, void *match, void *aux)
 	    SID_RESPONSE_FORMAT(inq) != 2)
 		return 0;
 
-	length = inq->additional_length + SAFTE_EXTRA_OFFSET;
-	if (length < SAFTE_INQ_LEN)
-		return 0;
-	if (length > sizeof(*inqbuf))
-		length = sizeof(*inqbuf);
-
-	inqbuf = dma_alloc(sizeof(*inqbuf), PR_NOWAIT | PR_ZERO);
-	if (inqbuf == NULL)
+	if (inq->additional_length < SID_SCSI2_ALEN + sizeof(*si))
 		return 0;
 
-	memset(inqbuf->extra, ' ', sizeof(inqbuf->extra));
-
-	if (cold)
-		SET(flags, SCSI_AUTOCONF);
-	xs = scsi_xs_get(sa->sa_sc_link, flags | SCSI_DATA_IN);
-	if (xs == NULL)
-		goto fail;
-
-	xs->retries = 2;
-	xs->timeout = 10000;
-
-	scsi_init_inquiry(xs, 0, 0, inqbuf, length);
-
-	error = scsi_xs_sync(xs);
-	scsi_xs_put(xs);
-
-	if (error)
-		goto fail;
-
-	si = (struct safte_inq *)&inqbuf->extra;
-	if (memcmp(si->ident, SAFTE_IDENT, sizeof(si->ident)) == 0) {
-		dma_free(inqbuf, sizeof(*inqbuf));
+	si = (struct safte_inq *)&inq->extra;
+	if (memcmp(si->ident, SAFTE_IDENT, sizeof(si->ident)) == 0)
 		return 2;
-	}
 
-fail:
-	dma_free(inqbuf, sizeof(*inqbuf));
 	return 0;
 }
 
