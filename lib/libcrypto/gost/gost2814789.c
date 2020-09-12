@@ -1,4 +1,4 @@
-/* $OpenBSD: gost2814789.c,v 1.5 2015/09/10 15:56:25 jsing Exp $ */
+/* $OpenBSD: gost2814789.c,v 1.6 2020/09/12 02:45:05 inoguchi Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -48,6 +48,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * ====================================================================
  */
+
+#include <machine/endian.h>
 
 #include <string.h>
 
