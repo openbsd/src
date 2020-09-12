@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.16 2020/05/14 20:49:04 job Exp $ */
+/*	$OpenBSD: output.c,v 1.17 2020/09/12 15:46:48 claudio Exp $ */
 /*
  * Copyright (c) 2019 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -26,8 +26,6 @@
 #include <limits.h>
 #include <unistd.h>
 #include <time.h>
-
-#include <openssl/x509v3.h>
 
 #include "extern.h"
 

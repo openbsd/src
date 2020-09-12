@@ -1,4 +1,4 @@
-/*	$OpenBSD: as.c,v 1.5 2019/11/27 17:18:24 deraadt Exp $ */
+/*	$OpenBSD: as.c,v 1.6 2020/09/12 15:46:48 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -24,8 +24,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include <openssl/ssl.h>
 
 #include "extern.h"
 

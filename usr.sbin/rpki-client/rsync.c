@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.8 2020/09/12 10:02:01 claudio Exp $ */
+/*	$OpenBSD: rsync.c,v 1.9 2020/09/12 15:46:48 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -28,8 +28,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include <openssl/ssl.h>
 
 #include "extern.h"
 

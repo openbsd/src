@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.12 2020/05/03 20:24:02 deraadt Exp $ */
+/*	$OpenBSD: output-json.c,v 1.13 2020/09/12 15:46:48 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -19,7 +19,6 @@
 #include <unistd.h>
 #include <time.h>
 #include <netdb.h>
-#include <openssl/ssl.h>
 
 #include "extern.h"
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.5 2019/11/29 05:14:11 benno Exp $ */
+/*	$OpenBSD: log.c,v 1.6 2020/09/12 15:46:48 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -21,7 +21,6 @@
 #include <stdint.h>
 
 #include <openssl/err.h>
-#include <openssl/ssl.h>
 
 #include "extern.h"
 

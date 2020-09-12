@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.10 2019/11/29 05:16:54 benno Exp $ */
+/*	$OpenBSD: validate.c,v 1.11 2020/09/12 15:46:48 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -25,8 +25,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include <openssl/ssl.h>
 
 #include "extern.h"
 
