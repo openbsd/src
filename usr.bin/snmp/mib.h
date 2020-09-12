@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.7 2020/08/08 14:01:31 martijn Exp $	*/
+/*	$OpenBSD: mib.h,v 1.8 2020/09/12 18:11:43 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -961,7 +961,7 @@
 	{ MIBDECL(hrStorageEntry) },			\
 	{ MIBDECL(hrStorageIndex) },			\
 	{ MIBDECL(hrStorageType) },			\
-	{ MIBDECL(hrStorageDescr) },			\
+	{ MIBDECL(hrStorageDescr), "DisplayString" },	\
 	{ MIBDECL(hrStorageAllocationUnits) },		\
 	{ MIBDECL(hrStorageSize) },			\
 	{ MIBDECL(hrStorageUsed) },			\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.28 2020/08/03 14:45:54 martijn Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.29 2020/09/12 18:11:43 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -39,6 +39,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <util.h>
+#include <wchar.h>
 
 #include "smi.h"
 #include "snmp.h"
@@ -58,6 +59,7 @@ int snmpc_print(struct ber_element *);
 __dead void snmpc_printerror(enum snmp_error, struct ber_element *, int,
     const char *);
 char *snmpc_hex2bin(char *, size_t *);
+ssize_t snmpc_mbswidth(char *);
 struct ber_element *snmpc_varbindparse(int, char *[]);
 void usage(void);
 
@@ -820,8 +822,8 @@ snmpc_df(int argc, char *argv[])
 {
 	struct snmpc_df {
 		uint32_t index;
-		/* DisplayString is 255a DISPLAY-HINT */
-		char descr[256];
+		char *descr;
+		int descrwidth;
 		/* Theoretical maximum for 2 32 bit values multiplied */
 		char size[21];
 		char used[21];
@@ -833,7 +835,8 @@ snmpc_df(int argc, char *argv[])
 	struct ber_oid sizeoid = {{ 1, 3, 6, 1, 2, 1, 25, 2, 3, 1, 5 }, 11};
 	struct ber_oid usedoid = {{ 1, 3, 6, 1, 2, 1, 25, 2, 3, 1, 6 }, 11};
 	struct ber_oid oid, *reqoid;
-	struct ber_element *pdu, *varbind;
+	char oids[SNMP_MAX_OID_STRLEN];
+	struct ber_element *pdu, *varbind, *elm;
 	struct snmp_agent *agent;
 	int errorstatus, errorindex;
 	int class;
@@ -890,8 +893,9 @@ snmpc_df(int argc, char *argv[])
 			return 1;
 		}
 		for (; varbind != NULL; varbind = varbind->be_next) {
-			(void) ober_scanf_elements(varbind, "{oS", &oid);
-			if (ober_oid_cmp(&descroid, &oid) != 2)
+			if (ober_scanf_elements(varbind, "{os", &oid,
+			    &string) == -1 ||
+			    ober_oid_cmp(&descroid, &oid) != 2)
 				break;
 			rows++;
 		} 
@@ -899,19 +903,29 @@ snmpc_df(int argc, char *argv[])
 			err(1, "malloc");
 		(void) ober_scanf_elements(pdu, "{SSS{e", &varbind);
 		for (; i < rows; varbind = varbind->be_next, i++) {
-			if (ober_scanf_elements(varbind, "{os", &oid,
-			    &string) == -1) {
+			if (ober_scanf_elements(varbind, "{oe", &oid,
+			    &elm) == -1) {
 				i--;
 				rows--;
 				continue;
 			}
+			if (ober_oid_cmp(&descroid, &oid) != 2)
+				break;
 			df[i].index = oid.bo_id[oid.bo_n - 1];
-			len = strlcpy(df[i].descr, string,
-			    sizeof(df[i].descr));
-			if (len > (int) sizeof(df[i].descr))
-				len = (int) sizeof(df[i].descr) - 1;
-			if (len > descrlen)
-				descrlen = len;
+			if ((df[i].descr = smi_print_element(&oid, elm, 0,
+			    smi_os_ascii, 0, utf8)) == NULL) {
+				smi_oid2string(&oid, oids, sizeof(oids),
+				    oid_lookup);
+				warn("df: can't print oid %s", oids);
+				i--;
+				rows--;
+				continue;
+			}
+			if ((df[i].descrwidth =
+			    (int) snmpc_mbswidth(df[i].descr)) == -1)
+				err(1, "df: invalid hrStorageDescr");
+			if (df[i].descrwidth > descrlen)
+				descrlen = df[i].descrwidth;
 		} 
 		ober_free_elements(pdu);
 		if (varbind != NULL)
@@ -1031,8 +1045,8 @@ snmpc_df(int argc, char *argv[])
 	    NEXTTAB(usedlen) + availlen, "Available",
 	    NEXTTAB(availlen) + proclen, "Used%");
 	for (i = 0; i < rows; i++) {
-		printf("%-*s%*s%*s%*s%*s\n",
-		    descrlen, df[i].descr,
+		printf("%s%*s%*s%*s%*s%*s\n",
+		    df[i].descr, descrlen - df[i].descrwidth, "",
 		    NEXTTAB(descrlen) + sizelen, df[i].size,
 		    NEXTTAB(sizelen) + usedlen, df[i].used,
 		    NEXTTAB(usedlen) + availlen, df[i].avail,
@@ -1325,6 +1339,24 @@ fail:
 	errno = EINVAL;
 	free(decstr);
 	return NULL;
+}
+
+ssize_t
+snmpc_mbswidth(char *str)
+{
+	wchar_t wc;
+	size_t width = 0;
+	size_t i;
+	int len;
+
+	for (i = 0; (len = mbtowc(&wc, &(str[i]), MB_CUR_MAX)) != 0; i += len) {
+		if (len == -1) {
+			mbtowc(NULL, NULL, MB_CUR_MAX);
+			return -1;
+		}
+		width += wcwidth(wc);
+	}
+	return width;
 }
 
 struct ber_element *
