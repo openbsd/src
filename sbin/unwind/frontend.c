@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.50 2020/01/28 15:44:13 bket Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.51 2020/09/12 17:01:03 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -913,8 +913,21 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 {
 	struct imsg_rdns_proposal	 rdns_proposal;
 	struct sockaddr_rtdns		*rtdns;
+	struct if_announcemsghdr	*ifan;
 
 	switch (rtm->rtm_type) {
+	case RTM_IFANNOUNCE:
+		ifan = (struct if_announcemsghdr *)rtm;
+		if (ifan->ifan_what == IFAN_ARRIVAL)
+			break;
+		rdns_proposal.if_index = ifan->ifan_index;
+		rdns_proposal.src = 0;
+		rdns_proposal.rtdns.sr_family = AF_INET;
+		rdns_proposal.rtdns.sr_len = offsetof(struct sockaddr_rtdns,
+		    sr_dns);
+		frontend_imsg_compose_resolver(IMSG_REPLACE_DNS, 0,
+		    &rdns_proposal, sizeof(rdns_proposal));
+		break;
 	case RTM_IFINFO:
 		frontend_imsg_compose_resolver(IMSG_NETWORK_CHANGED, 0, NULL,
 		    0);
