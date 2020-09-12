@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.82 2020/09/11 17:36:27 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.83 2020/09/12 17:27:11 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1352,7 +1352,7 @@ ssl3_send_server_kex_dhe(SSL *s, CBB *cbb)
 static int
 ssl3_send_server_kex_ecdhe_ecp(SSL *s, int nid, CBB *cbb)
 {
-	int curve_id = 0;
+	uint16_t curve_id;
 	EC_KEY *ecdh;
 	CBB ecpoint;
 	int al;
@@ -1414,7 +1414,7 @@ static int
 ssl3_send_server_kex_ecdhe_ecx(SSL *s, int nid, CBB *cbb)
 {
 	uint8_t *public_key = NULL, *private_key = NULL;
-	int curve_id;
+	uint16_t curve_id;
 	CBB ecpoint;
 	int ret = -1;
 
