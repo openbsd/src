@@ -21,7 +21,6 @@
 #include <openssl/safestack.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
-#include "x509_verify.h"
 #include "x509_internal.h"
 
 
