@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.77 2020/09/12 10:02:01 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.78 2020/09/12 13:26:06 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -303,8 +303,7 @@ entityq_flush(int fd, struct entityq *q, const struct repo *repo)
  * Look up a repository, queueing it for discovery if not found.
  */
 static const struct repo *
-repo_lookup(int fd, struct repotab *rt, const char *uri, struct entityq *q,
-    int proc)
+repo_lookup(int fd, struct repotab *rt, const char *uri)
 {
 	const char	*host, *mod;
 	size_t		 hostsz, modsz, i;
@@ -555,7 +554,7 @@ queue_add_from_tal(int proc, int rsync, struct entityq *q,
 	/* Look up the repository. */
 
 	assert(rtype_resolve(uri) == RTYPE_CER);
-	repo = repo_lookup(rsync, rt, uri, q, proc);
+	repo = repo_lookup(rsync, rt, uri);
 	uri += 8 + strlen(repo->host) + 1 + strlen(repo->module) + 1;
 
 	if (asprintf(&nfile, "%s/%s/%s", repo->host, repo->module, uri) == -1)
@@ -583,7 +582,7 @@ queue_add_from_cert(int proc, int rsync, struct entityq *q,
 
 	/* Look up the repository. */
 
-	repo = repo_lookup(rsync, rt, uri, q, proc);
+	repo = repo_lookup(rsync, rt, uri);
 	uri += 8 + strlen(repo->host) + 1 + strlen(repo->module) + 1;
 
 	if (asprintf(&nfile, "%s/%s/%s", repo->host, repo->module, uri) == -1)
