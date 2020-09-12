@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.61 2020/06/30 18:43:37 krw Exp $ */
+/*	$OpenBSD: ses.c,v 1.62 2020/09/12 16:51:04 krw Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -124,9 +124,6 @@ ses_match(struct device *parent, void *match, void *aux)
 {
 	struct scsi_attach_args		*sa = aux;
 	struct scsi_inquiry_data	*inq = &sa->sa_sc_link->inqdata;
-
-	if (inq == NULL)
-		return 0;
 
 	if ((inq->device & SID_TYPE) == T_ENCLOSURE &&
 	    SID_ANSII_REV(inq) >= SCSI_REV_2)

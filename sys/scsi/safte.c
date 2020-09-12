@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.63 2020/09/12 15:54:51 krw Exp $ */
+/*	$OpenBSD: safte.c,v 1.64 2020/09/12 16:51:04 krw Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -111,9 +111,6 @@ safte_match(struct device *parent, void *match, void *aux)
 	struct scsi_attach_args		*sa = aux;
 	struct scsi_inquiry_data	*inq = &sa->sa_sc_link->inqdata;
 	struct safte_inq		*si;
-
-	if (inq == NULL)
-		return 0;
 
 	/* Match on Dell enclosures. */
 	if ((inq->device & SID_TYPE) == T_PROCESSOR &&
