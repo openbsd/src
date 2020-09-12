@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.55 2020/08/03 03:40:02 dlg Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.56 2020/09/12 09:27:22 kn Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -912,16 +912,33 @@ gen_linktype(proto)
 	case DLT_LOOP:
 	case DLT_ENC:
 	case DLT_NULL:
-		/* XXX */
+	{
+		int v;
+
 		if (proto == ETHERTYPE_IP)
-			return (gen_cmp(0, BPF_W, (bpf_int32)htonl(AF_INET)));
+			v = AF_INET;
 #ifdef INET6
 		else if (proto == ETHERTYPE_IPV6)
-			return (gen_cmp(0, BPF_W, (bpf_int32)htonl(AF_INET6)));
+			v = AF_INET6;
 #endif /* INET6 */
 		else
 			return gen_false();
+
+		/*
+		 * For DLT_NULL, the link-layer header is a 32-bit word
+		 * containing an AF_ value in *host* byte order, and for
+		 * DLT_ENC, the link-layer header begins with a 32-bit
+		 * word containing an AF_ value in host byte order.
+		 *
+		 * For DLT_LOOP, the link-layer header is a 32-bit
+		 * word containing an AF_ value in *network* byte order.
+		 */
+		if (linktype != DLT_LOOP)
+			v = htonl(v);
+
+		return (gen_cmp(0, BPF_W, (bpf_int32)v));
 		break;
+	}
 	case DLT_PFLOG:
 		if (proto == ETHERTYPE_IP)
 			return (gen_cmp(offsetof(struct pfloghdr, af), BPF_B,
