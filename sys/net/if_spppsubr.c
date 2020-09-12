@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.186 2020/08/22 16:12:12 kn Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.187 2020/09/12 13:44:38 kn Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -750,13 +750,15 @@ sppp_detach(struct ifnet *ifp)
 
 	/* release authentication data */
 	if (sp->myauth.name != NULL)
-		free(sp->myauth.name, M_DEVBUF, 0);
+		free(sp->myauth.name, M_DEVBUF, strlen(sp->myauth.name) + 1);
 	if (sp->myauth.secret != NULL)
-		free(sp->myauth.secret, M_DEVBUF, 0);
+		free(sp->myauth.secret, M_DEVBUF,
+		    strlen(sp->myauth.secret) + 1);
 	if (sp->hisauth.name != NULL)
-		free(sp->hisauth.name, M_DEVBUF, 0);
+		free(sp->hisauth.name, M_DEVBUF, strlen(sp->hisauth.name) + 1);
 	if (sp->hisauth.secret != NULL)
-		free(sp->hisauth.secret, M_DEVBUF, 0);
+		free(sp->hisauth.secret, M_DEVBUF,
+		    strlen(sp->hisauth.secret) + 1);
 }
 
 /*
@@ -4579,9 +4581,11 @@ sppp_set_params(struct sppp *sp, struct ifreq *ifr)
 		if (spa->proto == 0) {
 			/* resetting auth */
 			if (auth->name != NULL)
-				free(auth->name, M_DEVBUF, 0);
+				free(auth->name, M_DEVBUF,
+				    strlen(auth->name) + 1);
 			if (auth->secret != NULL)
-				free(auth->secret, M_DEVBUF, 0);
+				free(auth->secret, M_DEVBUF,
+				    strlen(auth->secret) + 1);
 			bzero(auth, sizeof *auth);
 			explicit_bzero(sp->chap_challenge, sizeof sp->chap_challenge);
 		} else {
@@ -4594,7 +4598,8 @@ sppp_set_params(struct sppp *sp, struct ifreq *ifr)
 			p = malloc(len, M_DEVBUF, M_WAITOK);
 			strlcpy(p, spa->name, len);
 			if (auth->name != NULL)
-				free(auth->name, M_DEVBUF, 0);
+				free(auth->name, M_DEVBUF,
+				    strlen(auth->name) + 1);
 			auth->name = p;
 
 			if (spa->secret[0] != '\0') {
@@ -4603,7 +4608,8 @@ sppp_set_params(struct sppp *sp, struct ifreq *ifr)
 				p = malloc(len, M_DEVBUF, M_WAITOK);
 				strlcpy(p, spa->secret, len);
 				if (auth->secret != NULL)
-					free(auth->secret, M_DEVBUF, 0);
+					free(auth->secret, M_DEVBUF,
+					    strlen(auth->secret) + 1);
 				auth->secret = p;
 			} else if (!auth->secret) {
 				p = malloc(1, M_DEVBUF, M_WAITOK);
