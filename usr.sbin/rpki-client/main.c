@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.75 2020/09/12 09:06:26 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.76 2020/09/12 09:22:26 tobhe Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1147,13 +1147,10 @@ proc_parser_crl(struct entity *entp, X509_STORE *store,
 	X509_CRL		*x509_crl;
 	struct crl		*crl;
 	const unsigned char	*dgst;
-	char			*t;
 
 	dgst = entp->has_dgst ? entp->dgst : NULL;
 	if ((x509_crl = crl_parse(entp->uri, dgst)) != NULL) {
 		if ((crl = malloc(sizeof(*crl))) == NULL)
-			err(1, NULL);
-		if ((t = strdup(entp->uri)) == NULL)
 			err(1, NULL);
 		if ((crl->aki = x509_crl_get_aki(x509_crl)) == NULL)
 			errx(1, "x509_crl_get_aki failed");
