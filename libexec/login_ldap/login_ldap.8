@@ -1,4 +1,4 @@
-.\" $OpenBSD: login_ldap.8,v 1.1 2020/09/12 15:06:12 martijn Exp $
+.\" $OpenBSD: login_ldap.8,v 1.2 2020/09/12 17:14:23 martijn Exp $
 .\" Copyright (c) 2002 Institute for Open Systems Technology Australia (IFOST)
 .\" Copyright (c) 2007 Michael Erdely <merdely@openbsd.org>
 .\" Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -34,9 +34,9 @@
 .Nd contact LDAP directory server for authentication
 .Sh SYNOPSIS
 .Nm login_ldap
-.Op Fl s Ar service
 .Op Fl d
-.Op Fl v Ar name=value
+.Op Fl s Ar service
+.Op Fl v Ar name Ns = Ns Ar value
 .Ar user
 .Op Ar class
 .Sh DESCRIPTION
@@ -47,28 +47,28 @@ utility contacts an LDAP server to authenticate a
 .Pp
 Available options are:
 .Bl -tag -width indent
+.It Fl d
+Print debugging information.
 .It Fl s
 Specify the service.
 Currently only
-.Li login
+.Dq login
 and
-.Li response
+.Dq response
 are supported.
 The challenge service is not supported, but it is not an error to specify
-this service. If this happens
-.Nm 
-will request the response service. 
-.It Fl d
-Print debugging information.
+this service.
+If this happens
+.Nm
+will request the response service.
 .It Fl v
-This option is here for compatiblity and is ignored.
+This option is for compatibility and is ignored.
 .El
 .Pp
-The
-.Nm 
-will search for the
+.Nm
+searches for the
 .Ar user
-in the LDAP server based on the filter parameters in the configuration file.
+on the LDAP server based on the filter parameters in the configuration file.
 If the user is found it will try to bind to it using the supplied password.
 .Pp
 .Nm
@@ -131,7 +131,7 @@ This option can be omitted if the binddn points directly to the user entry.
 .It Ar binddn
 DN used by
 .Nm
-to bind to the ldap server.
+to bind to the LDAP server.
 If no basedn is set this is used to bind directly to the user and uses the user
 supplied password.
 Use FORMAT FILTERS to specify the username in this case.
@@ -145,26 +145,31 @@ entry.
 .El
 .Pp
 In most cases, you will need to configure additional options.
-The following entries to login_ldap.conf are also recognised by 
+The following entries to login_ldap.conf are also recognised by
 .Nm
 and are optional:
 .Bl -tag -width cacertdir
 .It Ar bindpw
 Password used by
 .Nm
-to bind to the ldap server. Leave this out for a passwordless bind.
+to bind to the LDAP server.
+Leave this out for a passwordless bind.
 .It Ar filter
 LDAP search filter (in accordance with RFC 1558) which identifies the
-objectclass(s) and attribute(s) necessary for
+objectclasses and attributes necessary for
 .Nm
-to locate the user object. See the FILTER FORMATS section for details.
+to locate the user object.
+See the
+.Sx FILTER FORMATS
+section for details.
 .It Ar timeout
-Time in seconds to wait for the ldap server to respond to a query. 
-The default is 60 seconds per query, with up to four queries occuring.
+Time in seconds to wait for the LDAP server to respond to a query.
+The default is 60 seconds per query, with up to four queries occurring.
 .It Ar scope
 The directory scope when performing the user lookup (first pass) search.
 Acceptable values are:
-.Bl -tag -width onelevel
+.Pp
+.Bl -tag -width baseXXX -offset indent -compact
 .It base
 Base object search
 .It one
@@ -177,7 +182,7 @@ The default is sub if scope is unspecified.
 .It Ar cacert
 The pathname of the CA used for SSL certificates.
 .It Ar cacertdir
-The directory containing the certificates of trusted CA's
+The directory containing the certificates of trusted CAs.
 .El
 .Pp
 An additional groupcheck can be performed to verify the user is allowed to log
@@ -194,18 +199,19 @@ for semantics.
 These checks are performed by the binddn user.
 .Sh FILTER FORMATS
 The following format specifiers are valid for the filter:
-.Bl -tag -width xxx 
+.Bl -tag -width xxx
 .It %u
-Username. The username of the user to be authenticated as specified by 
-the
+Username.
+The username of the user to be authenticated as specified by the
 .Ar user
 argument.
 .It %h
-Hostname. The hostname of the host the user is trying to authenticate on,
+Hostname.
+The hostname of the host the user is trying to authenticate on,
 as returned by
 .Xr gethostname 3
 and displayed by
-.Xr hostname 1 . 
+.Xr hostname 1 .
 .It %d
 The dn of the user attempting authentication as returned from the first pass of
 the search.
@@ -215,17 +221,21 @@ A literal
 .Sq %
 character.
 .El
-.Pp
+.Sh FILES
+.Bl -tag -width /etc/examples/login_ldap.conf -compact
+.It Pa /etc/examples/login_ldap.conf
+Example configuration file.
+.El
 .Sh SEE ALSO
-.Xr login.conf 5 ,
-.Xr login 8 ,
-.Xr ldapd 8 ,
 .Xr ldap 1 ,
+.Xr login 1 ,
+.Xr login.conf 5 ,
+.Xr ldapd 8 ,
 .Xr ypldap 8
 .Sh HISTORY
 The
 .Nm
-utility was first appeared in
+utility first appeared in
 .Ox 3.3
 ports and was later mostly rewritten by
 .An Martijn van Duren Aq Mt martijn@openbsd.org

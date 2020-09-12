@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: login_ldap.c,v 1.1 2020/09/12 15:06:12 martijn Exp $
+ * $OpenBSD: login_ldap.c,v 1.2 2020/09/12 17:14:23 martijn Exp $
  * Copyright (c) 2002 Institute for Open Systems Technology Australia (IFOST)
  * Copyright (c) 2007 Michael Erdely <merdely@openbsd.org>
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -263,6 +263,6 @@ auth_ldap(char *user, char *class, char *pass)
 __dead void
 usage(void)
 {
-	dlog(0, "usage: %s [-d] [-s service] username [class]", getprogname());
+	dlog(0, "usage: %s [-d] [-s service] [-v name=value] user [class]", getprogname());
 	exit(1);
 }
