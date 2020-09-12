@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.140 2020/08/03 10:59:53 benno Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.141 2020/09/12 07:34:17 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2018 Reyk Floeter <reyk@openbsd.org>
@@ -100,6 +100,8 @@ server_httpdesc_free(struct http_descriptor *desc)
 
 	free(desc->http_path);
 	desc->http_path = NULL;
+	free(desc->http_path_orig);
+	desc->http_path_orig = NULL;
 	free(desc->http_path_alias);
 	desc->http_path_alias = NULL;
 	free(desc->http_query);
@@ -1204,9 +1206,13 @@ server_response(struct httpd *httpd, struct client *clt)
 	char			*hostval, *query;
 	const char		*errstr = NULL;
 
-	/* Decode the URL */
+	/* Preserve original path */
 	if (desc->http_path == NULL ||
-	    url_decode(desc->http_path) == NULL)
+	    (desc->http_path_orig = strdup(desc->http_path)) == NULL)
+		goto fail;
+
+	/* Decode the URL */
+	if (url_decode(desc->http_path) == NULL)
 		goto fail;
 
 	/* Canonicalize the request path */

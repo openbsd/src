@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.h,v 1.15 2019/05/08 21:41:06 tb Exp $	*/
+/*	$OpenBSD: http.h,v 1.16 2020/09/12 07:34:17 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2012 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -246,6 +246,7 @@ struct http_descriptor {
 	/* Rewritten path and query remain NULL if not used */
 	char			*http_path_alias;
 	char			*http_query_alias;
+	char			*http_path_orig;
 
 	/* A tree of headers and attached lists for repeated headers. */
 	struct kv		*http_lastheader;
