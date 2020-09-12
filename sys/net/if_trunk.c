@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.149 2020/07/28 09:52:32 mvs Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.150 2020/09/12 20:12:09 kn Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -422,10 +422,6 @@ trunk_port_destroy(struct trunk_port *tp)
 
 	/* Remove multicast addresses from this port */
 	trunk_ether_cmdmulti(tp, SIOCDELMULTI);
-
-	/* Port has to be down */
-	if (ifp->if_flags & IFF_UP)
-		if_down(ifp);
 
 	ifpromisc(ifp, 0);
 
