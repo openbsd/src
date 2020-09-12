@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.74 2020/07/31 09:57:38 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.75 2020/09/12 09:06:26 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -148,8 +148,9 @@ struct filepath_tree  fpt = RB_INITIALIZER(&fpt);
 /*
  * Mark that our subprocesses will never return.
  */
+static void	entityq_flush(int, struct entityq *, const struct repo *);
 static void	proc_parser(int) __attribute__((noreturn));
-static void	proc_rsync(char *, char *, int, int)
+static void	proc_rsync(char *, char *, int)
 		    __attribute__((noreturn));
 static void	build_chain(const struct auth *, STACK_OF(X509) **);
 static void	build_crls(const struct auth *, struct crl_tree *,
@@ -157,7 +158,8 @@ static void	build_crls(const struct auth *, struct crl_tree *,
 
 const char	*bird_tablename = "ROAS";
 
-int	 verbose;
+int	verbose;
+int	noop;
 
 struct stats	 stats;
 
@@ -300,10 +302,17 @@ repo_lookup(int fd, struct repotab *rt, const char *uri)
 
 	i = rt->reposz - 1;
 
-	logx("%s/%s: pulling from network", rp->host, rp->module);
-	io_simple_write(fd, &i, sizeof(size_t));
-	io_str_write(fd, rp->host);
-	io_str_write(fd, rp->module);
+	if (!noop) {
+		logx("%s/%s: pulling from network", rp->host, rp->module);
+		io_simple_write(fd, &i, sizeof(size_t));
+		io_str_write(fd, rp->host);
+		io_str_write(fd, rp->module);
+	} else {
+		rp->loaded = 1;
+		logx("%s/%s: using cache", rp->host, rp->module);
+		stats.repos++;
+		/* there is nothing in the queue so no need to flush */
+	}
 	return rp;
 }
 
@@ -619,7 +628,7 @@ proc_child(int signal)
  * repositories and saturate our system.
  */
 static void
-proc_rsync(char *prog, char *bind_addr, int fd, int noop)
+proc_rsync(char *prog, char *bind_addr, int fd)
 {
 	size_t			 id, i, idsz = 0;
 	ssize_t			 ssz;
@@ -644,37 +653,35 @@ proc_rsync(char *prog, char *bind_addr, int fd, int noop)
 	 * Otherwise, look up the command in our PATH.
 	 */
 
-	if (!noop) {
-		if (strchr(prog, '/') == NULL) {
-			if (getenv("PATH") == NULL)
-				errx(1, "PATH is unset");
-			if ((path = strdup(getenv("PATH"))) == NULL)
-				err(1, "strdup");
-			save = path;
-			while ((pp = strsep(&path, ":")) != NULL) {
-				if (*pp == '\0')
-					continue;
-				if (asprintf(&cmd, "%s/%s", pp, prog) == -1)
-					err(1, "asprintf");
-				if (lstat(cmd, &stt) == -1) {
-					free(cmd);
-					continue;
-				} else if (unveil(cmd, "x") == -1)
-					err(1, "%s: unveil", cmd);
+	if (strchr(prog, '/') == NULL) {
+		if (getenv("PATH") == NULL)
+			errx(1, "PATH is unset");
+		if ((path = strdup(getenv("PATH"))) == NULL)
+			err(1, "strdup");
+		save = path;
+		while ((pp = strsep(&path, ":")) != NULL) {
+			if (*pp == '\0')
+				continue;
+			if (asprintf(&cmd, "%s/%s", pp, prog) == -1)
+				err(1, "asprintf");
+			if (lstat(cmd, &stt) == -1) {
 				free(cmd);
-				break;
-			}
-			free(save);
-		} else if (unveil(prog, "x") == -1)
-			err(1, "%s: unveil", prog);
+				continue;
+			} else if (unveil(cmd, "x") == -1)
+				err(1, "%s: unveil", cmd);
+			free(cmd);
+			break;
+		}
+		free(save);
+	} else if (unveil(prog, "x") == -1)
+		err(1, "%s: unveil", prog);
 
-		/* Unveil the repository directory and terminate unveiling. */
+	/* Unveil the repository directory and terminate unveiling. */
 
-		if (unveil(".", "c") == -1)
-			err(1, "unveil");
-		if (unveil(NULL, NULL) == -1)
-			err(1, "unveil");
-	}
+	if (unveil(".", "c") == -1)
+		err(1, "unveil");
+	if (unveil(NULL, NULL) == -1)
+		err(1, "unveil");
 
 	/* Initialise retriever for children exiting. */
 
@@ -700,6 +707,8 @@ proc_rsync(char *prog, char *bind_addr, int fd, int noop)
 			 */
 
 			while ((pid = waitpid(WAIT_ANY, &st, WNOHANG)) > 0) {
+				int ok = 1;
+
 				for (i = 0; i < idsz; i++)
 					if (ids[i].pid == pid)
 						break;
@@ -709,11 +718,14 @@ proc_rsync(char *prog, char *bind_addr, int fd, int noop)
 					warnx("rsync %s terminated abnormally",
 					    ids[i].uri);
 					rc = 1;
+					ok = 0;
 				} else if (WEXITSTATUS(st) != 0) {
 					warnx("rsync %s failed", ids[i].uri);
+					ok = 0;
 				}
 
 				io_simple_write(fd, &ids[i].id, sizeof(size_t));
+				io_simple_write(fd, &ok, sizeof(ok));
 				free(ids[i].uri);
 				ids[i].uri = NULL;
 				ids[i].pid = 0;
@@ -738,13 +750,6 @@ proc_rsync(char *prog, char *bind_addr, int fd, int noop)
 
 		io_str_read(fd, &host);
 		io_str_read(fd, &mod);
-
-		if (noop) {
-			io_simple_write(fd, &id, sizeof(size_t));
-			free(host);
-			free(mod);
-			continue;
-		}
 
 		/*
 		 * Create source and destination locations.
@@ -1585,7 +1590,7 @@ int
 main(int argc, char *argv[])
 {
 	int		 rc = 1, c, proc, st, rsync,
-			 fl = SOCK_STREAM | SOCK_CLOEXEC, noop = 0;
+			 fl = SOCK_STREAM | SOCK_CLOEXEC;
 	size_t		 i, j, eid = 1, outsz = 0, talsz = 0;
 	pid_t		 procpid, rsyncpid;
 	int		 fd[2];
@@ -1729,32 +1734,32 @@ main(int argc, char *argv[])
 	 * TAL) exists and has been downloaded.
 	 */
 
-	if (socketpair(AF_UNIX, fl, 0, fd) == -1)
-		err(1, "socketpair");
-	if ((rsyncpid = fork()) == -1)
-		err(1, "fork");
+	if (!noop) {
+		if (socketpair(AF_UNIX, fl, 0, fd) == -1)
+			err(1, "socketpair");
+		if ((rsyncpid = fork()) == -1)
+			err(1, "fork");
 
-	if (rsyncpid == 0) {
-		close(proc);
-		close(fd[1]);
+		if (rsyncpid == 0) {
+			close(proc);
+			close(fd[1]);
 
-		/* change working directory to the cache directory */
-		if (chdir(cachedir) == -1)
-			err(1, "%s: chdir", cachedir);
+			/* change working directory to the cache directory */
+			if (chdir(cachedir) == -1)
+				err(1, "%s: chdir", cachedir);
 
-		if (pledge("stdio rpath cpath proc exec unveil", NULL) == -1)
-			err(1, "pledge");
+			if (pledge("stdio rpath cpath proc exec unveil", NULL)
+			    == -1)
+				err(1, "pledge");
 
-		/* If -n, we don't exec or mkdir. */
+			proc_rsync(rsync_prog, bind_addr, fd[0]);
+			/* NOTREACHED */
+		}
 
-		if (noop && pledge("stdio", NULL) == -1)
-			err(1, "pledge");
-		proc_rsync(rsync_prog, bind_addr, fd[0], noop);
-		/* NOTREACHED */
-	}
-
-	close(fd[0]);
-	rsync = fd[1];
+		close(fd[0]);
+		rsync = fd[1];
+	} else
+		rsync = -1;
 
 	assert(rsync != proc);
 
@@ -1813,12 +1818,19 @@ main(int argc, char *argv[])
 		 */
 
 		if ((pfd[0].revents & POLLIN)) {
+			int ok;
 			io_simple_read(rsync, &i, sizeof(size_t));
+			io_simple_read(rsync, &ok, sizeof(ok));
 			assert(i < rt.reposz);
 			assert(!rt.repos[i].loaded);
 			rt.repos[i].loaded = 1;
-			logx("%s/%s: loaded from cache", rt.repos[i].host,
-			    rt.repos[i].module);
+			if (ok)
+				logx("%s/%s: loaded from network",
+				    rt.repos[i].host, rt.repos[i].module);
+			else
+				logx("%s/%s: load from network failed, "
+				    "fallback to cache",
+				    rt.repos[i].host, rt.repos[i].module);
 			stats.repos++;
 			entityq_flush(proc, &q, &rt.repos[i]);
 		}
@@ -1857,11 +1869,13 @@ main(int argc, char *argv[])
 		warnx("parser process exited abnormally");
 		rc = 1;
 	}
-	if (waitpid(rsyncpid, &st, 0) == -1)
-		err(1, "waitpid");
-	if (!WIFEXITED(st) || WEXITSTATUS(st) != 0) {
-		warnx("rsync process exited abnormally");
-		rc = 1;
+	if (!noop) {
+		if (waitpid(rsyncpid, &st, 0) == -1)
+			err(1, "waitpid");
+		if (!WIFEXITED(st) || WEXITSTATUS(st) != 0) {
+			warnx("rsync process exited abnormally");
+			rc = 1;
+		}
 	}
 
 	gettimeofday(&now_time, NULL);
