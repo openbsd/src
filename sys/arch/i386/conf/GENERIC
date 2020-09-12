@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.851 2020/06/22 00:33:28 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.852 2020/09/12 07:47:26 mglocker Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -62,6 +62,7 @@ acpivideo*	at acpi?
 acpivout*	at acpivideo?
 acpipwrres*	at acpi?
 aibs*		at acpi?
+asmc0		at acpi?	# Apple SMC
 
 option		PCIVERBOSE
 option		EISAVERBOSE
@@ -148,7 +149,6 @@ uguru0	at isa? disable port 0xe0	# ABIT uGuru
 fins0	at isa? port 0x4e		# Fintek F71805 Super I/O
 
 aps0	at isa? port 0x1600		# ThinkPad Active Protection System
-asmc0	at isa? port 0x300		# Apple SMC
 
 itherm*	at pci?				# Intel 3400 Thermal Sensor
 adc*	at iic?				# Analog Devices AD7416/AD7417/7418

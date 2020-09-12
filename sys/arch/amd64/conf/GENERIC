@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.490 2020/06/02 16:24:24 jcs Exp $
+#	$OpenBSD: GENERIC,v 1.491 2020/09/12 07:47:26 mglocker Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -68,6 +68,7 @@ glkgpio*	at acpi?
 sdhc*		at acpi?
 acpicbkbd*	at acpi?
 acpials*	at acpi?
+asmc0		at acpi?	# Apple SMC
 tpm*		at acpi?
 acpihve*	at acpi?
 acpisurface*	at acpi?
@@ -132,7 +133,6 @@ lm*	at wbsio?
 uguru0	at isa? disable port 0xe0	# ABIT uGuru
 
 aps0	at isa? port 0x1600		# ThinkPad Active Protection System
-asmc0	at isa? port 0x300		# Apple SMC
 
 piixpm*	at pci?			# Intel PIIX PM
 iic*	at piixpm?

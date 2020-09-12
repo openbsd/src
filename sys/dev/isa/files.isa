@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.126 2020/01/24 05:14:51 jsg Exp $
+#	$OpenBSD: files.isa,v 1.127 2020/09/12 07:47:27 mglocker Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -292,11 +292,6 @@ file	dev/isa/uguru.c			uguru
 device	aps
 attach	aps at isa
 file	dev/isa/aps.c			aps
-
-# Apple System Management Controller (SMC)
-device	asmc
-attach	asmc at isa
-file	dev/isa/asmc.c			asmc
 
 # ISA I/O mapped as GPIO
 device	isagpio: gpiobus

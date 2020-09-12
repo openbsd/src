@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.55 2020/06/02 16:24:24 jcs Exp $
+#	$OpenBSD: files.acpi,v 1.56 2020/09/12 07:47:26 mglocker Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -74,6 +74,11 @@ file	dev/acpi/acpiprt.c		acpiprt needs-flag
 device	acpidock
 attach	acpidock at acpi
 file	dev/acpi/acpidock.c		acpidock
+
+# Apple System Management Controller (SMC)
+device	asmc
+attach	asmc at acpi
+file	dev/acpi/asmc.c			asmc
 
 # ASUS ACPI Hotkeys
 device	acpiasus
