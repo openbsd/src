@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.201 2020/07/14 06:02:50 beck Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.202 2020/09/12 11:57:24 beck Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -309,7 +309,7 @@ bufbackoff(struct uvm_constraint_range *range, long size)
 	 * If we will accept high memory for this backoff
 	 * try to steal it from the high memory buffer cache.
 	 */
-	if (range->ucr_high > dma_constraint.ucr_high) {
+	if (range != NULL && range->ucr_high > dma_constraint.ucr_high) {
 		struct buf *bp;
 		int64_t start = bcstats.numbufpages, recovered = 0;
 		int s = splbio();
