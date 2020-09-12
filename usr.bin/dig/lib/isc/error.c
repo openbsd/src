@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: error.c,v 1.5 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: error.c,v 1.6 2020/09/12 07:19:59 florian Exp $ */
 
 /*! \file */
 
@@ -23,26 +23,15 @@
 
 #include <isc/error.h>
 
-/*% Default unexpected callback. */
-static void
-default_unexpected_callback(const char *, int, const char *, va_list)
-     __attribute__((__format__(__printf__, 3, 0)));
-
-/*% Default fatal callback. */
-static void
-default_fatal_callback(const char *, int, const char *, va_list)
-     __attribute__((__format__(__printf__, 3, 0)));
-
-/*% unexpected_callback */
-static isc_errorcallback_t unexpected_callback = default_unexpected_callback;
-static isc_errorcallback_t fatal_callback = default_fatal_callback;
-
 void
 isc_error_unexpected(const char *file, int line, const char *format, ...) {
 	va_list args;
 
 	va_start(args, format);
-	(unexpected_callback)(file, line, format, args);
+	fprintf(stderr, "%s:%d: ", file, line);
+	vfprintf(stderr, format, args);
+	fprintf(stderr, "\n");
+	fflush(stderr);
 	va_end(args);
 }
 
@@ -51,7 +40,10 @@ isc_error_fatal(const char *file, int line, const char *format, ...) {
 	va_list args;
 
 	va_start(args, format);
-	(fatal_callback)(file, line, format, args);
+	fprintf(stderr, "%s:%d: %s: ", file, line, "fatal error");
+	vfprintf(stderr, format, args);
+	fprintf(stderr, "\n");
+	fflush(stderr);
 	va_end(args);
 	abort();
 }
@@ -60,24 +52,4 @@ void
 isc_error_runtimecheck(const char *file, int line, const char *expression) {
 	isc_error_fatal(file, line, "RUNTIME_CHECK(%s) %s", expression,
 				       "failed");
-}
-
-static void
-default_unexpected_callback(const char *file, int line, const char *format,
-			    va_list args)
-{
-	fprintf(stderr, "%s:%d: ", file, line);
-	vfprintf(stderr, format, args);
-	fprintf(stderr, "\n");
-	fflush(stderr);
-}
-
-static void
-default_fatal_callback(const char *file, int line, const char *format,
-		       va_list args)
-{
-	fprintf(stderr, "%s:%d: %s: ", file, line, "fatal error");
-	vfprintf(stderr, format, args);
-	fprintf(stderr, "\n");
-	fflush(stderr);
 }
