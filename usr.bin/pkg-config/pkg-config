@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.93 2019/12/08 14:22:14 espie Exp $
+# $OpenBSD: pkg-config,v 1.94 2020/09/12 12:53:41 jasper Exp $
 # $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
@@ -165,7 +165,7 @@ if (!@ARGV){
 
 # Return the next module from @ARGV, if it turns out to be a comma separated
 # module list, take the first one and put the rest back to the front.
-sub get_next_module 
+sub get_next_module
 {
 	my $module = shift @ARGV;
 	my $m;
@@ -292,13 +292,13 @@ sub handle_config
 	    my $property = shift;
 	    my $pkg;
 
-	    # See if there's anything in the environment that we need to 
+	    # See if there's anything in the environment that we need to
 	    # take into account.
 	    ($pkg = $p) =~ s/(^.*\/)?(.*?)\.pc$/$2/g;
 	    $pkg = uc($pkg);
 
 	    if (grep {/PKG_CONFIG_${pkg}.*/} keys %ENV) {
-		    # Now that we know we have something to look for, do 
+		    # Now that we know we have something to look for, do
 		    # the inefficient iteration.
 		    while (my ($k, $v) = each %ENV) {
 			    if ($k =~ /^PKG_CONFIG_${pkg}_(\w+)/) {
