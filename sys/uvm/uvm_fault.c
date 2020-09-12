@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.97 2019/12/08 12:37:45 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.98 2020/09/12 17:08:49 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -38,6 +38,7 @@
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/mman.h>
+#include <sys/tracepoint.h>
 
 #include <uvm/uvm.h>
 
@@ -507,6 +508,7 @@ uvm_fault(vm_map_t orig_map, vaddr_t vaddr, vm_fault_t fault_type,
 	pg = NULL;
 
 	uvmexp.faults++;	/* XXX: locking? */
+	TRACEPOINT(uvm, fault, vaddr, fault_type, access_type, NULL);
 
 	/* init the IN parameters in the ufi */
 	ufi.orig_map = orig_map;

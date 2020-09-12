@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_static.c,v 1.2 2020/03/25 14:59:23 mpi Exp $ */
+/*	$OpenBSD: dt_prov_static.c,v 1.3 2020/09/12 17:08:50 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -34,7 +34,7 @@ struct dt_provider dt_prov_static = {
 };
 
 /*
- * Scheduler provider
+ * Scheduler
  */
 DT_STATIC_PROBE2(sched, dequeue, "pid_t", "pid_t");
 DT_STATIC_PROBE2(sched, enqueue, "pid_t", "pid_t");
@@ -51,6 +51,13 @@ DT_STATIC_PROBE1(raw_syscalls, sys_enter, "register_t");
 DT_STATIC_PROBE1(raw_syscalls, sys_exit, "register_t");
 
 /*
+ * UVM
+ */
+DT_STATIC_PROBE3(uvm, fault, "vaddr_t", "vm_fault_t", "vm_prot_t");
+DT_STATIC_PROBE3(uvm, map_insert, "vaddr_t", "vaddr_t", "vm_prot_t");
+DT_STATIC_PROBE3(uvm, map_remove, "vaddr_t", "vaddr_t", "vm_prot_t");
+
+/*
  * List of all static probes
  */
 struct dt_probe *dtps_static[] = {
@@ -65,6 +72,10 @@ struct dt_probe *dtps_static[] = {
 	/* Raw syscalls */
 	&_DT_STATIC_P(raw_syscalls, sys_enter),
 	&_DT_STATIC_P(raw_syscalls, sys_exit),
+	/* UVM */
+	&_DT_STATIC_P(uvm, fault),
+	&_DT_STATIC_P(uvm, map_insert),
+	&_DT_STATIC_P(uvm, map_remove),
 };
 
 int
@@ -91,7 +102,8 @@ dt_prov_static_alloc(struct dt_probe *dtp, struct dt_softc *sc,
 	if (dp == NULL)
 		return ENOMEM;
 
-	dp->dp_filter = dtrq->dtrq_filter;
+	if (dt_pcb_filter_insert(dp, &dtrq->dtrq_filter))
+		return ENOMEM;
 	dp->dp_evtflags = dtrq->dtrq_evtflags;
 	TAILQ_INSERT_HEAD(plist, dp, dp_snext);
 

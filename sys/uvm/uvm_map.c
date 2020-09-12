@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.265 2020/07/06 19:22:40 deraadt Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.266 2020/09/12 17:08:50 mpi Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -95,6 +95,7 @@
 #include <sys/signalvar.h>
 #include <sys/syslog.h>
 #include <sys/user.h>
+#include <sys/tracepoint.h>
 
 #ifdef SYSVSHM
 #include <sys/shm.h>
@@ -455,6 +456,9 @@ uvm_mapent_addr_insert(struct vm_map *map, struct vm_map_entry *entry)
 	KDASSERT((entry->start & (vaddr_t)PAGE_MASK) == 0 &&
 	    (entry->end & (vaddr_t)PAGE_MASK) == 0);
 
+	TRACEPOINT(uvm, map_insert,
+	    entry->start, entry->end, entry->protection, NULL);
+
 	UVM_MAP_REQ_WRITE(map);
 	res = RBT_INSERT(uvm_map_addr, &map->addr, entry);
 	if (res != NULL) {
@@ -474,6 +478,9 @@ void
 uvm_mapent_addr_remove(struct vm_map *map, struct vm_map_entry *entry)
 {
 	struct vm_map_entry *res;
+
+	TRACEPOINT(uvm, map_remove,
+	    entry->start, entry->end, entry->protection, NULL);
 
 	UVM_MAP_REQ_WRITE(map);
 	res = RBT_REMOVE(uvm_map_addr, &map->addr, entry);
