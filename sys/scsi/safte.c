@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.64 2020/09/12 16:51:04 krw Exp $ */
+/*	$OpenBSD: safte.c,v 1.65 2020/09/12 17:03:51 krw Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -119,7 +119,7 @@ safte_match(struct device *parent, void *match, void *aux)
 
 	if ((inq->device & SID_TYPE) != T_PROCESSOR ||
 	    SID_ANSII_REV(inq) != SCSI_REV_2 ||
-	    SID_RESPONSE_FORMAT(inq) != 2)
+	    SID_RESPONSE_FORMAT(inq) != SID_SCSI2_RESPONSE)
 		return 0;
 
 	if (inq->additional_length < SID_SCSI2_ALEN + sizeof(*si))
