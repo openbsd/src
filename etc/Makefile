@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.478 2020/06/29 17:52:02 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.479 2020/09/13 10:03:46 ajacoutot Exp $
 
 .include <bsd.own.mk>
 
@@ -52,9 +52,10 @@ EXAMPLES=acme-client.conf chio.conf dhclient.conf dhcpd.conf exports \
 
 # -rw-------
 EXAMPLES_600=bgpd.conf doas.conf dvmrpd.conf eigrpd.conf hostapd.conf \
-	iked.conf ipsec.conf ldapd.conf ldpd.conf ospf6d.conf ospfd.conf \
-	pf.conf radiusd.conf rc.local rc.securelevel rc.shutdown relayd.conf \
-	ripd.conf sasyncd.conf snmpd.conf vm.conf ypldap.conf
+	iked.conf ipsec.conf ldapd.conf ldpd.conf login_ldap.conf \
+	ospf6d.conf ospfd.conf pf.conf radiusd.conf rc.local \
+	rc.securelevel rc.shutdown relayd.conf ripd.conf sasyncd.conf \
+	snmpd.conf vm.conf ypldap.conf
 
 # -r-xr-xr-x
 RCDAEMONS=amd apmd bgpd bootparamd cron dhcpd dhcrelay dhcrelay6 dvmrpd \
