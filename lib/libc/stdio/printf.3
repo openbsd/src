@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.87 2020/07/10 17:04:18 deraadt Exp $
+.\"	$OpenBSD: printf.3,v 1.88 2020/09/13 11:55:53 claudio Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: July 10 2020 $
+.Dd $Mdocdate: September 13 2020 $
 .Dt PRINTF 3
 .Os
 .Sh NAME
@@ -589,8 +589,8 @@ modifier matches the type of the pointer passed:
 .It Cm %hhn Ta Vt signed char *
 .It Cm %hn  Ta Vt signed short *
 .It Cm %n   Ta Vt signed int *
-.It Cm %ln  Ta Vt signed long * Pq percent ell dee
-.It Cm %lln Ta Vt signed long long * Pq percent ell ell dee
+.It Cm %ln  Ta Vt signed long * Pq percent ell n
+.It Cm %lln Ta Vt signed long long * Pq percent ell ell n
 .It Cm %jn  Ta Vt intmax_t *
 .It Cm %tn  Ta Vt ptrdiff_t *
 .It Cm %zn  Ta Vt ssize_t *
