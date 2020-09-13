@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.326 2020/09/01 12:17:53 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.327 2020/09/13 14:26:56 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -695,14 +695,15 @@ sdstart(struct scsi_xfer *xs)
 	    ((secno & 0x1fffff) == secno) &&
 	    ((nsecs & 0xff) == nsecs))
 		xs->cmdlen = sd_cmd_rw6(xs->cmd, read, secno, nsecs);
-	else if (((secno & 0xffffffff) == secno) &&
-	    ((nsecs & 0xffff) == nsecs))
-		xs->cmdlen = sd_cmd_rw10(xs->cmd, read, secno, nsecs);
-	else if (((secno & 0xffffffff) == secno) &&
-	    ((nsecs & 0xffffffff) == nsecs))
-		xs->cmdlen = sd_cmd_rw12(xs->cmd, read, secno, nsecs);
-	else
+
+	else if (sc->params.disksize > UINT32_MAX)
 		xs->cmdlen = sd_cmd_rw16(xs->cmd, read, secno, nsecs);
+
+	else if (nsecs <= UINT16_MAX)
+		xs->cmdlen = sd_cmd_rw10(xs->cmd, read, secno, nsecs);
+
+	else
+		xs->cmdlen = sd_cmd_rw12(xs->cmd, read, secno, nsecs);
 
 	disk_busy(&sc->sc_dk);
 	if (!read)
