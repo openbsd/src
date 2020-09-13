@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.65 2019/06/28 13:34:59 deraadt Exp $	*/
+/*	$OpenBSD: eval.c,v 1.66 2020/09/13 15:39:09 tb Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -47,6 +47,8 @@ typedef struct Expand {
 #define IFS_WORD	0	/* word has chars (or quotes) */
 #define IFS_WS		1	/* have seen IFS white-space */
 #define IFS_NWS		2	/* have seen IFS non-white-space */
+#define IFS_IWS		3	/* beginning of word, ignore IFS white-space */
+#define IFS_QUOTE	4	/* beg.w/quote, becomes IFS_WORD unless "$@" */
 
 static	int	varsub(Expand *, char *, char *, int *, int *);
 static	int	comsub(Expand *, char *);
@@ -217,7 +219,17 @@ expand(char *cp,	/* input word */
 				c = *sp++;
 				break;
 			case OQUOTE:
-				word = IFS_WORD;
+				switch (word) {
+				case IFS_QUOTE:
+					/* """something */
+					word = IFS_WORD;
+					break;
+				case IFS_WORD:
+					break;
+				default:
+					word = IFS_QUOTE;
+					break;
+				}
 				tilde_ok = 0;
 				quote = 1;
 				continue;
@@ -297,6 +309,8 @@ expand(char *cp,	/* input word */
 				if (f&DOBLANK)
 					doblank++;
 				tilde_ok = 0;
+				if (word == IFS_QUOTE && type != XNULLSUB)
+					word = IFS_WORD;
 				if (type == XBASE) {	/* expand? */
 					if (!st->next) {
 						SubType *newst;
@@ -358,6 +372,11 @@ expand(char *cp,	/* input word */
 						f |= DOTEMP_;
 						/* FALLTHROUGH */
 					default:
+						/* '-' '+' '?' */
+						if (quote)
+							word = IFS_WORD;
+						else if (dp == Xstring(ds, dp))
+							word = IFS_IWS;
 						/* Enable tilde expansion */
 						tilde_ok = 1;
 						f |= DOTILDE;
@@ -387,10 +406,17 @@ expand(char *cp,	/* input word */
 					 */
 					x.str = trimsub(str_val(st->var),
 						dp, st->stype);
-					if (x.str[0] != '\0' || st->quote)
+					if (x.str[0] != '\0') {
+						word = IFS_IWS;
 						type = XSUB;
-					else
+					} else if (quote) {
+						word = IFS_WORD;
+						type = XSUB;
+					} else {
+						if (dp == Xstring(ds, dp))
+							word = IFS_IWS;
 						type = XNULLSUB;
+					}
 					if (f&DOBLANK)
 						doblank++;
 					st = st->prev;
@@ -422,6 +448,10 @@ expand(char *cp,	/* input word */
 					if (f&DOBLANK)
 						doblank++;
 					st = st->prev;
+					if (quote || !*x.str)
+						word = IFS_WORD;
+					else
+						word = IFS_IWS;
 					continue;
 				case '?':
 				    {
@@ -463,12 +493,8 @@ expand(char *cp,	/* input word */
 			type = XBASE;
 			if (f&DOBLANK) {
 				doblank--;
-				/* not really correct: x=; "$x$@" should
-				 * generate a null argument and
-				 * set A; "${@:+}" shouldn't.
-				 */
-				if (dp == Xstring(ds, dp))
-					word = IFS_WS;
+				if (dp == Xstring(ds, dp) && word != IFS_WORD)
+					word = IFS_IWS;
 			}
 			continue;
 
@@ -503,7 +529,12 @@ expand(char *cp,	/* input word */
 				if (c == 0) {
 					if (quote && !x.split)
 						continue;
+					if (!quote && word == IFS_WS)
+						continue;
+					/* this is so we don't terminate */
 					c = ' ';
+					/* now force-emit a word */
+					goto emit_word;
 				}
 				if (quote && x.split) {
 					/* terminate word for "$@" */
@@ -554,15 +585,15 @@ expand(char *cp,	/* input word */
 			 *	-----------------------------------
 			 *	IFS_WORD	w/WS	w/NWS	w
 			 *	IFS_WS		-/WS	w/NWS	-
-			 *	IFS_NWS		-/NWS	w/NWS	w
+			 *	IFS_NWS		-/NWS	w/NWS	-
+			 *	IFS_IWS		-/WS	w/NWS	-
 			 *   (w means generate a word)
-			 * Note that IFS_NWS/0 generates a word (at&t ksh
-			 * doesn't do this, but POSIX does).
 			 */
-			if (word == IFS_WORD ||
-			    (!ctype(c, C_IFSWS) && c && word == IFS_NWS)) {
-				char *p;
-
+			if ((word == IFS_WORD) || (word == IFS_QUOTE) || (c &&
+			    (word == IFS_IWS || word == IFS_NWS) &&
+			    !ctype(c, C_IFSWS))) {
+ 				char *p;
+ emit_word:
 				*dp++ = '\0';
 				p = Xclose(ds, dp);
 				if (fdo & DOBRACE_)
