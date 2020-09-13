@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2020/09/13 09:55:05 tobhe Exp $
+#	$OpenBSD: Makefile,v 1.20 2020/09/13 09:58:32 tobhe Exp $
 
 # Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
 #
@@ -242,6 +242,20 @@ run-cert-single-ca:
 	${SETUP_START}
 	flowtype=esp; ${TEST_FLOWS}; if [[ $$_ret -ne 0 ]]; then exit 1; fi
 	${TEST_PING}; if [[ $$_ret -ne 0 ]]; then exit 1; fi
+
+REGRESS_TARGETS += run-dstid-fail
+run-dstid-fail:
+	@echo '======= $@ ========'
+	flowtype=esp;
+	leftid=left-from-ca-both; \
+	rightid=right-from-ca-both; \
+	    side=left; ${SETUP_CONFIG}; \
+	    side=right; dstid="dstid invalid"; \
+	    ${SETUP_CONFIG}; \
+	    ${DEPLOY_CONFIGS}
+	${SETUP_START}
+	flowtype=esp; ${TEST_FLOWS}; if [[ $$_ret -ne 1 ]]; then exit 1; fi
+	${TEST_PING}; if [[ $$_ret -ne 1 ]]; then exit 1; fi
 
 REGRESS_TARGETS += run-cert-multi-ca
 run-cert-multi-ca:
