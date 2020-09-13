@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.300 2020/06/16 05:09:29 dlg Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.301 2020/09/13 09:42:31 claudio Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -325,8 +325,8 @@ main(void *framep)
 
 	/* Initialize signal state for process 0. */
 	signal_init();
+	siginit(&sigacts0);
 	pr->ps_sigacts = &sigacts0;
-	siginit(pr);
 
 	/* Create the file descriptor table. */
 	p->p_fd = pr->ps_fd = fdinit();
