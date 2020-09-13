@@ -1,4 +1,4 @@
-/* $OpenBSD: wstpad.c,v 1.25 2019/08/31 13:48:45 bru Exp $ */
+/* $OpenBSD: wstpad.c,v 1.26 2020/09/13 10:05:46 fcambus Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Ulf Brosziewski
@@ -1276,7 +1276,7 @@ wstpad_process_input(struct wsmouseinput *input, struct evq_access *evq)
  * Try to determine the average interval between two updates. Various
  * conditions are checked in order to ensure that only valid samples enter
  * into the calculation. Above all, it is restricted to motion events
- * occuring when there is only one contact. MT devices may need more than
+ * occurring when there is only one contact. MT devices may need more than
  * one packet to transmit their state if there are multiple touches, and
  * the update frequency may be higher in this case.
  */

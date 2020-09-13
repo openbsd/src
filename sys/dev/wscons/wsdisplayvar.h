@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplayvar.h,v 1.37 2020/05/25 09:55:49 jsg Exp $ */
+/* $OpenBSD: wsdisplayvar.h,v 1.38 2020/09/13 10:05:46 fcambus Exp $ */
 /* $NetBSD: wsdisplayvar.h,v 1.30 2005/02/04 02:10:49 perry Exp $ */
 
 /*
@@ -162,7 +162,7 @@ struct wsscreen_list {
  */
 struct wsemuldisplaydev_attach_args {
 	int	console;				/* is it console? */
-	int	primary;				/* is it primry? */
+	int	primary;				/* is it primary? */
 	const struct wsscreen_list *scrdata;		/* screen cfg info */
 	const struct wsdisplay_accessops *accessops;	/* access ops */
 	void	*accesscookie;				/* access cookie */

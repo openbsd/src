@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemulvar.h,v 1.17 2020/05/25 09:55:49 jsg Exp $ */
+/* $OpenBSD: wsemulvar.h,v 1.18 2020/09/13 10:05:46 fcambus Exp $ */
 /* $NetBSD: wsemulvar.h,v 1.6 1999/01/17 15:46:15 drochner Exp $ */
 
 /*
@@ -120,7 +120,7 @@ int	wsemul_utf8_translate(u_int32_t, kbd_t, u_char *, int);
  *
  * When the tty layer will try to retransmit the character, this state
  * information is used to not retrig the emulops which have been issued
- * succesfully already.
+ * successfully already.
  *
  * In order to make things more confusing, there is a particular failure
  * case, when all characters have been processed successfully, but
