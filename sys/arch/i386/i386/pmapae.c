@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.58 2019/12/19 17:46:32 mpi Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.59 2020/09/13 12:05:23 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -1888,7 +1888,7 @@ enter_now:
 
 	if (pmap_valid_entry(opte)) {
 		if (nocache && (opte & PG_N) == 0)
-			wbinvd(); /* XXX clflush before we enter? */
+			wbinvd_on_all_cpus(); /* XXX clflush before we enter? */
 		pmap_tlb_shootpage(pmap, va);
 	}
 

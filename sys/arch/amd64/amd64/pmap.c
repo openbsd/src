@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.138 2020/01/24 05:27:31 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.139 2020/09/13 12:05:23 jsg Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -503,7 +503,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 #endif
 	if (pmap_valid_entry(opte)) {
 		if (pa & PMAP_NOCACHE && (opte & PG_N) == 0)
-			wbinvd();
+			wbinvd_on_all_cpus();
 		/* This shouldn't happen */
 		pmap_tlb_shootpage(pmap_kernel(), va, 1);
 		pmap_tlb_shootwait();
@@ -1543,7 +1543,7 @@ pmap_flush_cache(vaddr_t addr, vsize_t len)
 	vaddr_t	i;
 
 	if (curcpu()->ci_cflushsz == 0) {
-		wbinvd();
+		wbinvd_on_all_cpus();
 		return;
 	}
 
@@ -2834,7 +2834,7 @@ enter_now:
 	 */
 	if (pmap_valid_entry(opte)) {
 		if (nocache && (opte & PG_N) == 0)
-			wbinvd();
+			wbinvd_on_all_cpus();
 		pmap_tlb_shootpage(pmap, va, shootself);
 	}
 
