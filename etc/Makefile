@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.479 2020/09/13 10:03:46 ajacoutot Exp $
+#	$OpenBSD: Makefile,v 1.480 2020/09/13 11:29:52 ajacoutot Exp $
 
 .include <bsd.own.mk>
 
@@ -164,6 +164,8 @@ distribution-etc-root-var: distrib-dirs
 		${INSTALL} -c -o root -g wheel -m 600 ${EXAMPLES_600} \
 		    ${DESTDIR}/etc/examples; \
 		chgrp operator ${DESTDIR}/etc/examples/chio.conf
+		chgrp auth ${DESTDIR}/etc/examples/login_ldap.conf
+		chmod 0640 ${DESTDIR}/etc/examples/login_ldap.conf
 	cd signify; \
 		${INSTALL} -c -o root -g wheel -m 644 *.pub \
 		    ${DESTDIR}/etc/signify
