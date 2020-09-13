@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lex.h,v 1.6 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: lex.h,v 1.7 2020/09/13 09:31:36 florian Exp $ */
 
 #ifndef ISC_LEX_H
 #define ISC_LEX_H 1
@@ -64,29 +64,14 @@
  * Various options for isc_lex_gettoken().
  */
 
-#define ISC_LEXOPT_EOL			0x01	/*%< Want end-of-line token. */
 #define ISC_LEXOPT_EOF			0x02	/*%< Want end-of-file token. */
-#define ISC_LEXOPT_INITIALWS		0x04	/*%< Want initial whitespace. */
-#define ISC_LEXOPT_NUMBER		0x08	/*%< Recognize numbers. */
 #define ISC_LEXOPT_QSTRING		0x10	/*%< Recognize qstrings. */
 /*@}*/
 
-/*@{*/
-/*!
- * The ISC_LEXOPT_DNSMULTILINE option handles the processing of '(' and ')' in
- * the DNS master file format.  If this option is set, then the
- * ISC_LEXOPT_INITIALWS and ISC_LEXOPT_EOL options will be ignored when
- * the paren count is > 0.  To use this option, '(' and ')' must be special
- * characters.
- */
-#define ISC_LEXOPT_DNSMULTILINE		0x20	/*%< Handle '(' and ')'. */
 #define ISC_LEXOPT_NOMORE		0x40	/*%< Want "no more" token. */
 
-#define ISC_LEXOPT_CNUMBER		0x80    /*%< Recognize octal and hex. */
-#define ISC_LEXOPT_ESCAPE		0x100	/*%< Recognize escapes. */
 #define ISC_LEXOPT_QSTRINGMULTILINE	0x200	/*%< Allow multiline "" strings */
-#define ISC_LEXOPT_OCTAL		0x400	/*%< Expect a octal number. */
-/*@}*/
+
 /*@{*/
 /*!
  * Various commenting styles, which may be changed at any time with
@@ -96,7 +81,6 @@
 #define ISC_LEXCOMMENT_C		0x01
 #define ISC_LEXCOMMENT_CPLUSPLUS	0x02
 #define ISC_LEXCOMMENT_SHELL		0x04
-#define ISC_LEXCOMMENT_DNSMASTERFILE	0x08
 /*@}*/
 
 /***
