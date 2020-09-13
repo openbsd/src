@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.32 2019/01/18 01:34:50 pd Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.33 2020/09/13 11:53:16 jsg Exp $	*/
 /* $NetBSD: ipifuncs.c,v 1.1.2.3 2000/06/26 02:04:06 sommerfeld Exp $ */
 
 /*-
@@ -56,6 +56,7 @@
 
 void i386_ipi_nop(struct cpu_info *);
 void i386_ipi_halt(struct cpu_info *);
+void i386_ipi_wbinvd(struct cpu_info *);
 
 #if NNPX > 0
 void i386_ipi_synch_fpu(struct cpu_info *);
@@ -89,6 +90,7 @@ void (*ipifunc[I386_NIPI])(struct cpu_info *) =
 	NULL,
 #endif
 	i386_setperf_ipi,
+	i386_ipi_wbinvd,
 };
 
 void
@@ -138,6 +140,12 @@ i386_ipi_reload_mtrr(struct cpu_info *ci)
 		mem_range_softc.mr_op->reload(&mem_range_softc);
 }
 #endif
+
+void
+i386_ipi_wbinvd(struct cpu_info *ci)
+{
+	wbinvd();
+}
 
 void
 i386_spurious(void)

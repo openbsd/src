@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.149 2020/05/29 04:42:23 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.150 2020/09/13 11:53:16 jsg Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -1322,3 +1322,12 @@ cpu_enter_pages(struct cpu_info_full *cif)
 	/* an empty iomap, by setting its offset to the TSS limit */
 	cif->cif_tss.tss_iobase = sizeof(cif->cif_tss);
 }
+
+#ifdef MULTIPROCESSOR
+int
+wbinvd_on_all_cpus(void)
+{
+	x86_broadcast_ipi(X86_IPI_WBINVD);
+	return 0;
+}
+#endif

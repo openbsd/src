@@ -201,7 +201,7 @@ intel_gtt_chipset_flush(void)
 #define I830_HIC        0x70
 		i915_reg_t hic = _MMIO(I830_HIC);
 
-		wbinvd();
+		wbinvd_on_all_cpus();
 
 		I915_WRITE(hic, (I915_READ(hic) | (1<<31)));
 		for (i = 1000; i; i--) {
