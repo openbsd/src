@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: grammar.h,v 1.3 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: grammar.h,v 1.4 2020/09/13 09:31:07 florian Exp $ */
 
 #ifndef ISCCFG_GRAMMAR_H
 #define ISCCFG_GRAMMAR_H 1
@@ -94,7 +94,6 @@ struct cfg_obj {
 		cfg_map_t	map;
 		cfg_list_t	list;
 	}               value;
-	isc_refcount_t  references;     /*%< reference counter */
 	const char *	file;
 	unsigned int    line;
 };
@@ -150,9 +149,6 @@ struct cfg_parser {
 	 * from one token to the next.
 	 */
 	unsigned int flags;
-
-	/*%< Reference counter */
-	isc_refcount_t  references;
 };
 
 /*@{*/

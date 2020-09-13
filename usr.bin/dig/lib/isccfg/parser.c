@@ -251,12 +251,6 @@ cfg_parser_create(isc_log_t *lctx, cfg_parser_t **ret) {
 	if (pctx == NULL)
 		return (ISC_R_NOMEMORY);
 
-	result = isc_refcount_init(&pctx->references, 1);
-	if (result != ISC_R_SUCCESS) {
-		free(pctx);
-		return (result);
-	}
-
 	pctx->lctx = lctx;
 	pctx->lexer = NULL;
 	pctx->seen_eof = ISC_FALSE;
@@ -377,25 +371,21 @@ cfg_parse_file(cfg_parser_t *pctx, const char *filename,
 void
 cfg_parser_destroy(cfg_parser_t **pctxp) {
 	cfg_parser_t *pctx;
-	unsigned int refs;
 
 	REQUIRE(pctxp != NULL && *pctxp != NULL);
 
 	pctx = *pctxp;
 	*pctxp = NULL;
 
-	isc_refcount_decrement(&pctx->references, &refs);
-	if (refs == 0) {
-		isc_lex_destroy(&pctx->lexer);
-		/*
-		 * Cleaning up open_files does not
-		 * close the files; that was already done
-		 * by closing the lexer.
-		 */
-		CLEANUP_OBJ(pctx->open_files);
-		CLEANUP_OBJ(pctx->closed_files);
-		free(pctx);
-	}
+	isc_lex_destroy(&pctx->lexer);
+	/*
+	 * Cleaning up open_files does not
+	 * close the files; that was already done
+	 * by closing the lexer.
+	 */
+	CLEANUP_OBJ(pctx->open_files);
+	CLEANUP_OBJ(pctx->closed_files);
+	free(pctx);
 }
 
 /*
@@ -1169,7 +1159,6 @@ parser_complain(cfg_parser_t *pctx, isc_boolean_t is_warning,
 
 static isc_result_t
 cfg_create_obj(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
-	isc_result_t result;
 	cfg_obj_t *obj;
 
 	REQUIRE(pctx != NULL);
@@ -1182,11 +1171,6 @@ cfg_create_obj(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	obj->type = type;
 	obj->file = current_file(pctx);
 	obj->line = pctx->line;
-	result = isc_refcount_init(&obj->references, 1);
-	if (result != ISC_R_SUCCESS) {
-		free(obj);
-		return (result);
-	}
 	*ret = obj;
 	return (ISC_R_SUCCESS);
 }
@@ -1238,18 +1222,13 @@ free_map(cfg_parser_t *pctx, cfg_obj_t *obj) {
 void
 cfg_obj_destroy(cfg_parser_t *pctx, cfg_obj_t **objp) {
 	cfg_obj_t *obj;
-	unsigned int refs;
 
 	REQUIRE(objp != NULL && *objp != NULL);
 	REQUIRE(pctx != NULL);
 
 	obj = *objp;
 
-	isc_refcount_decrement(&obj->references, &refs);
-	if (refs == 0) {
-		obj->type->rep->free(pctx, obj);
-		isc_refcount_destroy(&obj->references);
-		free(obj);
-	}
+	obj->type->rep->free(pctx, obj);
+	free(obj);
 	*objp = NULL;
 }
