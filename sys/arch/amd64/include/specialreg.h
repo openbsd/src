@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.87 2020/04/08 07:39:48 pd Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.88 2020/09/13 05:57:28 jsg Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -221,6 +221,7 @@
 /* SEFF EDX bits */
 #define SEFF0EDX_AVX512_4FNNIW	0x00000004 /* AVX-512 neural network insns */
 #define SEFF0EDX_AVX512_4FMAPS	0x00000008 /* AVX-512 mult accum single prec */
+#define SEFF0EDX_SRBDS_CTRL	0x00000200 /* MCU_OPT_CTRL MSR */
 #define SEFF0EDX_MD_CLEAR	0x00000400 /* Microarch Data Clear */
 #define SEFF0EDX_TSXFA		0x00002000 /* TSX Forced Abort */
 #define SEFF0EDX_IBRS		0x04000000 /* IBRS / IBPB Speculation Control */
@@ -392,6 +393,8 @@
 #define	MSR_TSX_CTRL		0x122
 #define TSX_CTRL_RTM_DISABLE		(1ULL << 0)
 #define TSX_CTRL_TSX_CPUID_CLEAR	(1ULL << 1)
+#define	MSR_MCU_OPT_CTRL	0x123
+#define RNGDS_MITG_DIS			(1ULL << 0)
 #define	MSR_SYSENTER_CS		0x174 	/* PII+ only */
 #define	MSR_SYSENTER_ESP	0x175 	/* PII+ only */
 #define	MSR_SYSENTER_EIP	0x176   /* PII+ only */

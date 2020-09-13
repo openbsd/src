@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.638 2020/08/23 01:12:04 gnezdo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.639 2020/09/13 05:57:28 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1099,6 +1099,9 @@ const struct cpu_cpuid_feature cpu_seff0_ecxfeatures[] = {
 const struct cpu_cpuid_feature cpu_seff0_edxfeatures[] = {
 	{ SEFF0EDX_AVX512_4FNNIW, "AVX512FNNIW" },
 	{ SEFF0EDX_AVX512_4FMAPS, "AVX512FMAPS" },
+	{ SEFF0EDX_SRBDS_CTRL,	"SRBDS_CTRL" },
+	{ SEFF0EDX_MD_CLEAR,	"MD_CLEAR" },
+	{ SEFF0EDX_TSXFA,	"TSXFA" },
 	{ SEFF0EDX_IBRS,	"IBRS,IBPB" },
 	{ SEFF0EDX_STIBP,	"STIBP" },
 	{ SEFF0EDX_L1DF,	"L1DF" },
