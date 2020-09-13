@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwge.c,v 1.5 2020/09/13 01:52:27 jmatthew Exp $	*/
+/*	$OpenBSD: if_dwge.c,v 1.6 2020/09/13 01:54:05 jmatthew Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -316,6 +316,7 @@ dwge_match(struct device *parent, void *cfdata, void *aux)
 	return (OF_is_compatible(faa->fa_node, "allwinner,sun7i-a20-gmac") ||
 	    OF_is_compatible(faa->fa_node, "amlogic,meson-axg-dwmac") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3288-gmac") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3308-mac") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3328-gmac") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3399-gmac"));
 }
@@ -408,6 +409,8 @@ dwge_attach(struct device *parent, struct device *self, void *aux)
 	if (OF_is_compatible(faa->fa_node, "allwinner,sun7i-a20-gmac"))
 		dwge_setup_allwinner(sc);
 	else if (OF_is_compatible(faa->fa_node, "rockchip,rk3288-gmac"))
+		dwge_setup_rockchip(sc);
+	else if (OF_is_compatible(faa->fa_node, "rockchip,rk3308-mac"))
 		dwge_setup_rockchip(sc);
 	else if (OF_is_compatible(faa->fa_node, "rockchip,rk3328-gmac"))
 		dwge_setup_rockchip(sc);
@@ -1351,6 +1354,12 @@ dwge_setup_allwinner(struct dwge_softc *sc)
  * Rockchip RK3288/RK3399.
  */
 
+/* RK3308 registers */
+#define RK3308_GRF_MAC_CON0	0x04a0
+#define RK3308_MAC_SPEED_100M	((0x1 << 0) << 16 | (0x1 << 0))
+#define RK3308_MAC_SPEED_10M	((0x1 << 0) << 16 | (0x0 << 0))
+#define RK3308_INTF_SEL_RMII	((0x1 << 4) << 16 | (0x1 << 4))
+
 /* RK3288 registers */
 #define RK3288_GRF_SOC_CON1	0x0248
 #define  RK3288_GMAC_PHY_INTF_SEL_RGMII	((0x7 << 6) << 16 | (0x1 << 6))
@@ -1406,6 +1415,7 @@ dwge_setup_rockchip(struct dwge_softc *sc)
 	struct regmap *rm;
 	uint32_t grf;
 	int tx_delay, rx_delay;
+	char clock_mode[8];
 
 	grf = OF_getpropint(sc->sc_node, "rockchip,grf", 0);
 	rm = regmap_byphandle(grf);
@@ -1437,6 +1447,24 @@ dwge_setup_rockchip(struct dwge_softc *sc)
 		sc->sc_clk_sel_2_5 = RK3288_GMAC_CLK_SEL_2_5;
 		sc->sc_clk_sel_25 = RK3288_GMAC_CLK_SEL_25;
 		sc->sc_clk_sel_125 = RK3288_GMAC_CLK_SEL_125;
+	} else if (OF_is_compatible(sc->sc_node, "rockchip,rk3308-mac")) {
+		/* Use RMII interface. */
+		regmap_write_4(rm, RK3308_GRF_MAC_CON0,
+		    RK3308_INTF_SEL_RMII | RK3308_MAC_SPEED_100M);
+
+		/* Adjust MAC clock if necessary. */
+		OF_getprop(sc->sc_node, "clock_in_out", clock_mode,
+		    sizeof(clock_mode));
+		if (strcmp(clock_mode, "output") == 0) {
+			clock_set_frequency(sc->sc_node, "stmmaceth",
+			    50000000);
+			sc->sc_clk = GMAC_GMII_ADDR_CR_DIV_26;
+		}
+
+		/* Clock speed bits. */
+		sc->sc_clk_sel = RK3308_GRF_MAC_CON0;
+		sc->sc_clk_sel_2_5 = RK3308_MAC_SPEED_10M;
+		sc->sc_clk_sel_25 = RK3308_MAC_SPEED_100M;
 	} else if (OF_is_compatible(sc->sc_node, "rockchip,rk3328-gmac")) {
 		/* Use RGMII interface. */
 		regmap_write_4(rm, RK3328_GRF_MAC_CON1,
