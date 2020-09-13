@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lex.c,v 1.10 2020/09/13 09:32:02 florian Exp $ */
+/* $Id: lex.c,v 1.11 2020/09/13 09:33:39 florian Exp $ */
 
 /*! \file */
 
@@ -24,8 +24,6 @@
 #include <isc/buffer.h>
 
 #include <isc/lex.h>
-
-#include <isc/parseint.h>
 
 #include <errno.h>
 #include <string.h>

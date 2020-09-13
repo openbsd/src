@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.25 2020/02/25 18:10:17 florian Exp $ */
+/* $Id: dighost.c,v 1.26 2020/09/13 09:33:39 florian Exp $ */
 
 /*! \file
  *  \note
@@ -56,7 +56,6 @@
 #include <isc/hex.h>
 #include <isc/log.h>
 #include <isc/netaddr.h>
-#include <isc/parseint.h>
 #include <isc/result.h>
 #include <isc/serial.h>
 #include <isc/sockaddr.h>
@@ -911,49 +910,20 @@ setup_text_key(void) {
 	isc_buffer_free(&namebuf);
 }
 
-static isc_result_t
-parse_uint_helper(uint32_t *uip, const char *value, uint32_t max,
-		  const char *desc, int base) {
-	uint32_t n;
-	isc_result_t result = isc_parse_uint32(&n, value, base);
-	if (result == ISC_R_SUCCESS && n > max)
-		result = ISC_R_RANGE;
-	if (result != ISC_R_SUCCESS) {
-		printf("invalid %s '%s': %s\n", desc,
-		       value, isc_result_totext(result));
-		return (result);
-	}
-	*uip = n;
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-parse_uint(uint32_t *uip, const char *value, uint32_t max,
-	   const char *desc) {
-	return (parse_uint_helper(uip, value, max, desc, 10));
-}
-
-isc_result_t
-parse_xint(uint32_t *uip, const char *value, uint32_t max,
-	   const char *desc) {
-	return (parse_uint_helper(uip, value, max, desc, 0));
-}
-
 static uint32_t
-parse_bits(char *arg, const char *desc, uint32_t max) {
-	isc_result_t result;
+parse_bits(char *arg, uint32_t max) {
 	uint32_t tmp;
+	const char *errstr;
 
-	result = parse_uint(&tmp, arg, max, desc);
-	if (result != ISC_R_SUCCESS)
-		fatal("couldn't parse digest bits");
+	tmp = strtonum(arg, 0, max, &errstr);
+	if (errstr != NULL)
+		fatal("digest bits is %s: '%s'", errstr, arg);
 	tmp = (tmp + 7) & ~0x7U;
 	return (tmp);
 }
 
 isc_result_t
 parse_netprefix(isc_sockaddr_t **sap, const char *value) {
-	isc_result_t result = ISC_R_SUCCESS;
 	isc_sockaddr_t *sa = NULL;
 	struct in_addr in4;
 	struct in6_addr in6;
@@ -962,6 +932,7 @@ parse_netprefix(isc_sockaddr_t **sap, const char *value) {
 	isc_boolean_t parsed = ISC_FALSE;
 	isc_boolean_t prefix_parsed = ISC_FALSE;
 	char buf[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:XXX.XXX.XXX.XXX/128")];
+	const char *errstr;
 
 	REQUIRE(sap != NULL && *sap == NULL);
 
@@ -982,10 +953,9 @@ parse_netprefix(isc_sockaddr_t **sap, const char *value) {
 	slash = strchr(buf, '/');
 	if (slash != NULL) {
 		*slash = '\0';
-		result = isc_parse_uint32(&prefix_length, slash + 1, 10);
-		if (result != ISC_R_SUCCESS) {
-			fatal("invalid prefix length in '%s': %s\n",
-			      value, isc_result_totext(result));
+		prefix_length = strtonum(slash + 1, 0, 10, &errstr);
+		if (errstr != NULL) {
+			fatal("prefix length is %s: '%s'", errstr, value);
 		}
 		prefix_parsed = ISC_TRUE;
 	}
@@ -1048,27 +1018,27 @@ parse_hmac(const char *hmac) {
 		digestbits = 0;
 	} else if (strncasecmp(buf, "hmac-sha1-", 10) == 0) {
 		hmacname = DNS_TSIG_HMACSHA1_NAME;
-		digestbits = parse_bits(&buf[10], "digest-bits [0..160]", 160);
+		digestbits = parse_bits(&buf[10], 160);
 	} else if (strcasecmp(buf, "hmac-sha224") == 0) {
 		hmacname = DNS_TSIG_HMACSHA224_NAME;
 	} else if (strncasecmp(buf, "hmac-sha224-", 12) == 0) {
 		hmacname = DNS_TSIG_HMACSHA224_NAME;
-		digestbits = parse_bits(&buf[12], "digest-bits [0..224]", 224);
+		digestbits = parse_bits(&buf[12], 224);
 	} else if (strcasecmp(buf, "hmac-sha256") == 0) {
 		hmacname = DNS_TSIG_HMACSHA256_NAME;
 	} else if (strncasecmp(buf, "hmac-sha256-", 12) == 0) {
 		hmacname = DNS_TSIG_HMACSHA256_NAME;
-		digestbits = parse_bits(&buf[12], "digest-bits [0..256]", 256);
+		digestbits = parse_bits(&buf[12], 256);
 	} else if (strcasecmp(buf, "hmac-sha384") == 0) {
 		hmacname = DNS_TSIG_HMACSHA384_NAME;
 	} else if (strncasecmp(buf, "hmac-sha384-", 12) == 0) {
 		hmacname = DNS_TSIG_HMACSHA384_NAME;
-		digestbits = parse_bits(&buf[12], "digest-bits [0..384]", 384);
+		digestbits = parse_bits(&buf[12], 384);
 	} else if (strcasecmp(buf, "hmac-sha512") == 0) {
 		hmacname = DNS_TSIG_HMACSHA512_NAME;
 	} else if (strncasecmp(buf, "hmac-sha512-", 12) == 0) {
 		hmacname = DNS_TSIG_HMACSHA512_NAME;
-		digestbits = parse_bits(&buf[12], "digest-bits [0..512]", 512);
+		digestbits = parse_bits(&buf[12], 512);
 	} else {
 		fprintf(stderr, ";; Warning, ignoring "
 			"invalid TSIG algorithm %s\n", buf);
@@ -1346,6 +1316,7 @@ save_opt(dig_lookup_t *lookup, char *code, char *value) {
 	isc_buffer_t b;
 	isc_boolean_t found = ISC_FALSE;
 	unsigned int i;
+	const char *errstr;
 
 	if (lookup->ednsoptscnt >= EDNSOPT_OPTIONS)
 		fatal("too many ednsopts");
@@ -1359,9 +1330,9 @@ save_opt(dig_lookup_t *lookup, char *code, char *value) {
 	}
 
 	if (!found) {
-		result = parse_uint(&num, code, 65535, "ednsopt");
-		if (result != ISC_R_SUCCESS)
-			fatal("bad edns code point: %s", code);
+		num = strtonum(code, 0, 65535, &errstr);
+		if (errstr != NULL)
+			fatal("edns code point is %s: '%s'", errstr, code);
 	}
 
 	if (lookup->ednsopts == NULL) {

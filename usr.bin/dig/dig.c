@@ -14,11 +14,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dig.c,v 1.12 2020/02/24 13:49:38 jsg Exp $ */
+/* $Id: dig.c,v 1.13 2020/09/13 09:33:39 florian Exp $ */
 
 /*! \file */
 #include <sys/cdefs.h>
 
+#include <errno.h>
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
@@ -633,7 +634,9 @@ plus_option(const char *option, isc_boolean_t is_batchfile,
 {
 	isc_result_t result;
 	char option_store[256];
-	char *cmd, *value, *ptr, *code;
+	char *cmd, *value, *ptr, *code, *ep;
+	const char *errstr;
+	long lval;
 	uint32_t num;
 	isc_boolean_t state = ISC_TRUE;
 	size_t n;
@@ -721,10 +724,9 @@ plus_option(const char *option, isc_boolean_t is_batchfile,
 				goto need_value;
 			if (!state)
 				goto invalid_option;
-			result = parse_uint(&num, value, COMMSIZE,
-					    "buffer size");
-			if (result != ISC_R_SUCCESS)
-				fatal("Couldn't parse buffer size");
+			num = strtonum(value, 0, COMMSIZE, &errstr);
+			if (errstr != NULL)
+				fatal("buffer size is %s: '%s'", errstr, value);
 			lookup->udpsize = num;
 			break;
 		default:
@@ -820,13 +822,12 @@ plus_option(const char *option, isc_boolean_t is_batchfile,
 							lookup->edns = 0;
 							break;
 						}
-						result = parse_uint(&num,
-								    value,
-								    255,
-								    "edns");
-						if (result != ISC_R_SUCCESS)
-							fatal("Couldn't parse "
-							      "edns");
+						num = strtonum(value, 0, 255,
+						    &errstr);
+						if (errstr != NULL)
+							fatal("edns is %s: "
+							    "'%s'", errstr,
+							    value);
 						lookup->edns = num;
 						break;
 					case 'f':
@@ -839,14 +840,14 @@ plus_option(const char *option, isc_boolean_t is_batchfile,
 							lookup->ednsflags = 0;
 							break;
 						}
-						result = parse_xint(&num,
-								    value,
-								    0xffff,
-								  "ednsflags");
-						if (result != ISC_R_SUCCESS)
+						errno = 0;
+						lval = strtol(value, &ep, 0);
+						if (value[0] == '\0' || *ep !=
+						    '\0' || lval < 0 || lval >
+						    0xffff || errno != 0)
 							fatal("Couldn't parse "
 							      "ednsflags");
-						lookup->ednsflags = num;
+						lookup->ednsflags = lval;
 						break;
 					case 'n':
 						FULLCHECK("ednsnegotiation");
@@ -929,9 +930,9 @@ plus_option(const char *option, isc_boolean_t is_batchfile,
 				goto need_value;
 			if (!state)
 				goto invalid_option;
-			result = parse_uint(&num, value, MAXNDOTS, "ndots");
-			if (result != ISC_R_SUCCESS)
-				fatal("Couldn't parse ndots");
+			num = strtonum(value, 0, MAXNDOTS, &errstr);
+			if (errstr != NULL)
+				fatal("ndots is %s: '%s'", errstr, value);
 			ndots = num;
 			break;
 		case 's':
@@ -992,9 +993,9 @@ plus_option(const char *option, isc_boolean_t is_batchfile,
 				lookup->opcode = (dns_opcode_t)num;
 				break;
 			}
-			result = parse_uint(&num, value, 15, "opcode");
-			if (result != ISC_R_SUCCESS)
-				fatal("Couldn't parse opcode");
+			num = strtonum(value, 0, 15, &errstr);
+			if (errstr != NULL)
+				fatal("opcode is %s: '%s'", errstr, value);
 			lookup->opcode = (dns_opcode_t)num;
 			break;
 		default:
@@ -1035,10 +1036,11 @@ plus_option(const char *option, isc_boolean_t is_batchfile,
 					goto need_value;
 				if (!state)
 					goto invalid_option;
-				result = parse_uint(&lookup->retries, value,
-						    MAXTRIES - 1, "retries");
-				if (result != ISC_R_SUCCESS)
-					fatal("Couldn't parse retries");
+				lookup->retries = strtonum(value, 0,
+				    MAXTRIES - 1, &errstr);
+				if (errstr != NULL)
+					fatal("retries is %s: '%s'", errstr,
+					    value);
 				lookup->retries++;
 				break;
 			default:
@@ -1121,8 +1123,9 @@ plus_option(const char *option, isc_boolean_t is_batchfile,
 			} else if (value == NULL)
 				break;
 
-			result = parse_uint(&splitwidth, value,
-					    1023, "split");
+			splitwidth = strtonum(value, 0, 1023, &errstr);
+			if (errstr != NULL)
+				fatal("split is %s: '%s'", errstr, value);
 			if ((splitwidth % 4) != 0U) {
 				splitwidth = ((splitwidth + 3) / 4) * 4;
 				fprintf(stderr, ";; Warning, split must be "
@@ -1138,8 +1141,6 @@ plus_option(const char *option, isc_boolean_t is_batchfile,
 			 */
 			if (splitwidth)
 				splitwidth += 3;
-			if (result != ISC_R_SUCCESS)
-				fatal("Couldn't parse split");
 			break;
 		case 't': /* stats */
 			FULLCHECK("stats");
@@ -1185,10 +1186,9 @@ plus_option(const char *option, isc_boolean_t is_batchfile,
 				goto need_value;
 			if (!state)
 				goto invalid_option;
-			result = parse_uint(&timeout, value, MAXTIMEOUT,
-					    "timeout");
-			if (result != ISC_R_SUCCESS)
-				fatal("Couldn't parse timeout");
+			timeout = strtonum(value, 0, MAXTIMEOUT, &errstr);
+			if (errstr != NULL)
+				fatal("timeout is %s: '%s'", errstr, value);
 			if (timeout == 0)
 				timeout = 1;
 			break;
@@ -1217,10 +1217,11 @@ plus_option(const char *option, isc_boolean_t is_batchfile,
 					goto need_value;
 				if (!state)
 					goto invalid_option;
-				result = parse_uint(&lookup->retries, value,
-						    MAXTRIES, "tries");
-				if (result != ISC_R_SUCCESS)
-					fatal("Couldn't parse tries");
+				lookup->retries = strtonum(value, 0, MAXTRIES,
+				    &errstr);
+				if (errstr != NULL)
+					fatal("tries is %s: '%s'", errstr,
+					    value);
 				if (lookup->retries == 0)
 					lookup->retries = 1;
 				break;
@@ -1276,6 +1277,7 @@ dash_option(char *option, char *next, dig_lookup_t **lookup,
 	in_port_t srcport;
 	char *hash, *cmd;
 	uint32_t num;
+	const char *errstr;
 
 	while (strpbrk(option, single_dash_opts) == &option[0]) {
 		/*
@@ -1352,10 +1354,10 @@ dash_option(char *option, char *next, dig_lookup_t **lookup,
 	case 'b':
 		hash = strchr(value, '#');
 		if (hash != NULL) {
-			result = parse_uint(&num, hash + 1, MAXPORT,
-					    "port number");
-			if (result != ISC_R_SUCCESS)
-				fatal("Couldn't parse port number");
+			num = strtonum(hash + 1, 0, MAXPORT, &errstr);
+			if (errstr != NULL)
+				fatal("port number is %s: '%s'", errstr,
+				    hash + 1);
 			srcport = num;
 			*hash = '\0';
 		} else
@@ -1399,9 +1401,9 @@ dash_option(char *option, char *next, dig_lookup_t **lookup,
 		strlcpy(keyfile, value, sizeof(keyfile));
 		return (value_from_next);
 	case 'p':
-		result = parse_uint(&num, value, MAXPORT, "port number");
-		if (result != ISC_R_SUCCESS)
-			fatal("Couldn't parse port number");
+		num = strtonum(value, 0, MAXPORT, &errstr);
+		if (errstr != NULL)
+			fatal("port number is %s: '%s'", errstr, value);
 		port = num;
 		return (value_from_next);
 	case 'q':
@@ -1447,10 +1449,11 @@ dash_option(char *option, char *next, dig_lookup_t **lookup,
 				uint32_t serial;
 				(*lookup)->rdtype = dns_rdatatype_ixfr;
 				(*lookup)->rdtypeset = ISC_TRUE;
-				result = parse_uint(&serial, &value[5],
-					   MAXSERIAL, "serial number");
-				if (result != ISC_R_SUCCESS)
-					fatal("Couldn't parse serial number");
+				serial = strtonum(&value[5], 0, MAXSERIAL,
+				    &errstr);
+				if (errstr != NULL)
+					fatal("serial number is %s: '%s'",
+					    errstr, &value[5]);
 				(*lookup)->ixfr_serial = serial;
 				(*lookup)->section_question = plusquest;
 				(*lookup)->comments = pluscomm;
@@ -1585,6 +1588,7 @@ parse_args(isc_boolean_t is_batchfile, isc_boolean_t config_only,
 	char *input;
 	int i;
 	isc_boolean_t need_clone = ISC_TRUE;
+	const char *errstr;
 
 	/*
 	 * The semantics for parsing the args is a bit complex; if
@@ -1690,13 +1694,12 @@ parse_args(isc_boolean_t is_batchfile, isc_boolean_t config_only,
 						lookup->rdtype =
 							dns_rdatatype_ixfr;
 						lookup->rdtypeset = ISC_TRUE;
-						result = parse_uint(&serial,
-								    &rv[0][5],
-								    MAXSERIAL,
-							      "serial number");
-						if (result != ISC_R_SUCCESS)
-							fatal("Couldn't parse "
-							      "serial number");
+						serial = strtonum(&rv[0][5], 0,
+						    MAXSERIAL, &errstr);
+						if (errstr != NULL)
+							fatal("serial number "
+							    "is %s: '%s'",
+							    errstr, &rv[0][5]);
 						lookup->ixfr_serial = serial;
 						lookup->section_question =
 							plusquest;

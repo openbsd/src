@@ -522,33 +522,49 @@ testclass(char *typetext) {
 static void
 set_port(const char *value) {
 	uint32_t n;
-	isc_result_t result = parse_uint(&n, value, 65535, "port");
-	if (result == ISC_R_SUCCESS)
+	const char *errstr;
+
+	n = strtonum(value, 0, 65535, &errstr);
+	if (errstr == NULL)
 		port = (uint16_t) n;
+	else
+		printf("port is %s: '%s'\n", errstr, value);
 }
 
 static void
 set_timeout(const char *value) {
 	uint32_t n;
-	isc_result_t result = parse_uint(&n, value, UINT_MAX, "timeout");
-	if (result == ISC_R_SUCCESS)
+	const char *errstr;
+
+	n = strtonum(value, 0, UINT_MAX, &errstr);
+	if (errstr == NULL)
 		timeout = n;
+	else
+		printf("timeout is %s: '%s'\n", errstr, value);
 }
 
 static void
 set_tries(const char *value) {
 	uint32_t n;
-	isc_result_t result = parse_uint(&n, value, INT_MAX, "tries");
-	if (result == ISC_R_SUCCESS)
+	const char *errstr;
+
+	n = strtonum(value, 0, INT_MAX, &errstr);
+	if (errstr == NULL)
 		tries = n;
+	else
+		printf("tries is %s: '%s'\n", errstr, value);
 }
 
 static void
 set_ndots(const char *value) {
 	uint32_t n;
-	isc_result_t result = parse_uint(&n, value, 128, "ndots");
-	if (result == ISC_R_SUCCESS)
+	const char *errstr;
+
+	n = strtonum(value, 0, 128, &errstr);
+	if (errstr == NULL)
 		ndots = n;
+	else
+		printf("ndots is %s: '%s'\n", errstr, value);
 }
 
 static void

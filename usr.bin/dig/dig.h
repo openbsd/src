@@ -298,14 +298,6 @@ void
 setup_system(isc_boolean_t ipv4only, isc_boolean_t ipv6only);
 
 isc_result_t
-parse_uint(uint32_t *uip, const char *value, uint32_t max,
-	   const char *desc);
-
-isc_result_t
-parse_xint(uint32_t *uip, const char *value, uint32_t max,
-	   const char *desc);
-
-isc_result_t
 parse_netprefix(isc_sockaddr_t **sap, const char *value);
 
 void
