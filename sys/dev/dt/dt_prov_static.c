@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_static.c,v 1.3 2020/09/12 17:08:50 mpi Exp $ */
+/*	$OpenBSD: dt_prov_static.c,v 1.4 2020/09/13 14:55:08 jasper Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -102,8 +102,7 @@ dt_prov_static_alloc(struct dt_probe *dtp, struct dt_softc *sc,
 	if (dp == NULL)
 		return ENOMEM;
 
-	if (dt_pcb_filter_insert(dp, &dtrq->dtrq_filter))
-		return ENOMEM;
+	dp->dp_filter = dtrq->dtrq_filter;
 	dp->dp_evtflags = dtrq->dtrq_evtflags;
 	TAILQ_INSERT_HEAD(plist, dp, dp_snext);
 
