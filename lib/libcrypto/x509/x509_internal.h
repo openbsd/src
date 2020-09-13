@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_internal.h,v 1.1 2020/09/11 18:34:29 beck Exp $ */
+/* $OpenBSD: x509_internal.h,v 1.2 2020/09/13 15:06:17 beck Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -19,6 +19,13 @@
 
 /* Internal use only, not public API */
 #include <netinet/in.h>
+
+#include <openssl/x509_verify.h>
+
+/* Hard limits on structure size and number of signature checks. */
+#define X509_VERIFY_MAX_CHAINS		8	/* Max validated chains */
+#define X509_VERIFY_MAX_CHAIN_CERTS	32	/* Max depth of a chain */
+#define X509_VERIFY_MAX_SIGCHECKS	256	/* Max signature checks */
 
 /*
  * Limit the number of names and constraints we will check in a chain
@@ -53,7 +60,35 @@ struct x509_verify_chain {
 	struct x509_constraints_names *names;	/* All names from all certs */
 };
 
+struct x509_verify_ctx {
+	X509_STORE_CTX *xsc;
+	struct x509_verify_chain **chains;	/* Validated chains */
+	size_t chains_count;
+	STACK_OF(X509) *roots;		/* Trusted roots for this validation */
+	STACK_OF(X509) *intermediates;	/* Intermediates provided by peer */
+	time_t *check_time;		/* Time for validity checks */
+	int purpose;			/* Cert purpose we are validating */
+	size_t max_chains;		/* Max chains to return */
+	size_t max_depth;		/* Max chain depth for validation */
+	size_t max_sigs;		/* Max number of signature checks */
+	size_t sig_checks;		/* Number of signature checks done */
+	size_t error_depth; 		/* Depth of last error seen */
+	int error; 			/* Last error seen */
+};
+
+int ASN1_time_tm_clamp_notafter(struct tm *tm);
+
 __BEGIN_HIDDEN_DECLS
+
+int x509_vfy_check_id(X509_STORE_CTX *ctx);
+int x509_vfy_check_revocation(X509_STORE_CTX *ctx);
+int x509_vfy_check_policy(X509_STORE_CTX *ctx);
+int x509_vfy_check_trust(X509_STORE_CTX *ctx);
+int x509_vfy_check_chain_extensions(X509_STORE_CTX *ctx);
+void x509v3_cache_extensions(X509 *x);
+
+struct x509_verify_ctx *x509_verify_ctx_new_from_xsc(X509_STORE_CTX *xsc,
+    STACK_OF(X509) *roots);
 
 void x509_constraints_name_clear(struct x509_constraints_name *name);
 int x509_constraints_names_add(struct x509_constraints_names *names,

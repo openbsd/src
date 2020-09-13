@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_utl.c,v 1.1 2020/06/04 15:19:32 jsing Exp $ */
+/* $OpenBSD: x509_utl.c,v 1.2 2020/09/13 15:06:17 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -988,7 +988,8 @@ do_x509_check(X509 *x, const char *chk, size_t chklen, unsigned int flags,
 		alt_type = V_ASN1_IA5STRING;
 		equal = equal_email;
 	} else if (check_type == GEN_DNS) {
-		cnid = NID_commonName;
+		if (!(flags & X509_CHECK_FLAG_NEVER_CHECK_SUBJECT))
+			cnid = NID_commonName;
 		/* Implicit client-side DNS sub-domain pattern */
 		if (chklen > 1 && chk[0] == '.')
 			flags |= _X509_CHECK_FLAG_DOT_SUBDOMAINS;

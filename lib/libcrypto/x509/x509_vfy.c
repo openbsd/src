@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.74 2020/09/12 14:14:02 beck Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.75 2020/09/13 15:06:17 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -77,6 +77,7 @@
 #include "vpm_int.h"
 #include "x509_internal.h"
 #include "x509_lcl.h"
+#include "x509_internal.h"
 
 /* CRL score values */
 
@@ -124,7 +125,7 @@ static int check_chain_extensions(X509_STORE_CTX *ctx);
 static int check_name_constraints(X509_STORE_CTX *ctx);
 static int check_trust(X509_STORE_CTX *ctx);
 static int check_revocation(X509_STORE_CTX *ctx);
-static int check_cert(X509_STORE_CTX *ctx);
+static int check_cert(X509_STORE_CTX *ctx, STACK_OF(X509) *chain, int depth);
 static int check_policy(X509_STORE_CTX *ctx);
 
 static int get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer,
@@ -144,6 +145,7 @@ static int X509_cmp_time_internal(const ASN1_TIME *ctm, time_t *cmp_time,
     int clamp_notafter);
 
 static int internal_verify(X509_STORE_CTX *ctx);
+static int get_issuer_sk(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);
 
 int ASN1_time_tm_clamp_notafter(struct tm *tm);
 
@@ -224,7 +226,21 @@ check_id(X509_STORE_CTX *ctx)
 }
 
 int
-X509_verify_cert(X509_STORE_CTX *ctx)
+x509_vfy_check_id(X509_STORE_CTX *ctx) {
+	return check_id(ctx);
+}
+
+/*
+ * This is the effectively broken legacy OpenSSL chain builder. It
+ * might find an unvalidated chain and leave it sitting in
+ * ctx->chain. It does not correctly handle many cases where multiple
+ * chains could exist.
+ *
+ * Oh no.. I know a dirty word...
+ * Oooooooh..
+ */
+static int
+X509_verify_cert_legacy_build_chain(X509_STORE_CTX *ctx, int *bad)
 {
 	X509 *x, *xtmp, *xtmp2, *chain_ss = NULL;
 	int bad_chain = 0;
@@ -233,39 +249,6 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 	int num, j, retry, trust;
 	int (*cb) (int xok, X509_STORE_CTX *xctx);
 	STACK_OF(X509) *sktmp = NULL;
-
-	if (ctx->cert == NULL) {
-		X509error(X509_R_NO_CERT_SET_FOR_US_TO_VERIFY);
-		ctx->error = X509_V_ERR_INVALID_CALL;
-		return -1;
-	}
-	if (ctx->chain != NULL) {
-		/*
-		 * This X509_STORE_CTX has already been used to verify
-		 * a cert. We cannot do another one.
-		 */
-		X509error(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		ctx->error = X509_V_ERR_INVALID_CALL;
-		return -1;
-	}
-	if (ctx->param->id->poisoned) {
-		/*
-		 * This X509_STORE_CTX had failures setting
-		 * up verify parameters. We can not use it.
-		 */
-		X509error(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		ctx->error = X509_V_ERR_INVALID_CALL;
-		return -1;
-	}
-	if (ctx->error != X509_V_ERR_INVALID_CALL) {
-		/*
-		 * This X509_STORE_CTX has not been properly initialized.
-		 */
-		X509error(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		ctx->error = X509_V_ERR_INVALID_CALL;
-		return -1;
-	}
-	ctx->error = X509_V_OK; /* Initialize to OK */
 
 	cb = ctx->verify_cb;
 
@@ -534,6 +517,23 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 		if (!ok)
 			goto end;
 	}
+ end:
+	sk_X509_free(sktmp);
+	X509_free(chain_ss);
+	*bad = bad_chain;
+	return ok;
+}
+
+static int
+X509_verify_cert_legacy(X509_STORE_CTX *ctx)
+{
+	int ok = 0, bad_chain;
+
+	ctx->error = X509_V_OK; /* Initialize to OK */
+
+	ok = X509_verify_cert_legacy_build_chain(ctx, &bad_chain);
+	if (!ok)
+		goto end;
 
 	/* We have the chain complete: now we need to check its purpose */
 	ok = check_chain_extensions(ctx);
@@ -548,6 +548,7 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 	ok = check_id(ctx);
 	if (!ok)
 		goto end;
+
 	/*
 	 * Check revocation status: we do this after copying parameters because
 	 * they may be needed for CRL signature verification.
@@ -569,13 +570,123 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 		ok = ctx->check_policy(ctx);
 
  end:
-	sk_X509_free(sktmp);
-	X509_free(chain_ss);
-
 	/* Safety net, error returns must set ctx->error */
 	if (ok <= 0 && ctx->error == X509_V_OK)
 		ctx->error = X509_V_ERR_UNSPECIFIED;
+
 	return ok;
+}
+
+int
+X509_verify_cert(X509_STORE_CTX *ctx)
+{
+	STACK_OF(X509) *roots = NULL;
+	struct x509_verify_ctx *vctx = NULL;
+	int chain_count = 0;
+
+	if (ctx->cert == NULL) {
+		X509error(X509_R_NO_CERT_SET_FOR_US_TO_VERIFY);
+		ctx->error = X509_V_ERR_INVALID_CALL;
+		return -1;
+	}
+	if (ctx->chain != NULL) {
+		/*
+		 * This X509_STORE_CTX has already been used to verify
+		 * a cert. We cannot do another one.
+		 */
+		X509error(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ctx->error = X509_V_ERR_INVALID_CALL;
+		return -1;
+	}
+	if (ctx->param->id->poisoned) {
+		/*
+		 * This X509_STORE_CTX had failures setting
+		 * up verify parameters. We can not use it.
+		 */
+		X509error(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ctx->error = X509_V_ERR_INVALID_CALL;
+		return -1;
+	}
+	if (ctx->error != X509_V_ERR_INVALID_CALL) {
+		/*
+		 * This X509_STORE_CTX has not been properly initialized.
+		 */
+		X509error(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		ctx->error = X509_V_ERR_INVALID_CALL;
+		return -1;
+	}
+
+	/*
+	 * If flags request legacy, use the legacy verifier. If we
+	 * requested "no alt chains" from the age of hammer pants, use
+	 * the legacy verifier because the multi chain verifier really
+	 * does find all the "alt chains".
+	 *
+	 * XXX deprecate the NO_ALT_CHAINS flag?
+	 */
+	if ((ctx->param->flags & X509_V_FLAG_LEGACY_VERIFY) ||
+	    (ctx->param->flags & X509_V_FLAG_NO_ALT_CHAINS))
+		return X509_verify_cert_legacy(ctx);
+
+	/* Use the modern multi-chain verifier from x509_verify_cert */
+
+	/* Find our trusted roots */
+	ctx->error = X509_V_ERR_OUT_OF_MEM;
+
+	if (ctx->get_issuer == get_issuer_sk) {
+		/*
+		 * We are using the trusted stack method. so
+		 * the roots are in the aptly named "ctx->other_ctx"
+		 * pointer. (It could have been called "al")
+		 */
+		if ((roots = X509_chain_up_ref(ctx->other_ctx)) == NULL)
+			return -1;
+	} else {
+		/*
+		 * We have a X509_STORE and need to pull out the roots.
+		 * Don't look Ethel...
+		 */
+		STACK_OF(X509_OBJECT) *objs;
+		size_t i, good = 1;
+
+		if ((roots = sk_X509_new_null()) == NULL)
+			return -1;
+
+		CRYPTO_w_lock(CRYPTO_LOCK_X509_STORE);
+		if ((objs = X509_STORE_get0_objects(ctx->ctx)) == NULL)
+				good = 0;
+		for (i = 0; good && i < sk_X509_OBJECT_num(objs); i++) {
+			X509_OBJECT *obj;
+			X509 *root;
+			obj = sk_X509_OBJECT_value(objs, i);
+			if (obj->type != X509_LU_X509)
+				continue;
+			root = obj->data.x509;
+			if (X509_up_ref(root) == 0)
+				good = 0;
+			if (sk_X509_push(roots, root) == 0) {
+				X509_free(root);
+				good = 0;
+			}
+		}
+		CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
+
+		if (!good) {
+			sk_X509_pop_free(roots, X509_free);
+			return -1;
+		}
+	}
+
+	if ((vctx = x509_verify_ctx_new_from_xsc(ctx, roots)) != NULL) {
+		ctx->error = X509_V_OK; /* Initialize to OK */
+		chain_count = x509_verify(vctx, NULL, NULL);
+	}
+
+	sk_X509_pop_free(roots, X509_free);
+	x509_verify_ctx_free(vctx);
+
+	/* if we succeed we have a chain in ctx->chain */
+	return (chain_count > 0 && ctx->chain != NULL);
 }
 
 /* Given a STACK_OF(X509) find the issuer of cert (if any)
@@ -637,8 +748,8 @@ get_issuer_sk(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
  * with the supplied purpose
  */
 
-static int
-check_chain_extensions(X509_STORE_CTX *ctx)
+int
+x509_vfy_check_chain_extensions(X509_STORE_CTX *ctx)
 {
 #ifdef OPENSSL_NO_CHAIN_VERIFY
 	return 1;
@@ -781,6 +892,11 @@ end:
 }
 
 static int
+check_chain_extensions(X509_STORE_CTX *ctx) {
+	return x509_vfy_check_chain_extensions(ctx);
+}
+
+static int
 check_name_constraints(X509_STORE_CTX *ctx)
 {
 	if (!x509_constraints_chain(ctx->chain, &ctx->error,
@@ -875,6 +991,11 @@ static int check_trust(X509_STORE_CTX *ctx)
 	return X509_TRUST_UNTRUSTED;
 }
 
+int x509_vfy_check_trust(X509_STORE_CTX *ctx)
+{
+	return check_trust(ctx);
+}
+
 static int
 check_revocation(X509_STORE_CTX *ctx)
 {
@@ -891,24 +1012,29 @@ check_revocation(X509_STORE_CTX *ctx)
 		last = 0;
 	}
 	for (i = 0; i <= last; i++) {
-		ctx->error_depth = i;
-		ok = check_cert(ctx);
+		ok = check_cert(ctx, ctx->chain, i);
 		if (!ok)
 			return ok;
 	}
 	return 1;
 }
 
+int
+x509_vfy_check_revocation(X509_STORE_CTX *ctx)
+{
+	return check_revocation(ctx);
+}
+
 static int
-check_cert(X509_STORE_CTX *ctx)
+check_cert(X509_STORE_CTX *ctx, STACK_OF(X509) *chain, int depth)
 {
 	X509_CRL *crl = NULL, *dcrl = NULL;
 	X509 *x;
 	int ok = 0, cnum;
 	unsigned int last_reasons;
 
-	cnum = ctx->error_depth;
-	x = sk_X509_value(ctx->chain, cnum);
+	cnum = ctx->error_depth = depth;
+	x = sk_X509_value(chain, cnum);
 	ctx->current_cert = x;
 	ctx->current_issuer = NULL;
 	ctx->current_crl_score = 0;
@@ -1660,8 +1786,8 @@ cert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x)
 	return 1;
 }
 
-static int
-check_policy(X509_STORE_CTX *ctx)
+int
+x509_vfy_check_policy(X509_STORE_CTX *ctx)
 {
 	int ret;
 
@@ -1705,6 +1831,12 @@ check_policy(X509_STORE_CTX *ctx)
 	}
 
 	return 1;
+}
+
+static int
+check_policy(X509_STORE_CTX *ctx)
+{
+	return x509_vfy_check_policy(ctx);
 }
 
 /*

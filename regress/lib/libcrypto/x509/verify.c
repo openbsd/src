@@ -1,6 +1,7 @@
-/* $OpenBSD: verify.c,v 1.1 2020/07/14 18:33:00 jsing Exp $ */
+/* $OpenBSD: verify.c,v 1.2 2020/09/13 15:06:17 beck Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
+ * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -23,6 +24,11 @@
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+#include <openssl/x509_verify.h>
+
+#define MODE_MODERN_VFY	0
+#define MODE_LEGACY_VFY 1
+#define MODE_VERIFY	2
 
 static int verbose = 1;
 
@@ -94,10 +100,12 @@ verify_cert_cb(int ok, X509_STORE_CTX *xsc)
 }
 
 static void
-verify_cert(const char *roots_file, const char *bundle_file, int *chains)
+verify_cert(const char *roots_file, const char *bundle_file, int *chains,
+    int mode)
 {
 	STACK_OF(X509) *roots = NULL, *bundle = NULL;
 	X509_STORE_CTX *xsc = NULL;
+	unsigned long flags;
 	X509 *leaf = NULL;
 	int verify_err;
 
@@ -117,6 +125,16 @@ verify_cert(const char *roots_file, const char *bundle_file, int *chains)
 		ERR_print_errors_fp(stderr);
 		errx(1, "failed to init store context");
 	}
+	if (mode == MODE_LEGACY_VFY) {
+		flags = X509_VERIFY_PARAM_get_flags(xsc->param);
+		flags |= X509_V_FLAG_LEGACY_VERIFY;
+		X509_VERIFY_PARAM_set_flags(xsc->param, flags);
+	} else {
+		flags = X509_VERIFY_PARAM_get_flags(xsc->param);
+		flags &= ~X509_V_FLAG_LEGACY_VERIFY;
+		X509_VERIFY_PARAM_set_flags(xsc->param, flags);
+	}
+
 	if (verbose)
 		X509_STORE_CTX_set_verify_cb(xsc, verify_cert_cb);
 	X509_STORE_CTX_set0_trusted_stack(xsc, roots);
@@ -142,6 +160,60 @@ struct verify_cert_test {
 	int want_chains;
 	int failing;
 };
+
+static void
+verify_cert_new(const char *roots_file, const char *bundle_file, int *chains)
+{
+	STACK_OF(X509) *roots = NULL, *bundle = NULL;
+	X509_STORE_CTX *xsc = NULL;
+	X509 *leaf = NULL;
+	struct x509_verify_ctx *ctx;
+
+	*chains = 0;
+
+	if (!certs_from_file(roots_file, &roots))
+		errx(1, "failed to load roots from '%s'", roots_file);
+	if (!certs_from_file(bundle_file, &bundle))
+		errx(1, "failed to load bundle from '%s'", bundle_file);
+	if (sk_X509_num(bundle) < 1)
+		errx(1, "not enough certs in bundle");
+	leaf = sk_X509_shift(bundle);
+
+        if ((xsc = X509_STORE_CTX_new()) == NULL)
+		errx(1, "X509_STORE_CTX");
+	if (!X509_STORE_CTX_init(xsc, NULL, leaf, bundle)) {
+		ERR_print_errors_fp(stderr);
+		errx(1, "failed to init store context");
+	}
+	if (verbose)
+		X509_STORE_CTX_set_verify_cb(xsc, verify_cert_cb);
+
+	if ((ctx = x509_verify_ctx_new(roots)) == NULL)
+		errx(1, "failed to create ctx");
+	if (!x509_verify_ctx_set_intermediates(ctx, bundle))
+		errx(1, "failed to set intermediates");
+
+	if ((*chains = x509_verify(ctx, leaf, NULL)) == 0) {
+		fprintf(stderr, "failed to verify at %lu: %s\n",
+		    x509_verify_ctx_error_depth(ctx),
+		    x509_verify_ctx_error_string(ctx));
+	} else {
+		for (int c = 0; verbose && c < *chains; c++) {
+			fprintf(stderr, "Chain %d\n--------\n", c);
+			STACK_OF(X509) * chain = x509_verify_ctx_chain(ctx, c);
+			for (int i = 0; i < sk_X509_num(chain); i++) {
+				X509 *cert = sk_X509_value(chain, i);
+				X509_NAME_print_ex_fp(stderr,
+				    X509_get_subject_name(cert), 0,
+				    XN_FLAG_ONELINE);
+				fprintf(stderr, "\n");
+			}
+		}
+	}
+	sk_X509_pop_free(roots, X509_free);
+	sk_X509_pop_free(bundle, X509_free);
+	X509_free(leaf);
+}
 
 struct verify_cert_test verify_cert_tests[] = {
 	{
@@ -306,7 +378,7 @@ struct verify_cert_test verify_cert_tests[] = {
     (sizeof(verify_cert_tests) / sizeof(*verify_cert_tests))
 
 static int
-verify_cert_test(const char *certs_path)
+verify_cert_test(const char *certs_path, int mode)
 {
 	char *roots_file, *bundle_file;
 	struct verify_cert_test *vct;
@@ -325,16 +397,20 @@ verify_cert_test(const char *certs_path)
 			errx(1, "asprintf");
 
 		fprintf(stderr, "== Test %zu (%s)\n", i, vct->id);
-		verify_cert(roots_file, bundle_file, &chains);
-		if ((chains == 0 && vct->want_chains == 0) ||
+		if (mode == MODE_VERIFY)
+			verify_cert_new(roots_file, bundle_file, &chains);
+		else
+			verify_cert(roots_file, bundle_file, &chains, mode);
+		if ((mode == 2 && chains == vct->want_chains) ||
+		    (chains == 0 && vct->want_chains == 0) ||
 		    (chains == 1 && vct->want_chains > 0)) {
 			fprintf(stderr, "INFO: Succeeded with %d chains%s\n",
-			    chains, vct->failing ? " (known failure)" : "");
-			if (vct->failing)
+			    chains, vct->failing ? " (legacy failure)" : "");
+			if (mode == MODE_LEGACY_VFY && vct->failing)
 				failed |= 1;
 		} else {
 			fprintf(stderr, "FAIL: Failed with %d chains%s\n",
-			    chains, vct->failing ? " (known failure)" : "");
+			    chains, vct->failing ? " (legacy failure)" : "");
 			if (!vct->failing)
 				failed |= 1;
 		}
@@ -357,7 +433,12 @@ main(int argc, char **argv)
 		exit(1);
 	}
 
-	failed |= verify_cert_test(argv[1]);
+	fprintf(stderr, "\n\nTesting legacy x509_vfy\n");
+	failed |= verify_cert_test(argv[1], MODE_LEGACY_VFY);
+	fprintf(stderr, "\n\nTesting modern x509_vfy\n");
+	failed |= verify_cert_test(argv[1], MODE_MODERN_VFY);
+	fprintf(stderr, "\n\nTesting x509_verify\n");
+	failed |= verify_cert_test(argv[1], MODE_VERIFY);
 
 	return (failed);
 }

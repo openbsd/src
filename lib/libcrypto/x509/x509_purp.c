@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_purp.c,v 1.1 2020/06/04 15:19:32 jsing Exp $ */
+/* $OpenBSD: x509_purp.c,v 1.2 2020/09/13 15:06:17 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -73,7 +73,7 @@
 #define ns_reject(x, usage) \
 	(((x)->ex_flags & EXFLAG_NSCERT) && !((x)->ex_nscert & (usage)))
 
-static void x509v3_cache_extensions(X509 *x);
+void x509v3_cache_extensions(X509 *x);
 
 static int check_ssl_ca(const X509 *x);
 static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x,
@@ -426,7 +426,7 @@ setup_crldp(X509 *x)
 		setup_dp(x, sk_DIST_POINT_value(x->crldp, i));
 }
 
-static void
+void
 x509v3_cache_extensions(X509 *x)
 {
 	BASIC_CONSTRAINTS *bs;

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.1 2020/06/04 15:19:32 jsing Exp $ */
+/* $OpenBSD: x509v3.h,v 1.2 2020/09/13 15:06:17 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -815,6 +815,8 @@ STACK_OF(OPENSSL_STRING) *X509_get1_ocsp(X509 *x);
 #define X509_CHECK_FLAG_MULTI_LABEL_WILDCARDS 0x8
 /* Constraint verifier subdomain patterns to match a single labels. */
 #define X509_CHECK_FLAG_SINGLE_LABEL_SUBDOMAINS 0x10
+/* Disable checking the CN for a hostname, to support modern validation */
+#define X509_CHECK_FLAG_NEVER_CHECK_SUBJECT 0x20
 
 /*
  * Match reference identifiers starting with "." to any sub-domain.
