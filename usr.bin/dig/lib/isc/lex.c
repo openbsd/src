@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lex.c,v 1.9 2020/09/13 09:31:36 florian Exp $ */
+/* $Id: lex.c,v 1.10 2020/09/13 09:32:02 florian Exp $ */
 
 /*! \file */
 
@@ -233,9 +233,7 @@ isc_lex_close(isc_lex_t *lex) {
 
 typedef enum {
 	lexstate_start,
-	lexstate_crlf,
 	lexstate_string,
-	lexstate_number,
 	lexstate_maybecomment,
 	lexstate_ccomment,
 	lexstate_ccommentend,
@@ -293,7 +291,6 @@ isc_lex_gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *tokenp) {
 	FILE *stream;
 	char *curr, *prev;
 	size_t remaining;
-	uint32_t as_ulong;
 	unsigned int saved_options;
 	isc_result_t result;
 
@@ -437,57 +434,6 @@ isc_lex_gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *tokenp) {
 				state = lexstate_string;
 				goto no_read;
 			}
-			break;
-		case lexstate_crlf:
-			if (c != '\n')
-				pushback(source, c);
-			tokenp->type = isc_tokentype_eol;
-			done = ISC_TRUE;
-			lex->last_was_eol = ISC_TRUE;
-			break;
-		case lexstate_number:
-			if (c == EOF || !isdigit((unsigned char)c)) {
-				if (c == ' ' || c == '\t' || c == '\r' ||
-				    c == '\n' || c == EOF ||
-				    lex->specials[c]) {
-					pushback(source, c);
-
-					result = isc_parse_uint32(&as_ulong,
-								  lex->data,
-								  10);
-					if (result == ISC_R_SUCCESS) {
-						tokenp->type =
-							isc_tokentype_number;
-						tokenp->value.as_ulong =
-							as_ulong;
-					} else if (result == ISC_R_BADNUMBER) {
-						isc_tokenvalue_t *v;
-
-						tokenp->type =
-							isc_tokentype_string;
-						v = &(tokenp->value);
-						v->as_textregion.base =
-							lex->data;
-						v->as_textregion.length =
-							(unsigned int)
-							(lex->max_token -
-							 remaining);
-					} else
-						goto done;
-					done = ISC_TRUE;
-					continue;
-				}
-			}
-			if (remaining == 0U) {
-				result = grow_data(lex, &remaining,
-						   &curr, &prev);
-				if (result != ISC_R_SUCCESS)
-					goto done;
-			}
-			INSIST(remaining > 0U);
-			*curr++ = c;
-			*curr = '\0';
-			remaining--;
 			break;
 		case lexstate_string:
 			/*
