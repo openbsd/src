@@ -30,8 +30,6 @@
 #include "i915_sw_fence_work.h"
 #include "i915_trace.h"
 
-#define clflushopt(x) clflush((uintptr_t)(x))
-
 struct eb_vma {
 	struct i915_vma *vma;
 	unsigned int flags;

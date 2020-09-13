@@ -1,68 +1,178 @@
-/*	$OpenBSD: drm_cache.c,v 1.8 2020/06/08 04:47:58 jsg Exp $	*/
+/**************************************************************************
+ *
+ * Copyright (c) 2006-2007 Tungsten Graphics, Inc., Cedar Park, TX., USA
+ * All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sub license, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial portions
+ * of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT. IN NO EVENT SHALL
+ * THE COPYRIGHT HOLDERS, AUTHORS AND/OR ITS SUPPLIERS BE LIABLE FOR ANY CLAIM,
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+ * USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ **************************************************************************/
 /*
- * Copyright (c) 2017 Mark Kettenis
- *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * Authors: Thomas Hellström <thomas-at-tungstengraphics-dot-com>
  */
 
-#include <sys/types.h>
-#include <sys/param.h>
-#include <uvm/uvm_extern.h>
-
+#include <linux/export.h>
 #include <linux/highmem.h>
-#include <linux/scatterlist.h>
 
-#if defined(__i386__) || defined(__amd64__)
+#include <drm/drm_cache.h>
+
+#if defined(CONFIG_X86)
+#include <asm/smp.h>
+
+/*
+ * clflushopt is an unordered instruction which needs fencing with mfence or
+ * sfence to avoid ordering issues.  For drm_clflush_page this fencing happens
+ * in the caller.
+ */
 static void
 drm_clflush_page(struct vm_page *page)
 {
-	void *addr;
+	uint8_t *page_virtual;
+	unsigned int i;
+	const int size = curcpu()->ci_cflushsz;
 
-	if (page == NULL)
+	if (unlikely(page == NULL))
 		return;
 
-	addr = kmap_atomic(page);
-	pmap_flush_cache((vaddr_t)addr, PAGE_SIZE);
-	kunmap_atomic(addr);
+	page_virtual = kmap_atomic(page);
+	for (i = 0; i < PAGE_SIZE; i += size)
+		clflushopt(page_virtual + i);
+	kunmap_atomic(page_virtual);
 }
 
-void
-drm_clflush_pages(struct vm_page *pages[], unsigned long num_pages)
+static void drm_cache_flush_clflush(struct vm_page *pages[],
+				    unsigned long num_pages)
 {
 	unsigned long i;
 
+	mb(); /*Full memory barrier used before so that CLFLUSH is ordered*/
 	for (i = 0; i < num_pages; i++)
 		drm_clflush_page(*pages++);
+	mb(); /*Also used after CLFLUSH so that all cache is flushed*/
 }
+#endif
 
-void
-drm_clflush_sg(struct sg_table *st)
-{
-	struct sg_page_iter sg_iter;
-
-	for_each_sg_page(st->sgl, &sg_iter, st->nents, 0)
-		drm_clflush_page(sg_page_iter_page(&sg_iter));
-}
-
-void
-drm_clflush_virt_range(void *addr, unsigned long length)
-{
-	pmap_flush_cache((vaddr_t)addr, length);
-}
-#else
+/**
+ * drm_clflush_pages - Flush dcache lines of a set of pages.
+ * @pages: List of pages to be flushed.
+ * @num_pages: Number of pages in the array.
+ *
+ * Flush every data cache line entry that points to an address belonging
+ * to a page in the array.
+ */
 void
 drm_clflush_pages(struct vm_page *pages[], unsigned long num_pages)
 {
-	STUB();
-}
+
+#if defined(CONFIG_X86)
+	if (static_cpu_has(X86_FEATURE_CLFLUSH)) {
+		drm_cache_flush_clflush(pages, num_pages);
+		return;
+	}
+
+	if (wbinvd_on_all_cpus())
+		pr_err("Timed out waiting for cache flush\n");
+
+#elif defined(__powerpc__) && defined(__linux__)
+	unsigned long i;
+
+	for (i = 0; i < num_pages; i++) {
+		struct vm_page *page = pages[i];
+		void *page_virtual;
+
+		if (unlikely(page == NULL))
+			continue;
+
+		page_virtual = kmap_atomic(page);
+		flush_dcache_range((unsigned long)page_virtual,
+				   (unsigned long)page_virtual + PAGE_SIZE);
+		kunmap_atomic(page_virtual);
+	}
+#else
+	pr_err("Architecture has no drm_cache.c support\n");
+	WARN_ON_ONCE(1);
 #endif
+}
+EXPORT_SYMBOL(drm_clflush_pages);
+
+/**
+ * drm_clflush_sg - Flush dcache lines pointing to a scather-gather.
+ * @st: struct sg_table.
+ *
+ * Flush every data cache line entry that points to an address in the
+ * sg.
+ */
+void
+drm_clflush_sg(struct sg_table *st)
+{
+#if defined(CONFIG_X86)
+	if (static_cpu_has(X86_FEATURE_CLFLUSH)) {
+		struct sg_page_iter sg_iter;
+
+		mb(); /*CLFLUSH is ordered only by using memory barriers*/
+		for_each_sg_page(st->sgl, &sg_iter, st->nents, 0)
+			drm_clflush_page(sg_page_iter_page(&sg_iter));
+		mb(); /*Make sure that all cache line entry is flushed*/
+
+		return;
+	}
+
+	if (wbinvd_on_all_cpus())
+		pr_err("Timed out waiting for cache flush\n");
+#else
+	pr_err("Architecture has no drm_cache.c support\n");
+	WARN_ON_ONCE(1);
+#endif
+}
+EXPORT_SYMBOL(drm_clflush_sg);
+
+/**
+ * drm_clflush_virt_range - Flush dcache lines of a region
+ * @addr: Initial kernel memory address.
+ * @length: Region size.
+ *
+ * Flush every data cache line entry that points to an address in the
+ * region requested.
+ */
+void
+drm_clflush_virt_range(void *addr, unsigned long length)
+{
+#if defined(CONFIG_X86)
+	if (static_cpu_has(X86_FEATURE_CLFLUSH)) {
+		const int size = curcpu()->ci_cflushsz;
+		void *end = addr + length;
+
+		addr = (void *)(((unsigned long)addr) & -size);
+		mb(); /*CLFLUSH is only ordered with a full memory barrier*/
+		for (; addr < end; addr += size)
+			clflushopt(addr);
+		clflushopt(end - 1); /* force serialisation */
+		mb(); /*Ensure that evry data cache line entry is flushed*/
+		return;
+	}
+
+	if (wbinvd_on_all_cpus())
+		pr_err("Timed out waiting for cache flush\n");
+#else
+	pr_err("Architecture has no drm_cache.c support\n");
+	WARN_ON_ONCE(1);
+#endif
+}
+EXPORT_SYMBOL(drm_clflush_virt_range);

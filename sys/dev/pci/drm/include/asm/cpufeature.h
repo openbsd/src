@@ -29,6 +29,15 @@ static_cpu_has(uint16_t f)
 
 #define boot_cpu_has(x) static_cpu_has(x)
 
+static inline void
+clflushopt(volatile void *addr)
+{
+	if (curcpu()->ci_feature_sefflags_ebx & SEFF0EBX_CLFLUSHOPT)
+		__asm volatile("clflushopt %0" : "+m" (*(volatile char *)addr));
+	else
+		__asm volatile("clflush %0" : "+m" (*(volatile char *)addr));
+}
+
 #endif
 
 #endif
