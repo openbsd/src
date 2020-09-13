@@ -1,7 +1,7 @@
-/*	$OpenBSD: ssl_ciphers.c,v 1.6 2020/09/11 17:36:27 jsing Exp $ */
+/*	$OpenBSD: ssl_ciphers.c,v 1.7 2020/09/13 16:49:05 jsing Exp $ */
 /*
  * Copyright (c) 2015-2017 Doug Hogan <doug@openbsd.org>
- * Copyright (c) 2015-2018 Joel Sing <jsing@openbsd.org>
+ * Copyright (c) 2015-2018, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Theo Buehler <tb@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -170,4 +170,129 @@ ssl_bytes_to_cipher_list(SSL *s, CBS *cbs)
 	sk_SSL_CIPHER_free(ciphers);
 
 	return (NULL);
+}
+
+struct ssl_tls13_ciphersuite {
+	const char *name;
+	const char *alias;
+	unsigned long cid;
+};
+
+static const struct ssl_tls13_ciphersuite ssl_tls13_ciphersuites[] = {
+	{
+		.name = TLS1_3_TXT_AES_128_GCM_SHA256,
+		.alias = "TLS_AES_128_GCM_SHA256",
+		.cid = TLS1_3_CK_AES_128_GCM_SHA256,
+	},
+	{
+		.name = TLS1_3_TXT_AES_256_GCM_SHA384,
+		.alias = "TLS_AES_256_GCM_SHA384",
+		.cid = TLS1_3_CK_AES_256_GCM_SHA384,
+	},
+	{
+		.name = TLS1_3_TXT_CHACHA20_POLY1305_SHA256,
+		.alias = "TLS_CHACHA20_POLY1305_SHA256",
+		.cid = TLS1_3_CK_CHACHA20_POLY1305_SHA256,
+	},
+	{
+		.name = TLS1_3_TXT_AES_128_CCM_SHA256,
+		.alias = "TLS_AES_128_CCM_SHA256",
+		.cid = TLS1_3_CK_AES_128_CCM_SHA256,
+	},
+	{
+		.name = TLS1_3_TXT_AES_128_CCM_8_SHA256,
+		.alias = "TLS_AES_128_CCM_8_SHA256",
+		.cid = TLS1_3_CK_AES_128_CCM_8_SHA256,
+	},
+	{
+		.name = NULL,
+	},
+};
+
+int
+ssl_parse_ciphersuites(STACK_OF(SSL_CIPHER) **out_ciphers, const char *str)
+{
+	const struct ssl_tls13_ciphersuite *ciphersuite;
+	STACK_OF(SSL_CIPHER) *ciphers;
+	const SSL_CIPHER *cipher;
+	char *s = NULL;
+	char *p, *q;
+	int i;
+	int ret = 0;
+
+	sk_SSL_CIPHER_free(*out_ciphers);
+	*out_ciphers = NULL;
+
+	if ((ciphers = sk_SSL_CIPHER_new_null()) == NULL)
+		goto err;
+
+	/* An empty string is valid and means no ciphers. */
+	if (strcmp(str, "") == 0)
+		goto done;
+
+	if ((s = strdup(str)) == NULL)
+		goto err;
+
+	q = s;
+	while ((p = strsep(&q, ":")) != NULL) {
+		ciphersuite = &ssl_tls13_ciphersuites[0];
+		for (i = 0; ciphersuite->name != NULL; i++) {
+			ciphersuite = &ssl_tls13_ciphersuites[i];
+			if (strcmp(p, ciphersuite->name) == 0)
+				break;
+			if (strcmp(p, ciphersuite->alias) == 0)
+				break;
+		}
+		if (ciphersuite->name == NULL)
+			goto err;
+
+		/* We know about the cipher suite, but it is not supported. */
+		if ((cipher = ssl3_get_cipher_by_id(ciphersuite->cid)) == NULL)
+			continue;
+
+		if (!sk_SSL_CIPHER_push(ciphers, cipher))
+			goto err;
+	}
+
+ done:
+	*out_ciphers = ciphers;
+	ciphers = NULL;
+	ret = 1;
+
+ err:
+	sk_SSL_CIPHER_free(ciphers);
+	free(s);
+
+	return ret;
+}
+
+int
+ssl_merge_cipherlists(STACK_OF(SSL_CIPHER) *cipherlist,
+    STACK_OF(SSL_CIPHER) *cipherlist_tls13,
+    STACK_OF(SSL_CIPHER) **out_cipherlist)
+{
+	STACK_OF(SSL_CIPHER) *ciphers = NULL;
+	const SSL_CIPHER *cipher;
+	int i, ret = 0;
+
+	if ((ciphers = sk_SSL_CIPHER_dup(cipherlist_tls13)) == NULL)
+		goto err;
+	for (i = 0; i < sk_SSL_CIPHER_num(cipherlist); i++) {
+		cipher = sk_SSL_CIPHER_value(cipherlist, i);
+		if (cipher->algorithm_ssl == SSL_TLSV1_3)
+			continue;
+		if (!sk_SSL_CIPHER_push(ciphers, cipher))
+			goto err;
+	}
+
+	sk_SSL_CIPHER_free(*out_cipherlist);
+	*out_cipherlist = ciphers;
+	ciphers = NULL;
+
+	ret = 1;
+
+ err:
+	sk_SSL_CIPHER_free(ciphers);
+
+	return ret;
 }

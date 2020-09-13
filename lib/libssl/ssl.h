@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.171 2020/03/16 15:25:13 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.172 2020/09/13 16:49:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1275,6 +1275,9 @@ void BIO_ssl_shutdown(BIO *ssl_bio);
 
 STACK_OF(SSL_CIPHER) *SSL_CTX_get_ciphers(const SSL_CTX *ctx);
 int	SSL_CTX_set_cipher_list(SSL_CTX *, const char *str);
+#if defined(LIBRESSL_HAS_TLS1_3) || defined(LIBRESSL_INTERNAL)
+int SSL_CTX_set_ciphersuites(SSL_CTX *ctx, const char *str);
+#endif
 SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth);
 void	SSL_CTX_free(SSL_CTX *);
 int SSL_CTX_up_ref(SSL_CTX *ctx);
@@ -1316,6 +1319,9 @@ void	SSL_set_bio(SSL *s, BIO *rbio, BIO *wbio);
 BIO *	SSL_get_rbio(const SSL *s);
 BIO *	SSL_get_wbio(const SSL *s);
 int	SSL_set_cipher_list(SSL *s, const char *str);
+#if defined(LIBRESSL_HAS_TLS1_3) || defined(LIBRESSL_INTERNAL)
+int	SSL_set_ciphersuites(SSL *s, const char *str);
+#endif
 void	SSL_set_read_ahead(SSL *s, int yes);
 int	SSL_get_verify_mode(const SSL *s);
 int	SSL_get_verify_depth(const SSL *s);

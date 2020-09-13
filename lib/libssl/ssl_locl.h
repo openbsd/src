@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.290 2020/09/11 17:36:27 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.291 2020/09/13 16:49:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -599,6 +599,8 @@ typedef struct ssl_ctx_internal_st {
 
 	CRYPTO_EX_DATA ex_data;
 
+	STACK_OF(SSL_CIPHER) *cipher_list_tls13;
+
 	struct cert_st /* CERT */ *cert;
 
 	/* Default values used when no per-SSL value is defined follow */
@@ -742,6 +744,8 @@ typedef struct ssl_internal_st {
 				 * (for non-blocking reads) */
 
 	int hit;		/* reusing a previous session */
+
+	STACK_OF(SSL_CIPHER) *cipher_list_tls13;
 
 	/* These are the ones being used, the ones in SSL_SESSION are
 	 * the ones to be 'copied' into these ones */
@@ -1164,7 +1168,12 @@ SSL_CIPHER *OBJ_bsearch_ssl_cipher_id(SSL_CIPHER *key, SSL_CIPHER const *base,
 int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *ciphers, CBB *cbb);
 STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s, CBS *cbs);
 STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *meth,
-    STACK_OF(SSL_CIPHER) **pref, const char *rule_str);
+    STACK_OF(SSL_CIPHER) **pref, STACK_OF(SSL_CIPHER) *tls13,
+    const char *rule_str);
+int ssl_parse_ciphersuites(STACK_OF(SSL_CIPHER) **out_ciphers, const char *str);
+int ssl_merge_cipherlists(STACK_OF(SSL_CIPHER) *cipherlist,
+    STACK_OF(SSL_CIPHER) *cipherlist_tls13,
+    STACK_OF(SSL_CIPHER) **out_cipherlist);
 void ssl_update_cache(SSL *s, int mode);
 int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
     const EVP_MD **md, int *mac_pkey_type, int *mac_secret_size);
