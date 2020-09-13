@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_object.c,v 1.15 2019/11/29 22:10:04 beck Exp $	*/
+/*	$OpenBSD: uvm_object.c,v 1.16 2020/09/13 10:05:25 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/mman.h>
 #include <sys/atomic.h>
 
