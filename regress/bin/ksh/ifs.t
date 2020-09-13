@@ -45,10 +45,10 @@ stdin:
 	showargs 3 $@
 	showargs 4 "$@"
 expected-stdout:
-	 <1> <A B C>
+	 <1> <A> <B> <C>
 	 <2> <ABC>
-	 <3> <A B C>
-	 <4> <A B C>
+	 <3> <A> <B> <C>
+	 <4> <A> <B> <C>
 ---
 
 name: IFS-space-colon-1
