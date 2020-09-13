@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2020/09/13 09:45:00 tobhe Exp $
+#	$OpenBSD: Makefile,v 1.19 2020/09/13 09:55:05 tobhe Exp $
 
 # Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
 #
@@ -264,6 +264,22 @@ run-cert-second-altname:
 	${SETUP_START}
 	flowtype=esp; ${TEST_FLOWS}; if [[ $$_ret -ne 0 ]]; then exit 1; fi
 	${TEST_PING}; if [[ $$_ret -ne 0 ]]; then exit 1; fi
+
+REGRESS_TARGETS += run-psk-fail
+run-psk-fail:
+	@echo '======= $@ ========'
+	auth=psk; \
+	leftid=left-from-ca-both; \
+	rightid=right-from-ca-both; \
+	flowtype=esp; \
+	    side=left; psk=`openssl rand -hex 20`; \
+	    ${SETUP_CONFIG}; \
+	    side=right; psk=`openssl rand -hex 20`; \
+	    ${SETUP_CONFIG}; \
+	    ${DEPLOY_CONFIGS}
+	${SETUP_START}
+	flowtype=esp; ${TEST_FLOWS}; if [[ $$_ret -ne 1 ]]; then exit 1; fi
+	${TEST_PING}; if [[ $$_ret -ne 1 ]]; then exit 1; fi
 
 REGRESS_TARGETS += run-psk
 run-psk:
