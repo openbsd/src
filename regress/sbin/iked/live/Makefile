@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2020/09/13 09:58:32 tobhe Exp $
+#	$OpenBSD: Makefile,v 1.21 2020/09/13 11:48:10 tobhe Exp $
 
 # Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
 #
@@ -87,6 +87,7 @@ TEST_SINGLEIKESA = \
 	fi
 
 SETUP_CONFIG = \
+	if [[ -z "$$mode" ]]; then mode="active"; fi; \
 	authstr=""; \
 	if [[ "$$auth" = "psk" ]]; then \
 		authstr="psk $$psk"; \
@@ -102,13 +103,13 @@ SETUP_CONFIG = \
 	if [ "$$singleikesa" = true ]; then \
 		global="$${global}set enforcesingleikesa\n"; \
 	fi; \
-	echo "MODE=\"active\"" > $@_$$side.conf; \
+	echo "MODE=\"$$mode\"" >> $@_$$side.conf; \
 	echo "TMODE=\"$$tmode\"" >> $@_$$side.conf; \
 	echo "LOCAL_ADDR=\"$$local\"" >> $@_$$side.conf; \
 	echo "PEER_ADDR=\"$$peer\"" >> $@_$$side.conf; \
 	echo "IPCOMP=\"$$ipcomp\"" >> $@_$$side.conf; \
 	echo "SRCID=\"$$srcid\"" >> $@_$$side.conf; \
-	echo "DSTID=\"\"" >> $@_$$side.conf; \
+	echo "DSTID=\"$$dstid\"" >> $@_$$side.conf; \
 	echo "AUTH=\"$$authstr\"" >> $@_$$side.conf; \
 	echo "$$global" >> $@_$$side.conf; \
 	cat ${.CURDIR}/iked.in >> $@_$$side.conf
@@ -117,7 +118,8 @@ DEPLOY_CONFIGS = \
 	chmod 0600 $@_left.conf; \
 	echo "cd /tmp\nput $@_left.conf test.conf" | sftp -q ${LEFT_SSH}; \
 	chmod 0600 $@_right.conf; \
-	echo "cd /tmp\nput $@_right.conf test.conf" | sftp -q ${RIGHT_SSH}
+	echo "cd /tmp\nput $@_right.conf test.conf" | sftp -q ${RIGHT_SSH}; \
+	rm -f $@_left.conf $@_right.conf
 
 SETUP_CONFIGS = \
 	if [[ "$$auth" = "psk" ]]; then \
@@ -125,13 +127,13 @@ SETUP_CONFIGS = \
 	fi; \
 	side=left; \
 	srcid=$$leftid; \
-	local=${LEFT_ADDR} \
-	peer=${RIGHT_ADDR} \
+	local=${LEFT_ADDR}; \
+	peer=${RIGHT_ADDR}; \
 	    ${SETUP_CONFIG}; \
 	side=right; \
 	srcid=$$rightid; \
-	local=${RIGHT_ADDR} \
-	peer=${LEFT_ADDR} \
+	local=${RIGHT_ADDR}; \
+	peer=${LEFT_ADDR}; \
 	    ${SETUP_CONFIG}; \
 	${DEPLOY_CONFIGS}
 
@@ -235,7 +237,6 @@ run-ping-fail:
 REGRESS_TARGETS += run-cert-single-ca
 run-cert-single-ca:
 	@echo '======= $@ ========'
-	flowtype=esp;
 	leftid=left-from-ca-both; \
 	rightid=right-from-ca-both; \
 	    ${SETUP_CONFIGS}
@@ -246,16 +247,66 @@ run-cert-single-ca:
 REGRESS_TARGETS += run-dstid-fail
 run-dstid-fail:
 	@echo '======= $@ ========'
-	flowtype=esp;
 	leftid=left-from-ca-both; \
 	rightid=right-from-ca-both; \
-	    side=left; ${SETUP_CONFIG}; \
-	    side=right; dstid="dstid invalid"; \
+	    side=left; \
+	    srcid=$$leftid; \
+	    local=${LEFT_ADDR}; \
+	    peer=${RIGHT_ADDR}; \
+	    ${SETUP_CONFIG}; \
+	    side=right; \
+	    mode=passive; \
+	    srcid=$$rightid; \
+	    local=${RIGHT_ADDR}; \
+	    peer=${LEFT_ADDR}; \
+	    dstid="dstid invalid"; \
 	    ${SETUP_CONFIG}; \
 	    ${DEPLOY_CONFIGS}
 	${SETUP_START}
 	flowtype=esp; ${TEST_FLOWS}; if [[ $$_ret -ne 1 ]]; then exit 1; fi
 	${TEST_PING}; if [[ $$_ret -ne 1 ]]; then exit 1; fi
+
+REGRESS_TARGETS += run-dstid
+run-dstid:
+	@echo '======= $@ ========'
+	flowtype=esp;
+	leftid=left-from-ca-both; \
+	rightid=right-from-ca-both; \
+	    side=left; \
+	    srcid=$$leftid; \
+	    local=${LEFT_ADDR}; \
+	    peer=${RIGHT_ADDR}; \
+	    dstid="dstid $$rightid"; \
+	    ${SETUP_CONFIG}; \
+	    side=right; \
+	    srcid=$$rightid; \
+	    local=${RIGHT_ADDR}; \
+	    peer=${LEFT_ADDR}; \
+	    dstid="dstid $$leftid"; \
+	    ${SETUP_CONFIG}; \
+	    ${DEPLOY_CONFIGS}
+	${SETUP_START}
+	flowtype=esp; ${TEST_FLOWS}; if [[ $$_ret -ne 0 ]]; then exit 1; fi
+	${TEST_PING}; if [[ $$_ret -ne 0 ]]; then exit 1; fi
+
+REGRESS_TARGETS += run-dstid-multi
+run-dstid-multi:
+	@echo '======= $@ ========'
+	flowtype=esp;
+	leftid=left-from-ca-both; \
+	rightid=right-from-ca-both; \
+	    side=left; srcid=$$leftid; local=${LEFT_ADDR}; peer=${RIGHT_ADDR}; \
+	    dstid="dstid $$rightid"; \
+	    ${SETUP_CONFIG}; \
+	    side=right; mode=passive; srcid=$$rightid; local=${RIGHT_ADDR}; \
+	    peer=${LEFT_ADDR}; dstid="dstid $$leftid"; \
+	    ${SETUP_CONFIG}; \
+	    dstid="dstid roflol"; \
+	    ${SETUP_CONFIG}; \
+	    ${DEPLOY_CONFIGS}
+	${SETUP_START}
+	flowtype=esp; ${TEST_FLOWS}; if [[ $$_ret -ne 0 ]]; then exit 1; fi
+	${TEST_PING}; if [[ $$_ret -ne 0 ]]; then exit 1; fi
 
 REGRESS_TARGETS += run-cert-multi-ca
 run-cert-multi-ca:
