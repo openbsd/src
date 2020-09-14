@@ -1167,6 +1167,7 @@
 ./usr/include/openssl/ui_compat.h
 ./usr/include/openssl/whrlpool.h
 ./usr/include/openssl/x509.h
+./usr/include/openssl/x509_verify.h
 ./usr/include/openssl/x509_vfy.h
 ./usr/include/openssl/x509v3.h
 ./usr/include/panel.h
