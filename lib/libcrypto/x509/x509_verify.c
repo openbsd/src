@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.1 2020/09/13 15:06:17 beck Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.2 2020/09/14 08:06:09 beck Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -153,7 +153,6 @@ x509_verify_ctx_clear(struct x509_verify_ctx *ctx)
 {
 	x509_verify_ctx_reset(ctx);
 	sk_X509_pop_free(ctx->intermediates, X509_free);
-	sk_X509_pop_free(ctx->roots, X509_free);
 	free(ctx->chains);
 	memset(ctx, 0, sizeof(*ctx));
 }
