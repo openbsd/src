@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.202 2020/09/12 11:57:24 beck Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.203 2020/09/14 19:02:09 jasper Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -57,6 +57,7 @@
 #include <sys/conf.h>
 #include <sys/kernel.h>
 #include <sys/specdev.h>
+#include <sys/tracepoint.h>
 #include <uvm/uvm_extern.h>
 
 /* XXX Should really be in buf.h, but for uvm_constraint_range.. */
@@ -1209,6 +1210,9 @@ buf_daemon(void *arg)
 		}
 
 		while ((bp = bufcache_getdirtybuf())) {
+			TRACEPOINT(vfs, cleaner, bp->b_flags, pushed,
+			    lodirtypages, hidirtypages);
+
 			if (UNCLEAN_PAGES < lodirtypages &&
 			    bcstats.kvaslots_avail > 2 * RESERVE_SLOTS &&
 			    pushed >= 16)
@@ -1693,6 +1697,9 @@ bufcache_take(struct buf *bp)
 	KASSERT((bp->cache < NUM_CACHES));
 
 	pages = atop(bp->b_bufsize);
+
+	TRACEPOINT(vfs, bufcache_take, bp->b_flags, bp->cache, pages);
+
 	struct bufcache *cache = &cleancache[bp->cache];
 	if (!ISSET(bp->b_flags, B_DELWRI)) {
                 if (ISSET(bp->b_flags, B_COLD)) {
@@ -1756,8 +1763,11 @@ bufcache_release(struct buf *bp)
 	int64_t pages;
 	struct bufcache *cache = &cleancache[bp->cache];
 
-	pages = atop(bp->b_bufsize);
 	KASSERT(ISSET(bp->b_flags, B_BC));
+	pages = atop(bp->b_bufsize);
+
+	TRACEPOINT(vfs, bufcache_rel, bp->b_flags, bp->cache, pages);
+
 	if (fliphigh) {
 		if (ISSET(bp->b_flags, B_DMA) && bp->cache > 0)
 			panic("B_DMA buffer release from cache %d",
