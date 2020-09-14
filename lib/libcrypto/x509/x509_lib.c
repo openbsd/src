@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lib.c,v 1.1 2020/06/04 15:19:31 jsing Exp $ */
+/* $OpenBSD: x509_lib.c,v 1.2 2020/09/14 11:35:32 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -168,7 +168,11 @@ X509V3_EXT_add_alias(int nid_to, int nid_from)
 	*tmpext = *ext;
 	tmpext->ext_nid = nid_to;
 	tmpext->ext_flags |= X509V3_EXT_DYNAMIC;
-	return X509V3_EXT_add(tmpext);
+	if (!X509V3_EXT_add(tmpext)) {
+		free(tmpext);
+		return 0;
+	}
+	return 1;
 }
 
 void
