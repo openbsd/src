@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.27 2020/09/14 13:49:13 florian Exp $ */
+/*	$Id: netproc.c,v 1.28 2020/09/14 16:00:17 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -369,14 +369,14 @@ sreq(struct conn *c, const char *addr, int kid, const char *req, char **loc)
  * Returns non-zero on success.
  */
 static int
-donewacc(struct conn *c, const struct capaths *p)
+donewacc(struct conn *c, const struct capaths *p, const char *contact)
 {
 	struct jsmnn	*j = NULL;
 	int		 rc = 0;
 	char		*req, *detail, *error = NULL;
 	long		 lc;
 
-	if ((req = json_fmt_newacc()) == NULL)
+	if ((req = json_fmt_newacc(contact)) == NULL)
 		warnx("json_fmt_newacc");
 	else if ((lc = sreq(c, p->newaccount, 0, req, &c->kid)) < 0)
 		warnx("%s: bad comm", p->newaccount);
@@ -410,7 +410,7 @@ donewacc(struct conn *c, const struct capaths *p)
  * Returns non-zero on success.
  */
 static int
-dochkacc(struct conn *c, const struct capaths *p)
+dochkacc(struct conn *c, const struct capaths *p, const char *contact)
 {
 	int		 rc = 0;
 	char		*req;
@@ -425,7 +425,7 @@ dochkacc(struct conn *c, const struct capaths *p)
 	else if (c->buf.buf == NULL || c->buf.sz == 0)
 		warnx("%s: empty response", p->newaccount);
 	else if (lc == 400)
-		rc = donewacc(c, p);
+		rc = donewacc(c, p, contact);
 	else
 		rc = 1;
 
@@ -755,7 +755,7 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
 	c.newnonce = paths.newnonce;
 
 	/* Check if our account already exists or create it. */
-	if (!dochkacc(&c, &paths))
+	if (!dochkacc(&c, &paths, authority->contact))
 		goto out;
 
 	/*

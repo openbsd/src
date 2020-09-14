@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.19 2020/09/14 13:49:13 florian Exp $ */
+/*	$Id: extern.h,v 1.20 2020/09/14 16:00:17 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -263,7 +263,7 @@ char		*json_getstr(struct jsmnn *, const char *);
 
 char		*json_fmt_newcert(const char *);
 char		*json_fmt_chkacc(void);
-char		*json_fmt_newacc(void);
+char		*json_fmt_newacc(const char *);
 char		*json_fmt_neworder(const char *const *, size_t);
 char		*json_fmt_protected_rsa(const char *,
 			const char *, const char *, const char *);

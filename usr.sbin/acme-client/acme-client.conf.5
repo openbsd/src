@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.conf.5,v 1.25 2020/05/16 16:58:11 jmc Exp $
+.\"	$OpenBSD: acme-client.conf.5,v 1.26 2020/09/14 16:00:17 florian Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 16 2020 $
+.Dd $Mdocdate: September 14 2020 $
 .Dt ACME-CLIENT.CONF 5
 .Os
 .Sh NAME
@@ -98,6 +98,11 @@ It defaults to
 Specify the
 .Ar url
 under which the ACME API is reachable.
+.It Ic contact Ar contact
+Optional
+.Ar contact
+URLs that the authority can use to contact the client for issues related to
+this account.
 .El
 .Sh DOMAINS
 The certificates to be obtained through ACME.

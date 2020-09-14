@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.41 2020/05/16 20:19:23 sthen Exp $ */
+/*	$OpenBSD: parse.y,v 1.42 2020/09/14 16:00:17 florian Exp $ */
 
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -100,7 +100,7 @@ typedef struct {
 
 %}
 
-%token	AUTHORITY URL API ACCOUNT
+%token	AUTHORITY URL API ACCOUNT CONTACT
 %token	DOMAIN ALTERNATIVE NAME NAMES CERT FULL CHAIN KEY SIGN WITH CHALLENGEDIR
 %token	YES NO
 %token	INCLUDE
@@ -229,6 +229,16 @@ authorityoptsl	: API URL STRING {
 				err(EXIT_FAILURE, "strdup");
 			auth->account = s;
 			auth->keytype = $4;
+		}
+		| CONTACT STRING {
+			char *s;
+			if (auth->contact != NULL) {
+				yyerror("duplicate contact");
+				YYERROR;
+			}
+			if ((s = strdup($2)) == NULL)
+				err(EXIT_FAILURE, "strdup");
+			auth->contact = s;
 		}
 		;
 
@@ -452,6 +462,7 @@ lookup(char *s)
 		{"certificate",		CERT},
 		{"chain",		CHAIN},
 		{"challengedir",	CHALLENGEDIR},
+		{"contact",		CONTACT},
 		{"domain",		DOMAIN},
 		{"ecdsa",		ECDSA},
 		{"full",		FULL},
