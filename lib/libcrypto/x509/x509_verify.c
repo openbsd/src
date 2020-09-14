@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.3 2020/09/14 08:56:32 beck Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.4 2020/09/14 09:01:11 beck Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -487,7 +487,6 @@ x509_verify_set_check_time(struct x509_verify_ctx *ctx) {
 static int
 x509_verify_asn1_time_to_tm(const ASN1_TIME *atime, struct tm *tm, int notafter)
 {
-	time_t time;
 	int type;
 
 	memset(tm, 0, sizeof(*tm));
@@ -517,7 +516,7 @@ x509_verify_asn1_time_to_tm(const ASN1_TIME *atime, struct tm *tm, int notafter)
 	 * a time_t. A time_t must be sane if you care about times after
 	 * Jan 19 2038.
 	 */
-	if ((time = timegm(tm)) == -1)
+	if (timegm(tm) == -1)
 		return 0;
 
 	return 1;
