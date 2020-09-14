@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.2 2020/07/15 03:44:42 beck Exp $ */
+/* $OpenBSD: verify.c,v 1.3 2020/09/14 09:59:58 beck Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -139,6 +139,7 @@ verify_cert(const char *roots_file, const char *bundle_file,
 
 	unsigned long flags = X509_VERIFY_PARAM_get_flags(xsc->param);
 	X509_VERIFY_PARAM_set_flags(xsc->param, flags);
+	X509_VERIFY_PARAM_set_time(xsc->param, 1600000000);
 	X509_VERIFY_PARAM_set1_host(xsc->param,"localhost.local", strlen("localhost.local"));
 
 	X509_STORE_CTX_set0_trusted_stack(xsc, roots);
@@ -164,6 +165,7 @@ verify_cert(const char *roots_file, const char *bundle_file,
 
 	unsigned long flagsip = X509_VERIFY_PARAM_get_flags(xscip->param);
 	X509_VERIFY_PARAM_set_flags(xscip->param, flagsip);
+	X509_VERIFY_PARAM_set_time(xscip->param, 1600000000);
 	X509_VERIFY_PARAM_set1_ip_asc(xscip->param,"127.0.0.1");
 
 	X509_STORE_CTX_set0_trusted_stack(xscip, roots);
@@ -228,7 +230,7 @@ main(int argc, char **argv)
 	}
 	if (json)
 		fprintf(stdout, "{\"testVersion\":1,\"date\":%lld,\"userAgent\""
-		    ":\"LibreSSL OpenBSD 6.7\\n\",\"results\":[", time(NULL));
+		    ":\"LibreSSL OpenBSD 6.8\\n\",\"results\":[", time(NULL));
 
         bettertls_cert_test(argv[1]);
 
