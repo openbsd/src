@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.51 2020/09/14 09:07:05 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.52 2020/09/14 09:40:28 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -900,8 +900,12 @@ open_icmp6sock(int rdomain)
 		fatal("IPV6_RECVHOPLIMIT");
 
 	if (setsockopt(icmp6sock, SOL_SOCKET, SO_RTABLE, &rdomain,
-	    sizeof(rdomain)) == -1)
-		fatal("setsockopt SO_RTABLE");
+	    sizeof(rdomain)) == -1) {
+		/* we might race against removal of the rdomain */
+		log_warn("setsockopt SO_RTABLE");
+		close(icmp6sock);
+		return;
+	}
 
 	main_imsg_compose_frontend(IMSG_ICMP6SOCK, icmp6sock, &rdomain,
 	    sizeof(rdomain));
