@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.12 2020/05/15 00:56:03 cheloha Exp $ */
+/*	$OpenBSD: pf.c,v 1.13 2020/09/14 11:15:30 kn Exp $ */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -54,18 +54,16 @@ field_def fields_pf[] = {
 	{"NAME", 12, 24, 1, FLD_ALIGN_LEFT, -1, 0, 0, 0},
 	{"VALUE", 8, 10, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 0},
 	{"RATE", 8, 10, 1, FLD_ALIGN_RIGHT, -1, 0, 0, 60},
-	{"NOTES", 10, 20, 1, FLD_ALIGN_LEFT, -1, 0, 0, 60},
 };
 
 #define FLD_PF_TYPE	FIELD_ADDR(fields_pf,0)
 #define FLD_PF_NAME	FIELD_ADDR(fields_pf,1)
 #define FLD_PF_VALUE	FIELD_ADDR(fields_pf,2)
 #define FLD_PF_RATE	FIELD_ADDR(fields_pf,3)
-#define FLD_PF_DESC	FIELD_ADDR(fields_pf,4)
 
 /* Define views */
 field_def *view_pf_0[] = {
-	FLD_PF_TYPE, FLD_PF_NAME, FLD_PF_VALUE, FLD_PF_RATE, FLD_PF_DESC, NULL
+	FLD_PF_TYPE, FLD_PF_NAME, FLD_PF_VALUE, FLD_PF_RATE, NULL
 };
 
 
@@ -187,19 +185,6 @@ print_fld_double(field_def *fld, double val)
 			return;					\
 	} while (0)
 
-#define ADD_LINE_VD(t, n, v, d) \
-	do {							\
-		if (cur >= dispstart && cur < end) { 		\
-			print_fld_str(FLD_PF_TYPE, (t));	\
-			print_fld_str(FLD_PF_NAME, (n));	\
-			print_fld_size(FLD_PF_VALUE, (v));	\
-			print_fld_str(FLD_PF_DESC, (d));	\
-			end_line();				\
-		}						\
-		if (++cur >= end)				\
-			return;					\
-	} while (0)
-
 #define ADD_LINE_VR(t, n, v, r) \
 	do {							\
 		if (cur >= dispstart && cur < end) { 		\
@@ -273,18 +258,18 @@ print_pf(void)
 
 	if (s->ifname[0] != 0) {
 		ADD_EMPTY_LINE;
-		ADD_LINE_VD(s->ifname, "Bytes In", s->bcounters[0][0], "IPv4");
-		ADD_LINE_VD(s->ifname, "Bytes In", s->bcounters[1][0], "IPv6");
-		ADD_LINE_VD(s->ifname, "Bytes Out", s->bcounters[0][1], "IPv4");
-		ADD_LINE_VD(s->ifname, "Bytes Out", s->bcounters[1][1], "IPv6");
-		ADD_LINE_VD(s->ifname, "Packets In", s->pcounters[0][0][PF_PASS], "IPv4, Passed");
-		ADD_LINE_VD(s->ifname, "Packets In", s->pcounters[1][0][PF_PASS], "IPv6, Passed");
-		ADD_LINE_VD(s->ifname, "Packets In", s->pcounters[0][0][PF_DROP], "IPv4, Blocked");
-		ADD_LINE_VD(s->ifname, "Packets In", s->pcounters[1][0][PF_DROP], "IPv6, Blocked");
-		ADD_LINE_VD(s->ifname, "Packets Out", s->pcounters[0][1][PF_PASS], "IPv4, Passed");
-		ADD_LINE_VD(s->ifname, "Packets Out", s->pcounters[1][1][PF_PASS], "IPv6, Passed");
-		ADD_LINE_VD(s->ifname, "Packets Out", s->pcounters[0][1][PF_DROP], "IPv4, Blocked");
-		ADD_LINE_VD(s->ifname, "Packets Out", s->pcounters[1][1][PF_DROP], "IPv6, Blocked");
+		ADD_LINE_V(s->ifname, "Bytes In IPv4", s->bcounters[0][0]);
+		ADD_LINE_V(s->ifname, "Bytes In IPv6", s->bcounters[1][0]);
+		ADD_LINE_V(s->ifname, "Bytes Out IPv4", s->bcounters[0][1]);
+		ADD_LINE_V(s->ifname, "Bytes Out IPv6", s->bcounters[1][1]);
+		ADD_LINE_V(s->ifname, "Packets In Passed IPv4", s->pcounters[0][0][PF_PASS]);
+		ADD_LINE_V(s->ifname, "Packets In Passed IPv6", s->pcounters[1][0][PF_PASS]);
+		ADD_LINE_V(s->ifname, "Packets In Blocked IPv4", s->pcounters[0][0][PF_DROP]);
+		ADD_LINE_V(s->ifname, "Packets In Blocked IPv6", s->pcounters[1][0][PF_DROP]);
+		ADD_LINE_V(s->ifname, "Packets Out Passed IPv4", s->pcounters[0][1][PF_PASS]);
+		ADD_LINE_V(s->ifname, "Packets Out Passed IPv6", s->pcounters[1][1][PF_PASS]);
+		ADD_LINE_V(s->ifname, "Packets Out Blocked IPv4", s->pcounters[0][1][PF_DROP]);
+		ADD_LINE_V(s->ifname, "Packets Out Blocked IPv6", s->pcounters[1][1][PF_DROP]);
 	}
 
 
