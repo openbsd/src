@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.2 2020/09/14 08:06:09 beck Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.3 2020/09/14 08:56:32 beck Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -646,7 +646,7 @@ x509_verify_cert_valid(struct x509_verify_ctx *ctx, X509 *cert,
 	int should_be_ca = current_chain != NULL;
 	size_t depth = 0;
 
-	if (!should_be_ca)
+	if (current_chain != NULL)
 		depth = sk_X509_num(current_chain->certs);
 
 	if (!x509_verify_cert_extensions(ctx, cert, should_be_ca))
