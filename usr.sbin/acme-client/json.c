@@ -1,4 +1,4 @@
-/*	$Id: json.c,v 1.19 2020/06/07 13:29:52 florian Exp $ */
+/*	$Id: json.c,v 1.20 2020/09/14 13:49:13 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -297,7 +297,7 @@ json_getobj(struct jsmnn *n, const char *name)
  * that it's the correct type.
  * Returns NULL on failure.
  */
-static char *
+char *
 json_getstr(struct jsmnn *n, const char *name)
 {
 	size_t		 i;

@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.18 2020/05/10 17:34:07 florian Exp $ */
+/*	$Id: extern.h,v 1.19 2020/09/14 13:49:13 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -259,6 +259,7 @@ int		 json_parse_order(struct jsmnn *, struct order *);
 int		 json_parse_upd_order(struct jsmnn *, struct order *);
 void		 json_free_capaths(struct capaths *);
 int		 json_parse_capaths(struct jsmnn *, struct capaths *);
+char		*json_getstr(struct jsmnn *, const char *);
 
 char		*json_fmt_newcert(const char *);
 char		*json_fmt_chkacc(void);

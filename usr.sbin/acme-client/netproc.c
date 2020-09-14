@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.26 2020/05/10 17:34:07 florian Exp $ */
+/*	$Id: netproc.c,v 1.27 2020/09/14 13:49:13 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -371,15 +371,27 @@ sreq(struct conn *c, const char *addr, int kid, const char *req, char **loc)
 static int
 donewacc(struct conn *c, const struct capaths *p)
 {
+	struct jsmnn	*j = NULL;
 	int		 rc = 0;
-	char		*req;
+	char		*req, *detail, *error = NULL;
 	long		 lc;
 
 	if ((req = json_fmt_newacc()) == NULL)
 		warnx("json_fmt_newacc");
 	else if ((lc = sreq(c, p->newaccount, 0, req, &c->kid)) < 0)
 		warnx("%s: bad comm", p->newaccount);
-	else if (lc != 200 && lc != 201)
+	else if (lc == 400) {
+		if ((j = json_parse(c->buf.buf, c->buf.sz)) == NULL)
+			warnx("%s: bad JSON object", p->newaccount);
+		else {
+			detail = json_getstr(j, "detail");
+			if (detail != NULL && stravis(&error, detail, VIS_SAFE)
+			    != -1) {
+				warnx("%s", error);
+				free(error);
+			}
+		}
+	} else if (lc != 200 && lc != 201)
 		warnx("%s: bad HTTP: %ld", p->newaccount, lc);
 	else if (c->buf.buf == NULL || c->buf.sz == 0)
 		warnx("%s: empty response", p->newaccount);
