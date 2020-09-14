@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_ciphers.c,v 1.7 2020/09/13 16:49:05 jsing Exp $ */
+/*	$OpenBSD: ssl_ciphers.c,v 1.8 2020/09/14 17:52:38 tb Exp $ */
 /*
  * Copyright (c) 2015-2017 Doug Hogan <doug@openbsd.org>
  * Copyright (c) 2015-2018, 2020 Joel Sing <jsing@openbsd.org>
@@ -237,11 +237,11 @@ ssl_parse_ciphersuites(STACK_OF(SSL_CIPHER) **out_ciphers, const char *str)
 	while ((p = strsep(&q, ":")) != NULL) {
 		ciphersuite = &ssl_tls13_ciphersuites[0];
 		for (i = 0; ciphersuite->name != NULL; i++) {
-			ciphersuite = &ssl_tls13_ciphersuites[i];
 			if (strcmp(p, ciphersuite->name) == 0)
 				break;
 			if (strcmp(p, ciphersuite->alias) == 0)
 				break;
+			ciphersuite = &ssl_tls13_ciphersuites[i];
 		}
 		if (ciphersuite->name == NULL)
 			goto err;
