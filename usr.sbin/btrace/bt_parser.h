@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parser.h,v 1.9 2020/08/13 11:29:39 mpi Exp $	*/
+/*	$OpenBSD: bt_parser.h,v 1.10 2020/09/14 18:45:19 jasper Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Martin Pieuchot <mpi@openbsd.org>
@@ -143,6 +143,8 @@ struct bt_arg {
 		B_AT_OP_MINUS,
 		B_AT_OP_MULT,
 		B_AT_OP_DIVIDE,
+		B_AT_OP_AND,
+		B_AT_OP_OR,
 	}			 ba_type;
 };
 

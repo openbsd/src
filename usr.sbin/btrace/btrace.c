@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.24 2020/09/11 08:16:15 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.25 2020/09/14 18:45:19 jasper Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -812,7 +812,7 @@ stmt_store(struct bt_stmt *bs, struct dt_evt *dtev)
 	case B_AT_BI_NSECS:
 		bv->bv_value = ba_new(builtin_nsecs(dtev), B_AT_LONG);
 		break;
-	case B_AT_OP_ADD ... B_AT_OP_DIVIDE:
+	case B_AT_OP_ADD ... B_AT_OP_OR:
 		bv->bv_value = ba_new(ba2long(ba, dtev), B_AT_LONG);
 		break;
 	default:
@@ -992,6 +992,12 @@ baexpr2long(struct bt_arg *ba, struct dt_evt *dtev)
 	case B_AT_OP_DIVIDE:
 		result = first / second;
 		break;
+	case B_AT_OP_AND:
+		result = first & second;
+		break;
+	case B_AT_OP_OR:
+		result = first | second;
+		break;
 	default:
 		xabort("unsuported operation %d", ba->ba_type);
 	}
@@ -1025,7 +1031,7 @@ ba2long(struct bt_arg *ba, struct dt_evt *dtev)
 	case B_AT_BI_RETVAL:
 		val = dtev->dtev_sysretval[0];
 		break;
-	case B_AT_OP_ADD ... B_AT_OP_DIVIDE:
+	case B_AT_OP_ADD ... B_AT_OP_OR:
 		val = baexpr2long(ba, dtev);
 		break;
 	default:
@@ -1093,7 +1099,7 @@ ba2str(struct bt_arg *ba, struct dt_evt *dtev)
 	case B_AT_VAR:
 		str = ba2str(ba_read(ba), dtev);
 		break;
-	case B_AT_OP_ADD ... B_AT_OP_DIVIDE:
+	case B_AT_OP_ADD ... B_AT_OP_OR:
 		snprintf(buf, sizeof(buf) - 1, "%ld", ba2long(ba, dtev));
 		str = buf;
 		break;
@@ -1152,7 +1158,7 @@ ba2dtflags(struct bt_arg *ba)
 		case B_AT_MF_MAX:
 		case B_AT_MF_MIN:
 		case B_AT_MF_SUM:
-		case B_AT_OP_ADD ... B_AT_OP_DIVIDE:
+		case B_AT_OP_ADD ... B_AT_OP_OR:
 			break;
 		default:
 			xabort("invalid argument type %d", ba->ba_type);

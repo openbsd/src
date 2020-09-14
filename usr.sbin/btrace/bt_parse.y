@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.16 2020/07/11 14:52:14 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.17 2020/09/14 18:45:19 jasper Exp $	*/
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -117,6 +117,8 @@ static int	 yylex(void);
 %type	<v.arg>		expr vargs map mexpr term
 %type	<v.rtype>	beginend
 
+%left	'|'
+%left	'&'
 %left	'+' '-'
 %left	'/' '*'
 %%
@@ -172,6 +174,8 @@ term		: '(' term ')'			{ $$ = $2; }
 		| term '-' term			{ $$ = ba_op('-', $1, $3); }
 		| term '/' term			{ $$ = ba_op('/', $1, $3); }
 		| term '*' term			{ $$ = ba_op('*', $1, $3); }
+		| term '&' term			{ $$ = ba_op('&', $1, $3); }
+		| term '|' term			{ $$ = ba_op('|', $1, $3); }
 		| NUMBER			{ $$ = ba_new($1, B_AT_LONG); }
 		| builtin			{ $$ = ba_new(NULL, $1); }
 		| gvar				{ $$ = bv_get($1); }
@@ -331,6 +335,12 @@ ba_op(const char op, struct bt_arg *da0, struct bt_arg *da1)
 		break;
 	case '/':
 		type = B_AT_OP_DIVIDE;
+		break;
+	case '&':
+		type = B_AT_OP_AND;
+		break;
+	case '|':
+		type = B_AT_OP_OR;
 		break;
 	default:
 		assert(0);
