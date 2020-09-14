@@ -1,4 +1,4 @@
-/*	$Id: certproc.c,v 1.12 2019/06/07 08:07:52 florian Exp $ */
+/*	$Id: certproc.c,v 1.13 2020/09/14 15:58:50 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -28,7 +28,8 @@
 
 #include "extern.h"
 
-#define MARKER "-----END CERTIFICATE-----\n"
+#define BEGIN_MARKER "-----BEGIN CERTIFICATE-----"
+#define END_MARKER "-----END CERTIFICATE-----"
 
 int
 certproc(int netsock, int filesock)
@@ -81,19 +82,25 @@ certproc(int netsock, int filesock)
 	if ((csr = readbuf(netsock, COMM_CSR, &csrsz)) == NULL)
 		goto out;
 
-	if (csrsz < strlen(MARKER)) {
+	if (csrsz < strlen(END_MARKER)) {
 		warnx("invalid cert");
 		goto out;
 	}
 
-	chaincp = strstr(csr, MARKER);
+	chaincp = strstr(csr, END_MARKER);
 
 	if (chaincp == NULL) {
 		warnx("invalid cert");
 		goto out;
 	}
 
-	chaincp += strlen(MARKER);
+	chaincp += strlen(END_MARKER);
+
+	if ((chaincp = strstr(chaincp, BEGIN_MARKER)) == NULL) {
+		warnx("invalid certificate chain");
+		goto out;
+	}
+
 	if ((chain = strdup(chaincp)) == NULL) {
 		warn("strdup");
 		goto out;
