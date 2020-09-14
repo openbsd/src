@@ -1,4 +1,4 @@
-.\" $OpenBSD: x509_verify.3,v 1.1 2020/09/14 12:38:38 beck Exp $
+.\" $OpenBSD: x509_verify.3,v 1.2 2020/09/14 14:21:46 schwarze Exp $
 .\"
 .\" Copyright (c) 2020 Bob Beck <beck@openbsd.org>
 .\"
@@ -180,12 +180,8 @@ The returned chain is neither copied,
 nor is its reference count increased.
 .Sh RETURN VALUES
 .Fn x509_verify
-returns the number of chains successfully built and validated,
-or 0 if
-.Fa ctx
-is
-.Dv NULL
-or if an error occurs.
+returns the number of chains successfully built and validated
+or 0 on failure.
 .Pp
 .Fn x509_verify_ctx_new
 returns a newly allocated context or
