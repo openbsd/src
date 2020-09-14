@@ -53,7 +53,7 @@ static void	dispatch_txt(struct dns_rr *, struct target *);
 static void	dispatch_mx(struct dns_rr *, struct target *);
 static void	dispatch_a(struct dns_rr *, struct target *);
 static void	dispatch_aaaa(struct dns_rr *, struct target *);
-static void	lookup_record(int, const char *, struct target *);
+static void	lookup_record(int, char *, struct target *);
 static void	dispatch_record(struct asr_result *, void *);
 static ssize_t	parse_txt(const char *, size_t, char *, size_t);
 static int	parse_target(char *, struct target *);
@@ -113,7 +113,7 @@ spfwalk(int argc, struct parameter *argv)
 }
 
 void
-lookup_record(int type, const char *record, struct target *tgt)
+lookup_record(int type, char *record, struct target *tgt)
 {
 	struct asr_query *as;
 	struct target *ntgt;
