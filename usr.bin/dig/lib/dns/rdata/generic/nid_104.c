@@ -19,8 +19,6 @@
 
 #include <string.h>
 
-#include <isc/net.h>
-
 static inline isc_result_t
 totext_nid(ARGS_TOTEXT) {
 	isc_region_t region;

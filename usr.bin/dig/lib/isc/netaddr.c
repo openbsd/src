@@ -14,14 +14,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: netaddr.c,v 1.7 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: netaddr.c,v 1.8 2020/09/14 08:39:12 florian Exp $ */
 
 /*! \file */
 
 #include <stdio.h>
 
 #include <isc/buffer.h>
-#include <isc/net.h>
 #include <isc/netaddr.h>
 
 #include <isc/sockaddr.h>
@@ -123,7 +122,7 @@ isc_boolean_t
 isc_netaddr_ismulticast(isc_netaddr_t *na) {
 	switch (na->family) {
 	case AF_INET:
-		return (ISC_TF(ISC_IPADDR_ISMULTICAST(na->type.in.s_addr)));
+		return (ISC_TF(IN_MULTICAST(na->type.in.s_addr)));
 	case AF_INET6:
 		return (ISC_TF(IN6_IS_ADDR_MULTICAST(&na->type.in6)));
 	default:

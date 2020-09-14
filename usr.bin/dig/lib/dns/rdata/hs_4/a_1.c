@@ -14,14 +14,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a_1.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
+/* $Id: a_1.c,v 1.11 2020/09/14 08:39:12 florian Exp $ */
 
 /* reviewed: Thu Mar 16 15:58:36 PST 2000 by brister */
 
 #ifndef RDATA_HS_4_A_1_C
 #define RDATA_HS_4_A_1_C
-
-#include <isc/net.h>
 
 static inline isc_result_t
 totext_hs_a(ARGS_TOTEXT) {

@@ -14,15 +14,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a_1.c,v 1.11 2020/02/26 18:47:58 florian Exp $ */
+/* $Id: a_1.c,v 1.12 2020/09/14 08:39:12 florian Exp $ */
 
 /* by Bjorn.Victor@it.uu.se, 2005-05-07 */
 /* Based on generic/soa_6.c and generic/mx_15.c */
 
 #ifndef RDATA_CH_3_A_1_C
 #define RDATA_CH_3_A_1_C
-
-#include <isc/net.h>
 
 static inline isc_result_t
 totext_ch_a(ARGS_TOTEXT) {

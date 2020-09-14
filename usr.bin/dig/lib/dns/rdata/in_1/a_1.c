@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a_1.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
+/* $Id: a_1.c,v 1.11 2020/09/14 08:39:12 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 16:52:50 PST 2000 by bwelling */
 
@@ -22,8 +22,7 @@
 #define RDATA_IN_1_A_1_C
 
 #include <string.h>
-
-#include <isc/net.h>
+#include <sys/socket.h>
 
 static inline isc_result_t
 totext_in_a(ARGS_TOTEXT) {

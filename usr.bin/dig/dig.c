@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dig.c,v 1.14 2020/09/14 08:37:08 florian Exp $ */
+/* $Id: dig.c,v 1.15 2020/09/14 08:39:12 florian Exp $ */
 
 /*! \file */
 #include <sys/cdefs.h>
@@ -1290,24 +1290,16 @@ dash_option(char *option, char *next, dig_lookup_t **lookup,
 		opt = option[0];
 		switch (opt) {
 		case '4':
-			if (have_ipv4) {
-				isc_net_disableipv6();
+			if (have_ipv4)
 				have_ipv6 = ISC_FALSE;
-			} else {
+			else
 				fatal("can't find IPv4 networking");
-				/* NOTREACHED */
-				return (ISC_FALSE);
-			}
 			break;
 		case '6':
-			if (have_ipv6) {
-				isc_net_disableipv4();
+			if (have_ipv6)
 				have_ipv4 = ISC_FALSE;
-			} else {
+			else
 				fatal("can't find IPv6 networking");
-				/* NOTREACHED */
-				return (ISC_FALSE);
-			}
 			break;
 		case 'd':
 			ptr = strpbrk(&option[1], dash_opts);
@@ -1364,17 +1356,13 @@ dash_option(char *option, char *next, dig_lookup_t **lookup,
 			*hash = '\0';
 		} else
 			srcport = 0;
-		if (have_ipv6 && inet_pton(AF_INET6, value, &in6) == 1) {
+		if (have_ipv6 && inet_pton(AF_INET6, value, &in6) == 1)
 			isc_sockaddr_fromin6(&bind_address, &in6, srcport);
-			isc_net_disableipv4();
-		} else if (have_ipv4 && inet_pton(AF_INET, value, &in4) == 1) {
+		else if (have_ipv4 && inet_pton(AF_INET, value, &in4) == 1)
 			isc_sockaddr_fromin(&bind_address, &in4, srcport);
-			isc_net_disableipv6();
-		} else {
-			if (hash != NULL)
-				*hash = '#';
+		else
 			fatal("invalid address %s", value);
-		}
+
 		if (hash != NULL)
 			*hash = '#';
 		specified_source = ISC_TRUE;

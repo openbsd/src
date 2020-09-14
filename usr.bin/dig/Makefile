@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2020/02/24 17:57:54 florian Exp $
+#	$OpenBSD: Makefile,v 1.4 2020/09/14 08:39:12 florian Exp $
 
 PROG=		dig
 SRCS=		dig.c dighost.c host.c nslookup.c
@@ -17,7 +17,6 @@ CFLAGS+= -Wall -I${.CURDIR} -I${.OBJDIR}
 CFLAGS+= -I ${.CURDIR}/bin/dig/include
 CFLAGS+= -I ${.CURDIR}/lib/dns/include
 CFLAGS+= -I ${.CURDIR}/lib/isc/include
-CFLAGS+= -I ${.CURDIR}/lib/isc/unix/include
 CFLAGS+= -I ${.CURDIR}/lib/isccfg/include
 CFLAGS+= -I ${.CURDIR}/lib/lwres/include
 CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.27 2020/09/14 08:37:08 florian Exp $ */
+/* $Id: dighost.c,v 1.28 2020/09/14 08:39:12 florian Exp $ */
 
 /*! \file
  *  \note
@@ -1161,21 +1161,17 @@ setup_system(isc_boolean_t ipv4only, isc_boolean_t ipv6only) {
 	debug("setup_system()");
 
 	if (ipv4only) {
-		if (have_ipv4) {
-			isc_net_disableipv6();
+		if (have_ipv4)
 			have_ipv6 = ISC_FALSE;
-		} else {
+		else
 			fatal("can't find IPv4 networking");
-		}
 	}
 
 	if (ipv6only) {
-		if (have_ipv6) {
-			isc_net_disableipv4();
+		if (have_ipv6)
 			have_ipv4 = ISC_FALSE;
-		} else {
+		else
 			fatal("can't find IPv6 networking");
-		}
 	}
 
 	if (have_ipv4)

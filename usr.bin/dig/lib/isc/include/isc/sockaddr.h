@@ -14,14 +14,17 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sockaddr.h,v 1.3 2020/02/13 13:53:01 jsg Exp $ */
+/* $Id: sockaddr.h,v 1.4 2020/09/14 08:39:12 florian Exp $ */
 
 #ifndef ISC_SOCKADDR_H
 #define ISC_SOCKADDR_H 1
 
 /*! \file isc/sockaddr.h */
 
-#include <isc/net.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include <isc/types.h>
 #include <sys/un.h>
 
@@ -34,7 +37,6 @@ struct isc_sockaddr {
 		struct sockaddr_un	sunix;
 	}				type;
 	unsigned int			length;		/* XXXRTH beginning? */
-	ISC_LINK(struct isc_sockaddr)	link;
 };
 
 #define ISC_SOCKADDR_CMPADDR	  0x0001	/*%< compare the address

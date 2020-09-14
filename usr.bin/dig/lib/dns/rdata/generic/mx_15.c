@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: mx_15.c,v 1.12 2020/02/26 18:47:59 florian Exp $ */
+/* $Id: mx_15.c,v 1.13 2020/09/14 08:39:12 florian Exp $ */
 
 /* reviewed: Wed Mar 15 18:05:46 PST 2000 by brister */
 
@@ -22,8 +22,6 @@
 #define RDATA_GENERIC_MX_15_C
 
 #include <string.h>
-
-#include <isc/net.h>
 
 static inline isc_result_t
 totext_mx(ARGS_TOTEXT) {

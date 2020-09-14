@@ -14,14 +14,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a6_38.c,v 1.12 2020/02/26 18:47:59 florian Exp $ */
+/* $Id: a6_38.c,v 1.13 2020/09/14 08:39:12 florian Exp $ */
 
 /* RFC2874 */
 
 #ifndef RDATA_IN_1_A6_28_C
 #define RDATA_IN_1_A6_28_C
-
-#include <isc/net.h>
 
 static inline isc_result_t
 totext_in_a6(ARGS_TOTEXT) {

@@ -34,7 +34,6 @@
 
 #include <isc/list.h>
 #include <isc/log.h>
-#include <isc/net.h>
 #include <isc/region.h>
 #include <isc/socket.h>
 #include <isc/task.h>
@@ -1348,8 +1347,7 @@ socket_create(isc_socketmgr_t *manager0, int pf, isc_sockettype_t type,
 
 	switch (sock->type) {
 	case isc_sockettype_udp:
-#define DCSPPKT(pf) ((pf == AF_INET) ? ISC_NET_DSCPPKTV4 : ISC_NET_DSCPPKTV6)
-		sock->pktdscp = (isc_net_probedscp() & DCSPPKT(pf)) != 0;
+		sock->pktdscp = 1;
 		break;
 	case isc_sockettype_tcp:
 		break;
