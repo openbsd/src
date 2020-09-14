@@ -68,6 +68,7 @@
 ./etc/examples/ipsec.conf
 ./etc/examples/ldapd.conf
 ./etc/examples/ldpd.conf
+./etc/examples/login_ldap.conf
 ./etc/examples/man.conf
 ./etc/examples/mixerctl.conf
 ./etc/examples/mrouted.conf
@@ -2302,6 +2303,7 @@
 ./usr/libexec/auth/login_chpass
 ./usr/libexec/auth/login_crypto
 ./usr/libexec/auth/login_lchpass
+./usr/libexec/auth/login_ldap
 ./usr/libexec/auth/login_passwd
 ./usr/libexec/auth/login_radius
 ./usr/libexec/auth/login_reject
@@ -2487,6 +2489,7 @@
 ./usr/sbin/authpf-noip
 ./usr/sbin/bgpctl
 ./usr/sbin/bgpd
+./usr/sbin/btrace
 ./usr/sbin/chat
 ./usr/sbin/chgrp
 ./usr/sbin/chown
