@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.245 2020/05/14 17:27:38 pvk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.246 2020/09/14 11:30:25 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -56,7 +56,7 @@
 
 #include "relayd.h"
 #include "http.h"
-#include "snmp.h"
+#include "subagentx.h"
 
 TAILQ_HEAD(files, file)		 files = TAILQ_HEAD_INITIALIZER(files);
 static struct file {
@@ -168,21 +168,21 @@ typedef struct {
 
 %}
 
-%token	APPEND BACKLOG BACKUP BINARY BUFFER CA CACHE SET CHECK CIPHERS CODE
-%token	COOKIE DEMOTE DIGEST DISABLE ERROR EXPECT PASS BLOCK EXTERNAL FILENAME
-%token	FORWARD FROM HASH HEADER HEADERLEN HOST HTTP ICMP INCLUDE INET INET6
-%token	INTERFACE INTERVAL IP KEYPAIR LABEL LISTEN VALUE LOADBALANCE LOG LOOKUP
-%token	METHOD MODE NAT NO DESTINATION NODELAY NOTHING ON PARENT PATH PFTAG PORT
-%token	PREFORK PRIORITY PROTO QUERYSTR REAL REDIRECT RELAY REMOVE REQUEST
-%token	RESPONSE RETRY QUICK RETURN ROUNDROBIN ROUTE SACK SCRIPT SEND SESSION
-%token	SNMP SOCKET SPLICE SSL STICKYADDR STYLE TABLE TAG TAGGED TCP TIMEOUT TLS
-%token	TO ROUTER RTLABEL TRANSPARENT TRAP URL WITH TTL RTABLE
+%token	AGENTX APPEND BACKLOG BACKUP BINARY BUFFER CA CACHE SET CHECK CIPHERS
+%token	CODE COOKIE DEMOTE DIGEST DISABLE ERROR EXPECT PASS BLOCK EXTERNAL
+%token	FILENAME FORWARD FROM HASH HEADER HEADERLEN HOST HTTP ICMP INCLUDE INET
+%token	INET6 INTERFACE INTERVAL IP KEYPAIR LABEL LISTEN VALUE LOADBALANCE LOG
+%token	LOOKUP METHOD MODE NAT NO DESTINATION NODELAY NOTHING ON PARENT PATH
+%token	PFTAG PORT PREFORK PRIORITY PROTO QUERYSTR REAL REDIRECT RELAY REMOVE
+%token	REQUEST RESPONSE RETRY QUICK RETURN ROUNDROBIN ROUTE SACK SCRIPT SEND
+%token	SESSION SNMP SOCKET SPLICE SSL STICKYADDR STYLE TABLE TAG TAGGED TCP
+%token	TIMEOUT TLS TO ROUTER RTLABEL TRANSPARENT TRAP URL WITH TTL RTABLE
 %token	MATCH PARAMS RANDOM LEASTSTATES SRCHASH KEY CERTIFICATE PASSWORD ECDHE
-%token	EDH TICKETS CONNECTION CONNECTIONS ERRORS STATE CHANGES CHECKS
+%token	EDH TICKETS CONNECTION CONNECTIONS CONTEXT ERRORS STATE CHANGES CHECKS
 %token	WEBSOCKETS
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
-%type	<v.string>	hostname interface table value optstring
+%type	<v.string>	context hostname interface table value optstring path
 %type	<v.number>	http_type loglevel quick trap
 %type	<v.number>	dstmode flag forwardmode retry
 %type	<v.number>	opttls opttlsclient
@@ -429,28 +429,61 @@ main		: INTERVAL NUMBER	{
 			}
 			conf->sc_conf.prefork_relay = $2;
 		}
-		| SNMP trap optstring	{
-			conf->sc_conf.flags |= F_SNMP;
-			if ($2)
-				conf->sc_conf.flags |= F_SNMP_TRAPONLY;
-			if ($3) {
-				if (strlcpy(conf->sc_conf.snmp_path,
-				    $3, sizeof(conf->sc_conf.snmp_path)) >=
-				    sizeof(conf->sc_conf.snmp_path)) {
-					yyerror("snmp path truncated");
+		| AGENTX context path {
+			conf->sc_conf.flags |= F_AGENTX;
+			if ($2 != NULL) {
+				if (strlcpy(conf->sc_conf.agentx_context, $2,
+				    sizeof(conf->sc_conf.agentx_context)) >=
+				    sizeof(conf->sc_conf.agentx_context)) {
+					yyerror("agentx context too long");
+					free($2);
+					free($3);
+					YYERROR;
+				}
+				free($2);
+			} else
+				conf->sc_conf.agentx_context[0] = '\0';
+			if ($3 != NULL) {
+				if (strlcpy(conf->sc_conf.agentx_path, $3,
+				    sizeof(conf->sc_conf.agentx_path)) >=
+				    sizeof(conf->sc_conf.agentx_path)) {
+					yyerror("agentx path too long");
 					free($3);
 					YYERROR;
 				}
 				free($3);
 			} else
-				(void)strlcpy(conf->sc_conf.snmp_path,
-				    AGENTX_SOCKET,
-				    sizeof(conf->sc_conf.snmp_path));
+				(void)strlcpy(conf->sc_conf.agentx_path,
+				    SUBAGENTX_AGENTX_MASTER,
+				    sizeof(conf->sc_conf.agentx_path));
+		}
+		| SNMP trap optstring	{
+			log_warnx("The snmp keyword is deprecated, please use agentx");
+			conf->sc_conf.flags |= F_AGENTX;
+			if ($3) {
+				if (strlcpy(conf->sc_conf.agentx_path,
+				    $3, sizeof(conf->sc_conf.agentx_path)) >=
+				    sizeof(conf->sc_conf.agentx_path)) {
+					yyerror("agentx path truncated");
+					free($3);
+					YYERROR;
+				}
+				free($3);
+			} else
+				(void)strlcpy(conf->sc_conf.agentx_path,
+				    "/var/run/agentx.sock",
+				    sizeof(conf->sc_conf.agentx_path));
 		}
 		| SOCKET STRING {
 			conf->sc_ps->ps_csock.cs_name = $2;
 		}
 		;
+
+path		: /* nothing */		{ $$ = NULL; }
+		| PATH STRING		{ $$ = $2; }
+
+context		: /* nothing */		{ $$ = NULL; }
+		| CONTEXT STRING	{ $$ = $2; }
 
 trap		: /* nothing */		{ $$ = 0; }
 		| TRAP			{ $$ = 1; }
@@ -2376,6 +2409,7 @@ lookup(char *s)
 {
 	/* this has to be sorted always */
 	static const struct keywords keywords[] = {
+		{ "agentx",		AGENTX },
 		{ "append",		APPEND },
 		{ "backlog",		BACKLOG },
 		{ "backup",		BACKUP },
@@ -2391,6 +2425,7 @@ lookup(char *s)
 		{ "ciphers",		CIPHERS },
 		{ "code",		CODE },
 		{ "connection",		CONNECTION },
+		{ "context",		CONTEXT },
 		{ "cookie",		COOKIE },
 		{ "demote",		DEMOTE },
 		{ "destination",	DESTINATION },

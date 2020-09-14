@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.183 2020/08/19 14:23:26 mestre Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.184 2020/09/14 11:30:25 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -185,7 +185,6 @@ main(int argc, char *argv[])
 	TAILQ_INIT(&env->sc_hosts);
 	TAILQ_INIT(&env->sc_sessions);
 	env->sc_rtable = getrtable();
-	env->sc_snmp = -1;
 	/* initialize the TLS session id to a random key for all relay procs */
 	arc4random_buf(env->sc_conf.tls_sid, sizeof(env->sc_conf.tls_sid));
 
@@ -430,8 +429,8 @@ parent_dispatch_pfe(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_CFG_DONE:
 		parent_configure_done(env);
 		break;
-	case IMSG_SNMPSOCK:
-		(void)snmp_setsock(env, p->p_id);
+	case IMSG_AGENTXSOCK:
+		(void)agentx_setsock(env, p->p_id);
 		break;
 	default:
 		return (-1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe.c,v 1.89 2017/05/28 10:39:15 benno Exp $	*/
+/*	$OpenBSD: pfe.c,v 1.90 2020/09/14 11:30:25 martijn Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -160,7 +160,10 @@ pfe_dispatch_hce(int fd, struct privsep_proc *p, struct imsg *imsg)
 		log_debug("%s: state %d for host %u %s", __func__,
 		    st.up, host->conf.id, host->conf.name);
 
+/* XXX Readd hosttrap code later */
+#if 0
 		snmp_hosttrap(env, table, host);
+#endif
 
 		/*
 		 * Do not change the table state when the host
@@ -226,7 +229,7 @@ pfe_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_CFG_DONE:
 		config_getcfg(env, imsg);
 		init_tables(env);
-		snmp_init(env, PROC_PARENT);
+		agentx_init(env);
 		break;
 	case IMSG_CTL_START:
 		pfe_setup_events();
@@ -235,8 +238,8 @@ pfe_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_CTL_RESET:
 		config_getreset(env, imsg);
 		break;
-	case IMSG_SNMPSOCK:
-		snmp_getsock(env, imsg);
+	case IMSG_AGENTXSOCK:
+		agentx_getsock(imsg);
 		break;
 	default:
 		return (-1);

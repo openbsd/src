@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.261 2020/05/14 17:27:39 pvk Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.262 2020/09/14 11:30:25 martijn Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -26,6 +26,7 @@
 #include <sys/queue.h>
 #include <sys/tree.h>
 #include <sys/time.h>
+#include <sys/un.h>
 
 #include <net/if.h>
 #include <net/pfvar.h>
@@ -97,7 +98,7 @@
 #define ICMP_BUF_SIZE		64
 #define ICMP_RCVBUF_SIZE	262144
 
-#define SNMP_RECONNECT_TIMEOUT	{ 3, 0 }	/* sec, usec */
+#define AGENTX_RECONNECT_TIMEOUT	{ 3, 0 }	/* sec, usec */
 
 #define PROC_PARENT_SOCK_FILENO	3
 #define PROC_MAX_INSTANCES	32
@@ -389,7 +390,7 @@ union hashkey {
 #define F_DEMOTED		0x00008000
 #define F_UDP			0x00010000
 #define F_RETURN		0x00020000
-#define F_SNMP			0x00040000
+#define F_AGENTX		0x00040000
 #define F_NEEDPF		0x00080000
 #define F_PORT			0x00100000
 #define F_TLSCLIENT		0x00200000
@@ -399,7 +400,7 @@ union hashkey {
 #define F_SCRIPT		0x02000000
 #define F_TLSINSPECT		0x04000000
 #define F_HASHKEY		0x08000000
-#define	F_SNMP_TRAPONLY		0x10000000
+#define F_AGENTX_TRAPONLY	0x10000000
 
 #define F_BITS								\
 	"\10\01DISABLE\02BACKUP\03USED\04DOWN\05ADD\06DEL\07CHANGED"	\
@@ -407,7 +408,7 @@ union hashkey {
 	"\14TLS\15NAT_LOOKUP\16DEMOTE\17LOOKUP_PATH\20DEMOTED\21UDP"	\
 	"\22RETURN\23TRAP\24NEEDPF\25PORT\26TLS_CLIENT\27NEEDRT"	\
 	"\30MATCH\31DIVERT\32SCRIPT\33TLS_INSPECT\34HASHKEY"		\
-	"\35SNMP_TRAPONLY"
+	"\35AGENTX_TRAPONLY"
 
 enum forwardmode {
 	FWD_NORMAL		= 0,
@@ -986,7 +987,7 @@ enum imsg_type {
 	IMSG_DEMOTE,
 	IMSG_STATISTICS,
 	IMSG_SCRIPT,
-	IMSG_SNMPSOCK,
+	IMSG_AGENTXSOCK,
 	IMSG_BINDANY,
 	IMSG_RTMSG,		/* from pfe to parent */
 	IMSG_CFG_TABLE,		/* configuration from parent */
@@ -1073,7 +1074,8 @@ struct privsep_fd {
 
 struct relayd_config {
 	char			 tls_sid[SSL_MAX_SID_CTX_LENGTH];
-	char			 snmp_path[PATH_MAX];
+	char			 agentx_path[sizeof(((struct sockaddr_un *)NULL)->sun_path)];
+	char			 agentx_context[32];
 	struct timeval		 interval;
 	struct timeval		 timeout;
 	struct timeval		 statinterval;
@@ -1121,9 +1123,7 @@ struct relayd {
 
 	struct event		 sc_statev;
 
-	int			 sc_snmp;
-	struct event		 sc_snmpto;
-	struct event		 sc_snmpev;
+	struct event		 sc_agentxev;
 
 	int			 sc_has_icmp;
 	int			 sc_has_icmp6;
@@ -1393,10 +1393,10 @@ const char	*tag_id2name(u_int16_t);
 void		 tag_unref(u_int16_t);
 void		 tag_ref(u_int16_t);
 
-/* snmp.c */
-void	 snmp_init(struct relayd *, enum privsep_procid);
-void	 snmp_setsock(struct relayd *, enum privsep_procid);
-int	 snmp_getsock(struct relayd *, struct imsg *);
+/* agentx_control.c */
+void	 agentx_init(struct relayd *);
+void	 agentx_setsock(struct relayd *, enum privsep_procid);
+int	 agentx_getsock(struct imsg *);
 void	 snmp_hosttrap(struct relayd *, struct table *, struct host *);
 
 /* shuffle.c */
