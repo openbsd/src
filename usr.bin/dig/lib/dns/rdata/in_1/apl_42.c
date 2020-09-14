@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: apl_42.c,v 1.13 2020/02/26 18:47:59 florian Exp $ */
+/* $Id: apl_42.c,v 1.14 2020/09/14 08:40:44 florian Exp $ */
 
 /* RFC3123 */
 
@@ -28,7 +28,7 @@ totext_in_apl(ARGS_TOTEXT) {
 	uint16_t afi;
 	uint8_t prefix;
 	uint8_t len;
-	isc_boolean_t neg;
+	int neg;
 	unsigned char buf[16];
 	char txt[sizeof(" !64000:")];
 	const char *sep = "";
@@ -50,7 +50,7 @@ totext_in_apl(ARGS_TOTEXT) {
 		prefix = *sr.base;
 		isc_region_consume(&sr, 1);
 		len = (*sr.base & 0x7f);
-		neg = ISC_TF((*sr.base & 0x80) != 0);
+		neg = (*sr.base & 0x80) != 0;
 		isc_region_consume(&sr, 1);
 		INSIST(len <= sr.length);
 		n = snprintf(txt, sizeof(txt), "%s%s%u:", sep,

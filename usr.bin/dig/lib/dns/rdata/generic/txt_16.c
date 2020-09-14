@@ -28,7 +28,7 @@ generic_totext_txt(ARGS_TOTEXT) {
 	dns_rdata_toregion(rdata, &region);
 
 	while (region.length > 0) {
-		RETERR(txt_totext(&region, ISC_TRUE, target));
+		RETERR(txt_totext(&region, 1, target));
 		if (region.length > 0)
 			RETERR(isc_str_tobuffer(" ", target));
 	}

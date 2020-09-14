@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdata.c,v 1.31 2020/09/14 08:39:12 florian Exp $ */
+/* $Id: rdata.c,v 1.32 2020/09/14 08:40:43 florian Exp $ */
 
 /*! \file */
 
@@ -64,7 +64,7 @@
 #define ARGS_FREESTRUCT void *source
 
 #define ARGS_CHECKOWNER dns_name_t *name, dns_rdataclass_t rdclass, \
-			dns_rdatatype_t type, isc_boolean_t wildcard
+			dns_rdatatype_t type, int wildcard
 
 /*%
  * Context structure for the totext_ functions.
@@ -84,7 +84,7 @@ typedef struct dns_rdata_type_lookup {
 } dns_rdata_type_lookup_t;
 
 static isc_result_t
-txt_totext(isc_region_t *source, isc_boolean_t quote, isc_buffer_t *target);
+txt_totext(isc_region_t *source, int quote, isc_buffer_t *target);
 
 static isc_result_t
 txt_fromwire(isc_buffer_t *source, isc_buffer_t *target);
@@ -92,7 +92,7 @@ txt_fromwire(isc_buffer_t *source, isc_buffer_t *target);
 static isc_result_t
 multitxt_totext(isc_region_t *source, isc_buffer_t *target);
 
-static isc_boolean_t
+static int
 name_prefix(dns_name_t *name, dns_name_t *origin, dns_name_t *target);
 
 static unsigned int
@@ -101,7 +101,7 @@ name_length(dns_name_t *name);
 static isc_result_t
 inet_totext(int af, isc_region_t *src, isc_buffer_t *target);
 
-static isc_boolean_t
+static int
 buffer_empty(isc_buffer_t *source);
 
 static isc_result_t
@@ -183,13 +183,13 @@ typemap_totext(isc_region_t *sr, dns_rdata_textctx_t *tctx,
 {
 	unsigned int i, j, k;
 	unsigned int window, len;
-	isc_boolean_t first = ISC_TRUE;
+	int first = 1;
 
 	for (i = 0; i < sr->length; i += len) {
 		if (tctx != NULL &&
 		    (tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
 			RETERR(isc_str_tobuffer(tctx->linebreak, target));
-			first = ISC_TRUE;
+			first = 1;
 		}
 		INSIST(i + 2 <= sr->length);
 		window = sr->base[i];
@@ -207,7 +207,7 @@ typemap_totext(isc_region_t *sr, dns_rdata_textctx_t *tctx,
 				t = window * 256 + j * 8 + k;
 				if (!first)
 					RETERR(isc_str_tobuffer(" ", target));
-				first = ISC_FALSE;
+				first = 0;
 				RETERR(dns_rdatatype_totext(t, target));
 			}
 		}
@@ -216,10 +216,10 @@ typemap_totext(isc_region_t *sr, dns_rdata_textctx_t *tctx,
 }
 
 static isc_result_t
-typemap_test(isc_region_t *sr, isc_boolean_t allow_empty) {
+typemap_test(isc_region_t *sr, int allow_empty) {
 	unsigned int window, lastwindow = 0;
 	unsigned int len;
-	isc_boolean_t first = ISC_TRUE;
+	int first = 1;
 	unsigned int i;
 
 	for (i = 0; i < sr->length; i += len) {
@@ -252,7 +252,7 @@ typemap_test(isc_region_t *sr, isc_boolean_t allow_empty) {
 		if (sr->base[i + len - 1] == 0)
 			return (DNS_R_FORMERR);
 		lastwindow = window;
-		first = ISC_FALSE;
+		first = 0;
 	}
 	if (i != sr->length)
 		return (DNS_R_EXTRADATA);
@@ -363,7 +363,7 @@ dns_rdata_fromwire(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
 	isc_region_t region;
 	isc_buffer_t ss;
 	isc_buffer_t st;
-	isc_boolean_t use_default = ISC_FALSE;
+	int use_default = 0;
 	uint32_t activelength;
 	unsigned int length;
 
@@ -429,7 +429,7 @@ dns_rdata_towire(dns_rdata_t *rdata, dns_compress_t *cctx,
 		 isc_buffer_t *target)
 {
 	isc_result_t result = ISC_R_NOTIMPLEMENTED;
-	isc_boolean_t use_default = ISC_FALSE;
+	int use_default = 0;
 	isc_region_t tr;
 	isc_buffer_t st;
 
@@ -511,12 +511,11 @@ rdata_totext(dns_rdata_t *rdata, dns_rdata_textctx_t *tctx,
 	     isc_buffer_t *target)
 {
 	isc_result_t result = ISC_R_NOTIMPLEMENTED;
-	isc_boolean_t use_default = ISC_FALSE;
+	int use_default = 0;
 	unsigned int cur;
 
 	REQUIRE(rdata != NULL);
-	REQUIRE(tctx->origin == NULL ||
-		dns_name_isabsolute(tctx->origin) == ISC_TRUE);
+	REQUIRE(tctx->origin == NULL ||	dns_name_isabsolute(tctx->origin));
 
 	/*
 	 * Some DynDNS meta-RRs have empty rdata.
@@ -714,9 +713,9 @@ dns_rdata_freestruct_tsig(dns_rdata_any_tsig_t *tsig) {
 	freestruct_any_tsig(tsig);
 }
 
-isc_boolean_t
+int
 dns_rdata_checkowner_nsec3(dns_name_t *name, dns_rdataclass_t rdclass,
-		     dns_rdatatype_t type, isc_boolean_t wildcard)
+		     dns_rdatatype_t type, int wildcard)
 {
 	return checkowner_nsec3(name, rdclass, type, wildcard);
 }
@@ -1093,7 +1092,7 @@ name_length(dns_name_t *name) {
 }
 
 static isc_result_t
-txt_totext(isc_region_t *source, isc_boolean_t quote, isc_buffer_t *target) {
+txt_totext(isc_region_t *source, int quote, isc_buffer_t *target) {
 	unsigned int tl;
 	unsigned int n;
 	unsigned char *sp;
@@ -1109,7 +1108,7 @@ txt_totext(isc_region_t *source, isc_boolean_t quote, isc_buffer_t *target) {
 
 	REQUIRE(n + 1 <= source->length);
 	if (n == 0U)
-		REQUIRE(quote == ISC_TRUE);
+		REQUIRE(quote);
 
 	if (quote) {
 		if (tl < 1)
@@ -1244,7 +1243,7 @@ multitxt_totext(isc_region_t *source, isc_buffer_t *target) {
 	return (ISC_R_SUCCESS);
 }
 
-static isc_boolean_t
+static int
 name_prefix(dns_name_t *name, dns_name_t *origin, dns_name_t *target) {
 	int l1, l2;
 
@@ -1269,11 +1268,11 @@ name_prefix(dns_name_t *name, dns_name_t *origin, dns_name_t *target) {
 		goto return_false;
 
 	dns_name_getlabelsequence(name, 0, l1 - l2, target);
-	return (ISC_TRUE);
+	return (1);
 
 return_false:
 	*target = *name;
-	return (ISC_FALSE);
+	return (0);
 }
 
 static isc_result_t
@@ -1289,9 +1288,9 @@ inet_totext(int af, isc_region_t *src, isc_buffer_t *target) {
 	return (ISC_R_SUCCESS);
 }
 
-static isc_boolean_t
+static int
 buffer_empty(isc_buffer_t *source) {
-	return((source->current == source->active) ? ISC_TRUE : ISC_FALSE);
+	return((source->current == source->active) ? 1 : 0);
 }
 
 static isc_result_t

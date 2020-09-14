@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec3_50.c,v 1.12 2020/02/26 18:49:02 florian Exp $ */
+/* $Id: nsec3_50.c,v 1.13 2020/09/14 08:40:43 florian Exp $ */
 
 /*
  * Copyright (C) 2004  Nominet, Ltd.
@@ -146,7 +146,7 @@ fromwire_nsec3(ARGS_FROMWIRE) {
 		return (DNS_R_FORMERR);
 	isc_region_consume(&sr, hashlen);
 
-	RETERR(typemap_test(&sr, ISC_TRUE));
+	RETERR(typemap_test(&sr, 1));
 
 	RETERR(isc_mem_tobuffer(target, rr.base, rr.length));
 	isc_buffer_forward(source, rr.length);
@@ -167,7 +167,7 @@ towire_nsec3(ARGS_TOWIRE) {
 }
 
 #define NSEC3_MAX_HASH_LENGTH 155
-static inline isc_boolean_t
+static inline int
 checkowner_nsec3(ARGS_CHECKOWNER) {
 	unsigned char owner[NSEC3_MAX_HASH_LENGTH];
 	isc_buffer_t buffer;
@@ -186,9 +186,9 @@ checkowner_nsec3(ARGS_CHECKOWNER) {
 	isc_region_consume(&label, 1);
 	isc_buffer_init(&buffer, owner, sizeof(owner));
 	if (isc_base32hexnp_decoderegion(&label, &buffer) == ISC_R_SUCCESS)
-		return (ISC_TRUE);
+		return (1);
 
-	return (ISC_FALSE);
+	return (0);
 }
 
 #endif	/* RDATA_GENERIC_NSEC3_50_C */

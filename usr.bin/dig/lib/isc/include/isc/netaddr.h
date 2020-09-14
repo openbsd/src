@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: netaddr.h,v 1.5 2020/09/14 08:39:12 florian Exp $ */
+/* $Id: netaddr.h,v 1.6 2020/09/14 08:40:44 florian Exp $ */
 
 #ifndef ISC_NETADDR_H
 #define ISC_NETADDR_H 1
@@ -42,7 +42,7 @@ struct isc_netaddr {
 /*%<
  * Compare the 'prefixlen' most significant bits of the network
  * addresses 'a' and 'b'.  If 'b''s scope is zero then 'a''s scope is
- * ignored.  Return #ISC_TRUE if they are equal, #ISC_FALSE if not.
+ * ignored.  Return #1 if they are equal, #0 if not.
  */
 
 isc_result_t
@@ -74,22 +74,22 @@ isc_netaddr_format(const isc_netaddr_t *na, char *array, unsigned int size);
 void
 isc_netaddr_fromsockaddr(isc_netaddr_t *netaddr, const isc_sockaddr_t *source);
 
-isc_boolean_t
+int
 isc_netaddr_ismulticast(isc_netaddr_t *na);
 /*%<
- * Returns ISC_TRUE if the address is a multicast address.
+ * Returns 1 if the address is a multicast address.
  */
 
-isc_boolean_t
+int
 isc_netaddr_islinklocal(isc_netaddr_t *na);
 /*%<
- * Returns #ISC_TRUE if the address is a link local address.
+ * Returns #1 if the address is a link local address.
  */
 
-isc_boolean_t
+int
 isc_netaddr_issitelocal(isc_netaddr_t *na);
 /*%<
- * Returns #ISC_TRUE if the address is a site local address.
+ * Returns #1 if the address is a site local address.
  */
 
 #endif /* ISC_NETADDR_H */

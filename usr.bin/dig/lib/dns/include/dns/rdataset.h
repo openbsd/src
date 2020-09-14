@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdataset.h,v 1.9 2020/02/24 17:57:54 florian Exp $ */
+/* $Id: rdataset.h,v 1.10 2020/09/14 08:40:43 florian Exp $ */
 
 #ifndef DNS_RDATASET_H
 #define DNS_RDATASET_H 1
@@ -228,7 +228,7 @@ dns_rdataset_disassociate(dns_rdataset_t *rdataset);
  *\li	'rdataset' is a valid, disassociated rdataset.
  */
 
-isc_boolean_t
+int
 dns_rdataset_isassociated(dns_rdataset_t *rdataset);
 /*%<
  * Is 'rdataset' associated?
@@ -237,8 +237,8 @@ dns_rdataset_isassociated(dns_rdataset_t *rdataset);
  *\li	'rdataset' is a valid rdataset.
  *
  * Returns:
- *\li	#ISC_TRUE			'rdataset' is associated.
- *\li	#ISC_FALSE			'rdataset' is not associated.
+ *\li	#1			'rdataset' is associated.
+ *\li	#0			'rdataset' is not associated.
  */
 
 void
@@ -323,8 +323,8 @@ dns_rdataset_current(dns_rdataset_t *rdataset, dns_rdata_t *rdata);
 isc_result_t
 dns_rdataset_totext(dns_rdataset_t *rdataset,
 		    dns_name_t *owner_name,
-		    isc_boolean_t omit_final_dot,
-		    isc_boolean_t question,
+		    int omit_final_dot,
+		    int question,
 		    isc_buffer_t *target);
 /*%<
  * Convert 'rdataset' to text format, storing the result in 'target'.
@@ -332,8 +332,8 @@ dns_rdataset_totext(dns_rdataset_t *rdataset,
  * Notes:
  *\li	The rdata cursor position will be changed.
  *
- *\li	The 'question' flag should normally be #ISC_FALSE.  If it is
- *	#ISC_TRUE, the TTL and rdata fields are not printed.  This is
+ *\li	The 'question' flag should normally be #0.  If it is
+ *	#1, the TTL and rdata fields are not printed.  This is
  *	for use when printing an rdata representing a question section.
  *
  *\li	This interface is deprecated; use dns_master_rdatasettottext()

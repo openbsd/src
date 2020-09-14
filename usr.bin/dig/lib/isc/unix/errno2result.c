@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: errno2result.c,v 1.4 2020/02/13 21:34:06 jung Exp $ */
+/* $Id: errno2result.c,v 1.5 2020/09/14 08:40:44 florian Exp $ */
 
 /*! \file */
 
@@ -33,7 +33,7 @@
  * not already there.
  */
 isc_result_t
-isc___errno2result(int posixerrno, isc_boolean_t dolog,
+isc___errno2result(int posixerrno, int dolog,
 		   const char *file, unsigned int line)
 {
 	switch (posixerrno) {

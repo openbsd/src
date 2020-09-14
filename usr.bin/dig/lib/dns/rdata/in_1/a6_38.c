@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a6_38.c,v 1.13 2020/09/14 08:39:12 florian Exp $ */
+/* $Id: a6_38.c,v 1.14 2020/09/14 08:40:44 florian Exp $ */
 
 /* RFC2874 */
 
@@ -31,7 +31,7 @@ totext_in_a6(ARGS_TOTEXT) {
 	char buf[sizeof("128")];
 	dns_name_t name;
 	dns_name_t prefix;
-	isc_boolean_t sub;
+	int sub;
 
 	REQUIRE(rdata->type == dns_rdatatype_a6);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);

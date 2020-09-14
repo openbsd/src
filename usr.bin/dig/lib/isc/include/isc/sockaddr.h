@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sockaddr.h,v 1.4 2020/09/14 08:39:12 florian Exp $ */
+/* $Id: sockaddr.h,v 1.5 2020/09/14 08:40:44 florian Exp $ */
 
 #ifndef ISC_SOCKADDR_H
 #define ISC_SOCKADDR_H 1
@@ -48,7 +48,7 @@ struct isc_sockaddr {
 #define ISC_SOCKADDR_CMPSCOPEZERO 0x0008	/*%< when comparing scopes
 						 *   zero scopes always match */
 
-isc_boolean_t
+int
 isc_sockaddr_compare(const isc_sockaddr_t *a, const isc_sockaddr_t *b,
 		     unsigned int flags);
 /*%<
@@ -58,16 +58,16 @@ isc_sockaddr_compare(const isc_sockaddr_t *a, const isc_sockaddr_t *b,
  * 'flags' is set from ISC_SOCKADDR_CMP*.
  */
 
-isc_boolean_t
+int
 isc_sockaddr_equal(const isc_sockaddr_t *a, const isc_sockaddr_t *b);
 /*%<
- * Return ISC_TRUE iff the socket addresses 'a' and 'b' are equal.
+ * Return 1 iff the socket addresses 'a' and 'b' are equal.
  */
 
-isc_boolean_t
+int
 isc_sockaddr_eqaddr(const isc_sockaddr_t *a, const isc_sockaddr_t *b);
 /*%<
- * Return ISC_TRUE iff the address parts of the socket addresses
+ * Return 1 iff the address parts of the socket addresses
  * 'a' and 'b' are equal, ignoring the ports.
  */
 
@@ -149,22 +149,22 @@ isc_sockaddr_format(const isc_sockaddr_t *sa, char *array, unsigned int size);
  * The resulting string is guaranteed to be null-terminated.
  */
 
-isc_boolean_t
+int
 isc_sockaddr_ismulticast(const isc_sockaddr_t *sa);
 /*%<
- * Returns #ISC_TRUE if the address is a multicast address.
+ * Returns #1 if the address is a multicast address.
  */
 
-isc_boolean_t
+int
 isc_sockaddr_islinklocal(const isc_sockaddr_t *sa);
 /*%<
- * Returns ISC_TRUE if the address is a link local address.
+ * Returns 1 if the address is a link local address.
  */
 
-isc_boolean_t
+int
 isc_sockaddr_issitelocal(const isc_sockaddr_t *sa);
 /*%<
- * Returns ISC_TRUE if the address is a sitelocal address.
+ * Returns 1 if the address is a sitelocal address.
  */
 
 #define ISC_SOCKADDR_FORMATSIZE \

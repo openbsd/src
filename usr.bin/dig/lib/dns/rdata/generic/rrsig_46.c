@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rrsig_46.c,v 1.12 2020/02/26 18:47:59 florian Exp $ */
+/* $Id: rrsig_46.c,v 1.13 2020/09/14 08:40:43 florian Exp $ */
 
 /* Reviewed: Fri Mar 17 09:05:02 PST 2000 by gson */
 
@@ -107,7 +107,7 @@ totext_rrsig(ARGS_TOTEXT) {
 	dns_name_init(&name, NULL);
 	dns_name_fromregion(&name, &sr);
 	isc_region_consume(&sr, name_length(&name));
-	RETERR(dns_name_totext(&name, ISC_FALSE, target));
+	RETERR(dns_name_totext(&name, 0, target));
 
 	/*
 	 * Sig.

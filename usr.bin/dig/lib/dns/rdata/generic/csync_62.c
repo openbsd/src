@@ -75,7 +75,7 @@ fromwire_csync(ARGS_FROMWIRE) {
 	isc_buffer_forward(source, 6);
 	isc_region_consume(&sr, 6);
 
-	RETERR(typemap_test(&sr, ISC_TRUE));
+	RETERR(typemap_test(&sr, 1));
 
 	RETERR(isc_mem_tobuffer(target, sr.base, sr.length));
 	isc_buffer_forward(source, sr.length);

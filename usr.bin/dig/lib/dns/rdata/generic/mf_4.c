@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: mf_4.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
+/* $Id: mf_4.c,v 1.11 2020/09/14 08:40:43 florian Exp $ */
 
 /* reviewed: Wed Mar 15 17:47:33 PST 2000 by brister */
 
@@ -26,7 +26,7 @@ totext_mf(ARGS_TOTEXT) {
 	isc_region_t region;
 	dns_name_t name;
 	dns_name_t prefix;
-	isc_boolean_t sub;
+	int sub;
 
 	REQUIRE(rdata->type == dns_rdatatype_mf);
 	REQUIRE(rdata->length != 0);

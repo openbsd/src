@@ -80,9 +80,9 @@ struct isc_taskmgr {
 	isc_taskmgrmode_t		mode;
 	unsigned int			tasks_running;
 	unsigned int			tasks_ready;
-	isc_boolean_t			pause_requested;
-	isc_boolean_t			exclusive_requested;
-	isc_boolean_t			exiting;
+	int			pause_requested;
+	int			exclusive_requested;
+	int			exiting;
 
 	/*
 	 * Multiple threads can read/write 'excl' at the same time, so we need
@@ -99,7 +99,7 @@ struct isc_taskmgr {
 
 static isc_taskmgr_t *taskmgr = NULL;
 
-static inline isc_boolean_t
+static inline int
 empty_readyq(isc_taskmgr_t *manager);
 
 static inline isc_task_t *
@@ -132,7 +132,7 @@ isc_task_create(isc_taskmgr_t *manager, unsigned int quantum,
 		 isc_task_t **taskp)
 {
 	isc_task_t *task;
-	isc_boolean_t exiting;
+	int exiting;
 
 	REQUIRE(taskp != NULL && *taskp == NULL);
 
@@ -154,13 +154,13 @@ isc_task_create(isc_taskmgr_t *manager, unsigned int quantum,
 	INIT_LINK(task, ready_link);
 	INIT_LINK(task, ready_priority_link);
 
-	exiting = ISC_FALSE;
+	exiting = 0;
 	if (!manager->exiting) {
 		if (task->quantum == 0)
 			task->quantum = manager->default_quantum;
 		APPEND(manager->tasks, task, link);
 	} else
-		exiting = ISC_TRUE;
+		exiting = 1;
 
 	if (exiting) {
 		free(task);
@@ -186,9 +186,9 @@ isc_task_attach(isc_task_t *source0, isc_task_t **targetp) {
 	*targetp = (isc_task_t *)source;
 }
 
-static inline isc_boolean_t
+static inline int
 task_shutdown(isc_task_t *task) {
-	isc_boolean_t was_idle = ISC_FALSE;
+	int was_idle = 0;
 	isc_event_t *event, *prev;
 
 	/*
@@ -200,7 +200,7 @@ task_shutdown(isc_task_t *task) {
 		if (task->state == task_state_idle) {
 			INSIST(EMPTY(task->events));
 			task->state = task_state_ready;
-			was_idle = ISC_TRUE;
+			was_idle = 1;
 		}
 		INSIST(task->state == task_state_ready ||
 		       task->state == task_state_running);
@@ -235,7 +235,7 @@ task_ready(isc_task_t *task) {
 	push_readyq(manager, task);
 }
 
-static inline isc_boolean_t
+static inline int
 task_detach(isc_task_t *task) {
 
 	/*
@@ -256,16 +256,16 @@ task_detach(isc_task_t *task) {
 		 * loop to deal with shutting down and termination.
 		 */
 		task->state = task_state_ready;
-		return (ISC_TRUE);
+		return (1);
 	}
 
-	return (ISC_FALSE);
+	return (0);
 }
 
 void
 isc_task_detach(isc_task_t **taskp) {
 	isc_task_t *task;
-	isc_boolean_t was_idle;
+	int was_idle;
 
 	/*
 	 * Detach *taskp from its task.
@@ -282,9 +282,9 @@ isc_task_detach(isc_task_t **taskp) {
 	*taskp = NULL;
 }
 
-static inline isc_boolean_t
+static inline int
 task_send(isc_task_t *task, isc_event_t **eventp) {
-	isc_boolean_t was_idle = ISC_FALSE;
+	int was_idle = 0;
 	isc_event_t *event;
 
 	/*
@@ -299,7 +299,7 @@ task_send(isc_task_t *task, isc_event_t **eventp) {
 	REQUIRE(!ISC_LINK_LINKED(event, ev_ratelink));
 
 	if (task->state == task_state_idle) {
-		was_idle = ISC_TRUE;
+		was_idle = 1;
 		INSIST(EMPTY(task->events));
 		task->state = task_state_ready;
 	}
@@ -314,7 +314,7 @@ task_send(isc_task_t *task, isc_event_t **eventp) {
 
 void
 isc_task_send(isc_task_t *task, isc_event_t **eventp) {
-	isc_boolean_t was_idle;
+	int was_idle;
 
 	/*
 	 * Send '*event' to 'task'.
@@ -349,7 +349,7 @@ isc_task_send(isc_task_t *task, isc_event_t **eventp) {
 
 void
 isc_task_sendanddetach(isc_task_t **taskp, isc_event_t **eventp) {
-	isc_boolean_t idle1, idle2;
+	int idle1, idle2;
 	isc_task_t *task;
 
 	/*
@@ -381,7 +381,7 @@ isc_task_sendanddetach(isc_task_t **taskp, isc_event_t **eventp) {
 static unsigned int
 dequeue_events(isc_task_t *task, void *sender, isc_eventtype_t first,
 	       isc_eventtype_t last, void *tag,
-	       isc_eventlist_t *events, isc_boolean_t purging)
+	       isc_eventlist_t *events, int purging)
 {
 	isc_event_t *event, *next_event;
 	unsigned int count = 0;
@@ -427,7 +427,7 @@ isc_task_purgerange(isc_task_t *task, void *sender, isc_eventtype_t first,
 	ISC_LIST_INIT(events);
 
 	count = dequeue_events(task, sender, first, last, tag, &events,
-			       ISC_TRUE);
+			       1);
 
 	for (event = HEAD(events); event != NULL; event = next_event) {
 		next_event = NEXT(event, ev_link);
@@ -457,13 +457,13 @@ isc_task_setname(isc_task_t *task, const char *name, void *tag) {
  ***/
 
 /*
- * Return ISC_TRUE if the current ready list for the manager, which is
+ * Return 1 if the current ready list for the manager, which is
  * either ready_tasks or the ready_priority_tasks, depending on whether
  * the manager is currently in normal or privileged execution mode.
  *
  * Caller must hold the task manager lock.
  */
-static inline isc_boolean_t
+static inline int
 empty_readyq(isc_taskmgr_t *manager) {
 	isc_tasklist_t queue;
 
@@ -472,7 +472,7 @@ empty_readyq(isc_taskmgr_t *manager) {
 	else
 		queue = manager->ready_priority_tasks;
 
-	return (ISC_TF(EMPTY(queue)));
+	return (EMPTY(queue));
 }
 
 /*
@@ -536,9 +536,9 @@ dispatch(isc_taskmgr_t *manager) {
 		task = pop_readyq(manager);
 		if (task != NULL) {
 			unsigned int dispatch_count = 0;
-			isc_boolean_t done = ISC_FALSE;
-			isc_boolean_t requeue = ISC_FALSE;
-			isc_boolean_t finished = ISC_FALSE;
+			int done = 0;
+			int requeue = 0;
+			int finished = 0;
 			isc_event_t *event;
 
 			/*
@@ -573,7 +573,7 @@ dispatch(isc_taskmgr_t *manager) {
 				if (task->references == 0 &&
 				    EMPTY(task->events) &&
 				    !TASK_SHUTTINGDOWN(task)) {
-					isc_boolean_t was_idle;
+					int was_idle;
 
 					/*
 					 * There are no references and no
@@ -611,11 +611,11 @@ dispatch(isc_taskmgr_t *manager) {
 						/*
 						 * The task is done.
 						 */
-						finished = ISC_TRUE;
+						finished = 1;
 						task->state = task_state_done;
 					} else
 						task->state = task_state_idle;
-					done = ISC_TRUE;
+					done = 1;
 				} else if (dispatch_count >= task->quantum) {
 					/*
 					 * Our quantum has expired, but
@@ -628,8 +628,8 @@ dispatch(isc_taskmgr_t *manager) {
 					 * so the minimum quantum is one.
 					 */
 					task->state = task_state_ready;
-					requeue = ISC_TRUE;
-					done = ISC_TRUE;
+					requeue = 1;
+					done = 1;
 				}
 			} while (!done);
 
@@ -720,9 +720,9 @@ isc_taskmgr_create(unsigned int workers,
 	INIT_LIST(manager->ready_priority_tasks);
 	manager->tasks_running = 0;
 	manager->tasks_ready = 0;
-	manager->exclusive_requested = ISC_FALSE;
-	manager->pause_requested = ISC_FALSE;
-	manager->exiting = ISC_FALSE;
+	manager->exclusive_requested = 0;
+	manager->pause_requested = 0;
+	manager->exiting = 0;
 	manager->excl = NULL;
 
 	manager->refs = 1;
@@ -772,7 +772,7 @@ isc_taskmgr_destroy(isc_taskmgr_t **managerp) {
 	 * Make sure we only get called once.
 	 */
 	INSIST(!manager->exiting);
-	manager->exiting = ISC_TRUE;
+	manager->exiting = 1;
 
 	/*
 	 * If privileged mode was on, turn it off.
@@ -802,14 +802,14 @@ isc_taskmgr_destroy(isc_taskmgr_t **managerp) {
 	*managerp = NULL;
 }
 
-isc_boolean_t
+int
 isc_taskmgr_ready(isc_taskmgr_t *manager) {
-	isc_boolean_t is_ready;
+	int is_ready;
 
 	if (manager == NULL)
 		manager = taskmgr;
 	if (manager == NULL)
-		return (ISC_FALSE);
+		return (0);
 
 	is_ready = !empty_readyq(manager);
 

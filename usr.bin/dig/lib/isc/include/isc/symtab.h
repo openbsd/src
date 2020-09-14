@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: symtab.h,v 1.3 2020/02/17 18:58:39 jung Exp $ */
+/* $Id: symtab.h,v 1.4 2020/09/14 08:40:44 florian Exp $ */
 
 #ifndef ISC_SYMTAB_H
 #define ISC_SYMTAB_H 1
@@ -110,7 +110,7 @@ typedef enum {
 isc_result_t
 isc_symtab_create(unsigned int size,
 		  isc_symtabaction_t undefine_action, void *undefine_arg,
-		  isc_boolean_t case_sensitive, isc_symtab_t **symtabp);
+		  int case_sensitive, isc_symtab_t **symtabp);
 
 /*% Destroy a symbol table. */
 void

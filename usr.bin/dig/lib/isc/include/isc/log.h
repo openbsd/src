@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.h,v 1.7 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: log.h,v 1.8 2020/09/14 08:40:44 florian Exp $ */
 
 #ifndef ISC_LOG_H
 #define ISC_LOG_H 1
@@ -123,7 +123,7 @@ typedef struct isc_logfile {
 	 * to a size large enough for the largest possible file on a system.
 	 */
 	off_t maximum_size;
-	isc_boolean_t maximum_reached; /*%< Private. */
+	int maximum_reached; /*%< Private. */
 } isc_logfile_t;
 
 /*%
@@ -540,13 +540,13 @@ isc_log_setdebuglevel(isc_log_t *lctx, unsigned int level);
  *\li	The debugging level is set to the requested value.
  */
 
-isc_boolean_t
+int
 isc_log_wouldlog(isc_log_t *lctx, int level);
 /*%<
  * Determine whether logging something to 'lctx' at 'level' would
  * actually cause something to be logged somewhere.
  *
- * If #ISC_FALSE is returned, it is guaranteed that nothing would
+ * If #0 is returned, it is guaranteed that nothing would
  * be logged, allowing the caller to omit unnecessary
  * isc_log_write() calls and possible message preformatting.
  */

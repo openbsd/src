@@ -60,7 +60,7 @@ totext_caa(ARGS_TOTEXT) {
 	/*
 	 * Tag
 	 */
-	RETERR(txt_totext(&region, ISC_FALSE, target));
+	RETERR(txt_totext(&region, 0, target));
 	RETERR(isc_str_tobuffer(" ", target));
 
 	/*

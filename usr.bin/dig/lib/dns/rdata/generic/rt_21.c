@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rt_21.c,v 1.11 2020/02/26 18:47:59 florian Exp $ */
+/* $Id: rt_21.c,v 1.12 2020/09/14 08:40:43 florian Exp $ */
 
 /* reviewed: Thu Mar 16 15:02:31 PST 2000 by brister */
 
@@ -28,7 +28,7 @@ totext_rt(ARGS_TOTEXT) {
 	isc_region_t region;
 	dns_name_t name;
 	dns_name_t prefix;
-	isc_boolean_t sub;
+	int sub;
 	char buf[sizeof("64000")];
 	unsigned short num;
 

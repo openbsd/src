@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: heap.h,v 1.3 2020/02/13 13:53:01 jsg Exp $ */
+/* $Id: heap.h,v 1.4 2020/09/14 08:40:44 florian Exp $ */
 
 #ifndef ISC_HEAP_H
 #define ISC_HEAP_H 1
@@ -24,10 +24,10 @@
 #include <isc/types.h>
 
 /*%
- * The comparison function returns ISC_TRUE if the first argument has
- * higher priority than the second argument, and ISC_FALSE otherwise.
+ * The comparison function returns 1 if the first argument has
+ * higher priority than the second argument, and 0 otherwise.
  */
-typedef isc_boolean_t (*isc_heapcompare_t)(void *, void *);
+typedef int (*isc_heapcompare_t)(void *, void *);
 
 /*%
  * The index function allows the client of the heap to receive a callback
@@ -61,8 +61,8 @@ isc_heap_create(isc_heapcompare_t compare,
  * Requires:
  *\li	"mctx" is valid.
  *\li	"compare" is a function which takes two void * arguments and
- *	returns ISC_TRUE if the first argument has a higher priority than
- *	the second, and ISC_FALSE otherwise.
+ *	returns 1 if the first argument has a higher priority than
+ *	the second, and 0 otherwise.
  *\li	"index" is a function which takes a void *, and an unsigned int
  *	argument.  This function will be called whenever an element's
  *	index value changes, so it may continue to delete itself from the

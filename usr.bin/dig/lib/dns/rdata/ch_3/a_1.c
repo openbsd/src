@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: a_1.c,v 1.12 2020/09/14 08:39:12 florian Exp $ */
+/* $Id: a_1.c,v 1.13 2020/09/14 08:40:43 florian Exp $ */
 
 /* by Bjorn.Victor@it.uu.se, 2005-05-07 */
 /* Based on generic/soa_6.c and generic/mx_15.c */
@@ -27,7 +27,7 @@ totext_ch_a(ARGS_TOTEXT) {
 	isc_region_t region;
 	dns_name_t name;
 	dns_name_t prefix;
-	isc_boolean_t sub;
+	int sub;
 	char buf[sizeof("0177777")];
 	uint16_t addr;
 

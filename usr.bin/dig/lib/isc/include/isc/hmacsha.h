@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hmacsha.h,v 1.5 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: hmacsha.h,v 1.6 2020/09/14 08:40:44 florian Exp $ */
 
 /*! \file isc/hmacsha.h
  * This is the header file for the HMAC-SHA1, HMAC-SHA224, HMAC-SHA256,
@@ -59,7 +59,7 @@ isc_hmacsha1_update(isc_hmacsha1_t *ctx, const unsigned char *buf,
 void
 isc_hmacsha1_sign(isc_hmacsha1_t *ctx, unsigned char *digest, size_t len);
 
-isc_boolean_t
+int
 isc_hmacsha1_verify(isc_hmacsha1_t *ctx, unsigned char *digest, size_t len);
 
 void
@@ -76,7 +76,7 @@ isc_hmacsha224_update(isc_hmacsha224_t *ctx, const unsigned char *buf,
 void
 isc_hmacsha224_sign(isc_hmacsha224_t *ctx, unsigned char *digest, size_t len);
 
-isc_boolean_t
+int
 isc_hmacsha224_verify(isc_hmacsha224_t *ctx, unsigned char *digest, size_t len);
 
 void
@@ -93,7 +93,7 @@ isc_hmacsha256_update(isc_hmacsha256_t *ctx, const unsigned char *buf,
 void
 isc_hmacsha256_sign(isc_hmacsha256_t *ctx, unsigned char *digest, size_t len);
 
-isc_boolean_t
+int
 isc_hmacsha256_verify(isc_hmacsha256_t *ctx, unsigned char *digest, size_t len);
 
 void
@@ -110,7 +110,7 @@ isc_hmacsha384_update(isc_hmacsha384_t *ctx, const unsigned char *buf,
 void
 isc_hmacsha384_sign(isc_hmacsha384_t *ctx, unsigned char *digest, size_t len);
 
-isc_boolean_t
+int
 isc_hmacsha384_verify(isc_hmacsha384_t *ctx, unsigned char *digest, size_t len);
 
 void
@@ -127,7 +127,7 @@ isc_hmacsha512_update(isc_hmacsha512_t *ctx, const unsigned char *buf,
 void
 isc_hmacsha512_sign(isc_hmacsha512_t *ctx, unsigned char *digest, size_t len);
 
-isc_boolean_t
+int
 isc_hmacsha512_verify(isc_hmacsha512_t *ctx, unsigned char *digest, size_t len);
 
 #endif /* ISC_HMACSHA_H */

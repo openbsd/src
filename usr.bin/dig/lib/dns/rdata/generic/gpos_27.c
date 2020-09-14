@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: gpos_27.c,v 1.12 2020/02/26 18:47:59 florian Exp $ */
+/* $Id: gpos_27.c,v 1.13 2020/09/14 08:40:43 florian Exp $ */
 
 /* reviewed: Wed Mar 15 16:48:45 PST 2000 by brister */
 
@@ -36,7 +36,7 @@ totext_gpos(ARGS_TOTEXT) {
 	dns_rdata_toregion(rdata, &region);
 
 	for (i = 0; i < 3; i++) {
-		RETERR(txt_totext(&region, ISC_TRUE, target));
+		RETERR(txt_totext(&region, 1, target));
 		if (i != 2)
 			RETERR(isc_str_tobuffer(" ", target));
 	}

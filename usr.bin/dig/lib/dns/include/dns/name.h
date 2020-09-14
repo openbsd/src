@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: name.h,v 1.11 2020/02/25 05:00:42 jsg Exp $ */
+/* $Id: name.h,v 1.12 2020/09/14 08:40:43 florian Exp $ */
 
 #ifndef DNS_NAME_H
 #define DNS_NAME_H 1
@@ -72,7 +72,6 @@
 
 #include <stdio.h>
 
-#include <isc/boolean.h>
 #include <isc/region.h>		/* Required for storage size of dns_label_t. */
 
 #include <dns/types.h>
@@ -170,7 +169,7 @@ dns_name_init(dns_name_t *name, unsigned char *offsets);
  * Ensures:
  * \li	'name' is a valid name.
  * \li	dns_name_countlabels(name) == 0
- * \li	dns_name_isabsolute(name) == ISC_FALSE
+ * \li	dns_name_isabsolute(name) == 0
  */
 
 void
@@ -195,7 +194,7 @@ dns_name_reset(dns_name_t *name);
  * Ensures:
  * \li	'name' is a valid name.
  * \li	dns_name_countlabels(name) == 0
- * \li	dns_name_isabsolute(name) == ISC_FALSE
+ * \li	dns_name_isabsolute(name) == 0
  */
 
 void
@@ -246,7 +245,7 @@ dns_name_setbuffer(dns_name_t *name, isc_buffer_t *buffer);
  *** Properties
  ***/
 
-isc_boolean_t
+int
 dns_name_isabsolute(const dns_name_t *name);
 /*%<
  * Does 'name' end in the root label?
@@ -260,11 +259,11 @@ dns_name_isabsolute(const dns_name_t *name);
  */
 
 unsigned int
-dns_name_hash(dns_name_t *name, isc_boolean_t case_sensitive);
+dns_name_hash(dns_name_t *name, int case_sensitive);
 /*%<
  * Provide a hash value for 'name'.
  *
- * Note: if 'case_sensitive' is ISC_FALSE, then names which differ only in
+ * Note: if 'case_sensitive' is 0, then names which differ only in
  * case will have the same hash value.
  *
  * Requires:
@@ -346,7 +345,7 @@ dns_name_compare(const dns_name_t *name1, const dns_name_t *name2);
  * \li	> 0		'name1' is greater than 'name2'
  */
 
-isc_boolean_t
+int
 dns_name_equal(const dns_name_t *name1, const dns_name_t *name2);
 /*%<
  * Are 'name1' and 'name2' equal?
@@ -370,17 +369,17 @@ dns_name_equal(const dns_name_t *name1, const dns_name_t *name2);
  * \li	Either name1 is absolute and name2 is absolute, or neither is.
  *
  * Returns:
- * \li	ISC_TRUE	'name1' and 'name2' are equal
- * \li	ISC_FALSE	'name1' and 'name2' are not equal
+ * \li	1	'name1' and 'name2' are equal
+ * \li	0	'name1' and 'name2' are not equal
  */
 
-isc_boolean_t
+int
 dns_name_caseequal(const dns_name_t *name1, const dns_name_t *name2);
 /*%<
  * Case sensitive version of dns_name_equal().
  */
 
-isc_boolean_t
+int
 dns_name_issubdomain(const dns_name_t *name1, const dns_name_t *name2);
 /*%<
  * Is 'name1' a subdomain of 'name2'?
@@ -670,7 +669,7 @@ dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
 #define DNS_NAME_MASTERFILE	0x02U	/* escape $ and @ */
 
 isc_result_t
-dns_name_totext(dns_name_t *name, isc_boolean_t omit_final_dot,
+dns_name_totext(dns_name_t *name, int omit_final_dot,
 		isc_buffer_t *target);
 
 isc_result_t
@@ -840,7 +839,7 @@ dns_name_free(dns_name_t *name);
  *	invalidated.
  */
 
-isc_boolean_t
+int
 dns_name_dynamic(dns_name_t *name);
 /*%<
  * Returns whether there is dynamic memory associated with this name.
@@ -851,7 +850,7 @@ dns_name_dynamic(dns_name_t *name);
  *
  * Returns:
  *
- *\li	'ISC_TRUE' if the name is dynamic otherwise 'ISC_FALSE'.
+ *\li	'1' if the name is dynamic otherwise '0'.
  */
 
 void

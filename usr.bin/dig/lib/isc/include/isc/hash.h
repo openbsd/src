@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hash.h,v 1.3 2020/02/17 18:58:39 jung Exp $ */
+/* $Id: hash.h,v 1.4 2020/09/14 08:40:44 florian Exp $ */
 
 #ifndef ISC_HASH_H
 #define ISC_HASH_H 1
@@ -98,7 +98,7 @@
 
 uint32_t
 isc_hash_function_reverse(const void *data, size_t length,
-			  isc_boolean_t case_sensitive,
+			  int case_sensitive,
 			  const uint32_t *previous_hashp);
 /*!<
  * \brief Calculate a hash over data.
@@ -119,7 +119,7 @@ isc_hash_function_reverse(const void *data, size_t length,
  * 'length' is the size of the data to be hashed.
  *
  * 'case_sensitive' specifies whether the hash key should be treated as
- * case_sensitive values.  It should typically be ISC_FALSE if the hash key
+ * case_sensitive values.  It should typically be 0 if the hash key
  * is a DNS name.
  *
  * 'previous_hashp' is a pointer to a previous hash value returned by

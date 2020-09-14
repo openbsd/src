@@ -14,31 +14,29 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: serial.h,v 1.4 2020/02/17 18:58:39 jung Exp $ */
+/* $Id: serial.h,v 1.5 2020/09/14 08:40:44 florian Exp $ */
 
 #ifndef ISC_SERIAL_H
 #define ISC_SERIAL_H 1
 
 #include <inttypes.h>
 
-#include <isc/boolean.h>
-
 /*! \file isc/serial.h
  *	\brief Implement 32 bit serial space arithmetic comparison functions.
- *	Note: Undefined results are returned as ISC_FALSE.
+ *	Note: Undefined results are returned as 0.
  */
 
 /***
  ***	Functions
  ***/
 
-isc_boolean_t
+int
 isc_serial_gt(uint32_t a, uint32_t b);
 /*%<
  *	Return true if 'a' > 'b' otherwise false.
  */
 
-isc_boolean_t
+int
 isc_serial_ge(uint32_t a, uint32_t b);
 /*%<
  *	Return true if 'a' >= 'b' otherwise false.

@@ -23,7 +23,7 @@ totext_talink(ARGS_TOTEXT) {
 	dns_name_t prev;
 	dns_name_t next;
 	dns_name_t prefix;
-	isc_boolean_t sub;
+	int sub;
 
 	REQUIRE(rdata->type == dns_rdatatype_talink);
 	REQUIRE(rdata->length != 0);

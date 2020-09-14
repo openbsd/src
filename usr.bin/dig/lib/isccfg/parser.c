@@ -141,7 +141,7 @@ static isc_result_t
 cfg_getstringtoken(cfg_parser_t *pctx);
 
 static void
-parser_complain(cfg_parser_t *pctx, isc_boolean_t is_warning,
+parser_complain(cfg_parser_t *pctx, int is_warning,
 		unsigned int flags, const char *format, va_list args);
 
 /*
@@ -253,8 +253,8 @@ cfg_parser_create(isc_log_t *lctx, cfg_parser_t **ret) {
 
 	pctx->lctx = lctx;
 	pctx->lexer = NULL;
-	pctx->seen_eof = ISC_FALSE;
-	pctx->ungotten = ISC_FALSE;
+	pctx->seen_eof = 0;
+	pctx->ungotten = 0;
 	pctx->errors = 0;
 	pctx->open_files = NULL;
 	pctx->closed_files = NULL;
@@ -590,10 +590,10 @@ cfg_parse_listelt(cfg_parser_t *pctx, const cfg_type_t *elttype,
 	return (result);
 }
 
-isc_boolean_t
+int
 cfg_obj_islist(const cfg_obj_t *obj) {
 	REQUIRE(obj != NULL);
-	return (ISC_TF(obj->type->rep == &cfg_rep_list));
+	return (obj->type->rep == &cfg_rep_list);
 }
 
 const cfg_listelt_t *
@@ -615,7 +615,7 @@ cfg_list_next(const cfg_listelt_t *elt) {
  * a list, return 0.
  */
 unsigned int
-cfg_list_length(const cfg_obj_t *obj, isc_boolean_t recurse) {
+cfg_list_length(const cfg_obj_t *obj, int recurse) {
 	const cfg_listelt_t *elt;
 	unsigned int count = 0;
 
@@ -960,7 +960,7 @@ cfg_gettoken(cfg_parser_t *pctx, int options) {
  redo:
 	pctx->token.type = isc_tokentype_unknown;
 	result = isc_lex_gettoken(pctx->lexer, options, &pctx->token);
-	pctx->ungotten = ISC_FALSE;
+	pctx->ungotten = 0;
 	pctx->line = isc_lex_getsourceline(pctx->lexer);
 
 	switch (result) {
@@ -984,7 +984,7 @@ cfg_gettoken(cfg_parser_t *pctx, int options) {
 						value.list, elt, link);
 				goto redo;
 			}
-			pctx->seen_eof = ISC_TRUE;
+			pctx->seen_eof = 1;
 		}
 		break;
 
@@ -1013,7 +1013,7 @@ cfg_ungettoken(cfg_parser_t *pctx) {
 	if (pctx->seen_eof)
 		return;
 	isc_lex_ungettoken(pctx->lexer, &pctx->token);
-	pctx->ungotten = ISC_TRUE;
+	pctx->ungotten = 1;
 }
 
 static isc_result_t
@@ -1056,24 +1056,24 @@ cfg_parser_error(cfg_parser_t *pctx, unsigned int flags, const char *fmt, ...) {
 	REQUIRE(fmt != NULL);
 
 	va_start(args, fmt);
-	parser_complain(pctx, ISC_FALSE, flags, fmt, args);
+	parser_complain(pctx, 0, flags, fmt, args);
 	va_end(args);
 	pctx->errors++;
 }
 
 #define MAX_LOG_TOKEN 30 /* How much of a token to quote in log messages. */
 
-static isc_boolean_t
+static int
 have_current_file(cfg_parser_t *pctx) {
 	cfg_listelt_t *elt;
 	if (pctx->open_files == NULL)
-		return (ISC_FALSE);
+		return (0);
 
 	elt = ISC_LIST_TAIL(pctx->open_files->value.list);
 	if (elt == NULL)
-	      return (ISC_FALSE);
+	      return (0);
 
-	return (ISC_TRUE);
+	return (1);
 }
 
 static char *
@@ -1095,7 +1095,7 @@ current_file(cfg_parser_t *pctx) {
 }
 
 static void
-parser_complain(cfg_parser_t *pctx, isc_boolean_t is_warning,
+parser_complain(cfg_parser_t *pctx, int is_warning,
 		unsigned int flags, const char *format,
 		va_list args)
 {
@@ -1197,7 +1197,7 @@ create_map(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	CHECK(cfg_create_obj(pctx, type, &obj));
 	CHECK(isc_symtab_create(5, /* XXX */
 				map_symtabitem_destroy,
-				pctx, ISC_FALSE, &symtab));
+				pctx, 0, &symtab));
 	obj->value.map.symtab = symtab;
 	obj->value.map.id = NULL;
 

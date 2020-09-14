@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: loc_29.c,v 1.12 2020/02/26 18:47:59 florian Exp $ */
+/* $Id: loc_29.c,v 1.13 2020/09/14 08:40:43 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 18:13:09 PST 2000 by explorer */
 
@@ -30,9 +30,9 @@ totext_loc(ARGS_TOTEXT) {
 	unsigned long latitude;
 	unsigned long longitude;
 	unsigned long altitude;
-	isc_boolean_t north;
-	isc_boolean_t east;
-	isc_boolean_t below;
+	int north;
+	int east;
+	int below;
 	isc_region_t sr;
 	char buf[sizeof("89 59 59.999 N 179 59 59.999 E "
 			"42849672.95m 90000000m 90000000m 90000000m")];
@@ -87,10 +87,10 @@ totext_loc(ARGS_TOTEXT) {
 	latitude = uint32_fromregion(&sr);
 	isc_region_consume(&sr, 4);
 	if (latitude >= 0x80000000) {
-		north = ISC_TRUE;
+		north = 1;
 		latitude -= 0x80000000;
 	} else {
-		north = ISC_FALSE;
+		north = 0;
 		latitude = 0x80000000 - latitude;
 	}
 	fs1 = (int)(latitude % 1000);
@@ -105,10 +105,10 @@ totext_loc(ARGS_TOTEXT) {
 	longitude = uint32_fromregion(&sr);
 	isc_region_consume(&sr, 4);
 	if (longitude >= 0x80000000) {
-		east = ISC_TRUE;
+		east = 1;
 		longitude -= 0x80000000;
 	} else {
-		east = ISC_FALSE;
+		east = 0;
 		longitude = 0x80000000 - longitude;
 	}
 	fs2 = (int)(longitude % 1000);
@@ -123,10 +123,10 @@ totext_loc(ARGS_TOTEXT) {
 	altitude = uint32_fromregion(&sr);
 	isc_region_consume(&sr, 4);
 	if (altitude < 10000000U) {
-		below = ISC_TRUE;
+		below = 1;
 		altitude = 10000000 - altitude;
 	} else {
-		below =ISC_FALSE;
+		below =0;
 		altitude -= 10000000;
 	}
 

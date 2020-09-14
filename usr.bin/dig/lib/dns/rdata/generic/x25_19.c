@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: x25_19.c,v 1.11 2020/02/26 18:47:25 florian Exp $ */
+/* $Id: x25_19.c,v 1.12 2020/09/14 08:40:43 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 16:15:57 PST 2000 by bwelling */
 
@@ -33,7 +33,7 @@ totext_x25(ARGS_TOTEXT) {
 	REQUIRE(rdata->length != 0);
 
 	dns_rdata_toregion(rdata, &region);
-	return (txt_totext(&region, ISC_TRUE, target));
+	return (txt_totext(&region, 1, target));
 }
 
 static inline isc_result_t

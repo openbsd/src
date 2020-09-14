@@ -33,7 +33,7 @@
 
 /*
  * Principal Author: Brian Wellington
- * $Id: dst_api.c,v 1.15 2020/02/25 18:10:17 florian Exp $
+ * $Id: dst_api.c,v 1.16 2020/09/14 08:40:43 florian Exp $
  */
 
 /*! \file */
@@ -51,7 +51,7 @@
 #include "dst_internal.h"
 
 static dst_func_t *dst_t_func[DST_MAX_ALGS];
-static isc_boolean_t dst_initialized = ISC_FALSE;
+static int dst_initialized = 0;
 
 /*
  * Static functions.
@@ -88,7 +88,7 @@ isc_result_t
 dst_lib_init(void) {
 	isc_result_t result;
 
-	REQUIRE(dst_initialized == ISC_FALSE);
+	REQUIRE(!dst_initialized);
 
 	dst_result_register();
 
@@ -99,42 +99,42 @@ dst_lib_init(void) {
 	RETERR(dst__hmacsha384_init(&dst_t_func[DST_ALG_HMACSHA384]));
 	RETERR(dst__hmacsha512_init(&dst_t_func[DST_ALG_HMACSHA512]));
 	RETERR(dst__openssl_init());
-	dst_initialized = ISC_TRUE;
+	dst_initialized = 1;
 	return (ISC_R_SUCCESS);
 
  out:
 	/* avoid immediate crash! */
-	dst_initialized = ISC_TRUE;
+	dst_initialized = 1;
 	dst_lib_destroy();
 	return (result);
 }
 
 void
 dst_lib_destroy(void) {
-	RUNTIME_CHECK(dst_initialized == ISC_TRUE);
-	dst_initialized = ISC_FALSE;
+	RUNTIME_CHECK(dst_initialized);
+	dst_initialized = 0;
 
 	dst__openssl_destroy();
 }
 
-isc_boolean_t
+int
 dst_algorithm_supported(unsigned int alg) {
-	REQUIRE(dst_initialized == ISC_TRUE);
+	REQUIRE(dst_initialized);
 
 	if (alg >= DST_MAX_ALGS || dst_t_func[alg] == NULL)
-		return (ISC_FALSE);
-	return (ISC_TRUE);
+		return (0);
+	return (1);
 }
 
 isc_result_t
 dst_context_create3(dst_key_t *key,
-		    isc_logcategory_t *category, isc_boolean_t useforsigning,
+		    isc_logcategory_t *category, int useforsigning,
 		    dst_context_t **dctxp)
 {
 	dst_context_t *dctx;
 	isc_result_t result;
 
-	REQUIRE(dst_initialized == ISC_TRUE);
+	REQUIRE(dst_initialized);
 	REQUIRE(dctxp != NULL && *dctxp == NULL);
 
 	dctx = malloc(sizeof(dst_context_t));
@@ -201,7 +201,7 @@ dst_context_verify(dst_context_t *dctx, isc_region_t *sig) {
 
 isc_result_t
 dst_key_todns(const dst_key_t *key, isc_buffer_t *target) {
-	REQUIRE(dst_initialized == ISC_TRUE);
+	REQUIRE(dst_initialized);
 	REQUIRE(target != NULL);
 
 	CHECKALG(key->key_alg);
@@ -249,7 +249,7 @@ dst_key_frombuffer(unsigned int alg, unsigned int flags, unsigned int protocol,
 void
 dst_key_attach(dst_key_t *source, dst_key_t **target) {
 
-	REQUIRE(dst_initialized == ISC_TRUE);
+	REQUIRE(dst_initialized);
 	REQUIRE(target != NULL && *target == NULL);
 
 	isc_refcount_increment(&source->refs, NULL);
@@ -261,7 +261,7 @@ dst_key_free(dst_key_t **keyp) {
 	dst_key_t *key;
 	unsigned int refs;
 
-	REQUIRE(dst_initialized == ISC_TRUE);
+	REQUIRE(dst_initialized);
 	REQUIRE(keyp != NULL);
 
 	key = *keyp;
@@ -278,7 +278,7 @@ dst_key_free(dst_key_t **keyp) {
 
 isc_result_t
 dst_key_sigsize(const dst_key_t *key, unsigned int *n) {
-	REQUIRE(dst_initialized == ISC_TRUE);
+	REQUIRE(dst_initialized);
 	REQUIRE(n != NULL);
 
 	/* XXXVIX this switch statement is too sparse to gen a jump table. */
@@ -388,7 +388,7 @@ frombuffer(unsigned int alg, unsigned int flags,
 
 static isc_result_t
 algorithm_status(unsigned int alg) {
-	REQUIRE(dst_initialized == ISC_TRUE);
+	REQUIRE(dst_initialized);
 
 	if (dst_algorithm_supported(alg))
 		return (ISC_R_SUCCESS);

@@ -37,17 +37,17 @@
 #define TOTEXTARGS "rdata, tctx, target"
 #define TOTEXTCLASS "rdata->rdclass"
 #define TOTEXTTYPE "rdata->type"
-#define TOTEXTDEF "use_default = ISC_TRUE"
+#define TOTEXTDEF "use_default = 1"
 
 #define FROMWIREARGS "rdclass, type, source, dctx, options, target"
 #define FROMWIRECLASS "rdclass"
 #define FROMWIRETYPE "type"
-#define FROMWIREDEF "use_default = ISC_TRUE"
+#define FROMWIREDEF "use_default = 1"
 
 #define TOWIREARGS "rdata, cctx, target"
 #define TOWIRECLASS "rdata->rdclass"
 #define TOWIRETYPE "rdata->type"
-#define TOWIREDEF "use_default = ISC_TRUE"
+#define TOWIREDEF "use_default = 1"
 
 static const char copyright[] =
 "/*\n"
@@ -445,7 +445,6 @@ main(int argc, char **argv) {
 		fputs("#ifndef DNS_CODE_H\n", stdout);
 		fputs("#define DNS_CODE_H 1\n\n", stdout);
 
-		fputs("#include <isc/boolean.h>\n", stdout);
 		fputs("#include <isc/result.h>\n\n", stdout);
 		fputs("#include <dns/name.h>\n\n", stdout);
 

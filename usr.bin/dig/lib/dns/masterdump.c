@@ -61,14 +61,14 @@ struct dns_master_style {
  */
 typedef struct dns_totext_ctx {
 	dns_master_style_t	style;
-	isc_boolean_t 		class_printed;
+	int 		class_printed;
 	char *			linebreak;
 	char 			linebreak_buf[DNS_TOTEXT_LINEBREAK_MAXLEN];
 	dns_name_t *		origin;
 	dns_name_t *		neworigin;
 	dns_fixedname_t		origin_fixname;
 	uint32_t 		current_ttl;
-	isc_boolean_t 		current_ttl_valid;
+	int 		current_ttl_valid;
 } dns_totext_ctx_t;
 
 /*%
@@ -158,7 +158,7 @@ totext_ctx_init(const dns_master_style_t *style, dns_totext_ctx_t *ctx) {
 	REQUIRE(style->tab_width != 0);
 
 	ctx->style = *style;
-	ctx->class_printed = ISC_FALSE;
+	ctx->class_printed = 0;
 
 	dns_fixedname_init(&ctx->origin_fixname);
 
@@ -214,7 +214,7 @@ totext_ctx_init(const dns_master_style_t *style, dns_totext_ctx_t *ctx) {
 	ctx->origin = NULL;
 	ctx->neworigin = NULL;
 	ctx->current_ttl = 0;
-	ctx->current_ttl_valid = ISC_FALSE;
+	ctx->current_ttl_valid = 0;
 
 	return (ISC_R_SUCCESS);
 }
@@ -238,14 +238,14 @@ static isc_result_t
 rdataset_totext(dns_rdataset_t *rdataset,
 		dns_name_t *owner_name,
 		dns_totext_ctx_t *ctx,
-		isc_boolean_t omit_final_dot,
+		int omit_final_dot,
 		isc_buffer_t *target)
 {
 	isc_result_t result;
 	unsigned int column;
-	isc_boolean_t first = ISC_TRUE;
+	int first = 1;
 	uint32_t current_ttl;
-	isc_boolean_t current_ttl_valid;
+	int current_ttl_valid;
 	dns_rdatatype_t type;
 	unsigned int type_start;
 
@@ -307,7 +307,7 @@ rdataset_totext(dns_rdataset_t *rdataset,
 			 */
 			if ((ctx->style.flags & DNS_STYLEFLAG_TTL) == 0) {
 				current_ttl = rdataset->ttl;
-				current_ttl_valid = ISC_TRUE;
+				current_ttl_valid = 1;
 			}
 		}
 
@@ -316,7 +316,7 @@ rdataset_totext(dns_rdataset_t *rdataset,
 		 */
 		if ((ctx->style.flags & DNS_STYLEFLAG_NO_CLASS) == 0 &&
 		    ((ctx->style.flags & DNS_STYLEFLAG_OMIT_CLASS) == 0 ||
-		     ctx->class_printed == ISC_FALSE))
+		     !ctx->class_printed))
 		{
 			unsigned int class_start;
 			INDENT_TO(class_column);
@@ -381,7 +381,7 @@ rdataset_totext(dns_rdataset_t *rdataset,
 			isc_buffer_add(target, 1);
 		}
 
-		first = ISC_FALSE;
+		first = 0;
 		result = dns_rdataset_next(rdataset);
 	}
 
@@ -395,7 +395,7 @@ rdataset_totext(dns_rdataset_t *rdataset,
 	 * times with increasing buffer sizes until it succeeds,
 	 * and failed attempts must not update the state prematurely.
 	 */
-	ctx->class_printed = ISC_TRUE;
+	ctx->class_printed = 1;
 	ctx->current_ttl= current_ttl;
 	ctx->current_ttl_valid = current_ttl_valid;
 
@@ -411,7 +411,7 @@ static isc_result_t
 question_totext(dns_rdataset_t *rdataset,
 		dns_name_t *owner_name,
 		dns_totext_ctx_t *ctx,
-		isc_boolean_t omit_final_dot,
+		int omit_final_dot,
 		isc_buffer_t *target)
 {
 	unsigned int column;
@@ -466,8 +466,8 @@ question_totext(dns_rdataset_t *rdataset,
 isc_result_t
 dns_rdataset_totext(dns_rdataset_t *rdataset,
 		    dns_name_t *owner_name,
-		    isc_boolean_t omit_final_dot,
-		    isc_boolean_t question,
+		    int omit_final_dot,
+		    int question,
 		    isc_buffer_t *target)
 {
 	dns_totext_ctx_t ctx;
@@ -512,7 +512,7 @@ dns_master_rdatasettotext(dns_name_t *owner_name,
 	}
 
 	return (rdataset_totext(rdataset, owner_name, &ctx,
-				ISC_FALSE, target));
+				0, target));
 }
 
 isc_result_t
@@ -531,7 +531,7 @@ dns_master_questiontotext(dns_name_t *owner_name,
 	}
 
 	return (question_totext(rdataset, owner_name, &ctx,
-				ISC_FALSE, target));
+				0, target));
 }
 
 isc_result_t

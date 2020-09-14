@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.c,v 1.24 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: timer.c,v 1.25 2020/09/14 08:40:44 florian Exp $ */
 
 /*! \file */
 
@@ -47,7 +47,7 @@ struct isc_timer {
 struct isc_timermgr {
 	/* Not locked. */
 	/* Locked by manager lock. */
-	isc_boolean_t			done;
+	int			done;
 	LIST(isc_timer_t)		timers;
 	unsigned int			nscheduled;
 	struct timespec			due;
@@ -230,14 +230,14 @@ isc_timer_create(isc_timermgr_t *manager0, const struct timespec *interval,
 
 isc_result_t
 isc_timer_reset(isc_timer_t *timer, const struct timespec *interval,
-		 isc_boolean_t purge)
+		 int purge)
 {
 	struct timespec now;
 	isc_result_t result;
 
 	/*
 	 * Change the timer's type, expires, and interval values to the given
-	 * values.  If 'purge' is ISC_TRUE, any pending events from this timer
+	 * values.  If 'purge' is 1, any pending events from this timer
 	 * are purged from its task's event queue.
 	 */
 
@@ -282,7 +282,7 @@ isc_timer_touch(isc_timer_t *timer) {
 void
 isc_timer_detach(isc_timer_t **timerp) {
 	isc_timer_t *timer;
-	isc_boolean_t free_timer = ISC_FALSE;
+	int free_timer = 0;
 
 	/*
 	 * Detach *timerp from its timer.
@@ -294,7 +294,7 @@ isc_timer_detach(isc_timer_t **timerp) {
 	REQUIRE(timer->references > 0);
 	timer->references--;
 	if (timer->references == 0)
-		free_timer = ISC_TRUE;
+		free_timer = 1;
 
 	if (free_timer)
 		destroy(timer);
@@ -304,12 +304,12 @@ isc_timer_detach(isc_timer_t **timerp) {
 
 static void
 dispatch(isc_timermgr_t *manager, struct timespec *now) {
-	isc_boolean_t done = ISC_FALSE, post_event, need_schedule;
+	int done = 0, post_event, need_schedule;
 	isc_timerevent_t *event;
 	isc_eventtype_t type = 0;
 	isc_timer_t *timer;
 	isc_result_t result;
-	isc_boolean_t idle;
+	int idle;
 
 	/*!
 	 * The caller must be holding the manager lock.
@@ -319,23 +319,23 @@ dispatch(isc_timermgr_t *manager, struct timespec *now) {
 		timer = isc_heap_element(manager->heap, 1);
 		INSIST(timer != NULL);
 		if (timespeccmp(now, &timer->due, >=)) {
-			idle = ISC_FALSE;
+			idle = 0;
 
 			if (timespecisset(&timer->idle) && timespeccmp(now,
 			    &timer->idle, >=)) {
-				idle = ISC_TRUE;
+				idle = 1;
 			}
 			if (idle) {
 				type = ISC_TIMEREVENT_IDLE;
-				post_event = ISC_TRUE;
-				need_schedule = ISC_FALSE;
+				post_event = 1;
+				need_schedule = 0;
 			} else {
 				/*
 				 * Idle timer has been touched;
 				 * reschedule.
 				 */
-				post_event = ISC_FALSE;
-				need_schedule = ISC_TRUE;
+				post_event = 0;
+				need_schedule = 1;
 			}
 
 			if (post_event) {
@@ -372,12 +372,12 @@ dispatch(isc_timermgr_t *manager, struct timespec *now) {
 			}
 		} else {
 			manager->due = timer->due;
-			done = ISC_TRUE;
+			done = 1;
 		}
 	}
 }
 
-static isc_boolean_t
+static int
 sooner(void *v1, void *v2) {
 	isc_timer_t *t1, *t2;
 
@@ -385,8 +385,8 @@ sooner(void *v1, void *v2) {
 	t2 = v2;
 
 	if (timespeccmp(&t1->due, &t2->due, <))
-		return (ISC_TRUE);
-	return (ISC_FALSE);
+		return (1);
+	return (0);
 }
 
 static void
@@ -419,7 +419,7 @@ isc_timermgr_create(isc_timermgr_t **managerp) {
 	if (manager == NULL)
 		return (ISC_R_NOMEMORY);
 
-	manager->done = ISC_FALSE;
+	manager->done = 0;
 	INIT_LIST(manager->timers);
 	manager->nscheduled = 0;
 	timespecclear(&manager->due);
@@ -459,7 +459,7 @@ isc_timermgr_destroy(isc_timermgr_t **managerp) {
 	isc_timermgr_dispatch((isc_timermgr_t *)manager);
 
 	REQUIRE(EMPTY(manager->timers));
-	manager->done = ISC_TRUE;
+	manager->done = 1;
 
 	/*
 	 * Clean up.

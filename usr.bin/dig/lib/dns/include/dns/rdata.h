@@ -605,9 +605,9 @@ dns_rdata_covers(dns_rdata_t *rdata);
  *\li	The type covered.
  */
 
-isc_boolean_t
+int
 dns_rdata_checkowner_nsec3(dns_name_t* name, dns_rdataclass_t rdclass,
-		     dns_rdatatype_t type, isc_boolean_t wildcard);
+		     dns_rdatatype_t type, int wildcard);
 /*
  * Returns whether this is a valid ownername for this <type,class>.
  * If wildcard is true allow the first label to be a wildcard if

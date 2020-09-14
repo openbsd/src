@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: log.c,v 1.17 2020/02/24 13:49:38 jsg Exp $ */
+/* $Id: log.c,v 1.18 2020/09/14 08:40:44 florian Exp $ */
 
 /*! \file
  * \author  Principal Authors: DCL */
@@ -97,7 +97,7 @@ struct isc_logconfig {
 	unsigned int			duplicate_interval;
 	int				highest_level;
 	char *				tag;
-	isc_boolean_t			dynamic;
+	int			dynamic;
 };
 
 /*!
@@ -206,7 +206,7 @@ sync_channellist(isc_logconfig_t *lcfg);
 
 static void
 isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
-	     isc_logmodule_t *module, int level, isc_boolean_t write_once,
+	     isc_logmodule_t *module, int level, int write_once,
 	     const char *format, va_list args)
      __attribute__((__format__(__printf__, 6, 0)));
 
@@ -293,7 +293,7 @@ isc_logconfig_create(isc_log_t *lctx, isc_logconfig_t **lcfgp) {
 		lcfg->duplicate_interval = 0;
 		lcfg->highest_level = level;
 		lcfg->tag = NULL;
-		lcfg->dynamic = ISC_FALSE;
+		lcfg->dynamic = 0;
 
 		ISC_LIST_INIT(lcfg->channels);
 
@@ -422,7 +422,7 @@ isc_logconfig_destroy(isc_logconfig_t **lcfgp) {
 	if (lcfg->channellist_count > 0)
 		free(lcfg->channellists);
 
-	lcfg->dynamic = ISC_FALSE;
+	lcfg->dynamic = 0;
 	if (lcfg->tag != NULL)
 		free(lcfg->tag);
 	lcfg->tag = NULL;
@@ -638,7 +638,7 @@ isc_log_write(isc_log_t *lctx, isc_logcategory_t *category,
 	 */
 
 	va_start(args, format);
-	isc_log_doit(lctx, category, module, level, ISC_FALSE, format, args);
+	isc_log_doit(lctx, category, module, level, 0, format, args);
 	va_end(args);
 }
 
@@ -696,7 +696,7 @@ assignchannel(isc_logconfig_t *lcfg, unsigned int category_id,
 		if (lcfg->highest_level < channel->level)
 			lcfg->highest_level = channel->level;
 		if (channel->level == ISC_LOG_DYNAMIC)
-			lcfg->dynamic = ISC_TRUE;
+			lcfg->dynamic = 1;
 	}
 
 	return (ISC_R_SUCCESS);
@@ -741,7 +741,7 @@ sync_channellist(isc_logconfig_t *lcfg) {
 	return (ISC_R_SUCCESS);
 }
 
-isc_boolean_t
+int
 isc_log_wouldlog(isc_log_t *lctx, int level) {
 	/*
 	 * If the level is (mathematically) less than or equal to the
@@ -757,25 +757,25 @@ isc_log_wouldlog(isc_log_t *lctx, int level) {
 	 */
 
 	if (lctx == NULL || lctx->logconfig == NULL)
-		return (ISC_FALSE);
+		return (0);
 
-	return (ISC_TF(level <= lctx->logconfig->highest_level ||
+	return (level <= lctx->logconfig->highest_level ||
 		       (lctx->logconfig->dynamic &&
-			level <= lctx->debug_level)));
+			level <= lctx->debug_level));
 }
 
 static void
 isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
-	     isc_logmodule_t *module, int level, isc_boolean_t write_once,
+	     isc_logmodule_t *module, int level, int write_once,
 	     const char *format, va_list args)
 {
 	int syslog_level;
 	char time_string[64];
 	char level_string[24];
 	const char *iformat;
-	isc_boolean_t matched = ISC_FALSE;
-	isc_boolean_t printtime, printtag, printcolon;
-	isc_boolean_t printcategory, printmodule, printlevel;
+	int matched = 0;
+	int printtime, printtag, printcolon;
+	int printcategory, printmodule, printlevel;
 	isc_logconfig_t *lcfg;
 	isc_logchannel_t *channel;
 	isc_logchannellist_t *category_channels;
@@ -846,7 +846,7 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 			continue;
 		}
 
-		matched = ISC_TRUE;
+		matched = 1;
 
 		channel = category_channels->channel;
 		category_channels = ISC_LIST_NEXT(category_channels, link);
@@ -979,19 +979,15 @@ isc_log_doit(isc_log_t *lctx, isc_logcategory_t *category,
 			}
 		}
 
-		printtime     = ISC_TF((channel->flags & ISC_LOG_PRINTTIME)
-				       != 0);
-		printtag      = ISC_TF((channel->flags &
+		printtime     = (channel->flags & ISC_LOG_PRINTTIME) != 0;
+		printtag      = (channel->flags &
 					(ISC_LOG_PRINTTAG|ISC_LOG_PRINTPREFIX))
-				       != 0 && lcfg->tag != NULL);
-		printcolon    = ISC_TF((channel->flags & ISC_LOG_PRINTTAG)
-				       != 0 && lcfg->tag != NULL);
-		printcategory = ISC_TF((channel->flags & ISC_LOG_PRINTCATEGORY)
-				       != 0);
-		printmodule   = ISC_TF((channel->flags & ISC_LOG_PRINTMODULE)
-				       != 0);
-		printlevel    = ISC_TF((channel->flags & ISC_LOG_PRINTLEVEL)
-				       != 0);
+				       != 0 && lcfg->tag != NULL;
+		printcolon    = (channel->flags & ISC_LOG_PRINTTAG)
+				       != 0 && lcfg->tag != NULL;
+		printcategory = (channel->flags & ISC_LOG_PRINTCATEGORY) != 0;
+		printmodule   = (channel->flags & ISC_LOG_PRINTMODULE) != 0;
+		printlevel    = (channel->flags & ISC_LOG_PRINTLEVEL) != 0;
 
 		switch (channel->type) {
 		case ISC_LOG_TOFILEDESC:

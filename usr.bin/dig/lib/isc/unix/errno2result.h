@@ -23,10 +23,10 @@
 
 #include <isc/types.h>
 
-#define isc__errno2result(x) isc___errno2result(x, ISC_TRUE, __FILE__, __LINE__)
+#define isc__errno2result(x) isc___errno2result(x, 1, __FILE__, __LINE__)
 
 isc_result_t
-isc___errno2result(int posixerrno, isc_boolean_t dolog,
+isc___errno2result(int posixerrno, int dolog,
 		   const char *file, unsigned int line);
 
 #endif /* UNIX_ERRNO2RESULT_H */

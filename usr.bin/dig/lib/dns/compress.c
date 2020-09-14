@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: compress.c,v 1.5 2020/02/18 18:11:27 florian Exp $ */
+/* $Id: compress.c,v 1.6 2020/09/14 08:40:43 florian Exp $ */
 
 /*! \file */
 
@@ -82,10 +82,10 @@ do { \
 
 /*
  * Find the longest match of name in the table.
- * If match is found return ISC_TRUE. prefix, suffix and offset are updated.
- * If no match is found return ISC_FALSE.
+ * If match is found return 1. prefix, suffix and offset are updated.
+ * If no match is found return 0.
  */
-isc_boolean_t
+int
 dns_compress_findglobal(dns_compress_t *cctx, const dns_name_t *name,
 			dns_name_t *prefix, uint16_t *offset)
 {
@@ -93,11 +93,11 @@ dns_compress_findglobal(dns_compress_t *cctx, const dns_name_t *name,
 	dns_compressnode_t *node = NULL;
 	unsigned int labels, hash, n;
 
-	REQUIRE(dns_name_isabsolute(name) == ISC_TRUE);
+	REQUIRE(dns_name_isabsolute(name));
 	REQUIRE(offset != NULL);
 
 	if (cctx->count == 0)
-		return (ISC_FALSE);
+		return (0);
 
 	labels = dns_name_countlabels(name);
 	INSIST(labels > 0);
@@ -107,7 +107,7 @@ dns_compress_findglobal(dns_compress_t *cctx, const dns_name_t *name,
 
 	for (n = 0; n < labels - 1; n++) {
 		dns_name_getlabelsequence(name, n, labels - n, &tname);
-		hash = dns_name_hash(&tname, ISC_FALSE) %
+		hash = dns_name_hash(&tname, 0) %
 		       DNS_COMPRESS_TABLESIZE;
 		for (node = cctx->table[hash]; node != NULL; node = node->next)
 		{
@@ -128,7 +128,7 @@ dns_compress_findglobal(dns_compress_t *cctx, const dns_name_t *name,
 	 * If node == NULL, we found no match at all.
 	 */
 	if (node == NULL)
-		return (ISC_FALSE);
+		return (0);
 
 	if (n == 0)
 		dns_name_reset(prefix);
@@ -136,7 +136,7 @@ dns_compress_findglobal(dns_compress_t *cctx, const dns_name_t *name,
 		dns_name_getlabelsequence(name, 0, n, prefix);
 
 	*offset = node->offset;
-	return (ISC_TRUE);
+	return (1);
 }
 
 void
@@ -167,7 +167,7 @@ dns_compress_add(dns_compress_t *cctx, const dns_name_t *name,
 		if (offset >= 0x4000)
 			break;
 		dns_name_getlabelsequence(name, start, n, &tname);
-		hash = dns_name_hash(&tname, ISC_FALSE) %
+		hash = dns_name_hash(&tname, 0) %
 		       DNS_COMPRESS_TABLESIZE;
 		tlength = tname.length;
 		toffset = (uint16_t)(offset + (length - tlength));

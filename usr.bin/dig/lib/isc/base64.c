@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: base64.c,v 1.6 2020/02/26 18:47:59 florian Exp $ */
+/* $Id: base64.c,v 1.7 2020/09/14 08:40:44 florian Exp $ */
 
 /*! \file */
 
@@ -91,7 +91,7 @@ typedef struct {
 	int length;		/*%< Desired length of binary data or -1 */
 	isc_buffer_t *target;	/*%< Buffer for resulting binary data */
 	int digits;		/*%< Number of buffered base64 digits */
-	isc_boolean_t seen_end;	/*%< True if "=" end marker seen */
+	int seen_end;	/*%< True if "=" end marker seen */
 	int val[4];
 } base64_decode_ctx_t;
 
@@ -99,7 +99,7 @@ static inline void
 base64_decode_init(base64_decode_ctx_t *ctx, int length, isc_buffer_t *target)
 {
 	ctx->digits = 0;
-	ctx->seen_end = ISC_FALSE;
+	ctx->seen_end = 0;
 	ctx->length = length;
 	ctx->target = target;
 }
@@ -134,7 +134,7 @@ base64_decode_char(base64_decode_ctx_t *ctx, int c) {
 		n = (ctx->val[2] == 64) ? 1 :
 			(ctx->val[3] == 64) ? 2 : 3;
 		if (n != 3) {
-			ctx->seen_end = ISC_TRUE;
+			ctx->seen_end = 1;
 			if (ctx->val[2] == 64)
 				ctx->val[2] = 0;
 			if (ctx->val[3] == 64)

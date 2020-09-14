@@ -16,7 +16,7 @@
 
 /*%
  * Principal Author: Brian Wellington
- * $Id: dst_result.c,v 1.2 2020/02/12 13:05:03 jsg Exp $
+ * $Id: dst_result.c,v 1.3 2020/09/14 08:40:43 florian Exp $
  */
 
 #include <isc/util.h>
@@ -50,7 +50,7 @@ static const char *text[DST_R_NRESULTS] = {
 
 #define DST_RESULT_RESULTSET			2
 
-static isc_boolean_t		once = ISC_FALSE;
+static int		once = 0;
 
 static void
 initialize_action(void) {
@@ -66,7 +66,7 @@ initialize_action(void) {
 static void
 initialize(void) {
 	if (!once) {
-		once = ISC_TRUE;
+		once = 1;
 		initialize_action();
 	}
 }

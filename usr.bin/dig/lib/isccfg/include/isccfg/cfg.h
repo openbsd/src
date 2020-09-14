@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: cfg.h,v 1.5 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: cfg.h,v 1.6 2020/09/14 08:40:44 florian Exp $ */
 
 #ifndef ISCCFG_CFG_H
 #define ISCCFG_CFG_H 1
@@ -157,7 +157,7 @@ cfg_obj_asstring(const cfg_obj_t *obj);
  * \li     A pointer to a null terminated string.
  */
 
-isc_boolean_t
+int
 cfg_obj_islist(const cfg_obj_t *obj);
 /*%<
  * Return true iff 'obj' is of list type.
@@ -191,7 +191,7 @@ cfg_list_next(const cfg_listelt_t *elt);
  */
 
 unsigned int
-cfg_list_length(const cfg_obj_t *obj, isc_boolean_t recurse);
+cfg_list_length(const cfg_obj_t *obj, int recurse);
 /*%<
  * Returns the length of a list of configure objects.  If obj is
  * not a list, returns 0.  If recurse is true, add in the length of

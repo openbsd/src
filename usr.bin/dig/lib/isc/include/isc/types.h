@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: types.h,v 1.4 2020/02/25 13:18:31 jsg Exp $ */
+/* $Id: types.h,v 1.5 2020/09/14 08:40:44 florian Exp $ */
 
 #ifndef ISC_TYPES_H
 #define ISC_TYPES_H 1
@@ -24,11 +24,6 @@
  * OS-specific types, from the OS-specific include directories.
  */
 
-/*
- * XXXDCL should isc_boolean_t be moved here, requiring an explicit include
- * of <isc/boolean.h> when ISC_TRUE/ISC_FALSE/ISC_TF() are desired?
- */
-#include <isc/boolean.h>
 /*
  * XXXDCL This is just for ISC_LIST and ISC_LINK, but gets all of the other
  * list macros too.

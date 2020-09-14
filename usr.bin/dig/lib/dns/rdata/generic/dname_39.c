@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dname_39.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
+/* $Id: dname_39.c,v 1.11 2020/09/14 08:40:43 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 16:52:38 PST 2000 by explorer */
 
@@ -28,7 +28,7 @@ totext_dname(ARGS_TOTEXT) {
 	isc_region_t region;
 	dns_name_t name;
 	dns_name_t prefix;
-	isc_boolean_t sub;
+	int sub;
 
 	REQUIRE(rdata->type == dns_rdatatype_dname);
 	REQUIRE(rdata->length != 0);

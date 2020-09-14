@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hip_55.c,v 1.14 2020/02/26 18:49:02 florian Exp $ */
+/* $Id: hip_55.c,v 1.15 2020/09/14 08:40:43 florian Exp $ */
 
 /* reviewed: TBC */
 
@@ -81,7 +81,7 @@ totext_hip(ARGS_TOTEXT) {
 	while (region.length > 0) {
 		dns_name_fromregion(&name, &region);
 
-		RETERR(dns_name_totext(&name, ISC_FALSE, target));
+		RETERR(dns_name_totext(&name, 0, target));
 		isc_region_consume(&region, name.length);
 		if (region.length > 0)
 			RETERR(isc_str_tobuffer(tctx->linebreak, target));

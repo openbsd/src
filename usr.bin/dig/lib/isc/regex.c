@@ -33,18 +33,18 @@ isc_regex_validate(const char *c) {
 		":space:", ":blank:", ":lower:", ":upper:", ":cntrl:",
 		":print:", ":xdigit:"
 	};
-	isc_boolean_t seen_comma = ISC_FALSE;
-	isc_boolean_t seen_high = ISC_FALSE;
-	isc_boolean_t seen_char = ISC_FALSE;
-	isc_boolean_t seen_ec = ISC_FALSE;
-	isc_boolean_t seen_ce = ISC_FALSE;
-	isc_boolean_t have_atom = ISC_FALSE;
+	int seen_comma = 0;
+	int seen_high = 0;
+	int seen_char = 0;
+	int seen_ec = 0;
+	int seen_ce = 0;
+	int have_atom = 0;
 	int group = 0;
 	int range = 0;
 	int sub = 0;
-	isc_boolean_t empty_ok = ISC_FALSE;
-	isc_boolean_t neg = ISC_FALSE;
-	isc_boolean_t was_multiple = ISC_FALSE;
+	int empty_ok = 0;
+	int neg = 0;
+	int was_multiple = 0;
 	unsigned int low = 0;
 	unsigned int high = 0;
 	const char *ccname = NULL;
@@ -65,8 +65,8 @@ isc_regex_validate(const char *c) {
 				case '7': case '8': case '9':
 					if ((*c - '0') > sub)
 						return(-1);
-					have_atom = ISC_TRUE;
-					was_multiple = ISC_FALSE;
+					have_atom = 1;
+					was_multiple = 0;
 					break;
 				case 0:
 					return(-1);
@@ -77,9 +77,9 @@ isc_regex_validate(const char *c) {
 				break;
 			case '[':	/* bracket start */
 				++c;
-				neg = ISC_FALSE;
-				was_multiple = ISC_FALSE;
-				seen_char = ISC_FALSE;
+				neg = 0;
+				was_multiple = 0;
+				seen_char = 0;
 				state = parse_bracket;
 				break;
 			case '{': 	/* bound start */
@@ -91,8 +91,8 @@ isc_regex_validate(const char *c) {
 						return(-1);
 					if (was_multiple)
 						return(-1);
-					seen_comma = ISC_FALSE;
-					seen_high = ISC_FALSE;
+					seen_comma = 0;
+					seen_high = 0;
 					low = high = 0;
 					state = parse_bound;
 					break;
@@ -100,15 +100,15 @@ isc_regex_validate(const char *c) {
 					goto literal;
 				}
 				++c;
-				have_atom = ISC_TRUE;
-				was_multiple = ISC_TRUE;
+				have_atom = 1;
+				was_multiple = 1;
 				break;
 			case '}':
 				goto literal;
 			case '(':	/* group start */
-				have_atom = ISC_FALSE;
-				was_multiple = ISC_FALSE;
-				empty_ok = ISC_TRUE;
+				have_atom = 0;
+				was_multiple = 0;
+				empty_ok = 1;
 				++group;
 				++sub;
 				++c;
@@ -116,8 +116,8 @@ isc_regex_validate(const char *c) {
 			case ')':	/* group end */
 				if (group && !have_atom && !empty_ok)
 					return(-1);
-				have_atom = ISC_TRUE;
-				was_multiple = ISC_FALSE;
+				have_atom = 1;
+				was_multiple = 0;
 				if (group != 0)
 					--group;
 				++c;
@@ -125,15 +125,15 @@ isc_regex_validate(const char *c) {
 			case '|':	/* alternative seperator */
 				if (!have_atom)
 					return(-1);
-				have_atom = ISC_FALSE;
-				empty_ok = ISC_FALSE;
-				was_multiple = ISC_FALSE;
+				have_atom = 0;
+				empty_ok = 0;
+				was_multiple = 0;
 				++c;
 				break;
 			case '^':
 			case '$':
-				have_atom = ISC_TRUE;
-				was_multiple = ISC_TRUE;
+				have_atom = 1;
+				was_multiple = 1;
 				++c;
 				break;
 			case '+':
@@ -143,15 +143,15 @@ isc_regex_validate(const char *c) {
 					return(-1);
 				if (!have_atom)
 					return(-1);
-				have_atom = ISC_TRUE;
-				was_multiple = ISC_TRUE;
+				have_atom = 1;
+				was_multiple = 1;
 				++c;
 				break;
 			case '.':
 			default:
 			literal:
-				have_atom = ISC_TRUE;
-				was_multiple = ISC_FALSE;
+				have_atom = 1;
+				was_multiple = 0;
 				++c;
 				break;
 			}
@@ -165,7 +165,7 @@ isc_regex_validate(const char *c) {
 					if (low > 255)
 						return(-1);
 				} else {
-					seen_high = ISC_TRUE;
+					seen_high = 1;
 					high = high * 10 + *c - '0';
 					if (high > 255)
 						return(-1);
@@ -175,7 +175,7 @@ isc_regex_validate(const char *c) {
 			case ',':
 				if (seen_comma)
 					return(-1);
-				seen_comma = ISC_TRUE;
+				seen_comma = 1;
 				++c;
 				break;
 			default:
@@ -184,7 +184,7 @@ isc_regex_validate(const char *c) {
 			case '}':
 				if (seen_high && low > high)
 					return(-1);
-				seen_comma = ISC_FALSE;
+				seen_comma = 0;
 				state = none;
 				++c;
 				break;
@@ -194,7 +194,7 @@ isc_regex_validate(const char *c) {
 			switch (*c) {
 			case '^':
 				if (seen_char || neg) goto inside;
-				neg = ISC_TRUE;
+				neg = 1;
 				++c;
 				break;
 			case '-':
@@ -212,14 +212,14 @@ isc_regex_validate(const char *c) {
 					if (range != 0) --range;
 					++c;
 					state = parse_ce;
-					seen_ce = ISC_FALSE;
+					seen_ce = 0;
 					break;
 				case '=':	/* equivalence class */
 					if (range == 2)
 						return(-1);
 					++c;
 					state = parse_ec;
-					seen_ec = ISC_FALSE;
+					seen_ec = 0;
 					break;
 				case ':':	/* character class */
 					if (range == 2)
@@ -229,7 +229,7 @@ isc_regex_validate(const char *c) {
 					state = parse_cc;
 					break;
 				}
-				seen_char = ISC_TRUE;
+				seen_char = 1;
 				break;
 			case ']':
 				if (!c[1] && !seen_char)
@@ -238,12 +238,12 @@ isc_regex_validate(const char *c) {
 					goto inside;
 				++c;
 				range = 0;
-				have_atom = ISC_TRUE;
+				have_atom = 1;
 				state = none;
 				break;
 			default:
 			inside:
-				seen_char = ISC_TRUE;
+				seen_char = 1;
 				if (range == 2 && (*c & 0xff) < range_start)
 					return(-1);
 				if (range != 0)
@@ -269,7 +269,7 @@ isc_regex_validate(const char *c) {
 						range_start = 256;
 					else
 						range_start = '.';
-					seen_ce = ISC_TRUE;
+					seen_ce = 1;
 					break;
 				}
 				break;
@@ -278,7 +278,7 @@ isc_regex_validate(const char *c) {
 					range_start = 256;
 				else
 					range_start = *c;
-				seen_ce = ISC_TRUE;
+				seen_ce = 1;
 				++c;
 				break;
 			}
@@ -295,12 +295,12 @@ isc_regex_validate(const char *c) {
 					state = parse_bracket;
 					break;
 				default:
-					seen_ec = ISC_TRUE;
+					seen_ec = 1;
 					break;
 				}
 				break;
 			default:
-				seen_ec = ISC_TRUE;
+				seen_ec = 1;
 				++c;
 				break;
 			}
@@ -312,7 +312,7 @@ isc_regex_validate(const char *c) {
 				switch (*c) {
 				case ']': {
 					unsigned int i;
-					isc_boolean_t found = ISC_FALSE;
+					int found = 0;
 					for (i = 0;
 					     i < sizeof(cc)/sizeof(*cc);
 					     i++)
@@ -324,7 +324,7 @@ isc_regex_validate(const char *c) {
 							continue;
 						if (strncmp(cc[i], ccname, len))
 							continue;
-						found = ISC_TRUE;
+						found = 1;
 					}
 					if (!found)
 						return(-1);

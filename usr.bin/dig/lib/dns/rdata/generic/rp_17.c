@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rp_17.c,v 1.11 2020/02/26 18:47:59 florian Exp $ */
+/* $Id: rp_17.c,v 1.12 2020/09/14 08:40:43 florian Exp $ */
 
 /* RFC1183 */
 
@@ -27,7 +27,7 @@ totext_rp(ARGS_TOTEXT) {
 	dns_name_t rmail;
 	dns_name_t email;
 	dns_name_t prefix;
-	isc_boolean_t sub;
+	int sub;
 
 	REQUIRE(rdata->type == dns_rdatatype_rp);
 	REQUIRE(rdata->length != 0);

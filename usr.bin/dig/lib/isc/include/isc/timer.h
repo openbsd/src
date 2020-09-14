@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: timer.h,v 1.12 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: timer.h,v 1.13 2020/09/14 08:40:44 florian Exp $ */
 
 #ifndef ISC_TIMER_H
 #define ISC_TIMER_H 1
@@ -165,7 +165,7 @@ isc_timer_create(isc_timermgr_t *manager,
 isc_result_t
 isc_timer_reset(isc_timer_t *timer,
 		const struct timespec *interval,
-		isc_boolean_t purge);
+		int purge);
 /*%<
  * Change the timer's type, expires, and interval values to the given
  * values.  If 'purge' is TRUE, any pending events from this timer

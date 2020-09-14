@@ -15,7 +15,7 @@
  */
 
 /*
- * $Id: tsig.c,v 1.13 2020/02/24 17:57:54 florian Exp $
+ * $Id: tsig.c,v 1.14 2020/09/14 08:40:43 florian Exp $
  */
 /*! \file */
 
@@ -95,7 +95,7 @@ tsig_log(dns_tsigkey_t *key, int level, const char *fmt, ...) {
 	char namestr[DNS_NAME_FORMATSIZE];
 	char creatorstr[DNS_NAME_FORMATSIZE];
 
-	if (isc_log_wouldlog(dns_lctx, level) == ISC_FALSE)
+	if (!isc_log_wouldlog(dns_lctx, level))
 		return;
 	if (key != NULL) {
 		dns_name_format(&key->name, namestr, sizeof(namestr));
@@ -126,7 +126,7 @@ tsig_log(dns_tsigkey_t *key, int level, const char *fmt, ...) {
 
 isc_result_t
 dns_tsigkey_createfromkey(dns_name_t *name, dns_name_t *algorithm,
-			  dst_key_t *dstkey, isc_boolean_t generated,
+			  dst_key_t *dstkey, int generated,
 			  dns_name_t *creator, time_t inception,
 			  time_t expire,
 			  dns_tsigkey_t **key)
@@ -273,7 +273,7 @@ dns_tsigkey_createfromkey(dns_name_t *name, dns_name_t *algorithm,
 
 isc_result_t
 dns_tsigkey_create(dns_name_t *name, dns_name_t *algorithm,
-		   unsigned char *secret, int length, isc_boolean_t generated,
+		   unsigned char *secret, int length, int generated,
 		   dns_name_t *creator, time_t inception,
 		   time_t expire,
 		   dns_tsigkey_t **key)
@@ -419,7 +419,7 @@ dns_tsig_sign(dns_message_t *msg) {
 	isc_result_t ret;
 	unsigned char badtimedata[BADTIMELEN];
 	unsigned int sigsize = 0;
-	isc_boolean_t response;
+	int response;
 
 	REQUIRE(msg != NULL);
 	key = dns_message_gettsigkey(msg);
@@ -479,7 +479,7 @@ dns_tsig_sign(dns_message_t *msg) {
 		 */
 		ret = dst_context_create3(key->key,
 					  DNS_LOGCATEGORY_DNSSEC,
-					  ISC_TRUE, &ctx);
+					  1, &ctx);
 		if (ret != ISC_R_SUCCESS)
 			return (ret);
 
@@ -717,7 +717,7 @@ dns_tsig_verify(isc_buffer_t *source, dns_message_t *msg)
 	uint16_t addcount, id;
 	unsigned int siglen;
 	unsigned int alg;
-	isc_boolean_t response;
+	int response;
 
 	REQUIRE(source != NULL);
 	tsigkey = dns_message_gettsigkey(msg);
@@ -794,7 +794,7 @@ dns_tsig_verify(isc_buffer_t *source, dns_message_t *msg)
 		if (ret != ISC_R_SUCCESS) {
 			msg->tsigstatus = dns_tsigerror_badkey;
 			ret = dns_tsigkey_create(keyname, &tsig.algorithm,
-						 NULL, 0, ISC_FALSE, NULL,
+						 NULL, 0, 0, NULL,
 						 now, now,
 						 &msg->tsigkey);
 			if (ret != ISC_R_SUCCESS)
@@ -840,7 +840,7 @@ dns_tsig_verify(isc_buffer_t *source, dns_message_t *msg)
 
 		ret = dst_context_create3(key,
 					  DNS_LOGCATEGORY_DNSSEC,
-					  ISC_FALSE, &ctx);
+					  0, &ctx);
 		if (ret != ISC_R_SUCCESS)
 			return (ret);
 
@@ -1050,7 +1050,7 @@ tsig_verify_tcp(isc_buffer_t *source, dns_message_t *msg) {
 	dst_key_t *key = NULL;
 	unsigned char header[DNS_MESSAGE_HEADERLEN];
 	uint16_t addcount, id;
-	isc_boolean_t has_tsig = ISC_FALSE;
+	int has_tsig = 0;
 	unsigned int siglen;
 	unsigned int alg;
 
@@ -1085,7 +1085,7 @@ tsig_verify_tcp(isc_buffer_t *source, dns_message_t *msg) {
 	 * If there is a TSIG in this message, do some checks.
 	 */
 	if (msg->tsig != NULL) {
-		has_tsig = ISC_TRUE;
+		has_tsig = 1;
 
 		keyname = msg->tsigname;
 		ret = dns_rdataset_first(msg->tsig);
@@ -1144,7 +1144,7 @@ tsig_verify_tcp(isc_buffer_t *source, dns_message_t *msg) {
 	if (msg->tsigctx == NULL) {
 		ret = dst_context_create3(key,
 					  DNS_LOGCATEGORY_DNSSEC,
-					  ISC_FALSE, &msg->tsigctx);
+					  0, &msg->tsigctx);
 		if (ret != ISC_R_SUCCESS)
 			goto cleanup_querystruct;
 

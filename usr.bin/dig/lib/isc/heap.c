@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: heap.c,v 1.6 2020/02/25 16:54:24 deraadt Exp $ */
+/* $Id: heap.c,v 1.7 2020/09/14 08:40:44 florian Exp $ */
 
 /*! \file
  * Heap implementation of priority queues adapted from the following:
@@ -104,7 +104,7 @@ isc_heap_destroy(isc_heap_t **heapp) {
 	*heapp = NULL;
 }
 
-static isc_boolean_t
+static int
 resize(isc_heap_t *heap) {
 	void **new_array;
 	unsigned int new_size;
@@ -112,7 +112,7 @@ resize(isc_heap_t *heap) {
 	new_size = heap->size + heap->size_increment;
 	new_array = reallocarray(NULL, new_size, sizeof(void *));
 	if (new_array == NULL)
-		return (ISC_FALSE);
+		return (0);
 	if (heap->array != NULL) {
 		memmove(new_array, heap->array, heap->size * sizeof(void *));
 		free(heap->array);
@@ -120,7 +120,7 @@ resize(isc_heap_t *heap) {
 	heap->size = new_size;
 	heap->array = new_array;
 
-	return (ISC_TRUE);
+	return (1);
 }
 
 static void
@@ -184,7 +184,7 @@ isc_heap_insert(isc_heap_t *heap, void *elt) {
 void
 isc_heap_delete(isc_heap_t *heap, unsigned int idx) {
 	void *elt;
-	isc_boolean_t less;
+	int less;
 
 	REQUIRE(idx >= 1 && idx <= heap->last);
 

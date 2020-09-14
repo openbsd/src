@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ttl.c,v 1.5 2020/02/25 05:00:42 jsg Exp $ */
+/* $Id: ttl.c,v 1.6 2020/09/14 08:40:43 florian Exp $ */
 
 /*! \file */
 
@@ -38,8 +38,8 @@
  * Helper for dns_ttl_totext().
  */
 static isc_result_t
-ttlfmt(unsigned int t, const char *s, isc_boolean_t verbose,
-       isc_boolean_t space, isc_buffer_t *target)
+ttlfmt(unsigned int t, const char *s, int verbose,
+       int space, isc_buffer_t *target)
 {
 	char tmp[60];
 	unsigned int len;
@@ -67,7 +67,7 @@ ttlfmt(unsigned int t, const char *s, isc_boolean_t verbose,
  * Derived from bind8 ns_format_ttl().
  */
 isc_result_t
-dns_ttl_totext(uint32_t src, isc_boolean_t verbose, isc_buffer_t *target) {
+dns_ttl_totext(uint32_t src, int verbose, isc_buffer_t *target) {
 	unsigned secs, mins, hours, days, weeks, x;
 
 	secs = src % 60;   src /= 60;
@@ -79,24 +79,24 @@ dns_ttl_totext(uint32_t src, isc_boolean_t verbose, isc_buffer_t *target) {
 
 	x = 0;
 	if (weeks != 0) {
-		RETERR(ttlfmt(weeks, "week", verbose, ISC_TF(x > 0), target));
+		RETERR(ttlfmt(weeks, "week", verbose, (x > 0), target));
 		x++;
 	}
 	if (days != 0) {
-		RETERR(ttlfmt(days, "day", verbose, ISC_TF(x > 0), target));
+		RETERR(ttlfmt(days, "day", verbose, (x > 0), target));
 		x++;
 	}
 	if (hours != 0) {
-		RETERR(ttlfmt(hours, "hour", verbose, ISC_TF(x > 0), target));
+		RETERR(ttlfmt(hours, "hour", verbose, (x > 0), target));
 		x++;
 	}
 	if (mins != 0) {
-		RETERR(ttlfmt(mins, "minute", verbose, ISC_TF(x > 0), target));
+		RETERR(ttlfmt(mins, "minute", verbose, (x > 0), target));
 		x++;
 	}
 	if (secs != 0 ||
 	    (weeks == 0 && days == 0 && hours == 0 && mins == 0)) {
-		RETERR(ttlfmt(secs, "second", verbose, ISC_TF(x > 0), target));
+		RETERR(ttlfmt(secs, "second", verbose, (x > 0), target));
 		x++;
 	}
 	INSIST (x > 0);

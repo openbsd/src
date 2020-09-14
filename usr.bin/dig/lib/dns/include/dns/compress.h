@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: compress.h,v 1.4 2020/02/18 18:11:27 florian Exp $ */
+/* $Id: compress.h,v 1.5 2020/09/14 08:40:43 florian Exp $ */
 
 #ifndef DNS_COMPRESS_H
 #define DNS_COMPRESS_H 1
@@ -115,7 +115,7 @@ dns_compress_getmethods(dns_compress_t *cctx);
  *\li		allowed compression bitmap.
  */
 
-isc_boolean_t
+int
 dns_compress_findglobal(dns_compress_t *cctx, const dns_name_t *name,
 			dns_name_t *prefix, uint16_t *offset);
 /*%<
@@ -128,10 +128,10 @@ dns_compress_findglobal(dns_compress_t *cctx, const dns_name_t *name,
  *\li		'offset' to point to an uint16_t.
  *
  *	Ensures:
- *\li		'prefix' and 'offset' are valid if ISC_TRUE is 	returned.
+ *\li		'prefix' and 'offset' are valid if 1 is 	returned.
  *
  *	Returns:
- *\li		#ISC_TRUE / #ISC_FALSE
+ *\li		#1 / #0
  */
 
 void

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: isdn_20.c,v 1.12 2020/02/26 18:47:59 florian Exp $ */
+/* $Id: isdn_20.c,v 1.13 2020/09/14 08:40:43 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 16:53:11 PST 2000 by bwelling */
 
@@ -33,11 +33,11 @@ totext_isdn(ARGS_TOTEXT) {
 	UNUSED(tctx);
 
 	dns_rdata_toregion(rdata, &region);
-	RETERR(txt_totext(&region, ISC_TRUE, target));
+	RETERR(txt_totext(&region, 1, target));
 	if (region.length == 0)
 		return (ISC_R_SUCCESS);
 	RETERR(isc_str_tobuffer(" ", target));
-	return (txt_totext(&region, ISC_TRUE, target));
+	return (txt_totext(&region, 1, target));
 }
 
 static inline isc_result_t

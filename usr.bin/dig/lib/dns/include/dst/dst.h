@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dst.h,v 1.10 2020/02/23 23:40:21 jsg Exp $ */
+/* $Id: dst.h,v 1.11 2020/09/14 08:40:43 florian Exp $ */
 
 #ifndef DST_DST_H
 #define DST_DST_H 1
@@ -130,19 +130,19 @@ dst_lib_destroy(void);
  * Releases all resources allocated by DST.
  */
 
-isc_boolean_t
+int
 dst_algorithm_supported(unsigned int alg);
 /*%<
  * Checks that a given algorithm is supported by DST.
  *
  * Returns:
- * \li	ISC_TRUE
- * \li	ISC_FALSE
+ * \li	1
+ * \li	0
  */
 
 isc_result_t
 dst_context_create3(dst_key_t *key,
-		    isc_logcategory_t *category, isc_boolean_t useforsigning,
+		    isc_logcategory_t *category, int useforsigning,
 		    dst_context_t **dctxp);
 
 /*%<

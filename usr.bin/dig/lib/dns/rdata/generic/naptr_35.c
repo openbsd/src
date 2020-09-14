@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: naptr_35.c,v 1.12 2020/02/26 18:47:59 florian Exp $ */
+/* $Id: naptr_35.c,v 1.13 2020/09/14 08:40:43 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 16:52:50 PST 2000 by bwelling */
 
@@ -34,8 +34,8 @@ txt_valid_regex(const unsigned char *txt) {
 	unsigned int nsub = 0;
 	char regex[256];
 	char *cp;
-	isc_boolean_t flags = ISC_FALSE;
-	isc_boolean_t replace = ISC_FALSE;
+	int flags = 0;
+	int replace = 0;
 	unsigned char c;
 	unsigned char delim;
 	unsigned int len;
@@ -64,10 +64,10 @@ txt_valid_regex(const unsigned char *txt) {
 		if (c == 0)
 			return (DNS_R_SYNTAX);
 		if (c == delim && !replace) {
-			replace = ISC_TRUE;
+			replace = 1;
 			continue;
 		} else if (c == delim && !flags) {
-			flags = ISC_TRUE;
+			flags = 1;
 			continue;
 		} else if (c == delim)
 			return (DNS_R_SYNTAX);
@@ -122,7 +122,7 @@ totext_naptr(ARGS_TOTEXT) {
 	isc_region_t region;
 	dns_name_t name;
 	dns_name_t prefix;
-	isc_boolean_t sub;
+	int sub;
 	char buf[sizeof("64000")];
 	unsigned short num;
 
@@ -155,19 +155,19 @@ totext_naptr(ARGS_TOTEXT) {
 	/*
 	 * Flags.
 	 */
-	RETERR(txt_totext(&region, ISC_TRUE, target));
+	RETERR(txt_totext(&region, 1, target));
 	RETERR(isc_str_tobuffer(" ", target));
 
 	/*
 	 * Service.
 	 */
-	RETERR(txt_totext(&region, ISC_TRUE, target));
+	RETERR(txt_totext(&region, 1, target));
 	RETERR(isc_str_tobuffer(" ", target));
 
 	/*
 	 * Regexp.
 	 */
-	RETERR(txt_totext(&region, ISC_TRUE, target));
+	RETERR(txt_totext(&region, 1, target));
 	RETERR(isc_str_tobuffer(" ", target));
 
 	/*

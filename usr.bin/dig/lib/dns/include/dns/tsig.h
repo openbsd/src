@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tsig.h,v 1.5 2020/02/18 18:11:27 florian Exp $ */
+/* $Id: tsig.h,v 1.6 2020/09/14 08:40:43 florian Exp $ */
 
 #ifndef DNS_TSIG_H
 #define DNS_TSIG_H 1
@@ -53,7 +53,7 @@ struct dns_tsigkey {
 	dns_name_t		name;		/*%< Key name */
 	dns_name_t		*algorithm;	/*%< Algorithm name */
 	dns_name_t		*creator;	/*%< name that created secret */
-	isc_boolean_t		generated;	/*%< was this generated? */
+	int		generated;	/*%< was this generated? */
 	time_t		inception;	/*%< start of validity period */
 	time_t		expire;		/*%< end of validity period */
 	isc_refcount_t		refs;		/*%< reference counter */
@@ -67,14 +67,14 @@ struct dns_tsigkey {
 
 isc_result_t
 dns_tsigkey_create(dns_name_t *name, dns_name_t *algorithm,
-		   unsigned char *secret, int length, isc_boolean_t generated,
+		   unsigned char *secret, int length, int generated,
 		   dns_name_t *creator, time_t inception,
 		   time_t expire,
 		   dns_tsigkey_t **key);
 
 isc_result_t
 dns_tsigkey_createfromkey(dns_name_t *name, dns_name_t *algorithm,
-			  dst_key_t *dstkey, isc_boolean_t generated,
+			  dst_key_t *dstkey, int generated,
 			  dns_name_t *creator, time_t inception,
 			  time_t expire,
 			  dns_tsigkey_t **key);

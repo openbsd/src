@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ns_2.c,v 1.8 2020/02/26 18:38:15 florian Exp $ */
+/* $Id: ns_2.c,v 1.9 2020/09/14 08:40:43 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 18:15:00 PST 2000 by bwelling */
 
@@ -26,7 +26,7 @@ totext_ns(ARGS_TOTEXT) {
 	isc_region_t region;
 	dns_name_t name;
 	dns_name_t prefix;
-	isc_boolean_t sub;
+	int sub;
 
 	REQUIRE(rdata->type == dns_rdatatype_ns);
 	REQUIRE(rdata->length != 0);

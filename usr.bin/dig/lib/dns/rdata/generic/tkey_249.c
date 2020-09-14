@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tkey_249.c,v 1.12 2020/02/26 18:47:59 florian Exp $ */
+/* $Id: tkey_249.c,v 1.13 2020/09/14 08:40:43 florian Exp $ */
 
 /*
  * Reviewed: Thu Mar 16 17:35:30 PST 2000 by halley.
@@ -32,7 +32,7 @@ totext_tkey(ARGS_TOTEXT) {
 	unsigned long n;
 	dns_name_t name;
 	dns_name_t prefix;
-	isc_boolean_t sub;
+	int sub;
 
 	REQUIRE(rdata->type == dns_rdatatype_tkey);
 	REQUIRE(rdata->length != 0);

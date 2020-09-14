@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: result.c,v 1.4 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: result.c,v 1.5 2020/09/14 08:40:44 florian Exp $ */
 
 /*! \file */
 
@@ -101,7 +101,7 @@ static const char *description[ISC_R_NRESULTS] = {
 
 #define ISC_RESULT_RESULTSET			2
 
-static isc_boolean_t 				once = ISC_FALSE;
+static int 				once = 0;
 static ISC_LIST(resulttable)			tables;
 
 static isc_result_t
@@ -149,7 +149,7 @@ initialize_action(void) {
 static void
 initialize(void) {
 	if (!once) {
-		once = ISC_TRUE;
+		once = 1;
 		initialize_action();
 	}
 }

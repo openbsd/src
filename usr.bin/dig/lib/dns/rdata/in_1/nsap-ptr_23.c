@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsap-ptr_23.c,v 1.10 2020/02/26 18:38:15 florian Exp $ */
+/* $Id: nsap-ptr_23.c,v 1.11 2020/09/14 08:40:44 florian Exp $ */
 
 /* Reviewed: Fri Mar 17 10:16:02 PST 2000 by gson */
 
@@ -28,7 +28,7 @@ totext_in_nsap_ptr(ARGS_TOTEXT) {
 	isc_region_t region;
 	dns_name_t name;
 	dns_name_t prefix;
-	isc_boolean_t sub;
+	int sub;
 
 	REQUIRE(rdata->type == dns_rdatatype_nsap_ptr);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);

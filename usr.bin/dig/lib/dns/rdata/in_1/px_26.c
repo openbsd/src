@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: px_26.c,v 1.12 2020/02/26 18:47:59 florian Exp $ */
+/* $Id: px_26.c,v 1.13 2020/09/14 08:40:44 florian Exp $ */
 
 /* Reviewed: Mon Mar 20 10:44:27 PST 2000 */
 
@@ -28,7 +28,7 @@ totext_in_px(ARGS_TOTEXT) {
 	isc_region_t region;
 	dns_name_t name;
 	dns_name_t prefix;
-	isc_boolean_t sub;
+	int sub;
 	char buf[sizeof("64000")];
 	unsigned short num;
 

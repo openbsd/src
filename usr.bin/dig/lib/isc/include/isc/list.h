@@ -14,11 +14,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: list.h,v 1.2 2020/02/13 16:56:09 florian Exp $ */
+/* $Id: list.h,v 1.3 2020/09/14 08:40:44 florian Exp $ */
 
 #ifndef ISC_LIST_H
 #define ISC_LIST_H 1
-#include <isc/boolean.h>
 #include <isc/assertions.h>
 
 #define ISC_LIST(type) struct { type *head, *tail; }
@@ -37,7 +36,7 @@
 
 #define ISC_LIST_HEAD(list) ((list).head)
 #define ISC_LIST_TAIL(list) ((list).tail)
-#define ISC_LIST_EMPTY(list) ISC_TF((list).head == NULL)
+#define ISC_LIST_EMPTY(list) ((list).head == NULL)
 
 #define __ISC_LIST_PREPENDUNSAFE(list, elt, link) \
 	do { \

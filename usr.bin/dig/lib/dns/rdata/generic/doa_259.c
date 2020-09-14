@@ -58,7 +58,7 @@ totext_doa(ARGS_TOTEXT) {
 	/*
 	 * DOA-MEDIA-TYPE
 	 */
-	RETERR(txt_totext(&region, ISC_TRUE, target));
+	RETERR(txt_totext(&region, 1, target));
 	RETERR(isc_str_tobuffer(" ", target));
 
 	/*

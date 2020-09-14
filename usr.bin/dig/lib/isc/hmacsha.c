@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hmacsha.c,v 1.6 2020/02/25 18:10:17 florian Exp $ */
+/* $Id: hmacsha.c,v 1.7 2020/09/14 08:40:44 florian Exp $ */
 
 /*
  * This code implements the HMAC-SHA1, HMAC-SHA224, HMAC-SHA256, HMAC-SHA384
@@ -223,63 +223,63 @@ isc_hmacsha512_sign(isc_hmacsha512_t *ctx, unsigned char *digest, size_t len) {
  * Verify signature - finalize SHA1 operation and reapply SHA1, then
  * compare to the supplied digest.
  */
-isc_boolean_t
+int
 isc_hmacsha1_verify(isc_hmacsha1_t *ctx, unsigned char *digest, size_t len) {
 	unsigned char newdigest[ISC_SHA1_DIGESTLENGTH];
 
 	REQUIRE(len <= ISC_SHA1_DIGESTLENGTH);
 	isc_hmacsha1_sign(ctx, newdigest, ISC_SHA1_DIGESTLENGTH);
-	return (ISC_TF(timingsafe_bcmp(digest, newdigest, len) == 0));
+	return (timingsafe_bcmp(digest, newdigest, len) == 0);
 }
 
 /*
  * Verify signature - finalize SHA224 operation and reapply SHA224, then
  * compare to the supplied digest.
  */
-isc_boolean_t
+int
 isc_hmacsha224_verify(isc_hmacsha224_t *ctx, unsigned char *digest, size_t len) {
 	unsigned char newdigest[ISC_SHA224_DIGESTLENGTH];
 
 	REQUIRE(len <= ISC_SHA224_DIGESTLENGTH);
 	isc_hmacsha224_sign(ctx, newdigest, ISC_SHA224_DIGESTLENGTH);
-	return (ISC_TF(timingsafe_bcmp(digest, newdigest, len) == 0));
+	return (timingsafe_bcmp(digest, newdigest, len) == 0);
 }
 
 /*
  * Verify signature - finalize SHA256 operation and reapply SHA256, then
  * compare to the supplied digest.
  */
-isc_boolean_t
+int
 isc_hmacsha256_verify(isc_hmacsha256_t *ctx, unsigned char *digest, size_t len) {
 	unsigned char newdigest[ISC_SHA256_DIGESTLENGTH];
 
 	REQUIRE(len <= ISC_SHA256_DIGESTLENGTH);
 	isc_hmacsha256_sign(ctx, newdigest, ISC_SHA256_DIGESTLENGTH);
-	return (ISC_TF(timingsafe_bcmp(digest, newdigest, len) == 0));
+	return (timingsafe_bcmp(digest, newdigest, len) == 0);
 }
 
 /*
  * Verify signature - finalize SHA384 operation and reapply SHA384, then
  * compare to the supplied digest.
  */
-isc_boolean_t
+int
 isc_hmacsha384_verify(isc_hmacsha384_t *ctx, unsigned char *digest, size_t len) {
 	unsigned char newdigest[ISC_SHA384_DIGESTLENGTH];
 
 	REQUIRE(len <= ISC_SHA384_DIGESTLENGTH);
 	isc_hmacsha384_sign(ctx, newdigest, ISC_SHA384_DIGESTLENGTH);
-	return (ISC_TF(timingsafe_bcmp(digest, newdigest, len) == 0));
+	return (timingsafe_bcmp(digest, newdigest, len) == 0);
 }
 
 /*
  * Verify signature - finalize SHA512 operation and reapply SHA512, then
  * compare to the supplied digest.
  */
-isc_boolean_t
+int
 isc_hmacsha512_verify(isc_hmacsha512_t *ctx, unsigned char *digest, size_t len) {
 	unsigned char newdigest[ISC_SHA512_DIGESTLENGTH];
 
 	REQUIRE(len <= ISC_SHA512_DIGESTLENGTH);
 	isc_hmacsha512_sign(ctx, newdigest, ISC_SHA512_DIGESTLENGTH);
-	return (ISC_TF(timingsafe_bcmp(digest, newdigest, len) == 0));
+	return (timingsafe_bcmp(digest, newdigest, len) == 0);
 }

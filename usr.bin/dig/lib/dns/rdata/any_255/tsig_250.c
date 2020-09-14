@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: tsig_250.c,v 1.9 2020/02/26 18:47:58 florian Exp $ */
+/* $Id: tsig_250.c,v 1.10 2020/09/14 08:40:43 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 13:39:43 PST 2000 by gson */
 
@@ -29,7 +29,7 @@ totext_any_tsig(ARGS_TOTEXT) {
 	char *bufp;
 	dns_name_t name;
 	dns_name_t prefix;
-	isc_boolean_t sub;
+	int sub;
 	uint64_t sigtime;
 	unsigned short n;
 

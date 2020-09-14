@@ -23,7 +23,6 @@
 #include <time.h>
 
 #include <isc/app.h>
-#include <isc/boolean.h>
 #include <isc/event.h>
 
 #include <string.h>
@@ -47,13 +46,13 @@
 
 typedef struct isc_appctx {
 	isc_eventlist_t		on_run;
-	isc_boolean_t		shutdown_requested;
-	isc_boolean_t		running;
+	int		shutdown_requested;
+	int		running;
 
 	/*!
 	 * We assume that 'want_shutdown' can be read and written atomically.
 	 */
-	isc_boolean_t		want_shutdown;
+	int		want_shutdown;
 
 	isc_taskmgr_t		*taskmgr;
 	isc_socketmgr_t		*socketmgr;
@@ -73,9 +72,9 @@ isc_app_ctxstart(isc_appctx_t *ctx) {
 
 	ISC_LIST_INIT(ctx->on_run);
 
-	ctx->shutdown_requested = ISC_FALSE;
-	ctx->running = ISC_FALSE;
-	ctx->want_shutdown = ISC_FALSE;
+	ctx->shutdown_requested = 0;
+	ctx->running = 0;
+	ctx->want_shutdown = 0;
 
 	if (signal(SIGPIPE, SIG_IGN) == SIG_ERR) {
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
@@ -147,15 +146,15 @@ evloop(isc_appctx_t *ctx) {
 		struct timespec when, now, diff, zero ={0, 0};
 		struct timeval tv, *tvp;
 		isc_socketwait_t *swait;
-		isc_boolean_t readytasks;
-		isc_boolean_t call_timer_dispatch = ISC_FALSE;
+		int readytasks;
+		int call_timer_dispatch = 0;
 
 		readytasks = isc_taskmgr_ready(ctx->taskmgr);
 		if (readytasks) {
 			tv.tv_sec = 0;
 			tv.tv_usec = 0;
 			tvp = &tv;
-			call_timer_dispatch = ISC_TRUE;
+			call_timer_dispatch = 1;
 		} else {
 			result = isc_timermgr_nextevent(ctx->timermgr, &when);
 			if (result != ISC_R_SUCCESS)
@@ -164,7 +163,7 @@ evloop(isc_appctx_t *ctx) {
 				clock_gettime(CLOCK_MONOTONIC, &now);
 				timespecsub(&when, &now, &diff);
 				if (timespeccmp(&diff, &zero, <=)) {
-					call_timer_dispatch = ISC_TRUE;
+					call_timer_dispatch = 1;
 					memset(&tv, 0, sizeof(tv));
 				} else
 					TIMESPEC_TO_TIMEVAL(&tv, &diff);
@@ -206,7 +205,7 @@ isc_app_ctxrun(isc_appctx_t *ctx) {
 	isc_task_t *task;
 
 	if (!ctx->running) {
-		ctx->running = ISC_TRUE;
+		ctx->running = 1;
 
 		/*
 		 * Post any on-run events (in FIFO order).
@@ -235,21 +234,21 @@ isc_app_run(void) {
 
 static isc_result_t
 isc_app_ctxshutdown(isc_appctx_t *ctx) {
-	isc_boolean_t want_kill = ISC_TRUE;
+	int want_kill = 1;
 
 	REQUIRE(ctx->running);
 
 	if (ctx->shutdown_requested)
-		want_kill = ISC_FALSE;
+		want_kill = 0;
 	else
-		ctx->shutdown_requested = ISC_TRUE;
+		ctx->shutdown_requested = 1;
 
 	if (want_kill) {
 		if (ctx != &isc_g_appctx)
 			/* BIND9 internal, but using multiple contexts */
-			ctx->want_shutdown = ISC_TRUE;
+			ctx->want_shutdown = 1;
 		else {
-			ctx->want_shutdown = ISC_TRUE;
+			ctx->want_shutdown = 1;
 		}
 	}
 

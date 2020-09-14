@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: soa_6.c,v 1.8 2020/02/26 18:47:59 florian Exp $ */
+/* $Id: soa_6.c,v 1.9 2020/09/14 08:40:43 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 15:18:32 PST 2000 by explorer */
 
@@ -31,19 +31,19 @@ totext_soa(ARGS_TOTEXT) {
 	dns_name_t mname;
 	dns_name_t rname;
 	dns_name_t prefix;
-	isc_boolean_t sub;
+	int sub;
 	int i;
-	isc_boolean_t multiline;
-	isc_boolean_t comm;
+	int multiline;
+	int comm;
 
 	REQUIRE(rdata->type == dns_rdatatype_soa);
 	REQUIRE(rdata->length != 0);
 
-	multiline = ISC_TF((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0);
+	multiline = (tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0;
 	if (multiline)
-		comm = ISC_TF((tctx->flags & DNS_STYLEFLAG_RRCOMMENT) != 0);
+		comm = (tctx->flags & DNS_STYLEFLAG_RRCOMMENT) != 0;
 	else
-		comm = ISC_FALSE;
+		comm = 0;
 
 	dns_name_init(&mname, NULL);
 	dns_name_init(&rname, NULL);
@@ -81,7 +81,7 @@ totext_soa(ARGS_TOTEXT) {
 			/* Print times in week/day/hour/minute/second form */
 			if (i >= 1) {
 				RETERR(isc_str_tobuffer(" (", target));
-				RETERR(dns_ttl_totext(num, ISC_TRUE, target));
+				RETERR(dns_ttl_totext(num, 1, target));
 				RETERR(isc_str_tobuffer(")", target));
 			}
 			RETERR(isc_str_tobuffer(tctx->linebreak, target));

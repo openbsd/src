@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: symtab.c,v 1.5 2020/02/25 16:54:24 deraadt Exp $ */
+/* $Id: symtab.c,v 1.6 2020/09/14 08:40:44 florian Exp $ */
 
 /*! \file */
 
@@ -41,14 +41,14 @@ struct isc_symtab {
 	eltlist_t *			table;
 	isc_symtabaction_t		undefine_action;
 	void *				undefine_arg;
-	isc_boolean_t			case_sensitive;
+	int			case_sensitive;
 };
 
 isc_result_t
 isc_symtab_create(unsigned int size,
 		  isc_symtabaction_t undefine_action,
 		  void *undefine_arg,
-		  isc_boolean_t case_sensitive,
+		  int case_sensitive,
 		  isc_symtab_t **symtabp)
 {
 	isc_symtab_t *symtab;
@@ -104,7 +104,7 @@ isc_symtab_destroy(isc_symtab_t **symtabp) {
 }
 
 static inline unsigned int
-hash(const char *key, isc_boolean_t case_sensitive) {
+hash(const char *key, int case_sensitive) {
 	const char *s;
 	unsigned int h = 0;
 	int c;

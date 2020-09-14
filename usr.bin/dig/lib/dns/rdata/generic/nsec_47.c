@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: nsec_47.c,v 1.12 2020/02/26 18:47:59 florian Exp $ */
+/* $Id: nsec_47.c,v 1.13 2020/09/14 08:40:43 florian Exp $ */
 
 /* reviewed: Wed Mar 15 18:21:15 PST 2000 by brister */
 
@@ -42,7 +42,7 @@ totext_nsec(ARGS_TOTEXT) {
 	dns_rdata_toregion(rdata, &sr);
 	dns_name_fromregion(&name, &sr);
 	isc_region_consume(&sr, name_length(&name));
-	RETERR(dns_name_totext(&name, ISC_FALSE, target));
+	RETERR(dns_name_totext(&name, 0, target));
 	/*
 	 * Don't leave a trailing space when there's no typemap present.
 	 */
@@ -68,7 +68,7 @@ fromwire_nsec(ARGS_FROMWIRE) {
 	RETERR(dns_name_fromwire(&name, source, dctx, options, target));
 
 	isc_buffer_activeregion(source, &sr);
-	RETERR(typemap_test(&sr, ISC_FALSE));
+	RETERR(typemap_test(&sr, 0));
 	RETERR(isc_mem_tobuffer(target, sr.base, sr.length));
 	isc_buffer_forward(source, sr.length);
 	return (ISC_R_SUCCESS);

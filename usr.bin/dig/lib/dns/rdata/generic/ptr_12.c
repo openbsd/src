@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ptr_12.c,v 1.11 2020/03/27 10:19:36 florian Exp $ */
+/* $Id: ptr_12.c,v 1.12 2020/09/14 08:40:43 florian Exp $ */
 
 /* Reviewed: Thu Mar 16 14:05:12 PST 2000 by explorer */
 
@@ -26,7 +26,7 @@ totext_ptr(ARGS_TOTEXT) {
 	isc_region_t region;
 	dns_name_t name;
 	dns_name_t prefix;
-	isc_boolean_t sub;
+	int sub;
 
 	REQUIRE(rdata->type == dns_rdatatype_ptr);
 	REQUIRE(rdata->length != 0);

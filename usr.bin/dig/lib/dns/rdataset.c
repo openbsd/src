@@ -82,16 +82,16 @@ dns_rdataset_disassociate(dns_rdataset_t *rdataset) {
 	rdataset->private6 = NULL;
 }
 
-isc_boolean_t
+int
 dns_rdataset_isassociated(dns_rdataset_t *rdataset) {
 	/*
 	 * Is 'rdataset' associated?
 	 */
 
 	if (rdataset->methods != NULL)
-		return (ISC_TRUE);
+		return (1);
 
-	return (ISC_FALSE);
+	return (0);
 }
 
 static void
@@ -239,7 +239,7 @@ static isc_result_t
 towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 	     dns_compress_t *cctx, isc_buffer_t *target,
 	     dns_rdatasetorderfunc_t order, const void *order_arg,
-	     isc_boolean_t partial, unsigned int *countp)
+	     int partial, unsigned int *countp)
 {
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	isc_region_t r;
@@ -247,8 +247,8 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 	unsigned int i, count = 0, added, choice;
 	isc_buffer_t savedbuffer, rdlen, rrbuffer;
 	unsigned int headlen;
-	isc_boolean_t question = ISC_FALSE;
-	isc_boolean_t shuffle = ISC_FALSE;
+	int question = 0;
+	int shuffle = 0;
 	dns_rdata_t *in = NULL, in_fixed[MAX_SHUFFLE];
 	struct towire_sort *out = NULL, out_fixed[MAX_SHUFFLE];
 
@@ -263,7 +263,7 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 	REQUIRE(cctx != NULL);
 
 	if ((rdataset->attributes & DNS_RDATASETATTR_QUESTION) != 0) {
-		question = ISC_TRUE;
+		question = 1;
 		count = 1;
 		result = dns_rdataset_first(rdataset);
 		INSIST(result == ISC_R_NOMORE);
@@ -282,13 +282,13 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 	if (!question && count > 1 &&
 	    (!WANT_FIXED(rdataset) || order != NULL) &&
 	    rdataset->type != dns_rdatatype_rrsig)
-		shuffle = ISC_TRUE;
+		shuffle = 1;
 
 	if (shuffle && count > MAX_SHUFFLE) {
 		in = reallocarray(NULL, count, sizeof(*in));
 		out = reallocarray(NULL, count, sizeof(*out));
 		if (in == NULL || out == NULL)
-			shuffle = ISC_FALSE;
+			shuffle = 0;
 	} else {
 		in = in_fixed;
 		out = out_fixed;
@@ -473,7 +473,7 @@ dns_rdataset_towiresorted(dns_rdataset_t *rdataset,
 			  unsigned int *countp)
 {
 	return (towiresorted(rdataset, owner_name, cctx, target,
-			     order, order_arg, ISC_FALSE, countp));
+			     order, order_arg, 0, countp));
 }
 
 isc_result_t
@@ -484,5 +484,5 @@ dns_rdataset_towire(dns_rdataset_t *rdataset,
 		    unsigned int *countp)
 {
 	return (towiresorted(rdataset, owner_name, cctx, target,
-			     NULL, NULL, ISC_FALSE, countp));
+			     NULL, NULL, 0, countp));
 }

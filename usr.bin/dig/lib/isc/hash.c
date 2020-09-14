@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hash.c,v 1.6 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: hash.c,v 1.7 2020/09/14 08:40:44 florian Exp $ */
 
 /*! \file
  * Some portion of this code was derived from universal hash function
@@ -95,7 +95,7 @@ static unsigned char maptolower[] = {
 };
 
 static uint32_t fnv_offset_basis;
-static isc_boolean_t fnv_once = ISC_FALSE;
+static int fnv_once = 0;
 
 static void
 fnv_initialize(void) {
@@ -111,7 +111,7 @@ fnv_initialize(void) {
 
 uint32_t
 isc_hash_function_reverse(const void *data, size_t length,
-			  isc_boolean_t case_sensitive,
+			  int case_sensitive,
 			  const uint32_t *previous_hashp)
 {
 	uint32_t hval;
@@ -120,7 +120,7 @@ isc_hash_function_reverse(const void *data, size_t length,
 
 	REQUIRE(length == 0 || data != NULL);
 	if (!fnv_once) {
-		fnv_once = ISC_TRUE;
+		fnv_once = 1;
 		fnv_initialize();
 	}
 

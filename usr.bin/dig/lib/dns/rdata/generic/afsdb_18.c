@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: afsdb_18.c,v 1.11 2020/02/26 18:47:58 florian Exp $ */
+/* $Id: afsdb_18.c,v 1.12 2020/09/14 08:40:43 florian Exp $ */
 
 /* Reviewed: Wed Mar 15 14:59:00 PST 2000 by explorer */
 
@@ -29,7 +29,7 @@ totext_afsdb(ARGS_TOTEXT) {
 	dns_name_t prefix;
 	isc_region_t region;
 	char buf[sizeof("64000 ")];
-	isc_boolean_t sub;
+	int sub;
 	unsigned int num;
 
 	REQUIRE(rdata->type == dns_rdatatype_afsdb);

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: netaddr.c,v 1.8 2020/09/14 08:39:12 florian Exp $ */
+/* $Id: netaddr.c,v 1.9 2020/09/14 08:40:44 florian Exp $ */
 
 /*! \file */
 
@@ -118,38 +118,38 @@ isc_netaddr_fromsockaddr(isc_netaddr_t *t, const isc_sockaddr_t *s) {
 	}
 }
 
-isc_boolean_t
+int
 isc_netaddr_ismulticast(isc_netaddr_t *na) {
 	switch (na->family) {
 	case AF_INET:
-		return (ISC_TF(IN_MULTICAST(na->type.in.s_addr)));
+		return (IN_MULTICAST(na->type.in.s_addr));
 	case AF_INET6:
-		return (ISC_TF(IN6_IS_ADDR_MULTICAST(&na->type.in6)));
+		return (IN6_IS_ADDR_MULTICAST(&na->type.in6));
 	default:
-		return (ISC_FALSE);  /* XXXMLG ? */
+		return (0);  /* XXXMLG ? */
 	}
 }
 
-isc_boolean_t
+int
 isc_netaddr_islinklocal(isc_netaddr_t *na) {
 	switch (na->family) {
 	case AF_INET:
-		return (ISC_FALSE);
+		return (0);
 	case AF_INET6:
-		return (ISC_TF(IN6_IS_ADDR_LINKLOCAL(&na->type.in6)));
+		return (IN6_IS_ADDR_LINKLOCAL(&na->type.in6));
 	default:
-		return (ISC_FALSE);
+		return (0);
 	}
 }
 
-isc_boolean_t
+int
 isc_netaddr_issitelocal(isc_netaddr_t *na) {
 	switch (na->family) {
 	case AF_INET:
-		return (ISC_FALSE);
+		return (0);
 	case AF_INET6:
-		return (ISC_TF(IN6_IS_ADDR_SITELOCAL(&na->type.in6)));
+		return (IN6_IS_ADDR_SITELOCAL(&na->type.in6));
 	default:
-		return (ISC_FALSE);
+		return (0);
 	}
 }
