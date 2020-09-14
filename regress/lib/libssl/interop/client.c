@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.9 2020/09/11 22:48:00 bluhm Exp $	*/
+/*	$OpenBSD: client.c,v 1.10 2020/09/14 00:51:04 bluhm Exp $	*/
 /*
  * Copyright (c) 2018-2019 Alexander Bluhm <bluhm@openbsd.org>
  *
@@ -35,7 +35,7 @@ void __dead
 usage(void)
 {
 	fprintf(stderr, "usage: client [-Lsv] [-C CA] [-c crt -k key] "
-	    "[-l ciphers] host port\n");
+	    "[-l ciphers] [-V version] host port\n");
 	exit(2);
 }
 
@@ -48,11 +48,12 @@ main(int argc, char *argv[])
 	BIO *bio;
 	SSL_SESSION *session = NULL;
 	int ch, error, listciphers = 0, sessionreuse = 0, verify = 0;
+	int version = 0;
 	char buf[256];
 	char *ca = NULL, *crt = NULL, *key = NULL, *ciphers = NULL;
 	char *host_port, *host = "127.0.0.1", *port = "0";
 
-	while ((ch = getopt(argc, argv, "C:c:k:Ll:sv")) != -1) {
+	while ((ch = getopt(argc, argv, "C:c:k:Ll:p:sV:v")) != -1) {
 		switch (ch) {
 		case 'C':
 			ca = optarg;
@@ -72,6 +73,21 @@ main(int argc, char *argv[])
 		case 's':
 			/* multiple reueses are possible */
 			sessionreuse++;
+			break;
+		case 'V':
+			if (strcmp(optarg, "TLS1") == 0) {
+				version = TLS1_VERSION;
+			} else if (strcmp(optarg, "TLS1_1") == 0) {
+				version = TLS1_1_VERSION;
+			} else if (strcmp(optarg, "TLS1_2") == 0) {
+				version = TLS1_2_VERSION;
+#ifdef TLS1_3_VERSION
+			} else if (strcmp(optarg, "TLS1_3") == 0) {
+				version = TLS1_3_VERSION;
+#endif
+			} else {
+				errx(1, "unknown protocol version: %s", optarg);
+			}
 			break;
 		case 'v':
 			verify = 1;
@@ -104,13 +120,39 @@ main(int argc, char *argv[])
 	if (method == NULL)
 		err_ssl(1, "TLS_client_method");
 #else
-	method = SSLv23_client_method();
+	switch (version) {
+	case TLS1_VERSION:
+		method = TLSv1_client_method();
+		break;
+	case TLS1_1_VERSION:
+		method = TLSv1_1_client_method();
+		break;
+	case TLS1_2_VERSION:
+		method = TLSv1_2_client_method();
+		break;
+#ifdef TLS1_3_VERSION
+	case TLS1_3_VERSION:
+		err(1, "TLS1_3 not supported");
+#endif
+	default:
+		method = SSLv23_client_method();
+		break;
+	}
 	if (method == NULL)
 		err_ssl(1, "SSLv23_client_method");
 #endif
 	ctx = SSL_CTX_new(method);
 	if (ctx == NULL)
 		err_ssl(1, "SSL_CTX_new");
+
+#if OPENSSL_VERSION_NUMBER >= 0x1010000f
+	if (version) {
+		if (SSL_CTX_set_min_proto_version(ctx, version) != 1)
+			err_ssl(1, "SSL_CTX_set_min_proto_version");
+		if (SSL_CTX_set_max_proto_version(ctx, version) != 1)
+			err_ssl(1, "SSL_CTX_set_max_proto_version");
+	}
+#endif
 
 	/* load client certificate */
 	if (crt != NULL) {
