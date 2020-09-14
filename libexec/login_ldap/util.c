@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: util.c,v 1.1 2020/09/12 15:06:12 martijn Exp $
+ * $OpenBSD: util.c,v 1.2 2020/09/14 08:00:57 martijn Exp $
  * Copyright (c) 2002 Institute for Open Systems Technology Australia (IFOST)
  * Copyright (c) 2007 Michael Erdely <merdely@openbsd.org>
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -236,20 +236,17 @@ parse_conf(struct auth_ctx *ctx, const char *path)
 			}
 			TAILQ_INSERT_TAIL(&(ctx->s), url, entries);
 		} else if (strcmp(key, "basedn") == 0) {
-			if (ctx->basedn != NULL)
-				free(ctx->basedn);
+			free(ctx->basedn);
 			if ((ctx->basedn = strdup(value)) == NULL) {
 				dlog(0, "%s", strerror(errno));
 				return 0;
 			}
 		} else if (strcmp(key, "binddn") == 0) {
-			if (ctx->binddn != NULL)
-				free(ctx->binddn);
+			free(ctx->binddn);
 			if ((ctx->binddn = parse_filter(ctx, value)) == NULL)
 				return 0;
 		} else if (strcmp(key, "bindpw") == 0) {
-			if (ctx->bindpw != NULL)
-				free(ctx->bindpw);
+			free(ctx->bindpw);
 			if ((ctx->bindpw = strdup(value)) == NULL) {
 				dlog(0, "%s", strerror(errno));
 				return 0;
@@ -261,37 +258,32 @@ parse_conf(struct auth_ctx *ctx, const char *path)
 				return 0;
 			}
 		} else if (strcmp(key, "filter") == 0) {
-			if (ctx->filter != NULL)
-				free(ctx->filter);
+			free(ctx->filter);
 			if ((ctx->filter = parse_filter(ctx, value)) == NULL)
 				return 0;
 		} else if (strcmp(key, "scope") == 0) {
 			if ((ctx->scope = getscope(value)) == -1)
 				return 0;
 		} else if (strcmp(key, "cacert") == 0) {
-			if (ctx->cacert != NULL)
-				free(ctx->cacert);
+			free(ctx->cacert);
 			if ((ctx->cacert = strdup(value)) == NULL) {
 				dlog(0, "%s", strerror(errno));
 				return 0;
 			}
 		} else if (strcmp(key, "cacertdir") == 0) {
-			if (ctx->cacertdir != NULL)
-				free(ctx->cacertdir);
+			free(ctx->cacertdir);
 			if ((ctx->cacertdir = strdup(value)) == NULL) {
 				dlog(0, "%s", strerror(errno));
 				return 0;
 			}
 		} else if (strcmp(key, "gbasedn") == 0) {
-			if (ctx->gbasedn != NULL)
-				free(ctx->gbasedn);
+			free(ctx->gbasedn);
 			if ((ctx->gbasedn = strdup(value)) == NULL) {
 				dlog(0, "%s", strerror(errno));
 				return 0;
 			}
 		} else if (strcmp(key, "gfilter") == 0) {
-			if (ctx->gfilter != NULL)
-				free(ctx->gfilter);
+			free(ctx->gfilter);
 			if ((ctx->gfilter = strdup(value)) == NULL) {
 				dlog(0, "%s", strerror(errno));
 				return 0;
