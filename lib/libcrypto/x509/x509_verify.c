@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.5 2020/09/14 12:00:55 tb Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.6 2020/09/14 12:33:51 beck Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -108,7 +108,7 @@ x509_verify_chain_append(struct x509_verify_chain *chain, X509 *cert,
 	X509_up_ref(cert);
 	if (!sk_X509_push(chain->certs, cert)) {
 		X509_free(cert);
-		*error = X509_V_ERR_UNSPECIFIED;
+		*error = X509_V_ERR_OUT_OF_MEM;
 		return 0;
 	}
 	return 1;
@@ -833,9 +833,7 @@ x509_verify(struct x509_verify_ctx *ctx, X509 *leaf, char *name)
 {
 	struct x509_verify_chain *current_chain;
 
-	if (ctx == NULL)
-		return 0;
-	if (ctx->roots == NULL || ctx->max_depth == 0) {
+	if (ctx == NULL || ctx->roots == NULL || ctx->max_depth == 0) {
 		ctx->error = X509_V_ERR_INVALID_CALL;
 		return 0;
 	}
