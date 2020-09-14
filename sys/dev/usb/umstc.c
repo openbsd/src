@@ -1,4 +1,4 @@
-/*	$OpenBSD: umstc.c,v 1.2 2020/08/23 11:08:02 mglocker Exp $ */
+/*	$OpenBSD: umstc.c,v 1.3 2020/09/14 15:21:08 deraadt Exp $ */
 
 /*
  * Copyright (c) 2020 joshua stein <jcs@jcs.org>
@@ -26,6 +26,8 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/atomic.h>
+#include <sys/task.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
@@ -41,13 +43,16 @@
 #include "wsdisplay.h"
 
 struct umstc_softc {
-	struct uhidev sc_hdev;
+	struct uhidev	sc_hdev;
+	struct task	sc_brightness_task;
+	int		sc_brightness_steps;
 };
 
 void	umstc_intr(struct uhidev *addr, void *ibuf, u_int len);
 int	umstc_match(struct device *, void *, void *);
 void	umstc_attach(struct device *, struct device *, void *);
 int	umstc_detach(struct device *, int flags);
+void	umstc_brightness_task(void *);
 
 extern int wskbd_set_mixervolume(long, long);
 
@@ -110,6 +115,8 @@ umstc_attach(struct device *parent, struct device *self, void *aux)
 
 	uhidev_open(&sc->sc_hdev);
 
+	task_set(&sc->sc_brightness_task, umstc_brightness_task, sc);
+
 	printf("\n");
 }
 
@@ -117,6 +124,8 @@ int
 umstc_detach(struct device *self, int flags)
 {
 	struct umstc_softc *sc = (struct umstc_softc *)self;
+
+	task_del(systq, &sc->sc_brightness_task);
 
 	uhidev_close(&sc->sc_hdev);
 
@@ -156,12 +165,14 @@ umstc_intr(struct uhidev *addr, void *buf, u_int len)
 		break;
 	case 0x70: /* brightness down */
 #if NWSDISPLAY > 0
-		wsdisplay_brightness_step(NULL, -1);
+		atomic_sub_int(&sc->sc_brightness_steps, 1);
+		task_add(systq, &sc->sc_brightness_task);
 #endif
 		break;
 	case 0x6f: /* brightness up */
 #if NWSDISPLAY > 0
-		wsdisplay_brightness_step(NULL, 1);
+		atomic_add_int(&sc->sc_brightness_steps, 1);
+		task_add(systq, &sc->sc_brightness_task);
 #endif
 		break;
 	case 0:
@@ -172,4 +183,20 @@ umstc_intr(struct uhidev *addr, void *buf, u_int len)
 			printf(" 0x%02x", ((unsigned char *)buf)[i]);
 		printf("\n");
 	}
+}
+
+void
+umstc_brightness_task(void *arg)
+{
+	struct umstc_softc *sc = arg;
+	int steps = atomic_swap_uint(&sc->sc_brightness_steps, 0);
+	int dir = 1;
+
+	if (steps < 0) {
+		steps = -steps;
+		dir = -1;
+	}
+	
+	while (steps--)
+		wsdisplay_brightness_step(NULL, dir);
 }
