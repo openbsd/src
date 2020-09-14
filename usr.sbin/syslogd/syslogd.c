@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.263 2020/05/25 10:38:32 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.264 2020/09/14 20:36:01 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2014-2017 Alexander Bluhm <bluhm@genua.de>
@@ -354,6 +354,7 @@ int	socket_bind(const char *, const char *, const char *, int,
 int	unix_socket(char *, int, mode_t);
 void	double_sockbuf(int, int, int);
 void	set_sockbuf(int);
+void	set_keepalive(int);
 void	tailify_replytext(char *, int);
 
 int
@@ -979,8 +980,10 @@ socket_bind(const char *proto, const char *host, const char *port,
 		}
 		if (!shutread && res->ai_protocol == IPPROTO_UDP)
 			double_sockbuf(*fdp, SO_RCVBUF, 0);
-		else if (res->ai_protocol == IPPROTO_TCP)
+		else if (res->ai_protocol == IPPROTO_TCP) {
 			set_sockbuf(*fdp);
+			set_keepalive(*fdp);
+		}
 		reuseaddr = 1;
 		if (setsockopt(*fdp, SOL_SOCKET, SO_REUSEADDR, &reuseaddr,
 		    sizeof(reuseaddr)) == -1) {
@@ -3104,6 +3107,15 @@ set_sockbuf(int fd)
 		log_warn("setsockopt sndbufsize %d", size);
 	if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &size, sizeof(size)) == -1)
 		log_warn("setsockopt rcvbufsize %d", size);
+}
+
+void
+set_keepalive(int fd)
+{
+	int val = 1;
+
+	if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &val, sizeof(val)) == -1)
+		log_warn("setsockopt keepalive %d", val);
 }
 
 void
