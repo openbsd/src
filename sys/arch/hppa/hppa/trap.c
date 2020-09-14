@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.147 2020/08/19 10:10:58 mpi Exp $	*/
+/*	$OpenBSD: trap.c,v 1.148 2020/09/14 19:04:30 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -369,9 +369,9 @@ trap(int type, struct trapframe *frame)
 			register_t cr;
 
 			if (((opcode >> 21) & 0x1f) == 27)
-				mfctl(CR_TR3, cr);	/* cr27 */
+				cr = frame->tf_cr27;	/* cr27 */
 			else
-				mfctl(CR_TR2, cr);	/* cr26 */
+				cr = 0;			/* cr26 */
 			frame_regmap(frame, opcode & 0x1f) = cr;
 			frame->tf_ipsw |= PSL_N;
 		} else {
