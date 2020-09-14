@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vpm.c,v 1.20 2020/09/14 07:09:06 beck Exp $ */
+/* $OpenBSD: x509_vpm.c,v 1.21 2020/09/14 07:32:05 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -178,6 +178,8 @@ x509_verify_param_zero(X509_VERIFY_PARAM *param)
 	/*param->inh_flags = X509_VP_FLAG_DEFAULT;*/
 	param->inh_flags = 0;
 	param->flags = 0;
+	/* XXX remove to enable new verifier by default */
+	param->flags |= X509_V_FLAG_LEGACY_VERIFY;
 	param->depth = -1;
 	if (param->policies) {
 		sk_ASN1_OBJECT_pop_free(param->policies, ASN1_OBJECT_free);
