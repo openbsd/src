@@ -28,7 +28,6 @@
 
 #include <string.h>
 #include <isc/task.h>
-#include <isc/time.h>
 #include <isc/util.h>
 
 /*%
@@ -145,7 +144,7 @@ evloop(isc_appctx_t *ctx) {
 
 	while (!ctx->want_shutdown) {
 		int n;
-		struct timespec when, now;
+		struct timespec when, now, diff, zero ={0, 0};
 		struct timeval tv, *tvp;
 		isc_socketwait_t *swait;
 		isc_boolean_t readytasks;
@@ -162,14 +161,13 @@ evloop(isc_appctx_t *ctx) {
 			if (result != ISC_R_SUCCESS)
 				tvp = NULL;
 			else {
-				uint64_t us;
-
 				clock_gettime(CLOCK_MONOTONIC, &now);
-				us = isc_time_microdiff(&when, &now);
-				if (us == 0)
+				timespecsub(&when, &now, &diff);
+				if (timespeccmp(&diff, &zero, <=)) {
 					call_timer_dispatch = ISC_TRUE;
-				tv.tv_sec = us / 1000000;
-				tv.tv_usec = us % 1000000;
+					memset(&tv, 0, sizeof(tv));
+				} else
+					TIMESPEC_TO_TIMEVAL(&tv, &diff);
 				tvp = &tv;
 			}
 		}

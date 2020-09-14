@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.26 2020/09/13 09:33:39 florian Exp $ */
+/* $Id: dighost.c,v 1.27 2020/09/14 08:37:08 florian Exp $ */
 
 /*! \file
  *  \note
@@ -27,6 +27,7 @@
  */
 
 #include <sys/socket.h>
+#include <sys/time.h>
 #include <limits.h>
 #include <locale.h>
 #include <netdb.h>
@@ -3902,3 +3903,18 @@ destroy_libs(void) {
 
 }
 
+int64_t
+uelapsed(const struct timespec *t1, const struct timespec *t2)
+{
+	struct timespec	 diff, zero = {0, 0};
+	struct timeval	 tv;
+
+	timespecsub(t1, t2, &diff);
+
+	if (timespeccmp(&diff, &zero, <=))
+		return 0;
+
+	TIMESPEC_TO_TIMEVAL(&tv, &diff);
+
+	return (tv.tv_sec * 1000000 + tv.tv_usec);
+}

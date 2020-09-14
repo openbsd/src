@@ -337,6 +337,9 @@ set_search_domain(char *domain);
 char *
 next_token(char **stringp, const char *delim);
 
+int64_t
+uelapsed(const struct timespec *t1, const struct timespec *t2);
+
 /*
  * Routines to be defined in dig.c, host.c, and nslookup.c. and
  * then assigned to the appropriate function pointer

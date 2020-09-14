@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dig.c,v 1.13 2020/09/13 09:33:39 florian Exp $ */
+/* $Id: dig.c,v 1.14 2020/09/14 08:37:08 florian Exp $ */
 
 /*! \file */
 #include <sys/cdefs.h>
@@ -28,7 +28,6 @@
 
 #include <string.h>
 #include <isc/util.h>
-#include <isc/time.h>
 
 #include <dns/fixedname.h>
 #include <dns/masterdump.h>
@@ -171,7 +170,6 @@ help(void) {
  */
 static void
 received(unsigned int bytes, isc_sockaddr_t *from, dig_query_t *query) {
-	uint64_t diff;
 	time_t tnow;
 	struct tm tmnow;
 	char time_str[100];
@@ -180,11 +178,13 @@ received(unsigned int bytes, isc_sockaddr_t *from, dig_query_t *query) {
 	isc_sockaddr_format(from, fromtext, sizeof(fromtext));
 
 	if (query->lookup->stats && !short_form) {
-		diff = isc_time_microdiff(&query->time_recv, &query->time_sent);
 		if (use_usec)
-			printf(";; Query time: %ld usec\n", (long) diff);
+			printf(";; Query time: %lld usec\n",
+			    uelapsed(&query->time_recv, &query->time_sent));
 		else
-			printf(";; Query time: %ld msec\n", (long) diff / 1000);
+			printf(";; Query time: %lld msec\n",
+			    uelapsed(&query->time_recv, &query->time_sent) /
+			    1000);
 		printf(";; SERVER: %s(%s)\n", fromtext, query->servname);
 		time(&tnow);
 		tmnow  = *localtime(&tnow);
@@ -210,21 +210,23 @@ received(unsigned int bytes, isc_sockaddr_t *from, dig_query_t *query) {
 		}
 		puts("");
 	} else if (query->lookup->identify && !short_form) {
-		diff = isc_time_microdiff(&query->time_recv, &query->time_sent);
 		if (use_usec)
 			printf(";; Received %llu bytes "
-			       "from %s(%s) in %ld us\n\n",
-			       query->lookup->doing_xfr
-				 ? query->byte_count
-				 : (uint64_t)bytes,
-			       fromtext, query->userarg, (long) diff);
+			    "from %s(%s) in %lld us\n\n",
+			    query->lookup->doing_xfr
+			    ? query->byte_count
+			    : (uint64_t)bytes,
+			    fromtext, query->userarg,
+			    uelapsed(&query->time_recv, &query->time_sent));
 		else
 			printf(";; Received %llu bytes "
-			       "from %s(%s) in %ld ms\n\n",
-			       query->lookup->doing_xfr
-				 ?  query->byte_count
-				 : (uint64_t)bytes,
-			       fromtext, query->userarg, (long) diff / 1000);
+			    "from %s(%s) in %lld ms\n\n",
+			    query->lookup->doing_xfr
+			    ?  query->byte_count
+			    : (uint64_t)bytes,
+			    fromtext, query->userarg,
+			    uelapsed(&query->time_recv, &query->time_sent) /
+			    1000);
 	}
 }
 
@@ -245,7 +247,6 @@ trying(char *frm, dig_lookup_t *lookup) {
 static isc_result_t
 say_message(dns_rdata_t *rdata, dig_query_t *query, isc_buffer_t *buf) {
 	isc_result_t result;
-	uint64_t diff;
 	char store[sizeof(" in 18446744073709551616 us.")];
 	unsigned int styleflags = 0;
 
@@ -267,14 +268,15 @@ say_message(dns_rdata_t *rdata, dig_query_t *query, isc_buffer_t *buf) {
 		return (result);
 	check_result(result, "dns_rdata_totext");
 	if (query->lookup->identify) {
-
-		diff = isc_time_microdiff(&query->time_recv, &query->time_sent);
 		ADD_STRING(buf, " from server ");
 		ADD_STRING(buf, query->servname);
 		if (use_usec)
-			snprintf(store, sizeof(store), " in %llu us.", diff);
+			snprintf(store, sizeof(store), " in %lld us.",
+			    uelapsed(&query->time_recv, &query->time_sent));
 		else
-			snprintf(store, sizeof(store), " in %llu ms.", diff / 1000);
+			snprintf(store, sizeof(store), " in %lld ms.",
+			    uelapsed(&query->time_recv, &query->time_sent) /
+			    1000);
 		ADD_STRING(buf, store);
 	}
 	ADD_STRING(buf, "\n");

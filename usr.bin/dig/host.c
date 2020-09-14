@@ -28,7 +28,6 @@
 
 #include <isc/app.h>
 #include <isc/util.h>
-#include <isc/time.h>
 
 #include <dns/fixedname.h>
 #include <dns/message.h>
@@ -146,15 +145,13 @@ host_shutdown(void) {
 static void
 received(unsigned int bytes, isc_sockaddr_t *from, dig_query_t *query) {
 	struct timespec now;
-	int diff;
 
 	if (!short_form) {
 		char fromtext[ISC_SOCKADDR_FORMATSIZE];
 		isc_sockaddr_format(from, fromtext, sizeof(fromtext));
 		clock_gettime(CLOCK_MONOTONIC, &now);
-		diff = (int) isc_time_microdiff(&now, &query->time_sent);
-		printf("Received %u bytes from %s in %d ms\n",
-		       bytes, fromtext, diff/1000);
+		printf("Received %u bytes from %s in %lld ms\n",
+		    bytes, fromtext, uelapsed(&now, &query->time_sent)/1000);
 	}
 }
 

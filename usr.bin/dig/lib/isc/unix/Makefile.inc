@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile.inc,v 1.5 2020/02/17 19:45:00 jung Exp $
+#	$OpenBSD: Makefile.inc,v 1.6 2020/09/14 08:37:09 florian Exp $
 
 .PATH: ${.CURDIR}/lib/isc/unix
 
-SRCS+=	app.c errno2result.c socket.c net.c time.c
+SRCS+=	app.c errno2result.c socket.c net.c
