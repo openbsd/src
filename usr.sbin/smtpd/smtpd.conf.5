@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.251 2020/08/27 08:58:30 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.252 2020/09/14 13:06:51 millert Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: August 27 2020 $
+.Dd $Mdocdate: September 14 2020 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -280,6 +280,14 @@ and
 .Dq smtps
 protocols for authentication.
 Server certificates for those protocols are verified by default.
+.It Cm pki Ar pkiname
+For secure connections,
+use the certificate associated with
+.Ar pkiname
+(declared in a
+.Ic pki
+directive)
+to prove the client's identity to the remote mail server.
 .It Cm srs
 When relaying a mail resulting from a forward,
 use the Sender Rewriting Scheme to rewrite sender address.
