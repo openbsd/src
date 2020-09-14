@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.21 2020/06/29 17:58:58 kn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.22 2020/09/14 18:09:57 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
@@ -80,7 +80,7 @@ struct vnet_opts {
 	const char	*devalias;
 } vnet_opts;
 
-void		vcput_opts_default(void);
+void		vcpu_opts_default(void);
 void		vdisk_opts_default(void);
 void		vnet_opts_default(void);
 
