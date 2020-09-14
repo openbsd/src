@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.80 2020/08/19 10:10:57 mpi Exp $	*/
+/*	$OpenBSD: trap.c,v 1.81 2020/09/14 12:51:28 kettenis Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -92,7 +92,7 @@
 
 #include "isa.h"
 
-int	pageflttrap(struct trapframe *, int _usermode);
+int	pageflttrap(struct trapframe *, uint64_t, int _usermode);
 void	kerntrap(struct trapframe *);
 void	usertrap(struct trapframe *);
 void	ast(struct trapframe *);
@@ -157,12 +157,11 @@ fault(const char *format, ...)
  * if something was so broken that we should panic.
  */
 int
-pageflttrap(struct trapframe *frame, int usermode)
+pageflttrap(struct trapframe *frame, uint64_t cr2, int usermode)
 {
 	struct proc *p = curproc;
 	struct pcb *pcb;
 	int error;
-	uint64_t cr2;
 	vaddr_t va;
 	struct vm_map *map;
 	vm_prot_t ftype;
@@ -172,7 +171,6 @@ pageflttrap(struct trapframe *frame, int usermode)
 
 	map = &p->p_vmspace->vm_map;
 	pcb = &p->p_addr->u_pcb;
-	cr2 = rcr2();
 	va = trunc_page((vaddr_t)cr2);
 
 	KERNEL_LOCK();
@@ -280,6 +278,7 @@ void
 kerntrap(struct trapframe *frame)
 {
 	int type = (int)frame->tf_trapno;
+	uint64_t cr2 = rcr2();
 
 	verify_smap(__func__);
 	uvmexp.traps++;
@@ -299,7 +298,7 @@ kerntrap(struct trapframe *frame)
 		/*NOTREACHED*/
 
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
-		if (pageflttrap(frame, 0))
+		if (pageflttrap(frame, cr2, 0))
 			return;
 		goto we_re_toast;
 
@@ -333,6 +332,7 @@ usertrap(struct trapframe *frame)
 {
 	struct proc *p = curproc;
 	int type = (int)frame->tf_trapno;
+	uint64_t cr2 = rcr2();
 	union sigval sv;
 	int sig, code;
 
@@ -381,7 +381,7 @@ usertrap(struct trapframe *frame)
 		break;
 
 	case T_PAGEFLT:			/* page fault */
-		if (pageflttrap(frame, 1))
+		if (pageflttrap(frame, cr2, 1))
 			goto out;
 		/* FALLTHROUGH */
 
