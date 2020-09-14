@@ -51,8 +51,8 @@ our %args = (
 	    qr/^_syslogd syslogd .* internet6? dgram udp \*:514$/ => 2,
 	},
 	ktrace => {
-	    qr/127\.0\.0\.1/ => 0,
-	    qr/\[::1\]/ => 0,
+	    qr/STRU  struct sockaddr .* 127\.0\.0\.1/ => 0,
+	    qr/STRU  struct sockaddr .* \[::1\]/ => 0,
 	},
     },
     server => {
