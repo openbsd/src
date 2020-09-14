@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.40 2019/09/06 12:22:01 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.41 2020/09/14 19:05:23 deraadt Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -155,7 +155,7 @@ void
 general_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 {
 	int expevt = tf->tf_expevt;
-	int tra;
+	int tra = _reg_read_4(SH_(TRA));
 	int usermode = !KERNELMODE(tf->tf_ssr);
 	union sigval sv;
 
@@ -191,7 +191,6 @@ general_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 	case EXPEVT_TRAPA:
 #ifdef DDB
 		/* Check for ddb request */
-		tra = _reg_read_4(SH_(TRA));
 		if (tra == (_SH_TRA_BREAK << 2) &&
 		    db_ktrap(expevt, tra, tf))
 			return;
@@ -201,7 +200,6 @@ general_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 		break;
 	case EXPEVT_TRAPA | EXP_USER:
 		/* Check for debugger break */
-		tra = _reg_read_4(SH_(TRA));
 		switch (tra) {
 		case _SH_TRA_BREAK << 2:
 			tf->tf_spc -= 2; /* back to the breakpoint address */
