@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.29 2020/09/12 18:11:43 martijn Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.30 2020/09/14 15:12:27 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -80,7 +80,7 @@ struct snmp_app snmp_apps[] = {
 	{ "set", 1, NULL, "agent oid type value [oid type value] ...", snmpc_set },
 	{ "trap", 1, NULL, "agent uptime oid [oid type value] ...", snmpc_trap },
 	{ "df", 1, "C:", "[-Ch] [-Cr<maxrep>] agent", snmpc_df },
-	{ "mibtree", 0, "O:", "[-O fnS]", snmpc_mibtree }
+	{ "mibtree", 0, "O:", "[-O fnS] [oid ...]", snmpc_mibtree }
 };
 struct snmp_app *snmp_app = NULL;
 
@@ -1060,11 +1060,25 @@ int
 snmpc_mibtree(int argc, char *argv[])
 {
 	struct oid *oid;
+	struct ber_oid soid;
 	char buf[BUFSIZ];
+	int i;
 
-	for (oid = NULL; (oid = smi_foreach(oid)) != NULL;) {
-		smi_oid2string(&oid->o_id, buf, sizeof(buf), oid_lookup);
-		printf("%s\n", buf);
+	if (argc == 0) {
+		for (oid = NULL; (oid = smi_foreach(oid)) != NULL;) {
+			smi_oid2string(&oid->o_id, buf, sizeof(buf),
+			    oid_lookup);
+			printf("%s\n", buf);
+		}
+	} else {
+		for (i = 0; i < argc; i++) {
+			if (smi_string2oid(argv[i], &soid) == -1) {
+				warnx("%s: Unknown object identifier", argv[i]);
+				continue;
+			}
+			smi_oid2string(&soid, buf, sizeof(buf), oid_lookup);
+			printf("%s\n", buf);
+		}
 	}
 	return 0;
 }
