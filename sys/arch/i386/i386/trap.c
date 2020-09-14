@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.143 2020/08/19 10:10:58 mpi Exp $	*/
+/*	$OpenBSD: trap.c,v 1.144 2020/09/14 12:56:20 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -119,7 +119,7 @@ trap(struct trapframe *frame)
 	vm_prot_t ftype;
 	union sigval sv;
 	caddr_t onfault;
-	uint32_t cr2;
+	uint32_t cr2 = rcr2();
 
 	uvmexp.traps++;
 
@@ -135,7 +135,7 @@ trap(struct trapframe *frame)
 	if (trapdebug) {
 		printf("trap %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
 		    frame->tf_trapno, frame->tf_err, frame->tf_eip,
-		    frame->tf_cs, frame->tf_eflags, rcr2(), lapic_tpr);
+		    frame->tf_cs, frame->tf_eflags, rcr2, lapic_tpr);
 		printf("curproc %p\n", curproc);
 	}
 #endif
@@ -182,7 +182,7 @@ trap(struct trapframe *frame)
 		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
 		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
 		    type, frame->tf_err, frame->tf_eip, frame->tf_cs,
-		    frame->tf_eflags, rcr2(), lapic_tpr);
+		    frame->tf_eflags, rcr2, lapic_tpr);
 
 		panic("trap type %d, code=%x, pc=%x",
 		    type, frame->tf_err, frame->tf_eip);
@@ -333,7 +333,6 @@ trap(struct trapframe *frame)
 			goto we_re_toast;
 
 		pcb = &p->p_addr->u_pcb;
-		cr2 = rcr2();
 		KERNEL_LOCK();
 		/* This will only trigger if SMEP is enabled */
 		if (cr2 <= VM_MAXUSER_ADDRESS && frame->tf_err & PGEX_I)
@@ -353,7 +352,6 @@ trap(struct trapframe *frame)
 		int error;
 		int signal, sicode;
 
-		cr2 = rcr2();
 		KERNEL_LOCK();
 	faultcommon:
 		vm = p->p_vmspace;
@@ -434,11 +432,11 @@ trap(struct trapframe *frame)
 #endif
 
 	case T_BPTFLT|T_USER:		/* bpt instruction fault */
-		sv.sival_int = rcr2();
+		sv.sival_int = rcr2;
 		trapsignal(p, SIGTRAP, type &~ T_USER, TRAP_BRKPT, sv);
 		break;
 	case T_TRCTRAP|T_USER:		/* trace trap */
-		sv.sival_int = rcr2();
+		sv.sival_int = rcr2;
 		trapsignal(p, SIGTRAP, type &~ T_USER, TRAP_TRACE, sv);
 		break;
 
