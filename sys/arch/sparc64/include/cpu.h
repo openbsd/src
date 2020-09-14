@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.95 2020/06/05 14:25:05 naddy Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.96 2020/09/14 20:28:41 deraadt Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -344,7 +344,6 @@ void	fb_unblank(void);
 /* tda.c */
 void	tda_full_blast(void);
 /* emul.c */
-int	emulinstr(vaddr_t, struct trapframe64 *);
 int	emul_qf(int32_t, struct proc *, union sigval, struct trapframe64 *);
 int	emul_popc(int32_t, struct proc *, union sigval, struct trapframe64 *);
 
