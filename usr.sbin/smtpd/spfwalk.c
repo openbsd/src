@@ -117,7 +117,17 @@ lookup_record(int type, const char *record, struct target *tgt)
 {
 	struct asr_query *as;
 	struct target *ntgt;
+	size_t i;
 
+	if (strchr(record, '%') != NULL) {
+		for (i = 0; record[i] != '\0'; i++) {
+			if (!isprint(record[i]))
+				record[i] = '?';
+		}
+		warnx("%s: %s contains macros and can't be resolved", __func__,
+		    record);
+		return;
+	}
 	as = res_query_async(record, C_IN, type, NULL);
 	if (as == NULL)
 		err(1, "res_query_async");

@@ -1,4 +1,4 @@
-.\" $OpenBSD: smtpctl.8,v 1.64 2018/09/18 06:21:45 miko Exp $
+.\" $OpenBSD: smtpctl.8,v 1.65 2020/09/14 09:48:08 martijn Exp $
 .\"
 .\" Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
 .\" Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 18 2018 $
+.Dd $Mdocdate: September 14 2020 $
 .Dt SMTPCTL 8
 .Os
 .Sh NAME
@@ -247,8 +247,13 @@ Shows if MTA, MDA and SMTP systems are currently running or paused.
 Recursively look up SPF records for the domains read from stdin.
 For example:
 .Bd -literal -offset indent
-# smtpctl spf walk < domains.txt
+$ smtpctl spf walk < domains.txt
 .Ed
+.Pp
+SPF records may contain macros which cannot be included in a static list and
+must be resolved dynamically at connection time.
+.Cm spf walk
+cannot provide full results in these cases.
 .It Cm trace Ar subsystem
 Enables real-time tracing of
 .Ar subsystem .
