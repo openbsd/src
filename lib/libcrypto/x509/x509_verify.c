@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.4 2020/09/14 09:01:11 beck Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.5 2020/09/14 12:00:55 tb Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -280,7 +280,7 @@ x509_verify_parent_signature(X509 *parent, X509 *child,
 	if (X509_verify(child, pkey) <= 0)
 		*error = X509_V_ERR_CERT_SIGNATURE_FAILURE;
 	else
-	 	ret = 1;
+		ret = 1;
 
 	/* Add result to cache */
 	if (child_md != NULL)
