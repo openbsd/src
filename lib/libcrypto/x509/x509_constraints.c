@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_constraints.c,v 1.2 2020/09/14 09:29:23 beck Exp $ */
+/* $OpenBSD: x509_constraints.c,v 1.3 2020/09/14 09:43:33 beck Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -947,7 +947,6 @@ x509_constraints_extract_constraints(X509 *cert,
 	struct x509_constraints_name *vname;
 	NAME_CONSTRAINTS *nc = cert->nc;
 	GENERAL_SUBTREE *subtree;
-	int type;
 	int i;
 
 	if (nc == NULL)
@@ -964,8 +963,8 @@ x509_constraints_extract_constraints(X509 *cert,
 			*error = X509_V_ERR_OUT_OF_MEM;
 			return 0;
 		}
-		if ((type = x509_constraints_validate(subtree->base,
-		    vname, error)) == 0) {
+		if (x509_constraints_validate(subtree->base, vname, error) ==
+		    0) {
 			x509_constraints_name_free(vname);
 			return 0;
 		}
@@ -990,8 +989,8 @@ x509_constraints_extract_constraints(X509 *cert,
 			*error = X509_V_ERR_OUT_OF_MEM;
 			return 0;
 		}
-		if ((type = x509_constraints_validate(subtree->base,
-		    vname, error)) == 0) {
+		if (x509_constraints_validate(subtree->base, vname, error) ==
+		    0) {
 			x509_constraints_name_free(vname);
 			return 0;
 		}
