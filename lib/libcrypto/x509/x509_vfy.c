@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.77 2020/09/14 08:06:09 beck Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.78 2020/09/14 09:09:08 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2001,15 +2001,15 @@ X509_cmp_current_time(const ASN1_TIME *ctm)
 static int
 X509_cmp_time_internal(const ASN1_TIME *ctm, time_t *cmp_time, int clamp_notafter)
 {
-	time_t time1, time2;
+	time_t compare;
 	struct tm tm1, tm2;
 	int ret = 0;
 	int type;
 
 	if (cmp_time == NULL)
-		time2 = time(NULL);
+		compare = time(NULL);
 	else
-		time2 = *cmp_time;
+		compare = *cmp_time;
 
 	memset(&tm1, 0, sizeof(tm1));
 
@@ -2034,10 +2034,10 @@ X509_cmp_time_internal(const ASN1_TIME *ctm, time_t *cmp_time, int clamp_notafte
 	 * a time_t. A time_t must be sane if you care about times after
 	 * Jan 19 2038.
 	 */
-	if ((time1 = timegm(&tm1)) == -1)
+	if (timegm(&tm1) == -1)
 		goto out;
 
-	if (gmtime_r(&time2, &tm2) == NULL)
+	if (gmtime_r(&compare, &tm2) == NULL)
 		goto out;
 
 	ret = ASN1_time_tm_cmp(&tm1, &tm2);
