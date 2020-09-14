@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_constraints.c,v 1.1 2020/09/11 18:34:29 beck Exp $ */
+/* $OpenBSD: x509_constraints.c,v 1.2 2020/09/14 09:29:23 beck Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -1168,6 +1168,7 @@ x509_constraints_chain(STACK_OF(X509) *chain, int *error, int *depth)
 		}
 	}
 
+	x509_constraints_names_free(names);
 	return 1;
 
  err:
