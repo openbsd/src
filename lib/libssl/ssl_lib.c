@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.226 2020/09/13 16:49:05 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.227 2020/09/14 18:34:12 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -215,8 +215,6 @@ SSL_clear(SSL *s)
 			return (0);
 	} else
 		s->method->internal->ssl_clear(s);
-
-	S3I(s)->hs.state = SSL_ST_BEFORE|((s->server) ? SSL_ST_ACCEPT : SSL_ST_CONNECT);
 
 	return (1);
 }

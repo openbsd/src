@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.196 2020/06/06 01:40:08 beck Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.197 2020/09/14 18:34:12 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1648,6 +1648,8 @@ ssl3_clear(SSL *s)
 
 	s->internal->packet_length = 0;
 	s->version = TLS1_VERSION;
+
+	S3I(s)->hs.state = SSL_ST_BEFORE|((s->server) ? SSL_ST_ACCEPT : SSL_ST_CONNECT);
 }
 
 static long
