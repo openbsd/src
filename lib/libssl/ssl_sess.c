@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.97 2020/09/02 08:04:06 tb Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.98 2020/09/14 18:25:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -776,45 +776,31 @@ SSL_SESSION_up_ref(SSL_SESSION *ss)
 int
 SSL_set_session(SSL *s, SSL_SESSION *session)
 {
-	int ret = 0;
-	const SSL_METHOD *meth;
+	const SSL_METHOD *method;
 
-	if (session != NULL) {
-		meth = s->ctx->method->internal->get_ssl_method(session->ssl_version);
-		if (meth == NULL)
-			meth = s->method->internal->get_ssl_method(session->ssl_version);
-		if (meth == NULL) {
-			SSLerror(s, SSL_R_UNABLE_TO_FIND_SSL_METHOD);
-			return (0);
-		}
+	if (session == NULL) {
+		SSL_SESSION_free(s->session);
+		s->session = NULL;
 
-		if (meth != s->method) {
-			if (!SSL_set_ssl_method(s, meth))
-				return (0);
-		}
-
-		/* CRYPTO_w_lock(CRYPTO_LOCK_SSL);*/
-		CRYPTO_add(&session->references, 1, CRYPTO_LOCK_SSL_SESSION);
-		if (s->session != NULL)
-			SSL_SESSION_free(s->session);
-		s->session = session;
-		s->verify_result = s->session->verify_result;
-		/* CRYPTO_w_unlock(CRYPTO_LOCK_SSL);*/
-		ret = 1;
-	} else {
-		if (s->session != NULL) {
-			SSL_SESSION_free(s->session);
-			s->session = NULL;
-		}
-
-		meth = s->ctx->method;
-		if (meth != s->method) {
-			if (!SSL_set_ssl_method(s, meth))
-				return (0);
-		}
-		ret = 1;
+		return SSL_set_ssl_method(s, s->ctx->method);
 	}
-	return (ret);
+
+	if ((method = tls1_get_client_method(session->ssl_version)) == NULL)
+		method = dtls1_get_client_method(session->ssl_version);
+	if (method == NULL) {
+		SSLerror(s, SSL_R_UNABLE_TO_FIND_SSL_METHOD);
+		return (0);
+	}
+
+	if (!SSL_set_ssl_method(s, method))
+		return (0);
+
+	CRYPTO_add(&session->references, 1, CRYPTO_LOCK_SSL_SESSION);
+	SSL_SESSION_free(s->session);
+	s->session = session;
+	s->verify_result = s->session->verify_result;
+
+	return (1);
 }
 
 size_t
