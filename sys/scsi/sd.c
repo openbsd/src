@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.327 2020/09/13 14:26:56 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.328 2020/09/14 18:44:54 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -315,6 +315,10 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 	unit = DISKUNIT(dev);
 	part = DISKPART(dev);
 
+	SC_DEBUG(link, SDEV_DB1,
+	    ("sdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
+	    sd_cd.cd_ndevs, part));
+
 	rawopen = (part == RAW_PART) && (fmt == S_IFCHR);
 
 	sc = sdlookup(unit);
@@ -330,14 +334,13 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 		device_unref(&sc->sc_dev);
 		return EACCES;
 	}
-
-	SC_DEBUG(link, SDEV_DB1,
-	    ("sdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
-	    sd_cd.cd_ndevs, part));
-
 	if ((error = disk_lock(&sc->sc_dk)) != 0) {
 		device_unref(&sc->sc_dev);
 		return error;
+	}
+	if (ISSET(sc->flags, SDF_DYING)) {
+		error = ENXIO;
+		goto die;
 	}
 
 	if (sc->sc_dk.dk_openmask != 0) {
@@ -345,10 +348,6 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 		 * If any partition is open, but the disk has been invalidated,
 		 * disallow further opens of non-raw partition.
 		 */
-		if (ISSET(sc->flags, SDF_DYING)) {
-			error = ENXIO;
-			goto die;
-		}
 		if (!ISSET(link->flags, SDEV_MEDIA_LOADED)) {
 			if (rawopen)
 				goto out;
@@ -357,10 +356,6 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 		}
 	} else {
 		/* Spin up non-UMASS devices ready or not. */
-		if (ISSET(sc->flags, SDF_DYING)) {
-			error = ENXIO;
-			goto die;
-		}
 		if (!ISSET(link->flags, SDEV_UMASS))
 			scsi_start(link, SSS_START, (rawopen ? SCSI_SILENT :
 			    0) | SCSI_IGNORE_ILLEGAL_REQUEST |
