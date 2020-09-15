@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.144 2020/09/14 12:56:20 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.145 2020/09/15 09:30:31 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -135,7 +135,7 @@ trap(struct trapframe *frame)
 	if (trapdebug) {
 		printf("trap %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
 		    frame->tf_trapno, frame->tf_err, frame->tf_eip,
-		    frame->tf_cs, frame->tf_eflags, rcr2, lapic_tpr);
+		    frame->tf_cs, frame->tf_eflags, cr2, lapic_tpr);
 		printf("curproc %p\n", curproc);
 	}
 #endif
@@ -182,7 +182,7 @@ trap(struct trapframe *frame)
 		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
 		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
 		    type, frame->tf_err, frame->tf_eip, frame->tf_cs,
-		    frame->tf_eflags, rcr2, lapic_tpr);
+		    frame->tf_eflags, cr2, lapic_tpr);
 
 		panic("trap type %d, code=%x, pc=%x",
 		    type, frame->tf_err, frame->tf_eip);
@@ -432,11 +432,11 @@ trap(struct trapframe *frame)
 #endif
 
 	case T_BPTFLT|T_USER:		/* bpt instruction fault */
-		sv.sival_int = rcr2;
+		sv.sival_int = cr2;
 		trapsignal(p, SIGTRAP, type &~ T_USER, TRAP_BRKPT, sv);
 		break;
 	case T_TRCTRAP|T_USER:		/* trace trap */
-		sv.sival_int = rcr2;
+		sv.sival_int = cr2;
 		trapsignal(p, SIGTRAP, type &~ T_USER, TRAP_TRACE, sv);
 		break;
 
