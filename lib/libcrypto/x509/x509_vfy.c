@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.78 2020/09/14 09:09:08 beck Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.79 2020/09/15 11:55:14 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2004,7 +2004,6 @@ X509_cmp_time_internal(const ASN1_TIME *ctm, time_t *cmp_time, int clamp_notafte
 	time_t compare;
 	struct tm tm1, tm2;
 	int ret = 0;
-	int type;
 
 	if (cmp_time == NULL)
 		compare = time(NULL);
@@ -2013,29 +2012,8 @@ X509_cmp_time_internal(const ASN1_TIME *ctm, time_t *cmp_time, int clamp_notafte
 
 	memset(&tm1, 0, sizeof(tm1));
 
-	type = ASN1_time_parse(ctm->data, ctm->length, &tm1, ctm->type);
-	if (type == -1)
+	if (!x509_verify_asn1_time_to_tm(ctm, &tm1, clamp_notafter))
 		goto out; /* invalid time */
-
-	/* RFC 5280 section 4.1.2.5 */
-	if (tm1.tm_year < 150 && type != V_ASN1_UTCTIME)
-		goto out;
-	if (tm1.tm_year >= 150 && type != V_ASN1_GENERALIZEDTIME)
-		goto out;
-
-	if (clamp_notafter) {
-		/* Allow for completely broken operating systems. */
-		if (!ASN1_time_tm_clamp_notafter(&tm1))
-			goto out;
-	}
-
-	/*
-	 * Defensively fail if the time string is not representable as
-	 * a time_t. A time_t must be sane if you care about times after
-	 * Jan 19 2038.
-	 */
-	if (timegm(&tm1) == -1)
-		goto out;
 
 	if (gmtime_r(&compare, &tm2) == NULL)
 		goto out;
