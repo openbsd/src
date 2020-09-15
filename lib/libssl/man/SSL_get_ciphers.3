@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_get_ciphers.3,v 1.8 2020/09/15 14:51:42 schwarze Exp $
+.\" $OpenBSD: SSL_get_ciphers.3,v 1.9 2020/09/15 18:37:25 schwarze Exp $
 .\" full merge up to: OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\" selective merge up to: OpenSSL 83cf7abf May 29 13:07:08 2018 +0100
 .\"
@@ -165,9 +165,9 @@ is destroyed or when
 .Xr SSL_set_cipher_list 3
 is called on it, but also when the
 .Vt SSL_CTX
-object is destroyed that
-.Fa SSL
-was created from or when
+object in use by
+.Fa ssl
+at the time of the call is freed or when
 .Xr SSL_CTX_set_cipher_list 3
 is called on that context object.
 .Pp
