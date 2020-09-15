@@ -1,4 +1,4 @@
-# $OpenBSD: services,v 1.97 2020/06/26 19:51:14 naddy Exp $
+# $OpenBSD: services,v 1.98 2020/09/15 09:52:47 martijn Exp $
 #
 # Network services, Internet style
 # https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt
@@ -175,6 +175,7 @@ ldaps		636/tcp				# LDAP over SSL
 ldaps		636/udp
 ldp		646/tcp
 ldp		646/udp
+agentx		705/tcp
 silc		706/tcp				# Secure Live Internet Conferencing
 silc		706/udp
 kerberos-adm	749/tcp				# Kerberos 5 kadmin
