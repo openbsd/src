@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.55 2018/08/31 15:18:02 yasuoka Exp $	*/
+/*	$OpenBSD: show.c,v 1.56 2020/09/15 20:28:27 pamela Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -169,28 +169,20 @@ p_rttables(int af, u_int tableid)
  * width of destination/gateway column
  * strlen("fe80::aaaa:bbbb:cccc:dddd@gif0") == 30, strlen("/128") == 4
  */
-#define	WID_GW(af)	((af) == AF_INET6 ? (nflag ? 30 : 18) : 18)
+#define	WID_GW(af)	((af) == AF_INET6 ? 30 : 18)
 
 int
 WID_DST(int af)
 {
 
-	if (nflag)
-		switch (af) {
-		case AF_MPLS:
-			return 9;
-		case AF_INET6:
-			return 34;
-		default:
-			return 18;
-		}
-	else
-		switch (af) {
-		case AF_MPLS:
-			return 9;
- 		default:
-			return 18;
-		}
+	switch (af) {
+	case AF_MPLS:
+		return 9;
+	case AF_INET6:
+		return 34;
+	default:
+		return 18;
+	}
 }
 
 /*
