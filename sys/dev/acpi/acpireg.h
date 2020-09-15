@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.45 2019/08/28 22:39:09 kettenis Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.46 2020/09/15 13:43:40 jordan Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -623,6 +623,9 @@ struct acpi_ivmd {
 struct acpi_ivhd {
 	uint8_t		type;
 	uint8_t		flags;
+#define IVHD_PPRSUP		(1L << 7)
+#define IVHD_PREFSUP		(1L << 6)
+#define IVHD_COHERENT		(1L << 5)
 #define IVHD_IOTLB		(1L << 4)
 #define IVHD_ISOC		(1L << 3)
 #define IVHD_RESPASSPW		(1L << 2)
@@ -638,13 +641,28 @@ struct acpi_ivhd {
 #define IVHD_UNITID_MASK	0x1F
 #define IVHD_MSINUM_SHIFT	0
 #define IVHD_MSINUM_MASK	0x1F
-	uint32_t	reserved;
+	uint32_t	feature;
+} __packed;
+
+struct acpi_ivhd_ext {
+	uint8_t		type;
+	uint8_t		flags;
+	uint16_t	length;
+	uint16_t	devid;
+	uint16_t	cap;
+	uint64_t	address;
+	uint16_t	segment;
+	uint16_t	info;
+	uint32_t	attrib;
+	uint64_t	efr;
+	uint8_t		reserved[8];
 } __packed;
 
 union acpi_ivrs_entry {
 	struct {
 		uint8_t		type;
 #define IVRS_IVHD			0x10
+#define IVRS_IVHD_EXT			0x11
 #define IVRS_IVMD_ALL			0x20
 #define IVRS_IVMD_SPECIFIED		0x21
 #define IVRS_IVMD_RANGE			0x22
@@ -652,6 +670,7 @@ union acpi_ivrs_entry {
 		uint16_t	length;
 	} __packed;
 	struct acpi_ivhd	ivhd;
+	struct acpi_ivhd_ext	ivhd_ext;
 	struct acpi_ivmd	ivmd;
 } __packed;
 
