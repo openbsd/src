@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_ncons.c,v 1.1 2020/06/04 15:19:31 jsing Exp $ */
+/* $OpenBSD: x509_ncons.c,v 1.2 2020/09/15 11:53:45 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -72,12 +72,14 @@ static int do_i2r_name_constraints(const X509V3_EXT_METHOD *method,
     STACK_OF(GENERAL_SUBTREE) *trees, BIO *bp, int ind, char *name);
 static int print_nc_ipadd(BIO *bp, ASN1_OCTET_STRING *ip);
 
+#if 0
 static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc);
 static int nc_match_single(GENERAL_NAME *sub, GENERAL_NAME *gen);
 static int nc_dn(X509_NAME *sub, X509_NAME *nm);
 static int nc_dns(ASN1_IA5STRING *sub, ASN1_IA5STRING *dns);
 static int nc_email(ASN1_IA5STRING *sub, ASN1_IA5STRING *eml);
 static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base);
+#endif
 
 const X509V3_EXT_METHOD v3_name_constraints = {
 	.ext_nid = NID_name_constraints,
@@ -286,7 +288,7 @@ print_nc_ipadd(BIO *bp, ASN1_OCTET_STRING *ip)
 		BIO_printf(bp, "IP Address:<invalid>");
 	return 1;
 }
-
+#if 0
 /* Check a certificate conforms to a specified set of constraints.
  * Return values:
  *  X509_V_OK: All constraints obeyed.
@@ -554,3 +556,4 @@ nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base)
 
 	return X509_V_OK;
 }
+#endif
