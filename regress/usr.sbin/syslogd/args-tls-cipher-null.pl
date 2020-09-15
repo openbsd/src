@@ -1,7 +1,7 @@
 # The client writes a message to Sys::Syslog native method.
 # The syslogd writes it into a file and through a pipe.
 # The syslogd passes it via TLS to localhost loghost.
-# The server offers only the null cipher on its TLS socket.
+# The server offers only the null cipher, works only with TLS 1.2.
 # Find the message in client, file, pipe, syslogd log.
 # Check that server log contains the no shared cipher error.
 
@@ -24,6 +24,7 @@ our %args = (
     server => {
 	listen => { domain => AF_UNSPEC, proto => "tls", addr => "localhost" },
 	sslciphers => "NULL",
+	sslversion => "TLSv1_2",
 	up => "IO::Socket::SSL socket accept failed",
 	down => "Server",
 	exit => 255,
