@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dig.c,v 1.16 2020/09/14 08:40:43 florian Exp $ */
+/* $Id: dig.c,v 1.17 2020/09/15 11:46:19 florian Exp $ */
 
 /*! \file */
 #include <sys/cdefs.h>
@@ -1165,7 +1165,8 @@ plus_option(const char *option, int is_batchfile,
 				free(lookup->ecs_addr);
 				lookup->ecs_addr = NULL;
 			}
-			result = parse_netprefix(&lookup->ecs_addr, value);
+			result = parse_netprefix(&lookup->ecs_addr,
+			    &lookup->ecs_plen, value);
 			if (result != ISC_R_SUCCESS)
 				fatal("Couldn't parse client");
 			break;

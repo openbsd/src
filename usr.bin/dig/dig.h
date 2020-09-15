@@ -148,6 +148,7 @@ struct dig_lookup {
 	uint32_t msgcounter;
 	dns_fixedname_t fdomain;
 	isc_sockaddr_t *ecs_addr;
+	int ecs_plen;
 	char *sitvalue;
 	dns_ednsopt_t *ednsopts;
 	unsigned int ednsoptscnt;
@@ -297,7 +298,7 @@ void
 setup_system(int ipv4only, int ipv6only);
 
 isc_result_t
-parse_netprefix(isc_sockaddr_t **sap, const char *value);
+parse_netprefix(isc_sockaddr_t **sap, int *plen, const char *value);
 
 void
 parse_hmac(const char *hmacstr);

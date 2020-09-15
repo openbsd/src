@@ -506,7 +506,7 @@ build_msghdr_send(isc_socket_t *sock, char* cmsgbuf, isc_socketevent_t *dev,
 
 	if (!sock->connected) {
 		msg->msg_name = (void *)&dev->address.type.sa;
-		msg->msg_namelen = dev->address.length;
+		msg->msg_namelen = dev->address.type.ss.ss_len;
 	} else {
 		msg->msg_name = NULL;
 		msg->msg_namelen = 0;
@@ -910,7 +910,7 @@ doio_recv(isc_socket_t *sock, isc_socketevent_t *dev) {
 	}
 
 	if (sock->type == isc_sockettype_udp) {
-		dev->address.length = msghdr.msg_namelen;
+		dev->address.type.ss.ss_len = msghdr.msg_namelen;
 		if (isc_sockaddr_getport(&dev->address) == 0) {
 			if (isc_log_wouldlog(isc_lctx, IOEVENT_LEVEL)) {
 				socket_log(sock, &dev->address, IOEVENT,
@@ -2189,7 +2189,7 @@ isc_socket_bind(isc_socket_t *sock0, isc_sockaddr_t *sockaddr,
 				 "setsockopt(%d) %s", sock->fd, "failed");
 		/* Press on... */
 	}
-	if (bind(sock->fd, &sockaddr->type.sa, sockaddr->length) < 0) {
+	if (bind(sock->fd, &sockaddr->type.sa, sockaddr->type.sa.sa_len) < 0) {
 		switch (errno) {
 		case EACCES:
 			return (ISC_R_NOPERM);
@@ -2249,7 +2249,7 @@ isc_socket_connect(isc_socket_t *sock0, isc_sockaddr_t *addr,
 	 * outstanding, and it might happen to complete.
 	 */
 	sock->peer_address = *addr;
-	cc = connect(sock->fd, &addr->type.sa, addr->length);
+	cc = connect(sock->fd, &addr->type.sa, addr->type.sa.sa_len);
 	if (cc < 0) {
 		/*
 		 * HP-UX "fails" to connect a UDP socket and sets errno to

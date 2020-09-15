@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.32 2020/09/15 08:19:29 florian Exp $ */
+/* $Id: dighost.c,v 1.33 2020/09/15 11:46:19 florian Exp $ */
 
 /*! \file
  *  \note
@@ -933,7 +933,7 @@ parse_bits(char *arg, uint32_t max) {
 }
 
 isc_result_t
-parse_netprefix(isc_sockaddr_t **sap, const char *value) {
+parse_netprefix(isc_sockaddr_t **sap, int *plen, const char *value) {
 	isc_sockaddr_t *sa = NULL;
 	struct in_addr in4;
 	struct in6_addr in6;
@@ -1000,7 +1000,7 @@ parse_netprefix(isc_sockaddr_t **sap, const char *value) {
 		fatal("invalid address '%s'", value);
 
 done:
-	sa->length = prefix_length;
+	*plen = prefix_length;
 	*sap = sa;
 
 	return (ISC_R_SUCCESS);
@@ -2190,7 +2190,7 @@ setup_lookup(dig_lookup_t *lookup) {
 			size_t addrl;
 
 			sa = &lookup->ecs_addr->type.sa;
-			plen = lookup->ecs_addr->length;
+			plen = lookup->ecs_plen;
 
 			/* Round up prefix len to a multiple of 8 */
 			addrl = (plen + 7) / 8;

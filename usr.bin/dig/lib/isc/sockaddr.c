@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sockaddr.c,v 1.11 2020/09/15 08:19:29 florian Exp $ */
+/* $Id: sockaddr.c,v 1.12 2020/09/15 11:46:19 florian Exp $ */
 
 /*! \file */
 #include <sys/types.h>
@@ -48,7 +48,7 @@ isc_sockaddr_compare(const isc_sockaddr_t *a, const isc_sockaddr_t *b,
 {
 	REQUIRE(a != NULL && b != NULL);
 
-	if (a->length != b->length)
+	if (a->type.ss.ss_len != b->type.ss.ss_len)
 		return (0);
 
 	/*
@@ -88,7 +88,7 @@ isc_sockaddr_compare(const isc_sockaddr_t *a, const isc_sockaddr_t *b,
 			return (0);
 		break;
 	default:
-		if (memcmp(&a->type, &b->type, a->length) != 0)
+		if (memcmp(&a->type, &b->type, a->type.ss.ss_len) != 0)
 			return (0);
 	}
 	return (1);
@@ -169,7 +169,6 @@ isc_sockaddr_any(isc_sockaddr_t *sockaddr)
 	sockaddr->type.sin.sin_len = sizeof(sockaddr->type.sin);
 	sockaddr->type.sin.sin_addr.s_addr = INADDR_ANY;
 	sockaddr->type.sin.sin_port = 0;
-	sockaddr->length = sizeof(sockaddr->type.sin);
 }
 
 void
@@ -180,7 +179,6 @@ isc_sockaddr_any6(isc_sockaddr_t *sockaddr)
 	sockaddr->type.sin6.sin6_len = sizeof(sockaddr->type.sin6);
 	sockaddr->type.sin6.sin6_addr = in6addr_any;
 	sockaddr->type.sin6.sin6_port = 0;
-	sockaddr->length = sizeof(sockaddr->type.sin6);
 }
 
 void
@@ -192,7 +190,6 @@ isc_sockaddr_fromin(isc_sockaddr_t *sockaddr, const struct in_addr *ina,
 	sockaddr->type.sin.sin_len = sizeof(sockaddr->type.sin);
 	sockaddr->type.sin.sin_addr = *ina;
 	sockaddr->type.sin.sin_port = htons(port);
-	sockaddr->length = sizeof(sockaddr->type.sin);
 }
 
 void
@@ -218,7 +215,6 @@ isc_sockaddr_fromin6(isc_sockaddr_t *sockaddr, const struct in6_addr *ina6,
 	sockaddr->type.sin6.sin6_len = sizeof(sockaddr->type.sin6);
 	sockaddr->type.sin6.sin6_addr = *ina6;
 	sockaddr->type.sin6.sin6_port = htons(port);
-	sockaddr->length = sizeof(sockaddr->type.sin6);
 }
 
 int
