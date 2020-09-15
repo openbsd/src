@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.245 2020/08/20 18:31:17 rsadowski Exp $
+.\"	$OpenBSD: port-modules.5,v 1.246 2020/09/15 10:03:09 jasper Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 20 2020 $
+.Dd $Mdocdate: September 15 2020 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -856,10 +856,15 @@ or
 .Ev VERSION
 it sets
 .Ev PKGNAME .
-Also sets
-.Ev FONTDIR ,
+.Ev TYPEFACE
+should be set to the name of the typeface.
+This sets
+.Ev FONTDIR
+using said typeface name.
 .Ev FONTTYPES
-and
+defaults to `ttf' but can be set to include the extenions of
+fonts which are to be installed.
+Also sets
 .Ev FONT_DISTDIR .
 A
 .Cm do-install
