@@ -2929,7 +2929,7 @@ getnext:
 				index->sav_idatacomplete = 1;
 			break;
 		case AGENTX_DATA_TYPE_IPADDRESS:
-			ipaddress = calloc(1, sizeof(ipaddress));
+			ipaddress = calloc(1, sizeof(*ipaddress));
 			if (ipaddress == NULL) {
 				subagentx_log_sag_warn(sag,
 				    "Failed to bind ipaddress index");
@@ -2951,7 +2951,7 @@ getnext:
 			}
 			if (j <= sav->sav_vb.avb_oid.aoi_idlen)
 				index->sav_idatacomplete = 1;
-			data->avb_ostring.aos_slen = sizeof(ipaddress);
+			data->avb_ostring.aos_slen = sizeof(*ipaddress);
 			data->avb_ostring.aos_string =
 			    (unsigned char *)ipaddress;
 			break;
