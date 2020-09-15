@@ -1,0 +1,4 @@
+Name: Cflags test package
+Description: pkg-config(1) regress file
+Version: 1.0.0
+Cflags: -I/usr/X11R6/include -I/usr/local/include -I/usr/private/include
