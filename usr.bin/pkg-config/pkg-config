@@ -1,9 +1,8 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.94 2020/09/12 12:53:41 jasper Exp $
-# $CSK: pkgconfig.pl,v 1.39 2006/11/27 16:26:20 ckuethe Exp $
+# $OpenBSD: pkg-config,v 1.95 2020/09/15 07:18:45 jasper Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
-# Copyright (c) 2011,2019 Jasper Lievisse Adriaanse <jasper@openbsd.org>
+# Copyright (c) 2011-2020 Jasper Lievisse Adriaanse <jasper@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -46,7 +45,7 @@ my $allow_uninstalled =
 	defined $ENV{PKG_CONFIG_DISABLE_UNINSTALLED} ? 0 : 1;
 my $found_uninstalled = 0;
 
-my $version = '0.29.1'; # pretend to be this version of pkgconfig
+my $version = '0.29.2'; # pretend to be this version of pkgconfig
 
 my %configs = ();
 setup_self();
@@ -59,6 +58,13 @@ $variables->{pc_top_builddir} = $ENV{PKG_CONFIG_TOP_BUILD_DIR} //
 
 $variables->{pc_sysrootdir} //= $ENV{PKG_CONFIG_SYSROOT_DIR};
 # The default '/' is implied.
+
+my @sys_includes = ('/usr/include');
+foreach my $path ($ENV{PKG_CONFIG_SYSTEM_INCLUDE_PATH}, $ENV{C_PATH}, $ENV{C_INCLUDE_PATH},
+    $ENV{CPLUS_INCLUDE_PATH}) {
+	next if !defined($path);
+	unshift(@sys_includes, split(/:/, $path));
+}
 
 defined $ENV{PKG_CONFIG_DEBUG_SPEW} ? $mode{debug} = 1 : $mode{debug} = 0;
 
@@ -496,10 +502,11 @@ sub do_cflags
 
 	for my $pkg (@$list) {
 		my $l = $configs{$pkg}->get_property('Cflags', $variables);
-		for my $path (@$l) {
-			unless ($path =~ /-I\/usr\/include\/*$/) {
-				push(@$cflags, $path);
+		PATH: for my $path (@$l) {
+			for my $sys_path (@sys_includes) {
+				next PATH if ($path =~ /${sys_path}\/*$/);
 			}
+			push(@$cflags, $path);
 		}
 	}
 	my $a = OpenBSD::PkgConfig->compress($cflags,

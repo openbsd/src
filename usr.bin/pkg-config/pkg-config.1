@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg-config.1,v 1.34 2019/08/02 22:36:37 schwarze Exp $
+.\"	$OpenBSD: pkg-config.1,v 1.35 2020/09/15 07:18:45 jasper Exp $
 .\"
 .\"	Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\"	ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"	OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 2 2019 $
+.Dd $Mdocdate: September 15 2020 $
 .Dt PKG-CONFIG 1
 .Os
 .Sh NAME
@@ -176,6 +176,10 @@ Thus -I/usr/local/include will become -I/target/usr/local/include when
 PKG_CONFIG_SYSROOT_DIR is set to /target, which is useful when cross compiling
 packages that use
 .Nm .
+.It Ev PKG_CONFIG_SYSTEM_INCLUDE_PATH
+When set to a list of paths, separated by :, these paths will be excluded from
+the output of include paths set with
+.Fl I .
 .It Ev PKG_CONFIG_TOP_BUILD_DIR
 If set
 .Nm
