@@ -1,9 +1,9 @@
-# $OpenBSD: Makefile.inc,v 1.6 2019/02/21 23:06:33 bluhm Exp $
+# $OpenBSD: Makefile.inc,v 1.7 2020/09/15 01:45:16 bluhm Exp $
 
 .PATH:			${.CURDIR}/..
 
-SRCS_client =		client.c util.c
-SRCS_server =		server.c util.c
+SRCS_client ?=		client.c util.c
+SRCS_server ?=		server.c util.c
 WARNINGS =		yes
 CLEANFILES +=		*.out *.fstat
 
@@ -43,8 +43,8 @@ CLEANFILES +=		127.0.0.1.{crt,key} \
 
 127.0.0.1.crt:
 	openssl req -batch -new \
-	    -subj /L=OpenBSD/O=tls-regress/OU=server/CN=127.0.0.1/ \
-	    -nodes -newkey rsa -keyout 127.0.0.1.key -x509 -out $@
+	    -subj /L=OpenBSD/O=tls-regress/OU=server/CN=${@:R}/ \
+	    -nodes -newkey rsa -keyout ${@:R}.key -x509 -out $@
 
 ca.crt fake-ca.crt:
 	openssl req -batch -new \
