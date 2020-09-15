@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.31 2020/09/15 08:15:17 florian Exp $ */
+/* $Id: dighost.c,v 1.32 2020/09/15 08:19:29 florian Exp $ */
 
 /*! \file
  *  \note
@@ -55,7 +55,6 @@
 #include <isc/base64.h>
 #include <isc/hex.h>
 #include <isc/log.h>
-#include <isc/netaddr.h>
 #include <isc/result.h>
 #include <isc/serial.h>
 #include <isc/sockaddr.h>
@@ -558,10 +557,9 @@ isc_result_t
 set_nameserver(char *opt) {
 	isc_result_t result;
 	isc_sockaddr_t sockaddrs[DIG_MAX_ADDRESSES];
-	isc_netaddr_t netaddr;
 	int count, i;
 	dig_server_t *srv;
-	char tmp[ISC_NETADDR_FORMATSIZE];
+	char tmp[NI_MAXHOST];
 
 	if (opt == NULL)
 		return ISC_R_NOTFOUND;
@@ -574,8 +572,12 @@ set_nameserver(char *opt) {
 	flush_server_list();
 
 	for (i = 0; i < count; i++) {
-		isc_netaddr_fromsockaddr(&netaddr, &sockaddrs[i]);
-		isc_netaddr_format(&netaddr, tmp, sizeof(tmp));
+		int error;
+		error = getnameinfo(&sockaddrs[i].type.sa,
+		    sockaddrs[i].type.sa.sa_len, tmp, sizeof(tmp), NULL, 0,
+		    NI_NUMERICHOST | NI_NUMERICSERV);
+		if (error)
+			fatal("%s", gai_strerror(error));
 		srv = make_server(tmp, opt);
 		if (srv == NULL)
 			fatal("memory allocation failure");
@@ -3733,10 +3735,9 @@ int
 getaddresses(dig_lookup_t *lookup, const char *host, isc_result_t *resultp) {
 	isc_result_t result;
 	isc_sockaddr_t sockaddrs[DIG_MAX_ADDRESSES];
-	isc_netaddr_t netaddr;
 	int count, i;
 	dig_server_t *srv;
-	char tmp[ISC_NETADDR_FORMATSIZE];
+	char tmp[NI_MAXHOST];
 
 	result = get_addresses(host, 0, sockaddrs,
 				    DIG_MAX_ADDRESSES, &count);
@@ -3750,8 +3751,13 @@ getaddresses(dig_lookup_t *lookup, const char *host, isc_result_t *resultp) {
 	}
 
 	for (i = 0; i < count; i++) {
-		isc_netaddr_fromsockaddr(&netaddr, &sockaddrs[i]);
-		isc_netaddr_format(&netaddr, tmp, sizeof(tmp));
+		int error;
+		error = getnameinfo(&sockaddrs[i].type.sa,
+		    sockaddrs[i].type.sa.sa_len, tmp, sizeof(tmp), NULL, 0,
+		    NI_NUMERICHOST | NI_NUMERICSERV);
+		if (error)
+			fatal("%s", gai_strerror(error));
+
 		srv = make_server(tmp, host);
 		ISC_LIST_APPEND(lookup->my_server_list, srv, link);
 	}

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: grammar.h,v 1.5 2020/09/14 08:40:44 florian Exp $ */
+/* $Id: grammar.h,v 1.6 2020/09/15 08:19:29 florian Exp $ */
 
 #ifndef ISCCFG_GRAMMAR_H
 #define ISCCFG_GRAMMAR_H 1
@@ -22,7 +22,6 @@
 /*! \file isccfg/grammar.h */
 
 #include <isc/lex.h>
-#include <isc/netaddr.h>
 #include <isc/sockaddr.h>
 #include <isc/region.h>
 #include <isc/types.h>

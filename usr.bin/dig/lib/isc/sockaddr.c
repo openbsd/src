@@ -14,14 +14,15 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sockaddr.c,v 1.10 2020/09/15 08:13:35 florian Exp $ */
+/* $Id: sockaddr.c,v 1.11 2020/09/15 08:19:29 florian Exp $ */
 
 /*! \file */
-
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
 #include <stdio.h>
 
 #include <isc/buffer.h>
-#include <isc/netaddr.h>
 
 #include <isc/region.h>
 #include <isc/sockaddr.h>
@@ -95,18 +96,17 @@ isc_sockaddr_compare(const isc_sockaddr_t *a, const isc_sockaddr_t *b,
 
 isc_result_t
 isc_sockaddr_totext(const isc_sockaddr_t *sockaddr, isc_buffer_t *target) {
-	isc_result_t result;
-	isc_netaddr_t netaddr;
 	char pbuf[sizeof("65000")];
 	unsigned int plen;
 	isc_region_t avail;
+	int error;
+	char tmp[NI_MAXHOST];
 
 	REQUIRE(sockaddr != NULL);
 
 	/*
 	 * Do the port first, giving us the opportunity to check for
-	 * unsupported address families before calling
-	 * isc_netaddr_fromsockaddr().
+	 * unsupported address families.
 	 */
 	switch (sockaddr->type.sa.sa_family) {
 	case AF_INET:
@@ -122,10 +122,11 @@ isc_sockaddr_totext(const isc_sockaddr_t *sockaddr, isc_buffer_t *target) {
 	plen = strlen(pbuf);
 	INSIST(plen < sizeof(pbuf));
 
-	isc_netaddr_fromsockaddr(&netaddr, sockaddr);
-	result = isc_netaddr_totext(&netaddr, target);
-	if (result != ISC_R_SUCCESS)
-		return (result);
+	error = getnameinfo(&sockaddr->type.sa, sockaddr->type.sa.sa_len, tmp,
+	    sizeof(tmp), NULL, 0, NI_NUMERICHOST | NI_NUMERICSERV);
+	if (strlen(tmp) > isc_buffer_availablelength(target))
+		return (ISC_R_NOSPACE);
+	isc_buffer_putmem(target, tmp, strlen(tmp));
 
 	if (1 + plen + 1 > isc_buffer_availablelength(target))
 		return (ISC_R_NOSPACE);
@@ -154,9 +155,6 @@ isc_sockaddr_format(const isc_sockaddr_t *sa, char *array, unsigned int size) {
 	isc_buffer_init(&buf, array, size);
 	result = isc_sockaddr_totext(sa, &buf);
 	if (result != ISC_R_SUCCESS) {
-		/*
-		 * The message is the same as in netaddr.c.
-		 */
 		snprintf(array, size, "<unknown address, family %u>",
 			 sa->type.sa.sa_family);
 		array[size - 1] = '\0';
