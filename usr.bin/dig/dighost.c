@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.29 2020/09/14 08:40:43 florian Exp $ */
+/* $Id: dighost.c,v 1.30 2020/09/15 07:45:06 florian Exp $ */
 
 /*! \file
  *  \note
@@ -954,7 +954,7 @@ parse_netprefix(isc_sockaddr_t **sap, const char *value) {
 	slash = strchr(buf, '/');
 	if (slash != NULL) {
 		*slash = '\0';
-		prefix_length = strtonum(slash + 1, 0, 10, &errstr);
+		prefix_length = strtonum(slash + 1, 0, 128, &errstr);
 		if (errstr != NULL) {
 			fatal("prefix length is %s: '%s'", errstr, value);
 		}
