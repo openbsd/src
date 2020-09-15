@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bt.5,v 1.6 2020/07/11 14:52:14 mpi Exp $
+.\"	$OpenBSD: bt.5,v 1.7 2020/09/15 10:59:05 jasper Exp $
 .\"
 .\" Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 11 2020 $
+.Dd $Mdocdate: September 15 2020 $
 .Dt BT 5
 .Os
 .Sh NAME
@@ -114,20 +114,20 @@ Functions:
 .Bl -tag -width "lhist(value, min, max, step)"
 .It Fn clear "@map"
 Delete all (key, value) pairs from
-.Va @map
+.Va @map .
 .It Fn delete "@map[key]"
 Delete the pair indexed by
 .Va key
 from
-.Va @map
+.Va @map .
 .It Fn exit
-Terminate execution with exit code 0
+Terminate execution with exit code 0.
 .It Fn hist "value"
-Increment the bucket corresponding  to
+Increment the bucket corresponding to
 .Va value
-in a power-of-two histogram
+in a power-of-two histogram.
 .It Fn lhist "value" "min" "max" "step"
-Increment the bucket corresponding  to
+Increment the bucket corresponding to
 .Va value
 in the linear histogram spawning between the positive value
 .Va min
@@ -138,17 +138,17 @@ with buckets of
 size.
 .It Fn print "@map"
 Print all pairs from
-.Va @map
+.Va @map .
 .It Fn printf "fmt" ...
-print formatted string
-.Va fmt
+Print formatted string
+.Va fmt .
 .It Fn time timefmt
-print timestamps using
+Print timestamps using
 .Xr strftime 3
 .It Fn zero "@map"
 Set all values from
 .Va @map
-to 0
+to 0.
 .El
 .Sh SEE ALSO
 .Xr awk 1 ,
