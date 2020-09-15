@@ -31,7 +31,7 @@
  * IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dst_internal.h,v 1.11 2020/02/23 08:54:01 florian Exp $ */
+/* $Id: dst_internal.h,v 1.12 2020/09/15 08:15:59 deraadt Exp $ */
 
 #ifndef DST_DST_INTERNAL_H
 #define DST_DST_INTERNAL_H 1
@@ -139,13 +139,6 @@ isc_result_t dst__opensslecdsa_init(struct dst_func **funcp);
  * Destructors
  */
 void dst__openssl_destroy(void);
-
-/*%
- * Memory allocators using the DST memory pool.
- */
-void * dst__mem_alloc(size_t size);
-void   dst__mem_free(void *ptr);
-void * dst__mem_realloc(void *ptr, size_t size);
 
 #endif /* DST_DST_INTERNAL_H */
 /*! \file */
