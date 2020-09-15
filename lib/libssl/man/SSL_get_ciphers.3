@@ -1,10 +1,28 @@
-.\" $OpenBSD: SSL_get_ciphers.3,v 1.7 2019/01/22 01:18:24 tb Exp $
-.\" full merge up to: OpenSSL c3e64028 Mar 30 11:50:14 2005 +0000
+.\" $OpenBSD: SSL_get_ciphers.3,v 1.8 2020/09/15 14:51:42 schwarze Exp $
+.\" full merge up to: OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\" selective merge up to: OpenSSL 83cf7abf May 29 13:07:08 2018 +0100
 .\"
-.\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>,
-.\" Nick Mathewson <nickm@torproject.org>, and Kazuki Yamaguchi <k@rhe.jp>.
-.\" Copyright (c) 2000, 2005, 2015, 2016 The OpenSSL Project.
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2020 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Lutz Jaenicke <jaenicke@openssl.org>,
+.\" Nick Mathewson <nickm@torproject.org>, Kurt Roeckx <kurt@roeckx.be>,
+.\" Kazuki Yamaguchi <k@rhe.jp>, and Benjamin Kaduk <bkaduk@akamai.com>.
+.\" Copyright (c) 2000, 2005, 2015, 2016, 2017 The OpenSSL Project.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -51,7 +69,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 22 2019 $
+.Dd $Mdocdate: September 15 2020 $
 .Dt SSL_GET_CIPHERS 3
 .Os
 .Sh NAME
@@ -60,7 +78,7 @@
 .Nm SSL_get1_supported_ciphers ,
 .Nm SSL_get_client_ciphers ,
 .Nm SSL_get_cipher_list
-.Nd get list of available SSL_CIPHERs
+.Nd get lists of available SSL_CIPHERs
 .Sh SYNOPSIS
 .In openssl/ssl.h
 .Ft STACK_OF(SSL_CIPHER) *
@@ -80,13 +98,6 @@ returns the stack of available
 for
 .Fa ssl ,
 sorted by preference.
-If
-.Fa ssl
-is
-.Dv NULL
-or no ciphers are available,
-.Dv NULL
-is returned.
 .Pp
 .Fn SSL_CTX_get_ciphers
 returns the stack of available
@@ -95,7 +106,7 @@ for
 .Fa ctx .
 .Pp
 .Fn SSL_get1_supported_ciphers
-returns the stack of enabled
+returns a stack of enabled
 .Vt SSL_CIPHER Ns s
 for
 .Fa ssl
@@ -110,40 +121,12 @@ For example,
 additional ciphers may be usable by a server if there is a gap in the
 list of supported protocols, and some ciphers may not be usable by a
 server if there is not a suitable certificate configured.
-If
-.Fa ssl
-is
-.Dv NULL
-or no ciphers are available,
-.Dv NULL
-is returned.
 .Pp
 .Fn SSL_get_client_ciphers
 returns the stack of available
 .Vt SSL_CIPHER Ns s
 matching the list received from the client on
 .Fa ssl .
-If
-.Fa ssl
-is
-.Dv NULL ,
-no ciphers are available, or
-.Fa ssl
-is not operating in server mode,
-.Dv NULL
-is returned.
-.Pp
-.Fn SSL_get_ciphers ,
-.Fn SSL_CTX_get_ciphers ,
-and
-.Fn SSL_get_client_ciphers
-return pointers to internal cipher stacks, which will be freed
-later on when the
-.Vt SSL
-or
-.Vt SSL_CTX
-object is freed.
-Therefore, the calling code must not free the return value itself.
 .Pp
 The details of the ciphers obtained by
 .Fn SSL_get_ciphers ,
@@ -156,29 +139,92 @@ can be obtained using the
 family of functions.
 .Pp
 .Fn SSL_get_cipher_list
-returns a pointer to the name of the
-.Vt SSL_CIPHER
-listed for
+is badly misnamed; it does not return a list.
+Instead, it returns the name of one element of the return value of
+.Fn SSL_get_ciphers ,
+with the index given by the
+.Fa priority
+argument.
+Passing 0 selects the cipher with the highest priority.
+To iterate over all available ciphers in decreasing priority,
+repeatedly increment the argument by 1 until
+.Dv NULL
+is returned.
+.Sh RETURN VALUES
+.Fn SSL_get_ciphers
+returns an internal pointer to a list of ciphers or
+.Dv NULL
+if
 .Fa ssl
-with
-.Fa priority .
+is
+.Dv NULL
+or if no ciphers are available.
+The returned pointer may not only become invalid when
+.Fa ssl
+is destroyed or when
+.Xr SSL_set_cipher_list 3
+is called on it, but also when the
+.Vt SSL_CTX
+object is destroyed that
+.Fa SSL
+was created from or when
+.Xr SSL_CTX_set_cipher_list 3
+is called on that context object.
+.Pp
+.Fn SSL_CTX_get_ciphers
+returns an internal pointer to a list of ciphers or
+.Dv NULL
+if no ciphers are available.
 If
+.Fa ctx
+is
+.Dv NULL ,
+calling this function crashes the program.
+The returned pointer becomes invalid when
+.Fa ctx
+is destroyed or when
+.Xr SSL_CTX_set_cipher_list 3
+is called on it.
+.Pp
+.Fn SSL_get1_supported_ciphers
+returns a newly allocated list of ciphers or
+.Dv NULL
+if
 .Fa ssl
 is
 .Dv NULL ,
-no ciphers are available, or there are fewer ciphers than
-.Fa priority
-available,
-.Dv NULL
-is returned.
+if no ciphers are available, or if an error occurs.
+When the returned pointer is no longer needed, the caller is
+responsible for freeing it using
+.Fn sk_SSL_CIPHER_free .
 .Pp
-Call
-.Fn SSL_get_cipher_list
-with
-.Fa priority
-starting from 0 to obtain the sorted list of available ciphers, until
+.Fn SSL_get_client_ciphers
+returns an internal pointer to a list of ciphers or
 .Dv NULL
-is returned.
+if
+.Fa ssl
+is
+.Dv NULL ,
+has no active session,
+or is not operating in server mode.
+The returned pointer becomes invalid when the
+.Vt SSL_SESSION
+object is destroyed, even if the
+.Fa ssl
+object remains valid.
+It may also become invalid in other circumstances,
+for example when processing a new ClientHello.
+.Pp
+.Fn SSL_get_cipher_list
+returns an internal pointer to a string or
+.Dv NULL
+if
+.Fa ssl
+is
+.Dv NULL ,
+if no ciphers are available, or if
+.Fa priority
+is greater than or equal to the number of available ciphers.
 .Sh SEE ALSO
 .Xr ssl 3 ,
 .Xr SSL_CIPHER_get_name 3 ,
