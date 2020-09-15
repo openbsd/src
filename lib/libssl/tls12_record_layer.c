@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_record_layer.c,v 1.1 2020/08/30 15:40:20 jsing Exp $ */
+/* $OpenBSD: tls12_record_layer.c,v 1.2 2020/09/15 15:11:58 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -457,7 +457,7 @@ tls12_record_layer_seal_record_protected_cipher(struct tls12_record_layer *rl,
 	/* Add padding to block size, if necessary. */
 	block_size = EVP_CIPHER_CTX_block_size(enc);
 	if (block_size < 0 || block_size > EVP_MAX_BLOCK_LENGTH)
-		return 0;
+		goto err;
 	if (block_size > 1) {
 		pad_len = block_size - (plain_len % block_size);
 		pad_val = pad_len - 1;
