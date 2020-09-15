@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.425 2020/08/05 06:12:43 kn Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.426 2020/09/15 15:23:11 claudio Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -6060,7 +6060,7 @@ umb_status(void)
 			snprintf(s[0], sizeof (s[0]), "%llu", mi.uplink_speed);
 		if (fmt_scaled(mi.downlink_speed, s[1]) != 0)
 			snprintf(s[1], sizeof (s[1]), "%llu", mi.downlink_speed);
-		printf(" speed %sps up %sps down", s[0], s[1]);
+		printf(" speed %sbps up %sbps down", s[0], s[1]);
 	}
 	printf("\n");
 
