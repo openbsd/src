@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sockaddr.h,v 1.6 2020/09/15 11:46:19 florian Exp $ */
+/* $Id: sockaddr.h,v 1.7 2020/09/15 11:47:42 florian Exp $ */
 
 #ifndef ISC_SOCKADDR_H
 #define ISC_SOCKADDR_H 1
@@ -28,16 +28,6 @@
 #include <isc/types.h>
 #include <sys/un.h>
 
-struct isc_sockaddr {
-	union {
-		struct sockaddr		sa;
-		struct sockaddr_in	sin;
-		struct sockaddr_in6	sin6;
-		struct sockaddr_storage ss;
-		struct sockaddr_un	sunix;
-	}				type;
-};
-
 #define ISC_SOCKADDR_CMPADDR	  0x0001	/*%< compare the address
 						 *   sin_addr/sin6_addr */
 #define ISC_SOCKADDR_CMPPORT 	  0x0002	/*%< compare the port
@@ -48,7 +38,7 @@ struct isc_sockaddr {
 						 *   zero scopes always match */
 
 int
-isc_sockaddr_compare(const isc_sockaddr_t *a, const isc_sockaddr_t *b,
+isc_sockaddr_compare(const struct sockaddr_storage *a, const struct sockaddr_storage *b,
 		     unsigned int flags);
 /*%<
  * Compare the elements of the two address ('a' and 'b') as specified
@@ -58,32 +48,32 @@ isc_sockaddr_compare(const isc_sockaddr_t *a, const isc_sockaddr_t *b,
  */
 
 int
-isc_sockaddr_equal(const isc_sockaddr_t *a, const isc_sockaddr_t *b);
+isc_sockaddr_equal(const struct sockaddr_storage *a, const struct sockaddr_storage *b);
 /*%<
  * Return 1 iff the socket addresses 'a' and 'b' are equal.
  */
 
 int
-isc_sockaddr_eqaddr(const isc_sockaddr_t *a, const isc_sockaddr_t *b);
+isc_sockaddr_eqaddr(const struct sockaddr_storage *a, const struct sockaddr_storage *b);
 /*%<
  * Return 1 iff the address parts of the socket addresses
  * 'a' and 'b' are equal, ignoring the ports.
  */
 
 void
-isc_sockaddr_any(isc_sockaddr_t *sockaddr);
+isc_sockaddr_any(struct sockaddr_storage *sockaddr);
 /*%<
  * Return the IPv4 wildcard address.
  */
 
 void
-isc_sockaddr_any6(isc_sockaddr_t *sockaddr);
+isc_sockaddr_any6(struct sockaddr_storage *sockaddr);
 /*%<
  * Return the IPv6 wildcard address.
  */
 
 void
-isc_sockaddr_anyofpf(isc_sockaddr_t *sockaddr, int family);
+isc_sockaddr_anyofpf(struct sockaddr_storage *sockaddr, int family);
 /*%<
  * Set '*sockaddr' to the wildcard address of protocol family
  * 'family'.
@@ -93,21 +83,21 @@ isc_sockaddr_anyofpf(isc_sockaddr_t *sockaddr, int family);
  */
 
 void
-isc_sockaddr_fromin(isc_sockaddr_t *sockaddr, const struct in_addr *ina,
+isc_sockaddr_fromin(struct sockaddr_storage *sockaddr, const struct in_addr *ina,
 		    in_port_t port);
 /*%<
- * Construct an isc_sockaddr_t from an IPv4 address and port.
+ * Construct an struct sockaddr_storage from an IPv4 address and port.
  */
 
 void
-isc_sockaddr_fromin6(isc_sockaddr_t *sockaddr, const struct in6_addr *ina6,
+isc_sockaddr_fromin6(struct sockaddr_storage *sockaddr, const struct in6_addr *ina6,
 		     in_port_t port);
 /*%<
- * Construct an isc_sockaddr_t from an IPv6 address and port.
+ * Construct an struct sockaddr_storage from an IPv6 address and port.
  */
 
 int
-isc_sockaddr_pf(const isc_sockaddr_t *sockaddr);
+isc_sockaddr_pf(const struct sockaddr_storage *sockaddr);
 /*%<
  * Get the protocol family of 'sockaddr'.
  *
@@ -122,13 +112,13 @@ isc_sockaddr_pf(const isc_sockaddr_t *sockaddr);
  */
 
 in_port_t
-isc_sockaddr_getport(const isc_sockaddr_t *sockaddr);
+isc_sockaddr_getport(const struct sockaddr_storage *sockaddr);
 /*%<
  * Get the port stored in 'sockaddr'.
  */
 
 isc_result_t
-isc_sockaddr_totext(const isc_sockaddr_t *sockaddr, isc_buffer_t *target);
+isc_sockaddr_totext(const struct sockaddr_storage *sockaddr, isc_buffer_t *target);
 /*%<
  * Append a text representation of 'sockaddr' to the buffer 'target'.
  * The text will include both the IP address (v4 or v6) and the port.
@@ -141,7 +131,7 @@ isc_sockaddr_totext(const isc_sockaddr_t *sockaddr, isc_buffer_t *target);
  */
 
 void
-isc_sockaddr_format(const isc_sockaddr_t *sa, char *array, unsigned int size);
+isc_sockaddr_format(const struct sockaddr_storage *sa, char *array, unsigned int size);
 /*%<
  * Format a human-readable representation of the socket address '*sa'
  * into the character array 'array', which is of size 'size'.
@@ -149,19 +139,19 @@ isc_sockaddr_format(const isc_sockaddr_t *sa, char *array, unsigned int size);
  */
 
 int
-isc_sockaddr_ismulticast(const isc_sockaddr_t *sa);
+isc_sockaddr_ismulticast(const struct sockaddr_storage *sa);
 /*%<
  * Returns #1 if the address is a multicast address.
  */
 
 int
-isc_sockaddr_islinklocal(const isc_sockaddr_t *sa);
+isc_sockaddr_islinklocal(const struct sockaddr_storage *sa);
 /*%<
  * Returns 1 if the address is a link local address.
  */
 
 int
-isc_sockaddr_issitelocal(const isc_sockaddr_t *sa);
+isc_sockaddr_issitelocal(const struct sockaddr_storage *sa);
 /*%<
  * Returns 1 if the address is a sitelocal address.
  */

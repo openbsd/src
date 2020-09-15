@@ -369,7 +369,7 @@ detailsection(dig_query_t *query, dns_message_t *msg, int headers,
 }
 
 static void
-received(unsigned int bytes, isc_sockaddr_t *from, dig_query_t *query)
+received(unsigned int bytes, struct sockaddr_storage *from, dig_query_t *query)
 {
 	UNUSED(bytes);
 	UNUSED(from);
@@ -442,7 +442,7 @@ printmessage(dig_query_t *query, dns_message_t *msg, int headers) {
 static void
 show_settings(int full, int serv_only) {
 	dig_server_t *srv;
-	isc_sockaddr_t sockaddr;
+	struct sockaddr_storage sockaddr;
 	dig_searchlist_t *listent;
 	isc_result_t result;
 

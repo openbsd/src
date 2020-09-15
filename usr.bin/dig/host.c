@@ -143,7 +143,7 @@ host_shutdown(void) {
 }
 
 static void
-received(unsigned int bytes, isc_sockaddr_t *from, dig_query_t *query) {
+received(unsigned int bytes, struct sockaddr_storage *from, dig_query_t *query) {
 	struct timespec now;
 
 	if (!short_form) {

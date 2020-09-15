@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: socket.h,v 1.6 2020/02/24 13:49:39 jsg Exp $ */
+/* $Id: socket.h,v 1.7 2020/09/15 11:47:42 florian Exp $ */
 
 #ifndef ISC_SOCKET_H
 #define ISC_SOCKET_H 1
@@ -93,7 +93,7 @@ struct isc_socketevent {
 	unsigned int		offset;		/*%< offset into buffer list */
 	isc_region_t		region;		/*%< for single-buffer i/o */
 	isc_bufferlist_t	bufferlist;	/*%< list of buffers */
-	isc_sockaddr_t		address;	/*%< source address */
+	struct sockaddr_storage		address;	/*%< source address */
 	struct timespec		timestamp;	/*%< timestamp of packet recv */
 	struct in6_pktinfo	pktinfo;	/*%< ipv6 pktinfo */
 	uint32_t		attributes;	/*%< see below */
@@ -106,7 +106,7 @@ struct isc_socket_newconnev {
 	ISC_EVENT_COMMON(isc_socket_newconnev_t);
 	isc_socket_t *		newsocket;
 	isc_result_t		result;		/*%< OK, EOF, whatever else */
-	isc_sockaddr_t		address;	/*%< source address */
+	struct sockaddr_storage		address;	/*%< source address */
 };
 
 typedef struct isc_socket_connev isc_socket_connev_t;
@@ -309,7 +309,7 @@ isc_socket_detach(isc_socket_t **socketp);
  */
 
 isc_result_t
-isc_socket_bind(isc_socket_t *sock, isc_sockaddr_t *addressp,
+isc_socket_bind(isc_socket_t *sock, struct sockaddr_storage *addressp,
 		unsigned int options);
 /*%<
  * Bind 'socket' to '*addressp'.
@@ -331,7 +331,7 @@ isc_socket_bind(isc_socket_t *sock, isc_sockaddr_t *addressp,
  */
 
 isc_result_t
-isc_socket_connect(isc_socket_t *sock, isc_sockaddr_t *addressp,
+isc_socket_connect(isc_socket_t *sock, struct sockaddr_storage *addressp,
 		   isc_task_t *task, isc_taskaction_t action,
 		   void *arg);
 /*%<
@@ -449,7 +449,7 @@ isc_socket_sendv(isc_socket_t *sock, isc_bufferlist_t *buflist,
 isc_result_t
 isc_socket_sendtov2(isc_socket_t *sock, isc_bufferlist_t *buflist,
 		    isc_task_t *task, isc_taskaction_t action, void *arg,
-		    isc_sockaddr_t *address, struct in6_pktinfo *pktinfo,
+		    struct sockaddr_storage *address, struct in6_pktinfo *pktinfo,
 		    unsigned int flags);
 /*!
  * Send the contents of 'region' to the socket's peer.

@@ -147,7 +147,7 @@ struct dig_lookup {
 	isc_buffer_t *querysig;
 	uint32_t msgcounter;
 	dns_fixedname_t fdomain;
-	isc_sockaddr_t *ecs_addr;
+	struct sockaddr_storage *ecs_addr;
 	int ecs_plen;
 	char *sitvalue;
 	dns_ednsopt_t *ednsopts;
@@ -189,7 +189,7 @@ struct dig_query {
 	isc_socket_t *sock;
 	ISC_LINK(dig_query_t) link;
 	ISC_LINK(dig_query_t) clink;
-	isc_sockaddr_t sockaddr;
+	struct sockaddr_storage sockaddr;
 	struct timespec time_sent;
 	struct timespec time_recv;
 	uint64_t byte_count;
@@ -229,7 +229,7 @@ extern int sendcount;
 extern int ndots;
 extern int lookup_counter;
 extern int exitcode;
-extern isc_sockaddr_t bind_address;
+extern struct sockaddr_storage bind_address;
 extern char keynametext[MXNAME];
 extern char keyfile[MXNAME];
 extern char keysecret[MXNAME];
@@ -254,7 +254,7 @@ int nslookup_main(int, char **);
  * Routines in dighost.c.
  */
 isc_result_t
-get_address(char *host, in_port_t port, isc_sockaddr_t *sockaddr);
+get_address(char *host, in_port_t port, struct sockaddr_storage *sockaddr);
 
 int
 getaddresses(dig_lookup_t *lookup, const char *host, isc_result_t *resultp);
@@ -298,7 +298,7 @@ void
 setup_system(int ipv4only, int ipv6only);
 
 isc_result_t
-parse_netprefix(isc_sockaddr_t **sap, int *plen, const char *value);
+parse_netprefix(struct sockaddr_storage **sap, int *plen, const char *value);
 
 void
 parse_hmac(const char *hmacstr);
@@ -352,7 +352,7 @@ extern isc_result_t
  */
 
 extern void
-(*dighost_received)(unsigned int bytes, isc_sockaddr_t *from, dig_query_t *query);
+(*dighost_received)(unsigned int bytes, struct sockaddr_storage *from, dig_query_t *query);
 /*%<
  * Print a message about where and when the response
  * was received from, like the final comment in the

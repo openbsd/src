@@ -153,7 +153,7 @@ struct isc_socket {
 	intev_t			readable_ev;
 	intev_t			writable_ev;
 
-	isc_sockaddr_t		peer_address;       /* remote address */
+	struct sockaddr_storage		peer_address;       /* remote address */
 
 	unsigned int		pending_recv : 1,
 				pending_send : 1,
@@ -239,11 +239,11 @@ enum {
 };
 
 static void
-socket_log(isc_socket_t *sock, isc_sockaddr_t *address,
+socket_log(isc_socket_t *sock, struct sockaddr_storage *address,
 	   isc_logcategory_t *category, isc_logmodule_t *module, int level,
 	   const char *fmt, ...) __attribute__((__format__(__printf__, 6, 7)));
 static void
-socket_log(isc_socket_t *sock, isc_sockaddr_t *address,
+socket_log(isc_socket_t *sock, struct sockaddr_storage *address,
 	   isc_logcategory_t *category, isc_logmodule_t *module, int level,
 	   const char *fmt, ...)
 {
@@ -505,8 +505,8 @@ build_msghdr_send(isc_socket_t *sock, char* cmsgbuf, isc_socketevent_t *dev,
 	memset(msg, 0, sizeof(*msg));
 
 	if (!sock->connected) {
-		msg->msg_name = (void *)&dev->address.type.sa;
-		msg->msg_namelen = dev->address.type.ss.ss_len;
+		msg->msg_name = (void *)&dev->address;
+		msg->msg_namelen = dev->address.ss_len;
 	} else {
 		msg->msg_name = NULL;
 		msg->msg_namelen = 0;
@@ -703,8 +703,8 @@ build_msghdr_recv(isc_socket_t *sock, char *cmsgbuf, isc_socketevent_t *dev,
 
 	if (sock->type == isc_sockettype_udp) {
 		memset(&dev->address, 0, sizeof(dev->address));
-		msg->msg_name = (void *)&dev->address.type.sa;
-		msg->msg_namelen = sizeof(dev->address.type);
+		msg->msg_name = (void *)&dev->address;
+		msg->msg_namelen = sizeof(dev->address);
 	} else { /* TCP */
 		msg->msg_name = NULL;
 		msg->msg_namelen = 0;
@@ -768,7 +768,7 @@ build_msghdr_recv(isc_socket_t *sock, char *cmsgbuf, isc_socketevent_t *dev,
 }
 
 static void
-set_dev_address(isc_sockaddr_t *address, isc_socket_t *sock,
+set_dev_address(struct sockaddr_storage *address, isc_socket_t *sock,
 		isc_socketevent_t *dev)
 {
 	if (sock->type == isc_sockettype_udp) {
@@ -910,7 +910,7 @@ doio_recv(isc_socket_t *sock, isc_socketevent_t *dev) {
 	}
 
 	if (sock->type == isc_sockettype_udp) {
-		dev->address.type.ss.ss_len = msghdr.msg_namelen;
+		dev->address.ss_len = msghdr.msg_namelen;
 		if (isc_sockaddr_getport(&dev->address) == 0) {
 			if (isc_log_wouldlog(isc_lctx, IOEVENT_LEVEL)) {
 				socket_log(sock, &dev->address, IOEVENT,
@@ -2042,7 +2042,7 @@ isc_socket_recvv(isc_socket_t *sock0, isc_bufferlist_t *buflist,
 
 static isc_result_t
 socket_send(isc_socket_t *sock, isc_socketevent_t *dev, isc_task_t *task,
-	    isc_sockaddr_t *address, struct in6_pktinfo *pktinfo,
+	    struct sockaddr_storage *address, struct in6_pktinfo *pktinfo,
 	    unsigned int flags)
 {
 	int io_state;
@@ -2132,7 +2132,7 @@ isc_socket_sendv(isc_socket_t *sock, isc_bufferlist_t *buflist,
 isc_result_t
 isc_socket_sendtov2(isc_socket_t *sock0, isc_bufferlist_t *buflist,
 		     isc_task_t *task, isc_taskaction_t action, void *arg,
-		     isc_sockaddr_t *address, struct in6_pktinfo *pktinfo,
+		     struct sockaddr_storage *address, struct in6_pktinfo *pktinfo,
 		     unsigned int flags)
 {
 	isc_socket_t *sock = (isc_socket_t *)sock0;
@@ -2167,14 +2167,14 @@ isc_socket_sendtov2(isc_socket_t *sock0, isc_bufferlist_t *buflist,
 }
 
 isc_result_t
-isc_socket_bind(isc_socket_t *sock0, isc_sockaddr_t *sockaddr,
+isc_socket_bind(isc_socket_t *sock0, struct sockaddr_storage *sockaddr,
 		 unsigned int options) {
 	isc_socket_t *sock = (isc_socket_t *)sock0;
 	int on = 1;
 
 	INSIST(!sock->bound);
 
-	if (sock->pf != sockaddr->type.sa.sa_family) {
+	if (sock->pf != sockaddr->ss_family) {
 		return (ISC_R_FAMILYMISMATCH);
 	}
 
@@ -2189,7 +2189,7 @@ isc_socket_bind(isc_socket_t *sock0, isc_sockaddr_t *sockaddr,
 				 "setsockopt(%d) %s", sock->fd, "failed");
 		/* Press on... */
 	}
-	if (bind(sock->fd, &sockaddr->type.sa, sockaddr->type.sa.sa_len) < 0) {
+	if (bind(sock->fd, (struct sockaddr *)sockaddr, sockaddr->ss_len) < 0) {
 		switch (errno) {
 		case EACCES:
 			return (ISC_R_NOPERM);
@@ -2213,7 +2213,7 @@ isc_socket_bind(isc_socket_t *sock0, isc_sockaddr_t *sockaddr,
 }
 
 isc_result_t
-isc_socket_connect(isc_socket_t *sock0, isc_sockaddr_t *addr,
+isc_socket_connect(isc_socket_t *sock0, struct sockaddr_storage *addr,
 		   isc_task_t *task, isc_taskaction_t action, void *arg)
 {
 	isc_socket_t *sock = (isc_socket_t *)sock0;
@@ -2249,7 +2249,7 @@ isc_socket_connect(isc_socket_t *sock0, isc_sockaddr_t *addr,
 	 * outstanding, and it might happen to complete.
 	 */
 	sock->peer_address = *addr;
-	cc = connect(sock->fd, &addr->type.sa, addr->type.sa.sa_len);
+	cc = connect(sock->fd, (struct sockaddr *)addr, addr->ss_len);
 	if (cc < 0) {
 		/*
 		 * HP-UX "fails" to connect a UDP socket and sets errno to

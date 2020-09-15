@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.33 2020/09/15 11:46:19 florian Exp $ */
+/* $Id: dighost.c,v 1.34 2020/09/15 11:47:42 florian Exp $ */
 
 /*! \file
  *  \note
@@ -96,8 +96,8 @@ isc_taskmgr_t *taskmgr = NULL;
 isc_task_t *global_task = NULL;
 isc_timermgr_t *timermgr = NULL;
 isc_socketmgr_t *socketmgr = NULL;
-isc_sockaddr_t bind_address;
-isc_sockaddr_t bind_any;
+struct sockaddr_storage bind_address;
+struct sockaddr_storage bind_any;
 int sendcount = 0;
 int recvcount = 0;
 int sockcount = 0;
@@ -108,7 +108,7 @@ int lookup_counter = 0;
 static char sitvalue[256];
 
 isc_socket_t *keep = NULL;
-isc_sockaddr_t keepaddr;
+struct sockaddr_storage keepaddr;
 
 static const struct {
 	const char *ns;
@@ -178,7 +178,7 @@ isc_result_t
 	int headers);
 
 void
-(*dighost_received)(unsigned int bytes, isc_sockaddr_t *from, dig_query_t *query);
+(*dighost_received)(unsigned int bytes, struct sockaddr_storage *from, dig_query_t *query);
 
 void
 (*dighost_trying)(char *frm, dig_lookup_t *lookup);
@@ -494,7 +494,7 @@ flush_server_list(void) {
 /* this used to be bind9_getaddresses from lib/bind9 */
 static isc_result_t
 get_addresses(const char *hostname, in_port_t dstport,
-		   isc_sockaddr_t *addrs, int addrsize, int *addrcount)
+		   struct sockaddr_storage *addrs, int addrsize, int *addrcount)
 {
 	struct addrinfo *ai = NULL, *tmpai, hints;
 	int result, i;
@@ -556,7 +556,7 @@ get_addresses(const char *hostname, in_port_t dstport,
 isc_result_t
 set_nameserver(char *opt) {
 	isc_result_t result;
-	isc_sockaddr_t sockaddrs[DIG_MAX_ADDRESSES];
+	struct sockaddr_storage sockaddrs[DIG_MAX_ADDRESSES];
 	int count, i;
 	dig_server_t *srv;
 	char tmp[NI_MAXHOST];
@@ -573,8 +573,8 @@ set_nameserver(char *opt) {
 
 	for (i = 0; i < count; i++) {
 		int error;
-		error = getnameinfo(&sockaddrs[i].type.sa,
-		    sockaddrs[i].type.sa.sa_len, tmp, sizeof(tmp), NULL, 0,
+		error = getnameinfo((struct sockaddr *)&sockaddrs[i],
+		    sockaddrs[i].ss_len, tmp, sizeof(tmp), NULL, 0,
 		    NI_NUMERICHOST | NI_NUMERICSERV);
 		if (error)
 			fatal("%s", gai_strerror(error));
@@ -825,7 +825,7 @@ clone_lookup(dig_lookup_t *lookold, int servers) {
 	looknew->eoferr = lookold->eoferr;
 
 	if (lookold->ecs_addr != NULL) {
-		size_t len = sizeof(isc_sockaddr_t);
+		size_t len = sizeof(struct sockaddr_storage);
 		looknew->ecs_addr = malloc(len);
 		if (looknew->ecs_addr == NULL)
 			fatal("out of memory");
@@ -933,8 +933,8 @@ parse_bits(char *arg, uint32_t max) {
 }
 
 isc_result_t
-parse_netprefix(isc_sockaddr_t **sap, int *plen, const char *value) {
-	isc_sockaddr_t *sa = NULL;
+parse_netprefix(struct sockaddr_storage **sap, int *plen, const char *value) {
+	struct sockaddr_storage *sa = NULL;
 	struct in_addr in4;
 	struct in6_addr in6;
 	uint32_t prefix_length = 0xffffffff;
@@ -955,7 +955,7 @@ parse_netprefix(isc_sockaddr_t **sap, int *plen, const char *value) {
 	memset(sa, 0, sizeof(*sa));
 
 	if (strcmp(buf, "0") == 0) {
-		sa->type.sa.sa_family = AF_UNSPEC;
+		sa->ss_family = AF_UNSPEC;
 		prefix_length = 0;
 		goto done;
 	}
@@ -2189,7 +2189,7 @@ setup_lookup(dig_lookup_t *lookup) {
 			struct sockaddr_in6 *sin6;
 			size_t addrl;
 
-			sa = &lookup->ecs_addr->type.sa;
+			sa = (struct sockaddr *)lookup->ecs_addr;
 			plen = lookup->ecs_plen;
 
 			/* Round up prefix len to a multiple of 8 */
@@ -3322,7 +3322,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 				  ISC_SOCKADDR_CMPSCOPEZERO)) {
 		char buf1[ISC_SOCKADDR_FORMATSIZE];
 		char buf2[ISC_SOCKADDR_FORMATSIZE];
-		isc_sockaddr_t any;
+		struct sockaddr_storage any;
 
 		if (isc_sockaddr_pf(&query->sockaddr) == AF_INET)
 			isc_sockaddr_any(&any);
@@ -3718,7 +3718,7 @@ recv_done(isc_task_t *task, isc_event_t *event) {
  * routines, since they may be using a non-DNS system for these lookups.
  */
 isc_result_t
-get_address(char *host, in_port_t myport, isc_sockaddr_t *sockaddr) {
+get_address(char *host, in_port_t myport, struct sockaddr_storage *sockaddr) {
 	int count;
 	isc_result_t result;
 
@@ -3734,7 +3734,7 @@ get_address(char *host, in_port_t myport, isc_sockaddr_t *sockaddr) {
 int
 getaddresses(dig_lookup_t *lookup, const char *host, isc_result_t *resultp) {
 	isc_result_t result;
-	isc_sockaddr_t sockaddrs[DIG_MAX_ADDRESSES];
+	struct sockaddr_storage sockaddrs[DIG_MAX_ADDRESSES];
 	int count, i;
 	dig_server_t *srv;
 	char tmp[NI_MAXHOST];
@@ -3752,8 +3752,8 @@ getaddresses(dig_lookup_t *lookup, const char *host, isc_result_t *resultp) {
 
 	for (i = 0; i < count; i++) {
 		int error;
-		error = getnameinfo(&sockaddrs[i].type.sa,
-		    sockaddrs[i].type.sa.sa_len, tmp, sizeof(tmp), NULL, 0,
+		error = getnameinfo((struct sockaddr *)&sockaddrs[i],
+		    sockaddrs[i].ss_len, tmp, sizeof(tmp), NULL, 0,
 		    NI_NUMERICHOST | NI_NUMERICSERV);
 		if (error)
 			fatal("%s", gai_strerror(error));

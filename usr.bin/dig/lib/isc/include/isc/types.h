@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: types.h,v 1.6 2020/09/15 08:19:29 florian Exp $ */
+/* $Id: types.h,v 1.7 2020/09/15 11:47:42 florian Exp $ */
 
 #ifndef ISC_TYPES_H
 #define ISC_TYPES_H 1
@@ -44,7 +44,6 @@ typedef struct isc_logconfig		isc_logconfig_t;	/*%< Log Configuration */
 typedef struct isc_logmodule		isc_logmodule_t;	/*%< Log Module */
 typedef struct isc_region		isc_region_t;		/*%< Region */
 typedef unsigned int			isc_result_t;		/*%< Result */
-typedef struct isc_sockaddr		isc_sockaddr_t;		/*%< Socket Address */
 typedef struct isc_socket		isc_socket_t;		/*%< Socket */
 typedef struct isc_socketevent		isc_socketevent_t;	/*%< Socket Event */
 typedef struct isc_socketmgr		isc_socketmgr_t;	/*%< Socket Manager */

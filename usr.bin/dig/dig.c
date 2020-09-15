@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dig.c,v 1.17 2020/09/15 11:46:19 florian Exp $ */
+/* $Id: dig.c,v 1.18 2020/09/15 11:47:42 florian Exp $ */
 
 /*! \file */
 #include <sys/cdefs.h>
@@ -169,7 +169,7 @@ help(void) {
  * Callback from dighost.c to print the received message.
  */
 static void
-received(unsigned int bytes, isc_sockaddr_t *from, dig_query_t *query) {
+received(unsigned int bytes, struct sockaddr_storage *from, dig_query_t *query) {
 	time_t tnow;
 	struct tm tmnow;
 	char time_str[100];
