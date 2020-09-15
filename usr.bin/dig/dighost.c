@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.30 2020/09/15 07:45:06 florian Exp $ */
+/* $Id: dighost.c,v 1.31 2020/09/15 08:15:17 florian Exp $ */
 
 /*! \file
  *  \note
@@ -37,7 +37,6 @@
 #include <time.h>
 #include <stdint.h>
 
-#include <dns/byaddr.h>
 #include <dns/fixedname.h>
 #include <dns/log.h>
 #include <dns/message.h>
@@ -309,25 +308,35 @@ get_reverse(char *reverse, size_t len, char *value, int ip6_int,
 	    int strict)
 {
 	int r;
+	struct in_addr in;
+	struct in6_addr in6;
 	isc_result_t result;
-	isc_netaddr_t addr;
 
-	addr.family = AF_INET6;
-	r = inet_pton(AF_INET6, value, &addr.type.in6);
+	r = inet_pton(AF_INET6, value, &in6);
 	if (r > 0) {
 		/* This is a valid IPv6 address. */
-		dns_fixedname_t fname;
-		dns_name_t *name;
-		unsigned int options = 0;
+		static char hex_digits[] = {
+			'0', '1', '2', '3', '4', '5', '6', '7',
+			'8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+		};
+		int i;
+		unsigned char *bytes = (unsigned char *)&in6;
+		char* cp;
 
-		if (ip6_int)
-			options |= DNS_BYADDROPT_IPV6INT;
-		dns_fixedname_init(&fname);
-		name = dns_fixedname_name(&fname);
-		result = dns_byaddr_createptrname2(&addr, options, name);
-		if (result != ISC_R_SUCCESS)
-			return (result);
-		dns_name_format(name, reverse, (unsigned int)len);
+		if (len <= 15 * 4 + sizeof("ip6.int"))
+			return (ISC_R_NOMEMORY);
+
+		cp = reverse;
+		for (i = 15; i >= 0; i--) {
+			*cp++ = hex_digits[bytes[i] & 0x0f];
+			*cp++ = '.';
+			*cp++ = hex_digits[(bytes[i] >> 4) & 0x0f];
+			*cp++ = '.';
+		}
+		*cp = '\0';
+		if (strlcat(reverse, ip6_int ? "ip6.int" : "ip6.arpa", len)
+		    >= len)
+			return (ISC_R_NOSPACE);
 		return (ISC_R_SUCCESS);
 	} else {
 		/*
@@ -340,16 +349,14 @@ get_reverse(char *reverse, size_t len, char *value, int ip6_int,
 		 */
 		char *p = reverse;
 		char *end = reverse + len;
-		if (strict && inet_pton(AF_INET, value, &addr.type.in) != 1)
+		if (strict && inet_pton(AF_INET, value, &in) != 1)
 			return (DNS_R_BADDOTTEDQUAD);
 		result = reverse_octets(value, &p, end);
 		if (result != ISC_R_SUCCESS)
 			return (result);
 		/* Append .in-addr.arpa. and a terminating NUL. */
 		result = append(".in-addr.arpa.", 15, &p, end);
-		if (result != ISC_R_SUCCESS)
-			return (result);
-		return (ISC_R_SUCCESS);
+		return (result);
 	}
 }
 
