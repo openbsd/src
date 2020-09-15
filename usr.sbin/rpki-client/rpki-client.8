@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.29 2020/09/15 12:06:02 deraadt Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.30 2020/09/15 20:02:30 job Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -77,10 +77,9 @@ instead of
 .Xr openrsync 1
 to fetch repositories.
 It must accept the
-.Fl rt ,
-.Fl -address
+.Fl rt
 and
-.Fl -delete
+.Fl -address
 flags and connect with rsync-protocol locations.
 .It Fl j
 Create output in the file
