@@ -3833,7 +3833,7 @@ subagentx_strcat(char **dst, const char *src)
 	}
 
 	srclen = strlen(src);
-	if (dst == NULL || dstlen + srclen > buflen) {
+	if (*dst == NULL || dstlen + srclen > buflen) {
 		nbuflen = (((dstlen + srclen) / 512) + 1) * 512;
 		tmp = recallocarray(*dst, buflen, nbuflen, sizeof(*tmp));
 		if (tmp == NULL)

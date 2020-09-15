@@ -135,7 +135,6 @@ agentx_recv(struct agentx *ax)
 	header.aph_packetid = agentx_pdutoh32(&header, u8);
 	u8 += 4;
 	header.aph_plength = agentx_pdutoh32(&header, u8);
-	u8 += 4;
 
 	if (header.aph_version != 1) {
 		errno = EPROTO;
