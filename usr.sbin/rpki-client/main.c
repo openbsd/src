@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.78 2020/09/12 13:26:06 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.79 2020/09/15 12:06:02 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -61,8 +61,10 @@
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
 #include <string.h>
 #include <limits.h>
+#include <syslog.h>
 #include <unistd.h>
 
 #include <openssl/err.h>
@@ -85,6 +87,9 @@ struct	repo {
 	int	 loaded; /* whether loaded or not */
 	size_t	 id; /* identifier (array index) */
 };
+
+int	timeout = 60*60;
+void	suicide(int sig);
 
 /*
  * Table of all known repositories.
@@ -1349,6 +1354,20 @@ repo_cleanup(const char *cachedir, struct repotab *rt)
 	return delsz;
 }
 
+void
+suicide(int sig __attribute__((unused)))
+{
+	struct syslog_data sdata = SYSLOG_DATA_INIT;
+	
+
+	dprintf(STDERR_FILENO,
+	    "%s: excessive runtime (%d seconds), giving up\n",
+	    getprogname(), timeout);
+	syslog_r(LOG_CRIT|LOG_DAEMON, &sdata,
+	    "excessive runtime (%d seconds), giving up", timeout);
+	_exit(1);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -1364,7 +1383,7 @@ main(int argc, char *argv[])
 	struct roa	**out = NULL;
 	char		*rsync_prog = "openrsync";
 	char		*bind_addr = NULL;
-	const char	*cachedir = NULL;
+	const char	*cachedir = NULL, *errs;
 	const char	*tals[TALSZ_MAX];
 	struct vrp_tree	 v = RB_INITIALIZER(&v);
 	struct rusage	ru;
@@ -1391,7 +1410,7 @@ main(int argc, char *argv[])
 	if (pledge("stdio rpath wpath cpath fattr proc exec unveil", NULL) == -1)
 		err(1, "pledge");
 
-	while ((c = getopt(argc, argv, "b:Bcd:e:jnot:T:v")) != -1)
+	while ((c = getopt(argc, argv, "b:Bcd:e:jnos:t:T:v")) != -1)
 		switch (c) {
 		case 'b':
 			bind_addr = optarg;
@@ -1417,6 +1436,11 @@ main(int argc, char *argv[])
 		case 'o':
 			outformats |= FORMAT_OPENBGPD;
 			break;
+		case 's':
+			timeout = strtonum(optarg, 0, 24*60*60, &errs);
+			if (errs)
+				err(1, "-t: %s\n", errs);
+			break;
 		case 't':
 			if (talsz >= TALSZ_MAX)
 				err(1,
@@ -1439,6 +1463,12 @@ main(int argc, char *argv[])
 		outputdir = argv[0];
 	else if (argc > 1)
 		goto usage;
+
+	if (timeout) {
+		signal(SIGALRM, suicide);
+		/* Commit suicide eventually - cron will normally start a new one */
+		alarm(timeout);
+	}
 
 	if (cachedir == NULL) {
 		warnx("cache directory required");
@@ -1685,6 +1715,6 @@ usage:
 	fprintf(stderr,
 	    "usage: rpki-client [-Bcjnov] [-b sourceaddr] [-d cachedir]"
 	    " [-e rsync_prog]\n"
-	    "                   [-T table] [-t tal] [outputdir]\n");
+	    "                   [-s timeout] [-T table] [-t tal] [outputdir]\n");
 	return 1;
 }

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.28 2020/06/30 12:52:44 job Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.29 2020/09/15 12:06:02 deraadt Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 30 2020 $
+.Dd $Mdocdate: September 15 2020 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -26,6 +26,7 @@
 .Op Fl b Ar sourceaddr
 .Op Fl d Ar cachedir
 .Op Fl e Ar rsync_prog
+.Op Fl s Ar timeout
 .Op Fl T Ar table
 .Op Fl t Ar tal
 .Op Ar outputdir
@@ -107,6 +108,13 @@ For BIRD output generated with the
 option use
 .Ar table
 as roa table name instead of the default 'ROAS'.
+.It Fl s Ar timeout
+Terminate after
+.Ar timeout
+seconds of runtime, because normal practice will restart from
+.Xr cron 8 .
+Disable by specifying 0.
+Defaults to 1 hour.
 .It Fl t Ar tal
 Specify a
 .Em Trust Anchor Location Pq TAL
