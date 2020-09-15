@@ -231,6 +231,7 @@ radeondrm_wsioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct rasops_info *ri = v;
 	struct wsdisplay_fbinfo *wdf;
+	struct wsdisplay_param *dp = (struct wsdisplay_param *)data;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
@@ -243,6 +244,14 @@ radeondrm_wsioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		wdf->depth = ri->ri_depth;
 		wdf->cmsize = 0;
 		return 0;
+	case WSDISPLAYIO_GETPARAM:
+		if (ws_get_param == NULL)
+			return 0;
+		return ws_get_param(dp);
+	case WSDISPLAYIO_SETPARAM:
+		if (ws_set_param == NULL)
+			return 0;
+		return ws_set_param(dp);
 	default:
 		return -1;
 	}
