@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2020/09/13 11:48:10 tobhe Exp $
+#	$OpenBSD: Makefile,v 1.22 2020/09/15 11:26:48 tobhe Exp $
 
 # Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
 #
@@ -269,7 +269,7 @@ run-dstid-fail:
 REGRESS_TARGETS += run-dstid
 run-dstid:
 	@echo '======= $@ ========'
-	flowtype=esp;
+	flowtype=esp; \
 	leftid=left-from-ca-both; \
 	rightid=right-from-ca-both; \
 	    side=left; \
@@ -292,7 +292,7 @@ run-dstid:
 REGRESS_TARGETS += run-dstid-multi
 run-dstid-multi:
 	@echo '======= $@ ========'
-	flowtype=esp;
+	flowtype=esp; \
 	leftid=left-from-ca-both; \
 	rightid=right-from-ca-both; \
 	    side=left; srcid=$$leftid; local=${LEFT_ADDR}; peer=${RIGHT_ADDR}; \
@@ -322,7 +322,7 @@ run-cert-multi-ca:
 REGRESS_TARGETS += run-cert-second-altname
 run-cert-second-altname:
 	@echo '======= $@ ========'
-	flowtype=esp;
+	flowtype=esp; \
 	leftid=left-from-ca-both-alternative; \
 	rightid=right-from-ca-both@openbsd.org; \
 	    ${SETUP_CONFIGS}
