@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.782 2020/06/25 12:26:31 patrick Exp $
+#	$OpenBSD: Makefile,v 1.783 2020/09/15 18:38:51 mglocker Exp $
 
-MAN=	aac.4 abcrtc.4 ac97.4 acphy.4 acrtc.4 \
+MAN=	aac.4 abcrtc.4 abl.4 ac97.4 acphy.4 acrtc.4 \
 	acpi.4 acpiac.4 acpials.4 acpiasus.4 acpibat.4 \
 	acpibtn.4 acpicbkbd.4 acpicpu.4 acpidock.4 acpihve.4 acpiec.4 \
 	acpihid.4 \
