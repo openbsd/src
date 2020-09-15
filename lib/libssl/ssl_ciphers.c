@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_ciphers.c,v 1.8 2020/09/14 17:52:38 tb Exp $ */
+/*	$OpenBSD: ssl_ciphers.c,v 1.9 2020/09/15 15:28:38 schwarze Exp $ */
 /*
  * Copyright (c) 2015-2017 Doug Hogan <doug@openbsd.org>
  * Copyright (c) 2015-2018, 2020 Joel Sing <jsing@openbsd.org>
@@ -220,9 +220,6 @@ ssl_parse_ciphersuites(STACK_OF(SSL_CIPHER) **out_ciphers, const char *str)
 	int i;
 	int ret = 0;
 
-	sk_SSL_CIPHER_free(*out_ciphers);
-	*out_ciphers = NULL;
-
 	if ((ciphers = sk_SSL_CIPHER_new_null()) == NULL)
 		goto err;
 
@@ -255,6 +252,7 @@ ssl_parse_ciphersuites(STACK_OF(SSL_CIPHER) **out_ciphers, const char *str)
 	}
 
  done:
+	sk_SSL_CIPHER_free(*out_ciphers);
 	*out_ciphers = ciphers;
 	ciphers = NULL;
 	ret = 1;
