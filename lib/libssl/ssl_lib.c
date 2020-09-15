@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.227 2020/09/14 18:34:12 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.228 2020/09/15 11:47:49 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2200,28 +2200,28 @@ SSL_get_ssl_method(SSL *s)
 }
 
 int
-SSL_set_ssl_method(SSL *s, const SSL_METHOD *meth)
+SSL_set_ssl_method(SSL *s, const SSL_METHOD *method)
 {
-	int	conn = -1;
-	int	ret = 1;
+	int (*handshake_func)(SSL *) = NULL;
+	int ret = 1;
 
-	if (s->method != meth) {
-		if (s->internal->handshake_func != NULL)
-			conn = (s->internal->handshake_func == s->method->internal->ssl_connect);
+	if (s->method == method)
+		return (ret);
 
-		if (s->method->internal->version == meth->internal->version)
-			s->method = meth;
-		else {
-			s->method->internal->ssl_free(s);
-			s->method = meth;
-			ret = s->method->internal->ssl_new(s);
-		}
+	if (s->internal->handshake_func == s->method->internal->ssl_connect)
+		handshake_func = method->internal->ssl_connect;
+	else if (s->internal->handshake_func == s->method->internal->ssl_accept)
+		handshake_func = method->internal->ssl_accept;
 
-		if (conn == 1)
-			s->internal->handshake_func = meth->internal->ssl_connect;
-		else if (conn == 0)
-			s->internal->handshake_func = meth->internal->ssl_accept;
+	if (s->method->internal->version == method->internal->version) {
+		s->method = method;
+	} else {
+		s->method->internal->ssl_free(s);
+		s->method = method;
+		ret = s->method->internal->ssl_new(s);
 	}
+	s->internal->handshake_func = handshake_func;
+
 	return (ret);
 }
 
