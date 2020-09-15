@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.35 2020/08/23 13:46:15 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.36 2020/09/15 07:47:24 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -69,7 +69,8 @@ cpu_hatch:
 
 	bl	cpu_bootstrap
 
-	ld	%r1, CI_INITSTACK_END(%r13)
+	mfsprg0	%r31
+	ld	%r1, CI_INITSTACK_END(%r31)
 	addi	%r1, %r1, -32
 
 	bl	cpu_start_secondary
@@ -131,12 +132,14 @@ cpu_switchto_asm:
 	std	%r1, PCB_SP(%r31)
 
 1:
+	mfsprg0	%r30
+
 	li	%r31, SONPROC
 	stb	%r31, P_STAT(%r4)
-	std	%r4, CI_CURPROC(%r13)
+	std	%r4, CI_CURPROC(%r30)
 
 	ld	%r31, P_ADDR(%r4)
-	std	%r31, CI_CURPCB(%r13)
+	std	%r31, CI_CURPCB(%r30)
 	ld	%r1, PCB_SP(%r31)
 #if PCB_SP != 0
 	addi	%r31, %r31, PCB_SP
@@ -144,7 +147,7 @@ cpu_switchto_asm:
 	stdcx.	%r1, 0, %r31	/* clear a possible reservation */
 
 	ld	%r31, P_MD_USER_SLB_PA(%r4)
-	std	%r31, CI_USER_SLB_PA(%r13)
+	std	%r31, CI_USER_SLB_PA(%r30)
 
 	ld	%r31, SF_R31(%r1)
 	ld	%r30, SF_R30(%r1)
@@ -173,7 +176,8 @@ cpu_switchto_asm:
 
 	.globl kcopy
 kcopy:
-	ld	%r7, CI_CURPCB(%r13)
+	mfsprg0	%r7
+	ld	%r7, CI_CURPCB(%r7)
 	ld	%r8, PCB_ONFAULT(%r7)
 	addis	%r9, %r2, .Lkcopyfault@toc@ha
 	addi	%r9, %r9, .Lkcopyfault@toc@l
@@ -217,7 +221,8 @@ kcopy:
 
 	.globl copystr
 copystr:
-	ld	%r7, CI_CURPCB(%r13)
+	mfsprg0	%r7
+	ld	%r7, CI_CURPCB(%r7)
 	ld	%r8, PCB_ONFAULT(%r7)
 	addis	%r9, %r2, .Lcopystrfault@toc@ha
 	addi	%r9, %r9, .Lcopystrfault@toc@l

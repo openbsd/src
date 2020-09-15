@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.17 2020/08/23 10:07:51 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.18 2020/09/15 07:47:24 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -270,7 +270,6 @@ cpu_bootstrap(void)
 
 	/* Store pointer to our struct cpu_info. */
 	__asm volatile ("mtsprg0 %0" :: "r"(ci));
-	__asm volatile ("mr %%r13, %0" :: "r"(ci));
 
 	/* We're now ready to take traps. */
 	msr = mfmsr();

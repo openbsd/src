@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.36 2020/08/23 13:50:34 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.37 2020/09/15 07:47:24 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -129,16 +129,6 @@ trap(struct trapframe *frame)
 			ftype = PROT_READ;
 		KERNEL_LOCK();
 		error = uvm_fault(map, trunc_page(va), 0, ftype);
-#ifdef MULTIPROCESSOR
-		/*
-		 * The uvm_fault() call above might sleep and
-		 * therefore witch from one CPU to another.  We must
-		 * update the CPU pointer in the trap frame such that
-		 * we don't restore the wrong CPU pointer when
-		 * returning from the trap.
-		 */
-		frame->fixreg[13] = (vaddr_t)curcpu();
-#endif
 		KERNEL_UNLOCK();
 		if (error == 0)
 			return;
