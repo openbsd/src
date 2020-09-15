@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: netaddr.c,v 1.9 2020/09/14 08:40:44 florian Exp $ */
+/* $Id: netaddr.c,v 1.10 2020/09/15 08:13:35 florian Exp $ */
 
 /*! \file */
 
@@ -115,41 +115,5 @@ isc_netaddr_fromsockaddr(isc_netaddr_t *t, const isc_sockaddr_t *s) {
 		break;
 	default:
 		INSIST(0);
-	}
-}
-
-int
-isc_netaddr_ismulticast(isc_netaddr_t *na) {
-	switch (na->family) {
-	case AF_INET:
-		return (IN_MULTICAST(na->type.in.s_addr));
-	case AF_INET6:
-		return (IN6_IS_ADDR_MULTICAST(&na->type.in6));
-	default:
-		return (0);  /* XXXMLG ? */
-	}
-}
-
-int
-isc_netaddr_islinklocal(isc_netaddr_t *na) {
-	switch (na->family) {
-	case AF_INET:
-		return (0);
-	case AF_INET6:
-		return (IN6_IS_ADDR_LINKLOCAL(&na->type.in6));
-	default:
-		return (0);
-	}
-}
-
-int
-isc_netaddr_issitelocal(isc_netaddr_t *na) {
-	switch (na->family) {
-	case AF_INET:
-		return (0);
-	case AF_INET6:
-		return (IN6_IS_ADDR_SITELOCAL(&na->type.in6));
-	default:
-		return (0);
 	}
 }

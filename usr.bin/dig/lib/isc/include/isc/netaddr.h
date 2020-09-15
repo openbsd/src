@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: netaddr.h,v 1.6 2020/09/14 08:40:44 florian Exp $ */
+/* $Id: netaddr.h,v 1.7 2020/09/15 08:13:35 florian Exp $ */
 
 #ifndef ISC_NETADDR_H
 #define ISC_NETADDR_H 1
@@ -73,23 +73,5 @@ isc_netaddr_format(const isc_netaddr_t *na, char *array, unsigned int size);
 
 void
 isc_netaddr_fromsockaddr(isc_netaddr_t *netaddr, const isc_sockaddr_t *source);
-
-int
-isc_netaddr_ismulticast(isc_netaddr_t *na);
-/*%<
- * Returns 1 if the address is a multicast address.
- */
-
-int
-isc_netaddr_islinklocal(isc_netaddr_t *na);
-/*%<
- * Returns #1 if the address is a link local address.
- */
-
-int
-isc_netaddr_issitelocal(isc_netaddr_t *na);
-/*%<
- * Returns #1 if the address is a site local address.
- */
 
 #endif /* ISC_NETADDR_H */

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sockaddr.c,v 1.9 2020/09/14 08:40:44 florian Exp $ */
+/* $Id: sockaddr.c,v 1.10 2020/09/15 08:13:35 florian Exp $ */
 
 /*! \file */
 
@@ -255,34 +255,26 @@ isc_sockaddr_getport(const isc_sockaddr_t *sockaddr) {
 
 int
 isc_sockaddr_ismulticast(const isc_sockaddr_t *sockaddr) {
-	isc_netaddr_t netaddr;
-
-	if (sockaddr->type.sa.sa_family == AF_INET ||
-	    sockaddr->type.sa.sa_family == AF_INET6) {
-		isc_netaddr_fromsockaddr(&netaddr, sockaddr);
-		return (isc_netaddr_ismulticast(&netaddr));
+	switch (sockaddr->type.sa.sa_family) {
+	case AF_INET:
+		return (IN_MULTICAST(&sockaddr->type.sin.sin_addr.s_addr));
+	case AF_INET6:
+		return (IN6_IS_ADDR_MULTICAST(&sockaddr->type.sin6.sin6_addr));
+	default:
+		return (0);
 	}
-	return (0);
 }
 
 int
 isc_sockaddr_issitelocal(const isc_sockaddr_t *sockaddr) {
-	isc_netaddr_t netaddr;
-
-	if (sockaddr->type.sa.sa_family == AF_INET6) {
-		isc_netaddr_fromsockaddr(&netaddr, sockaddr);
-		return (isc_netaddr_issitelocal(&netaddr));
-	}
+	if (sockaddr->type.sa.sa_family == AF_INET6)
+		return (IN6_IS_ADDR_SITELOCAL(&sockaddr->type.sin6.sin6_addr));
 	return (0);
 }
 
 int
 isc_sockaddr_islinklocal(const isc_sockaddr_t *sockaddr) {
-	isc_netaddr_t netaddr;
-
-	if (sockaddr->type.sa.sa_family == AF_INET6) {
-		isc_netaddr_fromsockaddr(&netaddr, sockaddr);
-		return (isc_netaddr_islinklocal(&netaddr));
-	}
+	if (sockaddr->type.sa.sa_family == AF_INET6)
+		return (IN6_IS_ADDR_LINKLOCAL(&sockaddr->type.sin6.sin6_addr));
 	return (0);
 }
