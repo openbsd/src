@@ -1,4 +1,4 @@
-.\"	$OpenBSD: abl.4,v 1.1 2020/09/15 18:38:51 mglocker Exp $
+.\"	$OpenBSD: abl.4,v 1.2 2020/09/15 21:06:20 jmc Exp $
 .\"
 .\" Copyright (c) 2020 Marcus Glocker <mglocker@openbsd.org>
 .\"
@@ -27,10 +27,10 @@
 The
 .Nm
 driver enables access to the backlight found in Intel based Apple computers.
-It allows to control the brightness using the
+It provides brightness control using the
 .Xr wsconsctl 8
 variable
-.Dq display.brightness .
+.Va display.brightness .
 .Sh SEE ALSO
 .Xr acpi 4 ,
 .Xr intro 4 ,

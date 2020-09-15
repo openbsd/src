@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpi.4,v 1.62 2020/06/02 16:24:24 jcs Exp $
+.\"	$OpenBSD: acpi.4,v 1.63 2020/09/15 21:06:20 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 2 2020 $
+.Dd $Mdocdate: September 15 2020 $
 .Dt ACPI 4
 .Os
 .Sh NAME
@@ -38,6 +38,8 @@ The following devices can attach to
 .Nm :
 .Pp
 .Bl -tag -width "acpithinkpad(4)XXX" -offset indent -compact
+.It Xr abl 4
+Apple backlight support
 .It Xr acpiac 4
 ACPI AC adapter
 .It Xr acpials 4
