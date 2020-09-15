@@ -43,7 +43,7 @@ our %args = (
     file => {
 	loggrep => {
 	    qr/syslogd\[\d+\]: tls logger .* connection error: /.
-		qr/read failed: $errors/ => 1,
+		qr/read failed: .*$errors/ => 1,
 	},
     },
     pipe => { nocheck => 1, },

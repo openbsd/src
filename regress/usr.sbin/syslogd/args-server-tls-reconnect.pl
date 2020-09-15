@@ -8,25 +8,27 @@
 
 use strict;
 use warnings;
-use Socket;
 use Errno ':POSIX';
+use Socket;
+
+my @errors = (EPIPE);
+my $errors = "(". join("|", map { $! = $_ } @errors). ")";
 
 our %args = (
     client => {
 	func => sub { write_between2logs(shift, sub {
 	    my $self = shift;
 	    ${$self->{syslogd}}->loggrep(
-		qr/SSL_internal:unknown failure occurred/, 5)
-		or die ref($self), " no SSL_internal error in syslogd.log";
+		qr/connection error: handshake failed:/, 5)
+		or die ref($self), " no handshake failed error in syslogd.log";
 	})},
     },
     syslogd => {
 	loghost => '@tls://127.0.0.1:$connectport',
 	loggrep => {
 	    qr/Logging to FORWTLS \@tls:\/\/127.0.0.1:\d+/ => '>=6',
-	    qr/syslogd\[\d+\]: /.
-		qr/(connect .*|.* connection error: handshake failed): /.
-		qr/.*SSL_internal:unknown failure occurred/ => 1,
+	    qr/syslogd\[\d+\]: .*/.
+		qr/connection error: handshake failed:/ => 1,
 	    get_between2loggrep(),
 	},
     },
@@ -38,24 +40,22 @@ our %args = (
 	    shutdown(\*STDOUT, 1)
 		or die ref($self), " shutdown write failed: $!";
 	    ${$self->{syslogd}}->loggrep(
-		qr/SSL_internal:unknown failure occurred/, 5)
-		or die ref($self), " no SSL_internal error in syslogd.log";
+		qr/connection error: handshake failed:/, 5)
+		or die ref($self), " no handshake failed error in syslogd.log";
 	    $self->listen();
 	})},
 	loggrep => {
 	    qr/Accepted/ => 2,
 	    qr/syslogd\[\d+\]: loghost .* connection close/ => 1,
-	    qr/syslogd\[\d+\]: /.
-		qr/(connect .*|.* connection error: handshake failed): /.
-		qr/.*SSL_internal:unknown failure occurred/ => 1,
+	    qr/syslogd\[\d+\]: .*/.
+		qr/connection error: handshake failed:/ => 1,
 	    get_between2loggrep(),
 	},
     },
     file => {
 	loggrep => {
-	    qr/syslogd\[\d+\]: /.
-		qr/(connect .*|.* connection error: handshake failed): /.
-		qr/.*SSL_internal:unknown failure occurred/ => 1,
+	    qr/syslogd\[\d+\]: .*/.
+		qr/connection error: handshake failed: .*$errors/ => 1,
 	    get_between2loggrep(),
 	},
     },
