@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.110 2020/09/05 19:14:32 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.111 2020/09/16 21:21:23 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1016,7 +1016,7 @@ ikeauth		: /* empty */			{
 			}
 			free($2);
 
-			$$.auth_method = IKEV2_AUTH_RSA_SIG;
+			$$.auth_method = IKEV2_AUTH_SIG_ANY;
 			$$.auth_eap = EAP_TYPE_MSCHAP_V2;
 			$$.auth_length = 0;
 		}
