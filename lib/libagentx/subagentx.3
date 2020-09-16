@@ -1,4 +1,4 @@
-.\" $OpenBSD: subagentx.3,v 1.1 2020/09/16 10:48:52 martijn Exp $
+.\" $OpenBSD: subagentx.3,v 1.2 2020/09/16 18:32:59 schwarze Exp $
 .\"
 .\" Copyright (c) 2020 Martijn van Duren <martijn@openbsd.org>
 .\"
@@ -110,7 +110,6 @@
 .Fn subagentx_session_free "struct subagentx_session *sas"
 .Ft struct subagentx_context *
 .Fn subagentx_context "struct subagentx_session *sas" "const char *name"
-.Ft uint32_t
 .Ft struct subagentx_object *
 .Fo subagentx_context_object_find
 .Fa "struct subagentx_context *sac" "const uint32_t oid[]" "size_t oidlen"
@@ -297,7 +296,7 @@ enum subagentx_request_type {
         SUBAGENTX_REQUEST_TYPE_GETNEXTINCLUSIVE
 };
 .Ed
-.Fd #define SUBAGENTX_AGENTX_MASTER "/var/agentx/master"
+.Fd #define SUBAGENTX_AGENTX_MASTER \(dq/var/agentx/master\(dq
 .Fd #define SUBAGENTX_OID_MAX_LEN 128
 .Fd #define SUBAGENTX_OID_INDEX_MAX_LEN 10
 .Fd #define SUBAGENTX_OID(...)
@@ -349,24 +348,24 @@ This
 can be returned to
 .Fa sa
 at any moment via
-.Nm subagentx_connect ,
+.Fn subagentx_connect ,
 but must always be done as a result of a call to
 .Fn nofd .
 Once
-.Nm subagentx_connect
+.Fn subagentx_connect
 has been called the application is responsible for retrieving data when available
 on
 .Fa fd
 by calling
 .Fn subagentx_read .
 If nonblocking writes are desirable the
-.Nm subagentx_wantwrite
+.Fn subagentx_wantwrite
 pointer can be set to an application function and will be called as soon as
 there's data available to be written out.
 Once
 .Fa fd
 is ready for write the function
-.Nm subagentx_write
+.Fn subagentx_write
 should be called.
 .Pp
 .Fa sa
@@ -384,7 +383,7 @@ set, indicating that the application can clean up any context related to
 On top of the
 .Fa sa
 connection a
-.Nm subagentx_session
+.Vt subagentx_session
 must be set up.
 Normally there's only a single session per
 .Fa sa .
@@ -405,7 +404,7 @@ is a short displaystring description of the agent and will be visiable through
 the agentxSessionDescr object on the agentx master.
 .Pp
 The
-.Nm subagentx_context
+.Vt subagentx_context
 is the SNMPv3 context in which the objects operate and is built on top of
 subagentx_session
 .Fa sas .
@@ -425,7 +424,7 @@ should be a textual description of the capabilities.
 If no AGENT-CAPABILITIES object is defined this function can be omitted.
 .Pp
 A
-.Nm subagentx_region
+.Vt subagentx_region
 indicates a region inside the object-tree for which get- and set-requests will
 be queried.
 If the OID has already been claimed by another subagent it will try to claim it
@@ -433,24 +432,24 @@ on a lower priority.
 The
 .Fa timeout
 parameter overrules its
-.Nm subagentx_session
+.Vt subagentx_session
 counterpart.
 .Pp
 For objects in a table one or more
 .Ft subagentx_index
 elements must be supplied.
-.Nm subagentx_index_integer_new ,
-.Nm subagentx_index_integer_any
+.Fn subagentx_index_integer_new ,
+.Fn subagentx_index_integer_any
 and
-.Nm subagentx_index_integer_value
+.Fn subagentx_index_integer_value
 register an integer index at the agentx master.
 Of these
-.Nm subagentx_index_integer_new
+.Fn subagentx_index_integer_new
 registers a new, previously unused, index;
-.Nm subagentx_index_integer_any
+.Fn subagentx_index_integer_any
 registers the first available index;
 and
-.Nm subagentx_index_integer_value
+.Fn subagentx_index_integer_value
 tries to register a specific value.
 If the registration of an index fails an error will be logged and all objects
 using it will remain disabled.
@@ -469,7 +468,7 @@ and
 .Fn subagentx_index_noid_dynamic
 respectively.
 .Pp
-.Nm subagentx_object
+.Vt subagentx_object
 is an object as described in the MIB.
 For scalar objects
 .Pq without indices
@@ -540,7 +539,7 @@ Returns a GENERR error to the client.
 .Pp
 For objects containing *_dynamic indices the following support functions are to
 be used:
-.Bl -tag -width subagentx_varbind_get_index_ipaddress()
+.Bl -tag -width Ds
 .It Fn subagentx_varbind_request
 Returns whether the request is of type GET, GETNEXT or GETNEXTINCLUSIVE.
 .It Fn subagentx_varbind_get_index_integer
@@ -584,7 +583,7 @@ The function type must also match the data type of
 .Fa sai .
 .Pp
 Other functions that can retrieve information from the agentx context are:
-.Bl -tag -width subagentx_context_object_nfind()
+.Bl -tag -width Ds
 .It Fn subagentx_context_object_find
 Find a subagentx_object created inside subagentx_context
 .Fa sac
