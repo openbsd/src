@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.263 2020/07/17 16:28:19 florian Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.264 2020/09/16 08:02:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -883,9 +883,6 @@ pledge_sysctl(struct proc *p, int miblen, int *mib, void *new)
 		if (miblen == 3 &&		/* kern.proc_cwd.* */
 		    mib[0] == CTL_KERN && mib[1] == KERN_PROC_CWD)
 			return (0);
-		if (miblen == 2 &&		/* hw.physmem */
-		    mib[0] == CTL_HW && mib[1] == HW_PHYSMEM64)
-			return (0);
 		if (miblen == 2 &&		/* kern.ccpu */
 		    mib[0] == CTL_KERN && mib[1] == KERN_CCPU)
 			return (0);
@@ -949,6 +946,7 @@ pledge_sysctl(struct proc *p, int miblen, int *mib, void *new)
 		switch (mib[0]) {
 		case CTL_KERN:
 			switch (mib[1]) {
+			case HW_PHYSMEM64:	/* hw.physmem */
 			case KERN_DOMAINNAME:	/* getdomainname() */
 			case KERN_HOSTNAME:	/* gethostname() */
 			case KERN_OSTYPE:	/* uname() */
