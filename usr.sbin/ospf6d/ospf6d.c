@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.c,v 1.47 2020/06/26 19:06:52 bket Exp $ */
+/*	$OpenBSD: ospf6d.c,v 1.48 2020/09/16 20:50:10 remi Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -274,7 +274,8 @@ main(int argc, char *argv[])
 		fatalx("control socket setup failed");
 	main_imsg_compose_ospfe_fd(IMSG_CONTROLFD, 0, control_fd);
 
-	if (unveil(ospfd_conf->csock, "c") == -1)
+	/* no filesystem visibility */
+	if (unveil("/", "") == -1)
 		fatal("unveil");
 	if (unveil(NULL, NULL) == -1)
 		fatal("unveil");
@@ -303,7 +304,7 @@ ospfd_shutdown(void)
 	msgbuf_clear(&iev_rde->ibuf.w);
 	close(iev_rde->ibuf.fd);
 
-	control_cleanup(ospfd_conf->csock);
+	control_cleanup();
 	kr_shutdown();
 	carp_demote_shutdown();
 
