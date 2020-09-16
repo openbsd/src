@@ -1,4 +1,4 @@
-/* $OpenBSD: menu.c,v 1.30 2020/05/25 11:59:50 nicm Exp $ */
+/* $OpenBSD: menu.c,v 1.31 2020/09/16 18:37:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -187,7 +187,7 @@ menu_key_cb(struct client *c, struct key_event *event)
 	struct mouse_event		*m = &event->m;
 	u_int				 i;
 	int				 count = menu->count, old = md->choice;
-	const char			*name;
+	const char			*name = NULL;
 	const struct menu_item		*item;
 	struct cmdq_state		*state;
 	enum cmd_parse_status		 status;

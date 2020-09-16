@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.261 2020/08/27 06:55:54 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.262 2020/09/16 18:37:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1373,7 +1373,6 @@ format_pretty_time(time_t t)
 	struct tm       now_tm, tm;
 	time_t		now, age;
 	char		s[6];
-	int		m;
 
 	time(&now);
 	if (now < t)
@@ -1397,10 +1396,6 @@ format_pretty_time(time_t t)
 	}
 
 	/* Last 12 months. */
-	if (now_tm.tm_mon == 0)
-		m = 11;
-	else
-		m = now_tm.tm_mon - 1;
 	if ((tm.tm_year == now_tm.tm_year && tm.tm_mon < now_tm.tm_mon) ||
 	    (tm.tm_year == now_tm.tm_year - 1 && tm.tm_mon > now_tm.tm_mon)) {
 		strftime(s, sizeof s, "%d%b", &tm);
