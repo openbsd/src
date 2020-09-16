@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.164 2020/08/28 13:37:52 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.165 2020/09/16 21:37:35 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -533,6 +533,25 @@ struct iked_certreq {
 };
 SIMPLEQ_HEAD(iked_certreqs, iked_certreq);
 
+#define EAP_STATE_IDENTITY		(1)
+#define EAP_STATE_MSCHAPV2_CHALLENGE	(2)
+#define EAP_STATE_MSCHAPV2_SUCCESS	(3)
+#define EAP_STATE_SUCCESS		(4)
+
+struct eap_msg {
+	char		*eam_identity;
+	char		*eam_user;
+	int		 eam_type;
+	uint8_t		 eam_id;
+	uint8_t		 eam_msrid;
+	int		 eam_success;
+	int		 eam_found;
+	int		 eam_response;
+	uint8_t		 eam_challenge[16];
+	uint8_t		 eam_ntresponse[24];
+	uint32_t	 eam_state;
+};
+
 struct iked_message {
 	struct ibuf		*msg_data;
 	size_t			 msg_offset;
@@ -578,6 +597,7 @@ struct iked_message {
 	uint16_t		 msg_cpi;
 	uint8_t			 msg_transform;
 	uint16_t		 msg_flags;
+	struct eap_msg		 msg_eap;
 
 	/* MOBIKE */
 	int			 msg_update_sa_addresses;
@@ -995,8 +1015,14 @@ int	 ikev2_pld_parse(struct iked *, struct ike_header *,
 	    struct iked_message *, size_t);
 
 /* eap.c */
-ssize_t	 eap_identity_request(struct ibuf *);
-int	 eap_parse(struct iked *, struct iked_sa *, void *, int);
+int	 eap_parse(struct iked *, struct iked_sa *, struct iked_message*,
+	    void *, int);
+int	 eap_success(struct iked *, struct iked_sa *, int);
+int	 eap_identity_request(struct iked *, struct iked_sa *);
+int	 eap_mschap_challenge(struct iked *, struct iked_sa *, int, int,
+	    uint8_t *, size_t);
+int	 eap_mschap_success(struct iked *, struct iked_sa *, int);
+int	 eap_challenge_request(struct iked *, struct iked_sa *, int);
 
 /* pfkey.c */
 int	 pfkey_couple(int, struct iked_sas *, int);

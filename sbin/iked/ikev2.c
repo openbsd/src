@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.255 2020/09/06 19:08:58 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.256 2020/09/16 21:37:35 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -46,6 +46,7 @@
 #include "ikev2.h"
 #include "eap.h"
 #include "dh.h"
+#include "chap_ms.h"
 
 void	 ikev2_info(struct iked *, int);
 void	 ikev2_info_sa(struct iked *, int, const char *, struct iked_sa *);
@@ -89,8 +90,11 @@ void	 ikev2_disable_timer(struct iked *, struct iked_sa *);
 void	 ikev2_resp_recv(struct iked *, struct iked_message *,
 	    struct ike_header *);
 int	 ikev2_resp_ike_sa_init(struct iked *, struct iked_message *);
+int	 ikev2_resp_ike_eap(struct iked *, struct iked_sa *,
+	    struct iked_message *);
+int	 ikev2_resp_ike_eap_mschap(struct iked *, struct iked_sa *,
+	    struct iked_message *);
 int	 ikev2_resp_ike_auth(struct iked *, struct iked_sa *);
-int	 ikev2_resp_ike_eap(struct iked *, struct iked_sa *, struct ibuf *);
 int	 ikev2_send_auth_failed(struct iked *, struct iked_sa *);
 int	 ikev2_send_error(struct iked *, struct iked_sa *,
 	    struct iked_message *, uint8_t);
@@ -2592,6 +2596,18 @@ ikev2_resp_recv(struct iked *env, struct iked_message *msg,
 			return;
 		}
 
+		/* Handle EAP authentication */
+		if (msg->msg_eap.eam_found) {
+			if (ikev2_resp_ike_eap(env, sa, msg)) {
+				log_info("%s: failed eap response",
+				    SPI_SA(sa, __func__));
+				ikev2_ike_sa_setreason(sa, "EAP failed");
+				sa_state(env, sa, IKEV2_STATE_CLOSED);
+				return;
+			}
+			return;
+		}
+
 		if (ikev2_ike_auth_recv(env, sa, msg) != 0) {
 			log_debug("%s: failed to send auth response", __func__);
 			ikev2_send_error(env, sa, msg, hdr->ike_exchange);
@@ -3136,6 +3152,105 @@ ikev2_handle_certreq(struct iked* env, struct iked_message *msg)
 	return (0);
 }
 
+int
+ikev2_resp_ike_eap_mschap(struct iked *env, struct iked_sa *sa,
+    struct iked_message *msg)
+{
+	uint8_t			 successmsg[EAP_MSCHAP_SUCCESS_SZ];
+	uint8_t			 ntresponse[EAP_MSCHAP_NTRESPONSE_SZ];
+	struct eap_msg		*eap = &msg->msg_eap;
+	struct iked_user	*usr;
+	uint8_t			*pass;
+	char			*name = NULL;
+	size_t			 passlen;
+	int			 ret;
+
+	switch (eap->eam_state) {
+	case EAP_STATE_IDENTITY:
+		sa->sa_eapid = eap->eam_identity;
+		return (eap_challenge_request(env, sa, eap->eam_id));
+	case EAP_STATE_MSCHAPV2_CHALLENGE:
+		if (eap->eam_user) {
+			name = eap->eam_user;
+		} else if (sa->sa_eapid) {
+			name = sa->sa_eapid;
+		}
+		if (name == NULL) {
+			log_info("%s: invalid response name",
+			    SPI_SA(sa, __func__));
+			return (-1);
+		}
+		if ((usr = user_lookup(env, name)) == NULL) {
+			log_info("%s: unknown user '%s'", SPI_SA(sa, __func__),
+			    name);
+			return (-1);
+		}
+
+		if ((pass = string2unicode(usr->usr_pass, &passlen)) == NULL)
+			return (-1);
+
+		mschap_nt_response(ibuf_data(sa->sa_eap.id_buf),
+		    eap->eam_challenge, usr->usr_name, strlen(usr->usr_name),
+		    pass, passlen, ntresponse);
+
+		if (memcmp(ntresponse, eap->eam_ntresponse,
+		    sizeof(ntresponse)) != 0) {
+			log_info("%s: '%s' authentication failed",
+			   SPI_SA(sa, __func__), usr->usr_name);
+			free(pass);
+
+			/* XXX should we send an EAP failure packet? */
+			return (-1);
+		}
+
+		bzero(&successmsg, sizeof(successmsg));
+
+		mschap_auth_response(pass, passlen,
+		    ntresponse, ibuf_data(sa->sa_eap.id_buf),
+		    eap->eam_challenge, usr->usr_name, strlen(usr->usr_name),
+		    successmsg);
+		if ((sa->sa_eapmsk = ibuf_new(NULL, MSCHAP_MSK_SZ)) == NULL) {
+			log_info("%s: failed to get MSK", SPI_SA(sa, __func__));
+			free(pass);
+			return (-1);
+		}
+		mschap_msk(pass, passlen, ntresponse,
+		    ibuf_data(sa->sa_eapmsk));
+		free(pass);
+
+		log_info("%s: '%s' authenticated", __func__, usr->usr_name);
+
+		ret = eap_mschap_challenge(env, sa, eap->eam_id, eap->eam_msrid,
+		    successmsg, EAP_MSCHAP_SUCCESS_SZ);
+		if (ret == 0)
+			sa_state(env, sa, IKEV2_STATE_AUTH_SUCCESS);
+		break;
+	case EAP_STATE_MSCHAPV2_SUCCESS:
+		return (eap_mschap_success(env, sa, eap->eam_id));
+	case EAP_STATE_SUCCESS:
+		if (!sa_stateok(sa, IKEV2_STATE_AUTH_SUCCESS))
+			return (-1);
+		return (eap_success(env, sa, msg->msg_eap.eam_id));
+	default:
+		log_info("%s: eap ignored.", __func__);
+		break;
+	}
+	return 0;
+}
+
+int
+ikev2_resp_ike_eap(struct iked *env, struct iked_sa *sa,
+    struct iked_message *msg)
+{
+	if (!sa_stateok(sa, IKEV2_STATE_EAP))
+		return (-1);
+
+	switch (sa->sa_policy->pol_auth.auth_eap) {
+	case EAP_TYPE_MSCHAP_V2:
+		return ikev2_resp_ike_eap_mschap(env, sa, msg);
+	}
+	return -1;
+}
 
 int
 ikev2_resp_ike_auth(struct iked *env, struct iked_sa *sa)
@@ -3153,7 +3268,7 @@ ikev2_resp_ike_auth(struct iked *env, struct iked_sa *sa)
 		return (-1);
 
 	if (sa->sa_state == IKEV2_STATE_EAP)
-		return (ikev2_resp_ike_eap(env, sa, NULL));
+		return (eap_identity_request(env, sa));
 
 	if (!sa_stateok(sa, IKEV2_STATE_VALID))
 		return (0);	/* ignore */
@@ -3280,91 +3395,6 @@ ikev2_resp_ike_auth(struct iked *env, struct iked_sa *sa)
 	if (ret)
 		ikev2_childsa_delete(env, sa, 0, 0, NULL, 1);
 	ibuf_release(e);
-	return (ret);
-}
-
-int
-ikev2_resp_ike_eap(struct iked *env, struct iked_sa *sa, struct ibuf *eapmsg)
-{
-	struct ikev2_payload		*pld;
-	struct ikev2_cert		*cert;
-	struct ikev2_auth		*auth;
-	struct iked_id			*id, *certid;
-	struct ibuf			*e = NULL;
-	uint8_t				 firstpayload;
-	int				 ret = -1;
-	ssize_t				 len = 0;
-
-	/* Responder only */
-	if (sa->sa_hdr.sh_initiator)
-		return (-1);
-
-	/* Check if "ca" has done it's job yet */
-	if (!sa->sa_localauth.id_type)
-		return (0);
-
-	/* New encrypted message buffer */
-	if ((e = ibuf_static()) == NULL)
-		goto done;
-
-	id = &sa->sa_rid;
-	certid = &sa->sa_rcert;
-
-	/* ID payload */
-	if ((pld = ikev2_add_payload(e)) == NULL)
-		goto done;
-	firstpayload = IKEV2_PAYLOAD_IDr;
-	if (ibuf_cat(e, id->id_buf) != 0)
-		goto done;
-	len = ibuf_size(id->id_buf);
-
-	if ((sa->sa_statevalid & IKED_REQ_CERT) &&
-	    (certid->id_type != IKEV2_CERT_NONE)) {
-		if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_CERT) == -1)
-			goto done;
-
-		/* CERT payload */
-		if ((pld = ikev2_add_payload(e)) == NULL)
-			goto done;
-		if ((cert = ibuf_advance(e, sizeof(*cert))) == NULL)
-			goto done;
-		cert->cert_type = certid->id_type;
-		if (ibuf_cat(e, certid->id_buf) != 0)
-			goto done;
-		len = ibuf_size(certid->id_buf) + sizeof(*cert);
-	}
-
-	if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_AUTH) == -1)
-		goto done;
-
-	/* AUTH payload */
-	if ((pld = ikev2_add_payload(e)) == NULL)
-		goto done;
-	if ((auth = ibuf_advance(e, sizeof(*auth))) == NULL)
-		goto done;
-	auth->auth_method = sa->sa_localauth.id_type;
-	if (ibuf_cat(e, sa->sa_localauth.id_buf) != 0)
-		goto done;
-	len = ibuf_size(sa->sa_localauth.id_buf) + sizeof(*auth);
-
-	if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_EAP) == -1)
-		goto done;
-
-	/* EAP payload */
-	if ((pld = ikev2_add_payload(e)) == NULL)
-		goto done;
-	if ((len = eap_identity_request(e)) == -1)
-		goto done;
-
-	if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_NONE) == -1)
-		goto done;
-
-	ret = ikev2_msg_send_encrypt(env, sa, &e,
-	    IKEV2_EXCHANGE_IKE_AUTH, firstpayload, 1);
-
- done:
-	ibuf_release(e);
-
 	return (ret);
 }
 

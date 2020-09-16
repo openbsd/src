@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.94 2020/08/20 19:28:01 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.95 2020/09/16 21:37:35 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -2005,8 +2005,9 @@ ikev2_pld_eap(struct iked *env, struct ikev2_payload *pld,
 		    eap->eap_id, betoh16(eap->eap_length),
 		    print_map(eap->eap_type, eap_type_map));
 
-		if (eap_parse(env, sa, eap, msg->msg_response) == -1)
+		if (eap_parse(env, sa, msg, eap, msg->msg_response) == -1)
 			return (-1);
+		msg->msg_parent->msg_eap.eam_found = 1;
 	}
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: eap.h,v 1.5 2015/08/21 11:59:27 reyk Exp $	*/
+/*	$OpenBSD: eap.h,v 1.6 2020/09/16 21:37:35 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -52,7 +52,7 @@ extern struct iked_constmap eap_code_map[];
 #define EAP_TYPE_DSS		10	/* Nace */
 #define EAP_TYPE_KEA		11	/* Nace */
 #define EAP_TYPE_KEA_VALIDATE	12	/* Nace */
-#define EAP_TYPE_TLS		13	/* RFC-simon-emu-rfc2716bis-13.txt */
+#define EAP_TYPE_TLS		13	/* RFC5216 */
 #define EAP_TYPE_AXENT		14	/* Rosselli */
 #define EAP_TYPE_SECURID	15	/* Nystrm */
 #define EAP_TYPE_ARCOT		16	/* Jerdonek */
