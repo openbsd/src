@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.77 2018/08/19 08:23:47 kettenis Exp $ */
+/* $OpenBSD: dsdt.h,v 1.78 2020/09/16 11:52:17 jsg Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -357,5 +357,63 @@ void			acpi_freedevlist(struct acpi_devlist_head *);
 
 void			acpi_glk_enter(void);
 void			acpi_glk_leave(void);
+
+/* https://docs.microsoft.com/en-us/windows-hardware/drivers/acpi/winacpi-osi */
+
+enum acpi_osi {
+	OSI_UNKNOWN = -1,
+	OSI_WIN_2000,
+	OSI_WIN_XP,
+	OSI_WIN_2003,
+	OSI_WIN_2003_SP1,
+	OSI_WIN_XP_SP0,
+	OSI_WIN_XP_SP1,
+	OSI_WIN_XP_SP2,
+	OSI_WIN_XP_SP3,
+	OSI_WIN_XP_SP4,
+	OSI_WIN_VISTA,
+	OSI_WIN_2008,
+	OSI_WIN_VISTA_SP1,
+	OSI_WIN_VISTA_SP2,
+	OSI_WIN_7,
+	OSI_WIN_8,
+	OSI_WIN_8_1,
+	OSI_WIN_10,
+	OSI_WIN_10_1607,
+	OSI_WIN_10_1703,
+	OSI_WIN_10_1709,
+	OSI_WIN_10_1803,
+	OSI_WIN_10_1809,
+	OSI_WIN_10_1903,
+	OSI_WIN_10_2004,
+};
+
+#define AML_VALID_OSI		\
+	"Windows 2000",		\
+	"Windows 2001",		\
+	"Windows 2001.1",	\
+	"Windows 2001.1 SP1",	\
+	"Windows 2001 SP0",	\
+	"Windows 2001 SP1",	\
+	"Windows 2001 SP2",	\
+	"Windows 2001 SP3",	\
+	"Windows 2001 SP4",	\
+	"Windows 2006",		\
+	"Windows 2006.1",	\
+	"Windows 2006 SP1",	\
+	"Windows 2006 SP2",	\
+	"Windows 2009",		\
+	"Windows 2012",		\
+	"Windows 2013",		\
+	"Windows 2015",		\
+	"Windows 2016",		\
+	"Windows 2017",		\
+	"Windows 2017.2",	\
+	"Windows 2018",		\
+	"Windows 2018.2",	\
+	"Windows 2019",		\
+	"Windows 2020"
+
+extern enum acpi_osi acpi_max_osi;	/* most recent Win version FW knows */
 
 #endif /* __DEV_ACPI_DSDT_H__ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivout.c,v 1.23 2020/05/19 14:26:59 kettenis Exp $	*/
+/*	$OpenBSD: acpivout.c,v 1.24 2020/09/16 11:52:17 jsg Exp $	*/
 /*
  * Copyright (c) 2009 Paul Irofti <paul@irofti.net>
  *
@@ -111,7 +111,8 @@ acpivout_attach(struct device *parent, struct device *self, void *aux)
 	    acpivout_notify, sc, ACPIDEV_NOPOLL);
 
 	if (!aml_searchname(sc->sc_devnode, "_BQC") ||
-	    ws_get_param || ws_set_param)
+	    ws_get_param || ws_set_param ||
+	    acpi_max_osi >= OSI_WIN_8)
 		return;
 
 	acpivout_get_bcl(sc);

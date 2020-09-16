@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.254 2020/08/26 17:10:49 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.255 2020/09/16 11:52:17 jsg Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1485,31 +1485,11 @@ struct aml_defval {
  * We return True for Windows to fake out nasty bad AML
  */
 char *aml_valid_osi[] = {
-	"Windows 2000",
-	"Windows 2001",
-	"Windows 2001.1",
-	"Windows 2001.1 SP1",
-	"Windows 2001 SP0",
-	"Windows 2001 SP1",
-	"Windows 2001 SP2",
-	"Windows 2001 SP3",
-	"Windows 2001 SP4",
-	"Windows 2006",
-	"Windows 2006.1",
-	"Windows 2006 SP1",
-	"Windows 2006 SP2",
-	"Windows 2009",
-	"Windows 2012",
-	"Windows 2013",
-	"Windows 2015",
-	"Windows 2016",
-	"Windows 2017",
-	"Windows 2017.2",
-	"Windows 2018",
-	"Windows 2018.2",
-	"Windows 2019",
+	AML_VALID_OSI,
 	NULL
 };
+
+enum acpi_osi acpi_max_osi = OSI_UNKNOWN;
 
 struct aml_value *
 aml_callosi(struct aml_scope *scope, struct aml_value *val)
@@ -1536,6 +1516,11 @@ aml_callosi(struct aml_scope *scope, struct aml_value *val)
 	for (idx=0; !result && aml_valid_osi[idx] != NULL; idx++) {
 		dnprintf(10,"osi: %s,%s\n", fa->v_string, aml_valid_osi[idx]);
 		result = !strcmp(fa->v_string, aml_valid_osi[idx]);
+		if (result) {
+			if (idx > acpi_max_osi)
+				acpi_max_osi = idx;
+			break;
+		}
 	}
 	dnprintf(10,"@@ OSI found: %x\n", result);
 	return aml_allocvalue(AML_OBJTYPE_INTEGER, result, NULL);
