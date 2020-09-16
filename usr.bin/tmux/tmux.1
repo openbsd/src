@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.794 2020/09/02 13:46:35 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.795 2020/09/16 19:12:59 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 2 2020 $
+.Dd $Mdocdate: September 16 2020 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3039,7 +3039,7 @@ Send the prefix key, or with
 .Fl 2
 the secondary prefix key, to a window as if it was pressed.
 .It Xo Ic unbind-key
-.Op Fl an
+.Op Fl anq
 .Op Fl T Ar key-table
 .Ar key
 .Xc
@@ -3054,6 +3054,9 @@ are the same as for
 If
 .Fl a
 is present, all key bindings are removed.
+The
+.Fl q
+option prevents errors being returned.
 .El
 .Sh OPTIONS
 The appearance and behaviour of
