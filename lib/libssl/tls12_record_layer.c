@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_record_layer.c,v 1.3 2020/09/15 16:07:17 jsing Exp $ */
+/* $OpenBSD: tls12_record_layer.c,v 1.4 2020/09/16 17:15:01 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -285,16 +285,6 @@ tls12_record_layer_write_mac(struct tls12_record_layer *rl, CBB *cbb,
 }
 
 static int
-tls12_record_layer_seal_record_plaintext(struct tls12_record_layer *rl,
-    uint8_t content_type, const uint8_t *content, size_t content_len, CBB *out)
-{
-	if (rl->write_aead_ctx != NULL || rl->write_cipher_ctx != NULL)
-		return 0;
-
-	return CBB_add_bytes(out, content, content_len);
-}
-
-static int
 tls12_record_layer_aead_concat_nonce(struct tls12_record_layer *rl,
     const SSL_AEAD_CTX *aead, uint8_t *seq_num, uint8_t **out, size_t *out_len)
 {
@@ -364,6 +354,16 @@ tls12_record_layer_aead_xored_nonce(struct tls12_record_layer *rl,
 	freezero(nonce, nonce_len);
 
 	return 0;
+}
+
+static int
+tls12_record_layer_seal_record_plaintext(struct tls12_record_layer *rl,
+    uint8_t content_type, const uint8_t *content, size_t content_len, CBB *out)
+{
+	if (rl->write_aead_ctx != NULL || rl->write_cipher_ctx != NULL)
+		return 0;
+
+	return CBB_add_bytes(out, content, content_len);
 }
 
 static int
