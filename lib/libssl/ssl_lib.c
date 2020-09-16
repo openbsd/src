@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.228 2020/09/15 11:47:49 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.229 2020/09/16 07:25:15 schwarze Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1336,6 +1336,8 @@ SSL_get_cipher_list(const SSL *s, int n)
 STACK_OF(SSL_CIPHER) *
 SSL_CTX_get_ciphers(const SSL_CTX *ctx)
 {
+	if (ctx == NULL)
+		return NULL;
 	return ctx->cipher_list;
 }
 

@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_get_ciphers.3,v 1.10 2020/09/16 07:11:14 schwarze Exp $
+.\" $OpenBSD: SSL_get_ciphers.3,v 1.11 2020/09/16 07:25:15 schwarze Exp $
 .\" full merge up to: OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\" selective merge up to: OpenSSL 83cf7abf May 29 13:07:08 2018 +0100
 .\"
@@ -176,12 +176,11 @@ is called on that context object.
 .Fn SSL_CTX_get_ciphers
 returns an internal pointer to a list of ciphers or
 .Dv NULL
-if no ciphers are available.
-If
+if
 .Fa ctx
 is
-.Dv NULL ,
-calling this function crashes the program.
+.Dv NULL
+or if no ciphers are available.
 The returned pointer becomes invalid when
 .Fa ctx
 is destroyed or when
