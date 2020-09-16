@@ -398,7 +398,7 @@ cipher_set_test()
 	SSL_CIPHER *cipher;
 	SSL_CTX *ctx = NULL;
 	SSL *ssl = NULL;
-	int failed = 1;
+	int failed = 0;
 	size_t i;
 	int j;
 
@@ -448,25 +448,17 @@ cipher_set_test()
 			fprintf(stderr, "FAIL: test %zu - got cipher %d with "
 			    "id %lx, want %lx\n", i, j,
 			    SSL_CIPHER_get_id(cipher), cst->cids[j]);
-			goto failed;
+			failed |= 1;
 		}
 		if (cst->cids[j] != 0) {
 			fprintf(stderr, "FAIL: test %zu - got %d ciphers, "
 			    "expected more", i, sk_SSL_CIPHER_num(ciphers));
-			goto failed;
+			failed |= 1;
 		}
 
 		SSL_CTX_free(ctx);
-		ctx = NULL;
 		SSL_free(ssl);
-		ssl = NULL;
 	}
-
-	failed = 0;
-
- failed:
-	SSL_CTX_free(ctx);
-	SSL_free(ssl);
 
 	return failed;
 }
