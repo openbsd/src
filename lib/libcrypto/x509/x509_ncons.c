@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_ncons.c,v 1.3 2020/09/16 12:51:15 inoguchi Exp $ */
+/* $OpenBSD: x509_ncons.c,v 1.4 2020/09/16 18:12:06 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -72,14 +72,12 @@ static int do_i2r_name_constraints(const X509V3_EXT_METHOD *method,
     STACK_OF(GENERAL_SUBTREE) *trees, BIO *bp, int ind, char *name);
 static int print_nc_ipadd(BIO *bp, ASN1_OCTET_STRING *ip);
 
-#if 0
 static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc);
 static int nc_match_single(GENERAL_NAME *sub, GENERAL_NAME *gen);
 static int nc_dn(X509_NAME *sub, X509_NAME *nm);
 static int nc_dns(ASN1_IA5STRING *sub, ASN1_IA5STRING *dns);
 static int nc_email(ASN1_IA5STRING *sub, ASN1_IA5STRING *eml);
 static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base);
-#endif
 
 const X509V3_EXT_METHOD v3_name_constraints = {
 	.ext_nid = NID_name_constraints,
@@ -303,7 +301,6 @@ print_nc_ipadd(BIO *bp, ASN1_OCTET_STRING *ip)
 int
 NAME_CONSTRAINTS_check(X509 *x, NAME_CONSTRAINTS *nc)
 {
-#if 0
 	int r, i;
 	X509_NAME *nm;
 
@@ -348,10 +345,8 @@ NAME_CONSTRAINTS_check(X509 *x, NAME_CONSTRAINTS *nc)
 		if (r != X509_V_OK)
 			return r;
 	}
-#endif
 	return X509_V_OK;
 }
-#if 0
 static int
 nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
 {
@@ -557,4 +552,3 @@ nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base)
 
 	return X509_V_OK;
 }
-#endif
