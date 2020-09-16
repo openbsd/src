@@ -22,6 +22,16 @@
 
 int ssl_parse_ciphersuites(STACK_OF(SSL_CIPHER) **out_ciphers, const char *str);
 
+static inline int
+ssl_aes_is_accelerated(void)
+{
+#if defined(__i386__) || defined(__x86_64__)
+	return ((OPENSSL_cpu_caps() & (1ULL << 57)) != 0);
+#else
+	return (0);
+#endif
+}
+
 static int
 get_put_test(const char *name, const SSL_METHOD *method)
 {
@@ -281,12 +291,14 @@ struct cipher_set_test {
 	int ssl_ciphersuites_first;
 	const char *ssl_ciphersuites;
 	const char *ssl_rulestr;
-	const unsigned long cids[32];
+	int cids_aes_accel_fixup;
+	unsigned long cids[32];
 };
 
 struct cipher_set_test cipher_set_tests[] = {
 	{
 		.ctx_rulestr = "TLSv1.2+ECDHE+AEAD+AES",
+		.cids_aes_accel_fixup = 1,
 		.cids = {
 			TLS1_3_CK_AES_256_GCM_SHA384,
 			TLS1_3_CK_CHACHA20_POLY1305_SHA256,
@@ -299,6 +311,7 @@ struct cipher_set_test cipher_set_tests[] = {
 	},
 	{
 		.ssl_rulestr = "TLSv1.2+ECDHE+AEAD+AES",
+		.cids_aes_accel_fixup = 1,
 		.cids = {
 			TLS1_3_CK_AES_256_GCM_SHA384,
 			TLS1_3_CK_CHACHA20_POLY1305_SHA256,
@@ -404,6 +417,11 @@ cipher_set_test()
 
 	for (i = 0; i < N_CIPHER_SET_TESTS; i++) {
 		cst = &cipher_set_tests[i];
+
+		if (!ssl_aes_is_accelerated() && cst->cids_aes_accel_fixup) {
+			cst->cids[0] = TLS1_3_CK_CHACHA20_POLY1305_SHA256;
+			cst->cids[1] = TLS1_3_CK_AES_256_GCM_SHA384;
+		}
 
 		if ((ctx = SSL_CTX_new(TLS_method())) == NULL)
 			errx(1, "SSL_CTX_new");
