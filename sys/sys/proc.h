@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.299 2020/08/26 03:19:09 visa Exp $	*/
+/*	$OpenBSD: proc.h,v 1.300 2020/09/16 08:01:15 mpi Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -383,14 +383,14 @@ struct proc {
 	struct	kcov_dev *p_kd;		/* kcov device handle */
 	struct	lock_list_entry *p_sleeplocks;	/* WITNESS lock tracking */ 
 
-	int	 p_siglist;		/* Signals arrived but not delivered. */
+	int	 p_siglist;		/* [a] Signals arrived & not delivered*/
 
 /* End area that is zeroed on creation. */
 #define	p_endzero	p_startcopy
 
 /* The following fields are all copied upon creation in fork. */
 #define	p_startcopy	p_sigmask
-	sigset_t p_sigmask;	/* Current signal mask. */
+	sigset_t p_sigmask;		/* [a] Current signal mask */
 
 	u_char	p_slppri;		/* [S] Sleeping priority */
 	u_char	p_usrpri;	/* [S] Priority based on p_estcpu & ps_nice */
