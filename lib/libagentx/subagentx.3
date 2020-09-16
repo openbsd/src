@@ -1,4 +1,4 @@
-.\" $OpenBSD: subagentx.3,v 1.2 2020/09/16 18:32:59 schwarze Exp $
+.\" $OpenBSD: subagentx.3,v 1.3 2020/09/16 20:12:59 martijn Exp $
 .\"
 .\" Copyright (c) 2020 Martijn van Duren <martijn@openbsd.org>
 .\"
@@ -103,8 +103,8 @@
 .Fn subagentx_free "struct subagentx *sa"
 .Ft struct subagentx_session *
 .Fo subagentx_session
-.Fa "struct subagentx *sa" "uint8_t timeout" "uint32_t oid[]" "size_t oidlen"
-.Fa "const char *descr"
+.Fa "struct subagentx *sa" "uint32_t oid[]" "size_t oidlen"
+.Fa "const char *descr" "uint8_t timeout"
 .Fc
 .Ft void
 .Fn subagentx_session_free "struct subagentx_session *sas"
@@ -133,8 +133,8 @@
 .Fn subagentx_agentcaps_free "struct subagentx_agentcaps *saa"
 .Ft struct subagentx_region *
 .Fo subagentx_region
-.Fa "struct subagentx_context *sac" "uint8_t timeout" "uint32_t oid[]"
-.Fa "size_t oidlen"
+.Fa "struct subagentx_context *sac" "uint32_t oid[]"
+.Fa "size_t oidlen" "uint8_t timeout"
 .Fc
 .Ft void
 .Fn subagentx_region_free "struct subagentx_region *sar"
@@ -166,7 +166,7 @@
 .Fc
 .Ft struct subagentx_index *
 .Fo subagentx_index_oid_dynamic
-.Fa "struct subagentx_region *sar "uint32_t oid[]" "size_t oidlen"
+.Fa "struct subagentx_region *sar" "uint32_t oid[]" "size_t oidlen"
 .Fc
 .Ft struct subagentx_index *
 .Fo subagentx_index_noid_dynamic
@@ -175,10 +175,6 @@
 .Fc
 .Ft struct subagentx_index *
 .Fo subagentx_index_ipaddress_dynamic
-.Fa "struct subagentx_region *sar" "uint32_t oid[]" "size_t oidlen"
-.Fc
-.Ft struct subagentx_index *
-.Fo subagentx_index_dynamic
 .Fa "struct subagentx_region *sar" "uint32_t oid[]" "size_t oidlen"
 .Fc
 .Ft void
