@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.262 2020/09/13 13:33:37 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.263 2020/09/16 13:50:42 mpi Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -121,6 +121,8 @@ const int sigprop[NSIG + 1] = {
 #define	contsigmask	(sigmask(SIGCONT))
 #define	stopsigmask	(sigmask(SIGSTOP) | sigmask(SIGTSTP) | \
 			    sigmask(SIGTTIN) | sigmask(SIGTTOU))
+
+void setsigvec(struct proc *, int, struct sigaction *);
 
 void proc_stop(struct proc *p, int);
 void proc_stop_sweep(void *);
@@ -1483,6 +1485,21 @@ sigexit(struct proc *p, int signum)
 	}
 	exit1(p, 0, signum, EXIT_NORMAL);
 	/* NOTREACHED */
+}
+
+/*
+ * Send uncatchable SIGABRT for coredump.
+ */
+void
+sigabort(struct proc *p)
+{
+	struct sigaction sa;
+
+	memset(&sa, 0, sizeof sa);
+	sa.sa_handler = SIG_DFL;
+	setsigvec(p, SIGABRT, &sa);
+	atomic_clearbits_int(&p->p_sigmask, sigmask(SIGABRT));
+	psignal(p, SIGABRT);
 }
 
 /*

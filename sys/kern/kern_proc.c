@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.86 2020/01/30 08:51:27 mpi Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.87 2020/09/16 13:50:42 mpi Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -494,7 +494,6 @@ void
 db_kill_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	struct process *pr;
-	struct sigaction sa;
 	struct proc *p;
 
 	pr = prfind(addr);
@@ -506,11 +505,7 @@ db_kill_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	p = TAILQ_FIRST(&pr->ps_threads);
 
 	/* Send uncatchable SIGABRT for coredump */
-	memset(&sa, 0, sizeof sa);
-	sa.sa_handler = SIG_DFL;
-	setsigvec(p, SIGABRT, &sa);
-	atomic_clearbits_int(&p->p_sigmask, sigmask(SIGABRT));
-	psignal(p, SIGABRT);
+	sigabort(p);
 }
 
 void

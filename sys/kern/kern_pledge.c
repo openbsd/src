@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.265 2020/09/16 10:06:56 jsg Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.266 2020/09/16 13:50:42 mpi Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -529,7 +529,6 @@ pledge_fail(struct proc *p, int error, uint64_t code)
 {
 	const char *codes = "";
 	int i;
-	struct sigaction sa;
 
 	/* Print first matching pledge */
 	for (i = 0; code && pledgenames[i].bits != 0; i++)
@@ -550,11 +549,7 @@ pledge_fail(struct proc *p, int error, uint64_t code)
 	p->p_p->ps_acflag |= APLEDGE;
 
 	/* Send uncatchable SIGABRT for coredump */
-	memset(&sa, 0, sizeof sa);
-	sa.sa_handler = SIG_DFL;
-	setsigvec(p, SIGABRT, &sa);
-	atomic_clearbits_int(&p->p_sigmask, sigmask(SIGABRT));
-	psignal(p, SIGABRT);
+	sigabort(p);
 
 	p->p_p->ps_pledge = 0;		/* Disable all PLEDGE_ flags */
 	KERNEL_UNLOCK();
