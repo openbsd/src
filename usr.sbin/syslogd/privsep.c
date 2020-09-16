@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.71 2019/07/05 13:23:27 bluhm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.72 2020/09/16 11:03:36 martijn Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -519,6 +519,7 @@ open_pipe(char *cmd)
 
 	if (dup2(fd[0], STDIN_FILENO) == -1)
 		err(1, "dup2 failed");
+	closefrom(STDERR_FILENO + 1);
 	if (execv("/bin/sh", argp) == -1)
 		err(1, "execv %s", cmd);
 	/* NOTREACHED */
