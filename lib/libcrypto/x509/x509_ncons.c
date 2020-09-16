@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_ncons.c,v 1.2 2020/09/15 11:53:45 beck Exp $ */
+/* $OpenBSD: x509_ncons.c,v 1.3 2020/09/16 12:51:15 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -288,7 +288,7 @@ print_nc_ipadd(BIO *bp, ASN1_OCTET_STRING *ip)
 		BIO_printf(bp, "IP Address:<invalid>");
 	return 1;
 }
-#if 0
+
 /* Check a certificate conforms to a specified set of constraints.
  * Return values:
  *  X509_V_OK: All constraints obeyed.
@@ -303,6 +303,7 @@ print_nc_ipadd(BIO *bp, ASN1_OCTET_STRING *ip)
 int
 NAME_CONSTRAINTS_check(X509 *x, NAME_CONSTRAINTS *nc)
 {
+#if 0
 	int r, i;
 	X509_NAME *nm;
 
@@ -347,10 +348,10 @@ NAME_CONSTRAINTS_check(X509 *x, NAME_CONSTRAINTS *nc)
 		if (r != X509_V_OK)
 			return r;
 	}
-
+#endif
 	return X509_V_OK;
 }
-
+#if 0
 static int
 nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
 {
