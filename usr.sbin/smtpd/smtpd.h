@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.656 2020/04/08 07:30:44 eric Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.657 2020/09/16 11:19:42 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -624,6 +624,8 @@ struct smtpd {
 	char				       *sc_srs_key;
 	char				       *sc_srs_key_backup;
 	int				        sc_srs_ttl;
+
+	char				       *sc_admd;
 };
 
 #define	TRACE_DEBUG	0x0001
