@@ -375,6 +375,28 @@ struct cipher_set_test cipher_set_tests[] = {
 		},
 	},
 	{
+		.ssl_ciphersuites_first = 1,
+		.ssl_ciphersuites = "",
+		.ssl_rulestr = "TLSv1.2+ECDHE+AEAD+AES",
+		.cids = {
+			TLS1_CK_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			TLS1_CK_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+			TLS1_CK_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			TLS1_CK_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+		},
+	},
+	{
+		.ssl_ciphersuites_first = 0,
+		.ssl_ciphersuites = "",
+		.ssl_rulestr = "TLSv1.2+ECDHE+AEAD+AES",
+		.cids = {
+			TLS1_CK_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			TLS1_CK_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+			TLS1_CK_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			TLS1_CK_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+		},
+	},
+	{
 		.ctx_ciphersuites = "AEAD-AES256-GCM-SHA384:AEAD-CHACHA20-POLY1305-SHA256",
 		.ssl_rulestr = "TLSv1.2+ECDHE+AEAD+AES",
 		.cids = {
