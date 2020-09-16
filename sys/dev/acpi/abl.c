@@ -1,4 +1,4 @@
-/*	$OpenBSD: abl.c,v 1.1 2020/09/15 18:31:14 mglocker Exp $ */
+/*	$OpenBSD: abl.c,v 1.2 2020/09/16 09:35:14 kettenis Exp $ */
 
 /*
  * Copyright (c) 2020 Marcus Glocker <mglocker@openbsd.org>
@@ -136,9 +136,12 @@ abl_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	/* Map I/O space. */
+	/*
+	 * Map I/O space.  This driver uses the ACPI SMI command port.
+	 * This port has already been claimed by the generic ACPI code
+	 * so we need to work around that here by calling _bus_space_map().
+	 */
 	sc->sc_bt = aaa->aaa_iot;
-	/* XXX: Something else already seems to map this address. */
 	if (_bus_space_map(sc->sc_bt, sc->sc_io_base, ABL_IO_SIZE, 0,
 	    &sc->sc_bh)) {
 		printf(": can't map register\n");
