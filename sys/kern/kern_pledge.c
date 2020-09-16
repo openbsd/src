@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.264 2020/09/16 08:02:53 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.265 2020/09/16 10:06:56 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -946,7 +946,6 @@ pledge_sysctl(struct proc *p, int miblen, int *mib, void *new)
 		switch (mib[0]) {
 		case CTL_KERN:
 			switch (mib[1]) {
-			case HW_PHYSMEM64:	/* hw.physmem */
 			case KERN_DOMAINNAME:	/* getdomainname() */
 			case KERN_HOSTNAME:	/* gethostname() */
 			case KERN_OSTYPE:	/* uname() */
@@ -965,6 +964,7 @@ pledge_sysctl(struct proc *p, int miblen, int *mib, void *new)
 			switch (mib[1]) {
 			case HW_MACHINE: 	/* uname() */
 			case HW_PAGESIZE: 	/* getpagesize() */
+			case HW_PHYSMEM64:	/* hw.physmem */
 			case HW_NCPU:		/* hw.ncpu */
 			case HW_NCPUONLINE:	/* hw.ncpuonline */
 				return (0);
