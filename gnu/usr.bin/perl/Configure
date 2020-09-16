@@ -21440,6 +21440,7 @@ int
 main(int ac, char **av)
 {
   signal(SIGSEGV, exit);
+  signal(SIGBUS, exit);
 
   myprintf("%s%cs all right, then\n", "that", '\'');
   exit(0);
