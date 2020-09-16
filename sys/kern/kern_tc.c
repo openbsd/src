@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.68 2020/07/20 22:40:53 deraadt Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.69 2020/09/16 00:00:40 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -110,6 +110,7 @@ static SLIST_HEAD(, timecounter) tc_list = SLIST_HEAD_INITIALIZER(tc_list);
  * These are updated from tc_windup().  They are useful when
  * examining kernel core dumps.
  */
+volatile time_t naptime = 0;
 volatile time_t time_second = 1;
 volatile time_t time_uptime = 0;
 
@@ -475,7 +476,7 @@ tc_setrealtimeclock(const struct timespec *ts)
 void
 tc_setclock(const struct timespec *ts)
 {
-	struct bintime naptime, old_naptime, uptime, utc;
+	struct bintime new_naptime, old_naptime, uptime, utc;
 	struct timespec tmp;
 	static int first = 1;
 #ifndef SMALL_KERNEL
@@ -503,11 +504,11 @@ tc_setclock(const struct timespec *ts)
 	old_naptime = timehands->th_naptime;
 	/* XXX fiddle all the little crinkly bits around the fiords... */
 	tc_windup(NULL, &uptime, NULL);
-	naptime = timehands->th_naptime;
+	new_naptime = timehands->th_naptime;
 
 	mtx_leave(&windup_mtx);
 
-	if (bintimecmp(&old_naptime, &naptime, ==)) {
+	if (bintimecmp(&old_naptime, &new_naptime, ==)) {
 		BINTIME_TO_TIMESPEC(&uptime, &tmp);
 		printf("%s: cannot rewind uptime to %lld.%09ld\n",
 		    __func__, (long long)tmp.tv_sec, tmp.tv_nsec);
@@ -515,7 +516,7 @@ tc_setclock(const struct timespec *ts)
 
 #ifndef SMALL_KERNEL
 	/* convert the bintime to ticks */
-	bintimesub(&naptime, &old_naptime, &elapsed);
+	bintimesub(&new_naptime, &old_naptime, &elapsed);
 	adj_ticks = (uint64_t)hz * elapsed.sec +
 	    (((uint64_t)1000000 * (uint32_t)(elapsed.frac >> 32)) >> 32) / tick;
 	if (adj_ticks > 0) {
@@ -611,6 +612,7 @@ tc_windup(struct bintime *new_boottime, struct bintime *new_offset,
 	if (new_offset != NULL && bintimecmp(&th->th_offset, new_offset, <)) {
 		bintimesub(new_offset, &th->th_offset, &bt);
 		bintimeadd(&th->th_naptime, &bt, &th->th_naptime);
+		naptime = th->th_naptime.sec;
 		th->th_offset = *new_offset;
 	}
 
