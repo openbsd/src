@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.257 2020/09/17 09:02:15 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.258 2020/09/17 13:19:27 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -2994,7 +2994,7 @@ ikev2_record_dstid(struct iked *env, struct iked_sa *sa)
 	if (osa != NULL) {
 		sa_dstid_remove(env, osa);
 		if (env->sc_enforcesingleikesa &&
-		    osa->sa_state != IKEV2_STATE_CLOSED) {
+		    osa->sa_state < IKEV2_STATE_CLOSING) {
 			log_info("%sreplaced by IKESA %s (identical DSTID)",
 			    SPI_SA(osa, NULL),
 			    print_spi(sa->sa_hdr.sh_ispi, 8));
