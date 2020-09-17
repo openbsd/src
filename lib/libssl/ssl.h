@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.172 2020/09/13 16:49:05 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.173 2020/09/17 15:42:14 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1126,7 +1126,12 @@ int PEM_write_SSL_SESSION(FILE *fp, SSL_SESSION *x);
 
 #define SSL_CTRL_SET_ECDH_AUTO			94
 
+#if defined(LIBRESSL_HAS_TLS1_3) || defined(LIBRESSL_INTERNAL)
+#define SSL_CTRL_GET_PEER_TMP_KEY			109
+#define SSL_CTRL_GET_SERVER_TMP_KEY SSL_CTRL_GET_PEER_TMP_KEY
+#else
 #define SSL_CTRL_GET_SERVER_TMP_KEY		109
+#endif
 
 #define	SSL_CTRL_GET_CHAIN_CERTS			115
 
@@ -1230,6 +1235,11 @@ int SSL_set_max_proto_version(SSL *ssl, uint16_t version);
 
 #define SSL_get_server_tmp_key(s, pk) \
 	SSL_ctrl(s,SSL_CTRL_GET_SERVER_TMP_KEY,0,pk)
+
+#if defined(LIBRESSL_HAS_TLS1_3) || defined(LIBRESSL_INTERNAL)
+#define SSL_get_peer_tmp_key(s, pk) \
+	SSL_ctrl(s, SSL_CTRL_GET_PEER_TMP_KEY, 0, pk)
+#endif /* LIBRESSL_HAS_TLS1_3 || LIBRESSL_INTERNAL */
 
 #ifndef LIBRESSL_INTERNAL
 /*

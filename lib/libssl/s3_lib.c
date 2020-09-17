@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.197 2020/09/14 18:34:12 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.198 2020/09/17 15:42:14 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1652,17 +1652,15 @@ ssl3_clear(SSL *s)
 	S3I(s)->hs.state = SSL_ST_BEFORE|((s->server) ? SSL_ST_ACCEPT : SSL_ST_CONNECT);
 }
 
-static long
-ssl_ctrl_get_server_tmp_key(SSL *s, EVP_PKEY **pkey_tmp)
+long
+_SSL_get_peer_tmp_key(SSL *s, EVP_PKEY **key)
 {
 	EVP_PKEY *pkey = NULL;
 	SESS_CERT *sc;
 	int ret = 0;
 
-	*pkey_tmp = NULL;
+	*key = NULL;
 
-	if (s->server != 0)
-		return 0;
 	if (s->session == NULL || SSI(s)->sess_cert == NULL)
 		return 0;
 
@@ -1688,7 +1686,7 @@ ssl_ctrl_get_server_tmp_key(SSL *s, EVP_PKEY **pkey_tmp)
 		goto err;
 	}
 
-	*pkey_tmp = pkey;
+	*key = pkey;
 	pkey = NULL;
 
 	ret = 1;
@@ -2016,8 +2014,11 @@ ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 	case SSL_CTRL_SET_GROUPS_LIST:
 		return SSL_set1_groups_list(s, parg);
 
+	/* XXX - rename to SSL_CTRL_GET_PEER_TMP_KEY and remove server check. */
 	case SSL_CTRL_GET_SERVER_TMP_KEY:
-		return ssl_ctrl_get_server_tmp_key(s, parg);
+		if (s->server != 0)
+			return 0;
+		return _SSL_get_peer_tmp_key(s, parg);
 
 	case SSL_CTRL_GET_MIN_PROTO_VERSION:
 		return SSL_get_min_proto_version(s);
