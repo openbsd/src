@@ -1108,6 +1108,7 @@
 ./usr/share/man/man3p/warnings::register.3p
 ./usr/share/man/man4/aac.4
 ./usr/share/man/man4/abcrtc.4
+./usr/share/man/man4/abl.4
 ./usr/share/man/man4/ac97.4
 ./usr/share/man/man4/acphy.4
 ./usr/share/man/man4/acpi.4
