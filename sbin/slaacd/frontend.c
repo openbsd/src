@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.35 2020/09/14 09:07:05 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.36 2020/09/17 18:18:07 semarie Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -995,6 +995,13 @@ icmp6_receive(int fd, short events, void *arg)
 		return;
 	}
 
+	if ((size_t)len < sizeof(struct icmp6_hdr))
+		return;
+
+	icmp6_hdr = (struct icmp6_hdr *)icmp6ev->answer;
+	if (icmp6_hdr->icmp6_type != ND_ROUTER_ADVERT)
+		return;
+
 	/* extract optional information via Advanced API */
 	for (cm = (struct cmsghdr *)CMSG_FIRSTHDR(&icmp6ev->rcvmhdr); cm;
 	    cm = (struct cmsghdr *)CMSG_NXTHDR(&icmp6ev->rcvmhdr, cm)) {
@@ -1035,13 +1042,6 @@ icmp6_receive(int fd, short events, void *arg)
 		    ifnamebuf));
 		return;
 	}
-
-	if ((size_t)len < sizeof(struct icmp6_hdr))
-		return;
-	icmp6_hdr = (struct icmp6_hdr *)icmp6ev->answer;
-	if (icmp6_hdr->icmp6_type != ND_ROUTER_ADVERT)
-		return;
-
 	ra.if_index = if_index;
 	memcpy(&ra.from,  &icmp6ev->from, sizeof(ra.from));
 	ra.len = len;
