@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bt.5,v 1.7 2020/09/15 10:59:05 jasper Exp $
+.\"	$OpenBSD: bt.5,v 1.8 2020/09/17 19:18:18 jasper Exp $
 .\"
 .\" Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 15 2020 $
+.Dd $Mdocdate: September 17 2020 $
 .Dt BT 5
 .Os
 .Sh NAME
@@ -136,12 +136,18 @@ and
 with buckets of
 .Va step
 size.
+.It Fn max
+Returns the maximum recorded value.
+.It Fn min
+Returns the minimum recorded value.
 .It Fn print "@map"
 Print all pairs from
 .Va @map .
 .It Fn printf "fmt" ...
 Print formatted string
 .Va fmt .
+.It Fn sum
+Returns the sum of all recorded values.
 .It Fn time timefmt
 Print timestamps using
 .Xr strftime 3
