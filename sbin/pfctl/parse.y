@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.701 2020/01/28 15:40:35 bket Exp $	*/
+/*	$OpenBSD: parse.y,v 1.702 2020/09/17 10:09:43 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -392,7 +392,7 @@ int	 invalid_redirect(struct node_host *, sa_family_t);
 u_int16_t parseicmpspec(char *, sa_family_t);
 int	 kw_casecmp(const void *, const void *);
 int	 map_tos(char *string, int *);
-int	 rdomain_exists(u_int);
+int	 lookup_rtable(u_int);
 int	 filteropts_to_rule(struct pf_rule *, struct filter_opts *);
 
 TAILQ_HEAD(loadanchorshead, loadanchors)
@@ -1216,6 +1216,9 @@ antispoof_opt	: LABEL label	{
 			if ($2 < 0 || $2 > RT_TABLEID_MAX) {
 				yyerror("invalid rtable id");
 				YYERROR;
+			} else if (lookup_rtable($2) >= 1) {
+				yyerror("rtable %lld does not exist", $2);
+				YYERROR;
 			}
 			antispoof_opts.rtableid = $2;
 		}
@@ -2000,6 +2003,9 @@ filter_opt	: USER uids {
 			if ($2 < 0 || $2 > RT_TABLEID_MAX) {
 				yyerror("invalid rtable id");
 				YYERROR;
+			} else if (lookup_rtable($2) >= 1) {
+				yyerror("rtable %lld does not exist", $2);
+				YYERROR;
 			}
 			filter_opts.rtableid = $2;
 		}
@@ -2475,7 +2481,7 @@ if_item		: STRING			{
 		| RDOMAIN NUMBER		{
 			if ($2 < 0 || $2 > RT_TABLEID_MAX)
 				yyerror("rdomain %lld outside range", $2);
-			else if (rdomain_exists($2) != 1)
+			else if (lookup_rtable($2) != 2)
 				yyerror("rdomain %lld does not exist", $2);
 
 			$$ = calloc(1, sizeof(struct node_if));
@@ -5868,37 +5874,38 @@ map_tos(char *s, int *val)
 }
 
 int
-rdomain_exists(u_int rdomain)
+lookup_rtable(u_int rtableid)
 {
 	size_t			 len;
 	struct rt_tableinfo	 info;
 	int			 mib[6];
 	static u_int		 found[RT_TABLEID_MAX+1];
 
-	if (found[rdomain] == 1)
-		return 1;
+	if (found[rtableid])
+		return found[rtableid];
 
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
 	mib[2] = 0;
 	mib[3] = 0;
 	mib[4] = NET_RT_TABLE;
-	mib[5] = rdomain;
+	mib[5] = rtableid;
 
 	len = sizeof(info);
 	if (sysctl(mib, 6, &info, &len, NULL, 0) == -1) {
 		if (errno == ENOENT) {
 			/* table nonexistent */
+			found[rtableid] = 0;
 			return 0;
 		}
 		err(1, "%s", __func__);
 	}
-	if (info.rti_domainid == rdomain) {
-		found[rdomain] = 1;
-		return 1;
+	if (info.rti_domainid == rtableid) {
+		found[rtableid] = 2;
+		return 2;
 	}
-	/* rdomain is a table, but not an rdomain */
-	return 0;
+	found[rtableid] = 1;
+	return 1;
 }
 
 int
