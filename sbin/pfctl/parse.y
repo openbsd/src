@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.702 2020/09/17 10:09:43 yasuoka Exp $	*/
+/*	$OpenBSD: parse.y,v 1.703 2020/09/17 14:26:59 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1216,7 +1216,7 @@ antispoof_opt	: LABEL label	{
 			if ($2 < 0 || $2 > RT_TABLEID_MAX) {
 				yyerror("invalid rtable id");
 				YYERROR;
-			} else if (lookup_rtable($2) >= 1) {
+			} else if (lookup_rtable($2) < 1) {
 				yyerror("rtable %lld does not exist", $2);
 				YYERROR;
 			}
@@ -2003,7 +2003,7 @@ filter_opt	: USER uids {
 			if ($2 < 0 || $2 > RT_TABLEID_MAX) {
 				yyerror("invalid rtable id");
 				YYERROR;
-			} else if (lookup_rtable($2) >= 1) {
+			} else if (lookup_rtable($2) < 1) {
 				yyerror("rtable %lld does not exist", $2);
 				YYERROR;
 			}
