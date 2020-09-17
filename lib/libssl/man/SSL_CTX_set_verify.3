@@ -1,6 +1,6 @@
-.\" $OpenBSD: SSL_CTX_set_verify.3,v 1.7 2018/03/27 17:35:50 schwarze Exp $
+.\" $OpenBSD: SSL_CTX_set_verify.3,v 1.8 2020/09/17 08:04:22 schwarze Exp $
 .\" full merge up to: OpenSSL 9b86974e Aug 17 15:21:33 2015 -0400
-.\" selective merge up to: OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
+.\" selective merge up to: OpenSSL 1cb7eff4 Sep 10 13:56:40 2019 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
 .\" Copyright (c) 2000, 2001, 2002, 2003, 2014 The OpenSSL Project.
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: September 17 2020 $
 .Dt SSL_CTX_SET_VERIFY 3
 .Os
 .Sh NAME
@@ -443,7 +443,8 @@ if (peer = SSL_get_peer_certificate(ssl)) {
 .Xr SSL_get_ex_new_index 3 ,
 .Xr SSL_get_peer_certificate 3 ,
 .Xr SSL_get_verify_result 3 ,
-.Xr SSL_new 3
+.Xr SSL_new 3 ,
+.Xr SSL_set1_host 3
 .Sh HISTORY
 .Fn SSL_set_verify
 appeared in SSLeay 0.4 or earlier.
