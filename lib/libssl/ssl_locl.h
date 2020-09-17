@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.292 2020/09/15 09:41:24 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.293 2020/09/17 15:23:29 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1131,10 +1131,8 @@ const SSL_METHOD *tls_legacy_method(void);
 const SSL_METHOD *tls_legacy_client_method(void);
 const SSL_METHOD *tls_legacy_server_method(void);
 
-const SSL_METHOD *dtls1_get_client_method(int ver);
-const SSL_METHOD *dtls1_get_server_method(int ver);
-const SSL_METHOD *tls1_get_client_method(int ver);
-const SSL_METHOD *tls1_get_server_method(int ver);
+const SSL_METHOD *ssl_get_client_method(uint16_t version);
+const SSL_METHOD *ssl_get_server_method(uint16_t version);
 
 extern SSL3_ENC_METHOD DTLSv1_enc_data;
 extern SSL3_ENC_METHOD TLSv1_enc_data;

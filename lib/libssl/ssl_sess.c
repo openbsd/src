@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.98 2020/09/14 18:25:23 jsing Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.99 2020/09/17 15:23:29 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -785,9 +785,7 @@ SSL_set_session(SSL *s, SSL_SESSION *session)
 		return SSL_set_ssl_method(s, s->ctx->method);
 	}
 
-	if ((method = tls1_get_client_method(session->ssl_version)) == NULL)
-		method = dtls1_get_client_method(session->ssl_version);
-	if (method == NULL) {
+	if ((method = ssl_get_client_method(session->ssl_version)) == NULL) {
 		SSLerror(s, SSL_R_UNABLE_TO_FIND_SSL_METHOD);
 		return (0);
 	}

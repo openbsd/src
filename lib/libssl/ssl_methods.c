@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_methods.c,v 1.15 2020/09/15 09:41:24 jsing Exp $ */
+/* $OpenBSD: ssl_methods.c,v 1.16 2020/09/17 15:23:29 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -98,14 +98,6 @@ DTLS_client_method(void)
 	return DTLSv1_client_method();
 }
 
-const SSL_METHOD *
-dtls1_get_client_method(int ver)
-{
-	if (ver == DTLS1_VERSION)
-		return (DTLSv1_client_method());
-	return (NULL);
-}
-
 static const SSL_METHOD_INTERNAL DTLSv1_method_internal_data = {
 	.version = DTLS1_VERSION,
 	.min_version = DTLS1_VERSION,
@@ -182,14 +174,6 @@ const SSL_METHOD *
 DTLS_server_method(void)
 {
 	return DTLSv1_server_method();
-}
-
-const SSL_METHOD *
-dtls1_get_server_method(int ver)
-{
-	if (ver == DTLS1_VERSION)
-		return (DTLSv1_server_method());
-	return (NULL);
 }
 
 #ifdef LIBRESSL_HAS_TLS1_3_CLIENT
@@ -328,22 +312,6 @@ static const SSL_METHOD TLSv1_2_client_method_data = {
 	.put_cipher_by_char = ssl3_put_cipher_by_char,
 	.internal = &TLSv1_2_client_method_internal_data,
 };
-
-const SSL_METHOD *
-tls1_get_client_method(int ver)
-{
-#ifdef LIBRESSL_HAS_TLS1_3_CLIENT
-	if (ver == TLS1_3_VERSION)
-		return (TLS_client_method());
-#endif
-	if (ver == TLS1_2_VERSION)
-		return (TLSv1_2_client_method());
-	if (ver == TLS1_1_VERSION)
-		return (TLSv1_1_client_method());
-	if (ver == TLS1_VERSION)
-		return (TLSv1_client_method());
-	return (NULL);
-}
 
 const SSL_METHOD *
 SSLv23_client_method(void)
@@ -700,22 +668,6 @@ static const SSL_METHOD TLSv1_2_server_method_data = {
 };
 
 const SSL_METHOD *
-tls1_get_server_method(int ver)
-{
-#ifdef LIBRESSL_HAS_TLS1_3_SERVER
-	if (ver == TLS1_3_VERSION)
-		return (TLS_server_method());
-#endif
-	if (ver == TLS1_2_VERSION)
-		return (TLSv1_2_server_method());
-	if (ver == TLS1_1_VERSION)
-		return (TLSv1_1_server_method());
-	if (ver == TLS1_VERSION)
-		return (TLSv1_server_method());
-	return (NULL);
-}
-
-const SSL_METHOD *
 SSLv23_server_method(void)
 {
 	return (TLS_server_method());
@@ -753,4 +705,38 @@ const SSL_METHOD *
 TLSv1_2_server_method(void)
 {
 	return (&TLSv1_2_server_method_data);
+}
+
+const SSL_METHOD *
+ssl_get_client_method(uint16_t version)
+{
+	if (version == TLS1_3_VERSION)
+		return (TLS_client_method());
+	if (version == TLS1_2_VERSION)
+		return (TLSv1_2_client_method());
+	if (version == TLS1_1_VERSION)
+		return (TLSv1_1_client_method());
+	if (version == TLS1_VERSION)
+		return (TLSv1_client_method());
+	if (version == DTLS1_VERSION)
+		return (DTLSv1_client_method());
+
+	return (NULL);
+}
+
+const SSL_METHOD *
+ssl_get_server_method(uint16_t version)
+{
+	if (version == TLS1_3_VERSION)
+		return (TLS_server_method());
+	if (version == TLS1_2_VERSION)
+		return (TLSv1_2_server_method());
+	if (version == TLS1_1_VERSION)
+		return (TLSv1_1_server_method());
+	if (version == TLS1_VERSION)
+		return (TLSv1_server_method());
+	if (version == DTLS1_VERSION)
+		return (DTLSv1_server_method());
+
+	return (NULL);
 }
