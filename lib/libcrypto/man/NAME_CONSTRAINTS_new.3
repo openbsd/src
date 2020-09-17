@@ -1,4 +1,4 @@
-.\"	$OpenBSD: NAME_CONSTRAINTS_new.3,v 1.3 2018/03/23 00:09:11 schwarze Exp $
+.\" $OpenBSD: NAME_CONSTRAINTS_new.3,v 1.4 2020/09/17 08:50:05 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 23 2018 $
+.Dd $Mdocdate: September 17 2020 $
 .Dt NAME_CONSTRAINTS_NEW 3
 .Os
 .Sh NAME
@@ -22,6 +22,9 @@
 .Nm NAME_CONSTRAINTS_free ,
 .Nm GENERAL_SUBTREE_new ,
 .Nm GENERAL_SUBTREE_free
+.\" .Nm NAME_CONSTRAINTS_check is intentionally undocumented.
+.\" beck@ said in the x509/x509_ncons.c rev. 1.4 commit message:
+.\" We probably need to deprecate it thoughtfully.
 .Nd X.509 CA name constraints extension
 .Sh SYNOPSIS
 .In openssl/x509v3.h
