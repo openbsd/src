@@ -240,6 +240,7 @@ static int
 test_invalid_hostnames(void)
 {
 	int i, failure = 0;
+	char *nulhost = "www.openbsd.org\0";
 
 	for (i = 0; invalid_hostnames[i] != NULL; i++) {
 		if (x509_constraints_valid_host(invalid_hostnames[i],
@@ -257,7 +258,6 @@ test_invalid_hostnames(void)
 			goto done;
 		}
 	}
-	char *nulhost = "www.openbsd.org\0";
 	if (x509_constraints_valid_host(nulhost,
 	    strlen(nulhost) + 1)) {
 		FAIL("hostname with NUL byte accepted\n");
