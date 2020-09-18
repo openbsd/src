@@ -348,7 +348,7 @@ test_invalid_uri(void) {
 }
 
 static int
-test_constraints1()
+test_constraints1(void)
 {
 	char *c; size_t cl;
 	char *d; size_t dl;
