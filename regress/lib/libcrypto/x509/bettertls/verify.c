@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.3 2020/09/14 09:59:58 beck Exp $ */
+/* $OpenBSD: verify.c,v 1.4 2020/09/18 15:23:16 tb Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -108,6 +108,7 @@ verify_cert(const char *roots_file, const char *bundle_file,
 	X509_STORE_CTX *xscip = NULL;
 	X509_STORE *storeip = NULL;
 	X509 *leaf = NULL;
+	unsigned long flags, flagsip;
 
 	*ip = *dns = 0;
 
@@ -137,7 +138,7 @@ verify_cert(const char *roots_file, const char *bundle_file,
 	if (verbose)
 		X509_STORE_CTX_set_verify_cb(xsc, verify_cert_cb);
 
-	unsigned long flags = X509_VERIFY_PARAM_get_flags(xsc->param);
+	flags = X509_VERIFY_PARAM_get_flags(xsc->param);
 	X509_VERIFY_PARAM_set_flags(xsc->param, flags);
 	X509_VERIFY_PARAM_set_time(xsc->param, 1600000000);
 	X509_VERIFY_PARAM_set1_host(xsc->param,"localhost.local", strlen("localhost.local"));
@@ -163,7 +164,7 @@ verify_cert(const char *roots_file, const char *bundle_file,
 	if (verbose)
 		X509_STORE_CTX_set_verify_cb(xscip, verify_cert_cb);
 
-	unsigned long flagsip = X509_VERIFY_PARAM_get_flags(xscip->param);
+	flagsip = X509_VERIFY_PARAM_get_flags(xscip->param);
 	X509_VERIFY_PARAM_set_flags(xscip->param, flagsip);
 	X509_VERIFY_PARAM_set_time(xscip->param, 1600000000);
 	X509_VERIFY_PARAM_set1_ip_asc(xscip->param,"127.0.0.1");
