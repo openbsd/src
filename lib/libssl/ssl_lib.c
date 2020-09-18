@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.229 2020/09/16 07:25:15 schwarze Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.230 2020/09/18 16:18:56 schwarze Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2726,17 +2726,22 @@ SSL_get_SSL_CTX(const SSL *ssl)
 SSL_CTX *
 SSL_set_SSL_CTX(SSL *ssl, SSL_CTX* ctx)
 {
-	if (ssl->ctx == ctx)
-		return (ssl->ctx);
+	CERT *new_cert;
+
 	if (ctx == NULL)
 		ctx = ssl->initial_ctx;
+	if (ssl->ctx == ctx)
+		return (ssl->ctx);
 
+	if ((new_cert = ssl_cert_dup(ctx->internal->cert)) == NULL)
+		return NULL;
 	ssl_cert_free(ssl->cert);
-	ssl->cert = ssl_cert_dup(ctx->internal->cert);
+	ssl->cert = new_cert;
 
-	CRYPTO_add(&ctx->references, 1, CRYPTO_LOCK_SSL_CTX);
+	SSL_CTX_up_ref(ctx);
 	SSL_CTX_free(ssl->ctx); /* decrement reference count */
 	ssl->ctx = ctx;
+
 	return (ssl->ctx);
 }
 
