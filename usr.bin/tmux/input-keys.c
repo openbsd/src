@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.79 2020/06/01 16:09:35 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.80 2020/09/18 11:20:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -556,6 +556,8 @@ input_key(struct screen *s, struct bufferevent *bev, key_code key)
 	case KEYC_SHIFT|KEYC_META|KEYC_CTRL:
 		modifier = '8';
 		break;
+	default:
+		fatalx("invalid key modifiers: %llx", key);
 	}
 	xsnprintf(tmp, sizeof tmp, "\033[%llu;%cu", outkey, modifier);
 	bufferevent_write(bev, tmp, strlen(tmp));

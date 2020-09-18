@@ -1,4 +1,4 @@
-/* $OpenBSD: control.c,v 1.44 2020/07/06 09:14:20 nicm Exp $ */
+/* $OpenBSD: control.c,v 1.45 2020/09/18 11:20:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -688,8 +688,8 @@ control_write_pending(struct client *c, struct control_pane *cp, size_t limit)
 		else
 			age = 0;
 		log_debug("%s: %s: output block %zu (age %llu) for %%%u "
-		    "(used %zu/%zu)", __func__, c->name, cb->size, age,
-		    cp->pane, used, limit);
+		    "(used %zu/%zu)", __func__, c->name, cb->size,
+		    (unsigned long long)age, cp->pane, used, limit);
 
 		size = cb->size;
 		if (size > limit - used)
