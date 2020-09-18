@@ -1,4 +1,4 @@
-/*	$OpenBSD: printf.c,v 1.1 2020/01/21 16:24:55 mpi Exp $	*/
+/*	$OpenBSD: printf.c,v 1.2 2020/09/18 19:19:38 jasper Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -54,7 +54,7 @@ static int	 getint(void);
 static long	 getlong(void);
 static unsigned long getulong(void);
 static const char *getstr(void);
-static char	*mklong(const char *, int); 
+static char	*mklong(const char *, int);
 static void      check_conversion(const char *, const char *);
 
 static int		 rval;
@@ -97,9 +97,9 @@ stmt_printf(struct bt_stmt *bs, struct dt_evt *des)
 		/*
 		 * Basic algorithm is to scan the format string for conversion
 		 * specifications -- once one is found, find out if the field
-		 * width or precision is a '*'; if it is, gather up value. 
+		 * width or precision is a '*'; if it is, gather up value.
 		 * Note, format strings are reused as necessary to use up the
-		 * provided arguments, arguments of zero/null string are 
+		 * provided arguments, arguments of zero/null string are
 		 * provided to use up the format string.
 		 */
 
@@ -225,7 +225,7 @@ stmt_printf(struct bt_stmt *bs, struct dt_evt *des)
 
 
 /*
- * Print SysV echo(1) style escape string 
+ * Print SysV echo(1) style escape string
  *	Halts processing string and returns 1 if a \c escape is encountered.
  */
 static int
@@ -237,10 +237,10 @@ print_escape_str(const char *str)
 	while (*str) {
 		if (*str == '\\') {
 			str++;
-			/* 
+			/*
 			 * %b string octal constants are not like those in C.
-			 * They start with a \0, and are followed by 0, 1, 2, 
-			 * or 3 octal digits. 
+			 * They start with a \0, and are followed by 0, 1, 2,
+			 * or 3 octal digits.
 			 */
 			if (*str == '0') {
 				str++;
@@ -266,7 +266,7 @@ print_escape_str(const char *str)
 }
 
 /*
- * Print "standard" escape characters 
+ * Print "standard" escape characters
  */
 static int
 print_escape(const char *str)
