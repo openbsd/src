@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmstest.c,v 1.2 2019/11/04 12:31:59 jsing Exp $	*/
+/*	$OpenBSD: cmstest.c,v 1.3 2020/09/18 14:38:04 tb Exp $	*/
 /*
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -109,7 +109,7 @@ hexdump(const unsigned char *buf, size_t len)
 }
 
 static int
-test_cms_encrypt_decrypt()
+test_cms_encrypt_decrypt(void)
 {
 	STACK_OF(X509) *certs = NULL;
 	CMS_ContentInfo *ci = NULL;
@@ -198,7 +198,7 @@ test_cms_encrypt_decrypt()
 }
 
 static int
-test_cms_sign_verify()
+test_cms_sign_verify(void)
 {
 	STACK_OF(X509) *certs = NULL;
 	CMS_ContentInfo *ci = NULL;
