@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_info.c,v 1.1 2020/07/23 17:15:35 schwarze Exp $	*/
+/*	$OpenBSD: x509_info.c,v 1.2 2020/09/18 14:41:04 tb Exp $	*/
 /*
  * Copyright (c) 2020 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -163,7 +163,7 @@ main(void)
 		warnx("real + bogus input changed stack size from 1 to %d",
 		    num);
 		while (sk_X509_INFO_num(skin) > 1)
-			sk_X509_INFO_pop(skin);
+			(void)sk_X509_INFO_pop(skin);
 		errcount++;
 	}
 	if (sk_X509_INFO_value(skin, 0) != info0)
