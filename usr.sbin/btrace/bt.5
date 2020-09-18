@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bt.5,v 1.8 2020/09/17 19:18:18 jasper Exp $
+.\"	$OpenBSD: bt.5,v 1.9 2020/09/18 18:05:20 jmc Exp $
 .\"
 .\" Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 17 2020 $
+.Dd $Mdocdate: September 18 2020 $
 .Dt BT 5
 .Os
 .Sh NAME
@@ -36,7 +36,7 @@ when an enabled
 .Ar probe
 is triggered.
 They are periodically collected by
-.Xr btrace 8
+.Xr btrace 8 ,
 which formats them using the corresponding
 .Ar action .
 If a recorded event doesn't match the optional
@@ -64,7 +64,7 @@ the last.
 They cannot be combined with any
 .Ar filter .
 .Sh FILTER
-Define under with condition an event should be recorded when its related
+Define under which condition an event should be recorded when its related
 .Ar probe
 is executed.
 An empty
@@ -73,11 +73,11 @@ means record all events.
 .Pp
 Variable names available in filters:
 .Pp
-.Bl -tag -width "pid " -compact
+.Bl -tag -width "kstack " -compact -offset indent
 .It Va pid
-Process ID of the current thread
+Process ID of the current thread.
 .It Va tid
-Thread ID of the current thread
+Thread ID of the current thread.
 .El
 .Sh ACTION
 An action is a sequence of statements that are evaluated for each event recorded
@@ -86,31 +86,30 @@ by the associated
 .Pp
 Variable names with special meaning:
 .Pp
-.Bl -tag -width "kstack " -compact
+.Bl -tag -width "kstack " -compact -offset indent
 .It Va argN
 Argument
 .Va N
-of the corresponding probe
+of the corresponding probe.
 .It Va comm
-Command name of the current process
+Command name of the current process.
 .It Va cpu
-ID of the processor that recorded the event
+ID of the processor that recorded the event.
 .It Va kstack
-Kernel stack of the current thread
+Kernel stack of the current thread.
 .It Va nsecs
-Timestamp of the event in nanoseconds
+Timestamp of the event in nanoseconds.
 .It Va pid
-Process ID of the current thread
+Process ID of the current thread.
 .It Va retval
-Return value of the traced syscall
+Return value of the traced syscall.
 .It Va tid
-Thread ID of the current thread
+Thread ID of the current thread.
 .\".It Va ustack
-.\"Userland stack of the current thread
+.\"Userland stack of the current thread.
 .El
 .Pp
 Functions:
-.Pp
 .Bl -tag -width "lhist(value, min, max, step)"
 .It Fn clear "@map"
 Delete all (key, value) pairs from
