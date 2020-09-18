@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.2 2020/09/13 15:06:17 beck Exp $ */
+/* $OpenBSD: verify.c,v 1.3 2020/09/18 14:58:04 tb Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -198,10 +198,15 @@ verify_cert_new(const char *roots_file, const char *bundle_file, int *chains)
 		    x509_verify_ctx_error_depth(ctx),
 		    x509_verify_ctx_error_string(ctx));
 	} else {
-		for (int c = 0; verbose && c < *chains; c++) {
+		int c;
+
+		for (c = 0; verbose && c < *chains; c++) {
+			STACK_OF(X509) *chain;
+			int i;
+
 			fprintf(stderr, "Chain %d\n--------\n", c);
-			STACK_OF(X509) * chain = x509_verify_ctx_chain(ctx, c);
-			for (int i = 0; i < sk_X509_num(chain); i++) {
+			chain = x509_verify_ctx_chain(ctx, c);
+			for (i = 0; i < sk_X509_num(chain); i++) {
 				X509 *cert = sk_X509_value(chain, i);
 				X509_NAME_print_ex_fp(stderr,
 				    X509_get_subject_name(cert), 0,
