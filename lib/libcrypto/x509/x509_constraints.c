@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_constraints.c,v 1.3 2020/09/14 09:43:33 beck Exp $ */
+/* $OpenBSD: x509_constraints.c,v 1.4 2020/09/18 08:28:45 beck Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -808,7 +808,7 @@ x509_constraints_extract_names(struct x509_constraints_names *names,
 				goto err;
 			}
 			if (!x509_constraints_parse_mailbox(aname->data,
-			    strlen(aname->data), vname)) {
+			    aname->length, vname)) {
 				*error = X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
 				goto err;
 			}
@@ -833,13 +833,14 @@ x509_constraints_extract_names(struct x509_constraints_names *names,
 				goto err;
 			}
 			if (!x509_constraints_valid_host(aname->data,
-			    strlen(aname->data)))
+			    aname->length))
 				continue; /* ignore it if not a hostname */
 			if ((vname = x509_constraints_name_new()) == NULL) {
 				*error = X509_V_ERR_OUT_OF_MEM;
 				goto err;
 			}
-			if ((vname->name = strdup(aname->data)) == NULL) {
+			if ((vname->name = strndup(aname->data,
+			    aname->length)) == NULL) {
 				*error = X509_V_ERR_OUT_OF_MEM;
 				goto err;
 			}
