@@ -1,4 +1,4 @@
-# $OpenBSD: symbols.awk,v 1.1 2020/09/18 10:18:26 tb Exp $
+# $OpenBSD: symbols.awk,v 1.2 2020/09/18 10:39:10 tb Exp $
 
 # Copyright (c) 2018,2020 Theo Buehler <tb@openbsd.org>
 #
@@ -50,7 +50,6 @@ BEGIN {
 
 # internal function used in libtls
 /^ASN1_time_tm_clamp_notafter$/ {
-	symbols[$0] = $0
 	printf("extern int ASN1_time_tm_clamp_notafter(struct tm *);\n")
 }
 
