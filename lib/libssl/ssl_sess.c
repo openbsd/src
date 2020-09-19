@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.99 2020/09/17 15:23:29 jsing Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.100 2020/09/19 09:56:35 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -192,6 +192,18 @@ void *
 SSL_SESSION_get_ex_data(const SSL_SESSION *s, int idx)
 {
 	return (CRYPTO_get_ex_data(&s->internal->ex_data, idx));
+}
+
+uint32_t
+SSL_SESSION_get_max_early_data(const SSL_SESSION *s)
+{
+	return 0;
+}
+
+int
+SSL_SESSION_set_max_early_data(SSL_SESSION *s, uint32_t max_early_data)
+{
+	return 1;
 }
 
 SSL_SESSION *

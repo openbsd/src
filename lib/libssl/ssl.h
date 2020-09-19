@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.173 2020/09/17 15:42:14 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.174 2020/09/19 09:56:34 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1386,6 +1386,10 @@ const unsigned char *SSL_SESSION_get_id(const SSL_SESSION *ss,
 	    unsigned int *len);
 const unsigned char *SSL_SESSION_get0_id_context(const SSL_SESSION *ss,
 	    unsigned int *len);
+#if defined(LIBRESSL_HAS_TLS1_3) || defined(LIBRESSL_INTERNAL)
+uint32_t SSL_SESSION_get_max_early_data(const SSL_SESSION *sess);
+int SSL_SESSION_set_max_early_data(SSL_SESSION *sess, uint32_t max_early_data);
+#endif
 unsigned long SSL_SESSION_get_ticket_lifetime_hint(const SSL_SESSION *s);
 int	SSL_SESSION_has_ticket(const SSL_SESSION *s);
 unsigned int SSL_SESSION_get_compress_id(const SSL_SESSION *ss);
