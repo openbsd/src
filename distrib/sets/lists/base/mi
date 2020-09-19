@@ -116,6 +116,7 @@
 ./etc/isakmpd/pubkeys/ipv6
 ./etc/isakmpd/pubkeys/ufqdn
 ./etc/ldap
+./etc/ldap/bsd.schema
 ./etc/ldap/certs
 ./etc/ldap/core.schema
 ./etc/ldap/inetorgperson.schema
