@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.232 2020/09/19 10:12:06 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.233 2020/09/19 10:17:56 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -468,6 +468,12 @@ SSL_set1_host(SSL *s, const char *hostname)
 		return X509_VERIFY_PARAM_set1_ip_asc(s->param, hostname);
 	else
 		return X509_VERIFY_PARAM_set1_host(s->param, hostname, 0);
+}
+
+const char *
+SSL_get0_peername(SSL *s)
+{
+	return X509_VERIFY_PARAM_get0_peername(s->param);
 }
 
 X509_VERIFY_PARAM *
