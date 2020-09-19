@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.174 2020/09/19 09:56:34 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.175 2020/09/19 10:05:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1458,6 +1458,15 @@ int	SSL_is_server(const SSL *s);
 int 	SSL_read(SSL *ssl, void *buf, int num);
 int 	SSL_peek(SSL *ssl, void *buf, int num);
 int 	SSL_write(SSL *ssl, const void *buf, int num);
+
+#if defined(LIBRESSL_HAS_TLS1_3) || defined(LIBRESSL_INTERNAL)
+uint32_t SSL_CTX_get_max_early_data(const SSL_CTX *ctx);
+int SSL_CTX_set_max_early_data(SSL_CTX *ctx, uint32_t max_early_data);
+
+uint32_t SSL_get_max_early_data(const SSL *s);
+int SSL_set_max_early_data(SSL *s, uint32_t max_early_data);
+#endif
+
 long	SSL_ctrl(SSL *ssl, int cmd, long larg, void *parg);
 long	SSL_callback_ctrl(SSL *, int, void (*)(void));
 long	SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg);

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.230 2020/09/18 16:18:56 schwarze Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.231 2020/09/19 10:05:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1000,6 +1000,29 @@ SSL_write(SSL *s, const void *buf, int num)
 	return ssl3_write(s, buf, num);
 }
 
+uint32_t
+SSL_CTX_get_max_early_data(const SSL_CTX *ctx)
+{
+	return 0;
+}
+
+int
+SSL_CTX_set_max_early_data(SSL_CTX *ctx, uint32_t max_early_data)
+{
+	return 1;
+}
+
+uint32_t
+SSL_get_max_early_data(const SSL *s)
+{
+	return 0;
+}
+
+int
+SSL_set_max_early_data(SSL *s, uint32_t max_early_data)
+{
+	return 1;
+}
 int
 SSL_shutdown(SSL *s)
 {
