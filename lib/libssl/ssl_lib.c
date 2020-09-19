@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.231 2020/09/19 10:05:00 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.232 2020/09/19 10:12:06 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1023,6 +1023,34 @@ SSL_set_max_early_data(SSL *s, uint32_t max_early_data)
 {
 	return 1;
 }
+
+int
+SSL_get_early_data_status(const SSL *s)
+{
+	return SSL_EARLY_DATA_REJECTED;
+}
+
+int
+SSL_read_early_data(SSL *s, void *buf, size_t num, size_t *readbytes)
+{
+	*readbytes = 0;
+
+	if (!s->server) {
+		SSLerror(s, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+		return SSL_READ_EARLY_DATA_ERROR;
+	}
+
+	return SSL_READ_EARLY_DATA_FINISH;
+}
+
+int
+SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
+{
+	*written = 0;
+	SSLerror(s, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+	return 0;
+}
+
 int
 SSL_shutdown(SSL *s)
 {

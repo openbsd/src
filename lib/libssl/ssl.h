@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.175 2020/09/19 10:05:00 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.176 2020/09/19 10:12:06 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1465,6 +1465,17 @@ int SSL_CTX_set_max_early_data(SSL_CTX *ctx, uint32_t max_early_data);
 
 uint32_t SSL_get_max_early_data(const SSL *s);
 int SSL_set_max_early_data(SSL *s, uint32_t max_early_data);
+
+#define SSL_EARLY_DATA_NOT_SENT		0
+#define SSL_EARLY_DATA_REJECTED		1
+#define SSL_EARLY_DATA_ACCEPTED		2
+int SSL_get_early_data_status(const SSL *s);
+
+#define SSL_READ_EARLY_DATA_ERROR	0
+#define SSL_READ_EARLY_DATA_SUCCESS	1
+#define SSL_READ_EARLY_DATA_FINISH	2
+int SSL_read_early_data(SSL *s, void *buf, size_t num, size_t *readbytes);
+int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written);
 #endif
 
 long	SSL_ctrl(SSL *ssl, int cmd, long larg, void *parg);
