@@ -115,16 +115,10 @@ void AArch64ReturnProtectorLowering::saveReturnProtectorRegister(
     return;
   }
 
-  // Put the temp reg after FP and LR to avoid layout issues
-  // with the D registers later.
-  bool added = false;
-  for (auto CSRI = CSI.begin(); CSRI != CSI.end(); CSRI++) {
-    if (CSRI->getReg() != AArch64::FP && CSRI->getReg() != AArch64::LR) {
-      CSI.insert(CSRI, CalleeSavedInfo(MFI.getReturnProtectorRegister()));
-      added = true;
-      break;
-    }
-  }
-  if (!added)
-    CSI.push_back(CalleeSavedInfo(MFI.getReturnProtectorRegister()));
+  // CSI Reg order is important for pairing registers later.
+  // The expected order of the CSI is given by getCalleeSavedRegs(),
+  // which for us returns a list of GPRs and FPRs in ascending
+  // order. Since our temp regs are all before the usual callee
+  // saved regs, we can just insert our reg first.
+  CSI.insert(CSI.begin(), CalleeSavedInfo(MFI.getReturnProtectorRegister()));
 }
