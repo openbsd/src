@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.10 2020/09/16 05:47:59 jsing Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.11 2020/09/19 14:15:38 beck Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -824,7 +824,7 @@ x509_verify(struct x509_verify_ctx *ctx, X509 *leaf, char *name)
 {
 	struct x509_verify_chain *current_chain;
 
-	if (ctx == NULL || ctx->roots == NULL || ctx->max_depth == 0) {
+	if (ctx->roots == NULL || ctx->max_depth == 0) {
 		ctx->error = X509_V_ERR_INVALID_CALL;
 		return 0;
 	}
