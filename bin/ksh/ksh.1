@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.209 2020/07/07 10:33:58 jca Exp $
+.\"	$OpenBSD: ksh.1,v 1.210 2020/09/20 14:40:45 millert Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: July 7 2020 $
+.Dd $Mdocdate: September 20 2020 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -5053,6 +5053,13 @@ Erases previous character.
 .It ^J | ^M
 End of line.
 The current line is read, parsed, and executed by the shell.
+.It ^L
+Clear the screen (if possible) and redraw the current line.
+See the
+.Em clear-screen
+command in
+.Sx Emacs editing mode
+for more information.
 .It ^V
 Literal next.
 The next character typed is not treated specially (can be used
@@ -5510,7 +5517,9 @@ Miscellaneous vi commands
 .Bl -tag -width Ds
 .It ^J and ^M
 The current line is read, parsed, and executed by the shell.
-.It ^L and ^R
+.It ^L
+Clear the screen (if possible) and redraw the current line.
+.It ^R
 Redraw the current line.
 .It Xo
 .Oo Ar n Oc Ns \&.

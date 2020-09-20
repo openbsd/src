@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.56 2018/03/15 16:51:29 anton Exp $	*/
+/*	$OpenBSD: vi.c,v 1.57 2020/09/20 14:40:45 millert Exp $	*/
 
 /*
  *	vi command editing
@@ -14,11 +14,13 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef SMALL
+# include <term.h>
+# include <curses.h>
+#endif
 
 #include "sh.h"
 #include "edit.h"
-
-#define CTRL(c)		(c & 0x1f)
 
 struct edstate {
 	char	*cbuf;		/* main buffer to build the command line */
@@ -52,8 +54,9 @@ static int	Backword(int);
 static int	Endword(int);
 static int	grabhist(int, int);
 static int	grabsearch(int, int, int, char *);
+static void	do_clear_screen(void);
 static void	redraw_line(int);
-static void	refresh(int);
+static void	refresh_line(int);
 static int	outofwin(void);
 static void	rewindow(void);
 static int	newcol(int, int);
@@ -271,9 +274,9 @@ vi_hook(int ch)
 			case 0:
 				if (state == VLIT) {
 					es->cursor--;
-					refresh(0);
+					refresh_line(0);
 				} else
-					refresh(insert != 0);
+					refresh_line(insert != 0);
 				break;
 			case 1:
 				return 1;
@@ -298,7 +301,7 @@ vi_hook(int ch)
 							return -1;
 					} else if (putbuf("?", 1, 0) != 0)
 						return -1;
-					refresh(0);
+					refresh_line(0);
 				}
 			}
 		}
@@ -310,7 +313,7 @@ vi_hook(int ch)
 			vi_error();
 		} else
 			es->cbuf[es->cursor++] = ch;
-		refresh(1);
+		refresh_line(1);
 		state = VNORMAL;
 		break;
 
@@ -375,7 +378,7 @@ vi_hook(int ch)
 				if (!srchpat[0]) {
 					vi_error();
 					state = VNORMAL;
-					refresh(0);
+					refresh_line(0);
 					return 0;
 				}
 			} else {
@@ -392,17 +395,17 @@ vi_hook(int ch)
 				} while (srchlen > 0 &&
 				    isu8cont(locpat[srchlen]));
 				es->cursor = es->linelen;
-				refresh(0);
+				refresh_line(0);
 				return 0;
 			}
 			restore_cbuf();
 			state = VNORMAL;
-			refresh(0);
+			refresh_line(0);
 		} else if (ch == edchars.kill) {
 			srchlen = 0;
 			es->linelen = 1;
 			es->cursor = 1;
-			refresh(0);
+			refresh_line(0);
 			return 0;
 		} else if (ch == edchars.werase) {
 			struct edstate new_es, *save_es;
@@ -421,7 +424,7 @@ vi_hook(int ch)
 				es->linelen -= char_len((unsigned char)locpat[i]);
 			srchlen = n;
 			es->cursor = es->linelen;
-			refresh(0);
+			refresh_line(0);
 			return 0;
 		} else {
 			if (srchlen == SRCHLEN - 1)
@@ -446,7 +449,7 @@ vi_hook(int ch)
 					es->cbuf[es->linelen++] = ch;
 				}
 				es->cursor = es->linelen;
-				refresh(0);
+				refresh_line(0);
 			}
 			return 0;
 		}
@@ -459,15 +462,15 @@ vi_hook(int ch)
 		switch (vi_cmd(argc1, curcmd)) {
 		case -1:
 			vi_error();
-			refresh(0);
+			refresh_line(0);
 			break;
 		case 0:
 			if (insert != 0)
 				inslen = 0;
-			refresh(insert != 0);
+			refresh_line(insert != 0);
 			break;
 		case 1:
-			refresh(0);
+			refresh_line(0);
 			return 1;
 		case 2:
 			/* back from a 'v' command - don't redraw the screen */
@@ -482,7 +485,7 @@ vi_hook(int ch)
 		switch (vi_cmd(lastac, lastcmd)) {
 		case -1:
 			vi_error();
-			refresh(0);
+			refresh_line(0);
 			break;
 		case 0:
 			if (insert != 0) {
@@ -495,10 +498,10 @@ vi_hook(int ch)
 						vi_error();
 				}
 			}
-			refresh(0);
+			refresh_line(0);
 			break;
 		case 1:
-			refresh(0);
+			refresh_line(0);
 			return 1;
 		case 2:
 			/* back from a 'v' command - can't happen */
@@ -651,6 +654,10 @@ vi_insert(int ch)
 		print_expansions(es);
 		break;
 
+	case CTRL('l'):
+		do_clear_screen();
+		break;
+
 	case CTRL('i'):
 		if (Flag(FVITABCOMPLETE)) {
 			complete_word(0, 0);
@@ -708,6 +715,9 @@ vi_cmd(int argcnt, const char *cmd)
 		switch (*cmd) {
 
 		case CTRL('l'):
+			do_clear_screen();
+			break;
+
 		case CTRL('r'):
 			redraw_line(1);
 			break;
@@ -1028,7 +1038,7 @@ vi_cmd(int argcnt, const char *cmd)
 			    c1, srchpat)) < 0) {
 				if (c3) {
 					restore_cbuf();
-					refresh(0);
+					refresh_line(0);
 				}
 				return -1;
 			} else {
@@ -1717,10 +1727,24 @@ grabsearch(int save, int start, int fwd, char *pat)
 }
 
 static void
-redraw_line(int newline)
+do_clear_screen(void)
+{
+	int neednl = 1;
+
+#ifndef SMALL
+	if (cur_term != NULL && clear_screen != NULL) {
+		if (tputs(clear_screen, 1, x_putc) != ERR)
+			neednl = 0;
+	}
+#endif
+	redraw_line(neednl);
+}
+
+static void
+redraw_line(int neednl)
 {
 	(void) memset(wbuf[win], ' ', wbuf_len);
-	if (newline) {
+	if (neednl) {
 		x_putc('\r');
 		x_putc('\n');
 	}
@@ -1730,7 +1754,7 @@ redraw_line(int newline)
 }
 
 static void
-refresh(int leftside)
+refresh_line(int leftside)
 {
 	if (outofwin())
 		rewindow();
@@ -2033,7 +2057,7 @@ expand_word(int command)
 	modified = 1; hnum = hlast;
 	insert = INSERT;
 	lastac = 0;
-	refresh(0);
+	refresh_line(0);
 	return rval;
 }
 
@@ -2137,7 +2161,7 @@ complete_word(int command, int count)
 	modified = 1; hnum = hlast;
 	insert = INSERT;
 	lastac = 0;	 /* prevent this from being redone... */
-	refresh(0);
+	refresh_line(0);
 
 	return rval;
 }
