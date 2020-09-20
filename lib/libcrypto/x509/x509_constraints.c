@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_constraints.c,v 1.7 2020/09/20 18:32:33 tb Exp $ */
+/* $OpenBSD: x509_constraints.c,v 1.8 2020/09/20 19:13:06 tb Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -769,9 +769,12 @@ x509_constraints_extract_names(struct x509_constraints_names *names,
 	}
 	subject_name = X509_get_subject_name(cert);
 	if (X509_NAME_entry_count(subject_name) > 0) {
-		struct x509_constraints_name *vname = NULL;
 		X509_NAME_ENTRY *email;
 		X509_NAME_ENTRY *cn;
+
+		x509_constraints_name_free(vname);
+		vname = NULL;
+
 		/*
 		 * This cert has a non-empty subject, so we must add
 		 * the subject as a dirname to be compared against
