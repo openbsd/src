@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: vi.sh,v 1.6 2017/08/22 20:14:57 anton Exp $
+# $OpenBSD: vi.sh,v 1.7 2020/09/20 15:25:09 tb Exp $
 #
 # Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2017 Anton Lindqvist <anton@openbsd.org>
@@ -179,6 +179,5 @@ testseq "abcd\00332h2yl\$p" " # abcd\b\b\bbcdbc\b"
 testseq "(x)\0033%lrc" " # (x)\b\b\b(c\b"
 testseq "(x)\00330%hrc" " # (x)\b\b\b(x\bc\b"
 
-# ^L, ^R: Redraw.
-testseq "test\0033\0014" " # test\b\r\r\n # test\b"
+# ^R: Redraw.
 testseq "test\0033h\0022" " # test\b\b\r\r\n # test\b\b"
