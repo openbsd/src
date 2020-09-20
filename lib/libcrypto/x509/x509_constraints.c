@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_constraints.c,v 1.4 2020/09/18 08:28:45 beck Exp $ */
+/* $OpenBSD: x509_constraints.c,v 1.5 2020/09/20 03:19:52 tb Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -674,7 +674,7 @@ x509_constraints_extract_names(struct x509_constraints_names *names,
 	X509_NAME *subject_name;
 	GENERAL_NAME *name;
 	ssize_t i = 0;
-	int name_type, add, include_cn = is_leaf, include_email = is_leaf;
+	int name_type, include_cn = is_leaf, include_email = is_leaf;
 
 	/* first grab the altnames */
 	while ((name = sk_GENERAL_NAME_value(cert->altname, i++)) != NULL) {
@@ -686,7 +686,6 @@ x509_constraints_extract_names(struct x509_constraints_names *names,
 			goto err;
 		}
 
-		add = 1;
 		name_type = x509_constraints_general_to_bytes(name, &bytes,
 		    &len);
 		switch(name_type) {
@@ -753,10 +752,11 @@ x509_constraints_extract_names(struct x509_constraints_names *names,
 			break;
 		default:
 			/* Ignore this name */
-			add = 0;
-			break;
+			x509_constraints_name_free(vname);
+			vname = NULL;
+			continue;
 		}
-		if (add && !x509_constraints_names_add(names, vname)) {
+		if (!x509_constraints_names_add(names, vname)) {
 			*error = X509_V_ERR_OUT_OF_MEM;
 			goto err;
 		}
