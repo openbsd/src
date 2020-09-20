@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_constraints.c,v 1.5 2020/09/20 03:19:52 tb Exp $ */
+/* $OpenBSD: x509_constraints.c,v 1.6 2020/09/20 18:22:31 beck Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -438,7 +438,7 @@ x509_constraints_valid_domain_constraint(uint8_t *constraint, size_t len)
  * the caller must free, or or NULL if it could not be found or is
  * invalid.
  *
- * rfc 3986:
+ * RFC 3986:
  * the authority part of a uri starts with // and is terminated with
  * the next '/', '?', '#' or end of the URI.
  *
@@ -454,7 +454,12 @@ x509_constraints_uri_host(uint8_t *uri, size_t len,  char**hostpart)
 	uint8_t *authority = NULL;
 	char *host = NULL;
 
-	/* find first // */
+	/*
+	 * Find first '//'. there must be at least a '//' and
+	 * something else.
+	 */
+	if (len < 3)
+		return 0;
 	for (i = 0; i < len - 1; i++) {
 		if (!isascii(uri[i]))
 			return 0;
@@ -557,7 +562,7 @@ x509_constraints_uri(uint8_t *uri, size_t ulen, uint8_t *constraint,
     size_t len, int *error)
 {
 	int ret = 0;
-	char *hostpart;
+	char *hostpart = NULL;
 
 	if (!x509_constraints_uri_host(uri, ulen, &hostpart)) {
 		*error = X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;

@@ -152,6 +152,10 @@ unsigned char *invaliduri[] = {
 	"https://.www.openbsd.org/",
 	"https://www.ope|nbsd.org%",
 	"https://www.openbsd.org.#",
+	"///",
+	"//",
+	"/",
+	"",
 	NULL,
 };
 
