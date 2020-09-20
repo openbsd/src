@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.177 2020/09/19 10:17:56 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.178 2020/09/20 09:42:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1443,7 +1443,9 @@ int SSL_set_purpose(SSL *s, int purpose);
 int SSL_CTX_set_trust(SSL_CTX *s, int trust);
 int SSL_set_trust(SSL *s, int trust);
 int SSL_set1_host(SSL *s, const char *hostname);
+#if defined(LIBRESSL_HAS_TLS1_3) || defined(LIBRESSL_INTERNAL)
 const char *SSL_get0_peername(SSL *s);
+#endif
 
 X509_VERIFY_PARAM *SSL_CTX_get0_param(SSL_CTX *ctx);
 int SSL_CTX_set1_param(SSL_CTX *ctx, X509_VERIFY_PARAM *vpm);
