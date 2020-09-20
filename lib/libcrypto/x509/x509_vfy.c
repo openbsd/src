@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.79 2020/09/15 11:55:14 beck Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.80 2020/09/20 18:32:33 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1664,9 +1664,10 @@ check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
 	if (ctx->current_issuer) {
 		issuer = ctx->current_issuer;
 	} else if (cnum < chnum) {
-		/* Else find CRL issuer: if not last certificate then issuer
-	 	* is next certificate in chain.
-	 	*/
+		/*
+		 * Else find CRL issuer: if not last certificate then issuer
+		 * is next certificate in chain.
+		 */
 		issuer = sk_X509_value(ctx->chain, cnum + 1);
 	} else {
 		issuer = sk_X509_value(ctx->chain, chnum);
