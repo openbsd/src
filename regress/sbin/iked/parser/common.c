@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.5 2020/04/01 21:09:27 tobhe Exp $ */
+/*	$OpenBSD: common.c,v 1.6 2020/09/20 17:29:55 tobhe Exp $ */
 /*
  * A bunch of stub functions so we can compile and link ikev2_pld.c
  * in a standalone program for testing purposes.
@@ -18,7 +18,8 @@
 #include "types.h"
 #include "test_helper.h"
 
-int	 eap_parse(struct iked *, struct iked_sa *, void *, int);
+int	 eap_parse(struct iked *, struct iked_sa *, struct iked_message *,
+	    void *, int);
 int	 ikev2_msg_frompeer(struct iked_message *);
 int	 ikev2_send_ike_e(struct iked *, struct iked_sa *, struct ibuf *,
 	    u_int8_t, u_int8_t, int);
@@ -53,7 +54,8 @@ struct ibuf *
 	     struct ibuf *);
 
 int
-eap_parse(struct iked *env, struct iked_sa *sa, void *data, int response)
+eap_parse(struct iked *env, struct iked_sa *sa, struct iked_message *msg,
+    void *data, int response)
 {
 	return (0);
 }
