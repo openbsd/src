@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2019/05/10 02:22:34 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.6 2020/09/21 17:29:02 florian Exp $
 
 # The following ports must be installed:
 #
@@ -8,9 +8,7 @@
 RTABLE		?=	1
 PAIR1		?=	pair1
 PAIR2		?=	pair2
-CTR_SOCK	?=	${.OBJDIR}/slaacd.sock
-
-CLEANFILES +=		slaacd.sock
+CTR_SOCK	?=	/dev/slaacd.sock
 
 .if ! (make(clean) || make(cleandir) || make(obj))
 # Check whether all required python packages are installed.  If some
@@ -55,12 +53,10 @@ setup: cleanup
 	${SUDO} ifconfig ${PAIR2} inet6 rdomain ${RTABLE} eui64
 	${SUDO} ifconfig ${PAIR2} inet6 rdomain ${RTABLE} autoconf
 	${SUDO} route -nq -T ${RTABLE} add -host default 10.11.12.1 -reject
-	${SUDO} route -T ${RTABLE} exec slaacd -s ${CTR_SOCK}
 
 REGRESS_CLEANUP +=	cleanup
 cleanup:
 	@echo '\n======== $@ ========'
-	${SUDO} pkill -T ${RTABLE} -xf "slaacd -s ${CTR_SOCK}" || true
 .for iface in ${PAIR1} ${PAIR2}
 	${SUDO} ifconfig ${iface} destroy 2>/dev/null || true
 .endfor
