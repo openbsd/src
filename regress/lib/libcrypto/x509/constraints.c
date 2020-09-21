@@ -390,6 +390,10 @@ test_constraints1(void)
 		"https://www.openbsd.net?",
 		"https://org#",
 		"herp://beck@org:",
+		"///",
+		"//",
+		"/",
+		"",
 		NULL,
 	};
 	for (i = 0; constraints[i] != NULL; i++) {
