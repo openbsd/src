@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.68 2020/09/20 10:20:43 schwarze Exp $
+# $OpenBSD: Makefile,v 1.69 2020/09/21 08:53:56 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -119,6 +119,9 @@ MAN =	BIO_f_ssl.3 \
 	SSL_write.3 \
 	d2i_SSL_SESSION.3 \
 	ssl.3
+
+# To be enabled after the release of OpenBSD 6.8:
+#	SSL_read_early_data.3 \
 
 all clean cleandir depend includes obj tags:
 

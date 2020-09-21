@@ -1,4 +1,4 @@
-.\" $OpenBSD: ssl.3,v 1.19 2020/09/20 10:20:44 schwarze Exp $
+.\" $OpenBSD: ssl.3,v 1.20 2020/09/21 08:53:56 schwarze Exp $
 .\" full merge up to: OpenSSL e330f55d Nov 11 00:51:04 2016 +0100
 .\" selective merge up to: OpenSSL 322755cc Sep 1 08:40:51 2018 +0800
 .\"
@@ -51,7 +51,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 20 2020 $
+.Dd $Mdocdate: September 21 2020 $
 .Dt SSL 3
 .Os
 .Sh NAME
@@ -301,7 +301,7 @@ To change the configuration:
 .Xr SSL_set_connect_state 3 ,
 .Xr SSL_set_fd 3 ,
 .Xr SSL_set_session 3 ,
-.Xr SSL_set1_host.3 ,
+.Xr SSL_set1_host 3 ,
 .Xr SSL_set_verify_result 3
 .Pp
 To inspect the configuration:
@@ -318,6 +318,7 @@ To transmit data:
 .Xr SSL_connect 3 ,
 .Xr SSL_do_handshake 3 ,
 .Xr SSL_read 3 ,
+.\" XXX enable after the 6.8 release: Xr SSL_read_early_data 3 ,
 .Xr SSL_renegotiate 3 ,
 .Xr SSL_shutdown 3 ,
 .Xr SSL_write 3
