@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_set_SSL_CTX.3,v 1.1 2020/09/20 10:20:44 schwarze Exp $
+.\" $OpenBSD: SSL_set_SSL_CTX.3,v 1.2 2020/09/21 14:59:46 schwarze Exp $
 .\"
 .\" Copyright (c) 2020 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 20 2020 $
+.Dd $Mdocdate: September 21 2020 $
 .Dt SSL_SET_SSL_CTX 3
 .Os
 .Sh NAME
@@ -32,8 +32,7 @@
 causes
 .Fa ssl
 to use the context
-.Fa ctx
-in the future.
+.Fa ctx .
 .Pp
 If
 .Fa ctx
@@ -52,7 +51,7 @@ no action occurs.
 .Fn SSL_set_SSL_CTX
 returns an internal pointer to the context that
 .Fa ssl
-will use after the call, or
+is using as a result of the call, or
 .Dv NULL
 if memory allocation fails.
 .Sh SEE ALSO
