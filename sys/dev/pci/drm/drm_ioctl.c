@@ -781,6 +781,10 @@ pledge_ioctl_drm(struct proc *p, long com, dev_t device)
 		return 0;
 	}
 
+	/* for amdgpu libdrm */
+	if (com == DRM_IOCTL_GET_CLIENT)
+		return 0;
+
 	return EPERM;
 }
 
