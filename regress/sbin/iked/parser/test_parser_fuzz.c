@@ -1,4 +1,4 @@
-/*	$OpenBSD: test_parser_fuzz.c,v 1.3 2019/05/11 16:30:23 patrick Exp $ */
+/*	$OpenBSD: test_parser_fuzz.c,v 1.4 2020/09/21 20:10:14 tobhe Exp $ */
 /*
  * Fuzz tests for payload parsing
  *
@@ -437,6 +437,7 @@ prepare_message(struct iked_message *msg, struct ibuf *data)
 	msg->msg_sa = &sa;
 	msg->msg_data = data;
 	msg->msg_e = 1;
+	msg->msg_parent = msg;
 }
 
 static void
