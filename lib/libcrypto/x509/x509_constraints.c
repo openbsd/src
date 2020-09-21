@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_constraints.c,v 1.9 2020/09/21 05:20:20 tb Exp $ */
+/* $OpenBSD: x509_constraints.c,v 1.10 2020/09/21 05:41:43 tb Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -184,8 +184,7 @@ x509_constraints_valid_domain_internal(uint8_t *name, size_t len)
 		if (!isascii(c) || c == '\0')
 			return 0;
 		/* It must be alphanumeric, a '-', '.', '_' or '*' */
-		if (!isalnum(c) && c != '-' && c != '.' && c != '_' &&
-		    c != '*')
+		if (!isalnum(c) && c != '-' && c != '.' && c != '_' && c != '*')
 			return 0;
 
 		/* '*' can only be the first thing. */
@@ -194,14 +193,14 @@ x509_constraints_valid_domain_internal(uint8_t *name, size_t len)
 
 		/* '-' must not start a component or be at the end. */
 		if (c == '-' && (component == 0 || i == len - 1))
-				return 0;
+			return 0;
 
 		/*
 		 * '.' must not be at the end. It may be first overall
 		 * but must not otherwise start a component.
 		 */
 		if (c == '.' && ((component == 0 && !first) || i == len - 1))
-				return 0;
+			return 0;
 
 		if (c == '.') {
 			/* Components can not end with a dash. */
@@ -419,7 +418,7 @@ int
 x509_constraints_valid_domain_constraint(uint8_t *constraint, size_t len)
 {
 	if (len == 0)
-		return 1; 	/* empty constraints match */
+		return 1;	/* empty constraints match */
 
 	if (constraint[0] == '*') /* wildcard not allowed in a constraint */
 		return 0;
@@ -496,12 +495,11 @@ x509_constraints_uri_host(uint8_t *uri, size_t len, char **hostpart)
 	if (!x509_constraints_valid_host(host, hostlen))
 		return 0;
 	*hostpart = strndup(host, hostlen);
-        return 1;
+	return 1;
 }
 
 int
-x509_constraints_sandns(char *sandns, size_t dlen, char *constraint,
-    size_t len)
+x509_constraints_sandns(char *sandns, size_t dlen, char *constraint, size_t len)
 {
 	char *suffix;
 
@@ -529,8 +527,7 @@ x509_constraints_sandns(char *sandns, size_t dlen, char *constraint,
  * starts with a '.'.
  */
 int
-x509_constraints_domain(char *domain, size_t dlen, char *constraint,
-    size_t len)
+x509_constraints_domain(char *domain, size_t dlen, char *constraint, size_t len)
 {
 	if (len == 0)
 		return 1; /* an empty constraint matches everything */
@@ -558,8 +555,8 @@ x509_constraints_domain(char *domain, size_t dlen, char *constraint,
 }
 
 int
-x509_constraints_uri(uint8_t *uri, size_t ulen, uint8_t *constraint,
-    size_t len, int *error)
+x509_constraints_uri(uint8_t *uri, size_t ulen, uint8_t *constraint, size_t len,
+    int *error)
 {
 	int ret = 0;
 	char *hostpart = NULL;
@@ -576,8 +573,8 @@ x509_constraints_uri(uint8_t *uri, size_t ulen, uint8_t *constraint,
 		*error = X509_V_ERR_UNSUPPORTED_CONSTRAINT_SYNTAX;
 		goto err;
 	}
-	ret = x509_constraints_domain(hostpart, strlen(hostpart),
-	    constraint, len);
+	ret = x509_constraints_domain(hostpart, strlen(hostpart), constraint,
+	    len);
  err:
 	free(hostpart);
 	return ret;
@@ -591,8 +588,8 @@ x509_constraints_uri(uint8_t *uri, size_t ulen, uint8_t *constraint,
  * 16 and 32 respectively for ipv6 address constraints by the caller.
  */
 int
-x509_constraints_ipaddr(uint8_t *address, size_t alen,
-    uint8_t *constraint, size_t len)
+x509_constraints_ipaddr(uint8_t *address, size_t alen, uint8_t *constraint,
+    size_t len)
 {
 	uint8_t *mask;
 	size_t i;
@@ -696,8 +693,7 @@ x509_constraints_extract_names(struct x509_constraints_names *names,
 		switch(name_type) {
 		case GEN_DNS:
 			if (!x509_constraints_valid_sandns(bytes, len)) {
-				*error =
-				    X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
+				*error = X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
 				goto err;
 			}
 			if ((vname->name = strdup(bytes)) == NULL) {
@@ -748,8 +744,7 @@ x509_constraints_extract_names(struct x509_constraints_names *names,
 				vname->af = AF_INET6;
 			if (vname->af != AF_INET && vname->af !=
 			    AF_INET6) {
-				*error =
-				    X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
+				*error = X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
 				goto err;
 			}
 			memcpy(vname->address, bytes, len);
@@ -889,14 +884,13 @@ x509_constraints_validate(GENERAL_NAME *constraint,
 			return 0;
 		}
 		if (len == 0)
-			goto err; /* XXX The RFC's are delightfully vague */
+			goto err; /* XXX The RFCs are delightfully vague */
 		memcpy(name->der, bytes, len);
 		name->der_len = len;
 		name->type = GEN_DIRNAME;
 		break;
 	case GEN_DNS:
-		if (!x509_constraints_valid_domain_constraint(bytes,
-		    len))
+		if (!x509_constraints_valid_domain_constraint(bytes, len))
 			goto err;
 		if ((name->name = strdup(bytes)) == NULL) {
 			*error = X509_V_ERR_OUT_OF_MEM;
@@ -906,12 +900,11 @@ x509_constraints_validate(GENERAL_NAME *constraint,
 		break;
 	case GEN_EMAIL:
 		if (memchr(bytes, '@', len) != NULL) {
-			if (!x509_constraints_parse_mailbox(bytes, len,
-			    name))
+			if (!x509_constraints_parse_mailbox(bytes, len, name))
 				goto err;
 		} else {
-			if (!x509_constraints_valid_domain_constraint(
-			    bytes, len))
+			if (!x509_constraints_valid_domain_constraint(bytes,
+			    len))
 				goto err;
 			if ((name->name = strdup(bytes)) == NULL) {
 				*error = X509_V_ERR_OUT_OF_MEM;
@@ -932,8 +925,7 @@ x509_constraints_validate(GENERAL_NAME *constraint,
 		name->type = GEN_IPADD;
 		break;
 	case GEN_URI:
-		if (!x509_constraints_valid_domain_constraint(bytes,
-		    len))
+		if (!x509_constraints_valid_domain_constraint(bytes, len))
 			goto err;
 		name->name = strdup(bytes);
 		name->type = GEN_URI;
@@ -983,7 +975,7 @@ x509_constraints_extract_constraints(X509 *cert,
 		}
 		if (!x509_constraints_names_add(permitted, vname)) {
 			x509_constraints_name_free(vname);
- 			*error = X509_V_ERR_OUT_OF_MEM;
+			*error = X509_V_ERR_OUT_OF_MEM;
 			return 0;
 		}
 	}
@@ -1009,7 +1001,7 @@ x509_constraints_extract_constraints(X509 *cert,
 		}
 		if (!x509_constraints_names_add(excluded, vname)) {
 			x509_constraints_name_free(vname);
- 			*error = X509_V_ERR_OUT_OF_MEM;
+			*error = X509_V_ERR_OUT_OF_MEM;
 			return 0;
 		}
 	}
@@ -1028,13 +1020,11 @@ x509_constraints_match(struct x509_constraints_name *name,
 	if (name->type != constraint->type)
 		return 0;
 	if (name->type == GEN_DNS)
-		return x509_constraints_sandns(name->name,
-		    strlen(name->name), constraint->name,
-		    strlen(constraint->name));
+		return x509_constraints_sandns(name->name, strlen(name->name),
+		    constraint->name, strlen(constraint->name));
 	if (name->type == GEN_URI)
-		return x509_constraints_domain(name->name,
-		    strlen(name->name), constraint->name,
-		    strlen(constraint->name));
+		return x509_constraints_domain(name->name, strlen(name->name),
+		    constraint->name, strlen(constraint->name));
 	if (name->type == GEN_IPADD) {
 		size_t nlen = name->af == AF_INET ? 4 : 16;
 		size_t clen = name->af == AF_INET ? 8 : 32;
@@ -1044,8 +1034,8 @@ x509_constraints_match(struct x509_constraints_name *name,
 			return 0;
 		if (name->af != constraint->af)
 			return 0;
-		return x509_constraints_ipaddr(name->address,
-		    nlen, constraint->address, clen);
+		return x509_constraints_ipaddr(name->address, nlen,
+		    constraint->address, clen);
 	}
 	if (name->type == GEN_EMAIL) {
 		if (constraint->local) {
@@ -1054,9 +1044,8 @@ x509_constraints_match(struct x509_constraints_name *name,
 			    strcmp(name->name, constraint->name) == 0);
 		}
 		/* otherwise match the constraint to the domain part */
-		return x509_constraints_domain(name->name,
-		    strlen(name->name), constraint->name,
-		    strlen(constraint->name));
+		return x509_constraints_domain(name->name, strlen(name->name),
+		    constraint->name, strlen(constraint->name));
 	}
 	if (name->type == GEN_DIRNAME)
 		return x509_constraints_dirname(name->der, name->der_len,
@@ -1159,8 +1148,8 @@ x509_constraints_chain(STACK_OF(X509) *chain, int *error, int *depth)
 				verify_err = X509_V_ERR_OUT_OF_MEM;
 				goto err;
 			}
-			if (!x509_constraints_check(names, permitted,
-			    excluded, &verify_err))
+			if (!x509_constraints_check(names, permitted, excluded,
+			    &verify_err))
 				goto err;
 			x509_constraints_names_free(excluded);
 			excluded = NULL;
