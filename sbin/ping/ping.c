@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.240 2020/02/11 18:41:39 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.241 2020/09/21 12:19:08 mglocker Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -351,7 +351,7 @@ main(int argc, char *argv[])
 				errx(1, "interval is too small: %s", optarg);
 			if (interval.tv_sec < 1 && ouid != 0) {
 				errx(1, "only root may use an interval smaller"
-				    "than one second");
+				    " than one second");
 			}
 			options |= F_INTERVAL;
 			break;
