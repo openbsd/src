@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.60 2020/08/26 06:50:20 florian Exp $	*/
+/*	$OpenBSD: config.c,v 1.61 2020/09/21 09:42:07 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -385,8 +385,10 @@ config_setserver_fcgiparams(struct httpd *env, struct server *srv)
 	if (proc_composev(ps, PROC_SERVER, IMSG_CFG_FCGI, iov, c) != 0) {
 		log_warn("%s: failed to compose IMSG_CFG_FCGI imsg for "
 		    "`%s'", __func__, srv_conf->name);
+		free(iov);
 		return (-1);
 	}
+	free(iov);
 
 	return (0);
 }
