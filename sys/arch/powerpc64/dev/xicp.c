@@ -1,4 +1,4 @@
-/*	$OpenBSD: xicp.c,v 1.1 2020/08/23 19:18:42 kettenis Exp $	*/
+/*	$OpenBSD: xicp.c,v 1.2 2020/09/21 11:14:28 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -97,7 +97,7 @@ struct cfdriver xicp_cd = {
 };
 
 void	xicp_exi(struct trapframe *);
-void 	*xicp_intr_establish(uint32_t, int, int,
+void 	*xicp_intr_establish(uint32_t, int, int, struct cpu_info *,
 	    int (*)(void *), void *, const char *);
 void	xicp_intr_send_ipi(void *);
 void	xicp_setipl(int);
@@ -175,10 +175,9 @@ xicp_intr_send_ipi(void *cookie)
 }
 
 void *
-xicp_intr_establish(uint32_t girq, int type, int level,
+xicp_intr_establish(uint32_t girq, int type, int level, struct cpu_info *ci,
     int (*func)(void *), void *arg, const char *name)
 {
-	struct cpu_info *ci = cpu_info_primary;
 	struct intrhand *ih;
 	int64_t error;
 	uint16_t server;

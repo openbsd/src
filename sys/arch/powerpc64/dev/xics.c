@@ -1,4 +1,4 @@
-/*	$OpenBSD: xics.c,v 1.2 2020/07/22 16:49:13 kettenis Exp $	*/
+/*	$OpenBSD: xics.c,v 1.3 2020/09/21 11:14:28 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -80,7 +80,7 @@ xics_intr_establish(void *cookie, int *cell, int level,
 	uint32_t girq = cell[0];
 	int type = cell[1];
 
-	return _intr_establish(girq, type, level, func, arg, name);
+	return _intr_establish(girq, type, level, ci, func, arg, name);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xive.c,v 1.12 2020/09/03 20:02:02 kettenis Exp $	*/
+/*	$OpenBSD: xive.c,v 1.13 2020/09/21 11:14:28 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -150,7 +150,7 @@ struct cfdriver xive_cd = {
 };
 
 void	xive_hvi(struct trapframe *);
-void 	*xive_intr_establish(uint32_t, int, int,
+void 	*xive_intr_establish(uint32_t, int, int, struct cpu_info *,
 	    int (*)(void *), void *, const char *);
 void	xive_intr_send_ipi(void *);
 void	xive_setipl(int);
@@ -248,7 +248,7 @@ xive_activate(struct device *self, int act)
 }
 
 void *
-xive_intr_establish(uint32_t girq, int type, int level,
+xive_intr_establish(uint32_t girq, int type, int level, struct cpu_info *ci,
     int (*func)(void *), void *arg, const char *name)
 {
 	struct xive_softc *sc = xive_sc;
@@ -285,7 +285,7 @@ xive_intr_establish(uint32_t girq, int type, int level,
 		return NULL;
 	}
 
-	error = opal_xive_set_irq_config(girq, mfpir(),
+	error = opal_xive_set_irq_config(girq, ci->ci_pir,
 	    xive_prio(level & IPL_IRQMASK), lirq);
 	if (error != OPAL_SUCCESS) {
 		if (trig != eoi && trig != 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.6 2020/08/23 13:50:34 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.7 2020/09/21 11:14:28 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -28,7 +28,7 @@
 /* Dummy implementations. */
 void	dummy_exi(struct trapframe *);
 void	dummy_hvi(struct trapframe *);
-void	*dummy_intr_establish(uint32_t, int, int,
+void	*dummy_intr_establish(uint32_t, int, int, struct cpu_info *,
 	    int (*)(void *), void *, const char *);
 void	dummy_intr_send_ipi(void *);
 void	dummy_setipl(int);
@@ -39,7 +39,7 @@ void	dummy_setipl(int);
  */
 void	(*_exi)(struct trapframe *) = dummy_exi;
 void	(*_hvi)(struct trapframe *) = dummy_hvi;
-void	*(*_intr_establish)(uint32_t, int, int,
+void	*(*_intr_establish)(uint32_t, int, int, struct cpu_info *,
 	    int (*)(void *), void *, const char *) = dummy_intr_establish;
 void	(*_intr_send_ipi)(void *) = dummy_intr_send_ipi;
 void	(*_setipl)(int) = dummy_setipl;
@@ -57,10 +57,13 @@ hvi_intr(struct trapframe *frame)
 }
 
 void *
-intr_establish(uint32_t girq, int type, int level,
+intr_establish(uint32_t girq, int type, int level, struct cpu_info *ci,
     int (*func)(void *), void *arg, const char *name)
 {
-	return (*_intr_establish)(girq, type, level, func, arg, name);
+	if (ci == NULL)
+		ci = cpu_info_primary;
+
+	return (*_intr_establish)(girq, type, level, ci, func, arg, name);
 }
 
 #define SI_TO_IRQBIT(x) (1 << (x))
@@ -179,7 +182,7 @@ dummy_hvi(struct trapframe *frame)
 }
 
 void *
-dummy_intr_establish(uint32_t girq, int type, int level,
+dummy_intr_establish(uint32_t girq, int type, int level, struct cpu_info *ci,
 	    int (*func)(void *), void *arg, const char *name)
 {
 	return NULL;

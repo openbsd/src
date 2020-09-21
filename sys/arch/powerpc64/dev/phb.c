@@ -1,4 +1,4 @@
-/*	$OpenBSD: phb.c,v 1.15 2020/09/01 19:12:11 kettenis Exp $	*/
+/*	$OpenBSD: phb.c,v 1.16 2020/09/21 11:14:28 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -93,7 +93,7 @@ void	phb_conf_write(void *, pcitag_t, int, pcireg_t);
 
 int	phb_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *phb_intr_string(void *, pci_intr_handle_t);
-void	*phb_intr_establish(void *, pci_intr_handle_t, int,
+void	*phb_intr_establish(void *, pci_intr_handle_t, int, struct cpu_info *,
 	    int (*)(void *), void *, char *);
 void	phb_intr_disestablish(void *, void *);
 
@@ -517,7 +517,7 @@ phb_intr_string(void *v, pci_intr_handle_t ih)
 
 void *
 phb_intr_establish(void *v, pci_intr_handle_t ih, int level,
-    int (*func)(void *), void *arg, char *name)
+    struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
 {
 	struct phb_softc *sc = v;
 	void *cookie = NULL;
@@ -553,7 +553,7 @@ phb_intr_establish(void *v, pci_intr_handle_t ih, int level,
 			return NULL;
 
 		cookie = intr_establish(sc->sc_msi_ranges[0] + xive,
-		    IST_EDGE, level, func, arg, name);
+		    IST_EDGE, level, ci, func, arg, name);
 		if (cookie == NULL)
 			return NULL;
 
