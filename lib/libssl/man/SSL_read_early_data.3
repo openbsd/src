@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_read_early_data.3,v 1.1 2020/09/21 08:53:56 schwarze Exp $
+.\" $OpenBSD: SSL_read_early_data.3,v 1.2 2020/09/21 15:18:13 schwarze Exp $
 .\" content checked up to: OpenSSL 6328d367 Jul 4 21:58:30 2020 +0200
 .\"
 .\" Copyright (c) 2020 Ingo Schwarze <schwarze@openbsd.org>
@@ -28,7 +28,7 @@
 .Nm SSL_write_early_data ,
 .Nm SSL_read_early_data ,
 .Nm SSL_get_early_data_status
-.Nd transmit application data before the handshake is complete
+.Nd transmit application data during the handshake
 .Sh SYNOPSIS
 .In openssl/ssl.h
 .Ft int
@@ -87,8 +87,7 @@ and because when they are used, inconspicuous oversights are likely
 to cause serious security vulnerabilities.
 .Pp
 If these functions are used, other TLS implementations
-may allow the transfer of application data
-before the inital handshake is complete.
+may allow the transfer of application data during the inital handshake.
 Even when used as designed, security of the connection is compromised;
 in particular, application data is exchanged with unauthenticated peers,
 and there is no forward secrecy.
@@ -99,19 +98,19 @@ Other downsides include an increased risk of replay attacks.
 and
 .Fn SSL_SESSION_set_max_early_data
 are intended to configure the maximum number of bytes per session
-that can be transmitted before the handshake is complete.
+that can be transmitted during the handshake.
 With LibreSSL, all arguments are ignored.
 .Pp
 An endpoint can attempt to send application data with
 .Fn SSL_write_early_data
-before the handshake is complete.
+during the handshake.
 With LibreSSL, such attempts always fail and set
 .Pf * Fa written
 to 0.
 .Pp
 A server can attempt to read application data from the client using
 .Fn SSL_read_early_data
-before the handshake is complete.
+during the handshake.
 With LibreSSL, no such data is ever accepted and
 .Pf * Fa readbytes
 is always set to 0.
@@ -128,7 +127,7 @@ With LibreSSL, they always succeed.
 and
 .Fn SSL_SESSION_get_max_early_data
 return the maximum number of bytes of application data
-that will be accepted from the peer before the handshake is complete.
+that will be accepted from the peer during the handshake.
 With LibreSSL, they always return 0.
 .Pp
 .Fn SSL_write_early_data
