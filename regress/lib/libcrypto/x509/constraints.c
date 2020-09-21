@@ -344,8 +344,8 @@ test_invalid_uri(void) {
 			FAIL("invalid URI '%s' accepted\n",
 			    invaliduri[j]);
 			failure = 1;
+			goto done;
 		}
-		goto done;
 	}
  done:
 	return failure;
