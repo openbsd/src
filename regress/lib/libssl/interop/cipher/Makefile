@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2020/09/12 15:48:30 bluhm Exp $
+# $OpenBSD: Makefile,v 1.6 2020/09/21 15:13:24 beck Exp $
 
 # Connect a client to a server.  Both can be current libressl, or
 # openssl 1.0.2, or openssl 1.1.  Create lists of supported ciphers
@@ -103,7 +103,11 @@ DHPARAM_${cipher}_${slib} =	-p dh.param
 DHPARAM_${cipher}_${slib} =
 .endif
 
+.if ("${clib}" == "libressl" || "${slib}" == "libressl")
 REGRESS_TARGETS +=	run-cipher-${cipher}-client-${clib}-server-${slib}
+.else
+REGRESS_SLOW_TARGETS +=	run-cipher-${cipher}-client-${clib}-server-${slib}
+.endif
 run-cipher-${cipher}-client-${clib}-server-${slib} \
 client-cipher-${cipher}-client-${clib}-server-${slib}.out \
 server-cipher-${cipher}-client-${clib}-server-${slib}.out: dh.param \
@@ -122,7 +126,11 @@ server-cipher-${cipher}-client-${clib}-server-${slib}.out: dh.param \
 	    { sleep 1; grep -q '^success$$' ${@:S/^run/server/}.out; }
 	grep -q '^success$$' ${@:S/^run/client/}.out
 
+.if ("${clib}" == "libressl" || "${slib}" == "libressl")
 REGRESS_TARGETS +=	check-cipher-${cipher}-client-${clib}-server-${slib}
+.else
+REGRESS_SLOW_TARGETS +=	check-cipher-${cipher}-client-${clib}-server-${slib}
+.endif
 check-cipher-${cipher}-client-${clib}-server-${slib}: \
     client-cipher-${cipher}-client-${clib}-server-${slib}.out \
     server-cipher-${cipher}-client-${clib}-server-${slib}.out

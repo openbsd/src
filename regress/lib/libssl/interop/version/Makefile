@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2020/09/14 00:51:04 bluhm Exp $
+# $OpenBSD: Makefile,v 1.2 2020/09/21 15:13:24 beck Exp $
 
 # Connect a client to a server.  Both can be current libressl, or
 # openssl 1.0.2, or openssl 1.1.  Pin client or server to a fixed TLS
@@ -31,7 +31,11 @@ FAIL_${cver}_${sver} = !
 .if ("${clib}" != openssl && "${slib}" != openssl) || \
     ("${cver}" != TLS1_3 && "${sver}" != TLS1_3)
 
+.if ("${clib}" == "libressl" || "${slib}" == "libressl")
 REGRESS_TARGETS +=	run-version-client-${clib}-${cver}-server-${slib}-${sver}
+.else
+REGRESS_SLOW_TARGETS +=	run-version-client-${clib}-${cver}-server-${slib}-${sver}
+.endif
 
 run-version-client-${clib}-${cver}-server-${slib}-${sver} \
 client-version-client-${clib}-${cver}-server-${slib}-${sver}.out \
@@ -56,7 +60,11 @@ server-version-client-${clib}-${cver}-server-${slib}-${sver}.out: \
 
 .if empty(${FAIL_${cver}_${sver}})
 
+.if ("${clib}" == "libressl" || "${slib}" == "libressl")
 REGRESS_TARGETS +=	check-version-client-${clib}-${cver}-server-${slib}-${sver}
+.else
+REGRESS_SLOW_TARGETS +=	check-version-client-${clib}-${cver}-server-${slib}-${sver}
+.endif
 
 check-version-client-${clib}-${cver}-server-${slib}-${sver}: \
     client-version-client-${clib}-${cver}-server-${slib}-${sver}.out \
