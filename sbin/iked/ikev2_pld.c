@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.95 2020/09/16 21:37:35 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.96 2020/09/21 20:13:49 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1721,7 +1721,6 @@ ikev2_pld_ef(struct iked *env, struct ikev2_payload *pld,
 			goto done;
 		}
 		sa_frag->frag_total = frag_total;
-		sa_frag->frag_nextpayload = pld->pld_nextpayload;
 	}
 
 	/* Drop all fragments if frag_num or frag_total don't match */
@@ -1731,6 +1730,10 @@ ikev2_pld_ef(struct iked *env, struct ikev2_payload *pld,
 	/* Silent drop if fragment already stored */
 	if (sa_frag->frag_arr[frag_num-1] != NULL)
 		goto done;
+
+	/* The first fragments IKE header determines pld_nextpayload */
+	if (frag_num == 1)
+		sa_frag->frag_nextpayload = pld->pld_nextpayload;
 
         /* Decrypt fragment */
 	if ((e = ibuf_new(buf, len)) == NULL)
