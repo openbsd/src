@@ -1,4 +1,4 @@
-/*	$OpenBSD: mailaddr.c,v 1.3 2018/05/31 21:06:12 gilles Exp $	*/
+/*	$OpenBSD: mailaddr.c,v 1.4 2020/09/22 18:04:27 martijn Exp $	*/
 
 /*
  * Copyright (c) 2015 Gilles Chehade <gilles@poolp.org>
@@ -80,12 +80,10 @@ int
 mailaddr_line(struct maddrmap *maddrmap, const char *s)
 {
 	struct maddrnode	mn;
-	char			buffer[LINE_MAX];
-	char		       *p, *subrcpt;
+	char		       *p, *subrcpt, *buffer;
 	int			ret;
 
-	memset(buffer, 0, sizeof buffer);
-	if (strlcpy(buffer, s, sizeof buffer) >= sizeof buffer)
+	if ((buffer = strdup(s)) == NULL)
 		return 0;
 
 	p = buffer;
@@ -93,11 +91,15 @@ mailaddr_line(struct maddrmap *maddrmap, const char *s)
 		subrcpt = strip(subrcpt);
 		if (subrcpt[0] == '\0')
 			continue;
-		if (!text_to_mailaddr(&mn.mailaddr, subrcpt))
+		if (!text_to_mailaddr(&mn.mailaddr, subrcpt)) {
+			free(buffer);
 			return 0;
+		}
 		log_debug("subrcpt: [%s]", subrcpt);
 		maddrmap_insert(maddrmap, &mn);
 	}
+
+	free(buffer);
 
 	if (ret >= 0)
 		return 1;
