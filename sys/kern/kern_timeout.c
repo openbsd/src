@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.79 2020/08/07 00:45:25 cheloha Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.80 2020/09/22 13:43:28 cheloha Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -470,11 +470,13 @@ timeout_run(struct timeout *to)
 	fn = to->to_func;
 	arg = to->to_arg;
 	needsproc = ISSET(to->to_flags, TIMEOUT_PROC);
+#if NKCOV > 0
+	struct process *kcov_process = to->to_process;
+#endif
 
 	mtx_leave(&timeout_mutex);
 	timeout_sync_enter(needsproc);
 #if NKCOV > 0
-	struct process *kcov_process = to->to_process;
 	kcov_remote_enter(KCOV_REMOTE_COMMON, kcov_process);
 #endif
 	fn(arg);
