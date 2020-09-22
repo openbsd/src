@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdomain.4,v 1.14 2020/07/30 21:44:34 kn Exp $
+.\"	$OpenBSD: rdomain.4,v 1.15 2020/09/22 20:47:57 kn Exp $
 .\"
 .\" Copyright (c) 2015 Peter Hessler <phessler@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 30 2020 $
+.Dd $Mdocdate: September 22 2020 $
 .Dt RDOMAIN 4
 .Os
 .Sh NAME
@@ -98,6 +98,10 @@ Put em0 and lo4 in rdomain 4:
 # ifconfig em0 192.0.2.100/24
 .Ed
 .Pp
+List all rdomains with associated interfaces and routing tables:
+.Pp
+.Dl # netstat -R
+.Pp
 Set a default route and localhost reject route within rtable 4:
 .Bd -literal -offset indent
 # route -T4 -qn add -net 127 127.0.0.1 -reject
@@ -129,6 +133,7 @@ Delete rdomain 4 again:
 # ifconfig lo4 destroy
 .Ed
 .Sh SEE ALSO
+.Xr netstat 1 ,
 .Xr ps 1 ,
 .Xr lo 4 ,
 .Xr route 4 ,
