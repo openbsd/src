@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.c,v 1.50 2020/08/08 12:40:55 krw Exp $	*/
+/*	$OpenBSD: adv.c,v 1.51 2020/09/22 19:32:52 krw Exp $	*/
 /*	$NetBSD: adv.c,v 1.6 1998/10/28 20:39:45 dante Exp $	*/
 
 /*
@@ -546,7 +546,7 @@ adv_scsi_cmd(xs)
 
 	ccb->scsiq.q2.ccb_ptr = (ulong) ccb;
 
-	ccb->scsiq.cdbptr = &xs->cmd->opcode;
+	ccb->scsiq.cdbptr = (u_int8_t *)&xs->cmd;
 	ccb->scsiq.q2.cdb_len = xs->cmdlen;
 	ccb->scsiq.q1.target_id = ASC_TID_TO_TARGET_ID(sc_link->target);
 	ccb->scsiq.q1.target_lun = sc_link->lun;
@@ -629,7 +629,7 @@ adv_scsi_cmd(xs)
 #ifdef ASC_DEBUG
 	printf("id = %d, lun = %d, cmd = %d, ccb = 0x%lX \n",
 			sc_link->target,
-			sc_link->lun, xs->cmd->opcode,
+			sc_link->lun, xs->cmd.opcode,
 			(unsigned long)ccb);
 #endif
 	/*
@@ -784,7 +784,7 @@ adv_narrow_isr_callback(sc, qdonep)
 	printf(" - ccb=0x%lx, id=%d, lun=%d, cmd=%d, ",
 			(unsigned long)ccb,
 			xs->sc_link->target,
-			xs->sc_link->lun, xs->cmd->opcode);
+			xs->sc_link->lun, xs->cmd.opcode);
 #endif
 	timeout_del(&xs->stimeout);
 
@@ -827,7 +827,7 @@ adv_narrow_isr_callback(sc, qdonep)
 		 * If an INQUIRY command completed successfully, then call
 		 * the AscInquiryHandling() function to patch bugged boards.
 		 */
-		if ((xs->cmd->opcode == SCSICMD_Inquiry) &&
+		if ((xs->cmd.opcode == SCSICMD_Inquiry) &&
 		    (xs->sc_link->lun == 0) &&
 		    (xs->datalen - qdonep->remain_bytes) >= 8) {
 			AscInquiryHandling(sc,

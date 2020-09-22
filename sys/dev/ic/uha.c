@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha.c,v 1.38 2020/07/29 12:09:47 krw Exp $	*/
+/*	$OpenBSD: uha.c,v 1.39 2020/09/22 19:32:53 krw Exp $	*/
 /*	$NetBSD: uha.c,v 1.3 1996/10/13 01:37:29 christos Exp $	*/
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -295,7 +295,7 @@ uha_scsi_cmd(xs)
 		mscp->opcode = UHA_TSP;
 		/* XXX Not for tapes. */
 		mscp->ca = 0x01;
-		bcopy(xs->cmd, &mscp->scsi_cmd, mscp->scsi_cmd_length);
+		bcopy(&xs->cmd, &mscp->scsi_cmd, mscp->scsi_cmd_length);
 	}
 	mscp->xdir = UHA_SDET;
 	mscp->dcn = 0x00;

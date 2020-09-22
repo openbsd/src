@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.81 2020/09/01 12:17:53 krw Exp $ */
+/* $OpenBSD: mfii.c,v 1.82 2020/09/22 19:32:53 krw Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -2088,7 +2088,7 @@ mfii_scsi_cmd(struct scsi_xfer *xs)
 
 	timeout_set(&xs->stimeout, mfii_scsi_cmd_tmo, xs);
 
-	switch (xs->cmd->opcode) {
+	switch (xs->cmd.opcode) {
 	case READ_COMMAND:
 	case READ_10:
 	case READ_12:
@@ -2297,7 +2297,7 @@ mfii_scsi_cmd_io(struct mfii_softc *sc, struct scsi_xfer *xs)
 		io->direction = MPII_SCSIIO_DIR_NONE;
 		break;
 	}
-	memcpy(io->cdb, xs->cmd, xs->cmdlen);
+	memcpy(io->cdb, &xs->cmd, xs->cmdlen);
 
 	ctx->type_nseg = sc->sc_iop->ldio_ctx_type_nseg;
 	ctx->timeout_value = htole16(0x14); /* XXX */
@@ -2356,7 +2356,7 @@ mfii_scsi_cmd_cdb(struct mfii_softc *sc, struct scsi_xfer *xs)
 		io->direction = MPII_SCSIIO_DIR_NONE;
 		break;
 	}
-	memcpy(io->cdb, xs->cmd, xs->cmdlen);
+	memcpy(io->cdb, &xs->cmd, xs->cmdlen);
 
 	ctx->virtual_disk_target_id = htole16(link->target);
 
@@ -2472,7 +2472,7 @@ mfii_pd_scsi_cmd_cdb(struct mfii_softc *sc, struct scsi_xfer *xs)
 		io->direction = MPII_SCSIIO_DIR_NONE;
 		break;
 	}
-	memcpy(io->cdb, xs->cmd, xs->cmdlen);
+	memcpy(io->cdb, &xs->cmd, xs->cmdlen);
 
 	ctx->virtual_disk_target_id = htole16(link->target);
 	ctx->raid_flags = MFII_RAID_CTX_IO_TYPE_SYSPD;

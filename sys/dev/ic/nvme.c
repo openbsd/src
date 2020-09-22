@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.87 2020/09/05 13:05:06 krw Exp $ */
+/*	$OpenBSD: nvme.c,v 1.88 2020/09/22 19:32:52 krw Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -536,7 +536,7 @@ nvme_activate(struct nvme_softc *sc, int act)
 void
 nvme_scsi_cmd(struct scsi_xfer *xs)
 {
-	switch (xs->cmd->opcode) {
+	switch (xs->cmd.opcode) {
 	case READ_COMMAND:
 	case READ_10:
 	case READ_12:
@@ -647,7 +647,7 @@ nvme_scsi_io_fill(struct nvme_softc *sc, struct nvme_ccb *ccb, void *slot)
 	u_int64_t lba;
 	u_int32_t blocks;
 
-	scsi_cmd_rw_decode(xs->cmd, &lba, &blocks);
+	scsi_cmd_rw_decode(&xs->cmd, &lba, &blocks);
 
 	sqe->opcode = ISSET(xs->flags, SCSI_DATA_IN) ?
 	    NVM_CMD_READ : NVM_CMD_WRITE;
@@ -749,7 +749,7 @@ nvme_scsi_sync_done(struct nvme_softc *sc, struct nvme_ccb *ccb,
 void
 nvme_scsi_inq(struct scsi_xfer *xs)
 {
-	struct scsi_inquiry *inq = (struct scsi_inquiry *)xs->cmd;
+	struct scsi_inquiry *inq = (struct scsi_inquiry *)&xs->cmd;
 
 	if (!ISSET(inq->flags, SI_EVPD)) {
 		nvme_scsi_inquiry(xs);

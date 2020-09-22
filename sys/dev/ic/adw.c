@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.67 2020/08/08 12:40:55 krw Exp $ */
+/*	$OpenBSD: adw.c,v 1.68 2020/09/22 19:32:52 krw Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -604,8 +604,8 @@ adw_build_req(struct scsi_xfer *xs, ADW_CCB *ccb, int flags)
 	 * is supported.
 	 */
 	scsiqp->cdb_len = xs->cmdlen;
-	bcopy((caddr_t)xs->cmd, &scsiqp->cdb, 12);
-	bcopy((caddr_t)xs->cmd + 12, &scsiqp->cdb16, 4);
+	bcopy(&xs->cmd, &scsiqp->cdb, 12);
+	bcopy((caddr_t)&xs->cmd + 12, &scsiqp->cdb16, 4);
 
 	scsiqp->target_id = sc_link->target;
 	scsiqp->target_lun = sc_link->lun;
@@ -746,7 +746,7 @@ adw_poll(ADW_SOFTC *sc, struct scsi_xfer *xs, int count)
 		adw_intr(sc);
 		splx(s);
 		if (xs->flags & ITSDONE) {
-			if ((xs->cmd->opcode == INQUIRY)
+			if ((xs->cmd.opcode == INQUIRY)
 			    && (xs->sc_link->lun == 0)
 			    && (xs->error == XS_NOERROR))
 				adw_print_info(sc, xs->sc_link->target);

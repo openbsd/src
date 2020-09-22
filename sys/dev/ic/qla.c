@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla.c,v 1.67 2020/07/20 14:41:13 krw Exp $ */
+/*	$OpenBSD: qla.c,v 1.68 2020/09/22 19:32:52 krw Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -2260,7 +2260,7 @@ qla_put_cmd(struct qla_softc *sc, void *buf, struct scsi_xfer *xs,
 	} else {
 		req->req_target = htole16(target << 8 | xs->sc_link->lun);
 	}
-	memcpy(req->req_cdb, xs->cmd, xs->cmdlen);
+	memcpy(req->req_cdb, &xs->cmd, xs->cmdlen);
 	req->req_totalcnt = htole32(xs->datalen);
 
 	req->req_handle = ccb->ccb_id;

@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.116 2020/07/22 13:16:04 krw Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.117 2020/09/22 19:32:52 krw Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -354,7 +354,7 @@ wdc_atapi_send_cmd(struct scsi_xfer *sc_xfer)
 
 	for (idx = 0; idx < sc_xfer->cmdlen; idx++) {
 		WDCDEBUG_PRINT((" %02x",
-				   ((unsigned char *)sc_xfer->cmd)[idx]),
+				   ((unsigned char *)&sc_xfer->cmd)[idx]),
 		    DEBUG_XFERS | DEBUG_ERRORS);
 	}
 	WDCDEBUG_PRINT(("\n"), DEBUG_XFERS | DEBUG_ERRORS);
@@ -363,8 +363,8 @@ wdc_atapi_send_cmd(struct scsi_xfer *sc_xfer)
 
 	if (drvp->atapi_cap & ACAP_DSC) {
 		WDCDEBUG_PRINT(("about to send cmd 0x%x ",
-		    sc_xfer->cmd->opcode), DEBUG_DSC);
-		switch (sc_xfer->cmd->opcode) {
+		    sc_xfer->cmd.opcode), DEBUG_DSC);
+		switch (sc_xfer->cmd.opcode) {
 		case READ:
 		case WRITE:
 			xfer->c_flags |= C_MEDIA_ACCESS;
@@ -377,10 +377,10 @@ wdc_atapi_send_cmd(struct scsi_xfer *sc_xfer)
 				xfer->c_bcount = 0;
 				xfer->transfer_len =
 				  _3btol(((struct scsi_rw_tape *)
-					  sc_xfer->cmd)->len);
+					  &sc_xfer->cmd)->len);
 				_lto3b(0,
 				    ((struct scsi_rw_tape *)
-				    sc_xfer->cmd)->len);
+				    &sc_xfer->cmd)->len);
 				xfer->c_done = wdc_atapi_tape_done;
 				WDCDEBUG_PRINT(
 				    ("R/W in completion mode, do 0 blocks\n"),
@@ -388,7 +388,7 @@ wdc_atapi_send_cmd(struct scsi_xfer *sc_xfer)
 			} else
 				WDCDEBUG_PRINT(("R/W %d blocks %d bytes\n",
 				    _3btol(((struct scsi_rw_tape *)
-					sc_xfer->cmd)->len),
+					&sc_xfer->cmd)->len),
 				    sc_xfer->datalen),
 				    DEBUG_DSC);
 
@@ -835,7 +835,7 @@ wdc_atapi_intr_command(struct channel_softc *chp, struct wdc_xfer *xfer,
 		cmd_reqsense->opcode = REQUEST_SENSE;
 		cmd_reqsense->length = xfer->c_bcount;
 	} else
-		bcopy(sc_xfer->cmd, cmd, sc_xfer->cmdlen);
+		bcopy(&sc_xfer->cmd, cmd, sc_xfer->cmdlen);
 
 	WDC_LOG_ATAPI_CMD(chp, xfer->drive, xfer->c_flags,
 	    cmdlen, cmd);
@@ -877,8 +877,8 @@ wdc_atapi_intr_command(struct channel_softc *chp, struct wdc_xfer *xfer,
 	/* If we read/write to a tape we will get into buffer
 	   availability mode.  */
 	if (drvp->atapi_cap & ACAP_DSC) {
-		if ((sc_xfer->cmd->opcode == READ ||
-		       sc_xfer->cmd->opcode == WRITE)) {
+		if ((sc_xfer->cmd.opcode == READ ||
+		       sc_xfer->cmd.opcode == WRITE)) {
 			drvp->drive_flags |= DRIVE_DSCBA;
 			WDCDEBUG_PRINT(("set DSCBA\n"), DEBUG_DSC);
 		} else if ((xfer->c_flags & C_MEDIA_ACCESS) &&
@@ -1474,7 +1474,7 @@ wdc_atapi_tape_done(struct channel_softc *chp, struct wdc_xfer *xfer,
 
 	_lto3b(xfer->transfer_len,
 	    ((struct scsi_rw_tape *)
-		sc_xfer->cmd)->len);
+		&sc_xfer->cmd)->len);
 
 	xfer->c_bcount = sc_xfer->datalen;
 	xfer->c_done = NULL;

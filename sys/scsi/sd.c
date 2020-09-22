@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.328 2020/09/14 18:44:54 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.329 2020/09/22 19:32:53 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -689,16 +689,16 @@ sdstart(struct scsi_xfer *xs)
 	    (SID_ANSII_REV(&link->inqdata) < SCSI_REV_2) &&
 	    ((secno & 0x1fffff) == secno) &&
 	    ((nsecs & 0xff) == nsecs))
-		xs->cmdlen = sd_cmd_rw6(xs->cmd, read, secno, nsecs);
+		xs->cmdlen = sd_cmd_rw6(&xs->cmd, read, secno, nsecs);
 
 	else if (sc->params.disksize > UINT32_MAX)
-		xs->cmdlen = sd_cmd_rw16(xs->cmd, read, secno, nsecs);
+		xs->cmdlen = sd_cmd_rw16(&xs->cmd, read, secno, nsecs);
 
 	else if (nsecs <= UINT16_MAX)
-		xs->cmdlen = sd_cmd_rw10(xs->cmd, read, secno, nsecs);
+		xs->cmdlen = sd_cmd_rw10(&xs->cmd, read, secno, nsecs);
 
 	else
-		xs->cmdlen = sd_cmd_rw12(xs->cmd, read, secno, nsecs);
+		xs->cmdlen = sd_cmd_rw12(&xs->cmd, read, secno, nsecs);
 
 	disk_busy(&sc->sc_dk);
 	if (!read)
@@ -1340,7 +1340,7 @@ sddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 		xs->data = va;
 		xs->datalen = nwrt * sectorsize;
 
-		xs->cmdlen = sd_cmd_rw10(xs->cmd, 0, blkno, nwrt); /* XXX */
+		xs->cmdlen = sd_cmd_rw10(&xs->cmd, 0, blkno, nwrt); /* XXX */
 
 		rv = scsi_xs_sync(xs);
 		scsi_xs_put(xs);
@@ -1869,7 +1869,7 @@ sd_flush(struct sd_softc *sc, int flags)
 		return EIO;
 	}
 
-	cmd = (struct scsi_synchronize_cache *)xs->cmd;
+	cmd = (struct scsi_synchronize_cache *)&xs->cmd;
 	cmd->opcode = SYNCHRONIZE_CACHE;
 
 	xs->cmdlen = sizeof(*cmd);

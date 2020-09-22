@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.186 2020/09/01 12:17:53 krw Exp $ */
+/* $OpenBSD: mfi.c,v 1.187 2020/09/22 19:32:52 krw Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -1079,7 +1079,7 @@ mfi_scsi_xs_done(struct mfi_softc *sc, struct mfi_ccb *ccb)
 		xs->error = XS_DRIVER_STUFFUP;
 		DNPRINTF(MFI_D_CMD,
 		    "%s: mfi_scsi_xs_done stuffup %02x on %02x\n",
-		    DEVNAME(sc), hdr->mfh_cmd_status, xs->cmd->opcode);
+		    DEVNAME(sc), hdr->mfh_cmd_status, xs->cmd.opcode);
 
 		if (hdr->mfh_scsi_status != 0) {
 			DNPRINTF(MFI_D_INTR,
@@ -1120,7 +1120,7 @@ mfi_scsi_ld(struct mfi_softc *sc, struct mfi_ccb *ccb, struct scsi_xfer *xs)
 	pf->mpf_sense_addr = htole64(ccb->ccb_psense);
 
 	memset(pf->mpf_cdb, 0, 16);
-	memcpy(pf->mpf_cdb, xs->cmd, xs->cmdlen);
+	memcpy(pf->mpf_cdb, &xs->cmd, xs->cmdlen);
 
 	ccb->ccb_done = mfi_scsi_xs_done;
 	ccb->ccb_cookie = xs;
@@ -1160,7 +1160,7 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 	union mfi_mbox		mbox;
 
 	DNPRINTF(MFI_D_CMD, "%s: mfi_scsi_cmd opcode: %#x\n",
-	    DEVNAME(sc), xs->cmd->opcode);
+	    DEVNAME(sc), xs->cmd.opcode);
 
 	KERNEL_UNLOCK();
 
@@ -1174,11 +1174,11 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 
 	xs->error = XS_NOERROR;
 
-	switch (xs->cmd->opcode) {
+	switch (xs->cmd.opcode) {
 	/* IO path */
 	case READ_10:
 	case WRITE_10:
-		rw10 = (struct scsi_rw_10 *)xs->cmd;
+		rw10 = (struct scsi_rw_10 *)&xs->cmd;
 		blockno = (uint64_t)_4btol(rw10->addr);
 		blockcnt = _2btol(rw10->length);
 		if (mfi_scsi_io(sc, ccb, xs, blockno, blockcnt))
@@ -1187,7 +1187,7 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 
 	case READ_COMMAND:
 	case WRITE_COMMAND:
-		rw = (struct scsi_rw *)xs->cmd;
+		rw = (struct scsi_rw *)&xs->cmd;
 		blockno =
 		    (uint64_t)(_3btol(rw->addr) & (SRW_TOPADDR << 16 | 0xffff));
 		blockcnt = rw->length ? rw->length : 0x100;
@@ -1197,7 +1197,7 @@ mfi_scsi_cmd(struct scsi_xfer *xs)
 
 	case READ_16:
 	case WRITE_16:
-		rw16 = (struct scsi_rw_16 *)xs->cmd;
+		rw16 = (struct scsi_rw_16 *)&xs->cmd;
 		blockno = _8btol(rw16->addr);
 		blockcnt = _4btol(rw16->length);
 		if (mfi_scsi_io(sc, ccb, xs, blockno, blockcnt))
@@ -2759,7 +2759,7 @@ mfi_pd_scsi_cmd(struct scsi_xfer *xs)
 	pf->mpf_sense_addr = htole64(ccb->ccb_psense);
 
 	memset(pf->mpf_cdb, 0, sizeof(pf->mpf_cdb));
-	memcpy(pf->mpf_cdb, xs->cmd, xs->cmdlen);
+	memcpy(pf->mpf_cdb, &xs->cmd, xs->cmdlen);
 
 	ccb->ccb_done = mfi_scsi_xs_done;
 	ccb->ccb_cookie = xs;

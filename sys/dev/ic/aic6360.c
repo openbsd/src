@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.37 2020/07/20 14:41:13 krw Exp $	*/
+/*	$OpenBSD: aic6360.c,v 1.38 2020/09/22 19:32:52 krw Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 #ifdef DDB
@@ -483,7 +483,7 @@ aic_scsi_cmd(struct scsi_xfer *xs)
 	int s, flags;
 
 	AIC_TRACE(("aic_scsi_cmd  "));
-	AIC_CMDS(("[0x%x, %d]->%d ", (int)xs->cmd->opcode, xs->cmdlen,
+	AIC_CMDS(("[0x%x, %d]->%d ", (int)xs->cmd.opcode, xs->cmdlen,
 	    sc_link->target));
 
 	flags = xs->flags;
@@ -499,7 +499,7 @@ aic_scsi_cmd(struct scsi_xfer *xs)
 		acb->scsi_cmd_length = 0;
 		acb->data_length = 0;
 	} else {
-		bcopy(xs->cmd, &acb->scsi_cmd, xs->cmdlen);
+		bcopy(&xs->cmd, &acb->scsi_cmd, xs->cmdlen);
 		acb->scsi_cmd_length = xs->cmdlen;
 		acb->data_addr = xs->data;
 		acb->data_length = xs->datalen;

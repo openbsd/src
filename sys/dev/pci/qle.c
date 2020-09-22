@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.60 2020/07/22 13:16:05 krw Exp $ */
+/*	$OpenBSD: qle.c,v 1.61 2020/09/22 19:32:53 krw Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -2635,7 +2635,7 @@ qle_put_cmd(struct qle_softc *sc, void *buf, struct scsi_xfer *xs,
 	htobem16(&cmnd->fcp_lun[1], lun >> 16);
 	/* cmnd->fcp_task_attr = TSK_SIMPLE; */
 	/* cmnd->fcp_task_mgmt = 0; */
-	memcpy(cmnd->fcp_cdb, xs->cmd, xs->cmdlen);
+	memcpy(cmnd->fcp_cdb, &xs->cmd, xs->cmdlen);
 
 	/* FCP_DL goes after the cdb */
 	fcp_dl = htobe32(xs->datalen);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.198 2020/08/30 19:41:25 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.199 2020/09/22 19:32:53 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -393,7 +393,7 @@ struct scsi_xfer {
 	struct	scsi_link *sc_link;	/* all about our device and adapter */
 	int	retries;		/* the number of times to retry */
 	int	timeout;		/* in milliseconds */
-	struct	scsi_generic *cmd;	/* The scsi command to execute */
+	struct	scsi_generic cmd;	/* The scsi command to execute */
 	int	cmdlen;			/* how long it is */
 	u_char	*data;			/* dma address OR a uio address */
 	int	datalen;		/* data len (blank if uio)    */
@@ -402,7 +402,6 @@ struct scsi_xfer {
 	struct	buf *bp;		/* If we need to associate with a buf */
 	struct	scsi_sense_data	sense;	/* 18 bytes*/
 	u_int8_t status;		/* SCSI status */
-	struct	scsi_generic cmdstore;	/* stash the command in here */
 	/*
 	 * timeout structure for hba's to use for a command
 	 */

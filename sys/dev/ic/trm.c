@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.c,v 1.42 2020/07/16 21:18:30 krw Exp $
+/*	$OpenBSD: trm.c,v 1.43 2020/09/22 19:32:52 krw Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.c
@@ -325,7 +325,7 @@ trm_scsi_cmd(struct scsi_xfer *xs)
 	if ((xs->flags & SCSI_POLL) != 0) {
  		sc_print_addr(xs->sc_link);
 		printf("trm_scsi_cmd. sc = %p, xs = %p, opcode = 0x%02x\n",
-		    sc, xs, lun, xs->cmd->opcode);
+		    sc, xs, lun, xs->cmd.opcode);
 	}
 #endif
 
@@ -379,13 +379,13 @@ trm_scsi_cmd(struct scsi_xfer *xs)
 	if (xs->datalen != 0) {
 #ifdef TRM_DEBUG0
  		sc_print_addr(xs->sc_link);
-		printf("xs->datalen=%x\n", (u_int32_t)xs->datalen);
+		printf("xs->datalen=%x\n", (u_int32_t)&xs->datalen);
  		sc_print_addr(xs->sc_link);
 		printf("sc->sc_dmatag=0x%x\n", (u_int32_t)sc->sc_dmatag);
  		sc_print_addr(xs->sc_link);
 		printf("pSRB->dmamapxfer=0x%x\n", (u_int32_t)pSRB->dmamapxfer);
  		sc_print_addr(xs->sc_link);
-		printf("xs->data=0x%x\n", (u_int32_t)xs->data);
+		printf("xs->data=0x%x\n", (u_int32_t)&xs->data);
 #endif
 		if ((error = bus_dmamap_load(sc->sc_dmatag, pSRB->dmamapxfer,
 		    xs->data, xs->datalen, NULL,
@@ -419,7 +419,7 @@ trm_scsi_cmd(struct scsi_xfer *xs)
 	pSRB->xs         = xs;
 	pSRB->ScsiCmdLen = xs->cmdlen;
 
-	memcpy(pSRB->CmdBlock, xs->cmd, xs->cmdlen);
+	memcpy(pSRB->CmdBlock, &xs->cmd, xs->cmdlen);
 
 	timeout_set(&xs->stimeout, trm_timeout, pSRB);
 
@@ -620,7 +620,7 @@ trm_timeout(void *arg1)
  	if (xs != NULL) {
  		sc = xs->sc_link->bus->sb_adapter_softc;
  		sc_print_addr(xs->sc_link);
- 		printf("SCSI OpCode 0x%02x ", xs->cmd->opcode);
+ 		printf("SCSI OpCode 0x%02x ", xs->cmd.opcode);
 		if (pSRB->SRBFlag & TRM_AUTO_REQSENSE)
 			printf("REQUEST SENSE ");
 		printf("timed out\n");
@@ -2038,7 +2038,7 @@ trm_FinishSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 
 	if ((xs->flags & SCSI_POLL) != 0) {
 
-		if (xs->cmd->opcode == INQUIRY && pDCB->sc_link == NULL) {
+		if (xs->cmd.opcode == INQUIRY && pDCB->sc_link == NULL) {
 
 			ptr = (struct scsi_inquiry_data *) xs->data;
 
@@ -2064,8 +2064,8 @@ trm_FinishSRB(struct trm_softc *sc, struct trm_scsi_req_q *pSRB)
 	if ((xs->error != 0) || (xs->status != 0) ||
 	    ((xs->flags & SCSI_POLL) != 0)) {
 		sc_print_addr(xs->sc_link);
-		printf("trm_FinishSRB. xs->cmd->opcode = 0x%02x, xs->error = %d, xs->status = %d\n",
-		    xs->cmd->opcode, xs->error, xs->status);
+		printf("trm_FinishSRB. xs->cmd.opcode = 0x%02x, xs->error = %d, xs->status = %d\n",
+		    xs->cmd.opcode, xs->error, xs->status);
 	}
 #endif
 

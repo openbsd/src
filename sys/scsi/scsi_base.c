@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.275 2020/09/08 12:36:42 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.276 2020/09/22 19:32:53 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -768,7 +768,6 @@ scsi_xs_io(struct scsi_link *link, void *io, int flags)
 		xs->sc_link = link;
 		xs->retries = SCSI_RETRIES;
 		xs->timeout = 10000;
-		xs->cmd = &xs->cmdstore;
 		xs->io = io;
 	}
 
@@ -804,7 +803,7 @@ scsi_test_unit_ready(struct scsi_link *link, int retries, int flags)
 	xs->retries = retries;
 	xs->timeout = 10000;
 
-	cmd = (struct scsi_test_unit_ready *)xs->cmd;
+	cmd = (struct scsi_test_unit_ready *)&xs->cmd;
 	cmd->opcode = TEST_UNIT_READY;
 
 	error = scsi_xs_sync(xs);
@@ -819,7 +818,7 @@ scsi_init_inquiry(struct scsi_xfer *xs, u_int8_t flags, u_int8_t pagecode,
 {
 	struct scsi_inquiry *cmd;
 
-	cmd = (struct scsi_inquiry *)xs->cmd;
+	cmd = (struct scsi_inquiry *)&xs->cmd;
 	cmd->opcode = INQUIRY;
 	cmd->flags = flags;
 	cmd->pagecode = pagecode;
@@ -948,7 +947,7 @@ scsi_read_cap_10(struct scsi_link *link, struct scsi_read_cap_data *rdcap,
 	memset(&cdb, 0, sizeof(cdb));
 	cdb.opcode = READ_CAPACITY;
 
-	memcpy(xs->cmd, &cdb, sizeof(cdb));
+	memcpy(&xs->cmd, &cdb, sizeof(cdb));
 	xs->cmdlen = sizeof(cdb);
 	xs->data = (void *)rdcap;
 	xs->datalen = sizeof(*rdcap);
@@ -985,7 +984,7 @@ scsi_read_cap_16(struct scsi_link *link, struct scsi_read_cap_data_16 *rdcap,
 	cdb.byte2 = SRC16_SERVICE_ACTION;
 	_lto4b(sizeof(*rdcap), cdb.length);
 
-	memcpy(xs->cmd, &cdb, sizeof(cdb));
+	memcpy(&xs->cmd, &cdb, sizeof(cdb));
 	xs->cmdlen = sizeof(cdb);
 	xs->data = (void *)rdcap;
 	xs->datalen = sizeof(*rdcap);
@@ -1025,7 +1024,7 @@ scsi_prevent(struct scsi_link *link, int type, int flags)
 	xs->retries = 2;
 	xs->timeout = 5000;
 
-	cmd = (struct scsi_prevent *)xs->cmd;
+	cmd = (struct scsi_prevent *)&xs->cmd;
 	cmd->opcode = PREVENT_ALLOW;
 	cmd->how = type;
 
@@ -1052,7 +1051,7 @@ scsi_start(struct scsi_link *link, int type, int flags)
 	xs->retries = 2;
 	xs->timeout = (type == SSS_START) ? 30000 : 10000;
 
-	cmd = (struct scsi_start_stop *)xs->cmd;
+	cmd = (struct scsi_start_stop *)&xs->cmd;
 	cmd->opcode = START_STOP;
 	cmd->how = type;
 
@@ -1091,7 +1090,7 @@ scsi_mode_sense(struct scsi_link *link, int pg_code,
 	 */
 	memset(data, 0, len);
 
-	cmd = (struct scsi_mode_sense *)xs->cmd;
+	cmd = (struct scsi_mode_sense *)&xs->cmd;
 	cmd->opcode = MODE_SENSE;
 	cmd->page = pg_code;
 
@@ -1150,7 +1149,7 @@ scsi_mode_sense_big(struct scsi_link *link, int pg_code,
 	 */
 	memset(data, 0, len);
 
-	cmd = (struct scsi_mode_sense_big *)xs->cmd;
+	cmd = (struct scsi_mode_sense_big *)&xs->cmd;
 	cmd->opcode = MODE_SENSE_BIG;
 	cmd->page = pg_code;
 
@@ -1343,7 +1342,7 @@ scsi_mode_select(struct scsi_link *link, int byte2,
 	xs->datalen = len;
 	xs->timeout = timeout;
 
-	cmd = (struct scsi_mode_select *)xs->cmd;
+	cmd = (struct scsi_mode_select *)&xs->cmd;
 	cmd->opcode = MODE_SELECT;
 	cmd->byte2 = byte2;
 	cmd->length = len;
@@ -1378,7 +1377,7 @@ scsi_mode_select_big(struct scsi_link *link, int byte2,
 	xs->datalen = len;
 	xs->timeout = timeout;
 
-	cmd = (struct scsi_mode_select_big *)xs->cmd;
+	cmd = (struct scsi_mode_select_big *)&xs->cmd;
 	cmd->opcode = MODE_SELECT_BIG;
 	cmd->byte2 = byte2;
 	_lto2b(len, cmd->length);
@@ -1414,7 +1413,7 @@ scsi_report_luns(struct scsi_link *link, int selectreport,
 
 	bzero(data, datalen);
 
-	cmd = (struct scsi_report_luns *)xs->cmd;
+	cmd = (struct scsi_report_luns *)&xs->cmd;
 	cmd->opcode = REPORT_LUNS;
 	cmd->selectreport = selectreport;
 	_lto4b(datalen, cmd->length);
@@ -2490,7 +2489,7 @@ scsi_print_sense(struct scsi_xfer *xs)
 	/* XXX For error 0x71, current opcode is not the relevant one. */
 	printf("%sCheck Condition (error %#x) on opcode 0x%x\n",
 	    (serr == SSD_ERRCODE_DEFERRED) ? "DEFERRED " : "", serr,
-	    xs->cmd->opcode);
+	    xs->cmd.opcode);
 
 	if (serr != SSD_ERRCODE_CURRENT && serr != SSD_ERRCODE_DEFERRED) {
 		if (ISSET(sense->error_code, SSD_ERRCODE_VALID)) {
@@ -2744,7 +2743,7 @@ scsi_show_sense(struct scsi_xfer *xs)
 void
 scsi_show_xs(struct scsi_xfer *xs)
 {
-	u_char		*b = (u_char *)xs->cmd;
+	u_char		*b = (u_char *)&xs->cmd;
 	int		 i = 0;
 
 	if (!ISSET(xs->sc_link->flags, SDEV_DB1))
@@ -2763,7 +2762,7 @@ scsi_show_xs(struct scsi_xfer *xs)
 	printf("bp(%p)\n", xs->bp);
 
 	sc_print_addr(xs->sc_link);
-	printf("cmd (%p): ", xs->cmd);
+	printf("cmd (%p): ", &xs->cmd);
 
 	if (!ISSET(xs->flags, SCSI_RESET)) {
 		while (i < xs->cmdlen) {

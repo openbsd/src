@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.48 2020/09/05 13:05:07 krw Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.49 2020/09/22 19:32:53 krw Exp $	*/
 
 /*
  * Copyright (c) 2016, 2017 Mike Belopuhov
@@ -385,7 +385,7 @@ xbf_scsi_cmd(struct scsi_xfer *xs)
 {
 	struct xbf_softc *sc = xs->sc_link->bus->sb_adapter_softc;
 
-	switch (xs->cmd->opcode) {
+	switch (xs->cmd.opcode) {
 	case READ_COMMAND:
 	case READ_10:
 	case READ_12:
@@ -420,7 +420,7 @@ xbf_scsi_cmd(struct scsi_xfer *xs)
 		xbf_scsi_done(xs, XS_NOERROR);
 		return;
 	default:
-		printf("%s cmd 0x%02x\n", __func__, xs->cmd->opcode);
+		printf("%s cmd 0x%02x\n", __func__, xs->cmd.opcode);
 	case MODE_SENSE:
 	case MODE_SENSE_BIG:
 	case REPORT_LUNS:
@@ -436,7 +436,7 @@ xbf_scsi_cmd(struct scsi_xfer *xs)
 
 	if (ISSET(xs->flags, SCSI_POLL) && xbf_poll_cmd(xs)) {
 		printf("%s: op %#x timed out\n", sc->sc_dev.dv_xname,
-		    xs->cmd->opcode);
+		    xs->cmd.opcode);
 		if (sc->sc_state == XBF_CONNECTED) {
 			xbf_reclaim_cmd(xs);
 			xbf_scsi_done(xs, XS_TIMEOUT);
@@ -617,7 +617,7 @@ xbf_submit_cmd(struct scsi_xfer *xs)
 	unsigned int ndesc = 0;
 	int desc, error;
 
-	switch (xs->cmd->opcode) {
+	switch (xs->cmd.opcode) {
 	case READ_COMMAND:
 	case READ_10:
 	case READ_12:
@@ -645,19 +645,19 @@ xbf_submit_cmd(struct scsi_xfer *xs)
 	 * has the same layout as 10-byte READ/WRITE commands.
 	 */
 	if (xs->cmdlen == 6) {
-		rw = (struct scsi_rw *)xs->cmd;
+		rw = (struct scsi_rw *)&xs->cmd;
 		lba = _3btol(rw->addr) & (SRW_TOPADDR << 16 | 0xffff);
 		nblk = rw->length ? rw->length : 0x100;
 	} else if (xs->cmdlen == 10) {
-		rw10 = (struct scsi_rw_10 *)xs->cmd;
+		rw10 = (struct scsi_rw_10 *)&xs->cmd;
 		lba = _4btol(rw10->addr);
 		nblk = _2btol(rw10->length);
 	} else if (xs->cmdlen == 12) {
-		rw12 = (struct scsi_rw_12 *)xs->cmd;
+		rw12 = (struct scsi_rw_12 *)&xs->cmd;
 		lba = _4btol(rw12->addr);
 		nblk = _4btol(rw12->length);
 	} else if (xs->cmdlen == 16) {
-		rw16 = (struct scsi_rw_16 *)xs->cmd;
+		rw16 = (struct scsi_rw_16 *)&xs->cmd;
 		lba = _8btol(rw16->addr);
 		nblk = _4btol(rw16->length);
 	}
@@ -809,7 +809,7 @@ xbf_complete_cmd(struct xbf_softc *sc, struct xbf_ccb_queue *cq, int desc)
 void
 xbf_scsi_inq(struct scsi_xfer *xs)
 {
-	struct scsi_inquiry *inq = (struct scsi_inquiry *)xs->cmd;
+	struct scsi_inquiry *inq = (struct scsi_inquiry *)&xs->cmd;
 
 	if (ISSET(inq->flags, SI_EVPD))
 		xbf_scsi_done(xs, XS_DRIVER_STUFFUP);

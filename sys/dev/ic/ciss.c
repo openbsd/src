@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss.c,v 1.88 2020/07/24 12:43:31 krw Exp $	*/
+/*	$OpenBSD: ciss.c,v 1.89 2020/09/22 19:32:52 krw Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -869,7 +869,7 @@ ciss_scsi_cmd(struct scsi_xfer *xs)
 		cmd->flags |= CISS_CDB_OUT;
 	cmd->tmo = htole16(xs->timeout < 1000? 1 : xs->timeout / 1000);
 	bzero(&cmd->cdb[0], sizeof(cmd->cdb));
-	bcopy(xs->cmd, &cmd->cdb[0], CISS_MAX_CDB);
+	bcopy(&xs->cmd, &cmd->cdb[0], CISS_MAX_CDB);
 
 	lock = CISS_LOCK(sc);
 	ciss_cmd(ccb, BUS_DMA_WAITOK, xs->flags & (SCSI_POLL|SCSI_NOSLEEP));

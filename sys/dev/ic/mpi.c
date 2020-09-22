@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi.c,v 1.222 2020/08/26 13:57:19 krw Exp $ */
+/*	$OpenBSD: mpi.c,v 1.223 2020/09/22 19:32:52 krw Exp $ */
 
 /*
  * Copyright (c) 2005, 2006, 2009 David Gwynne <dlg@openbsd.org>
@@ -1359,7 +1359,7 @@ mpi_scsi_cmd(struct scsi_xfer *xs)
 	else 
 		io->tagging = MPI_SCSIIO_ATTR_SIMPLE_Q;
 
-	memcpy(io->cdb, xs->cmd, xs->cmdlen);
+	memcpy(io->cdb, &xs->cmd, xs->cmdlen);
 
 	htolem32(&io->data_length, xs->datalen);
 
@@ -1420,7 +1420,7 @@ mpi_scsi_cmd_done(struct mpi_ccb *ccb)
 	sie = ccb->ccb_rcb->rcb_reply;
 
 	DNPRINTF(MPI_D_CMD, "%s: mpi_scsi_cmd_done xs cmd: 0x%02x len: %d "
-	    "flags 0x%x\n", DEVNAME(sc), xs->cmd->opcode, xs->datalen,
+	    "flags 0x%x\n", DEVNAME(sc), xs->cmd.opcode, xs->datalen,
 	    xs->flags);
 	DNPRINTF(MPI_D_CMD, "%s:  target_id: %d bus: %d msg_length: %d "
 	    "function: 0x%02x\n", DEVNAME(sc), sie->target_id, sie->bus,

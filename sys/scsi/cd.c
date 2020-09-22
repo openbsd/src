@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.261 2020/09/01 12:17:53 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.262 2020/09/22 19:32:53 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -587,12 +587,12 @@ cdstart(struct scsi_xfer *xs)
 	    (SID_ANSII_REV(&link->inqdata) < SCSI_REV_2) &&
 	    ((secno & 0x1fffff) == secno) &&
 	    ((nsecs & 0xff) == nsecs))
-		xs->cmdlen = cd_cmd_rw6(xs->cmd, read, secno, nsecs);
+		xs->cmdlen = cd_cmd_rw6(&xs->cmd, read, secno, nsecs);
 	else if (((secno & 0xffffffff) == secno) &&
 	    ((nsecs & 0xffff) == nsecs))
-		xs->cmdlen = cd_cmd_rw10(xs->cmd, read, secno, nsecs);
+		xs->cmdlen = cd_cmd_rw10(&xs->cmd, read, secno, nsecs);
 	else
-		xs->cmdlen = cd_cmd_rw12(xs->cmd, read, secno, nsecs);
+		xs->cmdlen = cd_cmd_rw12(&xs->cmd, read, secno, nsecs);
 
 	disk_busy(&sc->sc_dk);
 	scsi_xs_exec(xs);
@@ -1288,7 +1288,7 @@ cd_load_unload(struct cd_softc *sc, int options, int slot)
 	xs->cmdlen = sizeof(*cmd);
 	xs->timeout = 200000;
 
-	cmd = (struct scsi_load_unload *)xs->cmd;
+	cmd = (struct scsi_load_unload *)&xs->cmd;
 	cmd->opcode = LOAD_UNLOAD;
 	cmd->options = options;    /* ioctl uses ATAPI values */
 	cmd->slot = slot;
@@ -1353,7 +1353,7 @@ cd_play(struct cd_softc *sc, int secno, int nsecs)
 	xs->cmdlen = sizeof(*cmd);
 	xs->timeout = 200000;
 
-	cmd = (struct scsi_play *)xs->cmd;
+	cmd = (struct scsi_play *)&xs->cmd;
 	cmd->opcode = PLAY;
 	_lto4b(secno, cmd->blk_addr);
 	_lto2b(nsecs, cmd->xfer_len);
@@ -1440,7 +1440,7 @@ cd_play_msf(struct cd_softc *sc, int startm, int starts, int startf, int endm,
 	xs->cmdlen = sizeof(*cmd);
 	xs->timeout = 20000;
 
-	cmd = (struct scsi_play_msf *)xs->cmd;
+	cmd = (struct scsi_play_msf *)&xs->cmd;
 	cmd->opcode = PLAY_MSF;
 	cmd->start_m = startm;
 	cmd->start_s = starts;
@@ -1471,7 +1471,7 @@ cd_pause(struct cd_softc *sc, int go)
 	xs->cmdlen = sizeof(*cmd);
 	xs->timeout = 2000;
 
-	cmd = (struct scsi_pause *)xs->cmd;
+	cmd = (struct scsi_pause *)&xs->cmd;
 	cmd->opcode = PAUSE;
 	cmd->resume = go;
 
@@ -1521,7 +1521,7 @@ cd_read_subchannel(struct cd_softc *sc, int mode, int format, int track,
 	xs->datalen = len;
 	xs->timeout = 5000;
 
-	cmd = (struct scsi_read_subchannel *)xs->cmd;
+	cmd = (struct scsi_read_subchannel *)&xs->cmd;
 	cmd->opcode = READ_SUBCHANNEL;
 	if (mode == CD_MSF_FORMAT)
 		SET(cmd->byte2, CD_MSF);
@@ -1558,7 +1558,7 @@ cd_read_toc(struct cd_softc *sc, int mode, int start, void *data, int len,
 
 	bzero(data, len);
 
-	cmd = (struct scsi_read_toc *)xs->cmd;
+	cmd = (struct scsi_read_toc *)&xs->cmd;
 	cmd->opcode = READ_TOC;
 
 	if (mode == CD_MSF_FORMAT)
@@ -1659,7 +1659,7 @@ dvd_auth(struct cd_softc *sc, union dvd_authinfo *a)
 	xs->timeout = 30000;
 	xs->data = buf;
 
-	cmd = xs->cmd;
+	cmd = &xs->cmd;
 
 	switch (a->type) {
 	case DVD_LU_SEND_AGID:
@@ -1845,7 +1845,7 @@ dvd_read_physical(struct cd_softc *sc, union dvd_struct *s)
 	xs->datalen = DVD_READ_PHYSICAL_BUFSIZE;
 	xs->timeout = 30000;
 
-	cmd = xs->cmd;
+	cmd = &xs->cmd;
 	cmd->opcode = GPCMD_READ_DVD_STRUCTURE;
 	cmd->bytes[6] = s->type;
 	_lto2b(xs->datalen, &cmd->bytes[7]);
@@ -1902,7 +1902,7 @@ dvd_read_copyright(struct cd_softc *sc, union dvd_struct *s)
 	xs->datalen = DVD_READ_COPYRIGHT_BUFSIZE;
 	xs->timeout = 30000;
 
-	cmd = xs->cmd;
+	cmd = &xs->cmd;
 	cmd->opcode = GPCMD_READ_DVD_STRUCTURE;
 	cmd->bytes[6] = s->type;
 	_lto2b(xs->datalen, &cmd->bytes[7]);
@@ -1943,7 +1943,7 @@ dvd_read_disckey(struct cd_softc *sc, union dvd_struct *s)
 	xs->datalen = sizeof(*buf);
 	xs->timeout = 30000;
 
-	cmd = (struct scsi_read_dvd_structure *)xs->cmd;
+	cmd = (struct scsi_read_dvd_structure *)&xs->cmd;
 	cmd->opcode = GPCMD_READ_DVD_STRUCTURE;
 	cmd->format = s->type;
 	cmd->agid = s->disckey.agid << 6;
@@ -1983,7 +1983,7 @@ dvd_read_bca(struct cd_softc *sc, union dvd_struct *s)
 	xs->datalen = DVD_READ_BCA_BUFLEN;
 	xs->timeout = 30000;
 
-	cmd = xs->cmd;
+	cmd = &xs->cmd;
 	cmd->opcode = GPCMD_READ_DVD_STRUCTURE;
 	cmd->bytes[6] = s->type;
 	_lto2b(xs->datalen, &cmd->bytes[7]);
@@ -2024,7 +2024,7 @@ dvd_read_manufact(struct cd_softc *sc, union dvd_struct *s)
 	xs->datalen = sizeof(*buf);
 	xs->timeout = 30000;
 
-	cmd = (struct scsi_read_dvd_structure *)xs->cmd;
+	cmd = (struct scsi_read_dvd_structure *)&xs->cmd;
 	cmd->opcode = GPCMD_READ_DVD_STRUCTURE;
 	cmd->format = s->type;
 	_lto2b(xs->datalen, cmd->length);

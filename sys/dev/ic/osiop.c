@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.62 2020/07/24 12:43:31 krw Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.63 2020/09/22 19:32:52 krw Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -391,7 +391,7 @@ osiop_scsicmd(xs)
 	acb->status = ACB_S_READY;
 	acb->xs = xs;
 	acb->xsflags = xs->flags;
-	memcpy(&acb->ds->scsi_cmd, xs->cmd, xs->cmdlen);
+	memcpy(&acb->ds->scsi_cmd, &xs->cmd, xs->cmdlen);
 	acb->ds->cmd.count = xs->cmdlen;
 	acb->datalen = 0;
 #ifdef OSIOP_DEBUG
@@ -1930,7 +1930,7 @@ osiop_timeout(arg)
 	int s;
 
 	sc_print_addr(xs->sc_link);
-	printf("command 0x%02x timeout on xs %p\n", xs->cmd->opcode, xs);
+	printf("command 0x%02x timeout on xs %p\n", xs->cmd.opcode, xs);
 
 	s = splbio();
 	/* reset the scsi bus */

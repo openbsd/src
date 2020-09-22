@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath.c,v 1.53 2020/07/22 13:16:05 krw Exp $ */
+/*	$OpenBSD: mpath.c,v 1.54 2020/09/22 19:32:53 krw Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -204,7 +204,7 @@ mpath_cmd(struct scsi_xfer *xs)
 			return;
 		}
 
-		memcpy(mxs->cmd, xs->cmd, xs->cmdlen);
+		memcpy(&mxs->cmd, &xs->cmd, xs->cmdlen);
 		mxs->cmdlen = xs->cmdlen;
 		mxs->data = xs->data;
 		mxs->datalen = xs->datalen;
@@ -256,7 +256,7 @@ mpath_start(struct mpath_path *p, struct scsi_xfer *mxs)
 	if (xs == NULL)
 		goto fail;
 
-	memcpy(mxs->cmd, xs->cmd, xs->cmdlen);
+	memcpy(&mxs->cmd, &xs->cmd, xs->cmdlen);
 	mxs->cmdlen = xs->cmdlen;
 	mxs->data = xs->data;
 	mxs->datalen = xs->datalen;

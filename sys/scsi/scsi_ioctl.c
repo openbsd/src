@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_ioctl.c,v 1.66 2020/08/19 22:46:19 krw Exp $	*/
+/*	$OpenBSD: scsi_ioctl.c,v 1.67 2020/09/22 19:32:53 krw Exp $	*/
 /*	$NetBSD: scsi_ioctl.c,v 1.23 1996/10/12 23:23:17 christos Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ scsi_ioc_cmd(struct scsi_link *link, scsireq_t *screq)
 	if (xs == NULL)
 		return ENOMEM;
 
-	memcpy(xs->cmd, screq->cmd, screq->cmdlen);
+	memcpy(&xs->cmd, screq->cmd, screq->cmdlen);
 	xs->cmdlen = screq->cmdlen;
 
 	if (screq->datalen > 0) {
@@ -205,7 +205,7 @@ scsi_ioc_ata_cmd(struct scsi_link *link, atareq_t *atareq)
 	if (xs == NULL)
 		return ENOMEM;
 
-	cdb = (struct scsi_ata_passthru_12 *)xs->cmd;
+	cdb = (struct scsi_ata_passthru_12 *)&xs->cmd;
 	cdb->opcode = ATA_PASSTHRU_12;
 
 	if (atareq->datalen > 0) {

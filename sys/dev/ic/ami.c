@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.258 2020/09/05 13:05:06 krw Exp $	*/
+/*	$OpenBSD: ami.c,v 1.259 2020/09/22 19:32:52 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1102,7 +1102,7 @@ ami_done_pt(struct ami_softc *sc, struct ami_ccb *ccb)
 		xs->error = XS_DRIVER_STUFFUP;
  	else if (ccb->ccb_status != 0x00)
 		xs->error = XS_DRIVER_STUFFUP;
-	else if (xs->flags & SCSI_POLL && xs->cmd->opcode == INQUIRY) {
+	else if (xs->flags & SCSI_POLL && xs->cmd.opcode == INQUIRY) {
 		type = ((struct scsi_inquiry_data *)xs->data)->device &
 		    SID_TYPE;
 		if (!(type == T_PROCESSOR || type == T_ENCLOSURE))
@@ -1242,7 +1242,7 @@ ami_scsi_raw_cmd(struct scsi_xfer *xs)
 	ccb->ccb_pt->apt_param = AMI_PTPARAM(AMI_TIMEOUT_6,1,0);
 	ccb->ccb_pt->apt_channel = channel;
 	ccb->ccb_pt->apt_target = target;
-	bcopy(xs->cmd, ccb->ccb_pt->apt_cdb, AMI_MAX_CDB);
+	bcopy(&xs->cmd, ccb->ccb_pt->apt_cdb, AMI_MAX_CDB);
 	ccb->ccb_pt->apt_ncdb = xs->cmdlen;
 	ccb->ccb_pt->apt_nsense = AMI_MAX_SENSE;
 	ccb->ccb_pt->apt_datalen = xs->datalen;
@@ -1338,7 +1338,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 
 	xs->error = XS_NOERROR;
 
-	switch (xs->cmd->opcode) {
+	switch (xs->cmd.opcode) {
 	case READ_COMMAND:
 	case READ_10:
 	case WRITE_COMMAND:
@@ -1370,7 +1370,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 	case VERIFY:
 #endif
 	case PREVENT_ALLOW:
-		AMI_DPRINTF(AMI_D_CMD, ("opc %d tgt %d ", xs->cmd->opcode,
+		AMI_DPRINTF(AMI_D_CMD, ("opc %d tgt %d ", xs->cmd.opcode,
 		    target));
 		xs->error = XS_NOERROR;
 		scsi_done(xs);
@@ -1391,7 +1391,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		return;
 
 	case INQUIRY:
-		if (ISSET(((struct scsi_inquiry *)xs->cmd)->flags, SI_EVPD)) {
+		if (ISSET(((struct scsi_inquiry *)&xs->cmd)->flags, SI_EVPD)) {
 			xs->error = XS_DRIVER_STUFFUP;
 			scsi_done(xs);
 			return;
@@ -1428,7 +1428,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 
 	default:
 		AMI_DPRINTF(AMI_D_CMD, ("unsupported scsi command %#x tgt %d ",
-		    xs->cmd->opcode, target));
+		    xs->cmd.opcode, target));
 
 		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
@@ -1437,11 +1437,11 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 
 	/* A read or write operation. */
 	if (xs->cmdlen == 6) {
-		rw = (struct scsi_rw *)xs->cmd;
+		rw = (struct scsi_rw *)&xs->cmd;
 		blockno = _3btol(rw->addr) & (SRW_TOPADDR << 16 | 0xffff);
 		blockcnt = rw->length ? rw->length : 0x100;
 	} else {
-		rw10 = (struct scsi_rw_10 *)xs->cmd;
+		rw10 = (struct scsi_rw_10 *)&xs->cmd;
 		blockno = _4btol(rw10->addr);
 		blockcnt = _2btol(rw10->length);
 	}

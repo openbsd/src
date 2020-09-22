@@ -1,4 +1,4 @@
-/*	$OpenBSD: safte.c,v 1.65 2020/09/12 17:03:51 krw Exp $ */
+/*	$OpenBSD: safte.c,v 1.66 2020/09/22 19:32:53 krw Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -249,7 +249,7 @@ safte_read_config(struct safte_softc *sc)
 	xs->retries = 2;
 	xs->timeout = 30000;
 
-	cmd = (struct safte_readbuf_cmd *)xs->cmd;
+	cmd = (struct safte_readbuf_cmd *)&xs->cmd;
 	cmd->opcode = READ_BUFFER;
 	SET(cmd->flags, SAFTE_RD_MODE);
 	cmd->bufferid = SAFTE_RD_CONFIG;
@@ -397,7 +397,7 @@ safte_read_encstat(void *arg)
 	xs->retries = 2;
 	xs->timeout = 30000;
 
-	cmd = (struct safte_readbuf_cmd *)xs->cmd;
+	cmd = (struct safte_readbuf_cmd *)&xs->cmd;
 	cmd->opcode = READ_BUFFER;
 	SET(cmd->flags, SAFTE_RD_MODE);
 	cmd->bufferid = SAFTE_RD_ENCSTAT;
@@ -581,7 +581,7 @@ safte_bio_blink(struct safte_softc *sc, struct bioc_blink *blink)
 	xs->retries = 2;
 	xs->timeout = 30000;
 
-	cmd = (struct safte_writebuf_cmd *)xs->cmd;
+	cmd = (struct safte_writebuf_cmd *)&xs->cmd;
 	cmd->opcode = WRITE_BUFFER;
 	SET(cmd->flags, SAFTE_WR_MODE);
 	cmd->length = htobe16(sizeof(struct safte_slotop));

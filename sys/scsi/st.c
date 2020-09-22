@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.184 2020/08/22 15:07:11 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.185 2020/09/22 19:32:53 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -886,7 +886,7 @@ ststart(struct scsi_xfer *xs)
 	/*
 	 *  Fill out the scsi command
 	 */
-	cmd = (struct scsi_rw_tape *)xs->cmd;
+	cmd = (struct scsi_rw_tape *)&xs->cmd;
 	bzero(cmd, sizeof(*cmd));
 	if ((bp->b_flags & B_READ) == B_WRITE) {
 		cmd->opcode = WRITE;
@@ -1252,7 +1252,7 @@ st_read(struct st_softc *st, char *buf, int size, int flags)
 	xs->retries = 0;
 	xs->timeout = ST_IO_TIME;
 
-	cmd = (struct scsi_rw_tape *)xs->cmd;
+	cmd = (struct scsi_rw_tape *)&xs->cmd;
 	cmd->opcode = READ;
 	if (ISSET(st->flags, ST_FIXEDBLOCKS)) {
 		SET(cmd->byte2, SRW_FIXED);
@@ -1297,7 +1297,7 @@ st_read_block_limits(struct st_softc *st, int flags)
 	xs->datalen = sizeof(*block_limits);
 	xs->timeout = ST_CTL_TIME;
 
-	cmd = (struct scsi_block_limits *)xs->cmd;
+	cmd = (struct scsi_block_limits *)&xs->cmd;
 	cmd->opcode = READ_BLOCK_LIMITS;
 
 	error = scsi_xs_sync(xs);
@@ -1514,7 +1514,7 @@ st_erase(struct st_softc *st, int full, int flags)
 	 * the drive to erase the entire unit.  Without this bit, we're
 	 * asking the drive to write an erase gap.
 	 */
-	cmd = (struct scsi_erase *)xs->cmd;
+	cmd = (struct scsi_erase *)&xs->cmd;
 	cmd->opcode = ERASE;
 	if (full) {
 		cmd->byte2 = SE_IMMED|SE_LONG;
@@ -1613,7 +1613,7 @@ st_space(struct st_softc *st, int number, u_int what, int flags)
 	if (xs == NULL)
 		return ENOMEM;
 
-	cmd = (struct scsi_space *)xs->cmd;
+	cmd = (struct scsi_space *)&xs->cmd;
 	cmd->opcode = SPACE;
 	cmd->byte2 = what;
 	_lto3b(number, cmd->number);
@@ -1700,7 +1700,7 @@ st_write_filemarks(struct st_softc *st, int number, int flags)
 		break;
 	}
 
-	cmd = (struct scsi_write_filemarks *)xs->cmd;
+	cmd = (struct scsi_write_filemarks *)&xs->cmd;
 	cmd->opcode = WRITE_FILEMARKS;
 	_lto3b(number, cmd->number);
 
@@ -1787,7 +1787,7 @@ st_load(struct st_softc *st, u_int type, int flags)
 	xs->cmdlen = sizeof(*cmd);
 	xs->timeout = ST_SPC_TIME;
 
-	cmd = (struct scsi_load *)xs->cmd;
+	cmd = (struct scsi_load *)&xs->cmd;
 	cmd->opcode = LOAD;
 	cmd->how = type;
 
@@ -1818,7 +1818,7 @@ st_rewind(struct st_softc *st, u_int immediate, int flags)
 	xs->cmdlen = sizeof(*cmd);
 	xs->timeout = immediate ? ST_CTL_TIME : ST_SPC_TIME;
 
-	cmd = (struct scsi_rewind *)xs->cmd;
+	cmd = (struct scsi_rewind *)&xs->cmd;
 	cmd->opcode = REWIND;
 	cmd->byte2 = immediate;
 
@@ -1886,11 +1886,11 @@ st_interpret_sense(struct scsi_xfer *xs)
 		break;
 	case SKEY_BLANK_CHECK:
 		if (sense->error_code & SSD_ERRCODE_VALID &&
-		    xs->cmd->opcode == SPACE) {
+		    xs->cmd.opcode == SPACE) {
 			switch (ASC_ASCQ(sense)) {
 			case SENSE_END_OF_DATA_DETECTED:
 				SET(st->flags, ST_EOD_DETECTED);
-				space = (struct scsi_space *)xs->cmd;
+				space = (struct scsi_space *)&xs->cmd;
 				number = _3btol(space->number);
 				st->media_fileno = number - info;
 				st->media_eom = st->media_fileno;

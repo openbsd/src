@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.30 2020/09/05 13:05:07 krw Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.31 2020/09/22 19:32:53 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -406,7 +406,7 @@ vioblk_scsi_cmd(struct scsi_xfer *xs)
 	u_int32_t sector_count = 0;
 	uint8_t operation;
 
-	switch (xs->cmd->opcode) {
+	switch (xs->cmd.opcode) {
 	case READ_COMMAND:
 	case READ_10:
 	case READ_12:
@@ -447,7 +447,7 @@ vioblk_scsi_cmd(struct scsi_xfer *xs)
 		return;
 
 	default:
-		printf("%s cmd 0x%02x\n", __func__, xs->cmd->opcode);
+		printf("%s cmd 0x%02x\n", __func__, xs->cmd.opcode);
 	case MODE_SENSE:
 	case MODE_SENSE_BIG:
 	case REPORT_LUNS:
@@ -460,19 +460,19 @@ vioblk_scsi_cmd(struct scsi_xfer *xs)
 	 * layout as 10-byte READ/WRITE commands.
 	 */
 	if (xs->cmdlen == 6) {
-		rw = (struct scsi_rw *)xs->cmd;
+		rw = (struct scsi_rw *)&xs->cmd;
 		lba = _3btol(rw->addr) & (SRW_TOPADDR << 16 | 0xffff);
 		sector_count = rw->length ? rw->length : 0x100;
 	} else if (xs->cmdlen == 10) {
-		rw10 = (struct scsi_rw_10 *)xs->cmd;
+		rw10 = (struct scsi_rw_10 *)&xs->cmd;
 		lba = _4btol(rw10->addr);
 		sector_count = _2btol(rw10->length);
 	} else if (xs->cmdlen == 12) {
-		rw12 = (struct scsi_rw_12 *)xs->cmd;
+		rw12 = (struct scsi_rw_12 *)&xs->cmd;
 		lba = _4btol(rw12->addr);
 		sector_count = _4btol(rw12->length);
 	} else if (xs->cmdlen == 16) {
-		rw16 = (struct scsi_rw_16 *)xs->cmd;
+		rw16 = (struct scsi_rw_16 *)&xs->cmd;
 		lba = _8btol(rw16->addr);
 		sector_count = _4btol(rw16->length);
 	}
@@ -562,7 +562,7 @@ out_done:
 void
 vioblk_scsi_inq(struct scsi_xfer *xs)
 {
-	struct scsi_inquiry *inq = (struct scsi_inquiry *)xs->cmd;
+	struct scsi_inquiry *inq = (struct scsi_inquiry *)&xs->cmd;
 	struct scsi_inquiry_data inqd;
 
 	if (ISSET(inq->flags, SI_EVPD)) {

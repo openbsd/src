@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.c,v 1.51 2020/07/16 21:18:30 krw Exp $ */
+/*	$OpenBSD: iha.c,v 1.52 2020/09/22 19:32:52 krw Exp $ */
 /*-------------------------------------------------------------------------
  *
  * Device driver for the INI-9XXXU/UW or INIC-940/950  PCI SCSI Controller.
@@ -260,13 +260,13 @@ iha_scsi_cmd(struct scsi_xfer *xs)
 	pScb->SCB_Ident  = MSG_IDENTIFYFLAG |
 		(pScb->SCB_Lun & MSG_IDENTIFY_LUNMASK);
 
-	if ((xs->cmd->opcode != REQUEST_SENSE)
+	if ((xs->cmd.opcode != REQUEST_SENSE)
 	    && ((pScb->SCB_Flags & SCSI_POLL) == 0))
 		pScb->SCB_Ident |= MSG_IDENTIFY_DISCFLAG;
 
 	pScb->SCB_Xs	 = xs;
 	pScb->SCB_CDBLen = xs->cmdlen;
-	bcopy(xs->cmd, &pScb->SCB_CDB, xs->cmdlen);
+	bcopy(&xs->cmd, &pScb->SCB_CDB, xs->cmdlen);
 
 	pScb->SCB_BufCharsLeft = pScb->SCB_BufChars = xs->datalen;
 
@@ -2396,7 +2396,7 @@ iha_timeout(void *arg)
 
 	if (xs != NULL) {
 		sc_print_addr(xs->sc_link);
-		printf("SCSI OpCode 0x%02x timed out\n", xs->cmd->opcode);
+		printf("SCSI OpCode 0x%02x timed out\n", xs->cmd.opcode);
 		iha_abort_xs(xs->sc_link->bus->sb_adapter_softc, xs, HOST_TIMED_OUT);
 	}
 }

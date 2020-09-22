@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.71 2020/09/05 13:05:06 krw Exp $	*/
+/*	$OpenBSD: cac.c,v 1.72 2020/09/22 19:32:52 krw Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -604,7 +604,7 @@ cac_scsi_cmd(xs)
 	xs->error = XS_NOERROR;
 	dinfo = &sc->sc_dinfos[target];
 
-	switch (xs->cmd->opcode) {
+	switch (xs->cmd.opcode) {
 	case TEST_UNIT_READY:
 	case START_STOP:
 #if 0
@@ -676,12 +676,12 @@ cac_scsi_cmd(xs)
 		flags = 0;
 		/* A read or write operation. */
 		if (xs->cmdlen == 6) {
-			rw = (struct scsi_rw *)xs->cmd;
+			rw = (struct scsi_rw *)&xs->cmd;
 			blockno = _3btol(rw->addr) &
 			    (SRW_TOPADDR << 16 | 0xffff);
 			blockcnt = rw->length ? rw->length : 0x100;
 		} else {
-			rw10 = (struct scsi_rw_10 *)xs->cmd;
+			rw10 = (struct scsi_rw_10 *)&xs->cmd;
 			blockno = _4btol(rw10->addr);
 			blockcnt = _2btol(rw10->length);
 		}
@@ -694,7 +694,7 @@ cac_scsi_cmd(xs)
 			break;
 		}
 
-		switch (xs->cmd->opcode) {
+		switch (xs->cmd.opcode) {
 		case READ_COMMAND:
 		case READ_10:
 			op = CAC_CMD_READ;
@@ -723,7 +723,7 @@ cac_scsi_cmd(xs)
 
 	default:
 #ifdef CAC_DEBUG
-		printf("unsupported scsi command %#x tgt %d ", xs->cmd->opcode, target);
+		printf("unsupported scsi command %#x tgt %d ", xs->cmd.opcode, target);
 #endif
 		xs->error = XS_DRIVER_STUFFUP;
 	}

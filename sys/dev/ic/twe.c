@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.62 2020/09/05 13:05:06 krw Exp $	*/
+/*	$OpenBSD: twe.c,v 1.63 2020/09/22 19:32:53 krw Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff.  All rights reserved.
@@ -708,8 +708,8 @@ twe_done(sc, ccb)
 
 	dmap = ccb->ccb_dmamap;
 	if (xs) {
-		if (xs->cmd->opcode != PREVENT_ALLOW &&
-		    xs->cmd->opcode != SYNCHRONIZE_CACHE) {
+		if (xs->cmd.opcode != PREVENT_ALLOW &&
+		    xs->cmd.opcode != SYNCHRONIZE_CACHE) {
 			bus_dmamap_sync(sc->dmat, dmap, 0,
 			    dmap->dm_mapsize, (xs->flags & SCSI_DATA_IN) ?
 			    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
@@ -800,13 +800,13 @@ twe_scsi_cmd(xs)
 
 	xs->error = XS_NOERROR;
 
-	switch (xs->cmd->opcode) {
+	switch (xs->cmd.opcode) {
 	case TEST_UNIT_READY:
 	case START_STOP:
 #if 0
 	case VERIFY:
 #endif
-		TWE_DPRINTF(TWE_D_CMD, ("opc %d tgt %d ", xs->cmd->opcode,
+		TWE_DPRINTF(TWE_D_CMD, ("opc %d tgt %d ", xs->cmd.opcode,
 		    target));
 		break;
 
@@ -860,21 +860,21 @@ twe_scsi_cmd(xs)
 		lock = TWE_LOCK(sc);
 
 		flags = 0;
-		if (xs->cmd->opcode == SYNCHRONIZE_CACHE) {
+		if (xs->cmd.opcode == SYNCHRONIZE_CACHE) {
 			blockno = blockcnt = 0;
 		} else {
 			/* A read or write operation. */
 			if (xs->cmdlen == 6) {
-				rw = (struct scsi_rw *)xs->cmd;
+				rw = (struct scsi_rw *)&xs->cmd;
 				blockno = _3btol(rw->addr) &
 				    (SRW_TOPADDR << 16 | 0xffff);
 				blockcnt = rw->length ? rw->length : 0x100;
 			} else {
-				rw10 = (struct scsi_rw_10 *)xs->cmd;
+				rw10 = (struct scsi_rw_10 *)&xs->cmd;
 				blockno = _4btol(rw10->addr);
 				blockcnt = _2btol(rw10->length);
 				/* reflect DPO & FUA flags */
-				if (xs->cmd->opcode == WRITE_10 &&
+				if (xs->cmd.opcode == WRITE_10 &&
 				    rw10->byte2 & 0x18)
 					flags = TWE_FLAGS_CACHEDISABLE;
 			}
@@ -890,7 +890,7 @@ twe_scsi_cmd(xs)
 			}
 		}
 
-		switch (xs->cmd->opcode) {
+		switch (xs->cmd.opcode) {
 		case READ_COMMAND:	op = TWE_CMD_READ;	break;
 		case READ_10:		op = TWE_CMD_READ;	break;
 		case WRITE_COMMAND:	op = TWE_CMD_WRITE;	break;
@@ -925,7 +925,7 @@ twe_scsi_cmd(xs)
 
 	default:
 		TWE_DPRINTF(TWE_D_CMD, ("unsupported scsi command %#x tgt %d ",
-		    xs->cmd->opcode, target));
+		    xs->cmd.opcode, target));
 		xs->error = XS_DRIVER_STUFFUP;
 	}
 

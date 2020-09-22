@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.148 2020/09/05 13:05:06 krw Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.149 2020/09/22 19:32:52 krw Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -512,7 +512,7 @@ atascsi_disk_cmd(struct scsi_xfer *xs)
 
 	ap = atascsi_lookup_port(link);
 
-	switch (xs->cmd->opcode) {
+	switch (xs->cmd.opcode) {
 	case READ_COMMAND:
 	case READ_10:
 	case READ_12:
@@ -572,7 +572,7 @@ atascsi_disk_cmd(struct scsi_xfer *xs)
 	}
 
 	xa->flags = flags;
-	scsi_cmd_rw_decode(xs->cmd, &lba, &sector_count);
+	scsi_cmd_rw_decode(&xs->cmd, &lba, &sector_count);
 	if ((lba >> 48) != 0 || (sector_count >> 16) != 0) {
 		atascsi_done(xs, XS_DRIVER_STUFFUP);
 		return;
@@ -658,7 +658,7 @@ atascsi_disk_cmd_done(struct ata_xfer *xa)
 void
 atascsi_disk_inq(struct scsi_xfer *xs)
 {
-	struct scsi_inquiry	*inq = (struct scsi_inquiry *)xs->cmd;
+	struct scsi_inquiry	*inq = (struct scsi_inquiry *)&xs->cmd;
 
 	if (xs->cmdlen != sizeof(*inq)) {
 		atascsi_done(xs, XS_DRIVER_STUFFUP);
@@ -965,7 +965,7 @@ atascsi_disk_write_same_16(struct scsi_xfer *xs)
 	}
 
 	ap = atascsi_lookup_port(link);
-	cdb = (struct scsi_write_same_16 *)xs->cmd;
+	cdb = (struct scsi_write_same_16 *)&xs->cmd;
 
 	if (!ISSET(cdb->flags, WRITE_SAME_F_UNMAP) ||
 	   !ISSET(ap->ap_features, ATA_PORT_F_TRIM)) {
@@ -1048,7 +1048,7 @@ atascsi_disk_unmap(struct scsi_xfer *xs)
 	if (ISSET(xs->flags, SCSI_POLL) || xs->cmdlen != sizeof(*cdb))
 		atascsi_done(xs, XS_DRIVER_STUFFUP);
 
-	cdb = (struct scsi_unmap *)xs->cmd;
+	cdb = (struct scsi_unmap *)&xs->cmd;
 	len = _2btol(cdb->list_len);
 	if (xs->datalen != len || len < sizeof(*unmap)) {
 		atascsi_done(xs, XS_DRIVER_STUFFUP);
@@ -1403,7 +1403,7 @@ atascsi_passthru_12(struct scsi_xfer *xs)
 		return;
 	}
 
-	cdb = (struct scsi_ata_passthru_12 *)xs->cmd;
+	cdb = (struct scsi_ata_passthru_12 *)&xs->cmd;
 	/* validate cdb */
 
 	if (atascsi_passthru_map(xs, cdb->count_proto, cdb->flags) != 0) {
@@ -1441,7 +1441,7 @@ atascsi_passthru_16(struct scsi_xfer *xs)
 		return;
 	}
 
-	cdb = (struct scsi_ata_passthru_16 *)xs->cmd;
+	cdb = (struct scsi_ata_passthru_16 *)&xs->cmd;
 	/* validate cdb */
 
 	if (atascsi_passthru_map(xs, cdb->count_proto, cdb->flags) != 0) {
@@ -1519,7 +1519,7 @@ atascsi_disk_start_stop(struct scsi_xfer *xs)
 	struct atascsi		*as = link->bus->sb_adapter_softc;
 	struct atascsi_port	*ap;
 	struct ata_xfer		*xa = xs->io;
-	struct scsi_start_stop	*ss = (struct scsi_start_stop *)xs->cmd;
+	struct scsi_start_stop	*ss = (struct scsi_start_stop *)&xs->cmd;
 
 	if (xs->cmdlen != sizeof(*ss)) {
 		atascsi_done(xs, XS_DRIVER_STUFFUP);
@@ -1644,7 +1644,7 @@ atascsi_atapi_cmd(struct scsi_xfer *xs)
 	fis->lba_high = 0x20;
 
 	/* Copy SCSI command into ATAPI packet. */
-	memcpy(xa->packetcmd, xs->cmd, xs->cmdlen);
+	memcpy(xa->packetcmd, &xs->cmd, xs->cmdlen);
 
 	ata_exec(as, xa);
 }
@@ -1688,7 +1688,7 @@ atascsi_atapi_cmd_done(struct ata_xfer *xa)
 void
 atascsi_pmp_cmd(struct scsi_xfer *xs)
 {
-	switch (xs->cmd->opcode) {
+	switch (xs->cmd.opcode) {
 	case REQUEST_SENSE:
 		atascsi_pmp_sense(xs);
 		return;
@@ -1723,7 +1723,7 @@ void
 atascsi_pmp_inq(struct scsi_xfer *xs)
 {
 	struct scsi_inquiry_data inq;
-	struct scsi_inquiry *in_inq = (struct scsi_inquiry *)xs->cmd;
+	struct scsi_inquiry *in_inq = (struct scsi_inquiry *)&xs->cmd;
 
 	if (ISSET(in_inq->flags, SI_EVPD)) {
 		/* any evpd pages we need to support here? */

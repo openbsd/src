@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw.c,v 1.46 2020/08/13 10:37:27 krw Exp $ */
+/*	$OpenBSD: qlw.c,v 1.47 2020/09/22 19:32:52 krw Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -1379,7 +1379,7 @@ qlw_put_cmd(struct qlw_softc *sc, void *buf, struct scsi_xfer *xs,
 	lun = xs->sc_link->lun;
 	req->device = qlw_swap16(sc, (((bus << 7) | target) << 8) | lun);
 
-	memcpy(req->cdb, xs->cmd, xs->cmdlen);
+	memcpy(req->cdb, &xs->cmd, xs->cmdlen);
 	req->ccblen = qlw_swap16(sc, xs->cmdlen);
 
 	req->handle = qlw_swap32(sc, ccb->ccb_id);

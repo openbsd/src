@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.81 2020/09/05 13:05:06 krw Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.82 2020/09/22 19:32:52 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -591,7 +591,7 @@ gdt_scsi_cmd(struct scsi_xfer *xs)
 			break;
 		}
 
-		switch (xs->cmd->opcode) {
+		switch (xs->cmd.opcode) {
 		case TEST_UNIT_READY:
 		case REQUEST_SENSE:
 		case INQUIRY:
@@ -614,7 +614,7 @@ gdt_scsi_cmd(struct scsi_xfer *xs)
 
 		default:
 			GDT_DPRINTF(GDT_D_CMD,
-			    ("unknown opc %d ", xs->cmd->opcode));
+			    ("unknown opc %d ", xs->cmd.opcode));
 			/* XXX Not yet implemented */
 			xs->error = XS_DRIVER_STUFFUP;
 			scsi_done(xs);
@@ -630,18 +630,18 @@ gdt_scsi_cmd(struct scsi_xfer *xs)
 			 */
 			sc->sc_cmd_off = 0;
 
-			if (xs->cmd->opcode == SYNCHRONIZE_CACHE) {
+			if (xs->cmd.opcode == SYNCHRONIZE_CACHE) {
 				 blockno = blockcnt = 0;
 			} else {
 				/* A read or write operation. */
 				if (xs->cmdlen == 6) {
-					rw = (struct scsi_rw *)xs->cmd;
+					rw = (struct scsi_rw *)&xs->cmd;
 					blockno = _3btol(rw->addr) &
 					    (SRW_TOPADDR << 16 | 0xffff);
 					blockcnt =
 					    rw->length ? rw->length : 0x100;
 				} else {
-					rw10 = (struct scsi_rw_10 *)xs->cmd;
+					rw10 = (struct scsi_rw_10 *)&xs->cmd;
 					blockno = _4btol(rw10->addr);
 					blockcnt = _2btol(rw10->length);
 				}
@@ -673,7 +673,7 @@ gdt_scsi_cmd(struct scsi_xfer *xs)
 			ccb->gc_flags = 0;
 			gdt_ccb_set_cmd(ccb, GDT_GCF_SCSI);
 
-			if (xs->cmd->opcode != SYNCHRONIZE_CACHE) {
+			if (xs->cmd.opcode != SYNCHRONIZE_CACHE) {
 				xfer = ccb->gc_dmamap_xfer;
 				error = bus_dmamap_load(sc->sc_dmat, xfer,
 				    xs->data, xs->datalen, NULL,
@@ -762,10 +762,10 @@ gdt_exec_ccb(struct gdt_ccb *ccb)
 	gdt_enc16(sc->sc_cmd + GDT_CMD_UNION + GDT_CACHE_DEVICENO,
 	    target);
 
-	switch (xs->cmd->opcode) {
+	switch (xs->cmd.opcode) {
 	case PREVENT_ALLOW:
 	case SYNCHRONIZE_CACHE:
-		if (xs->cmd->opcode == PREVENT_ALLOW) {
+		if (xs->cmd.opcode == PREVENT_ALLOW) {
 			/* XXX PREVENT_ALLOW support goes here */
 		} else {
 			GDT_DPRINTF(GDT_D_CMD,
@@ -789,8 +789,8 @@ gdt_exec_ccb(struct gdt_ccb *ccb)
 		break;
 	}
 
-	if (xs->cmd->opcode != PREVENT_ALLOW &&
-	    xs->cmd->opcode != SYNCHRONIZE_CACHE) {
+	if (xs->cmd.opcode != PREVENT_ALLOW &&
+	    xs->cmd.opcode != SYNCHRONIZE_CACHE) {
 		gdt_enc32(sc->sc_cmd + GDT_CMD_UNION + GDT_CACHE_BLOCKNO,
 		    ccb->gc_blockno);
 		gdt_enc32(sc->sc_cmd + GDT_CMD_UNION + GDT_CACHE_BLOCKCNT,
@@ -883,13 +883,13 @@ gdt_internal_cache_cmd(struct scsi_xfer *xs)
 
 	GDT_DPRINTF(GDT_D_CMD, ("gdt_internal_cache_cmd "));
 
-	switch (xs->cmd->opcode) {
+	switch (xs->cmd.opcode) {
 	case TEST_UNIT_READY:
 	case START_STOP:
 #if 0
 	case VERIFY:
 #endif
-		GDT_DPRINTF(GDT_D_CMD, ("opc %d tgt %d ", xs->cmd->opcode,
+		GDT_DPRINTF(GDT_D_CMD, ("opc %d tgt %d ", xs->cmd.opcode,
 		    target));
 		break;
 
@@ -933,7 +933,7 @@ gdt_internal_cache_cmd(struct scsi_xfer *xs)
 
 	default:
 		GDT_DPRINTF(GDT_D_CMD, ("unsupported scsi command %#x tgt %d ",
-		    xs->cmd->opcode, target));
+		    xs->cmd.opcode, target));
 		xs->error = XS_DRIVER_STUFFUP;
 		return;
 	}
@@ -1050,8 +1050,8 @@ gdt_intr(void *arg)
 		timeout_del(&xs->stimeout);
 	ctx.service = ccb->gc_service;
 	prev_cmd = ccb->gc_flags & GDT_GCF_CMD_MASK;
-	if (xs && xs->cmd->opcode != PREVENT_ALLOW &&
-	    xs->cmd->opcode != SYNCHRONIZE_CACHE) {
+	if (xs && xs->cmd.opcode != PREVENT_ALLOW &&
+	    xs->cmd.opcode != SYNCHRONIZE_CACHE) {
 		bus_dmamap_sync(sc->sc_dmat, ccb->gc_dmamap_xfer, 0,
 		    ccb->gc_dmamap_xfer->dm_mapsize,
 		    (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_POSTREAD :

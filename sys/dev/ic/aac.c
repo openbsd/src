@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.89 2020/09/05 13:05:06 krw Exp $	*/
+/*	$OpenBSD: aac.c,v 1.90 2020/09/22 19:32:52 krw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -720,7 +720,7 @@ aac_bio_command(struct aac_softc *sc, struct aac_command **cmp)
 	 	AAC_FIBSTATE_ASYNC	 |
 		AAC_FIBSTATE_FAST_RESPONSE;
 
-	switch(xs->cmd->opcode) {
+	switch(xs->cmd.opcode) {
 	case READ_COMMAND:
 	case READ_10:
 		opcode = READ_COMMAND;
@@ -731,7 +731,7 @@ aac_bio_command(struct aac_softc *sc, struct aac_command **cmp)
 		break;
 	default:
 		panic("%s: invalid opcode %#x", sc->aac_dev.dv_xname,
-		    xs->cmd->opcode);
+		    xs->cmd.opcode);
 	}
 
 	/* build the read/write request */
@@ -2129,13 +2129,13 @@ aac_internal_cache_cmd(struct scsi_xfer *xs)
 	AAC_DPRINTF(AAC_D_CMD, ("%s: aac_internal_cache_cmd: ",
 				sc->aac_dev.dv_xname));
 
-	switch (xs->cmd->opcode) {
+	switch (xs->cmd.opcode) {
 	case TEST_UNIT_READY:
 	case START_STOP:
 #if 0
 	case VERIFY:
 #endif
-		AAC_DPRINTF(AAC_D_CMD, ("opc %#x tgt %d ", xs->cmd->opcode,
+		AAC_DPRINTF(AAC_D_CMD, ("opc %#x tgt %d ", xs->cmd.opcode,
 		    target));
 		break;
 
@@ -2179,7 +2179,7 @@ aac_internal_cache_cmd(struct scsi_xfer *xs)
 	default:
 		AAC_DPRINTF(AAC_D_CMD, ("\n"));
 		printf("aac_internal_cache_cmd got bad opcode: %#x\n",
-		    xs->cmd->opcode);
+		    xs->cmd.opcode);
 		xs->error = XS_DRIVER_STUFFUP;
 		return;
 	}
@@ -2222,7 +2222,7 @@ aac_scsi_cmd(struct scsi_xfer *xs)
 	link = xs->sc_link;
 	target = link->target;
 
-	switch (xs->cmd->opcode) {
+	switch (xs->cmd.opcode) {
 	case TEST_UNIT_READY:
 	case REQUEST_SENSE:
 	case INQUIRY:
@@ -2250,7 +2250,7 @@ aac_scsi_cmd(struct scsi_xfer *xs)
 		goto ready;
 
 	default:
-		AAC_DPRINTF(AAC_D_CMD, ("unknown opc %#x ", xs->cmd->opcode));
+		AAC_DPRINTF(AAC_D_CMD, ("unknown opc %#x ", xs->cmd.opcode));
 		/* XXX Not yet implemented */
 		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
@@ -2260,22 +2260,22 @@ aac_scsi_cmd(struct scsi_xfer *xs)
 	case READ_10:
 	case WRITE_COMMAND:
 	case WRITE_10:
-		AAC_DPRINTF(AAC_D_CMD, ("rw opc %#x ", xs->cmd->opcode));
+		AAC_DPRINTF(AAC_D_CMD, ("rw opc %#x ", xs->cmd.opcode));
 
 		/* A read or write operation. */
 		if (xs->cmdlen == 6) {
-			rw = (struct scsi_rw *)xs->cmd;
+			rw = (struct scsi_rw *)&xs->cmd;
 			blockno = _3btol(rw->addr) &
 				(SRW_TOPADDR << 16 | 0xffff);
 			blockcnt = rw->length ? rw->length : 0x100;
 		} else {
-			rw10 = (struct scsi_rw_10 *)xs->cmd;
+			rw10 = (struct scsi_rw_10 *)&xs->cmd;
 			blockno = _4btol(rw10->addr);
 			blockcnt = _2btol(rw10->length);
 		}
 
 		AAC_DPRINTF(AAC_D_CMD, ("opcode=%d blkno=%d bcount=%d ",
-					xs->cmd->opcode, blockno, blockcnt));
+					xs->cmd.opcode, blockno, blockcnt));
 
 		if (blockno >= sc->aac_hdr[target].hd_size ||
 		    blockno + blockcnt > sc->aac_hdr[target].hd_size) {

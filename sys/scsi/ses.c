@@ -1,4 +1,4 @@
-/*	$OpenBSD: ses.c,v 1.62 2020/09/12 16:51:04 krw Exp $ */
+/*	$OpenBSD: ses.c,v 1.63 2020/09/22 19:32:53 krw Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -283,7 +283,7 @@ ses_read_config(struct ses_softc *sc)
 	xs->retries = 2;
 	xs->timeout = 3000;
 
-	cmd = (struct ses_scsi_diag *)xs->cmd;
+	cmd = (struct ses_scsi_diag *)&xs->cmd;
 	cmd->opcode = RECEIVE_DIAGNOSTIC;
 	SET(cmd->flags, SES_DIAG_PCV);
 	cmd->pgcode = SES_PAGE_CONFIG;
@@ -381,7 +381,7 @@ ses_read_status(struct ses_softc *sc)
 	xs->retries = 2;
 	xs->timeout = 3000;
 
-	cmd = (struct ses_scsi_diag *)xs->cmd;
+	cmd = (struct ses_scsi_diag *)&xs->cmd;
 	cmd->opcode = RECEIVE_DIAGNOSTIC;
 	SET(cmd->flags, SES_DIAG_PCV);
 	cmd->pgcode = SES_PAGE_STATUS;
@@ -612,7 +612,7 @@ ses_write_config(struct ses_softc *sc)
 	xs->retries = 2;
 	xs->timeout = 3000;
 
-	cmd = (struct ses_scsi_diag *)xs->cmd;
+	cmd = (struct ses_scsi_diag *)&xs->cmd;
 	cmd->opcode = SEND_DIAGNOSTIC;
 	SET(cmd->flags, SES_DIAG_PF);
 	cmd->length = htobe16(sc->sc_buflen);

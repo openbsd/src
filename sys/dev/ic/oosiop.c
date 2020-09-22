@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop.c,v 1.33 2020/07/20 14:41:13 krw Exp $	*/
+/*	$OpenBSD: oosiop.c,v 1.34 2020/09/22 19:32:52 krw Exp $	*/
 /*	$NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $	*/
 
 /*
@@ -740,7 +740,7 @@ oosiop_scsicmd(struct scsi_xfer *xs)
 	xfer = cb->xfer;
 
 	/* Setup SCSI command buffer DMA */
-	err = bus_dmamap_load(sc->sc_dmat, cb->cmddma, xs->cmd,
+	err = bus_dmamap_load(sc->sc_dmat, cb->cmddma, &xs->cmd,
 	    xs->cmdlen, NULL, ((xs->flags & SCSI_NOSLEEP) ?
 	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK) |
 	    BUS_DMA_STREAMING | BUS_DMA_WRITE);
@@ -857,7 +857,7 @@ oosiop_setup(struct oosiop_softc *sc, struct oosiop_cb *cb)
 	OOSIOP_XFERMSG_SYNC(sc, cb,
 	   BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	xfer->msgout[0] = MSG_IDENTIFY(cb->lun,
-	    (cb->xs->cmd->opcode != REQUEST_SENSE));
+	    (cb->xs->cmd.opcode != REQUEST_SENSE));
 	cb->msgoutlen = 1;
 
 	if (sc->sc_tgt[cb->id].flags & TGTF_SYNCNEG) {
@@ -955,7 +955,7 @@ FREE:
 		sc->sc_tgt[cb->id].nexus = NULL;
 	} else {
 		/* Set up REQUEST_SENSE command */
-		struct scsi_sense *cmd = (struct scsi_sense *)xs->cmd;
+		struct scsi_sense *cmd = (struct scsi_sense *)&xs->cmd;
 		int err;
 
 		bzero(cmd, sizeof(*cmd));
@@ -1013,7 +1013,7 @@ oosiop_timeout(void *arg)
 	int s;
 
 	sc_print_addr(xs->sc_link);
-	printf("command 0x%02x timeout on xs %p\n", xs->cmd->opcode, xs);
+	printf("command 0x%02x timeout on xs %p\n", xs->cmd.opcode, xs);
 
 	s = splbio();
 

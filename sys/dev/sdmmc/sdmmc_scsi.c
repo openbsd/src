@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.57 2020/09/05 13:05:07 krw Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.58 2020/09/22 19:32:53 krw Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -290,11 +290,11 @@ sdmmc_scsi_decode_rw(struct scsi_xfer *xs, u_int32_t *blocknop,
 	struct scsi_rw_10 *rw10;
 
 	if (xs->cmdlen == 6) {
-		rw = (struct scsi_rw *)xs->cmd;
+		rw = (struct scsi_rw *)&xs->cmd;
 		*blocknop = _3btol(rw->addr) & (SRW_TOPADDR << 16 | 0xffff);
 		*blockcntp = rw->length ? rw->length : 0x100;
 	} else {
-		rw10 = (struct scsi_rw_10 *)xs->cmd;
+		rw10 = (struct scsi_rw_10 *)&xs->cmd;
 		*blocknop = _4btol(rw10->addr);
 		*blockcntp = _2btol(rw10->length);
 	}
@@ -323,12 +323,12 @@ sdmmc_scsi_cmd(struct scsi_xfer *xs)
 	}
 
 	DPRINTF(("%s: scsi cmd target=%d opcode=%#x proc=\"%s\" (poll=%#x)\n",
-	    DEVNAME(sc), link->target, xs->cmd->opcode, curproc ?
+	    DEVNAME(sc), link->target, xs->cmd.pcode, curproc ?
 	    curproc->p_p->ps_comm : "", xs->flags & SCSI_POLL));
 
 	xs->error = XS_NOERROR;
 
-	switch (xs->cmd->opcode) {
+	switch (xs->cmd.opcode) {
 	case READ_COMMAND:
 	case READ_10:
 	case WRITE_COMMAND:
@@ -356,7 +356,7 @@ sdmmc_scsi_cmd(struct scsi_xfer *xs)
 
 	default:
 		DPRINTF(("%s: unsupported scsi command %#x\n",
-		    DEVNAME(sc), xs->cmd->opcode));
+		    DEVNAME(sc), xs->cmd.opcode));
 		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
 		return;
@@ -391,7 +391,7 @@ sdmmc_inquiry(struct scsi_xfer *xs)
 	struct sdmmc_scsi_softc *scbus = sc->sc_scsibus;
 	struct sdmmc_scsi_target *tgt = &scbus->sc_tgt[link->target];
 	struct scsi_inquiry_data inq;
-	struct scsi_inquiry *cdb = (struct scsi_inquiry *)xs->cmd;
+	struct scsi_inquiry *cdb = (struct scsi_inquiry *)&xs->cmd;
 	char vendor[sizeof(inq.vendor) + 1];
 	char product[sizeof(inq.product) + 1];
 	char revision[sizeof(inq.revision) + 1];
@@ -486,7 +486,7 @@ sdmmc_complete_xs(void *arg)
 	int s;
 
 	DPRINTF(("%s: scsi cmd target=%d opcode=%#x proc=\"%s\" (poll=%#x)"
-	    " complete\n", DEVNAME(sc), link->target, xs->cmd->opcode,
+	    " complete\n", DEVNAME(sc), link->target, xs->cmd.opcode,
 	    curproc ? curproc->p_p->ps_comm : "", xs->flags & SCSI_POLL));
 
 	s = splbio();
@@ -517,7 +517,7 @@ sdmmc_done_xs(struct sdmmc_ccb *ccb)
 	timeout_del(&xs->stimeout);
 
 	DPRINTF(("%s: scsi cmd target=%d opcode=%#x proc=\"%s\" (error=%#x)"
-	    " done\n", DEVNAME(sc), link->target, xs->cmd->opcode,
+	    " done\n", DEVNAME(sc), link->target, xs->cmd.opcode,
 	    curproc ? curproc->p_p->ps_comm : "", xs->error));
 
 	xs->resid = 0;

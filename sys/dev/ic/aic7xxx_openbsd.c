@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.70 2020/07/29 15:25:34 deraadt Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.71 2020/09/22 19:32:52 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -513,10 +513,10 @@ ahc_setup_data(struct ahc_softc *ahc, struct scsi_xfer *xs,
 	}
 
 	if (hscb->cdb_len > 12) {
-		memcpy(hscb->cdb32, xs->cmd, hscb->cdb_len);
+		memcpy(hscb->cdb32, &xs->cmd, hscb->cdb_len);
 		scb->flags |= SCB_CDB32_PTR;
 	} else {
-		memcpy(hscb->shared_data.cdb, xs->cmd, hscb->cdb_len);
+		memcpy(hscb->shared_data.cdb, &xs->cmd, hscb->cdb_len);
 	}
 
 	/* Only use S/G if there is a transfer */

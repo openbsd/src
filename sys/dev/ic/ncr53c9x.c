@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.76 2020/07/20 14:41:13 krw Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.77 2020/09/22 19:32:52 krw Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -832,7 +832,7 @@ ncr53c9x_scsi_cmd(xs)
 	int s, flags;
 
 	NCR_TRACE(("[ncr53c9x_scsi_cmd] "));
-	NCR_CMDS(("[0x%x, %d]->%d ", (int)xs->cmd->opcode, xs->cmdlen,
+	NCR_CMDS(("[0x%x, %d]->%d ", (int)xs->cmd.opcode, xs->cmdlen,
 	    sc_link->target));
 
 	/*
@@ -864,7 +864,7 @@ ncr53c9x_scsi_cmd(xs)
 		ecb->clen = 0;
 		ecb->dleft = 0;
 	} else {
-		bcopy(xs->cmd, &ecb->cmd.cmd, xs->cmdlen);
+		bcopy(&xs->cmd, &ecb->cmd.cmd, xs->cmdlen);
 		ecb->clen = xs->cmdlen;
 		ecb->daddr = xs->data;
 		ecb->dleft = xs->datalen;

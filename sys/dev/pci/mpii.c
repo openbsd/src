@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.139 2020/08/26 13:57:19 krw Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.140 2020/09/22 19:32:53 krw Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -2955,7 +2955,7 @@ mpii_scsi_cmd(struct scsi_xfer *xs)
 
 	io->tagging = MPII_SCSIIO_ATTR_SIMPLE_Q;
 
-	memcpy(io->cdb, xs->cmd, xs->cmdlen);
+	memcpy(io->cdb, &xs->cmd, xs->cmdlen);
 
 	htolem32(&io->data_length, xs->datalen);
 
@@ -3098,7 +3098,7 @@ mpii_scsi_cmd_done(struct mpii_ccb *ccb)
 	sie = ccb->ccb_rcb->rcb_reply;
 
 	DNPRINTF(MPII_D_CMD, "%s: mpii_scsi_cmd_done xs cmd: 0x%02x len: %d "
-	    "flags 0x%x\n", DEVNAME(sc), xs->cmd->opcode, xs->datalen,
+	    "flags 0x%x\n", DEVNAME(sc), xs->cmd.opcode, xs->datalen,
 	    xs->flags);
 	DNPRINTF(MPII_D_CMD, "%s:  dev_handle: %d msg_length: %d "
 	    "function: 0x%02x\n", DEVNAME(sc), lemtoh16(&sie->dev_handle),

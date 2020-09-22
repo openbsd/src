@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.85 2020/07/30 00:03:25 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.86 2020/09/22 19:32:52 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -1486,7 +1486,7 @@ siop_scsicmd(xs)
 
 	bzero(&siop_cmd->cmd_c.siop_tables->xscmd,
 	    sizeof(siop_cmd->cmd_c.siop_tables->xscmd));
-	bcopy(xs->cmd, &siop_cmd->cmd_c.siop_tables->xscmd, xs->cmdlen);
+	bcopy(&xs->cmd, &siop_cmd->cmd_c.siop_tables->xscmd, xs->cmdlen);
 	siop_cmd->cmd_c.siop_tables->cmd.count =
 	    siop_htoc32(&sc->sc_c, xs->cmdlen);
 
@@ -1536,7 +1536,7 @@ siop_scsicmd(xs)
 			delay(1000);
 			continue;
 		}
-		if (xs->cmd->opcode == INQUIRY && xs->error == XS_NOERROR) {
+		if (xs->cmd.opcode == INQUIRY && xs->error == XS_NOERROR) {
 			struct scsi_inquiry_data *inqbuf =
 			    (struct scsi_inquiry_data *)xs->data;
 		 	if ((inqbuf->device & SID_QUAL) == SID_QUAL_BAD_LU)
@@ -1779,7 +1779,7 @@ siop_timeout(v)
 
 	sc_print_addr(siop_cmd->cmd_c.xs->sc_link);
 	printf("timeout on SCSI command 0x%x\n",
-	    siop_cmd->cmd_c.xs->cmd->opcode);
+	    siop_cmd->cmd_c.xs->cmd.opcode);
 
 	s = splbio();
 	/* reset the scsi bus */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd33c93.c,v 1.18 2020/07/20 14:41:13 krw Exp $	*/
+/*	$OpenBSD: wd33c93.c,v 1.19 2020/09/22 19:32:53 krw Exp $	*/
 /*	$NetBSD: wd33c93.c,v 1.24 2010/11/13 13:52:02 uebayasi Exp $	*/
 
 /*
@@ -549,7 +549,7 @@ wd33c93_scsi_cmd(struct scsi_xfer *xs)
 	 * to be six bytes long.
 	 */
 	if (sc->sc_chip <= SBIC_CHIP_WD33C93) {
-		switch (xs->cmd->opcode >> 5) {
+		switch (xs->cmd.opcode >> 5) {
 		case 0:
 		case 1:
 		case 5:
@@ -575,8 +575,8 @@ wd33c93_scsi_cmd(struct scsi_xfer *xs)
 	 * time to recover when the target powers down (the fewer
 	 * targets on the bus, the larger the time needed to recover).
 	 */
-	if (xs->cmd->opcode == START_STOP &&
-	    ((struct scsi_start_stop *)xs->cmd)->how == SSS_STOP) {
+	if (xs->cmd.opcode == START_STOP &&
+	    ((struct scsi_start_stop *)&xs->cmd)->how == SSS_STOP) {
 		if (xs->timeout < 30000)
 			xs->timeout = 30000;
 	}
@@ -593,7 +593,7 @@ wd33c93_scsi_cmd(struct scsi_xfer *xs)
 	acb->timeout = xs->timeout;
 	timeout_set(&acb->to, wd33c93_timeout, acb);
 
-	memcpy(&acb->cmd, xs->cmd, xs->cmdlen);
+	memcpy(&acb->cmd, &xs->cmd, xs->cmdlen);
 	acb->clen  = xs->cmdlen;
 	acb->daddr = xs->data;
 	acb->dleft = xs->datalen;

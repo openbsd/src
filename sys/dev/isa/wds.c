@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.56 2020/07/29 12:13:05 krw Exp $	*/
+/*	$OpenBSD: wds.c,v 1.57 2020/09/22 19:32:53 krw Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -893,7 +893,7 @@ wds_scsi_cmd(struct scsi_xfer *xs)
 
 	/* Zero out the command structure. */
 	bzero(&scb->cmd, sizeof scb->cmd);
-	bcopy(xs->cmd, &scb->cmd.scb, xs->cmdlen < 12 ? xs->cmdlen : 12);
+	bcopy(&xs->cmd, &scb->cmd.scb, xs->cmdlen < 12 ? xs->cmdlen : 12);
 
 	/* Set up some of the command fields. */
 	scb->cmd.targ = (xs->sc_link->target << 5) | xs->sc_link->lun;

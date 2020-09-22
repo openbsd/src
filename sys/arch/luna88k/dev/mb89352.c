@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.29 2020/07/20 20:33:10 krw Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.30 2020/09/22 19:32:51 krw Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -411,7 +411,7 @@ spc_scsi_cmd(struct scsi_xfer *xs)
 	int s, flags;
 
 	SPC_TRACE(("spc_scsi_cmd  "));
-	SPC_CMDS(("[0x%x, %d]->%d ", (int)xs->cmd->opcode, xs->cmdlen,
+	SPC_CMDS(("[0x%x, %d]->%d ", (int)xs->cmd.opcode, xs->cmdlen,
 	    sc_link->target));
 
 	flags = xs->flags;
@@ -427,7 +427,7 @@ spc_scsi_cmd(struct scsi_xfer *xs)
 		acb->scsi_cmd_length = 0;
 		acb->data_length = 0;
 	} else {
-		bcopy(xs->cmd, &acb->scsi_cmd, xs->cmdlen);
+		bcopy(&xs->cmd, &acb->scsi_cmd, xs->cmdlen);
 		acb->scsi_cmd_length = xs->cmdlen;
 		acb->data_addr = xs->data;
 		acb->data_length = xs->datalen;

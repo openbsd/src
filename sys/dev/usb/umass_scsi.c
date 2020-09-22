@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.60 2020/08/26 13:57:20 krw Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.61 2020/09/22 19:32:53 krw Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -188,7 +188,7 @@ umass_scsi_cmd(struct scsi_xfer *xs)
 	DPRINTF(UDMASS_CMD, ("%s: umass_scsi_cmd: at %lld.%06ld: %d:%d "
 		"xs=%p cmd=0x%02x datalen=%d (quirks=0x%x, poll=%d)\n",
 		sc->sc_dev.dv_xname, (long long)sc->tv.tv_sec, sc->tv.tv_usec,
-		sc_link->target, sc_link->lun, xs, xs->cmd->opcode,
+		sc_link->target, sc_link->lun, xs, xs->cmd.opcode,
 		xs->datalen, sc_link->quirks, xs->flags & SCSI_POLL));
 
 	if (usbd_is_dying(sc->sc_udev)) {
@@ -205,7 +205,7 @@ umass_scsi_cmd(struct scsi_xfer *xs)
 	}
 #endif
 
-	cmd = xs->cmd;
+	cmd = &xs->cmd;
 	cmdlen = xs->cmdlen;
 
 	dir = DIR_NONE;
@@ -302,7 +302,7 @@ umass_scsi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 			 * response, omitting response data from the
 			 * "vendor specific data" on...
 			 */
-			if (xs->cmd->opcode == INQUIRY &&
+			if (xs->cmd.opcode == INQUIRY &&
 			    residue < xs->datalen) {
 				xs->error = XS_NOERROR;
 				break;
@@ -314,7 +314,7 @@ umass_scsi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 		/* FALLTHROUGH */
 	case STATUS_CMD_FAILED:
 		DPRINTF(UDMASS_CMD, ("umass_scsi_cb: status cmd failed for "
-		    "scsi op 0x%02x\n", xs->cmd->opcode));
+		    "scsi op 0x%02x\n", xs->cmd.opcode));
 		/* fetch sense data */
 		sc->sc_sense = 1;
 		memset(&scbus->sc_sense_cmd, 0, sizeof(scbus->sc_sense_cmd));

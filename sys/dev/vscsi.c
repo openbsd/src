@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.56 2020/07/22 13:16:04 krw Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.57 2020/09/22 19:32:52 krw Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -169,7 +169,7 @@ vscsi_cmd(struct scsi_xfer *xs)
 
 	if (ISSET(xs->flags, SCSI_POLL) && ISSET(xs->flags, SCSI_NOSLEEP)) {
 		printf("%s: POLL && NOSLEEP for 0x%02x\n", DEVNAME(sc),
-		    xs->cmd->opcode);
+		    xs->cmd.opcode);
 		xs->error = XS_DRIVER_STUFFUP;
 		scsi_done(xs);
 		return;
@@ -351,7 +351,7 @@ vscsi_i2t(struct vscsi_softc *sc, struct vscsi_ioc_i2t *i2t)
 	i2t->tag = ccb->ccb_tag;
 	i2t->target = link->target;
 	i2t->lun = link->lun;
-	memcpy(&i2t->cmd, xs->cmd, xs->cmdlen);
+	memcpy(&i2t->cmd, &xs->cmd, xs->cmdlen);
 	i2t->cmdlen = xs->cmdlen;
 	i2t->datalen = xs->datalen;
 
