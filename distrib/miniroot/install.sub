@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1154 2020/05/26 16:21:00 florian Exp $
+#	$OpenBSD: install.sub,v 1.1155 2020/09/22 15:38:59 florian Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2257,7 +2257,11 @@ is_rootdisk() {
 		make_dev $_d
 		if disklabel $_d | grep -q '^  a: .*4\.2BSD ' &&
 			mount -t ffs -r /dev/${_d}a /mnt; then
-			ls -d /mnt/{bin,dev,etc,home,mnt,root,sbin,tmp,usr,var}
+			if $UU; then
+				ls -d /mnt/{auto_upgrade.conf,bin,dev,etc,home,mnt,root,sbin,tmp,usr,var}
+			else
+				ls -d /mnt/{bin,dev,etc,home,mnt,root,sbin,tmp,usr,var}
+			fi
 			_rc=$?
 			umount -f /mnt
 		fi
@@ -3222,6 +3226,7 @@ check_unattendedupgrade() {
 				[[ -f /mnt/bsd.upgrade && -f /mnt/auto_upgrade.conf ]]
 				_rc=$?
 				((_rc == 0)) && cp /mnt/auto_upgrade.conf /
+				echo "Which disk is the root disk = ${_d}" >> /auto_upgrade.conf
 				umount -f /mnt
 			fi
 			rm -f /dev/{r,}$_d?
