@@ -1,4 +1,4 @@
-/* $OpenBSD: popup.c,v 1.19 2020/05/16 16:35:13 nicm Exp $ */
+/* $OpenBSD: popup.c,v 1.20 2020/09/22 06:44:52 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -262,7 +262,7 @@ popup_handle_drag(struct client *c, struct popup_data *pd,
 		pd->sx = m->x - pd->px;
 		pd->sy = m->y - pd->py;
 
-		screen_resize(&pd->s, pd->sx, pd->sy, 0);
+		screen_resize(&pd->s, pd->sx - 2, pd->sy - 2, 0);
 		if (pd->ictx == NULL)
 			popup_write_screen(c, pd);
 		else if (pd->job != NULL)
