@@ -1493,6 +1493,8 @@
 ./usr/lib/crt0.o
 ./usr/lib/debug
 ./usr/lib/gcrt0.o
+./usr/lib/libagentx.a
+./usr/lib/libagentx_p.a
 ./usr/lib/libc.a
 ./usr/lib/libc_p.a
 ./usr/lib/libcbor.a
@@ -2873,6 +2875,7 @@
 ./usr/share/man/man3/strtonum.3
 ./usr/share/man/man3/strtoul.3
 ./usr/share/man/man3/strxfrm.3
+./usr/share/man/man3/subagentx.3
 ./usr/share/man/man3/swab.3
 ./usr/share/man/man3/sysconf.3
 ./usr/share/man/man3/sysexits.3
