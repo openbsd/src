@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.300 2020/08/13 04:58:22 jmatthew Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.301 2020/09/22 19:25:27 mvs Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -138,18 +138,23 @@ int		 sysctl_iflist(int, struct walkarg *);
 int		 sysctl_ifnames(struct walkarg *);
 int		 sysctl_rtable_rtstat(void *, size_t *, void *);
 
+/*
+ * Locks used to protect struct members
+ *       I       immutable after creation
+ *       sK      solock (kernel lock)
+ */
 struct rtpcb {
-	struct socket		*rop_socket;
+	struct socket		*rop_socket;		/* [I] */
 
 	SRPL_ENTRY(rtpcb)	rop_list;
 	struct refcnt		rop_refcnt;
 	struct timeout		rop_timeout;
-	unsigned int		rop_msgfilter;
-	unsigned int		rop_flagfilter;
-	unsigned int		rop_flags;
-	u_int			rop_rtableid;
-	unsigned short		rop_proto;
-	u_char			rop_priority;
+	unsigned int		rop_msgfilter;		/* [sK] */
+	unsigned int		rop_flagfilter;		/* [sK] */
+	unsigned int		rop_flags;		/* [sK] */
+	u_int			rop_rtableid;		/* [sK] */
+	unsigned short		rop_proto;		/* [I] */
+	u_char			rop_priority;		/* [sK] */
 };
 #define	sotortpcb(so)	((struct rtpcb *)(so)->so_pcb)
 
