@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_addr.c,v 1.28 2020/09/13 10:05:25 mpi Exp $	*/
+/*	$OpenBSD: uvm_addr.c,v 1.29 2020/09/22 14:31:08 mpi Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -186,7 +186,7 @@ uvm_addr_entrybyspace(struct uaddr_free_rbtree *free, vsize_t sz)
 }
 #endif /* !SMALL_KERNEL */
 
-static __inline vaddr_t
+static inline vaddr_t
 uvm_addr_align_forward(vaddr_t addr, vaddr_t align, vaddr_t offset)
 {
 	vaddr_t adjusted;
@@ -201,7 +201,7 @@ uvm_addr_align_forward(vaddr_t addr, vaddr_t align, vaddr_t offset)
 	return (adjusted < addr ? adjusted + align : adjusted);
 }
 
-static __inline vaddr_t
+static inline vaddr_t
 uvm_addr_align_backward(vaddr_t addr, vaddr_t align, vaddr_t offset)
 {
 	vaddr_t adjusted;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.86 2019/07/18 23:47:33 cheloha Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.87 2020/09/22 14:31:08 mpi Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -256,7 +256,7 @@ uao_find_swhash_elt(struct uvm_aobj *aobj, int pageidx, boolean_t create)
 /*
  * uao_find_swslot: find the swap slot number for an aobj/pageidx
  */
-__inline static int
+inline static int
 uao_find_swslot(struct uvm_aobj *aobj, int pageidx)
 {
 

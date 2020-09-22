@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.99 2020/09/22 14:29:20 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.100 2020/09/22 14:31:08 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -159,7 +159,7 @@ static struct uvm_advice uvmadvice[MADV_MASK + 1];
  * private prototypes
  */
 static void uvmfault_amapcopy(struct uvm_faultinfo *);
-static __inline void uvmfault_anonflush(struct vm_anon **, int);
+static inline void uvmfault_anonflush(struct vm_anon **, int);
 void	uvmfault_unlockmaps(struct uvm_faultinfo *, boolean_t);
 void	uvmfault_update_stats(struct uvm_faultinfo *);
 
@@ -171,7 +171,7 @@ void	uvmfault_update_stats(struct uvm_faultinfo *);
  *
  * => does not have to deactivate page if it is busy
  */
-static __inline void
+static inline void
 uvmfault_anonflush(struct vm_anon **anons, int n)
 {
 	int lcv;

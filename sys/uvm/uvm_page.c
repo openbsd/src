@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.149 2019/11/29 18:32:40 kettenis Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.150 2020/09/22 14:31:08 mpi Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -129,7 +129,7 @@ static void uvm_pageremove(struct vm_page *);
  * => call should have already set pg's object and offset pointers
  *    and bumped the version counter
  */
-__inline static void
+inline static void
 uvm_pageinsert(struct vm_page *pg)
 {
 	struct vm_page	*dupe;
@@ -147,7 +147,7 @@ uvm_pageinsert(struct vm_page *pg)
  *
  * => caller must lock page queues
  */
-static __inline void
+static inline void
 uvm_pageremove(struct vm_page *pg)
 {
 	KASSERT(pg->pg_flags & PG_TABLED);

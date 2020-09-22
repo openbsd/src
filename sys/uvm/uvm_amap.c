@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.82 2020/01/04 16:17:29 beck Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.83 2020/09/22 14:31:08 mpi Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -63,20 +63,20 @@ static char amap_small_pool_names[UVM_AMAP_CHUNK][9];
  */
 
 static struct vm_amap *amap_alloc1(int, int, int);
-static __inline void amap_list_insert(struct vm_amap *);
-static __inline void amap_list_remove(struct vm_amap *);   
+static inline void amap_list_insert(struct vm_amap *);
+static inline void amap_list_remove(struct vm_amap *);   
 
 struct vm_amap_chunk *amap_chunk_get(struct vm_amap *, int, int, int);
 void amap_chunk_free(struct vm_amap *, struct vm_amap_chunk *);
 void amap_wiperange_chunk(struct vm_amap *, struct vm_amap_chunk *, int, int);
 
-static __inline void
+static inline void
 amap_list_insert(struct vm_amap *amap)
 {
 	LIST_INSERT_HEAD(&amap_list, amap, am_list);
 }
 
-static __inline void
+static inline void
 amap_list_remove(struct vm_amap *amap)
 { 
 	LIST_REMOVE(amap, am_list);
@@ -190,13 +190,10 @@ amap_chunk_free(struct vm_amap *amap, struct vm_amap_chunk *chunk)
  * here are some in-line functions to help us.
  */
 
-static __inline void pp_getreflen(int *, int, int *, int *);
-static __inline void pp_setreflen(int *, int, int, int);
-
 /*
  * pp_getreflen: get the reference and length for a specific offset
  */
-static __inline void
+static inline void
 pp_getreflen(int *ppref, int offset, int *refp, int *lenp)
 {
 
@@ -212,7 +209,7 @@ pp_getreflen(int *ppref, int offset, int *refp, int *lenp)
 /*
  * pp_setreflen: set the reference and length for a specific offset
  */
-static __inline void
+static inline void
 pp_setreflen(int *ppref, int offset, int ref, int len)
 {
 	if (len == 1) {
