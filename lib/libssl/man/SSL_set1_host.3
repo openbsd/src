@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_set1_host.3,v 1.1 2020/09/17 07:56:38 schwarze Exp $
+.\" $OpenBSD: SSL_set1_host.3,v 1.2 2020/09/22 16:31:37 schwarze Exp $
 .\" selective merge up to: OpenSSL 6328d367 Jul 4 21:58:30 2020 +0200
 .\"
 .\" This file was written by Viktor Dukhovni <viktor@openssl.org>
@@ -48,12 +48,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 17 2020 $
+.Dd $Mdocdate: September 22 2020 $
 .Dt SSL_SET1_HOST 3
 .Os
 .Sh NAME
-.Nm SSL_set1_host ,
+.Nm SSL_set1_host
+.ig  \" won't make Ox 6.8 but will appear in 6.9
 .Nm SSL_get0_peername
+..
 .Nd SSL server verification parameters
 .Sh SYNOPSIS
 .In openssl/ssl.h
@@ -62,10 +64,12 @@
 .Fa "SSL *ssl"
 .Fa "const char *hostname"
 .Fc
+.ig
 .Ft const char *
 .Fo SSL_get0_peername
 .Fa "SSL *ssl"
 .Fc
+..
 .Sh DESCRIPTION
 .Fn SSL_set1_host
 configures a server hostname check in the
@@ -87,6 +91,7 @@ with
 .Fa flags
 set to 0.
 .Pp
+.ig
 .Fn SSL_get0_peername
 returns the DNS hostname or subject CommonName from the peer certificate
 that matched one of the reference identifiers.
@@ -104,11 +109,14 @@ object is cleared or freed, or if a renegotiation takes place.
 Applications must not free the return value.
 .Pp
 SSL clients are advised to use these functions in preference to
+..
+SSL clients are advised to use this function in preference to
 explicitly calling
 .Xr X509_check_host 3 .
 .Sh RETURN VALUES
 .Fn SSL_set1_host
 returns 1 for success or 0 for failure.
+.ig
 .Pp
 .Fn SSL_get0_peername
 returns the matched peername or
@@ -137,6 +145,7 @@ if (SSL_get_verify_result(ssl) == X509_V_OK) {
 		/* Name checks were in scope and matched the peername */
 }
 .Ed
+..
 .Sh SEE ALSO
 .Xr ssl 3 ,
 .Xr SSL_CTX_set_verify 3 ,
@@ -145,6 +154,10 @@ if (SSL_get_verify_result(ssl) == X509_V_OK) {
 .Xr X509_check_host 3 ,
 .Xr X509_VERIFY_PARAM_set1_host 3
 .Sh HISTORY
+This function first appeared in OpenSSL 1.1.0
+and has been available since
+.Ox 6.5 .
+.ig
 Both functions first appeared in OpenSSL 1.1.0.
 .Fn SSL_set1_host
 has been available since
@@ -152,4 +165,5 @@ has been available since
 and
 .Fn SSL_get0_peername
 since
-.Ox 6.8 .
+.Ox 6.9 .
+..
