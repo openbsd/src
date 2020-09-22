@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.c,v 1.202 2020/06/02 08:17:27 nicm Exp $ */
+/* $OpenBSD: tmux.c,v 1.203 2020/09/22 05:23:34 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -331,8 +331,8 @@ main(int argc, char **argv)
 	char					*path = NULL, *label = NULL;
 	char					*cause, **var;
 	const char				*s, *shell, *cwd;
-	int					 opt, flags = 0, keys;
-	int					 feat = 0;
+	int					 opt, keys, feat = 0;
+	uint64_t				 flags = 0;
 	const struct options_table_entry	*oe;
 
 	if (setlocale(LC_CTYPE, "en_US.UTF-8") == NULL &&
