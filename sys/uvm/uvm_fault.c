@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.98 2020/09/12 17:08:49 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.99 2020/09/22 14:29:20 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -702,13 +702,6 @@ ReFault:
 		pmap_update(ufi.orig_map->pmap);
 
 	/* (shadowed == TRUE) if there is an anon at the faulting address */
-	/*
-	 * note that if we are really short of RAM we could sleep in the above
-	 * call to pmap_enter.   bad?
-	 *
-	 * XXX Actually, that is bad; pmap_enter() should just fail in that
-	 * XXX case.  --thorpej
-	 */
 	/*
 	 * if the desired page is not shadowed by the amap and we have a
 	 * backing object, then we check to see if the backing object would
