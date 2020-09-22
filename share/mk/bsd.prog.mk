@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.81 2019/11/15 00:06:46 jsg Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.82 2020/09/22 10:31:46 martijn Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -56,6 +56,7 @@ LIBRPCSVC?=	${DESTDIR}/usr/lib/librpcsvc.a
 LIBSKEY?=	${DESTDIR}/usr/lib/libskey.a
 LIBSNDIO?=	${DESTDIR}/usr/lib/libsndio.a
 LIBSSL?=	${DESTDIR}/usr/lib/libssl.a
+LIBAGENTX?=	${DESTDIR}/usr/lib/libagentx.a
 LIBTLS?=	${DESTDIR}/usr/lib/libtls.a
 LIBTERMCAP?=	${DESTDIR}/usr/lib/libtermcap.a
 LIBTERMLIB?=	${DESTDIR}/usr/lib/libtermlib.a

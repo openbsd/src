@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.84 2019/11/15 00:06:46 jsg Exp $
+#	$OpenBSD: bsd.README,v 1.85 2020/09/22 10:31:46 martijn Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -362,6 +362,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 			LIBSKEY		/usr/lib/libskey.a
 			LIBSNDIO	/usr/lib/libsndio.a
 			LIBSSL		/usr/lib/libssl.a
+			LIBAGENTX	/usr/lib/libagentx.a
 			LIBTERMCAP	/usr/lib/libtermcap.a
 			LIBTERMLIB	/usr/lib/libtermlib.a
 			LIBTLS		/usr/lib/libtls.a
