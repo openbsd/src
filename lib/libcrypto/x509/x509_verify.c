@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.11 2020/09/19 14:15:38 beck Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.12 2020/09/23 18:20:16 jsing Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -169,6 +169,29 @@ x509_verify_ctx_cert_is_root(struct x509_verify_ctx *ctx, X509 *cert)
 	return 0;
 }
 
+static int
+x509_verify_ctx_set_xsc_chain(struct x509_verify_ctx *ctx,
+    struct x509_verify_chain *chain)
+{
+	size_t depth;
+	X509 *last = x509_verify_chain_last(chain);
+
+	if (ctx->xsc == NULL)
+		return 1;
+
+	depth = sk_X509_num(chain->certs);
+	if (depth > 0)
+		depth--;
+
+	ctx->xsc->last_untrusted = depth ? depth - 1 : 0;
+	sk_X509_pop_free(ctx->xsc->chain, X509_free);
+	ctx->xsc->chain = X509_chain_up_ref(chain->certs);
+	if (ctx->xsc->chain == NULL)
+		return x509_verify_cert_error(ctx, last, depth,
+		    X509_V_ERR_OUT_OF_MEM, 0);
+	return 1;
+}
+
 /* Add a validated chain to our list of valid chains */
 static int
 x509_verify_ctx_add_chain(struct x509_verify_ctx *ctx,
@@ -194,12 +217,8 @@ x509_verify_ctx_add_chain(struct x509_verify_ctx *ctx,
 	 * knobs that are there for the fiddling.
 	 */
 	if (ctx->xsc != NULL) {
-		ctx->xsc->last_untrusted = depth ? depth - 1 : 0;
-		sk_X509_pop_free(ctx->xsc->chain, X509_free);
-		ctx->xsc->chain = X509_chain_up_ref(chain->certs);
-		if (ctx->xsc->chain == NULL)
-			return x509_verify_cert_error(ctx, last, depth,
-			    X509_V_ERR_OUT_OF_MEM, 0);
+		if (!x509_verify_ctx_set_xsc_chain(ctx, chain))
+			return 0;
 
 		/*
 		 * XXX currently this duplicates some work done
@@ -343,12 +362,20 @@ x509_verify_consider_candidate(struct x509_verify_ctx *ctx, X509 *cert,
 	 * so we save it.  Otherwise, recurse until we find a root or
 	 * give up.
 	 */
-	if (is_root_cert &&
-	    x509_verify_cert_error(ctx, candidate, depth, X509_V_OK, 1))
-		(void) x509_verify_ctx_add_chain(ctx, new_chain);
-	else
-		x509_verify_build_chains(ctx, candidate, new_chain);
+	if (is_root_cert) {
+		if (!x509_verify_ctx_set_xsc_chain(ctx, new_chain)) {
+			x509_verify_chain_free(new_chain);
+			return 0;
+		}
+		if (x509_verify_cert_error(ctx, candidate, depth, X509_V_OK, 1)) {
+			(void) x509_verify_ctx_add_chain(ctx, new_chain);
+			goto done;
+		}
+	}
 
+	x509_verify_build_chains(ctx, candidate, new_chain);
+
+ done:
 	x509_verify_chain_free(new_chain);
 	return 1;
 }
