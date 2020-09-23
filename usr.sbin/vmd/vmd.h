@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.99 2020/06/28 16:52:45 pd Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.100 2020/09/23 15:52:06 martijn Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 #include <sys/queue.h>
+#include <sys/un.h>
 #include <sys/socket.h>
 
 #include <machine/vmmvar.h>
@@ -123,6 +124,7 @@ enum imsg_type {
 	IMSG_VMDOP_VM_SHUTDOWN,
 	IMSG_VMDOP_VM_REBOOT,
 	IMSG_VMDOP_CONFIG,
+	IMSG_VMDOP_AGENTXFD,
 	IMSG_VMDOP_DONE
 };
 
@@ -319,6 +321,12 @@ struct address {
 };
 TAILQ_HEAD(addresslist, address);
 
+struct agentx {
+	int		 enabled;
+	char		 path[sizeof(((struct sockaddr_un *)0)->sun_path)];
+	char		 context[50];
+};
+
 struct vmd_config {
 	unsigned int		 cfg_flags;
 #define VMD_CFG_INET6		0x01
@@ -329,6 +337,7 @@ struct vmd_config {
 	int			 parallelism;
 	struct address		 cfg_localprefix;
 	struct address		 cfg_localprefix6;
+	struct agentx		 cfg_agentx;
 };
 
 struct vmd {
@@ -473,6 +482,11 @@ int	 config_getvm(struct privsep *, struct imsg *);
 int	 config_getdisk(struct privsep *, struct imsg *);
 int	 config_getif(struct privsep *, struct imsg *);
 int	 config_getcdrom(struct privsep *, struct imsg *);
+
+/* control_agentx.c */
+void control_agentx(struct privsep *, struct agentx *);
+void control_agentx_dispatch_vmd(struct imsg *);
+void control_agentx_connect(int);
 
 /* vmboot.c */
 FILE	*vmboot_open(int, int *, int, unsigned int, struct vmboot_params *);
