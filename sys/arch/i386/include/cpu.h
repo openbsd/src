@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.170 2020/05/31 06:23:57 dlg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.171 2020/09/23 15:13:26 deraadt Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -361,6 +361,7 @@ extern int cpu_perf_eax;
 extern int cpu_perf_ebx;
 extern int cpu_perf_edx;
 extern int cpu_apmi_edx;
+extern int cpu_pae;	/* cpu has both PAE and NX features */
 
 /* cpu.c */
 extern u_int cpu_mwait_size;

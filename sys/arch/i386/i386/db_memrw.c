@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_memrw.c,v 1.17 2017/04/30 13:04:49 mpi Exp $	*/
+/*	$OpenBSD: db_memrw.c,v 1.18 2020/09/23 15:13:26 deraadt Exp $	*/
 /*	$NetBSD: db_memrw.c,v 1.6 1999/04/12 20:38:19 pk Exp $	*/
 
 /*
@@ -45,8 +45,6 @@
 
 #define PG_LGFRAME	0xffc00000	/* large (4M) page frame mask */
 #define PG_LGFRAME_PAE	0xffe00000	/* large (2M) page frame mask */
-
-extern int cpu_pae;
 
 /*
  * Read bytes from kernel address space for debugger.

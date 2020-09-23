@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.59 2020/09/13 12:05:23 jsg Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.60 2020/09/23 15:13:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -617,7 +617,7 @@ pmap_pte_paddr_pae(vaddr_t va)
 void
 pmap_bootstrap_pae(void)
 {
-	extern int cpu_pae, nkpde;
+	extern int nkpde;
 	struct pmap *kpm = pmap_kernel();
 	struct vm_page *ptp;
 	paddr_t ptaddr;

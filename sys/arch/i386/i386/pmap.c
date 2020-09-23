@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.206 2020/09/13 12:05:23 jsg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.207 2020/09/23 15:13:26 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -374,8 +374,6 @@ struct pmap __attribute__ ((aligned (32))) kernel_pmap_store;
 
 int nkpde = NKPTP;
 int nkptp_max = 1024 - (KERNBASE / NBPD) - 1;
-
-extern int cpu_pae;
 
 /*
  * pg_g_kern:  if CPU is affected by Meltdown pg_g_kern is 0,
