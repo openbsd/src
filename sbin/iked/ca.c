@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.70 2020/09/08 20:20:30 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.71 2020/09/23 14:25:54 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -226,6 +226,9 @@ ca_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_PRIVKEY:
 	case IMSG_PUBKEY:
 		config_getkey(env, imsg);
+		break;
+	case IMSG_CERT_PARTIAL_CHAIN:
+		config_getcertpartialchain(env, imsg);
 		break;
 	default:
 		return (-1);
@@ -1530,6 +1533,8 @@ ca_validate_cert(struct iked *env, struct iked_static_id *id,
 		X509_STORE_CTX_set_flags(&csc, X509_V_FLAG_CRL_CHECK);
 		X509_STORE_CTX_set_flags(&csc, X509_V_FLAG_CRL_CHECK_ALL);
 	}
+	if (env->sc_cert_partial_chain)
+		X509_STORE_CTX_set_flags(&csc, X509_V_FLAG_PARTIAL_CHAIN);
 
 	result = X509_verify_cert(&csc);
 	error = csc.error;

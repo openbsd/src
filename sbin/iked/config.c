@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.65 2020/08/26 14:49:48 tobhe Exp $	*/
+/*	$OpenBSD: config.c,v 1.66 2020/09/23 14:25:55 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -937,6 +937,28 @@ config_getocsp(struct iked *env, struct imsg *imsg)
 	log_debug("%s: ocsp_url %s tolerate %ld maxage %ld", __func__,
 	    env->sc_ocsp_url ? env->sc_ocsp_url : "none",
 	    env->sc_ocsp_tolerate, env->sc_ocsp_maxage);
+	return (0);
+}
+
+int
+config_setcertpartialchain(struct iked *env)
+{
+	unsigned int boolval;
+
+	boolval = env->sc_cert_partial_chain;
+	proc_compose(&env->sc_ps, PROC_CERT, IMSG_CERT_PARTIAL_CHAIN,
+	    &boolval, sizeof(boolval));
+	return (0);
+}
+
+int
+config_getcertpartialchain(struct iked *env, struct imsg *imsg)
+{
+	unsigned int boolval;
+
+	IMSG_SIZE_CHECK(imsg, &boolval);
+	memcpy(&boolval, imsg->data, sizeof(boolval));
+	env->sc_cert_partial_chain = boolval;
 	return (0);
 }
 

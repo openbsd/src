@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.113 2020/09/19 20:12:11 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.114 2020/09/23 14:25:55 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -105,6 +105,7 @@ static int		 dpd_interval = IKED_IKE_SA_ALIVE_TIMEOUT;
 static char		*ocsp_url = NULL;
 static long		 ocsp_tolerate = 0;
 static long		 ocsp_maxage = -1;
+static int		 cert_partial_chain = 0;
 
 struct ipsec_xf {
 	const char	*name;
@@ -454,6 +455,7 @@ typedef struct {
 %token	FRAGMENTATION NOFRAGMENTATION DPD_CHECK_INTERVAL
 %token	ENFORCESINGLEIKESA NOENFORCESINGLEIKESA
 %token	TOLERATE MAXAGE
+%token	CERTPARTIALCHAIN
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.string>		string
@@ -541,6 +543,9 @@ set		: SET ACTIVE	{ passive = 0; }
 			}
 			ocsp_tolerate = $5;
 			ocsp_maxage = $7;
+		}
+		| SET CERTPARTIALCHAIN		{
+			cert_partial_chain = 1;
 		}
 		| SET DPD_CHECK_INTERVAL NUMBER {
 			if ($3 < 0) {
@@ -1303,6 +1308,7 @@ lookup(char *s)
 		{ "any",		ANY },
 		{ "auth",		AUTHXF },
 		{ "bytes",		BYTES },
+		{ "cert_partial_chain",	CERTPARTIALCHAIN },
 		{ "childsa",		CHILDSA },
 		{ "config",		CONFIG },
 		{ "couple",		COUPLE },
@@ -1738,6 +1744,7 @@ parse_config(const char *filename, struct iked *x_env)
 
 	mobike = 1;
 	enforcesingleikesa = 0;
+	cert_partial_chain = decouple = passive = 0;
 	ocsp_tolerate = 0;
 	ocsp_url = NULL;
 	ocsp_maxage = -1;
@@ -1762,6 +1769,7 @@ parse_config(const char *filename, struct iked *x_env)
 	env->sc_ocsp_url = ocsp_url;
 	env->sc_ocsp_tolerate = ocsp_tolerate;
 	env->sc_ocsp_maxage = ocsp_maxage;
+	env->sc_cert_partial_chain = cert_partial_chain;
 
 	if (!rules)
 		log_warnx("%s: no valid configuration rules found",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.165 2020/09/16 21:37:35 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.166 2020/09/23 14:25:55 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -756,6 +756,7 @@ struct iked {
 	struct iked_addrpool		 sc_addrpool;
 	struct iked_addrpool6		 sc_addrpool6;
 
+	int				 sc_cert_partial_chain;
 };
 
 struct iked_socket {
@@ -826,6 +827,8 @@ int	 config_setkeys(struct iked *);
 int	 config_getkey(struct iked *, struct imsg *);
 int	 config_setstatic(struct iked *);
 int	 config_getstatic(struct iked *, struct imsg *);
+int	 config_setcertpartialchain(struct iked *);
+int	 config_getcertpartialchain(struct iked *, struct imsg *);
 
 /* policy.c */
 void	 policy_init(struct iked *);

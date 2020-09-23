@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.77 2020/08/26 14:49:48 tobhe Exp $
+.\" $OpenBSD: iked.conf.5,v 1.78 2020/09/23 14:25:55 tobhe Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 26 2020 $
+.Dd $Mdocdate: September 23 2020 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -179,6 +179,9 @@ Currently
 only supports MOBIKE when acting as a responder.
 .It Ic set nomobike
 Disables MOBIKE support.
+.It Ic set cert_partial_chain
+Allow partial certificate chain if at least one certificate is a trusted CA from
+.Pa /etc/iked/ca/ .
 .It Ic set ocsp Ar URL Op Ic tolerate Ar time Op Ic maxage Ar time
 Enable OCSP and set the fallback URL of the OCSP responder.
 This fallback will be used if the trusted CA from
