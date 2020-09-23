@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.118 2020/09/23 15:52:06 martijn Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.119 2020/09/23 19:18:18 martijn Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -96,9 +96,6 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 	char				*str = NULL;
 	uint32_t			 id = 0;
 	struct control_sock		*rcs;
-	struct sockaddr_un		 sun;
-
-	fd = -1;
 
 	switch (imsg->hdr.type) {
 	case IMSG_VMDOP_START_VM_REQUEST:
@@ -303,19 +300,6 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 			control_reset(rcs);
 		cmd = 0;
 		break;
-	case IMSG_VMDOP_AGENTXFD:
-		sun.sun_len = sizeof(sun);
-		sun.sun_family = AF_UNIX;
-		strlcpy(sun.sun_path, env->vmd_cfg.cfg_agentx.path,
-		    sizeof(sun.sun_path));
-		if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1 ||
-		    connect(fd, (struct sockaddr *)&sun, sun.sun_len) == -1) {
-			log_warn("agentx connect");
-			close(fd);
-			fd = -1;
-		}
-		cmd = IMSG_VMDOP_AGENTXFD;
-		break;
 	default:
 		return (-1);
 	}
@@ -334,7 +318,7 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 		break;
 	default:
 		if (proc_compose_imsg(ps, PROC_CONTROL, -1, cmd,
-		    imsg->hdr.peerid, fd, &res, sizeof(res)) == -1)
+		    imsg->hdr.peerid, -1, &res, sizeof(res)) == -1)
 			return (-1);
 		break;
 	}
@@ -926,7 +910,7 @@ vmd_configure(void)
 	 * flock - locking disk files
 	 */
 	if (pledge("stdio rpath wpath proc tty recvfd sendfd getpw"
-	    " chown fattr flock unix", NULL) == -1)
+	    " chown fattr flock", NULL) == -1)
 		fatal("pledge");
 
 	if (parse_config(env->vmd_conffile) == -1) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.31 2020/09/23 15:52:06 martijn Exp $	*/
+/*	$OpenBSD: control.c,v 1.32 2020/09/23 19:18:18 martijn Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -29,7 +29,6 @@
 #include <errno.h>
 #include <event.h>
 #include <fcntl.h>
-#include <libgen.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -39,7 +38,6 @@
 #include "vmd.h"
 
 #define	CONTROL_BACKLOG	5
-#define CONTROL_AGENTX_PEERID UINT32_MAX
 
 struct ctl_connlist ctl_conns;
 
@@ -82,7 +80,6 @@ control_dispatch_vmd(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct ctl_conn		*c;
 	struct privsep		*ps = p->p_ps;
-	struct vmd		*env = ps->ps_env;
 
 	switch (imsg->hdr.type) {
 	case IMSG_VMDOP_START_VM_RESPONSE:
@@ -95,10 +92,6 @@ control_dispatch_vmd(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_GET_INFO_VM_END_DATA:
 	case IMSG_CTL_FAIL:
 	case IMSG_CTL_OK:
-		if (imsg->hdr.peerid == CONTROL_AGENTX_PEERID) {
-			control_agentx_dispatch_vmd(imsg);
-			break;
-		}
 		if ((c = control_connbyfd(imsg->hdr.peerid)) == NULL) {
 			log_warnx("%s: lost control connection: fd %d",
 			    __func__, imsg->hdr.peerid);
@@ -110,13 +103,9 @@ control_dispatch_vmd(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_CONFIG:
 		config_getconfig(ps->ps_env, imsg);
 		proc_compose(ps, PROC_PARENT, IMSG_VMDOP_DONE, NULL, 0);
-		control_agentx(ps, &(env->vmd_cfg.cfg_agentx));
 		break;
 	case IMSG_CTL_RESET:
 		config_getreset(ps->ps_env, imsg);
-		break;
-	case IMSG_VMDOP_AGENTXFD:
-		control_agentx_connect(imsg->fd);
 		break;
 	default:
 		return (-1);

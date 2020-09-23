@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.54 2020/09/23 15:52:06 martijn Exp $
+.\" $OpenBSD: vm.conf.5,v 1.55 2020/09/23 19:18:18 martijn Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -91,19 +91,6 @@ vm "vm1.example.com" {
 .Sh GLOBAL CONFIGURATION
 The following setting can be configured globally:
 .Bl -tag -width Ds
-.It Ic agentx Oo Ic context Ar context Oc Oo Ic path Ar path Oc
-Export vm metrics via an agentx compatible
-.Pq snmp
-daemon by connecting to
-.Ar path .
-Metrics can be found under the vmMIB subtree
-.Pq mib-2.236 .
-If
-.Ar path
-is omitted it will default to
-.Pa /var/agentx/master .
-.Ar Context
-is the SNMPv3 context and can usually be omitted.
 .It Ic local prefix Ar address Ns Li / Ns Ar prefix
 Set the network prefix that is used to allocate subnets for
 local interfaces, see
