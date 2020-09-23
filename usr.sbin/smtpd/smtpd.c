@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.333 2020/05/06 16:03:30 millert Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.334 2020/09/23 18:01:27 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -25,6 +25,7 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/uio.h>
+#include <sys/un.h>
 #include <sys/mman.h>
 
 #include <bsd_auth.h>
@@ -57,6 +58,7 @@
 #include "smtpd.h"
 #include "log.h"
 #include "ssl.h"
+#include "subagentx.h"
 
 #define SMTPD_MAXARG 32
 
@@ -69,6 +71,7 @@ static void parent_send_config_lka(void);
 static void parent_send_config_pony(void);
 static void parent_send_config_ca(void);
 static void parent_sig_handler(int, short, void *);
+static int parent_open_agentx(void);
 static void forkmda(struct mproc *, uint64_t, struct deliver *);
 static int parent_forward_open(char *, char *, uid_t, gid_t);
 static struct child *child_add(pid_t, int, const char *);
@@ -266,6 +269,12 @@ parent_imsg(struct mproc *p, struct imsg *imsg)
 		m_create(p_lka, IMSG_LKA_PROCESSOR_ERRFD, 0, 0, processor->errfd);
 		m_add_string(p_lka, procname);
 		m_close(p_lka);
+		return;
+	case IMSG_AGENTX_GETFD:
+		fd = parent_open_agentx();
+
+		m_create(p_control, IMSG_AGENTX_GETFD, 0, 0, fd);
+		m_close(p_control);
 		return;
 	}
 
@@ -471,6 +480,25 @@ parent_sig_handler(int sig, short event, void *p)
 	default:
 		fatalx("smtpd: unexpected signal");
 	}
+}
+
+static int
+parent_open_agentx(void)
+{
+	int fd;
+	struct sockaddr_un sun;
+
+	sun.sun_len = sizeof(sun);
+	sun.sun_family = AF_UNIX;
+	strlcpy(sun.sun_path, env->sc_agentx->path, sizeof(sun.sun_path));
+
+	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1 ||
+	    connect(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
+		log_warn("agentx connect");
+		close(fd);
+		return -1;
+	}
+	return fd;
 }
 
 int
@@ -2125,6 +2153,8 @@ imsg_to_str(int type)
 	CASE(IMSG_CA_RSA_PRIVENC);
 	CASE(IMSG_CA_RSA_PRIVDEC);
 	CASE(IMSG_CA_ECDSA_SIGN);
+
+	CASE(IMSG_AGENTX_GETFD);
 	default:
 		(void)snprintf(buf, sizeof(buf), "IMSG_??? (%d)", type);
 
