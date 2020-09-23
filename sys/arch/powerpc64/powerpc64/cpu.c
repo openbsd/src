@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.18 2020/09/15 07:47:24 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.19 2020/09/23 03:03:12 gkoehler Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -255,6 +255,9 @@ cpu_darn(void *arg)
 
 #ifdef MULTIPROCESSOR
 
+volatile int mp_perflevel;
+void (*ul_setperf)(int);
+
 void
 cpu_bootstrap(void)
 {
@@ -349,11 +352,15 @@ int
 cpu_intr(void *arg)
 {
 	struct cpu_info *ci = curcpu();
+	int pending;
 
-	if (ci->ci_ipi_reason == IPI_DDB) {
-		ci->ci_ipi_reason = IPI_NOP;
+	pending = atomic_swap_uint(&ci->ci_ipi_reason, IPI_NOP);
+
+	if (pending & IPI_DDB)
 		db_enter();
-	}
+
+	if (pending & IPI_SETPERF)
+		ul_setperf(mp_perflevel);
 
 	return 1;
 }
@@ -363,6 +370,21 @@ cpu_kick(struct cpu_info *ci)
 {
 	if (ci != curcpu())
 		intr_send_ipi(ci, IPI_NOP);
+}
+
+/*
+ * Run ul_setperf(level) on every core.
+ */
+void
+mp_setperf(int level) {
+	int i;
+
+	mp_perflevel = level;
+	ul_setperf(level);
+	for (i = 0; i < ncpus; i++) {
+		if (i != cpu_number())
+			intr_send_ipi(&cpu_info[i], IPI_SETPERF);
+	}
 }
 
 #endif

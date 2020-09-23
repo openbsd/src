@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.7 2020/09/21 11:14:28 kettenis Exp $	*/
+/*	$OpenBSD: intr.c,v 1.8 2020/09/23 03:03:12 gkoehler Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -21,6 +21,7 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 
+#include <machine/atomic.h>
 #include <machine/intr.h>
 
 #include <dev/ofw/openfirm.h>
@@ -400,9 +401,8 @@ intr_send_ipi(struct cpu_info *ci, int reason)
 	if (ci == curcpu() && reason == IPI_NOP)
 		return;
 
-	/* Never overwrite IPI_DDB with IPI_NOP. */
-	if (reason == IPI_DDB)
-		ci->ci_ipi_reason = reason;
+	if (reason != IPI_NOP)
+		atomic_setbits_int(&ci->ci_ipi_reason, reason);
 
 	if (ih && ih->ih_ic)
 		ih->ih_ic->ic_send_ipi(ih->ih_ih);
