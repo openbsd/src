@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.36 2019/06/28 13:32:46 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.37 2020/09/23 05:50:26 jca Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -185,14 +185,10 @@ main(int argc, char *argv[])
 			action = HIBERNATE;
 			break;
 		case 'A':
-			if (action != NONE)
-				usage();
-			action = SETPERF_AUTO;
-			break;
 		case 'C':
 			if (action != NONE)
 				usage();
-			action = SETPERF_COOL;
+			action = SETPERF_AUTO;
 			break;
 		case 'H':
 			if (action != NONE)
@@ -277,7 +273,6 @@ main(int argc, char *argv[])
 	case SETPERF_LOW:
 	case SETPERF_HIGH:
 	case SETPERF_AUTO:
-	case SETPERF_COOL:
 		if (fd == -1)
 			errx(1, "cannot connect to apmd, "
 			    "not changing performance adjustment mode");

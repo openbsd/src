@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmsubr.c,v 1.8 2006/03/15 20:30:28 sturm Exp $	*/
+/*	$OpenBSD: apmsubr.c,v 1.9 2020/09/23 05:50:26 jca Exp $	*/
 
 /*
  *  Copyright (c) 1995,1996 John T. Kohl
@@ -79,8 +79,6 @@ perf_mode(int mode)
 		return "manual";
 	case PERF_AUTO:
 		return "auto";
-	case PERF_COOL:
-		return "cool running";
 	default:
 		return "invalid";
 	}

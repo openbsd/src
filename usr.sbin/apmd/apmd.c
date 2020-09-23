@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.96 2020/03/13 09:08:58 jca Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.97 2020/09/23 05:50:26 jca Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -302,7 +302,6 @@ handle_client(int sock_fd, int ctl_fd)
 		setperfpolicy("high");
 		break;
 	case SETPERF_AUTO:
-	case SETPERF_COOL:
 		doperf = PERF_AUTO;
 		reply.newstate = NORMAL;
 		logmsg(LOG_NOTICE, "setting hw.perfpolicy to auto");
