@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.254 2020/09/23 18:01:27 martijn Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.255 2020/09/23 19:11:50 martijn Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -326,33 +326,6 @@ The Administrative Management Domain this mailserver belongs to.
 The authservid will be forwarded to filters using it to identify or mark
 authentication-results headers.
 If omitted it defaults to the server name.
-.It Ic agentx Oo Cm applIndex Ar index Oc Oo Cm context Ar context Oc Op Cm path Ar path
-Export NETWORK-SERVICES-MIB and MTA-MIB metrics via an agentx compatible
-.Pq snmp
-daemon by connecting to
-.Ar path .
-Metrics can be found under the application subtree
-.Pq mib-2.27
-and mta subtree
-.Pq mib-2.28 .
-The index in the applTable and mtaTable can be controlled via
-.Cm applIndex .
-For the first available index it can be set to
-.Cm any ,
-for a new unused entry it can be set to
-.Cm new ,
-and if a fixed position is desired it can be set to a number between 1 and
-4294967295.
-If an index collision occurs because of a fixed position the metrics will not be
-exported.
-The default is
-.Cm any .
-If
-.Ar path
-is omitted it will default to
-.Pa /var/agentx/master .
-.Ar Context
-is the SNMPv3 context and can usually be omitted.
 .It Ic bounce Cm warn-interval Ar delay Op , Ar delay ...
 Send warning messages to the envelope sender when temporary delivery
 failures cause a message to remain on the queue for longer than

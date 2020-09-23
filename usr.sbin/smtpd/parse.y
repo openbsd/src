@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.280 2020/09/23 18:01:26 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.281 2020/09/23 19:11:50 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -28,7 +28,6 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
-#include <sys/un.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
@@ -48,7 +47,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <subagentx.h>
 #include <syslog.h>
 #include <unistd.h>
 #include <util.h>
@@ -175,9 +173,9 @@ typedef struct {
 
 %}
 
-%token	ACTION ADMD AGENTX ALIAS ANY APPLINDEX ARROW AUTH AUTH_OPTIONAL
+%token	ACTION ADMD ALIAS ANY ARROW AUTH AUTH_OPTIONAL
 %token	BACKUP BOUNCE BYPASS
-%token	CA CERT CHAIN CHROOT CIPHERS COMMIT COMPRESSION CONNECT CONTEXT
+%token	CA CERT CHAIN CHROOT CIPHERS COMMIT COMPRESSION CONNECT
 %token	DATA DATA_LINE DHE DISCONNECT DOMAIN
 %token	EHLO ENABLE ENCRYPTION ERROR EXPAND_ONLY 
 %token	FCRDNS FILTER FOR FORWARD_ONLY FROM
@@ -190,7 +188,7 @@ typedef struct {
 %token	MAIL_FROM MAILDIR MASK_SRC MASQUERADE MATCH MAX_MESSAGE_SIZE MAX_DEFERRED MBOX MDA MTA MX
 %token	NO_DSN NO_VERIFY NOOP
 %token	ON
-%token	PATH PHASE PKI PORT PROC PROC_EXEC PROXY_V2
+%token	PHASE PKI PORT PROC PROC_EXEC PROXY_V2
 %token	QUEUE QUIT
 %token	RCPT_TO RDNS RECIPIENT RECEIVEDAUTH REGEX RELAY REJECT REPORT REWRITE RSET
 %token	SCHEDULER SENDER SENDERS SMTP SMTP_IN SMTP_OUT SMTPS SOCKET SRC SRS SUB_ADDR_DELIM
@@ -226,7 +224,6 @@ grammar		: /* empty */
 		| grammar dispatcher '\n'
 		| grammar match '\n'
 		| grammar filter '\n'
-		| grammar agentx '\n'
 		| grammar error '\n'		{ file->errors++; }
 		;
 
@@ -1963,82 +1960,6 @@ FILTER STRING CHAIN {
 }
 ;
 
-agentxopt	:
-CONTEXT STRING {
-	if (conf->sc_agentx->context != NULL) {
-		yyerror("redefinition of agentx context");
-		free($2);
-		YYERROR;
-	}
-	conf->sc_agentx->context = $2;
-}
-| PATH STRING {
-	if (strlen($2) >= sizeof(((struct sockaddr_un *)0)->sun_path)) {
-		yyerror("agentx path too large");
-		free($2);
-		YYERROR;
-	}
-	if ($2[0] != '/') {
-		yyerror("agentx path must be absolute");
-		free($2);
-		YYERROR;
-	}
-	if (conf->sc_agentx->path != NULL) {
-		yyerror("redefinition of agentx path");
-		free($2);
-		YYERROR;
-	}
-	conf->sc_agentx->path = $2;
-}
-| APPLINDEX STRING {
-	if (conf->sc_agentx->applIndexType != AGENTX_INDEX_TYPE_UNDEFINED) {
-		yyerror("redefinition of agentx applIndex");
-		YYERROR;
-	}
-
-	if (strcasecmp($2, "any") == 0)
-		conf->sc_agentx->applIndexType = AGENTX_INDEX_TYPE_ANY;
-	else if (strcasecmp($2, "new") == 0)
-		conf->sc_agentx->applIndexType = AGENTX_INDEX_TYPE_NEW;
-	else {
-		yyerror("invalid applIndex");
-		YYERROR;
-	}
-}
-| APPLINDEX NUMBER {
-	if (conf->sc_agentx->applIndexType != AGENTX_INDEX_TYPE_UNDEFINED) {
-		yyerror("redefinition of agentx applIndex");
-		YYERROR;
-	}
-	if ($2 > UINT32_MAX) {
-		yyerror("agentx applIndex too large");
-		YYERROR;
-	}
-	if ($2 < 1) {
-		yyerror("agentx applIndex too small");
-		YYERROR;
-	}
-
-	conf->sc_agentx->applIndexType = AGENTX_INDEX_TYPE_VALUE;
-	conf->sc_agentx->applIndex = (uint32_t) $2;
-}
-;
-
-agentxopts	: /* empty */
-		| agentxopts agentxopt
-		;
-
-agentx:
-AGENTX {
-	conf->sc_agentx = xcalloc(1, sizeof(*conf->sc_agentx));
-} agentxopts {
-	if (conf->sc_agentx->path == NULL)
-		conf->sc_agentx->path = SUBAGENTX_AGENTX_MASTER;
-	if (conf->sc_agentx->applIndexType == AGENTX_INDEX_TYPE_UNDEFINED)
-		conf->sc_agentx->applIndexType = AGENTX_INDEX_TYPE_ANY;
-}
-;
-
 size		: NUMBER		{
 			if ($1 < 0) {
 				yyerror("invalid size: %" PRId64, $1);
@@ -2699,10 +2620,8 @@ lookup(char *s)
 	static const struct keywords keywords[] = {
 		{ "action",		ACTION },
 		{ "admd",		ADMD },
-		{ "agentx",		AGENTX },
 		{ "alias",		ALIAS },
 		{ "any",		ANY },
-		{ "applIndex",		APPLINDEX },
 		{ "auth",		AUTH },
 		{ "auth-optional",     	AUTH_OPTIONAL },
 		{ "backup",		BACKUP },
@@ -2716,7 +2635,6 @@ lookup(char *s)
 		{ "commit",		COMMIT },
 		{ "compression",	COMPRESSION },
 		{ "connect",		CONNECT },
-		{ "context",		CONTEXT },
 		{ "data",		DATA },
 		{ "data-line",		DATA_LINE },
 		{ "dhe",		DHE },
@@ -2760,7 +2678,6 @@ lookup(char *s)
 		{ "no-verify",		NO_VERIFY },
 		{ "noop",		NOOP },
 		{ "on",			ON },
-		{ "path",		PATH },
 		{ "phase",		PHASE },
 		{ "pki",		PKI },
 		{ "port",		PORT },

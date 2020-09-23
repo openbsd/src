@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.658 2020/09/23 18:01:27 martijn Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.659 2020/09/23 19:11:50 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -163,7 +163,7 @@ union lookup {
  * Bump IMSG_VERSION whenever a change is made to enum imsg_type.
  * This will ensure that we can never use a wrong version of smtpctl with smtpd.
  */
-#define	IMSG_VERSION		17
+#define	IMSG_VERSION		16
 
 enum imsg_type {
 	IMSG_NONE,
@@ -337,8 +337,6 @@ enum imsg_type {
 	IMSG_CA_RSA_PRIVENC,
 	IMSG_CA_RSA_PRIVDEC,
 	IMSG_CA_ECDSA_SIGN,
-
-	IMSG_AGENTX_GETFD,
 };
 
 enum smtp_proc_type {
@@ -628,8 +626,6 @@ struct smtpd {
 	int				        sc_srs_ttl;
 
 	char				       *sc_admd;
-
-	struct smtp_agentx		       *sc_agentx;
 };
 
 #define	TRACE_DEBUG	0x0001
@@ -864,20 +860,6 @@ struct mta_envelope {
 	enum dsn_ret			dsn_ret;
 
 	char				 status[LINE_MAX];
-};
-
-enum agentx_index_type {
-	AGENTX_INDEX_TYPE_UNDEFINED,
-	AGENTX_INDEX_TYPE_ANY,
-	AGENTX_INDEX_TYPE_NEW,
-	AGENTX_INDEX_TYPE_VALUE,
-};
-
-struct smtp_agentx {
-	const char			*path;
-	const char			*context;
-	enum agentx_index_type		 applIndexType;
-	uint32_t			 applIndex;
 };
 
 struct mta_task {
@@ -1325,9 +1307,6 @@ void config_peer(enum smtp_proc_type);
 int control(void);
 int control_create_socket(void);
 
-/* control_agentx.c */
-void control_agentx(void);
-void control_agentx_connect(int);
 
 /* crypto.c */
 int	crypto_setup(const char *, size_t);
