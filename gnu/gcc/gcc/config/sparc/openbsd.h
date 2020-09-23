@@ -83,7 +83,7 @@ Boston, MA 02110-1301, USA.  */
    %{!static:-Bdynamic} \
    %{rdynamic:-export-dynamic} \
    %{assert*} \
-   %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.so}"
+   %{!static:%{!dynamic-linker:-dynamic-linker /usr/libexec/ld.so}}"
 
 /* As an elf system, we need crtbegin/crtend stuff.  */
 #undef STARTFILE_SPEC

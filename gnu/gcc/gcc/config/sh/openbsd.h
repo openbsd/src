@@ -80,7 +80,7 @@ Boston, MA 02110-1301, USA.  */
    %{static:-Bstatic} \
    %{rdynamic:-export-dynamic} \
    %{assert*} \
-   %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.so}"
+   %{!static:%{!dynamic-linker:-dynamic-linker /usr/libexec/ld.so}}"
 #endif
 
 

@@ -122,7 +122,7 @@ __dcache_sync (addr, len)						\
    %{!static:-Bdynamic} \
    %{rdynamic:-export-dynamic} \
    %{assert*} \
-   %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.so}"
+   %{!static:%{!dynamic-linker:-dynamic-linker /usr/libexec/ld.so}}"
 
 /* As an elf system, we need crtbegin/crtend stuff.  */
 #undef STARTFILE_SPEC
