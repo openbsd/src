@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.90 2020/09/24 17:54:28 deraadt Exp $ */
+/* $OpenBSD: trap.c,v 1.91 2020/09/24 20:33:10 deraadt Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -707,8 +707,7 @@ void
 ast(framep)
 	struct trapframe *framep;
 {
-	struct cpu_info *ci = curcpu();
-	struct proc *p = ci->ci_curproc;
+	struct proc *p = curproc;
 
 	p->p_md.md_tf = framep;
 	p->p_md.md_astpending = 0;
@@ -718,8 +717,9 @@ ast(framep)
 		panic("ast and not user");
 #endif
 
+	refreshcreds(p);
 	atomic_add_int(&uvmexp.softs, 1);
-	mi_ast(p, ci->ci_want_resched);
+	mi_ast(p, curcpu()->ci_want_resched);
 
 	/* Do any deferred user pmap operations. */
 	PMAP_USERRET(vm_map_pmap(&p->p_vmspace->vm_map));
