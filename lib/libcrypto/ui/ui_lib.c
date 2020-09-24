@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_lib.c,v 1.34 2018/06/02 04:45:21 tb Exp $ */
+/* $OpenBSD: ui_lib.c,v 1.35 2020/09/24 19:22:18 tb Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
  */
@@ -99,6 +99,8 @@ UI_new_method(const UI_METHOD *method)
 static void
 free_string(UI_STRING *uis)
 {
+	if (uis == NULL)
+		return;
 	if (uis->flags & OUT_STRING_FREEABLE) {
 		free((char *) uis->out_string);
 		switch (uis->type) {
