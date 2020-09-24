@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.116 2020/09/24 17:54:30 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.117 2020/09/24 20:22:50 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -522,7 +522,7 @@ brain_damage:
 	case EXC_AST|EXC_USER:
 		p->p_md.md_astpending = 0;	/* we are about to do it */
 		uvmexp.softs++;
-		mi_ast(p, ci->ci_want_resched);
+		mi_ast(p, curcpu()->ci_want_resched);
 		break;
 	}
 
