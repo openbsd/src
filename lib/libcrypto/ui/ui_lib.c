@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_lib.c,v 1.36 2020/09/24 19:24:45 tb Exp $ */
+/* $OpenBSD: ui_lib.c,v 1.37 2020/09/24 19:29:09 tb Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
  */
@@ -139,90 +139,123 @@ allocate_string_stack(UI *ui)
 }
 
 static UI_STRING *
-general_allocate_prompt(UI *ui, const char *prompt, int prompt_freeable,
+general_allocate_prompt(const char *prompt, int dup_prompt,
     enum UI_string_types type, int input_flags, char *result_buf)
 {
-	UI_STRING *ret = NULL;
+	UI_STRING *uis = NULL;
 
 	if (prompt == NULL) {
 		UIerror(ERR_R_PASSED_NULL_PARAMETER);
-	} else if ((type == UIT_PROMPT || type == UIT_VERIFY ||
-	    type == UIT_BOOLEAN) && result_buf == NULL) {
-		UIerror(UI_R_NO_RESULT_BUFFER);
-	} else if ((ret = malloc(sizeof(UI_STRING)))) {
-		ret->out_string = prompt;
-		ret->flags = prompt_freeable ? OUT_STRING_FREEABLE : 0;
-		ret->input_flags = input_flags;
-		ret->type = type;
-		ret->result_buf = result_buf;
+		goto err;
 	}
-	return ret;
+	if ((type == UIT_PROMPT || type == UIT_VERIFY || type == UIT_BOOLEAN) &&
+	    result_buf == NULL) {
+		UIerror(UI_R_NO_RESULT_BUFFER);
+		goto err;
+	}
+
+	if ((uis = calloc(1, sizeof(UI_STRING))) == NULL) {
+		UIerror(ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+	uis->out_string = prompt;
+	if (dup_prompt) {
+		if ((uis->out_string = strdup(prompt)) == NULL) {
+			UIerror(ERR_R_MALLOC_FAILURE);
+			goto err;
+		}
+		uis->flags = OUT_STRING_FREEABLE;
+	}
+	uis->input_flags = input_flags;
+	uis->type = type;
+	uis->result_buf = result_buf;
+
+	return uis;
+
+ err:
+	free_string(uis);
+	return NULL;
 }
 
 static int
-general_allocate_string(UI *ui, const char *prompt, int prompt_freeable,
+general_allocate_string(UI *ui, const char *prompt, int dup_prompt,
     enum UI_string_types type, int input_flags, char *result_buf, int minsize,
     int maxsize, const char *test_buf)
 {
-	int ret = -1;
-	UI_STRING *s = general_allocate_prompt(ui, prompt, prompt_freeable,
-	    type, input_flags, result_buf);
+	UI_STRING *s;
+	int ret;
 
-	if (s) {
-		if (allocate_string_stack(ui) >= 0) {
-			s->_.string_data.result_minsize = minsize;
-			s->_.string_data.result_maxsize = maxsize;
-			s->_.string_data.test_buf = test_buf;
-			ret = sk_UI_STRING_push(ui->strings, s);
-			/* sk_push() returns 0 on error.  Let's adapt that */
-			if (ret <= 0)
-				ret--;
-		} else
-			free_string(s);
-	}
+	if ((s = general_allocate_prompt(prompt, dup_prompt, type, input_flags,
+	    result_buf)) == NULL)
+		goto err;
+	s->_.string_data.result_minsize = minsize;
+	s->_.string_data.result_maxsize = maxsize;
+	s->_.string_data.test_buf = test_buf;
+
+	if (allocate_string_stack(ui) < 0)
+		goto err;
+	if ((ret = sk_UI_STRING_push(ui->strings, s)) <= 0)
+		goto err;
+
 	return ret;
+
+ err:
+	free_string(s);
+	return -1;
 }
 
 static int
 general_allocate_boolean(UI *ui, const char *prompt, const char *action_desc,
-    const char *ok_chars, const char *cancel_chars, int prompt_freeable,
+    const char *ok_chars, const char *cancel_chars, int dup_strings,
     enum UI_string_types type, int input_flags, char *result_buf)
 {
-	int ret = -1;
-	UI_STRING *s;
-	const char *p;
+	UI_STRING *s = NULL;
+	int ret;
 
-	if (ok_chars == NULL) {
+	if (ok_chars == NULL || cancel_chars == NULL) {
 		UIerror(ERR_R_PASSED_NULL_PARAMETER);
-	} else if (cancel_chars == NULL) {
-		UIerror(ERR_R_PASSED_NULL_PARAMETER);
-	} else {
-		for (p = ok_chars; *p; p++) {
-			if (strchr(cancel_chars, *p)) {
-				UIerror(UI_R_COMMON_OK_AND_CANCEL_CHARACTERS);
+		goto err;
+	}
+	if (ok_chars[strcspn(ok_chars, cancel_chars)] != '\0')
+		UIerror(UI_R_COMMON_OK_AND_CANCEL_CHARACTERS);
+
+	if ((s = general_allocate_prompt(prompt, dup_strings, type, input_flags,
+	    result_buf)) == NULL)
+		goto err;
+
+	if (dup_strings) {
+		if (action_desc != NULL) {
+			if ((s->_.boolean_data.action_desc =
+			    strdup(action_desc)) == NULL) {
+				UIerror(ERR_R_MALLOC_FAILURE);
+				goto err;
 			}
 		}
-
-		s = general_allocate_prompt(ui, prompt, prompt_freeable,
-		    type, input_flags, result_buf);
-
-		if (s) {
-			if (allocate_string_stack(ui) >= 0) {
-				s->_.boolean_data.action_desc = action_desc;
-				s->_.boolean_data.ok_chars = ok_chars;
-				s->_.boolean_data.cancel_chars = cancel_chars;
-				ret = sk_UI_STRING_push(ui->strings, s);
-				/*
-				 * sk_push() returns 0 on error. Let's adapt
-				 * that
-				 */
-				if (ret <= 0)
-					ret--;
-			} else
-				free_string(s);
+		if ((s->_.boolean_data.ok_chars = strdup(ok_chars)) == NULL) {
+			UIerror(ERR_R_MALLOC_FAILURE);
+			goto err;
 		}
+		if ((s->_.boolean_data.cancel_chars = strdup(cancel_chars)) ==
+		    NULL) {
+			UIerror(ERR_R_MALLOC_FAILURE);
+			goto err;
+		}
+	} else {
+		s->_.boolean_data.action_desc = action_desc;
+		s->_.boolean_data.ok_chars = ok_chars;
+		s->_.boolean_data.cancel_chars = cancel_chars;
 	}
+
+	if (allocate_string_stack(ui) < 0)
+		goto err;
+	if ((ret = sk_UI_STRING_push(ui->strings, s)) <= 0)
+		goto err;
+
 	return ret;
+
+ err:
+	free_string(s);
+	return -1;
 }
 
 /* Returns the index to the place in the stack or -1 for error.  Uses a
@@ -240,16 +273,7 @@ int
 UI_dup_input_string(UI *ui, const char *prompt, int flags, char *result_buf,
     int minsize, int maxsize)
 {
-	char *prompt_copy = NULL;
-
-	if (prompt) {
-		prompt_copy = strdup(prompt);
-		if (prompt_copy == NULL) {
-			UIerror(ERR_R_MALLOC_FAILURE);
-			return 0;
-		}
-	}
-	return general_allocate_string(ui, prompt_copy, 1, UIT_PROMPT, flags,
+	return general_allocate_string(ui, prompt, 1, UIT_PROMPT, flags,
 	    result_buf, minsize, maxsize, NULL);
 }
 
@@ -265,16 +289,7 @@ int
 UI_dup_verify_string(UI *ui, const char *prompt, int flags,
     char *result_buf, int minsize, int maxsize, const char *test_buf)
 {
-	char *prompt_copy = NULL;
-
-	if (prompt) {
-		prompt_copy = strdup(prompt);
-		if (prompt_copy == NULL) {
-			UIerror(ERR_R_MALLOC_FAILURE);
-			return -1;
-		}
-	}
-	return general_allocate_string(ui, prompt_copy, 1, UIT_VERIFY, flags,
+	return general_allocate_string(ui, prompt, 1, UIT_VERIFY, flags,
 	    result_buf, minsize, maxsize, test_buf);
 }
 
@@ -290,49 +305,8 @@ int
 UI_dup_input_boolean(UI *ui, const char *prompt, const char *action_desc,
     const char *ok_chars, const char *cancel_chars, int flags, char *result_buf)
 {
-	char *prompt_copy = NULL;
-	char *action_desc_copy = NULL;
-	char *ok_chars_copy = NULL;
-	char *cancel_chars_copy = NULL;
-
-	if (prompt) {
-		prompt_copy = strdup(prompt);
-		if (prompt_copy == NULL) {
-			UIerror(ERR_R_MALLOC_FAILURE);
-			goto err;
-		}
-	}
-	if (action_desc) {
-		action_desc_copy = strdup(action_desc);
-		if (action_desc_copy == NULL) {
-			UIerror(ERR_R_MALLOC_FAILURE);
-			goto err;
-		}
-	}
-	if (ok_chars) {
-		ok_chars_copy = strdup(ok_chars);
-		if (ok_chars_copy == NULL) {
-			UIerror(ERR_R_MALLOC_FAILURE);
-			goto err;
-		}
-	}
-	if (cancel_chars) {
-		cancel_chars_copy = strdup(cancel_chars);
-		if (cancel_chars_copy == NULL) {
-			UIerror(ERR_R_MALLOC_FAILURE);
-			goto err;
-		}
-	}
-	return general_allocate_boolean(ui, prompt_copy, action_desc_copy,
-	    ok_chars_copy, cancel_chars_copy, 1, UIT_BOOLEAN, flags,
-	    result_buf);
-
-err:
-	free(prompt_copy);
-	free(action_desc_copy);
-	free(ok_chars_copy);
-	free(cancel_chars_copy);
-	return -1;
+	return general_allocate_boolean(ui, prompt, action_desc, ok_chars,
+	    cancel_chars, 1, UIT_BOOLEAN, flags, result_buf);
 }
 
 int
@@ -345,17 +319,8 @@ UI_add_info_string(UI *ui, const char *text)
 int
 UI_dup_info_string(UI *ui, const char *text)
 {
-	char *text_copy = NULL;
-
-	if (text) {
-		text_copy = strdup(text);
-		if (text_copy == NULL) {
-			UIerror(ERR_R_MALLOC_FAILURE);
-			return -1;
-		}
-	}
-	return general_allocate_string(ui, text_copy, 1, UIT_INFO, 0, NULL,
-	    0, 0, NULL);
+	return general_allocate_string(ui, text, 1, UIT_INFO, 0, NULL, 0, 0,
+	    NULL);
 }
 
 int
@@ -368,17 +333,8 @@ UI_add_error_string(UI *ui, const char *text)
 int
 UI_dup_error_string(UI *ui, const char *text)
 {
-	char *text_copy = NULL;
-
-	if (text) {
-		text_copy = strdup(text);
-		if (text_copy == NULL) {
-			UIerror(ERR_R_MALLOC_FAILURE);
-			return -1;
-		}
-	}
-	return general_allocate_string(ui, text_copy, 1, UIT_ERROR, 0, NULL,
-	    0, 0, NULL);
+	return general_allocate_string(ui, text, 1, UIT_ERROR, 0, NULL, 0, 0,
+	    NULL);
 }
 
 char *
