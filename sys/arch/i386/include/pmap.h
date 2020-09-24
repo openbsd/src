@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.87 2019/12/19 17:46:32 mpi Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.88 2020/09/24 11:18:37 kettenis Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -250,7 +250,7 @@ int pmap_test_attrs(struct vm_page *, int);
 void pmap_write_protect(struct pmap *, vaddr_t,
     vaddr_t, vm_prot_t);
 int pmap_exec_fixup(struct vm_map *, struct trapframe *,
-    struct pcb *);
+    vaddr_t, struct pcb *);
 void pmap_exec_account(struct pmap *, vaddr_t, u_int32_t,
     u_int32_t);
 struct pv_entry *pmap_remove_pv(struct vm_page *, struct pmap *, vaddr_t);

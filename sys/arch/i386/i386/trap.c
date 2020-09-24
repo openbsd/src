@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.145 2020/09/15 09:30:31 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.146 2020/09/24 11:18:37 kettenis Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -119,6 +119,7 @@ trap(struct trapframe *frame)
 	vm_prot_t ftype;
 	union sigval sv;
 	caddr_t onfault;
+	vaddr_t gdt_cs = SEGDESC_LIMIT(curcpu()->ci_gdt[GUCODE_SEL].sd);
 	uint32_t cr2 = rcr2();
 
 	uvmexp.traps++;
@@ -261,7 +262,7 @@ trap(struct trapframe *frame)
 		KERNEL_LOCK();
 
 		/* If pmap_exec_fixup does something, let's retry the trap. */
-		if (pmap_exec_fixup(&p->p_vmspace->vm_map, frame,
+		if (pmap_exec_fixup(&p->p_vmspace->vm_map, frame, gdt_cs,
 		    &p->p_addr->u_pcb)) {
 			KERNEL_UNLOCK();
 			goto out;

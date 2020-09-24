@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.207 2020/09/23 15:13:26 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.208 2020/09/24 11:18:37 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -594,12 +594,12 @@ pmap_exec_account(struct pmap *pm, vaddr_t va,
 		struct trapframe *tf = curproc->p_md.md_regs;
 		struct pcb *pcb = &curproc->p_addr->u_pcb;
 
+		KERNEL_LOCK();
 		pm->pm_hiexec = I386_MAX_EXE_ADDR;
 		setcslimit(pm, tf, pcb, I386_MAX_EXE_ADDR);
+		KERNEL_UNLOCK();
 	}
 }
-
-#define SEGDESC_LIMIT(sd) (ptoa(((sd).sd_hilimit << 16) | (sd).sd_lolimit))
 
 /*
  * Fixup the code segment to cover all potential executable mappings.
@@ -607,12 +607,13 @@ pmap_exec_account(struct pmap *pm, vaddr_t va,
  * returns 0 if no changes to the code segment were made.
  */
 int
-pmap_exec_fixup(struct vm_map *map, struct trapframe *tf, struct pcb *pcb)
+pmap_exec_fixup(struct vm_map *map, struct trapframe *tf, vaddr_t gdt_cs,
+    struct pcb *pcb)
 {
 	struct vm_map_entry *ent;
 	struct pmap *pm = vm_map_pmap(map);
 	vaddr_t va = 0;
-	vaddr_t pm_cs, gdt_cs;
+	vaddr_t pm_cs;
 
 	vm_map_lock(map);
 	RBT_FOREACH_REVERSE(ent, uvm_map_addr, &map->addr) {
@@ -627,8 +628,9 @@ pmap_exec_fixup(struct vm_map *map, struct trapframe *tf, struct pcb *pcb)
 		va = trunc_page(ent->end - 1);
 	vm_map_unlock(map);
 
+	KERNEL_ASSERT_LOCKED();
+
 	pm_cs = SEGDESC_LIMIT(pm->pm_codeseg);
-	gdt_cs = SEGDESC_LIMIT(curcpu()->ci_gdt[GUCODE_SEL].sd);
 
 	/*
 	 * Another thread running on another cpu can change
