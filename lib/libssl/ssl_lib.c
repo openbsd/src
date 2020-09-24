@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.233 2020/09/19 10:17:56 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.234 2020/09/24 18:12:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -196,8 +196,7 @@ SSL_clear(SSL *s)
 	tls13_ctx_free(s->internal->tls13);
 	s->internal->tls13 = NULL;
 
-	BUF_MEM_free(s->internal->init_buf);
-	s->internal->init_buf = NULL;
+	ssl3_release_init_buffer(s);
 
 	ssl_clear_cipher_state(s);
 
@@ -531,7 +530,7 @@ SSL_free(SSL *s)
 
 	tls13_ctx_free(s->internal->tls13);
 
-	BUF_MEM_free(s->internal->init_buf);
+	ssl3_release_init_buffer(s);
 
 	sk_SSL_CIPHER_free(s->cipher_list);
 	sk_SSL_CIPHER_free(s->internal->cipher_list_tls13);

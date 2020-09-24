@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.19 2020/09/24 17:59:54 jsing Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.20 2020/09/24 18:12:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -684,6 +684,16 @@ ssl3_setup_init_buffer(SSL *s)
 err:
 	BUF_MEM_free(buf);
 	return (0);
+}
+
+void
+ssl3_release_init_buffer(SSL *s)
+{
+	BUF_MEM_free(s->internal->init_buf);
+	s->internal->init_buf = NULL;
+	s->internal->init_msg = NULL;
+	s->internal->init_num = 0;
+	s->internal->init_off = 0;
 }
 
 int
