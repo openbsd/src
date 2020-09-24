@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.97 2020/09/23 05:50:26 jca Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.98 2020/09/24 07:23:41 jca Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -58,8 +58,6 @@
 #define AUTO_HIBERNATE 2
 
 int debug = 0;
-
-int doperf = PERF_NONE;
 
 extern char *__progname;
 
@@ -255,7 +253,10 @@ handle_client(int sock_fd, int ctl_fd)
 	socklen_t fromlen;
 	struct apm_command cmd;
 	struct apm_reply reply;
-	int cpuspeed_mib[] = {CTL_HW, HW_CPUSPEED};
+	int perfpol_mib[] = { CTL_HW, HW_PERFPOLICY };
+	char perfpol[32];
+	size_t perfpol_sz = sizeof(perfpol);
+	int cpuspeed_mib[] = { CTL_HW, HW_CPUSPEED };
 	int cpuspeed = 0;
 	size_t cpuspeed_sz = sizeof(cpuspeed);
 
@@ -290,19 +291,16 @@ handle_client(int sock_fd, int ctl_fd)
 		reply.newstate = HIBERNATING;
 		break;
 	case SETPERF_LOW:
-		doperf = PERF_MANUAL;
 		reply.newstate = NORMAL;
 		logmsg(LOG_NOTICE, "setting hw.perfpolicy to low");
 		setperfpolicy("low");
 		break;
 	case SETPERF_HIGH:
-		doperf = PERF_MANUAL;
 		reply.newstate = NORMAL;
 		logmsg(LOG_NOTICE, "setting hw.perfpolicy to high");
 		setperfpolicy("high");
 		break;
 	case SETPERF_AUTO:
-		doperf = PERF_AUTO;
 		reply.newstate = NORMAL;
 		logmsg(LOG_NOTICE, "setting hw.perfpolicy to auto");
 		setperfpolicy("auto");
@@ -312,11 +310,22 @@ handle_client(int sock_fd, int ctl_fd)
 		break;
 	}
 
-	if (sysctl(cpuspeed_mib, 2, &cpuspeed, &cpuspeed_sz, NULL, 0) == -1)
-		logmsg(LOG_INFO, "cannot read hw.cpuspeed");
+	reply.perfmode = PERF_NONE;
+	if (sysctl(perfpol_mib, 2, perfpol, &perfpol_sz, NULL, 0) == -1)
+		logmsg(LOG_INFO, "cannot read hw.perfpolicy");
+	else {
+		if (strcmp(perfpol, "manual") == 0 ||
+		    strcmp(perfpol, "high") == 0) {
+			reply.perfmode = PERF_MANUAL;
+		} else if (strcmp(perfpol, "auto") == 0)
+			reply.perfmode = PERF_AUTO;
+	}
 
+	if (sysctl(cpuspeed_mib, 2, &cpuspeed, &cpuspeed_sz, NULL, 0) == -1) {
+		logmsg(LOG_INFO, "cannot read hw.cpuspeed");
+		cpuspeed = 0;
+	}
 	reply.cpuspeed = cpuspeed;
-	reply.perfmode = doperf;
 	reply.vno = APMD_VNO;
 	if (send(cli_fd, &reply, sizeof(reply), 0) != sizeof(reply))
 		logmsg(LOG_INFO, "reply to client botched");
@@ -386,6 +395,7 @@ main(int argc, char *argv[])
 	const char *errstr;
 	int kq, nchanges;
 	struct kevent ev[2];
+	int doperf = PERF_NONE;
 
 	while ((ch = getopt(argc, argv, "aACdHLsf:t:S:z:Z:")) != -1)
 		switch(ch) {
