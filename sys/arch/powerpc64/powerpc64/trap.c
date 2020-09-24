@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.38 2020/09/24 17:54:30 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.39 2020/09/24 20:22:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -258,7 +258,7 @@ trap(struct trapframe *frame)
 	case EXC_AST|EXC_USER:
 		p->p_md.md_astpending = 0;
 		uvmexp.softs++;
-		mi_ast(p, ci->ci_want_resched);
+		mi_ast(p, curcpu()->ci_want_resched);
 		break;
 
 	case EXC_ALI|EXC_USER:
