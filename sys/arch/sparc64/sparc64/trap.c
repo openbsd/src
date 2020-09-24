@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.104 2020/09/24 17:54:30 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.105 2020/09/24 23:49:59 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -788,6 +788,7 @@ data_access_fault(struct trapframe64 *tf, unsigned type, vaddr_t pc,
 		}
 	} else {
 		p->p_md.md_tf = tf;
+		refreshcreds(p);
 		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
 		    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
 		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
@@ -978,6 +979,7 @@ text_access_fault(struct trapframe64 *tf, unsigned type, vaddr_t pc,
 		/* NOTREACHED */
 	} else {
 		p->p_md.md_tf = tf;
+		refreshcreds(p);
 		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
 		    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
 		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
@@ -1086,6 +1088,7 @@ text_access_error(struct trapframe64 *tf, unsigned type, vaddr_t pc,
 		/* NOTREACHED */
 	} else {
 		p->p_md.md_tf = tf;
+		refreshcreds(p);
 		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
 		    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
 		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
