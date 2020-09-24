@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_lib.c,v 1.46 2020/07/07 19:31:11 jsing Exp $ */
+/* $OpenBSD: d1_lib.c,v 1.47 2020/09/24 17:59:54 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -132,14 +132,14 @@ dtls1_clear_queues(SSL *s)
 
 	while ((item = pqueue_pop(D1I(s)->unprocessed_rcds.q)) != NULL) {
 		rdata = (DTLS1_RECORD_DATA_INTERNAL *) item->data;
-		free(rdata->rbuf.buf);
+		ssl3_release_buffer(&rdata->rbuf);
 		free(item->data);
 		pitem_free(item);
 	}
 
 	while ((item = pqueue_pop(D1I(s)->processed_rcds.q)) != NULL) {
 		rdata = (DTLS1_RECORD_DATA_INTERNAL *) item->data;
-		free(rdata->rbuf.buf);
+		ssl3_release_buffer(&rdata->rbuf);
 		free(item->data);
 		pitem_free(item);
 	}
@@ -160,7 +160,7 @@ dtls1_clear_queues(SSL *s)
 
 	while ((item = pqueue_pop(D1I(s)->buffered_app_data.q)) != NULL) {
 		rdata = (DTLS1_RECORD_DATA_INTERNAL *) item->data;
-		free(rdata->rbuf.buf);
+		ssl3_release_buffer(&rdata->rbuf);
 		free(item->data);
 		pitem_free(item);
 	}

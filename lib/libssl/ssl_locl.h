@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.293 2020/09/17 15:23:29 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.294 2020/09/24 17:59:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1223,8 +1223,9 @@ int	ssl3_setup_buffers(SSL *s);
 int	ssl3_setup_init_buffer(SSL *s);
 int	ssl3_setup_read_buffer(SSL *s);
 int	ssl3_setup_write_buffer(SSL *s);
-int	ssl3_release_read_buffer(SSL *s);
-int	ssl3_release_write_buffer(SSL *s);
+void ssl3_release_buffer(SSL3_BUFFER_INTERNAL *b);
+void ssl3_release_read_buffer(SSL *s);
+void ssl3_release_write_buffer(SSL *s);
 int	ssl3_new(SSL *s);
 void	ssl3_free(SSL *s);
 int	ssl3_accept(SSL *s);

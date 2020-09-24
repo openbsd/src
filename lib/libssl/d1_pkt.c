@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.81 2020/08/30 15:40:19 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.82 2020/09/24 17:59:54 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -200,7 +200,7 @@ dtls1_copy_record(SSL *s, pitem *item)
 
 	rdata = (DTLS1_RECORD_DATA_INTERNAL *)item->data;
 
-	free(S3I(s)->rbuf.buf);
+	ssl3_release_buffer(&S3I(s)->rbuf);
 
 	s->internal->packet = rdata->packet;
 	s->internal->packet_length = rdata->packet_length;
@@ -251,7 +251,7 @@ dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
 	return (1);
 
 err:
-	free(rdata->rbuf.buf);
+	ssl3_release_buffer(&rdata->rbuf);
 
 init_err:
 	SSLerror(s, ERR_R_INTERNAL_ERROR);
