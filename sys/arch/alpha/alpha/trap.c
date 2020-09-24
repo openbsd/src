@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.89 2020/08/19 10:10:57 mpi Exp $ */
+/* $OpenBSD: trap.c,v 1.90 2020/09/24 17:54:28 deraadt Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -244,10 +244,6 @@ trap(a0, a1, a2, entry, framep)
 	if (user) {
 		p->p_md.md_tf = framep;
 		refreshcreds(p);
-		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
-		   "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
-		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
-			goto out;
 	}
 
 	switch (entry) {
@@ -370,6 +366,12 @@ trap(a0, a1, a2, entry, framep)
 		break;
 
 	case ALPHA_KENTRY_MM:
+		if (user &&
+		    !uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
+		   "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
+		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
+			goto out;
+
 		switch (a1) {
 		case ALPHA_MMCSR_FOR:
 		case ALPHA_MMCSR_FOE:

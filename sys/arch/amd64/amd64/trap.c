@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.81 2020/09/14 12:51:28 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.82 2020/09/24 17:54:29 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -343,11 +343,6 @@ usertrap(struct trapframe *frame)
 	p->p_md.md_regs = frame;
 	refreshcreds(p);
 
-	if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
-	    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
-	    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
-		goto out;
-
 	switch (type) {
 	case T_PROTFLT:			/* protection fault */
 	case T_TSSFLT:
@@ -381,6 +376,10 @@ usertrap(struct trapframe *frame)
 		break;
 
 	case T_PAGEFLT:			/* page fault */
+		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
+		    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
+		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
+			goto out;
 		if (pageflttrap(frame, cr2, 1))
 			goto out;
 		/* FALLTHROUGH */

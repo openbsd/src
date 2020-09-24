@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.103 2020/08/19 10:10:58 mpi Exp $	*/
+/*	$OpenBSD: trap.c,v 1.104 2020/09/24 17:54:30 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -426,10 +426,6 @@ trap(struct trapframe64 *tf, unsigned type, vaddr_t pc, long tstate)
 	pcb = &p->p_addr->u_pcb;
 	p->p_md.md_tf = tf;	/* for ptrace/signals */
 	refreshcreds(p);
-	if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
-	    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
-	    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
-		goto out;
 
 	switch (type) {
 
@@ -678,7 +674,7 @@ dopanic:
 		trapsignal(p, SIGFPE, FPE_INTOVF_TRAP, FPE_INTOVF, sv);
 		break;
 	}
-out:
+
 	userret(p);
 	share_fpu(p, tf);
 #undef ADVANCE
@@ -791,8 +787,13 @@ data_access_fault(struct trapframe64 *tf, unsigned type, vaddr_t pc,
 			goto kfault;
 		}
 	} else {
-		KERNEL_LOCK();
 		p->p_md.md_tf = tf;
+		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
+		    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
+		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
+			goto out;
+
+		KERNEL_LOCK();
 	}
 
 	vm = p->p_vmspace;
@@ -857,12 +858,12 @@ kfault:
 		trapsignal(p, signal, access_type, sicode, sv);
 	}
 
+	KERNEL_UNLOCK();
+
+out:
 	if ((tstate & TSTATE_PRIV) == 0) {
-		KERNEL_UNLOCK();
 		userret(p);
 		share_fpu(p, tf);
-	} else {
-		KERNEL_UNLOCK();
 	}
 }
 
@@ -934,8 +935,8 @@ data_access_error(struct trapframe64 *tf, unsigned type, vaddr_t afva,
 	}
 
 	trapsignal(p, SIGSEGV, PROT_READ | PROT_WRITE, SEGV_MAPERR, sv);
-out:
 
+out:
 	if ((tstate & TSTATE_PRIV) == 0) {
 		userret(p);
 		share_fpu(p, tf);
@@ -975,8 +976,13 @@ text_access_fault(struct trapframe64 *tf, unsigned type, vaddr_t pc,
 		(void) splhigh();
 		panic("kernel text_access_fault: pc=%lx va=%lx", pc, va);
 		/* NOTREACHED */
-	} else
+	} else {
 		p->p_md.md_tf = tf;
+		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
+		    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
+		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
+			goto out;
+	}
 
 	KERNEL_LOCK();
 
@@ -1020,6 +1026,7 @@ text_access_fault(struct trapframe64 *tf, unsigned type, vaddr_t pc,
 
 	KERNEL_UNLOCK();
 
+out:
 	if ((tstate & TSTATE_PRIV) == 0) {
 		userret(p);
 		share_fpu(p, tf);
@@ -1077,8 +1084,13 @@ text_access_error(struct trapframe64 *tf, unsigned type, vaddr_t pc,
 		panic("kernel text error: pc=%lx sfsr=%lb", pc,
 		    sfsr, SFSR_BITS);
 		/* NOTREACHED */
-	} else
+	} else {
 		p->p_md.md_tf = tf;
+		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
+		    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
+		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
+			goto out;
+	}
 
 	KERNEL_LOCK();
 

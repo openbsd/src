@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.146 2020/08/19 10:10:58 mpi Exp $	*/
+/*	$OpenBSD: trap.c,v 1.147 2020/09/24 17:54:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -261,16 +261,11 @@ trap(struct trapframe *trapframe)
 	}
 #endif
 
-	if (type & T_USER) {
+	if (type & T_USER)
 		refreshcreds(p);
-		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
-		    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
-		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
-			goto out;
-	}
 
 	itsa(trapframe, ci, p, type);
-out:
+
 	if (type & T_USER)
 		userret(p);
 }
@@ -394,6 +389,11 @@ itsa(struct trapframe *trapframe, struct cpu_info *ci, struct proc *p,
 		ftype = PROT_WRITE;
 		pcb = &p->p_addr->u_pcb;
 fault_common:
+		if ((type & T_USER) &&
+		    !uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
+		    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
+		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
+			return;
 
 #ifdef CPU_R4000
 		if (r4000_errata != 0) {

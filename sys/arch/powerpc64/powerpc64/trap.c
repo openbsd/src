@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.37 2020/09/15 07:47:24 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.38 2020/09/24 17:54:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -92,10 +92,6 @@ trap(struct trapframe *frame)
 		type |= EXC_USER;
 		p->p_md.md_regs = frame;
 		refreshcreds(p);
-		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
-		    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
-		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
-			goto out;
 	}
 
 	switch (type) {
@@ -172,6 +168,11 @@ trap(struct trapframe *frame)
 		/* FALLTHROUGH */
 
 	case EXC_DSI|EXC_USER:
+		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
+		    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
+		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
+			goto out;
+
 		map = &p->p_vmspace->vm_map;
 		va = frame->dar;
 		if (frame->dsisr & DSISR_STORE)
@@ -214,6 +215,11 @@ trap(struct trapframe *frame)
 		/* FALLTHROUGH */
 
 	case EXC_ISI|EXC_USER:
+		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
+		    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
+		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
+			goto out;
+
 		map = &p->p_vmspace->vm_map;
 		va = frame->srr0;
 		ftype = PROT_READ | PROT_EXEC;
