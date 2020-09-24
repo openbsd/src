@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.260 2020/09/23 14:25:55 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.261 2020/09/24 13:16:52 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -4095,7 +4095,8 @@ ikev2_ikesa_enable(struct iked *env, struct iked_sa *sa, struct iked_sa *nsa)
 		nsa->sa_eapid = sa->sa_eapid;
 		sa->sa_eapid = NULL;
 	}
-	log_debug("%s: activating new IKE SA", __func__);
+	log_info("%srekeyed as new IKESA %s",
+	    SPI_SA(sa, NULL), print_spi(nsa->sa_hdr.sh_ispi, 8));
 	sa_state(env, nsa, IKEV2_STATE_ESTABLISHED);
 	ikev2_enable_timer(env, nsa);
 
@@ -4619,8 +4620,8 @@ ikev2_send_informational(struct iked *env, struct iked_message *msg)
 		ikev2_log_proposal(msg->msg_sa, &msg->msg_proposals);
 		break;
 	default:
-		log_debug("%s: unsupported notification %s", __func__,
-		    print_map(msg->msg_error, ikev2_n_map));
+		log_warnx("%s: unsupported notification %s", SPI_SA(sa,
+		    __func__), print_map(msg->msg_error, ikev2_n_map));
 		goto done;
 	}
 	log_info("%s: %s", SPI_SA(sa, __func__),
