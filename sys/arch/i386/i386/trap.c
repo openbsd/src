@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.148 2020/09/24 17:54:29 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.149 2020/09/24 20:21:50 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -476,7 +476,7 @@ ast(struct trapframe *frame)
 	p->p_md.md_regs = frame;
 	refreshcreds(p);
 	uvmexp.softs++;
-	mi_ast(p, want_resched);
+	mi_ast(p, curcpu()->ci_want_resched);
 	userret(p);
 }
 
