@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.208 2020/09/24 11:18:37 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.209 2020/09/24 11:36:50 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -582,6 +582,9 @@ pmap_exec_account(struct pmap *pm, vaddr_t va,
 	if ((opte ^ npte) & PG_X)
 		pmap_tlb_shootpage(pm, va);
 			
+	if (cpu_pae)
+		return;
+
 	/*
 	 * Executability was removed on the last executable change.
 	 * Reset the code segment to something conservative and
@@ -615,6 +618,8 @@ pmap_exec_fixup(struct vm_map *map, struct trapframe *tf, vaddr_t gdt_cs,
 	vaddr_t va = 0;
 	vaddr_t pm_cs;
 
+	KERNEL_LOCK();
+
 	vm_map_lock(map);
 	RBT_FOREACH_REVERSE(ent, uvm_map_addr, &map->addr) {
 		if (ent->protection & PROT_EXEC)
@@ -642,6 +647,7 @@ pmap_exec_fixup(struct vm_map *map, struct trapframe *tf, vaddr_t gdt_cs,
 	 */
 	if (va <= pm->pm_hiexec && pm_cs == pm->pm_hiexec &&
 	    gdt_cs == pm->pm_hiexec) {
+		KERNEL_UNLOCK();
 		return (0);
 	}
 
@@ -654,6 +660,7 @@ pmap_exec_fixup(struct vm_map *map, struct trapframe *tf, vaddr_t gdt_cs,
 	 */
 	setcslimit(pm, tf, pcb, va);
 
+	KERNEL_UNLOCK();
 	return (1);
 }
 
@@ -1346,8 +1353,7 @@ pmap_create(void)
 	pmap->pm_hiexec = 0;
 	pmap->pm_flags = 0;
 
-	setsegment(&pmap->pm_codeseg, 0, atop(I386_MAX_EXE_ADDR) - 1,
-	    SDT_MEMERA, SEL_UPL, 1, 1);
+	initcodesegment(&pmap->pm_codeseg);
 
 	pmap_pinit_pd(pmap);
 	return (pmap);

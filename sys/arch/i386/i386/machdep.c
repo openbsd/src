@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.639 2020/09/13 05:57:28 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.640 2020/09/24 11:36:50 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2955,15 +2955,7 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	p->p_md.md_flags &= ~MDP_USEDFPU;
 #endif
 
-	/*
-	 * Reset the code segment limit to I386_MAX_EXE_ADDR in the pmap;
-	 * this gets copied into the GDT for GUCODE_SEL by pmap_activate().
-	 * Similarly, reset the base of each of the two thread data
-	 * segments to zero in the pcb; they'll get copied into the
-	 * GDT for GUFS_SEL and GUGS_SEL.
-	 */
-	setsegment(&pmap->pm_codeseg, 0, atop(I386_MAX_EXE_ADDR) - 1,
-	    SDT_MEMERA, SEL_UPL, 1, 1);
+	initcodesegment(&pmap->pm_codeseg);
 	setsegment(&pcb->pcb_threadsegs[TSEG_FS], 0,
 	    atop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMRWA, SEL_UPL, 1, 1);
 	setsegment(&pcb->pcb_threadsegs[TSEG_GS], 0,
@@ -3049,6 +3041,30 @@ setregion(struct region_descriptor *rd, void *base, size_t limit)
 {
 	rd->rd_limit = (int)limit;
 	rd->rd_base = (int)base;
+}
+
+void
+initcodesegment(struct segment_descriptor *cs)
+{
+	if (cpu_pae) {
+		/*
+		 * When code execution is managed using NX feature
+		 * in pmapae.c, GUCODE_SEL should cover userland.
+		 */
+		setsegment(cs, 0, atop(VM_MAXUSER_ADDRESS - 1),
+		    SDT_MEMERA, SEL_UPL, 1, 1);
+	} else {
+		/*
+		 * For pmap.c's non-PAE/NX line-in-the-sand execution, reset
+		 * the code segment limit to I386_MAX_EXE_ADDR in the pmap;
+		 * this gets copied into the GDT for GUCODE_SEL by
+		 * pmap_activate().  Similarly, reset the base of each of
+		 * the two thread data segments to zero in the pcb; they'll
+		 * get copied into the GDT for GUFS_SEL and GUGS_SEL.
+		 */
+		setsegment(cs, 0, atop(I386_MAX_EXE_ADDR - 1),
+		    SDT_MEMERA, SEL_UPL, 1, 1);
+	}
 }
 
 void

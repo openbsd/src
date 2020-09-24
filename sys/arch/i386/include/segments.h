@@ -1,4 +1,4 @@
-/*	$OpenBSD: segments.h,v 1.27 2020/09/24 11:18:37 kettenis Exp $	*/
+/*	$OpenBSD: segments.h,v 1.28 2020/09/24 11:36:50 deraadt Exp $	*/
 /*	$NetBSD: segments.h,v 1.23 1996/02/01 22:31:03 mycroft Exp $	*/
 
 /*-
@@ -121,6 +121,7 @@ void setgate(struct gate_descriptor *, void *, int, int, int, int);
 void setregion(struct region_descriptor *, void *, size_t);
 void setsegment(struct segment_descriptor *, void *, size_t, int, int,
     int, int);
+void initcodesegment(struct segment_descriptor *);
 void unsetgate(struct gate_descriptor *);
 void cpu_init_idt(void);
 

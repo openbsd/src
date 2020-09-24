@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.146 2020/09/24 11:18:37 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.147 2020/09/24 11:36:50 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -259,18 +259,14 @@ trap(struct trapframe *frame)
 		return;
 
 	case T_PROTFLT|T_USER:		/* protection fault */
-		KERNEL_LOCK();
-
 		/* If pmap_exec_fixup does something, let's retry the trap. */
-		if (pmap_exec_fixup(&p->p_vmspace->vm_map, frame, gdt_cs,
-		    &p->p_addr->u_pcb)) {
-			KERNEL_UNLOCK();
+		if (cpu_pae == 0 &&
+		    pmap_exec_fixup(&p->p_vmspace->vm_map, frame, gdt_cs,
+		    &p->p_addr->u_pcb))
 			goto out;
-		}
 
 		sv.sival_int = frame->tf_eip;
 		trapsignal(p, SIGSEGV, type &~ T_USER, SEGV_MAPERR, sv);
-		KERNEL_UNLOCK();
 		goto out;
 
 	case T_TSSFLT|T_USER:
