@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_lib.c,v 1.37 2020/09/24 19:29:09 tb Exp $ */
+/* $OpenBSD: ui_lib.c,v 1.38 2020/09/24 19:31:01 tb Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
  */
@@ -216,8 +216,10 @@ general_allocate_boolean(UI *ui, const char *prompt, const char *action_desc,
 		UIerror(ERR_R_PASSED_NULL_PARAMETER);
 		goto err;
 	}
-	if (ok_chars[strcspn(ok_chars, cancel_chars)] != '\0')
+	if (ok_chars[strcspn(ok_chars, cancel_chars)] != '\0') {
 		UIerror(UI_R_COMMON_OK_AND_CANCEL_CHARACTERS);
+		goto err;
+	}
 
 	if ((s = general_allocate_prompt(prompt, dup_strings, type, input_flags,
 	    result_buf)) == NULL)
