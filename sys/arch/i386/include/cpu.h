@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.171 2020/09/23 15:13:26 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.172 2020/09/24 20:30:41 deraadt Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -264,8 +264,6 @@ void cpu_unidle(struct cpu_info *);
 #define aston(p)	((p)->p_md.md_astpending = 1)
 
 #define curpcb			curcpu()->ci_curpcb
-
-#define want_resched (curcpu()->ci_want_resched)
 
 unsigned int cpu_rnd_messybits(void);
 
