@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.114 2020/09/24 17:54:29 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.115 2020/09/25 12:57:37 deraadt Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -287,10 +287,8 @@ lose:
 		/* kernel mode data fault */
 
 		/* data fault on the user address? */
-		if ((frame->tf_dmt0 & DMT_DAS) == 0) {
-			KERNEL_LOCK();
+		if ((frame->tf_dmt0 & DMT_DAS) == 0)
 			goto user_fault;
-		}
 
 		fault_addr = frame->tf_dma0;
 		if (frame->tf_dmt0 & (DMT_WRITE|DMT_LOCKBAR)) {
@@ -378,8 +376,13 @@ lose:
 		/* User mode instruction access fault */
 		/* FALLTHROUGH */
 	case T_DATAFLT+T_USER:
-		KERNEL_LOCK();
 user_fault:
+		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
+		    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
+		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
+			goto userexit;
+
+		KERNEL_LOCK();
 		if (type == T_INSTFLT + T_USER) {
 			pbus_type = CMMU_PFSR_FAULT(frame->tf_ipfsr);
 #ifdef TRAPDEBUG
@@ -798,10 +801,8 @@ lose:
 		/* kernel mode data fault */
 
 		/* data fault on the user address? */
-		if ((frame->tf_dsr & CMMU_DSR_SU) == 0) {
-			KERNEL_LOCK();
+		if ((frame->tf_dsr & CMMU_DSR_SU) == 0)
 			goto m88110_user_fault;
-		}
 
 #ifdef TRAPDEBUG
 		printf("Kernel Data access fault exip %x dsr %x dlar %x\n",
@@ -854,13 +855,13 @@ lose:
 		/* User mode instruction access fault */
 		/* FALLTHROUGH */
 	case T_DATAFLT+T_USER:
+m88110_user_fault:
 		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
 		    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
 		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
 			goto userexit;
 
 		KERNEL_LOCK();
-m88110_user_fault:
 		if (type == T_INSTFLT+T_USER) {
 			ftype = PROT_READ;
 			fault_code = PROT_READ;
