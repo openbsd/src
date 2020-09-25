@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_lib.c,v 1.43 2020/09/25 11:17:52 tb Exp $ */
+/* $OpenBSD: ui_lib.c,v 1.44 2020/09/25 11:25:31 tb Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
  */
@@ -254,8 +254,10 @@ general_allocate_boolean(UI *ui, const char *prompt, const char *action_desc,
 	return -1;
 }
 
-/* Returns the index to the place in the stack or -1 for error.  Uses a
-   direct reference to the prompt.  */
+/*
+ * Returns the index to the place in the stack or -1 for error.  Uses a
+ * direct reference to the prompt.
+ */
 int
 UI_add_input_string(UI *ui, const char *prompt, int flags, char *result_buf,
     int minsize, int maxsize)
@@ -264,7 +266,7 @@ UI_add_input_string(UI *ui, const char *prompt, int flags, char *result_buf,
 	    result_buf, minsize, maxsize, NULL);
 }
 
-/* Same as UI_add_input_string(), excepts it takes a copy of the prompt */
+/* Same as UI_add_input_string(), excepts it takes a copy of the prompt. */
 int
 UI_dup_input_string(UI *ui, const char *prompt, int flags, char *result_buf,
     int minsize, int maxsize)
@@ -453,7 +455,7 @@ UI_process(UI *ui)
 		}
 	}
 
-err:
+ err:
 	if (ui->meth->ui_close_session && !ui->meth->ui_close_session(ui))
 		return -1;
 	return ok;
@@ -545,9 +547,11 @@ UI_create_method(const char *name)
 	return ui_method;
 }
 
-/* BIG FSCKING WARNING!!!!  If you use this on a statically allocated method
-   (that is, it hasn't been allocated using UI_create_method(), you deserve
-   anything Murphy can throw at you and more!  You have been warned. */
+/*
+ * BIG FSCKING WARNING!!!!  If you use this on a statically allocated method
+ * (that is, it hasn't been allocated using UI_create_method(), you deserve
+ * anything Murphy can throw at you and more!  You have been warned.
+ */
 void
 UI_destroy_method(UI_METHOD *ui_method)
 {
