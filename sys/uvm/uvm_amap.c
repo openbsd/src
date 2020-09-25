@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.83 2020/09/22 14:31:08 mpi Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.84 2020/09/25 08:04:48 mpi Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -1019,9 +1019,7 @@ amap_lookup(struct vm_aref *aref, vaddr_t offset)
 
 	AMAP_B2SLOT(slot, offset);
 	slot += aref->ar_pageoff;
-
-	if (slot >= amap->am_nslot)
-		panic("amap_lookup: offset out of range");
+	KASSERT(slot < amap->am_nslot);
 
 	chunk = amap_chunk_get(amap, slot, 0, PR_NOWAIT);
 	if (chunk == NULL)
@@ -1046,8 +1044,7 @@ amap_lookups(struct vm_aref *aref, vaddr_t offset,
 	AMAP_B2SLOT(slot, offset);
 	slot += aref->ar_pageoff;
 
-	if ((slot + (npages - 1)) >= amap->am_nslot)
-		panic("amap_lookups: offset out of range");
+	KASSERT((slot + (npages - 1)) < amap->am_nslot);
 
 	for (i = 0, lcv = slot; lcv < slot + npages; i += n, lcv += n) {
 		n = UVM_AMAP_CHUNK - UVM_AMAP_SLOTIDX(lcv);
@@ -1078,9 +1075,7 @@ amap_populate(struct vm_aref *aref, vaddr_t offset)
 
 	AMAP_B2SLOT(slot, offset);
 	slot += aref->ar_pageoff;
-
-	if (slot >= amap->am_nslot)
-		panic("amap_populate: offset out of range");
+	KASSERT(slot < amap->am_nslot);
 
 	chunk = amap_chunk_get(amap, slot, 1, PR_WAITOK);
 	KASSERT(chunk != NULL);
@@ -1101,9 +1096,8 @@ amap_add(struct vm_aref *aref, vaddr_t offset, struct vm_anon *anon,
 
 	AMAP_B2SLOT(slot, offset);
 	slot += aref->ar_pageoff;
+	KASSERT(slot < amap->am_nslot);
 
-	if (slot >= amap->am_nslot)
-		panic("amap_add: offset out of range");
 	chunk = amap_chunk_get(amap, slot, 1, PR_NOWAIT);
 	if (chunk == NULL)
 		return 1;
@@ -1144,9 +1138,7 @@ amap_unadd(struct vm_aref *aref, vaddr_t offset)
 
 	AMAP_B2SLOT(slot, offset);
 	slot += aref->ar_pageoff;
-
-	if (slot >= amap->am_nslot)
-		panic("amap_unadd: offset out of range");
+	KASSERT(slot < amap->am_nslot);
 	chunk = amap_chunk_get(amap, slot, 0, PR_NOWAIT);
 	if (chunk == NULL)
 		panic("amap_unadd: chunk for slot %d not present", slot);
