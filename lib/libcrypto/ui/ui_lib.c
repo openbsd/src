@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_lib.c,v 1.40 2020/09/25 10:50:26 tb Exp $ */
+/* $OpenBSD: ui_lib.c,v 1.41 2020/09/25 10:56:36 tb Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
  */
@@ -775,6 +775,7 @@ UI_get_result_maxsize(UI_STRING *uis)
 int
 UI_set_result(UI *ui, UI_STRING *uis, const char *result)
 {
+	const char *p;
 	int l = strlen(result);
 
 	ui->flags &= ~UI_FLAG_REDOABLE;
@@ -810,25 +811,21 @@ UI_set_result(UI *ui, UI_STRING *uis, const char *result)
 		    uis->_.string_data.result_maxsize + 1);
 		break;
 	case UIT_BOOLEAN:
-		{
-			const char *p;
-
-			if (!uis->result_buf) {
-				UIerror(UI_R_NO_RESULT_BUFFER);
-				return -1;
+		if (!uis->result_buf) {
+			UIerror(UI_R_NO_RESULT_BUFFER);
+			return -1;
+		}
+		uis->result_buf[0] = '\0';
+		for (p = result; *p; p++) {
+			if (strchr(uis->_.boolean_data.ok_chars, *p)) {
+				uis->result_buf[0] =
+				    uis->_.boolean_data.ok_chars[0];
+				break;
 			}
-			uis->result_buf[0] = '\0';
-			for (p = result; *p; p++) {
-				if (strchr(uis->_.boolean_data.ok_chars, *p)) {
-					uis->result_buf[0] =
-					    uis->_.boolean_data.ok_chars[0];
-					break;
-				}
-				if (strchr(uis->_.boolean_data.cancel_chars, *p)) {
-					uis->result_buf[0] =
-					    uis->_.boolean_data.cancel_chars[0];
-					break;
-				}
+			if (strchr(uis->_.boolean_data.cancel_chars, *p)) {
+				uis->result_buf[0] =
+				    uis->_.boolean_data.cancel_chars[0];
+				break;
 			}
 		}
 	default:
