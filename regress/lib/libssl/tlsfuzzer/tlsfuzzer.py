@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.17 2020/09/10 08:24:31 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.18 2020/09/25 06:34:59 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -165,10 +165,6 @@ tls13_slow_failing_tests = TestGroup("slow, failing TLSv1.3 tests", [
     # but we send a decrypt_error after the CBS_mem_equal() fails in
     # tls13_server_finished_recv() (which is correct).
     Test("test-tls13-finished.py"),               # decrypt_error -> decode_error?
-
-    # The following two tests fail Test (skip empty extensions for the first one):
-    # 'empty unassigned extensions, ids in range from 2 to 4118'
-    # 'unassigned extensions with random payload, ids in range from 2 to 1046'
 
     # 6 tests fail: 'rsa_pkcs1_{md5,sha{1,224,256,384,512}} signature'
     # We send server hello, but the test expects handshake_failure
