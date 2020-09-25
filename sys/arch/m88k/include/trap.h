@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.11 2013/09/05 20:40:32 miod Exp $ */
+/*	$OpenBSD: trap.h,v 1.12 2020/09/25 15:10:48 deraadt Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -52,7 +52,7 @@
 #define	T_110_DWM	18	/* 88110 data write miss (sw table walk) */
 #define	T_110_IAM	19	/* 88110 inst ATC miss (sw table walk) */
 
-#define	T_USER		20	/* added to trap code if user mode fault */
+#define	T_USER		0x40	/* or'd to trap code if user mode fault */
 
 #ifndef _LOCORE
 
