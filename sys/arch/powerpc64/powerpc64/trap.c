@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.39 2020/09/24 20:22:15 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.40 2020/09/25 07:50:26 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -181,6 +181,8 @@ trap(struct trapframe *frame)
 			ftype = PROT_READ;
 		KERNEL_LOCK();
 		error = uvm_fault(map, trunc_page(va), 0, ftype);
+		if (error == 0)
+			uvm_grow(p, trunc_page(va));
 		KERNEL_UNLOCK();
 		if (error) {
 #ifdef TRAP_DEBUG
@@ -225,6 +227,8 @@ trap(struct trapframe *frame)
 		ftype = PROT_READ | PROT_EXEC;
 		KERNEL_LOCK();
 		error = uvm_fault(map, trunc_page(va), 0, ftype);
+		if (error == 0)
+			uvm_grow(p, trunc_page(va));
 		KERNEL_UNLOCK();
 		if (error) {
 #ifdef TRAP_DEBUG
