@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.43 2020/09/24 17:54:30 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.44 2020/09/25 14:42:25 deraadt Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -486,7 +486,7 @@ ast(struct proc *p, struct trapframe *tf)
 		p->p_md.md_astpending = 0;
 		refreshcreds(p);
 		uvmexp.softs++;
-		mi_ast(p, want_resched);
+		mi_ast(p, curcpu()->ci_want_resched);
 		userret(p);
 	}
 }

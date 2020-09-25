@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore_c.c,v 1.12 2014/11/18 20:51:01 krw Exp $	*/
+/*	$OpenBSD: locore_c.c,v 1.13 2020/09/25 14:42:25 deraadt Exp $	*/
 /*	$NetBSD: locore_c.c,v 1.13 2006/03/04 01:13:35 uwe Exp $	*/
 
 /*-
@@ -121,7 +121,6 @@
 
 void (*__sh_switch_resume)(struct proc *);
 void cpu_switch_prepare(struct proc *, struct proc *);
-int want_resched;
 
 /*
  * Prepare context switch from oproc to nproc.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.4 2019/07/07 14:41:55 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.5 2020/09/25 14:42:25 deraadt Exp $	*/
 /*	$NetBSD: cpu.c,v 1.8 2006/01/02 23:16:20 uwe Exp $	*/
 
 /*-
@@ -29,8 +29,10 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 #include <sys/device.h>
 
+#include <sh/cpu.h>
 #include <sh/clock.h>
 #include <sh/cache.h>
 #include <sh/mmu.h>
@@ -73,4 +75,13 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 #undef MHZ
 	sh_cache_information();
 	sh_mmu_information();
+}
+
+void
+need_resched(struct cpu_info *ci)
+{
+	ci->ci_want_resched = 1;
+
+	if (ci->ci_curproc)
+		aston(ci->ci_curproc);
 }
