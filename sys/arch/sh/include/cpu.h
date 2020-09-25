@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.29 2020/05/31 06:23:58 dlg Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.30 2020/09/25 14:42:39 deraadt Exp $	*/
 /*	$NetBSD: cpu.h,v 1.41 2006/01/21 04:24:12 uwe Exp $	*/
 
 /*-
@@ -68,6 +68,8 @@ struct cpu_info {
 #ifdef GPROF
 	struct gmonparam *ci_gmon;
 #endif
+
+	int	ci_want_resched;
 };
 
 extern struct cpu_info cpu_info_store;
@@ -109,13 +111,8 @@ struct clockframe {
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-#define	need_resched(ci)						\
-do {									\
-	want_resched = 1;						\
-	if (curproc != NULL)						\
-		aston(curproc);					\
-} while (/*CONSTCOND*/0)
-#define clear_resched(ci) 	want_resched = 0
+void need_resched(struct cpu_info *);
+#define clear_resched(ci) 	(ci)->ci_want_resched = 0
 
 /*
  * Give a profiling tick to the current process when the user profiling
@@ -131,8 +128,6 @@ do {									\
 #define	signotify(p)	aston(p)
 
 #define	aston(p)	((p)->p_md.md_astpending = 1)
-
-extern int want_resched;		/* need_resched() was called */
 
 /*
  * We need a machine-independent name for this.
