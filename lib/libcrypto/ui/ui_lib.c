@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_lib.c,v 1.41 2020/09/25 10:56:36 tb Exp $ */
+/* $OpenBSD: ui_lib.c,v 1.42 2020/09/25 11:05:21 tb Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
  */
@@ -79,20 +79,14 @@ UI_new_method(const UI_METHOD *method)
 {
 	UI *ret;
 
-	ret = malloc(sizeof(UI));
-	if (ret == NULL) {
+	if ((ret = calloc(1, sizeof(UI))) == NULL) {
 		UIerror(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
-	if (method == NULL)
+	if ((ret->meth = method) == NULL)
 		ret->meth = UI_get_default_method();
-	else
-		ret->meth = method;
-
-	ret->strings = NULL;
-	ret->user_data = NULL;
-	ret->flags = 0;
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_UI, ret, &ret->ex_data);
+
 	return ret;
 }
 
