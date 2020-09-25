@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.6 2020/06/24 20:19:14 kettenis Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.7 2020/09/25 17:10:46 kettenis Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.15 1996/02/22 23:23:41 gwr Exp $	*/
 
 /*
@@ -28,7 +28,10 @@
  */
 
 #include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/stacktrace.h>
 #include <sys/systm.h>
+#include <sys/user.h>
 
 #include <machine/db_machdep.h>
 
@@ -190,5 +193,40 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 		}
 
 		--count;
+	}
+}
+
+extern char _start[], _etext[];
+
+void
+stacktrace_save_at(struct stacktrace *st, unsigned int skip)
+{
+	struct callframe *frame, *lastframe, *limit;
+	struct proc *p = curproc;
+
+	st->st_count = 0;
+
+	if (p == NULL)
+		return;
+
+	frame = __builtin_frame_address(0);
+	limit = (struct callframe *)(p->p_addr + USPACE - FRAMELEN);
+
+	while (st->st_count < STACKTRACE_MAX) {
+		if (skip == 0)
+			st->st_pc[st->st_count++] = frame->cf_lr;
+		else
+			skip--;
+
+		lastframe = frame;
+		frame = (struct callframe *)frame->cf_sp;
+
+		if (frame <= lastframe)
+			break;
+		if (frame >= limit)
+			break;
+		if (frame->cf_lr < (vaddr_t)_start ||
+		    frame->cf_lr >= (vaddr_t)_etext)
+			break;
 	}
 }
