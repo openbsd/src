@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.28 2020/08/30 13:19:44 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.29 2020/09/25 09:43:01 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -592,15 +592,12 @@ kcov_remote_leave(int subsystem, void *id)
 		return;
 
 	mtx_enter(&kcov_mtx);
-	kr = kr_lookup(subsystem, id);
-	/*
-	 * The remote could have been absent when the same thread called
-	 * kcov_remote_enter() earlier, allowing the remote to be registered
-	 * while thread was inside the remote section. Therefore ensure we don't
-	 * give back a reference we didn't acquire.
-	 */
-	if (kr == NULL || curproc->p_kd == NULL || curproc->p_kd != kr->kr_kd)
+	if (curproc->p_kd == NULL)
 		goto out;
+	kr = kr_lookup(subsystem, id);
+	if (kr == NULL)
+		goto out;
+	KASSERT(curproc->p_kd == kr->kr_kd);
 	curproc->p_kd = NULL;
 	if (--kr->kr_nsections == 0)
 		wakeup(kr);
