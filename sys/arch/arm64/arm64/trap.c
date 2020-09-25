@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.30 2020/09/14 19:44:01 kettenis Exp $ */
+/* $OpenBSD: trap.c,v 1.31 2020/09/25 07:52:25 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -144,6 +144,8 @@ data_abort(struct trapframe *frame, uint64_t esr, uint64_t far,
 		if (!pmap_fault_fixup(map->pmap, va, access_type, 1)) {
 			KERNEL_LOCK();
 			error = uvm_fault(map, va, ftype, access_type);
+			if (error == 0)
+				uvm_grow(p, va);
 			KERNEL_UNLOCK();
 		}
 	} else {
