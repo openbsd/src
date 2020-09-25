@@ -1,4 +1,4 @@
-/* $OpenBSD: trap_subr.S,v 1.17 2020/09/15 07:47:24 kettenis Exp $ */
+/* $OpenBSD: trap_subr.S,v 1.18 2020/09/25 17:31:27 kettenis Exp $ */
 /* $NetBSD: trap_subr.S,v 1.20 2002/04/22 23:20:08 kleink Exp $	*/
 
 /*-
@@ -483,6 +483,7 @@ generichvtrap:
  */
 
 	.globl generictrap
+	.type generictrap, @function
 generictrap:
 	/* Save R1 for computing the exception vector */
 	mtsprg3	%r1

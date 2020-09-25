@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.36 2020/09/15 07:47:24 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.37 2020/09/25 17:31:27 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -263,6 +263,7 @@ copystr:
 	blr
 
 	.globl proc_trampoline
+	.type proc_trampoline, @function
 proc_trampoline:
 #ifdef MULTIPROCESSOR
 	bl	proc_trampoline_mp
