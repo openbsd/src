@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool.9,v 1.58 2019/12/16 10:25:22 mpi Exp $
+.\"	$OpenBSD: pool.9,v 1.59 2020/09/25 14:20:20 deraadt Exp $
 .\"	$NetBSD: pool.9,v 1.18 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 16 2019 $
+.Dd $Mdocdate: September 25 2020 $
 .Dt POOL_INIT 9
 .Os
 .Sh NAME
@@ -221,7 +221,7 @@ A pointer to a pool item previously obtained by
 If a non-interrupt safe allocator has been selected by passing the
 .Dv PR_WAITOK
 flag to
-.Fn pmap_init ,
+.Fn pool_init ,
 .Fn pool_put
 may sleep when completely unused pages are released.
 .Ss PRIMING A POOL
