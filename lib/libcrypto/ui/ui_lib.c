@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_lib.c,v 1.38 2020/09/24 19:31:01 tb Exp $ */
+/* $OpenBSD: ui_lib.c,v 1.39 2020/09/25 10:46:12 tb Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
  */
@@ -393,8 +393,9 @@ UI_get0_result(UI *ui, int i)
 }
 
 static int
-print_error(const char *str, size_t len, UI *ui)
+print_error(const char *str, size_t len, void *arg)
 {
+	UI *ui = arg;
 	UI_STRING uis;
 
 	memset(&uis, 0, sizeof(uis));
@@ -416,9 +417,7 @@ UI_process(UI *ui)
 		return -1;
 
 	if (ui->flags & UI_FLAG_PRINT_ERRORS)
-		ERR_print_errors_cb(
-		    (int (*)(const char *, size_t, void *)) print_error,
-		    (void *)ui);
+		ERR_print_errors_cb(print_error, ui);
 
 	for (i = 0; i < sk_UI_STRING_num(ui->strings); i++) {
 		if (ui->meth->ui_write_string &&
