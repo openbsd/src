@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.19 2020/09/25 08:38:25 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.20 2020/09/25 19:50:45 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -67,30 +67,6 @@ tls13_unsupported_ciphers = [
     "-e", "TLS 1.3 with ffdhe3072",
     "-e", "TLS 1.3 with x448",
 ]
-
-tls13_tests = TestGroup("TLSv1.3 tests", [
-    Test("test-tls13-ccs.py"),
-    Test("test-tls13-conversation.py"),
-    Test("test-tls13-count-tickets.py"),
-    Test("test-tls13-empty-alert.py"),
-    Test("test-tls13-finished-plaintext.py"),
-    Test("test-tls13-hrr.py"),
-    Test("test-tls13-keyshare-omitted.py"),
-    Test("test-tls13-legacy-version.py"),
-    Test("test-tls13-nociphers.py"),
-    Test("test-tls13-record-padding.py"),
-    Test("test-tls13-shuffled-extentions.py"),
-    Test("test-tls13-zero-content-type.py"),
-
-    # The skipped tests fail due to a bug in BIO_gets() which masks the retry
-    # signalled from an SSL_read() failure. Testing with httpd(8) shows we're
-    # handling these corner cases correctly since tls13_record_layer.c -r1.47.
-    Test("test-tls13-zero-length-data.py", [
-        "-e", "zero-length app data",
-        "-e", "zero-length app data with large padding",
-        "-e", "zero-length app data with padding",
-    ]),
-])
 
 # test-tls13-finished.py has 70 failing tests that expect a "decode_error"
 # instead of the "decrypt_error" sent by tls13_server_finished_recv().
@@ -183,6 +159,31 @@ def generate_test_tls13_finished_args():
         args += ["-x", truncation_fmt % truncation, "-X", assertion]
     return args
 
+tls13_tests = TestGroup("TLSv1.3 tests", [
+    Test("test-tls13-ccs.py"),
+    Test("test-tls13-conversation.py"),
+    Test("test-tls13-count-tickets.py"),
+    Test("test-tls13-empty-alert.py"),
+    Test("test-tls13-finished.py", generate_test_tls13_finished_args()),
+    Test("test-tls13-finished-plaintext.py"),
+    Test("test-tls13-hrr.py"),
+    Test("test-tls13-keyshare-omitted.py"),
+    Test("test-tls13-legacy-version.py"),
+    Test("test-tls13-nociphers.py"),
+    Test("test-tls13-record-padding.py"),
+    Test("test-tls13-shuffled-extentions.py"),
+    Test("test-tls13-zero-content-type.py"),
+
+    # The skipped tests fail due to a bug in BIO_gets() which masks the retry
+    # signalled from an SSL_read() failure. Testing with httpd(8) shows we're
+    # handling these corner cases correctly since tls13_record_layer.c -r1.47.
+    Test("test-tls13-zero-length-data.py", [
+        "-e", "zero-length app data",
+        "-e", "zero-length app data with large padding",
+        "-e", "zero-length app data with padding",
+    ]),
+])
+
 # Tests that take a lot of time (> ~30s on an x280)
 tls13_slow_tests = TestGroup("slow TLSv1.3 tests", [
     # XXX: Investigate the occasional message
@@ -191,8 +192,6 @@ tls13_slow_tests = TestGroup("slow TLSv1.3 tests", [
 
     Test("test-tls13-invalid-ciphers.py"),
     Test("test-tls13-serverhello-random.py", tls13_unsupported_ciphers),
-
-    Test("test-tls13-finished.py", generate_test_tls13_finished_args()),
 
     # Mark two tests cases as xfail for now. The tests expect an arguably
     # correct decode_error while we send a decrypt_error (like fizz/boring).
