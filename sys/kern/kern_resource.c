@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.68 2019/07/15 20:44:48 mpi Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.69 2020/09/25 20:24:32 cheloha Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -157,7 +157,7 @@ sys_setpriority(struct proc *curp, void *v, register_t *retval)
 		if (pr == NULL)
 			break;
 		error = donice(curp, pr, SCARG(uap, prio));
-		found++;
+		found = 1;
 		break;
 
 	case PRIO_PGRP: {
@@ -169,7 +169,7 @@ sys_setpriority(struct proc *curp, void *v, register_t *retval)
 			break;
 		LIST_FOREACH(pr, &pg->pg_members, ps_pglist) {
 			error = donice(curp, pr, SCARG(uap, prio));
-			found++;
+			found = 1;
 		}
 		break;
 	}
@@ -180,14 +180,14 @@ sys_setpriority(struct proc *curp, void *v, register_t *retval)
 		LIST_FOREACH(pr, &allprocess, ps_list)
 			if (pr->ps_ucred->cr_uid == SCARG(uap, who)) {
 				error = donice(curp, pr, SCARG(uap, prio));
-				found++;
+				found = 1;
 			}
 		break;
 
 	default:
 		return (EINVAL);
 	}
-	if (found == 0)
+	if (!found)
 		return (ESRCH);
 	return (error);
 }
