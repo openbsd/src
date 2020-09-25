@@ -1,4 +1,4 @@
-/* $OpenBSD: ui_lib.c,v 1.39 2020/09/25 10:46:12 tb Exp $ */
+/* $OpenBSD: ui_lib.c,v 1.40 2020/09/25 10:50:26 tb Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
  */
@@ -830,9 +830,9 @@ UI_set_result(UI *ui, UI_STRING *uis, const char *result)
 					break;
 				}
 			}
-		default:
-			break;
 		}
+	default:
+		break;
 	}
 	return 0;
 }
