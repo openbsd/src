@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_lib.c,v 1.49 2020/09/26 09:01:05 jsing Exp $ */
+/* $OpenBSD: d1_lib.c,v 1.50 2020/09/26 14:43:17 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -70,6 +70,8 @@
 #include "pqueue.h"
 #include "ssl_locl.h"
 
+void dtls1_hm_fragment_free(hm_fragment *frag);
+
 static int dtls1_listen(SSL *s, struct sockaddr *client);
 
 SSL3_ENC_METHOD DTLSv1_enc_data = {
@@ -130,15 +132,12 @@ static void
 dtls1_drain_fragments(pqueue queue)
 {
 	pitem *item;
-	hm_fragment *frag;
 
 	if (queue == NULL)
 		return;
 
 	while ((item = pqueue_pop(queue)) != NULL) {
-		frag = (hm_fragment *)item->data;
-		free(frag->fragment);
-		free(frag);
+		dtls1_hm_fragment_free(item->data);
 		pitem_free(item);
 	}
 }

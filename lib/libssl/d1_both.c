@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.59 2020/09/26 08:58:00 jsing Exp $ */
+/* $OpenBSD: d1_both.c,v 1.60 2020/09/26 14:43:17 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -166,7 +166,7 @@ static int dtls1_write_message_header(const struct hm_header_st *msg_hdr,
 static long dtls1_get_message_fragment(SSL *s, int st1, int stn, long max,
     int *ok);
 
-static void dtls1_hm_fragment_free(hm_fragment *frag);
+void dtls1_hm_fragment_free(hm_fragment *frag);
 
 static hm_fragment *
 dtls1_hm_fragment_new(unsigned long frag_len, int reassembly)
@@ -195,7 +195,7 @@ dtls1_hm_fragment_new(unsigned long frag_len, int reassembly)
 	return NULL;
 }
 
-static void
+void
 dtls1_hm_fragment_free(hm_fragment *frag)
 {
 	if (frag == NULL)
