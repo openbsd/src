@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.31 2020/09/26 11:59:59 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.32 2020/09/26 12:01:57 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -559,6 +559,7 @@ kcov_remote_enter(int subsystem, void *id)
 {
 	struct kcov_dev *kd;
 	struct kcov_remote *kr;
+	struct proc *p;
 
 	/*
 	 * We could end up here while executing a timeout triggered from a
@@ -573,11 +574,12 @@ kcov_remote_enter(int subsystem, void *id)
 	kr = kr_lookup(subsystem, id);
 	if (kr == NULL || kr->kr_state != KCOV_STATE_READY)
 		goto out;
+	p = curproc;
 	kd = kr->kr_kd;
 	if (kd != NULL && kd->kd_state == KCOV_STATE_TRACE) {
 		kr->kr_nsections++;
-		KASSERT(curproc->p_kd == NULL);
-		curproc->p_kd = kd;
+		KASSERT(p->p_kd == NULL);
+		p->p_kd = kd;
 	}
 out:
 	mtx_leave(&kcov_mtx);
@@ -587,19 +589,21 @@ void
 kcov_remote_leave(int subsystem, void *id)
 {
 	struct kcov_remote *kr;
+	struct proc *p;
 
 	/* See kcov_remote_enter(). */
 	if (inintr())
 		return;
 
 	mtx_enter(&kcov_mtx);
-	if (curproc->p_kd == NULL)
+	p = curproc;
+	if (p->p_kd == NULL)
 		goto out;
 	kr = kr_lookup(subsystem, id);
 	if (kr == NULL)
 		goto out;
-	KASSERT(curproc->p_kd == kr->kr_kd);
-	curproc->p_kd = NULL;
+	KASSERT(p->p_kd == kr->kr_kd);
+	p->p_kd = NULL;
 	if (--kr->kr_nsections == 0)
 		wakeup(kr);
 out:
