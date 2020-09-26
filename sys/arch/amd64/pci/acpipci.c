@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.4 2020/05/14 13:07:11 kettenis Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.5 2020/09/26 15:16:12 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -164,7 +164,7 @@ acpipci_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-#ifdef DIAGNOSTIC
+#ifdef ACPIPCI_DEBUG
 	extent_print(sc->sc_busex);
 	extent_print(sc->sc_ioex);
 	extent_print(sc->sc_memex);
