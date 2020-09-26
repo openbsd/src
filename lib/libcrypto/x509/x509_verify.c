@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.12 2020/09/23 18:20:16 jsing Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.13 2020/09/26 15:44:06 jsing Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -862,15 +862,7 @@ x509_verify(struct x509_verify_ctx *ctx, X509 *leaf, char *name)
 			return 0;
 		}
 		leaf = ctx->xsc->cert;
-	}
 
-	if (!x509_verify_cert_valid(ctx, leaf, NULL))
-		return 0;
-
-	if (!x509_verify_cert_hostname(ctx, leaf, name))
-		return 0;
-
-	if (ctx->xsc != NULL) {
 		/*
 		 * XXX
 		 * The legacy code expects the top level cert to be
@@ -894,6 +886,12 @@ x509_verify(struct x509_verify_ctx *ctx, X509 *leaf, char *name)
 		ctx->xsc->error_depth = 0;
 		ctx->xsc->current_cert = leaf;
 	}
+
+	if (!x509_verify_cert_valid(ctx, leaf, NULL))
+		return 0;
+
+	if (!x509_verify_cert_hostname(ctx, leaf, name))
+		return 0;
 
 	if ((current_chain = x509_verify_chain_new()) == NULL) {
 		ctx->error = X509_V_ERR_OUT_OF_MEM;
