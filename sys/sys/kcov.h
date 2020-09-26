@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.h,v 1.6 2020/08/01 08:40:20 anton Exp $	*/
+/*	$OpenBSD: kcov.h,v 1.7 2020/09/26 11:59:59 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -38,8 +38,6 @@ struct kio_remote_attach {
 };
 
 #ifdef _KERNEL
-
-#define KCOV_BUF_MAX_NMEMB	(256 << 10)
 
 struct proc;
 
