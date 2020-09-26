@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_lib.c,v 1.47 2020/09/24 17:59:54 jsing Exp $ */
+/* $OpenBSD: d1_lib.c,v 1.48 2020/09/26 07:36:51 tb Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -124,46 +124,47 @@ dtls1_new(SSL *s)
 }
 
 static void
-dtls1_clear_queues(SSL *s)
+dtls1_drain_records(pqueue queue)
 {
-	pitem *item = NULL;
-	hm_fragment *frag = NULL;
+	pitem *item;
 	DTLS1_RECORD_DATA_INTERNAL *rdata;
 
-	while ((item = pqueue_pop(D1I(s)->unprocessed_rcds.q)) != NULL) {
-		rdata = (DTLS1_RECORD_DATA_INTERNAL *) item->data;
+	if (queue == NULL)
+		return;
+
+	while ((item = pqueue_pop(queue)) != NULL) {
+		rdata = (DTLS1_RECORD_DATA_INTERNAL *)item->data;
 		ssl3_release_buffer(&rdata->rbuf);
 		free(item->data);
 		pitem_free(item);
 	}
+}
 
-	while ((item = pqueue_pop(D1I(s)->processed_rcds.q)) != NULL) {
-		rdata = (DTLS1_RECORD_DATA_INTERNAL *) item->data;
-		ssl3_release_buffer(&rdata->rbuf);
-		free(item->data);
-		pitem_free(item);
-	}
+static void
+dtls1_drain_fragments(pqueue queue)
+{
+	pitem *item;
+	hm_fragment *frag;
 
-	while ((item = pqueue_pop(D1I(s)->buffered_messages)) != NULL) {
+	if (queue == NULL)
+		return;
+
+	while ((item = pqueue_pop(queue)) != NULL) {
 		frag = (hm_fragment *)item->data;
 		free(frag->fragment);
 		free(frag);
 		pitem_free(item);
 	}
+}
 
-	while ((item = pqueue_pop(s->d1->sent_messages)) != NULL) {
-		frag = (hm_fragment *)item->data;
-		free(frag->fragment);
-		free(frag);
-		pitem_free(item);
-	}
-
-	while ((item = pqueue_pop(D1I(s)->buffered_app_data.q)) != NULL) {
-		rdata = (DTLS1_RECORD_DATA_INTERNAL *) item->data;
-		ssl3_release_buffer(&rdata->rbuf);
-		free(item->data);
-		pitem_free(item);
-	}
+static void
+dtls1_clear_queues(SSL *s)
+{
+	dtls1_drain_records(D1I(s)->unprocessed_rcds.q);
+	dtls1_drain_records(D1I(s)->processed_rcds.q);
+	dtls1_drain_fragments(D1I(s)->buffered_messages);
+	dtls1_drain_fragments(s->d1->sent_messages);
+	dtls1_drain_records(D1I(s)->buffered_app_data.q);
 }
 
 void
