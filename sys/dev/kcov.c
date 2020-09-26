@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.32 2020/09/26 12:01:57 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.33 2020/09/26 12:06:37 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -38,6 +38,9 @@
 #define KCOV_STATE_READY	1
 #define KCOV_STATE_TRACE	2
 #define KCOV_STATE_DYING	3
+
+#define KCOV_STRIDE_TRACE_PC	1
+#define KCOV_STRIDE_TRACE_CMP	4
 
 /*
  * Coverage structure.
@@ -91,7 +94,7 @@ void kr_barrier(struct kcov_remote *);
 struct kcov_remote *kr_lookup(int, void *);
 
 static struct kcov_dev *kd_curproc(int);
-static uint64_t kd_claim(struct kcov_dev *, int);
+static uint64_t kd_claim(struct kcov_dev *, int, int);
 static inline int inintr(void);
 
 TAILQ_HEAD(, kcov_dev) kd_list = TAILQ_HEAD_INITIALIZER(kd_list);
@@ -123,7 +126,7 @@ __sanitizer_cov_trace_pc(void)
 	if (kd == NULL)
 		return;
 
-	if ((idx = kd_claim(kd, 1)))
+	if ((idx = kd_claim(kd, KCOV_STRIDE_TRACE_PC, 1)))
 		kd->kd_buf[idx] = (uintptr_t)__builtin_return_address(0);
 }
 
@@ -145,7 +148,7 @@ trace_cmp(uint64_t type, uint64_t arg1, uint64_t arg2, uintptr_t pc)
 	if (kd == NULL)
 		return;
 
-	if ((idx = kd_claim(kd, 4))) {
+	if ((idx = kd_claim(kd, KCOV_STRIDE_TRACE_CMP, 1))) {
 		kd->kd_buf[idx] = type;
 		kd->kd_buf[idx + 1] = arg1;
 		kd->kd_buf[idx + 2] = arg2;
@@ -522,21 +525,21 @@ kd_curproc(int mode)
 }
 
 /*
- * Claim stride number of elements in the coverage buffer. Returns the index of
- * the first claimed element. If the claim cannot be fulfilled, zero is
- * returned.
+ * Claim stride times nmemb number of elements in the coverage buffer. Returns
+ * the index of the first claimed element. If the claim cannot be fulfilled,
+ * zero is returned.
  */
 static uint64_t
-kd_claim(struct kcov_dev *kd, int stride)
+kd_claim(struct kcov_dev *kd, int stride, int nmemb)
 {
 	uint64_t idx, was;
 
 	idx = kd->kd_buf[0];
 	for (;;) {
-		if (idx * stride + stride > kd->kd_nmemb)
+		if (stride * (idx + nmemb) > kd->kd_nmemb)
 			return (0);
 
-		was = atomic_cas_ulong(&kd->kd_buf[0], idx, idx + 1);
+		was = atomic_cas_ulong(&kd->kd_buf[0], idx, idx + nmemb);
 		if (was == idx)
 			return (idx * stride + 1);
 		idx = was;
