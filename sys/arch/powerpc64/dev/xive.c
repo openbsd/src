@@ -1,4 +1,4 @@
-/*	$OpenBSD: xive.c,v 1.13 2020/09/21 11:14:28 kettenis Exp $	*/
+/*	$OpenBSD: xive.c,v 1.14 2020/09/26 17:56:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -258,6 +258,9 @@ xive_intr_establish(uint32_t girq, int type, int level, struct cpu_info *ci,
 	uint64_t flags, eoi_page, trig_page;
 	uint32_t esb_shift, lirq;
 	int64_t error;
+
+	if (ci == NULL)
+		ci = cpu_info_primary;
 
 	/* Allocate a logical IRQ. */
 	if (sc->sc_lirq >= XIVE_NUM_IRQS)
