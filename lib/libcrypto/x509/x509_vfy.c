@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.80 2020/09/20 18:32:33 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.81 2020/09/26 02:06:28 deraadt Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1889,7 +1889,7 @@ x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
 	    X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD))
 		return 0;
 	if (i > 0 && !verify_cb_cert(ctx, x, depth,
-		X509_V_ERR_CERT_NOT_YET_VALID))
+	    X509_V_ERR_CERT_NOT_YET_VALID))
 		return 0;
 
 	i = X509_cmp_time_internal(X509_get_notAfter(x), ptime, 1);
@@ -1941,16 +1941,16 @@ internal_verify(X509_STORE_CTX *ctx)
 		 * certificate and its depth (rather than the depth of
 		 * the subject).
 		 */
-		if (xs != xi || (ctx->param->flags &
-			X509_V_FLAG_CHECK_SS_SIGNATURE)) {
+		if (xs != xi ||
+		    (ctx->param->flags & X509_V_FLAG_CHECK_SS_SIGNATURE)) {
 			EVP_PKEY *pkey;
 			if ((pkey = X509_get_pubkey(xi)) == NULL) {
 				if (!verify_cb_cert(ctx, xi, xi != xs ? n+1 : n,
-					X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY))
+				    X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY))
 					return 0;
 			} else if (X509_verify(xs, pkey) <= 0) {
 				if (!verify_cb_cert(ctx, xs, n,
-					X509_V_ERR_CERT_SIGNATURE_FAILURE)) {
+				    X509_V_ERR_CERT_SIGNATURE_FAILURE)) {
 					EVP_PKEY_free(pkey);
 					return 0;
 				}
