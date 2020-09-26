@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.29 2020/09/25 09:43:01 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.30 2020/09/26 11:58:17 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -714,7 +714,7 @@ kr_free(struct kcov_remote *kr)
 		kr->kr_kd->kd_kr = NULL;
 	kr->kr_kd = NULL;
 	TAILQ_REMOVE(&kr_list, kr, kr_entry);
-	/* Notify thread(s) wating in kcov_remote_register(). */
+	/* Notify thread(s) waiting in kcov_remote_register(). */
 	wakeup(kr);
 	pool_put(&kr_pool, kr);
 }
