@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.58 2020/08/11 19:13:35 jsing Exp $ */
+/* $OpenBSD: d1_both.c,v 1.59 2020/09/26 08:58:00 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -166,42 +166,33 @@ static int dtls1_write_message_header(const struct hm_header_st *msg_hdr,
 static long dtls1_get_message_fragment(SSL *s, int st1, int stn, long max,
     int *ok);
 
+static void dtls1_hm_fragment_free(hm_fragment *frag);
+
 static hm_fragment *
 dtls1_hm_fragment_new(unsigned long frag_len, int reassembly)
 {
-	hm_fragment *frag = NULL;
-	unsigned char *buf = NULL;
-	unsigned char *bitmask = NULL;
+	hm_fragment *frag;
 
-	frag = malloc(sizeof(hm_fragment));
-	if (frag == NULL)
-		return NULL;
+	if ((frag = calloc(1, sizeof(*frag))) == NULL)
+		goto err;
 
-	if (frag_len) {
-		buf = malloc(frag_len);
-		if (buf == NULL) {
-			free(frag);
-			return NULL;
-		}
+	if (frag_len > 0) {
+		if ((frag->fragment = calloc(1, frag_len)) == NULL)
+			goto err;
 	}
 
-	/* zero length fragment gets zero frag->fragment */
-	frag->fragment = buf;
-
-	/* Initialize reassembly bitmask if necessary */
+	/* Initialize reassembly bitmask if necessary. */
 	if (reassembly) {
-		bitmask = malloc(RSMBLY_BITMASK_SIZE(frag_len));
-		if (bitmask == NULL) {
-			free(buf);
-			free(frag);
-			return NULL;
-		}
-		memset(bitmask, 0, RSMBLY_BITMASK_SIZE(frag_len));
+		if ((frag->reassembly = calloc(1,
+		    RSMBLY_BITMASK_SIZE(frag_len))) == NULL)
+			goto err;
 	}
-
-	frag->reassembly = bitmask;
 
 	return frag;
+
+ err:
+	dtls1_hm_fragment_free(frag);
+	return NULL;
 }
 
 static void
