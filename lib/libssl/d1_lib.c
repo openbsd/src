@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_lib.c,v 1.48 2020/09/26 07:36:51 tb Exp $ */
+/* $OpenBSD: d1_lib.c,v 1.49 2020/09/26 09:01:05 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -79,48 +79,34 @@ SSL3_ENC_METHOD DTLSv1_enc_data = {
 int
 dtls1_new(SSL *s)
 {
-	DTLS1_STATE *d1;
-
 	if (!ssl3_new(s))
-		return (0);
-	if ((d1 = calloc(1, sizeof(*d1))) == NULL) {
-		ssl3_free(s);
-		return (0);
-	}
-	if ((d1->internal = calloc(1, sizeof(*d1->internal))) == NULL) {
-		free(d1);
-		ssl3_free(s);
-		return (0);
-	}
+		goto err;
 
-	/* d1->handshake_epoch=0; */
+	if ((s->d1 = calloc(1, sizeof(*s->d1))) == NULL)
+		goto err;
+	if ((s->d1->internal = calloc(1, sizeof(*s->d1->internal))) == NULL)
+		goto err;
 
-	d1->internal->unprocessed_rcds.q = pqueue_new();
-	d1->internal->processed_rcds.q = pqueue_new();
-	d1->internal->buffered_messages = pqueue_new();
-	d1->sent_messages = pqueue_new();
-	d1->internal->buffered_app_data.q = pqueue_new();
+	if ((s->d1->internal->unprocessed_rcds.q = pqueue_new()) == NULL)
+		goto err;
+	if ((s->d1->internal->processed_rcds.q = pqueue_new()) == NULL)
+		goto err;
+	if ((s->d1->internal->buffered_messages = pqueue_new()) == NULL)
+		goto err;
+	if ((s->d1->sent_messages = pqueue_new()) == NULL)
+		goto err;
+	if ((s->d1->internal->buffered_app_data.q = pqueue_new()) == NULL)
+		goto err;
 
-	if (s->server) {
-		d1->internal->cookie_len = sizeof(D1I(s)->cookie);
-	}
+	if (s->server)
+		s->d1->internal->cookie_len = sizeof(D1I(s)->cookie);
 
-	if (!d1->internal->unprocessed_rcds.q || !d1->internal->processed_rcds.q ||
-	    !d1->internal->buffered_messages || !d1->sent_messages ||
-	    !d1->internal->buffered_app_data.q) {
-		pqueue_free(d1->internal->unprocessed_rcds.q);
-		pqueue_free(d1->internal->processed_rcds.q);
-		pqueue_free(d1->internal->buffered_messages);
-		pqueue_free(d1->sent_messages);
-		pqueue_free(d1->internal->buffered_app_data.q);
-		free(d1);
-		ssl3_free(s);
-		return (0);
-	}
-
-	s->d1 = d1;
 	s->method->internal->ssl_clear(s);
 	return (1);
+
+ err:
+	dtls1_free(s);
+	return (0);
 }
 
 static void
