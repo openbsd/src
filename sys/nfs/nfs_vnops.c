@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.184 2020/09/27 16:40:44 matthieu Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.185 2020/09/27 17:25:19 matthieu Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -1489,9 +1489,9 @@ nfsmout:
 		}
 	} else if (info.nmi_v3 && (fmode & O_EXCL)) {
 		getnanotime(&ts);
-		if (vap->va_atime.tv_sec == VNOVAL)
+		if (vap->va_atime.tv_nsec == VNOVAL)
 			vap->va_atime = ts;
-		if (vap->va_mtime.tv_sec == VNOVAL)
+		if (vap->va_mtime.tv_nsec == VNOVAL)
 			vap->va_mtime = ts;
 		error = nfs_setattrrpc(newvp, vap, cnp->cn_cred, cnp->cn_proc);
 	}
