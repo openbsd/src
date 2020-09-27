@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.115 2020/09/25 12:57:37 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.116 2020/09/27 16:40:26 deraadt Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -376,12 +376,11 @@ lose:
 		/* User mode instruction access fault */
 		/* FALLTHROUGH */
 	case T_DATAFLT+T_USER:
-user_fault:
 		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
 		    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
 		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
 			goto userexit;
-
+user_fault:
 		KERNEL_LOCK();
 		if (type == T_INSTFLT + T_USER) {
 			pbus_type = CMMU_PFSR_FAULT(frame->tf_ipfsr);
@@ -855,12 +854,11 @@ lose:
 		/* User mode instruction access fault */
 		/* FALLTHROUGH */
 	case T_DATAFLT+T_USER:
-m88110_user_fault:
 		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
 		    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
 		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
 			goto userexit;
-
+m88110_user_fault:
 		KERNEL_LOCK();
 		if (type == T_INSTFLT+T_USER) {
 			ftype = PROT_READ;
