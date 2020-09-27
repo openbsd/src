@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.255 2020/09/16 11:52:17 jsg Exp $ */
+/* $OpenBSD: dsdt.c,v 1.256 2020/09/27 16:46:15 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -2080,6 +2080,9 @@ aml_convert(struct aml_value *a, int ctype, int clen)
 		case AML_OBJTYPE_STRING:
 			aml_addref(a, "XConvert");
 			return a;
+		case AML_OBJTYPE_PACKAGE: /* XXX Deal with broken Lenovo X1 BIOS. */
+			c = aml_allocvalue(AML_OBJTYPE_STRING, 0, NULL);
+			break;
 		}
 		break;
 	}
