@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.9 2020/08/13 11:28:31 mpi Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.10 2020/09/28 13:16:58 kettenis Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -55,6 +55,9 @@
  */
 #if defined(__amd64__)
 #define DT_FA_PROFILE	5
+#define DT_FA_STATIC	2
+#elif defined(__powerpc64__)
+#define DT_FA_PROFILE	6
 #define DT_FA_STATIC	2
 #elif defined(__sparc64__)
 #define DT_FA_PROFILE	5
