@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.98 2020/09/24 07:23:41 jca Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.99 2020/09/28 21:35:14 jca Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -650,27 +650,27 @@ void
 setperfpolicy(char *policy)
 {
 	int hw_perfpol_mib[] = { CTL_HW, HW_PERFPOLICY };
-	char oldpolicy[32];
-	size_t oldsz = sizeof(oldpolicy);
-	int setlo = 0;
+	int hw_perf_mib[] = { CTL_HW, HW_SETPERF };
+	int new_perf = -1;
 
 	if (strcmp(policy, "low") == 0) {
 		policy = "manual";
-		setlo = 1;
+		new_perf = 0;
+	} else if (strcmp(policy, "high") == 0) {
+		policy = "manual";
+		new_perf = 100;
 	}
 
-	if (sysctl(hw_perfpol_mib, 2, oldpolicy, &oldsz,
+	if (sysctl(hw_perfpol_mib, 2, NULL, NULL,
 	    policy, strlen(policy) + 1) == -1)
 		logmsg(LOG_INFO, "cannot set hw.perfpolicy");
 
-	if (setlo == 1) {
-		int hw_perf_mib[] = {CTL_HW, HW_SETPERF};
-		int perf;
-		int new_perf = 0;
-		size_t perf_sz = sizeof(perf);
-		if (sysctl(hw_perf_mib, 2, &perf, &perf_sz, &new_perf, perf_sz) == -1)
-			logmsg(LOG_INFO, "cannot set hw.setperf");
-	}
+	if (new_perf == -1)
+		return;
+
+	if (sysctl(hw_perf_mib, 2, NULL, NULL,
+	    &new_perf, sizeof(new_perf)) == -1)
+		logmsg(LOG_INFO, "cannot set hw.setperf");
 }
 
 void
