@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.248 2020/08/07 14:35:38 cheloha Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.249 2020/09/29 11:48:54 claudio Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -192,7 +192,9 @@ sobind(struct socket *so, struct mbuf *nam, struct proc *p)
 int
 solisten(struct socket *so, int backlog)
 {
-	int s, error;
+	int error;
+
+	soassertlocked(so);
 
 	if (so->so_state & (SS_ISCONNECTED|SS_ISCONNECTING|SS_ISDISCONNECTING))
 		return (EINVAL);
@@ -200,13 +202,10 @@ solisten(struct socket *so, int backlog)
 	if (isspliced(so) || issplicedback(so))
 		return (EOPNOTSUPP);
 #endif /* SOCKET_SPLICE */
-	s = solock(so);
 	error = (*so->so_proto->pr_usrreq)(so, PRU_LISTEN, NULL, NULL, NULL,
 	    curproc);
-	if (error) {
-		sounlock(so, s);
+	if (error)
 		return (error);
-	}
 	if (TAILQ_FIRST(&so->so_q) == NULL)
 		so->so_options |= SO_ACCEPTCONN;
 	if (backlog < 0 || backlog > somaxconn)
@@ -214,7 +213,6 @@ solisten(struct socket *so, int backlog)
 	if (backlog < sominconn)
 		backlog = sominconn;
 	so->so_qlimit = backlog;
-	sounlock(so, s);
 	return (0);
 }
 

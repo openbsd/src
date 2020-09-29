@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.186 2020/06/10 13:24:57 visa Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.187 2020/09/29 11:48:54 claudio Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -194,12 +194,14 @@ sys_listen(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	struct file *fp;
 	struct socket *so;
-	int error;
+	int s, error;
 
 	if ((error = getsock(p, SCARG(uap, s), &fp)) != 0)
 		return (error);
 	so = fp->f_data;
+	s = solock(so);
 	error = solisten(so, SCARG(uap, backlog));
+	sounlock(so, s);
 	FRELE(fp, p);
 	return (error);
 }
