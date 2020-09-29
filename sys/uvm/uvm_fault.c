@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.101 2020/09/24 09:51:07 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.102 2020/09/29 11:47:41 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -881,7 +881,6 @@ ReFault:
 		/* check for out of RAM */
 		if (anon == NULL || pg == NULL) {
 			uvmfault_unlockall(&ufi, amap, NULL, oanon);
-			KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
 			if (anon == NULL)
 				uvmexp.fltnoanon++;
 			else {
@@ -889,7 +888,7 @@ ReFault:
 				uvmexp.fltnoram++;
 			}
 
-			if (uvmexp.swpgonly == uvmexp.swpages)
+			if (uvm_swapisfull())
 				return (ENOMEM);
 
 			/* out of RAM, wait for more */
@@ -942,8 +941,7 @@ ReFault:
 		 * as the map may change while we're asleep.
 		 */
 		uvmfault_unlockall(&ufi, amap, NULL, oanon);
-		KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
-		if (uvmexp.swpgonly == uvmexp.swpages) {
+		if (uvm_swapisfull()) {
 			/* XXX instrumentation */
 			return (ENOMEM);
 		}
@@ -1137,7 +1135,6 @@ Case2:
 
 			/* unlock and fail ... */
 			uvmfault_unlockall(&ufi, amap, uobj, NULL);
-			KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
 			if (anon == NULL)
 				uvmexp.fltnoanon++;
 			else {
@@ -1145,7 +1142,7 @@ Case2:
 				uvmexp.fltnoram++;
 			}
 
-			if (uvmexp.swpgonly == uvmexp.swpages)
+			if (uvm_swapisfull())
 				return (ENOMEM);
 
 			/* out of RAM, wait for more */
@@ -1191,11 +1188,10 @@ Case2:
 		if (amap_add(&ufi.entry->aref,
 		    ufi.orig_rvaddr - ufi.entry->start, anon, 0)) {
 			uvmfault_unlockall(&ufi, amap, NULL, oanon);
-			KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
 			uvm_anfree(anon);
 			uvmexp.fltnoamap++;
 
-			if (uvmexp.swpgonly == uvmexp.swpages)
+			if (uvm_swapisfull())
 				return (ENOMEM);
 
 			amap_populate(&ufi.entry->aref,
@@ -1225,8 +1221,7 @@ Case2:
 		atomic_clearbits_int(&pg->pg_flags, PG_BUSY|PG_FAKE|PG_WANTED);
 		UVM_PAGE_OWN(pg, NULL);
 		uvmfault_unlockall(&ufi, amap, uobj, NULL);
-		KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
-		if (uvmexp.swpgonly == uvmexp.swpages) {
+		if (uvm_swapisfull()) {
 			/* XXX instrumentation */
 			return (ENOMEM);
 		}

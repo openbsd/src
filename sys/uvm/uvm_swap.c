@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.146 2020/01/20 23:21:57 claudio Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.147 2020/09/29 11:47:41 mpi Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1438,6 +1438,21 @@ ReTry:	/* XXXMRG */
 	/* XXXMRG: END HACK */
 
 	return 0;		/* failed */
+}
+
+/*
+ * uvm_swapisfull: return true if all of available swap is allocated
+ * and in use.
+ */
+int
+uvm_swapisfull(void)
+{
+	int result;
+
+	KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
+	result = (uvmexp.swpgonly == uvmexp.swpages);
+
+	return result;
 }
 
 /*

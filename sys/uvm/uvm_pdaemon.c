@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.86 2020/04/04 22:08:02 kettenis Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.87 2020/09/29 11:47:41 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -522,9 +522,7 @@ uvmpd_scan_inactive(struct pglist *pglst)
 			 * reactivate it so that we eventually cycle
 			 * all pages thru the inactive queue.
 			 */
-			KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
-			if ((p->pg_flags & PQ_SWAPBACKED) &&
-			    uvmexp.swpgonly == uvmexp.swpages) {
+			if ((p->pg_flags & PQ_SWAPBACKED) && uvm_swapisfull()) {
 				dirtyreacts++;
 				uvm_pageactivate(p);
 				continue;
@@ -879,7 +877,7 @@ uvmpd_scan(void)
 	swap_shortage = 0;
 	if (uvmexp.free < uvmexp.freetarg &&
 	    uvmexp.swpginuse == uvmexp.swpages &&
-	    uvmexp.swpgonly < uvmexp.swpages &&
+	    !uvm_swapisfull() &&
 	    pages_freed == 0) {
 		swap_shortage = uvmexp.freetarg - uvmexp.free;
 	}

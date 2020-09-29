@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.h,v 1.17 2019/12/05 12:46:54 mpi Exp $	*/
+/*	$OpenBSD: uvm_swap.h,v 1.18 2020/09/29 11:47:41 mpi Exp $	*/
 /*	$NetBSD: uvm_swap.h,v 1.5 2000/01/11 06:57:51 chs Exp $	*/
 
 /*
@@ -41,6 +41,7 @@ int			uvm_swap_put(int, struct vm_page **, int, int);
 int			uvm_swap_alloc(int *, boolean_t);
 void			uvm_swap_free(int, int);
 void			uvm_swap_markbad(int, int);
+int			uvm_swapisfull(void);
 void			uvm_swap_freepages(struct vm_page **, int);
 #ifdef HIBERNATE
 int			uvm_hibswap(dev_t, u_long *, u_long *);
