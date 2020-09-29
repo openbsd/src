@@ -669,6 +669,11 @@ struct sxiccmu_ccu_bit sun8i_a23_resets[] = {
 #define A64_RST_BUS_I2C0	42
 #define A64_RST_BUS_I2C1	43
 #define A64_RST_BUS_I2C2	44
+#define A64_RST_BUS_UART0	46
+#define A64_RST_BUS_UART1	47
+#define A64_RST_BUS_UART2	48
+#define A64_RST_BUS_UART3	49
+#define A64_RST_BUS_UART4	50
 
 struct sxiccmu_ccu_bit sun50i_a64_resets[] = {
 	[A64_RST_USB_PHY0] =  { 0x00cc, 0 },
@@ -685,6 +690,11 @@ struct sxiccmu_ccu_bit sun50i_a64_resets[] = {
 	[A64_RST_BUS_I2C0] =  { 0x02d8, 0 },
 	[A64_RST_BUS_I2C1] =  { 0x02d8, 1 },
 	[A64_RST_BUS_I2C2] =  { 0x02d8, 2 },
+	[A64_RST_BUS_UART0] = { 0x02d8, 16 },
+	[A64_RST_BUS_UART1] = { 0x02d8, 17 },
+	[A64_RST_BUS_UART2] = { 0x02d8, 18 },
+	[A64_RST_BUS_UART3] = { 0x02d8, 19 },
+	[A64_RST_BUS_UART4] = { 0x02d8, 20 },
 };
 
 /* A80 */
