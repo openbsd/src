@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.96 2020/09/21 20:13:49 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.97 2020/09/29 14:51:40 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1793,6 +1793,7 @@ ikev2_frags_reassemble(struct iked *env, struct ikev2_payload *pld,
 	struct iked_frag		*sa_frag = &msg->msg_sa->sa_fragments;
 	struct ibuf			*e = NULL;
 	struct iked_frag_entry		*el;
+	uint8_t				*ptr;
 	size_t				 offset;
 	size_t				 i;
 	struct iked_message		 emsg;
@@ -1809,7 +1810,12 @@ ikev2_frags_reassemble(struct iked *env, struct ikev2_payload *pld,
 	for (i = 0; i < sa_frag->frag_total; i++) {
 		if ((el = sa_frag->frag_arr[i]) == NULL)
 			fatalx("Tried to reassemble shallow frag_arr");
-		memcpy(ibuf_seek(e, offset, 0), el->frag_data, el->frag_size);
+		ptr = ibuf_seek(e, offset, el->frag_size);
+		if (ptr == NULL) {
+			log_info("%s: failed to reassemble fragments", __func__);
+			goto done;
+		}
+		memcpy(ptr, el->frag_data, el->frag_size);
 		offset += el->frag_size;
 	}
 
