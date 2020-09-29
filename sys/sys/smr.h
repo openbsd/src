@@ -1,4 +1,4 @@
-/*	$OpenBSD: smr.h,v 1.7 2020/06/17 14:12:19 visa Exp $	*/
+/*	$OpenBSD: smr.h,v 1.8 2020/09/29 16:40:33 mvs Exp $	*/
 
 /*
  * Copyright (c) 2019 Visa Hankala
@@ -288,7 +288,7 @@ struct {								\
  * List functions.
  */
 #define	SMR_LIST_INIT(head) do {					\
-	(head)->smr_lh_first = LIST_END(head);				\
+	(head)->smr_lh_first = SMR_LIST_END(head);			\
 } while (0)
 
 #define	SMR_LIST_INSERT_AFTER_LOCKED(listelm, elm, field) do {		\
@@ -382,7 +382,7 @@ struct {								\
  * Tail queue functions.
  */
 #define	SMR_TAILQ_INIT(head) do {					\
-	(head)->smr_tqh_first = TAILQ_END(head);			\
+	(head)->smr_tqh_first = SMR_TAILQ_END(head);			\
 	(head)->smr_tqh_last = &(head)->smr_tqh_first;			\
 } while (0)
 
