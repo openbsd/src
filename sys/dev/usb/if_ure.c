@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ure.c,v 1.18 2020/08/04 14:45:46 kevlo Exp $	*/
+/*	$OpenBSD: if_ure.c,v 1.19 2020/09/29 01:44:40 kevlo Exp $	*/
 /*-
  * Copyright (c) 2015, 2016, 2019 Kevin Lo <kevlo@openbsd.org>
  * Copyright (c) 2020 Jonathon Fletcher <jonathon.fletcher@gmail.com>
@@ -76,7 +76,8 @@ const struct usb_devno ure_devs[] = {
 	{ USB_VENDOR_LENOVO, USB_PRODUCT_LENOVO_DOCK_ETHERNET },
 	{ USB_VENDOR_REALTEK, USB_PRODUCT_REALTEK_RTL8152 },
 	{ USB_VENDOR_REALTEK, USB_PRODUCT_REALTEK_RTL8153 },
-	{ USB_VENDOR_REALTEK, USB_PRODUCT_REALTEK_RTL8156 }
+	{ USB_VENDOR_REALTEK, USB_PRODUCT_REALTEK_RTL8156 },
+	{ USB_VENDOR_TPLINK, 0x0601 }
 };
 
 int	ure_match(struct device *, void *, void *);
