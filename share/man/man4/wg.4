@@ -1,4 +1,4 @@
-.\" $OpenBSD: wg.4,v 1.4 2020/06/24 17:41:29 jmc Exp $
+.\" $OpenBSD: wg.4,v 1.5 2020/09/29 19:37:08 procter Exp $
 .\" Copyright (c) 2020 Matt Dunwoodie <ncon@noconroy.net>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 24 2020 $
+.Dd $Mdocdate: September 29 2020 $
 .Dt WG 4
 .Os
 .Sh NAME
@@ -24,17 +24,15 @@
 .Sh DESCRIPTION
 The
 .Nm wg
-driver provides a simple Virtual Private Network (VPN) interface for
-securely communicating with other WireGuard endpoints.
-.Nm wg
-interfaces implement the WireGuard protocol, heavily relying on the
-Noise protocol framework.
+driver provides Virtual Private Network (VPN) interfaces for the secure
+exchange of layer 3 traffic with other WireGuard peers using the WireGuard
+protocol.
 .Pp
-Each interface is able to connect to a number of endpoints, relying on
-an internal routing table to direct outgoing IP traffic to the correct
-endpoint.
-Incoming traffic is also matched against this routing table
-and dropped if the source does not match the corresponding output route.
+A
+.Nm wg
+interface recognises one or more peers, establishes a secure tunnel with
+each on demand, and tracks each peer's UDP endpoint for exchanging encrypted
+traffic with.
 .Pp
 The interfaces can be created at runtime using the
 .Ic ifconfig Cm wg Ns Ar N Cm create
@@ -44,13 +42,6 @@ configuration file for
 .Xr netstart 8 .
 The interface itself can be configured with
 .Xr ifconfig 8 .
-Support is also available in the
-.Nm wireguard-tools
-package by using the
-.Nm wg
-and
-.Nm wg-quick
-utilities.
 .Pp
 .Nm wg
 interfaces support the following
@@ -61,47 +52,55 @@ Set the device configuration.
 .It Dv SIOCGWG Fa "struct wg_data_io *"
 Get the device configuration.
 .El
-.Ss Design
-WireGuard is designed as a small, secure, easy to use VPN.
-It operates at the IP level, supporting both IPv4 and IPv6.
 .Pp
-The following list provides a brief overview of WireGuard terminology:
+The following glossary provides a brief overview of WireGuard
+terminology:
 .Bl -tag -width indent -offset 3n
 .It Peer
-A peer is a host that the interface creates a connection with.
-There is no concept of client/server as both ends of the connection
-are equal.
-An interface may have multiple peers.
+Peers exchange IPv4 or IPv6 traffic over secure tunnels.
+Each
+.Nm wg
+interface may be configured to recognise one or more peers.
 .It Key
-Each interface has a private key and corresponding public key.
-The public key is used to identify the interface to other peers.
+Each peer uses its private key and corresponding public key to
+identify itself to others.
+A peer configures a
+.Nm wg
+interface with its own private key and with the public keys of its peers.
 .It Preshared key
-In addition to the interface keys, each peer pair can have a
-unique preshared key.
-This key is used in the handshake to provide post-quantum security.
+In addition to the public keys, each peer pair may be configured with a
+unique pre-shared symmetric key.
+This is used in their handshake to guard against future compromise of the
+peers' encrypted tunnel if a quantum-computational attack on their
+Diffie-Hellman exchange becomes feasible.
 It is optional, but recommended.
 .It Allowed IPs
-Allowed IPs dictate the tunneled IP addresses each peer is allowed to
-send from.
-After decryption, all packets have their source IP address
-checked against the sending peer's allowed IPs list.
-This list is hierarchical, allowing peers to have overlapping ranges,
-with the most specific range taking precedence.
-They can be thought of like a routing
-table, as outgoing packets are also matched against this list to
-determine which peer to send to.
+A single
+.Nm wg
+interface may maintain concurrent tunnels connecting diverse networks.
+The interface therefore implements rudimentary routing and reverse-path
+filtering functions for its tunneled traffic.
+These functions reference a set of allowed IP ranges configured against
+each peer.
 .Pp
-This does not correspond to the IP address that UDP
-packets are sent to or received from, but rather the IP addresses that
-are encapsulated in the tunnel.
+The interface will route outbound tunneled traffic to the peer configured
+with the most specific matching allowed IP address range, or drop it
+if no such match exists.
+.Pp
+The interface will accept tunneled traffic only from the peer
+configured with the most specific matching allowed IP address range
+for the incoming traffic, or drop it if no such match exists.
+That is, tunneled traffic routed to a given peer cannot return through
+another peer of the same
+.Nm wg
+interface.
+This ensures that peers cannot spoof another's traffic.
 .It Handshake
-In order to establish a set of shared secret keys, two peers perform a
-handshake.
-This occurs every 2 minutes while traffic is being sent.
-If no traffic is being sent, then no handshake occurs.
-When traffic resumes, a new handshake is performed.
-Each handshake generates a new
-set of ephemeral keys to provide forward secrecy.
+Two peers handshake to mutually authenticate each other and to
+establish a shared series of secret ephemeral encryption keys.
+Any peer may initiate a handshake.
+Handshakes occur only when there is traffic to send, and recur every
+two minutes during transfers.
 .It Connectionless
 Due to the handshake behavior, there is no connected or disconnected
 state.
@@ -118,11 +117,9 @@ as follows:
 .Pp
 .Dl $ openssl rand -base64 32
 .Pp
-Note that not all 32-byte strings are valid Curve25519 keys.
-Specific bits must be set in the string.
-All the same, a random 32-byte string can be passed because
-the interface automatically sets the required bits.
-This does not apply to the preshared key.
+Although a valid Curve25519 key must have 5 bits set to
+specific values, this is done by the interface and so it
+will accept any random 32-byte base64 string.
 .Pp
 When an interface has a private key set with
 .Nm wgkey ,
@@ -218,4 +215,4 @@ driver was developed by
 and
 .An Jason A. Donenfeld Aq Mt Jason@zx2c4.com ,
 based on code written by
-.An Jason A. Donenfeld.
+.An Jason A. Donenfeld .
