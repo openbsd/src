@@ -1,4 +1,4 @@
-/*	$OpenBSD: pca9548.c,v 1.1 2020/06/18 18:05:00 kettenis Exp $	*/
+/*	$OpenBSD: pca9548.c,v 1.2 2020/09/29 13:50:54 patrick Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis
@@ -32,6 +32,7 @@
 
 struct pcamux_bus {
 	struct pcamux_softc	*pb_sc;
+	int			pb_node;
 	int			pb_channel;
 	struct i2c_controller	pb_ic;
 	struct i2c_bus		pb_ib;
@@ -102,6 +103,7 @@ pcamux_attach(struct device *parent, struct device *self, void *aux)
 
 		pb = &sc->sc_bus[channel];
 		pb->pb_sc = sc;
+		pb->pb_node = node;
 		pb->pb_channel = channel;
 		pb->pb_ic.ic_cookie = pb;
 		pb->pb_ic.ic_acquire_bus = pcamux_acquire_bus;
@@ -113,7 +115,7 @@ pcamux_attach(struct device *parent, struct device *self, void *aux)
 		iba.iba_name = "iic";
 		iba.iba_tag = &pb->pb_ic;
 		iba.iba_bus_scan = pcamux_bus_scan;
-		iba.iba_bus_scan_arg = &sc->sc_node;
+		iba.iba_bus_scan_arg = &pb->pb_node;
 
 		config_found(&sc->sc_dev, &iba, iicbus_print);
 
