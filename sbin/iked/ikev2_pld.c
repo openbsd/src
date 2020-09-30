@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.97 2020/09/29 14:51:40 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.98 2020/09/30 16:55:16 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -691,6 +691,12 @@ ikev2_validate_id(struct iked_message *msg, size_t offset, size_t left,
 		return (-1);
 	}
 	memcpy(id, msgbuf + offset, sizeof(*id));
+
+	if (id->id_type == IKEV2_ID_NONE) {
+		log_debug("%s: malformed payload: invalid ID type.",
+		    __func__);
+		return (-1);
+	}
 
 	return (0);
 }
