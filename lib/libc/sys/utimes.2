@@ -1,4 +1,4 @@
-.\"	$OpenBSD: utimes.2,v 1.27 2016/01/05 17:40:26 millert Exp $
+.\"	$OpenBSD: utimes.2,v 1.28 2020/09/30 16:27:16 deraadt Exp $
 .\"	$NetBSD: utimes.2,v 1.9 1996/04/23 10:34:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)utimes.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: January 5 2016 $
+.Dd $Mdocdate: September 30 2020 $
 .Dt UTIMES 2
 .Os
 .Sh NAME
@@ -42,9 +42,9 @@
 .Sh SYNOPSIS
 .In sys/time.h
 .Ft int
-.Fn utimes "const char *path" "const struct timeval *times"
+.Fn utimes "const char *path" "const struct timeval times[2]"
 .Ft int
-.Fn futimes "int fd" "const struct timeval *times"
+.Fn futimes "int fd" "const struct timeval times[2]"
 .In sys/stat.h
 .In fcntl.h
 .Ft int
@@ -248,6 +248,30 @@ and the calling process's effective user ID
 does not match the owner of the file and is not the superuser.
 .It Bq Er EROFS
 The file system containing the file is mounted read-only.
+.El
+.Pp
+.Fn utimes
+and
+.Fn futimes
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+Either of the
+.Fa times
+arguments specified a microsecond value less than zero or greater
+than or equal to 1 million, or a second value less than zero.
+.El
+.Pp
+.Fn utimesat
+and
+.Fn futimens
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+Either of the
+.Fa times
+argument specified a nanosecond value less than zero or greater
+than or equal to 1000 million, or a second value less than zero.
 .El
 .Sh SEE ALSO
 .Xr clock_gettime 2 ,
