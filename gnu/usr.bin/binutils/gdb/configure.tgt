@@ -151,6 +151,7 @@ ns32k-*-netbsd*)	gdb_target=nbsdaout ;;
 powerpc-*-netbsd* | powerpc-*-knetbsd*-gnu)
 			gdb_target=nbsd ;;
 powerpc-*-openbsd*)	gdb_target=obsd ;;
+powerpc64-*-openbsd*)	gdb_target=obsd64 ;;
 powerpc-*-aix*)		gdb_target=aix ;;
 powerpc-*-linux*)	gdb_target=linux
 			build_gdbserver=yes

@@ -113,6 +113,7 @@ powerpc-*-linux*)	gdb_host=linux ;;
 powerpc-*-netbsd* | powerpc-*-knetbsd*-gnu)
 			gdb_host=nbsd ;;
 powerpc-*-openbsd*)	gdb_host=obsd ;;
+powerpc64-*-openbsd*)	gdb_host=obsd64 ;;
 
 powerpc64-*-linux*)     gdb_host=ppc64-linux ;;
 
