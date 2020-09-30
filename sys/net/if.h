@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.203 2019/07/25 15:23:39 krw Exp $	*/
+/*	$OpenBSD: if.h,v 1.204 2020/09/30 19:22:51 mvs Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -530,7 +530,6 @@ void	if_attach(struct ifnet *);
 void	if_attach_queues(struct ifnet *, unsigned int);
 void	if_attach_iqueues(struct ifnet *, unsigned int);
 void	if_attach_ifq(struct ifnet *, const struct ifq_ops *, void *);
-void	if_attachtail(struct ifnet *);
 void	if_attachhead(struct ifnet *);
 void	if_deactivate(struct ifnet *);
 void	if_detach(struct ifnet *);
