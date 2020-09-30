@@ -2686,7 +2686,9 @@ subagentx_get_free(struct subagentx_get *sag)
 			sao = sav->sav_sao;
 			index = &(sav->sav_index[j]);
 			if (sao->sao_index[j]->sai_vb.avb_type == 
-			    AGENTX_DATA_TYPE_OCTETSTRING)
+			    AGENTX_DATA_TYPE_OCTETSTRING ||
+			    sao->sao_index[j]->sai_vb.avb_type ==
+			    AGENTX_DATA_TYPE_IPADDRESS)
 				free(index->sav_idata.avb_ostring.aos_string);
 		}
 		agentx_varbind_free(&(sag->sag_varbind[i].sav_vb));
@@ -3335,6 +3337,7 @@ subagentx_varbind_endofmibview(struct subagentx_varbind *sav)
 {
 	struct subagentx_object *sao;
 	struct agentx_varbind *vb;
+	struct subagentx_varbind_index *index;
 	size_t i;
 
 #ifdef AGENTX_DEBUG
@@ -3352,10 +3355,11 @@ subagentx_varbind_endofmibview(struct subagentx_varbind *sav)
 		    sizeof(sao->sao_oid));
 		sav->sav_include = 1;
 		for (i = 0; i < sav->sav_indexlen; i++) {
-			vb = &(sav->sav_index[i].sav_sai->sai_vb);
+			index = &(sav->sav_index[i]);
+			vb = &(index->sav_sai->sai_vb);
 			if (vb->avb_type == AGENTX_DATA_TYPE_OCTETSTRING ||
 			    vb->avb_type == AGENTX_DATA_TYPE_IPADDRESS)
-				free(vb->avb_data.avb_ostring.aos_string);
+				free(index->sav_idata.avb_ostring.aos_string);
 		}
 		bzero(&(sav->sav_index), sizeof(sav->sav_index));
 		subagentx_object_unlock(sav->sav_sao);
