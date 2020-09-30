@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.61 2019/12/17 13:08:55 reyk Exp $
+#	$OpenBSD: GENERIC,v 1.62 2020/09/30 22:23:41 patrick Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -74,7 +74,7 @@ gdiumiic0	at gpio0 offset 46 mask 0x03	# pins 46 and 47
 iic0		at gdiumiic0
 stsec0		at iic0				# ST7 Embedded Controller
 lmtemp0		at iic0 			# National Semiconductor LM75
-mfokclock0	at iic0				# M41T8x todclock
+mfokrtc0	at iic0				# M41T8x RTC
 #iic*		at voyager?
 ohci*		at voyager?
 smfb*		at voyager?

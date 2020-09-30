@@ -1,4 +1,4 @@
-/*	$OpenBSD: m41t8xclock.c,v 1.4 2020/05/25 13:15:37 visa Exp $	*/
+/*	$OpenBSD: m41t8x.c,v 1.1 2020/09/30 22:23:41 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -29,59 +29,61 @@
 #include <dev/i2c/i2cvar.h>
 #include <dev/ic/m41t8xreg.h>
 
-struct m41t8xclock_softc {
+struct m41t8xrtc_softc {
 	struct device		sc_dev;
 	struct todr_chip_handle	sc_todr;
 	i2c_tag_t		sc_tag;
 	i2c_addr_t		sc_addr;
 };
 
-int	m41t8xclock_match(struct device *, void *, void *);
-void	m41t8xclock_attach(struct device *, struct device *, void *);
+int	m41t8xrtc_match(struct device *, void *, void *);
+void	m41t8xrtc_attach(struct device *, struct device *, void *);
 
-const struct cfattach mfokclock_ca = {
-	sizeof(struct m41t8xclock_softc),
-	m41t8xclock_match, m41t8xclock_attach
+const struct cfattach mfokrtc_ca = {
+	sizeof(struct m41t8xrtc_softc),
+	m41t8xrtc_match, m41t8xrtc_attach
 };
 
-struct cfdriver mfokclock_cd = {
-	NULL, "mfokclock", DV_DULL
+struct cfdriver mfokrtc_cd = {
+	NULL, "mfokrtc", DV_DULL
 };
 
-int	m41t8xclock_gettime(struct todr_chip_handle *, struct timeval *);
-int	m41t8xclock_settime(struct todr_chip_handle *, struct timeval *);
+int	m41t8xrtc_gettime(struct todr_chip_handle *, struct timeval *);
+int	m41t8xrtc_settime(struct todr_chip_handle *, struct timeval *);
 
 int
-m41t8xclock_match(struct device *parent, void *vcf, void *aux)
+m41t8xrtc_match(struct device *parent, void *vcf, void *aux)
 {
 	struct i2c_attach_args *ia = (struct i2c_attach_args *)aux;
-	struct cfdata *cf = (struct cfdata *)vcf;
 
-	return strcmp(ia->ia_name, cf->cf_driver->cd_name) == 0;
+	if (strcmp(ia->ia_name, "st,m41t83") == 0)
+		return (1);
+	return (0);
+
 }
 
 void
-m41t8xclock_attach(struct device *parent, struct device *self, void *aux)
+m41t8xrtc_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct m41t8xclock_softc *sc = (struct m41t8xclock_softc *)self;
+	struct m41t8xrtc_softc *sc = (struct m41t8xrtc_softc *)self;
 	struct i2c_attach_args *ia = (struct i2c_attach_args *)aux;
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 
 	sc->sc_todr.cookie = sc;
-	sc->sc_todr.todr_gettime = m41t8xclock_gettime;
-	sc->sc_todr.todr_settime = m41t8xclock_settime;
+	sc->sc_todr.todr_gettime = m41t8xrtc_gettime;
+	sc->sc_todr.todr_settime = m41t8xrtc_settime;
 	todr_attach(&sc->sc_todr);
 
 	printf("\n");
 }
 
 int
-m41t8xclock_gettime(struct todr_chip_handle *handle, struct timeval *tv)
+m41t8xrtc_gettime(struct todr_chip_handle *handle, struct timeval *tv)
 {
 	struct clock_ymdhms dt;
-	struct m41t8xclock_softc *sc = handle->cookie;
+	struct m41t8xrtc_softc *sc = handle->cookie;
 	uint8_t regno, data[M41T8X_TOD_LENGTH];
 	int s;
 
@@ -110,10 +112,10 @@ m41t8xclock_gettime(struct todr_chip_handle *handle, struct timeval *tv)
 }
 
 int
-m41t8xclock_settime(struct todr_chip_handle *handle, struct timeval *tv)
+m41t8xrtc_settime(struct todr_chip_handle *handle, struct timeval *tv)
 {
 	struct clock_ymdhms dt;
-	struct m41t8xclock_softc *sc = handle->cookie;
+	struct m41t8xrtc_softc *sc = handle->cookie;
 	uint8_t regno, data[M41T8X_TOD_LENGTH];
 	int s;
 
