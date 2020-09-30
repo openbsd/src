@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.98 2020/09/30 16:55:16 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.99 2020/09/30 16:59:09 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -899,6 +899,12 @@ ikev2_validate_auth(struct iked_message *msg, size_t offset, size_t left,
 		return (-1);
 	}
 	memcpy(auth, msgbuf + offset, sizeof(*auth));
+
+	if (auth->auth_method == 0) {
+		log_info("%s: malformed payload: invalid auth method",
+		    __func__);
+		return (-1);
+	}
 
 	return (0);
 }
