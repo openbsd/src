@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.67 2020/09/25 10:38:05 tobhe Exp $	*/
+/*	$OpenBSD: config.c,v 1.68 2020/09/30 16:52:08 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -169,6 +169,7 @@ config_free_sa(struct iked *env, struct iked_sa *sa)
 	ibuf_release(sa->sa_icert.id_buf);
 	ibuf_release(sa->sa_rcert.id_buf);
 	ibuf_release(sa->sa_localauth.id_buf);
+	ibuf_release(sa->sa_peerauth.id_buf);
 
 	ibuf_release(sa->sa_eap.id_buf);
 	free(sa->sa_eapid);
