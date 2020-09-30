@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.42 2020/09/30 15:47:36 deraadt Exp $
+.\"	$OpenBSD: bpf.4,v 1.43 2020/09/30 19:25:40 tb Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -614,6 +614,8 @@ packet data at a variable offset
 .Pf ( Dv BPF_IND ) ,
 the packet length
 .Pf ( Dv BPF_LEN ) ,
+a random number
+.Pf ( Dv BPF_RND ) ,
 or a word in the scratch memory store
 .Pf ( Dv BPF_MEM ) .
 For
@@ -673,6 +675,12 @@ A <- P[X+k:1]
 .Xc
 .Sm on
 A <- len
+.Sm off
+.It Xo Dv BPF_LD No + Dv BPF_W No +
+.Dv BPF_RND
+.Xc
+.Sm on
+A <- arc4random()
 .Sm off
 .It Dv BPF_LD No + Dv BPF_IMM
 .Sm on
@@ -1049,7 +1057,8 @@ request is too large to be represented by an
 .Xr select 2 ,
 .Xr signal 3 ,
 .Xr MAKEDEV 8 ,
-.Xr tcpdump 8
+.Xr tcpdump 8 ,
+.Xr arc4random 9
 .Rs
 .%A McCanne, S.
 .%A Jacobson, V.
