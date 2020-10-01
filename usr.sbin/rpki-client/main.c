@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.79 2020/09/15 12:06:02 deraadt Exp $ */
+/*	$OpenBSD: main.c,v 1.80 2020/10/01 08:27:33 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1439,7 +1439,7 @@ main(int argc, char *argv[])
 		case 's':
 			timeout = strtonum(optarg, 0, 24*60*60, &errs);
 			if (errs)
-				err(1, "-t: %s\n", errs);
+				errx(1, "-s: %s", errs);
 			break;
 		case 't':
 			if (talsz >= TALSZ_MAX)
