@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.81 2020/10/01 10:25:26 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.82 2020/10/01 11:06:47 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -89,6 +89,7 @@ struct	repo {
 };
 
 int	timeout = 60*60;
+volatile sig_atomic_t killme;
 void	suicide(int sig);
 
 /*
@@ -1357,15 +1358,8 @@ repo_cleanup(const char *cachedir)
 void
 suicide(int sig __attribute__((unused)))
 {
-	struct syslog_data sdata = SYSLOG_DATA_INIT;
-	
+	killme = 1;
 
-	dprintf(STDERR_FILENO,
-	    "%s: excessive runtime (%d seconds), giving up\n",
-	    getprogname(), timeout);
-	syslog_r(LOG_CRIT|LOG_DAEMON, &sdata,
-	    "excessive runtime (%d seconds), giving up", timeout);
-	_exit(1);
 }
 
 int
@@ -1576,9 +1570,12 @@ main(int argc, char *argv[])
 	pfd[1].fd = proc;
 	pfd[0].events = pfd[1].events = POLLIN;
 
-	while (!TAILQ_EMPTY(&q)) {
-		if ((c = poll(pfd, 2, verbose ? 10000 : INFTIM)) == -1)
+	while (!TAILQ_EMPTY(&q) && !killme) {
+		if ((c = poll(pfd, 2, verbose ? 10000 : INFTIM)) == -1) {
+			if (errno == EINTR)
+				continue;
 			err(1, "poll");
+		}
 
 		/* Debugging: print some statistics if we stall. */
 
@@ -1639,6 +1636,12 @@ main(int argc, char *argv[])
 				fprintf(stderr, "%s\n", ent->uri);
 			entity_free(ent);
 		}
+	}
+
+	if (killme) {
+		syslog(LOG_CRIT|LOG_DAEMON, 
+		    "excessive runtime (%d seconds), giving up", timeout);
+		errx(1, "excessive runtime (%d seconds), giving up", timeout);
 	}
 
 	assert(TAILQ_EMPTY(&q));
