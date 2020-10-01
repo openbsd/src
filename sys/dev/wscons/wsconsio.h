@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.94 2020/03/22 07:59:59 anton Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.95 2020/10/01 17:28:14 kettenis Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -439,6 +439,7 @@ struct wsmouse_parameters {
 #define		WSDISPLAY_TYPE_RADEONDRM 70	/* ATI Radeon KMS framebuffer */
 #define		WSDISPLAY_TYPE_EFIFB	71	/* EFI framebuffer */
 #define		WSDISPLAY_TYPE_RKDRM	72	/* Rockchip KMS framebuffer */
+#define		WSDISPLAY_TYPE_ASTFB	73	/* AST framebuffer */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {

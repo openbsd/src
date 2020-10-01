@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.18 2020/09/05 13:55:45 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.19 2020/10/01 17:28:14 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -30,7 +30,13 @@ xics*		at fdt?
 xicp*		at fdt?
 xive*		at fdt?
 
+option		WSDISPLAY_COMPAT_USL
+option		WSDISPLAY_COMPAT_RAWKBD
+option		WSDISPLAY_DEFAULTSCREENS=6
+
 ahci*		at pci?
+astfb*		at pci?
+wsdisplay*	at astfb?
 bge*		at pci?
 mpii*		at pci?
 nvme*		at pci?

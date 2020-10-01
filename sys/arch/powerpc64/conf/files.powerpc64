@@ -1,4 +1,4 @@
-# $OpenBSD: files.powerpc64,v 1.23 2020/08/23 19:18:42 kettenis Exp $
+# $OpenBSD: files.powerpc64,v 1.24 2020/10/01 17:28:14 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -101,6 +101,10 @@ file	arch/powerpc64/dev/xicp.c		xicp
 device	xive
 attach	xive at fdt
 file	arch/powerpc64/dev/xive.c		xive
+
+device	astfb: wsemuldisplaydev, rasops32
+attach	astfb at pci
+file	arch/powerpc64/dev/astfb.c		astfb
 
 # Machine-independent HID support
 include	"dev/hid/files.hid"
