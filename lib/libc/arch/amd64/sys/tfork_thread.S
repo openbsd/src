@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.8 2019/05/10 01:31:30 guenther Exp $ */
+/*	$OpenBSD: tfork_thread.S,v 1.9 2020/10/01 01:05:40 guenther Exp $ */
 /*-
  * Copyright (c) 2000 Peter Wemm <peter@FreeBSD.org>
  * Copyright (c) 2003 Alan L. Cox <alc@cs.rice.edu>
@@ -45,6 +45,7 @@
  */
 
 ENTRY(__tfork_thread)
+	.cfi_startproc
 	movq	%rdx, %r8
 	movq	%rcx, %r9
 
@@ -52,6 +53,7 @@ ENTRY(__tfork_thread)
 	 * Prepare and execute the thread creation syscall
 	 */
 	movl	$SYS___tfork, %eax
+	.cfi_endproc
 	syscall
 	jb 	2f
 
@@ -64,6 +66,7 @@ ENTRY(__tfork_thread)
 
 	/* the retpoline we'll use to call the child's main */
 	_ALIGN_TRAPS
+	.cfi_startproc
 0:	JMP_RETPOLINE(r8)
 
 	/*
@@ -73,6 +76,10 @@ ENTRY(__tfork_thread)
 	 */
 	_ALIGN_TRAPS
 1:
+	/* Mark top frame of new thread in CFI and with zero FP */
+	.cfi_undefined	rip
+	.cfi_undefined	rsp
+	xorl	%ebp, %ebp
 	movq	%r9, %rdi
 	call	0b
 
@@ -89,4 +96,5 @@ ENTRY(__tfork_thread)
 2:
 	SET_ERRNO
 	ret
+	.cfi_endproc
 END(__tfork_thread)

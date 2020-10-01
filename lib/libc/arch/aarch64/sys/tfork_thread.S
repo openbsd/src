@@ -1,4 +1,4 @@
-/* $OpenBSD: tfork_thread.S,v 1.3 2018/08/12 17:15:10 mortimer Exp $ */
+/* $OpenBSD: tfork_thread.S,v 1.4 2020/10/01 01:05:40 guenther Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -24,8 +24,10 @@
  */
 
 ENTRY(__tfork_thread)
+	.cfi_startproc
 	RETGUARD_SETUP(__tfork_thread, x15)
 	SYSTRAP(__tfork)
+	.cfi_endproc
 	bcs	CERROR
 
 	/* check if we are parent or child */
@@ -34,8 +36,12 @@ ENTRY(__tfork_thread)
 	ret
 
 1:
+	.cfi_startproc
+	.cfi_undefined	lr
 	/* child */
+	ldr	fp, 0
 	mov	x0, x3
 	blr	x2
 	SYSTRAP(__threxit)
+	.cfi_endproc
 END(__tfork_thread)
