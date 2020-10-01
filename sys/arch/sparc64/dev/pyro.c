@@ -1,4 +1,4 @@
-/*	$OpenBSD: pyro.c,v 1.35 2020/06/24 00:40:53 dlg Exp $	*/
+/*	$OpenBSD: pyro.c,v 1.36 2020/10/01 05:14:10 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -842,7 +842,7 @@ pyro_msi_eq_intr(void *arg)
 		if (msg->mm_type == 0)
 			break;
 
- 		msg->mm_type = 0;
+		msg->mm_type = 0;
 
 		msinum = msg->mm_data;
 		ih = pbm->pp_msi[msinum];

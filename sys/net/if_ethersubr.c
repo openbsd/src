@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.266 2020/07/22 02:16:01 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.267 2020/10/01 05:14:10 jsg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -392,7 +392,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	 * bridge can have a go at forwarding them.
 	 */
 
- 	eh = mtod(m, struct ether_header *);
+	eh = mtod(m, struct ether_header *);
 	etype = ntohs(eh->ether_type);
 
 	if (ISSET(m->m_flags, M_VLANTAG) ||
