@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.703 2020/09/17 14:26:59 yasuoka Exp $	*/
+/*	$OpenBSD: parse.y,v 1.704 2020/10/01 14:02:08 kn Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1216,7 +1216,7 @@ antispoof_opt	: LABEL label	{
 			if ($2 < 0 || $2 > RT_TABLEID_MAX) {
 				yyerror("invalid rtable id");
 				YYERROR;
-			} else if (lookup_rtable($2) < 1) {
+			} else if (!lookup_rtable($2)) {
 				yyerror("rtable %lld does not exist", $2);
 				YYERROR;
 			}
@@ -2003,7 +2003,7 @@ filter_opt	: USER uids {
 			if ($2 < 0 || $2 > RT_TABLEID_MAX) {
 				yyerror("invalid rtable id");
 				YYERROR;
-			} else if (lookup_rtable($2) < 1) {
+			} else if (!lookup_rtable($2)) {
 				yyerror("rtable %lld does not exist", $2);
 				YYERROR;
 			}
@@ -2481,8 +2481,6 @@ if_item		: STRING			{
 		| RDOMAIN NUMBER		{
 			if ($2 < 0 || $2 > RT_TABLEID_MAX)
 				yyerror("rdomain %lld outside range", $2);
-			else if (lookup_rtable($2) != 2)
-				yyerror("rdomain %lld does not exist", $2);
 
 			$$ = calloc(1, sizeof(struct node_if));
 			if ($$ == NULL)
@@ -5899,10 +5897,6 @@ lookup_rtable(u_int rtableid)
 			return 0;
 		}
 		err(1, "%s", __func__);
-	}
-	if (info.rti_domainid == rtableid) {
-		found[rtableid] = 2;
-		return 2;
 	}
 	found[rtableid] = 1;
 	return 1;
