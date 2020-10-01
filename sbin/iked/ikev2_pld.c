@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.99 2020/09/30 16:59:09 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.100 2020/10/01 18:38:49 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1356,13 +1356,14 @@ ikev2_pld_delete(struct iked *env, struct ikev2_payload *pld,
 	size_t			 found = 0, failed = 0;
 	int			 cnt, i, len, sz, ret = -1;
 
+	if (ikev2_validate_delete(msg, offset, left, &del))
+		return (-1);
+
 	/* Skip if it's a response, then we don't have to deal with it */
 	if (ikev2_msg_frompeer(msg) &&
 	    msg->msg_parent->msg_response)
 		return (0);
 
-	if (ikev2_validate_delete(msg, offset, left, &del))
-		return (-1);
 	cnt = betoh16(del.del_nspi);
 	sz = del.del_spisize;
 
