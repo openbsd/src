@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apropos.1,v 1.44 2020/10/01 22:30:14 ians Exp $
+.\"	$OpenBSD: apropos.1,v 1.45 2020/10/01 22:47:26 schwarze Exp $
 .\"
 .\" Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2011,2012,2014,2017,2018 Ingo Schwarze <schwarze@openbsd.org>
@@ -405,7 +405,8 @@ Search in names and descriptions using a case-sensitive regular expression:
 .Pp
 Search for all manual pages in a given section:
 .Pp
-.Dl $ apropos \-s 9 .
+.Dl $ apropos \-s 9 \&.
+.Pp
 Search for manuals in the library section mentioning both the
 .Qq optind
 and the
