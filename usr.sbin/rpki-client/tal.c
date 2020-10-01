@@ -1,4 +1,4 @@
-/*	$OpenBSD: tal.c,v 1.20 2020/09/30 14:42:14 claudio Exp $ */
+/*	$OpenBSD: tal.c,v 1.21 2020/10/01 19:57:00 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -31,9 +31,12 @@ static int
 base64_decode(const unsigned char *in, size_t inlen, unsigned char **out,
    size_t *outlen)
 {
-	EVP_ENCODE_CTX ctx;
+	static EVP_ENCODE_CTX *ctx;
 	unsigned char *to;
 	int tolen;
+
+	if (ctx == NULL && (ctx = EVP_ENCODE_CTX_new()) == NULL)
+		err(1, "EVP_ENCODE_CTX_new");
 
 	*out = NULL;
 	*outlen = 0;
@@ -44,11 +47,11 @@ base64_decode(const unsigned char *in, size_t inlen, unsigned char **out,
 	if ((to = malloc(tolen)) == NULL)
 		return -1;
 
-	EVP_DecodeInit(&ctx);
-	if (EVP_DecodeUpdate(&ctx, to, &tolen, in, inlen) == -1)
+	EVP_DecodeInit(ctx);
+	if (EVP_DecodeUpdate(ctx, to, &tolen, in, inlen) == -1)
 		goto fail;
 	*outlen = tolen;
-	if (EVP_DecodeFinal(&ctx, to + tolen, &tolen) == -1)
+	if (EVP_DecodeFinal(ctx, to + tolen, &tolen) == -1)
 		goto fail;
 	*outlen += tolen;
 	*out = to;
