@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1932 2020/08/23 19:24:22 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1933 2020/10/01 15:42:15 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -3212,6 +3212,12 @@
 #define	PCI_PRODUCT_INTEL_CORE3G_D_GT2	0x0162		/* HD Graphics 4000 */
 #define	PCI_PRODUCT_INTEL_CORE3G_M_GT2	0x0166		/* HD Graphics 4000 */
 #define	PCI_PRODUCT_INTEL_CORE3G_S_GT2	0x016a		/* HD Graphics P4000 */
+#define	PCI_PRODUCT_INTEL_400SERIES_LP_I2C_1	0x02c5		/* 400 Series I2C */
+#define	PCI_PRODUCT_INTEL_400SERIES_LP_I2C_2	0x02c6		/* 400 Series I2C */
+#define	PCI_PRODUCT_INTEL_400SERIES_LP_I2C_3	0x02e8		/* 400 Series I2C */
+#define	PCI_PRODUCT_INTEL_400SERIES_LP_I2C_4	0x02e9		/* 400 Series I2C */
+#define	PCI_PRODUCT_INTEL_400SERIES_LP_I2C_5	0x02ea		/* 400 Series I2C */
+#define	PCI_PRODUCT_INTEL_400SERIES_LP_I2C_6	0x02eb		/* 400 Series I2C */
 #define	PCI_PRODUCT_INTEL_WL_22500_2	0x02f0		/* Wi-Fi 6 AX201 */
 #define	PCI_PRODUCT_INTEL_80303	0x0309		/* 80303 IOP */
 #define	PCI_PRODUCT_INTEL_80312	0x030d		/* 80312 I/O Companion */
