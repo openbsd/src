@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.43 2020/07/27 13:46:48 inoguchi Exp $ */
+/* $OpenBSD: s_server.c,v 1.44 2020/10/02 15:43:48 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -472,6 +472,14 @@ s_server_opt_verify_param(int argc, char **argv, int *argsused)
 }
 
 static const struct option s_server_options[] = {
+	{
+		.name = "4",
+		.type = OPTION_DISCARD,
+	},
+	{
+		.name = "6",
+		.type = OPTION_DISCARD,
+	},
 	{
 		.name = "accept",
 		.argname = "port",
