@@ -1563,7 +1563,6 @@
 ./usr/share/man/man4/loongson/intro.4
 ./usr/share/man/man4/loongson/leioc.4
 ./usr/share/man/man4/loongson/mem.4
-./usr/share/man/man4/loongson/mfokclock.4
 ./usr/share/man/man4/loongson/sisfb.4
 ./usr/share/man/man4/loongson/smfb.4
 ./usr/share/man/man4/loongson/stsec.4
@@ -1626,6 +1625,7 @@
 ./usr/share/man/man4/mcx.4
 ./usr/share/man/man4/mfi.4
 ./usr/share/man/man4/mfii.4
+./usr/share/man/man4/mfokrtc.4
 ./usr/share/man/man4/midi.4
 ./usr/share/man/man4/mii.4
 ./usr/share/man/man4/mlphy.4
