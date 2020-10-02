@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.261 2020/09/24 13:16:52 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.262 2020/10/02 20:02:03 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -873,6 +873,19 @@ ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
 		}
 		if (ikev2_handle_certreq(env, msg) != 0)
 			return (-1);
+	}
+
+	/* AUTH payload is required for non-EAP */
+	if (!msg->msg_auth.id_type &&
+	    !sa->sa_policy->pol_auth.auth_eap) {
+		/* get dstid */
+		if (msg->msg_id.id_type) {
+			memcpy(id, &msg->msg_id, sizeof(*id));
+			bzero(&msg->msg_id, sizeof(msg->msg_id));
+		}
+		log_debug("%s: missing auth payload", SPI_SA(sa, __func__));
+		ikev2_send_auth_failed(env, sa);
+		return (-1);
 	}
 
 	if (msg->msg_id.id_type) {
