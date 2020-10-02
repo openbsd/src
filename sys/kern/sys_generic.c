@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.131 2020/03/20 04:11:05 cheloha Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.132 2020/10/02 15:45:22 deraadt Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -529,12 +529,12 @@ sys_select(struct proc *p, void *v, register_t *retval)
 		struct timeval tv;
 		if ((error = copyin(SCARG(uap, tv), &tv, sizeof tv)) != 0)
 			return (error);
-		if (tv.tv_sec < 0 || !timerisvalid(&tv))
-			return (EINVAL);
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_STRUCT))
 			ktrreltimeval(p, &tv);
 #endif
+		if (tv.tv_sec < 0 || !timerisvalid(&tv))
+			return (EINVAL);
 		TIMEVAL_TO_TIMESPEC(&tv, &ts);
 		tsp = &ts;
 	}
@@ -562,12 +562,12 @@ sys_pselect(struct proc *p, void *v, register_t *retval)
 	if (SCARG(uap, ts) != NULL) {
 		if ((error = copyin(SCARG(uap, ts), &ts, sizeof ts)) != 0)
 			return (error);
-		if (ts.tv_sec < 0 || !timespecisvalid(&ts))
-			return (EINVAL);
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_STRUCT))
 			ktrreltimespec(p, &ts);
 #endif
+		if (ts.tv_sec < 0 || !timespecisvalid(&ts))
+			return (EINVAL);
 		tsp = &ts;
 	}
 	if (SCARG(uap, mask) != NULL) {
@@ -893,12 +893,12 @@ sys_ppoll(struct proc *p, void *v, register_t *retval)
 	if (SCARG(uap, ts) != NULL) {
 		if ((error = copyin(SCARG(uap, ts), &ts, sizeof ts)) != 0)
 			return (error);
-		if (ts.tv_sec < 0 || !timespecisvalid(&ts))
-			return (EINVAL);
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_STRUCT))
 			ktrreltimespec(p, &ts);
 #endif
+		if (ts.tv_sec < 0 || !timespecisvalid(&ts))
+			return (EINVAL);
 		tsp = &ts;
 	}
 
@@ -1017,6 +1017,7 @@ sys_utrace(struct proc *curp, void *v, register_t *retval)
 		syscallarg(const void *) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
+
 	return (ktruser(curp, SCARG(uap, label), SCARG(uap, addr),
 	    SCARG(uap, len)));
 #else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.140 2020/08/12 15:31:27 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.141 2020/10/02 15:45:22 deraadt Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -381,6 +381,10 @@ sys_settimeofday(struct proc *p, void *v, register_t *retval)
 	if (tv) {
 		struct timespec ts;
 
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_STRUCT))
+			ktrabstimeval(p, &atv);
+#endif
 		if (!timerisvalid(&atv))
 			return (EINVAL);
 		TIMEVAL_TO_TIMESPEC(&atv, &ts);
@@ -450,6 +454,10 @@ sys_adjtime(struct proc *p, void *v, register_t *retval)
 			return (error);
 		if ((error = copyin(delta, &atv, sizeof(struct timeval))))
 			return (error);
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_STRUCT))
+			ktrreltimeval(p, &atv);
+#endif
 		if (!timerisvalid(&atv))
 			return (EINVAL);
 
