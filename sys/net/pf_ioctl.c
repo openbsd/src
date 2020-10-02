@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.357 2020/10/01 14:02:08 kn Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.358 2020/10/02 09:14:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2820,7 +2820,8 @@ pf_rule_copyin(struct pf_rule *from, struct pf_rule *to,
 	if (to->rtableid >= 0 && !rtable_exists(to->rtableid))
 		return (EBUSY);
 	to->onrdomain = from->onrdomain;
-	if (to->onrdomain < 0 || to->onrdomain > RT_TABLEID_MAX)
+	if (to->onrdomain != -1 && (to->onrdomain < 0 ||
+	    to->onrdomain > RT_TABLEID_MAX))
 		return (EINVAL);
 
 	for (i = 0; i < PFTM_MAX; i++)
