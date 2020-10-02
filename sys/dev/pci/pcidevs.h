@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1933 2020/10/01 15:42:15 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1934 2020/10/02 18:41:51 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5539,6 +5539,12 @@
 #define	PCI_PRODUCT_INTEL_PINEVIEW_M_DMI	0xa010		/* Pineview DMI */
 #define	PCI_PRODUCT_INTEL_PINEVIEW_M_IGC_1	0xa011		/* Pineview Video */
 #define	PCI_PRODUCT_INTEL_PINEVIEW_M_IGC_2	0xa012		/* Pineview Video */
+#define	PCI_PRODUCT_INTEL_500SERIES_LP_I2C_1	0xa0c5		/* 500 Series I2C */
+#define	PCI_PRODUCT_INTEL_500SERIES_LP_I2C_2	0xa0c6		/* 500 Series I2C */
+#define	PCI_PRODUCT_INTEL_500SERIES_LP_I2C_3	0xa0e8		/* 500 Series I2C */
+#define	PCI_PRODUCT_INTEL_500SERIES_LP_I2C_4	0xa0e9		/* 500 Series I2C */
+#define	PCI_PRODUCT_INTEL_500SERIES_LP_I2C_5	0xa0ea		/* 500 Series I2C */
+#define	PCI_PRODUCT_INTEL_500SERIES_LP_I2C_6	0xa0eb		/* 500 Series I2C */
 #define	PCI_PRODUCT_INTEL_100SERIES_AHCI_1	0xa102		/* 100 Series AHCI */
 #define	PCI_PRODUCT_INTEL_100SERIES_AHCI_2	0xa103		/* 100 Series AHCI */
 #define	PCI_PRODUCT_INTEL_100SERIES_RAID_1	0xa105		/* 100 Series RAID */
