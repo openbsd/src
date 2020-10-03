@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.619 2020/08/19 11:23:59 kn Exp $	*/
+/*	$OpenBSD: if.c,v 1.620 2020/10/03 00:23:55 mvs Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -87,6 +87,7 @@
 #include <sys/percpu.h>
 #include <sys/proc.h>
 #include <sys/stdint.h>	/* uintptr_t */
+#include <sys/rwlock.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -226,6 +227,8 @@ TAILQ_HEAD(, ifg_group) ifg_head = TAILQ_HEAD_INITIALIZER(ifg_head);
 
 LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
 int if_cloners_count;
+
+struct rwlock if_cloners_lock = RWLOCK_INITIALIZER("clonerlock");
 
 /* hooks should only be added, deleted, and run from a process context */
 struct mutex if_hooks_mtx = MUTEX_INITIALIZER(IPL_NONE);
@@ -1139,19 +1142,25 @@ if_clone_create(const char *name, int rdomain)
 	if (ifc == NULL)
 		return (EINVAL);
 
-	if (ifunit(name) != NULL)
-		return (EEXIST);
+	rw_enter_write(&if_cloners_lock);
+
+	if (ifunit(name) != NULL) {
+		ret = EEXIST;
+		goto unlock;
+	}
 
 	ret = (*ifc->ifc_create)(ifc, unit);
 
 	if (ret != 0 || (ifp = ifunit(name)) == NULL)
-		return (ret);
+		goto unlock;
 
 	NET_LOCK();
 	if_addgroup(ifp, ifc->ifc_name);
 	if (rdomain != 0)
 		if_setrdomain(ifp, rdomain);
 	NET_UNLOCK();
+unlock:
+	rw_exit_write(&if_cloners_lock);
 
 	return (ret);
 }
@@ -1173,9 +1182,13 @@ if_clone_destroy(const char *name)
 	if (ifc->ifc_destroy == NULL)
 		return (EOPNOTSUPP);
 
+	rw_enter_write(&if_cloners_lock);
+
 	ifp = ifunit(name);
-	if (ifp == NULL)
+	if (ifp == NULL) {
+		rw_exit_write(&if_cloners_lock);
 		return (ENXIO);
+	}
 
 	NET_LOCK();
 	if (ifp->if_flags & IFF_UP) {
@@ -1186,6 +1199,8 @@ if_clone_destroy(const char *name)
 	}
 	NET_UNLOCK();
 	ret = (*ifc->ifc_destroy)(ifp);
+
+	rw_exit_write(&if_cloners_lock);
 
 	return (ret);
 }
