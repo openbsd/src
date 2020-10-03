@@ -25,7 +25,7 @@ and "expected"
 -An expected value of OK means the cert is valid.
 -An expected value of ERROR means the cert is invalid.
 -An expected value of WEAK-OK means the cert could be considered valid
- by may be rejected.
+ but may be rejected.
 
 As anything is fixed in libressl, the known file should be updated
 to indicate your improved result, and prevent future regressions.
