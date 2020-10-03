@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.73 2020/09/24 18:12:00 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.74 2020/10/03 18:01:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -318,7 +318,7 @@ ssl3_connect(SSL *s)
 
 		case DTLS1_ST_CR_HELLO_VERIFY_REQUEST_A:
 		case DTLS1_ST_CR_HELLO_VERIFY_REQUEST_B:
-			ret = dtls1_get_hello_verify(s);
+			ret = ssl3_get_dtls_hello_verify(s);
 			if (ret <= 0)
 				goto end;
 			dtls1_stop_timer(s);
@@ -791,6 +791,62 @@ err:
 	CBB_cleanup(&cbb);
 
 	return (-1);
+}
+
+int
+ssl3_get_dtls_hello_verify(SSL *s)
+{
+	long n;
+	int al, ok = 0;
+	size_t cookie_len;
+	uint16_t ssl_version;
+	CBS hello_verify_request, cookie;
+
+	n = ssl3_get_message(s, DTLS1_ST_CR_HELLO_VERIFY_REQUEST_A,
+	    DTLS1_ST_CR_HELLO_VERIFY_REQUEST_B, -1, s->internal->max_cert_list, &ok);
+	if (!ok)
+		return ((int)n);
+
+	if (S3I(s)->tmp.message_type != DTLS1_MT_HELLO_VERIFY_REQUEST) {
+		D1I(s)->send_cookie = 0;
+		S3I(s)->tmp.reuse_message = 1;
+		return (1);
+	}
+
+	if (n < 0)
+		goto truncated;
+
+	CBS_init(&hello_verify_request, s->internal->init_msg, n);
+
+	if (!CBS_get_u16(&hello_verify_request, &ssl_version))
+		goto truncated;
+
+	if (ssl_version != s->version) {
+		SSLerror(s, SSL_R_WRONG_SSL_VERSION);
+		s->version = (s->version & 0xff00) | (ssl_version & 0xff);
+		al = SSL_AD_PROTOCOL_VERSION;
+		goto f_err;
+	}
+
+	if (!CBS_get_u8_length_prefixed(&hello_verify_request, &cookie))
+		goto truncated;
+
+	if (!CBS_write_bytes(&cookie, D1I(s)->cookie,
+	    sizeof(D1I(s)->cookie), &cookie_len)) {
+		D1I(s)->cookie_len = 0;
+		al = SSL_AD_ILLEGAL_PARAMETER;
+		goto f_err;
+	}
+	D1I(s)->cookie_len = cookie_len;
+	D1I(s)->send_cookie = 1;
+
+	return 1;
+
+truncated:
+	al = SSL_AD_DECODE_ERROR;
+f_err:
+	ssl3_send_alert(s, SSL3_AL_FATAL, al);
+	return -1;
 }
 
 int

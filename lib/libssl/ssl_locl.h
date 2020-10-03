@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.297 2020/10/03 17:54:27 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.298 2020/10/03 18:01:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1297,8 +1297,8 @@ void dtls1_double_timeout(SSL *s);
 unsigned int dtls1_min_mtu(void);
 
 /* some client-only functions */
-int dtls1_get_hello_verify(SSL *s);
 int ssl3_send_client_hello(SSL *s);
+int ssl3_get_dtls_hello_verify(SSL *s);
 int ssl3_get_server_hello(SSL *s);
 int ssl3_get_certificate_request(SSL *s);
 int ssl3_get_new_session_ticket(SSL *s);
@@ -1314,8 +1314,8 @@ int ssl3_check_cert_and_algorithm(SSL *s);
 int ssl3_check_finished(SSL *s);
 
 /* some server-only functions */
-int dtls1_send_hello_verify_request(SSL *s);
 int ssl3_get_client_hello(SSL *s);
+int ssl3_send_dtls_hello_verify_request(SSL *s);
 int ssl3_send_server_hello(SSL *s);
 int ssl3_send_hello_request(SSL *s);
 int ssl3_send_server_key_exchange(SSL *s);
