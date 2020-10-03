@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.33 2020/09/26 12:06:37 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.34 2020/10/03 07:31:12 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -54,6 +54,7 @@ struct kcov_dev {
 	int		 kd_state;	/* [M] */
 	int		 kd_mode;	/* [M] */
 	int		 kd_unit;	/* [I] device minor */
+	int		 kd_intr;	/* [M] currently used in interrupt */
 	uintptr_t	*kd_buf;	/* [a] traced coverage */
 	size_t		 kd_nmemb;	/* [I] */
 	size_t		 kd_size;	/* [I] */
@@ -80,11 +81,28 @@ struct kcov_remote {
 	TAILQ_ENTRY(kcov_remote) kr_entry;	/* [M] */
 };
 
+/*
+ * Per CPU coverage structure used to track coverage when executing in a remote
+ * interrupt context.
+ *
+ * Locking:
+ * 	I	immutable after creation
+ *	M	kcov_mtx
+ */
+struct kcov_cpu {
+	struct kcov_dev  kc_kd;
+	struct kcov_dev *kc_kd_save;	/* [M] previous kcov_dev */
+	int kc_cpuid;			/* [I] cpu number */
+
+	TAILQ_ENTRY(kcov_cpu) kc_entry;	/* [I] */
+};
+
 void kcovattach(int);
 
 int kd_init(struct kcov_dev *, unsigned long);
 void kd_free(struct kcov_dev *);
 struct kcov_dev *kd_lookup(int);
+void kd_put(struct kcov_dev *, struct kcov_dev *);
 
 struct kcov_remote *kcov_remote_register_locked(int, void *);
 int kcov_remote_attach(struct kcov_dev *, struct kio_remote_attach *);
@@ -94,11 +112,13 @@ void kr_barrier(struct kcov_remote *);
 struct kcov_remote *kr_lookup(int, void *);
 
 static struct kcov_dev *kd_curproc(int);
+static struct kcov_cpu *kd_curcpu(void);
 static uint64_t kd_claim(struct kcov_dev *, int, int);
 static inline int inintr(void);
 
 TAILQ_HEAD(, kcov_dev) kd_list = TAILQ_HEAD_INITIALIZER(kd_list);
 TAILQ_HEAD(, kcov_remote) kr_list = TAILQ_HEAD_INITIALIZER(kr_list);
+TAILQ_HEAD(, kcov_cpu) kc_list = TAILQ_HEAD_INITIALIZER(kc_list);
 
 int kcov_cold = 1;
 int kr_cold = 1;
@@ -247,8 +267,22 @@ __sanitizer_cov_trace_switch(uint64_t val, uint64_t *cases)
 void
 kcovattach(int count)
 {
+	struct kcov_cpu *kc;
+	int error, i;
+
 	pool_init(&kr_pool, sizeof(struct kcov_remote), 0, IPL_MPFLOOR, PR_WAITOK,
 	    "kcovpl", NULL);
+
+	kc = mallocarray(ncpusfound, sizeof(*kc), M_DEVBUF, M_WAITOK | M_ZERO);
+	mtx_enter(&kcov_mtx);
+	for (i = 0; i < ncpusfound; i++) {
+		kc[i].kc_cpuid = i;
+		error = kd_init(&kc[i].kc_kd, KCOV_BUF_MAX_NMEMB);
+		KASSERT(error == 0);
+		TAILQ_INSERT_TAIL(&kc_list, &kc[i], kc_entry);
+	}
+	mtx_leave(&kcov_mtx);
+
 	kr_cold = 0;
 }
 
@@ -430,6 +464,27 @@ kd_lookup(int unit)
 	return (NULL);
 }
 
+void
+kd_put(struct kcov_dev *dst, struct kcov_dev *src)
+{
+	uint64_t idx, nmemb;
+	int stride;
+
+	MUTEX_ASSERT_LOCKED(&kcov_mtx);
+	KASSERT(dst->kd_mode == src->kd_mode);
+
+	nmemb = src->kd_buf[0];
+	if (nmemb == 0)
+		return;
+	stride = src->kd_mode == KCOV_MODE_TRACE_CMP ? KCOV_STRIDE_TRACE_CMP :
+	    KCOV_STRIDE_TRACE_PC;
+	idx = kd_claim(dst, stride, nmemb);
+	if (idx == 0)
+		return;
+	memcpy(&dst->kd_buf[idx], &src->kd_buf[1],
+	    stride * nmemb * KCOV_BUF_MEMB_SIZE);
+}
+
 int
 kd_init(struct kcov_dev *kd, unsigned long nmemb)
 {
@@ -513,15 +568,26 @@ kd_curproc(int mode)
 	if (__predict_false(kcov_cold))
 		return (NULL);
 
-	/* Do not trace in interrupts to prevent noisy coverage. */
-	if (inintr())
-		return (NULL);
-
 	kd = curproc->p_kd;
 	if (__predict_true(kd == NULL) || kd->kd_mode != mode)
 		return (NULL);
+	if (inintr() && kd->kd_intr == 0)
+		return (NULL);
 	return (kd);
 
+}
+
+static struct kcov_cpu *
+kd_curcpu(void)
+{
+	struct kcov_cpu *kc;
+	unsigned int cpuid = cpu_number();
+
+	TAILQ_FOREACH(kc, &kc_list, kc_entry) {
+		if (kc->kc_cpuid == cpuid)
+			return (kc);
+	}
+	return (NULL);
 }
 
 /*
@@ -560,30 +626,40 @@ inintr(void)
 void
 kcov_remote_enter(int subsystem, void *id)
 {
+	struct kcov_cpu *kc;
 	struct kcov_dev *kd;
 	struct kcov_remote *kr;
 	struct proc *p;
-
-	/*
-	 * We could end up here while executing a timeout triggered from a
-	 * softclock interrupt context. At this point, the current thread might
-	 * have kcov enabled and this is therefore not a remote section in the
-	 * sense that we're not executing in the context of another thread.
-	 */
-	if (inintr())
-		return;
 
 	mtx_enter(&kcov_mtx);
 	kr = kr_lookup(subsystem, id);
 	if (kr == NULL || kr->kr_state != KCOV_STATE_READY)
 		goto out;
-	p = curproc;
 	kd = kr->kr_kd;
-	if (kd != NULL && kd->kd_state == KCOV_STATE_TRACE) {
-		kr->kr_nsections++;
+	if (kd == NULL || kd->kd_state != KCOV_STATE_TRACE)
+		goto out;
+	p = curproc;
+	if (inintr()) {
+		/*
+		 * XXX we only expect to be called from softclock interrupts at
+		 * this point.
+		 */
+		kc = kd_curcpu();
+		if (kc == NULL || kc->kc_kd.kd_intr == 1)
+			goto out;
+		kc->kc_kd.kd_state = KCOV_STATE_TRACE;
+		kc->kc_kd.kd_mode = kd->kd_mode;
+		kc->kc_kd.kd_intr = 1;
+		kc->kc_kd_save = p->p_kd;
+		kd = &kc->kc_kd;
+		/* Reset coverage buffer. */
+		kd->kd_buf[0] = 0;
+	} else {
 		KASSERT(p->p_kd == NULL);
-		p->p_kd = kd;
 	}
+	kr->kr_nsections++;
+	p->p_kd = kd;
+
 out:
 	mtx_leave(&kcov_mtx);
 }
@@ -591,12 +667,9 @@ out:
 void
 kcov_remote_leave(int subsystem, void *id)
 {
+	struct kcov_cpu *kc;
 	struct kcov_remote *kr;
 	struct proc *p;
-
-	/* See kcov_remote_enter(). */
-	if (inintr())
-		return;
 
 	mtx_enter(&kcov_mtx);
 	p = curproc;
@@ -605,8 +678,26 @@ kcov_remote_leave(int subsystem, void *id)
 	kr = kr_lookup(subsystem, id);
 	if (kr == NULL)
 		goto out;
-	KASSERT(p->p_kd == kr->kr_kd);
-	p->p_kd = NULL;
+	if (inintr()) {
+		kc = kd_curcpu();
+		if (kc == NULL || kc->kc_kd.kd_intr == 0)
+			goto out;
+
+		/*
+		 * Stop writing to the coverage buffer associated with this CPU
+		 * before copying its contents.
+		 */
+		p->p_kd = kc->kc_kd_save;
+		kc->kc_kd_save = NULL;
+
+		kd_put(kr->kr_kd, &kc->kc_kd);
+		kc->kc_kd.kd_state = KCOV_STATE_READY;
+		kc->kc_kd.kd_mode = KCOV_MODE_NONE;
+		kc->kc_kd.kd_intr = 0;
+	} else {
+		KASSERT(p->p_kd == kr->kr_kd);
+		p->p_kd = NULL;
+	}
 	if (--kr->kr_nsections == 0)
 		wakeup(kr);
 out:
