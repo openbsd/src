@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_cbc.c,v 1.22 2020/06/19 21:26:40 tb Exp $ */
+/* $OpenBSD: s3_cbc.c,v 1.23 2020/10/03 17:35:16 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2012 The OpenSSL Project.  All rights reserved.
  *
@@ -101,7 +101,7 @@ constant_time_eq_8(unsigned int a, unsigned int b)
 	return DUPLICATE_MSB_TO_ALL_8(c);
 }
 
-/* tls1_cbc_remove_padding removes the CBC padding from the decrypted, TLS, CBC
+/* ssl3_cbc_remove_padding removes the CBC padding from the decrypted, TLS, CBC
  * record in |rec| in constant time and returns 1 if the padding is valid and
  * -1 otherwise. It also removes any explicit IV from the start of the record
  * without leaking any timing about whether there was enough space after the
@@ -113,25 +113,23 @@ constant_time_eq_8(unsigned int a, unsigned int b)
  *   1: if the padding was valid
  *  -1: otherwise. */
 int
-tls1_cbc_remove_padding(const SSL* s, SSL3_RECORD_INTERNAL *rec,
-    unsigned int block_size, unsigned int mac_size)
+ssl3_cbc_remove_padding(SSL3_RECORD_INTERNAL *rec, unsigned int eiv_len,
+    unsigned int mac_size)
 {
 	unsigned int padding_length, good, to_check, i;
 	const unsigned int overhead = 1 /* padding length byte */ + mac_size;
 
-	/* Check if version requires explicit IV */
-	if (SSL_USE_EXPLICIT_IV(s)) {
-		/* These lengths are all public so we can test them in
-		 * non-constant time.
-		 */
-		if (overhead + block_size > rec->length)
-			return 0;
-		/* We can now safely skip explicit IV */
-		rec->data += block_size;
-		rec->input += block_size;
-		rec->length -= block_size;
-	} else if (overhead > rec->length)
+	/*
+	 * These lengths are all public so we can test them in
+	 * non-constant time.
+	 */
+	if (overhead + eiv_len > rec->length)
 		return 0;
+
+	/* We can now safely skip explicit IV, if any. */
+	rec->data += eiv_len;
+	rec->input += eiv_len;
+	rec->length -= eiv_len;
 
 	padding_length = rec->data[rec->length - 1];
 

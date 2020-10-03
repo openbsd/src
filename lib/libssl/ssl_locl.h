@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.295 2020/09/24 18:12:00 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.296 2020/10/03 17:35:16 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -477,6 +477,8 @@ struct tls12_record_layer;
 
 struct tls12_record_layer *tls12_record_layer_new(void);
 void tls12_record_layer_free(struct tls12_record_layer *rl);
+void tls12_record_layer_alert(struct tls12_record_layer *rl,
+    uint8_t *alert_desc);
 void tls12_record_layer_set_version(struct tls12_record_layer *rl,
     uint16_t version);
 void tls12_record_layer_set_read_epoch(struct tls12_record_layer *rl,
@@ -497,6 +499,10 @@ int tls12_record_layer_set_read_cipher_hash(struct tls12_record_layer *rl,
     EVP_CIPHER_CTX *cipher_ctx, EVP_MD_CTX *hash_ctx, int stream_mac);
 int tls12_record_layer_set_write_cipher_hash(struct tls12_record_layer *rl,
     EVP_CIPHER_CTX *cipher_ctx, EVP_MD_CTX *hash_ctx, int stream_mac);
+int tls12_record_layer_set_read_mac_key(struct tls12_record_layer *rl,
+    const uint8_t *mac_key, size_t mac_key_len);
+int tls12_record_layer_open_record(struct tls12_record_layer *rl,
+    uint8_t *buf, size_t buf_len, uint8_t **out, size_t *out_len);
 int tls12_record_layer_seal_record(struct tls12_record_layer *rl,
     uint8_t content_type, const uint8_t *content, size_t content_len,
     CBB *out);
@@ -1361,9 +1367,7 @@ int tls1_transcript_record(SSL *s, const unsigned char *buf, size_t len);
 void tls1_cleanup_key_block(SSL *s);
 int tls1_change_cipher_state(SSL *s, int which);
 int tls1_setup_key_block(SSL *s);
-int tls1_enc(SSL *s, int snd);
 int tls1_final_finish_mac(SSL *s, const char *str, int slen, unsigned char *p);
-int tls1_mac(SSL *ssl, unsigned char *md, int snd);
 int tls1_generate_master_secret(SSL *s, unsigned char *out,
     unsigned char *p, int len);
 int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
@@ -1411,8 +1415,8 @@ int tls1_check_ec_server_key(SSL *s);
 /* s3_cbc.c */
 void ssl3_cbc_copy_mac(unsigned char *out, const SSL3_RECORD_INTERNAL *rec,
     unsigned int md_size, unsigned int orig_len);
-int tls1_cbc_remove_padding(const SSL *s, SSL3_RECORD_INTERNAL *rec,
-    unsigned int block_size, unsigned int mac_size);
+int ssl3_cbc_remove_padding(SSL3_RECORD_INTERNAL *rec, unsigned int eiv_len,
+    unsigned int mac_size);
 char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx);
 int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx, unsigned char *md_out,
     size_t *md_out_size, const unsigned char header[13],
