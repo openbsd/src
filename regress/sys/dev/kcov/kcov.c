@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.14 2020/10/03 07:33:44 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.15 2020/10/03 07:35:07 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -46,6 +46,7 @@ static int test_fork(struct context *);
 static int test_open(struct context *);
 static int test_remote(struct context *);
 static int test_remote_close(struct context *);
+static int test_remote_interrupt(struct context *);
 static int test_state(struct context *);
 
 static int check_coverage(const unsigned long *, int, unsigned long, int);
@@ -74,6 +75,7 @@ main(int argc, char *argv[])
 		{ "open",		test_open,		0 },
 		{ "remote",		test_remote,		1 },
 		{ "remote-close",	test_remote_close,	0 },
+		{ "remote-interrupt",	test_remote_interrupt,	-1 },
 		{ "state",		test_state,		1 },
 		{ NULL,			NULL,			0 },
 	};
@@ -188,7 +190,9 @@ check_coverage(const unsigned long *cover, int mode, unsigned long maxsize,
 	unsigned long arg1, arg2, exp, i, pc, type;
 	int error = 0;
 
-	if (nonzero && cover[0] == 0) {
+	if (nonzero == -1) {
+		return 0;
+	} else if (nonzero && cover[0] == 0) {
 		warnx("coverage empty (count=0)\n");
 		return 1;
 	} else if (!nonzero && cover[0] != 0) {
@@ -491,6 +495,34 @@ test_remote_close(struct context *ctx)
 	if (close(ctx->c_fd) == -1)
 		err(1, "close");
 	ctx->c_fd = kcov_open();
+	return 0;
+}
+
+/*
+ * Remote interrupt coverage. There's no reliable way to enter a remote section
+ * in interrupt context. This test can however by used to examine the coverage
+ * collected in interrupt context:
+ *
+ *     $ until [ -s cov ]; do kcov -v -m pc remote-interrupt >cov; done
+ */
+static int
+test_remote_interrupt(struct context *ctx)
+{
+	struct kio_remote_attach remote = {
+		.subsystem	= KCOV_REMOTE_COMMON,
+		.id		= 0,
+	};
+	int i;
+
+	if (ioctl(ctx->c_fd, KIOREMOTEATTACH, &remote) == -1)
+		err(1, "ioctl: KIOREMOTEATTACH");
+	kcov_enable(ctx->c_fd, ctx->c_mode);
+
+	for (i = 0; i < 100; i++)
+		(void)getpid();
+
+	kcov_disable(ctx->c_fd);
+
 	return 0;
 }
 

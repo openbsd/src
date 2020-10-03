@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2020/08/01 08:44:57 anton Exp $
+#	$OpenBSD: Makefile,v 1.12 2020/10/03 07:35:07 anton Exp $
 
 PROG=		kcov
 WARNINGS=	yes
@@ -20,6 +20,7 @@ TESTS+=	fork
 TESTS+=	open
 TESTS+=	remote
 TESTS+=	remote-close
+TESTS+=	remote-interrupt
 TESTS+=	state
 
 REGRESS_SETUP_ONCE=	setup
