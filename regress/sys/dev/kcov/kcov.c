@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.13 2020/08/01 08:44:57 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.14 2020/10/03 07:33:44 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -171,7 +171,7 @@ main(int argc, char *argv[])
 static __dead void
 usage(void)
 {
-	fprintf(stderr, "usage: kcov [-Epv] [-b fraction] -t mode test\n");
+	fprintf(stderr, "usage: kcov [-Epv] [-b fraction] -m mode test\n");
 	exit(1);
 }
 
