@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.5 2020/10/02 07:53:58 tb Exp $ */
+/* $OpenBSD: verify.c,v 1.6 2020/10/03 15:19:47 tb Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -83,8 +83,7 @@ verify_cert_cb(int ok, X509_STORE_CTX *xsc)
 	current_cert = X509_STORE_CTX_get_current_cert(xsc);
 	if (current_cert != NULL) {
 		X509_NAME_print_ex_fp(stderr,
-		    X509_get_subject_name(current_cert), 0,
-		    XN_FLAG_ONELINE);
+		    X509_get_subject_name(current_cert), 0, XN_FLAG_ONELINE);
 		fprintf(stderr, "\n");
 	}
 
@@ -123,10 +122,10 @@ verify_cert(const char *roots_file, const char *bundle_file,
 		errx(1, "no certs in cert bundle %s", cert_file);
 	leaf = sk_X509_shift(cert);
 
-        if ((xsc = X509_STORE_CTX_new()) == NULL)
+	if ((xsc = X509_STORE_CTX_new()) == NULL)
 		errx(1, "X509_STORE_CTX");
 
-        if ((store = X509_STORE_new()) == NULL)
+	if ((store = X509_STORE_new()) == NULL)
 		errx(1, "X509_STORE");
 
 	if (!X509_STORE_CTX_init(xsc, store, leaf, bundle)) {
@@ -154,10 +153,10 @@ verify_cert(const char *roots_file, const char *bundle_file,
 	if (X509_verify_cert(xsc) == 1)
 		*dns = 1;
 
-        if ((xscip = X509_STORE_CTX_new()) == NULL)
+	if ((xscip = X509_STORE_CTX_new()) == NULL)
 		errx(1, "X509_STORE_CTX");
 
-        if ((storeip = X509_STORE_new()) == NULL)
+	if ((storeip = X509_STORE_new()) == NULL)
 		errx(1, "X509_STORE");
 
 	if (!X509_STORE_CTX_init(xscip, storeip, leaf, bundle)) {
@@ -184,7 +183,7 @@ verify_cert(const char *roots_file, const char *bundle_file,
 	if (X509_verify_cert(xscip) == 1)
 		*ip = 1;
 
- 	sk_X509_pop_free(roots, X509_free);
+	sk_X509_pop_free(roots, X509_free);
 	sk_X509_pop_free(bundle, X509_free);
 	sk_X509_pop_free(cert, X509_free);
 	X509_STORE_free(store);
@@ -204,11 +203,11 @@ bettertls_cert_test(const char *certs_path)
 	if (asprintf(&roots_file, "%s/root.crt", certs_path) == -1)
 		errx(1, "asprintf");
 
-	for(i = 1;;i++) {
+	for(i = 1;; i++) {
 		int ip, dns;
 		struct stat sb;
 		if (asprintf(&cert_file, "%s/%d.crt", certs_path, i) == -1)
-				errx(1, "asprintf");
+			errx(1, "asprintf");
 		if (asprintf(&bundle_file, "%s/%d.chain", certs_path, i) == -1)
 			errx(1, "asprintf");
 		if (stat(cert_file, &sb) == -1)
@@ -243,10 +242,10 @@ main(int argc, char **argv)
 		fprintf(stdout, "{\"testVersion\":1,\"date\":%lld,\"userAgent\""
 		    ":\"LibreSSL OpenBSD 6.8\\n\",\"results\":[", time(NULL));
 
-        bettertls_cert_test(argv[1]);
+	bettertls_cert_test(argv[1]);
 
 	if (json)
 		fprintf(stdout, "],\"osVersion\":\"OpenBSD 6.7\\n\"}\n");
 
-        return 0;
+	return 0;
 }
