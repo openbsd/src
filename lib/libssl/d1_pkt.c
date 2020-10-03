@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.83 2020/10/03 17:10:09 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.84 2020/10/03 17:11:28 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -194,12 +194,8 @@ static int dtls1_process_record(SSL *s);
 
 /* copy buffered record into SSL structure */
 static int
-dtls1_copy_record(SSL *s, pitem *item)
+dtls1_copy_record(SSL *s, DTLS1_RECORD_DATA_INTERNAL *rdata)
 {
-	DTLS1_RECORD_DATA_INTERNAL *rdata;
-
-	rdata = (DTLS1_RECORD_DATA_INTERNAL *)item->data;
-
 	ssl3_release_buffer(&S3I(s)->rbuf);
 
 	s->internal->packet = rdata->packet;
@@ -212,7 +208,6 @@ dtls1_copy_record(SSL *s, pitem *item)
 
 	return (1);
 }
-
 
 static int
 dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
@@ -268,7 +263,7 @@ dtls1_retrieve_buffered_record(SSL *s, record_pqueue *queue)
 
 	item = pqueue_pop(queue->q);
 	if (item) {
-		dtls1_copy_record(s, item);
+		dtls1_copy_record(s, item->data);
 
 		free(item->data);
 		pitem_free(item);
@@ -675,8 +670,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		pitem *item;
 		item = pqueue_pop(D1I(s)->buffered_app_data.q);
 		if (item) {
-
-			dtls1_copy_record(s, item);
+			dtls1_copy_record(s, item->data);
 
 			free(item->data);
 			pitem_free(item);
