@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_methods.c,v 1.16 2020/09/17 15:23:29 jsing Exp $ */
+/* $OpenBSD: ssl_methods.c,v 1.17 2020/10/03 17:54:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -74,7 +74,7 @@ static const SSL_METHOD_INTERNAL DTLSv1_client_method_internal_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = dtls1_read_bytes,
 	.ssl_write_bytes = dtls1_write_app_data_bytes,
-	.ssl3_enc = &DTLSv1_enc_data,
+	.ssl3_enc = &TLSv1_1_enc_data,
 };
 
 static const SSL_METHOD DTLSv1_client_method_data = {
@@ -113,7 +113,7 @@ static const SSL_METHOD_INTERNAL DTLSv1_method_internal_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = dtls1_read_bytes,
 	.ssl_write_bytes = dtls1_write_app_data_bytes,
-	.ssl3_enc = &DTLSv1_enc_data,
+	.ssl3_enc = &TLSv1_1_enc_data,
 };
 
 static const SSL_METHOD DTLSv1_method_data = {
@@ -152,7 +152,7 @@ static const SSL_METHOD_INTERNAL DTLSv1_server_method_internal_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = dtls1_read_bytes,
 	.ssl_write_bytes = dtls1_write_app_data_bytes,
-	.ssl3_enc = &DTLSv1_enc_data,
+	.ssl3_enc = &TLSv1_1_enc_data,
 };
 
 static const SSL_METHOD DTLSv1_server_method_data = {
