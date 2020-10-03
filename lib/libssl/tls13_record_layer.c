@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.53 2020/09/11 15:03:36 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.54 2020/10/03 17:22:27 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -383,7 +383,7 @@ tls13_record_layer_send_pending(struct tls13_record_layer *rl)
 }
 
 static ssize_t
-tls13_record_layer_alert(struct tls13_record_layer *rl,
+tls13_record_layer_enqueue_alert(struct tls13_record_layer *rl,
     uint8_t alert_level, uint8_t alert_desc)
 {
 	CBB cbb;
@@ -1193,7 +1193,8 @@ tls13_send_alert(struct tls13_record_layer *rl, uint8_t alert_desc)
 		alert_level = TLS13_ALERT_LEVEL_WARNING;
 
 	do {
-		ret = tls13_record_layer_alert(rl, alert_level, alert_desc);
+		ret = tls13_record_layer_enqueue_alert(rl, alert_level,
+		    alert_desc);
 	} while (ret == TLS13_IO_WANT_RETRY);
 
 	return ret;
