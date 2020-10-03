@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.82 2020/09/24 17:59:54 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.83 2020/10/03 17:10:09 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -279,18 +279,6 @@ dtls1_retrieve_buffered_record(SSL *s, record_pqueue *queue)
 	return (0);
 }
 
-
-/* retrieve a buffered record that belongs to the new epoch, i.e., not processed
- * yet */
-#define dtls1_get_unprocessed_record(s) \
-                   dtls1_retrieve_buffered_record((s), \
-		       &((D1I(s))->unprocessed_rcds))
-
-/* retrieve a buffered record that belongs to the current epoch, ie, processed */
-#define dtls1_get_processed_record(s) \
-                   dtls1_retrieve_buffered_record((s), \
-		       &((D1I(s))->processed_rcds))
-
 static int
 dtls1_process_buffered_records(SSL *s)
 {
@@ -305,8 +293,10 @@ dtls1_process_buffered_records(SSL *s)
 
 		/* Process all the records. */
 		while (pqueue_peek(D1I(s)->unprocessed_rcds.q)) {
-			dtls1_get_unprocessed_record(s);
-			if (! dtls1_process_record(s))
+			if (!dtls1_retrieve_buffered_record((s),
+			    &((D1I(s))->unprocessed_rcds)))
+				return (0);
+			if (!dtls1_process_record(s))
 				return (0);
 			if (dtls1_buffer_record(s, &(D1I(s)->processed_rcds),
 			    S3I(s)->rrec.seq_num) < 0)
@@ -479,7 +469,7 @@ dtls1_get_record(SSL *s)
 		return (-1);
 
 	/* if we're renegotiating, then there may be buffered records */
-	if (dtls1_get_processed_record(s))
+	if (dtls1_retrieve_buffered_record((s), &((D1I(s))->processed_rcds)))
 		return 1;
 
 	/* get something from the wire */
