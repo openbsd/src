@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-agent.c,v 1.264 2020/09/18 08:16:38 djm Exp $ */
+/* $OpenBSD: ssh-agent.c,v 1.265 2020/10/03 09:22:26 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -1259,7 +1259,7 @@ int
 main(int ac, char **av)
 {
 	int c_flag = 0, d_flag = 0, D_flag = 0, k_flag = 0, s_flag = 0;
-	int sock, fd, ch, result, saved_errno;
+	int sock, ch, result, saved_errno;
 	char *shell, *format, *pidstr, *agentsocket = NULL;
 	struct rlimit rlim;
 	extern int optind;
@@ -1474,14 +1474,8 @@ main(int ac, char **av)
 	}
 
 	(void)chdir("/");
-	if ((fd = open(_PATH_DEVNULL, O_RDWR, 0)) != -1) {
-		/* XXX might close listen socket */
-		(void)dup2(fd, STDIN_FILENO);
-		(void)dup2(fd, STDOUT_FILENO);
-		(void)dup2(fd, STDERR_FILENO);
-		if (fd > 2)
-			close(fd);
-	}
+	if (stdfd_devnull(1, 1, 1) == -1)
+		error("%s: stdfd_devnull failed", __func__);
 
 	/* deny core dumps, since memory contains unencrypted private keys */
 	rlim.rlim_cur = rlim.rlim_max = 0;
