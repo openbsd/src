@@ -1,4 +1,4 @@
-.\"	$OpenBSD: phb.4,v 1.1 2020/10/03 18:33:25 kettenis Exp $
+.\"	$OpenBSD: phb.4,v 1.2 2020/10/03 22:35:32 jmc Exp $
 .\"
 .\" Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: October 3 2020 $
-.Dt PHB 4
+.Dt PHB 4 powerpc64
 .Os
 .Sh NAME
 .Nm phb
@@ -26,8 +26,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for PCIe host bridge conforming to the IODA2
-and IODA3 specifications as found on POWER CPUs.
+driver provides support for PCIe host bridges conforming to the IODA2
+and IODA3 specifications, as found on POWER CPUs.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr pci 4
