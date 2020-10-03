@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.262 2020/10/02 20:02:03 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.263 2020/10/03 20:23:08 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -101,6 +101,8 @@ int	 ikev2_send_error(struct iked *, struct iked_sa *,
 int	 ikev2_send_init_error(struct iked *, struct iked_message *);
 
 int	 ikev2_handle_certreq(struct iked*, struct iked_message *);
+ssize_t	 ikev2_handle_delete(struct iked *, struct iked_message *,
+	    struct ibuf *, struct ikev2_payload **, uint8_t *);
 
 int	 ikev2_send_create_child_sa(struct iked *, struct iked_sa *,
 	    struct iked_spi *, uint8_t);
@@ -2451,6 +2453,11 @@ ikev2_resp_informational(struct iked *env, struct iked_sa *sa,
 
 	if ((buf = ibuf_static()) == NULL)
 		goto done;
+
+	if ((len = ikev2_handle_delete(env, msg, buf, &pld,
+	    &firstpayload)) == -1)
+		goto done;
+
 	/*
 	 * Include NAT_DETECTION notification on UPDATE_SA_ADDRESSES or if
 	 * the peer did include them, too (RFC 455, 3.8).
@@ -2643,6 +2650,157 @@ ikev2_resp_recv(struct iked *env, struct iked_message *msg,
 	default:
 		break;
 	}
+}
+
+ssize_t
+ikev2_handle_delete(struct iked *env, struct iked_message *msg,
+    struct ibuf *resp, struct ikev2_payload **pld, uint8_t *firstpayload)
+{
+	struct iked_childsa	**peersas = NULL;
+	struct iked_sa		*sa = msg->msg_sa;
+	struct ikev2_delete	*localdel;
+	struct ibuf		*spibuf = NULL;
+	uint64_t		*localspi = NULL;
+	uint64_t		 spi64, spi = 0;
+	uint32_t		 spi32;
+	uint8_t			*buf;
+	size_t			 found = 0, failed = 0;
+	int			 ret = -1;
+	size_t			 i, sz, cnt, len;
+
+	if (!msg->msg_del_protoid)
+		return (0);
+
+	sz = msg->msg_del_spisize;
+
+	switch (sz) {
+	case 4:
+	case 8:
+		break;
+	case 0:
+		if (msg->msg_del_protoid != IKEV2_SAPROTO_IKE) {
+			log_debug("%s: invalid SPI size", __func__);
+			goto done;
+		}
+		ikev2_ikesa_recv_delete(env, sa);
+		return (0);
+	default:
+		log_info("%s: error: invalid SPI size", __func__);
+		goto done;
+	}
+
+	cnt = msg->msg_del_cnt;
+	len = ibuf_length(msg->msg_del_buf);
+
+	if ((len / sz) != cnt) {
+		log_debug("%s: invalid payload length %zu/%zu != %zu",
+		    __func__, len, sz, cnt);
+		return (-1);
+	}
+
+	if (((peersas = calloc(cnt, sizeof(struct iked_childsa *))) == NULL ||
+	     (localspi = calloc(cnt, sizeof(uint64_t))) == NULL)) {
+		log_warn("%s", __func__);
+		goto done;
+	}
+
+	buf = ibuf_data(msg->msg_del_buf);
+	for (i = 0; i < cnt; i++) {
+		switch (sz) {
+		case 4:
+			memcpy(&spi32, buf + (i * sz), sizeof(spi32));
+			spi = betoh32(spi32);
+			break;
+		case 8:
+			memcpy(&spi64, buf + (i * sz), sizeof(spi64));
+			spi = betoh64(spi64);
+			break;
+		}
+
+		log_debug("%s: spi %s", __func__, print_spi(spi, sz));
+
+		if (peersas == NULL || sa == NULL)
+			continue;
+
+		if ((peersas[i] = childsa_lookup(sa, spi,
+		    msg->msg_del_protoid)) == NULL) {
+			log_warnx("%s: CHILD SA doesn't exist for spi %s",
+			    SPI_SA(sa, __func__),
+			    print_spi(spi, sz));
+			continue;
+		}
+
+		if (ikev2_childsa_delete(env, sa, msg->msg_del_protoid, spi,
+		    &localspi[i], 0) == -1)
+			failed++;
+		else {
+			found++;
+
+			/* append SPI to log buffer */
+			if (ibuf_strlen(spibuf))
+				ibuf_strcat(&spibuf, ", ");
+			ibuf_strcat(&spibuf, print_spi(spi, sz));
+		}
+
+		/*
+		 * Flows are left in the require mode so that it would be
+		 * possible to quickly negotiate a new Child SA
+		 */
+	}
+
+	if (resp == NULL) {
+		ret = 0;
+		goto done;
+	}
+
+	/* Response to the INFORMATIONAL with Delete payload */
+	if (found) {
+		if ((*pld = ikev2_add_payload(resp)) == NULL)
+			goto done;
+		*firstpayload = IKEV2_PAYLOAD_DELETE;
+
+		if ((localdel = ibuf_advance(resp, sizeof(*localdel))) == NULL)
+			goto done;
+
+		localdel->del_protoid = msg->msg_del_protoid;
+		localdel->del_spisize = sz;
+		localdel->del_nspi = htobe16(found);
+		ret = sizeof(*localdel);
+
+		for (i = 0; i < cnt; i++) {
+			if (localspi[i] == 0)	/* happens if found < cnt */
+				continue;
+			switch (sz) {
+			case 4:
+				spi32 = htobe32(localspi[i]);
+				if (ibuf_add(resp, &spi32, sizeof(spi32)) != 0)
+					goto done;
+				ret += sizeof(spi32);
+				break;
+			case 8:
+				spi64 = htobe64(localspi[i]);
+				if (ibuf_add(resp, &spi64, sizeof(spi64)) != 0)
+					goto done;
+				ret += sizeof(spi64);
+				break;
+			}
+		}
+		log_info("%sdeleted %zu SPI%s: %.*s",
+		    SPI_SA(sa, NULL), found,
+		    found == 1 ? "" : "s",
+		    spibuf ? ibuf_strlen(spibuf) : 0,
+		    spibuf ? (char *)ibuf_data(spibuf) : "");
+	} else {
+		/* XXX should we send an INVALID_SPI notification? */
+		ret = 0;
+	}
+
+ done:
+	free(localspi);
+	free(peersas);
+	ibuf_release(spibuf);
+
+	return (ret);
 }
 
 int
