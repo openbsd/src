@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.45 2020/08/21 10:17:35 jan Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.46 2020/10/03 13:39:56 jan Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -467,6 +467,7 @@ lsa_add(struct rde_nbr *nbr, struct lsa *lsa)
 	struct lsa_tree	*tree;
 	struct vertex	*new, *old;
 	struct timeval	 tv, now, res;
+	int update = 1;
 
 	if (LSA_IS_SCOPE_AS(ntohs(lsa->hdr.type)))
 		tree = &asext_tree;
@@ -495,16 +496,13 @@ lsa_add(struct rde_nbr *nbr, struct lsa *lsa)
 				fatal("lsa_add");
 			return (1);
 		}
-		if (!lsa_equal(new->lsa, old->lsa)) {
-			if (ntohs(lsa->hdr.type) == LSA_TYPE_LINK)
-				orig_intra_area_prefix_lsas(nbr->area);
-			if (ntohs(lsa->hdr.type) != LSA_TYPE_EXTERNAL)
-				nbr->area->dirty = 1;
-			start_spf_timer();
-		}
+		if (lsa_equal(new->lsa, old->lsa))
+			update = 0;
 		vertex_free(old);
 		RB_INSERT(lsa_tree, tree, new);
-	} else {
+	}
+
+	if (update) {
 		if (ntohs(lsa->hdr.type) == LSA_TYPE_LINK)
 			orig_intra_area_prefix_lsas(nbr->area);
 		if (ntohs(lsa->hdr.type) != LSA_TYPE_EXTERNAL)
