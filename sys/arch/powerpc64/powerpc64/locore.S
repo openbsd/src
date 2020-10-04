@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.37 2020/09/25 17:31:27 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.38 2020/10/04 20:22:22 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -183,16 +183,26 @@ kcopy:
 	addi	%r9, %r9, .Lkcopyfault@toc@l
 	std	%r9, PCB_ONFAULT(%r7)
 
-	rldicl.	%r6, %r5, 62, 2
-	beq	0, .Lkcopybytes
+	rldicl.	%r6, %r5, 61, 3
+	beq	0, .Lkcopywords
 
-	addi	%r3, %r3, -4
-	addi	%r4, %r4, -4
+	addi	%r3, %r3, -8
+	addi	%r4, %r4, -8
 	mtctr	%r6
 1:
-	lwzu	%r6, 4(%r3)
-	stwu	%r6, 4(%r4)
+	ldu	%r6, 8(%r3)
+	stdu	%r6, 8(%r4)
 	bdnz	1b
+
+	addi	%r3, %r3, 8
+	addi	%r4, %r4, 8
+
+.Lkcopywords:
+	andi.	%r6, %r5, 4
+	beq	0, .Lkcopybytes
+
+	lwz	%r6, 0(%r3)
+	stw	%r6, 0(%r4)
 
 	addi	%r3, %r3, 4
 	addi	%r4, %r4, 4
