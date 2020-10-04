@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.34 2020/10/03 07:31:12 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.35 2020/10/04 18:49:22 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -133,8 +133,6 @@ struct pool kr_pool;
  *
  * If kcov is enabled for the current thread, the kernel program counter will
  * be stored in its corresponding coverage buffer.
- * The first element in the coverage buffer holds the index of next available
- * element.
  */
 void
 __sanitizer_cov_trace_pc(void)
