@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.46 2020/10/03 13:39:56 jan Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.47 2020/10/04 07:24:46 denis Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -467,7 +467,7 @@ lsa_add(struct rde_nbr *nbr, struct lsa *lsa)
 	struct lsa_tree	*tree;
 	struct vertex	*new, *old;
 	struct timeval	 tv, now, res;
-	int update = 1;
+	int		 update = 1;
 
 	if (LSA_IS_SCOPE_AS(ntohs(lsa->hdr.type)))
 		tree = &asext_tree;
