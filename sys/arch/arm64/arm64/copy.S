@@ -1,4 +1,4 @@
-/* $OpenBSD: copy.S,v 1.7 2019/06/19 08:00:17 patrick Exp $ */
+/* $OpenBSD: copy.S,v 1.8 2020/10/04 20:03:57 kettenis Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -163,12 +163,28 @@ ENTRY(kcopy)
 	adr	x5, .Lcopyfault
 	str	x5, [x3, #(PCB_ONFAULT)]	// set handler
 
-// This probably should be optimized
-2:	ldrb	w6, [x0], #1
+	cmp	x2, #8
+	b.lo	.Lkcopy4
+2:	ldr	x6, [x0], #8
+	str	x6, [x1], #8
+	sub	x2, x2, #8
+	cmp	x2, #8
+	b.hs	2b
+
+.Lkcopy4:
+	tbz	x2, #2, .Lkcopy1
+	ldr	w6, [x0], #4
+	str	w6, [x1], #4
+	sub	x2, x2, #4
+
+.Lkcopy1:
+	cbz	x2, .Lkcopy0
+3:	ldrb	w6, [x0], #1
 	strb	w6, [x1], #1
 	sub	x2, x2, #1
-	cbnz	x2, 2b
+	cbnz	x2, 3b
 
+.Lkcopy0:
 	str	x4, [x3, #(PCB_ONFAULT)]	// clear handler
 	mov	x0, xzr
 	RETGUARD_CHECK(copy, x15)
