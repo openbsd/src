@@ -1740,6 +1740,15 @@
 ./usr/share/man/man4/plrtc.4
 ./usr/share/man/man4/pluart.4
 ./usr/share/man/man4/pms.4
+./usr/share/man/man4/powerpc64/astfb.4
+./usr/share/man/man4/powerpc64/intro.4
+./usr/share/man/man4/powerpc64/opal.4
+./usr/share/man/man4/powerpc64/opalcons.4
+./usr/share/man/man4/powerpc64/opalsens.4
+./usr/share/man/man4/powerpc64/phb.4
+./usr/share/man/man4/powerpc64/xicp.4
+./usr/share/man/man4/powerpc64/xics.4
+./usr/share/man/man4/powerpc64/xive.4
 ./usr/share/man/man4/ppb.4
 ./usr/share/man/man4/ppp.4
 ./usr/share/man/man4/pppoe.4
