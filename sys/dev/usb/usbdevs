@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.720 2020/08/03 14:25:44 deraadt Exp $
+$OpenBSD: usbdevs,v 1.721 2020/10/05 05:28:13 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -80,6 +80,7 @@ vendor FUJITSUCOMP	0x0430	Fujitsu Component
 vendor TAUGA		0x0436	Taugagreining HF
 vendor AMD		0x0438	Advanced Micro Devices
 vendor LEXMARK		0x043d	Lexmark International
+vendor LG		0x043e	LG USA
 vendor NANAO		0x0440	NANAO
 vendor ALPS		0x044e	Alps Electric
 vendor THRUST		0x044f	Thrustmaster
@@ -367,6 +368,7 @@ vendor TOSHIBA		0x0930	Toshiba Corp
 vendor INTREPIDCS	0x093c	Intrepid
 vendor YANO		0x094f	Yano
 vendor KINGSTON		0x0951	Kingston Technology
+vendor NVIDIA		0x0955	NVIDIA
 vendor BLUEWATER	0x0956	BlueWater Systems
 vendor AGILENT		0x0957	Agilent Technologies
 vendor GUDE		0x0959	Gude ADS
@@ -465,6 +467,7 @@ vendor ITEGNO		0x0eba	iTegno
 vendor NORITAKE		0x0eda	Noritake itron Corp
 vendor EGALAX		0x0eef	eGalax
 vendor XIRING		0x0f14	XIRING
+vendor IOI		0x0f21	IOI
 vendor AIRPRIME		0x0f3d	Airprime
 vendor VTECH		0x0f88	VTech
 vendor FALCOM		0x0f94	Falcom Wireless Communications
@@ -476,6 +479,7 @@ vendor UNKNOWN4		0x0fe6	Unknown Vendor
 vendor DVICO		0x0fe9	DViCO
 vendor QUALCOMM2	0x1004	Qualcomm
 vendor MOTOROLA4	0x100d	Motorola
+vendor TTL		0x1025	Technology Testing Lab
 vendor HP3		0x103c	Hewlett Packard
 vendor THURLBY		0x103e	Thurlby Thandar Instruments
 vendor GIGABYTE		0x1044	GIGABYTE
@@ -540,6 +544,7 @@ vendor STARTECH		0x14b0	StarTech.com
 vendor CONCEPTRONIC2	0x14b2	Conceptronic
 vendor SUPERTOP		0x14cd	SuperTop
 vendor PLANEX3		0x14ea	Planex Communications
+vendor TWINHEAD		0x14ff	Twinhead
 vendor SILICONPORTALS	0x1527	Silicon Portals
 vendor UBLOX		0x1546	U-blox
 vendor OWEN		0x1555	Owen
@@ -620,6 +625,7 @@ vendor VERTEX		0x1fe7	Vertex Wireless Co., Ltd.
 vendor DLINK		0x2001	D-Link
 vendor PLANEX2		0x2019	Planex Communications
 vendor ENCORE		0x203d	Encore
+vendor LUXSHARE		0x208e	Luxshare
 vendor PARA		0x20b8	PARA Industrial
 vendor TRENDNET		0x20f4	TRENDnet
 vendor RTSYSTEMS	0x2100	RT Systems
@@ -635,7 +641,11 @@ vendor XIAOMI		0x2717	Xiaomi
 vendor NHJ		0x2770	NHJ
 vendor THINGM		0x27b8	ThingM
 vendor ASUSTEK		0x2821	ASUSTeK Computer
+vendor PIONEERDJ	0x2b73	Pioneer DJ
 vendor PLANEX		0x2c02	Planex Communications
+vendor CLUB3D		0x2d1c	Club 3D
+vendor CLEVO		0x30da	CLEVO
+vendor DYNABOOK		0x30f3	Dynabook
 vendor LINKINSTRUMENTS	0x3195	Link Instruments
 vendor AEI		0x3334	AEI
 vendor PQI		0x3538	PQI
@@ -1056,6 +1066,7 @@ product ASUS RTL8192CU		0x17ab	RTL8192CU
 product ASUS USBN66		0x17ad	USB-N66
 product ASUS RTL8192CU_2	0x17ba	RTL8192CU
 product ASUS RTL8192CU_3	0x17c0	RTL8192CU
+product ASUS RTL8156		0x18d1	RTL8156
 product ASUS MYPAL_A730		0x4202	MyPal A730
 product ASUS2 USBN11		0x0b05	USB-N11
 
@@ -1194,6 +1205,8 @@ product BELKIN F5U234		0x0234	F5U234 USB 2.0 4-Port Hub
 product BELKIN F5U237		0x0237	F5U237 USB 2.0 7-Port Hub
 product BELKIN F5U257		0x0257	F5U257 Serial
 product BELKIN F6H375		0x0375	F6H375 UPS
+product BELKIN RTL8152B		0x047a	RTL8152B
+product BELKIN RTL8153		0x048a	RTL8153
 product BELKIN F5U409		0x0409	F5U409 Serial
 product BELKIN F6C550AVR	0x0551	F6C550-AVR UPS
 product BELKIN F6C1250EITWRK	0x0750	F6C1250EITW-RK UPS
@@ -1336,8 +1349,12 @@ product CISCOLINKSYS WUSBF54G	0x0024	WUSBF54G
 product CISCOLINKSYS WUSB200	0x0028	WUSB200
 product CISCOLINKSYS AE1000	0x002f	AE1000
 product CISCOLINKSYS AM10	0x0031	AM10
+product CISCOLINKSYS USB3GIGV1	0x0041	USB3GIGV1
 product CISCOLINKSYS2 RT3070	0x4001	RT3070
 product CISCOLINKSYS3 RT3070	0x0101	RT3070
+
+/* CLEVO products */
+product CLEVO RTL8153B		0x5101	RTL8153B
 
 /* Clipsal products */
 product CLIPSAL 560884		0x0101	560884 C-Bus Switch
@@ -1347,6 +1364,9 @@ product CLIPSAL 5500PCU		0x0303	5500PCU C-Bus
 product CLIPSAL 5000CT2		0x0304	5000CT2 C-Bus Touch Screen
 product CLIPSAL C5000CT2	0x0305	C5000CT2 C-Bus Touch Screen
 product CLIPSAL L51XX		0x0401	L51xx C-Bus Dimmer
+
+/* Club 3D products */
+product CLUB3D RTL8153		0x8153	RTL8153
 
 /* CMOTECH CDMA Technologies products */
 product CMOTECH CNU510		0x5141	CDMA Technologies USB modem
@@ -1597,7 +1617,9 @@ product DLINK DSB650TX_PNA	0x4003	1/10/100 Ethernet
 product DLINK DSB650TX3		0x400b	10/100 Ethernet
 product DLINK DSB650TX2		0x4102	10/100 Ethernet
 product DLINK DUB1312		0x4a00	DUB-1312
+product DLINK RTL8153_1		0x7e34	RTL8153
 product DLINK DSB650		0xabc1	10/100 Ethernet
+product DLINK RTL8153_2		0xa710	RTL8153
 
 /* D-Link(2) products */
 product DLINK2 RTL8192SU_1	0x3300	RTL8192SU
@@ -1650,6 +1672,10 @@ product DRESDENELEC WHT		0x0004	Wireless Terminal
 /* DViCO products */
 product DVICO RT3070		0xb307	RT3070
 
+/* Dynabook products */
+product DYNABOOK RTL8153B_1	0x0419	RTL8153B
+product DYNABOOK RTL8153B_2	0x0425	RTL8153B
+
 /* Dynastream Innovations */
 product DYNASTREAM ANTDEVBOARD	0x1003	ANT dev board
 product DYNASTREAM ANT2USB	0x1004	ANT2USB
@@ -1701,6 +1727,8 @@ product ELECOM LDUSBLTX		0x4005	LD-USBL/TX
 product ELECOM WDC150SU2M	0x4008	WDC-150SU2M
 product ELECOM LDUSBTX2		0x400b	LD-USB/TX
 product ELECOM LDUSB20		0x4010	LD-USB20
+product ELECOM RTL8153B		0x4013	RTL8153B
+product ELECOM RTL8156B		0x4017	RTL8156B
 product ELECOM UCSGT		0x5003	UC-SGT Serial
 product ELECOM UCSGT0		0x5004	UC-SGT0 Serial
 product ELECOM LDUSBTX3		0xabc1	LD-USB/TX
@@ -2399,6 +2427,9 @@ product IODATA USBRSAQ		0x0a03	RSAQ1 Serial
 product IODATA USBRSAQ5		0x0a0e	RSAQ5 Serial
 product IODATA2 USB2SC		0x0a09	USB2.0-SCSI Bridge USB2-SC
 
+/* IOI products */
+product IOI RTL8153		0x8153	RTL8153
+
 /* Iomega products */
 product IOMEGA ZIP100		0x0001	Zip 100
 product IOMEGA ZIP250		0x0030	Zip 250
@@ -2550,9 +2581,30 @@ product LEADTEK 9531		0x2101	9531 GPS
 
 /* Lenovo products */
 product LENOVO AX88179		0x304b	AX88179
+product LENOVO ONELINKPRO	0x304f	OneLink Pro
+product LENOVO TABLETDOCK	0x3052	Tablet Dock
 product LENOVO ONELINKPLUS	0x3054	OneLink+ Dock
+product LENOVO WIGIGDOCK	0x3057	WiGig Dock
 product LENOVO DOCK_ETHERNET	0x3062	USB-C Dock Ethernet
+product LENOVO TB3GFXDOCK	0x3065	Thunderbolt 3 Graphics Dock
+product LENOVO RTL8153B_1	0x3069	RTL8153B
+product LENOVO TB3DOCKGEN2	0x3082	Thunderbolt 3 Dock Gen 2
+product LENOVO RTL8153B_2	0x3083	RTL8153B
+product LENOVO RTL8153B_3	0x3098	RTL8153B
+product LENOVO RTL8153B_4	0x309b	RTL8153B
+product LENOVO RTL8153B_5	0x309c	RTL8153B
+product LENOVO RTL8153B_6	0x309d	RTL8153B
 product LENOVO ETHERNET		0x7203	USB 2.0 Ethernet
+product LENOVO RTL8153_1	0x7205	RTL8153
+product LENOVO ONELINK		0x720a	OneLink
+product LENOVO RTL8153_2	0x720b	RTL8153
+product LENOVO RTL8153_3	0x720c	RTL8153
+product LENOVO RTL8153B_7	0x7214	RTL8153B
+product LENOVO RTL8153B_8	0x721e	RTL8153B
+product LENOVO RTL8153B_9	0x8153	RTL8153B
+product LENOVO RTL8153B_10	0xa359	RTL8153B
+product LENOVO USBCDOCKGEN2	0xa387	USB-C Dock Gen 2
+product LENOVO TB3DOCK		0xa3c1	Thunderbolt 3 Dock
 
 /* Lexar products */
 product LEXAR JUMPSHOT		0x0001	jumpSHOT CompactFlash
@@ -2560,6 +2612,10 @@ product LEXAR 2662WAR		0xa002	2662W-AR
 
 /* Lexmark products */
 product LEXMARK S2450		0x0009	Optra S 2450
+
+/* LG products */
+product LG RTL8153		0x9819	RTL8153
+product LG RTL8153B		0x9820	RTL8153
 
 /* Liebert products */
 product LIEBERT UPS		0xffff	UPS
@@ -2672,6 +2728,9 @@ product LONGCHEER 510FUMASS	0x98ff	IIJmobile 510FU Mass only mode
 
 /* Lucent products */
 product LUCENT EVALKIT		0x1001	USS-720 evaluation kit
+
+/* Luxshare products */
+product LUXSHARE RTL8153	0xd003	RTL8153
 
 /* Macally products */
 product MACALLY MOUSE1		0x0101	mouse
@@ -3041,6 +3100,9 @@ product MICROSOFT XBOX360	0x0292	XBOX 360 WLAN
 product MICROSOFT WLMOBILEMOUSE3500 0x0745  Wireless Mobile Mouse 3500
 product MICROSOFT LIFECAM	0x074a	Microsoft LifeCam
 product MICROSOFT WLARCMOUSE	0x074f	Wireless Arc Mouse (Model 1350)
+product MICROSOFT DOCKETH	0x07ab	Surface Dock Ethernet
+product MICROSOFT DOCKETH2	0x07c6	Surface Dock Ethernet
+product MICROSOFT SURFETH	0x0927	Surface Ethernet
 product MICROSOFT TYPECOVER	0x096f	Surface Go Type Cover
 product MICROSOFT TYPECOVER2	0x09b5	Surface Go Type Cover
 
@@ -3283,6 +3345,9 @@ product NOVATEL MC760		0x6002	MC760
 /* Novatel Wireless(1) products */
 product NOVATEL1 FLEXPACKGPS	0x0100	NovAtel FlexPack GPS
 
+/* NVIDIA products */
+product NVIDIA TEGRAETH		0x09ff	Tegra Ethernet
+
 /* O2 Micro products */
 product O2MICRO OZ776HUB	0x7761	OZ776 Hub
 
@@ -3475,6 +3540,10 @@ product PIENGINEERING XKEYS	0x0233	Xkeys Programmable Keyboard
 /* Pilotech Systems Co., Ltd products */
 product PILOTECH CRW600		0x0001	CRW-600 6-in-1
 
+/* Pioneer DJ products */
+product PIONEERDJ RTL8152B	0x0007	RTL8152B
+product PIONEERDJ RTL8153B	0x0031	RTL8153B
+
 /* Planex Communications products */
 product PLANEX GW_US11H		0x14ea	GW-US11H WLAN
 product PLANEX2 RTL8188CUS	0x1201	RTL8188CUS
@@ -3626,6 +3695,7 @@ product REALTEK RTL8188ETV	0x0179	RTL8188ETV
 product REALTEK RTL8188CTV	0x018a	RTL8188CTV
 product REALTEK RTL8188RU_2	0x317f	RTL8188RU
 product REALTEK RTL8188CU_4	0x5088	RTL8188CU
+product REALTEK RTL8152B	0x8050	RTL8152B
 product REALTEK RTL8150		0x8150	RTL8150
 product REALTEK RTL8151		0x8151	RTL8151 PNA
 product REALTEK RTL8152		0x8152	RTL8152
@@ -3728,6 +3798,7 @@ product SAMSUNG2 ANDROID2	0x6863	Android v2
 product SAMSUNG2 ANDROID	0x6881	Android
 product SAMSUNG2 I330		0x8001	I330
 product SAMSUNG2 AX88179	0xa100	AX88179
+product SAMSUNG2 RTL8153	0xa101	RTL8153
 
 /* SanDisk products */
 product SANDISK SDDR05A		0x0001	ImageMate SDDR-05a
@@ -4307,6 +4378,7 @@ product TORADEX IO		0x0010	Toradex OAK IO
 product TORADEX ORIENT		0x0015	Toradex ORIENT Tilt sensor
 
 /* Toshiba Corp products */
+product TOSHIBA RTL8153B	0x0416	RTL8153B
 product TOSHIBA RT3070		0x0a07	RT3070
 product TOSHIBA HSDPA		0x1302	HSDPA
 
@@ -4317,6 +4389,10 @@ product TPLINK RTL8192EU	0x0107	RTL8192EU
 product TPLINK RTL8192EU_2	0x0108	RTL8192EU
 product TPLINK RTL8192EU_3	0x0109	RTL8192EU
 product TPLINK RTL8188EUS	0x010c	RTL8188EUS
+product TPLINK EU300		0x0601	EU300
+product TPLINK RTL8152B_1	0x0602	RTL8152B
+product TPLINK RTL8152B_2	0x0603	RTL8152B
+product TPLINK RTL8153		0x0604	RTL8153
 
 /* Trek Technology products */
 product TREK THUMBDRIVE		0x1111	ThumbDrive
@@ -4325,6 +4401,7 @@ product TREK THUMBDRIVE_8MB	0x9988	ThumbDrive 8MB
 /* TRENDnet products */
 product TRENDNET RTL8192CU	0x624d	RTL8192CU
 product TRENDNET RTL8188CU	0x648b	RTL8188CU
+product TRENDNET RTL8156	0xe02b	RTL8156
 
 /* Tripp-Lite products */
 product TRIPPLITE U209		0x2008	U209 Serial
@@ -4339,6 +4416,12 @@ product	TRUST MOUSE		0x0a37	Mouse
 
 /* Tsunami products */
 product TSUNAMI SM2000		0x1111	SM-2000
+
+/* Technology Testing Lab products */
+product TTL RTL8153		0x104e	RTL8153
+
+/* Twinhead products */
+product TWINHEAD RTL8153B	0x1400	RTL8153B
 
 /* TwinMOS products */
 product TWINMOS G240		0xa006	G240
@@ -4496,6 +4579,7 @@ product WISTRONNEWEB AR5523_2	0x082a	AR5523
 product WMR RIGBLASTER		0x0003	RIGblaster
 
 /* Xiaomi products */
+product XIAOMI RTL8152B		0x0011	RTL8152B
 product	XIAOMI MT7601U		0x4106	MT7601U
 
 /* XIRING products */
