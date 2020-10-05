@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.203 2020/09/14 19:02:09 jasper Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.204 2020/10/05 01:56:17 asou Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -949,6 +949,11 @@ brelse(struct buf *bp)
 			CLR(bp->b_flags, B_WANTED);
 			wakeup(bp);
 		}
+
+		if (bcstats.dmapages > targetpages)
+			(void) bufcache_recover_dmapages(0,
+			    bcstats.dmapages - targetpages);
+		bufcache_adjust();
 	}
 
 	/* Wake up syncer and cleaner processes waiting for buffers. */
