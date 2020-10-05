@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tar.1,v 1.62 2020/01/16 16:46:46 schwarze Exp $
+.\"	$OpenBSD: tar.1,v 1.63 2020/10/05 05:52:19 jmc Exp $
 .\"
 .\" Copyright (c) 1996 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 16 2020 $
+.Dd $Mdocdate: October 5 2020 $
 .Dt TAR 1
 .Os
 .Sh NAME
@@ -142,12 +142,13 @@ from the directory.
 .It Fl e
 Stop after the first error.
 .It Fl f Ar archive
-Filename where the archive is stored.
-Defaults to
+Read from or write to
+.Ar archive .
+A hyphen
+.Pq -
+can be used to represent standard input or output.
+The default is
 .Pa /dev/rst0 .
-If set to hyphen
-.Pq Sq -
-standard output is used.
 See also the
 .Ev TAPE
 environment variable.
