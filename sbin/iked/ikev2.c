@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.263 2020/10/03 20:23:08 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.264 2020/10/05 19:21:16 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1059,6 +1059,19 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
 		(void)ikev2_init_auth(env, msg);
 		break;
 	case IKEV2_EXCHANGE_IKE_AUTH:
+		if (msg->msg_flags & IKED_MSG_FLAGS_AUTHENTICATION_FAILED) {
+			log_debug("%s: AUTHENTICATION_FAILED, closing SA",
+			    __func__);
+			ikev2_log_cert_info(SPI_SA(sa, __func__),
+			    sa->sa_hdr.sh_initiator ? &sa->sa_rcert
+			    : &sa->sa_icert);
+			ikev2_ike_sa_setreason(sa,
+			    "authentication failed notification from peer");
+			sa_state(env, sa, IKEV2_STATE_CLOSED);
+			msg->msg_sa = NULL;
+			return;
+		}
+
 		(void)ikev2_ike_auth_recv(env, sa, msg);
 		break;
 	case IKEV2_EXCHANGE_CREATE_CHILD_SA:
@@ -2515,6 +2528,15 @@ ikev2_resp_informational(struct iked *env, struct iked_sa *sa,
 	    IKEV2_EXCHANGE_INFORMATIONAL, firstpayload, 1);
 	if (ret != -1)
 		msg->msg_responded = 1;
+	if (msg->msg_flags & IKED_MSG_FLAGS_AUTHENTICATION_FAILED) {
+		log_debug("%s: AUTHENTICATION_FAILED, closing SA",
+		    __func__);
+		ikev2_log_cert_info(SPI_SA(sa, __func__),
+		    sa->sa_hdr.sh_initiator ? &sa->sa_rcert : &sa->sa_icert);
+		ikev2_ike_sa_setreason(sa,
+		    "authentication failed notification from peer");
+		sa_state(env, sa, IKEV2_STATE_CLOSED);
+	}
  done:
 	ibuf_release(buf);
 	return (ret);
@@ -2833,17 +2855,6 @@ ikev2_handle_notifies(struct iked *env, struct iked_message *msg)
 		/* This makes sense for Child SAs only atm */
 		ikev2_disable_rekeying(env, sa);
 		sa->sa_stateflags &= ~IKED_REQ_CHILDSA;
-	}
-
-	if (msg->msg_flags & IKED_MSG_FLAGS_AUTHENTICATION_FAILED) {
-		log_debug("%s: AUTHENTICATION_FAILED, closing SA", __func__);
-		ikev2_log_cert_info(SPI_SA(sa, __func__),
-		    sa->sa_hdr.sh_initiator ? &sa->sa_rcert : &sa->sa_icert);
-		ikev2_ike_sa_setreason(sa,
-		    "authentication failed notification from peer");
-		sa_state(env, sa, IKEV2_STATE_CLOSED);
-		msg->msg_sa = NULL;
-		return (-1);
 	}
 
 	if (msg->msg_flags & IKED_MSG_FLAGS_INVALID_KE) {
