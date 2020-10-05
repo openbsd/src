@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.796 2020/09/22 15:45:20 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.797 2020/10/05 09:53:01 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 22 2020 $
+.Dd $Mdocdate: October 5 2020 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -5897,8 +5897,8 @@ Set a styled underscore.
 The single parameter is one of: 0 for no underscore, 1 for normal
 underscore, 2 for double underscore, 3 for curly underscore, 4 for dotted
 underscore and 5 for dashed underscore.
-.It Em \&Setulc
-Set the underscore colour.
+.It Em \&Setulc , \&ol
+Set the underscore colour or reset to the default.
 The argument is (red * 65536) + (green * 256) + blue where each is between 0
 and 255.
 .It Em \&Ss , Se
