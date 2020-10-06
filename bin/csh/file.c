@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.39 2019/11/29 05:28:32 nayden Exp $	*/
+/*	$OpenBSD: file.c,v 1.40 2020/10/06 01:40:43 deraadt Exp $	*/
 /*	$NetBSD: file.c,v 1.11 1996/11/08 19:34:37 christos Exp $	*/
 
 /*-
@@ -71,6 +71,7 @@ typedef enum {
 struct cmdline {
 	int	 fdin;
 	int	 fdout;
+	int	 istty;
 	int	 flags;
 #define	CL_ALTWERASE	0x1
 #define	CL_PROMPT	0x2
@@ -229,7 +230,8 @@ cl_abort(struct cmdline *cl, int c)
 
 	/* Abort while/foreach loop prematurely. */
 	if (whyles) {
-		setup_tty(0);
+		if (cl->istty)
+			setup_tty(0);
 		kill(getpid(), SIGINT);
 	}
 
@@ -370,7 +372,8 @@ static int
 cl_status(struct cmdline *cl, int c)
 {
 	cl->cursor = 0;
-	ioctl(cl->fdin, TIOCSTAT);
+	if (cl->istty)
+		ioctl(cl->fdin, TIOCSTAT);
 
 	return 0;
 }
@@ -769,16 +772,19 @@ tenex(Char *inputline, int inputline_size)
 	size_t			 i;
 	int			 c, ret;
 
-	tio = setup_tty(1);
-
 	memset(&cl, 0, sizeof(cl));
 	cl.fdin = SHIN;
 	cl.fdout = SHOUT;
+	cl.istty = isatty(SHIN);
+
+	if (cl.istty)
+		tio = setup_tty(1);
+
 	cl.buf = buf;
 	cl.size = sizeof(buf);
 	if (inputline_size < cl.size)
 		cl.size = inputline_size;
-	if (tio->c_lflag & ALTWERASE)
+	if (cl.istty && tio->c_lflag & ALTWERASE)
 		cl.flags |= CL_ALTWERASE;
 	if (needprompt) {
 		needprompt = 0;
@@ -791,7 +797,7 @@ tenex(Char *inputline, int inputline_size)
 			break;
 
 		for (i = 0; keys[i].idx >= 0; i++)
-			if (CCEQ(tio->c_cc[keys[i].idx], c))
+			if (cl.istty && CCEQ(tio->c_cc[keys[i].idx], c))
 				break;
 		ret = keys[i].fn(&cl, c);
 		cl_flush(&cl);
@@ -799,7 +805,8 @@ tenex(Char *inputline, int inputline_size)
 			break;
 	}
 
-	setup_tty(0);
+	if (cl.istty)
+		setup_tty(0);
 
 	for (i = 0; i < cl.len; i++)
 		inputline[i] = cl.buf[i];
