@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.263 2020/10/06 07:36:05 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.264 2020/10/06 07:36:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -259,7 +259,7 @@ format_copy_state(struct format_expand_state *to,
 	to->ft = from->ft;
 	to->loop = from->loop;
 	to->time = from->time;
-	to->flags = from->flags|flag;
+	to->flags = from->flags|flags;
 }
 
 /* Format job update callback. */
