@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.73 2020/10/03 20:23:08 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.74 2020/10/06 19:06:06 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -584,7 +584,7 @@ ikev2_msg_decrypt(struct iked *env, struct iked_sa *sa,
 	 * Validate packet checksum
 	 */
 	if (!sa->sa_integr->hash_isaead) {
-		if ((tmp = ibuf_new(NULL, ibuf_length(integr))) == NULL)
+		if ((tmp = ibuf_new(NULL, hash_keylength(sa->sa_integr))) == NULL)
 			goto done;
 
 		hash_setkey(sa->sa_integr, integr->buf, ibuf_length(integr));
@@ -932,8 +932,11 @@ ikev2_msg_auth(struct iked *env, struct iked_sa *sa, int response)
 	    ibuf_size(prfkey))) == NULL)
 		goto fail;
 
-	if ((ptr = ibuf_advance(authmsg,
-	    hash_length(sa->sa_prf))) == NULL)
+	/* require non-truncating hash */
+	if (hash_keylength(sa->sa_prf) != hash_length(sa->sa_prf))
+		goto fail;
+
+	if ((ptr = ibuf_advance(authmsg, hash_keylength(sa->sa_prf))) == NULL)
 		goto fail;
 
 	hash_init(sa->sa_prf);

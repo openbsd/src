@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.264 2020/10/05 19:21:16 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.265 2020/10/06 19:06:06 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -5312,7 +5312,7 @@ ikev2_sa_keys(struct iked *env, struct iked_sa *sa, struct ibuf *key)
 		goto done;
 	}
 
-	if ((skeyseed = ibuf_new(NULL, hash_length(prf))) == NULL) {
+	if ((skeyseed = ibuf_new(NULL, hash_keylength(prf))) == NULL) {
 		log_info("%s: failed to get SKEYSEED buffer",
 		    SPI_SA(sa, __func__));
 		goto done;
@@ -5474,7 +5474,7 @@ ikev2_prfplus(struct iked_hash *prf, struct ibuf *key, struct ibuf *seed,
 			ibuf_release(t1);
 		} else
 			t2 = ibuf_new(NULL, 0);
-		t1 = ibuf_new(NULL, hash_length(prf));
+		t1 = ibuf_new(NULL, hash_keylength(prf));
 
 		ibuf_add(t2, seed->buf, ibuf_length(seed));
 		pad = i + 1;
