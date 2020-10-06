@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.263 2020/09/06 06:41:03 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.264 2020/10/06 06:31:14 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -726,26 +726,6 @@ unmap(struct dir_info *d, void *p, size_t sz, size_t clear, int junk)
 	}
 	if (d->free_regions_size > d->malloc_cache)
 		wrterror(d, "malloc cache overflow");
-}
-
-static void
-zapcacheregion(struct dir_info *d, void *p, size_t len)
-{
-	u_int i;
-	struct region_info *r;
-	size_t rsz;
-
-	for (i = 0; i < d->malloc_cache; i++) {
-		r = &d->free_regions[i];
-		if (r->p >= p && r->p <= (void *)((char *)p + len)) {
-			rsz = r->size << MALLOC_PAGESHIFT;
-			if (munmap(r->p, rsz))
-				wrterror(d, "munmap %p", r->p);
-			r->p = NULL;
-			d->free_regions_size -= r->size;
-			STATS_SUB(d->malloc_used, rsz);
-		}
-	}
 }
 
 static void *
@@ -1587,14 +1567,12 @@ orealloc(struct dir_info **argpool, void *p, size_t newsz, void *f)
 				size_t needed = rnewsz - roldsz;
 
 				STATS_INC(pool->cheap_realloc_tries);
-				//zapcacheregion(pool, hint, needed);
 				q = MQUERY(hint, needed, pool->mmap_flag);
 				if (q == hint)
 					q = MMAPA(hint, needed, pool->mmap_flag);
 				else
 					q = MAP_FAILED;
 				if (q == hint) {
-gotit:
 					STATS_ADD(pool->malloc_used, needed);
 					if (pool->malloc_junk == 2)
 						memset(q, SOME_JUNK, needed);
