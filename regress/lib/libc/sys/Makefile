@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2020/02/02 20:18:17 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.5 2020/10/06 09:20:29 mpi Exp $
 
 # Copyright (c) 2019 Moritz Buhl <openbsd@moritzbuhl.de>
 # Copyright (c) 2019 Alexander Bluhm <bluhm@openbsd.org>
@@ -48,6 +48,8 @@ PROGS +=	t_unlink
 . for p in ${PROGS}
 SRCS_$p =		$p.c atf-c.c
 . endfor
+
+CFLAGS += -std=gnu99
 
 LDADD_t_getpid =	-lpthread
 
