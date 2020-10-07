@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.142 2020/10/07 15:45:00 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.143 2020/10/07 16:17:25 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -521,6 +521,7 @@ void
 setitimer(int which, const struct itimerval *itv, struct itimerval *olditv)
 {
 	struct itimerspec its, oldits;
+	struct timespec now;
 	struct itimerspec *itimer;
 	struct process *pr;
 	int timo;
@@ -537,17 +538,17 @@ setitimer(int which, const struct itimerval *itv, struct itimerval *olditv)
 
 	if (which != ITIMER_REAL)
 		mtx_enter(&itimer_mtx);
+	else
+		getnanouptime(&now);
 
 	if (olditv != NULL)
 		oldits = *itimer;
 	if (itv != NULL) {
 		if (which == ITIMER_REAL) {
-			struct timespec cts;
-			getnanouptime(&cts);
 			if (timespecisset(&its.it_value)) {
 				timo = tstohz(&its.it_value);
 				timeout_add(&pr->ps_realit_to, timo);
-				timespecadd(&its.it_value, &cts, &its.it_value);
+				timespecadd(&its.it_value, &now, &its.it_value);
 			} else
 				timeout_del(&pr->ps_realit_to);
 		}
@@ -559,8 +560,6 @@ setitimer(int which, const struct itimerval *itv, struct itimerval *olditv)
 
 	if (olditv != NULL) {
 		if (which == ITIMER_REAL && timespecisset(&oldits.it_value)) {
-			struct timespec now;
-			getnanouptime(&now);
 			if (timespeccmp(&oldits.it_value, &now, <))
 				timespecclear(&oldits.it_value);
 			else {
