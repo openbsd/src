@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.143 2020/10/07 16:17:25 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.144 2020/10/07 17:53:44 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -583,14 +583,14 @@ sys_getitimer(struct proc *p, void *v, register_t *retval)
 	int which;
 
 	which = SCARG(uap, which);
-
 	if (which < ITIMER_REAL || which > ITIMER_PROF)
-		return (EINVAL);
+		return EINVAL;
+
 	memset(&aitv, 0, sizeof(aitv));
 
 	setitimer(which, NULL, &aitv);
 
-	return (copyout(&aitv, SCARG(uap, itv), sizeof (struct itimerval)));
+	return copyout(&aitv, SCARG(uap, itv), sizeof(aitv));
 }
 
 int
@@ -601,42 +601,36 @@ sys_setitimer(struct proc *p, void *v, register_t *retval)
 		syscallarg(const struct itimerval *) itv;
 		syscallarg(struct itimerval *) oitv;
 	} */ *uap = v;
-	struct itimerval aitv;
-	struct itimerval olditv;
-	const struct itimerval *itvp;
-	struct itimerval *oitv;
+	struct itimerval aitv, olditv;
 	struct itimerval *newitvp, *olditvp;
-	int error;
-	int which;
+	int error, which;
 
 	which = SCARG(uap, which);
-	oitv = SCARG(uap, oitv);
-
 	if (which < ITIMER_REAL || which > ITIMER_PROF)
-		return (EINVAL);
+		return EINVAL;
+
 	newitvp = olditvp = NULL;
-	itvp = SCARG(uap, itv);
-	if (itvp) {
-		error = copyin(itvp, &aitv, sizeof(struct itimerval));
+	if (SCARG(uap, itv) != NULL) {
+		error = copyin(SCARG(uap, itv), &aitv, sizeof(aitv));
 		if (error)
-			return (error);
+			return error;
 		if (itimerfix(&aitv.it_value) || itimerfix(&aitv.it_interval))
-			return (EINVAL);
+			return EINVAL;
 		newitvp = &aitv;
 	}
-	if (oitv != NULL) {
+	if (SCARG(uap, oitv) != NULL) {
 		memset(&olditv, 0, sizeof(olditv));
 		olditvp = &olditv;
 	}
 	if (newitvp == NULL && olditvp == NULL)
-		return (0);
+		return 0;
 
 	setitimer(which, newitvp, olditvp);
 
 	if (SCARG(uap, oitv) != NULL)
 		return copyout(&olditv, SCARG(uap, oitv), sizeof(olditv));
 
-	return (0);
+	return 0;
 }
 
 /*
