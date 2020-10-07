@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.20 2020/09/25 19:50:45 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.21 2020/10/07 13:31:00 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -224,8 +224,23 @@ tls13_failing_tests = TestGroup("failing TLSv1.3 tests", [
     # With X25519, we accept weak peer public keys and fail when we actually
     # compute the keyshare.  Other tests seem to indicate that we could be
     # stricter about what keyshares we accept.
-    Test("test-tls13-crfg-curves.py"),
-    Test("test-tls13-ecdhe-curves.py"),
+    Test("test-tls13-crfg-curves.py", [
+        '-e', 'all zero x448 key share',
+        '-e', 'empty x448 key share',
+        '-e', 'sanity x448 with compression ansiX962_compressed_char2',
+        '-e', 'sanity x448 with compression ansiX962_compressed_prime',
+        '-e', 'sanity x448 with compression uncompressed',
+        '-e', 'too big x448 key share',
+        '-e', 'too small x448 key share',
+        '-e', 'x448 key share of "1"',
+    ]),
+    Test("test-tls13-ecdhe-curves.py", [
+        '-e', 'sanity - x448',
+        '-e', 'x448 - key share from other curve',
+        '-e', 'x448 - point at infinity',
+        '-e', 'x448 - right 0-padded key_share',
+        '-e', 'x448 - right-truncated key_share',
+    ]),
 
     # https://github.com/openssl/openssl/issues/8369
     Test("test-tls13-obsolete-curves.py"),
