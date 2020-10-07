@@ -1,5 +1,5 @@
-.\"	$OpenBSD: zic.8,v 1.3 2020/04/23 21:28:10 jmc Exp $
-.Dd $Mdocdate: April 23 2020 $
+.\"	$OpenBSD: zic.8,v 1.4 2020/10/07 22:36:14 millert Exp $
+.Dd $Mdocdate: October 7 2020 $
 .Dt ZIC 8
 .Os
 .Sh NAME
@@ -13,7 +13,6 @@
 .Op Fl L Ar leapsecondfilename
 .Op Fl l Ar timezone
 .Op Fl p Ar timezone
-.Op Fl y Ar command
 .Op Ar filename ...
 .Ek
 .Sh DESCRIPTION
@@ -57,12 +56,6 @@ Also complain if a time of 24:00
 (which cannot be handled by pre-1998 versions of
 .Nm zic )
 appears in the input.
-.It Fl y Ar command
-Use the given
-.Ar command
-rather than
-.Em yearistype
-when checking year types (see below).
 .El
 .Pp
 Input lines are made up of fields.
@@ -120,26 +113,8 @@ may be used to repeat the value of the
 field.
 .It Cm TYPE
 Gives the type of year in which the rule applies.
-If
-.Em TYPE
-is
-.Dq Fl
-then the rule applies in all years between
-.Em FROM
-and
-.Em TO
-inclusive.
-If
-.Em TYPE
-is something else, then
-.Nm
-executes the command
-.Pp
-.Dl yearistype Ar year type
-.Pp
-to check the type of a year:
-an exit status of zero is taken to mean that the year is of the given type;
-an exit status of one is taken to mean that the year is not of the given type.
+This field is obsolete and should always be
+.Dq Fl .
 .It Cm IN
 Names the month in which the rule takes effect.
 Month names may be abbreviated.

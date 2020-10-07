@@ -1,4 +1,4 @@
-/*	$OpenBSD: zic.c,v 1.23 2019/01/12 15:33:17 schwarze Exp $	*/
+/*	$OpenBSD: zic.c,v 1.24 2020/10/07 22:36:14 millert Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -51,7 +51,6 @@ struct rule {
 
 	int		r_loyear;	/* for example, 1986 */
 	int		r_hiyear;	/* for example, 1986 */
-	const char 	*r_yrtype;
 	int		r_lowasnum;
 	int		r_hiwasnum;
 
@@ -146,7 +145,6 @@ static void	setboundaries(void);
 static zic_t	tadd(zic_t t1, long t2);
 static void	usage(void);
 static void	writezone(const char *name, const char *string);
-static int	yearistype(int year, const char *type);
 
 extern char 	*__progname;
 
@@ -500,7 +498,6 @@ static const char 	*psxrules;
 static const char 	*lcltime;
 static const char 	*directory;
 static const char 	*leapsec;
-static const char 	*yitcommand;
 
 int
 main(int argc, char **argv)
@@ -534,10 +531,7 @@ main(int argc, char **argv)
 					errx(1, "More than one -p option specified");
 				break;
 			case 'y':
-				if (yitcommand == NULL)
-					yitcommand = optarg;
-				else
-					errx(1, "More than one -y option specified");
+				warning("ignoring obsolescent option -y");
 				break;
 			case 'L':
 				if (leapsec == NULL)
@@ -553,8 +547,6 @@ main(int argc, char **argv)
 		usage();	/* usage message by request */
 	if (directory == NULL)
 		directory = TZDIR;
-	if (yitcommand == NULL)
-		yitcommand = "yearistype";
 
 	setboundaries();
 
@@ -1245,14 +1237,12 @@ rulesub(struct rule * const rp, const char * const loyearp,
 		error("starting year greater than ending year");
 		return;
 	}
-	if (*typep == '\0')
-		rp->r_yrtype = NULL;
-	else {
+	if (*typep != '\0') {
 		if (rp->r_loyear == rp->r_hiyear) {
 			error("typed single year");
 			return;
 		}
-		rp->r_yrtype = ecpyalloc(typep);
+		warning("year type is obsolete; use \"-\" instead");
 	}
 	/*
 	** Day work.
@@ -1795,8 +1785,6 @@ stringzone(char *result, size_t size, const struct zone *zpfirst, int zonecount)
 		rp = &zp->z_rules[i];
 		if (rp->r_hiwasnum || rp->r_hiyear != INT_MAX)
 			continue;
-		if (rp->r_yrtype != NULL)
-			continue;
 		if (rp->r_stdoff == 0) {
 			if (stdrp == NULL)
 				stdrp = rp;
@@ -1991,8 +1979,7 @@ outzone(const struct zone *zpfirst, int zonecount)
 				eats(zp->z_filename, zp->z_linenum,
 					rp->r_filename, rp->r_linenum);
 				rp->r_todo = year >= rp->r_loyear &&
-				    year <= rp->r_hiyear &&
-				    yearistype(year, rp->r_yrtype);
+				    year <= rp->r_hiyear;
 				if (rp->r_todo)
 					rp->r_temp = rpytime(rp, year);
 			}
@@ -2243,30 +2230,6 @@ adjleap(void)
 		trans[i] = tadd(trans[i], last);
 		last = corr[i] += last;
 	}
-}
-
-static int
-yearistype(int year, const char *type)
-{
-	static char 	*buf;
-	int		result;
-	size_t		len;
-
-	if (type == NULL || *type == '\0')
-		return TRUE;
-	len = 132 + strlen(yitcommand) + strlen(type);
-	buf = erealloc(buf, len);
-	snprintf(buf, len, "%s %d %s", yitcommand, year, type);
-	result = system(buf);
-	if (WIFEXITED(result))
-		switch (WEXITSTATUS(result)) {
-		case 0:
-			return TRUE;
-		case 1:
-			return FALSE;
-		}
-	error("Wild result from command execution");
-	errx(1, "command was '%s', result was %d", buf, result);
 }
 
 /* this function is not strncasecmp */
