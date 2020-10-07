@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.428 2020/10/07 11:36:05 denis Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.429 2020/10/07 14:38:54 denis Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3219,7 +3219,7 @@ print_tunnel(const struct if_laddrreq *req)
 		    0, 0, niflag) != 0)
 			strlcpy(pdstaddr, "<error>", sizeof(pdstaddr));
 
-		printf(" -> %s", pdstaddr);
+		printf(" --> %s", pdstaddr);
 
 		switch (req->dstaddr.ss_family) {
 		case AF_INET:
@@ -3635,7 +3635,7 @@ in6_alias(struct in6_ifreq *creq)
 		if (getnameinfo((struct sockaddr *)sin6, sin6->sin6_len,
 		    hbuf, sizeof(hbuf), NULL, 0, niflag) != 0)
 			strlcpy(hbuf, "", sizeof hbuf);
-		printf(" -> %s", hbuf);
+		printf(" --> %s", hbuf);
 	}
 
 	(void) memset(&ifr6, 0, sizeof(ifr6));
