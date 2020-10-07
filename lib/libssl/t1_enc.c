@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.124 2020/10/03 17:35:16 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.125 2020/10/07 08:43:34 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -423,11 +423,6 @@ tls1_change_cipher_state_cipher(SSL *s, char is_read,
 	stream_mac = S3I(s)->hs.new_cipher->algorithm2 & TLS1_STREAM_MAC;
 
 	if (is_read) {
-		if (stream_mac)
-			s->internal->mac_flags |= SSL_MAC_FLAG_READ_MAC_STREAM;
-		else
-			s->internal->mac_flags &= ~SSL_MAC_FLAG_READ_MAC_STREAM;
-
 		ssl_clear_cipher_read_state(s);
 
 		if ((cipher_ctx = EVP_CIPHER_CTX_new()) == NULL)
@@ -445,11 +440,6 @@ tls1_change_cipher_state_cipher(SSL *s, char is_read,
 		    S3I(s)->read_mac_secret, mac_secret_size))
 			goto err;
 	} else {
-		if (stream_mac)
-			s->internal->mac_flags |= SSL_MAC_FLAG_WRITE_MAC_STREAM;
-		else
-			s->internal->mac_flags &= ~SSL_MAC_FLAG_WRITE_MAC_STREAM;
-
 		/*
 		 * DTLS fragments retain a pointer to the compression, cipher
 		 * and hash contexts, so that it can restore state in order
@@ -581,9 +571,6 @@ tls1_change_cipher_state(SSL *s, int which)
 	if (is_read) {
 		memcpy(S3I(s)->read_mac_secret, mac_secret, mac_secret_size);
 		S3I(s)->read_mac_secret_size = mac_secret_size;
-	} else {
-		memcpy(S3I(s)->write_mac_secret, mac_secret, mac_secret_size);
-		S3I(s)->write_mac_secret_size = mac_secret_size;
 	}
 
 	if (aead != NULL) {

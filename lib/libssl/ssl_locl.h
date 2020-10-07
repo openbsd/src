@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.298 2020/10/03 18:01:55 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.299 2020/10/07 08:43:34 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -316,10 +316,6 @@ __BEGIN_HIDDEN_DECLS
 /* Check if an SSL structure is using DTLS. */
 #define SSL_IS_DTLS(s) \
 	(s->method->internal->version == DTLS1_VERSION)
-
-/* See if we need explicit IV. */
-#define SSL_USE_EXPLICIT_IV(s) \
-	(s->method->internal->ssl3_enc->enc_flags & SSL_ENC_FLAG_EXPLICIT_IV)
 
 /* See if we use signature algorithms extension. */
 #define SSL_USE_SIGALGS(s) \
@@ -751,10 +747,6 @@ typedef struct ssl_internal_st {
 
 	STACK_OF(SSL_CIPHER) *cipher_list_tls13;
 
-	/* These are the ones being used, the ones in SSL_SESSION are
-	 * the ones to be 'copied' into these ones */
-	int mac_flags;
-
 	SSL_AEAD_CTX *aead_read_ctx;	/* AEAD context. If non-NULL, then
 					   enc_read_ctx and read_hash are
 					   ignored. */
@@ -842,8 +834,6 @@ typedef struct ssl3_state_internal_st {
 	int read_mac_secret_size;
 	unsigned char read_mac_secret[EVP_MAX_MD_SIZE];
 	unsigned char write_sequence[SSL3_SEQUENCE_SIZE];
-	int write_mac_secret_size;
-	unsigned char write_mac_secret[EVP_MAX_MD_SIZE];
 
 	SSL3_BUFFER_INTERNAL rbuf;	/* read IO goes into here */
 	SSL3_BUFFER_INTERNAL wbuf;	/* write IO goes into here */
@@ -1080,9 +1070,6 @@ typedef struct ssl3_enc_method {
 /*
  * Flag values for enc_flags.
  */
-
-/* Uses explicit IV. */
-#define SSL_ENC_FLAG_EXPLICIT_IV        (1 << 0)
 
 /* Uses signature algorithms extension. */
 #define SSL_ENC_FLAG_SIGALGS            (1 << 1)
