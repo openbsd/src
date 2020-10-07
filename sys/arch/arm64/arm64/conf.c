@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.15 2020/07/06 04:32:25 dlg Exp $	*/
+/*	$OpenBSD: conf.c,v 1.16 2020/10/07 13:37:32 jan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -71,13 +71,6 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 18 */
 };
 int	nblkdev = nitems(bdevsw);
-
-/* open, close, read, ioctl */
-#define cdev_joy_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, seltrue, \
-	(dev_type_mmap((*))) enodev, 0, 0, seltrue_kqfilter }
 
 /* open, close, ioctl, select -- XXX should be a generic device */
 #define cdev_ocis_init(c,n) { \
