@@ -1,4 +1,4 @@
-/*	$OpenBSD: interrupt.c,v 1.16 2016/01/15 18:53:26 deraadt Exp $	*/
+/*	$OpenBSD: interrupt.c,v 1.17 2020/10/07 12:13:23 mpi Exp $	*/
 /*	$NetBSD: interrupt.c,v 1.18 2006/01/25 00:02:57 uwe Exp $	*/
 
 /*-
@@ -31,6 +31,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>	/* uvmexp.intrs */
