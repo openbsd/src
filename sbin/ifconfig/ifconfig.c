@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.427 2020/10/07 11:34:11 denis Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.428 2020/10/07 11:36:05 denis Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3552,7 +3552,7 @@ in_status(int force)
 		}
 		(void) strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 		sin = (struct sockaddr_in *)&ifr.ifr_dstaddr;
-		printf(" -> %s", inet_ntoa(sin->sin_addr));
+		printf(" --> %s", inet_ntoa(sin->sin_addr));
 	}
 	printf(" netmask 0x%x", ntohl(netmask.sin_addr.s_addr));
 	if (flags & IFF_BROADCAST) {
