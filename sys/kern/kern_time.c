@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.141 2020/10/02 15:45:22 deraadt Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.142 2020/10/07 15:45:00 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -499,7 +499,7 @@ out:
 struct mutex itimer_mtx = MUTEX_INITIALIZER(IPL_CLOCK);
 
 /*
- * Get value of an interval timer.  The process virtual and
+ * Get or set value of an interval timer.  The process virtual and
  * profiling virtual time timers are kept internally in the
  * way they are specified externally: in time until they expire.
  *
@@ -517,6 +517,62 @@ struct mutex itimer_mtx = MUTEX_INITIALIZER(IPL_CLOCK);
  * real time timers .it_interval.  Rather, we compute the next time in
  * absolute time the timer should go off.
  */
+void
+setitimer(int which, const struct itimerval *itv, struct itimerval *olditv)
+{
+	struct itimerspec its, oldits;
+	struct itimerspec *itimer;
+	struct process *pr;
+	int timo;
+
+	KASSERT(which >= ITIMER_REAL && which <= ITIMER_PROF);
+
+	pr = curproc->p_p;
+	itimer = &pr->ps_timer[which];
+
+	if (itv != NULL) {
+		TIMEVAL_TO_TIMESPEC(&itv->it_value, &its.it_value);
+		TIMEVAL_TO_TIMESPEC(&itv->it_interval, &its.it_interval);
+	}
+
+	if (which != ITIMER_REAL)
+		mtx_enter(&itimer_mtx);
+
+	if (olditv != NULL)
+		oldits = *itimer;
+	if (itv != NULL) {
+		if (which == ITIMER_REAL) {
+			struct timespec cts;
+			getnanouptime(&cts);
+			if (timespecisset(&its.it_value)) {
+				timo = tstohz(&its.it_value);
+				timeout_add(&pr->ps_realit_to, timo);
+				timespecadd(&its.it_value, &cts, &its.it_value);
+			} else
+				timeout_del(&pr->ps_realit_to);
+		}
+		*itimer = its;
+	}
+
+	if (which != ITIMER_REAL)
+		mtx_leave(&itimer_mtx);
+
+	if (olditv != NULL) {
+		if (which == ITIMER_REAL && timespecisset(&oldits.it_value)) {
+			struct timespec now;
+			getnanouptime(&now);
+			if (timespeccmp(&oldits.it_value, &now, <))
+				timespecclear(&oldits.it_value);
+			else {
+				timespecsub(&oldits.it_value, &now,
+				    &oldits.it_value);
+			}
+		}
+		TIMESPEC_TO_TIMEVAL(&olditv->it_value, &oldits.it_value);
+		TIMESPEC_TO_TIMEVAL(&olditv->it_interval, &oldits.it_interval);
+	}
+}
+
 int
 sys_getitimer(struct proc *p, void *v, register_t *retval)
 {
@@ -524,44 +580,16 @@ sys_getitimer(struct proc *p, void *v, register_t *retval)
 		syscallarg(int) which;
 		syscallarg(struct itimerval *) itv;
 	} */ *uap = v;
-	struct itimerspec its;
 	struct itimerval aitv;
-	struct itimerspec *itimer;
 	int which;
 
 	which = SCARG(uap, which);
 
 	if (which < ITIMER_REAL || which > ITIMER_PROF)
 		return (EINVAL);
-	itimer = &p->p_p->ps_timer[which];
 	memset(&aitv, 0, sizeof(aitv));
 
-	if (which != ITIMER_REAL)
-		mtx_enter(&itimer_mtx);
-	its = *itimer;
-	if (which != ITIMER_REAL)
-		mtx_leave(&itimer_mtx);
-
-	if (which == ITIMER_REAL) {
-		struct timespec now;
-
-		getnanouptime(&now);
-		/*
-		 * Convert from absolute to relative time in .it_value
-		 * part of real time timer.  If time for real time timer
-		 * has passed return 0, else return difference between
-		 * current time and time for the timer to go off.
-		 */
-		if (timespecisset(&its.it_value)) {
-			if (timespeccmp(&its.it_value, &now, <))
-				timespecclear(&its.it_value);
-			else
-				timespecsub(&its.it_value, &now,
-				    &its.it_value);
-		}
-	}
-	TIMESPEC_TO_TIMEVAL(&aitv.it_value, &its.it_value);
-	TIMESPEC_TO_TIMEVAL(&aitv.it_interval, &its.it_interval);
+	setitimer(which, NULL, &aitv);
 
 	return (copyout(&aitv, SCARG(uap, itv), sizeof (struct itimerval)));
 }
@@ -574,14 +602,12 @@ sys_setitimer(struct proc *p, void *v, register_t *retval)
 		syscallarg(const struct itimerval *) itv;
 		syscallarg(struct itimerval *) oitv;
 	} */ *uap = v;
-	struct sys_getitimer_args getargs;
-	struct itimerspec aits;
 	struct itimerval aitv;
+	struct itimerval olditv;
 	const struct itimerval *itvp;
 	struct itimerval *oitv;
-	struct process *pr = p->p_p;
+	struct itimerval *newitvp, *olditvp;
 	int error;
-	int timo;
 	int which;
 
 	which = SCARG(uap, which);
@@ -589,6 +615,7 @@ sys_setitimer(struct proc *p, void *v, register_t *retval)
 
 	if (which < ITIMER_REAL || which > ITIMER_PROF)
 		return (EINVAL);
+	newitvp = olditvp = NULL;
 	itvp = SCARG(uap, itv);
 	if (itvp) {
 		error = copyin(itvp, &aitv, sizeof(struct itimerval));
@@ -596,36 +623,19 @@ sys_setitimer(struct proc *p, void *v, register_t *retval)
 			return (error);
 		if (itimerfix(&aitv.it_value) || itimerfix(&aitv.it_interval))
 			return (EINVAL);
-		TIMEVAL_TO_TIMESPEC(&aitv.it_value, &aits.it_value);
-		TIMEVAL_TO_TIMESPEC(&aitv.it_interval, &aits.it_interval);
+		newitvp = &aitv;
 	}
 	if (oitv != NULL) {
-		SCARG(&getargs, which) = which;
-		SCARG(&getargs, itv) = oitv;
-		if ((error = sys_getitimer(p, &getargs, retval)))
-			return (error);
+		memset(&olditv, 0, sizeof(olditv));
+		olditvp = &olditv;
 	}
-	if (itvp == 0)
+	if (newitvp == NULL && olditvp == NULL)
 		return (0);
 
-	if (which != ITIMER_REAL)
-		mtx_enter(&itimer_mtx);
+	setitimer(which, newitvp, olditvp);
 
-	if (which == ITIMER_REAL) {
-		struct timespec cts;
-
-		getnanouptime(&cts);
-		if (timespecisset(&aits.it_value)) {
-			timo = tstohz(&aits.it_value);
-			timeout_add(&pr->ps_realit_to, timo);
-			timespecadd(&aits.it_value, &cts, &aits.it_value);
-		} else
-			timeout_del(&pr->ps_realit_to);
-	}
-	pr->ps_timer[which] = aits;
-
-	if (which != ITIMER_REAL)
-		mtx_leave(&itimer_mtx);
+	if (SCARG(uap, oitv) != NULL)
+		return copyout(&olditv, SCARG(uap, oitv), sizeof(olditv));
 
 	return (0);
 }
