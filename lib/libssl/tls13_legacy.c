@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_legacy.c,v 1.14 2020/10/07 07:46:18 jsing Exp $ */
+/*	$OpenBSD: tls13_legacy.c,v 1.15 2020/10/07 10:14:45 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -321,8 +321,7 @@ tls13_use_legacy_stack(struct tls13_ctx *ctx)
 			goto err;
 		if (!CBB_add_u16_length_prefixed(&cbb, &fragment))
 			goto err;
-		if (!CBB_add_bytes(&fragment, CBS_data(&cbs),
-		    CBS_len(&cbs)))
+		if (!CBB_add_bytes(&fragment, CBS_data(&cbs), CBS_len(&cbs)))
 			goto err;
 		if (!CBB_finish(&cbb, NULL, NULL))
 			goto err;
