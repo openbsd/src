@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.53 2020/07/06 00:55:05 millert Exp $	*/
+/*	$OpenBSD: ls.c,v 1.54 2020/10/07 21:03:09 millert Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -355,7 +355,13 @@ traverse(int argc, char *argv[], int options)
 	    fts_open(argv, options, f_nosort ? NULL : mastercmp)) == NULL)
 		err(1, NULL);
 
-	display(NULL, fts_children(ftsp, 0));
+	/*
+	 * We ignore errors from fts_children here since they will be
+	 * replicated and signalled on the next call to fts_read() below.
+	 */
+	chp = fts_children(ftsp, 0);
+	if (chp != NULL)
+		display(NULL, chp);
 	if (f_listdir)
 		return;
 
@@ -437,16 +443,6 @@ display(FTSENT *p, FTSENT *list)
 	char nuser[12], ngroup[12];
 	char buf[21];	/* 64 bits == 20 digits */
 	char *flags = NULL;
-
-	/*
-	 * If list is NULL there are two possibilities: that the parent
-	 * directory p has no children, or that fts_children() returned an
-	 * error.  We ignore the error case since it will be replicated
-	 * on the next call to fts_read() on the post-order visit to the
-	 * directory p, and will be signalled in traverse().
-	 */
-	if (list == NULL)
-		return;
 
 	needstats = f_inode || f_longform || f_size;
 	flen = 0;
@@ -542,7 +538,13 @@ display(FTSENT *p, FTSENT *list)
 		++entries;
 	}
 
-	if (!entries)
+	/*
+	 * If there are no entries to display, we normally stop right
+	 * here.  However, we must continue if we have to display the
+	 * total block count.  In this case, we display the total only
+	 * on the second (p != NULL) pass.
+	 */
+	if (!entries && (!(f_longform || f_size) || p == NULL))
 		return;
 
 	d.list = list;
