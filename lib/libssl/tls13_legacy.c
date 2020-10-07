@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_legacy.c,v 1.13 2020/09/13 15:04:35 jsing Exp $ */
+/*	$OpenBSD: tls13_legacy.c,v 1.14 2020/10/07 07:46:18 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -297,22 +297,35 @@ static int
 tls13_use_legacy_stack(struct tls13_ctx *ctx)
 {
 	SSL *s = ctx->ssl;
+	CBB cbb, fragment;
 	CBS cbs;
 
+	memset(&cbb, 0, sizeof(cbb));
+
 	if (!ssl3_setup_init_buffer(s))
-		return 0;
+		goto err;
 	if (!ssl3_setup_buffers(s))
-		return 0;
+		goto err;
 	if (!ssl_init_wbio_buffer(s, 1))
-		return 0;
+		goto err;
 
 	/* Stash any unprocessed data from the last record. */
 	tls13_record_layer_rbuf(ctx->rl, &cbs);
 	if (CBS_len(&cbs) > 0) {
-		if (!CBS_write_bytes(&cbs,
-		    S3I(s)->rbuf.buf + SSL3_RT_HEADER_LENGTH,
-		    S3I(s)->rbuf.len - SSL3_RT_HEADER_LENGTH, NULL))
-			return 0;
+		if (!CBB_init_fixed(&cbb, S3I(s)->rbuf.buf,
+		    S3I(s)->rbuf.len))
+			goto err;
+		if (!CBB_add_u8(&cbb, SSL3_RT_HANDSHAKE))
+			goto err;
+		if (!CBB_add_u16(&cbb, TLS1_2_VERSION))
+			goto err;
+		if (!CBB_add_u16_length_prefixed(&cbb, &fragment))
+			goto err;
+		if (!CBB_add_bytes(&fragment, CBS_data(&cbs),
+		    CBS_len(&cbs)))
+			goto err;
+		if (!CBB_finish(&cbb, NULL, NULL))
+			goto err;
 
 		S3I(s)->rbuf.offset = SSL3_RT_HEADER_LENGTH;
 		S3I(s)->rbuf.left = CBS_len(&cbs);
@@ -328,13 +341,18 @@ tls13_use_legacy_stack(struct tls13_ctx *ctx)
 	tls13_handshake_msg_data(ctx->hs_msg, &cbs);
 	if (!CBS_write_bytes(&cbs, s->internal->init_buf->data,
 	    s->internal->init_buf->length, NULL))
-		return 0;
+		goto err;
 
 	S3I(s)->tmp.reuse_message = 1;
 	S3I(s)->tmp.message_type = tls13_handshake_msg_type(ctx->hs_msg);
 	S3I(s)->tmp.message_size = CBS_len(&cbs);
 
 	return 1;
+
+ err:
+	CBB_cleanup(&cbb);
+
+	return 0;
 }
 
 int
