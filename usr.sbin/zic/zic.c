@@ -1,4 +1,4 @@
-/*	$OpenBSD: zic.c,v 1.24 2020/10/07 22:36:14 millert Exp $	*/
+/*	$OpenBSD: zic.c,v 1.25 2020/10/08 11:22:43 millert Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -489,7 +489,7 @@ usage(void)
 {
 	fprintf(stderr,
 	    "usage: %s [-v] [-d directory] [-L leapsecondfilename] [-l timezone]\n"
-	    "\t\t[-p timezone] [-y command] [filename ...]\n",
+	    "\t\t[-p timezone] [filename ...]\n",
 		__progname);
 	exit(EXIT_FAILURE);
 }
