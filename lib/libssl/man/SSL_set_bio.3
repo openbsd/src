@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_set_bio.3,v 1.5 2018/03/27 17:35:50 schwarze Exp $
+.\"	$OpenBSD: SSL_set_bio.3,v 1.6 2020/10/08 18:21:30 tb Exp $
 .\"	OpenSSL acb5b343 Sep 16 16:00:38 2000 +0000
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: October 8 2020 $
 .Dt SSL_SET_BIO 3
 .Os
 .Sh NAME
@@ -86,9 +86,6 @@ connected to
 .Fa ssl ,
 .Xr BIO_free 3
 will be called (for both the reading and writing side, if different).
-.Sh RETURN VALUES
-.Fn SSL_set_bio
-cannot fail.
 .Sh SEE ALSO
 .Xr BIO_new 3 ,
 .Xr ssl 3 ,
