@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.149 2020/09/24 17:54:29 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.150 2020/10/08 19:41:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -152,13 +152,12 @@ trap(int type, struct trapframe *frame)
 	vaddr_t va;
 	struct vm_map *map;
 	struct vmspace *vm;
-	register vm_prot_t vftype;
+	register vm_prot_t access_type;
 	register pa_space_t space;
 	union sigval sv;
 	u_int opcode;
 	int ret, trapnum;
 	const char *tts;
-	vm_fault_t fault = VM_FAULT_INVALID;
 #ifdef DIAGNOSTIC
 	int oldcpl = curcpu()->ci_cpl;
 #endif
@@ -170,16 +169,16 @@ trap(int type, struct trapframe *frame)
 	    trapnum == T_IDEBUG || trapnum == T_PERFMON) {
 		va = frame->tf_iioq_head;
 		space = frame->tf_iisq_head;
-		vftype = PROT_EXEC;
+		access_type = PROT_EXEC;
 	} else {
 		va = frame->tf_ior;
 		space = frame->tf_isr;
 		if (va == frame->tf_iioq_head)
-			vftype = PROT_EXEC;
+			access_type = PROT_EXEC;
 		else if (inst_store(opcode))
-			vftype = PROT_WRITE;
+			access_type = PROT_WRITE;
 		else
-			vftype = PROT_READ;
+			access_type = PROT_READ;
 	}
 
 	if (frame->tf_flags & TFF_LAST)
@@ -380,7 +379,7 @@ trap(int type, struct trapframe *frame)
 	case T_LOWERPL | T_USER:
 	case T_DATAPID | T_USER:
 		sv.sival_int = va;
-		trapsignal(p, SIGSEGV, vftype, SEGV_ACCERR, sv);
+		trapsignal(p, SIGSEGV, access_type, SEGV_ACCERR, sv);
 		break;
 
 	/*
@@ -397,7 +396,7 @@ trap(int type, struct trapframe *frame)
 		}
 
 		sv.sival_int = va;
-		trapsignal(p, SIGSEGV, vftype, SEGV_ACCERR, sv);
+		trapsignal(p, SIGSEGV, access_type, SEGV_ACCERR, sv);
 		break;
 
 	case T_ITLBMISSNA:
@@ -430,7 +429,7 @@ trap(int type, struct trapframe *frame)
 			if ((type & T_USER && space == HPPA_SID_KERNEL) ||
 			    (frame->tf_iioq_head & 3) != pl ||
 			    (type & T_USER && va >= VM_MAXUSER_ADDRESS) ||
-			    uvm_fault(map, trunc_page(va), fault,
+			    uvm_fault(map, trunc_page(va), 0,
 			     opcode & 0x40? PROT_WRITE : PROT_READ)) {
 				frame_regmap(frame, opcode & 0x1f) = 0;
 				frame->tf_ipsw |= PSL_N;
@@ -452,7 +451,6 @@ trap(int type, struct trapframe *frame)
 	case T_DATACC:
 	case T_DATACC | T_USER:
 datacc:
-		fault = VM_FAULT_PROTECT;
 	case T_ITLBMISS:
 	case T_ITLBMISS | T_USER:
 	case T_DTLBMISS:
@@ -485,13 +483,13 @@ datacc:
 		if ((type & T_USER && va >= VM_MAXUSER_ADDRESS) ||
 		   (type & T_USER && map->pmap->pm_space != space)) {
 			sv.sival_int = va;
-			trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
+			trapsignal(p, SIGSEGV, access_type, SEGV_MAPERR, sv);
 			break;
 		}
 
 		KERNEL_LOCK();
 
-		ret = uvm_fault(map, trunc_page(va), fault, vftype);
+		ret = uvm_fault(map, trunc_page(va), 0, access_type);
 
 		/*
 		 * If this was a stack access we keep track of the maximum
@@ -519,7 +517,7 @@ datacc:
 					sicode = BUS_OBJERR;
 				}
 				sv.sival_int = va;
-				trapsignal(p, signal, vftype, sicode, sv);
+				trapsignal(p, signal, access_type, sicode, sv);
 			} else {
 				if (p && p->p_addr->u_pcb.pcb_onfault) {
 					frame->tf_iioq_tail = 4 +
@@ -530,8 +528,8 @@ datacc:
 #endif
 				} else {
 					panic("trap: "
-					    "uvm_fault(%p, %lx, %d, %d): %d",
-					    map, va, fault, vftype, ret);
+					    "uvm_fault(%p, %lx, 0, %d): %d",
+					    map, va, access_type, ret);
 				}
 			}
 		}
@@ -553,7 +551,7 @@ datacc:
 	case T_DATALIGN | T_USER:
 datalign_user:
 		sv.sival_int = va;
-		trapsignal(p, SIGBUS, vftype, BUS_ADRALN, sv);
+		trapsignal(p, SIGBUS, access_type, BUS_ADRALN, sv);
 		break;
 
 	case T_INTERRUPT:

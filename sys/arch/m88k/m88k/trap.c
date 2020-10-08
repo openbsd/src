@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.116 2020/09/27 16:40:26 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.117 2020/10/08 19:41:05 deraadt Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -218,7 +218,7 @@ m88100_trap(u_int type, struct trapframe *frame)
 	struct proc *p;
 	struct vm_map *map;
 	vaddr_t va, pcb_onfault;
-	vm_prot_t ftype;
+	vm_prot_t access_type;
 	int fault_type, pbus_type;
 	u_long fault_code;
 	vaddr_t fault_addr;
@@ -292,10 +292,10 @@ lose:
 
 		fault_addr = frame->tf_dma0;
 		if (frame->tf_dmt0 & (DMT_WRITE|DMT_LOCKBAR)) {
-			ftype = PROT_READ | PROT_WRITE;
+			access_type = PROT_READ | PROT_WRITE;
 			fault_code = PROT_WRITE;
 		} else {
-			ftype = PROT_READ;
+			access_type = PROT_READ;
 			fault_code = PROT_READ;
 		}
 
@@ -330,7 +330,7 @@ lose:
 		case CMMU_PFSR_SFAULT:
 		case CMMU_PFSR_PFAULT:
 			p->p_addr->u_pcb.pcb_onfault = 0;
-			result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
+			result = uvm_fault(map, va, 0, access_type);
 			p->p_addr->u_pcb.pcb_onfault = pcb_onfault;
 			if (result == 0) {
 				/*
@@ -400,10 +400,10 @@ user_fault:
 		}
 
 		if (frame->tf_dmt0 & (DMT_WRITE | DMT_LOCKBAR)) {
-			ftype = PROT_READ | PROT_WRITE;
+			access_type = PROT_READ | PROT_WRITE;
 			fault_code = PROT_WRITE;
 		} else {
-			ftype = PROT_READ;
+			access_type = PROT_READ;
 			fault_code = PROT_READ;
 		}
 
@@ -423,7 +423,7 @@ user_fault:
 			result = EACCES;
 			break;
 		default:
-			result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
+			result = uvm_fault(map, va, 0, access_type);
 			if (result == EACCES)
 				result = EFAULT;
 			break;
@@ -606,7 +606,7 @@ m88110_trap(u_int type, struct trapframe *frame)
 	struct proc *p;
 	struct vm_map *map;
 	vaddr_t va, pcb_onfault;
-	vm_prot_t ftype;
+	vm_prot_t access_type;
 	int fault_type;
 	u_long fault_code;
 	vaddr_t fault_addr;
@@ -810,10 +810,10 @@ lose:
 
 		fault_addr = frame->tf_dlar;
 		if (frame->tf_dsr & CMMU_DSR_RW) {
-			ftype = PROT_READ;
+			access_type = PROT_READ;
 			fault_code = PROT_READ;
 		} else {
-			ftype = PROT_READ | PROT_WRITE;
+			access_type = PROT_READ | PROT_WRITE;
 			fault_code = PROT_WRITE;
 		}
 
@@ -830,7 +830,7 @@ lose:
 			 */
 			if ((pcb_onfault = p->p_addr->u_pcb.pcb_onfault) != 0)
 				p->p_addr->u_pcb.pcb_onfault = 0;
-			result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
+			result = uvm_fault(map, va, 0, access_type);
 			p->p_addr->u_pcb.pcb_onfault = pcb_onfault;
 			/*
 			 * This could be a fault caused in copyout*()
@@ -861,7 +861,7 @@ lose:
 m88110_user_fault:
 		KERNEL_LOCK();
 		if (type == T_INSTFLT+T_USER) {
-			ftype = PROT_READ;
+			access_type = PROT_READ;
 			fault_code = PROT_READ;
 #ifdef TRAPDEBUG
 			printf("User Instruction fault exip %x isr %x ilar %x\n",
@@ -870,10 +870,10 @@ m88110_user_fault:
 		} else {
 			fault_addr = frame->tf_dlar;
 			if (frame->tf_dsr & CMMU_DSR_RW) {
-				ftype = PROT_READ;
+				access_type = PROT_READ;
 				fault_code = PROT_READ;
 			} else {
-				ftype = PROT_READ | PROT_WRITE;
+				access_type = PROT_READ | PROT_WRITE;
 				fault_code = PROT_WRITE;
 			}
 #ifdef TRAPDEBUG
@@ -902,7 +902,7 @@ m88110_user_fault:
 			} else
 			if (frame->tf_isr & (CMMU_ISR_SI | CMMU_ISR_PI)) {
 				/* segment or page fault */
-				result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
+				result = uvm_fault(map, va, 0, access_type);
 				if (result == EACCES)
 					result = EFAULT;
 			} else {
@@ -921,7 +921,7 @@ m88110_user_fault:
 			} else
 			if (frame->tf_dsr & (CMMU_DSR_SI | CMMU_DSR_PI)) {
 				/* segment or page fault */
-				result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
+				result = uvm_fault(map, va, 0, access_type);
 				if (result == EACCES)
 					result = EFAULT;
 			} else
@@ -953,7 +953,7 @@ m88110_user_fault:
 					printf("Uncorrected userland write fault, pmap %p va %p\n",
 					    map->pmap, va);
 #endif
-					result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
+					result = uvm_fault(map, va, 0, access_type);
 					if (result == EACCES)
 						result = EFAULT;
 				}

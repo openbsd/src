@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.44 2020/09/25 14:42:25 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.45 2020/10/08 19:41:05 deraadt Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -318,7 +318,7 @@ tlb_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 	pmap_t pmap;
 	union sigval sv;
 	int usermode;
-	int err, track, ftype;
+	int err, track, access_type;
 	const char *panic_msg;
 
 #define TLB_ASSERT(assert, msg)				\
@@ -348,15 +348,15 @@ tlb_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 	switch (tf->tf_expevt) {
 	case EXPEVT_TLB_MISS_LD:
 		track = PVH_REFERENCED;
-		ftype = PROT_READ;
+		access_type = PROT_READ;
 		break;
 	case EXPEVT_TLB_MISS_ST:
 		track = PVH_REFERENCED;
-		ftype = PROT_WRITE;
+		access_type = PROT_WRITE;
 		break;
 	case EXPEVT_TLB_MOD:
 		track = PVH_REFERENCED | PVH_MODIFIED;
-		ftype = PROT_WRITE;
+		access_type = PROT_WRITE;
 		break;
 	case EXPEVT_TLB_PROT_LD:
 		TLB_ASSERT((int)va > 0,
@@ -374,7 +374,7 @@ tlb_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 
 	case EXPEVT_TLB_PROT_ST:
 		track = 0;	/* call uvm_fault first. (COW) */
-		ftype = PROT_WRITE;
+		access_type = PROT_WRITE;
 		break;
 
 	default:
@@ -415,7 +415,7 @@ tlb_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 		return;
 	}
 
-	err = uvm_fault(map, va, 0, ftype);
+	err = uvm_fault(map, va, 0, access_type);
 
 	/* User stack extension */
 	if (map != kernel_map &&

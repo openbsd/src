@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.82 2020/09/24 17:54:29 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.83 2020/10/08 19:41:04 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -164,7 +164,7 @@ pageflttrap(struct trapframe *frame, uint64_t cr2, int usermode)
 	int error;
 	vaddr_t va;
 	struct vm_map *map;
-	vm_prot_t ftype;
+	vm_prot_t access_type;
 
 	if (p == NULL || p->p_addr == NULL || p->p_vmspace == NULL)
 		return 0;
@@ -205,19 +205,18 @@ pageflttrap(struct trapframe *frame, uint64_t cr2, int usermode)
 	}
 
 	if (frame->tf_err & PGEX_W)
-		ftype = PROT_WRITE;
+		access_type = PROT_WRITE;
 	else if (frame->tf_err & PGEX_I)
-		ftype = PROT_EXEC;
+		access_type = PROT_EXEC;
 	else
-		ftype = PROT_READ;
+		access_type = PROT_READ;
 
 	if (curcpu()->ci_inatomic == 0 || map == kernel_map) {
 		/* Fault the original page in. */
 		caddr_t onfault = pcb->pcb_onfault;
 
 		pcb->pcb_onfault = NULL;
-		error = uvm_fault(map, va, frame->tf_err & PGEX_P ?
-		    VM_FAULT_PROTECT : VM_FAULT_INVALID, ftype);
+		error = uvm_fault(map, va, 0, access_type);
 		pcb->pcb_onfault = onfault;
 	} else
 		error = EFAULT;
@@ -233,7 +232,7 @@ pageflttrap(struct trapframe *frame, uint64_t cr2, int usermode)
 		} else {
 			/* bad memory access in the kernel */
 			fault("uvm_fault(%p, 0x%llx, 0, %d) -> %x",
-			    map, cr2, ftype, error);
+			    map, cr2, access_type, error);
 			/* retain kernel lock */
 			return 0;
 		}

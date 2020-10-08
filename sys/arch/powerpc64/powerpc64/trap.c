@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.40 2020/09/25 07:50:26 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.41 2020/10/08 19:41:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -52,7 +52,7 @@ trap(struct trapframe *frame)
 	struct vm_map *map;
 	pmap_t pm;
 	vaddr_t va;
-	int ftype;
+	int access_type;
 	int error, sig, code;
 
 	/* Disable access to floating-point and vector registers. */
@@ -120,11 +120,11 @@ trap(struct trapframe *frame)
 			va = curpcb->pcb_userva | (va & SEGMENT_MASK);
 		}
 		if (frame->dsisr & DSISR_STORE)
-			ftype = PROT_READ | PROT_WRITE;
+			access_type = PROT_READ | PROT_WRITE;
 		else
-			ftype = PROT_READ;
+			access_type = PROT_READ;
 		KERNEL_LOCK();
-		error = uvm_fault(map, trunc_page(va), 0, ftype);
+		error = uvm_fault(map, trunc_page(va), 0, access_type);
 		KERNEL_UNLOCK();
 		if (error == 0)
 			return;
@@ -176,11 +176,11 @@ trap(struct trapframe *frame)
 		map = &p->p_vmspace->vm_map;
 		va = frame->dar;
 		if (frame->dsisr & DSISR_STORE)
-			ftype = PROT_READ | PROT_WRITE;
+			access_type = PROT_READ | PROT_WRITE;
 		else
-			ftype = PROT_READ;
+			access_type = PROT_READ;
 		KERNEL_LOCK();
-		error = uvm_fault(map, trunc_page(va), 0, ftype);
+		error = uvm_fault(map, trunc_page(va), 0, access_type);
 		if (error == 0)
 			uvm_grow(p, trunc_page(va));
 		KERNEL_UNLOCK();
@@ -224,9 +224,9 @@ trap(struct trapframe *frame)
 
 		map = &p->p_vmspace->vm_map;
 		va = frame->srr0;
-		ftype = PROT_READ | PROT_EXEC;
+		access_type = PROT_READ | PROT_EXEC;
 		KERNEL_LOCK();
-		error = uvm_fault(map, trunc_page(va), 0, ftype);
+		error = uvm_fault(map, trunc_page(va), 0, access_type);
 		if (error == 0)
 			uvm_grow(p, trunc_page(va));
 		KERNEL_UNLOCK();

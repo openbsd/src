@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.31 2020/09/25 07:52:25 kettenis Exp $ */
+/* $OpenBSD: trap.c,v 1.32 2020/10/08 19:41:04 deraadt Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -80,7 +80,6 @@ data_abort(struct trapframe *frame, uint64_t esr, uint64_t far,
 	struct vm_map *map;
 	struct proc *p;
 	struct pcb *pcb;
-	vm_fault_t ftype;
 	vm_prot_t access_type;
 	vaddr_t va;
 	union sigval sv;
@@ -137,13 +136,11 @@ data_abort(struct trapframe *frame, uint64_t esr, uint64_t far,
 		access_type = (!(esr & ISS_DATA_CM) && (esr & ISS_DATA_WnR)) ?
 		    PROT_WRITE : PROT_READ;
 
-	ftype = VM_FAULT_INVALID; // should check for failed permissions.
-
 	if (map != kernel_map) {
 		/* Fault in the user page: */
 		if (!pmap_fault_fixup(map->pmap, va, access_type, 1)) {
 			KERNEL_LOCK();
-			error = uvm_fault(map, va, ftype, access_type);
+			error = uvm_fault(map, va, 0, access_type);
 			if (error == 0)
 				uvm_grow(p, va);
 			KERNEL_UNLOCK();
@@ -155,7 +152,7 @@ data_abort(struct trapframe *frame, uint64_t esr, uint64_t far,
 		 */
 		if (!pmap_fault_fixup(map->pmap, va, access_type, 0)) {
 			KERNEL_LOCK();
-			error = uvm_fault(map, va, ftype, access_type);
+			error = uvm_fault(map, va, 0, access_type);
 			KERNEL_UNLOCK();
 		}
 	}
