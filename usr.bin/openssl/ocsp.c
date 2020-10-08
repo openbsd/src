@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp.c,v 1.19 2020/09/09 13:57:36 inoguchi Exp $ */
+/* $OpenBSD: ocsp.c,v 1.20 2020/10/08 23:46:57 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -1328,6 +1328,7 @@ init_responder(char *port)
 	acbio = BIO_new_accept(port);
 	if (!acbio)
 		goto err;
+	BIO_set_bind_mode(acbio, BIO_BIND_REUSEADDR);
 	BIO_set_accept_bios(acbio, bufbio);
 	bufbio = NULL;
 
