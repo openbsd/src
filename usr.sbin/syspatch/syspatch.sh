@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.164 2020/07/18 14:08:07 ajacoutot Exp $
+# $OpenBSD: syspatch.sh,v 1.165 2020/10/08 14:26:34 kn Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -20,14 +20,16 @@ set -e
 umask 0022
 export PATH=/usr/bin:/bin:/usr/sbin:/sbin
 
-sp_err()
+err()
 {
-	echo "${0##*/}: ${1}" 1>&2 && return ${2:-1}
+	echo "${0##*/}: ${1}" 1>&2
+	return ${2:-1}
 }
 
 usage()
 {
-	echo "usage: ${0##*/} [-c | -l | -R | -r]"; return 1
+	echo "usage: ${0##*/} [-c | -l | -R | -r]" 1>&2
+	return 1
 }
 
 apply_patch()
@@ -59,7 +61,7 @@ apply_patch()
 	done
 
 	if ((_rc != 0)); then
-		sp_err "Failed to apply patch ${_patch##${_OSrev}-}" 0
+		err "Failed to apply patch ${_patch##${_OSrev}-}" 0
 		rollback_patch; return ${_rc}
 	fi
 	# don't fill up /tmp when installing multiple patches at once; non-fatal
@@ -70,7 +72,7 @@ apply_patch()
 		'(^|[[:blank:]]+)usr/share/relink/kernel/GENERI(C|C.MP)/[[:print:]]+([[:blank:]]+|$)' ||
 		_KARL=true
 
-	(! ${_upself} || sp_err "updated itself, run it again to install \
+	(! ${_upself} || err "updated itself, run it again to install \
 missing patches" 2)
 }
 
@@ -95,12 +97,12 @@ checkfs()
 	set -e
 
 	for _d in $(printf '%s\n' ${_dev} | sort -u); do
-		[[ ${_d} != "??" ]] || sp_err "Unsupported filesystem, aborting"
+		[[ ${_d} != "??" ]] || err "Unsupported filesystem, aborting"
 		mount | grep -v read-only | grep -q "^/dev/${_d} " ||
-			sp_err "Read-only filesystem, aborting"
+			err "Read-only filesystem, aborting"
 		_df=$(df -Pk | grep "^/dev/${_d} " | tr -s ' ' | cut -d ' ' -f4)
 		_sz=$(($((_d))/1024))
-		((_df > _sz)) || sp_err "No space left on ${_d}, aborting"
+		((_df > _sz)) || err "No space left on ${_d}, aborting"
 	done
 }
 
@@ -120,7 +122,7 @@ create_rollback()
 	tar -C / -czf ${_PDIR}/${_patch}/rollback.tgz ${_rbfiles} || _rc=$?
 
 	if ((_rc != 0)); then
-		sp_err "Failed to create rollback patch ${_patch##${_OSrev}-}" 0
+		err "Failed to create rollback patch ${_patch##${_OSrev}-}" 0
 		rm -r ${_PDIR}/${_patch}; return ${_rc}
 	fi
 }
@@ -214,7 +216,7 @@ rollback_patch()
 
 	((_rc != 0)) || rm -r ${_PDIR}/${_patch} || _rc=$?
 	((_rc == 0)) ||
-		sp_err "Failed to revert patch ${_patch##${_OSrev}-}" ${_rc}
+		err "Failed to revert patch ${_patch##${_OSrev}-}" ${_rc}
 	rm -rf ${_edir} # don't fill up /tmp when using `-R'; non-fatal
 	trap exit INT
 
@@ -271,12 +273,12 @@ unpriv()
 # only run on release (not -current nor -stable)
 set -A _KERNV -- $(sysctl -n kern.version |
 	sed 's/^OpenBSD \([1-9][0-9]*\.[0-9]\)\([^ ]*\).*/\1 \2/;q')
-((${#_KERNV[*]} > 1)) && sp_err "Unsupported release: ${_KERNV[0]}${_KERNV[1]}"
+((${#_KERNV[*]} > 1)) && err "Unsupported release: ${_KERNV[0]}${_KERNV[1]}"
 
 [[ $@ == @(|-[[:alpha:]]) ]] || usage; [[ $@ == @(|-(c|R|r)) ]] &&
-	(($(id -u) != 0)) && sp_err "need root privileges"
+	(($(id -u) != 0)) && err "need root privileges"
 [[ $@ == @(|-(R|r)) ]] && pgrep -qxf '/bin/ksh .*reorder_kernel' &&
-	sp_err "cannot apply patches while reorder_kernel is running"
+	err "cannot apply patches while reorder_kernel is running"
 
 _OSrev=${_KERNV[0]%.*}${_KERNV[0]#*.}
 [[ -n ${_OSrev} ]]

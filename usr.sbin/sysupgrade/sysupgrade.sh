@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.40 2020/09/05 16:52:25 florian Exp $
+# $OpenBSD: sysupgrade.sh,v 1.41 2020/10/08 14:26:34 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -27,14 +27,16 @@ export PATH=/usr/bin:/bin:/usr/sbin:/sbin
 ARCH=$(uname -m)
 SETSDIR=/home/_sysupgrade
 
-ug_err()
+err()
 {
-	echo "${1}" 1>&2 && return ${2:-1}
+	echo "${0##*/}: ${1}" 1>&2
+	return ${2:-1}
 }
 
 usage()
 {
-	ug_err "usage: ${0##*/} [-fkn] [-r | -s] [installurl]"
+	echo "usage: ${0##*/} [-fkn] [-r | -s] [installurl]" 1>&2
+	return 1
 }
 
 unpriv()
@@ -87,7 +89,7 @@ while getopts fknrs arg; do
 	esac
 done
 
-(($(id -u) != 0)) && ug_err "${0##*/}: need root privileges"
+(($(id -u) != 0)) && err "need root privileges"
 
 if $RELEASE && $SNAP; then
 	usage
@@ -136,10 +138,10 @@ read _LINE <SHA256.sig
 case ${_LINE} in
 *\ ${_KEY})	SIGNIFY_KEY=/etc/signify/${_KEY} ;;
 *\ ${_NEXTKEY})	SIGNIFY_KEY=/etc/signify/${_NEXTKEY} ;;
-*)		ug_err "invalid signing key" ;;
+*)		err "invalid signing key" ;;
 esac
 
-[[ -f ${SIGNIFY_KEY} ]] || ug_err "cannot find ${SIGNIFY_KEY}"
+[[ -f ${SIGNIFY_KEY} ]] || err "cannot find ${SIGNIFY_KEY}"
 
 unpriv -f SHA256 signify -Ve -p "${SIGNIFY_KEY}" -x SHA256.sig -m SHA256
 rm SHA256.sig
