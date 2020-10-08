@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.6 2020/10/03 15:19:47 tb Exp $ */
+/* $OpenBSD: verify.c,v 1.7 2020/10/08 14:38:09 tb Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -98,14 +98,12 @@ verify_cert_cb(int ok, X509_STORE_CTX *xsc)
 }
 
 static void
-verify_cert(const char *roots_file, const char *bundle_file,
+verify_cert(X509_STORE *store, const char *roots_file, const char *bundle_file,
     const char *cert_file, int *ip, int *dns)
 {
 	STACK_OF(X509) *roots = NULL, *bundle = NULL, *cert = NULL;
 	X509_STORE_CTX *xsc = NULL;
-	X509_STORE *store = NULL;
 	X509_STORE_CTX *xscip = NULL;
-	X509_STORE *storeip = NULL;
 	X509_VERIFY_PARAM *param, *paramip;
 	X509 *leaf = NULL;
 	unsigned long flags, flagsip;
@@ -125,15 +123,10 @@ verify_cert(const char *roots_file, const char *bundle_file,
 	if ((xsc = X509_STORE_CTX_new()) == NULL)
 		errx(1, "X509_STORE_CTX");
 
-	if ((store = X509_STORE_new()) == NULL)
-		errx(1, "X509_STORE");
-
 	if (!X509_STORE_CTX_init(xsc, store, leaf, bundle)) {
 		ERR_print_errors_fp(stderr);
 		errx(1, "failed to init store context");
 	}
-
-	X509_STORE_set_default_paths(store);
 
 	if (verbose)
 		X509_STORE_CTX_set_verify_cb(xsc, verify_cert_cb);
@@ -156,15 +149,10 @@ verify_cert(const char *roots_file, const char *bundle_file,
 	if ((xscip = X509_STORE_CTX_new()) == NULL)
 		errx(1, "X509_STORE_CTX");
 
-	if ((storeip = X509_STORE_new()) == NULL)
-		errx(1, "X509_STORE");
-
-	if (!X509_STORE_CTX_init(xscip, storeip, leaf, bundle)) {
+	if (!X509_STORE_CTX_init(xscip, store, leaf, bundle)) {
 		ERR_print_errors_fp(stderr);
 		errx(1, "failed to init store context");
 	}
-
-	X509_STORE_set_default_paths(storeip);
 
 	if (verbose)
 		X509_STORE_CTX_set_verify_cb(xscip, verify_cert_cb);
@@ -186,8 +174,6 @@ verify_cert(const char *roots_file, const char *bundle_file,
 	sk_X509_pop_free(roots, X509_free);
 	sk_X509_pop_free(bundle, X509_free);
 	sk_X509_pop_free(cert, X509_free);
-	X509_STORE_free(store);
-	X509_STORE_free(storeip);
 	X509_STORE_CTX_free(xsc);
 	X509_STORE_CTX_free(xscip);
 	X509_free(leaf);
@@ -196,9 +182,14 @@ verify_cert(const char *roots_file, const char *bundle_file,
 static void
 bettertls_cert_test(const char *certs_path)
 {
+	X509_STORE *store;
 	char *roots_file, *bundle_file, *cert_file;
 	int i;
 
+	if ((store = X509_STORE_new()) == NULL)
+		errx(1, "X509_STORE_new");
+
+	X509_STORE_set_default_paths(store);
 
 	if (asprintf(&roots_file, "%s/root.crt", certs_path) == -1)
 		errx(1, "asprintf");
@@ -214,7 +205,7 @@ bettertls_cert_test(const char *certs_path)
 			break;
 		if (stat(bundle_file, &sb) == -1)
 			break;
-		verify_cert(roots_file, bundle_file, cert_file, &ip, &dns);
+		verify_cert(store, roots_file, bundle_file, cert_file, &ip, &dns);
 		/* Mmm. json. with my avocado toast */
 		if (i > 1 && json)
 			fprintf(stdout, ",");
@@ -229,6 +220,7 @@ bettertls_cert_test(const char *certs_path)
 		free(cert_file);
 	}
 	free(roots_file);
+	X509_STORE_free(store);
 }
 
 int
