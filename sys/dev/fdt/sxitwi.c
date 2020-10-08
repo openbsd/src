@@ -1,4 +1,4 @@
-/* $OpenBSD: sxitwi.c,v 1.11 2018/12/04 11:25:48 kettenis Exp $ */
+/* $OpenBSD: sxitwi.c,v 1.12 2020/10/08 20:57:52 patrick Exp $ */
 /*	$NetBSD: gttwsi_core.c,v 1.2 2014/11/23 13:37:27 jmcneill Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
@@ -80,6 +80,7 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_pinctrl.h>
+#include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/fdt.h>
 
 #define	TWSI_SLAVEADDR		0
@@ -133,6 +134,7 @@ struct sxitwi_softc {
 	u_int			 sc_started;
 	u_int			 sc_twsien_iflg;
 	struct i2c_controller	 sc_ic;
+	struct i2c_bus		 sc_ib;
 	struct rwlock		 sc_buslock;
 	void			*sc_ih;
 	uint8_t			 sc_regs[TWSI_NREG];
@@ -290,8 +292,11 @@ sxitwi_attach(struct device *parent, struct device *self, void *aux)
 	iba.iba_tag = &sc->sc_ic;
 	iba.iba_bus_scan = sxitwi_bus_scan;
 	iba.iba_bus_scan_arg = &sc->sc_node;
-
 	config_found(&sc->sc_dev, &iba, iicbus_print);
+
+	sc->sc_ib.ib_node = sc->sc_node;
+	sc->sc_ib.ib_ic = &sc->sc_ic;
+	i2c_register(&sc->sc_ib);
 }
 
 void
