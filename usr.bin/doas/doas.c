@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.83 2020/10/09 00:04:05 kn Exp $ */
+/* $OpenBSD: doas.c,v 1.84 2020/10/09 07:43:38 kn Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -448,8 +448,11 @@ main(int argc, char **argv)
 	if (pledge("stdio exec", NULL) == -1)
 		err(1, "pledge");
 
-	syslog(LOG_AUTHPRIV | LOG_INFO, "%s ran command %s as %s from %s",
-	    mypw->pw_name, cmdline, targpw->pw_name, cwd);
+	if (!(rule->options & NOLOG)) {
+		syslog(LOG_AUTHPRIV | LOG_INFO,
+		    "%s ran command %s as %s from %s",
+		    mypw->pw_name, cmdline, targpw->pw_name, cwd);
+	}
 
 	envp = prepenv(rule, mypw, targpw);
 

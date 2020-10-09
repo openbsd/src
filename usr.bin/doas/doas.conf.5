@@ -1,4 +1,4 @@
-.\" $OpenBSD: doas.conf.5,v 1.43 2020/05/16 16:58:11 jmc Exp $
+.\" $OpenBSD: doas.conf.5,v 1.44 2020/10/09 07:43:38 kn Exp $
 .\"
 .\"Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -13,7 +13,7 @@
 .\"WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\"ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\"OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: May 16 2020 $
+.Dd $Mdocdate: October 9 2020 $
 .Dt DOAS.CONF 5
 .Os
 .Sh NAME
@@ -45,6 +45,9 @@ Options are:
 .Bl -tag -width keepenv
 .It Ic nopass
 The user is not required to enter a password.
+.It Ic nolog
+Do not log successful command execution to
+.Xr syslogd 8 .
 .It Ic persist
 After the user successfully authenticates, do not ask for a password
 again for some time.
@@ -140,6 +143,7 @@ permit nopass keepenv setenv { PATH } root as root
 .Ed
 .Sh SEE ALSO
 .Xr doas 1
+.Xr syslogd 8
 .Sh HISTORY
 The
 .Nm
