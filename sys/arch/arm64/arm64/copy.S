@@ -1,4 +1,4 @@
-/* $OpenBSD: copy.S,v 1.8 2020/10/04 20:03:57 kettenis Exp $ */
+/* $OpenBSD: copy.S,v 1.9 2020/10/09 17:36:47 kettenis Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -52,13 +52,25 @@ ENTRY(copyin)
 	adr	x5, .Lcopyfault
 	str	x5, [x3, #(PCB_ONFAULT)]	// set handler
 
-// This probably should be optimized
-2:	ldtrb	w6, [x0]
+	cmp	x2, #16
+	b.lo	.Lcopyin1
+2:	ldtr	x6, [x0]
+	ldtr	x7, [x0, #8]
+	stp	x6, x7, [x1], #16
+	add	x0, x0, #16
+	sub	x2, x2, #16
+	cmp	x2, #16
+	b.hs	2b
+
+.Lcopyin1:
+	cbz	x2, .Lcopyin0
+3:	ldtrb	w6, [x0]
 	strb	w6, [x1], #1
 	add	x0, x0, #1
 	sub	x2, x2, #1
-	cbnz	x2, 2b
+	cbnz	x2, 3b
 
+.Lcopyin0:
 	str	x4, [x3, #(PCB_ONFAULT)]	// clear handler
 	mov	x0, xzr
 	RETGUARD_CHECK(copy, x15)
@@ -130,13 +142,25 @@ ENTRY(copyout)
 	adr	x5, .Lcopyfault
 	str	x5, [x3, #(PCB_ONFAULT)]	// set handler
 
-// This probably should be optimized
-2:	ldrb	w6, [x0], #1
+	cmp	x2, #16
+	b.lo	.Lcopyout1
+2:	ldp	x6, x7, [x0], #16
+	sttr	x6, [x1]
+	sttr	x7, [x1, #8]
+	add	x1, x1, #16
+	sub	x2, x2, #16
+	cmp	x2, #16
+	b.hs	2b
+
+.Lcopyout1:
+	cbz	x2, .Lcopyout0
+3:	ldrb	w6, [x0], #1
 	sttrb	w6, [x1]
 	add	x1, x1, #1
 	sub	x2, x2, #1
-	cbnz	x2, 2b
+	cbnz	x2, 3b
 
+.Lcopyout0:
 	str	x4, [x3, #(PCB_ONFAULT)]	// clear handler
 	mov	x0, xzr
 	RETGUARD_CHECK(copy, x15)
@@ -163,13 +187,19 @@ ENTRY(kcopy)
 	adr	x5, .Lcopyfault
 	str	x5, [x3, #(PCB_ONFAULT)]	// set handler
 
-	cmp	x2, #8
-	b.lo	.Lkcopy4
-2:	ldr	x6, [x0], #8
+	cmp	x2, #16
+	b.lo	.Lkcopy8
+2:	ldp	x6, x7, [x0], #16
+	stp	x6, x7, [x1], #16
+	sub	x2, x2, #16
+	cmp	x2, #16
+	b.hs	2b
+
+.Lkcopy8:
+	tbz	x2, #3, .Lkcopy4
+	ldr	x6, [x0], #8
 	str	x6, [x1], #8
 	sub	x2, x2, #8
-	cmp	x2, #8
-	b.hs	2b
 
 .Lkcopy4:
 	tbz	x2, #2, .Lkcopy1
