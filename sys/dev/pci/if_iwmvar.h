@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.55 2020/04/03 08:32:21 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.56 2020/10/09 08:53:16 mpi Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -134,8 +134,7 @@ struct iwm_tx_radiotap_header {
 #define IWM_TX_RADIOTAP_PRESENT						\
 	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
 	 (1 << IEEE80211_RADIOTAP_RATE) |				\
-	 (1 << IEEE80211_RADIOTAP_CHANNEL) |				\
-	 (1 << IEEE80211_RADIOTAP_HWQUEUE))
+	 (1 << IEEE80211_RADIOTAP_CHANNEL))
 
 #define IWM_UCODE_SECT_MAX 16
 #define IWM_FWDMASEGSZ (192*1024)

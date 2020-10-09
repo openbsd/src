@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_runvar.h,v 1.10 2014/05/24 10:10:17 stsp Exp $	*/
+/*	$OpenBSD: if_runvar.h,v 1.11 2020/10/09 08:53:16 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -70,8 +70,7 @@ struct run_tx_radiotap_header {
 #define RUN_TX_RADIOTAP_PRESENT				\
 	(1 << IEEE80211_RADIOTAP_FLAGS |		\
 	 1 << IEEE80211_RADIOTAP_RATE |			\
-	 1 << IEEE80211_RADIOTAP_CHANNEL |		\
-	 1 << IEEE80211_RADIOTAP_HWQUEUE)
+	 1 << IEEE80211_RADIOTAP_CHANNEL)
 
 struct run_softc;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860var.h,v 1.24 2016/08/17 11:50:52 stsp Exp $	*/
+/*	$OpenBSD: rt2860var.h,v 1.25 2020/10/09 08:53:16 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -61,8 +61,7 @@ struct rt2860_tx_radiotap_header {
 #define RT2860_TX_RADIOTAP_PRESENT			\
 	(1 << IEEE80211_RADIOTAP_FLAGS |		\
 	 1 << IEEE80211_RADIOTAP_RATE |			\
-	 1 << IEEE80211_RADIOTAP_CHANNEL |		\
-	 1 << IEEE80211_RADIOTAP_HWQUEUE)
+	 1 << IEEE80211_RADIOTAP_CHANNEL)
 
 struct rt2860_tx_data {
 	struct rt2860_txwi		*txwi;

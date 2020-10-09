@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ieee80211_radiotap.9,v 1.14 2016/12/11 21:45:06 stsp Exp $
+.\"	$OpenBSD: ieee80211_radiotap.9,v 1.15 2020/10/09 08:53:16 mpi Exp $
 .\"
 .\" Copyright (c) 2004	Bruce M. Simpson <bms@spc.org>,
 .\"			Darron Broad <darron@kewl.org>,
@@ -27,9 +27,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/share/man/man9/ieee80211_radiotap.9,v 1.3 2004/07/07 12:59:39 ru Exp $
-.\" $Id: ieee80211_radiotap.9,v 1.14 2016/12/11 21:45:06 stsp Exp $
+.\" $Id: ieee80211_radiotap.9,v 1.15 2020/10/09 08:53:16 mpi Exp $
 .\"
-.Dd $Mdocdate: December 11 2016 $
+.Dd $Mdocdate: October 9 2020 $
 .Dt IEEE80211_RADIOTAP 9
 .Os
 .Sh NAME
@@ -185,9 +185,6 @@ arbitrary, fixed reference.
 This field contains a single unsigned 8-bit value, which indicates the
 RF noise power at the antenna, in decibels difference from an
 arbitrary, fixed reference.
-.It Dv IEEE80211_RADIOTAP_HWQUEUE
-This field contains a single unsigned 8-bit value specifying which
-hardware queue is being used to transmit the frame.
 .It Dv IEEE80211_RADIOTAP_RSSI
 This field contains two unsigned 8-bit values.
 The first value is the received signal strength index (RSSI)
