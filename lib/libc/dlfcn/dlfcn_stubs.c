@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn_stubs.c,v 1.17 2020/10/09 16:08:18 otto Exp $	*/
+/*	$OpenBSD: dlfcn_stubs.c,v 1.18 2020/10/09 16:31:03 otto Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -35,13 +35,13 @@
 
 #include "init.h"
 
+static int dlerror_ret;
 
 void *
 dlopen(const char *libname, int how)
 {
 	if (_dl_cb != NULL && _dl_cb->dlopen != NULL)
 		return _dl_cb->dlopen(libname, how);
-	printf("Wrong dl symbols!\n");
 	return NULL;
 }
 
@@ -50,8 +50,8 @@ dlclose(void *handle)
 {
 	if (_dl_cb != NULL && _dl_cb->dlclose != NULL)
 		return _dl_cb->dlclose(handle);
-	printf("Wrong dl symbols!\n");
-	return 0;
+	dlerror_ret = 1;
+	return -1;
 }
 
 void *
@@ -59,7 +59,7 @@ dlsym(void *handle, const char *name)
 {
 	if (_dl_cb != NULL && _dl_cb->dlsym != NULL)
 		return _dl_cb->dlsym(handle, name);
-	printf("Wrong dl symbols!\n");
+	dlerror_ret = 1;
 	return NULL;
 }
 
@@ -68,6 +68,7 @@ dlctl(void *handle, int command, void *data)
 {
 	if (_dl_cb != NULL && _dl_cb->dlctl != NULL)
 		return _dl_cb->dlctl(handle, command, data);
+	dlerror_ret = 1;
 	return -1;
 }
 DEF_WEAK(dlctl);
@@ -77,7 +78,12 @@ dlerror(void)
 {
 	if (_dl_cb != NULL && _dl_cb->dlerror != NULL)
 		return _dl_cb->dlerror();
-	return "Wrong dl symbols!\n";
+	if (dlerror_ret) {
+		dlerror_ret = 0;
+		return _dl_cb == NULL ? "No dynamic linker" :
+		    "Incompatible dynamic linker";
+	}
+	return NULL;
 }
 
 int
@@ -100,9 +106,10 @@ dladdr(const void *addr, struct dl_info *info)
 {
 	if (_dl_cb != NULL && _dl_cb->dladdr != NULL)
 		return _dl_cb->dladdr(addr, info);
-	printf("Wrong dl symbols!\n");
-	return -1;
+	dlerror_ret = 1;
+	return 0;
 }
+DEF_WEAK(dladdr);
 
 #if 0
 /* Thread Local Storage argument structure */
