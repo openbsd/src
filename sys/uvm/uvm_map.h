@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.67 2019/12/18 13:33:29 visa Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.68 2020/10/09 08:16:28 mpi Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -408,13 +408,6 @@ int		uvm_map_fill_vmmap(struct vm_map *, struct kinfo_vmentry *,
  *	vm_map_unbusy: clear busy status on a map.
  *
  */
-
-/*
- * XXX: clean up later
- * Half the kernel seems to depend on them being included here.
- */
-#include <sys/time.h>
-#include <sys/systm.h>  /* for panic() */
 
 boolean_t	vm_map_lock_try_ln(struct vm_map*, char*, int);
 void		vm_map_lock_ln(struct vm_map*, char*, int);
