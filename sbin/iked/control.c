@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.29 2020/04/03 08:20:32 tobhe Exp $	*/
+/*	$OpenBSD: control.c,v 1.30 2020/10/09 08:59:15 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -22,8 +22,6 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/tree.h>
-
-#include <net/if.h>
 
 #include <errno.h>
 #include <event.h>

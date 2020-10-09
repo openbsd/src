@@ -1,4 +1,4 @@
-/*	$OpenBSD: eap.c,v 1.17 2020/10/09 08:54:24 tobhe Exp $	*/
+/*	$OpenBSD: eap.c,v 1.18 2020/10/09 08:59:15 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -30,7 +30,6 @@
 #include <signal.h>
 #include <errno.h>
 #include <err.h>
-#include <pwd.h>
 #include <event.h>
 
 #include <openssl/sha.h>

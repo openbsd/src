@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.69 2020/10/09 08:54:24 tobhe Exp $	*/
+/*	$OpenBSD: config.c,v 1.70 2020/10/09 08:59:15 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -28,7 +28,6 @@
 #include <signal.h>
 #include <errno.h>
 #include <err.h>
-#include <pwd.h>
 #include <event.h>
 
 #include <openssl/evp.h>

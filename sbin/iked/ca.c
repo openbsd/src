@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.72 2020/10/09 08:54:24 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.73 2020/10/09 08:59:15 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -29,7 +29,6 @@
 #include <syslog.h>
 #include <errno.h>
 #include <err.h>
-#include <pwd.h>
 #include <event.h>
 
 #include <openssl/bio.h>
