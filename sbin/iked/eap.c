@@ -1,4 +1,4 @@
-/*	$OpenBSD: eap.c,v 1.16 2020/09/16 21:37:35 tobhe Exp $	*/
+/*	$OpenBSD: eap.c,v 1.17 2020/10/09 08:54:24 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -18,7 +18,6 @@
 
 #include <sys/queue.h>
 #include <sys/socket.h>
-#include <sys/wait.h>
 #include <sys/uio.h>
 
 #include <netinet/in.h>
