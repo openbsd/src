@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn_stubs.c,v 1.16 2020/10/09 16:01:48 otto Exp $	*/
+/*	$OpenBSD: dlfcn_stubs.c,v 1.17 2020/10/09 16:08:18 otto Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -103,7 +103,6 @@ dladdr(const void *addr, struct dl_info *info)
 	printf("Wrong dl symbols!\n");
 	return -1;
 }
-DEF_WEAK(dladdr);
 
 #if 0
 /* Thread Local Storage argument structure */
