@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.6 2020/07/14 09:42:33 kettenis Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.7 2020/10/09 20:30:18 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
@@ -18,6 +18,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/syscall.h>

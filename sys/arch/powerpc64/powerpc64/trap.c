@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.41 2020/10/08 19:41:05 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.42 2020/10/09 20:30:18 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -17,6 +17,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/user.h>

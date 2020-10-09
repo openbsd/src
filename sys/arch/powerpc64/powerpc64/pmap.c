@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.48 2020/09/07 18:51:47 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.49 2020/10/09 20:30:18 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -48,6 +48,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/atomic.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
