@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_lookup.c,v 1.57 2019/05/09 15:35:19 deraadt Exp $	*/
+/*	$OpenBSD: ufs_lookup.c,v 1.58 2020/10/09 08:20:46 mpi Exp $	*/
 /*	$NetBSD: ufs_lookup.c,v 1.7 1996/02/09 22:36:06 christos Exp $	*/
 
 /*
@@ -1121,7 +1121,7 @@ ufs_dirempty(struct inode *ip, ufsino_t parentino, struct ucred *cred)
 int
 ufs_checkpath(struct inode *source, struct inode *target, struct ucred *cred)
 {
-	struct vnode *vp;
+	struct vnode *nextvp, *vp;
 	int error, rootino, namlen;
 	struct dirtemplate dirbuf;
 
@@ -1165,12 +1165,14 @@ ufs_checkpath(struct inode *source, struct inode *target, struct ucred *cred)
 		}
 		if (dirbuf.dotdot_ino == rootino)
 			break;
-		vput(vp);
-		error = VFS_VGET(vp->v_mount, dirbuf.dotdot_ino, &vp);
+		VOP_UNLOCK(vp);
+		error = VFS_VGET(vp->v_mount, dirbuf.dotdot_ino, &nextvp);
+		vrele(vp);
 		if (error) {
 			vp = NULL;
 			break;
 		}
+		vp = nextvp;
 	}
 
 out:
