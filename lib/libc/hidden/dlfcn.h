@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.h,v 1.1 2019/06/02 01:03:01 guenther Exp $	*/
+/*	$OpenBSD: dlfcn.h,v 1.2 2020/10/09 16:01:48 otto Exp $	*/
 /*
  * Copyright (c) 2019 Philip Guenther <guenther@openbsd.org>
  *
@@ -20,7 +20,7 @@
 
 #include_next <dlfcn.h>
 
-PROTO_DEPRECATED(dladdr);
+PROTO_NORMAL(dladdr);
 PROTO_DEPRECATED(dlclose);
 PROTO_DEPRECATED(dlerror);
 PROTO_DEPRECATED(dlopen);

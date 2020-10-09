@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.264 2020/10/06 06:31:14 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.265 2020/10/09 16:01:48 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -193,7 +193,7 @@ struct malloc_readonly {
 	int	def_malloc_junk;	/* junk fill? */
 	int	malloc_realloc;		/* always realloc? */
 	int	malloc_xmalloc;		/* xmalloc behaviour? */
-	int	chunk_canaries;		/* use canaries after chunks? */
+	u_int	chunk_canaries;		/* use canaries after chunks? */
 	int	internal_funcs;		/* use better recallocarray/freezero? */
 	u_int	def_malloc_cache;	/* free pages we cache */
 	size_t	malloc_guard;		/* use guard pages after allocations? */
@@ -468,6 +468,11 @@ omalloc_init(void)
 
 	while ((mopts.malloc_canary = arc4random()) == 0)
 		;
+	if (mopts.chunk_canaries)
+		do {
+			mopts.chunk_canaries = arc4random();
+		} while ((u_char)mopts.chunk_canaries == 0 ||
+		    (u_char)mopts.chunk_canaries == SOME_FREEJUNK); 
 }
 
 static void
@@ -918,7 +923,7 @@ fill_canary(char *ptr, size_t sz, size_t allocated)
 
 	if (check_sz > CHUNK_CHECK_LENGTH)
 		check_sz = CHUNK_CHECK_LENGTH;
-	memset(ptr + sz, SOME_JUNK, check_sz);
+	memset(ptr + sz, mopts.chunk_canaries, check_sz);
 }
 
 /*
@@ -1019,7 +1024,7 @@ validate_canary(struct dir_info *d, u_char *ptr, size_t sz, size_t allocated)
 	q = p + check_sz;
 
 	while (p < q) {
-		if (*p != SOME_JUNK) {
+		if (*p != (u_char)mopts.chunk_canaries && *p != SOME_JUNK) {
 			wrterror(d, "chunk canary corrupted %p %#tx@%#zx%s",
 			    ptr, p - ptr, sz,
 			    *p == SOME_FREEJUNK ? " (double free?)" : "");
