@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.247 2020/09/29 19:23:53 kmos Exp $
+.\"	$OpenBSD: port-modules.5,v 1.248 2020/10/09 13:24:43 paco Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 29 2020 $
+.Dd $Mdocdate: October 9 2020 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -1163,6 +1163,18 @@ Go package names as arguments),
 .Ev MODGO_{BUILD,INSTALL,TEST}_TARGET
 and
 .Ev MODGO_{BUILD,RUN}_DEPENDS .
+.Pp
+This module adds one
+.Xr make 1
+target:
+.Bl -tag -width modgo-gen-modules
+.It Cm modgo-gen-modules
+Generate the
+.Ev MODGO_MODULES
+and the
+.Ev MODGO_MODFILES
+lists.
+.El
 .It lang/lua
 Sets
 .Ev MODLUA_BIN ,
