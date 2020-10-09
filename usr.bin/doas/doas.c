@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.82 2019/10/18 17:15:45 tedu Exp $ */
+/* $OpenBSD: doas.c,v 1.83 2020/10/09 00:04:05 kn Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -396,7 +396,7 @@ main(int argc, char **argv)
 	if (!permit(uid, groups, ngroups, &rule, target, cmd,
 	    (const char **)argv + 1)) {
 		syslog(LOG_AUTHPRIV | LOG_NOTICE,
-		    "failed command for %s: %s", mypw->pw_name, cmdline);
+		    "command not permitted for %s: %s", mypw->pw_name, cmdline);
 		errc(1, EPERM, NULL);
 	}
 
