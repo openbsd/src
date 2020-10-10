@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.h,v 1.29 2017/07/30 19:27:20 deraadt Exp $	*/
+/*	$OpenBSD: tree.h,v 1.30 2020/10/10 18:03:41 otto Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -910,25 +910,25 @@ _name##_RBT_PARENT(struct _type *elm)					\
 __unused static inline void						\
 _name##_RBT_SET_LEFT(struct _type *elm, struct _type *left)		\
 {									\
-	return _rb_set_left(_name##_RBT_TYPE, elm, left);		\
+	_rb_set_left(_name##_RBT_TYPE, elm, left);			\
 }									\
 									\
 __unused static inline void						\
 _name##_RBT_SET_RIGHT(struct _type *elm, struct _type *right)		\
 {									\
-	return _rb_set_right(_name##_RBT_TYPE, elm, right);		\
+	_rb_set_right(_name##_RBT_TYPE, elm, right);			\
 }									\
 									\
 __unused static inline void						\
 _name##_RBT_SET_PARENT(struct _type *elm, struct _type *parent)		\
 {									\
-	return _rb_set_parent(_name##_RBT_TYPE, elm, parent);		\
+	_rb_set_parent(_name##_RBT_TYPE, elm, parent);			\
 }									\
 									\
 __unused static inline void						\
 _name##_RBT_POISON(struct _type *elm, unsigned long poison)		\
 {									\
-	return _rb_poison(_name##_RBT_TYPE, elm, poison);		\
+	_rb_poison(_name##_RBT_TYPE, elm, poison);			\
 }									\
 									\
 __unused static inline int						\
