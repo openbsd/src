@@ -1,4 +1,4 @@
-#	$OpenBSD: BOOT,v 1.8 2020/07/24 14:54:38 visa Exp $
+#	$OpenBSD: BOOT,v 1.9 2020/10/10 10:11:54 visa Exp $
 
 machine		octeon mips64
 maxusers	4
@@ -73,6 +73,6 @@ scsibus*	at scsi?
 sd*		at scsibus?
 
 pseudo-device	etherip		# pulls ether in kernel
-pseudo-device	octboot 1
+pseudo-device	octboot
 pseudo-device	rd 1
 pseudo-device	wsmux 2
