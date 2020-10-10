@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.35 2020/10/04 18:49:22 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.36 2020/10/10 07:07:46 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -436,14 +436,15 @@ kcov_exit(struct proc *p)
 	}
 
 	if (kd->kd_state == KCOV_STATE_DYING) {
+		p->p_kd = NULL;
 		kd_free(kd);
 	} else {
 		kd->kd_state = KCOV_STATE_READY;
 		kd->kd_mode = KCOV_MODE_NONE;
 		if (kd->kd_kr != NULL)
 			kr_barrier(kd->kd_kr);
+		p->p_kd = NULL;
 	}
-	p->p_kd = NULL;
 
 	mtx_leave(&kcov_mtx);
 }
