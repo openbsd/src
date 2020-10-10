@@ -1,4 +1,4 @@
-/*	$OpenBSD: xive.c,v 1.14 2020/09/26 17:56:54 kettenis Exp $	*/
+/*	$OpenBSD: xive.c,v 1.15 2020/10/10 17:05:55 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -395,8 +395,17 @@ xive_hvi(struct trapframe *frame)
 		/* Synchronize software state to hardware state. */
 		cppr = ack;
 		new = xive_ipl(cppr);
+		if (new <= old) {
+			/*
+			 * QEMU generates spurious interrupts.  It is
+			 * unclear whether this can happen on real
+			 * hardware as well.  We just ignore the
+			 * interrupt, but we need to reset the CPPR
+			 * register since we did accept the interrupt.
+			 */
+			goto spurious;
+		}
 		ci->ci_cpl = new;
-		KASSERT(new > old);
 
 		KASSERT(cppr < XIVE_NUM_PRIORITIES);
 		eq = &sc->sc_eq[ci->ci_cpuid][cppr];
@@ -436,6 +445,7 @@ xive_hvi(struct trapframe *frame)
 		}
 
 		ci->ci_cpl = old;
+	spurious:
 		xive_write_1(sc, XIVE_TM_CPPR_HV, xive_prio(old));
 		eieio();
 	}
