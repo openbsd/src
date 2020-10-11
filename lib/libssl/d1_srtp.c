@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srtp.c,v 1.25 2020/10/11 01:16:31 guenther Exp $ */
+/* $OpenBSD: d1_srtp.c,v 1.26 2020/10/11 02:44:27 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -139,7 +139,7 @@ static const SRTP_PROTECTION_PROFILE srtp_known_profiles[] = {
 };
 
 int
-srtp_find_profile_by_name(char *profile_name,
+srtp_find_profile_by_name(const char *profile_name,
     const SRTP_PROTECTION_PROFILE **pptr, unsigned int len)
 {
 	const SRTP_PROTECTION_PROFILE *p;
@@ -181,10 +181,8 @@ ssl_ctx_make_profiles(const char *profiles_string,
     STACK_OF(SRTP_PROTECTION_PROFILE) **out)
 {
 	STACK_OF(SRTP_PROTECTION_PROFILE) *profiles;
-
 	char *col;
-	char *ptr = (char *)profiles_string;
-
+	const char *ptr = profiles_string;
 	const SRTP_PROTECTION_PROFILE *p;
 
 	if (!(profiles = sk_SRTP_PROTECTION_PROFILE_new_null())) {

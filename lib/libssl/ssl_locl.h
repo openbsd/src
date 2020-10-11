@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.302 2020/10/11 02:22:27 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.303 2020/10/11 02:44:27 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1413,7 +1413,7 @@ void SSL_error_internal(const SSL *s, int r, char *f, int l);
 
 #ifndef OPENSSL_NO_SRTP
 
-int srtp_find_profile_by_name(char *profile_name,
+int srtp_find_profile_by_name(const char *profile_name,
     const SRTP_PROTECTION_PROFILE **pptr, unsigned int len);
 int srtp_find_profile_by_num(unsigned int profile_num,
     const SRTP_PROTECTION_PROFILE **pptr);
