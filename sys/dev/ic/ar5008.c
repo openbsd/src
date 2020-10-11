@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.61 2020/07/13 08:31:32 stsp Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.62 2020/10/11 07:05:28 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1522,7 +1522,6 @@ ar5008_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 			tap->wt_rate = athn_rates[ridx[0]].rate;
 		tap->wt_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
 		tap->wt_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
-		tap->wt_hwqueue = qid;
 		if (athn_rates[ridx[0]].phy == IEEE80211_T_DS &&
 		    ridx[0] != ATHN_RIDX_CCK1 &&
 		    (ic->ic_flags & IEEE80211_F_SHPREAMBLE))

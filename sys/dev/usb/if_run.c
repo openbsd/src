@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.130 2020/07/31 10:49:32 mglocker Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.131 2020/10/11 07:05:29 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2485,7 +2485,6 @@ run_tx(struct run_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		tap->wt_rate = rt2860_rates[ridx].rate;
 		tap->wt_chan_freq = htole16(ic->ic_bss->ni_chan->ic_freq);
 		tap->wt_chan_flags = htole16(ic->ic_bss->ni_chan->ic_flags);
-		tap->wt_hwqueue = qid;
 		if (mcs & RT2860_PHY_SHPRE)
 			tap->wt_flags |= IEEE80211_RADIOTAP_F_SHORTPRE;
 

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.121 2020/07/10 13:26:37 patrick Exp $  */
+/*      $OpenBSD: ath.c,v 1.122 2020/10/11 07:05:28 mpi Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -2309,7 +2309,6 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni,
 		    IEEE80211_RATE_VAL;
 		sc->sc_txtap.wt_txpower = 30;
 		sc->sc_txtap.wt_antenna = antenna;
-		sc->sc_txtap.wt_hwqueue = hwqueue;
 
 		bpf_mtap_hdr(sc->sc_drvbpf, &sc->sc_txtap, sc->sc_txtap_len,
 		    m0, BPF_DIRECTION_OUT);

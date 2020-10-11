@@ -1,4 +1,4 @@
-/*	$OpenBSD: athnvar.h,v 1.40 2020/10/09 08:53:16 mpi Exp $	*/
+/*	$OpenBSD: athnvar.h,v 1.41 2020/10/11 07:05:28 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -63,7 +63,6 @@ struct athn_tx_radiotap_header {
 	uint8_t		wt_rate;
 	uint16_t	wt_chan_freq;
 	uint16_t	wt_chan_flags;
-	uint8_t		wt_hwqueue;
 } __packed;
 
 #define ATHN_TX_RADIOTAP_PRESENT						\

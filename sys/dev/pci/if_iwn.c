@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.241 2020/07/27 07:24:03 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.242 2020/10/11 07:05:28 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -3465,7 +3465,6 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 			tap->wt_rate = (0x80 | ni->ni_txmcs);
 		} else
 			tap->wt_rate = rinfo->rate;
-		tap->wt_hwqueue = ac;
 		if ((ic->ic_flags & IEEE80211_F_WEPON) &&
 		    (wh->i_fc[1] & IEEE80211_FC1_PROTECTED))
 			tap->wt_flags |= IEEE80211_RADIOTAP_F_WEP;

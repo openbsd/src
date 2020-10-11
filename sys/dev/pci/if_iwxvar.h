@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxvar.h,v 1.12 2020/10/09 08:53:16 mpi Exp $	*/
+/*	$OpenBSD: if_iwxvar.h,v 1.13 2020/10/11 07:05:28 mpi Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -116,7 +116,6 @@ struct iwx_tx_radiotap_header {
 	uint8_t		wt_rate;
 	uint16_t	wt_chan_freq;
 	uint16_t	wt_chan_flags;
-	uint8_t		wt_hwqueue;
 } __packed;
 
 #define IWX_TX_RADIOTAP_PRESENT						\

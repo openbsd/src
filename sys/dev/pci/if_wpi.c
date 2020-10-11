@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.153 2020/07/10 13:22:21 patrick Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.154 2020/10/11 07:05:28 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -1701,7 +1701,6 @@ wpi_tx(struct wpi_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		tap->wt_chan_freq = htole16(ni->ni_chan->ic_freq);
 		tap->wt_chan_flags = htole16(ni->ni_chan->ic_flags);
 		tap->wt_rate = rinfo->rate;
-		tap->wt_hwqueue = ac;
 		if ((ic->ic_flags & IEEE80211_F_WEPON) &&
 		    (wh->i_fc[1] & IEEE80211_FC1_PROTECTED))
 			tap->wt_flags |= IEEE80211_RADIOTAP_F_WEP;

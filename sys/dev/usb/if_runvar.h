@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_runvar.h,v 1.11 2020/10/09 08:53:16 mpi Exp $	*/
+/*	$OpenBSD: if_runvar.h,v 1.12 2020/10/11 07:05:29 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -64,7 +64,6 @@ struct run_tx_radiotap_header {
 	uint8_t		wt_rate;
 	uint16_t	wt_chan_freq;
 	uint16_t	wt_chan_flags;
-	uint8_t		wt_hwqueue;
 } __packed;
 
 #define RUN_TX_RADIOTAP_PRESENT				\
