@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.142 2020/08/12 13:49:24 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.143 2020/10/11 07:11:59 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -64,9 +64,6 @@ void	KQREF(struct kqueue *);
 void	KQRELE(struct kqueue *);
 
 int	kqueue_sleep(struct kqueue *, struct timespec *);
-int	kqueue_scan(struct kqueue *kq, int maxevents,
-		    struct kevent *ulistp, struct timespec *timeout,
-		    struct kevent *kev, struct proc *p, int *retval);
 
 int	kqueue_read(struct file *, struct uio *, int);
 int	kqueue_write(struct file *, struct uio *, int);
@@ -554,6 +551,7 @@ out:
 int
 sys_kevent(struct proc *p, void *v, register_t *retval)
 {
+	struct kqueue_scan_state scan;
 	struct filedesc* fdp = p->p_fd;
 	struct sys_kevent_args /* {
 		syscallarg(int)	fd;
@@ -635,11 +633,12 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 		goto done;
 	}
 
-	KQREF(kq);
+	kqueue_scan_setup(&scan, kq);
 	FRELE(fp, p);
-	error = kqueue_scan(kq, SCARG(uap, nevents), SCARG(uap, eventlist),
+	error = kqueue_scan(&scan, SCARG(uap, nevents), SCARG(uap, eventlist),
 	    tsp, kev, p, &n);
-	KQRELE(kq);
+	kqueue_scan_finish(&scan);
+
 	*retval = n;
 	return (error);
 
@@ -895,11 +894,13 @@ kqueue_sleep(struct kqueue *kq, struct timespec *tsp)
 }
 
 int
-kqueue_scan(struct kqueue *kq, int maxevents, struct kevent *ulistp,
-    struct timespec *tsp, struct kevent *kev, struct proc *p, int *retval)
+kqueue_scan(struct kqueue_scan_state *scan, int maxevents,
+    struct kevent *ulistp, struct timespec *tsp, struct kevent *kev,
+    struct proc *p, int *retval)
 {
+	struct kqueue *kq = scan->kqs_kq;
 	struct kevent *kevp;
-	struct knote mend, mstart, *kn;
+	struct knote *kn;
 	int s, count, nkev, error = 0;
 
 	nkev = 0;
@@ -908,9 +909,6 @@ kqueue_scan(struct kqueue *kq, int maxevents, struct kevent *ulistp,
 	count = maxevents;
 	if (count == 0)
 		goto done;
-
-	memset(&mstart, 0, sizeof(mstart));
-	memset(&mend, 0, sizeof(mend));
 
 retry:
 	KASSERT(count == maxevents);
@@ -939,18 +937,16 @@ retry:
 		goto done;
 	}
 
-	mstart.kn_filter = EVFILT_MARKER;
-	mstart.kn_status = KN_PROCESSING;
-	TAILQ_INSERT_HEAD(&kq->kq_head, &mstart, kn_tqe);
-	mend.kn_filter = EVFILT_MARKER;
-	mend.kn_status = KN_PROCESSING;
-	TAILQ_INSERT_TAIL(&kq->kq_head, &mend, kn_tqe);
+	TAILQ_INSERT_TAIL(&kq->kq_head, &scan->kqs_end, kn_tqe);
+	TAILQ_INSERT_HEAD(&kq->kq_head, &scan->kqs_start, kn_tqe);
 	while (count) {
-		kn = TAILQ_NEXT(&mstart, kn_tqe);
+		kn = TAILQ_NEXT(&scan->kqs_start, kn_tqe);
 		if (kn->kn_filter == EVFILT_MARKER) {
-			if (kn == &mend) {
-				TAILQ_REMOVE(&kq->kq_head, &mend, kn_tqe);
-				TAILQ_REMOVE(&kq->kq_head, &mstart, kn_tqe);
+			if (kn == &scan->kqs_end) {
+				TAILQ_REMOVE(&kq->kq_head, &scan->kqs_end,
+				    kn_tqe);
+				TAILQ_REMOVE(&kq->kq_head, &scan->kqs_start,
+				    kn_tqe);
 				splx(s);
 				if (count == maxevents)
 					goto retry;
@@ -958,8 +954,9 @@ retry:
 			}
 
 			/* Move start marker past another thread's marker. */
-			TAILQ_REMOVE(&kq->kq_head, &mstart, kn_tqe);
-			TAILQ_INSERT_AFTER(&kq->kq_head, kn, &mstart, kn_tqe);
+			TAILQ_REMOVE(&kq->kq_head, &scan->kqs_start, kn_tqe);
+			TAILQ_INSERT_AFTER(&kq->kq_head, kn, &scan->kqs_start,
+			    kn_tqe);
 			continue;
 		}
 
@@ -1029,8 +1026,8 @@ retry:
 				break;
 		}
 	}
-	TAILQ_REMOVE(&kq->kq_head, &mend, kn_tqe);
-	TAILQ_REMOVE(&kq->kq_head, &mstart, kn_tqe);
+	TAILQ_REMOVE(&kq->kq_head, &scan->kqs_end, kn_tqe);
+	TAILQ_REMOVE(&kq->kq_head, &scan->kqs_start, kn_tqe);
 	splx(s);
 done:
 	if (nkev != 0) {
@@ -1044,6 +1041,33 @@ done:
 	*retval = maxevents - count;
 	return (error);
 }
+
+void
+kqueue_scan_setup(struct kqueue_scan_state *scan, struct kqueue *kq)
+{
+	memset(scan, 0, sizeof(*scan));
+
+	KQREF(kq);
+	scan->kqs_kq = kq;
+	scan->kqs_start.kn_filter = EVFILT_MARKER;
+	scan->kqs_start.kn_status = KN_PROCESSING;
+	scan->kqs_end.kn_filter = EVFILT_MARKER;
+	scan->kqs_end.kn_status = KN_PROCESSING;
+}
+
+void
+kqueue_scan_finish(struct kqueue_scan_state *scan)
+{
+	struct kqueue *kq = scan->kqs_kq;
+
+	KASSERT(scan->kqs_start.kn_filter == EVFILT_MARKER);
+	KASSERT(scan->kqs_start.kn_status == KN_PROCESSING);
+	KASSERT(scan->kqs_end.kn_filter == EVFILT_MARKER);
+	KASSERT(scan->kqs_end.kn_status == KN_PROCESSING);
+
+	KQRELE(kq);
+}
+
 
 /*
  * XXX
