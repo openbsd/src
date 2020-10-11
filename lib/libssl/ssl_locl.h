@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.303 2020/10/11 02:44:27 tb Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.304 2020/10/11 12:45:52 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -319,15 +319,19 @@ __BEGIN_HIDDEN_DECLS
 
 /* See if we use signature algorithms extension. */
 #define SSL_USE_SIGALGS(s) \
-	(s->method->internal->ssl3_enc->enc_flags & SSL_ENC_FLAG_SIGALGS)
+	(s->method->internal->enc_flags & SSL_ENC_FLAG_SIGALGS)
+
+/* See if we use SHA256 default PRF. */
+#define SSL_USE_SHA256_PRF(s) \
+	(s->method->internal->enc_flags & SSL_ENC_FLAG_SHA256_PRF)
 
 /* Allow TLS 1.2 ciphersuites: applies to DTLS 1.2 as well as TLS 1.2. */
 #define SSL_USE_TLS1_2_CIPHERS(s) \
-	(s->method->internal->ssl3_enc->enc_flags & SSL_ENC_FLAG_TLS1_2_CIPHERS)
+	(s->method->internal->enc_flags & SSL_ENC_FLAG_TLS1_2_CIPHERS)
 
 /* Allow TLS 1.3 ciphersuites only. */
 #define SSL_USE_TLS1_3_CIPHERS(s) \
-	(s->method->internal->ssl3_enc->enc_flags & SSL_ENC_FLAG_TLS1_3_CIPHERS)
+	(s->method->internal->enc_flags & SSL_ENC_FLAG_TLS1_3_CIPHERS)
 
 #define SSL_PKEY_RSA		0
 #define SSL_PKEY_ECC		1
@@ -379,7 +383,7 @@ typedef struct ssl_method_internal_st {
 	    int peek);
 	int (*ssl_write_bytes)(SSL *s, int type, const void *buf_, int len);
 
-	struct ssl3_enc_method *ssl3_enc; /* Extra SSLv3/TLS stuff */
+	unsigned int enc_flags;		/* SSL_ENC_FLAG_* */
 } SSL_METHOD_INTERNAL;
 
 typedef struct ssl_session_internal_st {
@@ -1063,10 +1067,6 @@ typedef struct sess_cert_st {
 /*#define SSL_DEBUG	*/
 /*#define RSA_DEBUG	*/
 
-typedef struct ssl3_enc_method {
-	unsigned int enc_flags;
-} SSL3_ENC_METHOD;
-
 /*
  * Flag values for enc_flags.
  */
@@ -1082,6 +1082,14 @@ typedef struct ssl3_enc_method {
 
 /* Allow TLS 1.3 ciphersuites only. */
 #define SSL_ENC_FLAG_TLS1_3_CIPHERS     (1 << 5)
+
+#define TLSV1_ENC_FLAGS		0
+#define TLSV1_1_ENC_FLAGS	0
+#define TLSV1_2_ENC_FLAGS	(SSL_ENC_FLAG_SIGALGS		| \
+				 SSL_ENC_FLAG_SHA256_PRF	| \
+				 SSL_ENC_FLAG_TLS1_2_CIPHERS)
+#define TLSV1_3_ENC_FLAGS	(SSL_ENC_FLAG_SIGALGS		| \
+				 SSL_ENC_FLAG_TLS1_3_CIPHERS)
 
 /*
  * ssl_aead_ctx_st contains information about an AEAD that is being used to
@@ -1122,11 +1130,6 @@ int ssl_cipher_allowed_in_version_range(const SSL_CIPHER *cipher,
 
 const SSL_METHOD *tls_legacy_method(void);
 const SSL_METHOD *ssl_get_method(uint16_t version);
-
-extern SSL3_ENC_METHOD TLSv1_enc_data;
-extern SSL3_ENC_METHOD TLSv1_1_enc_data;
-extern SSL3_ENC_METHOD TLSv1_2_enc_data;
-extern SSL3_ENC_METHOD TLSv1_3_enc_data;
 
 void ssl_clear_cipher_state(SSL *s);
 void ssl_clear_cipher_read_state(SSL *s);

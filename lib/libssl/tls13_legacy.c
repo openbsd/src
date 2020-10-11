@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_legacy.c,v 1.17 2020/10/11 02:59:47 jsing Exp $ */
+/*	$OpenBSD: tls13_legacy.c,v 1.18 2020/10/11 12:45:52 guenther Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -19,10 +19,6 @@
 
 #include "ssl_locl.h"
 #include "tls13_internal.h"
-
-SSL3_ENC_METHOD TLSv1_3_enc_data = {
-	.enc_flags = SSL_ENC_FLAG_SIGALGS|SSL_ENC_FLAG_TLS1_3_CIPHERS,
-};
 
 static ssize_t
 tls13_legacy_wire_read(SSL *ssl, uint8_t *buf, size_t len)

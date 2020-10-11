@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.199 2020/10/11 01:13:04 guenther Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.200 2020/10/11 12:45:51 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2731,7 +2731,7 @@ ssl_get_algorithm2(SSL *s)
 {
 	long	alg2 = S3I(s)->hs.new_cipher->algorithm2;
 
-	if (s->method->internal->ssl3_enc->enc_flags & SSL_ENC_FLAG_SHA256_PRF &&
+	if (SSL_USE_SHA256_PRF(s) &&
 	    alg2 == (SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF))
 		return SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256;
 	return alg2;

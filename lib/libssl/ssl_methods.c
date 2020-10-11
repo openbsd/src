@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_methods.c,v 1.18 2020/10/11 02:22:27 jsing Exp $ */
+/* $OpenBSD: ssl_methods.c,v 1.19 2020/10/11 12:45:52 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -74,7 +74,7 @@ static const SSL_METHOD_INTERNAL DTLSv1_method_internal_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = dtls1_read_bytes,
 	.ssl_write_bytes = dtls1_write_app_data_bytes,
-	.ssl3_enc = &TLSv1_1_enc_data,
+	.enc_flags = TLSV1_1_ENC_FLAGS,
 };
 
 static const SSL_METHOD DTLSv1_method_data = {
@@ -138,7 +138,7 @@ static const SSL_METHOD_INTERNAL TLS_method_internal_data = {
 	.ssl_pending = tls13_legacy_pending,
 	.ssl_read_bytes = tls13_legacy_read_bytes,
 	.ssl_write_bytes = tls13_legacy_write_bytes,
-	.ssl3_enc = &TLSv1_3_enc_data,
+	.enc_flags = TLSV1_3_ENC_FLAGS,
 };
 
 static const SSL_METHOD TLS_method_data = {
@@ -166,7 +166,7 @@ static const SSL_METHOD_INTERNAL TLS_legacy_method_internal_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = ssl3_read_bytes,
 	.ssl_write_bytes = ssl3_write_bytes,
-	.ssl3_enc = &TLSv1_2_enc_data,
+	.enc_flags = TLSV1_2_ENC_FLAGS,
 };
 
 static const SSL_METHOD TLS_legacy_method_data = {
@@ -193,7 +193,7 @@ static const SSL_METHOD_INTERNAL TLSv1_method_internal_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = ssl3_read_bytes,
 	.ssl_write_bytes = ssl3_write_bytes,
-	.ssl3_enc = &TLSv1_enc_data,
+	.enc_flags = TLSV1_ENC_FLAGS,
 };
 
 static const SSL_METHOD TLSv1_method_data = {
@@ -220,7 +220,7 @@ static const SSL_METHOD_INTERNAL TLSv1_1_method_internal_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = ssl3_read_bytes,
 	.ssl_write_bytes = ssl3_write_bytes,
-	.ssl3_enc = &TLSv1_1_enc_data,
+	.enc_flags = TLSV1_1_ENC_FLAGS,
 };
 
 static const SSL_METHOD TLSv1_1_method_data = {
@@ -247,7 +247,7 @@ static const SSL_METHOD_INTERNAL TLSv1_2_method_internal_data = {
 	.ssl_pending = ssl3_pending,
 	.ssl_read_bytes = ssl3_read_bytes,
 	.ssl_write_bytes = ssl3_write_bytes,
-	.ssl3_enc = &TLSv1_2_enc_data,
+	.enc_flags = TLSV1_2_ENC_FLAGS,
 };
 
 static const SSL_METHOD TLSv1_2_method_data = {
