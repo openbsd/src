@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_methods.c,v 1.17 2020/10/03 17:54:27 jsing Exp $ */
+/* $OpenBSD: ssl_methods.c,v 1.18 2020/10/11 02:22:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,45 +59,6 @@
 #include "ssl_locl.h"
 #include "tls13_internal.h"
 
-static const SSL_METHOD_INTERNAL DTLSv1_client_method_internal_data = {
-	.version = DTLS1_VERSION,
-	.min_version = DTLS1_VERSION,
-	.max_version = DTLS1_VERSION,
-	.ssl_new = dtls1_new,
-	.ssl_clear = dtls1_clear,
-	.ssl_free = dtls1_free,
-	.ssl_accept = ssl_undefined_function,
-	.ssl_connect = ssl3_connect,
-	.ssl_shutdown = ssl3_shutdown,
-	.ssl_renegotiate = ssl3_renegotiate,
-	.ssl_renegotiate_check = ssl3_renegotiate_check,
-	.ssl_pending = ssl3_pending,
-	.ssl_read_bytes = dtls1_read_bytes,
-	.ssl_write_bytes = dtls1_write_app_data_bytes,
-	.ssl3_enc = &TLSv1_1_enc_data,
-};
-
-static const SSL_METHOD DTLSv1_client_method_data = {
-	.ssl_dispatch_alert = dtls1_dispatch_alert,
-	.num_ciphers = ssl3_num_ciphers,
-	.get_cipher = dtls1_get_cipher,
-	.get_cipher_by_char = ssl3_get_cipher_by_char,
-	.put_cipher_by_char = ssl3_put_cipher_by_char,
-	.internal = &DTLSv1_client_method_internal_data,
-};
-
-const SSL_METHOD *
-DTLSv1_client_method(void)
-{
-	return &DTLSv1_client_method_data;
-}
-
-const SSL_METHOD *
-DTLS_client_method(void)
-{
-	return DTLSv1_client_method();
-}
-
 static const SSL_METHOD_INTERNAL DTLSv1_method_internal_data = {
 	.version = DTLS1_VERSION,
 	.min_version = DTLS1_VERSION,
@@ -126,9 +87,27 @@ static const SSL_METHOD DTLSv1_method_data = {
 };
 
 const SSL_METHOD *
+DTLSv1_client_method(void)
+{
+	return &DTLSv1_method_data;
+}
+
+const SSL_METHOD *
 DTLSv1_method(void)
 {
 	return &DTLSv1_method_data;
+}
+
+const SSL_METHOD *
+DTLSv1_server_method(void)
+{
+	return &DTLSv1_method_data;
+}
+
+const SSL_METHOD *
+DTLS_client_method(void)
+{
+	return DTLSv1_method();
 }
 
 const SSL_METHOD *
@@ -137,220 +116,10 @@ DTLS_method(void)
 	return DTLSv1_method();
 }
 
-static const SSL_METHOD_INTERNAL DTLSv1_server_method_internal_data = {
-	.version = DTLS1_VERSION,
-	.min_version = DTLS1_VERSION,
-	.max_version = DTLS1_VERSION,
-	.ssl_new = dtls1_new,
-	.ssl_clear = dtls1_clear,
-	.ssl_free = dtls1_free,
-	.ssl_accept = ssl3_accept,
-	.ssl_connect = ssl_undefined_function,
-	.ssl_shutdown = ssl3_shutdown,
-	.ssl_renegotiate = ssl3_renegotiate,
-	.ssl_renegotiate_check = ssl3_renegotiate_check,
-	.ssl_pending = ssl3_pending,
-	.ssl_read_bytes = dtls1_read_bytes,
-	.ssl_write_bytes = dtls1_write_app_data_bytes,
-	.ssl3_enc = &TLSv1_1_enc_data,
-};
-
-static const SSL_METHOD DTLSv1_server_method_data = {
-	.ssl_dispatch_alert = dtls1_dispatch_alert,
-	.num_ciphers = ssl3_num_ciphers,
-	.get_cipher = dtls1_get_cipher,
-	.get_cipher_by_char = ssl3_get_cipher_by_char,
-	.put_cipher_by_char = ssl3_put_cipher_by_char,
-	.internal = &DTLSv1_server_method_internal_data,
-};
-
-const SSL_METHOD *
-DTLSv1_server_method(void)
-{
-	return &DTLSv1_server_method_data;
-}
-
 const SSL_METHOD *
 DTLS_server_method(void)
 {
-	return DTLSv1_server_method();
-}
-
-#ifdef LIBRESSL_HAS_TLS1_3_CLIENT
-static const SSL_METHOD_INTERNAL TLS_client_method_internal_data = {
-	.version = TLS1_3_VERSION,
-	.min_version = TLS1_VERSION,
-	.max_version = TLS1_3_VERSION,
-	.ssl_new = tls1_new,
-	.ssl_clear = tls1_clear,
-	.ssl_free = tls1_free,
-	.ssl_accept = ssl_undefined_function,
-	.ssl_connect = tls13_legacy_connect,
-	.ssl_shutdown = tls13_legacy_shutdown,
-	.ssl_renegotiate = ssl_undefined_function,
-	.ssl_renegotiate_check = ssl_ok,
-	.ssl_pending = tls13_legacy_pending,
-	.ssl_read_bytes = tls13_legacy_read_bytes,
-	.ssl_write_bytes = tls13_legacy_write_bytes,
-	.ssl3_enc = &TLSv1_3_enc_data,
-};
-
-static const SSL_METHOD TLS_client_method_data = {
-	.ssl_dispatch_alert = ssl3_dispatch_alert,
-	.num_ciphers = ssl3_num_ciphers,
-	.get_cipher = ssl3_get_cipher,
-	.get_cipher_by_char = ssl3_get_cipher_by_char,
-	.put_cipher_by_char = ssl3_put_cipher_by_char,
-	.internal = &TLS_client_method_internal_data,
-};
-#endif
-
-static const SSL_METHOD_INTERNAL TLS_legacy_client_method_internal_data = {
-	.version = TLS1_2_VERSION,
-	.min_version = TLS1_VERSION,
-	.max_version = TLS1_2_VERSION,
-	.ssl_new = tls1_new,
-	.ssl_clear = tls1_clear,
-	.ssl_free = tls1_free,
-	.ssl_accept = ssl_undefined_function,
-	.ssl_connect = ssl3_connect,
-	.ssl_shutdown = ssl3_shutdown,
-	.ssl_renegotiate = ssl_undefined_function,
-	.ssl_renegotiate_check = ssl_ok,
-	.ssl_pending = ssl3_pending,
-	.ssl_read_bytes = ssl3_read_bytes,
-	.ssl_write_bytes = ssl3_write_bytes,
-	.ssl3_enc = &TLSv1_2_enc_data,
-};
-
-static const SSL_METHOD TLS_legacy_client_method_data = {
-	.ssl_dispatch_alert = ssl3_dispatch_alert,
-	.num_ciphers = ssl3_num_ciphers,
-	.get_cipher = ssl3_get_cipher,
-	.get_cipher_by_char = ssl3_get_cipher_by_char,
-	.put_cipher_by_char = ssl3_put_cipher_by_char,
-	.internal = &TLS_legacy_client_method_internal_data,
-};
-
-static const SSL_METHOD_INTERNAL TLSv1_client_method_internal_data = {
-	.version = TLS1_VERSION,
-	.min_version = TLS1_VERSION,
-	.max_version = TLS1_VERSION,
-	.ssl_new = tls1_new,
-	.ssl_clear = tls1_clear,
-	.ssl_free = tls1_free,
-	.ssl_accept = ssl_undefined_function,
-	.ssl_connect = ssl3_connect,
-	.ssl_shutdown = ssl3_shutdown,
-	.ssl_renegotiate = ssl3_renegotiate,
-	.ssl_renegotiate_check = ssl3_renegotiate_check,
-	.ssl_pending = ssl3_pending,
-	.ssl_read_bytes = ssl3_read_bytes,
-	.ssl_write_bytes = ssl3_write_bytes,
-	.ssl3_enc = &TLSv1_enc_data,
-};
-
-static const SSL_METHOD TLSv1_client_method_data = {
-	.ssl_dispatch_alert = ssl3_dispatch_alert,
-	.num_ciphers = ssl3_num_ciphers,
-	.get_cipher = ssl3_get_cipher,
-	.get_cipher_by_char = ssl3_get_cipher_by_char,
-	.put_cipher_by_char = ssl3_put_cipher_by_char,
-	.internal = &TLSv1_client_method_internal_data,
-};
-
-static const SSL_METHOD_INTERNAL TLSv1_1_client_method_internal_data = {
-	.version = TLS1_1_VERSION,
-	.min_version = TLS1_1_VERSION,
-	.max_version = TLS1_1_VERSION,
-	.ssl_new = tls1_new,
-	.ssl_clear = tls1_clear,
-	.ssl_free = tls1_free,
-	.ssl_accept = ssl_undefined_function,
-	.ssl_connect = ssl3_connect,
-	.ssl_shutdown = ssl3_shutdown,
-	.ssl_renegotiate = ssl3_renegotiate,
-	.ssl_renegotiate_check = ssl3_renegotiate_check,
-	.ssl_pending = ssl3_pending,
-	.ssl_read_bytes = ssl3_read_bytes,
-	.ssl_write_bytes = ssl3_write_bytes,
-	.ssl3_enc = &TLSv1_1_enc_data,
-};
-
-static const SSL_METHOD TLSv1_1_client_method_data = {
-	.ssl_dispatch_alert = ssl3_dispatch_alert,
-	.num_ciphers = ssl3_num_ciphers,
-	.get_cipher = ssl3_get_cipher,
-	.get_cipher_by_char = ssl3_get_cipher_by_char,
-	.put_cipher_by_char = ssl3_put_cipher_by_char,
-	.internal = &TLSv1_1_client_method_internal_data,
-};
-
-static const SSL_METHOD_INTERNAL TLSv1_2_client_method_internal_data = {
-	.version = TLS1_2_VERSION,
-	.min_version = TLS1_2_VERSION,
-	.max_version = TLS1_2_VERSION,
-	.ssl_new = tls1_new,
-	.ssl_clear = tls1_clear,
-	.ssl_free = tls1_free,
-	.ssl_accept = ssl_undefined_function,
-	.ssl_connect = ssl3_connect,
-	.ssl_shutdown = ssl3_shutdown,
-	.ssl_renegotiate = ssl3_renegotiate,
-	.ssl_renegotiate_check = ssl3_renegotiate_check,
-	.ssl_pending = ssl3_pending,
-	.ssl_read_bytes = ssl3_read_bytes,
-	.ssl_write_bytes = ssl3_write_bytes,
-	.ssl3_enc = &TLSv1_2_enc_data,
-};
-
-static const SSL_METHOD TLSv1_2_client_method_data = {
-	.ssl_dispatch_alert = ssl3_dispatch_alert,
-	.num_ciphers = ssl3_num_ciphers,
-	.get_cipher = ssl3_get_cipher,
-	.get_cipher_by_char = ssl3_get_cipher_by_char,
-	.put_cipher_by_char = ssl3_put_cipher_by_char,
-	.internal = &TLSv1_2_client_method_internal_data,
-};
-
-const SSL_METHOD *
-SSLv23_client_method(void)
-{
-	return (TLS_client_method());
-}
-
-const SSL_METHOD *
-TLS_client_method(void)
-{
-#ifdef LIBRESSL_HAS_TLS1_3_CLIENT
-	return (&TLS_client_method_data);
-#else
-	return tls_legacy_client_method();
-#endif
-}
-
-const SSL_METHOD *
-tls_legacy_client_method(void)
-{
-	return (&TLS_legacy_client_method_data);
-}
-
-const SSL_METHOD *
-TLSv1_client_method(void)
-{
-	return (&TLSv1_client_method_data);
-}
-
-const SSL_METHOD *
-TLSv1_1_client_method(void)
-{
-	return (&TLSv1_1_client_method_data);
-}
-
-const SSL_METHOD *
-TLSv1_2_client_method(void)
-{
-	return (&TLSv1_2_client_method_data);
+	return DTLSv1_method();
 }
 
 #if defined(LIBRESSL_HAS_TLS1_3_CLIENT) && defined(LIBRESSL_HAS_TLS1_3_SERVER)
@@ -491,9 +260,9 @@ static const SSL_METHOD TLSv1_2_method_data = {
 };
 
 const SSL_METHOD *
-SSLv23_method(void)
+TLS_client_method(void)
 {
-	return (TLS_method());
+	return TLS_method();
 }
 
 const SSL_METHOD *
@@ -507,9 +276,39 @@ TLS_method(void)
 }
 
 const SSL_METHOD *
+TLS_server_method(void)
+{
+	return TLS_method();
+}
+
+const SSL_METHOD *
 tls_legacy_method(void)
 {
 	return (&TLS_legacy_method_data);
+}
+
+const SSL_METHOD *
+SSLv23_client_method(void)
+{
+	return TLS_method();
+}
+
+const SSL_METHOD *
+SSLv23_method(void)
+{
+	return TLS_method();
+}
+
+const SSL_METHOD *
+SSLv23_server_method(void)
+{
+	return TLS_method();
+}
+
+const SSL_METHOD *
+TLSv1_client_method(void)
+{
+	return (&TLSv1_method_data);
 }
 
 const SSL_METHOD *
@@ -519,9 +318,33 @@ TLSv1_method(void)
 }
 
 const SSL_METHOD *
+TLSv1_server_method(void)
+{
+	return (&TLSv1_method_data);
+}
+
+const SSL_METHOD *
+TLSv1_1_client_method(void)
+{
+	return (&TLSv1_1_method_data);
+}
+
+const SSL_METHOD *
 TLSv1_1_method(void)
 {
 	return (&TLSv1_1_method_data);
+}
+
+const SSL_METHOD *
+TLSv1_1_server_method(void)
+{
+	return (&TLSv1_1_method_data);
+}
+
+const SSL_METHOD *
+TLSv1_2_client_method(void)
+{
+	return (&TLSv1_2_method_data);
 }
 
 const SSL_METHOD *
@@ -530,213 +353,25 @@ TLSv1_2_method(void)
 	return (&TLSv1_2_method_data);
 }
 
-#ifdef LIBRESSL_HAS_TLS1_3_SERVER
-static const SSL_METHOD_INTERNAL TLS_server_method_internal_data = {
-	.version = TLS1_3_VERSION,
-	.min_version = TLS1_VERSION,
-	.max_version = TLS1_3_VERSION,
-	.ssl_new = tls1_new,
-	.ssl_clear = tls1_clear,
-	.ssl_free = tls1_free,
-	.ssl_accept = tls13_legacy_accept,
-	.ssl_connect = ssl_undefined_function,
-	.ssl_shutdown = tls13_legacy_shutdown,
-	.ssl_renegotiate = ssl_undefined_function,
-	.ssl_renegotiate_check = ssl_ok,
-	.ssl_pending = tls13_legacy_pending,
-	.ssl_read_bytes = tls13_legacy_read_bytes,
-	.ssl_write_bytes = tls13_legacy_write_bytes,
-	.ssl3_enc = &TLSv1_3_enc_data,
-};
-
-static const SSL_METHOD TLS_server_method_data = {
-	.ssl_dispatch_alert = ssl3_dispatch_alert,
-	.num_ciphers = ssl3_num_ciphers,
-	.get_cipher = ssl3_get_cipher,
-	.get_cipher_by_char = ssl3_get_cipher_by_char,
-	.put_cipher_by_char = ssl3_put_cipher_by_char,
-	.internal = &TLS_server_method_internal_data,
-};
-#endif
-
-static const SSL_METHOD_INTERNAL TLS_legacy_server_method_internal_data = {
-	.version = TLS1_2_VERSION,
-	.min_version = TLS1_VERSION,
-	.max_version = TLS1_2_VERSION,
-	.ssl_new = tls1_new,
-	.ssl_clear = tls1_clear,
-	.ssl_free = tls1_free,
-	.ssl_accept = ssl3_accept,
-	.ssl_connect = ssl_undefined_function,
-	.ssl_shutdown = ssl3_shutdown,
-	.ssl_renegotiate = ssl_undefined_function,
-	.ssl_renegotiate_check = ssl_ok,
-	.ssl_pending = ssl3_pending,
-	.ssl_read_bytes = ssl3_read_bytes,
-	.ssl_write_bytes = ssl3_write_bytes,
-	.ssl3_enc = &TLSv1_2_enc_data,
-};
-
-static const SSL_METHOD TLS_legacy_server_method_data = {
-	.ssl_dispatch_alert = ssl3_dispatch_alert,
-	.num_ciphers = ssl3_num_ciphers,
-	.get_cipher = ssl3_get_cipher,
-	.get_cipher_by_char = ssl3_get_cipher_by_char,
-	.put_cipher_by_char = ssl3_put_cipher_by_char,
-	.internal = &TLS_legacy_server_method_internal_data,
-};
-
-static const SSL_METHOD_INTERNAL TLSv1_server_method_internal_data = {
-	.version = TLS1_VERSION,
-	.min_version = TLS1_VERSION,
-	.max_version = TLS1_VERSION,
-	.ssl_new = tls1_new,
-	.ssl_clear = tls1_clear,
-	.ssl_free = tls1_free,
-	.ssl_accept = ssl3_accept,
-	.ssl_connect = ssl_undefined_function,
-	.ssl_shutdown = ssl3_shutdown,
-	.ssl_renegotiate = ssl3_renegotiate,
-	.ssl_renegotiate_check = ssl3_renegotiate_check,
-	.ssl_pending = ssl3_pending,
-	.ssl_read_bytes = ssl3_read_bytes,
-	.ssl_write_bytes = ssl3_write_bytes,
-	.ssl3_enc = &TLSv1_enc_data,
-};
-
-static const SSL_METHOD TLSv1_server_method_data = {
-	.ssl_dispatch_alert = ssl3_dispatch_alert,
-	.num_ciphers = ssl3_num_ciphers,
-	.get_cipher = ssl3_get_cipher,
-	.get_cipher_by_char = ssl3_get_cipher_by_char,
-	.put_cipher_by_char = ssl3_put_cipher_by_char,
-	.internal = &TLSv1_server_method_internal_data,
-};
-
-static const SSL_METHOD_INTERNAL TLSv1_1_server_method_internal_data = {
-	.version = TLS1_1_VERSION,
-	.min_version = TLS1_1_VERSION,
-	.max_version = TLS1_1_VERSION,
-	.ssl_new = tls1_new,
-	.ssl_clear = tls1_clear,
-	.ssl_free = tls1_free,
-	.ssl_accept = ssl3_accept,
-	.ssl_connect = ssl_undefined_function,
-	.ssl_shutdown = ssl3_shutdown,
-	.ssl_renegotiate = ssl3_renegotiate,
-	.ssl_renegotiate_check = ssl3_renegotiate_check,
-	.ssl_pending = ssl3_pending,
-	.ssl_read_bytes = ssl3_read_bytes,
-	.ssl_write_bytes = ssl3_write_bytes,
-	.ssl3_enc = &TLSv1_1_enc_data,
-};
-
-static const SSL_METHOD TLSv1_1_server_method_data = {
-	.ssl_dispatch_alert = ssl3_dispatch_alert,
-	.num_ciphers = ssl3_num_ciphers,
-	.get_cipher = ssl3_get_cipher,
-	.get_cipher_by_char = ssl3_get_cipher_by_char,
-	.put_cipher_by_char = ssl3_put_cipher_by_char,
-	.internal = &TLSv1_1_server_method_internal_data,
-};
-
-static const SSL_METHOD_INTERNAL TLSv1_2_server_method_internal_data = {
-	.version = TLS1_2_VERSION,
-	.min_version = TLS1_2_VERSION,
-	.max_version = TLS1_2_VERSION,
-	.ssl_new = tls1_new,
-	.ssl_clear = tls1_clear,
-	.ssl_free = tls1_free,
-	.ssl_accept = ssl3_accept,
-	.ssl_connect = ssl_undefined_function,
-	.ssl_shutdown = ssl3_shutdown,
-	.ssl_renegotiate = ssl3_renegotiate,
-	.ssl_renegotiate_check = ssl3_renegotiate_check,
-	.ssl_pending = ssl3_pending,
-	.ssl_read_bytes = ssl3_read_bytes,
-	.ssl_write_bytes = ssl3_write_bytes,
-	.ssl3_enc = &TLSv1_2_enc_data,
-};
-
-static const SSL_METHOD TLSv1_2_server_method_data = {
-	.ssl_dispatch_alert = ssl3_dispatch_alert,
-	.num_ciphers = ssl3_num_ciphers,
-	.get_cipher = ssl3_get_cipher,
-	.get_cipher_by_char = ssl3_get_cipher_by_char,
-	.put_cipher_by_char = ssl3_put_cipher_by_char,
-	.internal = &TLSv1_2_server_method_internal_data,
-};
-
-const SSL_METHOD *
-SSLv23_server_method(void)
-{
-	return (TLS_server_method());
-}
-
-const SSL_METHOD *
-TLS_server_method(void)
-{
-#ifdef LIBRESSL_HAS_TLS1_3_SERVER
-	return (&TLS_server_method_data);
-#else
-	return tls_legacy_server_method();
-#endif
-}
-
-const SSL_METHOD *
-tls_legacy_server_method(void)
-{
-	return (&TLS_legacy_server_method_data);
-}
-
-const SSL_METHOD *
-TLSv1_server_method(void)
-{
-	return (&TLSv1_server_method_data);
-}
-
-const SSL_METHOD *
-TLSv1_1_server_method(void)
-{
-	return (&TLSv1_1_server_method_data);
-}
-
 const SSL_METHOD *
 TLSv1_2_server_method(void)
 {
-	return (&TLSv1_2_server_method_data);
+	return (&TLSv1_2_method_data);
 }
 
 const SSL_METHOD *
-ssl_get_client_method(uint16_t version)
+ssl_get_method(uint16_t version)
 {
 	if (version == TLS1_3_VERSION)
-		return (TLS_client_method());
+		return (TLS_method());
 	if (version == TLS1_2_VERSION)
-		return (TLSv1_2_client_method());
+		return (TLSv1_2_method());
 	if (version == TLS1_1_VERSION)
-		return (TLSv1_1_client_method());
+		return (TLSv1_1_method());
 	if (version == TLS1_VERSION)
-		return (TLSv1_client_method());
+		return (TLSv1_method());
 	if (version == DTLS1_VERSION)
-		return (DTLSv1_client_method());
-
-	return (NULL);
-}
-
-const SSL_METHOD *
-ssl_get_server_method(uint16_t version)
-{
-	if (version == TLS1_3_VERSION)
-		return (TLS_server_method());
-	if (version == TLS1_2_VERSION)
-		return (TLSv1_2_server_method());
-	if (version == TLS1_1_VERSION)
-		return (TLSv1_1_server_method());
-	if (version == TLS1_VERSION)
-		return (TLSv1_server_method());
-	if (version == DTLS1_VERSION)
-		return (DTLSv1_server_method());
+		return (DTLSv1_method());
 
 	return (NULL);
 }

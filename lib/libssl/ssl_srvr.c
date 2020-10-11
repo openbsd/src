@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.86 2020/10/03 18:01:55 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.87 2020/10/11 02:22:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -868,7 +868,7 @@ ssl3_get_client_hello(SSL *s)
 	s->client_version = client_version;
 	s->version = shared_version;
 
-	if ((method = ssl_get_server_method(shared_version)) == NULL) {
+	if ((method = ssl_get_method(shared_version)) == NULL) {
 		SSLerror(s, ERR_R_INTERNAL_ERROR);
 		goto err;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_legacy.c,v 1.15 2020/10/07 10:14:45 tb Exp $ */
+/*	$OpenBSD: tls13_legacy.c,v 1.16 2020/10/11 02:22:27 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -302,6 +302,8 @@ tls13_use_legacy_stack(struct tls13_ctx *ctx)
 
 	memset(&cbb, 0, sizeof(cbb));
 
+	s->method = tls_legacy_method();
+
 	if (!ssl3_setup_init_buffer(s))
 		goto err;
 	if (!ssl3_setup_buffers(s))
@@ -359,12 +361,11 @@ tls13_use_legacy_client(struct tls13_ctx *ctx)
 {
 	SSL *s = ctx->ssl;
 
-	s->method = tls_legacy_client_method();
-	s->internal->handshake_func = s->method->internal->ssl_connect;
-	s->client_version = s->version = s->method->internal->max_version;
-
 	if (!tls13_use_legacy_stack(ctx))
 		return 0;
+
+	s->internal->handshake_func = s->method->internal->ssl_connect;
+	s->client_version = s->version = s->method->internal->max_version;
 
 	S3I(s)->hs.state = SSL3_ST_CR_SRVR_HELLO_A;
 
@@ -376,13 +377,12 @@ tls13_use_legacy_server(struct tls13_ctx *ctx)
 {
 	SSL *s = ctx->ssl;
 
-	s->method = tls_legacy_server_method();
+	if (!tls13_use_legacy_stack(ctx))
+		return 0;
+
 	s->internal->handshake_func = s->method->internal->ssl_accept;
 	s->client_version = s->version = s->method->internal->max_version;
 	s->server = 1;
-
-	if (!tls13_use_legacy_stack(ctx))
-		return 0;
 
 	S3I(s)->hs.state = SSL3_ST_SR_CLNT_HELLO_A;
 
