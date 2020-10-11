@@ -19,4 +19,8 @@ cpu_relax(void)
 	}
 }
 
+#ifndef CACHELINESIZE
+#define CACHELINESIZE 64
+#endif
+
 #endif

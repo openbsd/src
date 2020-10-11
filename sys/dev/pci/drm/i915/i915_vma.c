@@ -1418,7 +1418,7 @@ int __init i915_global_vma_init(void)
 		return -ENOMEM;
 #else
 	pool_init(&global.slab_vmas, sizeof(struct i915_vma),
-	    0, IPL_NONE, 0, "drmvma", NULL);
+	    CACHELINESIZE, IPL_NONE, 0, "drmvma", NULL);
 #endif
 
 	i915_global_register(&global.base);

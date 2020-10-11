@@ -467,7 +467,7 @@ int amdgpu_sync_init(void)
 		return -ENOMEM;
 #else
 	pool_init(&amdgpu_sync_slab, sizeof(struct amdgpu_sync_entry),
-	    0, IPL_TTY, 0, "amdgpu_sync", NULL);
+	    CACHELINESIZE, IPL_TTY, 0, "amdgpu_sync", NULL);
 #endif
 
 	return 0;

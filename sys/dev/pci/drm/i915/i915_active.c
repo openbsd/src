@@ -998,7 +998,7 @@ int __init i915_global_active_init(void)
 		return -ENOMEM;
 #else
 	pool_init(&global.slab_cache, sizeof(struct active_node),
-	    0, IPL_TTY, 0, "drmsc", NULL);
+	    CACHELINESIZE, IPL_TTY, 0, "drmsc", NULL);
 #endif
 
 	i915_global_register(&global.base);

@@ -574,9 +574,9 @@ err_priorities:
 	return -ENOMEM;
 #else
 	pool_init(&global.slab_dependencies, sizeof(struct i915_dependency),
-	    0, IPL_TTY, 0, "gsdep", NULL);
+	    CACHELINESIZE, IPL_TTY, 0, "gsdep", NULL);
 	pool_init(&global.slab_priorities, sizeof(struct i915_priolist),
-	    0, IPL_TTY, 0, "gspri", NULL);
+	    CACHELINESIZE, IPL_TTY, 0, "gspri", NULL);
 
 	i915_global_register(&global.base);
 	return 0;

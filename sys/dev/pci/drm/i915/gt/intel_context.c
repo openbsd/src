@@ -354,7 +354,7 @@ int __init i915_global_context_init(void)
 		return -ENOMEM;
 #else
 	pool_init(&global.slab_ce, sizeof(struct intel_context),
-	    0, IPL_TTY, 0, "ictx", NULL);
+	    CACHELINESIZE, IPL_TTY, 0, "ictx", NULL);
 #endif
 
 	i915_global_register(&global.base);

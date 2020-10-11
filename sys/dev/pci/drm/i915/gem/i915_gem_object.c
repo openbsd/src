@@ -410,7 +410,7 @@ int __init i915_global_objects_init(void)
 		return -ENOMEM;
 #else
 	pool_init(&global.slab_objects, sizeof(struct drm_i915_gem_object),
-	    0, IPL_NONE, 0, "drmobj", NULL);
+	    CACHELINESIZE, IPL_NONE, 0, "drmobj", NULL);
 #endif
 
 	i915_global_register(&global.base);

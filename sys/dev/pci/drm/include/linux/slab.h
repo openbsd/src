@@ -10,6 +10,8 @@
 #include <linux/workqueue.h>
 #include <linux/gfp.h>
 
+#include <linux/processor.h>	/* for CACHELINESIZE */
+
 static inline void *
 kmalloc(size_t size, int flags)
 {

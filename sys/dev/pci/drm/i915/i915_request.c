@@ -1788,9 +1788,9 @@ int __init i915_global_request_init(void)
 		goto err_requests;
 #else
 	pool_init(&global.slab_requests, sizeof(struct i915_request),
-	    0, IPL_TTY, 0, "i915_request", NULL);
+	    CACHELINESIZE, IPL_TTY, 0, "i915_request", NULL);
 	pool_init(&global.slab_execute_cbs, sizeof(struct execute_cb),
-	    0, IPL_TTY, 0, "i915_exec", NULL);
+	    CACHELINESIZE, IPL_TTY, 0, "i915_exec", NULL);
 #endif
 
 	i915_global_register(&global.base);

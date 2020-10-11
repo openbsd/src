@@ -50,7 +50,7 @@ int __init i915_global_buddy_init(void)
 		return -ENOMEM;
 #else
 	pool_init(&global.slab_blocks, sizeof(struct i915_buddy_block),
-	    0, IPL_NONE, 0, "i915bb", NULL);
+	    CACHELINESIZE, IPL_NONE, 0, "i915bb", NULL);
 #endif
 
 	i915_global_register(&global.base);
