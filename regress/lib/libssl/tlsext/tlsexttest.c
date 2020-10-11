@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.43 2020/08/09 16:26:57 jsing Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.44 2020/10/11 02:12:55 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -2583,7 +2583,7 @@ test_tlsext_srtp_client(void)
 static int
 test_tlsext_srtp_server(void)
 {
-	SRTP_PROTECTION_PROFILE *prof;
+	const SRTP_PROTECTION_PROFILE *prof;
 	SSL_CTX *ssl_ctx = NULL;
 	SSL *ssl = NULL;
 	uint8_t *data = NULL;
