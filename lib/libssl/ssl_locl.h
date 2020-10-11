@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.300 2020/10/11 01:13:04 guenther Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.301 2020/10/11 01:16:31 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -797,7 +797,7 @@ typedef struct ssl_internal_st {
 	TLS_SESSION_TICKET_EXT *tlsext_session_ticket;
 
 	STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;	/* What we'll do */
-	SRTP_PROTECTION_PROFILE *srtp_profile;			/* What's been chosen */
+	const SRTP_PROTECTION_PROFILE *srtp_profile;		/* What's been chosen */
 
 	int renegotiate;/* 1 if we are renegotiating.
 		 	 * 2 if we are a server and are inside a handshake
@@ -1418,9 +1418,9 @@ void SSL_error_internal(const SSL *s, int r, char *f, int l);
 #ifndef OPENSSL_NO_SRTP
 
 int srtp_find_profile_by_name(char *profile_name,
-    SRTP_PROTECTION_PROFILE **pptr, unsigned int len);
+    const SRTP_PROTECTION_PROFILE **pptr, unsigned int len);
 int srtp_find_profile_by_num(unsigned int profile_num,
-    SRTP_PROTECTION_PROFILE **pptr);
+    const SRTP_PROTECTION_PROFILE **pptr);
 
 #endif /* OPENSSL_NO_SRTP */
 

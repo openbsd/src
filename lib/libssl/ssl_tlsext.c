@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.83 2020/10/11 01:13:04 guenther Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.84 2020/10/11 01:16:31 guenther Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1213,7 +1213,7 @@ tlsext_srtp_client_build(SSL *s, uint16_t msg_type, CBB *cbb)
 	CBB profiles, mki;
 	int ct, i;
 	STACK_OF(SRTP_PROTECTION_PROFILE) *clnt = NULL;
-	SRTP_PROTECTION_PROFILE *prof;
+	const SRTP_PROTECTION_PROFILE *prof;
 
 	if ((clnt = SSL_get_srtp_profiles(s)) == NULL) {
 		SSLerror(s, SSL_R_EMPTY_SRTP_PROTECTION_PROFILE_LIST);
@@ -1247,7 +1247,7 @@ tlsext_srtp_client_build(SSL *s, uint16_t msg_type, CBB *cbb)
 int
 tlsext_srtp_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 {
-	SRTP_PROTECTION_PROFILE *cprof, *sprof;
+	const SRTP_PROTECTION_PROFILE *cprof, *sprof;
 	STACK_OF(SRTP_PROTECTION_PROFILE) *clnt = NULL, *srvr;
 	int i, j;
 	int ret;
@@ -1358,7 +1358,7 @@ int
 tlsext_srtp_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 {
 	STACK_OF(SRTP_PROTECTION_PROFILE) *clnt;
-	SRTP_PROTECTION_PROFILE *prof;
+	const SRTP_PROTECTION_PROFILE *prof;
 	int i;
 	uint16_t id;
 	CBS profile_ids, mki;
