@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.44 2020/10/11 02:12:55 jsing Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.45 2020/10/11 02:45:49 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -2608,7 +2608,7 @@ test_tlsext_srtp_server(void)
 		goto err;
 	}
 
-	if (srtp_find_profile_by_name((char *)tlsext_srtp_aes128cmsha80, &prof,
+	if (srtp_find_profile_by_name(tlsext_srtp_aes128cmsha80, &prof,
 	    strlen(tlsext_srtp_aes128cmsha80))) {
 		FAIL("should be able to find the given profile\n");
 		goto err;
