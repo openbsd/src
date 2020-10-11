@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.117 2020/08/26 06:50:20 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.118 2020/10/11 03:21:44 tb Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -355,10 +355,17 @@ server		: SERVER optmatch STRING	{
 				YYERROR;
 			}
 
-			if (server_tls_load_keypair(srv) == -1)
+			if (server_tls_load_keypair(srv) == -1) {
+				/* Soft fail as there may be no certificate. */
 				log_warnx("%s:%d: server \"%s\": failed to "
 				    "load public/private keys", file->name,
 				    yylval.lineno, srv->srv_conf.name);
+				serverconfig_free(srv_conf);
+				srv_conf = NULL;
+				free(srv);
+				srv = NULL;
+				break;
+			}
 
 			if (server_tls_load_ca(srv) == -1) {
 				yyerror("server \"%s\": failed to load "
