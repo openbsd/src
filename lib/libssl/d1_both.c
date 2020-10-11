@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.60 2020/09/26 14:43:17 jsing Exp $ */
+/* $OpenBSD: d1_both.c,v 1.61 2020/10/11 03:47:59 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -973,14 +973,9 @@ dtls1_buffer_message(SSL *s, int is_ccs)
 
 	memcpy(frag->fragment, s->internal->init_buf->data, s->internal->init_num);
 
-	if (is_ccs) {
-		OPENSSL_assert(D1I(s)->w_msg_hdr.msg_len +
-		    ((s->version == DTLS1_VERSION) ?
-		    DTLS1_CCS_HEADER_LENGTH : 3) == (unsigned int)s->internal->init_num);
-	} else {
-		OPENSSL_assert(D1I(s)->w_msg_hdr.msg_len +
-		    DTLS1_HM_HEADER_LENGTH == (unsigned int)s->internal->init_num);
-	}
+	OPENSSL_assert(D1I(s)->w_msg_hdr.msg_len +
+	    (is_ccs ? DTLS1_CCS_HEADER_LENGTH : DTLS1_HM_HEADER_LENGTH) ==
+	    (unsigned int)s->internal->init_num);
 
 	frag->msg_header.msg_len = D1I(s)->w_msg_hdr.msg_len;
 	frag->msg_header.seq = D1I(s)->w_msg_hdr.seq;
