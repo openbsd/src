@@ -1,6 +1,6 @@
 #!/usr/bin/perl -T
 
-# $OpenBSD: security,v 1.40 2020/09/17 06:51:06 schwarze Exp $
+# $OpenBSD: security,v 1.41 2020/10/11 18:28:17 millert Exp $
 #
 # Copyright (c) 2011, 2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
 # Copyright (c) 2011 Andrew Fresh <andrew@afresh1.com>
@@ -529,7 +529,7 @@ sub strmode {
 }
 
 sub find_special_files {
-	my %skip;
+	my (%skip, @fs);
 
 	%skip = map { $_ => 1 } split ' ', $ENV{SUIDSKIP}
 	    if $ENV{SUIDSKIP};
@@ -541,11 +541,11 @@ sub find_special_files {
 	    and return;
 	while (<$fh>) {
 		my ($path, $opt) = /\son\s+(.*?)\s+type\s+\w+(.*)/;
-		$skip{$path} = 1 if $path &&
-		    ($opt !~ /local/ ||
-		     ($opt =~ /nodev/ && $opt =~ /nosuid/));
+		push @fs, $path if $path && $opt =~ /local/ &&
+		    !($opt =~ /nodev/ && $opt =~ /nosuid/);
 	}
 	close_or_nag $fh, "mount" or return;
+	return unless @fs;
 
 	my $setuid_files = {};
 	my $device_files = {};
@@ -554,14 +554,19 @@ sub find_special_files {
 	File::Find::find({no_chdir => 1, wanted => sub {
 
 		if ($skip{$_}) {
-			no warnings 'once';
 			$File::Find::prune = 1;
 			return;
 		}
 
 		my ($dev, $ino, $mode, $nlink, $uid, $gid, $rdev, $size,
 		    $atime, $mtime, $ctime, $blksize, $blocks) = lstat;
-		unless (defined $dev) {
+		if (defined $dev) {
+			no warnings 'once';
+			if ($dev != $File::Find::topdev) {
+				$File::Find::prune = 1;
+				return;
+			}
+		} else {
 			nag !$!{ENOENT}, "stat: $_: $!";
 			return;
 		}
@@ -592,7 +597,7 @@ sub find_special_files {
 		$file->{size}    = $size;
 		@$file{qw(wday mon day time year)} =
 		    split ' ', localtime $mtime;
-	}}, '/');
+	}}, @fs);
 
 	nag $uudecode_is_setuid, 'Uudecode is setuid.';
 	return $setuid_files, $device_files;
