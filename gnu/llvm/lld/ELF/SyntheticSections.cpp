@@ -604,6 +604,8 @@ GotSection::GotSection()
   // ElfSym::globalOffsetTable.
   if (ElfSym::globalOffsetTable && !target->gotBaseSymInGotPlt)
     numEntries += target->gotHeaderEntriesNum;
+  else if (config->emachine == EM_PPC)
+    numEntries += target->gotHeaderEntriesNum;
 }
 
 void GotSection::addEntry(Symbol &sym) {
