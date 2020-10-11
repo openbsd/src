@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.198 2020/09/17 15:42:14 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.199 2020/10/11 01:13:04 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -170,7 +170,7 @@
 #define FIXED_NONCE_LEN(x) (((x / 2) & 0xf) << 24)
 
 /* list of available SSLv3 ciphers (sorted by id) */
-SSL_CIPHER ssl3_ciphers[] = {
+const SSL_CIPHER ssl3_ciphers[] = {
 
 	/* The RSA ciphers */
 	/* Cipher 01 */

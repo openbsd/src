@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.82 2020/09/09 12:31:23 inoguchi Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.83 2020/10/11 01:13:04 guenther Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -563,7 +563,7 @@ tlsext_sigalgs_client_needs(SSL *s, uint16_t msg_type)
 int
 tlsext_sigalgs_client_build(SSL *s, uint16_t msg_type, CBB *cbb)
 {
-	uint16_t *tls_sigalgs = tls12_sigalgs;
+	const uint16_t *tls_sigalgs = tls12_sigalgs;
 	size_t tls_sigalgs_len = tls12_sigalgs_len;
 	CBB sigalgs;
 
@@ -609,7 +609,7 @@ tlsext_sigalgs_server_needs(SSL *s, uint16_t msg_type)
 int
 tlsext_sigalgs_server_build(SSL *s, uint16_t msg_type, CBB *cbb)
 {
-	uint16_t *tls_sigalgs = tls12_sigalgs;
+	const uint16_t *tls_sigalgs = tls12_sigalgs;
 	size_t tls_sigalgs_len = tls12_sigalgs_len;
 	CBB sigalgs;
 
@@ -1815,7 +1815,7 @@ struct tls_extension {
 	struct tls_extension_funcs server;
 };
 
-static struct tls_extension tls_extensions[] = {
+static const struct tls_extension tls_extensions[] = {
 	{
 		.type = TLSEXT_TYPE_supported_versions,
 		.messages = SSL_TLSEXT_MSG_CH | SSL_TLSEXT_MSG_SH |
@@ -1997,7 +1997,7 @@ static struct tls_extension tls_extensions[] = {
 /* Ensure that extensions fit in a uint32_t bitmask. */
 CTASSERT(N_TLS_EXTENSIONS <= (sizeof(uint32_t) * 8));
 
-struct tls_extension *
+const struct tls_extension *
 tls_extension_find(uint16_t type, size_t *tls_extensions_idx)
 {
 	size_t i;
@@ -2022,8 +2022,8 @@ tlsext_extension_seen(SSL *s, uint16_t type)
 	return ((S3I(s)->hs.extensions_seen & (1 << idx)) != 0);
 }
 
-static struct tls_extension_funcs *
-tlsext_funcs(struct tls_extension *tlsext, int is_server)
+static const struct tls_extension_funcs *
+tlsext_funcs(const struct tls_extension *tlsext, int is_server)
 {
 	if (is_server)
 		return &tlsext->server;
@@ -2034,8 +2034,8 @@ tlsext_funcs(struct tls_extension *tlsext, int is_server)
 static int
 tlsext_build(SSL *s, int is_server, uint16_t msg_type, CBB *cbb)
 {
-	struct tls_extension_funcs *ext;
-	struct tls_extension *tlsext;
+	const struct tls_extension_funcs *ext;
+	const struct tls_extension *tlsext;
 	CBB extensions, extension_data;
 	int extensions_present = 0;
 	size_t i;
@@ -2112,8 +2112,8 @@ tlsext_clienthello_hash_extension(SSL *s, uint16_t type, CBS *cbs)
 static int
 tlsext_parse(SSL *s, int is_server, uint16_t msg_type, CBS *cbs, int *alert)
 {
-	struct tls_extension_funcs *ext;
-	struct tls_extension *tlsext;
+	const struct tls_extension_funcs *ext;
+	const struct tls_extension *tlsext;
 	CBS extensions, extension_data;
 	uint16_t type;
 	size_t idx;

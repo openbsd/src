@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.21 2020/05/09 16:52:15 beck Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.22 2020/10/11 01:13:04 guenther Exp $ */
 /*
  * Copyright (c) 2018-2020 Bob Beck <beck@openbsd.org>
  *
@@ -144,7 +144,7 @@ const struct ssl_sigalg sigalgs[] = {
 };
 
 /* Sigalgs for tls 1.3, in preference order, */
-uint16_t tls13_sigalgs[] = {
+const uint16_t tls13_sigalgs[] = {
 	SIGALG_RSA_PSS_RSAE_SHA512,
 	SIGALG_RSA_PKCS1_SHA512,
 	SIGALG_ECDSA_SECP521R1_SHA512,
@@ -155,10 +155,10 @@ uint16_t tls13_sigalgs[] = {
 	SIGALG_RSA_PKCS1_SHA256,
 	SIGALG_ECDSA_SECP256R1_SHA256,
 };
-size_t tls13_sigalgs_len = (sizeof(tls13_sigalgs) / sizeof(tls13_sigalgs[0]));
+const size_t tls13_sigalgs_len = (sizeof(tls13_sigalgs) / sizeof(tls13_sigalgs[0]));
 
 /* Sigalgs for tls 1.2, in preference order, */
-uint16_t tls12_sigalgs[] = {
+const uint16_t tls12_sigalgs[] = {
 	SIGALG_RSA_PSS_RSAE_SHA512,
 	SIGALG_RSA_PKCS1_SHA512,
 	SIGALG_ECDSA_SECP521R1_SHA512,
@@ -171,7 +171,7 @@ uint16_t tls12_sigalgs[] = {
 	SIGALG_RSA_PKCS1_SHA1, /* XXX */
 	SIGALG_ECDSA_SHA1,     /* XXX */
 };
-size_t tls12_sigalgs_len = (sizeof(tls12_sigalgs) / sizeof(tls12_sigalgs[0]));
+const size_t tls12_sigalgs_len = (sizeof(tls12_sigalgs) / sizeof(tls12_sigalgs[0]));
 
 const struct ssl_sigalg *
 ssl_sigalg_lookup(uint16_t sigalg)
@@ -187,7 +187,7 @@ ssl_sigalg_lookup(uint16_t sigalg)
 }
 
 const struct ssl_sigalg *
-ssl_sigalg(uint16_t sigalg, uint16_t *values, size_t len)
+ssl_sigalg(uint16_t sigalg, const uint16_t *values, size_t len)
 {
 	int i;
 
@@ -200,7 +200,7 @@ ssl_sigalg(uint16_t sigalg, uint16_t *values, size_t len)
 }
 
 int
-ssl_sigalgs_build(CBB *cbb, uint16_t *values, size_t len)
+ssl_sigalgs_build(CBB *cbb, const uint16_t *values, size_t len)
 {
 	size_t i;
 
@@ -260,7 +260,7 @@ ssl_sigalg_pkey_ok(const struct ssl_sigalg *sigalg, EVP_PKEY *pkey,
 const struct ssl_sigalg *
 ssl_sigalg_select(SSL *s, EVP_PKEY *pkey)
 {
-	uint16_t *tls_sigalgs = tls12_sigalgs;
+	const uint16_t *tls_sigalgs = tls12_sigalgs;
 	size_t tls_sigalgs_len = tls12_sigalgs_len;
 	int check_curve = 0;
 	CBS cbs;

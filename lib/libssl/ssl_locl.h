@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.299 2020/10/07 08:43:34 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.300 2020/10/11 01:13:04 guenther Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1105,7 +1105,7 @@ struct ssl_aead_ctx_st {
 	char variable_nonce_in_record;
 };
 
-extern SSL_CIPHER ssl3_ciphers[];
+extern const SSL_CIPHER ssl3_ciphers[];
 
 const char *ssl_version_string(int ver);
 int ssl_enabled_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver);
