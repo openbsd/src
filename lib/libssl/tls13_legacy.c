@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_legacy.c,v 1.16 2020/10/11 02:22:27 jsing Exp $ */
+/*	$OpenBSD: tls13_legacy.c,v 1.17 2020/10/11 02:59:47 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -340,6 +340,8 @@ tls13_use_legacy_stack(struct tls13_ctx *ctx)
 
 	/* Stash the current handshake message. */
 	tls13_handshake_msg_data(ctx->hs_msg, &cbs);
+	if (!BUF_MEM_grow_clean(s->internal->init_buf, CBS_len(&cbs)))
+		goto err;
 	if (!CBS_write_bytes(&cbs, s->internal->init_buf->data,
 	    s->internal->init_buf->length, NULL))
 		goto err;
