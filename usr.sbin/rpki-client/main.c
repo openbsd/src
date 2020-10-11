@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.82 2020/10/01 11:06:47 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.83 2020/10/11 12:35:24 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -363,6 +363,21 @@ repo_lookup(int fd, const char *uri)
 }
 
 /*
+ * Build local file name base on the URI and the repo info.
+ */
+static char *
+repo_filename(const struct repo *repo, const char *uri)
+{
+	char *nfile;
+
+	uri += 8 + strlen(repo->host) + 1 + strlen(repo->module) + 1;
+
+	if (asprintf(&nfile, "%s/%s/%s", repo->host, repo->module, uri) == -1)
+		err(1, "asprintf");
+	return nfile;
+}
+
+/*
  * Read the next entity from the parser process, removing it from the
  * queue of pending requests in the process.
  * This always returns a valid entity.
@@ -543,8 +558,7 @@ queue_add_tal(int fd, struct entityq *q, const char *file, size_t *eid)
 }
 
 /*
- * Add rsync URIs (CER) from a TAL file, RFC 7730.
- * Only use the first URI of the set.
+ * Add URIs (CER) from a TAL file, RFC 8630.
  */
 static void
 queue_add_from_tal(int proc, int rsync, struct entityq *q,
@@ -552,19 +566,24 @@ queue_add_from_tal(int proc, int rsync, struct entityq *q,
 {
 	char			*nfile;
 	const struct repo	*repo;
-	const char		*uri;
+	const char		*uri = NULL;
+	size_t			 i;
 
 	assert(tal->urisz);
-	uri = tal->uri[0];
+
+	for (i = 0; i < tal->urisz; i++) {
+		uri = tal->uri[i];
+		if (strncasecmp(uri, "rsync://", 8) == 0)
+			break;
+	}
+	if (uri == NULL)
+		errx(1, "TAL file has no rsync:// URI");
 
 	/* Look up the repository. */
-
 	assert(rtype_resolve(uri) == RTYPE_CER);
-	repo = repo_lookup(rsync, uri);
-	uri += 8 + strlen(repo->host) + 1 + strlen(repo->module) + 1;
 
-	if (asprintf(&nfile, "%s/%s/%s", repo->host, repo->module, uri) == -1)
-		err(1, "asprintf");
+	repo = repo_lookup(rsync, uri);
+	nfile = repo_filename(repo, uri);
 
 	entityq_add(proc, q, nfile, RTYPE_CER, repo, NULL, tal->pkey,
 	    tal->pkeysz, tal->descr, eid);
@@ -575,24 +594,23 @@ queue_add_from_tal(int proc, int rsync, struct entityq *q,
  */
 static void
 queue_add_from_cert(int proc, int rsync, struct entityq *q,
-    const char *uri, size_t *eid)
+    const char *rsyncuri, const char *rrdpuri, size_t *eid)
 {
 	char			*nfile;
 	enum rtype		 type;
 	const struct repo	*repo;
 
-	if ((type = rtype_resolve(uri)) == RTYPE_EOF)
-		errx(1, "%s: unknown file type", uri);
+	if (rsyncuri == NULL)
+		return;
+	if ((type = rtype_resolve(rsyncuri)) == RTYPE_EOF)
+		errx(1, "%s: unknown file type", rsyncuri);
 	if (type != RTYPE_MFT)
-		errx(1, "%s: invalid file type", uri);
+		errx(1, "%s: invalid file type", rsyncuri);
 
 	/* Look up the repository. */
 
-	repo = repo_lookup(rsync, uri);
-	uri += 8 + strlen(repo->host) + 1 + strlen(repo->module) + 1;
-
-	if (asprintf(&nfile, "%s/%s/%s", repo->host, repo->module, uri) == -1)
-		err(1, "asprintf");
+	repo = repo_lookup(rsync, rsyncuri);
+	nfile = repo_filename(repo, rsyncuri);
 
 	entityq_add(proc, q, nfile, type, repo, NULL, NULL, 0, NULL, eid);
 }
@@ -1198,9 +1216,8 @@ entity_process(int proc, int rsync, struct stats *st,
 			 * we're revoked and then we don't want to
 			 * process the MFT.
 			 */
-			if (cert->mft != NULL)
-				queue_add_from_cert(proc, rsync,
-				    q, cert->mft, eid);
+			queue_add_from_cert(proc, rsync,
+			    q, cert->mft, cert->notify, eid);
 		} else
 			st->certs_invalid++;
 		cert_free(cert);
@@ -1639,7 +1656,7 @@ main(int argc, char *argv[])
 	}
 
 	if (killme) {
-		syslog(LOG_CRIT|LOG_DAEMON, 
+		syslog(LOG_CRIT|LOG_DAEMON,
 		    "excessive runtime (%d seconds), giving up", timeout);
 		errx(1, "excessive runtime (%d seconds), giving up", timeout);
 	}
