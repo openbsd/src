@@ -1,4 +1,4 @@
-/*	$OpenBSD: getmaxpartitions.c,v 1.10 2019/06/28 13:32:43 deraadt Exp $	*/
+/*	$OpenBSD: getmaxpartitions.c,v 1.11 2020/10/12 22:08:34 deraadt Exp $	*/
 /*	$NetBSD: getmaxpartitions.c,v 1.1 1996/05/16 07:03:31 thorpej Exp $	*/
 
 /*-
@@ -39,11 +39,10 @@
 int
 getmaxpartitions(void)
 {
-	int maxpart, mib[2];
+	const int mib[2] = { CTL_KERN, KERN_MAXPARTITIONS };
+	int maxpart;
 	size_t varlen;
 
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_MAXPARTITIONS;
 	varlen = sizeof(maxpart);
 	if (sysctl(mib, 2, &maxpart, &varlen, NULL, (size_t)0) == -1)
 		return (-1);

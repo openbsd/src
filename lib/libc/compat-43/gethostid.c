@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostid.c,v 1.8 2015/01/14 23:03:50 deraadt Exp $ */
+/*	$OpenBSD: gethostid.c,v 1.9 2020/10/12 22:08:32 deraadt Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,12 +35,10 @@
 long
 gethostid(void)
 {
-	int mib[2];
+	const int mib[2] = { CTL_KERN, KERN_HOSTID };
 	size_t size;
 	long value;
 
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_HOSTID;
 	size = sizeof value;
 	if (sysctl(mib, 2, &value, &size, NULL, 0) == -1)
 		return (-1);

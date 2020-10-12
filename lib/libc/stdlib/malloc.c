@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.265 2020/10/09 16:01:48 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.266 2020/10/12 22:08:33 deraadt Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -406,7 +406,8 @@ static void
 omalloc_init(void)
 {
 	char *p, *q, b[16];
-	int i, j, mib[2];
+	int i, j;
+	const int mib[2] = { CTL_VM, VM_MALLOC_CONF };
 	size_t sb;
 
 	/*
@@ -419,8 +420,6 @@ omalloc_init(void)
 	for (i = 0; i < 3; i++) {
 		switch (i) {
 		case 0:
-			mib[0] = CTL_VM;
-			mib[1] = VM_MALLOC_CONF;
 			sb = sizeof(b);
 			j = sysctl(mib, 2, b, &sb, NULL, 0);
 			if (j != 0)

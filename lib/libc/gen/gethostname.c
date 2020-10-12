@@ -1,4 +1,4 @@
-/*	$OpenBSD: gethostname.c,v 1.9 2015/09/12 14:56:50 guenther Exp $ */
+/*	$OpenBSD: gethostname.c,v 1.10 2020/10/12 22:08:33 deraadt Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,11 +35,9 @@
 int
 gethostname(char *name, size_t namelen)
 {
-	int mib[2];
+	const int mib[2] = { CTL_KERN, KERN_HOSTNAME };
 	size_t size;
 
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_HOSTNAME;
 	size = namelen;
 	if (sysctl(mib, 2, name, &size, NULL, 0) == -1)
 		return (-1);

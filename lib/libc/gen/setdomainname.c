@@ -1,4 +1,4 @@
-/*	$OpenBSD: setdomainname.c,v 1.9 2015/01/16 16:48:51 deraadt Exp $ */
+/*	$OpenBSD: setdomainname.c,v 1.10 2020/10/12 22:08:33 deraadt Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,10 +35,8 @@
 int
 setdomainname(const char *name, size_t namelen)
 {
-	int mib[2];
+	const int mib[2] = { CTL_KERN, KERN_DOMAINNAME };
 
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_DOMAINNAME;
 	if (sysctl(mib, 2, NULL, NULL, (void *)name, namelen) == -1)
 		return (-1);
 	return (0);

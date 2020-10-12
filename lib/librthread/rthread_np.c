@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_np.c,v 1.21 2019/02/04 17:18:08 tedu Exp $	*/
+/*	$OpenBSD: rthread_np.c,v 1.22 2020/10/12 22:08:34 deraadt Exp $	*/
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2005 Otto Moerbeek <otto@openbsd.org>
@@ -90,14 +90,12 @@ pthread_stackseg_np(pthread_t thread, stack_t *sinfo)
 			_rthread_init();
 
 		if (gotself == 0) {
-			int mib[2];
+			const int mib[2] = { CTL_VM, VM_PSSTRINGS };
 			size_t len;
 
 			if (getrlimit(RLIMIT_STACK, &rl) != 0)
 				return (EAGAIN);
 
-			mib[0] = CTL_VM;
-			mib[1] = VM_PSSTRINGS;
 			len = sizeof(_ps);
 			if (sysctl(mib, 2, &_ps, &len, NULL, 0) != 0)
 				return (EAGAIN);

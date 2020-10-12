@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt_scaled.c,v 1.18 2019/01/14 23:52:06 bluhm Exp $	*/
+/*	$OpenBSD: fmt_scaled.c,v 1.19 2020/10/12 22:08:34 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Ian F. Darwin.  All rights reserved.
@@ -50,9 +50,9 @@ typedef enum {
 } unit_type;
 
 /* These three arrays MUST be in sync!  XXX make a struct */
-static unit_type units[] = { NONE, KILO, MEGA, GIGA, TERA, PETA, EXA };
-static char scale_chars[] = "BKMGTPE";
-static long long scale_factors[] = {
+static const unit_type units[] = { NONE, KILO, MEGA, GIGA, TERA, PETA, EXA };
+static const char scale_chars[] = "BKMGTPE";
+static const long long scale_factors[] = {
 	1LL,
 	1024LL,
 	1024LL*1024,

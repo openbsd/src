@@ -1,4 +1,4 @@
-/*	$OpenBSD: setproctitle.c,v 1.15 2016/03/13 18:34:20 guenther Exp $ */
+/*	$OpenBSD: setproctitle.c,v 1.16 2020/10/12 22:08:33 deraadt Exp $ */
 /*
  * Copyright (c) 1994, 1995 Christopher G. Demetriou
  * All rights reserved.
@@ -64,11 +64,9 @@ setproctitle(const char *fmt, ...)
 
 	if (ps == NULL) {
 		struct _ps_strings _ps;
-		int mib[2];
+		const int mib[2] = { CTL_VM, VM_PSSTRINGS };
 		size_t len;
 
-		mib[0] = CTL_VM;
-		mib[1] = VM_PSSTRINGS;
 		len = sizeof(_ps);
 		if (sysctl(mib, 2, &_ps, &len, NULL, 0) != 0)
 			return;

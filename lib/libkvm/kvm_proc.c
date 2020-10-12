@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc.c,v 1.60 2019/06/28 13:32:42 deraadt Exp $	*/
+/*	$OpenBSD: kvm_proc.c,v 1.61 2020/10/12 22:08:33 deraadt Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -436,11 +436,9 @@ kvm_doargv(kvm_t *kd, const struct kinfo_proc *p, int nchr, int isenv,
 
 	if (ps == NULL) {
 		struct _ps_strings _ps;
-		int mib[2];
+		const int mib[2] = { CTL_VM, VM_PSSTRINGS };
 		size_t len;
 
-		mib[0] = CTL_VM;
-		mib[1] = VM_PSSTRINGS;
 		len = sizeof(_ps);
 		sysctl(mib, 2, &_ps, &len, NULL, 0);
 		ps = (struct ps_strings *)_ps.val;

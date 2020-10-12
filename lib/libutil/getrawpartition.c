@@ -1,4 +1,4 @@
-/*	$OpenBSD: getrawpartition.c,v 1.10 2019/06/28 13:32:43 deraadt Exp $	*/
+/*	$OpenBSD: getrawpartition.c,v 1.11 2020/10/12 22:08:34 deraadt Exp $	*/
 /*	$NetBSD: getrawpartition.c,v 1.1 1996/05/16 07:03:33 thorpej Exp $	*/
 
 /*-
@@ -39,11 +39,10 @@
 int
 getrawpartition(void)
 {
-	int rawpart, mib[2];
+	const int mib[2] = { CTL_KERN, KERN_RAWPARTITION };
+	int rawpart;
 	size_t varlen;
 
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_RAWPARTITION;
 	varlen = sizeof(rawpart);
 	if (sysctl(mib, 2, &rawpart, &varlen, NULL, (size_t)0) == -1)
 		return (-1);

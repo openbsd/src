@@ -1,4 +1,4 @@
-/*	$OpenBSD: sethostid.c,v 1.9 2015/01/14 23:03:50 deraadt Exp $ */
+/*	$OpenBSD: sethostid.c,v 1.10 2020/10/12 22:08:32 deraadt Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,10 +35,8 @@
 int
 sethostid(long hostid)
 {
-	int mib[2];
+	const int mib[2] = { CTL_KERN, KERN_HOSTID };
 
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_HOSTID;
 	if (sysctl(mib, 2, NULL, NULL, &hostid, sizeof hostid) == -1)
 		return (-1);
 	return (0);
