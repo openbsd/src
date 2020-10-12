@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs.h,v 1.9 2019/01/21 18:09:21 anton Exp $	*/
+/*	$OpenBSD: tmpfs.h,v 1.10 2020/10/12 13:08:03 visa Exp $	*/
 /*	$NetBSD: tmpfs.h,v 1.45 2011/09/27 01:10:43 christos Exp $	*/
 
 /*
@@ -171,6 +171,8 @@ typedef struct tmpfs_node {
 } tmpfs_node_t;
 
 #if defined(_KERNEL)
+
+#include <lib/libkern/libkern.h>	/* for KASSERT() */
 
 LIST_HEAD(tmpfs_node_list, tmpfs_node);
 
