@@ -1,4 +1,4 @@
-# $OpenBSD: symbols.awk,v 1.2 2020/09/18 10:39:10 tb Exp $
+# $OpenBSD: symbols.awk,v 1.3 2020/10/12 13:36:38 tb Exp $
 
 # Copyright (c) 2018,2020 Theo Buehler <tb@openbsd.org>
 #
@@ -62,11 +62,11 @@ BEGIN {
 }
 
 /^OPENSSL_strcasecmp$/ {
-	printf("extern int OPENSSL_strcasecmp(const char *, const char *);\n")
+	printf("extern int %s(const char *, const char *);\n", $0)
 }
 
 /^OPENSSL_strncasecmp$/ {
-	printf("extern int OPENSSL_strncasecmp(const char *, const char *, size_t);\n")
+	printf("extern int %s(const char *, const char *, size_t);\n", $0)
 }
 
 /^BIO_CONNECT_free$/						||
@@ -100,7 +100,7 @@ BEGIN {
 /^d2i_NETSCAPE_ENCRYPTED_PKEY$/					||
 /^d2i_NETSCAPE_PKEY$/ {
 	printf("extern void *%s", $0)
-	printf("(void *, const unsigned char *, const unsigned char *);\n", $0)
+	printf("(void *, const unsigned char *, const unsigned char *);\n")
 }
 
 /^i2d_ECPKPARAMETERS$/						||
