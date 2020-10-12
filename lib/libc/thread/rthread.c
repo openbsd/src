@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread.c,v 1.8 2018/05/13 16:21:26 visa Exp $ */
+/*	$OpenBSD: rthread.c,v 1.9 2020/10/12 22:06:51 deraadt Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -90,7 +90,7 @@ _rthread_init(void)
 	 * Set the debug level from an environment string.
 	 * Bogus values are silently ignored.
 	 */
-	if (! issetugid()) {
+	if (!issetugid()) {
 		char *envp = getenv(RTHREAD_ENV_DEBUG);
 
 		if (envp != NULL) {
