@@ -1,4 +1,4 @@
-.\" $OpenBSD: clang-local.1,v 1.20 2019/10/27 00:21:47 mortimer Exp $
+.\" $OpenBSD: clang-local.1,v 1.21 2020/10/12 16:41:03 deraadt Exp $
 .\"
 .\" Copyright (c) 2016 Pascal Stumpf <pascal@stumpf.co>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: October 27 2019 $
+.Dd $Mdocdate: October 12 2020 $
 .Dt CLANG-LOCAL 1
 .Os
 .Sh NAME
@@ -107,13 +107,14 @@ these functions.
 .It
 .Nm clang
 includes a security pass that exchanges some ROP-friendly instructions
-for safe alternatives on i386 and amd64.
+with safer alternatives on i386 and amd64.
 This can be disabled with the
 .Fl fno-fixup-gadgets
 option.
 .It
 .Nm clang
-includes the retguard security feature on amd64, arm64 and octeon.
+includes the retguard security feature on amd64, arm64, mips64, powerpc
+and powerpc64.
 This feature can be disabled with the
 .Fl fno-ret-protector
 or
