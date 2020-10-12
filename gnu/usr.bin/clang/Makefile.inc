@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.19 2020/08/03 14:45:22 patrick Exp $
+# $OpenBSD: Makefile.inc,v 1.20 2020/10/12 17:21:39 mortimer Exp $
 
 CLANG_SRCS?=	${.CURDIR}/../../../llvm/clang
 LLDB_SRCS?=	${.CURDIR}/../../../llvm/lldb
@@ -29,7 +29,7 @@ CPPFLAGS+=	-DNDEBUG
 # Disable some protections in the compiler to regain performance.
 .if ${MACHINE_ARCH} == "amd64" || ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "mips64" || ${MACHINE_ARCH} == "mips64el" || \
-    ${MACHINE_ARCH} == "aarch64" 
+    ${MACHINE_ARCH} == "aarch64" || ${MACHINE_ARCH} == "powerpc"
 CXXFLAGS+=	-fno-ret-protector
 .endif
 .if ${MACHINE_ARCH} == "amd64" || ${MACHINE_ARCH} == "i386"
