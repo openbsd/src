@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccm.c,v 1.21 2020/04/28 19:26:45 patrick Exp $ */
+/* $OpenBSD: imxccm.c,v 1.22 2020/10/12 17:38:28 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -244,11 +244,13 @@ uint32_t imxccm_get_ipgclk(struct imxccm_softc *);
 uint32_t imxccm_get_ipg_perclk(struct imxccm_softc *);
 uint32_t imxccm_get_uartclk(struct imxccm_softc *);
 uint32_t imxccm_imx8mm_enet(struct imxccm_softc *sc, uint32_t);
+uint32_t imxccm_imx8mm_ahb(struct imxccm_softc *sc, uint32_t);
 uint32_t imxccm_imx8mm_i2c(struct imxccm_softc *sc, uint32_t);
 uint32_t imxccm_imx8mm_uart(struct imxccm_softc *sc, uint32_t);
 uint32_t imxccm_imx8mm_usdhc(struct imxccm_softc *sc, uint32_t);
 uint32_t imxccm_imx8mq_ecspi(struct imxccm_softc *sc, uint32_t);
 uint32_t imxccm_imx8mq_enet(struct imxccm_softc *sc, uint32_t);
+uint32_t imxccm_imx8mq_ahb(struct imxccm_softc *sc, uint32_t);
 uint32_t imxccm_imx8mq_i2c(struct imxccm_softc *sc, uint32_t);
 uint32_t imxccm_imx8mq_pwm(struct imxccm_softc *sc, uint32_t);
 uint32_t imxccm_imx8mq_uart(struct imxccm_softc *sc, uint32_t);
@@ -775,6 +777,35 @@ imxccm_imx8mm_enet(struct imxccm_softc *sc, uint32_t idx)
 }
 
 uint32_t
+imxccm_imx8mm_ahb(struct imxccm_softc *sc, uint32_t idx)
+{
+	uint32_t mux;
+
+	if (idx >= sc->sc_nmuxs || sc->sc_muxs[idx].reg == 0)
+		return 0;
+
+	mux = HREAD4(sc, sc->sc_muxs[idx].reg);
+	mux >>= sc->sc_muxs[idx].shift;
+	mux &= sc->sc_muxs[idx].mask;
+
+	switch (mux) {
+	case 0:
+		return clock_get_frequency(sc->sc_node, "osc_24m");
+	case 1:
+		return 133 * 1000 * 1000; /* sys_pll1_133m */
+	case 2:
+		return 800 * 1000 * 1000; /* sys_pll1_800m */
+	case 3:
+		return 400 * 1000 * 1000; /* sys_pll1_400m */
+	case 4:
+		return 125 * 1000 * 1000; /* sys_pll2_125m */
+	default:
+		printf("%s: 0x%08x 0x%08x\n", __func__, idx, mux);
+		return 0;
+	}
+}
+
+uint32_t
 imxccm_imx8mm_i2c(struct imxccm_softc *sc, uint32_t idx)
 {
 	uint32_t mux;
@@ -879,6 +910,35 @@ imxccm_imx8mq_enet(struct imxccm_softc *sc, uint32_t idx)
 		return clock_get_frequency(sc->sc_node, "osc_25m");
 	case 1:
 		return 266 * 1000 * 1000; /* sys1_pll_266m */
+	default:
+		printf("%s: 0x%08x 0x%08x\n", __func__, idx, mux);
+		return 0;
+	}
+}
+
+uint32_t
+imxccm_imx8mq_ahb(struct imxccm_softc *sc, uint32_t idx)
+{
+	uint32_t mux;
+
+	if (idx >= sc->sc_nmuxs || sc->sc_muxs[idx].reg == 0)
+		return 0;
+
+	mux = HREAD4(sc, sc->sc_muxs[idx].reg);
+	mux >>= sc->sc_muxs[idx].shift;
+	mux &= sc->sc_muxs[idx].mask;
+
+	switch (mux) {
+	case 0:
+		return clock_get_frequency(sc->sc_node, "osc_25m");
+	case 1:
+		return 133 * 1000 * 1000; /* sys1_pll_133m */
+	case 2:
+		return 800 * 1000 * 1000; /* sys1_pll_800m */
+	case 3:
+		return 400 * 1000 * 1000; /* sys1_pll_400m */
+	case 4:
+		return 125 * 1000 * 1000; /* sys2_pll_125m */
 	default:
 		printf("%s: 0x%08x 0x%08x\n", __func__, idx, mux);
 		return 0;
@@ -1387,6 +1447,9 @@ imxccm_get_frequency(void *cookie, uint32_t *cells)
 			case IMX8MM_CLK_ENET_AXI:
 				freq = imxccm_imx8mm_enet(sc, idx);
 				break;
+			case IMX8MM_CLK_AHB:
+				freq = imxccm_imx8mm_ahb(sc, idx);
+				break;
 			case IMX8MM_CLK_I2C1:
 			case IMX8MM_CLK_I2C2:
 			case IMX8MM_CLK_I2C3:
@@ -1432,6 +1495,9 @@ imxccm_get_frequency(void *cookie, uint32_t *cells)
 			switch (idx) {
 			case IMX8MQ_CLK_ENET_AXI:
 				freq = imxccm_imx8mq_enet(sc, idx);
+				break;
+			case IMX8MQ_CLK_AHB:
+				freq = imxccm_imx8mq_ahb(sc, idx);
 				break;
 			case IMX8MQ_CLK_I2C1:
 			case IMX8MQ_CLK_I2C2:
