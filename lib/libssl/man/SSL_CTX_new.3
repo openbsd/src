@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_CTX_new.3,v 1.14 2020/10/12 09:18:33 schwarze Exp $
+.\" $OpenBSD: SSL_CTX_new.3,v 1.15 2020/10/12 09:26:57 schwarze Exp $
 .\" full merge up to: OpenSSL 21cd6e00 Oct 21 14:40:15 2015 +0100
 .\" selective merge up to: OpenSSL 8f75443f May 24 14:04:26 2019 +0200
 .\"
@@ -77,7 +77,7 @@
 .Nm DTLSv1_method ,
 .Nm DTLSv1_server_method ,
 .Nm DTLSv1_client_method
-.Nd create a new SSL_CTX object as framework for TLS/SSL enabled functions
+.Nd create a new SSL_CTX object as a framework for TLS enabled functions
 .Sh SYNOPSIS
 .In openssl/ssl.h
 .Ft SSL_CTX *
@@ -130,7 +130,7 @@
 .Fn SSL_CTX_new
 creates a new
 .Vt SSL_CTX
-object as framework to establish TLS/SSL or DTLS enabled connections.
+object as a framework to establish TLS or DTLS enabled connections.
 It initializes the list of ciphers, the session cache setting, the
 callbacks, the keys and certificates, and the options to its default
 values.
@@ -192,21 +192,21 @@ Deprecated aliases for
 .Fn TLSv1_server_method ,
 .Fn TLSv1_client_method
 .Xc
-A TLS/SSL connection established with these methods will only
+A connection established with these methods will only
 understand the TLSv1 protocol.
 .It Xo
 .Fn TLSv1_1_method ,
 .Fn TLSv1_1_server_method ,
 .Fn TLSv1_1_client_method
 .Xc
-A TLS/SSL connection established with these methods will only
+A connection established with these methods will only
 understand the TLSv1.1 protocol.
 .It Xo
 .Fn TLSv1_2_method ,
 .Fn TLSv1_2_server_method ,
 .Fn TLSv1_2_client_method
 .Xc
-A TLS/SSL connection established with these methods will only
+A connection established with these methods will only
 understand the TLSv1.2 protocol.
 .It Xo
 .Fn DTLSv1_method ,
