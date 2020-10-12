@@ -678,6 +678,85 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       return;
     }
   }
+  case PPC::RETGUARD_LOAD_PC: {
+    unsigned DEST = MI->getOperand(0).getReg();
+    unsigned LR  = MI->getOperand(1).getReg();
+    MCSymbol *HereSym = MI->getOperand(2).getMCSymbol();
+
+    unsigned MTLR = PPC::MTLR;
+    unsigned MFLR = PPC::MFLR;
+    unsigned BL   = PPC::BL;
+    if (Subtarget->isPPC64()) {
+      MTLR = PPC::MTLR8;
+      MFLR = PPC::MFLR8;
+      BL   = PPC::BL8;
+    }
+
+    // Cache the current LR
+    EmitToStreamer(*OutStreamer, MCInstBuilder(MFLR)
+                                 .addReg(LR));
+
+    // Create the BL forward
+    const MCExpr *HereExpr = MCSymbolRefExpr::create(HereSym, OutContext);
+    EmitToStreamer(*OutStreamer, MCInstBuilder(BL)
+                                 .addExpr(HereExpr));
+    OutStreamer->EmitLabel(HereSym);
+
+    // Grab the result
+    EmitToStreamer(*OutStreamer, MCInstBuilder(MFLR)
+                                 .addReg(DEST));
+    // Restore LR
+    EmitToStreamer(*OutStreamer, MCInstBuilder(MTLR)
+                                 .addReg(LR));
+    return;
+  }
+  case PPC::RETGUARD_LOAD_GOT: {
+    if (Subtarget->isSecurePlt() && isPositionIndependent() ) {
+      StringRef GOTName = (PL == PICLevel::SmallPIC ?
+                                 "_GLOBAL_OFFSET_TABLE_" : ".LTOC");
+      unsigned DEST     = MI->getOperand(0).getReg();
+      unsigned HERE     = MI->getOperand(1).getReg();
+      MCSymbol *HereSym = MI->getOperand(2).getMCSymbol();
+      MCSymbol *GOTSym  = OutContext.getOrCreateSymbol(GOTName);
+      const MCExpr *HereExpr = MCSymbolRefExpr::create(HereSym, OutContext);
+      const MCExpr *GOTExpr  = MCSymbolRefExpr::create(GOTSym, OutContext);
+
+      // Get offset from Here to GOT
+      const MCExpr *GOTDeltaExpr =
+        MCBinaryExpr::createSub(GOTExpr, HereExpr, OutContext);
+      const MCExpr *GOTDeltaHi =
+        PPCMCExpr::createHa(GOTDeltaExpr, false, OutContext);
+      const MCExpr *GOTDeltaLo =
+        PPCMCExpr::createLo(GOTDeltaExpr, false, OutContext);
+
+      EmitToStreamer(*OutStreamer, MCInstBuilder(PPC::ADDIS)
+                                   .addReg(DEST)
+                                   .addReg(HERE)
+                                   .addExpr(GOTDeltaHi));
+      EmitToStreamer(*OutStreamer, MCInstBuilder(PPC::ADDI)
+                                   .addReg(DEST)
+                                   .addReg(DEST)
+                                   .addExpr(GOTDeltaLo));
+    }
+    return;
+  }
+  case PPC::RETGUARD_LOAD_COOKIE: {
+    unsigned DEST       = MI->getOperand(0).getReg();
+    MCSymbol *CookieSym = getSymbol(MI->getOperand(1).getGlobal());
+    const MCExpr *CookieExprHa = MCSymbolRefExpr::create(
+        CookieSym, MCSymbolRefExpr::VK_PPC_HA, OutContext);
+    const MCExpr *CookieExprLo = MCSymbolRefExpr::create(
+        CookieSym, MCSymbolRefExpr::VK_PPC_LO, OutContext);
+
+    EmitToStreamer(*OutStreamer, MCInstBuilder(PPC::LIS)
+                                 .addReg(DEST)
+                                 .addExpr(CookieExprHa));
+    EmitToStreamer(*OutStreamer, MCInstBuilder(PPC::LWZ)
+                                 .addReg(DEST)
+                                 .addExpr(CookieExprLo)
+                                 .addReg(DEST));
+    return;
+  }
   case PPC::LWZtoc: {
     assert(!IsDarwin && "TOC is an ELF/XCOFF construct.");
 

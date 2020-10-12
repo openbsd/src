@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2020/08/03 14:45:27 patrick Exp $
+# $OpenBSD: Makefile,v 1.8 2020/10/12 14:52:08 mortimer Exp $
 
 LIB=	LLVMPowerPCCodeGen
 NOPROFILE=
@@ -31,6 +31,7 @@ SRCS+=	PPCBoolRetToInt.cpp \
 	PPCQPXLoadSplat.cpp \
 	PPCReduceCRLogicals.cpp \
 	PPCRegisterInfo.cpp \
+	PPCReturnProtectorLowering.cpp \
 	PPCSubtarget.cpp \
 	PPCTargetMachine.cpp \
 	PPCTargetObjectFile.cpp \

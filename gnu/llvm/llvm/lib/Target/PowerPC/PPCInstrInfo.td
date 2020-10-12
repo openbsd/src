@@ -1427,6 +1427,31 @@ let Defs = [LR] in
   def MoveGOTtoLR : PPCEmitTimePseudo<(outs), (ins), "#MoveGOTtoLR", []>,
                     PPC970_Unit_BRU;
 
+// Pseudo instruction used by retguard.
+//
+// We need to get the PC into a register in order to calculate the address of
+// the retguard cookies. This pseudo will branch immediately forward to get PC
+// in LR, and then move LR into the destination register. The current value of
+// LR is saved and restored via the given temp register, which is trashed.
+let Size = 16 in {
+def RETGUARD_LOAD_PC : PPCEmitTimePseudo<(outs gprc:$dest), (ins gprc:$tmp),
+                       "#RGLoadPC", []>;
+}
+
+// Once we have the PC in a register, we need to load the address of the GOT
+// into another register so we can then finally load the local offset of the
+// retguard symbol entry from the GOT and then the cookie value.
+let Size = 8 in {
+def RETGUARD_LOAD_GOT : PPCEmitTimePseudo<(outs gprc:$dest),
+                        (ins gprc:$pc, calltarget:$sym), "RGLoadGOT", []>;
+}
+
+let Size = 8 in {
+// For static linkage, we can load the cookie directly
+def RETGUARD_LOAD_COOKIE : PPCEmitTimePseudo<(outs gprc:$dest),
+                        (ins calltarget:$sym), "RGLoadCookie", []>;
+}
+
 let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, PPC970_Unit = 7 in {
   let isBarrier = 1 in {
     let isPredicable = 1 in
