@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.96 2019/06/28 13:35:00 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.97 2020/10/12 13:56:22 naddy Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -481,6 +481,7 @@ docompress(const char *in, char *out, const struct compressor *method,
 {
 #ifndef SMALL
 	u_char buf[Z_BUFSIZE];
+	char namebuf[PATH_MAX];
 	char *name;
 	int error, ifd, ofd, oreg;
 	void *cookie;
@@ -534,7 +535,8 @@ docompress(const char *in, char *out, const struct compressor *method,
 	}
 
 	if (!pipin && storename) {
-		name = basename(in);
+		strlcpy(namebuf, in, sizeof(namebuf));
+		name = basename(namebuf);
 		mtime = (u_int32_t)sb->st_mtime;
 	}
 	if ((cookie = method->wopen(ofd, name, bits, mtime)) == NULL) {
