@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rgereg.h,v 1.2 2020/07/22 00:48:02 kevlo Exp $	*/
+/*	$OpenBSD: if_rgereg.h,v 1.3 2020/10/12 02:06:25 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020 Kevin Lo <kevlo@openbsd.org>
@@ -316,7 +316,6 @@ struct rge_softc {
 	uint32_t		rge_intrs;
 	uint32_t		rge_tx_ack;
 	uint32_t		rge_rx_ack;
-	int			rge_rxbufsz;
 	int			rge_timerintr;
 #define RGE_IMTYPE_NONE		0
 #define RGE_IMTYPE_SIM		1

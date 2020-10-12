@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rge.c,v 1.6 2020/08/07 13:53:58 kevlo Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.7 2020/10/12 02:06:25 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020 Kevin Lo <kevlo@openbsd.org>
@@ -598,19 +598,8 @@ rge_init(struct ifnet *ifp)
 	/* Set MAC address. */
 	rge_set_macaddr(sc, sc->sc_arpcom.ac_enaddr);
 
-	/* Set Maximum frame size but don't let MTU be lass than ETHER_MTU. */
-	if (ifp->if_mtu < ETHERMTU)
-		sc->rge_rxbufsz = ETHERMTU;
-	else
-		sc->rge_rxbufsz = ifp->if_mtu;
-
-	sc->rge_rxbufsz += ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN +
-	    ETHER_CRC_LEN + 1;
-
-	if (sc->rge_rxbufsz > RGE_JUMBO_FRAMELEN)
-		sc->rge_rxbufsz -= 1; 
-
-	RGE_WRITE_2(sc, RGE_RXMAXSIZE, sc->rge_rxbufsz);
+	/* Set Maximum frame size. */
+	RGE_WRITE_2(sc, RGE_RXMAXSIZE, RGE_JUMBO_FRAMELEN);
 
 	/* Initialize RX and TX descriptors lists. */
 	rge_rx_list_init(sc);
@@ -1054,12 +1043,11 @@ rge_newbuf(struct rge_softc *sc)
 	bus_dmamap_t rxmap;
 	int idx;
 
-	m = MCLGETI(NULL, M_DONTWAIT, NULL, sc->rge_rxbufsz);
+	m = MCLGETI(NULL, M_DONTWAIT, NULL, RGE_JUMBO_FRAMELEN);
 	if (m == NULL)
 		return (ENOBUFS);
 
-	m->m_data += (m->m_ext.ext_size - sc->rge_rxbufsz);
-	m->m_len = m->m_pkthdr.len = sc->rge_rxbufsz;
+	m->m_len = m->m_pkthdr.len = RGE_JUMBO_FRAMELEN;
 
 	idx = sc->rge_ldata.rge_rxq_prodidx;
 	rxq = &sc->rge_ldata.rge_rxq[idx];
@@ -1577,7 +1565,6 @@ rge_phy_config_mac_cfg2(struct rge_softc *sc)
 void
 rge_phy_config_mac_cfg3(struct rge_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	uint16_t val;
 	int i;
 	static const uint16_t mac_cfg3_a438_value[] =
@@ -1640,7 +1627,8 @@ rge_phy_config_mac_cfg3(struct rge_softc *sc)
 	rge_write_phy_ocp(sc, 0xb87c, 0x8159);
 	val = rge_read_phy_ocp(sc, 0xb87e) & ~0xff00;
 	rge_write_phy_ocp(sc, 0xb87e, val | 0x0700);
-	RGE_WRITE_2(sc, RGE_EEE_TXIDLE_TIMER, ifp->if_mtu + ETHER_HDR_LEN + 32);
+	RGE_WRITE_2(sc, RGE_EEE_TXIDLE_TIMER, RGE_JUMBO_MTU + ETHER_HDR_LEN +
+	    32);
 	rge_write_phy_ocp(sc, 0xb87c, 0x80a2);
 	rge_write_phy_ocp(sc, 0xb87e, 0x0153);
 	rge_write_phy_ocp(sc, 0xb87c, 0x809c);
@@ -1681,7 +1669,6 @@ rge_phy_config_mac_cfg3(struct rge_softc *sc)
 void
 rge_phy_config_mac_cfg4(struct rge_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	uint16_t val;
 	int i;
 	static const uint16_t mac_cfg4_b87c_value[] =
@@ -1754,7 +1741,8 @@ rge_phy_config_mac_cfg4(struct rge_softc *sc)
 	RGE_PHY_CLRBIT(sc, 0xa432, 0x0040);
 	rge_write_phy_ocp(sc, 0xb87c, 0x8529);
 	rge_write_phy_ocp(sc, 0xb87e, 0x050e);
-	RGE_WRITE_2(sc, RGE_EEE_TXIDLE_TIMER, ifp->if_mtu + ETHER_HDR_LEN + 32);
+	RGE_WRITE_2(sc, RGE_EEE_TXIDLE_TIMER, RGE_JUMBO_MTU + ETHER_HDR_LEN +
+	    32);
 	rge_write_phy_ocp(sc, 0xa436, 0x816c);
 	rge_write_phy_ocp(sc, 0xa438, 0xc4a0);
 	rge_write_phy_ocp(sc, 0xa436, 0x8170);
@@ -1870,7 +1858,6 @@ rge_phy_config_mac_cfg4(struct rge_softc *sc)
 void
 rge_phy_config_mac_cfg5(struct rge_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	uint16_t val;
 	int i;
 
@@ -1900,7 +1887,8 @@ rge_phy_config_mac_cfg5(struct rge_softc *sc)
 	rge_write_phy_ocp(sc, 0xac46, val | 0x0090);
 	val = rge_read_phy_ocp(sc, 0xad30) & ~0x0003;
 	rge_write_phy_ocp(sc, 0xad30, val | 0x0001);
-	RGE_WRITE_2(sc, RGE_EEE_TXIDLE_TIMER, ifp->if_mtu + ETHER_HDR_LEN + 32);
+	RGE_WRITE_2(sc, RGE_EEE_TXIDLE_TIMER, RGE_JUMBO_MTU + ETHER_HDR_LEN +
+	    32);
 	rge_write_phy_ocp(sc, 0xb87c, 0x80f5);
 	rge_write_phy_ocp(sc, 0xb87e, 0x760e);
 	rge_write_phy_ocp(sc, 0xb87c, 0x8107);
