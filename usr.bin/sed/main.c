@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.40 2018/12/08 23:11:24 schwarze Exp $	*/
+/*	$OpenBSD: main.c,v 1.41 2020/10/13 06:07:54 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -343,6 +343,7 @@ mf_fgets(SPACE *sp, enum e_spflag spflag)
 {
 	struct stat sb;
 	size_t len;
+	char dirbuf[PATH_MAX];
 	char *p;
 	int c, fd;
 	static int firstfile;
@@ -397,8 +398,9 @@ mf_fgets(SPACE *sp, enum e_spflag spflag)
 				if (len > sizeof(oldfname))
 					error(FATAL, "%s: name too long", fname);
 			}
-			len = snprintf(tmpfname, sizeof(tmpfname), "%s/sedXXXXXXXXXX",
-			    dirname(fname));
+			strlcpy(dirbuf, fname, sizeof(dirbuf));
+			len = snprintf(tmpfname, sizeof(tmpfname),
+			    "%s/sedXXXXXXXXXX", dirname(dirbuf));
 			if (len >= sizeof(tmpfname))
 				error(FATAL, "%s: name too long", fname);
 			if ((fd = mkstemp(tmpfname)) == -1)
