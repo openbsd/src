@@ -22,7 +22,7 @@
  */
 int tsig_openssl_init(region_type *region);
 
-void tsig_openssl_finalize();
+void tsig_openssl_finalize(void);
 
 #endif /* defined(HAVE_SSL) */
 
