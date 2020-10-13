@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.68 2020/07/06 13:33:09 pirofti Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.69 2020/10/13 08:47:59 mpi Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -148,7 +148,7 @@ uvm_grow(struct proc *p, vaddr_t sp)
  * When then pass that range to the walk callback with 'start'
  * pointing to the start of the present range, 'realend' pointing
  * to the first absent page (or the end of the entry), and 'end'
- * pointing to the page page the last absent page (or the end of
+ * pointing to the page past the last absent page (or the end of
  * the entry).
  *
  * Note that if the first page of the amap is empty then the callback
