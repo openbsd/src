@@ -514,11 +514,11 @@ const struct drm_i915_gem_object_ops i915_gem_shmem_ops = {
 	.release = shmem_release,
 };
 
+#ifdef __linux__
 static int __create_shmem(struct drm_i915_private *i915,
 			  struct drm_gem_object *obj,
 			  resource_size_t size)
 {
-#ifdef __linux__
 	unsigned long flags = VM_NORESERVE;
 	struct file *filp;
 
@@ -534,12 +534,8 @@ static int __create_shmem(struct drm_i915_private *i915,
 
 	obj->filp = filp;
 	return 0;
-#else
-	drm_gem_private_object_init(&i915->drm, obj, size);
-
-	return 0;
-#endif
 }
+#endif
 
 static struct drm_i915_gem_object *
 create_shmem(struct intel_memory_region *mem,
