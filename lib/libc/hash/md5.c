@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.11 2015/09/11 09:18:27 guenther Exp $	*/
+/*	$OpenBSD: md5.c,v 1.12 2020/10/13 04:42:28 guenther Exp $	*/
 
 /*
  * This code implements the MD5 message-digest algorithm.
@@ -37,7 +37,7 @@
 	(cp)[1] = (value) >> 8;						\
 	(cp)[0] = (value); } while (0)
 
-static u_int8_t PADDING[MD5_BLOCK_LENGTH] = {
+static const u_int8_t PADDING[MD5_BLOCK_LENGTH] = {
 	0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0

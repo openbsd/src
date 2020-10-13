@@ -1,4 +1,4 @@
-/*	$OpenBSD: glob.c,v 1.49 2020/04/21 08:25:22 dtucker Exp $ */
+/*	$OpenBSD: glob.c,v 1.50 2020/10/13 04:42:28 guenther Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -429,7 +429,7 @@ g_charclass(const Char **patternp, Char **bufnextp)
 	const Char *pattern = *patternp + 1;
 	Char *bufnext = *bufnextp;
 	const Char *colon;
-	struct cclass *cc;
+	const struct cclass *cc;
 	size_t len;
 
 	if ((colon = g_strchr(pattern, ':')) == NULL || colon[1] != ']')

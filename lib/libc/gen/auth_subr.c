@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.55 2020/07/06 13:33:06 pirofti Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.56 2020/10/13 04:42:28 guenther Exp $	*/
 
 /*
  * Copyright (c) 2000-2002,2004 Todd C. Miller <millert@openbsd.org>
@@ -134,7 +134,7 @@ static char *_auth_next_arg(auth_session_t *);
 /*
  * Set up a known environment for all authentication scripts.
  */
-static char *auth_environ[] = {
+static char * const auth_environ[] = {
 	"PATH=" _PATH_DEFPATH,
 	"SHELL=" _PATH_BSHELL,
 	NULL,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fnmatch.c,v 1.22 2020/03/13 03:25:45 djm Exp $	*/
+/*	$OpenBSD: fnmatch.c,v 1.23 2020/10/13 04:42:28 guenther Exp $	*/
 
 /* Copyright (c) 2011, VMware, Inc.
  * All rights reserved.
@@ -100,7 +100,7 @@ classmatch(const char *pattern, char test, int foldcase, const char **ep)
 {
 	const char * const mismatch = pattern;
 	const char *colon;
-	struct cclass *cc;
+	const struct cclass *cc;
 	int rval = RANGE_NOMATCH;
 	size_t len;
 
