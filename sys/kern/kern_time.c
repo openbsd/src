@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.145 2020/10/13 16:43:44 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.146 2020/10/13 17:33:39 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -616,6 +616,8 @@ sys_setitimer(struct proc *p, void *v, register_t *retval)
 			return error;
 		if (itimerfix(&aitv.it_value) || itimerfix(&aitv.it_interval))
 			return EINVAL;
+		if (!timerisset(&aitv.it_value))
+			timerclear(&aitv.it_interval);
 		newitvp = &aitv;
 	}
 	if (SCARG(uap, oitv) != NULL) {
