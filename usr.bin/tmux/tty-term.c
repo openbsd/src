@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-term.c,v 1.84 2020/10/05 09:53:01 nicm Exp $ */
+/* $OpenBSD: tty-term.c,v 1.85 2020/10/13 07:29:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -578,6 +578,9 @@ tty_term_create(struct tty *tty, char *name, int *feat, int fd, char **cause)
 	    (!tty_term_has(term, TTYC_SETRGBF) ||
 	    !tty_term_has(term, TTYC_SETRGBB)))
 		tty_add_features(feat, "RGB", ",");
+	if (tty_term_has(term, TTYC_SETRGBF) &&
+	    tty_term_has(term, TTYC_SETRGBB))
+		term->flags |= TERM_RGBCOLOURS;
 
 	/* Apply the features and overrides again. */
 	tty_apply_features(term, *feat);
