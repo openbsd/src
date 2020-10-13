@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.144 2020/10/07 17:53:44 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.145 2020/10/13 16:43:44 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -644,31 +644,30 @@ sys_setitimer(struct proc *p, void *v, register_t *retval)
 void
 realitexpire(void *arg)
 {
+	struct timespec cts, nts;
 	struct process *pr = arg;
 	struct itimerspec *tp = &pr->ps_timer[ITIMER_REAL];
+	int timo;
 
 	prsignal(pr, SIGALRM);
+
+	/* If it was a one-shot timer we're done. */
 	if (!timespecisset(&tp->it_interval)) {
 		timespecclear(&tp->it_value);
 		return;
 	}
-	for (;;) {
-		struct timespec cts, nts;
-		int timo;
 
+	/* Find the nearest future expiration point and restart the timeout. */
+	getnanouptime(&cts);
+	while (timespeccmp(&tp->it_value, &cts, <=))
 		timespecadd(&tp->it_value, &tp->it_interval, &tp->it_value);
-		getnanouptime(&cts);
-		if (timespeccmp(&tp->it_value, &cts, >)) {
-			nts = tp->it_value;
-			timespecsub(&nts, &cts, &nts);
-			timo = tstohz(&nts) - 1;
-			if (timo <= 0)
-				timo = 1;
-			if ((pr->ps_flags & PS_EXITING) == 0)
-				timeout_add(&pr->ps_realit_to, timo);
-			return;
-		}
-	}
+	nts = tp->it_value;
+	timespecsub(&nts, &cts, &nts);
+	timo = tstohz(&nts) - 1;
+	if (timo <= 0)
+		timo = 1;
+	if ((pr->ps_flags & PS_EXITING) == 0)
+		timeout_add(&pr->ps_realit_to, timo);
 }
 
 /*
