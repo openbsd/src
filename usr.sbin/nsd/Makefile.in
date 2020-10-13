@@ -126,7 +126,7 @@ install:
 orig-install: all
 	$(INSTALL) -d $(DESTDIR)$(sbindir)
 	$(INSTALL) -d $(DESTDIR)$(configdir)
-	$(INSTALL) -d $(DESTDIR)$(piddir)
+	if test -n "$(piddir)"; then $(INSTALL) -d $(DESTDIR)$(piddir); fi
 	$(INSTALL) -d $(DESTDIR)$(xfrdir)
 	$(INSTALL) -d $(DESTDIR)$(dbdir)
 	$(INSTALL) -d $(DESTDIR)$(mandir)

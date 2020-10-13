@@ -391,13 +391,13 @@ try_read_udb(namedb_type* db, int fd, const char* filename,
 	if(!(db->udb=udb_base_create_fd(filename, fd, &namedb_walkfunc,
 		NULL))) {
 		/* fd is closed by failed udb create call */
-		VERBOSITY(1, (LOG_WARNING, "can not use %s, "
+		VERBOSITY(1, (LOG_ERR, "can not use %s, "
 			"will create anew", filename));
 		return 0;
 	}
 	/* sanity check if can be opened */
 	if(udb_base_get_userflags(db->udb) != 0) {
-		log_msg(LOG_WARNING, "%s was not closed properly, it might "
+		log_msg(LOG_ERR, "%s was not closed properly, it might "
 			"be corrupted, will create anew", filename);
 		udb_base_free(db->udb);
 		db->udb = NULL;

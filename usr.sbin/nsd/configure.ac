@@ -5,7 +5,7 @@ dnl
 sinclude(acx_nlnetlabs.m4)
 sinclude(dnstap/dnstap.m4)
 
-AC_INIT(NSD,4.3.2,nsd-bugs@nlnetlabs.nl)
+AC_INIT(NSD,4.3.3,nsd-bugs@nlnetlabs.nl)
 AC_CONFIG_HEADER([config.h])
 
 #
@@ -657,7 +657,7 @@ AC_CHECK_SIZEOF(void*)
 AC_CHECK_SIZEOF(off_t)
 AC_CHECK_FUNCS([getrandom arc4random arc4random_uniform])
 AC_SEARCH_LIBS([setusercontext],[util],[AC_CHECK_HEADERS([login_cap.h])])
-AC_CHECK_FUNCS([tzset alarm chroot dup2 endpwent gethostname memset memcpy pwrite socket strcasecmp strchr strdup strerror strncasecmp strtol writev getaddrinfo getnameinfo freeaddrinfo gai_strerror sigaction sigprocmask strptime strftime localtime_r setusercontext glob initgroups setresuid setreuid setresgid setregid getpwnam mmap ppoll clock_gettime accept4])
+AC_CHECK_FUNCS([tzset alarm chroot dup2 endpwent gethostname memset memcpy pwrite socket strcasecmp strchr strdup strerror strncasecmp strtol writev getaddrinfo getnameinfo freeaddrinfo gai_strerror sigaction sigprocmask strptime strftime localtime_r setusercontext glob initgroups setresuid setreuid setresgid setregid getpwnam mmap ppoll clock_gettime accept4 getifaddrs])
 
 AC_CHECK_TYPE([struct mmsghdr], AC_DEFINE(HAVE_MMSGHDR, 1, [If sys/socket.h has a struct mmsghdr.]), [], [
 AC_INCLUDES_DEFAULT
@@ -908,7 +908,7 @@ AC_DEFINE_UNQUOTED([TCP_PORT], ["53"], [Define to the default tcp port.])
 AC_DEFINE_UNQUOTED([TCP_MAX_MESSAGE_LEN], [65535], [Define to the default maximum message length.])
 AC_DEFINE_UNQUOTED([UDP_PORT], ["53"], [Define to the default udp port.])
 AC_DEFINE_UNQUOTED([UDP_MAX_MESSAGE_LEN], [512], [Define to the default maximum udp message length.])
-AC_DEFINE_UNQUOTED([EDNS_MAX_MESSAGE_LEN], [4096], [Define to the default maximum message length with EDNS.])
+AC_DEFINE_UNQUOTED([EDNS_MAX_MESSAGE_LEN], [1232], [Define to the default maximum message length with EDNS.])
 AC_DEFINE_UNQUOTED([TLS_PORT], ["853"], [Define to the default DNS over TLS port.])
 AC_DEFINE_UNQUOTED([MAXSYSLOGMSGLEN], [512], [Define to the maximum message length to pass to syslog.])
 AC_DEFINE_UNQUOTED([NSD_CONTROL_PORT], [8952], [Define to the default nsd-control port.])
@@ -1019,19 +1019,21 @@ AC_SUBST(ratelimit_default)
 CHECK_SSL
 if test x$HAVE_SSL = x"yes"; then
 	ACX_LIB_SSL
+	# remove space after -ldl if there.
+	LIBS=`echo "$LIBS" | sed -e 's/ $//'`
 
 	# Check for -pthread
 	BAKLIBS="$LIBS"
 	LIBS="-lcrypto $LIBS"
 	AC_TRY_LINK([], [
-		int HMAC_Update(void);
-		(void)HMAC_Update();
+		int EVP_sha256(void);
+		(void)EVP_sha256();
 	], [],[
-		dnl so link fails for HMAC_Update, try with -pthread.
+		dnl so link fails for EVP_sha256, try with -pthread.
 		BAKCFLAGS="$CFLAGS"
 		CFLAGS="$CFLAGS -pthread"
 		AC_MSG_CHECKING([if libcrypto needs -pthread])
-		AC_TRY_LINK_FUNC([HMAC_Update], [
+		AC_TRY_LINK_FUNC([EVP_sha256], [
 			AC_MSG_RESULT([yes])
 		] , [
 			AC_MSG_RESULT([no])
@@ -1042,14 +1044,14 @@ if test x$HAVE_SSL = x"yes"; then
 	LIBS="$BAKLIBS"
 
 	if test -n "$ssldir"; then
-            AC_CHECK_LIB(crypto, HMAC_Update,, [
+            AC_CHECK_LIB(crypto, EVP_sha256,, [
                     AC_MSG_ERROR([OpenSSL found in $ssldir, but version 0.9.7 or higher is required])
                 ])
 	fi
 	SSL_LIBS="-lssl"
 	AC_SUBST(SSL_LIBS)
-	AC_CHECK_HEADERS([openssl/ssl.h openssl/err.h openssl/rand.h openssl/ocsp.h],,, [AC_INCLUDES_DEFAULT])
-	AC_CHECK_FUNCS([HMAC_CTX_reset HMAC_CTX_new EVP_cleanup ERR_load_crypto_strings OPENSSL_init_crypto SSL_CTX_set_security_level CRYPTO_memcmp EC_KEY_new_by_curve_name])
+	AC_CHECK_HEADERS([openssl/ssl.h openssl/err.h openssl/rand.h openssl/ocsp.h openssl/core_names.h],,, [AC_INCLUDES_DEFAULT])
+	AC_CHECK_FUNCS([HMAC_CTX_reset HMAC_CTX_new EVP_cleanup ERR_load_crypto_strings OPENSSL_init_crypto SSL_CTX_set_security_level CRYPTO_memcmp EC_KEY_new_by_curve_name EVP_MAC_CTX_new EVP_MAC_CTX_set_params])
 	AC_CHECK_DECLS([SSL_CTX_set_ecdh_auto,SSL_CTX_set_tmp_ecdh], [], [], [
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_OPENSSL_ERR_H

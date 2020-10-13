@@ -266,6 +266,19 @@ lookup_by_id(lookup_table_type *table, int id)
 	return NULL;
 }
 
+char *
+xstrdup(const char *src)
+{
+	char *result = strdup(src);
+
+	if(!result) {
+		log_msg(LOG_ERR, "strdup failed: %s", strerror(errno));
+		exit(1);
+	}
+
+	return result;
+}
+
 void *
 xalloc(size_t size)
 {

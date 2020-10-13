@@ -139,10 +139,139 @@ version(void)
 		);
 #endif
 	fprintf(stderr,
-		"Copyright (C) 2001-2006 NLnet Labs.  This is free software.\n"
+		"Copyright (C) 2001-2020 NLnet Labs.  This is free software.\n"
 		"There is NO warranty; not even for MERCHANTABILITY or FITNESS\n"
 		"FOR A PARTICULAR PURPOSE.\n");
 	exit(0);
+}
+
+#ifdef HAVE_GETIFADDRS
+static void
+resolve_ifa_name(struct ifaddrs *ifas, const char *search_ifa, char ***ip_addresses, size_t *ip_addresses_size)
+{
+	struct ifaddrs *ifa;
+	size_t last_ip_addresses_size = *ip_addresses_size;
+
+	for(ifa = ifas; ifa != NULL; ifa = ifa->ifa_next) {
+		sa_family_t family;
+		const char* atsign;
+#ifdef INET6      /* |   address ip    | % |  ifa name  | @ |  port  | nul */
+		char addr_buf[INET6_ADDRSTRLEN + 1 + IF_NAMESIZE + 1 + 16 + 1];
+#else
+		char addr_buf[INET_ADDRSTRLEN + 1 + 16 + 1];
+#endif
+
+		if((atsign=strrchr(search_ifa, '@')) != NULL) {
+			if(strlen(ifa->ifa_name) != (size_t)(atsign-search_ifa)
+			   || strncmp(ifa->ifa_name, search_ifa,
+			   atsign-search_ifa) != 0)
+				continue;
+		} else {
+			if(strcmp(ifa->ifa_name, search_ifa) != 0)
+				continue;
+			atsign = "";
+		}
+
+		if(ifa->ifa_addr == NULL)
+			continue;
+
+		family = ifa->ifa_addr->sa_family;
+		if(family == AF_INET) {
+			char a4[INET_ADDRSTRLEN + 1];
+			struct sockaddr_in *in4 = (struct sockaddr_in *)
+				ifa->ifa_addr;
+			if(!inet_ntop(family, &in4->sin_addr, a4, sizeof(a4)))
+				error("inet_ntop");
+			snprintf(addr_buf, sizeof(addr_buf), "%s%s",
+				a4, atsign);
+		}
+#ifdef INET6
+		else if(family == AF_INET6) {
+			struct sockaddr_in6 *in6 = (struct sockaddr_in6 *)
+				ifa->ifa_addr;
+			char a6[INET6_ADDRSTRLEN + 1];
+			char if_index_name[IF_NAMESIZE + 1];
+			if_index_name[0] = 0;
+			if(!inet_ntop(family, &in6->sin6_addr, a6, sizeof(a6)))
+				error("inet_ntop");
+			if_indextoname(in6->sin6_scope_id,
+				(char *)if_index_name);
+			if (strlen(if_index_name) != 0) {
+				snprintf(addr_buf, sizeof(addr_buf),
+					"%s%%%s%s", a6, if_index_name, atsign);
+			} else {
+				snprintf(addr_buf, sizeof(addr_buf), "%s%s",
+					a6, atsign);
+			}
+		}
+#endif
+		else {
+			continue;
+		}
+		VERBOSITY(4, (LOG_INFO, "interface %s has address %s",
+			search_ifa, addr_buf));
+
+		*ip_addresses = xrealloc(*ip_addresses, sizeof(char *) * (*ip_addresses_size + 1));
+		(*ip_addresses)[*ip_addresses_size] = xstrdup(addr_buf);
+		(*ip_addresses_size)++;
+	}
+
+	if (*ip_addresses_size == last_ip_addresses_size) {
+		*ip_addresses = xrealloc(*ip_addresses, sizeof(char *) * (*ip_addresses_size + 1));
+		(*ip_addresses)[*ip_addresses_size] = xstrdup(search_ifa);
+		(*ip_addresses_size)++;
+	}
+}
+#endif /* HAVE_GETIFADDRS */
+
+static void
+resolve_interface_names(struct nsd_options* options)
+{
+#ifdef HAVE_GETIFADDRS
+	struct ifaddrs *addrs;
+	struct ip_address_option *ip_addr;
+	struct ip_address_option *last = NULL;
+	struct ip_address_option *first = NULL;
+
+	if(getifaddrs(&addrs) == -1)
+		  error("failed to list interfaces");
+
+	/* replace the list of ip_adresses with a new list where the
+	 * interface names are replaced with their ip-address strings
+	 * from getifaddrs.  An interface can have several addresses. */
+	for(ip_addr = options->ip_addresses; ip_addr; ip_addr = ip_addr->next) {
+		char **ip_addresses = NULL;
+		size_t ip_addresses_size = 0, i;
+		resolve_ifa_name(addrs, ip_addr->address, &ip_addresses,
+			&ip_addresses_size);
+
+		for (i = 0; i < ip_addresses_size; i++) {
+			struct ip_address_option *current;
+			/* this copies the range_option, dev, and fib from
+			 * the original ip_address option to the new ones
+			 * with the addresses spelled out by resolve_ifa_name*/
+			current = region_alloc_init(options->region, ip_addr,
+				sizeof(*ip_addr));
+			current->address = region_strdup(options->region,
+				ip_addresses[i]);
+			current->next = NULL;
+			free(ip_addresses[i]);
+
+			if(first == NULL) {
+				first = current;
+			} else {
+				last->next = current;
+			}
+			last = current;
+		}
+		free(ip_addresses);
+	}
+
+	freeifaddrs(addrs);
+	options->ip_addresses = first;
+#else
+	(void)options;
+#endif /* HAVE_GETIFADDRS */
 }
 
 static void
@@ -170,7 +299,7 @@ setup_socket(
 	if(node) {
 		char *sep;
 
-		if(strlcpy(host_buf, node, sizeof(host_buf)) >= sizeof(host_buf)) {
+		if (strlcpy(host_buf, node, sizeof(host_buf)) >= sizeof(host_buf)) {
 			error("cannot parse address '%s': %s", node,
 			    strerror(ENAMETOOLONG));
 		}
@@ -657,8 +786,9 @@ unlinkpid(const char* file)
 		if (fd == -1) {
 			/* Truncate the pid file.  */
 			log_msg(LOG_ERR, "can not truncate the pid file %s: %s", file, strerror(errno));
-		} else 
+		} else {
 			close(fd);
+		}
 
 		/* unlink pidfile */
 		if (unlink(file) == -1) {
@@ -1238,6 +1368,7 @@ main(int argc, char *argv[])
 
 	nsd.this_child = NULL;
 
+	resolve_interface_names(nsd.options);
 	figure_sockets(&nsd.udp, &nsd.tcp, &nsd.ifs,
 		nsd.options->ip_addresses, udp_port, tcp_port, &hints);
 

@@ -468,5 +468,9 @@ void nsd_options_destroy(struct nsd_options* opt);
 void replace_str(char* buf, size_t len, const char* one, const char* two);
 /* apply pattern to the existing pattern in the parser */
 void config_apply_pattern(struct pattern_options *dest, const char* name);
+/* if the file is a directory, print a warning, because flex just exit()s
+ * when a fileread fails because it is a directory, helps the user figure
+ * out what just happened */
+void warn_if_directory(const char* filetype, FILE* f, const char* fname);
 
 #endif /* OPTIONS_H */

@@ -1,5 +1,29 @@
 NSD RELEASE NOTES
 
+4.3.3
+================
+FEATURES:
+	- Follow DNS flag day 2020 advice and
+	  set default EDNS message size to 1232.
+	- Merged PR #113 with fixes.  Instead of listing an IP-address to
+	  listen on, an interface name can be specified in nsd.conf, with
+	  ip-address: eth0.  The IP-addresses for that interface are then used.
+	- Port TSIG code for openssl 3.0.0-alpha6.
+BUG FIXES:
+	- Fix make install with --with-pidfile="".
+	- Merge #115 from millert: Fix strlcpy() usage. From OpenBSD.
+	- Merge #117: mini_event.h (4.3.2 and 4.3.1) on OpenBSD cannot find
+	  fd_set - patch.
+	- Fix that configure checks for EVP_sha256 to detect openssl, because
+	  HMAC_CTX_new is deprecated in 3.0.0.
+	- Fix #119: fix compile warnings from new gcc.
+	- Fix #119: warn when trying to parse a directory.
+	- Merge PR #121: Increase log level of recreated database from
+	  WARNING to ERR.
+	- Remove unused space from LIBS on link line.
+	- Updated date in nsd -v output.
+
+
 4.3.2
 ================
 FEATURES:

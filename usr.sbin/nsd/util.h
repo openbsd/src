@@ -148,6 +148,7 @@ void *xmallocarray(size_t num, size_t size);
 void *xalloc_zero(size_t size);
 void *xalloc_array_zero(size_t num, size_t size);
 void *xrealloc(void *ptr, size_t size);
+char *xstrdup(const char *src);
 
 /*
  * Mmap allocator routines.
@@ -400,7 +401,7 @@ struct state_pretty_rr {
 struct state_pretty_rr* create_pretty_rr(struct region* region);
 /* print rr to file, returns 0 on failure(nothing is written) */
 int print_rr(FILE *out, struct state_pretty_rr* state, struct rr *record,
-	struct region* tmp_region, struct buffer* tmp_buffer); 
+	struct region* tmp_region, struct buffer* tmp_buffer);
 
 /*
  * Convert a numeric rcode value to a human readable string

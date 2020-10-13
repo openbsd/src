@@ -139,6 +139,12 @@
 /* Define to 1 if you have the `EVP_cleanup' function. */
 #undef HAVE_EVP_CLEANUP
 
+/* Define to 1 if you have the `EVP_MAC_CTX_new' function. */
+#undef HAVE_EVP_MAC_CTX_NEW
+
+/* Define to 1 if you have the `EVP_MAC_CTX_set_params' function. */
+#undef HAVE_EVP_MAC_CTX_SET_PARAMS
+
 /* Define to 1 if you have the `ev_default_loop' function. */
 #undef HAVE_EV_DEFAULT_LOOP
 
@@ -165,6 +171,9 @@
 
 /* Define to 1 if you have the `gethostname' function. */
 #undef HAVE_GETHOSTNAME
+
+/* Define to 1 if you have the `getifaddrs' function. */
+#undef HAVE_GETIFADDRS
 
 /* Define to 1 if you have the `getnameinfo' function. */
 #undef HAVE_GETNAMEINFO
@@ -250,6 +259,9 @@
 
 /* Define to 1 if you have the <netinet/tcp.h> header file. */
 #undef HAVE_NETINET_TCP_H
+
+/* Define to 1 if you have the <openssl/core_names.h> header file. */
+#undef HAVE_OPENSSL_CORE_NAMES_H
 
 /* Define to 1 if you have the <openssl/err.h> header file. */
 #undef HAVE_OPENSSL_ERR_H

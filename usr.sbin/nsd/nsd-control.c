@@ -63,7 +63,7 @@
 #include "tsig.h"
 #include "options.h"
 
-static void usage() ATTR_NORETURN;
+static void usage(void) ATTR_NORETURN;
 static void ssl_err(const char* s) ATTR_NORETURN;
 static void ssl_path_err(const char* s, const char *path) ATTR_NORETURN;
 

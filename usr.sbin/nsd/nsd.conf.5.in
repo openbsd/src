@@ -1,4 +1,4 @@
-.TH "nsd.conf" "5" "Jul 14, 2020" "NLnet Labs" "nsd 4.3.2"
+.TH "nsd.conf" "5" "Oct  8, 2020" "NLnet Labs" "nsd 4.3.3"
 .\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -143,11 +143,15 @@ NSD will bind to the listed ip\-address. Can be given multiple times
 to bind multiple ip\-addresses. Optionally, a port number can be given.
 If none are given NSD listens to the wildcard interface. Same as commandline option
 .BR \-a.
+.IP
 To limit which NSD server(s) listen on the given interface, specify one or
 more servers separated by whitespace after <ip>[@port]. Ranges can be used as
 a shorthand to specify multiple consecutive servers. By default every server
 will listen.
-.BR
+.IP
+If an interface name is used instead of ip4 or ip6, the list of IP addresses
+associated with that interface is picked up and used at server start.
+.IP
 For servers with multiple IP addresses that can be used to send traffic
 to the internet, list them one by one, or the source address of replies
 could be wrong.  This is because if the udp socket associates a source
@@ -298,10 +302,10 @@ Default is system default MSS determined by interface MTU and
 negotiation between NSD and other servers.
 .TP
 .B ipv4\-edns\-size:\fR <number>
-Preferred EDNS buffer size for IPv4.  Default 4096.
+Preferred EDNS buffer size for IPv4.  Default 1232.
 .TP
 .B ipv6\-edns\-size:\fR <number>
-Preferred EDNS buffer size for IPv6.  Default 4096.
+Preferred EDNS buffer size for IPv6.  Default 1232.
 .TP
 .B pidfile:\fR <filename>
 Use the pid file instead of the platform specific default, usually 

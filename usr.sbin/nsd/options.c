@@ -9,6 +9,7 @@
 #include "config.h"
 #include <string.h>
 #include <stdio.h>
+#include <sys/stat.h>
 #include <errno.h>
 #include "options.h"
 #include "query.h"
@@ -161,6 +162,20 @@ nsd_options_insert_pattern(struct nsd_options* opt,
 	return 1;
 }
 
+void
+warn_if_directory(const char* filetype, FILE* f, const char* fname)
+{
+	if(fileno(f) != -1) {
+		struct stat st;
+		memset(&st, 0, sizeof(st));
+		if(fstat(fileno(f), &st) != -1) {
+			if(S_ISDIR(st.st_mode)) {
+				log_msg(LOG_WARNING, "trying to read %s but it is a directory: %s", filetype, fname);
+			}
+		}
+	}
+}
+
 int
 parse_options_file(struct nsd_options* opt, const char* file,
 	void (*err)(void*,const char*), void* err_arg)
@@ -197,6 +212,7 @@ parse_options_file(struct nsd_options* opt, const char* file,
 		}
 		return 0;
 	}
+	warn_if_directory("configfile", in, file);
 	c_in = in;
 	c_parse();
 	fclose(in);

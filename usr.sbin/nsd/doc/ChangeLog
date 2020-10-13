@@ -1,3 +1,58 @@
+1 October 2020: Wouter
+	- tag for 4.3.3rc1 release.
+
+30 September 2020: Wouter
+	- Updated date in nsd -v output.
+	- Fixup bug013_truncate, checkconf and cutest_qroot tests for new
+	  default EDNS size.
+
+29 September 2020: Willem
+	- Follow DNS flag day 2020 advice and
+	  set default EDNS message size to 1232.
+
+4 September 2020: Wouter
+	- Remove unused space from LIBS on link line.
+
+3 September 2020: Wouter
+	- Merge PR #121: Increase log level of recreated database from
+	  WARNING to ERR.
+
+1 September 2020: Wouter
+	- Fix #119: fix compile warnings from new gcc.
+	- Fix #119: warn when trying to parse a directory.
+
+27 August 2020: Wouter
+	- Merged PR #113 with fixes.  Instead of listing an IP-address to
+	  listen on, an interface name can be specified in nsd.conf, with
+	  ip-address: eth0.  The IP-addresses for that interface are then used.
+
+26 August 2020: Wouter
+	- Add xstrdup for PR #113.
+	- Tidy up code like in PR #113.
+	- Import code from PR #113.
+	- Fix for unknown EVP_MAC_CTX_free function in openssl 3.0.0 tsig code.
+
+24 August 2020: Wouter
+	- Fix that configure checks for EVP_sha256 to detect openssl, because
+	  HMAC_CTX_new is deprecated in 3.0.0.
+	- Port TSIG code for openssl 3.0.0-alpha6.
+	- Sync acx_nlnetlabs.m4 with the unbound repo.
+	- Review fixes for tsig, defensive free and zero.
+
+4 August 2020: Wouter
+	- Merge #117: mini_event.h (4.3.2 and 4.3.1) on OpenBSD cannot find
+	  fd_set - patch.
+
+23 July 2020: Wouter
+	- Merge #115 from millert: Fix strlcpy() usage. From OpenBSD.
+
+15 July 2020: Wouter
+	- Fix make install with --with-pidfile="".
+
+14 July 2020: Wouter
+	- Tag for 4.3.2 release.  Master branch contains the next version
+	  in development, 4.3.3.
+
 7 July 2020: Wouter
 	- Tag for 4.3.2rc1.
 

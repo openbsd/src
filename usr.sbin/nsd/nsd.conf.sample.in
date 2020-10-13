@@ -175,10 +175,10 @@ server:
 	# outgoing-tcp-mss: 0
 
 	# Preferred EDNS buffer size for IPv4.
-	# ipv4-edns-size: 4096
+	# ipv4-edns-size: 1232
 
 	# Preferred EDNS buffer size for IPv6.
-	# ipv6-edns-size: 4096
+	# ipv6-edns-size: 1232
 
 	# statistics are produced every number of seconds. Prints to log.
 	# Default is 0, meaning no statistics are produced.

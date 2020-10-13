@@ -50,6 +50,7 @@ ipc_child_quit(struct nsd* nsd)
 	region_destroy(nsd->server_region);
 #endif
 	server_shutdown(nsd);
+	/* ENOTREACH */
 	exit(0);
 }
 

@@ -1341,8 +1341,12 @@ zone_open(const char *filename, uint32_t ttl, uint16_t klass,
 	if (strcmp(filename, "-") == 0) {
 		yyin = stdin;
 		filename = "<stdin>";
-	} else if (!(yyin = fopen(filename, "r"))) {
-		return 0;
+		warn_if_directory("zonefile from stdin", yyin, filename);
+	} else {
+		if (!(yyin = fopen(filename, "r"))) {
+			return 0;
+		}
+		warn_if_directory("zonefile", yyin, filename);
 	}
 
 	zparser_init(filename, ttl, klass, origin);
