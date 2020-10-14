@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.382 2020/01/16 01:02:20 kn Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.383 2020/10/14 19:30:37 naddy Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2241,16 +2241,19 @@ pfctl_get_anchors(int dev, const char *anchor, int opts)
 {
 	struct pfioc_ruleset	pr;
 	static struct pfr_anchors anchors;
+	char anchorbuf[PATH_MAX];
 	char *n;
 
 	SLIST_INIT(&anchors);
 
 	memset(&pr, 0, sizeof(pr));
 	if (*anchor != '\0') {
-		n = dirname(anchor);
+		strlcpy(anchorbuf, anchor, sizeof(anchorbuf));
+		n = dirname(anchorbuf);
 		if (n[0] != '.' && n[1] != '\0')
 			strlcpy(pr.path, n, sizeof(pr.path));
-		n = basename(anchor);
+		strlcpy(anchorbuf, anchor, sizeof(anchorbuf));
+		n = basename(anchorbuf);
 		if (n != NULL)
 			strlcpy(pr.name, n, sizeof(pr.name));
 	}
