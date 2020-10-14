@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.51 2020/07/10 12:25:57 inoguchi Exp $ */
+/* $OpenBSD: s_client.c,v 1.52 2020/10/14 05:36:18 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1607,6 +1607,7 @@ s_client_main(int argc, char **argv)
 	X509_VERIFY_PARAM_free(s_client_config.vpm);
 	freezero(cbuf, BUFSIZZ);
 	freezero(sbuf, BUFSIZZ);
+	freezero(pbuf, BUFSIZZ);
 	freezero(mbuf, BUFSIZZ);
 	BIO_free(bio_c_out);
 
