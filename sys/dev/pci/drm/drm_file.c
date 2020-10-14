@@ -158,12 +158,7 @@ struct drm_file *drm_file_alloc(struct drm_minor *minor)
 	struct drm_file *file;
 	int ret;
 
-#ifdef __linux__
 	file = kzalloc(sizeof(*file), GFP_KERNEL);
-#else
-	file = kzalloc(max(dev->driver->file_priv_size, sizeof(*file)),
-	    GFP_KERNEL);
-#endif
 	if (!file)
 		return ERR_PTR(-ENOMEM);
 
