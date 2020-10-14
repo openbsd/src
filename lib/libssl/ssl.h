@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.178 2020/09/20 09:42:00 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.179 2020/10/14 16:49:57 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1457,6 +1457,9 @@ void	SSL_free(SSL *ssl);
 int	SSL_up_ref(SSL *ssl);
 int 	SSL_accept(SSL *ssl);
 int 	SSL_connect(SSL *ssl);
+#ifdef LIBRESSL_INTERNAL
+int	SSL_is_dtls(const SSL *s);
+#endif
 int	SSL_is_server(const SSL *s);
 int 	SSL_read(SSL *ssl, void *buf, int num);
 int 	SSL_peek(SSL *ssl, void *buf, int num);

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.235 2020/10/11 02:22:27 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.236 2020/10/14 16:49:57 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -936,6 +936,12 @@ SSL_connect(SSL *s)
 		SSL_set_connect_state(s); /* Not properly initialized yet */
 
 	return (s->method->internal->ssl_connect(s));
+}
+
+int
+SSL_is_dtls(const SSL *s)
+{
+	return s->method->internal->dtls;
 }
 
 int
