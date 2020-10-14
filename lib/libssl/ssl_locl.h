@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.305 2020/10/14 16:44:15 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.306 2020/10/14 16:57:33 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -312,10 +312,6 @@ __BEGIN_HIDDEN_DECLS
  * Cipher argument is so that this can be variable in the future.
  */
 #define SSL_C_PKEYLENGTH(c)	1024
-
-/* Check if an SSL structure is using DTLS. */
-#define SSL_IS_DTLS(s) \
-	(s->method->internal->dtls)
 
 /* See if we use signature algorithms extension. */
 #define SSL_USE_SIGALGS(s) \

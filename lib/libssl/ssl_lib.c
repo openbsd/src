@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.236 2020/10/14 16:49:57 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.237 2020/10/14 16:57:33 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1151,7 +1151,7 @@ SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
 		if (larg < (long)dtls1_min_mtu())
 			return (0);
 #endif
-		if (SSL_IS_DTLS(s)) {
+		if (SSL_is_dtls(s)) {
 			D1I(s)->mtu = larg;
 			return (larg);
 		}
@@ -1166,7 +1166,7 @@ SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
 			return (S3I(s)->send_connection_binding);
 		else return (0);
 	default:
-		if (SSL_IS_DTLS(s))
+		if (SSL_is_dtls(s))
 			return dtls1_ctrl(s, cmd, larg, parg);
 		return ssl3_ctrl(s, cmd, larg, parg);
 	}

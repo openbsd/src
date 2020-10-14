@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.125 2020/10/07 08:43:34 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.126 2020/10/14 16:57:33 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -342,7 +342,7 @@ tls1_change_cipher_state_aead(SSL *s, char is_read, const unsigned char *key,
 	SSL_AEAD_CTX *aead_ctx;
 
 	/* XXX - Need to avoid clearing write state for DTLS. */
-	if (SSL_IS_DTLS(s))
+	if (SSL_is_dtls(s))
 		return 0;
 
 	if (is_read) {
@@ -447,7 +447,7 @@ tls1_change_cipher_state_cipher(SSL *s, char is_read,
 		 * contexts that are used for DTLS - these are instead freed
 		 * by DTLS when its frees a ChangeCipherSpec fragment.
 		 */
-		if (!SSL_IS_DTLS(s))
+		if (!SSL_is_dtls(s))
 			ssl_clear_cipher_write_state(s);
 
 		if ((cipher_ctx = EVP_CIPHER_CTX_new()) == NULL)
@@ -524,7 +524,7 @@ tls1_change_cipher_state(SSL *s, int which)
 	 * Reset sequence number to zero - for DTLS this is handled in
 	 * dtls1_reset_seq_numbers().
 	 */
-	if (!SSL_IS_DTLS(s)) {
+	if (!SSL_is_dtls(s)) {
 		seq = is_read ? S3I(s)->read_sequence : S3I(s)->write_sequence;
 		memset(seq, 0, SSL3_SEQUENCE_SIZE);
 	}

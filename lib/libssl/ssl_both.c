@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.20 2020/09/24 18:12:00 jsing Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.21 2020/10/14 16:57:33 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -331,7 +331,7 @@ ssl3_send_change_cipher_spec(SSL *s, int a, int b)
 		s->internal->init_num = (int)outlen;
 		s->internal->init_off = 0;
 
-		if (SSL_IS_DTLS(s)) {
+		if (SSL_is_dtls(s)) {
 			D1I(s)->handshake_write_seq =
 			    D1I(s)->next_handshake_write_seq;
 			dtls1_set_message_header_int(s, SSL3_MT_CCS, 0,
@@ -447,7 +447,7 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 	CBS cbs;
 	uint8_t u8;
 
-	if (SSL_IS_DTLS(s))
+	if (SSL_is_dtls(s))
 		return (dtls1_get_message(s, st1, stn, mt, max, ok));
 
 	if (S3I(s)->tmp.reuse_message) {
@@ -702,7 +702,7 @@ ssl3_setup_read_buffer(SSL *s)
 	unsigned char *p;
 	size_t len, align, headerlen;
 
-	if (SSL_IS_DTLS(s))
+	if (SSL_is_dtls(s))
 		headerlen = DTLS1_RT_HEADER_LENGTH;
 	else
 		headerlen = SSL3_RT_HEADER_LENGTH;
@@ -732,7 +732,7 @@ ssl3_setup_write_buffer(SSL *s)
 	unsigned char *p;
 	size_t len, align, headerlen;
 
-	if (SSL_IS_DTLS(s))
+	if (SSL_is_dtls(s))
 		headerlen = DTLS1_RT_HEADER_LENGTH + 1;
 	else
 		headerlen = SSL3_RT_HEADER_LENGTH;

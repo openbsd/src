@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_packet.c,v 1.8 2018/11/08 22:28:52 jsing Exp $ */
+/* $OpenBSD: ssl_packet.c,v 1.9 2020/10/14 16:57:33 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -238,7 +238,7 @@ ssl_server_legacy_first_packet(SSL *s)
 	const char *data;
 	CBS header;
 
-	if (SSL_IS_DTLS(s))
+	if (SSL_is_dtls(s))
 		return 1;
 
 	CBS_init(&header, s->internal->packet, SSL3_RT_HEADER_LENGTH);

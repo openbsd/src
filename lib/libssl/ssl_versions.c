@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_versions.c,v 1.6 2020/05/31 18:03:32 jsing Exp $ */
+/* $OpenBSD: ssl_versions.c,v 1.7 2020/10/14 16:57:33 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -137,7 +137,7 @@ ssl_supported_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver)
 	uint16_t min_version, max_version;
 
 	/* DTLS cannot currently be disabled... */
-	if (SSL_IS_DTLS(s)) {
+	if (SSL_is_dtls(s)) {
 		min_version = max_version = DTLS1_VERSION;
 		goto done;
 	}
@@ -167,7 +167,7 @@ ssl_max_shared_version(SSL *s, uint16_t peer_ver, uint16_t *max_ver)
 
 	*max_ver = 0;
 
-	if (SSL_IS_DTLS(s)) {
+	if (SSL_is_dtls(s)) {
 		if (peer_ver >= DTLS1_VERSION) {
 			*max_ver = DTLS1_VERSION;
 			return 1;
@@ -214,7 +214,7 @@ ssl_downgrade_max_version(SSL *s, uint16_t *max_ver)
 	 * context.
 	 */
 
-	if (SSL_IS_DTLS(s)) {
+	if (SSL_is_dtls(s)) {
 		*max_ver = DTLS1_VERSION;
 		return 1;
 	}

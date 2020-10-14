@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.32 2020/10/03 17:35:16 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.33 2020/10/14 16:57:33 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -194,7 +194,7 @@ ssl3_read_n(SSL *s, int n, int max, int extend)
 	/* For DTLS/UDP reads should not span multiple packets
 	 * because the read operation returns the whole packet
 	 * at once (as long as it fits into the buffer). */
-	if (SSL_IS_DTLS(s)) {
+	if (SSL_is_dtls(s)) {
 		if (left > 0 && n > left)
 			n = left;
 	}
@@ -254,7 +254,7 @@ ssl3_read_n(SSL *s, int n, int max, int extend)
 		if (i <= 0) {
 			rb->left = left;
 			if (s->internal->mode & SSL_MODE_RELEASE_BUFFERS &&
-			    !SSL_IS_DTLS(s)) {
+			    !SSL_is_dtls(s)) {
 				if (len + left == 0)
 					ssl3_release_read_buffer(s);
 			}
@@ -267,7 +267,7 @@ ssl3_read_n(SSL *s, int n, int max, int extend)
 		 * the underlying transport protocol is message oriented as
 		 * opposed to byte oriented as in the TLS case.
 		 */
-		if (SSL_IS_DTLS(s)) {
+		if (SSL_is_dtls(s)) {
 			if (n > left)
 				n = left; /* makes the while condition false */
 		}
@@ -655,7 +655,7 @@ ssl3_write_pending(SSL *s, int type, const unsigned char *buf, unsigned int len)
 			wb->left = 0;
 			wb->offset += i;
 			if (s->internal->mode & SSL_MODE_RELEASE_BUFFERS &&
-			    !SSL_IS_DTLS(s))
+			    !SSL_is_dtls(s))
 				ssl3_release_write_buffer(s);
 			s->internal->rwstate = SSL_NOTHING;
 			return (S3I(s)->wpend_ret);
@@ -664,7 +664,7 @@ ssl3_write_pending(SSL *s, int type, const unsigned char *buf, unsigned int len)
 			 * For DTLS, just drop it. That's kind of the
 			 * whole point in using a datagram service.
 			 */
-			if (SSL_IS_DTLS(s))
+			if (SSL_is_dtls(s))
 				wb->left = 0;
 			return (i);
 		}
