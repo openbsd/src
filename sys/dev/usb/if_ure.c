@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ure.c,v 1.20 2020/10/05 05:29:34 jsg Exp $	*/
+/*	$OpenBSD: if_ure.c,v 1.21 2020/10/14 23:47:55 jsg Exp $	*/
 /*-
  * Copyright (c) 2015, 2016, 2019 Kevin Lo <kevlo@openbsd.org>
  * Copyright (c) 2020 Jonathon Fletcher <jonathon.fletcher@gmail.com>
@@ -98,7 +98,6 @@ const struct usb_devno ure_devs[] = {
 	{ USB_VENDOR_LENOVO, USB_PRODUCT_LENOVO_RTL8153B_7 },
 	{ USB_VENDOR_LENOVO, USB_PRODUCT_LENOVO_RTL8153B_8 },
 	{ USB_VENDOR_LENOVO, USB_PRODUCT_LENOVO_RTL8153B_9 },
-	{ USB_VENDOR_LENOVO, USB_PRODUCT_LENOVO_RTL8153B_10 },
 	{ USB_VENDOR_LENOVO, USB_PRODUCT_LENOVO_RTL8153_1 },
 	{ USB_VENDOR_LENOVO, USB_PRODUCT_LENOVO_RTL8153_2 },
 	{ USB_VENDOR_LENOVO, USB_PRODUCT_LENOVO_RTL8153_3 },
