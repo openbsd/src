@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.141 2019/12/19 17:40:11 mpi Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.142 2020/10/14 22:41:48 deraadt Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ struct kmemusage *kmemusage;
 char *kmembase, *kmemlimit;
 char buckstring[16 * sizeof("123456,")];
 int buckstring_init = 0;
-#if defined(KMEMSTATS) || defined(DIAGNOSTIC) || defined(FFS_SOFTUPDATES)
+#if defined(KMEMSTATS) || defined(DIAGNOSTIC)
 char *memname[] = INITKMEMNAMES;
 char *memall = NULL;
 struct rwlock sysctl_kmemlock = RWLOCK_INITIALIZER("sysctlklk");
@@ -603,7 +603,7 @@ sysctl_malloc(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 #ifdef KMEMSTATS
 	struct kmemstats km;
 #endif
-#if defined(KMEMSTATS) || defined(DIAGNOSTIC) || defined(FFS_SOFTUPDATES)
+#if defined(KMEMSTATS) || defined(DIAGNOSTIC)
 	int error;
 #endif
 	int i, siz;
@@ -648,7 +648,7 @@ sysctl_malloc(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (EOPNOTSUPP);
 #endif
 	case KERN_MALLOC_KMEMNAMES:
-#if defined(KMEMSTATS) || defined(DIAGNOSTIC) || defined(FFS_SOFTUPDATES)
+#if defined(KMEMSTATS) || defined(DIAGNOSTIC)
 		error = rw_enter(&sysctl_kmemlock, RW_WRITE|RW_INTR);
 		if (error)
 			return (error);
