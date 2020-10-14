@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.276 2020/09/22 19:32:53 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.277 2020/10/14 23:40:33 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1442,6 +1442,26 @@ scsi_xs_exec(struct scsi_xfer *xs)
 	KERNEL_LOCK();
 	xs->sc_link->bus->sb_adapter->scsi_cmd(xs);
 	KERNEL_UNLOCK();
+}
+
+/*
+ * Used by device drivers that fake various scsi commands.
+ */
+void
+scsi_copy_internal_data(struct scsi_xfer *xs, void *data, size_t datalen)
+{
+	size_t copy_cnt;
+
+	SC_DEBUG(xs->sc_link, SDEV_DB3, ("scsi_copy_internal_data\n"));
+
+	if (xs->datalen == 0) {
+		sc_print_addr(xs->sc_link);
+		printf("uio internal data copy not supported\n");
+	} else {
+		copy_cnt = MIN(datalen, xs->datalen);
+		memcpy(xs->data, data, copy_cnt);
+		xs->resid = xs->datalen - copy_cnt;
+	}
 }
 
 /*

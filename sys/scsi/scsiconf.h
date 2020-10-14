@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.199 2020/09/22 19:32:53 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.200 2020/10/14 23:40:33 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -486,6 +486,7 @@ int	scsi_mode_select(struct scsi_link *, int, struct scsi_mode_header *,
 	    int, int);
 int	scsi_mode_select_big(struct scsi_link *, int,
 	    struct scsi_mode_header_big *, int, int);
+void	scsi_copy_internal_data(struct scsi_xfer *, void *, size_t);
 void	scsi_done(struct scsi_xfer *);
 int	scsi_do_ioctl(struct scsi_link *, u_long, caddr_t, int);
 void	sc_print_addr(struct scsi_link *);
