@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.13 2017/08/11 20:13:31 guenther Exp $ */
+/* $OpenBSD: md_init.h,v 1.14 2020/10/14 22:11:19 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -98,7 +98,6 @@
 	"	.exit						\n" \
 	"	.procend")
 
-
 #define	MD_RCRT0_START						\
 	__asm(							\
 	".import $global$, data					\n" \
@@ -148,7 +147,7 @@
 	"	stw	%rp, -24(%sp)				\n" \
 	"	ldil	L%0xc0000000, %r1			\n" \
 	"	ble	4(%sr7, %r1)				\n" \
-	"	ldi	1, %t1					\n" \
+	"	ldi	" STR(SYS_exit) ", %t1			\n" \
 	"	comb,<>	%r0, %t1, 1f				\n" \
 	"	ldw	-24(%sp), %rp				\n" \
 	"	bv	%r0(%rp)				\n" \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.14 2019/05/10 13:29:21 guenther Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.15 2020/10/14 22:11:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -31,6 +31,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/syscall.h>
 #include <stdlib.h>
 #include <limits.h>
 
@@ -39,6 +40,8 @@
 #include "boot.h"
 #endif
 #include "extern.h"
+
+#define STR(x) __STRING(x)	/* shorter macro name for MD_RCRT0_START */
 
 /* some defaults */
 #ifndef	MD_START_ARGS

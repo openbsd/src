@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.9 2017/08/11 20:13:31 guenther Exp $ */
+/* $OpenBSD: md_init.h,v 1.10 2020/10/14 22:11:19 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -60,10 +60,6 @@
 	"	addi	%r1,%r1,16		\n" \
 	"	blr				\n" \
 	"	.previous")
-
-#include <sys/syscall.h>	/* for SYS_mprotect */
-
-#define STR(x) __STRING(x)
 
 #define	MD_CRT0_START							\
 __asm(									\

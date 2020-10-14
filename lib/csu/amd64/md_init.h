@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.6 2016/03/20 02:32:39 guenther Exp $ */
+/* $OpenBSD: md_init.h,v 1.7 2020/10/14 22:11:19 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -80,7 +80,6 @@
 	"	jmp	___start		\n" \
 	"	.previous")
 
-
 #define	MD_RCRT0_START					\
 	__asm(						\
 	".text						\n" \
@@ -114,7 +113,7 @@
 	"	.type	_dl_exit,@function		\n" \
 	"	.align	8				\n" \
 	"_dl_exit:					\n" \
-	"	movl	$(1), %eax			\n" \
+	"	movl	$ " STR(SYS_exit) ", %eax	\n" \
 	"	syscall					\n" \
 	"	jb	1f				\n" \
 	"	ret					\n" \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: md_init.h,v 1.7 2018/10/06 23:30:25 aoyama Exp $	*/
+/*	$OpenBSD: md_init.h,v 1.8 2020/10/14 22:11:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -100,7 +100,7 @@
 	"	 /* envp = argv + argc + 1 */		\n" \
 	\
 	"_dl_exit:					\n" \
-	"	or	%r13, %r0, 1			\n" \
+	"	or	%r13, %r0, " STR(SYS_exit) "	\n" \
 	"	tb0	0, %r0, 450			\n" \
 	"	or	%r0, %r0, %r0			\n" \
 	"	.previous");

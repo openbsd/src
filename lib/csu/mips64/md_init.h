@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.17 2019/04/19 09:19:22 visa Exp $ */
+/* $OpenBSD: md_init.h,v 1.18 2020/10/14 22:11:19 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -144,7 +144,7 @@
 	"	.ent	_dl_exit		\n" \
 	"	.type	_dl_exit, @function	\n" \
 	"_dl_exit:				\n" \
-	"	li	$v0, 1			\n" \
+	"	li	$v0, " STR(SYS_exit) "	\n" \
 	"	syscall				\n" \
 	"	j	$ra			\n" \
 	"	.end	_dl_exit		\n" \
