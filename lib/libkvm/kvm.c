@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.66 2019/06/28 13:32:42 deraadt Exp $ */
+/*	$OpenBSD: kvm.c,v 1.67 2020/10/14 19:28:22 naddy Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -676,12 +676,13 @@ static int
 kvm_dbopen(kvm_t *kd, const char *uf)
 {
 	char dbversion[_POSIX2_LINE_MAX], kversion[_POSIX2_LINE_MAX];
-	char dbname[PATH_MAX];
+	char dbname[PATH_MAX], ufbuf[PATH_MAX];
 	struct nlist nitem;
 	size_t dbversionlen;
 	DBT rec;
 
-	uf = basename(uf);
+	strlcpy(ufbuf, uf, sizeof(ufbuf));
+	uf = basename(ufbuf);
 
 	(void)snprintf(dbname, sizeof(dbname), "%skvm_%s.db", _PATH_VARDB, uf);
 	kd->db = dbopen(dbname, O_RDONLY, 0, DB_HASH, NULL);
