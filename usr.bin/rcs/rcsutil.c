@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.46 2017/08/29 16:47:33 otto Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.47 2020/10/14 20:07:19 naddy Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -227,7 +227,7 @@ rcs_choosefile(const char *filename, char *out, size_t len)
 					err(1, "%s", rcspath);
 
 				if (strlcpy(out, rcspath, len) >= len)
-					errx(1, "rcs_choosefile; truncation");
+					errx(1, "rcs_choosefile: truncation");
 
 				free(suffixes);
 				return (fd);
