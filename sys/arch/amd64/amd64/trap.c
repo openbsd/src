@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.83 2020/10/08 19:41:04 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.84 2020/10/14 16:47:46 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -92,7 +92,8 @@
 
 #include "isa.h"
 
-int	pageflttrap(struct trapframe *, uint64_t, int _usermode);
+int	upageflttrap(struct trapframe *, uint64_t);
+int	kpageflttrap(struct trapframe *, uint64_t);
 void	kerntrap(struct trapframe *);
 void	usertrap(struct trapframe *);
 void	ast(struct trapframe *);
@@ -150,117 +151,139 @@ fault(const char *format, ...)
 	faultstr = faultbuf;
 }
 
+static inline int
+pgex2access(int pgex)
+{
+	if (pgex & PGEX_W)
+		return PROT_WRITE;
+	else if (pgex & PGEX_I)
+		return PROT_EXEC;
+	return PROT_READ;
+}
+
 /*
- * pageflttrap(frame, usermode): page fault handler
+ * upageflttrap(frame, usermode): page fault handler
  * Returns non-zero if the fault was handled (possibly by generating
  * a signal).  Returns zero, possibly still holding the kernel lock,
  * if something was so broken that we should panic.
  */
 int
-pageflttrap(struct trapframe *frame, uint64_t cr2, int usermode)
+upageflttrap(struct trapframe *frame, uint64_t cr2)
+{
+	struct proc *p = curproc;
+	vaddr_t va = trunc_page((vaddr_t)cr2);
+	vm_prot_t access_type = pgex2access(frame->tf_err);
+	union sigval sv;
+	int signal, sicode, error;
+
+	KERNEL_LOCK();
+	error = uvm_fault(&p->p_vmspace->vm_map, va, 0, access_type);
+
+	if (error == 0) {
+		uvm_grow(p, va);
+		KERNEL_UNLOCK();
+		return 1;
+	}
+
+	signal = SIGSEGV;
+	sicode = SEGV_MAPERR;
+	if (error == ENOMEM) {
+		printf("UVM: pid %d (%s), uid %d killed:"
+		    " out of swap\n", p->p_p->ps_pid, p->p_p->ps_comm,
+		    p->p_ucred ? (int)p->p_ucred->cr_uid : -1);
+		signal = SIGKILL;
+	} else {
+		if (error == EACCES)
+			sicode = SEGV_ACCERR;
+		else if (error == EIO) {
+			signal = SIGBUS;
+			sicode = BUS_OBJERR;
+		}
+	}
+	sv.sival_ptr = (void *)cr2;
+	trapsignal(p, signal, T_PAGEFLT, sicode, sv);
+
+	KERNEL_UNLOCK();
+	return 1;
+}
+
+
+/*
+ * kpageflttrap(frame, usermode): page fault handler
+ * Returns non-zero if the fault was handled (possibly by generating
+ * a signal).  Returns zero, possibly still holding the kernel lock,
+ * if something was so broken that we should panic.
+ */
+int
+kpageflttrap(struct trapframe *frame, uint64_t cr2)
 {
 	struct proc *p = curproc;
 	struct pcb *pcb;
-	int error;
-	vaddr_t va;
+	vaddr_t va = trunc_page((vaddr_t)cr2);
 	struct vm_map *map;
-	vm_prot_t access_type;
+	vm_prot_t access_type = pgex2access(frame->tf_err);
+	caddr_t onfault;
+	int error;
 
 	if (p == NULL || p->p_addr == NULL || p->p_vmspace == NULL)
 		return 0;
 
-	map = &p->p_vmspace->vm_map;
 	pcb = &p->p_addr->u_pcb;
-	va = trunc_page((vaddr_t)cr2);
 
-	KERNEL_LOCK();
-
-	if (!usermode) {
-		/* This will only trigger if SMEP is enabled */
-		if (cr2 <= VM_MAXUSER_ADDRESS && frame->tf_err & PGEX_I) {
-			fault("attempt to execute user address %p "
-			    "in supervisor mode", (void *)cr2);
-			/* retain kernel lock */
-			return 0;
-		}
-		/* This will only trigger if SMAP is enabled */
-		if (pcb->pcb_onfault == NULL && cr2 <= VM_MAXUSER_ADDRESS &&
-		    frame->tf_err & PGEX_P) {
-			fault("attempt to access user address %p "
-			    "in supervisor mode", (void *)cr2);
-			/* retain kernel lock */
-			return 0;
-		}
-
-		/*
-		 * It is only a kernel address space fault iff:
-		 *	1. when running in ring 0 and
-		 *	2. pcb_onfault not set or
-		 *	3. pcb_onfault set but supervisor space fault
-		 * The last can occur during an exec() copyin where the
-		 * argument space is lazy-allocated.
-		 */
-		if (va >= VM_MIN_KERNEL_ADDRESS)
-			map = kernel_map;
+	/* This will only trigger if SMEP is enabled */
+	if (cr2 <= VM_MAXUSER_ADDRESS && frame->tf_err & PGEX_I) {
+		KERNEL_LOCK();
+		fault("attempt to execute user address %p "
+		    "in supervisor mode", (void *)cr2);
+		/* retain kernel lock */
+		return 0;
+	}
+	/* This will only trigger if SMAP is enabled */
+	if (pcb->pcb_onfault == NULL && cr2 <= VM_MAXUSER_ADDRESS &&
+	    frame->tf_err & PGEX_P) {
+		KERNEL_LOCK();
+		fault("attempt to access user address %p "
+		    "in supervisor mode", (void *)cr2);
+		/* retain kernel lock */
+		return 0;
 	}
 
-	if (frame->tf_err & PGEX_W)
-		access_type = PROT_WRITE;
-	else if (frame->tf_err & PGEX_I)
-		access_type = PROT_EXEC;
-	else
-		access_type = PROT_READ;
+	/*
+	 * It is only a kernel address space fault iff:
+	 *	1. when running in ring 0 and
+	 *	2. pcb_onfault not set or
+	 *	3. pcb_onfault set but supervisor space fault
+	 * The last can occur during an exec() copyin where the
+	 * argument space is lazy-allocated.
+	 */
+	map = &p->p_vmspace->vm_map;
+	if (va >= VM_MIN_KERNEL_ADDRESS)
+		map = kernel_map;
 
 	if (curcpu()->ci_inatomic == 0 || map == kernel_map) {
-		/* Fault the original page in. */
-		caddr_t onfault = pcb->pcb_onfault;
-
+		KERNEL_LOCK();
+		onfault = pcb->pcb_onfault;
 		pcb->pcb_onfault = NULL;
 		error = uvm_fault(map, va, 0, access_type);
 		pcb->pcb_onfault = onfault;
+
+		if (error == 0 && map != kernel_map)
+			uvm_grow(p, va);
+		KERNEL_UNLOCK();
 	} else
 		error = EFAULT;
 
-	if (error == 0) {
-		if (map != kernel_map)
-			uvm_grow(p, va);
-	} else if (!usermode) {
-		if (pcb->pcb_onfault != 0) {
-			KERNEL_UNLOCK();
-			frame->tf_rip = (u_int64_t)pcb->pcb_onfault;
-			return 1;
-		} else {
+	if (error) {
+		if (pcb->pcb_onfault == NULL) {
 			/* bad memory access in the kernel */
+			KERNEL_LOCK();
 			fault("uvm_fault(%p, 0x%llx, 0, %d) -> %x",
 			    map, cr2, access_type, error);
 			/* retain kernel lock */
 			return 0;
 		}
-	} else {
-		union sigval sv;
-		int signal, sicode;
-
-		signal = SIGSEGV;
-		sicode = SEGV_MAPERR;
-		if (error == ENOMEM) {
-			printf("UVM: pid %d (%s), uid %d killed:"
-			    " out of swap\n", p->p_p->ps_pid, p->p_p->ps_comm,
-			    p->p_ucred ? (int)p->p_ucred->cr_uid : -1);
-			signal = SIGKILL;
-		} else {
-			frame_dump(frame, p, "SEGV", cr2);
-			if (error == EACCES)
-				sicode = SEGV_ACCERR;
-			else if (error == EIO) {
-				signal = SIGBUS;
-				sicode = BUS_OBJERR;
-			}
-		}
-		sv.sival_ptr = (void *)cr2;
-		trapsignal(p, signal, T_PAGEFLT, sicode, sv);
+		frame->tf_rip = (u_int64_t)pcb->pcb_onfault;
 	}
-
-	KERNEL_UNLOCK();
 
 	return 1;
 }
@@ -297,7 +320,7 @@ kerntrap(struct trapframe *frame)
 		/*NOTREACHED*/
 
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
-		if (pageflttrap(frame, cr2, 0))
+		if (kpageflttrap(frame, cr2))
 			return;
 		goto we_re_toast;
 
@@ -379,7 +402,7 @@ usertrap(struct trapframe *frame)
 		    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
 		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
 			goto out;
-		if (pageflttrap(frame, cr2, 1))
+		if (upageflttrap(frame, cr2))
 			goto out;
 		/* FALLTHROUGH */
 
