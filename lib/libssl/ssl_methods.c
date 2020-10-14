@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_methods.c,v 1.19 2020/10/11 12:45:52 guenther Exp $ */
+/* $OpenBSD: ssl_methods.c,v 1.20 2020/10/14 16:44:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,6 +60,7 @@
 #include "tls13_internal.h"
 
 static const SSL_METHOD_INTERNAL DTLSv1_method_internal_data = {
+	.dtls = 1,
 	.version = DTLS1_VERSION,
 	.min_version = DTLS1_VERSION,
 	.max_version = DTLS1_VERSION,
@@ -124,6 +125,7 @@ DTLS_server_method(void)
 
 #if defined(LIBRESSL_HAS_TLS1_3_CLIENT) && defined(LIBRESSL_HAS_TLS1_3_SERVER)
 static const SSL_METHOD_INTERNAL TLS_method_internal_data = {
+	.dtls = 0,
 	.version = TLS1_3_VERSION,
 	.min_version = TLS1_VERSION,
 	.max_version = TLS1_3_VERSION,
@@ -152,6 +154,7 @@ static const SSL_METHOD TLS_method_data = {
 #endif
 
 static const SSL_METHOD_INTERNAL TLS_legacy_method_internal_data = {
+	.dtls = 0,
 	.version = TLS1_2_VERSION,
 	.min_version = TLS1_VERSION,
 	.max_version = TLS1_2_VERSION,
@@ -179,6 +182,7 @@ static const SSL_METHOD TLS_legacy_method_data = {
 };
 
 static const SSL_METHOD_INTERNAL TLSv1_method_internal_data = {
+	.dtls = 0,
 	.version = TLS1_VERSION,
 	.min_version = TLS1_VERSION,
 	.max_version = TLS1_VERSION,
@@ -206,6 +210,7 @@ static const SSL_METHOD TLSv1_method_data = {
 };
 
 static const SSL_METHOD_INTERNAL TLSv1_1_method_internal_data = {
+	.dtls = 0,
 	.version = TLS1_1_VERSION,
 	.min_version = TLS1_1_VERSION,
 	.max_version = TLS1_1_VERSION,
@@ -233,6 +238,7 @@ static const SSL_METHOD TLSv1_1_method_data = {
 };
 
 static const SSL_METHOD_INTERNAL TLSv1_2_method_internal_data = {
+	.dtls = 0,
 	.version = TLS1_2_VERSION,
 	.min_version = TLS1_2_VERSION,
 	.max_version = TLS1_2_VERSION,
