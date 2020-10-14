@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.7 2017/08/11 20:13:31 guenther Exp $ */
+/* $OpenBSD: md_init.h,v 1.8 2020/10/14 22:11:52 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -73,7 +73,6 @@
 	"	 mov	%g1, %o1		\n" \
 	"	.previous")
 
-
 #define	MD_RCRT0_START				\
 	__asm__(				\
 	".text					\n" \
@@ -103,8 +102,7 @@
 	"					\n" \
 	"	.global	_dl_exit		\n" \
 	"_dl_exit:				\n" \
-	"	mov	0x401, %g1		\n" \
-	"	add	%o7, 8, %g2		\n" \
+	"	mov	" STR(SYS_exit) ", %g1	\n" \
 	"	t	0			\n" \
 	"	retl				\n" \
 	"	 sub %g0, %o0, %o0		\n" \
