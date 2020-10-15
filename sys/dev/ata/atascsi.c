@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.149 2020/09/22 19:32:52 krw Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.150 2020/10/15 13:22:13 krw Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -718,7 +718,7 @@ atascsi_disk_inquiry(struct scsi_xfer *xs)
 	ata_swapcopy(ap->ap_identify.firmware, inq.revision,
 	    sizeof(inq.revision));
 
-	bcopy(&inq, xs->data, MIN(sizeof(inq), xs->datalen));
+	scsi_copy_internal_data(xs, &inq, sizeof(inq));
 
 	atascsi_done(xs, XS_NOERROR);
 }
@@ -1746,7 +1746,8 @@ atascsi_pmp_inq(struct scsi_xfer *xs)
 	bcopy("Port Multiplier", inq.product, sizeof(inq.product));
 	bcopy("    ", inq.revision, sizeof(inq.revision));
 
-	bcopy(&inq, xs->data, MIN(sizeof(inq), xs->datalen));
+	scsi_copy_internal_data(xs, &inq, sizeof(inq));
+
 	atascsi_done(xs, XS_NOERROR);
 }
 

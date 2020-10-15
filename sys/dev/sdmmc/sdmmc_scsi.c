@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.58 2020/09/22 19:32:53 krw Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.59 2020/10/15 13:22:13 krw Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -443,7 +443,7 @@ sdmmc_inquiry(struct scsi_xfer *xs)
 	memcpy(inq.product, product, sizeof(inq.product));
 	memcpy(inq.revision, revision, sizeof(inq.revision));
 
-	memcpy(xs->data, &inq, MIN(xs->datalen, sizeof(inq)));
+	scsi_copy_internal_data(xs, &inq, sizeof(inq));
 
 done:
 	scsi_done(xs);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.132 2020/09/22 19:32:53 krw Exp $	*/
+/*	$OpenBSD: ips.c,v 1.133 2020/10/15 13:22:13 krw Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -922,19 +922,19 @@ ips_scsi_cmd(struct scsi_xfer *xs)
 		snprintf(inq.product, sizeof(inq.product),
 		    "LD%d RAID%d", target, drive->raid);
 		strlcpy(inq.revision, "1.0", sizeof(inq.revision));
-		memcpy(xs->data, &inq, MIN(xs->datalen, sizeof(inq)));
+		scsi_copy_internal_data(xs, &inq, sizeof(inq));
 		break;
 	case READ_CAPACITY:
 		bzero(&rcd, sizeof(rcd));
 		_lto4b(letoh32(drive->seccnt) - 1, rcd.addr);
 		_lto4b(IPS_SECSZ, rcd.length);
-		memcpy(xs->data, &rcd, MIN(xs->datalen, sizeof(rcd)));
+		scsi_copy_internal_data(xs, &rcd, sizeof(rcd));
 		break;
 	case REQUEST_SENSE:
 		bzero(&sd, sizeof(sd));
 		sd.error_code = SSD_ERRCODE_CURRENT;
 		sd.flags = SKEY_NO_SENSE;
-		memcpy(xs->data, &sd, MIN(xs->datalen, sizeof(sd)));
+		scsi_copy_internal_data(xs, &sd, sizeof(sd));
 		break;
 	case SYNCHRONIZE_CACHE:
 		cmd = ccb->c_cmdbva;

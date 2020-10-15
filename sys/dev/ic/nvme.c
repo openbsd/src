@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.88 2020/09/22 19:32:52 krw Exp $ */
+/*	$OpenBSD: nvme.c,v 1.89 2020/10/15 13:22:13 krw Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -787,7 +787,7 @@ nvme_scsi_inquiry(struct scsi_xfer *xs)
 	memcpy(inq.product, sc->sc_identify.mn, sizeof(inq.product));
 	memcpy(inq.revision, sc->sc_identify.fr, sizeof(inq.revision));
 
-	memcpy(xs->data, &inq, MIN(sizeof(inq), xs->datalen));
+	scsi_copy_internal_data(xs, &inq, sizeof(inq));
 
 	xs->error = XS_NOERROR;
 	scsi_done(xs);

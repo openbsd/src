@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.31 2020/09/22 19:32:53 krw Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.32 2020/10/15 13:22:13 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -580,7 +580,8 @@ vioblk_scsi_inq(struct scsi_xfer *xs)
 	bcopy("VirtIO  ", inqd.vendor, sizeof(inqd.vendor));
 	bcopy("Block Device    ", inqd.product, sizeof(inqd.product));
 
-	bcopy(&inqd, xs->data, MIN(sizeof(inqd), xs->datalen));
+	scsi_copy_internal_data(xs, &inqd, sizeof(inqd));
+
 	vioblk_scsi_done(xs, XS_NOERROR);
 }
 
