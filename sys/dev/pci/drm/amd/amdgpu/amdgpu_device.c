@@ -2953,7 +2953,7 @@ int amdgpu_device_init(struct amdgpu_device *adev,
 	adev->audio_endpt_rreg = &amdgpu_block_invalid_rreg;
 	adev->audio_endpt_wreg = &amdgpu_block_invalid_wreg;
 
-	printf("initializing kernel modesetting (%s 0x%04X:0x%04X 0x%04X:0x%04X 0x%02X).\n",
+	DRM_INFO("initializing kernel modesetting (%s 0x%04X:0x%04X 0x%04X:0x%04X 0x%02X).\n",
 		 amdgpu_asic_name[adev->asic_type], pdev->vendor, pdev->device,
 		 pdev->subsystem_vendor, pdev->subsystem_device, pdev->revision);
 
@@ -3191,6 +3191,27 @@ fence_driver_init:
 			adev->gfx.config.max_sh_per_se,
 			adev->gfx.config.max_cu_per_sh,
 			adev->gfx.cu_info.number);
+
+#ifdef __OpenBSD__
+{
+	const char *chip_name;
+
+	switch (adev->asic_type) {
+	case CHIP_RAVEN:
+		if (adev->rev_id >= 8)
+			chip_name = "RAVEN2";
+		else if (adev->pdev->device == 0x15d8)
+			chip_name = "PICASSO";
+		else
+			chip_name = "RAVEN";
+		break;
+	default:
+		chip_name = amdgpu_asic_name[adev->asic_type];
+	}
+	printf("%s: %s %d CU rev 0x%02x\n", adev->self.dv_xname,
+	    chip_name, adev->gfx.cu_info.number, adev->rev_id);
+}
+#endif
 
 	amdgpu_ctx_init_sched(adev);
 
