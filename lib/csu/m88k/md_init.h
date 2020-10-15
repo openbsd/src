@@ -1,4 +1,4 @@
-/*	$OpenBSD: md_init.h,v 1.8 2020/10/14 22:11:19 deraadt Exp $	*/
+/*	$OpenBSD: md_init.h,v 1.9 2020/10/15 16:30:23 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -103,4 +103,5 @@
 	"	or	%r13, %r0, " STR(SYS_exit) "	\n" \
 	"	tb0	0, %r0, 450			\n" \
 	"	or	%r0, %r0, %r0			\n" \
+	"	tb0	0, %r0, 130 /* breakpoint */	\n" \
 	"	.previous");

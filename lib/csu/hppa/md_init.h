@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.14 2020/10/14 22:11:19 deraadt Exp $ */
+/* $OpenBSD: md_init.h,v 1.15 2020/10/15 16:30:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -148,12 +148,7 @@
 	"	ldil	L%0xc0000000, %r1			\n" \
 	"	ble	4(%sr7, %r1)				\n" \
 	"	ldi	" STR(SYS_exit) ", %t1			\n" \
-	"	comb,<>	%r0, %t1, 1f				\n" \
-	"	ldw	-24(%sp), %rp				\n" \
-	"	bv	%r0(%rp)				\n" \
-	"	nop						\n" \
-	"1:	bv	%r0(%rp)				\n" \
-	"	sub	%r0, %ret0, %ret0			\n" \
+	"	break 0,0					\n" \
 	"	.exit						\n" \
 	"	.procend")
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.8 2020/10/14 22:11:52 deraadt Exp $ */
+/* $OpenBSD: md_init.h,v 1.9 2020/10/15 16:30:23 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -104,8 +104,7 @@
 	"_dl_exit:				\n" \
 	"	mov	" STR(SYS_exit) ", %g1	\n" \
 	"	t	0			\n" \
-	"	retl				\n" \
-	"	 sub %g0, %o0, %o0		\n" \
+	"	unimp				\n" \
 	"	.previous")
 
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.11 2020/10/14 22:11:19 deraadt Exp $ */
+/* $OpenBSD: md_init.h,v 1.12 2020/10/15 16:30:23 deraadt Exp $ */
 /*-
  * Copyright (c) 2001 Ross Harvey
  * All rights reserved.
@@ -100,7 +100,7 @@
 	"_dl_exit:				\n" \
 	"	lda	$0, " STR(SYS_exit) "	\n" \
 	"	callsys				\n" \
-	"	ret")
+	"	halt				")
 
 #define	MD_START_ARGS		char **sp, void (*cleanup)(void)
 #define	MD_START_SETUP				\

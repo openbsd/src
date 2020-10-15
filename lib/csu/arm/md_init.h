@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.15 2020/10/14 22:11:19 deraadt Exp $ */
+/* $OpenBSD: md_init.h,v 1.16 2020/10/15 16:30:23 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -159,4 +159,5 @@
 	"	swi	#0			\n" \
 	"	dsb	nsh			\n" \
 	"	isb				\n" \
+	"	.word 0xa000f7f0 /* illegal */	\n" \
 	".previous");
