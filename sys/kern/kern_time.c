@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.146 2020/10/13 17:33:39 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.147 2020/10/15 04:28:43 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -570,6 +570,16 @@ setitimer(int which, const struct itimerval *itv, struct itimerval *olditv)
 		TIMESPEC_TO_TIMEVAL(&olditv->it_value, &oldits.it_value);
 		TIMESPEC_TO_TIMEVAL(&olditv->it_interval, &oldits.it_interval);
 	}
+}
+
+void
+cancelitimer(int which)
+{
+	struct itimerval itv;
+
+	timerclear(&itv.it_value);
+	timerclear(&itv.it_interval);
+	setitimer(which, &itv, NULL);
 }
 
 int
