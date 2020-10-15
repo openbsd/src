@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.22 2019/02/13 22:57:07 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.23 2020/10/15 19:42:56 naddy Exp $ */
 
 /*
  * Copyright (c) 2006 Bob Beck <beck@openbsd.org>
@@ -29,6 +29,7 @@
 #include <err.h>
 #include <libgen.h>
 #include <limits.h>
+#include <paths.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -445,10 +446,12 @@ parse_tapedev(const char *filename, const char *changer, int drive)
 	errors = file->errors;
 	popfile();
 
+	if (strncmp(changer, _PATH_DEV, sizeof(_PATH_DEV) - 1) == 0)
+		changer += sizeof(_PATH_DEV) - 1;
 	TAILQ_FOREACH(p, &changers, entry) {
-		if (strcmp(basename(changer), p->name) == 0) {
+		if (strcmp(changer, p->name) == 0) {
 			if (drive >= 0 && drive < p->drivecnt) {
-				if (asprintf(&tapedev, "/dev/%s",
+				if (asprintf(&tapedev, _PATH_DEV "%s",
 				     p->drives[drive]) == -1)
 					errx(1, "malloc failed");
 			} else
