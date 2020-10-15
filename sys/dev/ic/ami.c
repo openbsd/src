@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.259 2020/09/22 19:32:52 krw Exp $	*/
+/*	$OpenBSD: ami.c,v 1.260 2020/10/15 00:01:24 krw Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -134,8 +134,6 @@ void		ami_done_sysflush(struct ami_softc *, struct ami_ccb *);
 void		ami_done_dummy(struct ami_softc *, struct ami_ccb *);
 void		ami_done_ioctl(struct ami_softc *, struct ami_ccb *);
 void		ami_done_init(struct ami_softc *, struct ami_ccb *);
-
-void		ami_copy_internal_data(struct scsi_xfer *, void *, size_t);
 
 int		ami_load_ptmem(struct ami_softc*, struct ami_ccb *,
 		    void *, size_t, int, int);
@@ -1191,21 +1189,6 @@ ami_done_init(struct ami_softc *sc, struct ami_ccb *ccb)
 }
 
 void
-ami_copy_internal_data(struct scsi_xfer *xs, void *v, size_t size)
-{
-	size_t copy_cnt;
-
-	AMI_DPRINTF(AMI_D_MISC, ("ami_copy_internal_data "));
-
-	if (!xs->datalen)
-		printf("uio move not yet supported\n");
-	else {
-		copy_cnt = MIN(size, xs->datalen);
-		bcopy(v, xs->data, copy_cnt);
-	}
-}
-
-void
 ami_scsi_raw_cmd(struct scsi_xfer *xs)
 {
 	struct scsi_link *link = xs->sc_link;
@@ -1384,7 +1367,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		sd.flags = SKEY_NO_SENSE;
 		*(u_int32_t*)sd.info = htole32(0);
 		sd.extra_len = 0;
-		ami_copy_internal_data(xs, &sd, sizeof(sd));
+		scsi_copy_internal_data(xs, &sd, sizeof(sd));
 
 		xs->error = XS_NOERROR;
 		scsi_done(xs);
@@ -1409,7 +1392,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		snprintf(inq.product, sizeof(inq.product),
 		    "Host drive  #%02d", target);
 		strlcpy(inq.revision, "   ", sizeof(inq.revision));
-		ami_copy_internal_data(xs, &inq, sizeof(inq));
+		scsi_copy_internal_data(xs, &inq, sizeof(inq));
 
 		xs->error = XS_NOERROR;
 		scsi_done(xs);
@@ -1420,7 +1403,7 @@ ami_scsi_cmd(struct scsi_xfer *xs)
 		bzero(&rcd, sizeof(rcd));
 		_lto4b(sc->sc_hdr[target].hd_size - 1, rcd.addr);
 		_lto4b(AMI_SECTOR_SIZE, rcd.length);
-		ami_copy_internal_data(xs, &rcd, sizeof(rcd));
+		scsi_copy_internal_data(xs, &rcd, sizeof(rcd));
 
 		xs->error = XS_NOERROR;
 		scsi_done(xs);

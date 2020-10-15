@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.63 2020/09/22 19:32:53 krw Exp $	*/
+/*	$OpenBSD: twe.c,v 1.64 2020/10/15 00:01:24 krw Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff.  All rights reserved.
@@ -75,7 +75,6 @@ int  twe_cmd(struct twe_ccb *ccb, int flags, int wait);
 int  twe_start(struct twe_ccb *ccb, int wait);
 int  twe_complete(struct twe_ccb *ccb);
 int  twe_done(struct twe_softc *sc, struct twe_ccb *ccb);
-void twe_copy_internal_data(struct scsi_xfer *xs, void *v, size_t size);
 void twe_thread_create(void *v);
 void twe_thread(void *v);
 void twe_aen(void *, void *);
@@ -753,24 +752,6 @@ twe_done(sc, ccb)
 }
 
 void
-twe_copy_internal_data(xs, v, size)
-	struct scsi_xfer *xs;
-	void *v;
-	size_t size;
-{
-	size_t copy_cnt;
-
-	TWE_DPRINTF(TWE_D_MISC, ("twe_copy_internal_data "));
-
-	if (!xs->datalen)
-		printf("uio move is not yet supported\n");
-	else {
-		copy_cnt = MIN(size, xs->datalen);
-		bcopy(v, xs->data, copy_cnt);
-	}
-}
-
-void
 twe_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
@@ -818,7 +799,7 @@ twe_scsi_cmd(xs)
 		sd.flags = SKEY_NO_SENSE;
 		*(u_int32_t*)sd.info = htole32(0);
 		sd.extra_len = 0;
-		twe_copy_internal_data(xs, &sd, sizeof sd);
+		scsi_copy_internal_data(xs, &sd, sizeof(sd));
 		break;
 
 	case INQUIRY:
@@ -836,7 +817,7 @@ twe_scsi_cmd(xs)
 		snprintf(inq.product, sizeof inq.product, "Host drive  #%02d",
 		    target);
 		strlcpy(inq.revision, "   ", sizeof inq.revision);
-		twe_copy_internal_data(xs, &inq, sizeof inq);
+		scsi_copy_internal_data(xs, &inq, sizeof(inq));
 		break;
 
 	case READ_CAPACITY:
@@ -844,7 +825,7 @@ twe_scsi_cmd(xs)
 		bzero(&rcd, sizeof rcd);
 		_lto4b(sc->sc_hdr[target].hd_size - 1, rcd.addr);
 		_lto4b(TWE_SECTOR_SIZE, rcd.length);
-		twe_copy_internal_data(xs, &rcd, sizeof rcd);
+		scsi_copy_internal_data(xs, &rcd, sizeof(rcd));
 		break;
 
 	case PREVENT_ALLOW:

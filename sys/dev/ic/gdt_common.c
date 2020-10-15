@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.82 2020/09/22 19:32:52 krw Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.83 2020/10/15 00:01:24 krw Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2003 Niklas Hallqvist.  All rights reserved.
@@ -61,7 +61,6 @@ int gdt_maxcmds = GDT_MAXCMDS;
 int	gdt_async_event(struct gdt_softc *, int);
 void	gdt_chain(struct gdt_softc *);
 void	gdt_clear_events(struct gdt_softc *);
-void	gdt_copy_internal_data(struct scsi_xfer *, u_int8_t *, size_t);
 struct scsi_xfer *gdt_dequeue(struct gdt_softc *);
 void	gdt_enqueue(struct gdt_softc *, struct scsi_xfer *, int);
 void	gdt_enqueue_ccb(struct gdt_softc *, struct gdt_ccb *);
@@ -855,21 +854,6 @@ gdt_exec_ccb(struct gdt_ccb *ccb)
 	return (1);
 }
 
-void
-gdt_copy_internal_data(struct scsi_xfer *xs, u_int8_t *data, size_t size)
-{
-	size_t copy_cnt;
-
-	GDT_DPRINTF(GDT_D_MISC, ("gdt_copy_internal_data "));
-
-	if (!xs->datalen)
-		printf("uio move not yet supported\n");
-	else {
-		copy_cnt = MIN(size, xs->datalen);
-		bcopy(data, xs->data, copy_cnt);
-	}
-}
-
 /* Emulated SCSI operation on cache device */
 void
 gdt_internal_cache_cmd(struct scsi_xfer *xs)
@@ -901,7 +885,7 @@ gdt_internal_cache_cmd(struct scsi_xfer *xs)
 		sd.flags = SKEY_NO_SENSE;
 		gdt_enc32(sd.info, 0);
 		sd.extra_len = 0;
-		gdt_copy_internal_data(xs, (u_int8_t *)&sd, sizeof sd);
+		scsi_copy_internal_data(xs, &sd, sizeof(sd));
 		break;
 
 	case INQUIRY:
@@ -920,7 +904,7 @@ gdt_internal_cache_cmd(struct scsi_xfer *xs)
 		snprintf(inq.product, sizeof inq.product, "Host drive  #%02d",
 		    target);
 		strlcpy(inq.revision, "	 ", sizeof inq.revision);
-		gdt_copy_internal_data(xs, (u_int8_t *)&inq, sizeof inq);
+		scsi_copy_internal_data(xs, &inq, sizeof(inq));
 		break;
 
 	case READ_CAPACITY:
@@ -928,7 +912,7 @@ gdt_internal_cache_cmd(struct scsi_xfer *xs)
 		bzero(&rcd, sizeof rcd);
 		_lto4b(sc->sc_hdr[target].hd_size - 1, rcd.addr);
 		_lto4b(GDT_SECTOR_SIZE, rcd.length);
-		gdt_copy_internal_data(xs, (u_int8_t *)&rcd, sizeof rcd);
+		scsi_copy_internal_data(xs, &rcd, sizeof(rcd));
 		break;
 
 	default:

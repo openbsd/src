@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.90 2020/09/22 19:32:52 krw Exp $	*/
+/*	$OpenBSD: aac.c,v 1.91 2020/10/15 00:01:24 krw Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -80,7 +80,6 @@
 
 struct scsi_xfer;
 
-void	aac_copy_internal_data(struct scsi_xfer *, u_int8_t *, size_t);
 char   *aac_describe_code(struct aac_code_lookup *, u_int32_t);
 void	aac_describe_controller(struct aac_softc *);
 int	aac_enqueue_fib(struct aac_softc *, int, struct aac_command *);
@@ -2097,24 +2096,6 @@ aac_eval_mapping(size, cyls, heads, secs)
 	}
 }
 
-void
-aac_copy_internal_data(struct scsi_xfer *xs, u_int8_t *data, size_t size)
-{
-	struct aac_softc *sc = xs->sc_link->bus->sb_adapter_softc;
-	size_t copy_cnt;
-
-	AAC_DPRINTF(AAC_D_MISC, ("%s: aac_copy_internal_data\n",
-				 sc->aac_dev.dv_xname));
-
-	if (!xs->datalen)
-		printf("%s: uio move not yet supported\n",
-		       sc->aac_dev.dv_xname);
-	else {
-		copy_cnt = MIN(size, xs->datalen);
-		bcopy(data, xs->data, copy_cnt);
-	}
-}
-
 /* Emulated SCSI operation on cache device */
 void
 aac_internal_cache_cmd(struct scsi_xfer *xs)
@@ -2147,7 +2128,7 @@ aac_internal_cache_cmd(struct scsi_xfer *xs)
 		sd.flags = SKEY_NO_SENSE;
 		aac_enc32(sd.info, 0);
 		sd.extra_len = 0;
-		aac_copy_internal_data(xs, (u_int8_t *)&sd, sizeof sd);
+		scsi_copy_internal_data(xs, &sd, sizeof(sd));
 		break;
 
 	case INQUIRY:
@@ -2165,7 +2146,7 @@ aac_internal_cache_cmd(struct scsi_xfer *xs)
 		snprintf(inq.product, sizeof inq.product, "Container #%02d",
 		    target);
 		strlcpy(inq.revision, "   ", sizeof inq.revision);
-		aac_copy_internal_data(xs, (u_int8_t *)&inq, sizeof inq);
+		scsi_copy_internal_data(xs, &inq, sizeof(inq));
 		break;
 
 	case READ_CAPACITY:
@@ -2173,7 +2154,7 @@ aac_internal_cache_cmd(struct scsi_xfer *xs)
 		bzero(&rcd, sizeof rcd);
 		_lto4b(sc->aac_hdr[target].hd_size - 1, rcd.addr);
 		_lto4b(AAC_BLOCK_SIZE, rcd.length);
-		aac_copy_internal_data(xs, (u_int8_t *)&rcd, sizeof rcd);
+		scsi_copy_internal_data(xs, (u_int8_t *)&rcd, sizeof rcd);
 		break;
 
 	default:

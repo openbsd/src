@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.72 2020/09/22 19:32:52 krw Exp $	*/
+/*	$OpenBSD: cac.c,v 1.73 2020/10/15 00:01:24 krw Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -109,7 +109,6 @@ int	cac_ccb_start(struct cac_softc *, struct cac_ccb *);
 int	cac_cmd(struct cac_softc *sc, int command, void *data, int datasize,
 	int drive, int blkno, int flags, struct scsi_xfer *xs);
 int	cac_get_dinfo(struct cac_softc *sc, int target);
-void	cac_copy_internal_data(struct scsi_xfer *xs, void *v, size_t size);
 
 struct	cac_ccb *cac_l0_completed(struct cac_softc *);
 int	cac_l0_fifo_full(struct cac_softc *);
@@ -562,22 +561,6 @@ cac_get_dinfo(sc, target)
 }
 
 void
-cac_copy_internal_data(xs, v, size)
-	struct scsi_xfer *xs;
-	void *v;
-	size_t size;
-{
-	size_t copy_cnt;
-
-	if (!xs->datalen)
-		printf("uio move is not yet supported\n");
-	else {
-		copy_cnt = MIN(size, xs->datalen);
-		memcpy(xs->data, v, copy_cnt);
-	}
-}
-
-void
 cac_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
@@ -619,7 +602,7 @@ cac_scsi_cmd(xs)
 		sd.flags = SKEY_NO_SENSE;
 		*(u_int32_t*)sd.info = htole32(0);
 		sd.extra_len = 0;
-		cac_copy_internal_data(xs, &sd, sizeof sd);
+		scsi_copy_internal_data(xs, &sd, sizeof(sd));
 		break;
 
 	case INQUIRY:
@@ -645,7 +628,7 @@ cac_scsi_cmd(xs)
 		snprintf(inq.product, sizeof inq.product, "%s vol  #%02d",
 		    p, target);
 		strlcpy(inq.revision, "   ", sizeof inq.revision);
-		cac_copy_internal_data(xs, &inq, sizeof inq);
+		scsi_copy_internal_data(xs, &inq, sizeof(inq));
 		break;
 
 	case READ_CAPACITY:
@@ -657,7 +640,7 @@ cac_scsi_cmd(xs)
 		_lto4b( CAC_GET2(dinfo->ncylinders) * CAC_GET1(dinfo->nheads) *
 		    CAC_GET1(dinfo->nsectors) - 1, rcd.addr);
 		_lto4b(CAC_SECTOR_SIZE, rcd.length);
-		cac_copy_internal_data(xs, &rcd, sizeof rcd);
+		scsi_copy_internal_data(xs, &rcd, sizeof(rcd));
 		break;
 
 	case PREVENT_ALLOW:
