@@ -593,6 +593,7 @@ fixup_inquiry(struct scsi_xfer *xs, struct hvs_srb *srb)
 	resplen = srb->srb_datalen >= SID_SCSI2_HDRLEN ?
 	    SID_SCSI2_HDRLEN + inq->additional_length : 0;
 	datalen = MIN(resplen, srb->srb_datalen);
+	xs->resid = xs->datalen - datalen;
 
 	/* Fixup wrong response from WS2012 */
 	if ((sc->sc_proto == HVS_PROTO_VERSION_WIN8_1 ||
