@@ -1,4 +1,4 @@
-/*	$OpenBSD: dl_uname.c,v 1.2 2015/01/16 16:18:07 deraadt Exp $ */
+/*	$OpenBSD: dl_uname.c,v 1.3 2020/10/15 04:12:43 deraadt Exp $ */
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -43,27 +43,24 @@
 int
 _dl_uname(struct utsname *name)
 {
-	int mib[2], rval;
+	const int otmib[2] = { CTL_KERN, KERN_OSTYPE };
+	const int ormib[2] = { CTL_KERN, KERN_OSRELEASE };
+	const int hmmib[2] = { CTL_HW, HW_MACHINE };
+	int rval;
 	size_t len;
 
 	rval = 0;
 
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_OSTYPE;
 	len = sizeof(name->sysname);
-	if (_dl_sysctl(mib, 2, &name->sysname, &len, NULL, 0) < 0)
+	if (_dl_sysctl(otmib, 2, &name->sysname, &len, NULL, 0) < 0)
 		rval = -1;
 
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_OSRELEASE;
 	len = sizeof(name->release);
-	if (_dl_sysctl(mib, 2, &name->release, &len, NULL, 0) < 0)
+	if (_dl_sysctl(ormib, 2, &name->release, &len, NULL, 0) < 0)
 		rval = -1;
 
-	mib[0] = CTL_HW;
-	mib[1] = HW_MACHINE;
 	len = sizeof(name->machine);
-	if (_dl_sysctl(mib, 2, &name->machine, &len, NULL, 0) < 0)
+	if (_dl_sysctl(hmmib, 2, &name->machine, &len, NULL, 0) < 0)
 		rval = -1;
 	return (rval);
 }
