@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.189 2020/10/15 04:28:42 cheloha Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.190 2020/10/15 16:31:11 cheloha Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -194,10 +194,7 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 		/* close open files and release open-file table */
 		fdfree(p);
 
-		/* cancel all interval timers */
-		int i;
-		for (i = 0; i < nitems(pr->ps_timer); i++)
-			cancelitimer(i);
+		cancel_all_itimers();
 
 		timeout_del(&pr->ps_rucheck_to);
 #ifdef SYSVSEM

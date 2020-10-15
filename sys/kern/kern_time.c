@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.147 2020/10/15 04:28:43 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.148 2020/10/15 16:31:11 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -573,13 +573,16 @@ setitimer(int which, const struct itimerval *itv, struct itimerval *olditv)
 }
 
 void
-cancelitimer(int which)
+cancel_all_itimers(void)
 {
 	struct itimerval itv;
+	int i;
 
 	timerclear(&itv.it_value);
 	timerclear(&itv.it_interval);
-	setitimer(which, &itv, NULL);
+
+	for (i = 0; i < nitems(curproc->p_p->ps_timer); i++)
+		setitimer(i, &itv, NULL);
 }
 
 int
