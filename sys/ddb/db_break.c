@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_break.c,v 1.21 2019/11/07 13:16:25 mpi Exp $	*/
+/*	$OpenBSD: db_break.c,v 1.22 2020/10/15 03:13:59 deraadt Exp $	*/
 /*	$NetBSD: db_break.c,v 1.7 1996/03/30 22:30:03 christos Exp $	*/
 
 /*
@@ -61,12 +61,12 @@ db_breakpoint_alloc(void)
 	db_breakpoint_t	bkpt;
 
 	if ((bkpt = db_free_breakpoints) != 0) {
-	    db_free_breakpoints = bkpt->link;
-	    return (bkpt);
+		db_free_breakpoints = bkpt->link;
+		return (bkpt);
 	}
 	if (db_next_free_breakpoint == &db_break_table[NBREAKPOINTS]) {
-	    db_printf("All breakpoints used.\n");
-	    return (0);
+		db_printf("All breakpoints used.\n");
+		return (0);
 	}
 	bkpt = db_next_free_breakpoint;
 	db_next_free_breakpoint++;
@@ -195,8 +195,8 @@ db_set_temp_breakpoint(vaddr_t addr)
 
 	bkpt = db_breakpoint_alloc();
 	if (bkpt == 0) {
-	    db_printf("Too many breakpoints.\n");
-	    return (0);
+		db_printf("Too many breakpoints.\n");
+		return (0);
 	}
 
 	bkpt->address = addr;

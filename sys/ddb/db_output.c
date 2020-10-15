@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_output.c,v 1.34 2020/01/20 15:58:23 visa Exp $	*/
+/*	$OpenBSD: db_output.c,v 1.35 2020/10/15 03:14:00 deraadt Exp $	*/
 /*	$NetBSD: db_output.c,v 1.13 1996/04/01 17:27:14 christos Exp $	*/
 
 /*
@@ -90,17 +90,16 @@ db_force_whitespace(void)
 
 	last_print = db_last_non_space;
 	while (last_print < db_output_position) {
-	    next_tab = NEXT_TAB(last_print);
-	    if (next_tab <= db_output_position) {
-		while (last_print < next_tab) { /* DON'T send a tab!!! */
+		next_tab = NEXT_TAB(last_print);
+		if (next_tab <= db_output_position) {
+			while (last_print < next_tab) { /* DON'T send a tab!!! */
+				cnputc(' ');
+				last_print++;
+			}
+		} else {
 			cnputc(' ');
 			last_print++;
 		}
-	    }
-	    else {
-		cnputc(' ');
-		last_print++;
-	    }
 	}
 	db_last_non_space = db_output_position;
 }
@@ -112,26 +111,26 @@ db_more(void)
 	int quit_output = 0;
 
 	for (p = "--db_more--"; *p; p++)
-	    cnputc(*p);
+		cnputc(*p);
 	switch(cngetc()) {
 	case ' ':
-	    db_output_line = 0;
-	    break;
+		db_output_line = 0;
+		break;
 	case 'q':
 	case CTRL('c'):
-	    db_output_line = 0;
-	    quit_output = 1;
-	    break;
+		db_output_line = 0;
+		quit_output = 1;
+		break;
 	default:
-	    db_output_line--;
-	    break;
+		db_output_line--;
+		break;
 	}
 	p = "\b\b\b\b\b\b\b\b\b\b\b           \b\b\b\b\b\b\b\b\b\b\b";
 	while (*p)
-	    cnputc(*p++);
+		cnputc(*p++);
 	if (quit_output) {
-	    db_error(0);
-	    /* NOTREACHED */
+		db_error(0);
+		/* NOTREACHED */
 	}
 }
 
@@ -142,45 +141,41 @@ void
 db_putchar(int c)
 {
 	if (db_max_line >= DB_MIN_MAX_LINE && db_output_line >= db_max_line-1)
-	    db_more();
+		db_more();
 
 	if (c > ' ' && c <= '~') {
-	    /*
-	     * Printing character.
-	     * If we have spaces to print, print them first.
-	     * Use tabs if possible.
-	     */
-	    db_force_whitespace();
-	    cnputc(c);
-	    db_output_position++;
-	    if (db_max_width >= DB_MIN_MAX_WIDTH
-		&& db_output_position >= db_max_width-1) {
-		/* auto new line */
-		cnputc('\n');
+		/*
+		 * Printing character.
+		 * If we have spaces to print, print them first.
+		 * Use tabs if possible.
+		 */
+		db_force_whitespace();
+		cnputc(c);
+		db_output_position++;
+		if (db_max_width >= DB_MIN_MAX_WIDTH &&
+		    db_output_position >= db_max_width-1) {
+			/* auto new line */
+			cnputc('\n');
+			db_output_position = 0;
+			db_last_non_space = 0;
+			db_output_line++;
+		}
+		db_last_non_space = db_output_position;
+	} else if (c == '\n') {
+		/* Return */
+		cnputc(c);
 		db_output_position = 0;
 		db_last_non_space = 0;
 		db_output_line++;
-	    }
-	    db_last_non_space = db_output_position;
-	}
-	else if (c == '\n') {
-	    /* Return */
-	    cnputc(c);
-	    db_output_position = 0;
-	    db_last_non_space = 0;
-	    db_output_line++;
-	}
-	else if (c == '\t') {
-	    /* assume tabs every 8 positions */
-	    db_output_position = NEXT_TAB(db_output_position);
-	}
-	else if (c == ' ') {
-	    /* space */
-	    db_output_position++;
-	}
-	else if (c == '\007') {
-	    /* bell */
-	    cnputc(c);
+	} else if (c == '\t') {
+		/* assume tabs every 8 positions */
+		db_output_position = NEXT_TAB(db_output_position);
+	} else if (c == ' ') {
+		/* space */
+		db_output_position++;
+	} else if (c == '\007') {
+		/* bell */
+		cnputc(c);
 	}
 	/* other characters are assumed non-printing */
 }
@@ -201,7 +196,7 @@ void
 db_end_line(int space)
 {
 	if (db_output_position >= db_max_width - space)
-	    db_printf("\n");
+		db_printf("\n");
 }
 
 char *
@@ -223,7 +218,6 @@ db_format(char *buf, size_t bufsize, long val, int format, int alt, int width)
 		fmt++;
 
 	snprintf(buf, bufsize, fmt, width, val);
-
 	return (buf);
 }
 

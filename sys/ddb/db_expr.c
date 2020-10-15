@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_expr.c,v 1.17 2019/11/07 13:16:25 mpi Exp $	*/
+/*	$OpenBSD: db_expr.c,v 1.18 2020/10/15 03:14:00 deraadt Exp $	*/
 /*	$NetBSD: db_expr.c,v 1.5 1996/02/05 01:56:58 christos Exp $	*/
 
 /*
@@ -54,48 +54,48 @@ db_term(db_expr_t *valuep)
 
 	t = db_read_token();
 	if (t == tIDENT) {
-	    if (db_symbol_by_name(db_tok_string, valuep) == NULL) {
-		db_error("Symbol not found\n");
-		/*NOTREACHED*/
-	    }
-	    return 1;
+		if (db_symbol_by_name(db_tok_string, valuep) == NULL) {
+			db_error("Symbol not found\n");
+			/*NOTREACHED*/
+		}
+		return 1;
 	}
 	if (t == tNUMBER) {
-	    *valuep = db_tok_number;
-	    return 1;
+		*valuep = db_tok_number;
+		return 1;
 	}
 	if (t == tDOT) {
-	    *valuep = (db_expr_t)db_dot;
-	    return 1;
+		*valuep = (db_expr_t)db_dot;
+		return 1;
 	}
 	if (t == tDOTDOT) {
-	    *valuep = (db_expr_t)db_prev;
-	    return 1;
+		*valuep = (db_expr_t)db_prev;
+		return 1;
 	}
 	if (t == tPLUS) {
-	    *valuep = (db_expr_t) db_next;
-	    return 1;
+		*valuep = (db_expr_t) db_next;
+		return 1;
 	}
 	if (t == tDITTO) {
-	    *valuep = (db_expr_t)db_last_addr;
-	    return 1;
+		*valuep = (db_expr_t)db_last_addr;
+		return 1;
 	}
 	if (t == tDOLLAR) {
-	    if (!db_get_variable(valuep))
-		return 0;
-	    return 1;
+		if (!db_get_variable(valuep))
+			return 0;
+		return 1;
 	}
 	if (t == tLPAREN) {
-	    if (!db_expression(valuep)) {
-		db_error("Syntax error\n");
-		/*NOTREACHED*/
-	    }
-	    t = db_read_token();
-	    if (t != tRPAREN) {
-		db_error("Syntax error\n");
-		/*NOTREACHED*/
-	    }
-	    return 1;
+		if (!db_expression(valuep)) {
+			db_error("Syntax error\n");
+			/*NOTREACHED*/
+		}
+		t = db_read_token();
+		if (t != tRPAREN) {
+			db_error("Syntax error\n");
+			/*NOTREACHED*/
+		}
+		return 1;
 	}
 	db_unread_token(t);
 	return 0;
@@ -108,21 +108,21 @@ db_unary(db_expr_t *valuep)
 
 	t = db_read_token();
 	if (t == tMINUS) {
-	    if (!db_unary(valuep)) {
-		db_error("Syntax error\n");
-		/*NOTREACHED*/
-	    }
-	    *valuep = -*valuep;
-	    return 1;
+		if (!db_unary(valuep)) {
+			db_error("Syntax error\n");
+			/*NOTREACHED*/
+		}
+		*valuep = -*valuep;
+		return 1;
 	}
 	if (t == tSTAR) {
-	    /* indirection */
-	    if (!db_unary(valuep)) {
-		db_error("Syntax error\n");
-		/*NOTREACHED*/
-	    }
-	    *valuep = db_get_value((vaddr_t)*valuep, sizeof(vaddr_t), 0);
-	    return 1;
+		/* indirection */
+		if (!db_unary(valuep)) {
+			db_error("Syntax error\n");
+			/*NOTREACHED*/
+		}
+		*valuep = db_get_value((vaddr_t)*valuep, sizeof(vaddr_t), 0);
+		return 1;
 	}
 	db_unread_token(t);
 	return (db_term(valuep));
@@ -135,29 +135,29 @@ db_mult_expr(db_expr_t *valuep)
 	int		t;
 
 	if (!db_unary(&lhs))
-	    return 0;
+		return 0;
 
 	t = db_read_token();
 	while (t == tSTAR || t == tSLASH || t == tPCT || t == tHASH) {
-	    if (!db_term(&rhs)) {
-		db_error("Syntax error\n");
-		/*NOTREACHED*/
-	    }
-	    if (t == tSTAR)
-		lhs *= rhs;
-	    else {
-		if (rhs == 0) {
-		    db_error("Divide by 0\n");
-		    /*NOTREACHED*/
+		if (!db_term(&rhs)) {
+			db_error("Syntax error\n");
+			/*NOTREACHED*/
 		}
-		if (t == tSLASH)
-		    lhs /= rhs;
-		else if (t == tPCT)
-		    lhs %= rhs;
-		else
-		    lhs = ((lhs+rhs-1)/rhs)*rhs;
-	    }
-	    t = db_read_token();
+		if (t == tSTAR)
+			lhs *= rhs;
+		else {
+			if (rhs == 0) {
+				db_error("Divide by 0\n");
+				/*NOTREACHED*/
+			}
+			if (t == tSLASH)
+				lhs /= rhs;
+			else if (t == tPCT)
+				lhs %= rhs;
+			else
+				lhs = ((lhs+rhs-1)/rhs)*rhs;
+		}
+		t = db_read_token();
 	}
 	db_unread_token(t);
 	*valuep = lhs;
@@ -171,19 +171,19 @@ db_add_expr(db_expr_t *valuep)
 	int		t;
 
 	if (!db_mult_expr(&lhs))
-	    return 0;
+		return 0;
 
 	t = db_read_token();
 	while (t == tPLUS || t == tMINUS) {
-	    if (!db_mult_expr(&rhs)) {
-		db_error("Syntax error\n");
-		/*NOTREACHED*/
-	    }
-	    if (t == tPLUS)
-		lhs += rhs;
-	    else
-		lhs -= rhs;
-	    t = db_read_token();
+		if (!db_mult_expr(&rhs)) {
+			db_error("Syntax error\n");
+			/*NOTREACHED*/
+		}
+		if (t == tPLUS)
+			lhs += rhs;
+		else
+			lhs -= rhs;
+		t = db_read_token();
 	}
 	db_unread_token(t);
 	*valuep = lhs;
@@ -197,25 +197,25 @@ db_shift_expr(db_expr_t *valuep)
 	int		t;
 
 	if (!db_add_expr(&lhs))
-	    return 0;
+		return 0;
 
 	t = db_read_token();
 	while (t == tSHIFT_L || t == tSHIFT_R) {
-	    if (!db_add_expr(&rhs)) {
-		db_error("Syntax error\n");
-		/*NOTREACHED*/
-	    }
-	    if (rhs < 0) {
-		db_error("Negative shift amount\n");
-		/*NOTREACHED*/
-	    }
-	    if (t == tSHIFT_L)
-		lhs <<= rhs;
-	    else {
-		/* Shift right is unsigned */
-		lhs = (unsigned) lhs >> rhs;
-	    }
-	    t = db_read_token();
+		if (!db_add_expr(&rhs)) {
+			db_error("Syntax error\n");
+			/*NOTREACHED*/
+		}
+		if (rhs < 0) {
+			db_error("Negative shift amount\n");
+			/*NOTREACHED*/
+		}
+		if (t == tSHIFT_L)
+			lhs <<= rhs;
+		else {
+			/* Shift right is unsigned */
+			lhs = (unsigned) lhs >> rhs;
+		}
+		t = db_read_token();
 	}
 	db_unread_token(t);
 	*valuep = lhs;

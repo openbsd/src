@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_var.h,v 1.13 2019/07/20 23:06:51 mpi Exp $	*/
+/*	$OpenBSD: db_var.h,v 1.14 2020/10/15 03:14:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.  All rights reserved.
@@ -70,7 +70,7 @@ extern int	db_log;
 extern int	db_profile;
 
 int	ddb_sysctl(int *, u_int, void *, size_t *, void *, size_t,
-		       struct proc *);
+	    struct proc *);
 #endif
 
 #endif /* _DDB_DB_VAR_H_ */

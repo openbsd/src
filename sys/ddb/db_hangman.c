@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_hangman.c,v 1.37 2017/05/30 15:39:05 mpi Exp $	*/
+/*	$OpenBSD: db_hangman.c,v 1.38 2020/10/15 03:14:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt, Michael Shalayeff
@@ -156,7 +156,7 @@ db_hangman(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 	size_t	tries;
 	size_t	len;
 	struct _abc sabc[1];
-	int	skill;
+	int	skill, c;
 
 	if (modif[0] != 's' || (skill = modif[1] - '0') > 9U)
 		skill = 3;
@@ -174,30 +174,25 @@ db_hangman(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 
 			db_plays++;
 		}
+		db_hang(tries, word, sabc);
+		c = cngetc();
+		c = TOLOWER(c);
 
-		{
-			int c;
+		if (ISLOWALPHA(c) && ABC_ISCLR(c)) {
+			char	*p;
+			size_t	n;
 
-			db_hang(tries, word, sabc);
-			c = cngetc();
-			c = TOLOWER(c);
+			/* strchr(word,c) */
+			for (n = 0, p = word; *p ; p++)
+				if (TOLOWER(*p) == c)
+					n++;
 
-			if (ISLOWALPHA(c) && ABC_ISCLR(c)) {
-				char	*p;
-				size_t	n;
-
-					/* strchr(word,c) */
-				for (n = 0, p = word; *p ; p++)
-					if (TOLOWER(*p) == c)
-						n++;
-
-				if (n) {
-					ABC_SETRIGHT(c);
-					len -= n;
-				} else {
-					ABC_SETWRONG(c);
-					tries--;
-				}
+			if (n) {
+				ABC_SETRIGHT(c);
+				len -= n;
+			} else {
+				ABC_SETWRONG(c);
+				tries--;
 			}
 		}
 

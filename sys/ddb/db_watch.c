@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_watch.c,v 1.17 2019/11/07 13:16:25 mpi Exp $ */
+/*	$OpenBSD: db_watch.c,v 1.18 2020/10/15 03:14:00 deraadt Exp $ */
 /*	$NetBSD: db_watch.c,v 1.9 1996/03/30 22:30:12 christos Exp $	*/
 
 /*
@@ -62,12 +62,12 @@ db_watchpoint_alloc(void)
 	db_watchpoint_t	watch;
 
 	if ((watch = db_free_watchpoints) != 0) {
-	    db_free_watchpoints = watch->link;
-	    return (watch);
+		db_free_watchpoints = watch->link;
+		return (watch);
 	}
 	if (db_next_free_watchpoint == &db_watch_table[NWATCHPOINTS]) {
-	    db_printf("All watchpoints used.\n");
-	    return (0);
+		db_printf("All watchpoints used.\n");
+		return (0);
 	}
 	watch = db_next_free_watchpoint;
 	db_next_free_watchpoint++;
@@ -119,7 +119,7 @@ db_delete_watchpoint(vaddr_t addr)
 	db_watchpoint_t	*prev;
 
 	for (prev = &db_watchpoint_list; (watch = *prev) != 0;
-	   prev = &watch->link)
+	    prev = &watch->link)
 		if (watch->loaddr <= addr && addr < watch->hiaddr) {
 			*prev = watch->link;
 			db_watchpoint_free(watch);
@@ -135,8 +135,8 @@ db_list_watchpoints(void)
 	db_watchpoint_t	watch;
 
 	if (db_watchpoint_list == 0) {
-	    db_printf("No watchpoints set\n");
-	    return;
+		db_printf("No watchpoints set\n");
+		return;
 	}
 
 	db_printf("  Address  Size\n");
@@ -158,13 +158,13 @@ db_deletewatch_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 void
 db_watchpoint_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
-	vsize_t 	size;
+	vsize_t		size;
 	db_expr_t	value;
 
 	if (db_expression(&value))
-	    size = (vsize_t) value;
+		size = (vsize_t) value;
 	else
-	    size = 4;
+		size = 4;
 	db_skip_to_eol();
 
 	db_set_watchpoint(addr, size);

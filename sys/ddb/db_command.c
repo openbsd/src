@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.88 2019/11/07 13:16:25 mpi Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.89 2020/10/15 03:14:00 deraadt Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /*
@@ -127,7 +127,7 @@ db_skip_to_eol(void)
 {
 	int	t;
 	do {
-	    t = db_read_token();
+		t = db_read_token();
 	} while (t != tEOL);
 }
 
@@ -149,34 +149,29 @@ db_cmd_search(char *name, struct db_command *table, struct db_command **cmdp)
 	int			result = CMD_NONE;
 
 	for (cmd = table; cmd->name != 0; cmd++) {
-	    char *lp;
-	    char *rp;
-	    int  c;
+		char *lp = name, *rp = cmd->name;
+		int  c;
 
-	    lp = name;
-	    rp = cmd->name;
-	    while ((c = *lp) == *rp) {
+		while ((c = *lp) == *rp) {
+			if (c == 0) {
+				/* complete match */
+				*cmdp = cmd;
+				return (CMD_UNIQUE);
+			}
+			lp++;
+			rp++;
+		}
 		if (c == 0) {
-		    /* complete match */
-		    *cmdp = cmd;
-		    return (CMD_UNIQUE);
+			/* end of name, not end of command - partial match */
+			if (result == CMD_FOUND) {
+				result = CMD_AMBIGUOUS;
+				/* but keep looking for a full match -
+				   this lets us match single letters */
+			} else {
+				*cmdp = cmd;
+				result = CMD_FOUND;
+			}
 		}
-		lp++;
-		rp++;
-	    }
-	    if (c == 0) {
-		/* end of name, not end of command -
-		   partial match */
-		if (result == CMD_FOUND) {
-		    result = CMD_AMBIGUOUS;
-		    /* but keep looking for a full match -
-		       this lets us match single letters */
-		}
-		else {
-		    *cmdp = cmd;
-		    result = CMD_FOUND;
-		}
-	    }
 	}
 	return (result);
 }
@@ -187,8 +182,8 @@ db_cmd_list(struct db_command *table)
 	struct db_command *cmd;
 
 	for (cmd = table; cmd->name != 0; cmd++) {
-	    db_printf("%-12s", cmd->name);
-	    db_end_line(12);
+		db_printf("%-12s", cmd->name);
+		db_end_line(12);
 	}
 }
 
@@ -202,124 +197,109 @@ db_command(struct db_command **last_cmdp, struct db_command *cmd_table)
 
 	t = db_read_token();
 	if (t == tEOL) {
-	    /* empty line repeats last command, at 'next' */
-	    cmd = *last_cmdp;
-	    addr = (db_expr_t)db_next;
-	    have_addr = 0;
-	    count = 1;
-	    modif[0] = '\0';
-	}
-	else if (t == tEXCL) {
-	    db_fncall(0, 0, 0, NULL);
-	    return;
-	}
-	else if (t != tIDENT) {
-	    db_printf("?\n");
-	    db_flush_lex();
-	    return;
-	}
-	else {
-	    /*
-	     * Search for command
-	     */
-	    while (cmd_table) {
-		result = db_cmd_search(db_tok_string,
-				       cmd_table,
-				       &cmd);
-		switch (result) {
-		    case CMD_NONE:
-			db_printf("No such command\n");
-			db_flush_lex();
-			return;
-		    case CMD_AMBIGUOUS:
-			db_printf("Ambiguous\n");
-			db_flush_lex();
-			return;
-		    default:
-			break;
-		}
-		if ((cmd_table = cmd->more) != 0) {
-		    t = db_read_token();
-		    if (t != tIDENT) {
-			db_cmd_list(cmd_table);
-			db_flush_lex();
-			return;
-		    }
-		}
-	    }
-
-	    if ((cmd->flag & CS_OWN) == 0) {
-		/*
-		 * Standard syntax:
-		 * command [/modifier] [addr] [,count]
-		 */
-		t = db_read_token();
-		if (t == tSLASH) {
-		    t = db_read_token();
-		    if (t != tIDENT) {
-			db_printf("Bad modifier\n");
-			db_flush_lex();
-			return;
-		    }
-		    db_strlcpy(modif, db_tok_string, sizeof(modif));
-		}
-		else {
-		    db_unread_token(t);
-		    modif[0] = '\0';
+		/* empty line repeats last command, at 'next' */
+		cmd = *last_cmdp;
+		addr = (db_expr_t)db_next;
+		have_addr = 0;
+		count = 1;
+		modif[0] = '\0';
+	} else if (t == tEXCL) {
+		db_fncall(0, 0, 0, NULL);
+		return;
+	} else if (t != tIDENT) {
+		db_printf("?\n");
+		db_flush_lex();
+		return;
+	} else {
+		/* Search for command */
+		while (cmd_table) {
+			result = db_cmd_search(db_tok_string,
+			    cmd_table, &cmd);
+			switch (result) {
+			case CMD_NONE:
+				db_printf("No such command\n");
+				db_flush_lex();
+				return;
+			case CMD_AMBIGUOUS:
+				db_printf("Ambiguous\n");
+				db_flush_lex();
+				return;
+			default:
+				break;
+			}
+			if ((cmd_table = cmd->more) != 0) {
+				t = db_read_token();
+				if (t != tIDENT) {
+					db_cmd_list(cmd_table);
+					db_flush_lex();
+					return;
+				}
+			}
 		}
 
-		if (db_expression(&addr)) {
-		    db_dot = (vaddr_t) addr;
-		    db_last_addr = db_dot;
-		    have_addr = 1;
+		if ((cmd->flag & CS_OWN) == 0) {
+			/*
+			 * Standard syntax:
+			 * command [/modifier] [addr] [,count]
+			 */
+			t = db_read_token();
+			if (t == tSLASH) {
+				t = db_read_token();
+				if (t != tIDENT) {
+					db_printf("Bad modifier\n");
+					db_flush_lex();
+					return;
+				}
+				db_strlcpy(modif, db_tok_string, sizeof(modif));
+			} else {
+				db_unread_token(t);
+				modif[0] = '\0';
+			}
+
+			if (db_expression(&addr)) {
+				db_dot = (vaddr_t) addr;
+				db_last_addr = db_dot;
+				have_addr = 1;
+			} else {
+				addr = (db_expr_t) db_dot;
+				have_addr = 0;
+			}
+			t = db_read_token();
+			if (t == tCOMMA) {
+				if (!db_expression(&count)) {
+					db_printf("Count missing\n");
+					db_flush_lex();
+					return;
+				}
+			} else {
+				db_unread_token(t);
+				count = -1;
+			}
+			if ((cmd->flag & CS_MORE) == 0)
+				db_skip_to_eol();
 		}
-		else {
-		    addr = (db_expr_t) db_dot;
-		    have_addr = 0;
-		}
-		t = db_read_token();
-		if (t == tCOMMA) {
-		    if (!db_expression(&count)) {
-			db_printf("Count missing\n");
-			db_flush_lex();
-			return;
-		    }
-		}
-		else {
-		    db_unread_token(t);
-		    count = -1;
-		}
-		if ((cmd->flag & CS_MORE) == 0) {
-		    db_skip_to_eol();
-		}
-	    }
 	}
 	*last_cmdp = cmd;
 	if (cmd != 0) {
-	    /*
-	     * Execute the command.
-	     */
-	    (*cmd->fcn)(addr, have_addr, count, modif);
+		/* Execute the command. */
+		(*cmd->fcn)(addr, have_addr, count, modif);
 
-	    if (cmd->flag & CS_SET_DOT) {
-		/*
-		 * If command changes dot, set dot to
-		 * previous address displayed (if 'ed' style).
-		 */
-		if (db_ed_style) {
-		    db_dot = db_prev;
+		if (cmd->flag & CS_SET_DOT) {
+			/*
+			 * If command changes dot, set dot to
+			 * previous address displayed (if 'ed' style).
+			 */
+			if (db_ed_style)
+				db_dot = db_prev;
+			else
+				db_dot = db_next;
 		}
-		else {
-		    db_dot = db_next;
-		}
-	    }
-	    else {
+	} else {
 		/*
 		 * If command does not change dot,
 		 * set 'next' location to be the same.
 		 */
 		db_next = db_dot;
-	    }
 	}
 }
 
@@ -339,12 +319,12 @@ db_buf_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 void
 db_map_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
-        int full = 0;
+	int full = 0;
 
-        if (modif[0] == 'f')
-                full = 1;
+	if (modif[0] == 'f')
+		full = 1;
 
-        uvm_map_printit((struct vm_map *) addr, full, db_printf);
+	uvm_map_printit((struct vm_map *) addr, full, db_printf);
 }
 
 /*ARGSUSED*/
@@ -423,10 +403,10 @@ db_show_all_bufs(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 void
 db_object_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
-        int full = 0;
+	int full = 0;
 
-        if (modif[0] == 'f')
-                full = 1;
+	if (modif[0] == 'f')
+		full = 1;
 
 	uvm_object_printit((struct uvm_object *) addr, full, db_printf);
 }
@@ -435,10 +415,10 @@ db_object_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 void
 db_page_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
-        int full = 0;
+	int full = 0;
 
-        if (modif[0] == 'f')
-                full = 1;
+	if (modif[0] == 'f')
+		full = 1;
 
 	uvm_page_printit((struct vm_page *) addr, full, db_printf);
 }
@@ -557,13 +537,13 @@ struct db_command db_show_all_cmds[] = {
 #ifdef WITNESS
 	{ "locks",	db_witness_list_all,	0, NULL },
 #endif
-	{ NULL, 	NULL, 			0, NULL }
+	{ NULL,		NULL,			0, NULL }
 };
 
 struct db_command db_show_cmds[] = {
 	{ "all",	NULL,			0,	db_show_all_cmds },
 	{ "bcstats",	db_bcstats_print_cmd,	0,	NULL },
-	{ "breaks",	db_listbreak_cmd, 	0,	NULL },
+	{ "breaks",	db_listbreak_cmd,	0,	NULL },
 	{ "buf",	db_buf_print_cmd,	0,	NULL },
 	{ "extents",	db_extent_print_cmd,	0,	NULL },
 #ifdef WITNESS
@@ -587,7 +567,7 @@ struct db_command db_show_cmds[] = {
 	{ "struct",	db_ctf_show_struct,	CS_OWN,	NULL },
 	{ "uvmexp",	db_uvmexp_print_cmd,	0,	NULL },
 	{ "vnode",	db_vnode_print_cmd,	0,	NULL },
-	{ "watches",	db_listwatch_cmd, 	0,	NULL },
+	{ "watches",	db_listwatch_cmd,	0,	NULL },
 #ifdef WITNESS
 	{ "witness",	db_witness_display,	0,	NULL },
 #endif
@@ -607,14 +587,14 @@ struct db_command db_boot_cmds[] = {
 struct db_command db_command_table[] = {
 #ifdef DB_MACHINE_COMMANDS
   /* this must be the first entry, if it exists */
-	{ "machine",    NULL,                   0,     		NULL},
+	{ "machine",	NULL,			0,		NULL},
 #endif
 	{ "kill",	db_kill_cmd,		0,		NULL },
 	{ "print",	db_print_cmd,		0,		NULL },
 	{ "p",		db_print_cmd,		0,		NULL },
 	{ "pprint",	db_ctf_pprint_cmd,	CS_OWN,		NULL },
-	{ "examine",	db_examine_cmd,		CS_SET_DOT, 	NULL },
-	{ "x",		db_examine_cmd,		CS_SET_DOT, 	NULL },
+	{ "examine",	db_examine_cmd,		CS_SET_DOT,	NULL },
+	{ "x",		db_examine_cmd,		CS_SET_DOT,	NULL },
 	{ "search",	db_search_cmd,		CS_OWN|CS_SET_DOT, NULL },
 	{ "set",	db_set_cmd,		CS_OWN,		NULL },
 	{ "write",	db_write_cmd,		CS_MORE|CS_SET_DOT, NULL },
@@ -641,17 +621,17 @@ struct db_command db_command_table[] = {
 	{ "help",	db_help_cmd,		0,		NULL },
 	{ "hangman",	db_hangman,		0,		NULL },
 	{ "dmesg",	db_dmesg_cmd,		0,		NULL },
-	{ NULL, 	NULL,			0,		NULL }
+	{ NULL,		NULL,			0,		NULL }
 };
 
 #ifdef DB_MACHINE_COMMANDS
 
 /* this function should be called to install the machine dependent
    commands. It should be called before the debugger is enabled  */
-void db_machine_commands_install(struct db_command *ptr)
+void
+db_machine_commands_install(struct db_command *ptr)
 {
-  db_command_table[0].more = ptr;
-  return;
+	db_command_table[0].more = ptr;
 }
 
 #endif
@@ -731,45 +711,44 @@ db_fncall(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	char		tmpfmt[28];
 
 	if (!db_expression(&fn_addr)) {
-	    db_printf("Bad function\n");
-	    db_flush_lex();
-	    return;
+		db_printf("Bad function\n");
+		db_flush_lex();
+		return;
 	}
 	func = (db_expr_t (*)(db_expr_t, ...)) fn_addr;
 
 	t = db_read_token();
 	if (t == tLPAREN) {
-	    if (db_expression(&args[0])) {
-		nargs++;
-		while ((t = db_read_token()) == tCOMMA) {
-		    if (nargs == MAXARGS) {
-			db_printf("Too many arguments\n");
-			db_flush_lex();
-			return;
-		    }
-		    if (!db_expression(&args[nargs])) {
-			db_printf("Argument missing\n");
-			db_flush_lex();
-			return;
-		    }
-		    nargs++;
+		if (db_expression(&args[0])) {
+			nargs++;
+			while ((t = db_read_token()) == tCOMMA) {
+				if (nargs == MAXARGS) {
+					db_printf("Too many arguments\n");
+					db_flush_lex();
+					return;
+				}
+				if (!db_expression(&args[nargs])) {
+					db_printf("Argument missing\n");
+					db_flush_lex();
+					return;
+				}
+				nargs++;
+			}
+			db_unread_token(t);
 		}
-		db_unread_token(t);
-	    }
-	    if (db_read_token() != tRPAREN) {
-		db_printf("?\n");
-		db_flush_lex();
-		return;
-	    }
+		if (db_read_token() != tRPAREN) {
+			db_printf("?\n");
+			db_flush_lex();
+			return;
+		}
 	}
 	db_skip_to_eol();
 
-	while (nargs < MAXARGS) {
-	    args[nargs++] = 0;
-	}
+	while (nargs < MAXARGS)
+		args[nargs++] = 0;
 
 	retval = (*func)(args[0], args[1], args[2], args[3], args[4],
-			 args[5], args[6], args[7], args[8], args[9]);
+	    args[5], args[6], args[7], args[8], args[9]);
 	db_printf("%s\n", db_format(tmpfmt, sizeof tmpfmt, retval,
 	    DB_FORMAT_N, 1, 0));
 }
@@ -855,17 +834,19 @@ db_show_regs(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	char		tmpfmt[28];
 
 	for (regp = db_regs; regp < db_eregs; regp++) {
-	    db_read_variable(regp, &value);
-	    db_printf("%-12s%s", regp->name, db_format(tmpfmt, sizeof tmpfmt,
-	      (long)value, DB_FORMAT_N, 1, sizeof(long) * 3));
-	    db_find_xtrn_sym_and_offset((vaddr_t)value, &name, &offset);
-	    if (name != 0 && offset <= db_maxoff && offset != value) {
-		db_printf("\t%s", name);
-		if (offset != 0)
-		    db_printf("+%s", db_format(tmpfmt, sizeof tmpfmt,
-		      (long)offset, DB_FORMAT_R, 1, 0));
-	    }
-	    db_printf("\n");
+		db_read_variable(regp, &value);
+		db_printf("%-12s%s", regp->name,
+		    db_format(tmpfmt, sizeof tmpfmt,
+		    (long)value, DB_FORMAT_N, 1, sizeof(long) * 3));
+		db_find_xtrn_sym_and_offset((vaddr_t)value, &name, &offset);
+		if (name != 0 && offset <= db_maxoff && offset != value) {
+			db_printf("\t%s", name);
+			if (offset != 0)
+				db_printf("+%s",
+				    db_format(tmpfmt, sizeof tmpfmt,
+				    (long)offset, DB_FORMAT_R, 1, 0));
+		}
+		db_printf("\n");
 	}
 	db_print_loc_and_inst(PC_REGS(&ddb_regs));
 }

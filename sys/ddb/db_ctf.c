@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_ctf.c,v 1.29 2019/11/12 07:34:43 mpi Exp $	*/
+/*	$OpenBSD: db_ctf.c,v 1.30 2020/10/15 03:14:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -40,13 +40,13 @@
 extern db_symtab_t		db_symtab;
 
 struct ddb_ctf {
-	struct ctf_header 	*cth;
+	struct ctf_header	*cth;
 	const char		*rawctf;	/* raw .SUNW_ctf section */
-        size_t			 rawctflen;	/* raw .SUNW_ctf section size */
-	const char 		*data;		/* decompressed CTF data */
+	size_t			 rawctflen;	/* raw .SUNW_ctf section size */
+	const char		*data;		/* decompressed CTF data */
 	size_t			 dlen;		/* decompressed CTF data size */
 	char			*strtab;	/* ELF string table */
-	uint32_t 		 ctf_found;
+	uint32_t		 ctf_found;
 };
 
 struct ddb_ctf db_ctf;
@@ -588,7 +588,7 @@ db_ctf_pprint_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	}
 
 	if ((ctt = db_ctf_type_by_symbol(st)) == NULL) {
-	        modif[0] = '\0';
+		modif[0] = '\0';
 		db_print_cmd(addr, 0, 0, modif);
 		db_flush_lex();
 		return;

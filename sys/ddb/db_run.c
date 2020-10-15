@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_run.c,v 1.29 2019/11/07 13:16:25 mpi Exp $	*/
+/*	$OpenBSD: db_run.c,v 1.30 2020/10/15 03:14:00 deraadt Exp $	*/
 /*	$NetBSD: db_run.c,v 1.8 1996/02/05 01:57:12 christos Exp $	*/
 
 /*
@@ -137,37 +137,37 @@ db_stop_at_pc(db_regs_t *regs, int *is_breakpoint)
 		}
 	}
 	if (db_run_mode == STEP_RETURN) {
-	    db_expr_t ins = db_get_value(pc, sizeof(int), 0);
+		db_expr_t ins = db_get_value(pc, sizeof(int), 0);
 
-	    /* continue until matching return */
+		/* continue until matching return */
 
-	    if (!inst_trap_return(ins) &&
-		(!inst_return(ins) || --db_call_depth != 0)) {
-		if (db_sstep_print) {
-		    if (inst_call(ins) || inst_return(ins)) {
-			int i;
+		if (!inst_trap_return(ins) &&
+		    (!inst_return(ins) || --db_call_depth != 0)) {
+			if (db_sstep_print) {
+				if (inst_call(ins) || inst_return(ins)) {
+					int i;
 
-			db_printf("[after %6d]     ", db_inst_count);
-			for (i = db_call_depth; --i > 0; )
-			    db_printf("  ");
-			db_print_loc_and_inst(pc);
-			db_printf("\n");
-		    }
+					db_printf("[after %6d]     ", db_inst_count);
+					for (i = db_call_depth; --i > 0; )
+						db_printf("  ");
+					db_print_loc_and_inst(pc);
+					db_printf("\n");
+				}
+			}
+			if (inst_call(ins))
+				db_call_depth++;
+			return 0;	/* continue */
 		}
-		if (inst_call(ins))
-		    db_call_depth++;
-		return 0;	/* continue */
-	    }
 	}
 	if (db_run_mode == STEP_CALLT) {
-	    db_expr_t ins = db_get_value(pc, sizeof(int), 0);
+		db_expr_t ins = db_get_value(pc, sizeof(int), 0);
 
-	    /* continue until call or return */
+		/* continue until call or return */
 
-	    if (!inst_call(ins) && !inst_return(ins) &&
-		!inst_trap_return(ins)) {
-		return 0;	/* continue */
-	    }
+		if (!inst_call(ins) && !inst_return(ins) &&
+		    !inst_trap_return(ins)) {
+			return 0;	/* continue */
+		}
 	}
 	db_run_mode = STEP_NONE;
 	return 1;
@@ -218,8 +218,8 @@ void
 db_single_step(db_regs_t *regs)
 {
 	if (db_run_mode == STEP_CONTINUE) {
-	    db_run_mode = STEP_INVISIBLE;
-	    db_set_single_step(regs);
+		db_run_mode = STEP_INVISIBLE;
+		db_set_single_step(regs);
 	}
 }
 
@@ -231,10 +231,10 @@ db_single_step_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	int	print = 0;
 
 	if (count == -1)
-	    count = 1;
+		count = 1;
 
 	if (modif[0] == 'p')
-	    print = 1;
+		print = 1;
 
 	db_run_mode = STEP_ONCE;
 	db_loop_count = count;
@@ -253,7 +253,7 @@ db_trace_until_call_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 	int	print = 0;
 
 	if (modif[0] == 'p')
-	    print = 1;
+		print = 1;
 
 	db_run_mode = STEP_CALLT;
 	db_sstep_print = print;
@@ -270,7 +270,7 @@ db_trace_until_matching_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 	int	print = 0;
 
 	if (modif[0] == 'p')
-	    print = 1;
+		print = 1;
 
 	db_run_mode = STEP_RETURN;
 	db_call_depth = 1;
@@ -286,9 +286,9 @@ void
 db_continue_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	if (modif[0] == 'c')
-	    db_run_mode = STEP_COUNT;
+		db_run_mode = STEP_COUNT;
 	else
-	    db_run_mode = STEP_CONTINUE;
+		db_run_mode = STEP_CONTINUE;
 	db_inst_count = 0;
 
 	db_cmd_loop_done = 1;
@@ -340,13 +340,13 @@ db_set_single_step(db_regs_t *regs)
 	 */
 	inst = db_get_value(pc, sizeof(int), 0);
 	if (inst_branch(inst) || inst_call(inst) || inst_return(inst)) {
-	    brpc = branch_taken(inst, pc, getreg_val, regs);
-	    if (brpc != pc) {	/* self-branches are hopeless */
-		db_taken_bkpt = db_set_temp_breakpoint(brpc);
-	    }
+		brpc = branch_taken(inst, pc, getreg_val, regs);
+		if (brpc != pc) {	/* self-branches are hopeless */
+			db_taken_bkpt = db_set_temp_breakpoint(brpc);
+		}
 #if 0
-	    /* XXX this seems like a true bug, no?  */
-	    pc = next_instr_address(pc, 1);
+		/* XXX this seems like a true bug, no?  */
+		pc = next_instr_address(pc, 1);
 #endif
 	}
 #endif /*SOFTWARE_SSTEP_EMUL*/
@@ -358,12 +358,12 @@ void
 db_clear_single_step(db_regs_t *regs)
 {
 	if (db_taken_bkpt != 0) {
-	    db_delete_temp_breakpoint(db_taken_bkpt);
-	    db_taken_bkpt = 0;
+		db_delete_temp_breakpoint(db_taken_bkpt);
+		db_taken_bkpt = 0;
 	}
 	if (db_not_taken_bkpt != 0) {
-	    db_delete_temp_breakpoint(db_not_taken_bkpt);
-	    db_not_taken_bkpt = 0;
+		db_delete_temp_breakpoint(db_not_taken_bkpt);
+		db_not_taken_bkpt = 0;
 	}
 }
 

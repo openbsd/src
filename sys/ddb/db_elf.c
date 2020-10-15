@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_elf.c,v 1.30 2020/05/26 21:35:43 gkoehler Exp $	*/
+/*	$OpenBSD: db_elf.c,v 1.31 2020/10/15 03:14:00 deraadt Exp $	*/
 /*	$NetBSD: db_elf.c,v 1.13 2000/07/07 21:55:18 jhawk Exp $	*/
 
 /*-
@@ -435,7 +435,7 @@ db_symbol_by_name(char *name, db_expr_t *valuep)
 
 	sym = db_elf_sym_lookup(name);
 	if (sym == NULL)
-	    return (NULL);
+		return (NULL);
 	db_symbol_values(sym, &name, valuep);
 	return (sym);
 }

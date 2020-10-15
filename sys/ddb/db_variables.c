@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_variables.c,v 1.20 2019/02/15 18:34:59 anton Exp $	*/
+/*	$OpenBSD: db_variables.c,v 1.21 2020/10/15 03:14:00 deraadt Exp $	*/
 /*	$NetBSD: db_variables.c,v 1.8 1996/02/05 01:57:19 christos Exp $	*/
 
 /*
@@ -57,18 +57,18 @@ db_find_variable(struct db_variable **varp)
 
 	t = db_read_token();
 	if (t == tIDENT) {
-	    for (vp = db_vars; vp < db_evars; vp++) {
-		if (!strcmp(db_tok_string, vp->name)) {
-		    *varp = vp;
-		    return (1);
+		for (vp = db_vars; vp < db_evars; vp++) {
+			if (!strcmp(db_tok_string, vp->name)) {
+				*varp = vp;
+				return (1);
+			}
 		}
-	    }
-	    for (vp = db_regs; vp < db_eregs; vp++) {
-		if (!strcmp(db_tok_string, vp->name)) {
-		    *varp = vp;
-		    return (1);
+		for (vp = db_regs; vp < db_eregs; vp++) {
+			if (!strcmp(db_tok_string, vp->name)) {
+				*varp = vp;
+				return (1);
+			}
 		}
-	    }
 	}
 	db_error("Unknown variable\n");
 	/*NOTREACHED*/
@@ -81,7 +81,7 @@ db_get_variable(db_expr_t *valuep)
 	struct db_variable *vp;
 
 	if (!db_find_variable(&vp))
-	    return (0);
+		return (0);
 
 	db_read_variable(vp, valuep);
 
@@ -94,7 +94,7 @@ db_set_variable(db_expr_t value)
 	struct db_variable *vp;
 
 	if (!db_find_variable(&vp))
-	    return (0);
+		return (0);
 
 	db_write_variable(vp, &value);
 
@@ -108,9 +108,9 @@ db_read_variable(struct db_variable *vp, db_expr_t *valuep)
 	int	(*func)(struct db_variable *, db_expr_t *, int) = vp->fcn;
 
 	if (func == FCN_NULL)
-	    *valuep = *(vp->valuep);
+		*valuep = *(vp->valuep);
 	else
-	    (*func)(vp, valuep, DB_VAR_GET);
+		(*func)(vp, valuep, DB_VAR_GET);
 }
 
 void
@@ -119,9 +119,9 @@ db_write_variable(struct db_variable *vp, db_expr_t *valuep)
 	int	(*func)(struct db_variable *, db_expr_t *, int) = vp->fcn;
 
 	if (func == FCN_NULL)
-	    *(vp->valuep) = *valuep;
+		*(vp->valuep) = *valuep;
 	else
-	    (*func)(vp, valuep, DB_VAR_SET);
+		(*func)(vp, valuep, DB_VAR_SET);
 }
 
 /*ARGSUSED*/
@@ -134,25 +134,25 @@ db_set_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 
 	t = db_read_token();
 	if (t != tDOLLAR) {
-	    db_error("Unknown variable\n");
-	    /*NOTREACHED*/
+		db_error("Unknown variable\n");
+		/*NOTREACHED*/
 	}
 	if (!db_find_variable(&vp)) {
-	    db_error("Unknown variable\n");
-	    /*NOTREACHED*/
+		db_error("Unknown variable\n");
+		/*NOTREACHED*/
 	}
 
 	t = db_read_token();
 	if (t != tEQ)
-	    db_unread_token(t);
+		db_unread_token(t);
 
 	if (!db_expression(&value)) {
-	    db_error("No value\n");
-	    /*NOTREACHED*/
+		db_error("No value\n");
+		/*NOTREACHED*/
 	}
 	if (db_read_token() != tEOL) {
-	    db_error("?\n");
-	    /*NOTREACHED*/
+		db_error("?\n");
+		/*NOTREACHED*/
 	}
 
 	db_write_variable(vp, &value);
