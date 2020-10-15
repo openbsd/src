@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlog.c,v 1.74 2016/10/16 13:35:51 okan Exp $	*/
+/*	$OpenBSD: rlog.c,v 1.75 2020/10/15 19:47:46 naddy Exp $	*/
 /*
  * Copyright (c) 2005, 2009 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2005, 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -28,6 +28,7 @@
 #include <ctype.h>
 #include <err.h>
 #include <libgen.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -348,7 +349,7 @@ rlog_select_daterev(RCSFILE *rcsfile, char *date)
 static void
 rlog_file(const char *fname, RCSFILE *file)
 {
-	char numb[RCS_REV_BUFSZ];
+	char fnamebuf[PATH_MAX], numb[RCS_REV_BUFSZ];
 	u_int nrev;
 	struct rcs_sym *sym;
 	struct rcs_access *acp;
@@ -364,7 +365,10 @@ rlog_file(const char *fname, RCSFILE *file)
 	} else
 		nrev = file->rf_ndelta;
 
-	if ((workfile = basename(fname)) == NULL)
+	if (strlcpy(fnamebuf, fname, sizeof(fnamebuf)) >= sizeof(fnamebuf))
+		errx(1, "rlog_file: truncation");
+
+	if ((workfile = basename(fnamebuf)) == NULL)
 		err(1, "basename");
 
 	/*
