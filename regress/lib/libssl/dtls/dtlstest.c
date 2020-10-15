@@ -1,4 +1,4 @@
-/* $OpenBSD: dtlstest.c,v 1.2 2020/10/15 17:51:58 jsing Exp $ */
+/* $OpenBSD: dtlstest.c,v 1.3 2020/10/15 18:05:06 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -34,6 +34,177 @@ const char *server_key_file;
 char dtls_cookie[32];
 
 int debug = 0;
+
+static void
+hexdump(const unsigned char *buf, size_t len)
+{
+	size_t i;
+
+	for (i = 1; i <= len; i++)
+		fprintf(stderr, " 0x%02hhx,%s", buf[i - 1], i % 8 ? "" : "\n");
+
+	if (len % 8)
+		fprintf(stderr, "\n");
+}
+
+#define BIO_C_DROP_PACKET	1000
+#define BIO_C_DROP_RANDOM	1001
+
+struct bio_packet_monkey_ctx {
+	unsigned int drop_rand;
+	unsigned int drop_mask;
+};
+
+static int
+bio_packet_monkey_new(BIO *bio)
+{
+	struct bio_packet_monkey_ctx *ctx;
+
+	if ((ctx = calloc(1, sizeof(*ctx))) == NULL)
+		return 0;
+
+	bio->flags = 0;
+	bio->init = 1;
+	bio->num = 0;
+	bio->ptr = ctx;
+
+	return 1;
+}
+
+static int
+bio_packet_monkey_free(BIO *bio)
+{
+	struct bio_packet_monkey_ctx *ctx;
+
+	if (bio == NULL)
+		return 1;
+
+	ctx = bio->ptr;
+	free(ctx);
+
+	return 1;
+}
+
+static long
+bio_packet_monkey_ctrl(BIO *bio, int cmd, long num, void *ptr)
+{
+	struct bio_packet_monkey_ctx *ctx;
+
+	ctx = bio->ptr;
+
+	switch (cmd) {
+	case BIO_C_DROP_PACKET:
+		if (num < 1 || num > 31)
+			return 0;
+		ctx->drop_mask |= 1 << ((unsigned int)num - 1);
+		return 1;
+
+	case BIO_C_DROP_RANDOM:
+		if (num < 0 || num > UINT_MAX)
+			return 0;
+		ctx->drop_rand = (unsigned int)num;
+		return 1;
+	}
+
+	if (bio->next_bio == NULL)
+		return 0;
+
+	return BIO_ctrl(bio->next_bio, cmd, num, ptr);
+}
+
+static int
+bio_packet_monkey_read(BIO *bio, char *out, int out_len)
+{
+	struct bio_packet_monkey_ctx *ctx = bio->ptr;
+	int ret;
+
+	if (ctx == NULL || bio->next_bio == NULL)
+		return 0;
+
+	ret = BIO_read(bio->next_bio, out, out_len);
+
+	BIO_clear_retry_flags(bio);
+	if (ret <= 0 && BIO_should_retry(bio->next_bio))
+		BIO_set_retry_read(bio);
+
+	return ret;
+}
+
+static int
+bio_packet_monkey_write(BIO *bio, const char *in, int in_len)
+{
+	struct bio_packet_monkey_ctx *ctx = bio->ptr;
+	int drop = 0;
+	int ret;
+
+	if (ctx == NULL || bio->next_bio == NULL)
+		return 0;
+
+	if (ctx->drop_rand > 0) {
+		drop = arc4random_uniform(ctx->drop_rand) == 0;
+	} else if (ctx->drop_mask > 0) {
+		drop = ctx->drop_mask & 1;
+		ctx->drop_mask >>= 1;
+	}
+	if (debug) {
+		fprintf(stderr, "DEBUG: %s packet...\n",
+		    drop ? "dropping" : "writing");
+		hexdump(in, in_len);
+	}
+	if (drop)
+		return in_len;
+
+	ret = BIO_write(bio->next_bio, in, in_len);
+
+	BIO_clear_retry_flags(bio);
+	if (ret <= 0 && BIO_should_retry(bio->next_bio))
+		BIO_set_retry_write(bio);
+
+	return ret;
+}
+
+static int
+bio_packet_monkey_puts(BIO *bio, const char *str)
+{
+	return bio_packet_monkey_write(bio, str, strlen(str));
+}
+
+static const BIO_METHOD bio_packet_monkey = {
+	.type = BIO_TYPE_BUFFER,
+	.name = "packet monkey",
+	.bread = bio_packet_monkey_read,
+	.bwrite = bio_packet_monkey_write,
+	.bputs = bio_packet_monkey_puts,
+	.ctrl = bio_packet_monkey_ctrl,
+	.create = bio_packet_monkey_new,
+	.destroy = bio_packet_monkey_free
+};
+
+static const BIO_METHOD *
+BIO_f_packet_monkey(void)
+{
+	return &bio_packet_monkey;
+}
+
+static BIO *
+BIO_new_packet_monkey(void)
+{
+	return BIO_new(BIO_f_packet_monkey());
+}
+
+static int
+BIO_packet_monkey_drop(BIO *bio, int num)
+{
+	return BIO_ctrl(bio, BIO_C_DROP_PACKET, num, NULL);
+}
+
+#if 0
+static int
+BIO_packet_monkey_drop_random(BIO *bio, int num)
+{
+	return BIO_ctrl(bio, BIO_C_DROP_RANDOM, num, NULL);
+}
+#endif
 
 static int
 datagram_pair(int *client_sock, int *server_sock,
@@ -107,6 +278,17 @@ dtls_cookie_verify(SSL *ssl, const unsigned char *cookie,
 {
 	return cookie_len == sizeof(dtls_cookie) &&
 	    memcmp(cookie, dtls_cookie, sizeof(dtls_cookie)) == 0;
+}
+
+static void
+dtls_info_callback(const SSL *ssl, int type, int val)
+{
+	/*
+	 * Squeal's ahead... remove the bbio from the info callback, so we can
+	 * drop specific messages. Ideally this would be an option for the SSL.
+	 */
+	if (ssl->wbio == ssl->bbio)
+		((SSL *)ssl)->wbio = BIO_pop(ssl->wbio);
 }
 
 static SSL *
@@ -305,13 +487,19 @@ do_client_server_loop(SSL *client, ssl_func client_func, SSL *server,
 	return client_done && server_done;
 }
 
+#define MAX_PACKET_DROPS 32
+
 struct dtls_test {
 	const unsigned char *desc;
-	const long mtu;
-	const long ssl_options;
+	long mtu;
+	long ssl_options;
+	int client_bbio_off;
+	int server_bbio_off;
+	uint8_t client_drops[MAX_PACKET_DROPS];
+	uint8_t server_drops[MAX_PACKET_DROPS];
 };
 
-static struct dtls_test dtls_tests[] = {
+static const struct dtls_test dtls_tests[] = {
 	{
 		.desc = "DTLS without cookies",
 		.ssl_options = 0,
@@ -323,18 +511,116 @@ static struct dtls_test dtls_tests[] = {
 	{
 		.desc = "DTLS with low MTU",
 		.mtu = 256,
+		.ssl_options = 0,
 	},
 	{
 		.desc = "DTLS with low MTU and cookies",
 		.mtu = 256,
 		.ssl_options = SSL_OP_COOKIE_EXCHANGE,
 	},
+	{
+		.desc = "DTLS with dropped server response",
+		.ssl_options = 0,
+		.server_drops = { 1 },
+	},
+	{
+		.desc = "DTLS with two dropped server responses",
+		.ssl_options = 0,
+		.server_drops = { 1, 2 },
+	},
+	{
+		.desc = "DTLS with dropped ServerHello",
+		.ssl_options = 0,
+		.server_bbio_off = 1,
+		.server_drops = { 1 },
+	},
+	{
+		.desc = "DTLS with dropped server Certificate",
+		.ssl_options = 0,
+		.server_bbio_off = 1,
+		.server_drops = { 2 },
+	},
+	{
+		.desc = "DTLS with dropped ServerKeyExchange",
+		.ssl_options = 0,
+		.server_bbio_off = 1,
+		.server_drops = { 3 },
+	},
+#if 0
+	/*
+	 * These three currently result in the server accept completing and the
+	 * client looping on a timeout. Presumably the server should not
+	 * complete until the client Finished is received...
+	 */
+	{
+		.desc = "DTLS with dropped ServerHelloDone",
+		.ssl_options = 0,
+		.server_bbio_off = 1,
+		.server_drops = { 4 },
+	},
+	{
+		.desc = "DTLS with dropped server CCS",
+		.ssl_options = 0,
+		.server_bbio_off = 1,
+		.server_drops = { 5 },
+	},
+	{
+		.desc = "DTLS with dropped server Finished",
+		.ssl_options = 0,
+		.server_bbio_off = 1,
+		.server_drops = { 6 },
+	},
+#endif
+	{
+		.desc = "DTLS with dropped ClientKeyExchange",
+		.ssl_options = 0,
+		.client_bbio_off = 1,
+		.client_drops = { 2 },
+	},
+	{
+		.desc = "DTLS with dropped Client CCS",
+		.ssl_options = 0,
+		.client_bbio_off = 1,
+		.client_drops = { 3 },
+	},
+	{
+		.desc = "DTLS with dropped client Finished",
+		.ssl_options = 0,
+		.client_bbio_off = 1,
+		.client_drops = { 4 },
+	},
 };
 
 #define N_DTLS_TESTS (sizeof(dtls_tests) / sizeof(*dtls_tests))
 
+static void
+dtlstest_packet_monkey(SSL *ssl, const uint8_t drops[])
+{
+	BIO *bio_monkey;
+	BIO *bio;
+	int i;
+
+	if ((bio_monkey = BIO_new_packet_monkey()) == NULL)
+		errx(1, "packet monkey");
+
+	for (i = 0; i < MAX_PACKET_DROPS; i++) {
+		if (drops[i] == 0)
+			break;
+		if (!BIO_packet_monkey_drop(bio_monkey, drops[i]))
+			errx(1, "drop failure");
+	}
+
+	if ((bio = SSL_get_wbio(ssl)) == NULL)
+		errx(1, "SSL has NULL bio");
+
+	BIO_up_ref(bio);
+	bio = BIO_push(bio_monkey, bio);
+
+	SSL_set_bio(ssl, bio, bio);
+}
+
 static int
-dtlstest(struct dtls_test *dt)
+dtlstest(const struct dtls_test *dt)
 {
 	SSL *client = NULL, *server = NULL;
 	struct sockaddr_in server_sin;
@@ -352,6 +638,14 @@ dtlstest(struct dtls_test *dt)
 		goto failure;
 	if ((server = dtls_server(server_sock, dt->ssl_options, dt->mtu)) == NULL)
 		goto failure;
+
+	if (dt->client_bbio_off)
+		SSL_set_info_callback(client, dtls_info_callback);
+	if (dt->server_bbio_off)
+		SSL_set_info_callback(server, dtls_info_callback);
+
+	dtlstest_packet_monkey(client, dt->client_drops);
+	dtlstest_packet_monkey(server, dt->server_drops);
 
 	pfd[0].fd = client_sock;
 	pfd[0].events = POLLOUT;
