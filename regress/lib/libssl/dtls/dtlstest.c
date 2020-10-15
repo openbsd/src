@@ -1,4 +1,4 @@
-/* $OpenBSD: dtlstest.c,v 1.1 2020/10/14 15:49:14 jsing Exp $ */
+/* $OpenBSD: dtlstest.c,v 1.2 2020/10/15 17:51:58 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -32,6 +32,8 @@ const char *server_cert_file;
 const char *server_key_file;
 
 char dtls_cookie[32];
+
+int debug = 0;
 
 static int
 datagram_pair(int *client_sock, int *server_sock,
@@ -78,7 +80,11 @@ poll_timeout(SSL *client, SSL *server)
 	if (DTLSv1_get_timeout(server, &timeout))
 		server_timeout = timeout.tv_sec * 1000 + timeout.tv_usec / 1000;
 
-	if (client_timeout > 0 && client_timeout < server_timeout)
+	if (client_timeout <= 0)
+		return server_timeout;
+	if (client_timeout > 0 && server_timeout <= 0)
+		return client_timeout;
+	if (client_timeout < server_timeout)
 		return client_timeout;
 
 	return server_timeout;
@@ -201,7 +207,6 @@ ssl_error(SSL *ssl, const char *name, const char *desc, int ssl_ret,
 		*events = POLLOUT;
 	} else if (ssl_err == SSL_ERROR_SYSCALL && errno == 0) {
 		/* Yup, this is apparently a thing... */
-		*events = 0;
 	} else {
 		fprintf(stderr, "FAIL: %s %s failed - ssl err = %d, errno = %d\n",
 		    name, desc, ssl_err, errno);
@@ -263,25 +268,36 @@ do_client_server_loop(SSL *client, ssl_func client_func, SSL *server,
 	int client_done = 0, server_done = 0;
 	int i = 0;
 
-	do {
-		if (poll(pfd, 2, poll_timeout(client, server)) == -1)
-			err(1, "poll");
+	pfd[0].revents = POLLIN;
+	pfd[1].revents = POLLIN;
 
+	do {
 		if (!client_done) {
+			if (debug)
+				fprintf(stderr, "DEBUG: client loop\n");
 			if (DTLSv1_handle_timeout(client) > 0)
 				fprintf(stderr, "INFO: client timeout\n");
 			if (!client_func(client, "client", &client_done,
 			    &pfd[0].events))
 				return 0;
+			if (client_done)
+				pfd[0].events = 0;
 		}
 		if (!server_done) {
+			if (debug)
+				fprintf(stderr, "DEBUG: server loop\n");
 			if (DTLSv1_handle_timeout(server) > 0)
 				fprintf(stderr, "INFO: server timeout\n");
 			if (!server_func(server, "server", &server_done,
 			    &pfd[1].events))
 				return 0;
+			if (server_done)
+				pfd[1].events = 0;
 		}
-	} while (i++ < 1000 && (!client_done || !server_done));
+		if (poll(pfd, 2, poll_timeout(client, server)) == -1)
+			err(1, "poll");
+
+	} while (i++ < 100 && (!client_done || !server_done));
 
 	if (!client_done || !server_done)
 		fprintf(stderr, "FAIL: gave up\n");
@@ -340,7 +356,7 @@ dtlstest(struct dtls_test *dt)
 	pfd[0].fd = client_sock;
 	pfd[0].events = POLLOUT;
 	pfd[1].fd = server_sock;
-	pfd[1].events = 0;
+	pfd[1].events = POLLIN;
 
 	if (!do_client_server_loop(client, do_connect, server, do_accept, pfd)) {
 		fprintf(stderr, "FAIL: client and server handshake failed\n");
@@ -348,6 +364,9 @@ dtlstest(struct dtls_test *dt)
 	}
 
 	/* XXX - do reads and writes. */
+
+	pfd[0].events = POLLOUT;
+	pfd[1].events = POLLOUT;
 
 	if (!do_client_server_loop(client, do_shutdown, server, do_shutdown, pfd)) {
 		fprintf(stderr, "FAIL: client and server shutdown failed\n");
