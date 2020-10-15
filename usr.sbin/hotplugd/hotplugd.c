@@ -1,4 +1,4 @@
-/*	$OpenBSD: hotplugd.c,v 1.15 2019/04/30 17:05:15 mestre Exp $	*/
+/*	$OpenBSD: hotplugd.c,v 1.16 2020/10/15 19:45:50 naddy Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -28,6 +28,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <libgen.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -163,7 +164,10 @@ exec_script(const char *file, int class, char *name)
 	}
 	if (pid == 0) {
 		/* child process */
-		execl(file, basename(file), strclass, name, (char *)NULL);
+		char filebuf[PATH_MAX];
+
+		strlcpy(filebuf, file, sizeof(filebuf));
+		execl(file, basename(filebuf), strclass, name, (char *)NULL);
 		syslog(LOG_ERR, "execl %s: %m", file);
 		_exit(1);
 		/* NOTREACHED */
