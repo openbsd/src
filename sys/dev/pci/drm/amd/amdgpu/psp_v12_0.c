@@ -97,7 +97,7 @@ static int psp_v12_0_bootloader_load_sysdrv(struct psp_context *psp)
 	sol_reg = RREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_81);
 	if (sol_reg) {
 		psp->sos_fw_version = RREG32_SOC15(MP0, 0, mmMP0_SMN_C2PMSG_58);
-		printk("sos fw version = 0x%x.\n", psp->sos_fw_version);
+		dev_info(adev->dev, "sos fw version = 0x%x.\n", psp->sos_fw_version);
 		return 0;
 	}
 
