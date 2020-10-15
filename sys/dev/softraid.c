@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.415 2020/09/22 19:32:52 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.416 2020/10/15 00:13:47 krw Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -94,8 +94,6 @@ struct cfdriver softraid_cd = {
 /* scsi & discipline */
 void			sr_scsi_cmd(struct scsi_xfer *);
 int			sr_scsi_probe(struct scsi_link *);
-void			sr_copy_internal_data(struct scsi_xfer *,
-			    void *, size_t);
 int			sr_scsi_ioctl(struct scsi_link *, u_long,
 			    caddr_t, int);
 int			sr_bio_ioctl(struct device *, u_long, caddr_t);
@@ -1884,20 +1882,6 @@ sr_error(struct sr_softc *sc, const char *fmt, ...)
 	va_start(ap, fmt);
 	bio_status(&sc->sc_status, 1, BIO_MSG_ERROR, fmt, &ap);
 	va_end(ap);
-}
-
-void
-sr_copy_internal_data(struct scsi_xfer *xs, void *v, size_t size)
-{
-	size_t			copy_cnt;
-
-	DNPRINTF(SR_D_MISC, "sr_copy_internal_data xs: %p size: %zu\n",
-	    xs, size);
-
-	if (xs->datalen) {
-		copy_cnt = MIN(size, xs->datalen);
-		memcpy(xs->data, v, copy_cnt);
-	}
 }
 
 int
@@ -4035,7 +4019,7 @@ sr_raid_inquiry(struct sr_workunit *wu)
 	    sizeof(inq.product));
 	strlcpy(inq.revision, sd->sd_meta->ssdi.ssd_revision,
 	    sizeof(inq.revision));
-	sr_copy_internal_data(xs, &inq, sizeof(inq));
+	scsi_copy_internal_data(xs, &inq, sizeof(inq));
 
 	return (0);
 }
@@ -4063,13 +4047,13 @@ sr_raid_read_cap(struct sr_workunit *wu)
 		else
 			_lto4b(addr, rcd.addr);
 		_lto4b(secsize, rcd.length);
-		sr_copy_internal_data(xs, &rcd, sizeof(rcd));
+		scsi_copy_internal_data(xs, &rcd, sizeof(rcd));
 		rv = 0;
 	} else if (xs->cmd.opcode == READ_CAPACITY_16) {
 		bzero(&rcd16, sizeof(rcd16));
 		_lto8b(addr, rcd16.addr);
 		_lto4b(secsize, rcd16.length);
-		sr_copy_internal_data(xs, &rcd16, sizeof(rcd16));
+		scsi_copy_internal_data(xs, &rcd16, sizeof(rcd16));
 		rv = 0;
 	}
 
