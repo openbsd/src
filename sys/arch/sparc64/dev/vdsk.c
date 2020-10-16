@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.69 2020/10/15 13:22:12 krw Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.70 2020/10/16 03:59:24 jsg Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -1178,7 +1178,7 @@ vdsk_scsi_inquiry(struct scsi_xfer *xs)
 	snprintf(buf, sizeof(buf), "%u.%u ", sc->sc_major, sc->sc_minor);
 	bcopy(buf, inq.revision, sizeof(inq.revision));
 
-	scsi_copy_internal_data(xs, &inq, sizoef(inq));
+	scsi_copy_internal_data(xs, &inq, sizeof(inq));
 
 	vdsk_scsi_done(xs, XS_NOERROR);
 }
