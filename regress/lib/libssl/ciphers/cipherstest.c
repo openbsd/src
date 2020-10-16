@@ -238,7 +238,7 @@ struct parse_ciphersuites_test parse_ciphersuites_tests[] = {
     (sizeof(parse_ciphersuites_tests) / sizeof(*parse_ciphersuites_tests))
 
 static int
-parse_ciphersuites_test()
+parse_ciphersuites_test(void)
 {
 	struct parse_ciphersuites_test *pct;
 	STACK_OF(SSL_CIPHER) *ciphers = NULL;
@@ -426,7 +426,7 @@ struct cipher_set_test cipher_set_tests[] = {
     (sizeof(cipher_set_tests) / sizeof(*cipher_set_tests))
 
 static int
-cipher_set_test()
+cipher_set_test(void)
 {
 	struct cipher_set_test *cst;
 	STACK_OF(SSL_CIPHER) *ciphers = NULL;
