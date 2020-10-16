@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.80 2020/07/29 21:10:19 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.81 2020/10/16 04:09:25 deraadt Exp $
 
 machine		amd64
 maxusers	4
@@ -88,7 +88,7 @@ wd*		at pciide? flags 0x0000
 #atapiscsi*	at pciide?
 
 #fxp*		at pci?			# EtherExpress 10/100B ethernet
-rl*		at pci?			# Realtek 81[23]9 ethernet
+#rl*		at pci?			# Realtek 81[23]9 ethernet
 re*		at pci?			# Realtek 8169/8169S/8110S
 em*		at pci?			# Intel Pro/1000 ethernet
 bge*		at pci?			# Broadcom BCM570x (aka Tigon3)
