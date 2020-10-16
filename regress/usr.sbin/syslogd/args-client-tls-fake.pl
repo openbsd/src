@@ -8,7 +8,11 @@
 
 use strict;
 use warnings;
+use Errno ':POSIX';
 use Socket;
+
+my @errors = (EPIPE);
+my $errors = "(". join("|", map { $! = $_ } @errors). ")";
 
 our %args = (
     client => {
@@ -21,8 +25,7 @@ our %args = (
 	exit => 255,
 	loggrep => {
 	    qr/Client IO::Socket::SSL socket connect failed: /.
-		qr/,SSL connect attempt failed /.
-		qr/because of handshake problems error:/ => 1,
+		qr/.*,SSL connect attempt failed error:.*$errors/ => 1,
 	},
     },
     syslogd => {

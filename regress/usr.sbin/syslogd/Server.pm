@@ -1,4 +1,4 @@
-#	$OpenBSD: Server.pm,v 1.12 2020/07/24 22:12:00 bluhm Exp $
+#	$OpenBSD: Server.pm,v 1.13 2020/10/16 22:46:45 bluhm Exp $
 
 # Copyright (c) 2010-2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -103,6 +103,10 @@ sub run {
 
 sub child {
 	my $self = shift;
+
+	# TLS 1.3 writes multiple messages without acknowledgement.
+	# If the other side closes early, we want broken pipe error.
+	$SIG{PIPE} = 'IGNORE' if $self->{listenproto} eq "tls";
 
 	my $as = $self->{ls};
 	if ($self->{listenproto} ne "udp") {

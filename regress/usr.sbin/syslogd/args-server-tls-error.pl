@@ -43,7 +43,7 @@ our %args = (
     file => {
 	loggrep => {
 	    qr/syslogd\[\d+\]: loghost .* connection error: /.
-		qr/read failed: $errors/ => 1,
+		qr/read failed: .*$errors/ => 1,
 	},
     },
 );
