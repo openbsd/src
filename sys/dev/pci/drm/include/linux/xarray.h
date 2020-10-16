@@ -6,7 +6,6 @@
 #include <linux/gfp.h>
 
 #include <sys/tree.h>
-#include <sys/pool.h>
 
 #define XA_FLAGS_ALLOC		1
 #define XA_FLAGS_ALLOC1		2
