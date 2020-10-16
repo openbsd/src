@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.39 2020/08/17 08:12:17 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.40 2020/10/16 17:28:59 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -290,8 +290,7 @@ cpu_identify(struct cpu_info *ci)
 	 * we're not vulnerable.
 	 */
 	id_aa64pfr0 = READ_SPECIALREG(id_aa64pfr0_el1);
-	if (ID_AA64PFR0_CSV2(id_aa64pfr0) == ID_AA64PFR0_CSV2_IMPL ||
-	    ID_AA64PFR0_CSV2(id_aa64pfr0) == ID_AA64PFR0_CSV2_SCXT)
+	if (ID_AA64PFR0_CSV2(id_aa64pfr0) >= ID_AA64PFR0_CSV2_IMPL)
 		ci->ci_flush_bp = cpu_flush_bp_noop;
 }
 
@@ -396,7 +395,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 
 		/* Enable PAN. */
 		id_aa64mmfr1 = READ_SPECIALREG(id_aa64mmfr1_el1);
-		if (ID_AA64MMFR1_PAN(id_aa64mmfr1) != ID_AA64MMFR1_PAN_NONE) {
+		if (ID_AA64MMFR1_PAN(id_aa64mmfr1) >= ID_AA64MMFR1_PAN_IMPL) {
 			sctlr = READ_SPECIALREG(sctlr_el1);
 			sctlr &= ~SCTLR_SPAN;
 			WRITE_SPECIALREG(sctlr_el1, sctlr);
@@ -556,7 +555,7 @@ cpu_start_secondary(struct cpu_info *ci)
 
 	/* Enable PAN. */
 	id_aa64mmfr1 = READ_SPECIALREG(id_aa64mmfr1_el1);
-	if (ID_AA64MMFR1_PAN(id_aa64mmfr1) != ID_AA64MMFR1_PAN_NONE) {
+	if (ID_AA64MMFR1_PAN(id_aa64mmfr1) >= ID_AA64MMFR1_PAN_IMPL) {
 		sctlr = READ_SPECIALREG(sctlr_el1);
 		sctlr &= ~SCTLR_SPAN;
 		WRITE_SPECIALREG(sctlr_el1, sctlr);
