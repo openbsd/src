@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.244 2020/10/16 04:09:42 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.245 2020/10/16 04:19:06 deraadt Exp $
 
 machine		i386
 maxusers	4
@@ -205,7 +205,6 @@ ie0		at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
 le0		at isa? port 0x360 irq 15 drq 6	# IsoLan, NE2100, and DEPCA
 ex0		at isa? port 0x320 irq 5	# Intel EtherExpress PRO/10
 ep*		at eisa?			# 3C579 ethernet
-ef*		at isapnp?			# 3C515 ethernet
 le*		at isapnp?
 pcn*		at pci?				# AMD PCnet-PCI Ethernet
 de*		at pci?				# DC21X4X-based ethernet
@@ -216,7 +215,7 @@ ne*		at pci?				# NE2000-compat ethernet
 ne*		at pcmcia?			# PCMCIA based NE2000 ethernet
 ep*		at pcmcia?			# PCMCIA based 3C5xx ethernet
 sm*		at pcmcia?			# PCMCIA based sm ethernet
-xe*		at pcmcia?			# Xircom ethernet
+#xe*		at pcmcia?			# Xircom ethernet
 xl*		at pci?				# 3C9xx ethernet
 xl*		at cardbus?			# 3C575 ethernet
 rl*		at pci?				# Realtek 81[23]9 ethernet
@@ -250,7 +249,7 @@ stge*		at pci?				# Sundance TC9021 GigE
 bge*		at pci?				# Broadcom BCM57xx (aka Tigon3)
 bnx*		at pci?				# Broadcom BCM5706/5708 GigE
 lge*		at pci?				# Level1 LXT1001 GigE
-mtd*		at pci?				# Myson MTD803
+#mtd*		at pci?				# Myson MTD803
 hme*		at pci?				# Sun Happy Meal
 bce*		at pci?				# Broadcom BCM4401
 vge*		at pci?				# VIA VT612x
@@ -306,7 +305,7 @@ luphy*		at mii?				# Lucent LU6612 PHY
 sqphy*		at mii?				# Seeq 8x220 PHYs
 tlphy*		at mii?				# ThunderLAN PHYs
 rlphy*		at mii?				# Realtek 8139 internal PHYs
-mtdphy*		at mii?				# Myson MTD972 PHYs
+#mtdphy*	at mii?				# Myson MTD972 PHYs
 dcphy*		at mii?				# Digital Clone PHYs
 acphy*		at mii?				# Altima AC101 PHYs
 amphy*		at mii?				# AMD 79C873 PHYs
