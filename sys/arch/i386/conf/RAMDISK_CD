@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.243 2020/06/22 00:33:28 dlg Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.244 2020/10/16 04:09:42 deraadt Exp $
 
 machine		i386
 maxusers	4
@@ -200,7 +200,7 @@ ne*		at isapnp?			# NE[12]000 PnP ethernet
 ep0		at isa?				# 3C509 ethernet
 ep*		at isa?				# 3C509 ethernet
 ep*		at isapnp?			# 3C509 PnP ethernet
-ef*		at isapnp?			# 3C515 PnP ethernet
+#ef*		at isapnp?			# 3C515 PnP ethernet
 ie0		at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
 le0		at isa? port 0x360 irq 15 drq 6	# IsoLan, NE2100, and DEPCA
 ex0		at isa? port 0x320 irq 5	# Intel EtherExpress PRO/10
