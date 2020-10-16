@@ -1,4 +1,4 @@
-/* $OpenBSD: dtlstest.c,v 1.3 2020/10/15 18:05:06 jsing Exp $ */
+/* $OpenBSD: dtlstest.c,v 1.4 2020/10/16 17:57:20 tb Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -100,7 +100,7 @@ bio_packet_monkey_ctrl(BIO *bio, int cmd, long num, void *ptr)
 		return 1;
 
 	case BIO_C_DROP_RANDOM:
-		if (num < 0 || num > UINT_MAX)
+		if (num < 0 || (size_t)num > UINT_MAX)
 			return 0;
 		ctx->drop_rand = (unsigned int)num;
 		return 1;
