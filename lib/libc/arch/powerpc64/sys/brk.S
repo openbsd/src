@@ -1,4 +1,4 @@
-/* $OpenBSD: brk.S,v 1.3 2020/07/27 07:10:36 kettenis Exp $ */
+/* $OpenBSD: brk.S,v 1.4 2020/10/16 23:42:16 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -32,7 +32,9 @@
 
 	.weak	brk
 
-PSEUDO_PREFIX(,brk,break)
+SYSENTRY(brk)
+	RETGUARD_SETUP(brk, %r11)
+
 	/* check >= _end, if not make the call for _end */
 	addis %r5, %r2, .LC0@toc@ha
 	ld  %r5, .LC0@toc@l(%r5)		/* # %r5 = &_end */
@@ -47,6 +49,7 @@ PSEUDO_PREFIX(,brk,break)
 	addis	%r6, %r2, __curbrk@toc@ha
 	addi	%r6, %r6, __curbrk@toc@l	/* # %r6 = &__curbrk */
 
+	li %r0, SYS_break
 	sc
 
 	/* check for error */
@@ -54,17 +57,18 @@ PSEUDO_PREFIX(,brk,break)
 	beq+	.L_brk_ok	/* OK so this is stupid but I haven't read b */
 	stw	%r0, R13_OFFSET_ERRNO(%r13)
 	li	%r3, -1
-	blr
+	b	.L_done
 	nop
 
 	/* update, __curbrk and return */
 .L_brk_ok:
 	std	%r7, 0(%r6)	/* # remember, %r6=&__curbrk, %r3=new value */
 	mr	%r3, 0		/* # return 0 */
+.L_done:
+	RETGUARD_CHECK(brk, %r11);
 	blr
 END(brk)
 
-        .section        .toc,"aw",@progbits
+	.section	.toc,"aw",@progbits
 .LC0:
-        .tc _end[TC],_end
-
+	.tc _end[TC],_end

@@ -1,4 +1,4 @@
-/* $OpenBSD: sbrk.S,v 1.3 2020/07/27 05:08:57 gkoehler Exp $ */
+/* $OpenBSD: sbrk.S,v 1.4 2020/10/16 23:42:16 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -39,7 +39,9 @@ __curbrk:
 	.weak	sbrk
 
 	.text
-PSEUDO_PREFIX(,sbrk,break)
+SYSENTRY(sbrk)
+	RETGUARD_SETUP(sbrk, %r11)
+
 	/* call break(__curbrk + size) */
 	addis	%r6, %r2, __curbrk@toc@ha
 	addi	%r6, %r6, __curbrk@toc@l	/* # %r6 = &__curbrk */
@@ -48,6 +50,7 @@ PSEUDO_PREFIX(,sbrk,break)
 	add	%r3, %r5, %r3			/* # %r3 = new_curbrk */
 	mr	%r7, %r3
 
+	li %r0, SYS_break
 	sc
 
 	/* check for error */
@@ -55,11 +58,13 @@ PSEUDO_PREFIX(,sbrk,break)
 	beq+	.L_sbrk_ok
 	stw	%r0, R13_OFFSET_ERRNO(%r13)
 	li	%r3, -1
-	blr
+	b	.L_done
 
 	/* update, __curbrk and return */
 .L_sbrk_ok:
 	std	%r7, 0(%r6)	/* # remember, %r6=&__curbrk, %r7=new_curbrk */
 	mr	%r3, %r5	/* # remember, %r5=old_curbrk */
+.L_done:
+	RETGUARD_CHECK(sbrk, %r11);
 	blr
-END(sbrk)
+ END(sbrk)

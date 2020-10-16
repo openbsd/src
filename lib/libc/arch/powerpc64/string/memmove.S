@@ -1,4 +1,4 @@
-/* $OpenBSD: memmove.S,v 1.1 2020/06/25 02:34:22 drahn Exp $ */
+/* $OpenBSD: memmove.S,v 1.2 2020/10/16 23:42:16 deraadt Exp $ */
 /* $NetBSD: memmove.S,v 1.3 2011/01/15 07:31:12 matt Exp $ */
 
 /* stropt/memmove.S, pl_string_common, pl_linux 10/11/04 11:45:37
@@ -56,6 +56,7 @@ ENTRY(bcopy)
 
 /* void *memmove(void *, const void *, size_t) */
 ENTRY(memmove)
+	RETGUARD_SETUP(memmove, %r11);
 	mr	%r8, %r3		/* Save dst (return value)	*/
 
 	cmpd	%r4, %r8		/* Branch to reverse if 	*/
@@ -110,8 +111,7 @@ last2:
 	lbzu	%r6, 1(%r4)		/* But handle the rest by	*/
 	stbu	%r6, 1(%r8)		/* updating addr by 1		*/
 	bdnz+	last2
-
-	blr
+	b	done
 
 	/* We're here since src < dest. Don't want to overwrite end of	*/
 	/* src with start of dest					*/
@@ -165,6 +165,8 @@ rlast2:
 
 	bdnz+	rlast2		 	/* Dec ctr, and branch if more	*/
 					/* bytes left			*/
+done:
+	RETGUARD_CHECK(memmove, %r11);
 	blr
 END_STRONG(memmove)
 END_WEAK(bcopy)

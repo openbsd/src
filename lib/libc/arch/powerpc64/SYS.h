@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.3 2020/07/14 16:48:13 kettenis Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.4 2020/10/16 23:42:14 deraadt Exp $	*/
 /*-
  * Copyright (c) 1994
  *	Andrew Cagney.  All rights reserved.
@@ -54,40 +54,39 @@
 /* offset of errno from %r13 */
 #define R13_OFFSET_ERRNO		(-TCB_OFFSET + TCB_OFFSET_ERRNO)
 
-#define _CONCAT(x,y)	x##y
-#define PSEUDO_PREFIX(p,x,y)	\
-			ENTRY(p##x) \
-				li %r0, SYS_##y ; \
-				/* sc */
-#define PSEUDO_SUFFIX		cmpwi %r0, 0 ; \
-				beqlr ; \
-				stw	%r0, R13_OFFSET_ERRNO(%r13); \
-				li	%r3, -1; \
-				blr
-
-#define PSEUDO_NOERROR_SUFFIX	blr
-
+#define SYSENTRY(x)		.weak _C_LABEL(x); \
+				_C_LABEL(x) = _C_LABEL(_thread_sys_ ## x); \
+				ENTRY(_thread_sys_ ## x)
+#define SYSENTRY_HIDDEN(x) 	ENTRY(_thread_sys_ ## x)
 #define __END_HIDDEN(p,x)	END(p##x);			\
 				_HIDDEN_FALIAS(x,p##x);		\
 				END(_HIDDEN(x))
 #define __END(p,x)		__END_HIDDEN(p,x); END(x)
 
-
-#define ALIAS(x,y)		WEAK_ALIAS(y,_CONCAT(x,y));
+#define ALIAS(x,y)		WEAK_ALIAS(y, x ## y);
 		
-#define PREFIX_HIDDEN(x)	PSEUDO_PREFIX(_thread_sys_,x,x)
-#define PREFIX(x)		ALIAS(_thread_sys_,x) \
-				PREFIX_HIDDEN(x)
 #define PSEUDO_NOERROR(x,y)	ALIAS(_thread_sys_,x) \
-				PSEUDO_PREFIX(_thread_sys_,x,y) ; \
+				ENTRY(_thread_sys_ ## x) \
+				RETGUARD_SETUP(_thread_sys_ ## x, %r11); \
+				li %r0, SYS_ ## y ; \
 				sc ; \
-				PSEUDO_NOERROR_SUFFIX; \
+				RETGUARD_CHECK(_thread_sys_ ## x, %r11); \
+				blr; \
 				__END(_thread_sys_,x)
 
-#define PSEUDO_HIDDEN(x,y)	PSEUDO_PREFIX(_thread_sys_,x,y) ; \
+#define PSEUDO_HIDDEN(x,y) 	ENTRY(_thread_sys_ ## x) \
+				RETGUARD_SETUP(_thread_sys_ ## x, %r11); \
+				li %r0, SYS_ ## y ; \
 				sc ; \
-				PSEUDO_SUFFIX; \
+				cmpwi %r0, 0 ; \
+				beq .L_ret ; \
+				stw	%r0, R13_OFFSET_ERRNO(%r13); \
+				li	%r3, -1; \
+			.L_ret: \
+				RETGUARD_CHECK(_thread_sys_ ## x, %r11); \
+				blr; \
 				__END_HIDDEN(_thread_sys_,x)
+
 #define PSEUDO(x,y)		ALIAS(_thread_sys_,x) \
 				PSEUDO_HIDDEN(x,y); \
 				END(x)
