@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.63 2020/08/26 03:29:06 visa Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.64 2020/10/16 09:20:04 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -46,6 +46,7 @@
 #include <linux/shrinker.h>
 #include <linux/fb.h>
 #include <linux/xarray.h>
+#include <linux/interval_tree.h>
 
 #include <drm/drm_device.h>
 #include <drm/drm_print.h>
@@ -2089,4 +2090,51 @@ printk(const char *fmt, ...)
 	va_end(ap);
 
 	return ret;
+}
+
+#define START(node) ((node)->start)
+#define LAST(node) ((node)->last)
+
+struct interval_tree_node *
+interval_tree_iter_first(struct rb_root_cached *root, unsigned long start,
+    unsigned long last)
+{
+	struct interval_tree_node *node;
+	struct rb_node *rb;
+
+	for (rb = rb_first_cached(root); rb; rb = rb_next(rb)) {
+		node = rb_entry(rb, typeof(*node), rb);
+		if (LAST(node) >= start && START(node) <= last)
+			return node;
+	}
+	return NULL;
+}
+
+void
+interval_tree_remove(struct interval_tree_node *node,
+    struct rb_root_cached *root) 
+{
+	rb_erase_cached(&node->rb, root);
+}
+
+void
+interval_tree_insert(struct interval_tree_node *node,
+    struct rb_root_cached *root)
+{
+	struct rb_node **iter = &root->rb_root.rb_node;
+	struct rb_node *parent = NULL;
+	struct interval_tree_node *iter_node;
+
+	while (*iter) {
+		parent = *iter;
+		iter_node = rb_entry(*iter, struct interval_tree_node, rb);
+
+		if (node->start < iter_node->start)
+			iter = &(*iter)->rb_left;
+		else
+			iter = &(*iter)->rb_right;
+	}
+
+	rb_link_node(&node->rb, parent, iter);
+	rb_insert_color_cached(&node->rb, root, false);
 }

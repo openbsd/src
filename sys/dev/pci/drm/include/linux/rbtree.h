@@ -29,10 +29,6 @@
 #ifndef	_LINUX_RBTREE_H_
 #define	_LINUX_RBTREE_H_
 
-/* for printf */
-#include <sys/types.h>
-#include <sys/systm.h>
-
 #include <sys/tree.h>
 
 struct rb_node {
@@ -162,37 +158,5 @@ rb_replace_node(struct rb_node *victim, struct rb_node *new,
 #else
 #define RB_ROOT_CACHED	(struct rb_root_cached) { { NULL } }
 #endif
-
-struct interval_tree_node {
-	struct rb_node rb;
-	unsigned long start;
-	unsigned long last;
-};
-
-static inline struct interval_tree_node *
-interval_tree_iter_first(struct rb_root_cached *root,
-    unsigned long start, unsigned long last)
-{
-#ifdef DRMDEBUG
-	printf("%s: stub start: 0x%lx last: 0x%lx\n", __func__, start, last);
-#endif
-	return NULL;
-}
-
-static inline void
-interval_tree_insert(struct interval_tree_node *node, struct rb_root_cached *root)
-{
-#ifdef DRMDEBUG
-	printf("%s: stub start: 0x%lx last: 0x%lx\n", __func__, node->start, node->last);
-#endif
-}
-
-static inline void
-interval_tree_remove(struct interval_tree_node *node, struct rb_root_cached *root)
-{
-#ifdef DRMDEBUG
-	printf("%s: stub start: 0x%lx last: 0x%lx\n", __func__, node->start, node->last);
-#endif
-}
 
 #endif	/* _LINUX_RBTREE_H_ */
