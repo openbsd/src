@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.84 2020/08/03 02:42:49 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.85 2020/10/16 13:24:45 djm Exp $
 
 .include <bsd.own.mk>
 
@@ -55,6 +55,8 @@ SRCS_BASE+=	ssherr.c
 SRCS_BASE+=	log.c
 SRCS_BASE+=	xmalloc.c
 SRCS_BASE+=	misc.c
+SRCS_BASE+=	addrmatch.c
+SRCS_BASE+=	match.c
 
 .if (${OPENSSL:L} == "yes")
 SRCS_KEX+=	dh.c
@@ -118,9 +120,6 @@ SRCS_PROT+=	channels.c
 SRCS_PROT+=	monitor_fdpass.c
 SRCS_PROT+=	nchan.c
 SRCS_PROT+=	ttymodes.c
-
-SRCS_UTL+=	addrmatch.c
-SRCS_UTL+=	match.c
 
 .if (${OPENSSL:L} == "yes")
 SRCS_PKCS11+=		ssh-pkcs11.c
