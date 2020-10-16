@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2019/11/30 05:51:20 bluhm Exp $
+# $OpenBSD: Makefile,v 1.5 2020/10/16 13:59:36 denis Exp $
 
 # Copyright (c) 2019 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -544,7 +544,7 @@ run-ppp-inet6-destination:
 	@echo '======== $@ ========'
 	${IFCONFIG} ${PPP_IF} inet6 ${PPP_ADDR6} ${PPP_DEST6}
 	/sbin/ifconfig ${PPP_IF} >ifconfig.out
-	grep 'inet6 ${PPP_ADDR6} -> ${PPP_DEST6} ' ifconfig.out
+	grep 'inet6 ${PPP_ADDR6} --> ${PPP_DEST6} ' ifconfig.out
 
 REGRESS_TARGETS +=	run-ppp-inet6-noreplace
 run-ppp-inet6-noreplace:
@@ -552,8 +552,8 @@ run-ppp-inet6-noreplace:
 	${IFCONFIG} ${PPP_IF} inet6 ${PPP_NET6}1 ${PPP_DEST6}
 	${IFCONFIG} ${PPP_IF} inet6 ${PPP_NET6}2 ${PPP_DEST6}
 	/sbin/ifconfig ${PPP_IF} >ifconfig.out
-	grep 'inet6 ${PPP_NET6}1 -> ${PPP_DEST6} ' ifconfig.out
-	grep 'inet6 ${PPP_NET6}2 -> ${PPP_DEST6} ' ifconfig.out
+	grep 'inet6 ${PPP_NET6}1 --> ${PPP_DEST6} ' ifconfig.out
+	grep 'inet6 ${PPP_NET6}2 --> ${PPP_DEST6} ' ifconfig.out
 
 REGRESS_TARGETS +=	run-ppp-inet6-alias
 run-ppp-inet6-alias:
@@ -561,8 +561,8 @@ run-ppp-inet6-alias:
 	${IFCONFIG} ${PPP_IF} inet6 ${PPP_NET6}1 ${PPP_DEST6}
 	${IFCONFIG} ${PPP_IF} inet6 ${PPP_NET6}2 ${PPP_DEST6} alias
 	/sbin/ifconfig ${PPP_IF} >ifconfig.out
-	grep 'inet6 ${PPP_NET6}1 -> ${PPP_DEST6} ' ifconfig.out
-	grep 'inet6 ${PPP_NET6}2 -> ${PPP_DEST6} ' ifconfig.out
+	grep 'inet6 ${PPP_NET6}1 --> ${PPP_DEST6} ' ifconfig.out
+	grep 'inet6 ${PPP_NET6}2 --> ${PPP_DEST6} ' ifconfig.out
 
 ### setup cleanup
 
