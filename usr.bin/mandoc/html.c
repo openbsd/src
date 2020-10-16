@@ -1,4 +1,4 @@
-/* $OpenBSD: html.c,v 1.141 2020/04/20 12:59:24 schwarze Exp $ */
+/* $OpenBSD: html.c,v 1.142 2020/10/16 17:22:38 schwarze Exp $ */
 /*
  * Copyright (c) 2011-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -79,7 +79,7 @@ static	const struct htmldata htmltags[TAG_MAX] = {
 	{"h1",		HTML_TOPHRASE | HTML_NLAROUND},
 	{"h2",		HTML_TOPHRASE | HTML_NLAROUND},
 	{"p",		HTML_TOPHRASE | HTML_NLAROUND | HTML_INDENT},
-	{"pre",		HTML_TOPHRASE | HTML_NLALL | HTML_NOINDENT},
+	{"pre",		HTML_TOPHRASE | HTML_NLAROUND | HTML_NOINDENT},
 	{"a",		HTML_INPHRASE | HTML_TOPHRASE},
 	{"b",		HTML_INPHRASE | HTML_TOPHRASE},
 	{"cite",	HTML_INPHRASE | HTML_TOPHRASE},

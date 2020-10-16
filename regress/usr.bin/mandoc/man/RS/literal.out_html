@@ -1,18 +1,12 @@
   <br/>
   initial regular text</p>
-<pre>
-literal text
-before display
-</pre>
+<pre>literal text
+before display</pre>
 <div class="Bd-indent">
-<pre>
-This is a short line.
-This is a very long line that would wrap if it weren't in literal context.
-</pre>
+<pre>This is a short line.
+This is a very long line that would wrap if it weren't in literal context.</pre>
 </div>
-<pre>
-literal text
-after display
-</pre>
+<pre>literal text
+after display</pre>
 <p class="Pp">final regular text
   <br/>

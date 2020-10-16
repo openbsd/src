@@ -3,23 +3,17 @@
   <dd>regular indented text</dd>
 </dl>
 <p class="Pp">regular paragraph</p>
-<pre>
-literal
-text
-</pre>
+<pre>literal
+text</pre>
 <dl class="Bl-tag">
   <dt id="tag~2"><a class="permalink" href="#tag~2">tag</a></dt>
   <dd>
-    <pre>
-indented
+    <pre>indented
 literal
-text
-    </pre>
+text</pre>
   </dd>
 </dl>
-<pre>
-literal
-paragraph
-</pre>
+<pre>literal
+paragraph</pre>
 regular text
 <br/>

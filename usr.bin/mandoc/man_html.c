@@ -1,4 +1,4 @@
-/* $OpenBSD: man_html.c,v 1.131 2020/04/04 20:23:06 schwarze Exp $ */
+/* $OpenBSD: man_html.c,v 1.132 2020/10/16 17:22:39 schwarze Exp $ */
 /*
  * Copyright (c) 2013-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -167,7 +167,12 @@ print_man_node(MAN_ARGS)
 	if (n->type == ROFFT_COMMENT || n->flags & NODE_NOPRT)
 		return;
 
-	html_fillmode(h, n->flags & NODE_NOFILL ? ROFF_nf : ROFF_fi);
+	if ((n->flags & NODE_NOFILL) == 0)
+		html_fillmode(h, ROFF_fi);
+	else if (html_fillmode(h, ROFF_nf) == ROFF_nf &&
+	    n->tok != ROFF_fi && n->flags & NODE_LINE &&
+	    (n->prev == NULL || n->prev->tok != MAN_YS))
+		print_endline(h);
 
 	child = 1;
 	switch (n->type) {
@@ -251,13 +256,6 @@ print_man_node(MAN_ARGS)
 	}
 	if (t != NULL)
 		print_stagq(h, t);
-
-	if (n->flags & NODE_NOFILL && n->tok != MAN_YS &&
-	    (n->next != NULL && n->next->flags & NODE_LINE)) {
-		/* In .nf = <pre>, print even empty lines. */
-		h->col++;
-		print_endline(h);
-	}
 }
 
 static void

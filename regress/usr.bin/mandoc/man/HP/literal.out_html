@@ -1,18 +1,12 @@
 <p class="Pp HP">tag indented text</p>
 <p class="Pp">regular paragraph</p>
-<pre>
-literal
-text
-</pre>
-<pre>
-tag
+<pre>literal
+text</pre>
+<pre>tag
 literal
 hanged
-paragraph
-</pre>
-<pre>
-literal
-paragraph
-</pre>
+paragraph</pre>
+<pre>literal
+paragraph</pre>
 regular text
 <br/>

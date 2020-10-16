@@ -1,4 +1,4 @@
-/* $OpenBSD: mdoc_html.c,v 1.215 2020/04/19 15:15:54 schwarze Exp $ */
+/* $OpenBSD: mdoc_html.c,v 1.216 2020/10/16 17:22:39 schwarze Exp $ */
 /*
  * Copyright (c) 2014-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -347,12 +347,11 @@ print_mdoc_node(MDOC_ARGS)
 	if (n->type == ROFFT_COMMENT || n->flags & NODE_NOPRT)
 		return;
 
-	if (n->flags & NODE_NOFILL) {
-		html_fillmode(h, ROFF_nf);
-		if (n->flags & NODE_LINE)
-			print_endline(h);
-	} else
+	if ((n->flags & NODE_NOFILL) == 0)
 		html_fillmode(h, ROFF_fi);
+	else if (html_fillmode(h, ROFF_nf) == ROFF_nf &&
+	    n->tok != ROFF_fi && n->flags & NODE_LINE)
+		print_endline(h);
 
 	child = 1;
 	n->flags &= ~NODE_ENDED;

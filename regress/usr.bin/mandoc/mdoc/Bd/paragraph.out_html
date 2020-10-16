@@ -8,13 +8,11 @@
 back to normal
 <p class="Pp">another paragraph</p>
 <div class="Bd Pp" id="unfilled">
-<pre>
-<a class="permalink" href="#unfilled">unfilled</a> literal
+<pre><a class="permalink" href="#unfilled">unfilled</a> literal
 display
 <mark id="upara"></mark>
 <a class="permalink" href="#upara">unfilled</a> literal
-paragraph
-</pre>
+paragraph</pre>
 </div>
 again back to normal
 <br/>
