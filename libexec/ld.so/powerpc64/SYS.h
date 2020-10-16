@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.1 2020/06/25 04:00:58 drahn Exp $ */
+/*	$OpenBSD: SYS.h,v 1.2 2020/10/16 23:42:53 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -31,9 +31,12 @@
 
 #define	DL_SYSCALL(n)							\
 ENTRY(_dl_##n)								\
+	RETGUARD_SETUP(_dl_##n, %r11)					;\
 	li	%r0, SYS_##n						;\
 	sc								;\
 	cmpdi	%r0, 0							;\
-	beqlr+								;\
+	beq .L_end##n							;\
 	neg	%r3, %r3						;\
+.L_end##n:								;\
+	RETGUARD_CHECK(_dl_##n, %r11)					;\
 	blr
