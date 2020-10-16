@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.3 2020/06/25 09:03:01 kettenis Exp $	*/
+/*	$OpenBSD: asm.h,v 1.4 2020/10/16 23:39:25 mortimer Exp $	*/
 
 /*
  * Copyright (c) 2020 Dale Rahn <drahn@openbsd.org>
@@ -58,5 +58,43 @@ _TMP_LABEL(y):;							\
 	.global alias; .set alias,sym
 #define WEAK_ALIAS(alias,sym) \
 	.weak alias; .set alias,sym
+
+#if defined(_RET_PROTECTOR)
+# define RETGUARD_SETUP(x, reg)						\
+	RETGUARD_SYMBOL(x);						\
+	mflr %r0;							\
+	addis reg, %r2, (__retguard_ ## x)@toc@ha;			\
+	lwz reg, ((__retguard_ ## x)@toc@l)(reg);			\
+	xor reg, reg, %r0
+# define RETGUARD_CHECK(x, reg)						\
+	mflr %r0;							\
+	xor reg, reg, %r0;						\
+	addis %r12, %r2, (__retguard_ ## x)@toc@ha;			\
+	lwz %r12, ((__retguard_ ## x)@toc@l)(%r12);			\
+	tdne reg, %r12
+# define RETGUARD_SAVE(reg, off)					\
+	std reg, off(%r31)
+# define RETGUARD_LOAD(reg, off)					\
+	ld reg, off(%r31)
+# define RETGUARD_SYMBOL(x)						\
+	.ifndef __retguard_ ## x;					\
+	.hidden __retguard_ ## x;					\
+	.type   __retguard_ ## x,@object;				\
+	.pushsection .openbsd.randomdata.retguard,"aw",@progbits; 	\
+	.weak   __retguard_ ## x;					\
+	.p2align 3;							\
+	__retguard_ ## x: ;						\
+	.quad 0;							\
+	.size __retguard_ ## x, 8;					\
+	.popsection;							\
+	.endif
+#else
+# define RETGUARD_SETUP(x, reg)
+# define RETGUARD_CHECK(x, reg)
+# define RETGUARD_SAVE(reg)
+# define RETGUARD_LOAD(reg)
+# define RETGUARD_SYMBOL(x)
+#endif
+
 
 #endif /* !_POWERPC64_ASM_H_ */
