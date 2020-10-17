@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.4 2020/10/16 23:39:25 mortimer Exp $	*/
+/*	$OpenBSD: asm.h,v 1.5 2020/10/17 15:26:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2020 Dale Rahn <drahn@openbsd.org>
@@ -64,13 +64,13 @@ _TMP_LABEL(y):;							\
 	RETGUARD_SYMBOL(x);						\
 	mflr %r0;							\
 	addis reg, %r2, (__retguard_ ## x)@toc@ha;			\
-	lwz reg, ((__retguard_ ## x)@toc@l)(reg);			\
+	ld reg, ((__retguard_ ## x)@toc@l)(reg);			\
 	xor reg, reg, %r0
 # define RETGUARD_CHECK(x, reg)						\
 	mflr %r0;							\
 	xor reg, reg, %r0;						\
 	addis %r12, %r2, (__retguard_ ## x)@toc@ha;			\
-	lwz %r12, ((__retguard_ ## x)@toc@l)(%r12);			\
+	ld %r12, ((__retguard_ ## x)@toc@l)(%r12);			\
 	tdne reg, %r12
 # define RETGUARD_SAVE(reg, off)					\
 	std reg, off(%r31)
