@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.64 2020/10/16 09:20:04 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.65 2020/10/17 15:10:54 semarie Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -207,6 +207,7 @@ kthread_func(void *arg)
 
 	ret = thread->func(thread->data);
 	thread->flags |= KTHREAD_STOPPED;
+	wakeup(thread);
 	kthread_exit(ret);
 }
 
@@ -298,6 +299,7 @@ kthread_stop(struct proc *p)
 
 	while ((thread->flags & KTHREAD_STOPPED) == 0) {
 		thread->flags |= KTHREAD_SHOULDSTOP;
+		kthread_unpark(p);
 		wake_up_process(thread->proc);
 		tsleep_nsec(thread, PPAUSE, "stop", INFSLP);
 	}
