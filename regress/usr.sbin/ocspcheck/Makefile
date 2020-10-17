@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2020/09/25 02:45:21 beck Exp $
+# $OpenBSD: Makefile,v 1.2 2020/10/17 16:25:39 beck Exp $
 
 # Copyright (c) 2020 Bob Beck <beck@openbsd.org>
 #
@@ -18,7 +18,7 @@ clean: _SUBDIRUSE
 	rm -f  *.core ktrace.out server.der client.der revoked.der
 
 ocsp-start: 
-	/usr/bin/openssl ocsp -port 127.0.0.1:2560 -text -sha256  -index ${.CURDIR}/index.txt -CA ${.CURDIR}/chain.pem -rkey ${.CURDIR}/ocsp-localhost.key.pem -rsigner ${.CURDIR}/ocsp-localhost.pem -nmin 1 > /tmp/shit 2>&1 &
+	/usr/bin/openssl ocsp -port 127.0.0.1:2560 -text -sha256  -index ${.CURDIR}/index.txt -CA ${.CURDIR}/chain.pem -rkey ${.CURDIR}/ocsp-localhost.key.pem -rsigner ${.CURDIR}/ocsp-localhost.pem -nmin 1 > /dev/null 2>&1 &
 	sleep .1 # give openssl some time to spin up
 	pgrep -xf '/usr/bin/openssl ocsp -port 127.0.0.1:2560.*'
 
