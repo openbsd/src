@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.49 2020/10/09 20:30:18 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.50 2020/10/17 19:16:24 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -965,27 +965,23 @@ pmap_vp_destroy(pmap_t pm)
 
 	while ((slbd = LIST_FIRST(&pm->pm_slbd))) {
 		vp1 = slbd->slbd_vp;
-		if (vp1 == NULL)
-			continue;
-
-		for (i = 0; i < VP_IDX1_CNT; i++) {
-			vp2 = vp1->vp[i];
-			if (vp2 == NULL)
-				continue;
-			vp1->vp[i] = NULL;
-
-			for (j = 0; j < VP_IDX2_CNT; j++) {
-				pted = vp2->vp[j];
-				if (pted == NULL)
+		if (vp1) {
+			for (i = 0; i < VP_IDX1_CNT; i++) {
+				vp2 = vp1->vp[i];
+				if (vp2 == NULL)
 					continue;
-				vp2->vp[j] = NULL;
 
-				pool_put(&pmap_pted_pool, pted);
+				for (j = 0; j < VP_IDX2_CNT; j++) {
+					pted = vp2->vp[j];
+					if (pted == NULL)
+						continue;
+
+					pool_put(&pmap_pted_pool, pted);
+				}
+				pool_put(&pmap_vp_pool, vp2);
 			}
-			pool_put(&pmap_vp_pool, vp2);
+			pool_put(&pmap_vp_pool, vp1);
 		}
-		slbd->slbd_vp = NULL;
-		pool_put(&pmap_vp_pool, vp1);
 
 		LIST_REMOVE(slbd, slbd_list);
 		pmap_free_vsid(slbd->slbd_vsid);
