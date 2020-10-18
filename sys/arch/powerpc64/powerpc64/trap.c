@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.42 2020/10/09 20:30:18 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.43 2020/10/18 12:21:32 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -41,7 +41,9 @@ void	exi_intr(struct trapframe *);  /* intr.c */
 void	hvi_intr(struct trapframe *);  /* intr.c */
 void	syscall(struct trapframe *);   /* syscall.c */
 
+#ifdef TRAP_DEBUG
 void	dumpframe(struct trapframe *);
+#endif
 
 void
 trap(struct trapframe *frame)
@@ -272,9 +274,6 @@ trap(struct trapframe *frame)
 		break;
 
 	case EXC_PGM|EXC_USER:
-		printf("type %x srr0 0x%lx\r\n", type, frame->srr0);
-		dumpframe(frame);
-
 		sv.sival_ptr = (void *)frame->srr0;
 		trapsignal(p, SIGTRAP, 0, TRAP_BRKPT, sv);
 		break;
@@ -307,6 +306,8 @@ out:
 	userret(p);
 }
 
+#ifdef TRAP_DEBUG
+
 #include <machine/opal.h>
 
 void
@@ -323,3 +324,5 @@ dumpframe(struct trapframe *frame)
 	opal_printf("srr0 0x%lx\r\n", frame->srr0);
 	opal_printf("srr1 0x%lx\r\n", frame->srr1);
 }
+
+#endif
