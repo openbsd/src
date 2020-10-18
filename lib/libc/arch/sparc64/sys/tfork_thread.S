@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.3 2015/09/05 06:22:47 guenther Exp $	*/
+/*	$OpenBSD: tfork_thread.S,v 1.4 2020/10/18 14:28:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -60,6 +60,7 @@ ENTRY(__tfork_thread)
 	mov	SYS___threxit, %g1
 	clr	%o0
 	t	ST_SYSCALL	/* will not return */
+	unimp
 
 9:
 	/*

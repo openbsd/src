@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.2 2012/06/21 00:56:59 guenther Exp $	*/
+/*	$OpenBSD: tfork_thread.S,v 1.3 2020/10/18 14:28:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -52,5 +52,6 @@ LEAF(__tfork_thread,0)
 
 	mov	zero, a0
 	CALLSYS_NOERROR(__threxit)
+	halt
 	
 END(__tfork_thread)

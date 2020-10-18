@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.9 2019/03/15 05:42:38 kevlo Exp $ */
+/*	$OpenBSD: tfork_thread.S,v 1.10 2020/10/18 14:28:17 deraadt Exp $ */
 /*-
  * Copyright (c) 2000 Peter Wemm <peter@FreeBSD.org>
  * All rights reserved.
@@ -99,6 +99,7 @@ ENTRY(__tfork_thread)
 	pushl	$0		# slot for return address, ignored by kernel
 	movl	$SYS___threxit, %eax
 	int	$0x80
+	int3
 
 	/*
 	 * Branch here if the thread creation fails:

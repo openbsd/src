@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.9 2020/10/01 01:05:40 guenther Exp $ */
+/*	$OpenBSD: tfork_thread.S,v 1.10 2020/10/18 14:28:17 deraadt Exp $ */
 /*-
  * Copyright (c) 2000 Peter Wemm <peter@FreeBSD.org>
  * Copyright (c) 2003 Alan L. Cox <alc@cs.rice.edu>
@@ -89,6 +89,7 @@ ENTRY(__tfork_thread)
 	movl	$SYS___threxit, %eax
 	xorl	%edi, %edi
 	syscall
+	int3
 
 	/*
 	 * Branch here if the thread creation fails:

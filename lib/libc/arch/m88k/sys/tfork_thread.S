@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.5 2013/01/23 18:59:32 miod Exp $	*/
+/*	$OpenBSD: tfork_thread.S,v 1.6 2020/10/18 14:28:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -51,4 +51,6 @@ ENTRY(__tfork_thread)
 
 	or	%r13, %r0,  __SYSCALLNAME(SYS_,__threxit)
 	tb0	0,    %r0,  450
+	nop
+	tb0     0, %r0, 130	/* breakpoint */
 END(__tfork_thread)

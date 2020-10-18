@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.7 2016/05/15 00:15:10 guenther Exp $	*/
+/*	$OpenBSD: tfork_thread.S,v 1.8 2020/10/18 14:28:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Tim Wiess <tim@nop.cx>
@@ -38,6 +38,8 @@ ENTRY(__tfork_thread)
 	/* child returned, call __threxit */
 	li	%r0, SYS___threxit
 	sc
+	.long	0		/* illegal */
+
 1:
 	stw	0, R2_OFFSET_ERRNO(%r2)
 	li	%r3, -1
