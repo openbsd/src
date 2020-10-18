@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.43 2020/10/18 12:21:32 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.44 2020/10/18 14:50:14 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -283,6 +283,11 @@ trap(struct trapframe *frame)
 			restore_vsx(p);
 		curpcb->pcb_flags |= PCB_FP;
 		frame->srr1 |= PSL_FP;
+		break;
+
+	case EXC_TRC|EXC_USER:
+		sv.sival_ptr = (void *)frame->srr0;
+		trapsignal(p, SIGTRAP, 0, TRAP_TRACE, sv);
 		break;
 
 	case EXC_VEC|EXC_USER:
