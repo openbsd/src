@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.40 2020/10/16 17:28:59 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.41 2020/10/18 12:03:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -156,7 +156,7 @@ void
 cpu_identify(struct cpu_info *ci)
 {
 	uint64_t midr, impl, part;
-	uint64_t clidr, id_aa64pfr0;
+	uint64_t clidr, id;
 	uint32_t ctr, ccsidr, sets, ways, line;
 	const char *impl_name = NULL;
 	const char *part_name = NULL;
@@ -289,9 +289,140 @@ cpu_identify(struct cpu_info *ci)
 	 * The architecture has been updated to explicitly tell us if
 	 * we're not vulnerable.
 	 */
-	id_aa64pfr0 = READ_SPECIALREG(id_aa64pfr0_el1);
-	if (ID_AA64PFR0_CSV2(id_aa64pfr0) >= ID_AA64PFR0_CSV2_IMPL)
+
+	id = READ_SPECIALREG(id_aa64pfr0_el1);
+	if (ID_AA64PFR0_CSV2(id) >= ID_AA64PFR0_CSV2_IMPL)
 		ci->ci_flush_bp = cpu_flush_bp_noop;
+
+	/*
+	 * Print CPU features encoded in the ID registers.
+	 */
+
+	printf("\n%s: ", ci->ci_dev->dv_xname);
+
+	/*
+	 * ID_AA64ISAR0
+	 */
+	id = READ_SPECIALREG(id_aa64isar0_el1);
+	sep = "";
+
+	if (ID_AA64ISAR0_DP(id) >= ID_AA64ISAR0_DP_IMPL) {
+		printf("%sDP", sep);
+		sep = ",";
+	}
+
+	if (ID_AA64ISAR0_SM4(id) >= ID_AA64ISAR0_SM4_IMPL) {
+		printf("%sSM4", sep);
+		sep = ",";
+	}
+
+	if (ID_AA64ISAR0_SM3(id) >= ID_AA64ISAR0_SM3_IMPL) {
+		printf("%sSM3", sep);
+		sep = ",";
+	}
+
+	if (ID_AA64ISAR0_SHA3(id) >= ID_AA64ISAR0_SHA3_IMPL) {
+		printf("%sSHA3", sep);
+		sep = ",";
+	}
+
+	if (ID_AA64ISAR0_RDM(id) >= ID_AA64ISAR0_RDM_IMPL) {
+		printf("%sRDM", sep);
+		sep = ",";
+	}
+
+	if (ID_AA64ISAR0_ATOMIC(id) >= ID_AA64ISAR0_ATOMIC_IMPL) {
+		printf("%sAtomic", sep);
+		sep = ",";
+	}
+
+	if (ID_AA64ISAR0_CRC32(id) >= ID_AA64ISAR0_CRC32_BASE) {
+		printf("%sCRC32", sep);
+		sep = ",";
+	}
+
+	if (ID_AA64ISAR0_SHA2(id) >= ID_AA64ISAR0_SHA2_BASE) {
+		printf("%sSHA2", sep);
+		sep = ",";
+	}
+	if (ID_AA64ISAR0_SHA2(id) >= ID_AA64ISAR0_SHA2_512)
+		printf("+SHA512");
+
+	if (ID_AA64ISAR0_SHA1(id) >= ID_AA64ISAR0_SHA1_BASE) {
+		printf("%sSHA1", sep);
+		sep = ",";
+	}
+
+	if (ID_AA64ISAR0_AES(id) >= ID_AA64ISAR0_AES_BASE) {
+		printf("%sAES", sep);
+		sep = ",";
+	}
+	if (ID_AA64ISAR0_AES(id) >= ID_AA64ISAR0_AES_PMULL)
+		printf("+PMULL");
+
+	/*
+	 * ID_AA64ISAR1
+	 */
+	id = READ_SPECIALREG(id_aa64isar1_el1);
+
+	if (ID_AA64ISAR1_DPB(id) >= ID_AA64ISAR1_DPB_IMPL) {
+		printf("%sDPB", sep);
+		sep = ",";
+	}
+
+	/*
+	 * ID_AA64MMFR1
+	 *
+	 * We omit printing virtualization related fields like XNX, VH
+	 * and VMIDBits as they are not reakky relevant for us.
+	 */
+	id = READ_SPECIALREG(id_aa64mmfr1_el1);
+
+	if (ID_AA64MMFR1_SPECSEI(id) >= ID_AA64MMFR1_SPECSEI_IMPL) {
+		printf("%sSpecSEI", sep);
+		sep = ",";
+	}
+
+	if (ID_AA64MMFR1_PAN(id) >= ID_AA64MMFR1_PAN_IMPL) {
+		printf("%sPAN", sep);
+		sep = ",";
+	}
+	if (ID_AA64MMFR1_PAN(id) >= ID_AA64MMFR1_PAN_ATS1E1)
+		printf("+ATS1E1");
+
+	if (ID_AA64MMFR1_LO(id) >= ID_AA64MMFR1_LO_IMPL) {
+		printf("%sLO", sep);
+		sep = ",";
+	}
+
+	if (ID_AA64MMFR1_HPDS(id) >= ID_AA64MMFR1_HPDS_IMPL) {
+		printf("%sHPDS", sep);
+		sep = ",";
+	}
+
+	if (ID_AA64MMFR1_HAFDBS(id) >= ID_AA64MMFR1_HAFDBS_AF) {
+		printf("%sHAF", sep);
+		sep = ",";
+	}
+	if (ID_AA64MMFR1_HAFDBS(id) >= ID_AA64MMFR1_HAFDBS_AF_DBS)
+		printf("DBS");
+
+	/*
+	 * ID_AA64PFR0
+	 */
+	id = READ_SPECIALREG(id_aa64pfr0_el1);
+
+	if (ID_AA64PFR0_CSV3(id) >= ID_AA64PFR0_CSV3_IMPL) {
+		printf("%sCSV3", sep);
+		sep = ",";
+	}
+
+	if (ID_AA64PFR0_CSV2(id) >= ID_AA64PFR0_CSV2_IMPL) {
+		printf("%sCSV2", sep);
+		sep = ",";
+	}
+	if (ID_AA64PFR0_CSV2(id) >= ID_AA64PFR0_CSV2_SCXT)
+		printf("+SCTX");
 }
 
 int	cpu_hatch_secondary(struct cpu_info *ci, int, uint64_t);
