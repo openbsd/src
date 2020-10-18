@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.3 2020/07/02 08:59:45 kettenis Exp $ */
+/*	$OpenBSD: setjmp.S,v 1.4 2020/10/18 17:51:39 mortimer Exp $ */
 /*
  * Copyright (c) 2020 Dale Rahn. All rights reserved.
  *
@@ -78,6 +78,7 @@ ENTRY(setjmp)
 ENTRY(_setjmp)
 	mr	%r5, %r3		/* save jmpbuf addr in r5 */
 1:
+	RETGUARD_SETUP(setjmp, %r11)
 	addis	%r7, %r2, __jmpxor@toc@ha
 	addi	%r7, %r7, __jmpxor@toc@l
 	ld	%r0, 0(%r7)		/* xor for r1 */
@@ -116,6 +117,7 @@ ENTRY(_setjmp)
 	std	%r0, JMP_xer(%r5)
 	/* floating point is all caller save */
 	li	%r3, 0
+	RETGUARD_CHECK(setjmp, %r11)
 	blr
 END(_setjmp)
 END(setjmp)
@@ -143,6 +145,10 @@ ENTRY(_longjmp)
 	addi	%r9, %r9, __jmpxor@toc@l
 	ld	%r8, 0(%r9)			/* xor for r1 */
 	ld	%r9, 8(%r9)			/* xor for lr, overwrite addr */
+	ld	%r0, JMP_lr(%r5)
+	xor	%r0, %r0, %r9			/* use the lr xor */
+	mtlr	%r0
+	RETGUARD_SETUP(longjmp, %r11)
 
 	/* r1, r14-r31 */
 	ld	%r0, JMP_r1(%r5)
@@ -168,9 +174,6 @@ ENTRY(_longjmp)
 	/* cr, lr, ctr, xer */
 	ld	%r8, JMP_cr(%r5)		/* overwrite the r1 xor */
 	mtcr	%r8
-	ld	%r0, JMP_lr(%r5)
-	xor	%r0, %r0, %r9			/* use the lr xor */
-	mtlr	%r0
 	ld	%r9, JMP_ctr(%r5)		/* overwrite the lr xor */
 	mtctr	%r9
 	ld	%r0, JMP_xer(%r5)
@@ -180,8 +183,10 @@ ENTRY(_longjmp)
 	/* if return val in r6 == 0, return 1, not 0 */
 	mr	%r3, %r6
 	cmpwi	%r6, 0
-	bnelr
+	bne	2f
 	li	%r3, 1
+2:
+	RETGUARD_CHECK(longjmp, %r11)
 	blr
 END(_longjmp)
 END(longjmp)
