@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor_fdpass.c,v 1.21 2016/02/29 20:22:36 jca Exp $ */
+/* $OpenBSD: monitor_fdpass.c,v 1.22 2020/10/18 11:32:01 djm Exp $ */
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -69,17 +69,16 @@ mm_send_fd(int sock, int fd)
 	pfd.events = POLLOUT;
 	while ((n = sendmsg(sock, &msg, 0)) == -1 &&
 	    (errno == EAGAIN || errno == EINTR)) {
-		debug3("%s: sendmsg(%d): %s", __func__, fd, strerror(errno));
+		debug3_f("sendmsg(%d): %s", fd, strerror(errno));
 		(void)poll(&pfd, 1, -1);
 	}
 	if (n == -1) {
-		error("%s: sendmsg(%d): %s", __func__, fd,
-		    strerror(errno));
+		error_f("sendmsg(%d): %s", fd, strerror(errno));
 		return -1;
 	}
 
 	if (n != 1) {
-		error("%s: sendmsg: expected sent 1 got %zd", __func__, n);
+		error_f("sendmsg: expected sent 1 got %zd", n);
 		return -1;
 	}
 	return 0;
@@ -113,28 +112,27 @@ mm_receive_fd(int sock)
 	pfd.events = POLLIN;
 	while ((n = recvmsg(sock, &msg, 0)) == -1 &&
 	    (errno == EAGAIN || errno == EINTR)) {
-		debug3("%s: recvmsg: %s", __func__, strerror(errno));
+		debug3_f("recvmsg: %s", strerror(errno));
 		(void)poll(&pfd, 1, -1);
 	}
 	if (n == -1) {
-		error("%s: recvmsg: %s", __func__, strerror(errno));
+		error_f("recvmsg: %s", strerror(errno));
 		return -1;
 	}
 
 	if (n != 1) {
-		error("%s: recvmsg: expected received 1 got %zd", __func__, n);
+		error_f("recvmsg: expected received 1 got %zd", n);
 		return -1;
 	}
 
 	cmsg = CMSG_FIRSTHDR(&msg);
 	if (cmsg == NULL) {
-		error("%s: no message header", __func__);
+		error_f("no message header");
 		return -1;
 	}
 
 	if (cmsg->cmsg_type != SCM_RIGHTS) {
-		error("%s: expected type %d got %d", __func__,
-		    SCM_RIGHTS, cmsg->cmsg_type);
+		error_f("expected %d got %d", SCM_RIGHTS, cmsg->cmsg_type);
 		return -1;
 	}
 	fd = (*(int *)CMSG_DATA(cmsg));

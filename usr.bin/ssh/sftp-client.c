@@ -1,4 +1,4 @@
-/* $OpenBSD: sftp-client.c,v 1.136 2020/05/15 03:57:33 djm Exp $ */
+/* $OpenBSD: sftp-client.c,v 1.137 2020/10/18 11:32:02 djm Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -126,7 +126,7 @@ get_msg_extended(struct sftp_conn *conn, struct sshbuf *m, int initial)
 	int r;
 
 	if ((r = sshbuf_reserve(m, 4, &p)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "reserve");
 	if (atomicio6(read, conn->fd_in, p, 4, sftpio,
 	    conn->limit_kbps > 0 ? &conn->bwlimit_in : NULL) != 4) {
 		if (errno == EPIPE || errno == ECONNRESET)
@@ -136,7 +136,7 @@ get_msg_extended(struct sftp_conn *conn, struct sshbuf *m, int initial)
 	}
 
 	if ((r = sshbuf_get_u32(m, &msg_len)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "sshbuf_get_u32");
 	if (msg_len > SFTP_MAX_MSG_LENGTH) {
 		do_log2(initial ? SYSLOG_LEVEL_ERROR : SYSLOG_LEVEL_FATAL,
 		    "Received message too long %u", msg_len);
@@ -145,7 +145,7 @@ get_msg_extended(struct sftp_conn *conn, struct sshbuf *m, int initial)
 	}
 
 	if ((r = sshbuf_reserve(m, msg_len, &p)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "reserve");
 	if (atomicio6(read, conn->fd_in, p, msg_len, sftpio,
 	    conn->limit_kbps > 0 ? &conn->bwlimit_in : NULL)
 	    != msg_len) {
@@ -170,11 +170,11 @@ send_string_request(struct sftp_conn *conn, u_int id, u_int code, const char *s,
 	int r;
 
 	if ((msg = sshbuf_new()) == NULL)
-		fatal("%s: sshbuf_new failed", __func__);
+		fatal_f("sshbuf_new failed");
 	if ((r = sshbuf_put_u8(msg, code)) != 0 ||
 	    (r = sshbuf_put_u32(msg, id)) != 0 ||
 	    (r = sshbuf_put_string(msg, s, len)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "compose");
 	send_msg(conn, msg);
 	debug3("Sent message fd %d T:%u I:%u", conn->fd_out, code, id);
 	sshbuf_free(msg);
@@ -188,12 +188,12 @@ send_string_attrs_request(struct sftp_conn *conn, u_int id, u_int code,
 	int r;
 
 	if ((msg = sshbuf_new()) == NULL)
-		fatal("%s: sshbuf_new failed", __func__);
+		fatal_f("sshbuf_new failed");
 	if ((r = sshbuf_put_u8(msg, code)) != 0 ||
 	    (r = sshbuf_put_u32(msg, id)) != 0 ||
 	    (r = sshbuf_put_string(msg, s, len)) != 0 ||
 	    (r = encode_attrib(msg, a)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "compose");
 	send_msg(conn, msg);
 	debug3("Sent message fd %d T:%u I:%u", conn->fd_out, code, id);
 	sshbuf_free(msg);
@@ -208,11 +208,11 @@ get_status(struct sftp_conn *conn, u_int expected_id)
 	int r;
 
 	if ((msg = sshbuf_new()) == NULL)
-		fatal("%s: sshbuf_new failed", __func__);
+		fatal_f("sshbuf_new failed");
 	get_msg(conn, msg);
 	if ((r = sshbuf_get_u8(msg, &type)) != 0 ||
 	    (r = sshbuf_get_u32(msg, &id)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "compose");
 
 	if (id != expected_id)
 		fatal("ID mismatch (%u != %u)", id, expected_id);
@@ -221,7 +221,7 @@ get_status(struct sftp_conn *conn, u_int expected_id)
 		    SSH2_FXP_STATUS, type);
 
 	if ((r = sshbuf_get_u32(msg, &status)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "parse");
 	sshbuf_free(msg);
 
 	debug3("SSH2_FXP_STATUS %u", status);
@@ -247,18 +247,18 @@ get_handle(struct sftp_conn *conn, u_int expected_id, size_t *len,
 	va_end(args);
 
 	if ((msg = sshbuf_new()) == NULL)
-		fatal("%s: sshbuf_new failed", __func__);
+		fatal_f("sshbuf_new failed");
 	get_msg(conn, msg);
 	if ((r = sshbuf_get_u8(msg, &type)) != 0 ||
 	    (r = sshbuf_get_u32(msg, &id)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "parse");
 
 	if (id != expected_id)
 		fatal("%s: ID mismatch (%u != %u)",
 		    errfmt == NULL ? __func__ : errmsg, id, expected_id);
 	if (type == SSH2_FXP_STATUS) {
 		if ((r = sshbuf_get_u32(msg, &status)) != 0)
-			fatal("%s: buffer error: %s", __func__, ssh_err(r));
+			fatal_fr(r, "parse status");
 		if (errfmt != NULL)
 			error("%s: %s", errmsg, fx2txt(status));
 		sshbuf_free(msg);
@@ -268,7 +268,7 @@ get_handle(struct sftp_conn *conn, u_int expected_id, size_t *len,
 		    errfmt == NULL ? __func__ : errmsg, SSH2_FXP_HANDLE, type);
 
 	if ((r = sshbuf_get_string(msg, &handle, len)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "parse handle");
 	sshbuf_free(msg);
 
 	return handle;
@@ -284,12 +284,12 @@ get_decode_stat(struct sftp_conn *conn, u_int expected_id, int quiet)
 	static Attrib a;
 
 	if ((msg = sshbuf_new()) == NULL)
-		fatal("%s: sshbuf_new failed", __func__);
+		fatal_f("sshbuf_new failed");
 	get_msg(conn, msg);
 
 	if ((r = sshbuf_get_u8(msg, &type)) != 0 ||
 	    (r = sshbuf_get_u32(msg, &id)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "parse");
 
 	debug3("Received stat reply T:%u I:%u", type, id);
 	if (id != expected_id)
@@ -298,7 +298,7 @@ get_decode_stat(struct sftp_conn *conn, u_int expected_id, int quiet)
 		u_int status;
 
 		if ((r = sshbuf_get_u32(msg, &status)) != 0)
-			fatal("%s: buffer error: %s", __func__, ssh_err(r));
+			fatal_fr(r, "parse status");
 		if (quiet)
 			debug("Couldn't stat remote file: %s", fx2txt(status));
 		else
@@ -310,7 +310,7 @@ get_decode_stat(struct sftp_conn *conn, u_int expected_id, int quiet)
 		    SSH2_FXP_ATTRS, type);
 	}
 	if ((r = decode_attrib(msg, &a)) != 0) {
-		error("%s: couldn't decode attrib: %s", __func__, ssh_err(r));
+		error_fr(r, "decode_attrib");
 		sshbuf_free(msg);
 		return NULL;
 	}
@@ -330,12 +330,12 @@ get_decode_statvfs(struct sftp_conn *conn, struct sftp_statvfs *st,
 	int r;
 
 	if ((msg = sshbuf_new()) == NULL)
-		fatal("%s: sshbuf_new failed", __func__);
+		fatal_f("sshbuf_new failed");
 	get_msg(conn, msg);
 
 	if ((r = sshbuf_get_u8(msg, &type)) != 0 ||
 	    (r = sshbuf_get_u32(msg, &id)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "parse");
 
 	debug3("Received statvfs reply T:%u I:%u", type, id);
 	if (id != expected_id)
@@ -344,7 +344,7 @@ get_decode_statvfs(struct sftp_conn *conn, struct sftp_statvfs *st,
 		u_int status;
 
 		if ((r = sshbuf_get_u32(msg, &status)) != 0)
-			fatal("%s: buffer error: %s", __func__, ssh_err(r));
+			fatal_fr(r, "parse status");
 		if (quiet)
 			debug("Couldn't statvfs: %s", fx2txt(status));
 		else
@@ -368,7 +368,7 @@ get_decode_statvfs(struct sftp_conn *conn, struct sftp_statvfs *st,
 	    (r = sshbuf_get_u64(msg, &st->f_fsid)) != 0 ||
 	    (r = sshbuf_get_u64(msg, &flag)) != 0 ||
 	    (r = sshbuf_get_u64(msg, &st->f_namemax)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "parse statvfs");
 
 	st->f_flag = (flag & SSH2_FXE_STATVFS_ST_RDONLY) ? ST_RDONLY : 0;
 	st->f_flag |= (flag & SSH2_FXE_STATVFS_ST_NOSUID) ? ST_NOSUID : 0;
@@ -397,10 +397,11 @@ do_init(int fd_in, int fd_out, u_int transfer_buflen, u_int num_requests,
 	ret->limit_kbps = 0;
 
 	if ((msg = sshbuf_new()) == NULL)
-		fatal("%s: sshbuf_new failed", __func__);
+		fatal_f("sshbuf_new failed");
 	if ((r = sshbuf_put_u8(msg, SSH2_FXP_INIT)) != 0 ||
 	    (r = sshbuf_put_u32(msg, SSH2_FILEXFER_VERSION)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "parse");
+
 	send_msg(ret, msg);
 
 	sshbuf_reset(msg);
@@ -409,7 +410,7 @@ do_init(int fd_in, int fd_out, u_int transfer_buflen, u_int num_requests,
 
 	/* Expecting a VERSION reply */
 	if ((r = sshbuf_get_u8(msg, &type)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "parse type");
 	if (type != SSH2_FXP_VERSION) {
 		error("Invalid packet back from SSH2_FXP_INIT (type %u)",
 		    type);
@@ -418,7 +419,7 @@ do_init(int fd_in, int fd_out, u_int transfer_buflen, u_int num_requests,
 		return(NULL);
 	}
 	if ((r = sshbuf_get_u32(msg, &ret->version)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "parse version");
 
 	debug2("Remote version: %u", ret->version);
 
@@ -431,7 +432,7 @@ do_init(int fd_in, int fd_out, u_int transfer_buflen, u_int num_requests,
 
 		if ((r = sshbuf_get_cstring(msg, &name, NULL)) != 0 ||
 		    (r = sshbuf_get_string(msg, &value, &vlen)) != 0)
-			fatal("%s: buffer error: %s", __func__, ssh_err(r));
+			fatal_fr(r, "parse extension");
 		if (strcmp(name, "posix-rename@openssh.com") == 0 &&
 		    strcmp((char *)value, "1") == 0) {
 			ret->exts |= SFTP_EXT_POSIX_RENAME;
@@ -498,13 +499,13 @@ do_close(struct sftp_conn *conn, const u_char *handle, u_int handle_len)
 	int r;
 
 	if ((msg = sshbuf_new()) == NULL)
-		fatal("%s: sshbuf_new failed", __func__);
+		fatal_f("sshbuf_new failed");
 
 	id = conn->msg_id++;
 	if ((r = sshbuf_put_u8(msg, SSH2_FXP_CLOSE)) != 0 ||
 	    (r = sshbuf_put_u32(msg, id)) != 0 ||
 	    (r = sshbuf_put_string(msg, handle, handle_len)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "parse");
 	send_msg(conn, msg);
 	debug3("Sent message SSH2_FXP_CLOSE I:%u", id);
 
@@ -535,11 +536,11 @@ do_lsreaddir(struct sftp_conn *conn, const char *path, int print_flag,
 	id = conn->msg_id++;
 
 	if ((msg = sshbuf_new()) == NULL)
-		fatal("%s: sshbuf_new failed", __func__);
+		fatal_f("sshbuf_new failed");
 	if ((r = sshbuf_put_u8(msg, SSH2_FXP_OPENDIR)) != 0 ||
 	    (r = sshbuf_put_u32(msg, id)) != 0 ||
 	    (r = sshbuf_put_cstring(msg, path)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "compose OPENDIR");
 	send_msg(conn, msg);
 
 	handle = get_handle(conn, id, &handle_len,
@@ -564,7 +565,7 @@ do_lsreaddir(struct sftp_conn *conn, const char *path, int print_flag,
 		if ((r = sshbuf_put_u8(msg, SSH2_FXP_READDIR)) != 0 ||
 		    (r = sshbuf_put_u32(msg, id)) != 0 ||
 		    (r = sshbuf_put_string(msg, handle, handle_len)) != 0)
-			fatal("%s: buffer error: %s", __func__, ssh_err(r));
+			fatal_fr(r, "compose READDIR");
 		send_msg(conn, msg);
 
 		sshbuf_reset(msg);
@@ -573,7 +574,7 @@ do_lsreaddir(struct sftp_conn *conn, const char *path, int print_flag,
 
 		if ((r = sshbuf_get_u8(msg, &type)) != 0 ||
 		    (r = sshbuf_get_u32(msg, &id)) != 0)
-			fatal("%s: buffer error: %s", __func__, ssh_err(r));
+			fatal_fr(r, "parse");
 
 		debug3("Received reply T:%u I:%u", type, id);
 
@@ -584,8 +585,7 @@ do_lsreaddir(struct sftp_conn *conn, const char *path, int print_flag,
 			u_int rstatus;
 
 			if ((r = sshbuf_get_u32(msg, &rstatus)) != 0)
-				fatal("%s: buffer error: %s",
-				    __func__, ssh_err(r));
+				fatal_fr(r, "parse status");
 			debug3("Received SSH2_FXP_STATUS %d", rstatus);
 			if (rstatus == SSH2_FX_EOF)
 				break;
@@ -596,9 +596,9 @@ do_lsreaddir(struct sftp_conn *conn, const char *path, int print_flag,
 			    SSH2_FXP_NAME, type);
 
 		if ((r = sshbuf_get_u32(msg, &count)) != 0)
-			fatal("%s: buffer error: %s", __func__, ssh_err(r));
+			fatal_fr(r, "parse count");
 		if (count > SSHBUF_SIZE_MAX)
-			fatal("%s: nonsensical number of entries", __func__);
+			fatal_f("nonsensical number of entries");
 		if (count == 0)
 			break;
 		debug3("Received %d SSH2_FXP_NAME responses", count);
@@ -610,11 +610,9 @@ do_lsreaddir(struct sftp_conn *conn, const char *path, int print_flag,
 			    NULL)) != 0 ||
 			    (r = sshbuf_get_cstring(msg, &longname,
 			    NULL)) != 0)
-				fatal("%s: buffer error: %s",
-				    __func__, ssh_err(r));
+				fatal_fr(r, "parse filenames");
 			if ((r = decode_attrib(msg, &a)) != 0) {
-				error("%s: couldn't decode attrib: %s",
-				    __func__, ssh_err(r));
+				error_fr(r, "couldn't decode attrib");
 				free(filename);
 				free(longname);
 				goto out;
@@ -829,12 +827,12 @@ do_realpath(struct sftp_conn *conn, const char *path)
 	    strlen(path));
 
 	if ((msg = sshbuf_new()) == NULL)
-		fatal("%s: sshbuf_new failed", __func__);
+		fatal_f("sshbuf_new failed");
 
 	get_msg(conn, msg);
 	if ((r = sshbuf_get_u8(msg, &type)) != 0 ||
 	    (r = sshbuf_get_u32(msg, &id)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "parse");
 
 	if (id != expected_id)
 		fatal("ID mismatch (%u != %u)", id, expected_id);
@@ -843,7 +841,7 @@ do_realpath(struct sftp_conn *conn, const char *path)
 		u_int status;
 
 		if ((r = sshbuf_get_u32(msg, &status)) != 0)
-			fatal("%s: buffer error: %s", __func__, ssh_err(r));
+			fatal_fr(r, "parse status");
 		error("Couldn't canonicalize: %s", fx2txt(status));
 		sshbuf_free(msg);
 		return NULL;
@@ -852,14 +850,14 @@ do_realpath(struct sftp_conn *conn, const char *path)
 		    SSH2_FXP_NAME, type);
 
 	if ((r = sshbuf_get_u32(msg, &count)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "parse count");
 	if (count != 1)
 		fatal("Got multiple names (%d) from SSH_FXP_REALPATH", count);
 
 	if ((r = sshbuf_get_cstring(msg, &filename, NULL)) != 0 ||
 	    (r = sshbuf_get_cstring(msg, &longname, NULL)) != 0 ||
 	    (r = decode_attrib(msg, &a)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "parse filename/attrib");
 
 	debug3("SSH_FXP_REALPATH %s -> %s size %lu", path, filename,
 	    (unsigned long)a.size);
@@ -880,7 +878,7 @@ do_rename(struct sftp_conn *conn, const char *oldpath, const char *newpath,
 	int r, use_ext = (conn->exts & SFTP_EXT_POSIX_RENAME) && !force_legacy;
 
 	if ((msg = sshbuf_new()) == NULL)
-		fatal("%s: sshbuf_new failed", __func__);
+		fatal_f("sshbuf_new failed");
 
 	/* Send rename request */
 	id = conn->msg_id++;
@@ -889,15 +887,15 @@ do_rename(struct sftp_conn *conn, const char *oldpath, const char *newpath,
 		    (r = sshbuf_put_u32(msg, id)) != 0 ||
 		    (r = sshbuf_put_cstring(msg,
 		    "posix-rename@openssh.com")) != 0)
-			fatal("%s: buffer error: %s", __func__, ssh_err(r));
+			fatal_fr(r, "compose posix-rename");
 	} else {
 		if ((r = sshbuf_put_u8(msg, SSH2_FXP_RENAME)) != 0 ||
 		    (r = sshbuf_put_u32(msg, id)) != 0)
-			fatal("%s: buffer error: %s", __func__, ssh_err(r));
+			fatal_fr(r, "compose rename");
 	}
 	if ((r = sshbuf_put_cstring(msg, oldpath)) != 0 ||
 	    (r = sshbuf_put_cstring(msg, newpath)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "compose paths");
 	send_msg(conn, msg);
 	debug3("Sent message %s \"%s\" -> \"%s\"",
 	    use_ext ? "posix-rename@openssh.com" :
@@ -925,7 +923,7 @@ do_hardlink(struct sftp_conn *conn, const char *oldpath, const char *newpath)
 	}
 
 	if ((msg = sshbuf_new()) == NULL)
-		fatal("%s: sshbuf_new failed", __func__);
+		fatal_f("sshbuf_new failed");
 
 	/* Send link request */
 	id = conn->msg_id++;
@@ -934,7 +932,7 @@ do_hardlink(struct sftp_conn *conn, const char *oldpath, const char *newpath)
 	    (r = sshbuf_put_cstring(msg, "hardlink@openssh.com")) != 0 ||
 	    (r = sshbuf_put_cstring(msg, oldpath)) != 0 ||
 	    (r = sshbuf_put_cstring(msg, newpath)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "compose");
 	send_msg(conn, msg);
 	debug3("Sent message hardlink@openssh.com \"%s\" -> \"%s\"",
 	       oldpath, newpath);
@@ -961,7 +959,7 @@ do_symlink(struct sftp_conn *conn, const char *oldpath, const char *newpath)
 	}
 
 	if ((msg = sshbuf_new()) == NULL)
-		fatal("%s: sshbuf_new failed", __func__);
+		fatal_f("sshbuf_new failed");
 
 	/* Send symlink request */
 	id = conn->msg_id++;
@@ -969,7 +967,7 @@ do_symlink(struct sftp_conn *conn, const char *oldpath, const char *newpath)
 	    (r = sshbuf_put_u32(msg, id)) != 0 ||
 	    (r = sshbuf_put_cstring(msg, oldpath)) != 0 ||
 	    (r = sshbuf_put_cstring(msg, newpath)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "compose");
 	send_msg(conn, msg);
 	debug3("Sent message SSH2_FXP_SYMLINK \"%s\" -> \"%s\"", oldpath,
 	    newpath);
@@ -996,13 +994,13 @@ do_fsync(struct sftp_conn *conn, u_char *handle, u_int handle_len)
 
 	/* Send fsync request */
 	if ((msg = sshbuf_new()) == NULL)
-		fatal("%s: sshbuf_new failed", __func__);
+		fatal_f("sshbuf_new failed");
 	id = conn->msg_id++;
 	if ((r = sshbuf_put_u8(msg, SSH2_FXP_EXTENDED)) != 0 ||
 	    (r = sshbuf_put_u32(msg, id)) != 0 ||
 	    (r = sshbuf_put_cstring(msg, "fsync@openssh.com")) != 0 ||
 	    (r = sshbuf_put_string(msg, handle, handle_len)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "compose");
 	send_msg(conn, msg);
 	debug3("Sent message fsync@openssh.com I:%u", id);
 	sshbuf_free(msg);
@@ -1029,12 +1027,12 @@ do_readlink(struct sftp_conn *conn, const char *path)
 	send_string_request(conn, id, SSH2_FXP_READLINK, path, strlen(path));
 
 	if ((msg = sshbuf_new()) == NULL)
-		fatal("%s: sshbuf_new failed", __func__);
+		fatal_f("sshbuf_new failed");
 
 	get_msg(conn, msg);
 	if ((r = sshbuf_get_u8(msg, &type)) != 0 ||
 	    (r = sshbuf_get_u32(msg, &id)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "parse");
 
 	if (id != expected_id)
 		fatal("ID mismatch (%u != %u)", id, expected_id);
@@ -1043,7 +1041,7 @@ do_readlink(struct sftp_conn *conn, const char *path)
 		u_int status;
 
 		if ((r = sshbuf_get_u32(msg, &status)) != 0)
-			fatal("%s: buffer error: %s", __func__, ssh_err(r));
+			fatal_fr(r, "parse status");
 		error("Couldn't readlink: %s", fx2txt(status));
 		sshbuf_free(msg);
 		return(NULL);
@@ -1052,14 +1050,14 @@ do_readlink(struct sftp_conn *conn, const char *path)
 		    SSH2_FXP_NAME, type);
 
 	if ((r = sshbuf_get_u32(msg, &count)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "parse count");
 	if (count != 1)
 		fatal("Got multiple names (%d) from SSH_FXP_READLINK", count);
 
 	if ((r = sshbuf_get_cstring(msg, &filename, NULL)) != 0 ||
 	    (r = sshbuf_get_cstring(msg, &longname, NULL)) != 0 ||
 	    (r = decode_attrib(msg, &a)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "parse filenames/attrib");
 
 	debug3("SSH_FXP_READLINK %s -> %s", path, filename);
 
@@ -1087,12 +1085,12 @@ do_statvfs(struct sftp_conn *conn, const char *path, struct sftp_statvfs *st,
 	id = conn->msg_id++;
 
 	if ((msg = sshbuf_new()) == NULL)
-		fatal("%s: sshbuf_new failed", __func__);
+		fatal_f("sshbuf_new failed");
 	if ((r = sshbuf_put_u8(msg, SSH2_FXP_EXTENDED)) != 0 ||
 	    (r = sshbuf_put_u32(msg, id)) != 0 ||
 	    (r = sshbuf_put_cstring(msg, "statvfs@openssh.com")) != 0 ||
 	    (r = sshbuf_put_cstring(msg, path)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "compose");
 	send_msg(conn, msg);
 	sshbuf_free(msg);
 
@@ -1115,12 +1113,12 @@ do_fstatvfs(struct sftp_conn *conn, const u_char *handle, u_int handle_len,
 	id = conn->msg_id++;
 
 	if ((msg = sshbuf_new()) == NULL)
-		fatal("%s: sshbuf_new failed", __func__);
+		fatal_f("sshbuf_new failed");
 	if ((r = sshbuf_put_u8(msg, SSH2_FXP_EXTENDED)) != 0 ||
 	    (r = sshbuf_put_u32(msg, id)) != 0 ||
 	    (r = sshbuf_put_cstring(msg, "fstatvfs@openssh.com")) != 0 ||
 	    (r = sshbuf_put_string(msg, handle, handle_len)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "compose");
 	send_msg(conn, msg);
 	sshbuf_free(msg);
 
@@ -1142,13 +1140,13 @@ do_lsetstat(struct sftp_conn *conn, const char *path, Attrib *a)
 
 	id = conn->msg_id++;
 	if ((msg = sshbuf_new()) == NULL)
-		fatal("%s: sshbuf_new failed", __func__);
+		fatal_f("sshbuf_new failed");
 	if ((r = sshbuf_put_u8(msg, SSH2_FXP_EXTENDED)) != 0 ||
 	    (r = sshbuf_put_u32(msg, id)) != 0 ||
 	    (r = sshbuf_put_cstring(msg, "lsetstat@openssh.com")) != 0 ||
 	    (r = sshbuf_put_cstring(msg, path)) != 0 ||
 	    (r = encode_attrib(msg, a)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "compose");
 	send_msg(conn, msg);
 	sshbuf_free(msg);
 
@@ -1168,13 +1166,13 @@ send_read_request(struct sftp_conn *conn, u_int id, u_int64_t offset,
 	int r;
 
 	if ((msg = sshbuf_new()) == NULL)
-		fatal("%s: sshbuf_new failed", __func__);
+		fatal_f("sshbuf_new failed");
 	if ((r = sshbuf_put_u8(msg, SSH2_FXP_READ)) != 0 ||
 	    (r = sshbuf_put_u32(msg, id)) != 0 ||
 	    (r = sshbuf_put_string(msg, handle, handle_len)) != 0 ||
 	    (r = sshbuf_put_u64(msg, offset)) != 0 ||
 	    (r = sshbuf_put_u32(msg, len)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "compose");
 	send_msg(conn, msg);
 	sshbuf_free(msg);
 }
@@ -1228,7 +1226,7 @@ do_download(struct sftp_conn *conn, const char *remote_path,
 
 	buflen = conn->transfer_buflen;
 	if ((msg = sshbuf_new()) == NULL)
-		fatal("%s: sshbuf_new failed", __func__);
+		fatal_f("sshbuf_new failed");
 
 	attrib_clear(&junk); /* Send empty attributes */
 
@@ -1239,7 +1237,7 @@ do_download(struct sftp_conn *conn, const char *remote_path,
 	    (r = sshbuf_put_cstring(msg, remote_path)) != 0 ||
 	    (r = sshbuf_put_u32(msg, SSH2_FXF_READ)) != 0 ||
 	    (r = encode_attrib(msg, &junk)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "compose");
 	send_msg(conn, msg);
 	debug3("Sent message SSH2_FXP_OPEN I:%u P:%s", id, remote_path);
 
@@ -1325,7 +1323,7 @@ do_download(struct sftp_conn *conn, const char *remote_path,
 		get_msg(conn, msg);
 		if ((r = sshbuf_get_u8(msg, &type)) != 0 ||
 		    (r = sshbuf_get_u32(msg, &id)) != 0)
-			fatal("%s: buffer error: %s", __func__, ssh_err(r));
+			fatal_fr(r, "parse");
 		debug3("Received reply T:%u I:%u R:%d", type, id, max_req);
 
 		/* Find the request in our queue */
@@ -1339,8 +1337,7 @@ do_download(struct sftp_conn *conn, const char *remote_path,
 		switch (type) {
 		case SSH2_FXP_STATUS:
 			if ((r = sshbuf_get_u32(msg, &status)) != 0)
-				fatal("%s: buffer error: %s",
-				    __func__, ssh_err(r));
+				fatal_fr(r, "parse status");
 			if (status != SSH2_FX_EOF)
 				read_error = 1;
 			max_req = 0;
@@ -1350,8 +1347,7 @@ do_download(struct sftp_conn *conn, const char *remote_path,
 			break;
 		case SSH2_FXP_DATA:
 			if ((r = sshbuf_get_string(msg, &data, &len)) != 0)
-				fatal("%s: buffer error: %s",
-				    __func__, ssh_err(r));
+				fatal_fr(r, "parse data");
 			debug3("Received data %llu -> %llu",
 			    (unsigned long long)req->offset,
 			    (unsigned long long)req->offset + len - 1);
@@ -1659,7 +1655,7 @@ do_upload(struct sftp_conn *conn, const char *local_path,
 	}
 
 	if ((msg = sshbuf_new()) == NULL)
-		fatal("%s: sshbuf_new failed", __func__);
+		fatal_f("sshbuf_new failed");
 
 	/* Send open request */
 	id = conn->msg_id++;
@@ -1669,7 +1665,7 @@ do_upload(struct sftp_conn *conn, const char *local_path,
 	    (r = sshbuf_put_u32(msg, SSH2_FXF_WRITE|SSH2_FXF_CREAT|
 	    (resume ? SSH2_FXF_APPEND : SSH2_FXF_TRUNC))) != 0 ||
 	    (r = encode_attrib(msg, &a)) != 0)
-		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+		fatal_fr(r, "compose");
 	send_msg(conn, msg);
 	debug3("Sent message SSH2_FXP_OPEN I:%u P:%s", id, remote_path);
 
@@ -1725,8 +1721,7 @@ do_upload(struct sftp_conn *conn, const char *local_path,
 			    handle_len)) != 0 ||
 			    (r = sshbuf_put_u64(msg, offset)) != 0 ||
 			    (r = sshbuf_put_string(msg, data, len)) != 0)
-				fatal("%s: buffer error: %s",
-				    __func__, ssh_err(r));
+				fatal_fr(r, "compose");
 			send_msg(conn, msg);
 			debug3("Sent message SSH2_FXP_WRITE I:%u O:%llu S:%u",
 			    id, (unsigned long long)offset, len);
@@ -1744,16 +1739,14 @@ do_upload(struct sftp_conn *conn, const char *local_path,
 			get_msg(conn, msg);
 			if ((r = sshbuf_get_u8(msg, &type)) != 0 ||
 			    (r = sshbuf_get_u32(msg, &rid)) != 0)
-				fatal("%s: buffer error: %s",
-				    __func__, ssh_err(r));
+				fatal_fr(r, "parse");
 
 			if (type != SSH2_FXP_STATUS)
 				fatal("Expected SSH2_FXP_STATUS(%d) packet, "
 				    "got %d", SSH2_FXP_STATUS, type);
 
 			if ((r = sshbuf_get_u32(msg, &status)) != 0)
-				fatal("%s: buffer error: %s",
-				    __func__, ssh_err(r));
+				fatal_fr(r, "parse status");
 			debug3("SSH2_FXP_STATUS %u", status);
 
 			/* Find the request in our queue */
@@ -1772,7 +1765,7 @@ do_upload(struct sftp_conn *conn, const char *local_path,
 		}
 		offset += len;
 		if (offset < 0)
-			fatal("%s: offset < 0", __func__);
+			fatal_f("offset < 0");
 	}
 	sshbuf_free(msg);
 
