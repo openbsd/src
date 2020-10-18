@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.197 2020/07/04 11:23:35 kn Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.198 2020/10/18 20:35:18 naddy Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -192,7 +192,7 @@ file_get(const char *path, const char *outfile)
 	int		 fd, out = -1, rval = -1, save_errno;
 	volatile sig_t	 oldintr, oldinti;
 	const char	*savefile;
-	char		*buf = NULL, *cp;
+	char		*buf = NULL, *cp, *pathbuf = NULL;
 	const size_t	 buflen = 128 * 1024;
 	off_t		 hashbytes;
 	ssize_t		 len, wlen;
@@ -215,8 +215,12 @@ file_get(const char *path, const char *outfile)
 	else {
 		if (path[strlen(path) - 1] == '/')	/* Consider no file */
 			savefile = NULL;		/* after dir invalid. */
-		else
-			savefile = basename(path);
+		else {
+			pathbuf = strdup(path);
+			if (pathbuf == NULL)
+				errx(1, "Can't allocate memory for filename");
+			savefile = basename(pathbuf);
+		}
 	}
 
 	if (EMPTYSTRING(savefile)) {
@@ -294,6 +298,7 @@ file_get(const char *path, const char *outfile)
 
 cleanup_copy:
 	free(buf);
+	free(pathbuf);
 	if (out >= 0 && out != fileno(stdout))
 		close(out);
 	close(fd);
@@ -315,6 +320,7 @@ url_get(const char *origline, const char *proxyenv, const char *outfile, int las
 	int isunavail = 0, retryafter = -1;
 	struct addrinfo hints, *res0, *res;
 	const char *savefile;
+	char *pathbuf = NULL;
 	char *proxyurl = NULL;
 	char *credentials = NULL, *proxy_credentials = NULL;
 	int fd = -1, out = -1;
@@ -412,8 +418,12 @@ noslash:
 	else {
 		if (path[strlen(path) - 1] == '/')	/* Consider no file */
 			savefile = NULL;		/* after dir invalid. */
-		else
-			savefile = basename(path);
+		else {
+			pathbuf = strdup(path);
+			if (pathbuf == NULL)
+				errx(1, "Can't allocate memory for filename");
+			savefile = basename(pathbuf);
+		}
 	}
 
 	if (EMPTYSTRING(savefile)) {
@@ -1106,6 +1116,7 @@ cleanup_url_get:
 	if (out >= 0 && out != fileno(stdout))
 		close(out);
 	free(buf);
+	free(pathbuf);
 	free(proxyhost);
 	free(proxyurl);
 	free(newline);

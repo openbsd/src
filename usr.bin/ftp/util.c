@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.93 2020/07/06 17:11:29 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.94 2020/10/18 20:35:18 naddy Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -763,7 +763,7 @@ progressmeter(int flag, const char *filename)
 	off_t cursize, abbrevsize;
 	double elapsed;
 	int ratio, barlength, i, remaining, overhead = 30;
-	char buf[512];
+	char buf[512], *filenamebuf;
 
 	if (flag == -1) {
 		clock_gettime(CLOCK_MONOTONIC, &start);
@@ -782,11 +782,12 @@ progressmeter(int flag, const char *filename)
 	ratio = MAXIMUM(ratio, 0);
 	ratio = MINIMUM(ratio, 100);
 	if (!verbose && flag == -1) {
-		filename = basename(filename);
-		if (filename != NULL) {
+		if ((filenamebuf = strdup(filename)) != NULL &&
+		    (filename = basename(filenamebuf)) != NULL) {
 			free(title);
 			title = strdup(filename);
 		}
+		free(filenamebuf);
 	}
 
 	buf[0] = 0;
