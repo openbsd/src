@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2020/09/14 18:45:19 jasper Exp $
+# $OpenBSD: Makefile,v 1.6 2020/10/18 21:32:24 patrick Exp $
 
 BTRACE?=		 /usr/sbin/btrace
 
@@ -13,6 +13,7 @@ ${BT_LANG_SCRIPTS}:
 		diff -u ${.CURDIR}/${.TARGET}.ok /dev/stdin
 
 REGRESS_TARGETS=${BT_LANG_SCRIPTS}
+REGRESS_EXPECTED_FAILURES=maxoperand
 .PHONY: ${REGRESS_TARGETS}
 
 .include <bsd.regress.mk>
