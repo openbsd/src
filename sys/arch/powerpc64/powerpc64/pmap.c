@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.50 2020/10/17 19:16:24 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.51 2020/10/18 14:51:09 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -1456,7 +1456,26 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 void
 pmap_proc_iflush(struct process *pr, vaddr_t va, vsize_t len)
 {
-	panic(__func__);
+	paddr_t pa;
+	vaddr_t cva;
+	vsize_t clen;
+
+	while (len > 0) {
+		/* add one to always round up to the next page */
+		clen = round_page(va + 1) - va;
+		if (clen > len)
+			clen = len;
+
+		if (pmap_extract(pr->ps_vmspace->vm_map.pmap, va, &pa)) {
+			cva = zero_page + cpu_number() * PAGE_SIZE;
+			pmap_kenter_pa(cva, pa, PROT_READ | PROT_WRITE);
+			__syncicache((void *)cva, clen);
+			pmap_kremove(cva, PAGE_SIZE);
+		}
+
+		len -= clen;
+		va += clen;
+	}
 }
 
 void
