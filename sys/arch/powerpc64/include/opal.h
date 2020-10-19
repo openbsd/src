@@ -1,4 +1,4 @@
-/*	$OpenBSD: opal.h,v 1.17 2020/10/10 13:19:50 kettenis Exp $	*/
+/*	$OpenBSD: opal.h,v 1.18 2020/10/19 18:54:58 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -80,6 +80,7 @@
 #define OPAL_ASYNC_COMPLETION		-15
 
 /* OPAL_POLL_EVENT */
+#define OPAL_EVENT_CONSOLE_OUTPUT	0x00000008
 #define OPAL_EVENT_CONSOLE_INPUT	0x00000010
 
 /* OPAL_PCI_EEH_FREEZE_CLEAR */

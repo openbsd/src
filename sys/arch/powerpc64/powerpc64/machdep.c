@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.61 2020/09/15 07:47:24 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.62 2020/10/19 18:54:58 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -73,6 +73,7 @@ extern char __bss_start[];
 
 extern uint64_t opal_base;
 extern uint64_t opal_entry;
+int opal_have_console_flush;
 
 extern char trapcode[], trapcodeend[];
 extern char hvtrapcode[], hvtrapcodeend[];
@@ -138,6 +139,10 @@ init_powernv(void *fdt, void *tocbase)
 		 * the full TLB available.
 		 */
 		opal_reinit_cpus(OPAL_REINIT_CPUS_MMU_HASH);
+
+		/* Older firmware doesn't implement OPAL_CONSOLE_FLUSH. */
+		if (opal_check_token(OPAL_CONSOLE_FLUSH) == OPAL_TOKEN_PRESENT)
+			opal_have_console_flush = 1;
 	}
 
 	/* At this point we can call OPAL runtime services and use printf(9). */
@@ -377,6 +382,27 @@ opal_printf(const char *fmt, ...)
 	opal_console_write(0, opal_phys(&len), opal_phys(buf));
 }
 
+int64_t
+opal_do_console_flush(int64_t term_number)
+{
+	uint64_t events;
+	int64_t error;
+
+	if (opal_have_console_flush) {
+		error = opal_console_flush(term_number);
+		if (error == OPAL_BUSY_EVENT) {
+			opal_poll_events(NULL);
+			error = OPAL_BUSY;
+		}
+		return error;
+	} else {
+		opal_poll_events(opal_phys(&events));
+		if (events & OPAL_EVENT_CONSOLE_OUTPUT)
+			return OPAL_BUSY;
+		return OPAL_SUCCESS;
+	}
+}
+
 void
 opal_cnprobe(struct consdev *cd)
 {
@@ -411,7 +437,7 @@ opal_cnputc(dev_t dev, int c)
 
 	opal_console_write(0, opal_phys(&len), opal_phys(&ch));
 	while (1) {
-		error = opal_console_flush(0);
+		error = opal_do_console_flush(0);
 		if (error != OPAL_BUSY && error != OPAL_PARTIAL)
 			break;
 		delay(1);
