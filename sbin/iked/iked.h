@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.167 2020/10/03 20:23:08 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.168 2020/10/19 17:02:57 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -632,6 +632,7 @@ struct iked_message {
 #define IKED_MSG_FLAGS_IPCOMP_SUPPORTED			0x0080
 #define IKED_MSG_FLAGS_USE_TRANSPORT			0x0100
 #define IKED_MSG_FLAGS_TEMPORARY_FAILURE		0x0200
+#define IKED_MSG_FLAGS_NO_PROPOSAL_CHOSEN		0x0400
 
 
 struct iked_user {

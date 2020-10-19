@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.267 2020/10/09 08:59:15 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.268 2020/10/19 17:02:57 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1065,6 +1065,14 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
 			    : &sa->sa_icert);
 			ikev2_ike_sa_setreason(sa,
 			    "authentication failed notification from peer");
+			sa_state(env, sa, IKEV2_STATE_CLOSED);
+			msg->msg_sa = NULL;
+			return;
+		}
+		if (msg->msg_flags & IKED_MSG_FLAGS_NO_PROPOSAL_CHOSEN) {
+			log_info("%s: failed to negotiate IKE SA",
+			    SPI_SA(sa, __func__));
+			ikev2_ike_sa_setreason(sa, "no proposal chosen");
 			sa_state(env, sa, IKEV2_STATE_CLOSED);
 			msg->msg_sa = NULL;
 			return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.103 2020/10/09 08:59:16 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.104 2020/10/19 17:02:57 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1178,6 +1178,13 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 		}
 		msg->msg_parent->msg_flags |= IKED_MSG_FLAGS_CHILD_SA_NOT_FOUND;
 		break;
+	case IKEV2_N_NO_PROPOSAL_CHOSEN:
+		if (!msg->msg_e) {
+			log_debug("%s: IKEV2_N_NO_PROPOSAL_CHOSEN not encrypted",
+			    __func__);
+			return (-1);
+		}
+		msg->msg_parent->msg_flags |= IKED_MSG_FLAGS_NO_PROPOSAL_CHOSEN;
 	case IKEV2_N_MOBIKE_SUPPORTED:
 		if (!msg->msg_e) {
 			log_debug("%s: N_MOBIKE_SUPPORTED not encrypted",
