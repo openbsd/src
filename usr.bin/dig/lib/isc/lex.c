@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lex.c,v 1.12 2020/09/14 08:40:44 florian Exp $ */
+/* $Id: lex.c,v 1.13 2020/10/19 14:53:11 florian Exp $ */
 
 /*! \file */
 
@@ -415,8 +415,12 @@ isc_lex_gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *tokenp) {
 				}
 				tokenp->type = isc_tokentype_eof;
 				done = 1;
+			} else if (c == ' ' || c == '\t') {
+				lex->last_was_eol = 0;
 			} else if (c == '\n') {
 				lex->last_was_eol = 1;
+			} else if (c == '\r') {
+				lex->last_was_eol = 0;
 			} else if (c == '"' &&
 				   (options & ISC_LEXOPT_QSTRING) != 0) {
 				lex->last_was_eol = 0;
