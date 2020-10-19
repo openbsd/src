@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.3 2018/10/01 22:49:50 mortimer Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.4 2020/10/19 08:47:28 kettenis Exp $	*/
 /*-
  * Copyright (c) 2014 Andrew Turner
  * Copyright (c) 2014 The FreeBSD Foundation
@@ -61,7 +61,9 @@ ENTRY(setjmp)
 	stp	d8, d9, [x0], #16
 	stp	d10, d11, [x0], #16
 	stp	d12, d13, [x0], #16
-	stp	d14, d15, [x0]
+	stp	d14, d15, [x0], #16
+	mrs	x1, fpcr
+	str	x1, [x0]
 
 	/* Return value */
 	mov	x0, #0
@@ -108,7 +110,9 @@ ENTRY(longjmp)
 	ldp	d8, d9, [x0], #16
 	ldp	d10, d11, [x0], #16
 	ldp	d12, d13, [x0], #16
-	ldp	d14, d15, [x0]
+	ldp	d14, d15, [x0], #16
+	ldr	x1, [x0]
+	msr	fpcr, x1
 
 	/* Load the return value */
 	cmp	w3, #0
