@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.273 2017/06/01 08:38:56 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.274 2020/10/19 19:51:20 naddy Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -265,7 +265,8 @@ cvs_file_walklist(struct cvs_flisthead *fl, struct cvs_recursion *cr)
 	struct stat st;
 	struct cvs_file *cf;
 	struct cvs_filelist *l, *nxt;
-	char *d, *f, repo[PATH_MAX], fpath[PATH_MAX];
+	char *d, dbuf[PATH_MAX], *f, fbuf[PATH_MAX];
+	char repo[PATH_MAX], fpath[PATH_MAX];
 
 	for (l = RB_MIN(cvs_flisthead, fl); l != NULL; l = nxt) {
 		if (cvs_quit)
@@ -274,9 +275,14 @@ cvs_file_walklist(struct cvs_flisthead *fl, struct cvs_recursion *cr)
 		cvs_log(LP_TRACE, "cvs_file_walklist: element '%s'",
 		    l->file_path);
 
-		if ((f = basename(l->file_path)) == NULL)
+		if (strlcpy(fbuf, l->file_path, sizeof(fbuf)) >= sizeof(fbuf))
+			fatal("cvs_file_walklist: truncation");
+		if ((f = basename(fbuf)) == NULL)
 			fatal("cvs_file_walklist: basename failed");
-		if ((d = dirname(l->file_path)) == NULL)
+
+		if (strlcpy(dbuf, l->file_path, sizeof(dbuf)) >= sizeof(dbuf))
+			fatal("cvs_file_walklist: truncation");
+		if ((d = dirname(dbuf)) == NULL)
 			fatal("cvs_file_walklist: dirname failed");
 
 		type = l->type;

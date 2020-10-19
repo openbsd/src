@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.60 2017/05/28 16:57:01 joris Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.61 2020/10/19 19:51:20 naddy Exp $	*/
 /*
  * Copyright (c) 2007 Joris Vink <joris@openbsd.org>
  *
@@ -100,6 +100,7 @@ cvs_logmsg_create(char *dir, struct cvs_flisthead *added,
 	struct cvs_filelist *cf;
 	struct stat st1, st2;
 	char *fpath, *logmsg, repo[PATH_MAX];
+	char *f, path[PATH_MAX];
 	struct stat st;
 	struct trigger_list *line_list;
 	struct trigger_line *line;
@@ -165,28 +166,46 @@ cvs_logmsg_create(char *dir, struct cvs_flisthead *added,
 
 	if (added != NULL && !RB_EMPTY(added)) {
 		fprintf(fp, "%s Added Files:", CVS_LOGMSG_PREFIX);
-		RB_FOREACH(cf, cvs_flisthead, added)
-			fprintf(fp, "\n%s \t%s ", CVS_LOGMSG_PREFIX,
-			    dir != NULL ? basename(cf->file_path) :
-			    cf->file_path);
+		RB_FOREACH(cf, cvs_flisthead, added) {
+			f = cf->file_path;
+			if (dir != NULL) {
+				if (strlcpy(path, f, sizeof(path)) >=
+				    sizeof(path))
+					fatal("cvs_logmsg_create: truncation");
+				f = basename(path);
+			}
+			fprintf(fp, "\n%s \t%s ", CVS_LOGMSG_PREFIX, f);
+		}
 		fputs("\n", fp);
 	}
 
 	if (removed != NULL && !RB_EMPTY(removed)) {
 		fprintf(fp, "%s Removed Files:", CVS_LOGMSG_PREFIX);
-		RB_FOREACH(cf, cvs_flisthead, removed)
-			fprintf(fp, "\n%s \t%s ", CVS_LOGMSG_PREFIX,
-			    dir != NULL ? basename(cf->file_path) :
-			    cf->file_path);
+		RB_FOREACH(cf, cvs_flisthead, removed) {
+			f = cf->file_path;
+			if (dir != NULL) {
+				if (strlcpy(path, f, sizeof(path)) >=
+				    sizeof(path))
+					fatal("cvs_logmsg_create: truncation");
+				f = basename(path);
+			}
+			fprintf(fp, "\n%s \t%s ", CVS_LOGMSG_PREFIX, f);
+		}
 		fputs("\n", fp);
 	}
 
 	if (modified != NULL && !RB_EMPTY(modified)) {
 		fprintf(fp, "%s Modified Files:", CVS_LOGMSG_PREFIX);
-		RB_FOREACH(cf, cvs_flisthead, modified)
-			fprintf(fp, "\n%s \t%s ", CVS_LOGMSG_PREFIX,
-			    dir != NULL ? basename(cf->file_path) :
-			    cf->file_path);
+		RB_FOREACH(cf, cvs_flisthead, modified) {
+			f = cf->file_path;
+			if (dir != NULL) {
+				if (strlcpy(path, f, sizeof(path)) >=
+				    sizeof(path))
+					fatal("cvs_logmsg_create: truncation");
+				f = basename(path);
+			}
+			fprintf(fp, "\n%s \t%s ", CVS_LOGMSG_PREFIX, f);
+		}
 		fputs("\n", fp);
 	}
 

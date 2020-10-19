@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.105 2017/08/28 19:33:20 otto Exp $	*/
+/*	$OpenBSD: server.c,v 1.106 2020/10/19 19:51:20 naddy Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -324,6 +324,7 @@ cvs_server_directory(char *data)
 {
 	CVSENTRIES *entlist;
 	char *dir, *repo, *parent, *entry, *dirn, *p;
+	char parentbuf[PATH_MAX], dirnbuf[PATH_MAX];
 
 	if (current_cvsroot == NULL)
 		fatal("No Root specified for Directory");
@@ -350,10 +351,14 @@ cvs_server_directory(char *data)
 
 	cvs_mkpath(p, NULL);
 
-	if ((dirn = basename(p)) == NULL)
+	if (strlcpy(dirnbuf, p, sizeof(dirnbuf)) >= sizeof(dirnbuf))
+		fatal("cvs_server_directory: truncation");
+	if ((dirn = basename(dirnbuf)) == NULL)
 		fatal("cvs_server_directory: %s", strerror(errno));
 
-	if ((parent = dirname(p)) == NULL)
+	if (strlcpy(parentbuf, p, sizeof(parentbuf)) >= sizeof(parentbuf))
+		fatal("cvs_server_directory: truncation");
+	if ((parent = dirname(parentbuf)) == NULL)
 		fatal("cvs_server_directory: %s", strerror(errno));
 
 	if (strcmp(parent, ".")) {

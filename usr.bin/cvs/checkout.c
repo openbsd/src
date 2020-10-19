@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.171 2017/06/01 08:08:24 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.172 2020/10/19 19:51:20 naddy Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -239,7 +239,7 @@ checkout_check_repository(int argc, char **argv)
 	struct module_checkout *mc;
 	struct cvs_ignpat *ip;
 	struct cvs_filelist *fl, *nxt;
-	char repo[PATH_MAX], fpath[PATH_MAX], *f[1];
+	char repo[PATH_MAX], fpath[PATH_MAX], path[PATH_MAX], *f[1];
 
 	build_dirs = print_stdout ? 0 : 1;
 
@@ -329,14 +329,25 @@ checkout_check_repository(int argc, char **argv)
 				cr.flags = flags;
 
 				if (!(mc->mc_flags & MODULE_ALIAS)) {
+					if (strlcpy(path, fl->file_path,
+					    sizeof(path)) >= sizeof(path))
+						fatal("%s: truncation",
+						    __func__);
 					module_repo_root =
-					    xstrdup(dirname(fl->file_path));
+					    xstrdup(dirname(path));
 					d = wdir;
+					if (strlcpy(path, fl->file_path,
+					    sizeof(path)) >= sizeof(path))
+						fatal("%s: truncation",
+						    __func__);
 					(void)xsnprintf(fpath, sizeof(fpath),
-					    "%s/%s", d,
-					    basename(fl->file_path));
+					    "%s/%s", d, basename(path));
 				} else {
-					d = dirname(wdir);
+					if (strlcpy(path, wdir,
+					    sizeof(path)) >= sizeof(path))
+						fatal("%s: truncation",
+						    __func__);
+					d = dirname(path);
 					strlcpy(fpath, fl->file_path,
 					    sizeof(fpath));
 				}
@@ -387,7 +398,7 @@ checkout_check_repository(int argc, char **argv)
 static int
 checkout_classify(const char *repo, const char *arg)
 {
-	char *d, *f, fpath[PATH_MAX];
+	char *d, dbuf[PATH_MAX], *f, fbuf[PATH_MAX], fpath[PATH_MAX];
 	struct stat sb;
 
 	if (stat(repo, &sb) == 0) {
@@ -395,8 +406,13 @@ checkout_classify(const char *repo, const char *arg)
 			return CVS_DIR;
 	}
 
-	d = dirname(repo);
-	f = basename(repo);
+	if (strlcpy(dbuf, repo, sizeof(dbuf)) >= sizeof(dbuf))
+		fatal("checkout_classify: truncation");
+	d = dirname(dbuf);
+
+	if (strlcpy(fbuf, repo, sizeof(fbuf)) >= sizeof(fbuf))
+		fatal("checkout_classify: truncation");
+	f = basename(fbuf);
 
 	(void)xsnprintf(fpath, sizeof(fpath), "%s/%s%s", d, f, RCS_FILE_EXT);
 	if (stat(fpath, &sb) == 0) {

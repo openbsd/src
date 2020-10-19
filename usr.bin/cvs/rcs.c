@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.319 2019/06/28 13:35:00 deraadt Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.320 2020/10/19 19:51:20 naddy Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -2183,8 +2183,8 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct rcs_lines *lines,
 	int kwtype;
 	u_int j, found;
 	const u_char *c, *start, *fin, *end;
-	char *kwstr;
-	char expbuf[256], buf[256];
+	char *kwstr, *rcsfile_basename;
+	char expbuf[256], buf[256], path[PATH_MAX];
 	size_t clen, kwlen, len, tlen;
 
 	kwtype = 0;
@@ -2201,6 +2201,10 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct rcs_lines *lines,
 	found = 0;
 	/* Final character in buffer. */
 	fin = c + len - 1;
+
+	if (strlcpy(path, rcsfile, sizeof(path)) >= sizeof(path))
+		fatal("rcs_kwexp_line: truncation");
+	rcsfile_basename = basename(path);
 
 	/*
 	 * Keyword formats:
@@ -2300,7 +2304,7 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct rcs_lines *lines,
 		if (mode & RCS_KWEXP_VAL) {
 			if (kwtype & RCS_KW_RCSFILE) {
 				if (!(kwtype & RCS_KW_FULLPATH))
-					(void)strlcat(expbuf, basename(rcsfile),
+					(void)strlcat(expbuf, rcsfile_basename,
 					    sizeof(expbuf));
 				else
 					(void)strlcat(expbuf, rcsfile,
@@ -2376,7 +2380,7 @@ rcs_kwexp_line(char *rcsfile, struct rcs_delta *rdp, struct rcs_lines *lines,
 				/* Log line */
 				if (!(kwtype & RCS_KW_FULLPATH))
 					(void)strlcat(expbuf,
-					    basename(rcsfile), sizeof(expbuf));
+					    rcsfile_basename, sizeof(expbuf));
 				else
 					(void)strlcat(expbuf, rcsfile,
 					    sizeof(expbuf));

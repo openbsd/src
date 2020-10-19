@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.128 2018/07/14 21:28:02 joris Exp $	*/
+/*	$OpenBSD: client.c,v 1.129 2020/10/19 19:51:20 naddy Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -157,6 +157,7 @@ client_check_directory(char *data, char *repository)
 {
 	CVSENTRIES *entlist;
 	char *entry, *parent, *base, *p;
+	char basebuf[PATH_MAX], parentbuf[PATH_MAX];
 
 	STRIP_SLASH(data);
 
@@ -174,10 +175,14 @@ client_check_directory(char *data, char *repository)
 	if (cvs_cmdop == CVS_OP_EXPORT)
 		return;
 
-	if ((base = basename(data)) == NULL)
+	if (strlcpy(basebuf, data, sizeof(basebuf)) >= sizeof(basebuf))
+		fatal("client_check_directory: truncation");
+	if ((base = basename(basebuf)) == NULL)
 		fatal("client_check_directory: overflow");
 
-	if ((parent = dirname(data)) == NULL)
+	if (strlcpy(parentbuf, data, sizeof(parentbuf)) >= sizeof(parentbuf))
+		fatal("client_check_directory: truncation");
+	if ((parent = dirname(parentbuf)) == NULL)
 		fatal("client_check_directory: overflow");
 
 	if (!strcmp(parent, "."))
@@ -796,7 +801,7 @@ cvs_client_merged(char *data)
 	struct timeval tv[2];
 	struct tm datetm;
 	char timebuf[CVS_TIME_BUFSZ], *repo, *rpath, *entry, *mode;
-	char *len, *fpath, *wdir;
+	char *len, *fpath, *wdir, wdirbuf[PATH_MAX];
 
 	if (data == NULL)
 		fatal("Missing argument for Merged");
@@ -817,7 +822,9 @@ cvs_client_merged(char *data)
 		fatal("received a repository path that is too short");
 
 	fpath = rpath + strlen(repo) + 1;
-	if ((wdir = dirname(fpath)) == NULL)
+	if (strlcpy(wdirbuf, fpath, sizeof(wdirbuf)) >= sizeof(wdirbuf))
+		fatal("cvs_client_merged: truncation");
+	if ((wdir = dirname(wdirbuf)) == NULL)
 		fatal("cvs_client_merged: dirname: %s", strerror(errno));
 	free(repo);
 

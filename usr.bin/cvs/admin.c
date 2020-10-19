@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.68 2017/06/01 08:08:24 joris Exp $	*/
+/*	$OpenBSD: admin.c,v 1.69 2020/10/19 19:51:20 naddy Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -246,12 +246,17 @@ cvs_admin_local(struct cvs_file *cf)
 		struct cvs_file *ocf;
 		struct rcs_access *acp;
 		int ofd;
-		char *d, *f, fpath[PATH_MAX], repo[PATH_MAX];
+		char *d, dbuf[PATH_MAX], *f, fbuf[PATH_MAX];
+		char fpath[PATH_MAX], repo[PATH_MAX];
 
-
-		if ((f = basename(oldfilename)) == NULL)
+		if (strlcpy(fbuf, oldfilename, sizeof(fbuf)) >= sizeof(fbuf))
+			fatal("cvs_admin_local: truncation");
+		if ((f = basename(fbuf)) == NULL)
 			fatal("cvs_admin_local: basename failed");
-		if ((d = dirname(oldfilename)) == NULL)
+
+		if (strlcpy(dbuf, oldfilename, sizeof(dbuf)) >= sizeof(dbuf))
+			fatal("cvs_admin_local: truncation");
+		if ((d = dirname(dbuf)) == NULL)
 			fatal("cvs_admin_local: dirname failed");
 
 		cvs_get_repository_path(d, repo, PATH_MAX);
