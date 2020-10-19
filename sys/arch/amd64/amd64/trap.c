@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.84 2020/10/14 16:47:46 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.85 2020/10/19 18:17:38 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -366,13 +366,16 @@ usertrap(struct trapframe *frame)
 	refreshcreds(p);
 
 	switch (type) {
-	case T_PROTFLT:			/* protection fault */
 	case T_TSSFLT:
-	case T_SEGNPFLT:
-	case T_STKFLT:
-		frame_dump(frame, p, "BUS", 0);
 		sig = SIGBUS;
 		code = BUS_OBJERR;
+		break;
+	case T_PROTFLT:			/* protection fault */
+	case T_SEGNPFLT:
+	case T_STKFLT:
+		frame_dump(frame, p, "SEGV", 0);
+		sig = SIGSEGV;
+		code = SEGV_MAPERR;
 		break;
 	case T_ALIGNFLT:
 		sig = SIGBUS;
