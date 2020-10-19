@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-window.c,v 1.28 2020/05/16 16:45:55 nicm Exp $ */
+/* $OpenBSD: cmd-select-window.c,v 1.29 2020/10/19 06:39:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -142,7 +142,7 @@ cmd_select_window_exec(struct cmd *self, struct cmdq_item *item)
 		}
 		cmdq_insert_hook(s, item, current, "after-select-window");
 	}
-	if (c->session != NULL)
+	if (c != NULL && c->session != NULL)
 		s->curw->window->latest = c;
 	recalculate_sizes();
 
