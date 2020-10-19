@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.75 2019/06/21 09:39:49 visa Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.76 2020/10/19 17:57:43 kettenis Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -293,8 +293,10 @@ uvm_uarea_free(struct proc *p)
 void
 uvm_exit(struct process *pr)
 {
-	uvmspace_free(pr->ps_vmspace);
+	struct vmspace *vm = pr->ps_vmspace;
+
 	pr->ps_vmspace = NULL;
+	uvmspace_free(vm);
 }
 
 /*
