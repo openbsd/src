@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.268 2020/09/22 14:31:08 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.269 2020/10/19 08:19:46 mpi Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -3517,7 +3517,6 @@ uvmspace_init(struct vmspace *vm, struct pmap *pmap, vaddr_t min, vaddr_t max,
 /*
  * uvmspace_share: share a vmspace between two processes
  *
- * - XXX: no locking on vmspace
  * - used for vfork
  */
 
@@ -3526,7 +3525,7 @@ uvmspace_share(struct process *pr)
 {
 	struct vmspace *vm = pr->ps_vmspace;
 
-	vm->vm_refcnt++;
+	uvmspace_addref(vm);
 	return vm;
 }
 
@@ -3630,13 +3629,25 @@ uvmspace_exec(struct proc *p, vaddr_t start, vaddr_t end)
 }
 
 /*
+ * uvmspace_addref: add a reference to a vmspace.
+ */
+void
+uvmspace_addref(struct vmspace *vm)
+{
+	KERNEL_ASSERT_LOCKED();
+	KASSERT(vm->vm_refcnt > 0);
+
+	vm->vm_refcnt++;
+}
+
+/*
  * uvmspace_free: free a vmspace data structure
- *
- * - XXX: no locking on vmspace
  */
 void
 uvmspace_free(struct vmspace *vm)
 {
+	KERNEL_ASSERT_LOCKED();
+
 	if (--vm->vm_refcnt == 0) {
 		/*
 		 * lock the map, to wait out all other references to it.  delete

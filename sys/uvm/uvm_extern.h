@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.153 2020/09/13 10:05:25 mpi Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.154 2020/10/19 08:19:46 mpi Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -192,11 +192,13 @@ struct pmap;
  * Several fields are temporary (text, data stuff).
  *
  *  Locks used to protect struct members in this file:
+ *	K	kernel lock
  *	I	immutable after creation
+ *	v	vm_map's lock
  */
 struct vmspace {
 	struct	vm_map vm_map;	/* VM address map */
-	int	vm_refcnt;	/* number of references */
+	int	vm_refcnt;	/* [K] number of references */
 	caddr_t	vm_shm;		/* SYS5 shared memory private data XXX */
 /* we copy from vm_startcopy to the end of the structure on fork */
 #define vm_startcopy vm_rssize
@@ -205,9 +207,9 @@ struct vmspace {
 	segsz_t vm_tsize;	/* text size (pages) XXX */
 	segsz_t vm_dsize;	/* data size (pages) XXX */
 	segsz_t vm_dused;	/* data segment length (pages) XXX */
-	segsz_t vm_ssize;	/* stack size (pages) */
-	caddr_t	vm_taddr;	/* user virtual address of text XXX */
-	caddr_t	vm_daddr;	/* user virtual address of data XXX */
+	segsz_t vm_ssize;	/* [v] stack size (pages) */
+	caddr_t	vm_taddr;	/* [I] user virtual address of text */
+	caddr_t	vm_daddr;	/* [I] user virtual address of data */
 	caddr_t vm_maxsaddr;	/* [I] user VA at max stack growth */
 	caddr_t vm_minsaddr;	/* [I] user VA at top of stack */
 };
@@ -413,6 +415,7 @@ void			uvmspace_init(struct vmspace *, struct pmap *,
 			    vaddr_t, vaddr_t, boolean_t, boolean_t);
 void			uvmspace_exec(struct proc *, vaddr_t, vaddr_t);
 struct vmspace		*uvmspace_fork(struct process *);
+void			uvmspace_addref(struct vmspace *);
 void			uvmspace_free(struct vmspace *);
 struct vmspace		*uvmspace_share(struct process *);
 int			uvm_share(vm_map_t, vaddr_t, vm_prot_t,

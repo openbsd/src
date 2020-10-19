@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.83 2020/03/16 11:58:46 mpi Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.84 2020/10/19 08:19:46 mpi Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -850,13 +850,12 @@ process_domem(struct proc *curp, struct process *tr, struct uio *uio, int req)
 	if ((error = process_checkioperm(curp, tr)) != 0)
 		return error;
 
-	/* XXXCDC: how should locking work here? */
 	vm = tr->ps_vmspace;
 	if ((tr->ps_flags & PS_EXITING) || (vm->vm_refcnt < 1))
 		return EFAULT;
 	addr = uio->uio_offset;
 
-	vm->vm_refcnt++;
+	uvmspace_addref(vm);
 
 	error = uvm_io(&vm->vm_map, uio,
 	    (uio->uio_rw == UIO_WRITE) ? UVM_IO_FIXPROT : 0);
@@ -892,7 +891,7 @@ process_auxv_offset(struct proc *curp, struct process *tr, struct uio *uiop)
 	if ((tr->ps_flags & PS_EXITING) || (vm->vm_refcnt < 1))
 		return EFAULT;
 
-	vm->vm_refcnt++;
+	uvmspace_addref(vm);
 	error = uvm_io(&vm->vm_map, &uio, 0);
 	uvmspace_free(vm);
 
