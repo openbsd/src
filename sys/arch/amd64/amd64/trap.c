@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.85 2020/10/19 18:17:38 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.86 2020/10/19 18:18:15 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -184,6 +184,7 @@ upageflttrap(struct trapframe *frame, uint64_t cr2)
 		KERNEL_UNLOCK();
 		return 1;
 	}
+	KERNEL_UNLOCK();
 
 	signal = SIGSEGV;
 	sicode = SEGV_MAPERR;
@@ -202,8 +203,6 @@ upageflttrap(struct trapframe *frame, uint64_t cr2)
 	}
 	sv.sival_ptr = (void *)cr2;
 	trapsignal(p, signal, T_PAGEFLT, sicode, sv);
-
-	KERNEL_UNLOCK();
 	return 1;
 }
 
