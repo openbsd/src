@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.1 2020/01/16 13:04:02 bluhm Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.2 2020/10/19 08:50:35 kettenis Exp $	*/
 
 #include <err.h>
 #include <fenv.h>
@@ -34,10 +34,12 @@ main(int argc, char *argv[])
 	rv = fegetround();
 	if (rv != FE_UPWARD)
 		errx(1, "fegetround returned %d, not FE_UPWARD", rv);
+#if !defined(__arm__) && !defined(__aarch64__)
 	rv = fegetexcept();
 	if (rv != FE_DIVBYZERO)
 		errx(1, "fegetexcept returned %d, not FE_DIVBYZERO",
 		    rv);
+#endif
 
 	/* Verify that the FPU exception flags weren't clobbered. */
 	flag = 0;
