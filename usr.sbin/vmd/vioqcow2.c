@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioqcow2.c,v 1.13 2019/01/10 19:21:02 deraadt Exp $	*/
+/*	$OpenBSD: vioqcow2.c,v 1.14 2020/10/19 19:06:49 naddy Exp $	*/
 
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
@@ -145,6 +145,7 @@ virtio_qcow2_init(struct virtio_backing *file, off_t *szp, int *fd, size_t nfd)
 ssize_t
 virtio_qcow2_get_base(int fd, char *path, size_t npath, const char *dpath)
 {
+	char dpathbuf[PATH_MAX];
 	char expanded[PATH_MAX];
 	struct qcheader header;
 	uint64_t backingoff;
@@ -186,7 +187,12 @@ virtio_qcow2_get_base(int fd, char *path, size_t npath, const char *dpath)
 			return -1;
 		}
 	} else {
-		s = dirname(dpath);
+		if (strlcpy(dpathbuf, dpath, sizeof(dpathbuf)) >=
+		    sizeof(dpathbuf)) {
+			log_warnx("path too long: %s", dpath);
+			return -1;
+		}
+		s = dirname(dpathbuf);
 		if (snprintf(expanded, sizeof(expanded),
 		    "%s/%s", s, path) >= (int)sizeof(expanded)) {
 			log_warnx("path too long: %s/%s", s, path);
