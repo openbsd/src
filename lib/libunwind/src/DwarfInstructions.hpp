@@ -240,6 +240,16 @@ int DwarfInstructions<A, R>::stepWithDwarf(A &addressSpace, pint_t pc,
       }
 #endif
 
+#if defined(_LIBUNWIND_TARGET_PPC64)
+      if (R::getArch() == REGISTERS_PPC64) {
+        if (addressSpace.get32(returnAddress) == 0xE8410018) {
+          pint_t sp = newRegisters.getRegister(UNW_REG_SP);
+          pint_t r2 = addressSpace.get64(sp + 24);
+          newRegisters.setRegister(UNW_PPC64_R2, r2);
+        }
+      }
+#endif
+
       // Return address is address after call site instruction, so setting IP to
       // that does simualates a return.
       newRegisters.setIP(returnAddress);
