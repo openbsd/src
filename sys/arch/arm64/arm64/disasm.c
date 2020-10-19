@@ -1,4 +1,4 @@
-/*	$OpenBSD: disasm.c,v 1.2 2020/09/11 09:27:10 mpi Exp $ */
+/*	$OpenBSD: disasm.c,v 1.3 2020/10/19 22:01:32 naddy Exp $ */
 /*	$NetBSD: disasm.c,v 1.8 2020/05/26 05:25:21 ryo Exp $	*/
 
 /*
@@ -3107,6 +3107,11 @@ OP4FUNC(op_tbz, b5, b40, imm14, Rt)
 	PRINTF("\n");
 }
 
+OP1FUNC(op_udf, imm16)
+{
+	PRINTF("udf\t#0x%"PRIx64"\n", imm16);
+}
+
 OP4FUNC(op_udiv, sf, Rm, Rn, Rd)
 {
 	PRINTF("udiv\t%s, %s, %s\n",
@@ -3668,6 +3673,8 @@ struct insn_info {
 	{{ 5,16}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
 #define FMT_IMM16_LL			\
 	{{ 5,16}, { 0, 2}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
+#define FMT_IMM16_UDF			\
+	{{ 0,16}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}, { 0, 0}}
 #define FMT_OP0_OP1_CRN_CRM_OP2_RT	\
 	{{19, 2}, {16, 3}, {12, 4}, { 8, 4}, { 5, 3}, { 0, 5}, { 0, 0}, { 0, 0}}
 #define FMT_IMM7_RT2_RN_RT		\
@@ -3786,6 +3793,7 @@ static const struct insn_info insn_tables[] = {
  { 0xffffd800, 0xdac10000, FMT_Z_M_RN_RD,               op_pacia },
  { 0xffffcc00, 0x4e284800, FMT_M_D_RN_RD,               op_simd_aes },
  { 0xffff8c00, 0x5e280800, FMT_OP3_RN_RD,               op_simd_sha_reg2 },
+ { 0xffff0000, 0x00000000, FMT_IMM16_UDF,               op_udf },
  { 0xfff8f01f, 0xd500401f, FMT_OP1_CRM_OP2,             op_msr_imm },
  { 0xfff80000, 0xd5080000, FMT_OP1_CRN_CRM_OP2_RT,      op_sys },
  { 0xfff80000, 0xd5280000, FMT_OP1_CRN_CRM_OP2_RT,      op_sysl },
