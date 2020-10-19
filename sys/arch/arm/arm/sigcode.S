@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigcode.S,v 1.9 2020/03/13 08:46:50 deraadt Exp $	*/
+/*	$OpenBSD: sigcode.S,v 1.10 2020/10/19 17:57:40 naddy Exp $	*/
 /*	$NetBSD: sigcode.S,v 1.6 2003/10/05 19:44:58 matt Exp $	*/
 
 /*
@@ -72,7 +72,7 @@ _C_LABEL(esigcode):
 
 	.globl	sigfill
 sigfill:
-	.word	0xa000f7f0		/* illegal on all cpus? */
+	udf	#0
 esigfill:
 
 	.data
