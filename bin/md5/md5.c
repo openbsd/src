@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.96 2020/10/03 00:37:06 millert Exp $	*/
+/*	$OpenBSD: md5.c,v 1.97 2020/10/19 18:15:18 millert Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2007,2010,2013,2014
@@ -778,7 +778,7 @@ digest_time(struct hash_list *hl, int times)
 		digest_end(hf, &context, digest, sizeof(digest), hf->base64);
 		getrusage(RUSAGE_SELF, &stop);
 		timersub(&stop.ru_utime, &start.ru_utime, &res);
-		elapsed = res.tv_sec + res.tv_usec / 1000000.0;
+		elapsed = (double)res.tv_sec + (double)res.tv_usec / 1000000.0;
 
 		(void)printf("\nDigest = %s\n", digest);
 		(void)printf("Time   = %f seconds\n", elapsed);
