@@ -1,4 +1,4 @@
-/*	$OpenBSD: fenv_test.c,v 1.3 2019/02/22 14:22:51 bluhm Exp $	*/
+/*	$OpenBSD: fenv_test.c,v 1.4 2020/10/19 09:35:44 kettenis Exp $	*/
 /*-
  * Copyright (c) 2004 David Schultz <das@FreeBSD.org>
  * All rights reserved.
@@ -394,6 +394,7 @@ test_fegsetenv(void)
 static void
 test_masking(void)
 {
+#if !defined(__arm__) && !defined(__aarch64__)
 	struct sigaction act;
 	int except, pass, raise, status;
 	unsigned i;
@@ -462,6 +463,7 @@ test_masking(void)
 		}
 	}
 	assert(fetestexcept(FE_ALL_EXCEPT) == 0);
+#endif
 }
 
 /*
@@ -537,6 +539,9 @@ test_feholdupdate(void)
 				assert(0);
 			}
 		}
+#if defined(__arm__) || defined(__aarch64__)
+		break;
+#endif
 	}
 	assert(fetestexcept(FE_ALL_EXCEPT) == 0);
 }
