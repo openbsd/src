@@ -1,4 +1,4 @@
-.\" $OpenBSD: dirname.3,v 1.23 2019/03/08 17:33:23 benno Exp $
+.\" $OpenBSD: dirname.3,v 1.24 2020/10/20 19:30:14 naddy Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <millert@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 8 2019 $
+.Dd $Mdocdate: October 20 2020 $
 .Dt DIRNAME 3
 .Os
 .Sh NAME
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .In libgen.h
 .Ft char *
-.Fn dirname "const char *path"
+.Fn dirname "char *path"
 .Sh DESCRIPTION
 The
 .Fn dirname
