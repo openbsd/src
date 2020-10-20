@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.87 2020/09/22 14:31:08 mpi Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.88 2020/10/20 08:47:23 mpi Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -788,12 +788,6 @@ uao_create(vsize_t size, int flags)
 void
 uao_init(void)
 {
-	static int uao_initialized;
-
-	if (uao_initialized)
-		return;
-	uao_initialized = TRUE;
-
 	/*
 	 * NOTE: Pages for this pool must not come from a pageable
 	 * kernel map!
