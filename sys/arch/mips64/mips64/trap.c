@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.149 2020/10/08 19:41:05 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.150 2020/10/20 15:21:44 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -762,6 +762,11 @@ fault_common_no_miss:
 		    (instr & 0x001fffc0) == ((ZERO << 16) | (7 << 6))) {
 			signal = SIGFPE;
 			sicode = FPE_INTDIV;
+		} else if (instr == (0x00000034 | (0x52 << 6)) /* teq */) {
+			/* trap used by sigfill and similar */
+			KERNEL_LOCK();
+			sigexit(p, SIGABRT);
+			/* NOTREACHED */
 		} else if ((instr & 0xfc00003f) == 0x00000036 /* tne */ &&
 		    (instr & 0x0000ffc0) == (0x52 << 6)) {
 			KERNEL_LOCK();
