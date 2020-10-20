@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_access.S,v 1.28 2019/04/23 15:37:58 visa Exp $ */
+/*	$OpenBSD: lcore_access.S,v 1.29 2020/10/20 15:26:59 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -86,7 +86,7 @@ esigcode:
 
 	.globl	sigfill
 sigfill:
-	break	0
+	teq	zero, zero, 0x52
 esigfill:
 
 	.data

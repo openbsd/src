@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.3 2020/10/18 14:28:18 deraadt Exp $	*/
+/*	$OpenBSD: tfork_thread.S,v 1.4 2020/10/20 15:26:59 visa Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -65,7 +65,7 @@ LEAF(__tfork_thread, FRAMESZ)
 
 	move	a0, zero
 	__DO_SYSCALL(__threxit)
-	break	0
+	teq	zero, zero, 0x52
 
 9:
 	/*
