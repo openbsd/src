@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.66 2020/07/31 11:19:12 kettenis Exp $	*/
+/*	$OpenBSD: clock.c,v 1.67 2020/10/20 15:59:17 cheloha Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -567,6 +567,7 @@ cpu_initclocks(void)
 	if (intrdebug) {
 		hz = 1;
 		tick = 1000000 / hz;
+		tick_nsec = 1000000000 / hz;
 		printf("intrdebug set: 1Hz clock\n");
 	}
 #endif
@@ -575,6 +576,7 @@ cpu_initclocks(void)
 		printf("cannot get %d Hz clock; using 100 Hz\n", hz);
 		hz = 100;
 		tick = 1000000 / hz;
+		tick_nsec = 1000000000 / hz;
 	}
 
 	/* Make sure we have a sane cpu_clockrate -- we'll need it */

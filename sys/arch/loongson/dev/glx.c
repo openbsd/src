@@ -1,4 +1,4 @@
-/*	$OpenBSD: glx.c,v 1.10 2015/08/15 22:25:22 miod Exp $	*/
+/*	$OpenBSD: glx.c,v 1.11 2020/10/20 15:59:17 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -125,6 +125,8 @@ glx_init(pci_chipset_tag_t pc, pcitag_t tag, int dev)
 	 * MFGPT runs on powers of two, adjust the hz value accordingly.
 	 */
 	stathz = hz = 128;
+	tick = 1000000 / hz;
+	tick_nsec = 1000000000 / hz;
 }
 
 uint64_t

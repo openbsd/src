@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.193 2020/08/26 03:29:05 visa Exp $ */
+/* $OpenBSD: machdep.c,v 1.194 2020/10/20 15:59:17 cheloha Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -769,6 +769,8 @@ nobootinfo:
 #endif
 		hz = 1024;
 	}
+	tick = 1000000 / hz;
+	tick_nsec = 1000000000 / hz;
 }
 
 void
