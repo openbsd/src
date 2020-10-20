@@ -877,13 +877,7 @@ static void reloc_cache_init(struct reloc_cache *cache,
 	cache->use_64bit_reloc = HAS_64BIT_RELOC(i915);
 	cache->has_fence = cache->gen < 4;
 	cache->needs_unfenced = INTEL_INFO(i915)->unfenced_needs_alignment;
-#ifdef notyet
 	cache->node.flags = 0;
-#else
-	cache->node.hole_follows = 0;
-	cache->node.allocated = 0;
-	cache->node.scanned_block = 0;
-#endif
 	cache->rq = NULL;
 	cache->rq_size = 0;
 

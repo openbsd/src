@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_vma_manager.c,v 1.5 2020/06/08 04:47:58 jsg Exp $	*/
+// SPDX-License-Identifier: GPL-2.0 OR MIT
 /*
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
  * Copyright (c) 2012 David Airlie <airlied@linux.ie>
@@ -86,7 +86,6 @@ void drm_vma_offset_manager_init(struct drm_vma_offset_manager *mgr,
 				 unsigned long page_offset, unsigned long size)
 {
 	rw_init(&mgr->vm_lock, "drmvmo");
-	mgr->vm_addr_space_rb = RB_ROOT;
 	drm_mm_init(&mgr->vm_addr_space_mm, page_offset, size);
 }
 EXPORT_SYMBOL(drm_vma_offset_manager_init);
@@ -104,10 +103,7 @@ EXPORT_SYMBOL(drm_vma_offset_manager_init);
  */
 void drm_vma_offset_manager_destroy(struct drm_vma_offset_manager *mgr)
 {
-	/* take the lock to protect against buggy drivers */
-	write_lock(&mgr->vm_lock);
 	drm_mm_takedown(&mgr->vm_addr_space_mm);
-	write_unlock(&mgr->vm_lock);
 }
 EXPORT_SYMBOL(drm_vma_offset_manager_destroy);
 
@@ -117,27 +113,44 @@ EXPORT_SYMBOL(drm_vma_offset_manager_destroy);
  * @start: Start address for object (page-based)
  * @pages: Size of object (page-based)
  *
- * Same as drm_vma_offset_lookup() but requires the caller to lock offset lookup
- * manually. See drm_vma_offset_lock_lookup() for an example.
+ * Find a node given a start address and object size. This returns the _best_
+ * match for the given node. That is, @start may point somewhere into a valid
+ * region and the given node will be returned, as long as the node spans the
+ * whole requested area (given the size in number of pages as @pages).
+ *
+ * Note that before lookup the vma offset manager lookup lock must be acquired
+ * with drm_vma_offset_lock_lookup(). See there for an example. This can then be
+ * used to implement weakly referenced lookups using kref_get_unless_zero().
+ *
+ * Example:
+ *
+ * ::
+ *
+ *     drm_vma_offset_lock_lookup(mgr);
+ *     node = drm_vma_offset_lookup_locked(mgr);
+ *     if (node)
+ *         kref_get_unless_zero(container_of(node, sth, entr));
+ *     drm_vma_offset_unlock_lookup(mgr);
  *
  * RETURNS:
  * Returns NULL if no suitable node can be found. Otherwise, the best match
- * is returned.
+ * is returned. It's the caller's responsibility to make sure the node doesn't
+ * get destroyed before the caller can access it.
  */
 struct drm_vma_offset_node *drm_vma_offset_lookup_locked(struct drm_vma_offset_manager *mgr,
 							 unsigned long start,
 							 unsigned long pages)
 {
-	struct drm_vma_offset_node *node, *best;
+	struct drm_mm_node *node, *best;
 	struct rb_node *iter;
 	unsigned long offset;
 
-	iter = mgr->vm_addr_space_rb.rb_node;
+	iter = mgr->vm_addr_space_mm.interval_tree.rb_root.rb_node;
 	best = NULL;
 
 	while (likely(iter)) {
-		node = rb_entry(iter, struct drm_vma_offset_node, vm_rb);
-		offset = node->vm_node.start;
+		node = rb_entry(iter, struct drm_mm_node, rb);
+		offset = node->start;
 		if (start >= offset) {
 			iter = iter->rb_right;
 			best = node;
@@ -150,38 +163,17 @@ struct drm_vma_offset_node *drm_vma_offset_lookup_locked(struct drm_vma_offset_m
 
 	/* verify that the node spans the requested area */
 	if (best) {
-		offset = best->vm_node.start + best->vm_node.size;
+		offset = best->start + best->size;
 		if (offset < start + pages)
 			best = NULL;
 	}
 
-	return best;
+	if (!best)
+		return NULL;
+
+	return container_of(best, struct drm_vma_offset_node, vm_node);
 }
 EXPORT_SYMBOL(drm_vma_offset_lookup_locked);
-
-/* internal helper to link @node into the rb-tree */
-static void _drm_vma_offset_add_rb(struct drm_vma_offset_manager *mgr,
-				   struct drm_vma_offset_node *node)
-{
-	struct rb_node **iter = &mgr->vm_addr_space_rb.rb_node;
-	struct rb_node *parent = NULL;
-	struct drm_vma_offset_node *iter_node;
-
-	while (likely(*iter)) {
-		parent = *iter;
-		iter_node = rb_entry(*iter, struct drm_vma_offset_node, vm_rb);
-
-		if (node->vm_node.start < iter_node->vm_node.start)
-			iter = &(*iter)->rb_left;
-		else if (node->vm_node.start > iter_node->vm_node.start)
-			iter = &(*iter)->rb_right;
-		else
-			BUG();
-	}
-
-	rb_link_node(&node->vm_rb, parent, iter);
-	rb_insert_color(&node->vm_rb, &mgr->vm_addr_space_rb);
-}
 
 /**
  * drm_vma_offset_add() - Add offset node to manager
@@ -209,24 +201,16 @@ static void _drm_vma_offset_add_rb(struct drm_vma_offset_manager *mgr,
 int drm_vma_offset_add(struct drm_vma_offset_manager *mgr,
 		       struct drm_vma_offset_node *node, unsigned long pages)
 {
-	int ret;
+	int ret = 0;
 
 	write_lock(&mgr->vm_lock);
 
-	if (drm_mm_node_allocated(&node->vm_node)) {
-		ret = 0;
-		goto out_unlock;
-	}
+	if (!drm_mm_node_allocated(&node->vm_node))
+		ret = drm_mm_insert_node(&mgr->vm_addr_space_mm,
+					 &node->vm_node, pages);
 
-	ret = drm_mm_insert_node(&mgr->vm_addr_space_mm, &node->vm_node,
-				 pages, 0, DRM_MM_SEARCH_DEFAULT);
-	if (ret)
-		goto out_unlock;
-
-	_drm_vma_offset_add_rb(mgr, node);
-
-out_unlock:
 	write_unlock(&mgr->vm_lock);
+
 	return ret;
 }
 EXPORT_SYMBOL(drm_vma_offset_add);
@@ -248,7 +232,6 @@ void drm_vma_offset_remove(struct drm_vma_offset_manager *mgr,
 	write_lock(&mgr->vm_lock);
 
 	if (drm_mm_node_allocated(&node->vm_node)) {
-		rb_erase(&node->vm_rb, &mgr->vm_addr_space_rb);
 		drm_mm_remove_node(&node->vm_node);
 		memset(&node->vm_node, 0, sizeof(node->vm_node));
 	}
@@ -260,9 +243,9 @@ EXPORT_SYMBOL(drm_vma_offset_remove);
 /**
  * drm_vma_node_allow - Add open-file to list of allowed users
  * @node: Node to modify
- * @filp: Open file to add
+ * @tag: Tag of file to remove
  *
- * Add @filp to the list of allowed open-files for this node. If @filp is
+ * Add @tag to the list of allowed open-files for this node. If @tag is
  * already on this list, the ref-count is incremented.
  *
  * The list of allowed-users is preserved across drm_vma_offset_add() and
@@ -277,7 +260,7 @@ EXPORT_SYMBOL(drm_vma_offset_remove);
  * RETURNS:
  * 0 on success, negative error code on internal failure (out-of-mem)
  */
-int drm_vma_node_allow(struct drm_vma_offset_node *node, struct file *filp)
+int drm_vma_node_allow(struct drm_vma_offset_node *node, struct file *tag)
 {
 	struct rb_node **iter;
 	struct rb_node *parent = NULL;
@@ -298,10 +281,10 @@ int drm_vma_node_allow(struct drm_vma_offset_node *node, struct file *filp)
 		parent = *iter;
 		entry = rb_entry(*iter, struct drm_vma_offset_file, vm_rb);
 
-		if (filp == entry->vm_filp) {
+		if (tag == entry->vm_tag) {
 			entry->vm_count++;
 			goto unlock;
-		} else if (filp > entry->vm_filp) {
+		} else if (tag > entry->vm_tag) {
 			iter = &(*iter)->rb_right;
 		} else {
 			iter = &(*iter)->rb_left;
@@ -313,7 +296,7 @@ int drm_vma_node_allow(struct drm_vma_offset_node *node, struct file *filp)
 		goto unlock;
 	}
 
-	new->vm_filp = filp;
+	new->vm_tag = tag;
 	new->vm_count = 1;
 	rb_link_node(&new->vm_rb, parent, iter);
 	rb_insert_color(&new->vm_rb, &node->vm_files);
@@ -329,17 +312,18 @@ EXPORT_SYMBOL(drm_vma_node_allow);
 /**
  * drm_vma_node_revoke - Remove open-file from list of allowed users
  * @node: Node to modify
- * @filp: Open file to remove
+ * @tag: Tag of file to remove
  *
- * Decrement the ref-count of @filp in the list of allowed open-files on @node.
- * If the ref-count drops to zero, remove @filp from the list. You must call
- * this once for every drm_vma_node_allow() on @filp.
+ * Decrement the ref-count of @tag in the list of allowed open-files on @node.
+ * If the ref-count drops to zero, remove @tag from the list. You must call
+ * this once for every drm_vma_node_allow() on @tag.
  *
  * This is locked against concurrent access internally.
  *
- * If @filp is not on the list, nothing is done.
+ * If @tag is not on the list, nothing is done.
  */
-void drm_vma_node_revoke(struct drm_vma_offset_node *node, struct file *filp)
+void drm_vma_node_revoke(struct drm_vma_offset_node *node,
+			 struct file *tag)
 {
 	struct drm_vma_offset_file *entry;
 	struct rb_node *iter;
@@ -349,13 +333,13 @@ void drm_vma_node_revoke(struct drm_vma_offset_node *node, struct file *filp)
 	iter = node->vm_files.rb_node;
 	while (likely(iter)) {
 		entry = rb_entry(iter, struct drm_vma_offset_file, vm_rb);
-		if (filp == entry->vm_filp) {
+		if (tag == entry->vm_tag) {
 			if (!--entry->vm_count) {
 				rb_erase(&entry->vm_rb, &node->vm_files);
 				kfree(entry);
 			}
 			break;
-		} else if (filp > entry->vm_filp) {
+		} else if (tag > entry->vm_tag) {
 			iter = iter->rb_right;
 		} else {
 			iter = iter->rb_left;
@@ -369,9 +353,9 @@ EXPORT_SYMBOL(drm_vma_node_revoke);
 /**
  * drm_vma_node_is_allowed - Check whether an open-file is granted access
  * @node: Node to check
- * @filp: Open-file to check for
+ * @tag: Tag of file to remove
  *
- * Search the list in @node whether @filp is currently on the list of allowed
+ * Search the list in @node whether @tag is currently on the list of allowed
  * open-files (see drm_vma_node_allow()).
  *
  * This is locked against concurrent access internally.
@@ -380,7 +364,7 @@ EXPORT_SYMBOL(drm_vma_node_revoke);
  * true iff @filp is on the list
  */
 bool drm_vma_node_is_allowed(struct drm_vma_offset_node *node,
-			     struct file *filp)
+			     struct file *tag)
 {
 	struct drm_vma_offset_file *entry;
 	struct rb_node *iter;
@@ -390,9 +374,9 @@ bool drm_vma_node_is_allowed(struct drm_vma_offset_node *node,
 	iter = node->vm_files.rb_node;
 	while (likely(iter)) {
 		entry = rb_entry(iter, struct drm_vma_offset_file, vm_rb);
-		if (filp == entry->vm_filp)
+		if (tag == entry->vm_tag)
 			break;
-		else if (filp > entry->vm_filp)
+		else if (tag > entry->vm_tag)
 			iter = iter->rb_right;
 		else
 			iter = iter->rb_left;

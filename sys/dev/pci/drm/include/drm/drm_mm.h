@@ -40,6 +40,7 @@
 #include <linux/bug.h>
 #include <linux/rbtree.h>
 #include <linux/kernel.h>
+#include <linux/mm_types.h>
 #include <linux/list.h>
 #include <linux/spinlock.h>
 #ifdef CONFIG_DRM_DEBUG_MM
@@ -52,20 +53,6 @@
 #else
 #define DRM_MM_BUG_ON(expr) BUILD_BUG_ON_INVALID(expr)
 #endif
-
-enum drm_mm_search_flags {
-	DRM_MM_SEARCH_DEFAULT =		0,
-	DRM_MM_SEARCH_BEST =		1 << 0,
-	DRM_MM_SEARCH_BELOW =		1 << 1,
-};
-
-enum drm_mm_allocator_flags {
-	DRM_MM_CREATE_DEFAULT =		0,
-	DRM_MM_CREATE_TOP =		1 << 0,
-};
-
-#define DRM_MM_BOTTOMUP DRM_MM_SEARCH_DEFAULT, DRM_MM_CREATE_DEFAULT
-#define DRM_MM_TOPDOWN DRM_MM_SEARCH_BELOW, DRM_MM_CREATE_TOP
 
 /**
  * enum drm_mm_insert_mode - control search and allocation behaviour
@@ -173,14 +160,17 @@ struct drm_mm_node {
 	/** @size: Size of the allocated block. */
 	u64 size;
 	/* private: */
+	struct drm_mm *mm;
 	struct list_head node_list;
 	struct list_head hole_stack;
 	struct rb_node rb;
-	unsigned hole_follows : 1;
-	unsigned allocated : 1;
-	bool scanned_block : 1;
+	struct rb_node rb_hole_size;
+	struct rb_node rb_hole_addr;
 	u64 __subtree_last;
-	struct drm_mm *mm;
+	u64 hole_size;
+	unsigned long flags;
+#define DRM_MM_NODE_ALLOCATED_BIT	0
+#define DRM_MM_NODE_SCANNED_BIT		1
 #ifdef CONFIG_DRM_DEBUG_MM
 	depot_stack_handle_t stack;
 #endif
@@ -215,7 +205,9 @@ struct drm_mm {
 	 * according to the (increasing) start address of the memory node. */
 	struct drm_mm_node head_node;
 	/* Keep an interval_tree for fast lookup of drm_mm_nodes by address. */
-	struct rb_root interval_tree;
+	struct rb_root_cached interval_tree;
+	struct rb_root_cached holes_size;
+	struct rb_root holes_addr;
 
 	unsigned long scan_active;
 };
@@ -244,7 +236,7 @@ struct drm_mm_scan {
 	u64 hit_end;
 
 	unsigned long color;
-	unsigned int flags;
+	enum drm_mm_insert_mode mode;
 };
 
 /**
@@ -262,7 +254,7 @@ struct drm_mm_scan {
  */
 static inline bool drm_mm_node_allocated(const struct drm_mm_node *node)
 {
-	return node->allocated;
+	return test_bit(DRM_MM_NODE_ALLOCATED_BIT, &node->flags);
 }
 
 /**
@@ -280,7 +272,7 @@ static inline bool drm_mm_node_allocated(const struct drm_mm_node *node)
  */
 static inline bool drm_mm_initialized(const struct drm_mm *mm)
 {
-	return mm->hole_stack.next;
+	return READ_ONCE(mm->hole_stack.next);
 }
 
 /**
@@ -297,7 +289,7 @@ static inline bool drm_mm_initialized(const struct drm_mm *mm)
  */
 static inline bool drm_mm_hole_follows(const struct drm_mm_node *node)
 {
-	return node->hole_follows;
+	return node->hole_size;
 }
 
 static inline u64 __drm_mm_hole_node_start(const struct drm_mm_node *hole_node)
@@ -380,17 +372,9 @@ static inline u64 drm_mm_hole_node_end(const struct drm_mm_node *hole_node)
 #define drm_mm_for_each_node_safe(entry, next, mm) \
 	list_for_each_entry_safe(entry, next, drm_mm_nodes(mm), node_list)
 
-#define __drm_mm_for_each_hole(entry, mm, hole_start, hole_end, backwards) \
-	for (entry = list_entry((backwards) ? (mm)->hole_stack.prev : (mm)->hole_stack.next, struct drm_mm_node, hole_stack); \
-	     &entry->hole_stack != &(mm)->hole_stack ? \
-	     hole_start = drm_mm_hole_node_start(entry), \
-	     hole_end = drm_mm_hole_node_end(entry), \
-	     1 : 0; \
-	     entry = list_entry((backwards) ? entry->hole_stack.prev : entry->hole_stack.next, struct drm_mm_node, hole_stack))
-
 /**
  * drm_mm_for_each_hole - iterator to walk over all holes
- * @entry: &drm_mm_node used internally to track progress
+ * @pos: &drm_mm_node used internally to track progress
  * @mm: &drm_mm allocator to walk
  * @hole_start: ulong variable to assign the hole start to on each iteration
  * @hole_end: ulong variable to assign the hole end to on each iteration
@@ -403,79 +387,28 @@ static inline u64 drm_mm_hole_node_end(const struct drm_mm_node *hole_node)
  * Implementation Note:
  * We need to inline list_for_each_entry in order to be able to set hole_start
  * and hole_end on each iteration while keeping the macro sane.
- *
- * The __drm_mm_for_each_hole version is similar, but with added support for
- * going backwards.
  */
-#define drm_mm_for_each_hole(entry, mm, hole_start, hole_end) \
-	__drm_mm_for_each_hole(entry, mm, hole_start, hole_end, 0)
+#define drm_mm_for_each_hole(pos, mm, hole_start, hole_end) \
+	for (pos = list_first_entry(&(mm)->hole_stack, \
+				    typeof(*pos), hole_stack); \
+	     &pos->hole_stack != &(mm)->hole_stack ? \
+	     hole_start = drm_mm_hole_node_start(pos), \
+	     hole_end = hole_start + pos->hole_size, \
+	     1 : 0; \
+	     pos = list_next_entry(pos, hole_stack))
 
 /*
  * Basic range manager support (drm_mm.c)
  */
 int drm_mm_reserve_node(struct drm_mm *mm, struct drm_mm_node *node);
-int drm_mm_insert_node_in_range_generic(struct drm_mm *mm,
-					struct drm_mm_node *node,
-					u64 size,
-					u64 alignment,
-					unsigned long color,
-					u64 start,
-					u64 end,
-					enum drm_mm_search_flags sflags,
-					enum drm_mm_allocator_flags aflags);
-
-/**
- * drm_mm_insert_node_in_range - ranged search for space and insert @node
- * @mm: drm_mm to allocate from
- * @node: preallocate node to insert
- * @size: size of the allocation
- * @alignment: alignment of the allocation
- * @start: start of the allowed range for this node
- * @end: end of the allowed range for this node
- * @flags: flags to fine-tune the allocation
- *
- * This is a simplified version of drm_mm_insert_node_in_range_generic() with
- * @color set to 0.
- *
- * The preallocated node must be cleared to 0.
- *
- * Returns:
- * 0 on success, -ENOSPC if there's no suitable hole.
- */
-static inline int drm_mm_insert_node_in_range(struct drm_mm *mm,
-					      struct drm_mm_node *node,
-					      u64 size,
-					      u64 alignment,
-					      unsigned long color,
-					      u64 start,
-					      u64 end,
-					      enum drm_mm_insert_mode mode)
-{
-	enum drm_mm_search_flags sflags;
-	enum drm_mm_allocator_flags aflags;
-	switch (mode) {
-	case DRM_MM_INSERT_HIGHEST:
-		sflags = DRM_MM_SEARCH_BELOW;
-		aflags = DRM_MM_CREATE_TOP;
-		break;
-	case DRM_MM_INSERT_BEST:
-		sflags = DRM_MM_SEARCH_BEST;
-		aflags = DRM_MM_CREATE_DEFAULT;
-		break;
-	case DRM_MM_INSERT_LOW:
-	case DRM_MM_INSERT_HIGH:
-	case DRM_MM_INSERT_EVICT:
-	case DRM_MM_INSERT_ONCE:
-	case DRM_MM_INSERT_LOWEST:
-	default:
-		sflags = DRM_MM_SEARCH_DEFAULT;
-		aflags = DRM_MM_CREATE_DEFAULT;
-		break;
-	}
-	return drm_mm_insert_node_in_range_generic(mm, node, size, alignment,
-						   color, start, end,
-						   sflags, aflags);
-}
+int drm_mm_insert_node_in_range(struct drm_mm *mm,
+				struct drm_mm_node *node,
+				u64 size,
+				u64 alignment,
+				unsigned long color,
+				u64 start,
+				u64 end,
+				enum drm_mm_insert_mode mode);
 
 /**
  * drm_mm_insert_node_generic - search for space and insert @node
@@ -484,10 +417,9 @@ static inline int drm_mm_insert_node_in_range(struct drm_mm *mm,
  * @size: size of the allocation
  * @alignment: alignment of the allocation
  * @color: opaque tag value to use for this node
- * @sflags: flags to fine-tune the allocation search
- * @aflags: flags to fine-tune the allocation behavior
+ * @mode: fine-tune the allocation search and placement
  *
- * This is a simplified version of drm_mm_insert_node_in_range_generic() with no
+ * This is a simplified version of drm_mm_insert_node_in_range() with no
  * range restrictions applied.
  *
  * The preallocated node must be cleared to 0.
@@ -499,13 +431,11 @@ static inline int
 drm_mm_insert_node_generic(struct drm_mm *mm, struct drm_mm_node *node,
 			   u64 size, u64 alignment,
 			   unsigned long color,
-			   enum drm_mm_search_flags sflags,
-			   enum drm_mm_allocator_flags aflags)
+			   enum drm_mm_insert_mode mode)
 {
-	return drm_mm_insert_node_in_range_generic(mm, node,
-						   size, alignment, 0,
-						   0, U64_MAX,
-						   sflags, aflags);
+	return drm_mm_insert_node_in_range(mm, node,
+					   size, alignment, color,
+					   0, U64_MAX, mode);
 }
 
 /**
@@ -513,8 +443,6 @@ drm_mm_insert_node_generic(struct drm_mm *mm, struct drm_mm_node *node,
  * @mm: drm_mm to allocate from
  * @node: preallocate node to insert
  * @size: size of the allocation
- * @alignment: alignment of the allocation
- * @flags: flags to fine-tune the allocation
  *
  * This is a simplified version of drm_mm_insert_node_generic() with @color set
  * to 0.
@@ -526,13 +454,9 @@ drm_mm_insert_node_generic(struct drm_mm *mm, struct drm_mm_node *node,
  */
 static inline int drm_mm_insert_node(struct drm_mm *mm,
 				     struct drm_mm_node *node,
-				     u64 size,
-				     u64 alignment,
-				     enum drm_mm_search_flags flags)
+				     u64 size)
 {
-	return drm_mm_insert_node_generic(mm, node,
-					  size, alignment, 0,
-					  flags, DRM_MM_CREATE_DEFAULT);
+	return drm_mm_insert_node_generic(mm, node, size, 0, 0, 0);
 }
 
 void drm_mm_remove_node(struct drm_mm_node *node);
@@ -569,17 +493,20 @@ __drm_mm_interval_first(const struct drm_mm *mm, u64 start, u64 last);
  * but using the internal interval tree to accelerate the search for the
  * starting node, and so not safe against removal of elements. It assumes
  * that @end is within (or is the upper limit of) the drm_mm allocator.
+ * If [@start, @end] are beyond the range of the drm_mm, the iterator may walk
+ * over the special _unallocated_ &drm_mm.head_node, and may even continue
+ * indefinitely.
  */
 #define drm_mm_for_each_node_in_range(node__, mm__, start__, end__)	\
 	for (node__ = __drm_mm_interval_first((mm__), (start__), (end__)-1); \
-	     node__ && node__->start < (end__);				\
+	     node__->start < (end__);					\
 	     node__ = list_next_entry(node__, node_list))
 
 void drm_mm_scan_init_with_range(struct drm_mm_scan *scan,
 				 struct drm_mm *mm,
 				 u64 size, u64 alignment, unsigned long color,
 				 u64 start, u64 end,
-				 unsigned int flags);
+				 enum drm_mm_insert_mode mode);
 
 /**
  * drm_mm_scan_init - initialize lru scanning
@@ -588,7 +515,7 @@ void drm_mm_scan_init_with_range(struct drm_mm_scan *scan,
  * @size: size of the allocation
  * @alignment: alignment of the allocation
  * @color: opaque tag value to use for the allocation
- * @flags: flags to specify how the allocation will be performed afterwards
+ * @mode: fine-tune the allocation search and placement
  *
  * This is a simplified version of drm_mm_scan_init_with_range() with no range
  * restrictions applied.
@@ -605,12 +532,11 @@ static inline void drm_mm_scan_init(struct drm_mm_scan *scan,
 				    u64 size,
 				    u64 alignment,
 				    unsigned long color,
-				    unsigned int flags)
+				    enum drm_mm_insert_mode mode)
 {
 	drm_mm_scan_init_with_range(scan, mm,
 				    size, alignment, color,
-				    0, U64_MAX,
-				    flags);
+				    0, U64_MAX, mode);
 }
 
 bool drm_mm_scan_add_block(struct drm_mm_scan *scan,

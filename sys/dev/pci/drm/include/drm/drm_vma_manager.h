@@ -1,4 +1,3 @@
-/*	$OpenBSD: drm_vma_manager.h,v 1.3 2020/06/08 04:48:14 jsg Exp $	*/
 #ifndef __DRM_VMA_MANAGER_H__
 #define __DRM_VMA_MANAGER_H__
 
@@ -46,21 +45,19 @@ struct drm_file;
 
 struct drm_vma_offset_file {
 	struct rb_node vm_rb;
-	struct file *vm_filp;
+	struct file *vm_tag;
 	unsigned long vm_count;
 };
 
 struct drm_vma_offset_node {
 	rwlock_t vm_lock;
 	struct drm_mm_node vm_node;
-	struct rb_node vm_rb;
 	struct rb_root vm_files;
 	bool readonly:1;
 };
 
 struct drm_vma_offset_manager {
 	rwlock_t vm_lock;
-	struct rb_root vm_addr_space_rb;
 	struct drm_mm vm_addr_space_mm;
 };
 
@@ -76,10 +73,11 @@ int drm_vma_offset_add(struct drm_vma_offset_manager *mgr,
 void drm_vma_offset_remove(struct drm_vma_offset_manager *mgr,
 			   struct drm_vma_offset_node *node);
 
-int drm_vma_node_allow(struct drm_vma_offset_node *node, struct file *filp);
-void drm_vma_node_revoke(struct drm_vma_offset_node *node, struct file *filp);
+int drm_vma_node_allow(struct drm_vma_offset_node *node, struct file *tag);
+void drm_vma_node_revoke(struct drm_vma_offset_node *node,
+			 struct file *tag);
 bool drm_vma_node_is_allowed(struct drm_vma_offset_node *node,
-			     struct file *filp);
+			     struct file *tag);
 
 /**
  * drm_vma_offset_exact_lookup_locked() - Look up node by exact address
@@ -206,7 +204,6 @@ static inline __u64 drm_vma_node_offset_addr(struct drm_vma_offset_node *node)
 	return ((__u64)node->vm_node.start) << PAGE_SHIFT;
 }
 
-#ifdef __linux__
 /**
  * drm_vma_node_unmap() - Unmap offset node
  * @node: Offset node
@@ -219,6 +216,7 @@ static inline __u64 drm_vma_node_offset_addr(struct drm_vma_offset_node *node)
  * This call is unlocked. The caller must guarantee that drm_vma_offset_remove()
  * is not called on this node concurrently.
  */
+#ifdef __linux__
 static inline void drm_vma_node_unmap(struct drm_vma_offset_node *node,
 				      struct address_space *file_mapping)
 {
@@ -232,9 +230,9 @@ static inline void drm_vma_node_unmap(struct drm_vma_offset_node *node,
 /**
  * drm_vma_node_verify_access() - Access verification helper for TTM
  * @node: Offset node
- * @filp: Open-file
+ * @tag: Tag of file to check
  *
- * This checks whether @filp is granted access to @node. It is the same as
+ * This checks whether @tag is granted access to @node. It is the same as
  * drm_vma_node_is_allowed() but suitable as drop-in helper for TTM
  * verify_access() callbacks.
  *
@@ -242,9 +240,9 @@ static inline void drm_vma_node_unmap(struct drm_vma_offset_node *node,
  * 0 if access is granted, -EACCES otherwise.
  */
 static inline int drm_vma_node_verify_access(struct drm_vma_offset_node *node,
-					     struct file *filp)
+					     struct file *tag)
 {
-	return drm_vma_node_is_allowed(node, filp) ? 0 : -EACCES;
+	return drm_vma_node_is_allowed(node, tag) ? 0 : -EACCES;
 }
 
 #endif /* __DRM_VMA_MANAGER_H__ */
