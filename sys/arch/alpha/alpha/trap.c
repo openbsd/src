@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.93 2020/10/21 17:54:33 deraadt Exp $ */
+/* $OpenBSD: trap.c,v 1.94 2020/10/21 21:59:50 deraadt Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -66,17 +66,17 @@
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -145,18 +145,18 @@ trap_init()
 	/*
 	 * Point interrupt/exception vectors to our own.
 	 */
-	alpha_pal_wrent(XentInt, ALPHA_KENTRY_INT); 
+	alpha_pal_wrent(XentInt, ALPHA_KENTRY_INT);
 	alpha_pal_wrent(XentArith, ALPHA_KENTRY_ARITH);
 	alpha_pal_wrent(XentMM, ALPHA_KENTRY_MM);
 	alpha_pal_wrent(XentIF, ALPHA_KENTRY_IF);
-	alpha_pal_wrent(XentUna, ALPHA_KENTRY_UNA); 
+	alpha_pal_wrent(XentUna, ALPHA_KENTRY_UNA);
 	alpha_pal_wrent(XentSys, ALPHA_KENTRY_SYS);
 
 	/*
 	 * Clear pending machine checks and error reports, and enable
 	 * system- and processor-correctable error reporting.
 	 */
-	alpha_pal_wrmces(alpha_pal_rdmces() & 
+	alpha_pal_wrmces(alpha_pal_rdmces() &
 	    ~(ALPHA_MCES_DSC|ALPHA_MCES_DPC));
 }
 
@@ -404,7 +404,7 @@ trap(a0, a1, a2, entry, framep)
 				access_type = PROT_READ | PROT_WRITE;
 				break;
 			}
-	
+
 			KERNEL_LOCK();
 do_fault:
 			/*
@@ -423,7 +423,7 @@ do_fault:
 				vm = p->p_vmspace;
 				map = &vm->vm_map;
 			}
-	
+
 			va = trunc_page((vaddr_t)a0);
 			onfault = p->p_addr->u_pcb.pcb_onfault;
 			p->p_addr->u_pcb.pcb_onfault = 0;
@@ -578,17 +578,17 @@ syscall(code, framep)
 		if ((error = copyin((caddr_t)(framep->tf_regs[FRAME_SP]), &args[6],
 		    (nargs - 6) * sizeof(u_long))))
 			goto bad;
-	case 6:	
+	case 6:
 		args[5] = framep->tf_regs[FRAME_A5];
-	case 5:	
+	case 5:
 		args[4] = framep->tf_regs[FRAME_A4];
-	case 4:	
+	case 4:
 		args[3] = framep->tf_regs[FRAME_A3];
-	case 3:	
+	case 3:
 		args[2] = framep->tf_regs[FRAME_A2];
-	case 2:	
+	case 2:
 		args[1] = framep->tf_regs[FRAME_A1];
-	case 1:	
+	case 1:
 		args[0] = framep->tf_regs[FRAME_A0];
 	case 0:
 		break;
@@ -1004,7 +1004,7 @@ unaligned_fixup(va, opcode, reg, p)
 	 * process go on without warning.
 	 *
 	 * If we're trying to do a fixup, we assume that things
-	 * will be botched.  If everything works out OK, 
+	 * will be botched.  If everything works out OK,
 	 * unaligned_{load,store}_* clears the signal flag.
 	 */
 	signal = SIGBUS;
@@ -1077,7 +1077,7 @@ unaligned_fixup(va, opcode, reg, p)
 			panic("unaligned_fixup: can't get here");
 #endif
 		}
-	} 
+	}
 
 	/*
 	 * Force SIGBUS if requested.
