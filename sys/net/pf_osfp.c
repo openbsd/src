@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_osfp.c,v 1.43 2020/10/21 15:35:25 sashan Exp $ */
+/*	$OpenBSD: pf_osfp.c,v 1.44 2020/10/21 16:15:32 kettenis Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@w4g.org>
@@ -59,6 +59,11 @@ typedef struct pool pool_t;
 #define pool_get(pool, flags)	malloc(*(pool))
 #define pool_put(pool, item)	free(item)
 #define pool_init(pool, size, a, ao, f, m, p)	(*(pool)) = (size)
+
+#define NET_LOCK()
+#define NET_UNLOCK()
+#define PF_LOCK()
+#define PF_UNLOCK()
 
 #ifdef PFDEBUG
 #include <sys/stdarg.h>	/* for DPFPRINTF() */
