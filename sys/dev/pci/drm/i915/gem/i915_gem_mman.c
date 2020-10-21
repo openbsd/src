@@ -911,7 +911,7 @@ insert:
 	GEM_BUG_ON(lookup_mmo(obj, mmap_type) != mmo);
 out:
 	if (file)
-		drm_vma_node_allow(&mmo->vma_node, file->filp);
+		drm_vma_node_allow(&mmo->vma_node, file);
 	return mmo;
 
 err:
@@ -1240,7 +1240,7 @@ i915_gem_mmap(struct file *filp, vm_prot_t accessprot,
 	node = drm_vma_offset_exact_lookup_locked(dev->vma_offset_manager,
 						  off >> PAGE_SHIFT,
 						  atop(round_page(size)));
-	if (node && drm_vma_node_is_allowed(node, filp)) {
+	if (node && drm_vma_node_is_allowed(node, priv)) {
 		/*
 		 * Skip 0-refcnted objects as it is in the process of being
 		 * destroyed and will be invalid when the vma manager lock

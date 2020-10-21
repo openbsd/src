@@ -260,7 +260,7 @@ EXPORT_SYMBOL(drm_vma_offset_remove);
  * RETURNS:
  * 0 on success, negative error code on internal failure (out-of-mem)
  */
-int drm_vma_node_allow(struct drm_vma_offset_node *node, struct file *tag)
+int drm_vma_node_allow(struct drm_vma_offset_node *node, struct drm_file *tag)
 {
 	struct rb_node **iter;
 	struct rb_node *parent = NULL;
@@ -323,7 +323,7 @@ EXPORT_SYMBOL(drm_vma_node_allow);
  * If @tag is not on the list, nothing is done.
  */
 void drm_vma_node_revoke(struct drm_vma_offset_node *node,
-			 struct file *tag)
+			 struct drm_file *tag)
 {
 	struct drm_vma_offset_file *entry;
 	struct rb_node *iter;
@@ -364,7 +364,7 @@ EXPORT_SYMBOL(drm_vma_node_revoke);
  * true iff @filp is on the list
  */
 bool drm_vma_node_is_allowed(struct drm_vma_offset_node *node,
-			     struct file *tag)
+			     struct drm_file *tag)
 {
 	struct drm_vma_offset_file *entry;
 	struct rb_node *iter;

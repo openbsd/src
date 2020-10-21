@@ -45,7 +45,7 @@ struct drm_file;
 
 struct drm_vma_offset_file {
 	struct rb_node vm_rb;
-	struct file *vm_tag;
+	struct drm_file *vm_tag;
 	unsigned long vm_count;
 };
 
@@ -73,11 +73,11 @@ int drm_vma_offset_add(struct drm_vma_offset_manager *mgr,
 void drm_vma_offset_remove(struct drm_vma_offset_manager *mgr,
 			   struct drm_vma_offset_node *node);
 
-int drm_vma_node_allow(struct drm_vma_offset_node *node, struct file *tag);
+int drm_vma_node_allow(struct drm_vma_offset_node *node, struct drm_file *tag);
 void drm_vma_node_revoke(struct drm_vma_offset_node *node,
-			 struct file *tag);
+			 struct drm_file *tag);
 bool drm_vma_node_is_allowed(struct drm_vma_offset_node *node,
-			     struct file *tag);
+			     struct drm_file *tag);
 
 /**
  * drm_vma_offset_exact_lookup_locked() - Look up node by exact address
@@ -240,7 +240,7 @@ static inline void drm_vma_node_unmap(struct drm_vma_offset_node *node,
  * 0 if access is granted, -EACCES otherwise.
  */
 static inline int drm_vma_node_verify_access(struct drm_vma_offset_node *node,
-					     struct file *tag)
+					     struct drm_file *tag)
 {
 	return drm_vma_node_is_allowed(node, tag) ? 0 : -EACCES;
 }

@@ -186,10 +186,11 @@ static void radeon_evict_flags(struct ttm_buffer_object *bo,
 static int radeon_verify_access(struct ttm_buffer_object *bo, struct file *filp)
 {
 	struct radeon_bo *rbo = container_of(bo, struct radeon_bo, tbo);
+	struct drm_file *file_priv = (void *)filp;
 
 	if (radeon_ttm_tt_has_userptr(bo->ttm))
 		return -EPERM;
-	return drm_vma_node_verify_access(&rbo->tbo.base.vma_node, filp);
+	return drm_vma_node_verify_access(&rbo->tbo.base.vma_node, file_priv);
 }
 
 static void radeon_move_null(struct ttm_buffer_object *bo,
