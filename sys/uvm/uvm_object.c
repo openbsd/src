@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_object.c,v 1.16 2020/09/13 10:05:25 mpi Exp $	*/
+/*	$OpenBSD: uvm_object.c,v 1.17 2020/10/21 09:08:14 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  * uvm_objinit: initialise a uvm object.
  */
 void
-uvm_objinit(struct uvm_object *uobj, struct uvm_pagerops *pgops, int refs)
+uvm_objinit(struct uvm_object *uobj, const struct uvm_pagerops *pgops, int refs)
 {
 	uobj->pgops = pgops;
 	RBT_INIT(uvm_objtree, &uobj->memt);

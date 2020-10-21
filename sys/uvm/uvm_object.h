@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_object.h,v 1.23 2019/11/29 22:10:04 beck Exp $	*/
+/*	$OpenBSD: uvm_object.h,v 1.24 2020/10/21 09:08:14 mpi Exp $	*/
 /*	$NetBSD: uvm_object.h,v 1.11 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 struct uvm_object {
-	struct uvm_pagerops		*pgops;		/* pager ops */
+	const struct uvm_pagerops	*pgops;		/* pager ops */
 	RBT_HEAD(uvm_objtree, vm_page)	 memt;		/* pages in object */
 	int				 uo_npages;	/* # of pages in memt */
 	int				 uo_refs;	/* reference count */
@@ -72,8 +72,8 @@ struct uvm_object {
 
 #ifdef _KERNEL
 
-extern struct uvm_pagerops uvm_vnodeops;
-extern struct uvm_pagerops uvm_deviceops;
+extern const struct uvm_pagerops uvm_vnodeops;
+extern const struct uvm_pagerops uvm_deviceops;
 
 /* For object trees */
 int	uvm_pagecmp(const struct vm_page *, const struct vm_page *);
@@ -89,7 +89,7 @@ RBT_PROTOTYPE(uvm_objtree, vm_page, objt, uvm_pagecmp)
 	((uobj)->pgops == &uvm_vnodeops &&				\
 	 ((struct vnode *)uobj)->v_flag & VTEXT)
 
-void	uvm_objinit(struct uvm_object *, struct uvm_pagerops *, int);
+void	uvm_objinit(struct uvm_object *, const struct uvm_pagerops *, int);
 int	uvm_objwire(struct uvm_object *, voff_t, voff_t, struct pglist *);
 void	uvm_objunwire(struct uvm_object *, voff_t, voff_t);
 void	uvm_objfree(struct uvm_object *);

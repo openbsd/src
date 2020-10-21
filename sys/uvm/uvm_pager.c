@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.72 2019/12/08 12:37:45 mpi Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.73 2020/10/21 09:08:14 mpi Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 
 struct pool *uvm_aiobuf_pool;
 
-struct uvm_pagerops *uvmpagerops[] = {
+const struct uvm_pagerops *uvmpagerops[] = {
 	&aobj_pager,
 	&uvm_deviceops,
 	&uvm_vnodeops,

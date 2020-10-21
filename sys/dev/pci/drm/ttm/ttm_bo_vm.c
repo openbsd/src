@@ -903,7 +903,7 @@ ttm_bo_vm_detach(struct uvm_object *uobj)
 	ttm_bo_put(bo);
 }
 
-struct uvm_pagerops ttm_bo_vm_ops = {
+const struct uvm_pagerops ttm_bo_vm_ops = {
 	.pgo_fault = ttm_bo_vm_fault,
 	.pgo_reference = ttm_bo_vm_reference,
 	.pgo_detach = ttm_bo_vm_detach

@@ -58,12 +58,11 @@ boolean_t drm_flush(struct uvm_object *, voff_t, voff_t, int);
 int drm_fault(struct uvm_faultinfo *, vaddr_t, vm_page_t *, int, int,
     vm_fault_t, vm_prot_t, int);
 
-struct uvm_pagerops drm_pgops = {
-	NULL,
-	drm_ref,
-	drm_unref,
-	drm_fault,
-	drm_flush,
+const struct uvm_pagerops drm_pgops = {
+	.pgo_reference = drm_ref,
+	.pgo_detach = drm_unref,
+	.pgo_fault = drm_fault,
+	.pgo_flush = drm_flush,
 };
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.106 2020/01/16 15:35:22 kettenis Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.107 2020/10/21 09:08:14 mpi Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -93,16 +93,16 @@ void		 uvn_reference(struct uvm_object *);
 /*
  * master pager structure
  */
-struct uvm_pagerops uvm_vnodeops = {
-	uvn_init,
-	uvn_reference,
-	uvn_detach,
-	NULL,			/* no specialized fault routine required */
-	uvn_flush,
-	uvn_get,
-	uvn_put,
-	uvn_cluster,
-	uvm_mk_pcluster, /* use generic version of this: see uvm_pager.c */
+const struct uvm_pagerops uvm_vnodeops = {
+	.pgo_init = uvn_init,
+	.pgo_reference = uvn_reference,
+	.pgo_detach = uvn_detach,
+	.pgo_flush = uvn_flush,
+	.pgo_get = uvn_get,
+	.pgo_put = uvn_put,
+	.pgo_cluster = uvn_cluster,
+	/* use generic version of this: see uvm_pager.c */
+	.pgo_mk_pcluster = uvm_mk_pcluster,
 };
 
 /*
@@ -279,6 +279,7 @@ uvn_reference(struct uvm_object *uobj)
 		panic("uvn_reference: invalid state");
 	}
 #endif
+	KERNEL_ASSERT_LOCKED();
 	uobj->uo_refs++;
 }
 
@@ -298,7 +299,7 @@ uvn_detach(struct uvm_object *uobj)
 	struct vnode *vp;
 	int oldflags;
 
-
+	KERNEL_ASSERT_LOCKED();
 	uobj->uo_refs--;			/* drop ref! */
 	if (uobj->uo_refs) {			/* still more refs */
 		return;
@@ -587,6 +588,7 @@ uvn_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 	boolean_t retval, need_iosync, needs_clean;
 	voff_t curoff;
 
+	KERNEL_ASSERT_LOCKED();
 	TAILQ_INIT(&dead);
 
 	/* get init vals and determine how we are going to traverse object */
@@ -875,6 +877,7 @@ uvn_put(struct uvm_object *uobj, struct vm_page **pps, int npages, int flags)
 {
 	int retval;
 
+	KERNEL_ASSERT_LOCKED();
 	retval = uvn_io((struct uvm_vnode*)uobj, pps, npages, flags, UIO_WRITE);
 
 	return(retval);
@@ -897,6 +900,8 @@ uvn_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 	struct vm_page *ptmp;
 	int lcv, result, gotpages;
 	boolean_t done;
+
+	KERNEL_ASSERT_LOCKED();
 
 	/* step 1: handled the case where fault data structures are locked. */
 	if (flags & PGO_LOCKED) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.88 2020/10/20 08:47:23 mpi Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.89 2020/10/21 09:08:14 mpi Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -181,16 +181,14 @@ int	uao_grow_convert(struct uvm_object *, int);
 
 /*
  * aobj_pager
- * 
+ *
  * note that some functions (e.g. put) are handled elsewhere
  */
-struct uvm_pagerops aobj_pager = {
-	NULL,			/* init */
-	uao_reference,		/* reference */
-	uao_detach,		/* detach */
-	NULL,			/* fault */
-	uao_flush,		/* flush */
-	uao_get,		/* get */
+const struct uvm_pagerops aobj_pager = {
+	.pgo_reference = uao_reference,
+	.pgo_detach = uao_detach,
+	.pgo_flush = uao_flush,
+	.pgo_get = uao_get,
 };
 
 /*
@@ -804,6 +802,7 @@ uao_init(void)
 void
 uao_reference(struct uvm_object *uobj)
 {
+	KERNEL_ASSERT_LOCKED();
 	uao_reference_locked(uobj);
 }
 
@@ -828,6 +827,7 @@ uao_reference_locked(struct uvm_object *uobj)
 void
 uao_detach(struct uvm_object *uobj)
 {
+	KERNEL_ASSERT_LOCKED();
 	uao_detach_locked(uobj);
 }
 
@@ -901,6 +901,8 @@ uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 	struct uvm_aobj *aobj = (struct uvm_aobj *) uobj;
 	struct vm_page *pp;
 	voff_t curoff;
+
+	KERNEL_ASSERT_LOCKED();
 
 	if (flags & PGO_ALLPAGES) {
 		start = 0;
@@ -1022,6 +1024,8 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 	vm_page_t ptmp;
 	int lcv, gotpages, maxpages, swslot, rv, pageidx;
 	boolean_t done;
+
+	KERNEL_ASSERT_LOCKED();
 
 	/* get number of pages */
 	maxpages = *npagesp;

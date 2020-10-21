@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.h,v 1.16 2014/07/11 16:35:40 jsg Exp $	*/
+/*	$OpenBSD: uvm_aobj.h,v 1.17 2020/10/21 09:08:14 mpi Exp $	*/
 /*	$NetBSD: uvm_aobj.h,v 1.10 2000/01/11 06:57:49 chs Exp $	*/
 
 /*
@@ -69,7 +69,7 @@ int uao_grow(struct uvm_object *, int);
  * globals
  */
 
-extern struct uvm_pagerops aobj_pager;
+extern const struct uvm_pagerops aobj_pager;
 
 #endif /* _KERNEL */
 
