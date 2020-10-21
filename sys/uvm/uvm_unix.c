@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_unix.c,v 1.70 2020/10/19 08:19:46 mpi Exp $	*/
+/*	$OpenBSD: uvm_unix.c,v 1.71 2020/10/21 21:24:57 deraadt Exp $	*/
 /*	$NetBSD: uvm_unix.c,v 1.18 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
@@ -114,6 +114,10 @@ uvm_grow(struct proc *p, vaddr_t sp)
 	/* For user defined stacks (from sendsig). */
 	if (sp < (vaddr_t)vm->vm_maxsaddr)
 		return;
+#ifdef MACHINE_STACK_GROWS_UP
+	if (sp >= (vaddr_t)vm->vm_minsaddr)
+		return;
+#endif
 
 	vm_map_lock(map);
 
