@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.9 2020/05/10 13:38:46 deraadt Exp $ */
+/*	$OpenBSD: output.c,v 1.10 2020/10/21 06:52:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -19,6 +19,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <endian.h>
 #include <err.h>
 #include <math.h>
 #include <stdio.h>
