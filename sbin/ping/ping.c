@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.241 2020/09/21 12:19:08 mglocker Exp $	*/
+/*	$OpenBSD: ping.c,v 1.242 2020/10/21 11:11:58 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -785,6 +785,55 @@ main(int argc, char *argv[])
 	smsgiov.iov_base = (caddr_t)outpack;
 	smsghdr.msg_iov = &smsgiov;
 	smsghdr.msg_iovlen = 1;
+
+	/* Drain our socket. */
+	(void)signal(SIGALRM, onsignal);
+	memset(&itimer, 0, sizeof(itimer));
+	itimer.it_value.tv_sec = 1; /* make sure we don't get stuck */
+	(void)setitimer(ITIMER_REAL, &itimer, NULL);
+	for (;;) {
+		struct msghdr		m;
+		union {
+			struct cmsghdr hdr;
+			u_char buf[CMSG_SPACE(1024)];
+		}			cmsgbuf;
+		struct iovec		iov[1];
+		struct pollfd		pfd;
+		struct sockaddr_in	peer4;
+		struct sockaddr_in6	peer6;
+		ssize_t			cc;
+
+		if (seenalrm)
+			break;
+
+		pfd.fd = s;
+		pfd.events = POLLIN;
+
+		if (poll(&pfd, 1, 0) <= 0)
+			break;
+
+		if (v6flag) {
+			m.msg_name = &peer6;
+			m.msg_namelen = sizeof(peer6);
+		} else {
+			m.msg_name = &peer4;
+			m.msg_namelen = sizeof(peer4);
+		}
+		memset(&iov, 0, sizeof(iov));
+		iov[0].iov_base = (caddr_t)packet;
+		iov[0].iov_len = packlen;
+
+		m.msg_iov = iov;
+		m.msg_iovlen = 1;
+		m.msg_control = (caddr_t)&cmsgbuf.buf;
+		m.msg_controllen = sizeof(cmsgbuf.buf);
+
+		cc = recvmsg(s, &m, 0);
+		if (cc == -1 && errno != EINTR)
+			break;
+	}
+	memset(&itimer, 0, sizeof(itimer));
+	(void)setitimer(ITIMER_REAL, &itimer, NULL);
 
 	while (preload--)		/* Fire off them quickies. */
 		pinger(s);
