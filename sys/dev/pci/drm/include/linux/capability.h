@@ -9,11 +9,18 @@
 #include <machine/cpu.h>
 
 #define CAP_SYS_ADMIN	0x1
-static inline int 
+#define CAP_SYS_NICE	0x2
+
+static inline bool
 capable(int cap) 
 { 
-	KASSERT(cap == CAP_SYS_ADMIN);
-	return suser(curproc) == 0;
+	switch (cap) {
+	case CAP_SYS_ADMIN:
+	case CAP_SYS_NICE:
+		return suser(curproc) == 0;
+	default:
+		panic("unhandled capability");
+	}
 } 
 
 #endif

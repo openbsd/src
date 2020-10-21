@@ -2020,12 +2020,8 @@ static int set_priority(struct i915_gem_context *ctx,
 	    priority < I915_CONTEXT_MIN_USER_PRIORITY)
 		return -EINVAL;
 
-#ifdef notyet
 	if (priority > I915_CONTEXT_DEFAULT_PRIORITY &&
 	    !capable(CAP_SYS_NICE))
-#else
-	if (priority > I915_CONTEXT_DEFAULT_PRIORITY)
-#endif
 		return -EPERM;
 
 	ctx->sched.priority = I915_USER_PRIORITY(priority);
