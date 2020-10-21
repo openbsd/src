@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.502 2020/05/02 14:12:17 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.503 2020/10/21 06:56:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1028,7 +1028,7 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 	struct bgpd_addr	 prefix;
 	struct mpattr		 mpa;
 	u_char			*p, *mpp = NULL;
-	int			 error = -1, pos = 0;
+	int			 pos = 0;
 	u_int16_t		 afi, len, mplen;
 	u_int16_t		 withdrawn_len;
 	u_int16_t		 attrpath_len;
@@ -1246,10 +1246,8 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 			break;
 		}
 
-		if ((state.aspath.flags & ~F_ATTR_MP_UNREACH) == 0) {
-			error = 0;
+		if ((state.aspath.flags & ~F_ATTR_MP_UNREACH) == 0)
 			goto done;
-		}
 	}
 
 	/* shift to NLRI information */
