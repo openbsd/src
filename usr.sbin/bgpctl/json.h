@@ -15,7 +15,6 @@
  */
 
 #include <stdarg.h>
-#include <sys/cdefs.h>
 
 void json_do_start(void);
 void json_do_finish(void);
