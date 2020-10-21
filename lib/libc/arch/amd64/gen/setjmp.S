@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.8 2019/03/30 12:37:59 mortimer Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.9 2020/10/21 17:22:59 kettenis Exp $	*/
 /*	$NetBSD: __setjmp14.S,v 1.1 2001/06/19 00:25:02 fvdl Exp $	*/
 
 /*
@@ -85,6 +85,8 @@ ENTRY(setjmp)
 	xorq	(2*8)(%rcx),%rax
 	movq	%rax,(_JB_PC  * 8)(%rdi)
 	xorq	%rcx,%rcx
+	stmxcsr	(_JB_MXCSR * 8)(%rdi)
+	fnstcw	(_JB_MXCSR * 8 + 4)(%rdi)
 
 	xorq	%rax,%rax
 	RETGUARD_CHECK(setjmp, r10)
@@ -109,6 +111,8 @@ ENTRY(longjmp)
 	xorq	(2*8)(%rcx),%r11
 	movq	%r11,0(%rsp)
 	RETGUARD_SETUP(longjmp, r10)
+	ldmxcsr	(_JB_MXCSR * 8)(%r12)
+	fldcw	(_JB_MXCSR * 8 + 4)(%r12)
 	movq	(_JB_RBX * 8)(%r12),%rbx
 	movq	(_JB_RBP * 8)(%r12),%r11
 	xorq	(0*8)(%rcx),%r11
