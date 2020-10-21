@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.32 2020/10/08 19:41:04 deraadt Exp $ */
+/* $OpenBSD: trap.c,v 1.33 2020/10/21 21:53:45 deraadt Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -138,7 +138,7 @@ data_abort(struct trapframe *frame, uint64_t esr, uint64_t far,
 
 	if (map != kernel_map) {
 		/* Fault in the user page: */
-		if (!pmap_fault_fixup(map->pmap, va, access_type, 1)) {
+		if (!pmap_fault_fixup(map->pmap, va, access_type)) {
 			KERNEL_LOCK();
 			error = uvm_fault(map, va, 0, access_type);
 			if (error == 0)
@@ -150,7 +150,7 @@ data_abort(struct trapframe *frame, uint64_t esr, uint64_t far,
 		 * Don't have to worry about process locking or stacks in the
 		 * kernel.
 		 */
-		if (!pmap_fault_fixup(map->pmap, va, access_type, 0)) {
+		if (!pmap_fault_fixup(map->pmap, va, access_type)) {
 			KERNEL_LOCK();
 			error = uvm_fault(map, va, 0, access_type);
 			KERNEL_UNLOCK();
