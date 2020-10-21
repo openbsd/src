@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.54 2020/05/10 13:38:46 deraadt Exp $ */
+/*	$OpenBSD: util.c,v 1.55 2020/10/21 06:53:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -69,7 +69,6 @@ const char *
 log_in6addr(const struct in6_addr *addr)
 {
 	struct sockaddr_in6	sa_in6;
-	u_int16_t		tmp16;
 
 	bzero(&sa_in6, sizeof(sa_in6));
 	sa_in6.sin6_family = AF_INET6;
@@ -79,6 +78,7 @@ log_in6addr(const struct in6_addr *addr)
 	/* XXX thanks, KAME, for this ugliness... adopted from route/show.c */
 	if (IN6_IS_ADDR_LINKLOCAL(&sa_in6.sin6_addr) ||
 	    IN6_IS_ADDR_MC_LINKLOCAL(&sa_in6.sin6_addr)) {
+		u_int16_t tmp16;
 		memcpy(&tmp16, &sa_in6.sin6_addr.s6_addr[2], sizeof(tmp16));
 		sa_in6.sin6_scope_id = ntohs(tmp16);
 		sa_in6.sin6_addr.s6_addr[2] = 0;
