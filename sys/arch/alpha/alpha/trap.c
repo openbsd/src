@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.92 2020/10/08 19:41:03 deraadt Exp $ */
+/* $OpenBSD: trap.c,v 1.93 2020/10/21 17:54:33 deraadt Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -437,8 +437,7 @@ do_fault:
 			 * the stack region outside the current limit and
 			 * we need to reflect that as an access error.
 			 */
-			if (map != kernel_map &&
-			    (caddr_t)va >= vm->vm_maxsaddr) {
+			if (map != kernel_map) {
 				if (rv == 0) {
 					uvm_grow(p, va);
 				} else if (rv == EACCES)

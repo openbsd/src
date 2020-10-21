@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.117 2020/10/08 19:41:05 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.118 2020/10/21 17:54:33 deraadt Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -431,7 +431,7 @@ user_fault:
 
 		p->p_addr->u_pcb.pcb_onfault = pcb_onfault;
 
-		if (result == 0 && (caddr_t)va >= vm->vm_maxsaddr)
+		if (result == 0)
 			uvm_grow(p, va);
 
 		if (result == 0) {
@@ -968,7 +968,7 @@ m88110_user_fault:
 		}
 		p->p_addr->u_pcb.pcb_onfault = pcb_onfault;
 
-		if (result == 0 && (caddr_t)va >= vm->vm_maxsaddr)
+		if (result == 0)
 			uvm_grow(p, va);
 		KERNEL_UNLOCK();
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.45 2020/10/08 19:41:05 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.46 2020/10/21 17:54:33 deraadt Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -418,8 +418,7 @@ tlb_exception(struct proc *p, struct trapframe *tf, uint32_t va)
 	err = uvm_fault(map, va, 0, access_type);
 
 	/* User stack extension */
-	if (map != kernel_map &&
-	    va >= (vaddr_t)p->p_vmspace->vm_maxsaddr) {
+	if (map != kernel_map) {
 		if (err == 0)
 			uvm_grow(p, va);
 		else if (err == EACCES)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.150 2020/10/20 15:21:44 visa Exp $	*/
+/*	$OpenBSD: trap.c,v 1.151 2020/10/21 17:54:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -433,7 +433,7 @@ fault_common_no_miss:
 		 * the current limit and we need to reflect that as an access
 		 * error.
 		 */
-		if (rv == 0 && (caddr_t)va >= vm->vm_maxsaddr)
+		if (rv == 0)
 			uvm_grow(p, va);
 
 		KERNEL_UNLOCK();

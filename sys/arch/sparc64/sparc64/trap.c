@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.105 2020/09/24 23:49:59 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.106 2020/10/21 17:54:33 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -811,7 +811,7 @@ data_access_fault(struct trapframe64 *tf, unsigned type, vaddr_t pc,
 	 * the current limit and we need to reflect that as an access
 	 * error.
 	 */
-	if (rv == 0 && (caddr_t)va >= vm->vm_maxsaddr)
+	if (rv == 0)
 		uvm_grow(p, va);
 
 	if (rv != 0) {
@@ -999,7 +999,7 @@ text_access_fault(struct trapframe64 *tf, unsigned type, vaddr_t pc,
 	 * the current limit and we need to reflect that as an access
 	 * error.
 	 */
-	if (rv == 0 && (caddr_t)va >= vm->vm_maxsaddr)
+	if (rv == 0)
 		uvm_grow(p, va);
 
 	if (rv != 0) {
@@ -1108,9 +1108,8 @@ text_access_error(struct trapframe64 *tf, unsigned type, vaddr_t pc,
 	 * the current limit and we need to reflect that as an access
 	 * error.
 	 */
-	if (rv == 0 && (caddr_t)va >= vm->vm_maxsaddr) {
+	if (rv == 0)
 		uvm_grow(p, va);
-	}
 
 	if (rv != 0) {
 		/*
