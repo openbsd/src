@@ -1,4 +1,4 @@
-.\"	$OpenBSD: du.1,v 1.37 2020/01/30 17:54:30 schwarze Exp $
+.\"	$OpenBSD: du.1,v 1.38 2020/10/21 17:00:47 schwarze Exp $
 .\"	$NetBSD: du.1,v 1.6 1996/10/18 07:20:31 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)du.1	8.2 (Berkeley) 4/1/94
 .\"
-.Dd $Mdocdate: January 30 2020 $
+.Dd $Mdocdate: October 21 2020 $
 .Dt DU 1
 .Os
 .Sh NAME
@@ -151,7 +151,7 @@ option is specified.
 Display a summary of files and folders in the current directory,
 sorted by size:
 .Pp
-.Dl $ du -sh * .??* | sort -h
+.Dl $ du -had 1 | sort -h
 .Sh SEE ALSO
 .Xr df 1 ,
 .Xr fts_open 3 ,
