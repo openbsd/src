@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.70 2020/10/09 08:59:15 tobhe Exp $	*/
+/*	$OpenBSD: config.c,v 1.71 2020/10/21 17:47:36 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -528,6 +528,8 @@ config_getreset(struct iked *env, struct imsg *imsg)
 			if (mode == RESET_ALL ||
 			    ikev2_ike_sa_delete(env, sa) != 0) {
 				RB_REMOVE(iked_sas, &env->sc_sas, sa);
+				if (sa->sa_dstid_entry_valid)
+					sa_dstid_remove(env, sa);
 				config_free_sa(env, sa);
 			}
 		}
