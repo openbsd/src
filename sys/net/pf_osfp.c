@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_osfp.c,v 1.42 2020/10/21 11:36:56 mpi Exp $ */
+/*	$OpenBSD: pf_osfp.c,v 1.43 2020/10/21 15:35:25 sashan Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@w4g.org>
@@ -367,7 +367,7 @@ pf_osfp_add(struct pf_osfp_ioctl *fpioc)
 		return (ENOMEM);
 
 	fp_prealloc = pool_get(&pf_osfp_pl, PR_WAITOK|PR_ZERO|PR_LIMITFAIL);
-	if (fp == NULL) {
+	if (fp_prealloc == NULL) {
 		pool_put(&pf_osfp_entry_pl, entry);
 		return (ENOMEM);
 	}
@@ -382,7 +382,7 @@ pf_osfp_add(struct pf_osfp_ioctl *fpioc)
 				NET_UNLOCK();
 				PF_UNLOCK();
 				pool_put(&pf_osfp_entry_pl, entry);
-				pool_put(&pf_osfp_pl, fp);
+				pool_put(&pf_osfp_pl, fp_prealloc);
 				return (EEXIST);
 			}
 		}
