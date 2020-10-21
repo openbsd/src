@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.260 2020/06/14 20:29:13 naddy Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.261 2020/10/21 04:10:56 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -1092,12 +1092,16 @@ kcopy(const void *from, void *to, size_t size)
 int
 copystr(const void *src, void *dst, size_t size, size_t *lenp)
 {
+	if (size == 0)
+		return ENAMETOOLONG;
 	return spstrcpy(HPPA_SID_KERNEL, src, HPPA_SID_KERNEL, dst, size, lenp);
 }
 
 int
 copyinstr(const void *src, void *dst, size_t size, size_t *lenp)
 {
+	if (size == 0)
+		return ENAMETOOLONG;
 	return spstrcpy(curproc->p_addr->u_pcb.pcb_space, src,
 	    HPPA_SID_KERNEL, dst, size, lenp);
 }
@@ -1105,6 +1109,8 @@ copyinstr(const void *src, void *dst, size_t size, size_t *lenp)
 int
 copyoutstr(const void *src, void *dst, size_t size, size_t *lenp)
 {
+	if (size == 0)
+		return ENAMETOOLONG;
 	return spstrcpy(HPPA_SID_KERNEL, src,
 	    curproc->p_addr->u_pcb.pcb_space, dst, size, lenp);
 }
