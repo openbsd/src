@@ -756,6 +756,7 @@
 #define	PCI_PRODUCT_AMD_17_PCIE_5	0x1471		/* 17h PCIE */
 #define	PCI_PRODUCT_AMD_17_3X_RC	0x1480		/* 17h/3xh Root Complex */
 #define	PCI_PRODUCT_AMD_17_3X_CCP	0x1486		/* 17h/3xh Crypto */
+#define	PCI_PRODUCT_AMD_17_3X_HDA	0x1487		/* 17h/3xh HD Audio */
 #define	PCI_PRODUCT_AMD_14_HB	0x1510		/* 14h Host */
 #define	PCI_PRODUCT_AMD_14_PCIE_1	0x1512		/* 14h PCIE */
 #define	PCI_PRODUCT_AMD_14_PCIE_2	0x1513		/* 14h PCIE */

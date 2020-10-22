@@ -1328,6 +1328,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "17h/3xh Crypto",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_3X_HDA,
+	    "17h/3xh HD Audio",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_14_HB,
 	    "14h Host",
 	},

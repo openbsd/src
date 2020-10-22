@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.178 2019/10/14 02:04:35 jcs Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.179 2020/10/22 18:11:13 robert Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -221,6 +221,10 @@ azalia_codec_init_vtbl(codec_t *this)
 		    this->subid == 0xcb7910de ||	/* APPLE_MACMINI3_1 (internal spkr) */
 		    this->subid == 0x00a0106b)
 			this->qrks |= AZ_QRK_WID_OVREF50;
+		break;
+	case 0x10ec0887:
+		this->name = "Realtek ALC887";
+		this->qrks |= AZ_QRK_WID_CDIN_1C | AZ_QRK_WID_BEEP_1D;
 		break;
 	case 0x10ec0888:
 		this->name = "Realtek ALC888";
