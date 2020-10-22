@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.151 2020/10/21 17:54:33 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.152 2020/10/22 13:41:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -422,8 +422,8 @@ fault_common_no_miss:
 		onfault = pcb->pcb_onfault;
 		pcb->pcb_onfault = 0;
 		KERNEL_LOCK();
-
 		rv = uvm_fault(map, va, 0, access_type);
+		KERNEL_UNLOCK();
 		pcb->pcb_onfault = onfault;
 
 		/*
@@ -433,12 +433,11 @@ fault_common_no_miss:
 		 * the current limit and we need to reflect that as an access
 		 * error.
 		 */
-		if (rv == 0)
+		if (rv == 0) {
 			uvm_grow(p, va);
-
-		KERNEL_UNLOCK();
-		if (rv == 0)
 			return;
+		}
+
 		if (!USERMODE(trapframe->sr)) {
 			if (onfault != 0) {
 				pcb->pcb_onfault = 0;
@@ -809,7 +808,7 @@ fault_common_no_miss:
 			sicode = BUS_OBJERR;
 			break;
 		}
-		
+
 		/* Emulate "RDHWR rt, UserLocal". */
 		if (inst.RType.op == OP_SPECIAL3 &&
 		    inst.RType.rs == 0 &&

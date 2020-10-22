@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.95 2020/10/21 22:01:52 deraadt Exp $ */
+/* $OpenBSD: trap.c,v 1.96 2020/10/22 13:41:51 deraadt Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -429,6 +429,7 @@ do_fault:
 			p->p_addr->u_pcb.pcb_onfault = 0;
 			rv = uvm_fault(map, va, 0, access_type);
 			p->p_addr->u_pcb.pcb_onfault = onfault;
+			KERNEL_UNLOCK();
 
 			/*
 			 * If this was a stack access we keep track of the
@@ -437,10 +438,9 @@ do_fault:
 			 * the stack region outside the current limit and
 			 * we need to reflect that as an access error.
 			 */
-			if (rv == 0 && map != kernel_map)
-				uvm_grow(p, va);
 			if (rv == 0) {
-				KERNEL_UNLOCK();
+				if (map != kernel_map)
+					uvm_grow(p, va);
 				goto out;
 			}
 
@@ -449,13 +449,10 @@ do_fault:
 				if (p->p_addr->u_pcb.pcb_onfault != 0) {
 					framep->tf_regs[FRAME_PC] =
 					    p->p_addr->u_pcb.pcb_onfault;
-					KERNEL_UNLOCK();
 					goto out;
 				}
-				KERNEL_UNLOCK();
 				goto dopanic;
 			}
-			KERNEL_UNLOCK();
 			ucode = access_type;
 			v = (caddr_t)a0;
 			typ = SEGV_MAPERR;

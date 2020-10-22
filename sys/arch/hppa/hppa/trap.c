@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.151 2020/10/21 21:24:56 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.152 2020/10/22 13:41:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -488,8 +488,8 @@ datacc:
 		}
 
 		KERNEL_LOCK();
-
 		ret = uvm_fault(map, trunc_page(va), 0, access_type);
+		KERNEL_UNLOCK();
 
 		/*
 		 * If this was a stack access we keep track of the maximum
@@ -500,8 +500,6 @@ datacc:
 		 */
 		if (ret == 0 && space != HPPA_SID_KERNEL)
 			uvm_grow(p, va);
-
-		KERNEL_UNLOCK();
 
 		if (ret != 0) {
 			if (type & T_USER) {
