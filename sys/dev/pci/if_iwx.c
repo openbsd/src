@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.45 2020/10/11 07:05:28 mpi Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.46 2020/10/22 11:24:01 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5149,6 +5149,9 @@ iwx_mac_ctxt_cmd_common(struct iwx_softc *sc, struct iwx_node *in,
 	    in->in_color));
 	cmd->action = htole32(action);
 
+	if (action == IWX_FW_CTXT_ACTION_REMOVE)
+		return;
+
 	if (ic->ic_opmode == IEEE80211_M_MONITOR)
 		cmd->mac_type = htole32(IWX_FW_MAC_TYPE_LISTENER);
 	else if (ic->ic_opmode == IEEE80211_M_STA)
@@ -5267,6 +5270,11 @@ iwx_mac_ctxt_cmd(struct iwx_softc *sc, struct iwx_node *in, uint32_t action,
 	memset(&cmd, 0, sizeof(cmd));
 
 	iwx_mac_ctxt_cmd_common(sc, in, &cmd, action);
+
+	if (action == IWX_FW_CTXT_ACTION_REMOVE) {
+		return iwx_send_cmd_pdu(sc, IWX_MAC_CONTEXT_CMD, 0,
+		    sizeof(cmd), &cmd);
+	}
 
 	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
 		cmd.filter_flags |= htole32(IWX_MAC_FILTER_IN_PROMISC |
