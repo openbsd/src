@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.40 2020/10/21 23:53:22 mortimer Exp $	*/
+/*	$OpenBSD: locore.S,v 1.41 2020/10/22 23:35:43 mortimer Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -312,6 +312,7 @@ opal_entry:
 #define OPAL_CALL(opal_token, name) \
 	.globl name;			\
 name:					\
+	RETGUARD_SETUP(opal_call, %r12); \
 	li	%r0, opal_token;	\
 	b	opal_call
 
@@ -359,8 +360,9 @@ OPAL_CALL(OPAL_SENSOR_READ_U64, opal_sensor_read_u64)
 opal_call:
 	mflr	%r11
 	std	%r11, 16(%r1)
-	stdu	%r1, -32(%r1)
+	stdu	%r1, -40(%r1)
 	std	%r2, 24(%r1)
+	RETGUARD_SAVE(%r12, 32(%r1))
 
 	addis	%r11, %r2, opal_base@toc@ha
 	addi	%r11, %r11, opal_base@toc@l
@@ -387,10 +389,12 @@ opal_call:
 	isync
 	ld	%r31, 12(%r1)
 
+	RETGUARD_LOAD(%r11, 32(%r1))
 	ld	%r2, 24(%r1)
-	addi	%r1, %r1, 32
+	addi	%r1, %r1, 40
 	ld	%r0, 16(%r1)
 	mtlr	%r0
+	RETGUARD_CHECK(opal_call, %r11)
 	blr
 
 /*
