@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.268 2020/10/19 17:02:57 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.269 2020/10/22 17:11:27 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1050,6 +1050,14 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
 				    "IKE_SA_INIT exchange", SPI_SA(sa,
 				    __func__));
 			break;
+		}
+		if (msg->msg_flags & IKED_MSG_FLAGS_NO_PROPOSAL_CHOSEN) {
+			log_info("%s: failed to negotiate IKE SA",
+			    SPI_SA(sa, __func__));
+			ikev2_ike_sa_setreason(sa, "no proposal chosen");
+			sa_state(env, sa, IKEV2_STATE_CLOSED);
+			msg->msg_sa = NULL;
+			return;
 		}
 		if (ikev2_handle_certreq(env, msg) != 0)
 			return;
