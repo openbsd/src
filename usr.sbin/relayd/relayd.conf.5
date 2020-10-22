@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.200 2020/10/22 07:48:50 benno Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.201 2020/10/22 08:00:24 benno Exp $
 .\"
 .\" Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1006,11 +1006,11 @@ OCSP server for the certificate in use, and can be created using
 Prefer the client's cipher list over the server's preferences when
 choosing a cipher for the connection.
 The default is to prefer the server's cipher list.
-.It Ic no session tickets
-Disable TLS session tickets.
+.It Ic session tickets
+Enable TLS session tickets.
 .Xr relayd 8
 supports stateless TLS session tickets (RFC 5077) to implement TLS session
-resumption.
+resumption for connections not using TLSv1.3.
 The default is to disable session tickets.
 .It Ic no tlsv1.3
 Disable the TLSv1.3 protocol.
