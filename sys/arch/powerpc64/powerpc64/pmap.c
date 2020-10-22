@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.51 2020/10/18 14:51:09 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.52 2020/10/22 15:54:10 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -1432,9 +1432,11 @@ pmap_zero_page(struct vm_page *pg)
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	paddr_t va = zero_page + cpu_number() * PAGE_SIZE;
+	int offset;
 
 	pmap_kenter_pa(va, pa, PROT_READ | PROT_WRITE);
-	memset((void *)va, 0, PAGE_SIZE);
+	for (offset = 0; offset < PAGE_SIZE; offset += cacheline_size)
+		__asm volatile ("dcbz 0, %0" :: "r"(va + offset));
 	pmap_kremove(va, PAGE_SIZE);
 }
 
