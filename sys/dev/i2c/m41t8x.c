@@ -1,4 +1,4 @@
-/*	$OpenBSD: m41t8x.c,v 1.1 2020/09/30 22:23:41 patrick Exp $	*/
+/*	$OpenBSD: m41t8x.c,v 1.2 2020/10/23 20:55:15 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -56,7 +56,8 @@ m41t8xrtc_match(struct device *parent, void *vcf, void *aux)
 {
 	struct i2c_attach_args *ia = (struct i2c_attach_args *)aux;
 
-	if (strcmp(ia->ia_name, "st,m41t83") == 0)
+	if (strcmp(ia->ia_name, "st,m41t83") == 0 ||
+	    strcmp(ia->ia_name, "microcrystal,rv4162") == 0)
 		return (1);
 	return (0);
 
@@ -137,7 +138,8 @@ m41t8xrtc_settime(struct todr_chip_handle *handle, struct timeval *tv)
 	if (dt.dt_year >= 2100)
 		data[M41T8X_HR] |= M41T8X_CB;
 	data[M41T8X_HR] |= TOBCD(dt.dt_hour);
-	data[M41T8X_DOW] = TOBCD(dt.dt_wday + 1);
+	data[M41T8X_DOW] &= ~M41T8X_DOW_MASK;
+	data[M41T8X_DOW] |= TOBCD(dt.dt_wday + 1);
 	data[M41T8X_DAY] = TOBCD(dt.dt_day);
 	data[M41T8X_MON] = TOBCD(dt.dt_mon);
 	data[M41T8X_YEAR] = TOBCD(dt.dt_year % 100);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m41t8xreg.h,v 1.2 2010/02/19 14:58:13 miod Exp $	*/
+/*	$OpenBSD: m41t8xreg.h,v 1.3 2020/10/23 20:55:15 patrick Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -40,6 +40,7 @@
 #define	M41T8X_CEB		0x80	/* century bit toggle enable */
 #define	M41T8X_CB		0x40	/* century bit */
 #define	M41T8X_DOW	0x04		/* day of week */
+#define	M41T8X_DOW_MASK		0x07	/* day of week bits */
 #define	M41T8X_DAY	0x05		/* day of month */
 #define	M41T8X_MON	0x06		/* month */
 #define	M41T8X_YEAR	0x07		/* year */
