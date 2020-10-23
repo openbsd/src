@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.170 2020/04/06 07:52:12 claudio Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.171 2020/10/23 20:28:09 cheloha Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -434,8 +434,9 @@ sleep_setup_timeout(struct sleep_state *sls, int timo)
 {
 	struct proc *p = curproc;
 
+	KASSERT((p->p_flag & P_TIMEOUT) == 0);
+
 	if (timo) {
-		KASSERT((p->p_flag & P_TIMEOUT) == 0);
 		sls->sls_timeout = 1;
 		timeout_add(&p->p_sleep_to, timo);
 	}
