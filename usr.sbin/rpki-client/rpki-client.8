@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.30 2020/09/15 20:02:30 job Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.31 2020/10/23 15:40:51 job Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 15 2020 $
+.Dd $Mdocdate: October 23 2020 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -85,8 +85,7 @@ flags and connect with rsync-protocol locations.
 Create output in the file
 .Pa json
 in the output directory as JSON object.
-This format is identical to that
-produced by the RIPE NCC RPKI Validator and NLnet Labs routinator.
+This format is similar to that produced by other RPKI validators.
 .It Fl n
 Assume that all requested repositories exist: don't update.
 .It Fl o
