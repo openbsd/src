@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.31 2020/10/23 15:40:51 job Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.32 2020/10/23 20:37:11 jmc Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -100,12 +100,6 @@ If the
 and
 .Fl j
 options are not specified this is the default.
-.It Fl T Ar table
-For BIRD output generated with the
-.Fl B
-option use
-.Ar table
-as roa table name instead of the default 'ROAS'.
 .It Fl s Ar timeout
 Terminate after
 .Ar timeout
@@ -113,6 +107,12 @@ seconds of runtime, because normal practice will restart from
 .Xr cron 8 .
 Disable by specifying 0.
 Defaults to 1 hour.
+.It Fl T Ar table
+For BIRD output generated with the
+.Fl B
+option use
+.Ar table
+as roa table name instead of the default 'ROAS'.
 .It Fl t Ar tal
 Specify a
 .Em Trust Anchor Location Pq TAL
