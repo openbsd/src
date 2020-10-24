@@ -1,4 +1,4 @@
-/*	$OpenBSD: mandoc.c,v 1.85 2020/01/19 16:16:32 schwarze Exp $ */
+/*	$OpenBSD: mandoc.c,v 1.86 2020/10/24 22:52:34 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
@@ -201,7 +201,18 @@ mandoc_escape(const char **end, const char **start, int *sz)
 	case 'O':
 	case 'V':
 	case 'Y':
-		gly = (*start)[-1] == 'f' ? ESCAPE_FONT : ESCAPE_IGNORE;
+	case '*':
+		switch ((*start)[-1]) {
+		case 'f':
+			gly = ESCAPE_FONT;
+			break;
+		case '*':
+			gly = ESCAPE_DEVICE;
+			break;
+		default:
+			gly = ESCAPE_IGNORE;
+			break;
+		}
 		switch (**start) {
 		case '(':
 			if ((*start)[-1] == 'O')
@@ -235,13 +246,6 @@ mandoc_escape(const char **end, const char **start, int *sz)
 			*sz = 1;
 			break;
 		}
-		break;
-	case '*':
-		if (strncmp(*start, "(.T", 3) != 0)
-			abort();
-		gly = ESCAPE_DEVICE;
-		*start = ++*end;
-		*sz = 2;
 		break;
 
 	/*
@@ -456,6 +460,9 @@ mandoc_escape(const char **end, const char **start, int *sz)
 		if ((int)strspn(*start + 1, "0123456789ABCDEFabcdef")
 		    + 1 == *sz)
 			gly = ESCAPE_UNICODE;
+		break;
+	case ESCAPE_DEVICE:
+		assert(*sz == 2 && (*start)[0] == '.' && (*start)[1] == 'T');
 		break;
 	default:
 		break;

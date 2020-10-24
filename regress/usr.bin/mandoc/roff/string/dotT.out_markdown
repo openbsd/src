@@ -9,9 +9,11 @@ STRING-DOTT(1) - General Commands Manual
 BEGINTEST
 
 We are using the  markdown device.
+It can also be written as the  markdown device.
 
 The device name can be overridden.
+Both escape forms work for the name.
 ENDTEST  
 end of file
 
-OpenBSD - January 7, 2019
+OpenBSD - October 24, 2020

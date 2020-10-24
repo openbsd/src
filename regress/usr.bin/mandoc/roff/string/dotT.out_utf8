@@ -6,10 +6,10 @@ NNAAMMEE
 DDEESSCCRRIIPPTTIIOONN
      BEGINTEST
 
-     We are using the utf8 device.
+     We are using the utf8 device.  It can also be written as the utf8 device.
 
-     The device name can be overridden.
+     The device name can be overridden.  Both escape forms work for the name.
      ENDTEST
      end of file
 
-OpenBSD                         January 7, 2019                        OpenBSD
+OpenBSD                        October 24, 2020                        OpenBSD
