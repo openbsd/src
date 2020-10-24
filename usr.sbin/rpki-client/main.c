@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.83 2020/10/11 12:35:24 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.84 2020/10/24 08:12:00 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -201,19 +201,6 @@ filepath_exists(char *file)
 }
 
 RB_GENERATE(filepath_tree, filepath, entry, filepathcmp);
-
-/*
- * Resolve the media type of a resource by looking at its suffice.
- * Returns the type of RTYPE_EOF if not found.
- */
-static enum rtype
-rtype_resolve(const char *uri)
-{
-	enum rtype	 rp;
-
-	rsync_uri_parse(NULL, NULL, NULL, NULL, NULL, NULL, &rp, uri);
-	return rp;
-}
 
 static void
 entity_free(struct entity *ent)
@@ -580,8 +567,6 @@ queue_add_from_tal(int proc, int rsync, struct entityq *q,
 		errx(1, "TAL file has no rsync:// URI");
 
 	/* Look up the repository. */
-	assert(rtype_resolve(uri) == RTYPE_CER);
-
 	repo = repo_lookup(rsync, uri);
 	nfile = repo_filename(repo, uri);
 
@@ -590,29 +575,23 @@ queue_add_from_tal(int proc, int rsync, struct entityq *q,
 }
 
 /*
- * Add a manifest (MFT) or CRL found in an X509 certificate, RFC 6487.
+ * Add a manifest (MFT) found in an X509 certificate, RFC 6487.
  */
 static void
 queue_add_from_cert(int proc, int rsync, struct entityq *q,
     const char *rsyncuri, const char *rrdpuri, size_t *eid)
 {
 	char			*nfile;
-	enum rtype		 type;
 	const struct repo	*repo;
 
 	if (rsyncuri == NULL)
 		return;
-	if ((type = rtype_resolve(rsyncuri)) == RTYPE_EOF)
-		errx(1, "%s: unknown file type", rsyncuri);
-	if (type != RTYPE_MFT)
-		errx(1, "%s: invalid file type", rsyncuri);
 
 	/* Look up the repository. */
-
 	repo = repo_lookup(rsync, rsyncuri);
 	nfile = repo_filename(repo, rsyncuri);
 
-	entityq_add(proc, q, nfile, type, repo, NULL, NULL, 0, NULL, eid);
+	entityq_add(proc, q, nfile, RTYPE_MFT, repo, NULL, NULL, 0, NULL, eid);
 }
 
 /*
