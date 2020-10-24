@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.9 2020/07/16 19:37:58 kettenis Exp $	*/
+/*	$OpenBSD: conf.c,v 1.10 2020/10/24 21:06:56 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -61,6 +61,7 @@ int	nblkdev = nitems(bdevsw);
 #include "ch.h"
 #include "com.h"
 cdev_decl(com);
+#include "drm.h"
 #include "dt.h"
 #include "fido.h"
 #include "fuse.h"
@@ -191,7 +192,7 @@ struct cdevsw cdevsw[] =
 	cdev_notdef(),			/* 84 */
 	cdev_notdef(),			/* 85 */
 	cdev_notdef(),			/* 86 */
-	cdev_notdef(),			/* 87 */
+	cdev_drm_init(NDRM,drm),	/* 87: drm */
 	cdev_ipmi_init(NIPMI,ipmi),	/* 88: ipmi */
 	cdev_notdef(),			/* 89 */
 	cdev_notdef(),			/* 90 */
