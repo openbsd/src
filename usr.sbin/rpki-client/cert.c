@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.18 2020/09/12 15:46:48 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.19 2020/10/24 08:09:39 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -149,7 +149,8 @@ sbgp_sia_resource_notify(struct parse *p,
 
 	/* Make sure it's a https:// address. */
 	if (dsz <= 8 || strncasecmp(d, "https://", 8)) {
-		warnx("%s: RFC8182 section 3.2: not using https schema", p->fn);
+		warnx("%s: RFC 8182 section 3.2: not using https schema",
+		    p->fn);
 		return 0;
 	}
 
@@ -167,32 +168,28 @@ static int
 sbgp_sia_resource_mft(struct parse *p,
 	const unsigned char *d, size_t dsz)
 {
-	enum rtype rt;
-
 	if (p->res->mft != NULL) {
 		warnx("%s: RFC 6487 section 4.8.8: SIA: "
 		    "MFT location already specified", p->fn);
 		return 0;
 	}
+
+	/* Make sure it's an MFT rsync address. */
+	if (dsz <= 8 || strncasecmp(d, "rsync://", 8)) {
+		warnx("%s: RFC 6487 section 4.8.8: not using rsync schema",
+		    p->fn);
+		return 0;
+	}
+	if (strcasecmp(d + dsz - 4, ".mft") != 0) {
+		warnx("%s: RFC 6487 section 4.8.8: SIA: "
+		    "invalid rsync URI suffix", p->fn);
+		return 0;
+	}
+
+
 	if ((p->res->mft = strndup((const char *)d, dsz)) == NULL)
 		err(1, NULL);
 
-	/* Make sure it's an MFT rsync address. */
-	if (!rsync_uri_parse(NULL, NULL, NULL,
-	    NULL, NULL, NULL, &rt, p->res->mft)) {
-		warnx("%s: RFC 6487 section 4.8.8: SIA: "
-		    "failed to parse rsync URI", p->fn);
-		free(p->res->mft);
-		p->res->mft = NULL;
-		return 0;
-	}
-	if (rt != RTYPE_MFT) {
-		warnx("%s: RFC 6487 section 4.8.8: SIA: "
-		    "invalid rsync URI suffix", p->fn);
-		free(p->res->mft);
-		p->res->mft = NULL;
-		return 0;
-	}
 	return 1;
 }
 
