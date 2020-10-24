@@ -3,7 +3,7 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.powerpc64/MAKEDEV.md,v 1.5 2020/07/22 14:04:35 deraadt Exp 
+#	OpenBSD: etc.powerpc64/MAKEDEV.md,v 1.6 2020/10/24 21:10:41 kettenis Exp 
 #	OpenBSD: MAKEDEV.common,v 1.111 2020/07/06 06:11:26 dlg Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
@@ -64,6 +64,7 @@
 #	bio	ioctl tunnel pseudo-device
 #	bpf	Berkeley Packet Filter
 #	diskmap	Disk mapper
+#	drm*	Direct Rendering Manager
 #	dt	Dynamic Tracer
 #	fd	fd/* nodes
 #	fuse	Userland Filesystem
@@ -316,6 +317,12 @@ dt)
 	M dt c 13 0 600
 	;;
 
+drm*)
+	M drm$U c 87 $U 600
+	r=$(($U+128))
+	M drmR$r c 87 $r 600
+	;;
+
 diskmap)
 	M diskmap c 10 0 640 operator
 	;;
@@ -486,13 +493,13 @@ local)
 all)
 	R vscsi0 vnd0 vnd1 vnd2 vnd3 tun0 tun1 tun2 tun3 tap0 tap1
 	R tap2 tap3 switch0 switch1 switch2 switch3 sd0 sd1 sd2 sd3
-	R sd4 sd5 sd6 sd7 sd8 sd9 rd0 pty0 ipmi0 diskmap cd0 cd1 bio
-	R audio0 audio1 audio2 audio3 kstat dt kcov bpf fuse pppac
-	R pppx hotplug ptm local wscons pci0 pci1 pci2 pci3 uall
-	R rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
-	R radio0 uk0 random lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 tty00 tty01
-	R tty02 tty03 tty04 tty05 tty06 tty07 tty08 tty09 tty0a tty0b
-	R pf std st0 st1 fd
+	R sd4 sd5 sd6 sd7 sd8 sd9 rd0 pty0 ipmi0 drm0 drm1 drm2 drm3
+	R diskmap cd0 cd1 bio audio0 audio1 audio2 audio3 kstat dt
+	R kcov bpf fuse pppac pppx hotplug ptm local wscons pci0 pci1
+	R pci2 pci3 uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5
+	R rmidi6 rmidi7 radio0 uk0 random lpa0 lpa1 lpa2 lpt0 lpt1
+	R lpt2 tty00 tty01 tty02 tty03 tty04 tty05 tty06 tty07 tty08
+	R tty09 tty0a tty0b pf std st0 st1 fd
 	;;
 
 sd*)
