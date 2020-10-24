@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.269 2020/10/22 17:11:27 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.270 2020/10/24 20:27:59 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -920,6 +920,9 @@ ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
 		memcpy(&sa->sa_peerauth, &msg->msg_auth, sizeof(sa->sa_peerauth));
 		bzero(&msg->msg_auth, sizeof(msg->msg_auth));
 	}
+
+	if (msg->msg_cp)
+		sa->sa_cp = msg->msg_cp;
 
 	/* For EAP and PSK AUTH can be verified without the CA process*/
 	if ((sa->sa_policy->pol_auth.auth_eap &&

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.106 2020/10/22 17:11:27 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.107 2020/10/24 20:27:59 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1807,7 +1807,6 @@ ikev2_pld_cp(struct iked *env, struct ikev2_payload *pld,
 	struct ikev2_cfg	*cfg;
 	uint8_t			*ptr;
 	size_t			 len;
-	struct iked_sa		*sa = msg->msg_sa;
 
 	if (ikev2_validate_cp(msg, offset, left, &cp))
 		return (-1);
@@ -1849,8 +1848,7 @@ ikev2_pld_cp(struct iked *env, struct ikev2_payload *pld,
 	if (!ikev2_msg_frompeer(msg))
 		return (0);
 
-	if (sa)
-		sa->sa_cp = cp.cp_type;
+	msg->msg_parent->msg_cp = cp.cp_type;
 
 	return (0);
 }
