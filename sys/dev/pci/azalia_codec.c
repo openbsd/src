@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.179 2020/10/22 18:11:13 robert Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.180 2020/10/24 12:51:58 jmc Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -35,6 +35,8 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <dev/pci/azalia.h>
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcidevs.h>
 
 #define XNAME(co)	(((struct device *)co->az)->dv_xname)
 #define MIXER_DELTA(n)	(AUDIO_MAX_GAIN / (n))
@@ -82,6 +84,12 @@ azalia_codec_init_vtbl(codec_t *this)
 	case 0x10ec0221:
 		this->name = "Realtek ALC221";
 		this->qrks |= AZ_QRK_WID_CDIN_1C | AZ_QRK_WID_BEEP_1D;
+		break;
+	case 0x10ec0236:
+		if (PCI_VENDOR(this->subid) == PCI_VENDOR_DELL)
+			this->name = "Realtek ALC3204";
+		else
+			this->name = "Realtek ALC236";
 		break;
 	case 0x10ec0260:
 		this->name = "Realtek ALC260";
