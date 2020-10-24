@@ -1,4 +1,4 @@
-.\" $OpenBSD: skey.5,v 1.8 2019/01/25 00:19:26 millert Exp $
+.\" $OpenBSD: skey.5,v 1.9 2020/10/24 10:33:44 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Todd C. Miller <millert@openbsd.org>
 .\"
@@ -18,7 +18,7 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.Dd $Mdocdate: January 25 2019 $
+.Dd $Mdocdate: October 24 2020 $
 .Dt SKEY 5
 .Os
 .Sh NAME
@@ -31,7 +31,7 @@ directory contains user records for the S/Key one-time password authentication
 system.
 .Pp
 Records take the form of files within
-.Pa /etc/skey
+.Pa /etc/skey ,
 where each file is named for the user whose record it contains.
 For example,
 .Pa /etc/skey/root
@@ -51,7 +51,7 @@ Each record consists of five lines:
 The name of the user the record describes.
 This should be the same as the name of the file.
 .It
-The hash type used for this entry;
+The hash type used for this entry:
 one of md5, sha1, or rmd160.
 The default is md5.
 .It
@@ -62,7 +62,7 @@ Each time the user authenticates via S/Key this number is decremented by one.
 A seed used along with the sequence number and the six S/Key words to
 compute the value.
 .It
-The value expected from the crunching of the user's seed, sequence number
+The value expected from the crunching of the user's seed, sequence number,
 and the six S/Key words.
 When the result matches this value, authentication is considered to have
 been successful.
