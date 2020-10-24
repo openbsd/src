@@ -1,4 +1,4 @@
-/*	$OpenBSD: vpci.c,v 1.31 2020/06/25 21:43:41 jmatthew Exp $	*/
+/*	$OpenBSD: vpci.c,v 1.32 2020/10/24 05:07:47 jmatthew Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -273,6 +273,8 @@ vpci_init_msi(struct vpci_softc *sc, struct vpci_pbm *pbm)
 
 	/* One eq per cpu, limited by the number of eqs. */
 	num_eq = min(ncpus, getpropint(sc->sc_node, "#msi-eqs", 36));
+	if (num_eq == 0)
+		return;
 
 	if (OF_getprop(sc->sc_node, "msi-address-ranges",
 	    msi_addr_range, sizeof(msi_addr_range)) <= 0)
