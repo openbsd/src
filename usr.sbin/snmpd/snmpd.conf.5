@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.44 2020/09/10 17:54:47 martijn Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.45 2020/10/24 14:52:11 jmc Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 10 2020 $
+.Dd $Mdocdate: October 24 2020 $
 .Dt SNMPD.CONF 5
 .Os
 .Sh NAME
@@ -193,7 +193,7 @@ the resolved hostname of the host sending the trap,
 the IP address of the host sending the trap,
 and any variable bindings contained in the trap
 (the OID followed by the value, separated by a single space).
-Traps will will be accepted on all
+Traps will be accepted on all
 .Ic listen on
 UDP addresses.
 .It Xo
