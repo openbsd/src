@@ -1,5 +1,5 @@
 # $NetBSD: files.drm,v 1.2 2007/03/28 11:29:37 jmcneill Exp $
-# $OpenBSD: files.drm,v 1.49 2020/06/08 04:47:58 jsg Exp $
+# $OpenBSD: files.drm,v 1.50 2020/10/25 09:43:46 kettenis Exp $
 
 # direct rendering modules
 define drmbase {[primary = -1]}
@@ -104,7 +104,7 @@ file	dev/pci/drm/scheduler/sched_entity.c	drm_sched
 file	dev/pci/drm/scheduler/sched_fence.c	drm_sched
 file	dev/pci/drm/scheduler/sched_main.c	drm_sched
 
-device	inteldrm: agpint, drmbase, wsemuldisplaydev, rasops32, rasops_rotation, i2cbus, i2c_bitbang
+device	inteldrm: agpint, drmbase, wsemuldisplaydev, rasops32, rasops_rotation, firmload, i2cbus, i2c_bitbang
 attach	inteldrm at pci
 file	dev/pci/drm/i915/display/dvo_ch7017.c		inteldrm
 file	dev/pci/drm/i915/display/dvo_ch7xxx.c		inteldrm
@@ -384,7 +384,7 @@ file	dev/pci/drm/i915/oa/i915_oa_tgl.c		inteldrm
 #file	dev/pci/drm/i915/selftests/scatterlist.c	inteldrm
 file	dev/pci/drm/i915/vlv_suspend.c			inteldrm
 
-device	radeondrm: drmbase, ttm, wsemuldisplaydev, rasops8, rasops32, i2cbus, i2c_bitbang
+device	radeondrm: drmbase, ttm, wsemuldisplaydev, rasops8, rasops32, firmload, i2cbus, i2c_bitbang
 attach	radeondrm at pci
 file	dev/pci/drm/radeon/atom.c			radeondrm
 file	dev/pci/drm/radeon/atombios_crtc.c		radeondrm
@@ -784,7 +784,7 @@ file	dev/pci/drm/amd/amdgpu/amdgpu_kv_smc.c		amdgpu_cik
 file	dev/pci/drm/amd/amdgpu/amdgpu_uvd_v4_2.c	amdgpu_cik
 file	dev/pci/drm/amd/amdgpu/amdgpu_vce_v2_0.c	amdgpu_cik
 
-device	amdgpu: drmbase, ttm, wsemuldisplaydev, rasops8, rasops32, i2cbus, i2c_bitbang, drm_sched, powerplay, amddal
+device	amdgpu: drmbase, ttm, wsemuldisplaydev, rasops8, rasops32, firmload, i2cbus, i2c_bitbang, drm_sched, powerplay, amddal
 attach	amdgpu at pci
 #file	dev/pci/drm/amd/amdgpu/amdgpu_acp.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_acpi.c		amdgpu & acpi
