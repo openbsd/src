@@ -1,4 +1,4 @@
-/*	$OpenBSD: agentx_control.c,v 1.1 2020/09/14 11:30:25 martijn Exp $	*/
+/*	$OpenBSD: agentx_control.c,v 1.2 2020/10/25 10:17:49 denis Exp $	*/
 
 /*
  * Copyright (c) 2020 Martijn van Duren <martijn@openbsd.org>
@@ -898,7 +898,7 @@ agentx_session(struct subagentx_varbind *sav)
 			subagentx_varbind_integer(sav, 2);
 		else
 			subagentx_varbind_integer(sav, 0);
-	} else if (subagentx_varbind_get_object(sav) == relaydSessionPortIn) 
+	} else if (subagentx_varbind_get_object(sav) == relaydSessionPortIn)
 		subagentx_varbind_integer(sav, session->se_in.port);
 	else if (subagentx_varbind_get_object(sav) == relaydSessionPortOut)
 		subagentx_varbind_integer(sav, session->se_out.port);

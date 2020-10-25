@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.246 2020/09/14 11:30:25 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.247 2020/10/25 10:17:49 denis Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -1971,7 +1971,7 @@ relayoptsl	: LISTEN ON STRING port opttls {
 				yyerror("more than one protocol specified");
 				YYERROR;
 			}
-				
+
 			TAILQ_FOREACH(p, conf->sc_protos, entry)
 				if (!strcmp(p->name, $2))
 					break;

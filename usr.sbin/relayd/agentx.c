@@ -34,7 +34,7 @@
 
 static int agentx_pdu_need(struct agentx *, size_t);
 static int agentx_pdu_header(struct agentx *,
-    enum agentx_pdu_type, uint8_t, uint32_t, uint32_t, uint32_t, 
+    enum agentx_pdu_type, uint8_t, uint32_t, uint32_t, uint32_t,
     struct agentx_ostring *);
 static uint32_t agentx_packetid(struct agentx *);
 static uint32_t agentx_pdu_queue(struct agentx *);
@@ -801,7 +801,7 @@ agentx_varbind2string(struct agentx_varbind *vb)
 				ishex = 1;
 		}
 		if (ishex) {
-			p = tmpbuf; 
+			p = tmpbuf;
 			bufleft = sizeof(tmpbuf);
 			for (i = 0;
 			    i < vb->avb_data.avb_ostring.aos_slen; i++) {
@@ -845,7 +845,7 @@ agentx_varbind2string(struct agentx_varbind *vb)
 		    agentx_oid2string(&(vb->avb_oid)));
 		break;
 	case AGENTX_DATA_TYPE_OID:
-		(void) strlcpy(tmpbuf, 
+		(void) strlcpy(tmpbuf,
 		    agentx_oid2string(&(vb->avb_data.avb_oid)), sizeof(tmpbuf));
 		snprintf(buf, sizeof(buf), "%s: (oid)%s",
 		    agentx_oid2string(&(vb->avb_oid)), tmpbuf);
@@ -856,7 +856,7 @@ agentx_varbind2string(struct agentx_varbind *vb)
 			    agentx_oid2string(&(vb->avb_oid)));
 			break;
 		}
-		if (inet_ntop(PF_INET, vb->avb_data.avb_ostring.aos_string, 
+		if (inet_ntop(PF_INET, vb->avb_data.avb_ostring.aos_string,
 		    tmpbuf, sizeof(tmpbuf)) == NULL) {
 			snprintf(buf, sizeof(buf), "%s: (ipaddress)"
 			    "<unparseable>: %s",
@@ -880,7 +880,7 @@ agentx_varbind2string(struct agentx_varbind *vb)
 		    agentx_oid2string(&(vb->avb_oid)), vb->avb_data.avb_uint32);
 		break;
 	case AGENTX_DATA_TYPE_OPAQUE:
-		p = tmpbuf; 
+		p = tmpbuf;
 		bufleft = sizeof(tmpbuf);
 		for (i = 0;
 		    i < vb->avb_data.avb_ostring.aos_slen; i++) {
@@ -1260,7 +1260,7 @@ agentx_pdutooid(struct agentx_pdu_header *header, struct agentx_oid *oid,
 		oid->aoi_id[i] = agentx_pdutoh32(header, buf);
 
 	return nread;
-		
+
 fail:
 	errno = EPROTO;
 	return -1;
@@ -1274,7 +1274,7 @@ agentx_pdutoostring(struct agentx_pdu_header *header,
 
 	if (rawlen < 4)
 		goto fail;
-	
+
 	ostring->aos_slen = agentx_pdutoh32(header, buf);
 	rawlen -= 4;
 	buf += 4;
@@ -1288,7 +1288,7 @@ agentx_pdutoostring(struct agentx_pdu_header *header,
 	nread = 4 + ostring->aos_slen;
 	if (ostring->aos_slen % 4 != 0)
 		nread += 4 - (ostring->aos_slen % 4);
-		
+
 	return nread;
 
 fail:
@@ -1308,7 +1308,7 @@ agentx_pdutovarbind(struct agentx_pdu_header *header,
 	if (rawlen < 8)
 		goto fail;
 	varbind->avb_type = agentx_pdutoh16(header, buf);
-	
+
 	buf += 4;
 	rawlen -= 4;
 	nread = agentx_pdutooid(header, &(varbind->avb_oid), buf, rawlen);
