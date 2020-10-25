@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.68 2020/08/18 13:41:49 visa Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.69 2020/10/25 10:55:42 visa Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/fcntl.h>
+#include <sys/mutex.h>
 #include <sys/timeout.h>
 
 #ifdef KTRACE
@@ -69,8 +70,12 @@
 #define LOG_ASYNC	0x04
 #define LOG_RDWAIT	0x08
 
+/*
+ * Locking:
+ *	L	log_mtx
+ */
 struct logsoftc {
-	int	sc_state;		/* see above for possibilities */
+	int	sc_state;		/* [L] see above for possibilities */
 	struct	selinfo sc_selp;	/* process waiting on select call */
 	struct	sigio_ref sc_sigio;	/* async I/O registration */
 	int	sc_need_wakeup;		/* if set, wake up waiters */
@@ -82,6 +87,14 @@ int	msgbufmapped;			/* is the message buffer mapped */
 struct	msgbuf *msgbufp;		/* the mapped buffer, itself. */
 struct	msgbuf *consbufp;		/* console message buffer. */
 struct	file *syslogf;
+
+/*
+ * Lock that serializes access to log message buffers.
+ * This should be kept as a leaf lock in order not to constrain where
+ * printf(9) can be used.
+ */
+struct	mutex log_mtx =
+    MUTEX_INITIALIZER_FLAGS(IPL_HIGH, "logmtx", MTX_NOWITNESS);
 
 void filt_logrdetach(struct knote *kn);
 int filt_logread(struct knote *kn, long hint);
@@ -144,13 +157,11 @@ initconsbuf(void)
 void
 msgbuf_putchar(struct msgbuf *mbp, const char c)
 {
-	int s;
-
 	if (mbp->msg_magic != MSG_MAGIC)
 		/* Nothing we can do */
 		return;
 
-	s = splhigh();
+	mtx_enter(&log_mtx);
 	mbp->msg_bufc[mbp->msg_bufx++] = c;
 	if (mbp->msg_bufx < 0 || mbp->msg_bufx >= mbp->msg_bufs)
 		mbp->msg_bufx = 0;
@@ -160,20 +171,19 @@ msgbuf_putchar(struct msgbuf *mbp, const char c)
 			mbp->msg_bufr = 0;
 		mbp->msg_bufd++;
 	}
-	splx(s);
+	mtx_leave(&log_mtx);
 }
 
 size_t
 msgbuf_getlen(struct msgbuf *mbp)
 {
 	long len;
-	int s;
 
-	s = splhigh();
+	mtx_enter(&log_mtx);
 	len = mbp->msg_bufx - mbp->msg_bufr;
 	if (len < 0)
 		len += mbp->msg_bufs;
-	splx(s);
+	mtx_leave(&log_mtx);
 	return (len);
 }
 
@@ -208,34 +218,47 @@ logclose(dev_t dev, int flag, int mode, struct proc *p)
 int
 logread(dev_t dev, struct uio *uio, int flag)
 {
+	struct sleep_state sls;
 	struct msgbuf *mbp = msgbufp;
-	size_t l;
-	int s, error = 0;
+	size_t l, rpos;
+	int error = 0;
 
-	s = splhigh();
+	mtx_enter(&log_mtx);
 	while (mbp->msg_bufr == mbp->msg_bufx) {
 		if (flag & IO_NDELAY) {
 			error = EWOULDBLOCK;
 			goto out;
 		}
 		logsoftc.sc_state |= LOG_RDWAIT;
-		error = tsleep_nsec(mbp, LOG_RDPRI | PCATCH, "klog", INFSLP);
+		mtx_leave(&log_mtx);
+		/*
+		 * Set up and enter sleep manually instead of using msleep()
+		 * to keep log_mtx as a leaf lock.
+		 */
+		sleep_setup(&sls, mbp, LOG_RDPRI | PCATCH, "klog");
+		sleep_setup_signal(&sls);
+		sleep_finish(&sls, logsoftc.sc_state & LOG_RDWAIT);
+		error = sleep_finish_signal(&sls);
+		mtx_enter(&log_mtx);
 		if (error)
 			goto out;
 	}
-	logsoftc.sc_state &= ~LOG_RDWAIT;
 
 	if (mbp->msg_bufd > 0) {
 		char buf[64];
+		long ndropped;
 
+		ndropped = mbp->msg_bufd;
+		mtx_leave(&log_mtx);
 		l = snprintf(buf, sizeof(buf),
 		    "<%d>klog: dropped %ld byte%s, message buffer full\n",
-		    LOG_KERN|LOG_WARNING, mbp->msg_bufd,
-                    mbp->msg_bufd == 1 ? "" : "s");
+		    LOG_KERN|LOG_WARNING, ndropped,
+		    ndropped == 1 ? "" : "s");
 		error = uiomove(buf, ulmin(l, sizeof(buf) - 1), uio);
+		mtx_enter(&log_mtx);
 		if (error)
 			goto out;
-		mbp->msg_bufd = 0;
+		mbp->msg_bufd -= ndropped;
 	}
 
 	while (uio->uio_resid > 0) {
@@ -246,7 +269,11 @@ logread(dev_t dev, struct uio *uio, int flag)
 		l = ulmin(l, uio->uio_resid);
 		if (l == 0)
 			break;
-		error = uiomove(&mbp->msg_bufc[mbp->msg_bufr], l, uio);
+		rpos = mbp->msg_bufr;
+		mtx_leave(&log_mtx);
+		/* Ignore that concurrent readers may consume the same data. */
+		error = uiomove(&mbp->msg_bufc[rpos], l, uio);
+		mtx_enter(&log_mtx);
 		if (error)
 			break;
 		mbp->msg_bufr += l;
@@ -254,23 +281,23 @@ logread(dev_t dev, struct uio *uio, int flag)
 			mbp->msg_bufr = 0;
 	}
  out:
-	splx(s);
+	mtx_leave(&log_mtx);
 	return (error);
 }
 
 int
 logpoll(dev_t dev, int events, struct proc *p)
 {
-	int s, revents = 0;
+	int revents = 0;
 
-	s = splhigh();
+	mtx_enter(&log_mtx);
 	if (events & (POLLIN | POLLRDNORM)) {
 		if (msgbufp->msg_bufr != msgbufp->msg_bufx)
 			revents |= events & (POLLIN | POLLRDNORM);
 		else
 			selrecord(p, &logsoftc.sc_selp);
 	}
-	splx(s);
+	mtx_leave(&log_mtx);
 	return (revents);
 }
 
@@ -339,6 +366,8 @@ logwakeup(void)
 void
 logtick(void *arg)
 {
+	int state;
+
 	if (!log_open)
 		return;
 
@@ -348,17 +377,20 @@ logtick(void *arg)
 
 	/*
 	 * sc_need_wakeup has to be cleared before handling the wakeup.
-	 * This ensures that no wakeup is lost.
+	 * Visiting log_mtx ensures the proper order.
 	 */
-	membar_enter();
+
+	mtx_enter(&log_mtx);
+	state = logsoftc.sc_state;
+	if (logsoftc.sc_state & LOG_RDWAIT)
+		logsoftc.sc_state &= ~LOG_RDWAIT;
+	mtx_leave(&log_mtx);
 
 	selwakeup(&logsoftc.sc_selp);
-	if (logsoftc.sc_state & LOG_ASYNC)
+	if (state & LOG_ASYNC)
 		pgsigio(&logsoftc.sc_sigio, SIGIO, 0);
-	if (logsoftc.sc_state & LOG_RDWAIT) {
+	if (state & LOG_RDWAIT)
 		wakeup(msgbufp);
-		logsoftc.sc_state &= ~LOG_RDWAIT;
-	}
 out:
 	timeout_add_msec(&logsoftc.sc_tick, LOG_TICK);
 }
@@ -380,10 +412,12 @@ logioctl(dev_t dev, u_long com, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case FIOASYNC:
+		mtx_enter(&log_mtx);
 		if (*(int *)data)
 			logsoftc.sc_state |= LOG_ASYNC;
 		else
 			logsoftc.sc_state &= ~LOG_ASYNC;
+		mtx_leave(&log_mtx);
 		break;
 
 	case FIOSETOWN:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msgbuf.h,v 1.12 2020/08/18 13:38:24 visa Exp $	*/
+/*	$OpenBSD: msgbuf.h,v 1.13 2020/10/25 10:55:42 visa Exp $	*/
 /*	$NetBSD: msgbuf.h,v 1.8 1995/03/26 20:24:27 jtc Exp $	*/
 
 /*
@@ -32,14 +32,20 @@
  *	@(#)msgbuf.h	8.1 (Berkeley) 6/2/93
  */
 
+/*
+ * Locking:
+ *	I	immutable after creation
+ *	L	log_mtx
+ *	Lw	log_mtx for writing
+ */
 struct	msgbuf {
 #define	MSG_MAGIC	0x063061
-	long	msg_magic;
-	long	msg_bufx;		/* write pointer */
-	long	msg_bufr;		/* read pointer */
-	long	msg_bufs;		/* real msg_bufc size (bytes) */
-	long	msg_bufd;		/* number of dropped bytes */
-	char	msg_bufc[1];		/* buffer */
+	long	msg_magic;		/* [I] buffer magic value */
+	long	msg_bufx;		/* [L] write pointer */
+	long	msg_bufr;		/* [L] read pointer */
+	long	msg_bufs;		/* [I] real msg_bufc size (bytes) */
+	long	msg_bufd;		/* [L] number of dropped bytes */
+	char	msg_bufc[1];		/* [Lw] buffer */
 };
 #ifdef _KERNEL
 #define CONSBUFSIZE	(16 * 1024)	/* console message buffer size */
