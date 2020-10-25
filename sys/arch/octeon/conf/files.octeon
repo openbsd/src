@@ -1,4 +1,4 @@
-#	$OpenBSD: files.octeon,v 1.57 2020/05/14 15:44:07 kettenis Exp $
+#	$OpenBSD: files.octeon,v 1.58 2020/10/25 10:31:33 visa Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -177,7 +177,7 @@ device	ogxnexus {}
 attach	ogxnexus at fdt
 file	arch/octeon/dev/ogxnexus.c			ogxnexus
 
-device	ogx: ether, ifnet, ifmedia, mii
+device	ogx: ether, ifnet, ifmedia, mii, firmload
 attach	ogx at ogxnexus
 file	arch/octeon/dev/if_ogx.c			ogx
 
