@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia_codec.c,v 1.181 2020/10/25 01:36:59 jsg Exp $	*/
+/*	$OpenBSD: azalia_codec.c,v 1.182 2020/10/25 02:54:38 jsg Exp $	*/
 /*	$NetBSD: azalia_codec.c,v 1.8 2006/05/10 11:17:27 kent Exp $	*/
 
 /*-
@@ -321,9 +321,8 @@ azalia_codec_init_vtbl(codec_t *this)
 		break;
 	case 0x111d7603:
 		this->name = "IDT 92HD75B3/4";
-		if ((this->subid & 0x0000ffff) == 0x0000103c) {	/* HP */
+		if (PCI_VENDOR(this->subid) == PCI_VENDOR_HP)
 			this->qrks |= AZ_QRK_GPIO_UNMUTE_0;
-		}
 		break;
 	case 0x111d7604:
 		this->name = "IDT 92HD83C1X";
@@ -333,18 +332,16 @@ azalia_codec_init_vtbl(codec_t *this)
 		break;
 	case 0x111d7608:
 		this->name = "IDT 92HD75B1/2";
-		if ((this->subid & 0x0000ffff) == 0x0000103c) {	/* HP */
+		if (PCI_VENDOR(this->subid) == PCI_VENDOR_HP)
 			this->qrks |= AZ_QRK_GPIO_UNMUTE_0;
-		}
 		break;
 	case 0x111d7674:
 		this->name = "IDT 92HD73D1";
 		break;
 	case 0x111d7675:
 		this->name = "IDT 92HD73C1";	/* aka 92HDW74C1 */
-		if ((this->subid & 0x0000ffff) == 0x00001028) {	/* DELL */
+		if (PCI_VENDOR(this->subid) == PCI_VENDOR_DELL)
 			this->qrks |= AZ_QRK_GPIO_UNMUTE_0;
-		}
 		break;
 	case 0x111d7676:
 		this->name = "IDT 92HD73E1";	/* aka 92HDW74E1 */
@@ -354,10 +351,9 @@ azalia_codec_init_vtbl(codec_t *this)
 		break;
 	case 0x111d76b2:
 		this->name = "IDT 92HD71B7";
-		if ((this->subid & 0x0000ffff) == 0x00001028 || /* DELL */
-		    (this->subid & 0x0000ffff) == 0x0000103c) { /* HP */
+		if (PCI_VENDOR(this->subid) == PCI_VENDOR_DELL ||
+		    PCI_VENDOR(this->subid) == PCI_VENDOR_HP)
 			this->qrks |= AZ_QRK_GPIO_UNMUTE_0;
-		}
 		break;
 	case 0x111d76b6:
 		this->name = "IDT 92HD71B5";
