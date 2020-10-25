@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.257 2020/06/09 03:36:05 jsg Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.258 2020/10/25 04:16:55 jsg Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -386,6 +386,10 @@ azalia_configure_pci(azalia_t *az)
 	switch (PCI_PRODUCT(az->pciid)) {
 	case PCI_PRODUCT_ATI_SB450_HDA:
 	case PCI_PRODUCT_ATI_SBX00_HDA:
+	case PCI_PRODUCT_AMD_15_6X_AUDIO:
+	case PCI_PRODUCT_AMD_17_HDA:
+	case PCI_PRODUCT_AMD_17_1X_HDA:
+	case PCI_PRODUCT_AMD_17_3X_HDA:
 	case PCI_PRODUCT_AMD_HUDSON2_HDA:
 		reg = azalia_pci_read(az->pc, az->tag, ATI_PCIE_SNOOP_REG);
 		reg &= ATI_PCIE_SNOOP_MASK;
