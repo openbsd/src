@@ -1,4 +1,4 @@
-/*	$OpenBSD: phb.c,v 1.17 2020/10/24 14:38:46 kettenis Exp $	*/
+/*	$OpenBSD: phb.c,v 1.18 2020/10/25 14:11:16 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -35,6 +35,15 @@ extern paddr_t physmax;		/* machdep.c */
 
 #define IODA_TVE_SELECT		(1ULL << 59)
 
+#define IODA_TCE_TABLE_SIZE_MAX	(1ULL << 42)
+
+#define IODA_TCE_READ		(1ULL << 0)
+#define IODA_TCE_WRITE		(1ULL << 1)
+
+#define PHB_DMA_OFFSET		(1ULL << 32)
+
+struct phb_dmamem;
+
 struct phb_range {
 	uint32_t		flags;
 	uint64_t		pci_base;
@@ -57,6 +66,7 @@ struct phb_softc {
 
 	uint64_t		sc_phb_id;
 	uint64_t		sc_pe_number;
+	struct phb_dmamem	*sc_tce_table;
 	uint32_t		sc_msi_ranges[2];
 	uint32_t		sc_xive;
 
@@ -71,6 +81,22 @@ struct phb_softc {
 	int			sc_bus;
 };
 
+struct phb_dmamem {
+	bus_dmamap_t		pdm_map;
+	bus_dma_segment_t	pdm_seg;
+	size_t			pdm_size;
+	caddr_t			pdm_kva;
+};
+
+#define PHB_DMA_MAP(_pdm)	((_pdm)->pdm_map)
+#define PHB_DMA_LEN(_pdm)	((_pdm)->pdm_size)
+#define PHB_DMA_DVA(_pdm)	((_pdm)->pdm_map->dm_segs[0].ds_addr)
+#define PHB_DMA_KVA(_pdm)	((void *)(_pdm)->pdm_kva)
+
+struct phb_dmamem *phb_dmamem_alloc(bus_dma_tag_t, bus_size_t,
+	    bus_size_t);
+void	phb_dmamem_free(bus_dma_tag_t, struct phb_dmamem *);
+
 int	phb_match(struct device *, void *, void *);
 void	phb_attach(struct device *, struct device *, void *);
 
@@ -81,6 +107,8 @@ struct cfattach	phb_ca = {
 struct cfdriver phb_cd = {
 	NULL, "phb", DV_DULL
 };
+
+void	phb_setup_tce_table(struct phb_softc *sc);
 
 void	phb_attach_hook(struct device *, struct device *,
 	    struct pcibus_attach_args *);
@@ -200,8 +228,7 @@ phb_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	ranges = malloc(rangeslen, M_TEMP, M_WAITOK);
-	OF_getpropintarray(sc->sc_node, "ranges", ranges,
-	    rangeslen);
+	OF_getpropintarray(sc->sc_node, "ranges", ranges, rangeslen);
 
 	/*
 	 * Reserve an extra slot here and make sure it is filled
@@ -318,6 +345,24 @@ phb_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
+	/*
+	 * The DMA controllers of many PCI devices developed for the
+	 * x86 architectures may not support the full 64-bit PCI
+	 * address space.  Examples of such devices are Radeon GPUs
+	 * that support only 36, 40 or 44 address lines.  This means
+	 * they can't enable the TVE selection bit to request IODA
+	 * no-translate (bypass) operation.
+	 *
+	 * To allow such devices to work, we set up a TCE table that
+	 * provides a 1:1 mapping of all physical memory where the
+	 * physical page at address zero as mapped at 4 GB in PCI
+	 * address space.  If we fail to set up this TCE table we fall
+	 * back on using no-translate operation, which means that
+	 * devices that don't implenent 64 address lines may not
+	 * function properly.
+	 */
+	phb_setup_tce_table(sc);
+
 	memcpy(&sc->sc_bus_iot, sc->sc_iot, sizeof(sc->sc_bus_iot));
 	sc->sc_bus_iot.bus_private = sc;
 	sc->sc_bus_iot._space_map = phb_bs_iomap;
@@ -374,6 +419,69 @@ phb_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_flags |= PCI_FLAGS_MSI_ENABLED;
 
 	config_found(self, &pba, NULL);
+}
+
+void
+phb_setup_tce_table(struct phb_softc *sc)
+{
+	uint64_t tce_table_size, tce_page_size;
+	uint64_t *tce;
+	uint32_t *tce_sizes;
+	int tce_page_shift;
+	int i, len, offset, nentries;
+	paddr_t pa;
+	int64_t error;
+
+	/* Determine the maximum supported TCE page size. */
+	len = OF_getproplen(sc->sc_node, "ibm,supported-tce-sizes");
+	if (len <= 0 || (len % sizeof(uint32_t)))
+		return;
+	tce_sizes = malloc(len, M_TEMP, M_WAITOK);
+	OF_getpropintarray(sc->sc_node, "ibm,supported-tce-sizes",
+	    tce_sizes, len);
+	tce_page_shift = 0;
+	for (i = 0; i < len / sizeof(uint32_t); i++)
+		tce_page_shift = MAX(tce_page_shift, tce_sizes[i]);
+	free(tce_sizes, M_TEMP, len);
+
+	/* Bail out if we don't support 2G pages. */
+	if (tce_page_shift < 30)
+		return;
+
+	/* Calculate the appropriate size of the TCE table. */
+	tce_page_size = (1ULL << tce_page_shift);
+	tce_table_size = PAGE_SIZE;
+	nentries = howmany(PHB_DMA_OFFSET + physmax, tce_page_size);
+	while (tce_table_size < nentries * sizeof(*tce))
+		tce_table_size *= 2;
+	if (tce_table_size > IODA_TCE_TABLE_SIZE_MAX)
+		return;
+
+	/* Allocate the TCE table. */
+	sc->sc_tce_table = phb_dmamem_alloc(sc->sc_dmat,
+	    tce_table_size, PAGE_SIZE);
+	if (sc->sc_tce_table == NULL) {
+		printf(": can't allocate DMA translation table\n");
+		return;
+	}
+
+	/* Fill TCE table. */
+	tce = PHB_DMA_KVA(sc->sc_tce_table);
+	offset = PHB_DMA_OFFSET >> tce_page_shift;
+	for (pa = 0, i = 0; pa < physmax; pa += tce_page_size, i++)
+		tce[i + offset] = pa | IODA_TCE_READ | IODA_TCE_WRITE;
+
+	/* Set up translations. */
+	error = opal_pci_map_pe_dma_window(sc->sc_phb_id,
+	    sc->sc_pe_number, sc->sc_pe_number << 1, 1,
+	    PHB_DMA_DVA(sc->sc_tce_table), PHB_DMA_LEN(sc->sc_tce_table),
+	    tce_page_size);
+	if (error != OPAL_SUCCESS) {
+		printf("%s: can't enable DMA window\n", sc->sc_dev.dv_xname);
+		phb_dmamem_free(sc->sc_dmat, sc->sc_tce_table);
+		sc->sc_tce_table = NULL;
+		return;
+	}
 }
 
 void
@@ -676,8 +784,13 @@ phb_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		return error;
 
 	/* For each segment. */
-	for (seg = firstseg; seg <= *segp; seg++)
-		map->dm_segs[seg].ds_addr |= IODA_TVE_SELECT;
+	for (seg = firstseg; seg <= *segp; seg++) {
+		map->dm_segs[seg].ds_addr = map->dm_segs[seg]._ds_paddr;
+		if (sc->sc_tce_table) 
+			map->dm_segs[seg].ds_addr += PHB_DMA_OFFSET;
+		else
+			map->dm_segs[seg].ds_addr |= IODA_TVE_SELECT;
+	}
 
 	return 0;
 }
@@ -695,8 +808,61 @@ phb_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 		return error;
 
 	/* For each segment. */
-	for (seg = 0; seg < nsegs; seg++)
-		map->dm_segs[seg].ds_addr |= IODA_TVE_SELECT;
+	for (seg = 0; seg < nsegs; seg++) {
+		map->dm_segs[seg].ds_addr = map->dm_segs[seg]._ds_paddr;
+		if (sc->sc_tce_table) 
+			map->dm_segs[seg].ds_addr += PHB_DMA_OFFSET;
+		else
+			map->dm_segs[seg].ds_addr |= IODA_TVE_SELECT;
+	}
 
 	return 0;
+}
+
+struct phb_dmamem *
+phb_dmamem_alloc(bus_dma_tag_t dmat, bus_size_t size, bus_size_t align)
+{
+	struct phb_dmamem *pdm;
+	int nsegs;
+
+	pdm = malloc(sizeof(*pdm), M_DEVBUF, M_WAITOK | M_ZERO);
+	pdm->pdm_size = size;
+
+	if (bus_dmamap_create(dmat, size, 1, size, 0,
+	    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &pdm->pdm_map) != 0)
+		goto pdmfree;
+
+	if (bus_dmamem_alloc(dmat, size, align, 0, &pdm->pdm_seg, 1,
+	    &nsegs, BUS_DMA_WAITOK | BUS_DMA_ZERO) != 0)
+		goto destroy;
+
+	if (bus_dmamem_map(dmat, &pdm->pdm_seg, nsegs, size,
+	    &pdm->pdm_kva, BUS_DMA_WAITOK | BUS_DMA_NOCACHE) != 0)
+		goto free;
+
+	if (bus_dmamap_load_raw(dmat, pdm->pdm_map, &pdm->pdm_seg,
+	    nsegs, size, BUS_DMA_WAITOK) != 0)
+		goto unmap;
+
+	return pdm;
+
+unmap:
+	bus_dmamem_unmap(dmat, pdm->pdm_kva, size);
+free:
+	bus_dmamem_free(dmat, &pdm->pdm_seg, 1);
+destroy:
+	bus_dmamap_destroy(dmat, pdm->pdm_map);
+pdmfree:
+	free(pdm, M_DEVBUF, sizeof(*pdm));
+
+	return NULL;
+}
+
+void
+phb_dmamem_free(bus_dma_tag_t dmat, struct phb_dmamem *pdm)
+{
+	bus_dmamem_unmap(dmat, pdm->pdm_kva, pdm->pdm_size);
+	bus_dmamem_free(dmat, &pdm->pdm_seg, 1);
+	bus_dmamap_destroy(dmat, pdm->pdm_map);
+	free(pdm, M_DEVBUF, sizeof(*pdm));
 }
