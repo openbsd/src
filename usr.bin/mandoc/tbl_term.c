@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_term.c,v 1.61 2020/01/11 16:24:33 schwarze Exp $ */
+/*	$OpenBSD: tbl_term.c,v 1.62 2020/10/25 18:21:07 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2020 Ingo Schwarze <schwarze@openbsd.org>
@@ -187,17 +187,6 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 		tp->tbl.arg = tp;
 
 		tblcalc(&tp->tbl, sp, tp->tcol->offset, tp->tcol->rmargin);
-
-		/* Tables leak .ta settings to subsequent text. */
-
-		term_tab_set(tp, NULL);
-		coloff = sp->opts->opts & (TBL_OPT_BOX | TBL_OPT_DBOX) ||
-		    sp->opts->lvert;
-		for (ic = 0; ic < sp->opts->cols; ic++) {
-			coloff += tp->tbl.cols[ic].width;
-			term_tab_iset(coloff);
-			coloff += tp->tbl.cols[ic].spacing;
-		}
 
 		/* Center the table as a whole. */
 
