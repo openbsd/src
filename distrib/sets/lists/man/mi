@@ -2489,8 +2489,8 @@
 ./usr/share/man/man8/ping.8
 ./usr/share/man/man8/pkg_check.8
 ./usr/share/man/man8/portmap.8
-./usr/share/man/man8/powerpc64/eeprom.8
 ./usr/share/man/man8/powerpc64/MAKEDEV.8
+./usr/share/man/man8/powerpc64/eeprom.8
 ./usr/share/man/man8/pppd.8
 ./usr/share/man/man8/pppstats.8
 ./usr/share/man/man8/pstat.8

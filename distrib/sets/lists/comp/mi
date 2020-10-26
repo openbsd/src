@@ -14,6 +14,7 @@
 ./usr/bin/yacc
 ./usr/include/FlexLexer.h
 ./usr/include/a.out.h
+./usr/include/agentx.h
 ./usr/include/ar.h
 ./usr/include/arpa
 ./usr/include/arpa/ftp.h
