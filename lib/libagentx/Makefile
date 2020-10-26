@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2020/10/26 15:56:02 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 2020/10/26 15:57:03 deraadt Exp $
 
 LIB=	agentx
 
@@ -6,7 +6,7 @@ SRCS=	ax.c agentx.c agentx_log.c
 HDRS=	agentx.h
 MAN=	agentx.3
 
-CFLAGS+=	-Wall -I${.CURDIR}
+CFLAGS+=	-Wall
 CFLAGS+=	-Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+=	-Wmissing-declarations
 CFLAGS+=	-Wshadow -Wpointer-arith -Wcast-qual

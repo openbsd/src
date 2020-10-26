@@ -25,7 +25,7 @@
 #include <unistd.h>
 
 #include "agentx_internal.h"
-#include "agentx.h"
+#include <agentx.h>
 
 enum agentx_index_type {
 	AXI_TYPE_NEW,
