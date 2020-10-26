@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.139 2020/09/13 12:05:23 jsg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.140 2020/10/26 18:35:41 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -854,7 +854,7 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 	 * initialize the pmap pools.
 	 */
 
-	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, IPL_NONE, 0,
+	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, IPL_VM, 0,
 	    "pmappl", NULL);
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, IPL_VM, 0,
 	    "pvpl", &pool_allocator_single);
@@ -864,8 +864,8 @@ pmap_bootstrap(paddr_t first_avail, paddr_t max_pa)
 	 * initialize the PDE pool.
 	 */
 
-	pool_init(&pmap_pdp_pool, PAGE_SIZE, 0, IPL_NONE, PR_WAITOK,
-	    "pdppl", NULL);
+	pool_init(&pmap_pdp_pool, PAGE_SIZE, 0, IPL_VM, 0,
+	    "pdppl", &pool_allocator_single);
 
 	kpm->pm_pdir_intel = NULL;
 	kpm->pm_pdirpa_intel = 0;
