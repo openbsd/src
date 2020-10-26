@@ -1,4 +1,4 @@
-/* $OpenBSD: sigprocmask.S,v 1.12 2016/05/15 00:15:10 guenther Exp $ */
+/* $OpenBSD: sigprocmask.S,v 1.13 2020/10/26 22:07:06 gkoehler Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -30,7 +30,8 @@
 #include "SYS.h"
 
 	.text
-PREFIX_HIDDEN(sigprocmask)
+SYSENTRY_HIDDEN(sigprocmask)
+	RETGUARD_SETUP(sigprocmask)
 	stwu	1, -16(1)
 	stw	5, 12(1)
 	
@@ -43,7 +44,8 @@ PREFIX_HIDDEN(sigprocmask)
 .L_load_set:
 	lwz	4, 0(4)	/* get new mask */
 .L_do_call:
-	
+
+	li	0, SYS_sigprocmask
 	sc
 	
 	/* didnt work? */
@@ -51,7 +53,7 @@ PREFIX_HIDDEN(sigprocmask)
 	beq+	.L_sigprocmask_ok
 	stw	0, R2_OFFSET_ERRNO(2)
 	li	3, -1
-	blr
+	b	.L_end
 
 .L_sigprocmask_ok:
 	lwz	5, 12(1)
@@ -61,5 +63,7 @@ PREFIX_HIDDEN(sigprocmask)
 .L_sigprocmask_done:
 	li	3, 0
 	addi	1, 1, 16
+.L_end:
+	RETGUARD_CHECK(sigprocmask)
 	blr
 SYSCALL_END_HIDDEN(sigprocmask)

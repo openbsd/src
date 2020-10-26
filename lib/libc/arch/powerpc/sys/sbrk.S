@@ -1,4 +1,4 @@
-/* $OpenBSD: sbrk.S,v 1.13 2016/05/30 05:18:52 guenther Exp $ */
+/* $OpenBSD: sbrk.S,v 1.14 2020/10/26 22:07:05 gkoehler Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -39,7 +39,7 @@ __curbrk:
 	.weak	sbrk
 
 	.text
-PSEUDO_PREFIX(,sbrk,break)
+ENTRY(sbrk)
 	
 	/* call break(__curbrk + size) */
 #ifndef __PIC__
@@ -58,6 +58,7 @@ PSEUDO_PREFIX(,sbrk,break)
 	add	3, 5, 3		/* # 3 = new_curbrk */
 	mr	7, 3
 
+	li	0, SYS_break
 	sc
 
 	/* check for error */

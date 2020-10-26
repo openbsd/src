@@ -1,4 +1,4 @@
-/* $OpenBSD: brk.S,v 1.14 2016/05/30 05:18:52 guenther Exp $ */
+/* $OpenBSD: brk.S,v 1.15 2020/10/26 22:07:05 gkoehler Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -32,7 +32,7 @@
 
 	.weak	brk
 
-PSEUDO_PREFIX(,brk,break)
+ENTRY(brk)
 	
 	/* check >= _end, if not make the call for _end */
 #ifndef __PIC__
@@ -61,6 +61,7 @@ PSEUDO_PREFIX(,brk,break)
 	lwz	6,__curbrk@got(9)
 #endif
 
+	li	0, SYS_break
 	sc
 
 	/* check for error */

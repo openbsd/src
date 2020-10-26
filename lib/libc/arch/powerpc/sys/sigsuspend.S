@@ -1,4 +1,4 @@
-/* $OpenBSD: sigsuspend.S,v 1.5 2016/05/07 19:05:22 guenther Exp $ */
+/* $OpenBSD: sigsuspend.S,v 1.6 2020/10/26 22:07:06 gkoehler Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -30,8 +30,18 @@
 #include "SYS.h"
 
 	.text
-PREFIX_HIDDEN(sigsuspend)
-	lwz 3, 0(3)		/* load the mask */
+SYSENTRY_HIDDEN(sigsuspend)
+	RETGUARD_SETUP(sigsuspend)
+	li	%r0, SYS_sigsuspend
+
+	lwz	%r3, 0(%r3)		/* load the mask */
 	sc
-	PSEUDO_SUFFIX
+
+	cmpwi	%r0, 0
+	beq+	.L_ret
+	stw	%r0, R2_OFFSET_ERRNO(2)
+	li	%r3, -1
+.L_ret:
+	RETGUARD_CHECK(sigsuspend)
+	blr
 SYSCALL_END_HIDDEN(sigsuspend)

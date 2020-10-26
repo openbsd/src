@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.23 2019/07/14 03:36:37 guenther Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.24 2020/10/26 22:07:05 gkoehler Exp $	*/
 /*-
  * Copyright (c) 1994
  *	Andrew Cagney.  All rights reserved.
@@ -75,48 +75,42 @@
 #define	END_STRONG(x)	END(x); _HIDDEN_FALIAS(x,x); END(_HIDDEN(x))
 #define	END_WEAK(x)	END_STRONG(x); .weak x
 
-
-#define _CONCAT(x,y)	x##y
-#define PSEUDO_PREFIX(p,x,y)	\
-			ENTRY(p##x) \
-				li 0, SYS_##y ; \
-				/* sc */
-#define PSEUDO_SUFFIX		cmpwi 0, 0 ; \
-				beqlr+ ; \
-				stw	0, R2_OFFSET_ERRNO(2); \
-				li	3, -1; \
-				li	4, -1; /* for __syscall(lseek) */ \
-				blr
-
-#define PSEUDO_NOERROR_SUFFIX	blr
-
-#define __END_HIDDEN(p,x)	END(p##x);			\
-				_HIDDEN_FALIAS(x,p##x);		\
+#define SYSENTRY(x)		WEAK_ALIAS(x, _thread_sys_ ## x);	\
+				ENTRY(_thread_sys_ ## x)
+#define SYSENTRY_HIDDEN(x)	ENTRY(_thread_sys_ ## x)
+#define __END_HIDDEN(x)		END(_thread_sys_ ## x);			\
+				_HIDDEN_FALIAS(x, _thread_sys_ ## x);	\
 				END(_HIDDEN(x))
-#define __END(p,x)		__END_HIDDEN(p,x); END(x)
+#define __END(x)		__END_HIDDEN(x); END(x)
 
+#define	PSEUDO_NOERROR(x,y)	SYSENTRY(x)				\
+				RETGUARD_SETUP(x);			\
+				li	%r0, SYS_ ## y ;		\
+				sc;					\
+				RETGUARD_CHECK(x);			\
+				blr;					\
+				__END(x)
 
-#define ALIAS(x,y)		WEAK_ALIAS(y,_CONCAT(x,y));
-		
-#define PREFIX_HIDDEN(x)	PSEUDO_PREFIX(_thread_sys_,x,x)
-#define PREFIX(x)		ALIAS(_thread_sys_,x) \
-				PREFIX_HIDDEN(x)
-#define	PSEUDO_NOERROR(x,y)	ALIAS(_thread_sys_,x) \
-				PSEUDO_PREFIX(_thread_sys_,x,y) ; \
-				sc ; \
-				PSEUDO_NOERROR_SUFFIX; \
-				__END(_thread_sys_,x)
+#define	PSEUDO_HIDDEN(x,y)	SYSENTRY_HIDDEN(x)			\
+				RETGUARD_SETUP(x);			\
+				li	%r0, SYS_ ## y;			\
+				sc;					\
+				cmpwi	%r0, 0;				\
+				beq+	.L_ret;				\
+				stw	%r0, R2_OFFSET_ERRNO(2);	\
+				li	%r3, -1;			\
+				li	%r4, -1; /* for __syscall(lseek) */ \
+			.L_ret:						\
+				RETGUARD_CHECK(x);			\
+				blr;					\
+				__END_HIDDEN(x)
 
-#define	PSEUDO_HIDDEN(x,y)	PSEUDO_PREFIX(_thread_sys_,x,y) ; \
-				sc ; \
-				PSEUDO_SUFFIX; \
-				__END_HIDDEN(_thread_sys_,x)
-#define	PSEUDO(x,y)		ALIAS(_thread_sys_,x) \
-				PSEUDO_HIDDEN(x,y); \
+#define	PSEUDO(x,y)		WEAK_ALIAS(x, _thread_sys_ ## x);	\
+				PSEUDO_HIDDEN(x,y);			\
 				END(x)
 
 #define RSYSCALL(x)		PSEUDO(x,x)
 #define RSYSCALL_HIDDEN(x)	PSEUDO_HIDDEN(x,x)
-#define SYSCALL_END_HIDDEN(x)	__END_HIDDEN(_thread_sys_,x)
-#define SYSCALL_END(x)		__END(_thread_sys_,x)
+#define SYSCALL_END_HIDDEN(x)	__END_HIDDEN(x)
+#define SYSCALL_END(x)		__END(x)
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: memmove.S,v 1.2 2015/08/31 02:53:57 guenther Exp $ */
+/* $OpenBSD: memmove.S,v 1.3 2020/10/26 22:07:05 gkoehler Exp $ */
 /* $NetBSD: memmove.S,v 1.3 2011/01/15 07:31:12 matt Exp $ */
 
 /* stropt/memmove.S, pl_string_common, pl_linux 10/11/04 11:45:37
@@ -44,9 +44,12 @@
         .text
 
 /* void *memcpy(void *to, const void *from, size_t len) */
-// ENTRY(memcpy)
+#if 0
+ENTRY(memcpy)
+	RETGUARD_SETUP(memmove)
 	mr	%r8, %r3		/* Save dst (return value)	*/
 	b	fwd
+#endif
 
 /* void bcopy(void *, void *, size_t) */
 ENTRY(bcopy)
@@ -56,6 +59,7 @@ ENTRY(bcopy)
 
 /* void *memmove(void *, const void *, size_t) */
 ENTRY(memmove)
+	RETGUARD_SETUP(memmove)
 	mr	%r8, %r3		/* Save dst (return value)	*/
 
 	cmpw	%r4, %r8		/* Branch to reverse if 	*/
@@ -97,21 +101,20 @@ last:
 last1:					/* Byte-by-byte copy		*/
 
 	clrlwi.	%r5,%r5,30		/* If count -> 0, then ...	*/
-	beqlr				/* we're done			*/
+	beq	done			/* we're done			*/
 
 	mtctr	%r5			/* else load count for loop	*/
 
 	lbzu	%r6, 4(%r4)		/* 1st byte: update addr by 4	*/
 	stbu	%r6, 4(%r8)		/* since we pre-adjusted by 4	*/
-	bdzlr-				/* in anticipation of main loop */
+	bdz-	done			/* in anticipation of main loop */
 
 last2:
 
 	lbzu	%r6, 1(%r4)		/* But handle the rest by	*/
 	stbu	%r6, 1(%r8)		/* updating addr by 1		*/
 	bdnz+	last2
-
-	blr
+	b	done
 
 	/* We're here since src < dest. Don't want to overwrite end of	*/
 	/* src with start of dest					*/
@@ -154,7 +157,7 @@ rlast:
 rlast1:					/* Byte-by-byte copy		*/
 
 	clrlwi.	%r5,%r5,30		/* If count -> 0, then...	*/
-	beqlr				/* ... we're done 		*/
+	beq	done			/* ... we're done 		*/
 
 	mtctr	%r5			/* else load count for loop 	*/
 
@@ -165,6 +168,8 @@ rlast2:
 
 	bdnz+	rlast2		 	/* Dec ctr, and branch if more	*/
 					/* bytes left			*/
+done:
+	RETGUARD_CHECK(memmove)
 	blr
 END_STRONG(memmove)
 END_WEAK(bcopy)
