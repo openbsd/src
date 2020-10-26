@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.107 2020/10/21 09:08:14 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.108 2020/10/26 19:48:19 anton Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -89,6 +89,9 @@ void		 uvn_init(void);
 int		 uvn_io(struct uvm_vnode *, vm_page_t *, int, int, int);
 int		 uvn_put(struct uvm_object *, vm_page_t *, int, boolean_t);
 void		 uvn_reference(struct uvm_object *);
+
+int		 uvm_vnode_lock(struct uvm_vnode *);
+void		 uvm_vnode_unlock(struct uvm_vnode *);
 
 /*
  * master pager structure
@@ -875,10 +878,16 @@ uvn_cluster(struct uvm_object *uobj, voff_t offset, voff_t *loffset,
 int
 uvn_put(struct uvm_object *uobj, struct vm_page **pps, int npages, int flags)
 {
+	struct uvm_vnode *uvn = (struct uvm_vnode *)uobj;
 	int retval;
 
 	KERNEL_ASSERT_LOCKED();
-	retval = uvn_io((struct uvm_vnode*)uobj, pps, npages, flags, UIO_WRITE);
+
+	retval = uvm_vnode_lock(uvn);
+	if (retval)
+		return(retval);
+	retval = uvn_io(uvn, pps, npages, flags, UIO_WRITE);
+	uvm_vnode_unlock(uvn);
 
 	return(retval);
 }
@@ -896,9 +905,10 @@ int
 uvn_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
     int *npagesp, int centeridx, vm_prot_t access_type, int advice, int flags)
 {
+	struct uvm_vnode *uvn = (struct uvm_vnode *)uobj;
 	voff_t current_offset;
 	struct vm_page *ptmp;
-	int lcv, result, gotpages;
+	int lcv, result, gotpages, retval;
 	boolean_t done;
 
 	KERNEL_ASSERT_LOCKED();
@@ -971,6 +981,18 @@ uvn_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 		else
 			return(VM_PAGER_UNLOCK);
 	}
+
+	/*
+	 * Before getting non-resident pages which must be populate with data
+	 * using I/O on the backing vnode, lock the same vnode. Such pages are
+	 * about to be allocated and busied (i.e. PG_BUSY) by the current
+	 * thread. Allocating and busying the page(s) before acquiring the
+	 * vnode lock could cause a deadlock with uvn_flush() which acquires the
+	 * vnode lock before waiting on pages to become unbusy and then flushed.
+	 */
+	retval = uvm_vnode_lock(uvn);
+	if (retval)
+		return(retval);
 
 	/*
 	 * step 2: get non-resident or busy pages.
@@ -1058,14 +1080,15 @@ uvn_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 		 * we have a "fake/busy/clean" page that we just allocated.  do
 		 * I/O to fill it with valid data.
 		 */
-		result = uvn_io((struct uvm_vnode *) uobj, &ptmp, 1,
-		    PGO_SYNCIO, UIO_READ);
+		result = uvn_io(uvn, &ptmp, 1, PGO_SYNCIO, UIO_READ);
 
 		/*
 		 * I/O done.  because we used syncio the result can not be
 		 * PEND or AGAIN.
 		 */
 		if (result != VM_PAGER_OK) {
+			uvm_vnode_unlock(uvn);
+
 			if (ptmp->pg_flags & PG_WANTED)
 				wakeup(ptmp);
 
@@ -1096,12 +1119,15 @@ uvn_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 
 	}
 
+	uvm_vnode_unlock(uvn);
+
 	return (VM_PAGER_OK);
 }
 
 /*
  * uvn_io: do I/O to a vnode
  *
+ * => uvn: the backing vnode must be locked
  * => prefer map unlocked (not required)
  * => flags: PGO_SYNCIO -- use sync. I/O
  * => XXX: currently we use VOP_READ/VOP_WRITE which are only sync.
@@ -1187,43 +1213,17 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 	}
 
 	/* do the I/O!  (XXX: curproc?) */
-	/*
-	 * This process may already have this vnode locked, if we faulted in
-	 * copyin() or copyout() on a region backed by this vnode
-	 * while doing I/O to the vnode.  If this is the case, don't
-	 * panic.. instead, return the error to the user.
-	 *
-	 * XXX this is a stopgap to prevent a panic.
-	 * Ideally, this kind of operation *should* work.
-	 */
-	result = 0;
-	if ((uvn->u_flags & UVM_VNODE_VNISLOCKED) == 0)
-		result = vn_lock(vn, LK_EXCLUSIVE | LK_RECURSEFAIL);
-
-	if (result == 0) {
-		/* NOTE: vnode now locked! */
-		if (rw == UIO_READ)
-			result = VOP_READ(vn, &uio, 0, curproc->p_ucred);
-		else
-			result = VOP_WRITE(vn, &uio,
-			    (flags & PGO_PDFREECLUST) ? IO_NOCACHE : 0,
-			    curproc->p_ucred);
-
-		if ((uvn->u_flags & UVM_VNODE_VNISLOCKED) == 0)
-			VOP_UNLOCK(vn);
-
-	}
+	if (rw == UIO_READ)
+		result = VOP_READ(vn, &uio, 0, curproc->p_ucred);
+	else
+		result = VOP_WRITE(vn, &uio,
+		    (flags & PGO_PDFREECLUST) ? IO_NOCACHE : 0,
+		    curproc->p_ucred);
 
 	if (netunlocked)
 		NET_LOCK();
 
-
-	/* NOTE: vnode now unlocked (unless vnislocked) */
-	/*
-	 * result == unix style errno (0 == OK!)
-	 *
-	 * zero out rest of buffer (if needed)
-	 */
+	/* zero out rest of buffer (if needed) */
 	if (result == 0) {
 		got = wanted - uio.uio_resid;
 
@@ -1244,13 +1244,14 @@ uvn_io(struct uvm_vnode *uvn, vm_page_t *pps, int npages, int flags, int rw)
 		wakeup(&uvn->u_nio);
 	}
 
-	if (result == 0) {
+	if (result == 0)
 		return(VM_PAGER_OK);
-	} else {
-		while (rebooting)
-			tsleep_nsec(&rebooting, PVM, "uvndead", INFSLP);
-		return(VM_PAGER_ERROR);
+
+	if (result == EIO) {
+		/* Signal back to uvm_vnode_unlock(). */
+		uvn->u_flags |= UVM_VNODE_IOERROR;
 	}
+	return(VM_PAGER_ERROR);
 }
 
 /*
@@ -1466,4 +1467,53 @@ uvm_vnp_sync(struct mount *mp)
 	}
 
 	rw_exit_write(&uvn_sync_lock);
+}
+
+int
+uvm_vnode_lock(struct uvm_vnode *uvn)
+{
+	int error;
+	int netunlocked = 0;
+
+	if (uvn->u_flags & UVM_VNODE_VNISLOCKED)
+		return(VM_PAGER_OK);
+
+	/*
+	 * This thread may already have the net lock, if we faulted in copyin()
+	 * or copyout() in the network stack.
+	 */
+	if (rw_status(&netlock) == RW_WRITE) {
+		NET_UNLOCK();
+		netunlocked = 1;
+	}
+
+	/*
+	 * This thread may already have this vnode locked, if we faulted in
+	 * copyin() or copyout() on a region backed by this vnode
+	 * while doing I/O to the vnode. If this is the case, don't panic but
+	 * instead return an error; as dictated by the LK_RECURSEFAIL flag.
+	 *
+	 * XXX this is a stopgap to prevent a panic.
+	 * Ideally, this kind of operation *should* work.
+	 */
+	error = vn_lock(uvn->u_vnode, LK_EXCLUSIVE | LK_RECURSEFAIL);
+	if (netunlocked)
+		NET_LOCK();
+	return(error ? VM_PAGER_ERROR : VM_PAGER_OK);
+}
+
+void
+uvm_vnode_unlock(struct uvm_vnode *uvn)
+{
+	int error;
+
+	if ((uvn->u_flags & UVM_VNODE_VNISLOCKED) == 0)
+		VOP_UNLOCK(uvn->u_vnode);
+
+	error = uvn->u_flags & UVM_VNODE_IOERROR;
+	uvn->u_flags &= ~UVM_VNODE_IOERROR;
+	if (error) {
+		while (rebooting)
+			tsleep_nsec(&rebooting, PVM, "uvndead", INFSLP);
+	}
 }
