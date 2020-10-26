@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.15 2020/10/26 11:59:16 tb Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.16 2020/10/26 12:01:01 tb Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -932,6 +932,8 @@ x509_verify(struct x509_verify_ctx *ctx, X509 *leaf, char *name)
 	return (ctx->chains_count);
 
  err:
+	if (ctx->error == X509_V_OK)
+		ctx->error = X509_V_ERR_UNSPECIFIED;
 	if (ctx->xsc != NULL)
 		ctx->xsc->error = ctx->error;
 	return 0;
