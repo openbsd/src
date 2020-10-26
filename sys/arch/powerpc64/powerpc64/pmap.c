@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.52 2020/10/22 15:54:10 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.53 2020/10/26 20:59:41 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -378,7 +378,7 @@ pmap_slbd_fault(pmap_t pm, vaddr_t va)
 uint32_t pmap_vsid[NUM_VSID / 32];
 
 uint64_t
-pmap_allo_vsid(void)
+pmap_alloc_vsid(void)
 {
 	uint32_t bits;
 	uint32_t vsid, bit;
@@ -427,7 +427,7 @@ pmap_slbd_alloc(pmap_t pm, vaddr_t va)
 		return NULL;
 
 	slbd->slbd_esid = esid;
-	slbd->slbd_vsid = pmap_allo_vsid();
+	slbd->slbd_vsid = pmap_alloc_vsid();
 	KASSERT((slbd->slbd_vsid & KERNEL_VSID_BIT) == 0);
 	LIST_INSERT_HEAD(&pm->pm_slbd, slbd, slbd_list);
 
