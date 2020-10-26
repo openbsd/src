@@ -1,4 +1,4 @@
-/* $OpenBSD: proc.c,v 1.18 2020/08/04 08:50:01 nicm Exp $ */
+/* $OpenBSD: proc.c,v 1.19 2020/10/26 19:00:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -270,6 +270,7 @@ proc_clear_signals(struct tmuxproc *tp, int defaults)
 
 	if (defaults) {
 		sigaction(SIGINT, &sa, NULL);
+		sigaction(SIGQUIT, &sa, NULL);
 		sigaction(SIGHUP, &sa, NULL);
 		sigaction(SIGCHLD, &sa, NULL);
 		sigaction(SIGCONT, &sa, NULL);
