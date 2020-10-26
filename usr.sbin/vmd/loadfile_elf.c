@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.35 2019/05/16 21:16:04 claudio Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.36 2020/10/26 04:04:31 visa Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -673,7 +673,7 @@ elf64_exec(FILE *fp, Elf64_Ehdr *elf, u_long *marks, int flags)
 	int i;
 	size_t sz;
 	int first;
-	int havesyms, havelines;
+	int havesyms;
 	paddr_t minp = ~0, maxp = 0, pos = 0;
 	paddr_t offset = marks[MARK_START], shpp, elfp;
 
@@ -806,7 +806,7 @@ elf64_exec(FILE *fp, Elf64_Ehdr *elf, u_long *marks, int flags)
 		 */
 		off = roundup((sizeof(Elf64_Ehdr) + sz), sizeof(Elf64_Addr));
 
-		for (havesyms = havelines = i = 0; i < elf->e_shnum; i++)
+		for (havesyms = i = 0; i < elf->e_shnum; i++)
 			if (shp[i].sh_type == SHT_SYMTAB)
 				havesyms = 1;
 
@@ -895,7 +895,7 @@ elf32_exec(FILE *fp, Elf32_Ehdr *elf, u_long *marks, int flags)
 	int i;
 	size_t sz;
 	int first;
-	int havesyms, havelines;
+	int havesyms;
 	paddr_t minp = ~0, maxp = 0, pos = 0;
 	paddr_t offset = marks[MARK_START], shpp, elfp;
 
@@ -1028,7 +1028,7 @@ elf32_exec(FILE *fp, Elf32_Ehdr *elf, u_long *marks, int flags)
 		 */
 		off = roundup((sizeof(Elf32_Ehdr) + sz), sizeof(Elf32_Addr));
 
-		for (havesyms = havelines = i = 0; i < elf->e_shnum; i++)
+		for (havesyms = i = 0; i < elf->e_shnum; i++)
 			if (shp[i].sh_type == SHT_SYMTAB)
 				havesyms = 1;
 

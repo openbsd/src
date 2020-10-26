@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.16 2019/11/29 20:53:13 kettenis Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.17 2020/10/26 04:04:31 visa Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ ELFNAME(exec)(int fd, Elf_Ehdr *elf, uint64_t *marks, int flags)
 	int i;
 	size_t sz;
 	int first;
-	int havesyms, havelines;
+	int havesyms;
 	paddr_t minp = ~0, maxp = 0, pos = 0;
 	paddr_t offset = marks[MARK_START], shpp, elfp;
 
@@ -225,7 +225,7 @@ ELFNAME(exec)(int fd, Elf_Ehdr *elf, uint64_t *marks, int flags)
 		 */
 		off = roundup((sizeof(Elf_Ehdr) + sz), sizeof(Elf_Addr));
 
-		for (havesyms = havelines = i = 0; i < elf->e_shnum; i++)
+		for (havesyms = i = 0; i < elf->e_shnum; i++)
 			if (shp[i].sh_type == SHT_SYMTAB)
 				havesyms = 1;
 
