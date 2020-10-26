@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.59 2020/05/25 09:55:48 jsg Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.60 2020/10/26 22:02:38 tobhe Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -61,6 +61,7 @@
 #endif
 
 #if NWSDISPLAY > 0
+#include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
 #endif
@@ -107,6 +108,9 @@ static struct ofwfb ofwfb;
 int	save_ofw_mapping(void);
 void	ofw_consinit(int);
 void	ofw_read_mem_regions(int, int, int);
+
+int	ofw_set_param(struct wsdisplay_param *);
+int	ofw_get_param(struct wsdisplay_param *);
 
 /*
  * This is called during initppc, before the system is really initialized.
@@ -267,6 +271,7 @@ save_ofw_mapping(void)
 }
 
 static int display_ofh;
+int cons_backlight;
 int cons_brightness;
 int cons_backlight_available;
 int fbnode;
@@ -472,6 +477,11 @@ of_display_console(void)
 	if (OF_getnodebyname(0, "backlight") != 0) {
 		cons_backlight_available = 1;
 		cons_brightness = MAX_BRIGHTNESS;
+		cons_backlight = WSDISPLAYIO_VIDEO_ON;
+	
+		/* wsconsctl hooks */
+		ws_get_param = ofw_get_param;
+		ws_set_param = ofw_set_param;
 	}
 
 #if 1
@@ -535,6 +545,8 @@ of_setbacklight(int on)
 {
 	if (cons_backlight_available == 0)
 		return;
+
+	cons_backlight = on;
 
 	if (on)
 		OF_call_method_1("backlight-on", display_ofh, 0);
@@ -637,3 +649,53 @@ ofw_consinit(int chosen)
 	cn_tab = cp;
 }
 
+int
+ofw_set_param(struct wsdisplay_param *dp)
+{
+	switch (dp->param) {
+	case WSDISPLAYIO_PARAM_BRIGHTNESS:
+		if (cons_backlight_available != 0) {
+			of_setbrightness(dp->curval);
+			return 0;
+		}
+		break;
+	case WSDISPLAYIO_PARAM_BACKLIGHT:
+		if (cons_backlight_available != 0) {
+			of_setbacklight(dp->curval ? WSDISPLAYIO_VIDEO_ON
+			    : WSDISPLAYIO_VIDEO_OFF);
+			return 0;
+		}
+		break;
+	default:
+		break;
+	}
+
+	return -1;
+}
+
+int
+ofw_get_param(struct wsdisplay_param *dp)
+{
+	switch (dp->param) {
+	case WSDISPLAYIO_PARAM_BRIGHTNESS:
+		if (cons_backlight_available != 0) {
+			dp->min = MIN_BRIGHTNESS;
+			dp->max = MAX_BRIGHTNESS;
+			dp->curval = cons_brightness;
+			return 0;
+		}
+		break;
+	case WSDISPLAYIO_PARAM_BACKLIGHT:
+		if (cons_backlight_available != 0) {
+			dp->min = 0;
+			dp->max = 1;
+			dp->curval = cons_backlight;
+			return 0;
+		}
+		break;
+	default:
+		break;
+	}
+
+	return 1;
+}
