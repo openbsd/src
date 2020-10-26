@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.408 2020/05/10 13:38:46 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.409 2020/10/26 08:31:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -4513,6 +4513,8 @@ add_roa_set(struct prefixset_item *npsi, u_int32_t as, u_int8_t max)
 	psi = RB_INSERT(prefixset_tree, curpsitree, npsi);
 	if (psi == NULL)
 		psi = npsi;
+	else
+		free(npsi);
 
 	if (psi->set == NULL)
 		if ((psi->set = set_new(1, sizeof(rs))) == NULL)
