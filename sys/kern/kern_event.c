@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.143 2020/10/11 07:11:59 mpi Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.144 2020/10/26 16:17:00 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -581,14 +581,14 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 		error = copyin(SCARG(uap, timeout), &ts, sizeof(ts));
 		if (error)
 			goto done;
-		if (ts.tv_sec < 0 || !timespecisvalid(&ts)) {
-			error = EINVAL;
-			goto done;
-		}
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_STRUCT))
 			ktrreltimespec(p, &ts);
 #endif
+		if (ts.tv_sec < 0 || !timespecisvalid(&ts)) {
+			error = EINVAL;
+			goto done;
+		}
 		tsp = &ts;
 	}
 
