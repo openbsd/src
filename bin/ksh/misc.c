@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.75 2020/07/22 19:20:41 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.76 2020/10/26 18:16:51 tb Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -713,7 +713,7 @@ do_gmatch(const unsigned char *s, const unsigned char *se,
 static int
 posix_cclass(const unsigned char *pattern, int test, const unsigned char **ep)
 {
-	struct cclass *cc;
+	const struct cclass *cc;
 	const unsigned char *colon;
 	size_t len;
 	int rval = 0;
