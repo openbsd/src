@@ -8,6 +8,7 @@
 #include <sys/memrange.h> /* for MDF_WRITECOMBINE */
 
 #include <linux/types.h>
+#include <linux/atomic.h>
 #include <linux/compiler.h>
 #include <linux/vmalloc.h>
 
@@ -18,50 +19,140 @@
 static inline u8
 ioread8(const volatile void __iomem *addr)
 {
-	return (*(volatile uint8_t *)addr);
-}
+	uint8_t val;
 
-static inline u16
-ioread16(const volatile void __iomem *addr)
-{
-	return (*(volatile uint16_t *)addr);
-}
-
-static inline u32
-ioread32(const volatile void __iomem *addr)
-{
-	return (*(volatile uint32_t *)addr);
-}
-
-static inline u64
-ioread64(const volatile void __iomem *addr)
-{
-	return (*(volatile uint64_t *)addr);
+	barrier();
+	val = *(volatile uint8_t *)addr;
+	rmb();
+	return val;
 }
 
 static inline void
 iowrite8(u8 val, volatile void __iomem *addr)
 {
+	wmb();
 	*(volatile uint8_t *)addr = val;
+}
+
+#ifdef __sparc64__
+
+/*
+ * On sparc64, bus_space_vaddr(9) returns a virtual address that has
+ * been mapped little-endian, so we should just use the CPU byte
+ * order.
+ */
+
+static inline u16
+ioread16(const volatile void __iomem *addr)
+{
+	uint16_t val;
+
+	barrier();
+	val = *(volatile uint16_t *)addr;
+	rmb();
+	return val;
+}
+
+static inline u32
+ioread32(const volatile void __iomem *addr)
+{
+	uint32_t val;
+
+	barrier();
+	val = *(volatile uint32_t *)addr;
+	rmb();
+	return val;
+}
+
+static inline u64
+ioread64(const volatile void __iomem *addr)
+{
+	uint64_t val;
+
+	barrier();
+	val = *(volatile uint64_t *)addr;
+	rmb();
+	return val;
 }
 
 static inline void
 iowrite16(u16 val, volatile void __iomem *addr)
 {
+	wmb();
 	*(volatile uint16_t *)addr = val;
 }
 
 static inline void
 iowrite32(u32 val, volatile void __iomem *addr)
 {
+	wmb();
 	*(volatile uint32_t *)addr = val;
 }
 
 static inline void
 iowrite64(u64 val, volatile void __iomem *addr)
 {
+	wmb();
 	*(volatile uint64_t *)addr = val;
 }
+
+#else
+
+static inline u16
+ioread16(const volatile void __iomem *addr)
+{
+	uint16_t val;
+
+	barrier();
+	val = lemtoh16(addr);
+	rmb();
+	return val;
+}
+
+static inline u32
+ioread32(const volatile void __iomem *addr)
+{
+	uint32_t val;
+	
+	barrier();
+	val = lemtoh32(addr);
+	rmb();
+	return val;
+}
+
+static inline u64
+ioread64(const volatile void __iomem *addr)
+{
+	uint64_t val;
+
+	barrier();
+	val = lemtoh64(addr);
+	rmb();
+	return val;
+}
+
+static inline void
+iowrite16(u16 val, volatile void __iomem *addr)
+{
+	wmb();
+	htolem16(addr, val);
+}
+
+static inline void
+iowrite32(u32 val, volatile void __iomem *addr)
+{
+	wmb();
+	htolem32(addr, val);
+}
+
+static inline void
+iowrite64(u64 val, volatile void __iomem *addr)
+{
+	wmb();
+	htolem64(addr, val);
+}
+
+#endif
 
 #define readb(p) ioread8(p)
 #define writeb(v, p) iowrite8(v, p)
