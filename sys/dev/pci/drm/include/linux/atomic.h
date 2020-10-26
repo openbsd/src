@@ -1,4 +1,4 @@
-/* $OpenBSD: atomic.h,v 1.10 2020/06/17 01:03:57 jsg Exp $ */
+/* $OpenBSD: atomic.h,v 1.11 2020/10/26 03:00:15 jsg Exp $ */
 /**
  * \file drm_atomic.h
  * Atomic operations used in the DRM which may or may not be provided by the OS.
@@ -415,10 +415,17 @@ find_next_bit(volatile void *p, int max, int b)
 #define rmb()	mips_sync() 
 #define wmb()	mips_sync()
 #define mb()	mips_sync()
+#elif defined(__powerpc64__)
+#define rmb()	__membar("sync")
+#define wmb()	__membar("sync")
+#define mb()	__membar("sync")
+#define smp_rmb()	__membar("lwsync")
+#define smp_wmb()	__membar("lwsync")
 #elif defined(__powerpc__)
-#define rmb()	__asm __volatile("sync" : : : "memory");
-#define wmb()	__asm __volatile("sync" : : : "memory");
-#define mb()	__asm __volatile("sync" : : : "memory");
+#define rmb()	__membar("sync")
+#define wmb()	__membar("sync")
+#define mb()	__membar("sync")
+#define smp_wmb()	__membar("eieio")
 #elif defined(__sparc64__)
 #define rmb()	membar_sync()
 #define wmb()	membar_sync()
