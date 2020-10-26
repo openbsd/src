@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.125 2020/07/14 09:52:46 inoguchi Exp $
+.\" $OpenBSD: openssl.1,v 1.126 2020/10/26 11:48:39 tb Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: July 14 2020 $
+.Dd $Mdocdate: October 26 2020 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -5859,6 +5859,7 @@ The default is no.
 .Op Fl inhibit_any
 .Op Fl inhibit_map
 .Op Fl issuer_checks
+.Op Fl legacy_verify
 .Op Fl policy_check
 .Op Fl purpose Ar purpose
 .Op Fl trusted Ar file
@@ -5931,6 +5932,8 @@ showing why each candidate issuer certificate was rejected.
 The presence of rejection messages
 does not itself imply that anything is wrong:
 during the normal verify process several rejections may take place.
+.It Fl legacy_verify
+Use the legacy X.509 certificate chain verification code.
 .It Fl policy_check
 Enable certificate policy processing.
 .It Fl purpose Ar purpose

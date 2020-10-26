@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.8 2020/07/14 19:08:30 jsing Exp $ */
+/* $OpenBSD: verify.c,v 1.9 2020/10/26 11:48:39 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -191,6 +191,10 @@ static const struct option verify_shared_options[] = {
 	{
 		.name = "issuer_checks",
 		.desc = "Enable debugging of certificate issuer checks",
+	},
+	{
+		.name = "legacy_verify",
+		.desc = "Use legacy certificate chain verification",
 	},
 	{
 		.name = "policy",
