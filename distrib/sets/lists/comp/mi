@@ -2189,6 +2189,7 @@
 ./usr/share/man/man3/abs.3
 ./usr/share/man/man3/acos.3
 ./usr/share/man/man3/acosh.3
+./usr/share/man/man3/agentx.3
 ./usr/share/man/man3/alarm.3
 ./usr/share/man/man3/alloca.3
 ./usr/share/man/man3/arc4random.3
@@ -2876,7 +2877,6 @@
 ./usr/share/man/man3/strtonum.3
 ./usr/share/man/man3/strtoul.3
 ./usr/share/man/man3/strxfrm.3
-./usr/share/man/man3/subagentx.3
 ./usr/share/man/man3/swab.3
 ./usr/share/man/man3/sysconf.3
 ./usr/share/man/man3/sysexits.3
