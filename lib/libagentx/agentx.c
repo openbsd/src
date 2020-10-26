@@ -13,1347 +13,3991 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#include <sys/socket.h>
+#include <netinet/in.h>
 
-#include <arpa/inet.h>
-
-#include <ctype.h>
-#include <endian.h>
 #include <errno.h>
-#include <inttypes.h>
+#include <stdarg.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <strings.h>
+#include <time.h>
 #include <unistd.h>
 
+#include "agentx_internal.h"
 #include "agentx.h"
 
-#define AGENTX_PDU_HEADER 20
+enum agentx_index_type {
+	AXI_TYPE_NEW,
+	AXI_TYPE_ANY,
+	AXI_TYPE_VALUE,
+	AXI_TYPE_DYNAMIC
+};
 
-static int agentx_pdu_need(struct agentx *, size_t);
-static int agentx_pdu_header(struct agentx *,
-    enum agentx_pdu_type, uint8_t, uint32_t, uint32_t, uint32_t,
-    struct agentx_ostring *);
-static uint32_t agentx_packetid(struct agentx *);
-static uint32_t agentx_pdu_queue(struct agentx *);
-static int agentx_pdu_add_uint16(struct agentx *, uint16_t);
-static int agentx_pdu_add_uint32(struct agentx *, uint32_t);
-static int agentx_pdu_add_uint64(struct agentx *, uint64_t);
-static int agentx_pdu_add_oid(struct agentx *, struct agentx_oid *, int);
-static int agentx_pdu_add_str(struct agentx *, struct agentx_ostring *);
-static int agentx_pdu_add_varbindlist( struct agentx *, struct agentx_varbind *,
-    size_t);
-static uint16_t agentx_pdutoh16(struct agentx_pdu_header *, uint8_t *);
-static uint32_t agentx_pdutoh32(struct agentx_pdu_header *, uint8_t *);
-static uint64_t agentx_pdutoh64(struct agentx_pdu_header *, uint8_t *);
-static ssize_t agentx_pdutooid(struct agentx_pdu_header *, struct agentx_oid *,
-    uint8_t *, size_t);
-static ssize_t agentx_pdutoostring(struct agentx_pdu_header *,
-    struct agentx_ostring *, uint8_t *, size_t);
-static ssize_t agentx_pdutovarbind(struct agentx_pdu_header *,
-    struct agentx_varbind *, uint8_t *, size_t);
+#define AGENTX_CONTEXT_CTX(axc) (axc->axc_name_default ? NULL : \
+    &(axc->axc_name))
+
+struct agentx_agentcaps {
+	struct agentx_context *axa_axc;
+	struct ax_oid axa_oid;
+	struct ax_ostring axa_descr;
+	enum agentx_cstate axa_cstate;
+	enum agentx_dstate axa_dstate;
+	TAILQ_ENTRY(agentx_agentcaps) axa_axc_agentcaps;
+};
+
+struct agentx_region {
+	struct agentx_context *axr_axc;
+	struct ax_oid axr_oid;
+	uint8_t axr_timeout;
+	uint8_t axr_priority;
+	enum agentx_cstate axr_cstate;
+	enum agentx_dstate axr_dstate;
+	TAILQ_HEAD(, agentx_index) axr_indices;
+	TAILQ_HEAD(, agentx_object) axr_objects;
+	TAILQ_ENTRY(agentx_region) axr_axc_regions;
+};
+
+struct agentx_index {
+	struct agentx_region *axi_axr;
+	enum agentx_index_type axi_type;
+	struct ax_varbind axi_vb;
+	struct agentx_object **axi_object;
+	size_t axi_objectlen;
+	size_t axi_objectsize;
+	enum agentx_cstate axi_cstate;
+	enum agentx_dstate axi_dstate;
+	TAILQ_ENTRY(agentx_index) axi_axr_indices;
+};
+
+struct agentx_object {
+	struct agentx_region *axo_axr;
+	struct ax_oid axo_oid;
+	struct agentx_index *axo_index[AGENTX_OID_INDEX_MAX_LEN];
+	size_t axo_indexlen;
+	int axo_implied;
+	uint8_t axo_timeout;
+	/* Prevent freeing object while in use by get and set requesets */
+	uint32_t axo_lock;
+	void (*axo_get)(struct agentx_varbind *);
+	enum agentx_cstate axo_cstate;
+	enum agentx_dstate axo_dstate;
+	RB_ENTRY(agentx_object) axo_axc_objects;
+	TAILQ_ENTRY(agentx_object) axo_axr_objects;
+};
+
+struct agentx_varbind {
+	struct agentx_get *axv_axg;
+	struct agentx_object *axv_axo;
+	struct agentx_varbind_index {
+		struct agentx_index *axv_axi;
+		union ax_data axv_idata;
+		uint8_t axv_idatacomplete;
+	} axv_index[AGENTX_OID_INDEX_MAX_LEN];
+	size_t axv_indexlen;
+	int axv_initialized;
+	int axv_include;
+	struct ax_varbind axv_vb;
+	struct ax_oid axv_start;
+	struct ax_oid axv_end;
+	enum ax_pdu_error axv_error;
+};
+
+#define AGENTX_GET_CTX(axg) (axg->axg_context_default ? NULL : \
+    &(axg->axg_context))
+struct agentx_request {
+	uint32_t axr_packetid;
+	int (*axr_cb)(struct ax_pdu *, void *);
+	void *axr_cookie;
+	RB_ENTRY(agentx_request) axr_ax_requests;
+};
+
+static void agentx_start(struct agentx *);
+static void agentx_finalize(struct agentx *, int);
+static void agentx_wantwritenow(struct agentx *, int);
+void (*agentx_wantwrite)(struct agentx *, int) =
+    agentx_wantwritenow;
+static void agentx_reset(struct agentx *);
+static void agentx_free_finalize(struct agentx *);
+static int agentx_session_start(struct agentx_session *);
+static int agentx_session_finalize(struct ax_pdu *, void *);
+static int agentx_session_close(struct agentx_session *,
+    enum ax_close_reason);
+static int agentx_session_close_finalize(struct ax_pdu *, void *);
+static void agentx_session_free_finalize(struct agentx_session *);
+static void agentx_session_reset(struct agentx_session *);
+static void agentx_context_start(struct agentx_context *);
+static void agentx_context_free_finalize(struct agentx_context *);
+static void agentx_context_reset(struct agentx_context *);
+static int agentx_agentcaps_start(struct agentx_agentcaps *);
+static int agentx_agentcaps_finalize(struct ax_pdu *, void *);
+static int agentx_agentcaps_close(struct agentx_agentcaps *);
+static int agentx_agentcaps_close_finalize(struct ax_pdu *, void *);
+static void agentx_agentcaps_free_finalize(struct agentx_agentcaps *);
+static void agentx_agentcaps_reset(struct agentx_agentcaps *);
+static int agentx_region_start(struct agentx_region *);
+static int agentx_region_finalize(struct ax_pdu *, void *);
+static int agentx_region_close(struct agentx_region *);
+static int agentx_region_close_finalize(struct ax_pdu *, void *);
+static void agentx_region_free_finalize(struct agentx_region *);
+static void agentx_region_reset(struct agentx_region *);
+static struct agentx_index *agentx_index(struct agentx_region *,
+    struct ax_varbind *, enum agentx_index_type);
+static int agentx_index_start(struct agentx_index *);
+static int agentx_index_finalize(struct ax_pdu *, void *);
+static void agentx_index_free_finalize(struct agentx_index *);
+static void agentx_index_reset(struct agentx_index *);
+static int agentx_index_close(struct agentx_index *);
+static int agentx_index_close_finalize(struct ax_pdu *, void *);
+static int agentx_object_start(struct agentx_object *);
+static int agentx_object_finalize(struct ax_pdu *, void *);
+static int agentx_object_lock(struct agentx_object *);
+static void agentx_object_unlock(struct agentx_object *);
+static int agentx_object_close(struct agentx_object *);
+static int agentx_object_close_finalize(struct ax_pdu *, void *);
+static void agentx_object_free_finalize(struct agentx_object *);
+static void agentx_object_reset(struct agentx_object *);
+static int agentx_object_cmp(struct agentx_object *,
+    struct agentx_object *);
+static void agentx_get_start(struct agentx_context *,
+    struct ax_pdu *);
+static void agentx_get_finalize(struct agentx_get *);
+static void agentx_get_free(struct agentx_get *);
+static void agentx_varbind_start(struct agentx_varbind *);
+static void agentx_varbind_finalize(struct agentx_varbind *);
+static void agentx_varbind_nosuchobject(struct agentx_varbind *);
+static void agentx_varbind_nosuchinstance(struct agentx_varbind *);
+static void agentx_varbind_endofmibview(struct agentx_varbind *);
+static void agentx_varbind_error_type(struct agentx_varbind *,
+    enum ax_pdu_error, int);
+static int agentx_request(struct agentx *, uint32_t,
+    int (*)(struct ax_pdu *, void *), void *);
+static int agentx_request_cmp(struct agentx_request *,
+    struct agentx_request *);
+static int agentx_strcat(char **, const char *);
+
+RB_PROTOTYPE_STATIC(ax_requests, agentx_request, axr_ax_requests,
+    agentx_request_cmp)
+RB_PROTOTYPE_STATIC(axc_objects, agentx_object, axo_axc_objects,
+    agentx_object_cmp)
 
 struct agentx *
-agentx_new(int fd)
+agentx(void (*nofd)(struct agentx *, void *, int), void *cookie)
 {
 	struct agentx *ax;
 
-	if (fd == -1) {
-		errno = EINVAL;
-		return NULL;
-	}
-
 	if ((ax = calloc(1, sizeof(*ax))) == NULL)
 		return NULL;
-	ax->ax_fd = fd;
-	if ((ax->ax_rbuf = malloc(512)) == NULL)
-		goto fail;
-	ax->ax_rbsize = 512;
-	ax->ax_byteorder = AGENTX_BYTE_ORDER_NATIVE;
+
+	ax->ax_nofd = nofd;
+	ax->ax_cookie = cookie;
+	ax->ax_fd = -1;
+	ax->ax_cstate = AX_CSTATE_CLOSE;
+	ax->ax_dstate = AX_DSTATE_OPEN;
+	TAILQ_INIT(&(ax->ax_sessions));
+	TAILQ_INIT(&(ax->ax_getreqs));
+	RB_INIT(&(ax->ax_requests));
+
+	agentx_start(ax);
 
 	return ax;
+}
 
-fail:
-	free(ax);
-	return NULL;
+/*
+ * agentx_finalize is not a suitable name for a public API,
+ * but use it internally for consistency
+ */
+void
+agentx_connect(struct agentx *ax, int fd)
+{
+	agentx_finalize(ax, fd);
+}
+
+static void
+agentx_start(struct agentx *ax)
+{
+#ifdef AX_DEBUG
+	if (ax->ax_cstate != AX_CSTATE_CLOSE ||
+	    ax->ax_dstate != AX_DSTATE_OPEN)
+		agentx_log_ax_fatalx(ax, "%s: unexpected connect", __func__);
+#endif
+	ax->ax_cstate = AX_CSTATE_WAITOPEN;
+	ax->ax_nofd(ax, ax->ax_cookie, 0);
+}
+
+static void
+agentx_finalize(struct agentx *ax, int fd)
+{
+	struct agentx_session *axs;
+
+	if (ax->ax_cstate != AX_CSTATE_WAITOPEN) {
+#ifdef AX_DEBUG
+		agentx_log_ax_fatalx(ax, "%s: agentx unexpected connect",
+		    __func__);
+#else
+		agentx_log_ax_warnx(ax,
+		    "%s: agentx unexpected connect: ignoring", __func__);
+		return;
+#endif
+	}
+	if ((ax->ax_ax = ax_new(fd)) == NULL) {
+		agentx_log_ax_warn(ax, "failed to initialize");
+		close(fd);
+		agentx_reset(ax);
+		return;
+	}
+
+	agentx_log_ax_info(ax, "new connection: %d", fd);
+
+	ax->ax_fd = fd;
+	ax->ax_cstate = AX_CSTATE_OPEN;
+
+	TAILQ_FOREACH(axs, &(ax->ax_sessions), axs_ax_sessions) {
+		if (agentx_session_start(axs) == -1)
+			break;
+	}
+}
+
+static void
+agentx_wantwritenow(struct agentx *ax, int fd)
+{
+	agentx_write(ax);
+}
+
+static void
+agentx_reset(struct agentx *ax)
+{
+	struct agentx_session *axs, *tsas;
+	struct agentx_request *axr;
+	struct agentx_get *axg;
+
+	ax_free(ax->ax_ax);
+	ax->ax_ax = NULL;
+	ax->ax_fd = -1;
+
+	ax->ax_cstate = AX_CSTATE_CLOSE;
+
+	while ((axr = RB_MIN(ax_requests, &(ax->ax_requests))) != NULL) {
+		RB_REMOVE(ax_requests, &(ax->ax_requests), axr);
+		free(axr);
+	}
+	TAILQ_FOREACH_SAFE(axs, &(ax->ax_sessions), axs_ax_sessions, tsas)
+		agentx_session_reset(axs);
+	while (!TAILQ_EMPTY(&(ax->ax_getreqs))) {
+		axg = TAILQ_FIRST(&(ax->ax_getreqs));
+		axg->axg_axc = NULL;
+		TAILQ_REMOVE(&(ax->ax_getreqs), axg, axg_ax_getreqs);
+	}
+
+	if (ax->ax_dstate == AX_DSTATE_CLOSE) {
+		agentx_free_finalize(ax);
+		return;
+	}
+
+	agentx_start(ax);
 }
 
 void
 agentx_free(struct agentx *ax)
 {
+	struct agentx_session *axs, *tsas;
+
 	if (ax == NULL)
 		return;
-	close(ax->ax_fd);
-	free(ax->ax_rbuf);
-	free(ax->ax_wbuf);
-	free(ax->ax_packetids);
+
+	if (ax->ax_dstate == AX_DSTATE_CLOSE) {
+/* Malloc throws abort on invalid pointers as well */
+		agentx_log_ax_fatalx(ax, "%s: double free", __func__);
+	}
+	ax->ax_dstate = AX_DSTATE_CLOSE;
+
+	if (!TAILQ_EMPTY(&(ax->ax_sessions))) {
+		TAILQ_FOREACH_SAFE(axs, &(ax->ax_sessions), axs_ax_sessions,
+		    tsas) {
+			if (axs->axs_dstate != AX_DSTATE_CLOSE)
+				agentx_session_free(axs);
+		}
+	} else
+		agentx_free_finalize(ax);
+}
+
+static void
+agentx_free_finalize(struct agentx *ax)
+{
+#ifdef AX_DEBUG
+	if (ax->ax_dstate != AX_DSTATE_CLOSE)
+		agentx_log_ax_fatalx(ax, "%s: agentx not closing",
+		    __func__);
+	if (!TAILQ_EMPTY(&(ax->ax_sessions)))
+		agentx_log_ax_fatalx(ax, "%s: agentx still has sessions",
+		    __func__);
+	if (!RB_EMPTY(&(ax->ax_requests)))
+		agentx_log_ax_fatalx(ax,
+		    "%s: agentx still has pending requests", __func__);
+#endif
+
+	ax_free(ax->ax_ax);
+	ax->ax_nofd(ax, ax->ax_cookie, 1);
 	free(ax);
 }
 
-struct agentx_pdu *
-agentx_recv(struct agentx *ax)
+struct agentx_session *
+agentx_session(struct agentx *ax, uint32_t oid[],
+    size_t oidlen, const char *descr, uint8_t timeout)
 {
-	struct agentx_pdu *pdu;
-	struct agentx_pdu_header header;
-	struct agentx_pdu_response *response;
-	struct agentx_varbind *varbind;
-	struct agentx_pdu_searchrangelist *srl = NULL;
-	struct agentx_pdu_varbindlist *vbl;
-	struct agentx_searchrange *sr;
-	size_t rbsize, packetidx = 0, i, rawlen;
-	ssize_t nread;
-	uint8_t *u8;
-	uint8_t *rbuf;
-	int found;
+	struct agentx_session *axs;
+	size_t i;
 
-	/* Only read a single packet at a time to make sure libevent triggers */
-	if (ax->ax_rblen < AGENTX_PDU_HEADER) {
-		if ((nread = read(ax->ax_fd, ax->ax_rbuf + ax->ax_rblen,
-		    AGENTX_PDU_HEADER - ax->ax_rblen)) == 0) {
-			errno = ECONNRESET;
-			return NULL;
-		}
-		if (nread == -1)
-			return NULL;
-		ax->ax_rblen += nread;
-		if (ax->ax_rblen < AGENTX_PDU_HEADER) {
-			errno = EAGAIN;
-			return NULL;
-		}
-	}
-	u8 = ax->ax_rbuf;
-	header.aph_version = *u8++;
-	header.aph_type = *u8++;
-	header.aph_flags = *u8++;
-	u8++;
-	header.aph_sessionid = agentx_pdutoh32(&header, u8);
-	u8 += 4;
-	header.aph_transactionid = agentx_pdutoh32(&header, u8);
-	u8 += 4;
-	header.aph_packetid = agentx_pdutoh32(&header, u8);
-	u8 += 4;
-	header.aph_plength = agentx_pdutoh32(&header, u8);
-
-	if (header.aph_version != 1) {
-		errno = EPROTO;
+	if (oidlen > AGENTX_OID_MAX_LEN) {
+#ifdef AX_DEBUG
+		agentx_log_ax_fatalx(ax, "%s: oidlen > %d", __func__,
+		    AGENTX_OID_MAX_LEN);
+#else
+		errno = EINVAL;
 		return NULL;
-	}
-	if (ax->ax_rblen < AGENTX_PDU_HEADER + header.aph_plength) {
-		if (AGENTX_PDU_HEADER + header.aph_plength > ax->ax_rbsize) {
-			rbsize = (((AGENTX_PDU_HEADER + header.aph_plength)
-			    / 512) + 1) * 512;
-			if ((rbuf = recallocarray(ax->ax_rbuf, ax->ax_rbsize,
-			    rbsize, sizeof(*rbuf))) == NULL)
-				return NULL;
-			ax->ax_rbsize = rbsize;
-			ax->ax_rbuf = rbuf;
-		}
-		nread = read(ax->ax_fd, ax->ax_rbuf + ax->ax_rblen,
-		    header.aph_plength - (ax->ax_rblen - AGENTX_PDU_HEADER));
-		if (nread == 0)
-			errno = ECONNRESET;
-		if (nread <= 0)
-			return NULL;
-		ax->ax_rblen += nread;
-		if (ax->ax_rblen < AGENTX_PDU_HEADER + header.aph_plength) {
-			errno = EAGAIN;
-			return NULL;
-		}
-	}
-
-	if ((pdu = calloc(1, sizeof(*pdu))) == NULL)
-		return NULL;
-
-	memcpy(&(pdu->ap_header), &header, sizeof(header));
-
-#if defined(AGENTX_DEBUG) && defined(AGENTX_DEBUG_VERBOSE)
-	{
-		char chars[4];
-		int print = 1;
-
-		fprintf(stderr, "received packet:\n");
-		for (i = 0; i < pdu->ap_header.aph_plength + AGENTX_PDU_HEADER;
-		    i++) {
-			fprintf(stderr, "%02hhx ", ax->ax_rbuf[i]);
-			chars[i % 4] = ax->ax_rbuf[i];
-			if (!isprint(ax->ax_rbuf[i]))
-				print = 0;
-			if (i % 4 == 3) {
-				if (print)
-					fprintf(stderr, "%.4s", chars);
-				fprintf(stderr, "\n");
-				print = 1;
-			}
-		}
-	}
 #endif
-
-	u8 = (ax->ax_rbuf) + AGENTX_PDU_HEADER;
-	rawlen = pdu->ap_header.aph_plength;
-	if (pdu->ap_header.aph_flags & AGENTX_PDU_FLAG_NON_DEFAULT_CONTEXT) {
-		nread = agentx_pdutoostring(&header, &(pdu->ap_context), u8,
-		    rawlen);
-		if (nread == -1)
-			goto fail;
-		rawlen -= nread;
-		u8 += nread;
 	}
+	if ((axs = calloc(1, sizeof(*axs))) == NULL)
+		return NULL;
 
-	switch (pdu->ap_header.aph_type) {
-	case AGENTX_PDU_TYPE_GETBULK:
-		if (rawlen < 4) {
-			errno = EPROTO;
-			goto fail;
-		}
-		pdu->ap_payload.ap_getbulk.ap_nonrep =
-		    agentx_pdutoh16(&header, u8);
-		u8 += 2;
-		pdu->ap_payload.ap_getbulk.ap_maxrep =
-		    agentx_pdutoh16(&header, u8);
-		u8 += 2;
-		srl = &(pdu->ap_payload.ap_getbulk.ap_srl);
-		rawlen -= 4;
-		/* FALLTHROUGH */
-	case AGENTX_PDU_TYPE_GET:
-	case AGENTX_PDU_TYPE_GETNEXT:
-		if (pdu->ap_header.aph_type != AGENTX_PDU_TYPE_GETBULK)
-			srl = &(pdu->ap_payload.ap_srl);
-		while (rawlen > 0 ) {
-			srl->ap_nsr++;
-			sr = reallocarray(srl->ap_sr, srl->ap_nsr, sizeof(*sr));
-			if (sr == NULL)
-				goto fail;
-			srl->ap_sr = sr;
-			sr += (srl->ap_nsr - 1);
-			if ((nread = agentx_pdutooid(&header, &(sr->asr_start),
-			    u8, rawlen)) == -1)
-				goto fail;
-			rawlen -= nread;
-			u8 += nread;
-			if ((nread = agentx_pdutooid(&header, &(sr->asr_stop),
-			    u8, rawlen)) == -1)
-				goto fail;
-			rawlen -= nread;
-			u8 += nread;
-		}
-		break;
-	case AGENTX_PDU_TYPE_TESTSET:
-		vbl = &(pdu->ap_payload.ap_vbl);
-		while (rawlen > 0) {
-			varbind = recallocarray(vbl->ap_varbind,
-			    vbl->ap_nvarbind, vbl->ap_nvarbind + 1,
-			    sizeof(*(vbl->ap_varbind)));
-			if (varbind == NULL)
-				goto fail;
-			vbl->ap_varbind = varbind;
-			nread = agentx_pdutovarbind(&header,
-			    &(vbl->ap_varbind[vbl->ap_nvarbind]), u8, rawlen);
-			if (nread == -1)
-				goto fail;
-			vbl->ap_nvarbind++;
-			u8 += nread;
-			rawlen -= nread;
-		}
-		break;
-	case AGENTX_PDU_TYPE_COMMITSET:
-	case AGENTX_PDU_TYPE_UNDOSET:
-	case AGENTX_PDU_TYPE_CLEANUPSET:
-		if (rawlen != 0) {
-			errno = EPROTO;
-			goto fail;
-		}
-		break;
-	case AGENTX_PDU_TYPE_RESPONSE:
-		if (ax->ax_packetids != NULL) {
-			found = 0;
-			for (i = 0; ax->ax_packetids[i] != 0; i++) {
-				if (ax->ax_packetids[i] ==
-				    pdu->ap_header.aph_packetid) {
-					packetidx = i;
-					found = 1;
-				}
-			}
-			if (found) {
-				ax->ax_packetids[packetidx] =
-				    ax->ax_packetids[i - 1];
-				ax->ax_packetids[i - 1] = 0;
-			} else {
-				errno = EPROTO;
-				goto fail;
-			}
-		}
-		if (rawlen < 8) {
-			errno = EPROTO;
-			goto fail;
-		}
-		response = &(pdu->ap_payload.ap_response);
-		response->ap_uptime = agentx_pdutoh32(&header, u8);
-		u8 += 4;
-		response->ap_error = agentx_pdutoh16(&header, u8);
-		u8 += 2;
-		response->ap_index = agentx_pdutoh16(&header, u8);
-		u8 += 2;
-		rawlen -= 8;
-		while (rawlen > 0) {
-			varbind = recallocarray(response->ap_varbindlist,
-			    response->ap_nvarbind, response->ap_nvarbind + 1,
-			    sizeof(*(response->ap_varbindlist)));
-			if (varbind == NULL)
-				goto fail;
-			response->ap_varbindlist = varbind;
-			nread = agentx_pdutovarbind(&header,
-			    &(response->ap_varbindlist[response->ap_nvarbind]),
-			    u8, rawlen);
-			if (nread == -1)
-				goto fail;
-			response->ap_nvarbind++;
-			u8 += nread;
-			rawlen -= nread;
-		}
-		break;
-	default:
-		pdu->ap_payload.ap_raw = malloc(pdu->ap_header.aph_plength);
-		if (pdu->ap_payload.ap_raw == NULL)
-			goto fail;
-		memcpy(pdu->ap_payload.ap_raw, ax->ax_rbuf + AGENTX_PDU_HEADER,
-		    pdu->ap_header.aph_plength);
-		break;
+	axs->axs_ax = ax;
+	axs->axs_timeout = timeout;
+	for (i = 0; i < oidlen; i++)
+		axs->axs_oid.aoi_id[i] = oid[i];
+	axs->axs_oid.aoi_idlen = oidlen;
+	axs->axs_descr.aos_string = (unsigned char *)strdup(descr);
+	if (axs->axs_descr.aos_string == NULL) {
+		free(axs);
+		return NULL;
 	}
+	axs->axs_descr.aos_slen = strlen(descr);
+	axs->axs_cstate = AX_CSTATE_CLOSE;
+	axs->axs_dstate = AX_DSTATE_OPEN;
+	TAILQ_INIT(&(axs->axs_contexts));
+	TAILQ_INSERT_HEAD(&(ax->ax_sessions), axs, axs_ax_sessions);
 
-	ax->ax_rblen = 0;
+	if (ax->ax_cstate == AX_CSTATE_OPEN)
+		(void) agentx_session_start(axs);
 
-	return pdu;
-fail:
-	agentx_pdu_free(pdu);
-	return NULL;
+	return axs;
 }
 
 static int
-agentx_pdu_need(struct agentx *ax, size_t need)
+agentx_session_start(struct agentx_session *axs)
 {
-	uint8_t *wbuf;
-	size_t wbsize;
+	struct agentx *ax = axs->axs_ax;
+	uint32_t packetid;
 
-	if (ax->ax_wbtlen >= ax->ax_wbsize) {
-		wbsize = ((ax->ax_wbtlen / 512) + 1) * 512;
-		wbuf = recallocarray(ax->ax_wbuf, ax->ax_wbsize, wbsize, 1);
-		if (wbuf == NULL) {
-			ax->ax_wbtlen = ax->ax_wblen;
-			return -1;
-		}
-		ax->ax_wbsize = wbsize;
-		ax->ax_wbuf = wbuf;
-	}
-
-	return 0;
-}
-
-ssize_t
-agentx_send(struct agentx *ax)
-{
-	ssize_t nwrite;
-
-	if (ax->ax_wblen != ax->ax_wbtlen) {
-		errno = EALREADY;
+#ifdef AX_DEBUG
+	if (ax->ax_cstate != AX_CSTATE_OPEN ||
+	    axs->axs_cstate != AX_CSTATE_CLOSE ||
+	    axs->axs_dstate != AX_DSTATE_OPEN)
+		agentx_log_ax_fatalx(ax, "%s: unexpected session open",
+		    __func__);
+#endif
+	packetid = ax_open(ax->ax_ax, axs->axs_timeout, &(axs->axs_oid),
+	    &(axs->axs_descr));
+	if (packetid == 0) {
+		agentx_log_ax_warn(ax, "couldn't generate %s",
+		    ax_pdutype2string(AX_PDU_TYPE_OPEN));
+		agentx_reset(ax);
 		return -1;
 	}
+	axs->axs_packetid = packetid;
+	agentx_log_ax_info(ax, "opening session");
+	axs->axs_cstate = AX_CSTATE_WAITOPEN;
+	return agentx_request(ax, packetid, agentx_session_finalize, axs);
+}
 
-	if (ax->ax_wblen == 0)
-		return 0;
+static int
+agentx_session_finalize(struct ax_pdu *pdu, void *cookie)
+{
+	struct agentx_session *axs = cookie;
+	struct agentx *ax = axs->axs_ax;
+	struct agentx_context *axc;
 
-#if defined(AGENTX_DEBUG) && defined(AGENTX_DEBUG_VERBOSE)
-	{
-		size_t i;
-		char chars[4];
-		int print = 1;
-
-		fprintf(stderr, "sending packet:\n");
-		for (i = 0; i < ax->ax_wblen; i++) {
-			fprintf(stderr, "%02hhx ", ax->ax_wbuf[i]);
-			chars[i % 4] = ax->ax_wbuf[i];
-			if (!isprint(ax->ax_wbuf[i]))
-				print = 0;
-			if (i % 4 == 3) {
-				if (print)
-					fprintf(stderr, "%.4s", chars);
-				fprintf(stderr, "\n");
-				print = 1;
-			}
-		}
-	}
+#ifdef AX_DEBUG
+	if (axs->axs_cstate != AX_CSTATE_WAITOPEN)
+		agentx_log_ax_fatalx(ax, "%s: not expecting new session",
+		    __func__);
 #endif
 
-	if ((nwrite = send(ax->ax_fd, ax->ax_wbuf, ax->ax_wblen,
-	    MSG_NOSIGNAL | MSG_DONTWAIT)) == -1)
+	if (pdu->ap_payload.ap_response.ap_error != AX_PDU_ERROR_NOERROR) {
+		agentx_log_ax_warnx(ax, "failed to open session: %s",
+		    ax_error2string(pdu->ap_payload.ap_response.ap_error));
+		agentx_reset(ax);
 		return -1;
+	}
 
-	memmove(ax->ax_wbuf, ax->ax_wbuf + nwrite, ax->ax_wblen - nwrite);
-	ax->ax_wblen -= nwrite;
-	ax->ax_wbtlen = ax->ax_wblen;
+	axs->axs_id = pdu->ap_header.aph_sessionid;
+	axs->axs_cstate = AX_CSTATE_OPEN;
 
-	return ax->ax_wblen;
-}
-
-uint32_t
-agentx_open(struct agentx *ax, uint8_t timeout, struct agentx_oid *oid,
-    struct agentx_ostring *descr)
-{
-	if (agentx_pdu_header(ax, AGENTX_PDU_TYPE_OPEN, 0, 0, 0, 0,
-	    NULL) == -1)
-		return 0;
-	agentx_pdu_need(ax, 4);
-	ax->ax_wbuf[ax->ax_wbtlen++] = timeout;
-	memset(&(ax->ax_wbuf[ax->ax_wbtlen]), 0, 3);
-	ax->ax_wbtlen += 3;
-	if (agentx_pdu_add_oid(ax, oid, 0) == -1)
-		return 0;
-	if (agentx_pdu_add_str(ax, descr) == -1)
-		return 0;
-
-	return agentx_pdu_queue(ax);
-}
-
-uint32_t
-agentx_close(struct agentx *ax, uint32_t sessionid,
-    enum agentx_close_reason reason)
-{
-	if (agentx_pdu_header(ax, AGENTX_PDU_TYPE_CLOSE, 0, sessionid, 0, 0,
-	    NULL) == -1)
-		return 0;
-
-	if (agentx_pdu_need(ax, 4) == -1)
-		return 0;
-	ax->ax_wbuf[ax->ax_wbtlen++] = (uint8_t)reason;
-	memset(&(ax->ax_wbuf[ax->ax_wbtlen]), 0, 3);
-	ax->ax_wbtlen += 3;
-
-	return agentx_pdu_queue(ax);
-}
-
-uint32_t
-agentx_indexallocate(struct agentx *ax, uint8_t flags, uint32_t sessionid,
-    struct agentx_ostring *context, struct agentx_varbind *vblist, size_t nvb)
-{
-	if (flags & ~(AGENTX_PDU_FLAG_NEW_INDEX | AGENTX_PDU_FLAG_ANY_INDEX)) {
-		errno = EINVAL;
+	if (axs->axs_dstate == AX_DSTATE_CLOSE) {
+		agentx_session_close(axs, AX_CLOSE_SHUTDOWN);
 		return 0;
 	}
 
-	if (agentx_pdu_header(ax, AGENTX_PDU_TYPE_INDEXALLOCATE, flags,
-	    sessionid, 0, 0, context) == -1)
-		return 0;
+	agentx_log_axs_info(axs, "open");
 
-	if (agentx_pdu_add_varbindlist(ax, vblist, nvb) == -1)
-		return 0;
-
-	return agentx_pdu_queue(ax);
+	TAILQ_FOREACH(axc, &(axs->axs_contexts), axc_axs_contexts)
+		agentx_context_start(axc);
+	return 0;
 }
 
-uint32_t
-agentx_indexdeallocate(struct agentx *ax, uint32_t sessionid,
-    struct agentx_ostring *context, struct agentx_varbind *vblist, size_t nvb)
+static int
+agentx_session_close(struct agentx_session *axs,
+    enum ax_close_reason reason)
 {
-	if (agentx_pdu_header(ax, AGENTX_PDU_TYPE_INDEXDEALLOCATE, 0,
-	    sessionid, 0, 0, context) == -1)
-		return 0;
+	struct agentx *ax = axs->axs_ax;
+	uint32_t packetid;
 
-	if (agentx_pdu_add_varbindlist(ax, vblist, nvb) == -1)
-		return 0;
-
-	return agentx_pdu_queue(ax);
-}
-
-uint32_t
-agentx_addagentcaps(struct agentx *ax, uint32_t sessionid,
-    struct agentx_ostring *context, struct agentx_oid *id,
-    struct agentx_ostring *descr)
-{
-	if (agentx_pdu_header(ax, AGENTX_PDU_TYPE_ADDAGENTCAPS, 0,
-	    sessionid, 0, 0, context) == -1)
-		return 0;
-	if (agentx_pdu_add_oid(ax, id, 0) == -1)
-		return 0;
-	if (agentx_pdu_add_str(ax, descr) == -1)
-		return 0;
-
-	return agentx_pdu_queue(ax);
-}
-
-uint32_t
-agentx_removeagentcaps(struct agentx *ax, uint32_t sessionid,
-    struct agentx_ostring *context, struct agentx_oid *id)
-{
-	if (agentx_pdu_header(ax, AGENTX_PDU_TYPE_REMOVEAGENTCAPS, 0,
-	    sessionid, 0, 0, context) == -1)
-		return 0;
-	if (agentx_pdu_add_oid(ax, id, 0) == -1)
-		return 0;
-
-	return agentx_pdu_queue(ax);
-
-}
-
-uint32_t
-agentx_register(struct agentx *ax, uint8_t flags, uint32_t sessionid,
-    struct agentx_ostring *context, uint8_t timeout, uint8_t priority,
-    uint8_t range_subid, struct agentx_oid *subtree, uint32_t upperbound)
-{
-	if (flags & ~(AGENTX_PDU_FLAG_INSTANCE_REGISTRATION)) {
-		errno = EINVAL;
-		return 0;
+#ifdef AX_DEBUG
+	if (axs->axs_cstate != AX_CSTATE_OPEN)
+		agentx_log_ax_fatalx(ax, "%s: unexpected session close",
+		    __func__);
+#endif
+	if ((packetid = ax_close(ax->ax_ax, axs->axs_id, reason)) == 0) {
+		agentx_log_axs_warn(axs, "couldn't generate %s",
+		    ax_pdutype2string(AX_PDU_TYPE_CLOSE));
+		agentx_reset(ax);
+		return -1;
 	}
 
-	if (agentx_pdu_header(ax, AGENTX_PDU_TYPE_REGISTER, flags,
-	    sessionid, 0, 0, context) == -1)
-		return 0;
+	agentx_log_axs_info(axs, "closing session: %s",
+	    ax_closereason2string(reason));
 
-	if (agentx_pdu_need(ax, 4) == -1)
-		return 0;
-	ax->ax_wbuf[ax->ax_wbtlen++] = timeout;
-	ax->ax_wbuf[ax->ax_wbtlen++] = priority;
-	ax->ax_wbuf[ax->ax_wbtlen++] = range_subid;
-	ax->ax_wbuf[ax->ax_wbtlen++] = 0;
-	if (agentx_pdu_add_oid(ax, subtree, 0) == -1)
-		return 0;
-	if (range_subid != 0) {
-		if (agentx_pdu_add_uint32(ax, upperbound) == -1)
-			return 0;
-	}
-
-	return agentx_pdu_queue(ax);
+	axs->axs_cstate = AX_CSTATE_WAITCLOSE;
+	return agentx_request(ax, packetid, agentx_session_close_finalize,
+	    axs);
 }
 
-uint32_t
-agentx_unregister(struct agentx *ax, uint32_t sessionid,
-    struct agentx_ostring *context, uint8_t priority, uint8_t range_subid,
-    struct agentx_oid *subtree, uint32_t upperbound)
+static int
+agentx_session_close_finalize(struct ax_pdu *pdu, void *cookie)
 {
-	if (agentx_pdu_header(ax, AGENTX_PDU_TYPE_UNREGISTER, 0,
-	    sessionid, 0, 0, context) == -1)
-		return 0;
+	struct agentx_session *axs = cookie;
+	struct agentx *ax = axs->axs_ax;
+	struct agentx_context *axc, *tsac;
 
-	if (agentx_pdu_need(ax, 4) == -1)
-		return 0;
-	ax->ax_wbuf[ax->ax_wbtlen++] = 0;
-	ax->ax_wbuf[ax->ax_wbtlen++] = priority;
-	ax->ax_wbuf[ax->ax_wbtlen++] = range_subid;
-	ax->ax_wbuf[ax->ax_wbtlen++] = 0;
-	if (agentx_pdu_add_oid(ax, subtree, 0) == -1)
-		return 0;
-	if (range_subid != 0) {
-		if (agentx_pdu_add_uint32(ax, upperbound) == -1)
-			return 0;
+#ifdef AX_DEBUG
+	if (axs->axs_cstate != AX_CSTATE_WAITCLOSE)
+		agentx_log_axs_fatalx(axs, "%s: not expecting session close",
+		    __func__);
+#endif
+
+	if (pdu->ap_payload.ap_response.ap_error != AX_PDU_ERROR_NOERROR) {
+		agentx_log_axs_warnx(axs, "failed to close session: %s",
+		    ax_error2string(pdu->ap_payload.ap_response.ap_error));
+		agentx_reset(ax);
+		return -1;
 	}
 
-	return agentx_pdu_queue(ax);
-}
+	axs->axs_cstate = AX_CSTATE_CLOSE;
 
-int
-agentx_response(struct agentx *ax, uint32_t sessionid, uint32_t transactionid,
-    uint32_t packetid, struct agentx_ostring *context, uint32_t sysuptime,
-    uint16_t error, uint16_t index, struct agentx_varbind *vblist, size_t nvb)
-{
-	if (agentx_pdu_header(ax, AGENTX_PDU_TYPE_RESPONSE, 0, sessionid,
-	    transactionid, packetid, context) == -1)
-		return -1;
+	agentx_log_axs_info(axs, "closed");
 
-	if (agentx_pdu_add_uint32(ax, sysuptime) == -1 ||
-	    agentx_pdu_add_uint16(ax, error) == -1 ||
-	    agentx_pdu_add_uint16(ax, index) == -1)
-		return -1;
+	TAILQ_FOREACH_SAFE(axc, &(axs->axs_contexts), axc_axs_contexts, tsac)
+		agentx_context_reset(axc);
 
-	if (agentx_pdu_add_varbindlist(ax, vblist, nvb) == -1)
-		return -1;
-	if (agentx_pdu_queue(ax) == 0)
-		return -1;
+	if (axs->axs_dstate == AX_DSTATE_CLOSE)
+		agentx_session_free_finalize(axs);
+	else {
+		if (ax->ax_cstate == AX_CSTATE_OPEN)
+			if (agentx_session_start(axs) == -1)
+				return -1;
+	}
 	return 0;
 }
 
 void
-agentx_pdu_free(struct agentx_pdu *pdu)
+agentx_session_free(struct agentx_session *axs)
 {
-	size_t i;
-	struct agentx_pdu_response *response;
+	struct agentx_context *axc, *tsac;
 
-	if (pdu->ap_header.aph_flags & AGENTX_PDU_FLAG_NON_DEFAULT_CONTEXT)
-		free(pdu->ap_context.aos_string);
+	if (axs == NULL)
+		return;
 
-	switch (pdu->ap_header.aph_type) {
-	case AGENTX_PDU_TYPE_GET:
-	case AGENTX_PDU_TYPE_GETNEXT:
-	case AGENTX_PDU_TYPE_GETBULK:
-		free(pdu->ap_payload.ap_srl.ap_sr);
-		break;
-	case AGENTX_PDU_TYPE_RESPONSE:
-		response = &(pdu->ap_payload.ap_response);
-		for (i = 0; i < response->ap_nvarbind; i++)
-			agentx_varbind_free(&(response->ap_varbindlist[i]));
-		free(response->ap_varbindlist);
-		break;
-	default:
-		free(pdu->ap_payload.ap_raw);
-		break;
+	if (axs->axs_dstate == AX_DSTATE_CLOSE)
+		agentx_log_axs_fatalx(axs, "%s: double free", __func__);
+
+	axs->axs_dstate = AX_DSTATE_CLOSE;
+
+	if (axs->axs_cstate == AX_CSTATE_OPEN)
+		(void) agentx_session_close(axs, AX_CLOSE_SHUTDOWN);
+
+	TAILQ_FOREACH_SAFE(axc, &(axs->axs_contexts), axc_axs_contexts, tsac) {
+		if (axc->axc_dstate != AX_DSTATE_CLOSE)
+			agentx_context_free(axc);
 	}
-	free(pdu);
+
+	if (axs->axs_cstate == AX_CSTATE_CLOSE)
+		agentx_session_free_finalize(axs);
+}
+
+static void
+agentx_session_free_finalize(struct agentx_session *axs)
+{
+	struct agentx *ax = axs->axs_ax;
+
+#ifdef AX_DEBUG
+	if (axs->axs_cstate != AX_CSTATE_CLOSE)
+		agentx_log_axs_fatalx(axs, "%s: free without closing",
+		    __func__);
+	if (!TAILQ_EMPTY(&(axs->axs_contexts)))
+		agentx_log_axs_fatalx(axs,
+		    "%s: agentx still has contexts", __func__);
+#endif
+
+	TAILQ_REMOVE(&(ax->ax_sessions), axs, axs_ax_sessions);
+	free(axs->axs_descr.aos_string);
+	free(axs);
+
+	if (TAILQ_EMPTY(&(ax->ax_sessions)) && ax->ax_dstate == AX_DSTATE_CLOSE)
+		agentx_free_finalize(ax);
+}
+
+static void
+agentx_session_reset(struct agentx_session *axs)
+{
+	struct agentx_context *axc, *tsac;
+
+	axs->axs_cstate = AX_CSTATE_CLOSE;
+
+	TAILQ_FOREACH_SAFE(axc, &(axs->axs_contexts), axc_axs_contexts, tsac)
+		agentx_context_reset(axc);
+
+	if (axs->axs_dstate == AX_DSTATE_CLOSE)
+		agentx_session_free_finalize(axs);
+}
+
+struct agentx_context *
+agentx_context(struct agentx_session *axs, const char *name)
+{
+	struct agentx_context *axc;
+
+	if (axs->axs_dstate == AX_DSTATE_CLOSE)
+		agentx_log_axs_fatalx(axs, "%s: use after free", __func__);
+
+	if ((axc = calloc(1, sizeof(*axc))) == NULL)
+		return NULL;
+
+	axc->axc_axs = axs;
+	axc->axc_name_default = (name == NULL);
+	if (name != NULL) {
+		axc->axc_name.aos_string = (unsigned char *)strdup(name);
+		if (axc->axc_name.aos_string == NULL) {
+			free(axc);
+			return NULL;
+		}
+		axc->axc_name.aos_slen = strlen(name);
+	}
+	axc->axc_cstate = axs->axs_cstate == AX_CSTATE_OPEN ?
+	    AX_CSTATE_OPEN : AX_CSTATE_CLOSE;
+	axc->axc_dstate = AX_DSTATE_OPEN;
+	TAILQ_INIT(&(axc->axc_agentcaps));
+	TAILQ_INIT(&(axc->axc_regions));
+
+	TAILQ_INSERT_HEAD(&(axs->axs_contexts), axc, axc_axs_contexts);
+
+	return axc;
+}
+
+static void
+agentx_context_start(struct agentx_context *axc)
+{
+	struct agentx_agentcaps *axa;
+	struct agentx_region *axr;
+
+#ifdef AX_DEBUG
+	if (axc->axc_cstate != AX_CSTATE_CLOSE)
+		agentx_log_axc_fatalx(axc, "%s: unexpected context start",
+		    __func__);
+#endif
+	axc->axc_cstate = AX_CSTATE_OPEN;
+
+	TAILQ_FOREACH(axa, &(axc->axc_agentcaps), axa_axc_agentcaps) {
+		if (agentx_agentcaps_start(axa) == -1)
+			return;
+	}
+	TAILQ_FOREACH(axr, &(axc->axc_regions), axr_axc_regions) {
+		if (agentx_region_start(axr) == -1)
+			return;
+	}
+}
+
+uint32_t
+agentx_context_uptime(struct agentx_context *axc)
+{
+	struct timespec cur, res;
+
+	if (axc->axc_sysuptimespec.tv_sec == 0 &&
+	    axc->axc_sysuptimespec.tv_nsec == 0)
+		return 0;
+
+	(void) clock_gettime(CLOCK_MONOTONIC, &cur);
+
+	timespecsub(&cur, &(axc->axc_sysuptimespec), &res);
+
+	return axc->axc_sysuptime +
+	    (uint32_t) ((res.tv_sec * 100) + (res.tv_nsec / 10000000));
+}
+
+struct agentx_object *
+agentx_context_object_find(struct agentx_context *axc,
+    const uint32_t oid[], size_t oidlen, int active, int instance)
+{
+	struct agentx_object *axo, axo_search;
+	size_t i;
+
+	for (i = 0; i < oidlen; i++)
+		axo_search.axo_oid.aoi_id[i] = oid[i];
+	axo_search.axo_oid.aoi_idlen = oidlen;
+
+	axo = RB_FIND(axc_objects, &(axc->axc_objects), &axo_search);
+	while (axo == NULL && !instance && axo_search.axo_oid.aoi_idlen > 0) {
+		axo = RB_FIND(axc_objects, &(axc->axc_objects), &axo_search);
+		axo_search.axo_oid.aoi_idlen--;
+	}
+	if (active && axo != NULL && axo->axo_cstate != AX_CSTATE_OPEN)
+		return NULL;
+	return axo;
+}
+
+struct agentx_object *
+agentx_context_object_nfind(struct agentx_context *axc,
+    const uint32_t oid[], size_t oidlen, int active, int inclusive)
+{
+	struct agentx_object *axo, axo_search;
+	size_t i;
+
+	for (i = 0; i < oidlen; i++)
+		axo_search.axo_oid.aoi_id[i] = oid[i];
+	axo_search.axo_oid.aoi_idlen = oidlen;
+
+	axo = RB_NFIND(axc_objects, &(axc->axc_objects), &axo_search);
+	if (!inclusive && axo != NULL &&
+	    ax_oid_cmp(&(axo_search.axo_oid), &(axo->axo_oid)) <= 0) {
+		axo = RB_NEXT(axc_objects, &(axc->axc_objects), axo);
+	}
+
+	while (active && axo != NULL && axo->axo_cstate != AX_CSTATE_OPEN)
+		axo = RB_NEXT(axc_objects, &(axc->axc_objects), axo);
+	return axo;
 }
 
 void
-agentx_varbind_free(struct agentx_varbind *varbind)
+agentx_context_free(struct agentx_context *axc)
 {
-	switch (varbind->avb_type) {
-	case AGENTX_DATA_TYPE_OCTETSTRING:
-	case AGENTX_DATA_TYPE_IPADDRESS:
-	case AGENTX_DATA_TYPE_OPAQUE:
-		free(varbind->avb_data.avb_ostring.aos_string);
+	struct agentx_agentcaps *axa, *tsaa;
+	struct agentx_region *axr, *tsar;
+
+	if (axc == NULL)
+		return;
+
+#ifdef AX_DEBUG
+	if (axc->axc_dstate == AX_DSTATE_CLOSE)
+		agentx_log_axc_fatalx(axc, "%s: double free", __func__);
+#endif
+	axc->axc_dstate = AX_DSTATE_CLOSE;
+
+	TAILQ_FOREACH_SAFE(axa, &(axc->axc_agentcaps), axa_axc_agentcaps,
+	    tsaa) {
+		if (axa->axa_dstate != AX_DSTATE_CLOSE)
+			agentx_agentcaps_free(axa);
+	}
+	TAILQ_FOREACH_SAFE(axr, &(axc->axc_regions), axr_axc_regions, tsar) {
+		if (axr->axr_dstate != AX_DSTATE_CLOSE)
+			agentx_region_free(axr);
+	}
+}
+
+static void
+agentx_context_free_finalize(struct agentx_context *axc)
+{
+	struct agentx_session *axs = axc->axc_axs;
+
+#ifdef AX_DEBUG
+	if (axc->axc_dstate != AX_DSTATE_CLOSE)
+		agentx_log_axc_fatalx(axc, "%s: unexpected context free",
+		    __func__);
+#endif
+	if (!TAILQ_EMPTY(&(axc->axc_regions)) ||
+	    !TAILQ_EMPTY(&(axc->axc_agentcaps)))
+		return;
+	TAILQ_REMOVE(&(axs->axs_contexts), axc, axc_axs_contexts);
+	free(axc->axc_name.aos_string);
+	free(axc);
+}
+
+static void
+agentx_context_reset(struct agentx_context *axc)
+{
+	struct agentx_agentcaps *axa, *tsaa;
+	struct agentx_region *axr, *tsar;
+
+	axc->axc_cstate = AX_CSTATE_CLOSE;
+	axc->axc_sysuptimespec.tv_sec = 0;
+	axc->axc_sysuptimespec.tv_nsec = 0;
+
+	TAILQ_FOREACH_SAFE(axa, &(axc->axc_agentcaps), axa_axc_agentcaps, tsaa)
+		agentx_agentcaps_reset(axa);
+	TAILQ_FOREACH_SAFE(axr, &(axc->axc_regions), axr_axc_regions, tsar)
+		agentx_region_reset(axr);
+
+	if (axc->axc_dstate == AX_DSTATE_CLOSE)
+		agentx_context_free_finalize(axc);
+}
+
+struct agentx_agentcaps *
+agentx_agentcaps(struct agentx_context *axc, uint32_t oid[],
+    size_t oidlen, const char *descr)
+{
+	struct agentx_agentcaps *axa;
+	size_t i;
+
+	if (axc->axc_dstate == AX_DSTATE_CLOSE)
+		agentx_log_axc_fatalx(axc, "%s: use after free", __func__);
+
+	if ((axa = calloc(1, sizeof(*axa))) == NULL)
+		return NULL;
+
+	axa->axa_axc = axc;
+	for (i = 0; i < oidlen; i++)
+		axa->axa_oid.aoi_id[i] = oid[i];
+	axa->axa_oid.aoi_idlen = oidlen;
+	axa->axa_descr.aos_string = (unsigned char *)strdup(descr);
+	if (axa->axa_descr.aos_string == NULL) {
+		free(axa);
+		return NULL;
+	}
+	axa->axa_descr.aos_slen = strlen(descr);
+	axa->axa_cstate = AX_CSTATE_CLOSE;
+	axa->axa_dstate = AX_DSTATE_OPEN;
+
+	TAILQ_INSERT_TAIL(&(axc->axc_agentcaps), axa, axa_axc_agentcaps);
+
+	if (axc->axc_cstate == AX_CSTATE_OPEN)
+		agentx_agentcaps_start(axa);
+
+	return axa;
+}
+
+static int
+agentx_agentcaps_start(struct agentx_agentcaps *axa)
+{
+	struct agentx_context *axc = axa->axa_axc;
+	struct agentx_session *axs = axc->axc_axs;
+	struct agentx *ax = axs->axs_ax;
+	uint32_t packetid;
+
+#ifdef AX_DEBUG
+	if (axc->axc_cstate != AX_CSTATE_OPEN ||
+	    axa->axa_cstate != AX_CSTATE_CLOSE ||
+	    axa->axa_dstate != AX_DSTATE_OPEN)
+		agentx_log_axc_fatalx(axc,
+		    "%s: unexpected region registration", __func__);
+#endif
+
+	packetid = ax_addagentcaps(ax->ax_ax, axs->axs_id,
+	    AGENTX_CONTEXT_CTX(axc), &(axa->axa_oid), &(axa->axa_descr));
+	if (packetid == 0) {
+		agentx_log_axc_warn(axc, "couldn't generate %s",
+		    ax_pdutype2string(AX_PDU_TYPE_ADDAGENTCAPS));
+		agentx_reset(ax);
+		return -1;
+	}
+	agentx_log_axc_info(axc, "agentcaps %s: opening",
+	    ax_oid2string(&(axa->axa_oid)));
+	axa->axa_cstate = AX_CSTATE_WAITOPEN;
+	return agentx_request(ax, packetid, agentx_agentcaps_finalize,
+	    axa);
+}
+
+static int
+agentx_agentcaps_finalize(struct ax_pdu *pdu, void *cookie)
+{
+	struct agentx_agentcaps *axa = cookie;
+	struct agentx_context *axc = axa->axa_axc;
+
+#ifdef AX_DEBUG
+	if (axa->axa_cstate != AX_CSTATE_WAITOPEN)
+		agentx_log_axc_fatalx(axc,
+		    "%s: not expecting agentcaps open", __func__);
+#endif
+
+	if (pdu->ap_payload.ap_response.ap_error != AX_PDU_ERROR_NOERROR) {
+		/* Agentcaps failing is nothing too serious */
+		agentx_log_axc_warn(axc, "agentcaps %s: %s",
+		    ax_oid2string(&(axa->axa_oid)),
+		    ax_error2string(pdu->ap_payload.ap_response.ap_error));
+		axa->axa_cstate = AX_CSTATE_CLOSE;
+		return 0;
+	}
+
+	axa->axa_cstate = AX_CSTATE_OPEN;
+
+	agentx_log_axc_info(axc, "agentcaps %s: open",
+	    ax_oid2string(&(axa->axa_oid)));
+
+	if (axa->axa_dstate == AX_DSTATE_CLOSE)
+		agentx_agentcaps_close(axa);
+
+	return 0;
+}
+
+static int
+agentx_agentcaps_close(struct agentx_agentcaps *axa)
+{
+	struct agentx_context *axc = axa->axa_axc;
+	struct agentx_session *axs = axc->axc_axs;
+	struct agentx *ax = axs->axs_ax;
+	uint32_t packetid;
+
+#ifdef AX_DEBUG
+	if (axa->axa_cstate != AX_CSTATE_OPEN)
+		agentx_log_axc_fatalx(axc, "%s: unexpected agentcaps close",
+		    __func__);
+#endif
+
+	axa->axa_cstate = AX_CSTATE_WAITCLOSE;
+	if (axs->axs_cstate == AX_CSTATE_WAITCLOSE)
+		return 0;
+
+	packetid = ax_removeagentcaps(ax->ax_ax, axs->axs_id,
+	    AGENTX_CONTEXT_CTX(axc), &(axa->axa_oid));
+	if (packetid == 0) {
+		agentx_log_axc_warn(axc, "couldn't generate %s",
+		    ax_pdutype2string(AX_PDU_TYPE_REMOVEAGENTCAPS));
+		agentx_reset(ax);
+		return -1;
+	}
+	agentx_log_axc_info(axc, "agentcaps %s: closing",
+	    ax_oid2string(&(axa->axa_oid)));
+	return agentx_request(ax, packetid,
+	    agentx_agentcaps_close_finalize, axa);
+}
+
+static int
+agentx_agentcaps_close_finalize(struct ax_pdu *pdu, void *cookie)
+{
+	struct agentx_agentcaps *axa = cookie;
+	struct agentx_context *axc = axa->axa_axc;
+	struct agentx_session *axs = axc->axc_axs;
+	struct agentx *ax = axs->axs_ax;
+
+#ifdef AX_DEBUG
+	if (axa->axa_cstate != AX_CSTATE_WAITCLOSE)
+		agentx_log_axc_fatalx(axc, "%s: unexpected agentcaps close",
+		    __func__);
+#endif
+
+	if (pdu->ap_payload.ap_response.ap_error != AX_PDU_ERROR_NOERROR) {
+		agentx_log_axc_warnx(axc, "agentcaps %s: %s",
+		    ax_oid2string(&(axa->axa_oid)),
+		    ax_error2string(pdu->ap_payload.ap_response.ap_error));
+		agentx_reset(ax);
+		return -1;
+	}
+
+	axa->axa_cstate = AX_CSTATE_CLOSE;
+
+	agentx_log_axc_info(axc, "agentcaps %s: closed",
+	    ax_oid2string(&(axa->axa_oid)));
+
+	if (axa->axa_dstate == AX_DSTATE_CLOSE) {
+		agentx_agentcaps_free_finalize(axa);
+		return 0;
+	} else {
+		if (axc->axc_cstate == AX_CSTATE_OPEN) {
+			if (agentx_agentcaps_start(axa) == -1)
+				return -1;
+		}
+	}
+	return 0;
+}
+
+void
+agentx_agentcaps_free(struct agentx_agentcaps *axa)
+{
+	if (axa == NULL)
+		return;
+
+	if (axa->axa_dstate == AX_DSTATE_CLOSE)
+		agentx_log_axc_fatalx(axa->axa_axc, "%s: double free",
+		    __func__);
+
+	axa->axa_dstate = AX_DSTATE_CLOSE;
+
+	if (axa->axa_cstate == AX_CSTATE_OPEN) {
+		if (agentx_agentcaps_close(axa) == -1)
+			return;
+	}
+
+	if (axa->axa_cstate == AX_CSTATE_CLOSE)
+		agentx_agentcaps_free_finalize(axa);
+}
+
+static void
+agentx_agentcaps_free_finalize(struct agentx_agentcaps *axa)
+{
+	struct agentx_context *axc = axa->axa_axc;
+
+#ifdef AX_DEBUG
+	if (axa->axa_dstate != AX_DSTATE_CLOSE ||
+	    axa->axa_cstate != AX_CSTATE_CLOSE)
+		agentx_log_axc_fatalx(axc, "%s: unexpected free", __func__);
+#endif
+
+	TAILQ_REMOVE(&(axc->axc_agentcaps), axa, axa_axc_agentcaps);
+	free(axa->axa_descr.aos_string);
+	free(axa);
+
+	if (axc->axc_dstate == AX_DSTATE_CLOSE)
+		agentx_context_free_finalize(axc);
+}
+
+static void
+agentx_agentcaps_reset(struct agentx_agentcaps *axa)
+{
+	axa->axa_cstate = AX_CSTATE_CLOSE;
+
+	if (axa->axa_dstate == AX_DSTATE_CLOSE)
+		agentx_agentcaps_free_finalize(axa);
+}
+
+struct agentx_region *
+agentx_region(struct agentx_context *axc, uint32_t oid[],
+    size_t oidlen, uint8_t timeout)
+{
+	struct agentx_region *axr;
+	struct ax_oid tmpoid;
+	size_t i;
+
+	if (axc->axc_dstate == AX_DSTATE_CLOSE)
+		agentx_log_axc_fatalx(axc, "%s: use after free", __func__);
+	if (oidlen < 1) {
+#ifdef AX_DEBUG
+		agentx_log_axc_fatalx(axc, "%s: oidlen == 0", __func__);
+#else
+		errno = EINVAL;
+		return NULL;
+#endif
+	}
+	if (oidlen > AGENTX_OID_MAX_LEN) {
+#ifdef AX_DEBUG
+		agentx_log_axc_fatalx(axc, "%s: oidlen > %d", __func__,
+		    AGENTX_OID_MAX_LEN);
+#else
+		errno = EINVAL;
+		return NULL;
+#endif
+	}
+
+	for (i = 0; i < oidlen; i++)
+		tmpoid.aoi_id[i] = oid[i];
+	tmpoid.aoi_idlen = oidlen;
+	TAILQ_FOREACH(axr, &(axc->axc_regions), axr_axc_regions) {
+		if (ax_oid_cmp(&(axr->axr_oid), &tmpoid) == 0) {
+#ifdef AX_DEBUG
+			agentx_log_axc_fatalx(axc,
+			    "%s: duplicate region registration", __func__);
+#else
+			errno = EINVAL;
+			return NULL;
+#endif
+		}
+	}
+
+	if ((axr = calloc(1, sizeof(*axr))) == NULL)
+		return NULL;
+
+	axr->axr_axc = axc;
+	axr->axr_timeout = timeout;
+	axr->axr_priority = AX_PRIORITY_DEFAULT;
+	bcopy(&tmpoid, &(axr->axr_oid), sizeof(axr->axr_oid));
+	axr->axr_cstate = AX_CSTATE_CLOSE;
+	axr->axr_dstate = AX_DSTATE_OPEN;
+	TAILQ_INIT(&(axr->axr_indices));
+	TAILQ_INIT(&(axr->axr_objects));
+
+	TAILQ_INSERT_HEAD(&(axc->axc_regions), axr, axr_axc_regions);
+
+	if (axc->axc_cstate == AX_CSTATE_OPEN)
+		(void) agentx_region_start(axr);
+
+	return axr;
+}
+
+static int
+agentx_region_start(struct agentx_region *axr)
+{
+	struct agentx_context *axc = axr->axr_axc;
+	struct agentx_session *axs = axc->axc_axs;
+	struct agentx *ax = axs->axs_ax;
+	uint32_t packetid;
+
+#ifdef AX_DEBUG
+	if (axc->axc_cstate != AX_CSTATE_OPEN ||
+	    axr->axr_cstate != AX_CSTATE_CLOSE ||
+	    axr->axr_dstate != AX_DSTATE_OPEN)
+		agentx_log_axc_fatalx(axc,
+		    "%s: unexpected region registration", __func__);
+#endif
+
+	packetid = ax_register(ax->ax_ax, 0, axs->axs_id,
+	    AGENTX_CONTEXT_CTX(axc), axr->axr_timeout, axr->axr_priority,
+	    0, &(axr->axr_oid), 0);
+	if (packetid == 0) {
+		agentx_log_axc_warn(axc, "couldn't generate %s",
+		    ax_pdutype2string(AX_PDU_TYPE_REGISTER));
+		agentx_reset(ax);
+		return -1;
+	}
+	agentx_log_axc_info(axc, "region %s: opening",
+	    ax_oid2string(&(axr->axr_oid)));
+	axr->axr_cstate = AX_CSTATE_WAITOPEN;
+	return agentx_request(ax, packetid, agentx_region_finalize, axr);
+}
+
+static int
+agentx_region_finalize(struct ax_pdu *pdu, void *cookie)
+{
+	struct agentx_region *axr = cookie;
+	struct agentx_context *axc = axr->axr_axc;
+	struct agentx_session *axs = axc->axc_axs;
+	struct agentx *ax = axs->axs_ax;
+	struct agentx_index *axi;
+	struct agentx_object *axo;
+
+#ifdef AX_DEBUG
+	if (axr->axr_cstate != AX_CSTATE_WAITOPEN)
+		agentx_log_axc_fatalx(axc, "%s: not expecting region open",
+		    __func__);
+#endif
+
+	if (pdu->ap_payload.ap_response.ap_error == AX_PDU_ERROR_NOERROR) {
+		axr->axr_cstate = AX_CSTATE_OPEN;
+		agentx_log_axc_info(axc, "region %s: open",
+		    ax_oid2string(&(axr->axr_oid)));
+	} else if (pdu->ap_payload.ap_response.ap_error ==
+	    AX_PDU_ERROR_DUPLICATEREGISTRATION) {
+		axr->axr_cstate = AX_CSTATE_CLOSE;
+		/* Try at lower priority: first come first serve */
+		if ((++axr->axr_priority) != 0) {
+			agentx_log_axc_warnx(axc, "region %s: duplicate, "
+			    "reducing priority",
+			    ax_oid2string(&(axr->axr_oid)));
+			return agentx_region_start(axr);
+		}
+		agentx_log_axc_info(axc, "region %s: duplicate, can't "
+		    "reduce priority, ignoring",
+		    ax_oid2string(&(axr->axr_oid)));
+	} else if (pdu->ap_payload.ap_response.ap_error ==
+	    AX_PDU_ERROR_REQUESTDENIED) {
+		axr->axr_cstate = AX_CSTATE_CLOSE;
+		agentx_log_axc_warnx(axc, "region %s: %s",
+		     ax_oid2string(&(axr->axr_oid)),
+		     ax_error2string(pdu->ap_payload.ap_response.ap_error));
+		/*
+		 * If we can't register a region, related objects are useless.
+		 * But no need to retry.
+		 */
+		return 0;
+	} else {
+		agentx_log_axc_info(axc, "region %s: %s",
+		    ax_oid2string(&(axr->axr_oid)),
+		    ax_error2string(pdu->ap_payload.ap_response.ap_error));
+		agentx_reset(ax);
+		return -1;
+	}
+
+	if (axr->axr_dstate == AX_DSTATE_CLOSE) {
+		if (agentx_region_close(axr) == -1)
+			return -1;
+	} else {
+		TAILQ_FOREACH(axi, &(axr->axr_indices), axi_axr_indices) {
+			if (agentx_index_start(axi) == -1)
+				return -1;
+		}
+		TAILQ_FOREACH(axo, &(axr->axr_objects), axo_axr_objects) {
+			if (agentx_object_start(axo) == -1)
+				return -1;
+		}
+	}
+	return 0;
+}
+
+static int
+agentx_region_close(struct agentx_region *axr)
+{
+	struct agentx_context *axc = axr->axr_axc;
+	struct agentx_session *axs = axc->axc_axs;
+	struct agentx *ax = axs->axs_ax;
+	uint32_t packetid;
+
+#ifdef AX_DEBUG
+	if (axr->axr_cstate != AX_CSTATE_OPEN)
+		agentx_log_axc_fatalx(axc, "%s: unexpected region close",
+		    __func__);
+#endif
+
+	axr->axr_cstate = AX_CSTATE_WAITCLOSE;
+	if (axs->axs_cstate == AX_CSTATE_WAITCLOSE)
+		return 0;
+
+	packetid = ax_unregister(ax->ax_ax, axs->axs_id,
+	    AGENTX_CONTEXT_CTX(axc), axr->axr_priority, 0, &(axr->axr_oid),
+	    0);
+	if (packetid == 0) {
+		agentx_log_axc_warn(axc, "couldn't generate %s",
+		    ax_pdutype2string(AX_PDU_TYPE_UNREGISTER));
+		agentx_reset(ax);
+		return -1;
+	}
+	agentx_log_axc_info(axc, "region %s: closing",
+	    ax_oid2string(&(axr->axr_oid)));
+	return agentx_request(ax, packetid, agentx_region_close_finalize,
+	    axr);
+}
+
+static int
+agentx_region_close_finalize(struct ax_pdu *pdu, void *cookie)
+{
+	struct agentx_region *axr = cookie;
+	struct agentx_context *axc = axr->axr_axc;
+	struct agentx_session *axs = axc->axc_axs;
+	struct agentx *ax = axs->axs_ax;
+
+#ifdef AX_DEBUG
+	if (axr->axr_cstate != AX_CSTATE_WAITCLOSE)
+		agentx_log_axc_fatalx(axc, "%s: unexpected region close",
+		    __func__);
+#endif
+
+	if (pdu->ap_payload.ap_response.ap_error != AX_PDU_ERROR_NOERROR) {
+		agentx_log_axc_warnx(axc, "closing %s: %s",
+		    ax_oid2string(&(axr->axr_oid)),
+		    ax_error2string(pdu->ap_payload.ap_response.ap_error));
+		agentx_reset(ax);
+		return -1;
+	}
+
+	axr->axr_priority = AX_PRIORITY_DEFAULT;
+	axr->axr_cstate = AX_CSTATE_CLOSE;
+
+	agentx_log_axc_info(axc, "region %s: closed",
+	    ax_oid2string(&(axr->axr_oid)));
+
+	if (axr->axr_dstate == AX_DSTATE_CLOSE) {
+		agentx_region_free_finalize(axr);
+		return 0;
+	} else {
+		if (axc->axc_cstate == AX_CSTATE_OPEN) {
+			if (agentx_region_start(axr) == -1)
+				return -1;
+		}
+	}
+	return 0;
+}
+
+void
+agentx_region_free(struct agentx_region *axr)
+{
+	struct agentx_index *axi, *tsai;
+	struct agentx_object *axo, *tsao;
+
+	if (axr == NULL)
+		return;
+
+	if (axr->axr_dstate == AX_DSTATE_CLOSE)
+		agentx_log_axc_fatalx(axr->axr_axc, "%s: double free",
+		    __func__);
+
+	axr->axr_dstate = AX_DSTATE_CLOSE;
+
+	TAILQ_FOREACH_SAFE(axi, &(axr->axr_indices), axi_axr_indices, tsai) {
+		if (axi->axi_dstate != AX_DSTATE_CLOSE)
+			agentx_index_free(axi);
+	}
+
+	TAILQ_FOREACH_SAFE(axo, &(axr->axr_objects), axo_axr_objects, tsao) {
+		if (axo->axo_dstate != AX_DSTATE_CLOSE)
+			agentx_object_free(axo);
+	}
+
+	if (axr->axr_cstate == AX_CSTATE_OPEN) {
+		if (agentx_region_close(axr) == -1)
+			return;
+	}
+
+	if (axr->axr_cstate == AX_CSTATE_CLOSE)
+		agentx_region_free_finalize(axr);
+}
+
+static void
+agentx_region_free_finalize(struct agentx_region *axr)
+{
+	struct agentx_context *axc = axr->axr_axc;
+
+#ifdef AX_DEBUG
+	if (axr->axr_dstate != AX_DSTATE_CLOSE)
+		agentx_log_axc_fatalx(axc, "%s: unexpected free", __func__);
+#endif
+
+	if (!TAILQ_EMPTY(&(axr->axr_indices)) ||
+	    !TAILQ_EMPTY(&(axr->axr_objects)))
+		return;
+
+	if (axr->axr_cstate != AX_CSTATE_CLOSE)
+		return;
+
+	TAILQ_REMOVE(&(axc->axc_regions), axr, axr_axc_regions);
+	free(axr);
+
+	if (axc->axc_dstate == AX_DSTATE_CLOSE)
+		agentx_context_free_finalize(axc);
+}
+
+static void
+agentx_region_reset(struct agentx_region *axr)
+{
+	struct agentx_index *axi, *tsai;
+	struct agentx_object *axo, *tsao;
+
+	axr->axr_cstate = AX_CSTATE_CLOSE;
+	axr->axr_priority = AX_PRIORITY_DEFAULT;
+
+	TAILQ_FOREACH_SAFE(axi, &(axr->axr_indices), axi_axr_indices, tsai)
+		agentx_index_reset(axi);
+	TAILQ_FOREACH_SAFE(axo, &(axr->axr_objects), axo_axr_objects, tsao)
+		agentx_object_reset(axo);
+
+	if (axr->axr_dstate == AX_DSTATE_CLOSE)
+		agentx_region_free_finalize(axr);
+}
+
+struct agentx_index *
+agentx_index_integer_new(struct agentx_region *axr, uint32_t oid[],
+    size_t oidlen)
+{
+	struct ax_varbind vb;
+	size_t i;
+
+	if (oidlen > AGENTX_OID_MAX_LEN) {
+#ifdef AX_DEBUG
+		agentx_log_axc_fatalx(axr->axr_axc, "%s: oidlen > %d",
+		    __func__, AGENTX_OID_MAX_LEN);
+#else
+		agentx_log_axc_warnx(axr->axr_axc, "%s: oidlen > %d",
+		    __func__, AGENTX_OID_MAX_LEN);
+		errno = EINVAL;
+		return NULL;
+#endif
+	}
+
+	vb.avb_type = AX_DATA_TYPE_INTEGER;
+	for (i = 0; i < oidlen; i++)
+		vb.avb_oid.aoi_id[i] = oid[i];
+	vb.avb_oid.aoi_idlen = oidlen;
+	vb.avb_data.avb_uint32 = 0;
+
+	return agentx_index(axr, &vb, AXI_TYPE_NEW);
+}
+
+struct agentx_index *
+agentx_index_integer_any(struct agentx_region *axr, uint32_t oid[],
+    size_t oidlen)
+{
+	struct ax_varbind vb;
+	size_t i;
+
+	if (oidlen > AGENTX_OID_MAX_LEN) {
+#ifdef AX_DEBUG
+		agentx_log_axc_fatalx(axr->axr_axc, "%s: oidlen > %d",
+		    __func__, AGENTX_OID_MAX_LEN);
+#else
+		agentx_log_axc_warnx(axr->axr_axc, "%s: oidlen > %d",
+		    __func__, AGENTX_OID_MAX_LEN);
+		errno = EINVAL;
+		return NULL;
+#endif
+	}
+
+	vb.avb_type = AX_DATA_TYPE_INTEGER;
+	for (i = 0; i < oidlen; i++)
+		vb.avb_oid.aoi_id[i] = oid[i];
+	vb.avb_oid.aoi_idlen = oidlen;
+	vb.avb_data.avb_uint32 = 0;
+
+	return agentx_index(axr, &vb, AXI_TYPE_ANY);
+}
+
+struct agentx_index *
+agentx_index_integer_value(struct agentx_region *axr, uint32_t oid[],
+    size_t oidlen, uint32_t value)
+{
+	struct ax_varbind vb;
+	size_t i;
+
+	if (oidlen > AGENTX_OID_MAX_LEN) {
+#ifdef AX_DEBUG
+		agentx_log_axc_fatalx(axr->axr_axc, "%s: oidlen > %d",
+		    __func__, AGENTX_OID_MAX_LEN);
+#else
+		agentx_log_axc_warnx(axr->axr_axc, "%s: oidlen > %d",
+		    __func__, AGENTX_OID_MAX_LEN);
+		errno = EINVAL;
+		return NULL;
+#endif
+	}
+
+	vb.avb_type = AX_DATA_TYPE_INTEGER;
+	for (i = 0; i < oidlen; i++)
+		vb.avb_oid.aoi_id[i] = oid[i];
+	vb.avb_oid.aoi_idlen = oidlen;
+	vb.avb_data.avb_uint32 = value;
+
+	return agentx_index(axr, &vb, AXI_TYPE_VALUE);
+}
+
+struct agentx_index *
+agentx_index_integer_dynamic(struct agentx_region *axr, uint32_t oid[],
+    size_t oidlen)
+{
+	struct ax_varbind vb;
+	size_t i;
+
+	if (oidlen > AGENTX_OID_MAX_LEN) {
+#ifdef AX_DEBUG
+		agentx_log_axc_fatalx(axr->axr_axc, "%s: oidlen > %d",
+		    __func__, AGENTX_OID_MAX_LEN);
+#else
+		agentx_log_axc_warnx(axr->axr_axc, "%s: oidlen > %d",
+		    __func__, AGENTX_OID_MAX_LEN);
+		errno = EINVAL;
+		return NULL;
+#endif
+	}
+
+	vb.avb_type = AX_DATA_TYPE_INTEGER;
+	for (i = 0; i < oidlen; i++)
+		vb.avb_oid.aoi_id[i] = oid[i];
+	vb.avb_oid.aoi_idlen = oidlen;
+
+	return agentx_index(axr, &vb, AXI_TYPE_DYNAMIC);
+}
+
+struct agentx_index *
+agentx_index_string_dynamic(struct agentx_region *axr, uint32_t oid[],
+    size_t oidlen)
+{
+	struct ax_varbind vb;
+	size_t i;
+
+	if (oidlen > AGENTX_OID_MAX_LEN) {
+#ifdef AX_DEBUG
+		agentx_log_axc_fatalx(axr->axr_axc, "%s: oidlen > %d",
+		    __func__, AGENTX_OID_MAX_LEN);
+#else
+		agentx_log_axc_warnx(axr->axr_axc, "%s: oidlen > %d",
+		    __func__, AGENTX_OID_MAX_LEN);
+		errno = EINVAL;
+		return NULL;
+#endif
+	}
+
+	vb.avb_type = AX_DATA_TYPE_OCTETSTRING;
+	for (i = 0; i < oidlen; i++)
+		vb.avb_oid.aoi_id[i] = oid[i];
+	vb.avb_oid.aoi_idlen = oidlen;
+	vb.avb_data.avb_ostring.aos_slen = 0;
+	vb.avb_data.avb_ostring.aos_string = NULL;
+
+	return agentx_index(axr, &vb, AXI_TYPE_DYNAMIC);
+}
+
+struct agentx_index *
+agentx_index_nstring_dynamic(struct agentx_region *axr, uint32_t oid[],
+    size_t oidlen, size_t vlen)
+{
+	struct ax_varbind vb;
+	size_t i;
+
+	if (oidlen > AGENTX_OID_MAX_LEN) {
+#ifdef AX_DEBUG
+		agentx_log_axc_fatalx(axr->axr_axc, "%s: oidlen > %d",
+		    __func__, AGENTX_OID_MAX_LEN);
+#else
+		agentx_log_axc_warnx(axr->axr_axc, "%s: oidlen > %d",
+		    __func__, AGENTX_OID_MAX_LEN);
+		errno = EINVAL;
+		return NULL;
+#endif
+	}
+	if (vlen == 0 || vlen > AGENTX_OID_MAX_LEN) {
+#ifdef AX_DEBUG
+		agentx_log_axc_fatalx(axr->axr_axc, "%s: invalid string "
+		    "length: %zu\n", __func__, vlen);
+#else
+		agentx_log_axc_warnx(axr->axr_axc, "%s: invalid string "
+		    "length: %zu\n", __func__, vlen);
+		errno = EINVAL;
+		return NULL;
+#endif
+	}
+
+	vb.avb_type = AX_DATA_TYPE_OCTETSTRING;
+	for (i = 0; i < oidlen; i++)
+		vb.avb_oid.aoi_id[i] = oid[i];
+	vb.avb_oid.aoi_idlen = oidlen;
+	vb.avb_data.avb_ostring.aos_slen = vlen;
+	vb.avb_data.avb_ostring.aos_string = NULL;
+
+	return agentx_index(axr, &vb, AXI_TYPE_DYNAMIC);
+}
+
+struct agentx_index *
+agentx_index_oid_dynamic(struct agentx_region *axr, uint32_t oid[],
+    size_t oidlen)
+{
+	struct ax_varbind vb;
+	size_t i;
+
+	if (oidlen > AGENTX_OID_MAX_LEN) {
+#ifdef AX_DEBUG
+		agentx_log_axc_fatalx(axr->axr_axc, "%s: oidlen > %d",
+		    __func__, AGENTX_OID_MAX_LEN);
+#else
+		agentx_log_axc_warnx(axr->axr_axc, "%s: oidlen > %d",
+		    __func__, AGENTX_OID_MAX_LEN);
+		errno = EINVAL;
+		return NULL;
+#endif
+	}
+
+	vb.avb_type = AX_DATA_TYPE_OID;
+	for (i = 0; i < oidlen; i++)
+		vb.avb_oid.aoi_id[i] = oid[i];
+	vb.avb_oid.aoi_idlen = oidlen;
+	vb.avb_data.avb_oid.aoi_idlen = 0;
+
+	return agentx_index(axr, &vb, AXI_TYPE_DYNAMIC);
+}
+
+struct agentx_index *
+agentx_index_noid_dynamic(struct agentx_region *axr, uint32_t oid[],
+    size_t oidlen, size_t vlen)
+{
+	struct ax_varbind vb;
+	size_t i;
+
+	if (oidlen > AGENTX_OID_MAX_LEN) {
+#ifdef AX_DEBUG
+		agentx_log_axc_fatalx(axr->axr_axc, "%s: oidlen > %d",
+		    __func__, AGENTX_OID_MAX_LEN);
+#else
+		agentx_log_axc_warnx(axr->axr_axc, "%s: oidlen > %d",
+		    __func__, AGENTX_OID_MAX_LEN);
+		errno = EINVAL;
+		return NULL;
+#endif
+	}
+	if (vlen == 0 || vlen > AGENTX_OID_MAX_LEN) {
+#ifdef AX_DEBUG
+		agentx_log_axc_fatalx(axr->axr_axc, "%s: invalid string "
+		    "length: %zu\n", __func__, vlen);
+#else
+		agentx_log_axc_warnx(axr->axr_axc, "%s: invalid string "
+		    "length: %zu\n", __func__, vlen);
+		errno = EINVAL;
+		return NULL;
+#endif
+	}
+
+	vb.avb_type = AX_DATA_TYPE_OID;
+	for (i = 0; i < oidlen; i++)
+		vb.avb_oid.aoi_id[i] = oid[i];
+	vb.avb_oid.aoi_idlen = oidlen;
+	vb.avb_data.avb_oid.aoi_idlen = vlen;
+
+	return agentx_index(axr, &vb, AXI_TYPE_DYNAMIC);
+}
+
+struct agentx_index *
+agentx_index_ipaddress_dynamic(struct agentx_region *axr, uint32_t oid[],
+    size_t oidlen)
+{
+	struct ax_varbind vb;
+	size_t i;
+
+	if (oidlen > AGENTX_OID_MAX_LEN) {
+#ifdef AX_DEBUG
+		agentx_log_axc_fatalx(axr->axr_axc, "%s: oidlen > %d",
+		    __func__, AGENTX_OID_MAX_LEN);
+#else
+		agentx_log_axc_warnx(axr->axr_axc, "%s: oidlen > %d",
+		    __func__, AGENTX_OID_MAX_LEN);
+		errno = EINVAL;
+		return NULL;
+#endif
+	}
+
+	vb.avb_type = AX_DATA_TYPE_IPADDRESS;
+	for (i = 0; i < oidlen; i++)
+		vb.avb_oid.aoi_id[i] = oid[i];
+	vb.avb_data.avb_ostring.aos_string = NULL;
+	vb.avb_oid.aoi_idlen = oidlen;
+
+	return agentx_index(axr, &vb, AXI_TYPE_DYNAMIC);
+}
+
+static struct agentx_index *
+agentx_index(struct agentx_region *axr, struct ax_varbind *vb,
+    enum agentx_index_type type)
+{
+	struct agentx_index *axi;
+
+	if (axr->axr_dstate == AX_DSTATE_CLOSE)
+		agentx_log_axc_fatalx(axr->axr_axc, "%s: use after free",
+		    __func__);
+	if (ax_oid_cmp(&(axr->axr_oid), &(vb->avb_oid)) != -2) {
+#ifdef AX_DEBUG
+		agentx_log_axc_fatalx(axr->axr_axc, "%s: oid is not child "
+		    "of region %s", __func__,
+		    ax_oid2string(&(vb->avb_oid)));
+#else
+		agentx_log_axc_warnx(axr->axr_axc, "%s: oid is not child of "
+		    "region %s", __func__, ax_oid2string(&(vb->avb_oid)));
+		errno = EINVAL;
+		return NULL;
+#endif
+	}
+
+	if ((axi = calloc(1, sizeof(*axi))) == NULL)
+		return NULL;
+
+	axi->axi_axr = axr;
+	axi->axi_type = type;
+	bcopy(vb, &(axi->axi_vb), sizeof(*vb));
+	axi->axi_cstate = AX_CSTATE_CLOSE;
+	axi->axi_dstate = AX_DSTATE_OPEN;
+	TAILQ_INSERT_HEAD(&(axr->axr_indices), axi, axi_axr_indices);
+
+	if (axr->axr_cstate == AX_CSTATE_OPEN)
+		agentx_index_start(axi);
+
+	return axi;
+}
+
+static int
+agentx_index_start(struct agentx_index *axi)
+{
+	struct agentx_region *axr = axi->axi_axr;
+	struct agentx_context *axc = axr->axr_axc;
+	struct agentx_session *axs = axc->axc_axs;
+	struct agentx *ax = axs->axs_ax;
+	uint32_t packetid;
+	int flags = 0;
+
+#ifdef AX_DEBUG
+	if (axr->axr_cstate != AX_CSTATE_OPEN ||
+	    axi->axi_cstate != AX_CSTATE_CLOSE ||
+	    axi->axi_dstate != AX_DSTATE_OPEN)
+		agentx_log_axc_fatalx(axc, "%s: unexpected index allocation",
+		    __func__);
+#endif
+
+	axi->axi_cstate = AX_CSTATE_WAITOPEN;
+
+	if (axi->axi_type == AXI_TYPE_NEW)
+		flags = AX_PDU_FLAG_NEW_INDEX;
+	else if (axi->axi_type == AXI_TYPE_ANY)
+		flags = AX_PDU_FLAG_ANY_INDEX;
+	else if (axi->axi_type == AXI_TYPE_DYNAMIC) {
+		agentx_index_finalize(NULL, axi);
+		return 0;
+	}
+
+	/* We might be able to bundle, but if we fail we'd have to reorganise */
+	packetid = ax_indexallocate(ax->ax_ax, flags, axs->axs_id,
+	    AGENTX_CONTEXT_CTX(axc), &(axi->axi_vb), 1);
+	if (packetid == 0) {
+		agentx_log_axc_warn(axc, "couldn't generate %s",
+		    ax_pdutype2string(AX_PDU_TYPE_INDEXDEALLOCATE));
+		agentx_reset(ax);
+		return -1;
+	}
+	if (axi->axi_type == AXI_TYPE_VALUE)
+		agentx_log_axc_info(axc, "index %s: allocating '%u'",
+		    ax_oid2string(&(axi->axi_vb.avb_oid)),
+		    axi->axi_vb.avb_data.avb_uint32);
+	else if (axi->axi_type == AXI_TYPE_ANY)
+		agentx_log_axc_info(axc, "index %s: allocating any index",
+		    ax_oid2string(&(axi->axi_vb.avb_oid)));
+	else if (axi->axi_type == AXI_TYPE_NEW)
+		agentx_log_axc_info(axc, "index %s: allocating new index",
+		    ax_oid2string(&(axi->axi_vb.avb_oid)));
+
+	return agentx_request(ax, packetid, agentx_index_finalize, axi);
+}
+
+static int
+agentx_index_finalize(struct ax_pdu *pdu, void *cookie)
+{
+	struct agentx_index *axi = cookie;
+	struct agentx_region *axr = axi->axi_axr;
+	struct agentx_context *axc = axr->axr_axc;
+	struct agentx_session *axs = axc->axc_axs;
+	struct agentx *ax = axs->axs_ax;
+	struct ax_pdu_response *resp;
+	size_t i;
+
+#ifdef AX_DEBUG
+	if (axi->axi_cstate != AX_CSTATE_WAITOPEN)
+		agentx_log_axc_fatalx(axc,
+		    "%s: not expecting index allocate", __func__);
+#endif
+	if (axi->axi_type == AXI_TYPE_DYNAMIC) {
+		axi->axi_cstate = AX_CSTATE_OPEN;
+		return 0;
+	}
+
+	resp = &(pdu->ap_payload.ap_response);
+	if (resp->ap_error != AX_PDU_ERROR_NOERROR) {
+		axi->axi_cstate = AX_CSTATE_CLOSE;
+		agentx_log_axc_warnx(axc, "index %s: %s",
+		    ax_oid2string(&(axr->axr_oid)),
+		    ax_error2string(resp->ap_error));
+		return 0;
+	}
+	axi->axi_cstate = AX_CSTATE_OPEN;
+	if (resp->ap_nvarbind != 1) {
+		agentx_log_axc_warnx(axc, "index %s: unexpected number of "
+		    "indices", ax_oid2string(&(axr->axr_oid)));
+		agentx_reset(ax);
+		return -1;
+	}
+	if (resp->ap_varbindlist[0].avb_type != axi->axi_vb.avb_type) {
+		agentx_log_axc_warnx(axc, "index %s: unexpected index type",
+		    ax_oid2string(&(axr->axr_oid)));
+		agentx_reset(ax);
+		return -1;
+	}
+	if (ax_oid_cmp(&(resp->ap_varbindlist[0].avb_oid),
+	    &(axi->axi_vb.avb_oid)) != 0) {
+		agentx_log_axc_warnx(axc, "index %s: unexpected oid",
+		    ax_oid2string(&(axr->axr_oid)));
+		agentx_reset(ax);
+		return -1;
+	}
+
+	switch (axi->axi_vb.avb_type) {
+	case AX_DATA_TYPE_INTEGER:
+		if (axi->axi_type == AXI_TYPE_NEW ||
+		    axi->axi_type == AXI_TYPE_ANY)
+			axi->axi_vb.avb_data.avb_uint32 =
+			    resp->ap_varbindlist[0].avb_data.avb_uint32;
+		else if (axi->axi_vb.avb_data.avb_uint32 !=
+		    resp->ap_varbindlist[0].avb_data.avb_uint32) {
+			agentx_log_axc_warnx(axc, "index %s: unexpected "
+			    "index value", ax_oid2string(&(axr->axr_oid)));
+			agentx_reset(ax);
+			return -1;
+		}
+		agentx_log_axc_info(axc, "index %s: allocated '%u'",
+		    ax_oid2string(&(axi->axi_vb.avb_oid)),
+		    axi->axi_vb.avb_data.avb_uint32);
 		break;
 	default:
-		break;
+		agentx_log_axc_fatalx(axc, "%s: Unsupported index type",
+		    __func__);
 	}
-}
 
-const char *
-agentx_error2string(enum agentx_pdu_error error)
-{
-	static char buffer[64];
-	switch (error) {
-	case AGENTX_PDU_ERROR_NOERROR:
-		return "No error";
-	case AGENTX_PDU_ERROR_GENERR:
-		return "Generic error";
-	case AGENTX_PDU_ERROR_NOACCESS:
-		return "No access";
-	case AGENTX_PDU_ERROR_WRONGTYPE:
-		return "Wrong type";
-	case AGENTX_PDU_ERROR_WRONGLENGTH:
-		return "Wrong length";
-	case AGENTX_PDU_ERROR_WRONGENCODING:
-		return "Wrong encoding";
-	case AGENTX_PDU_ERROR_WRONGVALUE:
-		return "Wrong value";
-	case AGENTX_PDU_ERROR_NOCREATION:
-		return "No creation";
-	case AGENTX_PDU_ERROR_INCONSISTENTVALUE:
-		return "Inconsistent value";
-	case AGENTX_PDU_ERROR_RESOURCEUNAVAILABLE:
-		return "Resource unavailable";
-	case AGENTX_PDU_ERROR_COMMITFAILED:
-		return "Commit failed";
-	case AGENTX_PDU_ERROR_UNDOFAILED:
-		return "Undo failed";
-	case AGENTX_PDU_ERROR_NOTWRITABLE:
-		return "Not writable";
-	case AGENTX_PDU_ERROR_INCONSISTENTNAME:
-		return "Inconsistent name";
-	case AGENTX_PDU_ERROR_OPENFAILED:
-		return "Open Failed";
-	case AGENTX_PDU_ERROR_NOTOPEN:
-		return "Not open";
-	case AGENTX_PDU_ERROR_INDEXWRONGTYPE:
-		return "Index wrong type";
-	case AGENTX_PDU_ERROR_INDEXALREADYALLOCATED:
-		return "Index already allocated";
-	case AGENTX_PDU_ERROR_INDEXNONEAVAILABLE:
-		return "Index none available";
-	case AGENTX_PDU_ERROR_INDEXNOTALLOCATED:
-		return "Index not allocated";
-	case AGENTX_PDU_ERROR_UNSUPPORTEDCONETXT:
-		return "Unsupported context";
-	case AGENTX_PDU_ERROR_DUPLICATEREGISTRATION:
-		return "Duplicate registration";
-	case AGENTX_PDU_ERROR_UNKNOWNREGISTRATION:
-		return "Unkown registration";
-	case AGENTX_PDU_ERROR_UNKNOWNAGENTCAPS:
-		return "Unknown agent capabilities";
-	case AGENTX_PDU_ERROR_PARSEERROR:
-		return "Parse error";
-	case AGENTX_PDU_ERROR_REQUESTDENIED:
-		return "Request denied";
-	case AGENTX_PDU_ERROR_PROCESSINGERROR:
-		return "Processing error";
-	}
-	snprintf(buffer, sizeof(buffer), "Unknown error: %d", error);
-	return buffer;
-}
+	if (axi->axi_dstate == AX_DSTATE_CLOSE)
+		return agentx_index_close(axi);
 
-const char *
-agentx_pdutype2string(enum agentx_pdu_type type)
-{
-	static char buffer[64];
-	switch(type) {
-	case AGENTX_PDU_TYPE_OPEN:
-		return "agentx-Open-PDU";
-	case AGENTX_PDU_TYPE_CLOSE:
-		return "agentx-Close-PDU";
-	case AGENTX_PDU_TYPE_REGISTER:
-		return "agentx-Register-PDU";
-	case AGENTX_PDU_TYPE_UNREGISTER:
-		return "agentx-Unregister-PDU";
-	case AGENTX_PDU_TYPE_GET:
-		return "agentx-Get-PDU";
-	case AGENTX_PDU_TYPE_GETNEXT:
-		return "agentx-GetNext-PDU";
-	case AGENTX_PDU_TYPE_GETBULK:
-		return "agentx-GetBulk-PDU";
-	case AGENTX_PDU_TYPE_TESTSET:
-		return "agentx-TestSet-PDU";
-	case AGENTX_PDU_TYPE_COMMITSET:
-		return "agentx-CommitSet-PDU";
-	case AGENTX_PDU_TYPE_UNDOSET:
-		return "agentx-UndoSet-PDU";
-	case AGENTX_PDU_TYPE_CLEANUPSET:
-		return "agentx-CleanupSet-PDU";
-	case AGENTX_PDU_TYPE_NOTIFY:
-		return "agentx-Notify-PDU";
-	case AGENTX_PDU_TYPE_PING:
-		return "agentx-Ping-PDU";
-	case AGENTX_PDU_TYPE_INDEXALLOCATE:
-		return "agentx-IndexAllocate-PDU";
-	case AGENTX_PDU_TYPE_INDEXDEALLOCATE:
-		return "agentx-IndexDeallocate-PDU";
-	case AGENTX_PDU_TYPE_ADDAGENTCAPS:
-		return "agentx-AddAgentCaps-PDU";
-	case AGENTX_PDU_TYPE_REMOVEAGENTCAPS:
-		return "agentx-RemoveAgentCaps-PDU";
-	case AGENTX_PDU_TYPE_RESPONSE:
-		return "agentx-Response-PDU";
-	}
-	snprintf(buffer, sizeof(buffer), "Unknown type: %d", type);
-	return buffer;
-}
-
-const char *
-agentx_closereason2string(enum agentx_close_reason reason)
-{
-	static char buffer[64];
-
-	switch (reason) {
-	case AGENTX_CLOSE_OTHER:
-		return "Undefined reason";
-	case AGENTX_CLOSEN_PARSEERROR:
-		return "Too many AgentX parse errors from peer";
-	case AGENTX_CLOSE_PROTOCOLERROR:
-		return "Too many AgentX protocol errors from peer";
-	case AGENTX_CLOSE_TIMEOUTS:
-		return "Too many timeouts waiting for peer";
-	case AGENTX_CLOSE_SHUTDOWN:
-		return "shutting down";
-	case AGENTX_CLOSE_BYMANAGER:
-		return "Manager shuts down";
-	}
-	snprintf(buffer, sizeof(buffer), "Unknown reason: %d", reason);
-	return buffer;
-}
-
-const char *
-agentx_oid2string(struct agentx_oid *oid)
-{
-	return agentx_oidrange2string(oid, 0, 0);
-}
-
-const char *
-agentx_oidrange2string(struct agentx_oid *oid, uint8_t range_subid,
-    uint32_t upperbound)
-{
-	static char buf[1024];
-	char *p;
-	size_t i, rest;
-	int ret;
-
-	rest = sizeof(buf);
-	p = buf;
-	for (i = 0; i < oid->aoi_idlen; i++) {
-		if (range_subid != 0 && range_subid - 1 == (uint8_t)i)
-			ret = snprintf(p, rest, ".[%u-%u]", oid->aoi_id[i],
-			    upperbound);
-		else
-			ret = snprintf(p, rest, ".%u", oid->aoi_id[i]);
-		if ((size_t) ret >= rest) {
-			snprintf(buf, sizeof(buf), "Couldn't parse oid");
-			return buf;
+	/* TODO Make use of range_subid register */
+	for (i = 0; i < axi->axi_objectlen; i++) {
+		if (axi->axi_object[i]->axo_dstate == AX_DSTATE_OPEN) {
+			if (agentx_object_start(axi->axi_object[i]) == -1)
+				return -1;
 		}
-		p += ret;
-		rest -= (size_t) ret;
 	}
-	return buf;
+	return 0;
 }
 
-const char *
-agentx_varbind2string(struct agentx_varbind *vb)
+void
+agentx_index_free(struct agentx_index *axi)
 {
-	static char buf[1024];
-	char tmpbuf[1024];
-	size_t i, bufleft;
-	int ishex = 0;
-	char *p;
-	int ret;
+	size_t i;
+	struct agentx_object *axo;
 
-	switch (vb->avb_type) {
-	case AGENTX_DATA_TYPE_INTEGER:
-		snprintf(buf, sizeof(buf), "%s: (int)%u",
-		    agentx_oid2string(&(vb->avb_oid)), vb->avb_data.avb_uint32);
-		break;
-	case AGENTX_DATA_TYPE_OCTETSTRING:
-		for (i = 0;
-		    i < vb->avb_data.avb_ostring.aos_slen && !ishex; i++) {
-			if (!isprint(vb->avb_data.avb_ostring.aos_string[i]))
-				ishex = 1;
+	if (axi == NULL)
+		return;
+
+	if (axi->axi_dstate == AX_DSTATE_CLOSE)
+		agentx_log_axc_fatalx(axi->axi_axr->axr_axc,
+		    "%s: double free", __func__);
+
+	/* TODO Do a range_subid unregister before freeing */
+	for (i = 0; i < axi->axi_objectlen; i++) {
+		axo = axi->axi_object[i];
+		if (axo->axo_dstate != AX_DSTATE_CLOSE) {
+			agentx_object_free(axo);
+			if (axi->axi_object[i] != axo)
+				i--;
 		}
-		if (ishex) {
-			p = tmpbuf;
-			bufleft = sizeof(tmpbuf);
-			for (i = 0;
-			    i < vb->avb_data.avb_ostring.aos_slen; i++) {
-				ret = snprintf(p, bufleft, " %02hhX",
-				    vb->avb_data.avb_ostring.aos_string[i]);
-				if (ret >= (int) bufleft) {
-					p = strrchr(p, ' ');
-					strlcpy(p, "...", 4);
-					break;
-				}
-				p += 3;
-				bufleft -= 3;
+	}
+
+	axi->axi_dstate = AX_DSTATE_CLOSE;
+
+	if (axi->axi_cstate == AX_CSTATE_OPEN)
+		(void) agentx_index_close(axi);
+	else if (axi->axi_cstate == AX_CSTATE_CLOSE)
+		agentx_index_free_finalize(axi);
+}
+
+static void
+agentx_index_free_finalize(struct agentx_index *axi)
+{
+	struct agentx_region *axr = axi->axi_axr;
+
+#ifdef AX_DEBUG
+	if (axi->axi_dstate != AX_DSTATE_CLOSE)
+		agentx_log_axc_fatalx(axr->axr_axc, "%s: unexpected free",
+		    __func__);
+	if (axi->axi_cstate != AX_CSTATE_CLOSE)
+		agentx_log_axc_fatalx(axr->axr_axc,
+		    "%s: free without deallocating", __func__);
+#endif
+
+	if (axi->axi_objectlen != 0)
+		return;
+
+	TAILQ_REMOVE(&(axr->axr_indices), axi, axi_axr_indices);
+	ax_varbind_free(&(axi->axi_vb));
+	free(axi->axi_object);
+	free(axi);
+	if (axr->axr_dstate == AX_DSTATE_CLOSE)
+		agentx_region_free_finalize(axr);
+}
+
+static void
+agentx_index_reset(struct agentx_index *axi)
+{
+	axi->axi_cstate = AX_CSTATE_CLOSE;
+
+	if (axi->axi_dstate == AX_DSTATE_CLOSE)
+		agentx_index_free_finalize(axi);
+}
+
+static int
+agentx_index_close(struct agentx_index *axi)
+{
+	struct agentx_region *axr = axi->axi_axr;
+	struct agentx_context *axc = axr->axr_axc;
+	struct agentx_session *axs = axc->axc_axs;
+	struct agentx *ax = axs->axs_ax;
+	uint32_t packetid;
+
+#ifdef AX_DEBUG
+	if (axi->axi_cstate != AX_CSTATE_OPEN)
+		agentx_log_axc_fatalx(axc,
+		    "%s: unexpected index deallocation", __func__);
+#endif
+
+	axi->axi_cstate = AX_CSTATE_WAITCLOSE;
+	if (axs->axs_cstate == AX_CSTATE_WAITCLOSE)
+		return 0;
+
+	/* We might be able to bundle, but if we fail we'd have to reorganise */
+	packetid = ax_indexdeallocate(ax->ax_ax, axs->axs_id,
+	    AGENTX_CONTEXT_CTX(axc), &(axi->axi_vb), 1);
+	if (packetid == 0) {
+		agentx_log_axc_warn(axc, "couldn't generate %s",
+		    ax_pdutype2string(AX_PDU_TYPE_INDEXDEALLOCATE));
+		agentx_reset(ax);
+		return -1;
+	}
+	agentx_log_axc_info(axc, "index %s: deallocating",
+	    ax_oid2string(&(axi->axi_vb.avb_oid)));
+	return agentx_request(ax, packetid, agentx_index_close_finalize,
+	    axi);
+}
+
+static int
+agentx_index_close_finalize(struct ax_pdu *pdu, void *cookie)
+{
+	struct agentx_index *axi = cookie;
+	struct agentx_region *axr = axi->axi_axr;
+	struct agentx_context *axc = axr->axr_axc;
+	struct agentx_session *axs = axc->axc_axs;
+	struct agentx *ax = axs->axs_ax;
+	struct ax_pdu_response *resp = &(pdu->ap_payload.ap_response);
+
+#ifdef AX_DEBUG
+	if (axi->axi_cstate != AX_CSTATE_WAITCLOSE)
+		agentx_log_axc_fatalx(axc, "%s: unexpected indexdeallocate",
+		    __func__);
+#endif
+
+	if (pdu->ap_payload.ap_response.ap_error != AX_PDU_ERROR_NOERROR) {
+		agentx_log_axc_warnx(axc,
+		    "index %s: couldn't deallocate: %s",
+		    ax_oid2string(&(axi->axi_vb.avb_oid)),
+		    ax_error2string(resp->ap_error));
+		agentx_reset(ax);
+		return -1;
+	}
+
+	if (resp->ap_nvarbind != 1) {
+		agentx_log_axc_warnx(axc,
+		    "index %s: unexpected number of indices",
+		    ax_oid2string(&(axr->axr_oid)));
+		agentx_reset(ax);
+		return -1;
+	}
+	if (resp->ap_varbindlist[0].avb_type != axi->axi_vb.avb_type) {
+		agentx_log_axc_warnx(axc, "index %s: unexpected index type",
+		    ax_oid2string(&(axr->axr_oid)));
+		agentx_reset(ax);
+		return -1;
+	}
+	if (ax_oid_cmp(&(resp->ap_varbindlist[0].avb_oid),
+	    &(axi->axi_vb.avb_oid)) != 0) {
+		agentx_log_axc_warnx(axc, "index %s: unexpected oid",
+		    ax_oid2string(&(axr->axr_oid)));
+		agentx_reset(ax);
+		return -1;
+	}
+	switch (axi->axi_vb.avb_type) {
+	case AX_DATA_TYPE_INTEGER:
+		if (axi->axi_vb.avb_data.avb_uint32 !=
+		    resp->ap_varbindlist[0].avb_data.avb_uint32) {
+			agentx_log_axc_warnx(axc,
+			    "index %s: unexpected index value",
+			    ax_oid2string(&(axr->axr_oid)));
+			agentx_reset(ax);
+			return -1;
+		}
+		break;
+	default:
+		agentx_log_axc_fatalx(axc, "%s: Unsupported index type",
+		    __func__);
+	}
+
+	axi->axi_cstate = AX_CSTATE_CLOSE;
+
+	agentx_log_axc_info(axc, "index %s: deallocated",
+	    ax_oid2string(&(axi->axi_vb.avb_oid)));
+
+	if (axi->axi_dstate == AX_DSTATE_CLOSE) {
+		agentx_index_free_finalize(axi);
+	} else if (axr->axr_cstate == AX_CSTATE_OPEN) {
+		if (agentx_index_start(axi) == -1)
+			return -1;
+	}
+	return 0;
+}
+
+struct agentx_object *
+agentx_object(struct agentx_region *axr, uint32_t oid[], size_t oidlen,
+    struct agentx_index *axi[], size_t axilen, int implied,
+    void (*get)(struct agentx_varbind *))
+{
+	struct agentx_object *axo, **tsao, axo_search;
+	struct agentx_index *lsai;
+	int ready = 1;
+	size_t i, j;
+
+	if (axr->axr_dstate == AX_DSTATE_CLOSE)
+		agentx_log_axc_fatalx(axr->axr_axc, "%s: use after free",
+		    __func__);
+	if (oidlen < 1) {
+#ifdef AX_DEBUG
+		agentx_log_axc_fatalx(axr->axr_axc, "%s: oidlen == 0",
+		    __func__);
+#else
+		agentx_log_axc_warnx(axr->axr_axc, "%s: oidlen == 0",
+		    __func__);
+		errno = EINVAL;
+		return NULL;
+#endif
+	}
+	if (oidlen > AGENTX_OID_MAX_LEN) {
+#ifdef AX_DEBUG
+		agentx_log_axc_fatalx(axr->axr_axc, "%s: oidlen > %d",
+		    __func__, AGENTX_OID_MAX_LEN);
+#else
+		agentx_log_axc_warnx(axr->axr_axc, "%s: oidlen > %d",
+		    __func__, AGENTX_OID_MAX_LEN);
+		errno = EINVAL;
+		return NULL;
+#endif
+	}
+	if (axilen > AGENTX_OID_INDEX_MAX_LEN) {
+#ifdef AX_DEBUG
+		agentx_log_axc_fatalx(axr->axr_axc, "%s: indexlen > %d",
+		    __func__, AGENTX_OID_INDEX_MAX_LEN);
+#else
+		agentx_log_axc_warnx(axr->axr_axc, "%s: indexlen > %d",
+		    __func__, AGENTX_OID_INDEX_MAX_LEN);
+		errno = EINVAL;
+		return NULL;
+#endif
+	}
+
+	for (i = 0; i < oidlen; i++)
+		axo_search.axo_oid.aoi_id[i] = oid[i];
+	axo_search.axo_oid.aoi_idlen = oidlen;
+
+	do {
+		if (RB_FIND(axc_objects, &(axr->axr_axc->axc_objects),
+		    &axo_search) != NULL) {
+#ifdef AX_DEBUG
+			agentx_log_axc_fatalx(axr->axr_axc, "%s: invalid "
+			    "parent child object relationship", __func__);
+#else
+			agentx_log_axc_warnx(axr->axr_axc, "%s: invalid "
+			    "parent child object relationship", __func__);
+			errno = EINVAL;
+			return NULL;
+#endif
+		}
+		axo_search.axo_oid.aoi_idlen--;
+	} while (axo_search.axo_oid.aoi_idlen > 0);
+	axo_search.axo_oid.aoi_idlen = oidlen;
+	axo = RB_NFIND(axc_objects, &(axr->axr_axc->axc_objects), &axo_search);
+	if (axo != NULL &&
+	    ax_oid_cmp(&(axo->axo_oid), &(axo_search.axo_oid)) == 2) {
+#ifdef AX_DEBUG
+		agentx_log_axc_fatalx(axr->axr_axc, "%s: invalid parent "
+		    "child object relationship", __func__);
+#else
+		agentx_log_axc_warnx(axr->axr_axc, "%s: invalid parent "
+		    "child object relationship", __func__);
+		errno = EINVAL;
+		return NULL;
+#endif
+	}
+	if (implied == 1) {
+		lsai = axi[axilen - 1];
+		if (lsai->axi_vb.avb_type == AX_DATA_TYPE_OCTETSTRING) {
+			if (lsai->axi_vb.avb_data.avb_ostring.aos_slen != 0) {
+#ifdef AX_DEBUG
+				agentx_log_axc_fatalx(axr->axr_axc,
+				    "%s: implied can only be used on strings "
+				    "of dynamic length", __func__);
+#else
+				agentx_log_axc_warnx(axr->axr_axc,
+				    "%s: implied can only be used on strings "
+				    "of dynamic length", __func__);
+				errno = EINVAL;
+				return NULL;
+#endif
 			}
-			ret = snprintf(buf, sizeof(buf), "%s: (hex-string)%s",
-			    agentx_oid2string(&(vb->avb_oid)), tmpbuf);
-			if (ret >= (int) sizeof(buf)) {
-				p  = strrchr(buf, ' ');
-				strlcpy(p, "...", 4);
+		} else if (lsai->axi_vb.avb_type == AX_DATA_TYPE_OID) {
+			if (lsai->axi_vb.avb_data.avb_oid.aoi_idlen != 0) {
+#ifdef AX_DEBUG
+				agentx_log_axc_fatalx(axr->axr_axc,
+				    "%s: implied can only be used on oids of "
+				    "dynamic length", __func__);
+#else
+				agentx_log_axc_warnx(axr->axr_axc,
+				    "%s: implied can only be used on oids of "
+				    "dynamic length", __func__);
+				errno = EINVAL;
+				return NULL;
+#endif
 			}
 		} else {
-			ret = snprintf(buf, sizeof(buf), "%s: (string)",
-			    agentx_oid2string(&(vb->avb_oid)));
-			if (ret >= (int) sizeof(buf)) {
-				snprintf(buf, sizeof(buf), "<too large OID>: "
-				    "(string)<too large string>");
+#ifdef AX_DEBUG
+			agentx_log_axc_fatalx(axr->axr_axc, "%s: implied "
+			    "can only be set on oid and string indices",
+			    __func__);
+#else
+			agentx_log_axc_warnx(axr->axr_axc, "%s: implied can "
+			    "only be set on oid and string indices", __func__);
+			errno = EINVAL;
+			return NULL;
+#endif
+		}
+	}
+
+	ready = axr->axr_cstate == AX_CSTATE_OPEN;
+	if ((axo = calloc(1, sizeof(*axo))) == NULL)
+		return NULL;
+	axo->axo_axr = axr;
+	bcopy(&(axo_search.axo_oid), &(axo->axo_oid), sizeof(axo->axo_oid));
+	for (i = 0; i < axilen; i++) {
+		axo->axo_index[i] = axi[i];
+		if (axi[i]->axi_objectlen == axi[i]->axi_objectsize) {
+			tsao = recallocarray(axi[i]->axi_object,
+			    axi[i]->axi_objectlen, axi[i]->axi_objectlen + 1,
+			    sizeof(*axi[i]->axi_object));
+			if (tsao == NULL) {
+				free(axo);
+				return NULL;
+			}
+			axi[i]->axi_object = tsao;
+			axi[i]->axi_objectsize = axi[i]->axi_objectlen + 1;
+		}
+		for (j = 0; j < axi[i]->axi_objectlen; j++) {
+			if (ax_oid_cmp(&(axo->axo_oid),
+			    &(axi[i]->axi_object[j]->axo_oid)) < 0) {
+				memmove(&(axi[i]->axi_object[j + 1]),
+				    &(axi[i]->axi_object[j]),
+				    sizeof(*(axi[i]->axi_object)) *
+				    (axi[i]->axi_objectlen - j));
 				break;
 			}
-			p = buf + ret;
-			bufleft = (int) sizeof(buf) - ret;
-			if (snprintf(p, bufleft, "%.*s",
-			    vb->avb_data.avb_ostring.aos_slen,
-			    vb->avb_data.avb_ostring.aos_string) >=
-			    (int) bufleft) {
-				p = buf + sizeof(buf) - 4;
-				strlcpy(p, "...", 4);
-			}
 		}
-		break;
-	case AGENTX_DATA_TYPE_NULL:
-		snprintf(buf, sizeof(buf), "%s: <null>",
-		    agentx_oid2string(&(vb->avb_oid)));
-		break;
-	case AGENTX_DATA_TYPE_OID:
-		strlcpy(tmpbuf,
-		    agentx_oid2string(&(vb->avb_data.avb_oid)), sizeof(tmpbuf));
-		snprintf(buf, sizeof(buf), "%s: (oid)%s",
-		    agentx_oid2string(&(vb->avb_oid)), tmpbuf);
-		break;
-	case AGENTX_DATA_TYPE_IPADDRESS:
-		if (vb->avb_data.avb_ostring.aos_slen != 4) {
-			snprintf(buf, sizeof(buf), "%s: (ipaddress)<invalid>",
-			    agentx_oid2string(&(vb->avb_oid)));
-			break;
-		}
-		if (inet_ntop(PF_INET, vb->avb_data.avb_ostring.aos_string,
-		    tmpbuf, sizeof(tmpbuf)) == NULL) {
-			snprintf(buf, sizeof(buf), "%s: (ipaddress)"
-			    "<unparseable>: %s",
-			    agentx_oid2string(&(vb->avb_oid)),
-			    strerror(errno));
-			break;
-		}
-		snprintf(buf, sizeof(buf), "%s: (ipaddress)%s",
-		    agentx_oid2string(&(vb->avb_oid)), tmpbuf);
-		break;
-	case AGENTX_DATA_TYPE_COUNTER32:
-		snprintf(buf, sizeof(buf), "%s: (counter32)%u",
-		    agentx_oid2string(&(vb->avb_oid)), vb->avb_data.avb_uint32);
-		break;
-	case AGENTX_DATA_TYPE_GAUGE32:
-		snprintf(buf, sizeof(buf), "%s: (gauge32)%u",
-		    agentx_oid2string(&(vb->avb_oid)), vb->avb_data.avb_uint32);
-		break;
-	case AGENTX_DATA_TYPE_TIMETICKS:
-		snprintf(buf, sizeof(buf), "%s: (timeticks)%u",
-		    agentx_oid2string(&(vb->avb_oid)), vb->avb_data.avb_uint32);
-		break;
-	case AGENTX_DATA_TYPE_OPAQUE:
-		p = tmpbuf;
-		bufleft = sizeof(tmpbuf);
-		for (i = 0;
-		    i < vb->avb_data.avb_ostring.aos_slen; i++) {
-			ret = snprintf(p, bufleft, " %02hhX",
-			    vb->avb_data.avb_ostring.aos_string[i]);
-			if (ret >= (int) bufleft) {
-				p = strrchr(p, ' ');
-				strlcpy(p, "...", 4);
-				break;
-			}
-			p += 3;
-			bufleft -= 3;
-		}
-		ret = snprintf(buf, sizeof(buf), "%s: (opaque)%s",
-		    agentx_oid2string(&(vb->avb_oid)), tmpbuf);
-		if (ret >= (int) sizeof(buf)) {
-			p  = strrchr(buf, ' ');
-			strlcpy(p, "...", 4);
-		}
-		break;
-	case AGENTX_DATA_TYPE_COUNTER64:
-		snprintf(buf, sizeof(buf), "%s: (counter64)%"PRIu64,
-		    agentx_oid2string(&(vb->avb_oid)), vb->avb_data.avb_uint64);
-		break;
-	case AGENTX_DATA_TYPE_NOSUCHOBJECT:
-		snprintf(buf, sizeof(buf), "%s: <noSuchObject>",
-		    agentx_oid2string(&(vb->avb_oid)));
-		break;
-	case AGENTX_DATA_TYPE_NOSUCHINSTANCE:
-		snprintf(buf, sizeof(buf), "%s: <noSuchInstance>",
-		    agentx_oid2string(&(vb->avb_oid)));
-		break;
-	case AGENTX_DATA_TYPE_ENDOFMIBVIEW:
-		snprintf(buf, sizeof(buf), "%s: <endOfMibView>",
-		    agentx_oid2string(&(vb->avb_oid)));
-		break;
+		axi[i]->axi_object[j] = axo;
+		axi[i]->axi_objectlen++;
+		if (axi[i]->axi_cstate != AX_CSTATE_OPEN)
+			ready = 0;
 	}
-	return buf;
-}
+	axo->axo_indexlen = axilen;
+	axo->axo_implied = implied;
+	axo->axo_timeout = 0;
+	axo->axo_lock = 0;
+	axo->axo_get = get;
+	axo->axo_cstate = AX_CSTATE_CLOSE;
+	axo->axo_dstate = AX_DSTATE_OPEN;
 
-int
-agentx_oid_cmp(struct agentx_oid *o1, struct agentx_oid *o2)
-{
-	size_t i, min;
+	TAILQ_INSERT_TAIL(&(axr->axr_objects), axo, axo_axr_objects);
+	RB_INSERT(axc_objects, &(axr->axr_axc->axc_objects), axo);
 
-	min = o1->aoi_idlen < o2->aoi_idlen ? o1->aoi_idlen : o2->aoi_idlen;
-	for (i = 0; i < min; i++) {
-		if (o1->aoi_id[i] < o2->aoi_id[i])
-			return -1;
-		if (o1->aoi_id[i] > o2->aoi_id[i])
-			return 1;
-	}
-	/* o1 is parent of o2 */
-	if (o1->aoi_idlen < o2->aoi_idlen)
-		return -2;
-	/* o1 is child of o2 */
-	if (o1->aoi_idlen > o2->aoi_idlen)
-		return 2;
-	return 0;
-}
+	if (ready)
+		agentx_object_start(axo);
 
-int
-agentx_oid_add(struct agentx_oid *oid, uint32_t value)
-{
-	if (oid->aoi_idlen == AGENTX_OID_MAX_LEN)
-		return -1;
-	oid->aoi_id[oid->aoi_idlen++] = value;
-	return 0;
-}
-
-static uint32_t
-agentx_pdu_queue(struct agentx *ax)
-{
-	struct agentx_pdu_header header;
-	uint32_t packetid, plength;
-	size_t wbtlen = ax->ax_wbtlen;
-
-	header.aph_flags = ax->ax_byteorder == AGENTX_BYTE_ORDER_BE ?
-	    AGENTX_PDU_FLAG_NETWORK_BYTE_ORDER : 0;
-	packetid = agentx_pdutoh32(&header, &(ax->ax_wbuf[ax->ax_wblen + 12]));
-	plength = (ax->ax_wbtlen - ax->ax_wblen) - AGENTX_PDU_HEADER;
-	ax->ax_wbtlen = ax->ax_wblen + 16;
-	(void)agentx_pdu_add_uint32(ax, plength);
-
-	ax->ax_wblen = ax->ax_wbtlen = wbtlen;
-
-	return packetid;
+	return axo;
 }
 
 static int
-agentx_pdu_header(struct agentx *ax, enum agentx_pdu_type type, uint8_t flags,
-    uint32_t sessionid, uint32_t transactionid, uint32_t packetid,
-    struct agentx_ostring *context)
+agentx_object_start(struct agentx_object *axo)
 {
-	if (ax->ax_wblen != ax->ax_wbtlen) {
-		errno = EALREADY;
-		return -1;
+	struct agentx_region *axr = axo->axo_axr;
+	struct agentx_context *axc = axr->axr_axc;
+	struct agentx_session *axs = axc->axc_axs;
+	struct agentx *ax = axs->axs_ax;
+	struct ax_oid oid;
+	char oids[1024];
+	size_t i;
+	int needregister = 0;
+	uint32_t packetid;
+	uint8_t flags = AX_PDU_FLAG_INSTANCE_REGISTRATION;
+
+#ifdef AX_DEBUG
+	if (axr->axr_cstate != AX_CSTATE_OPEN ||
+	    axo->axo_cstate != AX_CSTATE_CLOSE ||
+	    axo->axo_dstate != AX_DSTATE_OPEN)
+		agentx_log_axc_fatalx(axc,
+		    "%s: unexpected object registration", __func__);
+#endif
+
+	if (axo->axo_timeout != 0)
+		needregister = 1;
+	for (i = 0; i < axo->axo_indexlen; i++) {
+		if (axo->axo_index[i]->axi_cstate != AX_CSTATE_OPEN)
+			return 0;
+		if (axo->axo_index[i]->axi_type != AXI_TYPE_DYNAMIC)
+			needregister = 1;
+	}
+	if (!needregister) {
+		axo->axo_cstate = AX_CSTATE_WAITOPEN;
+		agentx_object_finalize(NULL, axo);
+		return 0;
 	}
 
-	ax->ax_wbtlen = ax->ax_wblen;
-	if (agentx_pdu_need(ax, 4) == -1)
+	bcopy(&(axo->axo_oid), &(oid), sizeof(oid));
+	for (i = 0; i < axo->axo_indexlen; i++) {
+		if (axo->axo_index[i]->axi_type == AXI_TYPE_DYNAMIC) {
+			flags = 0;
+			break;
+		}
+#ifdef AX_DEBUG
+		if (axo->axo_index[i]->axi_vb.avb_type !=
+		    AX_DATA_TYPE_INTEGER)
+			agentx_log_axc_fatalx(axc,
+			    "%s: Unsupported allocated index type", __func__);
+#endif
+		oid.aoi_id[oid.aoi_idlen++] =
+		    axo->axo_index[i]->axi_vb.avb_data.avb_uint32;
+	}
+	packetid = ax_register(ax->ax_ax, flags, axs->axs_id,
+	    AGENTX_CONTEXT_CTX(axc), axo->axo_timeout,
+	    AX_PRIORITY_DEFAULT, 0, &oid, 0);
+	if (packetid == 0) {
+		agentx_log_axc_warn(axc, "couldn't generate %s",
+		    ax_pdutype2string(AX_PDU_TYPE_REGISTER));
+		agentx_reset(ax);
 		return -1;
-	ax->ax_wbuf[ax->ax_wbtlen++] = 1;
-	ax->ax_wbuf[ax->ax_wbtlen++] = (uint8_t) type;
-	if (context != NULL)
-		flags |= AGENTX_PDU_FLAG_NON_DEFAULT_CONTEXT;
-	if (ax->ax_byteorder == AGENTX_BYTE_ORDER_BE)
-		flags |= AGENTX_PDU_FLAG_NETWORK_BYTE_ORDER;
-	ax->ax_wbuf[ax->ax_wbtlen++] = flags;
-	ax->ax_wbuf[ax->ax_wbtlen++] = 0;
-	if (packetid == 0)
-		packetid = agentx_packetid(ax);
-	if (agentx_pdu_add_uint32(ax, sessionid) == -1 ||
-	    agentx_pdu_add_uint32(ax, transactionid) == -1 ||
-	    agentx_pdu_add_uint32(ax, packetid) == -1 ||
-	    agentx_pdu_need(ax, 4) == -1)
+	}
+	strlcpy(oids, ax_oid2string(&(axo->axo_oid)), sizeof(oids));
+	agentx_log_axc_info(axc, "object %s (%s %s): opening",
+	    oids, flags ? "instance" : "region", ax_oid2string(&(oid)));
+	axo->axo_cstate = AX_CSTATE_WAITOPEN;
+	return agentx_request(ax, packetid, agentx_object_finalize, axo);
+}
+
+static int
+agentx_object_finalize(struct ax_pdu *pdu, void *cookie)
+{
+	struct agentx_object *axo = cookie;
+	struct agentx_context *axc = axo->axo_axr->axr_axc;
+	struct ax_oid oid;
+	char oids[1024];
+	size_t i;
+	uint8_t flags = 1;
+
+#ifdef AX_DEBUG
+	if (axo->axo_cstate != AX_CSTATE_WAITOPEN)
+		agentx_log_axc_fatalx(axc, "%s: not expecting object open",
+		    __func__);
+#endif
+
+	if (pdu == NULL) {
+		axo->axo_cstate = AX_CSTATE_OPEN;
+		return 0;
+	}
+
+	bcopy(&(axo->axo_oid), &oid, sizeof(oid));
+	for (i = 0; i < axo->axo_indexlen; i++) {
+		if (axo->axo_index[i]->axi_type == AXI_TYPE_DYNAMIC) {
+			flags = 0;
+			break;
+		}
+#ifdef AX_DEBUG
+		if (axo->axo_index[i]->axi_vb.avb_type !=
+		    AX_DATA_TYPE_INTEGER)
+			agentx_log_axc_fatalx(axc,
+			    "%s: Unsupported allocated index type", __func__);
+#endif
+
+		oid.aoi_id[oid.aoi_idlen++] =
+		    axo->axo_index[i]->axi_vb.avb_data.avb_uint32;
+	}
+	strlcpy(oids, ax_oid2string(&(axo->axo_oid)), sizeof(oids));
+
+	/*
+	 * We should only be here for table objects with registered indices.
+	 * If we fail here something is misconfigured and the admin should fix
+	 * it.
+	 */
+	if (pdu->ap_payload.ap_response.ap_error != AX_PDU_ERROR_NOERROR) {
+		axo->axo_cstate = AX_CSTATE_CLOSE;
+		agentx_log_axc_info(axc, "object %s (%s %s): %s",
+		    oids, flags ? "instance" : "region", ax_oid2string(&oid),
+		    ax_error2string(pdu->ap_payload.ap_response.ap_error));
+		if (axo->axo_dstate == AX_DSTATE_CLOSE)
+			return agentx_object_close_finalize(NULL, axo);
+		return 0;
+	}
+	axo->axo_cstate = AX_CSTATE_OPEN;
+	agentx_log_axc_info(axc, "object %s (%s %s): open", oids,
+	    flags ? "instance" : "region", ax_oid2string(&oid));
+
+	if (axo->axo_dstate == AX_DSTATE_CLOSE)
+		return agentx_object_close(axo);
+
+	return 0;
+}
+
+static int
+agentx_object_lock(struct agentx_object *axo)
+{
+	if (axo->axo_lock == UINT32_MAX) {
+		agentx_log_axc_warnx(axo->axo_axr->axr_axc,
+		    "%s: axo_lock == %u", __func__, UINT32_MAX);
 		return -1;
-	ax->ax_wbtlen += 4;
-	if (context != NULL) {
-		if (agentx_pdu_add_str(ax, context) == -1)
+	}
+	axo->axo_lock++;
+	return 0;
+}
+
+static void
+agentx_object_unlock(struct agentx_object *axo)
+{
+#ifdef AX_DEBUG
+	if (axo->axo_lock == 0)
+		agentx_log_axc_fatalx(axo->axo_axr->axr_axc,
+		    "%s: axo_lock == 0", __func__);
+#endif
+	axo->axo_lock--;
+	if (axo->axo_lock == 0 && axo->axo_dstate == AX_DSTATE_CLOSE &&
+	    axo->axo_cstate == AX_CSTATE_CLOSE)
+		agentx_object_free_finalize(axo);
+}
+
+static int
+agentx_object_close(struct agentx_object *axo)
+{
+	struct agentx_context *axc = axo->axo_axr->axr_axc;
+	struct agentx_session *axs = axc->axc_axs;
+	struct agentx *ax = axs->axs_ax;
+	struct ax_oid oid;
+	char oids[1024];
+	size_t i;
+	int needclose = 0;
+	uint32_t packetid;
+	uint8_t flags = 1;
+
+#ifdef AX_DEBUG
+	if (axo->axo_cstate != AX_CSTATE_OPEN)
+		agentx_log_axc_fatalx(axc, "%s: unexpected object close",
+		    __func__);
+#endif
+
+	for (i = 0; i < axo->axo_indexlen; i++) {
+#ifdef AX_DEBUG
+		if (axo->axo_index[i]->axi_cstate != AX_CSTATE_OPEN)
+			agentx_log_axc_fatalx(axc,
+			    "%s: Object open while index closed", __func__);
+#endif
+		if (axo->axo_index[i]->axi_type != AXI_TYPE_DYNAMIC)
+			needclose = 1;
+	}
+	axo->axo_cstate = AX_CSTATE_WAITCLOSE;
+	if (axs->axs_cstate == AX_CSTATE_WAITCLOSE)
+		return 0;
+	if (!needclose) {
+		agentx_object_close_finalize(NULL, axo);
+		return 0;
+	}
+
+	bcopy(&(axo->axo_oid), &(oid), sizeof(oid));
+	for (i = 0; i < axo->axo_indexlen; i++) {
+		if (axo->axo_index[i]->axi_type == AXI_TYPE_DYNAMIC) {
+			flags = 0;
+			break;
+		}
+#ifdef AX_DEBUG
+		if (axo->axo_index[i]->axi_vb.avb_type !=
+		    AX_DATA_TYPE_INTEGER)
+			agentx_log_axc_fatalx(axc,
+			    "%s: Unsupported allocated index type", __func__);
+#endif
+		oid.aoi_id[oid.aoi_idlen++] =
+		    axo->axo_index[i]->axi_vb.avb_data.avb_uint32;
+	}
+	packetid = ax_unregister(ax->ax_ax, axs->axs_id,
+	    AGENTX_CONTEXT_CTX(axc), AX_PRIORITY_DEFAULT, 0, &oid, 0);
+	if (packetid == 0) {
+		agentx_log_axc_warn(axc, "couldn't generate %s",
+		    ax_pdutype2string(AX_PDU_TYPE_UNREGISTER));
+		agentx_reset(ax);
+		return -1;
+	}
+	strlcpy(oids, ax_oid2string(&(axo->axo_oid)), sizeof(oids));
+	agentx_log_axc_info(axc, "object %s (%s %s): closing",
+	    oids, flags ? "instance" : "region", ax_oid2string(&(oid)));
+	return agentx_request(ax, packetid, agentx_object_close_finalize,
+	    axo);
+}
+
+static int
+agentx_object_close_finalize(struct ax_pdu *pdu, void *cookie)
+{
+	struct agentx_object *axo = cookie;
+	struct agentx_region *axr = axo->axo_axr;
+	struct agentx_context *axc = axr->axr_axc;
+	struct agentx_session *axs = axc->axc_axs;
+	struct agentx *ax = axs->axs_ax;
+	struct ax_oid oid;
+	char oids[1024];
+	uint8_t flags = 1;
+	size_t i;
+
+#ifdef AX_DEBUG
+	if (axo->axo_cstate != AX_CSTATE_WAITCLOSE)
+		agentx_log_axc_fatalx(axc,
+		    "%s: unexpected object unregister", __func__);
+#endif
+
+	if (pdu != NULL) {
+		bcopy(&(axo->axo_oid), &(oid), sizeof(oid));
+		for (i = 0; i < axo->axo_indexlen; i++) {
+			if (axo->axo_index[i]->axi_type == AXI_TYPE_DYNAMIC) {
+				flags = 0;
+				break;
+			}
+#ifdef AX_DEBUG
+			if (axo->axo_index[i]->axi_vb.avb_type !=
+			    AX_DATA_TYPE_INTEGER)
+				agentx_log_axc_fatalx(axc,
+				    "%s: Unsupported allocated index type",
+				    __func__);
+#endif
+			oid.aoi_id[oid.aoi_idlen++] =
+			    axo->axo_index[i]->axi_vb.avb_data.avb_uint32;
+		}
+		strlcpy(oids, ax_oid2string(&(axo->axo_oid)), sizeof(oids));
+		if (pdu->ap_payload.ap_response.ap_error !=
+		    AX_PDU_ERROR_NOERROR) {
+			agentx_log_axc_warnx(axc,
+			    "closing object %s (%s %s): %s", oids,
+			    flags ? "instance" : "region",
+			    ax_oid2string(&oid), ax_error2string(
+			    pdu->ap_payload.ap_response.ap_error));
+			agentx_reset(ax);
 			return -1;
+		}
+		agentx_log_axc_info(axc, "object %s (%s %s): closed", oids,
+		    flags ? "instance" : "region", ax_oid2string(&oid));
+	}
+
+	if (axo->axo_dstate == AX_DSTATE_CLOSE)
+		agentx_object_free_finalize(axo);
+	else {
+		if (axr->axr_cstate == AX_CSTATE_OPEN)
+			if (agentx_object_start(axo) == -1)
+				return -1;
 	}
 
 	return 0;
 }
 
-static uint32_t
-agentx_packetid(struct agentx *ax)
+void
+agentx_object_free(struct agentx_object *axo)
 {
-	uint32_t packetid, *packetids;
-	size_t npackets = 0, i;
+	if (axo == NULL)
+		return;
+
+	if (axo->axo_dstate == AX_DSTATE_CLOSE)
+		agentx_log_axc_fatalx(axo->axo_axr->axr_axc,
+		    "%s: double free", __func__);
+
+	axo->axo_dstate = AX_DSTATE_CLOSE;
+
+	if (axo->axo_cstate == AX_CSTATE_OPEN) {
+		if (agentx_object_close(axo) == -1)
+			return;
+	}
+	if (axo->axo_cstate == AX_CSTATE_CLOSE)
+		agentx_object_free_finalize(axo);
+}
+
+static void
+agentx_object_free_finalize(struct agentx_object *axo)
+{
+#ifdef AX_DEBUG
+	struct agentx *ax = axo->axo_axr->axr_axc->axc_axs->axs_ax;
+#endif
+	size_t i, j;
 	int found;
 
-	if (ax->ax_packetids != NULL) {
-		for (npackets = 0; ax->ax_packetids[npackets] != 0; npackets++)
-			continue;
+#ifdef AX_DEBUG
+	if (axo->axo_dstate != AX_DSTATE_CLOSE)
+		agentx_log_axc_fatalx(axo->axo_axr->axr_axc,
+		    "%s: unexpected free", __func__);
+#endif
+
+	if (axo->axo_lock != 0) {
+#ifdef AX_DEBUG
+		if (TAILQ_EMPTY(&(ax->ax_getreqs)))
+			agentx_log_axc_fatalx(axo->axo_axr->axr_axc,
+			    "%s: %s axo_lock == %u", __func__,
+			    ax_oid2string(&(axo->axo_oid)), axo->axo_lock);
+#endif
+		return;
 	}
-	if (ax->ax_packetidsize == 0 || npackets == ax->ax_packetidsize - 1) {
-		packetids = recallocarray(ax->ax_packetids, ax->ax_packetidsize,
-		    ax->ax_packetidsize + 25, sizeof(*packetids));
-		if (packetids == NULL)
-			return 0;
-		ax->ax_packetidsize += 25;
-		ax->ax_packetids = packetids;
-	}
-	do {
+
+	RB_REMOVE(axc_objects, &(axo->axo_axr->axr_axc->axc_objects), axo);
+	TAILQ_REMOVE(&(axo->axo_axr->axr_objects), axo, axo_axr_objects);
+
+	for (i = 0; i < axo->axo_indexlen; i++) {
 		found = 0;
-		packetid = arc4random();
-		for (i = 0; ax->ax_packetids[i] != 0; i++) {
-			if (ax->ax_packetids[i] == packetid) {
+		for (j = 0; j < axo->axo_index[i]->axi_objectlen; j++) {
+			if (axo->axo_index[i]->axi_object[j] == axo)
 				found = 1;
-				break;
-			}
+			if (found && j + 1 != axo->axo_index[i]->axi_objectlen)
+				axo->axo_index[i]->axi_object[j] =
+				    axo->axo_index[i]->axi_object[j + 1];
 		}
-	} while (packetid == 0 || found);
-	ax->ax_packetids[npackets] = packetid;
-
-	return packetid;
-}
-
-static int
-agentx_pdu_add_uint16(struct agentx *ax, uint16_t value)
-{
-	if (agentx_pdu_need(ax, sizeof(value)) == -1)
-		return -1;
-
-	if (ax->ax_byteorder == AGENTX_BYTE_ORDER_BE)
-		value = htobe16(value);
-	else
-		value = htole16(value);
-	memcpy(ax->ax_wbuf + ax->ax_wbtlen, &value, sizeof(value));
-        ax->ax_wbtlen += sizeof(value);
-        return 0;
-}
-
-static int
-agentx_pdu_add_uint32(struct agentx *ax, uint32_t value)
-{
-	if (agentx_pdu_need(ax, sizeof(value)) == -1)
-		return -1;
-
-	if (ax->ax_byteorder == AGENTX_BYTE_ORDER_BE)
-		value = htobe32(value);
-	else
-		value = htole32(value);
-	memcpy(ax->ax_wbuf + ax->ax_wbtlen, &value, sizeof(value));
-        ax->ax_wbtlen += sizeof(value);
-        return 0;
-}
-
-static int
-agentx_pdu_add_uint64(struct agentx *ax, uint64_t value)
-{
-	if (agentx_pdu_need(ax, sizeof(value)) == -1)
-		return -1;
-
-	if (ax->ax_byteorder == AGENTX_BYTE_ORDER_BE)
-		value = htobe64(value);
-	else
-		value = htole64(value);
-	memcpy(ax->ax_wbuf + ax->ax_wbtlen, &value, sizeof(value));
-        ax->ax_wbtlen += sizeof(value);
-        return 0;
-}
-
-
-static int
-agentx_pdu_add_oid(struct agentx *ax, struct agentx_oid *oid, int include)
-{
-	static struct agentx_oid nulloid = {0};
-	uint8_t prefix = 0, n_subid, i = 0;
-
-	n_subid = oid->aoi_idlen;
-
-	if (oid == NULL)
-		oid = &nulloid;
-
-	if (oid->aoi_idlen > 4 &&
-	    oid->aoi_id[0] == 1 && oid->aoi_id[1] == 3 &&
-	    oid->aoi_id[2] == 6 && oid->aoi_id[3] == 1 &&
-	    oid->aoi_id[4] <= UINT8_MAX) {
-		prefix = oid->aoi_id[4];
-		i = 5;
+#ifdef AX_DEBUG
+		if (!found)
+			agentx_log_axc_fatalx(axo->axo_axr->axr_axc,
+			    "%s: object not found in index", __func__);
+#endif
+		axo->axo_index[i]->axi_objectlen--;
+		if (axo->axo_index[i]->axi_dstate == AX_DSTATE_CLOSE &&
+		    axo->axo_index[i]->axi_cstate == AX_CSTATE_CLOSE)
+			agentx_index_free_finalize(axo->axo_index[i]);
 	}
 
-	if (agentx_pdu_need(ax, 4) == -1)
-		return -1;
-	ax->ax_wbuf[ax->ax_wbtlen++] = n_subid - i;
-	ax->ax_wbuf[ax->ax_wbtlen++] = prefix;
-	ax->ax_wbuf[ax->ax_wbtlen++] = !!include;
-	ax->ax_wbuf[ax->ax_wbtlen++] = 0;
+	free(axo);
+}
 
-	for (; i < n_subid; i++) {
-		if (agentx_pdu_add_uint32(ax, oid->aoi_id[i]) == -1)
-			return -1;
-	}
+static void
+agentx_object_reset(struct agentx_object *axo)
+{
+	axo->axo_cstate = AX_CSTATE_CLOSE;
 
-	return 0;
+	if (axo->axo_dstate == AX_DSTATE_CLOSE)
+		agentx_object_free_finalize(axo);
 }
 
 static int
-agentx_pdu_add_str(struct agentx *ax, struct agentx_ostring *str)
+agentx_object_cmp(struct agentx_object *o1, struct agentx_object *o2)
 {
-	size_t length, zeroes;
-
-	if (agentx_pdu_add_uint32(ax, str->aos_slen) == -1)
-		return -1;
-
-	if ((zeroes = (4 - (str->aos_slen % 4))) == 4)
-		zeroes = 0;
-	length = str->aos_slen + zeroes;
-	if (agentx_pdu_need(ax, length) == -1)
-		return -1;
-
-	memcpy(&(ax->ax_wbuf[ax->ax_wbtlen]), str->aos_string, str->aos_slen);
-	ax->ax_wbtlen += str->aos_slen;
-	memset(&(ax->ax_wbuf[ax->ax_wbtlen]), 0, zeroes);
-	ax->ax_wbtlen += zeroes;
-	return 0;
+	return ax_oid_cmp(&(o1->axo_oid), &(o2->axo_oid));
 }
 
 static int
-agentx_pdu_add_varbindlist(struct agentx *ax,
-    struct agentx_varbind *vblist, size_t nvb)
-{
-	size_t i;
-	uint16_t temp;
-
-	for (i = 0; i < nvb; i++) {
-		temp = (uint16_t) vblist[i].avb_type;
-		if (agentx_pdu_add_uint16(ax, temp) == -1 ||
-		    agentx_pdu_need(ax, 2))
-			return -1;
-		memset(&(ax->ax_wbuf[ax->ax_wbtlen]), 0, 2);
-		ax->ax_wbtlen += 2;
-		if (agentx_pdu_add_oid(ax, &(vblist[i].avb_oid), 0) == -1)
-			return -1;
-		switch (vblist[i].avb_type) {
-		case AGENTX_DATA_TYPE_INTEGER:
-		case AGENTX_DATA_TYPE_COUNTER32:
-		case AGENTX_DATA_TYPE_GAUGE32:
-		case AGENTX_DATA_TYPE_TIMETICKS:
-			if (agentx_pdu_add_uint32(ax,
-			    vblist[i].avb_data.avb_uint32) == -1)
-				return -1;
-			break;
-		case AGENTX_DATA_TYPE_COUNTER64:
-			if (agentx_pdu_add_uint64(ax,
-			    vblist[i].avb_data.avb_uint64) == -1)
-				return -1;
-			break;
-		case AGENTX_DATA_TYPE_OCTETSTRING:
-		case AGENTX_DATA_TYPE_IPADDRESS:
-		case AGENTX_DATA_TYPE_OPAQUE:
-			if (agentx_pdu_add_str(ax,
-			    &(vblist[i].avb_data.avb_ostring)) == -1)
-				return -1;
-			break;
-		case AGENTX_DATA_TYPE_OID:
-			if (agentx_pdu_add_oid(ax,
-			    &(vblist[i].avb_data.avb_oid), 1) == -1)
-				return -1;
-			break;
-		case AGENTX_DATA_TYPE_NULL:
-		case AGENTX_DATA_TYPE_NOSUCHOBJECT:
-		case AGENTX_DATA_TYPE_NOSUCHINSTANCE:
-		case AGENTX_DATA_TYPE_ENDOFMIBVIEW:
-			break;
-		default:
-			errno = EINVAL;
-			return -1;
-		}
-	}
-	return 0;
-}
-
-static uint16_t
-agentx_pdutoh16(struct agentx_pdu_header *header, uint8_t *buf)
-{
-	uint16_t value;
-
-	memcpy(&value, buf, sizeof(value));
-	if (header->aph_flags & AGENTX_PDU_FLAG_NETWORK_BYTE_ORDER)
-		return be16toh(value);
-	return le16toh(value);
-}
-
-static uint32_t
-agentx_pdutoh32(struct agentx_pdu_header *header, uint8_t *buf)
-{
-	uint32_t value;
-
-	memcpy(&value, buf, sizeof(value));
-	if (header->aph_flags & AGENTX_PDU_FLAG_NETWORK_BYTE_ORDER)
-		return be32toh(value);
-	return le32toh(value);
-}
-
-static uint64_t
-agentx_pdutoh64(struct agentx_pdu_header *header, uint8_t *buf)
-{
-	uint64_t value;
-
-	memcpy(&value, buf, sizeof(value));
-	if (header->aph_flags & AGENTX_PDU_FLAG_NETWORK_BYTE_ORDER)
-		return be64toh(value);
-	return le64toh(value);
-}
-
-static ssize_t
-agentx_pdutooid(struct agentx_pdu_header *header, struct agentx_oid *oid,
-    uint8_t *buf, size_t rawlen)
+agentx_object_implied(struct agentx_object *axo,
+    struct agentx_index *axi)
 {
 	size_t i = 0;
-	ssize_t nread;
 
-	if (rawlen < 4)
-		goto fail;
-	rawlen -= 4;
-	nread = 4;
-	oid->aoi_idlen = *buf++;
-	if (rawlen < (oid->aoi_idlen * 4))
-		goto fail;
-	nread += oid->aoi_idlen * 4;
-	if (*buf != 0) {
-		oid->aoi_id[0] = 1;
-		oid->aoi_id[1] = 3;
-		oid->aoi_id[2] = 6;
-		oid->aoi_id[3] = 1;
-		oid->aoi_id[4] = *buf;
-		oid->aoi_idlen += 5;
-		i = 5;
+	for (i = 0; i < axo->axo_indexlen; i++) {
+		if (axo->axo_index[i] == axi) {
+			if (axi->axi_vb.avb_data.avb_ostring.aos_slen != 0)
+				return 1;
+			else if (i == axo->axo_indexlen - 1)
+				return axo->axo_implied;
+			return 0;
+		}
 	}
-	buf++;
-	oid->aoi_include = *buf;
-	for (buf += 2; i < oid->aoi_idlen; i++, buf += 4)
-		oid->aoi_id[i] = agentx_pdutoh32(header, buf);
-
-	return nread;
-
-fail:
-	errno = EPROTO;
-	return -1;
+#ifdef AX_DEBUG
+	agentx_log_axc_fatalx(axo->axo_axr->axr_axc, "%s: unsupported index",
+	    __func__);
+#endif
+	return 0;
 }
 
-static ssize_t
-agentx_pdutoostring(struct agentx_pdu_header *header,
-    struct agentx_ostring *ostring, uint8_t *buf, size_t rawlen)
+static void
+agentx_get_start(struct agentx_context *axc, struct ax_pdu *pdu)
 {
-	ssize_t nread;
+	struct agentx_session *axs = axc->axc_axs;
+	struct agentx *ax = axs->axs_ax;
+	struct agentx_get *axg, tsag;
+	struct ax_pdu_searchrangelist *srl;
+	char *logmsg = NULL;
+	size_t i, j;
+	int fail = 0;
 
-	if (rawlen < 4)
-		goto fail;
+	if ((axg = calloc(1, sizeof(*axg))) == NULL) {
+		tsag.axg_sessionid = pdu->ap_header.aph_sessionid;
+		tsag.axg_transactionid = pdu->ap_header.aph_transactionid;
+		tsag.axg_packetid = pdu->ap_header.aph_packetid;
+		tsag.axg_context_default = axc->axc_name_default;
+		tsag.axg_fd = axc->axc_axs->axs_ax->ax_fd;
+		agentx_log_axg_warn(&tsag, "Couldn't parse request");
+		agentx_reset(ax);
+		return;
+	}
 
-	ostring->aos_slen = agentx_pdutoh32(header, buf);
-	rawlen -= 4;
-	buf += 4;
-	if (ostring->aos_slen > rawlen)
-		goto fail;
-	if ((ostring->aos_string = malloc(ostring->aos_slen + 1)) == NULL)
-		return -1;
-	memcpy(ostring->aos_string, buf, ostring->aos_slen);
-	ostring->aos_string[ostring->aos_slen] = '\0';
+	axg->axg_sessionid = pdu->ap_header.aph_sessionid;
+	axg->axg_transactionid = pdu->ap_header.aph_transactionid;
+	axg->axg_packetid = pdu->ap_header.aph_packetid;
+	axg->axg_context_default = axc->axc_name_default;
+	axg->axg_fd = axc->axc_axs->axs_ax->ax_fd;
+	if (!axc->axc_name_default) {
+		axg->axg_context.aos_string =
+		    (unsigned char *)strdup((char *)axc->axc_name.aos_string);
+		if (axg->axg_context.aos_string == NULL) {
+			agentx_log_axg_warn(axg, "Couldn't parse request");
+			free(axg);
+			agentx_reset(ax);
+			return;
+		}
+	}
+	axg->axg_context.aos_slen = axc->axc_name.aos_slen;
+	axg->axg_type = pdu->ap_header.aph_type;
+	axg->axg_axc = axc;
+	TAILQ_INSERT_TAIL(&(ax->ax_getreqs), axg, axg_ax_getreqs);
+	if (axg->axg_type == AX_PDU_TYPE_GET ||
+	    axg->axg_type == AX_PDU_TYPE_GETNEXT) {
+		srl = &(pdu->ap_payload.ap_srl);
+		axg->axg_nvarbind = srl->ap_nsr;
+	} else {
+		axg->axg_nonrep = pdu->ap_payload.ap_getbulk.ap_nonrep;
+		axg->axg_maxrep = pdu->ap_payload.ap_getbulk.ap_maxrep;
+		srl = &(pdu->ap_payload.ap_getbulk.ap_srl);
+		axg->axg_nvarbind = ((srl->ap_nsr - axg->axg_nonrep) *
+		    axg->axg_maxrep) + axg->axg_nonrep;
+	}
 
-	nread = 4 + ostring->aos_slen;
-	if (ostring->aos_slen % 4 != 0)
-		nread += 4 - (ostring->aos_slen % 4);
+	if ((axg->axg_varbind = calloc(axg->axg_nvarbind,
+	    sizeof(*(axg->axg_varbind)))) == NULL) {
+		agentx_log_axg_warn(axg, "Couldn't parse request");
+		agentx_get_free(axg);
+		agentx_reset(ax);
+		return;
+	}
 
-	return nread;
+	/* XXX net-snmp doesn't use getbulk, so untested */
+	/* Two loops: varbind after needs to be initialized */
+	for (i = 0; i < srl->ap_nsr; i++) {
+		if (i < axg->axg_nonrep ||
+		    axg->axg_type != AX_PDU_TYPE_GETBULK)
+			j = i;
+		else if (axg->axg_maxrep == 0)
+			break;
+		else
+			j = (axg->axg_maxrep * i) + axg->axg_nonrep;
+		bcopy(&(srl->ap_sr[i].asr_start),
+		    &(axg->axg_varbind[j].axv_vb.avb_oid),
+		    sizeof(srl->ap_sr[i].asr_start));
+		bcopy(&(srl->ap_sr[i].asr_start),
+		    &(axg->axg_varbind[j].axv_start),
+		    sizeof(srl->ap_sr[i].asr_start));
+		bcopy(&(srl->ap_sr[i].asr_stop),
+		    &(axg->axg_varbind[j].axv_end),
+		    sizeof(srl->ap_sr[i].asr_stop));
+		axg->axg_varbind[j].axv_initialized = 1;
+		axg->axg_varbind[j].axv_axg = axg;
+		axg->axg_varbind[j].axv_include =
+		    srl->ap_sr[i].asr_start.aoi_include;
+		if (j == 0)
+			fail |= agentx_strcat(&logmsg, " {");
+		else
+			fail |= agentx_strcat(&logmsg, ",{");
+		fail |= agentx_strcat(&logmsg,
+		    ax_oid2string(&(srl->ap_sr[i].asr_start)));
+		if (srl->ap_sr[i].asr_start.aoi_include)
+			fail |= agentx_strcat(&logmsg, " (inclusive)");
+		if (srl->ap_sr[i].asr_stop.aoi_idlen != 0) {
+			fail |= agentx_strcat(&logmsg, " - ");
+			fail |= agentx_strcat(&logmsg,
+			    ax_oid2string(&(srl->ap_sr[i].asr_stop)));
+		}
+		fail |= agentx_strcat(&logmsg, "}");
+		if (fail) {
+			agentx_log_axg_warn(axg, "Couldn't parse request");
+			free(logmsg);
+			agentx_get_free(axg);
+			agentx_reset(ax);
+			return;
+		}
+	}
 
-fail:
-	errno = EPROTO;
-	return -1;
+	agentx_log_axg_debug(axg, "%s:%s",
+	    ax_pdutype2string(axg->axg_type), logmsg);
+	free(logmsg);
+
+	for (i = 0; i < srl->ap_nsr; i++) {
+		if (i < axg->axg_nonrep ||
+		    axg->axg_type != AX_PDU_TYPE_GETBULK)
+			j = i;
+		else if (axg->axg_maxrep == 0)
+			break;
+		else
+			j = (axg->axg_maxrep * i) + axg->axg_nonrep;
+		agentx_varbind_start(&(axg->axg_varbind[j]));
+	}
 }
 
-static ssize_t
-agentx_pdutovarbind(struct agentx_pdu_header *header,
-    struct agentx_varbind *varbind, uint8_t *buf, size_t rawlen)
+static void
+agentx_get_finalize(struct agentx_get *axg)
 {
-	ssize_t nread, rread = 4;
+	struct agentx_context *axc = axg->axg_axc;
+	struct agentx_session *axs = axc->axc_axs;
+	struct agentx *ax = axs->axs_ax;
+	size_t i, j, nvarbind = 0;
+	uint16_t error = 0, index = 0;
+	struct ax_varbind *vbl;
+	char *logmsg = NULL;
+	int fail = 0;
 
-	if (rawlen == 0)
+	for (i = 0; i < axg->axg_nvarbind; i++) {
+		if (axg->axg_varbind[i].axv_initialized) {
+			if (axg->axg_varbind[i].axv_vb.avb_type == 0)
+				return;
+			nvarbind++;
+		}
+	}
+
+	if (axg->axg_axc == NULL) {
+		agentx_get_free(axg);
+		return;
+	}
+
+	if ((vbl = calloc(nvarbind, sizeof(*vbl))) == NULL) {
+		agentx_log_axg_warn(axg, "Couldn't parse request");
+		agentx_get_free(axg);
+		agentx_reset(ax);
+		return;
+	}
+	for (i = 0, j = 0; i < axg->axg_nvarbind; i++) {
+		if (axg->axg_varbind[i].axv_initialized) {
+			memcpy(&(vbl[j]), &(axg->axg_varbind[i].axv_vb),
+			    sizeof(*vbl));
+			if (error == 0 && axg->axg_varbind[i].axv_error !=
+			    AX_PDU_ERROR_NOERROR) {
+				error = axg->axg_varbind[i].axv_error;
+				index = j + 1;
+			}
+			if (j == 0)
+				fail |= agentx_strcat(&logmsg, " {");
+			else
+				fail |= agentx_strcat(&logmsg, ",{");
+			fail |= agentx_strcat(&logmsg,
+			    ax_varbind2string(&(vbl[j])));
+			if (axg->axg_varbind[i].axv_error !=
+			    AX_PDU_ERROR_NOERROR) {
+				fail |= agentx_strcat(&logmsg, "(");
+				fail |= agentx_strcat(&logmsg,
+				    ax_error2string(
+				    axg->axg_varbind[i].axv_error));
+				fail |= agentx_strcat(&logmsg, ")");
+			}
+			fail |= agentx_strcat(&logmsg, "}");
+			if (fail) {
+				agentx_log_axg_warn(axg,
+				    "Couldn't parse request");
+				free(logmsg);
+				agentx_get_free(axg);
+				return;
+			}
+			j++;
+		}
+	}
+	agentx_log_axg_debug(axg, "response:%s", logmsg);
+	free(logmsg);
+
+	if (ax_response(ax->ax_ax, axs->axs_id, axg->axg_transactionid,
+	    axg->axg_packetid, AGENTX_CONTEXT_CTX(axc), 0, error, index,
+	    vbl, nvarbind) == -1) {
+		agentx_log_axg_warn(axg, "Couldn't parse request");
+		agentx_reset(ax);
+	} else
+		agentx_wantwrite(ax, ax->ax_fd);
+	free(vbl);
+	agentx_get_free(axg);
+}
+
+void
+agentx_get_free(struct agentx_get *axg)
+{
+	struct agentx_varbind *axv;
+	struct agentx_object *axo;
+	struct agentx *ax = axg->axg_axc->axc_axs->axs_ax;
+	struct agentx_varbind_index *index;
+	size_t i, j;
+
+	if (axg->axg_axc != NULL)
+		TAILQ_REMOVE(&(ax->ax_getreqs), axg, axg_ax_getreqs);
+
+	for (i = 0; i < axg->axg_nvarbind; i++) {
+		axv = &(axg->axg_varbind[i]);
+		for (j = 0; axv->axv_axo != NULL &&
+		    j < axv->axv_axo->axo_indexlen; j++) {
+			axo = axv->axv_axo;
+			index = &(axv->axv_index[j]);
+			if (axo->axo_index[j]->axi_vb.avb_type ==
+			    AX_DATA_TYPE_OCTETSTRING ||
+			    axo->axo_index[j]->axi_vb.avb_type ==
+			    AX_DATA_TYPE_IPADDRESS)
+				free(index->axv_idata.avb_ostring.aos_string);
+		}
+		ax_varbind_free(&(axg->axg_varbind[i].axv_vb));
+	}
+
+	free(axg->axg_context.aos_string);
+	free(axg->axg_varbind);
+	free(axg);
+}
+
+static void
+agentx_varbind_start(struct agentx_varbind *axv)
+{
+	struct agentx_get *axg = axv->axv_axg;
+	struct agentx_context *axc = axg->axg_axc;
+	struct agentx_object *axo, axo_search;
+	struct agentx_varbind_index *index;
+	struct agentx_index *axi;
+	struct ax_oid *oid;
+	union ax_data *data;
+	struct in_addr *ipaddress;
+	unsigned char *ipbytes;
+	size_t i, j, k;
+	int overflow = 0, dynamic;
+
+#ifdef AX_DEBUG
+	if (!axv->axv_initialized)
+		agentx_log_axg_fatalx(axv->axv_axg,
+		    "%s: axv_initialized not set", __func__);
+#endif
+
+	bcopy(&(axv->axv_vb.avb_oid), &(axo_search.axo_oid),
+	    sizeof(axo_search.axo_oid));
+
+	do {
+		axo = RB_FIND(axc_objects, &(axc->axc_objects), &axo_search);
+		if (axo_search.axo_oid.aoi_idlen > 0)
+			axo_search.axo_oid.aoi_idlen--;
+	} while (axo == NULL && axo_search.axo_oid.aoi_idlen > 0);
+	if (axo == NULL || axo->axo_cstate != AX_CSTATE_OPEN) {
+		axv->axv_include = 1;
+		if (axv->axv_axg->axg_type == AX_PDU_TYPE_GET) {
+			agentx_varbind_nosuchobject(axv);
+			return;
+		}
+		bcopy(&(axv->axv_vb.avb_oid), &(axo_search.axo_oid),
+		    sizeof(axo_search.axo_oid));
+		axo = RB_NFIND(axc_objects, &(axc->axc_objects), &axo_search);
+getnext:
+		while (axo != NULL && axo->axo_cstate != AX_CSTATE_OPEN)
+			axo = RB_NEXT(axc_objects, &(axc->axc_objects), axo);
+		if (axo == NULL) {
+			agentx_varbind_endofmibview(axv);
+			return;
+		}
+		bcopy(&(axo->axo_oid), &(axv->axv_vb.avb_oid),
+		    sizeof(axo->axo_oid));
+	}
+	axv->axv_axo = axo;
+	axv->axv_indexlen = axo->axo_indexlen;
+	if (agentx_object_lock(axo) == -1) {
+		agentx_varbind_error_type(axv,
+		    AX_PDU_ERROR_PROCESSINGERROR, 1);
+		return;
+	}
+
+	oid = &(axv->axv_vb.avb_oid);
+	if (axo->axo_indexlen == 0) {
+		if (axv->axv_axg->axg_type == AX_PDU_TYPE_GET) {
+			if (oid->aoi_idlen != axo->axo_oid.aoi_idlen + 1 ||
+			    oid->aoi_id[oid->aoi_idlen - 1] != 0) {
+				agentx_varbind_nosuchinstance(axv);
+				return;
+			}
+		} else {
+			if (oid->aoi_idlen == axo->axo_oid.aoi_idlen) {
+				oid->aoi_id[oid->aoi_idlen++] = 0;
+				axv->axv_include = 1;
+			} else {
+				axv->axv_axo = NULL;
+				agentx_object_unlock(axo);
+				axo = RB_NEXT(axc_objects, &(axc->axc_objects),
+				    axo);
+				goto getnext;
+			}
+		}
+	}
+	j = axo->axo_oid.aoi_idlen;
+/*
+ * We can't trust what the client gives us, so sometimes we need to map it to
+ * index type.
+ * - AX_PDU_TYPE_GET: we always return AX_DATA_TYPE_NOSUCHINSTANCE
+ * - AX_PDU_TYPE_GETNEXT:
+ *   - Missing OID digits to match indices will result in the indices to be NUL-
+ *     initialized and the request type will be set to
+ *     AGENTX_REQUEST_TYPE_GETNEXTINCLUSIVE
+ *   - An overflow can happen on AX_DATA_TYPE_OCTETSTRING and
+ *     AX_DATA_TYPE_IPADDRESS. This results in request type being set to
+ *     AGENTX_REQUEST_TYPE_GETNEXT and will set the index to its maximum
+ *     value:
+ *     - AX_DATA_TYPE_INTEGER: UINT32_MAX
+ *     - AX_DATA_TYPE_OCTETSTRING: aos_slen = UINT32_MAX and
+ *       aos_string = NULL
+ *     - AX_DATA_TYPE_OID: aoi_idlen = UINT32_MAX and aoi_id[x] = UINT32_MAX
+ *     - AX_DATA_TYPE_IPADDRESS: 255.255.255.255
+ */
+	for (dynamic = 0, i = 0; i < axo->axo_indexlen; i++) {
+		index = &(axv->axv_index[i]);
+		index->axv_axi = axo->axo_index[i];
+		data = &(index->axv_idata);
+		if (axo->axo_index[i]->axi_type == AXI_TYPE_DYNAMIC)
+			dynamic = 1;
+		if (j >= axv->axv_vb.avb_oid.aoi_idlen && !overflow &&
+		    axo->axo_index[i]->axi_type == AXI_TYPE_DYNAMIC)
+			continue;
+		switch (axo->axo_index[i]->axi_vb.avb_type) {
+		case AX_DATA_TYPE_INTEGER:
+/* Dynamic index: normal copy paste */
+			if (axo->axo_index[i]->axi_type == AXI_TYPE_DYNAMIC) {
+				data->avb_uint32 = overflow ?
+				    UINT32_MAX : axv->axv_vb.avb_oid.aoi_id[j];
+				j++;
+				index->axv_idatacomplete = 1;
+				break;
+			}
+			axi = axo->axo_index[i];
+/* With a GET-request we need an exact match */
+			if (axv->axv_axg->axg_type == AX_PDU_TYPE_GET) {
+				if (axi->axi_vb.avb_data.avb_uint32 !=
+				    axv->axv_vb.avb_oid.aoi_id[j]) {
+					agentx_varbind_nosuchinstance(axv);
+					return;
+				}
+				index->axv_idatacomplete = 1;
+				j++;
+				break;
+			}
+/* A higher value automatically moves us to the next value */
+			if (overflow ||
+			    axv->axv_vb.avb_oid.aoi_id[j] >
+			    axi->axi_vb.avb_data.avb_uint32) {
+/* If we're !dynamic up until now the rest of the oid doesn't matter */
+				if (!dynamic) {
+					agentx_varbind_endofmibview(axv);
+					return;
+				}
+/*
+ * Else we just pick the max value and make sure we don't return
+ * AGENTX_REQUEST_TYPE_GETNEXTINCLUSIVE
+ */
+				data->avb_uint32 = UINT32_MAX;
+				index->axv_idatacomplete = 1;
+				overflow = 1;
+				j++;
+				break;
+/*
+ * A lower value automatically moves to the set value and counts as a short oid
+ */
+			} else if (axv->axv_vb.avb_oid.aoi_id[j] <
+			    axi->axi_vb.avb_data.avb_uint32) {
+				data->avb_uint32 =
+				    axi->axi_vb.avb_data.avb_uint32;
+				j = axv->axv_vb.avb_oid.aoi_idlen;
+				break;
+			}
+/* Normal match, except we already matched overflow at higher value */
+			data->avb_uint32 = axv->axv_vb.avb_oid.aoi_id[j];
+			j++;
+			index->axv_idatacomplete = 1;
+			break;
+		case AX_DATA_TYPE_OCTETSTRING:
+			if (!agentx_object_implied(axo, index->axv_axi)) {
+				if (overflow || axv->axv_vb.avb_oid.aoi_id[j] >
+				    AGENTX_OID_MAX_LEN -
+				    axv->axv_vb.avb_oid.aoi_idlen) {
+					overflow = 1;
+					data->avb_ostring.aos_slen = UINT32_MAX;
+					index->axv_idatacomplete = 1;
+					continue;
+				}
+				data->avb_ostring.aos_slen =
+				    axv->axv_vb.avb_oid.aoi_id[j++];
+			} else {
+				if (overflow) {
+					data->avb_ostring.aos_slen = UINT32_MAX;
+					index->axv_idatacomplete = 1;
+					continue;
+				}
+				data->avb_ostring.aos_slen =
+				    axv->axv_vb.avb_oid.aoi_idlen - j;
+			}
+			data->avb_ostring.aos_string =
+			    calloc(data->avb_ostring.aos_slen + 1, 1);
+			if (data->avb_ostring.aos_string == NULL) {
+				agentx_log_axg_warn(axg,
+				    "Failed to bind string index");
+				agentx_varbind_error_type(axv,
+				    AX_PDU_ERROR_PROCESSINGERROR, 1);
+				return;
+			}
+			for (k = 0; k < data->avb_ostring.aos_slen; k++, j++) {
+				if (!overflow &&
+				    j == axv->axv_vb.avb_oid.aoi_idlen)
+					break;
+
+				if (axv->axv_vb.avb_oid.aoi_id[j] > 255)
+					overflow = 1;
+
+				data->avb_ostring.aos_string[k] = overflow ?
+				    0xff : axv->axv_vb.avb_oid.aoi_id[j];
+			}
+			if (k == data->avb_ostring.aos_slen)
+				index->axv_idatacomplete = 1;
+			break;
+		case AX_DATA_TYPE_OID:
+			if (!agentx_object_implied(axo, index->axv_axi)) {
+				if (overflow || axv->axv_vb.avb_oid.aoi_id[j] >
+				    AGENTX_OID_MAX_LEN -
+				    axv->axv_vb.avb_oid.aoi_idlen) {
+					overflow = 1;
+					data->avb_oid.aoi_idlen = UINT32_MAX;
+					index->axv_idatacomplete = 1;
+					continue;
+				}
+				data->avb_oid.aoi_idlen =
+				    axv->axv_vb.avb_oid.aoi_id[j++];
+			} else {
+				if (overflow) {
+					data->avb_oid.aoi_idlen = UINT32_MAX;
+					index->axv_idatacomplete = 1;
+					continue;
+				}
+				data->avb_oid.aoi_idlen =
+				    axv->axv_vb.avb_oid.aoi_idlen - j;
+			}
+			for (k = 0; k < data->avb_oid.aoi_idlen; k++, j++) {
+				if (!overflow &&
+				    j == axv->axv_vb.avb_oid.aoi_idlen) {
+					data->avb_oid.aoi_id[k] = 0;
+					continue;
+				}
+				data->avb_oid.aoi_id[k] = overflow ?
+				    UINT32_MAX : axv->axv_vb.avb_oid.aoi_id[j];
+			}
+			if (j <= axv->axv_vb.avb_oid.aoi_idlen)
+				index->axv_idatacomplete = 1;
+			break;
+		case AX_DATA_TYPE_IPADDRESS:
+			ipaddress = calloc(1, sizeof(*ipaddress));
+			if (ipaddress == NULL) {
+				agentx_log_axg_warn(axg,
+				    "Failed to bind ipaddress index");
+				agentx_varbind_error_type(axv,
+				    AX_PDU_ERROR_PROCESSINGERROR, 1);
+				return;
+			}
+			ipbytes = (unsigned char *)ipaddress;
+			for (k = 0; k < 4; k++, j++) {
+				if (!overflow &&
+				    j == axv->axv_vb.avb_oid.aoi_idlen)
+					break;
+
+				if (axv->axv_vb.avb_oid.aoi_id[j] > 255)
+					overflow = 1;
+
+				ipbytes[k] = overflow ? 255 :
+				    axv->axv_vb.avb_oid.aoi_id[j];
+			}
+			if (j <= axv->axv_vb.avb_oid.aoi_idlen)
+				index->axv_idatacomplete = 1;
+			data->avb_ostring.aos_slen = sizeof(*ipaddress);
+			data->avb_ostring.aos_string =
+			    (unsigned char *)ipaddress;
+			break;
+		default:
+#ifdef AX_DEBUG
+			agentx_log_axg_fatalx(axg,
+			    "%s: unexpected index type", __func__);
+#else
+			agentx_log_axg_warnx(axg,
+			    "%s: unexpected index type", __func__);
+			agentx_varbind_error_type(axv,
+			    AX_PDU_ERROR_PROCESSINGERROR, 1);
+			return;
+#endif
+		}
+	}
+	if (axv->axv_axg->axg_type == AX_PDU_TYPE_GET) {
+		if ((axo->axo_indexlen > 0 &&
+		    !axv->axv_index[axo->axo_indexlen - 1].axv_idatacomplete) ||
+		    j != axv->axv_vb.avb_oid.aoi_idlen || overflow) {
+			agentx_varbind_nosuchinstance(axv);
+			return;
+		}
+	}
+
+	if (overflow || j > axv->axv_vb.avb_oid.aoi_idlen)
+		axv->axv_include = 0;
+
+/*
+ * AGENTX_REQUEST_TYPE_GETNEXT request can !dynamic objects can just move to
+ * the next object
+ */
+	if (agentx_varbind_request(axv) == AGENTX_REQUEST_TYPE_GETNEXT &&
+	    !dynamic) {
+		agentx_varbind_endofmibview(axv);
+		return;
+	}
+
+	axo->axo_get(axv);
+}
+
+void
+agentx_varbind_integer(struct agentx_varbind *axv, uint32_t value)
+{
+	axv->axv_vb.avb_type = AX_DATA_TYPE_INTEGER;
+	axv->axv_vb.avb_data.avb_uint32 = value;
+
+	agentx_varbind_finalize(axv);
+}
+
+void
+agentx_varbind_string(struct agentx_varbind *axv, const char *value)
+{
+	agentx_varbind_nstring(axv, (const unsigned char *)value,
+	    strlen(value));
+}
+
+void
+agentx_varbind_nstring(struct agentx_varbind *axv,
+    const unsigned char *value, size_t slen)
+{
+	axv->axv_vb.avb_data.avb_ostring.aos_string = malloc(slen);
+	if (axv->axv_vb.avb_data.avb_ostring.aos_string == NULL) {
+		agentx_log_axg_warn(axv->axv_axg, "Couldn't bind string");
+		agentx_varbind_error_type(axv,
+		    AX_PDU_ERROR_PROCESSINGERROR, 1);
+		return;
+	}
+	axv->axv_vb.avb_type = AX_DATA_TYPE_OCTETSTRING;
+	memcpy(axv->axv_vb.avb_data.avb_ostring.aos_string, value, slen);
+	axv->axv_vb.avb_data.avb_ostring.aos_slen = slen;
+
+	agentx_varbind_finalize(axv);
+}
+
+void
+agentx_varbind_printf(struct agentx_varbind *axv, const char *fmt, ...)
+{
+	va_list ap;
+	int r;
+
+	axv->axv_vb.avb_type = AX_DATA_TYPE_OCTETSTRING;
+	va_start(ap, fmt);
+	r = vasprintf((char **)&(axv->axv_vb.avb_data.avb_ostring.aos_string),
+	    fmt, ap);
+	va_end(ap);
+	if (r == -1) {
+		axv->axv_vb.avb_data.avb_ostring.aos_string = NULL;
+		agentx_log_axg_warn(axv->axv_axg, "Couldn't bind string");
+		agentx_varbind_error_type(axv,
+		    AX_PDU_ERROR_PROCESSINGERROR, 1);
+		return;
+	}
+	axv->axv_vb.avb_data.avb_ostring.aos_slen = r;
+
+	agentx_varbind_finalize(axv);
+}
+
+void
+agentx_varbind_null(struct agentx_varbind *axv)
+{
+	axv->axv_vb.avb_type = AX_DATA_TYPE_NULL;
+
+	agentx_varbind_finalize(axv);
+}
+
+void
+agentx_varbind_oid(struct agentx_varbind *axv, const uint32_t oid[],
+    size_t oidlen)
+{
+	size_t i;
+
+	axv->axv_vb.avb_type = AX_DATA_TYPE_OID;
+
+	for (i = 0; i < oidlen; i++)
+		axv->axv_vb.avb_data.avb_oid.aoi_id[i] = oid[i];
+	axv->axv_vb.avb_data.avb_oid.aoi_idlen = oidlen;
+
+	agentx_varbind_finalize(axv);
+}
+
+void
+agentx_varbind_object(struct agentx_varbind *axv,
+    struct agentx_object *axo)
+{
+	agentx_varbind_oid(axv, axo->axo_oid.aoi_id,
+	    axo->axo_oid.aoi_idlen);
+}
+
+void
+agentx_varbind_index(struct agentx_varbind *axv,
+    struct agentx_index *axi)
+{
+	agentx_varbind_oid(axv, axi->axi_vb.avb_oid.aoi_id,
+	    axi->axi_vb.avb_oid.aoi_idlen);
+}
+
+
+void
+agentx_varbind_ipaddress(struct agentx_varbind *axv,
+    const struct in_addr *value)
+{
+	axv->axv_vb.avb_type = AX_DATA_TYPE_IPADDRESS;
+	axv->axv_vb.avb_data.avb_ostring.aos_string = malloc(4);
+	if (axv->axv_vb.avb_data.avb_ostring.aos_string == NULL) {
+		agentx_log_axg_warn(axv->axv_axg, "Couldn't bind ipaddress");
+		agentx_varbind_error_type(axv,
+		    AX_PDU_ERROR_PROCESSINGERROR, 1);
+		return;
+	}
+	memcpy(axv->axv_vb.avb_data.avb_ostring.aos_string, value, 4);
+	axv->axv_vb.avb_data.avb_ostring.aos_slen = 4;
+
+	agentx_varbind_finalize(axv);
+}
+
+void
+agentx_varbind_counter32(struct agentx_varbind *axv, uint32_t value)
+{
+	axv->axv_vb.avb_type = AX_DATA_TYPE_COUNTER32;
+	axv->axv_vb.avb_data.avb_uint32 = value;
+
+	agentx_varbind_finalize(axv);
+}
+
+void
+agentx_varbind_gauge32(struct agentx_varbind *axv, uint32_t value)
+{
+	axv->axv_vb.avb_type = AX_DATA_TYPE_GAUGE32;
+	axv->axv_vb.avb_data.avb_uint32 = value;
+
+	agentx_varbind_finalize(axv);
+}
+
+void
+agentx_varbind_timeticks(struct agentx_varbind *axv, uint32_t value)
+{
+	axv->axv_vb.avb_type = AX_DATA_TYPE_TIMETICKS;
+	axv->axv_vb.avb_data.avb_uint32 = value;
+
+	agentx_varbind_finalize(axv);
+}
+
+void
+agentx_varbind_opaque(struct agentx_varbind *axv, const char *string,
+    size_t strlen)
+{
+	axv->axv_vb.avb_type = AX_DATA_TYPE_OPAQUE;
+	axv->axv_vb.avb_data.avb_ostring.aos_string = malloc(strlen);
+	if (axv->axv_vb.avb_data.avb_ostring.aos_string == NULL) {
+		agentx_log_axg_warn(axv->axv_axg, "Couldn't bind opaque");
+		agentx_varbind_error_type(axv,
+		    AX_PDU_ERROR_PROCESSINGERROR, 1);
+		return;
+	}
+	memcpy(axv->axv_vb.avb_data.avb_ostring.aos_string, string, strlen);
+	axv->axv_vb.avb_data.avb_ostring.aos_slen = strlen;
+
+	agentx_varbind_finalize(axv);
+}
+
+void
+agentx_varbind_counter64(struct agentx_varbind *axv, uint64_t value)
+{
+	axv->axv_vb.avb_type = AX_DATA_TYPE_COUNTER64;
+	axv->axv_vb.avb_data.avb_uint64 = value;
+
+	agentx_varbind_finalize(axv);
+}
+
+void
+agentx_varbind_notfound(struct agentx_varbind *axv)
+{
+	if (axv->axv_indexlen == 0) {
+#ifdef AX_DEBUG
+		agentx_log_axg_fatalx(axv->axv_axg, "%s invalid call",
+		    __func__);
+#else
+		agentx_log_axg_warnx(axv->axv_axg, "%s invalid call",
+		    __func__);
+		agentx_varbind_error_type(axv,
+		    AX_PDU_ERROR_GENERR, 1);
+#endif
+	} else if (axv->axv_axg->axg_type == AX_PDU_TYPE_GET)
+		agentx_varbind_nosuchinstance(axv);
+	else
+		agentx_varbind_endofmibview(axv);
+}
+
+void
+agentx_varbind_error(struct agentx_varbind *axv)
+{
+	agentx_varbind_error_type(axv, AX_PDU_ERROR_GENERR, 1);
+}
+
+static void
+agentx_varbind_error_type(struct agentx_varbind *axv,
+    enum ax_pdu_error error, int done)
+{
+	if (axv->axv_error == AX_PDU_ERROR_NOERROR) {
+		axv->axv_error = error;
+	}
+
+	if (done) {
+		axv->axv_vb.avb_type = AX_DATA_TYPE_NULL;
+
+		agentx_varbind_finalize(axv);
+	}
+}
+
+static void
+agentx_varbind_finalize(struct agentx_varbind *axv)
+{
+	struct agentx_get *axg = axv->axv_axg;
+	struct ax_oid oid;
+	union ax_data *data;
+	size_t i, j;
+	int cmp;
+
+	if (axv->axv_error != AX_PDU_ERROR_NOERROR) {
+		bcopy(&(axv->axv_start), &(axv->axv_vb.avb_oid),
+		    sizeof(axv->axv_start));
+		goto done;
+	}
+	bcopy(&(axv->axv_axo->axo_oid), &oid, sizeof(oid));
+	if (axv->axv_indexlen == 0)
+		ax_oid_add(&oid, 0);
+	for (i = 0; i < axv->axv_indexlen; i++) {
+		data = &(axv->axv_index[i].axv_idata);
+		switch (axv->axv_index[i].axv_axi->axi_vb.avb_type) {
+		case AX_DATA_TYPE_INTEGER:
+			if (ax_oid_add(&oid, data->avb_uint32) == -1)
+				goto fail;
+			break;
+		case AX_DATA_TYPE_OCTETSTRING:
+			if (!agentx_object_implied(axv->axv_axo,
+			    axv->axv_index[i].axv_axi)) {
+				if (ax_oid_add(&oid,
+				    data->avb_ostring.aos_slen) == -1)
+					goto fail;
+			}
+			for (j = 0; j < data->avb_ostring.aos_slen; j++) {
+				if (ax_oid_add(&oid,
+				    (uint8_t)data->avb_ostring.aos_string[j]) ==
+				    -1)
+					goto fail;
+			}
+			break;
+		case AX_DATA_TYPE_OID:
+			if (!agentx_object_implied(axv->axv_axo,
+			    axv->axv_index[i].axv_axi)) {
+				if (ax_oid_add(&oid,
+				    data->avb_oid.aoi_idlen) == -1)
+					goto fail;
+			}
+			for (j = 0; j < data->avb_oid.aoi_idlen; j++) {
+				if (ax_oid_add(&oid,
+				    data->avb_oid.aoi_id[j]) == -1)
+					goto fail;
+			}
+			break;
+		case AX_DATA_TYPE_IPADDRESS:
+			for (j = 0; j < 4; j++) {
+				if (ax_oid_add(&oid,
+				    data->avb_ostring.aos_string == NULL ? 0 :
+				    (uint8_t)data->avb_ostring.aos_string[j]) ==
+				    -1)
+					goto fail;
+			}
+			break;
+		default:
+#ifdef AX_DEBUG
+			agentx_log_axg_fatalx(axg,
+			    "%s: unsupported index type", __func__);
+#else
+			bcopy(&(axv->axv_start), &(axv->axv_vb.avb_oid),
+			    sizeof(axv->axv_start));
+			axv->axv_error = AX_PDU_ERROR_PROCESSINGERROR;
+			agentx_object_unlock(axv->axv_axo);
+			agentx_get_finalize(axv->axv_axg);
+			return;
+#endif
+		}
+	}
+	cmp = ax_oid_cmp(&(axv->axv_vb.avb_oid), &oid);
+	if ((agentx_varbind_request(axv) == AGENTX_REQUEST_TYPE_GETNEXT &&
+	    cmp >= 0) || cmp > 0) {
+#ifdef AX_DEBUG
+		agentx_log_axg_fatalx(axg, "indices not incremented");
+#else
+		agentx_log_axg_warnx(axg, "indices not incremented");
+		bcopy(&(axv->axv_start), &(axv->axv_vb.avb_oid),
+		    sizeof(axv->axv_start));
+		axv->axv_error = AX_PDU_ERROR_GENERR;
+#endif
+	} else
+		bcopy(&oid, &(axv->axv_vb.avb_oid), sizeof(oid));
+done:
+	agentx_object_unlock(axv->axv_axo);
+	agentx_get_finalize(axv->axv_axg);
+	return;
+
+fail:
+	agentx_log_axg_warnx(axg, "oid too large");
+	bcopy(&(axv->axv_start), &(axv->axv_vb.avb_oid),
+	    sizeof(axv->axv_start));
+	axv->axv_error = AX_PDU_ERROR_GENERR;
+	agentx_object_unlock(axv->axv_axo);
+	agentx_get_finalize(axv->axv_axg);
+}
+
+static void
+agentx_varbind_nosuchobject(struct agentx_varbind *axv)
+{
+	axv->axv_vb.avb_type = AX_DATA_TYPE_NOSUCHOBJECT;
+
+	if (axv->axv_axo != NULL)
+		agentx_object_unlock(axv->axv_axo);
+	agentx_get_finalize(axv->axv_axg);
+}
+
+static void
+agentx_varbind_nosuchinstance(struct agentx_varbind *axv)
+{
+	axv->axv_vb.avb_type = AX_DATA_TYPE_NOSUCHINSTANCE;
+
+	if (axv->axv_axo != NULL)
+		agentx_object_unlock(axv->axv_axo);
+	agentx_get_finalize(axv->axv_axg);
+}
+
+static void
+agentx_varbind_endofmibview(struct agentx_varbind *axv)
+{
+	struct agentx_object *axo;
+	struct ax_varbind *vb;
+	struct agentx_varbind_index *index;
+	size_t i;
+
+#ifdef AX_DEBUG
+	if (axv->axv_axg->axg_type != AX_PDU_TYPE_GETNEXT &&
+	    axv->axv_axg->axg_type != AX_PDU_TYPE_GETBULK)
+		agentx_log_axg_fatalx(axv->axv_axg,
+		    "%s: invalid request type", __func__);
+#endif
+
+	if (axv->axv_axo != NULL &&
+	    (axo = RB_NEXT(axc_objects, &(axc->axc_objects),
+	    axv->axv_axo)) != NULL &&
+	    ax_oid_cmp(&(axo->axo_oid), &(axv->axv_end)) < 0) {
+		bcopy(&(axo->axo_oid), &(axv->axv_vb.avb_oid),
+		    sizeof(axo->axo_oid));
+		axv->axv_include = 1;
+		for (i = 0; i < axv->axv_indexlen; i++) {
+			index = &(axv->axv_index[i]);
+			vb = &(index->axv_axi->axi_vb);
+			if (vb->avb_type == AX_DATA_TYPE_OCTETSTRING ||
+			    vb->avb_type == AX_DATA_TYPE_IPADDRESS)
+				free(index->axv_idata.avb_ostring.aos_string);
+		}
+		bzero(&(axv->axv_index), sizeof(axv->axv_index));
+		agentx_object_unlock(axv->axv_axo);
+		agentx_varbind_start(axv);
+		return;
+	}
+
+	axv->axv_vb.avb_type = AX_DATA_TYPE_ENDOFMIBVIEW;
+
+	if (axv->axv_axo != NULL)
+		agentx_object_unlock(axv->axv_axo);
+	agentx_get_finalize(axv->axv_axg);
+}
+
+enum agentx_request_type
+agentx_varbind_request(struct agentx_varbind *axv)
+{
+	if (axv->axv_axg->axg_type == AX_PDU_TYPE_GET)
+		return AGENTX_REQUEST_TYPE_GET;
+	if (axv->axv_include ||
+	    (axv->axv_indexlen > 0 &&
+	    !axv->axv_index[axv->axv_indexlen - 1].axv_idatacomplete))
+		return AGENTX_REQUEST_TYPE_GETNEXTINCLUSIVE;
+	return AGENTX_REQUEST_TYPE_GETNEXT;
+}
+
+struct agentx_object *
+agentx_varbind_get_object(struct agentx_varbind *axv)
+{
+	return axv->axv_axo;
+}
+
+uint32_t
+agentx_varbind_get_index_integer(struct agentx_varbind *axv,
+    struct agentx_index *axi)
+{
+	size_t i;
+
+	if (axi->axi_vb.avb_type != AX_DATA_TYPE_INTEGER) {
+#ifdef AX_DEBUG
+		agentx_log_axg_fatalx(axv->axv_axg, "invalid index type");
+#else
+		agentx_log_axg_warnx(axv->axv_axg, "invalid index type");
+		agentx_varbind_error_type(axv, AX_PDU_ERROR_GENERR, 0);
 		return 0;
-
-	if (rawlen < 8)
-		goto fail;
-	varbind->avb_type = agentx_pdutoh16(header, buf);
-
-	buf += 4;
-	rawlen -= 4;
-	nread = agentx_pdutooid(header, &(varbind->avb_oid), buf, rawlen);
-	if (nread == -1)
-		return -1;
-	rread += nread;
-	buf += nread;
-	rawlen -= nread;
-
-	switch(varbind->avb_type) {
-	case AGENTX_DATA_TYPE_INTEGER:
-	case AGENTX_DATA_TYPE_COUNTER32:
-	case AGENTX_DATA_TYPE_GAUGE32:
-	case AGENTX_DATA_TYPE_TIMETICKS:
-		if (rawlen < 4)
-			goto fail;
-		varbind->avb_data.avb_uint32 = agentx_pdutoh32(header, buf);
-		return rread + 4;
-	case AGENTX_DATA_TYPE_COUNTER64:
-		if (rawlen < 8)
-			goto fail;
-		varbind->avb_data.avb_uint64 = agentx_pdutoh64(header, buf);
-		return rread + 8;
-	case AGENTX_DATA_TYPE_OCTETSTRING:
-	case AGENTX_DATA_TYPE_IPADDRESS:
-	case AGENTX_DATA_TYPE_OPAQUE:
-		nread = agentx_pdutoostring(header,
-		    &(varbind->avb_data.avb_ostring), buf, rawlen);
-		if (nread == -1)
-			return -1;
-		return nread + rread;
-	case AGENTX_DATA_TYPE_OID:
-		nread = agentx_pdutooid(header, &(varbind->avb_data.avb_oid),
-		    buf, rawlen);
-		if (nread == -1)
-			return -1;
-		return nread + rread;
-	case AGENTX_DATA_TYPE_NULL:
-	case AGENTX_DATA_TYPE_NOSUCHOBJECT:
-	case AGENTX_DATA_TYPE_NOSUCHINSTANCE:
-	case AGENTX_DATA_TYPE_ENDOFMIBVIEW:
-		return rread;
+#endif
 	}
 
-fail:
-	errno = EPROTO;
-	return -1;
+	for (i = 0; i < axv->axv_indexlen; i++) {
+		if (axv->axv_index[i].axv_axi == axi)
+			return axv->axv_index[i].axv_idata.avb_uint32;
+	}
+#ifdef AX_DEBUG
+	agentx_log_axg_fatalx(axv->axv_axg, "invalid index");
+#else
+	agentx_log_axg_warnx(axv->axv_axg, "invalid index");
+	agentx_varbind_error_type(axv, AX_PDU_ERROR_GENERR, 0);
+	return 0;
+#endif
 }
+
+const unsigned char *
+agentx_varbind_get_index_string(struct agentx_varbind *axv,
+    struct agentx_index *axi, size_t *slen, int *implied)
+{
+	struct agentx_varbind_index *index;
+	size_t i;
+
+	if (axi->axi_vb.avb_type != AX_DATA_TYPE_OCTETSTRING) {
+#ifdef AX_DEBUG
+		agentx_log_axg_fatalx(axv->axv_axg, "invalid index type");
+#else
+		agentx_log_axg_warnx(axv->axv_axg, "invalid index type");
+		agentx_varbind_error_type(axv, AX_PDU_ERROR_GENERR, 0);
+		*slen = 0;
+		*implied = 0;
+		return NULL;
+#endif
+	}
+
+	for (i = 0; i < axv->axv_indexlen; i++) {
+		if (axv->axv_index[i].axv_axi == axi) {
+			index = &(axv->axv_index[i]);
+			*slen = index->axv_idata.avb_ostring.aos_slen;
+			*implied = agentx_object_implied(axv->axv_axo, axi);
+			return index->axv_idata.avb_ostring.aos_string;
+		}
+	}
+
+#ifdef AX_DEBUG
+	agentx_log_axg_fatalx(axv->axv_axg, "invalid index");
+#else
+	agentx_log_axg_warnx(axv->axv_axg, "invalid index");
+	agentx_varbind_error_type(axv, AX_PDU_ERROR_GENERR, 0);
+	*slen = 0;
+	*implied = 0;
+	return NULL;
+#endif
+}
+
+const uint32_t *
+agentx_varbind_get_index_oid(struct agentx_varbind *axv,
+    struct agentx_index *axi, size_t *oidlen, int *implied)
+{
+	struct agentx_varbind_index *index;
+	size_t i;
+
+	if (axi->axi_vb.avb_type != AX_DATA_TYPE_OID) {
+#ifdef AX_DEBUG
+		agentx_log_axg_fatalx(axv->axv_axg, "invalid index type");
+#else
+		agentx_log_axg_warnx(axv->axv_axg, "invalid index type");
+		agentx_varbind_error_type(axv, AX_PDU_ERROR_GENERR, 0);
+		*oidlen = 0;
+		*implied = 0;
+		return NULL;
+#endif
+	}
+
+	for (i = 0; i < axv->axv_indexlen; i++) {
+		if (axv->axv_index[i].axv_axi == axi) {
+			index = &(axv->axv_index[i]);
+			*oidlen = index->axv_idata.avb_oid.aoi_idlen;
+			*implied = agentx_object_implied(axv->axv_axo, axi);
+			return index->axv_idata.avb_oid.aoi_id;
+		}
+	}
+
+#ifdef AX_DEBUG
+	agentx_log_axg_fatalx(axv->axv_axg, "invalid index");
+#else
+	agentx_log_axg_warnx(axv->axv_axg, "invalid index");
+	agentx_varbind_error_type(axv, AX_PDU_ERROR_GENERR, 0);
+	*oidlen = 0;
+	*implied = 0;
+	return NULL;
+#endif
+}
+
+const struct in_addr *
+agentx_varbind_get_index_ipaddress(struct agentx_varbind *axv,
+    struct agentx_index *axi)
+{
+	static struct in_addr nuladdr = {0};
+	struct agentx_varbind_index *index;
+	size_t i;
+
+	if (axi->axi_vb.avb_type != AX_DATA_TYPE_IPADDRESS) {
+#ifdef AX_DEBUG
+		agentx_log_axg_fatalx(axv->axv_axg, "invalid index type");
+#else
+		agentx_log_axg_warnx(axv->axv_axg, "invalid index type");
+		agentx_varbind_error_type(axv, AX_PDU_ERROR_GENERR, 0);
+		return NULL;
+#endif
+	}
+
+	for (i = 0; i < axv->axv_indexlen; i++) {
+		if (axv->axv_index[i].axv_axi == axi) {
+			index = &(axv->axv_index[i]);
+			if (index->axv_idata.avb_ostring.aos_string == NULL)
+				return &nuladdr;
+			return (struct in_addr *)
+			    index->axv_idata.avb_ostring.aos_string;
+		}
+	}
+
+#ifdef AX_DEBUG
+	agentx_log_axg_fatalx(axv->axv_axg, "invalid index");
+#else
+	agentx_log_axg_warnx(axv->axv_axg, "invalid index");
+	agentx_varbind_error_type(axv, AX_PDU_ERROR_GENERR, 0);
+	return NULL;
+#endif
+}
+
+void
+agentx_varbind_set_index_integer(struct agentx_varbind *axv,
+    struct agentx_index *axi, uint32_t value)
+{
+	size_t i;
+
+	if (axi->axi_vb.avb_type != AX_DATA_TYPE_INTEGER) {
+#ifdef AX_DEBUG
+		agentx_log_axg_fatalx(axv->axv_axg, "invalid index type");
+#else
+		agentx_log_axg_warnx(axv->axv_axg, "invalid index type");
+		agentx_varbind_error_type(axv, AX_PDU_ERROR_GENERR, 0);
+		return;
+#endif
+	}
+
+	for (i = 0; i < axv->axv_indexlen; i++) {
+		if (axv->axv_index[i].axv_axi == axi) {
+			if (axv->axv_axg->axg_type == AX_PDU_TYPE_GET &&
+			    axv->axv_index[i].axv_idata.avb_uint32 != value) {
+#ifdef AX_DEBUG
+				agentx_log_axg_fatalx(axv->axv_axg,
+				    "can't change index on GET");
+#else
+				agentx_log_axg_warnx(axv->axv_axg,
+				    "can't change index on GET");
+				agentx_varbind_error_type(axv,
+				    AX_PDU_ERROR_GENERR, 0);
+				return;
+#endif
+			}
+			axv->axv_index[i].axv_idata.avb_uint32 = value;
+			return;
+		}
+	}
+#ifdef AX_DEBUG
+	agentx_log_axg_fatalx(axv->axv_axg, "invalid index");
+#else
+	agentx_log_axg_warnx(axv->axv_axg, "invalid index");
+	agentx_varbind_error_type(axv, AX_PDU_ERROR_GENERR, 0);
+#endif
+}
+
+void
+agentx_varbind_set_index_string(struct agentx_varbind *axv,
+    struct agentx_index *axi, const char *value)
+{
+	agentx_varbind_set_index_nstring(axv, axi,
+	    (const unsigned char *)value, strlen(value));
+}
+
+void
+agentx_varbind_set_index_nstring(struct agentx_varbind *axv,
+    struct agentx_index *axi, const unsigned char *value, size_t slen)
+{
+	struct ax_ostring *curvalue;
+	unsigned char *nstring;
+	size_t i;
+
+	if (axi->axi_vb.avb_type != AX_DATA_TYPE_OCTETSTRING) {
+#ifdef AX_DEBUG
+		agentx_log_axg_fatalx(axv->axv_axg, "invalid index type");
+#else
+		agentx_log_axg_warnx(axv->axv_axg, "invalid index type");
+		agentx_varbind_error_type(axv, AX_PDU_ERROR_GENERR, 0);
+		return;
+#endif
+	}
+
+	for (i = 0; i < axv->axv_indexlen; i++) {
+		if (axv->axv_index[i].axv_axi == axi) {
+			if (axi->axi_vb.avb_data.avb_ostring.aos_slen != 0 &&
+			    axi->axi_vb.avb_data.avb_ostring.aos_slen != slen) {
+#ifdef AX_DEBUG
+				agentx_log_axg_fatalx(axv->axv_axg,
+				    "invalid string length on explicit length "
+				    "string");
+#else
+				agentx_log_axg_warnx(axv->axv_axg,
+				    "invalid string length on explicit length "
+				    "string");
+				agentx_varbind_error_type(axv,
+				    AX_PDU_ERROR_GENERR, 0);
+				return;
+#endif
+			}
+			curvalue = &(axv->axv_index[i].axv_idata.avb_ostring);
+			if (axv->axv_axg->axg_type == AX_PDU_TYPE_GET &&
+			    (curvalue->aos_slen != slen ||
+			    memcmp(curvalue->aos_string, value, slen) != 0)) {
+#ifdef AX_DEBUG
+				agentx_log_axg_fatalx(axv->axv_axg,
+				    "can't change index on GET");
+#else
+				agentx_log_axg_warnx(axv->axv_axg,
+				    "can't change index on GET");
+				agentx_varbind_error_type(axv,
+				    AX_PDU_ERROR_GENERR, 0);
+				return;
+#endif
+			}
+			if ((nstring = recallocarray(curvalue->aos_string,
+			    curvalue->aos_slen + 1, slen + 1, 1)) == NULL) {
+				agentx_log_axg_warn(axv->axv_axg,
+				    "Failed to bind string index");
+				agentx_varbind_error_type(axv,
+				    AX_PDU_ERROR_PROCESSINGERROR, 0);
+				return;
+			}
+			curvalue->aos_string = nstring;
+			memcpy(nstring, value, slen);
+			curvalue->aos_slen = slen;
+			return;
+		}
+	}
+#ifdef AX_DEBUG
+	agentx_log_axg_fatalx(axv->axv_axg, "invalid index");
+#else
+	agentx_log_axg_warnx(axv->axv_axg, "invalid index");
+	agentx_varbind_error_type(axv, AX_PDU_ERROR_GENERR, 0);
+#endif
+}
+
+void
+agentx_varbind_set_index_oid(struct agentx_varbind *axv,
+    struct agentx_index *axi, const uint32_t *value, size_t oidlen)
+{
+	struct ax_oid *curvalue, oid;
+	size_t i;
+
+	if (axi->axi_vb.avb_type != AX_DATA_TYPE_OID) {
+#ifdef AX_DEBUG
+		agentx_log_axg_fatalx(axv->axv_axg, "invalid index type");
+#else
+		agentx_log_axg_warnx(axv->axv_axg, "invalid index type");
+		agentx_varbind_error_type(axv, AX_PDU_ERROR_GENERR, 0);
+		return;
+#endif
+	}
+
+	for (i = 0; i < axv->axv_indexlen; i++) {
+		if (axv->axv_index[i].axv_axi == axi) {
+			if (axi->axi_vb.avb_data.avb_oid.aoi_idlen != 0 &&
+			    axi->axi_vb.avb_data.avb_oid.aoi_idlen != oidlen) {
+#ifdef AX_DEBUG
+				agentx_log_axg_fatalx(axv->axv_axg,
+				    "invalid oid length on explicit length "
+				    "oid");
+#else
+				agentx_log_axg_warnx(axv->axv_axg,
+				    "invalid oid length on explicit length "
+				    "oid");
+				agentx_varbind_error_type(axv,
+				    AX_PDU_ERROR_GENERR, 0);
+				return;
+#endif
+			}
+			curvalue = &(axv->axv_index[i].axv_idata.avb_oid);
+			for (i = 0; i < oidlen; i++)
+				oid.aoi_id[i] = value[i];
+			oid.aoi_idlen = oidlen;
+			if (axv->axv_axg->axg_type == AX_PDU_TYPE_GET &&
+			    ax_oid_cmp(&oid, curvalue) != 0) {
+#ifdef AX_DEBUG
+				agentx_log_axg_fatalx(axv->axv_axg,
+				    "can't change index on GET");
+#else
+				agentx_log_axg_warnx(axv->axv_axg,
+				    "can't change index on GET");
+				agentx_varbind_error_type(axv,
+				    AX_PDU_ERROR_GENERR, 0);
+				return;
+#endif
+			}
+			for (i = 0; i < oidlen; i++)
+				curvalue->aoi_id[i] = value[i];
+			curvalue->aoi_idlen = oidlen;
+			return;
+		}
+	}
+#ifdef AX_DEBUG
+	agentx_log_axg_fatalx(axv->axv_axg, "invalid index");
+#else
+	agentx_log_axg_warnx(axv->axv_axg, "invalid index");
+	agentx_varbind_error_type(axv, AX_PDU_ERROR_GENERR, 0);
+#endif
+}
+
+void
+agentx_varbind_set_index_object(struct agentx_varbind *axv,
+    struct agentx_index *axi, struct agentx_object *axo)
+{
+	agentx_varbind_set_index_oid(axv, axi, axo->axo_oid.aoi_id,
+	    axo->axo_oid.aoi_idlen);
+}
+
+void
+agentx_varbind_set_index_ipaddress(struct agentx_varbind *axv,
+    struct agentx_index *axi, const struct in_addr *addr)
+{
+	struct ax_ostring *curvalue;
+	size_t i;
+
+	if (axi->axi_vb.avb_type != AX_DATA_TYPE_IPADDRESS) {
+#ifdef AX_DEBUG
+		agentx_log_axg_fatalx(axv->axv_axg, "invalid index type");
+#else
+		agentx_log_axg_warnx(axv->axv_axg, "invalid index type");
+		agentx_varbind_error_type(axv, AX_PDU_ERROR_GENERR, 0);
+		return;
+#endif
+	}
+
+	for (i = 0; i < axv->axv_indexlen; i++) {
+		if (axv->axv_index[i].axv_axi == axi) {
+			curvalue = &(axv->axv_index[i].axv_idata.avb_ostring);
+			if (curvalue->aos_string == NULL)
+				curvalue->aos_string = calloc(1, sizeof(*addr));
+			if (curvalue->aos_string == NULL) {
+				agentx_log_axg_warn(axv->axv_axg,
+				    "Failed to bind ipaddress index");
+				agentx_varbind_error_type(axv,
+				    AX_PDU_ERROR_PROCESSINGERROR, 0);
+				return;
+			}
+			if (axv->axv_axg->axg_type == AX_PDU_TYPE_GET &&
+			    memcmp(addr, curvalue->aos_string,
+			    sizeof(*addr)) != 0) {
+#ifdef AX_DEBUG
+				agentx_log_axg_fatalx(axv->axv_axg,
+				    "can't change index on GET");
+#else
+				agentx_log_axg_warnx(axv->axv_axg,
+				    "can't change index on GET");
+				agentx_varbind_error_type(axv,
+				    AX_PDU_ERROR_GENERR, 0);
+				return;
+#endif
+			}
+			bcopy(addr, curvalue->aos_string, sizeof(*addr));
+			return;
+		}
+	}
+#ifdef AX_DEBUG
+	agentx_log_axg_fatalx(axv->axv_axg, "invalid index");
+#else
+	agentx_log_axg_warnx(axv->axv_axg, "invalid index");
+	agentx_varbind_error_type(axv, AX_PDU_ERROR_GENERR, 0);
+#endif
+}
+
+static int
+agentx_request(struct agentx *ax, uint32_t packetid,
+    int (*cb)(struct ax_pdu *, void *), void *cookie)
+{
+	struct agentx_request *axr;
+
+#ifdef AX_DEBUG
+	if (ax->ax_ax->ax_wblen == 0)
+		agentx_log_ax_fatalx(ax, "%s: no data to be written",
+		    __func__);
+#endif
+
+	if ((axr = calloc(1, sizeof(*axr))) == NULL) {
+		agentx_log_ax_warn(ax, "couldn't create request context");
+		agentx_reset(ax);
+		return -1;
+	}
+
+	axr->axr_packetid = packetid;
+	axr->axr_cb = cb;
+	axr->axr_cookie = cookie;
+	if (RB_INSERT(ax_requests, &(ax->ax_requests), axr) != NULL) {
+#ifdef AX_DEBUG
+		agentx_log_ax_fatalx(ax, "%s: duplicate packetid", __func__);
+#else
+		agentx_log_ax_warnx(ax, "%s: duplicate packetid", __func__);
+		free(axr);
+		agentx_reset(ax);
+		return -1;
+#endif
+	}
+
+	agentx_wantwrite(ax, ax->ax_fd);
+	return 0;
+}
+
+static int
+agentx_request_cmp(struct agentx_request *r1,
+    struct agentx_request *r2)
+{
+	return r1->axr_packetid < r2->axr_packetid ? -1 :
+	    r1->axr_packetid > r2->axr_packetid;
+}
+
+static int
+agentx_strcat(char **dst, const char *src)
+{
+	char *tmp;
+	size_t dstlen = 0, buflen = 0, srclen, nbuflen;
+
+	if (*dst != NULL) {
+		dstlen = strlen(*dst);
+		buflen = ((dstlen / 512) + 1) * 512;
+	}
+
+	srclen = strlen(src);
+	if (*dst == NULL || dstlen + srclen > buflen) {
+		nbuflen = (((dstlen + srclen) / 512) + 1) * 512;
+		tmp = recallocarray(*dst, buflen, nbuflen, sizeof(*tmp));
+		if (tmp == NULL)
+			return -1;
+		*dst = tmp;
+		buflen = nbuflen;
+	}
+
+	(void)strlcat(*dst, src, buflen);
+	return 0;
+}
+
+void
+agentx_read(struct agentx *ax)
+{
+	struct agentx_session *axs;
+	struct agentx_context *axc;
+	struct agentx_request axr_search, *axr;
+	struct ax_pdu *pdu;
+	int error;
+
+	if ((pdu = ax_recv(ax->ax_ax)) == NULL) {
+		if (errno == EAGAIN)
+			return;
+		agentx_log_ax_warn(ax, "lost connection");
+		agentx_reset(ax);
+		return;
+	}
+
+	TAILQ_FOREACH(axs, &(ax->ax_sessions), axs_ax_sessions) {
+		if (axs->axs_id == pdu->ap_header.aph_sessionid)
+			break;
+		if (axs->axs_cstate == AX_CSTATE_WAITOPEN &&
+		    axs->axs_packetid == pdu->ap_header.aph_packetid)
+			break;
+	}
+	if (axs == NULL) {
+		agentx_log_ax_warnx(ax, "received unexpected session: %d",
+		    pdu->ap_header.aph_sessionid);
+		ax_pdu_free(pdu);
+		agentx_reset(ax);
+		return;
+	}
+	TAILQ_FOREACH(axc, &(axs->axs_contexts), axc_axs_contexts) {
+		if ((pdu->ap_header.aph_flags &
+		    AX_PDU_FLAG_NON_DEFAULT_CONTEXT) == 0 &&
+		    axc->axc_name_default == 1)
+			break;
+		if (pdu->ap_header.aph_flags &
+		    AX_PDU_FLAG_NON_DEFAULT_CONTEXT &&
+		    axc->axc_name_default == 0 &&
+		    pdu->ap_context.aos_slen == axc->axc_name.aos_slen &&
+		    memcmp(pdu->ap_context.aos_string,
+		    axc->axc_name.aos_string, axc->axc_name.aos_slen) == 0)
+			break;
+	}
+	if (pdu->ap_header.aph_type != AX_PDU_TYPE_RESPONSE) {
+		if (axc == NULL) {
+			agentx_log_ax_warnx(ax, "%s: invalid context",
+			    pdu->ap_context.aos_string);
+			ax_pdu_free(pdu);
+			agentx_reset(ax);
+			return;
+		}
+	}
+
+	switch (pdu->ap_header.aph_type) {
+	case AX_PDU_TYPE_GET:
+	case AX_PDU_TYPE_GETNEXT:
+	case AX_PDU_TYPE_GETBULK:
+		agentx_get_start(axc, pdu);
+		break;
+	/* Add stubs for set functions */
+	case AX_PDU_TYPE_TESTSET:
+	case AX_PDU_TYPE_COMMITSET:
+	case AX_PDU_TYPE_UNDOSET:
+		if (pdu->ap_header.aph_type == AX_PDU_TYPE_TESTSET)
+			error = AX_PDU_ERROR_NOTWRITABLE;
+		else if (pdu->ap_header.aph_type == AX_PDU_TYPE_COMMITSET)
+			error = AX_PDU_ERROR_COMMITFAILED;
+		else
+			error = AX_PDU_ERROR_UNDOFAILED;
+
+		agentx_log_axc_debug(axc, "unsupported call: %s",
+		    ax_pdutype2string(pdu->ap_header.aph_type));
+		if (ax_response(ax->ax_ax, axs->axs_id,
+		    pdu->ap_header.aph_transactionid,
+		    pdu->ap_header.aph_packetid,
+		    axc == NULL ? NULL : AGENTX_CONTEXT_CTX(axc),
+		    0, error, 1, NULL, 0) == -1)
+			agentx_log_axc_warn(axc,
+			    "transaction: %u packetid: %u: failed to send "
+			    "reply", pdu->ap_header.aph_transactionid,
+			    pdu->ap_header.aph_packetid);
+		if (ax->ax_ax->ax_wblen > 0)
+			agentx_wantwrite(ax, ax->ax_fd);
+		break;
+	case AX_PDU_TYPE_CLEANUPSET:
+		agentx_log_ax_debug(ax, "unsupported call: %s",
+		    ax_pdutype2string(pdu->ap_header.aph_type));
+		break;
+	case AX_PDU_TYPE_RESPONSE:
+		axr_search.axr_packetid = pdu->ap_header.aph_packetid;
+		axr = RB_FIND(ax_requests, &(ax->ax_requests), &axr_search);
+		if (axr == NULL) {
+			if (axc == NULL)
+				agentx_log_ax_warnx(ax, "received "
+				    "response on non-request");
+			else
+				agentx_log_axc_warnx(axc, "received "
+				    "response on non-request");
+			break;
+		}
+		if (axc != NULL && pdu->ap_payload.ap_response.ap_error == 0) {
+			axc->axc_sysuptime =
+			    pdu->ap_payload.ap_response.ap_uptime;
+			(void) clock_gettime(CLOCK_MONOTONIC,
+			    &(axc->axc_sysuptimespec));
+		}
+		RB_REMOVE(ax_requests, &(ax->ax_requests), axr);
+		(void) axr->axr_cb(pdu, axr->axr_cookie);
+		free(axr);
+		break;
+	default:
+		if (axc == NULL)
+			agentx_log_ax_warnx(ax, "unsupported call: %s",
+			    ax_pdutype2string(pdu->ap_header.aph_type));
+		else
+			agentx_log_axc_warnx(axc, "unsupported call: %s",
+			    ax_pdutype2string(pdu->ap_header.aph_type));
+		agentx_reset(ax);
+		break;
+	}
+	ax_pdu_free(pdu);
+}
+
+void
+agentx_write(struct agentx *ax)
+{
+	ssize_t send;
+
+	if ((send = ax_send(ax->ax_ax)) == -1) {
+		if (errno == EAGAIN) {
+			agentx_wantwrite(ax, ax->ax_fd);
+			return;
+		}
+		agentx_log_ax_warn(ax, "lost connection");
+		agentx_reset(ax);
+		return;
+	}
+	if (send > 0)
+		agentx_wantwrite(ax, ax->ax_fd);
+}
+
+RB_GENERATE_STATIC(ax_requests, agentx_request, axr_ax_requests,
+    agentx_request_cmp)
+RB_GENERATE_STATIC(axc_objects, agentx_object, axo_axc_objects,
+    agentx_object_cmp)

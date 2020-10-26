@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.1 2020/09/16 10:48:52 martijn Exp $
+#	$OpenBSD: Makefile,v 1.2 2020/10/26 15:45:56 martijn Exp $
 
 LIB=	agentx
 
-SRCS=	agentx.c subagentx.c subagentx_log.c
-HDRS=	subagentx.h
-MAN=	subagentx.3
+SRCS=	ax.c agentx.c agentx_log.c
+HDRS=	agentx.h
+MAN=	agentx.3
 
 CFLAGS+=	-Wall -I${.CURDIR}
 CFLAGS+=	-Wstrict-prototypes -Wmissing-prototypes
