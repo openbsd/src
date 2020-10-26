@@ -1,3 +1,4 @@
+/*	$OpenBSD: agentx.h,v 1.3 2020/10/26 16:02:16 tb Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *

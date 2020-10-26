@@ -1,3 +1,4 @@
+/*	$OpenBSD: ax.c,v 1.2 2020/10/26 16:02:16 tb Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
