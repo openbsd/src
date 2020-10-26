@@ -1,4 +1,4 @@
-.\"	$OpenBSD: softraid.4,v 1.43 2020/10/25 15:33:19 schwarze Exp $
+.\"	$OpenBSD: softraid.4,v 1.44 2020/10/26 13:42:07 schwarze Exp $
 .\"
 .\" Copyright (c) 2007 Todd T. Fries   <todd@OpenBSD.org>
 .\" Copyright (c) 2007 Marco Peereboom <marco@OpenBSD.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 25 2020 $
+.Dd $Mdocdate: October 26 2020 $
 .Dt SOFTRAID 4
 .Os
 .Sh NAME
@@ -116,6 +116,48 @@ prompt, softraid volumes have names beginning with
 .Sq sr
 and can be booted from like a normal disk device.
 CRYPTO volumes will require a decryption passphrase or keydisk at boot time.
+.Pp
+The status of
+.Nm
+volumes is reported via
+.Xr sysctl 8
+such that it can be monitored by
+.Xr sensorsd 8 .
+Each volume has one fourth level node named
+.Va hw.sensors.softraid0.drive Ns Ar N ,
+where
+.Ar N
+is a small integer indexing the volume.
+The format of the volume status is:
+.Pp
+.D1 Ar value Po Ar device Pc , Ar status
+.Pp
+The
+.Ar device
+identifies the
+.Nm
+volume.
+The following combinations of
+.Ar value
+and
+.Ar status
+can occur:
+.Bl -tag -width Ds -offset indent
+.It Sy online , OK
+The volume is operating normally.
+.It Sy degraded , WARNING
+The volume as a whole is operational, but not all of its chunks are.
+In many cases, using
+.Xr bioctl 8
+.Fl R
+to rebuild the failed chunk is advisable.
+.It Sy rebuilding , WARNING
+A rebuild operation was recently started and has not yet completed.
+.It Sy failed , CRITICAL
+The device is currently unable to process I/O.
+.It Sy unknown , UNKNOWN
+The status is unknown to the system.
+.El
 .Sh EXAMPLES
 An example to create a 3 chunk RAID 1 from scratch is as follows:
 .Pp
