@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2020/10/26 15:45:56 martijn Exp $
+#	$OpenBSD: Makefile,v 1.3 2020/10/26 15:56:02 deraadt Exp $
 
 LIB=	agentx
 
@@ -18,10 +18,13 @@ VERSION_SCRIPT=	Symbols.map
 SYMBOL_LIST=	${.CURDIR}/Symbols.list
 
 includes:
-	@cd ${.CURDIR}; for i in ${HDRS}; do \
-	  cmp -s $$i ${DESTDIR}/usr/include/$$i || \
-	  ${INSTALL} ${INSTALL_COPY} -m 444 -o $(BINOWN) -g $(BINGRP) $$i \
-	  ${DESTDIR}/usr/include; done
+	@cd ${.CURDIR}; for i in $(HDRS); do \
+	    j="cmp -s $$i ${DESTDIR}/usr/include/$$i || \
+		${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} \
+		-m 444 $$i ${DESTDIR}/usr/include"; \
+	    echo $$j; \
+	    eval "$$j"; \
+	done
 
 ${VERSION_SCRIPT}: ${SYMBOL_LIST}
 	{ printf '{\n\tglobal:\n'; \
