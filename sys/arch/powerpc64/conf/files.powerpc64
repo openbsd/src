@@ -1,4 +1,4 @@
-# $OpenBSD: files.powerpc64,v 1.24 2020/10/01 17:28:14 kettenis Exp $
+# $OpenBSD: files.powerpc64,v 1.25 2020/10/26 21:13:56 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -108,6 +108,9 @@ file	arch/powerpc64/dev/astfb.c		astfb
 
 # Machine-independent HID support
 include	"dev/hid/files.hid"
+
+# Machine-independent I2C drivers
+include "dev/i2c/files.i2c"
 
 # Include USB stuff
 include "dev/usb/files.usb"
