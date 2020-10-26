@@ -1,4 +1,4 @@
-/*	$OpenBSD: ax.c,v 1.2 2020/10/26 16:02:16 tb Exp $ */
+/*	$OpenBSD: ax.c,v 1.3 2020/10/26 19:02:30 martijn Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -69,9 +69,9 @@ ax_new(int fd)
 	if ((ax = calloc(1, sizeof(*ax))) == NULL)
 		return NULL;
 	ax->ax_fd = fd;
-	if ((ax->ax_rbuf = malloc(512)) == NULL)
-		goto fail;
 	ax->ax_rbsize = 512;
+	if ((ax->ax_rbuf = malloc(ax->ax_rbsize)) == NULL)
+		goto fail;
 	ax->ax_byteorder = AX_BYTE_ORDER_NATIVE;
 
 	return ax;
