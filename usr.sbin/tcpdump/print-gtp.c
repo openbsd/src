@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gtp.c,v 1.12 2020/05/20 01:20:37 dlg Exp $ */
+/*	$OpenBSD: print-gtp.c,v 1.13 2020/10/26 23:19:18 jca Exp $ */
 /*
  * Copyright (c) 2009, 2010 Joel Sing <jsing@openbsd.org>
  *
@@ -927,6 +927,11 @@ gtp_v1_print(const u_char *cp, u_int length, u_short sport, u_short dport)
 
 			/* Header length is a 4 octet multiplier. */
 			hlen = (int)p[0] * 4;
+			if (hlen == 0) {
+				printf(" [Invalid zero-length header %u]",
+				    nexthdr);
+				goto trunc;
+			}
 			TCHECK2(p[0], hlen);
 
 			switch (nexthdr) {
