@@ -1,4 +1,4 @@
-/* $OpenBSD: atomic.h,v 1.11 2020/10/26 03:00:15 jsg Exp $ */
+/* $OpenBSD: atomic.h,v 1.12 2020/10/26 04:01:19 jsg Exp $ */
 /**
  * \file drm_atomic.h
  * Atomic operations used in the DRM which may or may not be provided by the OS.
@@ -388,8 +388,8 @@ find_next_bit(volatile void *p, int max, int b)
 #define wmb()	__asm __volatile("lock; addl $0,-4(%%esp)" : : : "memory", "cc")
 #define mb()	__asm __volatile("lock; addl $0,-4(%%esp)" : : : "memory", "cc")
 #define smp_mb()	__asm __volatile("lock; addl $0,-4(%%esp)" : : : "memory", "cc")
-#define smp_rmb()	__asm __volatile("" : : : "memory")
-#define smp_wmb()	__asm __volatile("" : : : "memory")
+#define smp_rmb()	__membar("")
+#define smp_wmb()	__membar("")
 #define __smp_store_mb(var, value)	do { (void)xchg(&var, value); } while (0)
 #define smp_mb__after_atomic()	do { } while (0)
 #define smp_mb__before_atomic()	do { } while (0)
@@ -398,12 +398,12 @@ find_next_bit(volatile void *p, int max, int b)
 #define wmb()	alpha_wmb();
 #define mb()	alpha_mb();
 #elif defined(__amd64__)
-#define rmb()	__asm __volatile("lfence" : : : "memory")
-#define wmb()	__asm __volatile("sfence" : : : "memory")
-#define mb()	__asm __volatile("mfence" : : : "memory")
-#define smp_mb()	__asm __volatile("lock; addl $0,-4(%%rsp)" : : : "memory", "cc");
-#define smp_rmb()	__asm __volatile("" : : : "memory")
-#define smp_wmb()	__asm __volatile("" : : : "memory")
+#define rmb()	__membar("lfence")
+#define wmb()	__membar("sfence")
+#define mb()	__membar("mfence")
+#define smp_mb()	__asm __volatile("lock; addl $0,-4(%%rsp)" : : : "memory", "cc")
+#define smp_rmb()	__membar("")
+#define smp_wmb()	__membar("")
 #define __smp_store_mb(var, value)	do { (void)xchg(&var, value); } while (0)
 #define smp_mb__after_atomic()	do { } while (0)
 #define smp_mb__before_atomic()	do { } while (0)
