@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.8 2020/10/10 10:19:45 tb Exp $ */
+/* $OpenBSD: verify.c,v 1.9 2020/10/26 12:11:47 beck Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -107,6 +107,7 @@ verify_cert(X509_STORE *store, const char *roots_file, const char *bundle_file,
 	X509_VERIFY_PARAM *param, *paramip;
 	X509 *leaf = NULL;
 	unsigned long flags, flagsip;
+	int verify_err;
 
 	*ip = *dns = 0;
 
@@ -145,6 +146,11 @@ verify_cert(X509_STORE *store, const char *roots_file, const char *bundle_file,
 
 	if (X509_verify_cert(xsc) == 1)
 		*dns = 1;
+	verify_err = X509_STORE_CTX_get_error(xsc);
+	if (verify_err == X509_V_OK && *dns == 0) {
+		fprintf(stderr, "X509_V_OK on failure!\n");
+		*dns = 1;
+	}
 
 	if ((xscip = X509_STORE_CTX_new()) == NULL)
 		errx(1, "X509_STORE_CTX");
@@ -170,6 +176,11 @@ verify_cert(X509_STORE *store, const char *roots_file, const char *bundle_file,
 
 	if (X509_verify_cert(xscip) == 1)
 		*ip = 1;
+	verify_err = X509_STORE_CTX_get_error(xscip);
+	if (verify_err == X509_V_OK && *ip == 0) {
+		fprintf(stderr, "X509_V_OK on failure!\n");
+		*ip = 1;
+	}
 
 	sk_X509_pop_free(roots, X509_free);
 	sk_X509_pop_free(bundle, X509_free);

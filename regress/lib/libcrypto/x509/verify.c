@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.3 2020/09/18 14:58:04 tb Exp $ */
+/* $OpenBSD: verify.c,v 1.4 2020/10/26 12:11:47 beck Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -144,6 +144,9 @@ verify_cert(const char *roots_file, const char *bundle_file, int *chains,
 	}
 
 	verify_err = X509_STORE_CTX_get_error(xsc);
+	if (verify_err == 0)
+		errx(1, "Error unset on failure!\n");
+
 	fprintf(stderr, "failed to verify at %d: %s\n",
 	    X509_STORE_CTX_get_error_depth(xsc),
 	    X509_verify_cert_error_string(verify_err));
