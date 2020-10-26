@@ -1,6 +1,7 @@
-/*	$OpenBSD: parse.y,v 1.118 2020/10/11 03:21:44 tb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.119 2020/10/26 19:31:22 denis Exp $	*/
 
 /*
+ * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
  * Copyright (c) 2007 - 2015 Reyk Floeter <reyk@openbsd.org>
  * Copyright (c) 2008 Gilles Chehade <gilles@openbsd.org>
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -587,8 +588,10 @@ serveroptsl	: LISTEN ON STRING opttls port	{
 			struct server	*s = NULL;
 
 			TAILQ_FOREACH(s, conf->sc_servers, srv_entry) {
+				/* Compare locations of same parent server */
 				if ((s->srv_conf.flags & SRVFLAG_LOCATION) &&
-				    s->srv_conf.id == srv_conf->id &&
+				    s->srv_conf.parent_id ==
+				    srv_conf->parent_id &&
 				    strcmp(s->srv_conf.location,
 				    srv_conf->location) == 0)
 					break;
