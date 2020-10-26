@@ -99,7 +99,7 @@ agentx_recv(struct agentx *ax)
 	struct agentx_pdu_header header;
 	struct agentx_pdu_response *response;
 	struct agentx_varbind *varbind;
-	struct agentx_pdu_searchrangelist *srl;
+	struct agentx_pdu_searchrangelist *srl = NULL;
 	struct agentx_pdu_varbindlist *vbl;
 	struct agentx_searchrange *sr;
 	size_t rbsize, packetidx = 0, i, rawlen;
