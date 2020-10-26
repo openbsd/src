@@ -1609,22 +1609,15 @@ amdgpu_attach(struct device *parent, struct device *self, void *aux)
 		adev->fb_aper_offset = base;
 	}
 
-	for (i = PCI_MAPREG_START; i < PCI_MAPREG_END ;) {
+	for (i = PCI_MAPREG_START; i < PCI_MAPREG_END; i += 4) {
 		type = pci_mapreg_type(pa->pa_pc, pa->pa_tag, i);
-		if (PCI_MAPREG_TYPE(type) != PCI_MAPREG_TYPE_IO) {
-			if (type & PCI_MAPREG_MEM_TYPE_64BIT)
-				i += 8;
-			else
-				i += 4;
-			continue;
+		if (type == PCI_MAPREG_TYPE_IO) {
+			pci_mapreg_map(pa, i, type, 0, &adev->rio_mem_bst,
+			    &adev->rio_mem_bsh, NULL, &adev->rio_mem_size, 0);
+			break;
 		}
-		if (pci_mapreg_map(pa, i, type, 0,
-		    &adev->rio_mem_bst, &adev->rio_mem_bsh, NULL,
-		    &adev->rio_mem_size, 0)) {
-			printf(": can't map rio space\n");
-			return;
-		}
-		break;
+		if (type == PCI_MAPREG_MEM_TYPE_64BIT)
+			i += 4;
 	}
 
 	if (adev->family >= CHIP_BONAIRE) {
