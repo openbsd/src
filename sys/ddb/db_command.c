@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.89 2020/10/15 03:14:00 deraadt Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.90 2020/10/26 18:53:20 deraadt Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /*
@@ -616,6 +616,7 @@ struct db_command db_command_table[] = {
 	{ "call",	db_fncall,		CS_OWN,		NULL },
 	{ "ps",		db_show_all_procs,	0,		NULL },
 	{ "callout",	db_show_callout,	0,		NULL },
+	{ "reboot",	db_boot_reboot_cmd,	0,		NULL },
 	{ "show",	NULL,			0,		db_show_cmds },
 	{ "boot",	NULL,			0,		db_boot_cmds },
 	{ "help",	db_help_cmd,		0,		NULL },

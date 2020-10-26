@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.98 2020/06/17 10:55:24 sthen Exp $
+.\"	$OpenBSD: ddb.4,v 1.99 2020/10/26 18:53:20 deraadt Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: June 17 2020 $
+.Dd $Mdocdate: October 26 2020 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -604,6 +604,10 @@ The
 address is set to the address where
 .Ar value
 is found, or just after where the search area finishes.
+.\" --------------------
+.It Ic reboot
+Shortcut for
+.Ic boot reboot
 .\" --------------------
 .It Ic show Ar what
 Displays various things, depending on
