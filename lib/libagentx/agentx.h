@@ -1,4 +1,4 @@
-/*	$OpenBSD: agentx.h,v 1.3 2020/10/26 16:02:16 tb Exp $ */
+/*	$OpenBSD: agentx.h,v 1.4 2020/10/27 17:19:44 martijn Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -80,7 +80,7 @@ struct agentx_index *agentx_index_integer_new(struct agentx_region *,
 struct agentx_index *agentx_index_integer_any(struct agentx_region *,
     uint32_t[], size_t);
 struct agentx_index *agentx_index_integer_value(struct agentx_region *,
-    uint32_t[], size_t, uint32_t);
+    uint32_t[], size_t, int32_t);
 struct agentx_index *agentx_index_integer_dynamic(
     struct agentx_region *, uint32_t[], size_t);
 struct agentx_index *agentx_index_string_dynamic(
@@ -99,7 +99,7 @@ struct agentx_object *agentx_object(struct agentx_region *, uint32_t[],
     void (*)(struct agentx_varbind *));
 void agentx_object_free(struct agentx_object *);
 
-void agentx_varbind_integer(struct agentx_varbind *, uint32_t);
+void agentx_varbind_integer(struct agentx_varbind *, int32_t);
 void agentx_varbind_string(struct agentx_varbind *, const char *);
 void agentx_varbind_nstring(struct agentx_varbind *,
     const unsigned char *, size_t);
@@ -126,7 +126,7 @@ enum agentx_request_type agentx_varbind_request(
     struct agentx_varbind *);
 struct agentx_object *
     agentx_varbind_get_object(struct agentx_varbind *);
-uint32_t agentx_varbind_get_index_integer(struct agentx_varbind *,
+int32_t agentx_varbind_get_index_integer(struct agentx_varbind *,
     struct agentx_index *);
 const unsigned char *agentx_varbind_get_index_string(
     struct agentx_varbind *, struct agentx_index *, size_t *, int *);
@@ -135,7 +135,7 @@ const uint32_t *agentx_varbind_get_index_oid(struct agentx_varbind *,
 const struct in_addr *agentx_varbind_get_index_ipaddress(
     struct agentx_varbind *, struct agentx_index *);
 void agentx_varbind_set_index_integer(struct agentx_varbind *,
-    struct agentx_index *, uint32_t);
+    struct agentx_index *, int32_t);
 void agentx_varbind_set_index_string(struct agentx_varbind *,
     struct agentx_index *, const char *);
 void agentx_varbind_set_index_nstring(struct agentx_varbind *,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: agentx.c,v 1.6 2020/10/26 16:02:15 tb Exp $ */
+/*	$OpenBSD: agentx.c,v 1.7 2020/10/27 17:19:44 martijn Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -1299,7 +1299,7 @@ agentx_index_integer_new(struct agentx_region *axr, uint32_t oid[],
 	for (i = 0; i < oidlen; i++)
 		vb.avb_oid.aoi_id[i] = oid[i];
 	vb.avb_oid.aoi_idlen = oidlen;
-	vb.avb_data.avb_uint32 = 0;
+	vb.avb_data.avb_int32 = 0;
 
 	return agentx_index(axr, &vb, AXI_TYPE_NEW);
 }
@@ -1327,14 +1327,14 @@ agentx_index_integer_any(struct agentx_region *axr, uint32_t oid[],
 	for (i = 0; i < oidlen; i++)
 		vb.avb_oid.aoi_id[i] = oid[i];
 	vb.avb_oid.aoi_idlen = oidlen;
-	vb.avb_data.avb_uint32 = 0;
+	vb.avb_data.avb_int32 = 0;
 
 	return agentx_index(axr, &vb, AXI_TYPE_ANY);
 }
 
 struct agentx_index *
 agentx_index_integer_value(struct agentx_region *axr, uint32_t oid[],
-    size_t oidlen, uint32_t value)
+    size_t oidlen, int32_t value)
 {
 	struct ax_varbind vb;
 	size_t i;
@@ -1350,12 +1350,21 @@ agentx_index_integer_value(struct agentx_region *axr, uint32_t oid[],
 		return NULL;
 #endif
 	}
+	if (value < 0) {
+#ifdef AX_DEBUG
+		agentx_log_axc_fatalx(axr->axr_axc, "%s: value < 0", __func__);
+#else
+		agentx_log_axc_warnx(axr->axr_axc, "%s: value < 0", __func__);
+		errno = EINVAL;
+		return NULL;
+#endif
+	}
 
 	vb.avb_type = AX_DATA_TYPE_INTEGER;
 	for (i = 0; i < oidlen; i++)
 		vb.avb_oid.aoi_id[i] = oid[i];
 	vb.avb_oid.aoi_idlen = oidlen;
-	vb.avb_data.avb_uint32 = value;
+	vb.avb_data.avb_int32 = value;
 
 	return agentx_index(axr, &vb, AXI_TYPE_VALUE);
 }
@@ -1628,9 +1637,9 @@ agentx_index_start(struct agentx_index *axi)
 		return -1;
 	}
 	if (axi->axi_type == AXI_TYPE_VALUE)
-		agentx_log_axc_info(axc, "index %s: allocating '%u'",
+		agentx_log_axc_info(axc, "index %s: allocating '%d'",
 		    ax_oid2string(&(axi->axi_vb.avb_oid)),
-		    axi->axi_vb.avb_data.avb_uint32);
+		    axi->axi_vb.avb_data.avb_int32);
 	else if (axi->axi_type == AXI_TYPE_ANY)
 		agentx_log_axc_info(axc, "index %s: allocating any index",
 		    ax_oid2string(&(axi->axi_vb.avb_oid)));
@@ -1695,18 +1704,18 @@ agentx_index_finalize(struct ax_pdu *pdu, void *cookie)
 	case AX_DATA_TYPE_INTEGER:
 		if (axi->axi_type == AXI_TYPE_NEW ||
 		    axi->axi_type == AXI_TYPE_ANY)
-			axi->axi_vb.avb_data.avb_uint32 =
-			    resp->ap_varbindlist[0].avb_data.avb_uint32;
-		else if (axi->axi_vb.avb_data.avb_uint32 !=
-		    resp->ap_varbindlist[0].avb_data.avb_uint32) {
+			axi->axi_vb.avb_data.avb_int32 =
+			    resp->ap_varbindlist[0].avb_data.avb_int32;
+		else if (axi->axi_vb.avb_data.avb_int32 !=
+		    resp->ap_varbindlist[0].avb_data.avb_int32) {
 			agentx_log_axc_warnx(axc, "index %s: unexpected "
 			    "index value", ax_oid2string(&(axr->axr_oid)));
 			agentx_reset(ax);
 			return -1;
 		}
-		agentx_log_axc_info(axc, "index %s: allocated '%u'",
+		agentx_log_axc_info(axc, "index %s: allocated '%d'",
 		    ax_oid2string(&(axi->axi_vb.avb_oid)),
-		    axi->axi_vb.avb_data.avb_uint32);
+		    axi->axi_vb.avb_data.avb_int32);
 		break;
 	default:
 		agentx_log_axc_fatalx(axc, "%s: Unsupported index type",
@@ -1872,8 +1881,8 @@ agentx_index_close_finalize(struct ax_pdu *pdu, void *cookie)
 	}
 	switch (axi->axi_vb.avb_type) {
 	case AX_DATA_TYPE_INTEGER:
-		if (axi->axi_vb.avb_data.avb_uint32 !=
-		    resp->ap_varbindlist[0].avb_data.avb_uint32) {
+		if (axi->axi_vb.avb_data.avb_int32 !=
+		    resp->ap_varbindlist[0].avb_data.avb_int32) {
 			agentx_log_axc_warnx(axc,
 			    "index %s: unexpected index value",
 			    ax_oid2string(&(axr->axr_oid)));
@@ -2123,7 +2132,7 @@ agentx_object_start(struct agentx_object *axo)
 			    "%s: Unsupported allocated index type", __func__);
 #endif
 		oid.aoi_id[oid.aoi_idlen++] =
-		    axo->axo_index[i]->axi_vb.avb_data.avb_uint32;
+		    axo->axo_index[i]->axi_vb.avb_data.avb_int32;
 	}
 	packetid = ax_register(ax->ax_ax, flags, axs->axs_id,
 	    AGENTX_CONTEXT_CTX(axc), axo->axo_timeout,
@@ -2176,7 +2185,7 @@ agentx_object_finalize(struct ax_pdu *pdu, void *cookie)
 #endif
 
 		oid.aoi_id[oid.aoi_idlen++] =
-		    axo->axo_index[i]->axi_vb.avb_data.avb_uint32;
+		    axo->axo_index[i]->axi_vb.avb_data.avb_int32;
 	}
 	strlcpy(oids, ax_oid2string(&(axo->axo_oid)), sizeof(oids));
 
@@ -2279,7 +2288,7 @@ agentx_object_close(struct agentx_object *axo)
 			    "%s: Unsupported allocated index type", __func__);
 #endif
 		oid.aoi_id[oid.aoi_idlen++] =
-		    axo->axo_index[i]->axi_vb.avb_data.avb_uint32;
+		    axo->axo_index[i]->axi_vb.avb_data.avb_int32;
 	}
 	packetid = ax_unregister(ax->ax_ax, axs->axs_id,
 	    AGENTX_CONTEXT_CTX(axc), AX_PRIORITY_DEFAULT, 0, &oid, 0);
@@ -2330,7 +2339,7 @@ agentx_object_close_finalize(struct ax_pdu *pdu, void *cookie)
 				    __func__);
 #endif
 			oid.aoi_id[oid.aoi_idlen++] =
-			    axo->axo_index[i]->axi_vb.avb_data.avb_uint32;
+			    axo->axo_index[i]->axi_vb.avb_data.avb_int32;
 		}
 		strlcpy(oids, ax_oid2string(&(axo->axo_oid)), sizeof(oids));
 		if (pdu->ap_payload.ap_response.ap_error !=
@@ -2809,17 +2818,23 @@ getnext:
 		case AX_DATA_TYPE_INTEGER:
 /* Dynamic index: normal copy paste */
 			if (axo->axo_index[i]->axi_type == AXI_TYPE_DYNAMIC) {
-				data->avb_uint32 = overflow ?
-				    UINT32_MAX : axv->axv_vb.avb_oid.aoi_id[j];
+				if (axv->axv_vb.avb_oid.aoi_id[j] > INT32_MAX)
+					overflow = 1;
+				data->avb_int32 = overflow ?
+				    INT32_MAX : axv->axv_vb.avb_oid.aoi_id[j];
 				j++;
 				index->axv_idatacomplete = 1;
 				break;
 			}
+			if (axv->axv_vb.avb_oid.aoi_id[j] > INT32_MAX) {
+				agentx_varbind_nosuchinstance(axv);
+				return;
+			}
 			axi = axo->axo_index[i];
 /* With a GET-request we need an exact match */
 			if (axv->axv_axg->axg_type == AX_PDU_TYPE_GET) {
-				if (axi->axi_vb.avb_data.avb_uint32 !=
-				    axv->axv_vb.avb_oid.aoi_id[j]) {
+				if (axi->axi_vb.avb_data.avb_int32 !=
+				    (int32_t)axv->axv_vb.avb_oid.aoi_id[j]) {
 					agentx_varbind_nosuchinstance(axv);
 					return;
 				}
@@ -2829,8 +2844,8 @@ getnext:
 			}
 /* A higher value automatically moves us to the next value */
 			if (overflow ||
-			    axv->axv_vb.avb_oid.aoi_id[j] >
-			    axi->axi_vb.avb_data.avb_uint32) {
+			    (int32_t)axv->axv_vb.avb_oid.aoi_id[j] >
+			    axi->axi_vb.avb_data.avb_int32) {
 /* If we're !dynamic up until now the rest of the oid doesn't matter */
 				if (!dynamic) {
 					agentx_varbind_endofmibview(axv);
@@ -2840,7 +2855,7 @@ getnext:
  * Else we just pick the max value and make sure we don't return
  * AGENTX_REQUEST_TYPE_GETNEXTINCLUSIVE
  */
-				data->avb_uint32 = UINT32_MAX;
+				data->avb_int32 = INT32_MAX;
 				index->axv_idatacomplete = 1;
 				overflow = 1;
 				j++;
@@ -2848,15 +2863,16 @@ getnext:
 /*
  * A lower value automatically moves to the set value and counts as a short oid
  */
-			} else if (axv->axv_vb.avb_oid.aoi_id[j] <
-			    axi->axi_vb.avb_data.avb_uint32) {
-				data->avb_uint32 =
-				    axi->axi_vb.avb_data.avb_uint32;
+			} else if ((int32_t)axv->axv_vb.avb_oid.aoi_id[j] <
+			    axi->axi_vb.avb_data.avb_int32) {
+				data->avb_int32 =
+				    axi->axi_vb.avb_data.avb_int32;
 				j = axv->axv_vb.avb_oid.aoi_idlen;
 				break;
 			}
 /* Normal match, except we already matched overflow at higher value */
-			data->avb_uint32 = axv->axv_vb.avb_oid.aoi_id[j];
+			data->avb_int32 =
+			    (int32_t)axv->axv_vb.avb_oid.aoi_id[j];
 			j++;
 			index->axv_idatacomplete = 1;
 			break;
@@ -3003,10 +3019,10 @@ getnext:
 }
 
 void
-agentx_varbind_integer(struct agentx_varbind *axv, uint32_t value)
+agentx_varbind_integer(struct agentx_varbind *axv, int32_t value)
 {
 	axv->axv_vb.avb_type = AX_DATA_TYPE_INTEGER;
-	axv->axv_vb.avb_data.avb_uint32 = value;
+	axv->axv_vb.avb_data.avb_int32 = value;
 
 	agentx_varbind_finalize(axv);
 }
@@ -3232,7 +3248,7 @@ agentx_varbind_finalize(struct agentx_varbind *axv)
 		data = &(axv->axv_index[i].axv_idata);
 		switch (axv->axv_index[i].axv_axi->axi_vb.avb_type) {
 		case AX_DATA_TYPE_INTEGER:
-			if (ax_oid_add(&oid, data->avb_uint32) == -1)
+			if (ax_oid_add(&oid, data->avb_int32) == -1)
 				goto fail;
 			break;
 		case AX_DATA_TYPE_OCTETSTRING:
@@ -3392,7 +3408,7 @@ agentx_varbind_get_object(struct agentx_varbind *axv)
 	return axv->axv_axo;
 }
 
-uint32_t
+int32_t
 agentx_varbind_get_index_integer(struct agentx_varbind *axv,
     struct agentx_index *axi)
 {
@@ -3410,7 +3426,7 @@ agentx_varbind_get_index_integer(struct agentx_varbind *axv,
 
 	for (i = 0; i < axv->axv_indexlen; i++) {
 		if (axv->axv_index[i].axv_axi == axi)
-			return axv->axv_index[i].axv_idata.avb_uint32;
+			return axv->axv_index[i].axv_idata.avb_int32;
 	}
 #ifdef AX_DEBUG
 	agentx_log_axg_fatalx(axv->axv_axg, "invalid index");
@@ -3538,7 +3554,7 @@ agentx_varbind_get_index_ipaddress(struct agentx_varbind *axv,
 
 void
 agentx_varbind_set_index_integer(struct agentx_varbind *axv,
-    struct agentx_index *axi, uint32_t value)
+    struct agentx_index *axi, int32_t value)
 {
 	size_t i;
 
@@ -3552,10 +3568,20 @@ agentx_varbind_set_index_integer(struct agentx_varbind *axv,
 #endif
 	}
 
+	if (value < 0) {
+#ifdef AX_DEBUG
+		agentx_log_axg_fatalx(axv->axv_axg, "invalid index value");
+#else
+		agentx_log_axg_warnx(axv->axv_axg, "invalid index value");
+		agentx_varbind_error_type(axv, AX_PDU_ERROR_GENERR, 0);
+		return;
+#endif
+	}
+
 	for (i = 0; i < axv->axv_indexlen; i++) {
 		if (axv->axv_index[i].axv_axi == axi) {
 			if (axv->axv_axg->axg_type == AX_PDU_TYPE_GET &&
-			    axv->axv_index[i].axv_idata.avb_uint32 != value) {
+			    axv->axv_index[i].axv_idata.avb_int32 != value) {
 #ifdef AX_DEBUG
 				agentx_log_axg_fatalx(axv->axv_axg,
 				    "can't change index on GET");
@@ -3567,7 +3593,7 @@ agentx_varbind_set_index_integer(struct agentx_varbind *axv,
 				return;
 #endif
 			}
-			axv->axv_index[i].axv_idata.avb_uint32 = value;
+			axv->axv_index[i].axv_idata.avb_int32 = value;
 			return;
 		}
 	}

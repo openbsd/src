@@ -1,4 +1,4 @@
-/*	$OpenBSD: ax.c,v 1.3 2020/10/26 19:02:30 martijn Exp $ */
+/*	$OpenBSD: ax.c,v 1.4 2020/10/27 17:19:44 martijn Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -792,8 +792,8 @@ ax_varbind2string(struct ax_varbind *vb)
 
 	switch (vb->avb_type) {
 	case AX_DATA_TYPE_INTEGER:
-		snprintf(buf, sizeof(buf), "%s: (int)%u",
-		    ax_oid2string(&(vb->avb_oid)), vb->avb_data.avb_uint32);
+		snprintf(buf, sizeof(buf), "%s: (int)%d",
+		    ax_oid2string(&(vb->avb_oid)), vb->avb_data.avb_int32);
 		break;
 	case AX_DATA_TYPE_OCTETSTRING:
 		for (i = 0;
@@ -1161,6 +1161,10 @@ ax_pdu_add_varbindlist(struct ax *ax,
 			return -1;
 		switch (vblist[i].avb_type) {
 		case AX_DATA_TYPE_INTEGER:
+			if (ax_pdu_add_uint32(ax,
+			    vblist[i].avb_data.avb_int32) == -1)
+				return -1;
+			break;
 		case AX_DATA_TYPE_COUNTER32:
 		case AX_DATA_TYPE_GAUGE32:
 		case AX_DATA_TYPE_TIMETICKS:
@@ -1321,6 +1325,10 @@ ax_pdutovarbind(struct ax_pdu_header *header,
 
 	switch(varbind->avb_type) {
 	case AX_DATA_TYPE_INTEGER:
+		if (rawlen < 4)
+			goto fail;
+		varbind->avb_data.avb_int32 = ax_pdutoh32(header, buf);
+		return rread + 4;
 	case AX_DATA_TYPE_COUNTER32:
 	case AX_DATA_TYPE_GAUGE32:
 	case AX_DATA_TYPE_TIMETICKS:

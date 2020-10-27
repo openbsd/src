@@ -1,4 +1,4 @@
-/*	$OpenBSD: ax.h,v 1.2 2020/10/26 16:02:16 tb Exp $ */
+/*	$OpenBSD: ax.h,v 1.3 2020/10/27 17:19:44 martijn Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -163,6 +163,7 @@ struct ax_varbind {
 	enum ax_data_type avb_type;
 	struct ax_oid avb_oid;
 	union ax_data {
+		int32_t avb_int32;
 		uint32_t avb_uint32;
 		uint64_t avb_uint64;
 		struct ax_ostring avb_ostring;
