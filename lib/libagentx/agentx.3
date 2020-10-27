@@ -1,4 +1,4 @@
-.\" $OpenBSD: agentx.3,v 1.3 2020/10/27 17:33:05 martijn Exp $
+.\" $OpenBSD: agentx.3,v 1.4 2020/10/27 18:24:01 martijn Exp $
 .\"
 .\" Copyright (c) 2020 Martijn van Duren <martijn@openbsd.org>
 .\"
@@ -62,6 +62,7 @@
 .Nm agentx_varbind_ipaddress ,
 .Nm agentx_varbind_counter32 ,
 .Nm agentx_varbind_gauge32 ,
+.Nm agentx_varbind_unsigned32 ,
 .Nm agentx_varbind_timeticks ,
 .Nm agentx_varbind_opaque ,
 .Nm agentx_varbind_counter64 ,
@@ -221,6 +222,8 @@
 .Fn agentx_varbind_counter32 "struct agentx_varbind *sav" "uint32_t value"
 .Ft void
 .Fn agentx_varbind_gauge32 "struct agentx_varbind *sav" "uint32_t value"
+.Ft void
+.Fn agentx_varbind_unsigned32 "struct agentx_varbind *sav" "uint32_t value"
 .Ft void
 .Fo agentx_varbind_timeticks
 .Fa "struct agentx_varbind *sav"  "uint32_t value"
@@ -517,6 +520,8 @@ Set the return value to ipaddress.
 Set the return value to an uint32_t of type counter32.
 .It Fn agentx_varbind_gauge32
 Set the return value to an uint32_t of type gauge32.
+.It Fn agentx_varbind_unsigned32
+A wrapper around agentx_varbind_gauge32.
 .It Fn agentx_varbind_timeticks
 Set the return value to an uint32_t of type timeticks.
 .It Fn agentx_varbind_opaque

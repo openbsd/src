@@ -1,4 +1,4 @@
-/*	$OpenBSD: agentx.h,v 1.4 2020/10/27 17:19:44 martijn Exp $ */
+/*	$OpenBSD: agentx.h,v 1.5 2020/10/27 18:24:01 martijn Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -116,6 +116,7 @@ void agentx_varbind_ipaddress(struct agentx_varbind *,
     const struct in_addr *);
 void agentx_varbind_counter32(struct agentx_varbind *, uint32_t);
 void agentx_varbind_gauge32(struct agentx_varbind *, uint32_t);
+void agentx_varbind_unsigned32(struct agentx_varbind *, uint32_t);
 void agentx_varbind_timeticks(struct agentx_varbind *, uint32_t);
 void agentx_varbind_opaque(struct agentx_varbind *, const char *, size_t);
 void agentx_varbind_counter64(struct agentx_varbind *, uint64_t);

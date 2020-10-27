@@ -1,4 +1,4 @@
-/*	$OpenBSD: agentx.c,v 1.7 2020/10/27 17:19:44 martijn Exp $ */
+/*	$OpenBSD: agentx.c,v 1.8 2020/10/27 18:24:01 martijn Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -3149,6 +3149,12 @@ agentx_varbind_gauge32(struct agentx_varbind *axv, uint32_t value)
 	axv->axv_vb.avb_data.avb_uint32 = value;
 
 	agentx_varbind_finalize(axv);
+}
+
+void
+agentx_varbind_unsigned32(struct agentx_varbind *axv, uint32_t value)
+{
+	agentx_varbind_gauge32(axv, value);
 }
 
 void

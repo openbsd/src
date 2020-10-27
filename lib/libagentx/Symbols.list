@@ -42,6 +42,7 @@ agentx_varbind_index
 agentx_varbind_ipaddress
 agentx_varbind_counter32
 agentx_varbind_gauge32
+agentx_varbind_unsigned32
 agentx_varbind_timeticks
 agentx_varbind_opaque
 agentx_varbind_counter64
