@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.150 2020/10/08 19:41:04 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.151 2020/10/27 19:17:12 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -67,6 +67,8 @@
 #include "isa.h"
 #include "npx.h"
 
+int upageflttrap(struct trapframe *, uint32_t);
+int kpageflttrap(struct trapframe *, uint32_t);
 void trap(struct trapframe *);
 void ast(struct trapframe *);
 void syscall(struct trapframe *);
@@ -99,6 +101,130 @@ int	trap_types = sizeof trap_type / sizeof trap_type[0];
 int	trapdebug = 0;
 #endif
 
+static inline int
+pgex2access(int pgex)
+{
+	if (pgex & PGEX_W)
+		return PROT_WRITE;
+	else if (pgex & PGEX_I)
+		return PROT_EXEC;
+	return PROT_READ;
+}
+
+/*
+ * upageflttrap(frame, usermode): page fault handler
+ * Returns non-zero if the fault was handled (possibly by generating
+ * a signal).  Returns zero, possibly still holding the kernel lock,
+ * if something was so broken that we should panic.
+ */
+int
+upageflttrap(struct trapframe *frame, uint32_t cr2)
+{
+	struct proc *p = curproc;
+	vaddr_t va = trunc_page((vaddr_t)cr2);
+	vm_prot_t access_type = pgex2access(frame->tf_err);
+	union sigval sv;
+	int signal, sicode, error;
+
+	KERNEL_LOCK();
+	error = uvm_fault(&p->p_vmspace->vm_map, va, 0, access_type);
+	KERNEL_UNLOCK();
+
+	if (error == 0) {
+		uvm_grow(p, va);
+		return 1;
+	}
+
+	signal = SIGSEGV;
+	sicode = SEGV_MAPERR;
+	if (error == ENOMEM) {
+		printf("UVM: pid %d (%s), uid %d killed:"
+		    " out of swap\n", p->p_p->ps_pid, p->p_p->ps_comm,
+		    p->p_ucred ? (int)p->p_ucred->cr_uid : -1);
+		signal = SIGKILL;
+	} else {
+		if (error == EACCES)
+			sicode = SEGV_ACCERR;
+		else if (error == EIO) {
+			signal = SIGBUS;
+			sicode = BUS_OBJERR;
+		}
+	}
+	sv.sival_ptr = (void *)cr2;
+	trapsignal(p, signal, T_PAGEFLT, sicode, sv);
+	return 1;
+}
+
+/*
+ * kpageflttrap(frame, usermode): page fault handler
+ * Returns non-zero if the fault was handled (possibly by generating
+ * a signal).  Returns zero, possibly still holding the kernel lock,
+ * if something was so broken that we should panic.
+ */
+int
+kpageflttrap(struct trapframe *frame, uint32_t cr2)
+{
+	struct proc *p = curproc;
+	struct pcb *pcb;
+	vaddr_t va = trunc_page((vaddr_t)cr2);
+	struct vm_map *map;
+	vm_prot_t access_type = pgex2access(frame->tf_err);
+	caddr_t onfault;
+	int error;
+
+	if (p == NULL || p->p_addr == NULL || p->p_vmspace == NULL)
+		return 0;
+
+	pcb = &p->p_addr->u_pcb;
+
+	/* This will only trigger if SMEP is enabled */
+	if (cr2 <= VM_MAXUSER_ADDRESS && frame->tf_err & PGEX_I)
+		panic("attempt to execute user address %p "
+		    "in supervisor mode", (void *)cr2);
+
+	/* This will only trigger if SMAP is enabled */
+	if (pcb->pcb_onfault == NULL && cr2 <= VM_MAXUSER_ADDRESS &&
+	    frame->tf_err & PGEX_P)
+		panic("attempt to access user address %p "
+		    "in supervisor mode", (void *)cr2);
+
+	/*
+	 * It is only a kernel address space fault iff:
+	 *	1. (type & T_USER) == 0  and
+	 *	2. pcb_onfault not set or
+	 *	3. pcb_onfault set but supervisor space fault
+	 * The last can occur during an exec() copyin where the
+	 * argument space is lazy-allocated.
+	 */
+	map = &p->p_vmspace->vm_map;
+	if (va >= VM_MIN_KERNEL_ADDRESS)
+		map = kernel_map;
+
+	if (curcpu()->ci_inatomic == 0 || map == kernel_map) {
+		onfault = pcb->pcb_onfault;
+		pcb->pcb_onfault = NULL;
+		KERNEL_LOCK();
+		error = uvm_fault(map, va, 0, access_type);
+		KERNEL_UNLOCK();
+		pcb->pcb_onfault = onfault;
+
+		if (error == 0 && map != kernel_map)
+			uvm_grow(p, va);
+	} else
+		error = EFAULT;
+
+	if (error) {
+		if (pcb->pcb_onfault == NULL) {
+			/* bad memory access in the kernel */
+			panic("uvm_fault(%p, 0x%lx, 0, %d) -> %x\n",
+			    map, va, access_type, error);
+			return 0;
+		}
+		frame->tf_eip = (u_int32_t)pcb->pcb_onfault;
+	}
+	return 1;
+}
+
 /*
  * trap(frame):
  *	Exception, fault, and trap interface to BSD kernel. This
@@ -116,21 +242,11 @@ trap(struct trapframe *frame)
 	    resume_pop_fs[], resume_pop_gs[];
 	struct trapframe *vframe;
 	int resume;
-	vm_prot_t access_type;
 	union sigval sv;
-	caddr_t onfault;
 	vaddr_t gdt_cs = SEGDESC_LIMIT(curcpu()->ci_gdt[GUCODE_SEL].sd);
 	uint32_t cr2 = rcr2();
 
 	uvmexp.traps++;
-
-	/* SIGSEGV and SIGBUS need this */
-	if (frame->tf_err & PGEX_W) {
-		access_type = PROT_WRITE;
-	} else if (frame->tf_err & PGEX_I) {
-		access_type = PROT_EXEC;
-	} else
-		access_type = PROT_READ;
 
 #ifdef DEBUG
 	if (trapdebug) {
@@ -159,32 +275,6 @@ trap(struct trapframe *frame)
 	switch (type) {
 
 	/* trace trap */
-	case T_TRCTRAP:
-#ifndef DDB
-		return;	/* Just return if no kernel debugger */
-#endif
-		/* FALLTHROUGH */
-
-	default:
-	we_re_toast:
-#ifdef DDB
-		if (db_ktrap(type, 0, frame))
-			return;
-#endif
-		if (frame->tf_trapno < trap_types)
-			printf("fatal %s (%d)", trap_type[frame->tf_trapno],
-				frame->tf_trapno);
-		else
-			printf("unknown trap %d", frame->tf_trapno);
-		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
-		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
-		    type, frame->tf_err, frame->tf_eip, frame->tf_cs,
-		    frame->tf_eflags, cr2, lapic_tpr);
-
-		panic("trap type %d, code=%x, pc=%x",
-		    type, frame->tf_err, frame->tf_eip);
-		/*NOTREACHED*/
-
 	case T_PROTFLT:
 	case T_SEGNPFLT:
 	case T_ALIGNFLT:
@@ -192,7 +282,6 @@ trap(struct trapframe *frame)
 		if (p && p->p_addr) {
 			pcb = &p->p_addr->u_pcb;
 			if (pcb->pcb_onfault != 0) {
-			copyfault:
 				frame->tf_eip = (int)pcb->pcb_onfault;
 				return;
 			}
@@ -321,102 +410,19 @@ trap(struct trapframe *frame)
 		npxtrap(frame);
 		goto out;
 
-	case T_PAGEFLT:			/* allow page faults in kernel mode */
-		if (p == 0 || p->p_addr == 0)
-			goto we_re_toast;
-
-		pcb = &p->p_addr->u_pcb;
-		KERNEL_LOCK();
-		/* This will only trigger if SMEP is enabled */
-		if (cr2 <= VM_MAXUSER_ADDRESS && frame->tf_err & PGEX_I)
-			panic("attempt to execute user address %p "
-			    "in supervisor mode", (void *)cr2);
-		/* This will only trigger if SMAP is enabled */
-		if (pcb->pcb_onfault == NULL && cr2 <= VM_MAXUSER_ADDRESS &&
-		    frame->tf_err & PGEX_P)
-			panic("attempt to access user address %p "
-			    "in supervisor mode", (void *)cr2);
-		goto faultcommon;
+	case T_PAGEFLT:
+		if (kpageflttrap(frame, cr2))
+			return;
+		goto we_re_toast;
 
 	case T_PAGEFLT|T_USER: {	/* page fault */
-		vaddr_t va, fa;
-		struct vmspace *vm;
-		struct vm_map *map;
-		int error;
-		int signal, sicode;
-
 		if (!uvm_map_inentry(p, &p->p_spinentry, PROC_STACK(p),
 		    "[%s]%d/%d sp=%lx inside %lx-%lx: not MAP_STACK\n",
 		    uvm_map_inentry_sp, p->p_vmspace->vm_map.sserial))
 			goto out;
-		KERNEL_LOCK();
-	faultcommon:
-		vm = p->p_vmspace;
-		if (vm == NULL)
-			goto we_re_toast;
-		fa = (vaddr_t)cr2;
-		va = trunc_page(fa);
-		/*
-		 * It is only a kernel address space fault iff:
-		 *	1. (type & T_USER) == 0  and
-		 *	2. pcb_onfault not set or
-		 *	3. pcb_onfault set but supervisor space fault
-		 * The last can occur during an exec() copyin where the
-		 * argument space is lazy-allocated.
-		 */
-		if (type == T_PAGEFLT && va >= KERNBASE)
-			map = kernel_map;
-		else
-			map = &vm->vm_map;
-
-#ifdef DIAGNOSTIC
-		if (map == kernel_map && va == 0) {
-			printf("trap: bad kernel access at %lx\n", va);
-			goto we_re_toast;
-		}
-#endif
-
-		if (curcpu()->ci_inatomic == 0 || map == kernel_map) {
-			onfault = p->p_addr->u_pcb.pcb_onfault;
-			p->p_addr->u_pcb.pcb_onfault = NULL;
-			error = uvm_fault(map, va, 0, access_type);
-			p->p_addr->u_pcb.pcb_onfault = onfault;
-		} else
-			error = EFAULT;
-
-		if (error == 0) {
-			if (map != kernel_map)
-				uvm_grow(p, va);
-			if (type == T_PAGEFLT) {
-				KERNEL_UNLOCK();
-				return;
-			}
-			KERNEL_UNLOCK();
+		if (upageflttrap(frame, cr2))
 			goto out;
-		}
-
-		if (type == T_PAGEFLT) {
-			if (pcb->pcb_onfault != 0) {
-				KERNEL_UNLOCK();
-				goto copyfault;
-			}
-			printf("uvm_fault(%p, 0x%lx, 0, %d) -> %x\n",
-			    map, va, access_type, error);
-			goto we_re_toast;
-		}
-
-		signal = SIGSEGV;
-		sicode = SEGV_MAPERR;
-		if (error == EACCES)
-			sicode = SEGV_ACCERR;
-		if (error == EIO) {
-			signal = SIGBUS;
-			sicode = BUS_OBJERR;
-		}
-		sv.sival_int = fa;
-		trapsignal(p, signal, type &~ T_USER, sicode, sv);
-		KERNEL_UNLOCK();
-		break;
+		goto we_re_toast;
 	}
 
 #if 0  /* Should this be left out?  */
@@ -452,6 +458,31 @@ trap(struct trapframe *frame)
 		else
 			goto we_re_toast;
 #endif
+
+	case T_TRCTRAP:
+#ifndef DDB
+		return;	/* Just return if no kernel debugger */
+#endif
+		/* FALLTHROUGH */
+	default:
+	we_re_toast:
+#ifdef DDB
+		if (db_ktrap(type, 0, frame))
+			return;
+#endif
+		if (frame->tf_trapno < trap_types)
+			printf("fatal %s (%d)", trap_type[frame->tf_trapno],
+			    frame->tf_trapno);
+		else
+			printf("unknown trap %d", frame->tf_trapno);
+		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
+		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
+		    type, frame->tf_err, frame->tf_eip, frame->tf_cs,
+		    frame->tf_eflags, cr2, lapic_tpr);
+
+		panic("trap type %d, code=%x, pc=%x",
+		    type, frame->tf_err, frame->tf_eip);
+		/*NOTREACHED*/
 	}
 
 	if ((type & T_USER) == 0)
