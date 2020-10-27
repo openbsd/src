@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.172 2020/07/18 07:18:22 dlg Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.173 2020/10/27 23:32:02 bluhm Exp $	*/
 
 /******************************************************************************
 
@@ -1597,7 +1597,8 @@ ixgbe_stop(void *arg)
 		ifq_barrier(ifq);
 		ifq_clr_oactive(ifq);
 
-		intr_barrier(sc->queues[i].tag);
+		if (sc->queues[i].tag != NULL)
+			intr_barrier(sc->queues[i].tag);
 		timeout_del(&sc->rx_rings[i].rx_refill);
 	}
 
