@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.409 2020/10/26 08:31:01 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.410 2020/10/27 19:13:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1178,8 +1178,10 @@ neighbor	: {	curpeer = new_peer(); }
 			curpeer_filter[0] = NULL;
 			curpeer_filter[1] = NULL;
 
-			if (neighbor_consistent(curpeer) == -1)
+			if (neighbor_consistent(curpeer) == -1) {
+				free(curpeer);
 				YYERROR;
+			}
 			if (RB_INSERT(peer_head, new_peers, curpeer) != NULL)
 				fatalx("%s: peer tree is corrupt", __func__);
 			curpeer = curgroup;
@@ -1194,11 +1196,13 @@ group		: GROUP string			{
 				yyerror("group name \"%s\" too long: max %zu",
 				    $2, sizeof(curgroup->conf.group) - 1);
 				free($2);
+				free(curgroup);
 				YYERROR;
 			}
 			free($2);
 			if (get_id(curgroup)) {
 				yyerror("get_id failed");
+				free(curgroup);
 				YYERROR;
 			}
 		} '{' groupopts_l '}'		{
@@ -3987,7 +3991,9 @@ get_id(struct peer *newpeer)
 		/* neighbor */
 		if (cur_peers)
 			RB_FOREACH(p, peer_head, cur_peers)
-				if (memcmp(&p->conf.remote_addr,
+				if (p->conf.remote_masklen ==
+				    newpeer->conf.remote_masklen &&
+				    memcmp(&p->conf.remote_addr,
 				    &newpeer->conf.remote_addr,
 				    sizeof(p->conf.remote_addr)) == 0)
 					break;
@@ -4196,6 +4202,7 @@ int
 neighbor_consistent(struct peer *p)
 {
 	struct bgpd_addr *local_addr;
+	struct peer *xp;
 
 	switch (p->conf.remote_addr.aid) {
 	case AID_INET:
@@ -4251,6 +4258,21 @@ neighbor_consistent(struct peer *p)
 	if (p->conf.reflector_client && p->conf.ebgp) {
 		yyerror("EBGP neighbors are not allowed in route "
 		    "reflector clusters");
+		return (-1);
+	}
+
+	/* check for duplicate peer definitions */
+	RB_FOREACH(xp, peer_head, new_peers)
+		if (xp->conf.remote_masklen ==
+		    p->conf.remote_masklen &&
+		    memcmp(&xp->conf.remote_addr,
+		    &p->conf.remote_addr,
+		    sizeof(p->conf.remote_addr)) == 0)
+			break;
+	if (xp != NULL) {
+		char *descr = log_fmt_peer(&p->conf);
+		yyerror("duplicate %s", descr);
+		free(descr);
 		return (-1);
 	}
 
