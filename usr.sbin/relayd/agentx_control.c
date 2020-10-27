@@ -1,4 +1,4 @@
-/*	$OpenBSD: agentx_control.c,v 1.3 2020/10/26 16:52:06 martijn Exp $	*/
+/*	$OpenBSD: agentx_control.c,v 1.4 2020/10/27 18:48:07 martijn Exp $	*/
 
 /*
  * Copyright (c) 2020 Martijn van Duren <martijn@openbsd.org>
@@ -539,7 +539,7 @@ agentxctl_redirect(struct agentx_varbind *sav)
 
 	rdr = agentxctl_rdr_byidx(agentx_varbind_get_index_integer(sav,
 	    relaydRedirectIdx), agentx_varbind_request(sav));
-	if (rdr == NULL) {
+	if (rdr == NULL || rdr->conf.id > INT32_MAX) {
 		agentx_varbind_notfound(sav);
 		return;
 	}
@@ -605,7 +605,7 @@ agentxctl_relay(struct agentx_varbind *sav)
 
 	rly = agentxctl_relay_byidx(agentx_varbind_get_index_integer(sav,
 	    relaydRelayIdx), agentx_varbind_request(sav));
-	if (rly == NULL) {
+	if (rly == NULL || rly->rl_conf.id > INT32_MAX) {
 		agentx_varbind_notfound(sav);
 		return;
 	}
@@ -680,7 +680,7 @@ agentxctl_router(struct agentx_varbind *sav)
 
 	router = agentxctl_router_byidx(agentx_varbind_get_index_integer(sav,
 	    relaydRouterIdx), agentx_varbind_request(sav));
-	if (router == NULL) {
+	if (router == NULL || router->rt_conf.id > INT32_MAX) {
 		agentx_varbind_notfound(sav);
 		return;
 	}
@@ -688,9 +688,12 @@ agentxctl_router(struct agentx_varbind *sav)
 	    router->rt_conf.id);
 	if (agentx_varbind_get_object(sav) == relaydRouterIndex)
 		agentx_varbind_integer(sav, router->rt_conf.id);
-	else if (agentx_varbind_get_object(sav) == relaydRouterTableIndex)
-		agentx_varbind_integer(sav, router->rt_conf.gwtable);
-	else if (agentx_varbind_get_object(sav) == relaydRouterStatus) {
+	else if (agentx_varbind_get_object(sav) == relaydRouterTableIndex) {
+		if (router->rt_conf.gwtable > INT32_MAX)
+			agentx_varbind_integer(sav, -1);
+		else
+			agentx_varbind_integer(sav, router->rt_conf.gwtable);
+	} else if (agentx_varbind_get_object(sav) == relaydRouterStatus) {
 		if (router->rt_conf.flags & F_DISABLE)
 			agentx_varbind_integer(sav, 1);
 		else
@@ -732,7 +735,7 @@ agentxctl_netroute(struct agentx_varbind *sav)
 
 	nr = agentxctl_netroute_byidx(agentx_varbind_get_index_integer(sav,
 	    relaydNetRouteIdx), agentx_varbind_request(sav));
-	if (nr == NULL) {
+	if (nr == NULL || nr->nr_conf.id > INT32_MAX) {
 		agentx_varbind_notfound(sav);
 		return;
 	}
@@ -750,8 +753,12 @@ agentxctl_netroute(struct agentx_varbind *sav)
 			agentx_varbind_integer(sav, 2);
 	} else if (agentx_varbind_get_object(sav) == relaydNetRoutePrefixLen)
 		agentx_varbind_integer(sav, nr->nr_conf.prefixlen);
-	else if (agentx_varbind_get_object(sav) == relaydNetRouteRouterIndex)
-		agentx_varbind_integer(sav, nr->nr_conf.routerid);
+	else if (agentx_varbind_get_object(sav) == relaydNetRouteRouterIndex) {
+		if (nr->nr_conf.routerid > INT32_MAX)
+			agentx_varbind_integer(sav, -1);
+		else
+			agentx_varbind_integer(sav, nr->nr_conf.routerid);
+	}
 }
 
 struct host *
@@ -783,7 +790,7 @@ agentxctl_host(struct agentx_varbind *sav)
 
 	host = agentxctl_host_byidx(agentx_varbind_get_index_integer(sav,
 	    relaydHostIdx), agentx_varbind_request(sav));
-	if (host == NULL) {
+	if (host == NULL || host->conf.id > INT32_MAX) {
 		agentx_varbind_notfound(sav);
 		return;
 	}
@@ -791,11 +798,17 @@ agentxctl_host(struct agentx_varbind *sav)
 	    host->conf.id);
 	if (agentx_varbind_get_object(sav) == relaydHostIndex)
 		agentx_varbind_integer(sav, host->conf.id);
-	else if (agentx_varbind_get_object(sav) == relaydHostParentIndex)
-		agentx_varbind_integer(sav, host->conf.parentid);
-	else if (agentx_varbind_get_object(sav) == relaydHostTableIndex)
-		agentx_varbind_integer(sav, host->conf.tableid);
-	else if (agentx_varbind_get_object(sav) == relaydHostName)
+	else if (agentx_varbind_get_object(sav) == relaydHostParentIndex) {
+		if (host->conf.parentid > INT32_MAX)
+			agentx_varbind_integer(sav, -1);
+		else
+			agentx_varbind_integer(sav, host->conf.parentid);
+	} else if (agentx_varbind_get_object(sav) == relaydHostTableIndex) {
+		if (host->conf.tableid > INT32_MAX)
+			agentx_varbind_integer(sav, -1);
+		else
+			agentx_varbind_integer(sav, host->conf.tableid);
+	} else if (agentx_varbind_get_object(sav) == relaydHostName)
 		agentx_varbind_string(sav, host->conf.name);
 	else if (agentx_varbind_get_object(sav) == relaydHostAddress)
 		agentx_varbind_nstring(sav, sstodata(&host->conf.ss),
@@ -867,7 +880,8 @@ agentxctl_session(struct agentx_varbind *sav)
 	session = agentxctl_session_byidx(agentx_varbind_get_index_integer(sav,
 	    relaydSessionIdx), agentx_varbind_get_index_integer(sav,
 	    relaydSessionRelayIdx), agentx_varbind_request(sav));
-	if (session == NULL) {
+	if (session == NULL || session->se_id > INT32_MAX ||
+	    session->se_relayid > INT32_MAX) {
 		agentx_varbind_notfound(sav);
 		return;
 	}
@@ -950,7 +964,7 @@ agentxctl_table(struct agentx_varbind *sav)
 
 	table = agentxctl_table_byidx(agentx_varbind_get_index_integer(sav,
 	    relaydTableIdx), agentx_varbind_request(sav));
-	if (table == NULL) {
+	if (table == NULL || table->conf.id > INT32_MAX) {
 		agentx_varbind_notfound(sav);
 		return;
 	}
