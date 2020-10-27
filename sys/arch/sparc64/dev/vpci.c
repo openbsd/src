@@ -1,4 +1,4 @@
-/*	$OpenBSD: vpci.c,v 1.32 2020/10/24 05:07:47 jmatthew Exp $	*/
+/*	$OpenBSD: vpci.c,v 1.33 2020/10/27 21:01:33 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -416,11 +416,19 @@ vpci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	struct vpci_pbm *pbm = pa->pa_pc->cookie;
 	uint64_t devhandle = pbm->vp_devhandle;
-	uint64_t devino = INTVEC(*ihp);
-	uint64_t sysino;
+	uint64_t devino, sysino;
 	int err;
 
+	/*
+	 * If we didn't find a PROM mapping for this interrupt.  Try
+	 * to construct one ourselves based on the swizzled interrupt
+	 * pin.
+	 */
+	if (*ihp == (pci_intr_handle_t)-1 && pa->pa_intrpin != 0)
+		*ihp = pa->pa_intrpin;
+
 	if (*ihp != (pci_intr_handle_t)-1) {
+		devino = INTVEC(*ihp);
 		err = sun4v_intr_devino_to_sysino(devhandle, devino, &sysino);
 		if (err != H_EOK)
 			return (-1);
