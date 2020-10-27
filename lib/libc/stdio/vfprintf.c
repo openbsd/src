@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfprintf.c,v 1.78 2017/11/21 17:48:19 tb Exp $	*/
+/*	$OpenBSD: vfprintf.c,v 1.79 2020/10/27 21:06:57 deraadt Exp $	*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -55,6 +55,9 @@
 
 #include "local.h"
 #include "fvwrite.h"
+
+static const char n_msg[] = ": *printf used %n: ";
+static int n_report;
 
 union arg {
 	int			intarg;
@@ -799,7 +802,43 @@ fp_common:
 			break;
 #endif /* FLOATING_POINT */
 #ifndef NO_PRINTF_PERCENT_N
-		case 'n':
+		case 'n': {
+			int maxprot = 0;
+
+#ifdef notyet
+			if (mprotections(fmt0, strlen(fmt0) + 1,
+			    &maxprot) == -1)
+				maxprot = 0;
+			maxprot &= ~PROT_READ;
+#endif
+
+			if (n_report == 0 || maxprot) {
+				char buf[1024], *p;
+
+				/* <10> is LOG_CRIT */
+				strlcpy(buf, "<10>", sizeof buf);
+
+				/* XXX */
+				if ((p = getenv("_THIS_PORT")) != NULL) {
+					strlcat(buf, p, sizeof buf);
+					strlcat(buf, " ", sizeof buf);
+				}
+
+				/* Make sure progname does not fill the whole buffer */
+				strlcat(buf, __progname, sizeof(buf) - sizeof n_msg);
+				strlcat(buf, n_msg, sizeof buf);
+				strlcat(buf, fmt0, sizeof buf);
+				if ((p = strchr(buf, '\n')))
+					*p = '\0';
+				if (maxprot)
+					strlcat(buf, ": aborting", sizeof buf);
+				sendsyslog(buf, strlen(buf), LOG_CONS);
+				n_report = 1;
+			}
+
+			if (maxprot)
+				abort();
+
 			if (flags & LLONGINT)
 				*GETARG(long long *) = ret;
 			else if (flags & LONGINT)
@@ -817,6 +856,7 @@ fp_common:
 			else
 				*GETARG(int *) = ret;
 			continue;	/* no output */
+			}
 #endif /* NO_PRINTF_PERCENT_N */
 		case 'O':
 			flags |= LONGINT;
