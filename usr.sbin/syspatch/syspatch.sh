@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: syspatch.sh,v 1.165 2020/10/08 14:26:34 kn Exp $
+# $OpenBSD: syspatch.sh,v 1.166 2020/10/27 17:42:05 tb Exp $
 #
 # Copyright (c) 2016, 2017 Antoine Jacoutot <ajacoutot@openbsd.org>
 #
@@ -173,7 +173,7 @@ ls_missing()
 		/etc/signify/openbsd-${_OSrev}-syspatch.pub >/dev/null
 
 	# sig file less than 3 lines long doesn't list any patch (new release)
-	(($(grep -c ".*" ${_sha}) < 3)) && return
+	(($(grep -c ".*" ${_sha}.sig) < 3)) && return
 
 	set -o pipefail
 	grep -Eo "syspatch${_OSrev}-[[:digit:]]{3}_[[:alnum:]_-]+" ${_sha} |
