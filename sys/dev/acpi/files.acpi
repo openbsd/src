@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.57 2020/09/15 18:31:14 mglocker Exp $
+#	$OpenBSD: files.acpi,v 1.58 2020/10/27 02:39:07 jordan Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -69,6 +69,11 @@ file	dev/acpi/acpimcfg.c		acpimcfg
 device	acpiprt
 attach	acpiprt at acpi
 file	dev/acpi/acpiprt.c		acpiprt needs-flag
+
+# DMAR device
+device	acpidmar
+attach	acpidmar at acpi
+file	dev/acpi/acpidmar.c		acpidmar needs-flag
 
 # Docking station
 device	acpidock

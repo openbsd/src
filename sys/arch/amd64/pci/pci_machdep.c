@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.75 2020/06/17 06:14:52 dlg Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.76 2020/10/27 02:39:07 jordan Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -87,6 +87,13 @@
 #if NIOAPIC > 0
 #include <machine/i82093var.h>
 #include <machine/mpbiosvar.h>
+#endif
+
+#include "acpi.h"
+
+#include "acpidmar.h"
+#if NACPIDMAR > 0
+#include <dev/acpi/acpidmar.h>
 #endif
 
 /*
@@ -797,7 +804,15 @@ pci_init_extents(void)
 	}
 }
 
-#include "acpi.h"
+int
+pci_probe_device_hook(pci_chipset_tag_t pc, struct pci_attach_args *pa)
+{
+#if NACPIDMAR > 0
+	acpidmar_pci_hook(pc, pa);
+#endif
+	return 0;
+}
+
 #if NACPI > 0
 void acpi_pci_match(struct device *, struct pci_attach_args *);
 pcireg_t acpi_pci_min_powerstate(pci_chipset_tag_t, pcitag_t);

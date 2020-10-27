@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.493 2020/09/15 18:31:14 mglocker Exp $
+#	$OpenBSD: GENERIC,v 1.494 2020/10/27 02:39:07 jordan Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -45,6 +45,7 @@ acpibtn*	at acpi?
 acpicpu*	at acpi?
 acpicmos*	at acpi?
 acpidock*	at acpi?
+acpidmar0	at acpi? disable
 acpiec*		at acpi?
 acpipci*	at acpi?
 acpiprt*	at acpi?
