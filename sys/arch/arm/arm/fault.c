@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.43 2020/10/19 08:21:02 kettenis Exp $	*/
+/*	$OpenBSD: fault.c,v 1.44 2020/10/27 19:18:47 deraadt Exp $	*/
 /*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
@@ -331,8 +331,6 @@ data_abort_handler(trapframe_t *tf)
 	pcb->pcb_onfault = NULL;
 	KERNEL_LOCK();
 	error = uvm_fault(map, va, 0, ftype);
-	if (error == 0 && map != kernel_map)
-		uvm_grow(p, va);
 	KERNEL_UNLOCK();
 	pcb->pcb_onfault = onfault;
 
@@ -341,9 +339,9 @@ data_abort_handler(trapframe_t *tf)
 		p->p_flag &= ~L_SA_PAGEFAULT;
 #endif
 
-	if (__predict_true(error == 0)) {
-		if (user)
-			uvm_grow(p, va); /* Record any stack growth */
+	if (error == 0) {
+		if (map != kernel_map)
+			uvm_grow(p, va);
 		goto out;
 	}
 
@@ -367,10 +365,9 @@ data_abort_handler(trapframe_t *tf)
 		    p->p_ucred ? (int)p->p_ucred->cr_uid : -1);
 		sd.signo = SIGKILL;
 		sd.code = 0;
-	}
-	if (error == EACCES) 
+	} else if (error == EACCES) 
 		sd.code = SEGV_ACCERR;
-	if (error == EIO) {
+	else if (error == EIO) {
 		sd.signo = SIGBUS;
 		sd.code = BUS_OBJERR;
 	}
@@ -530,7 +527,7 @@ dab_buserr(trapframe_t *tf, u_int fsr, u_int far, struct proc *p,
 void
 prefetch_abort_handler(trapframe_t *tf)
 {
-	struct proc *p;
+	struct proc *p = curproc;
 	struct vm_map *map;
 	vaddr_t va;
 	int error;
@@ -559,8 +556,6 @@ prefetch_abort_handler(trapframe_t *tf)
 	if (__predict_true((tf->tf_spsr & PSR_I) == 0))
 		enable_interrupts(PSR_I);
 
-	p = curproc;
-
 	p->p_addr->u_pcb.pcb_tf = tf;
 
 	/* Invoke access fault handler if appropriate */
@@ -580,7 +575,6 @@ prefetch_abort_handler(trapframe_t *tf)
 	map = &p->p_vmspace->vm_map;
 	va = trunc_page(far);
 
-
 #ifdef DIAGNOSTIC
 	if (__predict_false(curcpu()->ci_idepth > 0)) {
 		printf("\nNon-emulated prefetch abort with intr_depth > 0\n");
@@ -590,11 +584,12 @@ prefetch_abort_handler(trapframe_t *tf)
 
 	KERNEL_LOCK();
 	error = uvm_fault(map, va, 0, PROT_READ | PROT_EXEC);
-	if (error == 0)
-		uvm_grow(p, va);
 	KERNEL_UNLOCK();
-	if (__predict_true(error == 0))
+
+	if (error == 0) {
+		uvm_grow(p, va);
 		goto out;
+	}
 
 	sv.sival_ptr = (u_int32_t *)far;
 	if (error == ENOMEM) {
