@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.53 2020/10/26 20:59:41 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.54 2020/10/27 12:45:32 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -145,6 +145,7 @@ struct pte_desc {
 #define PTED_VA_EXEC_M		0x40
 
 void	pmap_pted_syncicache(struct pte_desc *);
+void	pmap_flush_page(struct vm_page *);
 
 struct slb_desc {
 	LIST_ENTRY(slb_desc) slbd_list;
@@ -1077,6 +1078,9 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		atomic_setbits_int(&pg->pg_flags, PG_PMAP_REF);
 		if (flags & PROT_WRITE)
 			atomic_setbits_int(&pg->pg_flags, PG_PMAP_MOD);
+
+		if ((pg->pg_flags & PG_DEV) == 0 && cache != PMAP_CACHE_WB)
+			pmap_flush_page(pg);
 	}
 
 	pte_insert(pted);
@@ -1437,6 +1441,19 @@ pmap_zero_page(struct vm_page *pg)
 	pmap_kenter_pa(va, pa, PROT_READ | PROT_WRITE);
 	for (offset = 0; offset < PAGE_SIZE; offset += cacheline_size)
 		__asm volatile ("dcbz 0, %0" :: "r"(va + offset));
+	pmap_kremove(va, PAGE_SIZE);
+}
+
+void
+pmap_flush_page(struct vm_page *pg)
+{
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	paddr_t va = zero_page + cpu_number() * PAGE_SIZE;
+	int offset;
+
+	pmap_kenter_pa(va, pa, PROT_READ | PROT_WRITE);
+	for (offset = 0; offset < PAGE_SIZE; offset += cacheline_size)
+		__asm volatile ("dcbf 0, %0" :: "r"(va + offset));
 	pmap_kremove(va, PAGE_SIZE);
 }
 
