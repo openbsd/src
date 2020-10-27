@@ -97,8 +97,10 @@
 ./usr/include/dev/acpi
 ./usr/include/dev/acpi/acpidebug.h
 ./usr/include/dev/acpi/acpidev.h
+./usr/include/dev/acpi/acpidmar.h
 ./usr/include/dev/acpi/acpireg.h
 ./usr/include/dev/acpi/acpivar.h
+./usr/include/dev/acpi/amd_iommu.h
 ./usr/include/dev/acpi/amltypes.h
 ./usr/include/dev/acpi/dsdt.h
 ./usr/include/dev/acpi/efi.h
