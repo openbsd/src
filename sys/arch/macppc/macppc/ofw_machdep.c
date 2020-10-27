@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.60 2020/10/26 22:02:38 tobhe Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.61 2020/10/27 19:40:08 tobhe Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -697,5 +697,5 @@ ofw_get_param(struct wsdisplay_param *dp)
 		break;
 	}
 
-	return 1;
+	return -1;
 }
