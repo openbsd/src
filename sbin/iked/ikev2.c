@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.270 2020/10/24 20:27:59 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.271 2020/10/28 20:54:13 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1257,7 +1257,7 @@ ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
 	ke->kex_dhgroup = htobe16(group->id);
 	if (ikev2_add_buf(buf, sa->sa_dhiexchange) == -1)
 		goto done;
-	len = sizeof(*ke) + dh_getlen(group);
+	len = sizeof(*ke) + ibuf_length(sa->sa_dhiexchange);
 
 	if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_NONCE) == -1)
 		goto done;
@@ -3000,7 +3000,7 @@ ikev2_resp_ike_sa_init(struct iked *env, struct iked_message *msg)
 	ke->kex_dhgroup = htobe16(group->id);
 	if (ikev2_add_buf(buf, sa->sa_dhrexchange) == -1)
 		goto done;
-	len = sizeof(*ke) + dh_getlen(group);
+	len = sizeof(*ke) + ibuf_size(sa->sa_dhrexchange);
 
 	if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_NONCE) == -1)
 		goto done;
@@ -3777,7 +3777,7 @@ ikev2_send_create_child_sa(struct iked *env, struct iked_sa *sa,
 		ke->kex_dhgroup = htobe16(group->id);
 		if (ikev2_add_buf(e, sa->sa_dhiexchange) == -1)
 			goto done;
-		len = sizeof(*ke) + dh_getlen(group);
+		len = sizeof(*ke) + ibuf_length(sa->sa_dhiexchange);
 	}
 
 	if ((len = ikev2_add_ts(e, &pld, len, sa, !initiator)) == -1)
@@ -3910,7 +3910,7 @@ ikev2_ike_sa_rekey(struct iked *env, void *arg)
 	ke->kex_dhgroup = htobe16(group->id);
 	if (ikev2_add_buf(e, nsa->sa_dhiexchange) == -1)
 		goto done;
-	len = sizeof(*ke) + dh_getlen(group);
+	len = sizeof(*ke) + ibuf_length(sa->sa_dhiexchange);
 
 	if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_NONE) == -1)
 		goto done;
@@ -4605,7 +4605,7 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 		ke->kex_dhgroup = htobe16(kex->kex_dhgroup->id);
 		if (ikev2_add_buf(e, kex->kex_dhrexchange) == -1)
 			goto done;
-		len = sizeof(*ke) + dh_getlen(kex->kex_dhgroup);
+		len = sizeof(*ke) + ibuf_length(kex->kex_dhrexchange);
 	}
 
 	if (protoid != IKEV2_SAPROTO_IKE)
@@ -4942,14 +4942,8 @@ ikev2_sa_initiator_dh(struct iked_sa *sa, struct iked_message *msg,
 	}
 
 	if (!ibuf_length(sa->sa_dhiexchange)) {
-		if ((sa->sa_dhiexchange = ibuf_new(NULL,
-		    dh_getlen(sa->sa_dhgroup))) == NULL) {
-			log_info("%s: failed to alloc dh exchange",
-			    SPI_SA(sa, __func__));
-			return (-1);
-		}
 		if (dh_create_exchange(sa->sa_dhgroup,
-		    sa->sa_dhiexchange->buf) == -1) {
+		    &sa->sa_dhiexchange, NULL) == -1) {
 			log_debug("%s: failed to get dh exchange", __func__);
 			return (-1);
 		}
@@ -4962,13 +4956,6 @@ ikev2_sa_initiator_dh(struct iked_sa *sa, struct iked_message *msg,
 	if (!ibuf_length(sa->sa_dhrexchange)) {
 		if (!ibuf_length(msg->msg_ke)) {
 			log_debug("%s: invalid peer dh exchange", __func__);
-			return (-1);
-		}
-		if ((ssize_t)ibuf_length(msg->msg_ke) !=
-		    dh_getlen(sa->sa_dhgroup)) {
-			log_info("%s: invalid dh length, size %d",
-			    SPI_SA(msg->msg_sa, __func__),
-			    dh_getlen(sa->sa_dhgroup) * 8);
 			return (-1);
 		}
 		if ((sa->sa_dhrexchange = ibuf_dup(msg->msg_ke)) == NULL) {
@@ -5130,29 +5117,21 @@ ikev2_sa_responder_dh(struct iked_kex *kex, struct iked_proposals *proposals,
 		return (-1);
 	}
 
-	if (!ibuf_length(kex->kex_dhrexchange)) {
-		if ((kex->kex_dhrexchange = ibuf_new(NULL,
-		    dh_getlen(kex->kex_dhgroup))) == NULL) {
-			log_info("%s: failed to alloc dh exchange",
-			    SPI_SA(msg->msg_sa, __func__));
-			return (-1);
-		}
-		if (dh_create_exchange(kex->kex_dhgroup,
-		    kex->kex_dhrexchange->buf) == -1) {
-			log_info("%s: failed to get dh exchange",
-			    SPI_SA(msg->msg_sa ,__func__));
-			return (-1);
+	if (!ibuf_length(kex->kex_dhiexchange)) {
+		if ((kex->kex_dhiexchange = ibuf_dup(msg->msg_ke)) == NULL) {
+			/* XXX send notification to peer */
+			log_info("%s: invalid dh, size %zu",
+			    SPI_SA(msg->msg_sa, __func__),
+			    ibuf_length(msg->msg_ke));
+ 			return (-1);
 		}
 	}
 
-	if (!ibuf_length(kex->kex_dhiexchange)) {
-		if ((kex->kex_dhiexchange = ibuf_dup(msg->msg_ke)) == NULL ||
-		    ((ssize_t)ibuf_length(kex->kex_dhiexchange) !=
-		    dh_getlen(kex->kex_dhgroup))) {
-			/* XXX send notification to peer */
-			log_info("%s: invalid dh, size %d",
-			    SPI_SA(msg->msg_sa, __func__),
-			    dh_getlen(kex->kex_dhgroup) * 8);
+	if (!ibuf_length(kex->kex_dhrexchange)) {
+		if (dh_create_exchange(kex->kex_dhgroup,
+		    &kex->kex_dhrexchange, kex->kex_dhiexchange) == -1) {
+			log_info("%s: failed to get dh exchange",
+			    SPI_SA(msg->msg_sa ,__func__));
 			return (-1);
 		}
 	}
@@ -5283,12 +5262,7 @@ ikev2_sa_keys(struct iked *env, struct iked_sa *sa, struct ibuf *key)
 	/*
 	 *  Generate g^ir
 	 */
-	if ((dhsecret = ibuf_new(NULL, dh_secretlen(group))) == NULL) {
-		log_debug("%s: failed to alloc dh secret", __func__);
-		goto done;
-	}
-	if (dh_create_shared(group, dhsecret->buf,
-	    sa->sa_dhpeer->buf) == -1) {
+	if (dh_create_shared(group, &dhsecret, sa->sa_dhpeer) == -1) {
 		log_info("%s: failed to get dh secret"
 		    " group %d secret %zu exchange %zu",
 		    SPI_SA(sa, __func__),
@@ -5743,17 +5717,10 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 			log_debug("%s: no dh group for pfs", __func__);
 			goto done;
 		}
-		if ((dhsecret = ibuf_new(NULL, dh_secretlen(group))) == NULL) {
-			log_debug("%s: failed to alloc dh secret", __func__);
-			goto done;
-		}
-		if (dh_create_shared(group, dhsecret->buf,
-		    kex->kex_dhpeer->buf) == -1) {
+		if (dh_create_shared(group, &dhsecret, kex->kex_dhpeer) == -1) {
 			log_debug("%s: failed to get dh secret"
-			    " group %d len %d secretlen %d secret %zu"
-			    " exchange %zu", __func__, group->id,
-			    dh_getlen(group), dh_secretlen(group),
-			    ibuf_length(dhsecret),
+			    " group %d secret %zu exchange %zu",
+			    __func__, group->id, ibuf_length(dhsecret),
 			    ibuf_length(kex->kex_dhpeer));
 			goto done;
 		}

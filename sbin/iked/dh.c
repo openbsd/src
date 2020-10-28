@@ -1,4 +1,4 @@
-/*	$OpenBSD: dh.c,v 1.23 2020/04/28 15:18:52 tobhe Exp $	*/
+/*	$OpenBSD: dh.c,v 1.24 2020/10/28 20:54:13 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2014 Reyk Floeter <reyk@openbsd.org>
@@ -19,6 +19,14 @@
 #include <sys/param.h>	/* roundup */
 #include <string.h>
 
+#include <sys/queue.h>
+#include <sys/socket.h>
+#include <sys/uio.h>
+#include <event.h>
+#include <imsg.h>
+
+#include <openssl/evp.h>
+#include <openssl/sha.h>
 #include <openssl/obj_mac.h>
 #include <openssl/dh.h>
 #include <openssl/ec.h>
@@ -26,8 +34,11 @@
 #include <openssl/bn.h>
 
 #include "dh.h"
+#include "iked.h"
 
 int	dh_init(struct group *);
+int	dh_getlen(struct group *);
+int	dh_secretlen(struct group *);
 
 /* MODP */
 int	modp_init(struct group *);
@@ -352,15 +363,32 @@ dh_secretlen(struct group *group)
 }
 
 int
-dh_create_exchange(struct group *group, uint8_t *buf)
+dh_create_exchange(struct group *group, struct ibuf **bufp, struct ibuf *iexchange)
 {
-	return (group->exchange(group, buf));
+	struct ibuf *buf;
+
+	*bufp = NULL;
+	buf = ibuf_new(NULL, dh_getlen(group));
+	if (buf == NULL)
+		return -1;
+	*bufp = buf;
+	return (group->exchange(group, buf->buf));
 }
 
 int
-dh_create_shared(struct group *group, uint8_t *secret, uint8_t *exchange)
+dh_create_shared(struct group *group, struct ibuf **secretp, struct ibuf *exchange)
 {
-	return (group->shared(group, secret, exchange));
+	struct ibuf *buf;
+
+	*secretp = NULL;
+	if (exchange == NULL ||
+	    (ssize_t)ibuf_size(exchange) != dh_getlen(group))
+		return -1;
+	buf = ibuf_new(NULL, dh_secretlen(group));
+	if (buf == NULL)
+		return -1;
+	*secretp = buf;
+	return (group->shared(group, buf->buf, exchange->buf));
 }
 
 int

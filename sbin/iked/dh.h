@@ -1,4 +1,4 @@
-/*	$OpenBSD: dh.h,v 1.12 2020/04/28 15:18:52 tobhe Exp $	*/
+/*	$OpenBSD: dh.h,v 1.13 2020/10/28 20:54:13 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -58,9 +58,7 @@ struct group	*group_get(uint32_t);
 const struct group_id
 		*group_getid(uint32_t);
 
-int		 dh_getlen(struct group *);
-int		 dh_secretlen(struct group *);
-int		 dh_create_exchange(struct group *, uint8_t *);
-int		 dh_create_shared(struct group *, uint8_t *, uint8_t *);
+int		 dh_create_exchange(struct group *, struct ibuf **, struct ibuf *);
+int		 dh_create_shared(struct group *, struct ibuf **, struct ibuf *);
 
 #endif /* DH_GROUP_H */
