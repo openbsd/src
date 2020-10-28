@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.7,v 1.58 2020/10/14 14:22:22 schwarze Exp $
+.\"	$OpenBSD: man.7,v 1.59 2020/10/28 15:31:32 schwarze Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2011-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 14 2020 $
+.Dd $Mdocdate: October 28 2020 $
 .Dt MAN 7
 .Os
 .Sh NAME
@@ -612,21 +612,32 @@ The
 language first appeared as a macro package for the roff typesetting
 system in
 .At v7 .
-It was later rewritten by
+.Pp
+The stand-alone implementation that is part of the
+.Xr mandoc 1
+utility first appeared in
+.Ox 4.6 .
+.Sh AUTHORS
+.An -nosplit
+.An Douglas McIlroy Aq Mt m.douglas.mcilroy@dartmouth.edu
+designed and implemented the original version of these macros,
+wrote the original version of this manual page,
+and was the first to use them when he edited volume 1 of the
+.At v7
+manual pages.
+.Pp
 .An James Clark
-as a macro package for groff.
+later rewrote the macros for groff.
 .An Eric S. Raymond Aq Mt esr@thyrsus.com
 and
 .An Werner Lemberg Aq Mt wl@gnu.org
-wrote the extended
+added the extended
 .Nm
-macros for groff in 2007.
-The stand-alone implementation that is part of the
+macros to groff in 2007.
+.Pp
+The
 .Xr mandoc 1
-utility written by Kristaps Dzonsons appeared in
-.Ox 4.6 .
-.Sh AUTHORS
-This
+program and this
 .Nm
-reference was written by
+reference were written by
 .An Kristaps Dzonsons Aq Mt kristaps@bsd.lv .
