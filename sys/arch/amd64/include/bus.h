@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.34 2017/06/04 06:21:37 sf Exp $	*/
+/*	$OpenBSD: bus.h,v 1.35 2020/10/28 09:58:57 jsg Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -478,13 +478,13 @@ bus_space_barrier(bus_space_tag_t space, bus_space_handle_t
 {
 	switch (flags) {
 	case (BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE):
-		__asm volatile("mfence");
+		__asm volatile("mfence" ::: "memory");
 		break;
 	case BUS_SPACE_BARRIER_WRITE:
-		__asm volatile("sfence");
+		__asm volatile("sfence" ::: "memory");
 		break;
 	default:
-		__asm volatile("lfence");
+		__asm volatile("lfence" ::: "memory");
 		break;
 	}
 }
