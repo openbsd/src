@@ -371,13 +371,13 @@ static void radeon_doorbell_fini(struct radeon_device *rdev)
 {
 #ifdef __linux__
 	iounmap(rdev->doorbell.ptr);
-	rdev->doorbell.ptr = NULL;
 #else
 	if (rdev->doorbell.size > 0)
 		bus_space_unmap(rdev->memt, rdev->doorbell.bsh,
 		    rdev->doorbell.size);
 	rdev->doorbell.size = 0;
 #endif
+	rdev->doorbell.ptr = NULL;
 }
 
 /**
@@ -1561,7 +1561,6 @@ void radeon_device_fini(struct radeon_device *rdev)
 		pci_iounmap(rdev->pdev, rdev->rio_mem);
 	rdev->rio_mem = NULL;
 	iounmap(rdev->rmmio);
-	rdev->rmmio = NULL;
 #else
 	if (rdev->rio_mem_size > 0)
 		bus_space_unmap(rdev->iot, rdev->rio_mem, rdev->rio_mem_size);
@@ -1571,6 +1570,7 @@ void radeon_device_fini(struct radeon_device *rdev)
 		bus_space_unmap(rdev->memt, rdev->rmmio_bsh, rdev->rmmio_size);
 	rdev->rmmio_size = 0;
 #endif
+	rdev->rmmio = NULL;
 	if (rdev->family >= CHIP_BONAIRE)
 		radeon_doorbell_fini(rdev);
 }

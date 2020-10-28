@@ -4117,10 +4117,8 @@ uint32_t r100_mm_rreg_slow(struct radeon_device *rdev, uint32_t reg)
 	uint32_t ret;
 
 	spin_lock_irqsave(&rdev->mmio_idx_lock, flags);
-	bus_space_write_4(rdev->memt, rdev->rmmio_bsh,
-	    RADEON_MM_INDEX, reg);
-	ret = bus_space_read_4(rdev->memt, rdev->rmmio_bsh,
-	    RADEON_MM_DATA);
+	writel(reg, ((void __iomem *)rdev->rmmio) + RADEON_MM_INDEX);
+	ret = readl(((void __iomem *)rdev->rmmio) + RADEON_MM_DATA);
 	spin_unlock_irqrestore(&rdev->mmio_idx_lock, flags);
 	return ret;
 }
@@ -4130,10 +4128,8 @@ void r100_mm_wreg_slow(struct radeon_device *rdev, uint32_t reg, uint32_t v)
 	unsigned long flags;
 
 	spin_lock_irqsave(&rdev->mmio_idx_lock, flags);
-	bus_space_write_4(rdev->memt, rdev->rmmio_bsh,
-	    RADEON_MM_INDEX, reg);
-	bus_space_write_4(rdev->memt, rdev->rmmio_bsh,
-	    RADEON_MM_DATA, v);
+	writel(reg, ((void __iomem *)rdev->rmmio) + RADEON_MM_INDEX);
+	writel(v, ((void __iomem *)rdev->rmmio) + RADEON_MM_DATA);
 	spin_unlock_irqrestore(&rdev->mmio_idx_lock, flags);
 }
 
