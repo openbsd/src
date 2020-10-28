@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.72 2020/08/21 04:47:52 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.73 2020/10/28 07:09:37 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -3068,6 +3068,8 @@ mcx_cmdq_post(struct mcx_softc *sc, struct mcx_cmdq_entry *cqe,
 	    0, MCX_DMA_LEN(&sc->sc_cmdq_mem), BUS_DMASYNC_PRERW);
 
 	mcx_wr(sc, MCX_CMDQ_DOORBELL, 1U << slot);
+	mcx_bar(sc, MCX_CMDQ_DOORBELL, sizeof(uint32_t),
+	    BUS_SPACE_BARRIER_WRITE);
 }
 
 static int
