@@ -1623,12 +1623,14 @@ amdgpu_attach(struct device *parent, struct device *self, void *aux)
 	if (adev->family >= CHIP_BONAIRE) {
 		type = pci_mapreg_type(pa->pa_pc, pa->pa_tag, 0x18);
 		if (PCI_MAPREG_TYPE(type) != PCI_MAPREG_TYPE_MEM ||
-		    pci_mapreg_map(pa, 0x18, type, 0,
+		    pci_mapreg_map(pa, 0x18, type, BUS_SPACE_MAP_LINEAR,
 		    &adev->doorbell.bst, &adev->doorbell.bsh,
 		    &adev->doorbell.base, &adev->doorbell.size, 0)) {
 			printf(": can't map doorbell space\n");
 			return;
 		}
+		adev->doorbell.ptr = bus_space_vaddr(adev->doorbell.bst,
+		    adev->doorbell.bsh);
 	}
 
 	if (adev->family >= CHIP_BONAIRE)
@@ -1638,12 +1640,13 @@ amdgpu_attach(struct device *parent, struct device *self, void *aux)
 
 	type = pci_mapreg_type(pa->pa_pc, pa->pa_tag, rmmio_bar);
 	if (PCI_MAPREG_TYPE(type) != PCI_MAPREG_TYPE_MEM ||
-	    pci_mapreg_map(pa, rmmio_bar, type, 0,
+	    pci_mapreg_map(pa, rmmio_bar, type, BUS_SPACE_MAP_LINEAR,
 	    &adev->rmmio_bst, &adev->rmmio_bsh, &adev->rmmio_base,
 	    &adev->rmmio_size, 0)) {
 		printf(": can't map rmmio space\n");
 		return;
 	}
+	adev->rmmio = bus_space_vaddr(adev->rmmio_bst, adev->rmmio_bsh);
 
 	/*
 	 * Make sure we have a base address for the ROM such that we

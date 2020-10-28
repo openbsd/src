@@ -28,12 +28,9 @@ struct amdgpu_doorbell {
 	/* doorbell mmio */
 	resource_size_t		base;
 	resource_size_t		size;
-#ifdef __linux__
 	u32 __iomem		*ptr;
-#else
 	bus_space_tag_t		bst;
 	bus_space_handle_t	bsh;
-#endif
 	u32			num_doorbells;	/* Number of doorbells actually reserved for amdgpu. */
 };
 

@@ -785,9 +785,7 @@ struct amdgpu_device {
 	/* Register/doorbell mmio */
 	resource_size_t			rmmio_base;
 	resource_size_t			rmmio_size;
-#ifdef __linux__
 	void __iomem			*rmmio;
-#endif
 	bus_space_tag_t			rmmio_bst;
 	bus_space_handle_t		rmmio_bsh;
 	/* protects concurrent MM_INDEX/DATA based register access */
