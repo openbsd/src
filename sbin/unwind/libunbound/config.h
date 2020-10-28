@@ -114,6 +114,10 @@
    don't. */
 #define HAVE_DECL_INET_PTON 1
 
+/* Define to 1 if you have the declaration of `nghttp2_session_server_new',
+   and to 0 if you don't. */
+/* #undef HAVE_DECL_NGHTTP2_SESSION_SERVER_NEW */
+
 /* Define to 1 if you have the declaration of `NID_ED25519', and to 0 if you
    don't. */
 #define HAVE_DECL_NID_ED25519 0
@@ -222,6 +226,9 @@
 /* Define to 1 if you have the `EVP_EncryptInit_ex' function. */
 #define HAVE_EVP_ENCRYPTINIT_EX 1
 
+/* Define to 1 if you have the `EVP_MAC_CTX_set_params' function. */
+/* #undef HAVE_EVP_MAC_CTX_SET_PARAMS */
+
 /* Define to 1 if you have the `EVP_MD_CTX_new' function. */
 #define HAVE_EVP_MD_CTX_NEW 1
 
@@ -270,6 +277,9 @@
 /* Define to 1 if you have the `getentropy' function. */
 /* #undef HAVE_GETENTROPY */
 
+/* Define to 1 if you have the `getifaddrs' function. */
+#define HAVE_GETIFADDRS 1
+
 /* Define to 1 if you have the <getopt.h> header file. */
 #define HAVE_GETOPT_H 1
 
@@ -297,11 +307,11 @@
 /* Define to 1 if you have the `HMAC_Init_ex' function. */
 #define HAVE_HMAC_INIT_EX 1
 
-/* If you have HMAC_Update */
-#define HAVE_HMAC_UPDATE 1
-
 /* If we have htobe64 */
 #define HAVE_HTOBE64 1
+
+/* Define to 1 if you have the <ifaddrs.h> header file. */
+#define HAVE_IFADDRS_H 1
 
 /* Define to 1 if you have the `inet_aton' function. */
 #define HAVE_INET_ATON 1
@@ -371,6 +381,15 @@
 
 /* Define to 1 if you have the <nettle/eddsa.h> header file. */
 /* #undef HAVE_NETTLE_EDDSA_H */
+
+/* Define to 1 if you have the <net/if.h> header file. */
+#define HAVE_NET_IF_H 1
+
+/* Define this to use nghttp2 client. */
+/* #undef HAVE_NGHTTP2 */
+
+/* Define to 1 if you have the <nghttp2/nghttp2.h> header file. */
+/* #undef HAVE_NGHTTP2_NGHTTP2_H */
 
 /* Use libnss for crypto */
 /* #undef HAVE_NSS */
@@ -498,6 +517,9 @@
 /* Define if you have the SSL libraries installed. */
 #define HAVE_SSL /**/
 
+/* Define to 1 if you have the `SSL_CTX_set_alpn_select_cb' function. */
+#define HAVE_SSL_CTX_SET_ALPN_SELECT_CB 1
+
 /* Define to 1 if you have the `SSL_CTX_set_ciphersuites' function. */
 /* #undef HAVE_SSL_CTX_SET_CIPHERSUITES */
 
@@ -573,6 +595,9 @@
 
 /* Define to 1 if you have the <sys/resource.h> header file. */
 #define HAVE_SYS_RESOURCE_H 1
+
+/* Define to 1 if you have the <sys/select.h> header file. */
+#define HAVE_SYS_SELECT_H 1
 
 /* Define to 1 if you have the <sys/sha2.h> header file. */
 /* #undef HAVE_SYS_SHA2_H */
@@ -705,7 +730,7 @@
 #define PACKAGE_NAME "unbound"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "unbound 1.11.0"
+#define PACKAGE_STRING "unbound 1.12.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "unbound"
@@ -714,7 +739,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.11.0"
+#define PACKAGE_VERSION "1.12.0"
 
 /* default pidfile location */
 #define PIDFILE ""
@@ -736,7 +761,7 @@
 #define ROOT_CERT_FILE "/var/unbound/etc/icannbundle.pem"
 
 /* version number for resource files */
-#define RSRC_PACKAGE_VERSION 1,11,0,0
+#define RSRC_PACKAGE_VERSION 1,12,0,0
 
 /* Directory to chdir to */
 #define RUN_DIR "/var/unbound/etc"
@@ -1359,6 +1384,8 @@ void *unbound_stat_realloc_log(void *ptr, size_t size, const char* file,
 #define UNBOUND_DNS_PORT 53
 /** default port for DNS over TLS traffic. */
 #define UNBOUND_DNS_OVER_TLS_PORT 853
+/** default port for DNS over HTTPS traffic. */
+#define UNBOUND_DNS_OVER_HTTPS_PORT 443
 /** default port for unbound control traffic, registered port with IANA,
     ub-dns-control  8953/tcp    unbound dns nameserver control */
 #define UNBOUND_CONTROL_PORT 8953
