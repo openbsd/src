@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.724 2020/10/25 09:03:01 phessler Exp $
+$OpenBSD: usbdevs,v 1.725 2020/10/28 20:40:02 kettenis Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -951,6 +951,13 @@ product APPLE FOUNTAIN_ANSI	0x020e	Keyboard/Trackpad
 product APPLE FOUNTAIN_ISO	0x020f	Keyboard/Trackpad
 product APPLE GEYSER_ANSI	0x0214	Keyboard/Trackpad
 product APPLE GEYSER_ISO	0x0215	Keyboard/Trackpad
+product APPLE GEYSER_JIS	0x0216	Keyboard/Trackpad
+product APPLE GEYSER3_ANSI	0x0217	Keyboard/Trackpad
+product APPLE GEYSER3_ISO	0x0218	Keyboard/Trackpad
+product APPLE GEYSER3_JIS	0x0219	Keyboard/Trackpad
+product APPLE GEYSER4_ANSI	0x021a	Keyboard/Trackpad
+product APPLE GEYSER4_ISO	0x021b	Keyboard/Trackpad
+product APPLE GEYSER4_JIS	0x021c	Keyboard/Trackpad
 product APPLE WELLSPRING_ANSI	0x0223	Keyboard/Trackpad
 product APPLE WELLSPRING_ISO	0x0224	Keyboard/Trackpad
 product APPLE WELLSPRING_JIS	0x0225	Keyboard/Trackpad
