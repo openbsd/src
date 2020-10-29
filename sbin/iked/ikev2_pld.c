@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.107 2020/10/24 20:27:59 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.108 2020/10/29 21:49:58 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1805,8 +1805,12 @@ ikev2_pld_cp(struct iked *env, struct ikev2_payload *pld,
 {
 	struct ikev2_cp		 cp;
 	struct ikev2_cfg	*cfg;
+	struct iked_addr	*addr;
+	struct sockaddr_in	*in4;
+	struct sockaddr_in6	*in6;
 	uint8_t			*ptr;
 	size_t			 len;
+	uint8_t			 buf[128];
 
 	if (ikev2_validate_cp(msg, offset, left, &cp))
 		return (-1);
@@ -1839,6 +1843,71 @@ ikev2_pld_cp(struct iked *env, struct ikev2_payload *pld,
 			    "cfg_length (%zu < %u)", __func__, len,
 			    betoh16(cfg->cfg_length));
 			return (-1);
+		}
+
+		print_hex(ptr, sizeof(*cfg), betoh16(cfg->cfg_length));
+
+		switch (betoh16(cfg->cfg_type)) {
+		case IKEV2_CFG_INTERNAL_IP4_ADDRESS:
+			if (!ikev2_msg_frompeer(msg))
+				break;
+			if (betoh16(cfg->cfg_length) == 0)
+				break;
+			/* XXX multiple-valued */
+			if (betoh16(cfg->cfg_length) < 4) {
+				log_debug("%s: malformed payload: too short "
+				    "for ipv4 addr (%u < %u)",
+				    __func__, betoh16(cfg->cfg_length), 4);
+				return (-1);
+			}
+			if (msg->msg_parent->msg_cp_addr != NULL) {
+				log_debug("%s: address already set", __func__);
+				break;
+			}
+			if ((addr = calloc(1, sizeof(*addr))) == NULL) {
+				log_debug("%s: malloc failed", __func__);
+				break;
+			}
+			addr->addr_af = AF_INET;
+			in4 = (struct sockaddr_in *)&addr->addr;
+			in4->sin_family = AF_INET;
+			in4->sin_len = sizeof(*in4);
+			memcpy(&in4->sin_addr.s_addr, ptr, 4);
+			print_host((struct sockaddr *)in4, (char *)buf,
+			    sizeof(buf));
+			log_debug("%s: cfg %s", __func__, buf);
+			msg->msg_parent->msg_cp_addr = addr;
+			break;
+		case IKEV2_CFG_INTERNAL_IP6_ADDRESS:
+			if (!ikev2_msg_frompeer(msg))
+				break;
+			if (betoh16(cfg->cfg_length) == 0)
+				break;
+			/* XXX multiple-valued */
+			if (betoh16(cfg->cfg_length) < 16 + 1) {
+				log_debug("%s: malformed payload: too short "
+				    "for ipv6 addr w/prefixlen (%u < %u)",
+				    __func__, betoh16(cfg->cfg_length), 16 + 1);
+				return (-1);
+			}
+			if (msg->msg_parent->msg_cp_addr6 != NULL) {
+				log_debug("%s: address already set", __func__);
+				break;
+			}
+			if ((addr = calloc(1, sizeof(*addr))) == NULL) {
+				log_debug("%s: malloc failed", __func__);
+				break;
+			}
+			addr->addr_af = AF_INET6;
+			in6 = (struct sockaddr_in6 *)&addr->addr;
+			in6->sin6_family = AF_INET6;
+			in6->sin6_len = sizeof(*in6);
+			memcpy(&in6->sin6_addr, ptr, 16);
+			print_host((struct sockaddr *)in6, (char *)buf,
+			    sizeof(buf));
+			log_debug("%s: cfg %s/%d", __func__, buf, ptr[16]);
+			msg->msg_parent->msg_cp_addr6 = addr;
+			break;
 		}
 
 		ptr += betoh16(cfg->cfg_length);

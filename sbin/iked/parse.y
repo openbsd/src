@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.114 2020/09/23 14:25:55 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.115 2020/10/29 21:49:58 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -456,6 +456,7 @@ typedef struct {
 %token	ENFORCESINGLEIKESA NOENFORCESINGLEIKESA
 %token	TOLERATE MAXAGE
 %token	CERTPARTIALCHAIN
+%token	REQUEST
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.string>		string
@@ -607,6 +608,19 @@ cfg		: CONFIG STRING host_spec	{
 			$$ = $3;
 			$$->type = xf->id;
 			$$->action = IKEV2_CP_REPLY;	/* XXX */
+		}
+		| REQUEST STRING host_spec	{
+			const struct ipsec_xf	*xf;
+
+			if ((xf = parse_xf($2, $3->af, cpxfs)) == NULL) {
+				yyerror("not a valid ikecfg option");
+				free($2);
+				free($3);
+				YYERROR;
+			}
+			$$ = $3;
+			$$->type = xf->id;
+			$$->action = IKEV2_CP_REQUEST;	/* XXX */
 		}
 		;
 
@@ -1352,6 +1366,7 @@ lookup(char *s)
 		{ "psk",		PSK },
 		{ "quick",		QUICK },
 		{ "rdomain",		RDOMAIN },
+		{ "request",		REQUEST },
 		{ "sa",			SA },
 		{ "set",		SET },
 		{ "skip",		SKIP },
