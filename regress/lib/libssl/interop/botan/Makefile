@@ -1,10 +1,10 @@
-# $OpenBSD: Makefile,v 1.1 2020/09/15 01:45:16 bluhm Exp $
+# $OpenBSD: Makefile,v 1.2 2020/10/29 06:05:12 tb Exp $
 
 .if ! exists(/usr/local/bin/botan)
 regress:
 	# install botan2 from ports for interop tests
 	@echo SKIPPED
-.endif
+.else
 
 LIBRARIES =		libressl
 .if exists(/usr/local/bin/eopenssl)
@@ -66,5 +66,7 @@ server.req: ${@:R}.key
 server.crt: ca.crt ${@:R}.req
 	/usr/local/bin/botan sign_cert ca.crt ca.key ${@:R}.req >$@.tmp
 	mv $@.tmp $@
+
+.endif # exists(/usr/local/bin/botan)
 
 .include <bsd.regress.mk>

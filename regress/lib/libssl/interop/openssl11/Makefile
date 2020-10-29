@@ -1,10 +1,10 @@
-# $OpenBSD: Makefile,v 1.5 2018/11/11 00:15:04 bluhm Exp $
+# $OpenBSD: Makefile,v 1.6 2020/10/29 06:05:12 tb Exp $
 
 .if ! exists(/usr/local/bin/eopenssl11)
 regress:
 	# install openssl-1.1 from ports for interop tests
 	@echo SKIPPED
-.endif
+.else
 
 PROGS =			client server
 CPPFLAGS =		-I /usr/local/include/eopenssl11
@@ -39,5 +39,7 @@ run-protocol-$p: $p-self.out
 	grep 'Protocol *: TLSv1.3' $p-self.out
 
 .endfor
+
+.endif # exists(/usr/local/bin/eopenssl11)
 
 .include <bsd.regress.mk>
