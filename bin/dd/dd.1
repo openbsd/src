@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dd.1,v 1.38 2020/05/17 17:04:29 deraadt Exp $
+.\"	$OpenBSD: dd.1,v 1.39 2020/10/29 07:01:24 jmc Exp $
 .\"	$NetBSD: dd.1,v 1.5 1995/03/21 09:04:04 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)dd.1	8.2 (Berkeley) 1/13/94
 .\"
-.Dd $Mdocdate: May 17 2020 $
+.Dd $Mdocdate: October 29 2020 $
 .Dt DD 1
 .Os
 .Sh NAME
@@ -319,11 +319,12 @@ will exit.
 .Sh EXIT STATUS
 .Ex -std dd
 .Sh EXAMPLES
-Write an
+Write a bootable
 .Ox
-floppy image to a floppy disk:
+disk image to a USB flash drive attached at
+.Pa /dev/sd3 :
 .Pp
-.Dl # dd if=floppy67.img of=/dev/rfd0c bs=32k
+.Dl # dd if=install68.img of=/dev/rsd3c bs=1m
 .Pp
 Create an ISO-9660 image of a CD-ROM:
 .Pp
