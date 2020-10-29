@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unwind.conf.5,v 1.23 2019/12/08 09:47:50 florian Exp $
+.\"	$OpenBSD: unwind.conf.5,v 1.24 2020/10/29 17:28:12 solene Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 8 2019 $
+.Dd $Mdocdate: October 29 2020 $
 .Dt UNWIND.CONF 5
 .Os
 .Sh NAME
@@ -99,6 +99,7 @@ See
 .Xr asr_run 3 .
 Will never validate.
 Useful when running behind broken middle boxes that do not like edns0.
+DNS answers from stub name servers are not cached.
 .It Ic dhcp
 Name servers learned via DHCP or SLAAC.
 .It Ic oDoT-dhcp

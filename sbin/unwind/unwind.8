@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unwind.8,v 1.8 2020/04/21 17:03:44 florian Exp $
+.\"	$OpenBSD: unwind.8,v 1.9 2020/10/29 17:28:12 solene Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2016 Kenneth R Westerback <kwesterback@gmail.com>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 21 2020 $
+.Dd $Mdocdate: October 29 2020 $
 .Dt UNWIND 8
 .Os
 .Sh NAME
@@ -38,6 +38,13 @@ learned from
 if it detects that DNS queries are blocked by the local network.
 It periodically probes if DNS is no longer blocked and switches back to
 querying nameservers itself.
+.Pp
+.Nm
+keeps the DNS answers in a cache shared by the different DNS name
+server types.
+.Nm
+manages the cache size by deleting oldest entries when needed.
+The cache is non-configurable and is lost upon process restart.
 .Pp
 To have
 .Nm
