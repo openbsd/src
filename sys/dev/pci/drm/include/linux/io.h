@@ -16,12 +16,18 @@
 #define memcpy_fromio(d, s, n)	memcpy(d, s, n)
 #define memset_io(d, b, n)	memset(d, b, n)
 
+#ifdef __powerpc__
+#define iobarrier()		mb()
+#else
+#define iobarrier()		barrier()
+#endif
+
 static inline u8
 ioread8(const volatile void __iomem *addr)
 {
 	uint8_t val;
 
-	barrier();
+	iobarrier();
 	val = *(volatile uint8_t *)addr;
 	rmb();
 	return val;
@@ -47,7 +53,7 @@ ioread16(const volatile void __iomem *addr)
 {
 	uint16_t val;
 
-	barrier();
+	iobarrier();
 	val = *(volatile uint16_t *)addr;
 	rmb();
 	return val;
@@ -58,7 +64,7 @@ ioread32(const volatile void __iomem *addr)
 {
 	uint32_t val;
 
-	barrier();
+	iobarrier();
 	val = *(volatile uint32_t *)addr;
 	rmb();
 	return val;
@@ -69,7 +75,7 @@ ioread64(const volatile void __iomem *addr)
 {
 	uint64_t val;
 
-	barrier();
+	iobarrier();
 	val = *(volatile uint64_t *)addr;
 	rmb();
 	return val;
@@ -103,7 +109,7 @@ ioread16(const volatile void __iomem *addr)
 {
 	uint16_t val;
 
-	barrier();
+	iobarrier();
 	val = lemtoh16(addr);
 	rmb();
 	return val;
@@ -114,7 +120,7 @@ ioread32(const volatile void __iomem *addr)
 {
 	uint32_t val;
 	
-	barrier();
+	iobarrier();
 	val = lemtoh32(addr);
 	rmb();
 	return val;
@@ -125,7 +131,7 @@ ioread64(const volatile void __iomem *addr)
 {
 	uint64_t val;
 
-	barrier();
+	iobarrier();
 	val = lemtoh64(addr);
 	rmb();
 	return val;
