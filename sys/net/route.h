@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.182 2020/08/13 04:58:22 jmatthew Exp $	*/
+/*	$OpenBSD: route.h,v 1.183 2020/10/29 21:15:27 denis Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -238,6 +238,7 @@ struct rt_msghdr {
 #define RTM_PROPOSAL	0x13	/* proposal for netconfigd */
 #define RTM_CHGADDRATTR	0x14	/* address attribute change */
 #define RTM_80211INFO	0x15	/* 80211 iface change */
+#define RTM_SOURCE	0x16	/* set source address */
 
 #define RTV_MTU		0x1	/* init or lock _mtu */
 #define RTV_HOPCOUNT	0x2	/* init or lock _hopcount */

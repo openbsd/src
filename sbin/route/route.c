@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.248 2020/07/07 14:53:36 yasuoka Exp $	*/
+/*	$OpenBSD: route.c,v 1.249 2020/10/29 21:15:26 denis Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
+#include <ifaddrs.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
@@ -68,7 +69,8 @@
 const struct if_status_description
 			if_status_descriptions[] = LINK_STATE_DESCRIPTIONS;
 
-union sockunion so_dst, so_gate, so_mask, so_ifa, so_ifp, so_src, so_label;
+union sockunion so_dst, so_gate, so_mask, so_ifa, so_ifp, so_src, so_label,
+    so_source;
 
 typedef union sockunion *sup;
 pid_t	pid;
@@ -85,6 +87,8 @@ struct rt_metrics	rt_metrics;
 
 int	 flushroutes(int, char **);
 int	 newroute(int, char **);
+int	 setsource(int, char **);
+int	 pushsrc(int, char *, int);
 int	 show(int, char *[]);
 int	 keycmp(const void *, const void *);
 int	 keyword(char *);
@@ -132,7 +136,8 @@ usage(char *cp)
 	    "usage: %s [-dnqtv] [-T rtable] command [[modifiers] args]\n",
 	    __progname);
 	fprintf(stderr,
-	    "commands: add, change, delete, exec, flush, get, monitor, show\n");
+	    "commands: add, change, delete, exec, flush, get, monitor, show, "
+	    "sourceaddr\n");
 	exit(1);
 }
 
@@ -257,6 +262,10 @@ main(int argc, char **argv)
 		break;
 	case K_FLUSH:
 		exit(flushroutes(argc, argv));
+		break;
+	case K_SOURCEADDR:
+		nflag = 1;
+		exit(setsource(argc, argv));
 		break;
 	}
 
@@ -450,6 +459,92 @@ set_metric(char *value, int key)
 		locking = 0;
 }
 
+
+int
+setsource(int argc, char **argv)
+{
+	struct ifaddrs	*ifap, *ifa = NULL;
+	char *cmd;
+	int af = AF_UNSPEC, ret = 0, key;
+	unsigned int ifindex = 0;
+
+	cmd = argv[0];
+	while (--argc > 0) {
+		if (**(++argv)== '-') {
+			switch (key = keyword(1 + *argv)) {
+			case K_INET:
+				af = AF_INET;
+				aflen = sizeof(struct sockaddr_in);
+				break;
+			case K_INET6:
+				af = AF_INET6;
+				aflen = sizeof(struct sockaddr_in6);
+				break;
+			case K_IFP:
+				if (!--argc)
+					usage(1+*argv);
+				ifindex = if_nametoindex(*++argv);
+				if (ifindex == 0)
+					errx(1, "no such interface %s", *argv);
+				break;
+			}
+		} else
+			break;
+	}
+
+	if (argc <= 0 && ifindex == 0)
+		printsource(af, tableid);
+	if (argc > 1 && ifindex == 0)
+		usage(NULL);
+
+	if (uid)
+		errx(1, "must be root to alter source address");
+
+	if (ifindex) {
+		if (getifaddrs(&ifap) == -1)
+			err(1, "getifaddrs");
+		for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+			if (if_nametoindex(ifa->ifa_name) != ifindex)
+				continue;
+			if (!(ifa->ifa_addr->sa_family == AF_INET ||
+			    ifa->ifa_addr->sa_family == AF_INET6))
+				continue;
+			if ((af != AF_UNSPEC) &&
+			    (ifa->ifa_addr->sa_family != af))
+				continue;
+			if (ifa->ifa_addr->sa_family == AF_INET6) {
+				struct sockaddr_in6 *sin6 =
+				    (struct sockaddr_in6 *)ifa->ifa_addr;
+				if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr) ||
+				    IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr))
+					continue;
+			}
+			if (pushsrc(*cmd, routename(ifa->ifa_addr),
+			    ifa->ifa_addr->sa_family))
+				break;
+		}
+		freeifaddrs(ifap);
+	} else {
+		ret = pushsrc(*cmd, *argv, af);
+	}
+
+	return (ret != 0);
+}
+
+int
+pushsrc(int cmd, char *src, int af)
+{
+	int ret = 0;
+
+	getaddr(RTA_IFA, af, src, NULL);
+
+	errno = 0;
+	ret = rtmsg(cmd, 0, 0, 0);
+	if (!qflag && ret != 0)
+		printf("sourceaddr %s: %s\n", src, strerror(errno));
+
+	return (ret);
+}
 int
 newroute(int argc, char **argv)
 {
@@ -830,6 +925,7 @@ getaddr(int which, int af, char *s, struct hostent **hpp)
 		errx(1, "internal error");
 		/* NOTREACHED */
 	}
+	memset(su, 0, sizeof(union sockunion));
 	su->sa.sa_len = aflength;
 	su->sa.sa_family = afamily;
 
@@ -1067,6 +1163,8 @@ rtmsg(int cmd, int flags, int fmask, uint8_t prio)
 			so_ifp.sa.sa_len = sizeof(struct sockaddr_dl);
 			rtm_addrs |= RTA_IFP;
 		}
+	} else if (cmd == 's') {
+		cmd = RTM_SOURCE;
 	} else
 		cmd = RTM_DELETE;
 #define rtm m_rtmsg.m_rtm

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.396 2020/08/13 04:26:11 jmatthew Exp $	*/
+/*	$OpenBSD: route.c,v 1.397 2020/10/29 21:15:27 denis Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1192,6 +1192,7 @@ rt_ifa_del(struct ifaddr *ifa, int flags, struct sockaddr *dst,
 	if (flags & RTF_CONNECTED)
 		prio = ifp->if_priority + RTP_CONNECTED;
 
+	rtable_clearsource(rdomain, ifa->ifa_addr);
 	error = rtrequest_delete(&info, prio, ifp, &rt, rdomain);
 	if (error == 0) {
 		rtm_send(rt, RTM_DELETE, 0, rdomain);

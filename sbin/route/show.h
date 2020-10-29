@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.h,v 1.15 2019/08/31 13:46:14 bluhm Exp $ */
+/*	$OpenBSD: show.h,v 1.16 2020/10/29 21:15:26 denis Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -29,6 +29,7 @@ union sockunion {
 	struct sockaddr_storage	padding;
 };
 
+void	 printsource(int, u_int);
 void	 get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 void	 p_rttables(int, u_int, char);
 void	 p_sockaddr(struct sockaddr *, struct sockaddr *, int, int);

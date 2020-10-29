@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.81 2016/12/02 11:16:04 mpi Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.82 2020/10/29 21:15:27 denis Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -100,6 +100,7 @@ in6_pcbselsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 	struct in6_addr *laddr = &inp->inp_laddr6;
 	u_int rtableid = inp->inp_rtableid;
 	struct ifnet *ifp = NULL;
+	struct sockaddr	*ip6_source = NULL;
 	struct in6_addr *dst;
 	struct in6_ifaddr *ia6 = NULL;
 	struct in6_pktinfo *pi = NULL;
@@ -215,6 +216,28 @@ in6_pcbselsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 		if (ia6 == NULL) /* xxx scope error ?*/
 			ia6 = ifatoia6(ro->ro_rt->rt_ifa);
 	}
+
+	/*
+	 * Use preferred source address if :
+	 * - destination is not onlink
+	 * - output interface is not PtoP
+	 * - preferred source addresss is set
+	 * - output interface is UP
+	 */
+	if ((ro->ro_rt && !(ro->ro_rt->rt_flags & RTF_LLINFO)) &&
+	    (ia6 && !(ia6->ia_ifp->if_flags & IFF_POINTOPOINT))) {
+		ip6_source = rtable_getsource(rtableid, AF_INET6);
+		if (ip6_source != NULL) {
+			struct ifaddr *ifa;
+			if ((ifa = ifa_ifwithaddr(ip6_source, rtableid)) !=
+			    NULL && ISSET(ifa->ifa_ifp->if_flags, IFF_UP)) {
+				*in6src = &((struct sockaddr_in6 *)
+				    ip6_source)->sin6_addr;
+				return (0);
+			}
+		}
+	}
+
 	if (ia6 == NULL)
 		return (EHOSTUNREACH);	/* no route */
 

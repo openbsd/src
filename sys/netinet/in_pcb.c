@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.249 2020/05/27 20:44:07 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.250 2020/10/29 21:15:27 denis Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -887,6 +887,7 @@ in_pcbselsrc(struct in_addr **insrc, struct sockaddr_in *sin,
 	struct route *ro = &inp->inp_route;
 	struct in_addr *laddr = &inp->inp_laddr;
 	u_int rtableid = inp->inp_rtableid;
+	struct sockaddr	*ip4_source = NULL;
 
 	struct sockaddr_in *sin2;
 	struct in_ifaddr *ia = NULL;
@@ -923,6 +924,7 @@ in_pcbselsrc(struct in_addr **insrc, struct sockaddr_in *sin,
 			return (0);
 		}
 	}
+
 	/*
 	 * If route is known or can be allocated now,
 	 * our src addr is taken from the i/f, else punt.
@@ -947,12 +949,34 @@ in_pcbselsrc(struct in_addr **insrc, struct sockaddr_in *sin,
 		sin2 = satosin(&ro->ro_dst);
 		memset(sin2->sin_zero, 0, sizeof(sin2->sin_zero));
 	}
+
 	/*
 	 * If we found a route, use the address
 	 * corresponding to the outgoing interface.
 	 */
 	if (ro->ro_rt != NULL)
 		ia = ifatoia(ro->ro_rt->rt_ifa);
+
+	/*
+	 * Use preferred source address if :
+	 * - destination is not onlink
+	 * - output interface is not PtoP
+	 * - preferred source addresss is set
+	 * - output interface is UP
+	 */
+	if ((ro->ro_rt && !(ro->ro_rt->rt_flags & RTF_LLINFO)) &&
+	    (ia && !(ia->ia_ifp->if_flags & IFF_POINTOPOINT))) {
+		ip4_source = rtable_getsource(rtableid, AF_INET);
+		if (ip4_source != NULL) {
+			struct ifaddr *ifa;
+			if ((ifa = ifa_ifwithaddr(ip4_source, rtableid)) !=
+			    NULL && ISSET(ifa->ifa_ifp->if_flags, IFF_UP)) {
+				*insrc = &((struct sockaddr_in *)
+				    ip4_source)->sin_addr;
+				return (0);
+			}
+		}
+	}
 
 	if (ia == NULL)
 		return (EADDRNOTAVAIL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.h,v 1.24 2019/06/21 17:11:42 mpi Exp $ */
+/*	$OpenBSD: rtable.h,v 1.25 2020/10/29 21:15:27 denis Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -39,6 +39,9 @@ unsigned int	 rtable_l2(unsigned int);
 unsigned int	 rtable_loindex(unsigned int);
 void		 rtable_l2set(unsigned int, unsigned int, unsigned int);
 
+int		 rtable_setsource(unsigned int, struct sockaddr *);
+struct sockaddr *rtable_getsource(unsigned int, int);
+void		 rtable_clearsource(unsigned int, struct sockaddr *);
 struct rtentry	*rtable_lookup(unsigned int, struct sockaddr *,
 		     struct sockaddr *, struct sockaddr *, uint8_t);
 struct rtentry	*rtable_match(unsigned int, struct sockaddr *, uint32_t *);

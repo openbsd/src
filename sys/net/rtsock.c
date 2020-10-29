@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.302 2020/09/23 17:52:58 mvs Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.303 2020/10/29 21:15:27 denis Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -662,7 +662,10 @@ rtm_report(struct rtentry *rt, u_char type, int seq, int tableid)
 	ifp = if_get(rt->rt_ifidx);
 	if (ifp != NULL) {
 		info.rti_info[RTAX_IFP] = sdltosa(ifp->if_sadl);
-		info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
+		info.rti_info[RTAX_IFA] =
+		    rtable_getsource(tableid, info.rti_info[RTAX_DST]->sa_family);
+		if (info.rti_info[RTAX_IFA] == NULL)
+			info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
 		if (ifp->if_flags & IFF_POINTOPOINT)
 			info.rti_info[RTAX_BRD] = rt->rt_ifa->ifa_dstaddr;
 	}
@@ -696,6 +699,7 @@ route_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 	struct rt_msghdr	*rtm = NULL;
 	struct rtentry		*rt = NULL;
 	struct rt_addrinfo	 info;
+	struct ifnet		*ifp;
 	int			 len, seq, error = 0;
 	u_int			 tableid;
 	u_int8_t		 prio;
@@ -738,6 +742,7 @@ route_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 	case RTM_GET:
 	case RTM_CHANGE:
 	case RTM_PROPOSAL:
+	case RTM_SOURCE:
 		break;
 	default:
 		error = EOPNOTSUPP;
@@ -776,7 +781,6 @@ route_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 		}
 	}
 
-
 	/* Do not let userland play with kernel-only flags. */
 	if ((rtm->rtm_flags & (RTF_LOCAL|RTF_BROADCAST)) != 0) {
 		error = EINVAL;
@@ -807,9 +811,12 @@ route_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 	if ((error = rtm_xaddrs(rtm->rtm_hdrlen + (caddr_t)rtm,
 	    len + (caddr_t)rtm, &info)) != 0)
 		goto fail;
+
 	info.rti_flags = rtm->rtm_flags;
-	if (rtm->rtm_type != RTM_PROPOSAL &&
-	   (info.rti_info[RTAX_DST] == NULL ||
+	
+	if (rtm->rtm_type != RTM_SOURCE &&
+	    rtm->rtm_type != RTM_PROPOSAL &&
+	    (info.rti_info[RTAX_DST] == NULL ||
 	    info.rti_info[RTAX_DST]->sa_family >= AF_MAX ||
 	    (info.rti_info[RTAX_GATEWAY] != NULL &&
 	    info.rti_info[RTAX_GATEWAY]->sa_family >= AF_MAX) ||
@@ -841,13 +848,20 @@ route_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 		 * umb(4) will send a response to this event.
 		 */
 		if (rtm->rtm_priority == RTP_PROPOSAL_SOLICIT) {
-			struct ifnet *ifp;
 			NET_LOCK();
 			TAILQ_FOREACH(ifp, &ifnet, if_list) {
 				ifp->if_rtrequest(ifp, RTM_PROPOSAL, NULL);
 			}
 			NET_UNLOCK();
 		}
+	} else if (rtm->rtm_type == RTM_SOURCE) {
+		if (info.rti_info[RTAX_IFA] == NULL) {
+			error = EINVAL;
+			goto fail;
+		}
+		if ((error =
+		    rtable_setsource(tableid, info.rti_info[RTAX_IFA])) != 0)
+			goto fail;
 	} else {
 		error = rtm_output(rtm, &rt, &info, prio, tableid);
 		if (!error) {
@@ -1671,7 +1685,10 @@ rtm_send(struct rtentry *rt, int cmd, int error, unsigned int rtableid)
 	ifp = if_get(rt->rt_ifidx);
 	if (ifp != NULL) {
 		info.rti_info[RTAX_IFP] = sdltosa(ifp->if_sadl);
-		info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
+		info.rti_info[RTAX_IFA] =
+		    rtable_getsource(rtableid, info.rti_info[RTAX_DST]->sa_family);
+		if (info.rti_info[RTAX_IFA] == NULL)
+			info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
 	}
 
 	rtm_miss(cmd, &info, rt->rt_flags, rt->rt_priority, rt->rt_ifidx, error,
@@ -1909,7 +1926,10 @@ sysctl_dumpentry(struct rtentry *rt, void *v, unsigned int id)
 	ifp = if_get(rt->rt_ifidx);
 	if (ifp != NULL) {
 		info.rti_info[RTAX_IFP] = sdltosa(ifp->if_sadl);
-		info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
+		info.rti_info[RTAX_IFA] =
+		    rtable_getsource(id, info.rti_info[RTAX_DST]->sa_family);
+		if (info.rti_info[RTAX_IFA] == NULL)
+			info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
 		if (ifp->if_flags & IFF_POINTOPOINT)
 			info.rti_info[RTAX_BRD] = rt->rt_ifa->ifa_dstaddr;
 	}
@@ -2045,6 +2065,32 @@ sysctl_ifnames(struct walkarg *w)
 }
 
 int
+sysctl_source(int af, u_int tableid, struct walkarg *w)
+{
+	struct sockaddr	*sa;
+	int		 size, error = 0;
+
+	sa = rtable_getsource(tableid, af);
+	if (sa) {
+		switch (sa->sa_family) {
+		case AF_INET:
+			size = sizeof(struct sockaddr_in);
+			break;
+		case AF_INET6:
+			size = sizeof(struct sockaddr_in6);
+			break;
+		}
+		w->w_needed += size;
+		if (w->w_where && w->w_needed <= 0) {
+			if ((error = copyout(sa, w->w_where, size)))
+				return (error);
+			w->w_where += size;
+		}
+	}
+	return (0);
+}
+
+int
 sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
     size_t newlen)
 {
@@ -2112,6 +2158,23 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 	case NET_RT_IFNAMES:
 		NET_LOCK();
 		error = sysctl_ifnames(&w);
+		NET_UNLOCK();
+		break;
+	case NET_RT_SOURCE:
+		tableid = w.w_arg;
+		if (!rtable_exists(tableid))
+			return (ENOENT);
+		NET_LOCK();
+		for (i = 1; i <= AF_MAX; i++) {
+			if (af != 0 && af != i)
+				continue;
+
+			error = sysctl_source(i, tableid, &w);
+			if (error == EAFNOSUPPORT)
+				error = 0;
+			if (error)
+				break;
+		}
 		NET_UNLOCK();
 		break;
 	}

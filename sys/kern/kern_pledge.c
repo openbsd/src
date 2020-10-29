@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.266 2020/09/16 13:50:42 mpi Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.267 2020/10/29 21:15:27 denis Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -828,7 +828,7 @@ pledge_sysctl(struct proc *p, int miblen, int *mib, void *new)
 		    mib[0] == CTL_NET && mib[1] == PF_ROUTE &&
 		    mib[2] == 0 &&
 		    (mib[3] == 0 || mib[3] == AF_INET6 || mib[3] == AF_INET) &&
-		    mib[4] == NET_RT_TABLE)
+		    (mib[4] == NET_RT_TABLE || mib[4] == NET_RT_SOURCE))
 			return (0);
 
 		if (miblen == 7 &&		/* exposes MACs */

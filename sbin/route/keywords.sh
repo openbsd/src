@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: keywords.sh,v 1.32 2017/08/10 13:44:48 benno Exp $
+# $OpenBSD: keywords.sh,v 1.33 2020/10/29 21:15:26 denis Exp $
 # $NetBSD: keywords.sh,v 1.2 1996/11/15 18:57:21 gwr Exp $
 # @(#)keywords	8.2 (Berkeley) 3/19/94
 #
@@ -67,6 +67,7 @@ rttvar
 sa
 sendpipe
 show
+sourceaddr
 ssthresh
 static
 swap

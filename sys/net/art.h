@@ -1,4 +1,4 @@
-/* $OpenBSD: art.h,v 1.18 2019/03/31 14:03:40 mpi Exp $ */
+/* $OpenBSD: art.h,v 1.19 2020/10/29 21:15:27 denis Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -21,6 +21,7 @@
 
 #include <sys/rwlock.h>
 #include <sys/srp.h>
+#include <netinet/in.h>
 
 #define ART_MAXLVL	32	/* We currently use 32 levels for IPv6. */
 
@@ -35,6 +36,7 @@ struct art_root {
 	uint8_t			 ar_alen;	/* Address length in bits */
 	uint8_t			 ar_off;	/* Offset of the key in bytes */
 	unsigned int		 ar_rtableid;	/* ID of this routing table */
+	struct sockaddr		*source;	/* optional src addr to use */
 };
 
 #define ISLEAF(e)	(((unsigned long)(e) & 1) == 0)
