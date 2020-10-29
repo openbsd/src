@@ -994,7 +994,9 @@ int radeon_atombios_init(struct radeon_device *rdev)
 		atom_card_info->ioreg_read = cail_ioreg_read;
 		atom_card_info->ioreg_write = cail_ioreg_write;
 	} else {
+#ifndef __powerpc64__
 		DRM_ERROR("Unable to find PCI I/O BAR; using MMIO for ATOM IIO\n");
+#endif
 		atom_card_info->ioreg_read = cail_reg_read;
 		atom_card_info->ioreg_write = cail_reg_write;
 	}
