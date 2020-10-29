@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.152 2020/08/29 07:53:48 florian Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.153 2020/10/29 12:30:52 denis Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -391,13 +391,16 @@ SPLAY_HEAD(client_tree, client);
 #define SRVFLAG_DEFAULT_TYPE	0x00800000
 #define SRVFLAG_PATH_REWRITE	0x01000000
 #define SRVFLAG_NO_PATH_REWRITE	0x02000000
+#define SRVFLAG_LOCATION_FOUND	0x40000000
+#define SRVFLAG_LOCATION_NOT_FOUND 0x80000000
 
 #define SRVFLAG_BITS							\
 	"\10\01INDEX\02NO_INDEX\03AUTO_INDEX\04NO_AUTO_INDEX"		\
 	"\05ROOT\06LOCATION\07FCGI\10NO_FCGI\11LOG\12NO_LOG"		\
 	"\14SYSLOG\15NO_SYSLOG\16TLS\17ACCESS_LOG\20ERROR_LOG"		\
 	"\21AUTH\22NO_AUTH\23BLOCK\24NO_BLOCK\25LOCATION_MATCH"		\
-	"\26SERVER_MATCH\27SERVER_HSTS\30DEFAULT_TYPE\31PATH\32NO_PATH"
+	"\26SERVER_MATCH\27SERVER_HSTS\30DEFAULT_TYPE\31PATH\32NO_PATH" \
+	"\37LOCATION_FOUND\40LOCATION_NOT_FOUND"
 
 #define TCPFLAG_NODELAY		0x01
 #define TCPFLAG_NNODELAY	0x02
@@ -690,6 +693,7 @@ const char *
 	 server_root_strip(const char *, int);
 struct server_config *
 	 server_getlocation(struct client *, const char *);
+int	 server_locationaccesstest(struct server_config *, const char *);
 const char *
 	 server_http_host(struct sockaddr_storage *, char *, size_t);
 char	*server_http_parsehost(char *, char *, size_t, int *);

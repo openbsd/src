@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.113 2020/09/05 11:49:38 tb Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.114 2020/10/29 12:30:52 denis Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 5 2020 $
+.Dd $Mdocdate: October 29 2020 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -399,11 +399,16 @@ of the host's domain should be considered HSTS hosts.
 .It Ic listen on Ar address Oo Ic tls Oc Ic port Ar number
 Set the listen address and port.
 This statement can be specified multiple times.
-.It Ic location Ar path Brq ...
+.It Ic location Oo Oo Ic not Oc Ic found Oc Ar path Brq ...
 Specify server configuration rules for a specific location.
 The
 .Ar path
 argument will be matched against the request path with shell globbing rules.
+Optionally, it is also possible to match for
+.Ic found
+(i.e. accessible) or
+.Ic not found
+request paths only.
 In case of multiple location statements in the same context, the
 first matching location statement will be put into effect, while all
 later ones will be ignored.
@@ -419,7 +424,7 @@ except
 .Ic tcp
 and
 .Ic tls .
-.It Ic location match Ar path Brq ...
+.It Ic location Oo Oo Ic not Oc Ic found Oc Ic match Ar path Brq ...
 Like the
 .Ic location
 option,

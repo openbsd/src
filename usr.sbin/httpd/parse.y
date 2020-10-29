@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.119 2020/10/26 19:31:22 denis Exp $	*/
+/*	$OpenBSD: parse.y,v 1.120 2020/10/29 12:30:52 denis Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -143,12 +143,12 @@ typedef struct {
 %token	PROTOCOLS REQUESTS ROOT SACK SERVER SOCKET STRIP STYLE SYSLOG TCP TICKET
 %token	TIMEOUT TLS TYPE TYPES HSTS MAXAGE SUBDOMAINS DEFAULT PRELOAD REQUEST
 %token	ERROR INCLUDE AUTHENTICATE WITH BLOCK DROP RETURN PASS REWRITE
-%token	CA CLIENT CRL OPTIONAL PARAM FORWARDED
+%token	CA CLIENT CRL OPTIONAL PARAM FORWARDED FOUND NOT
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
 %type	<v.port>	port
 %type	<v.string>	fcgiport
-%type	<v.number>	opttls optmatch
+%type	<v.number>	opttls optmatch optfound
 %type	<v.tv>		timeout
 %type	<v.string>	numberstring optstring
 %type	<v.auth>	authopts
@@ -514,39 +514,39 @@ serveroptsl	: LISTEN ON STRING opttls port	{
 		| fastcgi
 		| authenticate
 		| filter
-		| LOCATION optmatch STRING	{
+		| LOCATION optfound optmatch STRING	{
 			struct server		*s;
 			struct sockaddr_un	*sun;
 
 			if (srv->srv_conf.ss.ss_family == AF_UNSPEC) {
 				yyerror("listen address not specified");
-				free($3);
+				free($4);
 				YYERROR;
 			}
 
 			if (parentsrv != NULL) {
-				yyerror("location %s inside location", $3);
-				free($3);
+				yyerror("location %s inside location", $4);
+				free($4);
 				YYERROR;
 			}
 
 			if (!loadcfg) {
-				free($3);
+				free($4);
 				YYACCEPT;
 			}
 
 			if ((s = calloc(1, sizeof (*s))) == NULL)
 				fatal("out of memory");
 
-			if (strlcpy(s->srv_conf.location, $3,
+			if (strlcpy(s->srv_conf.location, $4,
 			    sizeof(s->srv_conf.location)) >=
 			    sizeof(s->srv_conf.location)) {
 				yyerror("server location truncated");
-				free($3);
+				free($4);
 				free(s);
 				YYERROR;
 			}
-			free($3);
+			free($4);
 
 			if (strlcpy(s->srv_conf.name, srv->srv_conf.name,
 			    sizeof(s->srv_conf.name)) >=
@@ -566,7 +566,18 @@ serveroptsl	: LISTEN ON STRING opttls port	{
 			/* A location entry uses the parent id */
 			s->srv_conf.parent_id = srv->srv_conf.id;
 			s->srv_conf.flags = SRVFLAG_LOCATION;
-			if ($2)
+			if ($2 == 1) {
+				s->srv_conf.flags &=
+				    ~SRVFLAG_LOCATION_NOT_FOUND;
+				s->srv_conf.flags |=
+				    SRVFLAG_LOCATION_FOUND;
+			} else if ($2 == -1) {
+				s->srv_conf.flags &=
+				    ~SRVFLAG_LOCATION_FOUND;
+				s->srv_conf.flags |=
+				    SRVFLAG_LOCATION_NOT_FOUND;
+			}
+			if ($3)
 				s->srv_conf.flags |= SRVFLAG_LOCATION_MATCH;
 			s->srv_s = -1;
 			memcpy(&s->srv_conf.ss, &srv->srv_conf.ss,
@@ -586,12 +597,18 @@ serveroptsl	: LISTEN ON STRING opttls port	{
 			SPLAY_INIT(&srv->srv_clients);
 		} '{' optnl serveropts_l '}'	{
 			struct server	*s = NULL;
+			uint32_t	 f;
+
+			f = SRVFLAG_LOCATION_FOUND |
+			    SRVFLAG_LOCATION_NOT_FOUND;
 
 			TAILQ_FOREACH(s, conf->sc_servers, srv_entry) {
 				/* Compare locations of same parent server */
 				if ((s->srv_conf.flags & SRVFLAG_LOCATION) &&
 				    s->srv_conf.parent_id ==
 				    srv_conf->parent_id &&
+				    (s->srv_conf.flags & f) ==
+				    (srv_conf->flags & f) &&
 				    strcmp(s->srv_conf.location,
 				    srv_conf->location) == 0)
 					break;
@@ -627,6 +644,11 @@ serveroptsl	: LISTEN ON STRING opttls port	{
 			}
 			srv->srv_conf.flags |= SRVFLAG_SERVER_HSTS;
 		}
+		;
+
+optfound	: /* empty */	{ $$ = 0; }
+		| FOUND		{ $$ = 1; }
+		| NOT FOUND	{ $$ = -1; }
 		;
 
 hsts		: HSTS '{' optnl hstsflags_l '}'
@@ -1377,6 +1399,7 @@ lookup(char *s)
 		{ "error",		ERR },
 		{ "fastcgi",		FCGI },
 		{ "forwarded",		FORWARDED },
+		{ "found",		FOUND },
 		{ "hsts",		HSTS },
 		{ "include",		INCLUDE },
 		{ "index",		INDEX },
@@ -1392,6 +1415,7 @@ lookup(char *s)
 		{ "max-age",		MAXAGE },
 		{ "no",			NO },
 		{ "nodelay",		NODELAY },
+		{ "not",		NOT },
 		{ "ocsp",		OCSP },
 		{ "on",			ON },
 		{ "optional",		OPTIONAL },
