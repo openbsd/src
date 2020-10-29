@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.183 2020/08/19 06:37:23 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.184 2020/10/29 16:33:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1976,8 +1976,13 @@ input_csi_dispatch_sgr_colon(struct input_ctx *ictx, u_int i)
 				free(copy);
 				return;
 			}
-		} else
+		} else {
 			n++;
+			if (n == nitems(p)) {
+				free(copy);
+				return;
+			}
+		}
 		log_debug("%s: %u = %d", __func__, n - 1, p[n - 1]);
 	}
 	free(copy);
