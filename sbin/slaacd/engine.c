@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.52 2020/10/30 18:25:54 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.53 2020/10/30 18:26:24 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1838,10 +1838,14 @@ update_iface_ra_prefix(struct slaacd_iface *iface, struct radv *ra,
 		    sizeof(addr_proposal->soiikey)) != 0)
 			continue;
 
+		if (addr_proposal->state == PROPOSAL_DUPLICATED) {
+			duplicate_found = 1;
+			continue;
+		}
+
 		if (addr_proposal->privacy) {
 			/* create new privacy address if old expires */
-			if (addr_proposal->state != PROPOSAL_NEARLY_EXPIRED &&
-			    addr_proposal->state != PROPOSAL_DUPLICATED)
+			if (addr_proposal->state != PROPOSAL_NEARLY_EXPIRED)
 				found_privacy = 1;
 
 			if (!iface->autoconfprivacy)
@@ -1852,11 +1856,6 @@ update_iface_ra_prefix(struct slaacd_iface *iface, struct radv *ra,
 			    proposal_state_name[addr_proposal->state]);
 
 			/* privacy addresses just expire */
-			continue;
-		}
-
-		if (addr_proposal->state == PROPOSAL_DUPLICATED) {
-			duplicate_found = 1;
 			continue;
 		}
 
