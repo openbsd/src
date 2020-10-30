@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.53 2020/10/30 18:26:24 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.54 2020/10/30 18:27:39 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -87,9 +87,9 @@
 #define	MAX_RTR_SOLICITATIONS		3
 
 /* constants for RFC 4941 autoconf privacy extension */
-#define ND6_PRIV_MAX_DESYNC_FACTOR	512	/* largest pow2 < 10 minutes */
-#define ND6_PRIV_VALID_LIFETIME		172800	/* 2 days */
-#define ND6_PRIV_PREFERRED_LIFETIME	86400	/* 1 day */
+#define PRIV_MAX_DESYNC_FACTOR	600	/* 10 minutes */
+#define PRIV_VALID_LIFETIME	172800	/* 2 days */
+#define PRIV_PREFERRED_LIFETIME	86400	/* 1 day */
 
 enum if_state {
 	IF_DOWN,
@@ -1910,11 +1910,11 @@ update_iface_ra_prefix(struct slaacd_iface *iface, struct radv *ra,
 
 	/* privacy addresses do not depend on eui64 */
 	if (!found_privacy && iface->autoconfprivacy) {
-		if (prefix->pltime < ND6_PRIV_MAX_DESYNC_FACTOR) {
+		if (prefix->pltime < PRIV_MAX_DESYNC_FACTOR) {
 			log_warnx("%s: pltime from %s is too small: %d < %d; "
 			    "not generating privacy address", __func__,
 			    sin6_to_str(&ra->from), prefix->pltime,
-			    ND6_PRIV_MAX_DESYNC_FACTOR);
+			    PRIV_MAX_DESYNC_FACTOR);
 		} else
 			/* new privacy proposal */
 			gen_address_proposal(iface, ra, prefix, 1);
@@ -2042,14 +2042,14 @@ gen_address_proposal(struct slaacd_iface *iface, struct radv *ra, struct
 	addr_proposal->prefix_len = prefix->prefix_len;
 
 	if (privacy) {
-		if (prefix->vltime > ND6_PRIV_VALID_LIFETIME)
-			addr_proposal->vltime = ND6_PRIV_VALID_LIFETIME;
+		if (prefix->vltime > PRIV_VALID_LIFETIME)
+			addr_proposal->vltime = PRIV_VALID_LIFETIME;
 		else
 			addr_proposal->vltime = prefix->vltime;
 
-		if (prefix->pltime > ND6_PRIV_PREFERRED_LIFETIME)
-			addr_proposal->pltime = ND6_PRIV_PREFERRED_LIFETIME
-			    - arc4random_uniform(ND6_PRIV_MAX_DESYNC_FACTOR);
+		if (prefix->pltime > PRIV_PREFERRED_LIFETIME)
+			addr_proposal->pltime = PRIV_PREFERRED_LIFETIME
+			    - arc4random_uniform(PRIV_MAX_DESYNC_FACTOR);
 		else
 			addr_proposal->pltime = prefix->pltime;
 	} else {
