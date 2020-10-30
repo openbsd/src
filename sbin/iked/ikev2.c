@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.273 2020/10/30 12:29:40 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.274 2020/10/30 12:32:17 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -5164,7 +5164,7 @@ ikev2_sa_responder_dh(struct iked_kex *kex, struct iked_proposals *proposals,
 			log_info("%s: invalid dh, size %zu",
 			    SPI_SA(msg->msg_sa, __func__),
 			    ibuf_length(msg->msg_ke));
- 			return (-1);
+			return (-1);
 		}
 	}
 
@@ -5172,7 +5172,7 @@ ikev2_sa_responder_dh(struct iked_kex *kex, struct iked_proposals *proposals,
 		if (dh_create_exchange(kex->kex_dhgroup,
 		    &kex->kex_dhrexchange, kex->kex_dhiexchange) == -1) {
 			log_info("%s: failed to get dh exchange",
-			    SPI_SA(msg->msg_sa ,__func__));
+			    SPI_SA(msg->msg_sa, __func__));
 			return (-1);
 		}
 	}
