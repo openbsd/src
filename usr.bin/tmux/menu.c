@@ -1,4 +1,4 @@
-/* $OpenBSD: menu.c,v 1.32 2020/10/30 08:55:56 nicm Exp $ */
+/* $OpenBSD: menu.c,v 1.33 2020/10/30 12:00:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -315,10 +315,11 @@ chosen:
 	if (md->choice == -1)
 		return (1);
 	item = &menu->items[md->choice];
-	if ((md->flags & MENU_STAYOPEN) && item->name == NULL)
-		return (0);
-	if (item->name == NULL || *item->name == '-')
+	if (item->name == NULL || *item->name == '-') {
+		if (md->flags & MENU_STAYOPEN)
+			return (0);
 		return (1);
+	}
 	if (md->cb != NULL) {
 	    md->cb(md->menu, md->choice, item->key, md->data);
 	    md->cb = NULL;
