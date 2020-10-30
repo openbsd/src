@@ -1,10 +1,21 @@
-# $OpenBSD: Makefile,v 1.2 2020/10/29 06:05:12 tb Exp $
+# $OpenBSD: Makefile,v 1.3 2020/10/30 03:12:40 tb Exp $
+
+.include <bsd.own.mk>
 
 .if ! exists(/usr/local/bin/botan)
 regress:
 	# install botan2 from ports for interop tests
 	@echo SKIPPED
+.elif (${COMPILER_VERSION:L} != "clang" && ! exists(/usr/local/bin/eg++))
+regress:
+	# on gcc-archs install g++ from ports for botan2 interop tests
+	@echo SKIPPED
 .else
+
+# C++11
+.if ${COMPILER_VERSION:L} != "clang" && ${CXX} == "c++"
+CXX = /usr/local/bin/eg++
+.endif
 
 LIBRARIES =		libressl
 .if exists(/usr/local/bin/eopenssl)
