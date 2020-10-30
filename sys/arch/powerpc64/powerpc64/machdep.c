@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.62 2020/10/19 18:54:58 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.63 2020/10/30 13:07:48 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -41,6 +41,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <dev/ofw/fdt.h>
+#include <dev/ofw/openfirm.h>
 #include <dev/cons.h>
 
 #ifdef DDB
@@ -100,6 +101,81 @@ const char *parse_bootduid(const char *);
 paddr_t fdt_pa;
 size_t fdt_size;
 
+int stdout_node;
+int stdout_speed;
+
+static int
+atoi(const char *s)
+{
+	int n, neg;
+
+	n = 0;
+	neg = 0;
+
+	while (*s == '-') {
+		s++;
+		neg = !neg;
+	}
+
+	while (*s != '\0') {
+		if (*s < '0' || *s > '9')
+			break;
+
+		n = (10 * n) + (*s - '0');
+		s++;
+	}
+
+	return (neg ? -n : n);
+}
+
+void *
+fdt_find_cons(void)
+{
+	char *alias = "serial0";
+	char buf[128];
+	char *stdout = NULL;
+	char *p;
+	void *node;
+
+	/* First check if "stdout-path" is set. */
+	node = fdt_find_node("/chosen");
+	if (node) {
+		if (fdt_node_property(node, "stdout-path", &stdout) > 0) {
+			if (strchr(stdout, ':') != NULL) {
+				strlcpy(buf, stdout, sizeof(buf));
+				if ((p = strchr(buf, ':')) != NULL) {
+					*p++ = '\0';
+					stdout_speed = atoi(p);
+				}
+				stdout = buf;
+			}
+			if (stdout[0] != '/') {
+				/* It's an alias. */
+				alias = stdout;
+				stdout = NULL;
+			}
+		}
+	}
+
+	/* Perform alias lookup if necessary. */
+	if (stdout == NULL) {
+		node = fdt_find_node("/aliases");
+		if (node)
+			fdt_node_property(node, alias, &stdout);
+	}
+
+	/* Lookup the physical address of the interface. */
+	if (stdout) {
+		node = fdt_find_node(stdout);
+		if (node) {
+			stdout_node = OF_finddevice(stdout);
+			return (node);
+		}
+	}
+
+	return (NULL);
+}
+
 void
 init_powernv(void *fdt, void *tocbase)
 {
@@ -151,6 +227,8 @@ init_powernv(void *fdt, void *tocbase)
 	/* Stash these such that we can remap the FDT later. */
 	fdt_pa = (paddr_t)fdt;
 	fdt_size = fdt_get_size(fdt);
+
+	fdt_find_cons();
 
 	/*
 	 * Initialize all traps with the stub that calls the generic

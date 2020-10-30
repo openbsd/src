@@ -1,4 +1,4 @@
-/* $OpenBSD: fdt.h,v 1.1 2020/06/07 16:11:34 kettenis Exp $ */
+/* $OpenBSD: fdt.h,v 1.2 2020/10/30 13:07:48 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -32,5 +32,8 @@ struct fdt_attach_args {
 	int			 fa_acells;
 	int			 fa_scells;
 };
+
+extern int stdout_node;
+extern int stdout_speed;
 
 #endif /* _MACHINE_FDT_H_ */
