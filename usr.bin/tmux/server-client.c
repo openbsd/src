@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.363 2020/10/30 08:55:56 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.364 2020/10/30 09:00:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1588,10 +1588,6 @@ server_client_check_pane_focus(struct window_pane *wp)
 
 	/* If we're not the active pane in our window, we're not focused. */
 	if (wp->window->active != wp)
-		goto not_focused;
-
-	/* If we're in a mode, we're not focused. */
-	if (wp->screen != &wp->base)
 		goto not_focused;
 
 	/*
