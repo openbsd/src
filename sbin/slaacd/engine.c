@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.56 2020/10/30 18:29:13 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.57 2020/10/30 18:30:26 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -81,6 +81,8 @@
 #include "slaacd.h"
 #include "engine.h"
 
+#define	MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
+
 #define	MAX_RTR_SOLICITATION_DELAY	1
 #define	MAX_RTR_SOLICITATION_DELAY_USEC	MAX_RTR_SOLICITATION_DELAY * 1000000
 #define	RTR_SOLICITATION_INTERVAL	4
@@ -90,6 +92,7 @@
 #define PRIV_MAX_DESYNC_FACTOR	600	/* 10 minutes */
 #define PRIV_VALID_LIFETIME	172800	/* 2 days */
 #define PRIV_PREFERRED_LIFETIME	86400	/* 1 day */
+#define	PRIV_REGEN_ADVANCE	5	/* 5 seconds */
 
 enum if_state {
 	IF_DOWN,
@@ -183,6 +186,7 @@ struct address_proposal {
 	enum proposal_state		 state;
 	time_t				 next_timeout;
 	int				 timeout_count;
+	struct timespec			 created;
 	struct timespec			 when;
 	struct timespec			 uptime;
 	uint32_t			 if_index;
@@ -801,6 +805,7 @@ engine_dispatch_main(int fd, short event, void *bula)
 
 			timeout_from_lifetime(addr_proposal);
 
+			/* leave created 0, we don't know when it was created */
 			if (clock_gettime(CLOCK_REALTIME, &addr_proposal->when))
 				fatal("clock_gettime");
 			if (clock_gettime(CLOCK_MONOTONIC,
@@ -1822,7 +1827,7 @@ update_iface_ra_prefix(struct slaacd_iface *iface, struct radv *ra,
     struct radv_prefix *prefix)
 {
 	struct address_proposal	*addr_proposal;
-	uint32_t		 remaining_lifetime;
+	uint32_t		 remaining_lifetime, pltime, vltime;
 	int			 found, found_privacy, duplicate_found;
 
 	found = found_privacy = duplicate_found = 0;
@@ -1847,38 +1852,46 @@ update_iface_ra_prefix(struct slaacd_iface *iface, struct radv *ra,
 			continue;
 		}
 
-		if (addr_proposal->privacy) {
-			/* create new privacy address if old expires */
-			if (addr_proposal->state != PROPOSAL_NEARLY_EXPIRED)
-				found_privacy = 1;
-
-			if (!iface->autoconfprivacy)
-				log_debug("%s XXX remove privacy address",
-				    __func__);
-
-			log_debug("%s, privacy addr state: %s", __func__,
-			    proposal_state_name[addr_proposal->state]);
-
-			/* privacy addresses just expire */
-			continue;
-		}
-
-		found = 1;
-
 		remaining_lifetime = real_lifetime(&addr_proposal->uptime,
 			addr_proposal->vltime);
-
-		addr_proposal->when = ra->when;
-		addr_proposal->uptime = ra->uptime;
 
 		/* RFC 4862 5.5.3 two hours rule */
 #define TWO_HOURS 2 * 3600
 		if (prefix->vltime > TWO_HOURS ||
-		    prefix->vltime > remaining_lifetime)
-			addr_proposal->vltime = prefix->vltime;
+		    prefix->vltime >= remaining_lifetime)
+			vltime = prefix->vltime;
 		else
-			addr_proposal->vltime = TWO_HOURS;
-		addr_proposal->pltime = prefix->pltime;
+			vltime = TWO_HOURS;
+
+		if (addr_proposal->privacy) {
+			struct timespec	now;
+			int64_t		ltime;
+
+			if (clock_gettime(CLOCK_MONOTONIC, &now))
+				fatal("clock_gettime");
+
+			ltime = MINIMUM(addr_proposal->created.tv_sec +
+			    PRIV_PREFERRED_LIFETIME - desync_factor,
+			    now.tv_sec + prefix->pltime) - now.tv_sec;
+			pltime = ltime > 0 ? ltime : 0;
+
+			ltime = MINIMUM(addr_proposal->created.tv_sec +
+			    PRIV_VALID_LIFETIME, now.tv_sec + vltime) -
+			    now.tv_sec;
+			vltime = ltime > 0 ? ltime : 0;
+
+			if (pltime > PRIV_REGEN_ADVANCE)
+				found_privacy = 1;
+		} else {
+			pltime = prefix->pltime;
+			found = 1;
+		}
+
+		addr_proposal->when = ra->when;
+		addr_proposal->uptime = ra->uptime;
+
+		addr_proposal->vltime = vltime;
+		addr_proposal->pltime = pltime;
 
 		if (ra->mtu == iface->cur_mtu)
 			addr_proposal->mtu = 0;
@@ -2032,6 +2045,8 @@ gen_address_proposal(struct slaacd_iface *iface, struct radv *ra, struct
 	addr_proposal->next_timeout = 1;
 	addr_proposal->timeout_count = 0;
 	addr_proposal->state = PROPOSAL_NOT_CONFIGURED;
+	if (clock_gettime(CLOCK_MONOTONIC, &addr_proposal->created))
+		fatal("clock_gettime");
 	addr_proposal->when = ra->when;
 	addr_proposal->uptime = ra->uptime;
 	addr_proposal->if_index = iface->if_index;
@@ -2045,16 +2060,10 @@ gen_address_proposal(struct slaacd_iface *iface, struct radv *ra, struct
 	addr_proposal->prefix_len = prefix->prefix_len;
 
 	if (privacy) {
-		if (prefix->vltime > PRIV_VALID_LIFETIME)
-			addr_proposal->vltime = PRIV_VALID_LIFETIME;
-		else
-			addr_proposal->vltime = prefix->vltime;
-
-		if (prefix->pltime > PRIV_PREFERRED_LIFETIME)
-			addr_proposal->pltime = PRIV_PREFERRED_LIFETIME -
-			    desync_factor;
-		else
-			addr_proposal->pltime = prefix->pltime;
+		addr_proposal->vltime = MINIMUM(prefix->vltime,
+		    PRIV_VALID_LIFETIME);
+		addr_proposal->pltime = MINIMUM(prefix->pltime,
+		    PRIV_PREFERRED_LIFETIME - desync_factor);
 	} else {
 		addr_proposal->vltime = prefix->vltime;
 		addr_proposal->pltime = prefix->pltime;
