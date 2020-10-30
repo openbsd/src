@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.82 2020/08/17 18:12:12 semarie Exp $	*/
+/*	$OpenBSD: su.c,v 1.83 2020/10/30 16:23:57 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -363,7 +363,7 @@ main(int argc, char **argv)
 		err(1, "pledge");
 
 	if (pwd->pw_uid && auth_approval(as, lc, pwd->pw_name, "su") == 0)
-		auth_err(as, 1, "approval failure");
+		auth_errx(as, 1, "approval failure");
 	auth_close(as);
 
 	execv(shell, np);
