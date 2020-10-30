@@ -1,4 +1,4 @@
-/* $OpenBSD: mdoc_validate.c,v 1.302 2020/04/26 21:29:45 schwarze Exp $ */
+/* $OpenBSD: mdoc_validate.c,v 1.303 2020/10/30 13:24:26 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -2602,7 +2602,7 @@ post_section(POST_ARGS)
 			if ((nch = n->child) != NULL &&
 			    nch->type == ROFFT_TEXT &&
 			    strcmp(nch->string, tag) == 0)
-				tag_put(NULL, TAG_WEAK, n);
+				tag_put(NULL, TAG_STRONG, n);
 			else
 				tag_put(tag, TAG_FALLBACK, n);
 			free(tag);

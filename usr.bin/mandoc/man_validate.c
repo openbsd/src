@@ -1,4 +1,4 @@
-/* $OpenBSD: man_validate.c,v 1.124 2020/04/24 11:58:02 schwarze Exp $ */
+/* $OpenBSD: man_validate.c,v 1.125 2020/10/30 13:24:26 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2012-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -322,7 +322,7 @@ post_SH(CHKARGS)
 					*cp = '_';
 			if (nc != NULL && nc->type == ROFFT_TEXT &&
 			    strcmp(nc->string, tag) == 0)
-				tag_put(NULL, TAG_WEAK, n);
+				tag_put(NULL, TAG_STRONG, n);
 			else
 				tag_put(tag, TAG_FALLBACK, n);
 			free(tag);
