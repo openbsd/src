@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.248 2020/10/26 16:52:06 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.249 2020/10/30 09:45:03 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -175,15 +175,15 @@ typedef struct {
 %token	LOOKUP METHOD MODE NAT NO DESTINATION NODELAY NOTHING ON PARENT PATH
 %token	PFTAG PORT PREFORK PRIORITY PROTO QUERYSTR REAL REDIRECT RELAY REMOVE
 %token	REQUEST RESPONSE RETRY QUICK RETURN ROUNDROBIN ROUTE SACK SCRIPT SEND
-%token	SESSION SNMP SOCKET SPLICE SSL STICKYADDR STYLE TABLE TAG TAGGED TCP
-%token	TIMEOUT TLS TO ROUTER RTLABEL TRANSPARENT TRAP URL WITH TTL RTABLE
+%token	SESSION SOCKET SPLICE SSL STICKYADDR STYLE TABLE TAG TAGGED TCP
+%token	TIMEOUT TLS TO ROUTER RTLABEL TRANSPARENT URL WITH TTL RTABLE
 %token	MATCH PARAMS RANDOM LEASTSTATES SRCHASH KEY CERTIFICATE PASSWORD ECDHE
 %token	EDH TICKETS CONNECTION CONNECTIONS CONTEXT ERRORS STATE CHANGES CHECKS
 %token	WEBSOCKETS
 %token	<v.string>	STRING
 %token  <v.number>	NUMBER
-%type	<v.string>	context hostname interface table value optstring path
-%type	<v.number>	http_type loglevel quick trap
+%type	<v.string>	context hostname interface table value path
+%type	<v.number>	http_type loglevel quick
 %type	<v.number>	dstmode flag forwardmode retry
 %type	<v.number>	opttls opttlsclient
 %type	<v.number>	redirect_proto relay_proto match
@@ -457,23 +457,6 @@ main		: INTERVAL NUMBER	{
 				    AGENTX_MASTER_PATH,
 				    sizeof(conf->sc_conf.agentx_path));
 		}
-		| SNMP trap optstring	{
-			log_warnx("The snmp keyword is deprecated, please use agentx");
-			conf->sc_conf.flags |= F_AGENTX;
-			if ($3) {
-				if (strlcpy(conf->sc_conf.agentx_path,
-				    $3, sizeof(conf->sc_conf.agentx_path)) >=
-				    sizeof(conf->sc_conf.agentx_path)) {
-					yyerror("agentx path truncated");
-					free($3);
-					YYERROR;
-				}
-				free($3);
-			} else
-				(void)strlcpy(conf->sc_conf.agentx_path,
-				    "/var/run/agentx.sock",
-				    sizeof(conf->sc_conf.agentx_path));
-		}
 		| SOCKET STRING {
 			conf->sc_ps->ps_csock.cs_name = $2;
 		}
@@ -484,9 +467,6 @@ path		: /* nothing */		{ $$ = NULL; }
 
 context		: /* nothing */		{ $$ = NULL; }
 		| CONTEXT STRING	{ $$ = $2; }
-
-trap		: /* nothing */		{ $$ = 0; }
-		| TRAP			{ $$ = 1; }
 
 loglevel	: STATE CHANGES		{ $$ = RELAYD_OPT_LOGUPDATE; }
 		| HOST CHECKS		{ $$ = RELAYD_OPT_LOGHOSTCHECK; }
@@ -2371,10 +2351,6 @@ optnl		: '\n' optnl
 
 nl		: '\n' optnl
 		;
-
-optstring	: STRING		{ $$ = $1; }
-		| /* nothing */		{ $$ = NULL; }
-		;
 %%
 
 struct keywords {
@@ -2499,7 +2475,6 @@ lookup(char *s)
 		{ "send",		SEND },
 		{ "session",		SESSION },
 		{ "set",		SET },
-		{ "snmp",		SNMP },
 		{ "socket",		SOCKET },
 		{ "source-hash",	SRCHASH },
 		{ "splice",		SPLICE },
@@ -2516,7 +2491,6 @@ lookup(char *s)
 		{ "tls",		TLS },
 		{ "to",			TO },
 		{ "transparent",	TRANSPARENT },
-		{ "trap",		TRAP },
 		{ "ttl",		TTL },
 		{ "url",		URL },
 		{ "value",		VALUE },
