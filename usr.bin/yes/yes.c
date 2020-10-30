@@ -1,4 +1,4 @@
-/*	$OpenBSD: yes.c,v 2.0 2020/10/30 11:01:27 doug Exp $	*/
+/*	$OpenBSD: yes.c,v 2.0 2020/10/30 11:01:27 Ritchie Tsai Exp $	*/
 /*	$OpenBSD: yes.c,v 1.9 2015/10/13 07:03:26 doug Exp $	*/
 /*	$NetBSD: yes.c,v 1.3 1994/11/14 04:56:15 jtc Exp $	*/
 
