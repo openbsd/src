@@ -1,4 +1,4 @@
-/*	$OpenBSD: opalcons.c,v 1.2 2020/06/26 19:13:28 kettenis Exp $	*/
+/*	$OpenBSD: opalcons.c,v 1.3 2020/10/30 13:26:29 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -74,15 +74,19 @@ opalcons_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_reg = OF_getpropint(faa->fa_node, "reg", 0);
 
-	if (1) {
-		/* Locate the major number. */
-		for (maj = 0; maj < nchrdev; maj++)
-			if (cdevsw[maj].d_open == opalconsopen)
-				break;
-		cn_tab->cn_dev = makedev(maj, self->dv_unit);
+	/* Locate the major number. */
+	for (maj = 0; maj < nchrdev; maj++)
+		if (cdevsw[maj].d_open == opalconsopen)
+			break;
 
+	/*
+	 * Unconditionally set the major/minor here since we attach
+	 * early and are the fallback console device
+	 */
+	cn_tab->cn_dev = makedev(maj, self->dv_unit);
+
+	if (faa->fa_node == stdout_node)
 		printf(": console");
-	}
 
 	sc->sc_si = softintr_establish(IPL_TTY, opalcons_softintr, sc);
 	if (sc->sc_si == NULL) {
