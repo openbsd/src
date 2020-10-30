@@ -1,4 +1,4 @@
-/*	$OpenBSD: astfb.c,v 1.1 2020/10/01 17:28:14 kettenis Exp $	*/
+/*	$OpenBSD: astfb.c,v 1.2 2020/10/30 13:11:11 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis.
@@ -21,6 +21,7 @@
 #include <sys/systm.h>
 
 #include <machine/bus.h>
+#include <machine/fdt.h>
 
 #include <dev/ofw/openfirm.h>
 
@@ -99,12 +100,17 @@ astfb_attach(struct device *parent, struct device *self, void *aux)
 	struct wsemuldisplaydev_attach_args waa;
 	int node = PCITAG_NODE(pa->pa_tag);
 	uint32_t addr[5];
+	int console = 0;
+	uint32_t defattr;
 
 	if (OF_getpropintarray(node, "assigned-addresses", addr,
 	    sizeof(addr)) < sizeof(addr)) {
 		printf(": no framebuffer\n");
 		return;
 	}
+
+	if (node == stdout_node)
+		console = 1;
 
 	sc->sc_fbaddr = (bus_addr_t)addr[1] << 32 | addr[2];
 	sc->sc_fbsize = (bus_size_t)addr[3] << 32 | addr[4];
@@ -117,6 +123,9 @@ astfb_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf("\n");
+
+	if (console)
+		printf("%s: console\n", sc->sc_dev.dv_xname);
 
 	ri->ri_bits = bus_space_vaddr(sc->sc_iot, sc->sc_ioh);
 	ri->ri_hw = sc;
@@ -164,11 +173,17 @@ astfb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_wsl.nscreens = 1;
 	sc->sc_wsl.screens = (const struct wsscreen_descr **)sc->sc_scrlist;
 
+	if (console) {
+		ri->ri_ops.pack_attr(ri->ri_active, 0, 0, 0, &defattr);
+		wsdisplay_cnattach(&sc->sc_wsd, ri->ri_active,
+		    0, 0, defattr);
+	}
+
 	memset(&waa, 0, sizeof(waa));
 	waa.scrdata = &sc->sc_wsl;
 	waa.accessops = &astfb_accessops;
 	waa.accesscookie = ri;
-	waa.console = 0;
+	waa.console = console;
 
 	config_found_sm(self, &waa, wsemuldisplaydevprint,
 	    wsemuldisplaydevsubmatch);
