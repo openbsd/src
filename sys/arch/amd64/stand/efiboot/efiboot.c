@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.35 2020/03/22 14:59:11 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.36 2020/10/30 19:39:00 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -39,7 +39,7 @@
 #include "eficall.h"
 #include "run_i386.h"
 
-#define	KERN_LOADSPACE_SIZE	(32 * 1024 * 1024)
+#define	KERN_LOADSPACE_SIZE	(64 * 1024 * 1024)
 
 EFI_SYSTEM_TABLE	*ST;
 EFI_BOOT_SERVICES	*BS;
