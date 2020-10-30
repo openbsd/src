@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.49 2020/09/14 09:07:05 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.50 2020/10/30 18:25:06 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -284,6 +284,8 @@ void			 configure_dfr(struct dfr_proposal *);
 void			 free_dfr_proposal(struct dfr_proposal *);
 void			 withdraw_dfr(struct dfr_proposal *);
 #ifndef	SMALL
+void			 update_iface_ra_rdns(struct slaacd_iface *,
+			     struct radv *);
 void			 gen_rdns_proposal(struct slaacd_iface *, struct
 			     radv *);
 void			 propose_rdns(struct rdns_proposal *);
@@ -1737,9 +1739,6 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 	struct radv_prefix	*prefix;
 	struct address_proposal	*addr_proposal;
 	struct dfr_proposal	*dfr_proposal;
-#ifndef	SMALL
-	struct rdns_proposal	*rdns_proposal;
-#endif	/* SMALL */
 	uint32_t		 remaining_lifetime;
 	int			 found, found_privacy, duplicate_found;
 	const char		*hbuf;
@@ -1926,41 +1925,54 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 		}
 	}
 #ifndef	SMALL
-	rdns_proposal = find_rdns_proposal_by_gw(iface, &ra->from);
-	if (rdns_proposal) {
-		if (real_lifetime(&rdns_proposal->uptime,
-		    rdns_proposal->rdns_lifetime) > ra->rdns_lifetime)
-			/* XXX check RFC */
-			log_warnx("ignoring router advertisement lowering rdns "
-			    "lifetime");
-		else {
-			rdns_proposal->when = ra->when;
-			rdns_proposal->uptime = ra->uptime;
-			rdns_proposal->rdns_lifetime = ra->rdns_lifetime;
-
-			log_debug("%s, rdns state: %s, rl: %d", __func__,
-			    proposal_state_name[rdns_proposal->state],
-			    real_lifetime(&rdns_proposal->uptime,
-			    rdns_proposal->rdns_lifetime));
-
-			switch (rdns_proposal->state) {
-			case PROPOSAL_SENT:
-			case PROPOSAL_NEARLY_EXPIRED:
-				log_debug("updating rdns");
-				propose_rdns(rdns_proposal);
-				break;
-			default:
-				hbuf = sin6_to_str(&rdns_proposal->from);
-				log_debug("%s: iface %d: %s", __func__,
-				    iface->if_index, hbuf);
-				break;
-			}
-		}
-	} else
-		/* new proposal */
-		gen_rdns_proposal(iface, ra);
+	update_iface_ra_rdns(iface, ra);
 #endif	/* SMALL */
 }
+
+#ifndef	SMALL
+void
+update_iface_ra_rdns(struct slaacd_iface *iface, struct radv *ra)
+{
+	struct rdns_proposal	*rdns_proposal;
+
+	rdns_proposal = find_rdns_proposal_by_gw(iface, &ra->from);
+
+	if (!rdns_proposal) {
+		/* new proposal */
+		gen_rdns_proposal(iface, ra);
+		return;
+	}
+
+	if (real_lifetime(&rdns_proposal->uptime, rdns_proposal->rdns_lifetime)
+	    > ra->rdns_lifetime) {
+		/* XXX check RFC */
+		log_warnx("ignoring router advertisement lowering rdns "
+		    "lifetime");
+		return;
+	}
+
+	rdns_proposal->when = ra->when;
+	rdns_proposal->uptime = ra->uptime;
+	rdns_proposal->rdns_lifetime = ra->rdns_lifetime;
+
+	log_debug("%s, rdns state: %s, rl: %d", __func__,
+	    proposal_state_name[rdns_proposal->state],
+	    real_lifetime(&rdns_proposal->uptime,
+	    rdns_proposal->rdns_lifetime));
+
+	switch (rdns_proposal->state) {
+	case PROPOSAL_SENT:
+	case PROPOSAL_NEARLY_EXPIRED:
+		log_debug("updating rdns");
+		propose_rdns(rdns_proposal);
+		break;
+	default:
+		log_debug("%s: iface %d: %s", __func__, iface->if_index,
+		    sin6_to_str(&rdns_proposal->from));
+		break;
+	}
+}
+#endif	/* SMALL */
 
 void
 timeout_from_lifetime(struct address_proposal *addr_proposal)
