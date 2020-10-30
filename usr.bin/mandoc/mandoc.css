@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.css,v 1.33 2019/06/02 16:50:46 schwarze Exp $ */
+/* $OpenBSD: mandoc.css,v 1.34 2020/10/30 21:31:19 schwarze Exp $ */
 /*
  * Standard style sheet for mandoc(1) -Thtml and man.cgi(8).
  *
@@ -135,12 +135,12 @@ h2.Ss {		margin-top: 1.2em;
 		vertical-align: top; }
 .Bl-tag > dd {
 		clear: right;
+		column-count: 1;  /* Force block formatting context. */
 		width: 100%;
 		margin-top: 0em;
 		margin-left: 0em;
 		margin-bottom: 0.6em;
-		vertical-align: top;
-		overflow: auto; }
+		vertical-align: top; }
 .Bl-compact {	margin-top: 0em; }
 .Bl-compact > dd {
 		margin-bottom: 0em; }
