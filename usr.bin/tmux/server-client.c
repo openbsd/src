@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.364 2020/10/30 09:00:07 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.365 2020/10/30 18:54:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2025,7 +2025,7 @@ server_client_dispatch(struct imsg *imsg, void *arg)
 			break;
 		c->flags &= ~CLIENT_SUSPENDED;
 
-		if (c->fd == -1) /* exited in the meantime */
+		if (c->fd == -1 || c->session == NULL) /* exited already */
 			break;
 		s = c->session;
 
