@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.51 2020/10/30 18:25:29 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.52 2020/10/30 18:25:54 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -296,6 +296,8 @@ char			*parse_dnssl(char *, int);
 void			 update_iface_ra(struct slaacd_iface *, struct radv *);
 void			 update_iface_ra_dfr(struct slaacd_iface *,
     			     struct radv *);
+void			 update_iface_ra_prefix(struct slaacd_iface *,
+			     struct radv *, struct radv_prefix *prefix);
 void			 start_probe(struct slaacd_iface *);
 void			 address_proposal_timeout(int, short, void *);
 void			 dfr_proposal_timeout(int, short, void *);
@@ -1739,153 +1741,26 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 {
 	struct radv		*old_ra;
 	struct radv_prefix	*prefix;
-	struct address_proposal	*addr_proposal;
-	uint32_t		 remaining_lifetime;
-	int			 found, found_privacy, duplicate_found;
-	const char		*hbuf;
 
 	if ((old_ra = find_ra(iface, &ra->from)) == NULL)
 		LIST_INSERT_HEAD(&iface->radvs, ra, entries);
 	else {
 		LIST_REPLACE(old_ra, ra, entries);
-
 		merge_dad_couters(old_ra, ra);
-
 		free_ra(old_ra);
 	}
 
 	update_iface_ra_dfr(iface, ra);
 
-	if (ra->router_lifetime != 0) {
+	if (ra->router_lifetime != 0)
 		LIST_FOREACH(prefix, &ra->prefixes, entries) {
 			if (!prefix->autonomous || prefix->vltime == 0 ||
 			    prefix->pltime > prefix->vltime ||
 			    IN6_IS_ADDR_LINKLOCAL(&prefix->prefix))
 				continue;
-			found = 0;
-			found_privacy = 0;
-			duplicate_found = 0;
-
-			LIST_FOREACH(addr_proposal, &iface->addr_proposals,
-			    entries) {
-				if (prefix->prefix_len ==
-				    addr_proposal-> prefix_len &&
-				    memcmp(&prefix->prefix,
-				    &addr_proposal->prefix,
-				    sizeof(struct in6_addr)) != 0)
-					continue;
-
-				if (memcmp(&addr_proposal->hw_address,
-				    &iface->hw_address,
-				    sizeof(addr_proposal->hw_address)) != 0)
-					continue;
-
-				if (memcmp(&addr_proposal->soiikey,
-				    &iface->soiikey,
-				    sizeof(addr_proposal->soiikey)) != 0)
-					continue;
-
-				if (addr_proposal->privacy) {
-					/*
-					 * create new privacy address if old
-					 * expires
-					 */
-					if (addr_proposal->state !=
-					    PROPOSAL_NEARLY_EXPIRED &&
-					    addr_proposal->state !=
-					    PROPOSAL_DUPLICATED)
-						found_privacy = 1;
-
-					if (!iface->autoconfprivacy)
-						log_debug("%s XXX need to "
-						    "remove privacy address",
-						    __func__);
-
-					log_debug("%s, privacy addr state: %s",
-					    __func__, proposal_state_name[
-					    addr_proposal->state]);
-
-					/* privacy addresses just expire */
-					continue;
-				}
-
-				if (addr_proposal->state ==
-				    PROPOSAL_DUPLICATED) {
-					duplicate_found = 1;
-					continue;
-				}
-
-				found = 1;
-
-				remaining_lifetime =
-				    real_lifetime(&addr_proposal->uptime,
-				    addr_proposal->vltime);
-
-				addr_proposal->when = ra->when;
-				addr_proposal->uptime = ra->uptime;
-
-/* RFC 4862 5.5.3 two hours rule */
-#define TWO_HOURS 2 * 3600
-				if (prefix->vltime > TWO_HOURS ||
-				    prefix->vltime > remaining_lifetime)
-					addr_proposal->vltime = prefix->vltime;
-				else
-					addr_proposal->vltime = TWO_HOURS;
-				addr_proposal->pltime = prefix->pltime;
-
-				if (ra->mtu == iface->cur_mtu)
-					addr_proposal->mtu = 0;
-				else {
-					addr_proposal->mtu = ra->mtu;
-					iface->cur_mtu = ra->mtu;
-				}
-
-				log_debug("%s, addr state: %s", __func__,
-				    proposal_state_name[addr_proposal->state]);
-
-				switch (addr_proposal->state) {
-				case PROPOSAL_CONFIGURED:
-				case PROPOSAL_NEARLY_EXPIRED:
-					log_debug("updating address");
-					configure_address(addr_proposal);
-					break;
-				default:
-					hbuf = sin6_to_str(&addr_proposal->
-					    addr);
-					log_debug("%s: iface %d: %s", __func__,
-					    iface->if_index, hbuf);
-					break;
-				}
-			}
-
-			if (!found && duplicate_found && iface->soii) {
-				prefix->dad_counter++;
-				log_debug("%s dad_counter: %d",
-				     __func__, prefix->dad_counter);
-			}
-
-			if (!found &&
-			    (iface->soii || prefix->prefix_len <= 64))
-				/* new proposal */
-				gen_address_proposal(iface, ra, prefix, 0);
-
-			/* privacy addresses do not depend on eui64 */
-			if (!found_privacy && iface->autoconfprivacy) {
-				if (prefix->pltime <
-				    ND6_PRIV_MAX_DESYNC_FACTOR) {
-					hbuf = sin6_to_str(&ra->from);
-					log_warnx("%s: pltime from %s is too "
-					    "small: %d < %d; not generating "
-					    "privacy address", __func__, hbuf,
-					    prefix->pltime,
-					    ND6_PRIV_MAX_DESYNC_FACTOR);
-				} else
-					/* new privacy proposal */
-					gen_address_proposal(iface, ra, prefix,
-					    1);
-			}
+			update_iface_ra_prefix(iface, ra, prefix);
 		}
-	}
+
 #ifndef	SMALL
 	update_iface_ra_rdns(iface, ra);
 #endif	/* SMALL */
@@ -1935,6 +1810,115 @@ update_iface_ra_dfr(struct slaacd_iface *iface, struct radv *ra)
 		log_debug("%s: iface %d: %s", __func__, iface->if_index,
 		    sin6_to_str(&dfr_proposal->addr));
 		break;
+	}
+}
+
+void
+update_iface_ra_prefix(struct slaacd_iface *iface, struct radv *ra,
+    struct radv_prefix *prefix)
+{
+	struct address_proposal	*addr_proposal;
+	uint32_t		 remaining_lifetime;
+	int			 found, found_privacy, duplicate_found;
+
+	found = found_privacy = duplicate_found = 0;
+
+	LIST_FOREACH(addr_proposal, &iface->addr_proposals, entries) {
+		if (prefix->prefix_len == addr_proposal-> prefix_len &&
+		    memcmp(&prefix->prefix, &addr_proposal->prefix,
+		    sizeof(struct in6_addr)) != 0)
+			continue;
+
+		if (memcmp(&addr_proposal->hw_address,
+		    &iface->hw_address,
+		    sizeof(addr_proposal->hw_address)) != 0)
+			continue;
+
+		if (memcmp(&addr_proposal->soiikey, &iface->soiikey,
+		    sizeof(addr_proposal->soiikey)) != 0)
+			continue;
+
+		if (addr_proposal->privacy) {
+			/* create new privacy address if old expires */
+			if (addr_proposal->state != PROPOSAL_NEARLY_EXPIRED &&
+			    addr_proposal->state != PROPOSAL_DUPLICATED)
+				found_privacy = 1;
+
+			if (!iface->autoconfprivacy)
+				log_debug("%s XXX remove privacy address",
+				    __func__);
+
+			log_debug("%s, privacy addr state: %s", __func__,
+			    proposal_state_name[addr_proposal->state]);
+
+			/* privacy addresses just expire */
+			continue;
+		}
+
+		if (addr_proposal->state == PROPOSAL_DUPLICATED) {
+			duplicate_found = 1;
+			continue;
+		}
+
+		found = 1;
+
+		remaining_lifetime = real_lifetime(&addr_proposal->uptime,
+			addr_proposal->vltime);
+
+		addr_proposal->when = ra->when;
+		addr_proposal->uptime = ra->uptime;
+
+		/* RFC 4862 5.5.3 two hours rule */
+#define TWO_HOURS 2 * 3600
+		if (prefix->vltime > TWO_HOURS ||
+		    prefix->vltime > remaining_lifetime)
+			addr_proposal->vltime = prefix->vltime;
+		else
+			addr_proposal->vltime = TWO_HOURS;
+		addr_proposal->pltime = prefix->pltime;
+
+		if (ra->mtu == iface->cur_mtu)
+			addr_proposal->mtu = 0;
+		else {
+			addr_proposal->mtu = ra->mtu;
+			iface->cur_mtu = ra->mtu;
+		}
+
+		log_debug("%s, addr state: %s", __func__,
+		    proposal_state_name[addr_proposal->state]);
+
+		switch (addr_proposal->state) {
+		case PROPOSAL_CONFIGURED:
+		case PROPOSAL_NEARLY_EXPIRED:
+			log_debug("updating address");
+			configure_address(addr_proposal);
+			break;
+		default:
+			log_debug("%s: iface %d: %s", __func__, iface->if_index,
+			    sin6_to_str(&addr_proposal->addr));
+			break;
+		}
+	}
+
+	if (!found && duplicate_found && iface->soii) {
+		prefix->dad_counter++;
+		log_debug("%s dad_counter: %d", __func__, prefix->dad_counter);
+	}
+
+	if (!found && (iface->soii || prefix->prefix_len <= 64))
+		/* new proposal */
+		gen_address_proposal(iface, ra, prefix, 0);
+
+	/* privacy addresses do not depend on eui64 */
+	if (!found_privacy && iface->autoconfprivacy) {
+		if (prefix->pltime < ND6_PRIV_MAX_DESYNC_FACTOR) {
+			log_warnx("%s: pltime from %s is too small: %d < %d; "
+			    "not generating privacy address", __func__,
+			    sin6_to_str(&ra->from), prefix->pltime,
+			    ND6_PRIV_MAX_DESYNC_FACTOR);
+		} else
+			/* new privacy proposal */
+			gen_address_proposal(iface, ra, prefix, 1);
 	}
 }
 
