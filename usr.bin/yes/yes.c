@@ -39,11 +39,6 @@ main(int argc, char *argv[])
 {
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
-
-	if (argc > 1)
-		for (;;)
-			puts(argv[1]);
-	else
-		for (;;)
-			puts("y");
+	for (;;)
+		fprintf(stdout, "%s\n", argc > 1 ? argv[1] : "y");
 }
