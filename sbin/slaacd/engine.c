@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.50 2020/10/30 18:25:06 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.51 2020/10/30 18:25:29 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -294,6 +294,8 @@ void			 compose_rdns_proposal(uint32_t, int);
 #endif	/* SMALL */
 char			*parse_dnssl(char *, int);
 void			 update_iface_ra(struct slaacd_iface *, struct radv *);
+void			 update_iface_ra_dfr(struct slaacd_iface *,
+    			     struct radv *);
 void			 start_probe(struct slaacd_iface *);
 void			 address_proposal_timeout(int, short, void *);
 void			 dfr_proposal_timeout(int, short, void *);
@@ -1738,7 +1740,6 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 	struct radv		*old_ra;
 	struct radv_prefix	*prefix;
 	struct address_proposal	*addr_proposal;
-	struct dfr_proposal	*dfr_proposal;
 	uint32_t		 remaining_lifetime;
 	int			 found, found_privacy, duplicate_found;
 	const char		*hbuf;
@@ -1753,48 +1754,9 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 		free_ra(old_ra);
 	}
 
-	dfr_proposal = find_dfr_proposal_by_gw(iface, &ra->from);
+	update_iface_ra_dfr(iface, ra);
 
-	if (ra->router_lifetime == 0)
-		free_dfr_proposal(dfr_proposal);
-	else {
-		if (dfr_proposal) {
-			if (real_lifetime(&dfr_proposal->uptime,
-			    dfr_proposal->router_lifetime) >
-			    ra->router_lifetime)
-				log_warnx("ignoring router advertisement "
-				    "lowering router lifetime");
-			else {
-				dfr_proposal->when = ra->when;
-				dfr_proposal->uptime = ra->uptime;
-				dfr_proposal->router_lifetime =
-				    ra->router_lifetime;
-
-				log_debug("%s, dfr state: %s, rl: %d",
-				    __func__, proposal_state_name[
-				    dfr_proposal->state],
-				    real_lifetime(&dfr_proposal->uptime,
-				    dfr_proposal->router_lifetime));
-
-				switch (dfr_proposal->state) {
-				case PROPOSAL_CONFIGURED:
-				case PROPOSAL_NEARLY_EXPIRED:
-					log_debug("updating dfr");
-					configure_dfr(dfr_proposal);
-					break;
-				default:
-					hbuf = sin6_to_str(
-					    &dfr_proposal->addr);
-					log_debug("%s: iface %d: %s",
-					    __func__, iface->if_index,
-					    hbuf);
-					break;
-				}
-			}
-		} else
-			/* new proposal */
-			gen_dfr_proposal(iface, ra);
-
+	if (ra->router_lifetime != 0) {
 		LIST_FOREACH(prefix, &ra->prefixes, entries) {
 			if (!prefix->autonomous || prefix->vltime == 0 ||
 			    prefix->pltime > prefix->vltime ||
@@ -1927,6 +1889,53 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 #ifndef	SMALL
 	update_iface_ra_rdns(iface, ra);
 #endif	/* SMALL */
+}
+
+void
+update_iface_ra_dfr(struct slaacd_iface *iface, struct radv *ra)
+{
+	struct dfr_proposal	*dfr_proposal;
+
+	dfr_proposal = find_dfr_proposal_by_gw(iface, &ra->from);
+
+	if (ra->router_lifetime == 0) {
+		free_dfr_proposal(dfr_proposal);
+		return;
+	}
+
+	if (!dfr_proposal) {
+		/* new proposal */
+		gen_dfr_proposal(iface, ra);
+		return;
+	}
+
+	if (real_lifetime(&dfr_proposal->uptime, dfr_proposal->router_lifetime)
+	    > ra->router_lifetime) {
+		log_warnx("ignoring router advertisement lowering router "
+		    "lifetime");
+		return;
+	}
+
+	dfr_proposal->when = ra->when;
+	dfr_proposal->uptime = ra->uptime;
+	dfr_proposal->router_lifetime = ra->router_lifetime;
+
+	log_debug("%s, dfr state: %s, rl: %d", __func__,
+	    proposal_state_name[dfr_proposal->state],
+	    real_lifetime(&dfr_proposal->uptime,
+	    dfr_proposal->router_lifetime));
+
+	switch (dfr_proposal->state) {
+	case PROPOSAL_CONFIGURED:
+	case PROPOSAL_NEARLY_EXPIRED:
+		log_debug("updating dfr");
+		configure_dfr(dfr_proposal);
+		break;
+	default:
+		log_debug("%s: iface %d: %s", __func__, iface->if_index,
+		    sin6_to_str(&dfr_proposal->addr));
+		break;
+	}
 }
 
 #ifndef	SMALL
