@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.67 2019/08/30 20:20:51 jmc Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.68 2020/10/30 16:47:08 denis Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)hosts.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: August 30 2019 $
+.Dd $Mdocdate: October 30 2020 $
 .Dt HOSTNAME.IF 5
 .Os
 .Sh NAME
@@ -207,13 +207,24 @@ instance,
 or
 .Pa /sbin ) .
 Useful for doing interface-specific configuration such as
-setting up custom routes using
+setting up custom routes or default source IP address using
 .Xr route 8
 or establishing tunnels using
 .Xr ifconfig 8 .
 It is worth noting that
 .Dq \e$if
 in a command line will be replaced by the interface name.
+.Pp
+For example, you can use:
+.Bd -literal -offset 1n
+inet 192.0.2.1/32
+inet6 2001:db8::1/128
+up
+!route sourceaddr -ifp \e$if
+.Ed
+.Pp
+to set 192.0.2.1 and 2001:db8::1 as source IP addresses for
+outgoing connections.
 .El
 .Sh DYNAMIC ADDRESS CONFIGURATION
 The following packed formats are valid for configuring network
