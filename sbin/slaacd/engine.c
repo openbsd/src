@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.54 2020/10/30 18:27:39 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.55 2020/10/30 18:28:38 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -329,6 +329,8 @@ struct imsgev		*iev_frontend;
 struct imsgev		*iev_main;
 int64_t			 proposal_id;
 
+uint32_t		 desync_factor;
+
 void
 engine_sig_handler(int sig, short event, void *arg)
 {
@@ -399,6 +401,8 @@ engine(int debug, int verbose)
 	event_add(&iev_main->ev, NULL);
 
 	LIST_INIT(&slaacd_interfaces);
+
+	desync_factor = arc4random_uniform(PRIV_MAX_DESYNC_FACTOR);
 
 	event_dispatch();
 
@@ -1910,11 +1914,11 @@ update_iface_ra_prefix(struct slaacd_iface *iface, struct radv *ra,
 
 	/* privacy addresses do not depend on eui64 */
 	if (!found_privacy && iface->autoconfprivacy) {
-		if (prefix->pltime < PRIV_MAX_DESYNC_FACTOR) {
+		if (prefix->pltime < desync_factor) {
 			log_warnx("%s: pltime from %s is too small: %d < %d; "
 			    "not generating privacy address", __func__,
 			    sin6_to_str(&ra->from), prefix->pltime,
-			    PRIV_MAX_DESYNC_FACTOR);
+			    desync_factor);
 		} else
 			/* new privacy proposal */
 			gen_address_proposal(iface, ra, prefix, 1);
@@ -2048,8 +2052,8 @@ gen_address_proposal(struct slaacd_iface *iface, struct radv *ra, struct
 			addr_proposal->vltime = prefix->vltime;
 
 		if (prefix->pltime > PRIV_PREFERRED_LIFETIME)
-			addr_proposal->pltime = PRIV_PREFERRED_LIFETIME
-			    - arc4random_uniform(PRIV_MAX_DESYNC_FACTOR);
+			addr_proposal->pltime = PRIV_PREFERRED_LIFETIME -
+			    desync_factor;
 		else
 			addr_proposal->pltime = prefix->pltime;
 	} else {
