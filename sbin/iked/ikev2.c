@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.272 2020/10/29 21:49:58 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.273 2020/10/30 12:29:40 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -3951,7 +3951,7 @@ ikev2_ike_sa_rekey(struct iked *env, void *arg)
 	ke->kex_dhgroup = htobe16(group->id);
 	if (ikev2_add_buf(e, nsa->sa_dhiexchange) == -1)
 		goto done;
-	len = sizeof(*ke) + ibuf_length(sa->sa_dhiexchange);
+	len = sizeof(*ke) + ibuf_length(nsa->sa_dhiexchange);
 
 	if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_NONE) == -1)
 		goto done;
