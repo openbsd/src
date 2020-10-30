@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.61 2020/09/10 17:54:47 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.62 2020/10/30 07:43:48 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -130,7 +130,7 @@ typedef struct {
 %token  <v.number>	NUMBER
 %type	<v.string>	hostcmn
 %type	<v.string>	srcaddr port
-%type	<v.number>	optwrite yesno seclevel proto
+%type	<v.number>	optwrite yesno seclevel
 %type	<v.data>	objtype cmd
 %type	<v.oid>		oid hostoid trapoid
 %type	<v.auth>	auth
@@ -279,7 +279,7 @@ main		: LISTEN ON listenproto
 
 listenproto	: UDP listen_udp
 		| TCP listen_tcp
-		| listen_empty
+		| listen_udp
 
 listen_udp	: STRING port			{
 			struct sockaddr_storage ss[16];
@@ -335,34 +335,6 @@ listen_tcp	: STRING port			{
 			}
 		}
 
-/* Remove after deprecation period and replace with listen_udp */
-listen_empty	: STRING port proto		{
-			struct sockaddr_storage ss[16];
-			int nhosts, i;
-
-			nhosts = host($1, $2, $3, ss, nitems(ss));
-			if (nhosts < 1) {
-				yyerror("invalid address: %s", $1);
-				free($1);
-				if ($2 != snmpd_port)
-					free($2);
-				YYERROR;
-			}
-			if (nhosts > (int)nitems(ss))
-				log_warn("%s:%s resolves to more than %zu hosts",
-				    $1, $2, nitems(ss));
-
-			free($1);
-			if ($2 != snmpd_port)
-				free($2);
-			for (i = 0; i < nhosts; i++) {
-				if (listen_add(&(ss[i]), $3) == -1) {
-					yyerror("calloc");
-					YYERROR;
-				}
-			}
-		}
-
 port		: /* empty */			{
 			$$ = snmpd_port;
 		}
@@ -385,21 +357,6 @@ port		: /* empty */			{
 				YYERROR;
 			}
 			$$ = number;
-		}
-		;
-
-proto		: /* empty */			{
-			$$ = SOCK_DGRAM;
-		}
-		| UDP				{
-			log_warnx("udp as last keyword on listen on line is "
-			    "deprecated");
-			$$ = SOCK_DGRAM;
-		}
-		| TCP				{
-			log_warnx("tcp as last keyword on listen on line is "
-			    "deprecated");
-			$$ = SOCK_STREAM;
 		}
 		;
 
