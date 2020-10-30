@@ -1,4 +1,4 @@
-/*	$OpenBSD: astfb.c,v 1.2 2020/10/30 13:11:11 kettenis Exp $	*/
+/*	$OpenBSD: astfb.c,v 1.3 2020/10/30 13:36:45 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis.
@@ -123,9 +123,6 @@ astfb_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf("\n");
-
-	if (console)
-		printf("%s: console\n", sc->sc_dev.dv_xname);
 
 	ri->ri_bits = bus_space_vaddr(sc->sc_iot, sc->sc_ioh);
 	ri->ri_hw = sc;
