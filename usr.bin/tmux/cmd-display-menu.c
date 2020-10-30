@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-menu.c,v 1.19 2020/05/16 15:24:28 nicm Exp $ */
+/* $OpenBSD: cmd-display-menu.c,v 1.20 2020/10/30 08:55:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -36,8 +36,8 @@ const struct cmd_entry cmd_display_menu_entry = {
 	.name = "display-menu",
 	.alias = "menu",
 
-	.args = { "c:t:T:x:y:", 1, -1 },
-	.usage = "[-c target-client] " CMD_TARGET_PANE_USAGE " [-T title] "
+	.args = { "c:t:OT:x:y:", 1, -1 },
+	.usage = "[-O] [-c target-client] " CMD_TARGET_PANE_USAGE " [-T title] "
 		 "[-x position] [-y position] name key command ...",
 
 	.target = { 't', CMD_FIND_PANE, 0 },
@@ -229,6 +229,8 @@ cmd_display_menu_exec(struct cmd *self, struct cmdq_item *item)
 	cmd_display_menu_get_position(tc, item, args, &px, &py, menu->width + 4,
 	    menu->count + 2);
 
+	if (args_has(args, 'O'))
+		flags |= MENU_STAYOPEN;
 	if (!event->m.valid)
 		flags |= MENU_NOMOUSE;
 	if (menu_display(menu, flags, item, px, py, tc, target, NULL,

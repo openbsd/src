@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.362 2020/10/28 10:09:10 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.363 2020/10/30 08:55:56 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1693,8 +1693,8 @@ server_client_reset_state(struct client *c)
 	 * mode.
 	 */
 	if (options_get_number(oo, "mouse")) {
-		mode &= ~ALL_MOUSE_MODES;
 		if (c->overlay_draw == NULL) {
+			mode &= ~ALL_MOUSE_MODES;
 			TAILQ_FOREACH(loop, &w->panes, entry) {
 				if (loop->screen->mode & MODE_MOUSE_ALL)
 					mode |= MODE_MOUSE_ALL;
