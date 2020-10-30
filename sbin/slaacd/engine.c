@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.55 2020/10/30 18:28:38 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.56 2020/10/30 18:29:13 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1906,9 +1906,8 @@ update_iface_ra_prefix(struct slaacd_iface *iface, struct radv *ra,
 	if (!found && duplicate_found && iface->soii) {
 		prefix->dad_counter++;
 		log_debug("%s dad_counter: %d", __func__, prefix->dad_counter);
-	}
-
-	if (!found && (iface->soii || prefix->prefix_len <= 64))
+		gen_address_proposal(iface, ra, prefix, 0);
+	} else if (!found && (iface->soii || prefix->prefix_len <= 64))
 		/* new proposal */
 		gen_address_proposal(iface, ra, prefix, 0);
 
