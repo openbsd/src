@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.63 2020/10/30 13:07:48 kettenis Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.64 2020/10/31 17:57:53 patrick Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -95,8 +95,11 @@ struct fdt_reg initrd_reg;
 void memreg_add(const struct fdt_reg *);
 void memreg_remove(const struct fdt_reg *);
 
+uint8_t *bootmac = NULL;
+
 void parse_bootargs(const char *);
 const char *parse_bootduid(const char *);
+const char *parse_bootmac(const char *);
 
 paddr_t fdt_pa;
 size_t fdt_size;
@@ -766,6 +769,9 @@ parse_bootargs(const char *bootargs)
 	if (strncmp(cp, "bootduid=", strlen("bootduid=")) == 0)
 		cp = parse_bootduid(cp + strlen("bootduid="));
 
+	if (strncmp(cp, "bootmac=", strlen("bootmac=")) == 0)
+		cp = parse_bootmac(cp + strlen("bootmac="));
+
 	while (*cp != '-')
 		if (*cp++ == '\0')
 			return;
@@ -815,6 +821,38 @@ parse_bootduid(const char *bootarg)
 
 	if (count > 0) {
 		memcpy(&bootduid, &duid, sizeof(bootduid));
+		return cp;
+	}
+
+	return bootarg;
+}
+
+const char *
+parse_bootmac(const char *bootarg)
+{
+	static uint8_t lladdr[6];
+	const char *cp = bootarg;
+	int digit, count = 0;
+
+	memset(lladdr, 0, sizeof(lladdr));
+
+	while (count < 12) {
+		if (*cp >= '0' && *cp <= '9')
+			digit = *cp - '0';
+		else if (*cp >= 'a' && *cp <= 'f')
+			digit = *cp - 'a' + 10;
+		else if (*cp == ':') {
+			cp++;
+			continue;
+		} else
+			break;
+		lladdr[count / 2] |= digit << (4 * !(count % 2));
+		count++;
+		cp++;
+	}
+
+	if (count > 0) {
+		bootmac = lladdr;
 		return cp;
 	}
 
