@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rge.c,v 1.7 2020/10/12 02:06:25 kevlo Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.8 2020/10/31 07:50:41 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020 Kevin Lo <kevlo@openbsd.org>
@@ -1260,6 +1260,9 @@ rge_rxeof(struct rge_softc *sc)
 		ml_enqueue(&ml, m);
 	}
 
+	if (ifiq_input(&ifp->if_rcv, &ml))
+		if_rxr_livelocked(rxr);
+
 	sc->rge_ldata.rge_rxq_considx = i;
 	rge_fill_rx_ring(sc);
 
@@ -1870,16 +1873,6 @@ rge_phy_config_mac_cfg5(struct rge_softc *sc)
 	val = rge_read_ephy(sc, 0x0062) & ~0x0030;
 	rge_write_ephy(sc, 0x0062, val | 0x0020);
 
-	rge_write_phy_ocp(sc, 0xbf86, 0x9000);
-	RGE_PHY_SETBIT(sc, 0xc402, 0x0400);
-	RGE_PHY_CLRBIT(sc, 0xc402, 0x0400);
-	rge_write_phy_ocp(sc, 0xbd86, 0x1010);
-	rge_write_phy_ocp(sc, 0xbd88, 0x1010);
-	val = rge_read_phy_ocp(sc, 0xbd4e) & ~0x0c00;
-	rge_write_phy_ocp(sc, 0xbd4e, val | 0x0800);
-	val = rge_read_phy_ocp(sc, 0xbf46) & ~0x0f00;
-	rge_write_phy_ocp(sc, 0xbf46, val | 0x0700);
-
 	rge_phy_config_mcu(sc, RGE_MAC_CFG5_MCODE_VER);
 
 	RGE_PHY_SETBIT(sc, 0xa442, 0x0800);
@@ -1905,6 +1898,8 @@ rge_phy_config_mac_cfg5(struct rge_softc *sc)
 		rge_write_phy_ocp(sc, 0xa438, 0x2417);
 	}
 	RGE_PHY_SETBIT(sc, 0xa4ca, 0x0040);
+	val = rge_read_phy_ocp(sc, 0xbf84) & ~0xe000;
+	rge_write_phy_ocp(sc, 0xbf84, val | 0xa000);
 }
 
 void
