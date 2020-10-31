@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.68 2020/10/30 16:47:08 denis Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.69 2020/10/31 06:49:42 jmc Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)hosts.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: October 30 2020 $
+.Dd $Mdocdate: October 31 2020 $
 .Dt HOSTNAME.IF 5
 .Os
 .Sh NAME
@@ -215,16 +215,15 @@ It is worth noting that
 .Dq \e$if
 in a command line will be replaced by the interface name.
 .Pp
-For example, you can use:
-.Bd -literal -offset 1n
+For example,
+to set 192.0.2.1 and 2001:db8::1 as source IP addresses for
+outgoing connections:
+.Bd -literal -offset indent
 inet 192.0.2.1/32
 inet6 2001:db8::1/128
 up
 !route sourceaddr -ifp \e$if
 .Ed
-.Pp
-to set 192.0.2.1 and 2001:db8::1 as source IP addresses for
-outgoing connections.
 .El
 .Sh DYNAMIC ADDRESS CONFIGURATION
 The following packed formats are valid for configuring network
