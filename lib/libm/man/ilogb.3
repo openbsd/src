@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ilogb.3,v 1.7 2016/04/26 19:49:22 tb Exp $
+.\"	$OpenBSD: ilogb.3,v 1.8 2020/10/31 15:14:39 kettenis Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"     from: @(#)ieee.3	6.4 (Berkeley) 5/6/91
 .\"
-.Dd $Mdocdate: April 26 2016 $
+.Dd $Mdocdate: October 31 2020 $
 .Dt ILOGB 3
 .Os
 .Sh NAME
@@ -52,11 +52,14 @@ returns
 in integer format.
 .Fn ilogb \(+-infinity
 returns
-.Dv INT_MAX
+.Dv INT_MAX ,
+.Fn ilogb NaN
+returns
+.Dv FP_ILOGBNAN
 and
 .Fn ilogb 0
 returns
-.Dv INT_MIN .
+.Dv FP_ILOGB0 .
 The
 .Fn ilogbf
 function is a single precision version of
