@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.115 2020/10/29 21:49:58 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.116 2020/11/01 09:50:24 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -454,7 +454,7 @@ typedef struct {
 %token	IPCOMP OCSP IKELIFETIME MOBIKE NOMOBIKE RDOMAIN
 %token	FRAGMENTATION NOFRAGMENTATION DPD_CHECK_INTERVAL
 %token	ENFORCESINGLEIKESA NOENFORCESINGLEIKESA
-%token	TOLERATE MAXAGE
+%token	TOLERATE MAXAGE DYNAMIC
 %token	CERTPARTIALCHAIN
 %token	REQUEST
 %token	<v.string>		STRING
@@ -815,6 +815,12 @@ host		: host_spec			{ $$ = $1; }
 		}
 		| ANY				{
 			$$ = host_any();
+		}
+		| DYNAMIC			{
+			if (($$ = host("0.0.0.0")) == NULL) {
+				yyerror("could not parse host specification");
+				YYERROR;
+			}
 		}
 		;
 
@@ -1330,6 +1336,7 @@ lookup(char *s)
 		{ "default",		DEFAULT },
 		{ "dpd_check_interval",	DPD_CHECK_INTERVAL },
 		{ "dstid",		DSTID },
+		{ "dynamic",		DYNAMIC },
 		{ "eap",		EAP },
 		{ "enc",		ENCXF },
 		{ "enforcesingleikesa",	ENFORCESINGLEIKESA },
