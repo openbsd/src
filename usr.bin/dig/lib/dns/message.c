@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: message.c,v 1.17 2020/09/14 08:40:43 florian Exp $ */
+/* $Id: message.c,v 1.18 2020/11/01 07:12:14 florian Exp $ */
 
 /*! \file */
 
@@ -2434,6 +2434,68 @@ render_ecs(isc_buffer_t *ecsbuf, isc_buffer_t *target) {
 	return (ISC_R_SUCCESS);
 }
 
+static const char *
+ede_info_code2str(uint16_t info_code)
+{
+	if (info_code > 49151)
+		return "Private Use";
+
+	switch (info_code) {
+	case 0:
+		return "Other Error";
+	case 1:
+		return "Unsupported DNSKEY Algorithm";
+	case 2:
+		return "Unsupported DS Digest Type";
+	case 3:
+		return "Stale Answer";
+	case 4:
+		return "Forged Answer";
+	case 5:
+		return "DNSSEC Indeterminate";
+	case 6:
+		return "DNSSEC Bogus";
+	case 7:
+		return "Signature Expired";
+	case 8:
+		return "Signature Not Yet Valid";
+	case 9:
+		return "DNSKEY Missing";
+	case 10:
+		return "RRSIGs Missing";
+	case 11:
+		return "No Zone Key Bit Set";
+	case 12:
+		return "NSEC Missing";
+	case 13:
+		return "Cached Error";
+	case 14:
+		return "Not Ready";
+	case 15:
+		return "Blocked";
+	case 16:
+		return "Censored";
+	case 17:
+		return "Filtered";
+	case 18:
+		return "Prohibited";
+	case 19:
+		return "Stale NXDomain Answer";
+	case 20:
+		return "Not Authoritative";
+	case 21:
+		return "Not Supported";
+	case 22:
+		return "No Reachable Authority";
+	case 23:
+		return "Network Error";
+	case 24:
+		return "Invalid Data";
+	default:
+		return "Unassigned";
+	}
+}
+
 isc_result_t
 dns_message_pseudosectiontotext(dns_message_t *msg,
 				dns_pseudosection_t section,
@@ -2556,6 +2618,20 @@ dns_message_pseudosectiontotext(dns_message_t *msg,
 					}
 					ADD_STRING(target, "\n");
 					continue;
+				}
+			} else if (optcode == DNS_OPT_EDE) {
+				uint16_t info_code;
+				ADD_STRING(target, "; EDE");
+				if (optlen >= 2) {
+					info_code =
+					    isc_buffer_getuint16(&optbuf);
+					optlen -= 2;
+					snprintf(buf, sizeof(buf), ": %u (",
+					    info_code);
+					ADD_STRING(target, buf);
+					ADD_STRING(target,
+					    ede_info_code2str(info_code));
+					ADD_STRING(target, ")");
 				}
 			} else {
 				ADD_STRING(target, "; OPT=");
