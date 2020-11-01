@@ -604,7 +604,7 @@ GotSection::GotSection()
   // ElfSym::globalOffsetTable.
   if (ElfSym::globalOffsetTable && !target->gotBaseSymInGotPlt)
     numEntries += target->gotHeaderEntriesNum;
-  else if (config->emachine == EM_PPC)
+  else if (config->emachine == EM_PPC && !config->relocatable)
     numEntries += target->gotHeaderEntriesNum;
 }
 
