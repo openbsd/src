@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.126 2020/10/26 11:48:39 tb Exp $
+.\" $OpenBSD: openssl.1,v 1.127 2020/11/01 21:32:03 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: October 26 2020 $
+.Dd $Mdocdate: November 1 2020 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -1121,7 +1121,7 @@ commands.
 .It Fl binary
 Normally the input message is converted to "canonical" format which is
 effectively using CR/LF as end of line, as required by the S/MIME specification.
-When this option is present no translation occurs.
+When this option is present, no translation occurs.
 This is useful when handling binary data which may not be in MIME format.
 .It Fl CAfile Ar file
 A file containing trusted CA certificates, used with
@@ -1971,7 +1971,7 @@ Encrypt the private key with DES, triple DES, or
 any other cipher supported by
 .Nm openssl .
 A pass phrase is prompted for.
-If none of these options is specified the key is written in plain text.
+If none of these options are specified, the key is written in plain text.
 This means that using the
 .Nm ec
 utility to read in an encrypted key with no
@@ -1982,7 +1982,7 @@ These options can only be used with PEM format output files.
 .It Fl in Ar file
 The input file to read a key from,
 or standard input if not specified.
-If the key is encrypted a pass phrase will be prompted for.
+If the key is encrypted, a pass phrase will be prompted for.
 .It Fl inform Cm der | pem
 The input format.
 .It Fl noout
@@ -3356,7 +3356,7 @@ is acceptable, such as
 .It Fl in Ar file
 The input file to read from,
 or standard input if not specified.
-If the key is encrypted a pass phrase will be prompted for.
+If the key is encrypted, a pass phrase will be prompted for.
 .It Fl inform Cm der | pem
 The input format.
 .It Fl noout
@@ -3529,8 +3529,8 @@ For pss
 mode only this option specifies the salt length.
 Two special values are supported:
 -1 sets the salt length to the digest length.
-When signing -2 sets the salt length to the maximum permissible value.
-When verifying -2 causes the salt length to be automatically determined
+When signing, -2 sets the salt length to the maximum permissible value.
+When verifying, -2 causes the salt length to be automatically determined
 based on the PSS block structure.
 .El
 .Pp
@@ -5202,7 +5202,7 @@ Normally, the input message is converted to
 .Qq canonical
 format which uses CR/LF as end of line,
 as required by the S/MIME specification.
-When this option is present no translation occurs.
+When this option is present, no translation occurs.
 This is useful when handling binary data which may not be in MIME format.
 .It Fl CAfile Ar file
 A
@@ -5601,7 +5601,7 @@ The policy that the client expects the TSA to use for creating the
 time stamp token.
 Either dotted OID notation or OID names defined
 in the config file can be used.
-If no policy is requested the TSA uses its own default policy.
+If no policy is requested, the TSA uses its own default policy.
 .It Fl text
 Output in human-readable text format instead of DER.
 .El
@@ -5908,7 +5908,7 @@ The
 should contain one or more CRLs in PEM format.
 .It Fl crl_check
 Check end entity certificate validity by attempting to look up a valid CRL.
-If a valid CRL cannot be found an error occurs.
+If a valid CRL cannot be found, an error occurs.
 .It Fl crl_check_all
 Check the validity of all certificates in the chain by attempting
 to look up valid CRLs.
@@ -6563,7 +6563,7 @@ Print the full certificate in text form.
 A trusted certificate is a certificate which has several
 additional pieces of information attached to it such as the permitted
 and prohibited uses of the certificate and an alias.
-When a certificate is being verified at least one certificate must be trusted.
+When a certificate is being verified, at least one certificate must be trusted.
 By default, a trusted certificate must be stored locally and be a root CA.
 The following are x509 trust settings options:
 .Bl -tag -width "XXXX"
