@@ -1,4 +1,4 @@
-/*	$Id: test-mft.c,v 1.5 2020/07/05 18:31:28 tb Exp $ */
+/*	$Id: test-mft.c,v 1.6 2020/11/01 22:28:24 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -29,11 +29,36 @@
 
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/pem.h>
 #include <openssl/x509v3.h>
 
 #include "extern.h"
 
 int verbose;
+
+static void
+pem_print(X509 **xp)
+{
+	BIO	*bio = NULL;
+	char	*pem = NULL;
+
+	bio = BIO_new(BIO_s_mem());
+	assert(bio != NULL);
+
+	if (0 == PEM_write_bio_X509(bio, *xp)) {
+		BIO_free(bio);
+		errx(1, "PEM_write_bio_X509: unable to write cert");
+	}
+
+	if ((pem = (char *) malloc(bio->num_write + 1)) == NULL)
+		err(1, NULL);
+
+	memset(pem, 0, bio->num_write + 1);
+	BIO_read(bio, pem, bio->num_write);
+	BIO_free(bio);
+	printf("%s", pem);
+	free(pem);
+}
 
 static void
 mft_print(const struct mft *p)
@@ -57,7 +82,7 @@ mft_print(const struct mft *p)
 int
 main(int argc, char *argv[])
 {
-	int		 c, i, verb = 0;
+	int		 c, i, ppem, verb = 0;
 	struct mft	*p;
 	X509		*xp = NULL;
 
@@ -65,8 +90,11 @@ main(int argc, char *argv[])
 	OpenSSL_add_all_ciphers();
 	OpenSSL_add_all_digests();
 
-	while (-1 != (c = getopt(argc, argv, "v")))
+	while (-1 != (c = getopt(argc, argv, "pv")))
 		switch (c) {
+		case 'p':
+			ppem++;
+			break;
 		case 'v':
 			verb++;
 			break;
@@ -85,6 +113,8 @@ main(int argc, char *argv[])
 			break;
 		if (verb)
 			mft_print(p);
+		if (ppem)
+			pem_print(&xp);
 		mft_free(p);
 		X509_free(xp);
 	}

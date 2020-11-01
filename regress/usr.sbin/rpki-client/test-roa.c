@@ -1,4 +1,4 @@
-/*	$Id: test-roa.c,v 1.3 2019/08/22 21:31:48 bluhm Exp $ */
+/*	$Id: test-roa.c,v 1.4 2020/11/01 22:28:24 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -25,11 +25,36 @@
 
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/pem.h>
 #include <openssl/x509v3.h>
 
 #include "extern.h"
 
 int verbose;
+
+static void
+pem_print(X509 **xp)
+{
+	BIO     *bio = NULL;
+	char    *pem = NULL;
+
+	bio = BIO_new(BIO_s_mem());
+	assert(bio != NULL);
+
+	if (0 == PEM_write_bio_X509(bio, *xp)) {
+		BIO_free(bio);
+		errx(1, "PEM_write_bio_X509: unable to write cert");
+	}
+
+	if ((pem = (char *) malloc(bio->num_write + 1)) == NULL)
+		err(1, NULL);
+
+	memset(pem, 0, bio->num_write + 1);
+	BIO_read(bio, pem, bio->num_write);
+	BIO_free(bio);
+	printf("%s", pem);
+	free(pem);
+}
 
 static void
 roa_print(const struct roa *p)
@@ -53,16 +78,20 @@ roa_print(const struct roa *p)
 int
 main(int argc, char *argv[])
 {
-	int		 c, i, verb = 0;
+	int		 c, i, ppem, verb = 0;
 	X509		*xp = NULL;
 	struct roa	*p;
+
 
 	ERR_load_crypto_strings();
 	OpenSSL_add_all_ciphers();
 	OpenSSL_add_all_digests();
 
-	while ((c = getopt(argc, argv, "v")) != -1)
+	while ((c = getopt(argc, argv, "pv")) != -1)
 		switch (c) {
+		case 'p':
+			ppem++;
+			break;
 		case 'v':
 			verb++;
 			break;
@@ -81,6 +110,8 @@ main(int argc, char *argv[])
 			break;
 		if (verb)
 			roa_print(p);
+		if (ppem)
+			pem_print(&xp);
 		roa_free(p);
 		X509_free(xp);
 	}
