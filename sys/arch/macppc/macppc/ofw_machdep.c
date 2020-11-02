@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.61 2020/10/27 19:40:08 tobhe Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.62 2020/11/02 18:35:38 tobhe Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -476,8 +476,8 @@ of_display_console(void)
 
 	if (OF_getnodebyname(0, "backlight") != 0) {
 		cons_backlight_available = 1;
-		cons_brightness = MAX_BRIGHTNESS;
 		cons_backlight = WSDISPLAYIO_VIDEO_ON;
+		of_setbrightness(DEFAULT_BRIGHTNESS);
 	
 		/* wsconsctl hooks */
 		ws_get_param = ofw_get_param;
