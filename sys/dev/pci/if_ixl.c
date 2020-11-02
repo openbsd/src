@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.68 2020/07/16 03:04:50 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.69 2020/11/02 00:25:49 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1242,6 +1242,8 @@ struct ixl_softc {
 	bus_space_handle_t	 sc_memh;
 	bus_size_t		 sc_mems;
 
+	uint16_t		 sc_api_major;
+	uint16_t		 sc_api_minor;
 	uint8_t			 sc_pf_id;
 	uint16_t		 sc_uplink_seid;	/* le */
 	uint16_t		 sc_downlink_seid;	/* le */
@@ -1584,6 +1586,20 @@ static const struct ixl_chip ixl_722 = {
 	.ic_set_rss_lut =	ixl_722_set_rss_lut,
 };
 
+/*
+ * 710 chips using an older firmware/API use the same ctl ops as
+ * 722 chips. or 722 chips use the same ctl ops as 710 chips in early
+ * firmware/API versions?
+*/
+
+static const struct ixl_chip ixl_710_decrepit = {
+	.ic_rss_hena =		IXL_RSS_HENA_BASE_710,
+	.ic_rd_ctl =		ixl_722_rd_ctl,
+	.ic_wr_ctl =		ixl_722_wr_ctl,
+	.ic_set_rss_key =	ixl_710_set_rss_key,
+	.ic_set_rss_lut =	ixl_710_set_rss_lut,
+};
+
 /* driver code */
 
 struct ixl_device {
@@ -1904,6 +1920,11 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 			    (IXL_NOITR << I40E_PFINT_DYN_CTLN_ITR_INDX_SHIFT));
 		}
 	}
+
+	/* fixup the chip ops for older fw releases */
+	if (sc->sc_chip == &ixl_710 &&
+	    sc->sc_api_major == 1 && sc->sc_api_minor < 5)
+		sc->sc_chip = &ixl_710_decrepit;
 
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
@@ -3623,9 +3644,12 @@ ixl_get_version(struct ixl_softc *sc)
 	fwver = lemtoh32(&iaq.iaq_param[2]);
 	apiver = lemtoh32(&iaq.iaq_param[3]);
 
+	sc->sc_api_major = apiver & 0xffff;
+	sc->sc_api_minor = (apiver >> 16) & 0xffff;
+
 	printf(", FW %hu.%hu.%05u API %hu.%hu", (uint16_t)fwver,
-	    (uint16_t)(fwver >> 16), fwbuild, (uint16_t)apiver,
-	    (uint16_t)(apiver >> 16));
+	    (uint16_t)(fwver >> 16), fwbuild,
+	    sc->sc_api_major, sc->sc_api_minor);
 
 	return (0);
 }
@@ -4895,7 +4919,6 @@ ixl_pf_reset(struct ixl_softc *sc)
 static uint32_t
 ixl_710_rd_ctl(struct ixl_softc *sc, uint32_t r)
 {
-	/* XXX this should fall back to registers for api < 1.5 */
 	struct ixl_atq iatq;
 	struct ixl_aq_desc *iaq;
 	uint16_t retval;
@@ -4919,7 +4942,6 @@ ixl_710_rd_ctl(struct ixl_softc *sc, uint32_t r)
 static void
 ixl_710_wr_ctl(struct ixl_softc *sc, uint32_t r, uint32_t v)
 {
-	/* XXX this should fall back to registers for api < 1.5 */
 	struct ixl_atq iatq;
 	struct ixl_aq_desc *iaq;
 	uint16_t retval;
@@ -4945,7 +4967,7 @@ ixl_710_set_rss_key(struct ixl_softc *sc, const struct ixl_rss_key *rsskey)
 	unsigned int i;
 
 	for (i = 0; i < nitems(rsskey->key); i++)
-		ixl_710_wr_ctl(sc, I40E_PFQF_HKEY(i), rsskey->key[i]);
+		ixl_wr_ctl(sc, I40E_PFQF_HKEY(i), rsskey->key[i]);
 
 	return (0);
 }
