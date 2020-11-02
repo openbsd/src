@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.106 2019/04/23 06:18:02 remi Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.107 2020/11/02 00:29:58 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1057,6 +1057,8 @@ orig_rtr_lsa(struct area *area)
 		/* RFC 3137: stub router support */
 		if ((oeconf->flags & OSPFD_FLAG_STUB_ROUTER || oe_nofib) &&
 		    rtr_link.type != LINK_TYPE_STUB_NET)
+			rtr_link.metric = MAX_METRIC;
+		else if (iface->dependon[0] != '\0' && iface->depend_ok == 0)
 			rtr_link.metric = MAX_METRIC;
 		else
 			rtr_link.metric = htons(iface->metric);
