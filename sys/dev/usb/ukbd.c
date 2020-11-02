@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.80 2020/10/28 20:42:04 kettenis Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.81 2020/11/02 19:45:18 tobhe Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -560,6 +560,8 @@ ukbd_apple_munge(void *vsc, uint8_t *ibuf, u_int ilen)
 		{ 66, 0 },	/* F9 -> audio next */
 #endif
 #ifdef __macppc__
+		{ 58, 233 },	/* F1 -> screen brightness down */
+		{ 59, 232 },	/* F2 -> screen brightness up */
 		{ 60, 127 },	/* F3 -> audio mute */
 		{ 61, 129 },	/* F4 -> audio lower */
 		{ 62, 128 },	/* F5 -> audio raise */

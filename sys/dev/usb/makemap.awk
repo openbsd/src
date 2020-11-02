@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: makemap.awk,v 1.14 2013/11/20 17:27:32 miod Exp $
+#	$OpenBSD: makemap.awk,v 1.15 2020/11/02 19:45:18 tobhe Exp $
 #
 # Copyright (c) 2005, Miodrag Vallat
 #
@@ -31,7 +31,7 @@
 #
 
 BEGIN {
-	rcsid = "$OpenBSD: makemap.awk,v 1.14 2013/11/20 17:27:32 miod Exp $"
+	rcsid = "$OpenBSD: makemap.awk,v 1.15 2020/11/02 19:45:18 tobhe Exp $"
 	ifdepth = 0
 	ignore = 0
 	declk = 0
@@ -341,6 +341,8 @@ $1 == "#define" || $1 == "#undef" {
 			lines[124] = "    KC(124),\tKS_Copy,"
 			lines[125] = "    KC(125),\tKS_Paste,"
 			lines[126] = "    KC(126),\tKS_Find,"
+			lines[232] = "    KC(232),\tKS_Cmd_BrightnessUp,"
+			lines[233] = "    KC(233),\tKS_Cmd_BrightnessDown,"
 		}
 
 		for (i = 0; i < 256; i++)

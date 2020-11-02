@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidkbd.c,v 1.5 2017/05/30 07:40:24 mpi Exp $	*/
+/*	$OpenBSD: hidkbd.c,v 1.6 2020/11/02 19:45:18 tobhe Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -397,7 +397,7 @@ hidkbd_decode(struct hidkbd *kbd, struct hidkbd_data *ud)
 		wskbd_rawinput(kbd->sc_wskbddev, cbuf, j);
 
 		/*
-		 * Pass audio keys to wskbd_input anyway.
+		 * Pass audio and brightness keys to wskbd_input anyway.
 		 */
 		for (i = 0; i < nkeys; i++) {
 			key = ibuf[i];
@@ -405,6 +405,8 @@ hidkbd_decode(struct hidkbd *kbd, struct hidkbd_data *ud)
 			case 127:
 			case 128:
 			case 129:
+			case 232:
+			case 233:
 				wskbd_input(kbd->sc_wskbddev,
 				    key & RELEASE ?  WSCONS_EVENT_KEY_UP :
 				      WSCONS_EVENT_KEY_DOWN, key & CODEMASK);
