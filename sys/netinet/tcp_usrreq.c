@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.176 2020/08/18 18:19:30 gnezdo Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.177 2020/11/02 04:29:23 gnezdo Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -125,6 +125,7 @@ const struct sysctl_bounded_args tcpctl_vars[] = {
 	{ TCPCTL_SYN_CACHE_LIMIT, &tcp_syn_cache_limit, 1, 1000 * 1000 },
 	{ TCPCTL_SYN_BUCKET_LIMIT, &tcp_syn_bucket_limit, 1, INT_MAX },
 	{ TCPCTL_RFC3390, &tcp_do_rfc3390, 0, 2 },
+	{ TCPCTL_ALWAYS_KEEPALIVE, &tcp_always_keepalive, 0, 1 },
 };
 
 struct	inpcbtable tcbtable;
@@ -1024,13 +1025,6 @@ tcp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case TCPCTL_DROP:
 		NET_LOCK();
 		error = tcp_ident(oldp, oldlenp, newp, newlen, 1);
-		NET_UNLOCK();
-		return (error);
-
-	case TCPCTL_ALWAYS_KEEPALIVE:
-		NET_LOCK();
-		error = sysctl_int(oldp, oldlenp, newp, newlen,
-		    &tcp_always_keepalive);
 		NET_UNLOCK();
 		return (error);
 
