@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.120 2020/05/17 13:48:30 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.121 2020/11/02 18:32:08 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -551,7 +551,7 @@ IDTVEC(syscall32)
  * First order of business is to swap to the kernel GS.base so that
  * we can access our struct cpu_info.  After possibly mucking with
  * pagetables, we switch to our kernel stack.  Once that's in place
- * we can unblock interrupts and save the rest of the syscall frame.
+ * we can save the rest of the syscall frame and unblock interrupts.
  */
 KUTEXT_PAGE_START
  	.align	NBPG, 0xcc
@@ -562,7 +562,7 @@ XUsyscall_meltdown:
 	 * below.  For this, the Meltdown case, we use the scratch space
 	 * in cpu_info so we can switch to the kernel page tables
 	 * (thank you, Intel), at which point we'll continue at the
-	 * "movq CPUVAR(KERN_RSP),%rax" after Xsyscall below.
+	 * "SYSCALL_ENTRY" after Xsyscall below.
 	 * In case the CPU speculates past the mov to cr3, we put a
 	 * retpoline-style pause-lfence-jmp-to-pause loop.
 	 */
@@ -584,28 +584,8 @@ IDTVEC_NOALIGN(syscall_meltdown)
 IDTVEC_NOALIGN(syscall)
 	swapgs
 	movq	%rax,CPUVAR(SCRATCH)
-	movq	CPUVAR(KERN_RSP),%rax
-	xchgq	%rax,%rsp
-	movq	%rcx,TF_RCX(%rsp)
-	movq	%rcx,TF_RIP(%rsp)
-	RET_STACK_REFILL_WITH_RCX
+	SYSCALL_ENTRY			/* create trapframe */
 	sti
-
-	/*
-	 * XXX don't need this whole frame, split of the
-	 * syscall frame and trapframe is needed.
-	 * First, leave some room for the trapno, error,
-	 * ss:rsp, etc, so that all GP registers can be
-	 * saved. Then, fill in the rest.
-	 */
-	movq	$(GSEL(GUDATA_SEL, SEL_UPL)),TF_SS(%rsp)
-	movq	%rax,TF_RSP(%rsp)
-	movq	CPUVAR(SCRATCH),%rax
-	INTR_SAVE_MOST_GPRS_NO_ADJ
-	movq	%r11, TF_RFLAGS(%rsp)	/* old rflags from syscall insn */
-	movq	$(GSEL(GUCODE_SEL, SEL_UPL)), TF_CS(%rsp)
-	movq	%rax,TF_ERR(%rsp)	/* stash syscall # for SPL check */
-	INTR_CLEAR_GPRS
 
 	movq	CPUVAR(CURPROC),%r14
 	movq	%rsp,P_MD_REGS(%r14)	# save pointer to frame

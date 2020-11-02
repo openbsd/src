@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.80 2019/08/07 18:53:28 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.81 2020/11/02 18:32:08 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -121,8 +121,7 @@ IDTVEC(trap02)
 	pushq	$0
 	pushq	$T_NMI
 calltrap_specstk:			# special stack path
-	INTR_ENTRY_KERN
-	INTR_SAVE_MOST_GPRS_NO_ADJ
+	TRAP_ENTRY_KERN
 	INTR_CLEAR_GPRS
 	movl	$MSR_GSBASE,%ecx	# save current GS.base...
 	rdmsr
@@ -185,8 +184,7 @@ IDTVEC(trap03)
 	.global	INTRENTRY_LABEL(trap03)
 INTRENTRY_LABEL(trap03):
 	FENCE_NO_SAFE_SMAP
-	INTR_ENTRY_KERN
-	INTR_SAVE_MOST_GPRS_NO_ADJ
+	TRAP_ENTRY_KERN
 	sti
 	cld
 	SMAP_CLAC
@@ -389,8 +387,8 @@ KUTEXT_PAGE_START
 	 * userspace so we skip the SEL_RPL test and go directly to
 	 * the swapgs+use-scratch+change-cr3 sequence.  Switching to
 	 * the kernel page tables (thank you, Intel) will make us
-	 * continue at the "movq CPUVAR(KERN_RSP),%rax" after alltraps
-	 * below.  In case the CPU speculates past the mov to cr3,
+	 * continue at the "TRAP_ENTRY_KERN" after alltraps below.
+	 * In case the CPU speculates past the mov to cr3,
 	 * we put a retpoline-style pause-lfence-jmp-to-pause loop.
 	 */
 Xalltraps:
@@ -419,9 +417,7 @@ GENTRY(alltraps)
 	/*
 	 * Traps from userspace
 	 */
-	INTR_ENTRY_USER
-	INTR_SAVE_MOST_GPRS_NO_ADJ
-	INTR_CLEAR_GPRS
+	TRAP_ENTRY_USER
 	sti
 	cld
 	SMAP_CLAC
@@ -444,8 +440,7 @@ END(alltraps)
 GENTRY(alltraps_kern)
 	FENCE_NO_SAFE_SMAP
 GENTRY(alltraps_kern_meltdown)
-	INTR_ENTRY_KERN
-	INTR_SAVE_MOST_GPRS_NO_ADJ
+	TRAP_ENTRY_KERN
 	sti
 	cld
 	SMAP_CLAC
@@ -520,14 +515,9 @@ KUENTRY(x2apic_eoi)
 #if NLAPIC > 0
 #ifdef MULTIPROCESSOR
 KIDTVEC(recurse_lapic_ipi)
-	INTR_RECURSE_HWFRAME
-	pushq	$0
-	subq	$8,%rsp			/* if_ppl filled in below */
-	INTR_REENTRY
+	INTR_RECURSE
 	jmp	1f
 IDTVEC(intr_lapic_ipi)
-	pushq	$0
-	subq	$8,%rsp			/* if_ppl filled in below */
 	INTRENTRY(intr_lapic_ipi)
 	CODEPATCH_START
 	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
@@ -722,14 +712,9 @@ IDTVEC(ipi_invlrange_pcid)
 	 * Interrupt from the local APIC timer.
 	 */
 KIDTVEC(recurse_lapic_ltimer)
-	INTR_RECURSE_HWFRAME
-	pushq	$0
-	subq	$8,%rsp			/* if_ppl filled in below */
-	INTR_REENTRY
+	INTR_RECURSE
 	jmp	1f
 IDTVEC(intr_lapic_ltimer)
-	pushq	$0
-	subq	$8,%rsp			/* if_ppl filled in below */
 	INTRENTRY(intr_lapic_ltimer)
 	CODEPATCH_START
 	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
@@ -759,14 +744,9 @@ KIDTVEC_FALLTHROUGH(resume_lapic_ltimer)
  * Only used when the hypervisor supports direct vector callbacks.
  */
 KIDTVEC(recurse_xen_upcall)
-	INTR_RECURSE_HWFRAME
-	pushq	$0
-	subq	$8,%rsp			/* if_ppl filled in below */
-	INTR_REENTRY
+	INTR_RECURSE
 	jmp	1f
 IDTVEC(intr_xen_upcall)
-	pushq	$0
-	subq	$8,%rsp			/* if_ppl filled in below */
 	INTRENTRY(intr_xen_upcall)
 	call	_C_LABEL(xen_intr_ack)
 	movl	CPUVAR(ILEVEL),%ebx
@@ -794,14 +774,9 @@ KIDTVEC_FALLTHROUGH(resume_xen_upcall)
  * Only used when the hypervisor supports direct vector callbacks.
  */
 KIDTVEC(recurse_hyperv_upcall)
-	INTR_RECURSE_HWFRAME
-	pushq	$0
-	subq	$8,%rsp			/* if_ppl filled in below */
-	INTR_REENTRY
+	INTR_RECURSE
 	jmp	1f
 IDTVEC(intr_hyperv_upcall)
-	pushq	$0
-	subq	$8,%rsp			/* if_ppl filled in below */
 	INTRENTRY(intr_hyperv_upcall)
 	movl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_NET,%ebx
@@ -833,9 +808,7 @@ KIDTVEC_FALLTHROUGH(resume_hyperv_upcall)
 
 #define	INTRSTUB(name, num, early_ack, late_ack, mask, unmask, level_mask) \
 KIDTVEC(recurse_##name##num)						;\
-	INTR_RECURSE_HWFRAME						;\
-	subq	$16,%rsp		/* space for if_{ppl,err} */	;\
-	INTR_REENTRY							;\
+	INTR_RECURSE							;\
 KIDTVEC_FALLTHROUGH(resume_##name##num)					\
 	movq	$IREENT_MAGIC,TF_ERR(%rsp)				;\
 	movl	%ebx,%r13d						;\
@@ -843,8 +816,6 @@ KIDTVEC_FALLTHROUGH(resume_##name##num)					\
 	movl	IS_MAXLEVEL(%r14),%ebx					;\
 	jmp	1f							;\
 IDTVEC(intr_##name##num)						;\
-	pushq	$0			/* dummy error code */		;\
-	subq	$8,%rsp			/* if_ppl filled in below */	;\
 	INTRENTRY(intr_##name##num)					;\
 	movq	CPUVAR(ISOURCES) + (num) * 8, %r14			;\
 	mask(num)			/* mask it in hardware */	;\
