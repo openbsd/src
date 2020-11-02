@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.800 2020/10/30 08:55:56 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.801 2020/11/02 08:21:30 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 30 2020 $
+.Dd $Mdocdate: November 2 2020 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -4544,7 +4544,7 @@ multiplication
 .Ql * ,
 division
 .Ql / ,
-and modulus
+modulus
 .Ql m
 or
 .Ql %
@@ -4553,7 +4553,15 @@ or
 must be escaped as
 .Ql %%
 in formats which are also expanded by
-.Xr strftime 3 ) .
+.Xr strftime 3 )
+and numeric comparison operators
+.Ql == ,
+.Ql != ,
+.Ql < ,
+.Ql <= ,
+.Ql >
+and
+.Ql >= .
 For example,
 .Ql #{e|*|f|4:5.5,3}
 multiplies 5.5 by 3 for a result with four decimal places and
