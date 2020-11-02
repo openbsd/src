@@ -170,10 +170,15 @@ show_interface(struct ctl_iface	*iface, int detail)
 		printf("  Router ID %s, network type %s, cost: %d\n",
 		    inet_ntoa(iface->rtr_id),
 		    if_type_name(iface->type), iface->metric);
+		if (iface->dependon[0] != '\0') {
+			printf("  Depends on %s, %s\n", iface->dependon,
+			    iface->depend_ok ? "up" : "down");
+		}
 		printf("  Transmit delay is %d sec(s), state %s, priority %d\n",
 		    iface->transmit_delay, if_state_name(iface->state),
 		    iface->priority);
-		printf("  Designated Router (ID) %s, ", inet_ntoa(iface->dr_id));
+		printf("  Designated Router (ID) %s, ",
+		    inet_ntoa(iface->dr_id));
 		printf("interface address %s\n", inet_ntoa(iface->dr_addr));
 		printf("  Backup Designated Router (ID) %s, ",
 		    inet_ntoa(iface->bdr_id));

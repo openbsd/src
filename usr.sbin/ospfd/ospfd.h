@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.106 2020/01/21 20:38:52 remi Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.107 2020/11/02 00:30:56 dlg Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -485,6 +485,8 @@ struct ctl_iface {
 	u_int8_t		 passive;
 	enum auth_type		 auth_type;
 	u_int8_t		 auth_keyid;
+	char			 dependon[IF_NAMESIZE];
+	int			 depend_ok;
 };
 
 struct ctl_nbr {

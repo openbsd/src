@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.83 2019/06/28 13:32:49 deraadt Exp $ */
+/*	$OpenBSD: interface.c,v 1.84 2020/11/02 00:30:56 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -632,6 +632,9 @@ if_to_ctl(struct iface *iface)
 	ictl.passive = iface->passive;
 	ictl.auth_type = iface->auth_type;
 	ictl.auth_keyid = iface->auth_keyid;
+
+	memcpy(ictl.dependon, iface->dependon, sizeof(ictl.dependon));
+	ictl.depend_ok = iface->depend_ok;
 
 	gettimeofday(&now, NULL);
 	if (evtimer_pending(&iface->hello_timer, &tv)) {
