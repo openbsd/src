@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.11 2020/11/03 18:42:52 tb Exp $ */
+/* $OpenBSD: verify.c,v 1.12 2020/11/03 18:47:19 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -260,13 +260,13 @@ verify_usage(void)
 int
 verify_main(int argc, char **argv)
 {
-	int i, ret = 1;
 	STACK_OF(X509) *untrusted = NULL, *trusted = NULL;
 	STACK_OF(X509_CRL) *crls = NULL;
 	X509_STORE *cert_ctx = NULL;
 	X509_LOOKUP *lookup = NULL;
 	char **cert_files = NULL;
 	int argsused;
+	int ret = 1;
 
 	if (single_execution) {
 		if (pledge("stdio rpath", NULL) == -1) {
@@ -297,9 +297,10 @@ verify_main(int argc, char **argv)
 	if (lookup == NULL)
 		abort(); /* XXX */
 	if (verify_config.CAfile) {
-		i = X509_LOOKUP_load_file(lookup, verify_config.CAfile, X509_FILETYPE_PEM);
-		if (!i) {
-			BIO_printf(bio_err, "Error loading file %s\n", verify_config.CAfile);
+		if (!X509_LOOKUP_load_file(lookup, verify_config.CAfile,
+		    X509_FILETYPE_PEM)) {
+			BIO_printf(bio_err, "Error loading file %s\n",
+			    verify_config.CAfile);
 			ERR_print_errors(bio_err);
 			goto end;
 		}
@@ -310,9 +311,10 @@ verify_main(int argc, char **argv)
 	if (lookup == NULL)
 		abort(); /* XXX */
 	if (verify_config.CApath) {
-		i = X509_LOOKUP_add_dir(lookup, verify_config.CApath, X509_FILETYPE_PEM);
-		if (!i) {
-			BIO_printf(bio_err, "Error loading directory %s\n", verify_config.CApath);
+		if (!X509_LOOKUP_add_dir(lookup, verify_config.CApath,
+		    X509_FILETYPE_PEM)) {
+			BIO_printf(bio_err, "Error loading directory %s\n",
+			    verify_config.CApath);
 			ERR_print_errors(bio_err);
 			goto end;
 		}
