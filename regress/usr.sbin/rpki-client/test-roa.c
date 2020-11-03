@@ -1,4 +1,4 @@
-/*	$Id: test-roa.c,v 1.5 2020/11/02 13:40:58 tb Exp $ */
+/*	$Id: test-roa.c,v 1.6 2020/11/03 21:16:32 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -33,30 +33,6 @@
 int verbose;
 
 static void
-pem_print(X509 **xp)
-{
-	BIO     *bio = NULL;
-	char    *pem = NULL;
-
-	bio = BIO_new(BIO_s_mem());
-	assert(bio != NULL);
-
-	if (0 == PEM_write_bio_X509(bio, *xp)) {
-		BIO_free(bio);
-		errx(1, "PEM_write_bio_X509: unable to write cert");
-	}
-
-	if ((pem = (char *) malloc(bio->num_write + 1)) == NULL)
-		err(1, NULL);
-
-	memset(pem, 0, bio->num_write + 1);
-	BIO_read(bio, pem, bio->num_write);
-	BIO_free(bio);
-	printf("%s", pem);
-	free(pem);
-}
-
-static void
 roa_print(const struct roa *p)
 {
 	char	 buf[128];
@@ -79,6 +55,7 @@ int
 main(int argc, char *argv[])
 {
 	int		 c, i, ppem = 0, verb = 0;
+	BIO		*bio_out = NULL;
 	X509		*xp = NULL;
 	struct roa	*p;
 
@@ -90,7 +67,11 @@ main(int argc, char *argv[])
 	while ((c = getopt(argc, argv, "pv")) != -1)
 		switch (c) {
 		case 'p':
-			ppem++;
+			if (ppem)
+				break;
+			ppem = 1;
+			if ((bio_out = BIO_new_fp(stdout, BIO_NOCLOSE)) == NULL)
+				errx(1, "BIO_new_fp");
 			break;
 		case 'v':
 			verb++;
@@ -110,12 +91,16 @@ main(int argc, char *argv[])
 			break;
 		if (verb)
 			roa_print(p);
-		if (ppem)
-			pem_print(&xp);
+		if (ppem) {
+			if (!PEM_write_bio_X509(bio_out, xp))
+				errx(1,
+				    "PEM_write_bio_X509: unable to write cert");
+		}
 		roa_free(p);
 		X509_free(xp);
 	}
 
+	BIO_free(bio_out);
 	EVP_cleanup();
 	CRYPTO_cleanup_all_ex_data();
 	ERR_remove_state(0);
