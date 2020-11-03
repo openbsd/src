@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.81 2020/11/02 18:32:08 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.82 2020/11/03 02:45:20 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -387,7 +387,7 @@ KUTEXT_PAGE_START
 	 * userspace so we skip the SEL_RPL test and go directly to
 	 * the swapgs+use-scratch+change-cr3 sequence.  Switching to
 	 * the kernel page tables (thank you, Intel) will make us
-	 * continue at the "TRAP_ENTRY_KERN" after alltraps below.
+	 * continue at the "TRAP_ENTRY_USER" after alltraps below.
 	 * In case the CPU speculates past the mov to cr3,
 	 * we put a retpoline-style pause-lfence-jmp-to-pause loop.
 	 */
