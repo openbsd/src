@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.801 2020/11/02 08:21:30 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.802 2020/11/03 08:09:35 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 2 2020 $
+.Dd $Mdocdate: November 3 2020 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -5386,6 +5386,28 @@ Both may be a row or column number, or one of the following special values:
 .It Li "M" Ta "Both" Ta "The mouse position"
 .It Li "W" Ta "Both" Ta "The window position on the status line"
 .It Li "S" Ta Fl y Ta "The line above or below the status line"
+.El
+.Pp
+Or a format, which is expanded including the following additional variables:
+.Bl -column "XXXXXXXXXXXXXXXXXXXXXXXXXX" -offset indent
+.It Sy "Variable name" Ta Sy "Replaced with"
+.It Li "popup_centre_x" Ta "Centered in the client"
+.It Li "popup_centre_y" Ta "Centered in the client"
+.It Li "popup_height" Ta "Height of menu or popup"
+.It Li "popup_mouse_bottom" Ta "Bottom of at the mouse"
+.It Li "popup_mouse_centre_x" Ta "Horizontal centre at the mouse"
+.It Li "popup_mouse_centre_y" Ta "Vertical centre at the mouse"
+.It Li "popup_mouse_top" Ta "Top at the mouse"
+.It Li "popup_mouse_x" Ta "Mouse X position"
+.It Li "popup_mouse_y" Ta "Mouse Y position"
+.It Li "popup_pane_bottom" Ta "Bottom of the pane"
+.It Li "popup_pane_left" Ta "Left of the pane"
+.It Li "popup_pane_right" Ta "Right of the pane"
+.It Li "popup_pane_top" Ta "Top of the pane"
+.It Li "popup_status_line_y" Ta "Above or below the status line"
+.It Li "popup_width" Ta "Width of menu or popup"
+.It Li "popup_window_status_line_x" Ta "At the window position in status line"
+.It Li "popup_window_status_line_y" Ta "At the status line showing the window"
 .El
 .Pp
 Each menu consists of items followed by a key shortcut shown in brackets.
