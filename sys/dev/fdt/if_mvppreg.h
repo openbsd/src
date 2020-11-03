@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvppreg.h,v 1.13 2020/08/22 12:34:14 patrick Exp $	*/
+/*	$OpenBSD: if_mvppreg.h,v 1.14 2020/11/03 21:46:14 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -565,6 +565,10 @@
 #define     MVPP2_PORT_CTRL4_COUNT_EXTERNAL_FC_EN	BIT(8)
 #define     MVPP2_PORT_CTRL4_MARVELL_HEADER_EN		BIT(9)
 #define     MVPP2_PORT_CTRL4_LEDS_NUMBER		BIT(10)
+
+/* SMI registers */
+#define MVPP22_SMI_MISC_CFG_REG				0x1204
+#define     MVPP22_SMI_POLLING_EN			BIT(10)
 
 #define MVPP2_CAUSE_TXQ_SENT_DESC_ALL_MASK	0xff
 

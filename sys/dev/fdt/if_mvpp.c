@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.27 2020/08/22 12:34:14 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.28 2020/11/03 21:46:14 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -486,6 +486,10 @@ mvpp2_attach_deferred(struct device *self)
 	int i, node;
 
 	mvpp2_axi_config(sc);
+
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh_iface, MVPP22_SMI_MISC_CFG_REG,
+	    bus_space_read_4(sc->sc_iot, sc->sc_ioh_iface,
+	    MVPP22_SMI_MISC_CFG_REG) & ~MVPP22_SMI_POLLING_EN);
 
 	sc->sc_aggr_ntxq = 1;
 	sc->sc_aggr_txqs = mallocarray(sc->sc_aggr_ntxq,
