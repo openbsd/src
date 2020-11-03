@@ -1,4 +1,4 @@
-/*	$OpenBSD: eephy.c,v 1.57 2019/09/24 14:37:03 visa Exp $	*/
+/*	$OpenBSD: eephy.c,v 1.58 2020/11/03 21:49:41 patrick Exp $	*/
 /*
  * Principal Author: Parag Patel
  * Copyright (c) 2001
@@ -99,6 +99,8 @@ static const struct mii_phydesc eephys[] = {
 	  MII_STR_MARVELL_E1118 },
 	{ MII_OUI_MARVELL,		MII_MODEL_MARVELL_E1149,
 	  MII_STR_MARVELL_E1149 },
+	{ MII_OUI_MARVELL,		MII_MODEL_MARVELL_E1512,
+	  MII_STR_MARVELL_E1512 },
 	{ MII_OUI_MARVELL,		MII_MODEL_MARVELL_E1545,
 	  MII_STR_MARVELL_E1545 },
 	{ MII_OUI_MARVELL,		MII_MODEL_MARVELL_E3016,
@@ -183,6 +185,19 @@ eephy_attach(struct device *parent, struct device *self, void *aux)
 		reg &= ~E1000_SCR_MODE_MASK;
 		reg |= E1000_SCR_MODE_1000BX;
 		PHY_WRITE(sc, E1000_SCR, reg);
+		PHY_WRITE(sc, E1000_EADR, page);
+	}
+
+	/* Switch to SGMII-to-copper mode if necessary. */
+	if (sc->mii_model == MII_MODEL_MARVELL_E1512 &&
+	    sc->mii_flags & MIIF_SGMII) {
+		page = PHY_READ(sc, E1000_EADR);
+		PHY_WRITE(sc, E1000_EADR, 18);
+		reg = PHY_READ(sc, E1000_GCR1);
+		reg &= ~E1000_GCR1_MODE_MASK;
+		reg |= E1000_GCR1_MODE_SGMII;
+		reg |= E1000_GCR1_RESET;
+		PHY_WRITE(sc, E1000_GCR1, reg);
 		PHY_WRITE(sc, E1000_EADR, page);
 	}
 
