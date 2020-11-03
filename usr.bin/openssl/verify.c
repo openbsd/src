@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.9 2020/10/26 11:48:39 tb Exp $ */
+/* $OpenBSD: verify.c,v 1.10 2020/11/03 18:39:18 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -364,45 +364,47 @@ verify_main(int argc, char **argv)
 }
 
 static int
-check(X509_STORE * ctx, char *file, STACK_OF(X509) * uchain,
-    STACK_OF(X509) * tchain, STACK_OF(X509_CRL) * crls)
+check(X509_STORE *ctx, char *file, STACK_OF(X509) *uchain,
+    STACK_OF(X509) *tchain, STACK_OF(X509_CRL) *crls)
 {
 	X509 *x = NULL;
+	X509_STORE_CTX *csc = NULL;
+	const char *certfile = (file == NULL) ? "stdin" : file;
+	int verify_err;
 	int i = 0, ret = 0;
-	X509_STORE_CTX *csc;
 
 	x = load_cert(bio_err, file, FORMAT_PEM, NULL, "certificate file");
 	if (x == NULL)
 		goto end;
-	fprintf(stdout, "%s: ", (file == NULL) ? "stdin" : file);
 
-	csc = X509_STORE_CTX_new();
-	if (csc == NULL) {
-		ERR_print_errors(bio_err);
+	fprintf(stdout, "%s: ", certfile);
+
+	if ((csc = X509_STORE_CTX_new()) == NULL)
 		goto end;
-	}
 	X509_STORE_set_flags(ctx, vflags);
-	if (!X509_STORE_CTX_init(csc, ctx, x, uchain)) {
-		ERR_print_errors(bio_err);
+	if (!X509_STORE_CTX_init(csc, ctx, x, uchain))
 		goto end;
-	}
 	if (tchain)
 		X509_STORE_CTX_trusted_stack(csc, tchain);
 	if (crls)
 		X509_STORE_CTX_set0_crls(csc, crls);
+
 	i = X509_verify_cert(csc);
-	X509_STORE_CTX_free(csc);
+	verify_err = X509_STORE_CTX_get_error(csc);
 
-	ret = 0;
-
- end:
-	if (i > 0) {
+	if (i > 0 && verify_err == X509_V_OK) {
 		fprintf(stdout, "OK\n");
 		ret = 1;
-	} else
+	} else {
+		fprintf(stdout, "%s: verification failed: %d (%s)\n", certfile,
+		    verify_err, X509_verify_cert_error_string(verify_err));
+	}
+
+ end:
+	if (i <= 0)
 		ERR_print_errors(bio_err);
-	if (x != NULL)
-		X509_free(x);
+	X509_free(x);
+	X509_STORE_CTX_free(csc);
 
 	return (ret);
 }
