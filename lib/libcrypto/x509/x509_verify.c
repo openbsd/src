@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.17 2020/11/03 17:22:45 jsing Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.18 2020/11/03 17:43:01 jsing Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -333,12 +333,11 @@ x509_verify_consider_candidate(struct x509_verify_ctx *ctx, X509 *cert,
 		return 0;
 	}
 
-
 	if (!x509_verify_parent_signature(candidate, cert, cert_md,
 	    &ctx->error)) {
-		    if (!x509_verify_cert_error(ctx, candidate, depth,
-			ctx->error, 0))
-			    return 0;
+		if (!x509_verify_cert_error(ctx, candidate, depth,
+		    ctx->error, 0))
+			return 0;
 	}
 
 	if (!x509_verify_cert_valid(ctx, candidate, current_chain))
@@ -460,8 +459,8 @@ x509_verify_build_chains(struct x509_verify_ctx *ctx, X509 *cert,
 			(void) ctx->xsc->verify_cb(1, ctx->xsc);
 		}
 	} else if (ctx->error_depth == depth) {
-			(void) x509_verify_cert_error(ctx, cert, depth,
-			    ctx->error, 0);
+		(void) x509_verify_cert_error(ctx, cert, depth,
+		    ctx->error, 0);
 	}
 }
 
