@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.121 2020/11/02 18:32:08 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.122 2020/11/03 18:19:31 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -269,6 +269,7 @@ NENTRY(lgdt)
 	pushq	%rax
 	RETGUARD_CHECK(lgdt, r11)
 	lretq
+END(lgdt)
 
 #ifdef DDB
 ENTRY(setjmp)
@@ -291,6 +292,7 @@ ENTRY(setjmp)
 	xorl	%eax,%eax
 	RETGUARD_CHECK(setjmp, r11)
 	ret
+END(setjmp)
 
 ENTRY(longjmp)
 	movq	%rdi,%rax
@@ -308,6 +310,7 @@ ENTRY(longjmp)
 	incl	%eax
 	RETGUARD_CHECK(longjmp, r11)
 	ret
+END(longjmp)
 #endif /* DDB */
 
 /*****************************************************************************/
@@ -490,6 +493,7 @@ switch_restored:
 	popq	%rbx
 	RETGUARD_CHECK(cpu_switchto, r11)
 	ret
+END(cpu_switchto)
 
 ENTRY(cpu_idle_enter)
 	ret
@@ -520,6 +524,7 @@ END(cpu_idle_cycle)
 NENTRY(switch_pmcpu_set)
 	leaq	switch_active(%rip),%rdi
 	call	_C_LABEL(panic)
+END(switch_pmcpu_set)
 	/* NOTREACHED */
 
 	.section .rodata
@@ -538,9 +543,11 @@ ENTRY(savectx)
 	movq	%rbp,PCB_RBP(%rdi)
 	RETGUARD_CHECK(savectx, r11)
 	ret
+END(savectx)
 
 IDTVEC(syscall32)
 	sysret		/* go away please */
+END(Xsyscall32)
 
 /*
  * syscall insn entry.
@@ -668,6 +675,8 @@ Xsyscall_trampback:
 	CODEPATCH_END(CPTAG_MELTDOWN_NOP)
 	swapgs
 	sysretq
+END(Xsyscall)
+END(Xsyscall_meltdown)
 KTEXT_PAGE_END
 
 KUTEXT_PAGE_START
@@ -743,6 +752,7 @@ NENTRY(proc_trampoline)
 	call	retpoline_rax
 	movq	CPUVAR(CURPROC),%r14
 	jmp	.Lsyscall_check_asts
+END(proc_trampoline)
 
 
 /*
@@ -950,6 +960,7 @@ intr_spl_lowered:
 	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT %x %x\n"
 	.text
 #endif /* DIAGNOSTIC */
+END(Xintr_user_exit)
 
 
 /*
@@ -1004,6 +1015,7 @@ warn_once:
 	.asciz	"WARNING: INTERRUPTS NOT BLOCKED ON INTERRUPT RETURN: 0x%x 0x%x\n"
 	.text
 #endif
+END(intr_fast_exit)
 
 /*
  * FPU/"extended CPU state" handling
@@ -1117,6 +1129,7 @@ ENTRY(pagezero)
 	sfence
 	RETGUARD_CHECK(pagezero, r11)
 	ret
+END(pagezero)
 
 /* int rdmsr_safe(u_int msr, uint64_t *data) */
 ENTRY(rdmsr_safe)
@@ -1139,6 +1152,7 @@ NENTRY(rdmsr_resume)
 	movl	$0x1, %eax
 	RETGUARD_CHECK(rdmsr_safe, r10)
 	ret
+END(rdmsr_safe)
 
 #if NXEN > 0
 	/* Hypercall page needs to be page aligned */
