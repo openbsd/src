@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.160 2020/08/28 12:01:48 mvs Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.161 2020/11/03 04:47:01 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -1470,7 +1470,7 @@ nvgre_input_map(struct nvgre_softc *sc, const struct gre_tunnel *key,
 		nv->nv_age = ticks;
 
 		if (nv->nv_type != NVGRE_ENTRY_DYNAMIC ||
-		    gre_ip_cmp(key->t_af, &key->t_dst, &nv->nv_gateway))
+		    gre_ip_cmp(key->t_af, &key->t_dst, &nv->nv_gateway) == 0)
 			nv = NULL;
 		else
 			refcnt_take(&nv->nv_refs);
