@@ -1,3 +1,5 @@
+/*	$OpenBSD: vnode.c,v 1.2 2020/11/03 13:58:45 bluhm Exp $	*/
+
 /*
  * Copyright (c) 2020 Anton Lindqvist <anton@openbsd.org>
  *
@@ -52,7 +54,7 @@ main(int argc, char *argv[])
 	int killpip[2];
 	int status;
 	int iterations = 100;
-	char ch;
+	int ch;
 
 	while ((ch = getopt(argc, argv, "I")) != -1) {
 		switch (ch) {
@@ -95,7 +97,7 @@ main(int argc, char *argv[])
 	}
 
 	/* Signal shutdown to writer() process. */
-	write(killpip[1], &ch, 1);
+	write(killpip[1], "X", 1);
 	close(killpip[1]);
 
 	if (waitpid(pid, &status, 0) == -1)
