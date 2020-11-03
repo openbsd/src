@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstart.8,v 1.23 2018/03/07 09:54:23 jmc Exp $
+.\"	$OpenBSD: netstart.8,v 1.24 2020/11/03 06:46:23 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Miodrag Vallat.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\"
 .\"     @(#)rc.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: March 7 2018 $
+.Dd $Mdocdate: November 3 2020 $
 .Dt NETSTART 8
 .Os
 .Sh NAME
@@ -62,26 +62,32 @@ Set the machine's name.
 .It
 Configure the loopback interface.
 .It
-Configure all the physical interfaces.
+Configure all physical interfaces.
 .It
-Configure the following non-physical interfaces:
+Configure non-physical interfaces that can provide the default gateway,
+such as
+.Xr aggr 4 ,
 .Xr trunk 4 ,
+.Xr svlan 4 ,
 .Xr vlan 4 ,
-.Xr pfsync 4 ,
+.Xr carp 4 ,
 and
-.Xr carp 4 .
+.Xr pppoe 4 .
 .It
 Initialize the routing table and set up the default routes.
 .It
-Configure the remaining non-physical interfaces:
-.Xr pppoe 4 ,
+Configure tunnel interfaces that require a working network
+to reach the other end of the tunnel,
+such as
+.Xr tun 4 ,
+.Xr tap 4 ,
 .Xr gif 4 ,
+.Xr etherip 4 ,
+.Xr gre 4 ,
+.Xr egre 4 ,
+.Xr pflow 4 ,
 and
-.Xr gre 4 .
-.It
-Configure all
-.Xr bridge 4
-interfaces.
+.Xr wg 4 .
 .El
 .Pp
 After the system is completely initialized, it is possible to start a
