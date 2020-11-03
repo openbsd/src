@@ -1,7 +1,8 @@
-/*	$OpenBSD: dhtest.c,v 1.2 2014/08/27 10:28:57 reyk Exp $	*/
+/*	$OpenBSD: dhtest.c,v 1.3 2020/11/03 20:45:58 tobhe Exp $	*/
 /*	$EOM: dhtest.c,v 1.1 1998/07/18 21:14:20 provos Exp $	*/
 
 /*
+ * Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
  *
@@ -34,20 +35,29 @@
  * This module does a Diffie-Hellman Exchange
  */
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/queue.h>
+#include <sys/uio.h>
+#include <event.h>
+#include <imsg.h>
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
 #include "dh.h"
+#include "iked.h"
 
 int
 main(void)
 {
-	int len, id;
-	char buf[DH_MAXSZ], buf2[DH_MAXSZ];
-	char sec[DH_MAXSZ], sec2[DH_MAXSZ];
+	int id;
+	struct ibuf *buf, *buf2;
+	struct ibuf *sec, *sec2;
+	uint8_t *raw, *raw2;
 	struct group *group, *group2;
-	const char *name[] = { "MODP", "EC2N", "ECP", "CURVE25519" };
+	const char *name[] = { "MODP", "ECP", "CURVE25519" };
 
 	group_init();
 
@@ -56,19 +66,20 @@ main(void)
 		    (group2 = group_get(id)) == NULL)
 			continue;
 
-		len = dh_getlen(group);
+		dh_create_exchange(group, &buf, NULL);
+		dh_create_exchange(group2, &buf2, NULL);
 
-		printf ("Testing group %d (%s-%d, length %d): ", id,
+		printf ("Testing group %d (%s-%d, length %zu): ", id,
 		    name[group->spec->type],
-		    group->spec->bits, len * 8);
+		    group->spec->bits, ibuf_length(buf) * 8);
 
-		dh_create_exchange(group, buf);
-		dh_create_exchange(group2, buf2);
+		dh_create_shared(group, &sec, buf2);
+		dh_create_shared(group2, &sec2, buf);
 
-		dh_create_shared(group, sec, buf2);
-		dh_create_shared(group2, sec2, buf);
+		raw = ibuf_data(sec);
+		raw2 = ibuf_data(sec2);
 
-		if (memcmp (sec, sec2, len)) {
+		if (memcmp (raw, raw2, ibuf_length(sec))) {
 			printf("FAILED\n");
 			return (1);
 		} else
