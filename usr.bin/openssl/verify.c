@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.12 2020/11/03 18:47:19 tb Exp $ */
+/* $OpenBSD: verify.c,v 1.13 2020/11/03 18:50:25 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -324,14 +324,14 @@ verify_main(int argc, char **argv)
 	ERR_clear_error();
 
 	if (verify_config.untfile) {
-		untrusted = load_certs(bio_err, verify_config.untfile, FORMAT_PEM,
-		    NULL, "untrusted certificates");
+		untrusted = load_certs(bio_err, verify_config.untfile,
+		    FORMAT_PEM, NULL, "untrusted certificates");
 		if (!untrusted)
 			goto end;
 	}
 	if (verify_config.trustfile) {
-		trusted = load_certs(bio_err, verify_config.trustfile, FORMAT_PEM,
-		    NULL, "trusted certificates");
+		trusted = load_certs(bio_err, verify_config.trustfile,
+		    FORMAT_PEM, NULL, "trusted certificates");
 		if (!trusted)
 			goto end;
 	}
@@ -347,8 +347,8 @@ verify_main(int argc, char **argv)
 			ret = -1;
 	} else {
 		do {
-			if (1 != check(cert_ctx, *cert_files++, untrusted, trusted,
-			    crls))
+			if (1 != check(cert_ctx, *cert_files++, untrusted,
+			    trusted, crls))
 				ret = -1;
 		} while (*cert_files != NULL);
 	}
