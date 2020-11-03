@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.28 2020/11/03 21:46:14 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.29 2020/11/03 21:50:54 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -1308,6 +1308,7 @@ mvpp2_port_attach(struct device *parent, struct device *self, void *aux)
 	struct ifnet *ifp;
 	uint32_t phy, reg;
 	int i, idx, len, node;
+	int mii_flags = 0;
 	char *phy_mode;
 	char *managed;
 
@@ -1465,8 +1466,28 @@ mvpp2_port_attach(struct device *parent, struct device *self, void *aux)
 	ifmedia_init(&sc->sc_media, 0, mvpp2_media_change, mvpp2_media_status);
 
 	if (sc->sc_mdio) {
+		switch (sc->sc_phy_mode) {
+		case PHY_MODE_1000BASEX:
+			mii_flags |= MIIF_IS_1000X;
+			break;
+		case PHY_MODE_SGMII:
+			mii_flags |= MIIF_SGMII;
+			break;
+		case PHY_MODE_RGMII_ID:
+			mii_flags |= MIIF_RXID | MIIF_TXID;
+			break;
+		case PHY_MODE_RGMII_RXID:
+			mii_flags |= MIIF_RXID;
+			break;
+		case PHY_MODE_RGMII_TXID:
+			mii_flags |= MIIF_TXID;
+			break;
+		default:
+			break;
+		}
 		mii_attach(self, &sc->sc_mii, 0xffffffff, sc->sc_phyloc,
-		    (sc->sc_phyloc == MII_PHY_ANY) ? 0 : MII_OFFSET_ANY, 0);
+		    (sc->sc_phyloc == MII_PHY_ANY) ? 0 : MII_OFFSET_ANY,
+		    mii_flags);
 		if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 			printf("%s: no PHY found!\n", self->dv_xname);
 			ifmedia_add(&sc->sc_mii.mii_media,
