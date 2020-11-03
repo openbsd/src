@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.116 2020/11/01 09:50:24 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.117 2020/11/03 16:45:40 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -609,7 +609,7 @@ cfg		: CONFIG STRING host_spec	{
 			$$->type = xf->id;
 			$$->action = IKEV2_CP_REPLY;	/* XXX */
 		}
-		| REQUEST STRING host_spec	{
+		| REQUEST STRING anyhost	{
 			const struct ipsec_xf	*xf;
 
 			if ((xf = parse_xf($2, $3->af, cpxfs)) == NULL) {
