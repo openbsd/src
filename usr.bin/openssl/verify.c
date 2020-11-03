@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.10 2020/11/03 18:39:18 tb Exp $ */
+/* $OpenBSD: verify.c,v 1.11 2020/11/03 18:42:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,9 +68,9 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
-static int cb(int ok, X509_STORE_CTX * ctx);
-static int check(X509_STORE * ctx, char *file, STACK_OF(X509) * uchain,
-    STACK_OF(X509) * tchain, STACK_OF(X509_CRL) * crls);
+static int cb(int ok, X509_STORE_CTX *ctx);
+static int check(X509_STORE *ctx, char *file, STACK_OF(X509) *uchain,
+    STACK_OF(X509) *tchain, STACK_OF(X509_CRL) *crls);
 static int vflags = 0;
 
 static struct {
@@ -410,7 +410,7 @@ check(X509_STORE *ctx, char *file, STACK_OF(X509) *uchain,
 }
 
 static int
-cb(int ok, X509_STORE_CTX * ctx)
+cb(int ok, X509_STORE_CTX *ctx)
 {
 	int cert_error = X509_STORE_CTX_get_error(ctx);
 	X509 *current_cert = X509_STORE_CTX_get_current_cert(ctx);
