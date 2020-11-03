@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_legacy.c,v 1.18 2020/10/11 12:45:52 guenther Exp $ */
+/*	$OpenBSD: tls13_legacy.c,v 1.19 2020/11/03 17:41:39 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -36,8 +36,6 @@ tls13_legacy_wire_read(SSL *ssl, uint8_t *buf, size_t len)
 	if ((n = BIO_read(ssl->rbio, buf, len)) <= 0) {
 		if (BIO_should_read(ssl->rbio))
 			return TLS13_IO_WANT_POLLIN;
-		if (BIO_should_write(ssl->rbio))
-			return TLS13_IO_WANT_POLLOUT;
 		if (n == 0)
 			return TLS13_IO_EOF;
 
@@ -75,8 +73,6 @@ tls13_legacy_wire_write(SSL *ssl, const uint8_t *buf, size_t len)
 	errno = 0;
 
 	if ((n = BIO_write(ssl->wbio, buf, len)) <= 0) {
-		if (BIO_should_read(ssl->wbio))
-			return TLS13_IO_WANT_POLLIN;
 		if (BIO_should_write(ssl->wbio))
 			return TLS13_IO_WANT_POLLOUT;
 
