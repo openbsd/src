@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.192 2020/06/18 23:32:00 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.193 2020/11/04 04:40:13 gnezdo Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1720,32 +1720,16 @@ int
 bpf_sysctl_locked(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen)
 {
-	int newval;
-	int error;
-
 	switch (name[0]) {
 	case NET_BPF_BUFSIZE:
-		newval = bpf_bufsize;
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &newval);
-		if (error)
-			return (error);
-		if (newval < BPF_MINBUFSIZE || newval > bpf_maxbufsize)
-			return (EINVAL);
-		bpf_bufsize = newval;
-		break;
+		return sysctl_int_bounded(oldp, oldlenp, newp, newlen,
+		    &bpf_bufsize, BPF_MINBUFSIZE, bpf_maxbufsize);
 	case NET_BPF_MAXBUFSIZE:
-		newval = bpf_maxbufsize;
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &newval);
-		if (error)
-			return (error);
-		if (newval < BPF_MINBUFSIZE)
-			return (EINVAL);
-		bpf_maxbufsize = newval;
-		break;
+		return sysctl_int_bounded(oldp, oldlenp, newp, newlen,
+		    &bpf_maxbufsize, BPF_MINBUFSIZE, INT_MAX);
 	default:
 		return (EOPNOTSUPP);
 	}
-	return (0);
 }
 
 int
