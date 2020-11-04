@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.73 2020/10/09 08:59:15 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.74 2020/11/04 15:32:10 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -317,12 +317,13 @@ ca_setreq(struct iked *env, struct iked_sa *sa,
 	if (ikev2_policy2id(localid, &id, 1) != 0)
 		return (-1);
 
+	if (ibuf_length(id.id_buf) > IKED_ID_SIZE)
+		return (-1);
 	bzero(&idb, sizeof(idb));
 	idb.id_type = id.id_type;
 	idb.id_offset = id.id_offset;
 	idb.id_length = ibuf_length(id.id_buf);
-	memcpy(&idb.id_data, ibuf_data(id.id_buf),
-	    ibuf_length(id.id_buf));
+	memcpy(&idb.id_data, ibuf_data(id.id_buf), ibuf_length(id.id_buf));
 	iov[iovcnt].iov_base = &idb;
 	iov[iovcnt].iov_len = sizeof(idb);
 	iovcnt++;
