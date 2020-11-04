@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.1,v 1.35 2020/11/02 20:30:41 denis Exp $
+.\"	$OpenBSD: acme-client.1,v 1.36 2020/11/04 10:34:18 denis Exp $
 .\"
 .\" Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 2 2020 $
+.Dd $Mdocdate: November 4 2020 $
 .Dt ACME-CLIENT 1
 .Os
 .Sh NAME
@@ -58,7 +58,7 @@ can be served by
 with this location block,
 which will properly map response challenges:
 .Bd -literal -offset indent
-location found "/.well-known/acme-challenge/*" {
+location "/.well-known/acme-challenge/*" {
 	root "/acme"
 	request strip 2
 }
