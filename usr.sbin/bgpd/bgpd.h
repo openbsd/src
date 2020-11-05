@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.403 2020/05/10 13:38:46 deraadt Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.404 2020/11/05 11:51:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -995,6 +995,7 @@ enum action_types {
 	ACTION_SET_PREPEND_PEER,
 	ACTION_SET_AS_OVERRIDE,
 	ACTION_SET_NEXTHOP,
+	ACTION_SET_NEXTHOP_REF,
 	ACTION_SET_NEXTHOP_REJECT,
 	ACTION_SET_NEXTHOP_BLACKHOLE,
 	ACTION_SET_NEXTHOP_NOMODIFY,
@@ -1017,7 +1018,7 @@ struct filter_set {
 		u_int32_t			 metric;
 		int32_t				 relative;
 		struct bgpd_addr		 nexthop;
-		struct nexthop			*nh;
+		struct nexthop			*nh_ref;
 		struct community		 community;
 		char				 pftable[PFTABLE_LEN];
 		char				 rtlabel[RTLABEL_LEN];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.503 2020/10/21 06:56:32 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.504 2020/11/05 11:51:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -509,8 +509,11 @@ badnetdel:
 			if ((s = malloc(sizeof(struct filter_set))) == NULL)
 				fatal(NULL);
 			memcpy(s, imsg.data, sizeof(struct filter_set));
-			if (s->type == ACTION_SET_NEXTHOP)
-				s->action.nh = nexthop_get(&s->action.nexthop);
+			if (s->type == ACTION_SET_NEXTHOP) {
+				s->action.nh_ref =
+				    nexthop_get(&s->action.nexthop);
+				s->type = ACTION_SET_NEXTHOP_REF;
+			}
 			TAILQ_INSERT_TAIL(&session_set, s, entry);
 			break;
 		case IMSG_CTL_SHOW_NETWORK:
@@ -922,8 +925,11 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			if ((s = malloc(sizeof(struct filter_set))) == NULL)
 				fatal(NULL);
 			memcpy(s, imsg.data, sizeof(struct filter_set));
-			if (s->type == ACTION_SET_NEXTHOP)
-				s->action.nh = nexthop_get(&s->action.nexthop);
+			if (s->type == ACTION_SET_NEXTHOP) {
+				s->action.nh_ref =
+				    nexthop_get(&s->action.nexthop);
+				s->type = ACTION_SET_NEXTHOP_REF;
+			}
 			TAILQ_INSERT_TAIL(&parent_set, s, entry);
 			break;
 		case IMSG_MRT_OPEN:
