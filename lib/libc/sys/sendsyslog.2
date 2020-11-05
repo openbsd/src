@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sendsyslog.2,v 1.11 2017/09/27 15:09:48 bluhm Exp $
+.\"	$OpenBSD: sendsyslog.2,v 1.12 2020/11/05 16:04:39 jmc Exp $
 .\"
 .\" Copyright (c) 2017 Alexander Bluhm <bluhm@openbsd.org>
 .\" Copyright (c) 2014 Theo de Raadt
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 27 2017 $
+.Dd $Mdocdate: November 5 2020 $
 .Dt SENDSYSLOG 2
 .Os
 .Sh NAME
@@ -65,7 +65,7 @@ device and passing one file descriptor of the socket pair as argument
 to
 .Xr ioctl 2 Dv LIOCSFD
 invoked on the klog file descriptor.
-After that the messages can be be read from the other end of the
+After that the messages can be read from the other end of the
 socket pair.
 By utilizing
 .Pa /dev/klog
