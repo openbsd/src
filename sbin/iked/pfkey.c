@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.71 2020/09/09 21:25:42 tobhe Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.72 2020/11/05 19:28:27 phessler Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1524,6 +1524,8 @@ pfkey_id2ident(struct iked_id *id, unsigned int exttype)
 		type = SADB_IDENTTYPE_PREFIX;
 		break;
 	case IKEV2_ID_ASN1_DN:
+		type = SADB_IDENTTYPE_ASN1_DN;
+		break;
 	case IKEV2_ID_ASN1_GN:
 	case IKEV2_ID_KEY_ID:
 	case IKEV2_ID_NONE:

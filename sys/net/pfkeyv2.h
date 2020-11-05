@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.h,v 1.84 2020/08/07 20:12:15 tobhe Exp $ */
+/* $OpenBSD: pfkeyv2.h,v 1.85 2020/11/05 19:28:27 phessler Exp $ */
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) January 1998
  *
@@ -351,7 +351,8 @@ struct sadb_x_counter {
 #define SADB_IDENTTYPE_PREFIX       1
 #define SADB_IDENTTYPE_FQDN         2
 #define SADB_IDENTTYPE_USERFQDN     3
-#define SADB_IDENTTYPE_MAX          3
+#define SADB_IDENTTYPE_ASN1_DN      4
+#define SADB_IDENTTYPE_MAX          4
 
 #define SADB_KEY_FLAGS_MAX 0
 

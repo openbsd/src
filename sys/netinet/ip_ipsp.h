@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.195 2020/09/01 01:53:34 gnezdo Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.196 2020/11/05 19:28:28 phessler Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -303,6 +303,7 @@ struct ipsec_policy {
 #define	IPSP_IDENTITY_PREFIX		1
 #define	IPSP_IDENTITY_FQDN		2
 #define	IPSP_IDENTITY_USERFQDN		3
+#define	IPSP_IDENTITY_ASN1_DN		4
 
 struct tdb {				/* tunnel descriptor block */
 	/*
