@@ -1,3 +1,5 @@
+#	$OpenBSD: Makefile,v 1.2 2020/11/05 18:25:39 anton Exp $
+
 PROG=		vnode
 WARNINGS=	yes
 
