@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.504 2020/11/05 11:51:13 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.505 2020/11/05 11:52:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -157,8 +157,7 @@ rde_main(int debug, int verbose)
 	log_init(debug, LOG_DAEMON);
 	log_setverbose(verbose);
 
-	bgpd_process = PROC_RDE;
-	log_procinit(log_procnames[bgpd_process]);
+	log_procinit(log_procnames[PROC_RDE]);
 
 	if ((pw = getpwnam(BGPD_USER)) == NULL)
 		fatal("getpwnam");

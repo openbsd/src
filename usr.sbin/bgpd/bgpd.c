@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.229 2020/05/11 16:59:19 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.230 2020/11/05 11:52:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -117,10 +117,9 @@ main(int argc, char *argv[])
 	int			 pipe_m2r[2];
 
 	conffile = CONFFILE;
-	bgpd_process = PROC_MAIN;
 
 	log_init(1, LOG_DAEMON);	/* log to stderr until daemonized */
-	log_procinit(log_procnames[bgpd_process]);
+	log_procinit(log_procnames[PROC_MAIN]);
 	log_setverbose(1);
 
 	saved_argv0 = argv[0];

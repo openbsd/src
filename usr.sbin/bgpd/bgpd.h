@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.404 2020/11/05 11:51:13 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.405 2020/11/05 11:52:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -120,7 +120,7 @@ enum bgpd_process {
 	PROC_MAIN,
 	PROC_SE,
 	PROC_RDE
-} bgpd_process;
+};
 
 enum reconf_action {
 	RECONF_NONE,

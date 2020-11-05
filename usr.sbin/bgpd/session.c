@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.403 2020/11/05 11:28:11 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.404 2020/11/05 11:52:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -204,8 +204,7 @@ session_main(int debug, int verbose)
 	log_init(debug, LOG_DAEMON);
 	log_setverbose(verbose);
 
-	bgpd_process = PROC_SE;
-	log_procinit(log_procnames[bgpd_process]);
+	log_procinit(log_procnames[PROC_SE]);
 
 	if ((pw = getpwnam(BGPD_USER)) == NULL)
 		fatal(NULL);
