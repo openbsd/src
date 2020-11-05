@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.16 2020/09/12 15:46:48 claudio Exp $ */
+/*	$OpenBSD: mft.c,v 1.17 2020/11/05 15:53:55 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -54,33 +54,59 @@ gentime2str(const ASN1_GENERALIZEDTIME *time)
 }
 
 /*
+ * Convert an ASN1_GENERALIZEDTIME to a struct tm.
+ * Returns 1 on success, 0 on failure.
+ */
+static int
+generalizedtime_to_tm(const ASN1_GENERALIZEDTIME *gtime, struct tm *tm)
+{
+	const char *data;
+	size_t len;
+
+	data = ASN1_STRING_get0_data(gtime);
+	len = ASN1_STRING_length(gtime);
+
+	return ASN1_time_parse(data, len, tm, V_ASN1_GENERALIZEDTIME) ==
+	    V_ASN1_GENERALIZEDTIME;
+}
+
+/*
  * Validate and verify the time validity of the mft.
  * Returns 1 if all is good, 0 if mft is stale, any other case -1.
- * XXX should use ASN1_time_tm_cmp() once libressl is used.
  */
-static time_t
+static int
 check_validity(const ASN1_GENERALIZEDTIME *from,
     const ASN1_GENERALIZEDTIME *until, const char *fn)
 {
 	time_t now = time(NULL);
+	struct tm tm_from, tm_until, tm_now;
 
-	if (!ASN1_GENERALIZEDTIME_check(from) ||
-	    !ASN1_GENERALIZEDTIME_check(until)) {
-		warnx("%s: embedded time format invalid", fn);
+	if (gmtime_r(&now, &tm_now) == NULL) {
+		warnx("%s: could not get current time", fn);
 		return -1;
 	}
+
+	if (!generalizedtime_to_tm(from, &tm_from)) {
+		warnx("%s: embedded from time format invalid", fn);
+		return -1;
+	}
+	if (!generalizedtime_to_tm(until, &tm_until)) {
+		warnx("%s: embedded until time format invalid", fn);
+		return -1;
+	}
+
 	/* check that until is not before from */
-	if (ASN1_STRING_cmp(until, from) < 0) {
+	if (ASN1_time_tm_cmp(&tm_until, &tm_from) < 0) {
 		warnx("%s: bad update interval", fn);
 		return -1;
 	}
 	/* check that now is not before from */
-	if (X509_cmp_time(from, &now) > 0) {
+	if (ASN1_time_tm_cmp(&tm_from, &tm_now) > 0) {
 		warnx("%s: mft not yet valid %s", fn, gentime2str(from));
 		return -1;
 	}
 	/* check that now is not after until */
-	if (X509_cmp_time(until, &now) < 0) {
+	if (ASN1_time_tm_cmp(&tm_until, &tm_now) < 0) {
 		warnx("%s: mft expired on %s", fn, gentime2str(until));
 		return 0;
 	}
