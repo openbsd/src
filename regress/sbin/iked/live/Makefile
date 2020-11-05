@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2020/09/15 11:26:48 tobhe Exp $
+#	$OpenBSD: Makefile,v 1.23 2020/11/05 20:04:42 tobhe Exp $
 
 # Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
 #
@@ -108,7 +108,7 @@ SETUP_CONFIG = \
 	echo "LOCAL_ADDR=\"$$local\"" >> $@_$$side.conf; \
 	echo "PEER_ADDR=\"$$peer\"" >> $@_$$side.conf; \
 	echo "IPCOMP=\"$$ipcomp\"" >> $@_$$side.conf; \
-	echo "SRCID=\"$$srcid\"" >> $@_$$side.conf; \
+	echo "SRCID=\"\\\"$$srcid\\\"\"" >> $@_$$side.conf; \
 	echo "DSTID=\"$$dstid\"" >> $@_$$side.conf; \
 	echo "AUTH=\"$$authstr\"" >> $@_$$side.conf; \
 	echo "$$global" >> $@_$$side.conf; \
@@ -239,6 +239,16 @@ run-cert-single-ca:
 	@echo '======= $@ ========'
 	leftid=left-from-ca-both; \
 	rightid=right-from-ca-both; \
+	    ${SETUP_CONFIGS}
+	${SETUP_START}
+	flowtype=esp; ${TEST_FLOWS}; if [[ $$_ret -ne 0 ]]; then exit 1; fi
+	${TEST_PING}; if [[ $$_ret -ne 0 ]]; then exit 1; fi
+
+REGRESS_TARGETS += run-cert-single-ca-asn1dn
+run-cert-single-ca-asn1dn:
+	@echo '======= $@ ========'
+	leftid="/C=DE/ST=Bavaria/L=Munich/O=iked/CN=left-from-ca-both"; \
+	rightid="/C=DE/ST=Bavaria/L=Munich/O=iked/CN=right-from-ca-both"; \
 	    ${SETUP_CONFIGS}
 	${SETUP_START}
 	flowtype=esp; ${TEST_FLOWS}; if [[ $$_ret -ne 0 ]]; then exit 1; fi
