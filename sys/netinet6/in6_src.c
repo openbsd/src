@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.82 2020/10/29 21:15:27 denis Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.83 2020/11/05 10:46:13 denis Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -231,8 +231,7 @@ in6_pcbselsrc(struct in6_addr **in6src, struct sockaddr_in6 *dstsock,
 			struct ifaddr *ifa;
 			if ((ifa = ifa_ifwithaddr(ip6_source, rtableid)) !=
 			    NULL && ISSET(ifa->ifa_ifp->if_flags, IFF_UP)) {
-				*in6src = &((struct sockaddr_in6 *)
-				    ip6_source)->sin6_addr;
+				*in6src = &satosin6(ip6_source)->sin6_addr;
 				return (0);
 			}
 		}

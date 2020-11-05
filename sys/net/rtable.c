@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.70 2020/10/29 21:15:27 denis Exp $ */
+/*	$OpenBSD: rtable.c,v 1.71 2020/11/05 10:46:13 denis Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -388,13 +388,11 @@ rtable_setsource(unsigned int rtableid, struct sockaddr *src)
 		 */
 		switch(src->sa_family) {
 		case AF_INET:
-			if(((struct sockaddr_in *)
-			    src->sa_data)->sin_addr.s_addr != INADDR_ANY)
+			if(satosin(src)->sin_addr.s_addr == INADDR_ANY)
 				return (EINVAL);
 			break;
 		case AF_INET6:
-			if (!IN6_IS_ADDR_UNSPECIFIED(&((struct sockaddr_in6 *)
-		    src->sa_data)->sin6_addr))
+			if (IN6_IS_ADDR_UNSPECIFIED(&satosin6(src)->sin6_addr))
 				return (EINVAL);
 			break;
 		default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.250 2020/10/29 21:15:27 denis Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.251 2020/11/05 10:46:13 denis Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -971,8 +971,7 @@ in_pcbselsrc(struct in_addr **insrc, struct sockaddr_in *sin,
 			struct ifaddr *ifa;
 			if ((ifa = ifa_ifwithaddr(ip4_source, rtableid)) !=
 			    NULL && ISSET(ifa->ifa_ifp->if_flags, IFF_UP)) {
-				*insrc = &((struct sockaddr_in *)
-				    ip4_source)->sin_addr;
+				*insrc = &satosin(ip4_source)->sin_addr;
 				return (0);
 			}
 		}
