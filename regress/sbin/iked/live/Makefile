@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.23 2020/11/05 20:04:42 tobhe Exp $
+#	$OpenBSD: Makefile,v 1.24 2020/11/05 21:55:11 tobhe Exp $
 
 # Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
 #
@@ -38,9 +38,13 @@ TEST_FLOWS = \
 		ipsecctlleft=`ssh ${LEFT_SSH} ipsecctl -sa`; \
 		ipsecctlright=`ssh ${RIGHT_SSH} ipsecctl -sa`; \
 		flowleft=`echo "$$ipsecctlleft" \
-		    | sed -n "/^flow $$flowtype in from ${RIGHT_ADDR} to ${LEFT_ADDR}/p"`; \
+		    | sed -E -n "/^flow $$flowtype in from ${RIGHT_ADDR}\
+		    to ${LEFT_ADDR} peer ${RIGHT_ADDR} srcid (FQDN|UFQDN|ASN1_DN)\/[^ ]*\
+		    dstid (FQDN|UFQDN|ASN1_DN)\/[^ ]*/p"`; \
 		flowright=`echo "$$ipsecctlright" \
-		    | sed -n "/^flow $$flowtype in from ${LEFT_ADDR} to ${RIGHT_ADDR}/p"`; \
+		    | sed -E -n "/^flow $$flowtype in from ${LEFT_ADDR}\
+		    to ${RIGHT_ADDR} peer ${LEFT_ADDR} srcid (FQDN|UFQDN|ASN1_DN)\/[^ ]*\
+		    dstid (FQDN|UFQDN|ASN1_DN)\/[^ ]*/p"`; \
 		saleft_rtol=`echo "$$ipsecctlleft" \
 		    | sed -n "/^$$flowtype $$tmode from ${RIGHT_ADDR} to ${LEFT_ADDR}/p"`; \
 		saleft_ltor=`echo "$$ipsecctlleft" \
