@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.17 2020/11/05 15:53:55 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.18 2020/11/05 16:38:09 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -311,7 +311,7 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	 * Validate that the current date falls into this interval.
 	 * This is required by section 4.4, (3).
 	 * If we're after the given date, then the MFT is stale.
-	 * This is made super complicated because it usees OpenSSL's
+	 * This is made super complicated because it uses OpenSSL's
 	 * ASN1_GENERALIZEDTIME instead of ASN1_TIME, which we could
 	 * compare against the current time trivially.
 	 */
