@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.100 2020/05/10 13:38:46 deraadt Exp $ */
+/*	$OpenBSD: control.c,v 1.101 2020/11/05 11:28:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -29,11 +29,13 @@
 #include "session.h"
 #include "log.h"
 
+TAILQ_HEAD(ctl_conns, ctl_conn) ctl_conns = TAILQ_HEAD_INITIALIZER(ctl_conns);
+
 #define	CONTROL_BACKLOG	5
 
 struct ctl_conn	*control_connbyfd(int);
 struct ctl_conn	*control_connbypid(pid_t);
-int		 control_close(int);
+int		 control_close(struct ctl_conn *);
 void		 control_result(struct ctl_conn *, u_int);
 ssize_t		 imsg_read_nofd(struct imsgbuf *);
 
@@ -136,6 +138,22 @@ control_shutdown(int fd)
 	close(fd);
 }
 
+size_t
+control_fill_pfds(struct pollfd *pfd, size_t size)
+{
+	struct ctl_conn	*ctl_conn;
+	size_t i = 0;
+
+	TAILQ_FOREACH(ctl_conn, &ctl_conns, entry) {
+		pfd[i].fd = ctl_conn->ibuf.fd;
+		pfd[i].events = POLLIN;
+		if (ctl_conn->ibuf.w.queued > 0)
+			pfd[i].events |= POLLOUT;
+		i++;
+	}
+	return i;
+}
+
 unsigned int
 control_accept(int listenfd, int restricted)
 {
@@ -198,15 +216,8 @@ control_connbypid(pid_t pid)
 }
 
 int
-control_close(int fd)
+control_close(struct ctl_conn *c)
 {
-	struct ctl_conn	*c;
-
-	if ((c = control_connbyfd(fd)) == NULL) {
-		log_warn("control_close: fd %d: not found", fd);
-		return (0);
-	}
-
 	if (c->terminate && c->ibuf.pid)
 		imsg_ctl_rde(IMSG_CTL_TERMINATE, c->ibuf.pid, NULL, 0);
 
@@ -220,8 +231,7 @@ control_close(int fd)
 }
 
 int
-control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt,
-    struct peer_head *peers)
+control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 {
 	struct imsg		 imsg;
 	struct ctl_conn		*c;
@@ -237,10 +247,8 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt,
 	}
 
 	if (pfd->revents & POLLOUT) {
-		if (msgbuf_write(&c->ibuf.w) <= 0 && errno != EAGAIN) {
-			*ctl_cnt -= control_close(pfd->fd);
-			return (1);
-		}
+		if (msgbuf_write(&c->ibuf.w) <= 0 && errno != EAGAIN)
+			return control_close(c);
 		if (c->throttled && c->ibuf.w.queued < CTL_MSG_LOW_MARK) {
 			if (imsg_ctl_rde(IMSG_XON, c->ibuf.pid, NULL, 0) != -1)
 				c->throttled = 0;
@@ -251,16 +259,12 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt,
 		return (0);
 
 	if (((n = imsg_read_nofd(&c->ibuf)) == -1 && errno != EAGAIN) ||
-	    n == 0) {
-		*ctl_cnt -= control_close(pfd->fd);
-		return (1);
-	}
+	    n == 0)
+		return control_close(c);
 
 	for (;;) {
-		if ((n = imsg_get(&c->ibuf, &imsg)) == -1) {
-			*ctl_cnt -= control_close(pfd->fd);
-			return (1);
-		}
+		if ((n = imsg_get(&c->ibuf, &imsg)) == -1)
+			return control_close(c);
 
 		if (n == 0)
 			break;

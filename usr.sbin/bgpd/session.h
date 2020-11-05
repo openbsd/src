@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.146 2020/05/10 13:38:46 deraadt Exp $ */
+/*	$OpenBSD: session.h,v 1.147 2020/11/05 11:28:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -146,8 +146,6 @@ struct ctl_conn {
 	int			terminate;
 };
 
-TAILQ_HEAD(ctl_conns, ctl_conn)	ctl_conns;
-
 struct peer_stats {
 	unsigned long long	 msg_rcvd_open;
 	unsigned long long	 msg_rcvd_update;
@@ -260,8 +258,9 @@ int	 prepare_listeners(struct bgpd_config *);
 int	control_check(char *);
 int	control_init(int, char *);
 int	control_listen(int);
+size_t	control_fill_pfds(struct pollfd *, size_t);
 void	control_shutdown(int);
-int	control_dispatch_msg(struct pollfd *, u_int *, struct peer_head *);
+int	control_dispatch_msg(struct pollfd *, struct peer_head *);
 unsigned int	control_accept(int, int);
 
 /* log.c */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.402 2020/06/27 07:24:42 bket Exp $ */
+/*	$OpenBSD: session.c,v 1.403 2020/11/05 11:28:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -196,7 +196,6 @@ session_main(int debug, int verbose)
 	struct peer		*p, **peer_l = NULL, *next;
 	struct mrt		*m, *xm, **mrt_l = NULL;
 	struct pollfd		*pfd = NULL;
-	struct ctl_conn		*ctl_conn;
 	struct listen_addr	*la;
 	void			*newp;
 	time_t			 now;
@@ -237,7 +236,6 @@ session_main(int debug, int verbose)
 		fatal(NULL);
 	imsg_init(ibuf_main, 3);
 
-	TAILQ_INIT(&ctl_conns);
 	LIST_INIT(&mrthead);
 	listener_cnt = 0;
 	peer_cnt = 0;
@@ -438,13 +436,10 @@ session_main(int debug, int verbose)
 
 		idx_mrts = i;
 
-		TAILQ_FOREACH(ctl_conn, &ctl_conns, entry) {
-			pfd[i].fd = ctl_conn->ibuf.fd;
-			pfd[i].events = POLLIN;
-			if (ctl_conn->ibuf.w.queued > 0)
-				pfd[i].events |= POLLOUT;
-			i++;
-		}
+		i += control_fill_pfds(pfd + i, pfd_elms -i);
+
+		if (i > pfd_elms)
+			fatalx("poll pfd overflow");
 
 		if (pauseaccept && timeout > 1)
 			timeout = 1;
@@ -511,7 +506,7 @@ session_main(int debug, int verbose)
 				mrt_write(mrt_l[j - idx_peers]);
 
 		for (; j < i; j++)
-			control_dispatch_msg(&pfd[j], &ctl_cnt, &conf->peers);
+			ctl_cnt -= control_dispatch_msg(&pfd[j], &conf->peers);
 	}
 
 	RB_FOREACH_SAFE(p, peer_head, &conf->peers, next) {
