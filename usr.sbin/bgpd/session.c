@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.404 2020/11/05 11:52:59 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.405 2020/11/05 14:44:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -100,15 +100,16 @@ void		 session_template_clone(struct peer *, struct sockaddr *,
 		    u_int32_t, u_int32_t);
 int		 session_match_mask(struct peer *, struct bgpd_addr *);
 
-struct bgpd_config	*conf, *nconf;
+static struct bgpd_config	*conf, *nconf;
+static struct imsgbuf		*ibuf_rde;
+static struct imsgbuf		*ibuf_rde_ctl;
+static struct imsgbuf		*ibuf_main;
+
 struct bgpd_sysdep	 sysdep;
 volatile sig_atomic_t	 session_quit;
 int			 pending_reconf;
 int			 csock = -1, rcsock = -1;
 u_int			 peer_cnt;
-struct imsgbuf		*ibuf_rde;
-struct imsgbuf		*ibuf_rde_ctl;
-struct imsgbuf		*ibuf_main;
 
 struct mrt_head		 mrthead;
 time_t			 pauseaccept;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.505 2020/11/05 11:52:59 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.506 2020/11/05 14:44:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -98,12 +98,13 @@ static void	 network_flush_upcall(struct rib_entry *, void *);
 void		 rde_shutdown(void);
 int		 ovs_match(struct prefix *, u_int32_t);
 
+static struct imsgbuf		*ibuf_se;
+static struct imsgbuf		*ibuf_se_ctl;
+static struct imsgbuf		*ibuf_main;
+static struct bgpd_config	*conf, *nconf;
+
 volatile sig_atomic_t	 rde_quit = 0;
-struct bgpd_config	*conf, *nconf;
 struct filter_head	*out_rules, *out_rules_tmp;
-struct imsgbuf		*ibuf_se;
-struct imsgbuf		*ibuf_se_ctl;
-struct imsgbuf		*ibuf_main;
 struct rde_memstats	 rdemem;
 int			 softreconfig;
 
