@@ -1,4 +1,4 @@
-@(#) $Id: INSTALL,v 1.6 2015/12/05 21:43:51 mmcc Exp $ (LBL)
+@(#) $Id: INSTALL,v 1.7 2020/11/05 05:00:14 tb Exp $ (LBL)
 
 FILES
 -----
@@ -63,7 +63,6 @@ print-pim.c	- Protocol Independent Multicast printer routines
 print-ppp.c	- Point to Point Protocol printer routines
 print-raw.c	- raw printer routines
 print-rip.c	- Routing Information Protocol printer routines
-print-skip.c	- SKIP printer routines
 print-sl.c	- Compressed Serial Line Internet Protocol printer routines
 print-snmp.c	- Simple Network Management Protocol printer routines
 print-sunrpc.c	- Sun Remote Procedure Call printer routines
