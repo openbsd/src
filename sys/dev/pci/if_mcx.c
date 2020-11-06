@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.74 2020/11/06 02:45:47 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.75 2020/11/06 02:50:02 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -2543,6 +2543,7 @@ static const struct pci_matchid mcx_devices[] = {
 	{ PCI_VENDOR_MELLANOX,	PCI_PRODUCT_MELLANOX_MT27800VF },
 	{ PCI_VENDOR_MELLANOX,	PCI_PRODUCT_MELLANOX_MT28800 },
 	{ PCI_VENDOR_MELLANOX,	PCI_PRODUCT_MELLANOX_MT28800VF },
+	{ PCI_VENDOR_MELLANOX,	PCI_PRODUCT_MELLANOX_MT28908 },
 	{ PCI_VENDOR_MELLANOX,	PCI_PRODUCT_MELLANOX_MT2892  },
 };
 
