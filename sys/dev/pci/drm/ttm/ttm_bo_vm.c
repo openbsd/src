@@ -750,7 +750,7 @@ ttm_bo_vm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps,
 			break;
 		}
 
-		uvmfault_unlockall(ufi, NULL, NULL, NULL);
+		uvmfault_unlockall(ufi, NULL, NULL);
 		return ret;
 	}
 
@@ -769,7 +769,7 @@ ttm_bo_vm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps,
 
 	dma_resv_unlock(bo->base.resv);
 
-	uvmfault_unlockall(ufi, NULL, NULL, NULL);
+	uvmfault_unlockall(ufi, NULL, NULL);
 	return ret;
 }
 EXPORT_SYMBOL(ttm_bo_vm_fault);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.h,v 1.15 2014/07/11 16:35:40 jsg Exp $	*/
+/*	$OpenBSD: uvm_fault.h,v 1.16 2020/11/06 11:52:39 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.h,v 1.14 2000/06/26 14:21:17 mrg Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ void		uvmfault_init(void);
 boolean_t	uvmfault_lookup(struct uvm_faultinfo *, boolean_t);
 boolean_t	uvmfault_relock(struct uvm_faultinfo *);
 void		uvmfault_unlockall(struct uvm_faultinfo *, struct vm_amap *,
-		    struct uvm_object *, struct vm_anon *);
+		    struct uvm_object *);
 int		uvmfault_anonget(struct uvm_faultinfo *, struct vm_amap *,
 		    struct vm_anon *);
 

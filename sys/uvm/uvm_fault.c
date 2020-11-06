@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.103 2020/10/21 08:55:40 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.104 2020/11/06 11:52:39 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -301,7 +301,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 			 * the last unlock must be an atomic unlock+wait on
 			 * the owner of page
 			 */
-			uvmfault_unlockall(ufi, amap, NULL, NULL);
+			uvmfault_unlockall(ufi, amap, NULL);
 			tsleep_nsec(pg, PVM, "anonget2", INFSLP);
 			/* ready to relock and try again */
 		} else {
@@ -309,14 +309,14 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 			pg = uvm_pagealloc(NULL, 0, anon, 0);
 
 			if (pg == NULL) {		/* out of RAM.  */
-				uvmfault_unlockall(ufi, amap, NULL, anon);
+				uvmfault_unlockall(ufi, amap, NULL);
 				uvmexp.fltnoram++;
 				uvm_wait("flt_noram1");
 				/* ready to relock and try again */
 			} else {
 				/* we set the PG_BUSY bit */
 				we_own = TRUE;
-				uvmfault_unlockall(ufi, amap, NULL, anon);
+				uvmfault_unlockall(ufi, amap, NULL);
 
 				/*
 				 * we are passing a PG_BUSY+PG_FAKE+PG_CLEAN
@@ -368,8 +368,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 				pmap_page_protect(pg, PROT_NONE);
 				uvm_anfree(anon);	/* frees page for us */
 				if (locked)
-					uvmfault_unlockall(ufi, amap, NULL,
-							   NULL);
+					uvmfault_unlockall(ufi, amap, NULL);
 				uvmexp.fltpgrele++;
 				return (VM_PAGER_REFAULT);	/* refault! */
 			}
@@ -399,8 +398,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 				uvm_unlock_pageq();
 
 				if (locked)
-					uvmfault_unlockall(ufi, amap, NULL,
-					    anon);
+					uvmfault_unlockall(ufi, amap, NULL);
 				return (VM_PAGER_ERROR);
 			}
 
@@ -423,7 +421,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 		    amap_lookup(&ufi->entry->aref,
 				ufi->orig_rvaddr - ufi->entry->start) != anon) {
 
-			uvmfault_unlockall(ufi, amap, NULL, anon);
+			uvmfault_unlockall(ufi, amap, NULL);
 			return (VM_PAGER_REFAULT);
 		}
 
@@ -937,7 +935,7 @@ ReFault:
 
 		/* check for out of RAM */
 		if (anon == NULL || pg == NULL) {
-			uvmfault_unlockall(&ufi, amap, NULL, oanon);
+			uvmfault_unlockall(&ufi, amap, NULL);
 			if (anon == NULL)
 				uvmexp.fltnoanon++;
 			else {
@@ -997,7 +995,7 @@ ReFault:
 		 * We do, however, have to go through the ReFault path,
 		 * as the map may change while we're asleep.
 		 */
-		uvmfault_unlockall(&ufi, amap, NULL, oanon);
+		uvmfault_unlockall(&ufi, amap, NULL);
 		if (uvm_swapisfull()) {
 			/* XXX instrumentation */
 			return (ENOMEM);
@@ -1028,7 +1026,7 @@ ReFault:
 	uvm_unlock_pageq();
 
 	/* done case 1!  finish up by unlocking everything and returning success */
-	uvmfault_unlockall(&ufi, amap, NULL, oanon);
+	uvmfault_unlockall(&ufi, amap, NULL);
 	pmap_update(ufi.orig_map->pmap);
 	return (0);
 
@@ -1065,7 +1063,7 @@ Case2:
 		/* update rusage counters */
 		curproc->p_ru.ru_majflt++;
 
-		uvmfault_unlockall(&ufi, amap, NULL, NULL);
+		uvmfault_unlockall(&ufi, amap, NULL);
 
 		uvmexp.fltget++;
 		gotpages = 1;
@@ -1100,7 +1098,7 @@ Case2:
 		if (locked && amap && amap_lookup(&ufi.entry->aref,
 		      ufi.orig_rvaddr - ufi.entry->start)) {
 			if (locked)
-				uvmfault_unlockall(&ufi, amap, NULL, NULL);
+				uvmfault_unlockall(&ufi, amap, NULL);
 			locked = FALSE;
 		}
 
@@ -1191,7 +1189,7 @@ Case2:
 			}
 
 			/* unlock and fail ... */
-			uvmfault_unlockall(&ufi, amap, uobj, NULL);
+			uvmfault_unlockall(&ufi, amap, uobj);
 			if (anon == NULL)
 				uvmexp.fltnoanon++;
 			else {
@@ -1244,7 +1242,7 @@ Case2:
 
 		if (amap_add(&ufi.entry->aref,
 		    ufi.orig_rvaddr - ufi.entry->start, anon, 0)) {
-			uvmfault_unlockall(&ufi, amap, NULL, oanon);
+			uvmfault_unlockall(&ufi, amap, NULL);
 			uvm_anfree(anon);
 			uvmexp.fltnoamap++;
 
@@ -1277,7 +1275,7 @@ Case2:
 
 		atomic_clearbits_int(&pg->pg_flags, PG_BUSY|PG_FAKE|PG_WANTED);
 		UVM_PAGE_OWN(pg, NULL);
-		uvmfault_unlockall(&ufi, amap, uobj, NULL);
+		uvmfault_unlockall(&ufi, amap, uobj);
 		if (uvm_swapisfull()) {
 			/* XXX instrumentation */
 			return (ENOMEM);
@@ -1312,7 +1310,7 @@ Case2:
 
 	atomic_clearbits_int(&pg->pg_flags, PG_BUSY|PG_FAKE|PG_WANTED);
 	UVM_PAGE_OWN(pg, NULL);
-	uvmfault_unlockall(&ufi, amap, uobj, NULL);
+	uvmfault_unlockall(&ufi, amap, uobj);
 	pmap_update(ufi.orig_map->pmap);
 
 	return (0);
@@ -1445,7 +1443,7 @@ uvmfault_unlockmaps(struct uvm_faultinfo *ufi, boolean_t write_locked)
  */
 void
 uvmfault_unlockall(struct uvm_faultinfo *ufi, struct vm_amap *amap,
-    struct uvm_object *uobj, struct vm_anon *anon)
+    struct uvm_object *uobj)
 {
 
 	uvmfault_unlockmaps(ufi, FALSE);

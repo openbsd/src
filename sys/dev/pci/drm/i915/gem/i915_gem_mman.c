@@ -473,7 +473,7 @@ vm_fault_cpu(struct i915_mmap_offset *mmo, struct uvm_faultinfo *ufi,
 
 	/* Sanity check that we allow writing into this object */
 	if (unlikely(i915_gem_object_is_readonly(obj) && write)) {
-		uvmfault_unlockall(ufi, NULL, &obj->base.uobj, NULL);
+		uvmfault_unlockall(ufi, NULL, &obj->base.uobj);
 		return VM_PAGER_BAD;
 	}
 
@@ -518,7 +518,7 @@ vm_fault_cpu(struct i915_mmap_offset *mmo, struct uvm_faultinfo *ufi,
 	i915_gem_object_unpin_pages(obj);
 
 out:
-	uvmfault_unlockall(ufi, NULL, &obj->base.uobj, NULL);
+	uvmfault_unlockall(ufi, NULL, &obj->base.uobj);
 	return i915_error_to_vmf_fault(err);
 }
 
@@ -559,7 +559,7 @@ vm_fault_gtt(struct i915_mmap_offset *mmo, struct uvm_faultinfo *ufi,
 
 	/* Sanity check that we allow writing into this object */
 	if (i915_gem_object_is_readonly(obj) && write) {
-		uvmfault_unlockall(ufi, NULL, &obj->base.uobj, NULL);
+		uvmfault_unlockall(ufi, NULL, &obj->base.uobj);
 		return VM_PAGER_BAD;
 	}
 
@@ -664,7 +664,7 @@ err_rpm:
 	intel_runtime_pm_put(rpm, wakeref);
 	i915_gem_object_unpin_pages(obj);
 err:
-	uvmfault_unlockall(ufi, NULL, &obj->base.uobj, NULL);
+	uvmfault_unlockall(ufi, NULL, &obj->base.uobj);
 	return i915_error_to_vmf_fault(ret);
 }
 
@@ -687,7 +687,7 @@ i915_gem_fault(struct drm_gem_object *gem_obj, struct uvm_faultinfo *ufi,
 		mmo = container_of(node, struct i915_mmap_offset, vma_node);
 	drm_vma_offset_unlock_lookup(dev->vma_offset_manager);
 	if (!mmo) {
-		uvmfault_unlockall(ufi, NULL, &gem_obj->uobj, NULL);
+		uvmfault_unlockall(ufi, NULL, &gem_obj->uobj);
 		return VM_PAGER_BAD;
 	}
 

@@ -101,7 +101,7 @@ drm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps,
 	 */
 	
 	if (UVM_ET_ISCOPYONWRITE(entry)) {
-		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
+		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
 		return(VM_PAGER_ERROR);
 	}
 
@@ -115,7 +115,7 @@ drm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps,
 	mtx_enter(&dev->quiesce_mtx);
 	if (dev->quiesce && dev->quiesce_count == 0) {
 		mtx_leave(&dev->quiesce_mtx);
-		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
+		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
 		mtx_enter(&dev->quiesce_mtx);
 		while (dev->quiesce) {
 			msleep_nsec(&dev->quiesce, &dev->quiesce_mtx,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_device.c,v 1.59 2020/10/24 21:07:53 kettenis Exp $	*/
+/*	$OpenBSD: uvm_device.c,v 1.60 2020/11/06 11:52:39 mpi Exp $	*/
 /*	$NetBSD: uvm_device.c,v 1.30 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -306,7 +306,7 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps, int npages,
 	 * so we kill any attempt to do so here.
 	 */
 	if (UVM_ET_ISCOPYONWRITE(entry)) {
-		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
+		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
 		return(VM_PAGER_ERROR);
 	}
 
@@ -354,7 +354,7 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps, int npages,
 			 * XXX case.
 			 */
 			uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap,
-			    uobj, NULL);
+			    uobj);
 
 			/* sync what we have so far */
 			pmap_update(ufi->orig_map->pmap);      
@@ -363,7 +363,7 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps, int npages,
 		}
 	}
 
-	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
+	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
 	pmap_update(ufi->orig_map->pmap);
 	return (retval);
 }
