@@ -1,4 +1,4 @@
-.\" $OpenBSD: ldom.conf.5,v 1.14 2020/09/14 19:42:16 kn Exp $
+.\" $OpenBSD: ldom.conf.5,v 1.15 2020/11/06 21:32:09 kn Exp $
 .\"
 .\" Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 14 2020 $
+.Dd $Mdocdate: November 6 2020 $
 .Dt LDOM.CONF 5 sparc64
 .Os
 .Sh NAME
@@ -38,8 +38,11 @@ If no configuration for the primary domain exists it is assigned
 all CPU and memory resources not used by any guest domains.
 .It Ic vcpu Ar number Ns Op : Ns Ar stride
 Declare the number of virtual CPUs assigned to a domain.
-Optionally a stride can be specified to allocate additional virtual CPUs
-but not assign them to a domain.
+Optionally a stride can be specified to allocate
+.Ar stride
+VCPUs at a time but assign only
+.Ar number
+VCPUs to the domain.
 This can be used to distribute virtual CPUs over the available CPU cores.
 .It Ic memory Ar bytes
 Declare the amount of memory assigned to a domain, in bytes.
@@ -117,6 +120,21 @@ domain "salmah" {
 .Pp
 On a machine with 32 cores and 64GB physical memory, this leaves 12 cores and
 58GB memory to the primary domain.
+.Pp
+Use a
+.Ar stride
+step size to distribute VCPUs:
+.Bd -literal -offset indent
+domain "marlus" {
+	vcpu 2:4
+	memory 4G
+	vdisk "/home/marlus/vdisk0"
+}
+.Ed
+.Pp
+On a machine with eight threads per physical core, this allocates two strides
+of four VCPUs each for the guest domain but assigns only two VCPUs to it, i.e.\&
+makes it occupy an entire physical core while running on two threads only.
 .Sh SEE ALSO
 .Xr eeprom 8 ,
 .Xr ldomctl 8 ,
