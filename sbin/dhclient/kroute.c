@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.188 2020/06/03 18:15:57 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.189 2020/11/06 21:15:41 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -854,7 +854,32 @@ priv_write_resolv_conf(int index, int routefd, int rdomain, char *contents,
 void
 propose(struct proposal *proposal)
 {
+	struct option_data	 opt;
 	int			 rslt;
+
+	log_debug("%s: proposing address %s netmask 0x%08x", log_procname,
+	    inet_ntoa(proposal->address), ntohl(proposal->netmask.s_addr));
+
+	opt.data = (u_int8_t *)proposal + sizeof(struct proposal);
+	opt.len = proposal->routes_len;
+	if (opt.len > 0)
+		log_debug("%s: proposing static route(s) %s", log_procname,
+		    pretty_print_option(DHO_CLASSLESS_STATIC_ROUTES, &opt, 0));
+
+	opt.data += opt.len;
+	opt.len = proposal->domains_len;
+	if (opt.len > 0)
+		log_debug("%s: proposing search domain(s) %s", log_procname,
+		    pretty_print_option(DHO_DOMAIN_SEARCH, &opt, 0));
+
+	opt.data += opt.len;
+	opt.len = proposal->ns_len;
+	if (opt.len > 0)
+		log_debug("%s: proposing DNS server(s) %s", log_procname,
+		    pretty_print_option(DHO_DOMAIN_NAME_SERVERS, &opt, 0));
+
+	if (proposal->mtu != 0)
+		log_debug("%s: proposing mtu %u", log_procname, proposal->mtu);
 
 	rslt = imsg_compose(unpriv_ibuf, IMSG_PROPOSE, 0, 0, -1, proposal,
 	    sizeof(*proposal) + proposal->routes_len +

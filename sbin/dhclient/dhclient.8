@@ -1,4 +1,4 @@
-.\" $OpenBSD: dhclient.8,v 1.42 2019/07/31 08:23:48 jmc Exp $
+.\" $OpenBSD: dhclient.8,v 1.43 2020/11/06 21:15:41 krw Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .\" Enterprises.  To learn more about the Internet Software Consortium,
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
-.Dd $Mdocdate: July 31 2019 $
+.Dd $Mdocdate: November 6 2020 $
 .Dt DHCLIENT 8
 .Os
 .Sh NAME
@@ -133,7 +133,8 @@ has no active lease configured, no action is performed.
 .It Fl v
 Causes
 .Nm
-to log more information.
+to show more information about interactions with the DHCP server and what
+network configuration changes are attempted after accepting a lease.
 .Fl v
 is implied if either
 .Fl d
