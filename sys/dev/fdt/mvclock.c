@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvclock.c,v 1.7 2020/05/22 10:06:59 patrick Exp $	*/
+/*	$OpenBSD: mvclock.c,v 1.8 2020/11/06 13:29:45 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -156,6 +156,7 @@ ap806_get_frequency(void *cookie, uint32_t *cells)
 #define CP110_CORE_CORE		3
 #define CP110_CORE_SDIO		5
 
+#define CP110_GATE_PPV2		3
 #define CP110_GATE_SDIO		4
 #define CP110_GATE_SLOW_IO	21
 
@@ -193,6 +194,9 @@ cp110_get_frequency(void *cookie, uint32_t *cells)
 	/* Gatable clocks */
 	if (mod == 1) {
 		switch (idx) {
+		case CP110_GATE_PPV2:
+			parent[1] = CP110_CORE_PPV2;
+			break;
 		case CP110_GATE_SDIO:
 			parent[1] = CP110_CORE_SDIO;
 			break;
