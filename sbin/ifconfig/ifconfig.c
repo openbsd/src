@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.429 2020/10/07 14:38:54 denis Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.430 2020/11/06 21:24:47 kn Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -5696,11 +5696,10 @@ ensurewginterface(void)
 		err(1, "calloc");
 }
 
-void *
+void
 growwgdata(size_t by)
 {
 	ptrdiff_t peer_offset, aip_offset;
-	void *ret;
 
 	if (wg_interface == NULL)
 		wgdata.wgd_size = sizeof(*wg_interface);
@@ -5721,16 +5720,18 @@ growwgdata(size_t by)
 	if (wg_aip != NULL)
 		wg_aip = (void *)wg_interface + aip_offset;
 
-	ret = (void *)wg_interface + wgdata.wgd_size - by;
-	bzero(ret, by);
-
-	return ret;
+	bzero((char *)wg_interface + wgdata.wgd_size - by, by);
 }
 
 void
 setwgpeer(const char *peerkey_b64, int param)
 {
-	wg_peer = growwgdata(sizeof(*wg_peer));
+	growwgdata(sizeof(*wg_peer));
+	if (wg_aip)
+		wg_peer = (struct wg_peer_io *)wg_aip;
+	else
+		wg_peer = &wg_interface->i_peers[0];
+	wg_aip = &wg_peer->p_aips[0];
 	wg_peer->p_flags |= WG_PEER_HAS_PUBLIC;
 	WG_LOAD_KEY(wg_peer->p_public, peerkey_b64, "wgpeer");
 	wg_interface->i_peers_count++;
@@ -5743,7 +5744,7 @@ setwgpeeraip(const char *aip, int param)
 	if (wg_peer == NULL)
 		errx(1, "wgaip: wgpeer not set");
 
-	wg_aip = growwgdata(sizeof(*wg_aip));
+	growwgdata(sizeof(*wg_aip));
 
 	if ((res = inet_net_pton(AF_INET, aip, &wg_aip->a_ipv4,
 	    sizeof(wg_aip->a_ipv4))) != -1) {
@@ -5759,6 +5760,8 @@ setwgpeeraip(const char *aip, int param)
 
 	wg_peer->p_flags |= WG_PEER_REPLACE_AIPS;
 	wg_peer->p_aips_count++;
+
+	wg_aip++;
 }
 
 void
