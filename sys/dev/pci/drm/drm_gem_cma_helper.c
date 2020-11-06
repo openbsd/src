@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_gem_cma_helper.c,v 1.3 2020/06/08 04:47:58 jsg Exp $ */
+/* $OpenBSD: drm_gem_cma_helper.c,v 1.4 2020/11/06 13:22:07 mpi Exp $ */
 /* $NetBSD: drm_gem_cma_helper.c,v 1.9 2019/11/05 23:29:28 jmcneill Exp $ */
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -198,14 +198,14 @@ drm_gem_cma_fault(struct drm_gem_object *gem_obj, struct uvm_faultinfo *ufi,
 		    mapprot, PMAP_CANFAIL | mapprot) != 0) {
 			pmap_update(ufi->orig_map->pmap);
 			uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap,
-			    uobj, NULL);
+			    uobj);
 			uvm_wait("drm_gem_cma_fault");
 			return VM_PAGER_REFAULT;
 		}
 	}
 
 	pmap_update(ufi->orig_map->pmap);
-	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
+	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
 
 	return retval;
 }
