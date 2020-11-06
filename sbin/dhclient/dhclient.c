@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.678 2020/07/31 12:12:11 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.679 2020/11/06 21:53:55 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -97,7 +97,6 @@
 
 char *path_dhclient_conf = _PATH_DHCLIENT_CONF;
 char *path_lease_db;
-char *path_option_db;
 char *log_procname;
 
 int nullfd = -1;
@@ -151,7 +150,6 @@ void release_lease(struct interface_info *);
 void propose_release(struct interface_info *);
 
 void write_lease_db(struct client_lease_tq *);
-void write_option_db(struct client_lease *, struct client_lease *);
 char *lease_as_string(char *, struct client_lease *);
 struct proposal *lease_as_proposal(struct client_lease *);
 struct unwind_info *lease_as_unwind_info(struct client_lease *);
@@ -172,7 +170,6 @@ struct client_lease *get_recorded_lease(struct interface_info *);
 #define	ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 static FILE *leaseFile;
-static FILE *optionDB;
 
 int
 get_ifa_family(char *cp, int n)
@@ -471,7 +468,7 @@ main(int argc, char *argv[])
 
 	log_setverbose(0);	/* Don't show log_debug() messages. */
 
-	while ((ch = getopt(argc, argv, "c:di:L:nrv")) != -1)
+	while ((ch = getopt(argc, argv, "c:di:nrv")) != -1)
 		switch (ch) {
 		case 'c':
 			if (optarg == NULL)
@@ -487,12 +484,6 @@ main(int argc, char *argv[])
 				usage();
 			cmd_opts |= OPT_IGNORELIST;
 			ignore_list = strdup(optarg);
-			break;
-		case 'L':
-			if (optarg == NULL)
-				usage();
-			cmd_opts |= OPT_DBPATH;
-			path_option_db = optarg;
 			break;
 		case 'n':
 			cmd_opts |= OPT_NOACTION;
@@ -513,18 +504,6 @@ main(int argc, char *argv[])
 	if (argc != 1)
 		usage();
 
-	if ((cmd_opts & OPT_DBPATH) != 0) {
-		if (lstat(path_option_db, &sb) == -1) {
-			/*
-			 * Non-existant file is OK. An attempt will be
-			 * made to create it.
-			 */
-			if (errno != ENOENT)
-				fatal("lstat(%s)", path_option_db);
-		} else if (S_ISREG(sb.st_mode) == 0)
-			fatalx("'%s' is not a regular file",
-			    path_option_db);
-	}
 	if ((cmd_opts & OPT_CONFPATH) != 0) {
 		if (lstat(path_dhclient_conf, &sb) == -1) {
 			/*
@@ -656,17 +635,6 @@ main(int argc, char *argv[])
 		log_warn("%s: fopen(%s)", log_procname, path_lease_db);
 	write_lease_db(&ifi->lease_db);
 
-	if (path_option_db != NULL) {
-		/*
-		 * Open 'a' so file is not truncated. The truncation
-		 * is done when new data is about to be written to the
-		 * file. This avoids false notifications to watchers that
-		 * network configuration changes have occurred.
-		 */
-		if ((optionDB = fopen(path_option_db, "a")) == NULL)
-			fatal("fopen(%s)", path_option_db);
-	}
-
 	/* Create the udp and bpf sockets, growing rbuf if needed. */
 	ifi->udpfd = get_udp_sock(ifi->rdomain);
 	ifi->bpffd = get_bpf_sock(ifi->name);
@@ -712,7 +680,7 @@ usage(void)
 	extern char	*__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-dnrv] [-c file] [-i options] [-L file] "
+	    "usage: %s [-dnrv] [-c file] [-i options] "
 	    "interface\n", __progname);
 	exit(1);
 }
@@ -1086,7 +1054,6 @@ newlease:
 	 * place when dhclient(8) goes daemon.
 	 */
 	write_lease_db(&ifi->lease_db);
-	write_option_db(ifi->active, lease);
 	write_resolv_conf();
 
 	free_client_lease(lease);
@@ -1900,39 +1867,6 @@ write_lease_db(struct client_lease_tq *lease_db)
 	fflush(leaseFile);
 	ftruncate(fileno(leaseFile), ftello(leaseFile));
 	fsync(fileno(leaseFile));
-}
-
-void
-write_option_db(struct client_lease *offered, struct client_lease *effective)
-{
-	char	*leasestr;
-
-	if (optionDB == NULL)
-		return;
-
-	if (ftruncate(fileno(optionDB), 0) == -1) {
-		log_warn("optionDB ftruncate()");
-		return;
-	}
-
-	leasestr = lease_as_string("offered", offered);
-	if (leasestr == NULL)
-		log_warnx("%s: cannot make offered lease into string",
-		    log_procname);
-	else if (fprintf(optionDB, "%s", leasestr) == -1)
-		log_warn("optionDB 'offered' fprintf()");
-
-	leasestr = lease_as_string("effective", effective);
-	if (leasestr == NULL)
-		log_warnx("%s: cannot make effective lease into string",
-		    log_procname);
-	else if (fprintf(optionDB, "%s", leasestr) == -1)
-		log_warn("optionDB 'effective' fprintf()");
-
-	if (fflush(optionDB) == EOF)
-		log_warn("optionDB fflush()");
-	else if (fsync(fileno(optionDB)) == -1)
-		log_warn("optionDB fsync()");
 }
 
 void
@@ -2758,7 +2692,6 @@ tick_msg(const char *preamble, int success, time_t start)
  * 1) Send DHCPRELEASE.
  * 2) Unconfigure address/routes/etc.
  * 3) Remove lease from database & write updated DB.
- * 4) Truncate optionDB if present.
  */
 void
 release_lease(struct interface_info *ifi)
@@ -2787,12 +2720,6 @@ release_lease(struct interface_info *ifi)
 
 	TAILQ_REMOVE(&ifi->lease_db, ifi->active, next);
 	write_lease_db(&ifi->lease_db);
-
-	if (optionDB != NULL) {
-		ftruncate(fileno(optionDB), 0);
-		fclose(optionDB);
-		optionDB = NULL;
-	}
 
 	free_client_lease(ifi->active);
 	ifi->active = NULL;
