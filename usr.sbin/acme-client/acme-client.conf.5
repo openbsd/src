@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.conf.5,v 1.26 2020/09/14 16:00:17 florian Exp $
+.\"	$OpenBSD: acme-client.conf.5,v 1.27 2020/11/06 20:31:58 sthen Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 14 2020 $
+.Dd $Mdocdate: November 6 2020 $
 .Dt ACME-CLIENT.CONF 5
 .Os
 .Sh NAME
@@ -138,6 +138,12 @@ or
 .Cm ecdsa .
 It defaults to
 .Cm rsa .
+If the key file does not exist,
+.Xr acme-client 1
+will generate a key itself (4096-bit for
+.Cm rsa
+or secp384r1 for
+.Cm ecdsa ) .
 .It Ic domain certificate Ar file
 The filename of the certificate that will be issued.
 This is optional if
