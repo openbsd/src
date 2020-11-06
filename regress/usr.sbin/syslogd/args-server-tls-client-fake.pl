@@ -10,8 +10,9 @@ use warnings;
 use Errno ':POSIX';
 use Socket;
 
-my @errors = (EPIPE);
-my $errors = "(". join("|", map { $! = $_ } @errors). ")";
+my @errors = (EPIPE, ECONNRESET);
+my $errors = "(". join("|", map { $! = $_ } @errors).
+    "|tlsv1 alert decrypt error)";
 
 our %args = (
     syslogd => {

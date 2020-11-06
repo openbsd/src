@@ -1,4 +1,4 @@
-#	$OpenBSD: funcs.pl,v 1.37 2019/09/17 22:24:08 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.38 2020/11/06 03:26:18 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -26,6 +26,7 @@ use Sys::Syslog qw(:standard :extended :macros);
 use Time::HiRes 'sleep';
 use IO::Socket;
 use IO::Socket::INET6;
+use IO::Socket::SSL;
 
 my $firstlog = "syslogd regress test first message";
 my $secondlog = "syslogd regress test second message";
@@ -118,6 +119,15 @@ sub write_shutdown {
 	setlogsock("native")
 	    or die ref($self), " setlogsock native failed: $!";
 	syslog(LOG_NOTICE, $downlog);
+
+	if (defined($self->{connectdomain}) &&
+	    $self->{connectproto} eq "tls" &&
+	    $self->{exit}) {
+		# Due to missing handshakes TLS 1.3 cannot detect all
+		# connection errors while writing.  Try to read.
+		defined(read(STDIN, my $buf, 1))
+		    or die ref($self), " error after shutdown: $!,$SSL_ERROR";
+	}
 }
 
 sub write_lines {
