@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.17 2020/09/12 15:46:48 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.18 2020/11/06 05:42:43 tb Exp $ */
 /*
  * Copyright (c) 2019 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -195,8 +195,8 @@ outputheader(FILE *out, struct stats *st)
 	    "# VRP Entries: %zu (%zu unique)\n",
 	    hn, tbuf, (long long)st->elapsed_time.tv_sec,
 	    (long long)st->user_time.tv_sec, (long long)st->system_time.tv_sec,
-            st->roas, st->roas_fail, st->roas_invalid,
-            st->certs, st->certs_fail, st->certs_invalid,
+	    st->roas, st->roas_fail, st->roas_invalid,
+	    st->certs, st->certs_fail, st->certs_invalid,
 	    st->tals, st->talnames,
 	    st->mfts, st->mfts_fail, st->mfts_stale,
 	    st->crls,
