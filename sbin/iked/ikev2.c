@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.275 2020/10/30 23:32:42 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.276 2020/11/06 20:39:54 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -6759,6 +6759,8 @@ ikev2_cp_fixaddr(struct iked_sa *sa, struct iked_addr *addr,
 		if (in4->sin_addr.s_addr)
 			return (-1);
 		memcpy(patched, sa->sa_addrpool, sizeof(*patched));
+		patched->addr_net = 0;
+		patched->addr_mask = 32;
 		break;
 	case AF_INET6:
 		if (sa->sa_addrpool6 == NULL)
@@ -6767,6 +6769,8 @@ ikev2_cp_fixaddr(struct iked_sa *sa, struct iked_addr *addr,
 		if (!IN6_IS_ADDR_UNSPECIFIED(&in6->sin6_addr))
 			return (-1);
 		memcpy(patched, sa->sa_addrpool6, sizeof(*patched));
+		patched->addr_net = 0;
+		patched->addr_mask = 128;
 		break;
 	}
 	return (0);
