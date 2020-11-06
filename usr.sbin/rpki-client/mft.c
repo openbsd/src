@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.18 2020/11/05 16:38:09 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.19 2020/11/06 04:22:18 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -265,7 +265,7 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	ASN1_SEQUENCE_ANY	*seq;
 	const ASN1_TYPE		*t;
 	const ASN1_GENERALIZEDTIME *from, *until;
-	int			 i, rc = -1, validity;
+	int			 i, rc = -1;
 
 	if ((seq = d2i_ASN1_SEQUENCE_ANY(NULL, &d, dsz)) == NULL) {
 		cryptowarnx("%s: RFC 6486 section 4.2: Manifest: "
@@ -334,9 +334,12 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	}
 	until = t->value.generalizedtime;
 
-	validity = check_validity(from, until, p->fn);
-	if (validity != 1)
+	rc = check_validity(from, until, p->fn);
+	if (rc != 1)
 		goto out;
+
+	/* The mft is valid. Reset rc so later 'goto out' return failure. */
+	rc = -1;
 
 	/* File list algorithm. */
 
@@ -365,7 +368,7 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	} else if (!mft_parse_flist(p, t->value.octet_string))
 		goto out;
 
-	rc = validity;
+	rc = 1;
 out:
 	sk_ASN1_TYPE_pop_free(seq, ASN1_TYPE_free);
 	return rc;
