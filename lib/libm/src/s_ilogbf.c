@@ -25,12 +25,13 @@ ilogbf(float x)
 	hx &= 0x7fffffff;
 	if(hx<0x00800000) {
 	    if(hx==0) 
-		return 0x80000001;	/* ilogb(0) = 0x80000001 */
+		return FP_ILOGB0;	/* ilogb(0) = FP_ILOGB */
 	    else			/* subnormal x */
 	        for (ix = -126,hx<<=8; hx>0; hx<<=1) ix -=1;
 	    return ix;
 	}
 	else if (hx<0x7f800000) return (hx>>23)-127;
-	else return 0x7fffffff;
+	else if (hx>0x7f800000) return FP_ILOGBNAN;
+	else return INT_MAX;
 }
 DEF_STD(ilogbf);

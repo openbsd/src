@@ -1,4 +1,7 @@
-/* @(#)s_ilogb.c 5.1 93/09/24 */
+/* s_ilogbl.c -- long double version of s_ilogb.c.
+ * Conversion to 128-bit long double by Mark Kettenis, kettenis@openbsd.org.
+ */
+
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -10,7 +13,7 @@
  * ====================================================
  */
 
-/* ilogb(double x)
+/* ilogbl(long double x)
  * return the binary exponent of non-zero x
  * ilogb(0) = FP_ILOGB0
  * ilogb(NaN) = FP_ILOGBNAN (no signal is raised)
@@ -23,27 +26,26 @@
 #include "math_private.h"
 
 int
-ilogb(double x)
+ilogbl(long double x)
 {
-	int32_t hx,lx,ix;
+	int64_t hx,lx;
+	int32_t ix;
 
-	GET_HIGH_WORD(hx,x);
-	hx &= 0x7fffffff;
-	if(hx<0x00100000) {
-	    GET_LOW_WORD(lx,x);
+	GET_LDOUBLE_WORDS64(hx,lx,x);
+	hx &= 0x7fffffffffffffffLL;
+	if(hx<0x0001000000000000LL) {
 	    if((hx|lx)==0) 
 		return FP_ILOGB0;	/* ilogb(0) = FP_ILOGB0 */
 	    else			/* subnormal x */
 		if(hx==0) {
-		    for (ix = -1043; lx>0; lx<<=1) ix -=1;
+		    for (ix = -16431; lx>0; lx<<=1) ix -=1;
 		} else {
-		    for (ix = -1022,hx<<=11; hx>0; hx<<=1) ix -=1;
+		    for (ix = -16382, hx<<=15; hx>0; hx<<=1) ix -=1;
 		}
 	    return ix;
 	}
-	else if (hx<0x7ff00000) return (hx>>20)-1023;
-	else if (hx>0x7ff00000 || lx!=0) return FP_ILOGBNAN;
+	else if (hx<0x7fff000000000000LL) return (hx>>48)-16383;
+	else if (hx>0x7fff000000000000LL || lx!=0) return FP_ILOGBNAN;
 	else return INT_MAX;
 }
-DEF_STD(ilogb);
-LDBL_MAYBE_CLONE(ilogb);
+DEF_STD(ilogbl);
