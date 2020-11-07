@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.6 2020/11/06 15:26:38 bluhm Exp $
+#	$OpenBSD: Makefile.inc,v 1.7 2020/11/07 09:53:21 denis Exp $
 
 TOPDIR=		${.CURDIR}/..
 
@@ -9,8 +9,6 @@ SRCS+=		art.c
 CFLAGS+=	-DART
 .endif
 
-CPPFLAGS+=	-I${TOPDIR} -Wall \
-		-D'satosin(sa)=((struct sockaddr_in *)(sa))' \
-		-D'satosin6(sa)=((struct sockaddr_in6 *)(sa))'
+CPPFLAGS+=	-I${TOPDIR} -Wall
 
 .PATH:		${TOPDIR} ${TOPDIR}/../../../../sys/net
