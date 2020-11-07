@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.276 2020/11/06 20:39:54 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.277 2020/11/07 21:22:02 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -161,6 +161,8 @@ int	 ikev2_add_buf(struct ibuf *buf, struct ibuf *);
 int	 ikev2_cp_setaddr(struct iked *, struct iked_sa *, sa_family_t);
 int	 ikev2_cp_fixaddr(struct iked_sa *, struct iked_addr *,
 	    struct iked_addr *);
+int	 ikev2_cp_fixflow(struct iked_sa *, struct iked_flow *,
+	    struct iked_flow *);
 int	 ikev2_cp_request_configured(struct iked_sa *);
 
 ssize_t	 ikev2_add_sighashnotify(struct ibuf *, struct ikev2_payload **,
@@ -5806,7 +5808,7 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 			flowa->flow_local = &sa->sa_local;
 			flowa->flow_peer = &sa->sa_peer;
 			flowa->flow_ikesa = sa;
-			ikev2_cp_fixaddr(sa, &flow->flow_dst, &flowa->flow_dst);
+			ikev2_cp_fixflow(sa, flow, flowa);
 
 			skip = 0;
 			TAILQ_FOREACH(saflow, &sa->sa_flows, flow_entry) {
@@ -5833,7 +5835,7 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 			    sizeof(flow->flow_dst));
 			memcpy(&flowb->flow_dst, &flow->flow_src,
 			    sizeof(flow->flow_src));
-			ikev2_cp_fixaddr(sa, &flow->flow_dst, &flowb->flow_src);
+			ikev2_cp_fixflow(sa, flow, flowb);
 
 			TAILQ_INSERT_TAIL(&sa->sa_flows, flowa, flow_entry);
 			TAILQ_INSERT_TAIL(&sa->sa_flows, flowb, flow_entry);
@@ -6742,7 +6744,8 @@ ikev2_cp_request_configured(struct iked_sa *sa)
 
 /*
  * if 'addr' is 'UNSPECIFIED' replace it with sa_addrpool from
- * the ip-pool and store the result in 'patched'.
+ * the ip-pool or the sa_cp_addr received from peer and store the
+ * result in 'patched'.
  */
 int
 ikev2_cp_fixaddr(struct iked_sa *sa, struct iked_addr *addr,
@@ -6750,30 +6753,60 @@ ikev2_cp_fixaddr(struct iked_sa *sa, struct iked_addr *addr,
 {
 	struct sockaddr_in	*in4;
 	struct sockaddr_in6	*in6;
+	struct iked_addr	*naddr;
 
 	switch (addr->addr_af) {
 	case AF_INET:
-		if (sa->sa_addrpool == NULL)
+		naddr = (sa->sa_cp == IKEV2_CP_REQUEST) ?
+		    sa->sa_addrpool : sa->sa_cp_addr;
+		if (naddr == NULL)
 			return (-1);
 		in4 = (struct sockaddr_in *)&addr->addr;
 		if (in4->sin_addr.s_addr)
 			return (-1);
-		memcpy(patched, sa->sa_addrpool, sizeof(*patched));
+		memcpy(patched, naddr, sizeof(*patched));
 		patched->addr_net = 0;
 		patched->addr_mask = 32;
 		break;
 	case AF_INET6:
-		if (sa->sa_addrpool6 == NULL)
+		naddr = (sa->sa_cp == IKEV2_CP_REQUEST) ?
+		    sa->sa_addrpool6 : sa->sa_cp_addr6;
+		if (naddr == NULL)
 			return (-1);
 		in6 = (struct sockaddr_in6 *)&addr->addr;
 		if (!IN6_IS_ADDR_UNSPECIFIED(&in6->sin6_addr))
 			return (-1);
-		memcpy(patched, sa->sa_addrpool6, sizeof(*patched));
+		memcpy(patched, naddr, sizeof(*patched));
 		patched->addr_net = 0;
 		patched->addr_mask = 128;
 		break;
 	}
 	return (0);
+}
+
+/* replace unspecified address in flow with requested address */
+int
+ikev2_cp_fixflow(struct iked_sa *sa, struct iked_flow *flow,
+    struct iked_flow *patched)
+{
+	switch (sa->sa_cp) {
+	case IKEV2_CP_REQUEST:
+		if (patched->flow_dir == IPSP_DIRECTION_IN)
+			return (ikev2_cp_fixaddr(sa, &flow->flow_dst,
+			    &patched->flow_src));
+		else
+			return (ikev2_cp_fixaddr(sa, &flow->flow_dst,
+			    &patched->flow_dst));
+	case IKEV2_CP_REPLY:
+		if (patched->flow_dir == IPSP_DIRECTION_IN)
+			return (ikev2_cp_fixaddr(sa, &flow->flow_src,
+			    &patched->flow_dst));
+		else
+			return (ikev2_cp_fixaddr(sa, &flow->flow_src,
+			    &patched->flow_src));
+	default:
+		return (0);
+	}
 }
 
 int
