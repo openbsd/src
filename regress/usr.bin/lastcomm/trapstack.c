@@ -1,4 +1,4 @@
-/*	$OpenBSD: trapstack.c,v 1.1 2019/09/23 08:34:07 bluhm Exp $	*/
+/*	$OpenBSD: trapstack.c,v 1.2 2020/11/07 23:36:24 bluhm Exp $	*/
 /*
  * Copyright (c) 2018 Todd Mortimer <mortimer@openbsd.org>
  * Copyright (c) 2019 Alexander Bluhm <bluhm@openbsd.org>
@@ -28,7 +28,7 @@
 void handler(int);
 void dotrap(void);
 
-static char *trapmap;
+static volatile char *trapmap;
 
 int
 main(int argc, char *argv[])
@@ -60,8 +60,9 @@ main(int argc, char *argv[])
 	/* allow stack to change half a page up and down. */
 	newstack[pagesize/sizeof(*newstack)/2] = dotrap;
 
-	trapmap = mmap(NULL, pagesize, PROT_READ | PROT_WRITE, 0, -1, 0);
-	if (trapmap == NULL)
+	trapmap = mmap(NULL, pagesize, PROT_READ | PROT_WRITE, MAP_ANONYMOUS,
+	    -1, 0);
+	if (trapmap == MAP_FAILED)
 		err(1, "mmap");
 
 	if (sigaction(SIGSEGV, &act, NULL) == -1)
