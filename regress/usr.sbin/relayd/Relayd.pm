@@ -1,4 +1,4 @@
-#	$OpenBSD: Relayd.pm,v 1.17 2018/10/20 10:49:09 denis Exp $
+#	$OpenBSD: Relayd.pm,v 1.18 2020/11/07 16:02:19 bluhm Exp $
 
 # Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -78,6 +78,7 @@ sub new {
 	    $self->{forward} eq "copy"   ? "tcp no splice" :
 	    die ref($self), " invalid forward $self->{forward}"
 	    unless grep { /splice/ } @protocol;
+	push @protocol, "tcp nodelay";
 	print $fh "${proto}protocol proto-$test {";
 	if ($self->{inspectssl}) {
 		$self->{listenssl} = $self->{forwardssl} = 1;
