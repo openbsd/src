@@ -55,9 +55,9 @@ atomic_dec_and_lock(volatile int *v, struct mutex *mtxp)
 #define assert_spin_locked(mtxp)	MUTEX_ASSERT_LOCKED(mtxp)
 #define spin_trylock_irq(mtxp)		mtx_enter_try(mtxp)
 
-#define read_lock(rwl)			rw_enter_read(rwl)
-#define read_unlock(rwl)		rw_exit_read(rwl)
-#define write_lock(rwl)			rw_enter_write(rwl)
-#define write_unlock(rwl)		rw_exit_write(rwl)
+#define read_lock(mtxp)			mtx_enter(mtxp)
+#define read_unlock(mtxp)		mtx_leave(mtxp)
+#define write_lock(mtxp)		mtx_enter(mtxp)
+#define write_unlock(mtxp)		mtx_leave(mtxp)
 
 #endif
