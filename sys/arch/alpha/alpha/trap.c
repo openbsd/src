@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.98 2020/10/27 03:09:08 deraadt Exp $ */
+/* $OpenBSD: trap.c,v 1.99 2020/11/07 16:12:20 deraadt Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -223,7 +223,7 @@ trap(a0, a1, a2, entry, framep)
 	struct trapframe *framep;
 {
 	struct proc *p;
-	int i, gotlock = 0;
+	int i;
 	u_int64_t ucode;
 	int user;
 #if defined(DDB)
@@ -376,13 +376,10 @@ trap(a0, a1, a2, entry, framep)
 		case ALPHA_MMCSR_FOR:
 		case ALPHA_MMCSR_FOE:
 		case ALPHA_MMCSR_FOW:
-			KERNEL_LOCK();
 			if (pmap_emulate_reference(p, a0, user, a1)) {
 				access_type = PROT_EXEC;
-				gotlock = 1;
 				goto do_fault;
 			}
-			KERNEL_UNLOCK();
 			goto out;
 
 		case ALPHA_MMCSR_INVALTRANS:
@@ -427,8 +424,7 @@ do_fault:
 			onfault = p->p_addr->u_pcb.pcb_onfault;
 			p->p_addr->u_pcb.pcb_onfault = 0;
 
-			if (!gotlock)
-				KERNEL_LOCK();
+			KERNEL_LOCK();
 			rv = uvm_fault(map, va, 0, access_type);
 			KERNEL_UNLOCK();
 
