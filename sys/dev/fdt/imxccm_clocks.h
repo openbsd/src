@@ -474,6 +474,151 @@ struct imxccm_mux imx8mm_muxs[] = {
 };
 
 /*
+ * i.MX8MP clocks.
+ */
+
+#define IMX8MP_SYS_PLL1_266M		0x36
+#define IMX8MP_SYS_PLL2_100M		0x3a
+#define IMX8MP_SYS_PLL2_125M		0x3b
+#define IMX8MP_CLK_ENET_AXI		0x5e
+#define IMX8MP_CLK_NAND_USDHC_BUS	0x5f
+#define IMX8MP_CLK_I2C5			0x79
+#define IMX8MP_CLK_I2C6			0x7a
+#define IMX8MP_CLK_ENET_QOS		0x81
+#define IMX8MP_CLK_ENET_QOS_TIMER	0x82
+#define IMX8MP_CLK_ENET_REF		0x83
+#define IMX8MP_CLK_ENET_TIMER		0x84
+#define IMX8MP_CLK_ENET_PHY_REF		0x85
+#define IMX8MP_CLK_USDHC1		0x88
+#define IMX8MP_CLK_USDHC2		0x89
+#define IMX8MP_CLK_I2C1			0x8a
+#define IMX8MP_CLK_I2C2			0x8b
+#define IMX8MP_CLK_I2C3			0x8c
+#define IMX8MP_CLK_I2C4			0x8d
+#define IMX8MP_CLK_UART1		0x8e
+#define IMX8MP_CLK_UART2		0x8f
+#define IMX8MP_CLK_UART3		0x90
+#define IMX8MP_CLK_UART4		0x91
+#define IMX8MP_CLK_ENET1_ROOT		0xc0
+#define IMX8MP_CLK_I2C1_ROOT		0xcd
+#define IMX8MP_CLK_I2C2_ROOT		0xce
+#define IMX8MP_CLK_I2C3_ROOT		0xcf
+#define IMX8MP_CLK_I2C4_ROOT		0xd0
+#define IMX8MP_CLK_QOS_ROOT		0xe0
+#define IMX8MP_CLK_QOS_ENET_ROOT	0xe1
+#define IMX8MP_CLK_I2C5_ROOT		0xe7
+#define IMX8MP_CLK_I2C6_ROOT		0xe8
+#define IMX8MP_CLK_ENET_QOS_ROOT	0xed
+#define IMX8MP_CLK_SIM_ENET_ROOT	0xf2
+#define IMX8MP_CLK_UART1_ROOT		0xfb
+#define IMX8MP_CLK_UART2_ROOT		0xfc
+#define IMX8MP_CLK_UART3_ROOT		0xfd
+#define IMX8MP_CLK_UART4_ROOT		0xfe
+#define IMX8MP_CLK_USDHC3		0xa9
+#define IMX8MP_CLK_USDHC1_ROOT		0x101
+#define IMX8MP_CLK_USDHC2_ROOT		0x102
+#define IMX8MP_CLK_USDHC3_ROOT		0x115
+
+struct imxccm_gate imx8mp_gates[] = {
+	[IMX8MP_CLK_ENET_AXI] = { 0x8880, 14 },
+	[IMX8MP_CLK_NAND_USDHC_BUS] = { 0x8900, 14 },
+	[IMX8MP_CLK_I2C5] = { 0xa480, 14 },
+	[IMX8MP_CLK_I2C6] = { 0xa500, 14 },
+	[IMX8MP_CLK_ENET_REF] = { 0xa980, 14 },
+	[IMX8MP_CLK_ENET_TIMER] = { 0xaa00, 14 },
+	[IMX8MP_CLK_ENET_PHY_REF] = { 0xaa80, 14 },
+	[IMX8MP_CLK_USDHC1] = { 0xac00, 14 },
+	[IMX8MP_CLK_USDHC2] = { 0xac80, 14 },
+	[IMX8MP_CLK_I2C1] = { 0xad00, 14 },
+	[IMX8MP_CLK_I2C2] = { 0xad80, 14 },
+	[IMX8MP_CLK_I2C3] = { 0xae00, 14 },
+	[IMX8MP_CLK_I2C4] = { 0xae80, 14 },
+	[IMX8MP_CLK_UART1] = { 0xaf00, 14 },
+	[IMX8MP_CLK_UART2] = { 0xaf80, 14 },
+	[IMX8MP_CLK_UART3] = { 0xb000, 14 },
+	[IMX8MP_CLK_UART4] = { 0xb080, 14 },
+	[IMX8MP_CLK_USDHC3] = { 0xbc80, 14 },
+	[IMX8MP_CLK_ENET1_ROOT] = { 0x40a0, 0, IMX8MP_CLK_ENET_AXI },
+	[IMX8MP_CLK_I2C1_ROOT] = { 0x4170, 0, IMX8MP_CLK_I2C1 },
+	[IMX8MP_CLK_I2C2_ROOT] = { 0x4180, 0, IMX8MP_CLK_I2C2 },
+	[IMX8MP_CLK_I2C3_ROOT] = { 0x4190, 0, IMX8MP_CLK_I2C3 },
+	[IMX8MP_CLK_I2C4_ROOT] = { 0x41a0, 0, IMX8MP_CLK_I2C4 },
+	[IMX8MP_CLK_I2C5_ROOT] = { 0x4330, 0, IMX8MP_CLK_I2C5 },
+	[IMX8MP_CLK_I2C6_ROOT] = { 0x4340, 0, IMX8MP_CLK_I2C6 },
+	[IMX8MP_CLK_SIM_ENET_ROOT] = { 0x4400, 0, IMX8MP_CLK_ENET_AXI },
+	[IMX8MP_CLK_UART1_ROOT] = { 0x4490, 0, IMX8MP_CLK_UART1 },
+	[IMX8MP_CLK_UART2_ROOT] = { 0x44a0, 0, IMX8MP_CLK_UART2 },
+	[IMX8MP_CLK_UART3_ROOT] = { 0x44b0, 0, IMX8MP_CLK_UART3 },
+	[IMX8MP_CLK_UART4_ROOT] = { 0x44c0, 0, IMX8MP_CLK_UART4 },
+	[IMX8MP_CLK_USDHC1_ROOT] = { 0x4510, 0, IMX8MP_CLK_USDHC1 },
+	[IMX8MP_CLK_USDHC2_ROOT] = { 0x4520, 0, IMX8MP_CLK_USDHC2 },
+	[IMX8MP_CLK_USDHC3_ROOT] = { 0x45e0, 0, IMX8MP_CLK_USDHC3 },
+};
+
+struct imxccm_divider imx8mp_divs[] = {
+	[IMX8MP_CLK_ENET_AXI] = { 0x8880, 0, 0x3f },
+	[IMX8MP_CLK_NAND_USDHC_BUS] = { 0x8900, 0, 0x3f },
+	[IMX8MP_CLK_I2C5] = { 0xa480, 0, 0x3f },
+	[IMX8MP_CLK_I2C6] = { 0xa500, 0, 0x3f },
+	[IMX8MP_CLK_ENET_REF] = { 0xa980, 0, 0x3f },
+	[IMX8MP_CLK_ENET_TIMER] = { 0xaa00, 0, 0x3f },
+	[IMX8MP_CLK_ENET_PHY_REF] = { 0xaa80, 0, 0x3f},
+	[IMX8MP_CLK_USDHC1] = { 0xac00, 0, 0x3f },
+	[IMX8MP_CLK_USDHC2] = { 0xac80, 0, 0x3f },
+	[IMX8MP_CLK_I2C1] = { 0xad00, 0, 0x3f },
+	[IMX8MP_CLK_I2C2] = { 0xad80, 0, 0x3f },
+	[IMX8MP_CLK_I2C3] = { 0xae00, 0, 0x3f },
+	[IMX8MP_CLK_I2C4] = { 0xae80, 0, 0x3f },
+	[IMX8MP_CLK_UART1] = { 0xaf00, 0, 0x3f },
+	[IMX8MP_CLK_UART2] = { 0xaf80, 0, 0x3f },
+	[IMX8MP_CLK_UART3] = { 0xb000, 0, 0x3f },
+	[IMX8MP_CLK_UART4] = { 0xb080, 0, 0x3f },
+	[IMX8MP_CLK_USDHC3] = { 0xbc80, 0, 0x3f },
+};
+
+struct imxccm_divider imx8mp_predivs[] = {
+	[IMX8MP_CLK_ENET_AXI] = { 0x8880, 16, 0x7 },
+	[IMX8MP_CLK_NAND_USDHC_BUS] = { 0x8900, 16, 0x7 },
+	[IMX8MP_CLK_I2C5] = { 0xa480, 16, 0x7 },
+	[IMX8MP_CLK_I2C6] = { 0xa500, 16, 0x7 },
+	[IMX8MP_CLK_ENET_REF] = { 0xa980, 16, 0x7 },
+	[IMX8MP_CLK_ENET_TIMER] = { 0xaa00, 16, 0x7 },
+	[IMX8MP_CLK_ENET_PHY_REF] = { 0xaa80, 16, 0x7 },
+	[IMX8MP_CLK_USDHC1] = { 0xac00, 16, 0x7 },
+	[IMX8MP_CLK_USDHC2] = { 0xac80, 16, 0x7 },
+	[IMX8MP_CLK_I2C1] = { 0xad00, 16, 0x7 },
+	[IMX8MP_CLK_I2C2] = { 0xad80, 16, 0x7 },
+	[IMX8MP_CLK_I2C3] = { 0xae00, 16, 0x7 },
+	[IMX8MP_CLK_I2C4] = { 0xae80, 16, 0x7 },
+	[IMX8MP_CLK_UART1] = { 0xaf00, 16, 0x7 },
+	[IMX8MP_CLK_UART2] = { 0xaf80, 16, 0x7 },
+	[IMX8MP_CLK_UART3] = { 0xb000, 16, 0x7 },
+	[IMX8MP_CLK_UART4] = { 0xb080, 16, 0x7 },
+	[IMX8MP_CLK_USDHC3] = { 0xbc80, 16, 0x7 },
+};
+
+struct imxccm_mux imx8mp_muxs[] = {
+	[IMX8MP_CLK_ENET_AXI] = { 0x8880, 24, 0x7 },
+	[IMX8MP_CLK_NAND_USDHC_BUS] = { 0x8900, 24, 0x7 },
+	[IMX8MP_CLK_I2C5] = { 0xa480, 24, 0x7 },
+	[IMX8MP_CLK_I2C6] = { 0xa500, 24, 0x7 },
+	[IMX8MP_CLK_ENET_REF] = { 0xa980, 24, 0x7 },
+	[IMX8MP_CLK_ENET_TIMER] = { 0xaa00, 24, 0x7 },
+	[IMX8MP_CLK_ENET_PHY_REF] = { 0xaa80, 24, 0x7 },
+	[IMX8MP_CLK_USDHC1] = { 0xac00, 24, 0x7 },
+	[IMX8MP_CLK_USDHC2] = { 0xac80, 24, 0x7 },
+	[IMX8MP_CLK_I2C1] = { 0xad00, 24, 0x7 },
+	[IMX8MP_CLK_I2C2] = { 0xad80, 24, 0x7 },
+	[IMX8MP_CLK_I2C3] = { 0xae00, 24, 0x7 },
+	[IMX8MP_CLK_I2C4] = { 0xae80, 24, 0x7 },
+	[IMX8MP_CLK_UART1] = { 0xaf00, 24, 0x7 },
+	[IMX8MP_CLK_UART2] = { 0xaf80, 24, 0x7 },
+	[IMX8MP_CLK_UART3] = { 0xb000, 24, 0x7 },
+	[IMX8MP_CLK_UART4] = { 0xb080, 24, 0x7 },
+	[IMX8MP_CLK_USDHC3] = { 0xbc80, 24, 0x7 },
+};
+
+/*
  * i.MX8MQ clocks.
  */
 
