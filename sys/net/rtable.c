@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.71 2020/11/05 10:46:13 denis Exp $ */
+/*	$OpenBSD: rtable.c,v 1.72 2020/11/07 09:51:40 denis Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -30,10 +30,6 @@
 
 #include <net/rtable.h>
 #include <net/route.h>
-
-#include <net/if.h>
-#include <net/if_dl.h>
-#include <net/if_var.h>
 
 /*
  * Structures used by rtable_get() to retrieve the corresponding
@@ -370,46 +366,14 @@ rtable_alloc(unsigned int rtableid, unsigned int alen, unsigned int off)
 }
 
 int
-rtable_setsource(unsigned int rtableid, struct sockaddr *src)
+rtable_setsource(unsigned int rtableid, int af, struct sockaddr *src)
 {
 	struct art_root		*ar;
 
-	if ((ar = rtable_get(rtableid, src->sa_family)) == NULL)
+	if ((ar = rtable_get(rtableid, af)) == NULL)
 		return (EAFNOSUPPORT);
 
-	/*
-	 * Check if source address is assigned to an interface in the
-	 * same rdomain
-	 */
-	if (ifa_ifwithaddr(src, rtableid) == NULL) {
-		/*
-		 * If source address is 0.0.0.0 or ::
-		 * use automatic source selection
-		 */
-		switch(src->sa_family) {
-		case AF_INET:
-			if(satosin(src)->sin_addr.s_addr == INADDR_ANY)
-				return (EINVAL);
-			break;
-		case AF_INET6:
-			if (IN6_IS_ADDR_UNSPECIFIED(&satosin6(src)->sin6_addr))
-				return (EINVAL);
-			break;
-		default:
-			return (EAFNOSUPPORT);
-		}
-		src = NULL;
-	}
-
-	if (ar->source) {
-	       free(ar->source, M_IFADDR, ar->source->sa_len);
-	       ar->source = NULL;
-	}
-
-	if (src) {
-		ar->source = malloc(src->sa_len, M_IFADDR, M_WAITOK|M_ZERO);
-		memcpy(ar->source, src, src->sa_len);
-	}
+	ar->source = src;
 
 	return (0);
 }
@@ -434,9 +398,7 @@ rtable_clearsource(unsigned int rtableid, struct sockaddr *src)
 	addr = rtable_getsource(rtableid, src->sa_family);
 	if (addr && (addr->sa_len == src->sa_len)) {
 		if (memcmp(src, addr, addr->sa_len) == 0) {
-			memset(addr->sa_data, 0, addr->sa_len-
-			    sizeof(addr->sa_len)-sizeof(addr->sa_family));
-			rtable_setsource(rtableid, addr);
+			rtable_setsource(rtableid, src->sa_family, NULL);
 		}
 	}
 }

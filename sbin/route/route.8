@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.93 2020/10/30 14:30:51 denis Exp $
+.\"	$OpenBSD: route.8,v 1.94 2020/11/07 09:51:40 denis Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: October 30 2020 $
+.Dd $Mdocdate: November 7 2020 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -233,8 +233,6 @@ The preferred source will not be used when:
 .Bl -bullet -compact
 .It
 destination is on-link
-.It
-output interface is point-to-point
 .It
 source address is assigned to a disabled interface
 .El

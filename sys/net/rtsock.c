@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.303 2020/10/29 21:15:27 denis Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.304 2020/11/07 09:51:40 denis Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -137,6 +137,8 @@ void		 rtm_getmetrics(const struct rt_kmetrics *,
 int		 sysctl_iflist(int, struct walkarg *);
 int		 sysctl_ifnames(struct walkarg *);
 int		 sysctl_rtable_rtstat(void *, size_t *, void *);
+
+int		 rt_setsource(unsigned int, struct sockaddr *);
 
 /*
  * Locks used to protect struct members
@@ -860,7 +862,7 @@ route_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 			goto fail;
 		}
 		if ((error =
-		    rtable_setsource(tableid, info.rti_info[RTAX_IFA])) != 0)
+		    rt_setsource(tableid, info.rti_info[RTAX_IFA])) != 0)
 			goto fail;
 	} else {
 		error = rtm_output(rtm, &rt, &info, prio, tableid);
@@ -2076,9 +2078,13 @@ sysctl_source(int af, u_int tableid, struct walkarg *w)
 		case AF_INET:
 			size = sizeof(struct sockaddr_in);
 			break;
+#ifdef INET6
 		case AF_INET6:
 			size = sizeof(struct sockaddr_in6);
 			break;
+#endif
+		default:
+			return (0);
 		}
 		w->w_needed += size;
 		if (w->w_where && w->w_needed <= 0) {
@@ -2305,6 +2311,43 @@ rtm_validate_proposal(struct rt_addrinfo *info)
 	}
 
 	return 0;
+}
+
+int
+rt_setsource(unsigned int rtableid, struct sockaddr *src)
+{
+	struct ifaddr	*ifa;
+	/*
+	 * If source address is 0.0.0.0 or ::
+	 * use automatic source selection
+	 */
+	switch(src->sa_family) {
+	case AF_INET:
+		if(satosin(src)->sin_addr.s_addr == INADDR_ANY) {
+			rtable_setsource(rtableid, AF_INET, NULL);
+			return (0);
+		}
+		break;
+#ifdef INET6
+	case AF_INET6:
+		if (IN6_IS_ADDR_UNSPECIFIED(&satosin6(src)->sin6_addr)) {
+			rtable_setsource(rtableid, AF_INET6, NULL);
+			return (0);
+		}
+		break;
+#endif
+	default:
+		return (EAFNOSUPPORT);
+	}
+
+	/*
+	 * Check if source address is assigned to an interface in the
+	 * same rdomain
+	 */
+	if ((ifa = ifa_ifwithaddr(src, rtableid)) == NULL)
+		return (EINVAL);
+
+	return (rtable_setsource(rtableid, src->sa_family, ifa->ifa_addr));
 }
 
 /*

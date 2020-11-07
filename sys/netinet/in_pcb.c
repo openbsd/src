@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.251 2020/11/05 10:46:13 denis Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.252 2020/11/07 09:51:40 denis Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -960,12 +960,11 @@ in_pcbselsrc(struct in_addr **insrc, struct sockaddr_in *sin,
 	/*
 	 * Use preferred source address if :
 	 * - destination is not onlink
-	 * - output interface is not PtoP
 	 * - preferred source addresss is set
 	 * - output interface is UP
 	 */
-	if ((ro->ro_rt && !(ro->ro_rt->rt_flags & RTF_LLINFO)) &&
-	    (ia && !(ia->ia_ifp->if_flags & IFF_POINTOPOINT))) {
+	if (ro->ro_rt && !(ro->ro_rt->rt_flags & RTF_LLINFO) &&
+	    !(ro->ro_rt->rt_flags & RTF_HOST)) {
 		ip4_source = rtable_getsource(rtableid, AF_INET);
 		if (ip4_source != NULL) {
 			struct ifaddr *ifa;
