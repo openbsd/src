@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.211 2020/09/01 01:53:50 gnezdo Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.212 2020/11/07 05:24:20 gnezdo Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -984,7 +984,7 @@ struct sysctl_bounded_args {
 	int mib;     /* identifier shared with userspace as a CTL_ #define */
 	int *var;    /* never NULL */
 	int minimum; /* checking is disabled if minimum == maximum  */
-	int maximum;
+	int maximum; /* read-only variable if minimum > maximum */
 };
 
 /*

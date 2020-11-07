@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.380 2020/10/19 08:19:46 mpi Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.381 2020/11/07 05:24:20 gnezdo Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -938,8 +938,14 @@ sysctl_bounded_arr(const struct sysctl_bounded_args *valpp, u_int valplen,
 		return (ENOTDIR);
 	for (i = 0; i < valplen; ++i) {
 		if (valpp[i].mib == name[0]) {
-			return (sysctl_int_bounded(oldp, oldlenp, newp, newlen,
-			    valpp[i].var, valpp[i].minimum, valpp[i].maximum));
+			if (valpp[i].minimum <= valpp[i].maximum) {
+				return (sysctl_int_bounded(oldp, oldlenp, newp,
+				    newlen, valpp[i].var, valpp[i].minimum,
+				    valpp[i].maximum));
+			} else {
+				return (sysctl_rdint(oldp, oldlenp, newp,
+				    *valpp[i].var));
+			}
 		}
 	}
 	return (EOPNOTSUPP);
