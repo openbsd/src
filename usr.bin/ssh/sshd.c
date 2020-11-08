@@ -1,4 +1,4 @@
-/* $OpenBSD: sshd.c,v 1.564 2020/10/18 11:32:02 djm Exp $ */
+/* $OpenBSD: sshd.c,v 1.565 2020/11/08 11:46:12 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -865,14 +865,7 @@ drop_connection(int sock, int startups)
 static void
 usage(void)
 {
-	fprintf(stderr, "%s, %s\n",
-	    SSH_VERSION,
-#ifdef WITH_OPENSSL
-	    OpenSSL_version(OPENSSL_VERSION)
-#else
-	    "without OpenSSL"
-#endif
-	);
+	fprintf(stderr, "%s, %s\n", SSH_VERSION, SSH_OPENSSL_VERSION);
 	fprintf(stderr,
 "usage: sshd [-46DdeiqTt] [-C connection_spec] [-c host_cert_file]\n"
 "            [-E log_file] [-f config_file] [-g login_grace_time]\n"
@@ -1662,13 +1655,7 @@ main(int ac, char **av)
 		exit(1);
 	}
 
-	debug("sshd version %s, %s", SSH_VERSION,
-#ifdef WITH_OPENSSL
-	    OpenSSL_version(OPENSSL_VERSION)
-#else
-	    "without OpenSSL"
-#endif
-	);
+	debug("sshd version %s, %s", SSH_VERSION, SSH_OPENSSL_VERSION);
 
 	/* load host keys */
 	sensitive_data.host_keys = xcalloc(options.num_host_key_files,

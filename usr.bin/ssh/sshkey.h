@@ -1,4 +1,4 @@
-/* $OpenBSD: sshkey.h,v 1.47 2020/10/19 22:49:23 dtucker Exp $ */
+/* $OpenBSD: sshkey.h,v 1.48 2020/11/08 11:46:12 dtucker Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -33,6 +33,7 @@
 #include <openssl/dsa.h>
 #include <openssl/ec.h>
 #include <openssl/ecdsa.h>
+#define SSH_OPENSSL_VERSION OpenSSL_version(OPENSSL_VERSION)
 #else /* OPENSSL */
 #define BIGNUM		void
 #define RSA		void
@@ -40,6 +41,7 @@
 #define EC_KEY		void
 #define EC_GROUP	void
 #define EC_POINT	void
+#define SSH_OPENSSL_VERSION "without OpenSSL"
 #endif /* WITH_OPENSSL */
 
 #define SSH_RSA_MINIMUM_MODULUS_SIZE	1024
