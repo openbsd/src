@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.32 2020/11/08 00:49:41 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.33 2020/11/08 14:43:36 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -257,6 +257,8 @@ struct cfattach mvpp_ca = {
 struct cfdriver mvpp_cd = {
 	NULL, "mvpp", DV_IFNET
 };
+
+void	mvpp2_port_attach_sfp(struct device *);
 
 uint32_t mvpp2_read(struct mvpp2_softc *, bus_addr_t);
 void	mvpp2_write(struct mvpp2_softc *, bus_addr_t, uint32_t);
@@ -1385,6 +1387,9 @@ mvpp2_port_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_sfp = OF_getpropint(node, "sfp", sc->sc_sfp);
 	}
 
+	if (sc->sc_sfp)
+		config_mountroot(self, mvpp2_port_attach_sfp);
+
 	if ((len = OF_getproplen(sc->sc_node, "managed")) >= 0) {
 		managed = malloc(len, M_TEMP, M_WAITOK);
 		OF_getprop(sc->sc_node, "managed", managed, len);
@@ -1575,6 +1580,16 @@ mvpp2_port_attach(struct device *parent, struct device *self, void *aux)
 	if (idx >= 0)
 		fdt_intr_establish_idx(sc->sc_node, idx, IPL_NET,
 		    mvpp2_intr, sc, sc->sc_dev.dv_xname);
+}
+
+void
+mvpp2_port_attach_sfp(struct device *self)
+{
+	struct mvpp2_port *sc = (struct mvpp2_port *)self;
+
+	rw_enter(&mvpp2_sff_lock, RW_WRITE);
+	sfp_add_media(sc->sc_sfp, &sc->sc_mii);
+	rw_exit(&mvpp2_sff_lock);
 }
 
 uint32_t
