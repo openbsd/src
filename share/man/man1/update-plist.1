@@ -1,4 +1,4 @@
-.\"	$OpenBSD: update-plist.1,v 1.6 2019/08/08 20:37:08 fcambus Exp $
+.\"	$OpenBSD: update-plist.1,v 1.7 2020/11/08 17:02:34 espie Exp $
 .\"
 .\" Copyright (c) 2018 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 8 2019 $
+.Dd $Mdocdate: November 8 2020 $
 .Dt UPDATE-PLIST 1
 .Os
 .Sh NAME
@@ -24,7 +24,7 @@
 .Ev PORTSDIR Ns = Ns Ar path
 .Op Ev FAKE_TREE_OWNER Ns = Ns Ar user Ev PORTS_TREE_OWNER Ns = Ns Ar user Nm doas
 .Nm
-.Op Fl Fmnqrvx
+.Op Fl Ffmnqrvx
 .Op Fl C Ar dir
 .Op Fl c Ar var
 .Op Fl E Ar ext
@@ -104,6 +104,10 @@ extension instead of the default
 .It Fl F
 Do not try to run
 .Xr pkg_locate 1 .
+.It Fl f
+Force
+.Xr pkg_locate 1
+to look up every file for conflicts instead of just the new ones.
 .It Fl I Ar var
 Variable
 .Ar var
