@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.30 2020/11/08 00:45:47 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.31 2020/11/08 00:46:40 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -587,9 +587,9 @@ mvpp2_bm_pool_init(struct mvpp2_softc *sc)
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		mvpp2_write(sc, MVPP2_BM_POOL_BASE_REG(i),
-		    (uint64_t)MVPP2_DMA_KVA(bm->bm_mem) & 0xffffffff);
+		    (uint64_t)MVPP2_DMA_DVA(bm->bm_mem) & 0xffffffff);
 		mvpp2_write(sc, MVPP22_BM_POOL_BASE_HIGH_REG,
-		    ((uint64_t)MVPP2_DMA_KVA(bm->bm_mem) >> 32)
+		    ((uint64_t)MVPP2_DMA_DVA(bm->bm_mem) >> 32)
 		    & MVPP22_BM_POOL_BASE_HIGH_MASK);
 		mvpp2_write(sc, MVPP2_BM_POOL_SIZE_REG(i),
 		    MVPP2_BM_SIZE);
