@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.31 2020/11/08 00:46:40 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.32 2020/11/08 00:49:41 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -563,7 +563,7 @@ mvpp2_bm_pool_init(struct mvpp2_softc *sc)
 	struct mvpp2_bm_pool *bm;
 	struct mvpp2_buf *rxb;
 	uint64_t phys, virt;
-	int i, j;
+	int i, j, inuse;
 
 	for (i = 0; i < MVPP2_BM_POOLS_NUM; i++) {
 		mvpp2_write(sc, MVPP2_BM_INTR_MASK_REG(i), 0);
@@ -586,6 +586,10 @@ mvpp2_bm_pool_init(struct mvpp2_softc *sc)
 		    MVPP2_DMA_LEN(bm->bm_mem),
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
+		mvpp2_write(sc, MVPP2_BM_POOL_CTRL_REG(i),
+		    mvpp2_read(sc, MVPP2_BM_POOL_CTRL_REG(i)) |
+		    MVPP2_BM_STOP_MASK);
+
 		mvpp2_write(sc, MVPP2_BM_POOL_BASE_REG(i),
 		    (uint64_t)MVPP2_DMA_DVA(bm->bm_mem) & 0xffffffff);
 		mvpp2_write(sc, MVPP22_BM_POOL_BASE_HIGH_REG,
@@ -597,6 +601,23 @@ mvpp2_bm_pool_init(struct mvpp2_softc *sc)
 		mvpp2_write(sc, MVPP2_BM_POOL_CTRL_REG(i),
 		    mvpp2_read(sc, MVPP2_BM_POOL_CTRL_REG(i)) |
 		    MVPP2_BM_START_MASK);
+
+		/*
+		 * U-Boot might not have cleaned its pools.  The pool needs
+		 * to be empty before we fill it, otherwise our packets are
+		 * written to wherever U-Boot allocated memory.  Cleaning it
+		 * up ourselves is worrying as well, since the BM's pages are
+		 * probably in our own memory.  Best we can do is stop the BM,
+		 * set new memory and drain the pool.
+		 */
+		inuse = mvpp2_read(sc, MVPP2_BM_POOL_PTRS_NUM_REG(i)) &
+		    MVPP2_BM_POOL_PTRS_NUM_MASK;
+		inuse += mvpp2_read(sc, MVPP2_BM_BPPI_PTRS_NUM_REG(i)) &
+		    MVPP2_BM_BPPI_PTRS_NUM_MASK;
+		if (inuse)
+			inuse++;
+		for (j = 0; j < inuse; j++)
+			mvpp2_read(sc, MVPP2_BM_PHY_ALLOC_REG(i));
 
 		mvpp2_write(sc, MVPP2_POOL_BUF_SIZE_REG(i),
 		    roundup(MCLBYTES, 1 << MVPP2_POOL_BUF_SIZE_OFFSET));

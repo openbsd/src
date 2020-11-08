@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvppreg.h,v 1.14 2020/11/03 21:46:14 patrick Exp $	*/
+/*	$OpenBSD: if_mvppreg.h,v 1.15 2020/11/08 00:49:41 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -257,7 +257,7 @@
 #define     MVPP2_BM_POOL_PTRS_NUM_MASK		0xfff8
 #define MVPP2_BM_BPPI_READ_PTR_REG(pool)	(0x6100 + ((pool) * 4))
 #define MVPP2_BM_BPPI_PTRS_NUM_REG(pool)	(0x6140 + ((pool) * 4))
-#define     MVPP2_BM_BPPI_PTR_NUM_MASK		0x7ff
+#define     MVPP2_BM_BPPI_PTRS_NUM_MASK		0x7ff
 #define     MVPP2_BM_BPPI_PREFETCH_FULL_MASK	BIT(16)
 #define MVPP2_BM_POOL_CTRL_REG(pool)		(0x6200 + ((pool) * 4))
 #define     MVPP2_BM_START_MASK			BIT(0)
