@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.64 2020/10/31 17:57:53 patrick Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.65 2020/11/08 20:37:24 mpi Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -887,7 +887,7 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	pcb->pcb_flags = 0;
 }
 
-void
+int
 sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 {
 	struct proc *p = curproc;
@@ -948,7 +948,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 
 	frame.sf_sc.sc_cookie = (long)&fp->sf_sc ^ p->p_p->ps_sigcookie;
 	if (copyout(&frame, fp, sizeof(frame)))
-		sigexit(p, SIGILL);
+		return 1;
 
 	/*
 	 * Build context to run handler in.
@@ -960,6 +960,8 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	tf->fixreg[12] = (register_t)catcher;
 
 	tf->srr0 = p->p_p->ps_sigcode;
+
+	return 0;
 }
 
 int

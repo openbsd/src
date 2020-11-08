@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.198 2020/06/23 01:21:29 jmatthew Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.199 2020/11/08 20:37:24 mpi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -402,7 +402,7 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 /*
  * Send an interrupt to process.
  */
-void
+int
 sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 {
 	struct proc *p = curproc;
@@ -477,8 +477,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 		printf("sendsig: stack was trashed trying to send sig %d, "
 		    "sending SIGILL\n", sig);
 #endif
-		sigexit(p, SIGILL);
-		/* NOTREACHED */
+		return 1;
 	}
 
 	/*
@@ -490,6 +489,8 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
 	tf->tf_out[6] = newsp - STACK_OFFSET;
+
+	return 0;
 }
 
 /*

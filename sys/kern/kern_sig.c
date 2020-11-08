@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.263 2020/09/16 13:50:42 mpi Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.264 2020/11/08 20:37:24 mpi Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -464,6 +464,8 @@ sys_sigprocmask(struct proc *p, void *v, register_t *retval)
 	int error = 0;
 	sigset_t mask;
 
+	KASSERT(p == curproc);
+
 	*retval = p->p_sigmask;
 	mask = SCARG(uap, mask) &~ sigcantmask;
 
@@ -824,7 +826,10 @@ trapsignal(struct proc *p, int signum, u_long trapno, int code,
 			    p->p_sigmask, code, &si);
 		}
 #endif
-		sendsig(ps->ps_sigact[signum], signum, p->p_sigmask, &si);
+		if (sendsig(ps->ps_sigact[signum], signum, p->p_sigmask, &si)) {
+			sigexit(p, SIGILL);
+			/* NOTREACHED */
+		}
 		postsig_done(p, signum, ps);
 	} else {
 		p->p_sisig = signum;
@@ -1452,7 +1457,10 @@ postsig(struct proc *p, int signum)
 			p->p_sigval.sival_ptr = NULL;
 		}
 
-		sendsig(action, signum, returnmask, &si);
+		if (sendsig(action, signum, returnmask, &si)) {
+			sigexit(p, SIGILL);
+			/* NOTREACHED */
+		}
 		postsig_done(p, signum, ps);
 		splx(s);
 	}

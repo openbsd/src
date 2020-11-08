@@ -1,4 +1,4 @@
-/*	$OpenBSD: signalvar.h,v 1.44 2020/09/16 13:50:42 mpi Exp $	*/
+/*	$OpenBSD: signalvar.h,v 1.45 2020/11/08 20:37:24 mpi Exp $	*/
 /*	$NetBSD: signalvar.h,v 1.17 1996/04/22 01:23:31 christos Exp $	*/
 
 /*
@@ -140,6 +140,6 @@ void	sigactsfree(struct process *);
 /*
  * Machine-dependent functions:
  */
-void	sendsig(sig_t _catcher, int _sig, sigset_t _mask, const siginfo_t *_si);
+int	sendsig(sig_t _catcher, int _sig, sigset_t _mask, const siginfo_t *_si);
 #endif	/* _KERNEL */
 #endif	/* !_SYS_SIGNALVAR_H_ */

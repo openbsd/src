@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendsig.c,v 1.33 2019/08/02 07:41:57 visa Exp $ */
+/*	$OpenBSD: sendsig.c,v 1.34 2020/11/08 20:37:23 mpi Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -91,7 +91,7 @@ struct sigframe {
 /*
  * Send an interrupt to process.
  */
-void
+int
 sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 {
 	struct cpu_info *ci = curcpu();
@@ -139,19 +139,13 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 
 	if (psp->ps_siginfo & sigmask(sig)) {
 		if (copyout(ksip, (caddr_t)&fp->sf_si, sizeof *ksip))
-			goto bail;
+			return 1;
 	}
 
 	ksc.sc_cookie = (long)&fp->sf_sc ^ p->p_p->ps_sigcookie;
-	if (copyout((caddr_t)&ksc, (caddr_t)&fp->sf_sc, sizeof(ksc))) {
-bail:
-		/*
-		 * Process has trashed its stack; give it an illegal
-		 * instruction to halt it in its tracks.
-		 */
-		sigexit(p, SIGILL);
-		/* NOTREACHED */
-	}
+	if (copyout((caddr_t)&ksc, (caddr_t)&fp->sf_sc, sizeof(ksc)))
+		return 1;
+
 	/*
 	 * Build the argument list for the signal handler.
 	 */
@@ -165,6 +159,8 @@ bail:
 	regs->sp = (register_t)fp;
 
 	regs->ra = p->p_p->ps_sigcode;
+
+	return 0;
 }
 
 /*

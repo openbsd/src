@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.269 2020/08/20 15:12:35 kn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.270 2020/11/08 20:37:22 mpi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -566,7 +566,7 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
  * signal mask, the stack, and the frame pointer, it returns to the
  * user specified pc.
  */
-void
+int
 sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 {
 	struct proc *p = curproc;
@@ -618,7 +618,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	sp -= fpu_save_len;
 	ksc.sc_fpstate = (struct fxsave64 *)sp;
 	if (copyout(sfp, (void *)sp, fpu_save_len))
-		sigexit(p, SIGILL);
+		return 1;
 
 	/* Now reset the FPU state in PCB */
 	memcpy(&p->p_addr->u_pcb.pcb_savefpu,
@@ -630,13 +630,13 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 		sss += (sizeof(*ksip) + 15) & ~15;
 
 		if (copyout(ksip, (void *)sip, sizeof(*ksip)))
-			sigexit(p, SIGILL);
+			return 1;
 	}
 	scp = sp - sss;
 
 	ksc.sc_cookie = (long)scp ^ p->p_p->ps_sigcookie;
 	if (copyout(&ksc, (void *)scp, sizeof(ksc)))
-		sigexit(p, SIGILL);
+		return 1;
 
 	/*
 	 * Build context to run handler in.
@@ -654,6 +654,8 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 
 	/* The reset state _is_ the userspace state for this thread now */
 	curcpu()->ci_flags |= CPUF_USERXSTATE;
+
+	return 0;
 }
 
 /*

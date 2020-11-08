@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.6 2018/07/10 04:19:59 guenther Exp $ */
+/*	$OpenBSD: sig_machdep.c,v 1.7 2020/11/08 20:37:22 mpi Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -94,7 +94,7 @@ process_frame(struct proc *p)
  * signal mask, the stack, and the frame pointer, it returns to the
  * user specified pc.
  */
-void
+int
 sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 {
 	struct proc *p = curproc;
@@ -143,14 +143,8 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	}
 
 	frame.sf_sc.sc_cookie = (long)&fp->sf_sc ^ p->p_p->ps_sigcookie;
-	if (copyout(&frame, fp, sizeof(frame)) != 0) {
-		/*
-		 * Process has trashed its stack; give it an illegal
-		 * instruction to halt it in its tracks.
-		 */
-		sigexit(p, SIGILL);
-		/* NOTREACHED */
-	}
+	if (copyout(&frame, fp, sizeof(frame)) != 0)
+		return 1;
 
 	/*
 	 * Build context to run handler in.  We invoke the handler
@@ -163,6 +157,8 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	tf->tf_sp = (register_t)fp;
 
 	tf->tf_elr = p->p_p->ps_sigcode;
+
+	return 0;
 }
 
 /*

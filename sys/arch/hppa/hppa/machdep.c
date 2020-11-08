@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.261 2020/10/21 04:10:56 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.262 2020/11/08 20:37:22 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -1207,7 +1207,7 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 /*
  * Send an interrupt to process.
  */
-void
+int
 sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 {
 	struct proc *p = curproc;
@@ -1279,7 +1279,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	    sizeof(ksc.sc_fpregs));
 
 	if (setstack(tf, scp + sss, tf->tf_r3))
-		sigexit(p, SIGILL);
+		return 1;
 
 	tf->tf_arg0 = sig;
 	tf->tf_arg1 = sip;
@@ -1293,12 +1293,14 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 
 	ksc.sc_cookie = (long)scp ^ p->p_p->ps_sigcookie;
 	if (copyout(&ksc, (void *)scp, sizeof(ksc)))
-		sigexit(p, SIGILL);
+		return 1;
 
 	if (sip) {
 		if (copyout(ksip, (void *)sip, sizeof *ksip))
-			sigexit(p, SIGILL);
+			return 1;
 	}
+
+	return 0;
 }
 
 int

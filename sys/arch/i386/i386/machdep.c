@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.640 2020/09/24 11:36:50 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.641 2020/11/08 20:37:23 mpi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2443,7 +2443,7 @@ pentium_cpuspeed(int *freq)
  * frame pointer, it returns to the user
  * specified pc, psl.
  */
-void
+int
 sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 {
 	struct proc *p = curproc;
@@ -2475,7 +2475,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 		frame.sf_sc.sc_fpstate = (void *)sp;
 		if (copyout(&p->p_addr->u_pcb.pcb_savefpu,
 		    (void *)sp, sizeof(union savefpu)))
-			sigexit(p, SIGILL);
+		    	return 1;
 
 		/* Signal handlers get a completely clean FP state */
 		p->p_md.md_flags &= ~MDP_USEDFPU;
@@ -2516,14 +2516,8 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 
 	/* XXX don't copyout siginfo if not needed? */
 	frame.sf_sc.sc_cookie = (long)&fp->sf_sc ^ p->p_p->ps_sigcookie;
-	if (copyout(&frame, fp, sizeof(frame)) != 0) {
-		/*
-		 * Process has trashed its stack; give it an illegal
-		 * instruction to halt it in its tracks.
-		 */
-		sigexit(p, SIGILL);
-		/* NOTREACHED */
-	}
+	if (copyout(&frame, fp, sizeof(frame)) != 0)
+		return 1;
 
 	/*
 	 * Build context to run handler in.
@@ -2537,6 +2531,8 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	tf->tf_eflags &= ~(PSL_T|PSL_D|PSL_VM|PSL_AC);
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
+
+	return 0;
 }
 
 /*

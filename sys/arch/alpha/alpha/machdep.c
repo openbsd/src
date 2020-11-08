@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.194 2020/10/20 15:59:17 cheloha Exp $ */
+/* $OpenBSD: machdep.c,v 1.195 2020/11/08 20:37:21 mpi Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -1383,7 +1383,7 @@ regdump(framep)
 /*
  * Send an interrupt to process.
  */
-void
+int
 sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 {
 	struct proc *p = curproc;
@@ -1445,20 +1445,13 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	if (psp->ps_siginfo & sigmask(sig)) {
 		sip = (void *)scp + kscsize;
 		if (copyout(ksip, (caddr_t)sip, fsize - kscsize) != 0)
-			goto trash;
+			return 1;
 	} else
 		sip = NULL;
 
 	ksc.sc_cookie = (long)scp ^ p->p_p->ps_sigcookie;
-	if (copyout((caddr_t)&ksc, (caddr_t)scp, kscsize) != 0) {
-trash:
-		/*
-		 * Process has trashed its stack; give it an illegal
-		 * instruction to halt it in its tracks.
-		 */
-		sigexit(p, SIGILL);
-		/* NOTREACHED */
-	}
+	if (copyout((caddr_t)&ksc, (caddr_t)scp, kscsize) != 0)
+		return 1;
 
 	/*
 	 * Set up the registers to return to sigcode.
@@ -1469,6 +1462,8 @@ trash:
 	frame->tf_regs[FRAME_A2] = (u_int64_t)scp;
 	frame->tf_regs[FRAME_T12] = (u_int64_t)catcher;		/* t12 is pv */
 	alpha_pal_wrusp((unsigned long)scp);
+
+	return 0;
 }
 
 /*

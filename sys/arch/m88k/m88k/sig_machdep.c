@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.29 2018/07/10 04:19:59 guenther Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.30 2020/11/08 20:37:23 mpi Exp $	*/
 /*
  * Copyright (c) 2014 Miodrag Vallat.
  *
@@ -103,7 +103,7 @@ pid_t sigpid = 0;
 /*
  * Send an interrupt to process.
  */
-void
+int
 sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 {
 	struct proc *p = curproc;
@@ -152,14 +152,8 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	bcopy((const void *)&tf->tf_regs, (void *)&sf.sf_sc.sc_regs,
 	    sizeof(sf.sf_sc.sc_regs));
 
-	if (copyout((caddr_t)&sf, (caddr_t)fp, fsize)) {
-		/*
-		 * Process has trashed its stack; give it an illegal
-		 * instruction to halt it in its tracks.
-		 */
-		sigexit(p, SIGILL);
-		/* NOTREACHED */
-	}
+	if (copyout((caddr_t)&sf, (caddr_t)fp, fsize))
+		return 1;
 
 	/*
 	 * Set up registers for the signal handler invocation.
@@ -186,6 +180,8 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip)
 	    ((sigdebug & SDB_KSTACK) && p->p_p->ps_pid == sigpid))
 		printf("sendsig(%d): sig %d returns\n", p->p_p->ps_pid, sig);
 #endif
+
+	return 0;
 }
 
 /*
