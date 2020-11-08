@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.29 2020/11/03 21:50:54 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.30 2020/11/08 00:45:47 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -581,7 +581,7 @@ mvpp2_bm_pool_init(struct mvpp2_softc *sc)
 		bm->bm_mem = mvpp2_dmamem_alloc(sc,
 		    MVPP2_BM_SIZE * sizeof(uint64_t) * 2,
 		    MVPP2_BM_POOL_PTR_ALIGN);
-		memset(MVPP2_DMA_KVA(bm->bm_mem), 0, MVPP2_DMA_LEN(bm->bm_mem));
+		KASSERT(bm->bm_mem != NULL);
 		bus_dmamap_sync(sc->sc_dmat, MVPP2_DMA_MAP(bm->bm_mem), 0,
 		    MVPP2_DMA_LEN(bm->bm_mem),
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
@@ -2258,6 +2258,7 @@ mvpp2_aggr_txq_hw_init(struct mvpp2_softc *sc, struct mvpp2_tx_queue *txq)
 
 	txq->ring = mvpp2_dmamem_alloc(sc,
 	    MVPP2_AGGR_TXQ_SIZE * sizeof(struct mvpp2_tx_desc), 32);
+	KASSERT(txq->ring != NULL);
 	txq->descs = MVPP2_DMA_KVA(txq->ring);
 
 	txq->buf = mallocarray(MVPP2_AGGR_TXQ_SIZE, sizeof(struct mvpp2_buf),
@@ -2293,6 +2294,7 @@ mvpp2_txq_hw_init(struct mvpp2_port *sc, struct mvpp2_tx_queue *txq)
 
 	txq->ring = mvpp2_dmamem_alloc(sc->sc,
 	    MVPP2_NTXDESC * sizeof(struct mvpp2_tx_desc), 32);
+	KASSERT(txq->ring != NULL);
 	txq->descs = MVPP2_DMA_KVA(txq->ring);
 
 	txq->buf = mallocarray(MVPP2_NTXDESC, sizeof(struct mvpp2_buf),
@@ -2351,6 +2353,7 @@ mvpp2_rxq_hw_init(struct mvpp2_port *sc, struct mvpp2_rx_queue *rxq)
 
 	rxq->ring = mvpp2_dmamem_alloc(sc->sc,
 	    MVPP2_NRXDESC * sizeof(struct mvpp2_rx_desc), 32);
+	KASSERT(rxq->ring != NULL);
 	rxq->descs = MVPP2_DMA_KVA(rxq->ring);
 
 	bus_dmamap_sync(sc->sc_dmat, MVPP2_DMA_MAP(rxq->ring),
