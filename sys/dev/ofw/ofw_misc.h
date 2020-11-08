@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.h,v 1.14 2020/06/25 12:35:21 patrick Exp $	*/
+/*	$OpenBSD: ofw_misc.h,v 1.15 2020/11/08 14:42:48 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -84,6 +84,8 @@ struct sfp_device {
 
 void	sfp_register(struct sfp_device *);
 
+struct mii_data;
+int	sfp_add_media(uint32_t, struct mii_data *);
 int	sfp_get_sffpage(uint32_t, struct if_sffpage *);
 
 /* PWM support */

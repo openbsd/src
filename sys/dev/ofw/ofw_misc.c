@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.22 2020/06/25 12:35:21 patrick Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.23 2020/11/08 14:42:48 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -16,11 +16,17 @@
  */
 
 #include <sys/types.h>
-#include <sys/systm.h>
+#include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/systm.h>
+
+#include <net/if.h>
+#include <net/if_media.h>
 
 #include <machine/bus.h>
 
+#include <dev/mii/mii.h>
+#include <dev/mii/miivar.h>
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/ofw_misc.h>
@@ -318,6 +324,35 @@ sfp_get_sffpage(uint32_t phandle, struct if_sffpage *sff)
 	}
 
 	return ENXIO;
+}
+
+#define SFF8472_TCC_ECC			6 /* Ethernet Compliance Codes */
+#define SFF8472_TCC_ECC_1000_SX		(1 << 0)
+#define SFF8472_TCC_ECC_1000_LX		(1 << 1)
+#define SFF8472_TCC_ECC_1000_CX		(1 << 2)
+
+int
+sfp_add_media(uint32_t phandle, struct mii_data *mii)
+{
+	struct if_sffpage sff;
+	int error;
+
+	memset(&sff, 0, sizeof(sff));
+	sff.sff_addr = IFSFF_ADDR_EEPROM;
+	sff.sff_page = 0;
+
+	error = sfp_get_sffpage(phandle, &sff);
+	if (error)
+		return error;
+
+	if (sff.sff_data[SFF8472_TCC_ECC] & SFF8472_TCC_ECC_1000_SX)
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_1000_SX, 0, NULL);
+	if (sff.sff_data[SFF8472_TCC_ECC] & SFF8472_TCC_ECC_1000_LX)
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_1000_LX, 0, NULL);
+	if (sff.sff_data[SFF8472_TCC_ECC] & SFF8472_TCC_ECC_1000_CX)
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_1000_CX, 0, NULL);
+
+	return 0;
 }
 
 /*
