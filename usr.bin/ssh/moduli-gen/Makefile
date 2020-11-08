@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile,v 1.5 2015/10/21 06:37:25 doug Exp $
+#	$OpenBSD: Makefile,v 1.6 2020/11/08 12:10:20 dtucker Exp $
 
 .include <bsd.own.mk>
 
 # The larger ones will take many days, so if you're going to regen them run
 # it in a tmux session or something.  The checkpoints should make it safe
 # to stop and restart.
+# The sizes match those in dh.c:dh_estimate() plus some historic sizes.
 DHSIZE=2048 3072 4096 6144 7680 8192
 
 .for bits in ${DHSIZE}
