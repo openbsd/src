@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.53 2020/11/05 16:22:59 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.54 2020/11/09 04:13:32 tb Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1194,6 +1194,7 @@ free_bl(void)
 	for (n = RB_MIN(bl_tree, &bl_head); n != NULL; n = nxt) {
 		nxt = RB_NEXT(bl_tree, &bl_head, n);
 		RB_REMOVE(bl_tree, &bl_head, n);
+		free(n->domain);
 		free(n);
 	}
 }
