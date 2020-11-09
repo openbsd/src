@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.802 2020/11/03 08:09:35 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.803 2020/11/09 09:10:10 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 3 2020 $
+.Dd $Mdocdate: November 9 2020 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -4591,7 +4591,9 @@ pads the string to a given width, for example
 will result in a width of at least 10 characters.
 A positive width pads on the left, a negative on the right.
 .Ql n
-expands to the length of the variable, for example
+expands to the length of the variable and
+.Ql w
+to its width when displayed, for example
 .Ql #{n:window_name} .
 .Pp
 Prefixing a time variable with
