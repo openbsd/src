@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.82 2020/11/03 02:45:20 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.83 2020/11/09 19:29:27 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -352,6 +352,7 @@ IDTVEC_NOALIGN(trap1f)
 
 	.section .rodata
 	.globl	Xexceptions
+	.type Xexceptions,@object
 Xexceptions:
 	.quad	_C_LABEL(Xtrap00), _C_LABEL(Xtrap01)
 	.quad	_C_LABEL(Xtrap02), _C_LABEL(Xtrap03)
@@ -369,6 +370,7 @@ Xexceptions:
 	.quad	_C_LABEL(Xtrap1a), _C_LABEL(Xtrap1b)
 	.quad	_C_LABEL(Xtrap1c), _C_LABEL(Xtrap1d)
 	.quad	_C_LABEL(Xtrap1e), _C_LABEL(Xtrap1f)
+END(Xexceptions)
 
 /*
  * All traps go through here.  Figure out whether we're
@@ -470,8 +472,10 @@ GENTRY(alltraps_kern_meltdown)
 	jmp	2b
 
 	.pushsection .rodata
+	.type spl_lowered,@object
 spl_lowered:
 	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT %x %x\n"
+END(spl_lowered)
 	.popsection
 #endif /* DIAGNOSTIC */
 END(alltraps_kern)
@@ -511,12 +515,14 @@ KUENTRY(x2apic_eoi)
 	popq    %rcx
 	popq    %rax
 	ret
+END(x2apic_eoi)
 
 #if NLAPIC > 0
 #ifdef MULTIPROCESSOR
 KIDTVEC(recurse_lapic_ipi)
 	INTR_RECURSE
 	jmp	1f
+END(Xrecurse_lapic_ipi)
 IDTVEC(intr_lapic_ipi)
 	INTRENTRY(intr_lapic_ipi)
 	CODEPATCH_START
@@ -525,6 +531,7 @@ IDTVEC(intr_lapic_ipi)
 	movl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_IPI,%ebx
 	jae	2f
+END(INTRENTRY_LABEL(intr_lapic_ipi))
 KIDTVEC_FALLTHROUGH(resume_lapic_ipi)
 1:
 	incl	CPUVAR(IDEPTH)
@@ -539,6 +546,7 @@ KIDTVEC_FALLTHROUGH(resume_lapic_ipi)
 	movq	$(1 << LIR_IPI),%rax
 	orq	%rax,CPUVAR(IPENDING)
 	INTRFASTEXIT
+END(Xresume_lapic_ipi)
 
 /*
  * "Fast" IPI handlers.  These are the IPIs which are handled without
@@ -558,6 +566,7 @@ IDTVEC(ipi_invltlb)
 
 	popq	%rax
 	iretq
+END(Xipi_invltlb)
 
 /* invalidate a single page, no PCIDs version */
 IDTVEC(ipi_invlpg)
@@ -573,6 +582,7 @@ IDTVEC(ipi_invlpg)
 
 	popq	%rax
 	iretq
+END(Xipi_invlpg)
 
 /* invalidate a range of pages, no PCIDs version */
 IDTVEC(ipi_invlrange)
@@ -594,6 +604,7 @@ IDTVEC(ipi_invlrange)
 	popq	%rdx
 	popq	%rax
 	iretq
+END(Xipi_invlrange)
 
 /*
  * Invalidate the userspace PCIDs.
@@ -626,6 +637,7 @@ IDTVEC(ipi_invltlb_pcid)
 	popq	%rax
 	popq	%rax
 	iretq
+END(Xipi_invltlb_pcid)
 
 /*
  * Invalidate a VA in two PCIDs.  Kernel VAs are present in PCIDs 0 and 1,
@@ -662,6 +674,7 @@ IDTVEC(ipi_invlpg_pcid)
 	addq	$16,%rsp
 	popq	%rax
 	iretq
+END(Xipi_invlpg_pcid)
 
 /*
  * Invalidate a range of VA in two PCIDs.  Kernel VAs are present in
@@ -705,6 +718,7 @@ IDTVEC(ipi_invlrange_pcid)
 	popq	%rdx
 	popq	%rax
 	iretq
+END(Xipi_invlrange_pcid)
 
 #endif /* MULTIPROCESSOR */
 
@@ -714,6 +728,7 @@ IDTVEC(ipi_invlrange_pcid)
 KIDTVEC(recurse_lapic_ltimer)
 	INTR_RECURSE
 	jmp	1f
+END(Xrecurse_lapic_ltimer)
 IDTVEC(intr_lapic_ltimer)
 	INTRENTRY(intr_lapic_ltimer)
 	CODEPATCH_START
@@ -722,6 +737,7 @@ IDTVEC(intr_lapic_ltimer)
 	movl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_CLOCK,%ebx
 	jae	2f
+END(INTRENTRY_LABEL(intr_lapic_ltimer))
 KIDTVEC_FALLTHROUGH(resume_lapic_ltimer)
 1:
 	incl	CPUVAR(IDEPTH)
@@ -737,6 +753,7 @@ KIDTVEC_FALLTHROUGH(resume_lapic_ltimer)
 	movq	$(1 << LIR_TIMER),%rax
 	orq	%rax,CPUVAR(IPENDING)
 	INTRFASTEXIT
+END(Xresume_lapic_ltimer)
 
 #if NXEN > 0
 /*
@@ -746,12 +763,14 @@ KIDTVEC_FALLTHROUGH(resume_lapic_ltimer)
 KIDTVEC(recurse_xen_upcall)
 	INTR_RECURSE
 	jmp	1f
+END(Xrecurse_xen_upcall)
 IDTVEC(intr_xen_upcall)
 	INTRENTRY(intr_xen_upcall)
 	call	_C_LABEL(xen_intr_ack)
 	movl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_NET,%ebx
 	jae	2f
+END(INTRENTRY_LABEL(intr_xen_upcall))
 KIDTVEC_FALLTHROUGH(resume_xen_upcall)
 1:
 	incl	CPUVAR(IDEPTH)
@@ -766,6 +785,7 @@ KIDTVEC_FALLTHROUGH(resume_xen_upcall)
 	movq	$(1 << LIR_XEN),%rax
 	orq	%rax,CPUVAR(IPENDING)
 	INTRFASTEXIT
+END(Xresume_xen_upcall)
 #endif /* NXEN > 0 */
 
 #if NHYPERV > 0
@@ -776,11 +796,13 @@ KIDTVEC_FALLTHROUGH(resume_xen_upcall)
 KIDTVEC(recurse_hyperv_upcall)
 	INTR_RECURSE
 	jmp	1f
+END(Xrecurse_hyperv_upcall)
 IDTVEC(intr_hyperv_upcall)
 	INTRENTRY(intr_hyperv_upcall)
 	movl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_NET,%ebx
 	jae	2f
+END(INTRENTRY_LABEL(intr_hyperv_upcall))
 KIDTVEC_FALLTHROUGH(resume_hyperv_upcall)
 1:
 	incl	CPUVAR(IDEPTH)
@@ -795,6 +817,7 @@ KIDTVEC_FALLTHROUGH(resume_hyperv_upcall)
 	movq	$(1 << LIR_HYPERV),%rax
 	orq	%rax,CPUVAR(IPENDING)
 	INTRFASTEXIT
+END(Xresume_hyperv_upcall)
 #endif /* NHYPERV > 0 */
 #endif /* NLAPIC > 0 */
 
@@ -809,12 +832,14 @@ KIDTVEC_FALLTHROUGH(resume_hyperv_upcall)
 #define	INTRSTUB(name, num, early_ack, late_ack, mask, unmask, level_mask) \
 KIDTVEC(recurse_##name##num)						;\
 	INTR_RECURSE							;\
+END(Xrecurse_##name##num)						;\
 KIDTVEC_FALLTHROUGH(resume_##name##num)					\
 	movq	$IREENT_MAGIC,TF_ERR(%rsp)				;\
 	movl	%ebx,%r13d						;\
 	movq	CPUVAR(ISOURCES) + (num) * 8, %r14			;\
 	movl	IS_MAXLEVEL(%r14),%ebx					;\
 	jmp	1f							;\
+END(Xresume_##name##num)						;\
 IDTVEC(intr_##name##num)						;\
 	INTRENTRY(intr_##name##num)					;\
 	movq	CPUVAR(ISOURCES) + (num) * 8, %r14			;\
@@ -879,7 +904,8 @@ IDTVEC(intr_##name##num)						;\
 	late_ack(num)							;\
 	testb	$SEL_RPL,TF_CS(%rsp)					;\
 	jnz	intr_user_exit						;\
-	INTRFASTEXIT
+	INTRFASTEXIT							;\
+END(INTRENTRY_LABEL(intr_##name##num))
 
 #define ICUADDR IO_ICU1
 
@@ -1056,6 +1082,7 @@ INTRSTUB(ioapic_level,63,voidop,ioapic_asm_ack,voidop,ioapic_unmask,ioapic_mask)
 	.section .rodata
 
 	.globl _C_LABEL(i8259_stubs)
+	.type _C_LABEL(i8259_stubs),@object
 _C_LABEL(i8259_stubs):
 	.quad _C_LABEL(Xintr_legacy0), _C_LABEL(Xrecurse_legacy0)
 	.quad _C_LABEL(Xresume_legacy0)
@@ -1089,9 +1116,11 @@ _C_LABEL(i8259_stubs):
 	.quad _C_LABEL(Xresume_legacy14)
 	.quad _C_LABEL(Xintr_legacy15), _C_LABEL(Xrecurse_legacy15)
 	.quad _C_LABEL(Xresume_legacy15)
+END(i8259_stubs)
 
 #if NIOAPIC > 0
 	.globl _C_LABEL(ioapic_edge_stubs)
+	.type _C_LABEL(ioapic_edge_stubs),@object
 _C_LABEL(ioapic_edge_stubs):
 	.quad _C_LABEL(Xintr_ioapic_edge0), _C_LABEL(Xrecurse_ioapic_edge0)
 	.quad _C_LABEL(Xresume_ioapic_edge0)
@@ -1221,8 +1250,10 @@ _C_LABEL(ioapic_edge_stubs):
 	.quad _C_LABEL(Xresume_ioapic_edge62)
 	.quad _C_LABEL(Xintr_ioapic_edge63), _C_LABEL(Xrecurse_ioapic_edge63)
 	.quad _C_LABEL(Xresume_ioapic_edge63)
+END(ioapic_edge_stubs)
 
 	.globl _C_LABEL(ioapic_level_stubs)
+	.type _C_LABEL(ioapic_level_stubs),@object
 _C_LABEL(ioapic_level_stubs):
 	.quad _C_LABEL(Xintr_ioapic_level0), _C_LABEL(Xrecurse_ioapic_level0)
 	.quad _C_LABEL(Xresume_ioapic_level0)
@@ -1352,6 +1383,7 @@ _C_LABEL(ioapic_level_stubs):
 	.quad _C_LABEL(Xresume_ioapic_level62)
 	.quad _C_LABEL(Xintr_ioapic_level63), _C_LABEL(Xrecurse_ioapic_level63)
 	.quad _C_LABEL(Xresume_ioapic_level63)
+END(ioapic_level_stubs)
 #endif
 
 /*
@@ -1359,6 +1391,7 @@ _C_LABEL(ioapic_level_stubs):
  */
 NENTRY(retpoline_r13)
 	JMP_RETPOLINE(r13)
+END(retpoline_r13)
 
 KIDTVEC(softtty)
 	movl	$IPL_SOFTTTY, CPUVAR(ILEVEL)
@@ -1368,6 +1401,7 @@ KIDTVEC(softtty)
 	call	_C_LABEL(softintr_dispatch)
 	decl	CPUVAR(IDEPTH)
 	jmp	retpoline_r13
+END(Xsofttty)
 
 KIDTVEC(softnet)
 	movl	$IPL_SOFTNET, CPUVAR(ILEVEL)
@@ -1377,6 +1411,7 @@ KIDTVEC(softnet)
 	call	_C_LABEL(softintr_dispatch)
 	decl	CPUVAR(IDEPTH)
 	jmp	retpoline_r13
+END(Xsoftnet)
 
 KIDTVEC(softclock)
 	movl	$IPL_SOFTCLOCK, CPUVAR(ILEVEL)
@@ -1386,3 +1421,4 @@ KIDTVEC(softclock)
 	call	_C_LABEL(softintr_dispatch)
 	decl	CPUVAR(IDEPTH)
 	jmp	retpoline_r13
+END(Xsoftclock)

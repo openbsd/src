@@ -1,4 +1,4 @@
-/*	$OpenBSD: frameasm.h,v 1.23 2020/11/02 18:32:08 guenther Exp $	*/
+/*	$OpenBSD: frameasm.h,v 1.24 2020/11/09 19:29:27 guenther Exp $	*/
 /*	$NetBSD: frameasm.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
@@ -77,10 +77,8 @@
 	movq	%rax,%cr3		; \
 	CODEPATCH_END(CPTAG_MELTDOWN_NOP);\
 	jmp	98f			; \
-	.text				; \
-	_ALIGN_TRAPS			; \
-	.global	INTRENTRY_LABEL(label)	; \
-INTRENTRY_LABEL(label):	/* from kernel */ \
+END(X##label)				; \
+_ENTRY(INTRENTRY_LABEL(label)) /* from kernel */ \
 	FENCE_NO_SAFE_SMAP		; \
 	INTR_ENTRY_KERN			; \
 	jmp	99f			; \
