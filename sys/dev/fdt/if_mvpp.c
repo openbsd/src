@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.34 2020/11/09 13:33:23 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.35 2020/11/09 15:40:01 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -305,6 +305,7 @@ void	mvpp2_aggr_txq_hw_init(struct mvpp2_softc *, struct mvpp2_tx_queue *);
 void	mvpp2_txq_hw_init(struct mvpp2_port *, struct mvpp2_tx_queue *);
 void	mvpp2_rxq_hw_init(struct mvpp2_port *, struct mvpp2_rx_queue *);
 void	mvpp2_txq_hw_deinit(struct mvpp2_port *, struct mvpp2_tx_queue *);
+void	mvpp2_rxq_hw_drop(struct mvpp2_port *, struct mvpp2_rx_queue *);
 void	mvpp2_rxq_hw_deinit(struct mvpp2_port *, struct mvpp2_rx_queue *);
 void	mvpp2_rxq_long_pool_set(struct mvpp2_port *, int, int);
 void	mvpp2_rxq_short_pool_set(struct mvpp2_port *, int, int);
@@ -2826,13 +2827,55 @@ mvpp2_txq_hw_deinit(struct mvpp2_port *sc, struct mvpp2_tx_queue *txq)
 }
 
 void
-mvpp2_rxq_hw_deinit(struct mvpp2_port *sc, struct mvpp2_rx_queue *rxq)
+mvpp2_rxq_hw_drop(struct mvpp2_port *sc, struct mvpp2_rx_queue *rxq)
 {
-	uint32_t nrecv;
+	struct mvpp2_rx_desc *rxd;
+	struct mvpp2_bm_pool *bm;
+	uint64_t phys, virt;
+	uint32_t i, nrecv, pool;
+	struct mvpp2_buf *rxb;
 
 	nrecv = mvpp2_rxq_received(sc, rxq->id);
-	if (nrecv)
-		mvpp2_rxq_status_update(sc, rxq->id, nrecv, nrecv);
+	if (!nrecv)
+		return;
+
+	bus_dmamap_sync(sc->sc_dmat, MVPP2_DMA_MAP(rxq->ring), 0,
+	    MVPP2_DMA_LEN(rxq->ring),
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+
+	for (i = 0; i < nrecv; i++) {
+		rxd = &rxq->descs[rxq->cons];
+		virt = rxd->buf_cookie_bm_qset_cls_info;
+		pool = (virt >> 16) & 0xffff;
+		KASSERT(pool < sc->sc->sc_npools);
+		bm = &sc->sc->sc_bm_pools[pool];
+		KASSERT((virt & 0xffff) < MVPP2_BM_SIZE);
+		rxb = &bm->rxbuf[virt & 0xffff];
+		KASSERT(rxb->mb_m != NULL);
+		virt &= 0xffffffff;
+		phys = rxb->mb_map->dm_segs[0].ds_addr;
+		mvpp2_write(sc->sc, MVPP22_BM_ADDR_HIGH_RLS_REG,
+		    (((virt >> 32) & MVPP22_ADDR_HIGH_MASK)
+		    << MVPP22_BM_ADDR_HIGH_VIRT_RLS_SHIFT) |
+		    ((phys >> 32) & MVPP22_ADDR_HIGH_MASK));
+		mvpp2_write(sc->sc, MVPP2_BM_VIRT_RLS_REG,
+		    virt & 0xffffffff);
+		mvpp2_write(sc->sc, MVPP2_BM_PHY_RLS_REG(pool),
+		    phys & 0xffffffff);
+		rxq->cons = (rxq->cons + 1) % MVPP2_NRXDESC;
+	}
+
+	bus_dmamap_sync(sc->sc_dmat, MVPP2_DMA_MAP(rxq->ring), 0,
+	    MVPP2_DMA_LEN(rxq->ring),
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+	mvpp2_rxq_status_update(sc, rxq->id, nrecv, nrecv);
+}
+
+void
+mvpp2_rxq_hw_deinit(struct mvpp2_port *sc, struct mvpp2_rx_queue *rxq)
+{
+	mvpp2_rxq_hw_drop(sc, rxq);
 
 	mvpp2_write(sc->sc, MVPP2_RXQ_STATUS_REG(rxq->id), 0);
 	mvpp2_write(sc->sc, MVPP2_RXQ_NUM_REG, rxq->id);
