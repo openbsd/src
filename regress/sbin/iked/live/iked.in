@@ -1,4 +1,5 @@
 ikev2 "test" $MODE $IPCOMP $TMODE esp from $FROM to $TO \
 	peer $PEER_ADDR \
 	srcid $SRCID $DSTID \
-	$AUTH
+	$AUTH \
+	$CONFIG
