@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.33 2020/11/08 14:43:36 kettenis Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.34 2020/11/09 13:33:23 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -1750,9 +1750,9 @@ mvpp2_encap(struct mvpp2_port *sc, struct mbuf *m, int *idx)
 		txd->command = command |
 		    MVPP2_TXD_PADDING_DISABLE;
 		if (i == 0)
-		    txd->command |= MVPP2_TXD_F_DESC;
+			txd->command |= MVPP2_TXD_F_DESC;
 		if (i == (map->dm_nsegs - 1))
-		    txd->command |= MVPP2_TXD_L_DESC;
+			txd->command |= MVPP2_TXD_L_DESC;
 
 		bus_dmamap_sync(sc->sc_dmat, MVPP2_DMA_MAP(txq->ring),
 		    current * sizeof(*txd), sizeof(*txd),
@@ -3075,8 +3075,8 @@ mvpp2_egress_disable(struct mvpp2_port *port)
 	reg_data = (mvpp2_read(port->sc, MVPP2_TXP_SCHED_Q_CMD_REG)) &
 	    MVPP2_TXP_SCHED_ENQ_MASK;
 	if (reg_data)
-		mvpp2_write(port->sc, MVPP2_TXP_SCHED_Q_CMD_REG,(reg_data <<
-		    MVPP2_TXP_SCHED_DISQ_OFFSET));
+		mvpp2_write(port->sc, MVPP2_TXP_SCHED_Q_CMD_REG,
+		    reg_data << MVPP2_TXP_SCHED_DISQ_OFFSET);
 
 	i = 0;
 	do {
