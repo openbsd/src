@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.187 2020/07/21 05:24:33 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.188 2020/11/09 08:42:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1551,7 +1551,6 @@ screen_write_collect_flush(struct screen_write_ctx *ctx, int scroll_only,
 		TAILQ_FOREACH_SAFE(ci, &cl->items, entry, tmp) {
 			screen_write_set_cursor(ctx, ci->x, y);
 			if (ci->type == CLEAR_END) {
-				log_debug("XXX %u %u", ci->x, ci->bg);
 				screen_write_initctx(ctx, &ttyctx, 1);
 				ttyctx.bg = ci->bg;
 				tty_write(tty_cmd_clearendofline, &ttyctx);
