@@ -1,5 +1,5 @@
-/*	$OpenBSD: t_mmap.c,v 1.1.1.1 2019/11/19 19:57:04 bluhm Exp $	*/
-/* $NetBSD: t_mmap.c,v 1.13 2017/05/23 13:04:29 christos Exp $ */
+/*	$OpenBSD: t_mmap.c,v 1.2 2020/11/09 23:18:51 bluhm Exp $	*/
+/* $NetBSD: t_mmap.c,v 1.14 2020/06/26 07:50:11 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 #include "macros.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mmap.c,v 1.13 2017/05/23 13:04:29 christos Exp $");
+__RCSID("$NetBSD: t_mmap.c,v 1.14 2020/06/26 07:50:11 jruoho Exp $");
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
@@ -175,7 +175,8 @@ ATF_TC_BODY(mmap_block, tc)
 	size_t len;
 	int fd = -1;
 
-	atf_tc_skip("The test case causes a panic (PR kern/38889, kern/46592)");
+	atf_tc_skip("The test case causes a panic " \
+	    "(PR kern/38889, PR kern/46592)");
 
 	ATF_REQUIRE(sysctl(mib, miblen, NULL, &len, NULL, 0) == 0);
 	drives = malloc(len);
@@ -575,10 +576,10 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, mmap_prot_3);
 	ATF_TP_ADD_TC(tp, mmap_truncate);
 	ATF_TP_ADD_TC(tp, mmap_truncate_signal);
-	/*
-	 * Adjusted for OpenBSD, not available
-	 * ATF_TP_ADD_TC(tp, mmap_va0);
-	 */
+#ifndef __OpenBSD__
+	/* sysctl vm.user_va0_disable not available */
+	ATF_TP_ADD_TC(tp, mmap_va0);
+#endif
 
 	return atf_no_error();
 }

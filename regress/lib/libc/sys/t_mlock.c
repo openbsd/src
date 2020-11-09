@@ -1,5 +1,5 @@
-/*	$OpenBSD: t_mlock.c,v 1.1.1.1 2019/11/19 19:57:04 bluhm Exp $	*/
-/* $NetBSD: t_mlock.c,v 1.7 2019/03/13 08:50:12 kre Exp $ */
+/*	$OpenBSD: t_mlock.c,v 1.2 2020/11/09 23:18:51 bluhm Exp $	*/
+/* $NetBSD: t_mlock.c,v 1.8 2020/01/24 08:45:16 skrll Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "macros.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mlock.c,v 1.7 2019/03/13 08:50:12 kre Exp $");
+__RCSID("$NetBSD: t_mlock.c,v 1.8 2020/01/24 08:45:16 skrll Exp $");
 
 #include <sys/mman.h>
 #include <sys/resource.h>
@@ -108,8 +108,11 @@ ATF_TC_BODY(mlock_err, tc)
 	ATF_REQUIRE_ERRNO(ENOMEM, mlock((char *)0, page) == -1);
 
 	errno = 0;
-	/* Adjusted for OpenBSD, initially ENOMEM */
+#ifdef __OpenBSD__
 	ATF_REQUIRE_ERRNO(EINVAL, mlock((char *)-1, page) == -1);
+#else
+	ATF_REQUIRE_ERRNO(ENOMEM, mlock((char *)-1, page) == -1);
+#endif
 
 	errno = 0;
 	ATF_REQUIRE_ERRNO(ENOMEM, munlock(NULL, page) == -1);
@@ -118,8 +121,11 @@ ATF_TC_BODY(mlock_err, tc)
 	ATF_REQUIRE_ERRNO(ENOMEM, munlock((char *)0, page) == -1);
 
 	errno = 0;
-	/* Adjusted for OpenBSD, initially ENOMEM */
+#ifdef __OpenBSD__
 	ATF_REQUIRE_ERRNO(EINVAL, munlock((char *)-1, page) == -1);
+#else
+	ATF_REQUIRE_ERRNO(ENOMEM, munlock((char *)-1, page) == -1);
+#endif
 
 	buf = malloc(page);
 	ATF_REQUIRE(buf != NULL);
@@ -129,11 +135,10 @@ ATF_TC_BODY(mlock_err, tc)
 	 * unlocking memory that is not locked is an error...
 	 */
 
-	/*
-	 * Adjusted for OpenBSD
-	 * errno = 0;
-	 * ATF_REQUIRE_ERRNO(ENOMEM, munlock(buf, page) == -1);
-	 */
+#ifndef __OpenBSD__
+	errno = 0;
+	ATF_REQUIRE_ERRNO(ENOMEM, munlock(buf, page) == -1);
+#endif
 
 	/*
 	 * These are permitted to fail (EINVAL) but do not on NetBSD
@@ -229,8 +234,11 @@ ATF_TC_HEAD(mlock_mmap, tc)
 
 ATF_TC_BODY(mlock_mmap, tc)
 {
-	/* Adjusted for OpenBSD, initially ... | MAP_WIRED */
+#ifdef __OpenBSD__
 	static const int flags = MAP_ANON | MAP_PRIVATE;
+#else
+	static const int flags = MAP_ANON | MAP_PRIVATE | MAP_WIRED;
+#endif
 	void *buf;
 
 	/*
@@ -312,7 +320,6 @@ ATF_TP_ADD_TCS(tp)
 {
 
 	page = sysconf(_SC_PAGESIZE);
-	fprintf(stderr, "t_mlock: pagesize %ld\n", page);
 	ATF_REQUIRE(page >= 0);
 
 	ATF_TP_ADD_TC(tp, mlock_clip);

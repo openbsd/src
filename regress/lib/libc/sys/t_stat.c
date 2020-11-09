@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_stat.c,v 1.2 2019/11/22 15:59:53 bluhm Exp $	*/
+/*	$OpenBSD: t_stat.c,v 1.3 2020/11/09 23:18:51 bluhm Exp $	*/
 /* $NetBSD: t_stat.c,v 1.6 2019/07/16 17:29:18 martin Exp $ */
 
 /*-
@@ -68,7 +68,7 @@ ATF_TC_BODY(stat_chflags, tc)
 	(void)memset(&sa, 0, sizeof(struct stat));
 	(void)memset(&sb, 0, sizeof(struct stat));
 
-	fd = open(path, O_RDONLY | O_CREAT);
+	fd = open(path, O_RDONLY | O_CREAT, 0600);
 
 	ATF_REQUIRE(fd != -1);
 	ATF_REQUIRE(stat(path, &sa) == 0);
@@ -258,7 +258,7 @@ ATF_TC_BODY(stat_perm, tc)
 	uid = getuid();
 	gid = getgid();
 
-	fd = open(path, O_RDONLY | O_CREAT);
+	fd = open(path, O_RDONLY | O_CREAT, 0600);
 
 	ATF_REQUIRE(fd != -1);
 	ATF_REQUIRE(fstat(fd, &sa) == 0);

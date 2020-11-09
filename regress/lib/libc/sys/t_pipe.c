@@ -1,5 +1,5 @@
-/*	$OpenBSD: t_pipe.c,v 1.1.1.1 2019/11/19 19:57:04 bluhm Exp $	*/
-/* $NetBSD: t_pipe.c,v 1.5 2017/01/13 21:30:41 christos Exp $ */
+/*	$OpenBSD: t_pipe.c,v 1.2 2020/11/09 23:18:51 bluhm Exp $	*/
+/* $NetBSD: t_pipe.c,v 1.7 2020/06/26 07:50:11 jruoho Exp $ */
 
 /*-
  * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_pipe.c,v 1.5 2017/01/13 21:30:41 christos Exp $");
+__RCSID("$NetBSD: t_pipe.c,v 1.7 2020/06/26 07:50:11 jruoho Exp $");
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -74,7 +74,7 @@ ATF_TC_HEAD(pipe_restart, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Checks that writing to pipe "
 	    "works correctly after being interrupted and restarted "
-	    "(kern/14087)");
+	    "(PR kern/14087)");
 }
 
 ATF_TC_BODY(pipe_restart, tc)
@@ -103,7 +103,7 @@ ATF_TC_BODY(pipe_restart, tc)
 		/* child */
 		RL(close(pp[1]));
 
-		/* Do inital write. This should succeed, make
+		/* Do initial write. This should succeed, make
 		 * the other side do partial write and wait for us to pick
 		 * rest up.
 		 */

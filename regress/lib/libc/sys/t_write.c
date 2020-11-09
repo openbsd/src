@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_write.c,v 1.2 2019/11/22 15:59:53 bluhm Exp $	*/
+/*	$OpenBSD: t_write.c,v 1.3 2020/11/09 23:18:51 bluhm Exp $	*/
 /* $NetBSD: t_write.c,v 1.7 2019/07/16 17:29:18 martin Exp $ */
 
 /*-
@@ -74,7 +74,7 @@ ATF_TC_BODY(write_err, tc)
 	errno = 0;
 	ATF_REQUIRE_ERRNO(EBADF, write(-1, wbuf, sizeof(wbuf)) == -1);
 
-	fd = open(path, O_RDWR | O_CREAT);
+	fd = open(path, O_RDWR | O_CREAT, 0600);
 
 	if (fd >= 0) {
 
@@ -146,7 +146,7 @@ ATF_TC_BODY(write_pos, tc)
 	size_t i;
 	int fd;
 
-	fd = open(path, O_RDWR | O_CREAT);
+	fd = open(path, O_RDWR | O_CREAT, 0600);
 	ATF_REQUIRE(fd >= 0);
 
 	for (i = 0; i < n; i++) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_fsync.c,v 1.1.1.1 2019/11/19 19:57:03 bluhm Exp $	*/
+/*	$OpenBSD: t_fsync.c,v 1.2 2020/11/09 23:18:51 bluhm Exp $	*/
 /* $NetBSD: t_fsync.c,v 1.2 2012/03/18 07:00:52 jruoho Exp $ */
 
 /*-
@@ -103,8 +103,11 @@ ATF_TC_BODY(fsync_sync, tc)
 
 		(void)snprintf(buf, sizeof(buf), "t_fsync-%d", i);
 
-		/* Adjusted for OpenBSD, initially mkstemp(buf) */
-                fd = open(buf, O_CREAT|O_EXCL|O_RDWR, 0600);
+#ifdef __OpenBSD__
+		fd = open(buf, O_CREAT|O_EXCL|O_RDWR, 0600);
+#else
+		fd = mkstemp(buf);
+#endif
 
 		ATF_REQUIRE(fd != -1);
 		ATF_REQUIRE(write(fd, "0", 1) == 1);

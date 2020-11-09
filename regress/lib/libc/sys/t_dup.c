@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_dup.c,v 1.1.1.1 2019/11/19 19:57:03 bluhm Exp $	*/
+/*	$OpenBSD: t_dup.c,v 1.2 2020/11/09 23:18:51 bluhm Exp $	*/
 /* $NetBSD: t_dup.c,v 1.9 2017/01/13 20:31:53 christos Exp $ */
 
 /*-
@@ -212,12 +212,18 @@ ATF_TC_BODY(dup3_err, tc)
 	ATF_REQUIRE(fd >= 0);
 
 	errno = 0;
-	/* Adjusted for OpenBSD, initially != -1 */
+#ifdef __OpenBSD__
 	ATF_REQUIRE(dup3(fd, fd, O_CLOEXEC) == -1);
+#else
+	ATF_REQUIRE(dup3(fd, fd, O_CLOEXEC) != -1);
+#endif
 
 	errno = 0;
-	/* Adjusted for OpenBSD, initially EBADF */
+#ifdef __OpenBSD__
 	ATF_REQUIRE_ERRNO(EINVAL, dup3(-1, -1, O_CLOEXEC) == -1);
+#else
+	ATF_REQUIRE_ERRNO(EBADF, dup3(-1, -1, O_CLOEXEC) == -1);
+#endif
 
 	errno = 0;
 	ATF_REQUIRE_ERRNO(EBADF, dup3(fd, -1, O_CLOEXEC) == -1);
@@ -302,8 +308,11 @@ ATF_TC_BODY(dup_max, tc)
 		 * reached. Ater that dup(2) family
 		 * should fail with EMFILE.
 		 */
-		/* Adjusted for OpenBSD, initially 0 */
+#ifdef __OpenBSD__
 		(void)closefrom(STDERR_FILENO + 1);
+#else
+		(void)closefrom(0);
+#endif
 		(void)memset(&res, 0, sizeof(struct rlimit));
 
 		n = 10;
@@ -316,14 +325,20 @@ ATF_TC_BODY(dup_max, tc)
 		if (buf == NULL)
 			_exit(EX_OSERR);
 
-		/* Adjusted for OpenBSD, initially mkstemp(path) */
+#ifdef __OpenBSD__
 		buf[0] = open(path, O_CREAT|O_EXCL|O_RDWR, S_IRUSR|S_IWUSR);
+#else
+		buf[0] = mkstemp(path);
+#endif
 
 		if (buf[0] < 0)
 			_exit(EX_OSERR);
 
-		/* Adjusted for OpenBSD, initially i < n */
+#ifdef __OpenBSD__
 		for (i = 1; i < n - (STDERR_FILENO + 1); i++) {
+#else
+		for (i = 1; i < n; i++) {
+#endif
 
 			buf[i] = open(path, O_RDONLY);
 

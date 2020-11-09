@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2020/10/06 09:20:29 mpi Exp $
+#	$OpenBSD: Makefile,v 1.6 2020/11/09 23:18:51 bluhm Exp $
 
 # Copyright (c) 2019 Moritz Buhl <openbsd@moritzbuhl.de>
 # Copyright (c) 2019 Alexander Bluhm <bluhm@openbsd.org>
@@ -26,24 +26,35 @@ REGRESS_TARGETS =	${PROGS:S/^/run-/}
 .endif
 
 PROGS =
-PROGS +=	t_access t_bind t_chroot t_clock_gettime t_dup t_fsync
+PROGS +=	t_access
+PROGS +=	t_bind
+PROGS +=	t_chroot t_clock_gettime
+PROGS +=	t_dup
+PROGS +=	t_fsync
 PROGS +=	t_getgroups t_getitimer t_getlogin t_getpid t_getrusage
-PROGS +=	t_getsid t_getsockname t_gettimeofday t_kill t_link t_listen
-PROGS +=	t_mkdir t_mknod t_msgctl t_msgget t_msgsnd t_msync t_pipe
-PROGS +=	t_poll t_ptrace t_revoke t_select t_sendrecv t_setuid
-PROGS +=	t_socketpair t_sigaction t_truncate t_umask t_write
+PROGS +=	t_getsid t_getsockname t_gettimeofday
+PROGS +=	t_kill
+PROGS +=	t_link t_listen
+PROGS +=	t_mkdir t_mkfifo t_mknod t_mlock t_mmap 
+PROGS +=	t_msgctl t_msgget t_msgrcv t_msgsnd t_msync
+PROGS +=	t_pipe t_pipe2 t_poll t_ptrace
+PROGS +=	t_revoke
+PROGS +=	t_select t_sendrecv t_setuid t_socketpair t_sigaction t_stat
+PROGS +=	t_syscall
+PROGS +=	t_truncate
+PROGS +=	t_umask t_unlink
+PROGS +=	t_write
 
 # failing tests
-.if 0
-PROGS +=	t_mkfifo
-PROGS +=	t_mlock
-PROGS +=	t_mmap
-PROGS +=	t_msgrcv
-PROGS +=	t_pipe2
-PROGS +=	t_stat
-PROGS +=	t_syscall
-PROGS +=	t_unlink
-.endif
+REGRESS_EXPECTED_FAILURES =
+REGRESS_EXPECTED_FAILURES +=	run-t_mlock-4
+REGRESS_EXPECTED_FAILURES +=	run-t_mmap-1 run-t_mmap-3
+REGRESS_EXPECTED_FAILURES +=	run-t_msgrcv-3
+REGRESS_EXPECTED_FAILURES +=	run-t_pipe2-2
+REGRESS_EXPECTED_FAILURES +=	run-t_stat-1 run-t_stat-4 run-t_stat-5
+REGRESS_EXPECTED_FAILURES +=	run-t_stat-6 run-t_stat-8
+REGRESS_EXPECTED_FAILURES +=	run-t_syscall-1
+REGRESS_EXPECTED_FAILURES +=	run-t_unlink-2
 
 . for p in ${PROGS}
 SRCS_$p =		$p.c atf-c.c

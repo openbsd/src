@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_getrusage.c,v 1.1.1.1 2019/11/19 19:57:03 bluhm Exp $	*/
+/*	$OpenBSD: t_getrusage.c,v 1.2 2020/11/09 23:18:51 bluhm Exp $	*/
 /* $NetBSD: t_getrusage.c,v 1.8 2018/05/09 08:45:03 mrg Exp $ */
 
 /*-
@@ -208,6 +208,9 @@ ATF_TC_BODY(getrusage_utime_back, tc)
 	/*
 	 * Test that two consecutive calls are sane.
 	 */
+#ifndef __OpenBSD__
+	atf_tc_expect_fail("PR kern/30115");
+#endif
 
 	for (i = 0; i < maxiter; i++) {
 
@@ -225,6 +228,10 @@ ATF_TC_BODY(getrusage_utime_back, tc)
 		if (timercmp(&ru2.ru_utime, &ru1.ru_utime, <) != 0)
 			atf_tc_fail("user time went backwards");
 	}
+
+#ifndef __OpenBSD__
+	atf_tc_fail("anticipated error did not occur");
+#endif
 }
 
 ATF_TC(getrusage_utime_zero);
@@ -241,18 +248,31 @@ ATF_TC_BODY(getrusage_utime_zero, tc)
 	/*
 	 * Test that getrusage(2) does not return
 	 * zero user time for the calling process.
+	 *
+	 * See also (duplicate) PR port-amd64/41734.
 	 */
+#ifndef __OpenBSD__
+	atf_tc_expect_fail("PR kern/30115");
+#endif
 
 	for (i = 0; i < maxiter; i++) {
+
 		work();
+#ifdef __OpenBSD__
+	}
+#endif
+
+		(void)memset(&ru, 0, sizeof(struct rusage));
+
+		ATF_REQUIRE(getrusage(RUSAGE_SELF, &ru) == 0);
+
+		if (ru.ru_utime.tv_sec == 0 && ru.ru_utime.tv_usec == 0)
+			atf_tc_fail("zero user time from getrusage(2)");
+#ifndef __OpenBSD__
 	}
 
-	(void)memset(&ru, 0, sizeof(struct rusage));
-
-	ATF_REQUIRE(getrusage(RUSAGE_SELF, &ru) == 0);
-
-	if (ru.ru_utime.tv_sec == 0 && ru.ru_utime.tv_usec == 0)
-		atf_tc_fail("zero user time from getrusage(2)");
+	atf_tc_fail("anticipated error did not occur");
+#endif
 }
 
 ATF_TP_ADD_TCS(tp)

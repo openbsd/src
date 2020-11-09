@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_chroot.c,v 1.1.1.1 2019/11/19 19:57:03 bluhm Exp $	*/
+/*	$OpenBSD: t_chroot.c,v 1.2 2020/11/09 23:18:51 bluhm Exp $	*/
 /* $NetBSD: t_chroot.c,v 1.2 2017/01/10 22:36:29 christos Exp $ */
 
 /*-
@@ -310,12 +310,12 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, chroot_basic);
 	ATF_TP_ADD_TC(tp, chroot_err);
 	ATF_TP_ADD_TC(tp, chroot_perm);
-/*
- *	Not available on OpenBSD
- *	ATF_TP_ADD_TC(tp, fchroot_basic);
- *	ATF_TP_ADD_TC(tp, fchroot_err);
- *	ATF_TP_ADD_TC(tp, fchroot_perm);
- */
+#ifndef __OpenBSD__
+	/* fchroot(2) not available */
+	ATF_TP_ADD_TC(tp, fchroot_basic);
+	ATF_TP_ADD_TC(tp, fchroot_err);
+	ATF_TP_ADD_TC(tp, fchroot_perm);
+#endif
 
 	return atf_no_error();
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: t_poll.c,v 1.1.1.1 2019/11/19 19:57:04 bluhm Exp $	*/
-/*	$NetBSD: t_poll.c,v 1.3 2012/03/18 07:00:52 jruoho Exp $	*/
+/*	$OpenBSD: t_poll.c,v 1.2 2020/11/09 23:18:51 bluhm Exp $	*/
+/*	$NetBSD: t_poll.c,v 1.4 2020/07/17 15:34:16 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -85,8 +85,8 @@ child3(void)
 	(void)printf("child3 exit\n");
 }
 
-ATF_TC(poll_3way);
-ATF_TC_HEAD(poll_3way, tc)
+ATF_TC(3way);
+ATF_TC_HEAD(3way, tc)
 {
 	atf_tc_set_md_var(tc, "timeout", "15");
 	atf_tc_set_md_var(tc, "descr",
@@ -97,7 +97,7 @@ ATF_TC_HEAD(poll_3way, tc)
 	    "both be awaken. (kern/17517)");
 }
 
-ATF_TC_BODY(poll_3way, tc)
+ATF_TC_BODY(3way, tc)
 {
 	int pf[2];
 	int status, i;
@@ -148,15 +148,15 @@ ATF_TC_BODY(poll_3way, tc)
 	(void)printf("parent terminated\n");
 }
 
-ATF_TC(poll_basic);
-ATF_TC_HEAD(poll_basic, tc)
+ATF_TC(basic);
+ATF_TC_HEAD(basic, tc)
 {
 	atf_tc_set_md_var(tc, "timeout", "10");
 	atf_tc_set_md_var(tc, "descr",
 	    "Basis functionality test for poll(2)");
 }
 
-ATF_TC_BODY(poll_basic, tc)
+ATF_TC_BODY(basic, tc)
 {
 	int fds[2];
 	struct pollfd pfds[2];
@@ -215,13 +215,13 @@ ATF_TC_BODY(poll_basic, tc)
 	ATF_REQUIRE_EQ(close(fds[1]), 0);
 }
 
-ATF_TC(poll_err);
-ATF_TC_HEAD(poll_err, tc)
+ATF_TC(err);
+ATF_TC_HEAD(err, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Check errors from poll(2)");
 }
 
-ATF_TC_BODY(poll_err, tc)
+ATF_TC_BODY(err, tc)
 {
 	struct pollfd pfd;
 	int fd = 0;
@@ -236,163 +236,12 @@ ATF_TC_BODY(poll_err, tc)
 	ATF_REQUIRE_ERRNO(EINVAL, poll(&pfd, 1, -2) == -1);
 }
 
-ATF_TC(pollts_basic);
-ATF_TC_HEAD(pollts_basic, tc)
-{
-	atf_tc_set_md_var(tc, "timeout", "10");
-	atf_tc_set_md_var(tc, "descr",
-	    "Basis functionality test for pollts(2)");
-}
-
-ATF_TC_BODY(pollts_basic, tc)
-{
-	int fds[2];
-	struct pollfd pfds[2];
-	struct timespec timeout;
-	int ret;
-
-	ATF_REQUIRE_EQ(pipe(fds), 0);
-
-	pfds[0].fd = fds[0];
-	pfds[0].events = POLLIN;
-	pfds[1].fd = fds[1];
-	pfds[1].events = POLLOUT;
-
-	/* Use a timeout of 1 second. */
-	timeout.tv_sec = 1;
-	timeout.tv_nsec = 0;
-
-	/*
-	 * Check that we get a timeout waiting for data on the read end
-	 * of our pipe.
-	 */
-	pfds[0].revents = -1;
-	pfds[1].revents = -1;
-	ATF_REQUIRE_EQ_MSG(ret = pollts(&pfds[0], 1, &timeout, NULL), 0,
-	    "got: %d", ret);
-	ATF_REQUIRE_EQ_MSG(pfds[0].revents, 0, "got: %d", pfds[0].revents);
-	ATF_REQUIRE_EQ_MSG(pfds[1].revents, -1, "got: %d", pfds[1].revents);
-
-	/* Check that the write end of the pipe as reported as ready. */
-	pfds[0].revents = -1;
-	pfds[1].revents = -1;
-	ATF_REQUIRE_EQ_MSG(ret = pollts(&pfds[1], 1, &timeout, NULL), 1,
-	    "got: %d", ret);
-	ATF_REQUIRE_EQ_MSG(pfds[0].revents, -1, "got: %d", pfds[0].revents);
-	ATF_REQUIRE_EQ_MSG(pfds[1].revents, POLLOUT, "got: %d",\
-	    pfds[1].revents);
-
-	/* Check that only the write end of the pipe as reported as ready. */
-	pfds[0].revents = -1;
-	pfds[1].revents = -1;
-	ATF_REQUIRE_EQ_MSG(ret = pollts(pfds, 2, &timeout, NULL), 1,
-	    "got: %d", ret);
-	ATF_REQUIRE_EQ_MSG(pfds[0].revents, 0, "got: %d", pfds[0].revents);
-	ATF_REQUIRE_EQ_MSG(pfds[1].revents, POLLOUT, "got: %d",
-	    pfds[1].revents);
-
-	/* Write data to our pipe. */
-	ATF_REQUIRE_EQ(write(fds[1], "", 1), 1);
-
-	/* Check that both ends of our pipe are reported as ready. */
-	pfds[0].revents = -1;
-	pfds[1].revents = -1;
-	ATF_REQUIRE_EQ_MSG(ret = pollts(pfds, 2, &timeout, NULL), 2,
-	    "got: %d", ret);
-	ATF_REQUIRE_EQ_MSG(pfds[0].revents, POLLIN, "got: %d",
-	    pfds[0].revents);
-	ATF_REQUIRE_EQ_MSG(pfds[1].revents, POLLOUT, "got: %d",
-	    pfds[1].revents);
-
-	ATF_REQUIRE_EQ(close(fds[0]), 0);
-	ATF_REQUIRE_EQ(close(fds[1]), 0);
-}
-
-ATF_TC(pollts_err);
-ATF_TC_HEAD(pollts_err, tc)
-{
-	atf_tc_set_md_var(tc, "descr", "Check errors from pollts(2)");
-}
-
-ATF_TC_BODY(pollts_err, tc)
-{
-	struct timespec timeout;
-	struct pollfd pfd;
-	int fd = 0;
-
-	pfd.fd = fd;
-	pfd.events = POLLIN;
-
-	timeout.tv_sec = 1;
-	timeout.tv_nsec = 0;
-
-	errno = 0;
-	ATF_REQUIRE_ERRNO(EFAULT, pollts((void *)-1, 1, &timeout, NULL) == -1);
-
-	timeout.tv_sec = -1;
-	timeout.tv_nsec = -1;
-
-	errno = 0;
-	ATF_REQUIRE_ERRNO(EINVAL, pollts(&pfd, 1, &timeout, NULL) == -1);
-}
-
-ATF_TC(pollts_sigmask);
-ATF_TC_HEAD(pollts_sigmask, tc)
-{
-	atf_tc_set_md_var(tc, "timeout", "10");
-	atf_tc_set_md_var(tc, "descr",
-	    "Check that pollts(2) restores the signal mask (PR kern/44986)");
-}
-
-ATF_TC_BODY(pollts_sigmask, tc)
-{
-	int fd;
-	struct pollfd pfd;
-	struct timespec timeout;
-	sigset_t mask;
-	int ret;
-
-	fd = open(_PATH_DEVNULL, O_RDONLY);
-	ATF_REQUIRE(fd >= 0);
-
-	pfd.fd = fd;
-	pfd.events = POLLIN;
-
-	/* Use a timeout of 1 second. */
-	timeout.tv_sec = 1;
-	timeout.tv_nsec = 0;
-
-	/* Unblock all signals. */
-	ATF_REQUIRE_EQ(sigfillset(&mask), 0);
-	ATF_REQUIRE_EQ(sigprocmask(SIG_UNBLOCK, &mask, NULL), 0);
-
-	/*
-	 * Check that pollts(2) immediately returns. We block *all*
-	 * signals during pollts(2).
-	 */
-	ATF_REQUIRE_EQ_MSG(ret = pollts(&pfd, 1, &timeout, &mask), 1,
-	    "got: %d", ret);
-
-	/* Check that signals are now longer blocked. */
-	ATF_REQUIRE_EQ(sigprocmask(SIG_SETMASK, NULL, &mask), 0);
-	ATF_REQUIRE_EQ_MSG(sigismember(&mask, SIGUSR1), 0,
-	    "signal mask was changed.");
-
-	ATF_REQUIRE_EQ(close(fd), 0);
-}
-
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, poll_3way);
-	ATF_TP_ADD_TC(tp, poll_basic);
-	ATF_TP_ADD_TC(tp, poll_err);
-	/*
-	 * Adjusted for OpenBSD, not supported
-	 * ATF_TP_ADD_TC(tp, pollts_basic);
-	 * ATF_TP_ADD_TC(tp, pollts_err);
-	 * ATF_TP_ADD_TC(tp, pollts_sigmask);
-	 */
+	ATF_TP_ADD_TC(tp, 3way);
+	ATF_TP_ADD_TC(tp, basic);
+	ATF_TP_ADD_TC(tp, err);
 
 	return atf_no_error();
 }

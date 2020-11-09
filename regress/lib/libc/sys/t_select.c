@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_select.c,v 1.1.1.1 2019/11/19 19:57:04 bluhm Exp $	*/
+/*	$OpenBSD: t_select.c,v 1.2 2020/11/09 23:18:51 bluhm Exp $	*/
 /*	$NetBSD: t_select.c,v 1.4 2017/01/13 21:18:33 christos Exp $ */
 
 /*-
@@ -76,10 +76,18 @@ prmask(const sigset_t *m, char *buf, size_t len)
 	buf[0] = '0';
 	buf[1] = 'x';
 #define N(p, a)	(((p) >> ((a) * 4)) & 0xf)
-	/* Adjusted for OpenBSD, on NetBSD sigset_t is a struct */
+#ifdef __OpenBSD__
+	/* On NetBSD sigset_t is a struct */
 	uint32_t p = (*m);
 	for (size_t k = sizeof(p); k > 0; k--)
 		buf[j++] = xtoa(N(p, k - 1));
+#else
+	for (size_t i = __arraycount(m->__bits); i > 0; i--) {
+		uint32_t p = m->__bits[i - 1];
+		for (size_t k = sizeof(p); k > 0; k--)
+			buf[j++] = xtoa(N(p, k - 1));
+	}
+#endif
 	buf[j] = '\0';
 	return buf;
 }

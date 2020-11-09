@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_gettimeofday.c,v 1.2 2020/10/21 16:26:28 kettenis Exp $	*/
+/*	$OpenBSD: t_gettimeofday.c,v 1.3 2020/11/09 23:18:51 bluhm Exp $	*/
 /* $NetBSD: t_gettimeofday.c,v 1.1 2011/07/07 06:57:53 jruoho Exp $ */
 
 /*-
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: t_gettimeofday.c,v 1.1 2011/07/07 06:57:53 jruoho Exp $");
 #include <errno.h>
 #include <string.h>
 
+#ifdef __OpenBSD__
 static void	sighandler(int);
 
 static void
@@ -48,6 +49,7 @@ sighandler(int signo)
 {
 	_exit(0);
 }
+#endif
 
 ATF_TC(gettimeofday_err);
 ATF_TC_HEAD(gettimeofday_err, tc)
@@ -58,14 +60,16 @@ ATF_TC_HEAD(gettimeofday_err, tc)
 ATF_TC_BODY(gettimeofday_err, tc)
 {
 
+#ifdef __OpenBSD__
 	/*
 	 * With userland timecounters we will generate SIGSEGV instead
-	 * of failing with errno so to EFAULT.  POSIX explicitly
+	 * of failing with errno set to EFAULT.  POSIX explicitly
 	 * allows this behaviour.
 	 */
 	ATF_REQUIRE(signal(SIGSEGV, sighandler) != SIG_ERR);
-
+#endif
 	errno = 0;
+
 	ATF_REQUIRE_ERRNO(EFAULT, gettimeofday((void *)-1, NULL) != 0);
 }
 
