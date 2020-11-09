@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.174 2020/09/30 22:23:40 patrick Exp $
+# $OpenBSD: GENERIC,v 1.175 2020/11/09 16:13:57 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -206,8 +206,8 @@ mvkpcie*	at fdt?
 pci*		at mvkpcie?
 mvmdio*		at fdt?
 mvneta*		at fdt?
-#mvppc*		at fdt?
-#mvpp*		at mvppc?
+mvppc*		at fdt?
+mvpp*		at mvppc?
 mvrng*		at fdt?
 mvrtc*		at fdt?
 mvspi*		at fdt?
