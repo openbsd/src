@@ -1,4 +1,4 @@
-/* $OpenBSD: atomic.h,v 1.14 2020/11/09 05:42:43 jsg Exp $ */
+/* $OpenBSD: atomic.h,v 1.15 2020/11/09 23:53:30 jsg Exp $ */
 /**
  * \file drm_atomic.h
  * Atomic operations used in the DRM which may or may not be provided by the OS.
@@ -145,18 +145,20 @@ atomic64_xchg(volatile int64_t *v, int64_t n)
 
 #else
 
+extern struct mutex atomic64_mtx;
+
 typedef struct {
 	volatile int64_t val;
-	struct mutex lock;
 } atomic64_t;
 
-#define ATOMIC64_INIT(x)	{ (x), .lock = MUTEX_INITIALIZER(IPL_HIGH) }
+#define ATOMIC64_INIT(x)	{ (x) }
 
 static inline void
 atomic64_set(atomic64_t *v, int64_t i)
 {
-	mtx_init(&v->lock, IPL_HIGH);
+	mtx_enter(&atomic64_mtx);
 	v->val = i;
+	mtx_leave(&atomic64_mtx);
 }
 
 static inline int64_t
@@ -164,9 +166,9 @@ atomic64_read(atomic64_t *v)
 {
 	int64_t val;
 
-	mtx_enter(&v->lock);
+	mtx_enter(&atomic64_mtx);
 	val = v->val;
-	mtx_leave(&v->lock);
+	mtx_leave(&atomic64_mtx);
 
 	return val;
 }
@@ -176,10 +178,10 @@ atomic64_xchg(atomic64_t *v, int64_t n)
 {
 	int64_t val;
 
-	mtx_enter(&v->lock);
+	mtx_enter(&atomic64_mtx);
 	val = v->val;
 	v->val = n;
-	mtx_leave(&v->lock);
+	mtx_leave(&atomic64_mtx);
 
 	return val;
 }
@@ -187,9 +189,9 @@ atomic64_xchg(atomic64_t *v, int64_t n)
 static inline void
 atomic64_add(int i, atomic64_t *v)
 {
-	mtx_enter(&v->lock);
+	mtx_enter(&atomic64_mtx);
 	v->val += i;
-	mtx_leave(&v->lock);
+	mtx_leave(&atomic64_mtx);
 }
 
 #define atomic64_inc(p)		atomic64_add(p, 1)
@@ -199,10 +201,10 @@ atomic64_add_return(int i, atomic64_t *v)
 {
 	int64_t val;
 
-	mtx_enter(&v->lock);
+	mtx_enter(&atomic64_mtx);
 	val = v->val + i;
 	v->val = val;
-	mtx_leave(&v->lock);
+	mtx_leave(&atomic64_mtx);
 
 	return val;
 }
@@ -212,9 +214,9 @@ atomic64_add_return(int i, atomic64_t *v)
 static inline void
 atomic64_sub(int i, atomic64_t *v)
 {
-	mtx_enter(&v->lock);
+	mtx_enter(&atomic64_mtx);
 	v->val -= i;
-	mtx_leave(&v->lock);
+	mtx_leave(&atomic64_mtx);
 }
 #endif
 

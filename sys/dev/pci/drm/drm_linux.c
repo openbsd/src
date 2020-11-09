@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.65 2020/10/17 15:10:54 semarie Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.66 2020/11/09 23:53:30 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -67,6 +67,11 @@ tasklet_run(void *arg)
 		tasklet_unlock(ts);
 	}
 }
+
+/* 32 bit powerpc lacks 64 bit atomics */
+#if defined(__powerpc__) && !defined(__powerpc64__)
+struct mutex atomic64_mtx = MUTEX_INITIALIZER(IPL_HIGH);
+#endif
 
 struct mutex sch_mtx = MUTEX_INITIALIZER(IPL_SCHED);
 volatile struct proc *sch_proc;
