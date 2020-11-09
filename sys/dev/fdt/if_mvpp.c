@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.35 2020/11/09 15:40:01 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.36 2020/11/09 15:41:44 patrick Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -2381,6 +2381,8 @@ mvpp2_txq_hw_init(struct mvpp2_port *sc, struct mvpp2_tx_queue *txq)
 	    MVPP2_TXQ_TOKEN_SIZE_MAX);
 
 	mvpp2_tx_pkts_coal_set(sc, txq, txq->done_pkts_coal);
+
+	mvpp2_read(sc->sc, MVPP2_TXQ_SENT_REG(txq->id));
 }
 
 void
@@ -2809,6 +2811,7 @@ mvpp2_txq_hw_deinit(struct mvpp2_port *sc, struct mvpp2_tx_queue *txq)
 	mvpp2_write(sc->sc, MVPP2_TXQ_NUM_REG, txq->id);
 	mvpp2_write(sc->sc, MVPP2_TXQ_DESC_ADDR_REG, 0);
 	mvpp2_write(sc->sc, MVPP2_TXQ_DESC_SIZE_REG, 0);
+	mvpp2_read(sc->sc, MVPP2_TXQ_SENT_REG(txq->id));
 
 	for (i = 0; i < MVPP2_NTXDESC; i++) {
 		txb = &txq->buf[i];
