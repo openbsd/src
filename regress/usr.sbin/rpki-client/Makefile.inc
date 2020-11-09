@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.1 2020/11/09 15:43:46 tb Exp $
+# $OpenBSD: Makefile.inc,v 1.2 2020/11/09 15:53:42 tb Exp $
 
 .PATH:		${.CURDIR}/../../../../usr.sbin/rpki-client
 
@@ -29,7 +29,17 @@ run-regress-test-cert: test-cert
 	./test-cert -v ${.CURDIR}/../cer/*.cer
 	./test-cert -vt ${TALARGS:S,,${.CURDIR}/../&,}
 
-SRCS_test-mft+=	test-mft.c mft.c cms.c x509.c io.c log.c
+mft_gen.c: mft.c
+	echo '#include <openssl/asn1.h>\n' > $@.tmp
+	echo 'int ASN1_time_parse(const char *, size_t, struct tm *, int);' \
+	      	>> $@.tmp
+	echo 'int ASN1_time_tm_cmp(struct tm *, struct tm *);' >> $@.tmp
+	cat $> >> $@.tmp
+	mv -f $@.tmp $@
+
+CLEANFILES += mft_gen.c mft_gen.c.tmp
+
+SRCS_test-mft+=	test-mft.c mft_gen.c cms.c x509.c io.c log.c
 run-regress-test-mft: test-mft
 	./test-mft -v ${.CURDIR}/../mft/*.mft
 
