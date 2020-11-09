@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.22 2019/12/08 09:47:50 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.23 2020/11/09 04:20:46 tb Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -366,7 +366,10 @@ force_list:	force_list optnl STRING {
 					YYERROR;
 				}
 			}
-			RB_INSERT(force_tree, &$$, e);
+			if (RB_INSERT(force_tree, &$$, e) != NULL) {
+				log_warnx("duplicate force %s", e->domain);
+				free(e);
+			}
 		}
 	|	/* empty */ {
 			RB_INIT(&$$);

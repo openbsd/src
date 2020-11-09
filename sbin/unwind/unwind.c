@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.50 2020/11/05 16:22:59 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.51 2020/11/09 04:20:46 tb Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -886,7 +886,11 @@ imsg_receive_config(struct imsg *imsg, struct uw_conf **xconf)
 			fatal(NULL);
 		memcpy(force_entry, imsg->data, sizeof(struct
 		    force_tree_entry));
-		RB_INSERT(force_tree, &nconf->force, force_entry);
+		if (RB_INSERT(force_tree, &nconf->force, force_entry) != NULL) {
+			free(force_entry);
+			fatalx("%s: IMSG_RECONF_FORCE duplicate entry",
+			    __func__);
+		}
 		break;
 	default:
 		log_debug("%s: error handling imsg %d", __func__,
