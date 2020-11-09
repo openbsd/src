@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.71 2019/08/26 06:52:51 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.72 2020/11/09 12:39:29 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -381,7 +381,7 @@ sub ask_delete_deps
 	if ($state->{force}) {
 		$self->{req}->delete(@$l);
 	} elsif ($state->confirm_defaults_to_no(
-	    "Remove missing #1", $self->string(@$l))) {
+	    "Remove extra #1", $self->string(@$l))) {
 			$self->{req}->delete(@$l);
 	}
 }
