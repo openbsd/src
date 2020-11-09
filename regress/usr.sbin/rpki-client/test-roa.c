@@ -1,4 +1,4 @@
-/*	$Id: test-roa.c,v 1.6 2020/11/03 21:16:32 tb Exp $ */
+/*	$Id: test-roa.c,v 1.7 2020/11/09 16:13:02 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -103,7 +103,6 @@ main(int argc, char *argv[])
 	BIO_free(bio_out);
 	EVP_cleanup();
 	CRYPTO_cleanup_all_ex_data();
-	ERR_remove_state(0);
 	ERR_free_strings();
 
 	if (i < argc)

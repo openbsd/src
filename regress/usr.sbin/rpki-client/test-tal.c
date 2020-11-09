@@ -1,4 +1,4 @@
-/*	$Id: test-tal.c,v 1.5 2019/11/06 07:19:45 claudio Exp $ */
+/*	$Id: test-tal.c,v 1.6 2020/11/09 16:13:02 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -81,7 +81,6 @@ main(int argc, char *argv[])
 
 	EVP_cleanup();
 	CRYPTO_cleanup_all_ex_data();
-	ERR_remove_state(0);
 	ERR_free_strings();
 
 	if (i < argc)
