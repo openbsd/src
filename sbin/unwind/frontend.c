@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.55 2020/11/09 04:20:46 tb Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.56 2020/11/09 04:22:05 tb Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1195,8 +1195,7 @@ free_bl(void)
 {
 	struct bl_node	*n, *nxt;
 
-	for (n = RB_MIN(bl_tree, &bl_head); n != NULL; n = nxt) {
-		nxt = RB_NEXT(bl_tree, &bl_head, n);
+	RB_FOREACH_SAFE(n, bl_tree, &bl_head, nxt) {
 		RB_REMOVE(bl_tree, &bl_head, n);
 		free(n->domain);
 		free(n);
