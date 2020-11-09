@@ -1,4 +1,4 @@
-/* $OpenBSD: atomic.h,v 1.13 2020/10/26 04:10:25 jsg Exp $ */
+/* $OpenBSD: atomic.h,v 1.14 2020/11/09 05:42:43 jsg Exp $ */
 /**
  * \file drm_atomic.h
  * Atomic operations used in the DRM which may or may not be provided by the OS.
@@ -120,7 +120,9 @@ atomic_dec_if_positive(volatile int *v)
 
 #define atomic_long_read(p)	READ_ONCE(*(p))
 
-#ifdef __LP64__
+/* 32 bit powerpc lacks 64 bit atomics */
+#if !defined(__powerpc__) || defined(__powerpc64__)
+
 typedef int64_t atomic64_t;
 
 #define ATOMIC64_INIT(x)	(x)
