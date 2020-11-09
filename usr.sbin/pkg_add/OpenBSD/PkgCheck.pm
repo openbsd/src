@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.73 2020/11/09 13:28:31 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.74 2020/11/09 14:07:49 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -78,6 +78,10 @@ sub mark_indirect_depends
 {
 	my $self = shift;
 	$self->mark_available_lib(@_);
+}
+
+sub cache_depends
+{
 }
 
 package OpenBSD::PackingElement::DefineTag;
@@ -233,6 +237,13 @@ sub basic_check
 	$state->{known}{$name}{'dir'} = 1;
 }
 
+package OpenBSD::PackingElement::Depend;
+sub cache_depends
+{
+	my ($self, $copy) = @_;
+	$self->add_object($copy);
+}
+
 package OpenBSD::PackingElement::Dependency;
 sub find_dependencies
 {
@@ -302,6 +313,11 @@ sub find_dependencies
 	} else {
 		$state->log("definition for #1 not found", $self->stringize);
 	}
+}
+
+sub cache_depends
+{
+	&OpenBSD::PackingElement::Depend::cache_depends;
 }
 
 package OpenBSD::PkgCheck::State;
@@ -813,6 +829,9 @@ sub sanity_check
 			$self->may_remove($state, $name);
 		}
 		$plist->mark_indirect_depends($plist->pkgname, $state);
+		my $p = OpenBSD::PackingList->new;
+		$plist->cache_depends($p);
+		$state->{plist_cache}{$plist->pkgname} = $p;
 		$state->{exists}{$plist->pkgname} = 1;
 	});
 }
@@ -824,7 +843,7 @@ sub dependencies_check
 	$self->for_all_packages($state, $l, "Direct dependencies", sub {
 		my $name = shift;
 		$state->log->set_context($name);
-		my $plist = OpenBSD::PackingList->from_installation($name);
+		my $plist = $state->{plist_cache}{$name};
 		my $checker = OpenBSD::DirectDependencyCheck->new($state,
 		    $name);
 		$state->{localbase} = $plist->localbase;
@@ -834,6 +853,7 @@ sub dependencies_check
 			push(@{$state->{reverse}{$dep}}, $name);
 		}
 	});
+	delete $state->{plist_cache};
 }
 
 sub reverse_dependencies_check
