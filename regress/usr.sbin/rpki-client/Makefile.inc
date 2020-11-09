@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.2 2020/11/09 15:53:42 tb Exp $
+# $OpenBSD: Makefile.inc,v 1.3 2020/11/09 16:05:10 tb Exp $
 
 .PATH:		${.CURDIR}/../../../../usr.sbin/rpki-client
 
@@ -29,6 +29,7 @@ run-regress-test-cert: test-cert
 	./test-cert -v ${.CURDIR}/../cer/*.cer
 	./test-cert -vt ${TALARGS:S,,${.CURDIR}/../&,}
 
+# Provide missing prototypes for OpenSSL
 mft_gen.c: mft.c
 	echo '#include <openssl/asn1.h>\n' > $@.tmp
 	echo 'int ASN1_time_parse(const char *, size_t, struct tm *, int);' \
