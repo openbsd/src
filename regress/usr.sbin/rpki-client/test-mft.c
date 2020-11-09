@@ -1,4 +1,4 @@
-/*	$Id: test-mft.c,v 1.8 2020/11/03 21:16:32 tb Exp $ */
+/*	$Id: test-mft.c,v 1.9 2020/11/09 15:43:46 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -33,6 +33,14 @@
 #include <openssl/x509v3.h>
 
 #include "extern.h"
+
+#ifndef ASN1error
+void
+ASN1error(int err)
+{
+	ASN1err(0, err);
+}
+#endif
 
 int verbose;
 
