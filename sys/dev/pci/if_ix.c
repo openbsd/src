@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.173 2020/10/27 23:32:02 bluhm Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.174 2020/11/09 15:09:09 bluhm Exp $	*/
 
 /******************************************************************************
 
@@ -1061,7 +1061,6 @@ ixgbe_legacy_intr(void *arg)
 
 	rv = ixgbe_intr(sc);
 	if (rv == 0) {
-		ixgbe_enable_queues(sc);
 		return (0);
 	}
 
@@ -1082,14 +1081,27 @@ ixgbe_intr(struct ix_softc *sc)
 	struct ixgbe_hw	*hw = &sc->hw;
 	uint32_t	 reg_eicr, mod_mask, msf_mask;
 
-	reg_eicr = IXGBE_READ_REG(&sc->hw, IXGBE_EICR);
-	if (reg_eicr == 0) {
-		ixgbe_enable_intr(sc);
-		return (0);
+	if (sc->sc_intrmap) {
+		/* Pause other interrupts */
+		IXGBE_WRITE_REG(hw, IXGBE_EIMC, IXGBE_EIMC_OTHER);
+		/* First get the cause */
+		reg_eicr = IXGBE_READ_REG(hw, IXGBE_EICS);
+		/* Be sure the queue bits are not cleared */
+		reg_eicr &= ~IXGBE_EICR_RTX_QUEUE;
+		/* Clear interrupt with write */
+		IXGBE_WRITE_REG(hw, IXGBE_EICR, reg_eicr);
+	} else {
+		reg_eicr = IXGBE_READ_REG(hw, IXGBE_EICR);
+		if (reg_eicr == 0) {
+			ixgbe_enable_intr(sc);
+			ixgbe_enable_queues(sc);
+			return (0);
+		}
 	}
 
 	/* Link status change */
 	if (reg_eicr & IXGBE_EICR_LSC) {
+		IXGBE_WRITE_REG(hw, IXGBE_EIMC, IXGBE_EIMC_LSC);
 		KERNEL_LOCK();
 		ixgbe_update_link_status(sc);
 		KERNEL_UNLOCK();
@@ -1144,7 +1156,7 @@ ixgbe_intr(struct ix_softc *sc)
 	    (reg_eicr & IXGBE_EICR_GPI_SDP1)) {
 		printf("%s: CRITICAL: FAN FAILURE!! "
 		    "REPLACE IMMEDIATELY!!\n", ifp->if_xname);
-		IXGBE_WRITE_REG(&sc->hw, IXGBE_EICR, IXGBE_EICR_GPI_SDP1);
+		IXGBE_WRITE_REG(hw, IXGBE_EICR, IXGBE_EICR_GPI_SDP1);
 	}
 
 	/* External PHY interrupt */
@@ -1156,6 +1168,8 @@ ixgbe_intr(struct ix_softc *sc)
 		ixgbe_handle_phy(sc);
 		KERNEL_UNLOCK();
 	}
+
+	IXGBE_WRITE_REG(hw, IXGBE_EIMS, IXGBE_EIMS_OTHER | IXGBE_EIMS_LSC);
 
 	return (1);
 }
