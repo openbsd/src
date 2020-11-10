@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.23 2020/11/08 14:42:48 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.24 2020/11/10 19:08:43 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -308,6 +308,34 @@ sfp_register(struct sfp_device *sd)
 		return;
 
 	LIST_INSERT_HEAD(&sfp_devices, sd, sd_list);
+}
+
+int
+sfp_do_enable(uint32_t phandle, int enable)
+{
+	struct sfp_device *sd;
+
+	if (phandle == 0)
+		return ENXIO;
+
+	LIST_FOREACH(sd, &sfp_devices, sd_list) {
+		if (sd->sd_phandle == phandle)
+			return sd->sd_enable(sd->sd_cookie, enable);
+	}
+
+	return ENXIO;
+}
+
+int
+sfp_enable(uint32_t phandle)
+{
+	return sfp_do_enable(phandle, 1);
+}
+
+int
+sfp_disable(uint32_t phandle)
+{
+	return sfp_do_enable(phandle, 0);
 }
 
 int

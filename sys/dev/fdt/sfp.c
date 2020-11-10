@@ -1,4 +1,4 @@
-/* $OpenBSD: sfp.c,v 1.3 2020/11/10 11:10:18 kettenis Exp $ */
+/* $OpenBSD: sfp.c,v 1.4 2020/11/10 19:08:43 kettenis Exp $ */
 /*
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
  *
@@ -38,6 +38,8 @@ struct sfp_softc {
 
 	uint32_t		*sc_mod_def0_gpio;
 	int			 sc_mod_def0_gpio_len;
+	uint32_t		*sc_tx_disable_gpio;
+	int			 sc_tx_disable_gpio_len;
 
 	struct sfp_device	 sc_sd;
 };
@@ -47,6 +49,7 @@ void	 sfp_attach(struct device *, struct device *, void *);
 int	 sfp_detach(struct device *, int);
 
 int	 sfp_get_gpio(struct sfp_softc *, const char *, uint32_t **);
+int	 sfp_gpio_enable(void *, int);
 int	 sfp_i2c_get_sffpage(void *, struct if_sffpage *);
 
 struct cfattach sfp_ca = {
@@ -90,8 +93,16 @@ sfp_attach(struct device *parent, struct device *self, void *aux)
 		    GPIO_CONFIG_INPUT);
 	}
 
+	sc->sc_tx_disable_gpio_len =
+	    sfp_get_gpio(sc, "tx-disable", &sc->sc_tx_disable_gpio);
+	if (sc->sc_tx_disable_gpio) {
+		gpio_controller_config_pin(sc->sc_tx_disable_gpio,
+		    GPIO_CONFIG_OUTPUT);
+	}
+
 	sc->sc_sd.sd_node = faa->fa_node;
 	sc->sc_sd.sd_cookie = sc;
+	sc->sc_sd.sd_enable = sfp_gpio_enable;
 	sc->sc_sd.sd_get_sffpage = sfp_i2c_get_sffpage;
 	sfp_register(&sc->sc_sd);
 }
@@ -102,6 +113,7 @@ sfp_detach(struct device *self, int flags)
 	struct sfp_softc *sc = (struct sfp_softc *)self;
 
 	free(sc->sc_mod_def0_gpio, M_DEVBUF, sc->sc_mod_def0_gpio_len);
+	free(sc->sc_tx_disable_gpio, M_DEVBUF, sc->sc_tx_disable_gpio_len);
 	return 0;
 }
 
@@ -122,6 +134,19 @@ sfp_get_gpio(struct sfp_softc *sc, const char *name, uint32_t **gpio)
 	*gpio = malloc(len, M_DEVBUF, M_WAITOK);
 	OF_getpropintarray(sc->sc_node, buf, *gpio, len);
 	return len;
+}
+
+int
+sfp_gpio_enable(void *cookie, int enable)
+{
+	struct sfp_softc *sc = cookie;
+
+	if (sc->sc_tx_disable_gpio) {
+		gpio_controller_set_pin(sc->sc_tx_disable_gpio, !enable);
+		return 0;
+	}
+
+	return ENXIO;
 }
 
 int

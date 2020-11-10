@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.h,v 1.15 2020/11/08 14:42:48 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.h,v 1.16 2020/11/10 19:08:43 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -76,6 +76,7 @@ struct if_sffpage;
 struct sfp_device {
 	int	sd_node;
 	void	*sd_cookie;
+	int	(*sd_enable)(void *, int);
 	int	(*sd_get_sffpage)(void *, struct if_sffpage *);
 
 	LIST_ENTRY(sfp_device) sd_list;
@@ -85,6 +86,8 @@ struct sfp_device {
 void	sfp_register(struct sfp_device *);
 
 struct mii_data;
+int	sfp_enable(uint32_t);
+int	sfp_disable(uint32_t);
 int	sfp_add_media(uint32_t, struct mii_data *);
 int	sfp_get_sffpage(uint32_t, struct if_sffpage *);
 
