@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.37 2020/11/09 15:45:21 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.38 2020/11/10 19:10:14 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -1568,6 +1568,7 @@ mvpp2_port_attach_sfp(struct device *self)
 	struct mvpp2_port *sc = (struct mvpp2_port *)self;
 
 	rw_enter(&mvpp2_sff_lock, RW_WRITE);
+	sfp_disable(sc->sc_sfp);
 	sfp_add_media(sc->sc_sfp, &sc->sc_mii);
 	rw_exit(&mvpp2_sff_lock);
 }
@@ -2221,6 +2222,12 @@ mvpp2_up(struct mvpp2_port *sc)
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	int i;
 
+	if (sc->sc_sfp) {
+		rw_enter(&mvpp2_sff_lock, RW_WRITE);
+		sfp_enable(sc->sc_sfp);
+		rw_exit(&mvpp2_sff_lock);
+	}
+	
 	memcpy(sc->sc_cur_lladdr, sc->sc_lladdr, ETHER_ADDR_LEN);
 	mvpp2_prs_mac_da_accept(sc, etherbroadcastaddr, 1);
 	mvpp2_prs_mac_da_accept(sc, sc->sc_cur_lladdr, 1);
@@ -2849,6 +2856,12 @@ mvpp2_down(struct mvpp2_port *sc)
 		mvpp2_rxq_hw_deinit(sc, &sc->sc_rxqs[i]);
 
 	mvpp2_prs_mac_da_accept(sc, sc->sc_cur_lladdr, 0);
+
+	if (sc->sc_sfp) {
+		rw_enter(&mvpp2_sff_lock, RW_WRITE);
+		sfp_disable(sc->sc_sfp);
+		rw_exit(&mvpp2_sff_lock);
+	}
 }
 
 void
