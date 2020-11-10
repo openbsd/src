@@ -1,4 +1,4 @@
-/* $OpenBSD: sfp.c,v 1.2 2020/11/10 09:19:43 kettenis Exp $ */
+/* $OpenBSD: sfp.c,v 1.3 2020/11/10 11:10:18 kettenis Exp $ */
 /*
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
  *
@@ -130,7 +130,7 @@ sfp_i2c_get_sffpage(void *cookie, struct if_sffpage *sff)
 	struct sfp_softc *sc = cookie;
 	uint8_t reg = sff->sff_page;
 
-	if (sc->sc_mod_def0_gpio > 0) {
+	if (sc->sc_mod_def0_gpio) {
 		if (!gpio_controller_get_pin(sc->sc_mod_def0_gpio))
 			return ENXIO;
 	}
