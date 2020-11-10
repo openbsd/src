@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.149 2020/10/25 01:55:18 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.150 2020/11/10 17:26:54 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -535,10 +535,11 @@ setitimer(int which, const struct itimerval *itv, struct itimerval *olditv)
 		TIMEVAL_TO_TIMESPEC(&itv->it_interval, &its.it_interval);
 	}
 
-	if (which != ITIMER_REAL)
-		mtx_enter(&itimer_mtx);
-	else
+	if (which == ITIMER_REAL) {
+		mtx_enter(&pr->ps_mtx);
 		nanouptime(&now);
+	} else
+		mtx_enter(&itimer_mtx);
 
 	if (olditv != NULL)
 		oldits = *itimer;
@@ -553,7 +554,9 @@ setitimer(int which, const struct itimerval *itv, struct itimerval *olditv)
 		*itimer = its;
 	}
 
-	if (which != ITIMER_REAL)
+	if (which == ITIMER_REAL)
+		mtx_leave(&pr->ps_mtx);
+	else
 		mtx_leave(&itimer_mtx);
 
 	if (olditv != NULL) {
@@ -660,21 +663,41 @@ realitexpire(void *arg)
 	struct timespec cts;
 	struct process *pr = arg;
 	struct itimerspec *tp = &pr->ps_timer[ITIMER_REAL];
+	int need_signal = 0;
 
-	prsignal(pr, SIGALRM);
+	mtx_enter(&pr->ps_mtx);
 
-	/* If it was a one-shot timer we're done. */
+	/*
+	 * Do nothing if the timer was cancelled or rescheduled while we
+	 * were entering the mutex.
+	 */
+	if (!timespecisset(&tp->it_value) || timeout_pending(&pr->ps_realit_to))
+		goto out;
+
+	/* The timer expired.  We need to send the signal. */
+	need_signal = 1;
+
+	/* One-shot timers are not reloaded. */
 	if (!timespecisset(&tp->it_interval)) {
 		timespecclear(&tp->it_value);
-		return;
+		goto out;
 	}
 
-	/* Find the nearest future expiration point and restart the timeout. */
+	/*
+	 * Find the nearest future expiration point and restart
+	 * the timeout.
+	 */
 	nanouptime(&cts);
 	while (timespeccmp(&tp->it_value, &cts, <=))
 		timespecadd(&tp->it_value, &tp->it_interval, &tp->it_value);
 	if ((pr->ps_flags & PS_EXITING) == 0)
 		timeout_at_ts(&pr->ps_realit_to, &tp->it_value);
+
+out:
+	mtx_leave(&pr->ps_mtx);
+
+	if (need_signal)
+		prsignal(pr, SIGALRM);
 }
 
 /*

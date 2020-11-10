@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.300 2020/09/16 08:01:15 mpi Exp $	*/
+/*	$OpenBSD: proc.h,v 1.301 2020/11/10 17:26:54 cheloha Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -219,7 +219,7 @@ struct process {
 	struct	rusage *ps_ru;		/* sum of stats for dead threads. */
 	struct	tusage ps_tu;		/* accumulated times. */
 	struct	rusage ps_cru;		/* sum of stats for reaped children */
-	struct	itimerspec ps_timer[3];	/* [K] ITIMER_REAL timer */
+	struct	itimerspec ps_timer[3];	/* [m] ITIMER_REAL timer */
 					/* [T] ITIMER_{VIRTUAL,PROF} timers */
 	struct	timeout ps_rucheck_to;	/* [] resource limit check timer */
 	time_t	ps_nextxcpu;		/* when to send next SIGXCPU, */
@@ -273,7 +273,7 @@ struct process {
 	int	ps_refcnt;		/* Number of references. */
 
 	struct	timespec ps_start;	/* starting uptime. */
-	struct	timeout ps_realit_to;	/* [K] ITIMER_REAL timeout */
+	struct	timeout ps_realit_to;	/* [m] ITIMER_REAL timeout */
 };
 
 #define	ps_session	ps_pgrp->pg_session
