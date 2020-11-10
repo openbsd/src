@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.26 2020/11/09 21:07:25 tobhe Exp $
+#	$OpenBSD: Makefile,v 1.27 2020/11/10 15:17:51 tobhe Exp $
 
 # Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
 #
@@ -127,8 +127,8 @@ SETUP_CONFIG = \
 	fi; \
 	echo "MODE=\"$$mode\"" >> $@_$$side.conf; \
 	echo "TMODE=\"$$tmode\"" >> $@_$$side.conf; \
-	echo "FROM=\"$$local\"" >> $@_$$side.conf; \
-	echo "TO=\"$$peer\"" >> $@_$$side.conf; \
+	echo "FROM=\"$$from\"" >> $@_$$side.conf; \
+	echo "TO=\"$$to\"" >> $@_$$side.conf; \
 	echo "LOCAL_ADDR=\"$$local\"" >> $@_$$side.conf; \
 	echo "PEER_ADDR=\"$$peer\"" >> $@_$$side.conf; \
 	echo "IPCOMP=\"$$ipcomp\"" >> $@_$$side.conf; \
