@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.93 2020/07/31 10:49:33 mglocker Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.94 2020/11/10 11:19:37 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1254,7 +1254,10 @@ urtwn_rx_frame(struct urtwn_softc *sc, uint8_t *buf, int pktlen,
 	if (((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) != IEEE80211_FC0_TYPE_CTL)
 	    && (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) &&
 	    (ni->ni_flags & IEEE80211_NODE_RXPROT) &&
-	    ni->ni_pairwise_key.k_cipher == IEEE80211_CIPHER_CCMP) {
+	    ((!IEEE80211_IS_MULTICAST(wh->i_addr1) &&
+	    ni->ni_pairwise_key.k_cipher == IEEE80211_CIPHER_CCMP) ||
+	    (IEEE80211_IS_MULTICAST(wh->i_addr1) &&
+	    ni->ni_rsngroupcipher == IEEE80211_CIPHER_CCMP))) {
 		if (urtwn_ccmp_decap(sc, m, ni) != 0) {
 			ifp->if_ierrors++;
 			m_freem(m);
