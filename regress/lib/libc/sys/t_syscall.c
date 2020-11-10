@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_syscall.c,v 1.1.1.1 2019/11/19 19:57:04 bluhm Exp $	*/
+/*	$OpenBSD: t_syscall.c,v 1.2 2020/11/10 14:43:14 bluhm Exp $	*/
 /*	$NetBSD: t_syscall.c,v 1.3 2018/05/28 07:55:56 martin Exp $	*/
 
 /*-
@@ -46,6 +46,11 @@ __RCSID("$NetBSD: t_syscall.c,v 1.3 2018/05/28 07:55:56 martin Exp $");
 #include <sys/mman.h>
 #include <sys/endian.h>
 #include <sys/syscall.h>
+
+#ifdef __OpenBSD__
+/* Declare prototype of __syscall locally specifying the return type. */
+quad_t __syscall(quad_t number, ...);
+#endif
 
 #if !defined(_LP64) && BYTE_ORDER == _BIG_ENDIAN
 #define __SYSCALL_TO_UINTPTR_T(V)	((uintptr_t)((V)>>32))

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2020/11/09 23:18:51 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.7 2020/11/10 14:43:14 bluhm Exp $
 
 # Copyright (c) 2019 Moritz Buhl <openbsd@moritzbuhl.de>
 # Copyright (c) 2019 Alexander Bluhm <bluhm@openbsd.org>
@@ -53,7 +53,6 @@ REGRESS_EXPECTED_FAILURES +=	run-t_msgrcv-3
 REGRESS_EXPECTED_FAILURES +=	run-t_pipe2-2
 REGRESS_EXPECTED_FAILURES +=	run-t_stat-1 run-t_stat-4 run-t_stat-5
 REGRESS_EXPECTED_FAILURES +=	run-t_stat-6 run-t_stat-8
-REGRESS_EXPECTED_FAILURES +=	run-t_syscall-1
 REGRESS_EXPECTED_FAILURES +=	run-t_unlink-2
 
 . for p in ${PROGS}
