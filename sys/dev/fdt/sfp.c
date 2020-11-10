@@ -1,4 +1,4 @@
-/* $OpenBSD: sfp.c,v 1.1 2019/09/07 13:32:36 patrick Exp $ */
+/* $OpenBSD: sfp.c,v 1.2 2020/11/10 09:19:43 kettenis Exp $ */
 /*
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
  *
@@ -19,6 +19,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <net/if.h>
 
@@ -35,6 +36,9 @@ struct sfp_softc {
 	i2c_tag_t		 sc_tag;
 	int			 sc_node;
 
+	uint32_t		*sc_mod_def0_gpio;
+	int			 sc_mod_def0_gpio_len;
+
 	struct sfp_device	 sc_sd;
 };
 
@@ -42,6 +46,7 @@ int	 sfp_match(struct device *, void *, void *);
 void	 sfp_attach(struct device *, struct device *, void *);
 int	 sfp_detach(struct device *, int);
 
+int	 sfp_get_gpio(struct sfp_softc *, const char *, uint32_t **);
 int	 sfp_i2c_get_sffpage(void *, struct if_sffpage *);
 
 struct cfattach sfp_ca = {
@@ -78,6 +83,13 @@ sfp_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
+	sc->sc_mod_def0_gpio_len =
+	    sfp_get_gpio(sc, "mod-def0", &sc->sc_mod_def0_gpio);
+	if (sc->sc_mod_def0_gpio) {
+		gpio_controller_config_pin(sc->sc_mod_def0_gpio,
+		    GPIO_CONFIG_INPUT);
+	}
+
 	sc->sc_sd.sd_node = faa->fa_node;
 	sc->sc_sd.sd_cookie = sc;
 	sc->sc_sd.sd_get_sffpage = sfp_i2c_get_sffpage;
@@ -87,7 +99,29 @@ sfp_attach(struct device *parent, struct device *self, void *aux)
 int
 sfp_detach(struct device *self, int flags)
 {
+	struct sfp_softc *sc = (struct sfp_softc *)self;
+
+	free(sc->sc_mod_def0_gpio, M_DEVBUF, sc->sc_mod_def0_gpio_len);
 	return 0;
+}
+
+int
+sfp_get_gpio(struct sfp_softc *sc, const char *name, uint32_t **gpio)
+{
+	char buf[64];
+	int len;
+
+	snprintf(buf, sizeof(buf), "%s-gpios", name);
+	len = OF_getproplen(sc->sc_node, buf);
+	if (len <= 0) {
+		snprintf(buf, sizeof(buf), "%s-gpio", name);
+		len = OF_getproplen(sc->sc_node, buf);
+		if (len <= 0)
+			return len;
+	}
+	*gpio = malloc(len, M_DEVBUF, M_WAITOK);
+	OF_getpropintarray(sc->sc_node, buf, *gpio, len);
+	return len;
 }
 
 int
@@ -95,6 +129,11 @@ sfp_i2c_get_sffpage(void *cookie, struct if_sffpage *sff)
 {
 	struct sfp_softc *sc = cookie;
 	uint8_t reg = sff->sff_page;
+
+	if (sc->sc_mod_def0_gpio > 0) {
+		if (!gpio_controller_get_pin(sc->sc_mod_def0_gpio))
+			return ENXIO;
+	}
 
 	iic_acquire_bus(sc->sc_tag, 0);
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
