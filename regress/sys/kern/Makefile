@@ -1,41 +1,29 @@
-#	$OpenBSD: Makefile,v 1.87 2020/09/16 14:03:02 mpi Exp $
+#	$OpenBSD: Makefile,v 1.88 2020/11/10 16:13:35 bluhm Exp $
 
-SUBDIR+= __syscall access accept cmsgsize clock_gettime
-SUBDIR+= dup2 dup2_accept dup2_self descrip
+SUBDIR+= __syscall
+SUBDIR+= accept access
+SUBDIR+= bind
+SUBDIR+= clock_gettime cmsgsize
+SUBDIR+= descrip dup2 dup2_accept dup2_self
 SUBDIR+= exec_self execve exit extent
-SUBDIR+= fchdir
-SUBDIR+= fchown
-SUBDIR+= fcntl_dup
-SUBDIR+= flock
-SUBDIR+= ftruncate
-SUBDIR+= futex
-SUBDIR+= getpeereid getrusage gettimeofday itimer
-SUBDIR+= kqueue mbuf minherit
-SUBDIR+= main-thread-exited
-SUBDIR+= mmap mmap2 mmap3 mmap-fail
-SUBDIR+= mount
+SUBDIR+= fchdir fchown fcntl_dup flock ftruncate futex
+SUBDIR+= getpeereid getrusage gettimeofday
+SUBDIR+= itimer
+SUBDIR+= kqueue
+SUBDIR+= main-thread-exited mbuf minherit mmap mmap-fail mmap2 mmap3 mount
 SUBDIR+= nanosleep noexec
 SUBDIR+= open
-SUBDIR+= pipe
-SUBDIR+= pledge
-SUBDIR+= pread preadv ptmget ptrace2 pty pwrite pwritev rcvtimeo
-SUBDIR+= realpath
-SUBDIR+= realpath-unmount
-SUBDIR+= recvwait
-SUBDIR+= rlimit-file
-SUBDIR+= signal
-SUBDIR+= sosplice
-SUBDIR+= syscall sysvmsg sysvsem
-SUBDIR+= sysvshm unalign unfdpass wait
-SUBDIR+= unixsock bind
-SUBDIR+= unveil
-SUBDIR+= unveil-unmount
-
+SUBDIR+= pipe pledge pread preadv ptmget ptrace ptrace2 pty pwrite pwritev
+SUBDIR+= rcvtimeo realpath realpath-unmount recvwait rlimit-file
 # The setuid subtest creates set user/group id binaries in the obj directory.
 # Do not run this test by default, it may trigger alerts from daily security.
 .ifmake clean || cleandir || obj
 SUBDIR+= setuid
 .endif
+SUBDIR+= signal sosplice stackjmp stackpivot syscall syscall_segment
+SUBDIR+= sysvmsg sysvsem sysvshm
+SUBDIR+= unalign unfdpass unixsock unveil unveil-unmount
+SUBDIR+= wait
 
 install:
 
