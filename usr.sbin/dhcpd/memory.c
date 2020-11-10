@@ -1,4 +1,4 @@
-/*	$OpenBSD: memory.c,v 1.29 2020/04/06 17:05:40 krw Exp $ */
+/*	$OpenBSD: memory.c,v 1.30 2020/11/10 16:42:17 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
@@ -687,7 +687,8 @@ find_lease_by_ip_addr(struct iaddr addr)
 	    addr.iabuf, addr.len);
 }
 
-struct lease *find_lease_by_uid(unsigned char *uid, int len)
+struct lease *
+find_lease_by_uid(unsigned char *uid, int len)
 {
 	return (struct lease *)hash_lookup(lease_uid_hash, uid, len);
 }

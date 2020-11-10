@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.67 2019/05/08 22:00:55 krw Exp $ */
+/*	$OpenBSD: dhcpd.h,v 1.68 2020/11/10 16:42:17 krw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -311,7 +311,6 @@ void	 parse_options(struct packet *);
 void	 parse_option_buffer(struct packet *, unsigned char *, int);
 int	 cons_options(struct packet *, struct dhcp_packet *, int,
 	    struct tree_cache **, int, int, int, u_int8_t *, int);
-char	*pretty_print_option(unsigned int, unsigned char *, int, int, int);
 void	 do_packet(struct interface_info *, struct dhcp_packet *, int,
 	    unsigned int, struct iaddr, struct hardware *);
 
@@ -364,7 +363,6 @@ char	*parse_string(FILE *);
 struct tree		*parse_ip_addr_or_hostname(FILE *, int);
 struct tree_cache	*parse_fixed_addr_param(FILE *);
 void			 parse_option_param(FILE *, struct group *);
-time_t			 parse_timestamp(FILE *);
 struct lease		*parse_lease_declaration(FILE *);
 void			 parse_address_range(FILE *, struct subnet *);
 time_t			 parse_date(FILE *);
@@ -376,8 +374,6 @@ struct tree		*parse_domain_and_comp(FILE *);
 /* tree.c */
 pair			 cons(caddr_t, pair);
 struct tree_cache	*tree_cache(struct tree *);
-struct tree		*tree_host_lookup(char *);
-struct dns_host_entry	*enter_dns_host(char *);
 struct tree		*tree_const(unsigned char *, int);
 struct tree		*tree_concat(struct tree *, struct tree *);
 struct tree		*tree_limit(struct tree *, int);
@@ -476,9 +472,7 @@ void initialize_universes(void);
 
 /* convert.c */
 u_int32_t getULong(unsigned char *);
-int32_t getLong(unsigned char *);
 u_int16_t getUShort(unsigned char *);
-int16_t getShort(unsigned char *);
 void putULong(unsigned char *, u_int32_t);
 void putLong(unsigned char *, int32_t);
 void putUShort(unsigned char *, unsigned int);
