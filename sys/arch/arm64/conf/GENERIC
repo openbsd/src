@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.175 2020/11/09 16:13:57 patrick Exp $
+# $OpenBSD: GENERIC,v 1.176 2020/11/11 20:53:29 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -43,6 +43,8 @@ acpiec*		at acpi?
 acpimcfg*	at acpi?
 acpipci*	at acpi?
 pci*		at acpipci?
+acpipwrres*	at acpi?
+acpitz*		at acpi?
 ahci*		at acpi?
 ccp*		at acpi?		# AMD Cryptographic Co-processor
 com*		at acpi?
