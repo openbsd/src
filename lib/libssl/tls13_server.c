@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.61 2020/07/03 04:12:51 tb Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.62 2020/11/11 18:20:10 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -611,6 +611,7 @@ tls13_server_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
 	SSL *s = ctx->ssl;
 	CBB cert_request_context, cert_list;
 	const struct ssl_sigalg *sigalg;
+	X509_STORE_CTX *xsc = NULL;
 	STACK_OF(X509) *chain;
 	CERT_PKEY *cpk;
 	X509 *cert;
@@ -633,6 +634,16 @@ tls13_server_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
 	if ((chain = cpk->chain) == NULL)
 		chain = s->ctx->extra_certs;
 
+	if (chain == NULL && !(s->internal->mode & SSL_MODE_NO_AUTO_CHAIN)) {
+		if ((xsc = X509_STORE_CTX_new()) == NULL)
+			goto err;
+		if (!X509_STORE_CTX_init(xsc, s->ctx->cert_store, cpk->x509, NULL))
+			goto err;
+		X509_verify_cert(xsc);
+		ERR_clear_error();
+		chain = xsc->chain;
+	}
+
 	if (!CBB_add_u8_length_prefixed(cbb, &cert_request_context))
 		goto err;
 	if (!CBB_add_u24_length_prefixed(cbb, &cert_list))
@@ -643,6 +654,15 @@ tls13_server_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
 
 	for (i = 0; i < sk_X509_num(chain); i++) {
 		cert = sk_X509_value(chain, i);
+
+		/*
+		 * In the case of auto chain, the leaf certificate will be at
+		 * the top of the chain - skip over it as we've already added
+		 * it earlier.
+		 */
+		if (i == 0 && cert == cpk->x509)
+			continue;
+
 		/*
 		 * XXX we don't send extensions with chain certs to avoid sending
 		 * a leaf ocsp stape with the chain certs.  This needs to get
@@ -658,6 +678,8 @@ tls13_server_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
 	ret = 1;
 
  err:
+	X509_STORE_CTX_free(xsc);
+
 	return ret;
 }
 
