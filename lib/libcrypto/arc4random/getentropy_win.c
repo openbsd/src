@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_win.c,v 1.5 2016/08/07 03:27:21 tb Exp $	*/
+/*	$OpenBSD: getentropy_win.c,v 1.6 2020/11/11 10:41:24 bcook Exp $	*/
 
 /*
  * Copyright (c) 2014, Theo de Raadt <deraadt@openbsd.org> 
@@ -21,39 +21,30 @@
  */
 
 #include <windows.h>
+#include <bcrypt.h>
 #include <errno.h>
 #include <stdint.h>
 #include <sys/types.h>
-#include <wincrypt.h>
-#include <process.h>
 
 int	getentropy(void *buf, size_t len);
 
 /*
- * On Windows, CryptGenRandom is supposed to be a well-seeded
- * cryptographically strong random number generator.
+ * On Windows, BCryptGenRandom with BCRYPT_USE_SYSTEM_PREFERRED_RNG is supposed
+ * to be a well-seeded, cryptographically strong random number generator.
+ * https://docs.microsoft.com/en-us/windows/win32/api/bcrypt/nf-bcrypt-bcryptgenrandom
  */
 int
 getentropy(void *buf, size_t len)
 {
-	HCRYPTPROV provider;
-
 	if (len > 256) {
 		errno = EIO;
 		return (-1);
 	}
 
-	if (CryptAcquireContext(&provider, NULL, NULL, PROV_RSA_FULL,
-	    CRYPT_VERIFYCONTEXT) == 0)
-		goto fail;
-	if (CryptGenRandom(provider, len, buf) == 0) {
-		CryptReleaseContext(provider, 0);
-		goto fail;
+	if (FAILED(BCryptGenRandom(NULL, buf, len, BCRYPT_USE_SYSTEM_PREFERRED_RNG))) {
+		errno = EIO;
+		return (-1);
 	}
-	CryptReleaseContext(provider, 0);
-	return (0);
 
-fail:
-	errno = EIO;
-	return (-1);
+	return (0);
 }
