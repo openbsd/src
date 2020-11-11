@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.725 2020/10/28 20:40:02 kettenis Exp $
+$OpenBSD: usbdevs,v 1.726 2020/11/11 12:59:18 patrick Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3626,6 +3626,7 @@ product PROLIFIC PL2302		0x0001	PL2302 Host-Host
 product PROLIFIC RSAQ2		0x04bb	PL2303 Serial
 product PROLIFIC PL2303BENQ	0x0609	PL2303 Serial
 product PROLIFIC PL2303		0x2303	PL2303 Serial
+product PROLIFIC PL2303GC	0x23a3	PL2303 Serial
 product PROLIFIC PL2305		0x2305	Parallel printer
 product PROLIFIC ATAPI4		0x2307	ATAPI-4 Bridge Controller
 product PROLIFIC PL2501		0x2501	PL2501 Host-Host
