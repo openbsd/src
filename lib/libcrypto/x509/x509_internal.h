@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_internal.h,v 1.3 2020/09/15 11:55:14 beck Exp $ */
+/* $OpenBSD: x509_internal.h,v 1.4 2020/11/11 18:49:34 jsing Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -57,6 +57,7 @@ struct x509_constraints_names {
 
 struct x509_verify_chain {
 	STACK_OF(X509) *certs;		/* Kept in chain order, includes leaf */
+	int *cert_errors;		/* Verify error for each cert in chain. */
 	struct x509_constraints_names *names;	/* All names from all certs */
 };
 
