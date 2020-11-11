@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2020/11/10 14:43:14 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.8 2020/11/11 13:55:54 bluhm Exp $
 
 # Copyright (c) 2019 Moritz Buhl <openbsd@moritzbuhl.de>
 # Copyright (c) 2019 Alexander Bluhm <bluhm@openbsd.org>
@@ -20,7 +20,7 @@
 # For each PROG define new regression subtests based on the test number.
 
 .if defined(NUMBERS)
-REGRESS_TARGETS =	${NUMBERS:S/^/run-${PROG}-/}
+REGRESS_TARGETS =	${NUMBERS:C/(.*)/run-${PROG}-\1 cleanup-${PROG}-\1/}
 .else
 REGRESS_TARGETS =	${PROGS:S/^/run-/}
 .endif
@@ -35,7 +35,7 @@ PROGS +=	t_getgroups t_getitimer t_getlogin t_getpid t_getrusage
 PROGS +=	t_getsid t_getsockname t_gettimeofday
 PROGS +=	t_kill
 PROGS +=	t_link t_listen
-PROGS +=	t_mkdir t_mkfifo t_mknod t_mlock t_mmap 
+PROGS +=	t_mkdir t_mkfifo t_mknod t_mlock t_mmap
 PROGS +=	t_msgctl t_msgget t_msgrcv t_msgsnd t_msync
 PROGS +=	t_pipe t_pipe2 t_poll t_ptrace
 PROGS +=	t_revoke
@@ -48,11 +48,10 @@ PROGS +=	t_write
 # failing tests
 REGRESS_EXPECTED_FAILURES =
 REGRESS_EXPECTED_FAILURES +=	run-t_mlock-4
-REGRESS_EXPECTED_FAILURES +=	run-t_mmap-1 run-t_mmap-3
+REGRESS_EXPECTED_FAILURES +=	run-t_mmap-1
 REGRESS_EXPECTED_FAILURES +=	run-t_msgrcv-3
 REGRESS_EXPECTED_FAILURES +=	run-t_pipe2-2
-REGRESS_EXPECTED_FAILURES +=	run-t_stat-1 run-t_stat-4 run-t_stat-5
-REGRESS_EXPECTED_FAILURES +=	run-t_stat-6 run-t_stat-8
+REGRESS_EXPECTED_FAILURES +=	run-t_stat-5
 REGRESS_EXPECTED_FAILURES +=	run-t_unlink-2
 
 . for p in ${PROGS}
@@ -68,9 +67,9 @@ setup-t_truncate:
 	${SUDO} touch truncate_test.root_owned
 	${SUDO} chown root:wheel truncate_test.root_owned
 
-run-t_chroot: cleanup-dir
-run-t_ptrace: cleanup-dir
-cleanup-dir:
+run-t_chroot: clean-dir
+run-t_ptrace: clean-dir
+clean-dir:
 	${SUDO} rm -rf dir
 
 CLEANFILES =	access dummy mmap truncate_test.root_owned
@@ -107,6 +106,9 @@ run-${PROG}-$n:
 	# bad REQ_USER: ${REQ_USER_$n}
 	false
 .  endif
+
+cleanup-${PROG}-$n:
+	-./${PROG} -c $n
 
 . endfor
 .endif
