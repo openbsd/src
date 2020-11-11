@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.306 2020/10/14 16:57:33 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.307 2020/11/11 18:14:12 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -416,7 +416,7 @@ typedef struct ssl_handshake_st {
 	const SSL_CIPHER *new_cipher;
 
 	/* key_block is the record-layer key block for TLS 1.2 and earlier. */
-	int key_block_len;
+	size_t key_block_len;
 	unsigned char *key_block;
 
 	/* Extensions seen in this handshake. */

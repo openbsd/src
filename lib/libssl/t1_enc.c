@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.126 2020/10/14 16:57:33 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.127 2020/11/11 18:14:12 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -300,17 +300,14 @@ tls1_PRF(SSL *s, const unsigned char *secret, size_t secret_len,
 }
 
 static int
-tls1_generate_key_block(SSL *s, unsigned char *km, int num)
+tls1_generate_key_block(SSL *s, uint8_t *key_block, size_t key_block_len)
 {
-	if (num < 0)
-		return (0);
-
 	return tls1_PRF(s,
 	    s->session->master_key, s->session->master_key_length,
 	    TLS_MD_KEY_EXPANSION_CONST, TLS_MD_KEY_EXPANSION_CONST_SIZE,
 	    s->s3->server_random, SSL3_RANDOM_SIZE,
 	    s->s3->client_random, SSL3_RANDOM_SIZE,
-	    NULL, 0, NULL, 0, km, num);
+	    NULL, 0, NULL, 0, key_block, key_block_len);
 }
 
 /*
@@ -590,7 +587,8 @@ tls1_setup_key_block(SSL *s)
 {
 	unsigned char *key_block;
 	int mac_type = NID_undef, mac_secret_size = 0;
-	int key_block_len, key_len, iv_len;
+	size_t key_block_len;
+	int key_len, iv_len;
 	const EVP_CIPHER *cipher = NULL;
 	const EVP_AEAD *aead = NULL;
 	const EVP_MD *mac = NULL;
