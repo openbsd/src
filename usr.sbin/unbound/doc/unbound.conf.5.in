@@ -2360,9 +2360,6 @@ location.
 .I @ub_conf_file@
 unbound configuration file.
 .TP
-.I @UNBOUND_PIDFILE@
-default unbound pidfile with process ID of the running daemon.
-.TP
 .I unbound.log
 unbound log file. default is to log to
 \fIsyslog\fR(3).
