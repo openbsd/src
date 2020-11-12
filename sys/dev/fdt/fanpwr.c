@@ -1,4 +1,4 @@
-/*	$OpenBSD: fanpwr.c,v 1.3 2019/05/24 18:54:12 kettenis Exp $	*/
+/*	$OpenBSD: fanpwr.c,v 1.4 2020/11/12 10:47:07 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -77,11 +77,10 @@ int
 fanpwr_match(struct device *parent, void *match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
-	int node = *(int *)ia->ia_cookie;
 
-	return (OF_is_compatible(node, "fcs,fan53555") ||
-	    OF_is_compatible(node, "silergy,syr827") ||
-	    OF_is_compatible(node, "silergy,syr828"));
+	return (strcmp(ia->ia_name, "fcs,fan53555") == 0 ||
+	    strcmp(ia->ia_name, "silergy,syr827") == 0 ||
+	    strcmp(ia->ia_name, "silergy,syr828") == 0);
 }
 
 void

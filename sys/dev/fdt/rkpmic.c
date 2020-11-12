@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpmic.c,v 1.6 2018/07/31 10:09:25 kettenis Exp $	*/
+/*	$OpenBSD: rkpmic.c,v 1.7 2020/11/12 10:47:07 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -107,10 +107,9 @@ int
 rkpmic_match(struct device *parent, void *match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
-	int node = *(int *)ia->ia_cookie;
 
-	return (OF_is_compatible(node, "rockchip,rk805") ||
-		OF_is_compatible(node, "rockchip,rk808"));
+	return (strcmp(ia->ia_name, "rockchip,rk805") == 0 ||
+	    strcmp(ia->ia_name, "rockchip,rk808") == 0);
 }
 
 void

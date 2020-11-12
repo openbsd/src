@@ -1,4 +1,4 @@
-/*	$OpenBSD: bd718x7.c,v 1.2 2020/03/27 12:23:52 patrick Exp $	*/
+/*	$OpenBSD: bd718x7.c,v 1.3 2020/11/12 10:47:07 patrick Exp $	*/
 /*
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -74,10 +74,9 @@ int
 bdpmic_match(struct device *parent, void *match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
-	int node = *(int *)ia->ia_cookie;
 
-	return (OF_is_compatible(node, "rohm,bd71837") ||
-		OF_is_compatible(node, "rohm,bd71847"));
+	return (strcmp(ia->ia_name, "rohm,bd71837") == 0 ||
+	    strcmp(ia->ia_name, "rohm,bd71847") == 0);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sypwr.c,v 1.3 2019/09/29 13:27:48 kettenis Exp $	*/
+/*	$OpenBSD: sypwr.c,v 1.4 2020/11/12 10:47:07 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -62,9 +62,8 @@ int
 sypwr_match(struct device *parent, void *match, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
-	int node = *(int *)ia->ia_cookie;
 
-	return (OF_is_compatible(node, "silergy,sy8106a"));
+	return (strcmp(ia->ia_name, "silergy,sy8106a") == 0);
 }
 
 void
