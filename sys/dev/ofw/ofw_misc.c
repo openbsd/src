@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.24 2020/11/10 19:08:43 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.25 2020/11/12 13:50:30 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -358,6 +358,7 @@ sfp_get_sffpage(uint32_t phandle, struct if_sffpage *sff)
 #define SFF8472_TCC_ECC_1000_SX		(1 << 0)
 #define SFF8472_TCC_ECC_1000_LX		(1 << 1)
 #define SFF8472_TCC_ECC_1000_CX		(1 << 2)
+#define SFF8472_TCC_ECC_1000_T		(1 << 3)
 
 int
 sfp_add_media(uint32_t phandle, struct mii_data *mii)
@@ -373,12 +374,22 @@ sfp_add_media(uint32_t phandle, struct mii_data *mii)
 	if (error)
 		return error;
 
-	if (sff.sff_data[SFF8472_TCC_ECC] & SFF8472_TCC_ECC_1000_SX)
+	if (sff.sff_data[SFF8472_TCC_ECC] & SFF8472_TCC_ECC_1000_SX) {
 		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_1000_SX, 0, NULL);
-	if (sff.sff_data[SFF8472_TCC_ECC] & SFF8472_TCC_ECC_1000_LX)
+		mii->mii_media_active = IFM_ETHER | IFM_1000_SX | IFM_FDX;
+	}
+	if (sff.sff_data[SFF8472_TCC_ECC] & SFF8472_TCC_ECC_1000_LX) {
 		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_1000_LX, 0, NULL);
-	if (sff.sff_data[SFF8472_TCC_ECC] & SFF8472_TCC_ECC_1000_CX)
+		mii->mii_media_active = IFM_ETHER | IFM_1000_LX | IFM_FDX;
+	}
+	if (sff.sff_data[SFF8472_TCC_ECC] & SFF8472_TCC_ECC_1000_CX) {
 		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_1000_CX, 0, NULL);
+		mii->mii_media_active = IFM_ETHER | IFM_1000_CX | IFM_FDX;
+	}
+	if (sff.sff_data[SFF8472_TCC_ECC] & SFF8472_TCC_ECC_1000_T) {
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_1000_T, 0, NULL);
+		mii->mii_media_active = IFM_ETHER | IFM_1000_T | IFM_FDX;
+	}
 
 	return 0;
 }
