@@ -1,4 +1,4 @@
-/*	$OpenBSD: frameasm.h,v 1.24 2020/11/09 19:29:27 guenther Exp $	*/
+/*	$OpenBSD: frameasm.h,v 1.25 2020/11/12 23:29:16 guenther Exp $	*/
 /*	$NetBSD: frameasm.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
@@ -60,14 +60,10 @@
 /*
  * For real interrupt code paths, where we can come from userspace.
  * We only have an iretq_frame on entry.
- * Open up space like it was a hardware trap frame (with trapno+err)
- * then bludgeon it into an intrframe.
  */
 #define INTRENTRY_LABEL(label)	X##label##_untramp
 #define	INTRENTRY(label) \
-	pushq	$0	/* fake err */	; \
-	subq    $8,%rsp	/* fake trapno */; \
-	testb	$SEL_RPL,24(%rsp)	; \
+	testb	$SEL_RPL,IRETQ_CS(%rsp)	; \
 	je	INTRENTRY_LABEL(label)	; \
 	swapgs				; \
 	FENCE_SWAPGS_MIS_TAKEN 		; \
@@ -80,33 +76,15 @@
 END(X##label)				; \
 _ENTRY(INTRENTRY_LABEL(label)) /* from kernel */ \
 	FENCE_NO_SAFE_SMAP		; \
-	INTR_ENTRY_KERN			; \
+	subq	$TF_RIP,%rsp		; \
+	movq	%rcx,TF_RCX(%rsp)	; \
 	jmp	99f			; \
 	_ALIGN_TRAPS			; \
 98:	/* from userspace */		  \
-	INTR_ENTRY_USER			; \
-99:	INTR_SAVE_MOST_GPRS_NO_ADJ	; \
-	INTR_CLEAR_GPRS
-
-#define	INTR_ENTRY_KERN \
-	subq	$120,%rsp		; \
-	movq	%rcx,TF_RCX(%rsp)	; \
-	/* the hardware puts err next to %rip, we move it elsewhere and */ \
-	/* later put %rbp in this slot to make it look like a call frame */ \
-	movq	(TF_RIP - 8)(%rsp),%rcx	; \
-	movq	%rcx,TF_ERR(%rsp)
-
-#define	INTR_ENTRY_USER \
 	movq	CPUVAR(KERN_RSP),%rax	; \
 	xchgq	%rax,%rsp		; \
 	movq	%rcx,TF_RCX(%rsp)	; \
 	RET_STACK_REFILL_WITH_RCX	; \
-	/* copy trapno+err to the trap frame */ \
-	movq	0(%rax),%rcx		; \
-	movq	%rcx,TF_TRAPNO(%rsp)	; \
-	movq	8(%rax),%rcx		; \
-	movq	%rcx,TF_ERR(%rsp)	; \
-	addq	$16,%rax		; \
 	/* copy iretq frame to the trap frame */ \
 	movq	IRETQ_RIP(%rax),%rcx	; \
 	movq	%rcx,TF_RIP(%rsp)	; \
@@ -118,7 +96,10 @@ _ENTRY(INTRENTRY_LABEL(label)) /* from kernel */ \
 	movq	%rcx,TF_RSP(%rsp)	; \
 	movq	IRETQ_SS(%rax),%rcx	; \
 	movq	%rcx,TF_SS(%rsp)	; \
-	movq	CPUVAR(SCRATCH),%rax
+	movq	CPUVAR(SCRATCH),%rax	; \
+99:	INTR_SAVE_MOST_GPRS_NO_ADJ	; \
+	INTR_CLEAR_GPRS			; \
+	movq	%rax,TF_ERR(%rsp)
 
 #define INTRFASTEXIT \
 	jmp	intr_fast_exit
@@ -161,8 +142,28 @@ _ENTRY(INTRENTRY_LABEL(label)) /* from kernel */ \
  * Assumes that %rax has been saved in CPUVAR(SCRATCH).
  */
 #define	TRAP_ENTRY_USER \
-	INTR_ENTRY_USER			; \
-	INTR_SAVE_MOST_GPRS_NO_ADJ	; \
+	movq	CPUVAR(KERN_RSP),%rax		; \
+	xchgq	%rax,%rsp			; \
+	movq	%rcx,TF_RCX(%rsp)		; \
+	RET_STACK_REFILL_WITH_RCX		; \
+	/* copy trapno+err to the trap frame */ \
+	movq	0(%rax),%rcx			; \
+	movq	%rcx,TF_TRAPNO(%rsp)		; \
+	movq	8(%rax),%rcx			; \
+	movq	%rcx,TF_ERR(%rsp)		; \
+	/* copy iretq frame to the trap frame */ \
+	movq	(IRETQ_RIP+16)(%rax),%rcx	; \
+	movq	%rcx,TF_RIP(%rsp)		; \
+	movq	(IRETQ_CS+16)(%rax),%rcx	; \
+	movq	%rcx,TF_CS(%rsp)		; \
+	movq	(IRETQ_RFLAGS+16)(%rax),%rcx	; \
+	movq	%rcx,TF_RFLAGS(%rsp)		; \
+	movq	(IRETQ_RSP+16)(%rax),%rcx	; \
+	movq	%rcx,TF_RSP(%rsp)		; \
+	movq	(IRETQ_SS+16)(%rax),%rcx	; \
+	movq	%rcx,TF_SS(%rsp)		; \
+	movq	CPUVAR(SCRATCH),%rax		; \
+	INTR_SAVE_MOST_GPRS_NO_ADJ		; \
 	INTR_CLEAR_GPRS
 
 /*
