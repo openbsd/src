@@ -379,6 +379,7 @@ out:
 	return nr_free;
 }
 
+static struct rwlock lock = RWLOCK_INITIALIZER("ttmshrink");
 /**
  * Callback for mm to request pool to reduce number of page held.
  *
@@ -389,7 +390,6 @@ out:
 static unsigned long
 ttm_pool_shrink_scan(struct shrinker *shrink, struct shrink_control *sc)
 {
-	static DEFINE_MUTEX(lock);
 	static unsigned start_pool;
 	unsigned i;
 	unsigned pool_offset;

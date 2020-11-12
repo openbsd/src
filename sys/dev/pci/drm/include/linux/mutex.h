@@ -8,7 +8,7 @@
 #include <linux/list.h>
 #include <linux/spinlock_types.h>
 
-#define DEFINE_MUTEX(x)		struct rwlock x
+#define DEFINE_MUTEX(x)		struct rwlock x = RWLOCK_INITIALIZER(#x)
 
 #define mutex_lock_interruptible_nested(rwl, subc) \
 					mutex_lock_interruptible(rwl)
