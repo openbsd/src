@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.37 2020/03/15 05:58:48 visa Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.38 2020/11/12 05:49:26 semarie Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -390,6 +390,7 @@ static int witness_locktrace = 0;
 #endif
 
 int witness_count = WITNESS_COUNT;
+int witness_uninitialized_report = 5;
 
 static struct mutex w_mtx;
 static struct rwlock w_ctlock = RWLOCK_INITIALIZER("w_ctlock");
@@ -761,8 +762,19 @@ witness_checkorder(struct lock_object *lock, int flags,
 	struct witness *w, *w1;
 	int i, j, s;
 
-	if (witness_cold || witness_watch < 1 || panicstr != NULL ||
-	    db_active || (lock->lo_flags & LO_WITNESS) == 0)
+	if (witness_cold || witness_watch < 1 || panicstr != NULL || db_active)
+		return;
+	
+	if ((lock->lo_flags & LO_INITIALIZED) == 0) {
+		if (witness_uninitialized_report > 0) {
+			witness_uninitialized_report--;
+			printf("witness: lock_object uninitialized: %p\n", lock);
+			witness_debugger(1);
+		}
+		lock->lo_flags |= LO_INITIALIZED;
+	}
+
+	if ((lock->lo_flags & LO_WITNESS) == 0)
 		return;
 
 	w = lock->lo_witness;
