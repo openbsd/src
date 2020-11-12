@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.278 2020/11/12 22:17:21 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.279 2020/11/12 22:19:38 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1086,7 +1086,13 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
 		if (ikev2_handle_certreq(env, msg) != 0)
 			return;
 
-		(void)ikev2_init_auth(env, msg);
+		if (ikev2_init_auth(env, msg) != 0) {
+			ikev2_ike_sa_setreason(sa,
+			    "failed to initiate IKE_AUTH exchange");
+			sa_state(env, sa, IKEV2_STATE_CLOSED);
+			msg->msg_sa = NULL;
+			return;
+		}
 		break;
 	case IKEV2_EXCHANGE_IKE_AUTH:
 		if (msg->msg_flags & IKED_MSG_FLAGS_AUTHENTICATION_FAILED) {
@@ -1354,18 +1360,18 @@ ikev2_init_auth(struct iked *env, struct iked_message *msg)
 		return (-1);
 
 	if (ikev2_sa_initiator(env, sa, NULL, msg) == -1) {
-		log_debug("%s: failed to get IKE keys", __func__);
+		log_info("%s: failed to get IKE keys", SPI_SA(sa, __func__));
 		return (-1);
 	}
 
 	if ((authmsg = ikev2_msg_auth(env, sa,
 	    !sa->sa_hdr.sh_initiator)) == NULL) {
-		log_debug("%s: failed to get auth data", __func__);
+		log_info("%s: failed to get auth data", SPI_SA(sa, __func__));
 		return (-1);
 	}
 
 	if (ca_setauth(env, sa, authmsg, PROC_CERT) == -1) {
-		log_debug("%s: failed to get cert", __func__);
+		log_info("%s: failed to get cert", SPI_SA(sa, __func__));
 		ibuf_release(authmsg);
 		return (-1);
 	}
@@ -1392,7 +1398,7 @@ ikev2_init_ike_auth(struct iked *env, struct iked_sa *sa)
 
 	if (!sa->sa_localauth.id_type) {
 		log_debug("%s: no local auth", __func__);
-		return (-1);
+		return (0);
 	}
 
 	/* New encrypted message buffer */
