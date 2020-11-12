@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.38 2020/11/10 19:10:14 kettenis Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.39 2020/11/12 13:53:41 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -1566,11 +1566,34 @@ void
 mvpp2_port_attach_sfp(struct device *self)
 {
 	struct mvpp2_port *sc = (struct mvpp2_port *)self;
+	uint32_t reg;
 
 	rw_enter(&mvpp2_sff_lock, RW_WRITE);
 	sfp_disable(sc->sc_sfp);
 	sfp_add_media(sc->sc_sfp, &sc->sc_mii);
 	rw_exit(&mvpp2_sff_lock);
+
+	switch (IFM_SUBTYPE(sc->sc_mii.mii_media_active)) {
+	case IFM_2500_SX:
+		sc->sc_phy_mode = PHY_MODE_2500BASEX;
+		sc->sc_mii.mii_media_status = IFM_AVALID;
+		sc->sc_inband_status = 1;
+		break;
+	case IFM_1000_CX:
+	case IFM_1000_LX:
+	case IFM_1000_SX:
+	case IFM_1000_T:
+		sc->sc_phy_mode = PHY_MODE_1000BASEX;
+		sc->sc_mii.mii_media_status = IFM_AVALID;
+		sc->sc_inband_status = 1;
+		break;
+	}
+
+	if (sc->sc_inband_status) {
+		reg = mvpp2_gmac_read(sc, MVPP2_GMAC_INT_MASK_REG);
+		reg |= MVPP2_GMAC_INT_CAUSE_LINK_CHANGE;
+		mvpp2_gmac_write(sc, MVPP2_GMAC_INT_MASK_REG, reg);
+	}
 }
 
 uint32_t
@@ -1896,6 +1919,7 @@ mvpp2_mii_statchg(struct device *self)
 void
 mvpp2_inband_statchg(struct mvpp2_port *sc)
 {
+	uint64_t subtype = IFM_SUBTYPE(sc->sc_mii.mii_media_active);
 	uint32_t reg;
 
 	sc->sc_mii.mii_media_status = IFM_AVALID;
@@ -1915,9 +1939,9 @@ mvpp2_inband_statchg(struct mvpp2_port *sc)
 		if (reg & MVPP2_PORT_STATUS0_FULLDX)
 			sc->sc_mii.mii_media_active |= IFM_FDX;
 		if (sc->sc_phy_mode == PHY_MODE_2500BASEX)
-			sc->sc_mii.mii_media_active |= IFM_2500_SX;
+			sc->sc_mii.mii_media_active |= subtype;
 		else if (sc->sc_phy_mode == PHY_MODE_1000BASEX)
-			sc->sc_mii.mii_media_active |= IFM_1000_SX;
+			sc->sc_mii.mii_media_active |= subtype;
 		else if (reg & MVPP2_PORT_STATUS0_GMIISPEED)
 			sc->sc_mii.mii_media_active |= IFM_1000_T;
 		else if (reg & MVPP2_PORT_STATUS0_MIISPEED)
@@ -1954,6 +1978,8 @@ mvpp2_port_change(struct mvpp2_port *sc)
 			reg &= ~MVPP2_GMAC_CONFIG_GMII_SPEED;
 			reg &= ~MVPP2_GMAC_CONFIG_FULL_DUPLEX;
 			if (IFM_SUBTYPE(sc->sc_mii.mii_media_active) == IFM_2500_SX ||
+			    IFM_SUBTYPE(sc->sc_mii.mii_media_active) == IFM_1000_CX ||
+			    IFM_SUBTYPE(sc->sc_mii.mii_media_active) == IFM_1000_LX ||
 			    IFM_SUBTYPE(sc->sc_mii.mii_media_active) == IFM_1000_SX ||
 			    IFM_SUBTYPE(sc->sc_mii.mii_media_active) == IFM_1000_T)
 				reg |= MVPP2_GMAC_CONFIG_GMII_SPEED;
