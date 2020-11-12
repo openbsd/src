@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.277 2020/11/07 21:22:02 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.278 2020/11/12 22:17:21 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1388,7 +1388,7 @@ ikev2_init_ike_auth(struct iked *env, struct iked_sa *sa)
 	ssize_t				 len;
 
 	if (!sa_stateok(sa, IKEV2_STATE_SA_INIT))
-		return (0);
+		return (-1);
 
 	if (!sa->sa_localauth.id_type) {
 		log_debug("%s: no local auth", __func__);
