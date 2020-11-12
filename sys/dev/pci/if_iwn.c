@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.242 2020/10/11 07:05:28 mpi Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.243 2020/11/12 15:16:18 krw Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1910,7 +1910,6 @@ iwn_ccmp_decap(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_key *k = &ni->ni_pairwise_key;
 	struct ieee80211_frame *wh;
-	struct ieee80211_rx_ba *ba;
 	uint64_t pn, *prsc;
 	uint8_t *ivp;
 	uint8_t tid;
@@ -1927,7 +1926,6 @@ iwn_ccmp_decap(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	}
 	hasqos = ieee80211_has_qos(wh);
 	tid = hasqos ? ieee80211_get_qos(wh) & IEEE80211_QOS_TID : 0;
-	ba = hasqos ? &ni->ni_rx_ba[tid] : NULL;
 	prsc = &k->k_rsc[tid];
 
 	/* Extract the 48-bit PN from the CCMP header. */
