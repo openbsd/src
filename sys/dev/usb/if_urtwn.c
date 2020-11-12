@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.94 2020/11/10 11:19:37 stsp Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.95 2020/11/12 13:31:19 krw Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -216,6 +216,7 @@ struct urtwn_softc {
 #define sc_txtap	sc_txtapu.th
 	int				sc_txtap_len;
 #endif
+	int				sc_key_tasks;
 };
 
 #ifdef URTWN_DEBUG
@@ -1044,7 +1045,9 @@ urtwn_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	cmd.key = *k;
 	cmd.ni = ni;
 	urtwn_do_async(sc, urtwn_set_key_cb, &cmd, sizeof(cmd));
-	return (0);
+	sc->sc_key_tasks++;
+
+	return (EBUSY);
 }
 
 void
@@ -1053,7 +1056,20 @@ urtwn_set_key_cb(struct urtwn_softc *sc, void *arg)
 	struct ieee80211com *ic = &sc->sc_sc.sc_ic;
 	struct urtwn_cmd_key *cmd = arg;
 
-	rtwn_set_key(ic, cmd->ni, &cmd->key);
+	sc->sc_key_tasks--;
+
+	if (rtwn_set_key(ic, cmd->ni, &cmd->key) == 0) {
+		if (sc->sc_key_tasks == 0) {
+			DPRINTF(("marking port %s valid\n",
+			    ether_sprintf(cmd->ni->ni_macaddr)));
+			cmd->ni->ni_port_valid = 1;
+			ieee80211_set_link_state(ic, LINK_STATE_UP);
+		}
+	} else {
+		IEEE80211_SEND_MGMT(ic, cmd->ni, IEEE80211_FC0_SUBTYPE_DEAUTH,
+		    IEEE80211_REASON_AUTH_LEAVE);
+		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
+	}
 }
 
 void
