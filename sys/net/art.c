@@ -1,4 +1,4 @@
-/*	$OpenBSD: art.c,v 1.28 2019/03/31 19:29:27 tb Exp $ */
+/*	$OpenBSD: art.c,v 1.29 2020/11/12 15:25:28 mpi Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -115,7 +115,6 @@ art_alloc(unsigned int rtableid, unsigned int alen, unsigned int off)
 	}
 
 	ar->ar_off = off;
-	ar->ar_rtableid = rtableid;
 	rw_init(&ar->ar_lock, "art");
 
 	return (ar);
