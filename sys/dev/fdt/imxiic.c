@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiic.c,v 1.9 2020/11/13 12:40:06 patrick Exp $ */
+/* $OpenBSD: imxiic.c,v 1.10 2020/11/13 12:43:04 patrick Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -32,10 +32,10 @@
 
 /* registers */
 #define I2C_IADR	0x00
-#define I2C_IFDR	0x04
-#define I2C_I2CR	0x08
-#define I2C_I2SR	0x0C
-#define I2C_I2DR	0x10
+#define I2C_IFDR	0x01
+#define I2C_I2CR	0x02
+#define I2C_I2SR	0x03
+#define I2C_I2DR	0x04
 
 #define I2C_I2CR_RSTA	(1 << 2)
 #define I2C_I2CR_TXAK	(1 << 3)
@@ -52,7 +52,7 @@ struct imxiic_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_size_t		sc_ios;
-	void			*sc_ih;
+	int			sc_reg_shift;
 	int			sc_node;
 	int			sc_bitrate;
 
@@ -79,10 +79,13 @@ void imxiic_i2c_release_bus(void *, int);
 int imxiic_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
     void *, size_t, int);
 
+uint8_t imxiic_read_1(struct imxiic_softc *, int);
+void imxiic_write_1(struct imxiic_softc *, int, uint8_t);
+
 #define HREAD1(sc, reg)							\
-	(bus_space_read_1((sc)->sc_iot, (sc)->sc_ioh, (reg)))
+	imxiic_read_1((sc), (reg))
 #define HWRITE1(sc, reg, val)						\
-	bus_space_write_1((sc)->sc_iot, (sc)->sc_ioh, (reg), (val))
+	imxiic_write_1((sc), (reg), (val))
 #define HSET1(sc, reg, bits)						\
 	HWRITE1((sc), (reg), HREAD1((sc), (reg)) | (bits))
 #define HCLR1(sc, reg, bits)						\
@@ -122,6 +125,8 @@ imxiic_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
 	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("imxiic_attach: bus_space_map failed!");
+
+	sc->sc_reg_shift = 2;
 
 	printf("\n");
 
@@ -359,6 +364,22 @@ imxiic_detach(struct device *self, int flags)
 
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 	return 0;
+}
+
+uint8_t
+imxiic_read_1(struct imxiic_softc *sc, int reg)
+{
+	reg <<= sc->sc_reg_shift;
+
+	return bus_space_read_1(sc->sc_iot, sc->sc_ioh, reg);
+}
+
+void
+imxiic_write_1(struct imxiic_softc *sc, int reg, uint8_t val)
+{
+	reg <<= sc->sc_reg_shift;
+
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, reg, val);
 }
 
 void
