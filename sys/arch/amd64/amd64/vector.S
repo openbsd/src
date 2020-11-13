@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.83 2020/11/09 19:29:27 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.84 2020/11/13 05:32:08 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -434,7 +434,7 @@ END(alltraps)
 /*
  * Traps from supervisor mode (kernel)
  * If we're not mitigating Meltdown, then there's a conditional branch
- * above and we may need a fence to mitigate CVE-2019-1225.  If we're
+ * above and we may need a fence to mitigate CVE-2019-1125.  If we're
  * doing Meltdown mitigation there's just an unconditional branch and
  * can skip the fence.
  */
