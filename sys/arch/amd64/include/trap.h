@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.3 2015/06/28 01:16:29 guenther Exp $	*/
+/*	$OpenBSD: trap.h,v 1.4 2020/11/13 23:08:10 guenther Exp $	*/
 /*	$NetBSD: trap.h,v 1.4 1994/10/27 04:16:30 cgd Exp $	*/
 
 /*-
@@ -60,10 +60,3 @@
 #define	T_STKFLT	17	/* stack fault */
 #define	T_MCA		18	/* machine check ([P]Pro) */
 #define	T_XMM		19	/* SSE FP exception */
-
-/* Trap's coming from user mode */
-#define	T_USER	0x100
-
-/* Flags kludged into the trap code */
-#define TC_TSS		0x80000000
-#define TC_FLAGMASK	(TC_TSS)
