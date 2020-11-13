@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.39 2020/11/12 13:53:41 kettenis Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.40 2020/11/13 22:46:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -2491,9 +2491,9 @@ mvpp2_mac_config(struct mvpp2_port *sc)
 
 	mvpp2_port_disable(sc);
 
-	mvpp2_gmac_write(sc, MVPP2_PORT_CTRL2_REG,
-	    mvpp2_gmac_read(sc, MVPP2_PORT_CTRL2_REG) |
-	    MVPP2_PORT_CTRL2_PORTMACRESET);
+	mvpp2_mac_reset_assert(sc);
+	mvpp2_pcs_reset_assert(sc);
+
 	mvpp2_gop_intr_mask(sc);
 	mvpp2_comphy_config(sc, 0);
 
@@ -2502,9 +2502,6 @@ mvpp2_mac_config(struct mvpp2_port *sc)
 		mvpp2_xlg_config(sc);
 	else
 		mvpp2_gmac_config(sc);
-
-	mvpp2_mac_reset_assert(sc);
-	mvpp2_pcs_reset_assert(sc);
 
 	mvpp2_comphy_config(sc, 1);
 	mvpp2_gop_config(sc);
