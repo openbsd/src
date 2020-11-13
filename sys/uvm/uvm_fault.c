@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.105 2020/11/13 11:16:08 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.106 2020/11/13 14:18:25 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -801,6 +801,84 @@ uvm_fault_upper(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	return 0;
 }
 
+
+/*
+ * uvm_fault_upper_lookup: look up existing h/w mapping and amap.
+ *
+ * iterate range of interest:
+ *      1. check if h/w mapping exists.  if yes, we don't care
+ *      2. check if anon exists.  if not, page is lower.
+ *      3. if anon exists, enter h/w mapping for neighbors.
+ */
+boolean_t
+uvm_fault_upper_lookup(struct uvm_faultinfo *ufi,
+    const struct uvm_faultctx *flt, struct vm_anon **anons,
+    struct vm_page **pages)
+{
+	struct vm_amap *amap = ufi->entry->aref.ar_amap;
+	struct vm_anon *anon;
+	boolean_t shadowed;
+	vaddr_t currva;
+	paddr_t pa;
+	int lcv;
+
+	/*
+	 * map in the backpages and frontpages we found in the amap in hopes
+	 * of preventing future faults.    we also init the pages[] array as
+	 * we go.
+	 */
+	currva = flt->startva;
+	shadowed = FALSE;
+	for (lcv = 0 ; lcv < flt->npages ; lcv++, currva += PAGE_SIZE) {
+		/*
+		 * dont play with VAs that are already mapped
+		 * except for center)
+		 */
+		if (lcv != flt->centeridx &&
+		    pmap_extract(ufi->orig_map->pmap, currva, &pa)) {
+			pages[lcv] = PGO_DONTCARE;
+			continue;
+		}
+
+		/* unmapped or center page. check if any anon at this level. */
+		if (amap == NULL || anons[lcv] == NULL) {
+			pages[lcv] = NULL;
+			continue;
+		}
+
+		/* check for present page and map if possible. re-activate it */
+		pages[lcv] = PGO_DONTCARE;
+		if (lcv == flt->centeridx) {	/* save center for later! */
+			shadowed = TRUE;
+			continue;
+		}
+		anon = anons[lcv];
+		if (anon->an_page &&
+		    (anon->an_page->pg_flags & (PG_RELEASED|PG_BUSY)) == 0) {
+			uvm_lock_pageq();
+			uvm_pageactivate(anon->an_page);	/* reactivate */
+			uvm_unlock_pageq();
+			uvmexp.fltnamap++;
+
+			/*
+			 * Since this isn't the page that's actually faulting,
+			 * ignore pmap_enter() failures; it's not critical
+			 * that we enter these right now.
+			 */
+			(void) pmap_enter(ufi->orig_map->pmap, currva,
+			    VM_PAGE_TO_PHYS(anon->an_page) | flt->pa_flags,
+			    (anon->an_ref > 1) ?
+			    (flt->enter_prot & ~PROT_WRITE) : flt->enter_prot,
+			    PMAP_CANFAIL |
+			     (VM_MAPENT_ISWIRED(ufi->entry) ? PMAP_WIRED : 0));
+		}
+	}
+	if (flt->npages > 1)
+		pmap_update(ufi->orig_map->pmap);
+
+	return shadowed;
+}
+
 /*
  *   F A U L T   -   m a i n   e n t r y   p o i n t
  */
@@ -827,7 +905,6 @@ uvm_fault(vm_map_t orig_map, vaddr_t vaddr, vm_fault_t fault_type,
 	int result, lcv, gotpages;
 	vaddr_t currva;
 	voff_t uoff;
-	paddr_t pa;
 	struct vm_amap *amap;
 	struct uvm_object *uobj;
 	struct vm_anon *anons_store[UVM_MAXRANGE], **anons, *anon;
@@ -868,61 +945,9 @@ ReFault:
 	amap = ufi.entry->aref.ar_amap;
 	uobj = ufi.entry->object.uvm_obj;
 
-	/*
-	 * map in the backpages and frontpages we found in the amap in hopes
-	 * of preventing future faults.    we also init the pages[] array as
-	 * we go.
-	 */
-	currva = flt.startva;
-	shadowed = FALSE;
-	for (lcv = 0 ; lcv < flt.npages ; lcv++, currva += PAGE_SIZE) {
-		/*
-		 * dont play with VAs that are already mapped
-		 * except for center)
-		 */
-		if (lcv != flt.centeridx &&
-		    pmap_extract(ufi.orig_map->pmap, currva, &pa)) {
-			pages[lcv] = PGO_DONTCARE;
-			continue;
-		}
-
-		/* unmapped or center page.   check if any anon at this level. */
-		if (amap == NULL || anons[lcv] == NULL) {
-			pages[lcv] = NULL;
-			continue;
-		}
-
-		/* check for present page and map if possible.   re-activate it. */
-		pages[lcv] = PGO_DONTCARE;
-		if (lcv == flt.centeridx) {	/* save center for later! */
-			shadowed = TRUE;
-			continue;
-		}
-		anon = anons[lcv];
-		if (anon->an_page &&
-		    (anon->an_page->pg_flags & (PG_RELEASED|PG_BUSY)) == 0) {
-			uvm_lock_pageq();
-			uvm_pageactivate(anon->an_page);	/* reactivate */
-			uvm_unlock_pageq();
-			uvmexp.fltnamap++;
-
-			/*
-			 * Since this isn't the page that's actually faulting,
-			 * ignore pmap_enter() failures; it's not critical
-			 * that we enter these right now.
-			 */
-			(void) pmap_enter(ufi.orig_map->pmap, currva,
-			    VM_PAGE_TO_PHYS(anon->an_page) | flt.pa_flags,
-			    (anon->an_ref > 1) ?
-			    (flt.enter_prot & ~PROT_WRITE) : flt.enter_prot,
-			    PMAP_CANFAIL |
-			     (VM_MAPENT_ISWIRED(ufi.entry) ? PMAP_WIRED : 0));
-		}
-	}
-	if (flt.npages > 1)
-		pmap_update(ufi.orig_map->pmap);
-
 	/* (shadowed == TRUE) if there is an anon at the faulting address */
+	shadowed = uvm_fault_upper_lookup(&ufi, &flt, anons, pages);
+
 	/*
 	 * if the desired page is not shadowed by the amap and we have a
 	 * backing object, then we check to see if the backing object would
