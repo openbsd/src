@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.75 2020/07/31 10:49:33 mglocker Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.76 2020/11/13 13:04:53 patrick Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,11 +69,19 @@ int	uplcomdebug = 0;
 #define	UPLCOM_SECOND_IFACE_INDEX	1
 
 #define	UPLCOM_SET_REQUEST	0x01
+#define	UPLCOM_HXN_SET_REQUEST	0x80
+#define	UPLCOM_HXN_SET_CRTSCTS_REG 0x0A
 #define	UPLCOM_SET_CRTSCTS	0x41
 #define	UPLCOM_HX_SET_CRTSCTS	0x61
+#define	UPLCOM_HXN_SET_CRTSCTS	0xFA
+#define	UPLCOM_HX_STATUS_REG	0x8080
 #define RSAQ_STATUS_CTS		0x80
 #define RSAQ_STATUS_DSR		0x02
 #define RSAQ_STATUS_DCD		0x01
+
+#define UPLCOM_TYPE_01		0
+#define UPLCOM_TYPE_HX		1
+#define UPLCOM_TYPE_HXN		2
 
 struct	uplcom_softc {
 	struct device		 sc_dev;	/* base device */
@@ -95,7 +103,7 @@ struct	uplcom_softc {
 
 	u_char			 sc_lsr;	/* Local status register */
 	u_char			 sc_msr;	/* uplcom status register */
-	int			 sc_type_hx;	/* HX variant */
+	int			 sc_type;	/* variant */
 };
 
 /*
@@ -151,6 +159,7 @@ static const struct usb_devno uplcom_devs[] = {
 	{ USB_VENDOR_PLX, USB_PRODUCT_PLX_CA42 },
 	{ USB_VENDOR_PANASONIC, USB_PRODUCT_PANASONIC_TYTP50P6S },
 	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303 },
+	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303GC },
 	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303X },
 	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303X2 },
 	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_RSAQ2 },
@@ -211,7 +220,9 @@ uplcom_attach(struct device *parent, struct device *self, void *aux)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	char *devname = sc->sc_dev.dv_xname;
+	usb_device_request_t req;
 	usbd_status err;
+	uByte val;
 	int i;
 	struct ucom_attach_args uca;
 
@@ -248,15 +259,28 @@ uplcom_attach(struct device *parent, struct device *self, void *aux)
 	 * variants. The datasheets disagree.
 	 */
 	if (ddesc->bDeviceClass == 0x02)
-		sc->sc_type_hx = 0;
+		sc->sc_type = UPLCOM_TYPE_01;
 	else if (ddesc->bMaxPacketSize == 0x40)
-		sc->sc_type_hx = 1;
+		sc->sc_type = UPLCOM_TYPE_HX;
 	else
-		sc->sc_type_hx = 0;
+		sc->sc_type = UPLCOM_TYPE_01;
+
+	if (sc->sc_type == UPLCOM_TYPE_HX) {
+		req.bmRequestType = UT_READ_VENDOR_DEVICE;
+		req.bRequest = UPLCOM_SET_REQUEST;
+		USETW(req.wValue, UPLCOM_HX_STATUS_REG);
+		USETW(req.wIndex, sc->sc_iface_number);
+		USETW(req.wLength, 1);
+		err = usbd_do_request(sc->sc_udev, &req, &val);
+		if (err)
+			sc->sc_type = UPLCOM_TYPE_HXN;
+	}
 
 #ifdef UPLCOM_DEBUG
 	/* print the chip type */
-	if (sc->sc_type_hx) {
+	if (sc->sc_type == UPLCOM_TYPE_HXN) {
+		DPRINTF(("uplcom_attach: chiptype 2303XN\n"));
+	} else if (sc->sc_type == UPLCOM_TYPE_HX) {
 		DPRINTF(("uplcom_attach: chiptype 2303X\n"));
 	} else {
 		DPRINTF(("uplcom_attach: chiptype 2303\n"));
@@ -376,13 +400,14 @@ uplcom_attach(struct device *parent, struct device *self, void *aux)
 	uca.arg = sc;
 	uca.info = NULL;
 
-	err = uplcom_reset(sc);
-
-	if (err) {
-		printf("%s: reset failed, %s\n", sc->sc_dev.dv_xname,
-			usbd_errstr(err));
-		usbd_deactivate(sc->sc_udev);
-		return;
+	if (sc->sc_type != UPLCOM_TYPE_HXN) {
+		err = uplcom_reset(sc);
+		if (err) {
+			printf("%s: reset failed, %s\n", sc->sc_dev.dv_xname,
+				usbd_errstr(err));
+			usbd_deactivate(sc->sc_udev);
+			return;
+		}
 	}
 
 	DPRINTF(("uplcom: in=0x%x out=0x%x intr=0x%x\n",
@@ -528,10 +553,16 @@ uplcom_set_crtscts(struct uplcom_softc *sc)
 	DPRINTF(("uplcom_set_crtscts: on\n"));
 
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
-	req.bRequest = UPLCOM_SET_REQUEST;
-	USETW(req.wValue, 0);
-	USETW(req.wIndex,
-	    (sc->sc_type_hx ? UPLCOM_HX_SET_CRTSCTS : UPLCOM_SET_CRTSCTS));
+	if (sc->sc_type == UPLCOM_TYPE_HXN) {
+		req.bRequest = UPLCOM_HXN_SET_REQUEST;
+		USETW(req.wValue, UPLCOM_HXN_SET_CRTSCTS_REG);
+		USETW(req.wIndex, UPLCOM_HXN_SET_CRTSCTS);
+	} else {
+		req.bRequest = UPLCOM_SET_REQUEST;
+		USETW(req.wValue, 0);
+		USETW(req.wIndex, (sc->sc_type == UPLCOM_TYPE_HX ?
+		    UPLCOM_HX_SET_CRTSCTS : UPLCOM_SET_CRTSCTS));
+	}
 	USETW(req.wLength, 0);
 
 	err = usbd_do_request(sc->sc_udev, &req, 0);
@@ -655,7 +686,7 @@ uplcom_open(void *addr, int portno)
 		}
 	}
 
-	if (sc->sc_type_hx == 1) {
+	if (sc->sc_type == UPLCOM_TYPE_HX) {
 		/*
 		 * Undocumented (vendor unresponsive) - possibly changes
 		 * flow control semantics. It is needed for HX variant devices.
@@ -685,6 +716,19 @@ uplcom_open(void *addr, int portno)
 		req.bRequest = UPLCOM_SET_REQUEST;
 		USETW(req.wValue, 9);
 		USETW(req.wIndex, 0);
+		USETW(req.wLength, 0);
+
+		uerr = usbd_do_request(sc->sc_udev, &req, 0);
+		if (uerr)
+			return (EIO);
+	}
+
+	if (sc->sc_type == UPLCOM_TYPE_HXN) {
+		/* Reset upstream data pipes */
+		req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
+		req.bRequest = UPLCOM_HXN_SET_REQUEST;
+		USETW(req.wValue, 0x07);
+		USETW(req.wIndex, 0x03);
 		USETW(req.wLength, 0);
 
 		uerr = usbd_do_request(sc->sc_udev, &req, 0);
