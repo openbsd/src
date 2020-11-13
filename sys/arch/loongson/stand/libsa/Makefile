@@ -1,6 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2020/03/03 19:04:28 otto Exp $
-
-.include "${.CURDIR}/../Makefile.inc"
+#	$OpenBSD: Makefile,v 1.13 2020/11/13 16:53:02 visa Exp $
 
 LIB=	sa
 
