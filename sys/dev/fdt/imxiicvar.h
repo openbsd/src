@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiicvar.h,v 1.2 2020/11/13 20:46:18 patrick Exp $ */
+/* $OpenBSD: imxiicvar.h,v 1.3 2020/11/13 20:50:06 patrick Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -30,7 +30,7 @@ struct imxiic_clk_pair {
 	uint16_t val;
 };
 
-static struct imxiic_clk_pair imxiic_clk_div[50] = {
+static struct imxiic_clk_pair imxiic_imx21_clk_div[50] = {
 	{ 22,	0x20 }, { 24,	0x21 }, { 26,	0x22 }, { 28,	0x23 },
 	{ 30,	0x00 }, { 32,	0x24 }, { 36,	0x25 }, { 40,	0x26 },
 	{ 42,	0x03 }, { 44,	0x27 }, { 48,	0x28 }, { 52,	0x05 },

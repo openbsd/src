@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiic.c,v 1.12 2020/11/13 20:46:18 patrick Exp $ */
+/* $OpenBSD: imxiic.c,v 1.13 2020/11/13 20:50:06 patrick Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -56,6 +56,10 @@ struct imxiic_softc {
 	int			sc_reg_shift;
 	int			sc_node;
 	int			sc_bitrate;
+	uint32_t		sc_clkrate;
+
+	struct imxiic_clk_pair	*sc_clk_div;
+	int			sc_clk_ndiv;
 
 	struct rwlock		sc_buslock;
 	struct i2c_controller	i2c_tag;
@@ -128,6 +132,8 @@ imxiic_attach(struct device *parent, struct device *self, void *aux)
 		panic("imxiic_attach: bus_space_map failed!");
 
 	sc->sc_reg_shift = 2;
+	sc->sc_clk_div = imxiic_imx21_clk_div;
+	sc->sc_clk_ndiv = nitems(imxiic_imx21_clk_div);
 
 	printf("\n");
 
@@ -135,6 +141,7 @@ imxiic_attach(struct device *parent, struct device *self, void *aux)
 	pinctrl_byname(faa->fa_node, "default");
 
 	/* set speed */
+	sc->sc_clkrate = clock_get_frequency(sc->sc_node, NULL) / 1000;
 	sc->sc_bitrate = OF_getpropint(sc->sc_node,
 	    "clock-frequency", 100000) / 1000;
 	imxiic_setspeed(sc, sc->sc_bitrate);
@@ -165,20 +172,18 @@ void
 imxiic_setspeed(struct imxiic_softc *sc, u_int speed)
 {
 	if (!sc->frequency) {
-		uint32_t i2c_clk_rate;
 		uint32_t div;
 		int i;
 
-		i2c_clk_rate = clock_get_frequency(sc->sc_node, NULL) / 1000;
-		div = (i2c_clk_rate + speed - 1) / speed;
-		if (div < imxiic_clk_div[0].div)
+		div = (sc->sc_clkrate + speed - 1) / speed;
+		if (div < sc->sc_clk_div[0].div)
 			i = 0;
-		else if (div > imxiic_clk_div[49].div)
-			i = 49;
+		else if (div > sc->sc_clk_div[sc->sc_clk_ndiv - 1].div)
+			i = sc->sc_clk_ndiv - 1;
 		else
-			for (i = 0; imxiic_clk_div[i].div < div; i++);
+			for (i = 0; sc->sc_clk_div[i].div < div; i++);
 
-		sc->frequency = imxiic_clk_div[i].val;
+		sc->frequency = sc->sc_clk_div[i].val;
 	}
 
 	HWRITE1(sc, I2C_IFDR, sc->frequency);
