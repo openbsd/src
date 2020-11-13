@@ -1,4 +1,4 @@
-/*	$OpenBSD: pca9548.c,v 1.3 2020/09/29 13:59:22 patrick Exp $	*/
+/*	$OpenBSD: pca9548.c,v 1.4 2020/11/13 10:14:52 patrick Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis
@@ -28,8 +28,6 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_misc.h>
 
-#define PCA9546_NUM_CHANNELS	4
-#define PCA9548_NUM_CHANNELS	8
 #define PCAMUX_MAX_CHANNELS	8
 
 struct pcamux_bus {
@@ -44,12 +42,15 @@ struct pcamux_softc {
 	struct device		sc_dev;
 	i2c_tag_t		sc_tag;
 	i2c_addr_t		sc_addr;
-	
+
 	int			sc_node;
 	int			sc_channel;
 	int			sc_nchannel;
 	struct pcamux_bus	sc_bus[PCAMUX_MAX_CHANNELS];
 	struct rwlock		sc_lock;
+
+	int			sc_switch;
+	int			sc_enable;
 };
 
 int	pcamux_match(struct device *, void *, void *);
@@ -75,6 +76,7 @@ pcamux_match(struct device *parent, void *match, void *aux)
 	struct i2c_attach_args *ia = aux;
 
 	if (strcmp(ia->ia_name, "nxp,pca9546") == 0 ||
+	    strcmp(ia->ia_name, "nxp,pca9547") == 0 ||
 	    strcmp(ia->ia_name, "nxp,pca9548") == 0)
 		return (1);
 	return (0);
@@ -94,10 +96,16 @@ pcamux_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_channel = -1;	/* unknown */
 	rw_init(&sc->sc_lock, sc->sc_dev.dv_xname);
 
-	if (strcmp(ia->ia_name, "nxp,pca9546") == 0)
+	if (strcmp(ia->ia_name, "nxp,pca9546") == 0) {
+		sc->sc_switch = 1;
 		sc->sc_nchannel = 4;
-	else if (strcmp(ia->ia_name, "nxp,pca9548") == 0)
+	} else if (strcmp(ia->ia_name, "nxp,pca9547") == 0) {
+		sc->sc_enable = 1 << 3;
 		sc->sc_nchannel = 8;
+	} else if (strcmp(ia->ia_name, "nxp,pca9548") == 0) {
+		sc->sc_switch = 1;
+		sc->sc_nchannel = 8;
+	}
 
 	printf("\n");
 
@@ -146,7 +154,13 @@ pcamux_set_channel(struct pcamux_softc *sc, int channel, int flags)
 	if (sc->sc_channel == channel)
 		return 0;
 
-	data = (channel == -1) ? 0 : (1 << channel);
+	data = 0;
+	if (channel != -1) {
+		if (sc->sc_switch)
+			data = 1 << channel;
+		else
+			data = sc->sc_enable | channel;
+	}
 	error = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
 	    sc->sc_addr, NULL, 0, &data, sizeof data, flags);
 
