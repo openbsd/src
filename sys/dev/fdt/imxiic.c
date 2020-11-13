@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiic.c,v 1.10 2020/11/13 12:43:04 patrick Exp $ */
+/* $OpenBSD: imxiic.c,v 1.11 2020/11/13 12:51:08 patrick Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -45,6 +45,7 @@
 #define I2C_I2CR_IEN	(1 << 7)
 #define I2C_I2SR_RXAK	(1 << 0)
 #define I2C_I2SR_IIF	(1 << 1)
+#define I2C_I2SR_IAL	(1 << 4)
 #define I2C_I2SR_IBB	(1 << 5)
 
 struct imxiic_softc {
