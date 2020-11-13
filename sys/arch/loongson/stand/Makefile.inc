@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.6 2020/11/13 16:42:50 visa Exp $
+#	$OpenBSD: Makefile.inc,v 1.7 2020/11/13 16:45:11 visa Exp $
 
 BINDIR=		/usr/mdec
 
@@ -7,16 +7,7 @@ STANDALONE?=	-D_STANDALONE
 .if ${MACHINE} == "loongson"
 CPPFLAGS+=	${STANDALONE}
 CPPFLAGS+=	-I.
-CFLAGS+=	-fno-stack-protector -Wall
-CFLAGS+=	-fno-builtin-vprintf -fno-builtin-printf -fno-builtin-putchar
-# Silence warnings
-CFLAGS+=	-fno-builtin-snprintf
-CFLAGS+=	-fno-builtin-memcpy
-CFLAGS+=	-fno-builtin-memcmp
-CFLAGS+=	-fno-builtin-memset
-CFLAGS+=	-fno-builtin-strncpy
-CFLAGS+=	-fno-builtin-strncmp
-CFLAGS+=	-fno-builtin-exit
+CFLAGS+=	-fno-builtin -fno-stack-protector -Wall
 CFLAGS+=	-Wa,-mfix-loongson2f-btb
 AFLAGS+=	-Wa,-mfix-loongson2f-btb
 SAABI=		-mips3 -mno-abicalls -G 0 -fno-pic -fno-common
