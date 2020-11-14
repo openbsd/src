@@ -1,4 +1,4 @@
-/*	$OpenBSD: idr.h,v 1.3 2020/06/08 04:48:14 jsg Exp $	*/
+/*	$OpenBSD: idr.h,v 1.4 2020/11/14 15:00:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -25,7 +25,7 @@
 
 struct idr_entry {
 	SPLAY_ENTRY(idr_entry) entry;
-	int id;
+	unsigned long id;
 	void *ptr;
 };
 
@@ -35,11 +35,11 @@ struct idr {
 
 void idr_init(struct idr *);
 void idr_preload(unsigned int);
-int idr_alloc(struct idr *, void *, int, int, unsigned int);
+int idr_alloc(struct idr *, void *, int, int, gfp_t);
 #define idr_preload_end()
-void *idr_find(struct idr *, int);
-void *idr_replace(struct idr *, void *ptr, int);
-void *idr_remove(struct idr *, int);
+void *idr_find(struct idr *, unsigned long);
+void *idr_replace(struct idr *, void *, unsigned long);
+void *idr_remove(struct idr *, unsigned long);
 void idr_destroy(struct idr *);
 int idr_for_each(struct idr *, int (*)(int, void *, void *), void *);
 void *idr_get_next(struct idr *, int *);
@@ -55,18 +55,17 @@ idr_is_empty(const struct idr *idr)
 }
 
 struct ida {
-	int counter;
+	struct idr idr;
 };
 
-#define DEFINE_IDA(name)	\
-	struct ida name = {	\
-		.counter = 0	\
+#define DEFINE_IDA(name)					\
+	struct ida name = {					\
+	    .idr = { SPLAY_INITIALIZER(&name.idr.tree) }	\
 	}
 
 void ida_init(struct ida *);
 void ida_destroy(struct ida *);
-int ida_simple_get(struct ida *, unsigned int, unsigned nt, int);
-void ida_remove(struct ida *, int);
-void ida_simple_remove(struct ida *, int);
+int ida_simple_get(struct ida *, unsigned int, unsigned int, gfp_t);
+void ida_simple_remove(struct ida *, unsigned int);
 
 #endif

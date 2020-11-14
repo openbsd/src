@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.67 2020/11/14 14:57:41 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.68 2020/11/14 15:00:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -630,8 +630,7 @@ idr_preload(unsigned int gfp_mask)
 }
 
 int
-idr_alloc(struct idr *idr, void *ptr, int start, int end,
-    unsigned int gfp_mask)
+idr_alloc(struct idr *idr, void *ptr, int start, int end, gfp_t gfp_mask)
 {
 	int flags = (gfp_mask & GFP_NOWAIT) ? PR_NOWAIT : PR_WAITOK;
 	struct idr_entry *id;
@@ -669,7 +668,7 @@ idr_alloc(struct idr *idr, void *ptr, int start, int end,
 }
 
 void *
-idr_replace(struct idr *idr, void *ptr, int id)
+idr_replace(struct idr *idr, void *ptr, unsigned long id)
 {
 	struct idr_entry find, *res;
 	void *old;
@@ -684,7 +683,7 @@ idr_replace(struct idr *idr, void *ptr, int id)
 }
 
 void *
-idr_remove(struct idr *idr, int id)
+idr_remove(struct idr *idr, unsigned long id)
 {
 	struct idr_entry find, *res;
 	void *ptr = NULL;
@@ -700,7 +699,7 @@ idr_remove(struct idr *idr, int id)
 }
 
 void *
-idr_find(struct idr *idr, int id)
+idr_find(struct idr *idr, unsigned long id)
 {
 	struct idr_entry find, *res;
 
@@ -752,38 +751,26 @@ SPLAY_GENERATE(idr_tree, idr_entry, entry, idr_cmp);
 void
 ida_init(struct ida *ida)
 {
-	ida->counter = 0;
+	idr_init(&ida->idr);
 }
 
 void
 ida_destroy(struct ida *ida)
 {
-}
-
-void
-ida_remove(struct ida *ida, int id)
-{
+	idr_destroy(&ida->idr);
 }
 
 int
 ida_simple_get(struct ida *ida, unsigned int start, unsigned int end,
-    int flags)
+    gfp_t gfp_mask)
 {
-	if (end <= 0)
-		end = INT_MAX;
-
-	if (start > ida->counter)
-		ida->counter = start;
-
-	if (ida->counter >= end)
-		return -ENOSPC;
-
-	return ida->counter++;
+	return idr_alloc(&ida->idr, NULL, start, end, gfp_mask);
 }
 
 void
-ida_simple_remove(struct ida *ida, int id)
+ida_simple_remove(struct ida *ida, unsigned int id)
 {
+	idr_remove(&ida->idr, id);
 }
 
 int
