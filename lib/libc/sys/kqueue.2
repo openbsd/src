@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kqueue.2,v 1.42 2020/06/22 13:42:06 jmc Exp $
+.\"	$OpenBSD: kqueue.2,v 1.43 2020/11/14 10:16:15 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.18 2001/02/14 08:48:35 guido Exp $
 .\"
-.Dd $Mdocdate: June 22 2020 $
+.Dd $Mdocdate: November 14 2020 $
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -315,7 +315,8 @@ Takes a descriptor as the identifier, and returns whenever one of the
 specified exceptional conditions has occurred on the descriptor.
 Conditions are specified in
 .Fa fflags .
-Currently, a filter can monitor the reception of out-of-band data with
+Currently, a filter can monitor the reception of out-of-band data
+on a socket or pseudo terminal with
 .Dv NOTE_OOB .
 .It Dv EVFILT_WRITE
 Takes a descriptor as the identifier, and returns whenever
