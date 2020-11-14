@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.66 2020/11/09 23:53:30 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.67 2020/11/14 14:57:41 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -564,7 +564,7 @@ memchr_inv(const void *s, int c, size_t n)
 		do {
 			if (*p++ != (unsigned char)c)
 				return ((void *)(p - 1));
-		}while (--n != 0);
+		} while (--n != 0);
 	}
 	return (NULL);
 }
