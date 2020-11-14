@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.25 2020/11/12 13:50:30 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.26 2020/11/14 14:07:53 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -354,11 +354,19 @@ sfp_get_sffpage(uint32_t phandle, struct if_sffpage *sff)
 	return ENXIO;
 }
 
+#define SFF8472_TCC_XCC			3 /* 10G Ethernet Compliance Codes */
+#define SFF8472_TCC_XCC_10G_SR		(1 << 4)
+#define SFF8472_TCC_XCC_10G_LR		(1 << 5)
+#define SFF8472_TCC_XCC_10G_LRM		(1 << 6)
+#define SFF8472_TCC_XCC_10G_ER		(1 << 7)
 #define SFF8472_TCC_ECC			6 /* Ethernet Compliance Codes */
 #define SFF8472_TCC_ECC_1000_SX		(1 << 0)
 #define SFF8472_TCC_ECC_1000_LX		(1 << 1)
 #define SFF8472_TCC_ECC_1000_CX		(1 << 2)
 #define SFF8472_TCC_ECC_1000_T		(1 << 3)
+#define SFF8472_TCC_SCT			8 /* SFP+ Cable Technology */
+#define SFF8472_TCC_SCT_PASSIVE		(1 << 2)
+#define SFF8472_TCC_SCT_ACTIVE		(1 << 3)
 
 int
 sfp_add_media(uint32_t phandle, struct mii_data *mii)
@@ -374,6 +382,7 @@ sfp_add_media(uint32_t phandle, struct mii_data *mii)
 	if (error)
 		return error;
 
+	/* SFP */
 	if (sff.sff_data[SFF8472_TCC_ECC] & SFF8472_TCC_ECC_1000_SX) {
 		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_1000_SX, 0, NULL);
 		mii->mii_media_active = IFM_ETHER | IFM_1000_SX | IFM_FDX;
@@ -389,6 +398,32 @@ sfp_add_media(uint32_t phandle, struct mii_data *mii)
 	if (sff.sff_data[SFF8472_TCC_ECC] & SFF8472_TCC_ECC_1000_T) {
 		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_1000_T, 0, NULL);
 		mii->mii_media_active = IFM_ETHER | IFM_1000_T | IFM_FDX;
+	}
+
+	/* SFP+ */
+	if (sff.sff_data[SFF8472_TCC_XCC] & SFF8472_TCC_XCC_10G_SR) {
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_10G_SR, 0, NULL);
+		mii->mii_media_active = IFM_ETHER | IFM_10G_SR | IFM_FDX;
+	}
+	if (sff.sff_data[SFF8472_TCC_XCC] & SFF8472_TCC_XCC_10G_LR) {
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_10G_LR, 0, NULL);
+		mii->mii_media_active = IFM_ETHER | IFM_10G_LR | IFM_FDX;
+	}
+	if (sff.sff_data[SFF8472_TCC_XCC] & SFF8472_TCC_XCC_10G_LRM) {
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_10G_LRM, 0, NULL);
+		mii->mii_media_active = IFM_ETHER | IFM_10G_LRM | IFM_FDX;
+	}
+	if (sff.sff_data[SFF8472_TCC_XCC] & SFF8472_TCC_XCC_10G_ER) {
+		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_10G_ER, 0, NULL);
+		mii->mii_media_active = IFM_ETHER | IFM_10G_ER | IFM_FDX;
+	}
+
+	/* SFP+ DAC */
+	if (sff.sff_data[SFF8472_TCC_SCT] & SFF8472_TCC_SCT_PASSIVE ||
+	    sff.sff_data[SFF8472_TCC_SCT] & SFF8472_TCC_SCT_ACTIVE) {
+		ifmedia_add(&mii->mii_media,
+		    IFM_ETHER | IFM_10G_SFP_CU, 0, NULL);
+		mii->mii_media_active = IFM_ETHER | IFM_10G_SFP_CU | IFM_FDX;
 	}
 
 	return 0;
