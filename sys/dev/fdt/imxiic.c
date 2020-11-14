@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiic.c,v 1.14 2020/11/14 21:21:26 patrick Exp $ */
+/* $OpenBSD: imxiic.c,v 1.15 2020/11/14 21:24:08 patrick Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -48,12 +48,16 @@
 #define I2C_I2SR_IAL	(1 << 4)
 #define I2C_I2SR_IBB	(1 << 5)
 
+#define I2C_TYPE_IMX21	0
+#define I2C_TYPE_VF610	1
+
 struct imxiic_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_size_t		sc_ios;
 	int			sc_reg_shift;
+	int			sc_type;
 	int			sc_node;
 	int			sc_bitrate;
 	uint32_t		sc_clkrate;
@@ -115,7 +119,8 @@ imxiic_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "fsl,imx21-i2c");
+	return (OF_is_compatible(faa->fa_node, "fsl,imx21-i2c") ||
+	    OF_is_compatible(faa->fa_node, "fsl,vf610-i2c"));
 }
 
 void
@@ -137,6 +142,14 @@ imxiic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_reg_shift = 2;
 	sc->sc_clk_div = imxiic_imx21_clk_div;
 	sc->sc_clk_ndiv = nitems(imxiic_imx21_clk_div);
+	sc->sc_type = I2C_TYPE_IMX21;
+
+	if (OF_is_compatible(faa->fa_node, "fsl,vf610-i2c")) {
+		sc->sc_reg_shift = 0;
+		sc->sc_clk_div = imxiic_vf610_clk_div;
+		sc->sc_clk_ndiv = nitems(imxiic_vf610_clk_div);
+		sc->sc_type = I2C_TYPE_VF610;
+	}
 
 	printf("\n");
 
@@ -173,8 +186,18 @@ imxiic_attach(struct device *parent, struct device *self, void *aux)
 void
 imxiic_enable(struct imxiic_softc *sc, int on)
 {
-	HWRITE1(sc, I2C_I2SR, 0);
+	/*
+	 * VF610: write 1 to clear bits
+	 * iMX21: write 0 to clear bits
+	 */
+	if (sc->sc_type == I2C_TYPE_VF610)
+		HWRITE1(sc, I2C_I2SR, I2C_I2SR_IAL | I2C_I2SR_IIF);
+	else
+		HWRITE1(sc, I2C_I2SR, 0);
 
+	/* VF610 inverts enable bit meaning */
+	if (sc->sc_type == I2C_TYPE_VF610)
+		on = !on;
 	if (on)
 		HWRITE1(sc, I2C_I2CR, I2C_I2CR_IEN);
 	else
@@ -184,7 +207,14 @@ imxiic_enable(struct imxiic_softc *sc, int on)
 void
 imxiic_clear_iodone(struct imxiic_softc *sc)
 {
-	HCLR1(sc, I2C_I2SR, I2C_I2SR_IIF);
+	/*
+	 * VF610: write bit to clear bit
+	 * iMX21: clear bit, keep rest
+	 */
+	if (sc->sc_type == I2C_TYPE_VF610)
+		HWRITE1(sc, I2C_I2SR, I2C_I2SR_IIF);
+	else
+		HCLR1(sc, I2C_I2SR, I2C_I2SR_IIF);
 }
 
 void
