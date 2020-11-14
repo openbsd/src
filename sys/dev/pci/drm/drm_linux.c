@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.69 2020/11/14 22:42:06 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.70 2020/11/14 23:08:47 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -597,13 +597,6 @@ struct idr_entry *idr_entry_cache;
 void
 idr_init(struct idr *idr)
 {
-	static int initialized;
-
-	if (!initialized) {
-		pool_init(&idr_pool, sizeof(struct idr_entry), 0, IPL_TTY, 0,
-		    "idrpl", NULL);
-		initialized = 1;
-	}
 	SPLAY_INIT(&idr->tree);
 }
 
@@ -1935,28 +1928,35 @@ struct taskq *taskletq;
 void
 drm_linux_init(void)
 {
-	if (system_wq == NULL) {
-		system_wq = (struct workqueue_struct *)
-		    taskq_create("drmwq", 4, IPL_HIGH, 0);
-	}
-	if (system_highpri_wq == NULL) {
-		system_highpri_wq = (struct workqueue_struct *)
-		    taskq_create("drmhpwq", 4, IPL_HIGH, 0);
-	}
-	if (system_unbound_wq == NULL) {
-		system_unbound_wq = (struct workqueue_struct *)
-		    taskq_create("drmubwq", 4, IPL_HIGH, 0);
-	}
-	if (system_long_wq == NULL) {
-		system_long_wq = (struct workqueue_struct *)
-		    taskq_create("drmlwq", 4, IPL_HIGH, 0);
-	}
+	system_wq = (struct workqueue_struct *)
+	    taskq_create("drmwq", 4, IPL_HIGH, 0);
+	system_highpri_wq = (struct workqueue_struct *)
+	    taskq_create("drmhpwq", 4, IPL_HIGH, 0);
+	system_unbound_wq = (struct workqueue_struct *)
+	    taskq_create("drmubwq", 4, IPL_HIGH, 0);
+	system_long_wq = (struct workqueue_struct *)
+	    taskq_create("drmlwq", 4, IPL_HIGH, 0);
 
-	if (taskletq == NULL)
-		taskletq = taskq_create("drmtskl", 1, IPL_HIGH, 0);
+	taskletq = taskq_create("drmtskl", 1, IPL_HIGH, 0);
 
 	init_waitqueue_head(&bit_waitq);
 	init_waitqueue_head(&var_waitq);
+
+	pool_init(&idr_pool, sizeof(struct idr_entry), 0, IPL_TTY, 0,
+	    "idrpl", NULL);
+}
+
+void
+drm_linux_exit(void)
+{
+	pool_destroy(&idr_pool);
+
+	taskq_destroy(taskletq);
+
+	taskq_destroy((struct taskq *)system_long_wq);
+	taskq_destroy((struct taskq *)system_unbound_wq);
+	taskq_destroy((struct taskq *)system_highpri_wq);
+	taskq_destroy((struct taskq *)system_wq);
 }
 
 #define PCIE_ECAP_RESIZE_BAR	0x15
