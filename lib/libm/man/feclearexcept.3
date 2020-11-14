@@ -1,4 +1,4 @@
-.\"	$OpenBSD: feclearexcept.3,v 1.5 2016/04/26 19:49:22 tb Exp $
+.\"	$OpenBSD: feclearexcept.3,v 1.6 2020/11/14 10:35:58 jmc Exp $
 .\"
 .\" Copyright (c) 2011 Martynas Venckus <martynas@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 26 2016 $
+.Dd $Mdocdate: November 14 2020 $
 .Dt FECLEAREXCEPT 3
 .Os
 .Sh NAME
@@ -42,7 +42,7 @@ The
 .Fa excepts
 input argument is a bitmask specifying an exception type and
 containing any of the values listed below.
-.Bl -tag -width ".Dv FE_DIVBYZERO"
+.Bl -tag -width "FE_DIVBYZERO"
 .It Dv FE_DIVBYZERO
 A divide-by-zero exception occurs when the program attempts to
 divide a finite non-zero number by zero.

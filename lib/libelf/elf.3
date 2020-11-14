@@ -21,7 +21,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" $Id: elf.3,v 1.5 2020/05/18 06:46:23 jsg Exp $
+.\" $Id: elf.3,v 1.6 2020/11/14 10:35:58 jmc Exp $
 .\"
 .Dd June 12, 2019
 .Dt ELF 3
@@ -187,7 +187,7 @@ for its internal use.
 .Ss Descriptors
 Applications communicate with the library using descriptors.
 These are:
-.Bl -tag -width ".Vt Elf_Data"
+.Bl -tag -width "Elf_Data"
 .It Vt Elf
 An
 .Vt Elf
@@ -246,7 +246,7 @@ An
 data structure describes an individual chunk of a ELF file as
 represented in memory.
 It has the following application-visible members:
-.Bl -tag -width ".Vt unsigned int d_version" -compact
+.Bl -tag -width "unsigned int d_version" -compact
 .It Vt "uint64_t d_align"
 The in-file alignment of the data buffer within its containing ELF section.
 This value must be non-zero and a power of two.
@@ -307,7 +307,7 @@ function.
 .Ss Supported Elf Types
 The following ELF datatypes are supported by the library.
 .Pp
-.Bl -tag -width ".Dv ELF_T_SYMINFO" -compact
+.Bl -tag -width "ELF_T_SYMINFO" -compact
 .It Dv ELF_T_ADDR
 Machine addresses.
 .It Dv ELF_T_BYTE
@@ -368,7 +368,7 @@ The following table shows the mapping between ELF section types
 defined in
 .Xr elf 5
 and the types supported by the library.
-.Bl -column ".Dv SHT_PREINIT_ARRAY" ".Dv ELF_T_SYMINFO"
+.Bl -column "SHT_PREINIT_ARRAY" "ELF_T_SYMINFO"
 .It Em Section Type Ta Em "Library Type" Ta Em Description
 .It Dv SHT_DYNAMIC Ta Dv ELF_T_DYN Ta Xo
 .Sq .dynamic
@@ -509,7 +509,7 @@ archive or ELF object present in a memory arena.
 Sets the operating version.
 .El
 .It "IO Control"
-.Bl -tag -width ".Fn elf_setshstrndx" -compact
+.Bl -tag -width "elf_setshstrndx" -compact
 .It Fn elf_cntl
 Manage the association between and ELF descriptor and its underlying file.
 .It Fn elf_flagdata
@@ -533,7 +533,7 @@ Recompute ELF object layout and optionally write the modified object
 back to the underlying file.
 .El
 .It "Queries"
-.Bl -tag -width ".Fn elf_getshstrndx" -compact
+.Bl -tag -width "elf_getshstrndx" -compact
 .It Fn elf32_checksum , Fn elf64_checkum
 Compute checksum of an ELF object.
 .It Fn elf_getident

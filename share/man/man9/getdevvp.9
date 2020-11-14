@@ -1,4 +1,4 @@
-.\"     $OpenBSD: getdevvp.9,v 1.8 2013/06/04 19:27:06 schwarze Exp $
+.\"     $OpenBSD: getdevvp.9,v 1.9 2020/11/14 10:35:58 jmc Exp $
 .\"
 .\" Copyright (C) 2002 Peter A. Werner. All rights reserved.
 .\"
@@ -26,7 +26,7 @@
 .\" DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: June 4 2013 $
+.Dd $Mdocdate: November 14 2020 $
 .Dt GETDEVVP 9
 .Os
 .Sh NAME
@@ -54,14 +54,14 @@ and returns a pointer to it in
 .Fa vpp .
 .Pp
 Its arguments are:
-.Bl -tag -width ".Fa rootrefs"
+.Bl -tag -width "rootrefs"
 .It Fa dev
 The device number of the desired device.
 .It Fa vpp
 Where the vnode will be returned on success.
 .It Fa type
 The type of device, either:
-.Bl -tag -width ".Dv VBLK"
+.Bl -tag -width "VBLK"
 .It Dv VBLK
 For a block device, or
 .It Dv VCHR

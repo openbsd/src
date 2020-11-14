@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fegetround.3,v 1.3 2013/06/05 03:40:26 tedu Exp $
+.\"	$OpenBSD: fegetround.3,v 1.4 2020/11/14 10:35:58 jmc Exp $
 .\"
 .\" Copyright (c) 2011 Martynas Venckus <martynas@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: November 14 2020 $
 .Dt FEGETROUND 3
 .Os
 .Sh NAME
@@ -34,7 +34,7 @@ The
 .Fa round
 input argument is a value specifying a rounding direction mode and
 containing any of the values listed below.
-.Bl -tag -width ".Dv FE_TOWARDZERO"
+.Bl -tag -width "FE_TOWARDZERO"
 .It Dv FE_TONEAREST
 Results are rounded to the closest representable value.
 If the exact result is exactly half way between two representable

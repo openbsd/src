@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bnx.4,v 1.30 2014/09/14 00:17:09 brad Exp $
+.\"	$OpenBSD: bnx.4,v 1.31 2020/11/14 10:35:58 jmc Exp $
 .\"
 .\"Copyright (c) 2006 Broadcom Corporation
 .\" David Christensen <davidch@broadcom.com>.  All rights reserved.
@@ -30,7 +30,7 @@
 .\"
 .\" $FreeBSD: /repoman/r/ncvs/src/share/man/man4/bce.4,v 1.2 2006/04/10 20:12:17 brueffer Exp $
 .\"
-.Dd $Mdocdate: September 14 2014 $
+.Dd $Mdocdate: November 14 2020 $
 .Dt BNX 4
 .Os
 .Sh NAME
@@ -89,7 +89,7 @@ interrupt coalescing
 The
 .Nm
 driver supports the following media types:
-.Bl -tag -width ".Cm 10baseT/UTP"
+.Bl -tag -width "10baseT/UTP"
 .It Cm autoselect
 Enable autoselection of the media type and options.
 The user can manually override
@@ -135,7 +135,7 @@ mode is supported.
 The
 .Nm
 driver supports the following media options:
-.Bl -tag -width ".Cm full-duplex"
+.Bl -tag -width "full-duplex"
 .It Cm full-duplex
 Force full duplex operation.
 .It Cm half-duplex

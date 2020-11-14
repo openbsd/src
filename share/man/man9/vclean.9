@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vclean.9,v 1.10 2013/06/04 19:27:15 schwarze Exp $
+.\"     $OpenBSD: vclean.9,v 1.11 2020/11/14 10:35:58 jmc Exp $
 .\"-
 .\" Copyright (c) 2002 Peter Werner
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: June 4 2013 $
+.Dd $Mdocdate: November 14 2020 $
 .Dt VCLEAN 9
 .Os
 .Sh NAME
@@ -48,12 +48,12 @@ function clears any VM and buffer data associated with the vnode
 and reclaims it from the underlying file system.
 .Pp
 Its arguments are:
-.Bl -tag -width ".Fa flags"
+.Bl -tag -width "flags"
 .It Fa vp
 The vnode to be cleaned.
 .It Fa flags
 The flags indicating how the vnode should be handled.
-.Bl -tag -width ".Dv DOCLOSE"
+.Bl -tag -width "DOCLOSE"
 .It Dv DOCLOSE
 If this flag is set,
 .Fn vclean

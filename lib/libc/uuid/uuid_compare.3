@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uuid_compare.3,v 1.1 2019/08/30 17:34:36 deraadt Exp $
+.\"	$OpenBSD: uuid_compare.3,v 1.2 2020/11/14 10:35:58 jmc Exp $
 .\"	$NetBSD: uuid.3,v 1.7 2008/05/02 18:11:05 martin Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/uuid/uuid.3,v 1.4 2003/08/08 19:12:28 marcel Exp $
 .\"
-.Dd $Mdocdate: August 30 2019 $
+.Dd $Mdocdate: November 14 2020 $
 .Dt UUID_COMPARE 3
 .Os
 .Sh NAME
@@ -180,7 +180,7 @@ functions return successful or unsuccessful completion status in the
 argument unless it is
 .Dv NULL .
 Possible values are:
-.Bl -tag -width ".Dv uuid_s_invalid_string_uuid"
+.Bl -tag -width "uuid_s_invalid_string_uuid"
 .It Dv uuid_s_ok
 The function completed successfully.
 .It Dv uuid_s_bad_version

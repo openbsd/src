@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vdevgone.9,v 1.7 2013/06/04 19:27:15 schwarze Exp $
+.\"     $OpenBSD: vdevgone.9,v 1.8 2020/11/14 10:35:58 jmc Exp $
 .\"-
 .\" Copyright (c) 2002 Peter Werner
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: June 4 2013 $
+.Dd $Mdocdate: November 14 2020 $
 .Dt VDEVGONE 9
 .Os
 .Sh NAME
@@ -51,7 +51,7 @@ and of type
 .Fa type .
 .Pp
 Its arguments are:
-.Bl -tag -width ".Fa type"
+.Bl -tag -width "type"
 .It Fa maj
 The major number of the device.
 .It Fa minl
@@ -60,7 +60,7 @@ The lowest minor number for the device to be revoked.
 The highest minor number for the device to be revoked.
 .It Fa type
 The type of the device; this must be one of:
-.Bl -tag -width ".Dv VBLK"
+.Bl -tag -width "VBLK"
 .It Dv VBLK
 Device is a block device
 .It Dv VCHR
