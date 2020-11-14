@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.40 2020/11/13 22:46:20 kettenis Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.41 2020/11/14 14:11:08 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -1574,6 +1574,15 @@ mvpp2_port_attach_sfp(struct device *self)
 	rw_exit(&mvpp2_sff_lock);
 
 	switch (IFM_SUBTYPE(sc->sc_mii.mii_media_active)) {
+	case IFM_10G_SR:
+	case IFM_10G_LR:
+	case IFM_10G_LRM:
+	case IFM_10G_ER:
+	case IFM_10G_SFP_CU:
+		sc->sc_phy_mode = PHY_MODE_10GBASER;
+		sc->sc_mii.mii_media_status = IFM_AVALID;
+		sc->sc_inband_status = 1;
+		break;
 	case IFM_2500_SX:
 		sc->sc_phy_mode = PHY_MODE_2500BASEX;
 		sc->sc_mii.mii_media_status = IFM_AVALID;
@@ -1931,7 +1940,7 @@ mvpp2_inband_statchg(struct mvpp2_port *sc)
 		if (reg & MV_XLG_MAC_PORT_STATUS_LINKSTATUS)
 			sc->sc_mii.mii_media_status |= IFM_ACTIVE;
 		sc->sc_mii.mii_media_active |= IFM_FDX;
-		sc->sc_mii.mii_media_active |= IFM_10G_SR;
+		sc->sc_mii.mii_media_active |= subtype;
 	} else {
 		reg = mvpp2_gmac_read(sc, MVPP2_PORT_STATUS0_REG);
 		if (reg & MVPP2_PORT_STATUS0_LINKUP)
