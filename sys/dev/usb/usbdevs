@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.726 2020/11/11 12:59:18 patrick Exp $
+$OpenBSD: usbdevs,v 1.727 2020/11/14 23:59:06 jmatthew Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1706,6 +1706,7 @@ product EDIMAX EW7722UTN	0x7722	EW-7722UTn
 product EDIMAX EW7811UN		0x7811	EW-7811Un
 product EDIMAX RTL8192CU	0x7822	RTL8192CU
 product EDIMAX EW7611ULB	0xa611	EW-7611ULB
+product EDIMAX EW7811UNV2	0xb811	EW-7811Un V2
 product EDIMAX EW7822ULC	0xb822	EW-7822ULC
 
 /* eGalax Products */
