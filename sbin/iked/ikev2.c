@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.280 2020/11/13 21:09:49 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.281 2020/11/14 20:14:07 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -6759,6 +6759,10 @@ ikev2_cp_fixaddr(struct iked_sa *sa, struct iked_addr *addr,
 	struct sockaddr_in6	*in6;
 	struct iked_addr	*naddr;
 
+	if (addr->addr_net)
+		return (-1);
+	if (sa->sa_cp == 0)
+		return (-1);
 	switch (addr->addr_af) {
 	case AF_INET:
 		naddr = (sa->sa_cp == IKEV2_CP_REQUEST) ?
