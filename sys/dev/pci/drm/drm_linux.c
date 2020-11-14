@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.68 2020/11/14 15:00:20 kettenis Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.69 2020/11/14 22:42:06 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -656,8 +656,10 @@ idr_alloc(struct idr *idr, void *ptr, int start, int end, gfp_t gfp_mask)
 	id->id = begin = start;
 #endif
 	while (SPLAY_INSERT(idr_tree, &idr->tree, id)) {
-		if (++id->id == end)
+		if (id->id == end)
 			id->id = start;
+		else
+			id->id++;
 		if (id->id == begin) {
 			pool_put(&idr_pool, id);
 			return -ENOSPC;
@@ -825,8 +827,10 @@ xa_alloc(struct xarray *xa, u32 *id, void *entry, int limit, gfp_t gfp)
 	xid->id = begin = start;
 
 	while (SPLAY_INSERT(xarray_tree, &xa->xa_tree, xid)) {
-		if (++xid->id == limit)
+		if (xid->id == limit)
 			xid->id = start;
+		else
+			xid->id++;
 		if (xid->id == begin) {
 			pool_put(&xa_pool, xid);
 			return -EBUSY;
