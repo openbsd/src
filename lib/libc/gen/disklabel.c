@@ -42,7 +42,7 @@
 #include <string.h>
 #include <unistd.h>
 
-static u_int	gettype(char *, char **);
+static u_int	gettype(char *, const char * const *);
 
 struct disklabel *
 getdiskbyname(const char *name)
@@ -145,9 +145,9 @@ getdiskbyname(const char *name)
 }
 
 static u_int
-gettype(char *t, char **names)
+gettype(char *t, const char * const *names)
 {
-	char **nm;
+	const char * const *nm;
 
 	for (nm = names; *nm; nm++)
 		if (strcasecmp(t, *nm) == 0)

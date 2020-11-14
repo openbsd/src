@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.76 2020/05/10 00:56:06 guenther Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.77 2020/11/14 20:53:31 guenther Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -211,7 +211,7 @@ struct	__partitionv0 {		/* old (v0) partition table entry */
 #define DTYPE_RDROOT		15		/* ram disk root */
 
 #ifdef DKTYPENAMES
-static char *dktypenames[] = {
+static const char * const dktypenames[] = {
 	"unknown",
 	"SMD",
 	"MSCP",
@@ -262,7 +262,7 @@ static char *dktypenames[] = {
 #define FS_UDF		21		/* UDF (DVD) filesystem */
 
 #ifdef DKTYPENAMES
-static char *fstypenames[] = {
+static const char * const fstypenames[] = {
 	"unused",
 	"swap",
 	"Version6",

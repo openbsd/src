@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.235 2019/06/28 13:32:43 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.236 2020/11/14 20:53:31 guenther Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -809,10 +809,12 @@ duid_parse(struct disklabel *lp, char *s)
 int
 getasciilabel(FILE *f, struct disklabel *lp)
 {
-	char **cpp, *cp;
+	const char * const *cpp;
+	const char *s;
+	char *cp;
 	const char *errstr;
 	struct partition *pp;
-	char *mp, *tp, *s, line[BUFSIZ];
+	char *mp, *tp, line[BUFSIZ];
 	char **omountpoints = NULL;
 	int lineno = 0, errors = 0;
 	u_int32_t v, fsize;
