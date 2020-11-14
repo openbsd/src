@@ -1,4 +1,4 @@
-/*	$OpenBSD: pca9548.c,v 1.4 2020/11/13 10:14:52 patrick Exp $	*/
+/*	$OpenBSD: pca9548.c,v 1.5 2020/11/14 21:50:51 patrick Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis
@@ -25,6 +25,18 @@
 #define _I2C_PRIVATE
 #include <dev/i2c/i2cvar.h>
 
+#ifdef __HAVE_ACPI
+#include "acpi.h"
+#endif
+
+#if NACPI > 0
+#include <dev/acpi/acpireg.h>
+#include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpidev.h>
+#include <dev/acpi/amltypes.h>
+#include <dev/acpi/dsdt.h>
+#endif
+
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_misc.h>
 
@@ -33,9 +45,11 @@
 struct pcamux_bus {
 	struct pcamux_softc	*pb_sc;
 	int			pb_node;
+	void			*pb_devnode;
 	int			pb_channel;
 	struct i2c_controller	pb_ic;
 	struct i2c_bus		pb_ib;
+	struct device		*pb_iic;
 };
 
 struct pcamux_softc {
@@ -44,6 +58,7 @@ struct pcamux_softc {
 	i2c_addr_t		sc_addr;
 
 	int			sc_node;
+	void			*sc_devnode;
 	int			sc_channel;
 	int			sc_nchannel;
 	struct pcamux_bus	sc_bus[PCAMUX_MAX_CHANNELS];
@@ -52,6 +67,13 @@ struct pcamux_softc {
 	int			sc_switch;
 	int			sc_enable;
 };
+
+#if NACPI > 0
+struct pcamux_crs {
+	uint16_t i2c_addr;
+	struct aml_node *devnode;
+};
+#endif
 
 int	pcamux_match(struct device *, void *, void *);
 void	pcamux_attach(struct device *, struct device *, void *);
@@ -63,6 +85,18 @@ struct cfattach pcamux_ca = {
 struct cfdriver pcamux_cd = {
 	NULL, "pcamux", DV_DULL
 };
+
+void	pcamux_attach_fdt(struct pcamux_softc *, struct i2c_attach_args *);
+void	pcamux_attach_acpi(struct pcamux_softc *, struct i2c_attach_args *);
+
+#if NACPI > 0
+int	pcamux_attach_acpi_mux(struct aml_node *, void *);
+void	pcamux_acpi_bus_scan(struct device *,
+	    struct i2cbus_attach_args *, void *);
+int	pcamux_acpi_found_channel(struct aml_node *, void *);
+int	pcamux_acpi_found_hid(struct aml_node *, void *);
+int	pcamux_acpi_parse_crs(int, union acpi_resource *, void *);
+#endif
 
 int	pcamux_acquire_bus(void *, int);
 void	pcamux_release_bus(void *, int);
@@ -77,7 +111,8 @@ pcamux_match(struct device *parent, void *match, void *aux)
 
 	if (strcmp(ia->ia_name, "nxp,pca9546") == 0 ||
 	    strcmp(ia->ia_name, "nxp,pca9547") == 0 ||
-	    strcmp(ia->ia_name, "nxp,pca9548") == 0)
+	    strcmp(ia->ia_name, "nxp,pca9548") == 0 ||
+	    strcmp(ia->ia_name, "NXP0002") == 0)
 		return (1);
 	return (0);
 }
@@ -87,19 +122,18 @@ pcamux_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pcamux_softc *sc = (struct pcamux_softc *)self;
 	struct i2c_attach_args *ia = aux;
-	int node = *(int *)ia->ia_cookie;
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 
-	sc->sc_node = node;
 	sc->sc_channel = -1;	/* unknown */
 	rw_init(&sc->sc_lock, sc->sc_dev.dv_xname);
 
 	if (strcmp(ia->ia_name, "nxp,pca9546") == 0) {
 		sc->sc_switch = 1;
 		sc->sc_nchannel = 4;
-	} else if (strcmp(ia->ia_name, "nxp,pca9547") == 0) {
+	} else if (strcmp(ia->ia_name, "nxp,pca9547") == 0 ||
+	    strcmp(ia->ia_name, "NXP0002") == 0) {
 		sc->sc_enable = 1 << 3;
 		sc->sc_nchannel = 8;
 	} else if (strcmp(ia->ia_name, "nxp,pca9548") == 0) {
@@ -109,6 +143,18 @@ pcamux_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
+	if (strcmp(ia->ia_name, "NXP0002") == 0)
+		pcamux_attach_acpi(sc, ia);
+	else
+		pcamux_attach_fdt(sc, ia);
+}
+
+void
+pcamux_attach_fdt(struct pcamux_softc *sc, struct i2c_attach_args *ia)
+{
+	int node = *(int *)ia->ia_cookie;
+
+	sc->sc_node = node;
 	for (node = OF_child(node); node; node = OF_peer(node)) {
 		struct i2cbus_attach_args iba;
 		struct pcamux_bus *pb;
@@ -141,6 +187,144 @@ pcamux_attach(struct device *parent, struct device *self, void *aux)
 		i2c_register(&pb->pb_ib);
 	}
 }
+
+void
+pcamux_attach_acpi(struct pcamux_softc *sc, struct i2c_attach_args *ia)
+{
+#if NACPI > 0
+	struct aml_node *node = ia->ia_cookie;
+
+	sc->sc_devnode = node;
+	aml_walknodes(node, AML_WALK_PRE, pcamux_attach_acpi_mux, sc);
+#endif
+}
+
+#if NACPI > 0
+int
+pcamux_attach_acpi_mux(struct aml_node *node, void *arg)
+{
+	struct pcamux_softc *sc = arg;
+	struct i2cbus_attach_args iba;
+	struct pcamux_bus *pb;
+	uint64_t channel;
+
+	/* Only the node's direct children */
+	if (node->parent != sc->sc_devnode)
+		return 0;
+
+	/* Must have channel as address */
+	if (aml_evalinteger(acpi_softc, node, "_ADR", 0, NULL, &channel) ||
+	    channel >= sc->sc_nchannel)
+		return 0;
+
+	pb = &sc->sc_bus[channel];
+	pb->pb_sc = sc;
+	pb->pb_devnode = node;
+	pb->pb_channel = channel;
+	pb->pb_ic.ic_cookie = pb;
+	pb->pb_ic.ic_acquire_bus = pcamux_acquire_bus;
+	pb->pb_ic.ic_release_bus = pcamux_release_bus;
+	pb->pb_ic.ic_exec = pcamux_exec;
+
+	/* Configure the child busses. */
+	memset(&iba, 0, sizeof(iba));
+	iba.iba_name = "iic";
+	iba.iba_tag = &pb->pb_ic;
+	iba.iba_bus_scan = pcamux_acpi_bus_scan;
+	iba.iba_bus_scan_arg = pb;
+
+	config_found(&sc->sc_dev, &iba, iicbus_print);
+
+#ifndef SMALL_KERNEL
+	node->i2c = &pb->pb_ic;
+	acpi_register_gsb(acpi_softc, node);
+#endif
+	return 0;
+}
+
+void
+pcamux_acpi_bus_scan(struct device *iic, struct i2cbus_attach_args *iba,
+    void *aux)
+{
+	struct pcamux_bus *pb = aux;
+
+	pb->pb_iic = iic;
+	aml_find_node(pb->pb_devnode, "_HID", pcamux_acpi_found_hid, aux);
+}
+
+int
+pcamux_acpi_found_hid(struct aml_node *node, void *arg)
+{
+	struct pcamux_bus *pb = arg;
+	struct pcamux_softc *sc = pb->pb_sc;
+	struct pcamux_crs crs;
+	struct aml_value res;
+	int64_t sta;
+	char cdev[16], dev[16];
+	struct i2c_attach_args ia;
+
+	/* Skip our own _HID. */
+	if (node->parent == pb->pb_devnode)
+		return 0;
+
+	/* Only direct descendants, because of possible muxes. */
+	if (node->parent && node->parent->parent != pb->pb_devnode)
+		return 0;
+
+	if (acpi_parsehid(node, arg, cdev, dev, 16) != 0)
+		return 0;
+
+	sta = acpi_getsta(acpi_softc, node->parent);
+	if ((sta & STA_PRESENT) == 0)
+		return 0;
+
+	if (aml_evalname(acpi_softc, node->parent, "_CRS", 0, NULL, &res))
+		return 0;
+
+	if (res.type != AML_OBJTYPE_BUFFER || res.length < 5) {
+		printf("%s: invalid _CRS object (type %d len %d)\n",
+		    sc->sc_dev.dv_xname, res.type, res.length);
+		aml_freevalue(&res);
+		return (0);
+	}
+	memset(&crs, 0, sizeof(crs));
+	crs.devnode = sc->sc_devnode;
+	aml_parse_resource(&res, pcamux_acpi_parse_crs, &crs);
+	aml_freevalue(&res);
+
+	acpi_attach_deps(acpi_softc, node->parent);
+
+	memset(&ia, 0, sizeof(ia));
+	ia.ia_tag = &pb->pb_ic;
+	ia.ia_name = dev;
+	ia.ia_addr = crs.i2c_addr;
+	ia.ia_cookie = node->parent;
+
+	config_found(pb->pb_iic, &ia, iic_print);
+	node->parent->attached = 1;
+
+	return 0;
+}
+
+int
+pcamux_acpi_parse_crs(int crsidx, union acpi_resource *crs, void *arg)
+{
+	struct pcamux_crs *sc_crs = arg;
+
+	switch (AML_CRSTYPE(crs)) {
+	case LR_SERBUS:
+		if (crs->lr_serbus.type == LR_SERBUS_I2C)
+			sc_crs->i2c_addr = crs->lr_i2cbus._adr;
+		break;
+
+	default:
+		printf("%s: unknown resource type %d\n", __func__,
+		    AML_CRSTYPE(crs));
+	}
+
+	return 0;
+}
+#endif
 
 int
 pcamux_set_channel(struct pcamux_softc *sc, int channel, int flags)
