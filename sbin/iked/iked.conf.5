@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.78 2020/09/23 14:25:55 tobhe Exp $
+.\" $OpenBSD: iked.conf.5,v 1.79 2020/11/15 22:39:36 tobhe Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 23 2020 $
+.Dd $Mdocdate: November 15 2020 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -399,6 +399,12 @@ the
 .Ar srcnat
 parameter can be used to specify the actual source address.
 This can be used in outgoing NAT/BINAT scenarios as described below.
+If the
+.Ic config address
+option is specified, the
+.Ar dynamic
+keyword can be used to create flows from or to the dynamically
+assigned address.
 .Pp
 The optional
 .Ic port
@@ -1000,7 +1006,7 @@ authentication:
 user "test" "password123"
 
 ikev2 "win7" esp \e
-	from 0.0.0.0/0 to 172.16.2.0/24 \e
+	from dynamic to 172.16.2.0/24 \e
 	peer 10.0.0.0/8 local 192.168.56.0/24 \e
 	eap "mschap-v2" \e
 	config address 172.16.2.1 \e
