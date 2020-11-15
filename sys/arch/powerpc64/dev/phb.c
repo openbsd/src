@@ -1,4 +1,4 @@
-/*	$OpenBSD: phb.c,v 1.18 2020/10/25 14:11:16 kettenis Exp $	*/
+/*	$OpenBSD: phb.c,v 1.19 2020/11/15 23:14:04 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -808,7 +808,7 @@ phb_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 		return error;
 
 	/* For each segment. */
-	for (seg = 0; seg < nsegs; seg++) {
+	for (seg = 0; seg < map->dm_nsegs; seg++) {
 		map->dm_segs[seg].ds_addr = map->dm_segs[seg]._ds_paddr;
 		if (sc->sc_tce_table) 
 			map->dm_segs[seg].ds_addr += PHB_DMA_OFFSET;
