@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.177 2020/11/14 22:09:59 patrick Exp $
+# $OpenBSD: GENERIC,v 1.178 2020/11/15 18:04:39 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -40,6 +40,7 @@ smbios0		at efi?
 acpi0		at mainbus?
 acpibtn*	at acpi?
 acpiec*		at acpi?
+acpige*		at acpi?
 acpimcfg*	at acpi?
 acpipci*	at acpi?
 pci*		at acpipci?
