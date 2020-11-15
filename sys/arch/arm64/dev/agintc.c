@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.27 2020/09/05 14:47:21 deraadt Exp $ */
+/* $OpenBSD: agintc.c,v 1.28 2020/11/15 17:27:32 patrick Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -81,6 +81,9 @@
 #define GICD_ICACTIVER(i)	(0x0380 + (IRQ_TO_REG32(i) * 4))
 #define GICD_IPRIORITYR(i)	(0x0400 + (i))
 #define GICD_ICFGR(i)		(0x0c00 + (IRQ_TO_REG16(i) * 4))
+#define  GICD_ICFGR_TRIG_LEVEL(i)	(0x0 << (IRQ_TO_REG16BIT(i) * 2))
+#define  GICD_ICFGR_TRIG_EDGE(i)	(0x2 << (IRQ_TO_REG16BIT(i) * 2))
+#define  GICD_ICFGR_TRIG_MASK(i)	(0x2 << (IRQ_TO_REG16BIT(i) * 2))
 #define GICD_NSACR(i)		(0x0e00 + (IRQ_TO_REG16(i) * 4))
 #define GICD_IROUTER(i)		(0x6000 + ((i) * 8))
 
@@ -207,7 +210,7 @@ int		agintc_splraise(int);
 void		agintc_setipl(int);
 void		agintc_calc_mask(void);
 void		agintc_calc_irq(struct agintc_softc *sc, int irq);
-void		*agintc_intr_establish(int, int, struct cpu_info *ci,
+void		*agintc_intr_establish(int, int, int, struct cpu_info *,
 		    int (*)(void *), void *, char *);
 void		*agintc_intr_establish_fdt(void *cookie, int *cell, int level,
 		    struct cpu_info *, int (*func)(void *), void *arg, char *name);
@@ -218,6 +221,7 @@ void		agintc_eoi(uint32_t);
 void		agintc_set_priority(struct agintc_softc *sc, int, int);
 void		agintc_intr_enable(struct agintc_softc *, int);
 void		agintc_intr_disable(struct agintc_softc *, int);
+void		agintc_intr_config(struct agintc_softc *, int, int);
 void		agintc_route(struct agintc_softc *, int, int,
 		    struct cpu_info *);
 void		agintc_route_irq(void *, int, struct cpu_info *);
@@ -574,16 +578,19 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 	switch (nipi) {
 	case 1:
 		sc->sc_ipi_irq[0] = agintc_intr_establish(ipiirq[0],
-		    IPL_IPI|IPL_MPSAFE, NULL, agintc_ipi_combined, sc, "ipi");
+		    IST_EDGE_RISING, IPL_IPI|IPL_MPSAFE, NULL,
+		    agintc_ipi_combined, sc, "ipi");
 		sc->sc_ipi_num[ARM_IPI_NOP] = ipiirq[0];
 		sc->sc_ipi_num[ARM_IPI_DDB] = ipiirq[0];
 		break;
 	case 2:
 		sc->sc_ipi_irq[0] = agintc_intr_establish(ipiirq[0],
-		    IPL_IPI|IPL_MPSAFE, NULL, agintc_ipi_nop, sc, "ipinop");
+		    IST_EDGE_RISING, IPL_IPI|IPL_MPSAFE, NULL,
+		    agintc_ipi_nop, sc, "ipinop");
 		sc->sc_ipi_num[ARM_IPI_NOP] = ipiirq[0];
 		sc->sc_ipi_irq[1] = agintc_intr_establish(ipiirq[1],
-		    IPL_IPI|IPL_MPSAFE, NULL, agintc_ipi_ddb, sc, "ipiddb");
+		    IST_EDGE_RISING, IPL_IPI|IPL_MPSAFE, NULL,
+		    agintc_ipi_ddb, sc, "ipiddb");
 		sc->sc_ipi_num[ARM_IPI_DDB] = ipiirq[1];
 		break;
 	default:
@@ -741,6 +748,24 @@ agintc_intr_disable(struct agintc_softc *sc, int irq)
 		bus_space_write_4(sc->sc_iot, sc->sc_r_ioh[hwcpu],
 		    GICR_ICENABLE0, 1 << IRQ_TO_REG32BIT(irq));
 	}
+}
+
+void
+agintc_intr_config(struct agintc_softc *sc, int irq, int type)
+{
+	uint32_t reg;
+
+	/* Don't dare to change SGIs or PPIs (yet) */
+	if (irq < 32)
+		return;
+
+	reg = bus_space_read_4(sc->sc_iot, sc->sc_d_ioh, GICD_ICFGR(irq));
+	reg &= ~GICD_ICFGR_TRIG_MASK(irq);
+	if (type == IST_EDGE_RISING)
+		reg |= GICD_ICFGR_TRIG_EDGE(irq);
+	else
+		reg |= GICD_ICFGR_TRIG_LEVEL(irq);
+	bus_space_write_4(sc->sc_iot, sc->sc_d_ioh, GICD_ICFGR(irq), reg);
 }
 
 void
@@ -979,6 +1004,7 @@ agintc_intr_establish_fdt(void *cookie, int *cell, int level,
 {
 	struct agintc_softc	*sc = agintc_sc;
 	int			 irq;
+	int			 type;
 
 	/* 2nd cell contains the interrupt number */
 	irq = cell[1];
@@ -991,11 +1017,17 @@ agintc_intr_establish_fdt(void *cookie, int *cell, int level,
 	else
 		panic("%s: bogus interrupt type", sc->sc_sbus.sc_dev.dv_xname);
 
-	return agintc_intr_establish(irq, level, ci, func, arg, name);
+	/* SPIs are only active-high level or low-to-high edge */
+	if (cell[2] & 0x3)
+		type = IST_EDGE_RISING;
+	else
+		type = IST_LEVEL_HIGH;
+
+	return agintc_intr_establish(irq, type, level, ci, func, arg, name);
 }
 
 void *
-agintc_intr_establish(int irqno, int level, struct cpu_info *ci,
+agintc_intr_establish(int irqno, int type, int level, struct cpu_info *ci,
     int (*func)(void *), void *arg, char *name)
 {
 	struct agintc_softc	*sc = agintc_sc;
@@ -1041,6 +1073,7 @@ agintc_intr_establish(int irqno, int level, struct cpu_info *ci,
 #endif
 
 	if (irqno < LPI_BASE) {
+		agintc_intr_config(sc, irqno, type);
 		agintc_calc_irq(sc, irqno);
 	} else {
 		uint8_t *prop = AGINTC_DMA_KVA(sc->sc_prop);
@@ -1538,7 +1571,7 @@ agintc_intr_establish_msi(void *self, uint64_t *addr, uint64_t *data,
 			continue;
 
 		cookie = agintc_intr_establish(LPI_BASE + i,
-		    level, ci, func, arg, name);
+		    IST_EDGE_RISING, level, ci, func, arg, name);
 		if (cookie == NULL)
 			return NULL;
 
