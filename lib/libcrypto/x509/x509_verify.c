@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.19 2020/11/11 18:49:34 jsing Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.20 2020/11/15 17:54:49 beck Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -477,6 +477,19 @@ x509_verify_build_chains(struct x509_verify_ctx *ctx, X509 *cert,
 	count = ctx->chains_count;
 	ctx->error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY;
 	ctx->error_depth = depth;
+	if (ctx->xsc != NULL) {
+		/*
+		 * Long ago experiments at Muppet labs resulted in a
+		 * situation where software not only sees these errors
+		 * but forced developers to expect them in certain cases.
+		 * so we must mimic this awfulness for the legacy case.
+		 */
+		if (cert->ex_flags & EXFLAG_SS)
+			ctx->error = (depth == 0) ?
+			    X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
+			    X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN;
+
+	}
 
 	for (i = 0; i < sk_X509_num(ctx->roots); i++) {
 		candidate = sk_X509_value(ctx->roots, i);
