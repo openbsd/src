@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.58 2020/10/27 02:39:07 jordan Exp $
+#	$OpenBSD: files.acpi,v 1.59 2020/11/15 16:47:12 kettenis Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -150,6 +150,11 @@ file	dev/acpi/chvgpio.c		chvgpio
 device	glkgpio
 attach	glkgpio at acpi
 file	dev/acpi/glkgpio.c		glkgpio
+
+# Intel PCH GPIO
+device	pchgpio
+attach	pchgpio at acpi
+file	dev/acpi/pchgpio.c		pchgpio
 
 # "Intel" Dollar Cove TI PMIC
 device	tipmic
