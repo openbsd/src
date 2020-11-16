@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1942 2020/10/28 18:49:03 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1943 2020/11/16 07:40:19 kevlo Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -11392,6 +11392,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "I219-V",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I225_IT,
+	    "I225-IT",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E5V2_HB,
 	    "E5 v2 Host",
 	},
@@ -12544,6 +12548,26 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82439HX",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I226_LM,
+	    "I226-LM",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I226_V,
+	    "I226-V",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I226_IT,
+	    "I226-IT",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I221_V,
+	    "I221-V",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I226_BLANK_NVM,
+	    "I226",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82806AA,
 	    "82806AA",
 	},
@@ -12992,8 +13016,24 @@ static const struct pci_known_product pci_known_products[] = {
 	    "X553 SGMII",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I225_LM,
+	    "I225-LM",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I225_V,
+	    "I225-V",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_LM15,
 	    "I219-LM",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I220_V,
+	    "I220-V",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I225_I,
+	    "I225-I",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_LM14,
@@ -13010,6 +13050,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I219_V13,
 	    "I219-V",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I225_BLANK_NVM,
+	    "I225",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE5G_H_PCIE_X16,
@@ -16344,6 +16388,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "RCU32 I2O RAID",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I225_K,
+	    "I225-K",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I225_K2,
+	    "I225-K2",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3124,
 	    "3124 SATA",
 	},
@@ -18158,6 +18210,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_SERVER,
 	    "PRO 100 Server",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I225_LMVP,
+	    "I225-LMvP",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_QEMU_NVME,
