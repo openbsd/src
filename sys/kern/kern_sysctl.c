@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.382 2020/11/16 06:37:07 gnezdo Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.383 2020/11/16 06:42:12 gnezdo Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -666,6 +666,18 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 char *hw_vendor, *hw_prod, *hw_uuid, *hw_serial, *hw_ver;
 int allowpowerdown = 1;
 
+/* morally const values reported by sysctl_bounded_arr */
+static int byte_order = BYTE_ORDER;
+static int page_size = PAGE_SIZE;
+
+const struct sysctl_bounded_args hw_vars[] = {
+	{HW_NCPU, &ncpus, 1, 0},
+	{HW_NCPUFOUND, &ncpusfound, 1, 0},
+	{HW_BYTEORDER, &byte_order, 1, 0},
+	{HW_PAGESIZE, &page_size, 1, 0},
+	{HW_DISKCOUNT, &disk_count, 1, 0},
+};
+
 int
 hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
@@ -682,22 +694,14 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_rdstring(oldp, oldlenp, newp, machine));
 	case HW_MODEL:
 		return (sysctl_rdstring(oldp, oldlenp, newp, cpu_model));
-	case HW_NCPU:
-		return (sysctl_rdint(oldp, oldlenp, newp, ncpus));
-	case HW_NCPUFOUND:
-		return (sysctl_rdint(oldp, oldlenp, newp, ncpusfound));
 	case HW_NCPUONLINE:
 		return (sysctl_rdint(oldp, oldlenp, newp,
 		    sysctl_hwncpuonline()));
-	case HW_BYTEORDER:
-		return (sysctl_rdint(oldp, oldlenp, newp, BYTE_ORDER));
 	case HW_PHYSMEM:
 		return (sysctl_rdint(oldp, oldlenp, newp, ptoa(physmem)));
 	case HW_USERMEM:
 		return (sysctl_rdint(oldp, oldlenp, newp,
 		    ptoa(physmem - uvmexp.wired)));
-	case HW_PAGESIZE:
-		return (sysctl_rdint(oldp, oldlenp, newp, PAGE_SIZE));
 	case HW_DISKNAMES:
 		err = sysctl_diskinit(0, p);
 		if (err)
@@ -713,8 +717,6 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			return err;
 		return (sysctl_rdstruct(oldp, oldlenp, newp, diskstats,
 		    disk_count * sizeof(struct diskstats)));
-	case HW_DISKCOUNT:
-		return (sysctl_rdint(oldp, oldlenp, newp, disk_count));
 	case HW_CPUSPEED:
 		if (!cpu_cpuspeed)
 			return (EOPNOTSUPP);
@@ -775,7 +777,8 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_hwsmt(oldp, oldlenp, newp, newlen));
 #endif
 	default:
-		return (EOPNOTSUPP);
+		return sysctl_bounded_arr(hw_vars, nitems(hw_vars), name,
+		    namelen, oldp, oldlenp, newp, newlen);
 	}
 	/* NOTREACHED */
 }
