@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_check.8,v 1.11 2020/11/09 15:23:48 espie Exp $
+.\"	$OpenBSD: pkg_check.8,v 1.12 2020/11/16 17:52:08 jmc Exp $
 .\"
 .\" Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 9 2020 $
+.Dd $Mdocdate: November 16 2020 $
 .Dt PKG_CHECK 8
 .Os
 .Sh NAME
@@ -46,7 +46,7 @@ Checks that
 only contains directories, that each directory holds a packing-list,
 and that said packing-list is an actual packing-list that matches the directory.
 .It Direct dependencies
-Checks that all direct dependencies are recorded correctly, 
+Checks that all direct dependencies are recorded correctly,
 specifically, that
 .Cm @depend ,
 .Cm @tag
