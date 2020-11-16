@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.106 2020/11/13 14:18:25 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.107 2020/11/16 12:30:16 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -942,11 +942,23 @@ ReFault:
 		return error;
 	}
 
-	amap = ufi.entry->aref.ar_amap;
-	uobj = ufi.entry->object.uvm_obj;
-
 	/* (shadowed == TRUE) if there is an anon at the faulting address */
 	shadowed = uvm_fault_upper_lookup(&ufi, &flt, anons, pages);
+
+	/* handle case 1: fault on an anon in our amap */
+	if (shadowed == TRUE) {
+		error = uvm_fault_upper(&ufi, &flt, anons, fault_type,
+		    access_type);
+		switch (error) {
+		case ERESTART:
+			goto ReFault;
+		default:
+			return error;
+		}
+	}
+
+	amap = ufi.entry->aref.ar_amap;
+	uobj = ufi.entry->object.uvm_obj;
 
 	/*
 	 * if the desired page is not shadowed by the amap and we have a
@@ -1055,30 +1067,12 @@ ReFault:
 	/*
 	 * note that at this point we are done with any front or back pages.
 	 * we are now going to focus on the center page (i.e. the one we've
-	 * faulted on).  if we have faulted on the top (anon) layer
-	 * [i.e. case 1], then the anon we want is anons[centeridx] (we have
-	 * not touched it yet).  if we have faulted on the bottom (uobj)
+	 * faulted on).  if we have faulted on the bottom (uobj)
 	 * layer [i.e. case 2] and the page was both present and available,
 	 * then we've got a pointer to it as "uobjpage" and we've already
 	 * made it BUSY.
 	 */
-	/*
-	 * there are four possible cases we must address: 1A, 1B, 2A, and 2B
-	 */
-	/* redirect case 2: if we are not shadowed, go to case 2. */
-	if (shadowed == FALSE)
-		goto Case2;
 
-	/* handle case 1: fault on an anon in our amap */
-	error = uvm_fault_upper(&ufi, &flt, anons, fault_type, access_type);
-	switch (error) {
-	case ERESTART:
-		goto ReFault;
-	default:
-		return error;
-	}
-
-Case2:
 	/* handle case 2: faulting on backing object or zero fill */
 	/*
 	 * note that uobjpage can not be PGO_DONTCARE at this point.  we now
