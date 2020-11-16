@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.21 2020/10/27 17:57:04 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.22 2020/11/16 19:04:57 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -38,6 +38,7 @@ ahci*		at pci?
 astfb*		at pci?
 wsdisplay*	at astfb?
 bge*		at pci?
+mcx*		at pci?
 mpii*		at pci?
 nvme*		at pci?
 ppb*		at pci?
