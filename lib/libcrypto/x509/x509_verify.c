@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.21 2020/11/16 17:42:35 jsing Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.22 2020/11/16 17:43:37 jsing Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -1002,11 +1002,10 @@ x509_verify(struct x509_verify_ctx *ctx, X509 *leaf, char *name)
 	 * We could not find a validated chain, and for some reason do not
 	 * have an error set.
 	 */
-	if (ctx->chains_count == 0 && ctx->error == 0) {
+	if (ctx->chains_count == 0 && ctx->error == X509_V_OK) {
 		ctx->error = X509_V_ERR_UNSPECIFIED;
-		if (ctx->xsc != NULL && ctx->xsc->error != 0)
+		if (ctx->xsc != NULL && ctx->xsc->error != X509_V_OK)
 			ctx->error = ctx->xsc->error;
-
 	}
 
 	/* Clear whatever errors happened if we have any validated chain */
