@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.75 2020/10/22 14:31:27 claudio Exp $ */
+/* $OpenBSD: bwfm.c,v 1.76 2020/11/16 14:46:00 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -58,6 +58,7 @@ static int bwfm_debug = 1;
 void	 bwfm_start(struct ifnet *);
 void	 bwfm_init(struct ifnet *);
 void	 bwfm_stop(struct ifnet *);
+void	 bwfm_iff(struct bwfm_softc *);
 void	 bwfm_watchdog(struct ifnet *);
 void	 bwfm_update_node(void *, struct ieee80211_node *);
 void	 bwfm_update_nodes(struct bwfm_softc *);
@@ -505,11 +506,7 @@ bwfm_init(struct ifnet *ifp)
 	 */
 	bwfm_fwvar_var_set_int(sc, "sup_wpa", 0);
 
-#if 0
-	/* TODO: set these on proper ioctl */
-	bwfm_fwvar_var_set_int(sc, "allmulti", 1);
-	bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_PROMISC, 1);
-#endif
+	bwfm_iff(sc);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifq_clr_oactive(&ifp->if_snd);
@@ -541,6 +538,43 @@ bwfm_stop(struct ifnet *ifp)
 
 	if (sc->sc_bus_ops->bs_stop)
 		sc->sc_bus_ops->bs_stop(sc);
+}
+
+void
+bwfm_iff(struct bwfm_softc *sc)
+{
+	struct arpcom *ac = &sc->sc_ic.ic_ac;
+	struct ifnet *ifp = &ac->ac_if;
+	struct ether_multi *enm;
+	struct ether_multistep step;
+	size_t mcastlen;
+	char *mcast;
+	int i = 0;
+
+	mcastlen = sizeof(uint32_t) + ac->ac_multicnt * ETHER_ADDR_LEN;
+	mcast = malloc(mcastlen, M_TEMP, M_WAITOK);
+	htolem32(mcast, ac->ac_multicnt);
+
+	ifp->if_flags &= ~IFF_ALLMULTI;
+	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
+	} else {
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			memcpy(mcast + sizeof(uint32_t) + i * ETHER_ADDR_LEN,
+			    enm->enm_addrlo, ETHER_ADDR_LEN);
+			ETHER_NEXT_MULTI(step, enm);
+			i++;
+		}
+	}
+
+	bwfm_fwvar_var_set_data(sc, "mcast_list", mcast, mcastlen);
+	bwfm_fwvar_var_set_int(sc, "allmulti",
+	    !!(ifp->if_flags & IFF_ALLMULTI));
+	bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_PROMISC,
+	    !!(ifp->if_flags & IFF_PROMISC));
+
+	free(mcast, M_TEMP, mcastlen);
 }
 
 void
@@ -712,6 +746,7 @@ bwfm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct bwfm_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifreq *ifr;
 	int s, error = 0;
 
 	s = splnet();
@@ -726,6 +761,17 @@ bwfm_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				bwfm_stop(ifp);
+		}
+		break;
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		ifr = (struct ifreq *)data;
+		error = (cmd == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, &ic->ic_ac) :
+		    ether_delmulti(ifr, &ic->ic_ac);
+		if (error == ENETRESET) {
+			bwfm_iff(sc);
+			error = 0;
 		}
 		break;
 	case SIOCGIFMEDIA:
