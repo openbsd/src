@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.76 2020/11/16 14:46:00 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.77 2020/11/16 17:12:55 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -553,7 +553,7 @@ bwfm_iff(struct bwfm_softc *sc)
 
 	mcastlen = sizeof(uint32_t) + ac->ac_multicnt * ETHER_ADDR_LEN;
 	mcast = malloc(mcastlen, M_TEMP, M_WAITOK);
-	htolem32(mcast, ac->ac_multicnt);
+	htolem32((uint32_t *)mcast, ac->ac_multicnt);
 
 	ifp->if_flags &= ~IFF_ALLMULTI;
 	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
