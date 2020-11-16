@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_key_schedule.c,v 1.8 2019/11/17 21:01:08 beck Exp $ */
+/* $OpenBSD: tls13_key_schedule.c,v 1.9 2020/11/16 18:55:15 jsing Exp $ */
 /* Copyright (c) 2018, Bob Beck <beck@openbsd.org>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -174,6 +174,15 @@ tls13_hkdf_expand_label(struct tls13_secret *out, const EVP_MD *digest,
     const struct tls13_secret *secret, const char *label,
     const struct tls13_secret *context)
 {
+	return tls13_hkdf_expand_label_with_length(out, digest, secret, label,
+	    strlen(label), context);
+}
+
+int
+tls13_hkdf_expand_label_with_length(struct tls13_secret *out,
+    const EVP_MD *digest, const struct tls13_secret *secret,
+    const uint8_t *label, size_t label_len, const struct tls13_secret *context)
+{
 	const char tls13_plabel[] = "tls13 ";
 	uint8_t *hkdf_label;
 	size_t hkdf_label_len;
@@ -188,7 +197,7 @@ tls13_hkdf_expand_label(struct tls13_secret *out, const EVP_MD *digest,
 		goto err;
 	if (!CBB_add_bytes(&child, tls13_plabel, strlen(tls13_plabel)))
 		goto err;
-	if (!CBB_add_bytes(&child, label, strlen(label)))
+	if (!CBB_add_bytes(&child, label, label_len))
 		goto err;
 	if (!CBB_add_u8_length_prefixed(&cbb, &child))
 		goto err;
@@ -207,12 +216,21 @@ tls13_hkdf_expand_label(struct tls13_secret *out, const EVP_MD *digest,
 	return(0);
 }
 
-static int
+int
 tls13_derive_secret(struct tls13_secret *out, const EVP_MD *digest,
     const struct tls13_secret *secret, const char *label,
     const struct tls13_secret *context)
 {
 	return tls13_hkdf_expand_label(out, digest, secret, label, context);
+}
+
+int
+tls13_derive_secret_with_label_length(struct tls13_secret *out,
+    const EVP_MD *digest, const struct tls13_secret *secret, const uint8_t *label,
+    size_t label_len, const struct tls13_secret *context)
+{
+	return tls13_hkdf_expand_label_with_length(out, digest, secret, label,
+	    label_len, context);
 }
 
 int

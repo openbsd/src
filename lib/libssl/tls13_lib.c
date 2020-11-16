@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.54 2020/09/11 15:03:36 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.55 2020/11/16 18:55:15 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -579,3 +579,75 @@ tls13_clienthello_hash_validate(struct tls13_ctx *ctx)
 	return 1;
 }
 
+int
+tls13_exporter(struct tls13_ctx *ctx, const uint8_t *label, size_t label_len,
+    const uint8_t *context_value, size_t context_value_len, uint8_t *out,
+    size_t out_len)
+{
+	struct tls13_secret context, export_out, export_secret;
+	struct tls13_secrets *secrets = ctx->hs->secrets;
+	EVP_MD_CTX *md_ctx = NULL;
+	unsigned int md_out_len;
+	int md_len;
+	int ret = 0;
+
+	/*
+	 * RFC 8446 Section 7.5.
+	 */
+
+	memset(&context, 0, sizeof(context));
+	memset(&export_secret, 0, sizeof(export_secret));
+
+	export_out.data = out;
+	export_out.len = out_len;
+
+	if (!ctx->handshake_completed)
+		return 0;
+
+	md_len = EVP_MD_size(secrets->digest);
+	if (md_len <= 0 || md_len > EVP_MAX_MD_SIZE)
+		goto err;
+
+	if ((export_secret.data = calloc(1, md_len)) == NULL)
+		goto err;
+	export_secret.len = md_len;
+
+	if ((context.data = calloc(1, md_len)) == NULL)
+		goto err;
+	context.len = md_len;
+
+	/* In TLSv1.3 no context is equivalent to an empty context. */
+	if (context_value == NULL) {
+		context_value = "";
+		context_value_len = 0;
+	}
+
+	if ((md_ctx = EVP_MD_CTX_new()) == NULL)
+		goto err;
+	if (!EVP_DigestInit_ex(md_ctx, secrets->digest, NULL))
+		goto err;
+	if (!EVP_DigestUpdate(md_ctx, context_value, context_value_len))
+		goto err;
+	if (!EVP_DigestFinal_ex(md_ctx, context.data, &md_out_len))
+		goto err;
+	if (md_len != md_out_len)
+		goto err;
+
+	if (!tls13_derive_secret_with_label_length(&export_secret,
+	    secrets->digest, &secrets->exporter_master, label, label_len,
+	    &secrets->empty_hash))
+		goto err;
+
+	if (!tls13_hkdf_expand_label(&export_out, secrets->digest,
+	    &export_secret, "exporter", &context))
+		goto err;
+
+	ret = 1;
+
+ err:
+	EVP_MD_CTX_free(md_ctx);
+	freezero(context.data, context.len);
+	freezero(export_secret.data, export_secret.len);
+
+	return ret;
+}

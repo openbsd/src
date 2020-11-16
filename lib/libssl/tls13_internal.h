@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.86 2020/07/30 16:23:17 tb Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.87 2020/11/16 18:55:15 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -148,6 +148,16 @@ void tls13_secrets_destroy(struct tls13_secrets *secrets);
 int tls13_hkdf_expand_label(struct tls13_secret *out, const EVP_MD *digest,
     const struct tls13_secret *secret, const char *label,
     const struct tls13_secret *context);
+int tls13_hkdf_expand_label_with_length(struct tls13_secret *out,
+    const EVP_MD *digest, const struct tls13_secret *secret,
+    const uint8_t *label, size_t label_len, const struct tls13_secret *context);
+
+int tls13_derive_secret(struct tls13_secret *out, const EVP_MD *digest,
+    const struct tls13_secret *secret, const char *label,   
+    const struct tls13_secret *context);
+int tls13_derive_secret_with_label_length(struct tls13_secret *out,
+    const EVP_MD *digest, const struct tls13_secret *secret,
+    const uint8_t *label, size_t label_len, const struct tls13_secret *context);
 
 int tls13_derive_early_secrets(struct tls13_secrets *secrets, uint8_t *psk,
     size_t psk_len, const struct tls13_secret *context);
@@ -411,6 +421,10 @@ int tls13_error_setx(struct tls13_error *error, int code, int subcode,
 #define tls13_set_errorx(ctx, code, subcode, fmt, ...) \
 	tls13_error_setx(&(ctx)->error, (code), (subcode), __FILE__, __LINE__, \
 	    (fmt), __VA_ARGS__)
+
+int tls13_exporter(struct tls13_ctx *ctx, const uint8_t *label, size_t label_len,
+    const uint8_t *context_value, size_t context_value_len, uint8_t *out,
+    size_t out_len);
 
 extern const uint8_t tls13_downgrade_12[8];
 extern const uint8_t tls13_downgrade_11[8];
