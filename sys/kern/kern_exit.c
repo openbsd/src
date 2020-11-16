@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.190 2020/10/15 16:31:11 cheloha Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.191 2020/11/16 18:37:06 jsing Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -140,7 +140,7 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 			single_thread_check(p, 0);
 	}
 
-	if (flags == EXIT_NORMAL) {
+	if (flags == EXIT_NORMAL && !(pr->ps_flags & PS_EXITING)) {
 		if (pr->ps_pid == 1)
 			panic("init died (signal %d, exit %d)", xsig, xexit);
 
