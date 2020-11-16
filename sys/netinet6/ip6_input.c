@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.229 2020/08/24 16:40:07 gnezdo Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.230 2020/11/16 06:44:39 gnezdo Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1334,7 +1334,15 @@ const u_char inet6ctlerrmap[PRC_NCMDS] = {
 	ENOPROTOOPT
 };
 
+#ifdef MROUTING
+extern int ip6_mrtproto;
+#endif
+
 const struct sysctl_bounded_args ipv6ctl_vars[] = {
+	{ IPV6CTL_DAD_PENDING, &ip6_dad_pending, 1, 0 },
+#ifdef MROUTING
+	{ IPV6CTL_MRTPROTO, &ip6_mrtproto, 1, 0 },
+#endif
 	{ IPV6CTL_FORWARDING, &ip6_forwarding, 0, 1 },
 	{ IPV6CTL_SENDREDIRECTS, &ip6_sendredirects, 0, 1 },
 	{ IPV6CTL_DEFHLIM, &ip6_defhlim, 0, 255 },
@@ -1393,7 +1401,6 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
     void *newp, size_t newlen)
 {
 #ifdef MROUTING
-	extern int ip6_mrtproto;
 	extern struct mrt6stat mrt6stat;
 #endif
 	int error;
@@ -1403,8 +1410,6 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (ENOTDIR);
 
 	switch (name[0]) {
-	case IPV6CTL_DAD_PENDING:
-		return sysctl_rdint(oldp, oldlenp, newp, ip6_dad_pending);
 	case IPV6CTL_STATS:
 		return (ip6_sysctl_ip6stat(oldp, oldlenp, newp));
 #ifdef MROUTING
@@ -1416,8 +1421,6 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		    &mrt6stat, sizeof(mrt6stat));
 		NET_UNLOCK();
 		return (error);
-	case IPV6CTL_MRTPROTO:
-		return sysctl_rdint(oldp, oldlenp, newp, ip6_mrtproto);
 	case IPV6CTL_MRTMIF:
 		if (newp)
 			return (EPERM);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.351 2020/08/22 17:55:30 gnezdo Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.352 2020/11/16 06:44:38 gnezdo Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -107,7 +107,14 @@ LIST_HEAD(, ipq) ipq;
 int	ip_maxqueue = 300;
 int	ip_frags = 0;
 
+#ifdef MROUTING
+extern int ip_mrtproto;
+#endif
+
 const struct sysctl_bounded_args ipctl_vars[] = {
+#ifdef MROUTING
+	{ IPCTL_MRTPROTO, &ip_mrtproto, 1, 0 },
+#endif
 	{ IPCTL_FORWARDING, &ipforwarding, 0, 1 },
 	{ IPCTL_SENDREDIRECTS, &ipsendredirects, 0, 1 },
 	{ IPCTL_DEFTTL, &ip_defttl, 0, 255 },
@@ -1562,7 +1569,6 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 {
 	int error;
 #ifdef MROUTING
-	extern int ip_mrtproto;
 	extern struct mrtstat mrtstat;
 #endif
 
@@ -1636,8 +1642,6 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case IPCTL_MRTSTATS:
 		return (sysctl_rdstruct(oldp, oldlenp, newp,
 		    &mrtstat, sizeof(mrtstat)));
-	case IPCTL_MRTPROTO:
-		return (sysctl_rdint(oldp, oldlenp, newp, ip_mrtproto));
 	case IPCTL_MRTMFC:
 		if (newp)
 			return (EPERM);

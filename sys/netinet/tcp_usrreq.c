@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.177 2020/11/02 04:29:23 gnezdo Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.178 2020/11/16 06:44:38 gnezdo Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -110,7 +110,9 @@ u_int	tcp_sendspace = TCP_SENDSPACE;
 u_int	tcp_recvspace = TCP_RECVSPACE;
 u_int	tcp_autorcvbuf_inc = 16 * 1024;
 
+static int pr_slowhz = PR_SLOWHZ;
 const struct sysctl_bounded_args tcpctl_vars[] = {
+	{ TCPCTL_SLOWHZ, &pr_slowhz, 1, 0 },
 	{ TCPCTL_RFC1323, &tcp_do_rfc1323, 0, 1 },
 	{ TCPCTL_KEEPINITTIME, &tcptv_keep_init, 1, 3 * TCPTV_KEEP_INIT },
 	{ TCPCTL_KEEPIDLE, &tcp_keepidle, 1, 5 * TCPTV_KEEP_IDLE },
@@ -997,9 +999,6 @@ tcp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (ENOTDIR);
 
 	switch (name[0]) {
-	case TCPCTL_SLOWHZ:
-		return (sysctl_rdint(oldp, oldlenp, newp, PR_SLOWHZ));
-
 	case TCPCTL_BADDYNAMIC:
 		NET_LOCK();
 		error = sysctl_struct(oldp, oldlenp, newp, newlen,
