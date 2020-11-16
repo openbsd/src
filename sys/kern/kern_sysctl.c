@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.381 2020/11/07 05:24:20 gnezdo Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.382 2020/11/16 06:37:07 gnezdo Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -275,6 +275,76 @@ struct diskstats *diskstats = NULL;
 size_t diskstatslen;
 int securelevel;
 
+/* morally const values reported by sysctl_bounded_arr */
+static int arg_max = ARG_MAX;
+static int openbsd = OpenBSD;
+static int posix_version = _POSIX_VERSION;
+static int ngroups_max = NGROUPS_MAX;
+static int int_zero = 0;
+static int int_one = 1;
+static int maxpartitions = MAXPARTITIONS;
+static int raw_part = RAW_PART;
+
+extern int somaxconn, sominconn;
+extern int nosuidcoredump;
+extern int maxlocksperuid;
+extern int uvm_wxabort;
+extern int global_ptrace;
+
+const struct sysctl_bounded_args kern_vars[] = {
+	{KERN_OSREV, &openbsd, 1, 0},
+	{KERN_MAXVNODES, &maxvnodes, 0, INT_MAX},
+	{KERN_MAXPROC, &maxprocess, 0, INT_MAX},
+	{KERN_MAXFILES, &maxfiles, 0, INT_MAX},
+	{KERN_NFILES, &numfiles, 1, 0},
+	{KERN_TTYCOUNT, &tty_count, 1, 0},
+	{KERN_ARGMAX, &arg_max, 1, 0},
+	{KERN_NSELCOLL, &nselcoll, 1, 0},
+	{KERN_POSIX1, &posix_version, 1, 0},
+	{KERN_NGROUPS, &ngroups_max, 1, 0},
+	{KERN_JOB_CONTROL, &int_one, 1, 0},
+	{KERN_SAVED_IDS, &int_one, 1, 0},
+	{KERN_MAXPARTITIONS, &maxpartitions, 1, 0},
+	{KERN_RAWPARTITION, &raw_part, 1, 0},
+	{KERN_MAXTHREAD, &maxthread, 0, INT_MAX},
+	{KERN_NTHREADS, &nthreads, 1, 0},
+	{KERN_SOMAXCONN, &somaxconn, 0, SHRT_MAX},
+	{KERN_SOMINCONN, &sominconn, 0, SHRT_MAX},
+	{KERN_NOSUIDCOREDUMP, &nosuidcoredump, 0, 3},
+	{KERN_FSYNC, &int_one, 1, 0},
+	{KERN_SYSVMSG,
+#ifdef SYSVMSG
+	 &int_one,
+#else
+	 &int_zero,
+#endif
+	 1, 0},
+	{KERN_SYSVSEM,
+#ifdef SYSVSEM
+	 &int_one,
+#else
+	 &int_zero,
+#endif
+	 1, 0},
+	{KERN_SYSVSHM,
+#ifdef SYSVSHM
+	 &int_one,
+#else
+	 &int_zero,
+#endif
+	 1, 0},
+	{KERN_FSCALE, &fscale, 1, 0},
+	{KERN_CCPU, &ccpu, 1, 0},
+	{KERN_NPROCS, &nprocesses, 1, 0},
+	{KERN_SPLASSERT, &splassert_ctl, 0, 3},
+	{KERN_MAXLOCKSPERUID, &maxlocksperuid, 0, INT_MAX},
+	{KERN_WXABORT, &uvm_wxabort, 0, 1},
+	{KERN_NETLIVELOCKS, &int_zero, 1, 0},
+#ifdef PTRACE
+	{KERN_GLOBAL_PTRACE, &global_ptrace, 0, 1},
+#endif
+};
+
 /*
  * kernel related system variables.
  */
@@ -284,11 +354,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 {
 	int error, level, inthostid, stackgap;
 	dev_t dev;
-	extern int somaxconn, sominconn;
-	extern int nosuidcoredump;
-	extern int maxlocksperuid;
 	extern int pool_debug;
-	extern int uvm_wxabort;
 
 	/* all sysctl names at this level are terminal except a ton of them */
 	if (namelen != 1) {
@@ -325,28 +391,12 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_rdstring(oldp, oldlenp, newp, ostype));
 	case KERN_OSRELEASE:
 		return (sysctl_rdstring(oldp, oldlenp, newp, osrelease));
-	case KERN_OSREV:
-		return (sysctl_rdint(oldp, oldlenp, newp, OpenBSD));
 	case KERN_OSVERSION:
 		return (sysctl_rdstring(oldp, oldlenp, newp, osversion));
 	case KERN_VERSION:
 		return (sysctl_rdstring(oldp, oldlenp, newp, version));
-	case KERN_MAXVNODES:
-		return(sysctl_int(oldp, oldlenp, newp, newlen, &maxvnodes));
-	case KERN_MAXPROC:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &maxprocess));
-	case KERN_MAXFILES:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &maxfiles));
-	case KERN_NFILES:
-		return (sysctl_rdint(oldp, oldlenp, newp, numfiles));
-	case KERN_TTYCOUNT:
-		return (sysctl_rdint(oldp, oldlenp, newp, tty_count));
-	case KERN_NUMVNODES:
+	case KERN_NUMVNODES:  /* XXX numvnodes is a long */
 		return (sysctl_rdint(oldp, oldlenp, newp, numvnodes));
-	case KERN_ARGMAX:
-		return (sysctl_rdint(oldp, oldlenp, newp, ARG_MAX));
-	case KERN_NSELCOLL:
-		return (sysctl_rdint(oldp, oldlenp, newp, nselcoll));
 	case KERN_SECURELVL:
 		level = securelevel;
 		if ((error = sysctl_int(oldp, oldlenp, newp, newlen, &level)) ||
@@ -431,64 +481,6 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_doprof(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
 #endif
-	case KERN_POSIX1:
-		return (sysctl_rdint(oldp, oldlenp, newp, _POSIX_VERSION));
-	case KERN_NGROUPS:
-		return (sysctl_rdint(oldp, oldlenp, newp, NGROUPS_MAX));
-	case KERN_JOB_CONTROL:
-		return (sysctl_rdint(oldp, oldlenp, newp, 1));
-	case KERN_SAVED_IDS:
-		return (sysctl_rdint(oldp, oldlenp, newp, 1));
-	case KERN_MAXPARTITIONS:
-		return (sysctl_rdint(oldp, oldlenp, newp, MAXPARTITIONS));
-	case KERN_RAWPARTITION:
-		return (sysctl_rdint(oldp, oldlenp, newp, RAW_PART));
-	case KERN_MAXTHREAD:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &maxthread));
-	case KERN_NTHREADS:
-		return (sysctl_rdint(oldp, oldlenp, newp, nthreads));
-	case KERN_SOMAXCONN: {
-		int val = somaxconn;
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &val);
-		if (error)
-			return error;
-		if (val < 0 || val > SHRT_MAX)
-			return EINVAL;
-		somaxconn = val;
-		return 0;
-	}
-	case KERN_SOMINCONN: {
-		int val = sominconn;
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &val);
-		if (error)
-			return error;
-		if (val < 0 || val > SHRT_MAX)
-			return EINVAL;
-		sominconn = val;
-		return 0;
-	}
-	case KERN_NOSUIDCOREDUMP:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &nosuidcoredump));
-	case KERN_FSYNC:
-		return (sysctl_rdint(oldp, oldlenp, newp, 1));
-	case KERN_SYSVMSG:
-#ifdef SYSVMSG
-		return (sysctl_rdint(oldp, oldlenp, newp, 1));
-#else
-		return (sysctl_rdint(oldp, oldlenp, newp, 0));
-#endif
-	case KERN_SYSVSEM:
-#ifdef SYSVSEM
-		return (sysctl_rdint(oldp, oldlenp, newp, 1));
-#else
-		return (sysctl_rdint(oldp, oldlenp, newp, 0));
-#endif
-	case KERN_SYSVSHM:
-#ifdef SYSVSHM
-		return (sysctl_rdint(oldp, oldlenp, newp, 1));
-#else
-		return (sysctl_rdint(oldp, oldlenp, newp, 0));
-#endif
 	case KERN_MSGBUFSIZE:
 	case KERN_CONSBUFSIZE: {
 		struct msgbuf *mp;
@@ -549,12 +541,6 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case KERN_TTY:
 		return (sysctl_tty(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
-	case KERN_FSCALE:
-		return (sysctl_rdint(oldp, oldlenp, newp, fscale));
-	case KERN_CCPU:
-		return (sysctl_rdint(oldp, oldlenp, newp, ccpu));
-	case KERN_NPROCS:
-		return (sysctl_rdint(oldp, oldlenp, newp, nprocesses));
 	case KERN_POOL:
 		return (sysctl_dopool(name + 1, namelen - 1, oldp, oldlenp));
 	case KERN_STACKGAPRANDOM:
@@ -574,9 +560,6 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case KERN_SYSVIPC_INFO:
 		return (sysctl_sysvipc(name + 1, namelen - 1, oldp, oldlenp));
 #endif
-	case KERN_SPLASSERT:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &splassert_ctl));
 #ifdef SYSVSEM
 	case KERN_SEMINFO:
 		return (sysctl_sysvsem(name + 1, namelen - 1, oldp, oldlenp,
@@ -609,8 +592,6 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case KERN_TIMECOUNTER:
 		return (sysctl_tc(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
-	case KERN_MAXLOCKSPERUID:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &maxlocksperuid));
 	case KERN_CPTIME2:
 		return (sysctl_cptime2(name + 1, namelen -1, oldp, oldlenp,
 		    newp, newlen));
@@ -634,16 +615,12 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		}
 		return(0);
 	}
-	case KERN_WXABORT:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &uvm_wxabort));
 	case KERN_CONSDEV:
 		if (cn_tab != NULL)
 			dev = cn_tab->cn_dev;
 		else
 			dev = NODEV;
 		return sysctl_rdstruct(oldp, oldlenp, newp, &dev, sizeof(dev));
-	case KERN_NETLIVELOCKS:
-		return (sysctl_rdint(oldp, oldlenp, newp, 0));
 	case KERN_POOL_DEBUG: {
 		int old_pool_debug = pool_debug;
 
@@ -653,13 +630,6 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			pool_reclaim_all();
 		return (error);
 	}
-#ifdef PTRACE
-	case KERN_GLOBAL_PTRACE: {
-		extern int global_ptrace;
-
-		return sysctl_int(oldp, oldlenp, newp, newlen, &global_ptrace);
-	}
-#endif
 #ifdef WITNESS
 	case KERN_WITNESSWATCH:
 		return witness_sysctl_watch(oldp, oldlenp, newp, newlen);
@@ -684,7 +654,8 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case KERN_UTC_OFFSET:
 		return (sysctl_utc_offset(oldp, oldlenp, newp, newlen));
 	default:
-		return (EOPNOTSUPP);
+		return (sysctl_bounded_arr(kern_vars, nitems(kern_vars), name,
+		    namelen, oldp, oldlenp, newp, newlen));
 	}
 	/* NOTREACHED */
 }
