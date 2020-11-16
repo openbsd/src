@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.281 2020/11/14 20:14:07 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.282 2020/11/16 12:59:20 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1086,13 +1086,7 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
 		if (ikev2_handle_certreq(env, msg) != 0)
 			return;
 
-		if (ikev2_init_auth(env, msg) != 0) {
-			ikev2_ike_sa_setreason(sa,
-			    "failed to initiate IKE_AUTH exchange");
-			sa_state(env, sa, IKEV2_STATE_CLOSED);
-			msg->msg_sa = NULL;
-			return;
-		}
+		(void)ikev2_init_auth(env, msg);
 		break;
 	case IKEV2_EXCHANGE_IKE_AUTH:
 		if (msg->msg_flags & IKED_MSG_FLAGS_AUTHENTICATION_FAILED) {
