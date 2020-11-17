@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.59 2020/07/08 21:05:42 deraadt Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.60 2020/11/17 03:23:54 gnezdo Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -838,6 +838,35 @@ semexit(struct process *pr)
 	semutot--;
 }
 
+/* Expand semsegs and semseqs arrays */
+void
+sema_reallocate(int val)
+{
+	struct semid_ds **sema_new;
+	unsigned short *newseqs;
+	sema_new = mallocarray(val, sizeof(struct semid_ds *),
+	    M_SEM, M_WAITOK|M_ZERO);
+	memcpy(sema_new, sema,
+	    seminfo.semmni * sizeof(struct semid_ds *));
+	newseqs = mallocarray(val, sizeof(unsigned short), M_SEM,
+	    M_WAITOK|M_ZERO);
+	memcpy(newseqs, semseqs,
+	    seminfo.semmni * sizeof(unsigned short));
+	free(sema, M_SEM, seminfo.semmni * sizeof(struct semid_ds *));
+	free(semseqs, M_SEM, seminfo.semmni * sizeof(unsigned short));
+	sema = sema_new;
+	semseqs = newseqs;
+	seminfo.semmni = val;
+}
+
+const struct sysctl_bounded_args sysvsem_vars[] = {
+	{ KERN_SEMINFO_SEMUME, &seminfo.semume, 1, 0 },
+	{ KERN_SEMINFO_SEMUSZ, &seminfo.semusz, 1, 0 },
+	{ KERN_SEMINFO_SEMVMX, &seminfo.semvmx, 1, 0 },
+	{ KERN_SEMINFO_SEMAEM, &seminfo.semaem, 1, 0 },
+	{ KERN_SEMINFO_SEMOPM, &seminfo.semopm, 1, INT_MAX },
+};
+
 /*
  * Userland access to struct seminfo.
  */
@@ -846,97 +875,35 @@ sysctl_sysvsem(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	void *newp, size_t newlen)
 {
 	int error, val;
-	struct semid_ds **sema_new;
-	unsigned short *newseqs;
 
-	if (namelen != 2) {
-		switch (name[0]) {
-		case KERN_SEMINFO_SEMMNI:
-		case KERN_SEMINFO_SEMMNS:
-		case KERN_SEMINFO_SEMMNU:
-		case KERN_SEMINFO_SEMMSL:
-		case KERN_SEMINFO_SEMOPM:
-		case KERN_SEMINFO_SEMUME:
-		case KERN_SEMINFO_SEMUSZ:
-		case KERN_SEMINFO_SEMVMX:
-		case KERN_SEMINFO_SEMAEM:
-			break;
-		default:
-                        return (ENOTDIR);       /* overloaded */
-                }
-        }
+	if (namelen != 1)
+                        return (ENOTDIR);       /* leaf-only */
 
 	switch (name[0]) {
 	case KERN_SEMINFO_SEMMNI:
 		val = seminfo.semmni;
-		if ((error = sysctl_int(oldp, oldlenp, newp, newlen, &val)) ||
-		    val == seminfo.semmni)
+		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
+		    &val, val, 0xffff);
+		/* returns success and skips reallocation if val is unchanged */
+		if (error || val == seminfo.semmni)
 			return (error);
-
-		if (val < seminfo.semmni || val > 0xffff)
-			return (EINVAL);
-
-		/* Expand semsegs and semseqs arrays */
-		sema_new = mallocarray(val, sizeof(struct semid_ds *),
-		    M_SEM, M_WAITOK|M_ZERO);
-		memcpy(sema_new, sema,
-		    seminfo.semmni * sizeof(struct semid_ds *));
-		newseqs = mallocarray(val, sizeof(unsigned short), M_SEM,
-		    M_WAITOK|M_ZERO);
-		memcpy(newseqs, semseqs,
-		    seminfo.semmni * sizeof(unsigned short));
-		free(sema, M_SEM, seminfo.semmni * sizeof(struct semid_ds *));
-		free(semseqs, M_SEM, seminfo.semmni * sizeof(unsigned short));
-		sema = sema_new;
-		semseqs = newseqs;
-		seminfo.semmni = val;
+		sema_reallocate(val);
 		return (0);
 	case KERN_SEMINFO_SEMMNS:
-		val = seminfo.semmns;
-		if ((error = sysctl_int(oldp, oldlenp, newp, newlen, &val)) ||
-		    val == seminfo.semmns)
-			return (error);
-		if (val < seminfo.semmns || val > 0xffff)
-			return (EINVAL);	/* can't decrease semmns */
-		seminfo.semmns = val;
-		return (0);
+		/* can't decrease semmns or go over 2^16 */
+		return (sysctl_int_bounded(oldp, oldlenp, newp, newlen,
+		    &seminfo.semmns, seminfo.semmns, 0xffff));
 	case KERN_SEMINFO_SEMMNU:
-		val = seminfo.semmnu;
-		if ((error = sysctl_int(oldp, oldlenp, newp, newlen, &val)) ||
-		    val == seminfo.semmnu)
-			return (error);
-		if (val < seminfo.semmnu)
-			return (EINVAL);	/* can't decrease semmnu */
-		seminfo.semmnu = val;
-		return (0);
+		/* can't decrease semmnu or go over 2^16 */
+		return (sysctl_int_bounded(oldp, oldlenp, newp, newlen,
+		    &seminfo.semmnu, seminfo.semmnu, 0xffff));
 	case KERN_SEMINFO_SEMMSL:
-		val = seminfo.semmsl;
-		if ((error = sysctl_int(oldp, oldlenp, newp, newlen, &val)) ||
-		    val == seminfo.semmsl)
-			return (error);
-		if (val < seminfo.semmsl || val > 0xffff)
-			return (EINVAL);	/* can't decrease semmsl */
-		seminfo.semmsl = val;
-		return (0);
-	case KERN_SEMINFO_SEMOPM:
-		val = seminfo.semopm;
-		if ((error = sysctl_int(oldp, oldlenp, newp, newlen, &val)) ||
-		    val == seminfo.semopm)
-			return (error);
-		if (val <= 0)
-			return (EINVAL);	/* semopm must be >= 1 */
-		seminfo.semopm = val;
-		return (0);
-	case KERN_SEMINFO_SEMUME:
-		return (sysctl_rdint(oldp, oldlenp, newp, seminfo.semume));
-	case KERN_SEMINFO_SEMUSZ:
-		return (sysctl_rdint(oldp, oldlenp, newp, seminfo.semusz));
-	case KERN_SEMINFO_SEMVMX:
-		return (sysctl_rdint(oldp, oldlenp, newp, seminfo.semvmx));
-	case KERN_SEMINFO_SEMAEM:
-		return (sysctl_rdint(oldp, oldlenp, newp, seminfo.semaem));
+		/* can't decrease semmsl or go over 2^16 */
+		return (sysctl_int_bounded(oldp, oldlenp, newp, newlen,
+		    &seminfo.semmsl, seminfo.semmsl, 0xffff));
 	default:
-		return (EOPNOTSUPP);
+		return (sysctl_bounded_arr(sysvsem_vars, nitems(sysvsem_vars),
+		    name, namelen, oldp, oldlenp, newp, newlen));
 	}
 	/* NOTREACHED */
 }
