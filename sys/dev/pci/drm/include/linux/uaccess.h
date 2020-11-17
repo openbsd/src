@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaccess.h,v 1.3 2020/06/08 04:48:15 jsg Exp $	*/
+/*	$OpenBSD: uaccess.h,v 1.4 2020/11/17 11:20:59 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -64,8 +64,6 @@ copy_from_user(void *to, const void *from, unsigned len)
 		goto err;					\
 })
 
-#define VERIFY_READ     0x1
-#define VERIFY_WRITE    0x2
 static inline int
 access_ok(const void *addr, unsigned long size)
 {

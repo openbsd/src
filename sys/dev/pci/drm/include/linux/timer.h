@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.h,v 1.4 2020/11/17 10:01:41 jsg Exp $	*/
+/*	$OpenBSD: timer.h,v 1.5 2020/11/17 11:20:59 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -25,7 +25,6 @@
 #include <linux/ktime.h>
 
 #define mod_timer(x, y)		timeout_add((x), (y - jiffies))
-#define mod_timer_pinned(x, y)	timeout_add((x), (y - jiffies))
 #define del_timer_sync(x)	timeout_del_barrier((x))
 #define del_timer(x)		timeout_del((x))
 #define timer_pending(x)	timeout_pending((x))
