@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.252 2020/07/15 07:13:56 kettenis Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.253 2020/11/17 12:11:04 mglocker Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -134,7 +134,7 @@ struct ctlname witnessname[] = CTL_KERN_WITNESS_NAMES;
 char names[BUFSIZ];
 int lastused;
 
-/* Maximum size object to expect from sysctl(3) */
+/* Maximum size object to expect from sysctl(2) */
 #define SYSCTL_BUFSIZ	8192
 
 struct list {
