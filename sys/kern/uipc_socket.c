@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.249 2020/09/29 11:48:54 claudio Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.250 2020/11/17 14:45:42 claudio Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -892,10 +892,9 @@ dontblock:
 			nextrecord = so->so_rcv.sb_mb->m_nextpkt;
 		else
 			nextrecord = so->so_rcv.sb_mb;
-		if (controlp && !skip) {
-			orig_resid = 0;
+		if (controlp && !skip)
 			controlp = &(*controlp)->m_next;
-		}
+		orig_resid = 0;
 	}
 
 	/* If m is non-NULL, we have some data to read. */
@@ -963,6 +962,7 @@ dontblock:
 			if (flags & MSG_PEEK) {
 				m = m->m_next;
 				moff = 0;
+				orig_resid = 0;
 			} else {
 				nextrecord = m->m_nextpkt;
 				sbfree(&so->so_rcv, m);
@@ -992,9 +992,10 @@ dontblock:
 				SBLASTMBUFCHK(&so->so_rcv, "soreceive 3");
 			}
 		} else {
-			if (flags & MSG_PEEK)
+			if (flags & MSG_PEEK) {
 				moff += len;
-			else {
+				orig_resid = 0;
+			} else {
 				if (mp)
 					*mp = m_copym(m, 0, len, M_WAIT);
 				m->m_data += len;
