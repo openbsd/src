@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiicvar.h,v 1.4 2020/11/14 21:24:08 patrick Exp $ */
+/* $OpenBSD: imxiicvar.h,v 1.1 2020/11/17 14:30:13 patrick Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -24,6 +24,37 @@
 #include <sys/rwlock.h>
 
 #include <dev/i2c/i2cvar.h>
+
+#define I2C_TYPE_IMX21	0
+#define I2C_TYPE_VF610	1
+
+struct imxiic_softc {
+	struct device		sc_dev;
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
+	bus_size_t		sc_ios;
+	int			sc_reg_shift;
+	int			sc_type;
+	int			sc_bitrate;
+	uint32_t		sc_clkrate;
+
+	struct imxiic_clk_pair	*sc_clk_div;
+	int			sc_clk_ndiv;
+
+	struct rwlock		sc_buslock;
+	struct i2c_controller	i2c_tag;
+
+	uint16_t		frequency;
+	uint16_t		stopped;
+};
+
+void imxiic_enable(struct imxiic_softc *, int);
+void imxiic_setspeed(struct imxiic_softc *, u_int);
+
+int imxiic_i2c_acquire_bus(void *, int);
+void imxiic_i2c_release_bus(void *, int);
+int imxiic_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
+    void *, size_t, int);
 
 struct imxiic_clk_pair {
 	uint16_t div;

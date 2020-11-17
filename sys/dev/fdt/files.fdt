@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.141 2020/06/25 12:09:11 patrick Exp $
+#	$OpenBSD: files.fdt,v 1.142 2020/11/17 14:30:13 patrick Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -464,9 +464,8 @@ device	imxgpio
 attach	imxgpio at fdt
 file	dev/fdt/imxgpio.c		imxgpio
 
-device	imxiic: i2cbus
-attach	imxiic at fdt
-file	dev/fdt/imxiic.c		imxiic
+attach	imxiic at fdt with imxiic_fdt
+file	dev/fdt/imxiic_fdt.c		imxiic_fdt
 
 device	imxiomuxc
 attach	imxiomuxc at fdt

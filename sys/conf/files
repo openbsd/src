@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.691 2020/07/20 00:15:59 deraadt Exp $
+#	$OpenBSD: files,v 1.692 2020/11/17 14:30:13 patrick Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -532,6 +532,10 @@ file	dev/ic/dwhdmiphy.c		dwhdmi
 # Synopsys DesignWare I2C controller
 device	dwiic: i2cbus
 file	dev/ic/dwiic.c			dwiic
+
+# Freescale i.MX I2C controller
+device	imxiic: i2cbus
+file	dev/ic/imxiic.c			imxiic
 
 # legitimate pseudo-devices
 pseudo-device vnd: disk

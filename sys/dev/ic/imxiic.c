@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiic.c,v 1.15 2020/11/14 21:24:08 patrick Exp $ */
+/* $OpenBSD: imxiic.c,v 1.1 2020/11/17 14:30:13 patrick Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -21,14 +21,8 @@
 #include <sys/systm.h>
 
 #include <machine/bus.h>
-#include <machine/fdt.h>
 
-#include <dev/fdt/imxiicvar.h>
-
-#include <dev/ofw/openfirm.h>
-#include <dev/ofw/ofw_clock.h>
-#include <dev/ofw/ofw_pinctrl.h>
-#include <dev/ofw/fdt.h>
+#include <dev/ic/imxiicvar.h>
 
 /* registers */
 #define I2C_IADR	0x00
@@ -47,35 +41,6 @@
 #define I2C_I2SR_IIF	(1 << 1)
 #define I2C_I2SR_IAL	(1 << 4)
 #define I2C_I2SR_IBB	(1 << 5)
-
-#define I2C_TYPE_IMX21	0
-#define I2C_TYPE_VF610	1
-
-struct imxiic_softc {
-	struct device		sc_dev;
-	bus_space_tag_t		sc_iot;
-	bus_space_handle_t	sc_ioh;
-	bus_size_t		sc_ios;
-	int			sc_reg_shift;
-	int			sc_type;
-	int			sc_node;
-	int			sc_bitrate;
-	uint32_t		sc_clkrate;
-
-	struct imxiic_clk_pair	*sc_clk_div;
-	int			sc_clk_ndiv;
-
-	struct rwlock		sc_buslock;
-	struct i2c_controller	i2c_tag;
-
-	uint16_t		frequency;
-	uint16_t		intr_status;
-	uint16_t		stopped;
-};
-
-int imxiic_match(struct device *, void *, void *);
-void imxiic_attach(struct device *, struct device *, void *);
-int imxiic_detach(struct device *, int);
 
 void imxiic_enable(struct imxiic_softc *, int);
 void imxiic_clear_iodone(struct imxiic_softc *);
@@ -103,85 +68,9 @@ void imxiic_write_1(struct imxiic_softc *, int, uint8_t);
 #define HCLR1(sc, reg, bits)						\
 	HWRITE1((sc), (reg), HREAD1((sc), (reg)) & ~(bits))
 
-void imxiic_scan(struct device *, struct i2cbus_attach_args *, void *);
-
-struct cfattach imxiic_ca = {
-	sizeof(struct imxiic_softc), imxiic_match, imxiic_attach,
-	imxiic_detach
-};
-
 struct cfdriver imxiic_cd = {
 	NULL, "imxiic", DV_DULL
 };
-
-int
-imxiic_match(struct device *parent, void *match, void *aux)
-{
-	struct fdt_attach_args *faa = aux;
-
-	return (OF_is_compatible(faa->fa_node, "fsl,imx21-i2c") ||
-	    OF_is_compatible(faa->fa_node, "fsl,vf610-i2c"));
-}
-
-void
-imxiic_attach(struct device *parent, struct device *self, void *aux)
-{
-	struct imxiic_softc *sc = (struct imxiic_softc *)self;
-	struct fdt_attach_args *faa = aux;
-
-	if (faa->fa_nreg < 1)
-		return;
-
-	sc->sc_iot = faa->fa_iot;
-	sc->sc_ios = faa->fa_reg[0].size;
-	sc->sc_node = faa->fa_node;
-	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
-	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
-		panic("imxiic_attach: bus_space_map failed!");
-
-	sc->sc_reg_shift = 2;
-	sc->sc_clk_div = imxiic_imx21_clk_div;
-	sc->sc_clk_ndiv = nitems(imxiic_imx21_clk_div);
-	sc->sc_type = I2C_TYPE_IMX21;
-
-	if (OF_is_compatible(faa->fa_node, "fsl,vf610-i2c")) {
-		sc->sc_reg_shift = 0;
-		sc->sc_clk_div = imxiic_vf610_clk_div;
-		sc->sc_clk_ndiv = nitems(imxiic_vf610_clk_div);
-		sc->sc_type = I2C_TYPE_VF610;
-	}
-
-	printf("\n");
-
-	clock_enable(faa->fa_node, NULL);
-	pinctrl_byname(faa->fa_node, "default");
-
-	/* set speed */
-	sc->sc_clkrate = clock_get_frequency(sc->sc_node, NULL) / 1000;
-	sc->sc_bitrate = OF_getpropint(sc->sc_node,
-	    "clock-frequency", 100000) / 1000;
-	imxiic_setspeed(sc, sc->sc_bitrate);
-
-	/* reset */
-	imxiic_enable(sc, 0);
-
-	sc->stopped = 1;
-	rw_init(&sc->sc_buslock, sc->sc_dev.dv_xname);
-
-	struct i2cbus_attach_args iba;
-
-	sc->i2c_tag.ic_cookie = sc;
-	sc->i2c_tag.ic_acquire_bus = imxiic_i2c_acquire_bus;
-	sc->i2c_tag.ic_release_bus = imxiic_i2c_release_bus;
-	sc->i2c_tag.ic_exec = imxiic_i2c_exec;
-
-	bzero(&iba, sizeof iba);
-	iba.iba_name = "iic";
-	iba.iba_tag = &sc->i2c_tag;
-	iba.iba_bus_scan = imxiic_scan;
-	iba.iba_bus_scan_arg = &sc->sc_node;
-	config_found(&sc->sc_dev, &iba, iicbus_print);
-}
 
 void
 imxiic_enable(struct imxiic_softc *sc, int on)
@@ -343,9 +232,6 @@ imxiic_i2c_acquire_bus(void *cookie, int flags)
 
 	rw_enter(&sc->sc_buslock, RW_WRITE);
 
-	/* clock gating */
-	clock_enable(sc->sc_node, NULL);
-
 	/* set speed */
 	imxiic_setspeed(sc, sc->sc_bitrate);
 
@@ -406,20 +292,6 @@ fail:
 	return ret;
 }
 
-int
-imxiic_detach(struct device *self, int flags)
-{
-	struct imxiic_softc *sc = (struct imxiic_softc *)self;
-
-	HWRITE1(sc, I2C_IADR, 0);
-	HWRITE1(sc, I2C_IFDR, 0);
-	HWRITE1(sc, I2C_I2CR, 0);
-	HWRITE1(sc, I2C_I2SR, 0);
-
-	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
-	return 0;
-}
-
 uint8_t
 imxiic_read_1(struct imxiic_softc *sc, int reg)
 {
@@ -434,36 +306,4 @@ imxiic_write_1(struct imxiic_softc *sc, int reg, uint8_t val)
 	reg <<= sc->sc_reg_shift;
 
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, reg, val);
-}
-
-void
-imxiic_scan(struct device *self, struct i2cbus_attach_args *iba, void *aux)
-{
-	int iba_node = *(int *)aux;
-	extern int iic_print(void *, const char *);
-	struct i2c_attach_args ia;
-	char name[32];
-	uint32_t reg[1];
-	int node;
-
-	for (node = OF_child(iba_node); node; node = OF_peer(node)) {
-		memset(name, 0, sizeof(name));
-		memset(reg, 0, sizeof(reg));
-
-		if (OF_getprop(node, "compatible", name, sizeof(name)) == -1)
-			continue;
-		if (name[0] == '\0')
-			continue;
-
-		if (OF_getprop(node, "reg", &reg, sizeof(reg)) != sizeof(reg))
-			continue;
-
-		memset(&ia, 0, sizeof(ia));
-		ia.ia_tag = iba->iba_tag;
-		ia.ia_addr = bemtoh32(&reg[0]);
-		ia.ia_name = name;
-		ia.ia_cookie = &node;
-	
-		config_found(self, &ia, iic_print);
-	}
 }
