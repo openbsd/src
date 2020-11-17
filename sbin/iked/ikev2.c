@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.283 2020/11/16 18:00:30 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.284 2020/11/17 18:39:56 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -4526,10 +4526,10 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 		}
 
 		/* check KE payload for PFS */
-		if (ibuf_length(msg->msg_parent->msg_ke)) {
+		if (ibuf_length(msg->msg_ke)) {
 			log_debug("%s: using PFS", __func__);
 			if (ikev2_sa_responder_dh(kex, &proposals,
-			    msg->msg_parent, protoid) < 0) {
+			    msg, protoid) < 0) {
 				log_debug("%s: failed to setup DH", __func__);
 				goto fail;
 			}
