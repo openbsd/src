@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.209 2020/07/31 10:49:33 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.210 2020/11/17 12:39:56 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -118,7 +118,7 @@ struct uvideo_softc {
 int		uvideo_enable(void *);
 void		uvideo_disable(void *);
 int		uvideo_open(void *, int, int *, uint8_t *, void (*)(void *),
-		    void *arg);
+		    void *);
 int		uvideo_close(void *);
 int		uvideo_match(struct device *, void *, void *);
 void		uvideo_attach(struct device *, struct device *, void *);
@@ -181,8 +181,8 @@ usbd_status	uvideo_vs_decode_stream_header_isight(struct uvideo_softc *,
 		    uint8_t *, int);
 int		uvideo_mmap_queue(struct uvideo_softc *, uint8_t *, int);
 void		uvideo_read(struct uvideo_softc *, uint8_t *, int);
-usbd_status	uvideo_usb_control(struct uvideo_softc *sc, uint8_t rt, uint8_t r,
-		    uint16_t value, uint8_t *data, size_t length);
+usbd_status	uvideo_usb_control(struct uvideo_softc *, uint8_t, uint8_t,
+		    uint16_t, uint8_t *, size_t);
 
 #ifdef UVIDEO_DEBUG
 #include <sys/namei.h>
