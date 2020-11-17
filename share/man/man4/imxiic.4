@@ -1,4 +1,4 @@
-.\"     $OpenBSD: imxiic.4,v 1.4 2019/10/07 19:38:11 patrick Exp $
+.\"     $OpenBSD: imxiic.4,v 1.5 2020/11/17 14:33:26 patrick Exp $
 .\"
 .\" Copyright (c) 2014 Sylvestre Gallon <syl@openbsd.org>
 .\"
@@ -14,13 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 7 2019 $
+.Dd $Mdocdate: November 17 2020 $
 .Dt IMXIIC 4
 .Os
 .Sh NAME
 .Nm imxiic
 .Nd i.MX onboard I2C controller
 .Sh SYNOPSIS
+.Cd "imxiic* at acpi?"
 .Cd "imxiic* at fdt?"
 .Cd "iic* at imxiic?"
 .Sh DESCRIPTION
