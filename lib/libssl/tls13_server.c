@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.62 2020/11/11 18:20:10 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.63 2020/11/17 07:02:30 tb Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -665,8 +665,8 @@ tls13_server_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
 
 		/*
 		 * XXX we don't send extensions with chain certs to avoid sending
-		 * a leaf ocsp stape with the chain certs.  This needs to get
-		 * fixed
+		 * a leaf ocsp staple with the chain certs.  This needs to get
+		 * fixed.
 		 */
 		if (!tls13_cert_add(ctx, &cert_list, cert, NULL))
 			goto err;
