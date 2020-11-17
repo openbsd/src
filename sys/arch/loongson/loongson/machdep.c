@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.91 2020/09/01 02:22:52 gnezdo Exp $ */
+/*	$OpenBSD: machdep.c,v 1.92 2020/11/17 16:33:44 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2014 Miodrag Vallat.
@@ -352,9 +352,9 @@ loongson_identify(const char *version, int envtype)
 int
 loongson_efi_setup(void)
 {
+	struct pmon_env_mem_entry entry;
 	const struct pmon_env_cpu *cpuenv;
 	const struct pmon_env_mem *mem;
-	const struct pmon_env_mem_entry *entry;
 	paddr_t fp, lp;
 	uint32_t i, ncpus, seg = 0;
 
@@ -385,13 +385,13 @@ loongson_efi_setup(void)
 	mem = pmon_get_env_mem();
 	physmem = 0;
 	for (i = 0; i < mem->nentries && seg < MAXMEMSEGS; i++) {
-		entry = &mem->mem_map[i];
-		if (entry->node != 0 ||
-		    (entry->type != PMON_MEM_SYSTEM_LOW &&
-		     entry->type != PMON_MEM_SYSTEM_HIGH))
+		memcpy(&entry, &mem->mem_map[i], sizeof(entry));
+		if (entry.node != 0 ||
+		    (entry.type != PMON_MEM_SYSTEM_LOW &&
+		     entry.type != PMON_MEM_SYSTEM_HIGH))
 			continue;
-		fp = atop(entry->address);
-		lp = atop(entry->address + (entry->size << 20));
+		fp = atop(entry.address);
+		lp = atop(entry.address + (entry.size << 20));
 		if (lp > atop(pfn_to_pad(PG_FRAME)) + 1)
 			lp = atop(pfn_to_pad(PG_FRAME)) + 1;
 		if (fp >= lp)
