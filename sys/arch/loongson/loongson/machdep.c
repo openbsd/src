@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.92 2020/11/17 16:33:44 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.93 2020/11/17 16:38:10 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2014 Miodrag Vallat.
@@ -391,7 +391,7 @@ loongson_efi_setup(void)
 		     entry.type != PMON_MEM_SYSTEM_HIGH))
 			continue;
 		fp = atop(entry.address);
-		lp = atop(entry.address + (entry.size << 20));
+		lp = atop(entry.address + ((uint64_t)entry.size << 20));
 		if (lp > atop(pfn_to_pad(PG_FRAME)) + 1)
 			lp = atop(pfn_to_pad(PG_FRAME)) + 1;
 		if (fp >= lp)
