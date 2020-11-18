@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.680 2020/11/18 17:43:33 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.681 2020/11/18 18:42:54 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -251,8 +251,10 @@ interface_state(struct interface_info *ifi)
 		fatal("getifaddrs");
 
 	ifa = get_link_ifa(ifi->name, ifap);
-	if (ifa == NULL ||
-	    (ifa->ifa_flags & IFF_UP) == 0 ||
+	if (ifa == NULL)
+		fatalx("invalid interface");
+
+	if ((ifa->ifa_flags & IFF_UP) == 0 ||
 	    (ifa->ifa_flags & IFF_RUNNING) == 0) {
 		ifi->link_state = LINK_STATE_DOWN;
 	} else {
