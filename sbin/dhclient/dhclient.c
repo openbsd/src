@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.679 2020/11/06 21:53:55 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.680 2020/11/18 17:43:33 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -242,6 +242,7 @@ interface_state(struct interface_info *ifi)
 {
 	struct ether_addr		 hw;
 	struct ifaddrs			*ifap, *ifa;
+	struct sockaddr_dl		*sdl;
 	int				 newlinkup, oldlinkup;
 
 	oldlinkup = LINK_STATE_IS_UP(ifi->link_state);
@@ -260,7 +261,6 @@ interface_state(struct interface_info *ifi)
 		ifi->mtu =
 		    ((struct if_data *)ifa->ifa_data)->ifi_mtu;
 	}
-	freeifaddrs(ifap);
 
 	newlinkup = LINK_STATE_IS_UP(ifi->link_state);
 	if (newlinkup != oldlinkup) {
@@ -272,13 +272,17 @@ interface_state(struct interface_info *ifi)
 
 	if (newlinkup != 0) {
 		memcpy(&hw, &ifi->hw_address, sizeof(hw));
-		get_hw_address(ifi);
+		sdl = (struct sockaddr_dl *)ifa->ifa_addr;
+		memcpy(ifi->hw_address.ether_addr_octet, LLADDR(sdl),
+		    ETHER_ADDR_LEN);
 		if (memcmp(&hw, &ifi->hw_address, sizeof(hw))) {
 			tick_msg("", 0, INT64_MAX);
 			log_debug("%s: LLADDR changed", log_procname);
 			quit = RESTART;
 		}
 	}
+
+	freeifaddrs(ifap);
 }
 
 void
