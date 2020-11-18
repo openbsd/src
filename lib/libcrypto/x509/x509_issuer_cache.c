@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_issuer_cache.c,v 1.1 2020/09/11 14:30:51 beck Exp $ */
+/* $OpenBSD: x509_issuer_cache.c,v 1.2 2020/11/18 17:00:59 tb Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -77,9 +77,9 @@ x509_issuer_cache_set_max(size_t max)
  * Find a previous result of checking if parent signed child
  *
  * Returns:
- * 	-1 : No entry exists in the cache. signature must be checked.
- * 	0 : The signature of parent signing child is invalid.
- * 	1 : The signature of parent signing child is valid.
+ *	-1 : No entry exists in the cache. signature must be checked.
+ *	0 : The signature of parent signing child is invalid.
+ *	1 : The signature of parent signing child is valid.
  */
 int
 x509_issuer_cache_find(unsigned char *parent_md, unsigned char *child_md)
@@ -98,7 +98,7 @@ x509_issuer_cache_find(unsigned char *parent_md, unsigned char *child_md)
 		return -1;
 	if ((found = RB_FIND(x509_issuer_tree, &x509_issuer_cache,
 	    &candidate)) != NULL) {
-	 	TAILQ_REMOVE(&x509_issuer_lru, found, queue);
+		TAILQ_REMOVE(&x509_issuer_lru, found, queue);
 		TAILQ_INSERT_HEAD(&x509_issuer_lru, found, queue);
 		ret = found->valid;
 	}
@@ -111,7 +111,7 @@ x509_issuer_cache_find(unsigned char *parent_md, unsigned char *child_md)
  * Attempt to add a validation result to the cache.
  *
  * valid must be:
- * 	0: The signature of parent signing child is invalid.
+ *	0: The signature of parent signing child is invalid.
  *	1: The signature of parent signing child is valid.
  *
  * Previously added entries for the same parent and child are *not* replaced.

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_constraints.c,v 1.10 2020/09/21 05:41:43 tb Exp $ */
+/* $OpenBSD: x509_constraints.c,v 1.11 2020/11/18 17:00:59 tb Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -700,7 +700,7 @@ x509_constraints_extract_names(struct x509_constraints_names *names,
 				*error = X509_V_ERR_OUT_OF_MEM;
 				goto err;
 			}
-			vname->type=GEN_DNS;
+			vname->type = GEN_DNS;
 			include_cn = 0; /* don't use cn from subject */
 			break;
 		case GEN_EMAIL:

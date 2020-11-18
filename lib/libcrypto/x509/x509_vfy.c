@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.81 2020/09/26 02:06:28 deraadt Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.82 2020/11/18 17:00:59 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -654,7 +654,7 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 
 		CRYPTO_w_lock(CRYPTO_LOCK_X509_STORE);
 		if ((objs = X509_STORE_get0_objects(ctx->ctx)) == NULL)
-				good = 0;
+			good = 0;
 		for (i = 0; good && i < sk_X509_OBJECT_num(objs); i++) {
 			X509_OBJECT *obj;
 			X509 *root;
