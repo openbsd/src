@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.6 2020/09/20 17:29:55 tobhe Exp $ */
+/*	$OpenBSD: common.c,v 1.7 2020/11/18 22:24:03 tobhe Exp $ */
 /*
  * A bunch of stub functions so we can compile and link ikev2_pld.c
  * in a standalone program for testing purposes.
@@ -18,8 +18,8 @@
 #include "types.h"
 #include "test_helper.h"
 
-int	 eap_parse(struct iked *, struct iked_sa *, struct iked_message *,
-	    void *, int);
+int	 eap_parse(struct iked *, const struct iked_sa *,
+	    struct iked_message *, void *, int);
 int	 ikev2_msg_frompeer(struct iked_message *);
 int	 ikev2_send_ike_e(struct iked *, struct iked_sa *, struct ibuf *,
 	    u_int8_t, u_int8_t, int);
@@ -28,7 +28,7 @@ struct iked_childsa *
 	 childsa_lookup(struct iked_sa *, u_int64_t, u_int8_t);
 int	  ikev2_childsa_delete(struct iked *, struct iked_sa *,
 	    u_int8_t, u_int64_t, u_int64_t *, int);
-int	 sa_stateok(struct iked_sa *, int);
+int	 sa_stateok(const struct iked_sa *, int);
 void	 sa_state(struct iked *, struct iked_sa *, int);
 void	 ikev2_disable_rekeying(struct iked *, struct iked_sa *);
 void	 ikev2_init_ike_sa(struct iked *, void *);
@@ -54,7 +54,7 @@ struct ibuf *
 	     struct ibuf *);
 
 int
-eap_parse(struct iked *env, struct iked_sa *sa, struct iked_message *msg,
+eap_parse(struct iked *env, const struct iked_sa *sa, struct iked_message *msg,
     void *data, int response)
 {
 	return (0);
@@ -98,7 +98,7 @@ ikev2_childsa_delete(struct iked *a, struct iked_sa *b, u_int8_t c,
 }
 
 int
-sa_stateok(struct iked_sa *a, int b)
+sa_stateok(const struct iked_sa *a, int b)
 {
 	return (0);
 }

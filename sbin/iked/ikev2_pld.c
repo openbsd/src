@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.108 2020/10/29 21:49:58 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.109 2020/11/18 22:24:03 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1944,7 +1944,7 @@ ikev2_pld_eap(struct iked *env, struct ikev2_payload *pld,
 {
 	struct eap_header		 hdr;
 	struct eap_message		*eap = NULL;
-	struct iked_sa			*sa = msg->msg_sa;
+	const struct iked_sa		*sa = msg->msg_sa;
 	size_t				 len;
 
 	if (ikev2_validate_eap(msg, offset, left, &hdr))

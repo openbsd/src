@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.70 2020/09/09 21:25:42 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.71 2020/11/18 22:24:03 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -331,7 +331,7 @@ sa_stateflags(struct iked_sa *sa, unsigned int flags)
 }
 
 int
-sa_stateok(struct iked_sa *sa, int state)
+sa_stateok(const struct iked_sa *sa, int state)
 {
 	unsigned int	 require;
 
