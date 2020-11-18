@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.83 2020/11/18 17:08:59 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.84 2020/11/18 17:40:42 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1794,6 +1794,11 @@ x509_vfy_check_policy(X509_STORE_CTX *ctx)
 
 	if (ctx->parent)
 		return 1;
+
+	/* X509_policy_check always allocates a new tree. */
+	X509_policy_tree_free(ctx->tree);
+	ctx->tree = NULL;
+
 	ret = X509_policy_check(&ctx->tree, &ctx->explicit_policy, ctx->chain,
 	    ctx->param->policies, ctx->param->flags);
 	if (ret == 0) {
