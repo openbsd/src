@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.22 2020/11/16 17:43:37 jsing Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.23 2020/11/18 17:13:55 tb Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -488,7 +488,6 @@ x509_verify_build_chains(struct x509_verify_ctx *ctx, X509 *cert,
 			ctx->error = (depth == 0) ?
 			    X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
 			    X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN;
-
 	}
 
 	for (i = 0; i < sk_X509_num(ctx->roots); i++) {
