@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.23 2020/11/18 17:13:55 tb Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.24 2020/11/18 17:54:46 tb Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -86,7 +86,7 @@ x509_verify_chain_dup(struct x509_verify_chain *chain)
 {
 	struct x509_verify_chain *new_chain;
 
-	if ((new_chain = x509_verify_chain_new()) == NULL)
+	if ((new_chain = calloc(1, sizeof(*chain))) == NULL)
 		goto err;
 	if ((new_chain->certs = X509_chain_up_ref(chain->certs)) == NULL)
 		goto err;
