@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.82 2020/11/18 17:00:59 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.83 2020/11/18 17:08:59 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -681,9 +681,9 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 		ctx->error = X509_V_OK; /* Initialize to OK */
 		chain_count = x509_verify(vctx, NULL, NULL);
 	}
+	x509_verify_ctx_free(vctx);
 
 	sk_X509_pop_free(roots, X509_free);
-	x509_verify_ctx_free(vctx);
 
 	/* if we succeed we have a chain in ctx->chain */
 	return (chain_count > 0 && ctx->chain != NULL);
