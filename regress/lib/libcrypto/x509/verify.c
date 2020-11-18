@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.4 2020/10/26 12:11:47 beck Exp $ */
+/* $OpenBSD: verify.c,v 1.5 2020/11/18 06:56:07 tb Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -221,6 +221,8 @@ verify_cert_new(const char *roots_file, const char *bundle_file, int *chains)
 	sk_X509_pop_free(roots, X509_free);
 	sk_X509_pop_free(bundle, X509_free);
 	X509_free(leaf);
+	X509_STORE_CTX_free(xsc);
+	x509_verify_ctx_free(ctx);
 }
 
 struct verify_cert_test verify_cert_tests[] = {
