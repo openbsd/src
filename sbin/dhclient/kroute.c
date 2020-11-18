@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.189 2020/11/06 21:15:41 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.190 2020/11/18 16:31:47 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -801,6 +801,7 @@ void
 priv_write_resolv_conf(int index, int routefd, int rdomain, char *contents,
     int *lastidx)
 {
+	char		 ifname[IF_NAMESIZE];
 	const char	*path = "/etc/resolv.conf";
 	ssize_t		 n;
 	size_t		 sz;
@@ -815,19 +816,27 @@ priv_write_resolv_conf(int index, int routefd, int rdomain, char *contents,
 		retries++;
 	} while (newidx == 0 && retries < 3);
 
-	if (newidx != index) {
+	if (newidx == 0) {
+		log_debug("%s: %s not updated, no default route",
+		    log_procname, path);
+		return;
+	} else if (newidx != index) {
 		*lastidx = newidx;
-		log_debug("%s priv_write_resolv_conf: not my problem "
-		    "(%d != %d)", log_procname, newidx, index);
+		if (if_indextoname(newidx, ifname) == NULL) {
+			memset(ifname, 0, sizeof(ifname));
+			strlcat(ifname, "<unknown>", sizeof(ifname));
+		}
+		log_debug("%s: %s not updated, default route on %s",
+		    log_procname, path, ifname);
 		return;
 	} else if (newidx == *lastidx) {
-		log_debug("%s priv_write_resolv_conf: already written",
-		    log_procname);
+		log_debug("%s: %s not updated, same as last write",
+		    log_procname, path);
 		return;
-	} else {
-		*lastidx = newidx;
-		log_debug("%s priv_write_resolv_conf: writing", log_procname);
 	}
+
+	*lastidx = newidx;
+	log_debug("%s: %s updated", log_procname, path);
 
 	fd = open(path, O_WRONLY | O_CREAT | O_TRUNC,
 	    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
