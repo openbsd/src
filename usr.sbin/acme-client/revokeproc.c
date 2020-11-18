@@ -1,4 +1,4 @@
-/*	$Id: revokeproc.c,v 1.15 2019/06/16 19:49:13 florian Exp $ */
+/*	$Id: revokeproc.c,v 1.16 2020/11/18 20:54:43 beck Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -239,7 +239,7 @@ revokeproc(int fd, const char *certfile, int force,
 		}
 	}
 
-	for (j = 0; j < altsz; j++) {
+	for (j = 0; !force && j < altsz; j++) {
 		if (found[j])
 			continue;
 		warnx("%s: domain not listed: %s", certfile, alts[j]);
