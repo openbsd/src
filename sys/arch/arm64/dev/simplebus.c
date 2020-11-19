@@ -1,4 +1,4 @@
-/* $OpenBSD: simplebus.c,v 1.11 2019/04/16 13:15:31 kettenis Exp $ */
+/* $OpenBSD: simplebus.c,v 1.12 2020/11/19 17:42:59 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -33,6 +33,7 @@ void simplebus_attach(struct device *, struct device *, void *);
 void simplebus_attach_node(struct device *, int);
 int simplebus_bs_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
     bus_space_handle_t *);
+paddr_t simplebus_bs_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
 int simplebus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
     bus_size_t, struct proc *, int, paddr_t *, int *, int);
 
@@ -89,6 +90,7 @@ simplebus_attach(struct device *parent, struct device *self, void *aux)
 	memcpy(&sc->sc_bus, sc->sc_iot, sizeof(sc->sc_bus));
 	sc->sc_bus.bus_private = sc;
 	sc->sc_bus._space_map = simplebus_bs_map;
+	sc->sc_bus._space_mmap = simplebus_bs_mmap;
 
 	sc->sc_rangeslen = OF_getproplen(sc->sc_node, "ranges");
 	if (sc->sc_rangeslen > 0 &&
@@ -319,6 +321,57 @@ simplebus_bs_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 	}
 
 	return ESRCH;
+}
+
+paddr_t
+simplebus_bs_mmap(bus_space_tag_t t, bus_addr_t bpa, off_t off,
+    int prot, int flags)
+{
+	struct simplebus_softc *sc = t->bus_private;
+	uint64_t addr, rfrom, rto, rsize;
+	uint32_t *range;
+	int parent, rlen, rone;
+
+	addr = bpa;
+	parent = OF_parent(sc->sc_node);
+	if (parent == 0)
+		return bus_space_mmap(sc->sc_iot, addr, off, prot, flags);
+
+	if (sc->sc_rangeslen < 0)
+		return EINVAL;
+	if (sc->sc_rangeslen == 0)
+		return bus_space_mmap(sc->sc_iot, addr, off, prot, flags);
+
+	rlen = sc->sc_rangeslen / sizeof(uint32_t);
+	rone = sc->sc_pacells + sc->sc_acells + sc->sc_scells;
+
+	/* For each range. */
+	for (range = sc->sc_ranges; rlen >= rone; rlen -= rone, range += rone) {
+		/* Extract from and size, so we can see if we fit. */
+		rfrom = range[0];
+		if (sc->sc_acells == 2)
+			rfrom = (rfrom << 32) + range[1];
+		rsize = range[sc->sc_acells + sc->sc_pacells];
+		if (sc->sc_scells == 2)
+			rsize = (rsize << 32) +
+			    range[sc->sc_acells + sc->sc_pacells + 1];
+
+		/* Try next, if we're not in the range. */
+		if (addr < rfrom || addr >= (rfrom + rsize))
+			continue;
+
+		/* All good, extract to address and translate. */
+		rto = range[sc->sc_acells];
+		if (sc->sc_pacells == 2)
+			rto = (rto << 32) + range[sc->sc_acells + 1];
+
+		addr -= rfrom;
+		addr += rto;
+
+		return bus_space_mmap(sc->sc_iot, addr, off, prot, flags);
+	}
+
+	return -1;
 }
 
 int
