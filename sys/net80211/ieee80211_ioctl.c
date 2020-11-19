@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.79 2020/01/15 09:34:27 phessler Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.80 2020/11/19 20:03:33 krw Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -246,8 +246,14 @@ ieee80211_ioctl_setnwkeys(struct ieee80211com *ic,
 		error = copyin(nwkey->i_key[i].i_keydat, k->k_key, k->k_len);
 		if (error != 0)
 			return error;
-		if ((error = (*ic->ic_set_key)(ic, NULL, k)) != 0)
+		error = (*ic->ic_set_key)(ic, NULL, k);
+		switch (error) {
+		case 0:
+		case EBUSY:
+			break;
+		default:
 			return error;
+		}
 	}
 
 	ic->ic_def_txkey = nwkey->i_defkid - 1;

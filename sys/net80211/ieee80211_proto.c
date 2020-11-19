@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.98 2020/05/29 07:37:51 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.99 2020/11/19 20:03:33 krw Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -479,15 +479,26 @@ ieee80211_setkeysdone(struct ieee80211com *ic)
 
 	/* install GTK */
 	kid = (ic->ic_def_txkey == 1) ? 2 : 1;
-	if ((*ic->ic_set_key)(ic, ic->ic_bss, &ic->ic_nw_keys[kid]) == 0)
+	switch ((*ic->ic_set_key)(ic, ic->ic_bss, &ic->ic_nw_keys[kid])) {
+	case 0:
+	case EBUSY:
 		ic->ic_def_txkey = kid;
+		break;
+	default:
+		break;
+	}
 
 	if (ic->ic_caps & IEEE80211_C_MFP) {
 		/* install IGTK */
 		kid = (ic->ic_igtk_kid == 4) ? 5 : 4;
-		if ((*ic->ic_set_key)(ic, ic->ic_bss,
-		    &ic->ic_nw_keys[kid]) == 0)
+		switch ((*ic->ic_set_key)(ic, ic->ic_bss, &ic->ic_nw_keys[kid])) {
+		case 0:
+		case EBUSY:
 			ic->ic_igtk_kid = kid;
+			break;
+		default:
+			break;
+		}
 	}
 }
 
