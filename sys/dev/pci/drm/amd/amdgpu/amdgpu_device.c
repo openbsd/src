@@ -378,14 +378,24 @@ void amdgpu_mm_wreg_mmio_rlc(struct amdgpu_device *adev, uint32_t reg, uint32_t 
  */
 u32 amdgpu_io_rreg(struct amdgpu_device *adev, u32 reg)
 {
-	if ((reg * 4) < adev->rio_mem_size)
-		return bus_space_read_4(adev->rio_mem_bst, adev->rio_mem_bsh, reg);
-	else {
+	u32 val;
+
+	if ((reg * 4) < adev->rio_mem_size) {
+		val = bus_space_read_4(adev->rio_mem_bst, adev->rio_mem_bsh, reg);
+		bus_space_barrier(adev->rio_mem_bst, adev->rio_mem_bsh, 0,
+		    adev->rio_mem_size, BUS_SPACE_BARRIER_READ);
+	} else {
+		bus_space_barrier(adev->rio_mem_bst, adev->rio_mem_bsh, 0,
+		    adev->rio_mem_size, BUS_SPACE_BARRIER_WRITE);
 		bus_space_write_4(adev->rio_mem_bst, adev->rio_mem_bsh,
 		    mmMM_INDEX * 4, reg * 4);
-		return bus_space_read_4(adev->rio_mem_bst, adev->rio_mem_bsh,
+		val = bus_space_read_4(adev->rio_mem_bst, adev->rio_mem_bsh,
 		    mmMM_INDEX * 4);
+		bus_space_barrier(adev->rio_mem_bst, adev->rio_mem_bsh, 0,
+		    adev->rio_mem_size, BUS_SPACE_BARRIER_READ);
 	}
+
+	return val;
 }
 
 /**
@@ -403,12 +413,18 @@ void amdgpu_io_wreg(struct amdgpu_device *adev, u32 reg, u32 v)
 		adev->last_mm_index = v;
 	}
 
-	if ((reg * 4) < adev->rio_mem_size)
+	if ((reg * 4) < adev->rio_mem_size) {
+		bus_space_barrier(adev->rio_mem_bst, adev->rio_mem_bsh, 0,
+		    adev->rio_mem_size, BUS_SPACE_BARRIER_WRITE);
 		bus_space_write_4(adev->rio_mem_bst, adev->rio_mem_bsh,
 		    reg * 4, v);
-	else {
+	} else {
+		bus_space_barrier(adev->rio_mem_bst, adev->rio_mem_bsh, 0,
+		    adev->rio_mem_size, BUS_SPACE_BARRIER_WRITE);
 		bus_space_write_4(adev->rio_mem_bst, adev->rio_mem_bsh,
 		    mmMM_INDEX * 4, reg * 4);
+		bus_space_barrier(adev->rio_mem_bst, adev->rio_mem_bsh, 0,
+		    adev->rio_mem_size, BUS_SPACE_BARRIER_WRITE);
 		bus_space_write_4(adev->rio_mem_bst, adev->rio_mem_bsh,
 		    mmMM_DATA * 4, v);
 		
