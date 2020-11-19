@@ -1,4 +1,4 @@
-/* $OpenBSD: pciecam.c,v 1.10 2020/07/14 15:42:19 patrick Exp $ */
+/* $OpenBSD: pciecam.c,v 1.11 2020/11/19 17:42:19 kettenis Exp $ */
 /*
  * Copyright (c) 2013,2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -106,6 +106,7 @@ void *pciecam_intr_establish(void *, pci_intr_handle_t, int,
     struct cpu_info *, int (*func)(void *), void *, char *);
 void pciecam_intr_disestablish(void *, void *);
 int pciecam_bs_map(bus_space_tag_t, bus_addr_t, bus_size_t, int, bus_space_handle_t *);
+paddr_t pciecam_bs_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
 
 struct cfattach pciecam_ca = {
 	sizeof (struct pciecam_softc), pciecam_match, pciecam_attach
@@ -217,6 +218,7 @@ pciecam_attach(struct device *parent, struct device *self, void *aux)
 	memcpy(&sc->sc_bus, sc->sc_iot, sizeof(sc->sc_bus));
 	sc->sc_bus.bus_private = sc;
 	sc->sc_bus._space_map = pciecam_bs_map;
+	sc->sc_bus._space_mmap = pciecam_bs_mmap;
 
 	sc->sc_pc.pc_conf_v = sc;
 	sc->sc_pc.pc_attach_hook = pciecam_attach_hook;
@@ -412,4 +414,25 @@ pciecam_bs_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 	}
 
 	return ENXIO;
+}
+
+paddr_t
+pciecam_bs_mmap(bus_space_tag_t t, bus_addr_t bpa, off_t off,
+    int prot, int flags)
+{
+	struct pciecam_softc *sc = t->bus_private;
+	uint64_t physbase, pcibase, psize;
+	int i;
+
+	for (i = 0; i < sc->sc_pcirangeslen; i++) {
+		physbase = sc->sc_pciranges[i].phys_base;
+		pcibase = sc->sc_pciranges[i].pci_base;
+		psize = sc->sc_pciranges[i].size;
+
+		if (bpa >= pcibase && bpa < pcibase + psize)
+			return bus_space_mmap(sc->sc_iot,
+			    bpa - pcibase + physbase, off, prot, flags);
+	}
+
+	return -1;
 }
