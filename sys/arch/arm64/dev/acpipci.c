@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.20 2020/07/17 08:07:33 patrick Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.21 2020/11/19 13:31:07 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -96,6 +96,7 @@ const char *acpipci_hids[] = {
 int	acpipci_parse_resources(int, union acpi_resource *, void *);
 int	acpipci_bs_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
+paddr_t acpipci_bs_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
 
 void	acpipci_attach_hook(struct device *, struct device *,
 	    struct pcibus_attach_args *);
@@ -171,9 +172,11 @@ acpipci_attach(struct device *parent, struct device *self, void *aux)
 	memcpy(&sc->sc_bus_iot, sc->sc_iot, sizeof(sc->sc_bus_iot));
 	sc->sc_bus_iot.bus_private = sc->sc_io_trans;
 	sc->sc_bus_iot._space_map = acpipci_bs_map;
+	sc->sc_bus_iot._space_mmap = acpipci_bs_mmap;
 	memcpy(&sc->sc_bus_memt, sc->sc_iot, sizeof(sc->sc_bus_memt));
 	sc->sc_bus_memt.bus_private = sc->sc_mem_trans;
 	sc->sc_bus_memt._space_map = acpipci_bs_map;
+	sc->sc_bus_memt._space_mmap = acpipci_bs_mmap;
 
 	sc->sc_pc = pci_lookup_segment(seg);
 	KASSERT(sc->sc_pc->pc_intr_v == NULL);
@@ -504,6 +507,22 @@ acpipci_bs_map(bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
 	}
 	
 	return ENXIO;
+}
+
+paddr_t
+acpipci_bs_mmap(bus_space_tag_t t, bus_addr_t addr, off_t off,
+    int prot, int flags)
+{
+	struct acpipci_trans *at;
+
+	for (at = t->bus_private; at; at = at->at_next) {
+		if (addr >= at->at_base && addr < at->at_base + at->at_size) {
+			return bus_space_mmap(at->at_iot,
+			    addr + at->at_offset, off, prot, flags);
+		}
+	}
+
+	return -1;
 }
 
 SLIST_HEAD(,acpipci_mcfg) acpipci_mcfgs =
