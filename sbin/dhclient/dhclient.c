@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.681 2020/11/18 18:42:54 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.682 2020/11/19 22:30:19 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -374,7 +374,8 @@ rtm_dispatch(struct interface_info *ifi, struct rt_msghdr *rtm)
 			release_lease(ifi); /* OK even if we sent it. */
 			ifi->state = S_PREBOOT;
 			quit = TERMINATE;
-		}
+		} else
+			return; /* Ignore tell_unwind() proposals. */
 		break;
 
 	case RTM_DESYNC:
@@ -448,7 +449,8 @@ rtm_dispatch(struct interface_info *ifi, struct rt_msghdr *rtm)
 	 */
 	if (quit == 0 && ifi->active != NULL &&
 	    (ifi->flags & IFI_AUTOCONF) != 0 &&
-	    (ifi->flags & IFI_IN_CHARGE) != 0)
+	    (ifi->flags & IFI_IN_CHARGE) != 0 &&
+	    ifi->state == S_BOUND)
 		write_resolv_conf();
 }
 

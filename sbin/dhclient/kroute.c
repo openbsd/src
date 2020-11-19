@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.190 2020/11/18 16:31:47 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.191 2020/11/19 22:30:19 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -619,7 +619,8 @@ default_route_index(int rdomain, int routefd)
 		if (m_rtmsg.m_rtm.rtm_version == RTM_VERSION &&
 		    m_rtmsg.m_rtm.rtm_type == RTM_GET &&
 		    m_rtmsg.m_rtm.rtm_pid == pid &&
-		    m_rtmsg.m_rtm.rtm_seq == seq) {
+		    m_rtmsg.m_rtm.rtm_seq == seq &&
+		    (m_rtmsg.m_rtm.rtm_flags & RTF_UP) == RTF_UP) {
 			if (m_rtmsg.m_rtm.rtm_errno != 0) {
 				log_warnx("%s: read(RTM_GET): %s", log_procname,
 				    strerror(m_rtmsg.m_rtm.rtm_errno));
@@ -817,7 +818,7 @@ priv_write_resolv_conf(int index, int routefd, int rdomain, char *contents,
 	} while (newidx == 0 && retries < 3);
 
 	if (newidx == 0) {
-		log_debug("%s: %s not updated, no default route",
+		log_debug("%s: %s not updated, no default route is UP",
 		    log_procname, path);
 		return;
 	} else if (newidx != index) {
