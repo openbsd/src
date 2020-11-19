@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.41 2020/11/14 14:11:08 kettenis Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.42 2020/11/19 17:44:46 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -457,13 +457,10 @@ mvpp2_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc_iosize_base = faa->fa_reg[0].size;
 
-	if (!pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_ioh_base,
-	    &sc->sc_ioh_paddr)) {
-		printf(": can't extract address\n");
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh_base,
-		    sc->sc_iosize_base);
-		return;
-	}
+	sc->sc_ioh_paddr = bus_space_mmap(sc->sc_iot, faa->fa_reg[0].addr,
+	    0, PROT_READ | PROT_WRITE, 0);
+	KASSERT(sc->sc_ioh_paddr != -1);
+	sc->sc_ioh_paddr &= PMAP_PA_MASK;
 
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[1].addr,
 	    faa->fa_reg[1].size, 0, &sc->sc_ioh_iface)) {
