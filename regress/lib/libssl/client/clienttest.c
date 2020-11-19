@@ -1,3 +1,4 @@
+/*	$OpenBSD: clienttest.c,v 1.26 2020/11/19 09:35:50 tb Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  *
