@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.109 2020/11/18 22:24:03 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.110 2020/11/19 15:00:43 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -707,7 +707,7 @@ ikev2_pld_id(struct iked *env, struct ikev2_payload *pld,
 	struct ikev2_id			 id;
 	size_t				 len;
 	struct iked_id			*idp, idb;
-	struct iked_sa			*sa = msg->msg_sa;
+	const struct iked_sa		*sa = msg->msg_sa;
 	uint8_t				*msgbuf = ibuf_data(msg->msg_data);
 	char				 idstr[IKED_ID_SIZE];
 
@@ -784,6 +784,7 @@ ikev2_pld_cert(struct iked *env, struct ikev2_payload *pld,
 	size_t				 len;
 	struct iked_id			*certid;
 	uint8_t				*msgbuf = ibuf_data(msg->msg_data);
+	const struct iked_sa		*sa = msg->msg_sa;
 
 	if (ikev2_validate_cert(msg, offset, left, &cert))
 		return (-1);
@@ -803,7 +804,7 @@ ikev2_pld_cert(struct iked *env, struct ikev2_payload *pld,
 	certid = &msg->msg_parent->msg_cert;
 	if (certid->id_type) {
 		log_info("%s: multiple cert payloads not supported",
-		   SPI_SA(msg->msg_sa, __func__));
+		   SPI_SA(sa, __func__));
 		return (-1);
 	}
 
@@ -998,6 +999,7 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
     struct iked_message *msg, size_t offset, size_t left)
 {
 	struct ikev2_notify	 n;
+	const struct iked_sa	*sa = msg->msg_sa;
 	uint8_t			*buf, md[SHA_DIGEST_LENGTH];
 	uint32_t		 spi32;
 	uint64_t		 spi64;
@@ -1058,15 +1060,15 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 		 * AUTHENTICATION_FAILED from authenticated peers.
 		 * If we are the initiator, the peer cannot be authenticated.
 		 */
-		if (!msg->msg_sa->sa_hdr.sh_initiator) {
-			if (!sa_stateok(msg->msg_sa, IKEV2_STATE_VALID)) {
+		if (!sa->sa_hdr.sh_initiator) {
+			if (!sa_stateok(sa, IKEV2_STATE_VALID)) {
 				log_debug("%s: ignoring AUTHENTICATION_FAILED"
 				    " from unauthenticated initiator",
 				    __func__);
 				return (-1);
 			}
 		} else {
-			if (sa_stateok(msg->msg_sa, IKEV2_STATE_VALID)) {
+			if (sa_stateok(sa, IKEV2_STATE_VALID)) {
 				log_debug("%s: ignoring AUTHENTICATION_FAILED"
 				    " from authenticated responder",
 				    __func__);
@@ -1077,7 +1079,7 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 		    |= IKED_MSG_FLAGS_AUTHENTICATION_FAILED;
 		break;
 	case IKEV2_N_INVALID_KE_PAYLOAD:
-		if (sa_stateok(msg->msg_sa, IKEV2_STATE_VALID) &&
+		if (sa_stateok(sa, IKEV2_STATE_VALID) &&
 		    !msg->msg_e) {
 			log_debug("%s: INVALID_KE_PAYLOAD not encrypted",
 			    __func__);
@@ -1220,7 +1222,7 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 			    __func__);
 			return (-1);
 		}
-		if (!msg->msg_sa->sa_mobike) {
+		if (!sa->sa_mobike) {
 			log_debug("%s: ignoring update sa addresses"
 			    " notification w/o mobike: %zu", __func__, left);
 			return (0);
@@ -1238,7 +1240,7 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 			    __func__);
 			return (-1);
 		}
-		if (!msg->msg_sa->sa_mobike) {
+		if (!sa->sa_mobike) {
 			log_debug("%s: ignoring cookie2 notification"
 			    " w/o mobike: %zu", __func__, left);
 			return (0);
@@ -1295,8 +1297,8 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 			    __func__);
 			return (-1);
 		}
-		if (msg->msg_sa == NULL ||
-		    msg->msg_sa->sa_sigsha2) {
+		if (sa == NULL ||
+		    sa->sa_sigsha2) {
 			log_debug("%s: SIGNATURE_HASH_ALGORITHMS: no SA or "
 			    "duplicate notify", __func__);
 			return (-1);
