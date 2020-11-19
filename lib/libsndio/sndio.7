@@ -1,4 +1,4 @@
-.\" $OpenBSD: sndio.7,v 1.24 2020/07/18 05:01:14 ratchov Exp $
+.\" $OpenBSD: sndio.7,v 1.25 2020/11/19 08:14:19 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 18 2020 $
+.Dd $Mdocdate: November 19 2020 $
 .Dt SNDIO 7
 .Os
 .Sh NAME
@@ -151,9 +151,11 @@ If
 .Cm default
 is used as the audio device, the program will use the
 one specified in the
-.Ev AUDIODEVICE
-environment variable.
-If it is not set, the program first tries to connect to
+.Ev AUDIODEVICE , AUDIOPLAYDEVICE
+and/or
+.Ev AUDIORECDEVICE
+environment variables.
+If they are not set, the program first tries to connect to
 .Li snd/0 .
 If that fails, it then tries to use
 .Li rsnd/0 .
@@ -190,10 +192,20 @@ and contains 128 bits of raw random data.
 If a session needs to be shared between multiple users, they
 can connect to the server using the same cookie.
 .Sh ENVIRONMENT
-.Bl -tag -width "AUDIODEVICEXXX" -compact
+.Bl -tag -width "AUDIOPLAYDEVICE" -compact
 .It Ev AUDIODEVICE
 Audio device descriptor to use
 when no descriptor is explicitly specified to a program.
+.It Ev AUDIOPLAYDEVICE
+Audio device descriptor to use for play-only mode
+when no descriptor is explicitly specified to a program.
+Overrides
+.Ev AUDIODEVICE .
+.It Ev AUDIORECDEVICE
+Audio device descriptor to use for record-only mode
+when no descriptor is explicitly specified to a program.
+Overrides
+.Ev AUDIODEVICE .
 .It Ev MIDIDEVICE
 MIDI port descriptor to use
 when no descriptor is explicitly specified to a program.

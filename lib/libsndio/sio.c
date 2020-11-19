@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.24 2019/06/29 06:05:26 ratchov Exp $	*/
+/*	$OpenBSD: sio.c,v 1.25 2020/11/19 08:14:19 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -52,7 +52,12 @@ sio_open(const char *str, unsigned int mode, int nbio)
 	if (str == NULL) /* backward compat */
 		str = devany;
 	if (strcmp(str, devany) == 0 && !issetugid()) {
-		str = getenv("AUDIODEVICE");
+		if ((mode & SIO_PLAY) == 0)
+			str = getenv("AUDIORECDEVICE");
+		if ((mode & SIO_REC) == 0)
+			str = getenv("AUDIOPLAYDEVICE");
+		if (mode == (SIO_PLAY | SIO_REC) || str == NULL)
+			str = getenv("AUDIODEVICE");
 		if (str == NULL)
 			str = devany;
 	}
