@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.277 2020/10/14 23:40:33 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.278 2020/11/19 13:45:15 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -841,7 +841,7 @@ scsi_inquire(struct scsi_link *link, struct scsi_inquiry_data *inqbuf,
 {
 	struct scsi_xfer	*xs;
 	size_t			 bytes;
-	int			 error;
+	int			 avail, retries, error, received;
 
 	/*
 	 * Start by asking for only the basic 36 bytes of SCSI2 inquiry
@@ -849,42 +849,45 @@ scsi_inquire(struct scsi_link *link, struct scsi_inquiry_data *inqbuf,
 	 * supply more.
 	 */
 	bytes = SID_SCSI2_HDRLEN + SID_SCSI2_ALEN;
+	retries = 0;
 
-#ifdef SCSIDEBUG
 again:
-#endif /* SCSIDEBUG */
 	xs = scsi_xs_get(link, flags);
 	if (xs == NULL)
 		return EBUSY;
 
+	if (bytes > sizeof(*inqbuf))
+		bytes = sizeof(*inqbuf);
 	scsi_init_inquiry(xs, 0, 0, inqbuf, bytes);
 
-	bzero(inqbuf, sizeof(*inqbuf));
-	memset(&inqbuf->vendor, ' ', sizeof inqbuf->vendor);
-	memset(&inqbuf->product, ' ', sizeof inqbuf->product);
-	memset(&inqbuf->revision, ' ', sizeof inqbuf->revision);
-	memset(&inqbuf->extra, ' ', sizeof inqbuf->extra);
-
 	error = scsi_xs_sync(xs);
-
+	received = xs->datalen - xs->resid;
 	scsi_xs_put(xs);
+
+	if (error != 0)
+		return error;
+	if (received < SID_SCSI2_HDRLEN)
+		return EINVAL;
+
+	avail = SID_SCSI2_HDRLEN + inqbuf->additional_length;
+
+	if (received < avail && retries == 0) {
+		retries++;
+		bytes = avail;
+		goto again;
+	}
 
 #ifdef SCSIDEBUG
 	sc_print_addr(link);
-	if (bytes > SID_SCSI2_HDRLEN + inqbuf->additional_length)
-		bytes = SID_SCSI2_HDRLEN + inqbuf->additional_length;
-	printf("got %zu of %u bytes of inquiry data:\n",
-	    bytes, SID_SCSI2_HDRLEN + inqbuf->additional_length);
-	scsi_show_mem((u_char *)inqbuf, bytes);
-	if (bytes == SID_SCSI2_HDRLEN + SID_SCSI2_ALEN && bytes <
-	    SID_SCSI2_HDRLEN + inqbuf->additional_length) {
-		bytes = SID_SCSI2_HDRLEN + inqbuf->additional_length;
-		if (bytes > sizeof(*inqbuf))
-			bytes = sizeof(*inqbuf);
-		goto again;
-	}
+	printf("got %d of %d bytes of inquiry data:\n", received,
+	    avail);
+	scsi_show_mem((u_char *)inqbuf, received);
 #endif /* SCSIDEBUG */
-	return error;
+
+	if (avail > received)
+		inqbuf->additional_length = received - SID_SCSI2_HDRLEN;
+
+	return 0;
 }
 
 /*

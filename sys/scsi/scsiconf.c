@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.236 2020/08/18 16:30:38 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.237 2020/11/19 13:45:15 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -488,7 +488,7 @@ scsi_probe_link(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 	struct scsi_inquiry_data		*inqbuf, *usbinqbuf;
 	struct scsi_link			*link, *link0;
 	struct cfdata				*cf;
-	int					 priority, rslt = 0;
+	int					 inqbytes, priority, rslt = 0;
 	u_int16_t				 devquirks;
 
 	/* Skip this slot if it is already attached and try the next LUN. */
@@ -587,18 +587,27 @@ scsi_probe_link(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 	}
 
 	rslt = scsi_inquire(link, inqbuf, scsi_autoconf | SCSI_SILENT);
-	memcpy(&link->inqdata, inqbuf, sizeof(link->inqdata));
-	dma_free(inqbuf, sizeof(*inqbuf));
-
 	if (rslt != 0) {
 		if (lun == 0) {
 			SC_DEBUG(link, SDEV_DB2, ("Bad LUN 0. inquiry rslt = "
 			    "%i\n", rslt));
 			rslt = EINVAL;
 		}
+		dma_free(inqbuf, sizeof(*inqbuf));
 		goto bad;
 	}
+	inqbytes = SID_SCSI2_HDRLEN + inqbuf->additional_length;
+	memcpy(&link->inqdata, inqbuf, inqbytes);
+	dma_free(inqbuf, sizeof(*inqbuf));
 	inqbuf = &link->inqdata;
+	if (inqbytes < offsetof(struct scsi_inquiry_data, vendor))
+		memset(inqbuf->vendor, ' ', sizeof(inqbuf->vendor));
+	if (inqbytes < offsetof(struct scsi_inquiry_data, product))
+		memset(inqbuf->product, ' ', sizeof(inqbuf->product));
+	if (inqbytes < offsetof(struct scsi_inquiry_data, revision))
+		memset(inqbuf->revision, ' ', sizeof(inqbuf->revision));
+	if (inqbytes < offsetof(struct scsi_inquiry_data, extra))
+		memset(inqbuf->extra, ' ', sizeof(inqbuf->extra));
 
 	switch (inqbuf->device & SID_QUAL) {
 	case SID_QUAL_RSVD:
