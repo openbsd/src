@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.120 2020/10/29 12:30:52 denis Exp $	*/
+/*	$OpenBSD: parse.y,v 1.121 2020/11/20 20:39:31 jung Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -127,10 +127,6 @@ typedef struct {
 		struct timeval		 tv;
 		struct portrange	 port;
 		struct auth		 auth;
-		struct {
-			struct sockaddr_storage	 ss;
-			char			 name[HOST_NAME_MAX+1];
-		}			 addr;
 	} v;
 	int lineno;
 } YYSTYPE;
