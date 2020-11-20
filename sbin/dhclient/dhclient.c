@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.682 2020/11/19 22:30:19 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.683 2020/11/20 18:48:22 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2632,7 +2632,7 @@ lease_rebind(struct client_lease *lease)
 	expiry = lease_expiry(lease) - lease->epoch;
 	renewal = lease_renewal(lease) - lease->epoch;
 
-	rebind = (expiry * 7) / 8;
+	rebind = (expiry / 8) * 7;
 	if (lease->options[DHO_DHCP_REBINDING_TIME].len == sizeof(rebind)) {
 		memcpy(&rebind, lease->options[DHO_DHCP_REBINDING_TIME].data,
 		    sizeof(rebind));
