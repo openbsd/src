@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.426 2020/04/24 11:34:07 eric Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.427 2020/11/20 20:37:56 jung Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -2583,7 +2583,8 @@ smtp_tx_rcpt_to(struct smtp_tx *tx, const char *line)
 
 			if (!text_to_mailaddr(&tx->evp.dsn_orcpt, opt) ||
 			    !valid_localpart(tx->evp.dsn_orcpt.user) ||
-			    !valid_domainpart(tx->evp.dsn_orcpt.domain)) {
+			    (strlen(tx->evp.dsn_orcpt.domain) != 0 &&
+			     !valid_domainpart(tx->evp.dsn_orcpt.domain))) {
 				smtp_reply(tx->session,
 				    "553 ORCPT address syntax error");
 				return;
