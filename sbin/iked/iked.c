@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.48 2020/09/23 14:25:55 tobhe Exp $	*/
+/*	$OpenBSD: iked.c,v 1.49 2020/11/20 12:38:26 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -70,12 +70,13 @@ main(int argc, char *argv[])
 	enum natt_mode	 natt_mode = NATT_DEFAULT;
 	in_port_t	 port = IKED_NATT_PORT;
 	const char	*conffile = IKED_CONFIG;
+	const char	*sock = IKED_SOCKET;
 	struct iked	*env = NULL;
 	struct privsep	*ps;
 
 	log_init(1, LOG_DAEMON);
 
-	while ((c = getopt(argc, argv, "6dD:nf:p:vSTt")) != -1) {
+	while ((c = getopt(argc, argv, "6dD:nf:p:s:vSTt")) != -1) {
 		switch (c) {
 		case '6':
 			log_warnx("the -6 option is ignored and will be "
@@ -95,6 +96,9 @@ main(int argc, char *argv[])
 			break;
 		case 'f':
 			conffile = optarg;
+			break;
+		case 's':
+			sock = optarg;
 			break;
 		case 'v':
 			verbose++;
@@ -154,7 +158,7 @@ main(int argc, char *argv[])
 		errx(1, "unknown user %s", IKED_USER);
 
 	/* Configure the control socket */
-	ps->ps_csock.cs_name = IKED_SOCKET;
+	ps->ps_csock.cs_name = sock;
 
 	log_init(debug, LOG_DAEMON);
 	log_setverbose(verbose);

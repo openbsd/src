@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.8,v 1.26 2020/04/09 19:55:19 tobhe Exp $
+.\" $OpenBSD: iked.8,v 1.27 2020/11/20 12:38:26 tobhe Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 9 2020 $
+.Dd $Mdocdate: November 20 2020 $
 .Dt IKED 8
 .Os
 .Sh NAME
@@ -86,6 +86,11 @@ than 4500, the
 .Xr sysctl 2
 variable has to be set accordingly.
 Implies -t.
+.It Fl s Ar socket
+Use
+.Ar socket
+as the control socket, instead of the default
+.Pa /var/run/iked.sock .
 .It Fl S
 Start
 .Nm
