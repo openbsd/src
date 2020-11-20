@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.49 2020/11/20 12:38:26 tobhe Exp $	*/
+/*	$OpenBSD: iked.c,v 1.50 2020/11/20 13:03:00 jmc Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -57,7 +57,7 @@ usage(void)
 	extern char	*__progname;
 
 	fprintf(stderr, "usage: %s [-dnSTtv] [-D macro=value] "
-	    "[-f file] [-p udpencap_port]\n", __progname);
+	    "[-f file] [-p udpencap_port] [-s socket]\n", __progname);
 	exit(1);
 }
 

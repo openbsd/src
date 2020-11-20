@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.8,v 1.27 2020/11/20 12:38:26 tobhe Exp $
+.\" $OpenBSD: iked.8,v 1.28 2020/11/20 13:03:00 jmc Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -26,6 +26,7 @@
 .Op Fl D Ar macro Ns = Ns Ar value
 .Op Fl f Ar file
 .Op Fl p Ar udpencap_port
+.Op Fl s Ar socket
 .Sh DESCRIPTION
 .Nm
 is an Internet Key Exchange (IKEv2) daemon which performs mutual
@@ -86,11 +87,6 @@ than 4500, the
 .Xr sysctl 2
 variable has to be set accordingly.
 Implies -t.
-.It Fl s Ar socket
-Use
-.Ar socket
-as the control socket, instead of the default
-.Pa /var/run/iked.sock .
 .It Fl S
 Start
 .Nm
@@ -100,6 +96,11 @@ See the
 option in
 .Xr iked.conf 5
 for more information.
+.It Fl s Ar socket
+Use
+.Ar socket
+as the control socket, instead of the default
+.Pa /var/run/iked.sock .
 .It Fl T
 Disable NAT-Traversal and do not propose NAT-Traversal support to the peers.
 .It Fl t
