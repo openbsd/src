@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.79 2020/11/20 08:03:53 tb Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.80 2020/11/20 08:08:02 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -657,8 +657,9 @@ SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 	for (;;) {
 		if (PEM_read_bio_X509(in, &x, NULL, NULL) == NULL)
 			break;
-		if ((xn = X509_get_subject_name(x)) == NULL) goto err;
-			xn = X509_NAME_dup(xn);
+		if ((xn = X509_get_subject_name(x)) == NULL)
+			goto err;
+		xn = X509_NAME_dup(xn);
 		if (xn == NULL)
 			goto err;
 		if (sk_X509_NAME_find(stack, xn) >= 0)
