@@ -1,4 +1,4 @@
-.\" $OpenBSD: sndio.7,v 1.25 2020/11/19 08:14:19 ratchov Exp $
+.\" $OpenBSD: sndio.7,v 1.26 2020/11/20 12:13:11 schwarze Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,12 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 19 2020 $
+.Dd $Mdocdate: November 20 2020 $
 .Dt SNDIO 7
 .Os
 .Sh NAME
 .Nm sndio
-.Nd interface to audio and MIDI
+.Nd audio and MIDI device descriptors
 .Sh DESCRIPTION
 Programs access audio and MIDI hardware using the
 .Nm sndio
@@ -62,8 +62,9 @@ Additionally,
 exposes a MIDI port used to control audio programs using
 standard MIDI Machine Control (MMC), MIDI Time Code (MTC),
 and master volume messages.
-.Sh AUDIO AND MIDI DESCRIPTORS
-From the user's perspective every audio device or MIDI port
+.Ss Server device descriptors
+From the user's perspective, every audio device or MIDI port exposed by
+.Xr sndiod 8
 has a descriptor of the form:
 .Bd -literal -offset center
 type[@hostname][,servnum]/devnum[.option]
@@ -77,14 +78,6 @@ The type of the audio device or MIDI port.
 Possible values are:
 .Pp
 .Bl -tag -width "midithru" -offset 3n -compact
-.It Cm rsnd
-Raw
-.Xr audio 4
-device.
-.It Cm rmidi
-Raw
-.Xr midi 4
-port.
 .It Cm snd
 Audio device exposed by
 .Xr sndiod 8 .
@@ -94,8 +87,6 @@ MIDI thru port created with
 .It Cm midi
 MIDI port exposed by
 .Xr sndiod 8 .
-.It Cm default
-Default audio device or MIDI port (see below).
 .El
 .It Ar hostname
 The hostname or address where the remote
@@ -113,41 +104,41 @@ Useful only if multiple
 servers are running on the same system.
 .It Ar devnum
 Device number.
-For hardware audio or MIDI ports, this corresponds to
-the character device minor number.
-For audio devices or MIDI ports created with
+It corresponds to the number of the corresponding
+.Fl f
+or
+.Fl q
+option on the
 .Xr sndiod 8
-it corresponds to the number of the corresponding
-.Fl fq
-option on the command line.
+command line.
 .It Ar option
 Corresponds to the sub-device string registered using the
 .Fl s
 option of
 .Xr sndiod 8 .
 .El
+.Ss Raw device descriptors
+Every raw audio device or MIDI port has a descriptor of the form:
 .Pp
-For example:
+.D1 Ar type Ns / Ns Ar devnum
 .Pp
-.Bl -tag -width "snd/0.rear" -offset 3n -compact
-.It Li rsnd/0
-Raw access to first audio device.
-.It Li rmidi/5
-Raw access to MIDI port number 5.
-.It Li snd/0
-Audio device referred by first
-.Fl f
-option of
-.Xr sndiod 8 .
-.It Li snd/0.rear
-Sub-device registered with
-.Fl s Fa rear .
-.It Li midithru/0
-First MIDI thru port created with
-.Xr sndiod 8 .
-.El
-.Sh DEFAULTS
-If
+The
+.Ar type
+can be either
+.Cm rsnd
+or
+.Cm rmidi .
+The rsnd/0 device descriptor accesses the
+.Pa /dev/audio0
+device, rsnd/1 accesses
+.Pa /dev/audio1 ,
+and so on.
+Similarly, rmidi/0 accesses
+.Pa /dev/rmidi0
+and so on.
+.Ss Default Audio and MIDI devices
+When no audio device descriptor is provided to a program
+or when the reserved word
 .Cm default
 is used as the audio device, the program will use the
 one specified in the
@@ -177,7 +168,7 @@ is running, this allows programs to exchange MIDI data on
 machines with no MIDI hardware by default, e.g. a MIDI player
 could use a software synthesizer with no manual configuration
 required.
-.Sh AUTHENTICATION
+.Ss Authentication
 For privacy reasons only one user may have connections to
 .Xr sndiod 8
 at a given time.
@@ -219,9 +210,31 @@ if the program has the set-user-ID or set-group-ID bits set.
 .It Pa ~/.sndio/cookie
 User's session authentication cookie.
 .It Pa /dev/audioN
-Audio devices.
+Raw audio devices.
 .It Pa /dev/rmidiN
-MIDI ports.
+Raw MIDI ports.
+.El
+.Sh EXAMPLES
+.Bl -tag -width "snd/0.rear" -compact
+.It Li snd/0
+Audio device referred to by the first
+.Fl f
+option of
+.Xr sndiod 8 .
+.It Li snd/0.rear
+Sub-device registered with
+.Dq -s rear .
+.It Li midithru/0
+First MIDI thru port created with
+.Xr sndiod 8 .
+.It Li default
+Default audio or MIDI device.
+.It Li rsnd/0
+Direct hardware access to
+.Pa /dev/audio0 .
+.It Li rmidi/5
+Direct hardware access to
+.Pa /dev/rmidi5 .
 .El
 .Sh SEE ALSO
 .Xr aucat 1 ,
