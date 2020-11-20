@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.50 2020/06/20 09:26:54 schwarze Exp $
+.\" $OpenBSD: sio_open.3,v 1.51 2020/11/20 12:09:45 schwarze Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 20 2020 $
+.Dd $Mdocdate: November 20 2020 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -34,7 +34,8 @@
 .Nm sio_eof ,
 .Nm sio_setvol ,
 .Nm sio_onvol ,
-.Nm sio_initpar
+.Nm sio_initpar ,
+.Nm SIO_BPS
 .Nd sndio interface to audio devices
 .Sh SYNOPSIS
 .In sndio.h
@@ -80,8 +81,8 @@
 .Fc
 .Ft "void"
 .Fn sio_initpar "struct sio_par *par"
-.\"Fd #define SIO_BPS(bits)
-.\"Fd #define SIO_LE_NATIVE
+.Ft unsigned int
+.Fn SIO_BPS "unsigned int bits"
 .Sh DESCRIPTION
 The
 .Nm sndio
@@ -270,7 +271,7 @@ To ease filling the
 structure, the
 following macros can be used:
 .Bl -tag -width "SIO_BPS(bits)"
-.It Dv SIO_BPS Ns Pq Fa bits
+.It Fn SIO_BPS bits
 Return the smallest value for
 .Fa bps
 that is a power of two and that is large enough to
@@ -280,6 +281,7 @@ hold
 Can be used to set the
 .Fa le
 parameter when native byte order is required.
+It is 1 if the native byte order is little endian or 0 otherwise.
 .El
 .Ss Getting device capabilities
 There's no way to get an exhaustive list of all parameter
@@ -790,10 +792,17 @@ may be a value between 0 and 2.
 .El
 .Sh SEE ALSO
 .Xr pledge 2 ,
+.Xr mio_open 3 ,
+.Xr sioctl_open 3 ,
 .Xr audio 4 ,
 .Xr sndio 7 ,
 .Xr sndiod 8 ,
 .Xr audio 9
+.Sh HISTORY
+These functions first appeared in
+.Ox 4.5 .
+.Sh AUTHORS
+.An Alexandre Ratchov Aq Mt ratchov@openbsd.org
 .Sh BUGS
 The
 .Xr audio 4
