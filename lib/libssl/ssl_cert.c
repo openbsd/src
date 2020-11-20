@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.78 2020/06/05 17:55:24 jsing Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.79 2020/11/20 08:03:53 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -595,8 +595,9 @@ SSL_load_client_CA_file(const char *file)
 				goto err;
 			}
 		}
-		if ((xn = X509_get_subject_name(x)) == NULL) goto err;
-			/* check for duplicates */
+		if ((xn = X509_get_subject_name(x)) == NULL)
+			goto err;
+		/* check for duplicates */
 		xn = X509_NAME_dup(xn);
 		if (xn == NULL)
 			goto err;
