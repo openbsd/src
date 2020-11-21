@@ -4135,23 +4135,39 @@ void r100_mm_wreg_slow(struct radeon_device *rdev, uint32_t reg, uint32_t v)
 
 u32 r100_io_rreg(struct radeon_device *rdev, u32 reg)
 {
-	if (reg < rdev->rio_mem_size)
-		return bus_space_read_4(rdev->iot, rdev->rio_mem, reg);
-	else {
+	u32 val;
+
+	if (reg < rdev->rio_mem_size) {
+		val = bus_space_read_4(rdev->iot, rdev->rio_mem, reg);
+		bus_space_barrier(rdev->iot, rdev->rio_mem, 0,
+		    rdev->rio_mem_size, BUS_SPACE_BARRIER_READ);
+	} else {
+		bus_space_barrier(rdev->iot, rdev->rio_mem, 0,
+		    rdev->rio_mem_size, BUS_SPACE_BARRIER_WRITE);
 		bus_space_write_4(rdev->iot, rdev->rio_mem,
 		    RADEON_MM_INDEX, reg);
-		return bus_space_read_4(rdev->iot, rdev->rio_mem,
+		val = bus_space_read_4(rdev->iot, rdev->rio_mem,
 		    RADEON_MM_DATA);
+		bus_space_barrier(rdev->iot, rdev->rio_mem, 0,
+		    rdev->rio_mem_size, BUS_SPACE_BARRIER_READ);
 	}
+
+	return val;
 }
 
 void r100_io_wreg(struct radeon_device *rdev, u32 reg, u32 v)
 {
-	if (reg < rdev->rio_mem_size)
+	if (reg < rdev->rio_mem_size) {
+		bus_space_barrier(rdev->iot, rdev->rio_mem, 0,
+		    rdev->rio_mem_size, BUS_SPACE_BARRIER_WRITE);
 		bus_space_write_4(rdev->iot, rdev->rio_mem, reg, v);
-	else {
+	} else {
+		bus_space_barrier(rdev->iot, rdev->rio_mem, 0,
+		    rdev->rio_mem_size, BUS_SPACE_BARRIER_WRITE);
 		bus_space_write_4(rdev->iot, rdev->rio_mem,
 		    RADEON_MM_INDEX, reg);
+		bus_space_barrier(rdev->iot, rdev->rio_mem, 0,
+		    rdev->rio_mem_size, BUS_SPACE_BARRIER_WRITE);
 		bus_space_write_4(rdev->iot, rdev->rio_mem,
 		    RADEON_MM_DATA, v);
 	}
