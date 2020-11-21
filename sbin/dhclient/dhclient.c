@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.683 2020/11/20 18:48:22 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.684 2020/11/21 14:56:28 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -724,6 +724,8 @@ state_preboot(struct interface_info *ifi)
 void
 state_reboot(struct interface_info *ifi)
 {
+	struct client_lease		*lease;
+
 	cancel_timeout(ifi);
 
 	/*
@@ -736,8 +738,10 @@ state_reboot(struct interface_info *ifi)
 		state_init(ifi);
 		return;
 	}
-	ifi->expiry = lease_expiry(ifi->active);
-	ifi->rebind = lease_rebind(ifi->active);
+	lease = apply_defaults(ifi->active);
+	ifi->expiry = lease_expiry(lease);
+	ifi->rebind = lease_rebind(lease);
+	free_client_lease(lease);
 
 	ifi->xid = arc4random();
 	make_request(ifi, ifi->active);
