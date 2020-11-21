@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.684 2020/11/21 14:56:28 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.685 2020/11/21 18:34:25 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1066,7 +1066,6 @@ newlease:
 	 * place when dhclient(8) goes daemon.
 	 */
 	write_lease_db(&ifi->lease_db);
-	write_resolv_conf();
 
 	free_client_lease(lease);
 	free(effective_proposal);

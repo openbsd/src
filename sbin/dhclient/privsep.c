@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.78 2020/05/20 18:27:16 krw Exp $ */
+/*	$OpenBSD: privsep.c,v 1.79 2020/11/21 18:34:25 krw Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -82,8 +82,7 @@ dispatch_imsg(char *name, int rdomain, int ioctlfd, int routefd,
 			else {
 				priv_propose(name, ioctlfd, imsg.data,
 				    imsg.hdr.len - IMSG_HEADER_SIZE - sizeof(struct proposal),
-				    &resolv_conf, routefd, rdomain, index);
-				lastidx = 0; /* Next IMSG_WRITE_RESOLV_CONF */
+				    &resolv_conf, routefd, rdomain, index, &lastidx);
 			}
 			break;
 

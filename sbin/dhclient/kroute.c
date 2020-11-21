@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.191 2020/11/19 22:30:19 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.192 2020/11/21 18:34:25 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -900,7 +900,8 @@ propose(struct proposal *proposal)
 
 void
 priv_propose(char *name, int ioctlfd, struct proposal *proposal,
-    size_t sz, char **resolv_conf, int routefd, int rdomain, int index)
+    size_t sz, char **resolv_conf, int routefd, int rdomain, int index,
+    int *lastidx)
 {
 	struct unwind_info	 unwind_info;
 	struct ifreq		 ifr;
@@ -961,6 +962,9 @@ priv_propose(char *name, int ioctlfd, struct proposal *proposal,
 
 	set_routes(name, index, rdomain, routefd, proposal->address,
 	    proposal->netmask, routes, proposal->routes_len);
+
+	*lastidx = 0;
+	priv_write_resolv_conf(index, routefd, rdomain, *resolv_conf, lastidx);
 }
 
 /*
