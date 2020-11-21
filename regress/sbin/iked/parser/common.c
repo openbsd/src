@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.7 2020/11/18 22:24:03 tobhe Exp $ */
+/*	$OpenBSD: common.c,v 1.8 2020/11/21 19:25:08 tobhe Exp $ */
 /*
  * A bunch of stub functions so we can compile and link ikev2_pld.c
  * in a standalone program for testing purposes.
@@ -39,7 +39,7 @@ void	 timer_set(struct iked *, struct iked_timer *,
 void	 timer_add(struct iked *, struct iked_timer *, int);
 void	 timer_del(struct iked *, struct iked_timer *);
 ssize_t	 ikev2_nat_detection(struct iked *, struct iked_message *,
-	     void *, size_t, u_int);
+	     void *, size_t, u_int, int);
 int	 ca_setreq(struct iked *, struct iked_sa *, struct iked_static_id *,
 	     u_int8_t, u_int8_t, u_int8_t *, size_t, enum privsep_procid);
 int	 ikev2_print_id(struct iked_id *, char *, size_t);
@@ -142,7 +142,7 @@ timer_del(struct iked *env, struct iked_timer *tmr)
 
 ssize_t
 ikev2_nat_detection(struct iked *env, struct iked_message *msg,
-    void *ptr, size_t len, u_int type)
+    void *ptr, size_t len, u_int type, int frompeer)
 {
 	return (0);
 }
