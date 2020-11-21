@@ -1,4 +1,4 @@
-.\" $OpenBSD: sndioctl.1,v 1.14 2020/05/27 17:34:45 schwarze Exp $
+.\" $OpenBSD: sndioctl.1,v 1.15 2020/11/21 14:34:33 kn Exp $
 .\"
 .\" Copyright (c) 2014-2020 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 27 2020 $
+.Dd $Mdocdate: November 21 2020 $
 .Dt SNDIOCTL 1
 .Os
 .Sh NAME
@@ -72,8 +72,8 @@ The set of available controls depends on the audio device.
 Commands use the following two formats to display and change
 controls respectively:
 .Pp
-.Dl group/stream[channel].function
-.Dl group/stream[channel].function=value
+.Dl [group/]stream[channel].function
+.Dl [group/]stream[channel].function=value
 .Pp
 On the left-hand side are specified the control group (if any),
 the affected stream name, and the optional channel number.
