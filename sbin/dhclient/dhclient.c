@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.685 2020/11/21 18:34:25 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.686 2020/11/21 20:36:39 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -367,12 +367,10 @@ rtm_dispatch(struct interface_info *ifi, struct rt_msghdr *rtm)
 			} else if ((ifi->flags & IFI_IN_CHARGE) != 0) {
 				log_debug("%s: yielding responsibility",
 				    log_procname);
-				ifi->state = S_PREBOOT;
 				quit = TERMINATE;
 			}
 		} else if ((rtm->rtm_flags & RTF_PROTO2) != 0) {
 			release_lease(ifi); /* OK even if we sent it. */
-			ifi->state = S_PREBOOT;
 			quit = TERMINATE;
 		} else
 			return; /* Ignore tell_unwind() proposals. */
@@ -2539,7 +2537,7 @@ take_charge(struct interface_info *ifi, int routefd, char *leasespath)
 		if (nfds == 1 && (fds[0].revents & POLLIN) == POLLIN)
 			routefd_handler(ifi, routefd);
 
-		if ((ifi->flags & IFI_IN_CHARGE) == IFI_IN_CHARGE) {
+		if (quit != TERMINATE && (ifi->flags & IFI_IN_CHARGE) == IFI_IN_CHARGE) {
 			fd = open(leasespath, O_NONBLOCK |
 			    O_RDONLY|O_EXLOCK|O_CREAT|O_NOFOLLOW, 0640);
 			if (fd == -1 && errno != EWOULDBLOCK)
