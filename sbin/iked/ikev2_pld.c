@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.110 2020/11/19 15:00:43 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.111 2020/11/21 19:23:53 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1033,7 +1033,8 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 			    " (%zu != %zu)", __func__, left, sizeof(md));
 			return (-1);
 		}
-		if (ikev2_nat_detection(env, msg, md, sizeof(md), type) == -1)
+		if (ikev2_nat_detection(env, msg, md, sizeof(md), type,
+		     ikev2_msg_frompeer(msg)) == -1)
 			return (-1);
 		if (memcmp(buf, md, left) != 0) {
 			log_debug("%s: %s detected NAT", __func__,
