@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.37 2018/12/14 19:56:02 guenther Exp $	*/
+/*	$OpenBSD: elf.c,v 1.38 2020/11/22 10:40:39 jsg Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -518,7 +518,7 @@ elf_symload(const char *name, FILE *fp, off_t foff, Elf_Ehdr *eh,
 	}
 
 	if ((shstr = malloc(shstrsize)) == NULL) {
-		warn("%s: malloc shsrt", name);
+		warn("%s: malloc shstr", name);
 		return (1);
 	}
 
