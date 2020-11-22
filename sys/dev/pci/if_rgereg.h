@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rgereg.h,v 1.4 2020/10/31 07:50:41 kevlo Exp $	*/
+/*	$OpenBSD: if_rgereg.h,v 1.5 2020/11/22 14:06:22 otto Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020 Kevin Lo <kevlo@openbsd.org>
@@ -88,7 +88,7 @@
 
 #define RGE_INTRS		\
 	(RGE_ISR_RX_OK | RGE_ISR_RX_ERR | RGE_ISR_TX_OK |		\
-	RGE_ISR_TX_ERR | RGE_ISR_RX_DESC_UNAVAIL | RGE_ISR_LINKCHG |	\
+	RGE_ISR_TX_ERR | RGE_ISR_LINKCHG |	\
 	RGE_ISR_TX_DESC_UNAVAIL | RGE_ISR_PCS_TIMEOUT | RGE_ISR_SYSTEM_ERR)
 
 #define RGE_INTRS_TIMER		\
