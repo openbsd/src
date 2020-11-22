@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpidump.8,v 1.18 2017/06/01 12:26:14 schwarze Exp $
+.\"	$OpenBSD: acpidump.8,v 1.19 2020/11/22 17:10:06 jmc Exp $
 .\"
 .\" Copyright (c) 1999 Doug Rabson <dfr@FreeBSD.org>
 .\" Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -29,7 +29,7 @@
 .\"
 .\" $FreeBSD: src/usr.sbin/acpi/acpidump/acpidump.8,v 1.9 2001/09/05 19:21:25 dd Exp $
 .\"
-.Dd $Mdocdate: June 1 2017 $
+.Dd $Mdocdate: November 22 2020 $
 .Dt ACPIDUMP 8
 .Os
 .Sh NAME
@@ -67,7 +67,7 @@ $ iasl -d <prefix>.<sig>.<id>
 .Pp
 .Nm
 requires the ability to open
-.Pa /dev/kmem
+.Pa /dev/kmem ,
 which may be restricted based upon the value of the
 .Ar kern.allowkmem
 .Xr sysctl 8 .
