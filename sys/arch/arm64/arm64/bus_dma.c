@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_dma.c,v 1.13 2020/04/21 07:57:17 kettenis Exp $ */
+/*	$OpenBSD: bus_dma.c,v 1.14 2020/11/22 15:18:35 patrick Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -312,9 +312,12 @@ _dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
 				if (paddr == lastaddr &&
 				    (map->dm_segs[seg].ds_len + sgsize) <=
 				     map->_dm_maxsegsz &&
-				     (map->_dm_boundary == 0 ||
+				    (map->_dm_boundary == 0 ||
 				     (map->dm_segs[seg].ds_addr & bmask) ==
-				     (paddr & bmask)))
+				     (paddr & bmask)) &&
+				    (t->_flags & BUS_DMA_COHERENT ||
+				     (map->dm_segs[seg]._ds_vaddr +
+				     map->dm_segs[seg].ds_len == vaddr)))
 					map->dm_segs[seg].ds_len += sgsize;
 				else {
 					if (++seg >= map->_dm_segcnt)
@@ -643,9 +646,12 @@ _dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 			if ((bus_addr_t)curaddr == lastaddr &&
 			    (map->dm_segs[seg].ds_len + sgsize) <=
 			     map->_dm_maxsegsz &&
-			     (map->_dm_boundary == 0 ||
+			    (map->_dm_boundary == 0 ||
 			     (map->dm_segs[seg].ds_addr & bmask) ==
-			     ((bus_addr_t)curaddr & bmask)))
+			     ((bus_addr_t)curaddr & bmask)) &&
+			    (t->_flags & BUS_DMA_COHERENT ||
+			     (map->dm_segs[seg]._ds_vaddr +
+			     map->dm_segs[seg].ds_len == vaddr)))
 				map->dm_segs[seg].ds_len += sgsize;
 			else {
 				if (++seg >= map->_dm_segcnt)
