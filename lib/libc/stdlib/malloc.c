@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.266 2020/10/12 22:08:33 deraadt Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.267 2020/11/23 15:42:11 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -1957,6 +1957,8 @@ omemalign(struct dir_info *pool, size_t alignment, size_t sz, int zero_fill,
 		return NULL;
 	}
 
+	if (sz < MALLOC_PAGESIZE)
+		sz = MALLOC_PAGESIZE;
 	sz += mopts.malloc_guard;
 	psz = PAGEROUND(sz);
 
