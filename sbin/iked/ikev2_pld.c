@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.112 2020/11/22 17:47:50 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.113 2020/11/23 19:20:08 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1298,11 +1298,15 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 			    __func__);
 			return (-1);
 		}
-		if (sa == NULL ||
-		    sa->sa_sigsha2) {
-			log_debug("%s: SIGNATURE_HASH_ALGORITHMS: no SA or "
-			    "duplicate notify", __func__);
+		if (sa == NULL) {
+			log_debug("%s: SIGNATURE_HASH_ALGORITHMS: no SA",
+			    __func__);
 			return (-1);
+		}
+		if (sa->sa_sigsha2) {
+			log_debug("%s: SIGNATURE_HASH_ALGORITHMS: "
+			    "duplicate notify", __func__);
+			return (0);
 		}
 		if (left < sizeof(signature_hash) ||
 		    left % sizeof(signature_hash)) {
