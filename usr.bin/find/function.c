@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.49 2020/04/09 15:07:49 jca Exp $	*/
+/*	$OpenBSD: function.c,v 1.50 2020/11/23 06:21:52 halex Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -564,7 +564,7 @@ c_exec(char *unused, char ***argvp, int isok)
 	 */
 	for (ap = argv = *argvp, brace = 0;; ++ap) {
 		if (!*ap)
-			errx(1, "%s: no terminating \";\" or \"+\"",
+			errx(1, "%s: no terminating \";\" or \"{} +\"",
 			    isok ? "-ok" : "-exec");
 		lastbrace = brace;
 		brace = 0;
