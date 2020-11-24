@@ -1,4 +1,4 @@
-/*	$Id: sender.c,v 1.25 2019/06/28 13:35:03 deraadt Exp $ */
+/*	$Id: sender.c,v 1.26 2020/11/24 16:54:44 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -452,7 +452,7 @@ rsync_sender(struct sess *sess, int fdin,
 
 	for (;;) {
 		assert(pfd[0].fd != -1);
-		if ((c = poll(pfd, 3, POLL_TIMEOUT)) == -1) {
+		if ((c = poll(pfd, 3, poll_timeout)) == -1) {
 			ERR("poll");
 			goto out;
 		} else if (c == 0) {

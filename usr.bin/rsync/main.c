@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.49 2020/02/11 18:41:39 deraadt Exp $ */
+/*	$Id: main.c,v 1.50 2020/11/24 16:54:44 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -30,6 +30,7 @@
 #include "extern.h"
 
 int verbose;
+int poll_timeout;
 
 /*
  * A remote host is has a colon before the first path separator.
@@ -275,7 +276,8 @@ main(int argc, char *argv[])
 	struct sess	  sess;
 	struct fargs	*fargs;
 	char		**args;
-	struct option	 lopts[] = {
+	const char 	*errstr;
+	const struct option	 lopts[] = {
 		{ "port",	required_argument, NULL,		3 },
 		{ "rsh",	required_argument, NULL,		'e' },
 		{ "rsync-path",	required_argument, NULL,		1 },
@@ -303,6 +305,7 @@ main(int argc, char *argv[])
 		{ "no-recursive", no_argument,	&opts.recursive,	0 },
 		{ "specials",	no_argument,	&opts.specials,		1 },
 		{ "no-specials", no_argument,	&opts.specials,		0 },
+		{ "timeout",	required_argument, NULL,		5 },
 		{ "times",	no_argument,	&opts.preserve_times,	1 },
 		{ "no-times",	no_argument,	&opts.preserve_times,	0 },
 		{ "verbose",	no_argument,	&verbose,		1 },
@@ -384,6 +387,11 @@ main(int argc, char *argv[])
 		case 4:
 			opts.address = optarg;
 			break;
+		case 5:
+			poll_timeout = strtonum(optarg, 0, 60*60, &errstr);
+			if (errstr != NULL)
+				errx(1, "timeout is %s: %s", errstr, optarg);
+			break;
 		case 'h':
 		default:
 			goto usage;
@@ -409,6 +417,12 @@ main(int argc, char *argv[])
 
 	if (opts.server)
 		exit(rsync_server(&opts, (size_t)argc, argv));
+
+	/* by default and for --timeout=0 disable poll_timeout */
+	if (poll_timeout == 0)
+		poll_timeout = -1;
+	else
+		poll_timeout *= 1000;
 
 	/*
 	 * Now we know that we're the client on the local machine
@@ -511,7 +525,7 @@ usage:
 	fprintf(stderr, "usage: %s"
 	    " [-aDglnoprtvx] [-e program] [--address=sourceaddr] [--del]\n"
 	    "\t[--numeric-ids] [--port=portnumber] [--rsync-path=program]\n"
-	    "\t[--version] source ... directory\n",
+	    "\t[--timeout=seconds] [--version] source ... directory\n",
 	    getprogname());
 	exit(1);
 }

@@ -1,4 +1,4 @@
-/*	$Id: receiver.c,v 1.24 2019/05/08 21:30:11 benno Exp $ */
+/*	$Id: receiver.c,v 1.25 2020/11/24 16:54:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -329,7 +329,7 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 	LOG2("%s: ready for phase 1 data", root);
 
 	for (;;) {
-		if ((c = poll(pfd, PFD__MAX, POLL_TIMEOUT)) == -1) {
+		if ((c = poll(pfd, PFD__MAX, poll_timeout)) == -1) {
 			ERR("poll");
 			goto out;
 		} else if (c == 0) {

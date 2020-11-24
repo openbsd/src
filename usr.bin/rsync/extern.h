@@ -1,4 +1,4 @@
-/*	$Id: extern.h,v 1.33 2020/05/17 19:54:41 deraadt Exp $ */
+/*	$Id: extern.h,v 1.34 2020/11/24 16:54:44 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -42,10 +42,10 @@
 #define	CSUM_LENGTH_PHASE2 (16)
 
 /*
- * Use this for debugging deadlocks.
+ * Use this for --timeout.
  * All poll events will use it and catch time-outs.
  */
-#define POLL_TIMEOUT	(INFTIM)
+extern int poll_timeout;
 
 /*
  * Operating mode for a client or a server.

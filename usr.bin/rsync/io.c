@@ -1,4 +1,4 @@
-/*	$Id: io.c,v 1.18 2019/06/28 13:35:03 deraadt Exp $ */
+/*	$Id: io.c,v 1.19 2020/11/24 16:54:44 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -70,7 +70,7 @@ io_write_nonblocking(int fd, const void *buf, size_t bsz,
 
 	/* Poll and check for all possible errors. */
 
-	if ((c = poll(&pfd, 1, POLL_TIMEOUT)) == -1) {
+	if ((c = poll(&pfd, 1, poll_timeout)) == -1) {
 		ERR("poll");
 		return 0;
 	} else if (c == 0) {
@@ -201,7 +201,7 @@ io_read_nonblocking(int fd, void *buf, size_t bsz, size_t *sz)
 
 	/* Poll and check for all possible errors. */
 
-	if ((c = poll(&pfd, 1, POLL_TIMEOUT)) == -1) {
+	if ((c = poll(&pfd, 1, poll_timeout)) == -1) {
 		ERR("poll");
 		return 0;
 	} else if (c == 0) {
