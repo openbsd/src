@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.285 2020/11/21 19:23:53 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.286 2020/11/24 22:14:31 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -925,9 +925,6 @@ ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
 		memcpy(&sa->sa_peerauth, &msg->msg_auth, sizeof(sa->sa_peerauth));
 		bzero(&msg->msg_auth, sizeof(msg->msg_auth));
 	}
-
-	if (msg->msg_cp)
-		sa->sa_cp = msg->msg_cp;
 
 	if (msg->msg_cp) {
 		if (msg->msg_cp_addr) {
