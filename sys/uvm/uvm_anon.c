@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.c,v 1.49 2020/01/04 16:17:29 beck Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.50 2020/11/24 13:49:09 mpi Exp $	*/
 /*	$NetBSD: uvm_anon.c,v 1.10 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -106,7 +106,9 @@ uvm_anfree_list(struct vm_anon *anon, struct pglist *pgl)
 			 * clean page, and put on on pglist
 			 * for later freeing.
 			 */
+			uvm_lock_pageq();
 			uvm_pageclean(pg);
+			uvm_unlock_pageq();
 			TAILQ_INSERT_HEAD(pgl, pg, pageq);
 		} else {
 			uvm_lock_pageq();	/* lock out pagedaemon */

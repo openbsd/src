@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.150 2020/09/22 14:31:08 mpi Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.151 2020/11/24 13:49:09 mpi Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -973,6 +973,10 @@ uvm_pageclean(struct vm_page *pg)
 {
 	u_int flags_to_clear = 0;
 
+#if all_pmap_are_fixed
+	MUTEX_ASSERT_LOCKED(&uvm.pageqlock);
+#endif
+
 #ifdef DEBUG
 	if (pg->uobject == (void *)0xdeadbeef &&
 	    pg->uanon == (void *)0xdeadbeef) {
@@ -1037,6 +1041,10 @@ uvm_pageclean(struct vm_page *pg)
 void
 uvm_pagefree(struct vm_page *pg)
 {
+#if all_pmap_are_fixed
+	MUTEX_ASSERT_LOCKED(&uvm.pageqlock);
+#endif
+
 	uvm_pageclean(pg);
 	uvm_pmr_freepages(pg, 1);
 }
@@ -1229,6 +1237,8 @@ uvm_pagelookup(struct uvm_object *obj, voff_t off)
 void
 uvm_pagewire(struct vm_page *pg)
 {
+	MUTEX_ASSERT_LOCKED(&uvm.pageqlock);
+
 	if (pg->wire_count == 0) {
 		if (pg->pg_flags & PQ_ACTIVE) {
 			TAILQ_REMOVE(&uvm.page_active, pg, pageq);
@@ -1257,6 +1267,8 @@ uvm_pagewire(struct vm_page *pg)
 void
 uvm_pageunwire(struct vm_page *pg)
 {
+	MUTEX_ASSERT_LOCKED(&uvm.pageqlock);
+
 	pg->wire_count--;
 	if (pg->wire_count == 0) {
 		TAILQ_INSERT_TAIL(&uvm.page_active, pg, pageq);
@@ -1276,6 +1288,8 @@ uvm_pageunwire(struct vm_page *pg)
 void
 uvm_pagedeactivate(struct vm_page *pg)
 {
+	MUTEX_ASSERT_LOCKED(&uvm.pageqlock);
+
 	if (pg->pg_flags & PQ_ACTIVE) {
 		TAILQ_REMOVE(&uvm.page_active, pg, pageq);
 		atomic_clearbits_int(&pg->pg_flags, PQ_ACTIVE);
@@ -1310,6 +1324,8 @@ uvm_pagedeactivate(struct vm_page *pg)
 void
 uvm_pageactivate(struct vm_page *pg)
 {
+	MUTEX_ASSERT_LOCKED(&uvm.pageqlock);
+
 	if (pg->pg_flags & PQ_INACTIVE) {
 		if (pg->pg_flags & PQ_SWAPBACKED)
 			TAILQ_REMOVE(&uvm.page_inactive_swp, pg, pageq);

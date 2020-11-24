@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm.h,v 1.67 2019/12/06 08:33:25 mpi Exp $	*/
+/*	$OpenBSD: uvm.h,v 1.68 2020/11/24 13:49:09 mpi Exp $	*/
 /*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
 
 /*
@@ -44,18 +44,20 @@
 /*
  * uvm structure (vm global state: collected in one structure for ease
  * of reference...)
+ *
+ *  Locks used to protect struct members in this file:
+ *	Q	uvm.pageqlock
  */
-
 struct uvm {
 	/* vm_page related parameters */
 
 	/* vm_page queues */
-	struct pglist page_active;	/* allocated pages, in use */
-	struct pglist page_inactive_swp;/* pages inactive (reclaim or free) */
-	struct pglist page_inactive_obj;/* pages inactive (reclaim or free) */
+	struct pglist page_active;	/* [Q] allocated pages, in use */
+	struct pglist page_inactive_swp;/* [Q] pages inactive (reclaim/free) */
+	struct pglist page_inactive_obj;/* [Q] pages inactive (reclaim/free) */
 	/* Lock order: pageqlock, then fpageqlock. */
-	struct mutex pageqlock;		/* lock for active/inactive page q */
-	struct mutex fpageqlock;	/* lock for free page q  + pdaemon */
+	struct mutex pageqlock;		/* [] lock for active/inactive page q */
+	struct mutex fpageqlock;	/* [] lock for free page q  + pdaemon */
 	boolean_t page_init_done;	/* TRUE if uvm_page_init() finished */
 	struct uvm_pmr_control pmr_control; /* pmemrange data */
 

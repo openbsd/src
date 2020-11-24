@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.87 2020/09/29 11:47:41 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.88 2020/11/24 13:49:09 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -821,6 +821,8 @@ uvmpd_scan(void)
 	struct vm_page *p, *nextpg;
 	struct uvm_object *uobj;
 	boolean_t got_it;
+
+	MUTEX_ASSERT_LOCKED(&uvm.pageqlock);
 
 	uvmexp.pdrevs++;		/* counter */
 	uobj = NULL;
