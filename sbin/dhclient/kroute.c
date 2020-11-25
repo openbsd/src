@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.192 2020/11/21 18:34:25 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.193 2020/11/25 00:05:48 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -51,6 +51,8 @@
 #define ROUNDUP(a) \
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 
+#define	CIDR_MAX_BITS	32
+
 int		 delete_addresses(char *, int, struct in_addr, struct in_addr);
 void		 set_address(char *, int, struct in_addr, struct in_addr);
 void		 delete_address(char *, int, struct in_addr);
@@ -61,6 +63,7 @@ unsigned int	 route_pos(struct rt_msghdr *, uint8_t *, unsigned int,
     struct in_addr);
 void		 flush_routes(int, int, int, uint8_t *, unsigned int,
     struct in_addr);
+void		 discard_route(uint8_t *, unsigned int);
 void		 add_route(char *, int, int, struct in_addr, struct in_addr,
 		    struct in_addr, struct in_addr, int);
 void		 set_routes(char *, int, int, int, struct in_addr,
@@ -324,12 +327,6 @@ route_pos(struct rt_msghdr *rtm, uint8_t *routes, unsigned int routes_len,
 	return routes_len;
 }
 
-/*
- * flush_routes() does the equivalent of
- *
- *	route -q -T $rdomain -n flush -inet -iface $interface
- *	arp -dan
- */
 void
 flush_routes(int index, int routefd, int rdomain, uint8_t *routes,
     unsigned int routes_len, struct in_addr address)
@@ -359,10 +356,11 @@ flush_routes(int index, int routefd, int rdomain, uint8_t *routes,
 		if ((rtm->rtm_flags & (RTF_LOCAL|RTF_BROADCAST)) != 0)
 			continue;
 
-		/* Don't bother deleting a route we're going to add. */
 		pos = route_pos(rtm, routes, routes_len, address);
-		if (pos < routes_len)
+		if (pos < routes_len) {
+			discard_route(routes + pos, routes_len - pos);
 			continue;
+		}
 
 		rtm->rtm_type = RTM_DELETE;
 		rtm->rtm_seq = seqno++;
@@ -377,6 +375,16 @@ flush_routes(int index, int routefd, int rdomain, uint8_t *routes,
 	}
 
 	free(buf);
+}
+
+void
+discard_route(uint8_t *routes, unsigned int routes_len)
+{
+	unsigned int		len;
+
+	len = 1 + sizeof(struct in_addr) + (routes[0] + 7) / 8;
+	memmove(routes, routes + len, routes_len - len);
+	routes[routes_len - len] = CIDR_MAX_BITS + 1;
 }
 
 /*
@@ -756,7 +764,7 @@ extract_route(uint8_t *routes, unsigned int routes_len, in_addr_t *dest,
 {
 	unsigned int	 bits, bytes, len;
 
-	if (routes[0] > 32)
+	if (routes[0] > CIDR_MAX_BITS)
 		return 0;
 
 	bits = routes[0];
@@ -772,7 +780,7 @@ extract_route(uint8_t *routes, unsigned int routes_len, in_addr_t *dest,
 		if (bits == 0)
 			*netmask = INADDR_ANY;
 		else
-			*netmask = htonl(0xffffffff << (32 - bits));
+			*netmask = htonl(0xffffffff << (CIDR_MAX_BITS - bits));
 		if (dest != NULL)
 			*dest &= *netmask;
 	}
