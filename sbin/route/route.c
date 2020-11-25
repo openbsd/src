@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.249 2020/10/29 21:15:26 denis Exp $	*/
+/*	$OpenBSD: route.c,v 1.250 2020/11/25 21:36:05 krw Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -1249,6 +1249,13 @@ char ifnetflags[] =
 "\23INET6_NOPRIVACY\24MPLS\25WOL\26AUTOCONF6\27INET6_NOSOII\30AUTOCONF4";
 char addrnames[] =
 "\1DST\2GATEWAY\3NETMASK\4GENMASK\5IFP\6IFA\7AUTHOR\010BRD\011SRC\012SRCMASK\013LABEL\014BFD\015DNS\016STATIC\017SEARCH";
+char ieee80211flags[] =
+    "\1ASCAN\2SIBSS\011WEPON\012IBSSON\013PMGTON\014DESBSSID\016ROAMING"
+    "\020TXPOW_FIXED\021TXPOW_AUTO\022SHSLOT\023SHPREAMBLE\024QOS"
+    "\025USEPROT\026RSNON\027PSK\030COUNTERM\031MFPR\032HTON\033PBAR"
+    "\034BGSCAN\035AUTO_JOIN\036VHTON";
+char ieee80211xflags[] =
+    "\1TX_MGMT_ONLY";
 
 const char *
 get_linkstate(int mt, int link_state)
@@ -2205,9 +2212,12 @@ print_80211info(struct if_ieee80211_msghdr *ifim)
 	}
 	printf("channel %u, ", ifim->ifim_ifie.ifie_channel);
 	bssid = ifim->ifim_ifie.ifie_addr;
-	printf("bssid %02x:%02x:%02x:%02x:%02x:%02x, ",
+	printf("bssid %02x:%02x:%02x:%02x:%02x:%02x\n",
 	    bssid[0], bssid[1], bssid[2],
 	    bssid[3], bssid[4], bssid[5]);
-	printf("flags: 0x%x, xflags: 0x%x\n", ifim->ifim_ifie.ifie_flags,
-	    ifim->ifim_ifie.ifie_xflags);
+	printf("flags:");
+	bprintf(stdout, ifim->ifim_ifie.ifie_flags, ieee80211flags);
+	printf("\nxflags:");
+	bprintf(stdout, ifim->ifim_ifie.ifie_xflags, ieee80211xflags);
+	printf("\n");
 }
