@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.173 2020/11/21 19:23:53 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.174 2020/11/25 22:17:13 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -802,12 +802,12 @@ void	 config_free_policy(struct iked *, struct iked_policy *);
 struct iked_proposal *
 	 config_add_proposal(struct iked_proposals *, unsigned int,
 	    unsigned int);
+void	 config_free_proposal(struct iked_proposals *, struct iked_proposal *);
 void	 config_free_proposals(struct iked_proposals *, unsigned int);
 void	 config_free_flows(struct iked *, struct iked_flows *);
 void	 config_free_childsas(struct iked *, struct iked_childsas *,
 	    struct iked_spi *, struct iked_spi *);
-struct iked_transform *
-	 config_add_transform(struct iked_proposal *,
+int	 config_add_transform(struct iked_proposal *,
 	    unsigned int, unsigned int, unsigned int, unsigned int);
 int	 config_setcoupled(struct iked *, unsigned int);
 int	 config_getcoupled(struct iked *, unsigned int);

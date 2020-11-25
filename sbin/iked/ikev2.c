@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.286 2020/11/24 22:14:31 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.287 2020/11/25 22:17:13 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -3680,7 +3680,7 @@ ikev2_set_sa_proposal(struct iked_sa *sa, struct iked_policy *pol,
 			xform = &prop->prop_xforms[i];
 			if (config_add_transform(copy, xform->xform_type,
 			    xform->xform_id, xform->xform_length,
-			    xform->xform_keylength) == NULL)
+			    xform->xform_keylength) != 0)
 				return (-1);
 		}
 	}

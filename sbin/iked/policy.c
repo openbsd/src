@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.71 2020/11/18 22:24:03 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.72 2020/11/25 22:17:14 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -862,7 +862,7 @@ proposals_negotiate(struct iked_proposals *result, struct iked_proposals *local,
 
 		if (config_add_transform(prop, chosen[i].xform_type,
 		    chosen[i].xform_id, chosen[i].xform_length,
-		    chosen[i].xform_keylength) == NULL)
+		    chosen[i].xform_keylength) != 0)
 			break;
 	}
 

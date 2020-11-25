@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.113 2020/11/23 19:20:08 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.114 2020/11/25 22:17:14 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -345,6 +345,7 @@ ikev2_pld_sa(struct iked *env, struct ikev2_payload *pld,
 	uint32_t			 spi32;
 	uint64_t			 spi = 0, spi64;
 	uint8_t				*msgbuf = ibuf_data(msg->msg_data);
+	int				 r;
 	struct iked_proposals		*props;
 	size_t				 total;
 
@@ -430,10 +431,20 @@ ikev2_pld_sa(struct iked *env, struct ikev2_payload *pld,
 		/*
 		 * Parse the attached transforms
 		 */
-		if (sap.sap_transforms &&
-		    ikev2_pld_xform(env, msg, offset, total) != 0) {
-			log_debug("%s: invalid proposal transforms", __func__);
-			return (-1);
+		if (sap.sap_transforms) {
+			r = ikev2_pld_xform(env, msg, offset, total);
+			if ((r == -2) && ikev2_msg_frompeer(msg)) {
+				log_debug("%s: invalid proposal transform",
+				    __func__);
+
+				/* cleanup and ignore proposal */
+				config_free_proposal(props, prop);
+				prop = msg->msg_parent->msg_prop = NULL;
+			} else if (r != 0) {
+				log_debug("%s: invalid proposal transforms",
+				    __func__);
+				return (-1);
+			}
 		}
 
 		offset += total;
@@ -479,6 +490,7 @@ ikev2_pld_xform(struct iked *env, struct iked_message *msg,
 	struct ikev2_transform		 xfrm;
 	char				 id[BUFSIZ];
 	int				 ret = 0;
+	int				 r;
 	size_t				 xfrm_length;
 
 	if (ikev2_validate_xform(msg, offset, total, &xfrm))
@@ -529,11 +541,17 @@ ikev2_pld_xform(struct iked *env, struct iked_message *msg,
 	}
 
 	if (ikev2_msg_frompeer(msg)) {
-		if (config_add_transform(msg->msg_parent->msg_prop,
+		r = config_add_transform(msg->msg_parent->msg_prop,
 		    xfrm.xfrm_type, betoh16(xfrm.xfrm_id),
-		    msg->msg_attrlength, msg->msg_attrlength) == NULL) {
-			log_debug("%s: failed to add transform", __func__);
-			return (-1);
+		    msg->msg_attrlength, msg->msg_attrlength);
+		if (r == -1) {
+			log_debug("%s: failed to add transform: alloc error",
+			    __func__);
+			return (r);
+		} else if (r == -2) {
+			log_debug("%s: failed to add transform: unknown type",
+			    __func__);
+			return (r);
 		}
 	}
 
