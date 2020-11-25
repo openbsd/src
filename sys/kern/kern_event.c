@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.144 2020/10/26 16:17:00 cheloha Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.145 2020/11/25 13:49:00 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -905,7 +905,6 @@ kqueue_scan(struct kqueue_scan_state *scan, int maxevents,
 
 	nkev = 0;
 	kevp = kev;
-
 	count = maxevents;
 	if (count == 0)
 		goto done;
@@ -921,7 +920,8 @@ retry:
 
 	s = splhigh();
 	if (kq->kq_count == 0) {
-		if (tsp != NULL && !timespecisset(tsp)) {
+		if ((tsp != NULL && !timespecisset(tsp)) ||
+		    scan->kqs_nevent != 0) {
 			splx(s);
 			error = 0;
 			goto done;
@@ -937,18 +937,32 @@ retry:
 		goto done;
 	}
 
-	TAILQ_INSERT_TAIL(&kq->kq_head, &scan->kqs_end, kn_tqe);
+	/*
+	 * Put the end marker in the queue to limit the scan to the events
+	 * that are currently active.  This prevents events from being
+	 * recollected if they reactivate during scan.
+	 *
+	 * If a partial scan has been performed already but no events have
+	 * been collected, reposition the end marker to make any new events
+	 * reachable.
+	 */
+	if (!scan->kqs_queued) {
+		TAILQ_INSERT_TAIL(&kq->kq_head, &scan->kqs_end, kn_tqe);
+		scan->kqs_queued = 1;
+	} else if (scan->kqs_nevent == 0) {
+		TAILQ_REMOVE(&kq->kq_head, &scan->kqs_end, kn_tqe);
+		TAILQ_INSERT_TAIL(&kq->kq_head, &scan->kqs_end, kn_tqe);
+	}
+
 	TAILQ_INSERT_HEAD(&kq->kq_head, &scan->kqs_start, kn_tqe);
 	while (count) {
 		kn = TAILQ_NEXT(&scan->kqs_start, kn_tqe);
 		if (kn->kn_filter == EVFILT_MARKER) {
 			if (kn == &scan->kqs_end) {
-				TAILQ_REMOVE(&kq->kq_head, &scan->kqs_end,
-				    kn_tqe);
 				TAILQ_REMOVE(&kq->kq_head, &scan->kqs_start,
 				    kn_tqe);
 				splx(s);
-				if (count == maxevents)
+				if (scan->kqs_nevent == 0)
 					goto retry;
 				goto done;
 			}
@@ -984,6 +998,9 @@ retry:
 		*kevp = kn->kn_kevent;
 		kevp++;
 		nkev++;
+		count--;
+		scan->kqs_nevent++;
+
 		if (kn->kn_flags & EV_ONESHOT) {
 			splx(s);
 			kn->kn_fop->f_detach(kn);
@@ -1009,7 +1026,6 @@ retry:
 			knote_release(kn);
 		}
 		kqueue_check(kq);
-		count--;
 		if (nkev == KQ_NEVENTS) {
 			splx(s);
 #ifdef KTRACE
@@ -1026,7 +1042,6 @@ retry:
 				break;
 		}
 	}
-	TAILQ_REMOVE(&kq->kq_head, &scan->kqs_end, kn_tqe);
 	TAILQ_REMOVE(&kq->kq_head, &scan->kqs_start, kn_tqe);
 	splx(s);
 done:
@@ -1059,15 +1074,21 @@ void
 kqueue_scan_finish(struct kqueue_scan_state *scan)
 {
 	struct kqueue *kq = scan->kqs_kq;
+	int s;
 
 	KASSERT(scan->kqs_start.kn_filter == EVFILT_MARKER);
 	KASSERT(scan->kqs_start.kn_status == KN_PROCESSING);
 	KASSERT(scan->kqs_end.kn_filter == EVFILT_MARKER);
 	KASSERT(scan->kqs_end.kn_status == KN_PROCESSING);
 
+	if (scan->kqs_queued) {
+		scan->kqs_queued = 0;
+		s = splhigh();
+		TAILQ_REMOVE(&kq->kq_head, &scan->kqs_end, kn_tqe);
+		splx(s);
+	}
 	KQRELE(kq);
 }
-
 
 /*
  * XXX

@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.46 2020/10/11 07:11:59 mpi Exp $	*/
+/*	$OpenBSD: event.h,v 1.47 2020/11/25 13:49:00 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -204,6 +204,9 @@ struct kqueue_scan_state {
 	struct kqueue	*kqs_kq;		/* kqueue of this scan */
 	struct knote	 kqs_start;		/* start marker */
 	struct knote	 kqs_end;		/* end marker */
+	int		 kqs_nevent;		/* number of events collected */
+	int		 kqs_queued;		/* if set, end marker is
+						 * in queue */
 };
 
 struct proc;
