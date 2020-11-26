@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.28 2020/05/26 20:24:31 tobhe Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.29 2020/11/26 22:24:06 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -427,8 +427,22 @@ cipher_setiv(struct iked_cipher *encr, void *iv, size_t len)
 		}
 		encr->encr_iv = ibuf_new(iv, encr->encr_ivlength);
 	} else {
-		/* Get new random IV */
-		encr->encr_iv = ibuf_random(encr->encr_ivlength);
+		switch (encr->encr_id) {
+		case IKEV2_XFORMENCR_AES_GCM_16:
+		case IKEV2_XFORMENCR_AES_GCM_12:
+			if (encr->encr_ivlength != sizeof(encr->encr_civ)) {
+				log_info("%s: ivlen does not match %zu != %zu",
+				    __func__, encr->encr_ivlength,
+				    sizeof(encr->encr_civ));
+				return (NULL);
+			}
+			encr->encr_iv = ibuf_new(&encr->encr_civ, sizeof(encr->encr_civ));
+			encr->encr_civ++;
+			break;
+		default:
+			/* Get new random IV */
+			encr->encr_iv = ibuf_random(encr->encr_ivlength);
+		}
 	}
 	if (encr->encr_iv == NULL) {
 		log_debug("%s: failed to set IV", __func__);

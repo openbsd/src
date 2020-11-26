@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.174 2020/11/25 22:17:13 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.175 2020/11/26 22:24:06 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -320,6 +320,7 @@ struct iked_cipher {
 	int		 encr_fixedkey;	/* Requires fixed key length */
 	struct ibuf	*encr_key;	/* MAC key derived from key seed */
 	struct ibuf	*encr_iv;	/* Initialization Vector */
+	uint64_t	 encr_civ;	/* Counter IV for GCM */
 	size_t		 encr_ivlength;	/* IV length */
 	size_t		 encr_length;	/* Block length */
 	size_t		 encr_saltlength;	/* IV salt length */
