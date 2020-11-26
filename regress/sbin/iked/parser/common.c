@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.8 2020/11/21 19:25:08 tobhe Exp $ */
+/*	$OpenBSD: common.c,v 1.9 2020/11/26 22:29:32 tobhe Exp $ */
 /*
  * A bunch of stub functions so we can compile and link ikev2_pld.c
  * in a standalone program for testing purposes.
@@ -43,11 +43,11 @@ ssize_t	 ikev2_nat_detection(struct iked *, struct iked_message *,
 int	 ca_setreq(struct iked *, struct iked_sa *, struct iked_static_id *,
 	     u_int8_t, u_int8_t, u_int8_t *, size_t, enum privsep_procid);
 int	 ikev2_print_id(struct iked_id *, char *, size_t);
-struct iked_transform *
-	 config_add_transform(struct iked_proposal *, u_int, u_int, u_int,
+int	 config_add_transform(struct iked_proposal *, u_int, u_int, u_int,
 	     u_int);
 struct iked_proposal *
 	 config_add_proposal(struct iked_proposals *, u_int, u_int);
+void	 config_free_proposal(struct iked_proposals *, struct iked_proposal *);
 int	 ikev2_send_informational(struct iked *, struct iked_message *);
 struct ibuf *
 	 ikev2_msg_decrypt(struct iked *, struct iked_sa *, struct ibuf *,
@@ -161,17 +161,23 @@ ikev2_print_id(struct iked_id *id, char *idstr, size_t idstrlen)
 	return (0);
 }
 
-struct iked_transform *
+int
 config_add_transform(struct iked_proposal *prop, u_int type,
     u_int id, u_int length, u_int keylength)
 {
-	return (NULL);
+	return (0);
 }
 
 struct iked_proposal *
 config_add_proposal(struct iked_proposals *head, u_int id, u_int proto)
 {
 	return (NULL);
+}
+
+void
+config_free_proposal(struct iked_proposals *head, struct iked_proposal *prop)
+{
+	return;
 }
 
 void config_free_fragments(struct iked_frag *frag)
