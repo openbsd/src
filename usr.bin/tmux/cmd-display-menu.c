@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-display-menu.c,v 1.21 2020/11/03 08:09:35 nicm Exp $ */
+/* $OpenBSD: cmd-display-menu.c,v 1.22 2020/11/26 13:06:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -155,7 +155,7 @@ cmd_display_menu_get_position(struct client *tc, struct cmdq_item *item,
 	else
 		format_add(ft, "popup_centre_x", "%ld", n);
 	n = (tty->sy - 1) / 2 + h / 2;
-	if (n + h >= tty->sy)
+	if (n >= tty->sy)
 		format_add(ft, "popup_centre_y", "%u", tty->sy - h);
 	else
 		format_add(ft, "popup_centre_y", "%ld", n);
