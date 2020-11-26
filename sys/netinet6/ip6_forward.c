@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.98 2020/06/24 22:03:44 cheloha Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.99 2020/11/26 18:55:12 tb Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ ip6_forward(struct mbuf *m, struct rtentry *rt, int srcrt)
 			inet_ntop(AF_INET6, &ip6->ip6_dst, dst6, sizeof(dst6));
 			log(LOG_DEBUG,
 			    "cannot forward "
-			    "from %s to %s nxt %d received on inteface %u\n",
+			    "from %s to %s nxt %d received on interface %u\n",
 			    src6, dst6,
 			    ip6->ip6_nxt,
 			    m->m_pkthdr.ph_ifidx);
