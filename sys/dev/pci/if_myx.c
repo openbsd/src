@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.111 2020/07/17 03:37:36 dlg Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.112 2020/11/27 00:13:15 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -269,6 +269,8 @@ myx_attach(struct device *parent, struct device *self, void *aux)
 	struct pci_attach_args	*pa = aux;
 	char			 part[32];
 	pcireg_t		 memtype;
+
+	rw_init(&sc->sc_sff_lock, "myxsff");
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
