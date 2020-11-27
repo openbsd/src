@@ -1,4 +1,4 @@
-.\" $OpenBSD: wg.4,v 1.8 2020/11/27 14:49:54 sthen Exp $
+.\" $OpenBSD: wg.4,v 1.9 2020/11/27 15:08:22 sthen Exp $
 .\" Copyright (c) 2020 Matt Dunwoodie <ncon@noconroy.net>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -124,8 +124,8 @@ will accept any random 32-byte base64 string.
 When an interface has a private key set with
 .Nm wgkey ,
 the corresponding
-public key is shown in the status output of the interface, like so:
-.Bd -literal
+public key is shown in the status output of the interface:
+.Bd -literal -offset indent
 # ifconfig wg1 | grep wgpubkey
 	wgpubkey NW5l2q2MArV5ZXpVXSZwBOyqhohOf8ImDgUB+jPtJps=
 .Ed
@@ -136,7 +136,7 @@ interfaces in separate
 .Xr rdomain 4 Ns s ,
 which is of no practical use
 but demonstrates two interfaces on the same machine:
-.Bd -literal
+.Bd -literal -offset indent
 #!/bin/sh
 
 # create interfaces; set random private keys
