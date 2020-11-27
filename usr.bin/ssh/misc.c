@@ -1,4 +1,4 @@
-/* $OpenBSD: misc.c,v 1.155 2020/10/18 11:32:01 djm Exp $ */
+/* $OpenBSD: misc.c,v 1.156 2020/11/27 00:49:58 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2005-2020 Damien Miller.  All rights reserved.
@@ -202,6 +202,49 @@ set_rdomain(int fd, const char *name)
 		return -1;
 	}
 	return 0;
+}
+
+int
+get_sock_af(int fd)
+{
+	struct sockaddr_storage to;
+	socklen_t tolen = sizeof(to);
+
+	memset(&to, 0, sizeof(to));
+	if (getsockname(fd, (struct sockaddr *)&to, &tolen) == -1)
+		return -1;
+	return to.ss_family;
+}
+
+void
+set_sock_tos(int fd, int tos)
+{
+	int af;
+
+	switch ((af = get_sock_af(fd))) {
+	case -1:
+		/* assume not a socket */
+		break;
+	case AF_INET:
+		debug3_f("set socket %d IP_TOS 0x%02x", fd, tos);
+		if (setsockopt(fd, IPPROTO_IP, IP_TOS,
+		    &tos, sizeof(tos)) == -1) {
+			error("setsockopt socket %d IP_TOS %d: %s:",
+			    fd, tos, strerror(errno));
+		}
+		break;
+	case AF_INET6:
+		debug3_f("set socket %d IPV6_TCLASS 0x%02x", fd, tos);
+		if (setsockopt(fd, IPPROTO_IPV6, IPV6_TCLASS,
+		    &tos, sizeof(tos)) == -1) {
+			error("setsockopt socket %d IPV6_TCLASS %d: %.100s:",
+			    fd, tos, strerror(errno));
+		}
+		break;
+	default:
+		debug2_f("unsupported socket family %d", af);
+		break;
+	}
 }
 
 /*
