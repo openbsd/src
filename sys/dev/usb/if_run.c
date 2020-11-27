@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.131 2020/10/11 07:05:29 mpi Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.132 2020/11/27 14:45:03 krw Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1921,19 +1921,24 @@ run_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 	/* do it in a process context */
 	cmd.key = *k;
-	cmd.associd = (ni != NULL) ? ni->ni_associd : 0;
+	cmd.ni = ni;
 	run_do_async(sc, run_set_key_cb, &cmd, sizeof cmd);
-	return 0;
+	sc->sc_key_tasks++;
+
+	return EBUSY;
 }
 
 void
 run_set_key_cb(struct run_softc *sc, void *arg)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct run_cmd_key *cmd = arg;
 	struct ieee80211_key *k = &cmd->key;
 	uint32_t attr;
 	uint16_t base;
 	uint8_t mode, wcid, iv[8];
+
+	sc->sc_key_tasks--;
 
 	/* map net80211 cipher to RT2860 security mode */
 	switch (k->k_cipher) {
@@ -1950,6 +1955,9 @@ run_set_key_cb(struct run_softc *sc, void *arg)
 		mode = RT2860_MODE_AES_CCMP;
 		break;
 	default:
+		IEEE80211_SEND_MGMT(ic, cmd->ni, IEEE80211_FC0_SUBTYPE_DEAUTH,
+		    IEEE80211_REASON_AUTH_LEAVE);
+		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 		return;
 	}
 
@@ -1957,7 +1965,7 @@ run_set_key_cb(struct run_softc *sc, void *arg)
 		wcid = 0;	/* NB: update WCID0 for group keys */
 		base = RT2860_SKEY(0, k->k_id);
 	} else {
-		wcid = RUN_AID2WCID(cmd->associd);
+		wcid = RUN_AID2WCID(cmd->ni->ni_associd);
 		base = RT2860_PKEY(wcid);
 	}
 
@@ -2008,6 +2016,11 @@ run_set_key_cb(struct run_softc *sc, void *arg)
 		attr = (attr & ~0xf) | (mode << 1) | RT2860_RX_PKEY_EN;
 		run_write(sc, RT2860_WCID_ATTR(wcid), attr);
 	}
+
+	if (sc->sc_key_tasks == 0) {
+		cmd->ni->ni_port_valid = 1;
+		ieee80211_set_link_state(ic, LINK_STATE_UP);
+	}
 }
 
 void
@@ -2023,7 +2036,7 @@ run_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 	/* do it in a process context */
 	cmd.key = *k;
-	cmd.associd = (ni != NULL) ? ni->ni_associd : 0;
+	cmd.ni = ni;
 	run_do_async(sc, run_delete_key_cb, &cmd, sizeof cmd);
 }
 
@@ -2043,7 +2056,7 @@ run_delete_key_cb(struct run_softc *sc, void *arg)
 
 	} else {
 		/* remove pairwise key */
-		wcid = RUN_AID2WCID(cmd->associd);
+		wcid = RUN_AID2WCID(cmd->ni->ni_associd);
 		run_read(sc, RT2860_WCID_ATTR(wcid), &attr);
 		attr &= ~0xf;
 		run_write(sc, RT2860_WCID_ATTR(wcid), attr);

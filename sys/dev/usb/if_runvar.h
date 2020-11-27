@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_runvar.h,v 1.12 2020/10/11 07:05:29 mpi Exp $	*/
+/*	$OpenBSD: if_runvar.h,v 1.13 2020/11/27 14:45:03 krw Exp $	*/
 
 /*-
  * Copyright (c) 2008,2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -112,7 +112,7 @@ struct run_cmd_newstate {
 
 struct run_cmd_key {
 	struct ieee80211_key	key;
-	uint16_t		associd;
+	struct ieee80211_node	*ni;
 };
 
 #define RUN_HOST_CMD_RING_COUNT	32
@@ -208,4 +208,5 @@ struct run_softc {
 #define sc_txtap	sc_txtapu.th
 	int				sc_txtap_len;
 #endif
+	int				sc_key_tasks;
 };
