@@ -1,4 +1,4 @@
-.\" $OpenBSD: wg.4,v 1.7 2020/11/27 14:04:49 sthen Exp $
+.\" $OpenBSD: wg.4,v 1.8 2020/11/27 14:49:54 sthen Exp $
 .\" Copyright (c) 2020 Matt Dunwoodie <ncon@noconroy.net>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -125,8 +125,9 @@ When an interface has a private key set with
 .Nm wgkey ,
 the corresponding
 public key is shown in the status output of the interface, like so:
-.Bd -literal -offset indent
-wgpubkey NW5l2q2MArV5ZXpVXSZwBOyqhohOf8ImDgUB+jPtJps=
+.Bd -literal
+# ifconfig wg1 | grep wgpubkey
+	wgpubkey NW5l2q2MArV5ZXpVXSZwBOyqhohOf8ImDgUB+jPtJps=
 .Ed
 .Sh EXAMPLES
 Create two
