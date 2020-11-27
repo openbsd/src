@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.287 2020/11/25 22:17:13 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.288 2020/11/27 21:48:37 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -4093,7 +4093,6 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 			sa->sa_nextr->sa_prevr = NULL;
 			sa->sa_nextr = NULL;
 			/* Setup address, socket and NAT information */
-			sa_state(env, dsa, IKEV2_STATE_CLOSING);
 			sa_address(dsa, &dsa->sa_peer,
 			    (struct sockaddr *)&sa->sa_peer.addr);
 			sa_address(dsa, &dsa->sa_local,
