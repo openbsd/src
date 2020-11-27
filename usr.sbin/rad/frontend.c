@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.31 2019/09/07 18:57:47 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.32 2020/11/27 10:23:32 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -133,6 +133,7 @@ void			 free_ra_iface(struct ra_iface *);
 int			 in6_mask2prefixlen(struct in6_addr *);
 void			 get_interface_prefixes(struct ra_iface *,
 			     struct ra_prefix_conf *);
+int			 interface_has_linklocal_address(char *);
 void			 build_packet(struct ra_iface *);
 void			 build_leaving_packet(struct ra_iface *);
 void			 ra_output(struct ra_iface *, struct sockaddr_in6 *);
@@ -750,14 +751,19 @@ merge_ra_interface(char *name, char *conf_name)
 {
 	struct ra_iface		*ra_iface;
 	uint32_t		 if_index;
-	int			 link_state;
+	int			 link_state, has_linklocal;
 
 	link_state = get_link_state(name);
+	has_linklocal = interface_has_linklocal_address(name);
 
 	if ((ra_iface = find_ra_iface_by_name(name)) != NULL) {
 		ra_iface->link_state = link_state;
 		if (!LINK_STATE_IS_UP(link_state)) {
-			log_debug("%s down, ignoring", name);
+			log_debug("%s down, removing", name);
+			ra_iface->removed = 1;
+		} else if (!has_linklocal) {
+			log_debug("%s has no IPv6 link-local address, "
+			    "removing", name);
 			ra_iface->removed = 1;
 		} else {
 			log_debug("keeping interface %s", name);
@@ -768,6 +774,11 @@ merge_ra_interface(char *name, char *conf_name)
 
 	if (!LINK_STATE_IS_UP(link_state)) {
 		log_debug("%s down, ignoring", name);
+		return;
+	}
+
+	if (!has_linklocal) {
+		log_debug("%s has no IPv6 link-local address, ignoring", name);
 		return;
 	}
 
@@ -918,6 +929,32 @@ in6_mask2prefixlen(struct in6_addr *in6)
 	return (plen);
 }
 
+int
+interface_has_linklocal_address(char *name)
+{
+	struct ifaddrs		*ifap, *ifa;
+	struct sockaddr_in6	*sin6;
+	int			 ret = 0;
+
+	if (getifaddrs(&ifap) != 0)
+		fatal("getifaddrs");
+
+	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
+		if (strcmp(name, ifa->ifa_name) != 0)
+			continue;
+		if (ifa->ifa_addr->sa_family != AF_INET6)
+			continue;
+
+		sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
+
+		if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
+			ret = 1;
+			break;
+		}
+	}
+	freeifaddrs(ifap);
+	return (ret);
+}
 void
 get_interface_prefixes(struct ra_iface *ra_iface, struct ra_prefix_conf
     *autoprefix)
