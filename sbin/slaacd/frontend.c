@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.38 2020/11/28 07:58:50 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.39 2020/11/28 07:59:26 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1164,9 +1164,14 @@ set_icmp6sock(int icmp6sock, int rdomain)
 		}
 	}
 
-	if (icmp6sock != -1)
-		fatalx("received unneeded ICMPv6 socket for rdomain %d",
-		    rdomain);
+	if (icmp6sock != -1) {
+		/*
+		 * The interface disappeared or changed rdomain while we were
+		 * waiting for the parent process to open the raw socket.
+		 */
+		close(icmp6sock);
+		return;
+	}
 
 	LIST_FOREACH (iface, &interfaces, entries) {
 		if (event_initialized(&iface->icmp6ev->ev) &&
