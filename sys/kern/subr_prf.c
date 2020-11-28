@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.101 2020/07/24 14:27:47 kettenis Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.102 2020/11/28 17:53:05 deraadt Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -869,18 +869,8 @@ reswitch:	switch (ch) {
 			base = DEC;
 			goto number;
 		case 'n':
-			/* %n is unsupported in the kernel; just skip it */
-			if (flags & QUADINT)
-				(void)va_arg(ap, quad_t *);
-			else if (flags & LONGINT)
-				(void)va_arg(ap, long *);
-			else if (flags & SHORTINT)
-				(void)va_arg(ap, short *);
-			else if (flags & SIZEINT)
-				(void)va_arg(ap, ssize_t *);
-			else
-				(void)va_arg(ap, int *);
-			continue;	/* no output */
+			panic("no %%n support\n");
+			break;
 		case 'O':
 			flags |= LONGINT;
 			/*FALLTHROUGH*/
