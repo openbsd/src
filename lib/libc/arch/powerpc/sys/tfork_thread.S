@@ -1,4 +1,4 @@
-/*	$OpenBSD: tfork_thread.S,v 1.9 2020/10/26 22:07:06 gkoehler Exp $	*/
+/*	$OpenBSD: tfork_thread.S,v 1.10 2020/11/28 19:49:30 gkoehler Exp $	*/
 
 /*
  * Copyright (c) 2005 Tim Wiess <tim@nop.cx>
@@ -19,7 +19,7 @@
 #include "SYS.h"
 
 ENTRY(__tfork_thread)
-	RETGUARD_SETUP(__tfork_thread)
+	RETGUARD_SETUP(__tfork_thread, %r11, %r12)
 	/* call __tfork */
 	li	%r0, SYS___tfork
 	sc
@@ -45,6 +45,6 @@ ENTRY(__tfork_thread)
 	stw	0, R2_OFFSET_ERRNO(%r2)
 	li	%r3, -1
 9:
-	RETGUARD_CHECK(__tfork_thread)
+	RETGUARD_CHECK(__tfork_thread, %r11, %r12)
 	blr
 END(__tfork_thread)

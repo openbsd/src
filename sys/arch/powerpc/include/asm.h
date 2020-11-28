@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.15 2020/10/26 22:07:06 gkoehler Exp $	*/
+/*	$OpenBSD: asm.h,v 1.16 2020/11/28 19:49:30 gkoehler Exp $	*/
 /*	$NetBSD: asm.h,v 1.1 1996/09/30 16:34:20 ws Exp $	*/
 
 /*
@@ -109,16 +109,22 @@ _TMP_LABEL(y):; \
 	lis	reg, (__retguard_ ## x)@ha;				\
 	lwz	reg, ((__retguard_ ## x)@l)(reg)
 # endif
-# define RETGUARD_SETUP(x)						\
+# define RETGUARD_SETUP(x, reg, retreg)					\
+	mflr	retreg;							\
+	RETGUARD_SETUP_LATE(x, reg, retreg)
+# define RETGUARD_SETUP_LATE(x, reg, retreg)				\
 	RETGUARD_SYMBOL(x);						\
-	mflr	%r12;							\
-	RETGUARD_LOAD_RANDOM(x, %r11);					\
-	xor	%r11, %r11, %r12
-# define RETGUARD_CHECK(x)						\
-	xor	%r11, %r11, %r12;					\
+	RETGUARD_LOAD_RANDOM(x, reg);					\
+	xor	reg, reg, retreg
+# define RETGUARD_CHECK(x, reg, retreg)					\
+	xor	reg, reg, retreg;					\
 	RETGUARD_LOAD_RANDOM(x, %r10);					\
-	mtlr	%r12;							\
-	twne	%r11, %r10
+	mtlr	retreg;							\
+	twne	reg, %r10
+# define RETGUARD_SAVE(reg, loc)					\
+	stw reg, loc
+# define RETGUARD_LOAD(reg, loc)					\
+	lwz reg, loc
 # define RETGUARD_SYMBOL(x)						\
 	.ifndef __retguard_ ## x;					\
 	.hidden __retguard_ ## x;					\
@@ -133,8 +139,11 @@ _TMP_LABEL(y):; \
 	.endif
 #else
 # define RETGUARD_LOAD_RANDOM(x, reg)
-# define RETGUARD_SETUP(x)
-# define RETGUARD_CHECK(x)
+# define RETGUARD_SETUP(x, reg, retreg)
+# define RETGUARD_SETUP_LATE(x, reg, retreg)
+# define RETGUARD_CHECK(x, reg, retreg)
+# define RETGUARD_SAVE(reg, loc)
+# define RETGUARD_LOAD(reg, loc)
 # define RETGUARD_SYMBOL(x)
 #endif
 

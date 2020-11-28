@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.24 2020/10/26 22:07:05 gkoehler Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.25 2020/11/28 19:49:30 gkoehler Exp $	*/
 /*-
  * Copyright (c) 1994
  *	Andrew Cagney.  All rights reserved.
@@ -84,15 +84,15 @@
 #define __END(x)		__END_HIDDEN(x); END(x)
 
 #define	PSEUDO_NOERROR(x,y)	SYSENTRY(x)				\
-				RETGUARD_SETUP(x);			\
+				RETGUARD_SETUP(x, %r11, %r12);		\
 				li	%r0, SYS_ ## y ;		\
 				sc;					\
-				RETGUARD_CHECK(x);			\
+				RETGUARD_CHECK(x, %r11, %r12);		\
 				blr;					\
 				__END(x)
 
 #define	PSEUDO_HIDDEN(x,y)	SYSENTRY_HIDDEN(x)			\
-				RETGUARD_SETUP(x);			\
+				RETGUARD_SETUP(x, %r11, %r12);		\
 				li	%r0, SYS_ ## y;			\
 				sc;					\
 				cmpwi	%r0, 0;				\
@@ -101,7 +101,7 @@
 				li	%r3, -1;			\
 				li	%r4, -1; /* for __syscall(lseek) */ \
 			.L_ret:						\
-				RETGUARD_CHECK(x);			\
+				RETGUARD_CHECK(x, %r11, %r12);		\
 				blr;					\
 				__END_HIDDEN(x)
 

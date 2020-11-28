@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.57 2019/09/03 14:34:53 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.58 2020/11/28 19:49:30 gkoehler Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -66,9 +66,9 @@ _ENTRY(_C_LABEL(cpu_spinup_trampoline))
 _ENTRY(_C_LABEL(cpu_switchto_asm))
 	mflr	%r0			/* save lr */
 	stw	%r0,4(%r1)
-	stwu	%r1,-16(%r1)
-	stw	%r31,12(%r1)
-	stw	%r30,8(%r1)
+	stwu	%r1,(-SFRAMELEN - 16)(%r1)
+	stw	%r31,(SFRAMELEN + 12)(%r1)
+	stw	%r30,(SFRAMELEN + 8)(%r1)
 
 /*
  * r3 - old proc
@@ -86,7 +86,6 @@ _ENTRY(_C_LABEL(cpu_switchto_asm))
 	mfsr	%r10,PPC_USER_SR	/* save PPC_USER_SR for copyin/copyout*/
 	mfcr	%r11			/* save cr */
 	mr	%r12,%r2		/* save r2 */
-	stwu	%r1,-SFRAMELEN(%r1)	/* still running on old stack */
 	stmw	%r10,8(%r1)
 	lwz	%r31,P_ADDR(%r3)
 	stw	%r1,PCB_SP(%r31)	/* save SP */
@@ -117,26 +116,28 @@ switch_exited:
 	li	%r5,0
 
 	lwz	%r1,PCB_SP(%r31)	/* get new procs SP */
+	lwz	%r0,(SFRAMELEN + 16 + 4)(%r1)
+	RETGUARD_SETUP_LATE(cpu_switchto_asm, %r9, %r0)
 
 	ori	%r30,%r30,PSL_EE	/* interrupts are okay again */
 	mtmsr	%r30
 
 	lmw	%r10,8(%r1)		/* get other regs */
-	lwz	%r1,0(%r1)		/* get saved SP */
 	mr	%r2,%r12		/* get saved r2 */
 	mtcr	%r11			/* get saved cr */
 	isync
 	mtsr	PPC_USER_SR,%r10	/* get saved PPC_USER_SR */
 	isync
 
-	lwz	%r31,12(%r1)
-	lwz	%r30,8(%r1)
-	addi	%r1,%r1,16
-	lwz	%r0,4(%r1)
+	lwz	%r31,(SFRAMELEN + 12)(%r1)
+	lwz	%r30,(SFRAMELEN + 8)(%r1)
+	addi	%r1,%r1,SFRAMELEN + 16
 	mtlr	%r0
+	RETGUARD_CHECK(cpu_switchto_asm, %r9, %r0)
 	blr
 
 _ENTRY(_C_LABEL(cpu_idle_enter))
+	RETGUARD_SETUP(cpu_idle_enter, %r11, %r12)
 	lis	%r4, _C_LABEL(ppc_cpuidle)@ha
 	lwz	%r4, _C_LABEL(ppc_cpuidle)@l(%r4)
 	cmpwi	%r4, 0
@@ -147,9 +148,11 @@ _ENTRY(_C_LABEL(cpu_idle_enter))
 	mtmsr	%r3
 	isync
 1:
+	RETGUARD_CHECK(cpu_idle_enter, %r11, %r12)
 	blr
 
 _ENTRY(_C_LABEL(cpu_idle_cycle))
+	RETGUARD_SETUP(cpu_idle_cycle, %r11, %r12)
 	lis	%r4, _C_LABEL(ppc_cpuidle)@ha
 	lwz	%r4, _C_LABEL(ppc_cpuidle)@l(%r4)
 	cmpwi	%r4, 0
@@ -187,9 +190,11 @@ _ENTRY(_C_LABEL(cpu_idle_cycle))
 	andi.	%r6,%r6,~CI_FLAGS_SLEEPING@l
 	stw	%r6,CI_FLAGS(%r4)
 idledone:
+	RETGUARD_CHECK(cpu_idle_cycle, %r11, %r12)
 	blr
 
 _ENTRY(_C_LABEL(cpu_idle_leave))
+	RETGUARD_SETUP(cpu_idle_leave, %r11, %r12)
 	lis	%r4, _C_LABEL(ppc_cpuidle)@ha
 	lwz	%r4, _C_LABEL(ppc_cpuidle)@l(%r4)
 	cmpwi	%r4, 0
@@ -199,6 +204,7 @@ _ENTRY(_C_LABEL(cpu_idle_leave))
 	ori	%r3,%r3,PSL_EE@l
 	mtmsr	%r3
 1:
+	RETGUARD_CHECK(cpu_idle_leave, %r11, %r12)
 	blr
 
 /*
@@ -1110,6 +1116,7 @@ decrintr:
 	.type	_C_LABEL(setfault),@function
 _C_LABEL(setfault):
 	mflr	%r0
+	RETGUARD_SETUP_LATE(setfault, %r11, %r0)
 	mfcr	%r12
 	GET_CPUINFO(%r4)
 	lwz	%r4,CI_CURPCB(%r4)
@@ -1118,6 +1125,7 @@ _C_LABEL(setfault):
 	stw	%r1,4(%r3)
 	stmw	%r12,8(%r3)
 	li	%r3,0
+	RETGUARD_CHECK(setfault, %r11, %r0)
 	blr
 
 /*

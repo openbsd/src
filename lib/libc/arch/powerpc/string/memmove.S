@@ -1,4 +1,4 @@
-/* $OpenBSD: memmove.S,v 1.3 2020/10/26 22:07:05 gkoehler Exp $ */
+/* $OpenBSD: memmove.S,v 1.4 2020/11/28 19:49:30 gkoehler Exp $ */
 /* $NetBSD: memmove.S,v 1.3 2011/01/15 07:31:12 matt Exp $ */
 
 /* stropt/memmove.S, pl_string_common, pl_linux 10/11/04 11:45:37
@@ -46,7 +46,7 @@
 /* void *memcpy(void *to, const void *from, size_t len) */
 #if 0
 ENTRY(memcpy)
-	RETGUARD_SETUP(memmove)
+	RETGUARD_SETUP(memmove, %r11, %r12)
 	mr	%r8, %r3		/* Save dst (return value)	*/
 	b	fwd
 #endif
@@ -59,7 +59,7 @@ ENTRY(bcopy)
 
 /* void *memmove(void *, const void *, size_t) */
 ENTRY(memmove)
-	RETGUARD_SETUP(memmove)
+	RETGUARD_SETUP(memmove, %r11, %r12)
 	mr	%r8, %r3		/* Save dst (return value)	*/
 
 	cmpw	%r4, %r8		/* Branch to reverse if 	*/
@@ -169,7 +169,7 @@ rlast2:
 	bdnz+	rlast2		 	/* Dec ctr, and branch if more	*/
 					/* bytes left			*/
 done:
-	RETGUARD_CHECK(memmove)
+	RETGUARD_CHECK(memmove, %r11, %r12)
 	blr
 END_STRONG(memmove)
 END_WEAK(bcopy)

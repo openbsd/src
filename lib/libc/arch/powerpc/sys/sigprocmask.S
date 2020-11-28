@@ -1,4 +1,4 @@
-/* $OpenBSD: sigprocmask.S,v 1.13 2020/10/26 22:07:06 gkoehler Exp $ */
+/* $OpenBSD: sigprocmask.S,v 1.14 2020/11/28 19:49:30 gkoehler Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -31,7 +31,7 @@
 
 	.text
 SYSENTRY_HIDDEN(sigprocmask)
-	RETGUARD_SETUP(sigprocmask)
+	RETGUARD_SETUP(sigprocmask, %r11, %r12)
 	stwu	1, -16(1)
 	stw	5, 12(1)
 	
@@ -64,6 +64,6 @@ SYSENTRY_HIDDEN(sigprocmask)
 	li	3, 0
 	addi	1, 1, 16
 .L_end:
-	RETGUARD_CHECK(sigprocmask)
+	RETGUARD_CHECK(sigprocmask, %r11, %r12)
 	blr
 SYSCALL_END_HIDDEN(sigprocmask)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofwreal.S,v 1.6 2020/04/02 19:27:51 gkoehler Exp $	*/
+/*	$OpenBSD: ofwreal.S,v 1.7 2020/11/28 19:49:30 gkoehler Exp $	*/
 /*	$NetBSD: ofwreal.S,v 1.1 1996/09/30 16:34:51 ws Exp $	*/
 
 /*
@@ -124,7 +124,7 @@ _ENTRY(_C_LABEL(ofw_init))
  */
 	.type	savemmu,@function
 savemmu:
-
+	RETGUARD_SETUP(savemmu, %r11, %r12)
 	mr	%r6,%r4	/* r4 holds pointer to BAT save area */
 
 	li	%r4,0			/* save SRs */
@@ -188,6 +188,7 @@ savemmu:
 	sync
 	isync
 
+	RETGUARD_CHECK(savemmu, %r11, %r12)
 	blr
 
 /*
@@ -196,7 +197,7 @@ savemmu:
  */
 	.type	restoremmu,@function
 restoremmu:
-
+	RETGUARD_SETUP(restoremmu, %r11, %r12)
 	li	%r0,0
 	mtmsr	%r0
 	mr	%r6,%r4			/* pointer to sr to restore */
@@ -301,14 +302,17 @@ restoremmu:
 	mtmsr	%r4
 	isync
 
+	RETGUARD_CHECK(restoremmu, %r11, %r12)
 	blr
 
 
 _ENTRY(_C_LABEL(fwentry))
-	stwu	%r1,-16(%r1)
 	mflr	%r4
+	RETGUARD_SETUP_LATE(fwentry, %r11, %r4)
+	stwu	%r1,-16(%r1)
 	stw	%r4,20(%r1)
 	stw	%r3,12(%r1)			/* save arg */
+	RETGUARD_SAVE(%r11, 8(%r1))
 
 	lis	%r3,clsave@ha		/* save mmu values of client */
 	addi	%r3,%r3,clsave@l
@@ -350,9 +354,11 @@ _ENTRY(_C_LABEL(fwentry))
 
 	lwz	%r4,20(%r1)
 	lwz	%r3,12(%r1)		/* restore return value */
+	RETGUARD_LOAD(%r11, 8(%r1))
 
 	mtlr	%r4
 	addi	%r1,%r1,16
+	RETGUARD_CHECK(fwentry, %r11, %r4)
 	blr
 
 .lcomm	firmstk,NBPG,16
@@ -366,12 +372,14 @@ _ENTRY(_C_LABEL(fwentry))
  */
 _ENTRY(_C_LABEL(openfirmware))
 	mflr	%r0
+	RETGUARD_SETUP_LATE(openfirmware, %r11, %r0)
 	stw	%r0,4(%r1)		/* save return address */
 
 	/* switch to OpenFirmware real mode stack */
 	lis	%r7,firmstk+NBPG-16@ha
 	addi	%r7,%r7,firmstk+NBPG-16@l
 	stw	%r1,0(%r7)
+	RETGUARD_SAVE(%r11, 8(%r7))
 	mr	%r1,%r7
 
 	lis	%r4,fwcall@ha
@@ -380,7 +388,9 @@ _ENTRY(_C_LABEL(openfirmware))
 	mtctr	%r4
 	bctrl
 
+	RETGUARD_LOAD(%r11, 8(%r1))
 	lwz	%r1,0(%r1)		/* get callers original stack pointer */
 	lwz	%r0,4(%r1)
 	mtlr	%r0
+	RETGUARD_CHECK(openfirmware, %r11, %r0)
 	blr

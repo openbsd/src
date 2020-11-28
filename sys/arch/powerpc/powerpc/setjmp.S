@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.9 2008/05/21 19:42:07 miod Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.10 2020/11/28 19:49:30 gkoehler Exp $	*/
 /* kernel version of this file, does not have signal goop */
 /* int setjmp(jmp_buf env) */
 
@@ -56,6 +56,8 @@
 
 
 ENTRY(_C_LABEL(setjmp))
+	mflr %r12
+	RETGUARD_SETUP_LATE(setjmp, %r11, %r12)
 	stw %r31, JMP_r31(%r3)
 	/* r1, r14-r30 */
 	stw %r1,  JMP_r1 (%r3)
@@ -79,18 +81,22 @@ ENTRY(_C_LABEL(setjmp))
 	/* cr, lr, ctr, xer */
 	mfcr %r0
 	stw %r0, JMP_cr(%r3)
-	mflr %r0
-	stw %r0, JMP_lr(%r3)
+	stw %r12, JMP_lr(%r3)
 	mfctr %r0
 	stw %r0, JMP_ctr(%r3)
 	mfxer %r0
 	stw %r0, JMP_xer(%r3)
 	/* f14-f31, fpscr */
 	li %r3, 0
+	RETGUARD_CHECK(setjmp, %r11, %r12)
 	blr
 
 
 ENTRY(_C_LABEL(longjmp))
+	/* lr, r31 */
+	lwz %r12, JMP_lr(%r3)
+	RETGUARD_SETUP_LATE(longjmp, %r11, %r12)
+	mtlr %r12
 	lwz %r31, JMP_r31(%r3)
 	/* r1, r14-r30 */
 	lwz %r1,  JMP_r1 (%r3)
@@ -111,15 +117,14 @@ ENTRY(_C_LABEL(longjmp))
 	lwz %r28, JMP_r28(%r3)
 	lwz %r29, JMP_r29(%r3)
 	lwz %r30, JMP_r30(%r3)
-	/* cr, lr, ctr, xer */
+	/* cr, ctr, xer */
 	lwz %r0, JMP_cr(%r3)
 	mtcr %r0
-	lwz %r0, JMP_lr(%r3)
-	mtlr %r0
 	lwz %r0, JMP_ctr(%r3)
 	mtctr %r0
 	lwz %r0, JMP_xer(%r3)
 	mtxer %r0
 	/* f14-f31, fpscr */
 	li %r3, 1
+	RETGUARD_CHECK(longjmp, %r11, %r12)
 	blr
