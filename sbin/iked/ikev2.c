@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.288 2020/11/27 21:48:37 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.289 2020/11/28 20:26:50 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -159,6 +159,8 @@ int	 ikev2_add_data(struct ibuf *, void *, size_t);
 int	 ikev2_add_buf(struct ibuf *buf, struct ibuf *);
 
 int	 ikev2_cp_setaddr(struct iked *, struct iked_sa *, sa_family_t);
+int	 ikev2_cp_setaddr_pool(struct iked *, struct iked_sa *,
+	    struct iked_cfg *, const char **, sa_family_t);
 int	 ikev2_cp_fixaddr(struct iked_sa *, struct iked_addr *,
 	    struct iked_addr *);
 int	 ikev2_cp_fixflow(struct iked_sa *, struct iked_flow *,
@@ -2208,6 +2210,7 @@ ikev2_add_cp(struct iked *env, struct iked_sa *sa, int type, struct ibuf *buf)
 	struct sockaddr_in	*in4;
 	struct sockaddr_in6	*in6;
 	uint8_t			 prefixlen;
+	int			 sent_addr4 = 0, sent_addr6 = 0;
 
 	if ((cp = ibuf_advance(buf, sizeof(*cp))) == NULL)
 		return (-1);
@@ -2227,6 +2230,19 @@ ikev2_add_cp(struct iked *env, struct iked_sa *sa, int type, struct ibuf *buf)
 		ikecfg = &pol->pol_cfg[i];
 		if (ikecfg->cfg_action != cp->cp_type)
 			continue;
+		/* only return one address in case of multiple pools */
+		if (type == IKEV2_CP_REPLY) {
+			switch (ikecfg->cfg_type) {
+			case IKEV2_CFG_INTERNAL_IP4_ADDRESS:
+				if (sent_addr4)
+					continue;
+				break;
+			case IKEV2_CFG_INTERNAL_IP6_ADDRESS:
+				if (sent_addr6)
+					continue;
+				break;
+			}
+		}
 
 		if ((cfg = ibuf_advance(buf, sizeof(*cfg))) == NULL)
 			return (-1);
@@ -2256,6 +2272,8 @@ ikev2_add_cp(struct iked *env, struct iked_sa *sa, int type, struct ibuf *buf)
 			if (ibuf_add(buf, &in4->sin_addr.s_addr, 4) == -1)
 				return (-1);
 			len += 4;
+			if (ikecfg->cfg_type == IKEV2_CFG_INTERNAL_IP4_ADDRESS)
+				sent_addr4 = 1;
 			break;
 		case IKEV2_CFG_INTERNAL_IP4_SUBNET:
 			/* 4 bytes IPv4 address + 4 bytes IPv4 mask + */
@@ -2302,6 +2320,8 @@ ikev2_add_cp(struct iked *env, struct iked_sa *sa, int type, struct ibuf *buf)
 			if (ibuf_add(buf, &prefixlen, 1) == -1)
 				return (-1);
 			len += 16 + 1;
+			if (ikecfg->cfg_type == IKEV2_CFG_INTERNAL_IP6_ADDRESS)
+				sent_addr6 = 1;
 			break;
 		case IKEV2_CFG_APPLICATION_VERSION:
 			/* Reply with an empty string (non-NUL terminated) */
@@ -6521,16 +6541,11 @@ ikev2_print_id(struct iked_id *id, char *idstr, size_t idstrlen)
 int
 ikev2_cp_setaddr(struct iked *env, struct iked_sa *sa, sa_family_t family)
 {
-	char			 idstr[IKED_ID_SIZE];
-	struct iked_cfg		*ikecfg = NULL;
 	struct iked_policy	*pol = sa->sa_policy;
-	struct sockaddr_in	*in4 = NULL, *cfg4 = NULL;
-	struct sockaddr_in6	*in6 = NULL, *cfg6 = NULL;
-	struct iked_sa		 key;
-	struct iked_addr	 addr;
-	uint32_t		 mask, host, lower, upper, start, nhost;
+	struct iked_cfg		*ikecfg = NULL;
+	const char		*errstr = NULL;
+	int			 ret, pass, passes;
 	size_t			 i;
-	int			 requested = 0;
 
 	switch (family) {
 	case AF_INET:
@@ -6546,25 +6561,51 @@ ikev2_cp_setaddr(struct iked *env, struct iked_sa *sa, sa_family_t family)
 	}
 	if (pol->pol_ncfg == 0)
 		return (0);
-	/* check for an address pool config (address w/ prefixlen != 32) */
-	bzero(&addr, sizeof(addr));
-	for (i = 0; i < pol->pol_ncfg; i++) {
-		ikecfg = &pol->pol_cfg[i];
-		if (family == AF_INET &&
-		    ikecfg->cfg_type == IKEV2_CFG_INTERNAL_IP4_ADDRESS &&
-		    ikecfg->cfg.address.addr_mask != 32) {
-			addr.addr_af = AF_INET;
-			break;
+	/* default if no pool configured */
+	ret = 0;
+	/* two passes if client requests from specific pool */
+	passes = (sa->sa_cp_addr != NULL || sa->sa_cp_addr6 != NULL) ? 2 : 1;
+	for (pass = 0; pass < passes; pass++) {
+		/* loop over all address pool configs (addr_net) */
+		for (i = 0; i < pol->pol_ncfg; i++) {
+			ikecfg = &pol->pol_cfg[i];
+			if (!ikecfg->cfg.address.addr_net)
+				continue;
+			if ((family == AF_INET && ikecfg->cfg_type ==
+			    IKEV2_CFG_INTERNAL_IP4_ADDRESS) ||
+			    (family == AF_INET6 && ikecfg->cfg_type ==
+			    IKEV2_CFG_INTERNAL_IP6_ADDRESS)) {
+				if ((ret = ikev2_cp_setaddr_pool(env, sa,
+				    ikecfg, &errstr, family)) == 0)
+					return (0);
+			}
 		}
-		if (family == AF_INET6 &&
-		    ikecfg->cfg_type == IKEV2_CFG_INTERNAL_IP6_ADDRESS &&
-		    ikecfg->cfg.address.addr_mask != 128) {
-			addr.addr_af = AF_INET6;
-			break;
+		if (sa->sa_cp_addr != NULL) {
+			free(sa->sa_cp_addr);
+			sa->sa_cp_addr = NULL;
+		}
+		if (sa->sa_cp_addr6 != NULL) {
+			free(sa->sa_cp_addr6);
+			sa->sa_cp_addr6 = NULL;
 		}
 	}
-	if (i == pol->pol_ncfg)
-		return (0);
+
+	if (errstr != NULL)
+		log_warnx("%s: %s", SPI_SA(sa, __func__), errstr);
+	return (ret);
+}
+
+int
+ikev2_cp_setaddr_pool(struct iked *env, struct iked_sa *sa,
+    struct iked_cfg *ikecfg, const char **errstr, sa_family_t family)
+{
+	struct sockaddr_in	*in4 = NULL, *cfg4 = NULL;
+	struct sockaddr_in6	*in6 = NULL, *cfg6 = NULL;
+	struct iked_sa		 key;
+	char			 idstr[IKED_ID_SIZE];
+	struct iked_addr	 addr;
+	uint32_t		 mask, host, lower, upper, start, nhost;
+	int			 requested = 0;
 
 	/*
 	 * failure: pool configured, but not requested.
@@ -6576,6 +6617,8 @@ ikev2_cp_setaddr(struct iked *env, struct iked_sa *sa, sa_family_t family)
 		    __func__);
 		return (-1);
 	}
+	bzero(&addr, sizeof(addr));
+	addr.addr_af = family;
 
 	switch (addr.addr_af) {
 	case AF_INET:
@@ -6587,24 +6630,19 @@ ikev2_cp_setaddr(struct iked *env, struct iked_sa *sa, sa_family_t family)
 			in4 = (struct sockaddr_in *)&addr.addr;
 			if ((in4->sin_addr.s_addr & mask) !=
 			    (cfg4->sin_addr.s_addr & mask)) {
-				log_info("%s: requested addr out of range: %s",
-				    SPI_SA(sa, __func__), print_host(
-				    (struct sockaddr *)&addr.addr, NULL, 0));
+				*errstr = "requested addr out of range";
 				return (-1);
-			} else if (RB_FIND(iked_addrpool, &env->sc_addrpool,
-			     &key)) {
-				log_info("%s: requested addr in use: %s",
-				    SPI_SA(sa, __func__), print_host(
-				    (struct sockaddr *)&addr.addr, NULL, 0));
-			} else {
-				sa->sa_addrpool = sa->sa_cp_addr;
-				sa->sa_cp_addr = NULL;
-				RB_INSERT(iked_addrpool, &env->sc_addrpool, sa);
-				requested = 1;
-				goto done;
 			}
-			free(sa->sa_cp_addr);
+			if (RB_FIND(iked_addrpool, &env->sc_addrpool,
+			     &key)) {
+				*errstr = "requested addr in use";
+				return (-1);
+			}
+			sa->sa_addrpool = sa->sa_cp_addr;
 			sa->sa_cp_addr = NULL;
+			RB_INSERT(iked_addrpool, &env->sc_addrpool, sa);
+			requested = 1;
+			goto done;
 		}
 		in4 = (struct sockaddr_in *)&addr.addr;
 		in4->sin_family = AF_INET;
@@ -6617,8 +6655,6 @@ ikev2_cp_setaddr(struct iked *env, struct iked_sa *sa, sa_family_t family)
 		in6 = (struct sockaddr_in6 *)&addr.addr;
 		if (sa->sa_cp_addr6 != NULL) {
 			/* XXX not yet supported */
-			free(sa->sa_cp_addr6);
-			sa->sa_cp_addr6 = NULL;
 		}
 		in6->sin6_family = AF_INET6;
 		in6->sin6_len = sizeof(*in6);
@@ -6669,7 +6705,7 @@ ikev2_cp_setaddr(struct iked *env, struct iked_sa *sa, sa_family_t family)
 		if (host >= upper || host < lower)
 			host = lower;
 		if (host == start) {
-			log_warnx("%s: address pool exhausted", __func__);
+			*errstr = "address pool exhausted";
 			return (-1);		/* exhausted */
 		}
 	}
