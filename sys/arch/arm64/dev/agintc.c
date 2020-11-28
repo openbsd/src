@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.28 2020/11/15 17:27:32 patrick Exp $ */
+/* $OpenBSD: agintc.c,v 1.29 2020/11/28 18:33:43 patrick Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -280,7 +280,7 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t		 pmr, oldpmr;
 	uint32_t		 ctrl, bits;
 	uint32_t		 affinity;
-	int			 i, j, nbits, nintr;
+	int			 i, nbits, nintr;
 	int			 psw;
 	int			 offset, nredist;
 #ifdef MULTIPROCESSOR
@@ -484,11 +484,6 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 1; i < nintr / 32; i++) {
 		bus_space_write_4(sc->sc_iot, sc->sc_d_ioh,
 		    GICD_ICENABLER(i * 32), ~0);
-		for (j = 0; j < 32; j++) {
-			__asm volatile("msr "STR(ICC_DIR)", %x0" : :
-			    "r" ((i * 32) + j));
-			__isb();
-		}
 	}
 
 	for (i = 4; i < nintr; i += 4) {
