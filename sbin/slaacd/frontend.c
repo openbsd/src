@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.39 2020/11/28 07:59:26 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.40 2020/11/28 22:06:25 naddy Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1137,14 +1137,16 @@ get_icmp6ev_by_rdomain(int rdomain)
 void
 unref_icmp6ev(struct iface *iface)
 {
-	if (iface->icmp6ev != NULL) {
-		iface->icmp6ev->refcnt--;
-		if (iface->icmp6ev->refcnt == 0) {
-			event_del(&iface->icmp6ev->ev);
-			close(EVENT_FD(&iface->icmp6ev->ev));
-			free(iface->icmp6ev);
+	struct icmp6_ev *icmp6ev = iface->icmp6ev;
+
+	if (icmp6ev != NULL) {
+		icmp6ev->refcnt--;
+		if (icmp6ev->refcnt == 0) {
+			event_del(&icmp6ev->ev);
+			close(EVENT_FD(&icmp6ev->ev));
+			free(icmp6ev);
 		}
-		iface->icmp6ev = NULL;
+		icmp6ev = NULL;
 	}
 }
 
