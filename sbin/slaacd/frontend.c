@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.36 2020/09/17 18:18:07 semarie Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.37 2020/11/28 07:58:19 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -502,7 +502,6 @@ void
 update_iface(uint32_t if_index, char* if_name)
 {
 	struct iface		*iface;
-	struct icmp6_ev		*icmp6ev;
 	struct imsg_ifinfo	 imsg_ifinfo;
 	int			 flags, xflags, ifrdomain;
 
@@ -516,32 +515,29 @@ update_iface(uint32_t if_index, char* if_name)
 	if((ifrdomain = get_ifrdomain(if_name)) == -1)
 		return;
 
-	if ((iface = get_iface_by_id(if_index)) == NULL) {
+	iface = get_iface_by_id(if_index);
+
+	if (iface != NULL) {
+		if (iface->rdomain != ifrdomain) {
+			if (iface->icmp6ev != NULL) {
+				iface->icmp6ev->refcnt--;
+				if (iface->icmp6ev->refcnt == 0) {
+					event_del(&iface->icmp6ev->ev);
+					close(EVENT_FD(&iface->icmp6ev->ev));
+					free(iface->icmp6ev);
+				}
+				iface->icmp6ev = NULL;
+			}
+			iface->rdomain = ifrdomain;
+			iface->icmp6ev = get_icmp6ev_by_rdomain(ifrdomain);
+		}
+	} else {
 		if ((iface = calloc(1, sizeof(*iface))) == NULL)
 			fatal("calloc");
 		iface->if_index = if_index;
 		iface->rdomain = ifrdomain;
+		iface->icmp6ev = get_icmp6ev_by_rdomain(ifrdomain);
 
-		if ((icmp6ev = get_icmp6ev_by_rdomain(ifrdomain)) == NULL) {
-			if ((icmp6ev = calloc(1, sizeof(*icmp6ev))) == NULL)
-				fatal("calloc");
-			icmp6ev->rcviov[0].iov_base = (caddr_t)icmp6ev->answer;
-			icmp6ev->rcviov[0].iov_len = sizeof(icmp6ev->answer);
-			icmp6ev->rcvmhdr.msg_name = (caddr_t)&icmp6ev->from;
-			icmp6ev->rcvmhdr.msg_namelen = sizeof(icmp6ev->from);
-			icmp6ev->rcvmhdr.msg_iov = icmp6ev->rcviov;
-			icmp6ev->rcvmhdr.msg_iovlen = 1;
-			icmp6ev->rcvmhdr.msg_controllen =
-			    CMSG_SPACE(sizeof(struct in6_pktinfo)) +
-			    CMSG_SPACE(sizeof(int));
-			if ((icmp6ev->rcvmhdr.msg_control = malloc(icmp6ev->
-			    rcvmhdr.msg_controllen)) == NULL)
-				fatal("malloc");
-			frontend_imsg_compose_main(IMSG_OPEN_ICMP6SOCK, 0,
-			    &ifrdomain, sizeof(ifrdomain));
-		}
-		iface->icmp6ev = icmp6ev;
-		iface->icmp6ev->refcnt++;
 		LIST_INSERT_HEAD(&interfaces, iface, entries);
 	}
 
@@ -1121,13 +1117,35 @@ struct icmp6_ev*
 get_icmp6ev_by_rdomain(int rdomain)
 {
 	struct iface	*iface;
+	struct icmp6_ev	*icmp6ev = NULL;
 
 	LIST_FOREACH (iface, &interfaces, entries) {
-		if (iface->rdomain == rdomain)
-			return (iface->icmp6ev);
+		if (iface->rdomain == rdomain) {
+			icmp6ev = iface->icmp6ev;
+			break;
+		}
 	}
 
-	return (NULL);
+	if (icmp6ev == NULL) {
+		if ((icmp6ev = calloc(1, sizeof(*icmp6ev))) == NULL)
+			fatal("calloc");
+		icmp6ev->rcviov[0].iov_base = (caddr_t)icmp6ev->answer;
+		icmp6ev->rcviov[0].iov_len = sizeof(icmp6ev->answer);
+		icmp6ev->rcvmhdr.msg_name = (caddr_t)&icmp6ev->from;
+		icmp6ev->rcvmhdr.msg_namelen = sizeof(icmp6ev->from);
+		icmp6ev->rcvmhdr.msg_iov = icmp6ev->rcviov;
+		icmp6ev->rcvmhdr.msg_iovlen = 1;
+		icmp6ev->rcvmhdr.msg_controllen =
+		    CMSG_SPACE(sizeof(struct in6_pktinfo)) +
+		    CMSG_SPACE(sizeof(int));
+		if ((icmp6ev->rcvmhdr.msg_control = malloc(icmp6ev->
+		    rcvmhdr.msg_controllen)) == NULL)
+			fatal("malloc");
+		frontend_imsg_compose_main(IMSG_OPEN_ICMP6SOCK, 0,
+		    &rdomain, sizeof(rdomain));
+	}
+	icmp6ev->refcnt++;
+	return (icmp6ev);
 }
 
 void
