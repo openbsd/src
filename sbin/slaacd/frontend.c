@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.37 2020/11/28 07:58:19 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.38 2020/11/28 07:58:50 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -92,6 +92,7 @@ void		 get_lladdr(char *, struct ether_addr *, struct sockaddr_in6 *);
 struct iface	*get_iface_by_id(uint32_t);
 void		 remove_iface(uint32_t);
 struct icmp6_ev	*get_icmp6ev_by_rdomain(int);
+void		 unref_icmp6ev(struct iface *);
 void		 set_icmp6sock(int, int);
 void		 send_solicitation(uint32_t);
 #ifndef	SMALL
@@ -519,15 +520,7 @@ update_iface(uint32_t if_index, char* if_name)
 
 	if (iface != NULL) {
 		if (iface->rdomain != ifrdomain) {
-			if (iface->icmp6ev != NULL) {
-				iface->icmp6ev->refcnt--;
-				if (iface->icmp6ev->refcnt == 0) {
-					event_del(&iface->icmp6ev->ev);
-					close(EVENT_FD(&iface->icmp6ev->ev));
-					free(iface->icmp6ev);
-				}
-				iface->icmp6ev = NULL;
-			}
+			unref_icmp6ev(iface);
 			iface->rdomain = ifrdomain;
 			iface->icmp6ev = get_icmp6ev_by_rdomain(ifrdomain);
 		}
@@ -1102,14 +1095,7 @@ remove_iface(uint32_t if_index)
 
 	LIST_REMOVE(iface, entries);
 
-	if (iface->icmp6ev != NULL) {
-		iface->icmp6ev->refcnt--;
-		if (iface->icmp6ev->refcnt == 0) {
-			event_del(&iface->icmp6ev->ev);
-			close(EVENT_FD(&iface->icmp6ev->ev));
-			free(iface->icmp6ev);
-		}
-	}
+	unref_icmp6ev(iface);
 	free(iface);
 }
 
@@ -1146,6 +1132,20 @@ get_icmp6ev_by_rdomain(int rdomain)
 	}
 	icmp6ev->refcnt++;
 	return (icmp6ev);
+}
+
+void
+unref_icmp6ev(struct iface *iface)
+{
+	if (iface->icmp6ev != NULL) {
+		iface->icmp6ev->refcnt--;
+		if (iface->icmp6ev->refcnt == 0) {
+			event_del(&iface->icmp6ev->ev);
+			close(EVENT_FD(&iface->icmp6ev->ev));
+			free(iface->icmp6ev);
+		}
+		iface->icmp6ev = NULL;
+	}
 }
 
 void
