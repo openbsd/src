@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.142 2020/11/17 14:30:13 patrick Exp $
+#	$OpenBSD: files.fdt,v 1.143 2020/11/28 20:06:05 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -398,7 +398,7 @@ device	mvpinctrl
 attach	mvpinctrl at fdt
 file	dev/fdt/mvpinctrl.c		mvpinctrl
 
-device	mvmdio
+device	mvmdio: fdt
 attach	mvmdio at fdt
 file	dev/fdt/mvmdio.c		mvmdio
 
