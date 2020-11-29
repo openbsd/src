@@ -220,6 +220,7 @@ RelExpr PPC::getRelExpr(RelType type, const Symbol &s,
   case R_PPC_ADDR16_HA:
   case R_PPC_ADDR16_HI:
   case R_PPC_ADDR16_LO:
+  case R_PPC_ADDR24:
   case R_PPC_ADDR32:
     return R_ABS;
   case R_PPC_DTPREL16:
@@ -344,6 +345,7 @@ void PPC::relocateOne(uint8_t *loc, RelType type, uint64_t val) const {
     break;
   }
   case R_PPC_REL24:
+  case R_PPC_ADDR24:
   case R_PPC_LOCAL24PC:
   case R_PPC_PLTREL24: {
     uint32_t mask = 0x03FFFFFC;

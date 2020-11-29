@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.macppc,v 1.99 2019/11/07 20:42:28 guenther Exp $
+#	$OpenBSD: Makefile.macppc,v 1.100 2020/11/29 18:57:29 gkoehler Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -52,6 +52,13 @@ COPTS?=		-O2
 CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE ${CMACHFLAGS}
 LINKFLAGS=	-N -Ttext 100114 -e start --warn-common -nopie
+
+.if ${MACHINE} == "powerpc64"
+CFLAGS+=	-m32
+AFLAGS+=	-m32
+LDFLAGS=	-melf32ppc
+LINKFLAGS+=	${LDFLAGS}
+.endif
 
 HOSTCC?=	${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
@@ -123,12 +130,16 @@ ioconf.o: ioconf.c
 ld.script: ${_machdir}/conf/ld.script
 	cp ${_machdir}/conf/ld.script $@
 
+gapdummy.o:
+	echo '__asm(".section .rodata,\"a\"");' > gapdummy.c
+	${CC} -c ${CFLAGS} ${CPPFLAGS} gapdummy.c -o $@
+
 makegap.sh:
 	cp $S/conf/makegap.sh $@
 
-MAKE_GAP = LD="${LD}" sh makegap.sh 0x00000000	# guaranteed illegal
+MAKE_GAP = LD="${LD}" sh makegap.sh 0x00000000 gapdummy.o
 
-gap.o:	Makefile makegap.sh vers.o
+gap.o:	Makefile makegap.sh gapdummy.o vers.o
 	${MAKE_GAP}
 
 vers.o: ${SYSTEM_DEP:Ngap.o}
@@ -137,7 +148,7 @@ vers.o: ${SYSTEM_DEP:Ngap.o}
 
 clean:
 	rm -f *bsd *bsd.gdb *.[dio] [a-z]*.s assym.* \
-	    gap.link ld.script lorder makegap.sh param.c
+	    gap.link gapdummy.c ld.script lorder makegap.sh param.c
 
 cleandir: clean
 	rm -f Makefile *.h ioconf.c options machine ${_mach} vers.c
