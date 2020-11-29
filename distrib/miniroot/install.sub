@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1156 2020/11/29 20:14:06 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.1157 2020/11/29 20:54:33 tb Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2395,7 +2395,7 @@ ifstart() {
 
 # Configure the network during upgrade based on the on-disk configuration.
 enable_network() {
-	local _f _gw _hn _if _trunks _svlans _vlans
+	local _f _gw _v4set=false _v6set=false _hn _if _trunks _svlans _vlans
 
 	# Use installed network configuration files during upgrade.
 	for _f in resolv.conf resolv.conf.tail; do
@@ -2443,14 +2443,22 @@ enable_network() {
 	# dhcp. Use for ipv6 if no interfaces configured via autoconf.
 	stripcom /mnt/etc/mygate |
 	while read _gw; do
-		[[ $_gw == '!'* ]] && continue
-		if [[ $_gw != @(*:*) ]]; then
-			$V4_DHCPCONF && continue
+		case $_gw in
+		'!'*)
+			# Skip shell commands in the installer.
+			continue
+			;;
+		!(*:*))
+			($_v4set || $V4_DHCPCONF) && continue
 			route -qn add -host default $_gw
-		elif [[ $_gw == @(*:*) ]]; then
-			$V6_AUTOCONF && continue
+			_v4set=true
+			;;
+		*)
+			($_v6set || $V6_AUTOCONF) && continue
 			route -qn add -host -inet6 default $_gw
-		fi
+			_v6set=true
+			;;
+		esac
 	done
 
 	route -qn add -net 127 127.0.0.1 -reject >/dev/null
