@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.135 2020/11/17 14:32:34 patrick Exp $
+# $OpenBSD: RAMDISK,v 1.136 2020/11/29 22:02:37 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -187,6 +187,7 @@ mvppc*		at fdt?
 mvpp*		at mvppc?
 mvrng*		at fdt?
 mvrtc*		at fdt?
+mvsw*		at fdt?
 mvuart*		at fdt?
 sfp*		at fdt?
 
