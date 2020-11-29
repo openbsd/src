@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.69 2017/06/11 14:03:46 schwarze Exp $
+.\"	$OpenBSD: diskless.8,v 1.70 2020/11/29 20:14:06 deraadt Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 11 2017 $
+.Dd $Mdocdate: November 29 2020 $
 .Dt DISKLESS 8
 .Os
 .Sh NAME
@@ -395,7 +395,9 @@ Interface-specific configuration file.
 .It Pa /etc/hosts
 Host name database.
 .It Pa /etc/myname
-Default hostname and gateway.
+Default hostname.
+.It Pa /etc/mygate
+Default gateway.
 .It Pa /etc/rbootd.conf
 Configuration file for HP Remote Boot Daemon.
 .It Pa /tftpboot
@@ -411,6 +413,7 @@ Location of boot programs loaded by the HP Boot ROM.
 .Xr fstab 5 ,
 .Xr hostname.if 5 ,
 .Xr hosts 5 ,
+.Xr mygate 5 ,
 .Xr myname 5 ,
 .Xr dhcpd 8 ,
 .Xr mopd 8 ,

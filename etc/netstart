@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.207 2020/11/08 16:51:43 jmc Exp $
+#	$OpenBSD: netstart,v 1.208 2020/11/29 20:14:06 deraadt Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -177,27 +177,32 @@ ifmstart() {
 # Usage: defaultroute
 defaultroute() {
 	local _cmd;
+	set -o noglob
 
-	! $V4_DHCPCONF && stripcom /etc/mygate |
+	stripcom /etc/mygate |
 	while read gw; do
-		[[ $gw == @(*:*) ]] && continue
-		_cmd="route -qn add -host default $gw"
+		case $gw in
+		'!'*)
+			_cmd=$(print -- "$gw" | sed 's/\$if/'$_if'/g')
+			_cmd="${_cmd#!}"
+			;;
+		*)
+			if [[ $gw != @(*:*) ]]; then
+				$V4_DHCPCONF && continue
+				_cmd="route -qn add -host default $gw"
+			elif [[ $gw == @(*:*) ]]; then
+				$V6_AUTOCONF && continue
+				_cmd="route -qn add -host -inet6 default $gw"
+			fi
+			;;
+		esac
 		if $PRINT_ONLY; then
-			print -r -- "$_cmd" && break
+			print -r -- "$_cmd"
 		else
-			$_cmd && break
+			$_cmd
 		fi
 	done
-	! $V6_AUTOCONF && stripcom /etc/mygate |
-	while read gw; do
-		[[ $gw == !(*:*) ]] && continue
-		_cmd="route -qn add -host -inet6 default $gw"
-		if $PRINT_ONLY; then
-			print -r -- "$_cmd" && break
-		else
-			$_cmd && break
-		fi
-	done
+	set +o noglob
 }
 
 # Make sure the invoking user has the right privileges.  Check for presence of
@@ -240,9 +245,6 @@ if (($# > 0)); then
 fi
 
 # Otherwise, process with the complete network initialization.
-
-# /etc/myname contains my symbolic name.
-[[ -f /etc/myname ]] && hostname "$(stripcom /etc/myname)"
 
 # Set the address for the loopback interface.  Bringing the interface up,
 # automatically invokes the IPv6 address ::1.

@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.543 2020/01/24 06:17:37 tedu Exp $
+#	$OpenBSD: rc,v 1.544 2020/11/29 20:14:06 deraadt Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -300,6 +300,11 @@ trap : 3	# Shouldn't be needed.
 export HOME=/
 export INRC=1
 export PATH=/sbin:/bin:/usr/sbin:/usr/bin
+
+# /etc/myname contains my symbolic name.
+if [[ -f /etc/myname ]]; then
+	hostname "$(stripcom /etc/myname)"
+fi
 
 # Must set the domainname before rc.conf, so YP startup choices can be made.
 if [[ -s /etc/defaultdomain ]]; then

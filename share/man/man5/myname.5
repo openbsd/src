@@ -1,4 +1,4 @@
-.\"	$OpenBSD: myname.5,v 1.9 2017/07/13 19:16:33 jmc Exp $
+.\"	$OpenBSD: myname.5,v 1.10 2020/11/29 20:14:06 deraadt Exp $
 .\"
 .\" Copyright (c) 2003 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,18 +14,16 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 13 2017 $
+.Dd $Mdocdate: November 29 2020 $
 .Dt MYNAME 5
 .Os
 .Sh NAME
-.Nm myname , mygate
-.Nd default hostname and gateway
+.Nm myname
+.Nd default hostname
 .Sh DESCRIPTION
 The
 .Nm myname
-and
-.Nm mygate
-files are read by
+file is read by
 .Xr netstart 8
 at system startup time.
 .Pp
@@ -50,48 +48,14 @@ See
 .Xr hostname 7
 for a description of hostname resolution.
 .Pp
-.Pa /etc/mygate ,
-if it exists,
-contains the address of the gateway host.
-The gateway is added to the routing tables by the
-.Xr route 8
-utility.
-If
-.Pa /etc/mygate
-does not exist, no default gateway is added to the routing tables.
-The file may contain gateway addresses for both IPv4 and IPv6 networks:
-in dotted quad notation for v4
-.Pq e.g. 192.0.2.1
-or in colon notation for v6
-.Pq e.g. 2001:db8::1 .
-Each address must be specified on a separate line.
-If more than one address of a specific family is found,
-only the first is used \- all other addresses of that family are ignored.
-.Pp
-.Pa /etc/mygate
-is processed after all interfaces have been configured.
-If any
-.Xr hostname.if 5
-files contain
-.Dq dhcp
-directives,
-IPv4 entries in
-.Pa /etc/mygate
-will be ignored.
-If they contain
-.Dq autoconf
-directives,
-IPv6 entries will be ignored.
 .Pp
 Empty lines and lines beginning with
 .Sq #
-in either file are ignored.
+are ignored.
 .Sh FILES
 .Bl -tag -width "/etc/myname" -compact
 .It Pa /etc/myname
 Default hostname.
-.It Pa /etc/mygate
-Default gateway address(es).
 .El
 .Sh SEE ALSO
 .Xr hostname 1 ,
@@ -99,8 +63,7 @@ Default gateway address(es).
 .Xr hosts 5 ,
 .Xr resolv.conf 5 ,
 .Xr hostname 7 ,
-.Xr netstart 8 ,
-.Xr route 8
+.Xr netstart 8
 .Sh HISTORY
 This manual page first appeared in
 .Ox 3.4 .

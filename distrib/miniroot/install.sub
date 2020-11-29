@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1155 2020/09/22 15:38:59 florian Exp $
+#	$OpenBSD: install.sub,v 1.1156 2020/11/29 20:14:06 deraadt Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2441,15 +2441,16 @@ enable_network() {
 	# /mnt/etc/mygate, if it exists, contains the address(es) of my
 	# default gateway(s). Use for ipv4 if no interfaces configured via
 	# dhcp. Use for ipv6 if no interfaces configured via autoconf.
-	! $V4_DHCPCONF && stripcom /mnt/etc/mygate |
+	stripcom /mnt/etc/mygate |
 	while read _gw; do
-		[[ $_gw == @(*:*) ]] && continue
-		route -qn add -host default $_gw && break
-	done
-	! $V6_AUTOCONF && stripcom /mnt/etc/mygate |
-	while read _gw; do
-		[[ $_gw == !(*:*) ]] && continue
-		route -qn add -host -inet6 default $_gw && break
+		[[ $_gw == '!'* ]] && continue
+		if [[ $_gw != @(*:*) ]]; then
+			$V4_DHCPCONF && continue
+			route -qn add -host default $_gw
+		elif [[ $_gw == @(*:*) ]]; then
+			$V6_AUTOCONF && continue
+			route -qn add -host -inet6 default $_gw
+		fi
 	done
 
 	route -qn add -net 127 127.0.0.1 -reject >/dev/null
