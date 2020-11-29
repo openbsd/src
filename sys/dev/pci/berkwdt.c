@@ -1,4 +1,4 @@
-/*	$OpenBSD: berkwdt.c,v 1.9 2017/09/08 05:36:52 deraadt Exp $ */
+/*	$OpenBSD: berkwdt.c,v 1.10 2020/11/29 03:17:27 kevlo Exp $ */
 
 /*
  * Copyright (c) 2009 Wim Van Sebroeck <wim@iguana.be>
@@ -179,7 +179,7 @@ void
 berkwdt_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct berkwdt_softc *sc = (struct berkwdt_softc *)self;
-	struct pci_attach_args *const pa = (struct pci_attach_args *)aux;
+	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	bus_size_t iosize;
 	u_int8_t reg;
 

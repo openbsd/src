@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwdog.c,v 1.10 2017/09/08 05:36:52 deraadt Exp $ */
+/*	$OpenBSD: pwdog.c,v 1.11 2020/11/29 03:17:27 kevlo Exp $ */
 
 /*
  * Copyright (c) 2006 Marc Balmer <mbalmer@openbsd.org>
@@ -66,7 +66,7 @@ void
 pwdog_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pwdog_softc *pwdog = (struct pwdog_softc *)self;
-	struct pci_attach_args *const pa = (struct pci_attach_args *)aux;
+	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	pcireg_t memtype;
 	bus_size_t iosize;
 

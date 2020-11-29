@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbg.c,v 1.30 2017/09/08 05:36:52 deraadt Exp $ */
+/*	$OpenBSD: mbg.c,v 1.31 2020/11/29 03:17:27 kevlo Exp $ */
 
 /*
  * Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -174,7 +174,7 @@ void
 mbg_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mbg_softc *sc = (struct mbg_softc *)self;
-	struct pci_attach_args *const pa = (struct pci_attach_args *)aux;
+	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	struct mbg_time tframe;
 	pcireg_t memtype;
 	bus_size_t iosize, iosize2;
