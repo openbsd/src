@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvnetareg.h,v 1.1 2017/08/25 20:09:34 patrick Exp $	*/
+/*	$OpenBSD: if_mvnetareg.h,v 1.2 2020/11/29 13:00:23 kettenis Exp $	*/
 /*	$NetBSD: mvnetareg.h,v 1.8 2013/12/23 02:23:25 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007, 2013 KIYOHARA Takashi
@@ -464,6 +464,7 @@
 /* Port Serdes Config (MVNETA_SERDESCFG) */
 #define MVNETA_SERDESCFG_SGMII_PROTO	0x0cc7
 #define MVNETA_SERDESCFG_QSGMII_PROTO	0x0667
+#define MVNETA_SERDESCFG_HSGMII_PROTO	0x1107
 
 /* Ether Type Priority (MVNETA_ETP) */
 #define MVNETA_ETP_ETHERTYPEPRIEN	(1 << 0)	/* EtherType Prio Ena */
@@ -626,6 +627,9 @@
 
 /* Port MAC Control 3 (MVNETA_PMACC3) */
 #define MVNETA_PMACC3_IPG_MASK		0x7f80
+
+/* Port MAC Control 4 (MVNETA_PMACC4) */
+#define MVNETA_PMACC4_SHORT_PREAMBLE	(1 << 1)
 
 /* Port Interrupt Cause/Mask (MVNETA_PIC_2/MVNETA_PIM_2) */
 #define MVNETA_PI_2_INTSUM		(1 << 0)
