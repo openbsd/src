@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.40 2020/11/28 22:06:25 naddy Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.41 2020/11/29 09:39:33 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1139,6 +1139,8 @@ unref_icmp6ev(struct iface *iface)
 {
 	struct icmp6_ev *icmp6ev = iface->icmp6ev;
 
+	iface->icmp6ev = NULL;
+
 	if (icmp6ev != NULL) {
 		icmp6ev->refcnt--;
 		if (icmp6ev->refcnt == 0) {
@@ -1146,7 +1148,6 @@ unref_icmp6ev(struct iface *iface)
 			close(EVENT_FD(&icmp6ev->ev));
 			free(icmp6ev);
 		}
-		icmp6ev = NULL;
 	}
 }
 
