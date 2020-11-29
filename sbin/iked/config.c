@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.73 2020/11/25 22:17:13 tobhe Exp $	*/
+/*	$OpenBSD: config.c,v 1.74 2020/11/29 21:00:43 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -880,6 +880,8 @@ config_getstatic(struct iked *env, struct imsg *imsg)
 	log_debug("%s: %sfragmentation", __func__, env->sc_frag ? "" : "no ");
 	log_debug("%s: %smobike", __func__, env->sc_mobike ? "" : "no ");
 	log_debug("%s: nattport %u", __func__, env->sc_nattport);
+	log_debug("%s: %sstickyaddress", __func__,
+	    env->sc_stickyaddress ? "" : "no ");
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.175 2020/11/26 22:24:06 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.176 2020/11/29 21:00:43 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -716,6 +716,7 @@ struct iked_static {
 	uint8_t			 st_frag;	/* fragmentation */
 	uint8_t			 st_mobike;	/* MOBIKE */
 	in_port_t		 st_nattport;
+	int			 st_stickyaddress; /* addr per DSTID  */
 };
 
 struct iked {
@@ -733,6 +734,7 @@ struct iked {
 #define sc_frag			sc_static.st_frag
 #define sc_mobike		sc_static.st_mobike
 #define sc_nattport		sc_static.st_nattport
+#define sc_stickyaddress	sc_static.st_stickyaddress
 
 	struct iked_policies		 sc_policies;
 	struct iked_policy		*sc_defaultcon;

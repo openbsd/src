@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.117 2020/11/03 16:45:40 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.118 2020/11/29 21:00:44 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -100,6 +100,7 @@ static int		 passive = 0;
 static int		 decouple = 0;
 static int		 mobike = 1;
 static int		 enforcesingleikesa = 0;
+static int		 stickyaddress = 0;
 static int		 fragmentation = 0;
 static int		 dpd_interval = IKED_IKE_SA_ALIVE_TIMEOUT;
 static char		*ocsp_url = NULL;
@@ -454,6 +455,7 @@ typedef struct {
 %token	IPCOMP OCSP IKELIFETIME MOBIKE NOMOBIKE RDOMAIN
 %token	FRAGMENTATION NOFRAGMENTATION DPD_CHECK_INTERVAL
 %token	ENFORCESINGLEIKESA NOENFORCESINGLEIKESA
+%token	STICKYADDRESS NOSTICKYADDRESS
 %token	TOLERATE MAXAGE DYNAMIC
 %token	CERTPARTIALCHAIN
 %token	REQUEST
@@ -524,6 +526,8 @@ set		: SET ACTIVE	{ passive = 0; }
 		| SET NOMOBIKE	{ mobike = 0; }
 		| SET ENFORCESINGLEIKESA	{ enforcesingleikesa = 1; }
 		| SET NOENFORCESINGLEIKESA	{ enforcesingleikesa = 0; }
+		| SET STICKYADDRESS	{ stickyaddress = 1; }
+		| SET NOSTICKYADDRESS	{ stickyaddress = 0; }
 		| SET OCSP STRING		{
 			if ((ocsp_url = strdup($3)) == NULL) {
 				yyerror("cannot set ocsp_url");
@@ -1364,6 +1368,7 @@ lookup(char *s)
 		{ "noesn",		NOESN },
 		{ "nofragmentation",	NOFRAGMENTATION },
 		{ "nomobike",		NOMOBIKE },
+		{ "nostickyaddress",	NOSTICKYADDRESS },
 		{ "ocsp",		OCSP },
 		{ "passive",		PASSIVE },
 		{ "peer",		PEER },
@@ -1378,6 +1383,7 @@ lookup(char *s)
 		{ "set",		SET },
 		{ "skip",		SKIP },
 		{ "srcid",		SRCID },
+		{ "stickyaddress",	STICKYADDRESS },
 		{ "tag",		TAG },
 		{ "tap",		TAP },
 		{ "tcpmd5",		TCPMD5 },
@@ -1765,7 +1771,7 @@ parse_config(const char *filename, struct iked *x_env)
 	free(ocsp_url);
 
 	mobike = 1;
-	enforcesingleikesa = 0;
+	enforcesingleikesa = stickyaddress = 0;
 	cert_partial_chain = decouple = passive = 0;
 	ocsp_tolerate = 0;
 	ocsp_url = NULL;
@@ -1786,6 +1792,7 @@ parse_config(const char *filename, struct iked *x_env)
 	env->sc_decoupled = decouple ? 1 : 0;
 	env->sc_mobike = mobike;
 	env->sc_enforcesingleikesa = enforcesingleikesa;
+	env->sc_stickyaddress = stickyaddress;
 	env->sc_frag = fragmentation;
 	env->sc_alive_timeout = dpd_interval;
 	env->sc_ocsp_url = ocsp_url;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.289 2020/11/28 20:26:50 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.290 2020/11/29 21:00:43 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -6602,6 +6602,7 @@ ikev2_cp_setaddr_pool(struct iked *env, struct iked_sa *sa,
 	struct sockaddr_in	*in4 = NULL, *cfg4 = NULL;
 	struct sockaddr_in6	*in6 = NULL, *cfg6 = NULL;
 	struct iked_sa		 key;
+	struct iked_sa		*osa;
 	char			 idstr[IKED_ID_SIZE];
 	struct iked_addr	 addr;
 	uint32_t		 mask, host, lower, upper, start, nhost;
@@ -6620,6 +6621,66 @@ ikev2_cp_setaddr_pool(struct iked *env, struct iked_sa *sa,
 	bzero(&addr, sizeof(addr));
 	addr.addr_af = family;
 
+	/* check if old IKESA for same DSTID already exists and transfer IPs */
+	if (env->sc_stickyaddress &&
+	    (osa = sa_dstid_lookup(env, sa)) != NULL &&
+	    ((family == AF_INET && osa->sa_addrpool) ||
+	    (family == AF_INET6 && osa->sa_addrpool6))) {
+		/* we have to transfer both, even if we just need one */
+		if (osa->sa_addrpool) {
+			if (RB_REMOVE(iked_addrpool, &env->sc_addrpool, osa)
+			    != osa) {
+				log_info("%s: addrpool error",
+				    SPI_SA(osa, __func__));
+				return (-1);
+			}
+		}
+		if (osa->sa_addrpool6) {
+			if (RB_REMOVE(iked_addrpool6, &env->sc_addrpool6, osa)
+			    != osa) {
+				log_info("%s: addrpool6 error",
+				    SPI_SA(osa, __func__));
+				return (-1);
+			}
+		}
+		sa_dstid_remove(env, osa);
+		sa->sa_addrpool = osa->sa_addrpool;
+		osa->sa_addrpool = NULL;
+		sa->sa_addrpool6 = osa->sa_addrpool6;
+		osa->sa_addrpool6 = NULL;
+		if (osa->sa_state < IKEV2_STATE_CLOSING) {
+			if (osa->sa_state == IKEV2_STATE_ESTABLISHED)
+				ikev2_disable_timer(env, osa);
+			ikev2_ike_sa_setreason(osa,
+			    "address re-use (identical dstid)");
+			ikev2_ikesa_delete(env, osa, 1);
+			timer_add(env, &osa->sa_timer,
+			    3 * IKED_RETRANSMIT_TIMEOUT);
+		}
+		if (sa->sa_addrpool) {
+			RB_INSERT(iked_addrpool, &env->sc_addrpool, sa);
+			log_info(
+			    "%s: giving up assigned address %s to IKESA %s",
+			    SPI_SA(osa, __func__),
+			    print_host((struct sockaddr *)
+			    &sa->sa_addrpool->addr, NULL, 0),
+			    print_spi(sa->sa_hdr.sh_ispi, 8));
+		}
+		if (sa->sa_addrpool6) {
+			RB_INSERT(iked_addrpool6, &env->sc_addrpool6, sa);
+			log_info(
+			    "%s: giving up assigned v6 address %s to IKESA %s",
+			    SPI_SA(osa, __func__),
+			    print_host((struct sockaddr *)
+			    &sa->sa_addrpool6->addr, NULL, 0),
+			    print_spi(sa->sa_hdr.sh_ispi, 8));
+		}
+		if (family == AF_INET && sa->sa_addrpool != NULL)
+			memcpy(&addr, sa->sa_addrpool, sizeof(addr));
+		else if (family == AF_INET6 && sa->sa_addrpool6 != NULL)
+			memcpy(&addr, sa->sa_addrpool6, sizeof(addr));
+		goto done;
+	}
 	switch (addr.addr_af) {
 	case AF_INET:
 		cfg4 = (struct sockaddr_in *)&ikecfg->cfg.address.addr;
