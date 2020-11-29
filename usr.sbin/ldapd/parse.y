@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.36 2020/06/24 07:20:47 tb Exp $ */
+/*	$OpenBSD: parse.y,v 1.37 2020/11/29 19:48:35 tb Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -1279,12 +1279,17 @@ load_certfile(struct ldapd_config *env, const char *name, u_int8_t flags,
 		goto err;
 	}
 
-	if ((name[0] == '/' &&
-	     !bsnprintf(certfile, sizeof(certfile), "%s.crt", name)) ||
-	    !bsnprintf(certfile, sizeof(certfile), "/etc/ldap/certs/%s.crt",
-		name)) {
-		log_warn("load_certfile: path truncated");
-		goto err;
+	if (name[0] == '/') {
+		if (!bsnprintf(certfile, sizeof(certfile), "%s.crt", name)) {
+			log_warn("load_certfile: path truncated");
+			goto err;
+		}
+	} else {
+		if (!bsnprintf(certfile, sizeof(certfile),
+		    "/etc/ldap/certs/%s.crt", name)) {
+			log_warn("load_certfile: path truncated");
+			goto err;
+		}
 	}
 
 	log_debug("loading certificate file %s", certfile);
@@ -1298,12 +1303,17 @@ load_certfile(struct ldapd_config *env, const char *name, u_int8_t flags,
 		goto err;
 	}
 
-	if ((name[0] == '/' &&
-	     !bsnprintf(certfile, sizeof(certfile), "%s.key", name)) ||
-	    !bsnprintf(certfile, sizeof(certfile), "/etc/ldap/certs/%s.key",
-		name)) {
-		log_warn("load_certfile: path truncated");
-		goto err;
+	if (name[0] == '/') {
+		if (!bsnprintf(certfile, sizeof(certfile), "%s.key", name)) {
+			log_warn("load_certfile: path truncated");
+			goto err;
+		}
+	} else {
+		if (!bsnprintf(certfile, sizeof(certfile),
+		    "/etc/ldap/certs/%s.key", name)) {
+			log_warn("load_certfile: path truncated");
+			goto err;
+		}
 	}
 
 	log_debug("loading key file %s", certfile);
