@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.151 2020/02/24 23:54:28 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.152 2020/11/29 20:07:38 tb Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Markus Friedl.  All rights reserved.
@@ -176,7 +176,7 @@ bsnprintf(char *str, size_t size, const char *format, ...)
 	va_start(ap, format);
 	ret = vsnprintf(str, size, format, ap);
 	va_end(ap);
-	if (ret < 0 || ret >= (int)size)
+	if (ret < 0 || (size_t)ret >= size)
 		return 0;
 
 	return 1;
