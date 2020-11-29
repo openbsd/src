@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.51 2020/11/20 12:09:45 schwarze Exp $
+.\" $OpenBSD: sio_open.3,v 1.52 2020/11/29 08:02:42 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 20 2020 $
+.Dd $Mdocdate: November 29 2020 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -387,17 +387,17 @@ bitmasks should always be used.
 .Ss Starting and stopping the device
 The
 .Fn sio_start
-function puts the device in a waiting state:
-the device will wait for playback data to be provided
-(using the
-.Fn sio_write
-function).
-Once enough data is queued to ensure that play buffers
-will not underrun, actual playback is started automatically.
-If record mode only is selected, then recording starts
-immediately.
+function prepares the device to start.
+Once the play buffer is full, i.e.\&
+.Fa sio_par.bufsz
+samples are queued with
+.Fn sio_write ,
+playback starts automatically.
+If record-only mode is selected, then
+.Fn sio_start
+starts recording immediately.
 In full-duplex mode, playback and recording will start
-synchronously as soon as enough data to play is available.
+synchronously as soon as the play buffer is full.
 .Pp
 The
 .Fn sio_stop
@@ -581,7 +581,7 @@ parameter of the
 structure, the audio subsystem will behave as follows:
 .Bl -tag -width "SIO_IGNORE"
 .It Dv SIO_IGNORE
-The devices pauses during overruns and underruns,
+The device pauses during overruns and underruns,
 thus the current position (obtained through
 .Fn sio_onmove )
 stops being incremented.
