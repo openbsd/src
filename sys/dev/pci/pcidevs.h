@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1944 2020/11/18 13:25:35 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1945 2020/11/29 19:15:32 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -6233,6 +6233,7 @@
 #define	PCI_PRODUCT_MARTINMARIETTA_I740	0x00d1		/* i740 PCI */
 
 /* Marvell products */
+#define	PCI_PRODUCT_MARVELL_ARMADA_3700	0x0100		/* ARMADA 3700 PCIE */
 #define	PCI_PRODUCT_MARVELL_ARMADA_CP110_RC	0x0110		/* ARMADA 7K/8K Root Complex */
 #define	PCI_PRODUCT_MARVELL_88W8300_1	0x1fa6		/* Libertas 88W8300 */
 #define	PCI_PRODUCT_MARVELL_88W8310	0x1fa7		/* Libertas 88W8310 */

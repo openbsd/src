@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1944 2020/11/18 13:25:35 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1945 2020/11/29 19:15:32 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -22186,6 +22186,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_MARTINMARIETTA, PCI_PRODUCT_MARTINMARIETTA_I740,
 	    "i740 PCI",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_ARMADA_3700,
+	    "ARMADA 3700 PCIE",
 	},
 	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_ARMADA_CP110_RC,
