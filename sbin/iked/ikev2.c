@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.290 2020/11/29 21:00:43 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.291 2020/11/30 21:52:47 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -132,7 +132,7 @@ int	 ikev2_set_sa_proposal(struct iked_sa *, struct iked_policy *,
 	    unsigned int);
 
 int	 ikev2_childsa_negotiate(struct iked *, struct iked_sa *,
-	    struct iked_kex *, struct iked_proposals *, int, int, int);
+	    struct iked_kex *, struct iked_proposals *, int, int);
 int	 ikev2_childsa_delete_proposed(struct iked *, struct iked_sa *,
 	    struct iked_proposals *);
 int	 ikev2_valid_proposal(struct iked_proposal *,
@@ -1543,7 +1543,7 @@ ikev2_init_done(struct iked *env, struct iked_sa *sa)
 		return (0);	/* ignored */
 
 	ret = ikev2_childsa_negotiate(env, sa, &sa->sa_kex, &sa->sa_proposals,
-	    sa->sa_hdr.sh_initiator, 0, 0);
+	    sa->sa_hdr.sh_initiator, 0);
 	if (ret == 0)
 		ret = ikev2_childsa_enable(env, sa);
 	if (ret == 0) {
@@ -3528,7 +3528,7 @@ ikev2_resp_ike_auth(struct iked *env, struct iked_sa *sa)
 		return (-1);
 
 	if (ikev2_childsa_negotiate(env, sa, &sa->sa_kex, &sa->sa_proposals,
-	    sa->sa_hdr.sh_initiator, 0, 0) < 0)
+	    sa->sa_hdr.sh_initiator, 0) < 0)
 		return (-1);
 
 	/* New encrypted message buffer */
@@ -4184,7 +4184,7 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 	}
 
 	if (ikev2_childsa_negotiate(env, sa, &sa->sa_kex, &sa->sa_proposals, 1,
-	    pfs, !csa)) {
+	    pfs)) {
 		log_debug("%s: failed to get CHILD SAs", __func__);
 		return (-1);
 	}
@@ -4582,8 +4582,7 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 		ibuf_release(kex->kex_rnonce);
 		kex->kex_rnonce = nonce;
 
-		if (ikev2_childsa_negotiate(env, sa, kex, &proposals, 0,
-		    pfs, !rekeying)) {
+		if (ikev2_childsa_negotiate(env, sa, kex, &proposals, 0, pfs)) {
 			log_debug("%s: failed to get CHILD SAs", __func__);
 			goto fail;
 		}
@@ -5695,7 +5694,7 @@ ikev2_childsa_delete_proposed(struct iked *env, struct iked_sa *sa,
 int
 ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
     struct iked_kex *kex, struct iked_proposals *proposals, int initiator,
-    int pfs, int acquired)
+    int pfs)
 {
 	struct iked_proposal	*prop;
 	struct iked_transform	*xform, *encrxf = NULL, *integrxf = NULL;
@@ -5857,7 +5856,6 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 		csa->csa_ikesa = sa;
 		csa->csa_spi.spi_protoid = prop->prop_protoid;
 		csa->csa_esn = esn;
-		csa->csa_acquired = acquired;
 		csa->csa_transport = sa->sa_use_transport_mode;
 		sa->sa_used_transport_mode = sa->sa_use_transport_mode;
 
@@ -6332,8 +6330,6 @@ ikev2_child_sa_rekey(struct iked *env, struct iked_spi *rekey)
 		return (0);
 
 	if (csa->csa_rekey)	/* See if it's already taken care of */
-		return (0);
-	if (csa->csa_acquired)	/* Don't rekey, wait for hard expire */
 		return (0);
 	if ((sa = csa->csa_ikesa) == NULL) {
 		log_warnx("%s: SA %s doesn't have a parent SA", __func__,

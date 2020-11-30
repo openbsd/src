@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.176 2020/11/29 21:00:43 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.177 2020/11/30 21:52:47 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -180,7 +180,6 @@ struct iked_childsa {
 	uint8_t				 csa_persistent;/* do not rekey */
 	uint8_t				 csa_esn;	/* use ESN */
 	uint8_t				 csa_transport;	/* transport mode */
-	uint8_t				 csa_acquired;	/* no rekey for me */
 
 	struct iked_spi			 csa_spi;
 
