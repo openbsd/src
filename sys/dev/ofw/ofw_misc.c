@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.26 2020/11/14 14:07:53 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.27 2020/11/30 17:57:36 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -809,9 +809,21 @@ mii_register(struct mii_bus *md)
 }
 
 struct mii_bus *
-mii_byphandle(uint32_t phandle)
+mii_bynode(int node)
 {
 	struct mii_bus *md;
+
+	LIST_FOREACH(md, &mii_busses, md_list) {
+		if (md->md_node == node)
+			return md;
+	}
+
+	return NULL;
+}
+
+struct mii_bus *
+mii_byphandle(uint32_t phandle)
+{
 	int node;
 
 	if (phandle == 0)
@@ -825,10 +837,5 @@ mii_byphandle(uint32_t phandle)
 	if (node == 0)
 		return NULL;
 
-	LIST_FOREACH(md, &mii_busses, md_list) {
-		if (md->md_node == node)
-			return md;
-	}
-
-	return NULL;
+	return mii_bynode(node);
 }

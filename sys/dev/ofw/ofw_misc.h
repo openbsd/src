@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.h,v 1.16 2020/11/10 19:08:43 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.h,v 1.17 2020/11/30 17:57:36 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -230,6 +230,7 @@ struct mii_bus {
 };
 
 void	mii_register(struct mii_bus *);
+struct mii_bus *mii_bynode(int);
 struct mii_bus *mii_byphandle(uint32_t);
 
 #endif /* _DEV_OFW_MISC_H_ */
