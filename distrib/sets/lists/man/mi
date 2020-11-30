@@ -2181,6 +2181,7 @@
 ./usr/share/man/man5/moduli.5
 ./usr/share/man/man5/motd.5
 ./usr/share/man/man5/myname.5
+./usr/share/man/man5/mygate.5
 ./usr/share/man/man5/netgroup.5
 ./usr/share/man/man5/netid.5
 ./usr/share/man/man5/npppd-users.5
