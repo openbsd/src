@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.58 2020/07/13 08:31:32 stsp Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.59 2020/11/30 16:09:33 krw Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -1646,7 +1646,8 @@ athn_usb_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	cmd.ni = (ni != NULL) ? ieee80211_ref_node(ni) : NULL;
 	cmd.key = k;
 	athn_usb_do_async(usc, athn_usb_set_key_cb, &cmd, sizeof(cmd));
-	return (0);
+	usc->sc_key_tasks++;
+	return EBUSY;
 }
 
 void
@@ -1656,9 +1657,17 @@ athn_usb_set_key_cb(struct athn_usb_softc *usc, void *arg)
 	struct athn_usb_cmd_key *cmd = arg;
 	int s;
 
+	usc->sc_key_tasks--;
+
 	s = splnet();
 	athn_usb_write_barrier(&usc->sc_sc);
 	athn_set_key(ic, cmd->ni, cmd->key);
+	if (usc->sc_key_tasks == 0) {
+		DPRINTF(("marking port %s valid\n",
+		    ether_sprintf(cmd->ni->ni_macaddr)));
+		cmd->ni->ni_port_valid = 1;
+		ieee80211_set_link_state(ic, LINK_STATE_UP);
+	}
 	if (cmd->ni != NULL)
 		ieee80211_release_node(ic, cmd->ni);
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otusreg.h,v 1.11 2019/01/15 22:08:32 stsp Exp $	*/
+/*	$OpenBSD: if_otusreg.h,v 1.12 2020/11/30 16:09:33 krw Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -923,7 +923,7 @@ struct otus_cmd_newstate {
 
 struct otus_cmd_key {
 	struct ieee80211_key	key;
-	uint16_t		associd;
+	struct ieee80211_node	*ni;
 };
 
 struct otus_softc {
@@ -994,4 +994,5 @@ struct otus_softc {
 #define sc_txtap	sc_txtapu.th
 	int				sc_txtap_len;
 #endif
+	int				sc_key_tasks;
 };

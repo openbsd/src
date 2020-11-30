@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.h,v 1.11 2020/04/27 08:21:35 stsp Exp $	*/
+/*	$OpenBSD: if_athn_usb.h,v 1.12 2020/11/30 16:09:33 krw Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -485,4 +485,5 @@ struct athn_usb_softc {
 
 	void				(*sc_node_free)(struct ieee80211com *,
 					    struct ieee80211_node *);
+	int				sc_key_tasks;
 };

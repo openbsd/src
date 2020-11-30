@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rsureg.h,v 1.3 2013/04/15 09:23:01 mglocker Exp $	*/
+/*	$OpenBSD: if_rsureg.h,v 1.4 2020/11/30 16:09:33 krw Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -704,6 +704,7 @@ struct rsu_cmd_newstate {
 
 struct rsu_cmd_key {
 	struct ieee80211_key	key;
+	struct ieee80211_node	*ni;
 };
 
 struct rsu_host_cmd_ring {
@@ -754,4 +755,5 @@ struct rsu_softc {
 #define sc_txtap	sc_txtapu.th
 	int				sc_txtap_len;
 #endif
+	int				sc_key_tasks;
 };

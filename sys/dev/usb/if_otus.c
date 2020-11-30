@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.67 2020/07/31 10:49:32 mglocker Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.68 2020/11/30 16:09:33 krw Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -2054,9 +2054,10 @@ otus_set_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 	/* Do it in a process context. */
 	cmd.key = *k;
-	cmd.associd = (ni != NULL) ? ni->ni_associd : 0;
+	cmd.ni = *ni;
 	otus_do_async(sc, otus_set_key_cb, &cmd, sizeof cmd);
-	return 0;
+	sc->sc_key_tasks++
+	return EBUSY;
 }
 
 void
@@ -2067,6 +2068,8 @@ otus_set_key_cb(struct otus_softc *sc, void *arg)
 	struct ar_cmd_ekey key;
 	uint16_t cipher;
 	int error;
+
+	sc->sc_keys_tasks--;
 
 	memset(&key, 0, sizeof key);
 	if (k->k_flags & IEEE80211_KEY_GROUP) {
@@ -2093,18 +2096,32 @@ otus_set_key_cb(struct otus_softc *sc, void *arg)
 		cipher = AR_CIPHER_AES;
 		break;
 	default:
+		IEEE80211_SEND_MGMT(ic, cmd->ni, IEEE80211_FC0_SUBTYPE_DEAUTH,
+		    IEEE80211_REASON_AUTH_LEAVE);
+		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 		return;
 	}
 	key.cipher = htole16(cipher);
 	memcpy(key.key, k->k_key, MIN(k->k_len, 16));
 	error = otus_cmd(sc, AR_CMD_EKEY, &key, sizeof key, NULL);
-	if (error != 0 || k->k_cipher != IEEE80211_CIPHER_TKIP)
+	if (error != 0 || k->k_cipher != IEEE80211_CIPHER_TKIP) {
+		IEEE80211_SEND_MGMT(ic, cmd->ni, IEEE80211_FC0_SUBTYPE_DEAUTH,
+		    IEEE80211_REASON_AUTH_LEAVE);
+		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 		return;
+	}
 
 	/* TKIP: set Tx/Rx MIC Key. */
 	key.kix = htole16(1);
 	memcpy(key.key, k->k_key + 16, 16);
 	(void)otus_cmd(sc, AR_CMD_EKEY, &key, sizeof key, NULL);
+
+	if (sc->sc_key_tasks == 0) {
+		DPRINTF(("marking port %s valid\n",
+		    ether_sprintf(cmd->ni->ni_macaddr)));
+		cmd->ni->ni_port_valid = 1;
+		ieee80211_set_link_state(ic, LINK_STATE_UP);
+	}
 }
 
 void
