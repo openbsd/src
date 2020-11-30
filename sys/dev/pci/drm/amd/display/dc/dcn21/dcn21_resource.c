@@ -1179,7 +1179,9 @@ bool dcn21_validate_bandwidth(struct dc *dc, struct dc_state *context,
 
 	BW_VAL_TRACE_COUNT();
 
+	DC_FP_START();
 	out = dcn20_fast_validate_bw(dc, context, pipes, &pipe_cnt, pipe_split_from, &vlevel);
+	DC_FP_END();
 
 	if (pipe_cnt == 0)
 		goto validate_out;
@@ -1383,6 +1385,8 @@ static void update_bw_bounding_box(struct dc *dc, struct clk_bw_params *bw_param
 
 	// Default clock levels are used for diags, which may lead to overclocking.
 	if (!IS_DIAG_DC(dc->ctx->dce_environment)) {
+		DC_FP_START();
+
 		dcn2_1_ip.max_num_otg = pool->base.res_cap->num_timing_generator;
 		dcn2_1_ip.max_num_dpp = pool->base.pipe_count;
 		dcn2_1_soc.num_chans = bw_params->num_channels;
@@ -1419,6 +1423,8 @@ static void update_bw_bounding_box(struct dc *dc, struct clk_bw_params *bw_param
 			dcn2_1_soc.clock_limits[dcn2_1_soc.num_states] = dcn2_1_soc.clock_limits[dcn2_1_soc.num_states - 1];
 			dcn2_1_soc.clock_limits[dcn2_1_soc.num_states].state = dcn2_1_soc.num_states;
 		}
+
+		DC_FP_END();
 	}
 
 	dml_init_instance(&dc->dml, &dcn2_1_soc, &dcn2_1_ip, DML_PROJECT_DCN21);
