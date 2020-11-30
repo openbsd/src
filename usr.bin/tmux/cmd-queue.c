@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.99 2020/07/27 08:03:10 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.100 2020/11/30 13:37:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -768,7 +768,11 @@ cmdq_running(struct client *c)
 {
 	struct cmdq_list	*queue = cmdq_get(c);
 
-	return (queue->item);
+	if (queue->item == NULL)
+        return (NULL);
+    if (queue->item->flags & CMDQ_WAITING)
+        return (NULL);
+    return (queue->item);
 }
 
 /* Print a guard line. */
