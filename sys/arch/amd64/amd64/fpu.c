@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.41 2018/06/24 00:49:25 guenther Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.42 2020/11/30 02:56:42 jsg Exp $	*/
 /*	$NetBSD: fpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -152,6 +152,8 @@ fpu_kernel_enter(void)
 	if (ci->ci_flags & CPUF_USERXSTATE) {
 		ci->ci_flags &= ~CPUF_USERXSTATE;
 		fpusavereset(&curproc->p_addr->u_pcb.pcb_savefpu);
+	} else {
+		fpureset();
 	}
 }
 
