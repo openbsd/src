@@ -2366,6 +2366,11 @@ static void CollectArgsForIntegratedAssembler(Compilation &C,
           CmdArgs.push_back("-soft-float");
           continue;
         }
+        if (Value.startswith("-mfix-loongson2f-btb")) {
+          CmdArgs.push_back("-mllvm");
+          CmdArgs.push_back("-fix-loongson2f-btb");
+          continue;
+        }
 
         MipsTargetFeature = llvm::StringSwitch<const char *>(Value)
                                 .Case("-mips1", "+mips1")

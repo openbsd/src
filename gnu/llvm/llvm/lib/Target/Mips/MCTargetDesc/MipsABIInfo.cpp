@@ -22,6 +22,11 @@ EmitJalrReloc("mips-jalr-reloc", cl::Hidden,
               cl::desc("MIPS: Emit R_{MICRO}MIPS_JALR relocation with jalr"),
               cl::init(true));
 
+cl::opt<bool>
+FixLoongson2FBTB("fix-loongson2f-btb", cl::Hidden,
+                 cl::desc("MIPS: Enable Loongson 2F BTB workaround"),
+                 cl::init(false));
+
 namespace {
 static const MCPhysReg O32IntRegs[4] = {Mips::A0, Mips::A1, Mips::A2, Mips::A3};
 

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2020/08/03 14:45:26 patrick Exp $
+# $OpenBSD: Makefile,v 1.9 2020/12/01 13:30:13 visa Exp $
 
 LIB=	LLVMMipsCodeGen
 NOPROFILE=
@@ -28,6 +28,7 @@ SRCS+=	MicroMipsSizeReduction.cpp \
 	MipsInstrInfo.cpp \
 	MipsInstructionSelector.cpp \
 	MipsLegalizerInfo.cpp \
+	MipsLoongson2FBTBFix.cpp \
 	MipsMCInstLower.cpp \
 	MipsMachineFunction.cpp \
 	MipsModuleISelDAGToDAG.cpp \
