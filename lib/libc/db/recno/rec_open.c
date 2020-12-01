@@ -1,4 +1,4 @@
-/*	$OpenBSD: rec_open.c,v 1.13 2016/09/21 04:38:56 guenther Exp $	*/
+/*	$OpenBSD: rec_open.c,v 1.14 2020/12/01 16:19:38 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -154,6 +154,7 @@ slow:			if ((t->bt_rfp = fdopen(rfd, "r")) == NULL)
 	dbp->put = __rec_put;
 	dbp->seq = __rec_seq;
 	dbp->sync = __rec_sync;
+	dbp->type = DB_RECNO;
 
 	/* If the root page was created, reset the flags. */
 	if ((h = mpool_get(t->bt_mp, P_ROOT, 0)) == NULL)
