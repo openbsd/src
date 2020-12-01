@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.307 2020/11/11 18:14:12 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.308 2020/12/01 07:46:02 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -359,6 +359,7 @@ __BEGIN_HIDDEN_DECLS
 
 typedef struct ssl_method_internal_st {
 	int dtls;
+	int server;
 	int version;
 
 	uint16_t min_version;
