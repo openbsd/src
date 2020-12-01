@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-parse.y,v 1.31 2020/07/13 10:10:10 nicm Exp $ */
+/* $OpenBSD: cmd-parse.y,v 1.32 2020/12/01 10:48:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1505,8 +1505,12 @@ yylex_token(int ch)
 		    state == NONE)
 			break;
 
-		/* Spaces and comments inside quotes after \n are removed. */
+		/*
+		 * Spaces and comments inside quotes after \n are removed but
+		 * the \n is left.
+		 */
 		if (ch == '\n' && state != NONE) {
+			yylex_append1(&buf, &len, '\n');
 			while ((ch = yylex_getc()) == ' ' || ch == '\t')
 				/* nothing */;
 			if (ch != '#')
