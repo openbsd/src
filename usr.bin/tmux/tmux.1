@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.805 2020/11/30 13:37:45 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.806 2020/12/01 08:12:58 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 30 2020 $
+.Dd $Mdocdate: December 1 2020 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -4638,7 +4638,12 @@ of the variable respectively.
 .Ql q:\&
 will escape
 .Xr sh 1
-special characters.
+special characters or with an
+.Ql e
+suffix, escape hash characters (so
+.Ql #
+becomes
+.Ql ## ).
 .Ql E:\&
 will expand the format twice, for example
 .Ql #{E:status-left}

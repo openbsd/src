@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.134 2020/08/25 11:35:32 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.135 2020/12/01 08:12:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1014,7 +1014,7 @@ const struct options_table_entry options_table[] = {
 	{ .name = "window-status-current-format",
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_WINDOW,
-	  .default_str = "#I:#W#{?window_flags,#{window_flags}, }",
+	  .default_str = "#I:#W#{?window_flags,#{q/e:window_flags}, }",
 	  .text = "Format of the current window in the status line."
 	},
 
@@ -1030,7 +1030,7 @@ const struct options_table_entry options_table[] = {
 	{ .name = "window-status-format",
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_WINDOW,
-	  .default_str = "#I:#W#{?window_flags,#{window_flags}, }",
+	  .default_str = "#I:#W#{?window_flags,#{q/e:window_flags}, }",
 	  .text = "Format of windows in the status line, except the current "
 		  "window."
 	},
