@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.41 2020/11/29 09:39:33 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.42 2020/12/01 18:08:53 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -465,7 +465,7 @@ get_flags(char *if_name)
 {
 	struct ifreq		 ifr;
 
-	(void) strlcpy(ifr.ifr_name, if_name, sizeof(ifr.ifr_name));
+	strlcpy(ifr.ifr_name, if_name, sizeof(ifr.ifr_name));
 	if (ioctl(ioctlsock, SIOCGIFFLAGS, (caddr_t)&ifr) == -1) {
 		log_warn("SIOCGIFFLAGS");
 		return -1;
@@ -478,7 +478,7 @@ get_xflags(char *if_name)
 {
 	struct ifreq		 ifr;
 
-	(void) strlcpy(ifr.ifr_name, if_name, sizeof(ifr.ifr_name));
+	strlcpy(ifr.ifr_name, if_name, sizeof(ifr.ifr_name));
 	if (ioctl(ioctlsock, SIOCGIFXFLAGS, (caddr_t)&ifr) == -1) {
 		log_warn("SIOCGIFXFLAGS");
 		return -1;
@@ -491,7 +491,7 @@ get_ifrdomain(char *if_name)
 {
 	struct ifreq		 ifr;
 
-	(void) strlcpy(ifr.ifr_name, if_name, sizeof(ifr.ifr_name));
+	strlcpy(ifr.ifr_name, if_name, sizeof(ifr.ifr_name));
 	if (ioctl(ioctlsock, SIOCGIFRDOMAIN, (caddr_t)&ifr) == -1) {
 		log_warn("SIOCGIFRDOMAIN");
 		return -1;
@@ -599,7 +599,7 @@ update_autoconf_addresses(uint32_t if_index, char* if_name)
 		imsg_addrinfo.addr = *sin6;
 
 		memset(&ifr6, 0, sizeof(ifr6));
-		(void) strlcpy(ifr6.ifr_name, if_name, sizeof(ifr6.ifr_name));
+		strlcpy(ifr6.ifr_name, if_name, sizeof(ifr6.ifr_name));
 		memcpy(&ifr6.ifr_addr, sin6, sizeof(ifr6.ifr_addr));
 
 		if (ioctl(ioctlsock, SIOCGIFAFLAG_IN6, (caddr_t)&ifr6) == -1) {
@@ -615,7 +615,7 @@ update_autoconf_addresses(uint32_t if_index, char* if_name)
 		    IN6_IFF_TEMPORARY ? 1 : 0;
 
 		memset(&ifr6, 0, sizeof(ifr6));
-		(void) strlcpy(ifr6.ifr_name, if_name, sizeof(ifr6.ifr_name));
+		strlcpy(ifr6.ifr_name, if_name, sizeof(ifr6.ifr_name));
 		memcpy(&ifr6.ifr_addr, sin6, sizeof(ifr6.ifr_addr));
 
 		if (ioctl(ioctlsock, SIOCGIFNETMASK_IN6, (caddr_t)&ifr6) ==
@@ -628,7 +628,7 @@ update_autoconf_addresses(uint32_t if_index, char* if_name)
 		    ->sin6_addr;
 
 		memset(&ifr6, 0, sizeof(ifr6));
-		(void) strlcpy(ifr6.ifr_name, if_name, sizeof(ifr6.ifr_name));
+		strlcpy(ifr6.ifr_name, if_name, sizeof(ifr6.ifr_name));
 		memcpy(&ifr6.ifr_addr, sin6, sizeof(ifr6.ifr_addr));
 		lifetime = &ifr6.ifr_ifru.ifru_lifetime;
 
@@ -671,19 +671,19 @@ flags_to_str(int flags)
 
 	buf[0] = '\0';
 	if (flags & IN6_IFF_ANYCAST)
-		(void)strlcat(buf, " anycast", sizeof(buf));
+		strlcat(buf, " anycast", sizeof(buf));
 	if (flags & IN6_IFF_TENTATIVE)
-		(void)strlcat(buf, " tentative", sizeof(buf));
+		strlcat(buf, " tentative", sizeof(buf));
 	if (flags & IN6_IFF_DUPLICATED)
-		(void)strlcat(buf, " duplicated", sizeof(buf));
+		strlcat(buf, " duplicated", sizeof(buf));
 	if (flags & IN6_IFF_DETACHED)
-		(void)strlcat(buf, " detached", sizeof(buf));
+		strlcat(buf, " detached", sizeof(buf));
 	if (flags & IN6_IFF_DEPRECATED)
-		(void)strlcat(buf, " deprecated", sizeof(buf));
+		strlcat(buf, " deprecated", sizeof(buf));
 	if (flags & IN6_IFF_AUTOCONF)
-		(void)strlcat(buf, " autoconf", sizeof(buf));
+		strlcat(buf, " autoconf", sizeof(buf));
 	if (flags & IN6_IFF_TEMPORARY)
-		(void)strlcat(buf, " autoconfprivacy", sizeof(buf));
+		strlcat(buf, " autoconfprivacy", sizeof(buf));
 
 	return (buf);
 }
@@ -826,8 +826,7 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 				break;
 
 			memset(&ifr6, 0, sizeof(ifr6));
-			(void) strlcpy(ifr6.ifr_name, if_name,
-			    sizeof(ifr6.ifr_name));
+			strlcpy(ifr6.ifr_name, if_name, sizeof(ifr6.ifr_name));
 			memcpy(&ifr6.ifr_addr, sin6, sizeof(ifr6.ifr_addr));
 
 			if (ioctl(ioctlsock, SIOCGIFAFLAG_IN6, (caddr_t)&ifr6)

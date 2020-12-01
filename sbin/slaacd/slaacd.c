@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.52 2020/09/14 09:40:28 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.53 2020/12/01 18:08:53 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -675,7 +675,7 @@ configure_interface(struct imsg_configure_address *address)
 	if (address->mtu) {
 		struct ifreq	 ifr;
 
-		(void)strlcpy(ifr.ifr_name, in6_addreq.ifra_name,
+		strlcpy(ifr.ifr_name, in6_addreq.ifra_name,
 		    sizeof(ifr.ifr_name));
 		ifr.ifr_mtu = address->mtu;
 		log_debug("Setting MTU to %d", ifr.ifr_mtu);
