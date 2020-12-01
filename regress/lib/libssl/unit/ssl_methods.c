@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_methods.c,v 1.1 2020/12/01 07:48:35 tb Exp $ */
+/*	$OpenBSD: ssl_methods.c,v 1.2 2020/12/01 08:05:06 tb Exp $ */
 /*
  * Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
  *
@@ -23,6 +23,7 @@ struct ssl_method_test_data {
 	const SSL_METHOD *(*method)(void);
 	const char *name;
 	int server;
+	int dtls;
 };
 
 struct ssl_method_test_data ssl_method_tests[] = {
@@ -30,118 +31,140 @@ struct ssl_method_test_data ssl_method_tests[] = {
 		.method = SSLv23_method,
 		.name = "SSLv23_method",
 		.server = 1,
+		.dtls = 0,
 	},
 	{
 		.method = SSLv23_server_method,
 		.name = "SSLv23_server_method",
 		.server = 1,
+		.dtls = 0,
 	},
 	{
 		.method = SSLv23_client_method,
 		.name = "SSLv23_client_method",
 		.server = 0,
+		.dtls = 0,
 	},
 
 	{
 		.method = TLSv1_method,
 		.name = "TLSv1_method",
 		.server = 1,
+		.dtls = 0,
 	},
 	{
 		.method = TLSv1_server_method,
 		.name = "TLSv1_server_method",
 		.server = 1,
+		.dtls = 0,
 	},
 	{
 		.method = TLSv1_client_method,
 		.name = "TLSv1_client_method",
 		.server = 0,
+		.dtls = 0,
 	},
 
 	{
 		.method = TLSv1_1_method,
 		.name = "TLSv1_1_method",
 		.server = 1,
+		.dtls = 0,
 	},
 	{
 		.method = TLSv1_1_server_method,
 		.name = "TLSv1_1_server_method",
 		.server = 1,
+		.dtls = 0,
 	},
 	{
 		.method = TLSv1_1_client_method,
 		.name = "TLSv1_1_client_method",
 		.server = 0,
+		.dtls = 0,
 	},
 
 	{
 		.method = TLSv1_2_method,
 		.name = "TLSv1_2_method",
 		.server = 1,
+		.dtls = 0,
 	},
 	{
 		.method = TLSv1_2_server_method,
 		.name = "TLSv1_2_server_method",
 		.server = 1,
+		.dtls = 0,
 	},
 	{
 		.method = TLSv1_2_client_method,
 		.name = "TLSv1_2_client_method",
 		.server = 0,
+		.dtls = 0,
 	},
 
 	{
 		.method = TLS_method,
 		.name = "TLS_method",
 		.server = 1,
+		.dtls = 0,
 	},
 	{
 		.method = TLS_server_method,
 		.name = "TLS_server_method",
 		.server = 1,
+		.dtls = 0,
 	},
 	{
 		.method = TLS_client_method,
 		.name = "TLS_client_method",
 		.server = 0,
+		.dtls = 0,
 	},
 
 	{
 		.method = DTLSv1_method,
 		.name = "DTLSv1_method",
 		.server = 1,
+		.dtls = 1,
 	},
 	{
 		.method = DTLSv1_server_method,
 		.name = "DTLSv1_server_method",
 		.server = 1,
+		.dtls = 1,
 	},
 	{
 		.method = DTLSv1_client_method,
 		.name = "DTLSv1_client_method",
 		.server = 0,
+		.dtls = 1,
 	},
 
 	{
 		.method = DTLS_method,
 		.name = "DTLS_method",
 		.server = 1,
+		.dtls = 1,
 	},
 	{
 		.method = DTLS_server_method,
 		.name = "DTLS_server_method",
 		.server = 1,
+		.dtls = 1,
 	},
 	{
 		.method = DTLS_client_method,
 		.name = "DTLS_client_method",
 		.server = 0,
+		.dtls = 1,
 	},
 };
 
 #define N_METHOD_TESTS (sizeof(ssl_method_tests) / sizeof(ssl_method_tests[0]))
 
 int test_client_or_server_method(struct ssl_method_test_data *);
+int test_dtls_method(struct ssl_method_test_data *);
 
 int
 test_client_or_server_method(struct ssl_method_test_data *testcase)
@@ -176,6 +199,38 @@ test_client_or_server_method(struct ssl_method_test_data *testcase)
 }
 
 int
+test_dtls_method(struct ssl_method_test_data *testcase)
+{
+	SSL_CTX *ssl_ctx;
+	SSL *ssl = NULL;
+	int failed = 1;
+
+	if ((ssl_ctx = SSL_CTX_new(testcase->method())) == NULL) {
+		fprintf(stderr, "SSL_CTX_new returned NULL\n");
+		goto err;
+	}
+
+	if ((ssl = SSL_new(ssl_ctx)) == NULL) {
+		fprintf(stderr, "SSL_CTX_new returned NULL\n");
+		goto err;
+	}
+
+	if (SSL_is_dtls(ssl) != testcase->dtls) {
+		fprintf(stderr, "%s: SSL_is_dtls: want %d, got %d\n",
+		    testcase->name, testcase->dtls, SSL_is_dtls(ssl));
+		goto err;
+	}
+
+	failed = 0;
+
+ err:
+	SSL_free(ssl);
+	SSL_CTX_free(ssl_ctx);
+
+	return failed;
+}
+
+int
 main(int argc, char **argv)
 {
 	size_t i;
@@ -183,6 +238,7 @@ main(int argc, char **argv)
 
 	for (i = 0; i < N_METHOD_TESTS; i++) {
 		failed |= test_client_or_server_method(&ssl_method_tests[i]);
+		failed |= test_dtls_method(&ssl_method_tests[i]);
 	}
 
 	if (failed == 0)
