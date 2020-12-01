@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.33 2020/12/01 17:31:37 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.34 2020/12/01 18:10:27 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1022,8 +1022,7 @@ get_interface_prefixes(struct ra_iface *ra_iface, struct ra_prefix_conf
 			continue;
 
 		memset(&ifr6, 0, sizeof(ifr6));
-		(void) strlcpy(ifr6.ifr_name, ra_iface->name,
-		    sizeof(ifr6.ifr_name));
+		strlcpy(ifr6.ifr_name, ra_iface->name, sizeof(ifr6.ifr_name));
 		memcpy(&ifr6.ifr_addr, sin6, sizeof(ifr6.ifr_addr));
 
 		if (ioctl(ioctlsock, SIOCGIFNETMASK_IN6, (caddr_t)&ifr6) == -1)
