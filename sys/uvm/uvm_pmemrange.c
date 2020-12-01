@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.59 2020/02/18 12:13:40 mpi Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.60 2020/12/01 13:56:22 mpi Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -869,6 +869,7 @@ uvm_pmr_getpages(psize_t count, paddr_t start, paddr_t end, paddr_t align,
 	KASSERT(boundary == 0 || powerof2(boundary));
 	KASSERT(boundary == 0 || maxseg * boundary >= count);
 	KASSERT(TAILQ_EMPTY(result));
+	KASSERT(!(flags & UVM_PLA_WAITOK) ^ !(flags & UVM_PLA_NOWAIT));
 
 	/*
 	 * TRYCONTIG is a noop if you only want a single segment.
@@ -938,7 +939,41 @@ uvm_pmr_getpages(psize_t count, paddr_t start, paddr_t end, paddr_t align,
 	 */
 	desperate = 0;
 
+again:
 	uvm_lock_fpageq();
+
+	/*
+	 * check to see if we need to generate some free pages waking
+	 * the pagedaemon.
+	 */
+	if ((uvmexp.free - BUFPAGES_DEFICIT) < uvmexp.freemin ||
+	    ((uvmexp.free - BUFPAGES_DEFICIT) < uvmexp.freetarg &&
+	    (uvmexp.inactive + BUFPAGES_INACT) < uvmexp.inactarg))
+		wakeup(&uvm.pagedaemon);
+
+	/*
+	 * fail if any of these conditions is true:
+	 * [1]  there really are no free pages, or
+	 * [2]  only kernel "reserved" pages remain and
+	 *        the UVM_PLA_USERESERVE flag wasn't used.
+	 * [3]  only pagedaemon "reserved" pages remain and
+	 *        the requestor isn't the pagedaemon nor the syncer.
+	 */
+	if ((uvmexp.free <= uvmexp.reserve_kernel) &&
+	    !(flags & UVM_PLA_USERESERVE)) {
+		uvm_unlock_fpageq();
+		return ENOMEM;
+	}
+
+	if ((uvmexp.free <= (uvmexp.reserve_pagedaemon + count)) &&
+	    (curproc != uvm.pagedaemon_proc) && (curproc != syncerproc)) {
+		uvm_unlock_fpageq();
+		if (flags & UVM_PLA_WAITOK) {
+			uvm_wait("uvm_pmr_getpages");
+			goto again;
+		}
+		return ENOMEM;
+	}
 
 retry:		/* Return point after sleeping. */
 	fcount = 0;

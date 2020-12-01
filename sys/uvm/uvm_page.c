@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.152 2020/11/27 12:45:00 mpi Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.153 2020/12/01 13:56:22 mpi Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -277,7 +277,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	 * XXXCDC - values may need adjusting
 	 */
 	uvmexp.reserve_pagedaemon = 4;
-	uvmexp.reserve_kernel = 6;
+	uvmexp.reserve_kernel = 8;
 	uvmexp.anonminpct = 10;
 	uvmexp.vnodeminpct = 10;
 	uvmexp.vtextminpct = 5;
@@ -733,32 +733,11 @@ uvm_pglistalloc(psize_t size, paddr_t low, paddr_t high, paddr_t alignment,
 	size = atop(round_page(size));
 
 	/*
-	 * check to see if we need to generate some free pages waking
-	 * the pagedaemon.
-	 */
-	if ((uvmexp.free - BUFPAGES_DEFICIT) < uvmexp.freemin ||
-	    ((uvmexp.free - BUFPAGES_DEFICIT) < uvmexp.freetarg &&
-	    (uvmexp.inactive + BUFPAGES_INACT) < uvmexp.inactarg))
-		wakeup(&uvm.pagedaemon);
-
-	/*
 	 * XXX uvm_pglistalloc is currently only used for kernel
 	 * objects. Unlike the checks in uvm_pagealloc, below, here
-	 * we are always allowed to use the kernel reserve. However, we
-	 * have to enforce the pagedaemon reserve here or allocations
-	 * via this path could consume everything and we can't
-	 * recover in the page daemon.
+	 * we are always allowed to use the kernel reserve.
 	 */
- again:
-	if ((uvmexp.free <= uvmexp.reserve_pagedaemon + size &&
-	    !((curproc == uvm.pagedaemon_proc) ||
-		(curproc == syncerproc)))) {
-		if (flags & UVM_PLA_WAITOK) {
-			uvm_wait("uvm_pglistalloc");
-			goto again;
-		}
-		return (ENOMEM);
-	}
+	flags |= UVM_PLA_USERESERVE;
 
 	if ((high & PAGE_MASK) != PAGE_MASK) {
 		printf("uvm_pglistalloc: Upper boundary 0x%lx "
@@ -871,7 +850,7 @@ uvm_pagerealloc_multi(struct uvm_object *obj, voff_t off, vsize_t size,
 }
 
 /*
- * uvm_pagealloc_strat: allocate vm_page from a particular free list.
+ * uvm_pagealloc: allocate vm_page from a particular free list.
  *
  * => return null if no pages free
  * => wake up pagedaemon if number of free pages drops below low water mark
@@ -886,37 +865,21 @@ uvm_pagealloc(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	struct vm_page *pg;
 	struct pglist pgl;
 	int pmr_flags;
-	boolean_t use_reserve;
 
 	KASSERT(obj == NULL || anon == NULL);
+	KASSERT(anon == NULL || off == 0);
 	KASSERT(off == trunc_page(off));
 
-	/*
-	 * check to see if we need to generate some free pages waking
-	 * the pagedaemon.
-	 */
-	if ((uvmexp.free - BUFPAGES_DEFICIT) < uvmexp.freemin ||
-	    ((uvmexp.free - BUFPAGES_DEFICIT) < uvmexp.freetarg &&
-	    (uvmexp.inactive + BUFPAGES_INACT) < uvmexp.inactarg))
-		wakeup(&uvm.pagedaemon);
-
-	/*
-	 * fail if any of these conditions is true:
-	 * [1]  there really are no free pages, or
-	 * [2]  only kernel "reserved" pages remain and
-	 *        the page isn't being allocated to a kernel object.
-	 * [3]  only pagedaemon "reserved" pages remain and
-	 *        the requestor isn't the pagedaemon.
-	 */
-	use_reserve = (flags & UVM_PGA_USERESERVE) ||
-		(obj && UVM_OBJ_IS_KERN_OBJECT(obj));
-	if ((uvmexp.free <= uvmexp.reserve_kernel && !use_reserve) ||
-	    (uvmexp.free <= uvmexp.reserve_pagedaemon &&
-	     !((curproc == uvm.pagedaemon_proc) ||
-	      (curproc == syncerproc))))
-		goto fail;
-
 	pmr_flags = UVM_PLA_NOWAIT;
+
+	/*
+	 * We're allowed to use the kernel reserve if the page is
+	 * being allocated to a kernel object.
+	 */
+	if ((flags & UVM_PGA_USERESERVE) ||
+	    (obj != NULL && UVM_OBJ_IS_KERN_OBJECT(obj)))
+	    	pmr_flags |= UVM_PLA_USERESERVE;
+
 	if (flags & UVM_PGA_ZERO)
 		pmr_flags |= UVM_PLA_ZERO;
 	TAILQ_INIT(&pgl);
