@@ -467,8 +467,8 @@ noise_remote_begin_session(struct noise_remote *r)
 	kp.kp_local_index = hs->hs_local_index;
 	kp.kp_remote_index = hs->hs_remote_index;
 	getnanouptime(&kp.kp_birthdate);
-	rw_init(&kp.kp_ctr.c_lock, "noise_counter");
 	bzero(&kp.kp_ctr, sizeof(kp.kp_ctr));
+	rw_init(&kp.kp_ctr.c_lock, "noise_counter");
 
 	/* Now we need to add_new_keypair */
 	rw_enter_write(&r->r_keypair_lock);
