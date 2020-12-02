@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvsw.c,v 1.1 2020/11/29 21:09:49 kettenis Exp $	*/
+/*	$OpenBSD: mvsw.c,v 1.2 2020/12/02 09:49:34 patrick Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -354,6 +354,7 @@ mvsw_serdes_enable(struct mvsw_softc *sc, int node)
 	val = mvsw_serdes_read(sc, MVSW_SERDES(port),
 	    MDIO_MMD_PHYXS, MVSW_SERDES_BMCR);
 	val &= ~BMCR_PDOWN;
+	val |= BMCR_AUTOEN;
 	mvsw_serdes_write(sc, MVSW_SERDES(port),
 	    MDIO_MMD_PHYXS, MVSW_SERDES_BMCR, val);
 }
