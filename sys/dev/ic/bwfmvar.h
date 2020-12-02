@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmvar.h,v 1.20 2020/05/15 14:09:14 patrick Exp $ */
+/* $OpenBSD: bwfmvar.h,v 1.21 2020/12/02 17:06:35 krw Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -172,6 +172,7 @@ struct bwfm_softc {
 
 	u_char			*sc_clm;
 	size_t			 sc_clmsize;
+	int			 sc_key_tasks;
 };
 
 void bwfm_attach(struct bwfm_softc *);
