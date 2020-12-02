@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.72 2020/11/25 22:17:14 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.73 2020/12/02 16:47:45 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -229,16 +229,16 @@ policy_calc_skip_steps(struct iked_policies *policies)
 	while (cur != NULL) {
 		if (cur->pol_flags & IKED_POLICY_SKIP)
 			IKED_SET_SKIP_STEPS(IKED_SKIP_FLAGS);
-		else if (cur->pol_af != AF_UNSPEC &&
+		if (cur->pol_af != AF_UNSPEC &&
 		    prev->pol_af != AF_UNSPEC &&
 		    cur->pol_af != prev->pol_af)
 			IKED_SET_SKIP_STEPS(IKED_SKIP_AF);
-		else if (cur->pol_ipproto && prev->pol_ipproto &&
+		if (cur->pol_ipproto && prev->pol_ipproto &&
 		    cur->pol_ipproto != prev->pol_ipproto)
 			IKED_SET_SKIP_STEPS(IKED_SKIP_PROTO);
-		else if (IKED_ADDR_NEQ(&cur->pol_peer, &prev->pol_peer))
+		if (IKED_ADDR_NEQ(&cur->pol_peer, &prev->pol_peer))
 			IKED_SET_SKIP_STEPS(IKED_SKIP_DST_ADDR);
-		else if (IKED_ADDR_NEQ(&cur->pol_local, &prev->pol_local))
+		if (IKED_ADDR_NEQ(&cur->pol_local, &prev->pol_local))
 			IKED_SET_SKIP_STEPS(IKED_SKIP_SRC_ADDR);
 
 		prev = cur;
