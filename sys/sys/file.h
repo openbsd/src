@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.61 2020/03/13 10:07:01 anton Exp $	*/
+/*	$OpenBSD: file.h,v 1.62 2020/12/02 15:50:01 martijn Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -38,7 +38,15 @@
 #else /* _KERNEL */
 #include <sys/queue.h>
 #include <sys/mutex.h>
+#endif /* _KERNEL */
 
+#define	DTYPE_VNODE	1	/* file */
+#define	DTYPE_SOCKET	2	/* communications endpoint */
+#define	DTYPE_PIPE	3	/* pipe */
+#define	DTYPE_KQUEUE	4	/* event queue */
+#define	DTYPE_DMABUF	5	/* DMA buffer (for DRM) */
+
+#ifdef _KERNEL
 struct proc;
 struct uio;
 struct knote;
@@ -80,11 +88,6 @@ struct file {
 	LIST_ENTRY(file) f_list;/* [F] list of active files */
 	struct mutex f_mtx;
 	u_int	f_flag;		/* [a] see fcntl.h */
-#define	DTYPE_VNODE	1	/* file */
-#define	DTYPE_SOCKET	2	/* communications endpoint */
-#define	DTYPE_PIPE	3	/* pipe */
-#define	DTYPE_KQUEUE	4	/* event queue */
-#define	DTYPE_DMABUF	5	/* DMA buffer (for DRM) */
 	u_int	f_iflags;	/* [a] internal flags */
 	int	f_type;		/* [I] descriptor type */
 	u_int	f_count;	/* [a] reference count */
