@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpc.c,v 1.30 2020/09/14 15:12:27 martijn Exp $	*/
+/*	$OpenBSD: snmpc.c,v 1.31 2020/12/02 15:45:51 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -787,6 +787,9 @@ snmpc_trap(int argc, char *argv[])
 
 	if (version == SNMP_V1)
 		errx(1, "trap is not supported for snmp v1");
+
+	if (argc < 3)
+		usage();
 
 	if ((agent = snmpc_connect(argv[0], "162")) == NULL)
 		err(1, "%s", snmp_app->name);
