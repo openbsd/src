@@ -619,7 +619,41 @@ svr4_current_sos (void)
       /* If we can't find the dynamic linker's base structure, this
 	 must not be a dynamically linked executable.  Hmm.  */
       if (! debug_base)
-	return 0;
+	{
+	  if (exec_bfd != NULL &&
+	      bfd_get_section_by_name (exec_bfd, ".interp") == NULL &&
+	      (bfd_get_file_flags (exec_bfd) & DYNAMIC) != 0 &&
+	      bfd_get_start_address (exec_bfd) != entry_point_address ())
+	    {
+	      /* this is relocatable static link.
+		 cf. svr4_relocate_main_executable() */
+	      struct cleanup *old_chain;
+	      struct section_offsets *new_offsets;
+	      int i, changed;
+	      CORE_ADDR displacement;
+
+	      displacement = entry_point_address () - bfd_get_start_address (exec_bfd);
+	      changed = 0;
+
+	      new_offsets = xcalloc (symfile_objfile->num_sections,
+				     sizeof (struct section_offsets));
+	      old_chain = make_cleanup (xfree, new_offsets);
+
+	      for (i = 0; i < symfile_objfile->num_sections; i++)
+		{
+		  if (displacement != ANOFFSET (symfile_objfile->section_offsets, i))
+		    changed = 1;
+		  new_offsets->offsets[i] = displacement;
+		}
+
+	      if (changed)
+		objfile_relocate (symfile_objfile, new_offsets);
+
+	      do_cleanups (old_chain);
+	      exec_set_section_offsets(displacement, displacement, displacement);
+	    }
+	  return 0;
+	}
     }
 
   /* Walk the inferior's link map list, and build our list of
