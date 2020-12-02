@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.265 2020/12/02 16:52:30 mpi Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.266 2020/12/02 22:35:32 mpi Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1941,11 +1941,9 @@ userret(struct proc *p)
 }
 
 int
-single_thread_check_locked(struct proc *p, int deep)
+single_thread_check(struct proc *p, int deep)
 {
 	struct process *pr = p->p_p;
-
-	SCHED_ASSERT_LOCKED();
 
 	if (pr->ps_single != NULL && pr->ps_single != p) {
 		do {
@@ -1959,12 +1957,14 @@ single_thread_check_locked(struct proc *p, int deep)
 					return (EINTR);
 			}
 
-			if (pr->ps_single == NULL)
+			SCHED_LOCK(s);
+			if (pr->ps_single == NULL) {
+				SCHED_UNLOCK(s);
 				continue;
+			}
 
 			if (atomic_dec_int_nv(&pr->ps_singlecount) == 0)
 				wakeup(&pr->ps_singlecount);
-
 			if (pr->ps_flags & PS_SINGLEEXIT) {
 				SCHED_UNLOCK(s);
 				KERNEL_LOCK();
@@ -1975,22 +1975,11 @@ single_thread_check_locked(struct proc *p, int deep)
 			/* not exiting and don't need to unwind, so suspend */
 			p->p_stat = SSTOP;
 			mi_switch();
+			SCHED_UNLOCK(s);
 		} while (pr->ps_single != NULL);
 	}
 
 	return (0);
-}
-
-int
-single_thread_check(struct proc *p, int deep)
-{
-	int s, error;
-
-	SCHED_LOCK(s);
-	error = single_thread_check_locked(p, deep);
-	SCHED_UNLOCK(s);
-
-	return error;
 }
 
 /*
@@ -2014,12 +2003,8 @@ single_thread_set(struct proc *p, enum single_thread_mode mode, int deep)
 	KERNEL_ASSERT_LOCKED();
 	KASSERT(curproc == p);
 
-	SCHED_LOCK(s);
-	error = single_thread_check_locked(p, deep);
-	if (error) {
-		SCHED_UNLOCK(s);
+	if ((error = single_thread_check(p, deep)))
 		return error;
-	}
 
 	switch (mode) {
 	case SINGLE_SUSPEND:
@@ -2037,6 +2022,7 @@ single_thread_set(struct proc *p, enum single_thread_mode mode, int deep)
 		panic("single_thread_mode = %d", mode);
 #endif
 	}
+	SCHED_LOCK(s);
 	pr->ps_singlecount = 0;
 	membar_producer();
 	pr->ps_single = p;
