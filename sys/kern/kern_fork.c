@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.226 2020/10/25 01:55:18 cheloha Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.227 2020/12/02 16:52:30 mpi Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -516,7 +516,7 @@ thread_fork(struct proc *curp, void *stack, void *tcb, pid_t *tidptr,
 	struct proc *p;
 	pid_t tid;
 	vaddr_t uaddr;
-	int error;
+	int s, error;
 
 	if (stack == NULL)
 		return EINVAL;
@@ -563,10 +563,12 @@ thread_fork(struct proc *curp, void *stack, void *tcb, pid_t *tidptr,
 	 * if somebody else wants to take us to single threaded mode,
 	 * count ourselves in.
 	 */
+	SCHED_LOCK(s);
 	if (pr->ps_single) {
 		atomic_inc_int(&pr->ps_singlecount);
 		atomic_setbits_int(&p->p_flag, P_SUSPSINGLE);
 	}
+	SCHED_UNLOCK(s);
 
 	/*
 	 * Return tid to parent thread and copy it out to userspace
