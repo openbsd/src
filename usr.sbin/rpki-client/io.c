@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.9 2020/09/12 15:46:48 claudio Exp $ */
+/*	$OpenBSD: io.c,v 1.10 2020/12/02 15:31:15 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -98,17 +98,6 @@ io_buf_buffer(char **b, size_t *bsz,
 }
 
 /*
- * Write a binary buffer of the given size, which may be zero.
- */
-void
-io_buf_write(int fd, const void *p, size_t sz)
-{
-
-	io_simple_write(fd, &sz, sizeof(size_t));
-	io_simple_write(fd, p, sz);
-}
-
-/*
  * Like io_str_write() but into a buffer.
  */
 void
@@ -117,17 +106,6 @@ io_str_buffer(char **b, size_t *bsz, size_t *bmax, const char *p)
 	size_t	 sz = (p == NULL) ? 0 : strlen(p);
 
 	io_buf_buffer(b, bsz, bmax, p, sz);
-}
-
-/*
- * Write a NUL-terminated string, which may be zero-length.
- */
-void
-io_str_write(int fd, const char *p)
-{
-	size_t	 sz = (p == NULL) ? 0 : strlen(p);
-
-	io_buf_write(fd, p, sz);
 }
 
 /*

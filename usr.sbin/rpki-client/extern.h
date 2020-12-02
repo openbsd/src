@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.34 2020/09/12 15:46:48 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.35 2020/12/02 15:31:15 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -378,10 +378,8 @@ void		 io_simple_write(int, const void *, size_t);
 void		 io_buf_buffer(char **, size_t *, size_t *, const void *,
 			size_t);
 void		 io_buf_read_alloc(int, void **, size_t *);
-void		 io_buf_write(int, const void *, size_t);
 void		 io_str_buffer(char **, size_t *, size_t *, const char *);
 void		 io_str_read(int, char **);
-void		 io_str_write(int, const char *);
 
 /* X509 helpers. */
 

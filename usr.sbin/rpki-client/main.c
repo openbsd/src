@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.84 2020/10/24 08:12:00 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.85 2020/12/02 15:31:15 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -301,6 +301,8 @@ repo_lookup(int fd, const char *uri)
 	const char	*host, *mod;
 	size_t		 hostsz, modsz, i;
 	struct repo	*rp;
+	char		*b = NULL;
+	size_t		 bsz = 0, bmax = 0;
 
 	if (!rsync_uri_parse(&host, &hostsz,
 	    &mod, &modsz, NULL, NULL, NULL, uri))
@@ -337,9 +339,12 @@ repo_lookup(int fd, const char *uri)
 
 	if (!noop) {
 		logx("%s/%s: pulling from network", rp->host, rp->module);
-		io_simple_write(fd, &i, sizeof(size_t));
-		io_str_write(fd, rp->host);
-		io_str_write(fd, rp->module);
+		io_simple_buffer(&b, &bsz, &bmax, &i, sizeof(size_t));
+		io_str_buffer(&b, &bsz, &bmax, rp->host);
+		io_str_buffer(&b, &bsz, &bmax, rp->module);
+
+		io_simple_write(fd, b, bsz);
+		free(b);
 	} else {
 		rp->loaded = 1;
 		logx("%s/%s: using cache", rp->host, rp->module);
