@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.153 2020/12/01 13:56:22 mpi Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.154 2020/12/02 16:32:00 mpi Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -928,7 +928,7 @@ uvm_pagerealloc(struct vm_page *pg, struct uvm_object *newobj, voff_t newoff)
  * uvm_pageclean: clean page
  *
  * => erase page's identity (i.e. remove from object)
- * => caller must lock page queues
+ * => caller must lock page queues if `pg' is managed
  * => assumes all valid mappings of pg are gone
  */
 void
@@ -937,7 +937,8 @@ uvm_pageclean(struct vm_page *pg)
 	u_int flags_to_clear = 0;
 
 #if all_pmap_are_fixed
-	MUTEX_ASSERT_LOCKED(&uvm.pageqlock);
+	if (pg->pg_flags & (PG_TABLED|PQ_ACTIVE|PQ_INACTIVE))
+		MUTEX_ASSERT_LOCKED(&uvm.pageqlock);
 #endif
 
 #ifdef DEBUG
@@ -998,14 +999,15 @@ uvm_pageclean(struct vm_page *pg)
  *
  * => erase page's identity (i.e. remove from object)
  * => put page on free list
- * => caller must lock page queues
+ * => caller must lock page queues if `pg' is managed
  * => assumes all valid mappings of pg are gone
  */
 void
 uvm_pagefree(struct vm_page *pg)
 {
 #if all_pmap_are_fixed
-	MUTEX_ASSERT_LOCKED(&uvm.pageqlock);
+	if (pg->pg_flags & (PG_TABLED|PQ_ACTIVE|PQ_INACTIVE))
+		MUTEX_ASSERT_LOCKED(&uvm.pageqlock);
 #endif
 
 	uvm_pageclean(pg);
