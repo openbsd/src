@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.124 2020/11/05 11:51:13 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.125 2020/12/03 11:53:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -48,8 +48,8 @@ rde_apply_set(struct filter_set_head *sh, struct rde_peer *peer,
 			break;
 		case ACTION_SET_RELATIVE_LOCALPREF:
 			if (set->action.relative > 0) {
-				if (set->action.relative + state->aspath.lpref <
-				    state->aspath.lpref)
+				if (state->aspath.lpref >
+				    UINT_MAX - set->action.relative)
 					state->aspath.lpref = UINT_MAX;
 				else
 					state->aspath.lpref +=
@@ -70,8 +70,8 @@ rde_apply_set(struct filter_set_head *sh, struct rde_peer *peer,
 		case ACTION_SET_RELATIVE_MED:
 			state->aspath.flags |= F_ATTR_MED | F_ATTR_MED_ANNOUNCE;
 			if (set->action.relative > 0) {
-				if (set->action.relative + state->aspath.med <
-				    state->aspath.med)
+				if (state->aspath.med >
+				    UINT_MAX - set->action.relative)
 					state->aspath.med = UINT_MAX;
 				else
 					state->aspath.med +=
@@ -90,8 +90,8 @@ rde_apply_set(struct filter_set_head *sh, struct rde_peer *peer,
 			break;
 		case ACTION_SET_RELATIVE_WEIGHT:
 			if (set->action.relative > 0) {
-				if (set->action.relative + state->aspath.weight
-				    < state->aspath.weight)
+				if (state->aspath.weight >
+				    UINT_MAX - set->action.relative)
 					state->aspath.weight = UINT_MAX;
 				else
 					state->aspath.weight +=
