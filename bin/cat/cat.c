@@ -1,4 +1,4 @@
-/*	$OpenBSD: cat.c,v 1.27 2019/06/28 13:34:58 deraadt Exp $	*/
+/*	$OpenBSD: cat.c,v 1.28 2020/12/03 22:37:12 cheloha Exp $	*/
 /*	$NetBSD: cat.c,v 1.11 1995/09/07 06:12:54 jtc Exp $	*/
 
 /*
@@ -51,12 +51,11 @@ extern char *__progname;
 
 int bflag, eflag, nflag, sflag, tflag, vflag;
 int rval;
-char *filename;
 
 void cook_args(char *argv[]);
-void cook_buf(FILE *);
+void cook_buf(FILE *, const char *);
 void raw_args(char *argv[]);
-void raw_cat(int);
+void raw_cat(int, const char *);
 
 int
 main(int argc, char *argv[])
@@ -108,6 +107,7 @@ main(int argc, char *argv[])
 void
 cook_args(char **argv)
 {
+	char *filename;
 	FILE *fp;
 
 	fp = stdin;
@@ -124,7 +124,7 @@ cook_args(char **argv)
 			}
 			filename = *argv++;
 		}
-		cook_buf(fp);
+		cook_buf(fp, filename);
 		if (fp == stdin)
 			clearerr(fp);
 		else
@@ -133,7 +133,7 @@ cook_args(char **argv)
 }
 
 void
-cook_buf(FILE *fp)
+cook_buf(FILE *fp, const char *filename)
 {
 	int ch, gobble, line, prev;
 
@@ -198,6 +198,7 @@ cook_buf(FILE *fp)
 void
 raw_args(char **argv)
 {
+	char *filename;
 	int fd;
 
 	fd = fileno(stdin);
@@ -214,14 +215,14 @@ raw_args(char **argv)
 			}
 			filename = *argv++;
 		}
-		raw_cat(fd);
+		raw_cat(fd, filename);
 		if (fd != fileno(stdin))
 			(void)close(fd);
 	} while (*argv);
 }
 
 void
-raw_cat(int rfd)
+raw_cat(int rfd, const char *filename)
 {
 	int wfd;
 	ssize_t nr, nw, off;
