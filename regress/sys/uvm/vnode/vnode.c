@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.c,v 1.2 2020/11/03 13:58:45 bluhm Exp $	*/
+/*	$OpenBSD: vnode.c,v 1.3 2020/12/03 19:16:57 anton Exp $	*/
 
 /*
  * Copyright (c) 2020 Anton Lindqvist <anton@openbsd.org>
@@ -16,50 +16,51 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
-#include <sys/param.h>	/* PAGE_SIZE */
-#include <sys/mman.h>
-#include <sys/uio.h>
-#include <sys/wait.h>
-
 #include <err.h>
-#include <fcntl.h>
+#include <errno.h>
 #include <signal.h>
-#include <signal.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-static void growshrink(const char *);
-static void writer(const char *, int);
+#include "extern.h"
 
 static void sighandler(int);
 static void __dead usage(void);
 
-static int gotsig;
-static int npages = 2;
+int loglevel = 0;
 
-/*
- * Trigger a deadlock between uvn_flush() and uvn_io() caused by uvn_flush()
- * holding the vnode lock while waiting for pages to become unbusy; the busy
- * pages are allocated and marked as busy by uvn_io() which in turn is trying to
- * lock the same vnode while populating the page(s) using I/O on the vnode.
- */
+static int gotsig;
+
 int
 main(int argc, char *argv[])
 {
-	const char *path;
-	pid_t pid;
-	int killpip[2];
-	int status;
-	int iterations = 100;
-	int ch;
+	struct {
+		const char *t_name;
+		int (*t_func)(struct context *);
+	} tests[] = {
+		{ "deadlock",	test_deadlock },
 
-	while ((ch = getopt(argc, argv, "I")) != -1) {
+		{ NULL,	NULL },
+	};
+	struct context ctx;
+	int ch, i;
+
+	memset(&ctx, 0, sizeof(ctx));
+	ctx.c_iterations = 100;
+
+	while ((ch = getopt(argc, argv, "If:v")) != -1) {
 		switch (ch) {
 		case 'I':
-			iterations = -1;
+			ctx.c_iterations = -1;
+			break;
+		case 'f':
+			ctx.c_path = optarg;
+			break;
+		case 'v':
+			loglevel++;
 			break;
 		default:
 			usage();
@@ -67,110 +68,59 @@ main(int argc, char *argv[])
 	}
 	argc -= optind;
 	argv += optind;
-	if (argc != 1)
+	if (argc != 1 || ctx.c_path == NULL)
 		usage();
-	path = argv[0];
-
-	if (pipe2(killpip, O_NONBLOCK) == -1)
-		err(1, "pipe2");
 
 	if (signal(SIGINT, sighandler) == SIG_ERR)
 		err(1, "signal");
 
-	pid = fork();
-	if (pid == -1)
-		err(1, "fork");
-	if (pid == 0) {
-		close(killpip[1]);
-		writer(path, killpip[0]);
-		return 0;
-	}
-	close(killpip[0]);
+	for (i = 0;; i++) {
+		if (tests[i].t_name == NULL)
+			err(1, "%s: no such test", *argv);
 
-	fprintf(stderr, "parent = %d, child = %d\n", getpid(), pid);
+		if (strcmp(tests[i].t_name, *argv))
+			continue;
 
-	while (gotsig == 0) {
-		if (iterations > 0 && --iterations == 0)
-			break;
-
-		growshrink(path);
+		return tests[i].t_func(&ctx);
 	}
 
-	/* Signal shutdown to writer() process. */
-	write(killpip[1], "X", 1);
-	close(killpip[1]);
-
-	if (waitpid(pid, &status, 0) == -1)
-		err(1, "waitpid");
-	if (WIFSIGNALED(status))
-		return 128 + WTERMSIG(status);
-	if (WIFEXITED(status))
-		return WEXITSTATUS(status);
 	return 0;
 }
 
-static void
-growshrink(const char *path)
+int
+ctx_abort(struct context *ctx)
 {
-	char *p;
-	int fd;
-
-	/*
-	 * Open and truncate the file causing uvn_flush() to try evict pages
-	 * which are currently being populated by the writer() process.
-	 */
-	fd = open(path, O_RDWR | O_TRUNC);
-	if (fd == -1)
-		err(1, "open: %s", path);
-
-	/* Grow the file again. */
-	if (ftruncate(fd, npages * PAGE_SIZE) == -1)
-		err(1, "ftruncate");
-
-	p = mmap(NULL, npages * PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED,
-	    fd, 0);
-	if (p == MAP_FAILED)
-		err(1, "mmap");
-
-	/* Populate the last page. */
-	memset(&p[(npages - 1) * PAGE_SIZE], 'x', PAGE_SIZE);
-
-	if (munmap(p, npages * PAGE_SIZE) == -1)
-		err(1, "munmap");
-	close(fd);
+	if (gotsig)
+		return 1;
+	if (ctx->c_iterations > 0 && --ctx->c_iterations == 0)
+		return 1;
+	return 0;
 }
 
-static void
-writer(const char *path, int killfd)
+void
+logit(const char *fmt, ...)
 {
-	char *p;
-	int fd;
-	char c;
+	char buf[1024];
+	va_list ap;
+	char *p = buf;
+	ssize_t siz = sizeof(buf);
+	int n;
 
-	fd = open(path, O_RDONLY);
-	if (fd == -1)
-		err(1, "open: %s", path);
-	p = mmap(NULL, npages * PAGE_SIZE, PROT_READ, MAP_SHARED,
-	    fd, 0);
-	if (p == MAP_FAILED)
-		err(1, "mmap");
+	n = snprintf(p, siz, "[%d] ", getpid());
+	if (n < 0 || n >= siz)
+		errc(1, ENAMETOOLONG, "%s", __func__);
+	p += n;
+	siz -= n;
 
-	for (;;) {
-		const struct iovec *iov = (const struct iovec *)p;
+	va_start(ap, fmt);
+	n = vsnprintf(p, siz, fmt, ap);
+	va_end(ap);
+	if (n < 0 || n >= siz)
+		errc(1, ENAMETOOLONG, "%s", __func__);
+	p += n;
+	siz -= n;
 
-		if (read(killfd, &c, 1) == 1)
-			break;
-
-		/*
-		 * This write should never succeed since the file descriptor is
-		 * invalid. However, it should cause a page fault during
-		 * copyin() which in turn will invoke uvn_io() while trying to
-		 * populate the page. At this point, it will try to lock the
-		 * vnode, which is potentially already locked by the
-		 * growshrink() process.
-		 */
-		pwritev(-1, iov, 1, 0);
-	}
+	fprintf(stderr, "%s\n", buf);
 }
 
 static void
@@ -182,6 +132,6 @@ sighandler(int signo)
 static void __dead
 usage(void)
 {
-	fprintf(stderr, "usage: vnode [-I] path\n");
+	fprintf(stderr, "usage: vnode [-Iv] -f path test-case\n");
 	exit(1);
 }
