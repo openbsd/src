@@ -66,6 +66,7 @@
 ./usr/include/armv7/cdefs.h
 ./usr/include/armv7/conf.h
 ./usr/include/armv7/cpu.h
+./usr/include/armv7/cpufunc.h
 ./usr/include/armv7/db_machdep.h
 ./usr/include/armv7/disklabel.h
 ./usr/include/armv7/endian.h
