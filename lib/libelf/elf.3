@@ -21,7 +21,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" $Id: elf.3,v 1.6 2020/11/14 10:35:58 jmc Exp $
+.\" $Id: elf.3,v 1.7 2020/12/03 22:47:22 jmc Exp $
 .\"
 .Dd June 12, 2019
 .Dt ELF 3
@@ -576,7 +576,7 @@ set by function
 .Ss Error Handling
 In case an error is encountered, these library functions set an
 internal error number and signal the presence of the error by
-returning an special return value.
+returning a special return value.
 The application can check the
 current error number by calling
 .Xr elf_errno 3 .

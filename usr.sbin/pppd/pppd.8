@@ -1,4 +1,4 @@
-.\" $OpenBSD: pppd.8,v 1.46 2015/10/28 10:02:59 jmc Exp $
+.\" $OpenBSD: pppd.8,v 1.47 2020/12/03 22:47:22 jmc Exp $
 .\" Id: pppd.8,v 1.27 1998/03/31 04:31:08 paulus Exp $
 .\"
 .\" Copyright (c) 1993-2003 Paul Mackerras <paulus@samba.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 28 2015 $
+.Dd $Mdocdate: December 3 2020 $
 .Dt PPPD 8
 .Os
 .Sh NAME
@@ -138,7 +138,7 @@ Usually there is something which needs to be done to prepare the link
 before the PPP protocol can be started; for instance, with a dial-up
 modem, commands need to be sent to the modem to dial the appropriate
 phone number.
-This option specifies an command for
+This option specifies a command for
 .Nm
 to execute (by passing it to a shell) before attempting to start PPP
 negotiation.

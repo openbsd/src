@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_EncryptInit.3,v 1.39 2020/01/26 08:00:31 jmc Exp $
+.\" $OpenBSD: EVP_EncryptInit.3,v 1.40 2020/12/03 22:47:21 jmc Exp $
 .\" full merge up to: OpenSSL 5211e094 Nov 11 14:39:11 2014 -0800
 .\"   EVP_bf_cbc.pod EVP_cast5_cbc.pod EVP_idea_cbc.pod EVP_rc2_cbc.pod
 .\"   7c6d372a Nov 20 13:20:01 2018 +0000
@@ -71,7 +71,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 26 2020 $
+.Dd $Mdocdate: December 3 2020 $
 .Dt EVP_ENCRYPTINIT 3
 .Os
 .Sh NAME
@@ -1197,7 +1197,7 @@ openssl bf -in cipher.bin -K 000102030405060708090A0B0C0D0E0F \e
 .Ed
 .Pp
 General encryption, decryption function example using FILE I/O and AES128
-with an 128-bit key:
+with a 128-bit key:
 .Bd -literal
 int
 do_crypt(FILE *in, FILE *out, int do_encrypt)
