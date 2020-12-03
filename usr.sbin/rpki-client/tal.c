@@ -1,4 +1,4 @@
-/*	$OpenBSD: tal.c,v 1.23 2020/12/03 14:56:32 claudio Exp $ */
+/*	$OpenBSD: tal.c,v 1.24 2020/12/03 15:02:12 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -196,7 +196,7 @@ tal_parse(const char *fn, char *buf)
 	else
 		d++;
 	dlen = strlen(d);
-	if (strcasecmp(d + dlen - 4, ".tal") == 0)
+	if (dlen > 4 && strcasecmp(d + dlen - 4, ".tal") == 0)
 		dlen -= 4;
 	if ((p->descr = strndup(d, dlen)) == NULL)
 		err(1, NULL);
