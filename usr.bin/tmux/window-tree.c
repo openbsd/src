@@ -1,4 +1,4 @@
-/* $OpenBSD: window-tree.c,v 1.52 2020/07/15 11:03:17 nicm Exp $ */
+/* $OpenBSD: window-tree.c,v 1.53 2020/12/03 07:12:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -29,6 +29,7 @@ static struct screen	*window_tree_init(struct window_mode_entry *,
 static void		 window_tree_free(struct window_mode_entry *);
 static void		 window_tree_resize(struct window_mode_entry *, u_int,
 			     u_int);
+static void		 window_tree_update(struct window_mode_entry *);
 static void		 window_tree_key(struct window_mode_entry *,
 			     struct client *, struct session *,
 			     struct winlink *, key_code, struct mouse_event *);
@@ -79,6 +80,7 @@ const struct window_mode window_tree_mode = {
 	.init = window_tree_init,
 	.free = window_tree_free,
 	.resize = window_tree_resize,
+	.update = window_tree_update,
 	.key = window_tree_key,
 };
 
@@ -935,6 +937,16 @@ window_tree_resize(struct window_mode_entry *wme, u_int sx, u_int sy)
 	struct window_tree_modedata	*data = wme->data;
 
 	mode_tree_resize(data->data, sx, sy);
+}
+
+static void
+window_tree_update(struct window_mode_entry *wme)
+{
+	struct window_tree_modedata	*data = wme->data;
+
+	mode_tree_build(data->data);
+	mode_tree_draw(data->data);
+	data->wp->flags |= PANE_REDRAW;
 }
 
 static char *

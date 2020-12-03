@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1080 2020/10/30 08:55:56 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1081 2020/12/03 07:12:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -887,6 +887,7 @@ struct window_mode {
 			     struct cmd_find_state *, struct args *);
 	void		 (*free)(struct window_mode_entry *);
 	void		 (*resize)(struct window_mode_entry *, u_int, u_int);
+	void		 (*update)(struct window_mode_entry *);
 	void		 (*key)(struct window_mode_entry *, struct client *,
 			     struct session *, struct winlink *, key_code,
 			     struct mouse_event *);

@@ -1,4 +1,4 @@
-/* $OpenBSD: window-buffer.c,v 1.31 2020/05/16 16:13:09 nicm Exp $ */
+/* $OpenBSD: window-buffer.c,v 1.32 2020/12/03 07:12:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -31,6 +31,7 @@ static struct screen	*window_buffer_init(struct window_mode_entry *,
 static void		 window_buffer_free(struct window_mode_entry *);
 static void		 window_buffer_resize(struct window_mode_entry *, u_int,
 			     u_int);
+static void		 window_buffer_update(struct window_mode_entry *);
 static void		 window_buffer_key(struct window_mode_entry *,
 			     struct client *, struct session *,
 			     struct winlink *, key_code, struct mouse_event *);
@@ -63,6 +64,7 @@ const struct window_mode window_buffer_mode = {
 	.init = window_buffer_init,
 	.free = window_buffer_free,
 	.resize = window_buffer_resize,
+	.update = window_buffer_update,
 	.key = window_buffer_key,
 };
 
@@ -333,6 +335,16 @@ window_buffer_resize(struct window_mode_entry *wme, u_int sx, u_int sy)
 	struct window_buffer_modedata	*data = wme->data;
 
 	mode_tree_resize(data->data, sx, sy);
+}
+
+static void
+window_buffer_update(struct window_mode_entry *wme)
+{
+	struct window_buffer_modedata	*data = wme->data;
+
+	mode_tree_build(data->data);
+	mode_tree_draw(data->data);
+	data->wp->flags |= PANE_REDRAW;
 }
 
 static void
