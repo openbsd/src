@@ -1,9 +1,9 @@
-.\" $OpenBSD: pthread_attr_setstack.3,v 1.5 2018/04/12 17:13:34 deraadt Exp $
+.\" $OpenBSD: pthread_attr_setstack.3,v 1.6 2020/12/03 07:05:03 otto Exp $
 .\" Manual page derived from TOG's UNIX98 documentation.
 .\"
 .\"  David Leonard, 2000. Public Domain.
 .\"
-.Dd $Mdocdate: April 12 2018 $
+.Dd $Mdocdate: December 3 2020 $
 .Dt PTHREAD_ATTR_SETSTACK 3
 .Os
 .Sh NAME
@@ -46,11 +46,12 @@ the provided stack must be page-aligned.
 It will be replaced (meaning zeroed) with a new
 .Ar MAP_ANON | Ar MAP_STACK
 mapping.
-It is recommended that the initial mapping be allocated using
-an allocator which has a matching deallocator that discards whole
-pages, to clear the
-.Ar MAP_STACK
-attribute afterwards.
+The passed memory object should not be deallocated or reused,
+even when the thread using it has terminated.
+If there is no need for a specific memory object as stack,
+the
+.Xr pthread_attr_setstacksize 3
+function should be used.
 .Sh RETURN VALUES
 Upon successful completion,
 .Fn pthread_attr_setstack
