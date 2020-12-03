@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.29 2020/11/26 22:24:06 tobhe Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.30 2020/12/03 21:57:36 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -598,7 +598,7 @@ cipher_outlength(struct iked_cipher *encr, size_t inlen)
 }
 
 struct iked_dsa *
-dsa_new(uint16_t id, struct iked_hash *prf, int sign)
+dsa_new(uint8_t id, struct iked_hash *prf, int sign)
 {
 	struct iked_dsa		*dsap = NULL, dsa;
 
@@ -668,13 +668,13 @@ dsa_new(uint16_t id, struct iked_hash *prf, int sign)
 }
 
 struct iked_dsa *
-dsa_sign_new(uint16_t id, struct iked_hash *prf)
+dsa_sign_new(uint8_t id, struct iked_hash *prf)
 {
 	return (dsa_new(id, prf, 1));
 }
 
 struct iked_dsa *
-dsa_verify_new(uint16_t id, struct iked_hash *prf)
+dsa_verify_new(uint8_t id, struct iked_hash *prf)
 {
 	return (dsa_new(id, prf, 0));
 }
