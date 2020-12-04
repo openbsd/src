@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.54 2019/06/28 13:32:51 deraadt Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.55 2020/12/04 11:36:13 mvs Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -224,7 +224,7 @@ priv_exec(int argc, char *argv[])
 	/* parse the arguments for required options */
 	opterr = 0;
 	while ((i = getopt(argc, argv,
-	    "aB:c:D:deE:fF:i:lLnNOopPqr:s:StT:vw:xXy:Y")) != -1) {
+	    "aB:c:D:deE:fF:i:lLnNOopPqr:s:StT:vw:xXy:")) != -1) {
 		switch (i) {
 		case 'n':
 			nflag++;

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.66 2020/06/21 05:00:17 dlg Exp $
+#	$OpenBSD: Makefile,v 1.67 2020/12/04 11:36:13 mvs Exp $
 #
 #  Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
 # 	The Regents of the University of California.  All rights reserved.
@@ -30,8 +30,8 @@ CFLAGS+=-I${.CURDIR}/../../lib/libpcap
 
 CFLAGS+=-DCSLIP -DPPP -DHAVE_FDDI -DETHER_SERVICE -DHAVE_ETHER_NTOHOST -DINET6
 
-LDADD+=	-lpcap -ll -lcrypto
-DPADD+=	${LIBL} ${LIBPCAP} ${LIBCRYPTO}
+LDADD+=	-lpcap -lcrypto
+DPADD+=	${LIBPCAP} ${LIBCRYPTO}
 
 SRCS=	tcpdump.c addrtoname.c privsep.c privsep_fdpass.c privsep_pcap.c \
 	print-ether.c print-ip.c print-arp.c print-tcp.c print-udp.c \

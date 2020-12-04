@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.94 2020/08/17 06:29:29 dlg Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.95 2020/12/04 11:36:13 mvs Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -232,7 +232,7 @@ main(int argc, char **argv)
 
 	opterr = 0;
 	while ((op = getopt(argc, argv,
-	    "AaB:c:D:deE:fF:i:IlLnNOopqr:s:StT:vw:xXy:Y")) != -1)
+	    "AaB:c:D:deE:fF:i:IlLnNOopqr:s:StT:vw:xXy:")) != -1)
 		switch (op) {
 
 		case 'A':
@@ -392,15 +392,7 @@ main(int argc, char **argv)
 		case 'w':
 			WFileName = optarg;
 			break;
-#ifdef YYDEBUG
-		case 'Y':
-			{
-			/* Undocumented flag */
-			extern int yydebug;
-			yydebug = 1;
-			}
-			break;
-#endif
+
 		case 'y':
 			i = pcap_datalink_name_to_val(optarg);
 			if (i < 0)
