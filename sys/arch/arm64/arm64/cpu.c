@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.43 2020/11/04 10:53:29 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.44 2020/12/04 21:18:09 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -66,6 +66,7 @@
 #define CPU_PART_CORTEX_A78AE	0xd42
 #define CPU_PART_CORTEX_A65AE	0xd43
 #define CPU_PART_CORTEX_X1	0xd44
+#define CPU_PART_NEOVERSE_N2	0xd49
 #define CPU_PART_NEOVERSE_E1	0xd4a
 
 #define CPU_PART_THUNDERX_T88	0x0a1
@@ -108,6 +109,7 @@ struct cpu_cores cpu_cores_arm[] = {
 	{ CPU_PART_CORTEX_X1, "Cortex-X1" },
 	{ CPU_PART_NEOVERSE_E1, "Neoverse E1" },
 	{ CPU_PART_NEOVERSE_N1, "Neoverse N1" },
+	{ CPU_PART_NEOVERSE_N2, "Neoverse N2" },
 	{ CPU_PART_NEOVERSE_V1, "Neoverse V1" },
 	{ 0, NULL },
 };
