@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.73 2020/12/01 22:43:30 tobhe Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.74 2020/12/04 16:18:14 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1230,7 +1230,8 @@ pfkey_write(int sd, struct sadb_msg *smsg, struct iovec *iov, int iov_cnt,
 	}
 
 	if ((n = writev(sd, iov, iov_cnt)) == -1) {
-		log_warn("%s: writev failed", __func__);
+		log_warn("%s: writev failed: type %u len %zd",
+		    __func__, smsg->sadb_msg_type, len);
 		return (-1);
 	} else if (n != len) {
 		log_warn("%s: short write", __func__);
