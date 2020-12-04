@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.5 2020/02/12 10:33:56 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.6 2020/12/04 11:57:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -236,9 +236,8 @@ peer_flush_upcall(struct rib_entry *re, void *arg)
 			rp = prefix_get(rib, peer, &addr, prefixlen);
 			if (rp) {
 				asp = prefix_aspath(rp);
-				if (asp->pftableid)
-					rde_send_pftable(asp->pftableid, &addr,
-					    prefixlen, 1);
+				if (asp && asp->pftableid)
+					rde_pftable_del(asp->pftableid, rp);
 
 				prefix_destroy(rp);
 				rde_update_log("flush", i, peer, NULL,
@@ -384,9 +383,6 @@ peer_flush(struct rde_peer *peer, u_int8_t aid, time_t staletime)
 	if (rib_dump_new(RIB_ADJ_IN, aid, 0, &pf, peer_flush_upcall,
 	    NULL, NULL) == -1)
 		fatal("%s: rib_dump_new", __func__);
-
-	/* Deletions may have been performed in peer_flush_upcall */
-	rde_send_pftable_commit();
 
 	/* every route is gone so reset staletime */
 	if (aid == AID_UNSPEC) {

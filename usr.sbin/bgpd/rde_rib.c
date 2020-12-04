@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.217 2020/11/05 11:51:13 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.218 2020/12/04 11:57:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -252,14 +252,8 @@ rib_free(struct rib *rib)
 		 */
 		while ((p = LIST_FIRST(&re->prefix_h))) {
 			struct rde_aspath *asp = prefix_aspath(p);
-			if (asp && asp->pftableid) {
-				struct bgpd_addr addr;
-
-				pt_getaddr(p->pt, &addr);
-				/* Commit is done in rde_reload_done() */
-				rde_send_pftable(asp->pftableid, &addr,
-				    p->pt->prefixlen, 1);
-			}
+			if (asp && asp->pftableid)
+				rde_pftable_del(asp->pftableid, p);
 			prefix_destroy(p);
 		}
 	}
@@ -967,9 +961,6 @@ prefix_update(struct rib *rib, struct rde_peer *peer, struct filterstate *state,
 	struct rde_community	*comm, *ncomm = &state->communities;
 	struct prefix		*p;
 
-	if (nasp->pftableid)
-		rde_send_pftable(nasp->pftableid, prefix, prefixlen, 0);
-
 	/*
 	 * First try to find a prefix in the specified RIB.
 	 */
@@ -1056,6 +1047,10 @@ prefix_move(struct prefix *p, struct rde_peer *peer,
 	nexthop_link(np);
 	np->lastchange = getmonotime();
 
+	/* add possible pftable reference from new aspath */
+	if (asp && asp->pftableid)
+		rde_pftable_add(asp->pftableid, np);
+
 	/*
 	 * no need to update the peer prefix count because we are only moving
 	 * the prefix without changing the peer.
@@ -1074,6 +1069,10 @@ prefix_move(struct prefix *p, struct rde_peer *peer,
 
 	/* remove old prefix node */
 	/* as before peer count needs no update because of move */
+
+	/* remove possible pftable reference first */
+	if (p->aspath && p->aspath->pftableid)
+		rde_pftable_del(p->aspath->pftableid, p);
 
 	/* destroy all references to other objects and free the old prefix */
 	nexthop_unlink(p);
@@ -1109,7 +1108,7 @@ prefix_withdraw(struct rib *rib, struct rde_peer *peer,
 	asp = prefix_aspath(p);
 	if (asp && asp->pftableid)
 		/* only prefixes in the local RIB were pushed into pf */
-		rde_send_pftable(asp->pftableid, prefix, prefixlen, 1);
+		rde_pftable_del(asp->pftableid, p);
 
 	prefix_destroy(p);
 
@@ -1596,6 +1595,10 @@ prefix_link(struct prefix *p, struct rib_entry *re, struct rde_peer *peer,
 	p->nexthop = nexthop_ref(nexthop);
 	nexthop_link(p);
 	p->lastchange = getmonotime();
+
+	/* add possible pftable reference from aspath */
+	if (asp && asp->pftableid)
+		rde_pftable_add(asp->pftableid, p);
 
 	/* make route decision */
 	prefix_evaluate(p, re);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.234 2020/06/05 19:50:59 denis Exp $ */
+/*	$OpenBSD: rde.h,v 1.235 2020/12/04 11:57:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -368,9 +368,8 @@ void		 rde_update_log(const char *, u_int16_t,
 void		rde_send_kroute_flush(struct rib *);
 void		rde_send_kroute(struct rib *, struct prefix *, struct prefix *);
 void		rde_send_nexthop(struct bgpd_addr *, int);
-void		rde_send_pftable(u_int16_t, struct bgpd_addr *,
-		    u_int8_t, int);
-void		rde_send_pftable_commit(void);
+void		rde_pftable_add(u_int16_t, struct prefix *);
+void		rde_pftable_del(u_int16_t, struct prefix *);
 
 void		rde_generate_updates(struct rib *, struct prefix *,
 		    struct prefix *);
