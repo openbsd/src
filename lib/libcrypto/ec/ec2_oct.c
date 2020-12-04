@@ -1,4 +1,4 @@
-/* $OpenBSD: ec2_oct.c,v 1.11 2018/07/15 16:27:39 tb Exp $ */
+/* $OpenBSD: ec2_oct.c,v 1.12 2020/12/04 08:55:30 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -346,6 +346,10 @@ ec_GF2m_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
 		goto err;
 	}
 	if (form == POINT_CONVERSION_COMPRESSED) {
+		/*
+		 * EC_POINT_set_compressed_coordinates_GF2m checks that the
+		 * point is on the curve as required by X9.62.
+		 */
 		if (!EC_POINT_set_compressed_coordinates_GF2m(group, point, x, y_bit, ctx))
 			goto err;
 	} else {
@@ -363,15 +367,14 @@ ec_GF2m_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
 				goto err;
 			}
 		}
+		/*
+		 * EC_POINT_set_affine_coordinates_GF2m checks that the
+		 * point is on the curve as required by X9.62.
+		 */
 		if (!EC_POINT_set_affine_coordinates_GF2m(group, point, x, y, ctx))
 			goto err;
 	}
 
-	/* test required by X9.62 */
-	if (EC_POINT_is_on_curve(group, point, ctx) <= 0) {
-		ECerror(EC_R_POINT_IS_NOT_ON_CURVE);
-		goto err;
-	}
 	ret = 1;
 
  err:

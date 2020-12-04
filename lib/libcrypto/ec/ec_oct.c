@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_oct.c,v 1.5 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: ec_oct.c,v 1.6 2020/12/04 08:55:30 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -98,7 +98,14 @@ EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP * group, EC_POINT * point
 			    group, point, x, y_bit, ctx);
 #endif
 	}
-	return group->meth->point_set_compressed_coordinates(group, point, x, y_bit, ctx);
+	if (!group->meth->point_set_compressed_coordinates(group, point, x,
+	    y_bit, ctx))
+		return 0;
+	if (EC_POINT_is_on_curve(group, point, ctx) <= 0) {
+		ECerror(EC_R_POINT_IS_NOT_ON_CURVE);
+		return 0;
+	}
+	return 1;
 }
 
 #ifndef OPENSSL_NO_EC2M
@@ -123,7 +130,14 @@ EC_POINT_set_compressed_coordinates_GF2m(const EC_GROUP * group, EC_POINT * poin
 			return ec_GF2m_simple_set_compressed_coordinates(
 			    group, point, x, y_bit, ctx);
 	}
-	return group->meth->point_set_compressed_coordinates(group, point, x, y_bit, ctx);
+	if (!group->meth->point_set_compressed_coordinates(group, point, x,
+	    y_bit, ctx))
+		return 0;
+	if (EC_POINT_is_on_curve(group, point, ctx) <= 0) {
+		ECerror(EC_R_POINT_IS_NOT_ON_CURVE);
+		return 0;
+	}
+	return 1;
 }
 #endif
 
