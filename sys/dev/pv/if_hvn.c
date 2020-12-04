@@ -1127,8 +1127,8 @@ hvn_alloc_cmd(struct hvn_softc *sc)
 
 	mtx_enter(&sc->sc_cntl_fqlck);
 	while ((rc = TAILQ_FIRST(&sc->sc_cntl_fq)) == NULL)
-		msleep(&sc->sc_cntl_fq, &sc->sc_cntl_fqlck,
-		    PRIBIO, "nvsalloc", 1);
+		msleep_nsec(&sc->sc_cntl_fq, &sc->sc_cntl_fqlck,
+		    PRIBIO, "nvsalloc", INFSLP);
 	TAILQ_REMOVE(&sc->sc_cntl_fq, rc, rc_entry);
 	mtx_leave(&sc->sc_cntl_fqlck);
 	return (rc);
