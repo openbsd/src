@@ -558,8 +558,10 @@ hv_start(struct hv_softc *sc, struct hv_msg *msg)
 			s = splnet();
 			hv_intr();
 			splx(s);
-		} else
-			tsleep(wchan, PRIBIO, wchan, 1);
+		} else {
+			tsleep_nsec(wchan, PRIBIO, wchan,
+			    USEC_TO_NSEC(delays[i]));
+		}
 	}
 	if (status != 0) {
 		printf("%s: posting vmbus message failed with %d\n",
@@ -620,8 +622,10 @@ hv_wait(struct hv_softc *sc, int (*cond)(struct hv_softc *, struct hv_msg *),
 			s = splnet();
 			hv_intr();
 			splx(s);
-		} else
-			tsleep(wchan, PRIBIO, wmsg ? wmsg : "hvwait", 1);
+		} else {
+			tsleep_nsec(wchan, PRIBIO, wmsg ? wmsg : "hvwait",
+			    USEC_TO_NSEC(1000));
+		}
 	}
 }
 

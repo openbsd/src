@@ -1048,8 +1048,10 @@ hvn_nvs_cmd(struct hvn_softc *sc, void *cmd, size_t cmdsize, uint64_t tid,
 		if (rv == EAGAIN) {
 			if (cold)
 				delay(1000);
-			else
-				tsleep(cmd, PRIBIO, "nvsout", 1);
+			else {
+				tsleep_nsec(cmd, PRIBIO, "nvsout",
+				    USEC_TO_NSEC(1000));
+			}
 		} else if (rv) {
 			DPRINTF("%s: NVSP operation %u send error %d\n",
 			    sc->sc_dev.dv_xname, hdr->nvs_type, rv);
@@ -1069,8 +1071,10 @@ hvn_nvs_cmd(struct hvn_softc *sc, void *cmd, size_t cmdsize, uint64_t tid,
 	do {
 		if (cold)
 			delay(1000);
-		else
-			tsleep(sc, PRIBIO | PCATCH, "nvscmd", 1);
+		else {
+			tsleep_nsec(sc, PRIBIO | PCATCH, "nvscmd",
+			    USEC_TO_NSEC(1000));
+		}
 		s = splnet();
 		hvn_nvs_intr(sc);
 		splx(s);
@@ -1366,8 +1370,10 @@ hvn_rndis_cmd(struct hvn_softc *sc, struct rndis_cmd *rc, int timo)
 		if (rv == EAGAIN) {
 			if (cold)
 				delay(100);
-			else
-				tsleep(rc, PRIBIO, "rndisout", 1);
+			else {
+				tsleep_nsec(rc, PRIBIO, "rndisout",
+				    USEC_TO_NSEC(100));
+			}
 		} else if (rv) {
 			DPRINTF("%s: RNDIS operation %u send error %d\n",
 			    sc->sc_dev.dv_xname, hdr->rm_type, rv);
@@ -1388,8 +1394,10 @@ hvn_rndis_cmd(struct hvn_softc *sc, struct rndis_cmd *rc, int timo)
 	do {
 		if (cold)
 			delay(1000);
-		else
-			tsleep(rc, PRIBIO | PCATCH, "rndiscmd", 1);
+		else {
+			tsleep_nsec(rc, PRIBIO | PCATCH, "rndiscmd",
+			    USEC_TO_NSEC(1000));
+		}
 		s = splnet();
 		hvn_nvs_intr(sc);
 		splx(s);
