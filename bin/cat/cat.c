@@ -1,4 +1,4 @@
-/*	$OpenBSD: cat.c,v 1.28 2020/12/03 22:37:12 cheloha Exp $	*/
+/*	$OpenBSD: cat.c,v 1.29 2020/12/04 01:42:05 cheloha Exp $	*/
 /*	$NetBSD: cat.c,v 1.11 1995/09/07 06:12:54 jtc Exp $	*/
 
 /*
@@ -107,29 +107,27 @@ main(int argc, char *argv[])
 void
 cook_args(char **argv)
 {
-	char *filename;
 	FILE *fp;
 
-	fp = stdin;
-	filename = "stdin";
-	do {
-		if (*argv) {
-			if (!strcmp(*argv, "-"))
-				fp = stdin;
-			else if ((fp = fopen(*argv, "r")) == NULL) {
-				warn("%s", *argv);
-				rval = 1;
-				++argv;
-				continue;
-			}
-			filename = *argv++;
+	if (*argv == NULL) {
+		cook_buf(stdin, "stdin");
+		return;
+	}
+
+	for (; *argv != NULL; argv++) {
+		if (!strcmp(*argv, "-")) {
+			cook_buf(stdin, "stdin");
+			clearerr(stdin);
+			continue;
 		}
-		cook_buf(fp, filename);
-		if (fp == stdin)
-			clearerr(fp);
-		else
-			(void)fclose(fp);
-	} while (*argv);
+		if ((fp = fopen(*argv, "r")) == NULL) {
+			warn("%s", *argv);
+			rval = 1;
+			continue;
+		}
+		cook_buf(fp, *argv);
+		fclose(fp);
+	}
 }
 
 void
@@ -198,27 +196,26 @@ cook_buf(FILE *fp, const char *filename)
 void
 raw_args(char **argv)
 {
-	char *filename;
 	int fd;
 
-	fd = fileno(stdin);
-	filename = "stdin";
-	do {
-		if (*argv) {
-			if (!strcmp(*argv, "-"))
-				fd = fileno(stdin);
-			else if ((fd = open(*argv, O_RDONLY, 0)) == -1) {
-				warn("%s", *argv);
-				rval = 1;
-				++argv;
-				continue;
-			}
-			filename = *argv++;
+	if (*argv == NULL) {
+		raw_cat(fileno(stdin), "stdin");
+		return;
+	}
+
+	for (; *argv != NULL; argv++) {
+		if (!strcmp(*argv, "-")) {
+			raw_cat(fileno(stdin), "stdin");
+			continue;
 		}
-		raw_cat(fd, filename);
-		if (fd != fileno(stdin))
-			(void)close(fd);
-	} while (*argv);
+		if ((fd = open(*argv, O_RDONLY, 0)) == -1) {
+			warn("%s", *argv);
+			rval = 1;
+			continue;
+		}
+		raw_cat(fd, *argv);
+		close(fd);
+	}
 }
 
 void
