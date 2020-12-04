@@ -1652,6 +1652,7 @@
 ./usr/share/man/man4/mvgpio.4
 ./usr/share/man/man4/mvicu.4
 ./usr/share/man/man4/mviic.4
+./usr/share/man/man4/mvkpcie.4
 ./usr/share/man/man4/mvneta.4
 ./usr/share/man/man4/mvpinctrl.4
 ./usr/share/man/man4/mvpp.4
