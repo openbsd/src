@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.74 2020/11/04 15:32:10 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.75 2020/12/05 19:10:47 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -697,7 +697,8 @@ ca_reload(struct iked *env)
 	X509_OBJECT		*xo;
 	X509			*x509;
 	DIR			*dir;
-	int			 i, len, iovcnt = 0;
+	int			 i, iovcnt = 0;
+	unsigned int		 len;
 
 	/*
 	 * Load CAs
