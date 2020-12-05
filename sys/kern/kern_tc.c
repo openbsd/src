@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.69 2020/09/16 00:00:40 cheloha Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.70 2020/12/05 04:46:34 gnezdo Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -821,6 +821,11 @@ inittimecounter(void)
 	(void)timecounter->tc_get_timecount(timecounter);
 }
 
+const struct sysctl_bounded_args tc_vars[] = {
+	{ KERN_TIMECOUNTER_TICK, &tc_tick, 1, 0 },
+	{ KERN_TIMECOUNTER_TIMESTEPWARNINGS, &timestepwarnings, 0, 1 },
+};
+
 /*
  * Return timecounter-related information.
  */
@@ -832,17 +837,13 @@ sysctl_tc(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (ENOTDIR);
 
 	switch (name[0]) {
-	case KERN_TIMECOUNTER_TICK:
-		return (sysctl_rdint(oldp, oldlenp, newp, tc_tick));
-	case KERN_TIMECOUNTER_TIMESTEPWARNINGS:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
-		    &timestepwarnings));
 	case KERN_TIMECOUNTER_HARDWARE:
 		return (sysctl_tc_hardware(oldp, oldlenp, newp, newlen));
 	case KERN_TIMECOUNTER_CHOICE:
 		return (sysctl_tc_choice(oldp, oldlenp, newp, newlen));
 	default:
-		return (EOPNOTSUPP);
+		return (sysctl_bounded_arr(tc_vars, nitems(tc_vars), name,
+		    namelen, oldp, oldlenp, newp, newlen));
 	}
 	/* NOTREACHED */
 }
