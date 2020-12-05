@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.391 2020/08/27 01:08:55 jmatthew Exp $ */
+/* $OpenBSD: acpi.c,v 1.392 2020/12/05 16:14:30 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -879,11 +879,20 @@ void
 acpi_gpio_event_task(void *arg0, int arg1)
 {
 	struct aml_node *node = arg0;
+	struct aml_value evt;
 	uint16_t pin = arg1;
 	char name[5];
 
-	snprintf(name, sizeof(name), "_E%.2X", pin);
-	aml_evalname(acpi_softc, node, name, 0, NULL, NULL);
+	if (pin < 256) {
+		snprintf(name, sizeof(name), "_E%.2X", pin);
+		if (aml_evalname(acpi_softc, node, name, 0, NULL, NULL) == 0)
+			return;
+	}
+
+	memset(&evt, 0, sizeof(evt));
+	evt.v_integer = pin;
+	evt.type = AML_OBJTYPE_INTEGER;
+	aml_evalname(acpi_softc, node, "_EVT", 1, &evt, NULL);
 }
 
 int
