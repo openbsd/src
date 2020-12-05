@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.62 2020/10/15 18:00:31 jsing Exp $ */
+/* $OpenBSD: d1_both.c,v 1.63 2020/12/05 19:34:57 tb Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -148,15 +148,15 @@
 			if (is_complete) for (ii = (((msg_len) - 1) >> 3) - 1; ii >= 0 ; ii--) \
 				if (bitmask[ii] != 0xff) { is_complete = 0; break; } }
 
-static unsigned char bitmask_start_values[] = {
+static const unsigned char bitmask_start_values[] = {
 	0xff, 0xfe, 0xfc, 0xf8, 0xf0, 0xe0, 0xc0, 0x80
 };
-static unsigned char bitmask_end_values[] = {
+static const unsigned char bitmask_end_values[] = {
 	0xff, 0x01, 0x03, 0x07, 0x0f, 0x1f, 0x3f, 0x7f
 };
 
 /* XDTLS:  figure out the right values */
-static unsigned int g_probable_mtu[] = {1500 - 28, 512 - 28, 256 - 28};
+static const unsigned int g_probable_mtu[] = {1500 - 28, 512 - 28, 256 - 28};
 
 static unsigned int dtls1_guess_mtu(unsigned int curr_mtu);
 static void dtls1_fix_message_header(SSL *s, unsigned long frag_off,
