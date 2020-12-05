@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.178 2020/10/11 12:45:52 guenther Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.179 2020/12/05 19:33:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -151,7 +151,7 @@ tls1_clear(SSL *s)
 	s->version = s->method->internal->version;
 }
 
-static int nid_list[] = {
+static const int nid_list[] = {
 	NID_sect163k1,		/* sect163k1 (1) */
 	NID_sect163r1,		/* sect163r1 (2) */
 	NID_sect163r2,		/* sect163r2 (3) */
