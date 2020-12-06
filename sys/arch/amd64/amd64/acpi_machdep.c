@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.92 2020/07/21 03:48:04 deraadt Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.93 2020/12/06 21:42:24 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -199,6 +199,12 @@ acpi_intr_establish(int irq, int flags, int level,
 #else
 	return NULL;
 #endif
+}
+
+void
+acpi_intr_disestablish(void *cookie)
+{
+	intr_disestablish(cookie);
 }
 
 u_int8_t *
