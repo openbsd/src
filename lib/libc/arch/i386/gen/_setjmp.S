@@ -1,4 +1,4 @@
-/* $OpenBSD: _setjmp.S,v 1.7 2020/12/06 15:31:30 bluhm Exp $ */
+/* $OpenBSD: _setjmp.S,v 1.8 2020/12/06 18:13:15 bluhm Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -63,6 +63,8 @@ ENTRY(_setjmp)
 	movl	%ecx,(_JB_EBP * 4)(%eax)
 	movl	%esi,(_JB_ESI * 4)(%eax)
 	movl	%edi,(_JB_EDI * 4)(%eax)
+	stmxcsr	(_JB_MXCSR * 4)(%eax)
+	fnstcw	(_JB_FCW * 4)(%eax)
 	xorl	%eax,%eax
 	ret
 END(_setjmp)
@@ -73,6 +75,8 @@ ENTRY(_longjmp)
 	addl	$__jmpxor-1b,%ecx	# load cookie address
 	movl	4(%esp),%edx		# parameter, pointer to env
 	movl	8(%esp),%eax		# parameter, val
+	ldmxcsr	(_JB_MXCSR * 4)(%edx)
+	fldcw	(_JB_FCW * 4)(%edx)
 	movl	(_JB_EBX * 4)(%edx),%ebx
 	movl	(_JB_ESP * 4)(%edx),%esi
 	xorl	4(%ecx),%esi		# use esp cookie

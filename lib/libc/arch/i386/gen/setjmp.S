@@ -1,4 +1,4 @@
-/* $OpenBSD: setjmp.S,v 1.12 2020/12/06 15:31:30 bluhm Exp $ */
+/* $OpenBSD: setjmp.S,v 1.13 2020/12/06 18:13:15 bluhm Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -78,6 +78,8 @@ ENTRY(setjmp)
 	movl	8(%edx),%edx		# load eip cookie over cookie address
 	xorl	0(%esp),%edx		# caller address
 	movl	%edx,(_JB_EIP * 4)(%ecx)
+	stmxcsr	(_JB_MXCSR * 4)(%ecx)
+	fnstcw	(_JB_FCW * 4)(%ecx)
 	xorl	%eax,%eax
 	ret
 END(setjmp)
@@ -95,6 +97,8 @@ ENTRY(longjmp)
 
 	movl	4(%esp),%edx		# parameter, pointer to env
 	movl	8(%esp),%eax		# parameter, val
+	ldmxcsr	(_JB_MXCSR * 4)(%edx)
+	fldcw	(_JB_FCW * 4)(%edx)
 	movl	(_JB_EBX * 4)(%edx),%ebx
 	movl	(_JB_ESP * 4)(%edx),%esi
 	xorl	0(%ecx),%esi		# use esp cookie

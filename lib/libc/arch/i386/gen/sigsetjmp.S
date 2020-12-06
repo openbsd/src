@@ -1,4 +1,4 @@
-/* $OpenBSD: sigsetjmp.S,v 1.11 2020/12/06 15:31:30 bluhm Exp $ */
+/* $OpenBSD: sigsetjmp.S,v 1.12 2020/12/06 18:13:15 bluhm Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -67,6 +67,8 @@ ENTRY(sigsetjmp)
 	movl	4(%edx),%edx		# load eip cookie over cookie address
 	xorl	0(%esp),%edx
 	movl	%edx,(_JB_EIP * 4)(%ecx)
+	stmxcsr	(_JB_MXCSR * 4)(%ecx)
+	fnstcw	(_JB_FCW * 4)(%ecx)
 	xorl	%eax,%eax
 	ret
 END(sigsetjmp)
@@ -89,6 +91,8 @@ ENTRY(siglongjmp)
 
 	movl	4(%esp),%edx		# reload in case sigprocmask failed
 	movl	8(%esp),%eax		# parameter, val
+	ldmxcsr	(_JB_MXCSR * 4)(%edx)
+	fldcw	(_JB_FCW * 4)(%edx)
 	movl	(_JB_EBX * 4)(%edx),%ebx
 	movl	(_JB_ESP * 4)(%edx),%esi
 	xorl	8(%ecx),%esi		# use esp cookie
