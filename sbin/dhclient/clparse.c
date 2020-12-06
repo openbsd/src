@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.199 2020/05/13 20:55:41 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.200 2020/12/06 19:51:03 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -168,9 +168,11 @@ read_conf(char *name, char *ignore_list, struct ether_addr *hwaddr)
 
 	init_config();
 
-	new_parse(path_dhclient_conf);
-
-	if ((cfile = fopen(path_dhclient_conf, "r")) != NULL) {
+	if (path_dhclient_conf != NULL) {
+		cfile = fopen(path_dhclient_conf, "r");
+		if (cfile == NULL)
+			fatal("fopen(%s)", path_dhclient_conf);
+		new_parse(path_dhclient_conf);
 		for (;;) {
 			token = peek_token(NULL, cfile);
 			if (token == EOF)
