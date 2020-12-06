@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.688 2020/12/01 14:55:40 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.689 2020/12/06 17:40:43 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -95,7 +95,7 @@
 #include "log.h"
 #include "privsep.h"
 
-char *path_dhclient_conf = _PATH_DHCLIENT_CONF;
+char *path_dhclient_conf;
 char *path_lease_db;
 char *log_procname;
 
@@ -637,13 +637,18 @@ main(int argc, char *argv[])
 
 	log_setverbose(0);	/* Don't show log_debug() messages. */
 
+	if (lstat(_PATH_DHCLIENT_CONF, &sb) == 0)
+		path_dhclient_conf = _PATH_DHCLIENT_CONF;
+
 	while ((ch = getopt(argc, argv, "c:di:nrv")) != -1)
 		switch (ch) {
 		case 'c':
-			if (optarg == NULL)
-				usage();
-			cmd_opts |= OPT_CONFPATH;
-			path_dhclient_conf = optarg;
+			if (strlen(optarg) == 0)
+				path_dhclient_conf = NULL;
+			else if (lstat(optarg, &sb) == 0)
+				path_dhclient_conf = optarg;
+			else
+				fatal("lstat(%s)", optarg);
 			break;
 		case 'd':
 			cmd_opts |= OPT_FOREGROUND;
@@ -672,17 +677,6 @@ main(int argc, char *argv[])
 
 	if (argc != 1)
 		usage();
-
-	if ((cmd_opts & OPT_CONFPATH) != 0) {
-		if (lstat(path_dhclient_conf, &sb) == -1) {
-			/*
-			 * Non-existant file is OK. It lets you ignore
-			 * /etc/dhclient.conf for testing.
-			 */
-			if (errno != ENOENT)
-				fatal("lstat(%s)", path_dhclient_conf);
-		}
-	}
 
 	if ((cmd_opts & (OPT_FOREGROUND | OPT_NOACTION)) != 0)
 		cmd_opts |= OPT_VERBOSE;
