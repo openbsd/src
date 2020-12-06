@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_mmap.c,v 1.2 2020/11/09 23:18:51 bluhm Exp $	*/
+/*	$OpenBSD: t_mmap.c,v 1.3 2020/12/06 18:46:07 bluhm Exp $	*/
 /* $NetBSD: t_mmap.c,v 1.14 2020/06/26 07:50:11 jruoho Exp $ */
 
 /*-
@@ -175,14 +175,22 @@ ATF_TC_BODY(mmap_block, tc)
 	size_t len;
 	int fd = -1;
 
+#ifndef __OpenBSD__
+	/* works for us */
 	atf_tc_skip("The test case causes a panic " \
 	    "(PR kern/38889, PR kern/46592)");
+#endif
 
 	ATF_REQUIRE(sysctl(mib, miblen, NULL, &len, NULL, 0) == 0);
 	drives = malloc(len);
 	ATF_REQUIRE(drives != NULL);
 	ATF_REQUIRE(sysctl(mib, miblen, drives, &len, NULL, 0) == 0);
+#ifdef __OpenBSD__
+	/* devices separated by comma, disk uid by colon */
+	for (dk = strtok(drives, ",:"); dk != NULL; dk = strtok(NULL, ",:")) {
+#else
 	for (dk = strtok(drives, " "); dk != NULL; dk = strtok(NULL, " ")) {
+#endif
 		if (strncmp(dk, "dk", 2) == 0)
 			snprintf(dev, sizeof(dev), _PATH_DEV "%s", dk);
 		else
