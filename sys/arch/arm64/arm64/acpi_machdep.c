@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.9 2020/11/15 17:28:29 patrick Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.10 2020/12/06 21:19:55 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -175,6 +175,15 @@ acpi_intr_establish(int irq, int flags, int level,
 	aih->ih_ih = cookie;
 
 	return aih;
+}
+
+void
+acpi_intr_disestablish(void *cookie)
+{
+	struct arm_intr_handle *aih = cookie;
+	struct interrupt_controller *ic = aih->ih_ic;
+
+	ic->ic_disestablish(aih->ih_ih);
 }
 
 void

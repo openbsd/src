@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.112 2020/12/06 20:39:07 kettenis Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.113 2020/12/06 21:19:55 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -405,6 +405,7 @@ struct aml_node *acpi_find_pci(pci_chipset_tag_t, pcitag_t);
 
 void	*acpi_intr_establish(int, int, int, int (*)(void *), void *,
 	    const char *);
+void	acpi_intr_disestablish(void *);
 
 struct acpi_q *acpi_maptable(struct acpi_softc *sc, paddr_t,
 	    const char *, const char *, const char *, int);
