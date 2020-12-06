@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.51 2020/07/29 05:53:52 anton Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.52 2020/12/06 07:58:54 anton Exp $	*/
 /*      $NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $      */
 
 /*
@@ -705,13 +705,12 @@ wsmux_attach_sc(struct wsmux_softc *sc, struct wsevsrc *me)
 	}
 #endif
 	if (sc->sc_base.me_evp != NULL) {
-		/* Mux is open, so open the new subdevice */
-		DPRINTF(("%s: %s: calling open of %s\n", __func__,
-			 sc->sc_base.me_dv.dv_xname, me->me_dv.dv_xname));
+		/* Mux is open, try to open the subdevice. */
 		error = wsevsrc_open(me, sc->sc_base.me_evp);
 	} else {
-		DPRINTF(("%s: %s not open\n", __func__,
-			 sc->sc_base.me_dv.dv_xname));
+		/* Mux is closed, ensure that the subdevice is also closed. */
+		if (me->me_evp != NULL)
+			error = EBUSY;
 	}
 
 	if (error) {
