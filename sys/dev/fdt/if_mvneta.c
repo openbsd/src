@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvneta.c,v 1.14 2020/11/29 13:00:23 kettenis Exp $	*/
+/*	$OpenBSD: if_mvneta.c,v 1.15 2020/12/06 16:50:01 kettenis Exp $	*/
 /*	$NetBSD: if_mvneta.c,v 1.41 2015/04/15 10:15:40 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
@@ -753,6 +753,18 @@ mvneta_attach_deferred(struct device *self)
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 
 		if (sc->sc_inband_status) {
+			switch (sc->sc_phy_mode) {
+			case PHY_MODE_1000BASEX:
+				sc->sc_mii.mii_media_active =
+				    IFM_ETHER|IFM_1000_KX|IFM_FDX;
+				break;
+			case PHY_MODE_2500BASEX:
+				sc->sc_mii.mii_media_active =
+				    IFM_ETHER|IFM_2500_KX|IFM_FDX;
+				break;
+			default:
+				break;
+			}
 			mvneta_inband_statchg(sc);
 		} else {
 			sc->sc_mii.mii_media_status = IFM_AVALID|IFM_ACTIVE;
