@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.21 2020/11/19 13:31:07 kettenis Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.22 2020/12/06 21:20:41 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -487,7 +487,13 @@ acpipci_intr_establish(void *v, pci_intr_handle_t ih, int level,
 void
 acpipci_intr_disestablish(void *v, void *cookie)
 {
-	panic("%s", __func__);
+	struct arm_intr_handle *aih = cookie;
+	struct interrupt_controller *ic = aih->ih_ic;
+
+	if (ic->ic_establish_msi)
+		ic->ic_disestablish(aih->ih_ih);
+	else
+		acpi_intr_disestablish(cookie);
 }
 
 /*
