@@ -1,4 +1,4 @@
-/* $OpenBSD: _setjmp.S,v 1.6 2016/05/30 02:11:21 guenther Exp $ */
+/* $OpenBSD: _setjmp.S,v 1.7 2020/12/06 15:31:30 bluhm Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -32,6 +32,7 @@
  */
 
 #include <machine/asm.h>
+#include <machine/setjmp.h>
 
 	.global	__jmpxor
 
@@ -49,19 +50,19 @@ ENTRY(_setjmp)
 	call	1f
 1:	popl	%ecx
 	addl	$__jmpxor-1b,%ecx	# load cookie address
-	movl	4(%esp),%eax
-	movl	0(%esp),%edx
+	movl	4(%esp),%eax		# parameter, pointer to env
+	movl	0(%esp),%edx		# caller address
 	xorl	0(%ecx),%edx		# use eip cookie
-	movl	%edx, 0(%eax)
-	movl	%ebx, 4(%eax)
-	movl	%esp,   %edx
+	movl	%edx,(_JB_EIP * 4)(%eax)
+	movl	%ebx,(_JB_EBX * 4)(%eax)
+	movl	%esp,%edx
 	xorl	4(%ecx),%edx		# use esp cookie
-	movl	%edx, 8(%eax)
+	movl	%edx,(_JB_ESP * 4)(%eax)
 	movl	8(%ecx),%ecx		# load ebp cookie over cookie address
-	xorl	%ebp,   %ecx
-	movl	%ecx,12(%eax)
-	movl	%esi,16(%eax)
-	movl	%edi,20(%eax)
+	xorl	%ebp,%ecx
+	movl	%ecx,(_JB_EBP * 4)(%eax)
+	movl	%esi,(_JB_ESI * 4)(%eax)
+	movl	%edi,(_JB_EDI * 4)(%eax)
 	xorl	%eax,%eax
 	ret
 END(_setjmp)
@@ -70,18 +71,18 @@ ENTRY(_longjmp)
 	call	1f
 1:	popl	%ecx
 	addl	$__jmpxor-1b,%ecx	# load cookie address
-	movl	 4(%esp),%edx
-	movl	 8(%esp),%eax
-	movl	 4(%edx),%ebx
-	movl	 8(%edx),%esi		# load xor'ed esp into safe register
-	xorl	 4(%ecx),%esi		# use esp cookie
-	movl	   %esi, %esp		# un-xor'ed esp is safe to use
-	movl	12(%edx),%ebp
-	xorl	 8(%ecx),%ebp		# use ebp cookie
-	movl	16(%edx),%esi
-	movl	20(%edx),%edi
-	movl	 0(%ecx),%ecx		# load eip cookie over cookie address
-	xorl	 0(%edx),%ecx		# overwrite eip cookie
+	movl	4(%esp),%edx		# parameter, pointer to env
+	movl	8(%esp),%eax		# parameter, val
+	movl	(_JB_EBX * 4)(%edx),%ebx
+	movl	(_JB_ESP * 4)(%edx),%esi
+	xorl	4(%ecx),%esi		# use esp cookie
+	movl	%esi,%esp		# un-xor'ed esp is safe to use
+	movl	(_JB_EBP * 4)(%edx),%ebp
+	xorl	8(%ecx),%ebp		# use ebp cookie
+	movl	(_JB_ESI * 4)(%edx),%esi
+	movl	(_JB_EDI * 4)(%edx),%edi
+	movl	0(%ecx),%ecx		# load eip cookie over cookie address
+	xorl	(_JB_EIP * 4)(%edx),%ecx
 	testl	%eax,%eax
 	jnz	1f
 	incl	%eax
