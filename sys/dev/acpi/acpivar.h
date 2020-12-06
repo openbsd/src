@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.111 2020/08/27 01:08:55 jmatthew Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.112 2020/12/06 20:39:07 kettenis Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -69,8 +69,8 @@ struct acpi_attach_args {
 	uint64_t	 aaa_size[4];
 	bus_space_tag_t	 aaa_bst[4];
 	int		 aaa_naddr;
-	uint32_t	 aaa_irq[4];
-	uint32_t	 aaa_irq_flags[4];
+	uint32_t	 aaa_irq[8];
+	uint32_t	 aaa_irq_flags[8];
 	int		 aaa_nirq;
 };
 
