@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiacpi.c,v 1.8 2020/05/11 16:12:46 kettenis Exp $	*/
+/*	$OpenBSD: efiacpi.c,v 1.9 2020/12/06 17:57:03 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -466,8 +466,8 @@ efi_acpi_madt_gic_msi(struct acpi_madt_gic_msi *msi)
 	fdt_node_add_property(child, "msi-controller", NULL, 0);
 	fdt_node_add_property(child, "reg", reg, sizeof(reg));
 	if (msi->flags & ACPI_MADT_GIC_MSI_SPI_SELECT) {
-		uint32_t spi_base = msi->spi_base;
-		uint32_t spi_count = msi->spi_count;
+		uint32_t spi_base = htobe32(msi->spi_base);
+		uint32_t spi_count = htobe32(msi->spi_count);
 
 		fdt_node_add_property(child, "arm,msi-base-spi",
 		    &spi_base, sizeof(spi_base));
