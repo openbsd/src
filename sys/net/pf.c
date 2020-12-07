@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1094 2020/07/24 18:17:15 mvs Exp $ */
+/*	$OpenBSD: pf.c,v 1.1095 2020/12/07 08:29:41 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4161,7 +4161,7 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 		s->tag = tag;
 	}
 	if (pd->proto == IPPROTO_TCP && (th->th_flags & (TH_SYN|TH_ACK)) ==
-	    TH_SYN && r->keep_state == PF_STATE_SYNPROXY) {
+	    TH_SYN && r->keep_state == PF_STATE_SYNPROXY && pd->dir == PF_IN) {
 		int rtid = pd->rdomain;
 		if (act->rtableid >= 0)
 			rtid = act->rtableid;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.704 2020/10/01 14:02:08 kn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.705 2020/12/07 08:29:41 sashan Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -4042,6 +4042,12 @@ rule_consistent(struct pf_rule *r)
 		    "synproxy state or modulate state");
 		problems++;
 	}
+
+	if ((r->keep_state == PF_STATE_SYNPROXY) && (r->direction != PF_IN))
+		fprintf(stderr, "%s:%d: warning: "
+		    "synproxy used for inbound rules only, "
+		    "ignored for outbound\n", file->name, yylval.lineno);
+
 	if ((r->nat.addr.type != PF_ADDR_NONE ||
 	    r->rdr.addr.type != PF_ADDR_NONE) &&
 	    r->action != PF_MATCH && !r->keep_state) {
