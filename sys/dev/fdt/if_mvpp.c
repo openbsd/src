@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.42 2020/11/19 17:44:46 kettenis Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.43 2020/12/07 09:14:09 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -1513,6 +1513,22 @@ mvpp2_port_attach(struct device *parent, struct device *self, void *aux)
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 
 		if (sc->sc_inband_status) {
+			switch (sc->sc_phy_mode) {
+			case PHY_MODE_1000BASEX:
+				sc->sc_mii.mii_media_active =
+				    IFM_ETHER|IFM_1000_KX|IFM_FDX;
+				break;
+			case PHY_MODE_2500BASEX:
+				sc->sc_mii.mii_media_active =
+				    IFM_ETHER|IFM_2500_KX|IFM_FDX;
+				break;
+			case PHY_MODE_10GBASER:
+				sc->sc_mii.mii_media_active =
+				    IFM_ETHER|IFM_10G_KR|IFM_FDX;
+				break;
+			default:
+				break;
+			}
 			mvpp2_inband_statchg(sc);
 		} else {
 			sc->sc_mii.mii_media_status = IFM_AVALID|IFM_ACTIVE;
@@ -1983,9 +1999,11 @@ mvpp2_port_change(struct mvpp2_port *sc)
 			reg &= ~MVPP2_GMAC_CONFIG_MII_SPEED;
 			reg &= ~MVPP2_GMAC_CONFIG_GMII_SPEED;
 			reg &= ~MVPP2_GMAC_CONFIG_FULL_DUPLEX;
-			if (IFM_SUBTYPE(sc->sc_mii.mii_media_active) == IFM_2500_SX ||
+			if (IFM_SUBTYPE(sc->sc_mii.mii_media_active) == IFM_2500_KX ||
+			    IFM_SUBTYPE(sc->sc_mii.mii_media_active) == IFM_2500_SX ||
 			    IFM_SUBTYPE(sc->sc_mii.mii_media_active) == IFM_1000_CX ||
 			    IFM_SUBTYPE(sc->sc_mii.mii_media_active) == IFM_1000_LX ||
+			    IFM_SUBTYPE(sc->sc_mii.mii_media_active) == IFM_1000_KX ||
 			    IFM_SUBTYPE(sc->sc_mii.mii_media_active) == IFM_1000_SX ||
 			    IFM_SUBTYPE(sc->sc_mii.mii_media_active) == IFM_1000_T)
 				reg |= MVPP2_GMAC_CONFIG_GMII_SPEED;
