@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-redraw.c,v 1.81 2020/07/22 06:21:46 nicm Exp $ */
+/* $OpenBSD: screen-redraw.c,v 1.82 2020/12/07 09:46:58 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -407,7 +407,7 @@ screen_redraw_make_pane_status(struct client *c, struct window_pane *wp,
 	struct format_tree	*ft;
 	char			*expanded;
 	int			 pane_status = rctx->pane_status;
-	u_int			 width, i, cell_type, top, px, py;
+	u_int			 width, i, cell_type, px, py;
 	struct screen_write_ctx	 ctx;
 	struct screen		 old;
 
@@ -432,16 +432,12 @@ screen_redraw_make_pane_status(struct client *c, struct window_pane *wp,
 
 	screen_write_start(&ctx, &wp->status_screen);
 
-	if (rctx->statustop)
-		top = rctx->statuslines;
-	else
-		top = 0;
 	for (i = 0; i < width; i++) {
 		px = wp->xoff + 2 + i;
 		if (rctx->pane_status == PANE_STATUS_TOP)
-			py = top + wp->yoff - 1;
+			py = wp->yoff - 1;
 		else
-			py = top + wp->yoff + wp->sy;
+			py = wp->yoff + wp->sy;
 		cell_type = screen_redraw_type_of_cell(c, px, py, pane_status);
 		screen_redraw_border_set(wp, pane_lines, cell_type, &gc);
 		screen_write_cell(&ctx, &gc);
