@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.18 2020/12/01 18:47:25 anton Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.19 2020/12/07 20:14:35 anton Exp $	*/
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -104,17 +104,18 @@ static int	 yylex(void);
 /* Builtins */
 %token	BUILTIN PID TID
 /* Functions and Map operators */
-%token  F_DELETE FUNC0 FUNC1 FUNCN OP1 OP4 MOP0 MOP1
+%token  F_DELETE F_PRINT FUNC0 FUNC1 FUNCN OP1 OP4 MOP0 MOP1
 %token	<v.string>	STRING CSTRING
 %token	<v.number>	NUMBER
 
 %type	<v.string>	gvar
 %type	<v.i>		filterval oper builtin
-%type	<v.i>		BUILTIN F_DELETE FUNC0 FUNC1 FUNCN OP1 OP4 MOP0 MOP1
+%type	<v.i>		BUILTIN F_DELETE F_PRINT FUNC0 FUNC1 FUNCN OP1 OP4
+%type	<v.i>		MOP0 MOP1
 %type	<v.probe>	probe
 %type	<v.filter>	predicate
 %type	<v.stmt>	action stmt stmtlist
-%type	<v.arg>		expr vargs map mexpr term
+%type	<v.arg>		expr vargs map mexpr printargs term
 %type	<v.rtype>	beginend
 
 %left	'|'
@@ -192,6 +193,10 @@ vargs		: expr
 		| vargs ',' expr		{ $$ = ba_append($1, $3); }
 		;
 
+printargs	: gvar				{ $$ = bv_get($1); }
+		| gvar ',' expr			{ $$ = ba_append(bv_get($1), $3); }
+		;
+
 NL		: /* empty */ | '\n'
 		;
 
@@ -202,6 +207,7 @@ stmt		: ';' NL			{ $$ = NULL; }
 		| FUNC1 '(' expr ')'		{ $$ = bs_new($1, $3, NULL); }
 		| FUNC0 '(' ')'			{ $$ = bs_new($1, NULL, NULL); }
 		| F_DELETE '(' map ')'		{ $$ = bm_op($1, $3, NULL); }
+		| F_PRINT '(' printargs ')'	{ $$ = bs_new($1, $3, NULL); }
 		| gvar '=' OP1 '(' expr ')'	{ $$ = bh_inc($1, $5, NULL); }
 		| gvar '=' OP4 '(' expr ',' vargs ')' {$$ = bh_inc($1, $5, $7);}
 		;
@@ -579,7 +585,7 @@ lookup(char *s)
 		{ "min",	MOP1,		B_AT_MF_MIN },
 		{ "nsecs",	BUILTIN,	B_AT_BI_NSECS },
 		{ "pid",	PID,		0 /*B_AT_BI_PID*/ },
-		{ "print",	FUNC1,		B_AC_PRINT },
+		{ "print",	F_PRINT,	B_AC_PRINT },
 		{ "printf",	FUNCN,		B_AC_PRINTF },
 		{ "retval",	BUILTIN,	B_AT_BI_RETVAL },
 		{ "sum",	MOP1,		B_AT_MF_SUM },

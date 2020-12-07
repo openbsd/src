@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bt.5,v 1.9 2020/09/18 18:05:20 jmc Exp $
+.\"	$OpenBSD: bt.5,v 1.10 2020/12/07 20:14:35 anton Exp $
 .\"
 .\" Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 18 2020 $
+.Dd $Mdocdate: December 7 2020 $
 .Dt BT 5
 .Os
 .Sh NAME
@@ -141,6 +141,11 @@ Returns the maximum recorded value.
 Returns the minimum recorded value.
 .It Fn print "@map"
 Print all pairs from
+.Va @map .
+.It Fn print "@map" n
+Print only the first
+.Va n
+entries in
 .Va @map .
 .It Fn printf "fmt" ...
 Print formatted string
