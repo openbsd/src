@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.229 2020/12/04 15:16:45 mpi Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.230 2020/12/07 16:55:28 mpi Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
 #include <sys/acct.h>
 #include <sys/ktrace.h>
 #include <sys/sched.h>
+#include <sys/smr.h>
 #include <sys/sysctl.h>
 #include <sys/pool.h>
 #include <sys/mman.h>
@@ -179,8 +180,8 @@ process_initialize(struct process *pr, struct proc *p)
 {
 	/* initialize the thread links */
 	pr->ps_mainproc = p;
-	TAILQ_INIT(&pr->ps_threads);
-	TAILQ_INSERT_TAIL(&pr->ps_threads, p, p_thr_link);
+	SMR_TAILQ_INIT(&pr->ps_threads);
+	SMR_TAILQ_INSERT_TAIL_LOCKED(&pr->ps_threads, p, p_thr_link);
 	pr->ps_refcnt = 1;
 	p->p_p = pr;
 
@@ -557,7 +558,7 @@ thread_fork(struct proc *curp, void *stack, void *tcb, pid_t *tidptr,
 
 	LIST_INSERT_HEAD(&allproc, p, p_list);
 	LIST_INSERT_HEAD(TIDHASH(p->p_tid), p, p_hash);
-	TAILQ_INSERT_TAIL(&pr->ps_threads, p, p_thr_link);
+	SMR_TAILQ_INSERT_TAIL_LOCKED(&pr->ps_threads, p, p_thr_link);
 
 	/*
 	 * if somebody else wants to take us to single threaded mode,

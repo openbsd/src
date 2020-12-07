@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.301 2020/11/10 17:26:54 cheloha Exp $	*/
+/*	$OpenBSD: proc.h,v 1.302 2020/12/07 16:55:29 mpi Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -50,6 +50,7 @@
 #include <sys/resource.h>		/* For struct rusage */
 #include <sys/rwlock.h>			/* For struct rwlock */
 #include <sys/sigio.h>			/* For struct sigio */
+#include <sys/smr.h>
 
 #ifdef _KERNEL
 #include <sys/atomic.h>
@@ -156,6 +157,9 @@ struct unveil;
  *	R	rlimit_lock
  *	S	scheduler lock
  *	T	itimer_mtx
+ *
+ *  For SMR related structures that allow lock-free reads, the write lock
+ *  is indicated below.
  */
 struct process {
 	/*
@@ -167,7 +171,7 @@ struct process {
 	struct	ucred *ps_ucred;	/* Process owner's identity. */
 
 	LIST_ENTRY(process) ps_list;	/* List of all processes. */
-	TAILQ_HEAD(,proc) ps_threads;	/* Threads in this process. */
+	SMR_TAILQ_HEAD(,proc) ps_threads; /* [K] Threads in this process. */
 
 	LIST_ENTRY(process) ps_pglist;	/* List of processes in pgrp. */
 	struct	process *ps_pptr; 	/* Pointer to parent process. */
@@ -330,16 +334,20 @@ struct p_inentry {
 /*
  *  Locks used to protect struct members in this file:
  *	I	immutable after creation
- *	S	scheduler lock
+ *	K	kernel lock
  *	l	read only reference, see lim_read_enter()
  *	o	owned (read/modified only) by this thread
+ *	S	scheduler lock
+ *
+ *  For SMR related structures that allow lock-free reads, the write lock
+ *  is indicated below.
  */
 struct proc {
 	TAILQ_ENTRY(proc) p_runq;	/* [S] current run/sleep queue */
 	LIST_ENTRY(proc) p_list;	/* List of all threads. */
 
 	struct	process *p_p;		/* [I] The process of this thread. */
-	TAILQ_ENTRY(proc) p_thr_link;	/* Threads in a process linkage. */
+	SMR_TAILQ_ENTRY(proc) p_thr_link; /* [K] Threads in a process linkage */
 
 	TAILQ_ENTRY(proc) p_fut_link;	/* Threads in a futex linkage. */
 	struct	futex	*p_futex;	/* Current sleeping futex. */
@@ -425,8 +433,9 @@ struct proc {
 #define	SONPROC	7		/* Thread is currently on a CPU. */
 
 #define	P_ZOMBIE(p)	((p)->p_stat == SDEAD)
-#define	P_HASSIBLING(p)	(TAILQ_FIRST(&(p)->p_p->ps_threads) != (p) || \
-			 TAILQ_NEXT((p), p_thr_link) != NULL)
+#define	P_HASSIBLING(p)							\
+	(SMR_TAILQ_FIRST_LOCKED(&(p)->p_p->ps_threads) != (p) ||	\
+	 SMR_TAILQ_NEXT_LOCKED((p), p_thr_link) != NULL)
 
 /*
  * These flags are per-thread and kept in p_flag

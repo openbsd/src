@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.383 2020/11/16 06:42:12 gnezdo Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.384 2020/12/07 16:55:29 mpi Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1596,7 +1596,7 @@ again:
 		if (!dothreads)
 			continue;
 
-		TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link) {
+		SMR_TAILQ_FOREACH_LOCKED(p, &pr->ps_threads, p_thr_link) {
 			if (buflen >= elem_size && elem_count > 0) {
 				fill_kproc(pr, kproc, p, show_pointers);
 				error = copyout(kproc, dp, elem_size);
@@ -1696,7 +1696,7 @@ fill_kproc(struct process *pr, struct kinfo_proc *ki, struct proc *p,
 	} else {
 		ki->p_pctcpu = 0;
 		ki->p_stat = (pr->ps_flags & PS_ZOMBIE) ? SDEAD : SIDL;
-		TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link) {
+		SMR_TAILQ_FOREACH_LOCKED(p, &pr->ps_threads, p_thr_link) {
 			ki->p_pctcpu += p->p_pctcpu;
 			/* find best state: ONPROC > RUN > STOP > SLEEP > .. */
 			if (p->p_stat == SONPROC || ki->p_stat == SONPROC)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.301 2020/09/13 09:42:31 claudio Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.302 2020/12/07 16:55:28 mpi Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -519,7 +519,7 @@ main(void *framep)
 	 */
 	LIST_FOREACH(pr, &allprocess, ps_list) {
 		nanouptime(&pr->ps_start);
-		TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link) {
+		SMR_TAILQ_FOREACH_LOCKED(p, &pr->ps_threads, p_thr_link) {
 			nanouptime(&p->p_cpu->ci_schedstate.spc_runtime);
 			timespecclear(&p->p_rtime);
 		}

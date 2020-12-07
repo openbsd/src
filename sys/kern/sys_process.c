@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.84 2020/10/19 08:19:46 mpi Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.85 2020/12/07 16:55:29 mpi Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -301,7 +301,7 @@ ptrace_ctrl(struct proc *p, int req, pid_t pid, caddr_t addr, int data)
 			error = ESRCH;
 			goto fail;
 		}
-		t = TAILQ_FIRST(&tr->ps_threads);
+		t = SMR_TAILQ_FIRST_LOCKED(&tr->ps_threads);
 		break;
 
 	/* calls that accept a PID or a thread ID */
@@ -561,9 +561,9 @@ ptrace_kstate(struct proc *p, int req, pid_t pid, void *addr)
 				return ESRCH;
 			if (t->p_p != tr)
 				return EINVAL;
-			t = TAILQ_NEXT(t, p_thr_link);
+			t = SMR_TAILQ_NEXT_LOCKED(t, p_thr_link);
 		} else {
-			t = TAILQ_FIRST(&tr->ps_threads);
+			t = SMR_TAILQ_FIRST_LOCKED(&tr->ps_threads);
 		}
 
 		if (t == NULL)
@@ -754,7 +754,7 @@ process_tprfind(pid_t tpid, struct proc **tp)
 
 		if (tr == NULL)
 			return NULL;
-		*tp = TAILQ_FIRST(&tr->ps_threads);
+		*tp = SMR_TAILQ_FIRST_LOCKED(&tr->ps_threads);
 		return tr;
 	}
 }

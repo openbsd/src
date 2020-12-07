@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.164 2020/09/09 16:29:14 mpi Exp $	*/
+/*	$OpenBSD: tty.c,v 1.165 2020/12/07 16:55:29 mpi Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -2118,7 +2118,7 @@ process_sum(struct process *pr, fixpt_t *estcpup)
 
 	ret = 0;
 	estcpu = 0;
-	TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link) {
+	SMR_TAILQ_FOREACH_LOCKED(p, &pr->ps_threads, p_thr_link) {
 		if (p->p_stat == SRUN || p->p_stat == SONPROC)
 			ret = 1;
 		estcpu += p->p_pctcpu;
@@ -2220,12 +2220,12 @@ update_pickpr:
 		 *  - prefer living
 		 * Otherwise take the newest thread
 		 */
-		pick = p = TAILQ_FIRST(&pickpr->ps_threads);
+		pick = p = SMR_TAILQ_FIRST_LOCKED(&pickpr->ps_threads);
 		if (p == NULL)
 			goto empty;
 		run = p->p_stat == SRUN || p->p_stat == SONPROC;
 		pctcpu = p->p_pctcpu;
-		while ((p = TAILQ_NEXT(p, p_thr_link)) != NULL) {
+		while ((p = SMR_TAILQ_NEXT_LOCKED(p, p_thr_link)) != NULL) {
 			run2 = p->p_stat == SRUN || p->p_stat == SONPROC;
 			pctcpu2 = p->p_pctcpu;
 			if (run) {

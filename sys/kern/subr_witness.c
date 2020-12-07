@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.38 2020/11/12 05:49:26 semarie Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.39 2020/12/07 16:55:29 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -1888,7 +1888,7 @@ witness_process_has_locks(struct process *pr)
 {
 	struct proc *p;
 
-	TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link) {
+	SMR_TAILQ_FOREACH_LOCKED(p, &pr->ps_threads, p_thr_link) {
 		if (witness_thread_has_locks(p))
 			return (1);
 	}
@@ -2108,7 +2108,7 @@ db_witness_list_all(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	LIST_FOREACH(pr, &allprocess, ps_list) {
 		if (!witness_process_has_locks(pr))
 			continue;
-		TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link) {
+		SMR_TAILQ_FOREACH_LOCKED(p, &pr->ps_threads, p_thr_link) {
 			if (!witness_thread_has_locks(p))
 				continue;
 			db_printf("Process %d (%s) thread %p (%d)\n",

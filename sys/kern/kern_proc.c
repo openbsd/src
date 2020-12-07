@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.88 2020/09/26 15:15:22 kettenis Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.89 2020/12/07 16:55:28 mpi Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -502,7 +502,7 @@ db_kill_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 		return;
 	}
 
-	p = TAILQ_FIRST(&pr->ps_threads);
+	p = SMR_TAILQ_FIRST_LOCKED(&pr->ps_threads);
 
 	/* Send uncatchable SIGABRT for coredump */
 	sigabort(p);
@@ -558,7 +558,7 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 	while (pr != NULL) {
 		ppr = pr->ps_pptr;
 
-		TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link) {
+		SMR_TAILQ_FOREACH_LOCKED(p, &pr->ps_threads, p_thr_link) {
 #ifdef MULTIPROCESSOR
 			if (__mp_lock_held(&kernel_lock, p->p_cpu))
 				has_kernel_lock = 1;
