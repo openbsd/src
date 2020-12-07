@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.315 2020/10/11 07:05:28 mpi Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.316 2020/12/07 20:09:24 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -8494,7 +8494,6 @@ iwm_rx_pkt(struct iwm_softc *sc, struct iwm_rx_data *data, struct mbuf_list *ml)
 	uint32_t offset = 0, nextoff = 0, nmpdu = 0, len;
 	struct mbuf *m0, *m;
 	const size_t minsz = sizeof(pkt->len_n_flags) + sizeof(pkt->hdr);
-	size_t remain = IWM_RBUF_SIZE;
 	int qid, idx, code, handled = 1;
 
 	bus_dmamap_sync(sc->sc_dmat, data->map, 0, IWM_RBUF_SIZE,
@@ -8531,7 +8530,7 @@ iwm_rx_pkt(struct iwm_softc *sc, struct iwm_rx_data *data, struct mbuf_list *ml)
 			break;
 
 		case IWM_REPLY_RX_MPDU_CMD: {
-			size_t maxlen = remain - minsz;
+			size_t maxlen = IWM_RBUF_SIZE - offset - minsz;
 			nextoff = offset +
 			    roundup(len, IWM_FH_RSCSR_FRAME_ALIGN);
 			nextpkt = (struct iwm_rx_packet *)
@@ -8569,11 +8568,6 @@ iwm_rx_pkt(struct iwm_softc *sc, struct iwm_rx_data *data, struct mbuf_list *ml)
 					iwm_rx_mpdu(sc, m, pkt->data,
 					    maxlen, ml);
 			}
-
-			if (offset + minsz < remain)
-				remain -= offset;
-			else
-				remain = minsz;
  			break;
 		}
 
