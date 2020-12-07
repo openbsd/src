@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.25 2020/09/14 18:45:19 jasper Exp $ */
+/*	$OpenBSD: btrace.c,v 1.26 2020/12/07 18:28:09 bluhm Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -635,18 +635,31 @@ const char *
 builtin_stack(struct dt_evt *dtev, int kernel)
 {
 	struct stacktrace *st = &dtev->dtev_kstack;
-	static char buf[4096];
+	static char buf[4096], *bp;
 	size_t i;
-	int n = 0;
+	int sz;
 
 	if (!kernel || st->st_count == 0)
 		return "";
 
+	buf[0] = '\0';
+	bp = buf;
+	sz = sizeof(buf);
 	for (i = 0; i < st->st_count; i++) {
-		n += kelf_snprintsym(buf + n, sizeof(buf) - 1 - n,
-		    st->st_pc[i]);
+		int l;
+
+		l = kelf_snprintsym(bp, sz - 1, st->st_pc[i]);
+		if (l < 0)
+			break;
+		if (l >= sz - 1) {
+			bp += sz - 1;
+			sz = 1;
+			break;
+		}
+		bp += l;
+		sz -= l;
 	}
-	snprintf(buf + n, sizeof(buf) - 1 - n, "\n");
+	snprintf(bp, sz, "\n");
 
 	return buf;
 }
@@ -656,7 +669,7 @@ builtin_arg(struct dt_evt *dtev, enum bt_argtype dat)
 {
 	static char buf[sizeof("18446744073709551615")]; /* UINT64_MAX */
 
-	snprintf(buf, sizeof(buf) - 1, "%lu",
+	snprintf(buf, sizeof(buf), "%lu",
 	    dtev->dtev_sysargs[dat - B_AT_BI_ARG0]);
 
 	return buf;
@@ -879,6 +892,7 @@ ba2hash(struct bt_arg *ba, struct dt_evt *dtev)
 	char *hash;
 	int l, len;
 
+	buf[0] = '\0';
 	l = snprintf(buf, sizeof(buf), "%s", ba2str(ba, dtev));
 	if (l < 0 || (size_t)l > sizeof(buf)) {
 		warn("string too long %d > %lu", l, sizeof(buf));
@@ -948,6 +962,7 @@ ba2bucket(struct bt_arg *ba, struct bt_arg *brange, struct dt_evt *dtev,
 		*pstep = step;
 	}
 
+	buf[0] = '\0';
 	l = snprintf(buf, sizeof(buf), "%lu", bucket);
 	if (l < 0 || (size_t)l > sizeof(buf)) {
 		warn("string too long %d > %lu", l, sizeof(buf));
@@ -1051,12 +1066,13 @@ ba2str(struct bt_arg *ba, struct dt_evt *dtev)
 	struct bt_var *bv;
 	const char *str;
 
+	buf[0] = '\0';
 	switch (ba->ba_type) {
 	case B_AT_STR:
 		str = (const char *)ba->ba_value;
 		break;
 	case B_AT_LONG:
-		snprintf(buf, sizeof(buf) - 1, "%ld",(long)ba->ba_value);
+		snprintf(buf, sizeof(buf), "%ld",(long)ba->ba_value);
 		str = buf;
 		break;
 	case B_AT_BI_KSTACK:
@@ -1069,26 +1085,26 @@ ba2str(struct bt_arg *ba, struct dt_evt *dtev)
 		str = dtev->dtev_comm;
 		break;
 	case B_AT_BI_CPU:
-		snprintf(buf, sizeof(buf) - 1, "%u", dtev->dtev_cpu);
+		snprintf(buf, sizeof(buf), "%u", dtev->dtev_cpu);
 		str = buf;
 		break;
 	case B_AT_BI_PID:
-		snprintf(buf, sizeof(buf) - 1, "%d", dtev->dtev_pid);
+		snprintf(buf, sizeof(buf), "%d", dtev->dtev_pid);
 		str = buf;
 		break;
 	case B_AT_BI_TID:
-		snprintf(buf, sizeof(buf) - 1, "%d", dtev->dtev_tid);
+		snprintf(buf, sizeof(buf), "%d", dtev->dtev_tid);
 		str = buf;
 		break;
 	case B_AT_BI_NSECS:
-		snprintf(buf, sizeof(buf) - 1, "%llu", builtin_nsecs(dtev));
+		snprintf(buf, sizeof(buf), "%llu", builtin_nsecs(dtev));
 		str = buf;
 		break;
 	case B_AT_BI_ARG0 ... B_AT_BI_ARG9:
 		str = builtin_arg(dtev, ba->ba_type);
 		break;
 	case B_AT_BI_RETVAL:
-		snprintf(buf, sizeof(buf) - 1, "%ld", (long)dtev->dtev_sysretval[0]);
+		snprintf(buf, sizeof(buf), "%ld", (long)dtev->dtev_sysretval[0]);
 		str = buf;
 		break;
 	case B_AT_MAP:
@@ -1100,7 +1116,7 @@ ba2str(struct bt_arg *ba, struct dt_evt *dtev)
 		str = ba2str(ba_read(ba), dtev);
 		break;
 	case B_AT_OP_ADD ... B_AT_OP_OR:
-		snprintf(buf, sizeof(buf) - 1, "%ld", ba2long(ba, dtev));
+		snprintf(buf, sizeof(buf), "%ld", ba2long(ba, dtev));
 		str = buf;
 		break;
 	case B_AT_MF_COUNT:
@@ -1269,10 +1285,10 @@ debug_rule_name(struct bt_rule *r)
 	assert(r->br_type == B_RT_PROBE);
 
 	if (r->br_probe->bp_rate) {
-		snprintf(buf, sizeof(buf) - 1, "%s:%s:%u", bp->bp_prov,
+		snprintf(buf, sizeof(buf), "%s:%s:%u", bp->bp_prov,
 		    bp->bp_unit, bp->bp_rate);
 	} else {
-		snprintf(buf, sizeof(buf) - 1, "%s:%s:%s", bp->bp_prov,
+		snprintf(buf, sizeof(buf), "%s:%s:%s", bp->bp_prov,
 		    bp->bp_unit, bp->bp_name);
 	}
 

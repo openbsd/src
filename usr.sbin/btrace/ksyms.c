@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksyms.c,v 1.2 2020/08/13 11:35:21 mpi Exp $ */
+/*	$OpenBSD: ksyms.c,v 1.3 2020/12/07 18:28:09 bluhm Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
@@ -121,10 +121,19 @@ kelf_snprintsym(char *str, size_t size, unsigned long pc)
 		cnt = snprintf(str, size, "\n%s", name);
 	else
 		cnt = snprintf(str, size, "\n0x%llx", sym.st_value);
+	if (cnt < 0)
+		return cnt;
 
 	offset = pc - sym.st_value;
-	if (offset != 0)
-		cnt += snprintf(str + cnt, size - cnt, "+0x%llx", offset);
+	if (offset != 0) {
+		int l;
+
+		l = snprintf(str + cnt, size > (size_t)cnt ? size - cnt : 0,
+		    "+0x%llx", offset);
+		if (l < 0)
+			return l;
+		cnt += l;
+	}
 
 	return cnt;
 
