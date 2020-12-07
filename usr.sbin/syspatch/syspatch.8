@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syspatch.8,v 1.21 2020/07/25 15:45:44 solene Exp $
+.\"	$OpenBSD: syspatch.8,v 1.22 2020/12/07 21:19:28 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2016 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 25 2020 $
+.Dd $Mdocdate: December 7 2020 $
 .Dt SYSPATCH 8
 .Os
 .Sh NAME
@@ -64,6 +64,8 @@ of installed patches.
 .El
 .Sh EXIT STATUS
 .Ex -std syspatch
+In particular, 2 indicates that applying patches was requested but no
+additional patch was installed.
 .Sh SEE ALSO
 .Xr signify 1 ,
 .Xr installurl 5 ,
