@@ -38,8 +38,8 @@ typedef uint64_t __le64;
 typedef uint64_t __be64; 
 
 typedef bus_addr_t dma_addr_t;
-typedef bus_addr_t phys_addr_t;
-typedef bus_addr_t resource_size_t;
+typedef paddr_t phys_addr_t;
+typedef paddr_t resource_size_t;
 
 typedef off_t loff_t;
 
