@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.47 2020/11/25 13:49:00 mpi Exp $	*/
+/*	$OpenBSD: event.h,v 1.48 2020/12/07 11:15:50 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -223,7 +223,7 @@ extern void	knote_processexit(struct proc *);
 extern int	kqueue_register(struct kqueue *kq,
 		    struct kevent *kev, struct proc *p);
 extern int	kqueue_scan(struct kqueue_scan_state *, int, struct kevent *,
-		    struct timespec *, struct kevent *, struct proc *, int *);
+		    struct timespec *, struct proc *, int *);
 extern void	kqueue_scan_setup(struct kqueue_scan_state *, struct kqueue *);
 extern void	kqueue_scan_finish(struct kqueue_scan_state *);
 extern int	filt_seltrue(struct knote *kn, long hint);

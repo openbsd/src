@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.145 2020/11/25 13:49:00 mpi Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.146 2020/12/07 11:15:50 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -567,6 +567,7 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 	struct timespec ts;
 	struct timespec *tsp = NULL;
 	int i, n, nerrors, error;
+	int ready, total;
 	struct kevent kev[KQ_NEVENTS];
 
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
@@ -595,9 +596,9 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 	kq = fp->f_data;
 	nerrors = 0;
 
-	while (SCARG(uap, nchanges) > 0) {
-		n = SCARG(uap, nchanges) > KQ_NEVENTS ?
-		    KQ_NEVENTS : SCARG(uap, nchanges);
+	while ((n = SCARG(uap, nchanges)) > 0) {
+		if (n > nitems(kev))
+			n = nitems(kev);
 		error = copyin(SCARG(uap, changelist), kev,
 		    n * sizeof(struct kevent));
 		if (error)
@@ -635,11 +636,30 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 
 	kqueue_scan_setup(&scan, kq);
 	FRELE(fp, p);
-	error = kqueue_scan(&scan, SCARG(uap, nevents), SCARG(uap, eventlist),
-	    tsp, kev, p, &n);
+	/*
+	 * Collect as many events as we can.  The timeout on successive
+	 * loops is disabled (kqueue_scan() becomes non-blocking).
+	 */
+	total = 0;
+	error = 0;
+	while ((n = SCARG(uap, nevents) - total) > 0) {
+		if (n > nitems(kev))
+			n = nitems(kev);
+		ready = kqueue_scan(&scan, n, kev, tsp, p, &error);
+		if (ready == 0)
+			break;
+		error = copyout(kev, SCARG(uap, eventlist) + total,
+		    sizeof(struct kevent) * ready);
+#ifdef KTRACE
+		if (KTRPOINT(p, KTR_STRUCT))
+			ktrevent(p, kev, ready);
+#endif
+		total += ready;
+		if (error || ready < n)
+			break;
+	}
 	kqueue_scan_finish(&scan);
-
-	*retval = n;
+	*retval = total;
 	return (error);
 
  done:
@@ -893,22 +913,22 @@ kqueue_sleep(struct kqueue *kq, struct timespec *tsp)
 	return (error);
 }
 
+/*
+ * Scan the kqueue, blocking if necessary until the target time is reached.
+ * If tsp is NULL we block indefinitely.  If tsp->ts_secs/nsecs are both
+ * 0 we do not block at all.
+ */
 int
 kqueue_scan(struct kqueue_scan_state *scan, int maxevents,
-    struct kevent *ulistp, struct timespec *tsp, struct kevent *kev,
-    struct proc *p, int *retval)
+    struct kevent *kevp, struct timespec *tsp, struct proc *p, int *errorp)
 {
 	struct kqueue *kq = scan->kqs_kq;
-	struct kevent *kevp;
 	struct knote *kn;
-	int s, count, nkev, error = 0;
+	int s, count, nkev = 0, error = 0;
 
-	nkev = 0;
-	kevp = kev;
 	count = maxevents;
 	if (count == 0)
 		goto done;
-
 retry:
 	KASSERT(count == maxevents);
 	KASSERT(nkev == 0);
@@ -920,6 +940,10 @@ retry:
 
 	s = splhigh();
 	if (kq->kq_count == 0) {
+		/*
+		 * Successive loops are only necessary if there are more
+		 * ready events to gather, so they don't need to block.
+		 */
 		if ((tsp != NULL && !timespecisset(tsp)) ||
 		    scan->kqs_nevent != 0) {
 			splx(s);
@@ -958,14 +982,8 @@ retry:
 	while (count) {
 		kn = TAILQ_NEXT(&scan->kqs_start, kn_tqe);
 		if (kn->kn_filter == EVFILT_MARKER) {
-			if (kn == &scan->kqs_end) {
-				TAILQ_REMOVE(&kq->kq_head, &scan->kqs_start,
-				    kn_tqe);
-				splx(s);
-				if (scan->kqs_nevent == 0)
-					goto retry;
-				goto done;
-			}
+			if (kn == &scan->kqs_end)
+				break;
 
 			/* Move start marker past another thread's marker. */
 			TAILQ_REMOVE(&kq->kq_head, &scan->kqs_start, kn_tqe);
@@ -1001,6 +1019,9 @@ retry:
 		count--;
 		scan->kqs_nevent++;
 
+		/*
+		 * Post-event action on the note
+		 */
 		if (kn->kn_flags & EV_ONESHOT) {
 			splx(s);
 			kn->kn_fop->f_detach(kn);
@@ -1026,35 +1047,14 @@ retry:
 			knote_release(kn);
 		}
 		kqueue_check(kq);
-		if (nkev == KQ_NEVENTS) {
-			splx(s);
-#ifdef KTRACE
-			if (KTRPOINT(p, KTR_STRUCT))
-				ktrevent(p, kev, nkev);
-#endif
-			error = copyout(kev, ulistp,
-			    sizeof(struct kevent) * nkev);
-			ulistp += nkev;
-			nkev = 0;
-			kevp = kev;
-			s = splhigh();
-			if (error)
-				break;
-		}
 	}
 	TAILQ_REMOVE(&kq->kq_head, &scan->kqs_start, kn_tqe);
 	splx(s);
+	if (scan->kqs_nevent == 0)
+		goto retry;
 done:
-	if (nkev != 0) {
-#ifdef KTRACE
-		if (KTRPOINT(p, KTR_STRUCT))
-			ktrevent(p, kev, nkev);
-#endif
-		error = copyout(kev, ulistp,
-		    sizeof(struct kevent) * nkev);
-	}
-	*retval = maxevents - count;
-	return (error);
+	*errorp = error;
+	return (nkev);
 }
 
 void
