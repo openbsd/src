@@ -473,7 +473,7 @@ int ttm_tt_swapout(struct ttm_tt *ttm, struct uvm_object *persistent_swap_storag
 
 	uvm_objunwire(swap_storage, 0, ttm->num_pages << PAGE_SHIFT);
 
-	ttm->bdev->driver->ttm_tt_unpopulate(ttm);
+	ttm_tt_unpopulate(ttm);
 	ttm->swap_storage = swap_storage;
 	ttm->page_flags |= TTM_PAGE_FLAG_SWAPPED;
 	if (persistent_swap_storage)
