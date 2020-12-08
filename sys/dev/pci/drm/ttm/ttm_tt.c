@@ -282,7 +282,9 @@ int ttm_dma_tt_init(struct ttm_dma_tt *ttm_dma, struct ttm_buffer_object *bo,
 	    &ttm_dma->map)) {
 		km_free(ttm_dma->segs, round_page(ttm->num_pages *
 		    sizeof(bus_dma_segment_t)), &kv_any, &kp_zero);
-		ttm_tt_destroy(ttm);
+		kvfree(ttm->pages);
+		ttm->pages = NULL;
+		ttm_dma->dma_address = NULL;
 		pr_err("Failed allocating page table\n");
 		return -ENOMEM;
 	}
@@ -322,7 +324,12 @@ int ttm_sg_tt_init(struct ttm_dma_tt *ttm_dma, struct ttm_buffer_object *bo,
 	    &ttm_dma->map)) {
 		km_free(ttm_dma->segs, round_page(ttm->num_pages *
 		    sizeof(bus_dma_segment_t)), &kv_any, &kp_zero);
-		ttm_tt_destroy(ttm);
+		if (ttm->pages)
+			kvfree(ttm->pages);
+		else
+			kvfree(ttm_dma->dma_address);
+		ttm->pages = NULL;
+		ttm_dma->dma_address = NULL;
 		pr_err("Failed allocating page table\n");
 		return -ENOMEM;
 	}
