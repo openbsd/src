@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.108 2020/11/19 17:06:40 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.109 2020/12/08 12:26:31 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -907,7 +907,7 @@ uvm_fault(vm_map_t orig_map, vaddr_t vaddr, vm_fault_t fault_type,
 	boolean_t shadowed;
 	struct vm_anon *anons_store[UVM_MAXRANGE], **anons;
 	struct vm_page *pages[UVM_MAXRANGE];
-	int error;
+	int error = ERESTART;
 
 	uvmexp.faults++;	/* XXX: locking? */
 	TRACEPOINT(uvm, fault, vaddr, fault_type, access_type, NULL);
@@ -923,43 +923,32 @@ uvm_fault(vm_map_t orig_map, vaddr_t vaddr, vm_fault_t fault_type,
 		flt.narrow = FALSE;	/* normal fault */
 
 
-	/* "goto ReFault" means restart the page fault from ground zero. */
-ReFault:
-	anons = anons_store;
+	/*
+	 * ReFault
+	 */
+	while (error == ERESTART) {
+		anons = anons_store;
 
-	error = uvm_fault_check(&ufi, &flt, &anons, access_type);
-	switch (error) {
-	case 0:
-		break;
-	case ERESTART:
-		goto ReFault;
-	default:
-		return error;
-	}
+		error = uvm_fault_check(&ufi, &flt, &anons, access_type);
+		if (error != 0)
+			continue;
 
-	/* (shadowed == TRUE) if there is an anon at the faulting address */
-	shadowed = uvm_fault_upper_lookup(&ufi, &flt, anons, pages);
-
-	/* handle case 1: fault on an anon in our amap */
-	if (shadowed == TRUE) {
-		error = uvm_fault_upper(&ufi, &flt, anons, fault_type,
-		    access_type);
-		switch (error) {
-		case ERESTART:
-			goto ReFault;
-		default:
-			return error;
+		/* True if there is an anon at the faulting address */
+		shadowed = uvm_fault_upper_lookup(&ufi, &flt, anons, pages);
+		if (shadowed == TRUE) {
+			/* case 1: fault on an anon in our amap */
+			error = uvm_fault_upper(&ufi, &flt, anons, fault_type,
+			    access_type);
+		} else {
+			/* case 2: fault on backing object or zero fill */
+			KERNEL_LOCK();
+			error = uvm_fault_lower(&ufi, &flt, pages, fault_type,
+			    access_type);
+			KERNEL_UNLOCK();
 		}
 	}
 
-	/* handle case 2: faulting on backing object or zero fill */
-	error = uvm_fault_lower(&ufi, &flt, pages, fault_type, access_type);
-	switch (error) {
-	case ERESTART:
-		goto ReFault;
-	default:
-		return error;
-	}
+	return error;
 }
 
 int
