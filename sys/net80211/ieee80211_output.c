@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.131 2020/05/19 18:57:57 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.132 2020/12/08 15:52:04 stsp Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -941,7 +941,7 @@ ieee80211_add_rsn_body(u_int8_t *frm, struct ieee80211com *ic,
 {
 	const u_int8_t *oui = wpa ? MICROSOFT_OUI : IEEE80211_OUI;
 	u_int8_t *pcount;
-	u_int16_t count;
+	u_int16_t count, rsncaps;
 
 	/* write Version field */
 	LE_WRITE_2(frm, 1); frm += 2;
@@ -1017,7 +1017,16 @@ ieee80211_add_rsn_body(u_int8_t *frm, struct ieee80211com *ic,
 		return frm;
 
 	/* write RSN Capabilities field */
-	LE_WRITE_2(frm, ni->ni_rsncaps); frm += 2;
+	rsncaps = (ni->ni_rsncaps & (IEEE80211_RSNCAP_PTKSA_RCNT_MASK |
+	    IEEE80211_RSNCAP_GTKSA_RCNT_MASK));
+	if (ic->ic_caps & IEEE80211_C_MFP) {
+		rsncaps |= IEEE80211_RSNCAP_MFPC;
+		if (ic->ic_flags & IEEE80211_F_MFPR)
+			rsncaps |= IEEE80211_RSNCAP_MFPR;
+	}
+	if (ic->ic_flags & IEEE80211_F_PBAR)
+		rsncaps |= IEEE80211_RSNCAP_PBAC;
+	LE_WRITE_2(frm, rsncaps); frm += 2;
 
 	if (ni->ni_flags & IEEE80211_NODE_PMKID) {
 		/* write PMKID Count field */
