@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.222 2020/12/08 10:28:22 tobhe Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.223 2020/12/08 14:40:55 tobhe Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -850,30 +850,10 @@ ieee80211_input_ba(struct ieee80211com *ic, struct mbuf *m,
 	/* store Rx meta-data too */
 	rxi->rxi_flags |= IEEE80211_RXI_AMPDU_DONE;
 	ba->ba_buf[idx].rxi = *rxi;
+	ba->ba_gapwait++;
 
-	if (ba->ba_buf[ba->ba_head].m == NULL) {
-		if (ba->ba_gapwait < (ba->ba_winsize - 1)) {
-			if (ba->ba_gapwait == 0) {
-				timeout_add_msec(&ba->ba_gap_to,
-				    IEEE80211_BA_GAP_TIMEOUT);
-			}
-			ba->ba_gapwait++;
-		} else {
-			/*
-			 * A full BA window worth of frames is now waiting.
-			 * Skip the missing frame at the head of the window.
-			 */
-			int skipped = ieee80211_input_ba_gap_skip(ba);
-			ic->ic_stats.is_ht_rx_ba_frame_lost += skipped;
-			ba->ba_gapwait = 0;
-			if (timeout_pending(&ba->ba_gap_to))
-				timeout_del(&ba->ba_gap_to);
-		}
-	} else {
-		ba->ba_gapwait = 0;
-		if (timeout_pending(&ba->ba_gap_to))
-			timeout_del(&ba->ba_gap_to);
-	}
+	if (ba->ba_buf[ba->ba_head].m == NULL && ba->ba_gapwait == 1)
+		timeout_add_msec(&ba->ba_gap_to, IEEE80211_BA_GAP_TIMEOUT);
 
 	ieee80211_input_ba_flush(ic, ni, ba, ml);
 }
@@ -905,6 +885,7 @@ ieee80211_input_ba_seq(struct ieee80211com *ic, struct ieee80211_node *ni,
 			ieee80211_inputm(ifp, ba->ba_buf[ba->ba_head].m,
 			    ni, &ba->ba_buf[ba->ba_head].rxi, ml);
 			ba->ba_buf[ba->ba_head].m = NULL;
+			ba->ba_gapwait--;
 		} else
 			ic->ic_stats.is_ht_rx_ba_frame_lost++;
 		ba->ba_head = (ba->ba_head + 1) % IEEE80211_BA_MAX_WINSZ;
@@ -927,12 +908,18 @@ ieee80211_input_ba_flush(struct ieee80211com *ic, struct ieee80211_node *ni,
 		ieee80211_inputm(ifp, ba->ba_buf[ba->ba_head].m, ni,
 		    &ba->ba_buf[ba->ba_head].rxi, ml);
 		ba->ba_buf[ba->ba_head].m = NULL;
+		ba->ba_gapwait--;
 
 		ba->ba_head = (ba->ba_head + 1) % IEEE80211_BA_MAX_WINSZ;
 		/* move window forward */
 		ba->ba_winstart = (ba->ba_winstart + 1) & 0xfff;
 	}
 	ba->ba_winend = (ba->ba_winstart + ba->ba_winsize - 1) & 0xfff;
+
+	if (timeout_pending(&ba->ba_gap_to))
+		timeout_del(&ba->ba_gap_to);
+	if (ba->ba_gapwait)
+		timeout_add_msec(&ba->ba_gap_to, IEEE80211_BA_GAP_TIMEOUT);
 }
 
 /* 
@@ -1000,6 +987,7 @@ ieee80211_ba_move_window(struct ieee80211com *ic, struct ieee80211_node *ni,
 			ieee80211_inputm(ifp, ba->ba_buf[ba->ba_head].m, ni,
 			    &ba->ba_buf[ba->ba_head].rxi, ml);
 			ba->ba_buf[ba->ba_head].m = NULL;
+			ba->ba_gapwait--;
 		} else
 			ic->ic_stats.is_ht_rx_ba_frame_lost++;
 		ba->ba_head = (ba->ba_head + 1) % IEEE80211_BA_MAX_WINSZ;
