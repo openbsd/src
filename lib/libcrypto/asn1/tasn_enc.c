@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_enc.c,v 1.22 2019/04/01 15:48:04 jsing Exp $ */
+/* $OpenBSD: tasn_enc.c,v 1.23 2020/12/08 15:06:42 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -61,6 +61,7 @@
 
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
+#include <openssl/err.h>
 #include <openssl/objects.h>
 
 static int asn1_i2d_ex_primitive(ASN1_VALUE **pval, unsigned char **out,
@@ -152,9 +153,27 @@ ASN1_item_ex_i2d(ASN1_VALUE **pval, unsigned char **out, const ASN1_ITEM *it,
 		break;
 
 	case ASN1_ITYPE_MSTRING:
+		/*
+		 * It never makes sense for multi-strings to have implicit
+		 * tagging, so if tag != -1, then this looks like an error in
+		 * the template.
+		 */
+		if (tag != -1) {
+			ASN1error(ASN1_R_BAD_TEMPLATE);
+			return 0;
+		}
 		return asn1_i2d_ex_primitive(pval, out, it, -1, aclass);
 
 	case ASN1_ITYPE_CHOICE:
+		/*
+		 * It never makes sense for CHOICE types to have implicit
+		 * tagging, so if tag != -1, then this looks like an error in
+		 * the template.
+		 */
+		if (tag != -1) {
+			ASN1error(ASN1_R_BAD_TEMPLATE);
+			return 0;
+		}
 		if (asn1_cb && !asn1_cb(ASN1_OP_I2D_PRE, pval, it, NULL))
 			return 0;
 		i = asn1_get_choice_selector(pval, it);

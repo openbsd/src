@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_err.c,v 1.21 2018/03/29 02:29:24 inoguchi Exp $ */
+/* $OpenBSD: asn1_err.c,v 1.22 2020/12/08 15:06:42 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -85,6 +85,7 @@ static ERR_STRING_DATA ASN1_str_reasons[] = {
 	{ERR_REASON(ASN1_R_BAD_OBJECT_HEADER)    , "bad object header"},
 	{ERR_REASON(ASN1_R_BAD_PASSWORD_READ)    , "bad password read"},
 	{ERR_REASON(ASN1_R_BAD_TAG)              , "bad tag"},
+	{ERR_REASON(ASN1_R_BAD_TEMPLATE)         , "bad template"},
 	{ERR_REASON(ASN1_R_BMPSTRING_IS_WRONG_LENGTH), "bmpstring is wrong length"},
 	{ERR_REASON(ASN1_R_BN_LIB)               , "bn lib"},
 	{ERR_REASON(ASN1_R_BOOLEAN_IS_WRONG_LENGTH), "boolean is wrong length"},

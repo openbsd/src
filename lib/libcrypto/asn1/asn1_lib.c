@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_lib.c,v 1.44 2018/11/17 09:34:11 tb Exp $ */
+/* $OpenBSD: asn1_lib.c,v 1.45 2020/12/08 15:06:42 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -388,6 +388,8 @@ ASN1_STRING_cmp(const ASN1_STRING *a, const ASN1_STRING *b)
 {
 	int i;
 
+	if (a == NULL || b == NULL)
+		return -1;
 	i = (a->length - b->length);
 	if (i == 0) {
 		i = memcmp(a->data, b->data, a->length);

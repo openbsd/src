@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_genn.c,v 1.1 2020/06/04 15:19:31 jsing Exp $ */
+/* $OpenBSD: x509_genn.c,v 1.2 2020/12/08 15:06:42 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -117,16 +117,17 @@ OTHERNAME_free(OTHERNAME *a)
 	ASN1_item_free((ASN1_VALUE *)a, &OTHERNAME_it);
 }
 
+/* Uses explicit tagging since DIRECTORYSTRING is a CHOICE type */
 static const ASN1_TEMPLATE EDIPARTYNAME_seq_tt[] = {
 	{
-		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_OPTIONAL,
+		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
 		.tag = 0,
 		.offset = offsetof(EDIPARTYNAME, nameAssigner),
 		.field_name = "nameAssigner",
 		.item = &DIRECTORYSTRING_it,
 	},
 	{
-		.flags = ASN1_TFLG_IMPLICIT | ASN1_TFLG_OPTIONAL,
+		.flags = ASN1_TFLG_EXPLICIT,
 		.tag = 1,
 		.offset = offsetof(EDIPARTYNAME, partyName),
 		.field_name = "partyName",
@@ -324,6 +325,37 @@ GENERAL_NAME_dup(GENERAL_NAME *a)
 	return ASN1_item_dup(&GENERAL_NAME_it, a);
 }
 
+static int
+EDIPARTYNAME_cmp(const EDIPARTYNAME *a, const EDIPARTYNAME *b)
+{
+	int res;
+
+	/*
+	 * Shouldn't be possible in a valid GENERAL_NAME, but we handle it
+	 * anyway. OTHERNAME_cmp treats NULL != NULL, so we do the same here.
+	 */
+	if (a == NULL || b == NULL)
+		return -1;
+	if (a->nameAssigner == NULL && b->nameAssigner != NULL)
+		return -1;
+	if (a->nameAssigner != NULL && b->nameAssigner == NULL)
+		return 1;
+	/* If we get here, both have nameAssigner set or both unset. */
+	if (a->nameAssigner != NULL) {
+		res = ASN1_STRING_cmp(a->nameAssigner, b->nameAssigner);
+		if (res != 0)
+			return res;
+	}
+	/*
+	 * partyName is required, so these should never be NULL. We treat it in
+	 * the same way as the a == NULL || b == NULL case above.
+	 */
+	if (a->partyName == NULL || b->partyName == NULL)
+		return -1;
+
+	return ASN1_STRING_cmp(a->partyName, b->partyName);
+}
+
 /* Returns 0 if they are equal, != 0 otherwise. */
 int
 GENERAL_NAME_cmp(GENERAL_NAME *a, GENERAL_NAME *b)
@@ -334,8 +366,11 @@ GENERAL_NAME_cmp(GENERAL_NAME *a, GENERAL_NAME *b)
 		return -1;
 	switch (a->type) {
 	case GEN_X400:
+		result = ASN1_TYPE_cmp(a->d.x400Address, b->d.x400Address);
+		break;
+
 	case GEN_EDIPARTY:
-		result = ASN1_TYPE_cmp(a->d.other, b->d.other);
+		result = EDIPARTYNAME_cmp(a->d.ediPartyName, b->d.ediPartyName);
 		break;
 
 	case GEN_OTHERNAME:
@@ -384,8 +419,11 @@ GENERAL_NAME_set0_value(GENERAL_NAME *a, int type, void *value)
 {
 	switch (type) {
 	case GEN_X400:
+		a->d.x400Address = value;
+		break;
+
 	case GEN_EDIPARTY:
-		a->d.other = value;
+		a->d.ediPartyName = value;
 		break;
 
 	case GEN_OTHERNAME:
@@ -420,8 +458,10 @@ GENERAL_NAME_get0_value(GENERAL_NAME *a, int *ptype)
 		*ptype = a->type;
 	switch (a->type) {
 	case GEN_X400:
+		return a->d.x400Address;
+
 	case GEN_EDIPARTY:
-		return a->d.other;
+		return a->d.ediPartyName;
 
 	case GEN_OTHERNAME:
 		return a->d.otherName;
