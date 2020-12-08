@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.223 2020/12/08 14:40:55 tobhe Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.224 2020/12/08 20:17:32 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -2752,15 +2752,7 @@ ieee80211_recv_addba_req(struct ieee80211com *ic, struct mbuf *m,
 	ba->ba_params = (params & IEEE80211_ADDBA_BA_POLICY);
 	ba->ba_params |= ((ba->ba_winsize << IEEE80211_ADDBA_BUFSZ_SHIFT) |
 	    (tid << IEEE80211_ADDBA_TID_SHIFT));
-#if 0
-	/*
-	 * XXX A-MSDUs inside A-MPDUs expose a problem with bad TCP connection
-	 * sharing behaviour. One connection eats all available bandwidth
-	 * while others stall. Leave this disabled for now to give packets
-	 * from disparate connections better chances of interleaving.
-	 */
 	ba->ba_params |= IEEE80211_ADDBA_AMSDU;
-#endif
 	ba->ba_winstart = ssn;
 	ba->ba_winend = (ba->ba_winstart + ba->ba_winsize - 1) & 0xfff;
 	/* allocate and setup our reordering buffer */
