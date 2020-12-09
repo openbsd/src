@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.19 2020/11/06 04:22:18 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.20 2020/12/09 11:25:08 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -168,16 +168,6 @@ mft_parse_filehash(struct parse *p, const ASN1_OCTET_STRING *os)
 	} else if ((sz = strlen(fn)) <= 4) {
 		warnx("%s: filename must be large enough for suffix part: %s",
 		    p->fn, fn);
-		goto out;
-	}
-
-	if (strcasecmp(fn + sz - 4, ".roa") &&
-	    strcasecmp(fn + sz - 4, ".crl") &&
-	    strcasecmp(fn + sz - 4, ".cer")) {
-		/* ignore unknown files */
-		free(fn);
-		fn = NULL;
-		rc = 1;
 		goto out;
 	}
 
