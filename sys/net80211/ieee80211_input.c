@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.226 2020/12/09 15:50:58 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.227 2020/12/09 21:54:11 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1153,14 +1153,12 @@ ieee80211_amsdu_decap(struct ieee80211com *ic, struct mbuf *m,
 	/* strip 802.11 header */
 	m_adj(m, hdrlen);
 
-	for (;;) {
+	while (m->m_pkthdr.len >= ETHER_HDR_LEN + LLC_SNAPFRAMELEN) {
 		/* process an A-MSDU subframe */
-		if (m->m_len < ETHER_HDR_LEN + LLC_SNAPFRAMELEN) {
-			m = m_pullup(m, ETHER_HDR_LEN + LLC_SNAPFRAMELEN);
-			if (m == NULL) {
-				ic->ic_stats.is_rx_decap++;
-				break;
-			}
+		m = m_pullup(m, ETHER_HDR_LEN + LLC_SNAPFRAMELEN);
+		if (m == NULL) {
+			ic->ic_stats.is_rx_decap++;
+			break;
 		}
 		eh = mtod(m, struct ether_header *);
 		/* examine 802.3 header */
@@ -1207,15 +1205,13 @@ ieee80211_amsdu_decap(struct ieee80211com *ic, struct mbuf *m,
 		}
 		ieee80211_enqueue_data(ic, m, ni, mcast, ml);
 
-		if (n->m_pkthdr.len == 0) {
-			m_freem(n);
-			break;
-		}
 		m = n;
 		/* remove padding */
 		pad = ((len + 3) & ~3) - len;
 		m_adj(m, pad);
 	}
+
+	m_freem(m);
 }
 
 /*
