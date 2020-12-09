@@ -1,3 +1,4 @@
+/*	$OpenBSD: wg_cookie.h,v 1.2 2020/12/09 05:53:33 tb Exp $ */
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  * Copyright (C) 2019-2020 Matt Dunwoodie <ncon@noconroy.net>
