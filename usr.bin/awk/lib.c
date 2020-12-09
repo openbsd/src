@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.41 2020/07/30 17:46:54 millert Exp $	*/
+/*	$OpenBSD: lib.c,v 1.42 2020/12/09 20:00:11 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -31,6 +31,7 @@ THIS SOFTWARE.
 #include <stdlib.h>
 #include <stdarg.h>
 #include <limits.h>
+#include <math.h>
 #include "awk.h"
 
 char	EMPTY[] = { '\0' };
@@ -61,10 +62,10 @@ static Cell dollar1 = { OCELL, CFLD, NULL, EMPTY, 0.0, FLD|STR|DONTFREE, NULL, N
 
 void recinit(unsigned int n)
 {
-	if ( (record = malloc(n)) == NULL
-	  || (fields = malloc(n+1)) == NULL
-	  || (fldtab = calloc(nfields+2, sizeof(*fldtab))) == NULL
-	  || (fldtab[0] = malloc(sizeof(**fldtab))) == NULL)
+	if ( (record = (char *) malloc(n)) == NULL
+	  || (fields = (char *) malloc(n+1)) == NULL
+	  || (fldtab = (Cell **) calloc(nfields+2, sizeof(*fldtab))) == NULL
+	  || (fldtab[0] = (Cell *) malloc(sizeof(**fldtab))) == NULL)
 		FATAL("out of space for $0 and fields");
 	*record = '\0';
 	*fldtab[0] = dollar0;
@@ -79,7 +80,7 @@ void makefields(int n1, int n2)		/* create $n1..$n2 inclusive */
 	int i;
 
 	for (i = n1; i <= n2; i++) {
-		fldtab[i] = malloc(sizeof(**fldtab));
+		fldtab[i] = (Cell *) malloc(sizeof(**fldtab));
 		if (fldtab[i] == NULL)
 			FATAL("out of space in makefields %d", i);
 		*fldtab[i] = dollar1;
@@ -124,7 +125,7 @@ void savefs(void)
 	size_t len = strlen(getsval(fsloc));
 	if (len >= len_inputFS) {
 		len_inputFS = len + 1;
-		inputFS = realloc(inputFS, len_inputFS);
+		inputFS = (char *) realloc(inputFS, len_inputFS);
 		if (inputFS == NULL)
 			FATAL("field separator %.10s... is too long", *FS);
 	}
@@ -180,12 +181,14 @@ int getrec(char **pbuf, int *pbufsize, bool isrecord)	/* get next input record *
 			innew = false;
 		if (c != 0 || buf[0] != '\0') {	/* normal record */
 			if (isrecord) {
+				double result;
+
 				if (freeable(fldtab[0]))
 					xfree(fldtab[0]->sval);
 				fldtab[0]->sval = buf;	/* buf == record */
 				fldtab[0]->tval = REC | STR | DONTFREE;
-				if (is_number(fldtab[0]->sval)) {
-					fldtab[0]->fval = atof(fldtab[0]->sval);
+				if (is_number(fldtab[0]->sval, & result)) {
+					fldtab[0]->fval = result;
 					fldtab[0]->tval |= NUM;
 				}
 			}
@@ -292,6 +295,7 @@ void setclvar(char *s)	/* set var=value from s */
 {
 	char *p;
 	Cell *q;
+	double result;
 
 	for (p=s; *p != '='; p++)
 		;
@@ -299,8 +303,8 @@ void setclvar(char *s)	/* set var=value from s */
 	p = qstring(p, '\0');
 	q = setsymtab(s, p, 0.0, STR, symtab);
 	setsval(q, p);
-	if (is_number(q->sval)) {
-		q->fval = atof(q->sval);
+	if (is_number(q->sval, & result)) {
+		q->fval = result;
 		q->tval |= NUM;
 	}
 	DPRINTF("command line set %s to |%s|\n", s, p);
@@ -324,7 +328,7 @@ void fldbld(void)	/* create fields from current record */
 	n = strlen(r);
 	if (n > fieldssize) {
 		xfree(fields);
-		if ((fields = malloc(n+2)) == NULL) /* possibly 2 final \0s */
+		if ((fields = (char *) malloc(n+2)) == NULL) /* possibly 2 final \0s */
 			FATAL("out of space for fields in fldbld %d", n);
 		fieldssize = n;
 	}
@@ -401,9 +405,11 @@ void fldbld(void)	/* create fields from current record */
 	lastfld = i;
 	donefld = true;
 	for (j = 1; j <= lastfld; j++) {
+		double result;
+
 		p = fldtab[j];
-		if(is_number(p->sval)) {
-			p->fval = atof(p->sval);
+		if(is_number(p->sval, & result)) {
+			p->fval = result;
 			p->tval |= NUM;
 		}
 	}
@@ -473,7 +479,7 @@ void growfldtab(int n)	/* make new fields up to at least $n */
 		nf = n;
 	s = (nf+1) * (sizeof (struct Cell *));  /* freebsd: how much do we need? */
 	if (s / sizeof(struct Cell *) - 1 == (size_t)nf) /* didn't overflow */
-		fldtab = realloc(fldtab, s);
+		fldtab = (Cell **) realloc(fldtab, s);
 	else					/* overflow sizeof int */
 		xfree(fldtab);	/* make it null */
 	if (fldtab == NULL)
@@ -493,7 +499,7 @@ int refldbld(const char *rec, const char *fs)	/* build fields from reg expr in F
 	n = strlen(rec);
 	if (n > fieldssize) {
 		xfree(fields);
-		if ((fields = malloc(n+1)) == NULL)
+		if ((fields = (char *) malloc(n+1)) == NULL)
 			FATAL("out of space for fields in refldbld %d", n);
 		fieldssize = n;
 	}
@@ -758,24 +764,67 @@ int isclvar(const char *s)	/* is s of form var=something ? */
 /* strtod is supposed to be a proper test of what's a valid number */
 /* appears to be broken in gcc on linux: thinks 0x123 is a valid FP number */
 /* wrong: violates 4.10.1.4 of ansi C standard */
+
 /* well, not quite. As of C99, hex floating point is allowed. so this is
- * a bit of a mess.
+ * a bit of a mess. We work around the mess by checking for a hexadecimal
+ * value and disallowing it. Similarly, we now follow gawk and allow only
+ * +nan, -nan, +inf, and -inf for NaN and infinity values.
  */
 
-#include <math.h>
-int is_number(const char *s)
+/*
+ * This routine now has a more complicated interface, the main point
+ * being to avoid the double conversion of a string to double, and
+ * also to convey out, if requested, the information that the numeric
+ * value was a leading string or is all of the string. The latter bit
+ * is used in getfval().
+ */
+
+bool is_valid_number(const char *s, bool trailing_stuff_ok,
+			bool *no_trailing, double *result)
 {
 	double r;
 	char *ep;
+	bool retval = false;
+
+	if (no_trailing)
+		*no_trailing = false;
+
+	while (*s == ' ' || *s == '\t' || *s == '\n' || *s == '\r')
+		s++;
+
+	if (s[0] == '0' && tolower(s[1]) == 'x')	// no hex floating point, sorry
+		return false;
+
+	// allow +nan, -nan, +inf, -inf, any other letter, no
+	if (s[0] == '+' || s[0] == '-') {
+		if (strcasecmp(s+1, "nan") == 0 || strcasecmp(s+1, "inf") == 0)
+			return true;
+		else if (! isdigit(s[1]) && s[1] != '.')
+			return false;
+	}
+	else if (! isdigit(s[0]) && s[0] != '.')
+		return false;
+
 	errno = 0;
 	r = strtod(s, &ep);
 	if (ep == s || r == HUGE_VAL || errno == ERANGE)
-		return 0;
-	/* allow \r as well. windows files aren't going to go away. */
+		return false;
+
+	if (result != NULL)
+		*result = r;
+
+	/*
+	 * check for trailing stuff
+	 * allow \r as well. windows files aren't going to go away.
+	 */
 	while (*ep == ' ' || *ep == '\t' || *ep == '\n' || *ep == '\r')
 		ep++;
-	if (*ep == '\0')
-		return 1;
-	else
-		return 0;
+
+	if (no_trailing)
+		*no_trailing = (*ep == '\0');
+
+	// return true if found the end, or trailing stuff is allowed
+	retval = (*ep == '\0') || trailing_stuff_ok;
+
+	return retval;
 }

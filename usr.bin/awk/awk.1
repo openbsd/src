@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.58 2020/11/05 16:04:39 jmc Exp $
+.\"	$OpenBSD: awk.1,v 1.59 2020/12/09 20:00:11 millert Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -22,7 +22,7 @@
 .\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 5 2020 $
+.Dd $Mdocdate: December 9 2020 $
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -280,7 +280,7 @@ and concatenation
 .Pq indicated by whitespace .
 The operators
 .Ic \&! ++ \-\- += \-= *= /= %= ^=
-.Ic > >= < <= == != ?:
+.Ic > >= < <= == != ?\&:
 are also available in expressions.
 Variables may be scalars, array elements
 (denoted
@@ -919,6 +919,58 @@ Print an error message to standard error:
 .Bd -literal -offset indent
 { print "error!" > "/dev/stderr" }
 .Ed
+.Sh UNUSUAL FLOATING-POINT VALUES
+.Nm
+was designed before IEEE 754 arithmetic defined Not-A-Number (NaN)
+and Infinity values, which are supported by all modern floating-point
+hardware.
+.Pp
+Because
+.Nm
+uses
+.Xr strtod 3
+and
+.Xr atof 3
+to convert string values to double-precision floating-point values,
+modern C libraries also convert strings starting with
+.Dv inf
+and
+.Dv nan
+into infinity and NaN values respectively.
+This led to strange results,
+with something like this:
+.Pp
+.Li echo nancy | awk '{ print $1 + 0 }'
+.Pp
+printing
+.Dv nan
+instead of zero.
+.Pp
+.Nm
+now follows GNU
+.Nm ,
+and prefilters string values before attempting
+to convert them to numbers, as follows:
+.Bl -tag -width Ds
+.It Hexadecimal values
+Hexadecimal values (allowed since C99) convert to zero, as they did
+prior to C99.
+.It NaN values
+The two strings
+.Dq +NAN
+and
+.Dq -NAN
+(case independent) convert to NaN.
+No others do.
+(NaNs can have signs.)
+.It Infinity values
+The two strings
+.Dq +INF
+and
+.Dq -INF
+(case independent) convert to positive and negative infinity, respectively.
+No others do.
+.El
 .Sh SEE ALSO
 .Xr cut 1 ,
 .Xr date 1 ,

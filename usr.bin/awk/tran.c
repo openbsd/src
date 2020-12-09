@@ -1,4 +1,4 @@
-/*	$OpenBSD: tran.c,v 1.31 2020/08/11 16:57:05 millert Exp $	*/
+/*	$OpenBSD: tran.c,v 1.32 2020/12/09 20:00:11 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -130,9 +130,11 @@ void arginit(int ac, char **av)	/* set up ARGV and ARGC */
 	free(cp->sval);
 	cp->sval = (char *) ARGVtab;
 	for (i = 0; i < ac; i++) {
+		double result;
+
 		snprintf(temp, sizeof temp, "%d", i);
-		if (is_number(*av))
-			setsymtab(temp, *av, atof(*av), STR|NUM, ARGVtab);
+		if (is_number(*av, & result))
+			setsymtab(temp, *av, result, STR|NUM, ARGVtab);
 		else
 			setsymtab(temp, *av, 0.0, STR, ARGVtab);
 		av++;
@@ -149,13 +151,15 @@ void envinit(char **envp)	/* set up ENVIRON variable */
 	free(cp->sval);
 	cp->sval = (char *) ENVtab;
 	for ( ; *envp; envp++) {
+		double result;
+
 		if ((p = strchr(*envp, '=')) == NULL)
 			continue;
 		if( p == *envp ) /* no left hand side name in env string */
 			continue;
 		*p++ = 0;	/* split into two strings at = */
-		if (is_number(p))
-			setsymtab(*envp, p, atof(p), STR|NUM, ENVtab);
+		if (is_number(p, & result))
+			setsymtab(*envp, p, result, STR|NUM, ENVtab);
 		else
 			setsymtab(*envp, p, 0.0, STR, ENVtab);
 		p[-1] = '=';	/* restore in case env is passed down to a shell */
@@ -167,8 +171,8 @@ Array *makesymtab(int n)	/* make a new symbol table */
 	Array *ap;
 	Cell **tp;
 
-	ap = malloc(sizeof(*ap));
-	tp = calloc(n, sizeof(*tp));
+	ap = (Array *) malloc(sizeof(*ap));
+	tp = (Cell **) calloc(n, sizeof(*tp));
 	if (ap == NULL || tp == NULL)
 		FATAL("out of space in makesymtab");
 	ap->nelem = 0;
@@ -238,7 +242,7 @@ Cell *setsymtab(const char *n, const char *s, Awkfloat f, unsigned t, Array *tp)
 			(void*)p, NN(p->nval), NN(p->sval), p->fval, p->tval);
 		return(p);
 	}
-	p = malloc(sizeof(*p));
+	p = (Cell *) malloc(sizeof(*p));
 	if (p == NULL)
 		FATAL("out of space for symbol table at %s", n);
 	p->nval = tostring(n);
@@ -273,7 +277,7 @@ void rehash(Array *tp)	/* rehash items in small table into big one */
 	Cell *cp, *op, **np;
 
 	nsz = GROWTAB * tp->size;
-	np = calloc(nsz, sizeof(*np));
+	np = (Cell **) calloc(nsz, sizeof(*np));
 	if (np == NULL)		/* can't do it, but can keep running. */
 		return;		/* someone else will run out later. */
 	for (i = 0; i < tp->size; i++) {
@@ -400,9 +404,15 @@ Awkfloat getfval(Cell *vp)	/* get float val of a Cell */
 	else if (isrec(vp) && !donerec)
 		recbld();
 	if (!isnum(vp)) {	/* not a number */
-		vp->fval = atof(vp->sval);	/* best guess */
-		if (is_number(vp->sval) && !(vp->tval&CON))
-			vp->tval |= NUM;	/* make NUM only sparingly */
+		double fval;
+		bool no_trailing;
+
+		if (is_valid_number(vp->sval, true, & no_trailing, & fval)) {
+			vp->fval = fval;
+			if (no_trailing && !(vp->tval&CON))
+				vp->tval |= NUM;	/* make NUM only sparingly */
+		} else
+			vp->fval = 0.0;
 	}
 	DPRINTF("getfval %p: %s = %g, t=%o\n",
 		(void*)vp, NN(vp->nval), vp->fval, vp->tval);
@@ -521,7 +531,7 @@ char *tostringN(const char *s, size_t n)	/* make a copy of string s */
 {
 	char *p;
 
-	p = malloc(n);
+	p = (char *) malloc(n);
 	if (p == NULL)
 		FATAL("out of space in tostringN %zu", n);
 	if (strlcpy(p, s, n) >= n)
@@ -536,13 +546,13 @@ Cell *catstr(Cell *a, Cell *b) /* concatenate a and b */
 	char *sa = getsval(a);
 	char *sb = getsval(b);
 	size_t l = strlen(sa) + strlen(sb) + 1;
-	p = malloc(l);
+	p = (char *) malloc(l);
 	if (p == NULL)
 		FATAL("out of space concatenating %s and %s", sa, sb);
 	snprintf(p, l, "%s%s", sa, sb);
 
 	l++;	// add room for ' '
-	char *newbuf = malloc(l);
+	char *newbuf = (char *) malloc(l);
 	if (newbuf == NULL)
 		FATAL("out of space concatenating %s and %s", sa, sb);
 	// See string() in lex.c; a string "xx" is stored in the symbol
@@ -561,7 +571,7 @@ char *qstring(const char *is, int delim)	/* collect string up to next delim */
 	const uschar *s = (const uschar *) is;
 	uschar *buf, *bp;
 
-	if ((buf = malloc(strlen(is)+3)) == NULL)
+	if ((buf = (uschar *) malloc(strlen(is)+3)) == NULL)
 		FATAL( "out of space in qstring(%s)", s);
 	for (bp = buf; (c = *s) != delim; s++) {
 		if (c == '\n')

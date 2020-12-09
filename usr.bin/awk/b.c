@@ -1,4 +1,4 @@
-/*	$OpenBSD: b.c,v 1.34 2020/07/30 17:45:44 millert Exp $	*/
+/*	$OpenBSD: b.c,v 1.35 2020/12/09 20:00:11 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -84,7 +84,7 @@ int	nfatab	= 0;	/* entries in fatab */
 static int *
 intalloc(size_t n, const char *f)
 {
-	void *p = calloc(n, sizeof(int));
+	int *p = (int *) calloc(n, sizeof(int));
 	if (p == NULL)
 		overflo(f);
 	return p;
@@ -94,8 +94,8 @@ static void
 allocsetvec(const char *f)
 {
 	maxsetvec = MAXLIN;
-	setvec = reallocarray(setvec, maxsetvec, sizeof(*setvec));
-	tmpset = reallocarray(tmpset, maxsetvec, sizeof(*tmpset));
+	setvec = (int *) reallocarray(setvec, maxsetvec, sizeof(*setvec));
+	tmpset = (int *) reallocarray(tmpset, maxsetvec, sizeof(*tmpset));
 	if (setvec == NULL || tmpset == NULL)
 		overflo(f);
 }
@@ -103,8 +103,8 @@ allocsetvec(const char *f)
 static void
 resizesetvec(const char *f)
 {
-	setvec = reallocarray(setvec, maxsetvec, 4 * sizeof(*setvec));
-	tmpset = reallocarray(tmpset, maxsetvec, 4 * sizeof(*tmpset));
+	setvec = (int *) reallocarray(setvec, maxsetvec, 4 * sizeof(*setvec));
+	tmpset = (int *) reallocarray(tmpset, maxsetvec, 4 * sizeof(*tmpset));
 	if (setvec == NULL || tmpset == NULL)
 		overflo(f);
 	maxsetvec *= 4;
@@ -113,7 +113,9 @@ resizesetvec(const char *f)
 static void
 resize_state(fa *f, int state)
 {
-	void *p;
+	unsigned int **p;
+	uschar *p2;
+	int **p3;
 	int i, new_count;
 
 	if (++state < f->state_count)
@@ -121,23 +123,23 @@ resize_state(fa *f, int state)
 
 	new_count = state + 10; /* needs to be tuned */
 
-	p = reallocarray(f->gototab, new_count, sizeof(f->gototab[0]));
+	p = (unsigned int **) reallocarray(f->gototab, new_count, sizeof(f->gototab[0]));
 	if (p == NULL)
 		goto out;
 	f->gototab = p;
 
-	p = reallocarray(f->out, new_count, sizeof(f->out[0]));
-	if (p == NULL)
+	p2 = (uschar *) reallocarray(f->out, new_count, sizeof(f->out[0]));
+	if (p2 == NULL)
 		goto out;
-	f->out = p;
+	f->out = p2;
 
-	p = reallocarray(f->posns, new_count, sizeof(f->posns[0]));
-	if (p == NULL)
+	p3 = (int **) reallocarray(f->posns, new_count, sizeof(f->posns[0]));
+	if (p3 == NULL)
 		goto out;
-	f->posns = p;
+	f->posns = p3;
 
 	for (i = f->state_count; i < new_count; ++i) {
-		f->gototab[i] = calloc(NCHARS, sizeof(**f->gototab));
+		f->gototab[i] = (unsigned int *) calloc(NCHARS, sizeof(**f->gototab));
 		if (f->gototab[i] == NULL)
 			goto out;
 		f->out[i]  = 0;
@@ -203,7 +205,7 @@ fa *mkdfa(const char *s, bool anchor)	/* does the real work of making a dfa */
 
 	poscnt = 0;
 	penter(p1);	/* enter parent pointers and leaf indices */
-	if ((f = calloc(1, sizeof(fa) + poscnt * sizeof(rrow))) == NULL)
+	if ((f = (fa *) calloc(1, sizeof(fa) + poscnt * sizeof(rrow))) == NULL)
 		overflo(__func__);
 	f->accept = poscnt-1;	/* penter has computed number of positions in re */
 	cfoll(f, p1);	/* set up follow sets */
@@ -373,7 +375,7 @@ char *cclenter(const char *argp)	/* add a character class */
 	static int bufsz = 100;
 
 	op = p;
-	if (buf == NULL && (buf = malloc(bufsz)) == NULL)
+	if (buf == NULL && (buf = (uschar *) malloc(bufsz)) == NULL)
 		FATAL("out of space for character class [%.10s...] 1", p);
 	bp = buf;
 	for (i = 0; (c = *p++) != 0; ) {
@@ -944,7 +946,7 @@ replace_repeat(const uschar *reptok, int reptoklen, const uschar *atom,
 	} else if (special_case == REPEAT_ZERO) {
 		size += 2;	/* just a null ERE: () */
 	}
-	if ((buf = malloc(size + 1)) == NULL)
+	if ((buf = (uschar *) malloc(size + 1)) == NULL)
 		FATAL("out of space in reg expr %.10s..", lastre);
 	memcpy(buf, basestr, prefix_length);	/* copy prefix	*/
 	j = prefix_length;
@@ -1072,7 +1074,7 @@ rescan:
 		rlxval = c;
 		return CHAR;
 	case '[':
-		if (buf == NULL && (buf = malloc(bufsz)) == NULL)
+		if (buf == NULL && (buf = (uschar *) malloc(bufsz)) == NULL)
 			FATAL("out of space in reg expr %.10s..", lastre);
 		bp = buf;
 		if (*prestr == '^') {

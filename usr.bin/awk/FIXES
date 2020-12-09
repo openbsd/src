@@ -1,4 +1,4 @@
-/*	$OpenBSD: FIXES,v 1.38 2020/08/11 16:57:05 millert Exp $	*/
+/*	$OpenBSD: FIXES,v 1.39 2020/12/09 20:00:11 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -25,6 +25,25 @@ THIS SOFTWARE.
 
 This file lists all bug fixes, changes, etc., made since the AWK book
 was sent to the printers in August, 1987.
+
+December 8, 2020:
+	Merge PR #98: Disallow hex data. Allow only +nan, -nan,
+	+inf, -inf (case independent) to give NaN and infinity values.
+	Improve things so that string to double conversion is only
+	done once, yielding something of a speedup.  This obviate
+	PR #95. Thanks to Arnold Robbins.
+
+December 3, 2020:
+	Fix to argument parsing to avoid printing spurious newlines.
+	Thanks to Todd Miller. Merges PR #97.
+
+October 13, 2020:
+	Add casts before all the calls to malloc/calloc/realloc in order
+	to get it to compile with g++. Thanks to Arnold Robbins.
+
+August 16, 2020:
+	Additional fixes for DJGPP. Thanks to Eli Zaretskii for
+	the testing.
 
 August 7, 2020:
 	Merge PR #93, which adds casts to (void*) for debug prints
