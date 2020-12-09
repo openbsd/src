@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.175 2020/11/24 13:54:58 gerhard Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.176 2020/12/09 05:39:42 dlg Exp $	*/
 
 /******************************************************************************
 
@@ -3858,7 +3858,7 @@ int
 ix_txq_kstats_read(struct kstat *ks)
 {
 	struct ix_txq_kstats *stats = ks->ks_data;
-	struct rx_ring *txr = ks->ks_softc;
+	struct tx_ring *txr = ks->ks_softc;
 	struct ix_softc *sc = txr->sc;
 	struct ixgbe_hw	*hw = &sc->hw;
 	uint32_t i = txr->me;
