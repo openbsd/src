@@ -1,4 +1,4 @@
-/*	$Id: test-cert.c,v 1.5 2020/11/09 16:13:02 tb Exp $ */
+/*	$Id: test-cert.c,v 1.6 2020/12/09 11:22:47 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -44,6 +44,8 @@ cert_print(const struct cert *p)
 	assert(p != NULL);
 
 	printf("Manifest: %s\n", p->mft);
+	if (p->notify != NULL)
+		printf("Notify URL: %s\n", p->notify);
 	if (p->crl != NULL)
 		printf("Revocation list: %s\n", p->crl);
 	printf("Subject key identifier: %s\n", p->ski);
