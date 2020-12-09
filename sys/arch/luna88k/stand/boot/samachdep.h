@@ -1,4 +1,4 @@
-/*	$OpenBSD: samachdep.h,v 1.3 2013/10/29 21:49:07 miod Exp $	*/
+/*	$OpenBSD: samachdep.h,v 1.4 2020/12/09 18:10:19 krw Exp $	*/
 /*	$NetBSD: samachdep.h,v 1.10 2013/03/05 15:34:53 tsutsui Exp $	*/
 
 /*
@@ -133,7 +133,7 @@ int scsi_request_sense(struct scsi_softc *, int, int, u_char *, unsigned int);
 int scsi_test_unit_rdy(struct scsi_softc *, int, int);
 
 /* sd.c */
-int sdstrategy(void *, int, daddr32_t, size_t, void *, size_t *);
+int sdstrategy(void *, int, daddr_t, size_t, void *, size_t *);
 int sdopen(struct open_file *, ...);
 int sdclose(struct open_file *);
 

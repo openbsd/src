@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.h,v 1.34 2015/09/02 04:09:24 yasuoka Exp $	*/
+/*	$OpenBSD: biosdev.h,v 1.35 2020/12/09 18:10:18 krw Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -45,7 +45,7 @@ struct diskinfo;
 
 /* biosdev.c */
 extern const char *biosdevs[];
-int biosstrategy(void *, int, daddr32_t, size_t, void *, size_t *);
+int biosstrategy(void *, int, daddr_t, size_t, void *, size_t *);
 int biosopen(struct open_file *, ...);
 int biosclose(struct open_file *);
 int biosioctl(struct open_file *, u_long, void *);

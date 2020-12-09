@@ -1,4 +1,4 @@
-/*	$OpenBSD: efipxe.c,v 1.8 2020/05/18 12:14:33 patrick Exp $	*/
+/*	$OpenBSD: efipxe.c,v 1.9 2020/12/09 18:10:18 krw Exp $	*/
 /*
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -366,7 +366,7 @@ tftpioctl(struct open_file *f, u_long cmd, void *data)
 }
 
 int
-tftpstrategy(void *devdata, int rw, daddr32_t blk, size_t size, void *buf,
+tftpstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
 	size_t *rsize)
 {
 	return EOPNOTSUPP;

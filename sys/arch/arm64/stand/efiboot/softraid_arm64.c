@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid_arm64.c,v 1.1 2019/01/31 14:35:06 patrick Exp $	*/
+/*	$OpenBSD: softraid_arm64.c,v 1.2 2020/12/09 18:10:18 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -303,7 +303,7 @@ srprobe(void)
 }
 
 int
-sr_strategy(struct sr_boot_volume *bv, int rw, daddr32_t blk, size_t size,
+sr_strategy(struct sr_boot_volume *bv, int rw, daddr_t blk, size_t size,
     void *buf, size_t *rsize)
 {
 	struct diskinfo *sr_dip, *dip;
@@ -637,7 +637,7 @@ sropen(struct open_file *f, ...)
 }
 
 int
-srstrategy(void *devdata, int rw, daddr32_t blk, size_t size, void *buf,
+srstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
     size_t *rsize)
 {
 	struct diskinfo *dip = (struct diskinfo *)devdata;

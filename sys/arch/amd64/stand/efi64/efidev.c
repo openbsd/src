@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.1 2019/05/11 02:36:10 mlarkin Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.2 2020/12/09 18:10:18 krw Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -710,7 +710,7 @@ efiopen(struct open_file *f, ...)
 }
 
 int
-efistrategy(void *devdata, int rw, daddr32_t blk, size_t size, void *buf,
+efistrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
     size_t *rsize)
 {
 	struct diskinfo *dip = (struct diskinfo *)devdata;

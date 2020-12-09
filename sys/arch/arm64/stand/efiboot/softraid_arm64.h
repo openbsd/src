@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid_arm64.h,v 1.1 2019/01/31 14:35:06 patrick Exp $	*/
+/*	$OpenBSD: softraid_arm64.h,v 1.2 2020/12/09 18:10:18 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -22,10 +22,10 @@
 void	srprobe(void);
 
 const char *sr_getdisklabel(struct sr_boot_volume *, struct disklabel *);
-int	sr_strategy(struct sr_boot_volume *, int, daddr32_t, size_t,
+int	sr_strategy(struct sr_boot_volume *, int, daddr_t, size_t,
 	    void *, size_t *);
 int	sropen(struct open_file *, ...);
-int	srstrategy(void *, int, daddr32_t, size_t, void *, size_t *);
+int	srstrategy(void *, int, daddr_t, size_t, void *, size_t *);
 int	srdiskio(int, struct diskinfo *, u_int, int, void *);
 int	srclose(struct open_file *);
 int	srioctl(struct open_file *, u_long, void *);

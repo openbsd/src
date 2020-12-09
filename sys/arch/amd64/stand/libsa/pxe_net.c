@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxe_net.c,v 1.4 2014/08/21 14:24:08 mpi Exp $	*/
+/*	$OpenBSD: pxe_net.c,v 1.5 2020/12/09 18:10:18 krw Exp $	*/
 /*	$NetBSD: dev_net.c,v 1.4 2003/03/12 13:15:08 drochner Exp $	*/
 
 /*-
@@ -143,7 +143,7 @@ net_ioctl(struct open_file *f, u_long cmd, void *data)
 }
 
 int
-net_strategy(void *devdata, int rw, daddr32_t blk, size_t size, void *buf,
+net_strategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
     size_t *rsize)
 {
 	return EIO;

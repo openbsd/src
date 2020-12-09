@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid_amd64.c,v 1.5 2017/12/18 12:53:33 fcambus Exp $	*/
+/*	$OpenBSD: softraid_amd64.c,v 1.6 2020/12/09 18:10:18 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -309,7 +309,7 @@ srprobe(void)
 }
 
 int
-sr_strategy(struct sr_boot_volume *bv, int rw, daddr32_t blk, size_t size,
+sr_strategy(struct sr_boot_volume *bv, int rw, daddr_t blk, size_t size,
     void *buf, size_t *rsize)
 {
 	struct diskinfo *sr_dip, *dip;

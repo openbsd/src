@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.h,v 1.6 2017/07/21 01:21:42 yasuoka Exp $	*/
+/*	$OpenBSD: disk.h,v 1.7 2020/12/09 18:10:18 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -43,7 +43,7 @@ struct diskinfo {
 	struct sr_boot_volume *sr_vol;
 
 	int (*diskio)(int, struct diskinfo *, u_int, int, void *);
-	int (*strategy)(void *, int, daddr32_t, size_t, void *, size_t *);
+	int (*strategy)(void *, int, daddr_t, size_t, void *, size_t *);
 
 	dev_t bsddev, bootdev;
 

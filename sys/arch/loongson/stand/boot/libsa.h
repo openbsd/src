@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.6 2019/04/10 04:17:35 deraadt Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.7 2020/12/09 18:10:19 krw Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -41,14 +41,14 @@ void	pmon_cnputc(dev_t, int);
 /*
  * PMON I/O
  */
-int	pmon_iostrategy(void *, int, daddr32_t, size_t, void *, size_t *);
+int	pmon_iostrategy(void *, int, daddr_t, size_t, void *, size_t *);
 int	pmon_ioopen(struct open_file *, ...);
 int	pmon_ioclose(struct open_file *);
 
 /*
  * INITRD I/O
  */
-int	rd_iostrategy(void *, int, daddr32_t, size_t, void *, size_t *);
+int	rd_iostrategy(void *, int, daddr_t, size_t, void *, size_t *);
 int	rd_ioopen(struct open_file *, ...);
 int	rd_ioclose(struct open_file *);
 int	rd_isvalid(void);

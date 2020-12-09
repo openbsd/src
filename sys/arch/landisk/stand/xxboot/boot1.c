@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot1.c,v 1.8 2019/08/03 15:22:21 deraadt Exp $	*/
+/*	$OpenBSD: boot1.c,v 1.9 2020/12/09 18:10:19 krw Exp $	*/
 /*	$NetBSD: boot1.c,v 1.1 2006/09/01 21:26:19 uwe Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static uint32_t bios_sector;
 const char *boot1(uint32_t *);
 void putstr(const char *str);
 int raise(int sig);
-int blkdevstrategy(void *, int, daddr32_t, size_t, void *, size_t *);
+int blkdevstrategy(void *, int, daddr_t, size_t, void *, size_t *);
 int blkdevopen(struct open_file *, ...);
 int blkdevclose(struct open_file *);
 
@@ -118,7 +118,7 @@ blkdevclose(struct open_file *f)
 }
 
 int
-blkdevstrategy(void *devdata, int flag, daddr32_t dblk, size_t size, void *buf, size_t *rsize)
+blkdevstrategy(void *devdata, int flag, daddr_t dblk, size_t size, void *buf, size_t *rsize)
 {
 
 	if (flag != F_READ)

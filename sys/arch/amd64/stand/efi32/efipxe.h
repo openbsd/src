@@ -1,4 +1,4 @@
-/*	$OpenBSD: efipxe.h,v 1.1 2019/05/11 02:33:34 mlarkin Exp $	*/
+/*	$OpenBSD: efipxe.h,v 1.2 2020/12/09 18:10:18 krw Exp $	*/
 /*
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -18,4 +18,4 @@
 int tftpopen(struct open_file *, ...);
 int tftpclose(struct open_file *);
 int tftpioctl(struct open_file *, u_long, void *);
-int tftpstrategy(void *, int, daddr32_t, size_t, void *, size_t *);
+int tftpstrategy(void *, int, daddr_t, size_t, void *, size_t *);

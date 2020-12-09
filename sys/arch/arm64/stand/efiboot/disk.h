@@ -1,4 +1,4 @@
-/* $OpenBSD: disk.h,v 1.2 2019/01/31 14:35:06 patrick Exp $ */
+/* $OpenBSD: disk.h,v 1.3 2020/12/09 18:10:18 krw Exp $ */
 
 #ifndef _DISK_H
 #define _DISK_H
@@ -20,7 +20,7 @@ struct diskinfo {
 #define DISKINFO_FLAG_GOODLABEL		(1 << 0)
 
 	int (*diskio)(int, struct diskinfo *, u_int, int, void *);
-	int (*strategy)(void *, int, daddr32_t, size_t, void *, size_t *);
+	int (*strategy)(void *, int, daddr_t, size_t, void *, size_t *);
 
 	TAILQ_ENTRY(diskinfo) list;
 };

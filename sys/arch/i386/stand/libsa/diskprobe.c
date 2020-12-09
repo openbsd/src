@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.46 2018/06/18 15:37:48 krw Exp $	*/
+/*	$OpenBSD: diskprobe.c,v 1.47 2020/12/09 18:10:18 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -483,7 +483,7 @@ check_hibernate(struct diskinfo *dip)
 	    DL_GETPSIZE(&dip->disklabel.d_partitions[1]) -
             (sizeof(union hibernate_info) / DEV_BSIZE);
 
-	error = dip->strategy(dip, F_READ, (daddr32_t)sec, sizeof hib, &hib, NULL);
+	error = dip->strategy(dip, F_READ, sec, sizeof hib, &hib, NULL);
 	if (error == 0 && hib.magic == HIBERNATE_MAGIC)
 		dip->bios_info.flags |= BDI_HIBVALID; /* Hibernate present */
 }

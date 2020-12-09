@@ -1,4 +1,4 @@
-/*	$OpenBSD: stand.h,v 1.69 2019/11/28 00:17:13 bluhm Exp $	*/
+/*	$OpenBSD: stand.h,v 1.70 2020/12/09 18:10:19 krw Exp $	*/
 /*	$NetBSD: stand.h,v 1.18 1996/11/30 04:35:51 gwr Exp $	*/
 
 /*-
@@ -82,7 +82,7 @@ extern int nfsys;
 struct devsw {
 	char	*dv_name;
 	int	(*dv_strategy)(void *devdata, int rw,
-				    daddr32_t blk, size_t size,
+				    daddr_t blk, size_t size,
 				    void *buf, size_t *rsize);
 	int	(*dv_open)(struct open_file *f, ...);
 	int	(*dv_close)(struct open_file *f);

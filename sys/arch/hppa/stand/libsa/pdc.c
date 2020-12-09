@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.22 2020/05/26 13:38:07 deraadt Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.23 2020/12/09 18:10:18 krw Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -128,7 +128,7 @@ int
 iodcstrategy(devdata, rw, blk, size, buf, rsize)
 	void *devdata;
 	int rw;
-	daddr32_t blk;
+	daddr_t blk;
 	size_t size;
 	void *buf;
 	size_t *rsize;
@@ -232,7 +232,7 @@ iodcstrategy(devdata, rw, blk, size, buf, rsize)
 		if ((ret = ((iodcio_t)pzdev->pz_iodc_io)(pzdev->pz_hpa,
 		    (rw == F_READ? IODC_IO_READ: IODC_IO_WRITE),
 		    pzdev->pz_spa, pzdev->pz_layers, pdcbuf,
-		    blk - offset, dp->buf, IODC_IOSIZ, IODC_IOSIZ)) < 0) {
+		    (u_int)blk - offset, dp->buf, IODC_IOSIZ, IODC_IOSIZ)) < 0) {
 #ifdef DEBUG
 			if (debug)
 				printf("iodc_read(%d,%d): %d\n",

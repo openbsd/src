@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.8 2020/05/26 14:00:42 deraadt Exp $ */
+/*	$OpenBSD: conf.c,v 1.9 2020/12/09 18:10:19 krw Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -27,18 +27,18 @@
  */
 #include <stand.h>
 
-const char version[] = "1.12";
+const char version[] = "1.13";
 
 extern void	nullsys();
 extern int	nodev();
 extern int	noioctl();
 
-int	diostrategy(void *, int, daddr32_t, size_t, void *, size_t *);
+int	diostrategy(void *, int, daddr_t, size_t, void *, size_t *);
 int	dioopen(struct open_file *, ...);
 int	dioclose(struct open_file *);
 #define	dioioctl	noioctl
 
-int	netstrategy(void *, int, daddr32_t, size_t, void *, size_t *);
+int	netstrategy(void *, int, daddr_t, size_t, void *, size_t *);
 int	netopen(struct open_file *, ...);
 int	netclose(struct open_file *);
 #define	netioctl	noioctl
