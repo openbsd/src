@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.18 2020/11/06 05:42:43 tb Exp $ */
+/*	$OpenBSD: output.c,v 1.19 2020/12/09 11:29:04 claudio Exp $ */
 /*
  * Copyright (c) 2019 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -191,6 +191,7 @@ outputheader(FILE *out, struct stats *st)
 	    "# Trust Anchor Locators: %zu (%s)\n"
 	    "# Manifests: %zu (%zu failed parse, %zu stale)\n"
 	    "# Certificate revocation lists: %zu\n"
+	    "# Ghostbuster records: %zu\n"
 	    "# Repositories: %zu\n"
 	    "# VRP Entries: %zu (%zu unique)\n",
 	    hn, tbuf, (long long)st->elapsed_time.tv_sec,
@@ -200,6 +201,7 @@ outputheader(FILE *out, struct stats *st)
 	    st->tals, st->talnames,
 	    st->mfts, st->mfts_fail, st->mfts_stale,
 	    st->crls,
+	    st->gbrs,
 	    st->repos,
 	    st->vrps, st->uniqs) < 0)
 		return -1;

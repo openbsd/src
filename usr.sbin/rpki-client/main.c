@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.85 2020/12/02 15:31:15 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.86 2020/12/09 11:29:04 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -518,6 +518,27 @@ queue_add_from_mft_set(int fd, struct entityq *q, const struct mft *mft,
 			continue;
 		queue_add_from_mft(fd, q, mft->file, f, RTYPE_ROA, eid);
 	}
+
+	for (i = 0; i < mft->filesz; i++) {
+		f = &mft->files[i];
+		sz = strlen(f->file);
+		assert(sz > 4);
+		if (strcasecmp(f->file + sz - 4, ".gbr"))
+			continue;
+		queue_add_from_mft(fd, q, mft->file, f, RTYPE_GBR, eid);
+	}
+
+	for (i = 0; i < mft->filesz; i++) {
+		f = &mft->files[i];
+		sz = strlen(f->file);
+		assert(sz > 4);
+		if (strcasecmp(f->file + sz - 4, ".crl") == 0 ||
+		    strcasecmp(f->file + sz - 4, ".cer") == 0 ||
+		    strcasecmp(f->file + sz - 4, ".roa") == 0 ||
+		    strcasecmp(f->file + sz - 4, ".gbr") == 0)
+			continue;
+		logx("%s: unsupported file type: %s", mft->file, f->file);
+	}
 }
 
 /*
@@ -937,6 +958,49 @@ proc_parser_crl(struct entity *entp, X509_STORE *store,
 	}
 }
 
+/*
+ * Parse a ghostbuster record
+ */
+static void
+proc_parser_gbr(struct entity *entp, X509_STORE *store,
+    X509_STORE_CTX *ctx, struct auth_tree *auths, struct crl_tree *crlt)
+{
+	struct gbr		*gbr;
+	X509			*x509;
+	int			 c;
+	struct auth		*a;
+	STACK_OF(X509)		*chain;
+	STACK_OF(X509_CRL)	*crls;
+
+	if ((gbr = gbr_parse(&x509, entp->uri)) == NULL)
+		return;
+
+	a = valid_ski_aki(entp->uri, auths, gbr->ski, gbr->aki);
+
+	build_chain(a, &chain);
+	build_crls(a, crlt, &crls);
+
+	assert(x509 != NULL);
+	if (!X509_STORE_CTX_init(ctx, store, x509, chain))
+		cryptoerrx("X509_STORE_CTX_init");
+	X509_STORE_CTX_set_flags(ctx,
+	    X509_V_FLAG_IGNORE_CRITICAL | X509_V_FLAG_CRL_CHECK);
+	X509_STORE_CTX_set0_crls(ctx, crls);
+
+	if (X509_verify_cert(ctx) <= 0) {
+		c = X509_STORE_CTX_get_error(ctx);
+		if (verbose > 0 || c != X509_V_ERR_UNABLE_TO_GET_CRL)
+			warnx("%s: %s", entp->uri,
+			    X509_verify_cert_error_string(c));
+	}
+
+	X509_STORE_CTX_cleanup(ctx);
+	sk_X509_free(chain);
+	sk_X509_CRL_free(crls);
+	X509_free(x509);
+	gbr_free(gbr);
+}
+
 /* use the parent (id) to walk the tree to the root and
    build a certificate chain from cert->x509 */
 static void
@@ -1129,6 +1193,9 @@ proc_parser(int fd)
 				roa_buffer(&b, &bsz, &bmax, roa);
 			roa_free(roa);
 			break;
+		case RTYPE_GBR:
+			proc_parser_gbr(entp, store, ctx, &auths, &crlt);
+			break;
 		default:
 			abort();
 		}
@@ -1235,6 +1302,9 @@ entity_process(int proc, int rsync, struct stats *st,
 		else
 			st->roas_invalid++;
 		roa_free(roa);
+		break;
+	case RTYPE_GBR:
+		st->gbrs++;
 		break;
 	default:
 		abort();
@@ -1696,6 +1766,7 @@ main(int argc, char *argv[])
 	logx("Manifests: %zu (%zu failed parse, %zu stale)",
 	    stats.mfts, stats.mfts_fail, stats.mfts_stale);
 	logx("Certificate revocation lists: %zu", stats.crls);
+	logx("Ghostbuster records: %zu", stats.gbrs);
 	logx("Repositories: %zu", stats.repos);
 	logx("Files removed: %zu", stats.del_files);
 	logx("VRP Entries: %zu (%zu unique)", stats.vrps, stats.uniqs);

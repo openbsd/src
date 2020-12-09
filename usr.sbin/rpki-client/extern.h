@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.35 2020/12/02 15:31:15 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.36 2020/12/09 11:29:04 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -185,6 +185,15 @@ struct roa {
 };
 
 /*
+ * A single Ghostbuster record
+ */
+struct gbr {
+	char		*vcard;
+	char		*ski; /* SKI */
+	char		*aki; /* AKI */
+};
+
+/*
  * A single VRP element (including ASID)
  */
 struct vrp {
@@ -245,7 +254,8 @@ enum rtype {
 	RTYPE_MFT,
 	RTYPE_ROA,
 	RTYPE_CER,
-	RTYPE_CRL
+	RTYPE_CRL,
+	RTYPE_GBR,
 };
 
 /*
@@ -264,6 +274,7 @@ struct	stats {
 	size_t	 roas_invalid; /* invalid resources */
 	size_t	 repos; /* repositories */
 	size_t	 crls; /* revocation lists */
+	size_t	 gbrs; /* ghostbuster records */
 	size_t	 vrps; /* total number of vrps */
 	size_t	 uniqs; /* number of unique vrps */
 	size_t	 del_files; /* number of files removed in cleanup */
@@ -302,6 +313,9 @@ struct roa	*roa_parse(X509 **, const char *, const unsigned char *);
 struct roa	*roa_read(int);
 void		 roa_insert_vrps(struct vrp_tree *, struct roa *, size_t *,
 		    size_t *);
+
+void		 gbr_free(struct gbr *);
+struct gbr	*gbr_parse(X509 **, const char *);
 
 /* crl.c */
 X509_CRL	*crl_parse(const char *, const unsigned char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.13 2020/09/12 15:46:48 claudio Exp $ */
+/*	$OpenBSD: output-json.c,v 1.14 2020/12/09 11:29:04 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -55,6 +55,7 @@ outputheader_json(FILE *out, struct stats *st)
 	    "\t\t\"failedmanifests\": %zu,\n"
 	    "\t\t\"stalemanifests\": %zu,\n"
 	    "\t\t\"crls\": %zu,\n"
+	    "\t\t\"gbrs\": %zu,\n"
 	    "\t\t\"repositories\": %zu,\n"
 	    "\t\t\"vrps\": %zu,\n"
 	    "\t\t\"uniquevrps\": %zu\n"
@@ -66,6 +67,7 @@ outputheader_json(FILE *out, struct stats *st)
 	    st->tals, st->talnames,
 	    st->mfts, st->mfts_fail, st->mfts_stale,
 	    st->crls,
+	    st->gbrs,
 	    st->repos,
 	    st->vrps, st->uniqs) < 0)
 		return -1;
