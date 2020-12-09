@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.28 2020/06/27 15:35:27 deraadt Exp $
+#	$OpenBSD: install.md,v 1.29 2020/12/09 15:45:58 deraadt Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,6 +36,12 @@ md_installboot() {
 		echo "\nFailed to install bootblocks."
 		echo "You will not be able to boot OpenBSD from ${1}."
 		exit
+	fi
+	if [[ $(sysctl -n hw.product) = Gdium ]]; then
+		mount -t ext2fs /dev/${_disk}i /mnt2
+		mkdir -p /mnt2/boot
+		cp /mnt/bsd /mnt2/boot/bsd
+		umount /mnt2
 	fi
 }
 
