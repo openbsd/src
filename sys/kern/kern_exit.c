@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.192 2020/12/07 16:55:28 mpi Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.193 2020/12/09 18:58:19 mpi Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -184,6 +184,8 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 	p->p_siglist = 0;
 	if ((p->p_flag & P_THREAD) == 0)
 		pr->ps_siglist = 0;
+
+	kqpoll_exit();
 
 #if NKCOV > 0
 	kcov_exit(p);

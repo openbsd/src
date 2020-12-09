@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.146 2020/12/07 11:15:50 mpi Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.147 2020/12/09 18:58:19 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -57,6 +57,7 @@
 #include <sys/timeout.h>
 #include <sys/wait.h>
 
+struct	kqueue *kqueue_alloc(struct filedesc *);
 void	kqueue_terminate(struct proc *p, struct kqueue *);
 void	kqueue_free(struct kqueue *);
 void	kqueue_init(void);
@@ -503,6 +504,31 @@ const struct filterops dead_filtops = {
 	.f_detach	= filt_deaddetach,
 	.f_event	= filt_dead,
 };
+
+void
+kqpoll_init(void)
+{
+	struct proc *p = curproc;
+
+	if (p->p_kq != NULL)
+		return;
+
+	p->p_kq = kqueue_alloc(p->p_fd);
+	p->p_kq_serial = arc4random();
+}
+
+void
+kqpoll_exit(void)
+{
+	struct proc *p = curproc;
+
+	if (p->p_kq == NULL)
+		return;
+
+	kqueue_terminate(p, p->p_kq);
+	kqueue_free(p->p_kq);
+	p->p_kq = NULL;
+}
 
 struct kqueue *
 kqueue_alloc(struct filedesc *fdp)
@@ -1144,7 +1170,7 @@ kqueue_stat(struct file *fp, struct stat *st, struct proc *p)
 }
 
 void
-kqueue_terminate(struct proc *p, struct kqueue *kq)
+kqueue_purge(struct proc *p, struct kqueue *kq)
 {
 	int i;
 
@@ -1156,6 +1182,12 @@ kqueue_terminate(struct proc *p, struct kqueue *kq)
 		for (i = 0; i < kq->kq_knhashmask + 1; i++)
 			knote_remove(p, &kq->kq_knhash[i]);
 	}
+}
+
+void
+kqueue_terminate(struct proc *p, struct kqueue *kq)
+{
+	kqueue_purge(p, kq);
 	kq->kq_state |= KQ_DYING;
 	kqueue_wakeup(kq);
 
