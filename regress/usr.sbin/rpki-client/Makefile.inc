@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.3 2020/11/09 16:05:10 tb Exp $
+# $OpenBSD: Makefile.inc,v 1.4 2020/12/09 11:30:44 claudio Exp $
 
 .PATH:		${.CURDIR}/../../../../usr.sbin/rpki-client
 
@@ -6,6 +6,7 @@ PROGS += test-ip
 PROGS += test-cert
 PROGS += test-mft
 PROGS += test-roa
+PROGS += test-gbr
 PROGS += test-tal
 
 .for p in ${PROGS}
@@ -47,6 +48,10 @@ run-regress-test-mft: test-mft
 SRCS_test-roa=	test-roa.c roa.c cms.c x509.c ip.c as.c io.c log.c
 run-regress-test-roa: test-roa
 	./test-roa -v ${.CURDIR}/../roa/*.roa
+
+SRCS_test-gbr=	test-gbr.c gbr.c cms.c x509.c io.c log.c
+run-regress-test-gbr: test-gbr
+	./test-gbr -v ${.CURDIR}/../gbr/*.gbr
 
 SRCS_test-tal=	test-tal.c tal.c rsync.c io.c log.c
 run-regress-test-tal: test-tal
