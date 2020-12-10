@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.227 2020/12/09 21:54:11 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.228 2020/12/10 12:52:49 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1158,7 +1158,7 @@ ieee80211_amsdu_decap(struct ieee80211com *ic, struct mbuf *m,
 		m = m_pullup(m, ETHER_HDR_LEN + LLC_SNAPFRAMELEN);
 		if (m == NULL) {
 			ic->ic_stats.is_rx_decap++;
-			break;
+			return;
 		}
 		eh = mtod(m, struct ether_header *);
 		/* examine 802.3 header */
@@ -1168,7 +1168,7 @@ ieee80211_amsdu_decap(struct ieee80211com *ic, struct mbuf *m,
 			/* stop processing A-MSDU subframes */
 			ic->ic_stats.is_rx_decap++;
 			m_freem(m);
-			break;
+			return;
 		}
 		llc = (struct llc *)&eh[1];
 		/* examine 802.2 LLC header */
@@ -1192,7 +1192,7 @@ ieee80211_amsdu_decap(struct ieee80211com *ic, struct mbuf *m,
 			DPRINTF(("A-MSDU subframe too long (%d)\n", len));
 			ic->ic_stats.is_rx_decap++;
 			m_freem(m);
-			break;
+			return;
 		}
 
 		/* "detach" our A-MSDU subframe from the others */
@@ -1201,7 +1201,7 @@ ieee80211_amsdu_decap(struct ieee80211com *ic, struct mbuf *m,
 			/* stop processing A-MSDU subframes */
 			ic->ic_stats.is_rx_decap++;
 			m_freem(m);
-			break;
+			return;
 		}
 		ieee80211_enqueue_data(ic, m, ni, mcast, ml);
 
