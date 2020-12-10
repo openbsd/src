@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmboot.h,v 1.2 2016/11/26 20:03:42 reyk Exp $	*/
+/*	$OpenBSD: vmboot.h,v 1.3 2020/12/10 16:58:03 krw Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -46,7 +46,7 @@ struct fs_ops {
 
 struct devsw {
 	char	*dv_name;
-	int	(*dv_strategy)(void *, int, daddr32_t, size_t,
+	int	(*dv_strategy)(void *, int, daddr_t, size_t,
 	    void *, size_t *);
 };
 

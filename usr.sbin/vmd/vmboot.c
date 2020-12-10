@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmboot.c,v 1.7 2018/11/26 10:39:30 reyk Exp $	*/
+/*	$OpenBSD: vmboot.c,v 1.8 2020/12/10 16:58:03 krw Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -42,7 +42,7 @@ int	 vmboot_bootcmd(char *, struct vmboot_params *);
 int	 vmboot_bootargs(int argc, char **argv, struct vmboot_params *);
 uint32_t vmboot_bootdevice(const char *);
 
-int	 vmboot_strategy(void *, int, daddr32_t, size_t, void *, size_t *);
+int	 vmboot_strategy(void *, int, daddr_t, size_t, void *, size_t *);
 off_t	 vmboot_findopenbsd(struct open_file *, off_t, struct disklabel *);
 void	*vmboot_loadfile(struct open_file *, char *, size_t *);
 
@@ -241,26 +241,26 @@ struct open_file vmboot_file = {
 
 int
 vmboot_strategy(void *devdata, int rw,
-    daddr32_t blk, size_t size, void *buf, size_t *rsize)
+    daddr_t blk, size_t size, void *buf, size_t *rsize)
 {
 	struct vmboot_params	*vmboot = devdata;
 	struct virtio_backing	*vfp = vmboot->vbp_arg;
 	ssize_t			 rlen;
+	off_t			 off;
 
 	if (vfp == NULL)
 		return (EIO);
 
+	off = (blk + vmboot->vbp_partoff) * DEV_BSIZE;
 	switch (rw) {
 	case F_READ:
-		rlen = vfp->pread(vfp->p, buf, size,
-		    (blk + vmboot->vbp_partoff) * DEV_BSIZE);
+		rlen = vfp->pread(vfp->p, buf, size, off);
 		if (rlen == -1)
 			return (errno);
 		*rsize = (size_t)rlen;
 		break;
 	case F_WRITE:
-		rlen = vfp->pwrite(vfp->p, buf, size,
-		    (blk + vmboot->vbp_partoff) * DEV_BSIZE);
+		rlen = vfp->pwrite(vfp->p, buf, size, off);
 		if (rlen == -1)
 			return (errno);
 		*rsize = (size_t)rlen;
