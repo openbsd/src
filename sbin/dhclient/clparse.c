@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.200 2020/12/06 19:51:03 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.201 2020/12/10 18:35:31 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -77,7 +77,7 @@ void	parse_lease_decl(FILE *, struct client_lease *);
 int	parse_option(FILE *, int *, struct option_data *);
 int	parse_reject_statement(FILE *);
 
-void	apply_ignore_list(char *);
+void	apply_actions(uint8_t *);
 void	set_default_client_identifier(struct ether_addr *);
 void	set_default_hostname(void);
 
@@ -161,7 +161,7 @@ init_config(void)
  *	| conf-decls conf-decl
  */
 void
-read_conf(char *name, char *ignore_list, struct ether_addr *hwaddr)
+read_conf(char *name, uint8_t *actions, struct ether_addr *hwaddr)
 {
 	FILE			*cfile;
 	int			 token;
@@ -184,7 +184,7 @@ read_conf(char *name, char *ignore_list, struct ether_addr *hwaddr)
 
 	set_default_client_identifier(hwaddr);
 	set_default_hostname();
-	apply_ignore_list(ignore_list);
+	apply_actions(actions);
 }
 
 /*
@@ -949,49 +949,22 @@ parse_reject_statement(FILE *cfile)
 	return 1;
 }
 
-/*
- * Apply the list of options to be ignored that was provided on the
- * command line. This will override any ignore list obtained from
- * dhclient.conf.
- */
 void
-apply_ignore_list(char *ignore_list)
+apply_actions(uint8_t *actions)
 {
-	uint8_t		 list[DHO_COUNT];
-	char		*p;
-	int		 ix, i, j;
+	int		 i;
 
-	if (ignore_list == NULL)
-		return;
-
-	memset(list, 0, sizeof(list));
-	ix = 0;
-
-	for (p = strsep(&ignore_list, ", "); p != NULL;
-	     p = strsep(&ignore_list, ", ")) {
-		if (*p == '\0')
-			continue;
-
-		i = name_to_code(p);
-		if (i == DHO_END) {
-			log_debug("%s: invalid option name: '%s'", log_procname,
-			    p);
-			return;
+	for (i = 0; i < DHO_END; i++) {
+		switch (actions[i]) {
+		case ACTION_IGNORE:
+			config->default_actions[i] = ACTION_IGNORE;
+			free(config->defaults[i].data);
+			config->defaults[i].data = NULL;
+			config->defaults[i].len = 0;
+			break;
+		default:
+			break;
 		}
-
-		/* Avoid storing duplicate options in the list. */
-		for (j = 0; j < ix && list[j] != i; j++)
-			;
-		if (j == ix)
-			list[ix++] = i;
-	}
-
-	for (i = 0; i < ix; i++) {
-		j = list[i];
-		config->default_actions[j] = ACTION_IGNORE;
-		free(config->defaults[j].data);
-		config->defaults[j].data = NULL;
-		config->defaults[j].len = 0;
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.289 2020/12/06 17:40:43 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.290 2020/12/10 18:35:32 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -215,7 +215,6 @@ extern int			 cmd_opts;
 #define		OPT_VERBOSE	0x02
 #define		OPT_FOREGROUND	0x04
 #define		OPT_RELEASE	0x08
-#define		OPT_IGNORELIST	0x40
 
 void		 dhcpoffer(struct interface_info *, struct option_data *,
     const char *);
@@ -240,7 +239,7 @@ uint32_t	 wrapsum(uint32_t);
 
 /* clparse.c */
 void		 init_config(void);
-void		 read_conf(char *, char *, struct ether_addr *);
+void		 read_conf(char *, uint8_t *, struct ether_addr *);
 void		 read_lease_db(struct client_lease_tq *);
 
 /* kroute.c */

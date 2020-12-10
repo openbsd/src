@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.689 2020/12/06 17:40:43 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.690 2020/12/10 18:35:31 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -623,12 +623,13 @@ rtm_dispatch(struct interface_info *ifi, struct rt_msghdr *rtm)
 int
 main(int argc, char *argv[])
 {
+	uint8_t			 actions[DHO_END];
 	struct stat		 sb;
 	struct interface_info	*ifi;
-	char			*ignore_list = NULL;
+	char			*ignore_list, *p;
 	int			 fd, socket_fd[2];
 	int			 routefd;
-	int			 ch;
+	int			 ch, i;
 
 	if (isatty(STDERR_FILENO) != 0)
 		log_init(1, LOG_DEBUG); /* log to stderr until daemonized */
@@ -639,6 +640,7 @@ main(int argc, char *argv[])
 
 	if (lstat(_PATH_DHCLIENT_CONF, &sb) == 0)
 		path_dhclient_conf = _PATH_DHCLIENT_CONF;
+	memset(actions, ACTION_USELEASE, sizeof(actions));
 
 	while ((ch = getopt(argc, argv, "c:di:nrv")) != -1)
 		switch (ch) {
@@ -654,10 +656,21 @@ main(int argc, char *argv[])
 			cmd_opts |= OPT_FOREGROUND;
 			break;
 		case 'i':
-			if (optarg == NULL)
-				usage();
-			cmd_opts |= OPT_IGNORELIST;
+			if (strlen(optarg) == 0)
+				break;
 			ignore_list = strdup(optarg);
+			if (ignore_list == NULL)
+				fatal("ignore_list");
+			for (p = strsep(&ignore_list, ", "); p != NULL;
+			     p = strsep(&ignore_list, ", ")) {
+				if (*p == '\0')
+					continue;
+				i = name_to_code(p);
+				if (i == DHO_END)
+					fatalx("invalid option name: '%s'", p);
+				actions[i] = ACTION_IGNORE;
+			}
+			free(ignore_list);
 			break;
 		case 'n':
 			cmd_opts |= OPT_NOACTION;
@@ -719,8 +732,7 @@ main(int argc, char *argv[])
 		fatal("unpriv_ibuf");
 	imsg_init(unpriv_ibuf, socket_fd[1]);
 
-	read_conf(ifi->name, ignore_list, &ifi->hw_address);
-	free(ignore_list);
+	read_conf(ifi->name, actions, &ifi->hw_address);
 	if ((cmd_opts & OPT_NOACTION) != 0)
 		return 0;
 
