@@ -308,8 +308,13 @@ static rrtype_descriptor_type rrtype_descriptors[(RRTYPE_DESCRIPTORS_LENGTH+1)] 
 	/* 62 - CSYNC */
 	{ TYPE_CSYNC, "CSYNC", T_CSYNC, 3, 3, { RDATA_WF_LONG, RDATA_WF_SHORT,
 	 RDATA_WF_BINARY }, { RDATA_ZF_LONG, RDATA_ZF_SHORT, RDATA_ZF_NSEC } },
-	/* 63 */
-	{ 63, NULL, T_UTYPE, 1, 1, { RDATA_WF_BINARY }, { RDATA_ZF_UNKNOWN } },
+	/* 63 - ZONEMD */
+	{ TYPE_ZONEMD, "ZONEMD", T_ZONEMD, 4, 4,
+	  { RDATA_WF_LONG, /* serial */
+	    RDATA_WF_BYTE, /* scheme */
+	    RDATA_WF_BYTE, /* hash Algorithm */
+	    RDATA_WF_BINARY }, /* digest */
+	  { RDATA_ZF_PERIOD, RDATA_ZF_BYTE, RDATA_ZF_BYTE, RDATA_ZF_HEX } },
 	/* 64 */
 	{ 64, NULL, T_UTYPE, 1, 1, { RDATA_WF_BINARY }, { RDATA_ZF_UNKNOWN } },
 	/* 65 */

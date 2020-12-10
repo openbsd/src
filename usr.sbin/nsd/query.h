@@ -87,9 +87,9 @@ struct query {
 
 	/*
 	 * The number of CNAMES followed.  After a CNAME is followed
-	 * we no longer change the RCODE to NXDOMAIN and no longer add
-	 * SOA records to the authority section in case of NXDOMAIN
-	 * and NODATA.
+	 * we no longer clear AA for a delegation and do not REFUSE
+	 * or SERVFAIL if the destination zone of the CNAME does not exist,
+	 * or is configured but not present.
 	 * Also includes number of DNAMES followed.
 	 */
 	int cname_count;

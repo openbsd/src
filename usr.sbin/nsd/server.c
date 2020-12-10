@@ -3373,7 +3373,7 @@ handle_udp(int fd, short event, void* arg)
 #endif
 				errno == EAGAIN) {
 				/* block to wait until send buffer avail */
-				int flag;
+				int flag, errstore;
 				if((flag = fcntl(fd, F_GETFL)) == -1) {
 					log_msg(LOG_ERR, "cannot fcntl F_GETFL: %s", strerror(errno));
 					flag = 0;
@@ -3382,6 +3382,7 @@ handle_udp(int fd, short event, void* arg)
 				if(fcntl(fd, F_SETFL, flag) == -1)
 					log_msg(LOG_ERR, "cannot fcntl F_SETFL 0: %s", strerror(errno));
 				sent = nsd_sendmmsg(fd, &msgs[i], recvcount-i, 0);
+				errstore = errno;
 				flag |= O_NONBLOCK;
 				if(fcntl(fd, F_SETFL, flag) == -1)
 					log_msg(LOG_ERR, "cannot fcntl F_SETFL O_NONBLOCK: %s", strerror(errno));
@@ -3389,6 +3390,7 @@ handle_udp(int fd, short event, void* arg)
 					i += sent;
 					continue;
 				}
+				errno = errstore;
 			}
 			/* don't log transient network full errors, unless
 			 * on higher verbosity */
@@ -3398,8 +3400,8 @@ handle_udp(int fd, short event, void* arg)
 #endif
 			   errno != EAGAIN) {
 				const char* es = strerror(errno);
-				char a[48];
-				addr2str(&queries[i]->addr, a, sizeof(a));
+				char a[64];
+				addrport2str(&queries[i]->addr, a, sizeof(a));
 				log_msg(LOG_ERR, "sendmmsg [0]=%s count=%d failed: %s", a, (int)(recvcount-i), es);
 			}
 #ifdef BIND8_STATS

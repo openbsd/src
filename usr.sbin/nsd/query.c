@@ -918,9 +918,7 @@ answer_soa(struct query *query, answer_type *answer)
 static void
 answer_nodata(struct query *query, answer_type *answer, domain_type *original)
 {
-	if (query->cname_count == 0) {
-		answer_soa(query, answer);
-	}
+	answer_soa(query, answer);
 
 #ifdef NSEC3
 	if (query->edns.dnssec_ok && query->zone->nsec3_param) {
@@ -1450,6 +1448,25 @@ query_process(query_type *q, nsd_type *nsd)
 
 	/* Dont bother to answer more than one question at once... */
 	if (QDCOUNT(q->packet) != 1) {
+		if(QDCOUNT(q->packet) == 0 && ANCOUNT(q->packet) == 0 &&
+			NSCOUNT(q->packet) == 0 && ARCOUNT(q->packet) == 1 &&
+			buffer_limit(q->packet) >= QHEADERSZ+OPT_LEN+
+			OPT_RDATA) {
+			/* add edns section to answer */
+			buffer_set_position(q->packet, QHEADERSZ);
+			if (edns_parse_record(&q->edns, q->packet, q, nsd)) {
+				if(process_edns(nsd, q) == NSD_RC_OK) {
+					int opcode = OPCODE(q->packet);
+					(void)query_error(q, NSD_RC_FORMAT);
+					query_add_optional(q, nsd);
+					FLAGS_SET(q->packet, FLAGS(q->packet) & 0x0100U);
+						/* Preserve the RD flag. Clear the rest. */
+					OPCODE_SET(q->packet, opcode);
+					QR_SET(q->packet);
+					return QUERY_PROCESSED;
+				}
+			}
+		}
 		FLAGS_SET(q->packet, 0);
 		return query_formerr(q, nsd);
 	}

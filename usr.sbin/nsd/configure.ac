@@ -5,7 +5,7 @@ dnl
 sinclude(acx_nlnetlabs.m4)
 sinclude(dnstap/dnstap.m4)
 
-AC_INIT(NSD,4.3.3,nsd-bugs@nlnetlabs.nl)
+AC_INIT(NSD,4.3.4,nsd-bugs@nlnetlabs.nl)
 AC_CONFIG_HEADER([config.h])
 
 #
@@ -1344,7 +1344,7 @@ char *nsd_strptime(const char *s, const char *format, struct tm *tm);
 #ifdef __linux__
 #define HAVE_SETPROCTITLE 1
 #include <stdarg.h>
-void setproctitle(char *fmt, ...);
+void setproctitle(const char *fmt, ...);
 #endif
 #endif
 ])

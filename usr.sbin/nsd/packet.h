@@ -140,7 +140,7 @@ struct query;
 #define	MAXRRSPP		10240    /* Maximum number of rr's per packet */
 #define MAX_COMPRESSED_DNAMES	MAXRRSPP /* Maximum number of compressed domains. */
 #define MAX_COMPRESSION_OFFSET  16383	 /* Compression pointers are 14 bit. */
-#define IPV4_MINIMAL_RESPONSE_SIZE 1460	 /* Recommended minimal edns size for IPv4 */
+#define IPV4_MINIMAL_RESPONSE_SIZE 1232	 /* Recommended minimal edns size for IPv4 */
 #define IPV6_MINIMAL_RESPONSE_SIZE 1220	 /* Recommended minimal edns size for IPv6 */
 
 /* use round robin rotation */

@@ -1,3 +1,45 @@
+24 November 2020: Wouter
+	- Merge PR #141: ZONEMD RR type.
+	- tag for 4.3.4rc1.
+
+23 November 2020: Wouter
+	- Fix #142: NODATA answers missin SOA in authority section after
+	  CNAME chain.
+	- Fix for CVE-2020-28935 : Fix that symlink does not interfere
+	  with chown of pidfile.
+	- fix writepid for retvalue 0.
+
+9 November 2020: Wouter
+	- Fix #138: NSD returns non-EDNS answer when QUESTION is empty.
+	- Fix to check nscount in previous fix for EDNS in formerr response
+	  when there is no question.
+
+28 October 2020: Wouter
+	- Remove unused init_cfg_parse routine from configlexer.
+
+20 October 2020: Wouter
+	- Fix to add missing closest encloser NSEC3 for wildcard nodata type
+	  DS answer.
+
+14 October 2020: Wouter
+	- Fix #134: IPV4_MINIMAL_RESPONSE_SIZE vs EDNS_MAX_MESSAGE_LEN.
+
+13 October 2020: Wouter
+	- Fix missing parenthesis on size of fix to init buffer.
+
+12 October 2020: Wouter
+	- Fix #127: two minor `-Wcast-qual` cleanups
+	- Fix #126: minor header hygiene
+	- Fix #125: include config.h in compat/setproctitle.c and fix prototype of `setproctitle`
+	- Fix #133: fix 0-init of local ( stack ) buffer.
+
+8 October 2020: Wouter
+	- tag for 4.3.3 release
+	- current repository contains 4.3.4 in development.
+	- Fix #129: ambiguous use of errno, in log message if sendmmsg fails.
+	- Fix #128: Fix that the invalid port number is logged for sendmmsg
+	  failed: Invalid argument.
+
 1 October 2020: Wouter
 	- tag for 4.3.3rc1 release.
 

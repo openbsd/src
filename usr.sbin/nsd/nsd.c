@@ -744,26 +744,43 @@ readpid(const char *file)
 int
 writepid(struct nsd *nsd)
 {
-	FILE * fd;
+	int fd;
 	char pidbuf[32];
+	size_t count = 0;
 	if(!nsd->pidfile || !nsd->pidfile[0])
 		return 0;
 
 	snprintf(pidbuf, sizeof(pidbuf), "%lu\n", (unsigned long) nsd->pid);
 
-	if ((fd = fopen(nsd->pidfile, "w")) ==  NULL ) {
+	if((fd = open(nsd->pidfile, O_WRONLY | O_CREAT | O_TRUNC
+#ifdef O_NOFOLLOW
+		| O_NOFOLLOW
+#endif
+		, 0644)) == -1) {
 		log_msg(LOG_ERR, "cannot open pidfile %s: %s",
 			nsd->pidfile, strerror(errno));
 		return -1;
 	}
 
-	if (!write_data(fd, pidbuf, strlen(pidbuf))) {
-		log_msg(LOG_ERR, "cannot write pidfile %s: %s",
-			nsd->pidfile, strerror(errno));
-		fclose(fd);
-		return -1;
+	while(count < strlen(pidbuf)) {
+		ssize_t r = write(fd, pidbuf+count, strlen(pidbuf)-count);
+		if(r == -1) {
+			if(errno == EAGAIN || errno == EINTR)
+				continue;
+			log_msg(LOG_ERR, "cannot write pidfile %s: %s",
+				nsd->pidfile, strerror(errno));
+			close(fd);
+			return -1;
+		} else if(r == 0) {
+			log_msg(LOG_ERR, "cannot write any bytes to "
+				"pidfile %s: write returns 0 bytes written",
+				nsd->pidfile);
+			close(fd);
+			return -1;
+		}
+		count += r;
 	}
-	fclose(fd);
+	close(fd);
 
 	if (chown(nsd->pidfile, nsd->uid, nsd->gid) == -1) {
 		log_msg(LOG_ERR, "cannot chown %u.%u %s: %s",

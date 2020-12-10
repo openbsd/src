@@ -1077,6 +1077,17 @@ nsec3_answer_nodata(struct query* query, struct answer* answer,
 		}
 		/* query->zone must be the parent zone */
 		nsec3_add_ds_proof(query, answer, original, 0);
+		/* if the DS is from a wildcard match */
+		if (original==original->wildcard_child_closest_match
+			&& label_is_wildcard(dname_name(domain_dname(original)))) {
+			/* denial for wildcard is already there */
+			/* add parent proof to have a closest encloser proof for wildcard parent */
+			/* in other words: nsec3 matching closest encloser */
+			if(original->parent && original->parent->nsec3 &&
+				original->parent->nsec3->nsec3_is_exact)
+				nsec3_add_rrset(query, answer, AUTHORITY_SECTION,
+					original->parent->nsec3->nsec3_cover);
+		}
 	}
 	/* the nodata is result from a wildcard match */
 	else if (original==original->wildcard_child_closest_match

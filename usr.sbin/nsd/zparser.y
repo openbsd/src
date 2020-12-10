@@ -68,7 +68,7 @@ nsec3_add_params(const char* hash_algo_str, const char* flag_str,
 %token <type> T_AXFR T_MAILB T_MAILA T_DS T_DLV T_SSHFP T_RRSIG T_NSEC T_DNSKEY
 %token <type> T_SPF T_NSEC3 T_IPSECKEY T_DHCID T_NSEC3PARAM T_TLSA T_URI
 %token <type> T_NID T_L32 T_L64 T_LP T_EUI48 T_EUI64 T_CAA T_CDS T_CDNSKEY
-%token <type> T_OPENPGPKEY T_CSYNC T_AVC T_SMIMEA
+%token <type> T_OPENPGPKEY T_CSYNC T_ZONEMD T_AVC T_SMIMEA
 
 /* other tokens */
 %token	       DOLLAR_TTL DOLLAR_ORIGIN NL SP
@@ -670,6 +670,8 @@ type_and_rdata:
     |	T_OPENPGPKEY sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
     |	T_CSYNC sp rdata_csync
     |	T_CSYNC sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
+    |	T_ZONEMD sp rdata_zonemd
+    |	T_ZONEMD sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
     |	T_URI sp rdata_uri
     |	T_URI sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
     |	T_UTYPE sp rdata_unknown { $$ = $1; parse_unknown_rdata($1, $3); }
@@ -1119,6 +1121,16 @@ rdata_csync:	STR sp STR nsec_seq
 	    zadd_rdata_wireformat(zparser_conv_nsec(parser->region, nsecbits)); /* nsec bitlist */
 	    memset(nsecbits, 0, sizeof(nsecbits));
             nsec_highest_rcode = 0;
+    }
+    ;
+
+/* draft-ietf-dnsop-dns-zone-digest */
+rdata_zonemd:	STR sp STR sp STR sp str_sp_seq trail
+    {
+	    zadd_rdata_wireformat(zparser_conv_serial(parser->region, $1.str)); /* serial */
+	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, $3.str)); /* scheme */
+	    zadd_rdata_wireformat(zparser_conv_byte(parser->region, $5.str)); /* hash algorithm */
+	    zadd_rdata_wireformat(zparser_conv_hex(parser->region, $7.str, $7.len)); /* digest */
     }
     ;
 

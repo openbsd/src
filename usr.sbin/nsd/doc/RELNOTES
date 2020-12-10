@@ -1,5 +1,30 @@
 NSD RELEASE NOTES
 
+4.3.4
+================
+FEATURES:
+	- Merge PR #141: ZONEMD RR type.
+BUG FIXES:
+	- Fix #129: ambiguous use of errno, in log message if sendmmsg fails.
+	- Fix #128: Fix that the invalid port number is logged for sendmmsg
+	  failed: Invalid argument.
+	- Fix #127: two minor `-Wcast-qual` cleanups
+	- Fix #126: minor header hygiene
+	- Fix #125: include config.h in compat/setproctitle.c and fix
+	  prototype of `setproctitle`
+	- Fix #133: fix 0-init of local ( stack ) buffer.
+	- Fix missing parenthesis on size of fix to init buffer.
+	- Fix #134: IPV4_MINIMAL_RESPONSE_SIZE vs EDNS_MAX_MESSAGE_LEN.
+	- Fix to add missing closest encloser NSEC3 for wildcard nodata type
+	  DS answer.
+	- Remove unused init_cfg_parse routine from configlexer.
+	- Fix #138: NSD returns non-EDNS answer when QUESTION is empty.
+	- Fix #142: NODATA answers missin SOA in authority section after
+	  CNAME chain.
+	- Fix for CVE-2020-28935 : Fix that symlink does not interfere
+	  with chown of pidfile.
+
+
 4.3.3
 ================
 FEATURES:

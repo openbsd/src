@@ -10,7 +10,6 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
-#include "config.h"
 #include <stdarg.h>
 #include "region-allocator.h"
 #include "rbtree.h"

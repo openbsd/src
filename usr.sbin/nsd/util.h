@@ -230,9 +230,9 @@ static inline uint16_t
 read_uint16(const void *src)
 {
 #ifdef ALLOW_UNALIGNED_ACCESSES
-	return ntohs(* (uint16_t *) src);
+	return ntohs(* (const uint16_t *) src);
 #else
-	uint8_t *p = (uint8_t *) src;
+	const uint8_t *p = (const uint8_t *) src;
 	return (p[0] << 8) | p[1];
 #endif
 }
@@ -241,9 +241,9 @@ static inline uint32_t
 read_uint32(const void *src)
 {
 #ifdef ALLOW_UNALIGNED_ACCESSES
-	return ntohl(* (uint32_t *) src);
+	return ntohl(* (const uint32_t *) src);
 #else
-	uint8_t *p = (uint8_t *) src;
+	const uint8_t *p = (const uint8_t *) src;
 	return (p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3];
 #endif
 }
@@ -251,7 +251,7 @@ read_uint32(const void *src)
 static inline uint64_t
 read_uint64(const void *src)
 {
-	uint8_t *p = (uint8_t *) src;
+	const uint8_t *p = (const uint8_t *) src;
 	return
 	    ((uint64_t)p[0] << 56) |
 	    ((uint64_t)p[1] << 48) |
