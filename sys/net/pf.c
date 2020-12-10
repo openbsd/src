@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1095 2020/12/07 08:29:41 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.1096 2020/12/10 06:40:22 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -7183,8 +7183,10 @@ done:
 		pf_state_key_link_inpcb(s->key[PF_SK_STACK],
 		    pd.m->m_pkthdr.pf.inp);
 
-	if (s && (pd.m->m_pkthdr.csum_flags & M_FLOWID) == 0)
+	if (s != NULL && !ISSET(pd.m->m_pkthdr.csum_flags, M_FLOWID)) {
 		pd.m->m_pkthdr.ph_flowid = bemtoh64(&s->id);
+		SET(pd.m->m_pkthdr.csum_flags, M_FLOWID);
+	}
 
 	/*
 	 * connections redirected to loopback should not match sockets
