@@ -1,4 +1,4 @@
-/*	$OpenBSD: wait.h,v 1.5 2020/06/08 04:48:15 jsg Exp $	*/
+/*	$OpenBSD: wait.h,v 1.6 2020/12/10 12:24:06 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -112,15 +112,16 @@ remove_wait_queue(wait_queue_head_t *head, wait_queue_entry_t *old)
 ({									\
 	long ret = timo;						\
 	do {								\
-		int deadline, __error;					\
+		int __error;						\
+		unsigned long deadline;					\
 									\
 		KASSERT(!cold);						\
 									\
 		mtx_enter(&sch_mtx);					\
 		atomic_inc_int(&(wq).count);				\
-		deadline = ticks + ret;					\
+		deadline = jiffies + ret;				\
 		__error = msleep(&wq, &sch_mtx, prio, "drmweti", ret);	\
-		ret = deadline - ticks;					\
+		ret = deadline - jiffies;				\
 		atomic_dec_int(&(wq).count);				\
 		if (__error == ERESTART || __error == EINTR) {		\
 			ret = -ERESTARTSYS;				\
@@ -174,7 +175,7 @@ do {						\
  * Sleep until `condition' gets true or `timo' expires.
  *
  * Returns 0 if `condition' is still false when `timo' expires or
- * the remaining (>=1) ticks otherwise.
+ * the remaining (>=1) jiffies otherwise.
  */
 #define wait_event_timeout(wq, condition, timo)	\
 ({						\
@@ -190,7 +191,7 @@ do {						\
  *
  * Returns -ERESTARTSYS if interrupted by a signal.
  * Returns 0 if `condition' is still false when `timo' expires or
- * the remaining (>=1) ticks otherwise.
+ * the remaining (>=1) jiffies otherwise.
  */
 #define wait_event_interruptible_timeout(wq, condition, timo) \
 ({						\
