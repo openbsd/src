@@ -30,16 +30,4 @@ extern volatile unsigned long jiffies;
 #define time_after_eq(a,b)	((long)(b) - (long)(a) <= 0)
 #define time_before(a,b)	((long)(a) - (long)(b) < 0)
 
-static inline unsigned long
-timespec_to_jiffies(const struct timespec *ts)
-{
-	long long to_ticks;
-
-	to_ticks = (long long)hz * ts->tv_sec + ts->tv_nsec / (tick * 1000);
-	if (to_ticks > INT_MAX)
-		to_ticks = INT_MAX;
-
-	return ((int)to_ticks);
-}
-
 #endif
