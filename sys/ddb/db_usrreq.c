@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_usrreq.c,v 1.20 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: db_usrreq.c,v 1.21 2020/12/10 04:27:25 gnezdo Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.  All rights reserved.
@@ -36,6 +36,14 @@
 int	db_log = 1;
 int	db_profile;			/* Allow dynamic profiling */
 
+const struct sysctl_bounded_args ddb_vars[] = {
+	{ DBCTL_RADIX, &db_radix, 8, 16 },
+	{ DBCTL_MAXWIDTH, &db_max_width, 0, INT_MAX },
+	{ DBCTL_TABSTOP, &db_tab_stop_width, 1, 16 },
+	{ DBCTL_MAXLINE, &db_max_line, 0, INT_MAX },
+	{ DBCTL_LOG, &db_log, 0, 1 },
+};
+
 int
 ddb_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
@@ -47,15 +55,6 @@ ddb_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (ENOTDIR);
 
 	switch (name[0]) {
-
-	case DBCTL_RADIX:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &db_radix);
-	case DBCTL_MAXWIDTH:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &db_max_width);
-	case DBCTL_TABSTOP:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &db_tab_stop_width);
-	case DBCTL_MAXLINE:
-		return sysctl_int(oldp, oldlenp, newp, newlen, &db_max_line);
 	case DBCTL_PANIC:
 		if (securelevel > 0)
 			return (sysctl_int_lower(oldp, oldlenp, newp, newlen,
@@ -86,8 +85,6 @@ ddb_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			return (0);
 		}
 		break;
-	case DBCTL_LOG:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &db_log));
 	case DBCTL_TRIGGER:
 		if (newp && db_console) {
 			struct process *pr = curproc->p_p;
@@ -119,7 +116,8 @@ ddb_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		break;
 #endif /* DDBPROF */
 	default:
-		return (EOPNOTSUPP);
+		return (sysctl_bounded_arr(ddb_vars, nitems(ddb_vars), name,
+		    namelen, oldp, oldlenp, newp, newlen));
 	}
 	/* NOTREACHED */
 }
