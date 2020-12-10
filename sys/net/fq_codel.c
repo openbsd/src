@@ -1,4 +1,4 @@
-/* $OpenBSD: fq_codel.c,v 1.13 2020/06/18 23:29:59 dlg Exp $ */
+/* $OpenBSD: fq_codel.c,v 1.14 2020/12/10 06:53:38 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 Mike Belopuhov
@@ -521,12 +521,10 @@ codel_purge(struct codel *cd, struct mbuf_list *ml)
 static inline struct flow *
 classify_flow(struct fqcodel *fqc, struct mbuf *m)
 {
-	unsigned int index;
+	unsigned int index = 0;
 
 	if (m->m_pkthdr.csum_flags & M_FLOWID)
 		index = m->m_pkthdr.ph_flowid % fqc->nflows;
-	else
-		index = arc4random_uniform(fqc->nflows);
 
 	DPRINTF("%s: %u\n", __func__, index);
 
