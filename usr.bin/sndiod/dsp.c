@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.c,v 1.14 2018/09/18 06:05:45 miko Exp $	*/
+/*	$OpenBSD: dsp.c,v 1.15 2020/12/10 17:30:49 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -192,7 +192,9 @@ aparams_log(struct aparams *par)
 int
 aparams_native(struct aparams *par)
 {
-	return par->bps == sizeof(adata_t) && par->bits == ADATA_BITS &&
+	return par->sig &&
+	    par->bps == sizeof(adata_t) &&
+	    par->bits == ADATA_BITS &&
 	    (par->bps == 1 || par->le == ADATA_LE) &&
 	    (par->bits == par->bps * 8 || !par->msb);
 }
