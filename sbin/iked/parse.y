@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.118 2020/11/29 21:00:44 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.119 2020/12/10 10:14:31 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -2520,37 +2520,33 @@ print_policy(struct iked_policy *pol)
 				    ikev2_xformtype_map[j].cm_type)
 					continue;
 
-				if (xfs != NULL) {
-					print_verbose(",");
-				} else {
-					switch (xform->xform_type) {
-					case IKEV2_XFORMTYPE_INTEGR:
-						print_verbose(" auth ");
-						xfs = authxfs;
-						break;
-					case IKEV2_XFORMTYPE_ENCR:
-						print_verbose(" enc ");
-						if (pp->prop_protoid ==
-						    IKEV2_SAPROTO_IKE)
-							xfs = ikeencxfs;
-						else
-							xfs = ipsecencxfs;
-						break;
-					case IKEV2_XFORMTYPE_PRF:
-						print_verbose(" prf ");
-						xfs = prfxfs;
-						break;
-					case IKEV2_XFORMTYPE_DH:
-						print_verbose(" group ");
-						xfs = groupxfs;
-						break;
-					case IKEV2_XFORMTYPE_ESN:
-						print_verbose(" ");
-						xfs = esnxfs;
-						break;
-					default:
-						continue;
-					}
+				switch (xform->xform_type) {
+				case IKEV2_XFORMTYPE_INTEGR:
+					print_verbose(" auth ");
+					xfs = authxfs;
+					break;
+				case IKEV2_XFORMTYPE_ENCR:
+					print_verbose(" enc ");
+					if (pp->prop_protoid ==
+					    IKEV2_SAPROTO_IKE)
+						xfs = ikeencxfs;
+					else
+						xfs = ipsecencxfs;
+					break;
+				case IKEV2_XFORMTYPE_PRF:
+					print_verbose(" prf ");
+					xfs = prfxfs;
+					break;
+				case IKEV2_XFORMTYPE_DH:
+					print_verbose(" group ");
+					xfs = groupxfs;
+					break;
+				case IKEV2_XFORMTYPE_ESN:
+					print_verbose(" ");
+					xfs = esnxfs;
+					break;
+				default:
+					continue;
 				}
 
 				print_verbose("%s", print_xf(xform->xform_id,
