@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.113 2020/12/11 04:00:33 cheloha Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.114 2020/12/11 19:48:58 cheloha Exp $ */
 
 /*
  * Copyright (c) 2015 Masao Uebayashi
@@ -1497,9 +1497,7 @@ ipmi_poll_thread(void *arg)
 			printf("%s: no SDRs IPMI disabled\n", DEVNAME(sc));
 			goto done;
 		}
-		while (tsleep_nsec(sc, PWAIT, "ipmirun",
-		    MSEC_TO_NSEC(1)) != EWOULDBLOCK)
-			continue;
+		tsleep_nsec(sc, PWAIT, "ipmirun", MSEC_TO_NSEC(1));
 	}
 
 	/* initialize sensor list for thread */
