@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.56 2020/11/09 04:22:05 tb Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.57 2020/12/11 16:36:03 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -86,7 +86,8 @@ struct pending_query {
 	int				 fd;
 	int				 bogus;
 	int				 rcode_override;
-	ssize_t				 answer_len;
+	int				 answer_len;
+	int				 received;
 	uint8_t				*answer;
 };
 
@@ -424,10 +425,7 @@ frontend_dispatch_resolver(int fd, short event, void *bula)
 	struct imsgev			*iev = bula;
 	struct imsgbuf			*ibuf = &iev->ibuf;
 	struct imsg			 imsg;
-	struct query_imsg		*query_imsg;
-	struct answer_imsg		*answer_imsg;
 	int				 n, shut = 0, chg;
-	uint8_t				*p;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
@@ -449,45 +447,30 @@ frontend_dispatch_resolver(int fd, short event, void *bula)
 			break;
 
 		switch (imsg.hdr.type) {
-		case IMSG_ANSWER_HEADER:
-			if (IMSG_DATA_SIZE(imsg) != sizeof(*query_imsg))
-				fatalx("%s: IMSG_ANSWER_HEADER wrong length: "
-				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
-			query_imsg = (struct query_imsg *)imsg.data;
-			if ((pq = find_pending_query(query_imsg->id)) ==
-			    NULL) {
-				log_warnx("cannot find pending query %llu",
-				    query_imsg->id);
-				break;
-			}
-			if (query_imsg->err) {
-				send_answer(pq);
-				pq = NULL;
-				break;
-			}
-			pq->bogus = query_imsg->bogus;
-			break;
-		case IMSG_ANSWER:
-			if (IMSG_DATA_SIZE(imsg) != sizeof(*answer_imsg))
+		case IMSG_ANSWER: {
+			struct answer_header	*answer_header;
+			int			 data_len;
+			uint8_t			*data;
+
+			if (IMSG_DATA_SIZE(imsg) < sizeof(*answer_header))
 				fatalx("%s: IMSG_ANSWER wrong length: "
 				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
-			answer_imsg = (struct answer_imsg *)imsg.data;
-			if ((pq = find_pending_query(answer_imsg->id)) ==
+			answer_header = (struct answer_header *)imsg.data;
+			data = (uint8_t *)imsg.data + sizeof(*answer_header);
+			if (answer_header->answer_len > 65535)
+				fatalx("%s: IMSG_ANSWER answer too big: %d",
+				    __func__, answer_header->answer_len);
+			data_len = IMSG_DATA_SIZE(imsg) -
+			    sizeof(*answer_header);
+
+			if ((pq = find_pending_query(answer_header->id)) ==
 			    NULL) {
-				log_warnx("cannot find pending query %llu",
-				    answer_imsg->id);
+				log_warnx("%s: cannot find pending query %llu",
+				    __func__, answer_header->id);
 				break;
 			}
 
-			p = realloc(pq->answer, pq->answer_len +
-			    answer_imsg->len);
-
-			if (p != NULL) {
-				pq->answer = p;
-				memcpy(pq->answer + pq->answer_len,
-				    answer_imsg->answer, answer_imsg->len);
-				pq->answer_len += answer_imsg->len;
-			} else {
+			if (answer_header->srvfail) {
 				free(pq->answer);
 				pq->answer_len = 0;
 				pq->answer = NULL;
@@ -495,9 +478,32 @@ frontend_dispatch_resolver(int fd, short event, void *bula)
 				send_answer(pq);
 				break;
 			}
-			if (!answer_imsg->truncated)
+
+			if (pq->answer == NULL) {
+				pq->answer = malloc(answer_header->answer_len);
+				if (pq->answer == NULL) {
+					pq->answer_len = 0;
+					pq->rcode_override =
+					    LDNS_RCODE_SERVFAIL;
+					send_answer(pq);
+					break;
+				}
+				pq->answer_len = answer_header->answer_len;
+				pq->received = 0;
+				pq->bogus = answer_header->bogus;
+			}
+
+			if (pq->received + data_len > pq->answer_len)
+				fatalx("%s: IMSG_ANSWER answer too big: %d",
+				    __func__, data_len);
+
+			memcpy(pq->answer + pq->received, data, data_len);
+			pq->received += data_len;
+
+			if (pq->received == pq->answer_len)
 				send_answer(pq);
 			break;
+		}
 		case IMSG_CTL_RESOLVER_INFO:
 		case IMSG_CTL_AUTOCONF_RESOLVER_INFO:
 		case IMSG_CTL_MEM_INFO:

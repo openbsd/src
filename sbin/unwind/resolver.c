@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.126 2020/11/05 16:22:59 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.127 2020/12/11 16:36:03 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -884,7 +884,7 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 	sldns_buffer		*buf = NULL;
 	struct regional		*region = NULL;
 	struct query_imsg	*query_imsg;
-	struct answer_imsg	 answer_imsg;
+	struct answer_header	*answer_header;
 	struct running_query	*rq;
 	struct timespec		 tp, elapsed;
 	int64_t			 ms;
@@ -894,11 +894,18 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 	char			 rcode_buf[16];
 	char			 qclass_buf[16];
 	char			 qtype_buf[16];
-	uint8_t			*p;
+	uint8_t			*p, *data;
+	uint8_t			 answer_imsg[MAX_IMSGSIZE - IMSG_HEADER_SIZE];
 
 	clock_gettime(CLOCK_MONOTONIC, &tp);
 
 	query_imsg = (struct query_imsg *)arg;
+
+	answer_header = (struct answer_header *)answer_imsg;
+	data = answer_imsg + sizeof(*answer_header);
+	answer_header->id = query_imsg->id;
+	answer_header->srvfail = 0;
+	answer_header->answer_len = answer_len;
 
 	timespecsub(&tp, &query_imsg->tp, &elapsed);
 
@@ -1004,43 +1011,33 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 	if (result->rcode == LDNS_RCODE_SERVFAIL)
 		goto servfail;
 
-	query_imsg->err = 0;
-
 	if (sec == SECURE)
 		res->state = VALIDATING;
 
 	if (res->state == VALIDATING && sec == BOGUS) {
-		query_imsg->bogus = !force_acceptbogus;
-		if (query_imsg->bogus && why_bogus != NULL)
+		answer_header->bogus = !force_acceptbogus;
+		if (answer_header->bogus && why_bogus != NULL)
 			log_warnx("%s", why_bogus);
 	} else
-		query_imsg->bogus = 0;
+		answer_header->bogus = 0;
 
-	if (resolver_imsg_compose_frontend(IMSG_ANSWER_HEADER, 0, query_imsg,
-	    sizeof(*query_imsg)) == -1)
-		fatalx("IMSG_ANSWER_HEADER failed for \"%s %s %s\"",
-		    query_imsg->qname, qclass_buf, qtype_buf);
-
-	answer_imsg.id = query_imsg->id;
 	p = answer_packet;
-	while ((size_t)answer_len > MAX_ANSWER_SIZE) {
-		answer_imsg.truncated = 1;
-		answer_imsg.len = MAX_ANSWER_SIZE;
-		memcpy(&answer_imsg.answer, p, MAX_ANSWER_SIZE);
-		if (resolver_imsg_compose_frontend(IMSG_ANSWER, 0, &answer_imsg,
-		    sizeof(answer_imsg)) == -1)
+	do {
+		int len;
+
+		if ((size_t)answer_len > sizeof(answer_imsg) -
+		    sizeof(*answer_header))
+			len = sizeof(answer_imsg) - sizeof(*answer_header);
+		else
+			len = answer_len;
+		memcpy(data, p, len);
+		if (resolver_imsg_compose_frontend(IMSG_ANSWER, 0,
+		    &answer_imsg, sizeof(*answer_header) + len) == -1)
 			fatalx("IMSG_ANSWER failed for \"%s %s %s\"",
 			    query_imsg->qname, qclass_buf, qtype_buf);
-		p += MAX_ANSWER_SIZE;
-		answer_len -= MAX_ANSWER_SIZE;
-	}
-	answer_imsg.truncated = 0;
-	answer_imsg.len = answer_len;
-	memcpy(&answer_imsg.answer, p, answer_len);
-	if (resolver_imsg_compose_frontend(IMSG_ANSWER, 0, &answer_imsg,
-	    sizeof(answer_imsg)) == -1)
-		fatalx("IMSG_ANSWER failed for \"%s %s %s\"",
-		    query_imsg->qname, qclass_buf, qtype_buf);
+		answer_len -= len;
+		p += len;
+	} while (answer_len > 0);
 
 	TAILQ_REMOVE(&running_queries, rq, entry);
 	evtimer_del(&rq->timer_ev);
@@ -1052,9 +1049,9 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 	/* try_next_resolver() might free rq */
 	if (try_next_resolver(rq) != 0 && running_res == 0) {
 		/* we are the last one, send SERVFAIL */
-		query_imsg->err = -4; /* UB_SERVFAIL */
-		resolver_imsg_compose_frontend(IMSG_ANSWER_HEADER, 0,
-		    query_imsg, sizeof(*query_imsg));
+		answer_header->srvfail = 1;
+		resolver_imsg_compose_frontend(IMSG_ANSWER, 0,
+		    answer_imsg, sizeof(*answer_header));
 	}
  out:
 	free(query_imsg);
