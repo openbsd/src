@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.127 2020/12/11 16:36:03 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.128 2020/12/11 16:37:41 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -194,6 +194,7 @@ void			 decay_latest_histograms(int, short, void *);
 int			 running_query_cnt(void);
 int			*resolvers_to_restart(struct uw_conf *,
 			     struct uw_conf *);
+const char		*query_imsg2str(struct query_imsg *);
 
 struct uw_conf			*resolver_conf;
 struct imsgev			*iev_frontend;
@@ -752,8 +753,6 @@ try_next_resolver(struct running_query *rq)
 	struct timespec		 tp, elapsed;
 	struct timeval		 tv = {0, 0};
 	int64_t			 ms;
-	char			 qclass_buf[16];
-	char			 qtype_buf[16];
 
 	while(rq->next_resolver < rq->res_pref.len &&
 	    ((res = resolvers[rq->res_pref.types[rq->next_resolver]]) == NULL ||
@@ -772,13 +771,9 @@ try_next_resolver(struct running_query *rq)
 	timespecsub(&tp, &rq->tp, &elapsed);
 	ms = elapsed.tv_sec * 1000 + elapsed.tv_nsec / 1000000;
 
-	sldns_wire2str_class_buf(rq->query_imsg->c, qclass_buf,
-	    sizeof(qclass_buf));
-	sldns_wire2str_type_buf(rq->query_imsg->t, qtype_buf,
-	    sizeof(qtype_buf));
-	log_debug("%s[+%lldms]: %s[%s] %s %s %s", __func__, ms,
+	log_debug("%s[+%lldms]: %s[%s] %s", __func__, ms,
 	    uw_resolver_type_str[res->type], uw_resolver_state_str[res->state],
-	    rq->query_imsg->qname, qclass_buf, qtype_buf);
+	    query_imsg2str(rq->query_imsg));
 
 	if ((query_imsg = malloc(sizeof(*query_imsg))) == NULL) {
 		log_warnx("%s", __func__);
@@ -892,8 +887,6 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 	int			 running_res, asr_pref_pos, force_acceptbogus;
 	char			*str;
 	char			 rcode_buf[16];
-	char			 qclass_buf[16];
-	char			 qtype_buf[16];
 	uint8_t			*p, *data;
 	uint8_t			 answer_imsg[MAX_IMSGSIZE - IMSG_HEADER_SIZE];
 
@@ -958,11 +951,9 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 	result->answer_len = 0;
 
 	sldns_wire2str_rcode_buf(result->rcode, rcode_buf, sizeof(rcode_buf));
-	sldns_wire2str_class_buf(query_imsg->c, qclass_buf, sizeof(qclass_buf));
-	sldns_wire2str_type_buf(query_imsg->t, qtype_buf, sizeof(qtype_buf));
-	log_debug("%s[%s]: %s %s %s rcode: %s[%d], elapsed: %lldms, running: %d",
-	    __func__, uw_resolver_type_str[res->type], query_imsg->qname,
-	    qclass_buf, qtype_buf, rcode_buf, result->rcode, ms,
+	log_debug("%s[%s]: %s rcode: %s[%d], elapsed: %lldms, running: %d",
+	    __func__, uw_resolver_type_str[res->type],
+	    query_imsg2str(query_imsg), rcode_buf, result->rcode, ms,
 	    running_query_cnt());
 
 	force_acceptbogus = find_force(&resolver_conf->force, query_imsg->qname,
@@ -1033,8 +1024,8 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 		memcpy(data, p, len);
 		if (resolver_imsg_compose_frontend(IMSG_ANSWER, 0,
 		    &answer_imsg, sizeof(*answer_header) + len) == -1)
-			fatalx("IMSG_ANSWER failed for \"%s %s %s\"",
-			    query_imsg->qname, qclass_buf, qtype_buf);
+			fatalx("IMSG_ANSWER failed for \"%s\"",
+			    query_imsg2str(query_imsg));
 		answer_len -= len;
 		p += len;
 	} while (answer_len > 0);
@@ -2133,4 +2124,19 @@ resolvers_to_restart(struct uw_conf *oconf, struct uw_conf *nconf)
 			restart[i] = 1;
 	}
 	return restart;
+}
+
+const char *
+query_imsg2str(struct query_imsg *query_imsg)
+{
+	static char	 buf[sizeof(query_imsg->qname) + 1 + 16 + 1 + 16];
+	char		 qclass_buf[16];
+	char		 qtype_buf[16];
+
+	sldns_wire2str_class_buf(query_imsg->c, qclass_buf, sizeof(qclass_buf));
+	sldns_wire2str_type_buf(query_imsg->t, qtype_buf, sizeof(qtype_buf));
+
+	snprintf(buf, sizeof(buf), "%s %s %s", query_imsg->qname, qclass_buf,
+	    qtype_buf);
+	return buf;
 }
