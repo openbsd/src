@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1157 2020/11/29 20:54:33 tb Exp $
+#	$OpenBSD: install.sub,v 1.1158 2020/12/11 12:34:11 bluhm Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -621,6 +621,11 @@ get_responsefile() {
 		[[ -n $_if ]] && dhclient $_if || break
 		_lf=/var/db/dhclient.leases.$_if
 
+		if ! wait_for_dhcp_info $_if 30; then
+			echo "No dhcp address on interface $_if in 30 seconds."
+			continue
+		fi
+
 		# Extract installer mode and response file path from lease file.
 		_aifile=$(lease_value $_lf filename bootfile-name)
 		[[ $_aifile == ?(*/)auto_@(install|upgrade) ]] || _aifile=
@@ -909,6 +914,28 @@ v4_info() {
 		1s/.*flags=.*<\(.*\)>.*/\1/p
 		/inet/s/netmask //
 		/.inet /s///p'
+}
+
+# Wait until dhcp has configured interface $1 within timeout $2 seconds.
+wait_for_dhcp_info() {
+	local _if=$1 _secs=$2
+
+	# Wait until $_if has a V4 address.
+	while (( _secs > 0 )); do
+		set -- $(v4_info $_if)
+		[[ -n $2 ]] && break
+		sleep 1
+		(( _secs-- ))
+	done
+
+	# Wait until there is a leases file to parse.
+	while (( _secs > 0 )); do
+		[[ -s /var/db/dhclient.leases.$_if ]] && break
+		sleep 1
+		(( _secs-- ))
+	done
+
+	return $(( _secs <= 0 ))
 }
 
 # Convert a netmask in hex format ($1) to dotted decimal format.
