@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.79 2020/11/15 22:39:36 tobhe Exp $
+.\" $OpenBSD: iked.conf.5,v 1.80 2020/12/11 22:47:11 tobhe Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 15 2020 $
+.Dd $Mdocdate: December 11 2020 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -389,9 +389,6 @@ Each traffic selector will apply for packets with source address
 .Ar src
 and destination address
 .Ar dst .
-The keyword
-.Ar any
-will match any address (i.e. 0.0.0.0/0).
 If the
 .Ar src
 argument specifies a fictional source ID,
