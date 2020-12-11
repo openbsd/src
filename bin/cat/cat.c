@@ -1,4 +1,4 @@
-/*	$OpenBSD: cat.c,v 1.30 2020/12/04 02:25:56 cheloha Exp $	*/
+/*	$OpenBSD: cat.c,v 1.31 2020/12/11 05:48:22 cheloha Exp $	*/
 /*	$NetBSD: cat.c,v 1.11 1995/09/07 06:12:54 jtc Exp $	*/
 
 /*
@@ -132,7 +132,8 @@ cook_args(char **argv)
 void
 cook_buf(FILE *fp, const char *filename)
 {
-	int ch, gobble, line, prev;
+	unsigned long long line;
+	int ch, gobble, prev;
 
 	line = gobble = 0;
 	for (prev = '\n'; (ch = getc(fp)) != EOF; prev = ch) {
@@ -147,7 +148,7 @@ cook_buf(FILE *fp, const char *filename)
 			}
 			if (nflag) {
 				if (!bflag || ch != '\n') {
-					(void)fprintf(stdout, "%6d\t", ++line);
+					fprintf(stdout, "%6llu\t", ++line);
 					if (ferror(stdout))
 						break;
 				} else if (eflag) {
