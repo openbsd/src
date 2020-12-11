@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpfdesc.h,v 1.41 2020/05/13 21:34:37 cheloha Exp $	*/
+/*	$OpenBSD: bpfdesc.h,v 1.42 2020/12/11 05:00:21 cheloha Exp $	*/
 /*	$NetBSD: bpfdesc.h,v 1.11 1995/09/27 18:30:42 thorpej Exp $	*/
 
 /*
@@ -42,6 +42,12 @@
 
 #ifdef _KERNEL
 
+/*
+ * Locks used to protect struct members in this file:
+ *
+ *	m	the per-descriptor mutex (bpf_d.bd_mtx)
+ */
+
 struct bpf_program_smr {
 	struct bpf_program	bps_bf;
 	struct smr_entry	bps_smr;
@@ -72,7 +78,7 @@ struct bpf_d {
 	int		bd_in_uiomove;	/* for debugging purpose */
 
 	struct bpf_if  *bd_bif;		/* interface descriptor */
-	u_long		bd_rtout;	/* Read timeout in 'ticks' */
+	u_long		bd_rtout;	/* [m] Read timeout in 'ticks' */
 	u_long		bd_rdStart;	/* when the read started */
 	int		bd_rnonblock;	/* true if nonblocking reads are set */
 	struct bpf_program_smr

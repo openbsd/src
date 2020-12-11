@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.193 2020/11/04 04:40:13 gnezdo Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.194 2020/12/11 05:00:21 cheloha Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -873,9 +873,11 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 				break;
 			}
 			rtout += tv->tv_usec / tick;
+			mtx_enter(&d->bd_mtx);
 			d->bd_rtout = rtout;
 			if (d->bd_rtout == 0 && tv->tv_usec != 0)
 				d->bd_rtout = 1;
+			mtx_leave(&d->bd_mtx);
 			break;
 		}
 
@@ -886,8 +888,10 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		{
 			struct timeval *tv = (struct timeval *)addr;
 
+			mtx_enter(&d->bd_mtx);
 			tv->tv_sec = d->bd_rtout / hz;
 			tv->tv_usec = (d->bd_rtout % hz) * tick;
+			mtx_leave(&d->bd_mtx);
 			break;
 		}
 
