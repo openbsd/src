@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.18 2019/05/24 11:37:52 claudio Exp $ */
+/*	$OpenBSD: timer.c,v 1.19 2020/12/11 12:00:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003-2007 Henning Brauer <henning@openbsd.org>
@@ -36,108 +36,109 @@ getmonotime(void)
 	return (ts.tv_sec);
 }
 
-struct peer_timer *
-timer_get(struct peer *p, enum Timer timer)
+struct timer *
+timer_get(struct timer_head *th, enum Timer timer)
 {
-	struct peer_timer *pt;
+	struct timer *t;
 
-	TAILQ_FOREACH(pt, &p->timers, entry)
-		if (pt->type == timer)
+	TAILQ_FOREACH(t, th, entry)
+		if (t->type == timer)
 			break;
 
-	return (pt);
+	return (t);
 }
 
-struct peer_timer *
-timer_nextisdue(struct peer *p, time_t now)
+struct timer *
+timer_nextisdue(struct timer_head *th, time_t now)
 {
-	struct peer_timer *pt;
+	struct timer *t;
 
-	pt = TAILQ_FIRST(&p->timers);
-	if (pt != NULL && pt->val > 0 && pt->val <= now)
-		return (pt);
+	t = TAILQ_FIRST(th);
+	if (t != NULL && t->val > 0 && t->val <= now)
+		return (t);
 	return (NULL);
 }
 
 time_t
-timer_nextduein(struct peer *p, time_t now)
+timer_nextduein(struct timer_head *th, time_t now)
 {
-	struct peer_timer *pt;
+	struct timer *t;
 
-	if ((pt = TAILQ_FIRST(&p->timers)) != NULL && pt->val > 0)
-		return (MAXIMUM(pt->val - now, 0));
+	if ((t = TAILQ_FIRST(th)) != NULL && t->val > 0)
+		return (MAXIMUM(t->val - now, 0));
 	return (-1);
 }
 
 int
-timer_running(struct peer *p, enum Timer timer, time_t *left)
+timer_running(struct timer_head *th, enum Timer timer, time_t *left)
 {
-	struct peer_timer	*pt = timer_get(p, timer);
+	struct timer	*t = timer_get(th, timer);
 
-	if (pt != NULL && pt->val > 0) {
+	if (t != NULL && t->val > 0) {
 		if (left != NULL)
-			*left = pt->val - getmonotime();
+			*left = t->val - getmonotime();
 		return (1);
 	}
 	return (0);
 }
 
 void
-timer_set(struct peer *p, enum Timer timer, u_int offset)
+timer_set(struct timer_head *th, enum Timer timer, u_int offset)
 {
-	struct peer_timer	*t, *pt = timer_get(p, timer);
+	struct timer	*t = timer_get(th, timer);
+	struct timer	*next;
 
-	if (pt == NULL) {	/* have to create */
-		if ((pt = malloc(sizeof(*pt))) == NULL)
+	if (t == NULL) {	/* have to create */
+		if ((t = malloc(sizeof(*t))) == NULL)
 			fatal("timer_set");
-		pt->type = timer;
+		t->type = timer;
 	} else {
-		if (pt->val == getmonotime() + (time_t)offset)
+		if (t->val == getmonotime() + (time_t)offset)
 			return;
-		TAILQ_REMOVE(&p->timers, pt, entry);
+		TAILQ_REMOVE(th, t, entry);
 	}
 
-	pt->val = getmonotime() + offset;
+	t->val = getmonotime() + offset;
 
-	TAILQ_FOREACH(t, &p->timers, entry)
-		if (t->val == 0 || t->val > pt->val)
+	TAILQ_FOREACH(next, th, entry)
+		if (next->val == 0 || next->val > t->val)
 			break;
-	if (t != NULL)
-		TAILQ_INSERT_BEFORE(t, pt, entry);
+	if (next != NULL)
+		TAILQ_INSERT_BEFORE(next, t, entry);
 	else
-		TAILQ_INSERT_TAIL(&p->timers, pt, entry);
+		TAILQ_INSERT_TAIL(th, t, entry);
 }
 
 void
-timer_stop(struct peer *p, enum Timer timer)
+timer_stop(struct timer_head *th, enum Timer timer)
 {
-	struct peer_timer	*pt = timer_get(p, timer);
+	struct timer	*t = timer_get(th, timer);
 
-	if (pt != NULL) {
-		pt->val = 0;
-		TAILQ_REMOVE(&p->timers, pt, entry);
-		TAILQ_INSERT_TAIL(&p->timers, pt, entry);
+	if (t != NULL) {
+		t->val = 0;
+		TAILQ_REMOVE(th, t, entry);
+		TAILQ_INSERT_TAIL(th, t, entry);
 	}
 }
 
 void
-timer_remove(struct peer *p, enum Timer timer)
+timer_remove(struct timer_head *th, enum Timer timer)
 {
-	struct peer_timer	*pt = timer_get(p, timer);
+	struct timer	*t = timer_get(th, timer);
 
-	if (pt != NULL) {
-		TAILQ_REMOVE(&p->timers, pt, entry);
-		free(pt);
+	if (t != NULL) {
+		TAILQ_REMOVE(th, t, entry);
+		free(t);
 	}
 }
 
 void
-timer_remove_all(struct peer *p)
+timer_remove_all(struct timer_head *th)
 {
-	struct peer_timer	*pt;
+	struct timer	*t;
 
-	while ((pt = TAILQ_FIRST(&p->timers)) != NULL) {
-		TAILQ_REMOVE(&p->timers, pt, entry);
-		free(pt);
+	while ((t = TAILQ_FIRST(th)) != NULL) {
+		TAILQ_REMOVE(th, t, entry);
+		free(t);
 	}
 }

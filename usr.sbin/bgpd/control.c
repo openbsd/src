@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.101 2020/11/05 11:28:11 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.102 2020/12/11 12:00:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -333,7 +333,8 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 					    IMSG_CTL_SHOW_NEIGHBOR,
 					    0, 0, -1, p, sizeof(*p));
 					for (i = 1; i < Timer_Max; i++) {
-						if (!timer_running(p, i, &d))
+						if (!timer_running(&p->timers,
+						    i, &d))
 							continue;
 						ct.type = i;
 						ct.val = d;
@@ -403,7 +404,8 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 					if (!p->conf.down) {
 						session_stop(p,
 						    ERR_CEASE_ADMIN_RESET);
-						timer_set(p, Timer_IdleHold,
+						timer_set(&p->timers,
+						    Timer_IdleHold,
 						    SESSION_CLEAR_DELAY);
 					} else {
 						session_stop(p,

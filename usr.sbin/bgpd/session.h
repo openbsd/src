@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.147 2020/11/05 11:28:11 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.148 2020/12/11 12:00:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -187,13 +187,13 @@ enum Timer {
 	Timer_Max
 };
 
-struct peer_timer {
-	TAILQ_ENTRY(peer_timer)	entry;
+struct timer {
+	TAILQ_ENTRY(timer)	entry;
 	enum Timer		type;
 	time_t			val;
 };
 
-TAILQ_HEAD(peer_timer_head, peer_timer);
+TAILQ_HEAD(timer_head, timer);
 
 struct peer {
 	struct peer_config	 conf;
@@ -214,7 +214,7 @@ struct peer {
 	struct bgpd_addr	 local;
 	struct bgpd_addr	 local_alt;
 	struct bgpd_addr	 remote;
-	struct peer_timer_head	 timers;
+	struct timer_head	 timers;
 	struct msgbuf		 wbuf;
 	struct ibuf_read	*rbuf;
 	struct peer		*template;
@@ -314,11 +314,11 @@ int		 imsg_ctl_rde(int, pid_t, void *, u_int16_t);
 void		 session_stop(struct peer *, u_int8_t);
 
 /* timer.c */
-struct peer_timer	*timer_get(struct peer *, enum Timer);
-struct peer_timer	*timer_nextisdue(struct peer *, time_t);
-time_t			 timer_nextduein(struct peer *, time_t);
-int			 timer_running(struct peer *, enum Timer, time_t *);
-void			 timer_set(struct peer *, enum Timer, u_int);
-void			 timer_stop(struct peer *, enum Timer);
-void			 timer_remove(struct peer *, enum Timer);
-void			 timer_remove_all(struct peer *);
+struct timer	*timer_get(struct timer_head *, enum Timer);
+struct timer	*timer_nextisdue(struct timer_head *, time_t);
+time_t		 timer_nextduein(struct timer_head *, time_t);
+int		 timer_running(struct timer_head *, enum Timer, time_t *);
+void		 timer_set(struct timer_head *, enum Timer, u_int);
+void		 timer_stop(struct timer_head *, enum Timer);
+void		 timer_remove(struct timer_head *, enum Timer);
+void		 timer_remove_all(struct timer_head *);
