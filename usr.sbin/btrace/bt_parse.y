@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.19 2020/12/07 20:14:35 anton Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.20 2020/12/11 07:27:55 anton Exp $	*/
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -98,6 +98,8 @@ typedef struct {
 
 static void	 yyerror(const char *, ...);
 static int	 yylex(void);
+
+static int pflag;
 %}
 
 %token	ERROR OP_EQ OP_NEQ BEGIN END HZ
@@ -112,7 +114,7 @@ static int	 yylex(void);
 %type	<v.i>		filterval oper builtin
 %type	<v.i>		BUILTIN F_DELETE F_PRINT FUNC0 FUNC1 FUNCN OP1 OP4
 %type	<v.i>		MOP0 MOP1
-%type	<v.probe>	probe
+%type	<v.probe>	probe probeval
 %type	<v.filter>	predicate
 %type	<v.stmt>	action stmt stmtlist
 %type	<v.arg>		expr vargs map mexpr printargs term
@@ -138,7 +140,9 @@ beginend	: BEGIN				{ $$ = B_RT_BEGIN; }
 		| END				{ $$ = B_RT_END; }
 		;
 
-probe		: STRING ':' STRING ':' STRING	{ $$ = bp_new($1, $3, $5, 0); }
+probe		: { pflag = 1; } probeval	{ $$ = $2; pflag = 0; }
+
+probeval	: STRING ':' STRING ':' STRING	{ $$ = bp_new($1, $3, $5, 0); }
 		| STRING ':' HZ ':' NUMBER	{ $$ = bp_new($1, "hz", NULL, $5); }
 		;
 
@@ -782,6 +786,15 @@ again:
 		if (kwp == NULL) {
 			if ((yylval.v.string = strdup(buf)) == NULL)
 				err(1, "%s", __func__);
+			return STRING;
+		}
+		if (pflag) {
+			/*
+			 * Probe lexer backdoor, interpret the token as a string
+			 * rather than a keyword. Otherwise, reserved keywords
+			 * would conflict with syscall names.
+			 */
+			yylval.v.string = kwp->word;
 			return STRING;
 		}
 		yylval.v.i = kwp->type;
