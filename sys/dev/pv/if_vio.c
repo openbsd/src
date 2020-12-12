@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.18 2020/07/10 13:26:40 patrick Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.19 2020/12/12 11:48:53 jan Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -904,7 +904,7 @@ vio_add_rx_mbuf(struct vio_softc *sc, int i)
 	struct mbuf *m;
 	int r;
 
-	m = MCLGETI(NULL, M_DONTWAIT, NULL, MCLBYTES);
+	m = MCLGETL(NULL, M_DONTWAIT, MCLBYTES);
 	if (m == NULL)
 		return ENOBUFS;
 	sc->sc_rx_mbufs[i] = m;

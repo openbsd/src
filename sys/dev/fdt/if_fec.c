@@ -1,4 +1,4 @@
-/* $OpenBSD: if_fec.c,v 1.10 2020/07/10 13:26:36 patrick Exp $ */
+/* $OpenBSD: if_fec.c,v 1.11 2020/12/12 11:48:52 jan Exp $ */
 /*
  * Copyright (c) 2012-2013,2019 Patrick Wildt <patrick@blueri.se>
  *
@@ -1298,7 +1298,7 @@ fec_alloc_mbuf(struct fec_softc *sc, bus_dmamap_t map)
 {
 	struct mbuf *m = NULL;
 
-	m = MCLGETI(NULL, M_DONTWAIT, NULL, MCLBYTES);
+	m = MCLGETL(NULL, M_DONTWAIT, MCLBYTES);
 	if (!m)
 		return (NULL);
 	m->m_len = m->m_pkthdr.len = MCLBYTES;

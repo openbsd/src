@@ -1481,7 +1481,7 @@ hvn_devget(struct hvn_softc *sc, caddr_t buf, uint32_t len)
 	if (len + ETHER_ALIGN <= MHLEN)
 		MGETHDR(m, M_NOWAIT, MT_DATA);
 	else
-		m = MCLGETI(NULL, M_NOWAIT, NULL, len + ETHER_ALIGN);
+		m = MCLGETL(NULL, M_NOWAIT, len + ETHER_ALIGN);
 	if (m == NULL)
 		return (NULL);
 	m->m_len = m->m_pkthdr.len = len;

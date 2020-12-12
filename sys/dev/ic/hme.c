@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.82 2020/06/22 02:27:04 dlg Exp $	*/
+/*	$OpenBSD: hme.c,v 1.83 2020/12/12 11:48:52 jan Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -1284,7 +1284,7 @@ hme_newbuf(struct hme_softc *sc, struct hme_sxd *d)
 	 * until we're sure everything is a success.
 	 */
 
-	m = MCLGETI(NULL, M_DONTWAIT, NULL, MCLBYTES);
+	m = MCLGETL(NULL, M_DONTWAIT, MCLBYTES);
 	if (!m)
 		return (ENOBUFS);
 

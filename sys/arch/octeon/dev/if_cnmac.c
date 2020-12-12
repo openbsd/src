@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.79 2020/09/04 15:18:05 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.80 2020/12/12 11:48:52 jan Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -1106,7 +1106,7 @@ cnmac_mbuf_alloc(int n)
 	paddr_t pktbuf;
 
 	while (n > 0) {
-		m = MCLGETI(NULL, M_NOWAIT, NULL,
+		m = MCLGETL(NULL, M_NOWAIT,
 		    OCTEON_POOL_SIZE_PKT + CACHELINESIZE);
 		if (m == NULL || !ISSET(m->m_flags, M_EXT)) {
 			m_freem(m);

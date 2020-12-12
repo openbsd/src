@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.278 2020/08/24 15:30:58 kn Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.279 2020/12/12 11:49:02 jan Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1627,7 +1627,7 @@ pfsync_sendout(void)
 	}
 
 	if (max_linkhdr + sc->sc_len > MHLEN) {
-		MCLGETI(m, M_DONTWAIT, NULL, max_linkhdr + sc->sc_len);
+		MCLGETL(m, M_DONTWAIT, max_linkhdr + sc->sc_len);
 		if (!ISSET(m->m_flags, M_EXT)) {
 			m_free(m);
 			sc->sc_if.if_oerrors++;

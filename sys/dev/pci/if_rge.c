@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rge.c,v 1.8 2020/10/31 07:50:41 kevlo Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.9 2020/12/12 11:48:53 jan Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020 Kevin Lo <kevlo@openbsd.org>
@@ -1043,7 +1043,7 @@ rge_newbuf(struct rge_softc *sc)
 	bus_dmamap_t rxmap;
 	int idx;
 
-	m = MCLGETI(NULL, M_DONTWAIT, NULL, RGE_JUMBO_FRAMELEN);
+	m = MCLGETL(NULL, M_DONTWAIT, RGE_JUMBO_FRAMELEN);
 	if (m == NULL)
 		return (ENOBUFS);
 

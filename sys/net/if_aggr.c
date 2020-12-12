@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.34 2020/08/21 22:59:27 kn Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.35 2020/12/12 11:49:02 jan Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -2664,7 +2664,7 @@ aggr_ntt_transmit(struct aggr_port *p)
 		return;
 
 	if (len > MHLEN) {
-		MCLGETI(m, M_DONTWAIT, NULL, len);
+		MCLGETL(m, M_DONTWAIT, len);
 		if (!ISSET(m->m_flags, M_EXT)) {
 			m_freem(m);
 			return;

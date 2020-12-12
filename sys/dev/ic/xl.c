@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.135 2020/07/10 13:26:37 patrick Exp $	*/
+/*	$OpenBSD: xl.c,v 1.136 2020/12/12 11:48:52 jan Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1081,7 +1081,7 @@ xl_newbuf(struct xl_softc *sc, struct xl_chain_onefrag *c)
 	struct mbuf	*m_new = NULL;
 	bus_dmamap_t	map;
 
-	m_new = MCLGETI(NULL, M_DONTWAIT, NULL, MCLBYTES);
+	m_new = MCLGETL(NULL, M_DONTWAIT, MCLBYTES);
 	if (!m_new)
 		return (ENOBUFS);
 

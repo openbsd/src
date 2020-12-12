@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.62 2020/07/10 13:26:36 patrick Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.63 2020/12/12 11:48:52 jan Exp $	*/
 /*
  * Copyright (c) 2009, 2015 Mark Kettenis
  *
@@ -834,7 +834,7 @@ vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 				goto skip;
 			}
 
-			m = MCLGETI(NULL, M_DONTWAIT, NULL, desc.nbytes);
+			m = MCLGETL(NULL, M_DONTWAIT, desc.nbytes);
 			if (!m)
 				break;
 			m->m_len = m->m_pkthdr.len = desc.nbytes;

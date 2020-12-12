@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.129 2020/07/10 13:26:37 patrick Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.130 2020/12/12 11:48:52 jan Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -3671,7 +3671,7 @@ bnx_get_buf(struct bnx_softc *sc, u_int16_t *prod,
 	    *prod_bseq);
 
 	/* This is a new mbuf allocation. */
-	m = MCLGETI(NULL, M_DONTWAIT, NULL, BNX_MAX_JUMBO_MRU);
+	m = MCLGETL(NULL, M_DONTWAIT, BNX_MAX_JUMBO_MRU);
 	if (!m)
 		return (0);
 	m->m_len = m->m_pkthdr.len = BNX_MAX_JUMBO_MRU;

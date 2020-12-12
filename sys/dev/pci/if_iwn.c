@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.243 2020/11/12 15:16:18 krw Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.244 2020/12/12 11:48:53 jan Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1201,7 +1201,7 @@ iwn_alloc_rx_ring(struct iwn_softc *sc, struct iwn_rx_ring *ring)
 			goto fail;
 		}
 
-		data->m = MCLGETI(NULL, M_DONTWAIT, NULL, IWN_RBUF_SIZE);
+		data->m = MCLGETL(NULL, M_DONTWAIT, IWN_RBUF_SIZE);
 		if (data->m == NULL) {
 			printf("%s: could not allocate RX mbuf\n",
 			    sc->sc_dev.dv_xname);
@@ -2058,7 +2058,7 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 		return;
 	}
 
-	m1 = MCLGETI(NULL, M_DONTWAIT, NULL, IWN_RBUF_SIZE);
+	m1 = MCLGETL(NULL, M_DONTWAIT, IWN_RBUF_SIZE);
 	if (m1 == NULL) {
 		ic->ic_stats.is_rx_nombuf++;
 		ifp->if_ierrors++;

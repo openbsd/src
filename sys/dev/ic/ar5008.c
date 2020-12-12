@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.63 2020/11/11 22:45:09 stsp Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.64 2020/12/12 11:48:52 jan Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -625,9 +625,9 @@ ar5008_rx_alloc(struct athn_softc *sc)
 			goto fail;
 		}
 		/*
-		 * Assumes MCLGETI returns cache-line-size aligned buffers.
+		 * Assumes MCLGETL returns cache-line-size aligned buffers.
 		 */
-		bf->bf_m = MCLGETI(NULL, M_DONTWAIT, NULL, ATHN_RXBUFSZ);
+		bf->bf_m = MCLGETL(NULL, M_DONTWAIT, ATHN_RXBUFSZ);
 		if (bf->bf_m == NULL) {
 			printf("%s: could not allocate Rx mbuf\n",
 			    sc->sc_dev.dv_xname);
@@ -935,7 +935,7 @@ ar5008_rx_process(struct athn_softc *sc, struct mbuf_list *ml)
 	}
 
 	/* Allocate a new Rx buffer. */
-	m1 = MCLGETI(NULL, M_DONTWAIT, NULL, ATHN_RXBUFSZ);
+	m1 = MCLGETL(NULL, M_DONTWAIT, ATHN_RXBUFSZ);
 	if (__predict_false(m1 == NULL)) {
 		ic->ic_stats.is_rx_nombuf++;
 		ifp->if_ierrors++;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.275 2020/06/21 05:37:26 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.276 2020/12/12 11:48:54 jan Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -565,7 +565,7 @@ m_defrag(struct mbuf *m, int how)
 	if ((m0 = m_gethdr(how, m->m_type)) == NULL)
 		return (ENOBUFS);
 	if (m->m_pkthdr.len > MHLEN) {
-		MCLGETI(m0, how, NULL, m->m_pkthdr.len);
+		MCLGETL(m0, how, m->m_pkthdr.len);
 		if (!(m0->m_flags & M_EXT)) {
 			m_free(m0);
 			return (ENOBUFS);
@@ -759,7 +759,7 @@ m_copyback(struct mbuf *m0, int off, int len, const void *_cp, int wait)
 			}
 
 			if (off + len > MLEN) {
-				MCLGETI(n, wait, NULL, off + len);
+				MCLGETL(n, wait, off + len);
 				if (!(n->m_flags & M_EXT)) {
 					m_free(n);
 					error = ENOBUFS;
@@ -793,7 +793,7 @@ m_copyback(struct mbuf *m0, int off, int len, const void *_cp, int wait)
 			}
 
 			if (len > MLEN) {
-				MCLGETI(n, wait, NULL, len);
+				MCLGETL(n, wait, len);
 				if (!(n->m_flags & M_EXT)) {
 					m_free(n);
 					error = ENOBUFS;
@@ -978,7 +978,7 @@ m_pullup(struct mbuf *m0, int len)
 			goto bad;
 
 		if (space > MHLEN) {
-			MCLGETI(m0, M_DONTWAIT, NULL, space);
+			MCLGETL(m0, M_DONTWAIT, space);
 			if ((m0->m_flags & M_EXT) == 0)
 				goto bad;
 		}
@@ -1175,7 +1175,7 @@ m_makespace(struct mbuf *m0, int skip, int hlen, int *off)
 		if (remain > 0) {
 			MGET(n, M_DONTWAIT, m->m_type);
 			if (n && remain > MLEN) {
-				MCLGETI(n, M_DONTWAIT, NULL, remain);
+				MCLGETL(n, M_DONTWAIT, remain);
 				if ((n->m_flags & M_EXT) == 0) {
 					m_free(n);
 					n = NULL;
@@ -1441,7 +1441,7 @@ m_dup_pkt(struct mbuf *m0, unsigned int adj, int wait)
 		goto fail;
 
 	if (len > MHLEN) {
-		MCLGETI(m, wait, NULL, len);
+		MCLGETL(m, wait, len);
 		if (!ISSET(m->m_flags, M_EXT))
 			goto fail;
 	}

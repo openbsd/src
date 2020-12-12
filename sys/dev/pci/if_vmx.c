@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.64 2020/07/10 13:26:38 patrick Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.65 2020/12/12 11:48:53 jan Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -652,7 +652,7 @@ vmxnet3_rxfill(struct vmxnet3_rxring *ring)
 	for (slots = if_rxr_get(&ring->rxr, NRXDESC); slots > 0; slots--) {
 		KASSERT(ring->m[prod] == NULL);
 
-		m = MCLGETI(NULL, M_DONTWAIT, NULL, JUMBO_LEN);
+		m = MCLGETL(NULL, M_DONTWAIT, JUMBO_LEN);
 		if (m == NULL)
 			break;
 

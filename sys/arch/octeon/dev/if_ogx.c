@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ogx.c,v 1.2 2020/09/09 15:53:25 visa Exp $	*/
+/*	$OpenBSD: if_ogx.c,v 1.3 2020/12/12 11:48:52 jan Exp $	*/
 
 /*
  * Copyright (c) 2019 Visa Hankala
@@ -1147,7 +1147,7 @@ ogx_load_mbufs(struct ogx_softc *sc, unsigned int n)
 	paddr_t pktbuf;
 
 	for ( ; n > 0; n--) {
-		m = MCLGETI(NULL, M_NOWAIT, NULL, MCLBYTES);
+		m = MCLGETL(NULL, M_NOWAIT, MCLBYTES);
 		if (m == NULL)
 			break;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwge.c,v 1.6 2020/09/13 01:54:05 jmatthew Exp $	*/
+/*	$OpenBSD: if_dwge.c,v 1.7 2020/12/12 11:48:52 jan Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -1283,7 +1283,7 @@ dwge_alloc_mbuf(struct dwge_softc *sc, bus_dmamap_t map)
 {
 	struct mbuf *m = NULL;
 
-	m = MCLGETI(NULL, M_DONTWAIT, NULL, MCLBYTES);
+	m = MCLGETL(NULL, M_DONTWAIT, MCLBYTES);
 	if (!m)
 		return (NULL);
 	m->m_len = m->m_pkthdr.len = MCLBYTES;

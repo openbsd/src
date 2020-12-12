@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.250 2020/08/08 19:53:02 florian Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.251 2020/12/12 11:49:02 jan Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -312,7 +312,7 @@ struct mbuf {
 } while (/* CONSTCOND */ 0)
 
 #define MCLGET(m, how) (void) m_clget((m), (how), MCLBYTES)
-#define MCLGETI(m, how, ifp, l) m_clget((m), (how), (l))
+#define MCLGETL(m, how, l) m_clget((m), (how), (l))
 
 u_int mextfree_register(void (*)(caddr_t, u_int, void *));
 #define	MEXTFREE_POOL 0

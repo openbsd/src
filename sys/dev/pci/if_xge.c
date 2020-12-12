@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.79 2020/07/10 13:26:40 patrick Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.80 2020/12/12 11:48:53 jan Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -1340,7 +1340,7 @@ xge_add_rxbuf(struct xge_softc *sc, int id)
 	MGETHDR(m[0], M_DONTWAIT, MT_DATA);
 	if (m[0] == NULL)
 		return (ENOBUFS);
-	MCLGETI(m[0], M_DONTWAIT, NULL, XGE_MAX_FRAMELEN + ETHER_ALIGN);
+	MCLGETL(m[0], M_DONTWAIT, XGE_MAX_FRAMELEN + ETHER_ALIGN);
 	if ((m[0]->m_flags & M_EXT) == 0) {
 		m_freem(m[0]);
 		return (ENOBUFS);

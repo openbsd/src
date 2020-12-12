@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchctl.c,v 1.21 2020/04/07 13:27:52 visa Exp $	*/
+/*	$OpenBSD: switchctl.c,v 1.22 2020/12/12 11:49:02 jan Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -224,7 +224,7 @@ switchwrite(dev_t dev, struct uio *uio, int ioflag)
 		if (m == NULL)
 			return (ENOBUFS);
 		if (len >= MHLEN) {
-			MCLGETI(m, M_DONTWAIT, NULL, MIN(MAXMCLBYTES, len));
+			MCLGETL(m, M_DONTWAIT, MIN(MAXMCLBYTES, len));
 			if ((m->m_flags & M_EXT) == 0) {
 				m_free(m);
 				return (ENOBUFS);
@@ -262,7 +262,7 @@ switchwrite(dev_t dev, struct uio *uio, int ioflag)
 			goto save_return;
 		}
 		if (len >= MLEN) {
-			MCLGETI(n, M_DONTWAIT, NULL, MIN(MAXMCLBYTES, len));
+			MCLGETL(n, M_DONTWAIT, MIN(MAXMCLBYTES, len));
 			if ((n->m_flags & M_EXT) == 0) {
 				m_free(n);
 				error = ENOBUFS;

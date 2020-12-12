@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003.c,v 1.51 2020/10/11 07:05:28 mpi Exp $	*/
+/*	$OpenBSD: ar9003.c,v 1.52 2020/12/12 11:48:52 jan Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -743,9 +743,9 @@ ar9003_rx_alloc(struct athn_softc *sc, int qid, int count)
 			goto fail;
 		}
 		/*
-		 * Assumes MCLGETI returns cache-line-size aligned buffers.
+		 * Assumes MCLGETL returns cache-line-size aligned buffers.
 		 */
-		bf->bf_m = MCLGETI(NULL, M_DONTWAIT, NULL, ATHN_RXBUFSZ);
+		bf->bf_m = MCLGETL(NULL, M_DONTWAIT, ATHN_RXBUFSZ);
 		if (bf->bf_m == NULL) {
 			printf("%s: could not allocate Rx mbuf\n",
 			    sc->sc_dev.dv_xname);
@@ -970,7 +970,7 @@ ar9003_rx_process(struct athn_softc *sc, int qid, struct mbuf_list *ml)
 	}
 
 	/* Allocate a new Rx buffer. */
-	m1 = MCLGETI(NULL, M_DONTWAIT, NULL, ATHN_RXBUFSZ);
+	m1 = MCLGETL(NULL, M_DONTWAIT, ATHN_RXBUFSZ);
 	if (__predict_false(m1 == NULL)) {
 		ic->ic_stats.is_rx_nombuf++;
 		ifp->if_ierrors++;
@@ -2629,7 +2629,7 @@ ar9003_paprd_tx_tone(struct athn_softc *sc)
 	int error;
 
 	/* Build a Null (no data) frame of TONE_LEN bytes. */
-	m = MCLGETI(NULL, M_DONTWAIT, NULL, TONE_LEN);
+	m = MCLGETL(NULL, M_DONTWAIT, TONE_LEN);
 	if (m == NULL)
 		return (ENOBUFS);
 	memset(mtod(m, caddr_t), 0, TONE_LEN);

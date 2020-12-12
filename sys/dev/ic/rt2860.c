@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.100 2020/10/11 07:05:28 mpi Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.101 2020/12/12 11:48:52 jan Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -685,7 +685,7 @@ rt2860_alloc_rx_ring(struct rt2860_softc *sc, struct rt2860_rx_ring *ring)
 			goto fail;
 		}
 
-		data->m = MCLGETI(NULL, M_DONTWAIT, NULL, MCLBYTES);
+		data->m = MCLGETL(NULL, M_DONTWAIT, MCLBYTES);
 		if (data->m == NULL) {
 			printf("%s: could not allocate Rx mbuf\n",
 			    sc->sc_dev.dv_xname);
@@ -1304,7 +1304,7 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 			goto skip;
 		}
 
-		m1 = MCLGETI(NULL, M_DONTWAIT, NULL, MCLBYTES);
+		m1 = MCLGETL(NULL, M_DONTWAIT, MCLBYTES);
 		if (__predict_false(m1 == NULL)) {
 			ifp->if_ierrors++;
 			goto skip;

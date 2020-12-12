@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.43 2020/12/07 09:14:09 kettenis Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.44 2020/12/12 11:48:52 jan Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -3124,7 +3124,7 @@ mvpp2_alloc_mbuf(struct mvpp2_softc *sc, bus_dmamap_t map)
 {
 	struct mbuf *m = NULL;
 
-	m = MCLGETI(NULL, M_DONTWAIT, NULL, MCLBYTES);
+	m = MCLGETL(NULL, M_DONTWAIT, MCLBYTES);
 	if (!m)
 		return (NULL);
 	m->m_len = m->m_pkthdr.len = MCLBYTES;

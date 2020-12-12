@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.47 2020/12/07 20:12:04 tobhe Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.48 2020/12/12 11:48:53 jan Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3171,7 +3171,7 @@ iwx_rx_addbuf(struct iwx_softc *sc, int size, int idx)
 	if (size <= MCLBYTES) {
 		MCLGET(m, M_DONTWAIT);
 	} else {
-		MCLGETI(m, M_DONTWAIT, NULL, IWX_RBUF_SIZE);
+		MCLGETL(m, M_DONTWAIT, IWX_RBUF_SIZE);
 	}
 	if ((m->m_flags & M_EXT) == 0) {
 		m_freem(m);
@@ -3820,7 +3820,7 @@ iwx_send_cmd(struct iwx_softc *sc, struct iwx_host_cmd *hcmd)
 			err = EINVAL;
 			goto out;
 		}
-		m = MCLGETI(NULL, M_DONTWAIT, NULL, totlen);
+		m = MCLGETL(NULL, M_DONTWAIT, totlen);
 		if (m == NULL) {
 			printf("%s: could not get fw cmd mbuf (%zd bytes)\n",
 			    DEVNAME(sc), totlen);

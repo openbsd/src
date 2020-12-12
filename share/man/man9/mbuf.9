@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.119 2020/08/08 07:42:31 florian Exp $
+.\"     $OpenBSD: mbuf.9,v 1.120 2020/12/12 11:48:52 jan Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 8 2020 $
+.Dd $Mdocdate: December 12 2020 $
 .Dt MGET 9
 .Os
 .Sh NAME
@@ -58,7 +58,7 @@
 .Nm m_devget ,
 .Nm m_apply ,
 .Nm MCLGET ,
-.Nm MCLGETI ,
+.Nm MCLGETL ,
 .Nm MEXTADD ,
 .Nm m_align ,
 .Nm M_READONLY ,
@@ -126,7 +126,7 @@
 "int (*func)(caddr_t, caddr_t, unsigned int)" "caddr_t fstate"
 .Fn MCLGET "struct mbuf *m" "int how"
 .Ft struct mbuf *
-.Fn MCLGETI "struct mbuf *m" "int how" "struct ifnet *ifp" "int len"
+.Fn MCLGETL "struct mbuf *m" "int how" "int len"
 .Fn MEXTADD "struct mbuf *m" "caddr_t buf" "u_int size" "int flags" \
 "void (*free)(caddr_t, u_int, void *)" "void *arg"
 .Ft void
@@ -721,7 +721,7 @@ See
 .Fn m_get
 for a description of
 .Fa how .
-.It Fn MCLGETI "struct mbuf *m" "int how" "struct ifnet *ifp" "int len"
+.It Fn MCLGETL "struct mbuf *m" "int how" "int len"
 If
 .Fa m
 is NULL, allocate it.

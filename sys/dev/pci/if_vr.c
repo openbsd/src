@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.156 2020/07/10 13:26:38 patrick Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.157 2020/12/12 11:48:53 jan Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1699,7 +1699,7 @@ vr_alloc_mbuf(struct vr_softc *sc, struct vr_chain_onefrag *r)
 	if (r == NULL)
 		return (EINVAL);
 
-	m = MCLGETI(NULL, M_DONTWAIT, NULL, MCLBYTES);
+	m = MCLGETL(NULL, M_DONTWAIT, MCLBYTES);
 	if (!m)
 		return (ENOBUFS);
 

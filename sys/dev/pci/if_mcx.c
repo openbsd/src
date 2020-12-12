@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.75 2020/11/06 02:50:02 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.76 2020/12/12 11:48:53 jan Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -6413,7 +6413,7 @@ mcx_rx_fill_slots(struct mcx_softc *sc, struct mcx_rx *rx,
 	rqe = ring;
 	for (fills = 0; fills < nslots; fills++) {
 		ms = &slots[slot];
-		m = MCLGETI(NULL, M_DONTWAIT, NULL, sc->sc_rxbufsz);
+		m = MCLGETL(NULL, M_DONTWAIT, sc->sc_rxbufsz);
 		if (m == NULL)
 			break;
 

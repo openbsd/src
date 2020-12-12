@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf2.c,v 1.44 2019/07/16 21:41:37 bluhm Exp $	*/
+/*	$OpenBSD: uipc_mbuf2.c,v 1.45 2020/12/12 11:48:54 jan Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.40 1999/04/01 00:23:25 thorpej Exp $	*/
 
@@ -184,7 +184,7 @@ m_pulldown(struct mbuf *m, int off, int len, int *offp)
 	}
 	MGET(o, M_DONTWAIT, m->m_type);
 	if (o && len > MLEN) {
-		MCLGETI(o, M_DONTWAIT, NULL, len);
+		MCLGETL(o, M_DONTWAIT, len);
 		if ((o->m_flags & M_EXT) == 0) {
 			m_free(o);
 			o = NULL;
@@ -235,7 +235,7 @@ m_dup1(struct mbuf *m, int off, int len, int wait)
 		l = MLEN;
 	}
 	if (n && len > l) {
-		MCLGETI(n, wait, NULL, len);
+		MCLGETL(n, wait, len);
 		if ((n->m_flags & M_EXT) == 0) {
 			m_free(n);
 			n = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.135 2020/07/10 13:26:38 patrick Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.136 2020/12/12 11:48:53 jan Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -474,7 +474,7 @@ msk_newbuf(struct sk_if_softc *sc_if)
 	uint32_t		hiaddr;
 	unsigned int		pktlen = sc_if->sk_pktlen + ETHER_ALIGN;
 
-	m = MCLGETI(NULL, M_DONTWAIT, NULL, pktlen);
+	m = MCLGETL(NULL, M_DONTWAIT, pktlen);
 	if (m == NULL)
 		return (0);
 	m->m_len = m->m_pkthdr.len = pktlen;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.191 2020/07/10 13:26:38 patrick Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.192 2020/12/12 11:48:53 jan Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -622,7 +622,7 @@ sk_newbuf(struct sk_if_softc *sc_if)
 	int			error;
 	uint64_t		dva;
 
-	m = MCLGETI(NULL, M_DONTWAIT, NULL, SK_JLEN);
+	m = MCLGETL(NULL, M_DONTWAIT, SK_JLEN);
 	if (m == NULL)
 		return (ENOBUFS);
 

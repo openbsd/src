@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.101 2020/07/10 13:26:38 patrick Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.102 2020/12/12 11:48:53 jan Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -1311,7 +1311,7 @@ vic_alloc_mbuf(struct vic_softc *sc, bus_dmamap_t map, u_int pktlen)
 {
 	struct mbuf *m = NULL;
 
-	m = MCLGETI(NULL, M_DONTWAIT, NULL, pktlen);
+	m = MCLGETL(NULL, M_DONTWAIT, pktlen);
 	if (!m)
 		return (NULL);
 	m->m_data += ETHER_ALIGN;

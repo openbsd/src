@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_se.c,v 1.21 2020/07/10 13:26:38 patrick Exp $	*/
+/*	$OpenBSD: if_se.c,v 1.22 2020/12/12 11:48:53 jan Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Christopher Zimmermann <madroach@zakweb.de>
@@ -847,11 +847,11 @@ se_newbuf(struct se_softc *sc, uint i)
 	struct mbuf *m;
 	int rc;
 
-	m = MCLGETI(NULL, M_DONTWAIT, NULL, MCLBYTES);
+	m = MCLGETL(NULL, M_DONTWAIT, MCLBYTES);
 	if (m == NULL) {
 #ifdef SE_DEBUG
 		if (ifp->if_flags & IFF_DEBUG)
-			printf("%s: MCLGETI failed\n", ifp->if_xname);
+			printf("%s: MCLGETL failed\n", ifp->if_xname);
 #endif
 		return ENOBUFS;
 	}

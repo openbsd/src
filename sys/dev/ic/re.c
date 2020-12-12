@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.207 2020/08/26 03:29:06 visa Exp $	*/
+/*	$OpenBSD: re.c,v 1.208 2020/12/12 11:48:52 jan Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1125,7 +1125,7 @@ re_newbuf(struct rl_softc *sc)
 	u_int32_t	cmdstat;
 	int		error, idx;
 
-	m = MCLGETI(NULL, M_DONTWAIT, NULL, RL_FRAMELEN(sc->rl_max_mtu));
+	m = MCLGETL(NULL, M_DONTWAIT, RL_FRAMELEN(sc->rl_max_mtu));
 	if (!m)
 		return (ENOBUFS);
 

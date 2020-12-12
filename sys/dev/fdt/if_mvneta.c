@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvneta.c,v 1.15 2020/12/06 16:50:01 kettenis Exp $	*/
+/*	$OpenBSD: if_mvneta.c,v 1.16 2020/12/12 11:48:52 jan Exp $	*/
 /*	$NetBSD: if_mvneta.c,v 1.41 2015/04/15 10:15:40 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
@@ -1654,7 +1654,7 @@ mvneta_alloc_mbuf(struct mvneta_softc *sc, bus_dmamap_t map)
 {
 	struct mbuf *m = NULL;
 
-	m = MCLGETI(NULL, M_DONTWAIT, NULL, MCLBYTES);
+	m = MCLGETL(NULL, M_DONTWAIT, MCLBYTES);
 	if (!m)
 		return (NULL);
 	m->m_len = m->m_pkthdr.len = MCLBYTES;

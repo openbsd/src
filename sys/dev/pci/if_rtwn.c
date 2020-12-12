@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtwn.c,v 1.36 2019/09/12 12:55:07 stsp Exp $	*/
+/*	$OpenBSD: if_rtwn.c,v 1.37 2020/12/12 11:48:53 jan Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -545,7 +545,7 @@ rtwn_alloc_rx_list(struct rtwn_pci_softc *sc)
 			goto fail;
 		}
 
-		rx_data->m = MCLGETI(NULL, M_DONTWAIT, NULL, MCLBYTES);
+		rx_data->m = MCLGETL(NULL, M_DONTWAIT, MCLBYTES);
 		if (rx_data->m == NULL) {
 			printf("%s: could not allocate rx mbuf\n",
 			    sc->sc_dev.dv_xname);
@@ -887,7 +887,7 @@ rtwn_rx_frame(struct rtwn_pci_softc *sc, struct r92c_rx_desc_pci *rx_desc,
 	DPRINTFN(5, ("Rx frame len=%d rate=%d infosz=%d shift=%d rssi=%d\n",
 	    pktlen, rate, infosz, shift, rssi));
 
-	m1 = MCLGETI(NULL, M_DONTWAIT, NULL, MCLBYTES);
+	m1 = MCLGETL(NULL, M_DONTWAIT, MCLBYTES);
 	if (m1 == NULL) {
 		ifp->if_ierrors++;
 		return;

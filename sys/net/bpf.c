@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.196 2020/12/12 00:15:34 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.197 2020/12/12 11:49:02 jan Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -207,7 +207,7 @@ bpf_movein(struct uio *uio, struct bpf_d *d, struct mbuf **mp,
 	m->m_pkthdr.len = len - hlen;
 
 	if (len > MHLEN) {
-		MCLGETI(m, M_WAIT, NULL, len);
+		MCLGETL(m, M_WAIT, len);
 		if ((m->m_flags & M_EXT) == 0) {
 			error = ENOBUFS;
 			goto bad;

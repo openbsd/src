@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.250 2020/11/17 14:45:42 claudio Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.251 2020/12/12 11:48:54 jan Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -597,9 +597,9 @@ m_getuio(struct mbuf **mp, int atomic, long space, struct uio *uio)
 
 		resid = ulmin(resid, space);
 		if (resid >= MINCLSIZE) {
-			MCLGETI(m, M_NOWAIT, NULL, ulmin(resid, MAXMCLBYTES));
+			MCLGETL(m, M_NOWAIT, ulmin(resid, MAXMCLBYTES));
 			if ((m->m_flags & M_EXT) == 0)
-				MCLGETI(m, M_NOWAIT, NULL, MCLBYTES);
+				MCLGETL(m, M_NOWAIT, MCLBYTES);
 			if ((m->m_flags & M_EXT) == 0)
 				goto nopages;
 			mlen = m->m_ext.ext_size;

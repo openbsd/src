@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.154 2020/10/11 07:05:28 mpi Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.155 2020/12/12 11:48:53 jan Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -674,7 +674,7 @@ wpi_alloc_rx_ring(struct wpi_softc *sc, struct wpi_rx_ring *ring)
 			goto fail;
 		}
 
-		data->m = MCLGETI(NULL, M_DONTWAIT, NULL, WPI_RBUF_SIZE);
+		data->m = MCLGETL(NULL, M_DONTWAIT, WPI_RBUF_SIZE);
 		if (data->m == NULL) {
 			printf("%s: could not allocate RX mbuf\n",
 			    sc->sc_dev.dv_xname);
@@ -1216,7 +1216,7 @@ wpi_rx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 		return;
 	}
 
-	m1 = MCLGETI(NULL, M_DONTWAIT, NULL, WPI_RBUF_SIZE);
+	m1 = MCLGETL(NULL, M_DONTWAIT, WPI_RBUF_SIZE);
 	if (m1 == NULL) {
 		ic->ic_stats.is_rx_nombuf++;
 		ifp->if_ierrors++;
