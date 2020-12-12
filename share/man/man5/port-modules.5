@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.248 2020/10/09 13:24:43 paco Exp $
+.\"	$OpenBSD: port-modules.5,v 1.249 2020/12/12 15:13:28 rsadowski Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 9 2020 $
+.Dd $Mdocdate: December 12 2020 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -1886,13 +1886,6 @@ Some tools require the following goo in the PLIST:
 @unexec-delete %D/bin/update-mime-database %D/share/mime
 .Ed
 .It x11/gnustep
-.It x11/kde
-Used for building KDE3-enabled ports.
-Main variables there is
-.Ev MODKDE_VERSION ,
-which defines what patches and tweaks should be applied,
-depending of exact KDE version the ported software is build
-against of.
 .It x11/qt3, x11/qt4 and x11/qt5
 All qt* modules share a common
 .Ev MODQT_*
