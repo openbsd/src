@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cu.1,v 1.20 2020/02/08 01:09:57 jsg Exp $
+.\"	$OpenBSD: cu.1,v 1.21 2020/12/12 06:35:37 bentley Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 8 2020 $
+.Dd $Mdocdate: December 12 2020 $
 .Dt CU 1
 .Os
 .Sh NAME
@@ -147,11 +147,15 @@ Fork a child process on the local system to perform special protocols
 such as XMODEM.
 The child program will be run with the following arrangement of
 file descriptors:
-.Bd -literal -offset indent
-0 <-> remote tty in
-1 <-> remote tty out
-2 <-> local tty stderr
-.Ed
+.Pp
+.Bl -item -compact -offset indent
+.It
+0 \(<> remote tty in
+.It
+1 \(<> remote tty out
+.It
+2 \(<> local tty stderr
+.El
 .It Ic ~D
 Deassert the data terminal ready (DTR) line briefly.
 .It Ic ~R
