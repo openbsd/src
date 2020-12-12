@@ -1,4 +1,4 @@
-/*	$OpenBSD: asmc.c,v 1.2 2020/09/13 14:11:28 mglocker Exp $	*/
+/*	$OpenBSD: asmc.c,v 1.3 2020/12/12 09:44:27 mglocker Exp $	*/
 /*
  * Copyright (c) 2015 Joerg Jung <jung@openbsd.org>
  *
@@ -57,6 +57,8 @@
 #define ASMC_MAXFAN	10	/* fan keys with digits 0-9 */
 #define ASMC_MAXLIGHT	2	/* left and right light sensor */
 #define ASMC_MAXMOTION	3	/* x y z axis motion sensors */
+
+#define ASMC_DELAY_LOOP	200	/* ASMC_DELAY_LOOP * 10us = 2ms */
 
 struct asmc_prod {
 	const char	*pr_name;
@@ -434,36 +436,41 @@ asmc_status(struct asmc_softc *sc)
 }
 
 static int
-asmc_wait(struct asmc_softc *sc, uint8_t mask, uint8_t val)
-{
-	int i;
-
-	for (i = 0; i < 500; i++) { /* wait up to 5 ms */
-		if ((bus_space_read_1(sc->sc_iot, sc->sc_ioh, ASMC_COMMAND) &
-		    mask) == val)
-			return 0;
-		delay(10);
-	}
-	return ETIMEDOUT;
-}
-
-static int
 asmc_write(struct asmc_softc *sc, uint8_t off, uint8_t val)
 {
-	if (asmc_wait(sc, ASMC_IBF, 0))
-		return 1;
+	int i;
+	uint8_t status;
+
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, off, val);
-	if (asmc_wait(sc, ASMC_ACCEPT, ASMC_ACCEPT))
-		return 1;
-	return 0;
+	for (i = 0; i < ASMC_DELAY_LOOP; i++) {
+		status = bus_space_read_1(sc->sc_iot, sc->sc_ioh, ASMC_COMMAND);
+		if (status & ASMC_IBF)
+			continue;
+		if (status & ASMC_ACCEPT)
+			return 0;
+		delay(10);
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, off, val);
+	}
+
+	return ETIMEDOUT;
 }
 
 static int
 asmc_read(struct asmc_softc *sc, uint8_t off, uint8_t *buf)
 {
-	if (asmc_wait(sc, ASMC_OBF, ASMC_OBF))
-		return 1;
+	int i;
+	uint8_t status;
+
+	for (i = 0; i < ASMC_DELAY_LOOP; i++) {
+		status = bus_space_read_1(sc->sc_iot, sc->sc_ioh, ASMC_COMMAND);
+		if (status & ASMC_OBF)
+			break;
+		delay(10);
+	}
+	if (i == ASMC_DELAY_LOOP)
+		return ETIMEDOUT;
 	*buf = bus_space_read_1(sc->sc_iot, sc->sc_ioh, off);
+
 	return 0;
 }
 
