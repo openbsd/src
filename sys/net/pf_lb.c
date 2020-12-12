@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.67 2020/07/29 02:32:13 yasuoka Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.68 2020/12/12 22:59:21 jan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -349,7 +349,7 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
     struct pf_addr *naddr, struct pf_addr *init_addr, struct pf_src_node **sns,
     struct pf_pool *rpool, enum pf_sn_types type)
 {
-	unsigned char		 hash[16];
+	struct pf_addr		 hash;
 	struct pf_addr		 faddr;
 	struct pf_addr		*raddr = &rpool->addr.v.a.addr;
 	struct pf_addr		*rmask = &rpool->addr.v.a.mask;
@@ -460,8 +460,7 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 		}
 		break;
 	case PF_POOL_SRCHASH:
-		hashidx =
-		    pf_hash(saddr, (struct pf_addr *)&hash, &rpool->key, af);
+		hashidx = pf_hash(saddr, &hash, &rpool->key, af);
 
 		if (rpool->addr.type == PF_ADDR_TABLE ||
 		    rpool->addr.type == PF_ADDR_DYNIFTL) {
@@ -483,8 +482,7 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 				return (1);
 			pf_addrcpy(naddr, &rpool->counter, af);
 		} else {
-			pf_poolmask(naddr, raddr, rmask,
-			    (struct pf_addr *)&hash, af);
+			pf_poolmask(naddr, raddr, rmask, &hash, af);
 		}
 		break;
 	case PF_POOL_ROUNDROBIN:
