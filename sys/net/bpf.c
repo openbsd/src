@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.195 2020/12/12 00:01:37 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.196 2020/12/12 00:15:34 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1437,13 +1437,13 @@ bpf_mtap_ether(caddr_t arg, const struct mbuf *m, u_int direction)
 {
 #if NVLAN > 0
 	struct ether_vlan_header evh;
-	struct m_hdr mh;
+	struct m_hdr mh, md;
 	uint8_t prio;
 
 	if ((m->m_flags & M_VLANTAG) == 0)
 #endif
 	{
-		return bpf_mtap(arg, m, direction);
+		return _bpf_mtap(arg, m, m, direction);
 	}
 
 #if NVLAN > 0
@@ -1460,12 +1460,16 @@ bpf_mtap_ether(caddr_t arg, const struct mbuf *m, u_int direction)
 	    (prio << EVL_PRIO_BITS));
 
 	mh.mh_flags = 0;
-	mh.mh_data = m->m_data + ETHER_HDR_LEN;
-	mh.mh_len = m->m_len - ETHER_HDR_LEN;
-	mh.mh_next = m->m_next;
+	mh.mh_data = (caddr_t)&evh;
+	mh.mh_len = sizeof(evh);
+	mh.mh_next = (struct mbuf *)&md;
 
-	return bpf_mtap_hdr(arg, &evh, sizeof(evh),
-	    (struct mbuf *)&mh, direction);
+	md.mh_flags = 0;
+	md.mh_data = m->m_data + ETHER_HDR_LEN;
+	md.mh_len = m->m_len - ETHER_HDR_LEN;
+	md.mh_next = m->m_next;
+
+	return _bpf_mtap(arg, m, (struct mbuf *)&mh, direction);
 #endif
 }
 
