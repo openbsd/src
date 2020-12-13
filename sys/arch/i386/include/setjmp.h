@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.h,v 1.3 2020/12/06 15:31:30 bluhm Exp $	*/
+/*	$OpenBSD: setjmp.h,v 1.4 2020/12/13 21:21:32 bluhm Exp $	*/
 /*	$NetBSD: setjmp.h,v 1.1 1994/12/20 10:36:43 cgd Exp $	*/
 
 /*
@@ -13,7 +13,6 @@
 #define _JB_EDI		5
 #define _JB_SIGMASK	6
 #define _JB_SIGFLAG	7
-#define _JB_MXCSR	8
-#define _JB_FCW		9
+#define _JB_FCW		8
 
 #define _JBLEN		10	/* size, in longs, of a jmp_buf */
