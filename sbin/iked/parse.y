@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.119 2020/12/10 10:14:31 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.120 2020/12/13 19:46:17 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -3011,6 +3011,11 @@ create_ike(char *name, int af, uint8_t ipproto,
 
 	for (ipa = hosts->src, ipb = hosts->dst; ipa && ipb;
 	    ipa = ipa->next, ipb = ipb->next) {
+		if (ipa->af != ipb->af) {
+			yyerror("cannot mix different address families.");
+			goto done;
+		}
+
 		if ((flow = calloc(1, sizeof(struct iked_flow))) == NULL)
 			fatalx("%s: failed to alloc flow.", __func__);
 
