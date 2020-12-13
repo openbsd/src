@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.72 2020/12/13 03:15:52 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.73 2020/12/13 04:00:38 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -893,6 +893,7 @@ sg_free_table(struct sg_table *table)
 {
 	free(table->sgl, M_DRM,
 	    table->orig_nents * sizeof(struct scatterlist));
+	table->sgl = NULL;
 }
 
 size_t
