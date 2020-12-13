@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atc.6,v 1.23 2016/03/07 12:07:55 mestre Exp $
+.\"	$OpenBSD: atc.6,v 1.24 2020/12/13 15:47:32 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 .\"
 .\" Copyright (c) 1986 Ed James. All rights reserved.
 .\"
-.Dd $Mdocdate: March 7 2016 $
+.Dd $Mdocdate: December 13 2020 $
 .Dt ATC 6
 .Os
 .Sh NAME
@@ -423,7 +423,7 @@ A plane may also be either
 or
 .Em ignored .
 An
-.Em unmarked
+.Em ignored
 plane is drawn in unhighlighted mode, and a line of dashes is displayed in
 the command field of the information area.
 The plane will remain this way until a mark command has been issued.
@@ -432,8 +432,8 @@ but the command line will return to a line of dashes when the command
 is completed.
 .Pp
 An
-.Em ignored
-plane is treated the same as an unmarked plane, except that it will
+.Em unmarked
+plane is treated the same as an ignored plane, except that it will
 automatically switch to
 .Em marked
 status when a delayed command has been processed.
