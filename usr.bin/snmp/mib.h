@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.8 2020/09/12 18:11:43 martijn Exp $	*/
+/*	$OpenBSD: mib.h,v 1.9 2020/12/14 07:44:26 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -1034,8 +1034,8 @@
 	{ MIBDECL(ifHCOutBroadcastPkts) },		\
 	{ MIBDECL(ifLinkUpDownTrapEnable) },		\
 	{ MIBDECL(ifHighSpeed) },			\
-	{ MIBDECL(ifPromiscuousMode) },			\
-	{ MIBDECL(ifConnectorPresent) },		\
+	{ MIBDECL(ifPromiscuousMode), "TruthValue" },	\
+	{ MIBDECL(ifConnectorPresent), "TruthValue" },	\
 	{ MIBDECL(ifAlias) },				\
 	{ MIBDECL(ifCounterDiscontinuityTime) },	\
 	{ MIBDECL(ifStackTable) },			\
@@ -1460,10 +1460,15 @@
 	{ MIBEND }					\
 }
 
-#define TEXTCONV_TREE {					\
-	{ "SnmpAdminString", "255t", BER_TYPE_OCTETSTRING }, \
-	{ "DisplayString", "255a", BER_TYPE_OCTETSTRING }, \
-	{ NULL, NULL }					\
+#define TEXTCONV_TREE {							\
+	{ "SnmpAdminString", BER_TYPE_OCTETSTRING, "255t" },		\
+	{ "DisplayString", BER_TYPE_OCTETSTRING, "255a" },		\
+	{ "TruthValue", BER_TYPE_INTEGER, NULL, (struct textconv_enum[]){\
+		{ 1, "true" },						\
+		{ 2, "false" },						\
+		{ 0, NULL }						\
+	}},								\
+	{ NULL }							\
 }
 
 void	 mib_init(void);

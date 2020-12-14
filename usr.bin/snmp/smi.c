@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.12 2020/08/08 13:02:54 martijn Exp $	*/
+/*	$OpenBSD: smi.c,v 1.13 2020/12/14 07:44:26 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -39,6 +39,7 @@
 #define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 char *smi_displayhint_os(struct textconv *, int, const char *, size_t, int);
+char *smi_displayhint_int(struct textconv*, int, long long);
 
 int smi_oid_cmp(struct oid *, struct oid *);
 int smi_key_cmp(struct oid *, struct oid *);
@@ -345,6 +346,10 @@ smi_print_element(struct ber_oid *oid, struct ber_element *root, int print_hint,
 			break;
 		}
 		hint = "INTEGER: ";
+		if (object != NULL && object->o_textconv != NULL &&
+		    object->o_textconv->tc_syntax == root->be_encoding)
+			return smi_displayhint_int(object->o_textconv,
+			    print_hint, v);
 		if (root->be_class == BER_CLASS_APPLICATION) {
 			if (root->be_type == SNMP_T_COUNTER32)
 				hint = "Counter32: ";
@@ -628,6 +633,31 @@ smi_foreach(struct oid *oid)
 	if (oid == NULL)
 		return RB_MIN(oidtree, &smi_oidtree);
 	return RB_NEXT(oidtree, &smi_oidtree, oid);
+}
+
+char *
+smi_displayhint_int(struct textconv *tc, int print_hint, long long v)
+{
+	size_t i;
+	char *rbuf;
+
+	for (i = 0; tc->tc_enum[i].tce_name != NULL; i++) {
+		if (tc->tc_enum[i].tce_number == v) {
+			if (print_hint) {
+				if (asprintf(&rbuf, "INTEGER: %s(%lld)",
+				    tc->tc_enum[i].tce_name, v) == -1)
+					return NULL;
+			} else {
+				if (asprintf(&rbuf, "%s",
+				    tc->tc_enum[i].tce_name) == -1)
+					return NULL;
+			}
+			return rbuf;
+		}
+	}
+	if (asprintf(&rbuf, "%s%lld", print_hint ? "INTEGER: " : "", v) == -1)
+		return NULL;
+	return rbuf;
 }
 
 #define REPLACEMENT "\357\277\275"

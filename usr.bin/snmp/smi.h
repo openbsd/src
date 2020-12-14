@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.h,v 1.3 2020/08/03 14:45:54 martijn Exp $	*/
+/*	$OpenBSD: smi.h,v 1.4 2020/12/14 07:44:26 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -67,10 +67,16 @@ struct oid {
 	RB_ENTRY(oid)		 o_keyword;
 };
 
+struct textconv_enum {
+	uint32_t		 tce_number;
+	const char		*tce_name;
+};
+
 struct textconv {
 	const char		*tc_name;
-	const char		*tc_display_hint;
 	unsigned int		 tc_syntax;
+	const char		*tc_display_hint;
+	struct textconv_enum	*tc_enum;
 	RB_ENTRY(textconv)	 tc_entry;
 };
 
