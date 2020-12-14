@@ -14,9 +14,6 @@
 
 #define IRQF_SHARED	0
 
-#define disable_irq(x)		intr_disable()
-#define enable_irq(x)		intr_enable()
-
 #define request_irq(irq, hdlr, flags, name, dev)	(0)
 #define free_irq(irq, dev)
 
