@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.137 2020/05/23 06:15:09 jan Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.138 2020/12/14 13:29:18 mpi Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -243,6 +243,7 @@ uvm_km_pgremove(struct uvm_object *uobj, vaddr_t start, vaddr_t end)
 	voff_t curoff;
 	int slot;
 
+	KERNEL_ASSERT_LOCKED();
 	KASSERT(uobj->pgops == &aobj_pager);
 
 	for (curoff = start ; curoff < end ; curoff += PAGE_SIZE) {
