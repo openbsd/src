@@ -1,4 +1,4 @@
-/* $OpenBSD: term.h,v 1.15 2015/11/14 23:56:49 deraadt Exp $ */
+/* $OpenBSD: term.h,v 1.16 2020/12/14 22:05:31 naddy Exp $ */
 
 /****************************************************************************
  * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
@@ -34,7 +34,7 @@
 /*    and: Thomas E. Dickey                        1995-on                  */
 /****************************************************************************/
 
-/* $Id: term.h,v 1.15 2015/11/14 23:56:49 deraadt Exp $ */
+/* $Id: term.h,v 1.16 2020/12/14 22:05:31 naddy Exp $ */
 
 /*
 **	term.h -- Definition of struct term
@@ -68,7 +68,7 @@ extern "C" {
  */
 
 #undef  NCURSES_CONST
-#define NCURSES_CONST /*nothing*/
+#define NCURSES_CONST const
 
 #undef  NCURSES_SBOOL
 #define NCURSES_SBOOL signed char

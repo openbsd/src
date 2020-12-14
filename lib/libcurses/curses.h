@@ -1,4 +1,4 @@
-/* $OpenBSD: curses.h,v 1.61 2010/09/06 17:26:17 nicm Exp $ */
+/* $OpenBSD: curses.h,v 1.62 2020/12/14 22:05:31 naddy Exp $ */
 
 /****************************************************************************
  * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
@@ -34,7 +34,7 @@
  *     and: Thomas E. Dickey                        1996-on                 *
  ****************************************************************************/
 
-/* $Id: curses.h,v 1.61 2010/09/06 17:26:17 nicm Exp $ */
+/* $Id: curses.h,v 1.62 2020/12/14 22:05:31 naddy Exp $ */
 
 #ifndef __NCURSES_H
 #define __NCURSES_H
@@ -101,7 +101,7 @@
  * doing so makes it incompatible with other implementations of X/Open Curses.
  */
 #undef  NCURSES_CONST
-#define NCURSES_CONST /*nothing*/
+#define NCURSES_CONST const
 
 #undef NCURSES_INLINE
 #define NCURSES_INLINE inline
@@ -1334,7 +1334,7 @@ extern NCURSES_EXPORT_VAR(int) TABSIZE;
 #define KEY_EVENT	0633		/* We were interrupted by an event */
 
 #define KEY_MAX		0777		/* Maximum key value is 0633 */
-/* $Id: curses.h,v 1.61 2010/09/06 17:26:17 nicm Exp $ */
+/* $Id: curses.h,v 1.62 2020/12/14 22:05:31 naddy Exp $ */
 /*
  * vile:cmode:
  * This file is part of ncurses, designed to be appended after curses.h.in
@@ -1586,7 +1586,7 @@ extern NCURSES_EXPORT(const char *) _nc_viswibuf(const wint_t *);
 #endif
 
 #endif /* _XOPEN_SOURCE_EXTENDED */
-/* $Id: curses.h,v 1.61 2010/09/06 17:26:17 nicm Exp $ */
+/* $Id: curses.h,v 1.62 2020/12/14 22:05:31 naddy Exp $ */
 /*
  * vile:cmode:
  * This file is part of ncurses, designed to be appended after curses.h.in

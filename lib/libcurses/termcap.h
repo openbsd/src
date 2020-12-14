@@ -1,4 +1,4 @@
-/* $OpenBSD: termcap.h,v 1.10 2013/12/10 20:33:51 naddy Exp $ */
+/* $OpenBSD: termcap.h,v 1.11 2020/12/14 22:05:31 naddy Exp $ */
 
 /****************************************************************************
  * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -33,7 +33,7 @@
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
  ****************************************************************************/
 
-/* $Id: termcap.h,v 1.10 2013/12/10 20:33:51 naddy Exp $ */
+/* $Id: termcap.h,v 1.11 2020/12/14 22:05:31 naddy Exp $ */
 
 #ifndef NCURSES_TERMCAP_H_incl
 #define NCURSES_TERMCAP_H_incl	1
@@ -62,7 +62,7 @@ extern "C"
 #include <sys/types.h>
 
 #undef  NCURSES_CONST 
-#define NCURSES_CONST /*nothing*/ 
+#define NCURSES_CONST const
 
 #undef  NCURSES_OSPEED 
 #define NCURSES_OSPEED int 
