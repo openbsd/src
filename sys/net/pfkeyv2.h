@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.h,v 1.85 2020/11/05 19:28:27 phessler Exp $ */
+/* $OpenBSD: pfkeyv2.h,v 1.86 2020/12/14 20:20:06 tobhe Exp $ */
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) January 1998
  *
@@ -429,7 +429,7 @@ void import_identities(struct ipsec_ids **, int, struct sadb_ident *,
 void import_key(struct ipsecinit *, struct sadb_key *, int);
 void import_lifetime(struct tdb *, struct sadb_lifetime *, int);
 void import_sa(struct tdb *, struct sadb_sa *, struct ipsecinit *);
-void import_flow(struct sockaddr_encap *, struct sockaddr_encap *,
+int import_flow(struct sockaddr_encap *, struct sockaddr_encap *,
     struct sadb_address *, struct sadb_address *, struct sadb_address *,
     struct sadb_address *, struct sadb_protocol *, struct sadb_protocol *);
 void import_udpencap(struct tdb *, struct sadb_x_udpencap *);

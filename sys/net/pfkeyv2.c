@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.207 2020/08/28 12:43:59 tobhe Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.208 2020/12/14 20:20:06 tobhe Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -1339,13 +1339,19 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 			    newsa->tdb_ids_swapped,
 			    headers[SADB_EXT_IDENTITY_SRC],
 			    headers[SADB_EXT_IDENTITY_DST]);
-			import_flow(&newsa->tdb_filter, &newsa->tdb_filtermask,
+			if ((rval = import_flow(&newsa->tdb_filter,
+			    &newsa->tdb_filtermask,
 			    headers[SADB_X_EXT_SRC_FLOW],
 			    headers[SADB_X_EXT_SRC_MASK],
 			    headers[SADB_X_EXT_DST_FLOW],
 			    headers[SADB_X_EXT_DST_MASK],
 			    headers[SADB_X_EXT_PROTOCOL],
-			    headers[SADB_X_EXT_FLOW_TYPE]);
+			    headers[SADB_X_EXT_FLOW_TYPE]))) {
+				tdb_free(freeme);
+				freeme = NULL;
+				NET_UNLOCK();
+				goto ret;
+			}
 			import_udpencap(newsa, headers[SADB_X_EXT_UDPENCAP]);
 			import_rdomain(newsa, headers[SADB_X_EXT_RDOMAIN]);
 #if NPF > 0
@@ -1511,13 +1517,19 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 			    headers[SADB_EXT_IDENTITY_SRC],
 			    headers[SADB_EXT_IDENTITY_DST]);
 
-			import_flow(&newsa->tdb_filter, &newsa->tdb_filtermask,
+			if ((rval = import_flow(&newsa->tdb_filter,
+			    &newsa->tdb_filtermask,
 			    headers[SADB_X_EXT_SRC_FLOW],
 			    headers[SADB_X_EXT_SRC_MASK],
 			    headers[SADB_X_EXT_DST_FLOW],
 			    headers[SADB_X_EXT_DST_MASK],
 			    headers[SADB_X_EXT_PROTOCOL],
-			    headers[SADB_X_EXT_FLOW_TYPE]);
+			    headers[SADB_X_EXT_FLOW_TYPE]))) {
+				tdb_free(freeme);
+				freeme = NULL;
+				NET_UNLOCK();
+				goto ret;
+			}
 			import_udpencap(newsa, headers[SADB_X_EXT_UDPENCAP]);
 			import_rdomain(newsa, headers[SADB_X_EXT_RDOMAIN]);
 #if NPF > 0
@@ -1830,10 +1842,14 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 		else
 			ssrc = NULL;
 
-		import_flow(&encapdst, &encapnetmask,
+		if ((rval = import_flow(&encapdst, &encapnetmask,
 		    headers[SADB_X_EXT_SRC_FLOW], headers[SADB_X_EXT_SRC_MASK],
 		    headers[SADB_X_EXT_DST_FLOW], headers[SADB_X_EXT_DST_MASK],
-		    headers[SADB_X_EXT_PROTOCOL], headers[SADB_X_EXT_FLOW_TYPE]);
+		    headers[SADB_X_EXT_PROTOCOL],
+		    headers[SADB_X_EXT_FLOW_TYPE]))) {
+			NET_UNLOCK();
+			goto ret;
+		}
 
 		/* Determine whether the exact same SPD entry already exists. */
 		if ((rn = rn_match(&encapdst, rnh)) != NULL) {

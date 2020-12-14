@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.69 2020/11/05 19:28:28 phessler Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.70 2020/12/14 20:20:06 tobhe Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -422,7 +422,7 @@ export_lifetime(void **p, struct tdb *tdb, int type)
  * Import flow information to two struct sockaddr_encap's. Either
  * all or none of the address arguments are NULL.
  */
-void
+int
 import_flow(struct sockaddr_encap *flow, struct sockaddr_encap *flowmask,
     struct sadb_address *ssrc, struct sadb_address *ssrcmask,
     struct sadb_address *ddst, struct sadb_address *ddstmask,
@@ -435,7 +435,7 @@ import_flow(struct sockaddr_encap *flow, struct sockaddr_encap *flowmask,
 	union sockaddr_union *dstmask = (union sockaddr_union *)(ddstmask + 1);
 
 	if (ssrc == NULL)
-		return; /* There wasn't any information to begin with. */
+		return 0; /* There wasn't any information to begin with. */
 
 	bzero(flow, sizeof(*flow));
 	bzero(flowmask, sizeof(*flowmask));
@@ -450,7 +450,7 @@ import_flow(struct sockaddr_encap *flow, struct sockaddr_encap *flowmask,
 	if ((src->sa.sa_family != dst->sa.sa_family) ||
 	    (src->sa.sa_family != srcmask->sa.sa_family) ||
 	    (src->sa.sa_family != dstmask->sa.sa_family))
-		return;
+		return EINVAL;
 
 	/*
 	 * We set these as an indication that tdb_filter/tdb_filtermask are
@@ -513,6 +513,8 @@ import_flow(struct sockaddr_encap *flow, struct sockaddr_encap *flowmask,
 		break;
 #endif /* INET6 */
 	}
+
+	return 0;
 }
 
 /*
