@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.82 2020/09/22 19:32:53 krw Exp $ */
+/* $OpenBSD: mfii.c,v 1.83 2020/12/15 03:05:31 dlg Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -974,6 +974,7 @@ mfii_detach(struct device *self, int flags)
 static void
 mfii_flush_cache(struct mfii_softc *sc, struct mfii_ccb *ccb)
 {
+#if 0
 	union mfi_mbox mbox = {
 		.b[0] = MR_FLUSH_CTRL_CACHE | MR_FLUSH_DISK_CACHE,
 	};
@@ -986,11 +987,13 @@ mfii_flush_cache(struct mfii_softc *sc, struct mfii_ccb *ccb)
 		printf("%s: unable to flush cache\n", DEVNAME(sc));
 		return;
 	}
+#endif
 }
 
 static void
 mfii_shutdown(struct mfii_softc *sc, struct mfii_ccb *ccb)
 {
+#if 0
 	int rv;
 
 	mfii_scrub_ccb(ccb);
@@ -1000,6 +1003,7 @@ mfii_shutdown(struct mfii_softc *sc, struct mfii_ccb *ccb)
 		printf("%s: unable to shutdown controller\n", DEVNAME(sc));
 		return;
 	}
+#endif
 }
 
 static void
