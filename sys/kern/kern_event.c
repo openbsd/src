@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.147 2020/12/09 18:58:19 mpi Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.148 2020/12/15 04:48:18 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -950,13 +950,11 @@ kqueue_scan(struct kqueue_scan_state *scan, int maxevents,
 {
 	struct kqueue *kq = scan->kqs_kq;
 	struct knote *kn;
-	int s, count, nkev = 0, error = 0;
+	int s, error = 0, nkev = 0;
 
-	count = maxevents;
-	if (count == 0)
+	if (maxevents == 0)
 		goto done;
 retry:
-	KASSERT(count == maxevents);
 	KASSERT(nkev == 0);
 
 	if (kq->kq_state & KQ_DYING) {
@@ -1005,7 +1003,7 @@ retry:
 	}
 
 	TAILQ_INSERT_HEAD(&kq->kq_head, &scan->kqs_start, kn_tqe);
-	while (count) {
+	while (nkev < maxevents) {
 		kn = TAILQ_NEXT(&scan->kqs_start, kn_tqe);
 		if (kn->kn_filter == EVFILT_MARKER) {
 			if (kn == &scan->kqs_end)
@@ -1042,7 +1040,6 @@ retry:
 		*kevp = kn->kn_kevent;
 		kevp++;
 		nkev++;
-		count--;
 		scan->kqs_nevent++;
 
 		/*
