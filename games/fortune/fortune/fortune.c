@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.60 2017/08/10 17:00:08 millert Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.61 2020/12/15 14:06:32 zhuk Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -718,7 +718,7 @@ copy(char *str, char *suf)
 	char	*new;
 
 	if (asprintf(&new, "%s%s", str, suf ? suf : "") == -1)
-		return NULL;
+		err(1, NULL);
 	return new;
 }
 
