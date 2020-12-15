@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.620 2020/10/03 00:23:55 mvs Exp $	*/
+/*	$OpenBSD: if.c,v 1.621 2020/12/15 03:43:34 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -682,6 +682,8 @@ if_qstart_compat(struct ifqueue *ifq)
 int
 if_enqueue(struct ifnet *ifp, struct mbuf *m)
 {
+	CLR(m->m_pkthdr.csum_flags, M_TIMESTAMP);
+
 #if NPF > 0
 	if (m->m_pkthdr.pf.delay > 0)
 		return (pf_delay_pkt(m, ifp->if_index));
