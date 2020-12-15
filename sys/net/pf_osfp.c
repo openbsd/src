@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_osfp.c,v 1.44 2020/10/21 16:15:32 kettenis Exp $ */
+/*	$OpenBSD: pf_osfp.c,v 1.45 2020/12/15 15:23:48 sashan Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@w4g.org>
@@ -312,6 +312,7 @@ pf_osfp_flush(void)
 	struct pf_os_fingerprint *fp;
 	struct pf_osfp_entry *entry;
 
+	NET_LOCK();
 	PF_LOCK();
 	while ((fp = SLIST_FIRST(&pf_osfp_list))) {
 		SLIST_REMOVE_HEAD(&pf_osfp_list, fp_next);
@@ -322,6 +323,7 @@ pf_osfp_flush(void)
 		pool_put(&pf_osfp_pl, fp);
 	}
 	PF_UNLOCK();
+	NET_UNLOCK();
 }
 
 
