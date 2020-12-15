@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.77 2020/12/15 03:26:08 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.78 2020/12/15 03:35:26 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -6514,11 +6514,14 @@ static void
 mcx_calibrate_first(struct mcx_softc *sc)
 {
 	struct mcx_calibration *c = &sc->sc_calibration[0];
+	int s;
 
 	sc->sc_calibration_gen = 0;
 
+	s = splhigh(); /* crit_enter? */
 	c->c_ubase = mcx_uptime();
 	c->c_tbase = mcx_timer(sc);
+	splx(s);
 	c->c_tdiff = 0;
 
 	timeout_add_sec(&sc->sc_calibrate, MCX_CALIBRATE_FIRST);
@@ -6532,6 +6535,7 @@ mcx_calibrate(void *arg)
 	struct mcx_softc *sc = arg;
 	struct mcx_calibration *nc, *pc;
 	unsigned int gen;
+	int s;
 
 	if (!ISSET(sc->sc_ac.ac_if.if_flags, IFF_RUNNING))
 		return;
@@ -6546,8 +6550,10 @@ mcx_calibrate(void *arg)
 	nc->c_uptime = pc->c_ubase;
 	nc->c_timestamp = pc->c_tbase;
 
+	s = splhigh(); /* crit_enter? */
 	nc->c_ubase = mcx_uptime();
 	nc->c_tbase = mcx_timer(sc);
+	splx(s);
 
 	nc->c_udiff = (nc->c_ubase - nc->c_uptime) >> MCX_TIMESTAMP_SHIFT;
 	nc->c_tdiff = (nc->c_tbase - nc->c_timestamp) >> MCX_TIMESTAMP_SHIFT;
