@@ -1,4 +1,4 @@
-/*	$OpenBSD: aux.c,v 1.31 2019/06/28 13:35:01 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.1 2020/12/15 00:50:01 daniel Exp $	*/
 /*	$NetBSD: aux.c,v 1.5 1997/05/13 06:15:52 mikel Exp $	*/
 
 /*
