@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwlock.h,v 1.26 2019/07/16 01:40:49 jsg Exp $	*/
+/*	$OpenBSD: rwlock.h,v 1.27 2020/12/15 10:23:01 mpi Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  *
@@ -167,6 +167,29 @@ void	rw_assert_unlocked(struct rwlock *);
 int	rw_enter(struct rwlock *, int);
 void	rw_exit(struct rwlock *);
 int	rw_status(struct rwlock *);
+
+static inline int
+rw_read_held(struct rwlock *rwl)
+{
+	return (rw_status(rwl) == RW_READ);
+}
+
+static inline int
+rw_write_held(struct rwlock *rwl)
+{
+	return (rw_status(rwl) == RW_WRITE);
+}
+
+static inline int
+rw_lock_held(struct rwlock *rwl)
+{
+	int status;
+
+	status = rw_status(rwl);
+
+	return (status == RW_READ || status == RW_WRITE);
+}
+
 
 void	_rrw_init_flags(struct rrwlock *, const char *, int,
 	    const struct lock_type *);
