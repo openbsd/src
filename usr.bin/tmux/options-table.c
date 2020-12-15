@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.135 2020/12/01 08:12:58 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.136 2020/12/15 08:31:50 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -958,7 +958,7 @@ const struct options_table_entry options_table[] = {
 
 	{ .name = "synchronize-panes",
 	  .type = OPTIONS_TABLE_FLAG,
-	  .scope = OPTIONS_TABLE_WINDOW,
+	  .scope = OPTIONS_TABLE_WINDOW|OPTIONS_TABLE_PANE,
 	  .default_num = 0,
 	  .text = "Whether typing should be sent to all panes simultaneously."
 	},
