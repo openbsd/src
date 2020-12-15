@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.120 2020/12/13 19:46:17 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.121 2020/12/15 21:47:10 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -622,6 +622,7 @@ cfg		: CONFIG STRING host_spec	{
 				free($3);
 				YYERROR;
 			}
+			free($2);
 			$$ = $3;
 			$$->type = xf->id;
 			$$->action = IKEV2_CP_REQUEST;	/* XXX */
