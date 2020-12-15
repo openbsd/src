@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucode.c,v 1.2 2019/06/28 21:54:05 bluhm Exp $	*/
+/*	$OpenBSD: ucode.c,v 1.3 2020/12/15 22:51:34 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Stefan Fritsch <fritsch@genua.de>
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
@@ -102,7 +102,7 @@ cpu_ucode_setup(void)
 	size = round_page(bios_ucode->uc_size);
 	npages = size / PAGE_SIZE;
 
-	va = uvm_km_valloc(kernel_map, size);
+	va = (vaddr_t)km_alloc(size, &kv_any, &kp_none, &kd_nowait);
 	if (va == 0)
 		return;
 	for (i = 0; i < npages; i++) {
@@ -119,7 +119,7 @@ cpu_ucode_setup(void)
 
 	pmap_remove(pmap_kernel(), va, va + size);
 	pmap_update(pmap_kernel());
-	uvm_km_free(kernel_map, va, size);
+	km_free((void *)va, size, &kv_any, &kp_none);
 }
 
 /*
