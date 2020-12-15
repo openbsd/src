@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_keypair.c,v 1.6 2018/04/07 16:35:34 jsing Exp $ */
+/* $OpenBSD: tls_keypair.c,v 1.7 2020/12/15 08:47:45 inoguchi Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -137,7 +137,7 @@ tls_keypair_load_cert(struct tls_keypair *keypair, struct tls_error *error,
 {
 	char *errstr = "unknown";
 	BIO *cert_bio = NULL;
-	int ssl_err;
+	unsigned long ssl_err;
 	int rv = -1;
 
 	X509_free(*cert);
