@@ -1,4 +1,4 @@
-/*	$OpenBSD: com6.c,v 1.25 2019/05/09 20:19:22 tedu Exp $	*/
+/*	$OpenBSD: command6.c,v 1.1 2020/12/15 00:38:18 daniel Exp $	*/
 /*	$NetBSD: com6.c,v 1.5 1995/04/27 21:30:23 mycroft Exp $	*/
 
 /*
