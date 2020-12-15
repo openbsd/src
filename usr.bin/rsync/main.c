@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.50 2020/11/24 16:54:44 claudio Exp $ */
+/*	$Id: main.c,v 1.51 2020/12/15 08:20:42 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -409,6 +409,12 @@ main(int argc, char *argv[])
 	if (opts.port == NULL)
 		opts.port = "rsync";
 
+	/* by default and for --timeout=0 disable poll_timeout */
+	if (poll_timeout == 0)
+		poll_timeout = -1;
+	else
+		poll_timeout *= 1000;
+
 	/*
 	 * This is what happens when we're started with the "hidden"
 	 * --server option, which is invoked for the rsync on the remote
@@ -417,12 +423,6 @@ main(int argc, char *argv[])
 
 	if (opts.server)
 		exit(rsync_server(&opts, (size_t)argc, argv));
-
-	/* by default and for --timeout=0 disable poll_timeout */
-	if (poll_timeout == 0)
-		poll_timeout = -1;
-	else
-		poll_timeout *= 1000;
 
 	/*
 	 * Now we know that we're the client on the local machine
