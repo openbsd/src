@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.27 2019/07/03 03:24:02 deraadt Exp $ */
+/* $OpenBSD: ca.c,v 1.28 2020/12/16 18:53:10 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -219,7 +219,7 @@ static int
 setCertificateTime(ASN1_TIME *x509time, char *timestring)
 {
 	struct tm tm1;
-	memset(&tm1, 0, sizeof(tm1));
+
 	if (ASN1_time_parse(timestring, strlen(timestring), &tm1, 0) == -1)
 		return (-1);
 	if (!ASN1_TIME_set_tm(x509time, &tm1))
