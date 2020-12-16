@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.360 2020/10/22 12:25:20 sashan Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.361 2020/12/16 18:00:44 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -107,6 +107,7 @@ int			 pf_kif_setup(char *, struct pfi_kif **);
 void			 pf_addr_copyout(struct pf_addr_wrap *);
 void			 pf_trans_set_commit(void);
 void			 pf_pool_copyin(struct pf_pool *, struct pf_pool *);
+int			 pf_validate_range(u_int8_t, u_int16_t[2]);
 int			 pf_rule_copyin(struct pf_rule *, struct pf_rule *,
 			    struct pf_ruleset *);
 u_int16_t		 pf_qname2qid(char *, int);
@@ -2944,6 +2945,19 @@ pf_pool_copyin(struct pf_pool *from, struct pf_pool *to)
 }
 
 int
+pf_validate_range(u_int8_t op, u_int16_t port[2])
+{
+	u_int16_t a = ntohs(port[0]);
+	u_int16_t b = ntohs(port[1]);
+
+	if ((op == PF_OP_RRG && a > b) ||  /* 34:12,  i.e. none */
+	    (op == PF_OP_IRG && a >= b) || /* 34><12, i.e. none */
+	    (op == PF_OP_XRG && a > b))    /* 34<>22, i.e. all */
+		return 1;
+	return 0;
+}
+
+int
 pf_rule_copyin(struct pf_rule *from, struct pf_rule *to,
     struct pf_ruleset *ruleset)
 {
@@ -2953,6 +2967,11 @@ pf_rule_copyin(struct pf_rule *from, struct pf_rule *to,
 	to->src.addr.p.tbl = NULL;
 	to->dst = from->dst;
 	to->dst.addr.p.tbl = NULL;
+
+	if (pf_validate_range(to->src.port_op, to->src.port))
+		return (EINVAL);
+	if (pf_validate_range(to->dst.port_op, to->dst.port))
+		return (EINVAL);
 
 	/* XXX union skip[] */
 
@@ -2970,6 +2989,9 @@ pf_rule_copyin(struct pf_rule *from, struct pf_rule *to,
 	pf_pool_copyin(&from->nat, &to->nat);
 	pf_pool_copyin(&from->rdr, &to->rdr);
 	pf_pool_copyin(&from->route, &to->route);
+
+	if (pf_validate_range(to->rdr.port_op, to->rdr.proxy_port))
+		return (EINVAL);
 
 	if (pf_kif_setup(to->ifname, &to->kif))
 		return (EINVAL);
