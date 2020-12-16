@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2020/12/14 11:10:02 bluhm Exp $
+# $OpenBSD: Makefile,v 1.9 2020/12/16 23:10:48 bluhm Exp $
 
 # Start with a clean /var/account/acct accounting file and turn on
 # process accounting with accton(8).  Each test executes a command
@@ -25,10 +25,11 @@ WARNINGS=		Yes
 LDADD_syscallwx=	-z wxneeded
 CLEANFILES=		regress-*
 
+REGRESS_SETUP =		${PROGS}
+
 REGRESS_SETUP_ONCE =	setup-rotate
 # Rotate accouting files and keep statistics, from /etc/daily.
 setup-rotate:
-	@echo '\n======== $@ ========'
 	${SUDO} touch /var/account/acct
 	-${SUDO} mv -f /var/account/acct.2 /var/account/acct.3
 	-${SUDO} mv -f /var/account/acct.1 /var/account/acct.2
@@ -39,7 +40,6 @@ setup-rotate:
 
 REGRESS_TARGETS +=	run-fork
 run-fork:
-	@echo '\n======== $@ ========'
 	# Create shell program, fork a sub shell, and check the -F flag.
 	cp -f /bin/sh regress-fork
 	./regress-fork -c '( : ) &'
@@ -47,7 +47,6 @@ run-fork:
 
 REGRESS_TARGETS +=	run-trapstack
 run-trapstack: trapstack
-	@echo '\n======== $@ ========'
 	# Use invalid stack pointer, trap, SIGSEGV handler, check -M flag.
 	cp -f trapstack regress-trapstack
 	./regress-trapstack
@@ -55,7 +54,6 @@ run-trapstack: trapstack
 
 REGRESS_TARGETS +=	run-callstack
 run-callstack: callstack
-	@echo '\n======== $@ ========'
 	# Use invalid stack pointer, syscall, SIGSEGV handler, check -M flag.
 	cp -f callstack regress-callstack
 	./regress-callstack
@@ -63,7 +61,6 @@ run-callstack: callstack
 
 REGRESS_TARGETS +=	run-syscallwx
 run-syscallwx: syscallwx
-	@echo '\n======== $@ ========'
 	# Use writable syscall code, run SIGSEGV handler, check -M flag.
 	cp -f syscallwx regress-syscallwx
 	./regress-syscallwx
@@ -71,7 +68,6 @@ run-syscallwx: syscallwx
 
 REGRESS_TARGETS +=	run-core
 run-core:
-	@echo '\n======== $@ ========'
 	# Create shell program, abort sub shell, and check the -DX flag.
 	cp -f /bin/sh regress-core
 	rm -f regress-core.core
@@ -80,7 +76,6 @@ run-core:
 
 REGRESS_TARGETS +=	run-xsig
 run-xsig:
-	@echo '\n======== $@ ========'
 	# Create shell program, kill sub shell, and check the -X flag.
 	cp -f /bin/sh regress-xsig
 	./regress-xsig -c '( : ) & kill -KILL $$!; wait'
@@ -88,7 +83,6 @@ run-xsig:
 
 REGRESS_TARGETS +=	run-pledge
 run-pledge:
-	@echo '\n======== $@ ========'
 	# Create perl program, violate pledge, and check the -P flag.
 	cp -f /usr/bin/perl regress-pledge
 	ulimit -c 0; ! ./regress-pledge -MOpenBSD::Pledge -e\
@@ -97,7 +91,6 @@ run-pledge:
 
 REGRESS_TARGETS +=	run-unveil
 run-unveil: unveil
-	@echo '\n======== $@ ========'
 	# Attempt to open veiled file, check -U flag.
 	cp -f unveil regress-unveil
 	./regress-unveil
@@ -105,12 +98,9 @@ run-unveil: unveil
 
 REGRESS_TARGETS +=	run-trap
 run-trap: crash
-	@echo '\n======== $@ ========'
 	# Build crashing program, run SIGSEGV handler, and check the -T flag.
 	cp -f crash regress-trap
 	./regress-trap
 	lastcomm regress-trap | grep -q ' -T '
-
-${REGRESS_TARGETS}: ${PROGS}
 
 .include <bsd.regress.mk>

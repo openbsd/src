@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2019/07/12 19:31:29 bluhm Exp $
+# $OpenBSD: Makefile,v 1.10 2020/12/16 23:10:48 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-Net-Pcap		Perl interface for libpcap
@@ -47,12 +47,11 @@ PERLPATH =	${.CURDIR}/
 .for a in ${ARGS}
 REGRESS_TARGETS +=	run-$a
 run-$a: $a
-	@echo '\n======== $@ ========'
-	time SUDO=${SUDO} KTRACE=${KTRACE} SWITCHD=${SWITCHD} perl ${PERLINC} ${PERLPATH}run.pl ${PERLPATH}$a
+	time SUDO=${SUDO} KTRACE=${KTRACE} SWITCHD=${SWITCHD} \
+	    perl ${PERLINC} ${PERLPATH}run.pl ${PERLPATH}$a
 .endfor
 
 ${OFP_HEADERS}:
-	@echo '\n======== setup-$@ ========'
 .for p in ${SRC_PATH} ${SYS_PATH}
 	! test -s $p/$@ || grep -v '^#include' $p/$@ >$@
 .endfor
@@ -61,7 +60,7 @@ ${OFP_HEADERS}:
 .h.ph:
 	@h2ph -d ${.OBJDIR} $<
 
-${REGRESS_TARGETS:M*}: ${OFP_PERLHEADERS}
+REGRESS_SETUP =		${OFP_PERLHEADERS}
 
 # make perl syntax check for all args files
 

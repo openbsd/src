@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2020/05/25 11:08:12 bluhm Exp $
+# $OpenBSD: Makefile,v 1.8 2020/12/16 23:10:48 bluhm Exp $
 
 # This regress test uses a vnd device to run mount and unmount.
 # All tests have to be run as root.
@@ -8,7 +8,6 @@ CLEANFILES=	diskimage *.log
 .PHONY: disk mount unconfig clean
 
 disk: unconfig
-	@echo '======== $@ ========'
 	dd if=/dev/null of=diskimage bs=1m seek=1100
 	vnconfig vnd0 diskimage
 	disklabel -wA -T ${.CURDIR}/disktemplate vnd0
@@ -17,13 +16,11 @@ disk: unconfig
 	[ `disklabel vnd0 | grep -c '\<4.2BSD\>'` -eq 15 ]
 
 mount: disk
-	@echo '======== $@ ========'
 	newfs vnd0a
 	mkdir -p /mnt/regress-mount
 	mount /dev/vnd0a /mnt/regress-mount
 
 mount-nested: mount
-	@echo '======== $@ ========'
 .for p in b d e f g h i j k l m n o p
 	newfs -O 1 vnd0${p}
 .endfor
@@ -34,13 +31,11 @@ mount-nested: mount
 	mount
 	[ `mount | grep -c '/dev/vnd0. on /mnt/regress-mount\>'` -eq 15 ]
 
+REGRESS_CLEANUP =	unconfig
 unconfig:
-	@echo '======== $@ ========'
 	-umount -f /dev/vnd0a 2>/dev/null || true
 	-rmdir /mnt/regress-mount 2>/dev/null || true
 	-vnconfig -u vnd0 2>/dev/null || true
-
-REGRESS_CLEANUP =	unconfig
 
 # The unmount-nested test uses a disk template to create 15 partitions
 # on a vnd device.  All are initialized with a ffs file system.
@@ -52,7 +47,6 @@ REGRESS_CLEANUP =	unconfig
 
 REGRESS_TARGETS+=	run-unmount-nested
 run-unmount-nested: mount-nested
-	@echo '\n======== $@ ========'
 	! umount /mnt/regress-mount
 	umount -f /mnt/regress-mount
 	mount
@@ -65,7 +59,6 @@ run-unmount-nested: mount-nested
 
 REGRESS_TARGETS+=	run-unmount-busy
 run-unmount-busy: mount
-	@echo '\n======== $@ ========'
 	cp -r /usr /mnt/regress-mount &
 	sleep 5
 	sync
@@ -93,7 +86,6 @@ run-readonly-busy run-readonly-dangling:
 
 REGRESS_TARGETS+=	run-readonly-busy
 run-readonly-busy: mount
-	@echo '\n======== $@ ========'
 	cp -r /usr /mnt/regress-mount &
 	sleep 5
 	sync
@@ -119,7 +111,6 @@ run-readonly-busy: mount
 
 REGRESS_TARGETS+=	run-readonly-dangling
 run-readonly-dangling: mount
-	@echo '\n======== $@ ========'
 	touch /mnt/regress-mount/file
 	sleep 73 </mnt/regress-mount/file &
 	sleep .1
