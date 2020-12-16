@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1.1.1 2018/05/03 17:11:54 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.2 2020/12/16 20:37:16 bluhm Exp $
 
 # The following port must be installed:
 #
@@ -20,6 +20,7 @@ regress:
 	/usr/local/bin/posixtestsuite
 
 clean:
-	rm -rf logfile conformance functional
+	rm -f logfile *.log uname.out posixtestsuite.html
+	rm -rf conformance functional
 
 .include <bsd.regress.mk>
