@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vpm.c,v 1.22 2020/09/14 08:10:04 beck Exp $ */
+/* $OpenBSD: x509_vpm.c,v 1.23 2020/12/16 13:44:17 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -207,7 +207,7 @@ X509_VERIFY_PARAM_new(void)
 	param = calloc(1, sizeof(X509_VERIFY_PARAM));
 	if (param == NULL)
 		return NULL;
-	paramid = calloc (1, sizeof(X509_VERIFY_PARAM_ID));
+	paramid = calloc(1, sizeof(X509_VERIFY_PARAM_ID));
 	if (paramid == NULL) {
 		free(param);
 		return NULL;
@@ -227,7 +227,8 @@ X509_VERIFY_PARAM_free(X509_VERIFY_PARAM *param)
 	free(param);
 }
 
-/* This function determines how parameters are "inherited" from one structure
+/*
+ * This function determines how parameters are "inherited" from one structure
  * to another. There are several different ways this can happen.
  *
  * 1. If a child structure needs to have its values initialized from a parent
@@ -673,8 +674,8 @@ X509_VERIFY_PARAM_get_count(void)
 	return num;
 }
 
-const
-X509_VERIFY_PARAM *X509_VERIFY_PARAM_get0(int id)
+const X509_VERIFY_PARAM *
+X509_VERIFY_PARAM_get0(int id)
 {
 	int num = sizeof(default_table) / sizeof(X509_VERIFY_PARAM);
 	if (id < num)
@@ -682,8 +683,8 @@ X509_VERIFY_PARAM *X509_VERIFY_PARAM_get0(int id)
 	return sk_X509_VERIFY_PARAM_value(param_table, id - num);
 }
 
-const
-X509_VERIFY_PARAM *X509_VERIFY_PARAM_lookup(const char *name)
+const X509_VERIFY_PARAM *
+X509_VERIFY_PARAM_lookup(const char *name)
 {
 	X509_VERIFY_PARAM pm;
 	unsigned int i, limit;
