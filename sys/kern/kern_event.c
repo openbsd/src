@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.149 2020/12/16 15:06:11 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.150 2020/12/16 15:07:30 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -59,7 +59,6 @@
 
 struct	kqueue *kqueue_alloc(struct filedesc *);
 void	kqueue_terminate(struct proc *p, struct kqueue *);
-void	kqueue_free(struct kqueue *);
 void	kqueue_init(void);
 void	KQREF(struct kqueue *);
 void	KQRELE(struct kqueue *);
@@ -168,17 +167,12 @@ KQREF(struct kqueue *kq)
 void
 KQRELE(struct kqueue *kq)
 {
+	struct filedesc *fdp;
+
 	if (atomic_dec_int_nv(&kq->kq_refs) > 0)
 		return;
 
-	kqueue_free(kq);
-}
-
-void
-kqueue_free(struct kqueue *kq)
-{
-	struct filedesc *fdp = kq->kq_fdp;
-
+	fdp = kq->kq_fdp;
 	if (rw_status(&fdp->fd_lock) == RW_WRITE) {
 		LIST_REMOVE(kq, kq_next);
 	} else {
@@ -530,7 +524,8 @@ kqpoll_exit(void)
 		return;
 
 	kqueue_terminate(p, p->p_kq);
-	kqueue_free(p->p_kq);
+	KASSERT(p->p_kq->kq_refs == 1);
+	KQRELE(p->p_kq);
 	p->p_kq = NULL;
 }
 
