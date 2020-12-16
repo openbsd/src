@@ -1,39 +1,32 @@
-#	$OpenBSD: Makefile,v 1.1 2017/12/16 11:00:49 florian Exp $
+#	$OpenBSD: Makefile,v 1.2 2020/12/16 18:40:10 bluhm Exp $
 
 PROG=	execpromise
 
-test_normal: ${PROG}
-	@echo '\n======== $@ ========'
-	${.OBJDIR}/${PROG} "stdio rpath inet" "stdio inet"
-REGRESS_TARGETS+=	test_normal
+run-normal: ${PROG}
+	./${PROG} "stdio rpath inet" "stdio inet"
+REGRESS_TARGETS+=	run-normal
 
-test_no_child_pledge: ${PROG}
-	@echo '\n======== $@ ========'
-	${.OBJDIR}/${PROG} "stdio rpath inet"
-REGRESS_TARGETS+=	test_no_child_pledge
+run-no-child-pledge: ${PROG}
+	./${PROG} "stdio rpath inet"
+REGRESS_TARGETS+=	run-no-child-pledge
 
-test_abort_child: ${PROG}
-	@echo '\n======== $@ ========'
-	-${.OBJDIR}/${PROG} "stdio rpath"; \
-	if [[ $$? == 134 ]] ; then echo OK; else false; fi
-REGRESS_TARGETS+=	test_abort_child
+run-abort-child: ${PROG}
+	if ./${PROG} "stdio rpath"; \
+	    then false; else [[ $$? == 134 ]]; fi
+REGRESS_TARGETS+=	run-abort-child
 
-test_ENOSYS_child: ${PROG}
-	@echo '\n======== $@ ========'
-	-${.OBJDIR}/${PROG} "stdio rpath error"; \
-	if [[ $$? == 23 ]] ; then echo OK; else false; fi
-REGRESS_TARGETS+=	test_ENOSYS_child
+run-ENOSYS-child: ${PROG}
+	if ./${PROG} "stdio rpath error"; \
+	    then false; else [[ $$? == 23 ]]; fi
+REGRESS_TARGETS+=	run-ENOSYS-child
 
-test_upgrade_fail: ${PROG}
-	@echo '\n======== $@ ========'
-	-${.OBJDIR}/${PROG} "stdio rpath inet" "stdio inet wpath"; \
-	if [[ $$? == 24 ]] ; then echo OK; else false; fi
-REGRESS_TARGETS+=	test_upgrade_fail
+run-upgrade-fail: ${PROG}
+	if ./${PROG} "stdio rpath inet" "stdio inet wpath"; \
+	    then false; else [[ $$? == 24 ]]; fi
+REGRESS_TARGETS+=	run-upgrade-fail
 
-test_upgrade_ignore: ${PROG}
-	@echo '\n======== $@ ========'
-	${.OBJDIR}/${PROG} "stdio rpath inet error" "stdio rpath wpath inet"
-REGRESS_TARGETS+=	test_upgrade_ignore
-
+run-upgrade-ignore: ${PROG}
+	./${PROG} "stdio rpath inet error" "stdio rpath wpath inet"
+REGRESS_TARGETS+=	run-upgrade-ignore
 
 .include <bsd.regress.mk>
