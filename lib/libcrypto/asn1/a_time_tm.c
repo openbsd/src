@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.15 2018/04/25 11:48:21 tb Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.16 2020/12/16 18:35:59 tb Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -163,10 +163,9 @@ ASN1_time_parse(const char *bytes, size_t len, struct tm *tm, int mode)
 		return (-1);
 
 	lt = tm;
-	if (lt == NULL) {
-		memset(&ltm, 0, sizeof(ltm));
+	if (lt == NULL)
 		lt = &ltm;
-	}
+	memset(lt, 0, sizeof(*lt));
 
 	/* Timezone is required and must be GMT (Zulu). */
 	if (bytes[len - 1] != 'Z')
