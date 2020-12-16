@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid5.c,v 1.30 2020/03/26 11:28:23 tobhe Exp $ */
+/* $OpenBSD: softraid_raid5.c,v 1.31 2020/12/16 18:16:34 cheloha Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2009 Marco Peereboom <marco@peereboom.us>
@@ -857,8 +857,10 @@ sr_raid5_rebuild(struct sr_discipline *sd)
 			tsleep_nsec(wu_w, PRIBIO, "sr_rebuild", INFSLP);
 			slept = 1;
 		}
-		if (!slept)
-			tsleep(sd->sd_sc, PWAIT, "sr_yield", 1);
+		if (!slept) {
+			tsleep_nsec(sd->sd_sc, PWAIT, "sr_yield",
+			    MSEC_TO_NSEC(1));
+		}
 
 		sr_scsi_wu_put(sd, wu_r);
 		sr_scsi_wu_put(sd, wu_w);
@@ -950,8 +952,10 @@ sr_raid5_scrub(struct sr_discipline *sd)
 			tsleep_nsec(wu_w, PRIBIO, "sr_scrub", INFSLP);
 			slept = 1;
 		}
-		if (!slept)
-			tsleep(sd->sd_sc, PWAIT, "sr_yield", 1);
+		if (!slept) {
+			tsleep_nsec(sd->sd_sc, PWAIT, "sr_yield",
+			    MSEC_TO_NSEC(1));
+		}
 	}
 }
 #endif

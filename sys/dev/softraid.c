@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.416 2020/10/15 00:13:47 krw Exp $ */
+/* $OpenBSD: softraid.c,v 1.417 2020/12/16 18:16:34 cheloha Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -3885,7 +3885,7 @@ sr_discipline_shutdown(struct sr_discipline *sd, int meta_save, int dying)
 	if (sd->sd_reb_active) {
 		sd->sd_reb_abort = 1;
 		while (sd->sd_reb_active)
-			tsleep(sd, PWAIT, "sr_shutdown", 1);
+			tsleep_nsec(sd, PWAIT, "sr_shutdown", MSEC_TO_NSEC(1));
 	}
 
 	if (meta_save)
@@ -4765,7 +4765,7 @@ sr_rebuild(struct sr_discipline *sd)
 		}
 		/* yield if we didn't sleep */
 		if (slept == 0)
-			tsleep(sc, PWAIT, "sr_yield", 1);
+			tsleep_nsec(sc, PWAIT, "sr_yield", MSEC_TO_NSEC(1));
 
 		sr_scsi_wu_put(sd, wu_r);
 		sr_scsi_wu_put(sd, wu_w);
