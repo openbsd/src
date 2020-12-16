@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.706 2020/12/16 18:00:44 kn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.707 2020/12/16 18:01:16 kn Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -353,6 +353,7 @@ struct node_hfsc_opts	 hfsc_opts;
 struct node_state_opt	*keep_state_defaults = NULL;
 struct pfctl_watermarks	 syncookie_opts;
 
+int		 validate_range(u_int8_t, u_int16_t, u_int16_t);
 int		 disallow_table(struct node_host *, const char *);
 int		 disallow_urpf_failed(struct node_host *, const char *);
 int		 disallow_alias(struct node_host *, const char *);
@@ -2892,9 +2893,15 @@ port_item	: portrange			{
 				err(1, "port_item: calloc");
 			$$->port[0] = $1.a;
 			$$->port[1] = $1.b;
-			if ($1.t)
+			if ($1.t) {
 				$$->op = PF_OP_RRG;
-			else
+
+				if (validate_range($$->op, $$->port[0],
+				    $$->port[1])) {
+					yyerror("invalid port range");
+					YYERROR;
+				}
+			} else
 				$$->op = PF_OP_EQ;
 			$$->next = NULL;
 			$$->tail = $$;
@@ -2926,6 +2933,10 @@ port_item	: portrange			{
 			$$->port[0] = $1.a;
 			$$->port[1] = $3.a;
 			$$->op = $2;
+			if (validate_range($$->op, $$->port[0], $$->port[1])) {
+				yyerror("invalid port range");
+				YYERROR;
+			}
 			$$->next = NULL;
 			$$->tail = $$;
 		}
@@ -3932,6 +3943,19 @@ yyerror(const char *fmt, ...)
 }
 
 int
+validate_range(u_int8_t op, u_int16_t p1, u_int16_t p2)
+{
+	u_int16_t a = ntohs(p1);
+	u_int16_t b = ntohs(p2);
+
+	if ((op == PF_OP_RRG && a > b) ||  /* 34:12,  i.e. none */
+	    (op == PF_OP_IRG && a >= b) || /* 34><12, i.e. none */
+	    (op == PF_OP_XRG && a > b))    /* 34<>22, i.e. all */
+		return 1;
+	return 0;
+}
+
+int
 disallow_table(struct node_host *h, const char *fmt)
 {
 	for (; h != NULL; h = h->next)
@@ -4616,6 +4640,12 @@ apply_redirspec(struct pf_pool *rpool, struct pf_rule *r, struct redirspec *rs,
 			rpool->proxy_port[1] = ntohs(rs->rdr->rport.a) +
 			    (ntohs(np->port[1]) - ntohs(np->port[0]));
 		} else {
+			if (validate_range(rs->rdr->rport.t, rs->rdr->rport.a,
+			    rs->rdr->rport.b)) {
+				yyerror("invalid rdr-to port range");
+				return (1);
+			}
+
 			rpool->port_op = rs->rdr->rport.t;
 			rpool->proxy_port[1] = ntohs(rs->rdr->rport.b);
 		}
