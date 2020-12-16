@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.24 2020/11/18 17:54:46 tb Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.25 2020/12/16 18:46:29 tb Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -603,8 +603,6 @@ int
 x509_verify_asn1_time_to_tm(const ASN1_TIME *atime, struct tm *tm, int notafter)
 {
 	int type;
-
-	memset(tm, 0, sizeof(*tm));
 
 	type = ASN1_time_parse(atime->data, atime->length, tm, atime->type);
 	if (type == -1)
