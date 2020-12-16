@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.3 2017/08/15 17:16:39 sf Exp $
+# $OpenBSD: Makefile.inc,v 1.4 2020/12/16 21:49:20 bluhm Exp $
 
 PERL_REQUIRE != perl -e 'eval { require File::Slurp } or print $$@'
 
@@ -8,7 +8,7 @@ TESTS= ${TESTS1} ${TESTS2}
 
 FILEOPS_MNT=	/mnt/regress-fileops
 FILEOPS_PROG=	${.OBJDIR}/../fileops
-CLEANFILES=	diskimage stamp-*
+CLEANFILES=	diskimage
 
 .poison !defined (MOUNT)
 .poison !defined (NEWFS)
@@ -20,48 +20,40 @@ disk: unconfig
 	vnconfig vnd0 diskimage
 	${NEWFS} /dev/rvnd0c
 
+REGRESS_SETUP_ONCE+=	mount
 mount: disk
 	mkdir -p ${FILEOPS_MNT}
 	${MOUNT} /dev/vnd0c ${FILEOPS_MNT}
 
+REGRESS_CLEANUP+=	umount
+umount:
+	umount ${FILEOPS_MNT}
+
+REGRESS_CLEANUP+=	unconfig
 unconfig:
 	-umount -f /dev/vnd0c 2>/dev/null || true
 	-rmdir ${FILEOPS_MNT} 2>/dev/null || true
 	-vnconfig -u vnd0 2>/dev/null || true
-	-rm -f stamp-setup diskimage
-
-stamp-setup:
-	@echo '\n======== $@ ========'
-	${.MAKE} -C ${.CURDIR} mount
-	date >$@
+	rm -f stamp-setup
 
 ${.OBJDIR}/../fileops:
 	${.MAKE} -C ${.CURDIR}/.. fileops
 
 .for t in ${TESTS1}
-REGRESS_TARGETS+=	run-regress-${t}
-run-regress-${t}: stamp-setup ${.OBJDIR}/../fileops
-	@echo '\n======== $@ ========'
+REGRESS_TARGETS+=	run-$t
+run-$t: ${.OBJDIR}/../fileops
 	cd ${FILEOPS_MNT} && \
-	    ${FILEOPS_PROG} ${t} ${FILEOPS_MNT}/file
+	    ${FILEOPS_PROG} $t ${FILEOPS_MNT}/file
 .endfor
 
 .for t in ${TESTS2}
-REGRESS_TARGETS+=	run-regress-${t}
+REGRESS_TARGETS+=	run-$t
+run-$t: ${.CURDIR}/../fileops2.pl
 .if ! empty(PERL_REQUIRE)
-run-regress-${t}:
 	@echo "${PERL_REQUIRE}"
-	@echo "Install the p5-File-Slurp package to run the fileops ${t} subtest"
+	@echo "Install the p5-File-Slurp package to run fileops $t subtest"
 	@echo SKIPPED
 .else
-run-regress-${t}: stamp-setup
-	@echo '\n======== $@ ========'
-	perl ${.CURDIR}/../fileops2.pl ${t} ${FILEOPS_MNT}
+	perl ${.CURDIR}/../fileops2.pl $t ${FILEOPS_MNT}
 .endif
 .endfor
-
-REGRESS_TARGETS+=	run-regress-cleanup
-run-regress-cleanup:
-	@echo '\n======== $@ ========'
-	umount ${FILEOPS_MNT}
-	${.MAKE} -C ${.CURDIR} unconfig
