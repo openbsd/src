@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2019/03/21 11:58:33 bluhm Exp $
+# $OpenBSD: Makefile,v 1.10 2020/12/16 22:59:55 bluhm Exp $
 
 WARNINGS=	yes
 
@@ -30,9 +30,8 @@ IGNORE_sigio+=	wsmouse0-sigio
 .for d in ${DEVICES}
 .  for t in ${TESTS_sigio}
 .    if empty(IGNORE_sigio:M$d-$t)
-REGRESS_TARGETS+=	${PROG_sigio}-$d-$t
-${PROG_sigio}-$d-$t: ${PROG_sigio}
-	@echo "\n======== ${@} ========"
+REGRESS_TARGETS+=	run-${PROG_sigio}-$d-$t
+run-${PROG_sigio}-$d-$t: ${PROG_sigio}
 .      if ${HAVE_${d}:L} == "yes"
 	./${PROG_sigio} -d /dev/$d $t
 .      else
@@ -51,9 +50,8 @@ TESTS_wscons+=	ioctl-unknown
 
 .for d in ${DEVICES}
 .  for t in ${TESTS_wscons}
-REGRESS_TARGETS+=	${PROG_wscons}-$d-$t
-${PROG_wscons}-$d-$t: ${PROG_wscons}
-	@echo "\n======== ${@} ========"
+REGRESS_TARGETS+=	run-${PROG_wscons}-$d-$t
+run-${PROG_wscons}-$d-$t: ${PROG_wscons}
 .    if ${HAVE_${d}:L} == "yes"
 	./${PROG_wscons} -d /dev/$d $t
 .    else

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2020/04/13 03:09:29 pamela Exp $
+# $OpenBSD: Makefile,v 1.2 2020/12/16 22:59:55 bluhm Exp $
 
 RTABLE		?=	1
 VETHER		?=	vether1
@@ -20,7 +20,6 @@ regress:
 
 REGRESS_SETUP +=	setup
 setup: cleanup
-	@echo '\n======== $@ ========'
 	${SUDO} ifconfig ${VETHER} inet6 rdomain ${RTABLE} eui64 up
 	sh -c "ifconfig ${VETHER} | awk '/inet6/ {print \$$2}' > ${VETHER_LL}"
 	${SUDO} ifconfig lo${RTABLE} inet rdomain ${RTABLE} 127.0.0.1/8 up
@@ -28,24 +27,20 @@ setup: cleanup
 
 REGRESS_CLEANUP +=	cleanup
 cleanup:
-	@echo '\n======== $@ ========'
 .for iface in ${VETHER} lo${RTABLE}
 	${SUDO} ifconfig ${iface} destroy 2>/dev/null || true
 .endfor
 
-REGRESS_TARGETS +=	localhost
-localhost: srcaddr
-	@echo '\n======== $@ ========'
-	${REXEC} ${.OBJDIR}/srcaddr ::1 | \
+REGRESS_SETUP +=	${PROG}
+
+REGRESS_TARGETS +=	run-localhost
+run-localhost:
+	${REXEC} ./srcaddr ::1 | \
 	    diff -up ${.CURDIR}/localhost.ok /dev/stdin
 
-REGRESS_TARGETS +=	linklocal
-linklocal: srcaddr
-	@echo '\n======== $@ ========'
-	${REXEC} ${.OBJDIR}/srcaddr fe80::1%${VETHER} | \
+REGRESS_TARGETS +=	run-linklocal
+run-linklocal:
+	${REXEC} ./srcaddr fe80::1%${VETHER} | \
 	    diff -up ${VETHER_LL} /dev/stdin
 
-.PHONY:	${REGRESS_TARGETS}
-
 .include <bsd.regress.mk>
-
