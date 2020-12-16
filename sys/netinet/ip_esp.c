@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.159 2019/09/30 01:53:05 dlg Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.160 2020/12/16 19:28:59 tobhe Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -933,7 +933,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 
 		/* Encryption descriptor. */
 		crde->crd_skip = skip + hlen;
-		crde->crd_flags = CRD_F_ENCRYPT;
+		crde->crd_flags = CRD_F_ENCRYPT | CRD_F_IV_EXPLICIT;
 		crde->crd_inject = skip + hlen - tdb->tdb_ivlen;
 
 		/* Encryption operation. */
@@ -946,6 +946,14 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 			crde->crd_len = 0;
 		else
 			crde->crd_len = m->m_pkthdr.len - (skip + hlen + alen);
+
+		/* GCM & friends just require a NONCE (non-repeating!) */
+		if (espx->type == CRYPTO_AES_CTR ||
+		    espx->type == CRYPTO_AES_GCM_16 ||
+		    espx->type == CRYPTO_CHACHA20_POLY1305)
+			bcopy(&tdb->tdb_rpl, crde->crd_iv, sizeof(tdb->tdb_rpl));
+		else
+			arc4random_buf(crde->crd_iv, espx->ivsize);
 	} else
 		crda = &crp->crp_desc[0];
 
