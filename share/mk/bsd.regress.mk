@@ -1,4 +1,4 @@
-# $OpenBSD: bsd.regress.mk,v 1.21 2019/06/17 17:20:24 espie Exp $
+# $OpenBSD: bsd.regress.mk,v 1.22 2020/12/16 16:53:24 bluhm Exp $
 # Documented in bsd.regress.mk(5)
 
 # No man pages for regression tests.
@@ -84,6 +84,7 @@ regress: .SILENT
 	rm -f ${REGRESS_SETUP_ONCE:S/^/stamp-/}
 .endif
 .for RT in ${REGRESS_TARGETS}
+	echo '==== ${RT} ===='
 .  if ${REGRESS_SKIP_TARGETS:M${RT}}
 	echo -n "SKIP " ${_REGRESS_OUT}
 	echo SKIPPED
@@ -106,9 +107,12 @@ regress: .SILENT
 	fi
 .  endif
 	echo ${_REGRESS_NAME}/${RT:S/^run-regress-//} ${_REGRESS_OUT}
+	echo
 .endfor
 .for RT in ${REGRESS_CLEANUP}
+	echo '==== ${RT} ===='
 	${MAKE} -C ${.CURDIR} ${RT}
+	echo
 .endfor
 	rm -f ${REGRESS_SETUP_ONCE:S/^/stamp-/}
 
