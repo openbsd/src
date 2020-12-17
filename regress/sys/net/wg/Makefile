@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2020/12/17 00:51:13 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.3 2020/12/17 13:07:18 bluhm Exp $
 
 # Copyright (c) 2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -122,7 +122,7 @@ run-ping-tunnel$t-addr$a-${l:L}-${f:L}:
 	sleep 1  # Wait until tcpdump is up.
 	/sbin/ping${a:N4} -n -w 1 -c 1 -V ${TUNNEL$t_$l} ${TUNNEL$t_ADDR$a_$f}
 	sleep 1  # Wait until tcpdump has captured traffic.
-	${SUDO} pkill -f 'tcpdump -ni lo0 -w wg.pcap '
+	${SUDO} pkill -xf 'tcpdump -ni lo0 -w wg.pcap .*'
 	# Check WireGuard encrypted traffic
 	/usr/sbin/tcpdump -n -r wg.pcap | \
 	    fgrep ': [wg] data '
