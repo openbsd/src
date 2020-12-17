@@ -1,4 +1,4 @@
-# $OpenBSD: bsd.regress.mk,v 1.22 2020/12/16 16:53:24 bluhm Exp $
+# $OpenBSD: bsd.regress.mk,v 1.23 2020/12/17 14:54:15 bluhm Exp $
 # Documented in bsd.regress.mk(5)
 
 # No man pages for regression tests.
@@ -75,13 +75,16 @@ ${REGRESS_TARGETS}: ${REGRESS_SETUP}
 CLEANFILES+=${REGRESS_SETUP_ONCE:S/^/stamp-/}
 ${REGRESS_TARGETS}: ${REGRESS_SETUP_ONCE:S/^/stamp-/}
 ${REGRESS_SETUP_ONCE:S/^/stamp-/}: .SILENT
+	echo '==== ${@:S/^stamp-//} ===='
 	${MAKE} -C ${.CURDIR} ${@:S/^stamp-//}
 	date >$@
+	echo
 .endif
 
 regress: .SILENT
 .if !empty(REGRESS_SETUP_ONCE)
 	rm -f ${REGRESS_SETUP_ONCE:S/^/stamp-/}
+	${MAKE} -C ${.CURDIR} ${REGRESS_SETUP_ONCE:S/^/stamp-/}
 .endif
 .for RT in ${REGRESS_TARGETS}
 	echo '==== ${RT} ===='
