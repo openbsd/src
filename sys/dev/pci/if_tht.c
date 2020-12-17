@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.142 2020/07/10 13:26:38 patrick Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.143 2020/12/17 23:36:47 cheloha Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -582,7 +582,6 @@ void			tht_lladdr_read(struct tht_softc *);
 void			tht_lladdr_write(struct tht_softc *);
 int			tht_sw_reset(struct tht_softc *);
 int			tht_fw_load(struct tht_softc *);
-void			tht_fw_tick(void *arg);
 void			tht_link_state(struct tht_softc *);
 
 /* interface operations */
@@ -1667,11 +1666,9 @@ tht_sw_reset(struct tht_softc *sc)
 int
 tht_fw_load(struct tht_softc *sc)
 {
-	struct timeout			ticker;
-	volatile int			ok = 1;
 	u_int8_t			*fw, *buf;
 	size_t				fwlen, wrlen;
-	int				error = 1;
+	int				error = 1, msecs, ret;
 
 	if (loadfirmware("tht", &fw, &fwlen) != 0)
 		return (1);
@@ -1682,7 +1679,9 @@ tht_fw_load(struct tht_softc *sc)
 	buf = fw;
 	while (fwlen > 0) {
 		while (tht_fifo_writable(sc, &sc->sc_txt) <= THT_FIFO_GAP) {
-			if (tsleep(sc, PCATCH, "thtfw", 1) == EINTR)
+			ret = tsleep_nsec(sc, PCATCH, "thtfw",
+			    MSEC_TO_NSEC(10));
+			if (ret == EINTR)
 				goto err;
 		}
 
@@ -1695,32 +1694,21 @@ tht_fw_load(struct tht_softc *sc)
 		buf += wrlen;
 	}
 
-	timeout_set(&ticker, tht_fw_tick, (void *)&ok);
-	timeout_add_sec(&ticker, 2);
-	while (ok) {
+	for (msecs = 0; msecs < 2000; msecs += 10) {
 		if (tht_read(sc, THT_REG_INIT_STATUS) != 0) {
 			error = 0;
 			break;
 		}
-
-		if (tsleep(sc, PCATCH, "thtinit", 1) == EINTR)
+		ret = tsleep_nsec(sc, PCATCH, "thtinit", MSEC_TO_NSEC(10));
+		if (ret == EINTR)
 			goto err;
 	}
-	timeout_del(&ticker);
 
 	tht_write(sc, THT_REG_INIT_SEMAPHORE, 0x1);
 
 err:
 	free(fw, M_DEVBUF, fwlen);
 	return (error);
-}
-
-void
-tht_fw_tick(void *arg)
-{
-	volatile int			*ok = arg;
-
-	*ok = 0;
 }
 
 void
