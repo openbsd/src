@@ -1,4 +1,4 @@
-===== Start 90000MB disk =====
+=== Start 90000MB disk ===
 Writing MBR at offset 0.
 
   a:             1.0G              128  4.2BSD   2048 16384     1 # /
@@ -32,4 +32,4 @@ Writing MBR at offset 0.
 /dev/vnd0i /usr/src ffs rw 1 2
 /dev/vnd0e /var ffs rw 1 2
 /dev/vnd0b none swap sw
-===== End 90000MB disk =====
+=== End 90000MB disk ===
