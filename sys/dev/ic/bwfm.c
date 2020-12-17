@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.78 2020/12/02 17:06:35 krw Exp $ */
+/* $OpenBSD: bwfm.c,v 1.79 2020/12/17 15:37:09 jcs Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -2661,6 +2661,8 @@ bwfm_set_key_cb(struct bwfm_softc *sc, void *arg)
 		ieee80211_new_state(ic, IEEE80211_S_SCAN, -1);
 		return;
 	}
+
+	delay(100);
 
 	bwfm_fwvar_var_set_data(sc, "wsec_key", &key, sizeof(key));
 	bwfm_fwvar_var_get_int(sc, "wsec", &wsec);
