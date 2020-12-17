@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2018/06/25 22:22:49 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.7 2020/12/17 00:39:42 bluhm Exp $
 
 # Copyright (c) 2017 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2015 Vincent Gross <vgross@openbsd.org>
@@ -35,31 +35,32 @@ N2 =		12
 NUMS =		${N1} ${N2}
 IFS =		bridge vether etherip pair
 
-CLEANFILES =	stamp-*
-
 .PHONY: busy-interfaces busy-rdomains ifconfig unconfig
 
+REGRESS_SETUP_ONCE +=	busy-interfaces
 busy-interfaces:
-	# check if interfaces are busy
+	# Check if interfaces are busy.
 .for n in ${NUMS}
 .for i in ${IFS}
-	@if ! /sbin/ifconfig ${i}${n} 2>&1 | grep -q "no such interface"; then\
-	    echo interface ${i}${n} is already used >&2; exit 1; fi
+	@if ! /sbin/ifconfig $i$n 2>&1 | grep -q "no such interface"; then\
+	    echo interface $i$n is already used >&2; exit 1; fi
 .endfor
 .endfor
 
+REGRESS_SETUP_ONCE +=	busy-rdomains
 busy-rdomains:
-	# check if rdomains are busy
+	# Check if rdomains are busy.
 .for n in ${NUMS}
-	@if /sbin/ifconfig | grep -v '^lo${n}:' | grep ' rdomain ${n} '; then\
-	    echo routing domain ${n} is already used >&2; exit 1; fi
+	@if /sbin/ifconfig | grep -v '^lo$n:' | grep ' rdomain $n '; then\
+	    echo routing domain $n is already used >&2; exit 1; fi
 .endfor
 
+REGRESS_SETUP_ONCE +=	ifconfig
 ifconfig: unconfig
-	# create and configure interfaces
+	# Create and configure interfaces.
 .for n in ${NUMS}
 .for i in ${IFS}
-	${SUDO} /sbin/ifconfig ${i}${n} create rdomain ${n}
+	${SUDO} /sbin/ifconfig $i$n create rdomain $n
 .endfor
 .endfor
 	${SUDO} /sbin/ifconfig pair${N1}    172.31.0.1/24
@@ -73,33 +74,22 @@ ifconfig: unconfig
 	${SUDO} /sbin/ifconfig etherip${N1} tunnel 172.31.0.1 172.31.0.2 up
 	${SUDO} /sbin/ifconfig etherip${N2} tunnel 172.31.0.2 172.31.0.1 up
 
+REGRESS_CLEANUP +=	unconfig
 unconfig:
-	# destroy interfaces
+	# Destroy interfaces.
 .for n in ${NUMS}
 .for i in ${IFS}
-	-${SUDO} /sbin/ifconfig ${i}${n} destroy
+	-${SUDO} /sbin/ifconfig $i$n destroy
 .endfor
 .endfor
-	rm -f stamp-setup
+	rm -f stamp-ifconfig
 
-stamp-setup:
-	@echo '\n======== $@ ========'
-	${.MAKE} -C ${.CURDIR} busy-interfaces busy-rdomains ifconfig
-	date >$@
-
-REGRESS_TARGETS +=	run-regress-ping-1-2
-run-regress-ping-1-2: stamp-setup
-	@echo '\n======== $@ ========'
+REGRESS_TARGETS +=	run-ping-1-2
+run-ping-1-2:
 	/sbin/ping -n -w 1 -c 1 -V ${N1} 192.168.0.2
 
-REGRESS_TARGETS +=	run-regress-ping-2-1
-run-regress-ping-2-1: stamp-setup
-	@echo '\n======== $@ ========'
+REGRESS_TARGETS +=	run-ping-2-1
+run-ping-2-1:
 	/sbin/ping -n -w 1 -c 1 -V ${N2} 192.168.0.1
-
-REGRESS_TARGETS +=	run-regress-cleanup
-run-regress-cleanup: stamp-setup
-	@echo '\n======== $@ ========'
-	${.MAKE} -C ${.CURDIR} unconfig
 
 .include <bsd.regress.mk>
