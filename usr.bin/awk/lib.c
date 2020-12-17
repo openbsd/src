@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.42 2020/12/09 20:00:11 millert Exp $	*/
+/*	$OpenBSD: lib.c,v 1.43 2020/12/17 20:06:09 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -31,7 +31,6 @@ THIS SOFTWARE.
 #include <stdlib.h>
 #include <stdarg.h>
 #include <limits.h>
-#include <math.h>
 #include "awk.h"
 
 char	EMPTY[] = { '\0' };
@@ -789,35 +788,44 @@ bool is_valid_number(const char *s, bool trailing_stuff_ok,
 	if (no_trailing)
 		*no_trailing = false;
 
-	while (*s == ' ' || *s == '\t' || *s == '\n' || *s == '\r')
+	while (isspace((uschar)*s))
 		s++;
 
-	if (s[0] == '0' && tolower(s[1]) == 'x')	// no hex floating point, sorry
+	// no hex floating point, sorry
+	if (s[0] == '0' && (s[1] == 'x' || s[1] == 'X'))
 		return false;
 
 	// allow +nan, -nan, +inf, -inf, any other letter, no
 	if (s[0] == '+' || s[0] == '-') {
-		if (strcasecmp(s+1, "nan") == 0 || strcasecmp(s+1, "inf") == 0)
-			return true;
-		else if (! isdigit(s[1]) && s[1] != '.')
+		if ((strncasecmp(s+1, "nan", 3) == 0 ||
+		     strncasecmp(s+1, "inf", 3) == 0)) {
+			trailing_stuff_ok = false;
+			ep = (char *)(long)s + 4;
+			if (isspace((uschar)*ep)) {
+			    trailing_stuff_ok = true;
+			    do {
+				    ep++;
+			    } while (isspace((uschar)*ep));
+			}
+			if (no_trailing)
+				*no_trailing = (*ep == '\0');
+			if (*ep != '\0' && !trailing_stuff_ok)
+				return false;
+		} else if (! isdigit((uschar)s[1]) && s[1] != '.')
 			return false;
-	}
-	else if (! isdigit(s[0]) && s[0] != '.')
+	} else if (! isdigit((uschar)s[0]) && s[0] != '.')
 		return false;
 
 	errno = 0;
 	r = strtod(s, &ep);
-	if (ep == s || r == HUGE_VAL || errno == ERANGE)
+	if (ep == s || errno == ERANGE)
 		return false;
 
 	if (result != NULL)
 		*result = r;
 
-	/*
-	 * check for trailing stuff
-	 * allow \r as well. windows files aren't going to go away.
-	 */
-	while (*ep == ' ' || *ep == '\t' || *ep == '\n' || *ep == '\r')
+	// check for trailing stuff
+	while (isspace((uschar)*ep))
 		ep++;
 
 	if (no_trailing)
