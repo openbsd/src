@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.79 2020/12/15 03:40:29 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.80 2020/12/17 04:15:03 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -2252,12 +2252,11 @@ struct mcx_calibration {
 	uint64_t		 c_uptime;	/* previous kernel nanouptime */
 	uint64_t		 c_tbase;	/* mcx chip time */
 	uint64_t		 c_ubase;	/* kernel nanouptime */
-	uint64_t		 c_tdiff;
-	uint64_t		 c_udiff;
+	uint64_t		 c_ratio;
 };
 
 #define MCX_CALIBRATE_FIRST    2
-#define MCX_CALIBRATE_NORMAL   30
+#define MCX_CALIBRATE_NORMAL   32
 
 struct mcx_rx {
 	struct mcx_softc	*rx_softc;
@@ -6599,18 +6598,19 @@ mcx_calibrate_first(struct mcx_softc *sc)
 	c->c_ubase = mcx_uptime();
 	c->c_tbase = mcx_timer(sc);
 	splx(s);
-	c->c_tdiff = 0;
+	c->c_ratio = 0;
 
 	timeout_add_sec(&sc->sc_calibrate, MCX_CALIBRATE_FIRST);
 }
 
-#define MCX_TIMESTAMP_SHIFT 10
+#define MCX_TIMESTAMP_SHIFT 24
 
 static void
 mcx_calibrate(void *arg)
 {
 	struct mcx_softc *sc = arg;
 	struct mcx_calibration *nc, *pc;
+	uint64_t udiff, tdiff;
 	unsigned int gen;
 	int s;
 
@@ -6632,8 +6632,19 @@ mcx_calibrate(void *arg)
 	nc->c_tbase = mcx_timer(sc);
 	splx(s);
 
-	nc->c_udiff = (nc->c_ubase - nc->c_uptime) >> MCX_TIMESTAMP_SHIFT;
-	nc->c_tdiff = (nc->c_tbase - nc->c_timestamp) >> MCX_TIMESTAMP_SHIFT;
+	udiff = nc->c_ubase - nc->c_uptime;
+	tdiff = nc->c_tbase - nc->c_timestamp;
+
+	/*
+	 * udiff is the wall clock time between calibration ticks,
+	 * which should be 32 seconds or 32 billion nanoseconds. if
+	 * we squint, 1 billion nanoseconds is kind of like a 32 bit
+	 * number, so 32 billion should still have a lot of high bits
+	 * spare. we use this space by shifting the nanoseconds up
+	 * 24 bits so we have a nice big number to divide by the
+	 * number of mcx timer ticks.
+	 */
+	nc->c_ratio = (udiff << MCX_TIMESTAMP_SHIFT) / tdiff;
 
 	membar_producer();
 	sc->sc_calibration_gen = gen;
@@ -6680,12 +6691,14 @@ mcx_process_rx(struct mcx_softc *sc, struct mcx_rx *rx,
 	}
 #endif
 
-	if (ISSET(sc->sc_ac.ac_if.if_flags, IFF_LINK0) && c->c_tdiff) {
-		uint64_t t = bemtoh64(&cqe->cq_timestamp) - c->c_timestamp;
-		t *= c->c_udiff;
-		t /= c->c_tdiff;
+	if (ISSET(sc->sc_ac.ac_if.if_flags, IFF_LINK0) && c->c_ratio) {
+		uint64_t t = bemtoh64(&cqe->cq_timestamp);
+		t -= c->c_timestamp;
+		t *= c->c_ratio;
+		t >>= MCX_TIMESTAMP_SHIFT;
+		t += c->c_uptime;
 
-		m->m_pkthdr.ph_timestamp = c->c_uptime + t;
+		m->m_pkthdr.ph_timestamp = t;
 		SET(m->m_pkthdr.csum_flags, M_TIMESTAMP);
 	}
 
