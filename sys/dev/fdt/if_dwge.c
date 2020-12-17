@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwge.c,v 1.7 2020/12/12 11:48:52 jan Exp $	*/
+/*	$OpenBSD: if_dwge.c,v 1.8 2020/12/17 19:50:06 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -315,6 +315,7 @@ dwge_match(struct device *parent, void *cfdata, void *aux)
 
 	return (OF_is_compatible(faa->fa_node, "allwinner,sun7i-a20-gmac") ||
 	    OF_is_compatible(faa->fa_node, "amlogic,meson-axg-dwmac") ||
+	    OF_is_compatible(faa->fa_node, "amlogic,meson-g12a-dwmac") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3288-gmac") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3308-mac") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3328-gmac") ||
