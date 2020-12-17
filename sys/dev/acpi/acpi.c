@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.392 2020/12/05 16:14:30 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.393 2020/12/17 17:57:19 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2989,21 +2989,24 @@ acpi_getprop(struct aml_node *node, const char *prop, void *buf, int buflen)
 	/* Check properties. */
 	for (i = 0; i < dsd.v_package[1]->length; i++) {
 		struct aml_value *res = dsd.v_package[1]->v_package[i];
+		struct aml_value *val;
 		int len;
 
 		if (res->type != AML_OBJTYPE_PACKAGE || res->length != 2 ||
 		    res->v_package[0]->type != AML_OBJTYPE_STRING)
 			continue;
 
-		len = res->v_package[1]->length;
-		switch (res->v_package[1]->type) {
+		val = res->v_package[1];
+		if (val->type == AML_OBJTYPE_OBJREF)
+			val = val->v_objref.ref;
+
+		len = val->length;
+		switch (val->type) {
 		case AML_OBJTYPE_BUFFER:
-			memcpy(buf, res->v_package[1]->v_buffer,
-			    min(len, buflen));
+			memcpy(buf, val->v_buffer, min(len, buflen));
 			return len;
 		case AML_OBJTYPE_STRING:
-			memcpy(buf, res->v_package[1]->v_string,
-			    min(len, buflen));
+			memcpy(buf, val->v_string, min(len, buflen));
 			return len;
 		}
 	}
@@ -3040,14 +3043,22 @@ acpi_getpropint(struct aml_node *node, const char *prop, uint32_t defval)
 	/* Check properties. */
 	for (i = 0; i < dsd.v_package[1]->length; i++) {
 		struct aml_value *res = dsd.v_package[1]->v_package[i];
+		struct aml_value *val;
 
 		if (res->type != AML_OBJTYPE_PACKAGE || res->length != 2 ||
-		    res->v_package[0]->type != AML_OBJTYPE_STRING ||
-		    res->v_package[1]->type != AML_OBJTYPE_INTEGER)
+		    res->v_package[0]->type != AML_OBJTYPE_STRING)
 			continue;
 
-		if (strcmp(res->v_package[0]->v_string, prop) == 0)
-			return res->v_package[1]->v_integer;
+		val = res->v_package[1];
+		if (val->type == AML_OBJTYPE_OBJREF)
+			val = val->v_objref.ref;
+
+		if (val->type != AML_OBJTYPE_INTEGER)
+			continue;
+
+		if (strcmp(res->v_package[0]->v_string, prop) == 0 &&
+		    val->type == AML_OBJTYPE_INTEGER)
+			return val->v_integer;
 	}
 
 	return defval;
@@ -3139,7 +3150,7 @@ const char *acpi_isa_hids[] = {
 void
 acpi_attach_deps(struct acpi_softc *sc, struct aml_node *node)
 {
-	struct aml_value res;
+	struct aml_value res, *val;
 	struct aml_node *dep;
 	int i;
 
@@ -3150,9 +3161,12 @@ acpi_attach_deps(struct acpi_softc *sc, struct aml_node *node)
 		return;
 
 	for (i = 0; i < res.length; i++) {
-		if (res.v_package[i]->type != AML_OBJTYPE_STRING)
+		val = res.v_package[i];
+		if (val->type == AML_OBJTYPE_OBJREF)
+			val = val->v_objref.ref;
+		if (val->type != AML_OBJTYPE_DEVICE)
 			continue;
-		dep = aml_searchrel(node, res.v_package[i]->v_string);
+		dep = val->node;
 		if (dep == NULL || dep->attached)
 			continue;
 		dep = aml_searchname(dep, "_HID");

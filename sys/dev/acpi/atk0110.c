@@ -1,4 +1,4 @@
-/*	$OpenBSD: atk0110.c,v 1.15 2018/06/29 17:39:18 kettenis Exp $	*/
+/*	$OpenBSD: atk0110.c,v 1.16 2020/12/17 17:57:19 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
@@ -230,12 +230,12 @@ aibs_attach_sif(struct aibs_softc *sc, enum sensor_type st)
 	}
 
 	for (i = 0, v++; i < n; i++, v++) {
-		if(v[0]->type != AML_OBJTYPE_STRING) {
-			printf("%s: %s: %i: not a string: %i type\n",
+		if(v[0]->type != AML_OBJTYPE_NAMEREF) {
+			printf("%s: %s: %i: not a nameref: %i type\n",
 			    DEVNAME(sc), name, i, v[0]->type);
 			continue;
 		}
-		aibs_add_sensor(sc, v[0]->v_string);
+		aibs_add_sensor(sc, v[0]->v_nameref);
 	}
 
 	aml_freevalue(&res);

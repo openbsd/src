@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.54 2018/06/29 17:39:18 kettenis Exp $ */
+/* $OpenBSD: acpitz.c,v 1.55 2020/12/17 17:57:19 kettenis Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -304,9 +304,9 @@ acpitz_setfan(struct acpitz_softc *sc, int i, char *method)
 		}
 		for (y = 0; y < res1.length; y++) {
 			ref = res1.v_package[y];
-			if (ref->type == AML_OBJTYPE_STRING) {
+			if (ref->type == AML_OBJTYPE_NAMEREF) {
 				node = aml_searchrel(sc->sc_devnode,
-				    ref->v_string);
+				    ref->v_nameref);
 				if (node == NULL) {
 					printf("%s: %s[%d.%d] _PR0"
 					    " not a valid device\n",

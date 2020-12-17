@@ -1,4 +1,4 @@
-/* $OpenBSD: acpipwrres.c,v 1.8 2020/04/06 00:01:08 pirofti Exp $ */
+/* $OpenBSD: acpipwrres.c,v 1.9 2020/12/17 17:57:19 kettenis Exp $ */
 
 /*
  * Copyright (c) 2013 Martin Pieuchot <mpi@openbsd.org>
@@ -291,10 +291,10 @@ acpipwrres_foundcons(struct aml_node *node, void *arg)
 	for (; i < res.length; i++) {
 		ref = res.v_package[i];
 
-		if (ref->type == AML_OBJTYPE_STRING) {
+		if (ref->type == AML_OBJTYPE_NAMEREF) {
 			struct aml_node	*pnode;
 
-			pnode = aml_searchrel(&aml_root, ref->v_string);
+			pnode = aml_searchrel(&aml_root, ref->v_nameref);
 			if (pnode == NULL) {
 				DPRINTF(("%s: device %s not found\n",
 				    DEVNAME(sc), ref->v_string));

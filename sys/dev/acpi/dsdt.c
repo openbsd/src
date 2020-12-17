@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.256 2020/09/27 16:46:15 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.257 2020/12/17 17:57:19 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -965,6 +965,7 @@ aml_copyvalue(struct aml_value *lhs, struct aml_value *rhs)
 		lhs->v_mutex = rhs->v_mutex;
 		break;
 	case AML_OBJTYPE_POWERRSRC:
+		lhs->node = rhs->node;
 		lhs->v_powerrsrc = rhs->v_powerrsrc;
 		break;
 	case AML_OBJTYPE_METHOD:
@@ -980,6 +981,7 @@ aml_copyvalue(struct aml_value *lhs, struct aml_value *rhs)
 		lhs->v_opregion = rhs->v_opregion;
 		break;
 	case AML_OBJTYPE_PROCESSOR:
+		lhs->node = rhs->node;
 		lhs->v_processor = rhs->v_processor;
 		break;
 	case AML_OBJTYPE_NAMEREF:
@@ -995,6 +997,8 @@ aml_copyvalue(struct aml_value *lhs, struct aml_value *rhs)
 		aml_addref(lhs->v_objref.ref, "");
 		break;
 	case AML_OBJTYPE_DEVICE:
+	case AML_OBJTYPE_THERMZONE:
+		lhs->node = rhs->node;
 		break;
 	default:
 		printf("copyvalue: %x", rhs->type);
@@ -1035,10 +1039,8 @@ aml_freevalue(struct aml_value *val)
 		acpi_os_free(val->v_buffer);
 		break;
 	case AML_OBJTYPE_PACKAGE:
-		for (idx = 0; idx < val->length; idx++) {
-			aml_freevalue(val->v_package[idx]);
-			acpi_os_free(val->v_package[idx]);
-		}
+		for (idx = 0; idx < val->length; idx++)
+			aml_delref(&val->v_package[idx], "");
 		acpi_os_free(val->v_package);
 		break;
 	case AML_OBJTYPE_OBJREF:
@@ -1471,11 +1473,11 @@ struct aml_defval {
 	{ "_OSI", AML_OBJTYPE_METHOD, 1, aml_callosi },
 
 	/* Create default scopes */
-	{ "_GPE" },
-	{ "_PR_" },
-	{ "_SB_" },
-	{ "_TZ_" },
-	{ "_SI_" },
+	{ "_GPE", AML_OBJTYPE_DEVICE },
+	{ "_PR_", AML_OBJTYPE_DEVICE },
+	{ "_SB_", AML_OBJTYPE_DEVICE },
+	{ "_TZ_", AML_OBJTYPE_DEVICE },
+	{ "_SI_", AML_OBJTYPE_DEVICE },
 
 	{ NULL }
 };
@@ -3875,17 +3877,13 @@ aml_parse(struct aml_scope *scope, int ret_type, const char *stype)
 	case AMLOP_NAMECHAR:
 		/* opargs[0] = named object (node != NULL), or nameref */
 		my_ret = opargs[0];
-		if (scope->type == AMLOP_PACKAGE) {
+		if (scope->type == AMLOP_PACKAGE && my_ret->node) {
 			/* Special case for package */
-			if (my_ret->type == AML_OBJTYPE_NAMEREF)
-				my_ret = aml_allocvalue(AML_OBJTYPE_STRING, -1,
-				    aml_getname(my_ret->v_nameref));
-			else if (my_ret->node)
-				my_ret = aml_allocvalue(AML_OBJTYPE_STRING, -1,
-				    aml_nodename(my_ret->node));
-			break;
-		}
-		if (my_ret->type == AML_OBJTYPE_OBJREF) {
+			my_ret = aml_allocvalue(AML_OBJTYPE_OBJREF,
+			    AMLOP_NAMECHAR, 0);
+			my_ret->v_objref.ref = opargs[0];
+			aml_addref(my_ret, "package");
+		} else if (my_ret->type == AML_OBJTYPE_OBJREF) {
 			my_ret = my_ret->v_objref.ref;
 			aml_addref(my_ret, "de-alias");
 		}
@@ -4617,15 +4615,17 @@ acpi_getdevlist(struct acpi_devlist_head *list, struct aml_node *root,
     struct aml_value *pkg, int off)
 {
 	struct acpi_devlist *dl;
-	struct aml_node *node;
+	struct aml_value *val;
 	int idx;
 
-	for (idx=off; idx<pkg->length; idx++) {
-		node = aml_searchname(root, pkg->v_package[idx]->v_string);
-		if (node) {
+	for (idx = off; idx < pkg->length; idx++) {
+		val = pkg->v_package[idx];
+		if (val->type == AML_OBJTYPE_OBJREF)
+			val = val->v_objref.ref;
+		if (val->node) {
 			dl = acpi_os_malloc(sizeof(*dl));
 			if (dl) {
-				dl->dev_node = node;
+				dl->dev_node = val->node;
 				TAILQ_INSERT_TAIL(list, dl, dev_link);
 			}
 		}
@@ -4642,4 +4642,5 @@ acpi_freedevlist(struct acpi_devlist_head *list)
 		acpi_os_free(dl);
 	}
 }
+
 #endif /* SMALL_KERNEL */
