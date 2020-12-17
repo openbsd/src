@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.50 2020/11/20 13:03:00 jmc Exp $	*/
+/*	$OpenBSD: iked.c,v 1.51 2020/12/17 20:32:21 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -76,36 +76,38 @@ main(int argc, char *argv[])
 
 	log_init(1, LOG_DAEMON);
 
-	while ((c = getopt(argc, argv, "6dD:nf:p:s:vSTt")) != -1) {
+	while ((c = getopt(argc, argv, "6D:df:np:Ss:Ttv")) != -1) {
 		switch (c) {
 		case '6':
 			log_warnx("the -6 option is ignored and will be "
 			    "removed in the future.");
-			break;
-		case 'd':
-			debug++;
 			break;
 		case 'D':
 			if (cmdline_symset(optarg) < 0)
 				log_warnx("could not parse macro definition %s",
 				    optarg);
 			break;
-		case 'n':
-			debug = 1;
-			opts |= IKED_OPT_NOACTION;
+		case 'd':
+			debug++;
 			break;
 		case 'f':
 			conffile = optarg;
 			break;
-		case 's':
-			sock = optarg;
+		case 'n':
+			debug = 1;
+			opts |= IKED_OPT_NOACTION;
 			break;
-		case 'v':
-			verbose++;
-			opts |= IKED_OPT_VERBOSE;
+		case 'p':
+			if (natt_mode == NATT_DISABLE)
+				errx(1, "-T and -p are mutually exclusive");
+			port = atoi(optarg);
+			natt_mode = NATT_FORCE;
 			break;
 		case 'S':
 			opts |= IKED_OPT_PASSIVE;
+			break;
+		case 's':
+			sock = optarg;
 			break;
 		case 'T':
 			if (natt_mode == NATT_FORCE)
@@ -117,11 +119,9 @@ main(int argc, char *argv[])
 				errx(1, "-T and -t are mutually exclusive");
 			natt_mode = NATT_FORCE;
 			break;
-		case 'p':
-			if (natt_mode == NATT_DISABLE)
-				errx(1, "-T and -p are mutually exclusive");
-			port = atoi(optarg);
-			natt_mode = NATT_FORCE;
+		case 'v':
+			verbose++;
+			opts |= IKED_OPT_VERBOSE;
 			break;
 		default:
 			usage();
