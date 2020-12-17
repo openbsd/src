@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlpinctrl.c,v 1.6 2020/12/17 19:43:32 kettenis Exp $	*/
+/*	$OpenBSD: amlpinctrl.c,v 1.7 2020/12/17 21:52:09 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -73,6 +73,7 @@
 
 #define GPIOAO_0	0
 #define GPIOAO_1	1
+#define GPIOAO_3	3
 #define GPIOAO_5	5
 #define GPIOE_0		12
 #define GPIOE_1		13
@@ -321,9 +322,11 @@ struct amlpinctrl_softc {
 
 int	amlpinctrl_match(struct device *, void *, void *);
 void	amlpinctrl_attach(struct device *, struct device *, void *);
+int	amlpinctrl_activate(struct device *, int);
 
 struct cfattach amlpinctrl_ca = {
-	sizeof(struct amlpinctrl_softc), amlpinctrl_match, amlpinctrl_attach
+	sizeof(struct amlpinctrl_softc), amlpinctrl_match, amlpinctrl_attach,
+	NULL, amlpinctrl_activate
 };
 
 struct cfdriver amlpinctrl_cd = {
@@ -445,6 +448,32 @@ amlpinctrl_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_gc.gc_get_pin = amlpinctrl_get_pin;
 	sc->sc_gc.gc_set_pin = amlpinctrl_set_pin;
 	gpio_controller_register(&sc->sc_gc);
+}
+
+int
+amlpinctrl_activate(struct device *self, int act)
+{
+	struct amlpinctrl_softc *sc = (struct amlpinctrl_softc *)self;
+	uint32_t ao_pin3[] = { GPIOAO_3, 0 };
+
+	switch (act) {
+	case DVACT_POWERDOWN:
+		/*
+		 * Work around a hardware bug in the Odroid C4/HC4
+		 * boards where SD card boot fails if the
+		 * TFLASH_VDD_EN pin isn't configured as an input.
+		 * Since this is the default state it should be safe
+		 * to configure this pin (pin 3 of the GPIOAO bank) on
+		 * all boards.
+		 */
+		if (sc->sc_gpio_banks == aml_g12a_ao_gpio_banks)
+			amlpinctrl_config_pin(sc, ao_pin3, GPIO_CONFIG_INPUT);
+		break;
+	default:
+		break;
+	}
+
+	return 0;
 }
 
 struct aml_gpio_bank *
