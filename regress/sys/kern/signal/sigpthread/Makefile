@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2020/09/16 14:02:24 mpi Exp $
+# $OpenBSD: Makefile,v 1.2 2020/12/17 00:51:12 bluhm Exp $
 
 PROG =		sigpthread
 WARNINGS =	yes
@@ -12,7 +12,6 @@ CLEANFILES +=	out
 
 REGRESS_TARGETS +=	run-block-thread-3-unblock-$t
 run-block-thread-3-unblock-$t:
-	@echo '\n======== $@ ========'
 	# block signal
 	# run 3 threads
 	# kill process
@@ -25,7 +24,6 @@ run-block-thread-3-unblock-$t:
 
 REGRESS_TARGETS +=	run-block-thread-3-sleep-main-unblock-$t
 run-block-thread-3-sleep-main-unblock-$t:
-	@echo '\n======== $@ ========'
 	# block signal
 	# run 3 threads
 	# suspend threads until signaled
@@ -39,7 +37,6 @@ run-block-thread-3-sleep-main-unblock-$t:
 
 REGRESS_TARGETS +=	run-block-thread-3-unblock-$t-sleep-thread
 run-block-thread-3-sleep-thread-unblock-$t:
-	@echo '\n======== $@ ========'
 	# block signal
 	# run 3 threads
 	# kill process
@@ -53,7 +50,6 @@ run-block-thread-3-sleep-thread-unblock-$t:
 
 REGRESS_TARGETS +=	run-block-thread-3-sleep-unblock-unblock-$t
 run-block-thread-3-sleep-unblock-unblock-$t:
-	@echo '\n======== $@ ========'
 	# block signal
 	# run 3 threads
 	# kill process
@@ -67,7 +63,6 @@ run-block-thread-3-sleep-unblock-unblock-$t:
 
 REGRESS_TARGETS +=	run-block-thread-3-kill-$t-unblock-$t
 run-block-thread-3-kill-$t-unblock-$t:
-	@echo '\n======== $@ ========'
 	# block signal
 	# run 3 threads
 	# kill thread $t
@@ -80,7 +75,6 @@ run-block-thread-3-kill-$t-unblock-$t:
 
 REGRESS_TARGETS +=	run-block-thread-3-sleep-main-kill-$t-unblock-$t
 run-block-thread-3-sleep-main-kill-$t-unblock-$t:
-	@echo '\n======== $@ ========'
 	# block signal
 	# run 3 threads
 	# suspend threads until signaled
@@ -94,7 +88,6 @@ run-block-thread-3-sleep-main-kill-$t-unblock-$t:
 
 REGRESS_TARGETS +=	run-block-thread-3-kill-$t-sleep-thread-unblock-$t
 run-block-thread-3-kill-$t-sleep-thread-unblock-$t:
-	@echo '\n======== $@ ========'
 	# block signal
 	# run 3 threads
 	# kill thread $t
@@ -108,7 +101,6 @@ run-block-thread-3-kill-$t-sleep-thread-unblock-$t:
 
 REGRESS_TARGETS +=	run-block-thread-3-kill-$t-unblock-$t-sleep-unblock
 run-block-thread-3-kill-$t-unblock-$t-sleep-unblock:
-	@echo '\n======== $@ ========'
 	# block signal
 	# run 3 threads
 	# kill thread $t
@@ -122,7 +114,6 @@ run-block-thread-3-kill-$t-unblock-$t-sleep-unblock:
 
 REGRESS_TARGETS +=	run-block-thread-3-kill-$t
 run-block-thread-3-kill-$t:
-	@echo '\n======== $@ ========'
 	# block signal
 	# run 3 threads
 	# kill thread $t
@@ -135,7 +126,6 @@ run-block-thread-3-kill-$t:
 
 REGRESS_TARGETS +=	run-block-thread-3-sleep-main-kill-$t
 run-block-thread-3-sleep-main-kill-$t:
-	@echo '\n======== $@ ========'
 	# block signal
 	# run 3 threads
 	# suspend threads until signaled
@@ -149,7 +139,6 @@ run-block-thread-3-sleep-main-kill-$t:
 
 REGRESS_TARGETS +=	run-block-thread-3-kill-$t-sleep-thread
 run-block-thread-3-kill-$t-sleep-thread:
-	@echo '\n======== $@ ========'
 	# block signal
 	# run 3 threads
 	# kill thread $t
@@ -163,7 +152,6 @@ run-block-thread-3-kill-$t-sleep-thread:
 
 REGRESS_TARGETS +=	run-block-thread-3-kill-$t-sleep-unblock
 run-block-thread-3-kill-$t-sleep-unblock:
-	@echo '\n======== $@ ========'
 	# block signal
 	# run 3 threads
 	# kill thread $t
@@ -179,7 +167,6 @@ run-block-thread-3-kill-$t-sleep-unblock:
 
 REGRESS_TARGETS +=	run-block-thread-3
 run-block-thread-3:
-	@echo '\n======== $@ ========'
 	# block signal
 	# run 3 threads
 	# kill process
@@ -192,7 +179,6 @@ run-block-thread-3:
 
 REGRESS_TARGETS +=	run-block-thread-3-sleep-main
 run-block-thread-3-sleep-main:
-	@echo '\n======== $@ ========'
 	# block signal
 	# run 3 threads
 	# suspend threads until signaled
@@ -206,7 +192,6 @@ run-block-thread-3-sleep-main:
 
 REGRESS_TARGETS +=	run-block-thread-3-sleep-thread
 run-block-thread-3-sleep-thread:
-	@echo '\n======== $@ ========'
 	# block signal
 	# run 3 threads
 	# kill process
@@ -220,7 +205,6 @@ run-block-thread-3-sleep-thread:
 
 REGRESS_TARGETS +=	run-block-thread-3-sleep-unblock
 run-block-thread-3-sleep-unblock:
-	@echo '\n======== $@ ========'
 	# block signal
 	# run 3 threads
 	# kill process
@@ -238,7 +222,6 @@ run-block-thread-3-sleep-unblock:
 
 REGRESS_TARGETS +=	run-thread-3-kill-$t
 run-thread-3-kill-$t:
-	@echo '\n======== $@ ========'
 	# run 3 threads
 	# kill thread $t
 	# handle signal
@@ -249,7 +232,6 @@ run-thread-3-kill-$t:
 
 REGRESS_TARGETS +=	run-thread-3-sleep-main-kill-$t
 run-thread-3-sleep-main-kill-$t:
-	@echo '\n======== $@ ========'
 	# run 3 threads
 	# suspend threads until signaled
 	# sleep in main thread, signal should be received while suspended
@@ -261,7 +243,6 @@ run-thread-3-sleep-main-kill-$t:
 
 REGRESS_TARGETS +=	run-thread-3-kill-$t-sleep-thread
 run-thread-3-kill-$t-sleep-thread:
-	@echo '\n======== $@ ========'
 	# run 3 threads
 	# kill thread $t
 	# sleep in threads, signal should be received while sleeping
@@ -273,7 +254,6 @@ run-thread-3-kill-$t-sleep-thread:
 
 REGRESS_TARGETS +=	run-thread-3-kill-$t-sleep-unblock
 run-thread-3-kill-$t-sleep-unblock:
-	@echo '\n======== $@ ========'
 	# run 3 threads
 	# kill thread $t
 	# handle signal
@@ -287,7 +267,6 @@ run-thread-3-kill-$t-sleep-unblock:
 
 REGRESS_TARGETS +=	run-thread-3
 run-thread-3:
-	@echo '\n======== $@ ========'
 	# run 3 threads
 	# kill process
 	# handle signal
@@ -298,7 +277,6 @@ run-thread-3:
 
 REGRESS_TARGETS +=	run-thread-3-sleep-main
 run-thread-3-sleep-main:
-	@echo '\n======== $@ ========'
 	# block signal
 	# run 3 threads
 	# suspend threads until signaled
@@ -311,7 +289,6 @@ run-thread-3-sleep-main:
 
 REGRESS_TARGETS +=	run-thread-3-sleep-thread
 run-thread-3-sleep-thread:
-	@echo '\n======== $@ ========'
 	# run 3 threads
 	# kill process
 	# sleep in threads, signal should be received while sleeping
@@ -323,7 +300,6 @@ run-thread-3-sleep-thread:
 
 REGRESS_TARGETS +=	run-thread-3-sleep-unblock
 run-thread-3-sleep-unblock:
-	@echo '\n======== $@ ========'
 	# run 3 threads
 	# kill process
 	# handle signal
@@ -339,7 +315,6 @@ run-thread-3-sleep-unblock:
 
 REGRESS_TARGETS +=	run-block-thread-3-waiter-$t
 run-block-thread-3-waiter-$t:
-	@echo '\n======== $@ ========'
 	# block signal
 	# run 3 threads
 	# kill process
@@ -351,7 +326,6 @@ run-block-thread-3-waiter-$t:
 
 REGRESS_TARGETS +=	run-block-thread-3-sleep-main-waiter-$t
 run-block-thread-3-sleep-main-waiter-$t:
-	@echo '\n======== $@ ========'
 	# block signal
 	# run 3 threads
 	# wait for signal in thread $t
@@ -364,7 +338,6 @@ run-block-thread-3-sleep-main-waiter-$t:
 
 REGRESS_TARGETS +=	run-block-thread-3-waiter-$t-sleep-thread
 run-block-thread-3-sleep-thread-waiter-$t:
-	@echo '\n======== $@ ========'
 	# block signal
 	# run 3 threads
 	# kill process
@@ -377,7 +350,6 @@ run-block-thread-3-sleep-thread-waiter-$t:
 
 REGRESS_TARGETS +=	run-block-thread-3-kill-$t-waiter-$t
 run-block-thread-3-kill-$t-waiter-$t:
-	@echo '\n======== $@ ========'
 	# block signal
 	# run 3 threads
 	# kill thread $t
@@ -389,7 +361,6 @@ run-block-thread-3-kill-$t-waiter-$t:
 
 REGRESS_TARGETS +=	run-block-thread-3-sleep-main-kill-$t-waiter-$t
 run-block-thread-3-sleep-main-kill-$t-waiter-$t:
-	@echo '\n======== $@ ========'
 	# block signal
 	# run 3 threads
 	# wait for signal in thread $t
@@ -402,7 +373,6 @@ run-block-thread-3-sleep-main-kill-$t-waiter-$t:
 
 REGRESS_TARGETS +=	run-block-thread-3-kill-$t-sleep-thread-waiter-$t
 run-block-thread-3-kill-$t-sleep-thread-waiter-$t:
-	@echo '\n======== $@ ========'
 	# block signal
 	# run 3 threads
 	# kill thread $t
@@ -419,7 +389,6 @@ run-block-thread-3-kill-$t-sleep-thread-waiter-$t:
 
 REGRESS_TARGETS +=	run-block-thread-100-unblock-23
 run-block-thread-100-unblock-23:
-	@echo '\n======== $@ ========'
 	# block signal
 	# run 100 threads
 	# kill process
@@ -432,7 +401,6 @@ run-block-thread-100-unblock-23:
 
 REGRESS_TARGETS +=	run-block-thread-100-waiter-42
 run-block-thread-100-waiter-42:
-	@echo '\n======== $@ ========'
 	# block signal
 	# run 100 threads
 	# kill process

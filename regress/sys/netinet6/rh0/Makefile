@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2020/01/15 20:47:14 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.14 2020/12/17 00:51:13 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -80,7 +80,6 @@ PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 -u ${.CURDIR}/
 .endif
 
 stamp-stack:
-	@echo '\n======== $@ ========'
 	rm -f stamp-stack stamp-pf
 	-ssh ${REMOTE_SSH} ${SUDO} pfctl -d
 	ssh ${REMOTE_SSH} ${SUDO} pfctl -a regress -Fr
@@ -90,7 +89,6 @@ stamp-stack:
 # This is the expected default configuration.
 REGRESS_CLEANUP +=      stamp-pf
 stamp-pf:
-	@echo '\n======== $@ ========'
 	rm -f stamp-stack stamp-pf
 	echo 'pass proto tcp from port ssh no state\n'\
 	    'pass proto tcp to port ssh no state'|\
@@ -103,7 +101,6 @@ RH0_SCRIPTS !!=		cd ${.CURDIR} && ls -1 rh0*.py
 .for s in ${RH0_SCRIPTS}
 REGRESS_TARGETS =	run-${s}
 run-${s}: addr.py stamp-stack
-	@echo '\n======== $@ ========'
 	${SUDO} ${PYTHON}${s}
 .endfor
 

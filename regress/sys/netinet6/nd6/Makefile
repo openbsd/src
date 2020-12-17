@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2019/05/10 02:22:34 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.10 2020/12/17 00:51:13 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -87,7 +87,6 @@ PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 -u ${.CURDIR}/
 # to allow bidirectional packet flow.
 REGRESS_TARGETS =	run-ping6
 run-ping6:
-	@echo '\n======== $@ ========'
 	${SUDO} ndp -c
 .for ip in LOCAL_ADDR REMOTE_ADDR
 	@echo Check ping6 ${ip}6:
@@ -99,7 +98,6 @@ ND6_SCRIPTS !!=		cd ${.CURDIR} && ls -1 nd6*.py
 .for s in ${ND6_SCRIPTS}
 REGRESS_TARGETS =	run-${s}
 run-${s}: addr.py
-	@echo '\n======== $@ ========'
 	${SUDO} ${PYTHON}${s}
 .endfor
 

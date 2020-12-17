@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2020/02/28 12:48:30 mpi Exp $
+#	$OpenBSD: Makefile,v 1.2 2020/12/17 00:51:12 bluhm Exp $
 
 # Copyright (c) 2019 Moritz Buhl <openbsd@moritzbuhl.de>
 # Copyright (c) 2019 Alexander Bluhm <bluhm@openbsd.org>
@@ -35,7 +35,6 @@ LDADD =	-lpthread
 
 .for p in ${PROGS}
 run-$p: $p
-	@echo "\n======== $@ ========"
 	ntests="`./$p -n`" && \
 	echo "1..$$ntests" && \
 	tnumbers="`jot -ns' ' - 1 $$ntests`" && \

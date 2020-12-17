@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2020/09/21 15:13:24 beck Exp $
+# $OpenBSD: Makefile,v 1.6 2020/12/17 00:51:11 bluhm Exp $
 
 # Connect a client to a server.  Both can be current libressl, or
 # openssl 1.0.2, or openssl 1.1.  Create client and server certificates
@@ -45,7 +45,6 @@ REGRESS_SLOW_TARGETS +=	run-cert-client-${clib}-${cca}-${ccert}-${cv}-server-${s
 run-cert-client-${clib}-${cca}-${ccert}-${cv}-server-${slib}-${sca}-${scert}-${sv}: \
     127.0.0.1.crt ca.crt fake-ca.crt client.crt server.crt \
     ../${clib}/client ../${slib}/server
-	@echo '\n======== $@ ========'
 	LD_LIBRARY_PATH=/usr/local/lib/e${slib} \
 	    ../${slib}/server >${@:S/^run/server/}.out \
 	    ${sca:S/^noca//:S/^fakeca/-C fake-ca.crt/:S/^ca/-C ca.crt/} \

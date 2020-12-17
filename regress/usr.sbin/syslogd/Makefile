@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.30 2019/12/28 16:03:48 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.31 2020/12/17 00:51:13 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
@@ -41,7 +41,6 @@ CLEANFILES +=		*.out *.sock *.ktrace *.fstat ttylog *.ph */*.ph
 CLEANFILES +=		*.pem *.req *.key *.crt *.srl empty toobig diskimage
 
 run-args-rsyslog-client-tls.pl run-args-rsyslog-tls.pl:
-	@echo '\n======== $@ ========'
 	# rsyslogd TLS client side is totally unreliable.  Startup of
 	# GnuTLS may take a long time on slow machines.  Disable test.
 	@echo DISABLED
@@ -50,13 +49,11 @@ run-args-rsyslog-client-tls.pl run-args-rsyslog-tls.pl:
 
 REGRESS_SETUP_ONCE +=	setup
 setup:
-	@echo '\n======== $@ ========'
 	[ -z "${SUDO}" ] || ${SUDO} true
 	${SUDO} /etc/rc.d/syslogd stop
 
 REGRESS_CLEANUP +=	cleanup
 cleanup:
-	@echo '\n======== $@ ========'
 	-${SUDO} /etc/rc.d/syslogd restart
 
 # Set variables so that make runs with and without obj directory.
@@ -75,7 +72,6 @@ PERLPATH =	${.CURDIR}/
 
 .for a in ${ARGS}
 run-$a: $a
-	@echo '\n======== $@ ========'
 	time SUDO=${SUDO} KTRACE=${KTRACE} SYSLOGD=${SYSLOGD} perl ${PERLINC} ${PERLPATH}syslogd.pl ${PERLPATH}$a
 .endfor
 
@@ -131,14 +127,12 @@ unconfig:
 	-vnconfig -u vnd0 2>/dev/null || true
 
 stamp-filesystem:
-	@echo '\n======== $@ ========'
 	${SUDO} ${.MAKE} -C ${.CURDIR} mount
 	${SUDO} chmod 1777 /mnt/regress-syslogd
 	date >$@
 
 REGRESS_CLEANUP +=	cleanup-filesystem
 cleanup-filesystem:
-	@echo '\n======== $@ ========'
 	rm -f stamp-filesystem
 	-${SUDO} umount /mnt/regress-syslogd
 	-${SUDO} ${.MAKE} -C ${.CURDIR} unconfig

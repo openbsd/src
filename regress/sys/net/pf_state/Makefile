@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2020/01/15 20:47:13 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.11 2020/12/17 00:51:13 bluhm Exp $
 
 # Copyright (c) 2016-2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -115,13 +115,11 @@ PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 -u ${.CURDIR}/
 
 REGRESS_TARGETS +=	run-challenge-ack
 run-challenge-ack: challenge_ack.py addr.py
-	@echo '\n======== $@ ========'
 	${SUDO} ${PYTHON}challenge_ack.py
 
 .if ! empty(PF_ANCHOR:Mregress)
 REGRESS_CLEANUP +=	cleanup
 cleanup:
-	@echo '\n======== $@ ========'
 	${SUDO} pfctl -a regress -Fr
 	rm -f stamp-pfctl
 .endif

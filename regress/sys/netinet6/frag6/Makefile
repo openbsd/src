@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 2019/05/10 02:22:34 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.26 2020/12/17 00:51:13 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -73,14 +73,12 @@ PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 -u ${.CURDIR}/
 .endif
 
 stamp-stack:
-	@echo '\n======== $@ ========'
 	rm -f stamp-stack stamp-pf
 	-ssh ${REMOTE_SSH} ${SUDO} pfctl -d
 	ssh ${REMOTE_SSH} ${SUDO} pfctl -a regress -Fr
 	date >$@
 
 stamp-pf: addr.py pf.conf
-	@echo '\n======== $@ ========'
 	rm -f stamp-stack stamp-pf
 	cat addr.py ${.CURDIR}/pf.conf | pfctl -n -f -
 	cat addr.py ${.CURDIR}/pf.conf | \
@@ -91,7 +89,6 @@ stamp-pf: addr.py pf.conf
 FRAG6_SCRIPTS !!=	cd ${.CURDIR} && ls -1 frag6*.py
 
 run-stack-frag6_queuelimit.py:
-	@echo '\n======== $@ ========'
 	# the stack does not limit the amount of fragments during reassembly
 	@echo DISABLED
 
@@ -102,7 +99,6 @@ run-stack-frag6_queuelimit.py:
 ${sp}: run-${sp}-ping6
 REGRESS_TARGETS +=	run-${sp}-ping6
 run-${sp}-ping6: stamp-${sp}
-	@echo '\n======== $@ ========'
 .for ip in LOCAL_ADDR REMOTE_ADDR
 	@echo Check ping6 ${ip}6:
 	ping6 -n -c 1 ${${ip}6}
@@ -113,7 +109,6 @@ run-${sp}-ping6: stamp-${sp}
 ${sp}: run-${sp}-fragping6
 REGRESS_TARGETS +=	run-${sp}-fragping6
 run-${sp}-fragping6: stamp-${sp}
-	@echo '\n======== $@ ========'
 .for ip in LOCAL_ADDR REMOTE_ADDR
 	@echo Check ping6 ${ip}6:
 	ping6 -n -c 1 -s 5000 -m ${${ip}6}
@@ -123,7 +118,6 @@ run-${sp}-fragping6: stamp-${sp}
 ${sp}: run-${sp}-${s}
 REGRESS_TARGETS +=	run-${sp}-${s}
 run-${sp}-${s}: addr.py stamp-${sp}
-	@echo '\n======== $@ ========'
 	${SUDO} ${PYTHON}${s}
 .endfor
 

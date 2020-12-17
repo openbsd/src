@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2020/09/21 15:13:24 beck Exp $
+# $OpenBSD: Makefile,v 1.3 2020/12/17 00:51:12 bluhm Exp $
 
 # Connect a client to a server.  Both can be current libressl, or
 # openssl 1.0.2, or openssl 1.1.  Pin client or server to a fixed TLS
@@ -41,7 +41,6 @@ run-version-client-${clib}-${cver}-server-${slib}-${sver} \
 client-version-client-${clib}-${cver}-server-${slib}-${sver}.out \
 server-version-client-${clib}-${cver}-server-${slib}-${sver}.out: \
     127.0.0.1.crt ../${clib}/client ../${slib}/server
-	@echo '\n======== $@ ========'
 	LD_LIBRARY_PATH=/usr/local/lib/e${slib} \
 	    ../${slib}/server >${@:S/^run/server/}.out \
 	    -c 127.0.0.1.crt -k 127.0.0.1.key \
@@ -69,7 +68,6 @@ REGRESS_SLOW_TARGETS +=	check-version-client-${clib}-${cver}-server-${slib}-${sv
 check-version-client-${clib}-${cver}-server-${slib}-${sver}: \
     client-version-client-${clib}-${cver}-server-${slib}-${sver}.out \
     server-version-client-${clib}-${cver}-server-${slib}-${sver}.out
-	@echo '\n======== $@ ========'
 	@grep ' Protocol *: ' ${@:S/^check/client/}.out
 	@grep ' Protocol *: ' ${@:S/^check/server/}.out
 .if "${cver}" == any

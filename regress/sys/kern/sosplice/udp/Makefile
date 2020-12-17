@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2019/07/12 19:31:29 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.4 2020/12/17 00:51:12 bluhm Exp $
 
 .include <bsd.regress.mk>
 
@@ -12,7 +12,6 @@
 
 .for a in ${ARGS}
 run-$a: $a
-	@echo '\n======== $@ ========'
 .if empty (REMOTE_SSH)
 	time perl ${PERLINC} ${PERLPATH}relay.pl copy ${PERLPATH}$a
 	time perl ${PERLINC} ${PERLPATH}relay.pl splice ${PERLPATH}$a

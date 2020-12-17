@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2020/09/21 17:29:02 florian Exp $
+#	$OpenBSD: Makefile,v 1.7 2020/12/17 00:51:12 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -45,7 +45,6 @@ PYTHON =	python2.7 -B -u ${.CURDIR}/
 
 REGRESS_SETUP +=	setup
 setup: cleanup
-	@echo '\n======== $@ ========'
 	${SUDO} ifconfig ${PAIR1} rdomain ${RTABLE} 10.11.12.1/24 up
 	${SUDO} ifconfig ${PAIR2} rdomain ${RTABLE} 10.11.12.2/24 up
 	${SUDO} ifconfig ${PAIR1} rdomain ${RTABLE} patch ${PAIR2}
@@ -56,20 +55,17 @@ setup: cleanup
 
 REGRESS_CLEANUP +=	cleanup
 cleanup:
-	@echo '\n======== $@ ========'
 .for iface in ${PAIR1} ${PAIR2}
 	${SUDO} ifconfig ${iface} destroy 2>/dev/null || true
 .endfor
 
 REGRESS_TARGETS +=	run-send-solicitation
 run-send-solicitation:
-	@echo '\n======== $@ ========'
 	${SUDO} route -T${RTABLE} exec ${PYTHON}sniff_sol.py ${CTR_SOCK}
 
 
 REGRESS_TARGETS +=	run-parse-ra
 run-parse-ra:
-	@echo '\n======== $@ ========'
 	${SUDO} route -T${RTABLE} exec ${PYTHON}process_ra.py \
 	    ${PAIR1} ${PAIR2} ${CTR_SOCK}
 

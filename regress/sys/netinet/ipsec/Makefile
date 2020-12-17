@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.26 2020/01/15 20:47:13 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.27 2020/12/17 00:51:13 bluhm Exp $
 
 # This test needs a manual setup of four machines, the make
 # target create-setup can be used to distribute the configuration.
@@ -171,7 +171,6 @@ regress:
 
 # Create python include file containing the addresses.
 addr.py: Makefile
-	@echo '\n======== $@ ========'
 	rm -f $@ $@.tmp
 .for host in SRC IPS RT ECO
 .for dir in IN OUT BUNDLE
@@ -194,7 +193,6 @@ addr.py: Makefile
 
 # Load the ipsec sa and flow into the kernel of the SRC and IPS machine.
 stamp-ipsec: addr.py ipsec.conf
-	@echo '\n======== $@ ========'
 	cat addr.py ${.CURDIR}/ipsec.conf | /sbin/ipsecctl -n -f -
 	${SUDO} ipsecctl -F
 	cat addr.py ${.CURDIR}/ipsec.conf | ${SUDO} ipsecctl -f -
@@ -205,14 +203,12 @@ stamp-ipsec: addr.py ipsec.conf
 
 # Load a pf log enc0 pass any rule into the kernel of the IPS machine.
 stamp-pfctl: addr.py pf.conf
-	@echo '\n======== $@ ========'
 	cat addr.py ${.CURDIR}/pf.conf | /sbin/pfctl -n -f -
 	cat addr.py ${.CURDIR}/pf.conf | \
 	    ssh ${IPS_SSH} ${SUDO} pfctl -a regress -f -
 	@date >$@
 
 stamp-reflect: nonxt-reflect
-	@echo '\n======== $@ ========'
 	ssh ${IPS_SSH} make -C ${.CURDIR} nonxt-reflect
 	ssh ${IPS_SSH} ${SUDO} rcctl start inetd nonxt_reflect
 	-ssh ${ECO_SSH} make -C ${.CURDIR} nonxt-reflect
@@ -223,7 +219,6 @@ DUMPCMD=	tcpdump -l -e -vvv -s 2048 -ni
 
 # Run tcpdump on enc device of IPS machine.
 stamp-bpf: Makefile stamp-drop
-	@echo '\n======== $@ ========'
 	rm -f enc0.tcpdump
 	-ssh ${IPS_SSH} ${SUDO} pkill -f "'^${DUMPCMD} enc0'" || true
 	ssh ${IPS_SSH} ${SUDO} ${DUMPCMD} enc0 >enc0.tcpdump &
@@ -233,7 +228,6 @@ stamp-bpf: Makefile stamp-drop
 
 # Run tcpdump on pflog device of IPS machine.
 stamp-pflog: stamp-pfctl stamp-drop
-	@echo '\n======== $@ ========'
 	rm -f pflog0.tcpdump
 	-ssh ${IPS_SSH} ${SUDO} pkill -f "'^${DUMPCMD} pflog0'" || true
 	ssh ${IPS_SSH} ${SUDO} ${DUMPCMD} pflog0 >pflog0.tcpdump &
@@ -242,7 +236,6 @@ stamp-pflog: stamp-pfctl stamp-drop
 	@date >$@
 
 stamp-stop:
-	@echo '\n======== $@ ========'
 	sleep 5  # XXX
 	-ssh ${IPS_SSH} ${SUDO} pkill -f "'^${DUMPCMD}'"
 	@date >$@
@@ -250,7 +243,6 @@ stamp-stop:
 # Old TCP connections send packets from time to time.  These confuse
 # the checks that count the IPsec packets with netstat -ss.
 stamp-drop:
-	@echo '\n======== $@ ========'
 	netstat -nv -p tcp |\
 	    perl -ne '\
 		/ ${PREFIX_IPV6}.* ${PREFIX_IPV6}/ ||\
@@ -272,7 +264,6 @@ run-regress-pflog-ping-IPS_AH_TRANSP_IPV4 \
     run-regress-pflog-udp-IPS_AH_TRANSP_IPV6 \
     run-regress-pflog-tcp-IPS_AH_TRANSP_IPV6 \
     run-regress-pflog-nonxt-IPS_AH_TRANSP_IPV6:
-	@echo '\n======== $@ ========'
 	@echo IPv6 AH packets are treated as their payload protocol by pf.
 	@echo So they match the floating state on the physical interface
 	@echo and are not logged by the enc0 pf rule.
@@ -285,7 +276,6 @@ run-regress-pflog-ping-IPS_AH_TRANSP_IPV4 \
 .for ping ipv in ping IPV4 ping6 IPV6
 TARGETS +=	ping-${host}_${dir}_${ipv}
 run-regress-send-ping-${host}_${dir}_${ipv}:
-	@echo '\n======== $@ ========'
 	${ping} -n -c 1 -w 2 ${${host}_${dir}_${ipv}}
 .endfor
 .endfor
@@ -304,7 +294,6 @@ TARGETS +=	ping-${len}-${host}_${sec}_${mode}_${ipv}
 ping ${host:L} ${sec:L} ${mode:L} ${ipv:L}:\
     run-regress-send-ping-${len}-${host}_${sec}_${mode}_${ipv}
 run-regress-send-ping-${len}-${host}_${sec}_${mode}_${ipv}:
-	@echo '\n======== $@ ========'
 	netstat -s -p ${sec:L:S/ipip/ipencap/:S/bundle/esp/} |\
 	    awk '/input ${sec:S/BUNDLE/ESP/} /{print $$1}' >pkt.in
 	netstat -s -p ${sec:L:S/ipip/ipencap/:S/bundle/esp/} |\
@@ -338,7 +327,6 @@ TARGETS +=	udp-${host}_${sec}_${mode}_${ipv}
 udp ${host:L} ${sec:L} ${mode:L} ${ipv:L}:\
     run-regress-send-udp-${host}_${sec}_${mode}_${ipv}
 run-regress-send-udp-${host}_${sec}_${mode}_${ipv}:
-	@echo '\n======== $@ ========'
 	netstat -s -p ${sec:L:S/ipip/ipencap/:S/bundle/esp/} |\
 	    awk '/input ${sec:S/BUNDLE/ESP/} /{print $$1}' >pkt.in
 	netstat -s -p ${sec:L:S/ipip/ipencap/:S/bundle/esp/} |\
@@ -365,7 +353,6 @@ TARGETS +=	tcp-${host}_${sec}_${mode}_${ipv}
 tcp ${host:L} ${sec:L} ${mode:L} ${ipv:L}:\
     run-regress-send-tcp-${host}_${sec}_${mode}_${ipv}
 run-regress-send-tcp-${host}_${sec}_${mode}_${ipv}:
-	@echo '\n======== $@ ========'
 	echo $$$$ | nc -n -N -w 3 ${${host}_${sec}_${mode}_${ipv}} 7 |\
 	    fgrep $$$$
 
@@ -376,7 +363,6 @@ TARGETS +=	nonxt-${host}_${sec}_${mode}_${ipv}
 nonxt ${host:L} ${sec:L} ${mode:L} ${ipv:L}:\
     run-regress-send-nonxt-${host}_${sec}_${mode}_${ipv}
 run-regress-send-nonxt-${host}_${sec}_${mode}_${ipv}: nonxt-sendrecv
-	@echo '\n======== $@ ========'
 	netstat -s -p ${sec:L:S/ipip/ipencap/:S/bundle/esp/} |\
 	    awk '/input ${sec:S/BUNDLE/ESP/} /{print $$1}' >pkt.in
 	netstat -s -p ${sec:L:S/ipip/ipencap/:S/bundle/esp/} |\
@@ -457,7 +443,6 @@ REGEX_RPL_${host}_${sec}_${mode}_${ipv}_NONXT=\
 .for proto in PING UDP TCP NONXT
 
 run-regress-bpf-${proto:L}-${host}_${sec}_${mode}_${ipv}: stamp-stop
-	@echo '\n======== $@ ========'
 	egrep -q '\
 	    ${REGEX_${sec}}\
 	    ${REGEX_REQ_${mode}}\
@@ -470,7 +455,6 @@ run-regress-bpf-${proto:L}-${host}_${sec}_${mode}_${ipv}: stamp-stop
 	    ${REGEX_RPL_${proto}} ' enc0.tcpdump
 
 run-regress-pflog-${proto:L}-${host}_${sec}_${mode}_${ipv}: stamp-stop
-	@echo '\n======== $@ ========'
 	egrep -q '\
 	    rule .*regress.0/\(match\) .*\
 	    pass in on enc0:.*\
@@ -505,7 +489,6 @@ create-setup: stamp-hostname stamp-inetd stamp-nonxt-reflect
 # Create hostname.if files, copy them to the machines and install addresses.
 
 etc/hostname.${SRC_OUT_IF}: Makefile
-	@echo '\n======== $@ ========'
 	mkdir -p ${@:H}
 	rm -f $@ $@.tmp
 	echo '### regress ipsec $@' >$@.tmp
@@ -584,7 +567,6 @@ ${IPS_SSH}/hostname.${IPS_IN_IF}: Makefile
 	mv $@.tmp $@
 
 ${IPS_SSH}/hostname.${IPS_OUT_IF}: Makefile
-	@echo '\n======== $@ ========'
 	mkdir -p ${@:H}
 	rm -f $@ $@.tmp
 	echo '### regress ipsec $@' >$@.tmp
@@ -620,7 +602,6 @@ ${IPS_SSH}/hostname.${IPS_OUT_IF}: Makefile
 	mv $@.tmp $@
 
 ${RT_SSH}/hostname.${RT_IN_IF}: Makefile
-	@echo '\n======== $@ ========'
 	mkdir -p ${@:H}
 	rm -f $@ $@.tmp
 	echo '### regress ipsec $@' >$@.tmp
@@ -650,7 +631,6 @@ ${RT_SSH}/hostname.${RT_IN_IF}: Makefile
 	mv $@.tmp $@
 
 ${RT_SSH}/hostname.${RT_OUT_IF}: Makefile
-	@echo '\n======== $@ ========'
 	mkdir -p ${@:H}
 	rm -f $@ $@.tmp
 	echo '### regress ipsec $@' >$@.tmp
@@ -673,7 +653,6 @@ ${RT_SSH}/hostname.${RT_OUT_IF}: Makefile
 	mv $@.tmp $@
 
 ${ECO_SSH}/hostname.${ECO_IN_IF}: Makefile
-	@echo '\n======== $@ ========'
 	mkdir -p ${@:H}
 	rm -f $@ $@.tmp
 	echo '### regress ipsec $@' >$@.tmp
@@ -714,7 +693,6 @@ stamp-hostname: etc/hostname.${SRC_OUT_IF} \
     ${IPS_SSH}/hostname.${IPS_IN_IF} ${IPS_SSH}/hostname.${IPS_OUT_IF} \
     ${RT_SSH}/hostname.${RT_IN_IF} ${RT_SSH}/hostname.${RT_OUT_IF} \
     ${ECO_SSH}/hostname.${ECO_IN_IF}
-	@echo '\n======== $@ ========'
 	${SUDO} sh -c "umask 027;\
 	    { sed '/^### regress/,\$$d' /etc/hostname.${SRC_OUT_IF} &&\
 	    cat; } >/etc/hostname.${SRC_OUT_IF}.tmp"\
@@ -737,7 +715,6 @@ stamp-hostname: etc/hostname.${SRC_OUT_IF} \
 
 .for host in IPS ECO
 ${${host}_SSH}/inetd.conf: Makefile
-	@echo '\n======== $@ ========'
 	mkdir -p ${@:H}
 	rm -f $@ $@.tmp
 	echo '### regress ipsec $@' >$@.tmp
@@ -757,7 +734,6 @@ ${${host}_SSH}/inetd.conf: Makefile
 .endfor
 
 stamp-inetd: ${IPS_SSH}/inetd.conf ${ECO_SSH}/inetd.conf
-	@echo '\n======== $@ ========'
 .for host in IPS ECO
 	ssh root@${${host}_SSH} "umask 022;\
 	    { sed '/^### regress/,\$$d' /etc/inetd.conf && cat; }\
@@ -774,7 +750,6 @@ stamp-inetd: ${IPS_SSH}/inetd.conf ${ECO_SSH}/inetd.conf
 
 .for host in IPS ECO
 ${${host}_SSH}/nonxt_reflect: nonxt_reflect.sh Makefile
-	@echo '\n======== $@ ========'
 	mkdir -p ${@:H}
 	rm -f $@ $@.tmp
 	echo '#!/bin/ksh' >$@.tmp
@@ -798,7 +773,6 @@ ${${host}_SSH}/nonxt_reflect: nonxt_reflect.sh Makefile
 
 stamp-nonxt-reflect: ${IPS_SSH}/nonxt_reflect ${ECO_SSH}/nonxt_reflect \
     nonxt-reflect
-	@echo '\n======== $@ ========'
 .for host in IPS ECO
 	ssh ${${host}_SSH} make -C ${.CURDIR} nonxt-reflect
 	scp ${${host}_SSH}/nonxt_reflect root@${${host}_SSH}:/etc/rc.d/

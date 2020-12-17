@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2020/09/21 15:13:24 beck Exp $
+# $OpenBSD: Makefile,v 1.7 2020/12/17 00:51:11 bluhm Exp $
 
 # Connect a client to a server.  Both can be current libressl, or
 # openssl 1.0.2, or openssl 1.1.  Create lists of supported ciphers
@@ -14,7 +14,6 @@ server-cipher-GOST2001-GOST89-GOST89-client-libressl-server-libressl.out \
 server-cipher-GOST2012256-GOST89-GOST89-client-libressl-server-libressl.out \
 check-cipher-GOST2001-GOST89-GOST89-client-libressl-server-libressl \
 check-cipher-GOST2012256-GOST89-GOST89-client-libressl-server-libressl:
-	@echo '\n======== $@ ========'
 	# gost does not work with libressl TLS 1.3 right now
 	@echo DISABLED
 
@@ -112,7 +111,6 @@ run-cipher-${cipher}-client-${clib}-server-${slib} \
 client-cipher-${cipher}-client-${clib}-server-${slib}.out \
 server-cipher-${cipher}-client-${clib}-server-${slib}.out: dh.param \
     127.0.0.1.crt ${TYPE_${cipher}}.crt ../${clib}/client ../${slib}/server
-	@echo '\n======== $@ ========'
 	LD_LIBRARY_PATH=/usr/local/lib/e${slib} \
 	    ../${slib}/server >${@:S/^run/server/}.out \
 	    -c ${TYPE_${cipher}}.crt -k ${TYPE_${cipher}}.key \
@@ -134,7 +132,6 @@ REGRESS_SLOW_TARGETS +=	check-cipher-${cipher}-client-${clib}-server-${slib}
 check-cipher-${cipher}-client-${clib}-server-${slib}: \
     client-cipher-${cipher}-client-${clib}-server-${slib}.out \
     server-cipher-${cipher}-client-${clib}-server-${slib}.out
-	@echo '\n======== $@ ========'
 .if "${clib}" != "openssl" && "${slib}" != "openssl" && \
     "${cipher:C/AEAD-(AES.*-GCM|CHACHA.*-POLY.*)-SHA.*/TLS1_3/}" != TLS1_3
 	# client and server 1.3 capable, not TLS 1.3 cipher

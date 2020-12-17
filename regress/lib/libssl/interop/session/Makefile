@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2020/05/11 18:20:24 jsing Exp $
+# $OpenBSD: Makefile,v 1.6 2020/12/17 00:51:11 bluhm Exp $
 
 LIBRARIES =		libressl
 .if exists(/usr/local/bin/eopenssl)
@@ -12,7 +12,6 @@ run-session-client-libressl-server-libressl \
 run-session-client-libressl-server-openssl11 \
 run-session-client-openssl11-server-libressl \
 run-session-client-openssl11-server-openssl11:
-	@echo '\n======== $@ ========'
 	# TLS 1.3 needs some extra setup for session reuse
 	@echo DISABLED
 
@@ -23,7 +22,6 @@ REGRESS_TARGETS +=	run-session-client-${clib}-server-${slib}
 
 run-session-client-${clib}-server-${slib}: \
     127.0.0.1.crt ../${clib}/client ../${slib}/server
-	@echo '\n======== $@ ========'
 	LD_LIBRARY_PATH=/usr/local/lib/e${slib} \
 	    ../${slib}/server >${@:S/^run/server/}.out \
 	    -ss \

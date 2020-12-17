@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2019/07/12 19:31:29 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.8 2020/12/17 00:51:12 bluhm Exp $
 
 PROG ?=		relay
 CFLAGS +=	-Wall -Werror
@@ -25,7 +25,6 @@ remote-setup:
 .for r in copy splice
 
 run-$p-$r: $r remote-setup
-	@echo '\n======== $@ ========'
 	-pkill -x tcpbench
 .if empty (REMOTE_SSH)
 	./$r ${p:S/tcp//:S/udp/-u/} -4 12345 127.0.0.1 12346 & \

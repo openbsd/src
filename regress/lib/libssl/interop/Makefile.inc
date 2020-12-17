@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.7 2020/09/15 01:45:16 bluhm Exp $
+# $OpenBSD: Makefile.inc,v 1.8 2020/12/17 00:51:11 bluhm Exp $
 
 .PATH:			${.CURDIR}/..
 
@@ -16,7 +16,6 @@ ldd-$p.out: $p
 client-self.out server-self.out: run-self-client-server
 
 run-self-client-server: client server 127.0.0.1.crt
-	@echo '\n======== $@ ========'
 	# check that tls client and server work together
 	LD_LIBRARY_PATH=${LD_LIBRARY_PATH} \
 	    ./server >server-self.out \

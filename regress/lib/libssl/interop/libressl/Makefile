@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2020/09/14 00:51:04 bluhm Exp $
+# $OpenBSD: Makefile,v 1.8 2020/12/17 00:51:11 bluhm Exp $
 
 PROGS =			client server
 CFLAGS =		-DLIBRESSL_HAS_TLS1_3
@@ -15,7 +15,6 @@ REGRESS_TARGETS +=	run-ldd-$p run-version-$p run-protocol-$p
 .for p in ${PROGS}
 
 run-ldd-$p: ldd-$p.out
-	@echo '\n======== $@ ========'
 	# check that $p is linked with LibreSSL
 	grep -q /usr/lib/libcrypto.so ldd-$p.out
 	grep -q /usr/lib/libssl.so ldd-$p.out
@@ -23,12 +22,10 @@ run-ldd-$p: ldd-$p.out
 	! grep /usr/local/lib/ ldd-$p.out
 
 run-version-$p: $p-self.out
-	@echo '\n======== $@ ========'
 	# check that runtime version is LibreSSL
 	grep 'SSLEAY_VERSION: LibreSSL' $p-self.out
 
 run-protocol-$p: $p-self.out
-	@echo '\n======== $@ ========'
 	# check that LibreSSL protocol version is TLS 1.3
 	grep 'Protocol *: TLSv1.3' $p-self.out
 

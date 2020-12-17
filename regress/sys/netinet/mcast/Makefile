@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2019/09/05 18:27:19 bluhm Exp $
+# $OpenBSD: Makefile,v 1.5 2020/12/17 00:51:13 bluhm Exp $
 
 PROGS =			mcsend mcrecv mcroute
 WARNINGS =		Yes
@@ -27,7 +27,6 @@ GROUP_LOCAL =	224.0.0.123
 
 REGRESS_TARGETS +=	run-localhost
 run-localhost:
-	@echo '\n======== $@ ========'
 	# send over localhost interface
 	${RECV} -f recv.log -i ${LOCALHOST} -r 5 -- \
 	${SEND} -f send.log -i ${LOCALHOST} -m '${MSG}'
@@ -36,7 +35,6 @@ run-localhost:
 
 REGRESS_TARGETS +=	run-localhost-loop
 run-localhost-loop:
-	@echo '\n======== $@ ========'
 	# explicitly enable loop back on multicast interface
 	${RECV} -f recv.log -i ${LOCALHOST} -r 5 -- \
 	${SEND} -f send.log -i ${LOCALHOST} -l 1 -m '${MSG}'
@@ -45,7 +43,6 @@ run-localhost-loop:
 
 REGRESS_TARGETS +=	run-localhost-loop0
 run-localhost-loop0:
-	@echo '\n======== $@ ========'
 	# disable loop back on multicast interface, must fail
 	${RECV} -f recv.log -i ${LOCALHOST} -n 1 -- \
 	${SEND} -f send.log -i ${LOCALHOST} -l 0 -m '${MSG}'
@@ -54,7 +51,6 @@ run-localhost-loop0:
 
 REGRESS_TARGETS +=	run-localhost-ttl0
 run-localhost-ttl0:
-	@echo '\n======== $@ ========'
 	# send over localhost interface
 	${RECV} -f recv.log -i ${LOCALHOST} -r 5 -- \
 	${SEND} -f send.log -i ${LOCALHOST} -m '${MSG}' -t 0
@@ -63,7 +59,6 @@ run-localhost-ttl0:
 
 REGRESS_TARGETS +=	run-localhost-local
 run-localhost-local:
-	@echo '\n======== $@ ========'
 	# send over localhost interface
 	${RECV} -f recv.log -g ${GROUP_LOCAL} -i ${LOCALHOST} -r 5 -- \
 	${SEND} -f send.log -g ${GROUP_LOCAL} -i ${LOCALHOST} -m '${MSG}' -t 0
@@ -72,7 +67,6 @@ run-localhost-local:
 
 REGRESS_TARGETS +=	run-localaddr
 run-localaddr:
-	@echo '\n======== $@ ========'
 	# send over a local physical interface
 	${RECV} -f recv.log -i ${LOCAL} -r 5 -- \
 	${SEND} -f send.log -i ${LOCAL} -m '${MSG}'
@@ -81,7 +75,6 @@ run-localaddr:
 
 REGRESS_TARGETS +=	run-localaddr-loop0
 run-localaddr-loop0:
-	@echo '\n======== $@ ========'
 	# send over physical interface to loopback, ttl is 0
 	${RECV} -f recv.log -i ${LOCAL} -n 1 -- \
 	${SEND} -f send.log -i ${LOCAL} -l 0 -m '${MSG}'
@@ -90,7 +83,6 @@ run-localaddr-loop0:
 
 REGRESS_TARGETS +=	run-localaddr-ttl0
 run-localaddr-ttl0:
-	@echo '\n======== $@ ========'
 	# send over physical interface to loopback, ttl is 0
 	${RECV} -f recv.log -i ${LOCAL} -r 5 -- \
 	${SEND} -f send.log -i ${LOCAL} -m '${MSG}' -t 0
@@ -99,7 +91,6 @@ run-localaddr-ttl0:
 
 REGRESS_TARGETS +=	run-localaddr-local
 run-localaddr-local:
-	@echo '\n======== $@ ========'
 	# send over physical interface to loopback, ttl is 0
 	${RECV} -f recv.log -g ${GROUP_LOCAL} -i ${LOCAL} -r 5 -- \
 	${SEND} -f send.log -g ${GROUP_LOCAL} -i ${LOCAL} -m '${MSG}' -t 0
@@ -108,7 +99,6 @@ run-localaddr-local:
 
 REGRESS_TARGETS +=	run-remoteaddr
 run-remoteaddr:
-	@echo '\n======== $@ ========'
 	# send over a local physical interface
 	${RECV} -f recv.log -i ${LOCAL} -r 5 -- \
 	ssh ${REMOTE_SSH} ${SEND} -f ${.OBJDIR}/send.log \
@@ -117,7 +107,6 @@ run-remoteaddr:
 
 REGRESS_TARGETS +=	run-remoteaddr-loop0
 run-remoteaddr-loop0:
-	@echo '\n======== $@ ========'
 	# send over a local physical interface
 	${RECV} -f recv.log -i ${LOCAL} -r 5 -- \
 	ssh ${REMOTE_SSH} ${SEND} -f ${.OBJDIR}/send.log \
@@ -126,7 +115,6 @@ run-remoteaddr-loop0:
 
 REGRESS_TARGETS +=	run-remoteaddr-ttl0
 run-remoteaddr-ttl0:
-	@echo '\n======== $@ ========'
 	# send over a local physical interface
 	${RECV} -f recv.log -i ${LOCAL} -n 2 -- \
 	ssh ${REMOTE_SSH} ${SEND} -f ${.OBJDIR}/send.log \
@@ -135,7 +123,6 @@ run-remoteaddr-ttl0:
 
 REGRESS_TARGETS +=	run-forward
 run-forward:
-	@echo '\n======== $@ ========'
 	# start multicast router, start receiver, start sender
 	ssh ${REMOTE_SSH} ${SUDO} pkill mcroute mc6route || true
 	ssh ${REMOTE_SSH} ${SUDO} ${ROUTE} -f ${.OBJDIR}/route.log \
@@ -154,7 +141,6 @@ run-forward:
 
 REGRESS_TARGETS +=	run-forward-ttl1
 run-forward-ttl1:
-	@echo '\n======== $@ ========'
 	# try to get ttl 1 over multicast router, must fail
 	ssh ${REMOTE_SSH} ${SUDO} pkill mcroute mc6route || true
 	ssh ${REMOTE_SSH} ${SUDO} ${ROUTE} -f ${.OBJDIR}/route.log \
@@ -173,7 +159,6 @@ run-forward-ttl1:
 
 REGRESS_TARGETS +=	run-forward-local
 run-forward-local:
-	@echo '\n======== $@ ========'
 	# try to get local multicast group over router, must fail
 	ssh ${REMOTE_SSH} ${SUDO} pkill mcroute mc6route || true
 	ssh ${REMOTE_SSH} ${SUDO} ${ROUTE} -f ${.OBJDIR}/route.log \

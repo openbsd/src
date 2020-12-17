@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2020/11/04 16:31:41 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.2 2020/12/17 00:51:13 bluhm Exp $
 
 # Copyright (c) 2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -54,7 +54,6 @@ $n.pub: ${@:S/.pub$/.key/}
 
 REGRESS_SETUP_ONCE =	ifconfig
 ifconfig: ${NUMS:S/$/.pub/} unconfig
-	@echo '\n======== $@ ========'
 	# create and configure WireGuard interfaces
 .for n in ${NUMS}
 	${SUDO} ifconfig wg$n \
@@ -88,7 +87,6 @@ ifconfig: ${NUMS:S/$/.pub/} unconfig
 
 REGRESS_CLEANUP =	unconfig
 unconfig:
-	@echo '\n======== $@ ========'
 	# destroy WireGuard and routing domain loopback interfaces
 .for n in ${NUMS}
 	-${SUDO} ifconfig wg$n destroy
@@ -103,7 +101,6 @@ REGRESS_TARGETS =
 
 REGRESS_TARGETS +=	run-route-tunnel$t-addr$a-${l:L}-${f:L}
 run-route-tunnel$t-addr$a-${l:L}-${f:L}:
-	@echo '\n======== $@ ========'
 	# Get route to local address.
 	/sbin/route -n -T ${TUNNEL$t_$l} get ${TUNNEL$t_ADDR$a_$l} | \
 	    grep 'interface: wg${TUNNEL$t_$l}$$'
@@ -117,7 +114,6 @@ run-route-tunnel$t-addr$a-${l:L}-${f:L}:
 
 REGRESS_TARGETS +=	run-ping-tunnel$t-addr$a-${l:L}-${f:L}
 run-ping-tunnel$t-addr$a-${l:L}-${f:L}:
-	@echo '\n======== $@ ========'
 	# Ping local address.
 	/sbin/ping${a:N4} -n -w 1 -c 1 -V ${TUNNEL$t_$l} ${TUNNEL$t_ADDR$a_$l}
 	# Ping foreign address.
@@ -133,7 +129,6 @@ run-ping-tunnel$t-addr$a-${l:L}-${f:L}:
 
 REGRESS_TARGETS +=	run-badkey-tunnel$t-addr$a-${l:L}-${f:L}
 run-badkey-tunnel$t-addr$a-${l:L}-${f:L}: bad.key
-	@echo '\n======== $@ ========'
 	# Ping foreign address with bad key.
 	${SUDO} ifconfig wg${TUNNEL$t_$l} \
 	    wgkey "`cat bad.key`"

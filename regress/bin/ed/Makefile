@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2020/01/09 18:42:21 bluhm Exp $
+# $OpenBSD: Makefile,v 1.3 2020/12/17 00:51:11 bluhm Exp $
 
 ED ?=		/bin/ed
 TESTDIR =	${.CURDIR}/../../../bin/ed/test
@@ -19,7 +19,6 @@ REGRESS_TARGETS =
 .for t in ${TS:R}
 # from /usr/src/bin/ed/test/mkscripts.sh, converted to make rule
 $t.ed: ${TESTDIR}/$t.t ${TESTDIR}/$t.d Makefile
-	@echo '======== $@ ========'
 	cp ${TESTDIR}/$t.t ${TESTDIR}/$t.d .
 	( \
 	    echo "#!/bin/sh -"; \
@@ -37,7 +36,6 @@ $t.ed: ${TESTDIR}/$t.t ${TESTDIR}/$t.d Makefile
 REGRESS_TARGETS +=	run-$t.ed
 # from /usr/src/bin/ed/test/ckscripts.sh, converted to make rule
 run-$t.ed: $t.ed
-	@echo '======== $@ ========'
 	./$t.ed
 	diff -u ${TESTDIR}/$t.r $t.o
 .endfor
@@ -45,7 +43,6 @@ run-$t.ed: $t.ed
 .for t in ${ERRS:R}
 # from /usr/src/bin/ed/test/mkscripts.sh, converted to make rule
 $t.red: ${TESTDIR}/$t.err Makefile
-	@echo '======== $@ ========'
 	cp ${TESTDIR}/$t.err .
 	( \
 	    echo "#!/bin/sh -"; \
@@ -63,7 +60,6 @@ $t.red: ${TESTDIR}/$t.err Makefile
 REGRESS_TARGETS +=	run-$t.red
 # from /usr/src/bin/ed/test/ckscripts.sh, converted to make rule
 run-$t.red: $t.red
-	@echo '======== $@ ========'
 	! ./$t.red
 .endfor
 

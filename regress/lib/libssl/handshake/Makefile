@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2019/11/06 10:28:58 tb Exp $
+#	$OpenBSD: Makefile,v 1.8 2020/12/17 00:51:11 bluhm Exp $
 
 PROGS += handshake_table
 PROGS += valid_handshakes_terminate
@@ -34,7 +34,6 @@ CLEANFILES += handshake.${_FMT}
 
 .for p in ${PROGS}
 run-$p: $p
-	@echo '\n======== $@ ========'
 	./$p
 
 .PHONY: run-$p

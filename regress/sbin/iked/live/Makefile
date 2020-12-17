@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.27 2020/11/10 15:17:51 tobhe Exp $
+#	$OpenBSD: Makefile,v 1.28 2020/12/17 00:51:12 bluhm Exp $
 
 # Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
 #
@@ -253,7 +253,6 @@ left-from-ca-right.crt left.key: ca-right.crt ca-right.key
 
 REGRESS_TARGETS = run-ping-fail
 run-ping-fail:
-	@echo '======= $@ ========'
 	ssh ${LEFT_SSH} "ipsecctl -F; pkill iked || true"
 	ssh ${RIGHT_SSH} "ipsecctl -F; pkill iked || true"
 	${TEST_PING}; \
@@ -261,7 +260,6 @@ run-ping-fail:
 
 REGRESS_TARGETS += run-cert-single-ca
 run-cert-single-ca:
-	@echo '======= $@ ========'
 	leftid=left-from-ca-both; \
 	rightid=right-from-ca-both; \
 	    ${SETUP_CONFIGS}
@@ -271,7 +269,6 @@ run-cert-single-ca:
 
 REGRESS_TARGETS += run-cert-single-ca-asn1dn
 run-cert-single-ca-asn1dn:
-	@echo '======= $@ ========'
 	leftid="/C=DE/ST=Bavaria/L=Munich/O=iked/CN=left-from-ca-both"; \
 	rightid="/C=DE/ST=Bavaria/L=Munich/O=iked/CN=right-from-ca-both"; \
 	    ${SETUP_CONFIGS}
@@ -281,7 +278,6 @@ run-cert-single-ca-asn1dn:
 
 REGRESS_TARGETS += run-config-address
 run-config-address:
-	@echo '======= $@ ========'
 	flowtype=esp; \
 	config_address=true; \
 	leftid=left-from-ca-both; \
@@ -293,7 +289,6 @@ run-config-address:
 
 REGRESS_TARGETS += run-dstid-fail
 run-dstid-fail:
-	@echo '======= $@ ========'
 	leftid=left-from-ca-both; \
 	rightid=right-from-ca-both; \
 	    side=left; \
@@ -315,7 +310,6 @@ run-dstid-fail:
 
 REGRESS_TARGETS += run-dstid
 run-dstid:
-	@echo '======= $@ ========'
 	flowtype=esp; \
 	leftid=left-from-ca-both; \
 	rightid=right-from-ca-both; \
@@ -338,7 +332,6 @@ run-dstid:
 
 REGRESS_TARGETS += run-dstid-multi
 run-dstid-multi:
-	@echo '======= $@ ========'
 	flowtype=esp; \
 	leftid=left-from-ca-both; \
 	rightid=right-from-ca-both; \
@@ -357,7 +350,6 @@ run-dstid-multi:
 
 REGRESS_TARGETS += run-cert-multi-ca
 run-cert-multi-ca:
-	@echo '======= $@ ========'
 	flowtype=esp; \
 	leftid=left-from-ca-right; \
 	rightid=right-from-ca-left; \
@@ -368,7 +360,6 @@ run-cert-multi-ca:
 
 REGRESS_TARGETS += run-cert-second-altname
 run-cert-second-altname:
-	@echo '======= $@ ========'
 	flowtype=esp; \
 	leftid=left-from-ca-both-alternative; \
 	rightid=right-from-ca-both@openbsd.org; \
@@ -379,7 +370,6 @@ run-cert-second-altname:
 
 REGRESS_TARGETS += run-psk-fail
 run-psk-fail:
-	@echo '======= $@ ========'
 	auth=psk; \
 	leftid=left-from-ca-both; \
 	rightid=right-from-ca-both; \
@@ -395,7 +385,6 @@ run-psk-fail:
 
 REGRESS_TARGETS += run-psk
 run-psk:
-	@echo '======= $@ ========'
 	auth=psk; \
 	leftid=left; \
 	rightid=right; \
@@ -409,7 +398,6 @@ run-psk:
 
 REGRESS_TARGETS += run-fragmentation
 run-fragmentation:
-	@echo '======= $@ ========'
 	flowtype=esp; \
 	fragmentation=true; \
 	leftid=left-from-ca-both; \
@@ -423,7 +411,6 @@ run-fragmentation:
 
 REGRESS_TARGETS += run-transport
 run-transport:
-	@echo '======= $@ ========'
 	flowtype=esp; \
 	tmode=transport; \
 	leftid=left-from-ca-both; \
@@ -436,7 +423,6 @@ run-transport:
 
 REGRESS_TARGETS += run-singleikesa
 run-singleikesa:
-	@echo '======= $@ ========'
 	flowtype=esp; \
 	singleikesa=true; \
 	leftid=left-from-ca-both; \
@@ -448,7 +434,6 @@ run-singleikesa:
 
 REGRESS_TARGETS += run-ipcomp
 run-ipcomp:
-	@echo '======= $@ ========'
 	flowtype=ipcomp; \
 	leftid=left-from-ca-both; \
 	rightid=right-from-ca-both; \
@@ -461,7 +446,6 @@ run-ipcomp:
 
 REGRESS_TARGETS += run-udpencap-port
 run-udpencap-port:
-	@echo '======= $@ ========'
 	flowtype=esp; \
 	leftid=left-from-ca-both; \
 	rightid=right-from-ca-both; \

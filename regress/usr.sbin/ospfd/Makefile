@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2020/01/30 13:03:46 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.13 2020/12/17 00:51:13 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-AnyEvent		provide framework for multiple event loops
@@ -39,14 +39,12 @@ CFLAGS =		-Wall
 
 REGRESS_SETUP_ONCE +=	setup
 setup:
-	@echo '\n======== $@ ========'
 	[ -c /dev/tap${TAPNUM} ]
 	[ -z "${SUDO}" ] || ${SUDO} -C 4 true
 	${SUDO} ifconfig tap${TAPNUM} ${TAPIP} netmask 255.255.255.0
 
 REGRESS_CLEANUP +=	cleanup
 cleanup:
-	@echo '\n======== $@ ========'
 	-${SUDO} ifconfig tap${TAPNUM} destroy
 
 # Set variables so that make runs with and without obj directory.
@@ -66,7 +64,6 @@ PERLPATH =	${.CURDIR}/
 .for a in ${ARGS}
 REGRESS_TARGETS +=	run-$a
 run-$a: $a opentap PassFd.so
-	@echo '\n======== $@ ========'
 	time TAPNUM=${TAPNUM} TAPIP=${TAPIP} RTRID=${RTRID} SUDO=${SUDO} KTRACE=${KTRACE} OSPFD=${OSPFD} perl ${PERLINC} ${PERLPATH}ospfd.pl ${PERLPATH}$a
 .endfor
 

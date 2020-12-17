@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2020/01/15 20:47:13 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.7 2020/12/17 00:51:12 bluhm Exp $
 
 # Copyright (c) 2017-2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -124,14 +124,12 @@ SCAPYPATH =	${.CURDIR}/
 .for s in ${SCAPYS}
 REGRESS_TARGETS +=	run-$s
 run-$s: $s addr.py
-	@echo '\n======== $@ ========'
 	time SUDO=${SUDO} PYTHON="${PYTHON}" perl ${PERLINC} ${PERLPATH}scapy.pl splice ${FAKE_NET_ADDR} ${REMOTE_ADDR} ${REMOTE_SSH} ${SCAPYPATH}$s
 .endfor
 
 .if ! empty(PF_ANCHOR:Mregress)
 REGRESS_CLEANUP +=	cleanup
 cleanup:
-	@echo '\n======== $@ ========'
 	${SUDO} pfctl -a regress -Fr
 	rm -f stamp-pfctl
 .endif

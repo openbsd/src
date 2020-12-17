@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.26 2020/01/15 20:47:13 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.27 2020/12/17 00:51:12 bluhm Exp $
 
 # Copyright (c) 2011-2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -135,7 +135,6 @@ PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 -u ${.CURDIR}/
 
 REGRESS_TARGETS +=	run-ping
 run-ping:
-	@echo '\n======== $@ ========'
 .for ip in SRC_OUT PF_IN PF_OUT RT_IN RT_OUT ECO_IN RDR_IN RTT_IN
 	@echo Check ping ${ip}:
 	ping -n -c 1 ${${ip}}
@@ -143,7 +142,6 @@ run-ping:
 
 REGRESS_TARGETS +=	run-ping6
 run-ping6:
-	@echo '\n======== $@ ========'
 .for ip in SRC_OUT PF_IN PF_OUT RT_IN RT_OUT ECO_IN RDR_IN RTT_IN
 	@echo Check ping ${ip}6:
 	ping6 -n -c 1 ${${ip}6}
@@ -155,7 +153,6 @@ run-ping6:
 
 REGRESS_TARGETS +=	run-fragping
 run-fragping:
-	@echo '\n======== $@ ========'
 .for ip in PF_IN PF_OUT RT_IN RT_OUT ECO_IN RDR_IN RTT_IN
 	@echo Check ping ${ip}:
 	ping -n -c 1 -s 5000 ${${ip}}
@@ -163,7 +160,6 @@ run-fragping:
 
 REGRESS_TARGETS +=	run-fragping6
 run-fragping6:
-	@echo '\n======== $@ ========'
 .for ip in PF_IN PF_OUT RT_IN RT_OUT
 	@echo Check ping ${ip}6:
 	${SUDO} route -n delete -host -inet6 ${${ip}6} || true
@@ -184,7 +180,6 @@ run-fragping6:
 
 REGRESS_TARGETS +=	run-ping-mtu
 run-ping-mtu: addr.py
-	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN RTT_IN
 	@echo Check path MTU to ${ip}
 	${SUDO} ${PYTHON}ping_mtu_1300.py ${${ip}}
@@ -192,7 +187,6 @@ run-ping-mtu: addr.py
 
 REGRESS_TARGETS +=	run-ping6-mtu
 run-ping6-mtu: addr.py
-	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN RTT_IN
 	@echo Check path MTU to ${ip}6
 	${SUDO} ${PYTHON}ping6_mtu_1300.py ${${ip}6}
@@ -206,28 +200,24 @@ run-ping6-mtu: addr.py
 # XXX REGRESS_TARGETS +=	run-ping-cksum ping6-cksum run-udp-cksum udp6-cksum
 
 run-ping-cksum: addr.py
-	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN RTT_IN
 	@echo Check ICMP chksum in fragmentation needed to ${ip}
 	${SUDO} ${PYTHON}ping_cksum.py ${${ip}}
 .endfor
 
 run-ping6-cksum: addr.py
-	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN RTT_IN
 	@echo Check ICMP6 chksum in packet too big to ${ip}6
 	${SUDO} ${PYTHON}ping6_cksum.py ${${ip}6}
 .endfor
 
 run-udp-cksum: addr.py
-	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN RTT_IN
 	@echo Check UDP chksum in packet too big to ${ip}
 	${SUDO} ${PYTHON}udp_cksum.py ${${ip}}
 .endfor
 
 run-udp6-cksum: addr.py
-	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN RTT_IN
 	@echo Check UDP6 chksum in packet too big to ${ip}6
 	${SUDO} ${PYTHON}udp6_cksum.py ${${ip}6}
@@ -237,7 +227,6 @@ run-udp6-cksum: addr.py
 
 REGRESS_TARGETS +=	run-frag6
 run-frag: addr.py
-	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN RTT_IN
 	@echo Check ping reassembly ${ip}
 	${SUDO} ${PYTHON}frag.py ${${ip}}
@@ -245,7 +234,6 @@ run-frag: addr.py
 
 REGRESS_TARGETS +=	run-frag
 run-frag6: addr.py
-	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN RTT_IN
 	@echo Check ping6 reassembly ${ip}6
 	${SUDO} ${PYTHON}frag6.py ${${ip}6}
@@ -253,7 +241,6 @@ run-frag6: addr.py
 
 REGRESS_TARGETS +=	run-frag6-ext
 run-frag6-ext: addr.py
-	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN RTT_IN
 	@echo Check ping6 extension header reassembly ${ip}6
 	${SUDO} ${PYTHON}frag6_ext.py ${${ip}6}
@@ -261,7 +248,6 @@ run-frag6-ext: addr.py
 
 REGRESS_TARGETS +=	run-frag-cutnew
 run-frag-cutnew: addr.py
-	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN RTT_IN
 	@echo Check ping head overlap reassembly ${ip}
 	${SUDO} ${PYTHON}frag_cutnew.py ${${ip}}
@@ -269,7 +255,6 @@ run-frag-cutnew: addr.py
 
 REGRESS_TARGETS +=	run-frag6-cutnew
 run-frag6-cutnew: addr.py
-	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN RTT_IN
 	@echo Check ping6 head overlap reassembly ${ip}6
 	${SUDO} ${PYTHON}frag6_cutnew.py ${${ip}6}
@@ -277,7 +262,6 @@ run-frag6-cutnew: addr.py
 
 REGRESS_TARGETS +=	run-frag-cutold
 run-frag-cutold: addr.py
-	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN RTT_IN
 	@echo Check ping tail overlap reassembly ${ip}
 	${SUDO} ${PYTHON}frag_cutold.py ${${ip}}
@@ -285,7 +269,6 @@ run-frag-cutold: addr.py
 
 REGRESS_TARGETS +=	run-frag6-cutold
 run-frag6-cutold: addr.py
-	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN RTT_IN
 	@echo Check ping6 tail overlap reassembly ${ip}6
 	${SUDO} ${PYTHON}frag6_cutold.py ${${ip}6}
@@ -293,7 +276,6 @@ run-frag6-cutold: addr.py
 
 REGRESS_TARGETS +=	run-frag-dropold
 run-frag-dropold: addr.py
-	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN RTT_IN
 	@echo Check ping total overlapping reassembly ${ip}
 	${SUDO} ${PYTHON}frag_dropold.py ${${ip}}
@@ -301,7 +283,6 @@ run-frag-dropold: addr.py
 
 REGRESS_TARGETS +=	run-frag6-dropold
 run-frag6-dropold: addr.py
-	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN RTT_IN
 	@echo Check ping6 total overlapping reassembly ${ip}6
 	${SUDO} ${PYTHON}frag6_dropold.py ${${ip}6}
@@ -309,7 +290,6 @@ run-frag6-dropold: addr.py
 
 REGRESS_TARGETS +=	run-frag-dropnew
 run-frag-dropnew: addr.py
-	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN RTT_IN
 	@echo Check ping total overlaped reassembly ${ip}
 	${SUDO} ${PYTHON}frag_dropnew.py ${${ip}}
@@ -317,7 +297,6 @@ run-frag-dropnew: addr.py
 
 REGRESS_TARGETS +=	run-frag6-dropnew
 run-frag6-dropnew: addr.py
-	@echo '\n======== $@ ========'
 .for ip in ECO_IN RDR_IN RTT_IN
 	@echo Check ping6 total overlaped reassembly ${ip}6
 	${SUDO} ${PYTHON}frag6_dropnew.py ${${ip}6}

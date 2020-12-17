@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2020/01/28 19:25:45 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.9 2020/12/17 00:51:13 bluhm Exp $
 
 # Copyright (c) 2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -25,7 +25,6 @@ CLEANFILES =		${NC:T} {client,server}.{out,err,port,sock} ktrace.out
 
 REGRESS_SETUP =		setup
 setup:
-	@echo '======== $@ ========'
 	pkill ${NC:T} || true
 	rm -f ${NC:T}
 	# copying global netcat to local name allows to pkill it during cleanup
@@ -34,7 +33,6 @@ setup:
 
 REGRESS_CLEANUP =	cleanup
 cleanup:
-	@echo '======== $@ ========'
 	-pkill ${NC:T} || true
 
 REGRESS_TARGETS =
@@ -99,7 +97,6 @@ RUNNING_WAIT = \
 
 REGRESS_TARGETS +=	run-tcp
 run-tcp:
-	@echo '======== $@ ========'
 	${SERVER_NC} -n -v -l 127.0.0.1 0 ${SERVER_BG}
 	${LISTEN_WAIT}
 	${PORT_GET}
@@ -114,7 +111,6 @@ run-tcp:
 
 REGRESS_TARGETS +=	run-tcp6
 run-tcp6:
-	@echo '======== $@ ========'
 	${SERVER_NC} -n -v -l ::1 0 ${SERVER_BG}
 	${LISTEN_WAIT}
 	${PORT_GET}
@@ -131,7 +127,6 @@ run-tcp6:
 
 REGRESS_TARGETS +=	run-tcp-localhost-server
 run-tcp-localhost-server:
-	@echo '======== $@ ========'
 	${SERVER_NC} -4 -v -l localhost 0 ${SERVER_BG}
 	${LISTEN_WAIT}
 	${PORT_GET}
@@ -146,7 +141,6 @@ run-tcp-localhost-server:
 
 REGRESS_TARGETS +=	run-tcp6-localhost-server
 run-tcp6-localhost-server:
-	@echo '======== $@ ========'
 	${SERVER_NC} -6 -v -l localhost 0 ${SERVER_BG}
 	${LISTEN_WAIT}
 	${PORT_GET}
@@ -161,7 +155,6 @@ run-tcp6-localhost-server:
 
 REGRESS_TARGETS +=	run-tcp-localhost-client
 run-tcp-localhost-client:
-	@echo '======== $@ ========'
 	${SERVER_NC} -n -v -l 127.0.0.1 0 ${SERVER_BG}
 	${LISTEN_WAIT}
 	${PORT_GET}
@@ -176,7 +169,6 @@ run-tcp-localhost-client:
 
 REGRESS_TARGETS +=	run-tcp6-localhost-client
 run-tcp6-localhost-client:
-	@echo '======== $@ ========'
 	${SERVER_NC} -n -v -l ::1 0 ${SERVER_BG}
 	${LISTEN_WAIT}
 	${PORT_GET}
@@ -191,19 +183,16 @@ run-tcp6-localhost-client:
 
 REGRESS_TARGETS +=	run-tcp-bad-localhost-server
 run-tcp-bad-localhost-server:
-	@echo '======== $@ ========'
 	! ${NC} -4 -v -l ::1 0 ${SERVER_LOG}
 	grep 'no address associated with name' server.err
 
 REGRESS_TARGETS +=	run-tcp6-bad-localhost-server
 run-tcp6-bad-localhost-server:
-	@echo '======== $@ ========'
 	! ${NC} -6 -v -l 127.0.0.0 0 ${SERVER_LOG}
 	grep 'no address associated with name' server.err
 
 REGRESS_TARGETS +=	run-tcp-bad-localhost-client
 run-tcp-bad-localhost-client:
-	@echo '======== $@ ========'
 	${SERVER_NC} -n -v -l 127.0.0.1 0 ${SERVER_BG}
 	${LISTEN_WAIT}
 	${PORT_GET}
@@ -212,7 +201,6 @@ run-tcp-bad-localhost-client:
 
 REGRESS_TARGETS +=	run-tcp6-bad-localhost-client
 run-tcp6-bad-localhost-client:
-	@echo '======== $@ ========'
 	${SERVER_NC} -n -v -l 127.0.0.1 0 ${SERVER_BG}
 	${LISTEN_WAIT}
 	${PORT_GET}
@@ -221,7 +209,6 @@ run-tcp6-bad-localhost-client:
 
 REGRESS_TARGETS +=	run-tcp-sleep
 run-tcp-sleep:
-	@echo '======== $@ ========'
 	${SERVER_NC} -n -v -l 127.0.0.1 0 ${SERVER_BG}
 	${LISTEN_WAIT}
 	${PORT_GET}
@@ -242,7 +229,6 @@ run-tcp-sleep:
 
 REGRESS_TARGETS +=	run-tcp-keep
 run-tcp-keep:
-	@echo '======== $@ ========'
 	${SERVER_NC} -k -n -v -l 127.0.0.1 0 ${SERVER_BG}
 	${LISTEN_WAIT}
 	${PORT_GET}
@@ -277,7 +263,6 @@ run-tcp-keep:
 
 REGRESS_TARGETS +=	run-tls
 run-tls: 127.0.0.1.crt
-	@echo '======== $@ ========'
 	${SERVER_NC} -c -C 127.0.0.1.crt -K 127.0.0.1.key -n -v -l 127.0.0.1 0 \
 	    ${SERVER_BG}
 	${LISTEN_WAIT}
@@ -297,7 +282,6 @@ run-tls: 127.0.0.1.crt
 
 REGRESS_TARGETS +=	run-tls6
 run-tls6: 1.crt
-	@echo '======== $@ ========'
 	${SERVER_NC} -c -C 1.crt -K 1.key -n -v -l ::1 0 ${SERVER_BG}
 	${LISTEN_WAIT}
 	${PORT_GET}
@@ -315,7 +299,6 @@ run-tls6: 1.crt
 
 REGRESS_TARGETS +=	run-tls-localhost
 run-tls-localhost: server.crt ca.crt
-	@echo '======== $@ ========'
 	${SERVER_NC} -c -C server.crt -K server.key -v -l localhost 0 \
 	    ${SERVER_BG}
 	${LISTEN_WAIT}
@@ -334,7 +317,6 @@ run-tls-localhost: server.crt ca.crt
 
 REGRESS_TARGETS +=	run-tls-bad-ca
 run-tls-bad-ca: server.crt fake-ca.crt
-	@echo '======== $@ ========'
 	${SERVER_NC} -c -C server.crt -K server.key -v -l localhost 0 \
 	    ${SERVER_BG}
 	${LISTEN_WAIT}
@@ -350,7 +332,6 @@ run-tls-bad-ca: server.crt fake-ca.crt
 
 REGRESS_TARGETS +=	run-tls-name
 run-tls-name: server.crt ca.crt
-	@echo '======== $@ ========'
 	${SERVER_NC} -c -C server.crt -K server.key -n -v -l 127.0.0.1 0 \
 	    ${SERVER_BG}
 	${LISTEN_WAIT}
@@ -370,7 +351,6 @@ run-tls-name: server.crt ca.crt
 
 REGRESS_TARGETS +=	run-tls-bad-name
 run-tls-bad-name: server.crt ca.crt
-	@echo '======== $@ ========'
 	${SERVER_NC} -c -C server.crt -K server.key -n -v -l 127.0.0.1 0 \
 	    ${SERVER_BG}
 	${LISTEN_WAIT}
@@ -387,7 +367,6 @@ run-tls-bad-name: server.crt ca.crt
 
 REGRESS_TARGETS +=	run-tls-hash
 run-tls-hash: server.crt ca.crt server.hash
-	@echo '======== $@ ========'
 	${SERVER_NC} -c -C server.crt -K server.key -v -l localhost 0 \
 	    ${SERVER_BG}
 	${LISTEN_WAIT}
@@ -409,7 +388,6 @@ run-tls-hash: server.crt ca.crt server.hash
 
 REGRESS_TARGETS +=	run-tls-bad-hash
 run-tls-bad-hash: server.crt ca.crt ca.hash
-	@echo '======== $@ ========'
 	${SERVER_NC} -c -C server.crt -K server.key -v -l localhost 0 \
 	    ${SERVER_BG}
 	${LISTEN_WAIT}
@@ -430,7 +408,6 @@ run-tls-bad-hash: server.crt ca.crt ca.hash
 
 REGRESS_TARGETS +=	run-tls-client
 run-tls-client: client.crt server.crt ca.crt
-	@echo '======== $@ ========'
 	# use client certificate and validate at server
 	${SERVER_NC} -c -R ca.crt -C server.crt -K server.key -v -l \
 	    localhost 0 ${SERVER_BG}
@@ -453,7 +430,6 @@ run-tls-client: client.crt server.crt ca.crt
 
 REGRESS_TARGETS +=	run-tls-bad-client
 run-tls-bad-client: client.crt server.crt ca.crt
-	@echo '======== $@ ========'
 	# require client certificate at server
 	${SERVER_NC} -c -T clientcert -R ca.crt -C server.crt -K server.key \
 	    -v -l localhost 0 ${SERVER_BG}
@@ -474,7 +450,6 @@ run-tls-bad-client: client.crt server.crt ca.crt
 
 REGRESS_TARGETS +=	run-tls-client-bad-ca
 run-tls-client-bad-ca: client.crt server.crt ca.crt fake-ca.crt
-	@echo '======== $@ ========'
 	# the server uses the wrong root ca to verify the client cert
 	${SERVER_NC} -c -R fake-ca.crt -C server.crt -K server.key -v -l \
 	    localhost 0 ${SERVER_BG}
@@ -495,7 +470,6 @@ run-tls-client-bad-ca: client.crt server.crt ca.crt fake-ca.crt
 
 REGRESS_TARGETS +=	run-tls-client-name
 run-tls-client-name: client.crt server.crt ca.crt
-	@echo '======== $@ ========'
 	# check client certificate name at server
 	${SERVER_NC} -c -e localhost -R ca.crt -C server.crt -K server.key \
 	    -n -v -l 127.0.0.1 0 ${SERVER_BG}
@@ -518,7 +492,6 @@ run-tls-client-name: client.crt server.crt ca.crt
 
 REGRESS_TARGETS +=	run-tls-client-bad-name
 run-tls-client-bad-name: client.crt server.crt ca.crt
-	@echo '======== $@ ========'
 	# client certificate is for localhost, check with 127.0.0.1 should fail
 	${SERVER_NC} -c -e 127.0.0.1 -R ca.crt -C server.crt -K server.key \
 	    -n -v -l 127.0.0.1 0 ${SERVER_BG}
@@ -542,7 +515,6 @@ run-tls-client-bad-name: client.crt server.crt ca.crt
 
 REGRESS_TARGETS +=	run-tls-client-hash
 run-tls-client-hash: client.crt server.crt ca.crt client.hash
-	@echo '======== $@ ========'
 	# check client certificate hash at server
 	${SERVER_NC} -c -H `cat client.hash` -R ca.crt \
 	    -C server.crt -K server.key -v -l localhost 0 ${SERVER_BG}
@@ -565,7 +537,6 @@ run-tls-client-hash: client.crt server.crt ca.crt client.hash
 
 REGRESS_TARGETS +=	run-tls-client-bad-hash
 run-tls-client-bad-hash: client.crt server.crt ca.crt ca.hash
-	@echo '======== $@ ========'
 	# client presents certificate with client.hash, ca.hash is wrong
 	${SERVER_NC} -c -H `cat ca.hash` -R ca.crt \
 	    -C server.crt -K server.key -v -l localhost 0 ${SERVER_BG}
@@ -589,7 +560,6 @@ run-tls-client-bad-hash: client.crt server.crt ca.crt ca.hash
 
 REGRESS_TARGETS +=	run-tls-client-no-hash
 run-tls-client-no-hash: client.crt server.crt ca.crt client.hash
-	@echo '======== $@ ========'
 	# check client certificate hash at server if available
 	${SERVER_NC} -c -H `cat client.hash` -R ca.crt \
 	    -C server.crt -K server.key -v -l localhost 0 ${SERVER_BG}
@@ -613,7 +583,6 @@ run-tls-client-no-hash: client.crt server.crt ca.crt client.hash
 
 REGRESS_TARGETS +=	run-tls-sleep
 run-tls-sleep: 127.0.0.1.crt
-	@echo '======== $@ ========'
 	${SERVER_NC} -c -C 127.0.0.1.crt -K 127.0.0.1.key -n -v -l 127.0.0.1 0 \
 	    ${SERVER_BG}
 	${LISTEN_WAIT}
@@ -639,7 +608,6 @@ run-tls-sleep: 127.0.0.1.crt
 
 REGRESS_TARGETS +=	run-tls-keep
 run-tls-keep: 127.0.0.1.crt
-	@echo '======== $@ ========'
 	${SERVER_NC} -k -c -C 127.0.0.1.crt -K 127.0.0.1.key -n -v -l \
 	    127.0.0.1 0 ${SERVER_BG}
 	${LISTEN_WAIT}
@@ -681,7 +649,6 @@ run-tls-keep: 127.0.0.1.crt
 
 REGRESS_TARGETS +=	run-udp
 run-udp:
-	@echo '======== $@ ========'
 	${SERVER_NC} -u -n -v -l 127.0.0.1 0 ${SERVER_BG}
 	${BIND_WAIT}
 	${PORT_GET}
@@ -695,7 +662,6 @@ run-udp:
 
 REGRESS_TARGETS +=	run-udp6
 run-udp6:
-	@echo '======== $@ ========'
 	${SERVER_NC} -u -n -v -l ::1 0 ${SERVER_BG}
 	${BIND_WAIT}
 	${PORT_GET}
@@ -709,7 +675,6 @@ run-udp6:
 
 REGRESS_TARGETS +=	run-udp-probe
 run-udp-probe:
-	@echo '======== $@ ========'
 	${SERVER_NC} -u -n -v -l 127.0.0.1 0 ${SERVER_BG}
 	${BIND_WAIT}
 	${PORT_GET}
@@ -726,7 +691,6 @@ run-udp-probe:
 
 REGRESS_TARGETS +=	run-udp-localhost
 run-udp-localhost:
-	@echo '======== $@ ========'
 	${SERVER_NC} -u -4 -v -l localhost 0 ${SERVER_BG}
 	${BIND_WAIT}
 	${PORT_GET}
@@ -740,7 +704,6 @@ run-udp-localhost:
 
 REGRESS_TARGETS +=	run-udp6-localhost
 run-udp6-localhost:
-	@echo '======== $@ ========'
 	${SERVER_NC} -u -6 -v -l localhost 0 ${SERVER_BG}
 	${BIND_WAIT}
 	${PORT_GET}
@@ -756,7 +719,6 @@ run-udp6-localhost:
 
 REGRESS_TARGETS +=	run-udp-keep
 run-udp-keep:
-	@echo '======== $@ ========'
 	${SERVER_NC} -k -u -n -v -l 127.0.0.1 0 ${SERVER_BG}
 	${BIND_WAIT}
 	${PORT_GET}
@@ -788,7 +750,6 @@ run-udp-keep:
 
 REGRESS_TARGETS +=	run-udp-sleep
 run-udp-sleep:
-	@echo '======== $@ ========'
 	${SERVER_NC} -u -n -v -l 127.0.0.1 0 ${SERVER_BG}
 	${BIND_WAIT}
 	${PORT_GET}
@@ -808,7 +769,6 @@ run-udp-sleep:
 
 REGRESS_TARGETS +=	run-unix
 run-unix:
-	@echo '======== $@ ========'
 	rm -f server.sock
 	${SERVER_NC} -U -n -v -l server.sock ${SERVER_BG}
 	${LISTEN_WAIT}
@@ -825,7 +785,6 @@ run-unix:
 
 REGRESS_TARGETS +=	run-unix-namelookup
 run-unix-namelookup:
-	@echo '======== $@ ========'
 	rm -f server.sock
 	${SERVER_NC} -U -v -l server.sock ${SERVER_BG}
 	${LISTEN_WAIT}
@@ -842,7 +801,6 @@ run-unix-namelookup:
 
 REGRESS_TARGETS +=	run-unix-probe
 run-unix-probe:
-	@echo '======== $@ ========'
 	rm -f server.sock
 	${SERVER_NC} -U -n -v -l server.sock ${SERVER_BG}
 	${LISTEN_WAIT}
@@ -866,7 +824,6 @@ run-unix-probe:
 
 REGRESS_TARGETS +=	run-unix-keep
 run-unix-keep:
-	@echo '======== $@ ========'
 	rm -f server.sock
 	${SERVER_NC} -k -U -n -v -l server.sock ${SERVER_BG}
 	${LISTEN_WAIT}
@@ -899,7 +856,6 @@ run-unix-keep:
 
 REGRESS_TARGETS +=	run-unix-dgram
 run-unix-dgram:
-	@echo '======== $@ ========'
 	rm -f {client,server}.sock
 	${SERVER_NC} -U -u -n -v -l server.sock ${SERVER_BG}
 	${BIND_WAIT}
@@ -915,7 +871,6 @@ run-unix-dgram:
 
 REGRESS_TARGETS +=	run-unix-dgram-namelookup
 run-unix-dgram-namelookup:
-	@echo '======== $@ ========'
 	rm -f {client,server}.sock
 	${SERVER_NC} -U -u -v -l server.sock ${SERVER_BG}
 	${BIND_WAIT}
@@ -931,7 +886,6 @@ run-unix-dgram-namelookup:
 
 REGRESS_TARGETS +=	run-unix-dgram-clientsock
 run-unix-dgram-clientsock:
-	@echo '======== $@ ========'
 	rm -f {client,server}.sock
 	${SERVER_NC} -U -u -n -v -l server.sock ${SERVER_BG}
 	${BIND_WAIT}
@@ -948,7 +902,6 @@ run-unix-dgram-clientsock:
 
 REGRESS_TARGETS +=	run-unix-dgram-keep
 run-unix-dgram-keep:
-	@echo '======== $@ ========'
 	rm -f {client,server}.sock
 	${SERVER_NC} -k -U -u -n -v -l server.sock ${SERVER_BG}
 	${BIND_WAIT}
@@ -985,14 +938,12 @@ run-unix-dgram-keep:
 
 REGRESS_TARGETS +=	run-tcp-test
 run-tcp-test: server-tcp client-tcp
-	@echo '======== $@ ========'
 	# test the test tools
 	./server-tcp -s greeting -r command 127.0.0.1 0 >server.port
 	./client-tcp -r greeting -s command 127.0.0.1 ${PORT} >client.port
 
 REGRESS_TARGETS +=	run-tcp-test-shutdown
 run-tcp-test-shutdown: server-tcp client-tcp
-	@echo '======== $@ ========'
 	# test the test tools
 	./server-tcp -s greeting -N -r command -E 127.0.0.1 0 >server.port
 	./client-tcp -r greeting -E -s command -N 127.0.0.1 ${PORT} >client.port
@@ -1001,7 +952,6 @@ run-tcp-test-shutdown: server-tcp client-tcp
 
 REGRESS_TARGETS +=	run-tcp-server
 run-tcp-server: client-tcp
-	@echo '======== $@ ========'
 	${SERVER_NC} -n -v -l 127.0.0.1 0 ${SERVER_BG}
 	${LISTEN_WAIT}
 	${PORT_GET}
@@ -1014,7 +964,6 @@ run-tcp-server: client-tcp
 
 REGRESS_TARGETS +=	run-tcp-server-eof
 run-tcp-server-eof: client-tcp
-	@echo '======== $@ ========'
 	${SERVER_NC} -n -v -l 127.0.0.1 0 ${SERVER_BG}
 	${LISTEN_WAIT}
 	${PORT_GET}
@@ -1027,7 +976,6 @@ run-tcp-server-eof: client-tcp
 
 REGRESS_TARGETS +=	run-tcp-server-reverse-eof
 run-tcp-server-reverse-eof: client-tcp
-	@echo '======== $@ ========'
 	${SERVER_NC} -n -v -l 127.0.0.1 0 ${SERVER_BG}
 	${LISTEN_WAIT}
 	${PORT_GET}
@@ -1040,7 +988,6 @@ run-tcp-server-reverse-eof: client-tcp
 
 REGRESS_TARGETS +=	run-tcp-server-shutdown-eof
 run-tcp-server-shutdown-eof: client-tcp
-	@echo '======== $@ ========'
 	# netcat calls shutdown on output after EOF on input
 	${SERVER_NC} -N -n -v -l 127.0.0.1 0 ${SERVER_BG}
 	${LISTEN_WAIT}
@@ -1054,7 +1001,6 @@ run-tcp-server-shutdown-eof: client-tcp
 
 REGRESS_TARGETS +=	run-tcp-server-shutdown-reverse-eof
 run-tcp-server-shutdown-reverse-eof: client-tcp
-	@echo '======== $@ ========'
 	# netcat calls shutdown on output after EOF on input
 	${SERVER_NC} -N -n -v -l 127.0.0.1 0 ${SERVER_BG}
 	${LISTEN_WAIT}
@@ -1070,7 +1016,6 @@ run-tcp-server-shutdown-reverse-eof: client-tcp
 
 REGRESS_TARGETS +=	run-tcp-client
 run-tcp-client: server-tcp
-	@echo '======== $@ ========'
 	# test server send to netcat, then read line and exit
 	./server-tcp -s greeting -r command 127.0.0.1 0 >server.port
 	${CLIENT_NC} -n -v 127.0.0.1 ${PORT} ${CLIENT_BG}
@@ -1081,7 +1026,6 @@ run-tcp-client: server-tcp
 
 REGRESS_TARGETS +=	run-tcp-client-eof
 run-tcp-client-eof: server-tcp
-	@echo '======== $@ ========'
 	# test server send to netcat, shutdown, then read line, wait for eof
 	./server-tcp -s greeting -N -r command -E 127.0.0.1 0 >server.port
 	${CLIENT_NC} -n -v 127.0.0.1 ${PORT} ${CLIENT_BG}
@@ -1092,7 +1036,6 @@ run-tcp-client-eof: server-tcp
 
 REGRESS_TARGETS +=	run-tcp-client-reverse-eof
 run-tcp-client-reverse-eof: server-tcp
-	@echo '======== $@ ========'
 	# test server read from netcat, then read line, wait for eof, shutdown
 	./server-tcp -r command -s greeting -E -N 127.0.0.1 0 >server.port
 	${CLIENT_NC} -n -v 127.0.0.1 ${PORT} ${CLIENT_BG}
@@ -1103,7 +1046,6 @@ run-tcp-client-reverse-eof: server-tcp
 
 REGRESS_TARGETS +=	run-tcp-client-shutdown-eof
 run-tcp-client-shutdown-eof: server-tcp
-	@echo '======== $@ ========'
 	# test server send to netcat, shutdown, then read line, wait for eof
 	./server-tcp -s greeting -N -r command -E 127.0.0.1 0 >server.port
 	# netcat calls shutdown on output after EOF on input
@@ -1115,7 +1057,6 @@ run-tcp-client-shutdown-eof: server-tcp
 
 REGRESS_TARGETS +=	run-tcp-client-shutdown-reverse-eof
 run-tcp-client-shutdown-reverse-eof: server-tcp
-	@echo '======== $@ ========'
 	# test server read from netcat, wait for eof, then read line, shutdown
 	./server-tcp -r command -E -s greeting -N 127.0.0.1 0 >server.port
 	# netcat calls shutdown on output after EOF on input
