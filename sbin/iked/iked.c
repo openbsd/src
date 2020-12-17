@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.51 2020/12/17 20:32:21 tobhe Exp $	*/
+/*	$OpenBSD: iked.c,v 1.52 2020/12/17 20:43:07 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -71,6 +71,7 @@ main(int argc, char *argv[])
 	in_port_t	 port = IKED_NATT_PORT;
 	const char	*conffile = IKED_CONFIG;
 	const char	*sock = IKED_SOCKET;
+	const char	*errstr;
 	struct iked	*env = NULL;
 	struct privsep	*ps;
 
@@ -100,7 +101,9 @@ main(int argc, char *argv[])
 		case 'p':
 			if (natt_mode == NATT_DISABLE)
 				errx(1, "-T and -p are mutually exclusive");
-			port = atoi(optarg);
+			port = strtonum(optarg, 1, UINT16_MAX, &errstr);
+			if (errstr != NULL)
+				errx(1, "port is %s: %s", errstr, optarg);
 			natt_mode = NATT_FORCE;
 			break;
 		case 'S':
