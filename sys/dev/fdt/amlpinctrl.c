@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlpinctrl.c,v 1.7 2020/12/17 21:52:09 kettenis Exp $	*/
+/*	$OpenBSD: amlpinctrl.c,v 1.8 2020/12/18 22:15:29 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -322,11 +322,9 @@ struct amlpinctrl_softc {
 
 int	amlpinctrl_match(struct device *, void *, void *);
 void	amlpinctrl_attach(struct device *, struct device *, void *);
-int	amlpinctrl_activate(struct device *, int);
 
 struct cfattach amlpinctrl_ca = {
-	sizeof(struct amlpinctrl_softc), amlpinctrl_match, amlpinctrl_attach,
-	NULL, amlpinctrl_activate
+	sizeof(struct amlpinctrl_softc), amlpinctrl_match, amlpinctrl_attach
 };
 
 struct cfdriver amlpinctrl_cd = {
@@ -448,32 +446,6 @@ amlpinctrl_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_gc.gc_get_pin = amlpinctrl_get_pin;
 	sc->sc_gc.gc_set_pin = amlpinctrl_set_pin;
 	gpio_controller_register(&sc->sc_gc);
-}
-
-int
-amlpinctrl_activate(struct device *self, int act)
-{
-	struct amlpinctrl_softc *sc = (struct amlpinctrl_softc *)self;
-	uint32_t ao_pin3[] = { GPIOAO_3, 0 };
-
-	switch (act) {
-	case DVACT_POWERDOWN:
-		/*
-		 * Work around a hardware bug in the Odroid C4/HC4
-		 * boards where SD card boot fails if the
-		 * TFLASH_VDD_EN pin isn't configured as an input.
-		 * Since this is the default state it should be safe
-		 * to configure this pin (pin 3 of the GPIOAO bank) on
-		 * all boards.
-		 */
-		if (sc->sc_gpio_banks == aml_g12a_ao_gpio_banks)
-			amlpinctrl_config_pin(sc, ao_pin3, GPIO_CONFIG_INPUT);
-		break;
-	default:
-		break;
-	}
-
-	return 0;
 }
 
 struct aml_gpio_bank *
@@ -638,6 +610,7 @@ amlpinctrl_config_pin(void *cookie, uint32_t *cells, int config)
 	struct aml_gpio_bank *bank;
 	bus_addr_t off;
 	uint32_t pin = cells[0];
+	uint32_t flags = cells[1];
 	uint32_t reg;
 
 	bank = amlpinctrl_lookup_bank(sc, pin);
@@ -653,6 +626,10 @@ amlpinctrl_config_pin(void *cookie, uint32_t *cells, int config)
 	reg = bus_space_read_4(sc->sc_iot, sc->sc_mux_ioh, off);
 	reg &= ~(0xf << (((pin % 8) * 4) + bank->mux_bit));
 	bus_space_write_4(sc->sc_iot, sc->sc_mux_ioh, off, reg);
+
+	/* Emulate open drain. */
+	if (flags & GPIO_OPEN_DRAIN)
+		config &= ~GPIO_CONFIG_OUTPUT;
 
 	/* gpio */
 	off = bank->dir_reg << 2;
@@ -709,10 +686,24 @@ amlpinctrl_set_pin(void *cookie, uint32_t *cells, int val)
 		return;
 	}
 
+	pin = pin - bank->first_pin;
+
 	if (flags & GPIO_ACTIVE_LOW)
 		val = !val;
 
-	pin = pin - bank->first_pin;
+	/* Emulate open drain. */
+	if (flags & GPIO_OPEN_DRAIN) {
+		/* gpio */
+		off = bank->dir_reg << 2;
+		reg = bus_space_read_4(sc->sc_iot, sc->sc_gpio_ioh, off);
+		if (val)
+			reg |= (1 << (pin + bank->dir_bit));
+		else
+			reg &= ~(1 << (pin + bank->dir_bit));
+		bus_space_write_4(sc->sc_iot, sc->sc_gpio_ioh, off, reg);
+		if (val)
+			return;
+	}
 
 	/* gpio */
 	off = bank->out_reg << 2;
