@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.10 2020/12/02 15:31:15 claudio Exp $ */
+/*	$OpenBSD: io.c,v 1.11 2020/12/18 16:58:59 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -153,7 +153,7 @@ io_buf_read_alloc(int fd, void **res, size_t *sz)
 }
 
 /*
- * Read a string (which may just be \0 and zero-length), allocating
+ * Read a string (returns NULL for zero-length strings), allocating
  * space for it.
  */
 void
@@ -162,6 +162,10 @@ io_str_read(int fd, char **res)
 	size_t	 sz;
 
 	io_simple_read(fd, &sz, sizeof(size_t));
+	if (sz == 0) {
+		*res = NULL;
+		return;
+	}
 	if ((*res = calloc(sz + 1, 1)) == NULL)
 		err(1, NULL);
 	io_simple_read(fd, *res, sz);
