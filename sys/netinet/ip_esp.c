@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.160 2020/12/16 19:28:59 tobhe Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.161 2020/12/18 12:30:23 tobhe Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -737,6 +737,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	struct enc_xform *espx = (struct enc_xform *) tdb->tdb_encalgxform;
 	struct auth_hash *esph = (struct auth_hash *) tdb->tdb_authalgxform;
 	int ilen, hlen, rlen, padding, blks, alen, roff, error;
+	u_int64_t replay64;
 	u_int32_t replay;
 	struct mbuf *mi, *mo = (struct mbuf *) NULL;
 	struct tdb_crypto *tc = NULL;
@@ -881,8 +882,8 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	/* Initialize ESP header. */
 	memcpy(mtod(mo, caddr_t) + roff, (caddr_t) &tdb->tdb_spi,
 	    sizeof(u_int32_t));
-	tdb->tdb_rpl++;
-	replay = htonl((u_int32_t)tdb->tdb_rpl);
+	replay64 = tdb->tdb_rpl++;	/* used for both header and ESN */
+	replay = htonl((u_int32_t)replay64);
 	memcpy(mtod(mo, caddr_t) + roff + sizeof(u_int32_t), (caddr_t) &replay,
 	    sizeof(u_int32_t));
 
@@ -951,7 +952,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		if (espx->type == CRYPTO_AES_CTR ||
 		    espx->type == CRYPTO_AES_GCM_16 ||
 		    espx->type == CRYPTO_CHACHA20_POLY1305)
-			bcopy(&tdb->tdb_rpl, crde->crd_iv, sizeof(tdb->tdb_rpl));
+			bcopy(&replay64, crde->crd_iv, sizeof(replay64));
 		else
 			arc4random_buf(crde->crd_iv, espx->ivsize);
 	} else
@@ -992,7 +993,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		if ((tdb->tdb_wnd > 0) && (tdb->tdb_flags & TDBF_ESN)) {
 			u_int32_t esn;
 
-			esn = htonl((u_int32_t)(tdb->tdb_rpl >> 32));
+			esn = htonl((u_int32_t)(replay64 >> 32));
 			memcpy(crda->crd_esn, &esn, 4);
 			crda->crd_flags |= CRD_F_ESN;
 		}

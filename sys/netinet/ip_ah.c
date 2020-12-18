@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.144 2019/09/30 01:53:05 dlg Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.145 2020/12/18 12:30:23 tobhe Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -890,6 +890,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	struct tdb_crypto *tc = NULL;
 	struct mbuf *mi;
 	struct cryptop *crp = NULL;
+	u_int64_t replay64;
 	u_int16_t iplen;
 	int error, rplen, roff;
 	u_int8_t prot;
@@ -1041,8 +1042,8 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	/* Zeroize authenticator. */
 	m_copyback(m, skip + rplen, ahx->authsize, ipseczeroes, M_NOWAIT);
 
-	tdb->tdb_rpl++;
-	ah->ah_rpl = htonl((u_int32_t)(tdb->tdb_rpl & 0xffffffff));
+	replay64 = tdb->tdb_rpl++;
+	ah->ah_rpl = htonl((u_int32_t)replay64);
 #if NPFSYNC > 0
 	pfsync_update_tdb(tdb,1);
 #endif
@@ -1071,7 +1072,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	if ((tdb->tdb_wnd > 0) && (tdb->tdb_flags & TDBF_ESN)) {
 		u_int32_t esn;
 
-		esn = htonl((u_int32_t)(tdb->tdb_rpl >> 32));
+		esn = htonl((u_int32_t)(replay64 >> 32));
 		memcpy(crda->crd_esn, &esn, 4);
 		crda->crd_flags |= CRD_F_ESN;
 	}
