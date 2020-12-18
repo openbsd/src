@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.20 2020/12/09 11:25:08 claudio Exp $ */
+/*	$OpenBSD: mft.c,v 1.21 2020/12/18 12:31:06 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -17,6 +17,7 @@
 
 #include <assert.h>
 #include <err.h>
+#include <limits.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <fcntl.h>
@@ -447,6 +448,7 @@ mft_validfilehash(const char *fn, const struct mftfile *m)
 	/* Check hash of file now, but first build path for it */
 	cp = strrchr(fn, '/');
 	assert(cp != NULL);
+	assert(cp - fn < INT_MAX);
 	if (asprintf(&path, "%.*s/%s", (int)(cp - fn), fn, m->file) == -1)
 		err(1, "asprintf");
 

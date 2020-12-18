@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.86 2020/12/09 11:29:04 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.87 2020/12/18 12:31:06 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -451,23 +451,16 @@ static void
 queue_add_from_mft(int fd, struct entityq *q, const char *mft,
     const struct mftfile *file, enum rtype type, size_t *eid)
 {
-	size_t		 sz;
 	char		*cp, *nfile;
 
 	/* Construct local path from filename. */
-
-	sz = strlen(file->file) + strlen(mft);
-	if ((nfile = calloc(sz + 1, 1)) == NULL)
-		err(1, "calloc");
-
 	/* We know this is host/module/... */
 
-	strlcpy(nfile, mft, sz + 1);
-	cp = strrchr(nfile, '/');
+	cp = strrchr(mft, '/');
 	assert(cp != NULL);
-	cp++;
-	*cp = '\0';
-	strlcat(nfile, file->file, sz + 1);
+	assert(cp - mft < INT_MAX);
+	if (asprintf(&nfile, "%.*s/%s", (int)(cp - mft), mft, file->file) == -1)
+		err(1, "asprintf");
 
 	/*
 	 * Since we're from the same directory as the MFT file, we know
