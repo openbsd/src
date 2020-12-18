@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccm.c,v 1.23 2020/11/07 21:42:47 patrick Exp $ */
+/* $OpenBSD: imxccm.c,v 1.24 2020/12/18 16:29:57 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -248,6 +248,7 @@ uint32_t imxccm_imx8mm_ahb(struct imxccm_softc *sc, uint32_t);
 uint32_t imxccm_imx8mm_i2c(struct imxccm_softc *sc, uint32_t);
 uint32_t imxccm_imx8mm_uart(struct imxccm_softc *sc, uint32_t);
 uint32_t imxccm_imx8mm_usdhc(struct imxccm_softc *sc, uint32_t);
+uint32_t imxccm_imx8mp_hsio_axi(struct imxccm_softc *sc, uint32_t);
 uint32_t imxccm_imx8mq_ecspi(struct imxccm_softc *sc, uint32_t);
 uint32_t imxccm_imx8mq_enet(struct imxccm_softc *sc, uint32_t);
 uint32_t imxccm_imx8mq_ahb(struct imxccm_softc *sc, uint32_t);
@@ -883,6 +884,29 @@ imxccm_imx8mm_usdhc(struct imxccm_softc *sc, uint32_t idx)
 }
 
 uint32_t
+imxccm_imx8mp_hsio_axi(struct imxccm_softc *sc, uint32_t idx)
+{
+	uint32_t mux;
+
+	if (idx >= sc->sc_nmuxs || sc->sc_muxs[idx].reg == 0)
+		return 0;
+
+	mux = HREAD4(sc, sc->sc_muxs[idx].reg);
+	mux >>= sc->sc_muxs[idx].shift;
+	mux &= sc->sc_muxs[idx].mask;
+
+	switch (mux) {
+	case 0:
+		return clock_get_frequency(sc->sc_node, "osc_24m");
+	case 1:
+		return 500 * 1000 * 1000; /* sys2_pll_500m */
+	default:
+		printf("%s: 0x%08x 0x%08x\n", __func__, idx, mux);
+		return 0;
+	}
+}
+
+uint32_t
 imxccm_imx8mq_ecspi(struct imxccm_softc *sc, uint32_t idx)
 {
 	uint32_t mux;
@@ -1500,6 +1524,9 @@ imxccm_get_frequency(void *cookie, uint32_t *cells)
 			case IMX8MP_CLK_ENET_AXI:
 				freq = imxccm_imx8mm_enet(sc, idx);
 				break;
+			case IMX8MP_CLK_AHB:
+				freq = imxccm_imx8mm_ahb(sc, idx);
+				break;
 			case IMX8MP_CLK_I2C1:
 			case IMX8MP_CLK_I2C2:
 			case IMX8MP_CLK_I2C3:
@@ -1518,6 +1545,9 @@ imxccm_get_frequency(void *cookie, uint32_t *cells)
 			case IMX8MP_CLK_USDHC2:
 			case IMX8MP_CLK_USDHC3:
 				freq = imxccm_imx8mm_usdhc(sc, idx);
+				break;
+			case IMX8MP_CLK_HSIO_AXI:
+				freq = imxccm_imx8mp_hsio_axi(sc, idx);
 				break;
 			default:
 				printf("%s: 0x%08x\n", __func__, idx);
@@ -1694,6 +1724,13 @@ imxccm_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 			parent_freq = imxccm_imx8mm_usdhc(sc, idx);
 			return imxccm_imx8m_set_div(sc, idx, freq, parent_freq);
 		}
+	} else if (sc->sc_divs == imx8mp_divs) {
+		switch (idx) {
+		case IMX8MP_CLK_HSIO_AXI:
+			if (imxccm_get_frequency(sc, cells) != freq)
+				break;
+			return 0;
+		}
 	} else if (sc->sc_divs == imx8mq_divs) {
 		switch (idx) {
 		case IMX8MQ_CLK_ARM:
@@ -1806,6 +1843,25 @@ imxccm_set_parent(void *cookie, uint32_t *cells, uint32_t *pcells)
 		case IMX8MM_CLK_PCIE1_PHY:
 		case IMX8MM_CLK_PCIE2_PHY:
 			if (pidx != IMX8MM_SYS_PLL2_100M)
+				break;
+			mux = HREAD4(sc, sc->sc_muxs[idx].reg);
+			mux &= ~(sc->sc_muxs[idx].mask << sc->sc_muxs[idx].shift);
+			mux |= (0x1 << sc->sc_muxs[idx].shift);
+			HWRITE4(sc, sc->sc_muxs[idx].reg, mux);
+			return 0;
+		}
+	} else if (sc->sc_muxs == imx8mp_muxs) {
+		switch (idx) {
+		case IMX8MP_CLK_USB_PHY_REF:
+			if (pidx != IMX8MP_CLK_24M)
+				break;
+			mux = HREAD4(sc, sc->sc_muxs[idx].reg);
+			mux &= ~(sc->sc_muxs[idx].mask << sc->sc_muxs[idx].shift);
+			mux |= (0x0 << sc->sc_muxs[idx].shift);
+			HWRITE4(sc, sc->sc_muxs[idx].reg, mux);
+			return 0;
+		case IMX8MP_CLK_HSIO_AXI:
+			if (pidx != IMX8MP_SYS_PLL2_500M)
 				break;
 			mux = HREAD4(sc, sc->sc_muxs[idx].reg);
 			mux &= ~(sc->sc_muxs[idx].mask << sc->sc_muxs[idx].shift);
