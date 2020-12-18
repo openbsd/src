@@ -1,4 +1,4 @@
-/*	$OpenBSD: amliic.c,v 1.1 2019/10/07 18:54:03 kettenis Exp $	*/
+/*	$OpenBSD: amliic.c,v 1.2 2020/12/18 22:13:06 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -173,6 +173,8 @@ amliic_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmd,
 	uint64_t tokens = 0;
 	uint64_t data = 0;
 	uint32_t rdata;
+	uint32_t ctrl;
+	size_t pos, len;
 	int i = 0, j = 0;
 	int timo, k;
 
@@ -181,7 +183,7 @@ amliic_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmd,
 #define SET_DATA(i, d) \
 	data |= (((uint64_t)(d)) << ((i) * 8))
 
-	if (cmdlen + buflen > 8)
+	if (cmdlen > 8)
 		return EINVAL;
 
 	if (cmdlen > 0) {
@@ -196,49 +198,67 @@ amliic_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmd,
 	if (I2C_OP_READ_P(op)) {
 		SET_TOKEN(i++, START);
 		SET_TOKEN(i++, SLAVE_ADDR_READ);
-		for (k = 0; k < buflen; k++)
-			SET_TOKEN(i++, (k == (buflen - 1)) ? DATA_LAST : DATA);
-	} else {
-		if (cmdlen == 0) {
-			SET_TOKEN(i++, START);
-			SET_TOKEN(i++, SLAVE_ADDR_WRITE);
-		}
-		for (k = 0; k < buflen; k++) {
-			SET_TOKEN(i++, DATA);
-			SET_DATA(j++, ((uint8_t *)buf)[k]);
-		}
+	} else if (cmdlen == 0) {
+		SET_TOKEN(i++, START);
+		SET_TOKEN(i++, SLAVE_ADDR_WRITE);
 	}
 
-	if (I2C_OP_STOP_P(op))
-		SET_TOKEN(i++, STOP);
-
-	SET_TOKEN(i++, END);
-
-	/* Write slave address, tokens and associated data to hardware. */
 	HWRITE4(sc, I2C_M_SLAVE_ADDRESS, addr << 1);
-	HWRITE4(sc, I2C_M_TOKEN_LIST0, tokens);
-	HWRITE4(sc, I2C_M_TOKEN_LIST1, tokens >> 32);
-	HWRITE4(sc, I2C_M_TOKEN_WDATA0, data);
-	HWRITE4(sc, I2C_M_TOKEN_WDATA1, data >> 32);
 
-	/* Start token list processing. */
-	HSET4(sc, I2C_M_CONTROL, I2C_M_CONTROL_START);
-	for (timo = 50000; timo > 0; timo--) {
-		if ((HREAD4(sc, I2C_M_CONTROL) & I2C_M_CONTROL_STATUS) == 0)
-			break;
-		delay(10);
-	}
-	HCLR4(sc, I2C_M_CONTROL, I2C_M_CONTROL_START);
-	if (timo == 0 || HREAD4(sc, I2C_M_CONTROL) & I2C_M_CONTROL_ERROR)
-		return EIO;
+	pos = 0;
+	while (pos < buflen) {
+		len = MIN(buflen - pos, 8 - j);
 
-	if (I2C_OP_READ_P(op)) {
-		for (i = 0; i < buflen; i++) {
-			if (i % 4 == 0)
-				rdata = HREAD4(sc, I2C_M_TOKEN_RDATA0 + i);
-			((uint8_t *)buf)[i] = rdata;
-			rdata >>= 8;
+		if (I2C_OP_READ_P(op)) {
+			for (k = 0; k < len; k++)
+				SET_TOKEN(i++, (pos == (buflen - 1)) ?
+				    DATA_LAST : DATA);
+		} else {
+			for (k = 0; k < len; k++) {
+				SET_TOKEN(i++, DATA);
+				SET_DATA(j++, ((uint8_t *)buf)[pos++]);
+			}
 		}
+
+		if (pos == buflen && I2C_OP_STOP_P(op))
+			SET_TOKEN(i++, STOP);
+
+		SET_TOKEN(i++, END);
+
+		/* Write slave address, tokens and data to hardware. */
+		HWRITE4(sc, I2C_M_TOKEN_LIST0, tokens);
+		HWRITE4(sc, I2C_M_TOKEN_LIST1, tokens >> 32);
+		HWRITE4(sc, I2C_M_TOKEN_WDATA0, data);
+		HWRITE4(sc, I2C_M_TOKEN_WDATA1, data >> 32);
+
+		/* Start token list processing. */
+		HSET4(sc, I2C_M_CONTROL, I2C_M_CONTROL_START);
+		for (timo = 50000; timo > 0; timo--) {
+			ctrl = HREAD4(sc, I2C_M_CONTROL);
+			if ((ctrl & I2C_M_CONTROL_STATUS) == 0)
+				break;
+			delay(10);
+		}
+		HCLR4(sc, I2C_M_CONTROL, I2C_M_CONTROL_START);
+		if (ctrl & I2C_M_CONTROL_ERROR)
+			return EIO;
+		if (timo == 0)
+			return ETIMEDOUT;
+
+		if (I2C_OP_READ_P(op)) {
+			rdata = HREAD4(sc, I2C_M_TOKEN_RDATA0);
+			for (i = 0; i < len; i++) {
+				if (i == 4)
+					rdata = HREAD4(sc, I2C_M_TOKEN_RDATA1);
+				((uint8_t *)buf)[pos++] = rdata;
+				rdata >>= 8;
+			}
+		}
+
+		/* Reset tokens. */
+		tokens = 0;
+		data = 0;
+		i = j = 0;
 	}
 
 	return 0;
