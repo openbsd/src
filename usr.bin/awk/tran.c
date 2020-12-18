@@ -1,4 +1,4 @@
-/*	$OpenBSD: tran.c,v 1.32 2020/12/09 20:00:11 millert Exp $	*/
+/*	$OpenBSD: tran.c,v 1.33 2020/12/18 21:36:24 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -419,10 +419,21 @@ Awkfloat getfval(Cell *vp)	/* get float val of a Cell */
 	return(vp->fval);
 }
 
+static char *get_inf_nan(double d)
+{
+	if (isinf(d)) {
+		return (d < 0 ? "-inf" : "+inf");
+	} else if (isnan(d)) {
+		return (signbit(d) != 0 ? "-nan" : "+nan");
+	} else
+		return NULL;
+}
+
 static char *get_str_val(Cell *vp, char **fmt)        /* get string val of a Cell */
 {
 	int n;
 	double dtemp;
+	char *p;
 
 	if ((vp->tval & (NUM | STR)) == 0)
 		funnyvar(vp, "read value of");
@@ -459,7 +470,9 @@ static char *get_str_val(Cell *vp, char **fmt)        /* get string val of a Cel
 	{ \
 		if (freeable(vp)) \
 			xfree(vp->sval); \
-		if (modf(vp->fval, &dtemp) == 0)	/* it's integral */ \
+		if ((p = get_inf_nan(vp->fval)) != NULL) \
+			n = (vp->sval = strdup(p)) ? 0 : -1; \
+		else if (modf(vp->fval, &dtemp) == 0)	/* it's integral */ \
 			n = asprintf(&vp->sval, "%.30g", vp->fval); \
 		else \
 			n = asprintf(&vp->sval, *fmt, vp->fval); \

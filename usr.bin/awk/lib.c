@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.43 2020/12/17 20:06:09 millert Exp $	*/
+/*	$OpenBSD: lib.c,v 1.44 2020/12/18 21:36:24 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -31,6 +31,7 @@ THIS SOFTWARE.
 #include <stdlib.h>
 #include <stdarg.h>
 #include <limits.h>
+#include <math.h>
 #include "awk.h"
 
 char	EMPTY[] = { '\0' };
@@ -784,6 +785,8 @@ bool is_valid_number(const char *s, bool trailing_stuff_ok,
 	double r;
 	char *ep;
 	bool retval = false;
+	bool is_nan = false;
+	bool is_inf = false;
 
 	if (no_trailing)
 		*no_trailing = false;
@@ -792,47 +795,38 @@ bool is_valid_number(const char *s, bool trailing_stuff_ok,
 		s++;
 
 	// no hex floating point, sorry
-	if (s[0] == '0' && (s[1] == 'x' || s[1] == 'X'))
+	if (s[0] == '0' && tolower((uschar)s[1]) == 'x')
 		return false;
 
 	// allow +nan, -nan, +inf, -inf, any other letter, no
 	if (s[0] == '+' || s[0] == '-') {
-		if ((strncasecmp(s+1, "nan", 3) == 0 ||
-		     strncasecmp(s+1, "inf", 3) == 0)) {
-			trailing_stuff_ok = false;
-			ep = (char *)(long)s + 4;
-			if (isspace((uschar)*ep)) {
-			    trailing_stuff_ok = true;
-			    do {
-				    ep++;
-			    } while (isspace((uschar)*ep));
-			}
-			if (no_trailing)
-				*no_trailing = (*ep == '\0');
-			if (*ep != '\0' && !trailing_stuff_ok)
-				return false;
-		} else if (! isdigit((uschar)s[1]) && s[1] != '.')
+		is_nan = (strncasecmp(s+1, "nan", 3) == 0);
+		is_inf = (strncasecmp(s+1, "inf", 3) == 0);
+		if ((is_nan || is_inf)
+		    && (isspace((uschar)s[4]) || s[4] == '\0'))
+			goto convert;
+		else if (! isdigit((uschar)s[1]) && s[1] != '.')
 			return false;
-	} else if (! isdigit((uschar)s[0]) && s[0] != '.')
+	}
+	else if (! isdigit((uschar)s[0]) && s[0] != '.')
 		return false;
 
+convert:
 	errno = 0;
 	r = strtod(s, &ep);
 	if (ep == s || errno == ERANGE)
 		return false;
 
+	if (isnan(r) && s[0] == '-' && signbit(r) == 0)
+		r = -r;
+
 	if (result != NULL)
 		*result = r;
 
-	// check for trailing stuff
-	while (isspace((uschar)*ep))
-		ep++;
+	retval = (isspace((uschar)*ep) || *ep == '\0' || trailing_stuff_ok);
 
-	if (no_trailing)
+	if (no_trailing != NULL)
 		*no_trailing = (*ep == '\0');
-
-	// return true if found the end, or trailing stuff is allowed
-	retval = (*ep == '\0') || trailing_stuff_ok;
 
 	return retval;
 }

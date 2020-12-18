@@ -1,4 +1,4 @@
-/*	$OpenBSD: FIXES,v 1.39 2020/12/09 20:00:11 millert Exp $	*/
+/*	$OpenBSD: FIXES,v 1.40 2020/12/18 21:36:24 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -25,6 +25,18 @@ THIS SOFTWARE.
 
 This file lists all bug fixes, changes, etc., made since the AWK book
 was sent to the printers in August, 1987.
+
+December 18, 2020:
+	Fix problems converting inf and NaN values in lib.c:is_valid_number.
+	Enhance number to string conversion to do the right thing for
+	NaN and inf values.  Things are now pretty much the same as in
+	gawk.  (Found a gawk bug while we're at it.) Added a torture
+	test for these values.  Thanks to Arnold Robbins.  Allows closing
+	of PR #101.
+
+December 15, 2020:
+	Merge PR #99, which gets the right header for strcasecmp.
+	Thanks to GitHub user michaelforney.
 
 December 8, 2020:
 	Merge PR #98: Disallow hex data. Allow only +nan, -nan,
