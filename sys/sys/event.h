@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.49 2020/12/09 18:58:19 mpi Exp $	*/
+/*	$OpenBSD: event.h,v 1.50 2020/12/18 16:10:58 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -218,8 +218,6 @@ extern const struct filterops dead_filtops;
 extern void	kqpoll_init(void);
 extern void	kqpoll_exit(void);
 extern void	knote(struct klist *list, long hint);
-extern void	knote_activate(struct knote *);
-extern void	knote_remove(struct proc *p, struct knlist *list);
 extern void	knote_fdclose(struct proc *p, int fd);
 extern void	knote_processexit(struct proc *);
 extern int	kqueue_register(struct kqueue *kq,

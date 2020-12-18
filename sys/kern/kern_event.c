@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.150 2020/12/16 15:07:30 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.151 2020/12/18 16:10:57 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -95,6 +95,8 @@ void	knote_enqueue(struct knote *kn);
 void	knote_dequeue(struct knote *kn);
 int	knote_acquire(struct knote *kn);
 void	knote_release(struct knote *kn);
+void	knote_activate(struct knote *kn);
+void	knote_remove(struct proc *p, struct knlist *list);
 
 void	filt_kqdetach(struct knote *kn);
 int	filt_kqueue(struct knote *kn, long hint);
