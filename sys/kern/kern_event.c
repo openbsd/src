@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.151 2020/12/18 16:10:57 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.152 2020/12/18 16:16:14 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -96,7 +96,7 @@ void	knote_dequeue(struct knote *kn);
 int	knote_acquire(struct knote *kn);
 void	knote_release(struct knote *kn);
 void	knote_activate(struct knote *kn);
-void	knote_remove(struct proc *p, struct knlist *list);
+void	knote_remove(struct proc *p, struct knlist *list, int purge);
 
 void	filt_kqdetach(struct knote *kn);
 int	filt_kqueue(struct knote *kn, long hint);
@@ -506,8 +506,14 @@ kqpoll_init(void)
 	struct proc *p = curproc;
 	struct filedesc *fdp;
 
-	if (p->p_kq != NULL)
+	if (p->p_kq != NULL) {
+		/*
+		 * Clear any pending error that was raised after
+		 * previous scan.
+		 */
+		p->p_kq->kq_error = 0;
 		return;
+	}
 
 	p->p_kq = kqueue_alloc(p->p_fd);
 	p->p_kq_serial = arc4random();
@@ -964,6 +970,15 @@ retry:
 	}
 
 	s = splhigh();
+
+	if (kq->kq_error != 0) {
+		/* Deliver the pending error. */
+		error = kq->kq_error;
+		kq->kq_error = 0;
+		splx(s);
+		goto done;
+	}
+
 	if (kq->kq_count == 0) {
 		/*
 		 * Successive loops are only necessary if there are more
@@ -1175,10 +1190,10 @@ kqueue_purge(struct proc *p, struct kqueue *kq)
 	KERNEL_ASSERT_LOCKED();
 
 	for (i = 0; i < kq->kq_knlistsize; i++)
-		knote_remove(p, &kq->kq_knlist[i]);
+		knote_remove(p, &kq->kq_knlist[i], 1);
 	if (kq->kq_knhashmask != 0) {
 		for (i = 0; i < kq->kq_knhashmask + 1; i++)
-			knote_remove(p, &kq->kq_knhash[i]);
+			knote_remove(p, &kq->kq_knhash[i], 1);
 	}
 }
 
@@ -1358,9 +1373,10 @@ knote(struct klist *list, long hint)
  * remove all knotes from a specified knlist
  */
 void
-knote_remove(struct proc *p, struct knlist *list)
+knote_remove(struct proc *p, struct knlist *list, int purge)
 {
 	struct knote *kn;
+	struct kqueue *kq;
 	int s;
 
 	while ((kn = SLIST_FIRST(list)) != NULL) {
@@ -1371,6 +1387,21 @@ knote_remove(struct proc *p, struct knlist *list)
 		}
 		splx(s);
 		kn->kn_fop->f_detach(kn);
+
+		/*
+		 * Notify poll(2) and select(2) when a monitored
+		 * file descriptor is closed.
+		 */
+		if (!purge && (kn->kn_flags & __EV_POLL) != 0) {
+			kq = kn->kn_kq;
+			s = splhigh();
+			if (kq->kq_error == 0) {
+				kq->kq_error = EBADF;
+				kqueue_wakeup(kq);
+			}
+			splx(s);
+		}
+
 		knote_drop(kn, p);
 	}
 }
@@ -1401,7 +1432,7 @@ knote_fdclose(struct proc *p, int fd)
 			continue;
 
 		list = &kq->kq_knlist[fd];
-		knote_remove(p, list);
+		knote_remove(p, list, 0);
 	}
 	KERNEL_UNLOCK();
 }
