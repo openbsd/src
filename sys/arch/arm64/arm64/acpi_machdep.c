@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.10 2020/12/06 21:19:55 kettenis Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.11 2020/12/19 06:28:42 jmatthew Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -74,7 +74,8 @@ acpi_map(paddr_t pa, size_t len, struct acpi_mem_map *handle)
 {
 	paddr_t pgpa = trunc_page(pa);
 	paddr_t endpa = round_page(pa + len);
-	vaddr_t va = uvm_km_valloc(kernel_map, endpa - pgpa);
+	vaddr_t va = (vaddr_t)km_alloc(endpa - pgpa, &kv_any, &kp_none,
+	    &kd_nowait);
 
 	if (va == 0)
 		return (ENOMEM);
@@ -97,7 +98,7 @@ void
 acpi_unmap(struct acpi_mem_map *handle)
 {
 	pmap_kremove(handle->baseva, handle->vsize);
-	uvm_km_free(kernel_map, handle->baseva, handle->vsize);
+	km_free((void *)handle->baseva, handle->vsize, &kv_any, &kp_none);
 }
 
 int
