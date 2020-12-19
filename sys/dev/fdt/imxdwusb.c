@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxdwusb.c,v 1.3 2020/12/18 18:24:45 patrick Exp $	*/
+/*	$OpenBSD: imxdwusb.c,v 1.4 2020/12/19 01:21:35 patrick Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
@@ -27,7 +27,6 @@
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
-#include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/ofw_power.h>
 #include <dev/ofw/fdt.h>
 
