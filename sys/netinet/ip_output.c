@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.357 2020/06/24 22:03:43 cheloha Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.358 2020/12/20 21:15:47 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -605,7 +605,7 @@ ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro, int fwd)
 			rt = NULL;
 		else if (rt == NULL || (rt->rt_flags & RTF_HOST) == 0) {
 			rt = icmp_mtudisc_clone(ip->ip_dst,
-			    m->m_pkthdr.ph_rtableid);
+			    m->m_pkthdr.ph_rtableid, 1);
 			rt_mtucloned = 1;
 		}
 		DPRINTF(("%s: spi %08x mtu %d rt %p cloned %d\n", __func__,

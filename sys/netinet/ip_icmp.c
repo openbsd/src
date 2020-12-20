@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.183 2020/08/22 17:55:54 gnezdo Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.184 2020/12/20 21:15:47 bluhm Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -928,7 +928,7 @@ icmp_sysctl_icmpstat(void *oldp, size_t *oldlenp, void *newp)
 }
 
 struct rtentry *
-icmp_mtudisc_clone(struct in_addr dst, u_int rtableid)
+icmp_mtudisc_clone(struct in_addr dst, u_int rtableid, int ipsec)
 {
 	struct sockaddr_in sin;
 	struct rtentry *rt;
@@ -942,7 +942,10 @@ icmp_mtudisc_clone(struct in_addr dst, u_int rtableid)
 	rt = rtalloc(sintosa(&sin), RT_RESOLVE, rtableid);
 
 	/* Check if the route is actually usable */
-	if (!rtisvalid(rt) || (rt->rt_flags & (RTF_REJECT|RTF_BLACKHOLE)))
+	if (!rtisvalid(rt))
+		goto bad;
+	/* IPsec needs the route only for PMTU, it can use reject for that */
+	if (!ipsec && (rt->rt_flags & (RTF_REJECT|RTF_BLACKHOLE)))
 		goto bad;
 
 	/*
@@ -1000,7 +1003,7 @@ icmp_mtudisc(struct icmp *icp, u_int rtableid)
 	struct ifnet *ifp;
 	u_long mtu = ntohs(icp->icmp_nextmtu);  /* Why a long?  IPv6 */
 
-	rt = icmp_mtudisc_clone(icp->icmp_ip.ip_dst, rtableid);
+	rt = icmp_mtudisc_clone(icp->icmp_ip.ip_dst, rtableid, 0);
 	if (rt == NULL)
 		return;
 

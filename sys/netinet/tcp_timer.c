@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.67 2018/06/11 07:40:26 bluhm Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.68 2020/12/20 21:15:47 bluhm Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -292,7 +292,7 @@ tcp_timer_rexmt(void *arg)
 #endif
 		case PF_INET:
 			rt = icmp_mtudisc_clone(inp->inp_faddr,
-			    inp->inp_rtableid);
+			    inp->inp_rtableid, 0);
 			break;
 		}
 		if (rt != NULL) {
