@@ -231,7 +231,7 @@ lwres_conf_parsenameserver(lwres_conf_t *confdata,  FILE *fp) {
 
 	res = lwres_create_addr(word, &address, 1);
 	use_ipv4 = confdata->flags & LWRES_USEIPV4;
-	use_ipv6 = confdata->flags & LWRES_USEIPV4;
+	use_ipv6 = confdata->flags & LWRES_USEIPV6;
 	if (res == LWRES_R_SUCCESS &&
 	    ((address.family == LWRES_ADDRTYPE_V4 && use_ipv4) ||
 	    (address.family == LWRES_ADDRTYPE_V6 && use_ipv6))) {
