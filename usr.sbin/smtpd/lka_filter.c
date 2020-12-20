@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.63 2020/09/16 11:19:42 martijn Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.64 2020/12/20 13:27:46 martijn Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -535,6 +535,7 @@ lka_filter_end(uint64_t reqid)
 	free(fs->mail_from);
 	free(fs->username);
 	free(fs->lastparam);
+	free(fs->filter_name);
 	free(fs);
 	log_trace(TRACE_FILTERS, "%016"PRIx64" filters session-end", reqid);
 }
