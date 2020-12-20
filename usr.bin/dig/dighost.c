@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.35 2020/12/20 11:27:47 florian Exp $ */
+/* $Id: dighost.c,v 1.36 2020/12/20 12:02:00 florian Exp $ */
 
 /*! \file
  *  \note
@@ -701,6 +701,7 @@ make_empty_lookup(void) {
 	looknew->done_as_is = 0;
 	looknew->need_search = 0;
 	looknew->ecs_addr = NULL;
+	looknew->ecs_plen = 0;
 	looknew->sitvalue = NULL;
 	looknew->ednsopts = NULL;
 	looknew->ednsoptscnt = 0;
@@ -826,6 +827,7 @@ clone_lookup(dig_lookup_t *lookold, int servers) {
 		if (looknew->ecs_addr == NULL)
 			fatal("out of memory");
 		memmove(looknew->ecs_addr, lookold->ecs_addr, len);
+		looknew->ecs_plen = lookold->ecs_plen;
 	}
 
 	dns_name_copy(dns_fixedname_name(&lookold->fdomain),
