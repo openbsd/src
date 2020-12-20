@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.121 2020/12/15 21:47:10 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.122 2020/12/20 17:44:50 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -690,6 +690,7 @@ hosts_list	: hosts				{ $$ = $1; }
 				$1->dst->tail->next = $3->dst;
 				$1->dst->tail = $3->dst->tail;
 				$$ = $1;
+				free($3);
 			}
 		}
 		;
