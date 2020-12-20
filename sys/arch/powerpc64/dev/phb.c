@@ -1,4 +1,4 @@
-/*	$OpenBSD: phb.c,v 1.19 2020/11/15 23:14:04 kettenis Exp $	*/
+/*	$OpenBSD: phb.c,v 1.20 2020/12/20 13:02:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -459,7 +459,7 @@ phb_setup_tce_table(struct phb_softc *sc)
 
 	/* Allocate the TCE table. */
 	sc->sc_tce_table = phb_dmamem_alloc(sc->sc_dmat,
-	    tce_table_size, PAGE_SIZE);
+	    tce_table_size, tce_table_size);
 	if (sc->sc_tce_table == NULL) {
 		printf(": can't allocate DMA translation table\n");
 		return;
