@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.34 2020/09/15 11:47:42 florian Exp $ */
+/* $Id: dighost.c,v 1.35 2020/12/20 11:27:47 florian Exp $ */
 
 /*! \file
  *  \note
@@ -498,6 +498,7 @@ get_addresses(const char *hostname, in_port_t dstport,
 {
 	struct addrinfo *ai = NULL, *tmpai, hints;
 	int result, i;
+	char dport[sizeof("65535")];
 
 	REQUIRE(hostname != NULL);
 	REQUIRE(addrs != NULL);
@@ -513,9 +514,10 @@ get_addresses(const char *hostname, in_port_t dstport,
 		hints.ai_family = PF_UNSPEC;
 		hints.ai_flags = AI_ADDRCONFIG;
 	}
-	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_socktype = SOCK_DGRAM;
 
-	result = getaddrinfo(hostname, NULL, &hints, &ai);
+	snprintf(dport, sizeof(dport), "%d", dstport);
+	result = getaddrinfo(hostname, dport, &hints, &ai);
 	switch (result) {
 	case 0:
 		break;
@@ -532,16 +534,10 @@ get_addresses(const char *hostname, in_port_t dstport,
 		if (tmpai->ai_family != AF_INET &&
 		    tmpai->ai_family != AF_INET6)
 			continue;
-		if (tmpai->ai_family == AF_INET) {
-			struct sockaddr_in *sin;
-			sin = (struct sockaddr_in *)tmpai->ai_addr;
-			isc_sockaddr_fromin(&addrs[i], &sin->sin_addr, dstport);
-		} else {
-			struct sockaddr_in6 *sin6;
-			sin6 = (struct sockaddr_in6 *)tmpai->ai_addr;
-			isc_sockaddr_fromin6(&addrs[i], &sin6->sin6_addr,
-					     dstport);
-		}
+		if (tmpai->ai_addrlen > sizeof(addrs[i]))
+			continue;
+		memset(&addrs[i], 0, sizeof(addrs[i]));
+		memcpy(&addrs[i], tmpai->ai_addr, tmpai->ai_addrlen);
 		i++;
 
 	}

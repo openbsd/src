@@ -14,10 +14,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dig.c,v 1.18 2020/09/15 11:47:42 florian Exp $ */
+/* $Id: dig.c,v 1.19 2020/12/20 11:27:47 florian Exp $ */
 
 /*! \file */
-#include <sys/cdefs.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+
+#include <netdb.h>
 
 #include <errno.h>
 #include <stdlib.h>
@@ -1275,10 +1278,7 @@ dash_option(char *option, char *next, dig_lookup_t **lookup,
 	dns_rdatatype_t rdtype;
 	dns_rdataclass_t rdclass;
 	char textname[MXNAME];
-	struct in_addr in4;
-	struct in6_addr in6;
-	in_port_t srcport;
-	char *hash, *cmd;
+	char *cmd;
 	uint32_t num;
 	const char *errstr;
 
@@ -1346,28 +1346,39 @@ dash_option(char *option, char *next, dig_lookup_t **lookup,
 	if (value == NULL)
 		goto invalid_option;
 	switch (opt) {
-	case 'b':
+	case 'b': {
+		struct addrinfo *ai = NULL, hints;
+		int error;
+		char *hash;
+
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_flags = AI_NUMERICHOST;
+		hints.ai_socktype = SOCK_DGRAM;
+
 		hash = strchr(value, '#');
 		if (hash != NULL) {
-			num = strtonum(hash + 1, 0, MAXPORT, &errstr);
-			if (errstr != NULL)
-				fatal("port number is %s: '%s'", errstr,
-				    hash + 1);
-			srcport = num;
 			*hash = '\0';
-		} else
-			srcport = 0;
-		if (have_ipv6 && inet_pton(AF_INET6, value, &in6) == 1)
-			isc_sockaddr_fromin6(&bind_address, &in6, srcport);
-		else if (have_ipv4 && inet_pton(AF_INET, value, &in4) == 1)
-			isc_sockaddr_fromin(&bind_address, &in4, srcport);
-		else
-			fatal("invalid address %s", value);
-
-		if (hash != NULL)
+			error = getaddrinfo(value, hash + 1, &hints, &ai);
 			*hash = '#';
+		} else
+			error = getaddrinfo(value, NULL, &hints, &ai);
+
+		if (error)
+			fatal("invalid address %s: %s", value,
+			    gai_strerror(error));
+		if (ai == NULL || ai->ai_addrlen > sizeof(bind_address))
+			fatal("invalid address %s", value);
+		if (!have_ipv4 && ai->ai_family == AF_INET)
+			fatal("%s: wrong address family", value);
+		if (!have_ipv6 && ai->ai_family == AF_INET6)
+			fatal("%s: wrong address family", value);
+
+		memset(&bind_address, 0, sizeof(bind_address));
+		memcpy(&bind_address, ai->ai_addr, ai->ai_addrlen);
+
 		specified_source = 1;
 		return (value_from_next);
+	}
 	case 'c':
 		if ((*lookup)->rdclassset) {
 			fprintf(stderr, ";; Warning, extra class option\n");
