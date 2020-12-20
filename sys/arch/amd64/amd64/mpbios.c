@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.29 2018/02/07 06:19:54 krw Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.30 2020/12/20 09:49:53 jmatthew Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.7 2003/05/15 16:32:50 fvdl Exp $	*/
 
 /*-
@@ -240,7 +240,8 @@ mpbios_map(paddr_t pa, int len, struct mp_map *handle)
 {
 	paddr_t pgpa = trunc_page(pa);
 	paddr_t endpa = round_page(pa + len);
-	vaddr_t va = uvm_km_valloc(kernel_map, endpa - pgpa);
+	vaddr_t va = (vaddr_t)km_alloc(endpa - pgpa, &kv_any, &kp_none,
+	    &kd_nowait);
 	vaddr_t retva = va + (pa & PGOFSET);
 
 	handle->pa = pa;
@@ -262,7 +263,7 @@ void
 mpbios_unmap(struct mp_map *handle)
 {
 	pmap_kremove(handle->baseva, handle->vsize);
-	uvm_km_free(kernel_map, handle->baseva, handle->vsize);
+	km_free((void *)handle->baseva, handle->vsize, &kv_any, &kp_none);
 }
 
 /*
