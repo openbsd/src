@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::Ustar.pod,v 1.20 2019/05/26 15:48:26 espie Exp $
+$OpenBSD: Ustar.pod,v 1.1 2020/12/20 15:30:58 daniel Exp $
 
 =head1 NAME
 

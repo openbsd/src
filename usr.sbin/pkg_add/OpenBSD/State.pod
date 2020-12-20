@@ -1,4 +1,4 @@
-$OpenBSD: OpenBSD::State.pod,v 1.3 2013/04/16 16:29:30 jmc Exp $
+$OpenBSD: State.pod,v 1.1 2020/12/20 15:30:58 daniel Exp $
 
 =head1 NAME
 

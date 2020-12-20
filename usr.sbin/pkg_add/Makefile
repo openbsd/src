@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.90 2020/02/17 13:06:45 espie Exp $
+# $OpenBSD: Makefile,v 1.91 2020/12/20 15:30:58 daniel Exp $
 
 .include <bsd.own.mk>
 
@@ -113,18 +113,18 @@ _quick3p=
 .  ifndef NOMAN
 MAN3 += $p.3p
 MANSRC_COOKIE=stamp-mansrc.build
-_quick3p+=$p.pod ${.OBJDIR}/$p.3p
+_quick3p+=${p:S,::,/,}.pod ${.OBJDIR}/$p.3p
 .  else
 MANSRC_COOKIE=
 .  endif
 
-$p.3p: pod/$p.pod
+$p.3p: ${p:S,::,/,}.pod
 	${POD2MAN} --section=3p --official --name=$p ${.ALLSRC} $@
 .endfor
 
 mansrc.build:
 .if !empty(_quick3p)
-	cd ${.CURDIR}/pod && ${POD2MAN} --section=3p --official ${_quick3p}
+	cd ${.CURDIR} && ${POD2MAN} --section=3p --official ${_quick3p}
 .endif
 
 all: ${MANSRC_COOKIE}
