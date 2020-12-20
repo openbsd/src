@@ -1,4 +1,4 @@
-# $OpenBSD: regress.sh,v 1.8 2018/06/25 06:03:48 tb Exp $
+# $OpenBSD: regress.sh,v 1.9 2020/12/20 21:59:37 tb Exp $
 # $FreeBSD: head/usr.bin/jot/tests/regress.sh 208728 2010-06-02 07:47:29Z brian $
 
 JOT=${JOT-jot}
@@ -102,10 +102,10 @@ REGRESSION_TEST([[wg]], [[${JOT} -w "a%20gb" 10]])
 REGRESSION_TEST([[wc]], [[${JOT} -w "a%cb" 10 33 43]])
 REGRESSION_TEST([[wgd]], [[${JOT} -w "a%gb" 10 .2]])
 REGRESSION_TEST([[wu]], [[${JOT} -w "a%ub" 10]])
-REGRESSION_TEST([[wU]], [[${JOT} -w "a%Ub" 10]])
+REGRESSION_TEST([[wUn]], [[${JOT} -w "a%Ub" 10 1]])
 REGRESSION_TEST([[wlu]], [[${JOT} -w "a%lub" 10]])
 REGRESSION_TEST([[wo]], [[${JOT} -w "a%ob" 10]])
-REGRESSION_TEST([[wO]], [[${JOT} -w "a%Ob" 10]])
+REGRESSION_TEST([[wOn]], [[${JOT} -w "a%Ob" 10 1]])
 REGRESSION_TEST([[wlo]], [[${JOT} -w "a%lob" 10]])
 REGRESSION_TEST([[wx]], [[${JOT} -w "a%xb" 10]])
 REGRESSION_TEST([[wX1]], [[${JOT} -w "a%Xb" 10]])
@@ -113,7 +113,7 @@ REGRESSION_TEST([[wXl]], [[${JOT} -w "a%Xb" 10 2147483648]])
 REGRESSION_TEST([[wdl]], [[${JOT} -w "a%db" 10 2147483648 2>/dev/null]])
 REGRESSION_TEST([[wxn]], [[${JOT} -w "a%xb" 10 -5 2>/dev/null]])
 REGRESSION_TEST([[wdn]], [[${JOT} -w "a%db" 10 -5]])
-REGRESSION_TEST([[wDn]], [[${JOT} -w "a%Db" 10 -5]])
+REGRESSION_TEST([[wDnn]], [[${JOT} -w "a%Db" 10 -5 4]])
 REGRESSION_TEST([[wldn]], [[${JOT} -w "a%ldb" 10 -5]])
 REGRESSION_TEST([[wp1]], [[${JOT} -w "%%%d%%%%" 10]])
 REGRESSION_TEST([[wp2]], [[${JOT} -w "%d%%d%%" 10]])
