@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.178 2020/12/03 21:57:36 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.179 2020/12/21 22:49:36 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -846,6 +846,7 @@ int	 config_getcertpartialchain(struct iked *, struct imsg *);
 void	 policy_init(struct iked *);
 int	 policy_lookup(struct iked *, struct iked_message *,
 	    struct iked_proposals *proposals);
+int	 policy_lookup_sa(struct iked *, struct iked_sa *);
 struct iked_policy *
 	 policy_test(struct iked *, struct iked_policy *);
 int	 policy_generate_ts(struct iked_policy *);

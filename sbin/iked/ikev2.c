@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.291 2020/11/30 21:52:47 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.292 2020/12/21 22:49:36 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -225,7 +225,8 @@ int
 ikev2_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct iked		*env = p->p_env;
-	struct iked_policy	*pol;
+	struct iked_sa		*sa;
+	struct iked_policy	*pol, *old;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_RESET:
@@ -241,6 +242,36 @@ ikev2_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		TAILQ_FOREACH(pol, &env->sc_policies, pol_entry) {
 			if (policy_generate_ts(pol) == -1)
 				fatalx("%s: too many traffic selectors", __func__);
+		}
+		/* Find new policies for dangling SAs */
+		RB_FOREACH(sa, iked_sas, &env->sc_sas) {
+			if (sa->sa_state != IKEV2_STATE_ESTABLISHED) {
+				sa_state(env, sa, IKEV2_STATE_CLOSING);
+				ikev2_ike_sa_setreason(sa, "reload");
+				sa_free(env, sa);
+				continue;
+			}
+
+			old = sa->sa_policy;
+			if (policy_lookup_sa(env, sa) == -1) {
+				log_info("%s: No matching Policy found, terminating SA.",
+				    SPI_SA(sa, __func__));
+				ikev2_ike_sa_setreason(sa, "Policy no longer exists");
+				ikev2_ikesa_delete(env, sa, sa->sa_hdr.sh_initiator);
+			}
+			if (old != sa->sa_policy) {
+				/* Cleanup old policy */
+				TAILQ_REMOVE(&old->pol_sapeers, sa, sa_peer_entry);
+				if (old->pol_flags & IKED_POLICY_REFCNT)
+					policy_unref(env, old);
+
+				if (sa->sa_policy->pol_flags & IKED_POLICY_REFCNT) {
+					log_info("%s: sa %p old pol %p pol_refcnt %d",
+					    __func__, sa, sa->sa_policy, sa->sa_policy->pol_refcnt);
+					policy_ref(env, sa->sa_policy);
+				}
+				TAILQ_INSERT_TAIL(&sa->sa_policy->pol_sapeers, sa, sa_peer_entry);
+			}
 		}
 		if (!env->sc_passive) {
 			timer_set(env, &env->sc_inittmr, ikev2_init_ike_sa,

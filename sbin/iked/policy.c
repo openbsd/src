@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.73 2020/12/02 16:47:45 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.74 2020/12/21 22:49:36 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -48,6 +48,7 @@ static __inline int
 static __inline int
 	 ts_insert_unique(struct iked_addr *, struct iked_tss *, int);
 
+static int	policy_test_flows(struct iked_policy *, struct iked_policy *);
 static int	proposals_match(struct iked_proposal *, struct iked_proposal *,
 		    struct iked_transform **, int);
 
@@ -121,6 +122,80 @@ policy_lookup(struct iked *env, struct iked_message *msg,
 }
 
 /*
+ * Lookup an iked policy matching the SA sa and store a pointer
+ * to the found policy in SA.
+ *
+ * Returns 0 on success and -1 if no matching policy was
+ * found
+ */
+int
+policy_lookup_sa(struct iked *env, struct iked_sa *sa)
+{
+	struct iked_policy	 pol, *pol_found;
+	struct iked_id		*lid, *pid;
+	char			*s, idstr[IKED_ID_SIZE];
+
+	/*
+	 * The SA should never be without policy. In the case of
+	 * 'ikectl reload' the policy is no longer in sc_policies
+	 * but is kept alive by the reference from the sa.
+	 */
+	if (sa->sa_policy == NULL) {
+		log_warn("%s: missing SA policy.", SPI_SA(sa, __func__));
+		return (-1);
+	}
+
+	bzero(&pol, sizeof(pol));
+	pol.pol_proposals = sa->sa_proposals;
+	pol.pol_af = sa->sa_peer.addr_af;
+	if (sa->sa_used_transport_mode)
+		pol.pol_flags |= IKED_POLICY_TRANSPORT;
+	memcpy(&pol.pol_peer.addr, &sa->sa_peer, sizeof(sa->sa_peer));
+	memcpy(&pol.pol_local.addr, &sa->sa_local, sizeof(sa->sa_local));
+	pol.pol_flows = sa->sa_policy->pol_flows;
+	pol.pol_nflows = sa->sa_policy->pol_nflows;
+
+	if (sa->sa_hdr.sh_initiator) {
+		lid = &sa->sa_iid;
+		pid = &sa->sa_rid;
+	} else {
+		lid = &sa->sa_rid;
+		pid = &sa->sa_iid;
+	}
+
+	if (pid->id_type &&
+	    ikev2_print_id(pid, idstr, IKED_ID_SIZE) == 0 &&
+	    (s = strchr(idstr, '/')) != NULL) {
+		pol.pol_peerid.id_type = pid->id_type;
+		pol.pol_peerid.id_length = strlen(s+1);
+		strlcpy(pol.pol_peerid.id_data, s+1,
+		    sizeof(pol.pol_peerid.id_data));
+		log_debug("%s: peerid '%s'", __func__, s+1);
+	}
+
+	if (lid->id_type &&
+	    ikev2_print_id(lid, idstr, IKED_ID_SIZE) == 0 &&
+	    (s = strchr(idstr, '/')) != NULL) {
+		pol.pol_localid.id_type = lid->id_type;
+		pol.pol_localid.id_length = strlen(s+1);
+		strlcpy(pol.pol_localid.id_data, s+1,
+		    sizeof(pol.pol_localid.id_data));
+		log_debug("%s: localid '%s'", __func__, s+1);
+	}
+
+	/* Try to find a matching policy for this message */
+	if ((pol_found = policy_test(env, &pol)) != NULL) {
+		log_debug("%s: found policy '%s'", SPI_SA(sa, __func__),
+		    pol_found->pol_name);
+		sa->sa_policy = pol_found;
+		return (0);
+	}
+
+	/* No policy found */
+	return (-1);
+}
+
+/*
  * Find a policy matching the query policy key in the global env.
  * If multiple matching policies are found the policy with the highest
  * priority is selected.
@@ -131,7 +206,6 @@ struct iked_policy *
 policy_test(struct iked *env, struct iked_policy *key)
 {
 	struct iked_policy	*p = NULL, *pol = NULL;
-	struct iked_flow	*flowkey;
 	unsigned int		 cnt = 0;
 
 	p = TAILQ_FIRST(&env->sc_policies);
@@ -155,15 +229,10 @@ policy_test(struct iked *env, struct iked_policy *key)
 			p = p->pol_skip[IKED_SKIP_SRC_ADDR];
 		else {
 			/*
-			 * Check if a specific flow is requested
-			 * (eg. for acquire messages from the kernel)
-			 * and find a matching flow.
+			 * Check if flows are requested and if they
+			 * are compatible.
 			 */
-			if (key->pol_nflows &&
-			    (flowkey = RB_MIN(iked_flows,
-			    &key->pol_flows)) != NULL &&
-			    RB_FIND(iked_flows, &p->pol_flows,
-			    flowkey) == NULL) {
+			if (key->pol_nflows && policy_test_flows(key, p)) {
 				p = TAILQ_NEXT(p, pol_entry);
 				continue;
 			}
@@ -174,6 +243,18 @@ policy_test(struct iked *env, struct iked_policy *key)
 			    memcmp(key->pol_peerid.id_data,
 			    p->pol_peerid.id_data,
 			    sizeof(key->pol_peerid.id_data)) != 0)) {
+				p = TAILQ_NEXT(p, pol_entry);
+				continue;
+			}
+
+			/* make sure the local ID matches */
+			if (key->pol_localid.id_type &&
+			    p->pol_localid.id_type &&
+			    (key->pol_localid.id_type != p->pol_localid.id_type ||
+			    memcmp(key->pol_localid.id_data,
+			    p->pol_localid.id_data,
+			    sizeof(key->pol_localid.id_data)) != 0)) {
+				log_info("%s: localid mismatch", __func__);
 				p = TAILQ_NEXT(p, pol_entry);
 				continue;
 			}
@@ -205,6 +286,19 @@ policy_test(struct iked *env, struct iked_policy *key)
 	}
 
 	return (pol);
+}
+
+static int
+policy_test_flows(struct iked_policy *key, struct iked_policy *p)
+{
+	struct iked_flow	*f;
+
+	for (f = RB_MIN(iked_flows, &key->pol_flows); f != NULL;
+	    f = RB_NEXT(iked_flows, &key->pol_flows, f))
+		if (RB_FIND(iked_flows, &p->pol_flows, f) == NULL)
+			return (-1);
+
+	return (0);
 }
 
 #define	IKED_SET_SKIP_STEPS(i)						\
