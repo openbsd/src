@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpc.c,v 1.11 2020/09/14 18:32:11 millert Exp $	*/
+/*	$OpenBSD: smtpc.c,v 1.12 2020/12/21 11:48:38 martijn Exp $	*/
 
 /*
  * Copyright (c) 2018 Eric Faurot <eric@openbsd.org>
@@ -56,9 +56,8 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr,
-	    "usage: %s [-Chnv] [-F from] [-H helo] [-s server] [-S name] rcpt ...\n",
-	    __progname);
+	fprintf(stderr, "usage: %s [-Chnv] [-a authfile] [-F from] [-H helo] "
+	    "[-s server] [-S name] rcpt ...\n", __progname);
 	exit(1);
 }
 
@@ -66,8 +65,12 @@ int
 main(int argc, char **argv)
 {
 	char hostname[256];
+	FILE *authfile;
 	int ch, i;
 	char *server = "localhost";
+	char *authstr = NULL;
+	size_t alloc = 0;
+	ssize_t len;
 	struct passwd *pw;
 
 	log_init(1, 0);
@@ -91,7 +94,7 @@ main(int argc, char **argv)
 	memset(&mail, 0, sizeof(mail));
 	mail.from = pw->pw_name;
 
-	while ((ch = getopt(argc, argv, "CF:H:S:hns:v")) != -1) {
+	while ((ch = getopt(argc, argv, "CF:H:S:a:hns:v")) != -1) {
 		switch (ch) {
 		case 'C':
 			params.tls_verify = 0;
@@ -104,6 +107,23 @@ main(int argc, char **argv)
 			break;
 		case 'S':
 			servname = optarg;
+			break;
+		case 'a':
+			if ((authfile = fopen(optarg, "r")) == NULL)
+				fatal("%s: open", optarg);
+			if ((len = getline(&authstr, &alloc, authfile)) == -1)
+				fatal("%s: Failed to read username", optarg);
+			if (authstr[len - 1] == '\n')
+				authstr[len - 1] = '\0';
+			params.auth_user = authstr;
+			authstr = NULL;
+			len = 0;
+			if ((len = getline(&authstr, &alloc, authfile)) == -1)
+				fatal("%s: Failed to read password", optarg);
+			if (authstr[len - 1] == '\n')
+				authstr[len - 1] = '\0';
+			params.auth_pass = authstr;
+			fclose(authfile);
 			break;
 		case 'h':
 			usage();

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtp.1,v 1.7 2018/07/04 08:23:43 jmc Exp $
+.\"	$OpenBSD: smtp.1,v 1.8 2020/12/21 11:48:38 martijn Exp $
 .\"
 .\" Copyright (c) 2018, Eric Faurot <eric@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 4 2018 $
+.Dd $Mdocdate: December 21 2020 $
 .Dt SMTP 1
 .Os
 .Sh NAME
@@ -23,6 +23,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl Chnv
+.Op Fl a Ar authfile
 .Op Fl F Ar from
 .Op Fl H Ar helo
 .Op Fl s Ar server
@@ -42,6 +43,13 @@ The content is sent unaltered as mail data.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl a Ar authfile
+Perform a login before sending the message.
+The username and password are read from
+.Ar authfile
+and need to be on the first and second line respectively.
+This option requires a TLS or STARTTLS
+.Ar server .
 .It Fl C
 Do not require server certificate to be valid.
 .It Fl F Ar from
