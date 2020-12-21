@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrstruct.c,v 1.28 2018/11/17 20:46:12 claudio Exp $	*/
+/*	$OpenBSD: ktrstruct.c,v 1.29 2020/12/21 07:47:37 otto Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -90,7 +90,7 @@ ktrsockaddr(struct sockaddr *sa)
 	switch(sa->sa_family) {
 	case AF_INET: {
 		struct sockaddr_in	*sa_in;
-		char addr[64];
+		char addr[INET_ADDRSTRLEN];
 
 		sa_in = (struct sockaddr_in *)sa;
 		check_sockaddr_len(in);
@@ -100,12 +100,15 @@ ktrsockaddr(struct sockaddr *sa)
 	}
 	case AF_INET6: {
 		struct sockaddr_in6	*sa_in6;
-		char addr[64];
+		char addr[INET6_ADDRSTRLEN], scope[12] = { 0 };
 
 		sa_in6 = (struct sockaddr_in6 *)sa;
 		check_sockaddr_len(in6);
 		inet_ntop(AF_INET6, &sa_in6->sin6_addr, addr, sizeof addr);
-		printf("[%s]:%u", addr, htons(sa_in6->sin6_port));
+		if (sa_in6->sin6_scope_id)
+			snprintf(scope, sizeof(scope), "%%%u",
+			    sa_in6->sin6_scope_id);
+		printf("[%s%s]:%u", addr, scope, htons(sa_in6->sin6_port));
 		break;
 	}
 	case AF_UNIX: {
