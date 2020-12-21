@@ -1,4 +1,4 @@
-/* 	$OpenBSD: test_iterate.c,v 1.6 2018/07/16 03:09:59 djm Exp $ */
+/* 	$OpenBSD: test_iterate.c,v 1.7 2020/12/21 01:31:06 djm Exp $ */
 /*
  * Regress test for hostfile.h hostkeys_foreach()
  *
@@ -159,6 +159,7 @@ struct expected expected_full[] = {
 		KEY_UNSPEC,			/* key type */
 		NULL,				/* deserialised key */
 		NULL,				/* comment */
+		0,				/* note */
 	} },
 	{ "dsa_1.pub" , -1, -1, 0, HKF_MATCH_HOST, 0, 0, -1, {
 		NULL,
@@ -172,6 +173,7 @@ struct expected expected_full[] = {
 		KEY_DSA,
 		NULL,	/* filled at runtime */
 		"DSA #1",
+		0,
 	} },
 	{ "ecdsa_1.pub" , -1, -1, 0, HKF_MATCH_HOST, 0, 0, -1, {
 		NULL,
@@ -185,6 +187,7 @@ struct expected expected_full[] = {
 		KEY_ECDSA,
 		NULL,	/* filled at runtime */
 		"ECDSA #1",
+		0,
 	} },
 	{ "ed25519_1.pub" , -1, -1, 0, HKF_MATCH_HOST, 0, 0, -1, {
 		NULL,
@@ -198,6 +201,7 @@ struct expected expected_full[] = {
 		KEY_ED25519,
 		NULL,	/* filled at runtime */
 		"ED25519 #1",
+		0,
 	} },
 	{ "rsa_1.pub" , -1, -1, 0, HKF_MATCH_HOST, 0, 0, -1, {
 		NULL,
@@ -211,6 +215,7 @@ struct expected expected_full[] = {
 		KEY_RSA,
 		NULL,	/* filled at runtime */
 		"RSA #1",
+		0,
 	} },
 	{ NULL, -1, -1, 0, 0, 0, 0, -1, {
 		NULL,
@@ -224,6 +229,7 @@ struct expected expected_full[] = {
 		KEY_UNSPEC,
 		NULL,
 		NULL,
+		0,
 	} },
 	{ NULL, -1, -1, 0, 0, 0, 0, -1, {
 		NULL,
@@ -237,6 +243,7 @@ struct expected expected_full[] = {
 		KEY_UNSPEC,
 		NULL,
 		NULL,
+		0,
 	} },
 	{ "dsa_2.pub" , -1, -1, HKF_MATCH_HOST, 0, HKF_MATCH_IP, HKF_MATCH_IP, -1, {
 		NULL,
@@ -250,6 +257,7 @@ struct expected expected_full[] = {
 		KEY_DSA,
 		NULL,	/* filled at runtime */
 		"DSA #2",
+		0,
 	} },
 	{ "ecdsa_2.pub" , -1, -1, HKF_MATCH_HOST, 0, HKF_MATCH_IP, HKF_MATCH_IP, -1, {
 		NULL,
@@ -263,6 +271,7 @@ struct expected expected_full[] = {
 		KEY_ECDSA,
 		NULL,	/* filled at runtime */
 		"ECDSA #2",
+		0,
 	} },
 	{ "ed25519_2.pub" , -1, -1, HKF_MATCH_HOST, 0, HKF_MATCH_IP, HKF_MATCH_IP, -1, {
 		NULL,
@@ -276,6 +285,7 @@ struct expected expected_full[] = {
 		KEY_ED25519,
 		NULL,	/* filled at runtime */
 		"ED25519 #2",
+		0,
 	} },
 	{ "rsa_2.pub" , -1, -1, HKF_MATCH_HOST, 0, HKF_MATCH_IP, HKF_MATCH_IP, -1, {
 		NULL,
@@ -289,6 +299,7 @@ struct expected expected_full[] = {
 		KEY_RSA,
 		NULL,	/* filled at runtime */
 		"RSA #2",
+		0,
 	} },
 	{ NULL, -1, -1, 0, 0, 0, 0, -1, {
 		NULL,
@@ -302,6 +313,7 @@ struct expected expected_full[] = {
 		KEY_UNSPEC,
 		NULL,
 		NULL,
+		0,
 	} },
 	{ NULL, -1, -1, 0, 0, 0, 0, -1, {
 		NULL,
@@ -315,6 +327,7 @@ struct expected expected_full[] = {
 		KEY_UNSPEC,
 		NULL,
 		NULL,
+		0,
 	} },
 	{ "dsa_3.pub" , -1, -1, HKF_MATCH_HOST, HKF_MATCH_HOST, HKF_MATCH_IP, HKF_MATCH_IP, -1, {
 		NULL,
@@ -328,6 +341,7 @@ struct expected expected_full[] = {
 		KEY_DSA,
 		NULL,	/* filled at runtime */
 		"DSA #3",
+		0,
 	} },
 	{ "ecdsa_3.pub" , -1, -1, HKF_MATCH_HOST, HKF_MATCH_HOST, HKF_MATCH_IP, HKF_MATCH_IP, -1, {
 		NULL,
@@ -341,6 +355,7 @@ struct expected expected_full[] = {
 		KEY_ECDSA,
 		NULL,	/* filled at runtime */
 		"ECDSA #3",
+		0,
 	} },
 	{ "ed25519_3.pub" , -1, -1, HKF_MATCH_HOST, HKF_MATCH_HOST, HKF_MATCH_IP, HKF_MATCH_IP, -1, {
 		NULL,
@@ -354,6 +369,7 @@ struct expected expected_full[] = {
 		KEY_ED25519,
 		NULL,	/* filled at runtime */
 		"ED25519 #3",
+		0,
 	} },
 	{ "rsa_3.pub" , -1, -1, HKF_MATCH_HOST, HKF_MATCH_HOST, HKF_MATCH_IP, HKF_MATCH_IP, -1, {
 		NULL,
@@ -367,6 +383,7 @@ struct expected expected_full[] = {
 		KEY_RSA,
 		NULL,	/* filled at runtime */
 		"RSA #3",
+		0,
 	} },
 	{ NULL, -1, -1, 0, 0, 0, 0, -1, {
 		NULL,
@@ -380,6 +397,7 @@ struct expected expected_full[] = {
 		KEY_UNSPEC,
 		NULL,
 		NULL,
+		0,
 	} },
 	{ NULL, -1, -1, 0, 0, 0, 0, -1, {
 		NULL,
@@ -393,6 +411,7 @@ struct expected expected_full[] = {
 		KEY_UNSPEC,
 		NULL,
 		NULL,
+		0,
 	} },
 	{ "dsa_5.pub" , -1, -1, 0, HKF_MATCH_HOST|HKF_MATCH_HOST_HASHED, 0, 0, -1, {
 		NULL,
@@ -406,6 +425,7 @@ struct expected expected_full[] = {
 		KEY_DSA,
 		NULL,	/* filled at runtime */
 		"DSA #5",
+		0,
 	} },
 	{ "ecdsa_5.pub" , -1, -1, 0, HKF_MATCH_HOST|HKF_MATCH_HOST_HASHED, 0, 0, -1, {
 		NULL,
@@ -419,6 +439,7 @@ struct expected expected_full[] = {
 		KEY_ECDSA,
 		NULL,	/* filled at runtime */
 		"ECDSA #5",
+		0,
 	} },
 	{ "ed25519_5.pub" , -1, -1, 0, HKF_MATCH_HOST|HKF_MATCH_HOST_HASHED, 0, 0, -1, {
 		NULL,
@@ -432,6 +453,7 @@ struct expected expected_full[] = {
 		KEY_ED25519,
 		NULL,	/* filled at runtime */
 		"ED25519 #5",
+		0,
 	} },
 	{ "rsa_5.pub" , -1, -1, 0, HKF_MATCH_HOST|HKF_MATCH_HOST_HASHED, 0, 0, -1, {
 		NULL,
@@ -445,6 +467,7 @@ struct expected expected_full[] = {
 		KEY_RSA,
 		NULL,	/* filled at runtime */
 		"RSA #5",
+		0,
 	} },
 	{ NULL, -1, -1, 0, 0, 0, 0, -1, {
 		NULL,
@@ -458,6 +481,7 @@ struct expected expected_full[] = {
 		KEY_UNSPEC,
 		NULL,
 		NULL,
+		0,
 	} },
 	/*
 	 * The next series have each key listed multiple times, as the
@@ -476,6 +500,7 @@ struct expected expected_full[] = {
 		KEY_DSA,
 		NULL,	/* filled at runtime */
 		"DSA #6",
+		0,
 	} },
 	{ "dsa_6.pub" , -1, -1, 0, 0, HKF_MATCH_IP|HKF_MATCH_IP_HASHED, 0, -1, {
 		NULL,
@@ -489,6 +514,7 @@ struct expected expected_full[] = {
 		KEY_DSA,
 		NULL,	/* filled at runtime */
 		"DSA #6",
+		0,
 	} },
 	{ "dsa_6.pub" , -1, -1, 0, 0, 0, HKF_MATCH_IP|HKF_MATCH_IP_HASHED, -1, {
 		NULL,
@@ -502,6 +528,7 @@ struct expected expected_full[] = {
 		KEY_DSA,
 		NULL,	/* filled at runtime */
 		"DSA #6",
+		0,
 	} },
 	{ "ecdsa_6.pub" , -1, -1, HKF_MATCH_HOST|HKF_MATCH_HOST_HASHED, 0, 0, 0, -1, {
 		NULL,
@@ -515,6 +542,7 @@ struct expected expected_full[] = {
 		KEY_ECDSA,
 		NULL,	/* filled at runtime */
 		"ECDSA #6",
+		0,
 	} },
 	{ "ecdsa_6.pub" , -1, -1, 0, 0, HKF_MATCH_IP|HKF_MATCH_IP_HASHED, 0, -1, {
 		NULL,
@@ -528,6 +556,7 @@ struct expected expected_full[] = {
 		KEY_ECDSA,
 		NULL,	/* filled at runtime */
 		"ECDSA #6",
+		0,
 	} },
 	{ "ecdsa_6.pub" , -1, -1, 0, 0, 0, HKF_MATCH_IP|HKF_MATCH_IP_HASHED, -1, {
 		NULL,
@@ -541,6 +570,7 @@ struct expected expected_full[] = {
 		KEY_ECDSA,
 		NULL,	/* filled at runtime */
 		"ECDSA #6",
+		0,
 	} },
 	{ "ed25519_6.pub" , -1, -1, HKF_MATCH_HOST|HKF_MATCH_HOST_HASHED, 0, 0, 0, -1, {
 		NULL,
@@ -554,6 +584,7 @@ struct expected expected_full[] = {
 		KEY_ED25519,
 		NULL,	/* filled at runtime */
 		"ED25519 #6",
+		0,
 	} },
 	{ "ed25519_6.pub" , -1, -1, 0, 0, HKF_MATCH_IP|HKF_MATCH_IP_HASHED, 0, -1, {
 		NULL,
@@ -567,6 +598,7 @@ struct expected expected_full[] = {
 		KEY_ED25519,
 		NULL,	/* filled at runtime */
 		"ED25519 #6",
+		0,
 	} },
 	{ "ed25519_6.pub" , -1, -1, 0, 0, 0, HKF_MATCH_IP|HKF_MATCH_IP_HASHED, -1, {
 		NULL,
@@ -580,6 +612,7 @@ struct expected expected_full[] = {
 		KEY_ED25519,
 		NULL,	/* filled at runtime */
 		"ED25519 #6",
+		0,
 	} },
 	{ "rsa_6.pub" , -1, -1, HKF_MATCH_HOST|HKF_MATCH_HOST_HASHED, 0, 0, 0, -1, {
 		NULL,
@@ -593,6 +626,7 @@ struct expected expected_full[] = {
 		KEY_RSA,
 		NULL,	/* filled at runtime */
 		"RSA #6",
+		0,
 	} },
 	{ "rsa_6.pub" , -1, -1, 0, 0, HKF_MATCH_IP|HKF_MATCH_IP_HASHED, 0, -1, {
 		NULL,
@@ -606,6 +640,7 @@ struct expected expected_full[] = {
 		KEY_RSA,
 		NULL,	/* filled at runtime */
 		"RSA #6",
+		0,
 	} },
 	{ "rsa_6.pub" , -1, -1, 0, 0, 0, HKF_MATCH_IP|HKF_MATCH_IP_HASHED, -1, {
 		NULL,
@@ -619,6 +654,7 @@ struct expected expected_full[] = {
 		KEY_RSA,
 		NULL,	/* filled at runtime */
 		"RSA #6",
+		0,
 	} },
 	{ NULL, -1, -1, 0, 0, 0, 0, -1, {
 		NULL,
@@ -632,6 +668,7 @@ struct expected expected_full[] = {
 		KEY_UNSPEC,
 		NULL,
 		NULL,
+		0,
 	} },
 	{ NULL, -1, -1, 0, 0, 0, 0, -1, {
 		NULL,
@@ -645,6 +682,7 @@ struct expected expected_full[] = {
 		KEY_UNSPEC,
 		NULL,
 		NULL,
+		0,
 	} },
 	{ NULL, -1, -1, 0, 0, 0, 0, -1, {
 		NULL,
@@ -658,6 +696,7 @@ struct expected expected_full[] = {
 		KEY_UNSPEC,
 		NULL,
 		NULL,
+		0,
 	} },
 	{ "ed25519_4.pub" , -1, -1, 0, HKF_MATCH_HOST, 0, 0, -1, {
 		NULL,
@@ -671,6 +710,7 @@ struct expected expected_full[] = {
 		KEY_ED25519,
 		NULL,	/* filled at runtime */
 		"ED25519 #4",
+		0,
 	} },
 	{ "ecdsa_4.pub" , -1, -1, HKF_MATCH_HOST, 0, 0, 0, -1, {
 		NULL,
@@ -684,6 +724,7 @@ struct expected expected_full[] = {
 		KEY_ECDSA,
 		NULL,	/* filled at runtime */
 		"ECDSA #4",
+		0,
 	} },
 	{ "dsa_4.pub" , -1, -1, HKF_MATCH_HOST, HKF_MATCH_HOST, 0, 0, -1, {
 		NULL,
@@ -697,6 +738,7 @@ struct expected expected_full[] = {
 		KEY_DSA,
 		NULL,	/* filled at runtime */
 		"DSA #4",
+		0,
 	} },
 	{ NULL, -1, -1, 0, 0, 0, 0, -1, {
 		NULL,
@@ -710,6 +752,7 @@ struct expected expected_full[] = {
 		KEY_UNSPEC,
 		NULL,
 		NULL,
+		0,
 	} },
 	{ NULL, -1, -1, 0, 0, 0, 0, -1, {
 		NULL,
@@ -723,6 +766,7 @@ struct expected expected_full[] = {
 		KEY_UNSPEC,
 		NULL,
 		NULL,
+		0,
 	} },
 	{ NULL, -1, -1, 0, 0, 0, 0, -1, {
 		NULL,
@@ -736,6 +780,7 @@ struct expected expected_full[] = {
 		KEY_UNSPEC,
 		NULL,
 		NULL,
+		0,
 	} },
 	{ NULL, -1, -1, 0, HKF_MATCH_HOST, 0, 0, -1, {
 		NULL,
@@ -749,6 +794,7 @@ struct expected expected_full[] = {
 		KEY_UNSPEC,
 		NULL,
 		NULL,
+		0,
 	} },
 	{ NULL, -1, -1, HKF_MATCH_HOST, 0, 0, 0, -1, {
 		NULL,
@@ -762,6 +808,7 @@ struct expected expected_full[] = {
 		KEY_UNSPEC,
 		NULL,
 		NULL,
+		0,
 	} },
 	{ NULL, -1, -1, 0, HKF_MATCH_HOST, 0, 0, -1, {
 		NULL,
@@ -775,6 +822,7 @@ struct expected expected_full[] = {
 		KEY_UNSPEC,
 		NULL,
 		NULL,
+		0,
 	} },
 	{ NULL, -1, -1, 0, HKF_MATCH_HOST, 0, 0, -1, {
 		NULL,
@@ -788,6 +836,7 @@ struct expected expected_full[] = {
 		KEY_UNSPEC,
 		NULL,	/* filled at runtime */
 		NULL,
+		0,
 	} },
 	{ NULL, HKF_STATUS_OK, KEY_RSA, HKF_MATCH_HOST, 0, 0, 0, -1, {
 		NULL,
@@ -801,6 +850,7 @@ struct expected expected_full[] = {
 		KEY_UNSPEC,
 		NULL,	/* filled at runtime */
 		NULL,
+		0,
 	} },
 };
 
@@ -818,7 +868,7 @@ test_iterate(void)
 	ctx.flags = HKF_WANT_PARSE_KEY;
 	prepare_expected(expected_full, ctx.nexpected);
 	ASSERT_INT_EQ(hostkeys_foreach(test_data_file("known_hosts"),
-	    check, &ctx, NULL, NULL, ctx.flags), 0);
+	    check, &ctx, NULL, NULL, ctx.flags, 0), 0);
 	cleanup_expected(expected_full, ctx.nexpected);
 	TEST_DONE();
 
@@ -829,7 +879,7 @@ test_iterate(void)
 	ctx.flags = 0;
 	prepare_expected(expected_full, ctx.nexpected);
 	ASSERT_INT_EQ(hostkeys_foreach(test_data_file("known_hosts"),
-	    check, &ctx, NULL, NULL, ctx.flags), 0);
+	    check, &ctx, NULL, NULL, ctx.flags, 0), 0);
 	cleanup_expected(expected_full, ctx.nexpected);
 	TEST_DONE();
 
@@ -841,7 +891,7 @@ test_iterate(void)
 	ctx.match_host_p = 1;
 	prepare_expected(expected_full, ctx.nexpected);
 	ASSERT_INT_EQ(hostkeys_foreach(test_data_file("known_hosts"),
-	    check, &ctx, "prometheus.example.com", NULL, ctx.flags), 0);
+	    check, &ctx, "prometheus.example.com", NULL, ctx.flags, 0), 0);
 	cleanup_expected(expected_full, ctx.nexpected);
 	TEST_DONE();
 
@@ -853,7 +903,7 @@ test_iterate(void)
 	ctx.match_host_s = 1;
 	prepare_expected(expected_full, ctx.nexpected);
 	ASSERT_INT_EQ(hostkeys_foreach(test_data_file("known_hosts"),
-	    check, &ctx, "sisyphus.example.com", NULL, ctx.flags), 0);
+	    check, &ctx, "sisyphus.example.com", NULL, ctx.flags, 0), 0);
 	cleanup_expected(expected_full, ctx.nexpected);
 	TEST_DONE();
 
@@ -865,7 +915,7 @@ test_iterate(void)
 	ctx.match_host_p = 1;
 	prepare_expected(expected_full, ctx.nexpected);
 	ASSERT_INT_EQ(hostkeys_foreach(test_data_file("known_hosts"),
-	    check, &ctx, "prometheus.example.com", NULL, ctx.flags), 0);
+	    check, &ctx, "prometheus.example.com", NULL, ctx.flags, 0), 0);
 	cleanup_expected(expected_full, ctx.nexpected);
 	TEST_DONE();
 
@@ -877,7 +927,7 @@ test_iterate(void)
 	ctx.match_host_s = 1;
 	prepare_expected(expected_full, ctx.nexpected);
 	ASSERT_INT_EQ(hostkeys_foreach(test_data_file("known_hosts"),
-	    check, &ctx, "sisyphus.example.com", NULL, ctx.flags), 0);
+	    check, &ctx, "sisyphus.example.com", NULL, ctx.flags, 0), 0);
 	cleanup_expected(expected_full, ctx.nexpected);
 	TEST_DONE();
 
@@ -888,7 +938,7 @@ test_iterate(void)
 	ctx.flags = 0;
 	prepare_expected(expected_full, ctx.nexpected);
 	ASSERT_INT_EQ(hostkeys_foreach(test_data_file("known_hosts"),
-	    check, &ctx, "actaeon.example.org", NULL, ctx.flags), 0);
+	    check, &ctx, "actaeon.example.org", NULL, ctx.flags, 0), 0);
 	cleanup_expected(expected_full, ctx.nexpected);
 	TEST_DONE();
 
@@ -899,7 +949,7 @@ test_iterate(void)
 	ctx.flags = HKF_WANT_MATCH;
 	prepare_expected(expected_full, ctx.nexpected);
 	ASSERT_INT_EQ(hostkeys_foreach(test_data_file("known_hosts"),
-	    check, &ctx, "actaeon.example.org", NULL, ctx.flags), 0);
+	    check, &ctx, "actaeon.example.org", NULL, ctx.flags, 0), 0);
 	cleanup_expected(expected_full, ctx.nexpected);
 	TEST_DONE();
 
@@ -911,7 +961,7 @@ test_iterate(void)
 	ctx.match_ipv4 = 1;
 	prepare_expected(expected_full, ctx.nexpected);
 	ASSERT_INT_EQ(hostkeys_foreach(test_data_file("known_hosts"),
-	    check, &ctx, "tiresias.example.org", "192.0.2.1", ctx.flags), 0);
+	    check, &ctx, "tiresias.example.org", "192.0.2.1", ctx.flags, 0), 0);
 	cleanup_expected(expected_full, ctx.nexpected);
 	TEST_DONE();
 
@@ -923,7 +973,8 @@ test_iterate(void)
 	ctx.match_ipv6 = 1;
 	prepare_expected(expected_full, ctx.nexpected);
 	ASSERT_INT_EQ(hostkeys_foreach(test_data_file("known_hosts"),
-	    check, &ctx, "tiresias.example.org", "2001:db8::1", ctx.flags), 0);
+	    check, &ctx, "tiresias.example.org", "2001:db8::1",
+	    ctx.flags, 0), 0);
 	cleanup_expected(expected_full, ctx.nexpected);
 	TEST_DONE();
 
@@ -935,7 +986,7 @@ test_iterate(void)
 	ctx.match_ipv4 = 1;
 	prepare_expected(expected_full, ctx.nexpected);
 	ASSERT_INT_EQ(hostkeys_foreach(test_data_file("known_hosts"),
-	    check, &ctx, "tiresias.example.org", "192.0.2.1", ctx.flags), 0);
+	    check, &ctx, "tiresias.example.org", "192.0.2.1", ctx.flags, 0), 0);
 	cleanup_expected(expected_full, ctx.nexpected);
 	TEST_DONE();
 
@@ -947,7 +998,8 @@ test_iterate(void)
 	ctx.match_ipv6 = 1;
 	prepare_expected(expected_full, ctx.nexpected);
 	ASSERT_INT_EQ(hostkeys_foreach(test_data_file("known_hosts"),
-	    check, &ctx, "tiresias.example.org", "2001:db8::1", ctx.flags), 0);
+	    check, &ctx, "tiresias.example.org", "2001:db8::1",
+	    ctx.flags, 0), 0);
 	cleanup_expected(expected_full, ctx.nexpected);
 	TEST_DONE();
 
@@ -958,7 +1010,8 @@ test_iterate(void)
 	ctx.flags = 0;
 	prepare_expected(expected_full, ctx.nexpected);
 	ASSERT_INT_EQ(hostkeys_foreach(test_data_file("known_hosts"),
-	    check, &ctx, "tiresias.example.org", "192.168.0.1", ctx.flags), 0);
+	    check, &ctx, "tiresias.example.org", "192.168.0.1",
+	    ctx.flags, 0), 0);
 	cleanup_expected(expected_full, ctx.nexpected);
 	TEST_DONE();
 
@@ -969,7 +1022,7 @@ test_iterate(void)
 	ctx.flags = HKF_WANT_MATCH;
 	prepare_expected(expected_full, ctx.nexpected);
 	ASSERT_INT_EQ(hostkeys_foreach(test_data_file("known_hosts"),
-	    check, &ctx, "tiresias.example.org", "::1", ctx.flags), 0);
+	    check, &ctx, "tiresias.example.org", "::1", ctx.flags, 0), 0);
 	cleanup_expected(expected_full, ctx.nexpected);
 	TEST_DONE();
 
@@ -982,7 +1035,7 @@ test_iterate(void)
 	ctx.match_ipv4 = 1;
 	prepare_expected(expected_full, ctx.nexpected);
 	ASSERT_INT_EQ(hostkeys_foreach(test_data_file("known_hosts"),
-	    check, &ctx, "sisyphus.example.com", "192.0.2.1", ctx.flags), 0);
+	    check, &ctx, "sisyphus.example.com", "192.0.2.1", ctx.flags, 0), 0);
 	cleanup_expected(expected_full, ctx.nexpected);
 	TEST_DONE();
 
@@ -996,7 +1049,7 @@ test_iterate(void)
 	prepare_expected(expected_full, ctx.nexpected);
 	ASSERT_INT_EQ(hostkeys_foreach(test_data_file("known_hosts"),
 	    check, &ctx, "prometheus.example.com",
-	    "2001:db8::1", ctx.flags), 0);
+	    "2001:db8::1", ctx.flags, 0), 0);
 	cleanup_expected(expected_full, ctx.nexpected);
 	TEST_DONE();
 
@@ -1009,7 +1062,7 @@ test_iterate(void)
 	ctx.match_ipv4 = 1;
 	prepare_expected(expected_full, ctx.nexpected);
 	ASSERT_INT_EQ(hostkeys_foreach(test_data_file("known_hosts"),
-	    check, &ctx, "sisyphus.example.com", "192.0.2.1", ctx.flags), 0);
+	    check, &ctx, "sisyphus.example.com", "192.0.2.1", ctx.flags, 0), 0);
 	cleanup_expected(expected_full, ctx.nexpected);
 	TEST_DONE();
 
@@ -1023,7 +1076,7 @@ test_iterate(void)
 	prepare_expected(expected_full, ctx.nexpected);
 	ASSERT_INT_EQ(hostkeys_foreach(test_data_file("known_hosts"),
 	    check, &ctx, "prometheus.example.com",
-	    "2001:db8::1", ctx.flags), 0);
+	    "2001:db8::1", ctx.flags, 0), 0);
 	cleanup_expected(expected_full, ctx.nexpected);
 	TEST_DONE();
 }
