@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.28 2020/12/20 22:45:22 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.29 2020/12/21 00:47:18 bluhm Exp $
 
 # This test needs a manual setup of four machines, the make
 # target create-setup can be used to distribute the configuration.
@@ -362,6 +362,20 @@ run-send-tcp-${host}_${sec}_${mode}_${ipv}:
 	echo $$$$ | nc -n -N -w 3 ${${host}_${sec}_${mode}_${ipv}} 7 |\
 	    fgrep $$$$
 
+# Send large tcp stream, this should trigger path mtu discovery.
+# but it works only fo a few cases
+
+.if "${sec}" == ESP && "${mode}" == TUNNEL4 && "${ipv}" == IPV4
+TARGETS +=	tcp-pmtu-${host}_${sec}_${mode}_${ipv}
+tcp pmtu ${host:L} ${sec:L} ${mode:L} ${ipv:L}:\
+    run-send-tcp-pmtu-${host}_${sec}_${mode}_${ipv}
+run-send-tcp-pmtu-${host}_${sec}_${mode}_${ipv}:
+	route delete -host ${${host}_${sec}_${mode}_${ipv}} || true
+	openssl rand -base64 10000 |\
+	    nc -n -N -w 8 ${${host}_${sec}_${mode}_${ipv}} 7 |\
+	    wc | fgrep '     209     209   13545'
+.endif
+
 # Send no next header protocol 59 packets through the IPsec test.
 # They consist solely of an IPv6 header chain and trigger edge cases.
 
@@ -478,9 +492,35 @@ run-pflog-${proto:L}-${host}_${sec}_${mode}_${ipv}: stamp-stop
 .endfor
 .endfor
 
+run-bpf-tcp-pmtu-IPS_ESP_TUNNEL4_IPV4: stamp-stop
+	egrep -q '\
+	    ${REGEX_ESP}\
+	    ${REGEX_REQ_TUNNEL4}\
+	    ${REGEX_REQ_IPS_ESP_TUNNEL4_IPV4_TCP}\
+	    .* 1:1...\(1372\) ack ' enc0.tcpdump
+
+run-bpf-tcp-pmtu-ECO_ESP_TUNNEL4_IPV4: stamp-stop
+	egrep -q '\
+	    ${REGEX_ESP}\
+	    ${REGEX_RPL_TUNNEL4}\
+	    ${IPS_IN_IPV4} > ${SRC_ESP_TUNNEL_IPV4}:\
+	    icmp: ${ECO_ESP_TUNNEL4_IPV4} unreachable -\
+	    need to frag \(mtu 1400\) ' enc0.tcpdump
+	egrep -q '\
+	    ${REGEX_ESP}\
+	    ${REGEX_RPL_TUNNEL4}\
+	    ${RT_IN_IPV4} > ${SRC_ESP_TUNNEL_IPV4}:\
+	    icmp: ${ECO_ESP_TUNNEL4_IPV4} unreachable -\
+	    need to frag \(mtu 1300\) ' enc0.tcpdump
+	egrep -q '\
+	    ${REGEX_ESP}\
+	    ${REGEX_REQ_TUNNEL4}\
+	    ${REGEX_REQ_ECO_ESP_TUNNEL4_IPV4_TCP}\
+	    .* 1:1...\(1248\) ack ' enc0.tcpdump
+
 REGRESS_TARGETS =	${TARGETS:S/^/run-send-/} \
     ${TARGETS:N*_IPIP_*:N*_BUNDLE_*:N*_IN_*:N*_OUT_*:N*-SRC_*:Nudp-*_IPCOMP_*:Ntcp-*_IPCOMP_*:N*-small-*:Nnonxt-*_IPCOMP_*:S/-big-/-/:S/^/run-bpf-/} \
-    ${TARGETS:N*_IPIP_*:N*_IPCOMP_*:N*_IN_*:N*_OUT_*:N*-SRC_*:N*-small-*:S/-big-/-/:S/^/run-pflog-/}
+    ${TARGETS:N*_IPIP_*:N*_IPCOMP_*:N*_IN_*:N*_OUT_*:N*-SRC_*:N*-small-*:N*-pmtu-*:S/-big-/-/:S/^/run-pflog-/}
 
 ${REGRESS_TARGETS:Mrun-send-*}: stamp-bpf stamp-pflog stamp-drop
 
