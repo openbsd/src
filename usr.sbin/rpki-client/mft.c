@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.21 2020/12/18 12:31:06 claudio Exp $ */
+/*	$OpenBSD: mft.c,v 1.22 2020/12/21 11:35:55 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -552,6 +552,7 @@ mft_read(int fd)
 
 	io_simple_read(fd, &p->stale, sizeof(int));
 	io_str_read(fd, &p->file);
+	assert(p->file);
 	io_simple_read(fd, &p->filesz, sizeof(size_t));
 
 	if ((p->files = calloc(p->filesz, sizeof(struct mftfile))) == NULL)
@@ -564,5 +565,7 @@ mft_read(int fd)
 
 	io_str_read(fd, &p->aki);
 	io_str_read(fd, &p->ski);
+	assert(p->aki && p->ski);
+
 	return p;
 }

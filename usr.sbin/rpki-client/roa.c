@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.9 2020/09/12 15:46:48 claudio Exp $ */
+/*	$OpenBSD: roa.c,v 1.10 2020/12/21 11:35:55 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -445,6 +445,8 @@ roa_read(int fd)
 	io_str_read(fd, &p->aki);
 	io_str_read(fd, &p->ski);
 	io_str_read(fd, &p->tal);
+	assert(p->aki && p->ski && p->tal);
+
 	return p;
 }
 

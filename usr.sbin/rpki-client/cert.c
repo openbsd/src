@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.20 2020/12/07 13:23:01 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.21 2020/12/21 11:35:55 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1262,7 +1262,6 @@ void
 cert_buffer(char **b, size_t *bsz, size_t *bmax, const struct cert *p)
 {
 	size_t	 i;
-	int	 has_crl, has_aki;
 
 	io_simple_buffer(b, bsz, bmax, &p->valid, sizeof(int));
 	io_simple_buffer(b, bsz, bmax, &p->ipsz, sizeof(size_t));
@@ -1275,15 +1274,8 @@ cert_buffer(char **b, size_t *bsz, size_t *bmax, const struct cert *p)
 
 	io_str_buffer(b, bsz, bmax, p->mft);
 	io_str_buffer(b, bsz, bmax, p->notify);
-
-	has_crl = (p->crl != NULL);
-	io_simple_buffer(b, bsz, bmax, &has_crl, sizeof(int));
-	if (has_crl)
-		io_str_buffer(b, bsz, bmax, p->crl);
-	has_aki = (p->aki != NULL);
-	io_simple_buffer(b, bsz, bmax, &has_aki, sizeof(int));
-	if (has_aki)
-		io_str_buffer(b, bsz, bmax, p->aki);
+	io_str_buffer(b, bsz, bmax, p->crl);
+	io_str_buffer(b, bsz, bmax, p->aki);
 	io_str_buffer(b, bsz, bmax, p->ski);
 }
 
@@ -1327,7 +1319,6 @@ cert_read(int fd)
 {
 	struct cert	*p;
 	size_t		 i;
-	int		 has_crl, has_aki;
 
 	if ((p = calloc(1, sizeof(struct cert))) == NULL)
 		err(1, NULL);
@@ -1348,14 +1339,12 @@ cert_read(int fd)
 		cert_as_read(fd, &p->as[i]);
 
 	io_str_read(fd, &p->mft);
+	assert(p->mft);
 	io_str_read(fd, &p->notify);
-	io_simple_read(fd, &has_crl, sizeof(int));
-	if (has_crl)
-		io_str_read(fd, &p->crl);
-	io_simple_read(fd, &has_aki, sizeof(int));
-	if (has_aki)
-		io_str_read(fd, &p->aki);
+	io_str_read(fd, &p->crl);
+	io_str_read(fd, &p->aki);
 	io_str_read(fd, &p->ski);
+	assert(p->ski);
 
 	return p;
 }

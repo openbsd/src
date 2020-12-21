@@ -1,4 +1,4 @@
-/*	$OpenBSD: tal.c,v 1.24 2020/12/03 15:02:12 claudio Exp $ */
+/*	$OpenBSD: tal.c,v 1.25 2020/12/21 11:35:55 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -330,14 +330,17 @@ tal_read(int fd)
 	io_buf_read_alloc(fd, (void **)&p->pkey, &p->pkeysz);
 	assert(p->pkeysz > 0);
 	io_str_read(fd, &p->descr);
+	assert(p->descr);
 	io_simple_read(fd, &p->urisz, sizeof(size_t));
 	assert(p->urisz > 0);
 
 	if ((p->uri = calloc(p->urisz, sizeof(char *))) == NULL)
 		err(1, NULL);
 
-	for (i = 0; i < p->urisz; i++)
+	for (i = 0; i < p->urisz; i++) {
 		io_str_read(fd, &p->uri[i]);
+		assert(p->uri[i]);
+	}
 
 	return p;
 }

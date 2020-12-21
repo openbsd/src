@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.11 2020/12/02 15:31:15 claudio Exp $ */
+/*	$OpenBSD: rsync.c,v 1.12 2020/12/21 11:35:55 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -296,6 +296,8 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 
 		io_str_read(fd, &host);
 		io_str_read(fd, &mod);
+		assert(host);
+		assert(mod);
 
 		/*
 		 * Create source and destination locations.
