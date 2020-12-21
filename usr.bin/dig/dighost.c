@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dighost.c,v 1.36 2020/12/20 12:02:00 florian Exp $ */
+/* $Id: dighost.c,v 1.37 2020/12/21 11:41:08 florian Exp $ */
 
 /*! \file
  *  \note
@@ -933,68 +933,34 @@ parse_bits(char *arg, uint32_t max) {
 isc_result_t
 parse_netprefix(struct sockaddr_storage **sap, int *plen, const char *value) {
 	struct sockaddr_storage *sa = NULL;
-	struct in_addr in4;
-	struct in6_addr in6;
-	uint32_t prefix_length = 0xffffffff;
-	char *slash = NULL;
-	int parsed = 0;
-	int prefix_parsed = 0;
-	char buf[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:XXX.XXX.XXX.XXX/128")];
-	const char *errstr;
+	struct in_addr *in4;
+	struct in6_addr *in6;
+	int prefix_length;
 
 	REQUIRE(sap != NULL && *sap == NULL);
 
-	if (strlcpy(buf, value, sizeof(buf)) >= sizeof(buf))
-		fatal("invalid prefix '%s'\n", value);
-
-	sa = malloc(sizeof(*sa));
+	sa = calloc(1, sizeof(*sa));
 	if (sa == NULL)
 		fatal("out of memory");
-	memset(sa, 0, sizeof(*sa));
 
-	if (strcmp(buf, "0") == 0) {
+	in4 = &((struct sockaddr_in *)sa)->sin_addr;
+	in6 = &((struct sockaddr_in6 *)sa)->sin6_addr;
+
+	if (strcmp(value, "0") == 0) {
 		sa->ss_family = AF_UNSPEC;
 		prefix_length = 0;
 		goto done;
 	}
 
-	slash = strchr(buf, '/');
-	if (slash != NULL) {
-		*slash = '\0';
-		prefix_length = strtonum(slash + 1, 0, 128, &errstr);
-		if (errstr != NULL) {
-			fatal("prefix length is %s: '%s'", errstr, value);
-		}
-		prefix_parsed = 1;
-	}
-
-	if (inet_pton(AF_INET6, buf, &in6) == 1) {
-		parsed = 1;
-		isc_sockaddr_fromin6(sa, &in6, 0);
-		if (prefix_length > 128)
-			prefix_length = 128;
-	} else if (inet_pton(AF_INET, buf, &in4) == 1) {
-		parsed = 1;
-		isc_sockaddr_fromin(sa, &in4, 0);
-		if (prefix_length > 32)
-			prefix_length = 32;
-	} else if (prefix_parsed) {
-		int i;
-
-		for (i = 0; i < 3 && strlen(buf) < sizeof(buf) - 2; i++) {
-			strlcat(buf, ".0", sizeof(buf));
-			if (inet_pton(AF_INET, buf, &in4) == 1) {
-				parsed = 1;
-				isc_sockaddr_fromin(sa, &in4, 0);
-				break;
-			}
-		}
-
-		if (prefix_length > 32)
-			prefix_length = 32;
-	}
-
-	if (!parsed)
+	if ((prefix_length = inet_net_pton(AF_INET6, value, in6, sizeof(*in6)))
+	    != -1) {
+		sa->ss_len = sizeof(struct sockaddr_in6);
+		sa->ss_family = AF_INET6;
+	} else if ((prefix_length = inet_net_pton(AF_INET, value, in4,
+	    sizeof(*in4))) != -1) {
+		sa->ss_len = sizeof(struct sockaddr_in);
+		sa->ss_family = AF_INET;
+	} else
 		fatal("invalid address '%s'", value);
 
 done:

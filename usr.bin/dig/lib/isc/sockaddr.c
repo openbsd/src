@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sockaddr.c,v 1.14 2020/11/28 06:33:55 jmatthew Exp $ */
+/* $Id: sockaddr.c,v 1.15 2020/12/21 11:41:09 florian Exp $ */
 
 /*! \file */
 #include <sys/types.h>
@@ -196,18 +196,6 @@ isc_sockaddr_any6(struct sockaddr_storage *sockaddr)
 }
 
 void
-isc_sockaddr_fromin(struct sockaddr_storage *sockaddr, const struct in_addr *ina,
-		    in_port_t port)
-{
-	struct sockaddr_in *sin = (struct sockaddr_in *) sockaddr;
-	memset(sockaddr, 0, sizeof(*sockaddr));
-	sin->sin_family = AF_INET;
-	sin->sin_len = sizeof(*sin);
-	sin->sin_addr = *ina;
-	sin->sin_port = htons(port);
-}
-
-void
 isc_sockaddr_anyofpf(struct sockaddr_storage *sockaddr, int pf) {
      switch (pf) {
      case AF_INET:
@@ -219,18 +207,6 @@ isc_sockaddr_anyofpf(struct sockaddr_storage *sockaddr, int pf) {
      default:
 	     INSIST(0);
      }
-}
-
-void
-isc_sockaddr_fromin6(struct sockaddr_storage *sockaddr, const struct in6_addr *ina6,
-		     in_port_t port)
-{
-	struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *) sockaddr;
-	memset(sockaddr, 0, sizeof(*sockaddr));
-	sin6->sin6_family = AF_INET6;
-	sin6->sin6_len = sizeof(*sin6);
-	sin6->sin6_addr = *ina6;
-	sin6->sin6_port = htons(port);
 }
 
 int

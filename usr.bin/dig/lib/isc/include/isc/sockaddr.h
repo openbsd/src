@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sockaddr.h,v 1.7 2020/09/15 11:47:42 florian Exp $ */
+/* $Id: sockaddr.h,v 1.8 2020/12/21 11:41:09 florian Exp $ */
 
 #ifndef ISC_SOCKADDR_H
 #define ISC_SOCKADDR_H 1
@@ -80,20 +80,6 @@ isc_sockaddr_anyofpf(struct sockaddr_storage *sockaddr, int family);
  *
  * Requires:
  * \li	'family' is AF_INET or AF_INET6.
- */
-
-void
-isc_sockaddr_fromin(struct sockaddr_storage *sockaddr, const struct in_addr *ina,
-		    in_port_t port);
-/*%<
- * Construct an struct sockaddr_storage from an IPv4 address and port.
- */
-
-void
-isc_sockaddr_fromin6(struct sockaddr_storage *sockaddr, const struct in6_addr *ina6,
-		     in_port_t port);
-/*%<
- * Construct an struct sockaddr_storage from an IPv6 address and port.
  */
 
 int
