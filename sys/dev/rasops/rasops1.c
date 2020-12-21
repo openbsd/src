@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops1.c,v 1.10 2020/05/25 09:55:49 jsg Exp $	*/
+/*	$OpenBSD: rasops1.c,v 1.11 2020/12/21 12:58:42 kettenis Exp $	*/
 /*	$NetBSD: rasops1.c,v 1.11 2000/04/12 14:22:29 pk Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ int	rasops1_copycols(void *, int, int, int, int);
 int	rasops1_erasecols(void *, int, int, int, uint32_t);
 int	rasops1_do_cursor(struct rasops_info *);
 int	rasops1_putchar(void *, int, int col, u_int, uint32_t);
-#ifndef RASOPS_SMALL
+#if defined(RASOPS_SMALL) && BYTE_ORDER == BIG_ENDIAN
 int	rasops1_putchar8(void *, int, int col, u_int, uint32_t);
 int	rasops1_putchar16(void *, int, int col, u_int, uint32_t);
 #endif
@@ -58,7 +58,7 @@ rasops1_init(struct rasops_info *ri)
 	rasops_masks_init();
 
 	switch (ri->ri_font->fontwidth) {
-#ifndef RASOPS_SMALL
+#if defined(RASOPS_SMALL) && BYTE_ORDER == BIG_ENDIAN
 	case 8:
 		ri->ri_ops.putchar = rasops1_putchar8;
 		break;
@@ -223,7 +223,7 @@ rasops1_putchar(void *cookie, int row, int col, u_int uc, uint32_t attr)
 	return 0;
 }
 
-#ifndef RASOPS_SMALL
+#if defined(RASOPS_SMALL) && BYTE_ORDER == BIG_ENDIAN
 /*
  * Paint a single character. This is for 8-pixel wide fonts.
  */
@@ -350,7 +350,7 @@ rasops1_putchar16(void *cookie, int row, int col, u_int uc, uint32_t attr)
 
 	return 0;
 }
-#endif	/* !RASOPS_SMALL */
+#endif	/* !defined(RASOPS_SMALL) && BYTE_ORDER == BIG_ENDIAN */
 
 /*
  * Grab routines common to depths where (bpp < 8)
