@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.69 2020/10/31 06:49:42 jmc Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.70 2020/12/21 16:57:56 krw Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)hosts.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: October 31 2020 $
+.Dd $Mdocdate: December 21 2020 $
 .Dt HOSTNAME.IF 5
 .Os
 .Sh NAME
@@ -226,53 +226,35 @@ up
 .Ed
 .El
 .Sh DYNAMIC ADDRESS CONFIGURATION
-The following packed formats are valid for configuring network
-interfaces with dynamic addresses:
+The following packed formats are provided for configuring network
+interfaces using IPv4 DHCP or IPv6 stateless address autoconfiguration.
 .Pp
-A DHCP-configured network interface setup consists of
 .Bd -ragged -offset indent
 .Li dhcp
-.Va options
-.Ed
+.Op Va options
 .Pp
-The above format has the following field values:
-.Bl -tag -width "optionsXXX" -offset indent
-.It Li dhcp
-The literal string
-.Dq dhcp
-if the interface is to be configured using DHCP.
-See
-.Xr dhclient 8
-and
-.Xr dhclient.conf 5
-for more details.
-.It Va options
-Miscellaneous options to set on the interface, e.g.,
-.Dq media 100baseTX mediaopt full-duplex .
-Valid options for a particular interface type can be found in
-.Xr ifconfig 8 .
-.El
-.Pp
-IPv6 stateless address autoconfiguration:
-.Bd -ragged -offset indent
 .Li inet6 autoconf
-.Va options
+.Op Va options
 .Ed
 .Pp
-The above format has the following field values:
-.Bl -tag -width "optionsXXX" -offset indent
-.It Li inet6
-The address family.
-.It Li autoconf
-The literal string
-.Dq autoconf ,
-to configure the interface
-using IPv6 stateless address autoconfiguration (SLAAC).
-.It Va options
-Miscellaneous options to set on the interface, e.g.,
-.Dq media 100baseTX mediaopt full-duplex .
-Valid options for a particular interface type can be found in
+For IPv4 DHCP the literal string
+.Dq dhcp
+followed by any options to be passed to
 .Xr ifconfig 8 .
+Note that
+.Xr ifconfig 8
+will be executed before
+.Xr dhclient 8 .
+.Pp
+For IPv6 stateless address autoconfiguration the literal strings
+.Dq inet6
+and
+.Dq autoconf
+followed by any options to be passed to
+.Xr ifconfig 8 .
+Note that
+.Xr slaacd 8
+must also be enabled.
 .El
 .Sh BRIDGE INTERFACE CONFIGURATION
 If the network interface is a bridge, the options described in
@@ -297,8 +279,10 @@ up    # and finally enable it
 Interface-specific configuration files.
 .El
 .Sh SEE ALSO
+.Xr dhclient.conf 5
 .Xr hosts 5 ,
 .Xr dhclient 8 ,
 .Xr ifconfig 8 ,
 .Xr netstart 8 ,
-.Xr rc 8
+.Xr rc 8 ,
+.Xr slaacd 8
