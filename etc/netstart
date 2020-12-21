@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.209 2020/11/29 20:54:33 tb Exp $
+#	$OpenBSD: netstart,v 1.210 2020/12/21 16:52:49 krw Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -63,8 +63,9 @@ parse_hn_line() {
 		_c[_name]="${_c[_name]} $_daddr"
 		_cmds[$_prev]="${_c[@]}"
 		;;
-	dhcp)	_c[0]=
-		_cmds[${#_cmds[*]}]="ifconfig $_if ${_c[@]} up;dhclient $_if"
+	dhcp)	_c[0]="ifconfig $_if"
+		((${#_c[*]} > 1)) && _cmds[${#_cmds[*]}]="${_c[@]}"
+		_cmds[${#_cmds[*]}]="dhclient $_if"
 		V4_DHCPCONF=true
 		;;
 	'!'*)	_cmd=$(print -- "${_c[@]}" | sed 's/\$if/'$_if'/g')
