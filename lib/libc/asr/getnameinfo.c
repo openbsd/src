@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnameinfo.c,v 1.9 2019/07/03 03:24:03 deraadt Exp $	*/
+/*	$OpenBSD: getnameinfo.c,v 1.10 2020/12/21 09:40:35 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -129,12 +129,13 @@ asr_print_port(const struct sockaddr *sa, const char *proto, char *buf, size_t b
 	if (proto) {
 		memset(&sd, 0, sizeof (sd));
 		saved_errno = errno;
-		if (getservbyport_r(port, proto, &s, &sd) != -1) {
+		r = getservbyport_r(port, proto, &s, &sd);
+		if (r == 0)
 			n = strlcpy(buf, s.s_name, buflen);
-			endservent_r(&sd);
-			return (n);
-		}
+		endservent_r(&sd);
 		errno = saved_errno;
+		if (r == 0)
+			return (n);
 	}
 
 	r = snprintf(buf, buflen, "%u", ntohs(port));

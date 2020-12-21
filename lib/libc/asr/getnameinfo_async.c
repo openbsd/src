@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnameinfo_async.c,v 1.14 2019/07/03 03:24:03 deraadt Exp $	*/
+/*	$OpenBSD: getnameinfo_async.c,v 1.15 2020/12/21 09:40:35 eric Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -213,7 +213,7 @@ _servname(struct asr_query *as)
 	struct servent_data	 sd;
 	int			 port, r;
 	char			*buf = as->as.ni.servname;
-	size_t			 buflen = as->as.ni.servnamelen;
+	size_t			 n, buflen = as->as.ni.servnamelen;
 
 	if (as->as.ni.servname == NULL || as->as.ni.servnamelen == 0)
 		return (0);
@@ -225,12 +225,15 @@ _servname(struct asr_query *as)
 
 	if (!(as->as.ni.flags & NI_NUMERICSERV)) {
 		memset(&sd, 0, sizeof (sd));
-		if (getservbyport_r(port,
-		    (as->as.ni.flags & NI_DGRAM) ? "udp" : "tcp",
-		    &s, &sd) != -1) {
-			r = strlcpy(buf, s.s_name, buflen) >= buflen;
-			endservent_r(&sd);
-			return (r ? -1 : 0);
+		r = getservbyport_r(port, (as->as.ni.flags & NI_DGRAM) ?
+		    "udp" : "tcp", &s, &sd);
+		if (r == 0)
+			n = strlcpy(buf, s.s_name, buflen);
+		endservent_r(&sd);
+		if (r == 0) {
+			if (n >= buflen)
+				return (-1);
+			return (0);
 		}
 	}
 
