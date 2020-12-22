@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlclock.c,v 1.11 2020/05/18 10:40:38 kettenis Exp $	*/
+/*	$OpenBSD: amlclock.c,v 1.12 2020/12/22 15:23:51 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -41,6 +41,8 @@
 #define G12A_SD_EMMC_A		33
 #define G12A_SD_EMMC_B		34
 #define G12A_SD_EMMC_C		35
+#define G12A_PCIE_COMB		45
+#define G12A_PCIE_PHY		48
 #define G12A_SD_EMMC_A_CLK0	60
 #define G12A_SD_EMMC_B_CLK0	61
 #define G12A_SD_EMMC_C_CLK0	62
@@ -120,7 +122,9 @@ struct amlclock_gate aml_g12a_gates[] = {
 	[G12A_SD_EMMC_A] = { HHI_GCLK_MPEG0, 24 },
 	[G12A_SD_EMMC_B] = { HHI_GCLK_MPEG0, 25 },
 	[G12A_SD_EMMC_C] = { HHI_GCLK_MPEG0, 26 },
+	[G12A_PCIE_COMB] = { HHI_GCLK_MPEG1, 24 },
 	[G12A_USB] = { HHI_GCLK_MPEG1, 26 },
+	[G12A_PCIE_PHY] = { HHI_GCLK_MPEG1, 27 },
 
 	[G12A_SD_EMMC_A_CLK0] = { HHI_SD_EMMC_CLK_CNTL, 7 },
 	[G12A_SD_EMMC_B_CLK0] = { HHI_SD_EMMC_CLK_CNTL, 23 },
