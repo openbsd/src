@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.70 2020/12/21 16:57:56 krw Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.71 2020/12/22 00:11:03 jmc Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)hosts.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: December 21 2020 $
+.Dd $Mdocdate: December 22 2020 $
 .Dt HOSTNAME.IF 5
 .Os
 .Sh NAME
@@ -228,7 +228,6 @@ up
 .Sh DYNAMIC ADDRESS CONFIGURATION
 The following packed formats are provided for configuring network
 interfaces using IPv4 DHCP or IPv6 stateless address autoconfiguration.
-.Pp
 .Bd -ragged -offset indent
 .Li dhcp
 .Op Va options
@@ -255,7 +254,6 @@ followed by any options to be passed to
 Note that
 .Xr slaacd 8
 must also be enabled.
-.El
 .Sh BRIDGE INTERFACE CONFIGURATION
 If the network interface is a bridge, the options described in
 the bridge section of the
@@ -279,7 +277,7 @@ up    # and finally enable it
 Interface-specific configuration files.
 .El
 .Sh SEE ALSO
-.Xr dhclient.conf 5
+.Xr dhclient.conf 5 ,
 .Xr hosts 5 ,
 .Xr dhclient 8 ,
 .Xr ifconfig 8 ,
