@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.22 2020/07/14 15:42:19 patrick Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.23 2020/12/22 12:59:05 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -167,7 +167,10 @@ struct dwpcie_softc {
 	bus_space_handle_t	sc_ioh;
 	bus_space_handle_t	sc_cfg0_ioh;
 	bus_space_handle_t	sc_cfg1_ioh;
+	bus_dma_tag_t		sc_dmat;
 
+	bus_addr_t		sc_ctrl_base;
+	bus_size_t		sc_ctrl_size;
 	bus_addr_t		sc_cfg0_base;
 	bus_size_t		sc_cfg0_size;
 	bus_addr_t		sc_cfg1_base;
@@ -221,6 +224,8 @@ dwpcie_match(struct device *parent, void *match, void *aux)
 	    OF_is_compatible(faa->fa_node, "fsl,imx8mq-pcie"));
 }
 
+void	dwpcie_attach_deferred(struct device *);
+
 void	dwpcie_atu_config(struct dwpcie_softc *, int, int,
 	    uint64_t, uint64_t, uint64_t);
 void	dwpcie_link_config(struct dwpcie_softc *);
@@ -258,14 +263,8 @@ dwpcie_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct dwpcie_softc *sc = (struct dwpcie_softc *)self;
 	struct fdt_attach_args *faa = aux;
-	struct pcibus_attach_args pba;
-	bus_addr_t iobase, iolimit;
-	bus_addr_t membase, memlimit;
-	uint32_t bus_range[2];
 	uint32_t *ranges;
 	int i, j, nranges, rangeslen;
-	pcireg_t bir, blr, csr;
-	int error = 0;
 
 	if (faa->fa_nreg < 2) {
 		printf(": no registers\n");
@@ -273,6 +272,7 @@ dwpcie_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_iot = faa->fa_iot;
+	sc->sc_dmat = faa->fa_dmat;
 	sc->sc_node = faa->fa_node;
 
 	sc->sc_acells = OF_getpropint(sc->sc_node, "#address-cells",
@@ -321,8 +321,11 @@ dwpcie_attach(struct device *parent, struct device *self, void *aux)
 
 	free(ranges, M_TEMP, rangeslen);
 
-	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
-	    faa->fa_reg[0].size, 0, &sc->sc_ioh)) {
+	sc->sc_ctrl_base = faa->fa_reg[0].addr;
+	sc->sc_ctrl_size = faa->fa_reg[0].size;
+
+	if (bus_space_map(sc->sc_iot, sc->sc_ctrl_base,
+	    sc->sc_ctrl_size, 0, &sc->sc_ioh)) {
 		free(sc->sc_ranges, M_TEMP, sc->sc_nranges *
 		    sizeof(struct dwpcie_range));
 		printf(": can't map ctrl registers\n");
@@ -336,7 +339,7 @@ dwpcie_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_space_map(sc->sc_iot, sc->sc_cfg0_base,
 	    sc->sc_cfg1_size, 0, &sc->sc_cfg0_ioh)) {
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, faa->fa_reg[0].size);
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ctrl_size);
 		free(sc->sc_ranges, M_TEMP, sc->sc_nranges *
 		    sizeof(struct dwpcie_range));
 		printf(": can't map config registers\n");
@@ -346,7 +349,7 @@ dwpcie_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(sc->sc_iot, sc->sc_cfg1_base,
 	    sc->sc_cfg1_size, 0, &sc->sc_cfg1_ioh)) {
 		bus_space_unmap(sc->sc_iot, sc->sc_cfg0_ioh, sc->sc_cfg0_size);
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, faa->fa_reg[0].size);
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ctrl_size);
 		free(sc->sc_ranges, M_TEMP, sc->sc_nranges *
 		    sizeof(struct dwpcie_range));
 		printf(": can't map config registers\n");
@@ -358,8 +361,21 @@ dwpcie_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	pinctrl_byname(sc->sc_node, "default");
-
 	clock_set_assigned(sc->sc_node);
+
+	config_defer(self, dwpcie_attach_deferred);
+}
+
+void
+dwpcie_attach_deferred(struct device *self)
+{
+	struct dwpcie_softc *sc = (struct dwpcie_softc *)self;
+	struct pcibus_attach_args pba;
+	bus_addr_t iobase, iolimit;
+	bus_addr_t membase, memlimit;
+	uint32_t bus_range[2];
+	pcireg_t bir, blr, csr;
+	int i, error = 0;
 
 	if (OF_is_compatible(sc->sc_node, "marvell,armada8k-pcie"))
 		error = dwpcie_armada8k_init(sc);
@@ -369,7 +385,7 @@ dwpcie_attach(struct device *parent, struct device *self, void *aux)
 	if (error != 0) {
 		bus_space_unmap(sc->sc_iot, sc->sc_cfg1_ioh, sc->sc_cfg1_size);
 		bus_space_unmap(sc->sc_iot, sc->sc_cfg0_ioh, sc->sc_cfg0_size);
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, faa->fa_reg[0].size);
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ctrl_size);
 		free(sc->sc_ranges, M_TEMP, sc->sc_nranges *
 		    sizeof(struct dwpcie_range));
 		printf("%s: can't initialize hardware\n",
@@ -494,11 +510,11 @@ dwpcie_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_busname = "pci";
 	pba.pba_iot = &sc->sc_bus_iot;
 	pba.pba_memt = &sc->sc_bus_memt;
-	pba.pba_dmat = faa->fa_dmat;
+	pba.pba_dmat = sc->sc_dmat;
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = sc->sc_bus;
-	if (OF_is_compatible(faa->fa_node, "marvell,armada8k-pcie"))
+	if (OF_is_compatible(sc->sc_node, "marvell,armada8k-pcie"))
 		pba.pba_flags |= PCI_FLAGS_MSI_ENABLED;
 
 	config_found(self, &pba, NULL);
