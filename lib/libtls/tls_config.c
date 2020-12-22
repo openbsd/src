@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.60 2020/12/22 02:20:44 bcook Exp $ */
+/* $OpenBSD: tls_config.c,v 1.61 2020/12/22 13:07:54 bcook Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -178,6 +178,8 @@ tls_config_free(struct tls_config *config)
 	free((char *)config->ciphers);
 	free((char *)config->crl_mem);
 	free(config->ecdhecurves);
+
+	pthread_mutex_destroy(&config->mutex);
 
 	free(config);
 }

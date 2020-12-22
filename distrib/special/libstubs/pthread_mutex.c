@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_mutex.c,v 1.1 2018/11/11 06:41:28 bcook Exp $ */
+/*	$OpenBSD: pthread_mutex.c,v 1.2 2020/12/22 13:07:54 bcook Exp $ */
 /*
  * Copyright (c) 2018 Brent Cook <bcook@openbsd.org>
  *
@@ -24,6 +24,13 @@ pthread_mutex_init(pthread_mutex_t *mutex,
 	return (0);
 }
 DEF_STRONG(pthread_mutex_init);
+
+int
+pthread_mutex_destroy(pthread_mutex_t *mutex)
+{
+	return (0);
+}
+DEF_STRONG(pthread_mutex_destroy);
 
 int
 pthread_mutex_lock(pthread_mutex_t *mutex)
