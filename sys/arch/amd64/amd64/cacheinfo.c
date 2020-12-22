@@ -1,4 +1,4 @@
-/*	$OpenBSD: cacheinfo.c,v 1.8 2016/02/03 03:25:07 guenther Exp $	*/
+/*	$OpenBSD: cacheinfo.c,v 1.9 2020/12/22 03:42:03 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -243,22 +243,6 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 		cai->cai_associativity = cp->cai_associativity;
 	else
 		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
-
-	/*
-	 * Determine L3 cache, Intel is different
-	 */
-	if (!strcmp(cpu_vendor, "AuthenticAMD") && family >= 0xf) {
-		cai = &ci->ci_cinfo[CAI_L3CACHE];
-		cai->cai_totalsize = AMD_L3_EDX_C_SIZE(descs[3]);
-		cai->cai_associativity = AMD_L3_EDX_C_ASSOC(descs[3]);
-		cai->cai_linesize = AMD_L3_EDX_C_LS(descs[3]);
-		cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
-		    cai->cai_associativity);
-		if (cp != NULL)
-			cai->cai_associativity = cp->cai_associativity;
-		else
-			cai->cai_associativity = 0;	/* XXX Unknown/reserved */
-	}
 }
 
 void
@@ -269,7 +253,6 @@ x86_print_cacheinfo(struct cpu_info *ci)
 	sep = print_cache_config(ci, CAI_ICACHE, "I-cache", NULL);
 	sep = print_cache_config(ci, CAI_DCACHE, "D-cache", sep);
 	sep = print_cache_config(ci, CAI_L2CACHE, "L2 cache", sep);
-	sep = print_cache_config(ci, CAI_L3CACHE, "L3 cache", sep);
 	if (sep != NULL)
 		printf("\n");
 	sep = print_tlb_config(ci, CAI_ITLB, "ITLB", NULL);
