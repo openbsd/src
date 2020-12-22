@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.247 2020/07/17 15:21:36 kn Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.248 2020/12/22 13:37:48 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -616,7 +616,7 @@ reroute:
 
 #if NPF > 0
 	if (pf_test(AF_INET6, PF_OUT, ifp, &m) != PF_PASS) {
-		error = EHOSTUNREACH;
+		error = EACCES;
 		m_freem(m);
 		goto done;
 	}
@@ -2773,7 +2773,7 @@ ip6_output_ipsec_send(struct tdb *tdb, struct mbuf *m, int tunalready, int fwd)
 	if ((encif = enc_getif(tdb->tdb_rdomain, tdb->tdb_tap)) == NULL ||
 	    pf_test(AF_INET6, fwd ? PF_FWD : PF_OUT, encif, &m) != PF_PASS) {
 		m_freem(m);
-		return EHOSTUNREACH;
+		return EACCES;
 	}
 	if (m == NULL)
 		return 0;
