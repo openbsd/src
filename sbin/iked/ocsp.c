@@ -1,4 +1,4 @@
-/*	$OpenBSD: ocsp.c,v 1.20 2020/09/03 14:50:40 tobhe Exp $ */
+/*	$OpenBSD: ocsp.c,v 1.21 2020/12/22 21:01:55 tobhe Exp $ */
 
 /*
  * Copyright (c) 2014 Markus Friedl
@@ -102,22 +102,22 @@ ocsp_connect(struct iked *env, struct imsg *imsg)
 	else if (env->sc_ocsp_url)
 		url = env->sc_ocsp_url;
 	else {
-		log_warnx("%s: no ocsp url", __func__);
+		log_warnx("%s: no ocsp url", SPI_SH(&sh, __func__));
 		goto done;
 	}
 	if (!OCSP_parse_url(url, &host, &port, &path, &use_ssl)) {
-		log_warnx("%s: error parsing OCSP-request-URL: %s", __func__,
-		    url);
+		log_warnx("%s: error parsing OCSP-request-URL: %s",
+		    SPI_SH(&sh, __func__), url);
 		goto done;
 	}
 	if (use_ssl) {
-		log_warnx("%s: OCSP over SSL not supported: %s", __func__,
-		    url);
+		log_warnx("%s: OCSP over SSL not supported: %s",
+		    SPI_SH(&sh, __func__), url);
 		goto done;
 	}
 
 	if ((fd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0)) == -1) {
-		log_debug("%s: socket failed", __func__);
+		log_debug("%s: socket failed", SPI_SH(&sh, __func__));
 		goto done;
 	}
 	if ((oc = calloc(1, sizeof(*oc))) == NULL) {
@@ -140,7 +140,7 @@ ocsp_connect(struct iked *env, struct imsg *imsg)
 			break;
 	if (res == NULL) {
 		log_debug("%s: no addr to connect to for %s:%s",
-		    __func__, host, port);
+		    SPI_SH(&sh, __func__), host, port);
 		goto done;
 	}
 
@@ -199,7 +199,8 @@ ocsp_connect_cb(int fd, short event, void *arg)
 
 	len = sizeof(error);
 	if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &error, &len) == -1) {
-		log_warn("%s: getsockopt SOL_SOCKET SO_ERROR", __func__);
+		log_warn("%s: getsockopt SOL_SOCKET SO_ERROR",
+		    SPI_SH(&oc->oc_sh, __func__));
 	} else if (error) {
 		log_warnx("%s: error while connecting: %s",
 		    SPI_SH(&oc->oc_sh, __func__), strerror(error));
