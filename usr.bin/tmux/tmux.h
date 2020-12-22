@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1081 2020/12/03 07:12:12 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1082 2020/12/22 09:22:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -724,6 +724,13 @@ struct grid {
 	u_int			 hlimit;
 
 	struct grid_line	*linedata;
+};
+
+/* Virtual cursor in a grid. */
+struct grid_reader {
+	struct grid	*gd;
+	u_int		 cx;
+	u_int		 cy;
 };
 
 /* Style alignment. */
@@ -2547,6 +2554,22 @@ void	 grid_reflow(struct grid *, u_int);
 void	 grid_wrap_position(struct grid *, u_int, u_int, u_int *, u_int *);
 void	 grid_unwrap_position(struct grid *, u_int *, u_int *, u_int, u_int);
 u_int	 grid_line_length(struct grid *, u_int);
+
+/* grid-reader.c */
+void	 grid_reader_start(struct grid_reader *, struct grid *, u_int, u_int);
+void	 grid_reader_get_cursor(struct grid_reader *, u_int *, u_int *);
+u_int	 grid_reader_line_length(struct grid_reader *);
+int	 grid_reader_in_set(struct grid_reader *, const char *);
+void	 grid_reader_cursor_right(struct grid_reader *, int, int);
+void	 grid_reader_cursor_left(struct grid_reader *);
+void	 grid_reader_cursor_down(struct grid_reader *);
+void	 grid_reader_cursor_up(struct grid_reader *);
+void	 grid_reader_cursor_start_of_line(struct grid_reader *, int);
+void	 grid_reader_cursor_end_of_line(struct grid_reader *, int, int);
+void	 grid_reader_cursor_next_word(struct grid_reader *, const char *);
+void	 grid_reader_cursor_next_word_end(struct grid_reader *, const char *);
+void	 grid_reader_cursor_previous_word(struct grid_reader *, const char *,
+	     int);
 
 /* grid-view.c */
 void	 grid_view_get_cell(struct grid *, u_int, u_int, struct grid_cell *);
