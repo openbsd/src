@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.70 2020/12/12 11:48:53 jan Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.71 2020/12/22 06:55:16 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -3302,6 +3302,7 @@ ixl_rxrinfo(struct ixl_softc *sc, struct if_rxrinfo *ifri)
 	for (i = 0; i < ixl_nqueues(sc); i++) {
 		ring = ifp->if_iqs[i]->ifiq_softc;
 		ifr[i].ifr_size = MCLBYTES;
+		snprintf(ifr[i].ifr_name, sizeof(ifr[i].ifr_name), "%d", i);
 		ifr[i].ifr_info = ring->rxr_acct;
 	}
 
