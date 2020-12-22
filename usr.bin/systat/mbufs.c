@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbufs.c,v 1.43 2020/06/15 10:54:29 dlg Exp $ */
+/*	$OpenBSD: mbufs.c,v 1.44 2020/12/22 06:57:18 dlg Exp $ */
 /*
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -402,7 +402,7 @@ showmbuf(struct if_info *ifi, int p, int showif)
 		print_fld_size(FLD_MB_MHWM, mbpool.pr_hiwat);
 	}
 
-	if (p >= 0 && p < mclpool_count) {
+	if (p >= 0 && p < ifi->data.ifri_total) {
 		struct if_rxring_info *ifr = &ifi->data.ifri_entries[p];
 		struct if_rxring *rxr= &ifr->ifr_info;
 		print_fld_str(FLD_MB_RING, ifr->ifr_name);
