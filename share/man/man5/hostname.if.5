@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.71 2020/12/22 00:11:03 jmc Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.72 2020/12/22 17:18:09 jmc Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -76,7 +76,7 @@ would run ifconfig to set the nwid and wpakey of the interface, run it again to 
 .Xr dhclient 8 .
 .Sh STATIC ADDRESS CONFIGURATION
 The following packed formats are valid for configuring network
-interfaces with static addresses:
+interfaces with static addresses.
 .Pp
 Regular IPv4 network setup:
 .Bd -ragged -offset indent
@@ -226,34 +226,33 @@ up
 .Ed
 .El
 .Sh DYNAMIC ADDRESS CONFIGURATION
-The following packed formats are provided for configuring network
-interfaces using IPv4 DHCP or IPv6 stateless address autoconfiguration.
-.Bd -ragged -offset indent
-.Li dhcp
-.Op Va options
+The following packed formats are valid for configuring network interfaces
+with dynamic addresses.
 .Pp
-.Li inet6 autoconf
-.Op Va options
-.Ed
-.Pp
-For IPv4 DHCP the literal string
+For IPv4 dynamic addressing using DHCP, the literal string
 .Dq dhcp
 followed by any options to be passed to
 .Xr ifconfig 8 .
 Note that
 .Xr ifconfig 8
-will be executed before
+is executed before
 .Xr dhclient 8 .
+.Bd -ragged -offset indent
+.Li dhcp
+.Op Va options
+.Ed
 .Pp
-For IPv6 stateless address autoconfiguration the literal strings
-.Dq inet6
-and
-.Dq autoconf
+For IPv6 stateless address autoconfiguration the literal string
+.Dq inet6 autoconf
 followed by any options to be passed to
 .Xr ifconfig 8 .
 Note that
 .Xr slaacd 8
 must also be enabled.
+.Bd -ragged -offset indent
+.Li inet6 autoconf
+.Op Va options
+.Ed
 .Sh BRIDGE INTERFACE CONFIGURATION
 If the network interface is a bridge, the options described in
 the bridge section of the
