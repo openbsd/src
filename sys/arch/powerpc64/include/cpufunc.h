@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.8 2020/08/23 10:07:51 kettenis Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.9 2020/12/22 11:55:44 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -135,6 +135,12 @@ static inline void
 mtsdr1(uint64_t value)
 {
 	__asm volatile ("mtsdr1 %0" :: "r"(value));
+}
+
+static inline void
+mtfscr(uint64_t value)
+{
+	__asm volatile ("mtspr 153, %0" :: "r"(value));
 }
 
 static inline uint32_t

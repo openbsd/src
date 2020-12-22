@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.20 2020/09/26 12:42:52 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.21 2020/12/22 11:55:44 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -239,6 +239,9 @@ cpu_init(void)
 		lpcr |= LPCR_HVICE;
 
 	mtlpcr(lpcr);
+	isync();
+
+	mtfscr(0);
 	isync();
 }
 
