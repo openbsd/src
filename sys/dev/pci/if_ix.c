@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.177 2020/12/12 11:48:53 jan Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.178 2020/12/22 23:25:37 dlg Exp $	*/
 
 /******************************************************************************
 
@@ -605,7 +605,7 @@ ixgbe_rxrinfo(struct ix_softc *sc, struct if_rxrinfo *ifri)
 
 	for (i = 0; i < sc->num_queues; i++) {
 		rxr = &sc->rx_rings[i];
-		ifr[n].ifr_size = sc->rx_mbuf_sz;
+		ifr[n].ifr_size = MCLBYTES;
 		snprintf(ifr[n].ifr_name, sizeof(ifr[n].ifr_name), "%d", i);
 		ifr[n].ifr_info = rxr->rx_ring;
 		n++;
