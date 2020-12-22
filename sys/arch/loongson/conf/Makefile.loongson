@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.loongson,v 1.78 2020/12/01 13:40:16 visa Exp $
+#	$OpenBSD: Makefile.loongson,v 1.79 2020/12/22 04:32:08 visa Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -63,7 +63,7 @@ HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
 HOSTED_CFLAGS=	${CFLAGS}
 HOSTED_C=	${HOSTCC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 
-NORMAL_C_NOP=	${CC} ${CFLAGS} ${CPPFLAGS} -c $<
+NORMAL_C_NOP=	${CC} ${CFLAGS} ${CPPFLAGS} -fno-ret-protector -c $<
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} ${PROF} -c $<
 
