@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.150 2020/11/10 17:26:54 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.151 2020/12/23 20:45:02 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -294,7 +294,7 @@ sys_nanosleep(struct proc *p, void *v, register_t *retval)
 	do {
 		getnanouptime(&start);
 		nsecs = MAX(1, MIN(TIMESPEC_TO_NSEC(&request), MAXTSLP));
-		error = tsleep_nsec(&chan, PWAIT | PCATCH, "nanosleep", nsecs);
+		error = tsleep_nsec(&chan, PWAIT | PCATCH, "nanoslp", nsecs);
 		getnanouptime(&stop);
 		timespecsub(&stop, &start, &elapsed);
 		timespecsub(&request, &elapsed, &request);
