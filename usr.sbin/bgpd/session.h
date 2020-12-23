@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.148 2020/12/11 12:00:01 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.149 2020/12/23 13:20:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -59,6 +59,7 @@ enum session_events {
 	EVNT_TIMER_CONNRETRY,
 	EVNT_TIMER_HOLDTIME,
 	EVNT_TIMER_KEEPALIVE,
+	EVNT_TIMER_SENDHOLD,
 	EVNT_RCVD_OPEN,
 	EVNT_RCVD_KEEPALIVE,
 	EVNT_RCVD_UPDATE,
@@ -180,6 +181,7 @@ enum Timer {
 	Timer_ConnectRetry,
 	Timer_Keepalive,
 	Timer_Hold,
+	Timer_SendHold,
 	Timer_IdleHold,
 	Timer_IdleHoldReset,
 	Timer_CarpUndemote,

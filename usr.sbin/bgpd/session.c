@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.406 2020/12/11 12:00:01 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.407 2020/12/23 13:20:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -375,6 +375,9 @@ session_main(int debug, int verbose)
 				case Timer_Hold:
 					bgp_fsm(p, EVNT_TIMER_HOLDTIME);
 					break;
+				case Timer_SendHold:
+					bgp_fsm(p, EVNT_TIMER_SENDHOLD);
+					break;
 				case Timer_ConnectRetry:
 					bgp_fsm(p, EVNT_TIMER_CONNRETRY);
 					break;
@@ -597,6 +600,7 @@ bgp_fsm(struct peer *peer, enum session_events event)
 		switch (event) {
 		case EVNT_START:
 			timer_stop(&peer->timers, Timer_Hold);
+			timer_stop(&peer->timers, Timer_SendHold);
 			timer_stop(&peer->timers, Timer_Keepalive);
 			timer_stop(&peer->timers, Timer_IdleHold);
 
@@ -709,6 +713,7 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			change_state(peer, STATE_IDLE, event);
 			break;
 		case EVNT_TIMER_HOLDTIME:
+		case EVNT_TIMER_SENDHOLD:
 			session_notification(peer, ERR_HOLDTIMEREXPIRED,
 			    0, NULL, 0);
 			change_state(peer, STATE_IDLE, event);
@@ -749,6 +754,7 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			change_state(peer, STATE_IDLE, event);
 			break;
 		case EVNT_TIMER_HOLDTIME:
+		case EVNT_TIMER_SENDHOLD:
 			session_notification(peer, ERR_HOLDTIMEREXPIRED,
 			    0, NULL, 0);
 			change_state(peer, STATE_IDLE, event);
@@ -784,6 +790,7 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			change_state(peer, STATE_IDLE, event);
 			break;
 		case EVNT_TIMER_HOLDTIME:
+		case EVNT_TIMER_SENDHOLD:
 			session_notification(peer, ERR_HOLDTIMEREXPIRED,
 			    0, NULL, 0);
 			change_state(peer, STATE_IDLE, event);
@@ -875,6 +882,7 @@ change_state(struct peer *peer, enum session_state state,
 		timer_stop(&peer->timers, Timer_ConnectRetry);
 		timer_stop(&peer->timers, Timer_Keepalive);
 		timer_stop(&peer->timers, Timer_Hold);
+		timer_stop(&peer->timers, Timer_SendHold);
 		timer_stop(&peer->timers, Timer_IdleHold);
 		timer_stop(&peer->timers, Timer_IdleHoldReset);
 		session_close_connection(peer);
@@ -923,6 +931,7 @@ change_state(struct peer *peer, enum session_state state,
 			timer_stop(&peer->timers, Timer_ConnectRetry);
 			timer_stop(&peer->timers, Timer_Keepalive);
 			timer_stop(&peer->timers, Timer_Hold);
+			timer_stop(&peer->timers, Timer_SendHold);
 			timer_stop(&peer->timers, Timer_IdleHold);
 			timer_stop(&peer->timers, Timer_IdleHoldReset);
 			session_close_connection(peer);
@@ -1780,6 +1789,10 @@ session_dispatch_msg(struct pollfd *pfd, struct peer *p)
 			return (1);
 		}
 		p->stats.last_write = getmonotime();
+		if (p->holdtime > 0)
+			timer_set(&p->timers, Timer_SendHold,
+			    p->holdtime < INTERVAL_HOLD ? INTERVAL_HOLD :
+			    p->holdtime);
 		if (p->throttled && p->wbuf.queued < SESS_MSG_LOW_MARK) {
 			if (imsg_rde(IMSG_XON, p->conf.id, NULL, 0) == -1)
 				log_peer_warn(&p->conf, "imsg_compose XON");

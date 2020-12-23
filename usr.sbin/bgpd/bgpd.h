@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.405 2020/11/05 11:52:59 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.406 2020/12/23 13:20:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1377,6 +1377,7 @@ static const char * const eventnames[] = {
 	"ConnectRetryTimer expired",
 	"HoldTimer expired",
 	"KeepaliveTimer expired",
+	"SendHoldTimer expired",
 	"OPEN message received",
 	"KEEPALIVE message received",
 	"UPDATE message received",
@@ -1467,6 +1468,7 @@ static const char * const timernames[] = {
 	"ConnectRetryTimer",
 	"KeepaliveTimer",
 	"HoldTimer",
+	"SendHoldTimer",
 	"IdleHoldTimer",
 	"IdleHoldResetTimer",
 	"CarpUndemoteTimer",
