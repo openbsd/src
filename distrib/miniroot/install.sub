@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1159 2020/12/21 16:52:49 krw Exp $
+#	$OpenBSD: install.sub,v 1.1160 2020/12/23 17:22:07 krw Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2335,7 +2335,7 @@ get_rootinfo() {
 # Parse and "unpack" a hostname.if(5) line given as positional parameters.
 # Fill the _cmds array with the resulting interface configuration commands.
 parse_hn_line() {
-	local _af=0 _name=1 _mask=2 _bc=3 _prefix=2 _c _cmd _prev _daddr
+	local _af=0 _name=1 _mask=2 _bc=3 _prefix=2 _c _cmd _prev _daddr _dhcp _i
 	local _has_dhclient=false _has_inet6=false
 	set -A _c -- "$@"
 	set -o noglob
@@ -2378,9 +2378,20 @@ parse_hn_line() {
 		_cmds[$_prev]="${_c[@]}"
 		;;
 	dhcp)	! $_has_dhclient && return
-		_c[0]="ifconfig $_if"
-		((${#_c[*]} > 1)) && _cmds[${#_cmds[*]}]="${_c[@]}"
-		_cmds[${#_cmds[*]}]="dhclient $_if"
+		unset _c[0]
+		_i=1
+		while [[ ${_c[$_i]} == @(-c|-d|-i|-n|-r|-v) ]]; do
+			if [[ ${_c[$_i]} == @(-c|-i) ]]; then
+				_dhcp[${#_dhcp[*]}]=${_c[$_i]}
+				unset _c[$_i]
+				(( _i++ ))
+			fi
+			_dhcp[${#_dhcp[*]}]=${_c[$_i]}
+			unset _c[$_i]
+			(( _i++ ))
+		done
+		((${#_c[*]} > 0)) && _cmds[${#_cmds[*]}]="ifconfig $_if ${_c[@]}"
+		_cmds[${#_cmds[*]}]="dhclient ${_dhcp[@]} $_if"
 		V4_DHCPCONF=true
 		;;
 	'!'*|bridge)

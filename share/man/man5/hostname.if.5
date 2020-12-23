@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.72 2020/12/22 17:18:09 jmc Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.73 2020/12/23 17:22:07 krw Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)hosts.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: December 22 2020 $
+.Dd $Mdocdate: December 23 2020 $
 .Dt HOSTNAME.IF 5
 .Os
 .Sh NAME
@@ -231,15 +231,19 @@ with dynamic addresses.
 .Pp
 For IPv4 dynamic addressing using DHCP, the literal string
 .Dq dhcp
-followed by any options to be passed to
-.Xr ifconfig 8 .
+followed first by
+.Xr dhclient 8
+options and then by
+.Xr ifconfig 8
+options.
 Note that
 .Xr ifconfig 8
 is executed before
 .Xr dhclient 8 .
 .Bd -ragged -offset indent
 .Li dhcp
-.Op Va options
+.Op Va dhclient_options
+.Op Va ifconfig_options
 .Ed
 .Pp
 For IPv6 stateless address autoconfiguration the literal string
@@ -251,7 +255,7 @@ Note that
 must also be enabled.
 .Bd -ragged -offset indent
 .Li inet6 autoconf
-.Op Va options
+.Op Va ifconfig_options
 .Ed
 .Sh BRIDGE INTERFACE CONFIGURATION
 If the network interface is a bridge, the options described in
