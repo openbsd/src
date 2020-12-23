@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.154 2020/12/23 13:53:44 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.155 2020/12/23 13:59:09 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -1620,6 +1620,7 @@ klist_invalidate(struct klist *list)
 		kn->kn_fop->f_detach(kn);
 		if (kn->kn_fop->f_flags & FILTEROP_ISFD) {
 			kn->kn_fop = &dead_filtops;
+			kn->kn_fop->f_event(kn, 0);
 			knote_activate(kn);
 			s = splhigh();
 			knote_release(kn);
