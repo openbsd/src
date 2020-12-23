@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.153 2020/12/20 12:54:05 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.154 2020/12/23 13:53:44 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -976,6 +976,8 @@ kqueue_scan(struct kqueue_scan_state *scan, int maxevents,
 		goto done;
 retry:
 	KASSERT(nkev == 0);
+
+	error = 0;
 
 	if (kq->kq_state & KQ_DYING) {
 		error = EBADF;
