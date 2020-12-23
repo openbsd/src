@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.168 2020/01/15 14:02:37 mpi Exp $	*/
+/*	$OpenBSD: inet.c,v 1.169 2020/12/23 22:20:18 bluhm Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -327,9 +327,10 @@ netdomainpr(struct kinfo_file *kf, int proto)
 		if (Bflag && istcp)
 			printf("%-6.6s %-6.6s %-6.6s ",
 			    "Recv-W", "Send-W", "Cgst-W");
-		printf(" %-*.*s %-*.*s %s\n",
+		printf(" %-*.*s %-*.*s%s\n",
 		    addrlen, addrlen, "Local Address",
-		    addrlen, addrlen, "Foreign Address", "(state)");
+		    addrlen, addrlen, "Foreign Address",
+		    istcp ? " TCP-State" : type == SOCK_RAW ? " IP-Proto" : "");
 	}
 
 	if (Aflag)
