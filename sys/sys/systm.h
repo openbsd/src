@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.148 2020/08/26 03:29:07 visa Exp $	*/
+/*	$OpenBSD: systm.h,v 1.149 2020/12/24 01:16:14 cheloha Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -106,6 +106,8 @@ extern struct vnode *rootvp;	/* vnode equivalent to above */
 
 extern dev_t swapdev;		/* swapping device */
 extern struct vnode *swapdev_vp;/* vnode equivalent to above */
+
+extern int nowake;		/* dead wakeup(9) channel */
 
 struct proc;
 struct process;

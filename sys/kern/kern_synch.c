@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.172 2020/12/07 16:55:29 mpi Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.173 2020/12/24 01:16:14 cheloha Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -87,6 +87,11 @@ sleep_queue_init(void)
 		TAILQ_INIT(&slpque[i]);
 }
 
+/*
+ * Global sleep channel for threads that do not want to
+ * receive wakeup(9) broadcasts.
+ */
+int nowake;
 
 /*
  * During autoconfiguration or after a panic, a sleep will simply
@@ -119,6 +124,7 @@ tsleep(const volatile void *ident, int priority, const char *wmesg, int timo)
 #endif
 
 	KASSERT((priority & ~(PRIMASK | PCATCH)) == 0);
+	KASSERT(ident != &nowake || ISSET(priority, PCATCH) || timo != 0);
 
 #ifdef MULTIPROCESSOR
 	KASSERT(timo || _kernel_lock_held());
@@ -213,6 +219,7 @@ msleep(const volatile void *ident, struct mutex *mtx, int priority,
 #endif
 
 	KASSERT((priority & ~(PRIMASK | PCATCH | PNORELOCK)) == 0);
+	KASSERT(ident != &nowake || ISSET(priority, PCATCH) || timo != 0);
 	KASSERT(mtx != NULL);
 
 	if (priority & PCATCH)
@@ -301,6 +308,7 @@ rwsleep(const volatile void *ident, struct rwlock *rwl, int priority,
 	int error, status;
 
 	KASSERT((priority & ~(PRIMASK | PCATCH | PNORELOCK)) == 0);
+	KASSERT(ident != &nowake || ISSET(priority, PCATCH) || timo != 0);
 	rw_assert_anylock(rwl);
 	status = rw_status(rwl);
 
