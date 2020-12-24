@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rge.c,v 1.10 2020/12/24 01:00:00 kevlo Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.11 2020/12/24 06:34:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020 Kevin Lo <kevlo@openbsd.org>
@@ -300,7 +300,9 @@ rge_attach(struct device *parent, struct device *self, void *aux)
 int
 rge_activate(struct device *self, int act)
 {
+#ifndef SMALL_KERNEL
 	struct rge_softc *sc = (struct rge_softc *)self;
+#endif
 	int rv = 0;
 
 	switch (act) {
