@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.119 2020/07/31 19:27:57 mglocker Exp $ */
+/* $OpenBSD: xhci.c,v 1.120 2020/12/24 14:11:38 mglocker Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -1135,8 +1135,10 @@ xhci_xfer_done(struct usbd_xfer *xfer)
 			i = (xp->ring.ntrb - 1);
 	}
 	xp->free_trbs += xx->ntrb;
+	xp->free_trbs += xx->zerotd;
 	xx->index = -1;
 	xx->ntrb = 0;
+	xx->zerotd = 0;
 
 	timeout_del(&xfer->timeout_handle);
 	usb_rem_task(xfer->device, &xfer->abort_task);
@@ -1842,6 +1844,7 @@ xhci_xfer_get_trb(struct xhci_softc *sc, struct usbd_xfer *xfer,
 	switch (last) {
 	case -1:	/* This will be a zero-length TD. */
 		xp->pending_xfers[xp->ring.index] = NULL;
+		xx->zerotd += 1;
 		break;
 	case 0:		/* This will be in a chain. */
 		xp->pending_xfers[xp->ring.index] = xfer;
