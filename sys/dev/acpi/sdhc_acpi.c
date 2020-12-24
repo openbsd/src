@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_acpi.c,v 1.16 2020/12/24 12:47:17 kettenis Exp $	*/
+/*	$OpenBSD: sdhc_acpi.c,v 1.17 2020/12/24 14:09:38 patrick Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -151,6 +151,8 @@ sdhc_acpi_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc.sc_host = &sc->sc_host;
 	sc->sc.sc_dmat = aaa->aaa_dmat;
+	sc->sc.sc_clkbase = acpi_getpropint(sc->sc_node,
+	    "clock-frequency", 0) / 1000;
 	sdhc_host_found(&sc->sc, sc->sc_memt, sc->sc_memh,
 	    aaa->aaa_size[0], 1, cap);
 }
