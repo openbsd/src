@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.114 2019/12/20 13:27:41 visa Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.115 2020/12/24 10:10:49 visa Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -394,7 +394,7 @@ pmap_bootstrap(void)
 	Sysmap = (pt_entry_t *)
 	    uvm_pageboot_alloc(sizeof(pt_entry_t) * Sysmapsize);
 
-	pool_init(&pmap_pmap_pool, PMAP_SIZEOF(ncpusfound), 0, IPL_NONE, 0,
+	pool_init(&pmap_pmap_pool, PMAP_SIZEOF(ncpusfound), 0, IPL_VM, 0,
 	    "pmappl", NULL);
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, IPL_VM, 0,
 	    "pvpl", NULL);
