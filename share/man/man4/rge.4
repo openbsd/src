@@ -1,4 +1,4 @@
-.\" $OpenBSD: rge.4,v 1.4 2020/10/12 02:11:10 kevlo Exp $
+.\" $OpenBSD: rge.4,v 1.5 2020/12/24 01:00:00 kevlo Exp $
 .\"
 .\" Copyright (c) 2019, 2020 Kevin Lo <kevlo@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 12 2020 $
+.Dd $Mdocdate: December 24 2020 $
 .Dt RGE 4
 .Os
 .Sh NAME
@@ -37,6 +37,15 @@ Rivet Networks Killer E3000 Adapter (2500baseT)
 .It
 TP-LINK TL-NG421 Adapter (2500baseT)
 .El
+.Pp
+The
+.Nm
+driver additionally supports Wake on LAN (WoL).
+See
+.Xr arp 8
+and
+.Xr ifconfig 8
+for more details.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,

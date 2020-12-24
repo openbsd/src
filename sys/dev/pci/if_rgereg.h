@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rgereg.h,v 1.5 2020/11/22 14:06:22 otto Exp $	*/
+/*	$OpenBSD: if_rgereg.h,v 1.6 2020/12/24 01:00:00 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020 Kevin Lo <kevlo@openbsd.org>
@@ -111,16 +111,24 @@
 #define RGE_EECMD_WRITECFG	0xc0
 
 /* Flags for register RGE_CFG1 */
+#define RGE_CFG1_PM_EN		0x01
 #define RGE_CFG1_SPEED_DOWN	0x10
 
 /* Flags for register RGE_CFG2 */
+#define RGE_CFG2_PMSTS_EN	0x20
 #define RGE_CFG2_CLKREQ_EN	0x80
 
 /* Flags for register RGE_CFG3 */
 #define RGE_CFG3_RDY_TO_L23	0x02
+#define RGE_CFG3_WOL_LINK	0x10
+#define RGE_CFG3_WOL_MAGIC	0x20
 
 /* Flags for register RGE_CFG5 */
 #define RGE_CFG5_PME_STS	0x01
+#define RGE_CFG5_WOL_LANWAKE	0x02
+#define RGE_CFG5_WOL_UCAST	0x10
+#define RGE_CFG5_WOL_MCAST	0x20
+#define RGE_CFG5_WOL_BCAST	0x40
 
 /* Flags for register RGE_CSIAR */
 #define RGE_CSIAR_BYTE_EN	0x0000000f

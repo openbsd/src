@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rge.c,v 1.9 2020/12/12 11:48:53 jan Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.10 2020/12/24 01:00:00 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020 Kevin Lo <kevlo@openbsd.org>
@@ -59,6 +59,7 @@ int rge_debug = 0;
 
 int		rge_match(struct device *, void *, void *);
 void		rge_attach(struct device *, struct device *, void *);
+int		rge_activate(struct device *, int);
 int		rge_intr(void *);
 int		rge_encap(struct rge_softc *, struct mbuf *, int);
 int		rge_ioctl(struct ifnet *, u_long, caddr_t);
@@ -111,6 +112,10 @@ int		rge_get_link_status(struct rge_softc *);
 void		rge_txstart(void *);
 void		rge_tick(void *);
 void		rge_link_state(struct rge_softc *);
+#ifndef SMALL_KERNEL
+int		rge_wol(struct ifnet *, int);
+void		rge_wol_power(struct rge_softc *);
+#endif
 
 static const struct {
 	uint16_t reg;
@@ -126,7 +131,7 @@ static const struct {
 };
 
 struct cfattach rge_ca = {
-	sizeof(struct rge_softc), rge_match, rge_attach
+	sizeof(struct rge_softc), rge_match, rge_attach, NULL, rge_activate
 };
 
 struct cfdriver rge_cd = {
@@ -272,6 +277,11 @@ rge_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 #endif
 
+#ifndef SMALL_KERNEL
+	ifp->if_capabilities |= IFCAP_WOL;
+	ifp->if_wol = rge_wol;
+	rge_wol(ifp, 0);
+#endif
 	timeout_set(&sc->sc_timeout, rge_tick, sc);
 	task_set(&sc->sc_task, rge_txstart, sc);
 
@@ -285,6 +295,25 @@ rge_attach(struct device *parent, struct device *self, void *aux)
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
+}
+
+int
+rge_activate(struct device *self, int act)
+{
+	struct rge_softc *sc = (struct rge_softc *)self;
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_POWERDOWN:
+		rv = config_activate_children(self, act);
+#ifndef SMALL_KERNEL
+		rge_wol_power(sc);
+#endif
+	default:
+		rv = config_activate_children(self, act);
+		break;
+	}
+	return (rv);
 }
 
 int
@@ -2025,6 +2054,7 @@ rge_hw_init(struct rge_softc *sc)
 	/* Set PCIe uncorrectable error status. */
 	rge_write_csi(sc, 0x108,
 	    rge_read_csi(sc, 0x108) | 0x00100000);
+
 }
 
 void
@@ -2391,3 +2421,48 @@ rge_link_state(struct rge_softc *sc)
 		if_link_state_change(ifp);
 	}
 }
+
+#ifndef SMALL_KERNEL
+int
+rge_wol(struct ifnet *ifp, int enable)
+{
+	struct rge_softc *sc = ifp->if_softc;
+
+	if (enable) {
+		if (!(RGE_READ_1(sc, RGE_CFG1) & RGE_CFG1_PM_EN)) {
+			printf("%s: power management is disabled, "
+			    "cannot do WOL\n", sc->sc_dev.dv_xname);
+			return (ENOTSUP);
+		}
+
+	}
+
+	rge_iff(sc);
+
+	if (enable)
+		RGE_MAC_SETBIT(sc, 0xc0b6, 0x0001);
+	else
+		RGE_MAC_CLRBIT(sc, 0xc0b6, 0x0001);
+
+	RGE_SETBIT_1(sc, RGE_EECMD, RGE_EECMD_WRITECFG);
+	RGE_CLRBIT_1(sc, RGE_CFG5, RGE_CFG5_WOL_LANWAKE | RGE_CFG5_WOL_UCAST |
+	    RGE_CFG5_WOL_MCAST | RGE_CFG5_WOL_BCAST);
+	RGE_CLRBIT_1(sc, RGE_CFG3, RGE_CFG3_WOL_LINK | RGE_CFG3_WOL_MAGIC);
+	if (enable)
+		RGE_SETBIT_1(sc, RGE_CFG5, RGE_CFG5_WOL_LANWAKE);
+	RGE_CLRBIT_1(sc, RGE_EECMD, RGE_EECMD_WRITECFG);
+
+	return (0);
+}
+
+void
+rge_wol_power(struct rge_softc *sc)
+{
+	/* Disable RXDV gate. */
+	RGE_CLRBIT_1(sc, RGE_PPSW, 0x08);
+	DELAY(2000);
+
+	RGE_SETBIT_1(sc, RGE_CFG1, RGE_CFG1_PM_EN);
+	RGE_SETBIT_1(sc, RGE_CFG2, RGE_CFG2_PMSTS_EN);
+}
+#endif
