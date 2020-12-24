@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_acpi.c,v 1.15 2020/05/08 11:18:01 kettenis Exp $	*/
+/*	$OpenBSD: sdhc_acpi.c,v 1.16 2020/12/24 12:47:17 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -84,6 +84,7 @@ sdhc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	struct sdhc_acpi_softc *sc = (struct sdhc_acpi_softc *)self;
 	struct acpi_attach_args *aaa = aux;
 	struct aml_value res;
+	uint32_t cap, capmask;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_node = aaa->aaa_node;
@@ -140,10 +141,18 @@ sdhc_acpi_attach(struct device *parent, struct device *self, void *aux)
 	sdhc_acpi_power_on(sc, sc->sc_node);
 	sdhc_acpi_explore(sc);
 
+	cap = acpi_getpropint(sc->sc_node, "sdhci-caps", 0);
+	capmask = acpi_getpropint(sc->sc_node, "sdhci-caps-mask", 0);
+	if (capmask != 0) {
+		cap = bus_space_read_4(sc->sc_memt, sc->sc_memh,
+		    SDHC_CAPABILITIES);
+		cap &= ~capmask;
+	}
+
 	sc->sc.sc_host = &sc->sc_host;
 	sc->sc.sc_dmat = aaa->aaa_dmat;
 	sdhc_host_found(&sc->sc, sc->sc_memt, sc->sc_memh,
-	    aaa->aaa_size[0], 1, 0);
+	    aaa->aaa_size[0], 1, cap);
 }
 
 int
