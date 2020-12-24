@@ -1,4 +1,4 @@
-/*	$Id: netproc.c,v 1.28 2020/09/14 16:00:17 florian Exp $ */
+/*	$Id: netproc.c,v 1.29 2020/12/24 08:17:49 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -840,7 +840,12 @@ netproc(int kfd, int afd, int Cfd, int cfd, int dfd, int rfd,
 				if (readop(Cfd, COMM_CHNG_ACK) != CHNG_ACK)
 					goto out;
 
-				/* Write to the CA that it's ready. */
+			}
+			/* Write to the CA that it's ready. */
+			for (i = 0; i < order.authsz; i++) {
+				if (chngs[i].status == CHNG_VALID ||
+				    chngs[i].status == CHNG_INVALID)
+					continue;
 				if (!dochngresp(&c, &chngs[i]))
 					goto out;
 			}
