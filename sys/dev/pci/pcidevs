@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1945 2020/11/29 19:15:32 kettenis Exp $
+$OpenBSD: pcidevs,v 1.1946 2020/12/24 12:02:21 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -5570,8 +5570,18 @@ product INTEL TGL_GT2_6		0x9ac9	UHD Graphics
 product INTEL TGL_GT2_7		0x9ad9	UHD Graphics
 product INTEL TGL_GT2_8		0x9af8	UHD Graphics
 product INTEL CML_U_GT1_1	0x9b21	UHD Graphics
+product INTEL CML_S_HB_1	0x9b33	Core 10G Host
 product INTEL CML_U_GT2_1	0x9b41	UHD Graphics
-product INTEL CORE10G_U_HB	0x9b61	Core 10G Host
+product INTEL CML_S_HB_2	0x9b43	Core 10G Host
+product INTEL CML_H_HB_1	0x9b44	Core 10G Host
+product INTEL CML_U_HB_1	0x9b51	Core 10G Host
+product INTEL CML_S_HB_3	0x9b53	Core 10G Host
+product INTEL CML_H_HB_2	0x9b54	Core 10G Host
+product INTEL CML_U_HB_2	0x9b61	Core 10G Host
+product INTEL CML_S_HB_4	0x9b63	Core 10G Host
+product INTEL CML_H_HB_3	0x9b64	Core 10G Host
+product INTEL CML_U_HB_3	0x9b71	Core 10G Host
+product INTEL CML_S_HB_5	0x9b73	Core 10G Host
 product INTEL CML_GT1_4		0x9ba2	UHD Graphics
 product INTEL CML_GT1_3		0x9ba4	UHD Graphics
 product INTEL CML_GT1_1		0x9ba5	UHD Graphics 610
@@ -6054,6 +6064,7 @@ product INTEL CORE_CONTROL	0xd157	Core Control
 product INTEL CORE_MISC		0xd158	Core Misc
 product INTEL NVME_2		0xf1a5	NVMe
 product INTEL NVME_3		0xf1a6	NVMe
+product INTEL NVME_4		0xf1a8	NVMe
 
 /* Intergraph products */
 product INTERGRAPH 4D50T	0x00e4	Powerstorm 4D50T
@@ -6142,6 +6153,9 @@ product LAVA PARALLELB		0x8003	Dual Parallel
 product LEADTEK S3_805		0x0000	S3 805
 product LEADTEK WINFAST		0x6606	Leadtek WinFast TV 2000
 product LEADTEK WINFAST_XP	0x6609	Leadtek WinFast TV 2000 XP
+
+/* Lenovo products */
+product LENOVO NVME		0x0003	NVMe
 
 /* Level 1 (Intel) */
 product LEVEL1 LXT1001		0x0001	LXT1001
@@ -7675,6 +7689,8 @@ product SAMSUNG2 NVME_172X_A_B	0xa822	NVMe
 /* SanDisk (Western Digital) */
 product SANDISK WDSXXXG1X0C	0x5001	WD Black NVMe
 product SANDISK WDSXXXG2X0C	0x5002	WD Black NVMe
+product SANDISK PCSN520_1	0x5003	PC SN520
+product SANDISK PCSN520_2	0x5004	PC SN520
 product SANDISK WDSXXXG3X0C	0x5006	WD Black NVMe
 
 /* Sangoma products */
