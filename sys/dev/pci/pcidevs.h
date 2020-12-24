@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1945 2020/11/29 19:15:32 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1946 2020/12/24 12:02:21 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5575,8 +5575,18 @@
 #define	PCI_PRODUCT_INTEL_TGL_GT2_7	0x9ad9		/* UHD Graphics */
 #define	PCI_PRODUCT_INTEL_TGL_GT2_8	0x9af8		/* UHD Graphics */
 #define	PCI_PRODUCT_INTEL_CML_U_GT1_1	0x9b21		/* UHD Graphics */
+#define	PCI_PRODUCT_INTEL_CML_S_HB_1	0x9b33		/* Core 10G Host */
 #define	PCI_PRODUCT_INTEL_CML_U_GT2_1	0x9b41		/* UHD Graphics */
-#define	PCI_PRODUCT_INTEL_CORE10G_U_HB	0x9b61		/* Core 10G Host */
+#define	PCI_PRODUCT_INTEL_CML_S_HB_2	0x9b43		/* Core 10G Host */
+#define	PCI_PRODUCT_INTEL_CML_H_HB_1	0x9b44		/* Core 10G Host */
+#define	PCI_PRODUCT_INTEL_CML_U_HB_1	0x9b51		/* Core 10G Host */
+#define	PCI_PRODUCT_INTEL_CML_S_HB_3	0x9b53		/* Core 10G Host */
+#define	PCI_PRODUCT_INTEL_CML_H_HB_2	0x9b54		/* Core 10G Host */
+#define	PCI_PRODUCT_INTEL_CML_U_HB_2	0x9b61		/* Core 10G Host */
+#define	PCI_PRODUCT_INTEL_CML_S_HB_4	0x9b63		/* Core 10G Host */
+#define	PCI_PRODUCT_INTEL_CML_H_HB_3	0x9b64		/* Core 10G Host */
+#define	PCI_PRODUCT_INTEL_CML_U_HB_3	0x9b71		/* Core 10G Host */
+#define	PCI_PRODUCT_INTEL_CML_S_HB_5	0x9b73		/* Core 10G Host */
 #define	PCI_PRODUCT_INTEL_CML_GT1_4	0x9ba2		/* UHD Graphics */
 #define	PCI_PRODUCT_INTEL_CML_GT1_3	0x9ba4		/* UHD Graphics */
 #define	PCI_PRODUCT_INTEL_CML_GT1_1	0x9ba5		/* UHD Graphics 610 */
@@ -6059,6 +6069,7 @@
 #define	PCI_PRODUCT_INTEL_CORE_MISC	0xd158		/* Core Misc */
 #define	PCI_PRODUCT_INTEL_NVME_2	0xf1a5		/* NVMe */
 #define	PCI_PRODUCT_INTEL_NVME_3	0xf1a6		/* NVMe */
+#define	PCI_PRODUCT_INTEL_NVME_4	0xf1a8		/* NVMe */
 
 /* Intergraph products */
 #define	PCI_PRODUCT_INTERGRAPH_4D50T	0x00e4		/* Powerstorm 4D50T */
@@ -6147,6 +6158,9 @@
 #define	PCI_PRODUCT_LEADTEK_S3_805	0x0000		/* S3 805 */
 #define	PCI_PRODUCT_LEADTEK_WINFAST	0x6606		/* Leadtek WinFast TV 2000 */
 #define	PCI_PRODUCT_LEADTEK_WINFAST_XP	0x6609		/* Leadtek WinFast TV 2000 XP */
+
+/* Lenovo products */
+#define	PCI_PRODUCT_LENOVO_NVME	0x0003		/* NVMe */
 
 /* Level 1 (Intel) */
 #define	PCI_PRODUCT_LEVEL1_LXT1001	0x0001		/* LXT1001 */
@@ -7680,6 +7694,8 @@
 /* SanDisk (Western Digital) */
 #define	PCI_PRODUCT_SANDISK_WDSXXXG1X0C	0x5001		/* WD Black NVMe */
 #define	PCI_PRODUCT_SANDISK_WDSXXXG2X0C	0x5002		/* WD Black NVMe */
+#define	PCI_PRODUCT_SANDISK_PCSN520_1	0x5003		/* PC SN520 */
+#define	PCI_PRODUCT_SANDISK_PCSN520_2	0x5004		/* PC SN520 */
 #define	PCI_PRODUCT_SANDISK_WDSXXXG3X0C	0x5006		/* WD Black NVMe */
 
 /* Sangoma products */

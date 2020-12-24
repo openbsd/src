@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1945 2020/11/29 19:15:32 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1946 2020/12/24 12:02:21 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -19732,11 +19732,51 @@ static const struct pci_known_product pci_known_products[] = {
 	    "UHD Graphics",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CML_S_HB_1,
+	    "Core 10G Host",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CML_U_GT2_1,
 	    "UHD Graphics",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE10G_U_HB,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CML_S_HB_2,
+	    "Core 10G Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CML_H_HB_1,
+	    "Core 10G Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CML_U_HB_1,
+	    "Core 10G Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CML_S_HB_3,
+	    "Core 10G Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CML_H_HB_2,
+	    "Core 10G Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CML_U_HB_2,
+	    "Core 10G Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CML_S_HB_4,
+	    "Core 10G Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CML_H_HB_3,
+	    "Core 10G Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CML_U_HB_3,
+	    "Core 10G Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CML_S_HB_5,
 	    "Core 10G Host",
 	},
 	{
@@ -21668,6 +21708,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "NVMe",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_NVME_4,
+	    "NVMe",
+	},
+	{
 	    PCI_VENDOR_INTERGRAPH, PCI_PRODUCT_INTERGRAPH_4D50T,
 	    "Powerstorm 4D50T",
 	},
@@ -21922,6 +21966,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_LEADTEK, PCI_PRODUCT_LEADTEK_WINFAST_XP,
 	    "Leadtek WinFast TV 2000 XP",
+	},
+	{
+	    PCI_VENDOR_LENOVO, PCI_PRODUCT_LENOVO_NVME,
+	    "NVMe",
 	},
 	{
 	    PCI_VENDOR_LEVEL1, PCI_PRODUCT_LEVEL1_LXT1001,
@@ -27350,6 +27398,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_SANDISK, PCI_PRODUCT_SANDISK_WDSXXXG2X0C,
 	    "WD Black NVMe",
+	},
+	{
+	    PCI_VENDOR_SANDISK, PCI_PRODUCT_SANDISK_PCSN520_1,
+	    "PC SN520",
+	},
+	{
+	    PCI_VENDOR_SANDISK, PCI_PRODUCT_SANDISK_PCSN520_2,
+	    "PC SN520",
 	},
 	{
 	    PCI_VENDOR_SANDISK, PCI_PRODUCT_SANDISK_WDSXXXG3X0C,
