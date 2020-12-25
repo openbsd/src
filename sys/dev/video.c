@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.44 2020/05/16 10:47:22 mpi Exp $	*/
+/*	$OpenBSD: video.c,v 1.45 2020/12/25 12:59:52 visa Exp $	*/
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -419,7 +419,7 @@ filt_videodetach(struct knote *kn)
 	int s;
 
 	s = splhigh();
-	klist_remove(&sc->sc_rsel.si_note, kn);
+	klist_remove_locked(&sc->sc_rsel.si_note, kn);
 	splx(s);
 }
 
@@ -476,7 +476,7 @@ videokqfilter(dev_t dev, struct knote *kn)
 	}
 
 	s = splhigh();
-	klist_insert(&sc->sc_rsel.si_note, kn);
+	klist_insert_locked(&sc->sc_rsel.si_note, kn);
 	splx(s);
 
 	return (0);

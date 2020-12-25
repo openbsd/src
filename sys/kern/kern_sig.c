@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.269 2020/12/23 20:48:06 cheloha Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.270 2020/12/25 12:59:52 visa Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1854,7 +1854,7 @@ filt_sigattach(struct knote *kn)
 	kn->kn_flags |= EV_CLEAR;		/* automatically set */
 
 	s = splhigh();
-	klist_insert(&pr->ps_klist, kn);
+	klist_insert_locked(&pr->ps_klist, kn);
 	splx(s);
 
 	return (0);
@@ -1867,7 +1867,7 @@ filt_sigdetach(struct knote *kn)
 	int s;
 
 	s = splhigh();
-	klist_remove(&pr->ps_klist, kn);
+	klist_remove_locked(&pr->ps_klist, kn);
 	splx(s);
 }
 

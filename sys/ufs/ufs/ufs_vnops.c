@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.152 2020/06/11 09:18:43 mpi Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.153 2020/12/25 12:59:53 visa Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1934,7 +1934,7 @@ ufs_kqfilter(void *v)
 
 	kn->kn_hook = (caddr_t)vp;
 
-	klist_insert(&vp->v_selectinfo.si_note, kn);
+	klist_insert_locked(&vp->v_selectinfo.si_note, kn);
 
 	return (0);
 }
@@ -1944,7 +1944,7 @@ filt_ufsdetach(struct knote *kn)
 {
 	struct vnode *vp = (struct vnode *)kn->kn_hook;
 
-	klist_remove(&vp->v_selectinfo.si_note, kn);
+	klist_remove_locked(&vp->v_selectinfo.si_note, kn);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vldcp.c,v 1.20 2020/05/23 11:29:37 mpi Exp $	*/
+/*	$OpenBSD: vldcp.c,v 1.21 2020/12/25 12:59:51 visa Exp $	*/
 /*
  * Copyright (c) 2009, 2012 Mark Kettenis
  *
@@ -628,7 +628,7 @@ filt_vldcprdetach(struct knote *kn)
 	int s;
 
 	s = spltty();
-	klist_remove(&sc->sc_rsel.si_note, kn);
+	klist_remove_locked(&sc->sc_rsel.si_note, kn);
 	splx(s);
 }
 
@@ -639,7 +639,7 @@ filt_vldcpwdetach(struct knote *kn)
 	int s;
 
 	s = spltty();
-	klist_remove(&sc->sc_wsel.si_note, kn);
+	klist_remove_locked(&sc->sc_wsel.si_note, kn);
 	splx(s);
 }
 
@@ -733,7 +733,7 @@ vldcpkqfilter(dev_t dev, struct knote *kn)
 	kn->kn_hook = sc;
 
 	s = spltty();
-	klist_insert(klist, kn);
+	klist_insert_locked(klist, kn);
 	splx(s);
 
 	return (0);

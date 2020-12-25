@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.155 2020/12/23 13:59:09 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.156 2020/12/25 12:59:52 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -228,7 +228,7 @@ kqueue_kqfilter(struct file *fp, struct knote *kn)
 		return (EINVAL);
 
 	kn->kn_fop = &kqread_filtops;
-	klist_insert(&kq->kq_sel.si_note, kn);
+	klist_insert_locked(&kq->kq_sel.si_note, kn);
 	return (0);
 }
 
@@ -237,7 +237,7 @@ filt_kqdetach(struct knote *kn)
 {
 	struct kqueue *kq = kn->kn_fp->f_data;
 
-	klist_remove(&kq->kq_sel.si_note, kn);
+	klist_remove_locked(&kq->kq_sel.si_note, kn);
 }
 
 int
@@ -283,7 +283,7 @@ filt_procattach(struct knote *kn)
 	}
 
 	s = splhigh();
-	klist_insert(&pr->ps_klist, kn);
+	klist_insert_locked(&pr->ps_klist, kn);
 	splx(s);
 
 	return (0);
@@ -307,7 +307,7 @@ filt_procdetach(struct knote *kn)
 		return;
 
 	s = splhigh();
-	klist_remove(&pr->ps_klist, kn);
+	klist_remove_locked(&pr->ps_klist, kn);
 	splx(s);
 }
 
@@ -339,7 +339,7 @@ filt_proc(struct knote *kn, long hint)
 		kn->kn_status |= KN_DETACHED;
 		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
 		kn->kn_data = W_EXITCODE(pr->ps_xexit, pr->ps_xsig);
-		klist_remove(&pr->ps_klist, kn);
+		klist_remove_locked(&pr->ps_klist, kn);
 		splx(s);
 		return (1);
 	}
@@ -1575,6 +1575,16 @@ klist_free(struct klist *klist)
 void
 klist_insert(struct klist *klist, struct knote *kn)
 {
+	int ls;
+
+	ls = klist_lock(klist);
+	SLIST_INSERT_HEAD(&klist->kl_list, kn, kn_selnext);
+	klist_unlock(klist, ls);
+}
+
+void
+klist_insert_locked(struct klist *klist, struct knote *kn)
+{
 	KLIST_ASSERT_LOCKED(klist);
 
 	SLIST_INSERT_HEAD(&klist->kl_list, kn, kn_selnext);
@@ -1582,6 +1592,16 @@ klist_insert(struct klist *klist, struct knote *kn)
 
 void
 klist_remove(struct klist *klist, struct knote *kn)
+{
+	int ls;
+
+	ls = klist_lock(klist);
+	SLIST_REMOVE(&klist->kl_list, kn, knote, kn_selnext);
+	klist_unlock(klist, ls);
+}
+
+void
+klist_remove_locked(struct klist *klist, struct knote *kn)
 {
 	KLIST_ASSERT_LOCKED(klist);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.197 2020/12/12 11:49:02 jan Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.198 2020/12/25 12:59:53 visa Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1195,7 +1195,7 @@ bpfkqfilter(dev_t dev, struct knote *kn)
 
 	bpf_get(d);
 	kn->kn_hook = d;
-	klist_insert(klist, kn);
+	klist_insert_locked(klist, kn);
 
 	mtx_enter(&d->bd_mtx);
 	if (d->bd_rnonblock == 0 && d->bd_rdStart == 0)
@@ -1212,7 +1212,7 @@ filt_bpfrdetach(struct knote *kn)
 
 	KERNEL_ASSERT_LOCKED();
 
-	klist_remove(&d->bd_sel.si_note, kn);
+	klist_remove_locked(&d->bd_sel.si_note, kn);
 	bpf_put(d);
 }
 

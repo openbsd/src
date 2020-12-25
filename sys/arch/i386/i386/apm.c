@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.125 2020/06/24 22:03:40 cheloha Exp $	*/
+/*	$OpenBSD: apm.c,v 1.126 2020/12/25 12:59:51 visa Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -1117,7 +1117,7 @@ filt_apmrdetach(struct knote *kn)
 	struct apm_softc *sc = (struct apm_softc *)kn->kn_hook;
 
 	rw_enter_write(&sc->sc_lock);
-	klist_remove(&sc->sc_note, kn);
+	klist_remove_locked(&sc->sc_note, kn);
 	rw_exit_write(&sc->sc_lock);
 }
 
@@ -1151,7 +1151,7 @@ apmkqfilter(dev_t dev, struct knote *kn)
 	kn->kn_hook = (caddr_t)sc;
 
 	rw_enter_write(&sc->sc_lock);
-	klist_insert(&sc->sc_note, kn);
+	klist_insert_locked(&sc->sc_note, kn);
 	rw_exit_write(&sc->sc_lock);
 	return (0);
 }

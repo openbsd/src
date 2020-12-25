@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.61 2020/06/11 09:18:43 mpi Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.62 2020/12/25 12:59:52 visa Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -154,7 +154,7 @@ fusefs_kqfilter(void *v)
 
 	kn->kn_hook = (caddr_t)vp;
 
-	klist_insert(&vp->v_selectinfo.si_note, kn);
+	klist_insert_locked(&vp->v_selectinfo.si_note, kn);
 
 	return (0);
 }
@@ -164,7 +164,7 @@ filt_fusefsdetach(struct knote *kn)
 {
 	struct vnode *vp = (struct vnode *)kn->kn_hook;
 
-	klist_remove(&vp->v_selectinfo.si_note, kn);
+	klist_remove_locked(&vp->v_selectinfo.si_note, kn);
 }
 
 int

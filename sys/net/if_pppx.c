@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.105 2020/09/20 12:27:40 mvs Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.106 2020/12/25 12:59:53 visa Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -492,7 +492,7 @@ pppxkqfilter(dev_t dev, struct knote *kn)
 	kn->kn_hook = (caddr_t)pxd;
 
 	mtx_enter(mtx);
-	klist_insert(klist, kn);
+	klist_insert_locked(klist, kn);
 	mtx_leave(mtx);
 
 	return (0);
@@ -505,7 +505,7 @@ filt_pppx_rdetach(struct knote *kn)
 	struct klist *klist = &pxd->pxd_rsel.si_note;
 
 	mtx_enter(&pxd->pxd_rsel_mtx);
-	klist_remove(klist, kn);
+	klist_remove_locked(klist, kn);
 	mtx_leave(&pxd->pxd_rsel_mtx);
 }
 
@@ -526,7 +526,7 @@ filt_pppx_wdetach(struct knote *kn)
 	struct klist *klist = &pxd->pxd_wsel.si_note;
 
 	mtx_enter(&pxd->pxd_wsel_mtx);
-	klist_remove(klist, kn);
+	klist_remove_locked(klist, kn);
 	mtx_leave(&pxd->pxd_wsel_mtx);
 }
 
@@ -1259,7 +1259,7 @@ pppackqfilter(dev_t dev, struct knote *kn)
 	kn->kn_hook = sc;
 
 	mtx_enter(mtx);
-	klist_insert(klist, kn);
+	klist_insert_locked(klist, kn);
 	mtx_leave(mtx);
 
 	return (0);
@@ -1272,7 +1272,7 @@ filt_pppac_rdetach(struct knote *kn)
 	struct klist *klist = &sc->sc_rsel.si_note;
 
 	mtx_enter(&sc->sc_rsel_mtx);
-	klist_remove(klist, kn);
+	klist_remove_locked(klist, kn);
 	mtx_leave(&sc->sc_rsel_mtx);
 }
 
@@ -1293,7 +1293,7 @@ filt_pppac_wdetach(struct knote *kn)
 	struct klist *klist = &sc->sc_wsel.si_note;
 
 	mtx_enter(&sc->sc_wsel_mtx);
-	klist_remove(klist, kn);
+	klist_remove_locked(klist, kn);
 	mtx_leave(&sc->sc_wsel_mtx);
 }
 

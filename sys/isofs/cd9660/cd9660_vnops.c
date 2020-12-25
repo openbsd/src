@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.85 2020/06/11 09:18:43 mpi Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.86 2020/12/25 12:59:52 visa Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -1002,7 +1002,7 @@ cd9660_kqfilter(void *v)
 
 	kn->kn_hook = (caddr_t)vp;
 
-	klist_insert(&vp->v_selectinfo.si_note, kn);
+	klist_insert_locked(&vp->v_selectinfo.si_note, kn);
 
 	return (0);
 }
@@ -1012,7 +1012,7 @@ filt_cd9660detach(struct knote *kn)
 {
 	struct vnode *vp = (struct vnode *)kn->kn_hook;
 
-	klist_remove(&vp->v_selectinfo.si_note, kn);
+	klist_remove_locked(&vp->v_selectinfo.si_note, kn);
 }
 
 int

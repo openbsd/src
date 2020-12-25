@@ -1657,7 +1657,7 @@ filt_drmdetach(struct knote *kn)
 	int s;
 
 	s = spltty();
-	klist_remove(&dev->note, kn);
+	klist_remove_locked(&dev->note, kn);
 	splx(s);
 }
 
@@ -1676,7 +1676,7 @@ filt_drmreaddetach(struct knote *kn)
 	int s;
 
 	s = spltty();
-	klist_remove(&file_priv->rsel.si_note, kn);
+	klist_remove_locked(&file_priv->rsel.si_note, kn);
 	splx(s);
 }
 
@@ -1731,7 +1731,7 @@ drmkqfilter(dev_t kdev, struct knote *kn)
 		kn->kn_hook = file_priv;
 
 		s = spltty();
-		klist_insert(&file_priv->rsel.si_note, kn);
+		klist_insert_locked(&file_priv->rsel.si_note, kn);
 		splx(s);
 		break;
 	case EVFILT_DEVICE:
@@ -1739,7 +1739,7 @@ drmkqfilter(dev_t kdev, struct knote *kn)
 		kn->kn_hook = dev;
 
 		s = spltty();
-		klist_insert(&dev->note, kn);
+		klist_insert_locked(&dev->note, kn);
 		splx(s);
 		break;
 	default:

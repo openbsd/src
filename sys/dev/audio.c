@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.191 2020/05/19 06:32:24 mpi Exp $	*/
+/*	$OpenBSD: audio.c,v 1.192 2020/12/25 12:59:51 visa Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -2294,7 +2294,7 @@ audiokqfilter(dev_t dev, struct knote *kn)
 	kn->kn_hook = sc;
 
 	mtx_enter(&audio_lock);
-	klist_insert(klist, kn);
+	klist_insert_locked(klist, kn);
 	mtx_leave(&audio_lock);
 done:
 	device_unref(&sc->dev);
@@ -2307,7 +2307,7 @@ filt_audiordetach(struct knote *kn)
 	struct audio_softc *sc = kn->kn_hook;
 
 	mtx_enter(&audio_lock);
-	klist_remove(&sc->rec.sel.si_note, kn);
+	klist_remove_locked(&sc->rec.sel.si_note, kn);
 	mtx_leave(&audio_lock);
 }
 
@@ -2332,7 +2332,7 @@ filt_audiowdetach(struct knote *kn)
 	struct audio_softc *sc = kn->kn_hook;
 
 	mtx_enter(&audio_lock);
-	klist_remove(&sc->play.sel.si_note, kn);
+	klist_remove_locked(&sc->play.sel.si_note, kn);
 	mtx_leave(&audio_lock);
 }
 
@@ -2357,7 +2357,7 @@ filt_audioctlrdetach(struct knote *kn)
 	struct audio_softc *sc = kn->kn_hook;
 
 	mtx_enter(&audio_lock);
-	klist_remove(&sc->mix_sel.si_note, kn);
+	klist_remove_locked(&sc->mix_sel.si_note, kn);
 	mtx_leave(&audio_lock);
 }
 

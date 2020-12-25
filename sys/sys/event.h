@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.51 2020/12/20 12:54:05 visa Exp $	*/
+/*	$OpenBSD: event.h,v 1.52 2020/12/25 12:59:53 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -246,7 +246,9 @@ extern void	klist_init_mutex(struct klist *, struct mutex *);
 extern void	klist_init_rwlock(struct klist *, struct rwlock *);
 extern void	klist_free(struct klist *);
 extern void	klist_insert(struct klist *, struct knote *);
+extern void	klist_insert_locked(struct klist *, struct knote *);
 extern void	klist_remove(struct klist *, struct knote *);
+extern void	klist_remove_locked(struct klist *, struct knote *);
 extern int	klist_empty(struct klist *);
 extern void	klist_invalidate(struct klist *);
 
