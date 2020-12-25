@@ -1,8 +1,7 @@
-#	$OpenBSD: Makefile,v 1.7 2020/12/17 00:51:12 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.8 2020/12/25 14:25:58 bluhm Exp $
 
 # The following ports must be installed:
 #
-# python-2.7          interpreted object-oriented programming language
 # scapy               powerful interactive packet manipulation in python
 
 RTABLE		?=	1
@@ -20,7 +19,7 @@ INTERFACES != sh -c "ifconfig ${PAIR1} 2>/dev/null; \
 
 .if ! exists(/usr/local/bin/python2) || ! exists(/usr/local/bin/scapy)
 regress:
-	@echo install python and the scapy module for additional tests
+	@echo Install py3-scapy package to run this regress.
 	@echo SKIPPED
 .endif
 
@@ -38,9 +37,9 @@ regress:
 # Set variables so that make runs with and without obj directory.
 # Only do that if necessary to keep visible output short.
 .if ${.CURDIR} == ${.OBJDIR}
-PYTHON =	python2.7 -B -u ./
+PYTHON =	python3 -B -u ./
 .else
-PYTHON =	python2.7 -B -u ${.CURDIR}/
+PYTHON =	python3 -B -u ${.CURDIR}/
 .endif
 
 REGRESS_SETUP +=	setup

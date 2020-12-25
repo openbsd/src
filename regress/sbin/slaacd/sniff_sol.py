@@ -1,6 +1,6 @@
-#!/usr/local/bin/python2.7
+#!/usr/local/bin/python3
+# $OpenBSD: sniff_sol.py,v 1.2 2020/12/25 14:25:58 bluhm Exp $
 
-#	$OpenBSD: sniff_sol.py,v 1.1 2017/08/25 17:02:13 florian Exp $
 # Copyright (c) 2017 Florian Obser <florian@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -57,38 +57,38 @@ executor.join(timeout=30)
 p = sniffer.p
 
 if p is None:
-	print "no packet sniffed"
+	print("no packet sniffed")
 	exit(2)
 
 if p.type != ETH_P_IPV6:
-	print "unexpected ethertype: {0}".format(p.type)
+	print("unexpected ethertype: {0}".format(p.type))
 	exit(1)
 
 if not p.payload.nh in ipv6nh or ipv6nh[p.payload.nh] != 'ICMPv6':
-	print "unexpected next header: {0}".format(p.payload.nh)
+	print("unexpected next header: {0}".format(p.payload.nh))
 	exit(1)
 
 if p[IPv6].hlim != 255:
-	print "invalid hlim: {0}".format(p[IPv6].hlim)
+	print("invalid hlim: {0}".format(p[IPv6].hlim))
 	exit(1)
 
 if p[IPv6].dst != 'ff02::2':
-	print "invalid IPv6 destination: {0}".format(p[IPv6].dst)
+	print("invalid IPv6 destination: {0}".format(p[IPv6].dst))
 	exit(1)
 
 if 'ICMPv6ND_RS' not in p[IPv6]:
-	print "no router solicitation found"
+	print("no router solicitation found")
 	exit(1)
 
 
 if 'ICMPv6NDOptSrcLLAddr' not in p[IPv6][ICMPv6ND_RS]:
-	print "no Source Link-Layer Address option"
+	print("no Source Link-Layer Address option")
 	exit(1)
 
 if p[Ether].src != p[IPv6][ICMPv6ND_RS].lladdr:
-	print "src mac ({0}) != lladdr option ({0})".format(p[Ether].src,
-	    p[IPv6][ICMPv6ND_RS].lladdr)
+	print("src mac ({0}) != lladdr option ({0})".format(p[Ether].src,
+	    p[IPv6][ICMPv6ND_RS].lladdr))
 	exit(1)
 
-print "received router solicitation"
+print("received router solicitation")
 exit(0)

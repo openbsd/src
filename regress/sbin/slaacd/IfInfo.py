@@ -1,5 +1,7 @@
-#	$OpenBSD: IfInfo.py,v 1.1 2017/10/11 17:21:44 florian Exp $
+# $OpenBSD: IfInfo.py,v 1.2 2020/12/25 14:25:58 bluhm Exp $
+
 # Copyright (c) 2017 Florian Obser <florian@openbsd.org>
+# Copyright (c) 2020 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -22,7 +24,8 @@ class IfInfo(object):
 		self.ifname = ifname
 		self.mac = None
 		self.ll = None
-		self.out = subprocess.check_output(['ifconfig', ifname])
+		self.out = subprocess.check_output(['ifconfig', ifname],
+		    encoding='UTF-8')
 		self.parse(self.out)
 
 	def __str__(self):
@@ -30,7 +33,7 @@ class IfInfo(object):
 		    self.mac, self.ll)
 
 	def parse(self, str):
-		lines = str.split("\n")
+		lines = str.splitlines()
 		for line in lines:
 			lladdr = re.match("^\s+lladdr (.+)", line)
 			link_local = re.match("^\s+inet6 ([^%]+)", line)

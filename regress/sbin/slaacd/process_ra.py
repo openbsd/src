@@ -1,10 +1,12 @@
+#!/usr/local/bin/python3
+# $OpenBSD: process_ra.py,v 1.3 2020/12/25 14:25:58 bluhm Exp $
+
 from IfInfo import IfInfo
 from Slaacctl import ShowInterface
 import subprocess
 import sys
 from scapy.all import *
 import unittest
-
 
 rtadv_if = IfInfo(sys.argv[1])
 slaac_if = IfInfo(sys.argv[2])
@@ -25,7 +27,6 @@ p = eth/ip/ra/pref/mtu/rdnss/dnssl
 sendp(p, iface=rtadv_if.ifname, verbose=0)
 
 slaac_show_interface = ShowInterface(slaac_if.ifname, sock, debug=0)
-
 
 class TestRouterAdvertisementParsing(unittest.TestCase):
 	def test_number_ras(self):
@@ -50,5 +51,5 @@ if __name__ == '__main__':
 	suite = unittest.TestLoader().loadTestsFromTestCase(
 	    TestRouterAdvertisementParsing)
 	if not unittest.TextTestRunner(verbosity=2).run(suite).wasSuccessful():
-		print slaac_show_interface
+		print(slaac_show_interface)
 		sys.exit(1)

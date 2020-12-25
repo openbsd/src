@@ -1,5 +1,7 @@
-#	$OpenBSD: Slaacctl.py,v 1.2 2019/12/27 09:17:07 florian Exp $
+# $OpenBSD: Slaacctl.py,v 1.3 2020/12/25 14:25:58 bluhm Exp $
+
 # Copyright (c) 2017 Florian Obser <florian@openbsd.org>
+# Copyright (c) 2020 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -32,7 +34,7 @@ class ShowInterface(object):
 		self.def_router_proposals = []
 		self.rdns_proposals = []
 		self.out = subprocess.check_output(['slaacctl', '-s', self.sock,
-		    'sh', 'in', self.ifname])
+		    'sh', 'in', self.ifname], encoding='UTF-8')
 		self.parse(self.out)
 
 	def __str__(self):
@@ -57,10 +59,10 @@ class ShowInterface(object):
 		addr_proposal = None
 		def_router_proposal = None
 		rdns_proposal = None
-		lines = str.split("\n")
+		lines = str.splitlines()
 		for line in lines:
 			if self.debug == 1:
-				print line
+				print(line)
 			if re.match("^\s*$", line):
 				pass
 			elif state == 'START':
