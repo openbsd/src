@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2020/12/17 00:51:12 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.8 2020/12/25 16:50:40 bluhm Exp $
 
 # Copyright (c) 2017-2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -22,9 +22,9 @@
 
 .if ! (make(clean) || make(cleandir) || make(obj))
 
-.if ! exists(/usr/local/bin/scapy)
+.if ! exists(/usr/local/bin/scapy-3)
 regress:
-	@echo Install scapy package to run this regress.
+	@echo Install py3-scapy package to run this regress.
 	@echo SKIPPED
 .endif
 
@@ -32,7 +32,8 @@ regress:
 .if ! empty (PERL_REQUIRE)
 regress:
 	@echo perl require: "${PERL_REQUIRE}"
-	@echo install these perl packages for additional tests
+	@echo Install these Perl modules for additional tests.
+	@echo SKIPPED
 .endif
 
 PF_STATUS !=	${SUDO} pfctl -si | sed -n 's/^Status: \([^ ]*\) .*/\1/p'
@@ -85,9 +86,9 @@ regress:
 
 .if make (regress) || make (all)
 .BEGIN:
-	@echo
 	${SUDO} true
 	ssh -t ${REMOTE_SSH} true
+	@echo
 .endif
 
 # Create python include file containing the addresses.
@@ -114,10 +115,10 @@ TARGETS =
 # Set variables so that make runs with and without obj directory.
 # Only do that if necessary to keep visible output short.
 .if ${.CURDIR} == ${.OBJDIR}
-PYTHON =	python2.7 -u
+PYTHON =	python3 -u
 SCAPYPATH =
 .else
-PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 -u
+PYTHON =	PYTHONPATH=${.OBJDIR} python3 -u
 SCAPYPATH =	${.CURDIR}/
 .endif
 

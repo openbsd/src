@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.4 2019/07/12 19:31:29 bluhm Exp $
+#	$OpenBSD: Makefile.inc,v 1.5 2020/12/25 16:50:40 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-BSD-Socket-Splice	perl interface to OpenBSD socket splicing
@@ -16,7 +16,8 @@ PERL_REQUIRE !=	perl -Mstrict -Mwarnings -e ' \
 .if ! empty (PERL_REQUIRE) && ! defined (TARGETS)
 regress:
 	@echo "${PERL_REQUIRE}"
-	@echo install these perl packages for additional tests
+	@echo Install these Perl modules for additional tests.
+	@echo SKIPPED
 .endif
 
 # Fill out these variables if you want to test socket splicing with
@@ -35,7 +36,7 @@ REMOTE_SSH ?=
 ARGS !=			cd ${.CURDIR} && ls args-*.pl
 TARGETS ?=		${ARGS}
 .endif
-REGRESS_TARGETS =	${TARGETS:S/^/run-/}
+REGRESS_TARGETS +=	${TARGETS:S/^/run-/}
 CLEANFILES +=		*.log ktrace.out stamp-*
 
 # Set variables so that make runs with and without obj directory.
