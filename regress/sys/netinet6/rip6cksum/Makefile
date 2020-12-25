@@ -1,20 +1,21 @@
-# $OpenBSD: Makefile,v 1.4 2020/12/17 00:51:13 bluhm Exp $
+# $OpenBSD: Makefile,v 1.5 2020/12/25 13:47:43 bluhm Exp $
 
 # The following ports must be installed:
 #
-# python-2.7          interpreted object-oriented programming language
 # scapy               powerful interactive packet manipulation in python
 
-.if ! exists(/usr/local/bin/python2.7) || ! exists(/usr/local/bin/scapy)
+.if ! exists(/usr/local/bin/scapy-3)
 regress:
-	@echo Install python and the scapy module for additional tests.
+	@echo Install scapy package to run this regress.
 	@echo SKIPPED
 .endif
 
 PROG =		rip6cksum
 WARNINGS =	yes
 
-PYTHON =	python2.7 -u ${.CURDIR}/
+PYTHON =	python3 -u ${.CURDIR}/
+
+REGRESS_SETUP +=	${PROG}
 
 REGRESS_TARGETS +=	run-error-negative
 run-error-negative:
@@ -115,7 +116,5 @@ run-ckoff-2-long:
 	# use checksum at offset 2, packet is 5 bytes long
 	${SUDO} ./rip6cksum -c 2 -r 5 -s 5 -w -- \
 	    ${PYTHON}sendrecv.py -c 2 -s 5
-
-${REGRESS_TARGETS}: ${PROG}
 
 .include <bsd.regress.mk>
