@@ -1,4 +1,4 @@
-#!/usr/local/bin/python2.7
+#!/usr/local/bin/python3
 # send 2 non-overlapping ping fragments
 
 import os
@@ -19,11 +19,11 @@ class Sniff1(threading.Thread):
 dstaddr=sys.argv[1]
 pid=os.getpid()
 eid=pid & 0xffff
-payload="ABCDEFGHIJKLOMNO"
+payload=b"ABCDEFGHIJKLOMNO"
 packet=IP(src=SRC_OUT, dst=dstaddr)/ICMP(type='echo-request', id=eid)/payload
 fid=pid & 0xffff
-frag0=str(packet)[20:36]
-frag1=str(packet)[36:44]
+frag0=bytes(packet)[20:36]
+frag1=bytes(packet)[36:44]
 pkt0=IP(src=SRC_OUT, dst=dstaddr, proto=1, id=fid, frag=0, flags='MF')/frag0
 pkt1=IP(src=SRC_OUT, dst=dstaddr, proto=1, id=fid, frag=2)/frag1
 eth=[]
@@ -43,15 +43,15 @@ if a and a.type == ETH_P_IP and \
     a.payload.frag == 0 and a.payload.flags == 0 and \
     icmptypes[a.payload.payload.type] == 'echo-reply':
 	id=a.payload.payload.id
-	print "id=%#x" % (id)
+	print("id=%#x" % (id))
 	if id != eid:
-		print "WRONG ECHO REPLY ID"
+		print("WRONG ECHO REPLY ID")
 		exit(2)
 	load=a.payload.payload.payload.load
-	print "payload=%s" % (load)
+	print("payload=%s" % (load))
 	if load == payload:
 		exit(0)
-	print "PAYLOAD!=%s" % (payload)
+	print("PAYLOAD!=%s" % (payload))
 	exit(1)
-print "NO ECHO REPLY"
+print("NO ECHO REPLY")
 exit(2)

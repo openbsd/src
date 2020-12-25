@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.27 2020/12/17 00:51:12 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.28 2020/12/25 00:49:49 bluhm Exp $
 
 # Copyright (c) 2011-2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -18,9 +18,9 @@
 #
 # scapy               powerful interactive packet manipulation in python
 
-.if ! exists(/usr/local/bin/scapy)
+.if ! exists(/usr/local/bin/scapy-3)
 regress:
-	@echo Install scapy package to run this regress.
+	@echo Install py3-scapy package to run this regress.
 	@echo SKIPPED
 .endif
 
@@ -89,10 +89,10 @@ regress:
 .if ! empty (PF_SSH)
 .if make (regress) || make (all)
 .BEGIN:
-	@echo
 	${SUDO} true
 	ssh -t ${PF_SSH} ${SUDO} true
 	rm -f stamp-pfctl
+	@echo
 .endif
 .endif
 
@@ -123,9 +123,9 @@ stamp-pfctl: addr.py pf.conf
 # Set variables so that make runs with and without obj directory.
 # Only do that if necessary to keep visible output short.
 .if ${.CURDIR} == ${.OBJDIR}
-PYTHON =	python2.7 -u ./
+PYTHON =	python3 -u ./
 .else
-PYTHON =	PYTHONPATH=${.OBJDIR} python2.7 -u ${.CURDIR}/
+PYTHON =	PYTHONPATH=${.OBJDIR} python3 -u ${.CURDIR}/
 .endif
 
 # Ping all addresses.  This ensures that the IP addresses are configured

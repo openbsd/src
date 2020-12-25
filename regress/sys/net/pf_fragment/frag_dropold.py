@@ -1,4 +1,4 @@
-#!/usr/local/bin/python2.7
+#!/usr/local/bin/python3
 # new fragment completely overlaps old one
 
 # |----|
@@ -29,13 +29,13 @@ class Sniff1(threading.Thread):
 dstaddr=sys.argv[1]
 pid=os.getpid()
 eid=pid & 0xffff
-payload="ABCDEFGHIJKLOMNOQRSTUVWX"
-dummy="01234567"
+payload=b"ABCDEFGHIJKLOMNOQRSTUVWX"
+dummy=b"01234567"
 packet=IP(src=SRC_OUT, dst=dstaddr)/ICMP(type='echo-request', id=eid)/payload
 fid=pid & 0xffff
-frag0=str(packet)[20:28]
+frag0=bytes(packet)[20:28]
 frag1=dummy
-frag2=str(packet)[28:52]
+frag2=bytes(packet)[28:52]
 pkt0=IP(src=SRC_OUT, dst=dstaddr, proto=1, id=fid, frag=0, flags='MF')/frag0
 pkt1=IP(src=SRC_OUT, dst=dstaddr, proto=1, id=fid, frag=2, flags='MF')/frag1
 pkt2=IP(src=SRC_OUT, dst=dstaddr, proto=1, id=fid, frag=1)/frag2
@@ -57,15 +57,15 @@ if a and a.type == ETH_P_IP and \
     a.payload.frag == 0 and a.payload.flags == 0 and \
     icmptypes[a.payload.payload.type] == 'echo-reply':
 	id=a.payload.payload.id
-	print "id=%#x" % (id)
+	print("id=%#x" % (id))
 	if id != eid:
-		print "WRONG ECHO REPLY ID"
+		print("WRONG ECHO REPLY ID")
 		exit(2)
 	load=a.payload.payload.payload.load
-	print "payload=%s" % (load)
+	print("payload=%s" % (load))
 	if load == payload:
 		exit(0)
-	print "PAYLOAD!=%s" % (payload)
+	print("PAYLOAD!=%s" % (payload))
 	exit(1)
-print "NO ECHO REPLY"
+print("NO ECHO REPLY")
 exit(2)

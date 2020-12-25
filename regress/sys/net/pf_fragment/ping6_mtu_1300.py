@@ -1,4 +1,4 @@
-#!/usr/local/bin/python2.7
+#!/usr/local/bin/python3
 # check wether path mtu to dst is 1300
 
 import os
@@ -21,7 +21,7 @@ class Sniff1(threading.Thread):
 dstaddr=sys.argv[1]
 eid=os.getpid() & 0xffff
 hdr=IPv6(src=SRC_OUT6, dst=dstaddr)/ICMPv6EchoRequest(id=eid)
-payload="a" * (1400 - len(str(hdr)))
+payload=b"a" * (1400 - len(bytes(hdr)))
 ip=hdr/payload
 eth=Ether(src=SRC_MAC, dst=PF_MAC)/ip
 
@@ -36,16 +36,16 @@ sniffer.join(timeout=5)
 a = sniffer.packet
 
 if a is None:
-	print "no packet sniffed"
+	print("no packet sniffed")
 	exit(2)
 if a and a.type == ETH_P_IPV6 and \
     ipv6nh[a.payload.nh] == 'ICMPv6' and \
     icmp6types[a.payload.payload.type] == 'Packet too big':
 	mtu=a.payload.payload.mtu
-	print "mtu=%d" % (mtu)
+	print("mtu=%d" % (mtu))
 	if mtu == 1300:
 		exit(0)
-	print "MTU!=1300"
+	print("MTU!=1300")
 	exit(1)
-print "MTU=UNKNOWN"
+print("MTU=UNKNOWN")
 exit(2)

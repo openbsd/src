@@ -1,4 +1,4 @@
-#!/usr/local/bin/python2.7
+#!/usr/local/bin/python3
 # send 2 ping6 fragments with hop-by-hop extension header
 
 import os
@@ -19,11 +19,11 @@ class Sniff1(threading.Thread):
 dstaddr=sys.argv[1]
 pid=os.getpid()
 eid=pid & 0xffff
-payload="ABCDEFGHIJKLOMNO"
+payload=b"ABCDEFGHIJKLOMNO"
 packet=IPv6(src=SRC_OUT6, dst=dstaddr)/ICMPv6EchoRequest(id=eid, data=payload)
 fid=pid & 0xffffffff
-frag0=IPv6ExtHdrFragment(nh=58, id=fid, m=1)/str(packet)[40:56]
-frag1=IPv6ExtHdrFragment(nh=58, id=fid, offset=2)/str(packet)[56:64]
+frag0=IPv6ExtHdrFragment(nh=58, id=fid, m=1)/bytes(packet)[40:56]
+frag1=IPv6ExtHdrFragment(nh=58, id=fid, offset=2)/bytes(packet)[56:64]
 pkt0=IPv6(src=SRC_OUT6, dst=dstaddr)/IPv6ExtHdrHopByHop()/frag0
 pkt1=IPv6(src=SRC_OUT6, dst=dstaddr)/IPv6ExtHdrHopByHop()/frag1
 eth=[]
@@ -42,15 +42,15 @@ if a and a.type == ETH_P_IPV6 and \
     ipv6nh[a.payload.nh] == 'ICMPv6' and \
     icmp6types[a.payload.payload.type] == 'Echo Reply':
 	id=a.payload.payload.id
-	print "id=%#x" % (id)
+	print("id=%#x" % (id))
 	if id != eid:
-		print "WRONG ECHO REPLY ID"
+		print("WRONG ECHO REPLY ID")
 		exit(2)
 	data=a.payload.payload.data
-	print "payload=%s" % (data)
+	print("payload=%s" % (data))
 	if data == payload:
 		exit(0)
-	print "PAYLOAD!=%s" % (payload)
+	print("PAYLOAD!=%s" % (payload))
 	exit(1)
-print "NO ECHO REPLY"
+print("NO ECHO REPLY")
 exit(2)

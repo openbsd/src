@@ -1,4 +1,4 @@
-#!/usr/local/bin/python2.7
+#!/usr/local/bin/python3
 # old fragment completely overlaps new one
 
 #      |------------|
@@ -25,13 +25,13 @@ class Sniff1(threading.Thread):
 dstaddr=sys.argv[1]
 pid=os.getpid()
 eid=pid & 0xffff
-payload="ABCDEFGHIJKLOMNOQRSTUVWX"
-dummy="01234567"
+payload=b"ABCDEFGHIJKLOMNOQRSTUVWX"
+dummy=b"01234567"
 packet=IPv6(src=SRC_OUT6, dst=dstaddr)/ICMPv6EchoRequest(id=eid, data=payload)
 fid=pid & 0xffffffff
-frag0=IPv6ExtHdrFragment(nh=58, id=fid, offset=0, m=1)/str(packet)[40:48]
+frag0=IPv6ExtHdrFragment(nh=58, id=fid, offset=0, m=1)/bytes(packet)[40:48]
 frag1=IPv6ExtHdrFragment(nh=58, id=fid, offset=2, m=1)/dummy
-frag2=IPv6ExtHdrFragment(nh=58, id=fid, offset=1)/str(packet)[48:72]
+frag2=IPv6ExtHdrFragment(nh=58, id=fid, offset=1)/bytes(packet)[48:72]
 pkt0=IPv6(src=SRC_OUT6, dst=dstaddr)/frag0
 pkt1=IPv6(src=SRC_OUT6, dst=dstaddr)/frag1
 pkt2=IPv6(src=SRC_OUT6, dst=dstaddr)/frag2
@@ -49,22 +49,22 @@ sniffer.join(timeout=5)
 a = sniffer.packet
 
 if a is None:
-	print "no reply"
+	print("no reply")
 	exit(0)
 if a and a.type == ETH_P_IPV6 and \
     ipv6nh[a.payload.nh] == 'ICMPv6' and \
     icmp6types[a.payload.payload.type] == 'Echo Reply':
 	id=a.payload.payload.id
-	print "id=%#x" % (id)
+	print("id=%#x" % (id))
 	if id != eid:
-		print "WRONG ECHO REPLY ID"
+		print("WRONG ECHO REPLY ID")
 		exit(2)
 	data=a.payload.payload.data
-	print "payload=%s" % (data)
+	print("payload=%s" % (data))
 	if data == payload:
-		print "ECHO REPLY"
+		print("ECHO REPLY")
 		exit(1)
-	print "PAYLOAD!=%s" % (payload)
+	print("PAYLOAD!=%s" % (payload))
 	exit(2)
-print "NO ECHO REPLY"
+print("NO ECHO REPLY")
 exit(2)
