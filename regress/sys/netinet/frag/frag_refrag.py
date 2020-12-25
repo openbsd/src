@@ -1,6 +1,6 @@
-#!/usr/local/bin/python2.7
+#!/usr/local/bin/python3
 
-print "fragments of a large packet that has to be refragmented by reflector"
+print("fragments of a large packet that has to be refragmented by reflector")
 
 # |--------|
 #          |------------------|
@@ -14,24 +14,24 @@ from scapy.all import *
 
 pid=os.getpid()
 eid=pid & 0xffff
-payload=100 * "ABCDEFGHIJKLMNOP"
+payload=b"ABCDEFGHIJKLMNOP" * 100
 packet=IP(src=LOCAL_ADDR, dst=REMOTE_ADDR)/ \
     ICMP(type='echo-request', id=eid)/payload
-request_cksum=ICMP(str(packet.payload)).chksum
-print "request cksum=%#x" % (request_cksum)
+request_cksum=ICMP(bytes(packet.payload)).chksum
+print("request cksum=%#x" % (request_cksum))
 frag=[]
 fid=pid & 0xffff
 frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid, flags='MF')/
-    str(packet)[20:36])
+    bytes(packet)[20:36])
 offset=2
 chunk=4
 while 40+8*(offset+chunk) < len(payload):
 	frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
 	    frag=offset, flags='MF')/
-	    str(packet)[20+(8*offset):20+8*(offset+chunk)])
+	    bytes(packet)[20+(8*offset):20+8*(offset+chunk)])
 	offset+=chunk
 frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
-	frag=offset)/str(packet)[20+(8*offset):])
+	frag=offset)/bytes(packet)[20+(8*offset):])
 eth=[]
 for f in frag:
 	eth.append(Ether(src=LOCAL_MAC, dst=REMOTE_MAC)/f)
@@ -49,17 +49,17 @@ for a in ans:
 	    a.payload.frag == 0 and a.payload.flags == 1 and \
 	    icmptypes[a.payload.payload.type] == 'echo-reply':
 		id=a.payload.payload.id
-		print "id=%#x" % (id)
+		print("id=%#x" % (id))
 		if id != eid:
-			print "WRONG ECHO REPLY ID"
+			print("WRONG ECHO REPLY ID")
 			exit(2)
 		reply_cksum=a.payload.payload.chksum
-		print "reply cksum=%#x" % (reply_cksum)
+		print("reply cksum=%#x" % (reply_cksum))
 		# change request checksum incrementaly and check with reply
 		diff_cksum=~(~reply_cksum+~(~request_cksum+~0x0800+0x0000))
 		if diff_cksum & 0xffff != 0xffff and diff_cksum & 0xffff != 0:
-			print "CHECKSUM ERROR diff cksum=%#x" % (diff_cksum)
+			print("CHECKSUM ERROR diff cksum=%#x" % (diff_cksum))
 			exit(1)
 		exit(0)
-print "NO ECHO REPLY"
+print("NO ECHO REPLY")
 exit(2)

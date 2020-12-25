@@ -1,6 +1,6 @@
-#!/usr/local/bin/python2.7
+#!/usr/local/bin/python3
 
-print "6 non-overlapping ping fragments in 75 seconds, timeout is 60"
+print("6 non-overlapping ping fragments in 75 seconds, timeout is 60")
 
 # |----|
 #      |----|
@@ -15,23 +15,23 @@ from scapy.all import *
 
 pid=os.getpid()
 eid=pid & 0xffff
-payload="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcd"
+payload=b"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcd"
 packet=IP(src=LOCAL_ADDR, dst=REMOTE_ADDR)/ \
     ICMP(type='echo-request', id=eid)/payload
 frag=[]
 fid=pid & 0xffff
 frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
-    flags='MF')/str(packet)[20:28])
+    flags='MF')/bytes(packet)[20:28])
 frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
-    frag=1, flags='MF')/str(packet)[28:36])
+    frag=1, flags='MF')/bytes(packet)[28:36])
 frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
-    frag=2, flags='MF')/str(packet)[36:44])
+    frag=2, flags='MF')/bytes(packet)[36:44])
 frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
-    frag=3, flags='MF')/str(packet)[44:52])
+    frag=3, flags='MF')/bytes(packet)[44:52])
 frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
-    frag=4, flags='MF')/str(packet)[52:60])
+    frag=4, flags='MF')/bytes(packet)[52:60])
 frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
-    frag=5)/str(packet)[60:68])
+    frag=5)/bytes(packet)[60:68])
 eth=[]
 for f in frag:
 	eth.append(Ether(src=LOCAL_MAC, dst=REMOTE_MAC)/f)
@@ -51,16 +51,16 @@ for a in ans:
 	    a.payload.frag == 0 and a.payload.flags == 0 and \
 	    icmptypes[a.payload.payload.type] == 'echo-reply':
 		id=a.payload.payload.id
-		print "id=%#x" % (id)
+		print("id=%#x" % (id))
 		if id != eid:
-			print "WRONG ECHO REPLY ID"
+			print("WRONG ECHO REPLY ID")
 			exit(2)
 		data=a.payload.payload.payload.load
-		print "payload=%s" % (data)
+		print("payload=%s" % (data))
 		if data == payload:
-			print "ECHO REPLY"
+			print("ECHO REPLY")
 			exit(1)
-		print "PAYLOAD!=%s" % (payload)
+		print("PAYLOAD!=%s" % (payload))
 		exit(1)
-print "no echo reply"
+print("no echo reply")
 exit(0)

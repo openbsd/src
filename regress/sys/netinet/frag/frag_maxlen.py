@@ -1,6 +1,6 @@
-#!/usr/local/bin/python2.7
+#!/usr/local/bin/python3
 
-print "fully fragmented maximum size ping packet, sent in random order"
+print("fully fragmented maximum size ping packet, sent in random order")
 
 #          |----|
 #                                        |----|
@@ -17,17 +17,18 @@ pid=os.getpid()
 eid=pid & 0xffff
 iplen=2**16
 size=424
-payload="ABCDEFGHIJKLMNOP" * (iplen / 16)
+payload=b"ABCDEFGHIJKLMNOP" * int(iplen / 16)
 packet=IP(src=LOCAL_ADDR, dst=REMOTE_ADDR)/ \
-    ICMP(type='echo-request', id=eid)/str(payload)[0:iplen-20-8-1]
+    ICMP(type='echo-request', id=eid)/bytes(payload)[0:iplen-20-8-1]
 frag=[]
 fid=pid & 0xffff
-max=(iplen-20)/size
+max=int((iplen-20)/size)
 for i in range(max):
 	frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
-	    frag=i*(size/8), flags='MF')/str(packet)[20+i*size:20+(i+1)*size])
+	    frag=i*int(size/8), flags='MF')/
+	    bytes(packet)[20+i*size:20+(i+1)*size])
 frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
-    frag=max*(size/8))/str(packet)[20+max*size:])
+    frag=max*int(size/8))/bytes(packet)[20+max*size:])
 eth=[]
 for f in frag:
 	eth.append(Ether(src=LOCAL_MAC, dst=REMOTE_MAC)/f)
@@ -53,10 +54,10 @@ for a in ans:
 	    a.payload.proto == 1 and \
 	    icmptypes[a.payload.payload.type] == 'echo-reply':
 		id=a.payload.payload.id
-		print "id=%#x" % (id)
+		print("id=%#x" % (id))
 		if id != eid:
-			print "WRONG ECHO REPLY ID"
+			print("WRONG ECHO REPLY ID")
 			exit(2)
 		exit(0)
-print "NO ECHO REPLY"
+print("NO ECHO REPLY")
 exit(1)

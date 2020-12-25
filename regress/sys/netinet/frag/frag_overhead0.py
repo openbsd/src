@@ -1,6 +1,6 @@
-#!/usr/local/bin/python2.7
+#!/usr/local/bin/python3
 
-print "ping fragment that overlaps the first fragment with its head"
+print("ping fragment that overlaps the first fragment with its head")
 
 # |---------|
 #      |XXXX-----|
@@ -11,16 +11,16 @@ from scapy.all import *
 
 pid=os.getpid()
 eid=pid & 0xffff
-payload="ABCDEFGHIJKLMNOP"
-dummy="01234567"
+payload=b"ABCDEFGHIJKLMNOP"
+dummy=b"01234567"
 packet=IP(src=LOCAL_ADDR, dst=REMOTE_ADDR)/ \
     ICMP(type='echo-request', id=eid)/payload
 frag=[]
 fid=pid & 0xffff
 frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
-    flags='MF')/str(packet)[20:36])
+    flags='MF')/bytes(packet)[20:36])
 frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
-    frag=1)/(dummy+str(packet)[36:44]))
+    frag=1)/(dummy+bytes(packet)[36:44]))
 eth=[]
 for f in frag:
 	eth.append(Ether(src=LOCAL_MAC, dst=REMOTE_MAC)/f)
@@ -38,15 +38,15 @@ for a in ans:
 	    a.payload.frag == 0 and a.payload.flags == 0 and \
 	    icmptypes[a.payload.payload.type] == 'echo-reply':
 		id=a.payload.payload.id
-		print "id=%#x" % (id)
+		print("id=%#x" % (id))
 		if id != eid:
-			print "WRONG ECHO REPLY ID"
+			print("WRONG ECHO REPLY ID")
 			exit(2)
 		data=a.payload.payload.payload.load
-		print "payload=%s" % (data)
+		print("payload=%s" % (data))
 		if data == payload:
 			exit(0)
-		print "PAYLOAD!=%s" % (payload)
+		print("PAYLOAD!=%s" % (payload))
 		exit(1)
-print "NO ECHO REPLY"
+print("NO ECHO REPLY")
 exit(2)
