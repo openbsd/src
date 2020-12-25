@@ -1,4 +1,4 @@
-#!/usr/local/bin/python2.7
+#!/usr/local/bin/python3
 # send Gratuitous Address Resolution Protocol Reply
 # expect no answer
 # RFC 2002  IP Mobility Support
@@ -17,8 +17,8 @@ e=srp1(eth, iface=LOCAL_IF, timeout=2)
 if e and e.type == ETH_P_ARP:
 	a=e.payload
 	a.show()
-	print "ARP REPLY"
+	print("ARP REPLY")
 	exit(1)
 
-print "no arp reply"
+print("no arp reply")
 exit(0)
