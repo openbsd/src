@@ -17,9 +17,12 @@ packet=IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/ \
     ICMPv6EchoRequest(id=eid, data=payload)
 frag=[]
 fid=pid & 0xffffffff
-frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=1)/bytes(packet)[48:64])
-frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=1, m=1)/bytes(packet)[48:56])
-frag.append(IPv6ExtHdrFragment(nh=58, id=fid, m=1)/bytes(packet)[40:48])
+frag.append(IPv6ExtHdrFragment(nh=58, id=fid,
+    offset=1)/bytes(packet)[48:64])
+frag.append(IPv6ExtHdrFragment(nh=58, id=fid,
+    offset=1, m=1)/bytes(packet)[48:56])
+frag.append(IPv6ExtHdrFragment(nh=58, id=fid,
+    m=1)/bytes(packet)[40:48])
 eth=[]
 for f in frag:
 	pkt=IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/f
