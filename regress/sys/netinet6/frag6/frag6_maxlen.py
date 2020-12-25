@@ -1,6 +1,6 @@
-#!/usr/local/bin/python2.7
+#!/usr/local/bin/python3
 
-print "fully fragmented maximum size ping6 packet, sent in random order"
+print("fully fragmented maximum size ping6 packet, sent in random order")
 
 #          |----|
 #                                        |----|
@@ -17,17 +17,17 @@ pid=os.getpid()
 eid=pid & 0xffff
 iplen=2**16
 size=424
-payload="ABCDEFGHIJKLMNOP" * (iplen / 16)
+payload=b"ABCDEFGHIJKLMNOP" * int(iplen / 16)
 packet=IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/ \
-    ICMPv6EchoRequest(id=eid, data=str(payload)[0:iplen-8-1])
+    ICMPv6EchoRequest(id=eid, data=bytes(payload)[0:iplen-8-1])
 frag=[]
 fid=pid & 0xffffffff
-max=iplen/size
+max=int(iplen/size)
 for i in range(max):
 	frag.append(IPv6ExtHdrFragment(nh=58, id=fid, m=1,
-	    offset=i*(size/8))/str(packet)[40+i*size:40+(i+1)*size])
+	    offset=i*int(size/8))/bytes(packet)[40+i*size:40+(i+1)*size])
 frag.append(IPv6ExtHdrFragment(nh=58, id=fid,
-    offset=max*(size/8))/str(packet)[40+max*size:])
+    offset=max*int(size/8))/bytes(packet)[40+max*size:])
 eth=[]
 for f in frag:
 	pkt=IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/f
@@ -55,10 +55,10 @@ for a in ans:
 	    ipv6nh[a.payload.payload.nh] == 'ICMPv6' and \
 	    icmp6types[a.payload.payload.payload.type] == 'Echo Reply':
 		id=a.payload.payload.payload.id
-		print "id=%#x" % (id)
+		print("id=%#x" % (id))
 		if id != eid:
-			print "WRONG ECHO REPLY ID"
+			print("WRONG ECHO REPLY ID")
 			exit(2)
 		exit(0)
-print "NO ECHO REPLY"
+print("NO ECHO REPLY")
 exit(1)

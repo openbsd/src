@@ -1,6 +1,6 @@
-#!/usr/local/bin/python2.7
+#!/usr/local/bin/python3
 
-print "drop too long fragment queue, reassemble less fragments"
+print("drop too long fragment queue, reassemble less fragments")
 
 # |----|
 #      |----|
@@ -14,7 +14,7 @@ from scapy.all import *
 
 pid=os.getpid()
 eid=pid & 0xffff
-payload="ABCDEFGHIJKLMNOP" * 70
+payload=b"ABCDEFGHIJKLMNOP" * 70
 frag=[]
 fid=pid & 0xffffffff
 # send packets with 65 and 64 fragments
@@ -25,9 +25,9 @@ for max in (64, 63):
 	fid = ~fid & 0xffffffff
 	for i in range(max):
 		frag.append(IPv6ExtHdrFragment(nh=58, id=fid, m=1,
-		    offset=i)/str(packet)[40+i*8:40+(i+1)*8])
+		    offset=i)/bytes(packet)[40+i*8:40+(i+1)*8])
 	frag.append(IPv6ExtHdrFragment(nh=58, id=fid,
-	    offset=max)/str(packet)[40+max*8:])
+	    offset=max)/bytes(packet)[40+max*8:])
 eth=[]
 for f in frag:
 	pkt=IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/f
@@ -52,20 +52,20 @@ for a in ans:
 	    ipv6nh[a.payload.nh] == 'ICMPv6' and \
 	    icmp6types[a.payload.payload.type] == 'Echo Reply':
 		id=a.payload.payload.id
-		print "id=%#x" % (id)
+		print("id=%#x" % (id))
 		if id == ~eid & 0xffff:
-			print "ECHO REPLY FROM 65 FRAGMENTS"
+			print("ECHO REPLY FROM 65 FRAGMENTS")
 			exit(1)
 		if id != eid:
-			print "WRONG ECHO REPLY ID"
+			print("WRONG ECHO REPLY ID")
 			exit(2)
 		data=a.payload.payload.data
-		print "payload=%s" % (data)
+		print("payload=%s" % (data))
 		if data != payload:
-			print "PAYLOAD!=%s" % (payload)
+			print("PAYLOAD!=%s" % (payload))
 			exit(2)
 		reply=True
 if not reply:
-	print "NO ECHO REPLY FROM 64 FRAGMENTS"
+	print("NO ECHO REPLY FROM 64 FRAGMENTS")
 	exit(1)
 exit(0)

@@ -1,6 +1,6 @@
-#!/usr/local/bin/python2.7
+#!/usr/local/bin/python3
 
-print "atomic fragment with offset=0 and more=0, it must be processed"
+print("atomic fragment with offset=0 and more=0, it must be processed")
 
 #      |XXXXXXXX|
 # |-------------|
@@ -11,14 +11,14 @@ from scapy.all import *
 
 pid=os.getpid()
 eid=pid & 0xffff
-payload="ABCDEFGHIJKLMNOP"
-dummy="0123456701234567"
+payload=b"ABCDEFGHIJKLMNOP"
+dummy=b"0123456701234567"
 packet=IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/ \
     ICMPv6EchoRequest(id=eid, data=payload)
 frag=[]
 fid=pid & 0xffffffff
 frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=1)/dummy)
-frag.append(IPv6ExtHdrFragment(nh=58, id=fid)/str(packet)[40:64])
+frag.append(IPv6ExtHdrFragment(nh=58, id=fid)/bytes(packet)[40:64])
 eth=[]
 for f in frag:
 	pkt=IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/f
@@ -36,15 +36,15 @@ for a in ans:
 	    ipv6nh[a.payload.nh] == 'ICMPv6' and \
 	    icmp6types[a.payload.payload.type] == 'Echo Reply':
 		id=a.payload.payload.id
-		print "id=%#x" % (id)
+		print("id=%#x" % (id))
 		if id != eid:
-			print "WRONG ECHO REPLY ID"
+			print("WRONG ECHO REPLY ID")
 			exit(2)
 		data=a.payload.payload.data
-		print "payload=%s" % (data)
+		print("payload=%s" % (data))
 		if data == payload:
 			exit(0)
-		print "PAYLOAD!=%s" % (payload)
+		print("PAYLOAD!=%s" % (payload))
 		exit(2)
-print "NO ECHO REPLY"
+print("NO ECHO REPLY")
 exit(1)

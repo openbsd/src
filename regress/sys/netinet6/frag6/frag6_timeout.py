@@ -1,6 +1,6 @@
-#!/usr/local/bin/python2.7
+#!/usr/local/bin/python3
 
-print "6 non-overlapping ping6 fragments in 75 seconds, timeout is 60"
+print("6 non-overlapping ping6 fragments in 75 seconds, timeout is 60")
 
 # |----|
 #      |----|
@@ -15,17 +15,17 @@ from scapy.all import *
 
 pid=os.getpid()
 eid=pid & 0xffff
-payload="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcd"
+payload=b"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcd"
 packet=IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/ \
     ICMPv6EchoRequest(id=eid, data=payload)
 frag=[]
 fid=pid & 0xffffffff
-frag.append(IPv6ExtHdrFragment(nh=58, id=fid, m=1)/str(packet)[40:48])
-frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=1, m=1)/str(packet)[48:56])
-frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=2, m=1)/str(packet)[56:64])
-frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=3, m=1)/str(packet)[64:72])
-frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=4, m=1)/str(packet)[72:80])
-frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=5)/str(packet)[80:88])
+frag.append(IPv6ExtHdrFragment(nh=58, id=fid, m=1)/bytes(packet)[40:48])
+frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=1, m=1)/bytes(packet)[48:56])
+frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=2, m=1)/bytes(packet)[56:64])
+frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=3, m=1)/bytes(packet)[64:72])
+frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=4, m=1)/bytes(packet)[72:80])
+frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=5)/bytes(packet)[80:88])
 eth=[]
 for f in frag:
 	pkt=IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/f
@@ -45,16 +45,16 @@ for a in ans:
 	    ipv6nh[a.payload.nh] == 'ICMPv6' and \
 	    icmp6types[a.payload.payload.type] == 'Echo Reply':
 		id=a.payload.payload.id
-		print "id=%#x" % (id)
+		print("id=%#x" % (id))
 		if id != eid:
-			print "WRONG ECHO REPLY ID"
+			print("WRONG ECHO REPLY ID")
 			exit(2)
 		data=a.payload.payload.data
-		print "payload=%s" % (data)
+		print("payload=%s" % (data))
 		if data == payload:
-			print "ECHO REPLY"
+			print("ECHO REPLY")
 			exit(1)
-		print "PAYLOAD!=%s" % (payload)
+		print("PAYLOAD!=%s" % (payload))
 		exit(2)
-print "no echo reply"
+print("no echo reply")
 exit(0)

@@ -1,6 +1,6 @@
-#!/usr/local/bin/python2.7
+#!/usr/local/bin/python3
 
-print "send 3 non-overlapping ping6 fragments in all possible orders"
+print("send 3 non-overlapping ping6 fragments in all possible orders")
 
 # |----|
 #      |----|
@@ -19,7 +19,7 @@ permute.append([1,2,0])
 permute.append([2,1,0])
 
 pid=os.getpid()
-payload="ABCDEFGHIJKLMNOP"
+payload=b"ABCDEFGHIJKLMNOP"
 for p in permute:
 	pid += 1
 	eid=pid & 0xffff
@@ -28,11 +28,11 @@ for p in permute:
 	frag=[]
 	fid=pid & 0xffffffff
 	frag.append(IPv6ExtHdrFragment(nh=58, id=fid, m=1)/
-	    str(packet)[40:48])
+	    bytes(packet)[40:48])
 	frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=1, m=1)/
-	    str(packet)[48:56])
+	    bytes(packet)[48:56])
 	frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=2)/
-	    str(packet)[56:64])
+	    bytes(packet)[56:64])
 	eth=[]
 	for i in range(3):
 		pkt=IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/frag[p[i]]
@@ -50,16 +50,16 @@ for p in permute:
 		    ipv6nh[a.payload.nh] == 'ICMPv6' and \
 		    icmp6types[a.payload.payload.type] == 'Echo Reply':
 			id=a.payload.payload.id
-			print "id=%#x" % (id)
+			print("id=%#x" % (id))
 			if id != eid:
-				print "WRONG ECHO REPLY ID"
+				print("WRONG ECHO REPLY ID")
 				exit(2)
 			data=a.payload.payload.data
-			print "payload=%s" % (data)
+			print("payload=%s" % (data))
 			if data == payload:
 				break
-			print "PAYLOAD!=%s" % (payload)
+			print("PAYLOAD!=%s" % (payload))
 			exit(1)
 	else:
-		print "NO ECHO REPLY"
+		print("NO ECHO REPLY")
 		exit(2)

@@ -1,6 +1,6 @@
-#!/usr/local/bin/python2.7
+#!/usr/local/bin/python3
 
-print "fragments of a large packet that has to be refragmented by reflector"
+print("fragments of a large packet that has to be refragmented by reflector")
 
 # |--------|
 #          |------------------|
@@ -14,22 +14,22 @@ from scapy.all import *
 
 pid=os.getpid()
 eid=pid & 0xffff
-payload=100 * "ABCDEFGHIJKLMNOP"
+payload=b"ABCDEFGHIJKLMNOP" * 100
 packet=IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/ \
     ICMPv6EchoRequest(id=eid, data=payload)
-request_cksum=ICMPv6Unknown(str(packet.payload)).cksum
-print "request cksum=%#x" % (request_cksum)
+request_cksum=ICMPv6Unknown(bytes(packet.payload)).cksum
+print("request cksum=%#x" % (request_cksum))
 frag=[]
 fid=pid & 0xffffffff
-frag.append(IPv6ExtHdrFragment(nh=58, id=fid, m=1)/str(packet)[40:56])
+frag.append(IPv6ExtHdrFragment(nh=58, id=fid, m=1)/bytes(packet)[40:56])
 offset=2
 chunk=4
 while 40+8*(offset+chunk) < len(payload):
 	frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=offset, m=1)/
-	    str(packet)[40+(8*offset):40+8*(offset+chunk)])
+	    bytes(packet)[40+(8*offset):40+8*(offset+chunk)])
 	offset+=chunk
 frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=offset)/
-    str(packet)[40+(8*offset):])
+    bytes(packet)[40+(8*offset):])
 eth=[]
 for f in frag:
 	pkt=IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/f
@@ -49,17 +49,17 @@ for a in ans:
 	    ipv6nh[a.payload.payload.nh] == 'ICMPv6' and \
 	    icmp6types[a.payload.payload.payload.type] == 'Echo Reply':
 		id=a.payload.payload.payload.id
-		print "id=%#x" % (id)
+		print("id=%#x" % (id))
 		if id != eid:
-			print "WRONG ECHO REPLY ID"
+			print("WRONG ECHO REPLY ID")
 			exit(2)
 		reply_cksum=a.payload.payload.payload.cksum
-		print "reply cksum=%#x" % (reply_cksum)
+		print("reply cksum=%#x" % (reply_cksum))
 		# change request checksum incrementaly and check with reply
 		diff_cksum=~(~reply_cksum+~(~request_cksum+~0x8000+0x8100))
 		if diff_cksum & 0xffff != 0xffff and diff_cksum & 0xffff != 0:
-			print "CHECKSUM ERROR diff cksum=%#x" % (diff_cksum)
+			print("CHECKSUM ERROR diff cksum=%#x" % (diff_cksum))
 			exit(1)
 		exit(0)
-print "NO ECHO REPLY"
+print("NO ECHO REPLY")
 exit(2)

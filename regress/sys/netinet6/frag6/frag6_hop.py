@@ -1,6 +1,6 @@
-#!/usr/local/bin/python2.7
+#!/usr/local/bin/python3
 
-print "ping6 fragments with missplaced hop-by-hop extension header"
+print("ping6 fragments with missplaced hop-by-hop extension header")
 
 # |HHHH----------|
 #                |----|
@@ -11,13 +11,13 @@ from scapy.all import *
 
 pid=os.getpid()
 eid=pid & 0xffff
-payload="ABCDEFGHIJKLMNOP"
+payload=b"ABCDEFGHIJKLMNOP"
 packet=IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/IPv6ExtHdrHopByHop()/ \
     ICMPv6EchoRequest(id=eid, data=payload)
 frag=[]
 fid=pid & 0xffffffff
-frag.append(IPv6ExtHdrFragment(nh=0, id=fid, m=1)/str(packet)[40:64])
-frag.append(IPv6ExtHdrFragment(nh=0, id=fid, offset=3)/str(packet)[64:72])
+frag.append(IPv6ExtHdrFragment(nh=0, id=fid, m=1)/bytes(packet)[40:64])
+frag.append(IPv6ExtHdrFragment(nh=0, id=fid, offset=3)/bytes(packet)[64:72])
 eth=[]
 for f in frag:
 	pkt=IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/f
@@ -35,16 +35,16 @@ for a in ans:
 	    ipv6nh[a.payload.nh] == 'ICMPv6' and \
 	    icmp6types[a.payload.payload.type] == 'Echo Reply':
 		id=a.payload.payload.id
-		print "id=%#x" % (id)
+		print("id=%#x" % (id))
 		if id != eid:
-			print "WRONG ECHO REPLY ID"
+			print("WRONG ECHO REPLY ID")
 			exit(2)
 		data=a.payload.payload.data
-		print "payload=%s" % (data)
+		print("payload=%s" % (data))
 		if data == payload:
-			print "ECHO REPLY"
+			print("ECHO REPLY")
 			exit(1)
-		print "PAYLOAD!=%s" % (payload)
+		print("PAYLOAD!=%s" % (payload))
 		exit(2)
-print "no echo reply"
+print("no echo reply")
 exit(0)
