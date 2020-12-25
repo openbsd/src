@@ -1,8 +1,8 @@
-#!/usr/local/bin/python2.7
+#!/usr/local/bin/python3
 # send Address Resolution neighbor solicitation
 # expect an neighbor advertisement answer and check it
 
-print "send address resolution neighbor solicitation packet"
+print("send address resolution neighbor solicitation packet")
 
 import os
 from addr import *
@@ -41,10 +41,10 @@ for a in ans:
 	    ipv6nh[a.payload.nh] == 'ICMPv6' and \
 	    icmp6types[a.payload.payload.type] == 'Neighbor Advertisement':
 		tgt=a.payload.payload.tgt
-		print "target=%s" % (tgt)
+		print("target=%s" % (tgt))
 		if tgt == REMOTE_ADDR6:
 			exit(0)
-		print "TARGET!=%s" % (REMOTE_ADDR6)
+		print("TARGET!=%s" % (REMOTE_ADDR6))
 		exit(1)
-print "NO NEIGHBOR ADVERTISEMENT"
+print("NO NEIGHBOR ADVERTISEMENT")
 exit(2)

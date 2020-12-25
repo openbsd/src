@@ -1,7 +1,7 @@
-#!/usr/local/bin/python2.7
+#!/usr/local/bin/python3
 # send Unsolicited Neighbor Advertisement
 
-print "send unsolicited neighbor advertisement packet"
+print("send unsolicited neighbor advertisement packet")
 
 import os
 from addr import *
