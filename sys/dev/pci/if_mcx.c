@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.80 2020/12/17 04:15:03 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.81 2020/12/25 22:38:08 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -33,6 +33,7 @@
 #include <sys/timeout.h>
 #include <sys/task.h>
 #include <sys/atomic.h>
+#include <sys/timetc.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -2468,6 +2469,8 @@ struct mcx_softc {
 	unsigned int		 sc_kstat_mtmp_count;
 	struct kstat		**sc_kstat_mtmp;
 #endif
+
+	struct timecounter	 sc_timecounter;
 };
 #define DEVNAME(_sc) ((_sc)->sc_dev.dv_xname)
 
@@ -2477,6 +2480,8 @@ static void	mcx_attach(struct device *, struct device *, void *);
 #if NKSTAT > 0
 static void	mcx_kstat_attach(struct mcx_softc *);
 #endif
+
+static void	mcx_timecounter_attach(struct mcx_softc *);
 
 static int	mcx_version(struct mcx_softc *);
 static int	mcx_init_wait(struct mcx_softc *);
@@ -2947,6 +2952,7 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 #if NKSTAT > 0
 	mcx_kstat_attach(sc);
 #endif
+	mcx_timecounter_attach(sc);
 	return;
 
 teardown:
@@ -8579,3 +8585,26 @@ out:
 }
 
 #endif /* NKSTAT > 0 */
+
+static unsigned int
+mcx_timecounter_read(struct timecounter *tc)
+{
+	struct mcx_softc *sc = tc->tc_priv;
+
+	return (mcx_rd(sc, MCX_INTERNAL_TIMER_L));
+}
+
+static void
+mcx_timecounter_attach(struct mcx_softc *sc)
+{
+	struct timecounter *tc = &sc->sc_timecounter;
+
+	tc->tc_get_timecount = mcx_timecounter_read;
+	tc->tc_counter_mask = ~0U;
+	tc->tc_frequency = sc->sc_khz * 1000;
+	tc->tc_name = sc->sc_dev.dv_xname;
+	tc->tc_quality = -100;
+	tc->tc_priv = sc;
+
+	tc_init(tc);
+}
