@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.9 2020/04/15 11:40:26 kettenis Exp $
+dnl	$OpenBSD: hardware,v 1.10 2020/12/25 12:19:34 dtucker Exp $
 The following machines are targeted by OpenBSD/MACHINE:
 
 	Allwinner A64/H5
@@ -6,6 +6,7 @@ The following machines are targeted by OpenBSD/MACHINE:
 		Pine64 Pinebook
 		NanoPi A64
 		Orange Pi PC2
+		Orange Pi Zero Plus
 	AMD Opteron A1100 (Seattle)
 		AMD Seattle Development Board
 		SoftIron OverDrive 1000
