@@ -1,16 +1,16 @@
-#!/usr/local/bin/python2.7
+#!/usr/local/bin/python3
 # send a ping6 packet with routing header type 0
 # try to source route
 # we expect an ICMP6 error, as we do not support source routing
 
-print "send ping6 packet with routing header type 0 to be source routed"
+print("send ping6 packet with routing header type 0 to be source routed")
 
 import os
 from addr import *
 from scapy.all import *
 
 eid=os.getpid() & 0xffff
-payload="ABCDEFGHIJKLMNOP"
+payload=b"ABCDEFGHIJKLMNOP"
 packet=IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/\
     IPv6ExtHdrRouting(addresses=[OTHER_FAKE1_ADDR6, OTHER_FAKE2_ADDR6], \
     segleft=2)/\
@@ -30,15 +30,15 @@ for a in ans:
 	    icmp6types[a.payload.payload.type] == 'Parameter problem':
 		pprob=a.payload.payload
 		code=pprob.code
-		print "code=%#d" % (code)
+		print("code=%#d" % (code))
 		if code != 0:
-			print "WRONG PARAMETER PROBLEM CODE"
+			print("WRONG PARAMETER PROBLEM CODE")
 			exit(2)
 		ptr=pprob.ptr
-		print "ptr=%#d" % (ptr)
+		print("ptr=%#d" % (ptr))
 		if ptr != 42:
-			print "WRONG PARAMETER PROBLEM POINTER"
+			print("WRONG PARAMETER PROBLEM POINTER")
 			exit(2)
 		exit(0)
-print "NO ICMP6 PARAMETER PROBLEM"
+print("NO ICMP6 PARAMETER PROBLEM")
 exit(1)

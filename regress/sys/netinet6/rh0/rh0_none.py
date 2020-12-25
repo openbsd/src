@@ -1,15 +1,15 @@
-#!/usr/local/bin/python2.7
+#!/usr/local/bin/python3
 # send a ping6 packet without routing header type 0
 # we expect an echo reply, as there is no routing header
 
-print "send ping6 packet without routing header type 0"
+print("send ping6 packet without routing header type 0")
 
 import os
 from addr import *
 from scapy.all import *
 
 eid=os.getpid() & 0xffff
-payload="ABCDEFGHIJKLMNOP"
+payload=b"ABCDEFGHIJKLMNOP"
 packet=IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/\
     ICMPv6EchoRequest(id=eid, data=payload)
 eth=Ether(src=LOCAL_MAC, dst=REMOTE_MAC)/packet
@@ -27,15 +27,15 @@ for a in ans:
 	    icmp6types[a.payload.payload.type] == 'Echo Reply':
 		reply=a.payload.payload
 		id=reply.id
-		print "id=%#x" % (id)
+		print("id=%#x" % (id))
 		if id != eid:
-			print "WRONG ECHO REPLY ID"
+			print("WRONG ECHO REPLY ID")
 			exit(2)
 		data=reply.data
-		print "payload=%s" % (data)
+		print("payload=%s" % (data))
 		if data != payload:
-			print "WRONG PAYLOAD"
+			print("WRONG PAYLOAD")
 			exit(2)
 		exit(0)
-print "NO ICMP6 ECHO REPLY"
+print("NO ICMP6 ECHO REPLY")
 exit(1)
