@@ -1,7 +1,7 @@
-/*	$OpenBSD: kern_smr.c,v 1.8 2020/04/03 03:36:56 visa Exp $	*/
+/*	$OpenBSD: kern_smr.c,v 1.9 2020/12/25 12:49:31 visa Exp $	*/
 
 /*
- * Copyright (c) 2019 Visa Hankala
+ * Copyright (c) 2019-2020 Visa Hankala
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -41,6 +41,7 @@ struct smr_entry_list	smr_deferred;
 struct timeout		smr_wakeup_tmo;
 unsigned int		smr_expedite;
 unsigned int		smr_ndeferred;
+unsigned char		smr_grace_period;
 
 #ifdef WITNESS
 static const char smr_lock_name[] = "smr";
@@ -131,20 +132,27 @@ smr_thread(void *arg)
 }
 
 /*
- * Block until all CPUs have crossed quiescent state.
+ * Announce next grace period and wait until all CPUs have entered it
+ * by crossing quiescent state.
  */
 void
 smr_grace_wait(void)
 {
 #ifdef MULTIPROCESSOR
 	CPU_INFO_ITERATOR cii;
-	struct cpu_info *ci, *ci_start;
+	struct cpu_info *ci;
+	unsigned char smrgp;
 
-	ci_start = curcpu();
+	smrgp = READ_ONCE(smr_grace_period) + 1;
+	WRITE_ONCE(smr_grace_period, smrgp);
+
+	curcpu()->ci_schedstate.spc_smrgp = smrgp;
+
 	CPU_INFO_FOREACH(cii, ci) {
-		if (ci == ci_start)
+		if (READ_ONCE(ci->ci_schedstate.spc_smrgp) == smrgp)
 			continue;
 		sched_peg_curproc(ci);
+		KASSERT(ci->ci_schedstate.spc_smrgp == smrgp);
 	}
 	atomic_clearbits_int(&curproc->p_flag, P_CPUPEG);
 #endif /* MULTIPROCESSOR */
@@ -209,11 +217,23 @@ void
 smr_idle(void)
 {
 	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
+	unsigned char smrgp;
 
 	SMR_ASSERT_NONCRITICAL();
 
 	if (spc->spc_ndeferred > 0)
 		smr_dispatch(spc);
+
+	/*
+	 * Update this CPU's view of the system's grace period.
+	 * The update must become visible after any preceding reads
+	 * of SMR-protected data.
+	 */
+	smrgp = READ_ONCE(smr_grace_period);
+	if (__predict_false(spc->spc_smrgp != smrgp)) {
+		membar_exit();
+		WRITE_ONCE(spc->spc_smrgp, smrgp);
+	}
 }
 
 void

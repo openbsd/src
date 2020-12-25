@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.56 2019/10/21 10:24:01 mpi Exp $	*/
+/*	$OpenBSD: sched.h,v 1.57 2020/12/25 12:49:31 visa Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -119,6 +119,7 @@ struct schedstate_percpu {
 	u_int spc_smrdepth;		/* level of smr nesting */
 	u_char spc_smrexpedite;		/* if set, dispatch smr entries
 					 * without delay */
+	u_char spc_smrgp;		/* this CPU's view of grace period */
 };
 
 struct cpustats {
