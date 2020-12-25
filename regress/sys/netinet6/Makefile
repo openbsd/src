@@ -1,5 +1,11 @@
-#	$OpenBSD: Makefile,v 1.5 2019/09/05 02:35:46 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.6 2020/12/25 21:43:55 bluhm Exp $
 
-SUBDIR =	autoport frag6 mcast6 nd6 recvmsg rh0 rip6cksum
+SUBDIR +=	autoport
+SUBDIR +=	frag6
+SUBDIR +=	mcast6
+SUBDIR +=	nd6
+SUBDIR +=	pktinfo_addr
+SUBDIR +=	recvmsg rh0 rip6cksum
+SUBDIR +=	srcaddr
 
 .include <bsd.subdir.mk>
