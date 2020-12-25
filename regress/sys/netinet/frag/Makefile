@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2020/12/25 18:25:43 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.9 2020/12/25 22:59:27 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -87,6 +87,10 @@ stamp-pf: addr.py pf.conf
 
 REGRESS_TARGETS =
 FRAG_SCRIPTS !!=	cd ${.CURDIR} && ls -1 frag*.py
+
+run-stack-frag_maxpacket0.py:
+	# the stack allows fragments with data behind maximum packt length
+	@echo DISABLED
 
 run-stack-frag_mf0long.py:
 	# the stack allows fragments with data behind a fragment without MF
