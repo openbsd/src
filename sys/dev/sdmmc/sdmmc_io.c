@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_io.c,v 1.41 2019/12/31 10:05:33 mpi Exp $	*/
+/*	$OpenBSD: sdmmc_io.c,v 1.42 2020/12/26 03:45:57 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -244,7 +244,7 @@ sdmmc_io_function_enable(struct sdmmc_function *sf)
 	sdmmc_io_write_1(sf0, SD_IO_CCCR_FN_ENABLE, rv);
 
 	while (!sdmmc_io_function_ready(sf) && retry-- > 0)
-		tsleep_nsec(&lbolt, PPAUSE, "pause", INFSLP);
+		tsleep_nsec(&nowake, PPAUSE, "pause", SEC_TO_NSEC(1));
 	return (retry >= 0) ? 0 : ETIMEDOUT;
 }
 
