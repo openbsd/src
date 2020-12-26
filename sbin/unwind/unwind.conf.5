@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unwind.conf.5,v 1.24 2020/10/29 17:28:12 solene Exp $
+.\"	$OpenBSD: unwind.conf.5,v 1.25 2020/12/26 19:05:13 kn Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 29 2020 $
+.Dd $Mdocdate: December 26 2020 $
 .Dt UNWIND.CONF 5
 .Os
 .Sh NAME
@@ -123,7 +123,7 @@ itself recursively resolves names.
 .El
 .Pp
 The default preference is
-.Ic DoT forwarder recursor dhcp stub .
+.Ic DoT oDoT-forwarder forwarder recursor oDoT-dhcp dhcp stub .
 .It Ic force Oo Cm accept bogus Oc Ar type Brq Ar name ...
 Force resolving of
 .Ar name
