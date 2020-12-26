@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.86 2020/12/26 11:59:18 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.87 2020/12/26 12:26:01 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -2920,7 +2920,7 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 		tx->tx_ifq = ifq;
 		ifq->ifq_softc = tx;
 
-		if (pci_intr_map_msix(pa, i + 1, &ih) != 0) {
+		if (pci_intr_map_msix(pa, vec, &ih) != 0) {
 			printf("%s: unable to map queue interrupt %d\n",
 			    DEVNAME(sc), i);
 			goto teardown;
