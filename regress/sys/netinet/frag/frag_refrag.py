@@ -21,8 +21,8 @@ request_cksum=ICMP(bytes(packet.payload)).chksum
 print("request cksum=%#x" % (request_cksum))
 frag=[]
 fid=pid & 0xffff
-frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid, flags='MF')/
-    bytes(packet)[20:36])
+frag.append(IP(src=LOCAL_ADDR, dst=REMOTE_ADDR, proto=1, id=fid,
+    flags='MF')/bytes(packet)[20:36])
 offset=2
 chunk=4
 while 40+8*(offset+chunk) < len(payload):

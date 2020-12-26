@@ -25,11 +25,12 @@ frag.append(IPv6ExtHdrFragment(nh=58, id=fid, m=1)/bytes(packet)[40:56])
 offset=2
 chunk=4
 while 40+8*(offset+chunk) < len(payload):
-	frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=offset, m=1)/
+	frag.append(IPv6ExtHdrFragment(nh=58, id=fid,
+	    offset=offset, m=1)/
 	    bytes(packet)[40+(8*offset):40+8*(offset+chunk)])
 	offset+=chunk
-frag.append(IPv6ExtHdrFragment(nh=58, id=fid, offset=offset)/
-    bytes(packet)[40+(8*offset):])
+frag.append(IPv6ExtHdrFragment(nh=58, id=fid,
+    offset=offset)/bytes(packet)[40+(8*offset):])
 eth=[]
 for f in frag:
 	pkt=IPv6(src=LOCAL_ADDR6, dst=REMOTE_ADDR6)/f
