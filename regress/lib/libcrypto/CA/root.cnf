@@ -1,4 +1,4 @@
-# 	$OpenBSD: root.cnf,v 1.2 2018/07/17 17:06:49 tb Exp $
+#	$OpenBSD: root.cnf,v 1.3 2020/12/26 00:48:56 bluhm Exp $
 # For regression tests
 default_ca = CA_regress
 
@@ -8,8 +8,8 @@ dir               = .
 certs             = $dir
 crl_dir           = $dir
 database          = $dir/root.txt
-serial            = $dir/rootserial
-new_certs_dir	  = $dir
+serial            = $dir/root.serial
+new_certs_dir     = $dir
 
 # The root key and root certificate.
 private_key       = $dir/root.key.pem
@@ -127,4 +127,3 @@ subjectKeyIdentifier = hash
 authorityKeyIdentifier = keyid,issuer
 keyUsage = critical, digitalSignature
 extendedKeyUsage = critical, OCSPSigning
-

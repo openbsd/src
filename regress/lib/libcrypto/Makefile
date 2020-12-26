@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.40 2020/09/18 10:19:31 tb Exp $
+#	$OpenBSD: Makefile,v 1.41 2020/12/26 00:48:56 bluhm Exp $
 
 SUBDIR += aead
 SUBDIR += aeswrap
@@ -7,6 +7,7 @@ SUBDIR += base64
 SUBDIR += bf
 SUBDIR += bio
 SUBDIR += bn
+SUBDIR += CA
 SUBDIR += cast
 SUBDIR += certs
 SUBDIR += chacha
