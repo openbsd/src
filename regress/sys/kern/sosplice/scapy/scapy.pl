@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: scapy.pl,v 1.2 2017/11/07 22:06:17 bluhm Exp $
+#	$OpenBSD: scapy.pl,v 1.3 2020/12/26 00:12:03 bluhm Exp $
 
 # Copyright (c) 2010-2017 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -118,7 +118,7 @@ my $c = {
 };
 
 my @sudo = $ENV{SUDO} ? $ENV{SUDO} : ();
-my @python = $ENV{PYTHON} ? split(' ', $ENV{PYTHON}) : ("python2.7");
+my @python = $ENV{PYTHON} ? split(' ', $ENV{PYTHON}) : ("python3");
 my @cmd = (@sudo, @python, $testfile, $s->{listenport}, $c->{connectport});
 system("@cmd")
     and die "Scapy script '@cmd' failed: $?";
