@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.128 2020/12/11 16:37:41 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.129 2020/12/26 15:07:25 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -898,7 +898,7 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 	data = answer_imsg + sizeof(*answer_header);
 	answer_header->id = query_imsg->id;
 	answer_header->srvfail = 0;
-	answer_header->answer_len = answer_len;
+	answer_header->answer_len = 0;
 
 	timespecsub(&tp, &query_imsg->tp, &elapsed);
 
@@ -927,6 +927,13 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 		log_warnx("bad packet: too short");
 		goto servfail;
 	}
+
+	if (answer_len > UINT16_MAX) {
+		log_warnx("bad packet: too large: %d - %s", answer_len,
+		    query_imsg2str(query_imsg));
+		goto servfail;
+	}
+	answer_header->answer_len = answer_len;
 
 	if (rcode == LDNS_RCODE_SERVFAIL) {
 		if (res->stop != 1)

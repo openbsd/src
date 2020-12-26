@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.57 2020/12/11 16:36:03 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.58 2020/12/26 15:07:25 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -457,7 +457,7 @@ frontend_dispatch_resolver(int fd, short event, void *bula)
 				    "%lu", __func__, IMSG_DATA_SIZE(imsg));
 			answer_header = (struct answer_header *)imsg.data;
 			data = (uint8_t *)imsg.data + sizeof(*answer_header);
-			if (answer_header->answer_len > 65535)
+			if (answer_header->answer_len > UINT16_MAX)
 				fatalx("%s: IMSG_ANSWER answer too big: %d",
 				    __func__, answer_header->answer_len);
 			data_len = IMSG_DATA_SIZE(imsg) -
