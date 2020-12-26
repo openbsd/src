@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.198 2020/12/25 12:59:53 visa Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.199 2020/12/26 16:30:58 cheloha Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -430,7 +430,7 @@ bpfread(dev_t dev, struct uio *uio, int ioflag)
 {
 	struct bpf_d *d;
 	caddr_t hbuf;
-	int hlen, error;
+	int end, error, hlen, nticks;
 
 	KERNEL_ASSERT_LOCKED();
 
@@ -451,13 +451,10 @@ bpfread(dev_t dev, struct uio *uio, int ioflag)
 	}
 
 	/*
-	 * If there's a timeout, bd_rdStart is tagged when we start the read.
-	 * we can then figure out when we're done reading.
+	 * If there's a timeout, mark when the read should end.
 	 */
-	if (d->bd_rnonblock == 0 && d->bd_rdStart == 0)
-		d->bd_rdStart = ticks;
-	else
-		d->bd_rdStart = 0;
+	if (d->bd_rtout)
+		end = ticks + (int)d->bd_rtout;
 
 	/*
 	 * If the hold buffer is empty, then do a timed sleep, which
@@ -486,13 +483,21 @@ bpfread(dev_t dev, struct uio *uio, int ioflag)
 		if (d->bd_rnonblock) {
 			/* User requested non-blocking I/O */
 			error = EWOULDBLOCK;
+		} else if (d->bd_rtout == 0) {
+			/* No read timeout set. */
+			d->bd_nreaders++;
+			error = msleep_nsec(d, &d->bd_mtx, PRINET|PCATCH,
+			    "bpf", INFSLP);
+			d->bd_nreaders--;
+		} else if ((nticks = end - ticks) > 0) {
+			/* Read timeout has not expired yet. */
+			d->bd_nreaders++;
+			error = msleep(d, &d->bd_mtx, PRINET|PCATCH, "bpf",
+			    nticks);
+			d->bd_nreaders--;
 		} else {
-			if (d->bd_rdStart <= ULONG_MAX - d->bd_rtout &&
-			    d->bd_rdStart + d->bd_rtout < ticks) {
-				error = msleep(d, &d->bd_mtx, PRINET|PCATCH,
-				    "bpf", d->bd_rtout);
-			} else
-				error = EWOULDBLOCK;
+			/* Read timeout has expired. */
+			error = EWOULDBLOCK;
 		}
 		if (error == EINTR || error == ERESTART)
 			goto out;
@@ -1153,15 +1158,8 @@ bpfpoll(dev_t dev, int events, struct proc *p)
 		mtx_enter(&d->bd_mtx);
 		if (d->bd_hlen != 0 || (d->bd_immediate && d->bd_slen != 0))
 			revents |= events & (POLLIN | POLLRDNORM);
-		else {
-			/*
-			 * if there's a timeout, mark the time we
-			 * started waiting.
-			 */
-			if (d->bd_rnonblock == 0 && d->bd_rdStart == 0)
-				d->bd_rdStart = ticks;
+		else
 			selrecord(p, &d->bd_sel);
-		}
 		mtx_leave(&d->bd_mtx);
 	}
 	return (revents);
@@ -1196,11 +1194,6 @@ bpfkqfilter(dev_t dev, struct knote *kn)
 	bpf_get(d);
 	kn->kn_hook = d;
 	klist_insert_locked(klist, kn);
-
-	mtx_enter(&d->bd_mtx);
-	if (d->bd_rnonblock == 0 && d->bd_rdStart == 0)
-		d->bd_rdStart = ticks;
-	mtx_leave(&d->bd_mtx);
 
 	return (0);
 }
@@ -1551,15 +1544,12 @@ bpf_catchpacket(struct bpf_d *d, u_char *pkt, size_t pktlen, size_t snaplen,
 		do_wakeup = 1;
 	}
 
-	if (d->bd_rdStart && d->bd_rdStart <= ULONG_MAX - d->bd_rtout &&
-	    d->bd_rdStart + d->bd_rtout < ticks) {
+	if (d->bd_nreaders > 0) {
 		/*
-		 * we could be selecting on the bpf, and we
-		 * may have timeouts set.  We got here by getting
-		 * a packet, so wake up the reader.
+		 * We have one or more threads sleeping in bpfread().
+		 * We got a packet, so wake up all readers.
 		 */
 		if (d->bd_fbuf != NULL) {
-			d->bd_rdStart = 0;
 			ROTATE_BUFFERS(d);
 			do_wakeup = 1;
 		}
