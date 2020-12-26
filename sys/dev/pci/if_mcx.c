@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.85 2020/12/26 11:49:43 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.86 2020/12/26 11:59:18 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -4220,6 +4220,9 @@ mcx_create_eq(struct mcx_softc *sc, struct mcx_eq *eq, int uar,
 	mbin->cmd_eq_ctx.eq_intr = vector;
 	mbin->cmd_event_bitmask = htobe64(events);
 
+	bus_dmamap_sync(sc->sc_dmat, MCX_DMA_MAP(&eq->eq_mem),
+	    0, MCX_DMA_LEN(&eq->eq_mem), BUS_DMASYNC_PREREAD);
+
 	/* physical addresses follow the mailbox in data */
 	mcx_cmdq_mboxes_pas(&mxm, sizeof(*mbin), npages, &eq->eq_mem);
 	mcx_cmdq_mboxes_sign(&mxm, howmany(insize, MCX_CMDQ_MAILBOX_DATASIZE));
@@ -4251,6 +4254,8 @@ mcx_create_eq(struct mcx_softc *sc, struct mcx_eq *eq, int uar,
 	return (0);
 
 free_mxm:
+	bus_dmamap_sync(sc->sc_dmat, MCX_DMA_MAP(&eq->eq_mem),
+	    0, MCX_DMA_LEN(&eq->eq_mem), BUS_DMASYNC_POSTREAD);
 	mcx_dmamem_free(sc, &mxm);
 free_eq:
 	mcx_dmamem_free(sc, &eq->eq_mem);
@@ -6909,9 +6914,13 @@ int
 mcx_admin_intr(void *xsc)
 {
 	struct mcx_softc *sc = (struct mcx_softc *)xsc;
+	struct mcx_eq *eq = &sc->sc_admin_eq;
 	struct mcx_eq_entry *eqe;
 
-	while ((eqe = mcx_next_eq_entry(sc, &sc->sc_admin_eq))) {
+	bus_dmamap_sync(sc->sc_dmat, MCX_DMA_MAP(&eq->eq_mem),
+	    0, MCX_DMA_LEN(&eq->eq_mem), BUS_DMASYNC_POSTREAD);
+
+	while ((eqe = mcx_next_eq_entry(sc, eq)) != NULL) {
 		switch (eqe->eq_event_type) {
 		case MCX_EVENT_TYPE_LAST_WQE:
 			/* printf("%s: last wqe reached?\n", DEVNAME(sc)); */
@@ -6934,7 +6943,12 @@ mcx_admin_intr(void *xsc)
 			break;
 		}
 	}
-	mcx_arm_eq(sc, &sc->sc_admin_eq, sc->sc_uar);
+
+	bus_dmamap_sync(sc->sc_dmat, MCX_DMA_MAP(&eq->eq_mem),
+	    0, MCX_DMA_LEN(&eq->eq_mem), BUS_DMASYNC_PREREAD);
+
+	mcx_arm_eq(sc, eq, sc->sc_uar);
+
 	return (1);
 }
 
@@ -6943,10 +6957,14 @@ mcx_cq_intr(void *xq)
 {
 	struct mcx_queues *q = (struct mcx_queues *)xq;
 	struct mcx_softc *sc = q->q_sc;
+	struct mcx_eq *eq = &q->q_eq;
 	struct mcx_eq_entry *eqe;
 	int cqn;
 
-	while ((eqe = mcx_next_eq_entry(sc, &q->q_eq))) {
+	bus_dmamap_sync(sc->sc_dmat, MCX_DMA_MAP(&eq->eq_mem),
+	    0, MCX_DMA_LEN(&eq->eq_mem), BUS_DMASYNC_POSTREAD);
+
+	while ((eqe = mcx_next_eq_entry(sc, eq)) != NULL) {
 		switch (eqe->eq_event_type) {
 		case MCX_EVENT_TYPE_COMPLETION:
 			cqn = betoh32(eqe->eq_event_data[6]);
@@ -6956,10 +6974,13 @@ mcx_cq_intr(void *xq)
 		}
 	}
 
-	mcx_arm_eq(sc, &q->q_eq, q->q_uar);
+	bus_dmamap_sync(sc->sc_dmat, MCX_DMA_MAP(&eq->eq_mem),
+	    0, MCX_DMA_LEN(&eq->eq_mem), BUS_DMASYNC_PREREAD);
+
+	mcx_arm_eq(sc, eq, q->q_uar);
+
 	return (1);
 }
-
 
 static void
 mcx_free_slots(struct mcx_softc *sc, struct mcx_slot *slots, int allocated,
