@@ -34,7 +34,8 @@ our %args = (
 	loggrep => {
 	    qr/listen sock: (127.0.0.1|::1) \d+/ => 1,
 	    qr/IO::Socket::SSL socket accept failed: /.
-		qr/.*,SSL accept attempt failed error:.*$errors/ => 1,
+		qr/.*,SSL accept attempt failed error:.*/.
+		qr/(tlsv1 alert decrypt error|$errors)/ => 1,
 	    get_testgrep() => 0,
 	},
     },
