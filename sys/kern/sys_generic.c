@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.133 2020/12/22 13:24:45 mpi Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.134 2020/12/26 14:26:48 visa Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ int kqpoll_debug = 0;
 	printf(x);							\
 }
 
-int pselregister(struct proc *, fd_set *, int, int, int *);
+int pselregister(struct proc *, fd_set *[], int, int *);
 int pselcollect(struct proc *, struct kevent *, fd_set *[]);
 
 int pollout(struct pollfd *, struct pollfd *, u_int);
@@ -652,7 +652,7 @@ dopselect(struct proc *p, int nd, fd_set *in, fd_set *ou, fd_set *ex,
 		dosigsuspend(p, *sigmask &~ sigcantmask);
 
 	/* Register kqueue events */
-	error = pselregister(p, pibits[0], nd, ni, &nevents);
+	error = pselregister(p, pibits, nd, &nevents);
 	if (error != 0)
 		goto done;
 
@@ -738,20 +738,17 @@ dopselect(struct proc *p, int nd, fd_set *in, fd_set *ou, fd_set *ex,
  * per-thread queue.
  */
 int
-pselregister(struct proc *p, fd_set *ibits, int nfd, int ni, int *nregistered)
+pselregister(struct proc *p, fd_set *pibits[3], int nfd, int *nregistered)
 {
 	static const int evf[] = { EVFILT_READ, EVFILT_WRITE, EVFILT_EXCEPT };
 	static const int evff[] = { 0, 0, NOTE_OOB };
-	caddr_t cibits = (caddr_t)ibits;
 	int msk, i, j, fd, nevents = 0, error = 0;
 	struct kevent kev;
 	fd_mask bits;
 
 	for (msk = 0; msk < 3; msk++) {
-		fd_set *pibits = (fd_set *)&cibits[msk*ni];
-
 		for (i = 0; i < nfd; i += NFDBITS) {
-			bits = pibits->fds_bits[i/NFDBITS];
+			bits = pibits[msk]->fds_bits[i / NFDBITS];
 			while ((j = ffs(bits)) && (fd = i + --j) < nfd) {
 				bits &= ~(1 << j);
 
