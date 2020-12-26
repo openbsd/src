@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.84 2020/12/26 11:40:44 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.85 2020/12/26 11:49:43 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -4661,6 +4661,9 @@ mcx_create_rq(struct mcx_softc *sc, struct mcx_rx *rx, int db, int cqn)
 	mbin->rq_wq.wq_log_stride = htobe16(4);
 	mbin->rq_wq.wq_log_size = MCX_LOG_RQ_SIZE;
 
+	bus_dmamap_sync(sc->sc_dmat, MCX_DMA_MAP(&rx->rx_rq_mem),
+	    0, MCX_DMA_LEN(&rx->rx_rq_mem), BUS_DMASYNC_PREWRITE);
+
 	/* physical addresses follow the mailbox in data */
 	mcx_cmdq_mboxes_pas(&mxm, sizeof(*mbin) + 0x10, npages, &rx->rx_rq_mem);
 	mcx_cmdq_post(sc, cqe, 0);
@@ -4693,6 +4696,8 @@ mcx_create_rq(struct mcx_softc *sc, struct mcx_rx *rx, int db, int cqn)
 	return (0);
 
 free_mxm:
+	bus_dmamap_sync(sc->sc_dmat, MCX_DMA_MAP(&rx->rx_rq_mem),
+	    0, MCX_DMA_LEN(&rx->rx_rq_mem), BUS_DMASYNC_POSTWRITE);
 	mcx_dmamem_free(sc, &mxm);
 free_rq:
 	mcx_dmamem_free(sc, &rx->rx_rq_mem);
@@ -4791,8 +4796,11 @@ mcx_destroy_rq(struct mcx_softc *sc, struct mcx_rx *rx)
 		return -1;
 	}
 
-	rx->rx_rqn = 0;
+	bus_dmamap_sync(sc->sc_dmat, MCX_DMA_MAP(&rx->rx_rq_mem),
+	    0, MCX_DMA_LEN(&rx->rx_rq_mem), BUS_DMASYNC_POSTWRITE);
 	mcx_dmamem_free(sc, &rx->rx_rq_mem);
+
+	rx->rx_rqn = 0;
 	return 0;
 }
 
@@ -6529,6 +6537,9 @@ mcx_rx_fill_slots(struct mcx_softc *sc, struct mcx_rx *rx,
 	struct mbuf *m;
 	uint slot, p, fills;
 
+	bus_dmamap_sync(sc->sc_dmat, MCX_DMA_MAP(&rx->rx_rq_mem),
+	    0, MCX_DMA_LEN(&rx->rx_rq_mem), BUS_DMASYNC_POSTWRITE);
+
 	p = *prod;
 	slot = (p % (1 << MCX_LOG_RQ_SIZE));
 	rqe = ring;
@@ -6558,6 +6569,9 @@ mcx_rx_fill_slots(struct mcx_softc *sc, struct mcx_rx *rx,
 		if (slot == (1 << MCX_LOG_RQ_SIZE))
 			slot = 0;
 	}
+
+	bus_dmamap_sync(sc->sc_dmat, MCX_DMA_MAP(&rx->rx_rq_mem),
+	    0, MCX_DMA_LEN(&rx->rx_rq_mem), BUS_DMASYNC_PREWRITE);
 
 	if (fills != 0) {
 		*rx->rx_doorbell = htobe32(p & MCX_WQ_DOORBELL_MASK);
