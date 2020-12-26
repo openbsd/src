@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.81 2020/12/25 22:38:08 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.82 2020/12/26 11:06:52 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -4212,7 +4212,7 @@ mcx_create_eq(struct mcx_softc *sc, struct mcx_eq *eq, int uar,
 	    howmany(insize, MCX_CMDQ_MAILBOX_DATASIZE),
 	    &cqe->cq_input_ptr, token) != 0) {
 		printf(", unable to allocate create eq mailboxen\n");
-		return (-1);
+		goto free_eq;
 	}
 	mbin = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
 	mbin->cmd_eq_ctx.eq_uar_size = htobe32(
@@ -4228,26 +4228,33 @@ mcx_create_eq(struct mcx_softc *sc, struct mcx_eq *eq, int uar,
 	error = mcx_cmdq_poll(sc, cqe, 1000);
 	if (error != 0) {
 		printf(", create eq timeout\n");
-		goto free;
+		goto free_mxm;
 	}
 	if (mcx_cmdq_verify(cqe) != 0) {
 		printf(", create eq command corrupt\n");
-		goto free;
+		goto free_mxm;
 	}
 
 	out = mcx_cmdq_out(cqe);
 	if (out->cmd_status != MCX_CQ_STATUS_OK) {
 		printf(", create eq failed (%x, %x)\n", out->cmd_status,
 		    betoh32(out->cmd_syndrome));
-		error = -1;
-		goto free;
+		goto free_mxm;
 	}
 
 	eq->eq_n = mcx_get_id(out->cmd_eqn);
-	mcx_arm_eq(sc, eq, uar);
-free:
+
 	mcx_dmamem_free(sc, &mxm);
-	return (error);
+
+	mcx_arm_eq(sc, eq, uar);
+
+	return (0);
+
+free_mxm:
+	mcx_dmamem_free(sc, &mxm);
+free_eq:
+	mcx_dmamem_free(sc, &eq->eq_mem);
+	return (-1);
 }
 
 static int
@@ -4494,8 +4501,7 @@ mcx_create_cq(struct mcx_softc *sc, struct mcx_cq *cq, int uar, int db, int eqn)
 	    &cmde->cq_input_ptr, token) != 0) {
 		printf("%s: unable to allocate create cq mailboxen\n",
 		    DEVNAME(sc));
-		error = -1;
-		goto free;
+		goto free_cq;
 	}
 	mbin = mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0));
 	mbin->cmd_cq_ctx.cq_uar_size = htobe32(
@@ -4515,19 +4521,18 @@ mcx_create_cq(struct mcx_softc *sc, struct mcx_cq *cq, int uar, int db, int eqn)
 	error = mcx_cmdq_poll(sc, cmde, 1000);
 	if (error != 0) {
 		printf("%s: create cq timeout\n", DEVNAME(sc));
-		goto free;
+		goto free_mxm;
 	}
 	if (mcx_cmdq_verify(cmde) != 0) {
 		printf("%s: create cq command corrupt\n", DEVNAME(sc));
-		goto free;
+		goto free_mxm;
 	}
 
 	out = mcx_cmdq_out(cmde);
 	if (out->cmd_status != MCX_CQ_STATUS_OK) {
 		printf("%s: create cq failed (%x, %x)\n", DEVNAME(sc),
 		    out->cmd_status, betoh32(out->cmd_syndrome));
-		error = -1;
-		goto free;
+		goto free_mxm;
 	}
 
 	cq->cq_n = mcx_get_id(out->cmd_cqn);
@@ -4535,11 +4540,18 @@ mcx_create_cq(struct mcx_softc *sc, struct mcx_cq *cq, int uar, int db, int eqn)
 	cq->cq_count = 0;
 	cq->cq_doorbell = MCX_DMA_KVA(&sc->sc_doorbell_mem) +
 	    MCX_CQ_DOORBELL_BASE + (MCX_CQ_DOORBELL_STRIDE * db);
+
+	mcx_dmamem_free(sc, &mxm);
+
 	mcx_arm_cq(sc, cq, uar);
 
-free:
+	return (0);
+
+free_mxm:
 	mcx_dmamem_free(sc, &mxm);
-	return (error);
+free_cq:
+	mcx_dmamem_free(sc, &cq->cq_mem);
+	return (-1);
 }
 
 static int
@@ -4578,8 +4590,9 @@ mcx_destroy_cq(struct mcx_softc *sc, struct mcx_cq *cq)
 		return -1;
 	}
 
-	cq->cq_n = 0;
 	mcx_dmamem_free(sc, &cq->cq_mem);
+
+	cq->cq_n = 0;
 	cq->cq_cons = 0;
 	cq->cq_count = 0;
 	return 0;
@@ -4624,8 +4637,7 @@ mcx_create_rq(struct mcx_softc *sc, struct mcx_rx *rx, int db, int cqn)
 	    &cqe->cq_input_ptr, token) != 0) {
 		printf("%s: unable to allocate create rq mailboxen\n",
 		    DEVNAME(sc));
-		error = -1;
-		goto free;
+		goto free_rq;
 	}
 	mbin = (struct mcx_rq_ctx *)
 	    (((char *)mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0))) + 0x10);
@@ -4649,30 +4661,35 @@ mcx_create_rq(struct mcx_softc *sc, struct mcx_rx *rx, int db, int cqn)
 	error = mcx_cmdq_poll(sc, cqe, 1000);
 	if (error != 0) {
 		printf("%s: create rq timeout\n", DEVNAME(sc));
-		goto free;
+		goto free_mxm;
 	}
 	if (mcx_cmdq_verify(cqe) != 0) {
 		printf("%s: create rq command corrupt\n", DEVNAME(sc));
-		goto free;
+		goto free_mxm;
 	}
 
 	out = mcx_cmdq_out(cqe);
 	if (out->cmd_status != MCX_CQ_STATUS_OK) {
 		printf("%s: create rq failed (%x, %x)\n", DEVNAME(sc),
 		    out->cmd_status, betoh32(out->cmd_syndrome));
-		error = -1;
-		goto free;
+		goto free_mxm;
 	}
 
 	rx->rx_rqn = mcx_get_id(out->cmd_rqn);
+
+	mcx_dmamem_free(sc, &mxm);
 
 	doorbell = MCX_DMA_KVA(&sc->sc_doorbell_mem);
 	rx->rx_doorbell = (uint32_t *)(doorbell + MCX_WQ_DOORBELL_BASE +
 	    (db * MCX_WQ_DOORBELL_STRIDE));
 
-free:
+	return (0);
+
+free_mxm:
 	mcx_dmamem_free(sc, &mxm);
-	return (error);
+free_rq:
+	mcx_dmamem_free(sc, &rx->rx_rq_mem);
+	return (-1);
 }
 
 static int
@@ -4768,6 +4785,7 @@ mcx_destroy_rq(struct mcx_softc *sc, struct mcx_rx *rx)
 	}
 
 	rx->rx_rqn = 0;
+	mcx_dmamem_free(sc, &rx->rx_rq_mem);
 	return 0;
 }
 
@@ -4968,8 +4986,7 @@ mcx_create_sq(struct mcx_softc *sc, struct mcx_tx *tx, int uar, int db,
 	    &cqe->cq_input_ptr, token) != 0) {
 		printf("%s: unable to allocate create sq mailboxen\n",
 		    DEVNAME(sc));
-		error = -1;
-		goto free;
+		goto free_sq;
 	}
 	mbin = (struct mcx_sq_ctx *)
 	    (((char *)mcx_cq_mbox_data(mcx_cq_mbox(&mxm, 0))) + 0x10);
@@ -4994,30 +5011,36 @@ mcx_create_sq(struct mcx_softc *sc, struct mcx_tx *tx, int uar, int db,
 	error = mcx_cmdq_poll(sc, cqe, 1000);
 	if (error != 0) {
 		printf("%s: create sq timeout\n", DEVNAME(sc));
-		goto free;
+		goto free_mxm;
 	}
 	if (mcx_cmdq_verify(cqe) != 0) {
 		printf("%s: create sq command corrupt\n", DEVNAME(sc));
-		goto free;
+		goto free_mxm;
 	}
 
 	out = mcx_cmdq_out(cqe);
 	if (out->cmd_status != MCX_CQ_STATUS_OK) {
 		printf("%s: create sq failed (%x, %x)\n", DEVNAME(sc),
 		    out->cmd_status, betoh32(out->cmd_syndrome));
-		error = -1;
-		goto free;
+		goto free_mxm;
 	}
 
 	tx->tx_uar = uar;
 	tx->tx_sqn = mcx_get_id(out->cmd_sqn);
 
+	mcx_dmamem_free(sc, &mxm);
+
 	doorbell = MCX_DMA_KVA(&sc->sc_doorbell_mem);
 	tx->tx_doorbell = (uint32_t *)(doorbell + MCX_WQ_DOORBELL_BASE +
 	    (db * MCX_WQ_DOORBELL_STRIDE) + 4);
-free:
+
+	return (0);
+
+free_mxm:
 	mcx_dmamem_free(sc, &mxm);
-	return (error);
+free_sq:
+	mcx_dmamem_free(sc, &tx->tx_sq_mem);
+	return (-1);
 }
 
 static int
@@ -5057,6 +5080,7 @@ mcx_destroy_sq(struct mcx_softc *sc, struct mcx_tx *tx)
 	}
 
 	tx->tx_sqn = 0;
+	mcx_dmamem_free(sc, &tx->tx_sq_mem);
 	return 0;
 }
 
@@ -6968,16 +6992,21 @@ mcx_queue_up(struct mcx_softc *sc, struct mcx_queues *q)
 
 	if (mcx_create_cq(sc, &q->q_cq, q->q_uar, q->q_index,
 	    q->q_eq.eq_n) != 0)
-		return ENOMEM;
+		goto destroy_tx_slots;
 
 	if (mcx_create_sq(sc, tx, q->q_uar, q->q_index, q->q_cq.cq_n)
 	    != 0)
-		return ENOMEM;
+		goto destroy_cq;
 
 	if (mcx_create_rq(sc, rx, q->q_index, q->q_cq.cq_n) != 0)
-		return ENOMEM;
+		goto destroy_sq;
 
 	return 0;
+
+destroy_sq:
+	mcx_destroy_sq(sc, tx);
+destroy_cq:
+	mcx_destroy_cq(sc, &q->q_cq);
 destroy_tx_slots:
 	mcx_free_slots(sc, tx->tx_slots, i, (1 << MCX_LOG_SQ_SIZE));
 	tx->tx_slots = NULL;
