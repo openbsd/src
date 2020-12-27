@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.292 2020/12/21 22:49:36 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.293 2020/12/27 21:07:31 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1789,7 +1789,7 @@ ikev2_add_ts_payload(struct ibuf *buf, unsigned int type, struct iked_sa *sa)
 		/* patch remote address (if configured to 0.0.0.0) */
 		if ((type == IKEV2_PAYLOAD_TSi && !sa->sa_hdr.sh_initiator) ||
 		    (type == IKEV2_PAYLOAD_TSr && sa->sa_hdr.sh_initiator)) {
-			if (ikev2_cp_fixaddr(sa, addr, &pooladdr) != -1)
+			if (ikev2_cp_fixaddr(sa, addr, &pooladdr) == 0)
 				addr = &pooladdr;
 		}
 
@@ -5837,7 +5837,8 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 			flowa->flow_local = &sa->sa_local;
 			flowa->flow_peer = &sa->sa_peer;
 			flowa->flow_ikesa = sa;
-			ikev2_cp_fixflow(sa, flow, flowa);
+			if (ikev2_cp_fixflow(sa, flow, flowa) == -1)
+				continue;
 
 			skip = 0;
 			TAILQ_FOREACH(saflow, &sa->sa_flows, flow_entry) {
@@ -5864,7 +5865,8 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 			    sizeof(flow->flow_dst));
 			memcpy(&flowb->flow_dst, &flow->flow_src,
 			    sizeof(flow->flow_src));
-			ikev2_cp_fixflow(sa, flow, flowb);
+			if (ikev2_cp_fixflow(sa, flow, flowb) == -1)
+				continue;
 
 			TAILQ_INSERT_TAIL(&sa->sa_flows, flowa, flow_entry);
 			TAILQ_INSERT_TAIL(&sa->sa_flows, flowb, flow_entry);
@@ -6859,7 +6861,7 @@ ikev2_cp_fixaddr(struct iked_sa *sa, struct iked_addr *addr,
 	struct iked_addr	*naddr;
 
 	if (addr->addr_net)
-		return (-1);
+		return (-2);
 	if (sa->sa_cp == 0)
 		return (-1);
 	switch (addr->addr_af) {

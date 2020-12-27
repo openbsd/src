@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.122 2020/12/20 17:44:50 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.123 2020/12/27 21:07:32 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -350,6 +350,9 @@ const struct iked_lifetime deflifetime = {
 	IKED_LIFETIME_SECONDS
 };
 
+#define IPSEC_ADDR_ANY		(0x1)
+#define IPSEC_ADDR_DYNAMIC	(0x2)
+
 struct ipsec_addr_wrap {
 	struct sockaddr_storage	 address;
 	uint8_t			 mask;
@@ -381,6 +384,7 @@ struct ipsec_addr_wrap	*host_ip(const char *, int);
 struct ipsec_addr_wrap	*host_dns(const char *, int);
 struct ipsec_addr_wrap	*host_if(const char *, int);
 struct ipsec_addr_wrap	*host_any(void);
+struct ipsec_addr_wrap	*host_dynamic(void);
 void			 ifa_load(void);
 int			 ifa_exists(const char *);
 struct ipsec_addr_wrap	*ifa_lookup(const char *ifa_name);
@@ -408,6 +412,12 @@ uint8_t			 x2i(unsigned char *);
 int			 parsekey(unsigned char *, size_t, struct iked_auth *);
 int			 parsekeyfile(char *, struct iked_auth *);
 void			 iaw_free(struct ipsec_addr_wrap *);
+static int		 create_flow(struct iked_policy *pol, struct ipsec_addr_wrap *ipa,
+			    struct ipsec_addr_wrap *ipb);
+static int		 expand_flows(struct iked_policy *, struct ipsec_addr_wrap *,
+			    struct ipsec_addr_wrap *);
+static struct ipsec_addr_wrap *
+			 expand_keyword(struct ipsec_addr_wrap *);
 
 struct ipsec_transforms *ipsec_transforms;
 struct ipsec_filters *ipsec_filters;
@@ -823,10 +833,7 @@ host		: host_spec			{ $$ = $1; }
 			$$ = host_any();
 		}
 		| DYNAMIC			{
-			if (($$ = host("0.0.0.0")) == NULL) {
-				yyerror("could not parse host specification");
-				YYERROR;
-			}
+			$$ = host_dynamic();
 		}
 		;
 
@@ -2129,6 +2136,21 @@ host_any(void)
 	ipa->af = AF_UNSPEC;
 	ipa->netaddress = 1;
 	ipa->tail = ipa;
+	ipa->type = IPSEC_ADDR_ANY;
+	return (ipa);
+}
+
+struct ipsec_addr_wrap *
+host_dynamic(void)
+{
+	struct ipsec_addr_wrap	*ipa;
+
+	ipa = calloc(1, sizeof(struct ipsec_addr_wrap));
+	if (ipa == NULL)
+		err(1, "%s", __func__);
+	ipa->af = AF_UNSPEC;
+	ipa->tail = ipa;
+	ipa->type = IPSEC_ADDR_DYNAMIC;
 	return (ipa);
 }
 
@@ -2654,7 +2676,7 @@ create_ike(char *name, int af, uint8_t ipproto,
     struct ipsec_addr_wrap *ikecfg)
 {
 	char			 idstr[IKED_ID_SIZE];
-	struct ipsec_addr_wrap	*ipa, *ipb, *ippn;
+	struct ipsec_addr_wrap	*ipa, *ipb;
 	struct iked_auth	*ikeauth;
 	struct iked_policy	 pol;
 	struct iked_proposal	*p, *ptmp;
@@ -3012,50 +3034,9 @@ create_ike(char *name, int af, uint8_t ipproto,
 		fatalx("create_ike: no traffic selectors/flows");
 
 	for (ipa = hosts->src, ipb = hosts->dst; ipa && ipb;
-	    ipa = ipa->next, ipb = ipb->next) {
-		if (ipa->af != ipb->af) {
-			yyerror("cannot mix different address families.");
-			goto done;
-		}
-
-		if ((flow = calloc(1, sizeof(struct iked_flow))) == NULL)
-			fatalx("%s: failed to alloc flow.", __func__);
-
-		memcpy(&flow->flow_src.addr, &ipa->address,
-		    sizeof(ipa->address));
-		flow->flow_src.addr_af = ipa->af;
-		flow->flow_src.addr_mask = ipa->mask;
-		flow->flow_src.addr_net = ipa->netaddress;
-		flow->flow_src.addr_port = ipa->port;
-
-		memcpy(&flow->flow_dst.addr, &ipb->address,
-		    sizeof(ipb->address));
-		flow->flow_dst.addr_af = ipb->af;
-		flow->flow_dst.addr_mask = ipb->mask;
-		flow->flow_dst.addr_net = ipb->netaddress;
-		flow->flow_dst.addr_port = ipb->port;
-
-		ippn = ipa->srcnat;
-		if (ippn) {
-			memcpy(&flow->flow_prenat.addr, &ippn->address,
-			    sizeof(ippn->address));
-			flow->flow_prenat.addr_af = ippn->af;
-			flow->flow_prenat.addr_mask = ippn->mask;
-			flow->flow_prenat.addr_net = ippn->netaddress;
-		} else {
-			flow->flow_prenat.addr_af = 0;
-		}
-
-		flow->flow_dir = IPSP_DIRECTION_OUT;
-		flow->flow_saproto = saproto;
-		flow->flow_ipproto = ipproto;
-		flow->flow_rdomain = rdomain;
-
-		if (RB_INSERT(iked_flows, &pol.pol_flows, flow) == NULL)
-			pol.pol_nflows++;
-		else
-			warnx("create_ike: duplicate flow");
-	}
+	    ipa = ipa->next, ipb = ipb->next)
+		if (expand_flows(&pol, ipa, ipb))
+			fatalx("create_ike: invalid flow");
 
 	for (j = 0, ipa = ikecfg; ipa; ipa = ipa->next, j++) {
 		if (j >= IKED_CFG_MAX)
@@ -3152,6 +3133,132 @@ done:
 	free(srcid);
 	free(dstid);
 	return (ret);
+}
+
+static int
+create_flow(struct iked_policy *pol, struct ipsec_addr_wrap *ipa,
+    struct ipsec_addr_wrap *ipb)
+{
+	struct iked_flow	*flow;
+	struct ipsec_addr_wrap	*ippn;
+
+	if (ipa->af != ipb->af) {
+		yyerror("cannot mix different address families.");
+		return (-1);
+	}
+
+	if ((flow = calloc(1, sizeof(struct iked_flow))) == NULL)
+		fatalx("%s: failed to alloc flow.", __func__);
+
+	memcpy(&flow->flow_src.addr, &ipa->address,
+	    sizeof(ipa->address));
+	flow->flow_src.addr_af = ipa->af;
+	flow->flow_src.addr_mask = ipa->mask;
+	flow->flow_src.addr_net = ipa->netaddress;
+	flow->flow_src.addr_port = ipa->port;
+
+	memcpy(&flow->flow_dst.addr, &ipb->address,
+	    sizeof(ipb->address));
+	flow->flow_dst.addr_af = ipb->af;
+	flow->flow_dst.addr_mask = ipb->mask;
+	flow->flow_dst.addr_net = ipb->netaddress;
+	flow->flow_dst.addr_port = ipb->port;
+
+	ippn = ipa->srcnat;
+	if (ippn) {
+		memcpy(&flow->flow_prenat.addr, &ippn->address,
+		    sizeof(ippn->address));
+		flow->flow_prenat.addr_af = ippn->af;
+		flow->flow_prenat.addr_mask = ippn->mask;
+		flow->flow_prenat.addr_net = ippn->netaddress;
+	} else {
+		flow->flow_prenat.addr_af = 0;
+	}
+
+	flow->flow_dir = IPSP_DIRECTION_OUT;
+	flow->flow_saproto = pol->pol_saproto;
+	flow->flow_ipproto = pol->pol_ipproto;
+	flow->flow_rdomain = pol->pol_rdomain;
+
+	if (RB_INSERT(iked_flows, &pol->pol_flows, flow) == NULL)
+		pol->pol_nflows++;
+	else {
+		warnx("create_ike: duplicate flow");
+		free(flow);
+	}
+
+	return (0);
+}
+
+static int
+expand_flows(struct iked_policy *pol, struct ipsec_addr_wrap *src,
+    struct ipsec_addr_wrap *dst)
+{
+	struct ipsec_addr_wrap	*ipa = NULL, *ipb = NULL;
+	int			 ret = -1;
+
+	if (src->af == AF_UNSPEC &&
+	    dst->af == AF_UNSPEC) {
+		/* Need both IPv4 and IPv6 flows */
+		src->af = dst->af = AF_INET;
+		ipa = expand_keyword(src);
+		ipb = expand_keyword(dst);
+		if (!ipa || !ipb)
+			goto done;
+		if (create_flow(pol, ipa, ipb))
+			goto done;
+
+		src->af = dst->af = AF_INET6;
+		ipa = expand_keyword(src);
+		ipb = expand_keyword(dst);
+		if (!ipa || !ipb)
+			goto done;
+		if (create_flow(pol, ipa, ipb))
+			goto done;
+	} else if (src->af == AF_UNSPEC) {
+		src->af = dst->af;
+		ipa = expand_keyword(src);
+		if (!ipa)
+			goto done;
+		if (create_flow(pol, ipa, dst))
+			goto done;
+	} else if (dst->af == AF_UNSPEC) {
+		dst->af = src->af;
+		ipa = expand_keyword(dst);
+		if (!ipa)
+			goto done;
+		if (create_flow(pol, src, ipa))
+			goto done;
+	} else if (create_flow(pol, src, dst))
+		goto done;
+	ret = 0;
+ done:
+	free(ipa);
+	free(ipb);
+	return (ret);
+}
+
+static struct ipsec_addr_wrap *
+expand_keyword(struct ipsec_addr_wrap *ip)
+{
+	switch(ip->af) {
+	case AF_INET:
+		switch(ip->type) {
+		case IPSEC_ADDR_ANY:
+			return (host("0.0.0.0/0"));
+		case IPSEC_ADDR_DYNAMIC:
+			return (host("0.0.0.0"));
+		}
+		break;
+	case AF_INET6:	
+		switch(ip->type) {
+		case IPSEC_ADDR_ANY:
+			return (host("::/0"));
+		case IPSEC_ADDR_DYNAMIC:
+			return (host("::"));
+		}
+	}
+	return (NULL);
 }
 
 int
