@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlpciephy.c,v 1.2 2020/03/26 12:58:18 kettenis Exp $	*/
+/*	$OpenBSD: amlpciephy.c,v 1.3 2020/12/27 19:32:29 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -29,6 +29,9 @@
 #include <dev/ofw/fdt.h>
 
 #define PHY_R0		0x00
+#define  PHY_R0_PCIE_POWER_MASK	(0x1f << 0)
+#define  PHY_R0_PCIE_POWER_ON	(0x1c << 0)
+#define  PHY_R0_PCIE_POWER_OFF	(0x1d << 0)
 #define  PHY_R0_MODE_MASK	(0x3 << 5)
 #define  PHY_R0_MODE_USB3	(0x3 << 5)
 #define PHY_R4		0x10
@@ -113,57 +116,74 @@ amlpciephy_enable(void *cookie, uint32_t *cells)
 	uint32_t type = cells[0];
 	uint32_t reg;
 
-	/*
-	 * Hardware can be switched between PCIe 2.0 and USB 3.0 mode,
-	 * but we only support USB for now.
-	 */
-	if (type != PHY_TYPE_USB3)
+	/* Hardware can be switched between PCIe 2.0 and USB 3.0 mode. */
+	if (type != PHY_TYPE_PCIE && type != PHY_TYPE_USB3)
 		return -1;
 
 	clock_set_assigned(node);
 	clock_enable_all(node);
-	reset_assert_all(node);
-	delay(10);
-	reset_deassert_all(node);
 
-	/* Switch to USB 3.0 mode. */
-	reg = HREAD4(sc, PHY_R0);
-	reg &= ~PHY_R0_MODE_MASK;
-	reg |= PHY_R0_MODE_USB3;
-	HWRITE4(sc, PHY_R0, reg);
+	switch (type) {
+	case PHY_TYPE_PCIE:
+		/* Power on. */
+		reg = HREAD4(sc, PHY_R0);
+		printf("R0: 0x%x\n", reg);
+		reg &= ~PHY_R0_PCIE_POWER_MASK;
+		reg |= PHY_R0_PCIE_POWER_ON;
+		HWRITE4(sc, PHY_R0, reg);
 
-	/* Workaround for SuperSpeed PHY suspend bug. */
-	reg = amlpciephy_read(sc, 0x102d);
-	reg |= (1 << 7);
-	amlpciephy_write(sc, 0x102d, reg);
+		reset_assert_all(node);
+		delay(500);
+		reset_deassert_all(node);
+		delay(500);
 
-	reg = amlpciephy_read(sc, 0x1010);
-	reg &= ~0xff0;
-	reg |= 0x10;
-	amlpciephy_write(sc, 0x1010, reg);
+		break;
+	case PHY_TYPE_USB3:
+		reset_assert_all(node);
+		delay(10);
+		reset_deassert_all(node);
 
-	/* Rx equalization magic. */
-	reg = amlpciephy_read(sc, 0x1006);
-	reg &= (1 << 6);
-	reg |= (1 << 7);
-	reg &= ~(0x7 << 8);
-	reg |= (0x3 << 8);
-	reg |= (1 << 11);
-	amlpciephy_write(sc, 0x1006, reg);
+		/* Switch to USB 3.0 mode. */
+		reg = HREAD4(sc, PHY_R0);
+		reg &= ~PHY_R0_MODE_MASK;
+		reg |= PHY_R0_MODE_USB3;
+		HWRITE4(sc, PHY_R0, reg);
 
-	/* Tx equalization magic. */
-	reg = amlpciephy_read(sc, 0x1002);
-	reg &= ~0x3f80;
-	reg |= (0x16 << 7);
-	reg &= ~0x7f;
-	reg |= (0x7f | (1 << 14));
-	amlpciephy_write(sc, 0x1002, reg);
+		/* Workaround for SuperSpeed PHY suspend bug. */
+		reg = amlpciephy_read(sc, 0x102d);
+		reg |= (1 << 7);
+		amlpciephy_write(sc, 0x102d, reg);
 
-	/* MPLL loop magic. */
-	reg = amlpciephy_read(sc, 0x30);
-	reg &= ~(0xf << 4);
-	reg |= (8 << 4);
-	amlpciephy_write(sc, 0x30, reg);
+		reg = amlpciephy_read(sc, 0x1010);
+		reg &= ~0xff0;
+		reg |= 0x10;
+		amlpciephy_write(sc, 0x1010, reg);
+
+		/* Rx equalization magic. */
+		reg = amlpciephy_read(sc, 0x1006);
+		reg &= (1 << 6);
+		reg |= (1 << 7);
+		reg &= ~(0x7 << 8);
+		reg |= (0x3 << 8);
+		reg |= (1 << 11);
+		amlpciephy_write(sc, 0x1006, reg);
+
+		/* Tx equalization magic. */
+		reg = amlpciephy_read(sc, 0x1002);
+		reg &= ~0x3f80;
+		reg |= (0x16 << 7);
+		reg &= ~0x7f;
+		reg |= (0x7f | (1 << 14));
+		amlpciephy_write(sc, 0x1002, reg);
+
+		/* MPLL loop magic. */
+		reg = amlpciephy_read(sc, 0x30);
+		reg &= ~(0xf << 4);
+		reg |= (8 << 4);
+		amlpciephy_write(sc, 0x30, reg);
+
+		break;
+	}
 
 	return 0;
 }
