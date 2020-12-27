@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.149 2020/12/24 01:16:14 cheloha Exp $	*/
+/*	$OpenBSD: systm.h,v 1.150 2020/12/27 11:38:35 visa Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -355,6 +355,8 @@ extern struct rwlock netlock;
 #define	NET_RLOCK_IN_IOCTL()	do { rw_enter_read(&netlock); } while (0)
 #define	NET_RUNLOCK_IN_IOCTL()	do { rw_exit_read(&netlock); } while (0)
 
+#ifdef DIAGNOSTIC
+
 #define	NET_ASSERT_UNLOCKED()						\
 do {									\
 	int _s = rw_status(&netlock);					\
@@ -368,6 +370,11 @@ do {									\
 	if ((splassert_ctl > 0) && (_s != RW_WRITE && _s != RW_READ))	\
 		splassert_fail(RW_READ, _s, __func__);			\
 } while (0)
+
+#else /* DIAGNOSTIC */
+#define	NET_ASSERT_UNLOCKED()	do {} while (0)
+#define	NET_ASSERT_LOCKED()	do {} while (0)
+#endif /* !DIAGNOSTIC */
 
 __returns_twice int	setjmp(label_t *);
 __dead void	longjmp(label_t *);
