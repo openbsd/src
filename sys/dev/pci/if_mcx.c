@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.89 2020/12/27 00:21:32 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.90 2020/12/27 00:40:31 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -6890,7 +6890,7 @@ mcx_arm_eq(struct mcx_softc *sc, struct mcx_eq *eq, int uar)
 	val = (eq->eq_n << 24) | (eq->eq_cons & 0xffffff);
 
 	mcx_wr(sc, offset, val);
-	/* barrier? */
+	mcx_bar(sc, offset, sizeof(val), BUS_SPACE_BARRIER_WRITE);
 }
 
 static struct mcx_eq_entry *
