@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.87 2020/12/26 12:26:01 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.88 2020/12/27 00:14:52 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -6532,24 +6532,26 @@ free:
 
 #endif /* NKSTAT > 0 */
 
-
-int
-mcx_rx_fill_slots(struct mcx_softc *sc, struct mcx_rx *rx,
-    void *ring, struct mcx_slot *slots, uint *prod, uint nslots)
+static inline unsigned int
+mcx_rx_fill_slots(struct mcx_softc *sc, struct mcx_rx *rx, uint nslots)
 {
-	struct mcx_rq_entry *rqe;
+	struct mcx_rq_entry *ring, *rqe;
 	struct mcx_slot *ms;
 	struct mbuf *m;
 	uint slot, p, fills;
 
+	ring = MCX_DMA_KVA(&rx->rx_rq_mem);
+	p = rx->rx_prod;
+
 	bus_dmamap_sync(sc->sc_dmat, MCX_DMA_MAP(&rx->rx_rq_mem),
 	    0, MCX_DMA_LEN(&rx->rx_rq_mem), BUS_DMASYNC_POSTWRITE);
 
-	p = *prod;
-	slot = (p % (1 << MCX_LOG_RQ_SIZE));
-	rqe = ring;
 	for (fills = 0; fills < nslots; fills++) {
-		ms = &slots[slot];
+		slot = p % (1 << MCX_LOG_RQ_SIZE);
+
+		ms = &rx->rx_slots[slot];
+		rqe = &ring[slot];
+
 		m = MCLGETL(NULL, M_DONTWAIT, sc->sc_rxbufsz);
 		if (m == NULL)
 			break;
@@ -6557,6 +6559,7 @@ mcx_rx_fill_slots(struct mcx_softc *sc, struct mcx_rx *rx,
 		m->m_data += (m->m_ext.ext_size - sc->sc_rxbufsz);
 		m->m_data += ETHER_ALIGN;
 		m->m_len = m->m_pkthdr.len = sc->sc_hardmtu;
+
 		if (bus_dmamap_load_mbuf(sc->sc_dmat, ms->ms_map, m,
 		    BUS_DMA_NOWAIT) != 0) {
 			m_freem(m);
@@ -6564,26 +6567,19 @@ mcx_rx_fill_slots(struct mcx_softc *sc, struct mcx_rx *rx,
 		}
 		ms->ms_m = m;
 
-		rqe[slot].rqe_byte_count =
-		    htobe32(ms->ms_map->dm_segs[0].ds_len);
-		rqe[slot].rqe_addr = htobe64(ms->ms_map->dm_segs[0].ds_addr);
-		rqe[slot].rqe_lkey = htobe32(sc->sc_lkey);
+		htobem32(&rqe->rqe_byte_count, ms->ms_map->dm_segs[0].ds_len);
+		htobem64(&rqe->rqe_addr, ms->ms_map->dm_segs[0].ds_addr);
+		htobem32(&rqe->rqe_lkey, sc->sc_lkey);
 
 		p++;
-		slot++;
-		if (slot == (1 << MCX_LOG_RQ_SIZE))
-			slot = 0;
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, MCX_DMA_MAP(&rx->rx_rq_mem),
 	    0, MCX_DMA_LEN(&rx->rx_rq_mem), BUS_DMASYNC_PREWRITE);
 
-	if (fills != 0) {
-		*rx->rx_doorbell = htobe32(p & MCX_WQ_DOORBELL_MASK);
-		/* barrier? */
-	}
+	rx->rx_prod = p;
 
-	*prod = p;
+	htobem32(rx->rx_doorbell, p & MCX_WQ_DOORBELL_MASK);
 
 	return (nslots - fills);
 }
@@ -6597,8 +6593,7 @@ mcx_rx_fill(struct mcx_softc *sc, struct mcx_rx *rx)
 	if (slots == 0)
 		return (1);
 
-	slots = mcx_rx_fill_slots(sc, rx, MCX_DMA_KVA(&rx->rx_rq_mem),
-	    rx->rx_slots, &rx->rx_prod, slots);
+	slots = mcx_rx_fill_slots(sc, rx, slots);
 	if_rxr_put(&rx->rx_rxr, slots);
 	return (0);
 }
