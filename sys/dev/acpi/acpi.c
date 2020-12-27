@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.394 2020/12/25 12:59:52 visa Exp $ */
+/* $OpenBSD: acpi.c,v 1.395 2020/12/27 23:06:34 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2782,6 +2782,8 @@ acpi_powerdown(void)
 		;
 }
 
+#endif /* SMALL_KERNEL */
+
 int
 acpi_map_address(struct acpi_softc *sc, struct acpi_gas *gas, bus_addr_t base,
     bus_size_t size, bus_space_handle_t *pioh, bus_space_tag_t *piot)
@@ -2808,8 +2810,6 @@ acpi_map_address(struct acpi_softc *sc, struct acpi_gas *gas, bus_addr_t base,
 
 	return 0;
 }
-
-#endif /* SMALL_KERNEL */
 
 void
 acpi_wakeup(void *arg)
