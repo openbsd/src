@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.245 2020/10/16 04:19:06 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.246 2020/12/27 23:05:38 deraadt Exp $
 
 machine		i386
 maxusers	4
@@ -31,7 +31,7 @@ pvbus0		at mainbus0	# Paravirtual device bus
 
 acpi0		at bios?
 #acpitimer*	at acpi?
-#acpihpet*	at acpi?
+acpihpet*	at acpi?
 #acpiac*	at acpi?
 #acpibat*	at acpi?
 #acpibtn*	at acpi?

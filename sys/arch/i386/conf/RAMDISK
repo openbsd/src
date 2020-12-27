@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.199 2020/12/09 18:11:18 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.200 2020/12/27 23:05:38 deraadt Exp $
 
 machine		i386
 maxusers	4
@@ -23,7 +23,7 @@ mainbus0	at root
 
 acpi0		at bios?
 #acpitimer*	at acpi?
-#acpihpet*	at acpi?
+acpihpet*	at acpi?
 #acpiac*	at acpi?
 #acpibat*	at acpi?
 #acpibtn*	at acpi?
