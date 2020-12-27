@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlpwrc.c,v 1.2 2020/05/19 08:11:25 kettenis Exp $	*/
+/*	$OpenBSD: amlpwrc.c,v 1.3 2020/12/27 17:59:32 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -31,14 +31,17 @@
 /* Power domain IDs */
 #define PWRC_G12A_ETH_ID	1
 #define PWRC_SM1_USB_ID		2
+#define PWRC_SM1_PCIE_ID	3
 #define PWRC_SM1_ETH_ID		6
 
 /* Registers */
 #define AO_RTI_GEN_PWR_SLEEP0		0x3a
 #define AO_RTI_GEN_PWR_ISO0		0x3b
+#define  AO_RTI_GEN_PWR_PCIE_MASK	(1 << 18)
 #define  AO_RTI_GEN_PWR_USB_MASK	(1 << 17)
 #define HHI_MEM_PD_REG0			0x40
 #define  HHI_MEM_PD_USB_MASK		(0x3 << 30)
+#define  HHI_MEM_PD_PCIE_MASK		(0xf << 26)
 #define  HHI_MEM_PD_ETH_MASK		(0x3 << 2)
 
 #define HREAD4(sc, reg)							\
@@ -164,6 +167,16 @@ amlpwrc_sm1_enable(void *cookie, uint32_t *cells, int on)
 		delay(20);
 		amlpwrc_toggle(sc->sc_rm_ao, AO_RTI_GEN_PWR_ISO0,
 		    AO_RTI_GEN_PWR_USB_MASK, on);
+		return;
+	case PWRC_SM1_PCIE_ID:
+		amlpwrc_toggle(sc->sc_rm_ao, AO_RTI_GEN_PWR_SLEEP0,
+		    AO_RTI_GEN_PWR_PCIE_MASK, on);
+		delay(20);
+		amlpwrc_toggle(sc->sc_rm_hhi, HHI_MEM_PD_REG0,
+		    HHI_MEM_PD_PCIE_MASK, on);
+		delay(20);
+		amlpwrc_toggle(sc->sc_rm_ao, AO_RTI_GEN_PWR_ISO0,
+		    AO_RTI_GEN_PWR_PCIE_MASK, on);
 		return;
 	case PWRC_SM1_ETH_ID:
 		amlpwrc_toggle(sc->sc_rm_hhi, HHI_MEM_PD_REG0,
