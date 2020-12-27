@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: scapy.pl,v 1.3 2020/12/26 00:12:03 bluhm Exp $
+#	$OpenBSD: scapy.pl,v 1.4 2020/12/27 14:37:54 bluhm Exp $
 
 # Copyright (c) 2010-2017 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -86,6 +86,8 @@ if ($mode eq "relay") {
 	$r->run;
 	copy($log, \*STDERR);
 	$r->up;
+	copy($log, \*STDERR);
+	$r->loggrep(qr/^Spliced$/);
 	copy($log, \*STDERR);
 	$r->down;
 	copy($log, \*STDERR);
