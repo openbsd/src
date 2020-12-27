@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlpciephy.c,v 1.3 2020/12/27 19:32:29 kettenis Exp $	*/
+/*	$OpenBSD: amlpciephy.c,v 1.4 2020/12/27 20:37:58 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -127,7 +127,6 @@ amlpciephy_enable(void *cookie, uint32_t *cells)
 	case PHY_TYPE_PCIE:
 		/* Power on. */
 		reg = HREAD4(sc, PHY_R0);
-		printf("R0: 0x%x\n", reg);
 		reg &= ~PHY_R0_PCIE_POWER_MASK;
 		reg |= PHY_R0_PCIE_POWER_ON;
 		HWRITE4(sc, PHY_R0, reg);
