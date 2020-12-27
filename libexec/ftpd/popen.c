@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.29 2020/01/15 22:06:59 jan Exp $	*/
+/*	$OpenBSD: popen.c,v 1.30 2020/12/27 15:11:04 florian Exp $	*/
 /*	$NetBSD: popen.c,v 1.5 1995/04/11 02:45:00 cgd Exp $	*/
 
 /*
@@ -113,7 +113,6 @@ ftpd_ls(const char *path, pid_t *pidptr)
 		(void)close(pdes[0]);
 		closelog();
 
-		extern int optreset;
 		extern int ls_main(int, char **);
 
 		/* reset getopt for ls_main */
