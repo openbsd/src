@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.90 2020/12/27 00:40:31 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.91 2020/12/27 01:00:25 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -2557,8 +2557,8 @@ static void	mcx_refill(void *);
 static int	mcx_process_rx(struct mcx_softc *, struct mcx_rx *,
 		    struct mcx_cq_entry *, struct mbuf_list *,
 		    const struct mcx_calibration *);
-static void	mcx_process_txeof(struct mcx_softc *, struct mcx_tx *,
-		    struct mcx_cq_entry *, int *);
+static int	mcx_process_txeof(struct mcx_softc *, struct mcx_tx *,
+		    struct mcx_cq_entry *);
 static void	mcx_process_cq(struct mcx_softc *, struct mcx_queues *,
 		    struct mcx_cq *);
 
@@ -6610,9 +6610,9 @@ mcx_refill(void *xrx)
 		timeout_add(&rx->rx_refill, 1);
 }
 
-void
+static int
 mcx_process_txeof(struct mcx_softc *sc, struct mcx_tx *tx,
-    struct mcx_cq_entry *cqe, int *txfree)
+    struct mcx_cq_entry *cqe)
 {
 	struct mcx_slot *ms;
 	bus_dmamap_t map;
@@ -6629,10 +6629,11 @@ mcx_process_txeof(struct mcx_softc *sc, struct mcx_tx *tx,
 	if (map->dm_nsegs > 1)
 		slots += (map->dm_nsegs+2) / MCX_SQ_SEGS_PER_SLOT;
 
-	(*txfree) += slots;
 	bus_dmamap_unload(sc->sc_dmat, map);
 	m_freem(ms->ms_m);
 	ms->ms_m = NULL;
+
+	return (slots);
 }
 
 static uint64_t
@@ -6836,7 +6837,7 @@ mcx_process_cq(struct mcx_softc *sc, struct mcx_queues *q, struct mcx_cq *cq)
 		opcode = (cqe->cq_opcode_owner >> MCX_CQ_ENTRY_OPCODE_SHIFT);
 		switch (opcode) {
 		case MCX_CQ_ENTRY_OPCODE_REQ:
-			mcx_process_txeof(sc, tx, cqe, &txfree);
+			txfree += mcx_process_txeof(sc, tx, cqe);
 			break;
 		case MCX_CQ_ENTRY_OPCODE_SEND:
 			rxfree += mcx_process_rx(sc, rx, cqe, &ml, c);
