@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.88 2020/12/27 00:14:52 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.89 2020/12/27 00:21:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -6659,7 +6659,9 @@ mcx_calibrate_first(struct mcx_softc *sc)
 	splx(s);
 	c->c_ratio = 0;
 
+#ifdef notyet
 	timeout_add_sec(&sc->sc_calibrate, MCX_CALIBRATE_FIRST);
+#endif
 }
 
 #define MCX_TIMESTAMP_SHIFT 24
@@ -6750,6 +6752,7 @@ mcx_process_rx(struct mcx_softc *sc, struct mcx_rx *rx,
 	}
 #endif
 
+#ifdef notyet
 	if (ISSET(sc->sc_ac.ac_if.if_flags, IFF_LINK0) && c->c_ratio) {
 		uint64_t t = bemtoh64(&cqe->cq_timestamp);
 		t -= c->c_timestamp;
@@ -6760,6 +6763,7 @@ mcx_process_rx(struct mcx_softc *sc, struct mcx_rx *rx,
 		m->m_pkthdr.ph_timestamp = t;
 		SET(m->m_pkthdr.csum_flags, M_TIMESTAMP);
 	}
+#endif
 
 	ml_enqueue(ml, m);
 
