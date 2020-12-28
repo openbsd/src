@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.80 2020/12/11 22:47:11 tobhe Exp $
+.\" $OpenBSD: iked.conf.5,v 1.81 2020/12/28 19:13:12 tobhe Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 11 2020 $
+.Dd $Mdocdate: December 28 2020 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -396,6 +396,9 @@ the
 .Ar srcnat
 parameter can be used to specify the actual source address.
 This can be used in outgoing NAT/BINAT scenarios as described below.
+The keyword
+.Ar any
+will match any address (i.e. 0.0.0.0/0 and ::/0).
 If the
 .Ic config address
 option is specified, the
