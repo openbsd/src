@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.109 2020/12/08 12:26:31 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.110 2020/12/28 14:01:23 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -35,6 +35,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/percpu.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/mman.h>
@@ -271,7 +272,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 	int result;
 
 	result = 0;		/* XXX shut up gcc */
-	uvmexp.fltanget++;
+	counters_inc(uvmexp_counters, flt_anget);
         /* bump rusage counters */
 	if (anon->an_page)
 		curproc->p_ru.ru_minflt++;
@@ -295,7 +296,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 			if ((pg->pg_flags & (PG_BUSY|PG_RELEASED)) == 0)
 				return (VM_PAGER_OK);
 			atomic_setbits_int(&pg->pg_flags, PG_WANTED);
-			uvmexp.fltpgwait++;
+			counters_inc(uvmexp_counters, flt_pgwait);
 
 			/*
 			 * the last unlock must be an atomic unlock+wait on
@@ -310,7 +311,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 
 			if (pg == NULL) {		/* out of RAM.  */
 				uvmfault_unlockall(ufi, amap, NULL);
-				uvmexp.fltnoram++;
+				counters_inc(uvmexp_counters, flt_noram);
 				uvm_wait("flt_noram1");
 				/* ready to relock and try again */
 			} else {
@@ -325,7 +326,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 				 * it is ok to read an_swslot here because
 				 * we hold PG_BUSY on the page.
 				 */
-				uvmexp.pageins++;
+				counters_inc(uvmexp_counters, pageins);
 				result = uvm_swap_get(pg, anon->an_swslot,
 				    PGO_SYNCIO);
 
@@ -369,7 +370,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 				uvm_anfree(anon);	/* frees page for us */
 				if (locked)
 					uvmfault_unlockall(ufi, amap, NULL);
-				uvmexp.fltpgrele++;
+				counters_inc(uvmexp_counters, flt_pgrele);
 				return (VM_PAGER_REFAULT);	/* refault! */
 			}
 
@@ -426,7 +427,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 		}
 
 		/* try it again! */
-		uvmexp.fltanretry++;
+		counters_inc(uvmexp_counters, flt_anretry);
 		continue;
 
 	} /* while (1) */
@@ -547,7 +548,7 @@ uvm_fault_check(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 			/* need to clear */
 			uvmfault_unlockmaps(ufi, FALSE);
 			uvmfault_amapcopy(ufi);
-			uvmexp.fltamcopy++;
+			counters_inc(uvmexp_counters, flt_amcopy);
 			return (ERESTART);
 		} else {
 			/*
@@ -699,7 +700,7 @@ uvm_fault_upper(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	 */
 
 	if ((access_type & PROT_WRITE) != 0 && anon->an_ref > 1) {
-		uvmexp.flt_acow++;
+		counters_inc(uvmexp_counters, flt_acow);
 		oanon = anon;		/* oanon = old */
 		anon = uvm_analloc();
 		if (anon) {
@@ -710,10 +711,10 @@ uvm_fault_upper(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 		if (anon == NULL || pg == NULL) {
 			uvmfault_unlockall(ufi, amap, NULL);
 			if (anon == NULL)
-				uvmexp.fltnoanon++;
+				counters_inc(uvmexp_counters, flt_noanon);
 			else {
 				uvm_anfree(anon);
-				uvmexp.fltnoram++;
+				counters_inc(uvmexp_counters, flt_noram);
 			}
 
 			if (uvm_swapisfull())
@@ -745,7 +746,7 @@ uvm_fault_upper(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 		 * thus, no one can get at it until we are done with it.
 		 */
 	} else {
-		uvmexp.flt_anon++;
+		counters_inc(uvmexp_counters, flt_anon);
 		oanon = anon;
 		pg = anon->an_page;
 		if (anon->an_ref > 1)     /* disallow writes to ref > 1 anons */
@@ -861,7 +862,7 @@ uvm_fault_upper_lookup(struct uvm_faultinfo *ufi,
 			uvm_lock_pageq();
 			uvm_pageactivate(anon->an_page);	/* reactivate */
 			uvm_unlock_pageq();
-			uvmexp.fltnamap++;
+			counters_inc(uvmexp_counters, flt_namap);
 
 			/*
 			 * Since this isn't the page that's actually faulting,
@@ -909,7 +910,7 @@ uvm_fault(vm_map_t orig_map, vaddr_t vaddr, vm_fault_t fault_type,
 	struct vm_page *pages[UVM_MAXRANGE];
 	int error = ERESTART;
 
-	uvmexp.faults++;	/* XXX: locking? */
+	counters_inc(uvmexp_counters, faults);
 	TRACEPOINT(uvm, fault, vaddr, fault_type, access_type, NULL);
 
 	/* init the IN parameters in the ufi */
@@ -994,7 +995,7 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	 * ("get" has the option of doing a pmap_enter for us)
 	 */
 	if (uobj != NULL) {
-		uvmexp.fltlget++;
+		counters_inc(uvmexp_counters, flt_lget);
 		gotpages = flt->npages;
 		(void) uobj->pgops->pgo_get(uobj, ufi->entry->offset +
 				(flt->startva - ufi->entry->start),
@@ -1038,7 +1039,7 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 				uvm_lock_pageq();
 				uvm_pageactivate(pages[lcv]);	/* reactivate */
 				uvm_unlock_pageq();
-				uvmexp.fltnomap++;
+				counters_inc(uvmexp_counters, flt_nomap);
 
 				/*
 				 * Since this page isn't the page that's
@@ -1109,7 +1110,7 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 
 		uvmfault_unlockall(ufi, amap, NULL);
 
-		uvmexp.fltget++;
+		counters_inc(uvmexp_counters, flt_get);
 		gotpages = 1;
 		uoff = (ufi->orig_rvaddr - ufi->entry->start) + ufi->entry->offset;
 		result = uobj->pgops->pgo_get(uobj, uoff, &uobjpage, &gotpages,
@@ -1183,7 +1184,7 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 		 *
 		 * set "pg" to the page we want to map in (uobjpage, usually)
 		 */
-		uvmexp.flt_obj++;
+		counters_inc(uvmexp_counters, flt_obj);
 		if (UVM_ET_ISCOPYONWRITE(ufi->entry))
 			flt->enter_prot &= ~PROT_WRITE;
 		pg = uobjpage;		/* map in the actual object */
@@ -1235,10 +1236,10 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 			/* unlock and fail ... */
 			uvmfault_unlockall(ufi, amap, uobj);
 			if (anon == NULL)
-				uvmexp.fltnoanon++;
+				counters_inc(uvmexp_counters, flt_noanon);
 			else {
 				uvm_anfree(anon);
-				uvmexp.fltnoram++;
+				counters_inc(uvmexp_counters, flt_noram);
 			}
 
 			if (uvm_swapisfull())
@@ -1254,7 +1255,7 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 
 		/* fill in the data */
 		if (uobjpage != PGO_DONTCARE) {
-			uvmexp.flt_prcopy++;
+			counters_inc(uvmexp_counters, flt_prcopy);
 			/* copy page [pg now dirty] */
 			uvm_pagecopy(uobjpage, pg);
 
@@ -1277,7 +1278,7 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 			uvm_unlock_pageq();
 			uobj = NULL;
 		} else {
-			uvmexp.flt_przero++;
+			counters_inc(uvmexp_counters, flt_przero);
 			/*
 			 * Page is zero'd and marked dirty by uvm_pagealloc()
 			 * above.
@@ -1288,7 +1289,7 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 		    ufi->orig_rvaddr - ufi->entry->start, anon, 0)) {
 			uvmfault_unlockall(ufi, amap, NULL);
 			uvm_anfree(anon);
-			uvmexp.fltnoamap++;
+			counters_inc(uvmexp_counters, flt_noamap);
 
 			if (uvm_swapisfull())
 				return (ENOMEM);
@@ -1580,7 +1581,7 @@ uvmfault_relock(struct uvm_faultinfo *ufi)
 		return TRUE;
 	}
 
-	uvmexp.fltrelck++;
+	counters_inc(uvmexp_counters, flt_relck);
 
 	/*
 	 * relock map.   fail if version mismatch (in which case nothing
@@ -1592,6 +1593,6 @@ uvmfault_relock(struct uvm_faultinfo *ufi)
 		return(FALSE);
 	}
 
-	uvmexp.fltrelckok++;
+	counters_inc(uvmexp_counters, flt_relckok);
 	return(TRUE);		/* got it! */
 }

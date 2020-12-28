@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_meter.c,v 1.41 2020/06/24 22:03:45 cheloha Exp $	*/
+/*	$OpenBSD: uvm_meter.c,v 1.42 2020/12/28 14:01:23 mpi Exp $	*/
 /*	$NetBSD: uvm_meter.c,v 1.21 2001/07/14 06:36:03 matt Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/percpu.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/vmmeter.h>
@@ -78,6 +79,7 @@ static fixpt_t cexp[3] = {
 
 static void uvm_loadav(struct loadavg *);
 void uvm_total(struct vmtotal *);
+void uvmexp_read(struct uvmexp *);
 
 /*
  * uvm_meter: calculate load average and wake up the swapper (if needed)
@@ -151,6 +153,7 @@ uvm_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 {
 	struct process *pr = p->p_p;
 	struct vmtotal vmtotals;
+	struct uvmexp uexp;
 	int rv, t;
 
 	switch (name[0]) {
@@ -179,8 +182,9 @@ uvm_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		    sizeof(vmtotals)));
 
 	case VM_UVMEXP:
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &uvmexp,
-		    sizeof(uvmexp)));
+		uvmexp_read(&uexp);
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &uexp,
+		    sizeof(uexp)));
 
 	case VM_NKMEMPAGES:
 		return (sysctl_rdint(oldp, oldlenp, newp, nkmempages));
@@ -315,6 +319,41 @@ uvm_total(struct vmtotal *totalp)
 	totalp->t_armshr = 0;		/* XXX */
 }
 
+void
+uvmexp_read(struct uvmexp *uexp)
+{
+		uint64_t counters[exp_ncounters];
+
+		memcpy(uexp, &uvmexp, sizeof(*uexp));
+
+		counters_read(uvmexp_counters, counters, exp_ncounters);
+
+		/* stat counters */
+		uexp->faults = (int)counters[faults];
+		uexp->pageins = (int)counters[pageins];
+
+		/* fault subcounters */
+		uexp->fltnoram = (int)counters[flt_noram];
+		uexp->fltnoanon = (int)counters[flt_noanon];
+		uexp->fltnoamap = (int)counters[flt_noamap];
+		uexp->fltpgwait = (int)counters[flt_pgwait];
+		uexp->fltpgrele = (int)counters[flt_pgrele];
+		uexp->fltrelck = (int)counters[flt_relck];
+		uexp->fltrelckok = (int)counters[flt_relckok];
+		uexp->fltanget = (int)counters[flt_anget];
+		uexp->fltanretry = (int)counters[flt_anretry];
+		uexp->fltamcopy = (int)counters[flt_amcopy];
+		uexp->fltnamap = (int)counters[flt_namap];
+		uexp->fltnomap = (int)counters[flt_nomap];
+		uexp->fltlget = (int)counters[flt_lget];
+		uexp->fltget = (int)counters[flt_get];
+		uexp->flt_anon = (int)counters[flt_anon];
+		uexp->flt_acow = (int)counters[flt_acow];
+		uexp->flt_obj = (int)counters[flt_obj];
+		uexp->flt_prcopy = (int)counters[flt_prcopy];
+		uexp->flt_przero = (int)counters[flt_przero];
+}
+
 #ifdef DDB
 
 /*
@@ -323,51 +362,54 @@ uvm_total(struct vmtotal *totalp)
 void
 uvmexp_print(int (*pr)(const char *, ...))
 {
+	struct uvmexp uexp;
+
+	uvmexp_read(&uexp);
 
 	(*pr)("Current UVM status:\n");
 	(*pr)("  pagesize=%d (0x%x), pagemask=0x%x, pageshift=%d\n",
-	    uvmexp.pagesize, uvmexp.pagesize, uvmexp.pagemask,
-	    uvmexp.pageshift);
+	    uexp.pagesize, uexp.pagesize, uexp.pagemask,
+	    uexp.pageshift);
 	(*pr)("  %d VM pages: %d active, %d inactive, %d wired, %d free (%d zero)\n",
-	    uvmexp.npages, uvmexp.active, uvmexp.inactive, uvmexp.wired,
-	    uvmexp.free, uvmexp.zeropages);
+	    uexp.npages, uexp.active, uexp.inactive, uexp.wired,
+	    uexp.free, uexp.zeropages);
 	(*pr)("  min  %d%% (%d) anon, %d%% (%d) vnode, %d%% (%d) vtext\n",
-	    uvmexp.anonminpct, uvmexp.anonmin, uvmexp.vnodeminpct,
-	    uvmexp.vnodemin, uvmexp.vtextminpct, uvmexp.vtextmin);
+	    uexp.anonminpct, uexp.anonmin, uexp.vnodeminpct,
+	    uexp.vnodemin, uexp.vtextminpct, uexp.vtextmin);
 	(*pr)("  freemin=%d, free-target=%d, inactive-target=%d, "
-	    "wired-max=%d\n", uvmexp.freemin, uvmexp.freetarg, uvmexp.inactarg,
-	    uvmexp.wiredmax);
+	    "wired-max=%d\n", uexp.freemin, uexp.freetarg, uexp.inactarg,
+	    uexp.wiredmax);
 	(*pr)("  faults=%d, traps=%d, intrs=%d, ctxswitch=%d fpuswitch=%d\n",
-	    uvmexp.faults, uvmexp.traps, uvmexp.intrs, uvmexp.swtch,
-	    uvmexp.fpswtch);
+	    uexp.faults, uexp.traps, uexp.intrs, uexp.swtch,
+	    uexp.fpswtch);
 	(*pr)("  softint=%d, syscalls=%d, kmapent=%d\n",
-	    uvmexp.softs, uvmexp.syscalls, uvmexp.kmapent);
+	    uexp.softs, uexp.syscalls, uexp.kmapent);
 
 	(*pr)("  fault counts:\n");
 	(*pr)("    noram=%d, noanon=%d, noamap=%d, pgwait=%d, pgrele=%d\n",
-	    uvmexp.fltnoram, uvmexp.fltnoanon, uvmexp.fltnoamap,
-	    uvmexp.fltpgwait, uvmexp.fltpgrele);
+	    uexp.fltnoram, uexp.fltnoanon, uexp.fltnoamap,
+	    uexp.fltpgwait, uexp.fltpgrele);
 	(*pr)("    ok relocks(total)=%d(%d), anget(retries)=%d(%d), "
-	    "amapcopy=%d\n", uvmexp.fltrelckok, uvmexp.fltrelck,
-	    uvmexp.fltanget, uvmexp.fltanretry, uvmexp.fltamcopy);
+	    "amapcopy=%d\n", uexp.fltrelckok, uexp.fltrelck,
+	    uexp.fltanget, uexp.fltanretry, uexp.fltamcopy);
 	(*pr)("    neighbor anon/obj pg=%d/%d, gets(lock/unlock)=%d/%d\n",
-	    uvmexp.fltnamap, uvmexp.fltnomap, uvmexp.fltlget, uvmexp.fltget);
+	    uexp.fltnamap, uexp.fltnomap, uexp.fltlget, uexp.fltget);
 	(*pr)("    cases: anon=%d, anoncow=%d, obj=%d, prcopy=%d, przero=%d\n",
-	    uvmexp.flt_anon, uvmexp.flt_acow, uvmexp.flt_obj, uvmexp.flt_prcopy,
-	    uvmexp.flt_przero);
+	    uexp.flt_anon, uexp.flt_acow, uexp.flt_obj, uexp.flt_prcopy,
+	    uexp.flt_przero);
 
 	(*pr)("  daemon and swap counts:\n");
 	(*pr)("    woke=%d, revs=%d, scans=%d, obscans=%d, anscans=%d\n",
-	    uvmexp.pdwoke, uvmexp.pdrevs, uvmexp.pdscans, uvmexp.pdobscan,
-	    uvmexp.pdanscan);
+	    uexp.pdwoke, uexp.pdrevs, uexp.pdscans, uexp.pdobscan,
+	    uexp.pdanscan);
 	(*pr)("    busy=%d, freed=%d, reactivate=%d, deactivate=%d\n",
-	    uvmexp.pdbusy, uvmexp.pdfreed, uvmexp.pdreact, uvmexp.pddeact);
-	(*pr)("    pageouts=%d, pending=%d, nswget=%d\n", uvmexp.pdpageouts,
-	    uvmexp.pdpending, uvmexp.nswget);
+	    uexp.pdbusy, uexp.pdfreed, uexp.pdreact, uexp.pddeact);
+	(*pr)("    pageouts=%d, pending=%d, nswget=%d\n", uexp.pdpageouts,
+	    uexp.pdpending, uexp.nswget);
 	(*pr)("    nswapdev=%d\n",
-	    uvmexp.nswapdev);
+	    uexp.nswapdev);
 	(*pr)("    swpages=%d, swpginuse=%d, swpgonly=%d paging=%d\n",
-	    uvmexp.swpages, uvmexp.swpginuse, uvmexp.swpgonly, uvmexp.paging);
+	    uexp.swpages, uexp.swpginuse, uexp.swpgonly, uexp.paging);
 
 	(*pr)("  kernel pointers:\n");
 	(*pr)("    objs(kern)=%p\n", uvm.kernel_object);

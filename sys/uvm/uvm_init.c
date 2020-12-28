@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_init.c,v 1.40 2017/05/11 00:42:05 dlg Exp $	*/
+/*	$OpenBSD: uvm_init.c,v 1.41 2020/12/28 14:01:23 mpi Exp $	*/
 /*	$NetBSD: uvm_init.c,v 1.14 2000/06/27 17:29:23 mrg Exp $	*/
 
 /*
@@ -35,6 +35,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/filedesc.h>
+#include <sys/percpu.h>
 #include <sys/resourcevar.h>
 #include <sys/mman.h>
 #include <sys/malloc.h>
@@ -51,6 +52,9 @@
 
 struct uvm uvm;		/* decl */
 struct uvmexp uvmexp;	/* decl */
+
+COUNTERS_BOOT_MEMORY(uvmexp_countersboot, exp_ncounters);
+struct cpumem *uvmexp_counters = COUNTERS_BOOT_INITIALIZER(uvmexp_countersboot);
 
 #if defined(VM_MIN_KERNEL_ADDRESS)
 vaddr_t vm_min_kernel_address = VM_MIN_KERNEL_ADDRESS;
@@ -184,4 +188,10 @@ uvm_init(void)
 	    uaddr_bestfit_create(vm_map_min(kmem_map),
 	    vm_map_max(kmem_map)));
 #endif /* !SMALL_KERNEL */
+}
+
+void
+uvm_init_percpu(void)
+{
+	uvmexp_counters = counters_alloc_ncpus(uvmexp_counters, exp_ncounters);
 }
