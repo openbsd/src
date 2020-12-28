@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1946 2020/12/24 12:02:21 jsg Exp $
+$OpenBSD: pcidevs,v 1.1947 2020/12/28 10:35:59 kettenis Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -292,6 +292,7 @@ vendor	SAMSUNG		0x167d	Samsung
 vendor	ATHEROS		0x168c	Atheros
 vendor	GLOBALSUN	0x16ab	Global Sun
 vendor	SAFENET		0x16ae	SafeNet
+vendor	SYNOPSYS	0x16c3	Synopsys
 vendor	MICREL		0x16c6	Micrel
 vendor	USR2		0x16ec	US Robotics
 vendor	NETOCTAVE	0x170b	Netoctave
@@ -8086,6 +8087,9 @@ product SYMPHONY 82C103		0x0103	82C103
 product SYMPHONY 82C105		0x0105	82C105
 product SYMPHONY 82C565		0x0565	82C565 ISA
 product SYMPHONY2 82C101	0x0001	82C101
+
+/* Synopsys products */
+product SYNOPSYS DW_PCIE	0xabcd	DesignWare PCIE
 
 /* SK hynix products */
 product SKHYNIX SSD		0x1327	BC501 NVMe
