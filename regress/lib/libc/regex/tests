@@ -1,4 +1,4 @@
-#	$OpenBSD: tests,v 1.8 2016/05/26 14:23:55 schwarze Exp $
+#	$OpenBSD: tests,v 1.9 2020/12/28 21:41:55 millert Exp $
 #	$NetBSD: tests,v 1.5 1995/04/20 22:40:00 cgd Exp $
 
 # regular expression test set
@@ -592,3 +592,6 @@ Char \([a-z0-9_]*\)\[.*	b	Char xyz[k	Char xyz[k	xyz
 a?b	-	ab	ab
 -\{0,1\}[0-9]*$	b	-5	-5
 
+# FreeBSD PR 130504
+(.|())(b)	-	ab	ab
+(()|.)(b)	-	ab	ab

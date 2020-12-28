@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.25 2018/07/11 12:38:46 martijn Exp $	*/
+/*	$OpenBSD: engine.c,v 1.26 2020/12/28 21:41:55 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -935,7 +935,7 @@ step(struct re_guts *g,
 				    OP(s = g->strip[pc+look]) != O_CH;
 				    look += OPND(s))
 					assert(OP(s) == OOR2);
-				FWD(aft, aft, look);
+				FWD(aft, aft, look + 1);
 			}
 			break;
 		case OOR2:		/* propagate OCH_'s marking */
