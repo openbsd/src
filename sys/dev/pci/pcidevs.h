@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1946 2020/12/24 12:02:21 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1947 2020/12/28 10:35:59 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -297,6 +297,7 @@
 #define	PCI_VENDOR_ATHEROS	0x168c		/* Atheros */
 #define	PCI_VENDOR_GLOBALSUN	0x16ab		/* Global Sun */
 #define	PCI_VENDOR_SAFENET	0x16ae		/* SafeNet */
+#define	PCI_VENDOR_SYNOPSYS	0x16c3		/* Synopsys */
 #define	PCI_VENDOR_MICREL	0x16c6		/* Micrel */
 #define	PCI_VENDOR_USR2	0x16ec		/* US Robotics */
 #define	PCI_VENDOR_NETOCTAVE	0x170b		/* Netoctave */
@@ -8091,6 +8092,9 @@
 #define	PCI_PRODUCT_SYMPHONY_82C105	0x0105		/* 82C105 */
 #define	PCI_PRODUCT_SYMPHONY_82C565	0x0565		/* 82C565 ISA */
 #define	PCI_PRODUCT_SYMPHONY2_82C101	0x0001		/* 82C101 */
+
+/* Synopsys products */
+#define	PCI_PRODUCT_SYNOPSYS_DW_PCIE	0xabcd		/* DesignWare PCIE */
 
 /* SK hynix products */
 #define	PCI_PRODUCT_SKHYNIX_SSD	0x1327		/* BC501 NVMe */

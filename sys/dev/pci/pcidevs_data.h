@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1946 2020/12/24 12:02:21 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1947 2020/12/28 10:35:59 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -28772,6 +28772,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82C101",
 	},
 	{
+	    PCI_VENDOR_SYNOPSYS, PCI_PRODUCT_SYNOPSYS_DW_PCIE,
+	    "DesignWare PCIE",
+	},
+	{
 	    PCI_VENDOR_SKHYNIX, PCI_PRODUCT_SKHYNIX_SSD,
 	    "BC501 NVMe",
 	},
@@ -32130,6 +32134,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_SAFENET,
 	    "SafeNet",
+	},
+	{
+	    PCI_VENDOR_SYNOPSYS,
+	    "Synopsys",
 	},
 	{
 	    PCI_VENDOR_MICREL,
