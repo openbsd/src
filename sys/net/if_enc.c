@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.77 2020/07/10 13:22:22 patrick Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.78 2020/12/28 14:28:50 kn Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -44,7 +44,6 @@ void	 encattach(int);
 
 int	 enc_clone_create(struct if_clone *, int);
 int	 enc_clone_destroy(struct ifnet *);
-void	 enc_start(struct ifnet *);
 int	 enc_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 	    struct rtentry *);
 int	 enc_ioctl(struct ifnet *, u_long, caddr_t);
@@ -85,7 +84,6 @@ enc_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_softc = sc;
 	ifp->if_type = IFT_ENC;
 	ifp->if_xflags = IFXF_CLONED;
-	ifp->if_start = enc_start;
 	ifp->if_output = enc_output;
 	ifp->if_ioctl = enc_ioctl;
 	ifp->if_hdrlen = ENC_HDRLEN;
@@ -157,19 +155,6 @@ enc_clone_destroy(struct ifnet *ifp)
 	free(sc, M_DEVBUF, sizeof(*sc));
 
 	return (0);
-}
-
-void
-enc_start(struct ifnet *ifp)
-{
-	struct mbuf	*m;
-
-	for (;;) {
-		m = ifq_dequeue(&ifp->if_snd);
-		if (m == NULL)
-			break;
-		m_freem(m);
-	}
 }
 
 int
