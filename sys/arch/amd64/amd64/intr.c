@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.54 2020/06/17 06:14:52 dlg Exp $	*/
+/*	$OpenBSD: intr.c,v 1.55 2020/12/28 14:23:30 mpi Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -695,6 +695,8 @@ splraise(int nlevel)
 {
 	int olevel;
 	struct cpu_info *ci = curcpu();
+
+	KASSERT(nlevel >= IPL_NONE);
 
 	olevel = ci->ci_ilevel;
 	ci->ci_ilevel = MAX(ci->ci_ilevel, nlevel);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.61 2020/06/24 22:03:40 cheloha Exp $	*/
+/*	$OpenBSD: intr.c,v 1.62 2020/12/28 14:23:30 mpi Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -322,6 +322,7 @@ intr_establish(int level, struct intrhand *ih)
 int
 splraise(int ipl)
 {
+	KASSERT(ipl >= IPL_NONE);
 	return (_splraise(ipl));
 }
 
