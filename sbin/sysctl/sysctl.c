@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.253 2020/11/17 12:11:04 mglocker Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.254 2020/12/28 18:29:44 mglocker Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -130,6 +130,7 @@ struct ctlname machdepname[] = CTL_MACHDEP_NAMES;
 #endif
 struct ctlname ddbname[] = CTL_DDB_NAMES;
 struct ctlname audioname[] = CTL_KERN_AUDIO_NAMES;
+struct ctlname videoname[] = CTL_KERN_VIDEO_NAMES;
 struct ctlname witnessname[] = CTL_KERN_WITNESS_NAMES;
 char names[BUFSIZ];
 int lastused;
@@ -219,6 +220,7 @@ void print_sensor(struct sensor *);
 int sysctl_chipset(char *, char **, int *, int, int *);
 #endif
 int sysctl_audio(char *, char **, int *, int, int *);
+int sysctl_video(char *, char **, int *, int, int *);
 int sysctl_witness(char *, char **, int *, int, int *);
 void vfsinit(void);
 
@@ -514,6 +516,11 @@ parse(char *string, int flags)
 			break;
 		case KERN_AUDIO:
 			len = sysctl_audio(string, &bufp, mib, flags, &type);
+			if (len < 0)
+				return;
+			break;
+		case KERN_VIDEO:
+			len = sysctl_video(string, &bufp, mib, flags, &type);
 			if (len < 0)
 				return;
 			break;
@@ -1766,6 +1773,7 @@ struct list shmlist = { shmname, KERN_SHMINFO_MAXID };
 struct list watchdoglist = { watchdogname, KERN_WATCHDOG_MAXID };
 struct list tclist = { tcname, KERN_TIMECOUNTER_MAXID };
 struct list audiolist = { audioname, KERN_AUDIO_MAXID };
+struct list videolist = { videoname, KERN_VIDEO_MAXID };
 struct list witnesslist = { witnessname, KERN_WITNESS_MAXID };
 
 /*
@@ -2813,6 +2821,25 @@ sysctl_audio(char *string, char **bufpp, int mib[], int flags, int *typep)
 		return (-1);
 	mib[2] = indx;
 	*typep = audiolist.list[indx].ctl_type;
+	return (3);
+}
+
+/*
+ * Handle video support
+ */
+int
+sysctl_video(char *string, char **bufpp, int mib[], int flags, int *typep)
+{
+	int indx;
+
+	if (*bufpp == NULL) {
+		listall(string, &videolist);
+		return (-1);
+	}
+	if ((indx = findname(string, "third", bufpp, &videolist)) == -1)
+		return (-1);
+	mib[2] = indx;
+	*typep = videolist.list[indx].ctl_type;
 	return (3);
 }
 
