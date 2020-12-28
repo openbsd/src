@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.209 2020/09/24 11:36:50 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.210 2020/12/28 14:02:08 mpi Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -961,6 +961,8 @@ pmap_bootstrap(vaddr_t kva_start)
 	 */
 
 	kpm = pmap_kernel();
+	mtx_init(&kpm->pm_mtx, -1); /* must not be used */
+	mtx_init(&kpm->pm_apte_mtx, IPL_VM);
 	uvm_objinit(&kpm->pm_obj, NULL, 1);
 	bzero(&kpm->pm_list, sizeof(kpm->pm_list));  /* pm_list not used */
 	kpm->pm_pdir = (vaddr_t)(proc0.p_addr->u_pcb.pcb_cr3 + KERNBASE);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.641 2020/11/08 20:37:23 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.642 2020/12/28 14:02:07 mpi Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3995,6 +3995,8 @@ int
 splraise(int ncpl)
 {
 	int ocpl;
+
+	KASSERT(ncpl >= IPL_NONE);
 
 	_SPLRAISE(ocpl, ncpl);
 	return (ocpl);
