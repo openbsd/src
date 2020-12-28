@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.384 2020/12/07 16:55:29 mpi Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.385 2020/12/28 18:28:11 mglocker Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -114,6 +114,7 @@
 #endif
 
 #include "audio.h"
+#include "video.h"
 #include "pf.h"
 
 extern struct forkstat forkstat;
@@ -124,6 +125,9 @@ extern fixpt_t ccpu;
 extern  long numvnodes;
 #if NAUDIO > 0
 extern int audio_record_enable;
+#endif
+#if NVIDEO > 0
+extern int video_record_enable;
 #endif
 
 int allowkmem;
@@ -140,6 +144,9 @@ int sysctl_sensors(int *, u_int, void *, size_t *, void *, size_t);
 int sysctl_cptime2(int *, u_int, void *, size_t *, void *, size_t);
 #if NAUDIO > 0
 int sysctl_audio(int *, u_int, void *, size_t *, void *, size_t);
+#endif
+#if NVIDEO > 0
+int sysctl_video(int *, u_int, void *, size_t *, void *, size_t);
 #endif
 int sysctl_cpustats(int *, u_int, void *, size_t *, void *, size_t);
 int sysctl_utc_offset(void *, size_t *, void *, size_t);
@@ -379,6 +386,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		case KERN_FILE:
 		case KERN_WITNESS:
 		case KERN_AUDIO:
+		case KERN_VIDEO:
 		case KERN_CPUSTATS:
 			break;
 		default:
@@ -640,6 +648,11 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 #if NAUDIO > 0
 	case KERN_AUDIO:
 		return (sysctl_audio(name + 1, namelen - 1, oldp, oldlenp,
+		    newp, newlen));
+#endif
+#if NVIDEO > 0
+	case KERN_VIDEO:
+		return (sysctl_video(name + 1, namelen - 1, oldp, oldlenp,
 		    newp, newlen));
 #endif
 	case KERN_CPUSTATS:
@@ -2440,6 +2453,21 @@ sysctl_audio(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (ENOENT);
 
 	return (sysctl_int(oldp, oldlenp, newp, newlen, &audio_record_enable));
+}
+#endif
+
+#if NVIDEO > 0
+int
+sysctl_video(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen)
+{
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	if (name[0] != KERN_VIDEO_RECORD)
+		return (ENOENT);
+
+	return (sysctl_int(oldp, oldlenp, newp, newlen, &video_record_enable));
 }
 #endif
 

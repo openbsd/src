@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.212 2020/11/07 05:24:20 gnezdo Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.213 2020/12/28 18:28:11 mglocker Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -189,7 +189,8 @@ struct ctlname {
 #define	KERN_PFSTATUS		86	/* struct: pf status and stats */
 #define	KERN_TIMEOUT_STATS	87	/* struct: timeout status and stats */
 #define	KERN_UTC_OFFSET		88	/* int: adjust RTC time to UTC */
-#define	KERN_MAXID		89	/* number of valid kern ids */
+#define	KERN_VIDEO		89	/* struct: video properties */
+#define	KERN_MAXID		90	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -281,6 +282,7 @@ struct ctlname {
 	{ "pfstatus", CTLTYPE_STRUCT }, \
 	{ "timeout_stats", CTLTYPE_STRUCT }, \
 	{ "utc_offset", CTLTYPE_INT }, \
+	{ "video", CTLTYPE_STRUCT }, \
 }
 
 /*
@@ -318,6 +320,17 @@ struct ctlname {
 #define KERN_AUDIO_MAXID	2
 
 #define CTL_KERN_AUDIO_NAMES { \
+	{ 0, 0 }, \
+	{ "record", CTLTYPE_INT }, \
+}
+
+/*
+ * KERN_VIDEO
+ */
+#define KERN_VIDEO_RECORD	1
+#define KERN_VIDEO_MAXID	2
+
+#define CTL_KERN_VIDEO_NAMES { \
 	{ 0, 0 }, \
 	{ "record", CTLTYPE_INT }, \
 }
