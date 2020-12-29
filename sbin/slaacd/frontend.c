@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.42 2020/12/01 18:08:53 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.43 2020/12/29 19:51:15 benno Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -584,6 +584,8 @@ update_autoconf_addresses(uint32_t if_index, char* if_name)
 	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
 		if (strcmp(if_name, ifa->ifa_name) != 0)
 			continue;
+		if (ifa->ifa_addr == NULL)
+			continue;
 
 		if (ifa->ifa_addr->sa_family == AF_LINK)
 			imsg_link_state.link_state =
@@ -936,6 +938,8 @@ get_lladdr(char *if_name, struct ether_addr *mac, struct sockaddr_in6 *ll)
 
 	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
 		if (strcmp(if_name, ifa->ifa_name) != 0)
+			continue;
+		if (ifa->ifa_addr == NULL)
 			continue;
 
 		switch(ifa->ifa_addr->sa_family) {
