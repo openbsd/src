@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlpinctrl.c,v 1.8 2020/12/18 22:15:29 kettenis Exp $	*/
+/*	$OpenBSD: amlpinctrl.c,v 1.9 2020/12/29 15:57:29 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -42,6 +42,7 @@
 #define GPIOH_1		17
 #define GPIOH_2		18
 #define GPIOH_3		19
+#define GPIOH_5		21
 #define GPIOH_6		22
 #define GPIOH_7		23
 #define BOOT_0		25
@@ -66,15 +67,26 @@
 #define GPIOA_14	63
 #define GPIOA_15	64
 #define GPIOX_0		65
+#define GPIOX_3		68
+#define GPIOX_5		70
+#define GPIOX_6		71
+#define GPIOX_7		72
+#define GPIOX_8		73
 #define GPIOX_10	75
 #define GPIOX_11	76
+#define GPIOX_16	81
 #define GPIOX_17	82
 #define GPIOX_18	83
+#define GPIOX_19	84
 
 #define GPIOAO_0	0
 #define GPIOAO_1	1
 #define GPIOAO_3	3
+#define GPIOAO_4	4
 #define GPIOAO_5	5
+#define GPIOAO_6	6
+#define GPIOAO_10	10
+#define GPIOAO_11	11
 #define GPIOE_0		12
 #define GPIOE_1		13
 
@@ -246,22 +258,33 @@ struct aml_pin_group aml_g12a_pin_groups[] = {
 	{ "sdcard_d2_c", GPIOC_2, 1, "sdcard" },
 	{ "sdcard_d3_c", GPIOC_3, 1, "sdcard" },
 	{ "GPIOC_4", GPIOC_4, 0, "gpio_periphs" },
+	{ "pwm_c_c", GPIOC_4, 5, "pwm_c" },
 	{ "sdcard_clk_c", GPIOC_4, 1, "sdcard" },
 	{ "sdcard_cmd_c", GPIOC_5, 1, "sdcard" },
 	{ "i2c0_sda_c", GPIOC_5, 3, "i2c0" },
 	{ "i2c0_sck_c", GPIOC_6, 3, "i2c0" },
 
 	/* GPIOX */
+	{ "pwm_d_x3", GPIOX_3, 4, "pwm_d" },
+	{ "pwm_c_x5", GPIOX_5, 4, "pwm_c" },
+	{ "pwm_a", GPIOX_6, 1, "pwm_a" },
+	{ "pwm_d_x6", GPIOX_6, 4, "pwm_d" },
+	{ "pwm_b_x7", GPIOX_7, 4, "pwm_b" },
+	{ "pwm_f_x", GPIOX_7, 1, "pwm_f" },
+	{ "pwm_c_x8", GPIOX_8, 5, "pwm_c" },
 	{ "i2c1_sda_x", GPIOX_10, 5, "i2c1" },
 	{ "i2c1_sck_x", GPIOX_11, 5, "i2c1" },
+	{ "pwm_e", GPIOX_16, 1, "pwm_e" },
 	{ "i2c2_sda_x", GPIOX_17, 1, "i2c2" },
 	{ "i2c2_sck_x", GPIOX_18, 1, "i2c2" },
+	{ "pwm_b_x19", GPIOX_19, 1, "pwm_b" },
 
 	/* GPIOH */
 	{ "i2c3_sda_h", GPIOH_0, 2, "i2c3" },
 	{ "i2c3_sck_h", GPIOH_1, 2, "i2c3" },
 	{ "i2c1_sda_h2", GPIOH_2, 2, "i2c1" },
 	{ "i2c1_sck_h3", GPIOH_3, 2, "i2c1" },
+	{ "pwm_f_h", GPIOH_5, 4, "pwm_f" },
 	{ "i2c1_sda_h6", GPIOH_6, 4, "i2c1" },
 	{ "i2c1_sck_h7", GPIOH_7, 4, "i2c1" },
 
@@ -296,9 +319,17 @@ struct aml_pin_group aml_g12a_ao_pin_groups[] = {
 	/* GPIOAO */
 	{ "uart_ao_a_tx", GPIOAO_0, 1, "uart_ao_a" },
 	{ "uart_ao_a_rx", GPIOAO_1, 1, "uart_ao_a" },
+	{ "pwm_ao_c_4", GPIOAO_4, 3, "pwm_ao_c" },
+	{ "pwm_ao_c_hiz", GPIOAO_4, 4, "pwm_ao_c" },
+	{ "pwm_ao_d_5", GPIOAO_5, 3, "pwm_ao_d" },
 	{ "remote_ao_input", GPIOAO_5, 1, "remote_ao_input" },
+	{ "pwm_ao_c_6", GPIOAO_6, 3, "pwm_ao_c" },
+	{ "pwm_ao_d_10", GPIOAO_10, 3, "pwm_ao_d" },
+	{ "pwm_ao_a", GPIOAO_11, 3, "pwm_ao_a" },
+	{ "pwm_ao_a_hiz", GPIOAO_11, 2, "pwm_ao_a" },
 
 	/* GPIOE */
+	{ "pwm_ao_b", GPIOE_0, 3, "pwm_ao_b" },
 	{ "pwm_ao_d_e", GPIOE_1, 3, "pwm_ao_d" },
 
 	{ }
