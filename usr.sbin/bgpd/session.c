@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.407 2020/12/23 13:20:47 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.408 2020/12/29 09:49:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1232,7 +1232,8 @@ get_alternate_addr(struct sockaddr *sa, struct bgpd_addr *alt)
 		fatal("getifaddrs");
 
 	for (match = ifap; match != NULL; match = match->ifa_next)
-		if (sa_cmp(sa, match->ifa_addr) == 0)
+		if (match->ifa_addr != NULL &&
+		    sa_cmp(sa, match->ifa_addr) == 0)
 			break;
 
 	if (match == NULL) {
@@ -1243,7 +1244,8 @@ get_alternate_addr(struct sockaddr *sa, struct bgpd_addr *alt)
 	switch (sa->sa_family) {
 	case AF_INET6:
 		for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
-			if (ifa->ifa_addr->sa_family == AF_INET &&
+			if (ifa->ifa_addr != NULL &&
+			    ifa->ifa_addr->sa_family == AF_INET &&
 			    strcmp(ifa->ifa_name, match->ifa_name) == 0) {
 				sa2addr(ifa->ifa_addr, alt, NULL);
 				break;
@@ -1252,10 +1254,12 @@ get_alternate_addr(struct sockaddr *sa, struct bgpd_addr *alt)
 		break;
 	case AF_INET:
 		for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
-			struct sockaddr_in6 *s =
-			    (struct sockaddr_in6 *)ifa->ifa_addr;
-			if (ifa->ifa_addr->sa_family == AF_INET6 &&
+			if (ifa->ifa_addr != NULL &&
+			    ifa->ifa_addr->sa_family == AF_INET6 &&
 			    strcmp(ifa->ifa_name, match->ifa_name) == 0) {
+				struct sockaddr_in6 *s =
+				    (struct sockaddr_in6 *)ifa->ifa_addr;
+
 				/* only accept global scope addresses */
 				if (IN6_IS_ADDR_LINKLOCAL(&s->sin6_addr) ||
 				    IN6_IS_ADDR_SITELOCAL(&s->sin6_addr))
