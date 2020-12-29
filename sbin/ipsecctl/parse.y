@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.178 2020/02/07 13:01:34 bluhm Exp $	*/
+/*	$OpenBSD: parse.y,v 1.179 2020/12/29 19:50:03 benno Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1827,7 +1827,8 @@ ifa_load(void)
 		err(1, "ifa_load: getifaddrs");
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-		if (!(ifa->ifa_addr->sa_family == AF_INET ||
+		if (ifa->ifa_addr == NULL ||
+		    !(ifa->ifa_addr->sa_family == AF_INET ||
 		    ifa->ifa_addr->sa_family == AF_INET6 ||
 		    ifa->ifa_addr->sa_family == AF_LINK))
 			continue;
