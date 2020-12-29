@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_trie_test.c,v 1.11 2019/06/17 13:14:23 claudio Exp $ */
+/*	$OpenBSD: rde_trie_test.c,v 1.12 2020/12/29 15:35:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -172,7 +172,7 @@ parse_roa_file(FILE *in, struct trie_head *th)
 	const char *errstr;
 	char *line, *s;
 	struct set_table *set = NULL;
-	struct roa_set rs;
+	struct roa roa;
 	struct bgpd_addr prefix;
 	u_int8_t plen;
 
@@ -218,22 +218,14 @@ parse_roa_file(FILE *in, struct trie_head *th)
 			}
 		}
 
-		if (state == 0) {
-			set_prep(set);
-			if (trie_roa_add(th, &prefix, plen, set) != 0)
-				errx(1, "trie_roa_add(%s, %u) failed",
-				    print_prefix(&prefix), plen);
-			set = NULL;
-		} else {
-			if (set == NULL) {
-				if ((set = set_new(1, sizeof(rs))) == NULL)
-					err(1, "set_new");
-			}
-			rs.as = as;
-			rs.maxlen = max;
-			if (set_add(set, &rs, 1) != 0)
-				err(1, "set_add");
-		}
+		roa.aid = prefix.aid;
+		roa.prefix.inet6 = prefix.v6;
+		roa.prefixlen = plen;
+		roa.maxlen = max;
+		roa.asnum = as;
+		if (trie_roa_add(th, &roa) != 0)
+			errx(1, "trie_roa_add(%s, %u) failed",
+			    print_prefix(&prefix), plen);
 
 		free(line);
 	}
