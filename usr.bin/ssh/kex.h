@@ -1,4 +1,4 @@
-/* $OpenBSD: kex.h,v 1.111 2020/10/07 02:22:23 djm Exp $ */
+/* $OpenBSD: kex.h,v 1.112 2020/12/29 00:59:15 djm Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -55,7 +55,7 @@
 #define	KEX_ECDH_SHA2_NISTP521		"ecdh-sha2-nistp521"
 #define	KEX_CURVE25519_SHA256		"curve25519-sha256"
 #define	KEX_CURVE25519_SHA256_OLD	"curve25519-sha256@libssh.org"
-#define	KEX_SNTRUP4591761X25519_SHA512	"sntrup4591761x25519-sha512@tinyssh.org"
+#define	KEX_SNTRUP761X25519_SHA512	"sntrup761x25519-sha512@openssh.com"
 
 #define COMP_NONE	0
 /* pre-auth compression (COMP_ZLIB) is only supported in the client */
@@ -94,7 +94,7 @@ enum kex_exchange {
 	KEX_DH_GEX_SHA256,
 	KEX_ECDH_SHA2,
 	KEX_C25519_SHA256,
-	KEX_KEM_SNTRUP4591761X25519_SHA512,
+	KEX_KEM_SNTRUP761X25519_SHA512,
 	KEX_MAX
 };
 
@@ -161,7 +161,7 @@ struct kex {
 	const EC_GROUP *ec_group;	/* ECDH */
 	u_char c25519_client_key[CURVE25519_SIZE]; /* 25519 + KEM */
 	u_char c25519_client_pubkey[CURVE25519_SIZE]; /* 25519 */
-	u_char sntrup4591761_client_key[crypto_kem_sntrup4591761_SECRETKEYBYTES]; /* KEM */
+	u_char sntrup761_client_key[crypto_kem_sntrup761_SECRETKEYBYTES]; /* KEM */
 	struct sshbuf *client_pub;
 };
 
@@ -211,10 +211,10 @@ int	 kex_c25519_enc(struct kex *, const struct sshbuf *, struct sshbuf **,
     struct sshbuf **);
 int	 kex_c25519_dec(struct kex *, const struct sshbuf *, struct sshbuf **);
 
-int	 kex_kem_sntrup4591761x25519_keypair(struct kex *);
-int	 kex_kem_sntrup4591761x25519_enc(struct kex *, const struct sshbuf *,
+int	 kex_kem_sntrup761x25519_keypair(struct kex *);
+int	 kex_kem_sntrup761x25519_enc(struct kex *, const struct sshbuf *,
     struct sshbuf **, struct sshbuf **);
-int	 kex_kem_sntrup4591761x25519_dec(struct kex *, const struct sshbuf *,
+int	 kex_kem_sntrup761x25519_dec(struct kex *, const struct sshbuf *,
     struct sshbuf **);
 
 int	 kex_dh_keygen(struct kex *);
