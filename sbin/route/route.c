@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.250 2020/11/25 21:36:05 krw Exp $	*/
+/*	$OpenBSD: route.c,v 1.251 2020/12/29 19:50:51 benno Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -506,7 +506,8 @@ setsource(int argc, char **argv)
 		for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 			if (if_nametoindex(ifa->ifa_name) != ifindex)
 				continue;
-			if (!(ifa->ifa_addr->sa_family == AF_INET ||
+			if (ifa->ifa_addr == NULL ||
+			    !(ifa->ifa_addr->sa_family == AF_INET ||
 			    ifa->ifa_addr->sa_family == AF_INET6))
 				continue;
 			if ((af != AF_UNSPEC) &&
