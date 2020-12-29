@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.249 2020/10/30 09:45:03 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.250 2020/12/29 19:48:06 benno Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -3186,7 +3186,8 @@ host_if(const char *s, struct addresslist *al, int max,
 
  nextaf:
 	for (p = ifap; p != NULL && cnt < max; p = p->ifa_next) {
-		if (p->ifa_addr->sa_family != af ||
+		if (p->ifa_addr == NULL ||
+		    p->ifa_addr->sa_family != af ||
 		    (strcmp(s, p->ifa_name) != 0 &&
 		    !is_if_in_group(p->ifa_name, s)))
 			continue;
