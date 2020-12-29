@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.76 2019/06/28 13:32:50 deraadt Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.77 2020/12/29 19:47:40 benno Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -200,6 +200,8 @@ init_all(void)
 		error("getifaddrs: %s", strerror(errno));
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if (ifa->ifa_addr == NULL)
+			continue;
 		sdl = (struct sockaddr_dl *)ifa->ifa_addr;
 		if (sdl->sdl_family != AF_LINK || sdl->sdl_type != IFT_ETHER ||
 		    sdl->sdl_alen != 6)
@@ -512,6 +514,8 @@ lookup_addrs(char *ifname, struct if_info *p)
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 		if (strcmp(ifa->ifa_name, ifname))
+			continue;
+		if (ifa->ifa_addr == NULL)
 			continue;
 		sdl = (struct sockaddr_dl *) ifa->ifa_addr;
 		if (sdl->sdl_family == AF_LINK &&
