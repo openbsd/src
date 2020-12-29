@@ -3,7 +3,7 @@
 [![Packaging status](https://repology.org/badge/tiny-repos/expat.svg)](https://repology.org/metapackage/expat/versions)
 
 
-# Expat, Release 2.2.8
+# Expat, Release 2.2.10
 
 This is Expat, a C library for parsing XML, started by
 [James Clark](https://en.wikipedia.org/wiki/James_Clark_(programmer)) in 1997.
@@ -16,9 +16,9 @@ structures for which you may register handlers.
 Expat supports the following compilers:
 - GNU GCC >=4.5
 - LLVM Clang >=3.5
-- Microsoft Visual Studio >=8.0/2005
+- Microsoft Visual Studio >=9.0/2008
 
-Windows users should use the
+Windows users can use the
 [`expat_win32` package](https://sourceforge.net/projects/expat/files/expat_win32/),
 which includes both precompiled libraries and executables, and source code for
 developers.
@@ -133,7 +133,7 @@ distribution.
 
 
 The CMake build system is still *experimental* and will replace the primary
-build system based on GNU Autotools at some point when its ready.
+build system based on GNU Autotools at some point when it is ready.
 For an idea of the available (non-advanced) options for building with CMake:
 
 ```console
@@ -156,6 +156,9 @@ EXPAT_BUILD_EXAMPLES:BOOL=ON
 // build fuzzers for the expat library
 EXPAT_BUILD_FUZZERS:BOOL=OFF
 
+// build pkg-config file
+EXPAT_BUILD_PKGCONFIG:BOOL=ON
+
 // build the tests for expat library
 EXPAT_BUILD_TESTS:BOOL=ON
 
@@ -170,6 +173,9 @@ EXPAT_ENABLE_INSTALL:BOOL=ON
 
 // Use /MT flag (static CRT) when compiling in MSVC
 EXPAT_MSVC_STATIC_CRT:BOOL=OFF
+
+// build fuzzers via ossfuzz for the expat library
+EXPAT_OSSFUZZ_BUILD:BOOL=OFF
 
 // build a shared expat library
 EXPAT_SHARED_LIBS:BOOL=ON
