@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2019/06/17 13:13:03 claudio Exp $
+# $OpenBSD: Makefile,v 1.6 2020/12/29 16:57:50 claudio Exp $
 
 .PATH:		${.CURDIR}/../../../../usr.sbin/bgpd
 
@@ -19,9 +19,10 @@ run-regress-rde_sets_test: rde_sets_test
 	./rde_sets_test
 
 SRCS_rde_trie_test=	rde_trie_test.c rde_trie.c util.c rde_sets.c
-TRIE_TESTS=1 2 3 4 5
+TRIE_TESTS=1 2 3 4 5 6
 TRIE4_FLAGS=-o
 TRIE5_FLAGS=-r
+TRIE6_FLAGS=-r
 
 .for n in ${TRIE_TESTS}
 TRIE_TARGETS+=run-regress-rde_trie_test-${n}
