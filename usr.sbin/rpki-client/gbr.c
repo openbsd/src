@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbr.c,v 1.1 2020/12/09 11:29:04 claudio Exp $ */
+/*	$OpenBSD: gbr.c,v 1.2 2020/12/29 14:51:11 job Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -56,7 +56,7 @@ gbr_parse(X509 **x509, const char *fn)
 	if (cms == NULL)
 		return NULL;
 
-	if ((p.res = calloc(1, sizeof(struct roa))) == NULL)
+	if ((p.res = calloc(1, sizeof(*p.res))) == NULL)
 		err(1, NULL);
 	if ((p.res->vcard = strndup(cms, cmsz)) == NULL)
 		err(1, NULL);
