@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpc.c,v 1.12 2020/12/21 11:48:38 martijn Exp $	*/
+/*	$OpenBSD: smtpc.c,v 1.13 2020/12/29 12:17:54 jmc Exp $	*/
 
 /*
  * Copyright (c) 2018 Eric Faurot <eric@openbsd.org>
@@ -57,7 +57,7 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr, "usage: %s [-Chnv] [-a authfile] [-F from] [-H helo] "
-	    "[-s server] [-S name] rcpt ...\n", __progname);
+	    "[-s server] [recipient ...]\n", __progname);
 	exit(1);
 }
 
