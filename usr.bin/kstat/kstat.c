@@ -1,4 +1,4 @@
-/* $OpenBSD: kstat.c,v 1.6 2020/08/13 12:37:16 schwarze Exp $ */
+/* $OpenBSD: kstat.c,v 1.7 2020/12/29 23:26:48 dlg Exp $ */
 
 /*
  * Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
@@ -525,6 +525,8 @@ kstat_print(struct kstat_tree *kt)
 			break;
 		}
 	}
+
+	fflush(stdout);
 }
 
 static void
