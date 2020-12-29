@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlpwm.c,v 1.1 2019/09/30 20:42:45 kettenis Exp $	*/
+/*	$OpenBSD: amlpwm.c,v 1.2 2020/12/29 16:04:27 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -26,6 +26,7 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_misc.h>
+#include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/fdt.h>
 
 #define PWM_PWM_A		0x00
@@ -111,6 +112,8 @@ amlpwm_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_clkin[1] = clock_get_frequency(faa->fa_node, "clkin1");
 
 	printf("\n");
+
+	pinctrl_byname(faa->fa_node, "default");
 
 	sc->sc_pd.pd_node = faa->fa_node;
 	sc->sc_pd.pd_cookie = sc;
