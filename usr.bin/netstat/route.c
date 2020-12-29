@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.105 2020/06/12 06:22:32 remi Exp $	*/
+/*	$OpenBSD: route.c,v 1.106 2020/12/29 19:51:52 benno Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -368,7 +368,8 @@ rdomainpr(void)
 
 	getifaddrs(&ifap);
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-		if (ifa->ifa_addr->sa_family != AF_LINK)
+		if (ifa->ifa_addr == NULL ||
+		    ifa->ifa_addr->sa_family != AF_LINK)
 			continue;
 		ifd = ifa->ifa_data;
 		if (rdom_if[ifd->ifi_rdomain] == NULL) {
