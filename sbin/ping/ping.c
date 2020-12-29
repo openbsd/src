@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.242 2020/10/21 11:11:58 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.243 2020/12/29 16:40:47 florian Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -251,7 +251,7 @@ main(int argc, char *argv[])
 	struct passwd *pw;
 	socklen_t maxsizelen;
 	int64_t preload;
-	int ch, i, optval = 1, packlen, maxsize, error, s;
+	int ch, i, optval = 1, packlen, maxsize, error, s, flooddone = 0;
 	int df = 0, tos = 0, bufspace = IP_MAXPACKET, hoplimit = -1, mflag = 0;
 	u_char *datap, *packet;
 	u_char ttl = MAXTTL;
@@ -870,6 +870,8 @@ main(int argc, char *argv[])
 		if (seenint)
 			break;
 		if (seenalrm) {
+			if (flooddone)
+				break;
 			retransmit(s);
 			seenalrm = 0;
 			if (ntransmitted - nreceived - 1 > nmissedmax) {
@@ -886,7 +888,7 @@ main(int argc, char *argv[])
 			continue;
 		}
 
-		if (options & F_FLOOD) {
+		if ((options & F_FLOOD && !flooddone)) {
 			if (pinger(s) != 0) {
 				(void)signal(SIGALRM, onsignal);
 				timeout = INFTIM;
@@ -901,7 +903,7 @@ main(int argc, char *argv[])
 				(void)setitimer(ITIMER_REAL, &itimer, NULL);
 
 				/* When the alarm goes off we are done. */
-				seenint = 1;
+				flooddone = 1;
 			} else
 				timeout = 10;
 		} else
