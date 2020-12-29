@@ -3,12 +3,14 @@ router-id 127.0.0.1
 socket "/var/run/bgpd.sock.0"
 
 roa-set {
-	1.2.3.0/24 source-as 0
 	10.0.0.0/8 source-as 1
 	10.0.0.0/8 source-as 2
+	10.0.0.0/8 source-as 3
+	10.0.0.0/8 source-as 4
 	10.0.0.0/8 maxlen 24 source-as 3
 	10.0.0.0/8 maxlen 24 source-as 4
 	10.0.0.0/8 maxlen 24 source-as 5
+	1.2.3.0/24 source-as 0
 }
 
 origin-set "empty1" {
@@ -23,13 +25,15 @@ origin-set "one2" {
 }
 
 origin-set "test2" {
-	1.2.3.0/24 source-as 1
 	1.2.8.0/22 source-as 3
+	1.2.3.0/24 source-as 1
 }
 
 origin-set "test3" {
 	10.0.0.0/8 source-as 1
 	10.0.0.0/8 source-as 2
+	10.0.0.0/8 source-as 3
+	10.0.0.0/8 source-as 4
 	10.0.0.0/8 maxlen 24 source-as 3
 	10.0.0.0/8 maxlen 24 source-as 4
 	10.0.0.0/8 maxlen 24 source-as 5
@@ -37,9 +41,9 @@ origin-set "test3" {
 
 origin-set "test4" {
 	10.1.0.0/16 source-as 1
+	10.4.0.0/16 maxlen 23 source-as 1
 	10.2.0.0/16 maxlen 24 source-as 1
 	10.3.0.0/16 maxlen 24 source-as 1
-	10.4.0.0/16 maxlen 23 source-as 1
 }
 
 
