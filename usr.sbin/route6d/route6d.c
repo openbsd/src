@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.99 2019/06/28 13:32:50 deraadt Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.100 2020/12/29 19:48:27 benno Exp $	*/
 /*	$KAME: route6d.c,v 1.111 2006/10/25 06:38:13 jinmei Exp $	*/
 
 /*
@@ -1370,7 +1370,8 @@ ifconfig(void)
 	}
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-		if (ifa->ifa_addr->sa_family != AF_INET6)
+		if (ifa->ifa_addr == NULL ||
+		    ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
 		ifcp = ifc_find(ifa->ifa_name);
 		/* we are interested in multicast-capable interfaces */
