@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_trie.c,v 1.10 2018/10/26 16:53:55 claudio Exp $ */
+/*	$OpenBSD: rde_trie.c,v 1.11 2020/12/29 15:30:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -378,30 +378,30 @@ trie_add(struct trie_head *th, struct bgpd_addr *prefix, u_int8_t plen,
  * is a match.
  */
 int
-trie_roa_add(struct trie_head *th, struct bgpd_addr *prefix, u_int8_t plen,
-    struct set_table *set)
+trie_roa_add(struct trie_head *th, struct roa *roa)
 {
 	struct tentry_v4 *n4;
 	struct tentry_v6 *n6;
 	struct set_table **stp;
+	struct roa_set rs, *rsp;
 
 	/* ignore possible default route since it does not make sense */
 
-	switch (prefix->aid) {
+	switch (roa->aid) {
 	case AID_INET:
-		if (plen > 32)
+		if (roa->prefixlen > 32)
 			return -1;
 
-		n4 = trie_add_v4(th, &prefix->v4, plen);
+		n4 = trie_add_v4(th, &roa->prefix.inet, roa->prefixlen);
 		if (n4 == NULL)
 			return -1;
 		stp = &n4->set;
 		break;
 	case AID_INET6:
-		if (plen > 128)
+		if (roa->prefixlen > 128)
 			return -1;
 
-		n6 = trie_add_v6(th, &prefix->v6, plen);
+		n6 = trie_add_v6(th, &roa->prefix.inet6, roa->prefixlen);
 		if (n6 == NULL)
 			return -1;
 		stp = &n6->set;
@@ -411,10 +411,22 @@ trie_roa_add(struct trie_head *th, struct bgpd_addr *prefix, u_int8_t plen,
 		return -1;
 	}
 
-	/* set_table already set, error out */
-	if (*stp != NULL)
-		return -1;
-	*stp = set;
+	if (*stp == NULL)
+		if ((*stp = set_new(1, sizeof(rs))) == NULL)
+			return -1;
+
+	/* merge sets with same key, longer maxlen wins */
+	if ((rsp = set_match(*stp, roa->asnum)) != NULL) {
+		if (rsp->maxlen < roa->maxlen)
+			rsp->maxlen = roa->maxlen;
+	} else  {
+		rs.as = roa->asnum;
+		rs.maxlen = roa->maxlen;
+		if (set_add(*stp, &rs, 1) != 0)
+			return -1;
+		/* prep data so that set_match works */
+		set_prep(*stp);
+	}
 
 	return 0;
 }

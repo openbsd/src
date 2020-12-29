@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.96 2020/12/29 09:49:04 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.97 2020/12/29 15:30:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -117,6 +117,7 @@ free_prefixsets(struct prefixset_head *psh)
 
 	while (!SIMPLEQ_EMPTY(psh)) {
 		ps = SIMPLEQ_FIRST(psh);
+		free_roatree(&ps->roaitems);
 		free_prefixtree(&ps->psitems);
 		SIMPLEQ_REMOVE_HEAD(psh, entry);
 		free(ps);
@@ -146,8 +147,18 @@ free_prefixtree(struct prefixset_tree *p)
 
 	RB_FOREACH_SAFE(psi, prefixset_tree, p, npsi) {
 		RB_REMOVE(prefixset_tree, p, psi);
-		set_free(psi->set);
 		free(psi);
+	}
+}
+
+void
+free_roatree(struct roa_tree *r)
+{
+	struct roa	*roa, *nroa;
+
+	RB_FOREACH_SAFE(roa, roa_tree, r, nroa) {
+		RB_REMOVE(roa_tree, r, roa);
+		free(roa);
 	}
 }
 
@@ -166,7 +177,7 @@ free_config(struct bgpd_config *conf)
 	free_rde_prefixsets(&conf->rde_prefixsets);
 	free_rde_prefixsets(&conf->rde_originsets);
 	as_sets_free(&conf->as_sets);
-	free_prefixtree(&conf->roa);
+	free_roatree(&conf->roa);
 
 	while ((la = TAILQ_FIRST(conf->listen_addrs)) != NULL) {
 		TAILQ_REMOVE(conf->listen_addrs, la, entry);
@@ -230,7 +241,7 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf)
 	mrt_mergeconfig(xconf->mrt, conf->mrt);
 
 	/* switch the roa, first remove the old one */
-	free_prefixtree(&xconf->roa);
+	free_roatree(&xconf->roa);
 	/* then move the RB tree root */
 	RB_ROOT(&xconf->roa) = RB_ROOT(&conf->roa);
 	RB_ROOT(&conf->roa) = NULL;
@@ -528,7 +539,7 @@ expand_networks(struct bgpd_config *c)
 	}
 }
 
-int
+static inline int
 prefixset_cmp(struct prefixset_item *a, struct prefixset_item *b)
 {
 	int i;
@@ -572,3 +583,20 @@ prefixset_cmp(struct prefixset_item *a, struct prefixset_item *b)
 }
 
 RB_GENERATE(prefixset_tree, prefixset_item, entry, prefixset_cmp);
+
+static inline int
+roa_cmp(struct roa *a, struct roa *b)
+{
+	size_t len = 4 + sizeof(a->asnum);
+
+	if (a->aid == b->aid) {
+		if (a->aid == AID_INET)
+			len += sizeof(a->prefix.inet);
+		else
+			len += sizeof(a->prefix.inet6);
+	}
+
+	return memcmp(&a->aid, &b->aid, len);
+}
+
+RB_GENERATE(roa_tree, roa, entry, roa_cmp);

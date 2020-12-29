@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.406 2020/12/23 13:20:47 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.407 2020/12/29 15:30:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -264,6 +264,21 @@ struct rde_prefixset {
 };
 SIMPLEQ_HEAD(rde_prefixset_head, rde_prefixset);
 
+struct roa {
+	RB_ENTRY(roa)	entry;
+	uint8_t		aid;
+	uint8_t		prefixlen;
+	uint8_t		maxlen;
+	uint8_t		pad;
+	uint32_t	asnum;
+	union {
+		struct in_addr	inet;
+		struct in6_addr	inet6;
+	}		prefix;
+};
+
+RB_HEAD(roa_tree, roa);
+
 struct set_table;
 struct as_set;
 SIMPLEQ_HEAD(as_set_head, as_set);
@@ -280,7 +295,7 @@ struct bgpd_config {
 	struct mrt_head				*mrt;
 	struct prefixset_head			 prefixsets;
 	struct prefixset_head			 originsets;
-	struct prefixset_tree			 roa;
+	struct roa_tree				 roa;
 	struct rde_prefixset_head		 rde_prefixsets;
 	struct rde_prefixset_head		 rde_originsets;
 	struct rde_prefixset			 rde_roa;
@@ -492,7 +507,7 @@ enum imsg_type {
 	IMSG_RECONF_AS_SET_DONE,
 	IMSG_RECONF_ORIGIN_SET,
 	IMSG_RECONF_ROA_SET,
-	IMSG_RECONF_ROA_SET_ITEMS,
+	IMSG_RECONF_ROA_ITEM,
 	IMSG_RECONF_DRAIN,
 	IMSG_RECONF_DONE,
 	IMSG_UPDATE,
@@ -1035,13 +1050,13 @@ struct roa_set {
 struct prefixset_item {
 	struct filter_prefix		p;
 	RB_ENTRY(prefixset_item)	entry;
-	struct set_table		*set;
 };
 
 struct prefixset {
 	int				 sflags;
 	char				 name[SET_NAME_LEN];
 	struct prefixset_tree		 psitems;
+	struct roa_tree			 roaitems;
 	SIMPLEQ_ENTRY(prefixset)	 entry;
 };
 
@@ -1181,12 +1196,13 @@ void		free_config(struct bgpd_config *);
 void		free_prefixsets(struct prefixset_head *);
 void		free_rde_prefixsets(struct rde_prefixset_head *);
 void		free_prefixtree(struct prefixset_tree *);
+void		free_roatree(struct roa_tree *);
 void		filterlist_free(struct filter_head *);
 int		host(const char *, struct bgpd_addr *, u_int8_t *);
 u_int32_t	get_bgpid(void);
 void		expand_networks(struct bgpd_config *);
-int		prefixset_cmp(struct prefixset_item *, struct prefixset_item *);
 RB_PROTOTYPE(prefixset_tree, prefixset_item, entry, prefixset_cmp);
+RB_PROTOTYPE(roa_tree, roa, entry, roa_cmp);
 
 /* kroute.c */
 int		 kr_init(int *);
@@ -1287,8 +1303,7 @@ int			 set_equal(const struct set_table *,
 /* rde_trie.c */
 int	trie_add(struct trie_head *, struct bgpd_addr *, u_int8_t, u_int8_t,
 	    u_int8_t);
-int	trie_roa_add(struct trie_head *, struct bgpd_addr *, u_int8_t,
-	    struct set_table *);
+int	trie_roa_add(struct trie_head *, struct roa *);
 void	trie_free(struct trie_head *);
 int	trie_match(struct trie_head *, struct bgpd_addr *, u_int8_t, int);
 int	trie_roa_check(struct trie_head *, struct bgpd_addr *, u_int8_t,

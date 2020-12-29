@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.143 2020/11/05 11:51:13 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.144 2020/12/29 15:30:34 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -41,7 +41,7 @@ void		 print_network(struct network_config *, const char *);
 void		 print_as_sets(struct as_set_head *);
 void		 print_prefixsets(struct prefixset_head *);
 void		 print_originsets(struct prefixset_head *);
-void		 print_roa(struct prefixset_tree *p);
+void		 print_roa(struct roa_tree *);
 void		 print_peer(struct peer_config *, struct bgpd_config *,
 		    const char *);
 const char	*print_auth_alg(u_int8_t);
@@ -535,46 +535,42 @@ void
 print_originsets(struct prefixset_head *psh)
 {
 	struct prefixset	*ps;
-	struct prefixset_item	*psi;
-	struct roa_set		*rs;
-	size_t			 i, n;
+	struct roa		*roa;
+	struct bgpd_addr	 addr;
 
 	SIMPLEQ_FOREACH(ps, psh, entry) {
 		printf("origin-set \"%s\" {", ps->name);
-		RB_FOREACH(psi, prefixset_tree, &ps->psitems) {
-			rs = set_get(psi->set, &n);
-			for (i = 0; i < n; i++) {
-				printf("\n\t");
-				print_prefix(&psi->p);
-				if (psi->p.len != rs[i].maxlen)
-					printf(" maxlen %u", rs[i].maxlen);
-				printf(" source-as %u", rs[i].as);
-			}
+		RB_FOREACH(roa, roa_tree, &ps->roaitems) {
+			printf("\n\t");
+			addr.aid = roa->aid;
+			addr.v6 = roa->prefix.inet6;
+			printf("%s/%u", log_addr(&addr), roa->prefixlen);
+			if (roa->prefixlen != roa->maxlen)
+				printf(" maxlen %u", roa->maxlen);
+			printf(" source-as %u", roa->asnum);
 		}
 		printf("\n}\n\n");
 	}
 }
 
 void
-print_roa(struct prefixset_tree *p)
+print_roa(struct roa_tree *r)
 {
-	struct prefixset_item	*psi;
-	struct roa_set		*rs;
-	size_t			 i, n;
+	struct roa	*roa;
+	struct bgpd_addr addr;
 
-	if (RB_EMPTY(p))
+	if (RB_EMPTY(r))
 		return;
 
 	printf("roa-set {");
-	RB_FOREACH(psi, prefixset_tree, p) {
-		rs = set_get(psi->set, &n);
-		for (i = 0; i < n; i++) {
-			printf("\n\t");
-			print_prefix(&psi->p);
-			if (psi->p.len != rs[i].maxlen)
-				printf(" maxlen %u", rs[i].maxlen);
-			printf(" source-as %u", rs[i].as);
-		}
+	RB_FOREACH(roa, roa_tree, r) {
+		printf("\n\t");
+		addr.aid = roa->aid;
+		addr.v6 = roa->prefix.inet6;
+		printf("%s/%u", log_addr(&addr), roa->prefixlen);
+		if (roa->prefixlen != roa->maxlen)
+			printf(" maxlen %u", roa->maxlen);
+		printf(" source-as %u", roa->asnum);
 	}
 	printf("\n}\n\n");
 }

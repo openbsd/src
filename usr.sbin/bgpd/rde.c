@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.507 2020/12/04 11:57:13 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.508 2020/12/29 15:30:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -614,10 +614,10 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 {
 	static struct rde_prefixset	*last_prefixset;
 	static struct as_set	*last_as_set;
-	static struct set_table	*last_set;
 	static struct l3vpn	*vpn;
 	struct imsg		 imsg;
 	struct mrt		 xmrt;
+	struct roa		 roa;
 	struct rde_rib		 rr;
 	struct filterstate	 state;
 	struct imsgbuf		*i;
@@ -813,24 +813,18 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				    entry);
 			}
 			last_prefixset = ps;
-			last_set = NULL;
 			break;
 		case IMSG_RECONF_ROA_SET:
 			strlcpy(nconf->rde_roa.name, "RPKI ROA",
 			    sizeof(nconf->rde_roa.name));
 			last_prefixset = &nconf->rde_roa;
-			last_set = NULL;
 			break;
-		case IMSG_RECONF_ROA_SET_ITEMS:
-			nmemb = imsg.hdr.len - IMSG_HEADER_SIZE;
-			nmemb /= sizeof(struct roa_set);
-			if (last_set == NULL) {
-				last_set = set_new(1, sizeof(struct roa_set));
-				if (last_set == NULL)
-					fatal(NULL);
-			}
-			if (set_add(last_set, imsg.data, nmemb) != 0)
-				fatal(NULL);
+		case IMSG_RECONF_ROA_ITEM:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
+			    sizeof(roa))
+				fatalx("IMSG_RECONF_PREFIX_SET_ITEM bad len");
+			memcpy(&roa, imsg.data, sizeof(roa));
+			rv = trie_roa_add(&last_prefixset->th, &roa);
 			break;
 		case IMSG_RECONF_PREFIX_SET_ITEM:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
@@ -839,16 +833,9 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			memcpy(&psi, imsg.data, sizeof(psi));
 			if (last_prefixset == NULL)
 				fatalx("King Bula has no prefixset");
-			if (last_set) {
-				set_prep(last_set);
-				rv = trie_roa_add(&last_prefixset->th,
-				    &psi.p.addr, psi.p.len, last_set);
-				last_set = NULL;
-			} else {
-				rv = trie_add(&last_prefixset->th,
-				    &psi.p.addr, psi.p.len,
-				    psi.p.len_min, psi.p.len_max);
-			}
+			rv = trie_add(&last_prefixset->th,
+			    &psi.p.addr, psi.p.len,
+			    psi.p.len_min, psi.p.len_max);
 			if (rv == -1)
 				log_warnx("trie_add(%s) %s/%u) failed",
 				    last_prefixset->name, log_addr(&psi.p.addr),

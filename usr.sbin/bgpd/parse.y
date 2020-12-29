@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.410 2020/10/27 19:13:34 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.411 2020/12/29 15:30:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -94,7 +94,7 @@ static struct peer		*curgroup;
 static struct rde_rib		*currib;
 static struct l3vpn		*curvpn;
 static struct prefixset		*curpset, *curoset;
-static struct prefixset_tree	*curpsitree;
+static struct roa_tree		*curroatree;
 static struct filter_head	*filter_l;
 static struct filter_head	*peerfilter_l;
 static struct filter_head	*groupfilter_l;
@@ -498,9 +498,9 @@ prefixset_item	: prefix prefixlenop			{
 		;
 
 roa_set		: ROASET '{' optnl		{
-			curpsitree = &conf->roa;
+			curroatree = &conf->roa;
 		} roa_set_l optnl '}'			{
-			curpsitree = NULL;
+			curroatree = NULL;
 		}
 		| ROASET '{' optnl '}'		/* nothing */
 		;
@@ -510,12 +510,12 @@ origin_set	: ORIGINSET STRING '{' optnl		{
 				free($2);
 				YYERROR;
 			}
-			curpsitree = &curoset->psitems;
+			curroatree = &curoset->roaitems;
 			free($2);
 		} roa_set_l optnl '}'			{
 			SIMPLEQ_INSERT_TAIL(&conf->originsets, curoset, entry);
 			curoset = NULL;
-			curpsitree = NULL;
+			curroatree = NULL;
 		}
 		| ORIGINSET STRING '{' optnl '}'		{
 			if ((curoset = new_prefix_set($2, 1)) == NULL) {
@@ -525,7 +525,7 @@ origin_set	: ORIGINSET STRING '{' optnl		{
 			free($2);
 			SIMPLEQ_INSERT_TAIL(&conf->originsets, curoset, entry);
 			curoset = NULL;
-			curpsitree = NULL;
+			curroatree = NULL;
 		}
 		;
 
@@ -537,6 +537,7 @@ roa_set_l	: prefixset_item SOURCEAS as4number_any			{
 				YYERROR;
 			}
 			add_roa_set($1, $3, $1->p.len_max);
+			free($1);
 		}
 		| roa_set_l comma prefixset_item SOURCEAS as4number_any	{
 			if ($3->p.len_min != $3->p.len) {
@@ -546,6 +547,7 @@ roa_set_l	: prefixset_item SOURCEAS as4number_any			{
 				YYERROR;
 			}
 			add_roa_set($3, $5, $3->p.len_max);
+			free($3);
 		}
 		;
 
@@ -4502,7 +4504,7 @@ new_prefix_set(char *name, int is_roa)
 	struct prefixset *pset;
 
 	if (is_roa) {
-		type = "roa-set";
+		type = "origin-set";
 		sets = &conf->originsets;
 	}
 
@@ -4520,38 +4522,35 @@ new_prefix_set(char *name, int is_roa)
 		return NULL;
 	}
 	RB_INIT(&pset->psitems);
+	RB_INIT(&pset->roaitems);
 	return pset;
 }
 
 static void
 add_roa_set(struct prefixset_item *npsi, u_int32_t as, u_int8_t max)
 {
-	struct prefixset_item	*psi;
-	struct roa_set rs, *rsp;
+	struct roa *roa, *r;
 
-	/* no prefixlen option in this tree */
-	npsi->p.op = OP_NONE;
-	npsi->p.len_max = npsi->p.len_min = npsi->p.len;
-	psi = RB_INSERT(prefixset_tree, curpsitree, npsi);
-	if (psi == NULL)
-		psi = npsi;
-	else
-		free(npsi);
+	if ((roa = calloc(1, sizeof(*roa))) == NULL)
+		fatal("add_roa_set");
 
-	if (psi->set == NULL)
-		if ((psi->set = set_new(1, sizeof(rs))) == NULL)
-			fatal("set_new");
-
-	/* merge sets with same key, longer maxlen wins */
-	if ((rsp = set_match(psi->set, as)) != NULL) {
-		if (rsp->maxlen < max)
-			rsp->maxlen = max;
-	} else  {
-		rs.as = as;
-		rs.maxlen = max;
-		if (set_add(psi->set, &rs, 1) != 0)
-			fatal("as_set_new");
-		/* prep data so that set_match works */
-		set_prep(psi->set);
+	roa->aid = npsi->p.addr.aid;
+	roa->prefixlen = npsi->p.len;
+	roa->maxlen = max;
+	roa->asnum = as;
+	switch (roa->aid) {
+	case AID_INET:
+		roa->prefix.inet = npsi->p.addr.v4;
+		break;
+	case AID_INET6:
+		roa->prefix.inet6 = npsi->p.addr.v6;
+		break;
+	default:
+		fatalx("Bad address family for roa_set address");
 	}
+
+	r = RB_INSERT(roa_tree, curroatree, roa);
+	if (r != NULL)
+		/* just ignore duplicates */
+		free(roa);
 }
