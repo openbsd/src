@@ -1,4 +1,4 @@
-/*	$OpenBSD: ax.c,v 1.5 2020/12/29 21:27:05 rob Exp $ */
+/*	$OpenBSD: ax.c,v 1.6 2020/12/29 21:44:48 rob Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -337,8 +337,8 @@ ax_pdu_need(struct ax *ax, size_t need)
 	uint8_t *wbuf;
 	size_t wbsize;
 
-	if (ax->ax_wbtlen >= ax->ax_wbsize) {
-		wbsize = ((ax->ax_wbtlen / 512) + 1) * 512;
+	if (ax->ax_wbtlen + need >= ax->ax_wbsize) {
+		wbsize = (((ax->ax_wbtlen + need) / 512) + 1) * 512;
 		wbuf = recallocarray(ax->ax_wbuf, ax->ax_wbsize, wbsize, 1);
 		if (wbuf == NULL) {
 			ax->ax_wbtlen = ax->ax_wblen;
