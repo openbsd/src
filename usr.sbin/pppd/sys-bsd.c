@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys-bsd.c,v 1.29 2019/06/28 13:32:49 deraadt Exp $	*/
+/*	$OpenBSD: sys-bsd.c,v 1.30 2020/12/29 19:45:28 benno Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -1334,6 +1334,8 @@ get_ether_addr(ipaddr, hwaddr)
      * address on the same subnet as `ipaddr'.
      */
     for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+	if (ifa->ifa_addr == NULL)
+		continue;
 	if (ifa->ifa_addr->sa_family == AF_INET) {
 	    ina = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr;
 	    /*
@@ -1367,6 +1369,8 @@ get_ether_addr(ipaddr, hwaddr)
      */
     ifp = ifa;
     for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+	if (ifa->ifa_addr == NULL)
+		continue;
 	if (strcmp(ifp->ifa_name, ifa->ifa_name) == 0
 	    && ifa->ifa_addr->sa_family == AF_LINK) {
 	    /*
@@ -1418,8 +1422,9 @@ GetMask(addr)
 	/*
 	 * Check the interface's internet address.
 	 */
-	if (ifa->ifa_addr->sa_family != AF_INET)
-	    continue;
+	if (ifa->ifa_addr == NULL ||
+	    ifa->ifa_addr->sa_family != AF_INET)
+		continue;
 	ina = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr;
 	if ((ntohl(ina) & nmask) != (addr & nmask))
 	    continue;
