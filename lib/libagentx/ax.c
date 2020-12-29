@@ -1,4 +1,4 @@
-/*	$OpenBSD: ax.c,v 1.4 2020/10/27 17:19:44 martijn Exp $ */
+/*	$OpenBSD: ax.c,v 1.5 2020/12/29 21:27:05 rob Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -981,7 +981,6 @@ ax_pdu_header(struct ax *ax, enum ax_pdu_type type, uint8_t flags,
 		return -1;
 	}
 
-	ax->ax_wbtlen = ax->ax_wblen;
 	if (ax_pdu_need(ax, 4) == -1)
 		return -1;
 	ax->ax_wbuf[ax->ax_wbtlen++] = 1;
