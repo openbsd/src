@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.34 2020/12/01 18:10:27 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.35 2020/12/29 19:47:16 benno Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -731,7 +731,8 @@ get_link_state(char *if_name)
 		return LINK_STATE_UNKNOWN;
 	}
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-		if (ifa->ifa_addr->sa_family != AF_LINK)
+		if (ifa->ifa_addr == NULL ||
+		    ifa->ifa_addr->sa_family != AF_LINK)
 			continue;
 		if (strcmp(if_name, ifa->ifa_name) != 0)
 			continue;
@@ -969,7 +970,8 @@ interface_has_linklocal_address(char *name)
 	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
 		if (strcmp(name, ifa->ifa_name) != 0)
 			continue;
-		if (ifa->ifa_addr->sa_family != AF_INET6)
+		if (ifa->ifa_addr == NULL ||
+		    ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
 
 		sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
@@ -1013,7 +1015,8 @@ get_interface_prefixes(struct ra_iface *ra_iface, struct ra_prefix_conf
 	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
 		if (strcmp(ra_iface->name, ifa->ifa_name) != 0)
 			continue;
-		if (ifa->ifa_addr->sa_family != AF_INET6)
+		if (ifa->ifa_addr == NULL ||
+		    ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
 
 		sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
