@@ -558,7 +558,8 @@ ifconfaddr(a)
 	return (NULL);
 
     for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-	    if (ifa->ifa_addr->sa_family == AF_INET &&
+	    if (ifa->ifa_addr != NULL &&
+		ifa->ifa_addr->sa_family == AF_INET &&
 		((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr == a) {
 		strlcpy(ifname, ifa->ifa_name, sizeof(ifname));
 		freeifaddrs(ifap);
