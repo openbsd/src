@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_rmt.c,v 1.35 2019/06/28 13:32:42 deraadt Exp $ */
+/*	$OpenBSD: pmap_rmt.c,v 1.36 2020/12/30 18:56:35 benno Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -163,7 +163,8 @@ newgetbroadcastnets(struct in_addr **addrsp)
 		return 0;
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-		if (ifa->ifa_addr->sa_family != AF_INET)
+		if (ifa->ifa_addr == NULL ||
+		    ifa->ifa_addr->sa_family != AF_INET)
 			continue;
 		if ((ifa->ifa_flags & IFF_BROADCAST) &&
 		    (ifa->ifa_flags & IFF_UP) &&
@@ -180,7 +181,8 @@ newgetbroadcastnets(struct in_addr **addrsp)
 	}
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-		if (ifa->ifa_addr->sa_family != AF_INET)
+		if (ifa->ifa_addr == NULL ||
+		    ifa->ifa_addr->sa_family != AF_INET)
 			continue;
 		if ((ifa->ifa_flags & IFF_BROADCAST) &&
 		    (ifa->ifa_flags & IFF_UP) &&

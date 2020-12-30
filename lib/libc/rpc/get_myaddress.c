@@ -1,4 +1,4 @@
-/*	$OpenBSD: get_myaddress.c,v 1.15 2015/09/13 15:36:56 guenther Exp $ */
+/*	$OpenBSD: get_myaddress.c,v 1.16 2020/12/30 18:56:35 benno Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -67,6 +67,7 @@ get_myaddress(struct sockaddr_in *addr)
   again:
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 		if ((ifa->ifa_flags & IFF_UP) &&
+		    ifa->ifa_addr != NULL &&
 		    ifa->ifa_addr->sa_family == AF_INET &&
 		    (loopback == 1 && (ifa->ifa_flags & IFF_LOOPBACK))) {
 			*addr = *((struct sockaddr_in *)ifa->ifa_addr);
