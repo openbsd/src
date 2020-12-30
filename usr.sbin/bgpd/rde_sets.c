@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_sets.c,v 1.9 2019/08/05 08:46:55 claudio Exp $ */
+/*	$OpenBSD: rde_sets.c,v 1.10 2020/12/30 07:29:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -93,8 +93,11 @@ as_sets_mark_dirty(struct as_set_head *old, struct as_set_head *new)
 
 	SIMPLEQ_FOREACH(n, new, entry) {
 		if (old == NULL || (o = as_sets_lookup(old, n->name)) == NULL ||
-		    !set_equal(n->set, o->set))
+		    !set_equal(n->set, o->set)) {
 			n->dirty = 1;
+			n->lastchange = getmonotime();
+		} else
+			n->lastchange = o->lastchange;
 	}
 }
 
@@ -223,4 +226,10 @@ set_equal(const struct set_table *a, const struct set_table *b)
 	if (memcmp(a->set, b->set, a->nmemb * a->size) != 0)
 		return 0;
 	return 1;
+}
+
+size_t
+set_nmemb(const struct set_table *set)
+{
+	return set->nmemb;
 }

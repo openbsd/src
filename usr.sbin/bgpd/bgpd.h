@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.407 2020/12/29 15:30:34 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.408 2020/12/30 07:29:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -254,12 +254,15 @@ struct trie_head {
 	struct tentry_v6	*root_v6;
 	int			 match_default_v4;
 	int			 match_default_v6;
+	size_t			 v4_cnt;
+	size_t			 v6_cnt;
 };
 
 struct rde_prefixset {
 	char				name[SET_NAME_LEN];
 	struct trie_head		th;
 	SIMPLEQ_ENTRY(rde_prefixset)	entry;
+	time_t				lastchange;
 	int				dirty;
 };
 SIMPLEQ_HEAD(rde_prefixset_head, rde_prefixset);
@@ -480,6 +483,7 @@ enum imsg_type {
 	IMSG_CTL_SHOW_TIMER,
 	IMSG_CTL_LOG_VERBOSE,
 	IMSG_CTL_SHOW_FIB_TABLES,
+	IMSG_CTL_SHOW_SET,
 	IMSG_CTL_TERMINATE,
 	IMSG_NETWORK_ADD,
 	IMSG_NETWORK_ASPATH,
@@ -709,6 +713,20 @@ struct ctl_show_nexthop {
 	} kr;
 	u_int8_t			valid;
 	u_int8_t			krvalid;
+};
+
+struct ctl_show_set {
+	char			name[SET_NAME_LEN];
+	time_t			lastchange;
+	size_t			v4_cnt;
+	size_t			v6_cnt;
+	size_t			as_cnt;
+	enum {
+		ASNUM_SET,
+		PREFIX_SET,
+		ORIGIN_SET,
+		ROA_SET,
+	}			type;
 };
 
 struct ctl_neighbor {
@@ -1064,6 +1082,7 @@ struct as_set {
 	char				 name[SET_NAME_LEN];
 	SIMPLEQ_ENTRY(as_set)		 entry;
 	struct set_table		*set;
+	time_t				 lastchange;
 	int				 dirty;
 };
 
@@ -1299,6 +1318,7 @@ void			 set_prep(struct set_table *);
 void			*set_match(const struct set_table *, u_int32_t);
 int			 set_equal(const struct set_table *,
 			    const struct set_table *);
+size_t			 set_nmemb(const struct set_table *);
 
 /* rde_trie.c */
 int	trie_add(struct trie_head *, struct bgpd_addr *, u_int8_t, u_int8_t,

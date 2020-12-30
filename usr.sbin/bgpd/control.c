@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.102 2020/12/11 12:00:01 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.103 2020/12/30 07:29:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -280,6 +280,7 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 			case IMSG_CTL_SHOW_NETWORK:
 			case IMSG_CTL_SHOW_RIB:
 			case IMSG_CTL_SHOW_RIB_PREFIX:
+			case IMSG_CTL_SHOW_SET:
 				break;
 			default:
 				/* clear imsg type to prevent processing */
@@ -498,6 +499,7 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 			c->terminate = 1;
 			/* FALLTHROUGH */
 		case IMSG_CTL_SHOW_RIB_MEM:
+		case IMSG_CTL_SHOW_SET:
 			c->ibuf.pid = imsg.hdr.pid;
 			imsg_ctl_rde(imsg.hdr.type, imsg.hdr.pid,
 			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);

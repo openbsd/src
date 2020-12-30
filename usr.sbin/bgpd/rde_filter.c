@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.125 2020/12/03 11:53:34 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.126 2020/12/30 07:29:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -55,8 +55,8 @@ rde_apply_set(struct filter_set_head *sh, struct rde_peer *peer,
 					state->aspath.lpref +=
 					    set->action.relative;
 			} else {
-				if ((u_int32_t)-set->action.relative >
-				    state->aspath.lpref)
+				if (state->aspath.lpref <
+				    0U - set->action.relative)
 					state->aspath.lpref = 0;
 				else
 					state->aspath.lpref +=
@@ -77,8 +77,8 @@ rde_apply_set(struct filter_set_head *sh, struct rde_peer *peer,
 					state->aspath.med +=
 					    set->action.relative;
 			} else {
-				if ((u_int32_t)-set->action.relative >
-				    state->aspath.med)
+				if (state->aspath.med <
+				    0U - set->action.relative)
 					state->aspath.med = 0;
 				else
 					state->aspath.med +=
@@ -97,8 +97,8 @@ rde_apply_set(struct filter_set_head *sh, struct rde_peer *peer,
 					state->aspath.weight +=
 					    set->action.relative;
 			} else {
-				if ((u_int32_t)-set->action.relative >
-				    state->aspath.weight)
+				if (state->aspath.weight <
+				    0U - set->action.relative)
 					state->aspath.weight = 0;
 				else
 					state->aspath.weight +=

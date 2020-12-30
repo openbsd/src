@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_trie.c,v 1.11 2020/12/29 15:30:34 claudio Exp $ */
+/*	$OpenBSD: rde_trie.c,v 1.12 2020/12/30 07:29:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -189,6 +189,8 @@ trie_add_v4(struct trie_head *th, struct in_addr *prefix, u_int8_t plen)
 
 		if (n->plen == plen) {
 			/* matching node, adjust */
+			if (n->node == 0)
+				th->v4_cnt++;
 			n->node = 1;
 			return n;
 		}
@@ -204,6 +206,7 @@ trie_add_v4(struct trie_head *th, struct in_addr *prefix, u_int8_t plen)
 	/* create new node */
 	if ((new = calloc(1, sizeof(*new))) == NULL)
 		return NULL;
+	th->v4_cnt++;
 	rdemem.pset_cnt++;
 	rdemem.pset_size += sizeof(*new);
 	new->addr = p;
@@ -269,6 +272,8 @@ trie_add_v6(struct trie_head *th, struct in6_addr *prefix, u_int8_t plen)
 
 		if (n->plen == plen) {
 			/* matching node, adjust */
+			if (n->node == 0)
+				th->v6_cnt++;
 			n->node = 1;
 			return n;
 		}
@@ -284,6 +289,7 @@ trie_add_v6(struct trie_head *th, struct in6_addr *prefix, u_int8_t plen)
 	/* create new node */
 	if ((new = calloc(1, sizeof(*new))) == NULL)
 		return NULL;
+	th->v6_cnt++;
 	rdemem.pset_cnt++;
 	rdemem.pset_size += sizeof(*new);
 	new->addr = p;
