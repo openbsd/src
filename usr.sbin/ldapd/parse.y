@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.37 2020/11/29 19:48:35 tb Exp $ */
+/*	$OpenBSD: parse.y,v 1.38 2020/12/30 18:41:33 benno Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -1121,6 +1121,8 @@ interface(const char *s, const char *cert,
 
 	for (p = ifap; p != NULL; p = p->ifa_next) {
 		if (strcmp(s, p->ifa_name) != 0)
+			continue;
+		if (p->ifa_addr == NULL)
 			continue;
 
 		switch (p->ifa_addr->sa_family) {
