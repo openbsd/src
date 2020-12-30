@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtrace.c,v 1.40 2019/06/28 13:32:49 deraadt Exp $	*/
+/*	$OpenBSD: mtrace.c,v 1.41 2020/12/30 18:47:20 benno Exp $	*/
 /*	$NetBSD: mtrace.c,v 1.5 1995/12/10 10:57:15 mycroft Exp $	*/
 
 /*
@@ -284,8 +284,9 @@ get_netmask(int s, u_int32_t dst)
 	return (retval);
     }
     for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-	if (ifa->ifa_addr->sa_family != AF_INET)
-             continue;
+	if (ifa->ifa_addr == NULL ||
+	    ifa->ifa_addr->sa_family != AF_INET)
+		continue;
 	if_addr = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr;
 	if_mask = ((struct sockaddr_in *)ifa->ifa_netmask)->sin_addr.s_addr;
 	if ((dst & if_mask) == (if_addr & if_mask)) {
