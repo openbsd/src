@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.430 2020/11/06 21:24:47 kn Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.431 2020/12/30 18:57:28 benno Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1180,12 +1180,13 @@ printif(char *name, int ifaliases)
 			}
 		}
 		/* quickhack: sizeof(ifr) < sizeof(ifr6) */
-		if (ifa->ifa_addr->sa_family == AF_INET6) {
+		if (ifa->ifa_addr != NULL &&
+		    ifa->ifa_addr->sa_family == AF_INET6) {
 			memset(&ifr6, 0, sizeof(ifr6));
 			memcpy(&ifr6.ifr_addr, ifa->ifa_addr,
 			    MINIMUM(sizeof(ifr6.ifr_addr), ifa->ifa_addr->sa_len));
 			ifrp = (struct ifreq *)&ifr6;
-		} else {
+		} else if (ifa->ifa_addr != NULL) {
 			memset(&ifr, 0, sizeof(ifr));
 			memcpy(&ifr.ifr_addr, ifa->ifa_addr,
 			    MINIMUM(sizeof(ifr.ifr_addr), ifa->ifa_addr->sa_len));
@@ -1194,7 +1195,8 @@ printif(char *name, int ifaliases)
 		strlcpy(ifname, ifa->ifa_name, sizeof(ifname));
 		strlcpy(ifrp->ifr_name, ifa->ifa_name, sizeof(ifrp->ifr_name));
 
-		if (ifa->ifa_addr->sa_family == AF_LINK) {
+		if (ifa->ifa_addr != NULL &&
+		    ifa->ifa_addr->sa_family == AF_LINK) {
 			namep = ifa->ifa_name;
 			if (getinfo(ifrp, 0) < 0)
 				continue;
@@ -1209,8 +1211,9 @@ printif(char *name, int ifaliases)
 		if (!namep || !strcmp(namep, ifa->ifa_name)) {
 			const struct afswtch *p;
 
-			if (ifa->ifa_addr->sa_family == AF_INET &&
-			    ifaliases == 0 && noinet == 0)
+			if (ifa->ifa_addr == NULL ||
+			    (ifa->ifa_addr->sa_family == AF_INET &&
+			    ifaliases == 0 && noinet == 0))
 				continue;
 			if ((p = afp) != NULL) {
 				if (ifa->ifa_addr->sa_family == p->af_af)
