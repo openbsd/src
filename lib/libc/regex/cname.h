@@ -1,4 +1,4 @@
-/*	$OpenBSD: cname.h,v 1.5 2003/06/02 20:18:36 millert Exp $	*/
+/*	$OpenBSD: cname.h,v 1.6 2020/12/30 08:53:30 tb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -36,8 +36,8 @@
  */
 
 /* character-name table */
-static struct cname {
-	char *name;
+static const struct cname {
+	const char *name;
 	char code;
 } cnames[] = {
 	{ "NUL",			'\0' },

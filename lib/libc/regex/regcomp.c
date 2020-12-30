@@ -1,4 +1,4 @@
-/*	$OpenBSD: regcomp.c,v 1.35 2020/10/13 04:42:28 guenther Exp $ */
+/*	$OpenBSD: regcomp.c,v 1.36 2020/12/30 08:53:30 tb Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -826,7 +826,7 @@ p_b_coll_elem(struct parse *p,
     int endc)			/* name ended by endc,']' */
 {
 	char *sp = p->next;
-	struct cname *cp;
+	const struct cname *cp;
 	size_t len;
 
 	while (MORE() && !SEETWO(endc, ']'))
