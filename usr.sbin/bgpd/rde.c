@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.508 2020/12/29 15:30:34 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.509 2020/12/30 07:02:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -820,15 +820,13 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			last_prefixset = &nconf->rde_roa;
 			break;
 		case IMSG_RECONF_ROA_ITEM:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
-			    sizeof(roa))
-				fatalx("IMSG_RECONF_PREFIX_SET_ITEM bad len");
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(roa))
+				fatalx("IMSG_RECONF_ROA_ITEM bad len");
 			memcpy(&roa, imsg.data, sizeof(roa));
 			rv = trie_roa_add(&last_prefixset->th, &roa);
 			break;
 		case IMSG_RECONF_PREFIX_SET_ITEM:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
-			    sizeof(psi))
+			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(psi))
 				fatalx("IMSG_RECONF_PREFIX_SET_ITEM bad len");
 			memcpy(&psi, imsg.data, sizeof(psi));
 			if (last_prefixset == NULL)
