@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.64 2019/06/28 13:32:47 deraadt Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.65 2020/12/30 18:40:44 benno Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -642,7 +642,8 @@ fetch_ifstate(int do_eval)
 		fatal("getifaddrs");
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-		if (ifa->ifa_addr->sa_family == AF_LINK) {
+		if (ifa->ifa_addr != NULL &&
+		    ifa->ifa_addr->sa_family == AF_LINK) {
 			struct if_data *ifdata = ifa->ifa_data;
 			scan_ifstate(ifa->ifa_name, ifdata->ifi_link_state,
 			    do_eval);
