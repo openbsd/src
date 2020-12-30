@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoed.c,v 1.23 2020/12/30 18:52:40 benno Exp $	*/
+/*	$OpenBSD: pppoed.c,v 1.24 2020/12/30 19:04:56 benno Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 /**@file
  * This file provides the PPPoE(RFC2516) server(access concentrator)
  * implementaion.
- * $Id: pppoed.c,v 1.23 2020/12/30 18:52:40 benno Exp $
+ * $Id: pppoed.c,v 1.24 2020/12/30 19:04:56 benno Exp $
  */
 #include <sys/param.h>	/* ALIGN */
 #include <sys/types.h>
@@ -459,7 +459,6 @@ pppoed_reload(pppoed *_this, struct pppoe_confs *pppoe_conf)
 {
 	int                i, count, do_start, found;
 	struct pppoe_conf *conf;
-	struct ifaddrs    *ifa0;
 	slist              rmlist, newlist;
 	struct {
 		char			 ifname[IF_NAMESIZE];
@@ -471,15 +470,9 @@ pppoed_reload(pppoed *_this, struct pppoe_confs *pppoe_conf)
 	hash_link         *hl;
 
 	do_start = 0;
-	ifa0 = NULL;
 	slist_init(&rmlist);
 	slist_init(&newlist);
 
-	if (getifaddrs(&ifa0) != 0) {
-		pppoed_log(_this, LOG_ERR,
-		    "getifaddrs() failed on %s(): %m", __func__);
-		goto fail;
-	}
 	count = 0;
 	TAILQ_FOREACH(conf, pppoe_conf, entry) {
 		strlcpy(listeners[count].ifname, conf->if_name,
@@ -564,8 +557,6 @@ pppoed_reload(pppoed *_this, struct pppoe_confs *pppoe_conf)
 
 	slist_fini(&rmlist);
 	slist_fini(&newlist);
-	if (ifa0 != NULL)
-		freeifaddrs(ifa0);
 
 	if (pppoed_start(_this) != 0)
 		return 1;
@@ -574,8 +565,6 @@ pppoed_reload(pppoed *_this, struct pppoe_confs *pppoe_conf)
 fail:
 	slist_fini(&rmlist);
 	slist_fini(&newlist);
-	if (ifa0 != NULL)
-		freeifaddrs(ifa0);
 
 	return 1;
 }
