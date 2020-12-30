@@ -1,4 +1,4 @@
-/*	$OpenBSD: net_utils.c,v 1.5 2015/12/17 08:01:55 tb Exp $ */
+/*	$OpenBSD: net_utils.c,v 1.6 2020/12/30 18:52:06 benno Exp $ */
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: net_utils.c,v 1.5 2015/12/17 08:01:55 tb Exp $ */
+/* $Id: net_utils.c,v 1.6 2020/12/30 18:52:06 benno Exp $ */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -48,9 +48,10 @@ get_ifname_by_sockaddr(struct sockaddr *sa, char *ifname)
 	ifname0 = NULL;
 	/* I want other way than linear search */
 	getifaddrs(&addr0);
-	for (addr = addr0; ifname0 == NULL&& addr != NULL;
+	for (addr = addr0; ifname0 == NULL && addr != NULL;
 	    addr = addr->ifa_next) {
-		if (addr->ifa_addr->sa_family != sa->sa_family ||
+		if (addr->ifa_addr == NULL ||
+		    addr->ifa_addr->sa_family != sa->sa_family ||
 		    addr->ifa_addr->sa_len != sa->sa_len)
 			continue;
 		switch (addr->ifa_addr->sa_family) {
