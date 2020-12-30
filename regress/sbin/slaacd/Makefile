@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2020/12/25 14:30:00 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.10 2020/12/30 21:40:32 kn Exp $
 
 # The following ports must be installed:
 #
@@ -17,9 +17,9 @@ INTERFACES != sh -c "ifconfig ${PAIR1} 2>/dev/null; \
     ifconfig ${PAIR2} 2>/dev/null" || true
 .endif
 
-.if ! exists(/usr/local/bin/scapy-3)
+.if ! exists(/usr/local/bin/scapy)
 regress:
-	@echo Install py3-scapy package to run this regress.
+	@echo Install scapy package to run this regress.
 	@echo SKIPPED
 .endif
 

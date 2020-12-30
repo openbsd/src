@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2020/12/24 16:25:15 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.13 2020/12/30 21:40:33 kn Exp $
 
 # Copyright (c) 2016-2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -22,9 +22,9 @@
 
 .if ! (make(clean) || make(cleandir) || make(obj))
 
-.if ! exists(/usr/local/bin/scapy-3)
+.if ! exists(/usr/local/bin/scapy)
 regress:
-	@echo Install py3-scapy package to run this regress.
+	@echo Install scapy package to run this regress.
 	@echo SKIPPED
 .endif
 

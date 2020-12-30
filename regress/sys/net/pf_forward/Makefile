@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.33 2020/12/24 22:39:57 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.34 2020/12/30 21:40:32 kn Exp $
 
 # Copyright (c) 2012-2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -18,9 +18,9 @@
 #
 # scapy               powerful interactive packet manipulation in python
 
-.if ! exists(/usr/local/bin/scapy-3)
+.if ! exists(/usr/local/bin/scapy)
 regress:
-	@echo Install py3-scapy package to run this regress.
+	@echo Install scapy package to run this regress.
 	@echo SKIPPED
 .endif
 

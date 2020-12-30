@@ -1,12 +1,12 @@
-#	$OpenBSD: Makefile,v 1.12 2020/12/26 00:12:03 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.13 2020/12/30 21:40:33 kn Exp $
 
 # The following ports must be installed:
 #
 # scapy               powerful interactive packet manipulation in python
 
-.if ! exists(/usr/local/bin/scapy-3)
+.if ! exists(/usr/local/bin/scapy)
 regress:
-	@echo Install py3-scapy package to run this regress.
+	@echo Install scapy package to run this regress.
 	@echo SKIPPED
 .endif
 
