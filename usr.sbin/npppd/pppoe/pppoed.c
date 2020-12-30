@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoed.c,v 1.22 2019/02/22 07:04:20 jmc Exp $	*/
+/*	$OpenBSD: pppoed.c,v 1.23 2020/12/30 18:52:40 benno Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -28,7 +28,7 @@
 /**@file
  * This file provides the PPPoE(RFC2516) server(access concentrator)
  * implementaion.
- * $Id: pppoed.c,v 1.22 2019/02/22 07:04:20 jmc Exp $
+ * $Id: pppoed.c,v 1.23 2020/12/30 18:52:40 benno Exp $
  */
 #include <sys/param.h>	/* ALIGN */
 #include <sys/types.h>
@@ -256,7 +256,8 @@ pppoed_listener_start(pppoed_listener *_this, int restart)
 	found = 0;
 	for (ifa = ifa0; ifa != NULL; ifa = ifa->ifa_next) {
 		sdl = (struct sockaddr_dl *)ifa->ifa_addr;
-		if (sdl->sdl_family != AF_LINK || sdl->sdl_type != IFT_ETHER ||
+		if (sdl == NULL ||
+		    sdl->sdl_family != AF_LINK || sdl->sdl_type != IFT_ETHER ||
 		    sdl->sdl_alen != ETHER_ADDR_LEN)
 			continue;
 		if (strcmp(ifa->ifa_name, _this->listen_ifname) == 0) {
