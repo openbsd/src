@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.125 2020/12/25 12:59:52 visa Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.126 2020/12/30 17:02:32 visa Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -126,6 +126,7 @@ void	pipe_iounlock(struct pipe *);
 int	pipe_iosleep(struct pipe *, const char *);
 
 struct pipe_pair *pipe_pair_create(void);
+void	pipe_pair_destroy(struct pipe_pair *);
 
 /*
  * The pipe system call for the DTYPE_PIPE type of pipes
@@ -853,7 +854,7 @@ pipe_destroy(struct pipe *cpipe)
 	rw_exit_write(cpipe->pipe_lock);
 
 	if (ppipe == NULL)
-		pool_put(&pipe_pair_pool, cpipe->pipe_pair);
+		pipe_pair_destroy(cpipe->pipe_pair);
 }
 
 /*
@@ -913,9 +914,7 @@ filt_pipedetach(struct knote *kn)
 {
 	struct pipe *cpipe = kn->kn_hook;
 
-	rw_enter_write(cpipe->pipe_lock);
-	klist_remove_locked(&cpipe->pipe_sel.si_note, kn);
-	rw_exit_write(cpipe->pipe_lock);
+	klist_remove(&cpipe->pipe_sel.si_note, kn);
 }
 
 int
@@ -997,6 +996,9 @@ pipe_pair_create(void)
 	pp->pp_wpipe.pipe_lock = &pp->pp_lock;
 	pp->pp_rpipe.pipe_lock = &pp->pp_lock;
 
+	klist_init_rwlock(&pp->pp_wpipe.pipe_sel.si_note, &pp->pp_lock);
+	klist_init_rwlock(&pp->pp_rpipe.pipe_sel.si_note, &pp->pp_lock);
+
 	if (pipe_create(&pp->pp_wpipe) || pipe_create(&pp->pp_rpipe))
 		goto err;
 	return (pp);
@@ -1004,4 +1006,12 @@ err:
 	pipe_destroy(&pp->pp_wpipe);
 	pipe_destroy(&pp->pp_rpipe);
 	return (NULL);
+}
+
+void
+pipe_pair_destroy(struct pipe_pair *pp)
+{
+	klist_free(&pp->pp_wpipe.pipe_sel.si_note);
+	klist_free(&pp->pp_rpipe.pipe_sel.si_note);
+	pool_put(&pipe_pair_pool, pp);
 }
