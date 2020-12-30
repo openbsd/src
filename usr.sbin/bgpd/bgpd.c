@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.231 2020/12/29 15:30:34 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.232 2020/12/30 07:00:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -580,7 +580,7 @@ send_config(struct bgpd_config *conf)
 		    ps->name, sizeof(ps->name)) == -1)
 			return (-1);
 		RB_FOREACH_SAFE(roa, roa_tree, &ps->roaitems, nroa) {
-			RB_REMOVE(roa_tree, &conf->roa, roa);
+			RB_REMOVE(roa_tree, &ps->roaitems, roa);
 			if (imsg_compose(ibuf_rde, IMSG_RECONF_ROA_ITEM, 0, 0,
 			    -1, roa, sizeof(*roa)) == -1)
 				return (-1);
