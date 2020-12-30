@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.74 2020/12/30 12:10:39 mvs Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.75 2020/12/30 13:18:07 mvs Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -357,7 +357,8 @@ pppoeintr(void)
 }
 
 /* Analyze and handle a single received packet while not in session state. */
-static void pppoe_dispatch_disc_pkt(struct mbuf *m)
+static void
+pppoe_dispatch_disc_pkt(struct mbuf *m)
 {
 	struct pppoe_softc *sc;
 	struct pppoehdr *ph;
