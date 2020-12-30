@@ -1,4 +1,4 @@
-/* $OpenBSD: runtest.c,v 1.5 2017/07/06 13:20:54 bluhm Exp $ */
+/* $OpenBSD: runtest.c,v 1.6 2020/12/30 18:56:56 benno Exp $ */
 /*
  * Copyright (c) 2015 Vincent Gross <vincent.gross@kilob.yt>
  *
@@ -415,7 +415,8 @@ main(int argc, char *argv[])
 			err(2, "getifaddrs()");
 		curifa = ifap;
 		while (curifa) {
-			if (memcmp(curifa->ifa_addr,
+			if (curifa->ifa_addr != NULL &&
+			    memcmp(curifa->ifa_addr,
 			    mifa->ai_addr,
 			    mifa->ai_addrlen) == 0)
 				break;
