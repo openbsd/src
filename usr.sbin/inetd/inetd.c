@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.161 2019/06/28 13:32:48 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.162 2020/12/30 18:41:06 benno Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -487,7 +487,8 @@ dg_broadcast(struct in_addr *in)
 	if (getifaddrs(&ifap) == -1)
 		return (0);
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
-		if (ifa->ifa_addr->sa_family != AF_INET ||
+		if (ifa->ifa_addr == NULL ||
+		    ifa->ifa_addr->sa_family != AF_INET ||
 		    (ifa->ifa_flags & IFF_BROADCAST) == 0)
 			continue;
 		sin = (struct sockaddr_in *)ifa->ifa_broadaddr;
