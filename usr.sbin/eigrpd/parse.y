@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.30 2019/02/13 22:57:08 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.31 2020/12/30 18:39:57 benno Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -1246,7 +1246,8 @@ get_rtr_id(void)
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 		if (strncmp(ifa->ifa_name, "carp", 4) == 0)
 			continue;
-		if (ifa->ifa_addr->sa_family != AF_INET)
+		if (ifa->ifa_addr == NULL ||
+		    ifa->ifa_addr->sa_family != AF_INET)
 			continue;
 		cur = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr;
 		if ((cur & localnet) == localnet)	/* skip 127/8 */
