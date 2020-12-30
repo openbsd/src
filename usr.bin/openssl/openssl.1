@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.127 2020/11/01 21:32:03 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.128 2020/12/30 08:26:44 tb Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: November 1 2020 $
+.Dd $Mdocdate: December 30 2020 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -2491,7 +2491,10 @@ A
 .Sq \&.
 represents each number which has passed an initial sieve test;
 .Sq +
-means a number has passed a single round of the Miller-Rabin primality test.
+means a number has passed a single round of the Miller-Rabin primality test;
+.Sq *
+means the number has failed primality testing
+and needs to be generated afresh.
 A newline means that the number has passed all the prime tests
 (the actual number depends on the key size).
 .Pp
