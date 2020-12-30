@@ -1,4 +1,4 @@
-/*	$OpenBSD: regcomp.c,v 1.36 2020/12/30 08:53:30 tb Exp $ */
+/*	$OpenBSD: regcomp.c,v 1.37 2020/12/30 08:54:42 tb Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -90,9 +90,6 @@ static void freeset(struct parse *, cset *);
 static int freezeset(struct parse *, cset *);
 static int firstch(struct parse *, cset *);
 static int nch(struct parse *, cset *);
-static void mcadd(struct parse *, cset *, const char *);
-static void mcinvert(struct parse *, cset *);
-static void mccase(struct parse *, cset *);
 static int isinsets(struct re_guts *, int);
 static int samesets(struct re_guts *, int, int);
 static void categorize(struct parse *, struct re_guts *);
@@ -666,8 +663,6 @@ p_bracket(struct parse *p)
 				if (ci != i)
 					CHadd(cs, ci);
 			}
-		if (cs->multis != NULL)
-			mccase(p, cs);
 	}
 	if (invert) {
 		int i;
@@ -679,11 +674,7 @@ p_bracket(struct parse *p)
 				CHadd(cs, i);
 		if (p->g->cflags&REG_NEWLINE)
 			CHsub(cs, '\n');
-		if (cs->multis != NULL)
-			mcinvert(p, cs);
 	}
-
-	assert(cs->multis == NULL);		/* xxx */
 
 	if (nch(p, cs) == 1) {		/* optimize singleton sets */
 		ordinary(p, firstch(p, cs));
@@ -782,8 +773,6 @@ p_b_cclass(struct parse *p, cset *cs)
 	u = cp->chars;
 	while ((c = *u++) != '\0')
 		CHadd(cs, c);
-	for (u = cp->multis; *u != '\0'; u += strlen(u) + 1)
-		MCadd(p, cs, u);
 }
 
 /*
@@ -1073,8 +1062,6 @@ allocset(struct parse *p)
 	cs->ptr = p->g->setbits + css*((no)/CHAR_BIT);
 	cs->mask = 1 << ((no) % CHAR_BIT);
 	cs->hash = 0;
-	cs->smultis = 0;
-	cs->multis = NULL;
 
 	return(cs);
 nomem:
@@ -1171,52 +1158,6 @@ nch(struct parse *p, cset *cs)
 		if (CHIN(cs, i))
 			n++;
 	return(n);
-}
-
-/*
- - mcadd - add a collating element to a cset
- */
-static void
-mcadd( struct parse *p, cset *cs, const char *cp)
-{
-	size_t oldend = cs->smultis;
-	void *np;
-
-	cs->smultis += strlen(cp) + 1;
-	np = realloc(cs->multis, cs->smultis);
-	if (np == NULL) {
-		free(cs->multis);
-		cs->multis = NULL;
-		SETERROR(REG_ESPACE);
-		return;
-	}
-	cs->multis = np;
-
-	strlcpy(cs->multis + oldend - 1, cp, cs->smultis - oldend + 1);
-}
-
-/*
- - mcinvert - invert the list of collating elements in a cset
- *
- * This would have to know the set of possibilities.  Implementation
- * is deferred.
- */
-static void
-mcinvert(struct parse *p, cset *cs)
-{
-	assert(cs->multis == NULL);	/* xxx */
-}
-
-/*
- - mccase - add case counterparts of the list of collating elements in a cset
- *
- * This would have to know the set of possibilities.  Implementation
- * is deferred.
- */
-static void
-mccase(struct parse *p, cset *cs)
-{
-	assert(cs->multis == NULL);	/* xxx */
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: regex2.h,v 1.8 2013/04/17 17:39:29 tedu Exp $	*/
+/*	$OpenBSD: regex2.h,v 1.9 2020/12/30 08:54:42 tb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -106,16 +106,11 @@ typedef struct {
 	uch *ptr;		/* -> uch [csetsize] */
 	uch mask;		/* bit within array */
 	uch hash;		/* hash code */
-	size_t smultis;
-	char *multis;		/* -> char[smulti]  ab\0cd\0ef\0\0 */
 } cset;
 /* note that CHadd and CHsub are unsafe, and CHIN doesn't yield 0/1 */
 #define	CHadd(cs, c)	((cs)->ptr[(uch)(c)] |= (cs)->mask, (cs)->hash += (c))
 #define	CHsub(cs, c)	((cs)->ptr[(uch)(c)] &= ~(cs)->mask, (cs)->hash -= (c))
 #define	CHIN(cs, c)	((cs)->ptr[(uch)(c)] & (cs)->mask)
-#define	MCadd(p, cs, cp)	mcadd(p, cs, cp)	/* regcomp() internal fns */
-#define	MCsub(p, cs, cp)	mcsub(p, cs, cp)
-#define	MCin(p, cs, cp)	mcin(p, cs, cp)
 
 /* stuff for character categories */
 typedef unsigned char cat_t;
