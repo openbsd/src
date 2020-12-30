@@ -1,4 +1,4 @@
-/* $OpenBSD: trap_subr.S,v 1.18 2020/09/25 17:31:27 kettenis Exp $ */
+/* $OpenBSD: trap_subr.S,v 1.19 2020/12/30 06:06:30 gkoehler Exp $ */
 /* $NetBSD: trap_subr.S,v 1.20 2002/04/22 23:20:08 kleink Exp $	*/
 
 /*-
@@ -304,6 +304,30 @@ hvtrapcode:
 	li	%r1, 0xe0
 	blrl
 hvtrapcodeend:
+
+/* System reset might be an exit from power-saving mode. */
+	.globl rsttrapcode, rsttrapcodeend
+rsttrapcode:
+	mtsprg1	%r1
+	mfcr	%r1
+	mtsprg2	%r1			/* save cr */
+	mfsrr1	%r1
+	andis.	%r1, %r1, 0x3		/* test srr1 bits 46:47 */
+	beq	1f
+	/* This is an exit from power-saving mode. */
+	ld	%r1, TRAP_RSTENTRY(0)	/* cpu_idle_restore_context */
+	mtctr	%r1
+	bctr
+1:	/* This is something else. */
+	mfsprg2	%r1
+	mtcr	%r1			/* restore cr */
+	mflr	%r1
+	mtsprg2	%r1
+	ld	%r1, TRAP_ENTRY(0)	/* generictrap */
+	mtlr	%r1
+	li	%r1, 0xe0
+	blrl
+rsttrapcodeend:
 
 /*
  * For SLB misses: do special things for the kernel

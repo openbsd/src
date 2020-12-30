@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.28 2020/09/23 03:03:12 gkoehler Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.29 2020/12/30 06:06:30 gkoehler Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -69,6 +69,7 @@ struct cpu_info {
 
 #define CPUSAVE_LEN	9
 	register_t	ci_tempsave[CPUSAVE_LEN];
+	register_t	ci_idle_sp_save;
 
 	uint64_t	ci_lasttb;
 	uint64_t	ci_nexttimerevent;
@@ -135,6 +136,7 @@ curcpu(void)
 	for (cii = 0, ci = curcpu(); ci != NULL; ci = NULL)
 
 #define cpu_kick(ci)
+#define cpu_unidle(ci)
 
 #else
 
@@ -147,6 +149,7 @@ curcpu(void)
 	for (cii = 0, ci = &cpu_info[0]; cii < ncpus; cii++, ci++)
 
 void	cpu_kick(struct cpu_info *);
+void	cpu_unidle(struct cpu_info *);
 void	cpu_boot_secondary_processors(void);
 void	cpu_startclock(void);
 
@@ -166,7 +169,6 @@ void	mp_setperf(int);
 
 void signotify(struct proc *);
 
-#define cpu_unidle(ci)
 #define CPU_BUSY_CYCLE()	do {} while (0)
 
 #define curpcb			curcpu()->ci_curpcb
@@ -179,6 +181,9 @@ extern uint32_t cpu_features2;
 
 void cpu_init_features(void);
 void cpu_init(void);
+
+extern uint64_t cpu_idle_state_psscr;
+extern void (*cpu_idle_cycle_fcn)(void);
 
 static inline unsigned int
 cpu_rnd_messybits(void)

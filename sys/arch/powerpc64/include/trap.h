@@ -152,5 +152,6 @@
 #define	TRAP_ENTRY	0x1f8
 #define	TRAP_HVENTRY	0x1f0
 #define	TRAP_SLBENTRY	0x1e8
+#define	TRAP_RSTENTRY	0x1e0
 
 #endif	/* _MACHINE_TRAP_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: opal.c,v 1.10 2020/09/23 03:03:11 gkoehler Exp $	*/
+/*	$OpenBSD: opal.c,v 1.11 2020/12/30 06:06:30 gkoehler Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -76,6 +76,8 @@ void	opal_attach_deferred(struct device *);
 void	opal_attach_node(struct opal_softc *, int);
 int	opal_gettime(struct todr_chip_handle *, struct timeval *);
 int	opal_settime(struct todr_chip_handle *, struct timeval *);
+void	opal_configure_idle_states(struct opal_softc *, int);
+void	opal_found_stop_state(struct opal_softc *, uint64_t);
 
 extern int perflevel;
 
@@ -146,7 +148,11 @@ opal_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_todr.todr_settime = opal_settime;
 	todr_attach(&sc->sc_todr);
 
-	opalpm_init(sc, OF_getnodebyname(faa->fa_node, "power-mgt"));
+	node = OF_getnodebyname(faa->fa_node, "power-mgt");
+	if (node) {
+		opal_configure_idle_states(sc, node);
+		opalpm_init(sc, node);
+	}
 
 	node = OF_getnodebyname(faa->fa_node, "consoles");
 	if (node) {
@@ -322,19 +328,100 @@ opal_settime(struct todr_chip_handle *ch, struct timeval *tv)
 	return 0;
 }
 
+#define OPAL_PM_LOSE_USER_CONTEXT	0x00001000
+#define OPAL_PM_STOP_INST_FAST		0x00100000
+
+void
+opal_configure_idle_states(struct opal_softc *sc, int node)
+{
+	uint64_t *states;
+	uint32_t accept, *flags;
+	int count, flen, i, slen;
+	char *prop;
+
+	prop = "ibm,cpu-idle-state-flags";
+	flen = OF_getproplen(node, prop);
+	if (flen <= 0 || flen % sizeof(flags[0]) != 0)
+		return;
+	count = flen / sizeof(flags[0]);
+	slen = count * sizeof(states[0]);
+
+	flags = malloc(flen, M_DEVBUF, M_WAITOK);
+	states = malloc(slen, M_DEVBUF, M_WAITOK);
+	OF_getpropintarray(node, prop, flags, flen);
+
+	/* Power ISA v3 uses the psscr with the stop instruction. */
+	prop = "ibm,cpu-idle-state-psscr";
+	if (OF_getpropint64array(node, prop, states, slen) == slen) {
+		/*
+		 * Find the deepest idle state that doesn't lose too
+		 * much context.
+		 */
+		accept = OPAL_PM_LOSE_USER_CONTEXT | OPAL_PM_STOP_INST_FAST;
+		for (i = count - 1; i >= 0; i--) {
+			if ((flags[i] & ~accept) == 0) {
+				opal_found_stop_state(sc, states[i]);
+				break;
+			}
+		}
+	}
+
+	free(flags, M_DEVBUF, flen);
+	free(states, M_DEVBUF, slen);
+}
+
+void cpu_idle_stop(void);
+#ifdef MULTIPROCESSOR
+void cpu_hatch_and_stop(void);
+#endif
+
+void
+opal_found_stop_state(struct opal_softc *sc, uint64_t state)
+{
+#ifdef MULTIPROCESSOR
+	uint32_t pirs[8];
+	int i, len, node;
+	char buf[32];
+#endif
+
+	cpu_idle_state_psscr = state;
+	cpu_idle_cycle_fcn = &cpu_idle_stop;
+	printf("%s: idle psscr %llx\n", sc->sc_dev.dv_xname,
+	    (unsigned long long)state);
+
+#ifdef MULTIPROCESSOR
+	/*
+	 * Idle the other hardware threads.  We use only one thread of
+	 * each cpu core.  The other threads are idle in OPAL.  If we
+	 * move them to a deeper idle state, then the core might
+	 * switch to single-thread mode, increase performance.
+	 */
+	node = OF_parent(curcpu()->ci_node);
+	for (node = OF_child(node); node != 0; node = OF_peer(node)) {
+		if (OF_getprop(node, "device_type", buf, sizeof(buf)) <= 0 ||
+		    strcmp(buf, "cpu") != 0)
+			continue;
+		len = OF_getpropintarray(node, "ibm,ppc-interrupt-server#s",
+		    pirs, sizeof(pirs));
+		if (len > 0 && len % 4 == 0) {
+			/* Skip i = 0, the first hardware thread. */
+			for (i = 1; i < len / 4; i++)
+				opal_start_cpu(pirs[i],
+				    (vaddr_t)cpu_hatch_and_stop);
+		}
+	}
+#endif
+}
+
 void
 opalpm_init(struct opal_softc *sc, int node)
 {
 	int i, len;
 
-	if (!node) {
-		printf("%s: no power-mgt\n", sc->sc_dev.dv_xname);
-		return;
-	}
 	len = OF_getproplen(node, "ibm,pstate-ids");
 	if (len <= 0 || len % sizeof(int) != 0 ||
 	    len != OF_getproplen(node, "ibm,pstate-frequencies-mhz")) {
-		printf("%s: can't parse power-mgt\n", sc->sc_dev.dv_xname);
+		printf("%s: can't parse pstates\n", sc->sc_dev.dv_xname);
 		return;
 	}
 	sc->sc_pstate = malloc(len, M_DEVBUF, M_WAITOK);

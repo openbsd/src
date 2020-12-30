@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.13 2020/09/05 19:21:10 kettenis Exp $
+#	$OpenBSD: genassym.cf,v 1.14 2020/12/30 06:06:30 gkoehler Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -41,6 +41,7 @@ struct	cpu_info
 member	ci_curpcb
 member	ci_curproc
 member	ci_tempsave
+member	ci_idle_sp_save
 member	ci_slbsave
 member	ci_slbstack
 member	ci_kernel_slb

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.41 2020/10/22 23:35:43 mortimer Exp $	*/
+/*	$OpenBSD: locore.S,v 1.42 2020/12/30 06:06:30 gkoehler Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -86,15 +86,110 @@ tmpstack_end:
 
 	.text
 
+/* For Power ISA v3, stop a hardware thread forever. */
+	.globl cpu_hatch_and_stop
+cpu_hatch_and_stop:
+	bl	1f
+1:	mflr	%r2
+	addis	%r2, %r2, (.TOC. - 1b)@ha
+	addi	%r2, %r2, (.TOC. - 1b)@l
+	/* Clear PECE bits to disable exiting from idle. */
+	li	%r3, 0
+	mtspr	318, %r3	/* lpcr = 0 */
+	/* Set psscr to request idle state. */
+	addis	%r3, %r2, cpu_idle_state_psscr@toc@ha
+	ld	%r3, cpu_idle_state_psscr@toc@l(%r3)
+	mtspr	823, %r3
+1:	stop
+	b	1b		/* Lighter states might not use PECE. */
+
 #endif
 
 	.globl cpu_idle_enter
 cpu_idle_enter:
 	blr
 
-	.globl cpu_idle_cycle
-cpu_idle_cycle:
+	.globl cpu_idle_spin
+cpu_idle_spin:
 	blr
+
+/* Idle for Power ISA v3. */
+	.globl cpu_idle_stop
+cpu_idle_stop:
+	/* Set psscr to request idle state. */
+	addis	%r3, %r2, cpu_idle_state_psscr@toc@ha
+	ld	%r3, cpu_idle_state_psscr@toc@l(%r3)
+	mtspr	823, %r3
+	/*
+	 * POWER9 23.5.9.2 State Loss and Restoration: We may lose
+	 * "any nonhypervisor thread context (such as, GPRs, VSRs,
+	 * FPRs)" and "the following SPRs: CR, FPSCR, VSCR, XER, DSCR,
+	 * AMR, IAMR, UAMOR, AMOR, DAWR, DAWRX."
+	 */
+	mflr	%r3
+	mfcr	%r4
+	std	%r3, 16(%r1)
+	stw	%r4, 8(%r1)
+	std	%r31, -8(%r1)
+	std	%r30, -16(%r1)
+	std	%r29, -24(%r1)
+	std	%r28, -32(%r1)
+	std	%r27, -40(%r1)
+	std	%r26, -48(%r1)
+	std	%r25, -56(%r1)
+	std	%r24, -64(%r1)
+	std	%r23, -72(%r1)
+	std	%r22, -80(%r1)
+	std	%r21, -88(%r1)
+	std	%r20, -96(%r1)
+	std	%r19, -104(%r1)
+	std	%r18, -112(%r1)
+	std	%r17, -120(%r1)
+	std	%r16, -128(%r1)
+	std	%r15, -136(%r1)
+	std	%r14, -144(%r1)
+	/* Red zone ends at -288(%r1). */
+	mfsprg0	%r3
+	std	%r1, CI_IDLE_SP_SAVE(%r3)
+	stop
+	/* If we continue here, then we lost no context. */
+	blr
+
+/* Come here from the system reset vector (rsttrapcode). */
+	.globl cpu_idle_restore_context
+cpu_idle_restore_context:
+	bl	1f
+1:	mflr	%r2
+	addis	%r2, %r2, (.TOC. - 1b)@ha
+	addi	%r2, %r2, (.TOC. - 1b)@l	/* TOC pointer */
+	mfsprg0	%r3
+	ld	%r1, CI_IDLE_SP_SAVE(%r3)	/* stack pointer */
+	mfmsr	%r4
+	ori	%r4, %r4, PSL_DR@l		/* data relocation on */
+	mtmsr	%r4
+	ld	%r14, -144(%r1)
+	ld	%r15, -136(%r1)
+	ld	%r16, -128(%r1)
+	ld	%r17, -120(%r1)
+	ld	%r18, -112(%r1)
+	ld	%r19, -104(%r1)
+	ld	%r20, -96(%r1)
+	ld	%r21, -88(%r1)
+	ld	%r22, -80(%r1)
+	ld	%r23, -72(%r1)
+	ld	%r24, -64(%r1)
+	ld	%r25, -56(%r1)
+	ld	%r26, -48(%r1)
+	ld	%r27, -40(%r1)
+	ld	%r28, -32(%r1)
+	ld	%r29, -24(%r1)
+	ld	%r30, -16(%r1)
+	ld	%r31, -8(%r1)
+	lwz	%r4, 8(%r1)	/* cr */
+	ld	%r5, 16(%r1)	/* lr */
+	mtcr	%r4
+	mtsrr0	%r5
+	rfid	/* return from system reset interrupt */
 
 	.globl cpu_idle_leave
 cpu_idle_leave:
