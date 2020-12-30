@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.263 2020/05/10 13:38:46 deraadt Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.264 2020/12/30 07:31:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -213,6 +213,9 @@ main(int argc, char *argv[])
 	case SHOW_INTERFACE:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_INTERFACE, 0, 0, -1, NULL, 0);
 		break;
+	case SHOW_SET:
+		imsg_compose(ibuf, IMSG_CTL_SHOW_SET, 0, 0, -1, NULL, 0);
+		break;
 	case SHOW_NEIGHBOR:
 	case SHOW_NEIGHBOR_TIMERS:
 	case SHOW_NEIGHBOR_TERSE:
@@ -393,6 +396,7 @@ show(struct imsg *imsg, struct parse_result *res)
 	struct ctl_timer	*t;
 	struct ctl_show_interface	*iface;
 	struct ctl_show_nexthop	*nh;
+	struct ctl_show_set	*set;
 	struct kroute_full	*kf;
 	struct ktable		*kt;
 	struct ctl_show_rib	 rib;
@@ -465,6 +469,10 @@ show(struct imsg *imsg, struct parse_result *res)
 	case IMSG_CTL_SHOW_RIB_HASH:
 		memcpy(&hash, imsg->data, sizeof(hash));
 		output->rib_hash(&hash);
+		break;
+	case IMSG_CTL_SHOW_SET:
+		set = imsg->data;
+		output->set(set);
 		break;
 	case IMSG_CTL_RESULT:
 		if (imsg->hdr.len != IMSG_HEADER_SIZE + sizeof(rescode)) {
@@ -974,6 +982,23 @@ fmt_ext_community(u_int8_t *data)
 		    log_ext_subtype(type, subtype),
 		    (unsigned long long)be64toh(ext));
 		return buf;
+	}
+}
+
+const char *
+fmt_set_type(struct ctl_show_set *set)
+{
+	switch (set->type) {
+	case ROA_SET:
+		return "ROA";
+	case PREFIX_SET:
+		return "PREFIX";
+	case ORIGIN_SET:
+		return "ORIGIN";
+	case ASNUM_SET:
+		return "ASNUM";
+	default:
+		return "BULA";
 	}
 }
 

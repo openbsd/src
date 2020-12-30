@@ -30,6 +30,7 @@ struct output {
 		    struct parse_result *);
 	void	(*rib_hash)(struct rde_hashstats *);
 	void	(*rib_mem)(struct rde_memstats *);
+	void	(*set)(struct ctl_show_set *);
 	void	(*result)(u_int);
 	void	(*tail)(void);
 };
@@ -53,3 +54,4 @@ const char	*fmt_attr(u_int8_t, int);
 const char	*fmt_community(u_int16_t, u_int16_t);
 const char	*fmt_large_community(u_int32_t, u_int32_t, u_int32_t);
 const char	*fmt_ext_community(u_int8_t *);
+const char	*fmt_set_type(struct ctl_show_set *);

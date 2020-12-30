@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.4 2020/10/21 06:52:45 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.5 2020/12/30 07:31:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -919,6 +919,24 @@ json_rib_hash(struct rde_hashstats *hash)
 }
 
 static void
+json_rib_set(struct ctl_show_set *set)
+{
+	json_do_array("sets");
+
+	json_do_object("set");
+	json_do_printf("name", "%s", set->name);
+	json_do_printf("type", "%s", fmt_set_type(set));
+	json_do_printf("last_change", "%s", fmt_monotime(set->lastchange));
+	if (set->type == ASNUM_SET) {
+		json_do_uint("num_ASnum", set->as_cnt);
+	} else {
+		json_do_uint("num_IPv4", set->v4_cnt);
+		json_do_uint("num_IPv6", set->v6_cnt);
+	}
+	json_do_end();
+}
+
+static void
 json_result(u_int rescode)
 {
 	if (rescode == 0)
@@ -952,6 +970,7 @@ const struct output json_output = {
 	.rib = json_rib,
 	.rib_mem = json_rib_mem,
 	.rib_hash = json_rib_hash,
+	.set = json_rib_set,
 	.result = json_result,
 	.tail = json_tail
 };
