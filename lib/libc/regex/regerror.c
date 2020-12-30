@@ -1,4 +1,4 @@
-/*	$OpenBSD: regerror.c,v 1.14 2015/11/01 03:45:29 guenther Exp $ */
+/*	$OpenBSD: regerror.c,v 1.15 2020/12/30 08:56:38 tb Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -44,12 +44,12 @@
 
 #include "utils.h"
 
-static char *regatoi(const regex_t *, char *, int);
+static const char *regatoi(const regex_t *, char *, int);
 
-static struct rerr {
+static const struct rerr {
 	int code;
-	char *name;
-	char *explain;
+	const char *name;
+	const char *explain;
 } rerrs[] = {
 	{ REG_NOMATCH,	"REG_NOMATCH",	"regexec() failed to match" },
 	{ REG_BADPAT,	"REG_BADPAT",	"invalid regular expression" },
@@ -77,10 +77,10 @@ static struct rerr {
 size_t
 regerror(int errcode, const regex_t *preg, char *errbuf, size_t errbuf_size)
 {
-	struct rerr *r;
+	const struct rerr *r;
 	size_t len;
 	int target = errcode &~ REG_ITOA;
-	char *s;
+	const char *s;
 	char convbuf[50];
 
 	if (errcode == REG_ATOI)
@@ -102,21 +102,21 @@ regerror(int errcode, const regex_t *preg, char *errbuf, size_t errbuf_size)
 			s = r->explain;
 	}
 
-	len = strlen(s) + 1;
-	if (errbuf_size > 0) {
-		strlcpy(errbuf, s, errbuf_size);
-	}
+	if (errbuf_size != 0)
+		len = strlcpy(errbuf, s, errbuf_size);
+	else
+		len = strlen(s);
 
-	return(len);
+	return len + 1;
 }
 
 /*
  - regatoi - internal routine to implement REG_ATOI
  */
-static char *
+static const char *
 regatoi(const regex_t *preg, char *localbuf, int localbufsize)
 {
-	struct rerr *r;
+	const struct rerr *r;
 
 	for (r = rerrs; r->code != 0; r++)
 		if (strcmp(r->name, preg->re_endp) == 0)
