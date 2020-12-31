@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.73 2020/12/13 04:00:38 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.74 2020/12/31 06:31:55 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -1325,9 +1325,12 @@ long
 dma_fence_default_wait(struct dma_fence *fence, bool intr, signed long timeout)
 {
 	long ret = timeout ? timeout : 1;
+	unsigned long end;
 	int err;
 	struct default_wait_cb cb;
 	bool was_set;
+
+	KASSERT(timeout <= INT_MAX);
 
 	if (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags))
 		return ret;
@@ -1356,14 +1359,14 @@ dma_fence_default_wait(struct dma_fence *fence, bool intr, signed long timeout)
 	cb.proc = curproc;
 	list_add(&cb.base.node, &fence->cb_list);
 
-	while (!test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags)) {
-		err = msleep(curproc, fence->lock, intr ? PCATCH : 0, "dmafence",
-		    timeout);
+	end = jiffies + timeout;
+	for (ret = timeout; ret > 0; ret = MAX(0, end - jiffies)) {
+		if (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags))
+			break;
+		err = msleep(curproc, fence->lock, intr ? PCATCH : 0,
+		    "dmafence", ret);
 		if (err == EINTR || err == ERESTART) {
 			ret = -ERESTARTSYS;
-			break;
-		} else if (err == EWOULDBLOCK) {
-			ret = 0;
 			break;
 		}
 	}
@@ -1398,8 +1401,11 @@ dma_fence_wait_any_timeout(struct dma_fence **fences, uint32_t count,
     bool intr, long timeout, uint32_t *idx)
 {
 	struct default_wait_cb *cb;
+	long ret = timeout;
+	unsigned long end;
 	int i, err;
-	int ret = timeout;
+
+	KASSERT(timeout <= INT_MAX);
 
 	if (timeout == 0) {
 		for (i = 0; i < count; i++) {
@@ -1427,17 +1433,13 @@ dma_fence_wait_any_timeout(struct dma_fence **fences, uint32_t count,
 		}
 	}
 
-	while (ret > 0) {
+	end = jiffies + timeout;
+	for (ret = timeout; ret > 0; ret = MAX(0, end - jiffies)) {
 		if (dma_fence_test_signaled_any(fences, count, idx))
 			break;
-
-		err = tsleep(curproc, intr ? PCATCH : 0,
-		    "dfwat", timeout);
+		err = tsleep(curproc, intr ? PCATCH : 0, "dfwat", ret);
 		if (err == EINTR || err == ERESTART) {
 			ret = -ERESTARTSYS;
-			break;
-		} else if (err == EWOULDBLOCK) {
-			ret = 0;
 			break;
 		}
 	}
