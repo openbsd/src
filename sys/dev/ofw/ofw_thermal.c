@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_thermal.c,v 1.6 2020/01/23 23:10:04 kettenis Exp $	*/
+/*	$OpenBSD: ofw_thermal.c,v 1.7 2020/12/31 11:11:22 kettenis Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis
  *
@@ -270,7 +270,7 @@ thermal_zone_poll(void *arg)
 
 	temp = thermal_get_temperature_cells(tz->tz_sensors);
 	if (temp == THERMAL_SENSOR_MAX)
-		return;
+		goto out;
 
 	newtp = NULL;
 	tp = tz->tz_trips;
@@ -295,7 +295,7 @@ thermal_zone_poll(void *arg)
 	 *  - decrease the cooling level if the temperature is falling
 	 */
 	delta = 0;
-	if (newtp) {
+	if (newtp && tz->tz_temperature != THERMAL_SENSOR_MAX) {
 		if (temp >= newtp->tp_temperature) {
 			if (temp > tz->tz_temperature)
 				delta = 1;
