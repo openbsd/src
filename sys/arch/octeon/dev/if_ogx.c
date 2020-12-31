@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_ogx.c,v 1.3 2020/12/12 11:48:52 jan Exp $	*/
+/*	$OpenBSD: if_ogx.c,v 1.4 2020/12/31 09:57:23 visa Exp $	*/
 
 /*
- * Copyright (c) 2019 Visa Hankala
+ * Copyright (c) 2019-2020 Visa Hankala
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -34,10 +34,15 @@
 #include <net/if.h>
 #include <net/if_media.h>
 #include <netinet/in.h>
+#include <netinet/ip.h>
 #include <netinet/if_ether.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
+#endif
+
+#ifdef INET6
+#include <netinet/ip6.h>
 #endif
 
 #include <dev/mii/mii.h>
@@ -458,6 +463,9 @@ ogx_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_xflags |= IFXF_MPSAFE;
 	ifp->if_ioctl = ogx_ioctl;
 	ifp->if_qstart = ogx_start;
+	ifp->if_capabilities = IFCAP_CSUM_IPv4 |
+	    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4 |
+	    IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6;
 
 	sc->sc_mii.mii_ifp = ifp;
 	sc->sc_mii.mii_readreg = ogx_mii_readreg;
@@ -1216,14 +1224,46 @@ ogx_start(struct ifqueue *ifq)
 int
 ogx_send_mbuf(struct ogx_softc *sc, struct mbuf *m0)
 {
+	struct ether_header *eh;
 	struct mbuf *m;
-	uint64_t scroff, word;
+	uint64_t ehdrlen, hdr, scroff, word;
 	unsigned int nfrags;
 
 	/* Save original pointer for freeing after transmission. */
 	m0->m_pkthdr.ph_cookie = m0;
 	/* Add a tag for sanity checking. */
 	m0->m_pkthdr.ph_ifidx = (u_int)(uintptr_t)sc;
+
+	hdr = PKO3_SEND_HDR_DF;
+	hdr |= m0->m_pkthdr.len << PKO3_SEND_HDR_TOTAL_S;
+
+	if (m0->m_pkthdr.csum_flags &
+	    (M_IPV4_CSUM_OUT | M_TCP_CSUM_OUT | M_UDP_CSUM_OUT)) {
+		eh = mtod(m0, struct ether_header *);
+		ehdrlen = ETHER_HDR_LEN;
+
+		switch (ntohs(eh->ether_type)) {
+		case ETHERTYPE_IP:
+			hdr |= ehdrlen << PKO3_SEND_HDR_L3PTR_S;
+			hdr |= (ehdrlen + sizeof(struct ip)) <<
+			    PKO3_SEND_HDR_L4PTR_S;
+			break;
+		case ETHERTYPE_IPV6:
+			hdr |= ehdrlen << PKO3_SEND_HDR_L3PTR_S;
+			hdr |= (ehdrlen + sizeof(struct ip6_hdr)) <<
+			    PKO3_SEND_HDR_L4PTR_S;
+			break;
+		default:
+			break;
+		}
+
+		if (m0->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
+			hdr |= PKO3_SEND_HDR_CKL3;
+		if (m0->m_pkthdr.csum_flags & M_TCP_CSUM_OUT)
+			hdr |= PKO3_SEND_HDR_CKL4_TCP;
+		if (m0->m_pkthdr.csum_flags & M_UDP_CSUM_OUT)
+			hdr |= PKO3_SEND_HDR_CKL4_UDP;
+	}
 
 	/* Flush pending writes before packet submission. */
 	octeon_syncw();
@@ -1234,10 +1274,8 @@ ogx_send_mbuf(struct ogx_softc *sc, struct mbuf *m0)
 	/* Get the LMTDMA region offset in the scratchpad. */
 	scroff = 2 * 0x80;
 
-	word = PKO3_SEND_HDR_DF;
-	word |= m0->m_pkthdr.len << PKO3_SEND_HDR_TOTAL_S;
-	octeon_cvmseg_write_8(scroff, word);
-	scroff += sizeof(word);
+	octeon_cvmseg_write_8(scroff, hdr);
+	scroff += sizeof(hdr);
 
 	for (m = m0, nfrags = 0; m != NULL && nfrags < 13;
 	    m = m->m_next, nfrags++) {
