@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.65 2020/12/23 20:17:49 millert Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.66 2020/12/31 08:27:15 martijn Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -559,10 +559,10 @@ lka_filter_data_begin(uint64_t reqid)
 	io_set_callback(fs->io, filter_session_io, fs);
 
 end:
-	m_create(p_pony, IMSG_FILTER_SMTP_DATA_BEGIN, 0, 0, fd);
-	m_add_id(p_pony, reqid);
-	m_add_int(p_pony, fd != -1 ? 1 : 0);
-	m_close(p_pony);
+	m_create(p_dispatcher, IMSG_FILTER_SMTP_DATA_BEGIN, 0, 0, fd);
+	m_add_id(p_dispatcher, reqid);
+	m_add_int(p_dispatcher, fd != -1 ? 1 : 0);
+	m_close(p_dispatcher);
 	log_trace(TRACE_FILTERS, "%016"PRIx64" filters data-begin fd=%d", reqid, fd);
 }
 
@@ -981,49 +981,49 @@ filter_data_query(struct filter *filter, uint64_t token, uint64_t reqid, const c
 static void
 filter_result_proceed(uint64_t reqid)
 {
-	m_create(p_pony, IMSG_FILTER_SMTP_PROTOCOL, 0, 0, -1);
-	m_add_id(p_pony, reqid);
-	m_add_int(p_pony, FILTER_PROCEED);
-	m_close(p_pony);
+	m_create(p_dispatcher, IMSG_FILTER_SMTP_PROTOCOL, 0, 0, -1);
+	m_add_id(p_dispatcher, reqid);
+	m_add_int(p_dispatcher, FILTER_PROCEED);
+	m_close(p_dispatcher);
 }
 
 static void
 filter_result_junk(uint64_t reqid)
 {
-	m_create(p_pony, IMSG_FILTER_SMTP_PROTOCOL, 0, 0, -1);
-	m_add_id(p_pony, reqid);
-	m_add_int(p_pony, FILTER_JUNK);
-	m_close(p_pony);
+	m_create(p_dispatcher, IMSG_FILTER_SMTP_PROTOCOL, 0, 0, -1);
+	m_add_id(p_dispatcher, reqid);
+	m_add_int(p_dispatcher, FILTER_JUNK);
+	m_close(p_dispatcher);
 }
 
 static void
 filter_result_rewrite(uint64_t reqid, const char *param)
 {
-	m_create(p_pony, IMSG_FILTER_SMTP_PROTOCOL, 0, 0, -1);
-	m_add_id(p_pony, reqid);
-	m_add_int(p_pony, FILTER_REWRITE);
-	m_add_string(p_pony, param);
-	m_close(p_pony);
+	m_create(p_dispatcher, IMSG_FILTER_SMTP_PROTOCOL, 0, 0, -1);
+	m_add_id(p_dispatcher, reqid);
+	m_add_int(p_dispatcher, FILTER_REWRITE);
+	m_add_string(p_dispatcher, param);
+	m_close(p_dispatcher);
 }
 
 static void
 filter_result_reject(uint64_t reqid, const char *message)
 {
-	m_create(p_pony, IMSG_FILTER_SMTP_PROTOCOL, 0, 0, -1);
-	m_add_id(p_pony, reqid);
-	m_add_int(p_pony, FILTER_REJECT);
-	m_add_string(p_pony, message);
-	m_close(p_pony);
+	m_create(p_dispatcher, IMSG_FILTER_SMTP_PROTOCOL, 0, 0, -1);
+	m_add_id(p_dispatcher, reqid);
+	m_add_int(p_dispatcher, FILTER_REJECT);
+	m_add_string(p_dispatcher, message);
+	m_close(p_dispatcher);
 }
 
 static void
 filter_result_disconnect(uint64_t reqid, const char *message)
 {
-	m_create(p_pony, IMSG_FILTER_SMTP_PROTOCOL, 0, 0, -1);
-	m_add_id(p_pony, reqid);
-	m_add_int(p_pony, FILTER_DISCONNECT);
-	m_add_string(p_pony, message);
-	m_close(p_pony);
+	m_create(p_dispatcher, IMSG_FILTER_SMTP_PROTOCOL, 0, 0, -1);
+	m_add_id(p_dispatcher, reqid);
+	m_add_int(p_dispatcher, FILTER_DISCONNECT);
+	m_add_string(p_dispatcher, message);
+	m_close(p_dispatcher);
 }
 
 

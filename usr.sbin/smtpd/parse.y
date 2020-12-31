@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.281 2020/09/23 19:11:50 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.282 2020/12/31 08:27:15 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -103,7 +103,7 @@ struct mta_limits	*limits;
 static struct pki	*pki;
 static struct ca	*sca;
 
-struct dispatcher	*dispatcher;
+struct dispatcher	*dsp;
 struct rule		*rule;
 struct filter_proc	*processor;
 struct filter_config	*filter_config;
@@ -582,37 +582,37 @@ SRS KEY STRING {
 
 dispatcher_local_option:
 USER STRING {
-	if (dispatcher->u.local.is_mbox) {
+	if (dsp->u.local.is_mbox) {
 		yyerror("user may not be specified for this dispatcher");
 		YYERROR;
 	}
 
-	if (dispatcher->u.local.forward_only) {
+	if (dsp->u.local.forward_only) {
 		yyerror("user may not be specified for forward-only");
 		YYERROR;
 	}
 
-	if (dispatcher->u.local.expand_only) {
+	if (dsp->u.local.expand_only) {
 		yyerror("user may not be specified for expand-only");
 		YYERROR;
 	}
 
-	if (dispatcher->u.local.user) {
+	if (dsp->u.local.user) {
 		yyerror("user already specified for this dispatcher");
 		YYERROR;
 	}
 
-	dispatcher->u.local.user = $2;
+	dsp->u.local.user = $2;
 }
 | ALIAS tables {
 	struct table   *t = $2;
 
-	if (dispatcher->u.local.table_alias) {
+	if (dsp->u.local.table_alias) {
 		yyerror("alias mapping already specified for this dispatcher");
 		YYERROR;
 	}
 
-	if (dispatcher->u.local.table_virtual) {
+	if (dsp->u.local.table_virtual) {
 		yyerror("virtual mapping already specified for this dispatcher");
 		YYERROR;
 	}
@@ -623,17 +623,17 @@ USER STRING {
 		YYERROR;
 	}
 
-	dispatcher->u.local.table_alias = strdup(t->t_name);
+	dsp->u.local.table_alias = strdup(t->t_name);
 }
 | VIRTUAL tables {
 	struct table   *t = $2;
 
-	if (dispatcher->u.local.table_virtual) {
+	if (dsp->u.local.table_virtual) {
 		yyerror("virtual mapping already specified for this dispatcher");
 		YYERROR;
 	}
 
-	if (dispatcher->u.local.table_alias) {
+	if (dsp->u.local.table_alias) {
 		yyerror("alias mapping already specified for this dispatcher");
 		YYERROR;
 	}
@@ -644,12 +644,12 @@ USER STRING {
 		YYERROR;
 	}
 
-	dispatcher->u.local.table_virtual = strdup(t->t_name);
+	dsp->u.local.table_virtual = strdup(t->t_name);
 }
 | USERBASE tables {
 	struct table   *t = $2;
 
-	if (dispatcher->u.local.table_userbase) {
+	if (dsp->u.local.table_userbase) {
 		yyerror("userbase mapping already specified for this dispatcher");
 		YYERROR;
 	}
@@ -660,14 +660,14 @@ USER STRING {
 		YYERROR;
 	}
 
-	dispatcher->u.local.table_userbase = strdup(t->t_name);
+	dsp->u.local.table_userbase = strdup(t->t_name);
 }
 | WRAPPER STRING {
 	if (! dict_get(conf->sc_mda_wrappers, $2)) {
 		yyerror("no mda wrapper with that name: %s", $2);
 		YYERROR;
 	}
-	dispatcher->u.local.mda_wrapper = $2;
+	dsp->u.local.mda_wrapper = $2;
 }
 ;
 
@@ -678,67 +678,67 @@ dispatcher_local_option dispatcher_local_options
 
 dispatcher_local:
 MBOX {
-	dispatcher->u.local.is_mbox = 1;
-	asprintf(&dispatcher->u.local.command, "/usr/libexec/mail.local -f %%{mbox.from} -- %%{user.username}");
+	dsp->u.local.is_mbox = 1;
+	asprintf(&dsp->u.local.command, "/usr/libexec/mail.local -f %%{mbox.from} -- %%{user.username}");
 } dispatcher_local_options
 | MAILDIR {
-	asprintf(&dispatcher->u.local.command, "/usr/libexec/mail.maildir");
+	asprintf(&dsp->u.local.command, "/usr/libexec/mail.maildir");
 } dispatcher_local_options
 | MAILDIR JUNK {
-	asprintf(&dispatcher->u.local.command, "/usr/libexec/mail.maildir -j");
+	asprintf(&dsp->u.local.command, "/usr/libexec/mail.maildir -j");
 } dispatcher_local_options
 | MAILDIR STRING {
 	if (strncmp($2, "~/", 2) == 0)
-		asprintf(&dispatcher->u.local.command,
+		asprintf(&dsp->u.local.command,
 		    "/usr/libexec/mail.maildir \"%%{user.directory}/%s\"", $2+2);
 	else
-		asprintf(&dispatcher->u.local.command,
+		asprintf(&dsp->u.local.command,
 		    "/usr/libexec/mail.maildir \"%s\"", $2);
 } dispatcher_local_options
 | MAILDIR STRING JUNK {
 	if (strncmp($2, "~/", 2) == 0)
-		asprintf(&dispatcher->u.local.command,
+		asprintf(&dsp->u.local.command,
 		    "/usr/libexec/mail.maildir -j \"%%{user.directory}/%s\"", $2+2);
 	else
-		asprintf(&dispatcher->u.local.command,
+		asprintf(&dsp->u.local.command,
 		    "/usr/libexec/mail.maildir -j \"%s\"", $2);
 } dispatcher_local_options
 | LMTP STRING {
-	asprintf(&dispatcher->u.local.command,
+	asprintf(&dsp->u.local.command,
 	    "/usr/libexec/mail.lmtp -d %s -u", $2);
-	dispatcher->u.local.user = SMTPD_USER;
+	dsp->u.local.user = SMTPD_USER;
 } dispatcher_local_options
 | LMTP STRING RCPT_TO {
-	asprintf(&dispatcher->u.local.command,
+	asprintf(&dsp->u.local.command,
 	    "/usr/libexec/mail.lmtp -d %s -r", $2);
-	dispatcher->u.local.user = SMTPD_USER;
+	dsp->u.local.user = SMTPD_USER;
 } dispatcher_local_options
 | MDA STRING {
-	asprintf(&dispatcher->u.local.command,
+	asprintf(&dsp->u.local.command,
 	    "/usr/libexec/mail.mda \"%s\"", $2);
 } dispatcher_local_options
 | FORWARD_ONLY {
-	dispatcher->u.local.forward_only = 1;
+	dsp->u.local.forward_only = 1;
 } dispatcher_local_options
 | EXPAND_ONLY {
-	dispatcher->u.local.expand_only = 1;
+	dsp->u.local.expand_only = 1;
 } dispatcher_local_options
 
 ;
 
 dispatcher_remote_option:
 HELO STRING {
-	if (dispatcher->u.remote.helo) {
+	if (dsp->u.remote.helo) {
 		yyerror("helo already specified for this dispatcher");
 		YYERROR;
 	}
 
-	dispatcher->u.remote.helo = $2;
+	dsp->u.remote.helo = $2;
 }
 | HELO_SRC tables {
 	struct table   *t = $2;
 
-	if (dispatcher->u.remote.helo_source) {
+	if (dsp->u.remote.helo_source) {
 		yyerror("helo-source mapping already specified for this dispatcher");
 		YYERROR;
 	}
@@ -748,28 +748,28 @@ HELO STRING {
 		YYERROR;
 	}
 
-	dispatcher->u.remote.helo_source = strdup(t->t_name);
+	dsp->u.remote.helo_source = strdup(t->t_name);
 }
 | PKI STRING {
-	if (dispatcher->u.remote.pki) {
+	if (dsp->u.remote.pki) {
 		yyerror("pki already specified for this dispatcher");
 		YYERROR;
 	}
 
-	dispatcher->u.remote.pki = $2;
+	dsp->u.remote.pki = $2;
 }
 | CA STRING {
-	if (dispatcher->u.remote.ca) {
+	if (dsp->u.remote.ca) {
 		yyerror("ca already specified for this dispatcher");
 		YYERROR;
 	}
 
-	dispatcher->u.remote.ca = $2;
+	dsp->u.remote.ca = $2;
 }
 | SRC tables {
 	struct table   *t = $2;
 
-	if (dispatcher->u.remote.source) {
+	if (dsp->u.remote.source) {
 		yyerror("source mapping already specified for this dispatcher");
 		YYERROR;
 	}
@@ -780,49 +780,49 @@ HELO STRING {
 		YYERROR;
 	}
 
-	dispatcher->u.remote.source = strdup(t->t_name);
+	dsp->u.remote.source = strdup(t->t_name);
 }
 | MAIL_FROM STRING {
-	if (dispatcher->u.remote.mail_from) {
+	if (dsp->u.remote.mail_from) {
 		yyerror("mail-from already specified for this dispatcher");
 		YYERROR;
 	}
 
-	dispatcher->u.remote.mail_from = $2;
+	dsp->u.remote.mail_from = $2;
 }
 | BACKUP MX STRING {
-	if (dispatcher->u.remote.backup) {
+	if (dsp->u.remote.backup) {
 		yyerror("backup already specified for this dispatcher");
 		YYERROR;
 	}
-	if (dispatcher->u.remote.smarthost) {
+	if (dsp->u.remote.smarthost) {
 		yyerror("backup and host are mutually exclusive");
 		YYERROR;
 	}
 
-	dispatcher->u.remote.backup = 1;
-	dispatcher->u.remote.backupmx = $3;
+	dsp->u.remote.backup = 1;
+	dsp->u.remote.backupmx = $3;
 }
 | BACKUP {
-	if (dispatcher->u.remote.backup) {
+	if (dsp->u.remote.backup) {
 		yyerror("backup already specified for this dispatcher");
 		YYERROR;
 	}
-	if (dispatcher->u.remote.smarthost) {
+	if (dsp->u.remote.smarthost) {
 		yyerror("backup and host are mutually exclusive");
 		YYERROR;
 	}
 
-	dispatcher->u.remote.backup = 1;
+	dsp->u.remote.backup = 1;
 }
 | HOST tables {
 	struct table   *t = $2;
 
-	if (dispatcher->u.remote.smarthost) {
+	if (dsp->u.remote.smarthost) {
 		yyerror("host mapping already specified for this dispatcher");
 		YYERROR;
 	}
-	if (dispatcher->u.remote.backup) {
+	if (dsp->u.remote.backup) {
 		yyerror("backup and host are mutually exclusive");
 		YYERROR;
 	}
@@ -833,16 +833,16 @@ HELO STRING {
 		YYERROR;
 	}
 
-	dispatcher->u.remote.smarthost = strdup(t->t_name);
+	dsp->u.remote.smarthost = strdup(t->t_name);
 }
 | DOMAIN tables {
 	struct table   *t = $2;
 
-	if (dispatcher->u.remote.smarthost) {
+	if (dsp->u.remote.smarthost) {
 		yyerror("host mapping already specified for this dispatcher");
 		YYERROR;
 	}
-	if (dispatcher->u.remote.backup) {
+	if (dsp->u.remote.backup) {
 		yyerror("backup and domain are mutually exclusive");
 		YYERROR;
 	}
@@ -853,35 +853,35 @@ HELO STRING {
 		YYERROR;
 	}
 
-	dispatcher->u.remote.smarthost = strdup(t->t_name);
-	dispatcher->u.remote.smarthost_domain = 1;
+	dsp->u.remote.smarthost = strdup(t->t_name);
+	dsp->u.remote.smarthost_domain = 1;
 }
 | TLS {
-	if (dispatcher->u.remote.tls_required == 1) {
+	if (dsp->u.remote.tls_required == 1) {
 		yyerror("tls already specified for this dispatcher");
 		YYERROR;
 	}
 
-	dispatcher->u.remote.tls_required = 1;
+	dsp->u.remote.tls_required = 1;
 }
 | TLS NO_VERIFY {
-	if (dispatcher->u.remote.tls_required == 1) {
+	if (dsp->u.remote.tls_required == 1) {
 		yyerror("tls already specified for this dispatcher");
 		YYERROR;
 	}
 
-	dispatcher->u.remote.tls_required = 1;
-	dispatcher->u.remote.tls_noverify = 1;
+	dsp->u.remote.tls_required = 1;
+	dsp->u.remote.tls_noverify = 1;
 }
 | AUTH tables {
 	struct table   *t = $2;
 
-	if (dispatcher->u.remote.smarthost == NULL) {
+	if (dsp->u.remote.smarthost == NULL) {
 		yyerror("auth may not be specified without host on a dispatcher");
 		YYERROR;
 	}
 
-	if (dispatcher->u.remote.auth) {
+	if (dsp->u.remote.auth) {
 		yyerror("auth mapping already specified for this dispatcher");
 		YYERROR;
 	}
@@ -892,12 +892,12 @@ HELO STRING {
 		YYERROR;
 	}
 
-	dispatcher->u.remote.auth = strdup(t->t_name);
+	dsp->u.remote.auth = strdup(t->t_name);
 }
 | FILTER STRING {
 	struct filter_config *fc;
 
-	if (dispatcher->u.remote.filtername) {
+	if (dsp->u.remote.filtername) {
 		yyerror("filter already specified for this dispatcher");
 		YYERROR;
 	}
@@ -908,13 +908,13 @@ HELO STRING {
 		YYERROR;
 	}
 	fc->filter_subsystem |= FILTER_SUBSYSTEM_SMTP_OUT;
-	dispatcher->u.remote.filtername = $2;
+	dsp->u.remote.filtername = $2;
 }
 | FILTER {
 	char	buffer[128];
 	char	*filtername;
 
-	if (dispatcher->u.remote.filtername) {
+	if (dsp->u.remote.filtername) {
 		yyerror("filter already specified for this dispatcher");
 		YYERROR;
 	}
@@ -928,9 +928,9 @@ HELO STRING {
 	filter_config->filter_type = FILTER_TYPE_CHAIN;
 	filter_config->filter_subsystem |= FILTER_SUBSYSTEM_SMTP_OUT;
 	dict_init(&filter_config->chain_procs);
-	dispatcher->u.remote.filtername = filtername;
+	dsp->u.remote.filtername = filtername;
 } '{' filter_list '}' {
-	dict_set(conf->sc_filters_dict, dispatcher->u.remote.filtername, filter_config);
+	dict_set(conf->sc_filters_dict, dsp->u.remote.filtername, filter_config);
 	filter_config = NULL;
 }
 | SRS {
@@ -938,12 +938,12 @@ HELO STRING {
 		yyerror("an srs key is required for srs to be specified in an action");
 		YYERROR;
 	}
-	if (dispatcher->u.remote.srs == 1) {
+	if (dsp->u.remote.srs == 1) {
 		yyerror("srs already specified for this dispatcher");
 		YYERROR;
 	}
 
-	dispatcher->u.remote.srs = 1;
+	dsp->u.remote.srs = 1;
 }
 ;
 
@@ -958,22 +958,22 @@ RELAY dispatcher_remote_options
 
 dispatcher_type:
 dispatcher_local {
-	dispatcher->type = DISPATCHER_LOCAL;
+	dsp->type = DISPATCHER_LOCAL;
 }
 | dispatcher_remote {
-	dispatcher->type = DISPATCHER_REMOTE;
+	dsp->type = DISPATCHER_REMOTE;
 }
 ;
 
 dispatcher_option:
 TTL STRING {
-	if (dispatcher->ttl) {
+	if (dsp->ttl) {
 		yyerror("ttl already specified for this dispatcher");
 		YYERROR;
 	}
 
-	dispatcher->ttl = delaytonum($2);
-	if (dispatcher->ttl == -1) {
+	dsp->ttl = delaytonum($2);
+	if (dsp->ttl == -1) {
 		yyerror("ttl delay \"%s\" is invalid", $2);
 		free($2);
 		YYERROR;
@@ -993,13 +993,13 @@ ACTION STRING {
 		yyerror("dispatcher already declared with that name: %s", $2);
 		YYERROR;
 	}
-	dispatcher = xcalloc(1, sizeof *dispatcher);
+	dsp = xcalloc(1, sizeof *dsp);
 } dispatcher_type dispatcher_options {
-	if (dispatcher->type == DISPATCHER_LOCAL)
-		if (dispatcher->u.local.table_userbase == NULL)
-			dispatcher->u.local.table_userbase = "<getpwnam>";
-	dict_set(conf->sc_dispatchers, $2, dispatcher);
-	dispatcher = NULL;
+	if (dsp->type == DISPATCHER_LOCAL)
+		if (dsp->u.local.table_userbase == NULL)
+			dsp->u.local.table_userbase = "<getpwnam>";
+	dict_set(conf->sc_dispatchers, $2, dsp);
+	dsp = NULL;
 }
 ;
 

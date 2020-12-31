@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.109 2020/09/23 19:11:50 martijn Exp $
+#	$OpenBSD: Makefile,v 1.110 2020/12/31 08:27:15 martijn Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -35,7 +35,7 @@ SRCS+=	mproc.c
 SRCS+=	mta.c
 SRCS+=	mta_session.c
 SRCS+=	parse.y
-SRCS+=	pony.c
+SRCS+=	dispatcher.c
 SRCS+=	proxy.c
 SRCS+=	queue.c
 SRCS+=	queue_backend.c

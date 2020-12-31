@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka.c,v 1.243 2019/12/21 10:23:37 gilles Exp $	*/
+/*	$OpenBSD: lka.c,v 1.244 2020/12/31 08:27:15 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -334,7 +334,7 @@ lka_imsg(struct mproc *p, struct imsg *imsg)
 
 	case IMSG_LKA_AUTHENTICATE:
 		imsg->hdr.type = IMSG_SMTP_AUTHENTICATE;
-		m_forward(p_pony, imsg);
+		m_forward(p_dispatcher, imsg);
 		return;
 
 	case IMSG_CTL_VERBOSE:
@@ -701,10 +701,10 @@ lka(void)
 	config_peer(PROC_PARENT);
 	config_peer(PROC_QUEUE);
 	config_peer(PROC_CONTROL);
-	config_peer(PROC_PONY);
+	config_peer(PROC_DISPATCHER);
 
 	/* Ignore them until we get our config */
-	mproc_disable(p_pony);
+	mproc_disable(p_dispatcher);
 
 	lka_report_init();
 	lka_filter_init();
@@ -729,7 +729,7 @@ proc_timeout(int fd, short event, void *p)
 		goto reset;
 
 	lka_filter_ready();
-	mproc_enable(p_pony);
+	mproc_enable(p_dispatcher);
 	return;
 
 reset:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_session.c,v 1.93 2019/09/20 17:46:05 gilles Exp $	*/
+/*	$OpenBSD: lka_session.c,v 1.94 2020/12/31 08:27:15 martijn Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -215,20 +215,20 @@ lka_resume(struct lka_session *lks)
 	}
     error:
 	if (lks->error) {
-		m_create(p_pony, IMSG_SMTP_EXPAND_RCPT, 0, 0, -1);
-		m_add_id(p_pony, lks->id);
-		m_add_int(p_pony, lks->error);
+		m_create(p_dispatcher, IMSG_SMTP_EXPAND_RCPT, 0, 0, -1);
+		m_add_id(p_dispatcher, lks->id);
+		m_add_int(p_dispatcher, lks->error);
 
 		if (lks->errormsg)
-			m_add_string(p_pony, lks->errormsg);
+			m_add_string(p_dispatcher, lks->errormsg);
 		else {
 			if (lks->error == LKA_PERMFAIL)
-				m_add_string(p_pony, "550 Invalid recipient");
+				m_add_string(p_dispatcher, "550 Invalid recipient");
 			else if (lks->error == LKA_TEMPFAIL)
-				m_add_string(p_pony, "451 Temporary failure");
+				m_add_string(p_dispatcher, "451 Temporary failure");
 		}
 
-		m_close(p_pony);
+		m_close(p_dispatcher);
 		while ((ep = TAILQ_FIRST(&lks->deliverylist)) != NULL) {
 			TAILQ_REMOVE(&lks->deliverylist, ep, entry);
 			free(ep);

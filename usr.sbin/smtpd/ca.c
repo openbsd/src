@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.36 2019/09/21 07:46:53 semarie Exp $	*/
+/*	$OpenBSD: ca.c,v 1.37 2020/12/31 08:27:15 martijn Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -110,10 +110,10 @@ ca(void)
 
 	config_peer(PROC_CONTROL);
 	config_peer(PROC_PARENT);
-	config_peer(PROC_PONY);
+	config_peer(PROC_DISPATCHER);
 
 	/* Ignore them until we get our config */
-	mproc_disable(p_pony);
+	mproc_disable(p_dispatcher);
 
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
@@ -246,7 +246,7 @@ ca_imsg(struct mproc *p, struct imsg *imsg)
 		ca_init();
 
 		/* Start fulfilling requests */
-		mproc_enable(p_pony);
+		mproc_enable(p_dispatcher);
 		return;
 
 	case IMSG_CTL_VERBOSE:
@@ -385,7 +385,7 @@ rsae_send_imsg(int flen, const unsigned char *from, unsigned char *to,
 			if (n == 0)
 				break;
 
-			log_imsg(PROC_PONY, PROC_CA, &imsg);
+			log_imsg(PROC_DISPATCHER, PROC_CA, &imsg);
 
 			switch (imsg.hdr.type) {
 			case IMSG_CA_RSA_PRIVENC:
@@ -393,7 +393,7 @@ rsae_send_imsg(int flen, const unsigned char *from, unsigned char *to,
 				break;
 			default:
 				/* Another imsg is queued up in the buffer */
-				pony_imsg(p_ca, &imsg);
+				dispatcher_imsg(p_ca, &imsg);
 				imsg_free(&imsg);
 				continue;
 			}
@@ -569,14 +569,14 @@ ecdsae_send_enc_imsg(const unsigned char *dgst, int dgst_len,
 			if (n == 0)
 				break;
 
-			log_imsg(PROC_PONY, PROC_CA, &imsg);
+			log_imsg(PROC_DISPATCHER, PROC_CA, &imsg);
 
 			switch (imsg.hdr.type) {
 			case IMSG_CA_ECDSA_SIGN:
 				break;
 			default:
 				/* Another imsg is queued up in the buffer */
-				pony_imsg(p_ca, &imsg);
+				dispatcher_imsg(p_ca, &imsg);
 				imsg_free(&imsg);
 				continue;
 			}

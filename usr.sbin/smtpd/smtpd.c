@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.335 2020/09/23 19:11:50 martijn Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.336 2020/12/31 08:27:15 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -66,7 +66,7 @@ static int smtpd(void);
 static void parent_shutdown(void);
 static void parent_send_config(int, short, void *);
 static void parent_send_config_lka(void);
-static void parent_send_config_pony(void);
+static void parent_send_config_dispatcher(void);
 static void parent_send_config_ca(void);
 static void parent_sig_handler(int, short, void *);
 static void forkmda(struct mproc *, uint64_t, struct deliver *);
@@ -140,7 +140,7 @@ struct mproc	*p_lka = NULL;
 struct mproc	*p_parent = NULL;
 struct mproc	*p_queue = NULL;
 struct mproc	*p_scheduler = NULL;
-struct mproc	*p_pony = NULL;
+struct mproc	*p_dispatcher = NULL;
 struct mproc	*p_ca = NULL;
 
 const char	*backend_queue = "fs";
@@ -289,7 +289,7 @@ parent_shutdown(void)
 	pid_t pid;
 
 	mproc_clear(p_ca);
-	mproc_clear(p_pony);
+	mproc_clear(p_dispatcher);
 	mproc_clear(p_control);
 	mproc_clear(p_lka);
 	mproc_clear(p_scheduler);
@@ -309,17 +309,17 @@ static void
 parent_send_config(int fd, short event, void *p)
 {
 	parent_send_config_lka();
-	parent_send_config_pony();
+	parent_send_config_dispatcher();
 	parent_send_config_ca();
 	purge_config(PURGE_PKI);
 }
 
 static void
-parent_send_config_pony(void)
+parent_send_config_dispatcher(void)
 {
-	log_debug("debug: parent_send_config: configuring pony process");
-	m_compose(p_pony, IMSG_CONF_START, 0, 0, -1, NULL, 0);
-	m_compose(p_pony, IMSG_CONF_END, 0, 0, -1, NULL, 0);
+	log_debug("debug: parent_send_config: configuring dispatcher process");
+	m_compose(p_dispatcher, IMSG_CONF_START, 0, 0, -1, NULL, 0);
+	m_compose(p_dispatcher, IMSG_CONF_END, 0, 0, -1, NULL, 0);
 }
 
 void
@@ -437,13 +437,13 @@ parent_sig_handler(int sig, short event, void *p)
 				    "for session %016"PRIx64 ": %s",
 				    child->mda_id, cause);
 
-				m_create(p_pony, IMSG_MDA_DONE, 0, 0,
+				m_create(p_dispatcher, IMSG_MDA_DONE, 0, 0,
 				    child->mda_out);
-				m_add_id(p_pony, child->mda_id);
-				m_add_int(p_pony, mda_status);
-				m_add_int(p_pony, mda_sysexit);
-				m_add_string(p_pony, cause);
-				m_close(p_pony);
+				m_add_id(p_dispatcher, child->mda_id);
+				m_add_int(p_dispatcher, mda_status);
+				m_add_int(p_dispatcher, mda_sysexit);
+				m_add_string(p_dispatcher, cause);
+				m_close(p_dispatcher);
 
 				break;
 
@@ -698,8 +698,8 @@ main(int argc, char *argv[])
 		p_lka = start_child(save_argc, save_argv, "lka");
 		p_lka->proc = PROC_LKA;
 
-		p_pony = start_child(save_argc, save_argv, "pony");
-		p_pony->proc = PROC_PONY;
+		p_dispatcher = start_child(save_argc, save_argv, "dispatcher");
+		p_dispatcher->proc = PROC_DISPATCHER;
 
 		p_queue = start_child(save_argc, save_argv, "queue");
 		p_queue->proc = PROC_QUEUE;
@@ -709,12 +709,12 @@ main(int argc, char *argv[])
 
 		setup_peers(p_control, p_ca);
 		setup_peers(p_control, p_lka);
-		setup_peers(p_control, p_pony);
+		setup_peers(p_control, p_dispatcher);
 		setup_peers(p_control, p_queue);
 		setup_peers(p_control, p_scheduler);
-		setup_peers(p_pony, p_ca);
-		setup_peers(p_pony, p_lka);
-		setup_peers(p_pony, p_queue);
+		setup_peers(p_dispatcher, p_ca);
+		setup_peers(p_dispatcher, p_lka);
+		setup_peers(p_dispatcher, p_queue);
 		setup_peers(p_queue, p_lka);
 		setup_peers(p_queue, p_scheduler);
 
@@ -730,7 +730,7 @@ main(int argc, char *argv[])
 		setup_done(p_ca);
 		setup_done(p_control);
 		setup_done(p_lka);
-		setup_done(p_pony);
+		setup_done(p_dispatcher);
 		setup_done(p_queue);
 		setup_done(p_scheduler);
 
@@ -767,11 +767,11 @@ main(int argc, char *argv[])
 		return lka();
 	}
 
-	else if (!strcmp(rexec, "pony")) {
-		smtpd_process = PROC_PONY;
+	else if (!strcmp(rexec, "dispatcher")) {
+		smtpd_process = PROC_DISPATCHER;
 		setup_proc();
 
-		return pony();
+		return dispatcher();
 	}
 
 	else if (!strcmp(rexec, "queue")) {
@@ -978,8 +978,8 @@ setup_peer(enum smtp_proc_type proc, pid_t pid, int sock)
 	case PROC_SCHEDULER:
 		pp = &p_scheduler;
 		break;
-	case PROC_PONY:
-		pp = &p_pony;
+	case PROC_DISPATCHER:
+		pp = &p_dispatcher;
 		break;
 	case PROC_CA:
 		pp = &p_ca;
@@ -1050,7 +1050,7 @@ smtpd(void) {
 	child_add(p_control->pid, CHILD_DAEMON, proc_title(PROC_CONTROL));
 	child_add(p_lka->pid, CHILD_DAEMON, proc_title(PROC_LKA));
 	child_add(p_scheduler->pid, CHILD_DAEMON, proc_title(PROC_SCHEDULER));
-	child_add(p_pony->pid, CHILD_DAEMON, proc_title(PROC_PONY));
+	child_add(p_dispatcher->pid, CHILD_DAEMON, proc_title(PROC_DISPATCHER));
 	child_add(p_ca->pid, CHILD_DAEMON, proc_title(PROC_CA));
 
 	event_init();
@@ -1069,7 +1069,7 @@ smtpd(void) {
 	config_peer(PROC_LKA);
 	config_peer(PROC_QUEUE);
 	config_peer(PROC_CA);
-	config_peer(PROC_PONY);
+	config_peer(PROC_DISPATCHER);
 
 	evtimer_set(&config_ev, parent_send_config, NULL);
 	memset(&tv, 0, sizeof(tv));
@@ -1421,12 +1421,12 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 			(void)snprintf(ebuf, sizeof ebuf,
 			    "delivery user '%s' does not exist",
 			    dsp->u.local.user);
-			m_create(p_pony, IMSG_MDA_DONE, 0, 0, -1);
-			m_add_id(p_pony, id);
-			m_add_int(p_pony, MDA_PERMFAIL);
-			m_add_int(p_pony, EX_NOUSER);
-			m_add_string(p_pony, ebuf);
-			m_close(p_pony);
+			m_create(p_dispatcher, IMSG_MDA_DONE, 0, 0, -1);
+			m_add_id(p_dispatcher, id);
+			m_add_int(p_dispatcher, MDA_PERMFAIL);
+			m_add_int(p_dispatcher, EX_NOUSER);
+			m_add_string(p_dispatcher, ebuf);
+			m_close(p_dispatcher);
 			return;
 		}
 		pw_name = pw->pw_name;
@@ -1451,23 +1451,23 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 	if (pw_uid == 0 && !dsp->u.local.is_mbox) {
 		(void)snprintf(ebuf, sizeof ebuf, "not allowed to deliver to: %s",
 		    deliver->userinfo.username);
-		m_create(p_pony, IMSG_MDA_DONE, 0, 0, -1);
-		m_add_id(p_pony, id);
-		m_add_int(p_pony, MDA_PERMFAIL);
-		m_add_int(p_pony, EX_NOPERM);
-		m_add_string(p_pony, ebuf);
-		m_close(p_pony);
+		m_create(p_dispatcher, IMSG_MDA_DONE, 0, 0, -1);
+		m_add_id(p_dispatcher, id);
+		m_add_int(p_dispatcher, MDA_PERMFAIL);
+		m_add_int(p_dispatcher, EX_NOPERM);
+		m_add_string(p_dispatcher, ebuf);
+		m_close(p_dispatcher);
 		return;
 	}
 
 	if (pipe(pipefd) == -1) {
 		(void)snprintf(ebuf, sizeof ebuf, "pipe: %s", strerror(errno));
-		m_create(p_pony, IMSG_MDA_DONE, 0, 0, -1);
-		m_add_id(p_pony, id);
-		m_add_int(p_pony, MDA_TEMPFAIL);
-		m_add_int(p_pony, EX_OSERR);
-		m_add_string(p_pony, ebuf);
-		m_close(p_pony);
+		m_create(p_dispatcher, IMSG_MDA_DONE, 0, 0, -1);
+		m_add_id(p_dispatcher, id);
+		m_add_int(p_dispatcher, MDA_TEMPFAIL);
+		m_add_int(p_dispatcher, EX_OSERR);
+		m_add_string(p_dispatcher, ebuf);
+		m_close(p_dispatcher);
 		return;
 	}
 
@@ -1476,12 +1476,12 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 	allout = mkstemp(sfn);
 	if (allout == -1) {
 		(void)snprintf(ebuf, sizeof ebuf, "mkstemp: %s", strerror(errno));
-		m_create(p_pony, IMSG_MDA_DONE, 0, 0, -1);
-		m_add_id(p_pony, id);
-		m_add_int(p_pony, MDA_TEMPFAIL);
-		m_add_int(p_pony, EX_OSERR);
-		m_add_string(p_pony, ebuf);
-		m_close(p_pony);
+		m_create(p_dispatcher, IMSG_MDA_DONE, 0, 0, -1);
+		m_add_id(p_dispatcher, id);
+		m_add_int(p_dispatcher, MDA_TEMPFAIL);
+		m_add_int(p_dispatcher, EX_OSERR);
+		m_add_string(p_dispatcher, ebuf);
+		m_close(p_dispatcher);
 		close(pipefd[0]);
 		close(pipefd[1]);
 		return;
@@ -1491,12 +1491,12 @@ forkmda(struct mproc *p, uint64_t id, struct deliver *deliver)
 	pid = fork();
 	if (pid == -1) {
 		(void)snprintf(ebuf, sizeof ebuf, "fork: %s", strerror(errno));
-		m_create(p_pony, IMSG_MDA_DONE, 0, 0, -1);
-		m_add_id(p_pony, id);
-		m_add_int(p_pony, MDA_TEMPFAIL);
-		m_add_int(p_pony, EX_OSERR);
-		m_add_string(p_pony, ebuf);
-		m_close(p_pony);
+		m_create(p_dispatcher, IMSG_MDA_DONE, 0, 0, -1);
+		m_add_id(p_dispatcher, id);
+		m_add_int(p_dispatcher, MDA_TEMPFAIL);
+		m_add_int(p_dispatcher, EX_OSERR);
+		m_add_string(p_dispatcher, ebuf);
+		m_close(p_dispatcher);
 		close(pipefd[0]);
 		close(pipefd[1]);
 		close(allout);
@@ -1912,10 +1912,10 @@ proc_title(enum smtp_proc_type proc)
 		return "control";
 	case PROC_SCHEDULER:
 		return "scheduler";
-	case PROC_PONY:
-		return "pony express";
+	case PROC_DISPATCHER:
+		return "dispatcher";
 	case PROC_CA:
-		return "klondike";
+		return "crypto";
 	case PROC_CLIENT:
 		return "client";
 	case PROC_PROCESSOR:
@@ -1938,8 +1938,8 @@ proc_name(enum smtp_proc_type proc)
 		return "control";
 	case PROC_SCHEDULER:
 		return "scheduler";
-	case PROC_PONY:
-		return "pony";
+	case PROC_DISPATCHER:
+		return "dispatcher";
 	case PROC_CA:
 		return "ca";
 	case PROC_CLIENT:

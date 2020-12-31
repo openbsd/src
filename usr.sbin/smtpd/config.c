@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.51 2019/12/18 10:00:39 gilles Exp $	*/
+/*	$OpenBSD: config.c,v 1.52 2020/12/31 08:27:15 martijn Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -325,8 +325,8 @@ config_peer(enum smtp_proc_type proc)
 		p = p_queue;
 	else if (proc == PROC_SCHEDULER)
 		p = p_scheduler;
-	else if (proc == PROC_PONY)
-		p = p_pony;
+	else if (proc == PROC_DISPATCHER)
+		p = p_dispatcher;
 	else if (proc == PROC_CA)
 		p = p_ca;
 	else
