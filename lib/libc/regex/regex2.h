@@ -1,4 +1,4 @@
-/*	$OpenBSD: regex2.h,v 1.9 2020/12/30 08:54:42 tb Exp $	*/
+/*	$OpenBSD: regex2.h,v 1.10 2020/12/31 17:20:19 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -112,9 +112,6 @@ typedef struct {
 #define	CHsub(cs, c)	((cs)->ptr[(uch)(c)] &= ~(cs)->mask, (cs)->hash -= (c))
 #define	CHIN(cs, c)	((cs)->ptr[(uch)(c)] & (cs)->mask)
 
-/* stuff for character categories */
-typedef unsigned char cat_t;
-
 /*
  * main compiled-expression structure
  */
@@ -136,15 +133,11 @@ struct re_guts {
 #		define	BAD	04	/* something wrong */
 	int nbol;		/* number of ^ used */
 	int neol;		/* number of $ used */
-	int ncategories;	/* how many character categories */
-	cat_t *categories;	/* ->catspace[-CHAR_MIN] */
 	char *must;		/* match must contain this string */
 	int mlen;		/* length of must */
 	size_t nsub;		/* copy of re_nsub */
 	int backrefs;		/* does it use back references? */
 	sopno nplus;		/* how deep does it nest +s? */
-	/* catspace must be last */
-	cat_t catspace[NC];	/* actually [NC] */
 };
 
 /* misc utilities */

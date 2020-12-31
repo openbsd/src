@@ -1,4 +1,4 @@
-/*	$OpenBSD: regcomp.c,v 1.39 2020/12/31 17:16:38 millert Exp $ */
+/*	$OpenBSD: regcomp.c,v 1.40 2020/12/31 17:20:19 millert Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -92,7 +92,6 @@ static int firstch(struct parse *, cset *);
 static int nch(struct parse *, cset *);
 static int isinsets(struct re_guts *, int);
 static int samesets(struct re_guts *, int, int);
-static void categorize(struct parse *, struct re_guts *);
 static sopno dupl(struct parse *, sopno, sopno);
 static void doemit(struct parse *, sop, size_t);
 static void doinsert(struct parse *, sop, size_t, sopno);
@@ -198,9 +197,6 @@ regcomp(regex_t *preg, const char *pattern, int cflags)
 	g->must = NULL;
 	g->mlen = 0;
 	g->nsub = 0;
-	g->ncategories = 1;	/* category 0 is "everything else" */
-	g->categories = &g->catspace[-(CHAR_MIN)];
-	memset(g->catspace, 0, sizeof(g->catspace));
 	g->backrefs = 0;
 
 	/* do it */
@@ -216,7 +212,6 @@ regcomp(regex_t *preg, const char *pattern, int cflags)
 	g->laststate = THERE();
 
 	/* tidy up loose ends and fill things in */
-	categorize(p, g);
 	stripsnug(p, g);
 	findmust(p, g);
 	g->nplus = pluscount(p, g);
@@ -883,15 +878,10 @@ bothcases(struct parse *p, int ch)
 static void
 ordinary(struct parse *p, int ch)
 {
-	cat_t *cap = p->g->categories;
-
 	if ((p->g->cflags&REG_ICASE) && isalpha((uch)ch) && othercase(ch) != ch)
 		bothcases(p, ch);
-	else {
+	else
 		EMIT(OCHAR, (uch)ch);
-		if (cap[ch] == 0)
-			cap[ch] = p->g->ncategories++;
-	}
 }
 
 /*
@@ -1191,31 +1181,6 @@ samesets(struct re_guts *g, int c1, int c2)
 		if (col[uc1] != col[uc2])
 			return(0);
 	return(1);
-}
-
-/*
- - categorize - sort out character categories
- */
-static void
-categorize(struct parse *p, struct re_guts *g)
-{
-	cat_t *cats = g->categories;
-	int c;
-	int c2;
-	cat_t cat;
-
-	/* avoid making error situations worse */
-	if (p->error != 0)
-		return;
-
-	for (c = CHAR_MIN; c <= CHAR_MAX; c++)
-		if (cats[c] == 0 && isinsets(g, c)) {
-			cat = g->ncategories++;
-			cats[c] = cat;
-			for (c2 = c+1; c2 <= CHAR_MAX; c2++)
-				if (cats[c2] == 0 && samesets(g, c, c2))
-					cats[c2] = cat;
-		}
 }
 
 /*
