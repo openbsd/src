@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.117 2020/09/13 05:57:28 jsg Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.118 2020/12/31 06:22:33 jsg Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -64,11 +64,6 @@ int amd64_has_aesni;
 #endif
 int has_rdrand;
 int has_rdseed;
-
-#include "pvbus.h"
-#if NPVBUS > 0
-#include <dev/pv/pvvar.h>
-#endif
 
 const struct {
 	u_int32_t	bit;
