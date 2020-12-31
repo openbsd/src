@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.46 2020/05/18 06:20:44 otto Exp $
+#	$OpenBSD: Makefile,v 1.47 2020/12/31 17:18:39 deraadt Exp $
 
 FS=		floppyB${OSrev}.img
 FSSIZE=		2880
@@ -71,8 +71,6 @@ unconfig:
 
 .ifdef RELEASEDIR
 install:
-	cp bsd.rd ${RELEASEDIR}/bsd.rd
-	chmod a+r ${RELEASEDIR}/bsd.rd
 	cp ${FS} ${RELEASEDIR}
 .endif
 
