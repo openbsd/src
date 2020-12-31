@@ -1,4 +1,4 @@
-/*	$OpenBSD: regcomp.c,v 1.38 2020/12/30 08:59:17 tb Exp $ */
+/*	$OpenBSD: regcomp.c,v 1.39 2020/12/31 17:16:38 millert Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -53,8 +53,8 @@
  * other clumsinesses
  */
 struct parse {
-	char *next;		/* next character in RE */
-	char *end;		/* end of string (-> NUL normally) */
+	const char *next;	/* next character in RE */
+	const char *end;	/* end of string (-> NUL normally) */
 	int error;		/* has an error been seen? */
 	sop *strip;		/* malloced strip */
 	sopno ssize;		/* malloced strip size (allocated) */
@@ -179,7 +179,7 @@ regcomp(regex_t *preg, const char *pattern, int cflags)
 
 	/* set things up */
 	p->g = g;
-	p->next = (char *)pattern;	/* convenience; we do not modify it */
+	p->next = pattern;
 	p->end = p->next + len;
 	p->error = 0;
 	p->ncsalloc = 0;
@@ -754,7 +754,7 @@ p_b_term(struct parse *p, cset *cs)
 static void
 p_b_cclass(struct parse *p, cset *cs)
 {
-	char *sp = p->next;
+	const char *sp = p->next;
 	const struct cclass *cp;
 	size_t len;
 	const char *u;
@@ -816,7 +816,7 @@ static char			/* value of collating element */
 p_b_coll_elem(struct parse *p,
     int endc)			/* name ended by endc,']' */
 {
-	char *sp = p->next;
+	const char *sp = p->next;
 	const struct cname *cp;
 	size_t len;
 
@@ -860,8 +860,8 @@ othercase(int ch)
 static void
 bothcases(struct parse *p, int ch)
 {
-	char *oldnext = p->next;
-	char *oldend = p->end;
+	const char *oldnext = p->next;
+	const char *oldend = p->end;
 	char bracket[3];
 
 	ch = (uch)ch;
@@ -921,16 +921,12 @@ backslash(struct parse *p, int ch)
 static void
 nonnewline(struct parse *p)
 {
-	char *oldnext = p->next;
-	char *oldend = p->end;
-	char bracket[4];
+	const char *oldnext = p->next;
+	const char *oldend = p->end;
+	static const char bracket[4] = { '^', '\n', ']', '\0' };
 
 	p->next = bracket;
 	p->end = bracket+3;
-	bracket[0] = '^';
-	bracket[1] = '\n';
-	bracket[2] = ']';
-	bracket[3] = '\0';
 	p_bracket(p);
 	assert(p->next == bracket+3);
 	p->next = oldnext;
