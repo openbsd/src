@@ -1,4 +1,4 @@
-/*	$OpenBSD: regcomp.c,v 1.40 2020/12/31 17:20:19 millert Exp $ */
+/*	$OpenBSD: regcomp.c,v 1.41 2020/12/31 17:24:05 millert Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -84,7 +84,7 @@ static void ordinary(struct parse *, int);
 static void backslash(struct parse *, int);
 static void nonnewline(struct parse *);
 static void repeat(struct parse *, sopno, int, int);
-static int seterr(struct parse *, int);
+static void seterr(struct parse *, int);
 static cset *allocset(struct parse *);
 static void freeset(struct parse *, cset *);
 static int freezeset(struct parse *, cset *);
@@ -120,7 +120,7 @@ static char nuls[10];		/* place to point scanner in event of error */
 #define	NEXTn(n)	(p->next += (n))
 #define	GETNEXT()	(*p->next++)
 #define	SETERROR(e)	seterr(p, (e))
-#define	REQUIRE(co, e)	(void) ((co) || SETERROR(e))
+#define	REQUIRE(co, e)	do { if (!(co)) SETERROR(e); } while (0)
 #define	EMIT(op, sopnd)	doemit(p, (sop)(op), (size_t)(sopnd))
 #define	INSERT(op, pos)	doinsert(p, (sop)(op), HERE()-(pos)+1, pos)
 #define	AHEAD(pos)		dofwd(p, pos, HERE()-(pos))
@@ -996,14 +996,13 @@ repeat(struct parse *p,
 /*
  - seterr - set an error condition
  */
-static int			/* useless but makes type checking happy */
+static void
 seterr(struct parse *p, int e)
 {
 	if (p->error == 0)	/* keep earliest error condition */
 		p->error = e;
 	p->next = nuls;		/* try to bring things to a halt */
 	p->end = nuls;
-	return(0);		/* make the return value well-defined */
 }
 
 /*
