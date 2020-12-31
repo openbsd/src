@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.142 2020/10/14 22:41:48 deraadt Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.143 2020/12/31 11:04:35 claudio Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #include <sys/time.h>
 #include <sys/mutex.h>
 #include <sys/rwlock.h>
+#include <sys/tracepoint.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -359,6 +360,9 @@ out:
 
 	if ((flags & M_ZERO) && va != NULL)
 		memset(va, 0, size);
+
+	TRACEPOINT(uvm, malloc, type, va, size, flags);
+
 	return (va);
 }
 
@@ -389,6 +393,8 @@ free(void *addr, int type, size_t freedsize)
 		panic("free: non-malloced addr %p type %s", addr,
 		    memname[type]);
 #endif
+
+	TRACEPOINT(uvm, free, type, addr, freedsize);
 
 	mtx_enter(&malloc_mtx);
 	kup = btokup(addr);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_static.c,v 1.5 2020/09/14 19:02:09 jasper Exp $ */
+/*	$OpenBSD: dt_prov_static.c,v 1.6 2020/12/31 11:04:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -56,6 +56,8 @@ DT_STATIC_PROBE1(raw_syscalls, sys_exit, "register_t");
 DT_STATIC_PROBE3(uvm, fault, "vaddr_t", "vm_fault_t", "vm_prot_t");
 DT_STATIC_PROBE3(uvm, map_insert, "vaddr_t", "vaddr_t", "vm_prot_t");
 DT_STATIC_PROBE3(uvm, map_remove, "vaddr_t", "vaddr_t", "vm_prot_t");
+DT_STATIC_PROBE4(uvm, malloc, "int", "void *", "size_t", "int");
+DT_STATIC_PROBE3(uvm, free, "int", "void *", "size_t");
 
 /*
  * VFS
@@ -83,6 +85,8 @@ struct dt_probe *dtps_static[] = {
 	&_DT_STATIC_P(uvm, fault),
 	&_DT_STATIC_P(uvm, map_insert),
 	&_DT_STATIC_P(uvm, map_remove),
+	&_DT_STATIC_P(uvm, malloc),
+	&_DT_STATIC_P(uvm, free),
 	/* VFS */
 	&_DT_STATIC_P(vfs, bufcache_rel),
 	&_DT_STATIC_P(vfs, bufcache_take),
