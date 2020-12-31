@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.121 2020/10/11 03:21:44 tb Exp $	*/
+/*	$OpenBSD: server.c,v 1.122 2020/12/31 14:17:12 tb Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1251,12 +1251,14 @@ server_sendlog(struct server_config *srv_conf, int cmd, const char *emsg, ...)
 	iov[0].iov_base = &srv_conf->id;
 	iov[0].iov_len = sizeof(srv_conf->id);
 	iov[1].iov_base = msg;
-	iov[1].iov_len = strlen(msg) + 1;
+	iov[1].iov_len = ret + 1;
 
 	if (proc_composev(httpd_env->sc_ps, PROC_LOGGER, cmd, iov, 2) != 0) {
 		log_warn("%s: failed to compose imsg", __func__);
+		free(msg);
 		return;
 	}
+	free(msg);
 }
 
 void
