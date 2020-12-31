@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.10 2020/12/25 12:19:34 dtucker Exp $
+dnl	$OpenBSD: hardware,v 1.11 2020/12/31 07:00:21 jsg Exp $
 The following machines are targeted by OpenBSD/MACHINE:
 
 	Allwinner A64/H5
@@ -11,8 +11,10 @@ The following machines are targeted by OpenBSD/MACHINE:
 		AMD Seattle Development Board
 		SoftIron OverDrive 1000
 		SoftIron OverDrive 3000
-	Amlogic G12A/B
+	Amlogic G12B/SM1
 		Hardkernel ODROID-N2
+		Hardkernel ODROID-C4
+		Hardkernel ODROID-HC4
 	Ampere eMAG
 		Lenovo ThinkSystem HR330A
 		Lenovo ThinkSystem HR350A
