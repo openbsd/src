@@ -1,4 +1,4 @@
-/* $OpenBSD: siotty.c,v 1.23 2019/02/25 11:29:30 jca Exp $ */
+/* $OpenBSD: siotty.c,v 1.24 2021/01/01 10:21:26 jan Exp $ */
 /* $NetBSD: siotty.c,v 1.9 2002/03/17 19:40:43 atatat Exp $ */
 
 /*-
@@ -503,9 +503,6 @@ sioopen(dev_t dev, int flag, int mode, struct proc *p)
 		splx(s);
 	}
 
-	error = ttyopen(dev, tp, p);
-	if (error > 0)
-		return error;
 	return (*linesw[tp->t_line].l_open)(dev, tp, p);
 }
  
