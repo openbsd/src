@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.198 2020/10/18 20:35:18 naddy Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.199 2021/01/01 17:39:54 chrisz Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -843,6 +843,7 @@ noslash:
 	case 302:	/* Found */
 	case 303:	/* See Other */
 	case 307:	/* Temporary Redirect */
+	case 308:	/* Permanent Redirect (RFC 7538) */
 		isredirect++;
 		if (redirect_loop++ > 10) {
 			warnx("Too many redirections requested");
