@@ -17,6 +17,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/TargetFrameLowering.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Module.h"
 #include "llvm/MC/MCRegisterInfo.h"
@@ -45,6 +46,70 @@ static void markUsedRegsInSuccessors(MachineBasicBlock &MBB,
   // Recurse over all successors
   for (auto &SuccMBB : MBB.successors())
     markUsedRegsInSuccessors(*SuccMBB, Used, Visited);
+}
+
+static bool containsProtectableData(Type *Ty) {
+  if (!Ty)
+    return false;
+
+  if (ArrayType *AT = dyn_cast<ArrayType>(Ty))
+    return true;
+
+  if (StructType *ST = dyn_cast<StructType>(Ty)) {
+    for (StructType::element_iterator I = ST->element_begin(),
+                                      E = ST->element_end();
+         I != E; ++I) {
+      if (containsProtectableData(*I))
+        return true;
+    }
+  }
+  return false;
+}
+
+// Mostly the same as StackProtector::HasAddressTaken
+static bool hasAddressTaken(const Instruction *AI,
+                            SmallPtrSet<const PHINode *, 16> &visitedPHI) {
+  for (const User *U : AI->users()) {
+    const auto *I = cast<Instruction>(U);
+    switch (I->getOpcode()) {
+    case Instruction::Store:
+      if (AI == cast<StoreInst>(I)->getValueOperand())
+        return true;
+      break;
+    case Instruction::AtomicCmpXchg:
+      if (AI == cast<AtomicCmpXchgInst>(I)->getNewValOperand())
+        return true;
+      break;
+    case Instruction::PtrToInt:
+      if (AI == cast<PtrToIntInst>(I)->getOperand(0))
+        return true;
+      break;
+    case Instruction::BitCast:
+    case Instruction::GetElementPtr:
+    case Instruction::Select:
+    case Instruction::AddrSpaceCast:
+      if (hasAddressTaken(I, visitedPHI))
+        return true;
+      break;
+    case Instruction::PHI: {
+      const auto *PN = cast<PHINode>(I);
+      if (visitedPHI.insert(PN).second)
+        if (hasAddressTaken(PN, visitedPHI))
+          return true;
+      break;
+    }
+    case Instruction::Load:
+    case Instruction::AtomicRMW:
+    case Instruction::Ret:
+      return false;
+      break;
+    default:
+      // Conservatively return true for any instruction that takes an address
+      // operand, but is not handled above.
+      return true;
+    }
+  }
+  return false;
 }
 
 /// setupReturnProtector - Checks the function for ROP friendly return
@@ -115,7 +180,51 @@ bool ReturnProtectorLowering::determineReturnProtectorRegister(
       break;
   }
 
-  if (!hasCalls) {
+  // If the return address is always on the stack, then we
+  // want to try to keep the return protector cookie unspilled.
+  // This prevents a single stack smash from corrupting both the
+  // return protector cookie and the return address.
+  llvm::Triple::ArchType arch = MF.getTarget().getTargetTriple().getArch();
+  bool returnAddrOnStack = arch == llvm::Triple::ArchType::x86
+                        || arch == llvm::Triple::ArchType::x86_64;
+
+  // For architectures which do not spill a return address
+  // to the stack by default, it is possible that in a leaf
+  // function that neither the return address or the retguard cookie
+  // will be spilled, and stack corruption may be missed.
+  // Here, we check leaf functions on these kinds of architectures
+  // to see if they have any variable sized local allocations,
+  // array type allocations, allocations which contain array
+  // types, or elements that have their address taken. If any of
+  // these conditions are met, then we skip leaf function
+  // optimization and spill the retguard cookie to the stack.
+  bool hasLocals = MFI.hasVarSizedObjects();
+  if (!hasCalls && !hasLocals && !returnAddrOnStack) {
+    for (const BasicBlock &BB : MF.getFunction()) {
+      for (const Instruction &I : BB) {
+        if (const AllocaInst *AI = dyn_cast<AllocaInst>(&I)) {
+          // Check for array allocations
+          Type *Ty = AI->getAllocatedType();
+          if (AI->isArrayAllocation() || containsProtectableData(Ty)) {
+            hasLocals = true;
+            break;
+          }
+          // Check for address taken
+          SmallPtrSet<const PHINode *, 16> visitedPHIs;
+          if (hasAddressTaken(AI, visitedPHIs)) {
+            hasLocals = true;
+            break;
+          }
+        }
+      }
+      if (hasLocals)
+        break;
+    }
+  }
+
+  bool tryLeafOptimize = !hasCalls && (returnAddrOnStack || !hasLocals);
+
+  if (tryLeafOptimize) {
     SmallSet<unsigned, 16> LeafUsed;
     SmallSet<int, 24> LeafVisited;
     markUsedRegsInSuccessors(MF.front(), LeafUsed, LeafVisited);
