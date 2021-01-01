@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ogx.c,v 1.4 2020/12/31 09:57:23 visa Exp $	*/
+/*	$OpenBSD: if_ogx.c,v 1.5 2021/01/01 14:11:10 visa Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Visa Hankala
@@ -21,13 +21,16 @@
  */
 
 #include "bpfilter.h"
+#include "kstat.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/atomic.h>
+#include <sys/mutex.h>
+#include <sys/rwlock.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
-#include <sys/rwlock.h>
+#include <sys/kstat.h>
 #include <sys/socket.h>
 #include <sys/stdint.h>
 
@@ -91,6 +94,12 @@ struct ogx_softc {
 	struct fpa3aura		 sc_pkt_aura;
 	const struct ogx_link_ops *sc_link_ops;
 	uint8_t			 sc_link_duplex;
+
+	struct mutex		 sc_kstat_mtx;
+	struct timeout		 sc_kstat_tmo;
+	struct kstat		*sc_kstat;
+	uint64_t		*sc_counter_vals;
+	bus_space_handle_t	 sc_pki_stat_ioh;
 };
 
 #define DEVNAME(sc)		((sc)->sc_dev.dv_xname)
@@ -220,6 +229,15 @@ void	ogx_rxrefill(void *);
 int	ogx_rxintr(void *);
 int	ogx_txintr(void *);
 void	ogx_tick(void *);
+
+#if NKSTAT > 0
+#define OGX_KSTAT_TICK_SECS	600
+void	ogx_kstat_attach(struct ogx_softc *);
+int	ogx_kstat_read(struct kstat *);
+void	ogx_kstat_start(struct ogx_softc *);
+void	ogx_kstat_stop(struct ogx_softc *);
+void	ogx_kstat_tick(void *);
+#endif
 
 int	ogx_node_init(struct ogx_node **, bus_dma_tag_t, bus_space_tag_t);
 int	ogx_node_load_firmware(struct ogx_node *);
@@ -685,6 +703,10 @@ ogx_attach(struct device *parent, struct device *self, void *aux)
 	    (L2_QUEUE(sc) << PKO3_LUT_QUEUE_NUM_S);
 	PKO3_WR_8(node, PKO3_LUT(lut_index), val);
 
+#if NKSTAT > 0
+	ogx_kstat_attach(sc);
+#endif
+
 	fifogrp = &node->node_fifogrp[fgindex];
 	fifogrp->fg_speed += sc->sc_link_ops->link_fifo_speed;
 
@@ -787,6 +809,10 @@ ogx_init(struct ogx_softc *sc)
 	if (error != 0)
 		return error;
 
+#if NKSTAT > 0
+	ogx_kstat_start(sc);
+#endif
+
 	ogx_iff(sc);
 
 	SSO_WR_8(sc->sc_node, SSO_GRP_INT_THR(PORT_GROUP_RX(sc)), 1);
@@ -857,6 +883,10 @@ ogx_down(struct ogx_softc *sc)
 
 	timeout_del_barrier(&sc->sc_rxrefill);
 	timeout_del_barrier(&sc->sc_tick);
+
+#if NKSTAT > 0
+	ogx_kstat_stop(sc);
+#endif
 
 	nused = ogx_unload_mbufs(sc);
 	atomic_add_int(&sc->sc_rxused, nused);
@@ -1564,6 +1594,317 @@ ogx_sgmii_link_change(struct ogx_softc *sc)
 	PORT_WR_8(sc, BGX_CMR_CONFIG, config);
 	(void)PORT_RD_8(sc, BGX_CMR_CONFIG);
 }
+
+#if NKSTAT > 0
+enum ogx_stat {
+	ogx_stat_rx_hmin,
+	ogx_stat_rx_h64,
+	ogx_stat_rx_h128,
+	ogx_stat_rx_h256,
+	ogx_stat_rx_h512,
+	ogx_stat_rx_h1024,
+	ogx_stat_rx_hmax,
+	ogx_stat_rx_totp_pki,
+	ogx_stat_rx_toto_pki,
+	ogx_stat_rx_raw,
+	ogx_stat_rx_drop,
+	ogx_stat_rx_bcast,
+	ogx_stat_rx_mcast,
+	ogx_stat_rx_fcs_error,
+	ogx_stat_rx_fcs_undersz,
+	ogx_stat_rx_undersz,
+	ogx_stat_rx_fcs_oversz,
+	ogx_stat_rx_oversz,
+	ogx_stat_rx_error,
+	ogx_stat_rx_special,
+	ogx_stat_rx_bdrop,
+	ogx_stat_rx_mdrop,
+	ogx_stat_rx_ipbdrop,
+	ogx_stat_rx_ipmdrop,
+	ogx_stat_rx_sdrop,
+	ogx_stat_rx_totp_bgx,
+	ogx_stat_rx_toto_bgx,
+	ogx_stat_rx_pause,
+	ogx_stat_rx_dmac,
+	ogx_stat_rx_bgx_drop,
+	ogx_stat_rx_bgx_error,
+	ogx_stat_tx_hmin,
+	ogx_stat_tx_h64,
+	ogx_stat_tx_h65,
+	ogx_stat_tx_h128,
+	ogx_stat_tx_h256,
+	ogx_stat_tx_h512,
+	ogx_stat_tx_h1024,
+	ogx_stat_tx_hmax,
+	ogx_stat_tx_coll,
+	ogx_stat_tx_defer,
+	ogx_stat_tx_mcoll,
+	ogx_stat_tx_scoll,
+	ogx_stat_tx_toto_bgx,
+	ogx_stat_tx_totp_bgx,
+	ogx_stat_tx_bcast,
+	ogx_stat_tx_mcast,
+	ogx_stat_tx_uflow,
+	ogx_stat_tx_control,
+	ogx_stat_count
+};
+
+enum ogx_counter_type {
+	C_NONE = 0,
+	C_BGX,
+	C_PKI,
+};
+
+struct ogx_counter {
+	const char		*c_name;
+	enum kstat_kv_unit	 c_unit;
+	enum ogx_counter_type	 c_type;
+	uint32_t		 c_reg;
+};
+
+static const struct ogx_counter ogx_counters[ogx_stat_count] = {
+	[ogx_stat_rx_hmin] =
+	    { "rx 1-63B",	KSTAT_KV_U_PACKETS, C_PKI, PKI_STAT_HIST0 },
+	[ogx_stat_rx_h64] =
+	    { "rx 64-127B",	KSTAT_KV_U_PACKETS, C_PKI, PKI_STAT_HIST1 },
+	[ogx_stat_rx_h128] =
+	    { "rx 128-255B",	KSTAT_KV_U_PACKETS, C_PKI, PKI_STAT_HIST2 },
+	[ogx_stat_rx_h256] =
+	    { "rx 256-511B",	KSTAT_KV_U_PACKETS, C_PKI, PKI_STAT_HIST3 },
+	[ogx_stat_rx_h512] =
+	    { "rx 512-1023B",	KSTAT_KV_U_PACKETS, C_PKI, PKI_STAT_HIST4 },
+	[ogx_stat_rx_h1024] =
+	    { "rx 1024-1518B",	KSTAT_KV_U_PACKETS, C_PKI, PKI_STAT_HIST5 },
+	[ogx_stat_rx_hmax] =
+	    { "rx 1519-maxB",	KSTAT_KV_U_PACKETS, C_PKI, PKI_STAT_HIST6 },
+	[ogx_stat_rx_totp_pki] =
+	    { "rx total pki",	KSTAT_KV_U_PACKETS, C_PKI, PKI_STAT_STAT0 },
+	[ogx_stat_rx_toto_pki] =
+	    { "rx total pki",	KSTAT_KV_U_BYTES, C_PKI, PKI_STAT_STAT1 },
+	[ogx_stat_rx_raw] =
+	    { "rx raw",		KSTAT_KV_U_PACKETS, C_PKI, PKI_STAT_STAT2 },
+	[ogx_stat_rx_drop] =
+	    { "rx drop",	KSTAT_KV_U_PACKETS, C_PKI, PKI_STAT_STAT3 },
+	[ogx_stat_rx_bcast] =
+	    { "rx bcast",	KSTAT_KV_U_PACKETS, C_PKI, PKI_STAT_STAT5 },
+	[ogx_stat_rx_mcast] =
+	    { "rx mcast",	KSTAT_KV_U_PACKETS, C_PKI, PKI_STAT_STAT6 },
+	[ogx_stat_rx_fcs_error] =
+	    { "rx fcs error",	KSTAT_KV_U_PACKETS, C_PKI, PKI_STAT_STAT7 },
+	[ogx_stat_rx_fcs_undersz] =
+	    { "rx fcs undersz",	KSTAT_KV_U_PACKETS, C_PKI, PKI_STAT_STAT8 },
+	[ogx_stat_rx_undersz] =
+	    { "rx undersz",	KSTAT_KV_U_PACKETS, C_PKI, PKI_STAT_STAT9 },
+	[ogx_stat_rx_fcs_oversz] =
+	    { "rx fcs oversz",	KSTAT_KV_U_PACKETS, C_PKI, PKI_STAT_STAT10 },
+	[ogx_stat_rx_oversz] =
+	    { "rx oversize",	KSTAT_KV_U_PACKETS, C_PKI, PKI_STAT_STAT11 },
+	[ogx_stat_rx_error] =
+	    { "rx error",	KSTAT_KV_U_PACKETS, C_PKI, PKI_STAT_STAT12 },
+	[ogx_stat_rx_special] =
+	    { "rx special",	KSTAT_KV_U_PACKETS, C_PKI, PKI_STAT_STAT13 },
+	[ogx_stat_rx_bdrop] =
+	    { "rx drop bcast",	KSTAT_KV_U_PACKETS, C_PKI, PKI_STAT_STAT14 },
+	[ogx_stat_rx_mdrop] =
+	    { "rx drop mcast",	KSTAT_KV_U_PACKETS, C_PKI, PKI_STAT_STAT15 },
+	[ogx_stat_rx_ipbdrop] =
+	    { "rx drop ipbcast",KSTAT_KV_U_PACKETS, C_PKI, PKI_STAT_STAT16 },
+	[ogx_stat_rx_ipmdrop] =
+	    { "rx drop ipmcast",KSTAT_KV_U_PACKETS, C_PKI, PKI_STAT_STAT17 },
+	[ogx_stat_rx_sdrop] =
+	    { "rx drop special",KSTAT_KV_U_PACKETS, C_PKI, PKI_STAT_STAT18 },
+	[ogx_stat_rx_totp_bgx] =
+	    { "rx total bgx",	KSTAT_KV_U_PACKETS, C_BGX, BGX_CMR_RX_STAT0 },
+	[ogx_stat_rx_toto_bgx] =
+	    { "rx total bgx",	KSTAT_KV_U_BYTES, C_BGX, BGX_CMR_RX_STAT1 },
+	[ogx_stat_rx_pause] =
+	    { "rx bgx pause",	KSTAT_KV_U_PACKETS, C_BGX, BGX_CMR_RX_STAT2 },
+	[ogx_stat_rx_dmac] =
+	    { "rx bgx dmac",	KSTAT_KV_U_PACKETS, C_BGX, BGX_CMR_RX_STAT4 },
+	[ogx_stat_rx_bgx_drop] =
+	    { "rx bgx drop",	KSTAT_KV_U_PACKETS, C_BGX, BGX_CMR_RX_STAT6 },
+	[ogx_stat_rx_bgx_error] =
+	    { "rx bgx error",	KSTAT_KV_U_PACKETS, C_BGX, BGX_CMR_RX_STAT8 },
+	[ogx_stat_tx_hmin] =
+	    { "tx 1-63B",	KSTAT_KV_U_PACKETS, C_BGX, BGX_CMR_TX_STAT6 },
+	[ogx_stat_tx_h64] =
+	    { "tx 64B",		KSTAT_KV_U_PACKETS, C_BGX, BGX_CMR_TX_STAT7 },
+	[ogx_stat_tx_h65] =
+	    { "tx 65-127B",	KSTAT_KV_U_PACKETS, C_BGX, BGX_CMR_TX_STAT8 },
+	[ogx_stat_tx_h128] =
+	    { "tx 128-255B",	KSTAT_KV_U_PACKETS, C_BGX, BGX_CMR_TX_STAT9 },
+	[ogx_stat_tx_h256] =
+	    { "tx 256-511B",	KSTAT_KV_U_PACKETS, C_BGX, BGX_CMR_TX_STAT10 },
+	[ogx_stat_tx_h512] =
+	    { "tx 512-1023B",	KSTAT_KV_U_PACKETS, C_BGX, BGX_CMR_TX_STAT11 },
+	[ogx_stat_tx_h1024] =
+	    { "tx 1024-1518B",	KSTAT_KV_U_PACKETS, C_BGX, BGX_CMR_TX_STAT12 },
+	[ogx_stat_tx_hmax] =
+	    { "tx 1519-maxB",	KSTAT_KV_U_PACKETS, C_BGX, BGX_CMR_TX_STAT13 },
+	[ogx_stat_tx_coll] =
+	    { "tx coll",	KSTAT_KV_U_PACKETS, C_BGX, BGX_CMR_TX_STAT0 },
+	[ogx_stat_tx_defer] =
+	    { "tx defer",	KSTAT_KV_U_PACKETS, C_BGX, BGX_CMR_TX_STAT1 },
+	[ogx_stat_tx_mcoll] =
+	    { "tx mcoll",	KSTAT_KV_U_PACKETS, C_BGX, BGX_CMR_TX_STAT2 },
+	[ogx_stat_tx_scoll] =
+	    { "tx scoll",	KSTAT_KV_U_PACKETS, C_BGX, BGX_CMR_TX_STAT3 },
+	[ogx_stat_tx_toto_bgx] =
+	    { "tx total bgx",	KSTAT_KV_U_BYTES, C_BGX, BGX_CMR_TX_STAT4 },
+	[ogx_stat_tx_totp_bgx] =
+	    { "tx total bgx",	KSTAT_KV_U_PACKETS, C_BGX, BGX_CMR_TX_STAT5 },
+	[ogx_stat_tx_bcast] =
+	    { "tx bcast",	KSTAT_KV_U_PACKETS, C_BGX, BGX_CMR_TX_STAT14 },
+	[ogx_stat_tx_mcast] =
+	    { "tx mcast",	KSTAT_KV_U_PACKETS, C_BGX, BGX_CMR_TX_STAT15 },
+	[ogx_stat_tx_uflow] =
+	    { "tx underflow",	KSTAT_KV_U_PACKETS, C_BGX, BGX_CMR_TX_STAT16 },
+	[ogx_stat_tx_control] =
+	    { "tx control",	KSTAT_KV_U_PACKETS, C_BGX, BGX_CMR_TX_STAT17 },
+};
+
+void
+ogx_kstat_attach(struct ogx_softc *sc)
+{
+	const struct ogx_counter *c;
+	struct kstat *ks;
+	struct kstat_kv *kvs;
+	struct ogx_node *node = sc->sc_node;
+	uint64_t *vals;
+	int i;
+
+	mtx_init(&sc->sc_kstat_mtx, IPL_SOFTCLOCK);
+	timeout_set(&sc->sc_kstat_tmo, ogx_kstat_tick, sc);
+
+	if (bus_space_subregion(node->node_iot, node->node_pki,
+	    PKI_STAT_BASE(PORT_PKIND(sc)), PKI_STAT_SIZE,
+	    &sc->sc_pki_stat_ioh) != 0)
+		return;
+
+	ks = kstat_create(DEVNAME(sc), 0, "ogx-stats", 0, KSTAT_T_KV, 0);
+	if (ks == NULL)
+		return;
+
+	vals = mallocarray(nitems(ogx_counters), sizeof(*vals),
+	    M_DEVBUF, M_WAITOK | M_ZERO);
+	sc->sc_counter_vals = vals;
+
+	kvs = mallocarray(nitems(ogx_counters), sizeof(*kvs),
+	    M_DEVBUF, M_WAITOK | M_ZERO);
+	for (i = 0; i < nitems(ogx_counters); i++) {
+		c = &ogx_counters[i];
+		kstat_kv_unit_init(&kvs[i], c->c_name, KSTAT_KV_T_COUNTER64,
+		    c->c_unit);
+	}
+
+	kstat_set_mutex(ks, &sc->sc_kstat_mtx);
+	ks->ks_softc = sc;
+	ks->ks_data = kvs;
+	ks->ks_datalen = nitems(ogx_counters) * sizeof(*kvs);
+	ks->ks_read = ogx_kstat_read;
+
+	sc->sc_kstat = ks;
+	kstat_install(ks);
+}
+
+int
+ogx_kstat_read(struct kstat *ks)
+{
+	const struct ogx_counter *c;
+	struct ogx_softc *sc = ks->ks_softc;
+	struct kstat_kv *kvs = ks->ks_data;
+	uint64_t *counter_vals = sc->sc_counter_vals;
+	uint64_t delta, val;
+	int i, timeout;
+
+	for (i = 0; i < nitems(ogx_counters); i++) {
+		c = &ogx_counters[i];
+		switch (c->c_type) {
+		case C_BGX:
+			val = PORT_RD_8(sc, c->c_reg);
+			delta = (val - counter_vals[i]) & BGX_CMR_STAT_MASK;
+			counter_vals[i] = val;
+			kstat_kv_u64(&kvs[i]) += delta;
+			break;
+		case C_PKI:
+			/*
+			 * Retry the read if the value is bogus.
+			 * This can happen on some hardware when
+			 * the hardware is updating the value.
+			 */
+			for (timeout = 100; timeout > 0; timeout--) {
+				val = bus_space_read_8(sc->sc_iot,
+				    sc->sc_pki_stat_ioh, c->c_reg);
+				if (val != ~0ULL) {
+					delta = (val - counter_vals[i]) &
+					    PKI_STAT_MASK;
+					counter_vals[i] = val;
+					kstat_kv_u64(&kvs[i]) += delta;
+					break;
+				}
+				CPU_BUSY_CYCLE();
+			}
+			break;
+		case C_NONE:
+			break;
+		}
+	}
+
+	getnanouptime(&ks->ks_updated);
+
+	return 0;
+}
+
+void
+ogx_kstat_start(struct ogx_softc *sc)
+{
+	const struct ogx_counter *c;
+	int i;
+
+	/* Zero the counters. */
+	for (i = 0; i < nitems(ogx_counters); i++) {
+		c = &ogx_counters[i];
+		switch (c->c_type) {
+		case C_BGX:
+			PORT_WR_8(sc, c->c_reg, 0);
+			break;
+		case C_PKI:
+			bus_space_write_8(sc->sc_iot, sc->sc_pki_stat_ioh,
+			    c->c_reg, 0);
+			break;
+		case C_NONE:
+			break;
+		}
+	}
+	memset(sc->sc_counter_vals, 0,
+	    nitems(ogx_counters) * sizeof(*sc->sc_counter_vals));
+
+	timeout_add_sec(&sc->sc_kstat_tmo, OGX_KSTAT_TICK_SECS);
+}
+
+void
+ogx_kstat_stop(struct ogx_softc *sc)
+{
+	timeout_del_barrier(&sc->sc_kstat_tmo);
+
+	mtx_enter(&sc->sc_kstat_mtx);
+	ogx_kstat_read(sc->sc_kstat);
+	mtx_leave(&sc->sc_kstat_mtx);
+}
+
+void
+ogx_kstat_tick(void *arg)
+{
+	struct ogx_softc *sc = arg;
+
+	timeout_add_sec(&sc->sc_kstat_tmo, OGX_KSTAT_TICK_SECS);
+
+	if (mtx_enter_try(&sc->sc_kstat_mtx)) {
+		ogx_kstat_read(sc->sc_kstat);
+		mtx_leave(&sc->sc_kstat_mtx);
+	}
+}
+#endif /* NKSTAT > 0 */
 
 int
 ogx_node_init(struct ogx_node **pnode, bus_dma_tag_t dmat, bus_space_tag_t iot)

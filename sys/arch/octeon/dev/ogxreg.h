@@ -1,4 +1,4 @@
-/*	$OpenBSD: ogxreg.h,v 1.2 2020/12/31 09:57:23 visa Exp $	*/
+/*	$OpenBSD: ogxreg.h,v 1.3 2021/01/01 14:11:10 visa Exp $	*/
 
 /*
  * Copyright (c) 2019 Visa Hankala
@@ -35,6 +35,17 @@
 #define   BGX_CMR_RX_ID_MAP_PKND_M		0x00000000000000ffULL
 #define   BGX_CMR_RX_ID_MAP_PKND_S		0
 
+#define BGX_CMR_RX_STAT0		0x00038
+#define BGX_CMR_RX_STAT1		0x00040
+#define BGX_CMR_RX_STAT2		0x00048
+#define BGX_CMR_RX_STAT3		0x00050
+#define BGX_CMR_RX_STAT4		0x00058
+#define BGX_CMR_RX_STAT5		0x00060
+#define BGX_CMR_RX_STAT6		0x00068
+#define BGX_CMR_RX_STAT7		0x00070
+#define BGX_CMR_RX_STAT8		0x00078
+#define   BGX_CMR_STAT_MASK			0x0000ffffffffffffULL
+
 #define BGX_CMR_RX_ADR_CTL		0x000a0
 #define   BGX_CMR_RX_ADR_CTL_CAM_ACCEPT		0x0000000000000008ULL
 #define   BGX_CMR_RX_ADR_CTL_MCST_MODE		0x0000000000000006ULL
@@ -56,6 +67,25 @@
 #define BGX_CMR_RX_LMACS		0x00308
 
 #define BGX_CMR_TX_FIFO_LEN		0x00418
+
+#define BGX_CMR_TX_STAT0		0x00508
+#define BGX_CMR_TX_STAT1		0x00510
+#define BGX_CMR_TX_STAT2		0x00518
+#define BGX_CMR_TX_STAT3		0x00520
+#define BGX_CMR_TX_STAT4		0x00528
+#define BGX_CMR_TX_STAT5		0x00530
+#define BGX_CMR_TX_STAT6		0x00538
+#define BGX_CMR_TX_STAT7		0x00540
+#define BGX_CMR_TX_STAT8		0x00548
+#define BGX_CMR_TX_STAT9		0x00550
+#define BGX_CMR_TX_STAT10		0x00558
+#define BGX_CMR_TX_STAT11		0x00560
+#define BGX_CMR_TX_STAT12		0x00568
+#define BGX_CMR_TX_STAT13		0x00570
+#define BGX_CMR_TX_STAT14		0x00578
+#define BGX_CMR_TX_STAT15		0x00580
+#define BGX_CMR_TX_STAT16		0x00588
+#define BGX_CMR_TX_STAT17		0x00590
 
 #define BGX_CMR_TX_LMACS		0x01000
 #define   BGX_CMR_TX_LMACS_NUM_M		0x0000000000000007ULL
@@ -440,12 +470,36 @@
 #define   PKI_QPG_TBL_LAURA_M			0x00000000000003ffULL
 #define   PKI_QPG_TBL_LAURA_S			0
 
-#define PKI_STAT_STAT0(i)		(0x00e00038ULL + (i) * 256)
-#define   PKI_STAT_STAT0_PKTS_M			0x0000ffffffffffffULL
-#define PKI_STAT_STAT1(i)		(0x00e00040ULL + (i) * 256)
-#define   PKI_STAT_STAT0_PKTS_M			0x0000ffffffffffffULL
-#define PKI_STAT_STAT3(i)		(0x00e00050ULL + (i) * 256)
-#define   PKI_STAT_STAT3_PKTS			0x0000ffffffffffffULL
+#define PKI_STAT_BASE(i)		(0x00e00000ULL + (i) * PKI_STAT_SIZE)
+#define PKI_STAT_SIZE			0x100
+
+#define PKI_STAT_HIST0			0x00
+#define PKI_STAT_HIST1			0x08
+#define PKI_STAT_HIST2			0x10
+#define PKI_STAT_HIST3			0x18
+#define PKI_STAT_HIST4			0x20
+#define PKI_STAT_HIST5			0x28
+#define PKI_STAT_HIST6			0x30
+#define PKI_STAT_STAT0			0x38
+#define PKI_STAT_STAT1			0x40
+#define PKI_STAT_STAT2			0x48
+#define PKI_STAT_STAT3			0x50
+#define PKI_STAT_STAT4			0x58
+#define PKI_STAT_STAT5			0x60
+#define PKI_STAT_STAT6			0x68
+#define PKI_STAT_STAT7			0x70
+#define PKI_STAT_STAT8			0x78
+#define PKI_STAT_STAT9			0x80
+#define PKI_STAT_STAT10			0x88
+#define PKI_STAT_STAT11			0x90
+#define PKI_STAT_STAT12			0x98
+#define PKI_STAT_STAT13			0xa0
+#define PKI_STAT_STAT14			0xa8
+#define PKI_STAT_STAT15			0xb0
+#define PKI_STAT_STAT16			0xb8
+#define PKI_STAT_STAT17			0xc0
+#define PKI_STAT_STAT18			0xc8
+#define   PKI_STAT_MASK				0x0000ffffffffffffULL
 
 #define PKI_STYLE_BUF(style)		(0x0024000ULL + (style) * 8)
 #define   PKI_STYLE_BUF_PKT_LEND		0x0000000100000000ULL
