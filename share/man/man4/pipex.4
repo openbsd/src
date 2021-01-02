@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pipex.4,v 1.13 2020/08/09 14:35:31 mvs Exp $
+.\"	$OpenBSD: pipex.4,v 1.14 2021/01/02 13:15:15 mvs Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\" Copyright (c) 2010 SUENAGA Hiroki <hsuenaga@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 9 2020 $
+.Dd $Mdocdate: January 2 2021 $
 .Dt PIPEX 4
 .Os
 .Sh NAME
@@ -57,20 +57,6 @@ or
 devices.
 The added requests are as follows:
 .Bl -tag -width Ds
-.It Dv PIPEXGMODE    Fa "int *"
-Get the devices's
-.Nm
-operation mode.
-1 to enable
-.Nm
-on this device; 0 to disable.
-.It Dv PIPEXSMODE    Fa "int *"
-Set the device's
-.Nm
-operation mode.
-1 to enable
-.Nm
-on this device; 0 to disable.
 .It Dv PIPEXASESSION Fa "struct pipex_session_req *"
 Add a new PPP session to be handled by
 .Nm .

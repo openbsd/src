@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_iface.c,v 1.13 2015/12/05 16:10:31 yasuoka Exp $ */
+/*	$OpenBSD: npppd_iface.c,v 1.14 2021/01/02 13:15:15 mvs Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: npppd_iface.c,v 1.13 2015/12/05 16:10:31 yasuoka Exp $ */
+/* $Id: npppd_iface.c,v 1.14 2021/01/02 13:15:15 mvs Exp $ */
 /**@file
  * The interface of npppd and kernel.
  * This is an implementation to use tun(4) or pppx(4).
@@ -95,11 +95,6 @@ static int   npppd_iface_setup_ip(npppd_iface *);
 static void  npppd_iface_io_event_handler (int, short, void *);
 static int   npppd_iface_log (npppd_iface *, int, const char *, ...)
 		__printflike(3,4);
-
-#ifdef USE_NPPPD_PIPEX
-static int npppd_iface_pipex_enable(npppd_iface *_this);
-static int npppd_iface_pipex_disable(npppd_iface *_this);
-#endif /* USE_NPPPD_PIPEX */
 
 
 /** initialize npppd_iface */
@@ -311,12 +306,7 @@ npppd_iface_start(npppd_iface *_this)
 			goto fail;
 	}
 
-#ifdef USE_NPPPD_PIPEX
-	if (npppd_iface_pipex_enable(_this) != 0) {
-		log_printf(LOG_WARNING,
-		    "npppd_iface_pipex_enable() failed: %m");
-	}
-#else
+#ifndef USE_NPPPD_PIPEX
 	if (_this->using_pppx) {
 		npppd_iface_log(_this, LOG_ERR,
 		    "pipex is required when using pppx interface");
@@ -358,13 +348,6 @@ npppd_iface_stop(npppd_iface *_this)
 		in_host_route_delete(&_this->ip4addr, &gw);
 	}
 	if (_this->devf >= 0) {
-#ifdef USE_NPPPD_PIPEX
-		if (npppd_iface_pipex_disable(_this) != 0) {
-			log_printf(LOG_CRIT,
-			    "npppd_iface_pipex_disable() failed: %m");
-		}
-#endif /* USE_NPPPD_PIPEX */
-
 		event_del(&_this->ev);
 		close(_this->devf);
 		npppd_iface_log(_this, LOG_INFO, "Stopped");
@@ -381,32 +364,6 @@ npppd_iface_fini(npppd_iface *_this)
 	NPPPD_IFACE_ASSERT(_this != NULL);
 	_this->initialized = 0;
 }
-
-
-/***********************************************************************
- * PIPEX related functions
- ***********************************************************************/
-#ifdef USE_NPPPD_PIPEX
-
-/** enable PIPEX on PPPAC interface */
-int
-npppd_iface_pipex_enable(npppd_iface *_this)
-{
-	int enable = 1;
-
-	return ioctl(_this->devf, PIPEXSMODE, &enable);
-}
-
-/** disable PIPEX on PPPAC interface */
-int
-npppd_iface_pipex_disable(npppd_iface *_this)
-{
-	int disable = 0;
-
-	return ioctl(_this->devf, PIPEXSMODE, &disable);
-}
-
-#endif /* USE_NPPPD_PIPEX */
 
 
 /***********************************************************************

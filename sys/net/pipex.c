@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.127 2020/08/30 19:48:16 mvs Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.128 2021/01/02 13:15:15 mvs Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -163,13 +163,6 @@ pipex_ioctl(void *ownersc, u_long cmd, caddr_t data)
 
 	NET_ASSERT_LOCKED();
 	switch (cmd) {
-	case PIPEXSMODE:
-		break;
-
-	case PIPEXGMODE:
-		*(int *)data = 1;
-		break;
-
 	case PIPEXCSESSION:
 		ret = pipex_config_session(
 		    (struct pipex_session_config_req *)data, ownersc);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.h,v 1.28 2020/08/27 10:47:52 yasuoka Exp $	*/
+/*	$OpenBSD: pipex.h,v 1.29 2021/01/02 13:15:15 mvs Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -165,8 +165,6 @@ struct pipex_session_descr_req {
 
 
 /* PIPEX ioctls */
-#define PIPEXSMODE	_IOW ('p',  1, int)
-#define PIPEXGMODE	_IOR ('p',  2, int)
 #define PIPEXASESSION	_IOW ('p',  3, struct pipex_session_req)
 #define PIPEXDSESSION	_IOWR('p',  4, struct pipex_session_close_req)
 #define PIPEXCSESSION	_IOW ('p',  5, struct pipex_session_config_req)
