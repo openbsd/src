@@ -34,6 +34,7 @@ enum {
   REGISTERS_MIPS_O32,
   REGISTERS_MIPS_NEWABI,
   REGISTERS_SPARC,
+  REGISTERS_SPARC64,
   REGISTERS_HEXAGON,
   REGISTERS_RISCV,
 };
@@ -76,6 +77,7 @@ public:
   void      setESI(uint32_t value) { _registers.__esi = value; }
   uint32_t  getEDI() const         { return _registers.__edi; }
   void      setEDI(uint32_t value) { _registers.__edi = value; }
+  uint32_t  getWCookie() const     { return 0; }
 
 private:
   struct GPRs {
@@ -283,6 +285,7 @@ public:
   void      setR14(uint64_t value) { _registers.__r14 = value; }
   uint64_t  getR15() const         { return _registers.__r15; }
   void      setR15(uint64_t value) { _registers.__r15 = value; }
+  uint64_t  getWCookie() const     { return 0; }
 
 private:
   struct GPRs {
@@ -585,6 +588,7 @@ public:
   void      setSP(uint32_t value) { _registers.__r1 = value; }
   uint64_t  getIP() const         { return _registers.__srr0; }
   void      setIP(uint32_t value) { _registers.__srr0 = value; }
+  uint64_t  getWCookie() const    { return 0; }
 
 private:
   struct ppc_thread_state_t {
@@ -627,7 +631,7 @@ private:
     unsigned int __lr;     /* Link register */
     unsigned int __ctr;    /* Count register */
     unsigned int __mq;     /* MQ register (601 only) */
-    unsigned int __vrsave; /* Vector Save Register */
+    mutable unsigned int __vrsave; /* Vector Save Register */
   };
 
   struct ppc_float_state_t {
@@ -637,9 +641,11 @@ private:
     unsigned int __fpscr;     /* floating point status register */
   };
 
+  void saveVectorRegisters() const;
+
   ppc_thread_state_t _registers;
   ppc_float_state_t  _floatRegisters;
-  v128               _vectorRegisters[32]; // offset 424
+  mutable v128       _vectorRegisters[32]; // offset 424
 };
 
 inline Registers_ppc::Registers_ppc(const void *registers) {
@@ -654,10 +660,8 @@ inline Registers_ppc::Registers_ppc(const void *registers) {
          sizeof(_floatRegisters));
   static_assert(sizeof(ppc_thread_state_t) + sizeof(ppc_float_state_t) == 424,
                 "expected vector register offset to be 424 bytes");
-  memcpy(_vectorRegisters,
-         static_cast<const uint8_t *>(registers) + sizeof(ppc_thread_state_t) +
-             sizeof(ppc_float_state_t),
-         sizeof(_vectorRegisters));
+  // no values until saveVectorRegisters()
+  memset(&_vectorRegisters, 0, sizeof(_vectorRegisters));
 }
 
 inline Registers_ppc::Registers_ppc() {
@@ -777,6 +781,7 @@ inline uint32_t Registers_ppc::getRegister(int regNum) const {
   case UNW_PPC_CR7:
     return (_registers.__cr & 0x0000000F);
   case UNW_PPC_VRSAVE:
+    saveVectorRegisters();
     return _registers.__vrsave;
   }
   _LIBUNWIND_ABORT("unsupported ppc register");
@@ -929,6 +934,7 @@ inline void Registers_ppc::setRegister(int regNum, uint32_t value) {
     _registers.__cr |= (value & 0x0000000F);
     return;
   case UNW_PPC_VRSAVE:
+    saveVectorRegisters();
     _registers.__vrsave = value;
     return;
     // not saved
@@ -973,12 +979,14 @@ inline bool Registers_ppc::validVectorRegister(int regNum) const {
 
 inline v128 Registers_ppc::getVectorRegister(int regNum) const {
   assert(validVectorRegister(regNum));
+  saveVectorRegisters();
   v128 result = _vectorRegisters[regNum - UNW_PPC_V0];
   return result;
 }
 
 inline void Registers_ppc::setVectorRegister(int regNum, v128 value) {
   assert(validVectorRegister(regNum));
+  saveVectorRegisters();
   _vectorRegisters[regNum - UNW_PPC_V0] = value;
 }
 
@@ -1151,6 +1159,7 @@ public:
   void      setSP(uint64_t value) { _registers.__r1 = value; }
   uint64_t  getIP() const         { return _registers.__srr0; }
   void      setIP(uint64_t value) { _registers.__srr0 = value; }
+  uint64_t  getWCookie() const    { return 0; }
 
 private:
   struct ppc64_thread_state_t {
@@ -1796,6 +1805,7 @@ public:
   void      setIP(uint64_t value) { _registers.__pc = value; }
   uint64_t  getFP() const         { return _registers.__fp; }
   void      setFP(uint64_t value) { _registers.__fp = value; }
+  uint64_t  getWCookie() const    { return 0; }
 
 private:
   struct GPRs {
@@ -2074,6 +2084,7 @@ public:
   void      setSP(uint32_t value) { _registers.__sp = value; }
   uint32_t  getIP() const         { return _registers.__pc; }
   void      setIP(uint32_t value) { _registers.__pc = value; }
+  uint64_t  getWCookie() const    { return 0; }
 
   void saveVFPAsX() {
     assert(_use_X_for_vfp_save || !_saved_vfp_d0_d15);
@@ -2552,6 +2563,7 @@ public:
   void      setSP(uint32_t value) { _registers.__r[1] = value; }
   uint64_t  getIP() const         { return _registers.__pc; }
   void      setIP(uint32_t value) { _registers.__pc = value; }
+  uint64_t  getWCookie() const    { return 0; }
 
 private:
   struct or1k_thread_state_t {
@@ -2723,6 +2735,150 @@ inline const char *Registers_or1k::getRegisterName(int regNum) {
 }
 #endif // _LIBUNWIND_TARGET_OR1K
 
+#if defined(_LIBUNWIND_TARGET_SPARC64)
+/// Registers_sparc64 holds the register state of a thread in a 64-bit
+/// sparc process.
+class _LIBUNWIND_HIDDEN Registers_sparc64 {
+public:
+  Registers_sparc64();
+  Registers_sparc64(const void *registers);
+
+  bool        validRegister(int num) const;
+  uint64_t    getRegister(int num) const;
+  void        setRegister(int num, uint64_t value);
+  bool        validFloatRegister(int num) const;
+  double      getFloatRegister(int num) const;
+  void        setFloatRegister(int num, double value);
+  bool        validVectorRegister(int num) const;
+  v128        getVectorRegister(int num) const;
+  void        setVectorRegister(int num, v128 value);
+  const char *getRegisterName(int num);
+  void        jumpto();
+  static int  lastDwarfRegNum() { return 31; }
+  static int  getArch() { return REGISTERS_SPARC64; }
+
+  uint64_t  getSP() const         { return _registers.__o[6] + 2047; }
+  void      setSP(uint64_t value) { _registers.__o[6] = value - 2047; }
+  uint64_t  getIP() const         { return _registers.__o[7]; }
+  void      setIP(uint64_t value) { _registers.__o[7] = value; }
+  uint64_t  getWCookie() const    { return _wcookie; }
+
+private:
+  struct GPRs {
+    uint64_t __g[8];
+    uint64_t __o[8];
+    uint64_t __l[8];
+    uint64_t __i[8];
+  };
+
+  GPRs _registers;
+  uint64_t _wcookie;
+};
+
+inline Registers_sparc64::Registers_sparc64(const void *registers) {
+  static_assert((check_fit<Registers_sparc64, unw_context_t>::does_fit),
+                "sparc64 registers do not fit into unw_context_t");
+  memcpy(&_registers, static_cast<const uint8_t *>(registers),
+         sizeof(_registers));
+  memcpy(&_wcookie, static_cast<const uint8_t *>(registers) + sizeof(GPRs),
+        sizeof(_wcookie));
+}
+
+inline Registers_sparc64::Registers_sparc64() {
+  memset(&_registers, 0, sizeof(_registers));
+  _wcookie = 0;
+}
+
+inline bool Registers_sparc64::validRegister(int regNum) const {
+  if (regNum == UNW_REG_IP)
+    return true;
+  if (regNum == UNW_REG_SP)
+    return true;
+  if (regNum < 0)
+    return false;
+  if (regNum <= 31)
+    return true;
+  return false;
+}
+
+inline uint64_t Registers_sparc64::getRegister(int regNum) const {
+  if (regNum >= 0 && regNum <= 7)
+    return _registers.__g[regNum - 0];
+  if (regNum >= 8 && regNum <= 15)
+    return _registers.__o[regNum - 8];
+  if (regNum >= 16 && regNum <= 23)
+    return _registers.__l[regNum - 16];
+  if (regNum >= 24 && regNum <= 31)
+    return _registers.__i[regNum - 24];
+
+  switch (regNum) {
+  case UNW_REG_IP:
+    return _registers.__o[7] + 8;
+  case UNW_REG_SP:
+    return _registers.__o[6] + 2047;
+  }
+  _LIBUNWIND_ABORT("unsupported sparc64 register");
+}
+
+inline void Registers_sparc64::setRegister(int regNum, uint64_t value) {
+  if (regNum >= 0 && regNum <= 7) {
+    _registers.__g[regNum - 0] = value;
+    return;
+  }
+  if (regNum >= 8 && regNum <= 15) {
+    _registers.__o[regNum - 8] = value;
+    return;
+  }
+  if (regNum >= 16 && regNum <= 23) {
+    _registers.__l[regNum - 16] = value;
+    return;
+  }
+  if (regNum >= 24 && regNum <= 31) {
+    _registers.__i[regNum - 24] = value;
+    return;
+  }
+
+  switch (regNum) {
+  case UNW_REG_IP:
+    _registers.__o[7] = value - 8;
+    return;
+  case UNW_REG_SP:
+    _registers.__o[6] = value - 2047;
+    return;
+  }
+  _LIBUNWIND_ABORT("unsupported sparc64 register");
+}
+
+inline bool Registers_sparc64::validFloatRegister(int) const {
+  return false;
+}
+
+inline double Registers_sparc64::getFloatRegister(int) const {
+  _LIBUNWIND_ABORT("no sparc64 float registers");
+}
+
+inline void Registers_sparc64::setFloatRegister(int, double) {
+  _LIBUNWIND_ABORT("no sparc64 float registers");
+}
+
+inline bool Registers_sparc64::validVectorRegister(int) const {
+  return false;
+}
+
+inline v128 Registers_sparc64::getVectorRegister(int) const {
+  _LIBUNWIND_ABORT("no sparc64 vector registers");
+}
+
+inline void Registers_sparc64::setVectorRegister(int, v128) {
+  _LIBUNWIND_ABORT("no sparc64 vector registers");
+}
+
+inline const char *Registers_sparc64::getRegisterName(int regNum) {
+  return "unknown register";
+}
+
+#endif // _LIBUNWIND_TARGET_SPARC64
+
 #if defined(_LIBUNWIND_TARGET_MIPS_O32)
 /// Registers_mips_o32 holds the register state of a thread in a 32-bit MIPS
 /// process.
@@ -2749,6 +2905,7 @@ public:
   void      setSP(uint32_t value) { _registers.__r[29] = value; }
   uint32_t  getIP() const         { return _registers.__pc; }
   void      setIP(uint32_t value) { _registers.__pc = value; }
+  uint32_t  getWCookie() const    { return 0; }
 
 private:
   struct mips_o32_thread_state_t {
@@ -3076,6 +3233,7 @@ public:
   void      setSP(uint64_t value) { _registers.__r[29] = value; }
   uint64_t  getIP() const         { return _registers.__pc; }
   void      setIP(uint64_t value) { _registers.__pc = value; }
+  uint32_t  getWCookie() const    { return 0; }
 
 private:
   struct mips_newabi_thread_state_t {

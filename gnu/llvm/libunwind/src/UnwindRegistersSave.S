@@ -598,8 +598,8 @@ DEFINE_LIBUNWIND_FUNCTION(__unw_getcontext)
   stw     %r30,128(%r3)
   stw     %r31,132(%r3)
 
-  // save VRSave register
-  mfspr   %r0, 256
+  // zero VRSave register; saveVectorRegisters() will save it
+  li      %r0, 0
   stw     %r0, 156(%r3)
   // save CR registers
   mfcr    %r0
@@ -642,12 +642,29 @@ DEFINE_LIBUNWIND_FUNCTION(__unw_getcontext)
   stfd    %f30,400(%r3)
   stfd    %f31,408(%r3)
 
+  li  %r3, 0    // return UNW_ESUCCESS
+  blr
 
-  // save vector registers
+//
+// void libunwind::Registers_ppc::saveVectorRegisters() const
+//
+// On entry:
+//  thread_state pointer is in r3
+//
+DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZNK9libunwind13Registers_ppc19saveVectorRegistersEv)
+  // return if we have already saved VRsave
+  lwz    %r0, 156(%r3)
+  cmpwi  %r0, 0
+  bnelr
 
-  subi    %r4, %r1, 16
-  rlwinm  %r4, %r4, 0, 0, 27  // mask low 4-bits
-  // r4 is now a 16-byte aligned pointer into the red zone
+  stwu   %r1, -32(%r1)  // allocate a stack frame
+  addi   %r4, %r1, 16
+  clrrwi %r4, %r4, 4
+  // r4 is now a 16-byte aligned pointer
+
+  // save VRsave register
+  mfvrsave %r0
+  stw      %r0, 156(%r3)
 
 #define SAVE_VECTOR_UNALIGNED(_vec, _offset) \
   stvx    _vec, 0, %r4          SEPARATOR \
@@ -693,9 +710,8 @@ DEFINE_LIBUNWIND_FUNCTION(__unw_getcontext)
   SAVE_VECTOR_UNALIGNED(%v30, 424+0x1E0)
   SAVE_VECTOR_UNALIGNED(%v31, 424+0x1F0)
 
-  li      %r3, 0  // return UNW_ESUCCESS
+  addi   %r1, %r1, 32  // drop the stack frame
   blr
-
 
 #elif defined(__aarch64__)
 
@@ -946,6 +962,7 @@ DEFINE_LIBUNWIND_FUNCTION(__unw_getcontext)
   l.sw     132(r3), r0
 
 #elif defined(__hexagon__)
+
 #
 # extern int unw_getcontext(unw_context_t* thread_state)
 #
@@ -990,6 +1007,58 @@ DEFINE_LIBUNWIND_FUNCTION(__unw_getcontext)
   memw(r0+#132) = r1
 
   jumpr r31
+
+#elif defined(__sparc__) && defined(__arch64__)
+
+#
+# extern int unw_getcontext(unw_context_t* thread_state)
+#
+# On entry:
+#  thread_state pointer is in %o0
+#
+DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
+  stx  %g1, [%o0 + 0x08]
+  stx  %g2, [%o0 + 0x10]
+  stx  %g3, [%o0 + 0x18]
+  stx  %g4, [%o0 + 0x20]
+  stx  %g5, [%o0 + 0x28]
+  stx  %g6, [%o0 + 0x30]
+  stx  %g7, [%o0 + 0x38]
+  stx  %o0, [%o0 + 0x40]
+  stx  %o1, [%o0 + 0x48]
+  stx  %o2, [%o0 + 0x50]
+  stx  %o3, [%o0 + 0x58]
+  stx  %o4, [%o0 + 0x60]
+  stx  %o5, [%o0 + 0x68]
+  stx  %o6, [%o0 + 0x70]
+  stx  %o7, [%o0 + 0x78]
+  stx  %l0, [%o0 + 0x80]
+  stx  %l1, [%o0 + 0x88]
+  stx  %l2, [%o0 + 0x90]
+  stx  %l3, [%o0 + 0x98]
+  stx  %l4, [%o0 + 0xa0]
+  stx  %l5, [%o0 + 0xa8]
+  stx  %l6, [%o0 + 0xb0]
+  stx  %l7, [%o0 + 0xb8]
+  stx  %i0, [%o0 + 0xc0]
+  stx  %i1, [%o0 + 0xc8]
+  stx  %i2, [%o0 + 0xd0]
+  stx  %i3, [%o0 + 0xd8]
+  stx  %i4, [%o0 + 0xe0]
+  stx  %i5, [%o0 + 0xe8]
+  stx  %i6, [%o0 + 0xf0]
+  stx  %i7, [%o0 + 0xf8]
+
+  # save StackGhost cookie
+  add  %i7, %g0, %g4
+  save %sp, -176, %sp
+  # register window flush necessary even without StackGhost
+  flushw
+  restore
+  ldx  [%sp + 2047 + 0x78], %g5
+  xor  %g4, %g5, %g4
+  retl
+   stx %g4, [%o0 + 0x100]
 
 #elif defined(__sparc__)
 
