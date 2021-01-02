@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.1,v 1.38 2020/12/19 18:05:44 tb Exp $
+.\"	$OpenBSD: acme-client.1,v 1.39 2021/01/02 19:04:21 sthen Exp $
 .\"
 .\" Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 19 2020 $
+.Dd $Mdocdate: January 2 2021 $
 .Dt ACME-CLIENT 1
 .Os
 .Sh NAME
@@ -67,10 +67,8 @@ location "/.well-known/acme-challenge/*" {
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl F
-Force certificate renewal, even if it's too soon.
-This is required if new domain alternative names
-were added to
-.Xr acme-client.conf 5 .
+Force certificate renewal, even if it has more than 30 days
+validity.
 .It Fl f Ar configfile
 Specify an alternative configuration file.
 .It Fl n
