@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.136 2020/01/21 00:18:13 cheloha Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.137 2021/01/02 02:41:42 cheloha Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -408,7 +408,7 @@ nfs_reconnect(struct nfsreq *rep)
 	while ((error = nfs_connect(nmp, rep)) != 0) {
 		if (error == EINTR || error == ERESTART)
 			return (EINTR);
-		tsleep_nsec(&lbolt, PSOCK, "nfsrecon", INFSLP);
+		tsleep_nsec(&nowake, PSOCK, "nfsrecon", SEC_TO_NSEC(1));
 	}
 
 	/*
@@ -853,7 +853,7 @@ nfs_request(struct vnode *vp, int procnum, struct nfsm_info *infop)
 	struct nfsmount *nmp;
 	caddr_t cp2;
 	int t1, i, error = 0;
-	int addr, trylater_delay;
+	int trylater_delay;
 	struct nfsreq *rep;
 	struct nfsm_info info;
 
@@ -998,7 +998,7 @@ tryagain:
 			    error == NFSERR_TRYLATER) {
 				m_freem(info.nmi_mrep);
 				error = 0;
-				tsleep_nsec(&addr, PSOCK, "nfsretry",
+				tsleep_nsec(&nowake, PSOCK, "nfsretry",
 				    SEC_TO_NSEC(trylater_delay));
 				trylater_delay *= NFS_TIMEOUTMUL;
 				if (trylater_delay > NFS_MAXTIMEO)
