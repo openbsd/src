@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.71 2020/07/31 11:19:12 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.72 2021/01/02 05:36:49 jmatthew Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -113,6 +113,12 @@ void hummingbird_init(struct cpu_info *ci);
 #define	IU_IMPL(v)	((((u_int64_t)(v))&VER_IMPL) >> VER_IMPL_SHIFT)
 #define	IU_VERS(v)	((((u_int64_t)(v))&VER_MASK) >> VER_MASK_SHIFT)
 
+/* virtual address allocation mode for struct cpu_info */
+struct kmem_va_mode kv_cpu_info = {
+	.kv_map = &kernel_map,
+	.kv_align = 8 * PAGE_SIZE
+};
+
 struct cpu_info *
 alloc_cpuinfo(struct mainbus_attach_args *ma)
 {
@@ -137,7 +143,7 @@ alloc_cpuinfo(struct mainbus_attach_args *ma)
 		if (cpi->ci_upaid == portid)
 			return cpi;
 
-	va = uvm_km_valloc_align(kernel_map, sz, 8 * PAGE_SIZE, 0);
+	va = (vaddr_t)km_alloc(sz, &kv_cpu_info, &kp_none, &kd_nowait);
 	if (va == 0)
 		panic("alloc_cpuinfo: no virtual space");
 	va0 = va;
