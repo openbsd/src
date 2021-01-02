@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.110 2020/12/28 14:01:23 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.111 2021/01/02 02:39:59 cheloha Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -1122,7 +1122,8 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 			KASSERT(result != VM_PAGER_PEND);
 
 			if (result == VM_PAGER_AGAIN) {
-				tsleep_nsec(&lbolt, PVM, "fltagain2", INFSLP);
+				tsleep_nsec(&nowake, PVM, "fltagain2",
+				    SEC_TO_NSEC(1));
 				return ERESTART;
 			}
 
