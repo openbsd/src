@@ -651,7 +651,7 @@ DEFINE_LIBUNWIND_FUNCTION(__unw_getcontext)
 // On entry:
 //  thread_state pointer is in r3
 //
-DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZNK9libunwind13Registers_ppc19saveVectorRegistersEv)
+DEFINE_LIBUNWIND_FUNCTION(_ZNK9libunwind13Registers_ppc19saveVectorRegistersEv)
   // return if we have already saved VRsave
   lwz    %r0, 156(%r3)
   cmpwi  %r0, 0
@@ -1016,7 +1016,7 @@ DEFINE_LIBUNWIND_FUNCTION(__unw_getcontext)
 # On entry:
 #  thread_state pointer is in %o0
 #
-DEFINE_LIBUNWIND_FUNCTION(unw_getcontext)
+DEFINE_LIBUNWIND_FUNCTION(__unw_getcontext)
   stx  %g1, [%o0 + 0x08]
   stx  %g2, [%o0 + 0x10]
   stx  %g3, [%o0 + 0x18]

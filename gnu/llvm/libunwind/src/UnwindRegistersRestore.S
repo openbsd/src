@@ -1053,7 +1053,7 @@ DEFINE_LIBUNWIND_FUNCTION(_ZN9libunwind21Registers_mips_newabi6jumptoEv)
 
 #elif defined(__sparc__) && defined(__arch64__)
 
-DEFINE_LIBUNWIND_PRIVATE_FUNCTION(_ZN9libunwind17Registers_sparc646jumptoEv)
+DEFINE_LIBUNWIND_FUNCTION(_ZN9libunwind17Registers_sparc646jumptoEv)
 #
 # void libunwind::Registers_sparc64::jumpto()
 #
