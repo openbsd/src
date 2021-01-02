@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.200 2021/01/02 02:46:06 cheloha Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.201 2021/01/02 07:25:42 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -571,7 +571,6 @@ out:
 	return (error);
 }
 
-
 /*
  * If there are processes sleeping on this descriptor, wake them up.
  */
@@ -580,14 +579,20 @@ bpf_wakeup(struct bpf_d *d)
 {
 	MUTEX_ASSERT_LOCKED(&d->bd_mtx);
 
+	if (d->bd_nreaders)
+		wakeup(d);
+
 	/*
 	 * As long as pgsigio() and selwakeup() need to be protected
 	 * by the KERNEL_LOCK() we have to delay the wakeup to
 	 * another context to keep the hot path KERNEL_LOCK()-free.
 	 */
-	bpf_get(d);
-	if (!task_add(systq, &d->bd_wake_task))
-		bpf_put(d);
+	if ((d->bd_async && d->bd_sig) ||
+	    (!klist_empty(&d->bd_sel.si_note) || d->bd_sel.si_seltid != 0)) {
+		bpf_get(d);
+		if (!task_add(systq, &d->bd_wake_task))
+			bpf_put(d);
+	}
 }
 
 void
@@ -595,7 +600,6 @@ bpf_wakeup_cb(void *xd)
 {
 	struct bpf_d *d = xd;
 
-	wakeup(d);
 	if (d->bd_async && d->bd_sig)
 		pgsigio(&d->bd_sigio, d->bd_sig, 0);
 
@@ -1551,17 +1555,6 @@ bpf_catchpacket(struct bpf_d *d, u_char *pkt, size_t pktlen, size_t snaplen,
 		 * reads should be woken up.
 		 */
 		do_wakeup = 1;
-	}
-
-	if (d->bd_nreaders > 0) {
-		/*
-		 * We have one or more threads sleeping in bpfread().
-		 * We got a packet, so wake up all readers.
-		 */
-		if (d->bd_fbuf != NULL) {
-			ROTATE_BUFFERS(d);
-			do_wakeup = 1;
-		}
 	}
 
 	if (do_wakeup)
