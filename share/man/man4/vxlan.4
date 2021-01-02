@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vxlan.4,v 1.9 2020/06/26 12:04:17 denis Exp $
+.\"	$OpenBSD: vxlan.4,v 1.10 2021/01/02 09:56:16 dlg Exp $
 .\"
 .\" Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 26 2020 $
+.Dd $Mdocdate: January 2 2021 $
 .Dt VXLAN 4
 .Os
 .Sh NAME
@@ -82,6 +82,14 @@ The configuration can be done at runtime or by setting up a
 .Xr hostname.if 5
 configuration file for
 .Xr netstart 8 .
+.Pp
+For correct operation, encapsulated traffic must not be routed
+over the interface itself.
+This can be implemented by adding a distinct or a more specific
+route to the tunnel destination than the hosts or networks routed
+via the tunnel interface.
+Alternatively, the tunnel traffic may be configured in a separate
+routing table to the encapsulated traffic.
 .Sh EXAMPLES
 Create a tunnel to a unicast tunnel endpoint, using the virtual tunnel
 identifier 5:
