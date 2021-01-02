@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.38 2020/08/28 12:01:48 mvs Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.39 2021/01/02 13:16:40 mvs Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -208,7 +208,6 @@ switch_clone_destroy(struct ifnet *ifp)
 	bstp_destroy(sc->sc_stp);
 	swofp_destroy(sc);
 	switch_dev_destroy(sc);
-	if_deactivate(ifp);
 	if_detach(ifp);
 	free(sc, M_DEVBUF, sizeof(*sc));
 
