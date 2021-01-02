@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.345 2020/08/06 19:47:44 bluhm Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.346 2021/01/02 13:16:04 mvs Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -236,9 +236,6 @@ bridge_clone_destroy(struct ifnet *ifp)
 		bridge_spanremove(bif);
 
 	bstp_destroy(sc->sc_stp);
-
-	/* Undo pseudo-driver changes. */
-	if_deactivate(ifp);
 
 	if_detach(ifp);
 
