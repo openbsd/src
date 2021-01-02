@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.93 2020/11/17 16:38:10 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.94 2021/01/02 14:27:53 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2014 Miodrag Vallat.
@@ -207,6 +207,10 @@ const struct bonito_flavour bonito_flavours[] = {
 	{ "LM8101",	&yeeloong_platform },
 	/* Lemote Lynloong all-in-one computer */
 	{ "LM9001",	&lynloong_platform },
+	{ "LM9002",	&lynloong_platform },
+	{ "LM9003",	&lynloong_platform },
+	/* Lemote Lynloong all-in-one computer, Xueloong edition */
+	{ "LM9013",	&lynloong_platform },
 #endif
 #ifdef CPU_LOONGSON3
 	/* Laptops */
