@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstat.1,v 1.91 2021/01/02 16:10:30 kn Exp $
+.\"	$OpenBSD: netstat.1,v 1.92 2021/01/02 16:50:33 schwarze Exp $
 .\"	$NetBSD: netstat.1,v 1.11 1995/10/03 21:42:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
@@ -168,13 +168,13 @@ of the specified
 .Ar address_family .
 .Pp
 The following address families are recognized:
-.Bl -column "Address Family" "AF_APPLETA" "Description" -offset indent
-.It Sy "Address Family" Ta Sy "Constant" Ta Sy "Description"
-.It "inet" Ta Dv "AF_INET" Ta "IP Version 4"
-.It "inet6" Ta Dv "AF_INET6" Ta "IP Version 6"
-.It "local" Ta Dv "AF_UNIX" Ta "Alias for unix"
-.It "mpls" Ta Dv "AF_MPLS" Ta "MPLS"
-.It "unix" Ta Dv "AF_UNIX" Ta "Local to Host (i.e., pipes)"
+.Bl -column "Address Family" AF_INET6 Description -offset indent
+.It Sy Address Family Ta Sy Constant Ta Sy Description
+.It Cm inet  Ta Dv AF_INET  Ta IP Version 4
+.It Cm inet6 Ta Dv AF_INET6 Ta IP Version 6
+.It Cm local Ta Dv AF_UNIX  Ta Alias for Cm unix
+.It Cm mpls  Ta Dv AF_MPLS  Ta MPLS
+.It Cm unix  Ta Dv AF_UNIX  Ta Local to Host (i.e., pipes)
 .El
 .It Fl h
 Use unit suffixes to reduce the number of digits shown with the
