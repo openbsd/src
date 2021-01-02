@@ -1,4 +1,4 @@
-/*	$OpenBSD: regcomp.c,v 1.41 2020/12/31 17:24:05 millert Exp $ */
+/*	$OpenBSD: regcomp.c,v 1.42 2021/01/02 20:42:01 millert Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -90,8 +90,6 @@ static void freeset(struct parse *, cset *);
 static int freezeset(struct parse *, cset *);
 static int firstch(struct parse *, cset *);
 static int nch(struct parse *, cset *);
-static int isinsets(struct re_guts *, int);
-static int samesets(struct re_guts *, int, int);
 static sopno dupl(struct parse *, sopno, sopno);
 static void doemit(struct parse *, sop, size_t);
 static void doinsert(struct parse *, sop, size_t, sopno);
@@ -1148,41 +1146,6 @@ nch(struct parse *p, cset *cs)
 }
 
 /*
- - isinsets - is this character in any sets?
- */
-static int			/* predicate */
-isinsets(struct re_guts *g, int c)
-{
-	uch *col;
-	int i;
-	int ncols = (g->ncsets+(CHAR_BIT-1)) / CHAR_BIT;
-	unsigned uc = (uch)c;
-
-	for (i = 0, col = g->setbits; i < ncols; i++, col += g->csetsize)
-		if (col[uc] != 0)
-			return(1);
-	return(0);
-}
-
-/*
- - samesets - are these two characters in exactly the same sets?
- */
-static int			/* predicate */
-samesets(struct re_guts *g, int c1, int c2)
-{
-	uch *col;
-	int i;
-	int ncols = (g->ncsets+(CHAR_BIT-1)) / CHAR_BIT;
-	unsigned uc1 = (uch)c1;
-	unsigned uc2 = (uch)c2;
-
-	for (i = 0, col = g->setbits; i < ncols; i++, col += g->csetsize)
-		if (col[uc1] != col[uc2])
-			return(0);
-	return(1);
-}
-
-/*
  - dupl - emit a duplicate of a bunch of sops
  */
 static sopno			/* start of duplicate */
@@ -1394,7 +1357,7 @@ findmust(struct parse *p, struct re_guts *g)
 		*cp++ = (char)OPND(s);
 	}
 	assert(cp == g->must + g->mlen);
-	*cp++ = '\0';		/* just on general principles */
+	*cp = '\0';		/* just on general principles */
 }
 
 /*
