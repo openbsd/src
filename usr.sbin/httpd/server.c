@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.123 2021/01/02 18:31:06 tb Exp $	*/
+/*	$OpenBSD: server.c,v 1.124 2021/01/02 18:35:07 tb Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1316,6 +1316,11 @@ server_close(struct client *clt, const char *msg)
 	/* free the HTTP descriptors incl. headers */
 	server_close_http(clt);
 
+	/* tls_close must be called before the underlying socket is closed. */
+	if (clt->clt_tls_ctx != NULL)
+		tls_close(clt->clt_tls_ctx); /* XXX - error handling */
+	tls_free(clt->clt_tls_ctx);
+
 	event_del(&clt->clt_ev);
 	if (clt->clt_bev != NULL)
 		bufferevent_disable(clt->clt_bev, EV_READ|EV_WRITE);
@@ -1333,11 +1338,6 @@ server_close(struct client *clt, const char *msg)
 
 	if (clt->clt_srvbev != NULL)
 		bufferevent_free(clt->clt_srvbev);
-
-	/* tls_close must be called before the underlying socket is closed. */
-	if (clt->clt_tls_ctx != NULL)
-		tls_close(clt->clt_tls_ctx); /* XXX - error handling */
-	tls_free(clt->clt_tls_ctx);
 
 	if (clt->clt_fd != -1)
 		close(clt->clt_fd);
