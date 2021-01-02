@@ -10,8 +10,8 @@
 ./usr/lib/crtend.o
 ./usr/lib/crtendS.o
 ./usr/lib/libLLVM.so.4.0
-./usr/lib/libc++.so.5.0
-./usr/lib/libc++abi.so.3.0
+./usr/lib/libc++.so.6.0
+./usr/lib/libc++abi.so.4.0
 ./usr/lib/libcompiler_rt.a
 ./usr/libdata/perl5/powerpc64-openbsd
 ./usr/libdata/perl5/powerpc64-openbsd/.packlist
