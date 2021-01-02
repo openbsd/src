@@ -33,6 +33,7 @@
 #include <nacl/nacl_random.h>
 #endif
 
+#include <limits>
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
@@ -172,7 +173,11 @@ random_device::operator()()
 double
 random_device::entropy() const _NOEXCEPT
 {
+#ifdef __OpenBSD__
+    return std::numeric_limits<unsigned int>::digits;
+#else
     return 0;
+#endif
 }
 
 _LIBCPP_END_NAMESPACE_STD

@@ -80,9 +80,9 @@ thread::detach()
 unsigned
 thread::hardware_concurrency() _NOEXCEPT
 {
-#if defined(CTL_HW) && defined(HW_NCPU)
+#if defined(CTL_HW) && defined(HW_NCPUONLINE)
     unsigned n;
-    int mib[2] = {CTL_HW, HW_NCPU};
+    int mib[2] = {CTL_HW, HW_NCPUONLINE};
     std::size_t s = sizeof(n);
     sysctl(mib, 2, &n, &s, 0, 0);
     return n;
