@@ -1,4 +1,4 @@
-/*	$OpenBSD: ax.c,v 1.6 2020/12/29 21:44:48 rob Exp $ */
+/*	$OpenBSD: ax.c,v 1.7 2021/01/02 01:06:31 rob Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -1052,8 +1052,8 @@ ax_pdu_add_uint16(struct ax *ax, uint16_t value)
 	else
 		value = htole16(value);
 	memcpy(ax->ax_wbuf + ax->ax_wbtlen, &value, sizeof(value));
-        ax->ax_wbtlen += sizeof(value);
-        return 0;
+	ax->ax_wbtlen += sizeof(value);
+	return 0;
 }
 
 static int
@@ -1067,8 +1067,8 @@ ax_pdu_add_uint32(struct ax *ax, uint32_t value)
 	else
 		value = htole32(value);
 	memcpy(ax->ax_wbuf + ax->ax_wbtlen, &value, sizeof(value));
-        ax->ax_wbtlen += sizeof(value);
-        return 0;
+	ax->ax_wbtlen += sizeof(value);
+	return 0;
 }
 
 static int
@@ -1082,8 +1082,8 @@ ax_pdu_add_uint64(struct ax *ax, uint64_t value)
 	else
 		value = htole64(value);
 	memcpy(ax->ax_wbuf + ax->ax_wbtlen, &value, sizeof(value));
-        ax->ax_wbtlen += sizeof(value);
-        return 0;
+	ax->ax_wbtlen += sizeof(value);
+	return 0;
 }
 
 
