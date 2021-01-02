@@ -1,10 +1,9 @@
 add_compiler_rt_component(scudo_standalone)
-# FIXME: GWP-ASan is temporarily disabled, re-enable once issues are fixed.
-if (FALSE AND COMPILER_RT_HAS_GWP_ASAN)
+if (COMPILER_RT_HAS_GWP_ASAN)
   add_dependencies(scudo_standalone gwp_asan)
 endif()
 
-include_directories(../..)
+include_directories(../.. include)
 
 set(SCUDO_CFLAGS)
 
@@ -19,6 +18,13 @@ string(REGEX REPLACE "-stdlib=[a-zA-Z+]*" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
 append_list_if(COMPILER_RT_HAS_FFREESTANDING_FLAG -ffreestanding SCUDO_CFLAGS)
 
 append_list_if(COMPILER_RT_HAS_FVISIBILITY_HIDDEN_FLAG -fvisibility=hidden SCUDO_CFLAGS)
+
+if (COMPILER_RT_HAS_GWP_ASAN)
+  append_list_if(COMPILER_RT_HAS_OMIT_FRAME_POINTER_FLAG -fno-omit-frame-pointer
+                SCUDO_CFLAGS)
+  append_list_if(COMPILER_RT_HAS_OMIT_FRAME_POINTER_FLAG
+                -mno-omit-leaf-frame-pointer SCUDO_CFLAGS)
+endif() # COMPILER_RT_HAS_GWP_ASAN
 
 if(COMPILER_RT_DEBUG)
   list(APPEND SCUDO_CFLAGS -O0)
@@ -50,7 +56,6 @@ set(SCUDO_HEADERS
   flags.h
   flags_parser.h
   fuchsia.h
-  interface.h
   internal_defs.h
   linux.h
   list.h
@@ -72,6 +77,8 @@ set(SCUDO_HEADERS
   vector.h
   wrappers_c_checks.h
   wrappers_c.h
+
+  include/scudo/interface.h
   )
 
 set(SCUDO_SOURCES
@@ -82,6 +89,7 @@ set(SCUDO_SOURCES
   flags_parser.cpp
   fuchsia.cpp
   linux.cpp
+  release.cpp
   report.cpp
   string_utils.cpp
   )
@@ -107,8 +115,9 @@ set(SCUDO_SOURCES_CXX_WRAPPERS
 
 set(SCUDO_OBJECT_LIBS)
 
-if (FALSE AND COMPILER_RT_HAS_GWP_ASAN)
-  list(APPEND SCUDO_OBJECT_LIBS RTGwpAsan)
+if (COMPILER_RT_HAS_GWP_ASAN)
+  list(APPEND SCUDO_OBJECT_LIBS
+       RTGwpAsan RTGwpAsanBacktraceLibc RTGwpAsanSegvHandler)
   list(APPEND SCUDO_CFLAGS -DGWP_ASAN_HOOKS)
 endif()
 

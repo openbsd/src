@@ -1,11 +1,11 @@
 
 CHECK_CXX_SOURCE_COMPILES("
-#ifdef _MSC_VER
-#include <Intrin.h> /* Workaround for PR19898. */
+#ifdef _WIN32
+#include <intrin.h> /* Workaround for PR19898. */
 #include <windows.h>
 #endif
 int main() {
-#ifdef _MSC_VER
+#ifdef _WIN32
         volatile LONG val = 1;
         MemoryBarrier();
         InterlockedCompareExchange(&val, 0, 1);
@@ -51,7 +51,9 @@ add_compiler_rt_component(profile)
 set(PROFILE_SOURCES
   GCDAProfiling.c
   InstrProfiling.c
+  InstrProfilingInternal.c
   InstrProfilingValue.c
+  InstrProfilingBiasVar.c
   InstrProfilingBuffer.c
   InstrProfilingFile.c
   InstrProfilingMerge.c

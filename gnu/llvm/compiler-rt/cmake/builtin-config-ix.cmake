@@ -37,15 +37,19 @@ set(SPARC sparc)
 set(SPARCV9 sparcv9)
 set(WASM32 wasm32)
 set(WASM64 wasm64)
+set(VE ve)
 
 if(APPLE)
-  set(ARM64 arm64)
+  set(ARM64 arm64 arm64e)
   set(ARM32 armv7 armv7k armv7s)
   set(X86_64 x86_64 x86_64h)
 endif()
 
-set(ALL_BUILTIN_SUPPORTED_ARCH ${X86} ${X86_64} ${ARM32} ${ARM64}
-    ${HEXAGON} ${MIPS32} ${MIPS64} ${PPC64} ${RISCV32} ${RISCV64} ${SPARC} ${SPARCV9} ${WASM32} ${WASM64})
+set(ALL_BUILTIN_SUPPORTED_ARCH
+  ${X86} ${X86_64} ${ARM32} ${ARM64}
+  ${HEXAGON} ${MIPS32} ${MIPS64} ${PPC64}
+  ${RISCV32} ${RISCV64} ${SPARC} ${SPARCV9}
+  ${WASM32} ${WASM64} ${VE})
 
 include(CompilerRTUtils)
 include(CompilerRTDarwinUtils)
@@ -60,11 +64,34 @@ if(APPLE)
   find_darwin_sdk_dir(DARWIN_tvossim_SYSROOT appletvsimulator)
   find_darwin_sdk_dir(DARWIN_tvos_SYSROOT appletvos)
 
+  # Get supported architecture from SDKSettings.
+  function(sdk_has_arch_support sdk_path os arch has_support)
+    execute_process(COMMAND
+        /usr/libexec/PlistBuddy -c "Print :SupportedTargets:${os}:Archs" ${sdk_path}/SDKSettings.plist
+      OUTPUT_VARIABLE SDK_SUPPORTED_ARCHS
+      RESULT_VARIABLE PLIST_ERROR)
+    if (PLIST_ERROR EQUAL 0 AND
+        SDK_SUPPORTED_ARCHS MATCHES " ${arch}\n")
+      message(STATUS "Found ${arch} support in ${sdk_path}/SDKSettings.plist")
+      set("${has_support}" On PARENT_SCOPE)
+    else()
+      message(STATUS "No ${arch} support in ${sdk_path}/SDKSettings.plist")
+      set("${has_support}" Off PARENT_SCOPE)
+    endif()
+  endfunction()
+
   set(DARWIN_EMBEDDED_PLATFORMS)
   set(DARWIN_osx_BUILTIN_MIN_VER 10.5)
   set(DARWIN_osx_BUILTIN_MIN_VER_FLAG
       -mmacosx-version-min=${DARWIN_osx_BUILTIN_MIN_VER})
   set(DARWIN_osx_BUILTIN_ALL_POSSIBLE_ARCHS ${X86} ${X86_64})
+  # Add support for arm64 macOS if available in SDK.
+  foreach(arch ${ARM64})
+    sdk_has_arch_support(${DARWIN_osx_SYSROOT} macosx ${arch} MACOS_ARM_SUPPORT)
+    if (MACOS_ARM_SUPPORT)
+     list(APPEND DARWIN_osx_BUILTIN_ALL_POSSIBLE_ARCHS ${arch})
+    endif()
+  endforeach(arch)
 
   if(COMPILER_RT_ENABLE_IOS)
     list(APPEND DARWIN_EMBEDDED_PLATFORMS ios)
