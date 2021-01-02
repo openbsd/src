@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.227 2020/10/26 15:50:31 martijn Exp $
+#	$OpenBSD: Makefile,v 1.228 2021/01/02 20:04:36 patrick Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -60,7 +60,7 @@ PRDIRS+= ../gnu/lib/libstdc++
 PRDIRS+= ../gnu/lib/libstdc++-v3 ../gnu/usr.bin/cc/include
 .endif
 .if ${BUILD_CLANG:L} == "yes"
-RDIRS+= ../lib/libcxxabi ../lib/libcxx \
+RDIRS+= ../gnu/lib/libcxxabi ../gnu/lib/libcxx \
 	 ../gnu/usr.bin/clang/libLLVM
 .endif
 
