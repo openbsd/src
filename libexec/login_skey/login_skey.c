@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_skey.c,v 1.28 2019/06/28 13:32:53 deraadt Exp $	*/
+/*	$OpenBSD: login_skey.c,v 1.29 2021/01/02 20:32:20 millert Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001, 2004 Todd C. Miller <millert@openbsd.org>
@@ -157,8 +157,14 @@ main(int argc, char *argv[])
 	case MODE_CHALLENGE:
 		haskey = (skeychallenge2(fd, &skey, user, challenge) == 0);
 		strlcat(challenge, "\nS/Key Password:", sizeof(challenge));
-		fprintf(back, BI_VALUE " challenge %s\n",
-		    auth_mkvalue(challenge));
+		cp = auth_mkvalue(challenge);
+		if (cp == NULL) {
+			(void)fprintf(back, BI_VALUE " errormsg %s\n",
+			    "unable to allocate memory");
+			(void)fprintf(back, BI_REJECT "\n");
+			exit(1);
+		}
+		fprintf(back, BI_VALUE " challenge %s\n", cp);
 		fprintf(back, BI_CHALLENGE "\n");
 		if (haskey) {
 			fprintf(back, BI_FDPASS "\n");

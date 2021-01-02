@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_radius.c,v 1.9 2017/04/27 20:55:52 millert Exp $	*/
+/*	$OpenBSD: login_radius.c,v 1.10 2021/01/02 20:32:20 millert Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -183,19 +183,29 @@ main(int argc, char **argv)
 	    strcmp(service, "login") ? challenge : NULL, password, &emsg);
 
 	if (c == 0) {
-		if (*challenge == '\0')
+		if (*challenge == '\0') {
 			(void)fprintf(back, BI_AUTH "\n");
-		else {
-			(void)fprintf(back, BI_VALUE " challenge %s\n",
-			    auth_mkvalue(challenge));
-			(void)fprintf(back, BI_CHALLENGE "\n");
+			exit(0);
+		} else {
+			char *val = auth_mkvalue(challenge);
+			if (val != NULL) {
+				(void)fprintf(back, BI_VALUE " challenge %s\n",
+				    val);
+				(void)fprintf(back, BI_CHALLENGE "\n");
+				exit(0);
+			}
+			emsg = "unable to allocate memory";
 		}
-		exit(0);
 	}
-	if (emsg && strcmp(service, "login") == 0)
-		(void)fprintf(stderr, "%s\n", emsg);
-	else if (emsg)
-		(void)fprintf(back, "value errormsg %s\n", auth_mkvalue(emsg));
+	if (emsg != NULL) {
+		if (strcmp(service, "login") == 0) {
+		    (void)fprintf(stderr, "%s\n", emsg);
+		} else {
+		    emsg = auth_mkvalue(emsg);
+		    (void)fprintf(back, BI_VALUE " errormsg %s\n",
+			emsg ? emsg : "unable to allocate memory");
+		}
+	}
 	if (strcmp(service, "challenge") == 0) {
 		(void)fprintf(back, BI_SILENT "\n");
 		exit(0);

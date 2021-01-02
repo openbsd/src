@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_passwd.c,v 1.18 2020/05/15 17:25:39 millert Exp $	*/
+/*	$OpenBSD: login_passwd.c,v 1.19 2021/01/02 20:32:20 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
@@ -49,7 +49,6 @@
 #include <util.h>
 
 #include <login_cap.h>
-#include <bsd_auth.h>
 
 int
 main(int argc, char *argv[])
@@ -121,7 +120,7 @@ main(int argc, char *argv[])
 	}
 	if (wheel != NULL && strcmp(wheel, "yes") != 0) {
 		fprintf(back, BI_VALUE " errormsg %s\n",
-		    auth_mkvalue("you are not in group wheel"));
+		    "you are not in group wheel");
 		fprintf(back, BI_REJECT "\n");
 		exit(1);
 	}
