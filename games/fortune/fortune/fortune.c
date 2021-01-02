@@ -1,4 +1,4 @@
-/*	$OpenBSD: fortune.c,v 1.61 2020/12/15 14:06:32 zhuk Exp $	*/
+/*	$OpenBSD: fortune.c,v 1.62 2021/01/02 21:35:11 schwarze Exp $	*/
 /*	$NetBSD: fortune.c,v 1.8 1995/03/23 08:28:40 cgd Exp $	*/
 
 /*-
@@ -160,7 +160,7 @@ main(int ac, char *av[])
 	getargs(ac, av);
 
 	if (Match)
-		return find_matches() != 0;
+		return find_matches() == 0;
 
 	init_prob();
 	if ((Short_only && minlen_in_list(File_list) > SLEN) ||
