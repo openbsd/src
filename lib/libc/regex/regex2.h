@@ -1,4 +1,4 @@
-/*	$OpenBSD: regex2.h,v 1.11 2021/01/03 10:50:02 tb Exp $	*/
+/*	$OpenBSD: regex2.h,v 1.12 2021/01/03 17:07:58 tb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -122,10 +122,10 @@ CHsub(cset *cs, char c)
 	cs->hash -= c;
 }
 
-static inline uch
+static inline int
 CHIN(const cset *cs, char c)
 {
-	return cs->ptr[(uch)c] & cs->mask;
+	return (cs->ptr[(uch)c] & cs->mask) != 0;
 }
 
 /*

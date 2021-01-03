@@ -1,4 +1,4 @@
-/*	$OpenBSD: regcomp.c,v 1.42 2021/01/02 20:42:01 millert Exp $ */
+/*	$OpenBSD: regcomp.c,v 1.43 2021/01/03 17:07:57 tb Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
  * Copyright (c) 1992, 1993, 1994
@@ -1099,7 +1099,7 @@ freezeset(struct parse *p, cset *cs)
 		if (cs2->hash == h && cs2 != cs) {
 			/* maybe */
 			for (i = 0; i < css; i++)
-				if (!!CHIN(cs2, i) != !!CHIN(cs, i))
+				if (CHIN(cs2, i) != CHIN(cs, i))
 					break;		/* no */
 			if (i == css)
 				break;			/* yes */
