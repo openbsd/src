@@ -1,4 +1,4 @@
-/*	$OpenBSD: regex2.h,v 1.10 2020/12/31 17:20:19 millert Exp $	*/
+/*	$OpenBSD: regex2.h,v 1.11 2021/01/03 10:50:02 tb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -107,10 +107,26 @@ typedef struct {
 	uch mask;		/* bit within array */
 	uch hash;		/* hash code */
 } cset;
-/* note that CHadd and CHsub are unsafe, and CHIN doesn't yield 0/1 */
-#define	CHadd(cs, c)	((cs)->ptr[(uch)(c)] |= (cs)->mask, (cs)->hash += (c))
-#define	CHsub(cs, c)	((cs)->ptr[(uch)(c)] &= ~(cs)->mask, (cs)->hash -= (c))
-#define	CHIN(cs, c)	((cs)->ptr[(uch)(c)] & (cs)->mask)
+
+static inline void
+CHadd(cset *cs, char c)
+{
+	cs->ptr[(uch)c] |= cs->mask;
+	cs->hash += c;
+}
+
+static inline void
+CHsub(cset *cs, char c)
+{
+	cs->ptr[(uch)c] &= ~cs->mask;
+	cs->hash -= c;
+}
+
+static inline uch
+CHIN(const cset *cs, char c)
+{
+	return cs->ptr[(uch)c] & cs->mask;
+}
 
 /*
  * main compiled-expression structure
