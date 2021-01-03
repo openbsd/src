@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fortune.6,v 1.15 2017/07/12 11:36:22 schwarze Exp $
+.\"	$OpenBSD: fortune.6,v 1.16 2021/01/03 01:41:51 schwarze Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)fortune.6	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: July 12 2017 $
+.Dd $Mdocdate: January 3 2021 $
 .Dt FORTUNE 6
 .Os
 .Sh NAME
@@ -193,7 +193,20 @@ are replaced with question marks in the output.
 .It Pa /usr/share/games/fortune/*
 Fortune files.
 .El
+.Sh EXIT STATUS
+.Ex -std
+In particular, if
+.Fl l ,
+.Fl m ,
+or
+.Fl s
+is specified, failure to find a matching citation in the selected
+files counts as an error.
 .Sh SEE ALSO
 .Xr random 6 ,
 .Xr rot13 6 ,
 .Xr re_format 7
+.Sh HISTORY
+.Nm
+first favored
+.At v7 .
