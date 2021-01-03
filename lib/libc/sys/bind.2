@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bind.2,v 1.21 2015/10/11 07:25:11 guenther Exp $
+.\"	$OpenBSD: bind.2,v 1.22 2021/01/03 18:10:27 rob Exp $
 .\"	$NetBSD: bind.2,v 1.8 1995/10/12 15:40:46 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)bind.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: October 11 2015 $
+.Dd $Mdocdate: January 3 2021 $
 .Dt BIND 2
 .Os
 .Sh NAME
@@ -116,7 +116,7 @@ exceeded
 .Dv PATH_MAX
 bytes.
 .It Bq Er ENOENT
-A prefix component of the path name does not exist.
+A prefix component of the pathname does not exist.
 .It Bq Er ELOOP
 Too many symbolic links were encountered in translating the pathname.
 .It Bq Er EIO

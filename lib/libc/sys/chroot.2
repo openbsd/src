@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chroot.2,v 1.22 2015/01/22 20:44:05 millert Exp $
+.\"	$OpenBSD: chroot.2,v 1.23 2021/01/03 18:10:27 rob Exp $
 .\"	$NetBSD: chroot.2,v 1.7 1995/02/27 12:32:12 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)chroot.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: January 22 2015 $
+.Dd $Mdocdate: January 3 2021 $
 .Dt CHROOT 2
 .Os
 .Sh NAME
@@ -85,7 +85,7 @@ setresuid(getuid(), getuid(), getuid());
 will fail and the root directory will be unchanged if:
 .Bl -tag -width Er
 .It Bq Er ENOTDIR
-A component of the path name is not a directory.
+A component of the pathname is not a directory.
 .It Bq Er ENAMETOOLONG
 A component of a pathname exceeded
 .Dv NAME_MAX
@@ -96,7 +96,7 @@ bytes.
 .It Bq Er ENOENT
 The named directory does not exist.
 .It Bq Er EACCES
-Search permission is denied for any component of the path name.
+Search permission is denied for any component of the pathname.
 .It Bq Er ELOOP
 Too many symbolic links were encountered in translating the pathname.
 .It Bq Er EFAULT

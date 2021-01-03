@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.2,v 1.69 2020/02/08 01:09:57 jsg Exp $
+.\"	$OpenBSD: intro.2,v 1.70 2021/01/03 18:10:27 rob Exp $
 .\"	$NetBSD: intro.2,v 1.6 1995/02/27 12:33:41 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1983, 1986, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)intro.2	8.3 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: February 8 2020 $
+.Dd $Mdocdate: January 3 2021 $
 .Dt INTRO 2
 .Os
 .Sh NAME
@@ -330,7 +330,7 @@ refused it.
 This usually results from trying to connect to a service that is
 inactive on the foreign host.
 .It Er 62 ELOOP Em "Too many levels of symbolic links" .
-A path name lookup involved more than 32
+A pathname lookup involved more than 32
 .Pq Dv SYMLOOP_MAX
 symbolic links.
 .It Er 63 ENAMETOOLONG Em "File name too long" .
@@ -622,14 +622,14 @@ These can be queried using
 .Xr pathconf 2
 and
 .Xr fpathconf 2 .
-.It Path Name
-A path name is a NUL-terminated
+.It Pathname
+A pathname is a NUL-terminated
 character string starting with an
 optional slash
 .Ql \&/ ,
 followed by zero or more directory names separated
 by slashes, optionally followed by a file name.
-The total length of a path name must be less than 1024
+The total length of a pathname must be less than 1024
 .Pq Dv PATH_MAX
 characters.
 Additional restrictions may apply, depending upon the filesystem, to be
@@ -639,7 +639,7 @@ or
 .Xr fpathconf 2
 if needed.
 .Pp
-If a path name begins with a slash, the path search begins at the
+If a pathname begins with a slash, the path search begins at the
 .Em root
 directory.
 Otherwise, the search begins from the current working directory.
