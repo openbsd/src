@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.conf.5,v 1.27 2020/11/06 20:31:58 sthen Exp $
+.\"	$OpenBSD: acme-client.conf.5,v 1.28 2021/01/03 16:32:38 florian Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 6 2020 $
+.Dd $Mdocdate: January 3 2021 $
 .Dt ACME-CLIENT.CONF 5
 .Os
 .Sh NAME
@@ -149,6 +149,11 @@ The filename of the certificate that will be issued.
 This is optional if
 .Ar domain full chain certificate
 is specified.
+A backup with name
+.Ar file.1
+is created if
+.Ar file
+exists.
 .It Ic domain chain certificate Ar file
 The filename in which to store the certificate chain
 that will be returned by the certificate authority.
@@ -156,6 +161,11 @@ It needs to be in the same directory as the
 .Ar domain certificate
 (or in a subdirectory) and can be specified as a relative or absolute path.
 This setting is optional.
+A backup with name
+.Ar file.1
+is created if
+.Ar file
+exists.
 .It Ic domain full chain certificate Ar file
 The filename in which to store the full certificate chain
 that will be returned by the certificate authority.
@@ -170,6 +180,11 @@ in one file, and is required by most browsers.
 This is optional if
 .Ar domain certificate
 is specified.
+A backup with name
+.Ar file.1
+is created if
+.Ar file
+exists.
 .It Ic sign with Ar authority
 The certificate authority (as declared above in the
 .Sx AUTHORITIES
