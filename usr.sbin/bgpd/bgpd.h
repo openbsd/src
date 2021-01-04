@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.408 2020/12/30 07:29:56 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.409 2021/01/04 13:40:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1371,7 +1371,7 @@ int		 aid2afi(u_int8_t, u_int16_t *, u_int8_t *);
 int		 afi2aid(u_int16_t, u_int8_t, u_int8_t *);
 sa_family_t	 aid2af(u_int8_t);
 int		 af2aid(sa_family_t, u_int8_t, u_int8_t *);
-struct sockaddr	*addr2sa(struct bgpd_addr *, u_int16_t, socklen_t *);
+struct sockaddr	*addr2sa(const struct bgpd_addr *, u_int16_t, socklen_t *);
 void		 sa2addr(struct sockaddr *, struct bgpd_addr *, u_int16_t *);
 const char *	 get_baudrate(unsigned long long, char *);
 

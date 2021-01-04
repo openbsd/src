@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.55 2020/10/21 06:53:54 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.56 2021/01/04 13:40:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -39,14 +39,12 @@ log_addr(const struct bgpd_addr *addr)
 {
 	static char	buf[74];
 	char		tbuf[40];
+	socklen_t	len;
 
 	switch (addr->aid) {
 	case AID_INET:
 	case AID_INET6:
-		if (inet_ntop(aid2af(addr->aid), &addr->ba, buf,
-		    sizeof(buf)) == NULL)
-			return ("?");
-		return (buf);
+		return log_sockaddr(addr2sa(addr, 0, &len), len);
 	case AID_VPN_IPv4:
 		if (inet_ntop(AF_INET, &addr->vpn4.addr, tbuf,
 		    sizeof(tbuf)) == NULL)
@@ -838,7 +836,7 @@ af2aid(sa_family_t af, u_int8_t safi, u_int8_t *aid)
 }
 
 struct sockaddr *
-addr2sa(struct bgpd_addr *addr, u_int16_t port, socklen_t *len)
+addr2sa(const struct bgpd_addr *addr, u_int16_t port, socklen_t *len)
 {
 	static struct sockaddr_storage	 ss;
 	struct sockaddr_in		*sa_in = (struct sockaddr_in *)&ss;
