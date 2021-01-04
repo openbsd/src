@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.56 2021/01/02 18:00:08 tb Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.57 2021/01/04 16:46:07 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -135,13 +135,13 @@ tls13_record_layer_free(struct tls13_record_layer *rl)
 	if (rl == NULL)
 		return;
 
+	tls13_record_layer_rrec_free(rl);
+	tls13_record_layer_wrec_free(rl);
+
 	freezero(rl->alert_data, rl->alert_len);
 	freezero(rl->phh_data, rl->phh_len);
 
 	tls13_record_layer_rbuf_free(rl);
-
-	tls13_record_layer_rrec_free(rl);
-	tls13_record_layer_wrec_free(rl);
 
 	EVP_AEAD_CTX_cleanup(&rl->read_aead_ctx);
 	EVP_AEAD_CTX_cleanup(&rl->write_aead_ctx);
