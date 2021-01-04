@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.27 2019/10/24 12:39:27 tb Exp $	*/
+/*	$OpenBSD: smi.c,v 1.28 2021/01/04 07:59:54 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -317,9 +317,6 @@ smi_debug_elements(struct ber_element *root)
 		case BER_TYPE_EOC:
 			fprintf(stderr, "end-of-content");
 			break;
-		case BER_TYPE_BOOLEAN:
-			fprintf(stderr, "boolean");
-			break;
 		case BER_TYPE_INTEGER:
 			fprintf(stderr, "integer");
 			break;
@@ -417,9 +414,6 @@ smi_debug_elements(struct ber_element *root)
 		goto invalid;
 
 	switch (root->be_encoding) {
-	case BER_TYPE_BOOLEAN:
-		fprintf(stderr, "%s", value);
-		break;
 	case BER_TYPE_INTEGER:
 	case BER_TYPE_ENUMERATED:
 		fprintf(stderr, "value %s", value);
@@ -473,17 +467,10 @@ smi_print_element(struct ber_element *root)
 	char		*str = NULL, *buf, *p;
 	size_t		 len, i;
 	long long	 v;
-	int		 d;
 	struct ber_oid	 o;
 	char		 strbuf[BUFSIZ];
 
 	switch (root->be_encoding) {
-	case BER_TYPE_BOOLEAN:
-		if (ober_get_boolean(root, &d) == -1)
-			goto fail;
-		if (asprintf(&str, "%s(%d)", d ? "true" : "false", d) == -1)
-			goto fail;
-		break;
 	case BER_TYPE_INTEGER:
 	case BER_TYPE_ENUMERATED:
 		if (ober_get_integer(root, &v) == -1)
