@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.809 2021/01/01 08:36:51 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.810 2021/01/04 08:43:16 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 1 2021 $
+.Dd $Mdocdate: January 4 2021 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -4181,10 +4181,13 @@ interactive application starts and restores it on exit, so that any output
 visible before the application starts reappears unchanged after it exits.
 .Pp
 .It Xo Ic remain-on-exit
-.Op Ic on | off
+.Op Ic on | off | failed
 .Xc
 A pane with this flag set is not destroyed when the program running in it
 exits.
+If set to
+.Ic failed ,
+then only when the program exit status is not zero.
 The pane may be reactivated with the
 .Ic respawn-pane
 command.
