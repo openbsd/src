@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.279 2020/12/12 11:49:02 jan Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.280 2021/01/04 12:48:27 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -612,7 +612,7 @@ pfsync_state_import(struct pfsync_state *sp, int flags)
 	st->rtableid[PF_SK_STACK] = ntohl(sp->rtableid[PF_SK_STACK]);
 
 	/* copy to state */
-	bcopy(&sp->rt_addr, &st->rt_addr, sizeof(st->rt_addr));
+	st->rt_addr = sp->rt_addr;
 	st->creation = getuptime() - ntohl(sp->creation);
 	st->expire = getuptime();
 	if (ntohl(sp->expire)) {
@@ -1843,6 +1843,7 @@ pfsync_undefer(struct pfsync_deferral *pd, int drop)
 {
 	struct pfsync_softc *sc = pfsyncif;
 	struct pf_pdesc pdesc;
+	struct pf_state *st = pd->pd_st;
 
 	NET_ASSERT_LOCKED();
 
@@ -1852,35 +1853,32 @@ pfsync_undefer(struct pfsync_deferral *pd, int drop)
 	TAILQ_REMOVE(&sc->sc_deferrals, pd, pd_entry);
 	sc->sc_deferred--;
 
-	CLR(pd->pd_st->state_flags, PFSTATE_ACK);
+	CLR(st->state_flags, PFSTATE_ACK);
 	if (drop)
 		m_freem(pd->pd_m);
 	else {
-		if (pd->pd_st->rule.ptr->rt == PF_ROUTETO) {
-			if (pf_setup_pdesc(&pdesc,
-			    pd->pd_st->key[PF_SK_WIRE]->af,
-			    pd->pd_st->direction, pd->pd_st->rt_kif,
-			    pd->pd_m, NULL) != PF_PASS) {
+		if (st->rule.ptr->rt == PF_ROUTETO) {
+			if (pf_setup_pdesc(&pdesc, st->key[PF_SK_WIRE]->af,
+			    st->direction, st->kif, pd->pd_m, NULL) !=
+			    PF_PASS) {
 				m_freem(pd->pd_m);
 				goto out;
 			}
-			switch (pd->pd_st->key[PF_SK_WIRE]->af) {
+			switch (st->key[PF_SK_WIRE]->af) {
 			case AF_INET:
-				pf_route(&pdesc,
-				    pd->pd_st->rule.ptr, pd->pd_st);
+				pf_route(&pdesc, st->rule.ptr, st);
 				break;
 #ifdef INET6
 			case AF_INET6:
-				pf_route6(&pdesc,
-				    pd->pd_st->rule.ptr, pd->pd_st);
+				pf_route6(&pdesc, st->rule.ptr, st);
 				break;
 #endif /* INET6 */
 			default:
-				unhandled_af(pd->pd_st->key[PF_SK_WIRE]->af);
+				unhandled_af(st->key[PF_SK_WIRE]->af);
 			}
 			pd->pd_m = pdesc.m;
 		} else {
-			switch (pd->pd_st->key[PF_SK_WIRE]->af) {
+			switch (st->key[PF_SK_WIRE]->af) {
 			case AF_INET:
 				ip_output(pd->pd_m, NULL, NULL, 0, NULL, NULL,
 				    0);
@@ -1892,12 +1890,12 @@ pfsync_undefer(struct pfsync_deferral *pd, int drop)
 				break;
 #endif /* INET6 */
 			default:
-				unhandled_af(pd->pd_st->key[PF_SK_WIRE]->af);
+				unhandled_af(st->key[PF_SK_WIRE]->af);
 			}
 		}
 	}
  out:
-	pf_state_unref(pd->pd_st);
+	pf_state_unref(st);
 	pool_put(&sc->sc_pool, pd);
 }
 

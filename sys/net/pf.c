@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1096 2020/12/10 06:40:22 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1097 2021/01/04 12:48:27 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1186,7 +1186,7 @@ pf_state_export(struct pfsync_state *sp, struct pf_state *st)
 
 	/* copy from state */
 	strlcpy(sp->ifname, st->kif->pfik_name, sizeof(sp->ifname));
-	memcpy(&sp->rt_addr, &st->rt_addr, sizeof(sp->rt_addr));
+	sp->rt_addr = st->rt_addr;
 	sp->creation = htonl(getuptime() - st->creation);
 	expire = pf_state_expires(st);
 	if (expire <= getuptime())
@@ -3437,21 +3437,8 @@ pf_set_rt_ifp(struct pf_state *s, struct pf_addr *saddr, sa_family_t af,
 	if (!r->rt)
 		return (0);
 
-	switch (af) {
-	case AF_INET:
-		rv = pf_map_addr(AF_INET, r, saddr, &s->rt_addr, NULL, sns,
-		    &r->route, PF_SN_ROUTE);
-		break;
-#ifdef INET6
-	case AF_INET6:
-		rv = pf_map_addr(AF_INET6, r, saddr, &s->rt_addr, NULL, sns,
-		    &r->route, PF_SN_ROUTE);
-		break;
-#endif /* INET6 */
-	default:
-		rv = 1;
-	}
-
+	rv = pf_map_addr(af, r, saddr, &s->rt_addr, NULL, sns, 
+	    &r->route, PF_SN_ROUTE);
 	if (rv == 0) {
 		s->rt_kif = r->route.kif;
 		s->natrule.ptr = r;
@@ -6270,7 +6257,6 @@ bad:
 	goto done;
 }
 #endif /* INET6 */
-
 
 /*
  * check TCP checksum and set mbuf flag
