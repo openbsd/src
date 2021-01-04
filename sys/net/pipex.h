@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.h,v 1.29 2021/01/02 13:15:15 mvs Exp $	*/
+/*	$OpenBSD: pipex.h,v 1.30 2021/01/04 12:21:38 mvs Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -177,22 +177,8 @@ extern int	pipex_enable;
 
 struct pipex_session;
 
-/* pipex context for a interface
- *
- * Locks used to protect struct members:
- *      I       immutable after creation
- *      N       net lock
- */
-struct pipex_iface_context {
-	u_int	ifindex;		/* [I] outer interface index */
-	u_int	pipexmode;		/* [N] pipex mode */
-	/* [I] virtual pipex_session entry for multicast routing */
-	struct pipex_session *multicast_session;
-};
-
 __BEGIN_DECLS
 void                  pipex_init (void);
-void                  pipex_iface_fini (struct pipex_iface_context *);
 
 struct pipex_session  *pipex_pppoe_lookup_session (struct mbuf *);
 struct mbuf           *pipex_pppoe_input (struct mbuf *, struct pipex_session *);

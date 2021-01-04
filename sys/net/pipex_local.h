@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.40 2020/08/27 10:47:52 yasuoka Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.41 2021/01/04 12:21:38 mvs Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -384,8 +384,6 @@ void                  pipex_rele_session(struct pipex_session *);
 int                   pipex_link_session(struct pipex_session *,
                           struct ifnet *, void *);
 void                  pipex_unlink_session(struct pipex_session *);
-int                   pipex_close_session (struct pipex_session_close_req *,
-                          struct pipex_iface_context *);
 int                   pipex_config_session (struct pipex_session_config_req *,
                           void *);
 int                   pipex_get_stat (struct pipex_session_stat_req *,
