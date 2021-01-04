@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr.h,v 1.53 2020/08/06 12:00:46 mvs Exp $	*/
+/*	$OpenBSD: netisr.h,v 1.54 2021/01/04 21:21:41 kn Exp $	*/
 /*	$NetBSD: netisr.h,v 1.12 1995/08/12 23:59:24 mycroft Exp $	*/
 
 /*
@@ -45,7 +45,6 @@
 #define	NETISR_ARP	18		/* same as AF_LINK */
 #define	NETISR_PPP	28		/* for PPP processing */
 #define	NETISR_BRIDGE	29		/* for bridge processing */
-#define	NETISR_PPPOE	30		/* for pppoe processing */
 #define	NETISR_SWITCH	31		/* for switch dataplane */
 
 #ifndef _LOCORE

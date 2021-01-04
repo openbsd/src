@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.75 2020/12/30 13:18:07 mvs Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.76 2021/01/04 21:21:41 kn Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -143,14 +143,8 @@ struct pppoe_softc {
 	struct timeval sc_session_time;	/* [N] time the session was established */
 };
 
-/* incoming traffic will be queued here */
-struct niqueue pppoediscinq = NIQUEUE_INITIALIZER(IFQ_MAXLEN, NETISR_PPPOE);
-struct niqueue pppoeinq = NIQUEUE_INITIALIZER(IFQ_MAXLEN, NETISR_PPPOE);
-
 /* input routines */
-static void pppoe_disc_input(struct mbuf *);
 static void pppoe_dispatch_disc_pkt(struct mbuf *);
-static void pppoe_data_input(struct mbuf *);
 
 /* management routines */
 void pppoeattach(int);
@@ -339,21 +333,6 @@ pppoe_find_softc_by_hunique(u_int8_t *token, size_t len, u_int ifidx)
 		return (NULL);
 	}
 	return (sc);
-}
-
-/* Interface interrupt handler routine. */
-void
-pppoeintr(void)
-{
-	struct mbuf *m;
-
-	NET_ASSERT_LOCKED();
-
-	while ((m = niq_dequeue(&pppoediscinq)) != NULL)
-		pppoe_disc_input(m);
-
-	while ((m = niq_dequeue(&pppoeinq)) != NULL)
-		pppoe_data_input(m);
 }
 
 /* Analyze and handle a single received packet while not in session state. */
@@ -649,7 +628,7 @@ done:
 }
 
 /* Input function for discovery packets. */
-static void
+void
 pppoe_disc_input(struct mbuf *m)
 {
 	/* avoid error messages if there is not a single pppoe instance */
@@ -661,7 +640,7 @@ pppoe_disc_input(struct mbuf *m)
 }
 
 /* Input function for data packets */
-static void
+void
 pppoe_data_input(struct mbuf *m)
 {
 	struct pppoe_softc *sc;

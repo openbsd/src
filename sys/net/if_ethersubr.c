@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.267 2020/10/01 05:14:10 jsg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.268 2021/01/04 21:21:41 kn Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -532,9 +532,9 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		}
 #endif
 		if (etype == ETHERTYPE_PPPOEDISC)
-			niq_enqueue(&pppoediscinq, m);
+			pppoe_disc_input(m);
 		else
-			niq_enqueue(&pppoeinq, m);
+			pppoe_data_input(m);
 		return;
 #endif
 #ifdef MPLS
