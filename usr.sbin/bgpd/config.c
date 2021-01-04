@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.97 2020/12/29 15:30:34 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.98 2021/01/04 13:42:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -551,22 +551,20 @@ prefixset_cmp(struct prefixset_item *a, struct prefixset_item *b)
 
 	switch (a->p.addr.aid) {
 	case AID_INET:
-		if (ntohl(a->p.addr.v4.s_addr) < ntohl(b->p.addr.v4.s_addr))
-			return (-1);
-		if (ntohl(a->p.addr.v4.s_addr) > ntohl(b->p.addr.v4.s_addr))
-			return (1);
+		i = memcmp(&a->p.addr.v4, &b->p.addr.v4,
+		    sizeof(struct in_addr));
 		break;
 	case AID_INET6:
 		i = memcmp(&a->p.addr.v6, &b->p.addr.v6,
 		    sizeof(struct in6_addr));
-		if (i > 0)
-			return (1);
-		if (i < 0)
-			return (-1);
 		break;
 	default:
 		fatalx("%s: unknown af", __func__);
 	}
+	if (i > 0)
+		return (1);
+	if (i < 0)
+		return (-1);
 	if (a->p.len < b->p.len)
 		return (-1);
 	if (a->p.len > b->p.len)
@@ -587,16 +585,45 @@ RB_GENERATE(prefixset_tree, prefixset_item, entry, prefixset_cmp);
 static inline int
 roa_cmp(struct roa *a, struct roa *b)
 {
-	size_t len = 4 + sizeof(a->asnum);
+	int i;
 
-	if (a->aid == b->aid) {
-		if (a->aid == AID_INET)
-			len += sizeof(a->prefix.inet);
-		else
-			len += sizeof(a->prefix.inet6);
+	if (a->aid < b->aid)
+		return (-1);
+	if (a->aid > b->aid)
+		return (1);
+
+	switch (a->aid) {
+	case AID_INET:
+		i = memcmp(&a->prefix.inet, &b->prefix.inet,
+		    sizeof(struct in_addr));
+		break;
+	case AID_INET6:
+		i = memcmp(&a->prefix.inet6, &b->prefix.inet6,
+		    sizeof(struct in6_addr));
+		break;
+	default:
+		fatalx("%s: unknown af", __func__);
 	}
+	if (i > 0)
+		return (1);
+	if (i < 0)
+		return (-1);
+	if (a->prefixlen < b->prefixlen)
+		return (-1);
+	if (a->prefixlen > b->prefixlen)
+		return (1);
 
-	return memcmp(&a->aid, &b->aid, len);
+	if (a->asnum < b->asnum)
+		return (-1);
+	if (a->asnum > b->asnum)
+		return (1);
+
+	if (a->maxlen < b->maxlen)
+		return (-1);
+	if (a->maxlen > b->maxlen)
+		return (1);
+
+	return (0);
 }
 
 RB_GENERATE(roa_tree, roa, entry, roa_cmp);
