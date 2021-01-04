@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.91 2020/12/27 01:00:25 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.92 2021/01/04 04:50:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -2220,6 +2220,7 @@ struct mcx_dmamem {
 #define MCX_DMA_MAP(_mxm)	((_mxm)->mxm_map)
 #define MCX_DMA_DVA(_mxm)	((_mxm)->mxm_map->dm_segs[0].ds_addr)
 #define MCX_DMA_KVA(_mxm)	((void *)(_mxm)->mxm_kva)
+#define MCX_DMA_OFF(_mxm, _off)	((void *)((_mxm)->mxm_kva + (_off)))
 #define MCX_DMA_LEN(_mxm)	((_mxm)->mxm_size)
 
 struct mcx_hwmem {
@@ -2243,7 +2244,7 @@ struct mcx_eq {
 struct mcx_cq {
 	int			 cq_n;
 	struct mcx_dmamem	 cq_mem;
-	uint32_t		*cq_doorbell;
+	bus_addr_t		 cq_doorbell;
 	uint32_t		 cq_cons;
 	uint32_t		 cq_count;
 };
@@ -2266,7 +2267,7 @@ struct mcx_rx {
 	int			 rx_rqn;
 	struct mcx_dmamem	 rx_rq_mem;
 	struct mcx_slot		*rx_slots;
-	uint32_t		*rx_doorbell;
+	bus_addr_t		 rx_doorbell;
 
 	uint32_t		 rx_prod;
 	struct timeout		 rx_refill;
@@ -2281,7 +2282,7 @@ struct mcx_tx {
 	int			 tx_sqn;
 	struct mcx_dmamem	 tx_sq_mem;
 	struct mcx_slot		*tx_slots;
-	uint32_t		*tx_doorbell;
+	bus_addr_t		 tx_doorbell;
 	int			 tx_bf_offset;
 
 	uint32_t		 tx_cons;
@@ -4477,6 +4478,8 @@ mcx_create_cq(struct mcx_softc *sc, struct mcx_cq *cq, int uar, int db, int eqn)
 	uint64_t *pas;
 	int insize, npages, paslen, i, token;
 
+	cq->cq_doorbell = MCX_CQ_DOORBELL_BASE + (MCX_CQ_DOORBELL_STRIDE * db);
+
 	npages = howmany((1 << MCX_LOG_CQ_SIZE) * sizeof(struct mcx_cq_entry),
 	    MCX_PAGE_SIZE);
 	paslen = npages * sizeof(*pas);
@@ -4516,8 +4519,7 @@ mcx_create_cq(struct mcx_softc *sc, struct mcx_cq *cq, int uar, int db, int eqn)
 	    (MCX_CQ_MOD_PERIOD << MCX_CQ_CTX_PERIOD_SHIFT) |
 	    MCX_CQ_MOD_COUNTER);
 	mbin->cmd_cq_ctx.cq_doorbell = htobe64(
-	    MCX_DMA_DVA(&sc->sc_doorbell_mem) +
-	    MCX_CQ_DOORBELL_BASE + (MCX_CQ_DOORBELL_STRIDE * db));
+	    MCX_DMA_DVA(&sc->sc_doorbell_mem) + cq->cq_doorbell);
 
 	bus_dmamap_sync(sc->sc_dmat, MCX_DMA_MAP(&cq->cq_mem),
 	    0, MCX_DMA_LEN(&cq->cq_mem), BUS_DMASYNC_PREREAD);
@@ -4546,10 +4548,12 @@ mcx_create_cq(struct mcx_softc *sc, struct mcx_cq *cq, int uar, int db, int eqn)
 	cq->cq_n = mcx_get_id(out->cmd_cqn);
 	cq->cq_cons = 0;
 	cq->cq_count = 0;
-	cq->cq_doorbell = MCX_DMA_KVA(&sc->sc_doorbell_mem) +
-	    MCX_CQ_DOORBELL_BASE + (MCX_CQ_DOORBELL_STRIDE * db);
 
 	mcx_dmamem_free(sc, &mxm);
+
+	bus_dmamap_sync(sc->sc_dmat, MCX_DMA_MAP(&sc->sc_doorbell_mem),
+	    cq->cq_doorbell, sizeof(struct mcx_cq_doorbell),
+	    BUS_DMASYNC_PREWRITE);
 
 	mcx_arm_cq(sc, cq, uar);
 
@@ -4600,6 +4604,10 @@ mcx_destroy_cq(struct mcx_softc *sc, struct mcx_cq *cq)
 		return -1;
 	}
 
+	bus_dmamap_sync(sc->sc_dmat, MCX_DMA_MAP(&sc->sc_doorbell_mem),
+	    cq->cq_doorbell, sizeof(struct mcx_cq_doorbell),
+	    BUS_DMASYNC_POSTWRITE);
+
 	bus_dmamap_sync(sc->sc_dmat, MCX_DMA_MAP(&cq->cq_mem),
 	    0, MCX_DMA_LEN(&cq->cq_mem), BUS_DMASYNC_POSTREAD);
 	mcx_dmamem_free(sc, &cq->cq_mem);
@@ -4621,8 +4629,10 @@ mcx_create_rq(struct mcx_softc *sc, struct mcx_rx *rx, int db, int cqn)
 	int error;
 	uint64_t *pas;
 	uint32_t rq_flags;
-	uint8_t *doorbell;
 	int insize, npages, paslen, token;
+
+	rx->rx_doorbell = MCX_WQ_DOORBELL_BASE +
+	    (db * MCX_WQ_DOORBELL_STRIDE);
 
 	npages = howmany((1 << MCX_LOG_RQ_SIZE) * sizeof(struct mcx_rq_entry),
 	    MCX_PAGE_SIZE);
@@ -4662,7 +4672,7 @@ mcx_create_rq(struct mcx_softc *sc, struct mcx_rx *rx, int db, int cqn)
 	mbin->rq_wq.wq_type = MCX_WQ_CTX_TYPE_CYCLIC;
 	mbin->rq_wq.wq_pd = htobe32(sc->sc_pd);
 	mbin->rq_wq.wq_doorbell = htobe64(MCX_DMA_DVA(&sc->sc_doorbell_mem) +
-	    MCX_WQ_DOORBELL_BASE + (db * MCX_WQ_DOORBELL_STRIDE));
+	    rx->rx_doorbell);
 	mbin->rq_wq.wq_log_stride = htobe16(4);
 	mbin->rq_wq.wq_log_size = MCX_LOG_RQ_SIZE;
 
@@ -4694,9 +4704,8 @@ mcx_create_rq(struct mcx_softc *sc, struct mcx_rx *rx, int db, int cqn)
 
 	mcx_dmamem_free(sc, &mxm);
 
-	doorbell = MCX_DMA_KVA(&sc->sc_doorbell_mem);
-	rx->rx_doorbell = (uint32_t *)(doorbell + MCX_WQ_DOORBELL_BASE +
-	    (db * MCX_WQ_DOORBELL_STRIDE));
+	bus_dmamap_sync(sc->sc_dmat, MCX_DMA_MAP(&sc->sc_doorbell_mem),
+	    rx->rx_doorbell, sizeof(uint32_t), BUS_DMASYNC_PREWRITE);
 
 	return (0);
 
@@ -4800,6 +4809,9 @@ mcx_destroy_rq(struct mcx_softc *sc, struct mcx_rx *rx)
 		    out->cmd_status, betoh32(out->cmd_syndrome));
 		return -1;
 	}
+
+	bus_dmamap_sync(sc->sc_dmat, MCX_DMA_MAP(&sc->sc_doorbell_mem),
+	    rx->rx_doorbell, sizeof(uint32_t), BUS_DMASYNC_POSTWRITE);
 
 	bus_dmamap_sync(sc->sc_dmat, MCX_DMA_MAP(&rx->rx_rq_mem),
 	    0, MCX_DMA_LEN(&rx->rx_rq_mem), BUS_DMASYNC_POSTWRITE);
@@ -4977,8 +4989,10 @@ mcx_create_sq(struct mcx_softc *sc, struct mcx_tx *tx, int uar, int db,
 	struct mcx_cmd_create_sq_out *out;
 	int error;
 	uint64_t *pas;
-	uint8_t *doorbell;
 	int insize, npages, paslen, token;
+
+	tx->tx_doorbell = MCX_WQ_DOORBELL_BASE +
+	    (db * MCX_WQ_DOORBELL_STRIDE);
 
 	npages = howmany((1 << MCX_LOG_SQ_SIZE) * sizeof(struct mcx_sq_entry),
 	    MCX_PAGE_SIZE);
@@ -5019,7 +5033,7 @@ mcx_create_sq(struct mcx_softc *sc, struct mcx_tx *tx, int uar, int db,
 	mbin->sq_wq.wq_pd = htobe32(sc->sc_pd);
 	mbin->sq_wq.wq_uar_page = htobe32(uar);
 	mbin->sq_wq.wq_doorbell = htobe64(MCX_DMA_DVA(&sc->sc_doorbell_mem) +
-	    MCX_WQ_DOORBELL_BASE + (db * MCX_WQ_DOORBELL_STRIDE));
+	    tx->tx_doorbell);
 	mbin->sq_wq.wq_log_stride = htobe16(MCX_LOG_SQ_ENTRY_SIZE);
 	mbin->sq_wq.wq_log_size = MCX_LOG_SQ_SIZE;
 
@@ -5053,9 +5067,8 @@ mcx_create_sq(struct mcx_softc *sc, struct mcx_tx *tx, int uar, int db,
 
 	mcx_dmamem_free(sc, &mxm);
 
-	doorbell = MCX_DMA_KVA(&sc->sc_doorbell_mem);
-	tx->tx_doorbell = (uint32_t *)(doorbell + MCX_WQ_DOORBELL_BASE +
-	    (db * MCX_WQ_DOORBELL_STRIDE) + 4);
+	bus_dmamap_sync(sc->sc_dmat, MCX_DMA_MAP(&sc->sc_doorbell_mem),
+	    tx->tx_doorbell, sizeof(uint32_t), BUS_DMASYNC_PREWRITE);
 
 	return (0);
 
@@ -5103,6 +5116,9 @@ mcx_destroy_sq(struct mcx_softc *sc, struct mcx_tx *tx)
 		    out->cmd_status, betoh32(out->cmd_syndrome));
 		return -1;
 	}
+
+	bus_dmamap_sync(sc->sc_dmat, MCX_DMA_MAP(&sc->sc_doorbell_mem),
+	    tx->tx_doorbell, sizeof(uint32_t), BUS_DMASYNC_POSTWRITE);
 
 	bus_dmamap_sync(sc->sc_dmat, MCX_DMA_MAP(&tx->tx_sq_mem),
 	    0, MCX_DMA_LEN(&tx->tx_sq_mem), BUS_DMASYNC_POSTWRITE);
@@ -6579,7 +6595,12 @@ mcx_rx_fill_slots(struct mcx_softc *sc, struct mcx_rx *rx, uint nslots)
 
 	rx->rx_prod = p;
 
-	htobem32(rx->rx_doorbell, p & MCX_WQ_DOORBELL_MASK);
+	bus_dmamap_sync(sc->sc_dmat, MCX_DMA_MAP(&sc->sc_doorbell_mem),
+	    rx->rx_doorbell, sizeof(uint32_t), BUS_DMASYNC_POSTWRITE);
+	htobem32(MCX_DMA_OFF(&sc->sc_doorbell_mem, rx->rx_doorbell),
+	    p & MCX_WQ_DOORBELL_MASK);
+	bus_dmamap_sync(sc->sc_dmat, MCX_DMA_MAP(&sc->sc_doorbell_mem),
+	    rx->rx_doorbell, sizeof(uint32_t), BUS_DMASYNC_PREWRITE);
 
 	return (nslots - fills);
 }
@@ -6791,24 +6812,32 @@ mcx_next_cq_entry(struct mcx_softc *sc, struct mcx_cq *cq)
 static void
 mcx_arm_cq(struct mcx_softc *sc, struct mcx_cq *cq, int uar)
 {
+	struct mcx_cq_doorbell *db;
 	bus_size_t offset;
 	uint32_t val;
 	uint64_t uval;
 
-	offset = (MCX_PAGE_SIZE * uar);
 	val = ((cq->cq_count) & 3) << MCX_CQ_DOORBELL_ARM_CMD_SN_SHIFT;
 	val |= (cq->cq_cons & MCX_CQ_DOORBELL_ARM_CI_MASK);
 
-	cq->cq_doorbell[0] = htobe32(cq->cq_cons & MCX_CQ_DOORBELL_ARM_CI_MASK);
-	cq->cq_doorbell[1] = htobe32(val);
+	db = MCX_DMA_OFF(&sc->sc_doorbell_mem, cq->cq_doorbell);
 
-	uval = val;
-	uval <<= 32;
+	bus_dmamap_sync(sc->sc_dmat, MCX_DMA_MAP(&sc->sc_doorbell_mem),
+	    cq->cq_doorbell, sizeof(*db), BUS_DMASYNC_POSTWRITE);
+
+	htobem32(&db->db_update_ci, cq->cq_cons & MCX_CQ_DOORBELL_ARM_CI_MASK);
+	htobem32(&db->db_arm_ci, val);
+
+	bus_dmamap_sync(sc->sc_dmat, MCX_DMA_MAP(&sc->sc_doorbell_mem),
+	    cq->cq_doorbell, sizeof(*db), BUS_DMASYNC_PREWRITE);
+
+	offset = (MCX_PAGE_SIZE * uar) + MCX_UAR_CQ_DOORBELL;
+
+	uval = (uint64_t)val << 32;
 	uval |= cq->cq_n;
-	bus_space_write_raw_8(sc->sc_memt, sc->sc_memh,
-	    offset + MCX_UAR_CQ_DOORBELL, htobe64(uval));
-	mcx_bar(sc, offset + MCX_UAR_CQ_DOORBELL, sizeof(uint64_t),
-	    BUS_SPACE_BARRIER_WRITE);
+
+	bus_space_write_raw_8(sc->sc_memt, sc->sc_memh, offset, htobe64(uval));
+	mcx_bar(sc, offset, sizeof(uval), BUS_SPACE_BARRIER_WRITE);
 }
 
 void
@@ -7733,20 +7762,27 @@ mcx_start(struct ifqueue *ifq)
 	    0, MCX_DMA_LEN(&tx->tx_sq_mem), BUS_DMASYNC_PREWRITE);
 
 	if (used) {
-		htobem32(tx->tx_doorbell, tx->tx_prod & MCX_WQ_DOORBELL_MASK);
+		bus_size_t blueflame;
 
-		membar_sync();
+		bus_dmamap_sync(sc->sc_dmat, MCX_DMA_MAP(&sc->sc_doorbell_mem),
+		    tx->tx_doorbell, sizeof(uint32_t), BUS_DMASYNC_POSTWRITE);
+		htobem32(MCX_DMA_OFF(&sc->sc_doorbell_mem, tx->tx_doorbell),
+		    tx->tx_prod & MCX_WQ_DOORBELL_MASK);
+		bus_dmamap_sync(sc->sc_dmat, MCX_DMA_MAP(&sc->sc_doorbell_mem),
+		    tx->tx_doorbell, sizeof(uint32_t), BUS_DMASYNC_PREWRITE);
 
 		/*
 		 * write the first 64 bits of the last sqe we produced
 		 * to the blue flame buffer
 		 */
+
+		blueflame = bf_base + tx->tx_bf_offset;
 		bus_space_write_raw_8(sc->sc_memt, sc->sc_memh,
-		    bf_base + tx->tx_bf_offset, *bf);
+		    blueflame, *bf);
+		mcx_bar(sc, blueflame, sizeof(*bf), BUS_SPACE_BARRIER_WRITE);
+
 		/* next write goes to the other buffer */
 		tx->tx_bf_offset ^= sc->sc_bf_size;
-
-		membar_sync();
 	}
 }
 
