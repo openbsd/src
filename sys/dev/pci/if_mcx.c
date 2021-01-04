@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.92 2021/01/04 04:50:05 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.93 2021/01/04 23:12:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -4992,7 +4992,7 @@ mcx_create_sq(struct mcx_softc *sc, struct mcx_tx *tx, int uar, int db,
 	int insize, npages, paslen, token;
 
 	tx->tx_doorbell = MCX_WQ_DOORBELL_BASE +
-	    (db * MCX_WQ_DOORBELL_STRIDE);
+	    (db * MCX_WQ_DOORBELL_STRIDE) + 4;
 
 	npages = howmany((1 << MCX_LOG_SQ_SIZE) * sizeof(struct mcx_sq_entry),
 	    MCX_PAGE_SIZE);
