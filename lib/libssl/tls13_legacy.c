@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_legacy.c,v 1.19 2020/11/03 17:41:39 jsing Exp $ */
+/*	$OpenBSD: tls13_legacy.c,v 1.20 2021/01/04 19:19:12 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -216,7 +216,7 @@ tls13_legacy_read_bytes(SSL *ssl, int type, unsigned char *buf, int len, int pee
 		return -1;
 	}
 	if (len < 0) {
-		SSLerror(ssl, SSL_R_BAD_LENGTH); 
+		SSLerror(ssl, SSL_R_BAD_LENGTH);
 		return -1;
 	}
 
@@ -247,7 +247,7 @@ tls13_legacy_write_bytes(SSL *ssl, int type, const void *vbuf, int len)
 		return -1;
 	}
 	if (len < 0) {
-		SSLerror(ssl, SSL_R_BAD_LENGTH); 
+		SSLerror(ssl, SSL_R_BAD_LENGTH);
 		return -1;
 	}
 
@@ -261,12 +261,12 @@ tls13_legacy_write_bytes(SSL *ssl, int type, const void *vbuf, int len)
 	}
 
 	/*
- 	 * In the non-SSL_MODE_ENABLE_PARTIAL_WRITE case we have to loop until
+	 * In the non-SSL_MODE_ENABLE_PARTIAL_WRITE case we have to loop until
 	 * we have written out all of the requested data.
 	 */
 	sent = S3I(ssl)->wnum;
 	if (len < sent) {
-		SSLerror(ssl, SSL_R_BAD_LENGTH); 
+		SSLerror(ssl, SSL_R_BAD_LENGTH);
 		return -1;
 	}
 	n = len - sent;

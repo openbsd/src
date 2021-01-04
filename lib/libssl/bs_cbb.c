@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_cbb.c,v 1.23 2020/09/16 05:52:04 jsing Exp $	*/
+/*	$OpenBSD: bs_cbb.c,v 1.24 2021/01/04 19:19:12 tb Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -277,7 +277,7 @@ CBB_discard_child(CBB *cbb)
 		return;
 
 	cbb->base->len = cbb->offset;
-	
+
 	cbb->child->base = NULL;
 	cbb->child = NULL;
 	cbb->pending_len_len = 0;
