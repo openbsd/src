@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.349 2020/07/28 16:44:34 yasuoka Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.350 2021/01/04 15:02:34 sashan Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -2282,10 +2282,8 @@ carp_transmit(struct carp_softc *sc, struct ifnet *ifp0, struct mbuf *m)
 #if NBPFILTER > 0
 	{
 		caddr_t if_bpf = ifp->if_bpf;
-		if (if_bpf) {
-			if (bpf_mtap_ether(if_bpf, m, BPF_DIRECTION_OUT))
-				m_freem(m);
-		}
+		if (if_bpf)
+			bpf_mtap_ether(if_bpf, m, BPF_DIRECTION_OUT);
 	}
 #endif /* NBPFILTER > 0 */
 
