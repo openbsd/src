@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.57 2021/01/04 16:46:07 tb Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.58 2021/01/05 17:49:04 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -146,10 +146,10 @@ tls13_record_layer_free(struct tls13_record_layer *rl)
 	EVP_AEAD_CTX_cleanup(&rl->read_aead_ctx);
 	EVP_AEAD_CTX_cleanup(&rl->write_aead_ctx);
 
-	freezero(rl->read_iv.data, rl->read_iv.len);
-	freezero(rl->write_iv.data, rl->write_iv.len);
-	freezero(rl->read_nonce.data, rl->read_nonce.len);
-	freezero(rl->write_nonce.data, rl->write_nonce.len);
+	tls13_secret_cleanup(&rl->read_iv);
+	tls13_secret_cleanup(&rl->write_iv);
+	tls13_secret_cleanup(&rl->read_nonce);
+	tls13_secret_cleanup(&rl->write_nonce);
 
 	freezero(rl, sizeof(struct tls13_record_layer));
 }
@@ -440,25 +440,15 @@ tls13_record_layer_set_traffic_key(const EVP_AEAD *aead, EVP_AEAD_CTX *aead_ctx,
 
 	EVP_AEAD_CTX_cleanup(aead_ctx);
 
-	freezero(iv->data, iv->len);
-	iv->data = NULL;
-	iv->len = 0;
+	tls13_secret_cleanup(iv);
+	tls13_secret_cleanup(nonce);
 
-	freezero(nonce->data, nonce->len);
-	nonce->data = NULL;
-	nonce->len = 0;
-
-	if ((iv->data = calloc(1, EVP_AEAD_nonce_length(aead))) == NULL)
+	if (!tls13_secret_init(iv, EVP_AEAD_nonce_length(aead)))
 		goto err;
-	iv->len = EVP_AEAD_nonce_length(aead);
-
-	if ((nonce->data = calloc(1, EVP_AEAD_nonce_length(aead))) == NULL)
+	if (!tls13_secret_init(nonce, EVP_AEAD_nonce_length(aead)))
 		goto err;
-	nonce->len = EVP_AEAD_nonce_length(aead);
-
-	if ((key.data = calloc(1, EVP_AEAD_key_length(aead))) == NULL)
+	if (!tls13_secret_init(&key, EVP_AEAD_key_length(aead)))
 		goto err;
-	key.len = EVP_AEAD_key_length(aead);
 
 	if (!tls13_hkdf_expand_label(iv, hash, traffic_key, "iv", &context))
 		goto err;
@@ -472,7 +462,7 @@ tls13_record_layer_set_traffic_key(const EVP_AEAD *aead, EVP_AEAD_CTX *aead_ctx,
 	ret = 1;
 
  err:
-	freezero(key.data, key.len);
+	tls13_secret_cleanup(&key);
 
 	return ret;
 }
