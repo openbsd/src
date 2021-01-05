@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.142 2020/10/29 12:30:52 denis Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.143 2021/01/05 19:56:11 tb Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -1320,8 +1320,7 @@ server_response(struct httpd *httpd, struct client *clt)
 		goto fail;
 
 	/* Now search for the location */
-	if ((srv_conf = server_getlocation(clt,
-	    desc->http_path)) == NULL) {
+	if ((srv_conf = server_getlocation(clt, desc->http_path)) == NULL) {
 		server_abort_http(clt, 500, desc->http_path);
 		return (-1);
 	}
