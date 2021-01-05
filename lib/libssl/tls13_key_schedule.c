@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_key_schedule.c,v 1.9 2020/11/16 18:55:15 jsing Exp $ */
+/* $OpenBSD: tls13_key_schedule.c,v 1.10 2021/01/05 17:40:11 tb Exp $ */
 /* Copyright (c) 2018, Bob Beck <beck@openbsd.org>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -21,6 +21,31 @@
 
 #include "bytestring.h"
 #include "tls13_internal.h"
+
+int
+tls13_secret_init(struct tls13_secret *secret, size_t len)
+{
+	uint8_t *data;
+
+	if (secret->data != NULL)
+		return 0;
+
+	if ((data = calloc(1, len)) == NULL)
+		return 0;
+
+	secret->data = data;
+	secret->len = len;
+
+	return 1;
+}
+
+void
+tls13_secret_cleanup(struct tls13_secret *secret)
+{
+	freezero(secret->data, secret->len);
+	secret->data = NULL;
+	secret->len = 0;
+}
 
 void
 tls13_secrets_destroy(struct tls13_secrets *secrets)

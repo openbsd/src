@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.87 2020/11/16 18:55:15 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.88 2021/01/05 17:40:11 tb Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -141,6 +141,8 @@ struct tls13_secrets {
 	struct tls13_secret resumption_master;
 };
 
+int tls13_secret_init(struct tls13_secret *secret, size_t len);
+void tls13_secret_cleanup(struct tls13_secret *secret);
 struct tls13_secrets *tls13_secrets_create(const EVP_MD *digest,
     int resumption);
 void tls13_secrets_destroy(struct tls13_secrets *secrets);
