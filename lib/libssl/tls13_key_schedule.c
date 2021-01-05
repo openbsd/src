@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_key_schedule.c,v 1.13 2021/01/05 17:46:32 tb Exp $ */
+/* $OpenBSD: tls13_key_schedule.c,v 1.14 2021/01/05 18:36:22 tb Exp $ */
 /*
  * Copyright (c) 2018, Bob Beck <beck@openbsd.org>
  *
@@ -26,15 +26,11 @@
 int
 tls13_secret_init(struct tls13_secret *secret, size_t len)
 {
-	uint8_t *data;
-
 	if (secret->data != NULL)
 		return 0;
 
-	if ((data = calloc(1, len)) == NULL)
+	if ((secret->data = calloc(1, len)) == NULL)
 		return 0;
-
-	secret->data = data;
 	secret->len = len;
 
 	return 1;
