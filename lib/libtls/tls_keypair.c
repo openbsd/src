@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_keypair.c,v 1.7 2020/12/15 08:47:45 inoguchi Exp $ */
+/* $OpenBSD: tls_keypair.c,v 1.8 2021/01/05 17:37:12 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -155,7 +155,7 @@ tls_keypair_load_cert(struct tls_keypair *keypair, struct tls_error *error,
 	if ((*cert = PEM_read_bio_X509(cert_bio, NULL, tls_password_cb,
 	    NULL)) == NULL) {
 		if ((ssl_err = ERR_peek_error()) != 0)
-		    errstr = ERR_error_string(ssl_err, NULL);
+			errstr = ERR_error_string(ssl_err, NULL);
 		tls_error_set(error, "failed to load certificate: %s", errstr);
 		goto err;
 	}
