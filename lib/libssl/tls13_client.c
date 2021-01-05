@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.68 2020/12/14 15:26:36 tb Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.69 2021/01/05 17:32:39 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -1039,7 +1039,7 @@ tls13_client_finished_send(struct tls13_ctx *ctx, CBB *cbb)
 	size_t transcript_hash_len;
 	uint8_t key[EVP_MAX_MD_SIZE];
 	uint8_t *verify_data;
-	size_t hmac_len;
+	size_t verify_data_len;
 	unsigned int hlen;
 	HMAC_CTX *hmac_ctx = NULL;
 	CBS cbs;
@@ -1066,15 +1066,15 @@ tls13_client_finished_send(struct tls13_ctx *ctx, CBB *cbb)
 	if (!HMAC_Update(hmac_ctx, transcript_hash, transcript_hash_len))
 		goto err;
 
-	hmac_len = HMAC_size(hmac_ctx);
-	if (!CBB_add_space(cbb, &verify_data, hmac_len))
+	verify_data_len = HMAC_size(hmac_ctx);
+	if (!CBB_add_space(cbb, &verify_data, verify_data_len))
 		goto err;
 	if (!HMAC_Final(hmac_ctx, verify_data, &hlen))
 		goto err;
-	if (hlen != hmac_len)
+	if (hlen != verify_data_len)
 		goto err;
 
-	CBS_init(&cbs, verify_data, hmac_len);
+	CBS_init(&cbs, verify_data, verify_data_len);
 	if (!CBS_write_bytes(&cbs, S3I(s)->tmp.finish_md,
 	    sizeof(S3I(s)->tmp.finish_md), &S3I(s)->tmp.finish_md_len))
 		goto err;
