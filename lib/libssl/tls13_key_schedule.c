@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_key_schedule.c,v 1.10 2021/01/05 17:40:11 tb Exp $ */
+/* $OpenBSD: tls13_key_schedule.c,v 1.11 2021/01/05 17:43:13 tb Exp $ */
 /* Copyright (c) 2018, Bob Beck <beck@openbsd.org>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -54,37 +54,23 @@ tls13_secrets_destroy(struct tls13_secrets *secrets)
 		return;
 
 	/* you can never be too sure :) */
-	freezero(secrets->zeros.data, secrets->zeros.len);
-	freezero(secrets->empty_hash.data, secrets->empty_hash.len);
+	tls13_secret_cleanup(&secrets->zeros);
+	tls13_secret_cleanup(&secrets->empty_hash);
 
-	freezero(secrets->extracted_early.data,
-	    secrets->extracted_early.len);
-	freezero(secrets->binder_key.data,
-	    secrets->binder_key.len);
-	freezero(secrets->client_early_traffic.data,
-	    secrets->client_early_traffic.len);
-	freezero(secrets->early_exporter_master.data,
-	    secrets->early_exporter_master.len);
-	freezero(secrets->derived_early.data,
-	    secrets->derived_early.len);
-	freezero(secrets->extracted_handshake.data,
-	    secrets->extracted_handshake.len);
-	freezero(secrets->client_handshake_traffic.data,
-	    secrets->client_handshake_traffic.len);
-	freezero(secrets->server_handshake_traffic.data,
-	    secrets->server_handshake_traffic.len);
-	freezero(secrets->derived_handshake.data,
-	    secrets->derived_handshake.len);
-	freezero(secrets->extracted_master.data,
-	    secrets->extracted_master.len);
-	freezero(secrets->client_application_traffic.data,
-	    secrets->client_application_traffic.len);
-	freezero(secrets->server_application_traffic.data,
-	    secrets->server_application_traffic.len);
-	freezero(secrets->exporter_master.data,
-	    secrets->exporter_master.len);
-	freezero(secrets->resumption_master.data,
-	    secrets->resumption_master.len);
+	tls13_secret_cleanup(&secrets->extracted_early);
+	tls13_secret_cleanup(&secrets->binder_key);
+	tls13_secret_cleanup(&secrets->client_early_traffic);
+	tls13_secret_cleanup(&secrets->early_exporter_master);
+	tls13_secret_cleanup(&secrets->derived_early);
+	tls13_secret_cleanup(&secrets->extracted_handshake);
+	tls13_secret_cleanup(&secrets->client_handshake_traffic);
+	tls13_secret_cleanup(&secrets->server_handshake_traffic);
+	tls13_secret_cleanup(&secrets->derived_handshake);
+	tls13_secret_cleanup(&secrets->extracted_master);
+	tls13_secret_cleanup(&secrets->client_application_traffic);
+	tls13_secret_cleanup(&secrets->server_application_traffic);
+	tls13_secret_cleanup(&secrets->exporter_master);
+	tls13_secret_cleanup(&secrets->resumption_master);
 
 	freezero(secrets, sizeof(struct tls13_secrets));
 }
@@ -106,62 +92,39 @@ tls13_secrets_create(const EVP_MD *digest, int resumption)
 	if ((secrets = calloc(1, sizeof(struct tls13_secrets))) == NULL)
 		goto err;
 
-	if ((secrets->zeros.data = calloc(hash_length, sizeof(uint8_t))) ==
-	    NULL)
+	if (!tls13_secret_init(&secrets->zeros, hash_length))
 		goto err;
-	secrets->zeros.len = hash_length;
+	if (!tls13_secret_init(&secrets->empty_hash, hash_length))
+		goto err;
 
-	if ((secrets->empty_hash.data = malloc(hash_length)) == NULL)
+	if (!tls13_secret_init(&secrets->extracted_early, hash_length))
 		goto err;
-	secrets->empty_hash.len = hash_length;
-
-	if ((secrets->extracted_early.data = malloc(hash_length)) == NULL)
+	if (!tls13_secret_init(&secrets->binder_key, hash_length))
 		goto err;
-	secrets->extracted_early.len = hash_length;
-	if ((secrets->binder_key.data = malloc(hash_length)) == NULL)
+	if (!tls13_secret_init(&secrets->client_early_traffic, hash_length))
 		goto err;
-	secrets->binder_key.len = hash_length;
-	if ((secrets->client_early_traffic.data = malloc(hash_length)) == NULL)
+	if (!tls13_secret_init(&secrets->early_exporter_master, hash_length))
 		goto err;
-	secrets->client_early_traffic.len = hash_length;
-	if ((secrets->early_exporter_master.data = malloc(hash_length)) ==
-	    NULL)
+	if (!tls13_secret_init(&secrets->derived_early, hash_length))
 		goto err;
-	secrets->early_exporter_master.len = hash_length;
-	if ((secrets->derived_early.data = malloc(hash_length)) == NULL)
+	if (!tls13_secret_init(&secrets->extracted_handshake, hash_length))
 		goto err;
-	secrets->derived_early.len = hash_length;
-	if ((secrets->extracted_handshake.data = malloc(hash_length)) == NULL)
+	if (!tls13_secret_init(&secrets->client_handshake_traffic, hash_length))
 		goto err;
-	secrets->extracted_handshake.len = hash_length;
-	if ((secrets->client_handshake_traffic.data = malloc(hash_length))
-	    == NULL)
+	if (!tls13_secret_init(&secrets->server_handshake_traffic, hash_length))
 		goto err;
-	secrets->client_handshake_traffic.len = hash_length;
-	if ((secrets->server_handshake_traffic.data = malloc(hash_length))
-	    == NULL)
+	if (!tls13_secret_init(&secrets->derived_handshake, hash_length))
 		goto err;
-	secrets->server_handshake_traffic.len = hash_length;
-	if ((secrets->derived_handshake.data = malloc(hash_length)) == NULL)
+	if (!tls13_secret_init(&secrets->extracted_master, hash_length))
 		goto err;
-	secrets->derived_handshake.len = hash_length;
-	if ((secrets->extracted_master.data = malloc(hash_length)) == NULL)
+	if (!tls13_secret_init(&secrets->client_application_traffic, hash_length))
 		goto err;
-	secrets->extracted_master.len = hash_length;
-	if ((secrets->client_application_traffic.data = malloc(hash_length)) ==
-	    NULL)
+	if (!tls13_secret_init(&secrets->server_application_traffic, hash_length))
 		goto err;
-	secrets->client_application_traffic.len = hash_length;
-	if ((secrets->server_application_traffic.data = malloc(hash_length)) ==
-	    NULL)
+	if (!tls13_secret_init(&secrets->exporter_master, hash_length))
 		goto err;
-	secrets->server_application_traffic.len = hash_length;
-	if ((secrets->exporter_master.data = malloc(hash_length)) == NULL)
+	if (!tls13_secret_init(&secrets->resumption_master, hash_length))
 		goto err;
-	secrets->exporter_master.len = hash_length;
-	if ((secrets->resumption_master.data = malloc(hash_length)) == NULL)
-		goto err;
-	secrets->resumption_master.len = hash_length;
 
 	/*
 	 * Calculate the hash of a zero-length string - this is needed during
