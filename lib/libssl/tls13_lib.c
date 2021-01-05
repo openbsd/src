@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.55 2020/11/16 18:55:15 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.56 2021/01/05 17:47:35 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -608,13 +608,10 @@ tls13_exporter(struct tls13_ctx *ctx, const uint8_t *label, size_t label_len,
 	if (md_len <= 0 || md_len > EVP_MAX_MD_SIZE)
 		goto err;
 
-	if ((export_secret.data = calloc(1, md_len)) == NULL)
+	if (!tls13_secret_init(&export_secret, md_len))
 		goto err;
-	export_secret.len = md_len;
-
-	if ((context.data = calloc(1, md_len)) == NULL)
+	if (!tls13_secret_init(&context, md_len))
 		goto err;
-	context.len = md_len;
 
 	/* In TLSv1.3 no context is equivalent to an empty context. */
 	if (context_value == NULL) {
@@ -646,8 +643,8 @@ tls13_exporter(struct tls13_ctx *ctx, const uint8_t *label, size_t label_len,
 
  err:
 	EVP_MD_CTX_free(md_ctx);
-	freezero(context.data, context.len);
-	freezero(export_secret.data, export_secret.len);
+	tls13_secret_cleanup(&context);
+	tls13_secret_cleanup(&export_secret);
 
 	return ret;
 }
