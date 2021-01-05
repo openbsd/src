@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.47 2020/04/02 19:30:00 gkoehler Exp $
+#	$OpenBSD: Makefile,v 1.48 2021/01/05 15:10:43 deraadt Exp $
 
 CDROM=		cd${OSrev}.iso
 MTREE=		${UTILS}/mtree.conf
@@ -66,7 +66,7 @@ instbin.conf: ${LISTS}
 
 .ifdef RELEASEDIR
 install:
-	cp bsd.rd ${RELEASEDIR}/bsd.rd
+	cp bsd.gz ${RELEASEDIR}/bsd.rd
 	chmod a+r ${RELEASEDIR}/bsd.rd
 	cp ${CDROM} ${RELEASEDIR}
 .endif
