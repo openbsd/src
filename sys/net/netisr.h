@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr.h,v 1.54 2021/01/04 21:21:41 kn Exp $	*/
+/*	$OpenBSD: netisr.h,v 1.55 2021/01/05 20:43:36 kn Exp $	*/
 /*	$NetBSD: netisr.h,v 1.12 1995/08/12 23:59:24 mycroft Exp $	*/
 
 /*
@@ -59,7 +59,6 @@ extern struct task if_input_task_locked;
 void	arpintr(void);
 void	pppintr(void);
 void	bridgeintr(void);
-void	pppoeintr(void);
 void	switchintr(void);
 void	pfsyncintr(void);
 
