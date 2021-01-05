@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_key_schedule.c,v 1.11 2021/01/05 17:43:13 tb Exp $ */
+/* $OpenBSD: tls13_key_schedule.c,v 1.12 2021/01/05 17:45:32 tb Exp $ */
 /* Copyright (c) 2018, Bob Beck <beck@openbsd.org>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -45,34 +45,6 @@ tls13_secret_cleanup(struct tls13_secret *secret)
 	freezero(secret->data, secret->len);
 	secret->data = NULL;
 	secret->len = 0;
-}
-
-void
-tls13_secrets_destroy(struct tls13_secrets *secrets)
-{
-	if (secrets == NULL)
-		return;
-
-	/* you can never be too sure :) */
-	tls13_secret_cleanup(&secrets->zeros);
-	tls13_secret_cleanup(&secrets->empty_hash);
-
-	tls13_secret_cleanup(&secrets->extracted_early);
-	tls13_secret_cleanup(&secrets->binder_key);
-	tls13_secret_cleanup(&secrets->client_early_traffic);
-	tls13_secret_cleanup(&secrets->early_exporter_master);
-	tls13_secret_cleanup(&secrets->derived_early);
-	tls13_secret_cleanup(&secrets->extracted_handshake);
-	tls13_secret_cleanup(&secrets->client_handshake_traffic);
-	tls13_secret_cleanup(&secrets->server_handshake_traffic);
-	tls13_secret_cleanup(&secrets->derived_handshake);
-	tls13_secret_cleanup(&secrets->extracted_master);
-	tls13_secret_cleanup(&secrets->client_application_traffic);
-	tls13_secret_cleanup(&secrets->server_application_traffic);
-	tls13_secret_cleanup(&secrets->exporter_master);
-	tls13_secret_cleanup(&secrets->resumption_master);
-
-	freezero(secrets, sizeof(struct tls13_secrets));
 }
 
 /*
@@ -155,6 +127,34 @@ tls13_secrets_create(const EVP_MD *digest, int resumption)
 	EVP_MD_CTX_free(mdctx);
 
 	return NULL;
+}
+
+void
+tls13_secrets_destroy(struct tls13_secrets *secrets)
+{
+	if (secrets == NULL)
+		return;
+
+	/* you can never be too sure :) */
+	tls13_secret_cleanup(&secrets->zeros);
+	tls13_secret_cleanup(&secrets->empty_hash);
+
+	tls13_secret_cleanup(&secrets->extracted_early);
+	tls13_secret_cleanup(&secrets->binder_key);
+	tls13_secret_cleanup(&secrets->client_early_traffic);
+	tls13_secret_cleanup(&secrets->early_exporter_master);
+	tls13_secret_cleanup(&secrets->derived_early);
+	tls13_secret_cleanup(&secrets->extracted_handshake);
+	tls13_secret_cleanup(&secrets->client_handshake_traffic);
+	tls13_secret_cleanup(&secrets->server_handshake_traffic);
+	tls13_secret_cleanup(&secrets->derived_handshake);
+	tls13_secret_cleanup(&secrets->extracted_master);
+	tls13_secret_cleanup(&secrets->client_application_traffic);
+	tls13_secret_cleanup(&secrets->server_application_traffic);
+	tls13_secret_cleanup(&secrets->exporter_master);
+	tls13_secret_cleanup(&secrets->resumption_master);
+
+	freezero(secrets, sizeof(struct tls13_secrets));
 }
 
 int
