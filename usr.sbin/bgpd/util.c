@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.56 2021/01/04 13:40:32 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.57 2021/01/05 08:18:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -38,26 +38,21 @@ const char *
 log_addr(const struct bgpd_addr *addr)
 {
 	static char	buf[74];
-	char		tbuf[40];
+	struct sockaddr *sa;
 	socklen_t	len;
 
+	sa = addr2sa(addr, 0, &len);
 	switch (addr->aid) {
 	case AID_INET:
 	case AID_INET6:
-		return log_sockaddr(addr2sa(addr, 0, &len), len);
+		return log_sockaddr(sa, len);
 	case AID_VPN_IPv4:
-		if (inet_ntop(AF_INET, &addr->vpn4.addr, tbuf,
-		    sizeof(tbuf)) == NULL)
-			return ("?");
 		snprintf(buf, sizeof(buf), "%s %s", log_rd(addr->vpn4.rd),
-		    tbuf);
+		    log_sockaddr(sa, len));
 		return (buf);
 	case AID_VPN_IPv6:
-		if (inet_ntop(aid2af(addr->aid), &addr->vpn6.addr, tbuf,
-		    sizeof(tbuf)) == NULL)
-			return ("?");
 		snprintf(buf, sizeof(buf), "%s %s", log_rd(addr->vpn6.rd),
-		    tbuf);
+		    log_sockaddr(sa, len));
 		return (buf);
 	}
 	return ("???");
@@ -92,7 +87,7 @@ log_sockaddr(struct sockaddr *sa, socklen_t len)
 {
 	static char	buf[NI_MAXHOST];
 
-	if (getnameinfo(sa, len, buf, sizeof(buf), NULL, 0,
+	if (sa == NULL || getnameinfo(sa, len, buf, sizeof(buf), NULL, 0,
 	    NI_NUMERICHOST))
 		return ("(unknown)");
 	else
@@ -835,6 +830,10 @@ af2aid(sa_family_t af, u_int8_t safi, u_int8_t *aid)
 	return (-1);
 }
 
+/*
+ * Convert a struct bgpd_addr into a struct sockaddr. For VPN addresses
+ * the included label stack is ignored and needs to be handled by the caller.
+ */
 struct sockaddr *
 addr2sa(const struct bgpd_addr *addr, u_int16_t port, socklen_t *len)
 {
@@ -842,10 +841,10 @@ addr2sa(const struct bgpd_addr *addr, u_int16_t port, socklen_t *len)
 	struct sockaddr_in		*sa_in = (struct sockaddr_in *)&ss;
 	struct sockaddr_in6		*sa_in6 = (struct sockaddr_in6 *)&ss;
 
-	if (addr == NULL || addr->aid == AID_UNSPEC)
-		return (NULL);
-
 	bzero(&ss, sizeof(ss));
+	if (addr == NULL)
+		return ((struct sockaddr *)&ss);
+
 	switch (addr->aid) {
 	case AID_INET:
 		sa_in->sin_family = AF_INET;
@@ -856,6 +855,20 @@ addr2sa(const struct bgpd_addr *addr, u_int16_t port, socklen_t *len)
 	case AID_INET6:
 		sa_in6->sin6_family = AF_INET6;
 		memcpy(&sa_in6->sin6_addr, &addr->v6,
+		    sizeof(sa_in6->sin6_addr));
+		sa_in6->sin6_port = htons(port);
+		sa_in6->sin6_scope_id = addr->scope_id;
+		*len = sizeof(struct sockaddr_in6);
+		break;
+	case AID_VPN_IPv4:
+		sa_in->sin_family = AF_INET;
+		sa_in->sin_addr.s_addr = addr->vpn4.addr.s_addr;
+		sa_in->sin_port = htons(port);
+		*len = sizeof(struct sockaddr_in);
+		break;
+	case AID_VPN_IPv6:
+		sa_in6->sin6_family = AF_INET6;
+		memcpy(&sa_in6->sin6_addr, &addr->vpn6.addr,
 		    sizeof(sa_in6->sin6_addr));
 		sa_in6->sin6_port = htons(port);
 		sa_in6->sin6_scope_id = addr->scope_id;
