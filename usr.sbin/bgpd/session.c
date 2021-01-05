@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.409 2020/12/30 07:29:56 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.410 2021/01/05 10:02:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1086,7 +1086,7 @@ session_connect(struct peer *peer)
 		bind_addr = &peer->conf.local_addr_v6;
 		break;
 	}
-	if (bind_addr && (sa = addr2sa(bind_addr, 0, &sa_len)) != NULL) {
+	if ((sa = addr2sa(bind_addr, 0, &sa_len)) != NULL) {
 		if (bind(peer->fd, sa, sa_len) == -1) {
 			log_peer_warn(&peer->conf, "session_connect bind");
 			bgp_fsm(peer, EVNT_CON_OPENFAIL);
