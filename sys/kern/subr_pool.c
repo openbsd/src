@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.231 2021/01/02 03:23:59 cheloha Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.232 2021/01/06 07:51:40 claudio Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -44,6 +44,7 @@
 #include <sys/time.h>
 #include <sys/timeout.h>
 #include <sys/percpu.h>
+#include <sys/tracepoint.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -629,6 +630,8 @@ good:
 	if (ISSET(flags, PR_ZERO))
 		memset(v, 0, pp->pr_size);
 
+	TRACEPOINT(uvm, pool_get, pp, v, flags);
+
 	return (v);
 
 fail:
@@ -794,6 +797,8 @@ pool_put(struct pool *pp, void *v)
 	if (v == NULL)
 		panic("%s: NULL item", __func__);
 #endif
+
+	TRACEPOINT(uvm, pool_put, pp, v);
 
 #ifdef MULTIPROCESSOR
 	if (pp->pr_cache != NULL && TAILQ_EMPTY(&pp->pr_requests)) {
