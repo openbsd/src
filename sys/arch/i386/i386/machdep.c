@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.642 2020/12/28 14:02:07 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.643 2021/01/06 01:23:41 jmatthew Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3100,7 +3100,7 @@ fix_f00f(void)
 	void *p;
 
 	/* Allocate two new pages */
-	va = uvm_km_zalloc(kernel_map, NBPG*2);
+	va = (vaddr_t)km_alloc(NBPG*2, &kv_any, &kp_zero, &kd_waitok);
 	p = (void *)(va + NBPG - 7*sizeof(*idt));
 
 	/* Copy over old IDT */
