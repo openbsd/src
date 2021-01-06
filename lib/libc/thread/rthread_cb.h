@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_cb.h,v 1.2 2017/09/05 02:40:54 guenther Exp $ */
+/*	$OpenBSD: rthread_cb.h,v 1.3 2021/01/06 19:54:17 otto Exp $ */
 /*
  * Copyright (c) 2016 Philip Guenther <guenther@openbsd.org>
  * All Rights Reserved.
@@ -35,5 +35,5 @@ void	_thread_mutex_unlock(void **);
 void	_thread_mutex_destroy(void **);
 void	_thread_tag_lock(void **);
 void	_thread_tag_unlock(void **);
-void	*_thread_tag_storage(void **, void *, size_t, void *);
+void	*_thread_tag_storage(void **, void *, size_t, void (*)(void*), void *);
 __END_HIDDEN_DECLS

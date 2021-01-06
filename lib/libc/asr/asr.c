@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.64 2020/07/06 13:33:05 pirofti Exp $	*/
+/*	$OpenBSD: asr.c,v 1.65 2021/01/06 19:54:17 otto Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -117,7 +117,7 @@ _asr_resolver_done(void *arg)
 		_asr_ctx_unref(ac);
 		return;
 	} else {
-		priv = _THREAD_PRIVATE(_asr, _asr, &_asr);
+		priv = _THREAD_PRIVATE_DT(_asr, _asr, NULL, &_asr);
 		if (*priv == NULL)
 			return;
 		asr = *priv;
@@ -126,6 +126,23 @@ _asr_resolver_done(void *arg)
 
 	_asr_ctx_unref(asr->a_ctx);
 	free(asr);
+}
+
+static void
+_asr_resolver_done_tp(void *arg)
+{
+	char buf[100];
+	int len;
+	struct asr **priv = arg;
+	struct asr *asr;
+
+	if (*priv == NULL)
+		return;
+	asr = *priv;
+
+	_asr_ctx_unref(asr->a_ctx);
+	free(asr);
+	free(priv);
 }
 
 void *
@@ -349,7 +366,8 @@ _asr_use_resolver(void *arg)
 	}
 	else {
 		DPRINT("using thread-local resolver\n");
-		priv = _THREAD_PRIVATE(_asr, _asr, &_asr);
+		priv = _THREAD_PRIVATE_DT(_asr, _asr, _asr_resolver_done_tp,
+		    &_asr);
 		if (*priv == NULL) {
 			DPRINT("setting up thread-local resolver\n");
 			*priv = _asr_resolver();

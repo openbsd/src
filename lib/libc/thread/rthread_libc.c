@@ -1,4 +1,4 @@
-/* $OpenBSD: rthread_libc.c,v 1.3 2019/01/10 18:45:33 otto Exp $ */
+/* $OpenBSD: rthread_libc.c,v 1.4 2021/01/06 19:54:17 otto Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
@@ -31,7 +31,7 @@ static pthread_mutex_t	_thread_tag_mutex = PTHREAD_MUTEX_INITIALIZER;
  * This function will never return NULL.
  */
 static void
-_thread_tag_init(void **tag)
+_thread_tag_init(void **tag, void (*dt)(void *))
 {
 	struct _thread_tag *tt;
 	int result;
@@ -42,7 +42,8 @@ _thread_tag_init(void **tag)
 			tt = malloc(sizeof *tt);
 			if (tt != NULL) {
 				result = pthread_mutex_init(&tt->m, NULL);
-				result |= pthread_key_create(&tt->k, free);
+				result |= pthread_key_create(&tt->k, dt ? dt :
+				    free);
 				*tag = tt;
 			}
 		}
@@ -62,7 +63,7 @@ _thread_tag_lock(void **tag)
 
 	if (__isthreaded) {
 		if (*tag == NULL)
-			_thread_tag_init(tag);
+			_thread_tag_init(tag, NULL);
 		tt = *tag;
 		if (pthread_mutex_lock(&tt->m) != 0)
 			_rthread_debug(1, "tag mutex lock failure");
@@ -79,7 +80,7 @@ _thread_tag_unlock(void **tag)
 
 	if (__isthreaded) {
 		if (*tag == NULL)
-			_thread_tag_init(tag);
+			_thread_tag_init(tag, NULL);
 		tt = *tag;
 		if (pthread_mutex_unlock(&tt->m) != 0)
 			_rthread_debug(1, "tag mutex unlock failure");
@@ -88,28 +89,31 @@ _thread_tag_unlock(void **tag)
 
 /*
  * return the thread specific data for the given tag.   If there
- * is no data for this thread initialize it from 'storage'.
+ * is no data for this thread allocate and initialize it from 'storage'
+ * or clear it for non-main threads.
  * On any error return 'err'.
  */
 void *
-_thread_tag_storage(void **tag, void *storage, size_t sz, void *err)
+_thread_tag_storage(void **tag, void *storage, size_t sz, void (*dt)(void *),
+    void *err)
 {
 	struct _thread_tag *tt;
 	void *ret;
 
 	if (*tag == NULL)
-		_thread_tag_init(tag);
+		_thread_tag_init(tag, dt);
 	tt = *tag;
 
 	ret = pthread_getspecific(tt->k);
 	if (ret == NULL) {
-		ret = malloc(sz);
+		ret = calloc(1, sz);
 		if (ret == NULL)
 			ret = err;
 		else {
-			if (pthread_setspecific(tt->k, ret) == 0)
-				memcpy(ret, storage, sz);
-			else {
+			if (pthread_setspecific(tt->k, ret) == 0) {
+				if (pthread_self() == &_initial_thread)
+					memcpy(ret, storage, sz);
+			} else {
 				free(ret);
 				ret = err;
 			}

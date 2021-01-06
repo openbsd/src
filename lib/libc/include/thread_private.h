@@ -1,4 +1,4 @@
-/* $OpenBSD: thread_private.h,v 1.35 2019/02/13 13:22:14 mpi Exp $ */
+/* $OpenBSD: thread_private.h,v 1.36 2021/01/06 19:54:17 otto Exp $ */
 
 /* PUBLIC DOMAIN: No Rights Reserved. Marco S Hyman <marc@snafu.org> */
 
@@ -98,7 +98,8 @@ struct thread_callbacks {
 	void	(*tc_mutex_destroy)(void **);
 	void	(*tc_tag_lock)(void **);
 	void	(*tc_tag_unlock)(void **);
-	void	*(*tc_tag_storage)(void **, void *, size_t, void *);
+	void	*(*tc_tag_storage)(void **, void *, size_t, void (*)(void *),
+	   void *);
 	__pid_t	(*tc_fork)(void);
 	__pid_t	(*tc_vfork)(void);
 	void	(*tc_thread_release)(struct pthread *);
@@ -142,6 +143,7 @@ __END_HIDDEN_DECLS
 #define _THREAD_PRIVATE_MUTEX_LOCK(name)		do {} while (0)
 #define _THREAD_PRIVATE_MUTEX_UNLOCK(name)		do {} while (0)
 #define _THREAD_PRIVATE(keyname, storage, error)	&(storage)
+#define _THREAD_PRIVATE_DT(keyname, storage, dt, error)	&(storage)
 #define _MUTEX_LOCK(mutex)				do {} while (0)
 #define _MUTEX_UNLOCK(mutex)				do {} while (0)
 #define _MUTEX_DESTROY(mutex)				do {} while (0)
@@ -168,7 +170,12 @@ __END_HIDDEN_DECLS
 #define _THREAD_PRIVATE(keyname, storage, error)			\
 	(_thread_cb.tc_tag_storage == NULL ? &(storage) :		\
 	    _thread_cb.tc_tag_storage(&(__THREAD_NAME(keyname)),	\
-		&(storage), sizeof(storage), error))
+		&(storage), sizeof(storage), NULL, (error)))
+
+#define _THREAD_PRIVATE_DT(keyname, storage, dt, error)			\
+	(_thread_cb.tc_tag_storage == NULL ? &(storage) :		\
+	    _thread_cb.tc_tag_storage(&(__THREAD_NAME(keyname)),	\
+		&(storage), sizeof(storage), (dt), (error)))
 
 /*
  * Macros used in libc to access mutexes.
