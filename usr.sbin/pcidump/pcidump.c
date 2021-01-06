@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.57 2020/06/22 05:54:26 dlg Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.58 2021/01/06 23:43:43 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -402,8 +402,10 @@ dump_vpd(int bus, int dev, int func)
 	io.pv_count = nitems(data);
 	io.pv_data = data;
 
-	if (ioctl(pcifd, PCIOCGETVPD, &io) == -1)
+	if (ioctl(pcifd, PCIOCGETVPD, &io) == -1) {
 		warn("PCIOCGETVPD");
+		return;
+	}
 
 	do {
 		uint8_t vpd = *buf;
