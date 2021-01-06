@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.66 2021/01/05 17:32:39 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.67 2021/01/06 20:15:35 tb Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -770,10 +770,9 @@ tls13_server_finished_send(struct tls13_ctx *ctx, CBB *cbb)
 {
 	struct tls13_secrets *secrets = ctx->hs->secrets;
 	struct tls13_secret context = { .data = "", .len = 0 };
-	struct tls13_secret finished_key;
+	struct tls13_secret finished_key = { .data = NULL, .len = 0 } ;
 	uint8_t transcript_hash[EVP_MAX_MD_SIZE];
 	size_t transcript_hash_len;
-	uint8_t key[EVP_MAX_MD_SIZE];
 	uint8_t *verify_data;
 	size_t verify_data_len;
 	unsigned int hlen;
@@ -782,8 +781,8 @@ tls13_server_finished_send(struct tls13_ctx *ctx, CBB *cbb)
 	SSL *s = ctx->ssl;
 	int ret = 0;
 
-	finished_key.data = key;
-	finished_key.len = EVP_MD_size(ctx->hash);
+	if (!tls13_secret_init(&finished_key, EVP_MD_size(ctx->hash)))
+		goto err;
 
 	if (!tls13_hkdf_expand_label(&finished_key, ctx->hash,
 	    &secrets->server_handshake_traffic, "finished",
@@ -818,6 +817,7 @@ tls13_server_finished_send(struct tls13_ctx *ctx, CBB *cbb)
 	ret = 1;
 
  err:
+	tls13_secret_cleanup(&finished_key);
 	HMAC_CTX_free(hmac_ctx);
 
 	return ret;
