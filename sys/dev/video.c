@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.46 2020/12/28 18:28:11 mglocker Exp $	*/
+/*	$OpenBSD: video.c,v 1.47 2021/01/06 18:57:58 jca Exp $	*/
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -28,6 +28,7 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/conf.h>
+#include <sys/proc.h>
 #include <sys/videoio.h>
 
 #include <dev/video_if.h>
@@ -46,8 +47,7 @@ struct video_softc {
 	struct device		*sc_dev;	/* hardware device struct */
 	struct video_hw_if	*hw_if;		/* hardware interface */
 	char			 sc_dying;	/* device detached */
-#define VIDEO_OPEN	0x01
-	char			 sc_open;
+	struct process		 *sc_owner;	/* owner process */
 
 	int			 sc_fsize;
 	uint8_t			*sc_fbuffer;
@@ -101,6 +101,7 @@ videoattach(struct device *parent, struct device *self, void *aux)
 	sc->hw_hdl = sa->hdl;
 	sc->sc_dev = parent;
 	sc->sc_fbufferlen = 0;
+	sc->sc_owner = NULL;
 
 	if (sc->hw_if->get_bufsize)
 		sc->sc_fbufferlen = (sc->hw_if->get_bufsize)(sc->hw_hdl);
@@ -128,9 +129,13 @@ videoopen(dev_t dev, int flags, int fmt, struct proc *p)
 	     sc->hw_if == NULL)
 		return (ENXIO);
 
-	if (sc->sc_open & VIDEO_OPEN)
-		return (EBUSY);
-	sc->sc_open |= VIDEO_OPEN;
+	if (sc->sc_owner != NULL) {
+		if (sc->sc_owner == p->p_p)
+			return (0);
+		else
+			return (EBUSY);
+	} else
+		sc->sc_owner = p->p_p;
 
 	sc->sc_vidmode = VIDMODE_NONE;
 	sc->sc_frames_ready = 0;
@@ -153,7 +158,7 @@ videoclose(dev_t dev, int flags, int fmt, struct proc *p)
 	if (sc->hw_if->close != NULL)
 		r = sc->hw_if->close(sc->hw_hdl);
 
-	sc->sc_open &= ~VIDEO_OPEN;
+	sc->sc_owner = NULL;
 
 	return (r);
 }
