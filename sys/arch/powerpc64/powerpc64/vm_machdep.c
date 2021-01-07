@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.5 2020/08/17 16:55:41 kettenis Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.6 2021/01/07 19:02:45 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -76,7 +76,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 	/* Copy the pcb. */
 	*pcb = p1->p_addr->u_pcb;
 
-	/* XXX This should not be necessary but things explodes without it. */
+	/* XXX This should not be necessary but things explode without it. */
 	memset(&pcb->pcb_slb, 0, sizeof(pcb->pcb_slb));
 
 	pmap_extract(pmap_kernel(), (vaddr_t)&pcb->pcb_slb,
