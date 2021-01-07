@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.67 2021/01/06 20:15:35 tb Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.68 2021/01/07 16:26:31 tb Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -99,7 +99,7 @@ tls13_client_hello_is_legacy(CBS *cbs)
 int
 tls13_client_hello_required_extensions(struct tls13_ctx *ctx)
 {
-	SSL *ssl = ctx->ssl;
+	SSL *s = ctx->ssl;
 
 	/*
 	 * RFC 8446, section 9.2. If the ClientHello has supported_versions
@@ -111,10 +111,10 @@ tls13_client_hello_required_extensions(struct tls13_ctx *ctx)
 	 * If we got no pre_shared_key, then signature_algorithms and
 	 * supported_groups must both be present.
 	 */
-	if (!tlsext_extension_seen(ssl, TLSEXT_TYPE_pre_shared_key)) {
-		if (!tlsext_extension_seen(ssl, TLSEXT_TYPE_signature_algorithms))
+	if (!tlsext_extension_seen(s, TLSEXT_TYPE_pre_shared_key)) {
+		if (!tlsext_extension_seen(s, TLSEXT_TYPE_signature_algorithms))
 			return 0;
-		if (!tlsext_extension_seen(ssl, TLSEXT_TYPE_supported_groups))
+		if (!tlsext_extension_seen(s, TLSEXT_TYPE_supported_groups))
 			return 0;
 	}
 
@@ -122,8 +122,8 @@ tls13_client_hello_required_extensions(struct tls13_ctx *ctx)
 	 * supported_groups and key_share must either both be present or
 	 * both be absent.
 	 */
-	if (tlsext_extension_seen(ssl, TLSEXT_TYPE_supported_groups) !=
-	    tlsext_extension_seen(ssl, TLSEXT_TYPE_key_share))
+	if (tlsext_extension_seen(s, TLSEXT_TYPE_supported_groups) !=
+	    tlsext_extension_seen(s, TLSEXT_TYPE_key_share))
 		return 0;
 
 	/*

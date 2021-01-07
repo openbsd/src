@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_legacy.c,v 1.20 2021/01/04 19:19:12 tb Exp $ */
+/*	$OpenBSD: tls13_legacy.c,v 1.21 2021/01/07 16:26:31 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -515,14 +515,14 @@ tls13_legacy_servername_process(struct tls13_ctx *ctx, uint8_t *alert)
 	int legacy_alert = SSL_AD_UNRECOGNIZED_NAME;
 	int ret = SSL_TLSEXT_ERR_NOACK;
 	SSL_CTX *ssl_ctx = ctx->ssl->ctx;
-	SSL *ssl = ctx->ssl;
+	SSL *s = ctx->ssl;
 
 	if (ssl_ctx->internal->tlsext_servername_callback == NULL)
-		ssl_ctx = ssl->initial_ctx;
+		ssl_ctx = s->initial_ctx;
 	if (ssl_ctx->internal->tlsext_servername_callback == NULL)
 		return 1;
 
-	ret = ssl_ctx->internal->tlsext_servername_callback(ssl, &legacy_alert,
+	ret = ssl_ctx->internal->tlsext_servername_callback(s, &legacy_alert,
 	    ssl_ctx->internal->tlsext_servername_arg);
 
 	if (ret == SSL_TLSEXT_ERR_ALERT_FATAL ||
