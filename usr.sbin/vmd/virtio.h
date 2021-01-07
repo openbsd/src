@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.35 2019/12/11 06:45:16 pd Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.36 2021/01/07 17:11:38 tracey Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -38,7 +38,7 @@
 
 /* VMM Control Interface shutdown timeout (in seconds) */
 #define VMMCI_TIMEOUT		3
-#define VMMCI_SHUTDOWN_TIMEOUT	30
+#define VMMCI_SHUTDOWN_TIMEOUT	120
 
 /* All the devices we support have either 1, 2 or 3 queues */
 /* viornd - 1 queue
