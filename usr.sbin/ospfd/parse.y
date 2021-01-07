@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.101 2020/12/29 19:44:47 benno Exp $ */
+/*	$OpenBSD: parse.y,v 1.102 2021/01/07 09:31:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -144,7 +144,7 @@ typedef struct {
 %token	<v.number>	NUMBER
 %type	<v.number>	yesno no optlist optlist_l option demotecount msec
 %type	<v.number>	deadtime
-%type	<v.string>	string dependon
+%type	<v.string>	string dependon dependonopt
 %type	<v.redist>	redistribute
 %type	<v.id>		areaid
 
@@ -297,7 +297,7 @@ conf_main	: ROUTERID STRING {
 		;
 
 
-redistribute	: no REDISTRIBUTE NUMBER '/' NUMBER optlist dependon {
+redistribute	: no REDISTRIBUTE NUMBER '/' NUMBER optlist dependonopt {
 			struct redistribute	*r;
 
 			if ((r = calloc(1, sizeof(*r))) == NULL)
@@ -323,7 +323,7 @@ redistribute	: no REDISTRIBUTE NUMBER '/' NUMBER optlist dependon {
 			free($7);
 			$$ = r;
 		}
-		| no REDISTRIBUTE STRING optlist dependon {
+		| no REDISTRIBUTE STRING optlist dependonopt {
 			struct redistribute	*r;
 
 			if ((r = calloc(1, sizeof(*r))) == NULL)
@@ -426,8 +426,10 @@ option		: METRIC NUMBER {
 		}
 		;
 
-dependon	: /* empty */		{ $$ = NULL; }
-		| DEPEND ON STRING	{
+dependonopt	: /* empty */		{ $$ = NULL; }
+		| dependon
+
+dependon	: DEPEND ON STRING	{
 			struct in_addr	 addr;
 			struct kif	*kif;
 
@@ -599,7 +601,7 @@ area		: AREA areaid {
 			memcpy(&areadefs, defs, sizeof(areadefs));
 			md_list_copy(&areadefs.md_list, &defs->md_list);
 			defs = &areadefs;
-		} '{' optnl areaopts_l '}' {
+		} '{' optnl areaopts_l optnl '}' {
 			area = NULL;
 			md_list_clr(&defs->md_list);
 			defs = &globaldefs;
@@ -627,8 +629,8 @@ areaid		: NUMBER {
 		}
 		;
 
-areaopts_l	: areaopts_l areaoptsl nl
-		| areaoptsl optnl
+areaopts_l	: areaopts_l nl areaoptsl
+		| areaoptsl
 		;
 
 areaoptsl	: interface
@@ -739,13 +741,13 @@ interface	: INTERFACE STRING	{
 		}
 		;
 
-interface_block	: '{' optnl interfaceopts_l '}'
+interface_block	: '{' optnl interfaceopts_l optnl '}'
 		| '{' optnl '}'
-		|
+		| /* empty */
 		;
 
-interfaceopts_l	: interfaceopts_l interfaceoptsl nl
-		| interfaceoptsl optnl
+interfaceopts_l	: interfaceopts_l nl interfaceoptsl
+		| interfaceoptsl
 		;
 
 interfaceoptsl	: PASSIVE		{ iface->passive = 1; }
