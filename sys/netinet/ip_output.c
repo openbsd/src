@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.358 2020/12/20 21:15:47 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.359 2021/01/07 14:51:46 claudio Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -73,6 +73,7 @@
 #endif /* IPSEC */
 
 int ip_pcbopts(struct mbuf **, struct mbuf *);
+int ip_multicast_if(struct ip_mreqn *, u_int, unsigned int *);
 int ip_setmoptions(int, struct ip_moptions **, struct mbuf *, u_int);
 void ip_mloopback(struct ifnet *, struct mbuf *, struct sockaddr_in *);
 static __inline u_int16_t __attribute__((__unused__))
@@ -1337,6 +1338,51 @@ ip_pcbopts(struct mbuf **pcbopt, struct mbuf *m)
 }
 
 /*
+ * Lookup the interface based on the information in the ip_mreqn struct.
+ */
+int
+ip_multicast_if(struct ip_mreqn *mreq, u_int rtableid, unsigned int *ifidx)
+{
+	struct sockaddr_in sin;
+	struct rtentry *rt;
+
+	/*
+	 * In case userland provides the imr_ifindex use this as interface.
+	 * If no interface address was provided, use the interface of
+	 * the route to the given multicast address.
+	 */
+	if (mreq->imr_ifindex != 0) {
+		*ifidx = mreq->imr_ifindex;
+	} else if (mreq->imr_address.s_addr == INADDR_ANY) {
+		memset(&sin, 0, sizeof(sin));
+		sin.sin_len = sizeof(sin);
+		sin.sin_family = AF_INET;
+		sin.sin_addr = mreq->imr_multiaddr;
+		rt = rtalloc(sintosa(&sin), RT_RESOLVE, rtableid);
+		if (!rtisvalid(rt)) {
+			rtfree(rt);
+			return EADDRNOTAVAIL;
+		}
+		*ifidx = rt->rt_ifidx;
+		rtfree(rt);
+	} else {
+		memset(&sin, 0, sizeof(sin));
+		sin.sin_len = sizeof(sin);
+		sin.sin_family = AF_INET;
+		sin.sin_addr = mreq->imr_address;
+		rt = rtalloc(sintosa(&sin), 0, rtableid);
+		if (!rtisvalid(rt) || !ISSET(rt->rt_flags, RTF_LOCAL)) {
+			rtfree(rt);
+			return EADDRNOTAVAIL;
+		}
+		*ifidx = rt->rt_ifidx;
+		rtfree(rt);
+	}
+
+	return 0;
+}
+
+/*
  * Set the IP multicast options in response to user setsockopt().
  */
 int
@@ -1345,12 +1391,12 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 {
 	struct in_addr addr;
 	struct in_ifaddr *ia;
-	struct ip_mreq *mreq;
+	struct ip_mreqn mreqn;
 	struct ifnet *ifp = NULL;
 	struct ip_moptions *imo = *imop;
 	struct in_multi **immp;
-	struct rtentry *rt;
 	struct sockaddr_in sin;
+	unsigned int ifidx;
 	int i, error = 0;
 	u_char loop;
 
@@ -1438,63 +1484,41 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 		 * Add a multicast group membership.
 		 * Group must be a valid IP multicast address.
 		 */
-		if (m == NULL || m->m_len != sizeof(struct ip_mreq)) {
+		if (m == NULL || !(m->m_len == sizeof(struct ip_mreq) ||
+		    m->m_len == sizeof(struct ip_mreqn))) {
 			error = EINVAL;
 			break;
 		}
-		mreq = mtod(m, struct ip_mreq *);
-		if (!IN_MULTICAST(mreq->imr_multiaddr.s_addr)) {
+		memset(&mreqn, 0, sizeof(mreqn));
+		memcpy(&mreqn, mtod(m, void *), m->m_len);
+		if (!IN_MULTICAST(mreqn.imr_multiaddr.s_addr)) {
 			error = EINVAL;
 			break;
 		}
-		/*
-		 * If no interface address was provided, use the interface of
-		 * the route to the given multicast address.
-		 */
-		if (mreq->imr_interface.s_addr == INADDR_ANY) {
-			memset(&sin, 0, sizeof(sin));
-			sin.sin_len = sizeof(sin);
-			sin.sin_family = AF_INET;
-			sin.sin_addr = mreq->imr_multiaddr;
-			rt = rtalloc(sintosa(&sin), RT_RESOLVE, rtableid);
-			if (!rtisvalid(rt)) {
-				rtfree(rt);
-				error = EADDRNOTAVAIL;
-				break;
-			}
-		} else {
-			memset(&sin, 0, sizeof(sin));
-			sin.sin_len = sizeof(sin);
-			sin.sin_family = AF_INET;
-			sin.sin_addr = mreq->imr_interface;
-			rt = rtalloc(sintosa(&sin), 0, rtableid);
-			if (!rtisvalid(rt) || !ISSET(rt->rt_flags, RTF_LOCAL)) {
-				rtfree(rt);
-				error = EADDRNOTAVAIL;
-				break;
-			}
-		}
-		ifp = if_get(rt->rt_ifidx);
-		rtfree(rt);
+
+		error = ip_multicast_if(&mreqn, rtableid, &ifidx);
+		if (error)
+			break;
 
 		/*
 		 * See if we found an interface, and confirm that it
 		 * supports multicast.
 		 */
+		ifp = if_get(ifidx);
 		if (ifp == NULL || (ifp->if_flags & IFF_MULTICAST) == 0) {
 			error = EADDRNOTAVAIL;
 			if_put(ifp);
 			break;
 		}
+
 		/*
 		 * See if the membership already exists or if all the
 		 * membership slots are full.
 		 */
 		for (i = 0; i < imo->imo_num_memberships; ++i) {
-			if (imo->imo_membership[i]->inm_ifidx
-						== ifp->if_index &&
+			if (imo->imo_membership[i]->inm_ifidx == ifidx &&
 			    imo->imo_membership[i]->inm_addr.s_addr
-						== mreq->imr_multiaddr.s_addr)
+						== mreqn.imr_multiaddr.s_addr)
 				break;
 		}
 		if (i < imo->imo_num_memberships) {
@@ -1506,9 +1530,10 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 			struct in_multi **nmships, **omships;
 			size_t newmax;
 			/*
-			 * Resize the vector to next power-of-two minus 1. If the
-			 * size would exceed the maximum then we know we've really
-			 * run out of entries. Otherwise, we reallocate the vector.
+			 * Resize the vector to next power-of-two minus 1. If
+			 * the size would exceed the maximum then we know we've
+			 * really run out of entries. Otherwise, we reallocate
+			 * the vector.
 			 */
 			nmships = NULL;
 			omships = imo->imo_membership;
@@ -1538,7 +1563,7 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 		 * address list for the given interface.
 		 */
 		if ((imo->imo_membership[i] =
-		    in_addmulti(&mreq->imr_multiaddr, ifp)) == NULL) {
+		    in_addmulti(&mreqn.imr_multiaddr, ifp)) == NULL) {
 			error = ENOBUFS;
 			if_put(ifp);
 			break;
@@ -1552,42 +1577,34 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 		 * Drop a multicast group membership.
 		 * Group must be a valid IP multicast address.
 		 */
-		if (m == NULL || m->m_len != sizeof(struct ip_mreq)) {
+		if (m == NULL || !(m->m_len == sizeof(struct ip_mreq) ||
+		    m->m_len == sizeof(struct ip_mreqn))) {
 			error = EINVAL;
 			break;
 		}
-		mreq = mtod(m, struct ip_mreq *);
-		if (!IN_MULTICAST(mreq->imr_multiaddr.s_addr)) {
+		memset(&mreqn, 0, sizeof(mreqn));
+		memcpy(&mreqn, mtod(m, void *), m->m_len);
+		if (!IN_MULTICAST(mreqn.imr_multiaddr.s_addr)) {
 			error = EINVAL;
 			break;
 		}
+
 		/*
 		 * If an interface address was specified, get a pointer
 		 * to its ifnet structure.
 		 */
-		if (mreq->imr_interface.s_addr == INADDR_ANY)
-			ifp = NULL;
-		else {
-			memset(&sin, 0, sizeof(sin));
-			sin.sin_len = sizeof(sin);
-			sin.sin_family = AF_INET;
-			sin.sin_addr = mreq->imr_interface;
-			ia = ifatoia(ifa_ifwithaddr(sintosa(&sin), rtableid));
-			if (ia == NULL) {
-				error = EADDRNOTAVAIL;
-				break;
-			}
-			ifp = ia->ia_ifp;
-		}
+		error = ip_multicast_if(&mreqn, rtableid, &ifidx);
+		if (error)
+			break;
+
 		/*
 		 * Find the membership in the membership array.
 		 */
 		for (i = 0; i < imo->imo_num_memberships; ++i) {
-			if ((ifp == NULL ||
-			    imo->imo_membership[i]->inm_ifidx ==
-			        ifp->if_index) &&
+			if ((ifidx == 0 ||
+			    imo->imo_membership[i]->inm_ifidx == ifidx) &&
 			     imo->imo_membership[i]->inm_addr.s_addr ==
-			     mreq->imr_multiaddr.s_addr)
+			     mreqn.imr_multiaddr.s_addr)
 				break;
 		}
 		if (i == imo->imo_num_memberships) {

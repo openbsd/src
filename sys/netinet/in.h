@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.138 2020/08/22 17:55:30 gnezdo Exp $	*/
+/*	$OpenBSD: in.h,v 1.139 2021/01/07 14:51:46 claudio Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -358,6 +358,12 @@ struct ip_opts {
 struct ip_mreq {
 	struct	in_addr imr_multiaddr;	/* IP multicast address of group */
 	struct	in_addr imr_interface;	/* local IP address of interface */
+};
+
+struct ip_mreqn {
+	struct	in_addr imr_multiaddr;	/* IP multicast address of group */
+	struct	in_addr imr_address;	/* local IP address of interface */
+	int		imr_ifindex;	/* interface index */
 };
 
 /*
