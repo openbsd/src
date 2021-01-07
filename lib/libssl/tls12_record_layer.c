@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_record_layer.c,v 1.6 2021/01/07 15:32:59 jsing Exp $ */
+/* $OpenBSD: tls12_record_layer.c,v 1.7 2021/01/07 15:37:19 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -66,7 +66,11 @@ tls12_record_layer_new(void)
 void
 tls12_record_layer_free(struct tls12_record_layer *rl)
 {
+	if (rl == NULL)
+		return;
+
 	freezero(rl->read_mac_key, rl->read_mac_key_len);
+
 	freezero(rl, sizeof(struct tls12_record_layer));
 }
 
