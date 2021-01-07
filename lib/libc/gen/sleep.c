@@ -1,4 +1,4 @@
-/*	$OpenBSD: sleep.c,v 1.12 2009/12/14 05:10:13 guenther Exp $ */
+/*	$OpenBSD: sleep.c,v 1.13 2021/01/07 15:24:52 cheloha Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,9 +35,6 @@ unsigned int
 sleep(unsigned int seconds)
 {
 	struct timespec rqt, rmt;
-
-	if (seconds == 0)
-		return(0);
 
 	rqt.tv_sec = seconds;
 	rqt.tv_nsec = 0;
