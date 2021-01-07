@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.127 2020/11/11 18:14:12 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.128 2021/01/07 15:32:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -434,7 +434,7 @@ tls1_change_cipher_state_cipher(SSL *s, char is_read,
 			goto err;
 
 		if (!tls12_record_layer_set_read_mac_key(s->internal->rl,
-		    S3I(s)->read_mac_secret, mac_secret_size))
+		    mac_secret, mac_secret_size))
 			goto err;
 	} else {
 		/*
@@ -563,11 +563,6 @@ tls1_change_cipher_state(SSL *s, int which)
 	if (key_block - S3I(s)->hs.key_block != S3I(s)->hs.key_block_len) {
 		SSLerror(s, ERR_R_INTERNAL_ERROR);
 		goto err2;
-	}
-
-	if (is_read) {
-		memcpy(S3I(s)->read_mac_secret, mac_secret, mac_secret_size);
-		S3I(s)->read_mac_secret_size = mac_secret_size;
 	}
 
 	if (aead != NULL) {

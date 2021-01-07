@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_record_layer.c,v 1.5 2020/10/03 17:35:17 jsing Exp $ */
+/* $OpenBSD: tls12_record_layer.c,v 1.6 2021/01/07 15:32:59 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -33,6 +33,9 @@ struct tls12_record_layer {
 	int read_stream_mac;
 	int write_stream_mac;
 
+	uint8_t *read_mac_key;
+	size_t read_mac_key_len;
+
 	/*
 	 * XXX - for now these are just pointers to externally managed
 	 * structs/memory. These should eventually be owned by the record layer.
@@ -44,9 +47,6 @@ struct tls12_record_layer {
 	EVP_MD_CTX *read_hash_ctx;
 	EVP_CIPHER_CTX *write_cipher_ctx;
 	EVP_MD_CTX *write_hash_ctx;
-
-	const uint8_t *read_mac_key;
-	size_t read_mac_key_len;
 
 	uint8_t *read_seq_num;
 	uint8_t *write_seq_num;
@@ -66,6 +66,7 @@ tls12_record_layer_new(void)
 void
 tls12_record_layer_free(struct tls12_record_layer *rl)
 {
+	freezero(rl->read_mac_key, rl->read_mac_key_len);
 	freezero(rl, sizeof(struct tls12_record_layer));
 }
 
@@ -189,7 +190,17 @@ int
 tls12_record_layer_set_read_mac_key(struct tls12_record_layer *rl,
     const uint8_t *mac_key, size_t mac_key_len)
 {
-	rl->read_mac_key = mac_key;
+	freezero(rl->read_mac_key, rl->read_mac_key_len);
+	rl->read_mac_key = NULL;
+	rl->read_mac_key_len = 0;
+
+	if (mac_key == NULL || mac_key_len == 0)
+		return 1;
+
+	if ((rl->read_mac_key = calloc(1, mac_key_len)) == NULL)
+		return 0;
+
+	memcpy(rl->read_mac_key, mac_key, mac_key_len);
 	rl->read_mac_key_len = mac_key_len;
 
 	return 1;

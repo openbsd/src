@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.22 2021/01/05 17:14:46 jsing Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.23 2021/01/07 15:32:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -301,13 +301,6 @@ f_err:
 	return (0);
 }
 
-/* for these 2 messages, we need to
- * ssl->enc_read_ctx			re-init
- * ssl->s3->internal->read_sequence		zero
- * ssl->s3->internal->read_mac_secret		re-init
- * ssl->session->read_sym_enc		assign
- * ssl->session->read_hash		assign
- */
 int
 ssl3_send_change_cipher_spec(SSL *s, int a, int b)
 {

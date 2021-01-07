@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.310 2020/12/15 16:04:49 tb Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.311 2021/01/07 15:32:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -833,8 +833,6 @@ typedef struct ssl3_buffer_internal_st {
 
 typedef struct ssl3_state_internal_st {
 	unsigned char read_sequence[SSL3_SEQUENCE_SIZE];
-	int read_mac_secret_size;
-	unsigned char read_mac_secret[EVP_MAX_MD_SIZE];
 	unsigned char write_sequence[SSL3_SEQUENCE_SIZE];
 
 	SSL3_BUFFER_INTERNAL rbuf;	/* read IO goes into here */
