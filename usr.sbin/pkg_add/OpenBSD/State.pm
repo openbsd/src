@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.64 2020/01/28 16:00:24 espie Exp $
+# $OpenBSD: State.pm,v 1.65 2021/01/08 14:21:37 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -199,7 +199,9 @@ sub f
 	# is there anything to format, actually ?
 	if ($fmt =~ m/\#\d/) {
 		# encode any unknown chars as ?
-		s/$forbidden/?/g for @l;
+		for (@l) {
+			s/$forbidden/?/g if defined;
+		}
 		# make it so that #0 is #
 		unshift(@l, '#');
 		$fmt =~ s,\#(\d+),($l[$1] // "<Undefined #$1>"),ge;
