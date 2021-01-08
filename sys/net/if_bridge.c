@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.346 2021/01/02 13:16:04 mvs Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.347 2021/01/08 23:31:53 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1156,7 +1156,8 @@ bridge_process(struct ifnet *ifp, struct mbuf *m)
 
 	sc = brifp->if_softc;
 	SMR_SLIST_FOREACH_LOCKED(bif, &sc->sc_iflist, bif_next) {
-		if (bridge_ourether(bif->ifp, eh->ether_shost))
+		struct arpcom *ac = (struct arpcom *)bif->ifp;
+		if (memcmp(ac->ac_enaddr, eh->ether_shost, ETHER_ADDR_LEN) == 0)
 			goto bad;
 		if (bif->ifp == ifp)
 			bif0 = bif;
