@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.89 2021/01/08 08:09:07 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.90 2021/01/08 08:45:55 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -89,6 +89,7 @@ struct	repo {
 	size_t	 id; /* identifier (array index) */
 };
 
+size_t	entity_queue;
 int	timeout = 60*60;
 volatile sig_atomic_t killme;
 void	suicide(int sig);
@@ -106,7 +107,6 @@ static struct	repotab {
  * and parsed.
  */
 struct	entity {
-	size_t		 id; /* unique identifier */
 	enum rtype	 type; /* type of entity (not RTYPE_EOF) */
 	char		*uri; /* file or rsync:// URI */
 	int		 has_dgst; /* whether dgst is specified */
@@ -225,7 +225,6 @@ static void
 entity_read_req(int fd, struct entity *ent)
 {
 
-	io_simple_read(fd, &ent->id, sizeof(size_t));
 	io_simple_read(fd, &ent->type, sizeof(enum rtype));
 	io_str_read(fd, &ent->uri);
 	io_simple_read(fd, &ent->has_dgst, sizeof(int));
@@ -245,7 +244,6 @@ static void
 entity_buffer_req(struct ibuf *b, const struct entity *ent)
 {
 
-	io_simple_buffer(b, &ent->id, sizeof(ent->id));
 	io_simple_buffer(b, &ent->type, sizeof(ent->type));
 	io_str_buffer(b, ent->uri);
 	io_simple_buffer(b, &ent->has_dgst, sizeof(int));
@@ -279,12 +277,14 @@ entity_write_req(struct msgbuf *msgq, const struct entity *ent)
 static void
 entityq_flush(struct msgbuf *msgq, struct entityq *q, const struct repo *repo)
 {
-	struct entity	*p;
+	struct entity	*p, *np;
 
-	TAILQ_FOREACH(p, q, entries) {
+	TAILQ_FOREACH_SAFE(p, q, entries, np) {
 		if (p->repo < 0 || repo->id != (size_t)p->repo)
 			continue;
 		entity_write_req(msgq, p);
+		TAILQ_REMOVE(q, p, entries);
+		entity_free(p);
 	}
 }
 
@@ -366,47 +366,18 @@ repo_filename(const struct repo *repo, const char *uri)
 }
 
 /*
- * Read the next entity from the parser process, removing it from the
- * queue of pending requests in the process.
- * This always returns a valid entity.
- */
-static struct entity *
-entityq_next(int fd, struct entityq *q)
-{
-	size_t		 id;
-	struct entity	*entp;
-
-	io_simple_read(fd, &id, sizeof(size_t));
-
-	TAILQ_FOREACH(entp, q, entries)
-		if (entp->id == id)
-			break;
-
-	assert(entp != NULL);
-	TAILQ_REMOVE(q, entp, entries);
-	return entp;
-}
-
-static void
-entity_buffer_resp(struct ibuf *b, const struct entity *ent)
-{
-	io_simple_buffer(b, &ent->id, sizeof(size_t));
-}
-
-/*
  * Add the heap-allocated file to the queue for processing.
  */
 static void
 entityq_add(struct msgbuf *msgq, struct entityq *q, char *file, enum rtype type,
     const struct repo *rp, const unsigned char *dgst,
-    const unsigned char *pkey, size_t pkeysz, char *descr, size_t *eid)
+    const unsigned char *pkey, size_t pkeysz, char *descr)
 {
 	struct entity	*p;
 
 	if ((p = calloc(1, sizeof(struct entity))) == NULL)
 		err(1, "calloc");
 
-	p->id = (*eid)++;
 	p->type = type;
 	p->uri = file;
 	p->repo = (rp != NULL) ? (ssize_t)rp->id : -1;
@@ -425,15 +396,19 @@ entityq_add(struct msgbuf *msgq, struct entityq *q, char *file, enum rtype type,
 			err(1, "strdup");
 
 	filepath_add(file);
-	TAILQ_INSERT_TAIL(q, p, entries);
+
+	entity_queue++;
 
 	/*
 	 * Write to the queue if there's no repo or the repo has already
-	 * been loaded.
+	 * been loaded else enqueue it for later.
 	 */
 
-	if (rp == NULL || rp->loaded)
+	if (rp == NULL || rp->loaded) {
 		entity_write_req(msgq, p);
+		entity_free(p);
+	} else
+		TAILQ_INSERT_TAIL(q, p, entries);
 }
 
 /*
@@ -442,7 +417,7 @@ entityq_add(struct msgbuf *msgq, struct entityq *q, char *file, enum rtype type,
  */
 static void
 queue_add_from_mft(struct msgbuf *msgq, struct entityq *q, const char *mft,
-    const struct mftfile *file, enum rtype type, size_t *eid)
+    const struct mftfile *file, enum rtype type)
 {
 	char		*cp, *nfile;
 
@@ -460,7 +435,7 @@ queue_add_from_mft(struct msgbuf *msgq, struct entityq *q, const char *mft,
 	 * that the repository has already been loaded.
 	 */
 
-	entityq_add(msgq, q, nfile, type, NULL, file->hash, NULL, 0, NULL, eid);
+	entityq_add(msgq, q, nfile, type, NULL, file->hash, NULL, 0, NULL);
 }
 
 /*
@@ -473,7 +448,7 @@ queue_add_from_mft(struct msgbuf *msgq, struct entityq *q, const char *mft,
  */
 static void
 queue_add_from_mft_set(struct msgbuf *msgq, struct entityq *q,
-    const struct mft *mft, size_t *eid)
+    const struct mft *mft)
 {
 	size_t			 i, sz;
 	const struct mftfile	*f;
@@ -484,7 +459,7 @@ queue_add_from_mft_set(struct msgbuf *msgq, struct entityq *q,
 		assert(sz > 4);
 		if (strcasecmp(f->file + sz - 4, ".crl"))
 			continue;
-		queue_add_from_mft(msgq, q, mft->file, f, RTYPE_CRL, eid);
+		queue_add_from_mft(msgq, q, mft->file, f, RTYPE_CRL);
 	}
 
 	for (i = 0; i < mft->filesz; i++) {
@@ -493,7 +468,7 @@ queue_add_from_mft_set(struct msgbuf *msgq, struct entityq *q,
 		assert(sz > 4);
 		if (strcasecmp(f->file + sz - 4, ".cer"))
 			continue;
-		queue_add_from_mft(msgq, q, mft->file, f, RTYPE_CER, eid);
+		queue_add_from_mft(msgq, q, mft->file, f, RTYPE_CER);
 	}
 
 	for (i = 0; i < mft->filesz; i++) {
@@ -502,7 +477,7 @@ queue_add_from_mft_set(struct msgbuf *msgq, struct entityq *q,
 		assert(sz > 4);
 		if (strcasecmp(f->file + sz - 4, ".roa"))
 			continue;
-		queue_add_from_mft(msgq, q, mft->file, f, RTYPE_ROA, eid);
+		queue_add_from_mft(msgq, q, mft->file, f, RTYPE_ROA);
 	}
 
 	for (i = 0; i < mft->filesz; i++) {
@@ -511,7 +486,7 @@ queue_add_from_mft_set(struct msgbuf *msgq, struct entityq *q,
 		assert(sz > 4);
 		if (strcasecmp(f->file + sz - 4, ".gbr"))
 			continue;
-		queue_add_from_mft(msgq, q, mft->file, f, RTYPE_GBR, eid);
+		queue_add_from_mft(msgq, q, mft->file, f, RTYPE_GBR);
 	}
 
 	for (i = 0; i < mft->filesz; i++) {
@@ -531,8 +506,7 @@ queue_add_from_mft_set(struct msgbuf *msgq, struct entityq *q,
  * Add a local TAL file (RFC 7730) to the queue of files to fetch.
  */
 static void
-queue_add_tal(struct msgbuf *msgq, struct entityq *q, const char *file,
-    size_t *eid)
+queue_add_tal(struct msgbuf *msgq, struct entityq *q, const char *file)
 {
 	char	*nfile, *buf;
 
@@ -552,7 +526,7 @@ queue_add_tal(struct msgbuf *msgq, struct entityq *q, const char *file,
 	}
 
 	/* Not in a repository, so directly add to queue. */
-	entityq_add(msgq, q, nfile, RTYPE_TAL, NULL, NULL, NULL, 0, buf, eid);
+	entityq_add(msgq, q, nfile, RTYPE_TAL, NULL, NULL, NULL, 0, buf);
 	/* entityq_add makes a copy of buf */
 	free(buf);
 }
@@ -562,7 +536,7 @@ queue_add_tal(struct msgbuf *msgq, struct entityq *q, const char *file,
  */
 static void
 queue_add_from_tal(struct msgbuf *procq, struct msgbuf *rsyncq,
-    struct entityq *q, const struct tal *tal, size_t *eid)
+    struct entityq *q, const struct tal *tal)
 {
 	char			*nfile;
 	const struct repo	*repo;
@@ -584,7 +558,7 @@ queue_add_from_tal(struct msgbuf *procq, struct msgbuf *rsyncq,
 	nfile = repo_filename(repo, uri);
 
 	entityq_add(procq, q, nfile, RTYPE_CER, repo, NULL, tal->pkey,
-	    tal->pkeysz, tal->descr, eid);
+	    tal->pkeysz, tal->descr);
 }
 
 /*
@@ -592,7 +566,7 @@ queue_add_from_tal(struct msgbuf *procq, struct msgbuf *rsyncq,
  */
 static void
 queue_add_from_cert(struct msgbuf *procq, struct msgbuf *rsyncq,
-    struct entityq *q, const char *rsyncuri, const char *rrdpuri, size_t *eid)
+    struct entityq *q, const char *rsyncuri, const char *rrdpuri)
 {
 	char			*nfile;
 	const struct repo	*repo;
@@ -604,7 +578,7 @@ queue_add_from_cert(struct msgbuf *procq, struct msgbuf *rsyncq,
 	repo = repo_lookup(rsyncq, rsyncuri);
 	nfile = repo_filename(repo, rsyncuri);
 
-	entityq_add(procq, q, nfile, RTYPE_MFT, repo, NULL, NULL, 0, NULL, eid);
+	entityq_add(procq, q, nfile, RTYPE_MFT, repo, NULL, NULL, 0, NULL);
 }
 
 /*
@@ -1127,7 +1101,7 @@ proc_parser(int fd)
 
 		if ((b = ibuf_dynamic(256, UINT_MAX)) == NULL)
 			err(1, NULL);
-		entity_buffer_resp(b, entp);
+		io_simple_buffer(b, &entp->type, sizeof(entp->type));
 
 		switch (entp->type) {
 		case RTYPE_TAL:
@@ -1211,9 +1185,9 @@ out:
  */
 static void
 entity_process(int proc, struct msgbuf *procq, struct msgbuf *rsyncq,
-    struct stats *st, struct entityq *q, const struct entity *ent,
-    size_t *eid, struct vrp_tree *tree)
+    struct stats *st, struct entityq *q, struct vrp_tree *tree)
 {
+	enum rtype	type;
 	struct tal	*tal;
 	struct cert	*cert;
 	struct mft	*mft;
@@ -1226,12 +1200,13 @@ entity_process(int proc, struct msgbuf *procq, struct msgbuf *rsyncq,
 	 * certificate, for example).
 	 * We follow that up with whether the resources didn't parse.
 	 */
+	io_simple_read(proc, &type, sizeof(type));
 
-	switch (ent->type) {
+	switch (type) {
 	case RTYPE_TAL:
 		st->tals++;
 		tal = tal_read(proc);
-		queue_add_from_tal(procq, rsyncq, q, tal, eid);
+		queue_add_from_tal(procq, rsyncq, q, tal);
 		tal_free(tal);
 		break;
 	case RTYPE_CER:
@@ -1250,7 +1225,7 @@ entity_process(int proc, struct msgbuf *procq, struct msgbuf *rsyncq,
 			 * process the MFT.
 			 */
 			queue_add_from_cert(procq, rsyncq,
-			    q, cert->mft, cert->notify, eid);
+			    q, cert->mft, cert->notify);
 		} else
 			st->certs_invalid++;
 		cert_free(cert);
@@ -1265,7 +1240,7 @@ entity_process(int proc, struct msgbuf *procq, struct msgbuf *rsyncq,
 		mft = mft_read(proc);
 		if (mft->stale)
 			st->mfts_stale++;
-		queue_add_from_mft_set(procq, q, mft, eid);
+		queue_add_from_mft_set(procq, q, mft);
 		mft_free(mft);
 		break;
 	case RTYPE_CRL:
@@ -1291,6 +1266,8 @@ entity_process(int proc, struct msgbuf *procq, struct msgbuf *rsyncq,
 	default:
 		abort();
 	}
+
+	entity_queue--;
 }
 
 /*
@@ -1420,11 +1397,10 @@ main(int argc, char *argv[])
 {
 	int		 rc = 1, c, proc, st, rsync,
 			 fl = SOCK_STREAM | SOCK_CLOEXEC;
-	size_t		 i, j, eid = 1, outsz = 0, talsz = 0;
+	size_t		 i, j, outsz = 0, talsz = 0;
 	pid_t		 procpid, rsyncpid;
 	int		 fd[2];
 	struct entityq	 q;
-	struct entity	*ent;
 	struct msgbuf	 procq, rsyncq;
 	struct pollfd	 pfd[2];
 	struct roa	**out = NULL;
@@ -1626,9 +1602,9 @@ main(int argc, char *argv[])
 	 */
 
 	for (i = 0; i < talsz; i++)
-		queue_add_tal(&procq, &q, tals[i], &eid);
+		queue_add_tal(&procq, &q, tals[i]);
 
-	while (!TAILQ_EMPTY(&q) && !killme) {
+	while (entity_queue > 0 && !killme) {
 		pfd[0].events = POLLIN;
 		if (rsyncq.queued)
 			pfd[0].events = POLLOUT;
@@ -1649,10 +1625,7 @@ main(int argc, char *argv[])
 				if (!rt.repos[i].loaded)
 					j++;
 			logx("period stats: %zu pending repos", j);
-			j = 0;
-			TAILQ_FOREACH(ent, &q, entries)
-				j++;
-			logx("period stats: %zu pending entries", j);
+			logx("period stats: %zu pending entries", entity_queue);
 			continue;
 		}
 
@@ -1711,12 +1684,7 @@ main(int argc, char *argv[])
 		 */
 
 		if ((pfd[1].revents & POLLIN)) {
-			ent = entityq_next(proc, &q);
-			entity_process(proc, &procq, &rsyncq, &stats,
-			    &q, ent, &eid, &v);
-			if (verbose > 2)
-				fprintf(stderr, "%s\n", ent->uri);
-			entity_free(ent);
+			entity_process(proc, &procq, &rsyncq, &stats, &q, &v);
 		}
 	}
 
