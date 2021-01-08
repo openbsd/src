@@ -1,4 +1,4 @@
-/*	$OpenBSD: tal.c,v 1.25 2020/12/21 11:35:55 claudio Exp $ */
+/*	$OpenBSD: tal.c,v 1.26 2021/01/08 08:09:07 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -301,16 +301,16 @@ tal_free(struct tal *p)
  * See tal_read() for the other side of the pipe.
  */
 void
-tal_buffer(char **b, size_t *bsz, size_t *bmax, const struct tal *p)
+tal_buffer(struct ibuf *b, const struct tal *p)
 {
 	size_t	 i;
 
-	io_buf_buffer(b, bsz, bmax, p->pkey, p->pkeysz);
-	io_str_buffer(b, bsz, bmax, p->descr);
-	io_simple_buffer(b, bsz, bmax, &p->urisz, sizeof(size_t));
+	io_buf_buffer(b, p->pkey, p->pkeysz);
+	io_str_buffer(b, p->descr);
+	io_simple_buffer(b, &p->urisz, sizeof(size_t));
 
 	for (i = 0; i < p->urisz; i++)
-		io_str_buffer(b, bsz, bmax, p->uri[i]);
+		io_str_buffer(b, p->uri[i]);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.22 2020/12/21 11:35:55 claudio Exp $ */
+/*	$OpenBSD: mft.c,v 1.23 2021/01/08 08:09:07 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -519,22 +519,21 @@ mft_free(struct mft *p)
  * See mft_read() for the other side of the pipe.
  */
 void
-mft_buffer(char **b, size_t *bsz, size_t *bmax, const struct mft *p)
+mft_buffer(struct ibuf *b, const struct mft *p)
 {
 	size_t		 i;
 
-	io_simple_buffer(b, bsz, bmax, &p->stale, sizeof(int));
-	io_str_buffer(b, bsz, bmax, p->file);
-	io_simple_buffer(b, bsz, bmax, &p->filesz, sizeof(size_t));
+	io_simple_buffer(b, &p->stale, sizeof(int));
+	io_str_buffer(b, p->file);
+	io_simple_buffer(b, &p->filesz, sizeof(size_t));
 
 	for (i = 0; i < p->filesz; i++) {
-		io_str_buffer(b, bsz, bmax, p->files[i].file);
-		io_simple_buffer(b, bsz, bmax,
-			p->files[i].hash, SHA256_DIGEST_LENGTH);
+		io_str_buffer(b, p->files[i].file);
+		io_simple_buffer(b, p->files[i].hash, SHA256_DIGEST_LENGTH);
 	}
 
-	io_str_buffer(b, bsz, bmax, p->aki);
-	io_str_buffer(b, bsz, bmax, p->ski);
+	io_str_buffer(b, p->aki);
+	io_str_buffer(b, p->ski);
 }
 
 /*

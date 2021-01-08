@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.21 2020/12/21 11:35:55 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.22 2021/01/08 08:09:07 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1207,7 +1207,6 @@ ta_parse(X509 **xp, const char *fn, const unsigned char *pkey, size_t pkeysz)
 void
 cert_free(struct cert *p)
 {
-
 	if (p == NULL)
 		return;
 
@@ -1223,35 +1222,31 @@ cert_free(struct cert *p)
 }
 
 static void
-cert_ip_buffer(char **b, size_t *bsz,
-	size_t *bmax, const struct cert_ip *p)
+cert_ip_buffer(struct ibuf *b, const struct cert_ip *p)
 {
-
-	io_simple_buffer(b, bsz, bmax, &p->afi, sizeof(enum afi));
-	io_simple_buffer(b, bsz, bmax, &p->type, sizeof(enum cert_ip_type));
+	io_simple_buffer(b, &p->afi, sizeof(enum afi));
+	io_simple_buffer(b, &p->type, sizeof(enum cert_ip_type));
 
 	if (p->type != CERT_IP_INHERIT) {
-		io_simple_buffer(b, bsz, bmax, &p->min, sizeof(p->min));
-		io_simple_buffer(b, bsz, bmax, &p->max, sizeof(p->max));
+		io_simple_buffer(b, &p->min, sizeof(p->min));
+		io_simple_buffer(b, &p->max, sizeof(p->max));
 	}
 
 	if (p->type == CERT_IP_RANGE)
-		ip_addr_range_buffer(b, bsz, bmax, &p->range);
+		ip_addr_range_buffer(b, &p->range);
 	else if (p->type == CERT_IP_ADDR)
-		ip_addr_buffer(b, bsz, bmax, &p->ip);
+		ip_addr_buffer(b, &p->ip);
 }
 
 static void
-cert_as_buffer(char **b, size_t *bsz,
-	size_t *bmax, const struct cert_as *p)
+cert_as_buffer(struct ibuf *b, const struct cert_as *p)
 {
-
-	io_simple_buffer(b, bsz, bmax, &p->type, sizeof(enum cert_as_type));
+	io_simple_buffer(b, &p->type, sizeof(enum cert_as_type));
 	if (p->type == CERT_AS_RANGE) {
-		io_simple_buffer(b, bsz, bmax, &p->range.min, sizeof(uint32_t));
-		io_simple_buffer(b, bsz, bmax, &p->range.max, sizeof(uint32_t));
+		io_simple_buffer(b, &p->range.min, sizeof(uint32_t));
+		io_simple_buffer(b, &p->range.max, sizeof(uint32_t));
 	} else if (p->type == CERT_AS_ID)
-		io_simple_buffer(b, bsz, bmax, &p->id, sizeof(uint32_t));
+		io_simple_buffer(b, &p->id, sizeof(uint32_t));
 }
 
 /*
@@ -1259,24 +1254,24 @@ cert_as_buffer(char **b, size_t *bsz,
  * See cert_read() for the other side of the pipe.
  */
 void
-cert_buffer(char **b, size_t *bsz, size_t *bmax, const struct cert *p)
+cert_buffer(struct ibuf *b, const struct cert *p)
 {
 	size_t	 i;
 
-	io_simple_buffer(b, bsz, bmax, &p->valid, sizeof(int));
-	io_simple_buffer(b, bsz, bmax, &p->ipsz, sizeof(size_t));
+	io_simple_buffer(b, &p->valid, sizeof(int));
+	io_simple_buffer(b, &p->ipsz, sizeof(size_t));
 	for (i = 0; i < p->ipsz; i++)
-		cert_ip_buffer(b, bsz, bmax, &p->ips[i]);
+		cert_ip_buffer(b, &p->ips[i]);
 
-	io_simple_buffer(b, bsz, bmax, &p->asz, sizeof(size_t));
+	io_simple_buffer(b, &p->asz, sizeof(size_t));
 	for (i = 0; i < p->asz; i++)
-		cert_as_buffer(b, bsz, bmax, &p->as[i]);
+		cert_as_buffer(b, &p->as[i]);
 
-	io_str_buffer(b, bsz, bmax, p->mft);
-	io_str_buffer(b, bsz, bmax, p->notify);
-	io_str_buffer(b, bsz, bmax, p->crl);
-	io_str_buffer(b, bsz, bmax, p->aki);
-	io_str_buffer(b, bsz, bmax, p->ski);
+	io_str_buffer(b, p->mft);
+	io_str_buffer(b, p->notify);
+	io_str_buffer(b, p->crl);
+	io_str_buffer(b, p->aki);
+	io_str_buffer(b, p->ski);
 }
 
 static void

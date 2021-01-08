@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2020/12/09 11:29:04 claudio Exp $
+#	$OpenBSD: Makefile,v 1.16 2021/01/08 08:09:07 claudio Exp $
 
 PROG=	rpki-client
 SRCS=	as.c cert.c cms.c crl.c gbr.c io.c ip.c log.c main.c mft.c output.c \
@@ -6,8 +6,8 @@ SRCS=	as.c cert.c cms.c crl.c gbr.c io.c ip.c log.c main.c mft.c output.c \
 	roa.c rsync.c tal.c validate.c x509.c
 MAN=	rpki-client.8
 
-LDADD+= -lcrypto
-DPADD+= ${LIBCRYPTO}
+LDADD+= -lcrypto -lutil
+DPADD+= ${LIBCRYPTO} ${LIBUTIL}
 
 CFLAGS+= -Wall -I${.CURDIR}
 CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.12 2020/12/21 11:35:55 claudio Exp $ */
+/*	$OpenBSD: rsync.c,v 1.13 2021/01/08 08:09:07 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -15,6 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/queue.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <netinet/in.h>
@@ -28,6 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <imsg.h>
 
 #include "extern.h"
 
@@ -171,21 +173,25 @@ proc_child(int signal)
 void
 proc_rsync(char *prog, char *bind_addr, int fd)
 {
-	size_t			 id, i, idsz = 0, bsz = 0, bmax = 0;
+	size_t			 id, i, idsz = 0;
 	ssize_t			 ssz;
 	char			*host = NULL, *mod = NULL, *uri = NULL,
-				*dst = NULL, *path, *save, *cmd, *b = NULL;
+				*dst = NULL, *path, *save, *cmd;
 	const char		*pp;
 	pid_t			 pid;
 	char			*args[32];
 	int			 st, rc = 0;
 	struct stat		 stt;
 	struct pollfd		 pfd;
+	struct msgbuf		 msgq;
+	struct ibuf		*b;
 	sigset_t		 mask, oldmask;
 	struct rsyncproc	*ids = NULL;
 
 	pfd.fd = fd;
-	pfd.events = POLLIN;
+
+	msgbuf_init(&msgq);
+	msgq.fd = fd;
 
 	/*
 	 * Unveil the command we want to run.
@@ -236,6 +242,10 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 		err(1, NULL);
 
 	for (;;) {
+		pfd.events = POLLIN;
+		if (msgq.queued)
+			pfd.events |= POLLOUT;
+
 		if (ppoll(&pfd, 1, NULL, &oldmask) == -1) {
 			if (errno != EINTR)
 				err(1, "ppoll");
@@ -265,12 +275,12 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 					ok = 0;
 				}
 
-				io_simple_buffer(&b, &bsz, &bmax,
-				    &ids[i].id, sizeof(size_t));
-				io_simple_buffer(&b, &bsz, &bmax,
-				    &ok, sizeof(ok));
-				io_simple_write(fd, b, bsz);
-				bsz = 0;
+				b = ibuf_open(sizeof(size_t) + sizeof(ok));
+				if (b == NULL)
+					err(1, NULL);
+				io_simple_buffer(b, &ids[i].id, sizeof(size_t));
+				io_simple_buffer(b, &ok, sizeof(ok));
+				ibuf_close(&msgq, b);
 
 				free(ids[i].uri);
 				ids[i].uri = NULL;
@@ -281,6 +291,18 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 				err(1, "waitpid");
 			continue;
 		}
+
+		if (pfd.revents & POLLOUT) {
+			switch (msgbuf_write(&msgq)) {
+			case 0:
+				errx(1, "write: connection closed");
+			case -1:
+				err(1, "write");
+			}
+		}
+
+		if (!(pfd.revents & POLLIN))
+			continue;
 
 		/*
 		 * Read til the parent exits.
@@ -370,7 +392,7 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 			free(ids[i].uri);
 		}
 
-	free(b);
+	msgbuf_clear(&msgq);
 	free(ids);
 	exit(rc);
 	/* NOTREACHED */

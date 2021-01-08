@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.10 2020/12/21 11:35:55 claudio Exp $ */
+/*	$OpenBSD: roa.c,v 1.11 2021/01/08 08:09:07 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -388,29 +388,25 @@ roa_free(struct roa *p)
  * See roa_read() for reader.
  */
 void
-roa_buffer(char **b, size_t *bsz, size_t *bmax, const struct roa *p)
+roa_buffer(struct ibuf *b, const struct roa *p)
 {
 	size_t	 i;
 
-	io_simple_buffer(b, bsz, bmax, &p->valid, sizeof(int));
-	io_simple_buffer(b, bsz, bmax, &p->asid, sizeof(uint32_t));
-	io_simple_buffer(b, bsz, bmax, &p->ipsz, sizeof(size_t));
+	io_simple_buffer(b, &p->valid, sizeof(int));
+	io_simple_buffer(b, &p->asid, sizeof(uint32_t));
+	io_simple_buffer(b, &p->ipsz, sizeof(size_t));
 
 	for (i = 0; i < p->ipsz; i++) {
-		io_simple_buffer(b, bsz, bmax,
-		    &p->ips[i].afi, sizeof(enum afi));
-		io_simple_buffer(b, bsz, bmax,
-		    &p->ips[i].maxlength, sizeof(size_t));
-		io_simple_buffer(b, bsz, bmax,
-		    p->ips[i].min, sizeof(p->ips[i].min));
-		io_simple_buffer(b, bsz, bmax,
-		    p->ips[i].max, sizeof(p->ips[i].max));
-		ip_addr_buffer(b, bsz, bmax, &p->ips[i].addr);
+		io_simple_buffer(b, &p->ips[i].afi, sizeof(enum afi));
+		io_simple_buffer(b, &p->ips[i].maxlength, sizeof(size_t));
+		io_simple_buffer(b, p->ips[i].min, sizeof(p->ips[i].min));
+		io_simple_buffer(b, p->ips[i].max, sizeof(p->ips[i].max));
+		ip_addr_buffer(b, &p->ips[i].addr);
 	}
 
-	io_str_buffer(b, bsz, bmax, p->aki);
-	io_str_buffer(b, bsz, bmax, p->ski);
-	io_str_buffer(b, bsz, bmax, p->tal);
+	io_str_buffer(b, p->aki);
+	io_str_buffer(b, p->ski);
+	io_str_buffer(b, p->tal);
 }
 
 /*

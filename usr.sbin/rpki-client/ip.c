@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.c,v 1.13 2020/09/12 15:46:48 claudio Exp $ */
+/*	$OpenBSD: ip.c,v 1.14 2021/01/08 08:09:07 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -276,13 +276,13 @@ ip_addr_print(const struct ip_addr *addr,
  * Matched with ip_addr_read().
  */
 void
-ip_addr_buffer(char **b, size_t *bsz, size_t *bmax, const struct ip_addr *p)
+ip_addr_buffer(struct ibuf *b, const struct ip_addr *p)
 {
 	size_t sz = PREFIX_SIZE(p->prefixlen);
 
 	assert(sz <= 16);
-	io_simple_buffer(b, bsz, bmax, &p->prefixlen, sizeof(unsigned char));
-	io_simple_buffer(b, bsz, bmax, p->addr, sz);
+	io_simple_buffer(b, &p->prefixlen, sizeof(unsigned char));
+	io_simple_buffer(b, p->addr, sz);
 }
 
 /*
@@ -290,12 +290,10 @@ ip_addr_buffer(char **b, size_t *bsz, size_t *bmax, const struct ip_addr *p)
  * Matched with ip_addr_range_read().
  */
 void
-ip_addr_range_buffer(char **b, size_t *bsz, size_t *bmax,
-    const struct ip_addr_range *p)
+ip_addr_range_buffer(struct ibuf *b, const struct ip_addr_range *p)
 {
-
-	ip_addr_buffer(b, bsz, bmax, &p->min);
-	ip_addr_buffer(b, bsz, bmax, &p->max);
+	ip_addr_buffer(b, &p->min);
+	ip_addr_buffer(b, &p->max);
 }
 
 /*

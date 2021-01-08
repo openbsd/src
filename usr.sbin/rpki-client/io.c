@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.11 2020/12/18 16:58:59 claudio Exp $ */
+/*	$OpenBSD: io.c,v 1.12 2021/01/08 08:09:07 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <imsg.h>
 
 #include "extern.h"
 
@@ -50,62 +51,37 @@ io_socket_nonblocking(int fd)
 }
 
 /*
- * Blocking write of a binary buffer.
- * Buffers of length zero are simply ignored.
- */
-void
-io_simple_write(int fd, const void *res, size_t sz)
-{
-	ssize_t	 ssz;
-
-	if (sz == 0)
-		return;
-	if ((ssz = write(fd, res, sz)) == -1)
-		err(1, "write");
-	else if ((size_t)ssz != sz)
-		errx(1, "write: short write");
-}
-
-/*
  * Like io_simple_write() but into a buffer.
  */
 void
-io_simple_buffer(char **b, size_t *bsz,
-	size_t *bmax, const void *res, size_t sz)
+io_simple_buffer(struct ibuf *b, const void *res, size_t sz)
 {
-
-	if (*bsz + sz > *bmax) {
-		if ((*b = realloc(*b, *bsz + sz)) == NULL)
-			err(1, NULL);
-		*bmax = *bsz + sz;
-	}
-
-	memcpy(*b + *bsz, res, sz);
-	*bsz += sz;
+	if (ibuf_add(b, res, sz) == -1)
+		err(1, NULL);
 }
 
 /*
- * Like io_buf_write() but into a buffer.
+ * Add a sz sized buffer into the io buffer.
  */
 void
-io_buf_buffer(char **b, size_t *bsz,
-	size_t *bmax, const void *p, size_t sz)
+io_buf_buffer(struct ibuf *b, const void *p, size_t sz)
 {
-
-	io_simple_buffer(b, bsz, bmax, &sz, sizeof(size_t));
+	if (ibuf_add(b, &sz, sizeof(size_t)) == -1)
+		err(1, NULL);
 	if (sz > 0)
-		io_simple_buffer(b, bsz, bmax, p, sz);
+		if (ibuf_add(b, p, sz) == -1)
+			err(1, NULL);
 }
 
 /*
- * Like io_str_write() but into a buffer.
+ * Add a string into the io buffer.
  */
 void
-io_str_buffer(char **b, size_t *bsz, size_t *bmax, const char *p)
+io_str_buffer(struct ibuf *b, const char *p)
 {
-	size_t	 sz = (p == NULL) ? 0 : strlen(p);
+	size_t sz = (p == NULL) ? 0 : strlen(p);
 
-	io_buf_buffer(b, bsz, bmax, p, sz);
+	io_buf_buffer(b, p, sz);
 }
 
 /*

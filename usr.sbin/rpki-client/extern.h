@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.36 2020/12/09 11:29:04 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.37 2021/01/08 08:09:07 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -284,30 +284,32 @@ struct	stats {
 	struct timeval	system_time;
 };
 
+struct ibuf;
+
 /* global variables */
 extern int verbose;
 
 /* Routines for RPKI entities. */
 
-void		 tal_buffer(char **, size_t *, size_t *, const struct tal *);
+void		 tal_buffer(struct ibuf *, const struct tal *);
 void		 tal_free(struct tal *);
 struct tal	*tal_parse(const char *, char *);
 char		*tal_read_file(const char *);
 struct tal	*tal_read(int);
 
-void		 cert_buffer(char **, size_t *, size_t *, const struct cert *);
+void		 cert_buffer(struct ibuf *, const struct cert *);
 void		 cert_free(struct cert *);
 struct cert	*cert_parse(X509 **, const char *, const unsigned char *);
 struct cert	*ta_parse(X509 **, const char *, const unsigned char *, size_t);
 struct cert	*cert_read(int);
 
-void		 mft_buffer(char **, size_t *, size_t *, const struct mft *);
+void		 mft_buffer(struct ibuf *, const struct mft *);
 void		 mft_free(struct mft *);
 struct mft	*mft_parse(X509 **, const char *);
 int		 mft_check(const char *, struct mft *);
 struct mft	*mft_read(int);
 
-void		 roa_buffer(char **, size_t *, size_t *, const struct roa *);
+void		 roa_buffer(struct ibuf *, const struct roa *);
 void		 roa_free(struct roa *);
 struct roa	*roa_parse(X509 **, const char *, const unsigned char *);
 struct roa	*roa_read(int);
@@ -344,9 +346,8 @@ int		 ip_addr_parse(const ASN1_BIT_STRING *,
 			enum afi, const char *, struct ip_addr *);
 void		 ip_addr_print(const struct ip_addr *, enum afi, char *,
 			size_t);
-void		 ip_addr_buffer(char **, size_t *, size_t *,
-			const struct ip_addr *);
-void		 ip_addr_range_buffer(char **, size_t *, size_t *,
+void		 ip_addr_buffer(struct ibuf *, const struct ip_addr *);
+void		 ip_addr_range_buffer(struct ibuf *, 
 			const struct ip_addr_range *);
 void		 ip_addr_read(int, struct ip_addr *);
 void		 ip_addr_range_read(int, struct ip_addr_range *);
@@ -385,14 +386,11 @@ void		 cryptoerrx(const char *, ...)
 
 void		 io_socket_blocking(int);
 void		 io_socket_nonblocking(int);
-void		 io_simple_buffer(char **, size_t *, size_t *, const void *,
-			size_t);
+void		 io_simple_buffer(struct ibuf *, const void *, size_t);
+void		 io_buf_buffer(struct ibuf *, const void *, size_t);
+void		 io_str_buffer(struct ibuf *, const char *);
 void		 io_simple_read(int, void *, size_t);
-void		 io_simple_write(int, const void *, size_t);
-void		 io_buf_buffer(char **, size_t *, size_t *, const void *,
-			size_t);
 void		 io_buf_read_alloc(int, void **, size_t *);
-void		 io_str_buffer(char **, size_t *, size_t *, const char *);
 void		 io_str_read(int, char **);
 
 /* X509 helpers. */
