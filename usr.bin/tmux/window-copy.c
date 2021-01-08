@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.309 2021/01/06 07:29:49 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.310 2021/01/08 08:22:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2030,6 +2030,8 @@ window_copy_cmd_search_backward_incremental(struct window_copy_cmd_state *cs)
 
 	data->timeout = 0;
 
+	log_debug ("%s: %s", __func__, argument);
+
 	prefix = *argument++;
 	if (data->searchx == -1 || data->searchy == -1) {
 		data->searchx = data->cx;
@@ -2082,6 +2084,8 @@ window_copy_cmd_search_forward_incremental(struct window_copy_cmd_state *cs)
 	enum window_copy_cmd_action	 action = WINDOW_COPY_CMD_NOTHING;
 
 	data->timeout = 0;
+
+	log_debug ("%s: %s", __func__, argument);
 
 	prefix = *argument++;
 	if (data->searchx == -1 || data->searchy == -1) {
