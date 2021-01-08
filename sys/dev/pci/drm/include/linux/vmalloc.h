@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmalloc.h,v 1.1 2019/04/14 10:14:53 jsg Exp $	*/
+/*	$OpenBSD: vmalloc.h,v 1.2 2021/01/08 23:02:09 kettenis Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -25,25 +25,10 @@
 #include <linux/overflow.h>
 
 void	*vmap(struct vm_page **, unsigned int, unsigned long, pgprot_t);
-void	 vunmap(void *, size_t);
+void	vunmap(void *, size_t);
 
-static inline void *
-vmalloc(unsigned long size)
-{
-	return malloc(size, M_DRM, M_WAITOK | M_CANFAIL);
-}
-
-static inline void *
-vzalloc(unsigned long size)
-{
-	return malloc(size, M_DRM, M_WAITOK | M_CANFAIL | M_ZERO);
-}
-
-static inline void
-vfree(void *objp)
-{
-	free(objp, M_DRM, 0);
-}
-
+void	*vmalloc(unsigned long);
+void	*vzalloc(unsigned long);
+void	vfree(const void *);
 
 #endif
