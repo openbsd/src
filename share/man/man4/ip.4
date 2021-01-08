@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ip.4,v 1.41 2016/08/18 11:45:18 jmc Exp $
+.\"	$OpenBSD: ip.4,v 1.42 2021/01/08 14:48:36 claudio Exp $
 .\"	$NetBSD: ip.4,v 1.3 1994/11/30 16:22:19 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ip.4	8.2 (Berkeley) 11/30/93
 .\"
-.Dd $Mdocdate: August 18 2016 $
+.Dd $Mdocdate: January 8 2021 $
 .Dt IP 4
 .Os
 .Sh NAME
@@ -411,12 +411,18 @@ setsockopt(s, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq));
 .Pp
 where
 .Fa mreq
-is the following structure:
+is either of the following structure:
 .Bd -literal -offset indent
 struct ip_mreq {
     struct in_addr imr_multiaddr; /* multicast group to join */
     struct in_addr imr_interface; /* interface to join on */
 }
+
+struct ip_mreqn {
+    struct in_addr imr_multiaddr; /* multicast group to join */
+    struct in_addr imr_address;   /* local IP address of interface */
+    int            imr_ifindex;   /* interface index to join */
+};
 .Ed
 .Pp
 .Va imr_interface
@@ -428,6 +434,13 @@ or the
 .Tn IP
 address of a particular multicast-capable interface if
 the host is multihomed.
+The
+.Va imr_ifindex
+element of
+.Va struct ip_mreqn
+can be set to the interface index instead of specifying the
+.Tn IP
+address of a  particular multicast-capable interface.
 Membership is associated with a single interface;
 programs running on multihomed hosts may need to
 join the same group on more than one interface.
