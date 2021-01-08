@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.157 2021/01/07 11:08:59 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.158 2021/01/08 12:29:16 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -1665,8 +1665,8 @@ klist_lock(struct klist *list)
 	if (list->kl_ops != NULL) {
 		ls = list->kl_ops->klo_lock(list->kl_arg);
 	} else {
-		ls = splhigh();
 		KERNEL_LOCK();
+		ls = splhigh();
 	}
 	return ls;
 }
@@ -1677,8 +1677,8 @@ klist_unlock(struct klist *list, int ls)
 	if (list->kl_ops != NULL) {
 		list->kl_ops->klo_unlock(list->kl_arg, ls);
 	} else {
-		KERNEL_UNLOCK();
 		splx(ls);
+		KERNEL_UNLOCK();
 	}
 }
 
