@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.59 2019/06/28 13:32:41 deraadt Exp $	*/
+/*	$OpenBSD: fts.c,v 1.60 2021/01/08 16:06:30 tb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@
 
 #define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 
-static FTSENT	*fts_alloc(FTS *, char *, size_t);
+static FTSENT	*fts_alloc(FTS *, const char *, size_t);
 static FTSENT	*fts_build(FTS *, int);
 static void	 fts_lfree(FTSENT *);
 static void	 fts_load(FTS *, FTSENT *);
@@ -52,7 +52,7 @@ static void	 fts_padjust(FTS *, FTSENT *);
 static int	 fts_palloc(FTS *, size_t);
 static FTSENT	*fts_sort(FTS *, FTSENT *, int);
 static u_short	 fts_stat(FTS *, FTSENT *, int, int);
-static int	 fts_safe_changedir(FTS *, FTSENT *, int, char *);
+static int	 fts_safe_changedir(FTS *, FTSENT *, int, const char *);
 
 #define	ISDOT(a)	(a[0] == '.' && (!a[1] || (a[1] == '.' && !a[2])))
 
@@ -901,7 +901,7 @@ fts_sort(FTS *sp, FTSENT *head, int nitems)
 }
 
 static FTSENT *
-fts_alloc(FTS *sp, char *name, size_t namelen)
+fts_alloc(FTS *sp, const char *name, size_t namelen)
 {
 	FTSENT *p;
 	size_t len;
@@ -1020,7 +1020,7 @@ fts_maxarglen(char * const *argv)
  * Assumes p->fts_dev and p->fts_ino are filled in.
  */
 static int
-fts_safe_changedir(FTS *sp, FTSENT *p, int fd, char *path)
+fts_safe_changedir(FTS *sp, FTSENT *p, int fd, const char *path)
 {
 	int ret, oerrno, newfd;
 	struct stat sb;
