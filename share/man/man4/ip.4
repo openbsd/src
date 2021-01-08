@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ip.4,v 1.42 2021/01/08 14:48:36 claudio Exp $
+.\"	$OpenBSD: ip.4,v 1.43 2021/01/08 23:33:12 jmc Exp $
 .\"	$NetBSD: ip.4,v 1.3 1994/11/30 16:22:19 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -411,7 +411,7 @@ setsockopt(s, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq));
 .Pp
 where
 .Fa mreq
-is either of the following structure:
+is either of the following structures:
 .Bd -literal -offset indent
 struct ip_mreq {
     struct in_addr imr_multiaddr; /* multicast group to join */
