@@ -1,6 +1,6 @@
-/* $OpenBSD: x509_verify.c,v 1.27 2021/01/05 16:53:10 jsing Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.28 2021/01/08 03:23:56 beck Exp $ */
 /*
- * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
+ * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -501,6 +501,7 @@ x509_verify_build_chains(struct x509_verify_ctx *ctx, X509 *cert,
 			    X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN;
 	}
 
+	/* Check to see if we have a trusted root issuer. */
 	for (i = 0; i < sk_X509_num(ctx->roots); i++) {
 		candidate = sk_X509_value(ctx->roots, i);
 		if (x509_verify_potential_parent(ctx, candidate, cert)) {
@@ -508,15 +509,7 @@ x509_verify_build_chains(struct x509_verify_ctx *ctx, X509 *cert,
 			    cert_md, 1, candidate, current_chain);
 		}
 	}
-	if (ctx->intermediates != NULL) {
-		for (i = 0; i < sk_X509_num(ctx->intermediates); i++) {
-			candidate = sk_X509_value(ctx->intermediates, i);
-			if (x509_verify_potential_parent(ctx, candidate, cert)) {
-				x509_verify_consider_candidate(ctx, cert,
-				    cert_md, 0, candidate, current_chain);
-			}
-		}
-	}
+	/* Check for legacy mode roots */
 	if (ctx->xsc != NULL) {
 		if ((ret = ctx->xsc->get_issuer(&candidate, ctx->xsc, cert)) < 0) {
 			x509_verify_cert_error(ctx, cert, depth,
@@ -529,6 +522,17 @@ x509_verify_build_chains(struct x509_verify_ctx *ctx, X509 *cert,
 				    cert_md, 1, candidate, current_chain);
 			}
 			X509_free(candidate);
+		}
+	}
+
+	/* Check intermediates after checking roots */
+	if (ctx->intermediates != NULL) {
+		for (i = 0; i < sk_X509_num(ctx->intermediates); i++) {
+			candidate = sk_X509_value(ctx->intermediates, i);
+			if (x509_verify_potential_parent(ctx, candidate, cert)) {
+				x509_verify_consider_candidate(ctx, cert,
+				    cert_md, 0, candidate, current_chain);
+			}
 		}
 	}
 
