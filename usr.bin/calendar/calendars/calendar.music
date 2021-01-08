@@ -1,7 +1,7 @@
 /*
  * Music
  *
- * $OpenBSD: calendar.music,v 1.39 2020/06/22 13:38:43 jmc Exp $
+ * $OpenBSD: calendar.music,v 1.40 2021/01/08 23:31:48 jmc Exp $
  */
 
 #ifndef _calendar_music_
@@ -25,7 +25,7 @@
 01/10	Jim Croce is born in Philadelphia, 1943
 01/10	Pat Benatar is born in Long Island, 1952
 01/10	Rod Stewart is born in Glasgow, Scotland, 1945
-01/11	David Bowie dies, 2016
+01/10	David Bowie dies, 2016
 01/11	Maurice Durufle is born in Louviers, France, 1902
 01/11	Reinhold Gliere is born in Kiev, Russia, 1875
 01/13	Eric Clapton plays the "Rainbow Concert" in London, 1973
