@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.57 2020/05/11 10:40:12 claudio Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.58 2021/01/08 22:05:34 millert Exp $ */
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
@@ -166,8 +166,7 @@ struct fcgi_end_request_body {
 __dead void	usage(void);
 int		slowcgi_listen(char *, struct passwd *);
 void		slowcgi_paused(int, short, void *);
-int		accept_reserve(int, struct sockaddr *, socklen_t *, int,
-		    volatile int *);
+int		accept_reserve(int, struct sockaddr *, socklen_t *, int, int *);
 void		slowcgi_accept(int, short, void *);
 void		slowcgi_request(int, short, void *);
 void		slowcgi_response(int, short, void *);
@@ -432,7 +431,7 @@ slowcgi_paused(int fd, short events, void *arg)
 
 int
 accept_reserve(int sockfd, struct sockaddr *addr, socklen_t *addrlen,
-    int reserve, volatile int *counter)
+    int reserve, int *counter)
 {
 	int ret;
 	if (getdtablecount() + reserve +
