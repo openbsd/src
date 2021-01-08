@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.70 2020/12/25 12:59:52 visa Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.71 2021/01/08 11:23:57 visa Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -109,6 +109,7 @@ const struct filterops logread_filtops = {
 int dosendsyslog(struct proc *, const char *, size_t, int, enum uio_seg);
 void logtick(void *);
 size_t msgbuf_getlen(struct msgbuf *);
+void msgbuf_putchar_locked(struct msgbuf *, const char);
 
 void
 initmsgbuf(caddr_t buf, size_t bufsize)
@@ -137,9 +138,13 @@ initmsgbuf(caddr_t buf, size_t bufsize)
 		mbp->msg_bufs = new_bufs;
 	}
 
-	/* Always start new buffer data on a new line. */
+	/*
+	 * Always start new buffer data on a new line.
+	 * Avoid using log_mtx because mutexes do not work during early boot
+	 * on some architectures.
+	 */
 	if (mbp->msg_bufx > 0 && mbp->msg_bufc[mbp->msg_bufx - 1] != '\n')
-		msgbuf_putchar(msgbufp, '\n');
+		msgbuf_putchar_locked(mbp, '\n');
 
 	/* mark it as ready for use. */
 	msgbufmapped = 1;
@@ -162,6 +167,13 @@ msgbuf_putchar(struct msgbuf *mbp, const char c)
 		return;
 
 	mtx_enter(&log_mtx);
+	msgbuf_putchar_locked(mbp, c);
+	mtx_leave(&log_mtx);
+}
+
+void
+msgbuf_putchar_locked(struct msgbuf *mbp, const char c)
+{
 	mbp->msg_bufc[mbp->msg_bufx++] = c;
 	if (mbp->msg_bufx < 0 || mbp->msg_bufx >= mbp->msg_bufs)
 		mbp->msg_bufx = 0;
@@ -171,7 +183,6 @@ msgbuf_putchar(struct msgbuf *mbp, const char c)
 			mbp->msg_bufr = 0;
 		mbp->msg_bufd++;
 	}
-	mtx_leave(&log_mtx);
 }
 
 size_t
