@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.41 2021/01/09 12:18:28 visa Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.42 2021/01/09 12:20:37 visa Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -236,7 +236,8 @@ struct witness {
 	struct lock_class	*w_class;
 	SLIST_ENTRY(witness)	w_list;		/* List of all witnesses. */
 	SLIST_ENTRY(witness)	w_typelist;	/* Witnesses of a type. */
-	struct witness		*w_hash_next; /* Linked list in hash buckets. */
+	SLIST_ENTRY(witness)	w_hash_next;	/* Linked list in
+						 * hash buckets. */
 	uint16_t		w_num_ancestors; /* direct/indirect
 						  * ancestor count */
 	uint16_t		w_num_descendants; /* direct/indirect
@@ -254,9 +255,9 @@ SLIST_HEAD(witness_list, witness);
  * witness objects (struct witness *).
  */
 struct witness_hash {
-	struct witness	*wh_array[WITNESS_HASH_SIZE];
-	uint32_t	wh_size;
-	uint32_t	wh_count;
+	struct witness_list	wh_array[WITNESS_HASH_SIZE];
+	uint32_t		wh_size;
+	uint32_t		wh_count;
 };
 
 /*
@@ -2326,7 +2327,7 @@ witness_init_hash_tables(void)
 
 	/* Initialize the hash tables. */
 	for (i = 0; i < WITNESS_HASH_SIZE; i++)
-		w_hash.wh_array[i] = NULL;
+		SLIST_INIT(&w_hash.wh_array[i]);
 
 	w_hash.wh_size = WITNESS_HASH_SIZE;
 	w_hash.wh_count = 0;
@@ -2355,11 +2356,9 @@ witness_hash_get(const struct lock_type *type, const char *subtype)
 		MUTEX_ASSERT_LOCKED(&w_mtx);
 	hash = (uint32_t)((uintptr_t)type ^ (uintptr_t)subtype) %
 	    w_hash.wh_size;
-	w = w_hash.wh_array[hash];
-	while (w != NULL) {
+	SLIST_FOREACH(w, &w_hash.wh_array[hash], w_hash_next) {
 		if (w->w_type == type && w->w_subtype == subtype)
 			goto out;
-		w = w->w_hash_next;
 	}
 
 out:
@@ -2377,13 +2376,12 @@ witness_hash_put(struct witness *w)
 		MUTEX_ASSERT_LOCKED(&w_mtx);
 	KASSERTMSG(witness_hash_get(w->w_type, w->w_subtype) == NULL,
 	    "%s: trying to add a hash entry that already exists!", __func__);
-	KASSERTMSG(w->w_hash_next == NULL,
+	KASSERTMSG(SLIST_NEXT(w, w_hash_next) == NULL,
 	    "%s: w->w_hash_next != NULL", __func__);
 
 	hash = (uint32_t)((uintptr_t)w->w_type ^ (uintptr_t)w->w_subtype) %
 	    w_hash.wh_size;
-	w->w_hash_next = w_hash.wh_array[hash];
-	w_hash.wh_array[hash] = w;
+	SLIST_INSERT_HEAD(&w_hash.wh_array[hash], w, w_hash_next);
 	w_hash.wh_count++;
 }
 
