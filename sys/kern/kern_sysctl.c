@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.386 2021/01/09 22:00:13 gnezdo Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.387 2021/01/09 23:33:18 gnezdo Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -352,6 +352,95 @@ const struct sysctl_bounded_args kern_vars[] = {
 #endif
 };
 
+int
+kern_sysctl_dirs(int top_name, int *name, u_int namelen,
+    void *oldp, size_t *oldlenp, void *newp, size_t newlen, struct proc *p)
+{
+	switch (top_name) {
+#ifndef SMALL_KERNEL
+	case KERN_PROC:
+		return (sysctl_doproc(name, namelen, oldp, oldlenp));
+	case KERN_PROC_ARGS:
+		return (sysctl_proc_args(name, namelen, oldp, oldlenp, p));
+	case KERN_PROC_CWD:
+		return (sysctl_proc_cwd(name, namelen, oldp, oldlenp, p));
+	case KERN_PROC_NOBROADCASTKILL:
+		return (sysctl_proc_nobroadcastkill(name, namelen,
+		     newp, newlen, oldp, oldlenp, p));
+	case KERN_PROC_VMMAP:
+		return (sysctl_proc_vmmap(name, namelen, oldp, oldlenp, p));
+	case KERN_FILE:
+		return (sysctl_file(name, namelen, oldp, oldlenp, p));
+#endif
+#if defined(GPROF) || defined(DDBPROF)
+	case KERN_PROF:
+		return (sysctl_doprof(name, namelen, oldp, oldlenp,
+		    newp, newlen));
+#endif
+	case KERN_MALLOCSTATS:
+		return (sysctl_malloc(name, namelen, oldp, oldlenp,
+		    newp, newlen, p));
+	case KERN_TTY:
+		return (sysctl_tty(name, namelen, oldp, oldlenp,
+		    newp, newlen));
+	case KERN_POOL:
+		return (sysctl_dopool(name, namelen, oldp, oldlenp));
+#if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
+	case KERN_SYSVIPC_INFO:
+		return (sysctl_sysvipc(name, namelen, oldp, oldlenp));
+#endif
+#ifdef SYSVSEM
+	case KERN_SEMINFO:
+		return (sysctl_sysvsem(name, namelen, oldp, oldlenp,
+		    newp, newlen));
+#endif
+#ifdef SYSVSHM
+	case KERN_SHMINFO:
+		return (sysctl_sysvshm(name, namelen, oldp, oldlenp,
+		    newp, newlen));
+#endif
+#ifndef SMALL_KERNEL
+	case KERN_INTRCNT:
+		return (sysctl_intrcnt(name, namelen, oldp, oldlenp));
+	case KERN_WATCHDOG:
+		return (sysctl_wdog(name, namelen, oldp, oldlenp,
+		    newp, newlen));
+#endif
+#ifndef SMALL_KERNEL
+	case KERN_EVCOUNT:
+		return (evcount_sysctl(name, namelen, oldp, oldlenp,
+		    newp, newlen));
+#endif
+	case KERN_TIMECOUNTER:
+		return (sysctl_tc(name, namelen, oldp, oldlenp, newp, newlen));
+	case KERN_CPTIME2:
+		return (sysctl_cptime2(name, namelen, oldp, oldlenp,
+		    newp, newlen));
+#ifdef WITNESS
+	case KERN_WITNESSWATCH:
+		return witness_sysctl_watch(oldp, oldlenp, newp, newlen);
+	case KERN_WITNESS:
+		return witness_sysctl(name, namelen, oldp, oldlenp,
+		    newp, newlen);
+#endif
+#if NAUDIO > 0
+	case KERN_AUDIO:
+		return (sysctl_audio(name, namelen, oldp, oldlenp,
+		    newp, newlen));
+#endif
+#if NVIDEO > 0
+	case KERN_VIDEO:
+		return (sysctl_video(name, namelen, oldp, oldlenp,
+		    newp, newlen));
+#endif
+	case KERN_CPUSTATS:
+		return (sysctl_cpustats(name, namelen, oldp, oldlenp,
+		    newp, newlen));
+	default:
+		return (ENOTDIR);	/* overloaded */
+	}
+}
+
 /*
  * kernel related system variables.
  */
@@ -365,93 +454,8 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 
 	/* dispatch the non-terminal nodes first */
 	if (namelen != 1) {
-		switch (name[0]) {
-#ifndef SMALL_KERNEL
-	case KERN_PROC:
-		return (sysctl_doproc(name + 1, namelen - 1, oldp, oldlenp));
-	case KERN_PROC_ARGS:
-		return (sysctl_proc_args(name + 1, namelen - 1, oldp, oldlenp,
-		     p));
-	case KERN_PROC_CWD:
-		return (sysctl_proc_cwd(name + 1, namelen - 1, oldp, oldlenp,
-		     p));
-	case KERN_PROC_NOBROADCASTKILL:
-		return (sysctl_proc_nobroadcastkill(name + 1, namelen - 1,
-		     newp, newlen, oldp, oldlenp, p));
-	case KERN_PROC_VMMAP:
-		return (sysctl_proc_vmmap(name + 1, namelen - 1, oldp, oldlenp,
-		     p));
-	case KERN_FILE:
-		return (sysctl_file(name + 1, namelen - 1, oldp, oldlenp, p));
-#endif
-#if defined(GPROF) || defined(DDBPROF)
-	case KERN_PROF:
-		return (sysctl_doprof(name + 1, namelen - 1, oldp, oldlenp,
-		    newp, newlen));
-#endif
-	case KERN_MALLOCSTATS:
-		return (sysctl_malloc(name + 1, namelen - 1, oldp, oldlenp,
-		    newp, newlen, p));
-	case KERN_TTY:
-		return (sysctl_tty(name + 1, namelen - 1, oldp, oldlenp,
-		    newp, newlen));
-	case KERN_POOL:
-		return (sysctl_dopool(name + 1, namelen - 1, oldp, oldlenp));
-#if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
-	case KERN_SYSVIPC_INFO:
-		return (sysctl_sysvipc(name + 1, namelen - 1, oldp, oldlenp));
-#endif
-#ifdef SYSVSEM
-	case KERN_SEMINFO:
-		return (sysctl_sysvsem(name + 1, namelen - 1, oldp, oldlenp,
-		    newp, newlen));
-#endif
-#ifdef SYSVSHM
-	case KERN_SHMINFO:
-		return (sysctl_sysvshm(name + 1, namelen - 1, oldp, oldlenp,
-		    newp, newlen));
-#endif
-#ifndef SMALL_KERNEL
-	case KERN_INTRCNT:
-		return (sysctl_intrcnt(name + 1, namelen - 1, oldp, oldlenp));
-	case KERN_WATCHDOG:
-		return (sysctl_wdog(name + 1, namelen - 1, oldp, oldlenp,
-		    newp, newlen));
-#endif
-#ifndef SMALL_KERNEL
-	case KERN_EVCOUNT:
-		return (evcount_sysctl(name + 1, namelen - 1, oldp, oldlenp,
-		    newp, newlen));
-#endif
-	case KERN_TIMECOUNTER:
-		return (sysctl_tc(name + 1, namelen - 1, oldp, oldlenp,
-		    newp, newlen));
-	case KERN_CPTIME2:
-		return (sysctl_cptime2(name + 1, namelen -1, oldp, oldlenp,
-		    newp, newlen));
-#ifdef WITNESS
-	case KERN_WITNESSWATCH:
-		return witness_sysctl_watch(oldp, oldlenp, newp, newlen);
-	case KERN_WITNESS:
-		return witness_sysctl(name + 1, namelen - 1, oldp, oldlenp,
-		    newp, newlen);
-#endif
-#if NAUDIO > 0
-	case KERN_AUDIO:
-		return (sysctl_audio(name + 1, namelen - 1, oldp, oldlenp,
-		    newp, newlen));
-#endif
-#if NVIDEO > 0
-	case KERN_VIDEO:
-		return (sysctl_video(name + 1, namelen - 1, oldp, oldlenp,
-		    newp, newlen));
-#endif
-	case KERN_CPUSTATS:
-		return (sysctl_cpustats(name + 1, namelen - 1, oldp, oldlenp,
-		    newp, newlen));
-		default:
-			return (ENOTDIR);	/* overloaded */
-		}
+		return kern_sysctl_dirs(name[0], name + 1, namelen - 1,
+		    oldp, oldlenp, newp, newlen, p);
 	}
 
 	switch (name[0]) {
