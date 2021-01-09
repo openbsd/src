@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.178 2020/11/16 06:44:38 gnezdo Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.179 2021/01/09 20:58:37 gnezdo Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -1056,8 +1056,8 @@ tcp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 
 	case TCPCTL_SYN_USE_LIMIT:
 		NET_LOCK();
-		error = sysctl_int(oldp, oldlenp, newp, newlen,
-		    &tcp_syn_use_limit);
+		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
+		    &tcp_syn_use_limit, 0, INT_MAX);
 		if (!error && newp != NULL) {
 			/*
 			 * Global tcp_syn_use_limit is used when reseeding a
@@ -1074,22 +1074,19 @@ tcp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case TCPCTL_SYN_HASH_SIZE:
 		NET_LOCK();
 		nval = tcp_syn_hash_size;
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &nval);
+		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
+		    &nval, 1, 100000);
 		if (!error && nval != tcp_syn_hash_size) {
-			if (nval < 1 || nval > 100000) {
-				error = EINVAL;
-			} else {
-				/*
-				 * If global hash size has been changed,
-				 * switch sets as soon as possible.  Then
-				 * the actual hash array will be reallocated.
-				 */
-				if (tcp_syn_cache[0].scs_size != nval)
-					tcp_syn_cache[0].scs_use = 0;
-				if (tcp_syn_cache[1].scs_size != nval)
-					tcp_syn_cache[1].scs_use = 0;
-				tcp_syn_hash_size = nval;
-			}
+			/*
+			 * If global hash size has been changed,
+			 * switch sets as soon as possible.  Then
+			 * the actual hash array will be reallocated.
+			 */
+			if (tcp_syn_cache[0].scs_size != nval)
+				tcp_syn_cache[0].scs_use = 0;
+			if (tcp_syn_cache[1].scs_size != nval)
+				tcp_syn_cache[1].scs_use = 0;
+			tcp_syn_hash_size = nval;
 		}
 		NET_UNLOCK();
 		return (error);
