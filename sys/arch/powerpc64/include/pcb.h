@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.7 2020/08/17 16:55:41 kettenis Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.8 2021/01/09 13:14:02 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -25,7 +25,7 @@
 struct pcb {
 	register_t	pcb_sp;
 	u_int		pcb_flags;
-#define PCB_FP		0x000000001
+#define PCB_FPU		0x000000001
 #define PCB_VEC		0x000000002
 #define PCB_VSX		0x000000004
 	struct slb	pcb_slb[32];

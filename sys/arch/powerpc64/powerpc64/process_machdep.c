@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.4 2020/07/14 09:41:30 kettenis Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.5 2021/01/09 13:14:02 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -50,12 +50,12 @@ process_read_fpregs(struct proc *p, struct fpreg *regs)
 	struct trapframe *tf = p->p_md.md_regs;
 	struct pcb *pcb = &p->p_addr->u_pcb;
 
-	if (tf->srr1 & (PSL_FP|PSL_VEC|PSL_VSX)) {
-		tf->srr1 &= ~(PSL_FP|PSL_VEC|PSL_VSX);
+	if (tf->srr1 & (PSL_FPU|PSL_VEC|PSL_VSX)) {
+		tf->srr1 &= ~(PSL_FPU|PSL_VEC|PSL_VSX);
 		save_vsx(p);
 	}
 
-	if (pcb->pcb_flags & (PCB_FP|PCB_VEC|PCB_VSX))
+	if (pcb->pcb_flags & (PCB_FPU|PCB_VEC|PCB_VSX))
 		memcpy(regs, &pcb->pcb_fpstate, sizeof(*regs));
 	else
 		memset(regs, 0, sizeof(*regs));
@@ -98,8 +98,8 @@ process_write_regs(struct proc *p, struct reg *regs)
 {
 	struct trapframe *tf = p->p_md.md_regs;
 
-	regs->r_ps &= ~(PSL_FP|PSL_VEC|PSL_VSX);
-	regs->r_ps |= (tf->srr1 & (PSL_FP|PSL_VEC|PSL_VSX));
+	regs->r_ps &= ~(PSL_FPU|PSL_VEC|PSL_VSX);
+	regs->r_ps |= (tf->srr1 & (PSL_FPU|PSL_VEC|PSL_VSX));
 
 	if (regs->r_ps != tf->srr1)
 		return EINVAL;
@@ -122,11 +122,9 @@ process_write_fpregs(struct proc *p, struct fpreg *regs)
 	struct trapframe *tf = p->p_md.md_regs;
 	struct pcb *pcb = &p->p_addr->u_pcb;
 
-	if (tf->srr1 & (PSL_FP|PSL_VEC|PSL_VSX))
-		tf->srr1 &= ~(PSL_FP|PSL_VEC|PSL_VSX);
-
+	tf->srr1 &= ~(PSL_FPU|PSL_VEC|PSL_VSX);
 	memcpy(&pcb->pcb_fpstate, regs, sizeof(*regs));
-	pcb->pcb_flags |= (PCB_FP|PCB_VEC|PCB_VSX);
+	pcb->pcb_flags |= (PCB_FPU|PCB_VEC|PCB_VSX);
 
 	tf->vrsave = regs->fp_vrsave;
 

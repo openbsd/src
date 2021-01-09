@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.2 2020/07/10 16:10:54 kettenis Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.3 2021/01/09 13:14:02 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -22,6 +22,7 @@
 #include <sys/user.h>
 
 #include <machine/cpufunc.h>
+#include <machine/fenv.h>
 
 void
 save_vsx(struct proc *p)
@@ -68,7 +69,7 @@ restore_vsx(struct proc *p)
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct fpreg *fp = &pcb->pcb_fpstate;
 
-	if ((pcb->pcb_flags & (PCB_FP|PCB_VEC|PCB_VSX)) == 0)
+	if ((pcb->pcb_flags & (PCB_FPU|PCB_VEC|PCB_VSX)) == 0)
 		memset(fp, 0, sizeof(*fp));
 
 	mtmsr(mfmsr() | (PSL_FP|PSL_VEC|PSL_VSX));
@@ -103,4 +104,29 @@ restore_vsx(struct proc *p)
 	isync();
 
 	mtmsr(mfmsr() & ~(PSL_FP|PSL_VEC|PSL_VSX));
+}
+
+int
+fpu_sigcode(struct proc *p)
+{
+	struct trapframe *tf = p->p_md.md_regs;
+	struct fpreg *fp = &p->p_addr->u_pcb.pcb_fpstate;
+	int code = FPE_FLTINV;
+
+	KASSERT(tf->srr1 & PSL_FP);
+	tf->srr1 &= ~(PSL_FPU|PSL_VEC|PSL_VSX);
+	save_vsx(p);
+
+	if (fp->fp_fpscr & FE_INVALID)
+		code = FPE_FLTINV;
+	else if (fp->fp_fpscr & FE_DIVBYZERO)
+		code = FPE_FLTDIV;
+	else if (fp->fp_fpscr & FE_OVERFLOW)
+		code = FPE_FLTOVF;
+	else if (fp->fp_fpscr & FE_UNDERFLOW)
+		code = FPE_FLTUND;
+	else if (fp->fp_fpscr & FE_INEXACT)
+		code = FPE_FLTRES;
+
+	return code;
 }

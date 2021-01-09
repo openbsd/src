@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.2 2020/05/22 15:07:47 kettenis Exp $	*/
+/*	$OpenBSD: psl.h,v 1.3 2021/01/09 13:14:02 kettenis Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -82,5 +82,7 @@
 #define	PSL_FE_REC	PSL_FE0		/* imprecise recoverable */
 #define	PSL_FE_PREC	(PSL_FE0 | PSL_FE1) /* precise */
 #define	PSL_FE_DFLT	PSL_FE_DIS	/* default == none */
+
+#define	PSL_FPU		(PSL_FP | PSL_FE_PREC)
 
 #endif	/* _MACHINE_PSL_H_ */

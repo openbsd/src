@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.48 2020/12/23 10:47:10 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.49 2021/01/09 13:14:02 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -59,7 +59,7 @@ trap(struct trapframe *frame)
 	int error, sig, code;
 
 	/* Disable access to floating-point and vector registers. */
-	mtmsr(mfmsr() & ~(PSL_FP|PSL_VEC|PSL_VSX));
+	mtmsr(mfmsr() & ~(PSL_FPU|PSL_VEC|PSL_VSX));
 
 	switch (type) {
 	case EXC_DECR:
@@ -108,7 +108,7 @@ trap(struct trapframe *frame)
 			db_ktrap(T_BREAKPOINT, frame);
 			return;
 		}
-		break;
+		goto fatal;
 	case EXC_TRC:
 		db_ktrap(T_BREAKPOINT, frame); /* single-stepping */
 		return;
@@ -333,7 +333,7 @@ trap(struct trapframe *frame)
 	case EXC_PGM|EXC_USER:
 		sv.sival_ptr = (void *)frame->srr0;
 		if (frame->srr1 & EXC_PGM_FPENABLED)
-			trapsignal(p, SIGFPE, 0, FPE_FLTINV, sv);
+			trapsignal(p, SIGFPE, 0, fpu_sigcode(p), sv);
 		else if (frame->srr1 & EXC_PGM_TRAP)
 			trapsignal(p, SIGTRAP, 0, TRAP_BRKPT, sv);
 		else
@@ -343,8 +343,8 @@ trap(struct trapframe *frame)
 	case EXC_FPU|EXC_USER:
 		if ((frame->srr1 & (PSL_FP|PSL_VEC|PSL_VSX)) == 0)
 			restore_vsx(p);
-		curpcb->pcb_flags |= PCB_FP;
-		frame->srr1 |= PSL_FP;
+		curpcb->pcb_flags |= PCB_FPU;
+		frame->srr1 |= PSL_FPU;
 		break;
 
 	case EXC_TRC|EXC_USER:

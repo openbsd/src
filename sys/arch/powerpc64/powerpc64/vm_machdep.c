@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.6 2021/01/07 19:02:45 kettenis Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.7 2021/01/09 13:14:02 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -55,6 +55,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
+#include <machine/fpu.h>
 #include <machine/reg.h>
 
 /*
@@ -68,10 +69,18 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
     void (*func)(void *), void *arg)
 {
 	struct pcb *pcb = &p2->p_addr->u_pcb;
+	struct pcb *pcb1 = &p1->p_addr->u_pcb;
 	struct trapframe *tf;
 	struct callframe *cf;
 	struct switchframe *sf;
 	register_t kstack;
+
+	/* Save FPU state to PCB if necessary. */
+	if (pcb1->pcb_flags & (PCB_FPU|PCB_VEC|PCB_VSX) &&
+	    p1->p_md.md_regs->srr1 & (PSL_FPU|PSL_VEC|PSL_VSX)) {
+		p1->p_md.md_regs->srr1 &= ~(PSL_FPU|PSL_VEC|PSL_VSX);
+		save_vsx(p1);
+	}
 
 	/* Copy the pcb. */
 	*pcb = p1->p_addr->u_pcb;
