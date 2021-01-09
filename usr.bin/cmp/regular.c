@@ -1,4 +1,4 @@
-/*      $OpenBSD: regular.c,v 1.12 2015/02/06 23:21:59 millert Exp $      */
+/*      $OpenBSD: regular.c,v 1.13 2021/01/09 09:58:12 otto Exp $      */
 /*      $NetBSD: regular.c,v 1.2 1995/09/08 03:22:59 tls Exp $      */
 
 /*-
@@ -51,15 +51,15 @@ c_regular(int fd1, char *file1, off_t skip1, off_t len1,
 	off_t byte, length, line;
 	int dfound;
 
-	if (sflag && len1 != len2)
-		exit(1);
-
 	if (skip1 > len1)
 		eofmsg(file1);
 	len1 -= skip1;
 	if (skip2 > len2)
 		eofmsg(file2);
 	len2 -= skip2;
+
+	if (sflag && len1 != len2)
+		exit(1);
 
 	length = MINIMUM(len1, len2);
 	if (length > SIZE_MAX) {
