@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.38 2020/12/30 18:41:33 benno Exp $ */
+/*	$OpenBSD: parse.y,v 1.39 2021/01/09 14:51:45 rob Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martinh@openbsd.org>
@@ -78,11 +78,11 @@ struct listener *host_unix(const char *path);
 struct listener	*host_v4(const char *, in_port_t);
 struct listener	*host_v6(const char *, in_port_t);
 int		 host_dns(const char *, const char *,
-		    struct listenerlist *, int, in_port_t, u_int8_t);
+		    struct listenerlist *, in_port_t, u_int8_t);
 int		 host(const char *, const char *,
-		    struct listenerlist *, int, in_port_t, u_int8_t);
+		    struct listenerlist *, in_port_t, u_int8_t);
 int		 interface(const char *, const char *,
-		    struct listenerlist *, int, in_port_t, u_int8_t);
+		    struct listenerlist *, in_port_t, u_int8_t);
 int		 load_certfile(struct ldapd_config *, const char *, u_int8_t, u_int8_t);
 
 TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
@@ -205,9 +205,9 @@ conf_main	: LISTEN ON STRING port ssl certname	{
 			}
 
 			if (! interface($3, cert, &conf->listeners,
-				MAX_LISTEN, $4, $5)) {
+			    $4, $5)) {
 				if (host($3, cert, &conf->listeners,
-					MAX_LISTEN, $4, $5) <= 0) {
+				    $4, $5) <= 0) {
 					yyerror("invalid virtual ip or interface: %s", $3);
 					free($6);
 					free($3);
@@ -1014,10 +1014,10 @@ host_v6(const char *s, in_port_t port)
 
 int
 host_dns(const char *s, const char *cert,
-    struct listenerlist *al, int max, in_port_t port, u_int8_t flags)
+    struct listenerlist *al, in_port_t port, u_int8_t flags)
 {
 	struct addrinfo		 hints, *res0, *res;
-	int			 error, cnt = 0;
+	int			 error;
 	struct sockaddr_in	*sain;
 	struct sockaddr_in6	*sin6;
 	struct listener		*h;
@@ -1034,7 +1034,7 @@ host_dns(const char *s, const char *cert,
 		return (-1);
 	}
 
-	for (res = res0; res && cnt < max; res = res->ai_next) {
+	for (res = res0; res; res = res->ai_next) {
 		if (res->ai_family != AF_INET &&
 		    res->ai_family != AF_INET6)
 			continue;
@@ -1064,19 +1064,14 @@ host_dns(const char *s, const char *cert,
 		}
 
 		TAILQ_INSERT_HEAD(al, h, entry);
-		cnt++;
-	}
-	if (cnt == max && res) {
-		log_warnx("host_dns: %s resolves to more than %d hosts",
-		    s, max);
 	}
 	freeaddrinfo(res0);
-	return (cnt);
+	return 0;
 }
 
 int
 host(const char *s, const char *cert, struct listenerlist *al,
-    int max, in_port_t port, u_int8_t flags)
+    in_port_t port, u_int8_t flags)
 {
 	struct listener *h;
 
@@ -1103,12 +1098,12 @@ host(const char *s, const char *cert, struct listenerlist *al,
 		return (1);
 	}
 
-	return (host_dns(s, cert, al, max, port, flags));
+	return (host_dns(s, cert, al, port, flags));
 }
 
 int
 interface(const char *s, const char *cert,
-    struct listenerlist *al, int max, in_port_t port, u_int8_t flags)
+    struct listenerlist *al, in_port_t port, u_int8_t flags)
 {
 	int			 ret = 0;
 	struct ifaddrs		*ifap, *p;

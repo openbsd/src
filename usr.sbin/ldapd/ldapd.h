@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.h,v 1.32 2020/06/24 07:20:47 tb Exp $ */
+/*	$OpenBSD: ldapd.h,v 1.33 2021/01/09 14:51:45 rob Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -45,7 +45,6 @@
 #define LDAP_PORT		 389
 #define LDAPS_PORT		 636
 #define LDAPD_SESSION_TIMEOUT	 30
-#define MAX_LISTEN		 64
 #define FD_RESERVE		 8 /* 5 overhead, 2 for db, 1 accept */
 
 #define F_STARTTLS		 0x01
