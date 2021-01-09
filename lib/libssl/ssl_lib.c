@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.239 2020/12/01 07:46:01 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.240 2021/01/09 10:34:29 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1484,22 +1484,30 @@ SSL_set_ciphersuites(SSL *s, const char *str)
 char *
 SSL_get_shared_ciphers(const SSL *s, char *buf, int len)
 {
-	STACK_OF(SSL_CIPHER) *ciphers;
+	STACK_OF(SSL_CIPHER) *client_ciphers, *server_ciphers;
 	const SSL_CIPHER *cipher;
 	size_t curlen = 0;
 	char *end;
 	int i;
 
-	if (s->session == NULL || s->session->ciphers == NULL || len < 2)
-		return (NULL);
+	if (!s->server || s->session == NULL || len < 2)
+		return NULL;
 
-	ciphers = s->session->ciphers;
-	if (sk_SSL_CIPHER_num(ciphers) == 0)
-		return (NULL);
+	if ((client_ciphers = s->session->ciphers) == NULL)
+		return NULL;
+	if ((server_ciphers = SSL_get_ciphers(s)) == NULL)
+		return NULL;
+	if (sk_SSL_CIPHER_num(client_ciphers) == 0 ||
+	    sk_SSL_CIPHER_num(server_ciphers) == 0)
+		return NULL;
 
 	buf[0] = '\0';
-	for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
-		cipher = sk_SSL_CIPHER_value(ciphers, i);
+	for (i = 0; i < sk_SSL_CIPHER_num(client_ciphers); i++) {
+		cipher = sk_SSL_CIPHER_value(client_ciphers, i);
+
+		if (sk_SSL_CIPHER_find(server_ciphers, cipher) < 0)
+			continue;
+
 		end = buf + curlen;
 		if (strlcat(buf, cipher->name, len) >= len ||
 		    (curlen = strlcat(buf, ":", len)) >= len) {
@@ -1511,7 +1519,7 @@ SSL_get_shared_ciphers(const SSL *s, char *buf, int len)
 	/* remove trailing colon */
 	if ((end = strrchr(buf, ':')) != NULL)
 		*end = '\0';
-	return (buf);
+	return buf;
 }
 
 /*
