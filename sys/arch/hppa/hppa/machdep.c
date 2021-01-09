@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.262 2020/11/08 20:37:22 mpi Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.263 2021/01/09 18:03:19 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -191,8 +191,6 @@ int ibtlb_g(int i, pa_space_t sp, vaddr_t va, paddr_t pa,
     vsize_t sz, u_int prot);
 int pbtlb_g(int i);
 int pbtlb_u(int i);
-int hpti_l(vaddr_t, vsize_t);
-int hpti_u(vaddr_t, vsize_t);
 int hpti_g(vaddr_t, vsize_t);
 int desidhash_s(void);
 int desidhash_t(void);

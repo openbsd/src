@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.200 2020/05/17 13:48:31 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.201 2021/01/09 18:03:19 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -76,16 +76,23 @@
 #include "assym.h"
 
 /*
- * hv-specific instructions
+ * hw-specific instructions
  */
-#define	DR_PAGE0	.word	0x14001200
-#define	DR_PAGE1	.word	0x14001240
-#define	MTCPU_T(x,t)	.word	0x14001600 | ((t) << 21) | ((x) << 16)
-#define	MFCPU_T(r,x)	.word	0x14001a00 | ((r) << 21) | ((x) << 16)
-#define	MTCPU_C(x,t)	.word	0x14000240 | ((t) << 21) | ((x) << 16)
-#define	MFCPU_C(r,x)	.word	0x14000600 | ((r) << 21) | ((x) << 16)
-#define	MFCPU_U(r,x)	.word	0x140008a0 | ((r) << 21) | ((x))
-#define	MTCPU_U(x,r)	.word	0x14001840 | ((r) << 21) | ((x) << 16)
+
+/* source: mklinux cache.s */
+#define	MFCPU_C_PCXST(r,x)	.word	0x14001a00 | ((r) << 21) | ((x) << 16)
+#define	MTCPU_PCXST(x,r)	.word	0x14001600 | ((r) << 21) | ((x) << 16)
+
+/* source: PCXL and PCXL2 ERS */
+/* Use MFCPU_C for DR0-8; MFCPU_T for DR25,27,28,29 */
+#define	MFCPU_C_PCXL(r,x)	.word	0x14000600 | ((r) << 21) | ((x) << 16)
+#define	MFCPU_T_PCXL(r,x)	.word	0x14001800 | ((r) << 21) | ((x))
+#define	MTCPU_PCXL(x,r)		.word	0x14000240 | ((r) << 21) | ((x) << 16)
+#define	DR_PAGE0_PCXL		.word	0x14000e00
+#define	DR_PAGE1_PCXL		.word	0x14000e40
+
+#define	MFCPU_PCXU(r,x)		.word	0x140008a0 | ((r) << 21) | ((x))
+#define	MTCPU_PCXU(x,r)		.word	0x14001840 | ((r) << 21) | ((x) << 16)
 
 	.import	$global$, data
 	.import pdc, data
@@ -1646,8 +1653,8 @@ EXIT(TLABEL(all))
  */
 LEAF_ENTRY(desidhash_s)
 	sync
-	MFCPU_T(DR_CPUCFG,22)	/* t1 */
-	MFCPU_T(DR_CPUCFG,22)
+	MFCPU_C_PCXST(DR_CPUCFG,22)	/* t1 */
+	MFCPU_C_PCXST(DR_CPUCFG,22)
 	nop
 	nop
 	depi	0, DR0_PCXS_DHE, 3, t1	/* 3: DR0_PCXS_DOMAIN|DR0_PCXS_IHE */
@@ -1656,8 +1663,8 @@ LEAF_ENTRY(desidhash_s)
 	depi	0, DR0_PCXS_DHPMC, 1, t1
 	depi	0, DR0_PCXS_ILPMC, 1, t1
 	sync
-	MTCPU_T(22,DR_CPUCFG)
-	MTCPU_T(22,DR_CPUCFG)
+	MTCPU_PCXST(22,DR_CPUCFG)
+	MTCPU_PCXST(22,DR_CPUCFG)
 	nop
 	nop
 	bv	0(rp)
@@ -1671,8 +1678,8 @@ EXIT(desidhash_s)
  */
 LEAF_ENTRY(desidhash_t)
 	sync
-	MFCPU_T(DR_CPUCFG,22)	/* t1 */
-	MFCPU_T(DR_CPUCFG,22)
+	MFCPU_C_PCXST(DR_CPUCFG,22)	/* t1 */
+	MFCPU_C_PCXST(DR_CPUCFG,22)
 	nop
 	nop
 	depi	0, DR0_PCXT_IHE, 1, t1
@@ -1681,8 +1688,8 @@ LEAF_ENTRY(desidhash_t)
 	depi	0, DR0_PCXT_DHPMC, 1, t1
 	depi	0, DR0_PCXT_ILPMC, 1, t1
 	sync
-	MTCPU_T(22,DR_CPUCFG)
-	MTCPU_T(22,DR_CPUCFG)
+	MTCPU_PCXST(22,DR_CPUCFG)
+	MTCPU_PCXST(22,DR_CPUCFG)
 	nop
 	nop
 	bv	0(rp)
@@ -1697,7 +1704,7 @@ LEAF_ENTRY(eaio_l2)
 	ldil	L%eaio_l2_mask, t2
 	ldw	R%eaio_l2_mask(t2), t1
 	or	t1, arg0, t1
-	MTCPU_C(22, DR0_PCXL2_ACCEL_IO)
+	MTCPU_PCXL(22, DR0_PCXL2_ACCEL_IO)
 	nop
 	nop
 	bv	0(rp)
@@ -1719,54 +1726,11 @@ LEAF_ENTRY(ibtlb_l)
 	mtsm	t4
 EXIT(ibtlb_l)
 
-/* hpti_l(addr,size) */
-LEAF_ENTRY(hpti_l)
-	ldo	-1(arg1), arg1
-	depi	0, 31, 12, arg1
-	ldi	0x1c0, t1		/* cache size assumed 128k XXX */
-	or	arg0, t1, arg0
-	sync
-	MTCPU_C(26,DR0_PCXL2_HTLB_ADDR)
-	MTCPU_C(25,DR0_PCXL2_HTLB_CFG)
-	nop
-	nop
-	bv,n	r0(rp)
-	nop
-EXIT(hpti_l)
-
-/*
- * int
- * pbtlb_l(int i)
- */
-LEAF_ENTRY(pbtlb_l)
-	; DR_PAGE0
-	rsm	(PSL_R|PSL_I), t4
-	nop ! nop ! nop ! nop
-	ldil	L%0xc041, t1
-	ldo	R%0xc041(t1), t1
-	dep	arg0, 30, 3, t1
-	sync
-	MTCPU_T(22,DR_DTLB)	/* t1 */
-	nop
-	nop
-	mtsp	r0, sr1
-	idtlba	r0,(sr1,r0)
-	idtlbp	r0,(sr1,r0)
-	zdepi	-1, 18, 1, t1
-	nop
-	sync
-	MTCPU_T(22,DR_DTLB)
-	nop
-	nop
-	bv	0(rp)
-	mtsm	t4
-EXIT(pbtlb_l)
-
 /*
  * int desidhash_l(void)
  */
 LEAF_ENTRY(desidhash_l)
-	MFCPU_C(DR_CPUCFG,22)	/* t1 */
+	MFCPU_C_PCXL(DR_CPUCFG,22)	/* t1 */
 	nop
 	nop
 	depi	0, DR0_PCXL_L2IHASH_EN, 2, t1	/* 2: DR0_PCXL_L2DHASH_EN */
@@ -1779,7 +1743,7 @@ LEAF_ENTRY(desidhash_l)
 	depi	0, DR0_PCXL_L1IHPMC, 1, t1
 	depi	0, DR0_PCXL_L2PARERR, 4, t1
 	sync
-	MTCPU_C(22,DR_CPUCFG)
+	MTCPU_PCXL(22,DR_CPUCFG)
 	nop
 	nop
 	bv	0(rp)
@@ -1791,9 +1755,9 @@ EXIT(desidhash_l)
 #if defined(HP8000_CPU) || defined(HP8200_CPU) || defined(HP8500_CPU)
 	.level	2.0w
 LEAF_ENTRY(desidhash_u)
-	MFCPU_U(2,28)
+	MFCPU_PCXU(2,28)
 	depdi	0, 54, 1, r28
-	MTCPU_U(28,2)
+	MTCPU_PCXU(28,2)
 	bv	r0(rp)
 	copy	r0, ret0	/* XXX dunno how to get chip rev */
 EXIT(desidhash_u)
