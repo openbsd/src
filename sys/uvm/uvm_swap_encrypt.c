@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap_encrypt.c,v 1.22 2015/05/06 04:00:10 dlg Exp $	*/
+/*	$OpenBSD: uvm_swap_encrypt.c,v 1.23 2021/01/09 21:00:29 gnezdo Exp $	*/
 
 /*
  * Copyright 1999 Niels Provos <provos@citi.umich.edu>
@@ -63,7 +63,8 @@ swap_encrypt_ctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		int doencrypt = uvm_doswapencrypt;
 		int result;
 
-		result = sysctl_int(oldp, oldlenp, newp, newlen, &doencrypt);
+		result = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
+		    &doencrypt, 0, 1);
 		if (result)
 			return result;
 
