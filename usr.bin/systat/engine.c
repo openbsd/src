@@ -1,4 +1,4 @@
-/* $OpenBSD: engine.c,v 1.25 2020/01/12 20:51:08 martijn Exp $	 */
+/* $OpenBSD: engine.c,v 1.26 2021/01/09 12:49:09 jasper Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -128,7 +128,7 @@ tbprintf(char *format, ...)
 	va_start(arg, format);
 	len = vsnprintf(tb_ptr, tb_len, format, arg);
 	va_end(arg);
-	
+
 	if (len > tb_len)
 		tb_end();
 	else if (len > 0) {
@@ -538,7 +538,7 @@ set_curr_view(struct view_ent *ve)
 	}
 
 	v = ve->view;
-	
+
 	if ((curr_view != NULL) && (curr_mgr != v->mgr)) {
 		gotsig_alarm = 1;
 		if (v->mgr != NULL && v->mgr->select_fn != NULL)
@@ -682,7 +682,7 @@ print_fld_age(field_def *fld, unsigned int age)
 	tb_start();
 	if (tbprintf("%02u:%02u:%02u", h, m, s) <= len)
 		goto ok;
-	
+
 	tb_start();
 	if (tbprintf("%u", age) <= len)
 		goto ok;
@@ -693,24 +693,24 @@ print_fld_age(field_def *fld, unsigned int age)
 		goto ok;
 	if (age == 0)
 		goto err;
-	
+
 	tb_start();
 	age /= 60;
 	if (tbprintf("%uh", age) <= len)
 		goto ok;
 	if (age == 0)
 		goto err;
-	
+
 	tb_start();
 	age /= 24;
 	if (tbprintf("%ud", age) <= len)
 		goto ok;
-	
+
 err:
 	print_fld_str(fld, "*");
 	tb_end();
 	return;
-	
+
 ok:
 	print_fld_tb(fld);
 }
@@ -1002,7 +1002,7 @@ disp_update(void)
 		dispstart = 0;
 	else if (dispstart + maxprint > num_disp)
 		dispstart = num_disp - maxprint;
-	
+
 	if (dispstart < 0)
 		dispstart = 0;
 
@@ -1184,7 +1184,7 @@ cmd_keyboard(int ch)
 		} else
 			beep();
 	}
-	
+
 	switch (ch) {
 	case KEY_ENTER:
 	case 0x0a:
@@ -1348,7 +1348,7 @@ engine_loop(int countmax)
 			sort_view();
 			need_sort = 0;
 			need_update = 1;
-			
+
 			/* XXX if sort took too long */
 			if (gotsig_alarm) {
 				gotsig_alarm = 0;
@@ -1406,7 +1406,7 @@ check_termcap(void)
 		if (status == -1)
 			warnx("can't open termcap file");
 		else
-			warnx("no termcap entry for a `%s' terminal", 
+			warnx("no termcap entry for a `%s' terminal",
 			    term_name);
 
 		/* pretend it's dumb and proceed */
