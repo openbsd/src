@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_usrreq.c,v 1.21 2020/12/10 04:27:25 gnezdo Exp $	*/
+/*	$OpenBSD: db_usrreq.c,v 1.22 2021/01/09 20:58:12 gnezdo Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.  All rights reserved.
@@ -48,8 +48,6 @@ int
 ddb_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen, struct proc *p)
 {
-	int error, ctlval;
-
 	/* All sysctl names at this level are terminal. */
 	if (namelen != 1)
 		return (ENOTDIR);
@@ -60,14 +58,8 @@ ddb_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			return (sysctl_int_lower(oldp, oldlenp, newp, newlen,
 			    &db_panic));
 		else {
-			ctlval = db_panic;
-			if ((error = sysctl_int(oldp, oldlenp, newp, newlen,
-			    &ctlval)) || newp == NULL)
-				return (error);
-			if (ctlval != 1 && ctlval != 0)
-				return (EINVAL);
-			db_panic = ctlval;
-			return (0);
+			return (sysctl_int_bounded(oldp, oldlenp, newp, newlen,
+			    &db_panic, 0, 1));
 		}
 		break;
 	case DBCTL_CONSOLE:
@@ -75,14 +67,8 @@ ddb_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			return (sysctl_int_lower(oldp, oldlenp, newp, newlen,
 			    &db_console));
 		else {
-			ctlval = db_console;
-			if ((error = sysctl_int(oldp, oldlenp, newp, newlen,
-			    &ctlval)) || newp == NULL)
-				return (error);
-			if (ctlval != 1 && ctlval != 0)
-				return (EINVAL);
-			db_console = ctlval;
-			return (0);
+			return (sysctl_int_bounded(oldp, oldlenp, newp, newlen,
+			    &db_console, 0, 1));
 		}
 		break;
 	case DBCTL_TRIGGER:
@@ -104,14 +90,8 @@ ddb_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 			return (sysctl_int_lower(oldp, oldlenp, newp, newlen,
 			    &db_profile));
 		else {
-			ctlval = db_profile;
-			if ((error = sysctl_int(oldp, oldlenp, newp, newlen,
-			    &ctlval)) || newp == NULL)
-				return (error);
-			if (ctlval != 1 && ctlval != 0)
-				return (EINVAL);
-			db_profile = ctlval;
-			return (0);
+			return (sysctl_int_bounded(oldp, oldlenp, newp, newlen,
+			    &db_profile, 0, 1));
 		}
 		break;
 #endif /* DDBPROF */
