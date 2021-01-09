@@ -1,4 +1,4 @@
-/*      $OpenBSD: kern_watchdog.c,v 1.14 2019/07/05 22:10:50 kn Exp $        */
+/*      $OpenBSD: kern_watchdog.c,v 1.15 2021/01/09 20:59:23 gnezdo Exp $        */
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -81,7 +81,8 @@ sysctl_wdog(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	switch (name[0]) {
 	case KERN_WATCHDOG_PERIOD:
 		period = wdog_period;
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &period);
+		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
+		    &period, 0, INT_MAX);
 		if (error)
 			return (error);
 		if (newp) {
@@ -90,7 +91,8 @@ sysctl_wdog(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		}
 		break;
 	case KERN_WATCHDOG_AUTO:
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &wdog_auto);
+		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
+		    &wdog_auto, 0, 1);
 		if (error)
 			return (error);
 		break;
