@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.67 2020/06/11 00:00:01 dlg Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.68 2021/01/09 20:57:46 gnezdo Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -861,13 +861,9 @@ sysctl_hwsmt(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 	int err, newsmt;
 
 	newsmt = sched_smt;
-	err = sysctl_int(oldp, oldlenp, newp, newlen, &newsmt);
+	err = sysctl_int_bounded(oldp, oldlenp, newp, newlen, &newsmt, 0, 1);
 	if (err)
 		return err;
-	if (newsmt > 1)
-		newsmt = 1;
-	if (newsmt < 0)
-		newsmt = 0;
 	if (newsmt == sched_smt)
 		return 0;
 
