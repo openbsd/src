@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.40 2021/01/09 12:15:49 visa Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.41 2021/01/09 12:18:28 visa Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -234,8 +234,8 @@ struct witness {
 	const char		*w_subtype;
 	uint32_t		w_index;  /* Index in the relationship matrix */
 	struct lock_class	*w_class;
-	SIMPLEQ_ENTRY(witness)	w_list;		/* List of all witnesses. */
-	SIMPLEQ_ENTRY(witness)	w_typelist;	/* Witnesses of a type. */
+	SLIST_ENTRY(witness)	w_list;		/* List of all witnesses. */
+	SLIST_ENTRY(witness)	w_typelist;	/* Witnesses of a type. */
 	struct witness		*w_hash_next; /* Linked list in hash buckets. */
 	uint16_t		w_num_ancestors; /* direct/indirect
 						  * ancestor count */
@@ -247,7 +247,7 @@ struct witness {
 	unsigned		w_reversed:1;
 };
 
-SIMPLEQ_HEAD(witness_list, witness);
+SLIST_HEAD(witness_list, witness);
 
 /*
  * The witness hash table. Keys are witness names (const char *), elements are
@@ -396,12 +396,12 @@ static struct mutex w_mtx;
 static struct rwlock w_ctlock = RWLOCK_INITIALIZER("w_ctlock");
 
 /* w_list */
-static struct witness_list w_free = SIMPLEQ_HEAD_INITIALIZER(w_free);
-static struct witness_list w_all = SIMPLEQ_HEAD_INITIALIZER(w_all);
+static struct witness_list w_free = SLIST_HEAD_INITIALIZER(w_free);
+static struct witness_list w_all = SLIST_HEAD_INITIALIZER(w_all);
 
 /* w_typelist */
-static struct witness_list w_spin = SIMPLEQ_HEAD_INITIALIZER(w_spin);
-static struct witness_list w_sleep = SIMPLEQ_HEAD_INITIALIZER(w_sleep);
+static struct witness_list w_spin = SLIST_HEAD_INITIALIZER(w_spin);
+static struct witness_list w_sleep = SLIST_HEAD_INITIALIZER(w_sleep);
 
 /* lock list */
 static struct lock_list_entry *w_lock_list_free = NULL;
@@ -504,11 +504,11 @@ witness_initialize(void)
 		w_data[i].w_index = i;	/* Witness index never changes. */
 		witness_free(w);
 	}
-	KASSERTMSG(SIMPLEQ_FIRST(&w_free)->w_index == 0,
+	KASSERTMSG(SLIST_FIRST(&w_free)->w_index == 0,
 	    "%s: Invalid list of free witness objects", __func__);
 
 	/* Witness with index 0 is not used to aid in debugging. */
-	SIMPLEQ_REMOVE_HEAD(&w_free, w_list);
+	SLIST_REMOVE_HEAD(&w_free, w_list);
 	w_free_cnt--;
 
 	for (i = 0; i < witness_count; i++) {
@@ -607,14 +607,13 @@ witness_ddb_compute_levels(void)
 	/*
 	 * First clear all levels.
 	 */
-	SIMPLEQ_FOREACH(w, &w_all, w_list)
+	SLIST_FOREACH(w, &w_all, w_list)
 		w->w_ddb_level = -1;
 
 	/*
 	 * Look for locks with no parents and level all their descendants.
 	 */
-	SIMPLEQ_FOREACH(w, &w_all, w_list) {
-
+	SLIST_FOREACH(w, &w_all, w_list) {
 		/* If the witness has ancestors (is not a root), skip it. */
 		if (w->w_num_ancestors > 0)
 			continue;
@@ -673,7 +672,7 @@ witness_ddb_display_list(int(*prnt)(const char *fmt, ...),
 {
 	struct witness *w;
 
-	SIMPLEQ_FOREACH(w, list, w_typelist) {
+	SLIST_FOREACH(w, list, w_typelist) {
 		if (!w->w_acquired || w->w_ddb_level > 0)
 			continue;
 
@@ -691,7 +690,7 @@ witness_ddb_display(int(*prnt)(const char *fmt, ...))
 	witness_ddb_compute_levels();
 
 	/* Clear all the displayed flags. */
-	SIMPLEQ_FOREACH(w, &w_all, w_list)
+	SLIST_FOREACH(w, &w_all, w_list)
 		w->w_displayed = 0;
 
 	/*
@@ -711,7 +710,7 @@ witness_ddb_display(int(*prnt)(const char *fmt, ...))
 	 * Finally, any locks which have not been acquired yet.
 	 */
 	prnt("\nLocks which were never acquired:\n");
-	SIMPLEQ_FOREACH(w, &w_all, w_list) {
+	SLIST_FOREACH(w, &w_all, w_list) {
 		if (w->w_acquired)
 			continue;
 		prnt("%s (type: %s, depth: %d)\n", w->w_type->lt_name,
@@ -1499,12 +1498,12 @@ enroll(const struct lock_type *type, const char *subtype,
 	w->w_type = type;
 	w->w_subtype = subtype;
 	w->w_class = lock_class;
-	SIMPLEQ_INSERT_HEAD(&w_all, w, w_list);
+	SLIST_INSERT_HEAD(&w_all, w, w_list);
 	if (lock_class->lc_flags & LC_SPINLOCK) {
-		SIMPLEQ_INSERT_HEAD(&w_spin, w, w_typelist);
+		SLIST_INSERT_HEAD(&w_spin, w, w_typelist);
 		w_spin_cnt++;
 	} else if (lock_class->lc_flags & LC_SLEEPLOCK) {
-		SIMPLEQ_INSERT_HEAD(&w_sleep, w, w_typelist);
+		SLIST_INSERT_HEAD(&w_sleep, w, w_typelist);
 		w_sleep_cnt++;
 	}
 
@@ -1710,14 +1709,14 @@ witness_get(void)
 		mtx_leave(&w_mtx);
 		return (NULL);
 	}
-	if (SIMPLEQ_EMPTY(&w_free)) {
+	if (SLIST_EMPTY(&w_free)) {
 		witness_watch = -1;
 		mtx_leave(&w_mtx);
 		printf("WITNESS: unable to allocate a new witness object\n");
 		return (NULL);
 	}
-	w = SIMPLEQ_FIRST(&w_free);
-	SIMPLEQ_REMOVE_HEAD(&w_free, w_list);
+	w = SLIST_FIRST(&w_free);
+	SLIST_REMOVE_HEAD(&w_free, w_list);
 	w_free_cnt--;
 	index = w->w_index;
 	KASSERT(index > 0 && index == w_max_used_index + 1 &&
@@ -1732,8 +1731,7 @@ witness_get(void)
 static void
 witness_free(struct witness *w)
 {
-
-	SIMPLEQ_INSERT_HEAD(&w_free, w, w_list);
+	SLIST_INSERT_HEAD(&w_free, w, w_list);
 	w_free_cnt++;
 }
 
@@ -2265,9 +2263,9 @@ db_witness_print_fullgraph(void)
 	error = 0;
 
 	mtx_enter(&w_mtx);
-	SIMPLEQ_FOREACH(w, &w_all, w_list)
+	SLIST_FOREACH(w, &w_all, w_list)
 		w->w_displayed = 0;
-	SIMPLEQ_FOREACH(w, &w_all, w_list)
+	SLIST_FOREACH(w, &w_all, w_list)
 		db_witness_add_fullgraph(w);
 	mtx_leave(&w_mtx);
 }
