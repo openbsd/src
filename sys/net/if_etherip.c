@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.47 2020/08/21 22:59:27 kn Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.48 2021/01/09 21:00:58 gnezdo Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -767,7 +767,8 @@ etherip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	switch (name[0]) {
 	case ETHERIPCTL_ALLOW:
 		NET_LOCK();
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &etherip_allow);
+		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
+		    &etherip_allow, 0, 1);
 		NET_UNLOCK();
 		return (error);
 	case ETHERIPCTL_STATS:
