@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay_http.c,v 1.79 2020/09/04 13:09:14 bket Exp $	*/
+/*	$OpenBSD: relay_http.c,v 1.80 2021/01/09 08:53:58 denis Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -77,6 +77,7 @@ int		 relay_match_actions(struct ctl_relay_event *,
 		    struct relay_rule *, struct kvlist *, struct kvlist *,
 		    struct relay_table **);
 void		 relay_httpdesc_free(struct http_descriptor *);
+char *		 server_root_strip(char *, int);
 
 static struct relayd	*env = NULL;
 
@@ -1421,14 +1422,16 @@ relay_httppath_test(struct ctl_relay_event *cre, struct relay_rule *rule,
 
 	if (cre->dir == RELAY_DIR_RESPONSE || kv->kv_type != KEY_TYPE_PATH)
 		return (0);
-	else if (kv->kv_key == NULL)
-		return (0);
-	else if (fnmatch(kv->kv_key, desc->http_path, 0) == FNM_NOMATCH)
-		return (-1);
-	else if (kv->kv_value != NULL && kv->kv_option == KEY_OPTION_NONE) {
-		query = desc->http_query == NULL ? "" : desc->http_query;
-		if (fnmatch(kv->kv_value, query, FNM_CASEFOLD) == FNM_NOMATCH)
+	else if (kv->kv_option != KEY_OPTION_STRIP) {
+		if (kv->kv_key == NULL)
+			return (0);
+		else if (fnmatch(kv->kv_key, desc->http_path, 0) == FNM_NOMATCH)
 			return (-1);
+		else if (kv->kv_value != NULL && kv->kv_option == KEY_OPTION_NONE) {
+			query = desc->http_query == NULL ? "" : desc->http_query;
+			if (fnmatch(kv->kv_value, query, FNM_CASEFOLD) == FNM_NOMATCH)
+				return (-1);
+		}
 	}
 
 	relay_match(actions, kv, match, NULL);
@@ -1554,7 +1557,7 @@ relay_apply_actions(struct ctl_relay_event *cre, struct kvlist *actions,
 	struct kv		*host = NULL;
 	const char		*value;
 	struct kv		*kv, *match, *kp, *mp, kvcopy, matchcopy, key;
-	int			 addkv, ret;
+	int			 addkv, ret, nstrip;
 	char			 buf[IBUF_READ_SIZE], *ptr;
 	char			*msg = NULL;
 	const char		*meth = NULL;
@@ -1654,6 +1657,15 @@ relay_apply_actions(struct ctl_relay_event *cre, struct kvlist *actions,
 			break;
 		case KEY_OPTION_LOG:
 			/* perform this later */
+			break;
+		case KEY_OPTION_STRIP:
+			nstrip = strtonum(kv->kv_value, 0, INT_MAX, NULL);
+			if (kv->kv_type == KEY_TYPE_PATH) {
+				if (kv_setkey(match,
+				    server_root_strip(match->kv_key,
+				    nstrip)) == -1)
+					goto fail;
+			}
 			break;
 		default:
 			fatalx("%s: invalid action", __func__);
@@ -1932,3 +1944,19 @@ relay_match(struct kvlist *actions, struct kv *kv, struct kv *match,
 		TAILQ_INSERT_TAIL(actions, kv, kv_match_entry);
 	}
 }
+
+char *
+server_root_strip(char *path, int n)
+{
+	char *p;
+
+	/* Strip strip leading directories. Leading '/' is ignored. */
+	for (; n > 0 && *path != '\0'; n--)
+		if ((p = strchr(++path, '/')) != NULL)
+			path = p;
+		else
+			path--;
+
+	return (path);
+}
+

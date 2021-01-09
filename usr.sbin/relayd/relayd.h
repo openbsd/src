@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.262 2020/09/14 11:30:25 martijn Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.263 2021/01/09 08:53:58 denis Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -292,7 +292,8 @@ enum key_option {
 	KEY_OPTION_SET,
 	KEY_OPTION_REMOVE,
 	KEY_OPTION_HASH,
-	KEY_OPTION_LOG
+	KEY_OPTION_LOG,
+	KEY_OPTION_STRIP
 };
 
 enum key_type {

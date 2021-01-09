@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.250 2020/12/29 19:48:06 benno Exp $	*/
+/*	$OpenBSD: parse.y,v 1.251 2021/01/09 08:53:57 denis Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -175,7 +175,7 @@ typedef struct {
 %token	LOOKUP METHOD MODE NAT NO DESTINATION NODELAY NOTHING ON PARENT PATH
 %token	PFTAG PORT PREFORK PRIORITY PROTO QUERYSTR REAL REDIRECT RELAY REMOVE
 %token	REQUEST RESPONSE RETRY QUICK RETURN ROUNDROBIN ROUTE SACK SCRIPT SEND
-%token	SESSION SOCKET SPLICE SSL STICKYADDR STYLE TABLE TAG TAGGED TCP
+%token	SESSION SOCKET SPLICE SSL STICKYADDR STRIP STYLE TABLE TAG TAGGED TCP
 %token	TIMEOUT TLS TO ROUTER RTLABEL TRANSPARENT URL WITH TTL RTABLE
 %token	MATCH PARAMS RANDOM LEASTSTATES SRCHASH KEY CERTIFICATE PASSWORD ECDHE
 %token	EDH TICKETS CONNECTION CONNECTIONS CONTEXT ERRORS STATE CHANGES CHECKS
@@ -1549,6 +1549,20 @@ ruleopts	: METHOD STRING					{
 			rule->rule_kv[keytype].kv_option = $2;
 			rule->rule_kv[keytype].kv_type = keytype;
 		}
+		| PATH STRIP NUMBER				{
+			char	*strip = NULL;
+
+			if ($3 < 0 || $3 > INT_MAX) {
+				yyerror("invalid strip number");
+				YYERROR;
+			}
+			if (asprintf(&strip, "%lld", $3) <= 0)
+				fatal("can't parse strip");
+			keytype = KEY_TYPE_PATH;
+			rule->rule_kv[keytype].kv_option = KEY_OPTION_STRIP;
+			rule->rule_kv[keytype].kv_value = strip;
+			rule->rule_kv[keytype].kv_type = keytype;
+		}
 		| QUERYSTR key_option STRING value		{
 			switch ($2) {
 			case KEY_OPTION_APPEND:
@@ -2481,6 +2495,7 @@ lookup(char *s)
 		{ "ssl",		SSL },
 		{ "state",		STATE },
 		{ "sticky-address",	STICKYADDR },
+		{ "strip",		STRIP },
 		{ "style",		STYLE },
 		{ "table",		TABLE },
 		{ "tag",		TAG },
