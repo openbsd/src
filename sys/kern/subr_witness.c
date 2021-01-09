@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.39 2020/12/07 16:55:29 mpi Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.40 2021/01/09 12:15:49 visa Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -1622,26 +1622,18 @@ adopt(struct witness *parent, struct witness *child)
 static void
 itismychild(struct witness *parent, struct witness *child)
 {
-	int unlocked;
-
 	KASSERT(child != NULL && parent != NULL);
 	if (witness_cold == 0)
 		MUTEX_ASSERT_LOCKED(&w_mtx);
 
 	if (!witness_lock_type_equal(parent, child)) {
-		if (witness_cold == 0) {
-			unlocked = 1;
+		if (witness_cold == 0)
 			mtx_leave(&w_mtx);
-		} else {
-			unlocked = 0;
-		}
 		panic(
 		    "%s: parent \"%s\" (%s) and child \"%s\" (%s) are not "
 		    "the same lock type", __func__, parent->w_type->lt_name,
 		    parent->w_class->lc_name, child->w_type->lt_name,
 		    child->w_class->lc_name);
-		if (unlocked)
-			mtx_enter(&w_mtx);
 	}
 	adopt(parent, child);
 }
