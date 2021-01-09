@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_versions.c,v 1.9 2020/08/09 16:30:29 jsing Exp $ */
+/* $OpenBSD: ssl_versions.c,v 1.10 2021/01/09 12:39:23 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -193,7 +193,7 @@ test_ssl_enabled_version_range(void)
 	int failed = 1;
 	size_t i;
 
-	if ((ssl_ctx = SSL_CTX_new(TLS_method())) == NULL) { 
+	if ((ssl_ctx = SSL_CTX_new(TLS_method())) == NULL) {
 		fprintf(stderr, "SSL_CTX_new() returned NULL\n");
 		goto failure;
 	}
@@ -440,7 +440,7 @@ test_ssl_max_shared_version(void)
 	for (i = 0; i < N_SHARED_VERSION_TESTS; i++) {
 		svt = &shared_version_tests[i];
 
-		if ((ssl_ctx = SSL_CTX_new(svt->ssl_method())) == NULL) { 
+		if ((ssl_ctx = SSL_CTX_new(svt->ssl_method())) == NULL) {
 			fprintf(stderr, "SSL_CTX_new() returned NULL\n");
 			return 1;
 		}
@@ -661,7 +661,7 @@ test_ssl_min_max_version(void)
 	for (i = 0; i < N_MIN_MAX_VERSION_TESTS; i++) {
 		mmvt = &min_max_version_tests[i];
 
-		if ((ssl_ctx = SSL_CTX_new(mmvt->ssl_method())) == NULL) { 
+		if ((ssl_ctx = SSL_CTX_new(mmvt->ssl_method())) == NULL) {
 			fprintf(stderr, "SSL_CTX_new() returned NULL\n");
 			return 1;
 		}
@@ -803,5 +803,5 @@ main(int argc, char **argv)
 	if (failed == 0)
 		printf("PASS %s\n", __FILE__);
 
-        return (failed);
+	return (failed);
 }

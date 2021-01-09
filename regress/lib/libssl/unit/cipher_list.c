@@ -1,4 +1,4 @@
-/*	$OpenBSD: cipher_list.c,v 1.9 2018/06/02 16:35:02 jsing Exp $	*/
+/*	$OpenBSD: cipher_list.c,v 1.10 2021/01/09 12:39:22 tb Exp $	*/
 /*
  * Copyright (c) 2015 Doug Hogan <doug@openbsd.org>
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
@@ -199,6 +199,6 @@ err:
 
 	if (!rv)
 		printf("PASS %s\n", __FILE__);
-	
+
 	return rv;
 }
