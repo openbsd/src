@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.29 2021/01/09 03:01:03 beck Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.30 2021/01/09 03:51:42 jsing Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -555,6 +555,8 @@ x509_verify_build_chains(struct x509_verify_ctx *ctx, X509 *cert,
 		if (depth == 0 &&
 		    ctx->error == X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY)
 			ctx->error = X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE;
+		if (!x509_verify_ctx_set_xsc_chain(ctx, current_chain, 0))
+			return;
 		(void) x509_verify_cert_error(ctx, cert, depth,
 		    ctx->error, 0);
 	}
