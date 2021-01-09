@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.42 2021/01/09 12:20:37 visa Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.43 2021/01/09 20:59:06 gnezdo Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -2572,17 +2572,15 @@ witness_sysctl_watch(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 	int value;
 
 	value = witness_watch;
-	error = sysctl_int(oldp, oldlenp, newp, newlen, &value);
+	error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
+	    &value, -1, 3);
 	if (error == 0 && newp != NULL) {
-		if (value >= -1 && value <= 3) {
-			mtx_enter(&w_mtx);
-			if (value < 0 || witness_watch >= 0)
-				witness_watch = value;
-			else
-				error = EINVAL;
-			mtx_leave(&w_mtx);
-		} else
+		mtx_enter(&w_mtx);
+		if (value < 0 || witness_watch >= 0)
+			witness_watch = value;
+		else
 			error = EINVAL;
+		mtx_leave(&w_mtx);
 	}
 	return (error);
 }
