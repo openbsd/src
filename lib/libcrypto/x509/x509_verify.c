@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.28 2021/01/08 03:23:56 beck Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.29 2021/01/09 03:01:03 beck Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -469,6 +469,14 @@ x509_verify_build_chains(struct x509_verify_ctx *ctx, X509 *cert,
 	unsigned char cert_md[EVP_MAX_MD_SIZE] = { 0 };
 	X509 *candidate;
 	int i, depth, count, ret;
+
+	/*
+	 * If we are finding chains with an xsc, just stop after we have
+	 * one chain, there's no point in finding more, it just exercises
+	 * the potentially buggy callback processing in the calling software.
+	 */
+	if (ctx->xsc != NULL && ctx->chains_count > 0)
+		return;
 
 	depth = sk_X509_num(current_chain->certs);
 	if (depth > 0)
