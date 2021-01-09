@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.123 2020/01/24 05:44:05 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.124 2021/01/09 16:49:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -47,11 +47,9 @@ static struct community	comm_no_expsubconfed = {
 static int
 up_test_update(struct rde_peer *peer, struct prefix *p)
 {
-	struct bgpd_addr	 addr;
 	struct rde_aspath	*asp;
 	struct rde_community	*comm;
 	struct rde_peer		*prefp;
-	struct attr		*attr;
 
 	if (p == NULL)
 		/* no prefix available */
@@ -70,10 +68,6 @@ up_test_update(struct rde_peer *peer, struct prefix *p)
 	if (asp->flags & F_ATTR_LOOP)
 		fatalx("try to send out a looped path");
 
-	pt_getaddr(p->pt, &addr);
-	if (peer->capa.mp[addr.aid] == 0)
-		return (-1);
-
 	if (!prefp->conf.ebgp && !peer->conf.ebgp) {
 		/*
 		 * route reflector redistribution rules:
@@ -90,16 +84,6 @@ up_test_update(struct rde_peer *peer, struct prefix *p)
 			return (0);
 	}
 
-	/* export type handling */
-	if (peer->conf.export_type == EXPORT_NONE ||
-	    peer->conf.export_type == EXPORT_DEFAULT_ROUTE) {
-		/*
-		 * no need to withdraw old prefix as this will be
-		 * filtered out as well.
-		 */
-		return (-1);
-	}
-
 	/* well known communities */
 	if (community_match(comm, &comm_no_advertise, NULL))
 		return (0);
@@ -108,18 +92,6 @@ up_test_update(struct rde_peer *peer, struct prefix *p)
 			return (0);
 		if (community_match(comm, &comm_no_expsubconfed, NULL))
 			return (0);
-	}
-
-	/*
-	 * Don't send messages back to originator
-	 * this is not specified in the RFC but seems logical.
-	 */
-	if ((attr = attr_optget(asp, ATTR_ORIGINATOR_ID)) != NULL) {
-		if (memcmp(attr->data, &peer->remote_bgpid,
-		    sizeof(peer->remote_bgpid)) == 0) {
-			/* would cause loop don't send */
-			return (-1);
-		}
 	}
 
 	return (1);
@@ -149,13 +121,8 @@ withdraw:
 			peer->up_wcnt++;
 		}
 	} else {
-		switch (up_test_update(peer, new)) {
-		case 1:
-			break;
-		case 0:
+		if (!up_test_update(peer, new)) {
 			goto withdraw;
-		case -1:
-			return;
 		}
 
 		rde_filterstate_prep(&state, prefix_aspath(new),

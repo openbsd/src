@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.510 2020/12/30 07:29:56 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.511 2021/01/09 16:49:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2814,7 +2814,8 @@ rde_send_kroute(struct rib *rib, struct prefix *new, struct prefix *old)
 void
 rde_generate_updates(struct rib *rib, struct prefix *new, struct prefix *old)
 {
-	struct rde_peer			*peer;
+	struct rde_peer	*peer;
+	u_int8_t	 aid;
 
 	/*
 	 * If old is != NULL we know it was active and should be removed.
@@ -2824,6 +2825,11 @@ rde_generate_updates(struct rib *rib, struct prefix *new, struct prefix *old)
 	if (old == NULL && new == NULL)
 		return;
 
+	if (new)
+		aid = new->pt->aid;
+	else
+		aid = old->pt->aid;
+
 	LIST_FOREACH(peer, &peerlist, peer_l) {
 		if (peer->conf.id == 0)
 			continue;
@@ -2831,6 +2837,14 @@ rde_generate_updates(struct rib *rib, struct prefix *new, struct prefix *old)
 			continue;
 		if (peer->state != PEER_UP)
 			continue;
+		/* check if peer actually supports the address family */
+		if (peer->capa.mp[aid] == 0)
+			continue;
+		/* skip peers with special export types */
+		if (peer->conf.export_type == EXPORT_NONE ||
+		    peer->conf.export_type == EXPORT_DEFAULT_ROUTE)
+			continue;
+
 		up_generate_updates(out_rules, peer, new, old);
 	}
 }
