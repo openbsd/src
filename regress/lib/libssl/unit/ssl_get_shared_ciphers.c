@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_get_shared_ciphers.c,v 1.1 2021/01/10 07:30:00 tb Exp $ */
+/*	$OpenBSD: ssl_get_shared_ciphers.c,v 1.2 2021/01/10 09:28:30 tb Exp $ */
 /*
  * Copyright (c) 2021 Theo Buehler <tb@openbsd.org>
  *
@@ -334,7 +334,7 @@ handshake_loop(SSL *client_ssl, int *client_ret, SSL *server_ssl,
 /*
  * Alternate between loops of SSL_connect() and SSL_accept() as long as only
  * WANT_READ and WANT_WRITE situations are encountered. A function is repeated
- * while WANT_WRITE is returned or it succeeds, then it's the other functions
+ * until WANT_READ is returned or it succeeds, then it's the other functions
  * turn to make progress. Success: both functions returned 1.
  */
 static int
