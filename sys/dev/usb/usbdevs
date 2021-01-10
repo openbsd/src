@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.728 2020/11/16 09:49:10 patrick Exp $
+$OpenBSD: usbdevs,v 1.729 2021/01/10 16:23:44 thfr Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2491,6 +2491,7 @@ product KENSINGTON TURBOBALL	0x1005	TurboBall
 product KENSINGTON ORBIT_MAC	0x1009	Orbit trackball for Mac
 product KENSINGTON BT_EDR	0x105e	Bluetooth
 product KENSINGTON VIDEOCAM_VGA	0x5002	VideoCAM VGA
+product KENSINGTON SLIMBLADE	0x2041	Slimblade Trackball
 
 /* Keyspan products */
 product KEYSPAN USA28_NF	0x0101	USA-28 serial
