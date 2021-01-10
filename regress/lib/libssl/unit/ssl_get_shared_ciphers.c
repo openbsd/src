@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_get_shared_ciphers.c,v 1.2 2021/01/10 09:28:30 tb Exp $ */
+/*	$OpenBSD: ssl_get_shared_ciphers.c,v 1.3 2021/01/10 23:59:32 tb Exp $ */
 /*
  * Copyright (c) 2021 Theo Buehler <tb@openbsd.org>
  *
@@ -316,21 +316,6 @@ push_data_to_peer(SSL *ssl, int *ret, int (*func)(SSL *), const char *func_name,
 	return 1;
 }
 
-static int
-handshake_loop(SSL *client_ssl, int *client_ret, SSL *server_ssl,
-    int *server_ret, const char *description)
-{
-	if (!push_data_to_peer(client_ssl, client_ret, SSL_connect,
-	    "SSL_connect", description))
-		return 0;
-
-	if (!push_data_to_peer(server_ssl, server_ret, SSL_accept,
-	    "SSL_accept", description))
-		return 0;
-
-	return 1;
-}
-
 /*
  * Alternate between loops of SSL_connect() and SSL_accept() as long as only
  * WANT_READ and WANT_WRITE situations are encountered. A function is repeated
@@ -343,8 +328,12 @@ handshake(SSL *client_ssl, SSL *server_ssl, const char *description)
 	int loops = 0, client_ret = 0, server_ret = 0;
 
 	while (loops++ < 10 && (client_ret <= 0 || server_ret <= 0)) {
-		if (!handshake_loop(client_ssl, &client_ret, server_ssl,
-		    &server_ret, description))
+		if (!push_data_to_peer(client_ssl, &client_ret, SSL_connect,
+		    "SSL_connect", description))
+			return 0;
+
+		if (!push_data_to_peer(server_ssl, &server_ret, SSL_accept,
+		    "SSL_accept", description))
 			return 0;
 	}
 
