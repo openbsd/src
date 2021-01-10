@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_quirks.h,v 1.16 2010/07/19 05:08:37 jakemsr Exp $ */
+/*	$OpenBSD: usb_quirks.h,v 1.17 2021/01/10 16:32:48 thfr Exp $ */
 /*	$NetBSD: usb_quirks.h,v 1.20 2001/04/15 09:38:01 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.h,v 1.9 1999/11/12 23:31:03 n_hibma Exp $	*/
 
@@ -49,6 +49,8 @@ struct usbd_quirks {
 #define UQ_MS_LEADING_BYTE	0x00010000 /* mouse sends unknown leading byte */
 #define UQ_EHCI_NEEDTO_DISOWN	0x00020000 /* must hand device over to USB 1.1
 						if attached to EHCI */
+#define UQ_MS_VENDOR_BUTTONS	0x00040000 /* mouse reports extra buttons in
+						vendor page */
 };
 
 extern const struct usbd_quirks usbd_no_quirk;

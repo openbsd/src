@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidmsvar.h,v 1.1 2016/01/08 15:54:13 jcs Exp $ */
+/*	$OpenBSD: hidmsvar.h,v 1.2 2021/01/10 16:32:48 thfr Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -43,18 +43,19 @@ struct tsscale {
 struct hidms {
 	int		sc_enabled;
 	int		sc_flags;	/* device configuration */
-#define HIDMS_SPUR_BUT_UP	0x001	/* spurious button up events */
-#define HIDMS_Z			0x002	/* Z direction available */
-#define HIDMS_REVZ		0x004	/* Z-axis is reversed */
-#define HIDMS_W			0x008	/* W direction available */
-#define HIDMS_REVW		0x010	/* W-axis is reversed */
-#define HIDMS_LEADINGBYTE	0x020	/* Unknown leading byte */
-#define HIDMS_ABSX		0x040	/* X-axis is absolute */
-#define HIDMS_ABSY		0x080	/* Y-axis is absolute */
-#define HIDMS_TIP		0x100   /* Tip switch on a digitiser pen */
-#define HIDMS_BARREL		0x200	/* Barrel switch on a digitiser pen */
-#define HIDMS_ERASER		0x400   /* Eraser switch on a digitiser pen */
-#define HIDMS_MS_BAD_CLASS	0x800	/* Mouse doesn't identify properly */
+#define HIDMS_SPUR_BUT_UP	0x0001	/* spurious button up events */
+#define HIDMS_Z			0x0002	/* Z direction available */
+#define HIDMS_REVZ		0x0004	/* Z-axis is reversed */
+#define HIDMS_W			0x0008	/* W direction available */
+#define HIDMS_REVW		0x0010	/* W-axis is reversed */
+#define HIDMS_LEADINGBYTE	0x0020	/* Unknown leading byte */
+#define HIDMS_ABSX		0x0040	/* X-axis is absolute */
+#define HIDMS_ABSY		0x0080	/* Y-axis is absolute */
+#define HIDMS_TIP		0x0100   /* Tip switch on a digitiser pen */
+#define HIDMS_BARREL		0x0200	/* Barrel switch on a digitiser pen */
+#define HIDMS_ERASER		0x0400   /* Eraser switch on a digitiser pen */
+#define HIDMS_MS_BAD_CLASS	0x0800	/* Mouse doesn't identify properly */
+#define HIDMS_VENDOR_BUTTONS	0x1000	/* extra buttons in vendor page */
 
 	int		sc_num_buttons;
 	u_int32_t	sc_buttons;	/* mouse button status */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidms.c,v 1.5 2018/09/05 16:34:58 jcs Exp $ */
+/*	$OpenBSD: hidms.c,v 1.6 2021/01/10 16:32:48 thfr Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -190,6 +190,21 @@ hidms_setup(struct device *self, struct hidms *ms, uint32_t quirks,
 		    hid_input, &ms->sc_loc_btn[i - 1], NULL))
 			break;
 	ms->sc_num_buttons = i - 1;
+
+	/* 
+	 * The Kensington Slimblade reports some of its buttons as binary
+	 * inputs in the first vendor usage page (0xff00). Add such inputs
+	 * as buttons if the device has this quirk.
+	 */
+	if (ms->sc_flags & HIDMS_VENDOR_BUTTONS) {
+		const int b = ms->sc_num_buttons;
+		for (i = 1; b + i <= MAX_BUTTONS; i++)
+			if (!hid_locate(desc, dlen,
+			    HID_USAGE2(HUP_MICROSOFT, i),
+			    id, hid_input, &ms->sc_loc_btn[b + i - 1], NULL))
+				break;
+		ms->sc_num_buttons += i;
+	}
 
 	if (hid_locate(desc, dlen, HID_USAGE2(HUP_DIGITIZERS,
 	    HUD_TIP_SWITCH), id, hid_input,
