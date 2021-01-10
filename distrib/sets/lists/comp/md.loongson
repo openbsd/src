@@ -108,7 +108,6 @@
 ./usr/include/mips64/timetc.h
 ./usr/include/mips64/trap.h
 ./usr/include/mips64/vmparam.h
-./usr/include/unwind.h
 ./usr/libdata/ldscripts
 ./usr/libdata/ldscripts/elf32btsmip.x
 ./usr/libdata/ldscripts/elf32btsmip.xbn

@@ -107,7 +107,6 @@
 ./usr/include/octeon/timetc.h
 ./usr/include/octeon/trap.h
 ./usr/include/octeon/vmparam.h
-./usr/include/unwind.h
 ./usr/libdata/ldscripts
 ./usr/libdata/ldscripts/elf32btsmip.x
 ./usr/libdata/ldscripts/elf32btsmip.xbn
