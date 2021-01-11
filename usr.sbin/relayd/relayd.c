@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.184 2020/09/14 11:30:25 martijn Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.185 2021/01/11 10:24:08 mestre Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -380,7 +380,6 @@ parent_shutdown(struct relayd *env)
 
 	proc_kill(env->sc_ps);
 	control_cleanup(&env->sc_ps->ps_csock);
-	(void)unlink(env->sc_ps->ps_csock.cs_name);
 	carp_demote_shutdown();
 
 	free(env->sc_ps);
