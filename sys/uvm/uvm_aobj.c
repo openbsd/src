@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.89 2020/10/21 09:08:14 mpi Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.90 2021/01/11 18:51:09 mpi Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -287,6 +287,8 @@ uao_set_swslot(struct uvm_object *uobj, int pageidx, int slot)
 {
 	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
 	int oldslot;
+
+	KERNEL_ASSERT_LOCKED();
 
 	/* if noswap flag is set, then we can't set a slot */
 	if (aobj->u_flags & UAO_FLAG_NOSWAP) {
