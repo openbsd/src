@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_get_shared_ciphers.c,v 1.5 2021/01/11 18:31:03 tb Exp $ */
+/*	$OpenBSD: ssl_get_shared_ciphers.c,v 1.6 2021/01/11 18:33:43 tb Exp $ */
 /*
  * Copyright (c) 2021 Theo Buehler <tb@openbsd.org>
  *
@@ -347,7 +347,12 @@ handshake(SSL *client_ssl, SSL *server_ssl, const char *description)
 			return 0;
 	}
 
-	return client_ret == 1 && server_ret == 1;
+	if (client_ret != 1 || server_ret != 1) {
+		fprintf(stderr, "%s: failed\n", __func__);
+		return 0;
+	}
+
+	return 1;
 }
 
 static int
@@ -365,7 +370,12 @@ shutdown(SSL *client_ssl, SSL *server_ssl, const char *description)
 			return 0;
 	}
 
-	return client_ret == 1 && server_ret == 1;
+	if (client_ret != 1 || server_ret != 1) {
+		fprintf(stderr, "%s: failed\n", __func__);
+		return 0;
+	}
+
+	return 1;
 }
 
 /* from ssl_ciph.c */
