@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.169 2020/07/25 12:14:16 ajacoutot Exp $
+# $OpenBSD: PkgCreate.pm,v 1.170 2021/01/11 12:23:34 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -132,6 +132,7 @@ sub handle_options
 		$state->{userlist} = $state->parse_userdb($state->opt('u'));
 	}
 	$state->{wrkobjdir} = $state->defines('WRKOBJDIR');
+	$state->{fullpkgpath} = $state->{subst}->value('FULLPKGPATH') // '';
 }
 
 sub parse_userdb
@@ -942,8 +943,18 @@ sub really_solve_dependency
 
 	$state->progress->message($dep->{pkgpath});
 
-	# look in installed packages
-	my $v = $self->find_dep_in_installed($state, $dep);
+	my $v;
+
+	# look in installed packages, but only for different paths
+	my $p1 = $dep->{pkgpath};
+	my $p2 = $state->{fullpkgpath};
+	$p1 =~ s/\,.*//;
+	$p2 =~ s/\,.*//;
+	$p2 =~ s,^debug/,,;
+	if ($p1 ne $p2) {
+		# look in installed packages
+		$v = $self->find_dep_in_installed($state, $dep);
+	}
 	if (!defined $v) {
 		$v = $self->find_dep_in_self($state, $dep);
 	}
@@ -1322,13 +1333,12 @@ sub add_extra_info
 	my ($self, $plist, $state) = @_;
 
 	my $subst = $state->{subst};
-	my $fullpkgpath = $subst->value('FULLPKGPATH');
+	my $fullpkgpath = $state->{fullpkgpath};
 	my $cdrom = $subst->value('PERMIT_PACKAGE_CDROM') ||
 	    $subst->value('CDROM');;
 	my $ftp = $subst->value('PERMIT_PACKAGE_FTP') ||
 	    $subst->value('FTP');
-	if (defined $fullpkgpath || defined $cdrom || defined $ftp) {
-		$fullpkgpath //= '';
+	if (defined $cdrom || defined $ftp) {
 		$ftp //= 'no';
 		$ftp = 'yes' if $ftp =~ m/^yes$/io;
 		$cdrom = 'yes' if defined $cdrom && $cdrom =~ m/^yes$/io;
