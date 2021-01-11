@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.91 2020/08/28 12:01:48 mvs Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.92 2021/01/11 21:50:56 kn Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -80,7 +80,6 @@ int	pflogifs_resize(size_t);
 int	pflogoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
 		       struct rtentry *);
 int	pflogioctl(struct ifnet *, u_long, caddr_t);
-void	pflogstart(struct ifnet *);
 int	pflog_clone_create(struct if_clone *, int);
 int	pflog_clone_destroy(struct ifnet *);
 void	pflog_mtap(caddr_t, struct pfloghdr *, struct mbuf *);
@@ -139,7 +138,6 @@ pflog_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_mtu = PFLOGMTU;
 	ifp->if_ioctl = pflogioctl;
 	ifp->if_output = pflogoutput;
-	ifp->if_start = pflogstart;
 	ifp->if_xflags = IFXF_CLONED;
 	ifp->if_type = IFT_PFLOG;
 	ifp->if_hdrlen = PFLOG_HDRLEN;
@@ -178,15 +176,6 @@ pflog_clone_destroy(struct ifnet *ifp)
 	if_detach(ifp);
 	free(pflogif, M_DEVBUF, sizeof(*pflogif));
 	return (0);
-}
-
-/*
- * Start output on the pflog interface.
- */
-void
-pflogstart(struct ifnet *ifp)
-{
-	ifq_purge(&ifp->if_snd);
 }
 
 int
