@@ -1,22 +1,20 @@
-# $OpenBSD: Makefile,v 1.1 2021/01/04 19:24:55 rob Exp $
+# $OpenBSD: Makefile,v 1.2 2021/01/11 22:58:16 bluhm Exp $
 
-REGRESS_TARGETS= run-regress-agentx
-
-NETSNMP = $((grep _netsnmp /etc/group))
-
-.if empty (NETSNMP)
+.if ! exists(/usr/local/lib/libnetsnmpagent.a)
 regress:
-	@echo NETSNMP package required.
+	@echo Install net-snmp package to run this regress.
 	@echo SKIPPED
 .endif
 
-SRCS=		main.c log.c
 PROG=		agentx
+SRCS=		main.c log.c
 CFLAGS=		-Wall
 NOMAN=		yes
 LDADD=		-lagentx -levent
 
-run-regress-agentx:
-	${SUDO} ${.OBJDIR}/agentx
+REGRESS_TARGETS=	run-regress-agentx
+
+run-regress-agentx: ${PROG}
+	${SUDO} ./${PROG}
 
 .include <bsd.regress.mk>

@@ -1,3 +1,5 @@
+/*	$OpenBSD: main.c,v 1.2 2021/01/11 22:58:16 bluhm Exp $	*/
+
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
