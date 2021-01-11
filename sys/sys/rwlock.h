@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwlock.h,v 1.27 2020/12/15 10:23:01 mpi Exp $	*/
+/*	$OpenBSD: rwlock.h,v 1.28 2021/01/11 18:49:38 mpi Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  *
@@ -208,6 +208,28 @@ int	rrw_status(struct rrwlock *);
 				_rrw_init_flags(rrwl, name, 0, NULL)
 #define rrw_init(rrwl, name)	_rrw_init_flags(rrwl, name, 0, NULL)
 #endif /* WITNESS */
+
+
+/*
+ * Allocated, reference-counted rwlocks
+ */
+
+#ifdef WITNESS
+#define rw_obj_alloc_flags(rwl, name, flags) do {			\
+	static struct lock_type __lock_type = { .lt_name = #rwl };	\
+	_rw_obj_alloc_flags(rwl, name, flags, &__lock_type);		\
+} while (0)
+#else
+#define rw_obj_alloc_flags(rwl, name, flags) \
+			_rw_obj_alloc_flags(rwl, name, flags, NULL)
+#endif
+#define rw_obj_alloc(rwl, name)		rw_obj_alloc_flags(rwl, name, 0)
+
+void	rw_obj_init(void);
+void	_rw_obj_alloc_flags(struct rwlock **, const char *, int,
+		struct lock_type *);
+void	rw_obj_hold(struct rwlock *);
+int	rw_obj_free(struct rwlock *);
 
 #endif /* _KERNEL */
 

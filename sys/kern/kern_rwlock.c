@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.45 2020/03/02 17:07:49 visa Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.46 2021/01/11 18:49:38 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
@@ -19,6 +19,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/rwlock.h>
 #include <sys/limits.h>
@@ -487,4 +488,124 @@ int
 rrw_status(struct rrwlock *rrwl)
 {
 	return (rw_status(&rrwl->rrwl_lock));
+}
+
+/*-
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Andrew Doran.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#define	RWLOCK_OBJ_MAGIC	0x5aa3c85d
+struct rwlock_obj {
+	struct rwlock	ro_lock;
+	u_int		ro_magic;
+	u_int		ro_refcnt;
+};
+
+
+struct pool rwlock_obj_pool;
+
+/*
+ * rw_obj_init:
+ *
+ *	Initialize the mutex object store.
+ */
+void
+rw_obj_init(void)
+{
+	pool_init(&rwlock_obj_pool, sizeof(struct rwlock_obj), 0, IPL_MPFLOOR,
+	    PR_WAITOK, "rwobjpl", NULL);
+}
+
+/*
+ * rw_obj_alloc:
+ *
+ *	Allocate a single lock object.
+ */
+void
+_rw_obj_alloc_flags(struct rwlock **lock, const char *name, int flags,
+    struct lock_type *type)
+{
+	struct rwlock_obj *mo;
+
+	mo = pool_get(&rwlock_obj_pool, PR_WAITOK);
+	mo->ro_magic = RWLOCK_OBJ_MAGIC;
+	_rw_init_flags(&mo->ro_lock, name, flags, type);
+	mo->ro_refcnt = 1;
+
+	*lock = &mo->ro_lock;
+}
+
+/*
+ * rw_obj_hold:
+ *
+ *	Add a single reference to a lock object.  A reference to the object
+ *	must already be held, and must be held across this call.
+ */
+
+void
+rw_obj_hold(struct rwlock *lock)
+{
+	struct rwlock_obj *mo = (struct rwlock_obj *)lock;
+
+	KASSERTMSG(mo->ro_magic == RWLOCK_OBJ_MAGIC,
+	    "%s: lock %p: mo->ro_magic (%#x) != RWLOCK_OBJ_MAGIC (%#x)",
+	     __func__, mo, mo->ro_magic, RWLOCK_OBJ_MAGIC);
+	KASSERTMSG(mo->ro_refcnt > 0,
+	    "%s: lock %p: mo->ro_refcnt (%#x) == 0",
+	     __func__, mo, mo->ro_refcnt);
+
+	atomic_inc_int(&mo->ro_refcnt);
+}
+
+/*
+ * rw_obj_free:
+ *
+ *	Drop a reference from a lock object.  If the last reference is being
+ *	dropped, free the object and return true.  Otherwise, return false.
+ */
+int
+rw_obj_free(struct rwlock *lock)
+{
+	struct rwlock_obj *mo = (struct rwlock_obj *)lock;
+
+	KASSERTMSG(mo->ro_magic == RWLOCK_OBJ_MAGIC,
+	    "%s: lock %p: mo->ro_magic (%#x) != RWLOCK_OBJ_MAGIC (%#x)",
+	     __func__, mo, mo->ro_magic, RWLOCK_OBJ_MAGIC);
+	KASSERTMSG(mo->ro_refcnt > 0,
+	    "%s: lock %p: mo->ro_refcnt (%#x) == 0",
+	     __func__, mo, mo->ro_refcnt);
+
+	if (atomic_dec_int_nv(&mo->ro_refcnt) > 0) {
+		return false;
+	}
+#if notyet
+	WITNESS_DESTROY(&mo->ro_lock);
+#endif
+	pool_put(&rwlock_obj_pool, mo);
+	return true;
 }
