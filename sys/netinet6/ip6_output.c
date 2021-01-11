@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.248 2020/12/22 13:37:48 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.249 2021/01/11 13:28:54 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -106,6 +106,12 @@
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_ah.h>
 #include <netinet/ip_esp.h>
+
+#ifdef ENCDEBUG
+#define DPRINTF(x)    do { if (encdebug) printf x ; } while (0)
+#else
+#define DPRINTF(x)
+#endif
 #endif /* IPSEC */
 
 struct ip6_exthdrs {
@@ -426,7 +432,7 @@ reroute:
 		 * packet just because ip6_dst is different from what tdb has.
 		 * XXX
 		 */
-		error = ip6_output_ipsec_send(tdb, m,
+		error = ip6_output_ipsec_send(tdb, m, ro,
 		    exthdrs.ip6e_rthdr ? 1 : 0, 0);
 		goto done;
 	}
@@ -2762,14 +2768,19 @@ ip6_output_ipsec_lookup(struct mbuf *m, int *error, struct inpcb *inp)
 }
 
 int
-ip6_output_ipsec_send(struct tdb *tdb, struct mbuf *m, int tunalready, int fwd)
+ip6_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route_in6 *ro,
+    int tunalready, int fwd)
 {
 #if NPF > 0
 	struct ifnet *encif;
 #endif
+	struct ip6_hdr *ip6;
 	int error;
 
 #if NPF > 0
+	/*
+	 * Packet filter
+	 */
 	if ((encif = enc_getif(tdb->tdb_rdomain, tdb->tdb_tap)) == NULL ||
 	    pf_test(AF_INET6, fwd ? PF_FWD : PF_OUT, encif, &m) != PF_PASS) {
 		m_freem(m);
@@ -2786,7 +2797,69 @@ ip6_output_ipsec_send(struct tdb *tdb, struct mbuf *m, int tunalready, int fwd)
 	 */
 	in6_proto_cksum_out(m, encif);
 #endif
-	m->m_flags &= ~(M_BCAST | M_MCAST);	/* just in case */
+
+        /* Check if we are allowed to fragment */
+        ip6 = mtod(m, struct ip6_hdr *);
+        if (ip_mtudisc && tdb->tdb_mtu &&
+	    sizeof(struct ip6_hdr) + ntohs(ip6->ip6_plen) > tdb->tdb_mtu &&
+	    tdb->tdb_mtutimeout > gettime()) {
+		struct rtentry *rt = NULL;
+		int rt_mtucloned = 0;
+		int transportmode = 0;
+
+		transportmode = (tdb->tdb_dst.sa.sa_family == AF_INET6) &&
+		    (IN6_ARE_ADDR_EQUAL(&tdb->tdb_dst.sin6.sin6_addr,
+		    &ip6->ip6_dst));
+
+		/* Find a host route to store the mtu in */
+		if (ro != NULL)
+			rt = ro->ro_rt;
+		/* but don't add a PMTU route for transport mode SAs */
+		if (transportmode)
+			rt = NULL;
+		else if (rt == NULL || (rt->rt_flags & RTF_HOST) == 0) {
+			struct sockaddr_in6 sin6;
+
+			memset(&sin6, 0, sizeof(sin6));
+			sin6.sin6_family = AF_INET6;
+			sin6.sin6_len = sizeof(sin6);
+			sin6.sin6_addr = ip6->ip6_dst;
+			sin6.sin6_scope_id =
+			    in6_addr2scopeid(m->m_pkthdr.ph_ifidx,
+			    &ip6->ip6_dst);
+			error = in6_embedscope(&ip6->ip6_dst, &sin6, NULL);
+			if (error) {
+				/* should be impossible */
+				ipsecstat_inc(ipsec_odrops);
+				m_freem(m);
+				return error;
+			}
+			rt = icmp6_mtudisc_clone(&sin6,
+			    m->m_pkthdr.ph_rtableid, 1);
+			rt_mtucloned = 1;
+		}
+		DPRINTF(("%s: spi %08x mtu %d rt %p cloned %d\n", __func__,
+		    ntohl(tdb->tdb_spi), tdb->tdb_mtu, rt, rt_mtucloned));
+		if (rt != NULL) {
+			rt->rt_mtu = tdb->tdb_mtu;
+			if (ro != NULL && ro->ro_rt != NULL) {
+				rtfree(ro->ro_rt);
+				ro->ro_rt = rtalloc(sin6tosa(&ro->ro_dst),
+				    RT_RESOLVE, m->m_pkthdr.ph_rtableid);
+			}
+			if (rt_mtucloned)
+				rtfree(rt);
+		}
+		ipsec_adjust_mtu(m, tdb->tdb_mtu);
+		m_freem(m);
+		return EMSGSIZE;
+	}
+
+	/*
+	 * Clear these -- they'll be set in the recursive invocation
+	 * as needed.
+	 */
+	m->m_flags &= ~(M_BCAST | M_MCAST);
 
 	/* Callee frees mbuf */
 	error = ipsp_process_packet(m, tdb, AF_INET6, tunalready);

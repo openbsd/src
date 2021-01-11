@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.233 2020/10/28 17:27:35 bluhm Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.234 2021/01/11 13:28:53 bluhm Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -138,7 +138,6 @@ int	icmp6_ratelimit(const struct in6_addr *, const int, const int);
 const char *icmp6_redirect_diag(struct in6_addr *, struct in6_addr *,
 	    struct in6_addr *);
 int	icmp6_notify_error(struct mbuf *, int, int, int);
-struct rtentry *icmp6_mtudisc_clone(struct sockaddr *, u_int);
 void	icmp6_mtudisc_timeout(struct rtentry *, struct rttimer *);
 void	icmp6_redirect_timeout(struct rtentry *, struct rttimer *);
 
@@ -1015,7 +1014,7 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 	sin6.sin6_scope_id = in6_addr2scopeid(m->m_pkthdr.ph_ifidx,
 	    &sin6.sin6_addr);
 
-	rt = icmp6_mtudisc_clone(sin6tosa(&sin6), m->m_pkthdr.ph_rtableid);
+	rt = icmp6_mtudisc_clone(&sin6, m->m_pkthdr.ph_rtableid, 0);
 
 	if (rt != NULL && ISSET(rt->rt_flags, RTF_HOST) &&
 	    !(rt->rt_locks & RTV_MTU) &&
@@ -1784,15 +1783,18 @@ icmp6_ratelimit(const struct in6_addr *dst, const int type, const int code)
 }
 
 struct rtentry *
-icmp6_mtudisc_clone(struct sockaddr *dst, u_int rtableid)
+icmp6_mtudisc_clone(struct sockaddr_in6 *dst, u_int rtableid, int ipsec)
 {
 	struct rtentry *rt;
 	int    error;
 
-	rt = rtalloc(dst, RT_RESOLVE, rtableid);
+	rt = rtalloc(sin6tosa(dst), RT_RESOLVE, rtableid);
 
 	/* Check if the route is actually usable */
-	if (!rtisvalid(rt) || (rt->rt_flags & (RTF_REJECT|RTF_BLACKHOLE)))
+	if (!rtisvalid(rt))
+		goto bad;
+	/* IPsec needs the route only for PMTU, it can use reject for that */
+	if (!ipsec && (rt->rt_flags & (RTF_REJECT|RTF_BLACKHOLE)))
 		goto bad;
 
 	/*
@@ -1812,7 +1814,7 @@ icmp6_mtudisc_clone(struct sockaddr *dst, u_int rtableid)
 		memset(&info, 0, sizeof(info));
 		info.rti_ifa = rt->rt_ifa;
 		info.rti_flags = RTF_GATEWAY | RTF_HOST | RTF_DYNAMIC;
-		info.rti_info[RTAX_DST] = dst;
+		info.rti_info[RTAX_DST] = sin6tosa(dst);
 		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 		info.rti_info[RTAX_LABEL] =
 		    rtlabel_id2sa(rt->rt_labelid, &sa_rl);

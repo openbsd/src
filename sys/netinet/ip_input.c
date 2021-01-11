@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.352 2020/11/16 06:44:38 gnezdo Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.353 2021/01/11 13:28:53 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1418,8 +1418,8 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int srcrt)
 		goto freecopy;
 	}
 
+	memset(&ro, 0, sizeof(ro));
 	sin = satosin(&ro.ro_dst);
-	memset(sin, 0, sizeof(*sin));
 	sin->sin_family = AF_INET;
 	sin->sin_len = sizeof(*sin);
 	sin->sin_addr = ip->ip_dst;
@@ -1429,6 +1429,7 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int srcrt)
 		rt = rtalloc_mpath(sintosa(sin), &ip->ip_src.s_addr,
 		    m->m_pkthdr.ph_rtableid);
 		if (rt == NULL) {
+			ipstat_inc(ips_noroute);
 			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_HOST, dest, 0);
 			return;
 		}

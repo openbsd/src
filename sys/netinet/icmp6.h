@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.h,v 1.50 2020/10/28 17:27:35 bluhm Exp $	*/
+/*	$OpenBSD: icmp6.h,v 1.51 2021/01/11 13:28:53 bluhm Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 /*
@@ -599,6 +599,7 @@ void		 icmp6_prepare(struct mbuf *);
 void		 icmp6_redirect_input(struct mbuf *, int);
 void		 icmp6_redirect_output(struct mbuf *, struct rtentry *);
 int		 icmp6_sysctl(int *, u_int, void *, size_t *, void *, size_t);
+struct rtentry	*icmp6_mtudisc_clone(struct sockaddr_in6 *, u_int, int);
 
 struct	ip6ctlparam;
 void	icmp6_mtudisc_update(struct ip6ctlparam *, int);

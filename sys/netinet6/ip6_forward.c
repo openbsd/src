@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.99 2020/11/26 18:55:12 tb Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.100 2021/01/11 13:28:54 bluhm Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -85,7 +85,8 @@ void
 ip6_forward(struct mbuf *m, struct rtentry *rt, int srcrt)
 {
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
-	struct sockaddr_in6 *dst, sin6;
+	struct sockaddr_in6 *sin6;
+	struct route_in6 ro;
 	struct ifnet *ifp = NULL;
 	int error = 0, type = 0, code = 0;
 	struct mbuf *mcopy = NULL;
@@ -160,15 +161,15 @@ reroute:
 	}
 #endif /* IPSEC */
 
-	dst = &sin6;
-	memset(dst, 0, sizeof(*dst));
-	dst->sin6_len = sizeof(struct sockaddr_in6);
-	dst->sin6_family = AF_INET6;
-	dst->sin6_addr = ip6->ip6_dst;
+	memset(&ro, 0, sizeof(ro));
+	sin6 = &ro.ro_dst;
+	sin6->sin6_family = AF_INET6;
+	sin6->sin6_len = sizeof(*sin6);
+	sin6->sin6_addr = ip6->ip6_dst;
 
 	if (!rtisvalid(rt)) {
 		rtfree(rt);
-		rt = rtalloc_mpath(sin6tosa(dst), &ip6->ip6_src.s6_addr32[0],
+		rt = rtalloc_mpath(sin6tosa(sin6), &ip6->ip6_src.s6_addr32[0],
 		    m->m_pkthdr.ph_rtableid);
 		if (rt == NULL) {
 			ip6stat_inc(ip6s_noroute);
@@ -215,12 +216,12 @@ reroute:
 	/*
 	 * Check if the packet needs encapsulation.
 	 * ipsp_process_packet will never come back to here.
-	 * XXX ipsp_process_packet() calls ip6_output(), and there'll be no
-	 * PMTU notification.  is it okay?
 	 */
 	if (tdb != NULL) {
 		/* Callee frees mbuf */
-		error = ip6_output_ipsec_send(tdb, m, 0, 1);
+		ro.ro_rt = rt;
+		ro.ro_tableid = m->m_pkthdr.ph_rtableid;
+		error = ip6_output_ipsec_send(tdb, m, &ro, 0, 1);
 		if (error)
 			goto senderr;
 		goto freecopy;
@@ -228,7 +229,7 @@ reroute:
 #endif /* IPSEC */
 
 	if (rt->rt_flags & RTF_GATEWAY)
-		dst = satosin6(rt->rt_gateway);
+		sin6 = satosin6(rt->rt_gateway);
 
 	/*
 	 * If we are to forward the packet using the same interface
@@ -248,7 +249,7 @@ reroute:
 	    ip6_sendredirects &&
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0) {
 		if ((ifp->if_flags & IFF_POINTOPOINT) &&
-		    nd6_is_addr_neighbor(&sin6, ifp)) {
+		    nd6_is_addr_neighbor(&ro.ro_dst, ifp)) {
 			/*
 			 * If the incoming interface is equal to the outgoing
 			 * one, the link attached to the interface is
@@ -320,7 +321,7 @@ reroute:
 		goto out;
 	}
 
-	error = ifp->if_output(ifp, m, sin6tosa(dst), rt);
+	error = ifp->if_output(ifp, m, sin6tosa(sin6), rt);
 	if (error) {
 		ip6stat_inc(ip6s_cantforward);
 	} else {
