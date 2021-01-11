@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.173 2020/12/24 01:16:14 cheloha Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.174 2021/01/11 13:55:53 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -66,6 +66,7 @@
 #include <sys/ktrace.h>
 #endif
 
+int	sleep_signal_check(struct proc *);
 int	thrsleep(struct proc *, struct sys___thrsleep_args *);
 int	thrsleep_unlock(void *);
 
@@ -368,8 +369,7 @@ sleep_setup(struct sleep_state *sls, const volatile void *ident, int prio,
 	sls->sls_catch = prio & PCATCH;
 	sls->sls_do_sleep = 1;
 	sls->sls_locked = 0;
-	sls->sls_sig = 0;
-	sls->sls_unwind = 0;
+	sls->sls_sigerr = 0;
 	sls->sls_timeout = 0;
 
 	/*
@@ -470,6 +470,22 @@ sleep_finish_timeout(struct sleep_state *sls)
 	return (0);
 }
 
+int
+sleep_signal_check(struct proc *p)
+{
+	int err, sig;
+
+	if ((err = single_thread_check(p, 1)) != 0)
+		return err;
+	if ((sig = CURSIG(p)) != 0) {
+		if (p->p_p->ps_sigacts->ps_sigintr & sigmask(sig))
+			return EINTR;
+		else
+			return ERESTART;
+	}
+	return 0;
+}
+
 void
 sleep_setup_signal(struct sleep_state *sls)
 {
@@ -494,8 +510,7 @@ sleep_setup_signal(struct sleep_state *sls)
 	 * in sls->sl_unwind and checking it later in sleep_finish_signal.
 	 */
 	atomic_setbits_int(&p->p_flag, P_SINTR);
-	if ((sls->sls_unwind = single_thread_check(p, 1)) != 0 ||
-	    (sls->sls_sig = CURSIG(p)) != 0) {
+	if ((sls->sls_sigerr = sleep_signal_check(p)) != 0) {
 		unsleep(p);
 		p->p_stat = SONPROC;
 		sls->sls_do_sleep = 0;
@@ -514,17 +529,10 @@ sleep_finish_signal(struct sleep_state *sls)
 	if (sls->sls_catch != 0) {
 		KERNEL_ASSERT_LOCKED();
 
-		if (sls->sls_unwind != 0 ||
-		    (sls->sls_unwind = single_thread_check(p, 1)) != 0)
-			error = sls->sls_unwind;
-		else if (sls->sls_sig != 0 ||
-		    (sls->sls_sig = CURSIG(p)) != 0) {
-			if (p->p_p->ps_sigacts->ps_sigintr &
-			    sigmask(sls->sls_sig))
-				error = EINTR;
-			else
-				error = ERESTART;
-		}
+		if (sls->sls_sigerr != 0)
+			error = sls->sls_sigerr;
+		else
+			error = sleep_signal_check(p);
 	}
 
 	if (sls->sls_locked)
