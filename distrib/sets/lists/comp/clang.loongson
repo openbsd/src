@@ -70,12 +70,11 @@
 ./usr/include/c++/v1/deque
 ./usr/include/c++/v1/errno.h
 ./usr/include/c++/v1/exception
+./usr/include/c++/v1/execution
 ./usr/include/c++/v1/experimental
 ./usr/include/c++/v1/experimental/__config
 ./usr/include/c++/v1/experimental/__memory
 ./usr/include/c++/v1/experimental/algorithm
-./usr/include/c++/v1/experimental/any
-./usr/include/c++/v1/experimental/chrono
 ./usr/include/c++/v1/experimental/coroutine
 ./usr/include/c++/v1/experimental/deque
 ./usr/include/c++/v1/experimental/filesystem
@@ -85,17 +84,11 @@
 ./usr/include/c++/v1/experimental/list
 ./usr/include/c++/v1/experimental/map
 ./usr/include/c++/v1/experimental/memory_resource
-./usr/include/c++/v1/experimental/numeric
-./usr/include/c++/v1/experimental/optional
 ./usr/include/c++/v1/experimental/propagate_const
-./usr/include/c++/v1/experimental/ratio
 ./usr/include/c++/v1/experimental/regex
 ./usr/include/c++/v1/experimental/set
 ./usr/include/c++/v1/experimental/simd
 ./usr/include/c++/v1/experimental/string
-./usr/include/c++/v1/experimental/string_view
-./usr/include/c++/v1/experimental/system_error
-./usr/include/c++/v1/experimental/tuple
 ./usr/include/c++/v1/experimental/type_traits
 ./usr/include/c++/v1/experimental/unordered_map
 ./usr/include/c++/v1/experimental/unordered_set
@@ -105,6 +98,7 @@
 ./usr/include/c++/v1/ext/__hash
 ./usr/include/c++/v1/ext/hash_map
 ./usr/include/c++/v1/ext/hash_set
+./usr/include/c++/v1/fenv.h
 ./usr/include/c++/v1/filesystem
 ./usr/include/c++/v1/float.h
 ./usr/include/c++/v1/forward_list
@@ -165,7 +159,6 @@
 ./usr/include/c++/v1/support/xlocale/__nop_locale_mgmt.h
 ./usr/include/c++/v1/support/xlocale/__posix_l_fallback.h
 ./usr/include/c++/v1/support/xlocale/__strtonum_fallback.h
-./usr/include/c++/v1/support/xlocale/xlocale.h
 ./usr/include/c++/v1/system_error
 ./usr/include/c++/v1/tgmath.h
 ./usr/include/c++/v1/thread
