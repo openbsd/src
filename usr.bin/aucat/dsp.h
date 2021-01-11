@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.h,v 1.5 2016/06/08 04:36:48 ratchov Exp $	*/
+/*	$OpenBSD: dsp.h,v 1.6 2021/01/11 14:45:51 ratchov Exp $	*/
 /*
  * Copyright (c) 2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -92,6 +92,32 @@ typedef int adata_t;
 #endif
 
 /*
+ * The FIR is sampled and stored in a table of fixed-point numbers
+ * with 23 fractional bits. For convenience, we use the same fixed-point
+ * numbers to represent time and to walk through the table.
+ */
+#define RESAMP_BITS		23
+#define RESAMP_UNIT		(1 << RESAMP_BITS)
+
+/*
+ * Filter window length (the time unit is RESAMP_UNIT)
+ */
+#define RESAMP_LENGTH		(8 * RESAMP_UNIT)
+
+/*
+ * Time between samples of the FIR (the time unit is RESAMP_UNIT)
+ */
+#define RESAMP_STEP_BITS	(RESAMP_BITS - 6)
+#define RESAMP_STEP		(1 << RESAMP_STEP_BITS)
+
+/*
+ * Maximum downsample/upsample ratio we support, must be a power of two.
+ * The ratio between the max and the min sample rates is 192kHz / 4kHz = 48,
+ * so we can use 64
+ */
+#define RESAMP_RATIO		64
+
+/*
  * Maximum size of the encording string (the longest possible
  * encoding is ``s24le3msb'').
  */
@@ -111,9 +137,10 @@ struct aparams {
 };
 
 struct resamp {
-#define RESAMP_NCTX	2
+#define RESAMP_NCTX	(RESAMP_LENGTH / RESAMP_UNIT * RESAMP_RATIO)
 	unsigned int ctx_start;
 	adata_t ctx[NCHAN_MAX * RESAMP_NCTX];
+	int filt_cutoff, filt_step;
 	unsigned int iblksz, oblksz;
 	int diff;
 	int nch;
