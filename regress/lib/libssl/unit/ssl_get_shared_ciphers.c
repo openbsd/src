@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_get_shared_ciphers.c,v 1.4 2021/01/11 18:26:25 tb Exp $ */
+/*	$OpenBSD: ssl_get_shared_ciphers.c,v 1.5 2021/01/11 18:31:03 tb Exp $ */
 /*
  * Copyright (c) 2021 Theo Buehler <tb@openbsd.org>
  *
@@ -304,14 +304,18 @@ push_data_to_peer(SSL *ssl, int *ret, int (*func)(SSL *), const char *func_name,
 		return 1;
 
 	/*
-	 * Do SSL_connect/SSL_accept once and loop while hitting WANT_WRITE.
-	 * If done or on WANT_READ hand off to peer.
+	 * Do SSL_connect/SSL_accept/SSL_shutdown once and loop while hitting
+	 * WANT_WRITE.  If done or on WANT_READ hand off to peer.
 	 */
 
 	do {
 		if ((*ret = func(ssl)) <= 0)
 			ssl_err = SSL_get_error(ssl, *ret);
 	} while (*ret <= 0 && ssl_err == SSL_ERROR_WANT_WRITE);
+
+	/* Ignore erroneous error - see SSL_shutdown(3)... */
+	if (func == SSL_shutdown && ssl_err == SSL_ERROR_SYSCALL)
+		return 1;
 
 	if (*ret <= 0 && ssl_err != SSL_ERROR_WANT_READ) {
 		fprintf(stderr, "%s: %s failed\n", description, func_name);
@@ -340,6 +344,24 @@ handshake(SSL *client_ssl, SSL *server_ssl, const char *description)
 
 		if (!push_data_to_peer(server_ssl, &server_ret, SSL_accept,
 		    "SSL_accept", description))
+			return 0;
+	}
+
+	return client_ret == 1 && server_ret == 1;
+}
+
+static int
+shutdown(SSL *client_ssl, SSL *server_ssl, const char *description)
+{
+	int loops = 0, client_ret = 0, server_ret = 0;
+
+	while (loops++ < 10 && (client_ret <= 0 || server_ret <= 0)) {
+		if (!push_data_to_peer(client_ssl, &client_ret, SSL_shutdown,
+		    "client shutdown", description))
+			return 0;
+
+		if (!push_data_to_peer(server_ssl, &server_ret, SSL_shutdown,
+		    "server shutdown", description))
 			return 0;
 	}
 
@@ -414,6 +436,9 @@ test_get_shared_ciphers(const struct ssl_shared_ciphers_test_data *test)
 		    test->description);
 		goto err;
 	}
+
+	if (!shutdown(client_ssl, server_ssl, test->description))
+		goto err;
 
 	failed = check_shared_ciphers(test, buf);
 
