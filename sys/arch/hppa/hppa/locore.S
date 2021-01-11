@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.201 2021/01/09 18:03:19 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.202 2021/01/11 16:45:25 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -603,6 +603,9 @@ $syscall_return
 	nop ! nop ! nop ! nop ! nop
 	rsm	RESET_PSL, r0
 $syscall_return_phys
+
+	/* clear cr26 to avoid information leak */
+	mtctl	r0, cr26
 
 	/* finally we can restore the space and offset queues and the ipsw */
 	ldw	TF_IISQH(t3), t1
@@ -1379,15 +1382,15 @@ ENTRY(TLABEL(all),0)
 	 *	trap number in r1 (old r1 is saved in tr7)
 	 */
 
-	/* do not overwrite tr4(cr28) */
-	mtctl	t3, tr2
+	/* do not overwrite cr28 */
+	mtctl	t3, cr26
 
 	mfctl	cr29, t3
 	ldo	CI_TRAP_SAVE(t3), t3
 	stw	t1, TF_R22(t3)		/* use ,bc */
 	stw	t2, TF_R21(t3)
 
-	mfctl	tr2, t1
+	mfctl	cr26, t1
 	stw	sp, TF_R30(t3)	/* sp */
 	stw	t1, TF_R20(t3)	/* t3 */
 
