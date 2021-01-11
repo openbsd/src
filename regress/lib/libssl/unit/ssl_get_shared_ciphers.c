@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_get_shared_ciphers.c,v 1.3 2021/01/10 23:59:32 tb Exp $ */
+/*	$OpenBSD: ssl_get_shared_ciphers.c,v 1.4 2021/01/11 18:26:25 tb Exp $ */
 /*
  * Copyright (c) 2021 Theo Buehler <tb@openbsd.org>
  *
@@ -16,7 +16,13 @@
  */
 
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <openssl/bio.h>
 #include <openssl/err.h>
+#include <openssl/crypto.h>
 #include <openssl/ssl.h>
 
 struct peer_config {
