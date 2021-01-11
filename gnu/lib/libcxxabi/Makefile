@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2021/01/02 20:04:36 patrick Exp $
+# $OpenBSD: Makefile,v 1.2 2021/01/11 15:27:21 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -9,9 +9,9 @@ CXX=		clang++
 
 .if ${BUILD_CLANG:L} == "yes"
 
-HDRDIR=		${.CURDIR}/../../../lib/libcxxabi/include
-SRCDIR=		${.CURDIR}/../../../lib/libcxxabi/src
-SHDRDIR=	${.CURDIR}/../../../lib/libcxx/include
+HDRDIR=		${.CURDIR}/../../../gnu/llvm/libcxxabi/include
+SRCDIR=		${.CURDIR}/../../../gnu/llvm/libcxxabi/src
+SHDRDIR=	${.CURDIR}/../../../gnu/llvm/libcxx/include
 UHDRDIR=	${.CURDIR}/../../../gnu/llvm/libunwind/include
 CXXINCLUDEDIR=	/usr/include/c++/v1
 

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2021/01/02 20:43:26 patrick Exp $
+# $OpenBSD: Makefile,v 1.3 2021/01/11 15:27:21 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -9,9 +9,9 @@ CXX=		clang++
 
 .if ${BUILD_CLANG:L} == "yes"
 
-HDRDIR=		${.CURDIR}/../../../lib/libcxx/include
-SRCDIR=		${.CURDIR}/../../../lib/libcxx/src
-AHDRDIR=	${.CURDIR}/../../../lib/libcxxabi/include
+HDRDIR=		${.CURDIR}/../../../gnu/llvm/libcxx/include
+SRCDIR=		${.CURDIR}/../../../gnu/llvm/libcxx/src
+AHDRDIR=	${.CURDIR}/../../../gnu/llvm/libcxxabi/include
 UHDRDIR=	${.CURDIR}/../../../gnu/llvm/libunwind/include
 CXXINCLUDEDIR=	/usr/include/c++/v1
 
@@ -26,6 +26,7 @@ SRCS+=		algorithm.cpp \
 		charconv.cpp \
 		chrono.cpp \
 		condition_variable.cpp \
+		condition_variable_destructor.cpp \
 		debug.cpp \
 		directory_iterator.cpp \
 		exception.cpp \
@@ -37,6 +38,7 @@ SRCS+=		algorithm.cpp \
 		locale.cpp \
 		memory.cpp \
 		mutex.cpp \
+		mutex_destructor.cpp \
 		new.cpp \
 		operations.cpp \
 		optional.cpp \
@@ -130,7 +132,9 @@ STD_HEADERS=	__bit_reference \
 		deque \
 		errno.h \
 		exception \
+		execution \
 		filesystem \
+		fenv.h \
 		float.h \
 		forward_list \
 		fstream \
@@ -215,8 +219,6 @@ EXTDIR=		${CXXINCLUDEDIR}/ext
 EXP_HEADERS=	__config \
 		__memory \
 		algorithm \
-		any \
-		chrono \
 		coroutine \
 		deque \
 		filesystem \
@@ -226,17 +228,11 @@ EXP_HEADERS=	__config \
 		list \
 		map \
 		memory_resource \
-		numeric \
-		optional \
 		propagate_const \
-		ratio \
 		regex \
 		set \
 		simd \
 		string \
-		string_view \
-		system_error \
-		tuple \
 		utility \
 		type_traits \
 		unordered_map \
@@ -250,8 +246,7 @@ EXPDIR=		${CXXINCLUDEDIR}/experimental
 
 XLOCALE_HEADERS=	__nop_locale_mgmt.h\
 			__posix_l_fallback.h\
-			__strtonum_fallback.h\
-			xlocale.h
+			__strtonum_fallback.h
 
 .for hdr in ${XLOCALE_HEADERS}
 XLOCALE+=	${hdr} ${HDRDIR}/support/xlocale/${hdr}
