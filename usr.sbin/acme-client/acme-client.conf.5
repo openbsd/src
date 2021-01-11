@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.conf.5,v 1.28 2021/01/03 16:32:38 florian Exp $
+.\"	$OpenBSD: acme-client.conf.5,v 1.29 2021/01/11 07:23:42 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 3 2021 $
+.Dd $Mdocdate: January 11 2021 $
 .Dt ACME-CLIENT.CONF 5
 .Os
 .Sh NAME
@@ -125,7 +125,9 @@ If not specified, the
 .Ar handle
 of the domain block will be used as common name.
 .It Ic alternative names Brq ...
-Specify a list of alternative names for which the certificate will be valid.
+A list of alternative names,
+comma or space separated,
+for which the certificate will be valid.
 The common name is included automatically if this option is present,
 but there is no automatic conversion/inclusion between "www." and
 plain domain name forms.
