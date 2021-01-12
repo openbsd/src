@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.4 2020/12/09 11:30:44 claudio Exp $
+# $OpenBSD: Makefile.inc,v 1.5 2021/01/12 18:00:45 tb Exp $
 
 .PATH:		${.CURDIR}/../../../../usr.sbin/rpki-client
 
@@ -14,8 +14,8 @@ REGRESS_TARGETS += run-regress-$p
 .endfor
 
 CFLAGS+=	-I${.CURDIR}/.. -I${.CURDIR}/../../../../usr.sbin/rpki-client
-LDADD+=		-lcrypto
-DPADD+=		${LIBCRYPTO}
+LDADD+=		-lcrypto -lutil
+DPADD+=		${LIBCRYPTO} ${LIBUTIL}
 
 SRCS_test-ip=	test-ip.c ip.c io.c
 run-regress-test-ip: test-ip
@@ -34,7 +34,7 @@ run-regress-test-cert: test-cert
 mft_gen.c: mft.c
 	echo '#include <openssl/asn1.h>\n' > $@.tmp
 	echo 'int ASN1_time_parse(const char *, size_t, struct tm *, int);' \
-	      	>> $@.tmp
+		>> $@.tmp
 	echo 'int ASN1_time_tm_cmp(struct tm *, struct tm *);' >> $@.tmp
 	cat $> >> $@.tmp
 	mv -f $@.tmp $@
