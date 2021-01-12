@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.18 2020/07/15 14:47:41 denis Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.19 2021/01/12 09:51:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -474,7 +474,7 @@ ls_retrans_timer(int fd, short event, void *bula)
 			/* ls_retrans_list_free retriggers the timer */
 			return;
 		} else if (nbr->iface->type == IF_TYPE_POINTOPOINT)
-			memcpy(&addr, &nbr->iface->dst, sizeof(addr));
+			memcpy(&addr, &nbr->addr, sizeof(addr));
 		else
 			inet_pton(AF_INET6, AllDRouters, &addr);
 	} else
