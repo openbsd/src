@@ -1,5 +1,5 @@
 process reader {
-	run /bin/sh "##BGPDCONFIGDIR##/api-exabgp.sh";
+	run "##OBJDIR##/api-exabgp" -t 10 "##OBJDIR##/as0.fifo";
 	encoder text;
 }
 

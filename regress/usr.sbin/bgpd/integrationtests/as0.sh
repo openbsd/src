@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: as0.sh,v 1.1 2019/08/06 15:49:57 claudio Exp $
+#	$OpenBSD: as0.sh,v 1.2 2021/01/12 08:59:03 claudio Exp $
 
 set -e
 
@@ -20,7 +20,7 @@ PAIR2IP3=10.12.57.4
 error_notify() {
 	echo cleanup
 	pkill -T ${RDOMAIN1} bgpd || true
-	pkill -T ${RDOMAIN2} exabgp || true
+	pkill -T ${RDOMAIN2} -f exabgp || true
 	sleep 1
 	ifconfig ${PAIR2} destroy || true
 	ifconfig ${PAIR1} destroy || true
@@ -85,6 +85,7 @@ ifconfig ${PAIR2} alias ${PAIR2IP3}/32
 ifconfig ${PAIR1} patch ${PAIR2}
 ifconfig lo${RDOMAIN1} inet 127.0.0.1/8
 ifconfig lo${RDOMAIN2} inet 127.0.0.1/8
+[ -p as0.fifo ] || mkfifo as0.fifo
 
 echo run bgpd
 route -T ${RDOMAIN1} exec ${BGPD} \
@@ -93,11 +94,12 @@ route -T ${RDOMAIN1} exec ${BGPD} \
 sleep 1
 
 echo test1
-run_exabgp test1 exabgp.as0.test1.conf > as0.test1.out 2>&1
-grep -q 'error[OPEN message error / Bad Peer AS]' as0.test1.out && echo OK
+run_exabgp as0.test1 exabgp.as0.test1.conf > as0.test1.out 2>&1
+grep -q 'error[OPEN message error / Bad Peer AS]' as0.test1.out
+echo OK
 
 echo test2
-run_exabgp test2 exabgp.as0.test2*.conf > as0.test2.out 2>&1
+run_exabgp as0.test2 exabgp.as0.test2*.conf > as0.test2.out 2>&1
 grep 'receive update announced' as0.test2.out | sort | \
     diff -u ${BGPDCONFIGDIR}/exabgp.as0.test2.ok /dev/stdin
 echo OK
