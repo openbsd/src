@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.84 2020/11/02 00:30:56 dlg Exp $ */
+/*	$OpenBSD: interface.c,v 1.85 2021/01/12 09:11:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -711,7 +711,7 @@ LIST_HEAD(,if_group_count) ifglist = LIST_HEAD_INITIALIZER(ifglist);
 int
 if_join_group(struct iface *iface, struct in_addr *addr)
 {
-	struct ip_mreq		 mreq;
+	struct ip_mreqn		 mreq;
 	struct if_group_count	*ifg;
 
 	switch (iface->type) {
@@ -734,7 +734,7 @@ if_join_group(struct iface *iface, struct in_addr *addr)
 			return (0);
 
 		mreq.imr_multiaddr.s_addr = addr->s_addr;
-		mreq.imr_interface.s_addr = iface->addr.s_addr;
+		mreq.imr_ifindex = iface->ifindex;
 
 		if (setsockopt(iface->fd, IPPROTO_IP, IP_ADD_MEMBERSHIP,
 		    (void *)&mreq, sizeof(mreq)) == -1) {
@@ -760,7 +760,7 @@ if_join_group(struct iface *iface, struct in_addr *addr)
 int
 if_leave_group(struct iface *iface, struct in_addr *addr)
 {
-	struct ip_mreq		 mreq;
+	struct ip_mreqn		 mreq;
 	struct if_group_count	*ifg;
 
 	switch (iface->type) {
@@ -782,7 +782,7 @@ if_leave_group(struct iface *iface, struct in_addr *addr)
 		}
 
 		mreq.imr_multiaddr.s_addr = addr->s_addr;
-		mreq.imr_interface.s_addr = iface->addr.s_addr;
+		mreq.imr_ifindex = iface->ifindex;
 
 		if (setsockopt(iface->fd, IPPROTO_IP, IP_DROP_MEMBERSHIP,
 		    (void *)&mreq, sizeof(mreq)) == -1) {
