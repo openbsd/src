@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2021/01/11 12:02:53 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.2 2021/01/12 00:15:02 bluhm Exp $
 
 # Copyright (c) 2021 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -183,10 +183,9 @@ run-bpf-user: stamp-stop
 	# icmp has no uid at log entry
 	grep 'regress\.6/.* pass out on lo$N:\
 	    127.* > 127.0.0.4: icmp: echo request' pflog${N1}.tcpdump
-	# XXX rule without user sometimes has uid in log entry
-	#grep 'regress\.3/.* pass out on lo$N:\
+	# rule without user has no uid in log entry
+	grep 'regress\.3/.* pass out on lo$N:\
 	    127.* > 127.0.0.1.9:.* udp' pflog${N1}.tcpdump
-	@echo DISABLED
 
 run-bpf-matches:
 	# XXX The log matches keyword seems to be totally broken.
