@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.17 2019/12/23 07:33:49 denis Exp $ */
+/*	$OpenBSD: packet.c,v 1.18 2021/01/12 09:54:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -82,12 +82,9 @@ send_packet(struct iface *iface, struct ibuf *buf,
     struct in6_addr *dst)
 {
 	struct sockaddr_in6	sa6;
-	struct msghdr		msg;
-	struct iovec		iov[1];
 
-	/* setup buffer */
+	/* setup sockaddr */
 	bzero(&sa6, sizeof(sa6));
-
 	sa6.sin6_family = AF_INET6;
 	sa6.sin6_len = sizeof(sa6);
 	sa6.sin6_addr = *dst;
@@ -104,15 +101,8 @@ send_packet(struct iface *iface, struct ibuf *buf,
 			return (-1);
 		}
 
-	bzero(&msg, sizeof(msg));
-	msg.msg_name = &sa6;
-	msg.msg_namelen = sizeof(sa6);
-	iov[0].iov_base = buf->buf;
-	iov[0].iov_len = ibuf_size(buf);
-	msg.msg_iov = iov;
-	msg.msg_iovlen = 1;
-
-	if (sendmsg(iface->fd, &msg, 0) == -1) {
+	if (sendto(iface->fd, buf->buf, ibuf_size(buf), 0,
+	    (struct sockaddr *)&sa6, sizeof(sa6)) == -1) {
 		log_warn("send_packet: error sending packet on interface %s",
 		    iface->name);
 		return (-1);
@@ -186,11 +176,16 @@ recv_packet(int fd, short event, void *bula)
 	 * AllDRouters is only valid for DR and BDR but this is checked later.
 	 */
 	inet_pton(AF_INET6, AllSPFRouters, &addr);
-
 	if (!IN6_ARE_ADDR_EQUAL(&dest, &addr)) {
 		inet_pton(AF_INET6, AllDRouters, &addr);
 		if (!IN6_ARE_ADDR_EQUAL(&dest, &addr)) {
-			if (!IN6_ARE_ADDR_EQUAL(&dest, &iface->addr)) {
+			struct iface_addr *ia;
+
+			TAILQ_FOREACH(ia, &iface->ifa_list, entry) {
+				if (IN6_ARE_ADDR_EQUAL(&dest, &ia->addr))
+					break;
+			}
+			if (ia == NULL) {
 				log_debug("recv_packet: packet sent to wrong "
 				    "address %s, interface %s",
 				    log_in6addr(&dest), iface->name);
