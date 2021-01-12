@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.52 2020/11/09 04:22:05 tb Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.53 2021/01/12 16:40:33 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -725,6 +725,7 @@ open_ports(void)
 {
 	struct addrinfo	 hints, *res0;
 	int		 udp4sock = -1, udp6sock = -1, error, bsize = 65535;
+	int		 tcp4sock = -1, tcp6sock = -1;
 	int		 opt = 1;
 
 	memset(&hints, 0, sizeof(hints));
@@ -773,13 +774,73 @@ open_ports(void)
 	if (res0)
 		freeaddrinfo(res0);
 
-	if (udp4sock == -1 && udp6sock == -1)
-		fatal("could not bind to 127.0.0.1 or ::1 on port 53");
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+
+	error = getaddrinfo("127.0.0.1", "domain", &hints, &res0);
+	if (!error && res0) {
+		if ((tcp4sock = socket(res0->ai_family,
+		    res0->ai_socktype | SOCK_NONBLOCK,
+		    res0->ai_protocol)) != -1) {
+			if (setsockopt(tcp4sock, SOL_SOCKET, SO_REUSEADDR,
+			    &opt, sizeof(opt)) == -1)
+				log_warn("setting SO_REUSEADDR on socket");
+			if (setsockopt(tcp4sock, SOL_SOCKET, SO_SNDBUF, &bsize,
+			    sizeof(bsize)) == -1)
+				log_warn("setting SO_SNDBUF on socket");
+			if (bind(tcp4sock, res0->ai_addr, res0->ai_addrlen)
+			    == -1) {
+				close(tcp4sock);
+				tcp4sock = -1;
+			}
+			if (listen(tcp4sock, 5) == -1) {
+				close(tcp4sock);
+				tcp4sock = -1;
+			}
+		}
+	}
+	if (res0)
+		freeaddrinfo(res0);
+
+	hints.ai_family = AF_INET6;
+	error = getaddrinfo("::1", "domain", &hints, &res0);
+	if (!error && res0) {
+		if ((tcp6sock = socket(res0->ai_family,
+		    res0->ai_socktype | SOCK_NONBLOCK,
+		    res0->ai_protocol)) != -1) {
+			if (setsockopt(tcp6sock, SOL_SOCKET, SO_REUSEADDR,
+			    &opt, sizeof(opt)) == -1)
+				log_warn("setting SO_REUSEADDR on socket");
+			if (setsockopt(tcp6sock, SOL_SOCKET, SO_SNDBUF, &bsize,
+			    sizeof(bsize)) == -1)
+				log_warn("setting SO_SNDBUF on socket");
+			if (bind(tcp6sock, res0->ai_addr, res0->ai_addrlen)
+			    == -1) {
+				close(tcp6sock);
+				tcp6sock = -1;
+			}
+			if (listen(tcp6sock, 5) == -1) {
+				close(tcp6sock);
+				tcp6sock = -1;
+			}
+		}
+	}
+	if (res0)
+		freeaddrinfo(res0);
+
+	if ((udp4sock == -1 || tcp4sock == -1) && (udp6sock == -1 ||
+	    tcp6sock == -1))
+		//fatalx("could not bind to 127.0.0.1 or ::1 on port 53");
+		fatalx("could not bind to 127.0.0.1 or ::1 on port 53 %d %d %d %d", udp4sock, tcp4sock, udp6sock, tcp6sock);
 
 	if (udp4sock != -1)
 		main_imsg_compose_frontend_fd(IMSG_UDP4SOCK, 0, udp4sock);
 	if (udp6sock != -1)
 		main_imsg_compose_frontend_fd(IMSG_UDP6SOCK, 0, udp6sock);
+	if (tcp4sock != -1)
+		main_imsg_compose_frontend_fd(IMSG_TCP4SOCK, 0, tcp4sock);
+	if (tcp6sock != -1)
+		main_imsg_compose_frontend_fd(IMSG_TCP6SOCK, 0, tcp6sock);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.h,v 1.49 2020/12/11 16:36:03 florian Exp $	*/
+/*	$OpenBSD: unwind.h,v 1.50 2021/01/12 16:40:33 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -109,6 +109,8 @@ enum imsg_type {
 	IMSG_RECONF_END,
 	IMSG_UDP4SOCK,
 	IMSG_UDP6SOCK,
+	IMSG_TCP4SOCK,
+	IMSG_TCP6SOCK,
 	IMSG_ROUTESOCK,
 	IMSG_CONTROLFD,
 	IMSG_STARTUP,
