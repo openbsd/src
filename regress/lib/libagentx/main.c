@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.2 2021/01/11 22:58:16 bluhm Exp $	*/
+/*	$OpenBSD: main.c,v 1.3 2021/01/12 20:58:21 rob Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -23,6 +23,7 @@
 #include <arpa/inet.h>
 
 #include <event.h>
+#include <poll.h>
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
@@ -42,7 +43,7 @@
 
 void regress_fd(struct agentx *, void *, int);
 void regress_tryconnect(int, short, void *);
-void regress_shutdown(int, short, void *);
+void regress_shutdown(void);
 void regress_read(int, short, void *);
 void regress_usr1(int, short, void *);
 void regress_usr2(int, short, void *);
@@ -298,23 +299,21 @@ main(int argc, char *argv[])
 	    &regressidx_new, 1, 0, regress_intindexstaticnewstring)) == NULL)
 		fatal("agentx_object");
 
-
 	if ((regressobj_scalarerror = agentx_object(regress,
 	    AGENTX_OID(AGENTX_ENTERPRISES, 30155, 100, UINT32_MAX), NULL,
 	    0, 0, regress_scalarerror)) == NULL)
 		fatal("agentx_object");
 
+	struct pollfd pfd[1];
 
-	/* Abuse some signals for easier regressing */
-	signal_set(&intev, SIGINT, regress_shutdown, sa);
-	signal_set(&usr1ev, SIGUSR1, regress_usr1, sa);
-	signal_set(&usr2ev, SIGUSR2, regress_usr2, sa);
-	signal_add(&intev, NULL);
-	signal_add(&usr1ev, NULL);
-	signal_add(&usr2ev, NULL);
+	pfd[0].fd = rev.ev_fd;
+	pfd[0].events = POLLIN;
 
-	event_dispatch();
-	return 1;
+	while (poll(pfd,1,200))
+		event_loop(EVLOOP_ONCE);
+
+	regress_shutdown();
+	return 0;
 }
 
 void
@@ -358,14 +357,13 @@ regress_read(int fd, short event, void *cookie)
 }
 
 void
-regress_shutdown(int fd, short event, void *cookie)
+regress_shutdown(void)
 {
 	agentx_free(sa);
-	signal_del(&intev);
-	signal_del(&usr1ev);
-	signal_del(&usr2ev);
 	evtimer_del(&connev);
 }
+
+#ifdef notyet
 
 void
 regress_usr1(int fd, short event, void *cookie)
@@ -380,6 +378,8 @@ regress_usr1(int fd, short event, void *cookie)
 	agentx_notify_integer(san, AGENTX_OID(IFOPERSTATUS), 6);
 	agentx_notify_send(san);
 }
+
+#endif
 
 void
 regress_usr2(int fd, short event, void *cookie)
