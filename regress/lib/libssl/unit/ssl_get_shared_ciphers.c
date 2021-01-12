@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_get_shared_ciphers.c,v 1.6 2021/01/11 18:33:43 tb Exp $ */
+/*	$OpenBSD: ssl_get_shared_ciphers.c,v 1.7 2021/01/12 17:53:18 tb Exp $ */
 /*
  * Copyright (c) 2021 Theo Buehler <tb@openbsd.org>
  *
@@ -21,8 +21,8 @@
 #include <string.h>
 
 #include <openssl/bio.h>
-#include <openssl/err.h>
 #include <openssl/crypto.h>
+#include <openssl/err.h>
 #include <openssl/ssl.h>
 
 struct peer_config {
@@ -219,8 +219,7 @@ peer_config_to_ssl_ctx(const struct peer_config *config)
 		goto err;
 	}
 	if (!SSL_CTX_set_cipher_list(ctx, config->ciphers)) {
-		fprintf(stderr, "set_cipher_list(%s) failed\n",
-		    config->name);
+		fprintf(stderr, "set_cipher_list(%s) failed\n", config->name);
 		goto err;
 	}
 
@@ -329,8 +328,8 @@ push_data_to_peer(SSL *ssl, int *ret, int (*func)(SSL *), const char *func_name,
 /*
  * Alternate between loops of SSL_connect() and SSL_accept() as long as only
  * WANT_READ and WANT_WRITE situations are encountered. A function is repeated
- * until WANT_READ is returned or it succeeds, then it's the other functions
- * turn to make progress. Success: both functions returned 1.
+ * until WANT_READ is returned or it succeeds, then it's the other function's
+ * turn to make progress. Succeeds if SSL_connect() and SSL_accept() return 1.
  */
 static int
 handshake(SSL *client_ssl, SSL *server_ssl, const char *description)
@@ -396,13 +395,11 @@ check_shared_ciphers(const struct ssl_shared_ciphers_test_data *test,
 	const char *want = test->shared_ciphers;
 	int failed;
 
-	failed = strcmp(want, got);
-
-	if (failed && !ssl_aes_is_accelerated() &&
-	    test->shared_ciphers_without_aesni != NULL) {
+	if (!ssl_aes_is_accelerated() &&
+	    test->shared_ciphers_without_aesni != NULL)
 		want = test->shared_ciphers_without_aesni;
-		failed = strcmp(want, got);
-	}
+
+	failed = strcmp(want, got);
 
 	if (failed)
 		fprintf(stderr, "%s: want \"%s\", got \"%s\"\n",
