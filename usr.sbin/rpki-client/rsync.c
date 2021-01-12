@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.13 2021/01/08 08:09:07 claudio Exp $ */
+/*	$OpenBSD: rsync.c,v 1.14 2021/01/12 09:22:11 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -164,8 +164,6 @@ proc_child(int signal)
  * does so.
  * It then responds with the identifier of the repo that it updated.
  * It only exits cleanly when fd is closed.
- * FIXME: this should use buffered output to prevent deadlocks, but it's
- * very unlikely that we're going to fill our buffer, so whatever.
  * FIXME: limit the number of simultaneous process.
  * Currently, an attacker can trivially specify thousands of different
  * repositories and saturate our system.
