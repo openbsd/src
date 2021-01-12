@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.497 2020/10/14 19:22:14 naddy Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.498 2021/01/12 00:10:34 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -156,7 +156,7 @@ enum	{ PF_ADDR_ADDRMASK, PF_ADDR_NOROUTE, PF_ADDR_DYNIFTL,
 
 #define	PF_LOG			0x01
 #define	PF_LOG_ALL		0x02
-#define	PF_LOG_SOCKET_LOOKUP	0x04
+#define	PF_LOG_USER		0x04
 #define	PF_LOG_FORCE		0x08
 #define	PF_LOG_MATCHES		0x10
 

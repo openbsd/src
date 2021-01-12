@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.92 2021/01/11 21:50:56 kn Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.93 2021/01/12 00:10:34 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -242,9 +242,9 @@ pflog_packet(struct pf_pdesc *pd, u_int8_t reason, struct pf_rule *rm,
 			strlcpy(hdr.ruleset, ruleset->anchor->name,
 			    sizeof(hdr.ruleset));
 	}
-	if (trigger->log & PF_LOG_SOCKET_LOOKUP && !pd->lookup.done)
+	if (trigger->log & PF_LOG_USER && !pd->lookup.done)
 		pd->lookup.done = pf_socket_lookup(pd);
-	if (pd->lookup.done > 0) {
+	if (trigger->log & PF_LOG_USER && pd->lookup.done > 0) {
 		hdr.uid = pd->lookup.uid;
 		hdr.pid = pd->lookup.pid;
 	} else {

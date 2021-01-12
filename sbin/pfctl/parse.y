@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.707 2020/12/16 18:01:16 kn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.708 2021/01/12 00:10:34 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2409,8 +2409,7 @@ logopts		: logopt			{ $$ = $1; }
 
 logopt		: ALL		{ $$.log = PF_LOG_ALL; $$.logif = 0; }
 		| MATCHES	{ $$.log = PF_LOG_MATCHES; $$.logif = 0; }
-		| USER		{ $$.log = PF_LOG_SOCKET_LOOKUP; $$.logif = 0; }
-		| GROUP		{ $$.log = PF_LOG_SOCKET_LOOKUP; $$.logif = 0; }
+		| USER		{ $$.log = PF_LOG_USER; $$.logif = 0; }
 		| TO string	{
 			const char	*errstr;
 			u_int		 i;
