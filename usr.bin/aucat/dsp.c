@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.c,v 1.15 2021/01/11 14:45:51 ratchov Exp $	*/
+/*	$OpenBSD: dsp.c,v 1.16 2021/01/12 15:46:53 naddy Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -18,7 +18,7 @@
 #include "dsp.h"
 #include "utils.h"
 
-int aparams_ctltovol[128] = {
+const int aparams_ctltovol[128] = {
 	    0,
 	  256,	  266,	  276,	  287,	  299,	  310,	  323,	  335,
 	  348,	  362,	  376,	  391,	  406,	  422,	  439,	  456,
@@ -38,7 +38,7 @@ int aparams_ctltovol[128] = {
 	26008,	27029,	28090,	29193,	30339,	31530,	32768
 };
 
-short dec_ulawmap[256] = {
+const short dec_ulawmap[256] = {
 	-32124, -31100, -30076, -29052, -28028, -27004, -25980, -24956,
 	-23932, -22908, -21884, -20860, -19836, -18812, -17788, -16764,
 	-15996, -15484, -14972, -14460, -13948, -13436, -12924, -12412,
@@ -73,7 +73,7 @@ short dec_ulawmap[256] = {
 	    56,     48,     40,     32,     24,     16,      8,      0
 };
 
-short dec_alawmap[256] = {
+const short dec_alawmap[256] = {
 	 -5504,  -5248,  -6016,  -5760,  -4480,  -4224,  -4992,  -4736,
 	 -7552,  -7296,  -8064,  -7808,  -6528,  -6272,  -7040,  -6784,
 	 -2752,  -2624,  -3008,  -2880,  -2240,  -2112,  -2496,  -2368,
@@ -108,7 +108,7 @@ short dec_alawmap[256] = {
 	   944,    912,   1008,    976,    816,    784,    880,    848
 };
 
-int resamp_filt[RESAMP_LENGTH / RESAMP_STEP + 1] = {
+const int resamp_filt[RESAMP_LENGTH / RESAMP_STEP + 1] = {
 	      0,       0,       3,       9,      22,      42,      73,     116,
 	    174,     248,     341,     454,     589,     749,     934,    1148,
 	   1392,    1666,    1974,    2316,    2693,    3107,    3560,    4051,
@@ -842,7 +842,7 @@ dec_do_ulaw(struct conv *p, unsigned char *in,
 	unsigned int f;
 	unsigned char *idata;
 	adata_t *odata;
-	short *map;
+	const short *map;
 
 #ifdef DEBUG
 	if (log_level >= 4) {

@@ -131,28 +131,28 @@ struct au_hdr {
 	/* followed by optional desc[] continuation */
 };
 
-char wav_id_riff[4] = {'R', 'I', 'F', 'F'};
-char wav_id_wave[4] = {'W', 'A', 'V', 'E'};
-char wav_id_data[4] = {'d', 'a', 't', 'a'};
-char wav_id_fmt[4] = {'f', 'm', 't', ' '};
-char wav_guid[14] = {
+const char wav_id_riff[4] = {'R', 'I', 'F', 'F'};
+const char wav_id_wave[4] = {'W', 'A', 'V', 'E'};
+const char wav_id_data[4] = {'d', 'a', 't', 'a'};
+const char wav_id_fmt[4] = {'f', 'm', 't', ' '};
+const char wav_guid[14] = {
 	0x00, 0x00, 0x00, 0x00,
 	0x10, 0x00, 0x80, 0x00,
 	0x00, 0xAA, 0x00, 0x38,
 	0x9B, 0x71
 };
 
-char aiff_id_form[4] = {'F', 'O', 'R', 'M'};
-char aiff_id_aiff[4] = {'A', 'I', 'F', 'F'};
-char aiff_id_aifc[4] = {'A', 'I', 'F', 'C'};
-char aiff_id_data[4] = {'S', 'S', 'N', 'D'};
-char aiff_id_comm[4] = {'C', 'O', 'M', 'M'};
-char aiff_id_none[4] = {'N', 'O', 'N', 'E'};
-char aiff_id_fl32[4] = {'f', 'l', '3', '2'};
-char aiff_id_ulaw[4] = {'u', 'l', 'a', 'w'};
-char aiff_id_alaw[4] = {'a', 'l', 'a', 'w'};
+const char aiff_id_form[4] = {'F', 'O', 'R', 'M'};
+const char aiff_id_aiff[4] = {'A', 'I', 'F', 'F'};
+const char aiff_id_aifc[4] = {'A', 'I', 'F', 'C'};
+const char aiff_id_data[4] = {'S', 'S', 'N', 'D'};
+const char aiff_id_comm[4] = {'C', 'O', 'M', 'M'};
+const char aiff_id_none[4] = {'N', 'O', 'N', 'E'};
+const char aiff_id_fl32[4] = {'f', 'l', '3', '2'};
+const char aiff_id_ulaw[4] = {'u', 'l', 'a', 'w'};
+const char aiff_id_alaw[4] = {'a', 'l', 'a', 'w'};
 
-char au_id[4] = {'.', 's', 'n', 'd'};
+const char au_id[4] = {'.', 's', 'n', 'd'};
 
 static inline unsigned int
 le16_get(le16_t *p)

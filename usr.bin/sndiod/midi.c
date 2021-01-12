@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.25 2020/06/12 15:40:18 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.26 2021/01/12 15:46:53 naddy Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -54,8 +54,8 @@ struct midithru {
 /*
  * length of voice and common messages (status byte included)
  */
-unsigned int voice_len[] = { 3, 3, 3, 3, 2, 2, 3 };
-unsigned int common_len[] = { 0, 2, 3, 2, 0, 0, 1, 1 };
+const unsigned int voice_len[] = { 3, 3, 3, 3, 2, 2, 3 };
+const unsigned int common_len[] = { 0, 2, 3, 2, 0, 0, 1, 1 };
 
 void
 midi_log(struct midi *ep)

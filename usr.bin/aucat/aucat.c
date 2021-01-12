@@ -132,8 +132,8 @@ struct slot *slot_list = NULL;
 /*
  * length of voice and common MIDI messages (status byte included)
  */
-unsigned int voice_len[] = { 3, 3, 3, 3, 2, 2, 3 };
-unsigned int common_len[] = { 0, 2, 3, 2, 0, 0, 1, 1 };
+const unsigned int voice_len[] = { 3, 3, 3, 3, 2, 2, 3 };
+const unsigned int common_len[] = { 0, 2, 3, 2, 0, 0, 1, 1 };
 
 char usagestr[] = "usage: aucat [-dn] [-b size] "
     "[-c min:max] [-e enc] [-f device] [-g position]\n\t"
