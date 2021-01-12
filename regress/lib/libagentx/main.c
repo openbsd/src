@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.3 2021/01/12 20:58:21 rob Exp $	*/
+/*	$OpenBSD: main.c,v 1.4 2021/01/12 21:35:12 rob Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -309,7 +309,7 @@ main(int argc, char *argv[])
 	pfd[0].fd = rev.ev_fd;
 	pfd[0].events = POLLIN;
 
-	while (poll(pfd,1,200))
+	while (poll(pfd,1,200) > 0)
 		event_loop(EVLOOP_ONCE);
 
 	regress_shutdown();
