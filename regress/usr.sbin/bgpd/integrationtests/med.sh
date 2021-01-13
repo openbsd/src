@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: med.sh,v 1.1 2021/01/12 08:59:03 claudio Exp $
+#	$OpenBSD: med.sh,v 1.2 2021/01/13 10:15:08 claudio Exp $
 
 set -e
 
@@ -145,6 +145,15 @@ sleep .2
 diff -u ${BGPDCONFIGDIR}/exabgp.med.ok med.out
 echo OK
 
+echo test 4
+
+exacmd 'neighbor 10.12.57.1 router-id 10.12.57.4 withdraw route 10.12.1.0/24'
+
+sleep 5
+route -T ${RDOMAIN1} exec bgpctl sh rib | tee med.out
+sleep .2
+diff -u ${BGPDCONFIGDIR}/exabgp.med_2.ok med.out
+echo OK
 exacmd 'shutdown'
 
 exit 0

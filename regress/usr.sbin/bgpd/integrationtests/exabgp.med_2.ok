@@ -1,0 +1,8 @@
+flags: * = Valid, > = Selected, I = via IBGP, A = Announced,
+       S = Stale, E = Error
+origin validation state: N = not-found, V = valid, ! = invalid
+origin: i = IGP, e = EGP, ? = Incomplete
+
+flags ovs destination          gateway          lpref   med aspath origin
+*>      N 10.12.1.0/24         10.12.57.2        100   100 64501 64510 i
+*       N 10.12.1.0/24         10.12.57.3        100   100 64502 64510 i
