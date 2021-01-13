@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.84 2020/10/09 07:43:38 kn Exp $ */
+/* $OpenBSD: doas.c,v 1.85 2021/01/13 13:49:34 kn Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -183,6 +183,8 @@ checkconfig(const char *confpath, int argc, char **argv,
 	const struct rule *rule;
 
 	setresuid(uid, uid, uid);
+	if (pledge("stdio rpath getpw", NULL) == -1)
+		err(1, "pledge");
 	parseconfig(confpath, 0);
 	if (!argc)
 		exit(0);
@@ -373,6 +375,8 @@ main(int argc, char **argv)
 	}
 
 	if (confpath) {
+		if (pledge("stdio rpath getpw id", NULL) == -1)
+			err(1, "pledge");
 		checkconfig(confpath, argc, argv, uid, groups, ngroups,
 		    target);
 		exit(1);	/* fail safe */
