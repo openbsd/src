@@ -30,31 +30,38 @@
 #define PFN_DOWN(x)		((x) >> PAGE_SHIFT)
 #define PFN_PHYS(x)		((x) << PAGE_SHIFT)
 
-bool is_vmalloc_addr(const void *);
-
-void *kvmalloc(size_t, gfp_t);
-void kvfree(const void *);
+#define is_vmalloc_addr(ptr)	true
 
 static inline void *
-kvmalloc_array(size_t n, size_t size, gfp_t flags)
+kvmalloc(size_t size, gfp_t flags)
 {
-	if (n != 0 && SIZE_MAX / n < size)
-		return NULL;
-	return kvmalloc(n * size, flags);
+	return malloc(size, M_DRM, flags);
 }
 
 static inline void *
-kvcalloc(size_t n, size_t size, gfp_t flags)
+kvmalloc_array(size_t n, size_t size, int flags)
 {
 	if (n != 0 && SIZE_MAX / n < size)
 		return NULL;
-	return kvmalloc(n * size, flags | M_ZERO);
+	return malloc(n * size, M_DRM, flags);
 }
 
 static inline void *
-kvzalloc(size_t size, gfp_t flags)
+kvcalloc(size_t n, size_t size, int flags)
 {
-	return kvmalloc(size, flags | M_ZERO);
+	return kvmalloc_array(n, size, flags | M_ZERO);
+}
+
+static inline void *
+kvzalloc(size_t size, int flags)
+{
+	return malloc(size, M_DRM, flags | M_ZERO);
+}
+
+static inline void
+kvfree(const void *objp)
+{
+	free((void *)objp, M_DRM, 0);
 }
 
 static inline long
