@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.85 2020/10/03 17:35:16 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.86 2021/01/13 18:20:54 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -316,7 +316,6 @@ dtls1_process_record(SSL *s)
 	size_t out_len;
 
 	tls12_record_layer_set_version(s->internal->rl, s->version);
-	tls12_record_layer_set_read_epoch(s->internal->rl, rr->epoch);
 
 	if (!tls12_record_layer_open_record(s->internal->rl, s->internal->packet,
 	    s->internal->packet_length, &out, &out_len)) {
