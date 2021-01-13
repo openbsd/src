@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.93 2021/01/12 00:10:34 bluhm Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.94 2021/01/13 09:13:30 mvs Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -76,52 +76,23 @@
 #endif
 
 void	pflogattach(int);
-int	pflogifs_resize(size_t);
 int	pflogoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
 		       struct rtentry *);
 int	pflogioctl(struct ifnet *, u_long, caddr_t);
 int	pflog_clone_create(struct if_clone *, int);
 int	pflog_clone_destroy(struct ifnet *);
 void	pflog_mtap(caddr_t, struct pfloghdr *, struct mbuf *);
+struct	pflog_softc	*pflog_getif(int);
 
-struct if_clone	pflog_cloner =
+struct if_clone			pflog_cloner =
     IF_CLONE_INITIALIZER("pflog", pflog_clone_create, pflog_clone_destroy);
 
-int		  npflogifs = 0;
-struct ifnet	**pflogifs = NULL;	/* for fast access */
+LIST_HEAD(, pflog_softc)	pflog_ifs = LIST_HEAD_INITIALIZER(pflog_ifs);
 
 void
 pflogattach(int npflog)
 {
 	if_clone_attach(&pflog_cloner);
-}
-
-int
-pflogifs_resize(size_t n)
-{
-	struct ifnet	**p;
-	int		  i;
-
-	NET_ASSERT_LOCKED();
-
-	if (n > SIZE_MAX / sizeof(*p))
-		return (EINVAL);
-	if (n == 0)
-		p = NULL;
-	else
-		if ((p = mallocarray(n, sizeof(*p), M_DEVBUF,
-		    M_NOWAIT|M_ZERO)) == NULL)
-			return (ENOMEM);
-	for (i = 0; i < n; i++)
-		if (i < npflogifs)
-			p[i] = pflogifs[i];
-		else
-			p[i] = NULL;
-
-	free(pflogifs, M_DEVBUF, npflogifs * sizeof(*pflogifs));
-	pflogifs = p;
-	npflogifs = n;
-	return (0);
 }
 
 int
@@ -149,11 +120,7 @@ pflog_clone_create(struct if_clone *ifc, int unit)
 #endif
 
 	NET_LOCK();
-	if (unit + 1 > npflogifs && pflogifs_resize(unit + 1) != 0) {
-		NET_UNLOCK();
-		return (ENOMEM);
-	}
-	pflogifs[unit] = ifp;
+	LIST_INSERT_HEAD(&pflog_ifs, pflogif, sc_entry);
 	NET_UNLOCK();
 
 	return (0);
@@ -163,18 +130,14 @@ int
 pflog_clone_destroy(struct ifnet *ifp)
 {
 	struct pflog_softc	*pflogif = ifp->if_softc;
-	int			 i;
 
 	NET_LOCK();
-	pflogifs[pflogif->sc_unit] = NULL;
-	for (i = npflogifs; i > 0 && pflogifs[i - 1] == NULL; i--)
-		; /* nothing */
-	if (i < npflogifs)
-		pflogifs_resize(i);	/* error harmless here */
+	LIST_REMOVE(pflogif, sc_entry);
 	NET_UNLOCK();
 
 	if_detach(ifp);
 	free(pflogif, M_DEVBUF, sizeof(*pflogif));
+
 	return (0);
 }
 
@@ -203,11 +166,27 @@ pflogioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return (0);
 }
 
+struct pflog_softc *
+pflog_getif(int unit)
+{
+	struct pflog_softc *pflogif;
+
+	NET_ASSERT_LOCKED();
+
+	LIST_FOREACH(pflogif, &pflog_ifs, sc_entry) {
+		if (pflogif->sc_unit == unit)
+			break;
+	}
+
+	return pflogif;
+}
+
 int
 pflog_packet(struct pf_pdesc *pd, u_int8_t reason, struct pf_rule *rm,
     struct pf_rule *am, struct pf_ruleset *ruleset, struct pf_rule *trigger)
 {
 #if NBPFILTER > 0
+	struct pflog_softc *pflogif;
 	struct ifnet *ifn;
 	caddr_t if_bpf;
 	struct pfloghdr hdr;
@@ -216,12 +195,10 @@ pflog_packet(struct pf_pdesc *pd, u_int8_t reason, struct pf_rule *rm,
 		return (-1);
 	if (trigger == NULL)
 		trigger = rm;
-
-	if (trigger->logif >= npflogifs)
+	pflogif = pflog_getif(trigger->logif);
+	if (pflogif == NULL)
 		return (0);
-	ifn = pflogifs[trigger->logif];
-	if (ifn == NULL)
-		return (0);
+	ifn = &pflogif->sc_if;
 	if_bpf = ifn->if_bpf;
 	if (!if_bpf)
 		return (0);
