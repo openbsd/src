@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.276 2020/12/12 11:48:54 jan Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.277 2021/01/13 12:38:36 bluhm Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -244,7 +244,7 @@ m_get(int nowait, int type)
 	uint64_t *counters;
 	int s;
 
-	KDASSERT(type < MT_NTYPES);
+	KASSERT(type >= 0 && type < MT_NTYPES);
 
 	m = pool_get(&mbpool, nowait == M_WAIT ? PR_WAITOK : PR_NOWAIT);
 	if (m == NULL)
@@ -277,7 +277,7 @@ m_gethdr(int nowait, int type)
 	uint64_t *counters;
 	int s;
 
-	KDASSERT(type < MT_NTYPES);
+	KASSERT(type >= 0 && type < MT_NTYPES);
 
 	m = pool_get(&mbpool, nowait == M_WAIT ? PR_WAITOK : PR_NOWAIT);
 	if (m == NULL)
