@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.86 2021/01/13 18:20:54 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.87 2021/01/13 18:32:00 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -184,8 +184,10 @@ satsub64be(const unsigned char *v1, const unsigned char *v2)
 
 static int have_handshake_fragment(SSL *s, int type, unsigned char *buf,
     int len, int peek);
-static int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap);
-static void dtls1_record_bitmap_update(SSL *s, DTLS1_BITMAP *bitmap);
+static int dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap,
+    const unsigned char *seq);
+static void dtls1_record_bitmap_update(SSL *s, DTLS1_BITMAP *bitmap,
+    const unsigned char *seq);
 static DTLS1_BITMAP *dtls1_get_bitmap(SSL *s, SSL3_RECORD_INTERNAL *rr,
     unsigned int *is_next_epoch);
 static int dtls1_buffer_record(SSL *s, record_pqueue *q,
@@ -414,10 +416,15 @@ again:
 		    !CBS_get_bytes(&header, &seq_no, 6))
 			goto again;
 
+		if (!CBS_get_u16(&header, &len))
+			goto again;
+
 		if (!CBS_write_bytes(&seq_no, &(S3I(s)->read_sequence[2]),
 		    sizeof(S3I(s)->read_sequence) - 2, NULL))
 			goto again;
-		if (!CBS_get_u16(&header, &len))
+
+		if (!CBS_write_bytes(&seq_no, &rr->seq_num[2],
+		    sizeof(rr->seq_num) - 2, NULL))
 			goto again;
 
 		rr->type = type;
@@ -466,7 +473,7 @@ again:
 	 */
 	if (!(D1I(s)->listen && rr->type == SSL3_RT_HANDSHAKE &&
 	    p != NULL && *p == SSL3_MT_CLIENT_HELLO) &&
-	    !dtls1_record_replay_check(s, bitmap))
+	    !dtls1_record_replay_check(s, bitmap, rr->seq_num))
 		goto again;
 
 	/* just read a 0 length packet */
@@ -484,7 +491,7 @@ again:
 			    rr->seq_num) < 0)
 				return (-1);
 			/* Mark receipt of record. */
-			dtls1_record_bitmap_update(s, bitmap);
+			dtls1_record_bitmap_update(s, bitmap, rr->seq_num);
 		}
 		goto again;
 	}
@@ -493,7 +500,7 @@ again:
 		goto again;
 
 	/* Mark receipt of record. */
-	dtls1_record_bitmap_update(s, bitmap);
+	dtls1_record_bitmap_update(s, bitmap, rr->seq_num);
 
 	return (1);
 }
@@ -1128,34 +1135,30 @@ do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 }
 
 static int
-dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap)
+dtls1_record_replay_check(SSL *s, DTLS1_BITMAP *bitmap,
+    const unsigned char *seq)
 {
-	int cmp;
 	unsigned int shift;
-	const unsigned char *seq = S3I(s)->read_sequence;
+	int cmp;
 
 	cmp = satsub64be(seq, bitmap->max_seq_num);
-	if (cmp > 0) {
-		memcpy (S3I(s)->rrec.seq_num, seq, 8);
+	if (cmp > 0)
 		return 1; /* this record in new */
-	}
 	shift = -cmp;
 	if (shift >= sizeof(bitmap->map)*8)
 		return 0; /* stale, outside the window */
 	else if (bitmap->map & (1UL << shift))
 		return 0; /* record previously received */
 
-	memcpy(S3I(s)->rrec.seq_num, seq, 8);
 	return 1;
 }
 
-
 static void
-dtls1_record_bitmap_update(SSL *s, DTLS1_BITMAP *bitmap)
+dtls1_record_bitmap_update(SSL *s, DTLS1_BITMAP *bitmap,
+    const unsigned char *seq)
 {
-	int cmp;
 	unsigned int shift;
-	const unsigned char *seq = S3I(s)->read_sequence;
+	int cmp;
 
 	cmp = satsub64be(seq, bitmap->max_seq_num);
 	if (cmp > 0) {
@@ -1171,7 +1174,6 @@ dtls1_record_bitmap_update(SSL *s, DTLS1_BITMAP *bitmap)
 			bitmap->map |= 1UL << shift;
 	}
 }
-
 
 int
 dtls1_dispatch_alert(SSL *s)
