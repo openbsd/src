@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcf8563.c,v 1.2 2019/10/06 15:45:37 kettenis Exp $	*/
+/*	$OpenBSD: pcf8563.c,v 1.3 2021/01/13 11:01:19 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Kimihiro Nonaka
@@ -43,8 +43,6 @@
 /*
  * PCF8563 Real-Time Clock
  */
-
-#define PCF8563_ADDR		0x51	/* Fixed I2C Slave Address */
 
 #define PCF8563_CONTROL1	0x00
 #define PCF8563_CONTROL2	0x01
@@ -106,8 +104,8 @@ pcxrtc_match(struct device *parent, void *v, void *arg)
 {
 	struct i2c_attach_args *ia = arg;
 
-	if (strcmp(ia->ia_name, "nxp,pcf8563") == 0 &&
-	    ia->ia_addr == PCF8563_ADDR)
+	if (strcmp(ia->ia_name, "nxp,pcf8563") == 0 ||
+	    strcmp(ia->ia_name, "haoyu,hym8563") == 0)
 		return (1);
 
 	return (0);
