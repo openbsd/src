@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pair.c,v 1.16 2020/08/21 22:59:27 kn Exp $	*/
+/*	$OpenBSD: if_pair.c,v 1.17 2021/01/13 01:57:31 kn Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -37,7 +37,7 @@
 
 void	pairattach(int);
 int	pairioctl(struct ifnet *, u_long, caddr_t);
-void	pairstart(struct ifnet *);
+void	pairstart(struct ifqueue *);
 int	pair_clone_create(struct if_clone *, int);
 int	pair_clone_destroy(struct ifnet *);
 int	pair_media_change(struct ifnet *);
@@ -116,8 +116,8 @@ pair_clone_create(struct if_clone *ifc, int unit)
 
 	ifp->if_softc = sc;
 	ifp->if_ioctl = pairioctl;
-	ifp->if_start = pairstart;
-	ifp->if_xflags = IFXF_CLONED;
+	ifp->if_qstart = pairstart;
+	ifp->if_xflags = IFXF_CLONED | IFXF_MPSAFE;
 
 	ifp->if_hardmtu = ETHER_MAX_HARDMTU_LEN;
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
@@ -158,8 +158,9 @@ pair_clone_destroy(struct ifnet *ifp)
 }
 
 void
-pairstart(struct ifnet *ifp)
+pairstart(struct ifqueue *ifq)
 {
+	struct ifnet		*ifp = ifq->ifq_if;
 	struct pair_softc	*sc = (struct pair_softc *)ifp->if_softc;
 	struct mbuf_list	 ml = MBUF_LIST_INITIALIZER();
 	struct ifnet		*pairedifp;
@@ -167,11 +168,7 @@ pairstart(struct ifnet *ifp)
 
 	pairedifp = if_get(sc->sc_pairedif);
 
-	for (;;) {
-		m = ifq_dequeue(&ifp->if_snd);
-		if (m == NULL)
-			break;
-
+	while ((m = ifq_dequeue(ifq)) != NULL) {
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
