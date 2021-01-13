@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.218 2020/12/04 11:57:13 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.219 2021/01/13 11:34:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1064,8 +1064,7 @@ prefix_move(struct prefix *p, struct rde_peer *peer,
 	 * This is safe because we create a new prefix and so the change
 	 * is noticed by prefix_evaluate().
 	 */
-	LIST_REMOVE(p, entry.list.rib);
-	prefix_evaluate(np, np->re);
+	prefix_evaluate(np->re, np, p);
 
 	/* remove old prefix node */
 	/* as before peer count needs no update because of move */
@@ -1551,18 +1550,7 @@ prefix_evaluate_all(struct prefix *p, enum nexthop_state state,
 	}
 
 	/* redo the route decision */
-	LIST_REMOVE(p, entry.list.rib);
-	/*
-	 * If the prefix is the active one remove it first,
-	 * this has to be done because we can not detect when
-	 * the active prefix changes its state. In this case
-	 * we know that this is a withdrawal and so the second
-	 * prefix_evaluate() will generate no update because
-	 * the nexthop is unreachable or ineligible.
-	 */
-	if (p == p->re->active)
-		prefix_evaluate(NULL, p->re);
-	prefix_evaluate(p, p->re);
+	prefix_evaluate(p->re, p, p);
 }
 
 /* kill a prefix. */
@@ -1570,8 +1558,7 @@ void
 prefix_destroy(struct prefix *p)
 {
 	/* make route decision */
-	LIST_REMOVE(p, entry.list.rib);
-	prefix_evaluate(NULL, p->re);
+	prefix_evaluate(p->re, NULL, p);
 
 	prefix_unlink(p);
 	prefix_free(p);
@@ -1601,7 +1588,7 @@ prefix_link(struct prefix *p, struct rib_entry *re, struct rde_peer *peer,
 		rde_pftable_add(asp->pftableid, p);
 
 	/* make route decision */
-	prefix_evaluate(p, re);
+	prefix_evaluate(re, p, NULL);
 }
 
 /*

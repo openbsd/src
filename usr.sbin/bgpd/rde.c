@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.511 2021/01/09 16:49:41 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.512 2021/01/13 11:34:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2825,6 +2825,9 @@ rde_generate_updates(struct rib *rib, struct prefix *new, struct prefix *old)
 	if (old == NULL && new == NULL)
 		return;
 
+	if ((rib->flags & F_RIB_NOFIB) == 0)
+		rde_send_kroute(rib, new, old);
+
 	if (new)
 		aid = new->pt->aid;
 	else
@@ -3533,8 +3536,7 @@ rde_softreconfig_sync_reeval(struct rib_entry *re, void *arg)
 		/* need to re-link the nexthop if not already linked */
 		if ((p->flags & PREFIX_NEXTHOP_LINKED) == 0)
 			nexthop_link(p);
-		LIST_REMOVE(p, entry.list.rib);
-		prefix_evaluate(p, re);
+		prefix_evaluate(re, p, p);
 	}
 }
 

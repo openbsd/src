@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.78 2019/08/09 13:44:27 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.79 2021/01/13 11:34:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -238,14 +238,16 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
  * The to evaluate prefix must not be in the prefix list.
  */
 void
-prefix_evaluate(struct prefix *p, struct rib_entry *re)
+prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 {
 	struct prefix	*xp;
 
 	if (re_rib(re)->flags & F_RIB_NOEVALUATE) {
 		/* decision process is turned off */
-		if (p != NULL)
-			LIST_INSERT_HEAD(&re->prefix_h, p, entry.list.rib);
+		if (old != NULL)
+			LIST_REMOVE(old, entry.list.rib);
+		if (new != NULL)
+			LIST_INSERT_HEAD(&re->prefix_h, new, entry.list.rib);
 		if (re->active) {
 			/*
 			 * During reloads it is possible that the decision
@@ -259,19 +261,22 @@ prefix_evaluate(struct prefix *p, struct rib_entry *re)
 		return;
 	}
 
-	if (p != NULL) {
+	if (old != NULL)
+		LIST_REMOVE(old, entry.list.rib);
+		
+	if (new != NULL) {
 		if (LIST_EMPTY(&re->prefix_h))
-			LIST_INSERT_HEAD(&re->prefix_h, p, entry.list.rib);
+			LIST_INSERT_HEAD(&re->prefix_h, new, entry.list.rib);
 		else {
 			LIST_FOREACH(xp, &re->prefix_h, entry.list.rib) {
-				if (prefix_cmp(p, xp) > 0) {
-					LIST_INSERT_BEFORE(xp, p,
+				if (prefix_cmp(new, xp) > 0) {
+					LIST_INSERT_BEFORE(xp, new,
 					    entry.list.rib);
 					break;
 				} else if (LIST_NEXT(xp, entry.list.rib) ==
 				    NULL) {
 					/* if xp last element ... */
-					LIST_INSERT_AFTER(xp, p,
+					LIST_INSERT_AFTER(xp, new,
 					    entry.list.rib);
 					break;
 				}
@@ -290,18 +295,17 @@ prefix_evaluate(struct prefix *p, struct rib_entry *re)
 			xp = NULL;
 	}
 
-	if (re->active != xp) {
-		/* need to generate an update */
-
+	/*
+	 * If the active prefix changed or the active prefix was removed
+	 * and added again then generate an update.
+	 */
+	if (re->active != xp || (old != NULL && xp == old)) {
 		/*
-		 * Send update with remove for re->active and add for xp
+		 * Send update withdrawing re->active and adding xp
 		 * but remember that xp may be NULL aka ineligible.
 		 * Additional decision may be made by the called functions.
 		 */
 		rde_generate_updates(re_rib(re), xp, re->active);
-		if ((re_rib(re)->flags & F_RIB_NOFIB) == 0)
-			rde_send_kroute(re_rib(re), xp, re->active);
-
 		re->active = xp;
 	}
 }

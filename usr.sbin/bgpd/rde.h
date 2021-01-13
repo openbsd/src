@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.235 2020/12/04 11:57:13 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.236 2021/01/13 11:34:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -483,10 +483,10 @@ communities_unref(struct rde_community *comm)
 		communities_unlink(comm);
 }
 
-int	 community_to_rd(struct community *, u_int64_t *);
+int	community_to_rd(struct community *, u_int64_t *);
 
 /* rde_decide.c */
-void		 prefix_evaluate(struct prefix *, struct rib_entry *);
+void	prefix_evaluate(struct rib_entry *, struct prefix *, struct prefix *);
 
 /* rde_filter.c */
 void	rde_apply_set(struct filter_set_head *, struct rde_peer *,
