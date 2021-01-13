@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.4 2021/01/12 21:35:12 rob Exp $	*/
+/*	$OpenBSD: main.c,v 1.5 2021/01/13 17:00:20 martijn Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -23,18 +23,14 @@
 #include <arpa/inet.h>
 
 #include <event.h>
-#include <poll.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "log.h"
 #include <agentx.h>
-
-#ifndef __OpenBSD__
-#include "openbsd-compat.h"
-#endif
 
 #define LINKDOWN 1, 3, 6, 1, 6, 3, 1, 1, 5, 3
 #define IFINDEX 1, 3, 6, 1, 2, 1, 2, 2, 1, 1
@@ -77,8 +73,6 @@ void regress_intindexstaticanystring(struct agentx_varbind *);
 void regress_intindexstaticnewint(struct agentx_varbind *);
 void regress_intindexstaticnewstring(struct agentx_varbind *);
 
-struct event intev, usr1ev, usr2ev, connev;
-char *path = AGENTX_MASTER_PATH;
 struct agentx *sa;
 struct agentx_session *sas;
 struct agentx_context *sac;
@@ -130,19 +124,36 @@ struct agentx_object *regressobj_intindexstaticnewstring;
 
 struct agentx_object *regressobj_scalarerror;
 
+char *path = AGENTX_MASTER_PATH;
+int fd = -1;
 struct event rev;
+struct event intev, usr1ev, usr2ev, connev;
 
 int
 main(int argc, char *argv[])
 {
 	struct agentx_index *idx[AGENTX_OID_INDEX_MAX_LEN];
+	int ch;
+	int dflag = 0;
 
 	log_init(2, 1);
 
-	if (argc >= 2)
-		path = argv[1];
+	while ((ch = getopt(argc, argv, "d")) != -1) {
+		switch (ch) {
+		case 'd':
+			dflag = 1;
+			break;
+		default:
+			exit(1);
+		}
+	}
 
-	event_init();
+	argc -= optind;
+	argv += optind;
+
+	if (argc >= 1)
+		path = argv[0];
+
 	bzero(&rev, sizeof(rev));
 
 	agentx_log_fatal = fatalx;
@@ -304,50 +315,41 @@ main(int argc, char *argv[])
 	    0, 0, regress_scalarerror)) == NULL)
 		fatal("agentx_object");
 
-	struct pollfd pfd[1];
+	if (!dflag) {
+		if (daemon(0, 0) == -1)
+			fatalx("daemon");
+	}
 
-	pfd[0].fd = rev.ev_fd;
-	pfd[0].events = POLLIN;
+	event_init();
 
-	while (poll(pfd,1,200) > 0)
-		event_loop(EVLOOP_ONCE);
+	event_set(&rev, fd, EV_READ|EV_PERSIST, regress_read, NULL);
+	if (event_add(&rev, NULL) == -1)
+		fatal("event_add");
 
-	regress_shutdown();
+	event_dispatch();
 	return 0;
 }
 
 void
 regress_fd(struct agentx *sa2, void *cookie, int close)
 {
-	event_del(&rev);
-	if (!close)
-		regress_tryconnect(-1, 0, sa2);
-}
-
-void
-regress_tryconnect(int fd, short event, void *cookie)
-{
-	struct agentx *sa2 = cookie;
-	struct timeval timeout = {3, 0};
+	static int init = 0;
 	struct sockaddr_un sun;
 
-	sun.sun_family = AF_UNIX;
-	strlcpy(sun.sun_path, path, sizeof(sun.sun_path));
+	/* For ease of cleanup we take the single run approach */
+	if (init)
+		regress_shutdown();
+	else {
+		sun.sun_family = AF_UNIX;
+		strlcpy(sun.sun_path, path, sizeof(sun.sun_path));
 
-	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1 ||
-	    connect(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
-		log_warn("connect");
-		close(fd);
-		evtimer_set(&connev, regress_tryconnect, sa2);
-		evtimer_add(&connev, &timeout);
-		return;
+		if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1 ||
+		    connect(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
+			fatal("connect");
+		}
+		agentx_connect(sa2, fd);
+		init = 1;
 	}
-
-	event_set(&rev, fd, EV_READ|EV_PERSIST, regress_read, NULL);
-	event_add(&rev, NULL);
-
-	agentx_connect(sa2, fd);
-	
 }
 
 void
