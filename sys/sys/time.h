@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.57 2020/10/15 16:31:11 cheloha Exp $	*/
+/*	$OpenBSD: time.h,v 1.58 2021/01/13 16:28:50 cheloha Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -157,7 +157,6 @@ struct	itimerval {
 struct clockinfo {
 	int	hz;		/* clock frequency */
 	int	tick;		/* micro-seconds per hz tick */
-	int	tickadj;	/* clock skew rate for adjtime() */
 	int	stathz;		/* statistics clock frequency */
 	int	profhz;		/* profiling clock frequency */
 };

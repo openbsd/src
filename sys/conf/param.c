@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.c,v 1.45 2019/09/07 01:23:23 cheloha Exp $	*/
+/*	$OpenBSD: param.c,v 1.46 2021/01/13 16:28:50 cheloha Exp $	*/
 /*	$NetBSD: param.c,v 1.16 1996/03/12 03:08:40 mrg Exp $	*/
 
 /*
@@ -75,7 +75,6 @@
 int	hz = HZ;
 int	tick = 1000000 / HZ;
 int	tick_nsec = 1000000000 / HZ;
-int	tickadj = 240000 / (60 * HZ);		/* can adjust 240ms in 60s */
 int	utc_offset = 0;
 #define	NPROCESS (30 + 16 * MAXUSERS)
 #define	NTEXT (80 + NPROCESS / 8)		/* actually the object cache */

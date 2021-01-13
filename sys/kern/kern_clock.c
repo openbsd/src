@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.101 2020/01/21 16:16:23 mpi Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.102 2021/01/13 16:28:49 cheloha Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -119,10 +119,6 @@ initclocks(void)
 	if (profhz == 0)
 		profhz = i;
 	psratio = profhz / i;
-
-	/* For very large HZ, ensure that division by 0 does not occur later */
-	if (tickadj == 0)
-		tickadj = 1;
 
 	inittimecounter();
 }
@@ -421,7 +417,6 @@ sysctl_clockrate(char *where, size_t *sizep, void *newp)
 	 */
 	memset(&clkinfo, 0, sizeof clkinfo);
 	clkinfo.tick = tick;
-	clkinfo.tickadj = tickadj;
 	clkinfo.hz = hz;
 	clkinfo.profhz = profhz;
 	clkinfo.stathz = stathz ? stathz : hz;

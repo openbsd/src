@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips64_machdep.c,v 1.33 2020/07/11 15:18:08 visa Exp $ */
+/*	$OpenBSD: mips64_machdep.c,v 1.34 2021/01/13 16:28:49 cheloha Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
@@ -323,14 +323,13 @@ cp0_calibrate(struct cpu_info *ci)
  * Start the real-time and statistics clocks.
  */
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 	struct cpu_info *ci = curcpu();
 
 	profhz = hz;
 
 	tick = 1000000 / hz;	/* number of micro-seconds between interrupts */
-	tickadj = 240000 / (60 * hz);		/* can adjust 240ms in 60s */
 
 	cp0_calibrate(ci);
 

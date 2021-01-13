@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.254 2020/12/28 18:29:44 mglocker Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.255 2021/01/13 16:28:49 cheloha Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -916,8 +916,8 @@ parse(char *string, int flags)
 		if (!nflag)
 			(void)printf("%s%s", string, equ);
 		(void)printf(
-		    "tick = %d, tickadj = %d, hz = %d, profhz = %d, stathz = %d\n",
-		    clkp->tick, clkp->tickadj, clkp->hz, clkp->profhz, clkp->stathz);
+		    "tick = %d, hz = %d, profhz = %d, stathz = %d\n",
+		    clkp->tick, clkp->hz, clkp->profhz, clkp->stathz);
 		return;
 	}
 	if (special & BOOTTIME) {
