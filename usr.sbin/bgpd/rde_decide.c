@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.79 2021/01/13 11:34:01 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.80 2021/01/14 08:29:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -113,12 +113,12 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 	struct rde_peer		*peer1, *peer2;
 	struct attr		*a;
 	u_int32_t		 p1id, p2id;
-	int			 p1cnt, p2cnt;
+	int			 p1cnt, p2cnt, i;
 
 	if (p1 == NULL)
-		return (-1);
+		return -1;
 	if (p2 == NULL)
-		return (1);
+		return 1;
 
 	asp1 = prefix_aspath(p1);
 	asp2 = prefix_aspath(p2);
@@ -127,15 +127,15 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 
 	/* pathes with errors are not eligible */
 	if (asp1 == NULL || asp1->flags & F_ATTR_PARSE_ERR)
-		return (-1);
+		return -1;
 	if (asp2 == NULL || asp2->flags & F_ATTR_PARSE_ERR)
-		return (1);
+		return 1;
 
 	/* only loop free pathes are eligible */
 	if (asp1->flags & F_ATTR_LOOP)
-		return (-1);
+		return -1;
 	if (asp2->flags & F_ATTR_LOOP)
-		return (1);
+		return 1;
 
 	/*
 	 * 1. check if prefix is eligible a.k.a reachable
@@ -144,14 +144,16 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 	 */
 	if (prefix_nexthop(p2) != NULL &&
 	    prefix_nexthop(p2)->state != NEXTHOP_REACH)
-		return (1);
+		return 1;
 	if (prefix_nexthop(p1) != NULL &&
 	    prefix_nexthop(p1)->state != NEXTHOP_REACH)
-		return (-1);
+		return -1;
 
 	/* 2. local preference of prefix, bigger is better */
-	if ((asp1->lpref - asp2->lpref) != 0)
-		return (asp1->lpref - asp2->lpref);
+	if (asp1->lpref > asp2->lpref)
+		return 1;
+	if (asp1->lpref < asp2->lpref)
+		return -1;
 
 	/* 3. aspath count, the shorter the better */
 	if ((asp2->aspath->ascnt - asp1->aspath->ascnt) != 0)
@@ -161,12 +163,19 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 	if ((asp2->origin - asp1->origin) != 0)
 		return (asp2->origin - asp1->origin);
 
-	/* 5. MED decision, only comparable between the same neighboring AS */
-	if (rde_decisionflags() & BGPD_FLAG_DECISION_MED_ALWAYS ||
-	    aspath_neighbor(asp1->aspath) == aspath_neighbor(asp2->aspath))
+	/*
+	 * 5. MED decision
+	 * Only comparable between the same neighboring AS or if
+	 * 'rde med compare always' is set.
+	 */
+	if ((rde_decisionflags() & BGPD_FLAG_DECISION_MED_ALWAYS) ||
+	    aspath_neighbor(asp1->aspath) == aspath_neighbor(asp2->aspath)) {
 		/* lowest value wins */
-		if ((asp2->med - asp1->med) != 0)
-			return (asp2->med - asp1->med);
+		if (asp1->med < asp2->med)
+			return 1;
+		if (asp1->med > asp2->med)
+			return -1;
+	}
 
 	/*
 	 * 6. EBGP is cooler than IBGP
@@ -187,8 +196,10 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 	 * a metric that weights a prefix at a very late stage in the
 	 * decision process.
 	 */
-	if ((asp1->weight - asp2->weight) != 0)
-		return (asp1->weight - asp2->weight);
+	if (asp1->weight > asp2->weight)
+		return 1;
+	if (asp1->weight < asp2->weight)
+		return -1;
 
 	/* 8. nexthop costs. NOT YET -> IGNORE */
 
@@ -196,9 +207,12 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 	 * 9. older route (more stable) wins but only if route-age
 	 * evaluation is enabled.
 	 */
-	if (rde_decisionflags() & BGPD_FLAG_DECISION_ROUTEAGE)
-		if ((p2->lastchange - p1->lastchange) != 0)
-			return (p2->lastchange - p1->lastchange);
+	if (rde_decisionflags() & BGPD_FLAG_DECISION_ROUTEAGE) {
+		if (p1->lastchange < p2->lastchange) /* p1 is older */
+			return 1;
+		if (p1->lastchange > p2->lastchange)
+			return -1;
+	}
 
 	/* 10. lowest BGP Id wins, use ORIGINATOR_ID if present */
 	if ((a = attr_optget(asp1, ATTR_ORIGINATOR_ID)) != NULL) {
@@ -211,8 +225,10 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 		p2id = ntohl(p2id);
 	} else
 		p2id = peer2->remote_bgpid;
-	if ((p2id - p1id) != 0)
-		return (p2id - p1id);
+	if (p1id < p2id)
+		return 1;
+	if (p1id > p2id)
+		return -1;
 
 	/* 11. compare CLUSTER_LIST length, shorter is better */
 	p1cnt = p2cnt = 0;
@@ -224,10 +240,26 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 		return (p2cnt - p1cnt);
 
 	/* 12. lowest peer address wins (IPv4 is better than IPv6) */
-	if (memcmp(&peer1->remote_addr, &peer2->remote_addr,
-	    sizeof(peer1->remote_addr)) != 0)
-		return (-memcmp(&peer1->remote_addr, &peer2->remote_addr,
-		    sizeof(peer1->remote_addr)));
+	if (peer1->remote_addr.aid < peer2->remote_addr.aid)
+		return 1;
+	if (peer1->remote_addr.aid > peer2->remote_addr.aid)
+		return -1;
+	switch (peer1->remote_addr.aid) {
+	case AID_INET:
+		i = memcmp(&peer1->remote_addr.v4, &peer2->remote_addr.v4,
+		    sizeof(struct in_addr));
+		break;
+	case AID_INET6:
+		i = memcmp(&peer1->remote_addr.v6, &peer2->remote_addr.v6,
+		    sizeof(struct in6_addr));
+		break;
+	default:
+		fatalx("%s: unknown af", __func__);
+	}
+	if (i < 0)
+		return 1;
+	if (i > 0)
+		return -1;
 
 	fatalx("Uh, oh a politician in the decision process");
 }
