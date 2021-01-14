@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1097 2021/01/04 12:48:27 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1098 2021/01/14 09:44:33 tb Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3081,7 +3081,10 @@ pf_match_tag(struct mbuf *m, struct pf_rule *r, int *tag)
 int
 pf_match_rcvif(struct mbuf *m, struct pf_rule *r)
 {
-	struct ifnet *ifp, *ifp0;
+	struct ifnet *ifp;
+#if NCARP > 0
+	struct ifnet *ifp0;
+#endif
 	struct pfi_kif *kif;
 
 	ifp = if_get(m->m_pkthdr.ph_ifidx);
@@ -6841,7 +6844,9 @@ pf_counters_inc(int action, struct pf_pdesc *pd, struct pf_state *s,
 int
 pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 {
+#if NCARP > 0
 	struct ifnet		*ifp0;
+#endif
 	struct pfi_kif		*kif;
 	u_short			 action, reason = 0;
 	struct pf_rule		*a = NULL, *r = &pf_default_rule;
