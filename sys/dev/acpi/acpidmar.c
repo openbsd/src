@@ -1438,10 +1438,11 @@ domain_create(struct iommu_softc *iommu, int did)
 
 	/* Setup IOMMU address map */
 	gaw = min(iommu->agaw, iommu->mgaw);
-	dom->iovamap = extent_create(dom->exname, 1024*1024*16,
-	    (1LL << gaw)-1,
-	    M_DEVBUF, NULL, 0,
-	    EX_WAITOK|EX_NOCOALESCE);
+	dom->iovamap = extent_create(dom->exname, 0, (1LL << gaw)-1,
+	    M_DEVBUF, NULL, 0, EX_WAITOK | EX_NOCOALESCE);
+
+	/* Reserve the first 16M */
+	extent_alloc_region(dom->iovamap, 0, 16*1024*1024, EX_WAITOK);
 
 	/* Zero out MSI Interrupt region */
 	extent_alloc_region(dom->iovamap, MSI_BASE_ADDRESS, MSI_BASE_SIZE,
@@ -1897,7 +1898,8 @@ acpidmar_init(struct acpidmar_softc *sc, struct acpi_dmar *dmar)
 				    dom_bdf(dom), rmrr->start, rmrr->end);
 				domain_map_pthru(dom, rmrr->start, rmrr->end);
 				rc = extent_alloc_region(dom->iovamap,
-				    rmrr->start, rmrr->end, EX_WAITOK);
+				    rmrr->start, rmrr->end,
+				    EX_WAITOK | EX_CONFLICTOK);
 			}
 		}
 	}
