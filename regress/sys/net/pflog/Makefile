@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2021/01/13 00:26:17 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.4 2021/01/14 13:41:28 bluhm Exp $
 
 # Copyright (c) 2021 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -25,7 +25,7 @@ N2 =		12
 N3 =		13
 N =		${N1}
 NUMS =		${N1} ${N2} ${N3}
-IPS =		1 2 3 4 5 6
+IPS =		1 2 3 4 5 6 11 12
 
 UID !!=		id -u
 
@@ -76,17 +76,18 @@ ifconfig: unconfig
 	${SUDO} ifconfig lo$N rdomain $N
 	${SUDO} ifconfig lo$N inet 127.0.0.1/8
 	${SUDO} ifconfig lo$N inet6 ::1/128
-.for i in ${IPS:N1}
+	${SUDO} ifconfig lo$N inet6 fc00::1/128
+.for i in ${IPS:N1} 21 22
 	${SUDO} ifconfig lo$N inet 127.0.0.$i/32 alias
-	${SUDO} ifconfig lo$N inet6 fe80::$i/128
+	${SUDO} ifconfig lo$N inet6 fc00::$i/128
 .endfor
 
 REGRESS_CLEANUP +=	unconfig
 unconfig: stamp-stop
 	# Destroy interfaces.
-.for i in ${IPS}
+.for i in ${IPS} 21 22
 	-${SUDO} ifconfig lo$N inet 127.0.0.$i delete
-	-${SUDO} ifconfig lo$N inet6 fe80::$i%lo$N delete
+	-${SUDO} ifconfig lo$N inet6 fc00::$i delete
 .endfor
 	-${SUDO} ifconfig lo$N inet6 ::1 delete
 .for n in ${NUMS}
@@ -142,15 +143,17 @@ run-ping-$i: stamp-bpf
 
 REGRESS_TARGETS +=	run-ping6-$i
 run-ping6-$i: stamp-bpf
-	ping6 -n -w 1 -c 1 -V $N fe80::$i%lo$N
+	ping6 -n -w 1 -c 1 -V $N fc00::$i
 
 REGRESS_TARGETS +=	run-udp-$i
 run-udp-$i: stamp-bpf
-	echo foo | nc -u -w 1 -V $N 127.0.0.$i discard
+	# ignore errors, just send packet fast
+	echo foo | nc -u -w 1 -V $N 127.0.0.$i discard &
 
 REGRESS_TARGETS +=	run-udp6-$i
 run-udp6-$i: stamp-bpf
-	echo foo | nc -u -w 1 -V $N fe80::$i%lo$N discard
+	# ignore errors, just send packet fast
+	echo foo | nc -u -w 1 -V $N fc00::$i discard &
 .endfor
 
 REGRESS_TARGETS +=	run-ping6-0
@@ -184,7 +187,7 @@ REGRESS_TARGETS +=	run-bpf-everything6
 run-bpf-everything6: stamp-stop
 	# rule with pflog${N2} matches on every packet
 .for i in ${IPS}
-	grep 'regress\.1/.* > fe80::$i:' pflog${N2}.tcpdump
+	grep 'regress\.1/.* > fc00::$i:' pflog${N2}.tcpdump
 .endfor
 
 REGRESS_TARGETS +=	run-bpf-all
@@ -203,15 +206,15 @@ run-bpf-all: stamp-stop
 REGRESS_TARGETS +=	run-bpf-all6
 run-bpf-all6: stamp-stop
 	# reply without keep state
-	grep 'regress\.11/.* > fe80::1: icmp6: echo request' pflog${N1}.tcpdump
-	grep 'regress\.11/.* fe80::1 .*: icmp6: echo reply' pflog${N1}.tcpdump
+	grep 'regress\.11/.* > fc00::1: icmp6: echo request' pflog${N1}.tcpdump
+	grep 'regress\.11/.* fc00::1 .*: icmp6: echo reply' pflog${N1}.tcpdump
 	# no reply with keep state and without all
-	grep 'regress\.12/.* > fe80::2: icmp6: echo request' pflog${N1}.tcpdump
-	! grep 'regress\.12/.* fe80::2 .*: icmp6: echo reply' pflog${N1}.tcpdump
+	grep 'regress\.12/.* > fc00::2: icmp6: echo request' pflog${N1}.tcpdump
+	! grep 'regress\.12/.* fc00::2 .*: icmp6: echo reply' pflog${N1}.tcpdump
 	# reply with keep state and with all
-	grep 'regress\.13/.* > fe80::3: icmp6: echo request' pflog${N1}.tcpdump
+	grep 'regress\.13/.* > fc00::3: icmp6: echo request' pflog${N1}.tcpdump
 	# XXX anchor name missing
-	grep '/.* fe80::3 .*: icmp6: echo reply' pflog${N1}.tcpdump
+	grep '/.* fc00::3 .*: icmp6: echo reply' pflog${N1}.tcpdump
 
 REGRESS_TARGETS +=	run-bpf-user
 run-bpf-user: stamp-stop
@@ -232,16 +235,16 @@ REGRESS_TARGETS +=	run-bpf-user6
 run-bpf-user6: stamp-stop
 	# out rule creates log entry with uid
 	grep 'regress\.14/.* pass out on lo$N: \[uid ${UID}, pid [0-9]*\]\
-	    ::1.* > ::1.9:.* udp' pflog${N1}.tcpdump
+	    fc00.* > fc00::4.9:.* udp' pflog${N1}.tcpdump
 	# in rule has no uid at log entry
 	grep 'regress\.14/.* pass in on lo$N:\
-	    ::1.* > ::1.9:.* udp' pflog${N1}.tcpdump
+	    fc00.* > fc00::4.9:.* udp' pflog${N1}.tcpdump
 	# icmp has no uid at log entry
 	grep 'regress\.14/.* pass out on lo$N:\
-	    ::1.* > ::1: icmp6: echo request' pflog${N1}.tcpdump
+	    fc00.* > fc00::4: icmp6: echo request' pflog${N1}.tcpdump
 	# rule without user has no uid in log entry
 	grep 'regress\.11/.* pass out on lo$N:\
-	    fe80.* > fe80::1.9:.* udp' pflog${N1}.tcpdump
+	    fc00.* > fc00::1.9:.* udp' pflog${N1}.tcpdump
 
 run-bpf-matches run-bpf-matches6:
 	# XXX The log matches keyword seems to be totally broken.
@@ -253,6 +256,42 @@ run-bpf-matches: stamp-stop
 	grep 'regress\.9/.* > 127.0.0.6: icmp: echo request' pflog${N1}.tcpdump
 	! grep 'regress\.8/.* icmp: echo request' pflog${N1}.tcpdump
 	! grep 'regress\.7/.* icmp: echo request' pflog${N1}.tcpdump
+
+REGRESS_TARGETS +=	run-bpf-rdr
+run-bpf-rdr: stamp-stop
+	# loopback input logs redirected packet
+	grep 'regress\.2/.* pass in .* > 127.0.0.21:\
+	    icmp: echo request' pflog${N1}.tcpdump
+	# loopback output redirects and logs original packet
+	grep 'regress\.18/.* pass out .* > 127.0.0.11:\
+	    icmp: echo request' pflog${N1}.tcpdump
+
+REGRESS_TARGETS +=	run-bpf-nat
+run-bpf-nat: stamp-stop
+	# loopback input logs redirected packet
+	grep 'regress\.2/.* pass in .* 127.0.0.22 > 127.0.0.12:\
+	    icmp: echo request' pflog${N1}.tcpdump
+	# loopback output redirects and logs original packet
+	grep 'regress\.19/.* pass out .* 127.0.0.12 > 127.0.0.12:\
+	    icmp: echo request' pflog${N1}.tcpdump
+
+REGRESS_TARGETS +=	run-bpf-rdr6
+run-bpf-rdr6: stamp-stop
+	# loopback input logs redirected packet
+	grep 'regress\.10/.* pass in .* > fc00::21:\
+	    icmp6: echo request' pflog${N1}.tcpdump
+	# loopback output redirects and logs original packet
+	grep 'regress\.20/.* pass out .* > fc00::11:\
+	    icmp6: echo request' pflog${N1}.tcpdump
+
+REGRESS_TARGETS +=	run-bpf-nat6
+run-bpf-nat6: stamp-stop
+	# loopback input logs redirected packet
+	grep 'regress\.10/.* pass in .* fc00::22 > fc00::12:\
+	    icmp6: echo request' pflog${N1}.tcpdump
+	# loopback output redirects and logs original packet
+	grep 'regress\.21/.* pass out .* fc00::12 > fc00::12:\
+	    icmp6: echo request' pflog${N1}.tcpdump
 
 CLEANFILES +=	addr.py *.pyc *.tcpdump *.log stamp-*
 
