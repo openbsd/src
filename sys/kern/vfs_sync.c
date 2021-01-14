@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.64 2020/06/24 22:03:41 cheloha Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.65 2021/01/14 03:32:01 cheloha Exp $  */
 
 /*
  *  Portions of this code are:
@@ -48,6 +48,7 @@
 #include <sys/vnode.h>
 #include <sys/lock.h>
 #include <sys/malloc.h>
+#include <sys/time.h>
 
 #include <sys/kernel.h>
 #include <sys/sched.h>
@@ -73,6 +74,7 @@ LIST_HEAD(synclist, vnode);
 static struct synclist *syncer_workitem_pending;
 
 struct proc *syncerproc;
+int syncer_chan;
 
 /*
  * The workitem queue.
@@ -130,19 +132,32 @@ vn_syncer_add_to_worklist(struct vnode *vp, int delay)
 }
 
 /*
+ * TODO Move getnsecuptime() to kern_tc.c and document it when we have
+ * more users in the kernel.
+ */
+static uint64_t
+getnsecuptime(void)
+{
+	struct timespec now;
+
+	getnanouptime(&now);
+	return TIMESPEC_TO_NSEC(&now);
+}
+
+/*
  * System filesystem synchronizer daemon.
  */
 void
 syncer_thread(void *arg)
 {
+	uint64_t elapsed, start;
 	struct proc *p = curproc;
 	struct synclist *slp;
 	struct vnode *vp;
-	time_t starttime;
 	int s;
 
 	for (;;) {
-		starttime = gettime();
+		start = getnsecuptime();
 
 		/*
 		 * Push files whose dirty time has expired.
@@ -220,6 +235,7 @@ syncer_thread(void *arg)
 			rushjob -= 1;
 			continue;
 		}
+
 		/*
 		 * If it has taken us less than a second to process the
 		 * current work, then wait. Otherwise start right over
@@ -228,8 +244,11 @@ syncer_thread(void *arg)
 		 * matter as we are just trying to generally pace the
 		 * filesystem activity.
 		 */
-		if (gettime() == starttime)
-			tsleep_nsec(&lbolt, PPAUSE, "syncer", INFSLP);
+		elapsed = getnsecuptime() - start;
+		if (elapsed < SEC_TO_NSEC(1)) {
+			tsleep_nsec(&syncer_chan, PPAUSE, "syncer",
+			    SEC_TO_NSEC(1) - elapsed);
+		}
 	}
 }
 
@@ -242,7 +261,7 @@ int
 speedup_syncer(void)
 {
 	if (syncerproc)
-		wakeup_proc(syncerproc, &lbolt);
+		wakeup_proc(syncerproc, &syncer_chan);
 	if (rushjob < syncdelay / 2) {
 		rushjob += 1;
 		stat_rush_requests += 1;
