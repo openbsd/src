@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.23 2021/01/15 20:43:02 patrick Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.24 2021/01/15 20:49:38 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -650,6 +650,7 @@ acpipci_iort_map_msi(pci_chipset_tag_t pc, pcitag_t tag)
 	struct acpi_table_header *hdr;
 	struct acpi_iort *iort = NULL;
 	struct acpi_iort_node *node;
+	struct acpi_iort_rc_node *rc;
 	struct acpi_q *entry;
 	uint32_t rid, offset;
 	int i;
@@ -674,7 +675,8 @@ acpipci_iort_map_msi(pci_chipset_tag_t pc, pcitag_t tag)
 		node = (struct acpi_iort_node *)((char *)iort + offset);
 		switch (node->type) {
 		case ACPI_IORT_ROOT_COMPLEX:
-			if (node->segment == sc->sc_seg)
+			rc = (struct acpi_iort_rc_node *)&node[1];
+			if (rc->segment == sc->sc_seg)
 				return acpipci_iort_map_node(iort, node, rid);
 			break;
 		}
