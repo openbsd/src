@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapctl.c,v 1.14 2020/03/05 07:39:25 martijn Exp $	*/
+/*	$OpenBSD: ldapctl.c,v 1.15 2021/01/15 18:57:04 rob Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -243,7 +243,7 @@ int
 main(int argc, char *argv[])
 {
 	int			 ctl_sock;
-	int			 done = 0, verbose = 0;
+	int			 done = 0, verbose = 0, vlog = 0;
 	ssize_t			 n;
 	int			 ch;
 	enum action		 action = NONE;
@@ -342,11 +342,11 @@ main(int argc, char *argv[])
 		imsg_compose(&ibuf, IMSG_CTL_STATS, 0, 0, -1, NULL, 0);
 		break;
 	case LOG_VERBOSE:
-		verbose = 1;
+		vlog = 1;
 		/* FALLTHROUGH */
 	case LOG_BRIEF:
 		imsg_compose(&ibuf, IMSG_CTL_LOG_VERBOSE, 0, 0, -1,
-		    &verbose, sizeof(verbose));
+		    &vlog, sizeof(vlog));
 		printf("logging request sent.\n");
 		done = 1;
 		break;
