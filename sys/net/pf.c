@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1098 2021/01/14 09:44:33 tb Exp $ */
+/*	$OpenBSD: pf.c,v 1.1099 2021/01/15 22:27:49 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1122,12 +1122,6 @@ pf_find_state(struct pf_pdesc *pd, struct pf_state_key_cmp *key,
 	}
 
 	*state = s;
-	if (pd->dir == PF_OUT && s->rt_kif != NULL && s->rt_kif != pd->kif &&
-	    ((s->rule.ptr->rt == PF_ROUTETO &&
-	    s->rule.ptr->direction == PF_OUT) ||
-	    (s->rule.ptr->rt == PF_REPLYTO &&
-	    s->rule.ptr->direction == PF_IN)))
-		return (PF_PASS);
 
 	return (PF_MATCH);
 }
