@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2021/01/13 17:00:20 martijn Exp $
+# $OpenBSD: Makefile,v 1.4 2021/01/15 14:36:16 bluhm Exp $
 
 .if ! exists(/usr/local/sbin/snmpd)
 regress:
@@ -17,7 +17,7 @@ REGRESS_TARGETS=	run-regress-walk
 REGRESS_CLEANUP=	stop
 CLEANFILES=
 
-SNMPD_CMD=		/usr/local/sbin/snmpd -r -c ${.OBJDIR}/snmpd.conf
+SNMPD_CMD=		/usr/local/sbin/snmpd -r -c snmpd.conf -Le
 
 CLEANFILES+=	snmpd.conf
 snmpd.conf:
@@ -26,20 +26,18 @@ snmpd.conf:
 	@printf "master agentx\n" >> snmpd.conf
 	@printf "agentXSocket ${.OBJDIR}/agentx.sock\n" >> snmpd.conf
 
-CLEANFILES+=	${.OBJDIR}/agentx.sock
-start: snmpd.conf
+CLEANFILES+=	agentx.sock
+start: stop snmpd.conf agentx
 	${SNMPD_CMD}
-	${.OBJDIR}/agentx ${.OBJDIR}/agentx.sock
+	./agentx agentx.sock
 
 stop:
-	pkill -xf "${SNMPD_CMD}"
+	-pkill -xf "${SNMPD_CMD}"
 
 CLEANFILES+=	walk.run.out walk.run.err
-run-regress-walk: agentx
+run-regress-walk:
 	snmp walk 127.0.0.1:6161 openbsd > walk.run.out 2> walk.run.err || true
-	@cmp -s ${.CURDIR}/walk.err walk.run.err || \
-		(printf "XXX ${*} error failed\n" && false)
-	@cmp -s ${.CURDIR}/walk.out walk.run.out || \
-		(printf "XXX ${*} output failed\n" && false)
+	diff -up ${.CURDIR}/walk.err walk.run.err
+	diff -up ${.CURDIR}/walk.out walk.run.out
 
 .include <bsd.regress.mk>
