@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.21 2021/01/13 23:56:48 jmatthew Exp $ */
+/*	$OpenBSD: vmt.c,v 1.22 2021/01/15 06:14:41 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -41,8 +41,12 @@
 #include <sys/sensors.h>
 
 #include <net/if.h>
+#include <net/if_dl.h>
 #include <net/if_var.h>
+#include <net/if_types.h>
+#include <net/rtable.h>
 #include <netinet/in.h>
+#include <netinet/if_ether.h>
 
 #include <dev/pv/pvvar.h>
 
@@ -120,6 +124,7 @@
 #define VM_GUEST_INFO_UPTIME		7
 #define VM_GUEST_INFO_MEMORY		8
 #define VM_GUEST_INFO_IP_ADDRESS_V2	9
+#define VM_GUEST_INFO_IP_ADDRESS_V3	10
 
 /* RPC responses */
 #define VM_RPC_REPLY_OK			"OK "
@@ -133,6 +138,69 @@
 #define VM_BACKUP_REMOTE_ABORT		4
 
 #define VM_BACKUP_TIMEOUT		30 /* seconds */
+
+/* NIC/IP address stuff */
+#define VM_NICINFO_VERSION		3
+
+#define VM_NICINFO_IP_LEN		64
+#define VM_NICINFO_MAX_NICS		16
+#define VM_NICINFO_MAX_ADDRS		2048
+#define VM_NICINFO_MAC_LEN		20
+
+#define VM_NICINFO_ADDR_IPV4		1
+#define VM_NICINFO_ADDR_IPV6		2
+
+struct vm_nicinfo_addr_v4 {
+	uint32_t	v4_addr_type;
+	uint32_t	v4_addr_len;
+	struct in_addr	v4_addr;
+	uint32_t	v4_prefix_len;
+	uint32_t	v4_origin;
+	uint32_t	v4_status;
+};
+
+struct vm_nicinfo_addr_v6 {
+	uint32_t	v6_addr_type;
+	uint32_t	v6_addr_len;
+	struct in6_addr v6_addr;
+	uint32_t	v6_prefix_len;
+	uint32_t	v6_origin;
+	uint32_t	v6_status;
+};
+
+struct vm_nicinfo_nic {
+	uint32_t	ni_mac_len;
+	char		ni_mac[VM_NICINFO_MAC_LEN];
+	uint32_t	ni_num_addrs;
+};
+
+struct vm_nicinfo_nic_nomac {
+	uint32_t	nn_mac_len;
+	uint32_t	nn_num_addrs;
+};
+
+struct vm_nicinfo_nic_post {
+	uint32_t	np_dns_config;
+	uint32_t	np_wins_config;
+	uint32_t	np_dhcpv4_config;
+	uint32_t	np_dhcpv6_config;
+};
+
+struct vm_nicinfo_nic_list {
+	uint32_t	nl_version;
+	uint32_t	nl_nic_list;
+	uint32_t	nl_num_nics;
+};
+
+struct vm_nicinfo_nic_list_post {
+	uint32_t	nl_num_routes;
+	uint32_t	nl_dns_config;
+	uint32_t	nl_wins_config;
+	uint32_t	nl_dhcpv4_config;
+	uint32_t	nl_dhcpv6_config;
+};
+
+#define VM_NICINFO_CMD			"SetGuestInfo  10 "
 
 /* A register. */
 union vm_reg {
@@ -178,6 +246,7 @@ struct vmt_softc {
 	int			sc_set_guest_os;
 	int			sc_quiesce;
 	struct task		sc_quiesce_task;
+	struct task		sc_nicinfo_task;
 #define VMT_RPC_BUFLEN		4096
 
 	struct timeout		sc_tick;
@@ -186,6 +255,8 @@ struct vmt_softc {
 	struct ksensor		sc_sensor;
 
 	char			sc_hostname[MAXHOSTNAMELEN];
+	size_t			sc_nic_info_size;
+	char			*sc_nic_info;
 };
 
 #ifdef VMT_DEBUG
@@ -250,6 +321,11 @@ void	 vmt_quiesce_done_task(void *);
 void	 vmt_tclo_abortbackup(struct vmt_softc *);
 void	 vmt_tclo_startbackup(struct vmt_softc *);
 void	 vmt_tclo_backupdone(struct vmt_softc *);
+
+size_t	 vmt_xdr_ifaddr(struct ifaddr *, char *);
+size_t	 vmt_xdr_nic_entry(struct ifnet *, char *);
+size_t	 vmt_xdr_nic_info(char *);
+void	 vmt_nicinfo_task(void *);
 
 int	 vmt_probe(void);
 
@@ -399,6 +475,8 @@ vmt_attach(struct device *parent, struct device *self, void *aux)
 	timeout_add_sec(&sc->sc_tclo_tick, 1);
 	sc->sc_tclo_ping = 1;
 
+	task_set(&sc->sc_nicinfo_task, vmt_nicinfo_task, sc);
+
 	/* pvbus(4) key/value interface */
 	hv->hv_kvop = vmt_kvop;
 	hv->hv_arg = sc;
@@ -518,6 +596,11 @@ vmt_update_guest_uptime(struct vmt_softc *sc)
 void
 vmt_clear_guest_info(struct vmt_softc *sc)
 {
+	if (sc->sc_nic_info_size != 0) {
+		free(sc->sc_nic_info, M_DEVBUF, sc->sc_nic_info_size);
+		sc->sc_nic_info = NULL;
+		sc->sc_nic_info_size = 0;
+	}
 	sc->sc_hostname[0] = '\0';
 	sc->sc_set_guest_os = 0;
 }
@@ -534,12 +617,6 @@ vmt_update_guest_info(struct vmt_softc *sc)
 			sc->sc_rpc_error = 1;
 		}
 	}
-
-	/*
-	 * We're supposed to pass the full network address information back
-	 * here, but that involves xdr (sunrpc) data encoding, which seems a
-	 * bit unreasonable.
-	 */
 
 	if (sc->sc_set_guest_os == 0) {
 		if (vm_rpc_send_rpci_tx(sc, "SetGuestInfo  %d %s %s %s",
@@ -563,6 +640,8 @@ vmt_update_guest_info(struct vmt_softc *sc)
 
 		sc->sc_set_guest_os = 1;
 	}
+
+	task_add(systq, &sc->sc_nicinfo_task);
 }
 
 void
@@ -675,8 +754,6 @@ vmt_tclo_reset(struct vmt_softc *sc)
 void
 vmt_tclo_ping(struct vmt_softc *sc)
 {
-	vmt_update_guest_info(sc);
-
 	if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
 		DPRINTF("%s: error sending ping response\n", DEVNAME(sc));
 		sc->sc_rpc_error = 1;
@@ -1070,6 +1147,220 @@ vmt_tclo_tick(void *xarg)
 
 out:
 	timeout_add_sec(&sc->sc_tclo_tick, delay);
+}
+
+size_t
+vmt_xdr_ifaddr(struct ifaddr *ifa, char *data)
+{
+	struct sockaddr_in *sin;
+	struct vm_nicinfo_addr_v4 v4;
+#ifdef INET6
+	struct sockaddr_in6 *sin6;
+	struct vm_nicinfo_addr_v6 v6;
+#endif
+
+	/* skip loopback addresses and anything that isn't ipv4/v6 */
+	switch (ifa->ifa_addr->sa_family) {
+	case AF_INET:
+		sin = satosin(ifa->ifa_addr);
+		if ((ntohl(sin->sin_addr.s_addr) >>
+		    IN_CLASSA_NSHIFT) != IN_LOOPBACKNET) {
+			if (data != NULL) {
+				memset(&v4, 0, sizeof(v4));
+				htobem32(&v4.v4_addr_type,
+				    VM_NICINFO_ADDR_IPV4);
+				htobem32(&v4.v4_addr_len,
+				    sizeof(struct in_addr));
+				memcpy(&v4.v4_addr, &sin->sin_addr.s_addr,
+				    sizeof(struct in_addr));
+				htobem32(&v4.v4_prefix_len,
+				    rtable_satoplen(AF_INET, ifa->ifa_netmask));
+				memcpy(data, &v4, sizeof(v4));
+			}
+			return (sizeof (v4));
+		}
+		break;
+
+#ifdef INET6
+	case AF_INET6:
+		sin6 = satosin6(ifa->ifa_addr);
+		if (!IN6_IS_ADDR_LOOPBACK(&sin6->sin6_addr) &&
+		    !IN6_IS_SCOPE_EMBED(&sin6->sin6_addr)) {
+			if (data != NULL) {
+				memset(&v6, 0, sizeof(v6));
+				htobem32(&v6.v6_addr_type,
+				    VM_NICINFO_ADDR_IPV6);
+				htobem32(&v6.v6_addr_len,
+				    sizeof(sin6->sin6_addr));
+				memcpy(&v6.v6_addr, &sin6->sin6_addr,
+				    sizeof(sin6->sin6_addr));
+				htobem32(&v6.v6_prefix_len,
+				    rtable_satoplen(AF_INET6,
+				        ifa->ifa_netmask));
+				memcpy(data, &v6, sizeof(v6));
+			}
+			return (sizeof (v6));
+		}
+		break;
+#endif
+
+	default:
+		break;
+	}
+
+	return (0);
+}
+
+size_t
+vmt_xdr_nic_entry(struct ifnet *iface, char *data)
+{
+	struct ifaddr *iface_addr;
+	struct sockaddr_dl *sdl;
+	struct vm_nicinfo_nic nic;
+	struct vm_nicinfo_nic_nomac nnic;
+	char *nicdata;
+	const char *mac;
+	size_t addrsize, total;
+	int addrs;
+
+	total = 0;
+	addrs = 0;
+
+	/* work out if we have a mac address */
+	sdl = iface->if_sadl;
+	if (sdl != NULL && sdl->sdl_alen &&
+	    (sdl->sdl_type == IFT_ETHER || sdl->sdl_type == IFT_CARP))
+		mac = ether_sprintf(sdl->sdl_data + sdl->sdl_nlen);
+	else
+		mac = NULL;
+
+	if (data != NULL) {
+		nicdata = data;
+		if (mac != NULL)
+			data += sizeof(nic);
+		else
+			data += sizeof(nnic);
+	}
+
+	TAILQ_FOREACH(iface_addr, &iface->if_addrlist, ifa_list) {
+		addrsize = vmt_xdr_ifaddr(iface_addr, data);
+		if (addrsize == 0)
+			continue;
+
+		if (data != NULL)
+			data += addrsize;
+		total += addrsize;
+		addrs++;
+		if (addrs == VM_NICINFO_MAX_ADDRS)
+			break;
+	}
+
+	if (addrs == 0)
+		return (0);
+
+	if (data != NULL) {
+		/* fill in mac address, if any */
+		if (mac != NULL) {
+			memset(&nic, 0, sizeof(nic));
+			htobem32(&nic.ni_mac_len, strlen(mac));
+			strncpy(nic.ni_mac, mac, VM_NICINFO_MAC_LEN);
+			htobem32(&nic.ni_num_addrs, addrs);
+			memcpy(nicdata, &nic, sizeof(nic));
+		} else {
+			nnic.nn_mac_len = 0;
+			htobem32(&nnic.nn_num_addrs, addrs);
+			memcpy(nicdata, &nnic, sizeof(nnic));
+		}
+
+		/* we don't actually set anything in vm_nicinfo_nic_post */
+	}
+
+	if (mac != NULL)
+		total += sizeof(nic);
+	else
+		total += sizeof(nnic);
+	total += sizeof(struct vm_nicinfo_nic_post);
+	return (total);
+}
+
+size_t
+vmt_xdr_nic_info(char *data)
+{
+	struct ifnet *iface;
+	struct vm_nicinfo_nic_list nl;
+	size_t total, nictotal;
+	char *listdata;
+	int nics;
+
+	NET_ASSERT_LOCKED();
+
+	total = sizeof(nl);
+	if (data != NULL) {
+		listdata = data;
+		data += sizeof(nl);
+	}
+
+	nics = 0;
+	TAILQ_FOREACH(iface, &ifnet, if_list) {
+		nictotal = vmt_xdr_nic_entry(iface, data);
+		if (nictotal == 0)
+			continue;
+		
+		if (data != NULL)
+			data += nictotal;
+
+		total += nictotal;
+		nics++;
+		if (nics == VM_NICINFO_MAX_NICS)
+			break;
+	}
+
+	if (listdata != NULL) {
+		memset(&nl, 0, sizeof(nl));
+		htobem32(&nl.nl_version, VM_NICINFO_VERSION);
+		htobem32(&nl.nl_nic_list, 1);
+		htobem32(&nl.nl_num_nics, nics);
+		memcpy(listdata, &nl, sizeof(nl));
+	}
+
+	/* we don't actually set anything in vm_nicinfo_nic_list_post */
+	total += sizeof(struct vm_nicinfo_nic_list_post);
+
+	return (total);
+}
+
+void
+vmt_nicinfo_task(void *data)
+{
+	struct vmt_softc *sc = data;
+	size_t nic_info_size;
+	char *nic_info;
+
+	NET_LOCK();
+
+	nic_info_size = vmt_xdr_nic_info(NULL) + sizeof(VM_NICINFO_CMD) - 1;
+	nic_info = malloc(nic_info_size, M_DEVBUF, M_WAITOK | M_ZERO);
+
+	strncpy(nic_info, VM_NICINFO_CMD, nic_info_size);
+	vmt_xdr_nic_info(nic_info + sizeof(VM_NICINFO_CMD) - 1);
+
+	NET_UNLOCK();
+
+	if (nic_info_size != sc->sc_nic_info_size ||
+	    (memcmp(nic_info, sc->sc_nic_info, nic_info_size) != 0)) {
+		if (vm_rpc_send_rpci_tx_buf(sc, nic_info,
+		    nic_info_size) != 0) {
+			DPRINTF("%s: unable to send nic info",
+			    DEVNAME(sc));
+			sc->sc_rpc_error = 1;
+		}
+
+		free(sc->sc_nic_info, M_DEVBUF, sc->sc_nic_info_size);
+		sc->sc_nic_info = nic_info;
+		sc->sc_nic_info_size = nic_info_size;
+	} else {
+		free(nic_info, M_DEVBUF, nic_info_size);
+	}
 }
 
 #define BACKDOOR_OP_I386(op, frame)		\
