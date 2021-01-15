@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.46 2020/09/15 13:43:40 jordan Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.47 2021/01/15 20:43:02 patrick Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -686,6 +686,39 @@ struct acpi_ivrs {
 	uint8_t			reserved[8];
 } __packed;
 
+struct acpi_iort {
+	struct acpi_table_header	hdr;
+#define IORT_SIG	"IORT"
+	uint32_t	number_of_nodes;
+	uint32_t	offset;
+	uint32_t	reserved;
+} __packed;
+
+struct acpi_iort_node {
+	uint8_t		type;
+#define ACPI_IORT_ITS		0
+#define ACPI_IORT_ROOT_COMPLEX	2
+#define ACPI_IORT_SMMU		3
+	uint16_t	length;
+	uint8_t		revision;
+	uint32_t	reserved1;
+	uint32_t	number_of_mappings;
+	uint32_t	mapping_offset;
+	uint64_t	memory_access_properties;
+	uint32_t	atf_attributes;
+	uint32_t	segment;
+	uint8_t		memory_address_size_limit;
+	uint8_t		reserved2[3];
+} __packed;
+
+struct acpi_iort_mapping {
+	uint32_t	input_base;
+	uint32_t	number_of_ids;
+	uint32_t	output_base;
+	uint32_t	output_reference;
+	uint32_t	flags;
+#define ACPI_IORT_MAPPING_SINGLE	0x00000001
+} __packed;
 
 #define ACPI_FREQUENCY	3579545		/* Per ACPI spec */
 

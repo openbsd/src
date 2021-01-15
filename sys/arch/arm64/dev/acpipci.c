@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.22 2020/12/06 21:20:41 kettenis Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.23 2021/01/15 20:43:02 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -597,40 +597,6 @@ pci_lookup_segment(int segment)
 /*
  * IORT support.
  */
-
-struct acpi_iort {
-	struct acpi_table_header	hdr;
-#define IORT_SIG	"IORT"
-	uint32_t	number_of_nodes;
-	uint32_t	offset;
-	uint32_t	reserved;
-} __packed;
-
-struct acpi_iort_node {
-	uint8_t		type;
-#define ACPI_IORT_ITS		0
-#define ACPI_IORT_ROOT_COMPLEX	2
-#define ACPI_IORT_SMMU		3
-	uint16_t	length;
-	uint8_t		revision;
-	uint32_t	reserved1;
-	uint32_t	number_of_mappings;
-	uint32_t	mapping_offset;
-	uint64_t	memory_access_properties;
-	uint32_t	atf_attributes;
-	uint32_t	segment;
-	uint8_t		memory_address_size_limit;
-	uint8_t		reserved2[3];
-} __packed;
-
-struct acpi_iort_mapping {
-	uint32_t	input_base;
-	uint32_t	number_of_ids;
-	uint32_t	output_base;
-	uint32_t	output_reference;
-	uint32_t	flags;
-#define ACPI_IORT_MAPPING_SINGLE	0x00000001
-} __packed;
 
 uint32_t acpipci_iort_map(struct acpi_iort *, uint32_t, uint32_t);
 
