@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.111 2021/01/02 02:39:59 cheloha Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.112 2021/01/16 18:32:47 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -477,6 +477,7 @@ struct uvm_faultctx {
 	 * read-only after that.
 	 */
 	vm_prot_t enter_prot;
+	vm_prot_t access_type;
 	vaddr_t startva;
 	int npages;
 	int centeridx;
@@ -486,7 +487,7 @@ struct uvm_faultctx {
 };
 
 int	uvm_fault_lower(struct uvm_faultinfo *, struct uvm_faultctx *,
-	    struct vm_page **, vm_fault_t, vm_prot_t);
+	    struct vm_page **, vm_fault_t);
 
 /*
  * uvm_fault_check: check prot, handle needs-copy, etc.
@@ -505,7 +506,7 @@ int	uvm_fault_lower(struct uvm_faultinfo *, struct uvm_faultctx *,
  */
 int
 uvm_fault_check(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-    struct vm_anon ***ranons, vm_prot_t access_type)
+    struct vm_anon ***ranons)
 {
 	struct vm_amap *amap;
 	struct uvm_object *uobj;
@@ -523,7 +524,7 @@ uvm_fault_check(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 #endif
 
 	/* check protection */
-	if ((ufi->entry->protection & access_type) != access_type) {
+	if ((ufi->entry->protection & flt->access_type) != flt->access_type) {
 		uvmfault_unlockmaps(ufi, FALSE);
 		return (EACCES);
 	}
@@ -539,11 +540,11 @@ uvm_fault_check(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	flt->pa_flags = UVM_ET_ISWC(ufi->entry) ? PMAP_WC : 0;
 	flt->wired = VM_MAPENT_ISWIRED(ufi->entry) || (flt->narrow == TRUE);
 	if (flt->wired)
-		access_type = flt->enter_prot; /* full access for wired */
+		flt->access_type = flt->enter_prot; /* full access for wired */
 
 	/* handle "needs_copy" case. */
 	if (UVM_ET_ISNEEDSCOPY(ufi->entry)) {
-		if ((access_type & PROT_WRITE) ||
+		if ((flt->access_type & PROT_WRITE) ||
 		    (ufi->entry->object.uvm_obj == NULL)) {
 			/* need to clear */
 			uvmfault_unlockmaps(ufi, FALSE);
@@ -648,7 +649,7 @@ uvm_fault_check(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
  */
 int
 uvm_fault_upper(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-   struct vm_anon **anons, vm_fault_t fault_type, vm_prot_t access_type)
+   struct vm_anon **anons, vm_fault_t fault_type)
 {
 	struct vm_amap *amap = ufi->entry->aref.ar_amap;
 	struct vm_anon *oanon, *anon = anons[flt->centeridx];
@@ -699,7 +700,7 @@ uvm_fault_upper(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	 * if we are out of anon VM we wait for RAM to become available.
 	 */
 
-	if ((access_type & PROT_WRITE) != 0 && anon->an_ref > 1) {
+	if ((flt->access_type & PROT_WRITE) != 0 && anon->an_ref > 1) {
 		counters_inc(uvmexp_counters, flt_acow);
 		oanon = anon;		/* oanon = old */
 		anon = uvm_analloc();
@@ -761,7 +762,7 @@ uvm_fault_upper(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	 */
 	if (pmap_enter(ufi->orig_map->pmap, ufi->orig_rvaddr,
 	    VM_PAGE_TO_PHYS(pg) | flt->pa_flags, flt->enter_prot,
-	    access_type | PMAP_CANFAIL | (flt->wired ? PMAP_WIRED : 0)) != 0) {
+	    flt->access_type | PMAP_CANFAIL | (flt->wired ? PMAP_WIRED : 0)) != 0) {
 		/*
 		 * No need to undo what we did; we can simply think of
 		 * this as the pmap throwing away the mapping information.
@@ -922,6 +923,7 @@ uvm_fault(vm_map_t orig_map, vaddr_t vaddr, vm_fault_t fault_type,
 					 * pages on wire */
 	else
 		flt.narrow = FALSE;	/* normal fault */
+	flt.access_type = access_type;
 
 
 	/*
@@ -930,7 +932,7 @@ uvm_fault(vm_map_t orig_map, vaddr_t vaddr, vm_fault_t fault_type,
 	while (error == ERESTART) {
 		anons = anons_store;
 
-		error = uvm_fault_check(&ufi, &flt, &anons, access_type);
+		error = uvm_fault_check(&ufi, &flt, &anons);
 		if (error != 0)
 			continue;
 
@@ -938,13 +940,11 @@ uvm_fault(vm_map_t orig_map, vaddr_t vaddr, vm_fault_t fault_type,
 		shadowed = uvm_fault_upper_lookup(&ufi, &flt, anons, pages);
 		if (shadowed == TRUE) {
 			/* case 1: fault on an anon in our amap */
-			error = uvm_fault_upper(&ufi, &flt, anons, fault_type,
-			    access_type);
+			error = uvm_fault_upper(&ufi, &flt, anons, fault_type);
 		} else {
 			/* case 2: fault on backing object or zero fill */
 			KERNEL_LOCK();
-			error = uvm_fault_lower(&ufi, &flt, pages, fault_type,
-			    access_type);
+			error = uvm_fault_lower(&ufi, &flt, pages, fault_type);
 			KERNEL_UNLOCK();
 		}
 	}
@@ -954,7 +954,7 @@ uvm_fault(vm_map_t orig_map, vaddr_t vaddr, vm_fault_t fault_type,
 
 int
 uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
-   struct vm_page **pages, vm_fault_t fault_type, vm_prot_t access_type)
+   struct vm_page **pages, vm_fault_t fault_type)
 {
 	struct vm_amap *amap = ufi->entry->aref.ar_amap;
 	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
@@ -974,7 +974,7 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	 */
 	if (uobj != NULL && uobj->pgops->pgo_fault != NULL) {
 		result = uobj->pgops->pgo_fault(ufi, flt->startva, pages,
-		    flt->npages, flt->centeridx, fault_type, access_type,
+		    flt->npages, flt->centeridx, fault_type, flt->access_type,
 		    PGO_LOCKED);
 
 		if (result == VM_PAGER_OK)
@@ -1000,7 +1000,7 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 		(void) uobj->pgops->pgo_get(uobj, ufi->entry->offset +
 				(flt->startva - ufi->entry->start),
 				pages, &gotpages, flt->centeridx,
-				access_type & MASK(ufi->entry),
+				flt->access_type & MASK(ufi->entry),
 				ufi->entry->advice, PGO_LOCKED);
 
 		/* check for pages to map, if we got any */
@@ -1089,7 +1089,7 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 		promote = TRUE;		/* always need anon here */
 	} else {
 		KASSERT(uobjpage != PGO_DONTCARE);
-		promote = (access_type & PROT_WRITE) &&
+		promote = (flt->access_type & PROT_WRITE) &&
 		     UVM_ET_ISCOPYONWRITE(ufi->entry);
 	}
 
@@ -1114,7 +1114,7 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 		gotpages = 1;
 		uoff = (ufi->orig_rvaddr - ufi->entry->start) + ufi->entry->offset;
 		result = uobj->pgops->pgo_get(uobj, uoff, &uobjpage, &gotpages,
-		    0, access_type & MASK(ufi->entry), ufi->entry->advice,
+		    0, flt->access_type & MASK(ufi->entry), ufi->entry->advice,
 		    PGO_SYNCIO);
 
 		/* recover from I/O */
@@ -1308,7 +1308,7 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	 */
 	if (pmap_enter(ufi->orig_map->pmap, ufi->orig_rvaddr,
 	    VM_PAGE_TO_PHYS(pg) | flt->pa_flags, flt->enter_prot,
-	    access_type | PMAP_CANFAIL | (flt->wired ? PMAP_WIRED : 0)) != 0) {
+	    flt->access_type | PMAP_CANFAIL | (flt->wired ? PMAP_WIRED : 0)) != 0) {
 		/*
 		 * No need to undo what we did; we can simply think of
 		 * this as the pmap throwing away the mapping information.
