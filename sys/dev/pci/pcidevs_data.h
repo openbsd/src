@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1947 2020/12/28 10:35:59 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1948 2021/01/16 05:08:19 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -19664,6 +19664,82 @@ static const struct pci_known_product pci_known_products[] = {
 	    "C610 MS SMBus",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_TGL_UP4_2C_HB,
+	    "Core 11G Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_TGL_DTT,
+	    "Core 11G DTT",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_TGL_UP3_2C_HB,
+	    "Core 11G Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_TGL_PCIE_1,
+	    "Core 11G PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_TGL_VMD,
+	    "Core 11G VMD",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_TGL_SRAM,
+	    "Core 11G SRAM",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_TGL_GNA,
+	    "Core 11G GNA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_TGL_UP4_4C_HB,
+	    "Core 11G Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_TGL_XHCI,
+	    "Core 11G xHCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_TGL_UP3_4C_HB,
+	    "Core 11G Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_TGL_XDCI,
+	    "Core 11G xDCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_TGL_IPU,
+	    "Core 11G IPU",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_TGL_TBT_DMA0,
+	    "Core 11G TBT",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_TGL_TBT_DMA1,
+	    "Core 11G TBT",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_TGL_PCIE_2,
+	    "Core 11G PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_TGL_PCIE_3,
+	    "Core 11G PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_TGL_PCIE_4,
+	    "Core 11G PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_TGL_PCIE_5,
+	    "Core 11G PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_TGL_NPK,
+	    "Core 11G NPK",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I2OPCIB,
 	    "I2O RAID",
 	},
@@ -20460,7 +20536,11 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Pineview Video",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_500SERIES_LP_ESPI,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_500SERIES_LP_ESPI_UP3,
+	    "500 Series eSPI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_500SERIES_LP_ESPI_UP4,
 	    "500 Series eSPI",
 	},
 	{
@@ -27410,6 +27490,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_SANDISK, PCI_PRODUCT_SANDISK_WDSXXXG3X0C,
 	    "WD Black NVMe",
+	},
+	{
+	    PCI_VENDOR_SANDISK, PCI_PRODUCT_SANDISK_PCSN530,
+	    "PC SN530",
 	},
 	{
 	    PCI_VENDOR_SANGOMA, PCI_PRODUCT_SANGOMA_A10X,
