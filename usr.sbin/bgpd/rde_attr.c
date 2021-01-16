@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.123 2019/06/24 06:39:49 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.124 2021/01/16 13:14:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -673,8 +673,13 @@ aspath_length(struct aspath *aspath)
 u_int32_t
 aspath_neighbor(struct aspath *aspath)
 {
-	/* Empty aspath is OK -- internal AS route. */
-	if (aspath->len == 0)
+	/*
+	 * Empty aspath is OK -- internal AS route.
+	 * Additionally the RFC specifies that if the path starts with an
+	 * AS_SET the neighbor AS is also the local AS.
+	 */
+	if (aspath->len == 0 ||
+	    aspath->data[0] != AS_SEQUENCE)
 		return (rde_local_as());
 	return (aspath_extract(aspath->data, 0));
 }
