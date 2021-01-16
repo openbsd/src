@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.76 2019/06/28 13:35:02 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.77 2021/01/16 17:42:52 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -231,7 +231,8 @@ print_addr(struct sockaddr *sa, struct sockaddr **rtinfo, struct if_data *ifd)
 	case AF_INET6:
 		sin6 = (struct sockaddr_in6 *)sa;
 #ifdef __KAME__
-		if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
+		if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr) &&
+		    sin6->sin6_scope_id == 0) {
 			sin6->sin6_scope_id =
 			    ntohs(*(u_int16_t *)
 			    &sin6->sin6_addr.s6_addr[2]);
