@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.43 2020/12/29 19:51:15 benno Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.44 2021/01/16 17:45:45 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -879,9 +879,10 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 		    sizeof(del_route.gw));
 		in6 = &del_route.gw.sin6_addr;
 		/* XXX from route(8) p_sockaddr() */
-		if (IN6_IS_ADDR_LINKLOCAL(in6) ||
+		if ((IN6_IS_ADDR_LINKLOCAL(in6) ||
 		    IN6_IS_ADDR_MC_LINKLOCAL(in6) ||
-		    IN6_IS_ADDR_MC_INTFACELOCAL(in6)) {
+		    IN6_IS_ADDR_MC_INTFACELOCAL(in6)) &&
+		    del_route.gw.sin6_scope_id == 0) {
 			del_route.gw.sin6_scope_id =
 			    (u_int32_t)ntohs(*(u_short *) &in6->s6_addr[2]);
 			*(u_short *)&in6->s6_addr[2] = 0;
@@ -954,7 +955,8 @@ get_lladdr(char *if_name, struct ether_addr *mac, struct sockaddr_in6 *ll)
 			break;
 		case AF_INET6:
 			sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
-			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
+			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr) &&
+			    sin6->sin6_scope_id == 0) {
 				sin6->sin6_scope_id = ntohs(*(u_int16_t *)
 				    &sin6->sin6_addr.s6_addr[2]);
 				sin6->sin6_addr.s6_addr[2] =
