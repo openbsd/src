@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.85 2021/01/12 09:11:09 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.86 2021/01/16 08:03:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -733,6 +733,7 @@ if_join_group(struct iface *iface, struct in_addr *addr)
 			/* already joined */
 			return (0);
 
+		memset(&mreq, 0, sizeof(mreq));
 		mreq.imr_multiaddr.s_addr = addr->s_addr;
 		mreq.imr_ifindex = iface->ifindex;
 
@@ -781,6 +782,7 @@ if_leave_group(struct iface *iface, struct in_addr *addr)
 			free(ifg);
 		}
 
+		memset(&mreq, 0, sizeof(mreq));
 		mreq.imr_multiaddr.s_addr = addr->s_addr;
 		mreq.imr_ifindex = iface->ifindex;
 
@@ -808,11 +810,15 @@ if_leave_group(struct iface *iface, struct in_addr *addr)
 int
 if_set_mcast(struct iface *iface)
 {
+	struct ip_mreqn		 mreq;
+
 	switch (iface->type) {
 	case IF_TYPE_POINTOPOINT:
 	case IF_TYPE_BROADCAST:
+		memset(&mreq, 0, sizeof(mreq));
+		mreq.imr_ifindex = iface->ifindex;
 		if (setsockopt(iface->fd, IPPROTO_IP, IP_MULTICAST_IF,
-		    &iface->addr.s_addr, sizeof(iface->addr.s_addr)) == -1) {
+		    &mreq, sizeof(mreq)) == -1) {
 			log_warn("if_set_mcast: error setting "
 			    "IP_MULTICAST_IF, interface %s", iface->name);
 			return (-1);
