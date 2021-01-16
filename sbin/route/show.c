@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.116 2020/10/29 21:15:26 denis Exp $	*/
+/*	$OpenBSD: show.c,v 1.117 2021/01/16 17:41:20 claudio Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -392,9 +392,10 @@ p_sockaddr(struct sockaddr *sa, struct sockaddr *mask, int flags, int width)
 		 * XXX: This is a special workaround for KAME kernels.
 		 * sin6_scope_id field of SA should be set in the future.
 		 */
-		if (IN6_IS_ADDR_LINKLOCAL(in6) ||
+		if ((IN6_IS_ADDR_LINKLOCAL(in6) ||
 		    IN6_IS_ADDR_MC_LINKLOCAL(in6) ||
-		    IN6_IS_ADDR_MC_INTFACELOCAL(in6)) {
+		    IN6_IS_ADDR_MC_INTFACELOCAL(in6)) &&
+		    sa6->sin6_scope_id == 0) {
 			/* XXX: override is ok? */
 			sa6->sin6_scope_id = (u_int32_t)ntohs(*(u_short *)
 			    &in6->s6_addr[2]);
