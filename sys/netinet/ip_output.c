@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.360 2021/01/11 13:28:53 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.361 2021/01/16 07:58:12 claudio Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1423,11 +1423,40 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m,
 		/*
 		 * Select the interface for outgoing multicast packets.
 		 */
-		if (m == NULL || m->m_len != sizeof(struct in_addr)) {
+		if (m == NULL) {
 			error = EINVAL;
 			break;
 		}
-		addr = *(mtod(m, struct in_addr *));
+		if (m->m_len == sizeof(struct in_addr)) {
+			addr = *(mtod(m, struct in_addr *));
+		} else if (m->m_len == sizeof(struct ip_mreq) ||
+		    m->m_len == sizeof(struct ip_mreqn)) {
+			memset(&mreqn, 0, sizeof(mreqn));
+			memcpy(&mreqn, mtod(m, void *), m->m_len);
+
+			/*
+			 * If an interface index is given use this
+			 * index to set the imo_ifidx but check first
+			 * that the interface actually exists.
+			 * In the other case just set the addr to
+			 * the imr_address and fall through to the
+			 * regular code.
+			 */
+			if (mreqn.imr_ifindex != 0) {
+				ifp = if_get(mreqn.imr_ifindex);
+				if (ifp == NULL) {
+					error = EADDRNOTAVAIL;
+					break;
+				}
+				imo->imo_ifidx = ifp->if_index;
+				if_put(ifp);
+				break;
+			} else
+				addr = mreqn.imr_address;
+		} else {
+			error = EINVAL;
+			break;
+		}
 		/*
 		 * INADDR_ANY is used to remove a previous selection.
 		 * When no interface is selected, a default one is
