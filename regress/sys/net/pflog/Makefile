@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2021/01/14 21:53:42 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.6 2021/01/16 13:38:47 bluhm Exp $
 
 # Copyright (c) 2021 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -55,6 +55,13 @@ regress:
 	@echo pf anchor: "${PF_ANCHOR}"
 	@echo Need anchor '"regress"' in pf.conf to load additional rules.
 	@echo SKIPPED
+.endif
+
+SYSCTL_FORWARDING !=	sysctl net.inet.ip.forwarding
+SYSCTL_FORWARDING6 !=	sysctl net.inet6.ip6.forwarding
+.if ${SYSCTL_FORWARDING:C/.*=//} != 1 || ${SYSCTL_FORWARDING6:C/.*=//} != 1
+# Do not skip, but run tests.  Although they fail, their packets are logged.
+REGRESS_EXPECTED_FAILURES =	run-ping-14 run-ping6-14
 .endif
 
 .endif
