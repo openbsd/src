@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.44 2021/01/16 17:45:45 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.45 2021/01/16 18:02:34 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -961,8 +961,9 @@ get_lladdr(char *if_name, struct ether_addr *mac, struct sockaddr_in6 *ll)
 				    &sin6->sin6_addr.s6_addr[2]);
 				sin6->sin6_addr.s6_addr[2] =
 				    sin6->sin6_addr.s6_addr[3] = 0;
-				memcpy(ll, sin6, sizeof(*ll));
 			}
+			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
+				memcpy(ll, sin6, sizeof(*ll));
 			break;
 		default:
 			break;
