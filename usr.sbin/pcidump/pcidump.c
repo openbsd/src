@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.58 2021/01/06 23:43:43 dlg Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.59 2021/01/17 11:16:22 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -486,6 +486,27 @@ dump_pci_powerstate(int bus, int dev, int func, uint8_t ptr)
 	printf("\n");
 }
 
+static unsigned int
+pcie_dcap_mps(uint32_t dcap)
+{
+	uint32_t shift = dcap & 0x7;
+	return (128 << shift);
+}
+
+static unsigned int
+pcie_dcsr_mps(uint32_t dcsr)
+{
+	uint32_t shift = (dcsr >> 5) & 0x7;
+	return (128 << shift);
+}
+
+static unsigned int
+pcie_dcsr_mrrs(uint32_t dcsr)
+{
+	uint32_t shift = (dcsr >> 12) & 0x7;
+	return (128 << shift);
+}
+
 void
 print_pcie_ls(uint8_t speed)
 {
@@ -502,8 +523,20 @@ print_pcie_ls(uint8_t speed)
 void
 dump_pcie_linkspeed(int bus, int dev, int func, uint8_t ptr)
 {
+	u_int32_t dcap, dcsr;
 	u_int32_t lcap, sreg, lcap2 = 0, xcap;
 	u_int8_t cwidth, cspeed, swidth, sspeed;
+
+	if (pci_read(bus, dev, func, ptr + PCI_PCIE_DCAP, &dcap) != 0)
+		return;
+
+	if (pci_read(bus, dev, func, ptr + PCI_PCIE_DCSR, &dcsr) != 0)
+		return;
+
+	printf("\t\tMax Payload Size: %u / %u bytes\n",
+	    pcie_dcsr_mps(dcsr), pcie_dcap_mps(dcap));
+	printf("\t\tMax Read Request Size: %u bytes\n",
+	    pcie_dcsr_mrrs(dcsr));
 
 	if (pci_read(bus, dev, func, ptr + PCI_PCIE_XCAP, &xcap) != 0)
 		return;
@@ -535,9 +568,9 @@ dump_pcie_linkspeed(int bus, int dev, int func, uint8_t ptr)
 	print_pcie_ls(sspeed);
 	printf(" / ");
 	print_pcie_ls(cspeed);
-	printf(" GT/s, ");
+	printf(" GT/s\n");
 
-	printf("Link Width: x%d / x%d\n", swidth, cwidth);
+	printf("\t\tLink Width: x%d / x%d\n", swidth, cwidth);
 }
 
 void
