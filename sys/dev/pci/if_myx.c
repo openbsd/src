@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.113 2020/12/12 11:48:53 jan Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.114 2021/01/17 02:52:21 dlg Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -658,7 +658,8 @@ myx_dmamem_alloc(struct myx_softc *sc, struct myx_dmamem *mxm,
 	mxm->mxm_size = size;
 
 	if (bus_dmamap_create(sc->sc_dmat, mxm->mxm_size, 1,
-	    mxm->mxm_size, 0, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
+	    mxm->mxm_size, 0,
+	    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
 	    &mxm->mxm_map) != 0)
 		return (1);
 	if (bus_dmamem_alloc(sc->sc_dmat, mxm->mxm_size,
@@ -1892,7 +1893,8 @@ myx_rx_init(struct myx_softc *sc, int ring, bus_size_t size)
 	for (i = 0; i < sc->sc_rx_ring_count; i++) {
 		ms = &mrr->mrr_slots[i];
 		rv = bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
-		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &ms->ms_map);
+		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
+		    &ms->ms_map);
 		if (rv != 0)
 			goto destroy;
 
@@ -2041,7 +2043,8 @@ myx_tx_init(struct myx_softc *sc, bus_size_t size)
 		ms = &sc->sc_tx_slots[i];
 		rv = bus_dmamap_create(sc->sc_dmat, size, sc->sc_tx_nsegs,
 		    sc->sc_tx_boundary, sc->sc_tx_boundary,
-		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &ms->ms_map);
+		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
+		    &ms->ms_map);
 		if (rv != 0)
 			goto destroy;
 	}
