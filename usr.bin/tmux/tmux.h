@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1083 2021/01/08 10:09:44 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1084 2021/01/17 16:17:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1635,7 +1635,7 @@ struct client {
 #define CLIENT_DEAD 0x200
 #define CLIENT_REDRAWBORDERS 0x400
 #define CLIENT_READONLY 0x800
-/* 0x1000 unused */
+#define CLIENT_NOSTARTSERVER 0x1000
 #define CLIENT_CONTROL 0x2000
 #define CLIENT_CONTROLCONTROL 0x4000
 #define CLIENT_FOCUSED 0x8000

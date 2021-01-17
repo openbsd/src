@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.810 2021/01/04 08:43:16 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.811 2021/01/17 16:17:41 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 4 2021 $
+.Dd $Mdocdate: January 17 2021 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -191,6 +191,11 @@ directories are missing).
 Behave as a login shell.
 This flag currently has no effect and is for compatibility with other shells
 when using tmux as a login shell.
+.It Fl N
+Do not start the server even if the command would normally do so (for example
+.Ic new-session
+or
+.Ic start-server ) .
 .It Fl S Ar socket-path
 Specify a full alternative path to the server socket.
 If
