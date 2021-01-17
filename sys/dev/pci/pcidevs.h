@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1948 2021/01/16 05:08:19 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1949 2021/01/17 14:21:26 jcs Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5822,6 +5822,7 @@
 #define	PCI_PRODUCT_INTEL_500SERIES_LP_XHCI	0xa0ed		/* 500 Series xHCI */
 #define	PCI_PRODUCT_INTEL_500SERIES_LP_XDCI	0xa0ee		/* 500 Series xDCI */
 #define	PCI_PRODUCT_INTEL_500SERIES_LP_SRAM	0xa0ef		/* 500 Series Shared SRAM */
+#define	PCI_PRODUCT_INTEL_WL_22500_3	0xa0f0		/* Wi-Fi 6 AX201 */
 #define	PCI_PRODUCT_INTEL_500SERIES_LP_GSPI_3	0xa0fb		/* 500 Series GSPI */
 #define	PCI_PRODUCT_INTEL_500SERIES_LP_ISH	0xa0fc		/* 500 Series ISH */
 #define	PCI_PRODUCT_INTEL_500SERIES_LP_GSPI_4	0xa0fd		/* 500 Series GSPI */
