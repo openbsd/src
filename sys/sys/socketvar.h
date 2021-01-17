@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.91 2020/01/15 13:17:35 mpi Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.92 2021/01/17 05:23:34 visa Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -113,7 +113,6 @@ struct socket {
 		short	sb_flags;	/* flags, see below */
 /* End area that is zeroed on flush. */
 #define	sb_endzero	sb_flags
-		int	sb_flagsintr;	/* flags, changed atomically */
 		uint64_t sb_timeo_nsecs;/* timeout for read/write */
 		struct	selinfo sb_sel;	/* process selecting read/write */
 	} so_rcv, so_snd;
@@ -125,7 +124,6 @@ struct socket {
 #define	SB_ASYNC	0x10		/* ASYNC I/O, need signals */
 #define	SB_SPLICE	0x20		/* buffer is splice source or drain */
 #define	SB_NOINTR	0x40		/* operations not interruptible */
-#define	SB_KNOTE	0x80		/* kernel note attached */
 
 	void	(*so_upcall)(struct socket *so, caddr_t arg, int waitf);
 	caddr_t	so_upcallarg;		/* Arg for above */
@@ -177,11 +175,10 @@ void	soassertlocked(struct socket *);
 static inline int
 sb_notify(struct socket *so, struct sockbuf *sb)
 {
-	int flags = (sb->sb_flags | sb->sb_flagsintr);
-
 	KASSERT(sb == &so->so_rcv || sb == &so->so_snd);
 	soassertlocked(so);
-	return ((flags & (SB_WAIT|SB_SEL|SB_ASYNC|SB_SPLICE|SB_KNOTE)) != 0);
+	return ((sb->sb_flags & (SB_WAIT|SB_SEL|SB_ASYNC|SB_SPLICE)) != 0 ||
+	    !klist_empty(&sb->sb_sel.si_note));
 }
 
 /*
