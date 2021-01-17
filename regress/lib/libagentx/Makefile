@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2021/01/15 14:36:16 bluhm Exp $
+# $OpenBSD: Makefile,v 1.5 2021/01/17 20:53:51 bluhm Exp $
 
 .if ! exists(/usr/local/sbin/snmpd)
 regress:
@@ -17,18 +17,24 @@ REGRESS_TARGETS=	run-regress-walk
 REGRESS_CLEANUP=	stop
 CLEANFILES=
 
-SNMPD_CMD=		/usr/local/sbin/snmpd -r -c snmpd.conf -Le
+SNMPD_CMD=		/usr/local/sbin/snmpd -r -C -c snmpd.conf -Le
+UID!!=		id -u
+.if ${UID} == 0
+SNMPD_CMD+=		-u _netsnmp
+.endif
 
 CLEANFILES+=	snmpd.conf
-snmpd.conf:
+snmpd.conf: Makefile
 	@printf "agentaddress udp:127.0.0.1:6161\n" > snmpd.conf
 	@printf "rwcommunity public\n" >> snmpd.conf
 	@printf "master agentx\n" >> snmpd.conf
-	@printf "agentXSocket ${.OBJDIR}/agentx.sock\n" >> snmpd.conf
+	@printf "agentXSocket agentx.sock\n" >> snmpd.conf
 
 CLEANFILES+=	agentx.sock
 start: stop snmpd.conf agentx
 	${SNMPD_CMD}
+	# XXX Race in net-snmpd, socket exists before data is available.
+	sleep 1
 	./agentx agentx.sock
 
 stop:
