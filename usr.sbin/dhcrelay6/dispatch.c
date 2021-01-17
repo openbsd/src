@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.1 2017/03/17 14:45:16 rzalamena Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.2 2021/01/17 13:41:24 claudio Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -187,11 +187,16 @@ setup_iflist(void)
 			intf->primary_address = sin->sin_addr;
 		} else if (ifa->ifa_addr->sa_family == AF_INET6) {
 			sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
-			/* Remove the scope from address if link-local. */
 			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
 				intf->linklocal = sin6->sin6_addr;
+#ifdef __KAME__
+				/*
+				 * Remove possible scope from address if
+				 * link-local.
+				 */
 				intf->linklocal.s6_addr[2] = 0;
 				intf->linklocal.s6_addr[3] = 0;
+#endif
 			} else
 				intf->gipv6 = 1;
 
