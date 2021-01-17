@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.50 2021/01/15 20:52:49 patrick Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.51 2021/01/17 14:27:24 patrick Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -718,7 +718,13 @@ struct acpi_iort_rc_node {
 struct acpi_iort_smmu_node {
 	uint64_t	base_address;
 	uint64_t	span;
-	uint32_t	mode;
+	uint32_t	model;
+#define ACPI_IORT_SMMU_V1		0
+#define ACPI_IORT_SMMU_V2		1
+#define ACPI_IORT_SMMU_CORELINK_MMU400	2
+#define ACPI_IORT_SMMU_CORELINK_MMU500	3
+#define ACPI_IORT_SMMU_CORELINK_MMU401	4
+#define ACPI_IORT_SMMU_CAVIUM_THUNDERX	5
 	uint32_t	flags;
 #define ACPI_IORT_SMMU_DVM		0x00000001
 #define ACPI_IORT_SMMU_COHERENT		0x00000002
