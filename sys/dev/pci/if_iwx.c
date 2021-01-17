@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.48 2020/12/12 11:48:53 jan Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.49 2021/01/17 14:24:00 jcs Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -7709,6 +7709,7 @@ typedef void *iwx_match_t;
 static const struct pci_matchid iwx_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_2 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_3 },
 };
 
 static const struct pci_matchid iwx_subsystem_id_ax201[] = {
@@ -7747,6 +7748,7 @@ iwx_match(struct device *parent, iwx_match_t match __unused, void *aux)
 	case PCI_PRODUCT_INTEL_WL_22500_1: /* AX200 */
 		return 1; /* match any device */
 	case PCI_PRODUCT_INTEL_WL_22500_2: /* AX201 */
+	case PCI_PRODUCT_INTEL_WL_22500_3: /* AX201 */
 		for (i = 0; i < nitems(iwx_subsystem_id_ax201); i++) {
 			if (svid == iwx_subsystem_id_ax201[i].pm_vid &&
 			    spid == iwx_subsystem_id_ax201[i].pm_pid)
@@ -7910,6 +7912,16 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 	IWX_WRITE(sc, IWX_CSR_FH_INT_STATUS, ~0);
 
 	sc->sc_hw_rev = IWX_READ(sc, IWX_CSR_HW_REV);
+
+	/*
+	 * In the 8000 HW family the format of the 4 bytes of CSR_HW_REV have
+	 * changed, and now the revision step also includes bit 0-1 (no more
+	 * "dash" value). To keep hw_rev backwards compatible - we'll store it
+	 * in the old format.
+	 */
+	sc->sc_hw_rev = (sc->sc_hw_rev & 0xfff0) |
+			(IWX_CSR_HW_REV_STEP(sc->sc_hw_rev << 2) << 2);
+
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_INTEL_WL_22500_1:
 		sc->sc_fwname = "iwx-cc-a0-48";
@@ -7923,6 +7935,12 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_uhb_supported = 0;
 		break;
 	case PCI_PRODUCT_INTEL_WL_22500_2:
+	case PCI_PRODUCT_INTEL_WL_22500_3:
+		if (sc->sc_hw_rev != IWX_CSR_HW_REV_TYPE_QUZ) {
+			printf("%s: unsupported AX201 adapter\n", DEVNAME(sc));
+			return;
+		}
+
 		sc->sc_fwname = "iwx-QuZ-a0-hr-b0-48";
 		sc->sc_device_family = IWX_DEVICE_FAMILY_22000;
 		sc->sc_fwdmasegsz = IWX_FWDMASEGSZ_8000;
@@ -7938,15 +7956,6 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	/*
-	 * In the 8000 HW family the format of the 4 bytes of CSR_HW_REV have
-	 * changed, and now the revision step also includes bit 0-1 (no more
-	 * "dash" value). To keep hw_rev backwards compatible - we'll store it
-	 * in the old format.
-	 */
-	sc->sc_hw_rev = (sc->sc_hw_rev & 0xfff0) |
-			(IWX_CSR_HW_REV_STEP(sc->sc_hw_rev << 2) << 2);
-	
 	if (iwx_prepare_card_hw(sc) != 0) {
 		printf("%s: could not initialize hardware\n",
 		    DEVNAME(sc));

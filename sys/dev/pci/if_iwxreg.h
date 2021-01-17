@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.17 2020/08/01 16:14:05 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.18 2021/01/17 14:24:00 jcs Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -425,6 +425,7 @@ struct iwx_context_info {
 #define IWX_CSR_HW_REV_STEP(_val)          (((_val) & 0x000000C) >> 2)
 
 #define IWX_CSR_HW_REV_TYPE_MSK		(0x000FFF0)
+#define IWX_CSR_HW_REV_TYPE_QUZ		(0x0000354)
 
 /* CSR GIO */
 #define IWX_CSR_GIO_REG_VAL_L0S_DISABLED	(0x00000002)
