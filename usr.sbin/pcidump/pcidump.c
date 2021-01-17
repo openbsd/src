@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.60 2021/01/17 11:38:18 dlg Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.61 2021/01/17 11:54:15 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -510,9 +510,7 @@ pcie_dcsr_mrrs(uint32_t dcsr)
 void
 print_pcie_ls(uint8_t speed)
 {
-	if (speed & 5)
-		printf("16.0");
-	else if (speed & 4)
+	if (speed & 4)
 		printf("8.0");
 	else if (speed & 2)
 		printf("5.0");
