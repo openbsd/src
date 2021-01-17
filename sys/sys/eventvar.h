@@ -1,4 +1,4 @@
-/*	$OpenBSD: eventvar.h,v 1.10 2020/12/18 16:16:14 visa Exp $	*/
+/*	$OpenBSD: eventvar.h,v 1.11 2021/01/17 05:56:32 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -59,7 +59,6 @@ struct kqueue {
 #define KQ_SEL		0x01
 #define KQ_SLEEP	0x02
 #define KQ_DYING	0x04
-	int		kq_error;		/* pending error */
 };
 
 #endif /* !_SYS_EVENTVAR_H_ */

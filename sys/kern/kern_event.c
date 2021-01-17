@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.158 2021/01/08 12:29:16 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.159 2021/01/17 05:56:32 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -86,6 +86,15 @@ int	kqueue_stat(struct file *fp, struct stat *st, struct proc *p);
 int	kqueue_close(struct file *fp, struct proc *p);
 void	kqueue_wakeup(struct kqueue *kq);
 
+#ifdef KQUEUE_DEBUG
+void	kqueue_do_check(struct kqueue *kq, const char *func, int line);
+#define kqueue_check(kq)	kqueue_do_check((kq), __func__, __LINE__)
+#else
+#define kqueue_check(kq)	do {} while (0)
+#endif
+
+void	kqpoll_dequeue(struct proc *p);
+
 static void	kqueue_expand_hash(struct kqueue *kq);
 static void	kqueue_expand_list(struct kqueue *kq, int fd);
 static void	kqueue_task(void *);
@@ -103,6 +112,7 @@ const struct fileops kqueueops = {
 };
 
 void	knote_attach(struct knote *kn);
+void	knote_detach(struct knote *kn);
 void	knote_drop(struct knote *kn, struct proc *p);
 void	knote_enqueue(struct knote *kn);
 void	knote_dequeue(struct knote *kn);
@@ -513,6 +523,22 @@ const struct filterops dead_filtops = {
 	.f_event	= filt_dead,
 };
 
+static int
+filt_badfd(struct knote *kn, long hint)
+{
+	kn->kn_flags |= (EV_ERROR | EV_ONESHOT);
+	kn->kn_data = EBADF;
+	return (1);
+}
+
+/* For use with kqpoll. */
+const struct filterops badfd_filtops = {
+	.f_flags	= FILTEROP_ISFD,
+	.f_attach	= NULL,
+	.f_detach	= filt_deaddetach,
+	.f_event	= filt_badfd,
+};
+
 void
 kqpoll_init(void)
 {
@@ -521,10 +547,12 @@ kqpoll_init(void)
 
 	if (p->p_kq != NULL) {
 		/*
-		 * Clear any pending error that was raised after
+		 * Discard any knotes that have been enqueued after
 		 * previous scan.
+		 * This prevents accumulation of enqueued badfd knotes
+		 * in case scan does not make progress for some reason.
 		 */
-		p->p_kq->kq_error = 0;
+		kqpoll_dequeue(p);
 		return;
 	}
 
@@ -544,10 +572,42 @@ kqpoll_exit(void)
 	if (p->p_kq == NULL)
 		return;
 
+	kqueue_purge(p, p->p_kq);
+	/* Clear any detached knotes that remain in the queue. */
+	kqpoll_dequeue(p);
 	kqueue_terminate(p, p->p_kq);
 	KASSERT(p->p_kq->kq_refs == 1);
 	KQRELE(p->p_kq);
 	p->p_kq = NULL;
+}
+
+void
+kqpoll_dequeue(struct proc *p)
+{
+	struct knote *kn;
+	struct kqueue *kq = p->p_kq;
+	int s;
+
+	s = splhigh();
+	while ((kn = TAILQ_FIRST(&kq->kq_head)) != NULL) {
+		/* This kqueue should not be scanned by other threads. */
+		KASSERT(kn->kn_filter != EVFILT_MARKER);
+
+		if (!knote_acquire(kn, NULL, 0))
+			continue;
+
+		kqueue_check(kq);
+		TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
+		kn->kn_status &= ~KN_QUEUED;
+		kq->kq_count--;
+
+		splx(s);
+		kn->kn_fop->f_detach(kn);
+		knote_drop(kn, p);
+		s = splhigh();
+		kqueue_check(kq);
+	}
+	splx(s);
 }
 
 struct kqueue *
@@ -750,9 +810,6 @@ bad:
 		    func, line, kq, kq->kq_count, count, nmarker);
 	}
 }
-#define kqueue_check(kq)	kqueue_do_check((kq), __func__, __LINE__)
-#else
-#define kqueue_check(kq)	do {} while (0)
 #endif
 
 int
@@ -985,15 +1042,6 @@ retry:
 	}
 
 	s = splhigh();
-
-	if (kq->kq_error != 0) {
-		/* Deliver the pending error. */
-		error = kq->kq_error;
-		kq->kq_error = 0;
-		splx(s);
-		goto done;
-	}
-
 	if (kq->kq_count == 0) {
 		/*
 		 * Successive loops are only necessary if there are more
@@ -1090,6 +1138,7 @@ retry:
 				kn->kn_status |= KN_DISABLED;
 			if ((kn->kn_status & KN_QUEUED) == 0)
 				kn->kn_status &= ~KN_ACTIVE;
+			KASSERT(kn->kn_status & KN_ATTACHED);
 			knote_release(kn);
 		} else {
 			if ((kn->kn_status & KN_QUEUED) == 0) {
@@ -1098,6 +1147,7 @@ retry:
 				kn->kn_status |= KN_QUEUED;
 				TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe);
 			}
+			KASSERT(kn->kn_status & KN_ATTACHED);
 			knote_release(kn);
 		}
 		kqueue_check(kq);
@@ -1215,7 +1265,8 @@ kqueue_purge(struct proc *p, struct kqueue *kq)
 void
 kqueue_terminate(struct proc *p, struct kqueue *kq)
 {
-	kqueue_purge(p, kq);
+	KASSERT(TAILQ_EMPTY(&kq->kq_head));
+
 	kq->kq_state |= KQ_DYING;
 	kqueue_wakeup(kq);
 
@@ -1230,6 +1281,7 @@ kqueue_close(struct file *fp, struct proc *p)
 	struct kqueue *kq = fp->f_data;
 
 	KERNEL_LOCK();
+	kqueue_purge(p, kq);
 	kqueue_terminate(p, kq);
 	fp->f_data = NULL;
 
@@ -1398,7 +1450,6 @@ void
 knote_remove(struct proc *p, struct knlist *list, int purge)
 {
 	struct knote *kn;
-	struct kqueue *kq;
 	int s;
 
 	while ((kn = SLIST_FIRST(list)) != NULL) {
@@ -1413,15 +1464,26 @@ knote_remove(struct proc *p, struct knlist *list, int purge)
 		/*
 		 * Notify poll(2) and select(2) when a monitored
 		 * file descriptor is closed.
+		 *
+		 * This reuses the original knote for delivering the
+		 * notification so as to avoid allocating memory.
+		 * The knote will be reachable only through the queue
+		 * of active knotes and is freed either by kqueue_scan()
+		 * or kqpoll_dequeue().
 		 */
 		if (!purge && (kn->kn_flags & __EV_POLL) != 0) {
-			kq = kn->kn_kq;
+			KASSERT(kn->kn_fop->f_flags & FILTEROP_ISFD);
+			knote_detach(kn);
+			FRELE(kn->kn_fp, p);
+			kn->kn_fp = NULL;
+
+			kn->kn_fop = &badfd_filtops;
+			kn->kn_fop->f_event(kn, 0);
+			knote_activate(kn);
 			s = splhigh();
-			if (kq->kq_error == 0) {
-				kq->kq_error = EBADF;
-				kqueue_wakeup(kq);
-			}
+			knote_release(kn);
 			splx(s);
+			continue;
 		}
 
 		knote_drop(kn, p);
@@ -1481,6 +1543,14 @@ knote_attach(struct knote *kn)
 {
 	struct kqueue *kq = kn->kn_kq;
 	struct knlist *list;
+	int s;
+
+	KASSERT(kn->kn_status & KN_PROCESSING);
+	KASSERT((kn->kn_status & KN_ATTACHED) == 0);
+
+	s = splhigh();
+	kn->kn_status |= KN_ATTACHED;
+	splx(s);
 
 	if (kn->kn_fop->f_flags & FILTEROP_ISFD) {
 		KASSERT(kq->kq_knlistsize > kn->kn_id);
@@ -1492,6 +1562,29 @@ knote_attach(struct knote *kn)
 	SLIST_INSERT_HEAD(list, kn, kn_link);
 }
 
+void
+knote_detach(struct knote *kn)
+{
+	struct kqueue *kq = kn->kn_kq;
+	struct knlist *list;
+	int s;
+
+	KASSERT(kn->kn_status & KN_PROCESSING);
+
+	if ((kn->kn_status & KN_ATTACHED) == 0)
+		return;
+
+	if (kn->kn_fop->f_flags & FILTEROP_ISFD)
+		list = &kq->kq_knlist[kn->kn_id];
+	else
+		list = &kq->kq_knhash[KN_HASH(kn->kn_id, kq->kq_knhashmask)];
+	SLIST_REMOVE(list, kn, knote, kn_link);
+
+	s = splhigh();
+	kn->kn_status &= ~KN_ATTACHED;
+	splx(s);
+}
+
 /*
  * should be called at spl == 0, since we don't want to hold spl
  * while calling FRELE and pool_put.
@@ -1499,18 +1592,12 @@ knote_attach(struct knote *kn)
 void
 knote_drop(struct knote *kn, struct proc *p)
 {
-	struct kqueue *kq = kn->kn_kq;
-	struct knlist *list;
 	int s;
 
 	KASSERT(kn->kn_filter != EVFILT_MARKER);
 
-	if (kn->kn_fop->f_flags & FILTEROP_ISFD)
-		list = &kq->kq_knlist[kn->kn_id];
-	else
-		list = &kq->kq_knhash[KN_HASH(kn->kn_id, kq->kq_knhashmask)];
+	knote_detach(kn);
 
-	SLIST_REMOVE(list, kn, knote, kn_link);
 	s = splhigh();
 	if (kn->kn_status & KN_QUEUED)
 		knote_dequeue(kn);
@@ -1519,7 +1606,7 @@ knote_drop(struct knote *kn, struct proc *p)
 		wakeup(kn);
 	}
 	splx(s);
-	if (kn->kn_fop->f_flags & FILTEROP_ISFD)
+	if ((kn->kn_fop->f_flags & FILTEROP_ISFD) && kn->kn_fp != NULL)
 		FRELE(kn->kn_fp, p);
 	pool_put(&knote_pool, kn);
 }
