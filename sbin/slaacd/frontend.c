@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.45 2021/01/16 18:02:34 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.46 2021/01/17 15:39:17 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -878,6 +878,7 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 		memcpy(&del_route.gw, rti_info[RTAX_GATEWAY],
 		    sizeof(del_route.gw));
 		in6 = &del_route.gw.sin6_addr;
+#ifdef __KAME__
 		/* XXX from route(8) p_sockaddr() */
 		if ((IN6_IS_ADDR_LINKLOCAL(in6) ||
 		    IN6_IS_ADDR_MC_LINKLOCAL(in6) ||
@@ -887,6 +888,7 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 			    (u_int32_t)ntohs(*(u_short *) &in6->s6_addr[2]);
 			*(u_short *)&in6->s6_addr[2] = 0;
 		}
+#endif
 		frontend_imsg_compose_engine(IMSG_DEL_ROUTE,
 		    0, 0, &del_route, sizeof(del_route));
 		log_debug("RTM_DELETE: %s[%u]", if_name,
@@ -955,6 +957,7 @@ get_lladdr(char *if_name, struct ether_addr *mac, struct sockaddr_in6 *ll)
 			break;
 		case AF_INET6:
 			sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
+#ifdef __KAME__
 			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr) &&
 			    sin6->sin6_scope_id == 0) {
 				sin6->sin6_scope_id = ntohs(*(u_int16_t *)
@@ -962,6 +965,7 @@ get_lladdr(char *if_name, struct ether_addr *mac, struct sockaddr_in6 *ll)
 				sin6->sin6_addr.s6_addr[2] =
 				    sin6->sin6_addr.s6_addr[3] = 0;
 			}
+#endif
 			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
 				memcpy(ll, sin6, sizeof(*ll));
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.53 2020/12/01 18:08:53 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.54 2021/01/17 15:39:17 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -754,9 +754,11 @@ configure_gateway(struct imsg_configure_dfr *dfr, uint8_t rtm_type)
 	}
 
 	memcpy(&gw, &dfr->addr, sizeof(gw));
+#ifdef __KAME__
 	/* from route(8) getaddr()*/
 	*(u_int16_t *)& gw.sin6_addr.s6_addr[2] = htons(gw.sin6_scope_id);
 	gw.sin6_scope_id = 0;
+#endif
 	iov[iovcnt].iov_base = &gw;
 	iov[iovcnt++].iov_len = sizeof(gw);
 	rtm.rtm_msglen += sizeof(gw);
