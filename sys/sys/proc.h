@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.304 2021/01/11 13:55:53 claudio Exp $	*/
+/*	$OpenBSD: proc.h,v 1.305 2021/01/17 15:28:22 mvs Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -216,6 +216,7 @@ struct process {
 	u_int	ps_xexit;		/* Exit status for wait */
 	int	ps_xsig;		/* Stopping or killing signal */
 
+	pid_t	ps_ppid;		/* [a] Cached parent pid */
 	pid_t	ps_oppid;	 	/* Save parent pid during ptrace. */
 	int	ps_ptmask;		/* Ptrace event mask */
 	struct	ptrace_state *ps_ptstat;/* Ptrace state */

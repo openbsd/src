@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.230 2020/12/07 16:55:28 mpi Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.231 2021/01/17 15:28:21 mvs Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -231,6 +231,7 @@ process_new(struct proc *p, struct process *parent, int flags)
 
 	/* post-copy fixups */
 	pr->ps_pptr = parent;
+	pr->ps_ppid = parent->ps_pid;
 
 	/* bump references to the text vnode (for sysctl) */
 	pr->ps_textvp = parent->ps_textvp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.156 2020/12/07 16:55:28 mpi Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.157 2021/01/17 15:28:21 mvs Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -1257,7 +1257,7 @@ coredump_notes_elf(struct proc *p, void *iocookie, size_t *sizep)
 		cpi.cpi_sigcatch = pr->ps_sigacts->ps_sigcatch;
 
 		cpi.cpi_pid = pr->ps_pid;
-		cpi.cpi_ppid = pr->ps_pptr->ps_pid;
+		cpi.cpi_ppid = pr->ps_ppid;
 		cpi.cpi_pgrp = pr->ps_pgid;
 		if (pr->ps_session->s_leader)
 			cpi.cpi_sid = pr->ps_session->s_leader->ps_pid;
