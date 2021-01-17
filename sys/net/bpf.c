@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.201 2021/01/02 07:25:42 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.202 2021/01/17 02:27:29 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1444,7 +1444,6 @@ bpf_mtap_ether(caddr_t arg, const struct mbuf *m, u_int direction)
 #if NVLAN > 0
 	struct ether_vlan_header evh;
 	struct m_hdr mh, md;
-	uint8_t prio;
 
 	if ((m->m_flags & M_VLANTAG) == 0)
 #endif
@@ -1455,15 +1454,10 @@ bpf_mtap_ether(caddr_t arg, const struct mbuf *m, u_int direction)
 #if NVLAN > 0
 	KASSERT(m->m_len >= ETHER_HDR_LEN);
 
-	prio = m->m_pkthdr.pf.prio;
-	if (prio <= 1)
-		prio = !prio;
-
 	memcpy(&evh, mtod(m, char *), ETHER_HDR_LEN);
 	evh.evl_proto = evh.evl_encap_proto;
 	evh.evl_encap_proto = htons(ETHERTYPE_VLAN);
-	evh.evl_tag = htons(m->m_pkthdr.ether_vtag |
-	    (prio << EVL_PRIO_BITS));
+	evh.evl_tag = htons(m->m_pkthdr.ether_vtag);
 
 	mh.mh_flags = 0;
 	mh.mh_data = (caddr_t)&evh;
