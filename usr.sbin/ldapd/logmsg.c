@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.4 2019/10/24 12:39:26 tb Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.5 2021/01/17 14:45:35 rob Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -63,7 +63,7 @@ hexdump(void *data, size_t len, const char *fmt, ...)
 	uint8_t *p = data;
 	va_list ap;
 
-	if (log_getverbose() <= 2 || !debug)
+	if (log_getverbose() < 2 || !debug)
 		return;
 
 	va_start(ap, fmt);
@@ -98,7 +98,7 @@ ldap_debug_elements(struct ber_element *root, int context, const char *fmt, ...)
 	int		 constructed;
 	struct ber_oid	 o;
 
-	if (log_getverbose() <= 2 || !debug)
+	if (log_getverbose() < 2 || !debug)
 		return;
 
 	if (fmt != NULL) {
