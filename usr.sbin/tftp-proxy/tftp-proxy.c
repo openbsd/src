@@ -1,4 +1,4 @@
-/* $OpenBSD: tftp-proxy.c,v 1.21 2017/07/04 12:47:51 florian Exp $
+/* $OpenBSD: tftp-proxy.c,v 1.22 2021/01/17 13:38:52 claudio Exp $
  *
  * Copyright (c) 2005 DLS Internet Services
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -661,10 +661,8 @@ proxy_dst6(struct cmsghdr *cmsg, struct sockaddr_storage *ss)
 	case IPV6_PKTINFO:
 		memcpy(&sin6->sin6_addr, &ipi->ipi6_addr,
 		    sizeof(sin6->sin6_addr));
-#ifdef __KAME__
 		if (IN6_IS_ADDR_LINKLOCAL(&ipi->ipi6_addr))
 		    sin6->sin6_scope_id = ipi->ipi6_ifindex;
-#endif
 		break;
 	case IPV6_RECVDSTPORT:
 		memcpy(&sin6->sin6_port, CMSG_DATA(cmsg),
