@@ -1,4 +1,4 @@
-/*	$OpenBSD: systat.h,v 1.23 2019/03/04 21:27:35 dlg Exp $	*/
+/*	$OpenBSD: systat.h,v 1.24 2021/01/18 00:49:09 mortimer Exp $	*/
 /*	$NetBSD: systat.h,v 1.2 1995/01/20 08:52:14 jtc Exp $	*/
 
 /*-
@@ -112,4 +112,5 @@ struct ifcount {
 	u_int64_t	ifc_co;			/* collisions */
 	int		ifc_flags;		/* up / down */
 	int		ifc_state;		/* link state */
-} sum;
+};
+extern struct ifcount sum;
