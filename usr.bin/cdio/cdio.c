@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.79 2020/06/26 19:51:14 naddy Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.80 2021/01/18 00:44:00 mortimer Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -147,6 +147,8 @@ struct cmdtab {
 };
 
 struct cd_toc_entry *toc_buffer;
+
+struct track_head tracks;
 
 char		*cdname;
 int		fd = -1;

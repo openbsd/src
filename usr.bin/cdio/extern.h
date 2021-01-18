@@ -1,4 +1,4 @@
-/* $OpenBSD: extern.h,v 1.15 2010/03/01 02:09:44 krw Exp $ */
+/* $OpenBSD: extern.h,v 1.16 2021/01/18 00:44:00 mortimer Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -37,7 +37,8 @@ struct track_info {
 	char type;
 	int   speed; 
 };
-SLIST_HEAD(track_head, track_info) tracks;
+SLIST_HEAD(track_head, track_info);
+extern struct track_head tracks;
 
 /* Read/Write speed */
 #define DRIVE_SPEED_MAX		0xfffe
