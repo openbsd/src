@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.219 2021/01/13 11:34:01 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.220 2021/01/18 12:15:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1416,16 +1416,17 @@ prefix_write(u_char *buf, int len, struct bgpd_addr *prefix, u_int8_t plen,
 		memcpy(buf, &prefix->ba, totlen - 1);
 		return (totlen);
 	case AID_VPN_IPv4:
-		totlen = PREFIX_SIZE(plen) + sizeof(prefix->vpn4.rd);
+	case AID_VPN_IPv6:
+		totlen = PREFIX_SIZE(plen) + sizeof(prefix->rd);
 		psize = PREFIX_SIZE(plen) - 1;
-		plen += sizeof(prefix->vpn4.rd) * 8;
+		plen += sizeof(prefix->rd) * 8;
 		if (withdraw) {
 			/* withdraw have one compat label as placeholder */
 			totlen += 3;
 			plen += 3 * 8;
 		} else {
-			totlen += prefix->vpn4.labellen;
-			plen += prefix->vpn4.labellen * 8;
+			totlen += prefix->labellen;
+			plen += prefix->labellen * 8;
 		}
 
 		if (totlen > len)
@@ -1437,42 +1438,13 @@ prefix_write(u_char *buf, int len, struct bgpd_addr *prefix, u_int8_t plen,
 			*buf++ = 0x0;
 			*buf++ = 0x0;
 		} else  {
-			memcpy(buf, &prefix->vpn4.labelstack,
-			    prefix->vpn4.labellen);
-			buf += prefix->vpn4.labellen;
+			memcpy(buf, &prefix->labelstack,
+			    prefix->labellen);
+			buf += prefix->labellen;
 		}
-		memcpy(buf, &prefix->vpn4.rd, sizeof(prefix->vpn4.rd));
-		buf += sizeof(prefix->vpn4.rd);
-		memcpy(buf, &prefix->vpn4.addr, psize);
-		return (totlen);
-	case AID_VPN_IPv6:
-		totlen = PREFIX_SIZE(plen) + sizeof(prefix->vpn6.rd);
-		psize = PREFIX_SIZE(plen) - 1;
-		plen += sizeof(prefix->vpn6.rd) * 8;
-		if (withdraw) {
-			/* withdraw have one compat label as placeholder */
-			totlen += 3;
-			plen += 3 * 8;
-		} else {
-			totlen += prefix->vpn6.labellen;
-			plen += prefix->vpn6.labellen * 8;
-		}
-		if (totlen > len)
-			return (-1);
-		*buf++ = plen;
-		if (withdraw) {
-			/* magic compatibility label as per rfc8277 */
-			*buf++ = 0x80;
-			*buf++ = 0x0;
-			*buf++ = 0x0;
-		} else  {
-			memcpy(buf, &prefix->vpn6.labelstack,
-			    prefix->vpn6.labellen);
-			buf += prefix->vpn6.labellen;
-		}
-		memcpy(buf, &prefix->vpn6.rd, sizeof(prefix->vpn6.rd));
-		buf += sizeof(prefix->vpn6.rd);
-		memcpy(buf, &prefix->vpn6.addr, psize);
+		memcpy(buf, &prefix->rd, sizeof(prefix->rd));
+		buf += sizeof(prefix->rd);
+		memcpy(buf, &prefix->ba, psize);
 		return (totlen);
 	default:
 		return (-1);
@@ -1491,12 +1463,9 @@ prefix_writebuf(struct ibuf *buf, struct bgpd_addr *prefix, u_int8_t plen)
 		totlen = PREFIX_SIZE(plen);
 		break;
 	case AID_VPN_IPv4:
-		totlen = PREFIX_SIZE(plen) + sizeof(prefix->vpn4.rd) +
-		    prefix->vpn4.labellen;
-		break;
 	case AID_VPN_IPv6:
-		totlen = PREFIX_SIZE(plen) + sizeof(prefix->vpn6.rd) +
-		    prefix->vpn6.labellen;
+		totlen = PREFIX_SIZE(plen) + sizeof(prefix->rd) +
+		    prefix->labellen;
 		break;
 	default:
 		return (-1);

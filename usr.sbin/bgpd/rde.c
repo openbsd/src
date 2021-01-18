@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.512 2021/01/13 11:34:01 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.513 2021/01/18 12:15:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3658,7 +3658,7 @@ network_add(struct network_config *nc, struct filterstate *state)
 {
 	struct l3vpn		*vpn;
 	struct filter_set_head	*vpnset = NULL;
-	in_addr_t		 prefix4;
+	struct in_addr		 prefix4;
 	struct in6_addr		 prefix6;
 	u_int8_t		 vstate;
 	u_int16_t		 i;
@@ -3669,37 +3669,35 @@ network_add(struct network_config *nc, struct filterstate *state)
 				continue;
 			switch (nc->prefix.aid) {
 			case AID_INET:
-				prefix4 = nc->prefix.v4.s_addr;
-				bzero(&nc->prefix, sizeof(nc->prefix));
+				prefix4 = nc->prefix.v4;
+				memset(&nc->prefix, 0, sizeof(nc->prefix));
 				nc->prefix.aid = AID_VPN_IPv4;
-				nc->prefix.vpn4.rd = vpn->rd;
-				nc->prefix.vpn4.addr.s_addr = prefix4;
-				nc->prefix.vpn4.labellen = 3;
-				nc->prefix.vpn4.labelstack[0] =
+				nc->prefix.rd = vpn->rd;
+				nc->prefix.v4 = prefix4;
+				nc->prefix.labellen = 3;
+				nc->prefix.labelstack[0] =
 				    (vpn->label >> 12) & 0xff;
-				nc->prefix.vpn4.labelstack[1] =
+				nc->prefix.labelstack[1] =
 				    (vpn->label >> 4) & 0xff;
-				nc->prefix.vpn4.labelstack[2] =
+				nc->prefix.labelstack[2] =
 				    (vpn->label << 4) & 0xf0;
-				nc->prefix.vpn4.labelstack[2] |= BGP_MPLS_BOS;
+				nc->prefix.labelstack[2] |= BGP_MPLS_BOS;
 				vpnset = &vpn->export;
 				break;
 			case AID_INET6:
-				memcpy(&prefix6, &nc->prefix.v6.s6_addr,
-				    sizeof(struct in6_addr));
+				prefix6 = nc->prefix.v6;
 				memset(&nc->prefix, 0, sizeof(nc->prefix));
 				nc->prefix.aid = AID_VPN_IPv6;
-				nc->prefix.vpn6.rd = vpn->rd;
-				memcpy(&nc->prefix.vpn6.addr.s6_addr, &prefix6,
-				    sizeof(struct in6_addr));
-				nc->prefix.vpn6.labellen = 3;
-				nc->prefix.vpn6.labelstack[0] =
+				nc->prefix.rd = vpn->rd;
+				nc->prefix.v6 = prefix6;
+				nc->prefix.labellen = 3;
+				nc->prefix.labelstack[0] =
 				    (vpn->label >> 12) & 0xff;
-				nc->prefix.vpn6.labelstack[1] =
+				nc->prefix.labelstack[1] =
 				    (vpn->label >> 4) & 0xff;
-				nc->prefix.vpn6.labelstack[2] =
+				nc->prefix.labelstack[2] =
 				    (vpn->label << 4) & 0xf0;
-				nc->prefix.vpn6.labelstack[2] |= BGP_MPLS_BOS;
+				nc->prefix.labelstack[2] |= BGP_MPLS_BOS;
 				vpnset = &vpn->export;
 				break;
 			default:
@@ -3745,7 +3743,7 @@ void
 network_delete(struct network_config *nc)
 {
 	struct l3vpn	*vpn;
-	in_addr_t	 prefix4;
+	struct in_addr	 prefix4;
 	struct in6_addr	 prefix6;
 	u_int32_t	 i;
 
@@ -3755,36 +3753,34 @@ network_delete(struct network_config *nc)
 				continue;
 			switch (nc->prefix.aid) {
 			case AID_INET:
-				prefix4 = nc->prefix.v4.s_addr;
-				bzero(&nc->prefix, sizeof(nc->prefix));
+				prefix4 = nc->prefix.v4;
+				memset(&nc->prefix, 0, sizeof(nc->prefix));
 				nc->prefix.aid = AID_VPN_IPv4;
-				nc->prefix.vpn4.rd = vpn->rd;
-				nc->prefix.vpn4.addr.s_addr = prefix4;
-				nc->prefix.vpn4.labellen = 3;
-				nc->prefix.vpn4.labelstack[0] =
+				nc->prefix.rd = vpn->rd;
+				nc->prefix.v4 = prefix4;
+				nc->prefix.labellen = 3;
+				nc->prefix.labelstack[0] =
 				    (vpn->label >> 12) & 0xff;
-				nc->prefix.vpn4.labelstack[1] =
+				nc->prefix.labelstack[1] =
 				    (vpn->label >> 4) & 0xff;
-				nc->prefix.vpn4.labelstack[2] =
+				nc->prefix.labelstack[2] =
 				    (vpn->label << 4) & 0xf0;
-				nc->prefix.vpn4.labelstack[2] |= BGP_MPLS_BOS;
+				nc->prefix.labelstack[2] |= BGP_MPLS_BOS;
 				break;
 			case AID_INET6:
-				memcpy(&prefix6, &nc->prefix.v6.s6_addr,
-				    sizeof(struct in6_addr));
+				prefix6 = nc->prefix.v6;
 				memset(&nc->prefix, 0, sizeof(nc->prefix));
 				nc->prefix.aid = AID_VPN_IPv6;
-				nc->prefix.vpn6.rd = vpn->rd;
-				memcpy(&nc->prefix.vpn6.addr.s6_addr, &prefix6,
-				    sizeof(struct in6_addr));
-				nc->prefix.vpn6.labellen = 3;
-				nc->prefix.vpn6.labelstack[0] =
+				nc->prefix.rd = vpn->rd;
+				nc->prefix.v6 = prefix6;
+				nc->prefix.labellen = 3;
+				nc->prefix.labelstack[0] =
 				    (vpn->label >> 12) & 0xff;
-				nc->prefix.vpn6.labelstack[1] =
+				nc->prefix.labelstack[1] =
 				    (vpn->label >> 4) & 0xff;
-				nc->prefix.vpn6.labelstack[2] =
+				nc->prefix.labelstack[2] =
 				    (vpn->label << 4) & 0xf0;
-				nc->prefix.vpn6.labelstack[2] |= BGP_MPLS_BOS;
+				nc->prefix.labelstack[2] |= BGP_MPLS_BOS;
 				break;
 			default:
 				log_warnx("unable to VPNize prefix");

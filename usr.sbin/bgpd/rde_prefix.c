@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.39 2019/07/01 07:07:08 claudio Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.40 2021/01/18 12:15:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -79,27 +79,24 @@ pt_getaddr(struct pt_entry *pte, struct bgpd_addr *addr)
 		addr->v4 = ((struct pt_entry4 *)pte)->prefix4;
 		break;
 	case AID_INET6:
-		memcpy(&addr->v6, &((struct pt_entry6 *)pte)->prefix6,
-		    sizeof(addr->v6));
+		addr->v6 = ((struct pt_entry6 *)pte)->prefix6;
 		/* XXX scope_id ??? */
 		break;
 	case AID_VPN_IPv4:
-		addr->vpn4.addr = ((struct pt_entry_vpn4 *)pte)->prefix4;
-		addr->vpn4.rd = ((struct pt_entry_vpn4 *)pte)->rd;
-		addr->vpn4.labellen = ((struct pt_entry_vpn4 *)pte)->labellen;
-		memcpy(addr->vpn4.labelstack,
+		addr->v4 = ((struct pt_entry_vpn4 *)pte)->prefix4;
+		addr->rd = ((struct pt_entry_vpn4 *)pte)->rd;
+		addr->labellen = ((struct pt_entry_vpn4 *)pte)->labellen;
+		memcpy(addr->labelstack,
 		    ((struct pt_entry_vpn4 *)pte)->labelstack,
-		    addr->vpn4.labellen);
+		    addr->labellen);
 		break;
 	case AID_VPN_IPv6:
-		memcpy(&addr->vpn6.addr,
-		    &((struct pt_entry_vpn6 *)pte)->prefix6,
-		    sizeof(addr->vpn6.addr));
-		addr->vpn6.rd = ((struct pt_entry_vpn6 *)pte)->rd;
-		addr->vpn6.labellen = ((struct pt_entry_vpn6 *)pte)->labellen;
-		memcpy(addr->vpn6.labelstack,
+		addr->v6 = ((struct pt_entry_vpn6 *)pte)->prefix6;
+		addr->rd = ((struct pt_entry_vpn6 *)pte)->rd;
+		addr->labellen = ((struct pt_entry_vpn6 *)pte)->labellen;
+		memcpy(addr->labelstack,
 		    ((struct pt_entry_vpn6 *)pte)->labelstack,
-		    addr->vpn6.labellen);
+		    addr->labellen);
 		break;
 	default:
 		fatalx("pt_getaddr: unknown af");
@@ -136,26 +133,24 @@ pt_fill(struct bgpd_addr *prefix, int prefixlen)
 		pte_vpn4.aid = prefix->aid;
 		if (prefixlen > 32)
 			fatalx("pt_fill: bad IPv4 prefixlen");
-		inet4applymask(&pte_vpn4.prefix4, &prefix->vpn4.addr,
-		    prefixlen);
+		inet4applymask(&pte_vpn4.prefix4, &prefix->v4, prefixlen);
 		pte_vpn4.prefixlen = prefixlen;
-		pte_vpn4.rd = prefix->vpn4.rd;
-		pte_vpn4.labellen = prefix->vpn4.labellen;
-		memcpy(pte_vpn4.labelstack, prefix->vpn4.labelstack,
-		    prefix->vpn4.labellen);
+		pte_vpn4.rd = prefix->rd;
+		pte_vpn4.labellen = prefix->labellen;
+		memcpy(pte_vpn4.labelstack, prefix->labelstack,
+		    prefix->labellen);
 		return ((struct pt_entry *)&pte_vpn4);
 	case AID_VPN_IPv6:
 		memset(&pte_vpn6, 0, sizeof(pte_vpn6));
 		pte_vpn6.aid = prefix->aid;
 		if (prefixlen > 128)
 			fatalx("pt_get: bad IPv6 prefixlen");
-		inet6applymask(&pte_vpn6.prefix6, &prefix->vpn6.addr,
-		    prefixlen);
+		inet6applymask(&pte_vpn6.prefix6, &prefix->v6, prefixlen);
 		pte_vpn6.prefixlen = prefixlen;
-		pte_vpn6.rd = prefix->vpn6.rd;
-		pte_vpn6.labellen = prefix->vpn6.labellen;
-		memcpy(pte_vpn6.labelstack, prefix->vpn6.labelstack,
-		    prefix->vpn6.labellen);
+		pte_vpn6.rd = prefix->rd;
+		pte_vpn6.labellen = prefix->labellen;
+		memcpy(pte_vpn6.labelstack, prefix->labelstack,
+		    prefix->labellen);
 		return ((struct pt_entry *)&pte_vpn6);
 	default:
 		fatalx("pt_fill: unknown af");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.409 2021/01/04 13:40:32 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.410 2021/01/18 12:15:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -176,23 +176,6 @@ extern const struct aid aid_vals[];
 	sizeof(struct pt_entry_vpn6)			\
 }
 
-struct vpn4_addr {
-	u_int64_t	rd;
-	struct in_addr	addr;
-	u_int8_t	labelstack[21];	/* max that makes sense */
-	u_int8_t	labellen;
-	u_int8_t	pad1;
-	u_int8_t	pad2;
-};
-
-struct vpn6_addr {
-	u_int64_t	rd;
-	struct in6_addr	addr;
-	u_int8_t	labelstack[21];	/* max that makes sense */
-	u_int8_t	labellen;
-	u_int8_t	pad1;
-	u_int8_t	pad2;
-};
 
 #define BGP_MPLS_BOS	0x01
 
@@ -200,22 +183,15 @@ struct bgpd_addr {
 	union {
 		struct in_addr		v4;
 		struct in6_addr		v6;
-		struct vpn4_addr	vpn4;
-		struct vpn6_addr	vpn6;
 		/* maximum size for a prefix is 256 bits */
-		u_int8_t		addr8[32];
-		u_int16_t		addr16[16];
-		u_int32_t		addr32[8];
 	} ba;		    /* 128-bit address */
+	u_int64_t	rd;		/* route distinguisher for VPN addrs */
 	u_int32_t	scope_id;	/* iface scope id for v6 */
 	u_int8_t	aid;
+	u_int8_t	labellen;	/* size of the labelstack */
+	u_int8_t	labelstack[18];	/* max that makes sense */
 #define	v4	ba.v4
 #define	v6	ba.v6
-#define	vpn4	ba.vpn4
-#define	vpn6	ba.vpn6
-#define	addr8	ba.addr8
-#define	addr16	ba.addr16
-#define	addr32	ba.addr32
 };
 
 #define	DEFAULT_LISTENER	0x01
