@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.h,v 1.64 2014/10/02 06:23:15 otto Exp $	*/
+/*	$OpenBSD: rcsprog.h,v 1.65 2021/01/18 00:51:15 mortimer Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -120,7 +120,7 @@ int		build_cmd(char ***, char **, int);
 int		rcs_getopt(int, char **, const char *);
 int		rcs_main(int, char **);
 __dead void	rcs_usage(void);
-void		(*usage)(void);
+extern void		(*usage)(void);
 
 /* rlog.c */
 int		rlog_main(int, char **);
