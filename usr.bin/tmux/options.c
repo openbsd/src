@@ -1,4 +1,4 @@
-/* $OpenBSD: options.c,v 1.60 2020/08/25 11:35:32 nicm Exp $ */
+/* $OpenBSD: options.c,v 1.61 2021/01/18 11:14:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -157,8 +157,7 @@ options_value_to_string(struct options_entry *o, union options_value *ov,
 		case OPTIONS_TABLE_CHOICE:
 			s = xstrdup(o->tableentry->choices[ov->number]);
 			break;
-		case OPTIONS_TABLE_STRING:
-		case OPTIONS_TABLE_COMMAND:
+		default:
 			fatalx("not a number option type");
 		}
 		return (s);
@@ -311,6 +310,8 @@ options_default_to_string(const struct options_table_entry *oe)
 	case OPTIONS_TABLE_CHOICE:
 		s = xstrdup(oe->choices[oe->default_num]);
 		break;
+	default:
+		fatalx("unknown option type");
 	}
 	return (s);
 }
@@ -703,7 +704,7 @@ options_get_number(struct options *oo, const char *name)
 	if (o == NULL)
 		fatalx("missing option %s", name);
 	if (!OPTIONS_IS_NUMBER(o))
-	    fatalx("option %s is not a number", name);
+		fatalx("option %s is not a number", name);
 	return (o->value.number);
 }
 

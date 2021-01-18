@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.366 2020/12/03 07:12:11 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.367 2021/01/18 11:14:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1781,11 +1781,11 @@ server_client_check_exit(struct client *c)
 
 	switch (c->exit_type) {
 	case CLIENT_EXIT_RETURN:
-		if (c->exit_message != NULL) {
+		if (c->exit_message != NULL)
 			msize = strlen(c->exit_message) + 1;
-			size = (sizeof c->retval) + msize;
-		} else
-			size = (sizeof c->retval);
+		else
+			msize = 0;
+		size = (sizeof c->retval) + msize;
 		data = xmalloc(size);
 		memcpy(data, &c->retval, sizeof c->retval);
 		if (c->exit_message != NULL)
