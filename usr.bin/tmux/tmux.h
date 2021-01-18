@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1084 2021/01/17 16:17:41 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1085 2021/01/18 10:27:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1889,7 +1889,6 @@ const char	*find_cwd(void);
 const char	*find_home(void);
 const char	*getversion(void);
 void		 expand_paths(const char *, char ***, u_int *);
-
 
 /* proc.c */
 struct imsg;

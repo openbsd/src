@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.119 2020/08/07 07:02:57 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.120 2021/01/18 10:27:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -697,7 +697,6 @@ grid_move_lines(struct grid *gd, u_int dy, u_int py, u_int ny, u_int bg)
 	if (py != 0 && (py < dy || py >= dy + ny))
 		gd->linedata[py - 1].flags &= ~GRID_LINE_WRAPPED;
 }
-
 
 /* Move a group of cells. */
 void
