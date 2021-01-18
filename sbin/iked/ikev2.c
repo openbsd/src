@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.293 2020/12/27 21:07:31 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.294 2021/01/18 01:23:53 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -4362,6 +4362,11 @@ ikev2_ikesa_enable(struct iked *env, struct iked_sa *sa, struct iked_sa *nsa)
 		sa->sa_addrpool6 = NULL;
 		RB_INSERT(iked_addrpool6, &env->sc_addrpool6, nsa);
 	}
+	nsa->sa_cp = sa->sa_cp;
+	nsa->sa_cp_addr = sa->sa_cp_addr;
+	sa->sa_cp_addr = NULL;
+	nsa->sa_cp_addr6 = sa->sa_cp_addr6;
+	sa->sa_cp_addr6 = NULL;
 	/* Transfer other attributes */
         if (sa->sa_dstid_entry_valid) {
 		sa_dstid_remove(env, sa);
