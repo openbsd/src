@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.97 2020/10/12 13:56:22 naddy Exp $	*/
+/*	$OpenBSD: main.c,v 1.98 2021/01/18 00:46:58 mortimer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,6 +49,8 @@
 #include "compress.h"
 
 #define min(a,b) ((a) < (b)? (a) : (b))
+
+enum program_mode pmode;
 
 int cat, decomp, pipin, force, verbose, testmode, list, recurse, storename;
 extern char *__progname;

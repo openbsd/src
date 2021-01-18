@@ -1,4 +1,4 @@
-/*	$OpenBSD: compress.h,v 1.13 2016/09/03 11:41:10 tedu Exp $	*/
+/*	$OpenBSD: compress.h,v 1.14 2021/01/18 00:46:58 mortimer Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -47,7 +47,7 @@ enum program_mode {
 	MODE_COMP,
 	MODE_DECOMP,
 	MODE_CAT
-} pmode;
+};
 
 /*
  * exit codes for compress
