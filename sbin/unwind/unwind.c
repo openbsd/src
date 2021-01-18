@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.53 2021/01/12 16:40:33 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.54 2021/01/18 15:26:04 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -830,8 +830,7 @@ open_ports(void)
 
 	if ((udp4sock == -1 || tcp4sock == -1) && (udp6sock == -1 ||
 	    tcp6sock == -1))
-		//fatalx("could not bind to 127.0.0.1 or ::1 on port 53");
-		fatalx("could not bind to 127.0.0.1 or ::1 on port 53 %d %d %d %d", udp4sock, tcp4sock, udp6sock, tcp6sock);
+		fatalx("could not bind to 127.0.0.1 or ::1 on port 53");
 
 	if (udp4sock != -1)
 		main_imsg_compose_frontend_fd(IMSG_UDP4SOCK, 0, udp4sock);
