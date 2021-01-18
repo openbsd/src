@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.139 2021/01/07 14:51:46 claudio Exp $	*/
+/*	$OpenBSD: in.h,v 1.140 2021/01/18 12:22:40 sthen Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -97,6 +97,7 @@ typedef __in_port_t	in_port_t;	/* IP port type */
 #define	IPPROTO_PIM		103		/* Protocol indep. multicast */
 #define	IPPROTO_IPCOMP		108		/* IP Payload Comp. Protocol */
 #define	IPPROTO_CARP		112		/* CARP */
+#define	IPPROTO_SCTP		132		/* SCTP, RFC 4960 */
 #define	IPPROTO_UDPLITE		136		/* UDP-Lite, RFC 3828 */
 #define	IPPROTO_MPLS		137		/* unicast MPLS packet */
 #define	IPPROTO_PFSYNC		240		/* PFSYNC */
