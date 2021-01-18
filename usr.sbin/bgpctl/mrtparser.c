@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrtparser.c,v 1.13 2019/07/03 06:22:01 claudio Exp $ */
+/*	$OpenBSD: mrtparser.c,v 1.14 2021/01/18 12:16:09 claudio Exp $ */
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
  *
@@ -833,14 +833,14 @@ mrt_extract_attr(struct mrt_rib_entry *re, u_char *a, int alen, u_int8_t aid,
 				re->nexthop.aid = aid;
 				memcpy(&tmp, a + 1 + sizeof(u_int64_t),
 				    sizeof(tmp));
-				re->nexthop.vpn4.addr.s_addr = tmp;
+				re->nexthop.v4.s_addr = tmp;
 				break;
 			case AID_VPN_IPv6:
 				if (attr_len < sizeof(u_int64_t) +
 				    sizeof(struct in6_addr))
 					return (-1);
 				re->nexthop.aid = aid;
-				memcpy(&re->nexthop.vpn6.addr,
+				memcpy(&re->nexthop.v6,
 				    a + 1 + sizeof(u_int64_t),
 				    sizeof(struct in6_addr));
 				break;
@@ -979,7 +979,7 @@ mrt_extract_addr(void *msg, u_int len, struct bgpd_addr *addr, u_int8_t aid)
 			return (-1);
 		addr->aid = aid;
 		/* XXX labelstack and rd missing */
-		memcpy(&addr->vpn4.addr, b + sizeof(u_int64_t),
+		memcpy(&addr->v4, b + sizeof(u_int64_t),
 		    sizeof(struct in_addr));
 		return (sizeof(u_int64_t) + sizeof(struct in_addr));
 	case AID_VPN_IPv6:
@@ -987,7 +987,7 @@ mrt_extract_addr(void *msg, u_int len, struct bgpd_addr *addr, u_int8_t aid)
 			return (-1);
 		addr->aid = aid;
 		/* XXX labelstack and rd missing */
-		memcpy(&addr->vpn6.addr, b + sizeof(u_int64_t),
+		memcpy(&addr->v6, b + sizeof(u_int64_t),
 		    sizeof(struct in6_addr));
 		return (sizeof(u_int64_t) + sizeof(struct in6_addr));
 	default:
