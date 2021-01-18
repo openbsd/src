@@ -1,4 +1,4 @@
-.\"     $OpenBSD: pcap-filter.5,v 1.5 2020/08/03 03:40:02 dlg Exp $
+.\"     $OpenBSD: pcap-filter.5,v 1.6 2021/01/18 09:26:35 sthen Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -20,7 +20,7 @@
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: August 3 2020 $
+.Dd $Mdocdate: January 18 2021 $
 .Dt PCAP-FILTER 5
 .Os
 .Sh NAME
@@ -378,8 +378,9 @@ and looks up the subnet mask on the interface on which the capture is
 being done.
 .Pp
 If the subnet mask of the interface on which the capture is being done
-is not available,
-this check will not work correctly.
+is not known, a value of PCAP_NETMASK_UNKNOWN can be supplied;
+tests for IPv4 broadcast addreses will fail to compile,
+but all other tests in the filter program will be OK.
 .It Cm ether multicast
 True if the packet is an Ethernet multicast packet.
 The

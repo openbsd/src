@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap.h,v 1.21 2019/11/28 03:08:21 akoshibe Exp $	*/
+/*	$OpenBSD: pcap.h,v 1.22 2021/01/18 09:26:35 sthen Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -154,6 +154,12 @@ struct pcap_addr {
 #define PCAP_WARNING			1	/* generic warning code */
 #define PCAP_WARNING_PROMISC_NOTSUP	2	/* this device doesn't support promiscuous mode */
 #define PCAP_WARNING_TSTAMP_TYPE_NOTSUP	3	/* the requested time stamp type is not supported */
+
+/*
+ * Value to pass to pcap_compile() as the netmask if you don't know what
+ * the netmask is.
+ */
+#define PCAP_NETMASK_UNKNOWN		0xffffffff
 
 typedef void (*pcap_handler)(u_char *, const struct pcap_pkthdr *,
 			     const u_char *);
