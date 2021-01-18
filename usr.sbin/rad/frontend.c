@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.35 2020/12/29 19:47:16 benno Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.36 2021/01/18 15:20:28 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -156,7 +156,6 @@ struct imsgev		*iev_engine;
 struct event		 ev_route;
 int			 ioctlsock = -1, routesock = -1;
 struct ipv6_mreq	 all_routers;
-struct sockaddr_in6	 all_nodes;
 struct msghdr		 sndmhdr;
 struct iovec		 sndiov[2];
 
@@ -237,11 +236,6 @@ frontend(int debug, int verbose)
 
 	if (inet_pton(AF_INET6, "ff02::2",
 	    &all_routers.ipv6mr_multiaddr.s6_addr) == -1)
-		fatal("inet_pton");
-
-	all_nodes.sin6_len = sizeof(all_nodes);
-	all_nodes.sin6_family = AF_INET6;
-	if (inet_pton(AF_INET6, "ff02::1", &all_nodes.sin6_addr) != 1)
 		fatal("inet_pton");
 
 	sndcmsgbuflen = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
