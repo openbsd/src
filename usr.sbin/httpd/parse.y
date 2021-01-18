@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.122 2020/12/30 18:40:22 benno Exp $	*/
+/*	$OpenBSD: parse.y,v 1.123 2021/01/18 18:47:49 tb Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -119,6 +119,7 @@ int		 listen_on(const char *, int, struct portrange *);
 int		 getservice(char *);
 int		 is_if_in_group(const char *, const char *);
 int		 get_fastcgi_dest(struct server_config *, const char *, char *);
+void		 remove_locations(struct server_config *);
 
 typedef struct {
 	union {
@@ -357,6 +358,8 @@ server		: SERVER optmatch STRING	{
 				log_warnx("%s:%d: server \"%s\": failed to "
 				    "load public/private keys", file->name,
 				    yylval.lineno, srv->srv_conf.name);
+
+				remove_locations(srv_conf);
 				serverconfig_free(srv_conf);
 				srv_conf = NULL;
 				free(srv);
@@ -2489,4 +2492,19 @@ get_fastcgi_dest(struct server_config *xsrv_conf, const char *node, char *port)
 	freeaddrinfo(res);
 
 	return (0);
+}
+
+void
+remove_locations(struct server_config *xsrv_conf)
+{
+	struct server *s, *next;
+
+	TAILQ_FOREACH_SAFE(s, conf->sc_servers, srv_entry, next) {
+		if (!(s->srv_conf.flags & SRVFLAG_LOCATION &&
+		    s->srv_conf.parent_id == xsrv_conf->parent_id))
+			continue;
+		TAILQ_REMOVE(conf->sc_servers, s, srv_entry);
+		serverconfig_free(&s->srv_conf);
+		free(s);
+	}
 }
