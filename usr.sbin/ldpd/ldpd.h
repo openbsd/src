@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.90 2019/01/23 08:43:45 dlg Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.91 2021/01/19 15:23:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -363,13 +363,8 @@ enum ldpd_process {
 	PROC_MAIN,
 	PROC_LDP_ENGINE,
 	PROC_LDE_ENGINE
-} ldpd_process;
-
-static const char * const log_procnames[] = {
-	"parent",
-	"ldpe",
-	"lde"
 };
+extern enum ldpd_process	ldpd_process;
 
 enum socket_type {
 	LDP_SOCKET_DISC,

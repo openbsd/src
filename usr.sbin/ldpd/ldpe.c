@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.78 2021/01/19 15:14:35 claudio Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.79 2021/01/19 15:23:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -78,7 +78,7 @@ ldpe(int debug, int verbose, char *sockname)
 
 	setproctitle("ldp engine");
 	ldpd_process = PROC_LDP_ENGINE;
-	log_procname = log_procnames[ldpd_process];
+	log_procname = "ldpe";
 
 	/* create ldpd control socket outside chroot */
 	global.csock = sockname;
