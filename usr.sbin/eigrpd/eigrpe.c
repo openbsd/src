@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.c,v 1.38 2021/01/19 10:37:25 claudio Exp $ */
+/*	$OpenBSD: eigrpe.c,v 1.39 2021/01/19 10:53:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -124,8 +124,7 @@ eigrpe(int debug, int verbose, char *sockname)
 		fatal("chdir(\"/\")");
 
 	setproctitle("eigrp engine");
-	eigrpd_process = PROC_EIGRP_ENGINE;
-	log_procname = log_procnames[eigrpd_process];
+	log_procname = "eigrpe";
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
@@ -182,7 +181,7 @@ eigrpe_shutdown(void)
 	msgbuf_clear(&iev_main->ibuf.w);
 	close(iev_main->ibuf.fd);
 
-	config_clear(econf);
+	config_clear(econf, PROC_EIGRP_ENGINE);
 
 	event_del(&ev4);
 	event_del(&ev6);
@@ -363,7 +362,7 @@ eigrpe_dispatch_main(int fd, short event, void *bula)
 				    "RB_INSERT(ifaces_by_id) failed");
 			break;
 		case IMSG_RECONF_END:
-			merge_config(econf, nconf);
+			merge_config(econf, nconf, PROC_EIGRP_ENGINE);
 			nconf = NULL;
 			break;
 		case IMSG_CTL_KROUTE:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.23 2016/09/02 16:46:29 renato Exp $ */
+/*	$OpenBSD: rde.c,v 1.24 2021/01/19 10:53:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -90,7 +90,7 @@ rde(int debug, int verbose)
 		fatal("chdir(\"/\")");
 
 	setproctitle("route decision engine");
-	eigrpd_process = PROC_RDE_ENGINE;
+	log_procname = "rde";
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
@@ -137,7 +137,7 @@ rde_shutdown(void)
 	msgbuf_clear(&iev_main->ibuf.w);
 	close(iev_main->ibuf.fd);
 
-	config_clear(rdeconf);
+	config_clear(rdeconf, PROC_RDE_ENGINE);
 
 	free(iev_eigrpe);
 	free(iev_main);
@@ -429,7 +429,7 @@ rde_dispatch_parent(int fd, short event, void *bula)
 				    "RB_INSERT(ifaces_by_id) failed");
 			break;
 		case IMSG_RECONF_END:
-			merge_config(rdeconf, nconf);
+			merge_config(rdeconf, nconf, PROC_RDE_ENGINE);
 			nconf = NULL;
 			break;
 		default:

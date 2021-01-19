@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.h,v 1.25 2018/08/05 08:10:35 mestre Exp $ */
+/*	$OpenBSD: eigrpd.h,v 1.26 2021/01/19 10:53:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -60,12 +60,6 @@
 #define	F_CTL_EXTERNAL		0x0200	/* only used by eigrpctl */
 #define	F_CTL_ACTIVE		0x0400
 #define	F_CTL_ALLLINKS		0x0800
-
-static const char * const log_procnames[] = {
-	"parent",
-	"eigrpe",
-	"rde"
-};
 
 struct imsgev {
 	struct imsgbuf		 ibuf;
@@ -318,7 +312,7 @@ enum eigrpd_process {
 	PROC_MAIN,
 	PROC_EIGRP_ENGINE,
 	PROC_RDE_ENGINE
-} eigrpd_process;
+};
 
 struct eigrpd_conf {
 	struct in_addr		 rtr_id;
@@ -502,9 +496,10 @@ void		 imsg_event_add(struct imsgev *);
 int		 imsg_compose_event(struct imsgev *, uint16_t, uint32_t,
 		    pid_t, int, void *, uint16_t);
 struct eigrp	*eigrp_find(struct eigrpd_conf *, int, uint16_t);
-void		 merge_config(struct eigrpd_conf *, struct eigrpd_conf *);
+void		 merge_config(struct eigrpd_conf *, struct eigrpd_conf *,
+		    enum eigrpd_process);
 struct eigrpd_conf *config_new_empty(void);
-void		 config_clear(struct eigrpd_conf *);
+void		 config_clear(struct eigrpd_conf *, enum eigrpd_process);
 
 /* printconf.c */
 void		 print_config(struct eigrpd_conf *);

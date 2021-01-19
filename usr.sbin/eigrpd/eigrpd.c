@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.c,v 1.27 2019/03/31 03:36:18 yasuoka Exp $ */
+/*	$OpenBSD: eigrpd.c,v 1.28 2021/01/19 10:53:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -111,8 +111,7 @@ main(int argc, char *argv[])
 	int			 pipe_parent2rde[2];
 
 	conffile = CONF_FILE;
-	eigrpd_process = PROC_MAIN;
-	log_procname = log_procnames[eigrpd_process];
+	log_procname = "parent";
 	sockname = EIGRPD_SOCKET;
 
 	log_init(1);	/* log to stderr until daemonized */
@@ -292,7 +291,7 @@ eigrpd_shutdown(void)
 	close(iev_rde->ibuf.fd);
 
 	kr_shutdown();
-	config_clear(eigrpd_conf);
+	config_clear(eigrpd_conf, PROC_MAIN);
 
 	log_debug("waiting for children to terminate");
 	do {
@@ -617,7 +616,7 @@ eigrp_reload(void)
 	if (main_imsg_send_config(xconf) == -1)
 		return (-1);
 
-	merge_config(eigrpd_conf, xconf);
+	merge_config(eigrpd_conf, xconf, PROC_MAIN);
 
 	return (0);
 }
@@ -633,7 +632,8 @@ eigrp_sendboth(enum imsg_type type, void *buf, uint16_t len)
 }
 
 void
-merge_config(struct eigrpd_conf *conf, struct eigrpd_conf *xconf)
+merge_config(struct eigrpd_conf *conf, struct eigrpd_conf *xconf,
+    enum eigrpd_process proc)
 {
 	struct iface		*iface, *itmp, *xi;
 	struct eigrp		*eigrp, *etmp, *xe;
@@ -651,7 +651,7 @@ merge_config(struct eigrpd_conf *conf, struct eigrpd_conf *xconf)
 		if ((xe = eigrp_find(xconf, eigrp->af, eigrp->as)) == NULL) {
 			TAILQ_REMOVE(&conf->instances, eigrp, entry);
 
-			switch (eigrpd_process) {
+			switch (proc) {
 			case PROC_RDE_ENGINE:
 				rde_instance_del(eigrp);
 				break;
@@ -670,7 +670,7 @@ merge_config(struct eigrpd_conf *conf, struct eigrpd_conf *xconf)
 			TAILQ_REMOVE(&xconf->instances, xe, entry);
 			TAILQ_INSERT_TAIL(&conf->instances, xe, entry);
 
-			switch (eigrpd_process) {
+			switch (proc) {
 			case PROC_RDE_ENGINE:
 				rde_instance_init(xe);
 				break;
@@ -707,7 +707,7 @@ merge_config(struct eigrpd_conf *conf, struct eigrpd_conf *xconf)
 	}	
 
 	/* resend addresses to activate new interfaces */
-	if (eigrpd_process == PROC_MAIN)
+	if (proc == PROC_MAIN)
 		kif_redistribute();
 
 	free(xconf);
@@ -735,13 +735,13 @@ config_new_empty(void)
 }
 
 void
-config_clear(struct eigrpd_conf *conf)
+config_clear(struct eigrpd_conf *conf, enum eigrpd_process proc)
 {
 	struct eigrpd_conf	*xconf;
 
 	/* merge current config with an empty config */
 	xconf = config_new_empty();
-	merge_config(conf, xconf);
+	merge_config(conf, xconf, proc);
 
 	free(conf);
 }
