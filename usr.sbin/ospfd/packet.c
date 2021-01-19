@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.34 2021/01/19 09:29:49 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.35 2021/01/19 16:01:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -39,6 +39,8 @@ int		 ip_hdr_sanity_check(const struct ip *, u_int16_t);
 int		 ospf_hdr_sanity_check(const struct ip *,
 		    struct ospf_hdr *, u_int16_t, const struct iface *);
 struct iface	*find_iface(struct ospfd_conf *, unsigned int, struct in_addr);
+
+static u_int8_t	*recv_buf;
 
 int
 gen_ospf_hdr(struct ibuf *buf, struct iface *iface, u_int8_t type)
@@ -107,7 +109,6 @@ send_packet(struct iface *iface, struct ibuf *buf, struct sockaddr_in *dst)
 void
 recv_packet(int fd, short event, void *bula)
 {
-	static char pkt_ptr[READ_BUF_SIZE];
 	union {
 		struct cmsghdr hdr;
 		char	buf[CMSG_SPACE(sizeof(struct sockaddr_dl))];
@@ -130,9 +131,13 @@ recv_packet(int fd, short event, void *bula)
 	if (event != EV_READ)
 		return;
 
+	if (recv_buf == NULL)
+		if ((recv_buf = malloc(READ_BUF_SIZE)) == NULL)
+			fatal(__func__);
+
 	/* setup buffer */
 	bzero(&msg, sizeof(msg));
-	iov.iov_base = buf = pkt_ptr;
+	iov.iov_base = buf = recv_buf;
 	iov.iov_len = READ_BUF_SIZE;
 	msg.msg_iov = &iov;
 	msg.msg_iovlen = 1;
