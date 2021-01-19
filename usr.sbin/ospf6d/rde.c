@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.88 2020/05/16 15:54:12 denis Exp $ */
+/*	$OpenBSD: rde.c,v 1.89 2021/01/19 09:54:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -88,8 +88,8 @@ int		 prefix_compare(struct prefix_node *, struct prefix_node *);
 void		 prefix_tree_add(struct prefix_tree *, struct lsa_link *);
 
 struct ospfd_conf	*rdeconf = NULL, *nconf = NULL;
-struct imsgev		*iev_ospfe;
-struct imsgev		*iev_main;
+static struct imsgev	*iev_ospfe;
+static struct imsgev	*iev_main;
 struct rde_nbr		*nbrself;
 struct lsa_tree		 asext_tree;
 
