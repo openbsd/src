@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.16 2020/03/30 17:47:48 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.17 2021/01/19 17:38:41 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -260,17 +260,28 @@ ra_ifaceoptsl	: NO AUTO PREFIX {
 		| PREFIX STRING {
 			struct in6_addr	 addr;
 			int		 prefixlen;
+			char		*p;
+			const char	*errstr;
 
 			memset(&addr, 0, sizeof(addr));
-			prefixlen = inet_net_pton(AF_INET6, $2, &addr,
-			    sizeof(addr));
-			if (prefixlen == -1) {
-				yyerror("error parsing prefix");
+			p = strchr($2, '/');
+			if (p != NULL) {
+				*p++ = '\0';
+				prefixlen = strtonum(p, 0, 128, &errstr);
+				if (errstr != NULL) {
+					yyerror("error parsing prefix "
+					    "\"%s/%s\"", $2, p);
+					free($2);
+					YYERROR;
+				}
+			} else
+				prefixlen = 64;
+			if(inet_pton(AF_INET6, $2, &addr) == 0) {
+				yyerror("error parsing prefix \"%s/%d\"", $2,
+				    prefixlen);
 				free($2);
 				YYERROR;
 			}
-			if (prefixlen == 128 && strchr($2, '/') == NULL)
-				prefixlen = 64;
 			mask_prefix(&addr, prefixlen);
 			ra_prefix_conf = conf_get_ra_prefix(&addr, prefixlen);
 		} ra_prefix_block {

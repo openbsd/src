@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.5 2018/08/03 13:14:46 florian Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.6 2021/01/19 17:38:41 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -102,7 +102,7 @@ print_config(struct rad_conf *conf)
 {
 	struct ra_iface_conf	*iface;
 	struct ra_prefix_conf	*prefix;
-	char			 buf[INET6_ADDRSTRLEN], *bufp;
+	char			 buf[INET6_ADDRSTRLEN];
 
 	print_ra_options("", &conf->ra_options);
 	printf("\n");
@@ -120,9 +120,9 @@ print_config(struct rad_conf *conf)
 			printf("\tno auto prefix\n");
 
 		SIMPLEQ_FOREACH(prefix, &iface->ra_prefix_list, entry) {
-			bufp = inet_net_ntop(AF_INET6, &prefix->prefix,
-			    prefix->prefixlen, buf, sizeof(buf));
-			printf("\tprefix %s {\n", bufp);
+			printf("\tprefix %s/%d {\n", inet_ntop(AF_INET6,
+			    &prefix->prefix, buf, sizeof(buf)),
+			    prefix->prefixlen);
 			print_prefix_options("\t\t", prefix);
 			printf("\t}\n");
 		}
