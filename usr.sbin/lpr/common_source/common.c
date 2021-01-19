@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.41 2016/02/29 17:26:01 jca Exp $	*/
+/*	$OpenBSD: common.c,v 1.42 2021/01/19 09:04:13 claudio Exp $	*/
 /*	$NetBSD: common.c,v 1.21 2000/08/09 14:28:50 itojun Exp $	*/
 
 /*
@@ -322,6 +322,7 @@ checkremote(void)
 	int error;
 	struct ifaddrs *ifap, *ifa;
 	const int niflags = NI_NUMERICHOST;
+	struct sockaddr *sa;
 #ifdef __KAME__
 	struct sockaddr_in6 sin6;
 	struct sockaddr_in6 *sin6p;
@@ -370,10 +371,11 @@ checkremote(void)
 		if (error != 0)
 			continue;
 		for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+			sa = ifa->ifa_addr;
 #ifdef __KAME__
-			sin6p = (struct sockaddr_in6 *)ifa->ifa_addr;
-			if (ifa->ifa_addr->sa_family == AF_INET6 &&
-			    ifa->ifa_addr->sa_len == sizeof(sin6) &&
+			sin6p = (struct sockaddr_in6 *)sa;
+			if (sa->sa_family == AF_INET6 &&
+			    sa->sa_len == sizeof(sin6) &&
 			    IN6_IS_ADDR_LINKLOCAL(&sin6p->sin6_addr) &&
 			    *(u_int16_t *)&sin6p->sin6_addr.s6_addr[2]) {
 				/* kame scopeid hack */
@@ -382,19 +384,12 @@ checkremote(void)
 				    ntohs(*(u_int16_t *)&sin6p->sin6_addr.s6_addr[2]);
 				sin6.sin6_addr.s6_addr[2] = 0;
 				sin6.sin6_addr.s6_addr[3] = 0;
-				siginterrupt(SIGINT, 1);
-				error = getnameinfo((struct sockaddr *)&sin6,
-				    sin6.sin6_len, lname, sizeof(lname),
-				    NULL, 0, niflags);
-				siginterrupt(SIGINT, 0);
-				if (error != 0)
-					continue;
-			} else
+				sa = (struct sockaddr *)&sin6;
+			}
 #endif
 			siginterrupt(SIGINT, 1);
-			error = getnameinfo(ifa->ifa_addr,
-			    ifa->ifa_addr->sa_len, lname, sizeof(lname), NULL,
-			    0, niflags);
+			error = getnameinfo(sa, sa->sa_len,
+			    lname, sizeof(lname), NULL, 0, niflags);
 			siginterrupt(SIGINT, 0);
 			if (error != 0)
 				continue;
