@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bpe.c,v 1.14 2020/08/21 22:59:27 kn Exp $ */
+/*	$OpenBSD: if_bpe.c,v 1.15 2021/01/19 07:30:19 mvs Exp $ */
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
  *
@@ -750,25 +750,32 @@ bpe_set_parent(struct bpe_softc *sc, const struct if_parent *p)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct ifnet *ifp0;
+	int error = 0;
 
-	ifp0 = ifunit(p->ifp_parent); /* doesn't need an if_put */
+	ifp0 = if_unit(p->ifp_parent);
 	if (ifp0 == NULL)
 		return (ENXIO);
 
-	if (ifp0->if_type != IFT_ETHER)
-		return (ENXIO);
+	if (ifp0->if_type != IFT_ETHER) {
+		error = ENXIO;
+		goto put;
+	}
 
 	if (ifp0->if_index == sc->sc_key.k_if)
-		return (0);
+		goto put;
 
-	if (ISSET(ifp->if_flags, IFF_RUNNING))
-		return (EBUSY);
+	if (ISSET(ifp->if_flags, IFF_RUNNING)) {
+		error = EBUSY;
+		goto put;
+	}
 
 	/* commit */
 	sc->sc_key.k_if = ifp0->if_index;
 	bpe_flush_map(sc, IFBF_FLUSHALL);
 
-	return (0);
+put:
+	if_put(ifp0);
+	return (error);
 }
 
 static int
