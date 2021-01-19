@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.267 2020/10/29 21:15:27 denis Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.268 2021/01/19 17:41:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -718,14 +718,6 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 			return (0);
 		}
 
-		break;
-	case SYS_readlink:
-		/* Allow /etc/malloc.conf for malloc(3). */
-		if ((ni->ni_pledge == PLEDGE_RPATH) &&
-		    strcmp(path, "/etc/malloc.conf") == 0) {
-			ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
-			return (0);
-		}
 		break;
 	case SYS_stat:
 		/* DNS needs /etc/resolv.conf. */
