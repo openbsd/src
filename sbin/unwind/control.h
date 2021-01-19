@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.h,v 1.1 2019/01/23 13:11:00 florian Exp $	*/
+/*	$OpenBSD: control.h,v 1.2 2021/01/19 16:52:12 florian Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,19 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-struct {
-	struct event	ev;
-	struct event	evt;
-	int		fd;
-} control_state;
-
-struct ctl_conn {
-	TAILQ_ENTRY(ctl_conn)	entry;
-	struct imsgev		iev;
-};
-
 int	control_init(char *);
-int	control_listen(void);
+int	control_listen(int fd);
 void	control_accept(int, short, void *);
 void	control_dispatch_imsg(int, short, void *);
 int	control_imsg_relay(struct imsg *);
