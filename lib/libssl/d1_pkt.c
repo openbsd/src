@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.89 2021/01/19 18:57:09 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.90 2021/01/19 19:07:39 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -1105,7 +1105,6 @@ do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 		goto err;
 
 	tls12_record_layer_set_version(s->internal->rl, s->version);
-	tls12_record_layer_set_write_epoch(s->internal->rl, D1I(s)->w_epoch);
 
 	if (!tls12_record_layer_seal_record(s->internal->rl, type, buf, len, &cbb))
 		goto err;
@@ -1245,6 +1244,7 @@ dtls1_reset_seq_numbers(SSL *s, int rw)
 		memset(S3I(s)->read_sequence, 0, sizeof(S3I(s)->read_sequence));
 	} else {
 		D1I(s)->w_epoch++;
+		tls12_record_layer_set_write_epoch(s->internal->rl, D1I(s)->w_epoch);
 		memcpy(D1I(s)->last_write_sequence, S3I(s)->write_sequence,
 		    sizeof(S3I(s)->write_sequence));
 		memset(S3I(s)->write_sequence, 0, sizeof(S3I(s)->write_sequence));

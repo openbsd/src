@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_record_layer.c,v 1.12 2021/01/19 18:57:09 jsing Exp $ */
+/* $OpenBSD: tls12_record_layer.c,v 1.13 2021/01/19 19:07:39 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -132,8 +132,13 @@ struct tls12_record_layer {
 
 	uint8_t alert_desc;
 
+	/* Pointers to active record protection (memory is not owned). */
 	struct tls12_record_protection *read;
 	struct tls12_record_protection *write;
+
+	struct tls12_record_protection *read_current;
+	struct tls12_record_protection *write_current;
+	struct tls12_record_protection *write_previous;
 };
 
 struct tls12_record_layer *
@@ -143,10 +148,13 @@ tls12_record_layer_new(void)
 
 	if ((rl = calloc(1, sizeof(struct tls12_record_layer))) == NULL)
 		goto err;
-	if ((rl->read = tls12_record_protection_new()) == NULL)
+	if ((rl->read_current = tls12_record_protection_new()) == NULL)
 		goto err;
-	if ((rl->write = tls12_record_protection_new()) == NULL)
+	if ((rl->write_current = tls12_record_protection_new()) == NULL)
 		goto err;
+
+	rl->read = rl->read_current;
+	rl->write = rl->write_current;
 
 	return rl;
 
@@ -162,8 +170,9 @@ tls12_record_layer_free(struct tls12_record_layer *rl)
 	if (rl == NULL)
 		return;
 
-	tls12_record_protection_free(rl->read);
-	tls12_record_protection_free(rl->write);
+	tls12_record_protection_free(rl->read_current);
+	tls12_record_protection_free(rl->write_current);
+	tls12_record_protection_free(rl->write_previous);
 
 	freezero(rl, sizeof(struct tls12_record_layer));
 }
@@ -226,6 +235,37 @@ tls12_record_layer_set_write_epoch(struct tls12_record_layer *rl, uint16_t epoch
 	rl->write->epoch = epoch;
 }
 
+int
+tls12_record_layer_use_write_epoch(struct tls12_record_layer *rl, uint16_t epoch)
+{
+	if (rl->write->epoch == epoch)
+		return 1;
+
+	if (rl->write_current->epoch == epoch) {
+		rl->write = rl->write_current;
+		return 1;
+	}
+
+	if (rl->write_previous != NULL && rl->write_previous->epoch == epoch) {
+		rl->write = rl->write_previous;
+		return 1;
+	}
+
+	return 0;
+}
+
+void
+tls12_record_layer_write_epoch_done(struct tls12_record_layer *rl, uint16_t epoch)
+{
+	if (rl->write_previous == NULL || rl->write_previous->epoch != epoch)
+		return;
+
+	rl->write = rl->write_current;
+
+	tls12_record_protection_free(rl->write_previous);
+	rl->write_previous = NULL;
+}
+
 static void
 tls12_record_layer_set_read_state(struct tls12_record_layer *rl,
     SSL_AEAD_CTX *aead_ctx, EVP_CIPHER_CTX *cipher_ctx, EVP_MD_CTX *hash_ctx,
@@ -263,6 +303,9 @@ tls12_record_layer_clear_write_state(struct tls12_record_layer *rl)
 {
 	tls12_record_layer_set_write_state(rl, NULL, NULL, NULL, 0);
 	rl->write->seq_num = NULL;
+
+	tls12_record_protection_free(rl->write_previous);
+	rl->write_previous = NULL;
 }
 
 void
@@ -337,6 +380,60 @@ tls12_record_layer_set_read_mac_key(struct tls12_record_layer *rl,
 	return 1;
 }
 
+int
+tls12_record_layer_change_read_cipher_state(struct tls12_record_layer *rl,
+    const uint8_t *mac_key, size_t mac_key_len, const uint8_t *key,
+    size_t key_len, const uint8_t *iv, size_t iv_len)
+{
+	struct tls12_record_protection *read_new = NULL;
+	int ret = 0;
+
+	if ((read_new = tls12_record_protection_new()) == NULL)
+		goto err;
+
+	/* XXX - change cipher state. */
+
+	tls12_record_protection_free(rl->read_current);
+	rl->read = rl->read_current = read_new;
+	read_new = NULL;
+
+	ret = 1;
+
+ err:
+	tls12_record_protection_free(read_new);
+
+	return ret;
+}
+
+int
+tls12_record_layer_change_write_cipher_state(struct tls12_record_layer *rl,
+    const uint8_t *mac_key, size_t mac_key_len, const uint8_t *key,
+    size_t key_len, const uint8_t *iv, size_t iv_len)
+{
+	struct tls12_record_protection *write_new;
+	int ret = 0;
+
+	if ((write_new = tls12_record_protection_new()) == NULL)
+		goto err;
+
+	/* XXX - change cipher state. */
+
+	if (rl->dtls) {
+		tls12_record_protection_free(rl->write_previous);
+		rl->write_previous = rl->write_current;
+		rl->write_current = NULL;
+	}
+	tls12_record_protection_free(rl->write_current);
+	rl->write = rl->write_current = write_new;
+	write_new = NULL;
+
+	ret = 1;
+
+ err:
+	tls12_record_protection_free(write_new);
+
+	return ret;
+}
 static int
 tls12_record_layer_build_seq_num(struct tls12_record_layer *rl, CBB *cbb,
     uint16_t epoch, uint8_t *seq_num, size_t seq_num_len)

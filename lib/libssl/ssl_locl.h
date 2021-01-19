@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.314 2021/01/19 18:57:09 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.315 2021/01/19 19:07:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -485,6 +485,10 @@ void tls12_record_layer_set_version(struct tls12_record_layer *rl,
     uint16_t version);
 void tls12_record_layer_set_write_epoch(struct tls12_record_layer *rl,
     uint16_t epoch);
+int tls12_record_layer_use_write_epoch(struct tls12_record_layer *rl,
+    uint16_t epoch);
+void tls12_record_layer_write_epoch_done(struct tls12_record_layer *rl,
+    uint16_t epoch);
 void tls12_record_layer_clear_read_state(struct tls12_record_layer *rl);
 void tls12_record_layer_clear_write_state(struct tls12_record_layer *rl);
 void tls12_record_layer_set_read_seq_num(struct tls12_record_layer *rl,
@@ -501,6 +505,12 @@ int tls12_record_layer_set_write_cipher_hash(struct tls12_record_layer *rl,
     EVP_CIPHER_CTX *cipher_ctx, EVP_MD_CTX *hash_ctx, int stream_mac);
 int tls12_record_layer_set_read_mac_key(struct tls12_record_layer *rl,
     const uint8_t *mac_key, size_t mac_key_len);
+int tls12_record_layer_change_read_cipher_state(struct tls12_record_layer *rl,
+    const uint8_t *mac_key, size_t mac_key_len, const uint8_t *key,
+    size_t key_len, const uint8_t *iv, size_t iv_len);
+int tls12_record_layer_change_write_cipher_state(struct tls12_record_layer *rl,
+    const uint8_t *mac_key, size_t mac_key_len, const uint8_t *key,
+    size_t key_len, const uint8_t *iv, size_t iv_len);
 int tls12_record_layer_open_record(struct tls12_record_layer *rl,
     uint8_t *buf, size_t buf_len, uint8_t **out, size_t *out_len);
 int tls12_record_layer_seal_record(struct tls12_record_layer *rl,

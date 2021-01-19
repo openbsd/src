@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.64 2021/01/19 18:51:08 jsing Exp $ */
+/* $OpenBSD: d1_both.c,v 1.65 2021/01/19 19:07:39 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -1055,9 +1055,8 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
 	/* restore state in which the message was originally sent */
 	s->session = frag->msg_header.saved_retransmit_state.session;
 	D1I(s)->w_epoch = frag->msg_header.saved_retransmit_state.epoch;
-	if (!tls12_record_layer_set_write_cipher_hash(s->internal->rl,
-	    frag->msg_header.saved_retransmit_state.enc_write_ctx,
-	    frag->msg_header.saved_retransmit_state.write_hash, 0))
+
+	if (!tls12_record_layer_use_write_epoch(s->internal->rl, D1I(s)->w_epoch))
 		return 0;
 
 	if (frag->msg_header.saved_retransmit_state.epoch ==
@@ -1074,8 +1073,8 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
 	/* restore current state */
 	s->session = saved_state.session;
 	D1I(s)->w_epoch = saved_state.epoch;
-	if (!tls12_record_layer_set_write_cipher_hash(s->internal->rl,
-	    s->internal->enc_write_ctx, s->internal->write_hash, 0))
+
+	if (!tls12_record_layer_use_write_epoch(s->internal->rl, D1I(s)->w_epoch))
 		return 0;
 
 	if (frag->msg_header.saved_retransmit_state.epoch ==
