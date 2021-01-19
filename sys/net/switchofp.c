@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.77 2020/08/28 12:01:48 mvs Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.78 2021/01/19 19:39:14 mvs Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -1158,18 +1158,23 @@ swofp_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 		if (breq->ifbr_portno >= OFP_PORT_MAX)
 			return (EINVAL);
 
-		if ((ifs = ifunit(breq->ifbr_ifsname)) == NULL)
+		if ((ifs = if_unit(breq->ifbr_ifsname)) == NULL)
 			return (ENOENT);
 
-		if (ifs->if_switchport == NULL)
+		if (ifs->if_switchport == NULL) {
+			if_put(ifs);
 			return (ENOENT);
+		}
 
 		TAILQ_FOREACH(swpo, &sc->sc_swpo_list, swpo_list_next) {
-			if (swpo->swpo_port_no == breq->ifbr_portno)
+			if (swpo->swpo_port_no == breq->ifbr_portno) {
+				if_put(ifs);
 				return (EEXIST);
+			}
 		}
 
 		swpo = (struct switch_port *)ifs->if_switchport;
+		if_put(ifs);
 		swpo->swpo_port_no = breq->ifbr_portno;
 
 		break;
