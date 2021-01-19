@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.76 2021/01/04 21:21:41 kn Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.77 2021/01/19 19:38:29 mvs Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -793,8 +793,9 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 		if (parms->eth_ifname[0] != '\0') {
 			struct ifnet	*eth_if;
 
-			eth_if = ifunit(parms->eth_ifname);
+			eth_if = if_unit(parms->eth_ifname);
 			if (eth_if == NULL || eth_if->if_type != IFT_ETHER) {
+				if_put(eth_if);
 				sc->sc_eth_ifidx = 0;
 				return (ENXIO);
 			}
@@ -805,6 +806,7 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 				    PPPOE_OVERHEAD;
 			}
 			sc->sc_eth_ifidx = eth_if->if_index;
+			if_put(eth_if);
 		}
 
 		if (sc->sc_concentrator_name)
