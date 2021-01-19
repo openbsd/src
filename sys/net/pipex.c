@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.129 2021/01/09 21:00:04 gnezdo Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.130 2021/01/19 19:37:42 mvs Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -202,9 +202,6 @@ pipex_init_session(struct pipex_session **rsession,
 	switch (req->pr_protocol) {
 #ifdef PIPEX_PPPOE
 	case PIPEX_PROTO_PPPOE:
-		over_ifp = ifunit(req->pr_proto.pppoe.over_ifname);
-		if (over_ifp == NULL)
-			return (EINVAL);
 		if (req->pr_peer_address.ss_family != AF_UNSPEC)
 			return (EINVAL);
 		break;
@@ -255,6 +252,14 @@ pipex_init_session(struct pipex_session **rsession,
 	}
 #endif
 
+#ifdef PIPEX_PPPOE
+	if (req->pr_protocol == PIPEX_PROTO_PPPOE) {
+		over_ifp = if_unit(req->pr_proto.pppoe.over_ifname);
+		if (over_ifp == NULL)
+			return (EINVAL);
+	}
+#endif
+
 	/* prepare a new session */
 	session = pool_get(&pipex_session_pool, PR_WAITOK | PR_ZERO);
 	session->state = PIPEX_STATE_INITIAL;
@@ -288,8 +293,10 @@ pipex_init_session(struct pipex_session **rsession,
 		memcpy(&session->local, &req->pr_local_address,
 		    MIN(req->pr_local_address.ss_len, sizeof(session->local)));
 #ifdef PIPEX_PPPOE
-	if (req->pr_protocol == PIPEX_PROTO_PPPOE)
+	if (req->pr_protocol == PIPEX_PROTO_PPPOE) {
 		session->proto.pppoe.over_ifidx = over_ifp->if_index;
+		if_put(over_ifp);
+	}
 #endif
 #ifdef PIPEX_PPTP
 	if (req->pr_protocol == PIPEX_PROTO_PPTP) {
