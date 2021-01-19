@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_boot.c,v 1.46 2020/08/24 10:02:07 mvs Exp $ */
+/*	$OpenBSD: nfs_boot.c,v 1.47 2021/01/19 19:35:59 mvs Exp $ */
 /*	$NetBSD: nfs_boot.c,v 1.26 1996/05/07 02:51:25 thorpej Exp $	*/
 
 /*
@@ -136,7 +136,7 @@ nfs_boot_init(struct nfs_diskless *nd, struct proc *procp)
 	/*
 	 * Find a network interface.
 	 */
-	if (nfsbootdevname == NULL || (ifp = ifunit(nfsbootdevname)) == NULL)
+	if (nfsbootdevname == NULL || (ifp = if_unit(nfsbootdevname)) == NULL)
 		panic("nfs_boot: no suitable interface");
 
 	bcopy(ifp->if_xname, ireq.ifr_name, IFNAMSIZ);
@@ -190,6 +190,7 @@ nfs_boot_init(struct nfs_diskless *nd, struct proc *procp)
 	}
 	if (ifa == NULL)
 		panic("nfs_boot: address not configured on %s", ifp->if_xname);
+	if_put(ifp);
 
 	/*
 	 * Get client name and gateway address.
