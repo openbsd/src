@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.63 2021/01/19 16:52:12 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.64 2021/01/19 16:52:40 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -148,8 +148,8 @@ void			 free_bl(void);
 int			 pending_query_cnt(void);
 
 struct uw_conf		*frontend_conf;
-struct imsgev		*iev_main;
-struct imsgev		*iev_resolver;
+static struct imsgev	*iev_main;
+static struct imsgev	*iev_resolver;
 struct event		 ev_route;
 int			 udp4sock = -1, udp6sock = -1;
 int			 tcp4sock = -1, tcp6sock = -1;

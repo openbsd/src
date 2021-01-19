@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.55 2021/01/19 16:50:23 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.56 2021/01/19 16:52:40 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -75,17 +75,14 @@ void		open_ports(void);
 void		solicit_dns_proposals(void);
 void		send_blocklist_fd(void);
 
-struct uw_conf	*main_conf;
-struct imsgev	*iev_frontend;
-struct imsgev	*iev_resolver;
-char		*conffile;
-
-pid_t		 frontend_pid;
-pid_t		 resolver_pid;
-
-uint32_t	 cmd_opts;
-
-int		 routesock;
+struct uw_conf		*main_conf;
+static struct imsgev	*iev_frontend;
+static struct imsgev	*iev_resolver;
+char			*conffile;
+pid_t			 frontend_pid;
+pid_t			 resolver_pid;
+uint32_t		 cmd_opts;
+int			 routesock;
 
 void
 main_sig_handler(int sig, short event, void *arg)
