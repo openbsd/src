@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.77 2020/06/22 15:09:34 mestre Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.78 2021/01/19 15:14:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -146,7 +146,6 @@ ldpe(int debug, int verbose, char *sockname)
 	global.ipv6.ldp_session_socket = -1;
 
 	/* listen on ldpd control socket */
-	TAILQ_INIT(&ctl_conns);
 	control_listen();
 
 	if ((pkt_ptr = calloc(1, IBUF_READ_SIZE)) == NULL)
