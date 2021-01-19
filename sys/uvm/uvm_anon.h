@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.h,v 1.21 2020/01/04 16:17:29 beck Exp $	*/
+/*	$OpenBSD: uvm_anon.h,v 1.22 2021/01/19 13:21:36 mpi Exp $	*/
 /*	$NetBSD: uvm_anon.h,v 1.13 2000/12/27 09:17:04 chs Exp $	*/
 
 /*
@@ -38,6 +38,8 @@
  */
 
 struct vm_anon {
+	struct rwlock *an_lock;
+
 	struct vm_page *an_page;	/* if in RAM */
 	int an_ref;			/* reference count */
 
@@ -78,12 +80,15 @@ struct vm_aref {
 
 #ifdef _KERNEL
 struct vm_anon	*uvm_analloc(void);
-void		 uvm_anfree(struct vm_anon *);
-void 		 uvm_anfree_list(struct vm_anon *, struct pglist *);
+void		 uvm_anfree_list(struct vm_anon *, struct pglist *);
+void		 uvm_anon_release(struct vm_anon *);
 void		 uvm_anwait(void);
 void		 uvm_anon_init(void);
 void		 uvm_anon_dropswap(struct vm_anon *);
-boolean_t	 uvm_anon_pagein(struct vm_anon *);
+boolean_t	 uvm_anon_pagein(struct vm_amap *, struct vm_anon *);
+
+#define		uvm_anfree(an)	uvm_anfree_list((an), NULL)
+
 #endif /* _KERNEL */
 
 #endif /* _UVM_UVM_ANON_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.269 2020/10/19 08:19:46 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.270 2021/01/19 13:21:36 mpi Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -1104,10 +1104,8 @@ uvm_mapanon(struct vm_map *map, vaddr_t *addr, vsize_t sz,
 	if (flags & UVM_FLAG_CONCEAL)
 		entry->etype |= UVM_ET_CONCEAL;
 	if (flags & UVM_FLAG_OVERLAY) {
-		KERNEL_LOCK();
 		entry->aref.ar_pageoff = 0;
 		entry->aref.ar_amap = amap_alloc(sz, M_WAITOK, 0);
-		KERNEL_UNLOCK();
 	}
 
 	/* Update map and process statistics. */
@@ -2833,9 +2831,7 @@ uvm_map_splitentry(struct vm_map *map, struct vm_map_entry *orig,
 		orig->end = next->start = split;
 
 		if (next->aref.ar_amap) {
-			KERNEL_LOCK();
 			amap_splitref(&orig->aref, &next->aref, adj);
-			KERNEL_UNLOCK();
 		}
 		if (UVM_ET_ISSUBMAP(orig)) {
 			uvm_map_reference(next->object.sub_map);
@@ -4682,12 +4678,14 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 		cp_start = MAX(entry->start, start);
 		cp_end = MIN(entry->end, end);
 
+		amap_lock(amap);
 		for (; cp_start != cp_end; cp_start += PAGE_SIZE) {
 			anon = amap_lookup(&entry->aref,
 			    cp_start - entry->start);
 			if (anon == NULL)
 				continue;
 
+			KASSERT(anon->an_lock == amap->am_lock);
 			pg = anon->an_page;
 			if (pg == NULL) {
 				continue;
@@ -4743,6 +4741,7 @@ deactivate_it:
 				panic("uvm_map_clean: weird flags");
 			}
 		}
+		amap_unlock(amap);
 
 flush_object:
 		cp_start = MAX(entry->start, start);

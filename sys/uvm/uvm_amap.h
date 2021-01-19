@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.h,v 1.32 2020/11/13 11:11:49 mpi Exp $	*/
+/*	$OpenBSD: uvm_amap.h,v 1.33 2021/01/19 13:21:36 mpi Exp $	*/
 /*	$NetBSD: uvm_amap.h,v 1.14 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -133,6 +133,7 @@ struct vm_amap_chunk {
 };
 
 struct vm_amap {
+	struct rwlock *am_lock;	/* lock for all vm_amap flags */
 	int am_ref;		/* reference count */
 	int am_flags;		/* flags */
 	int am_nslot;		/* # of slots currently in map */
@@ -260,6 +261,9 @@ struct vm_amap {
 
 #define amap_flags(AMAP)	((AMAP)->am_flags)
 #define amap_refs(AMAP)		((AMAP)->am_ref)
+
+#define amap_lock(AMAP)		rw_enter_write((AMAP)->am_lock)
+#define amap_unlock(AMAP)	rw_exit_write((AMAP)->am_lock)
 
 #endif /* _KERNEL */
 
