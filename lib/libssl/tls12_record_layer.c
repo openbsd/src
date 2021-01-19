@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_record_layer.c,v 1.9 2021/01/13 18:20:54 jsing Exp $ */
+/* $OpenBSD: tls12_record_layer.c,v 1.10 2021/01/19 18:34:02 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -56,6 +56,68 @@ tls12_record_protection_free(struct tls12_record_protection *rp)
 	freezero(rp->mac_key, rp->mac_key_len);
 
 	freezero(rp, sizeof(struct tls12_record_protection));
+}
+
+static int
+tls12_record_protection_eiv_len(struct tls12_record_protection *rp,
+    size_t *out_eiv_len)
+{
+	int eiv_len;
+
+	*out_eiv_len = 0;
+
+	if (rp->cipher_ctx == NULL)
+		return 0;
+
+	eiv_len = 0;
+	if (EVP_CIPHER_CTX_mode(rp->cipher_ctx) == EVP_CIPH_CBC_MODE)
+		eiv_len = EVP_CIPHER_CTX_iv_length(rp->cipher_ctx);
+	if (eiv_len < 0 || eiv_len > EVP_MAX_IV_LENGTH)
+		return 0;
+
+	*out_eiv_len = eiv_len;
+
+	return 1;
+}
+
+static int
+tls12_record_protection_block_size(struct tls12_record_protection *rp,
+    size_t *out_block_size)
+{
+	int block_size;
+
+	*out_block_size = 0;
+
+	if (rp->cipher_ctx == NULL)
+		return 0;
+
+	block_size = EVP_CIPHER_CTX_block_size(rp->cipher_ctx);
+	if (block_size < 0 || block_size > EVP_MAX_BLOCK_LENGTH)
+		return 0;
+
+	*out_block_size = block_size;
+
+	return 1;
+}
+
+static int
+tls12_record_protection_mac_len(struct tls12_record_protection *rp,
+    size_t *out_mac_len)
+{
+	int mac_len;
+
+	*out_mac_len = 0;
+
+	if (rp->hash_ctx == NULL)
+		return 0;
+
+	mac_len = EVP_MD_CTX_size(rp->hash_ctx);
+	if (mac_len <= 0 || mac_len > EVP_MAX_MD_SIZE)
+		return 0;
+
+	*out_mac_len = mac_len;
+
+	return 1;
 }
 
 struct tls12_record_layer {
@@ -566,9 +628,9 @@ tls12_record_layer_open_record_protected_cipher(struct tls12_record_layer *rl,
 {
 	EVP_CIPHER_CTX *enc = rl->read->cipher_ctx;
 	SSL3_RECORD_INTERNAL rrec;
-	int block_size, eiv_len;
+	size_t block_size, eiv_len;
 	uint8_t *mac = NULL;
-	int mac_len = 0;
+	size_t mac_len = 0;
 	uint8_t *out_mac = NULL;
 	size_t out_mac_len = 0;
 	uint8_t *plain;
@@ -579,22 +641,19 @@ tls12_record_layer_open_record_protected_cipher(struct tls12_record_layer *rl,
 
 	memset(&cbb_mac, 0, sizeof(cbb_mac));
 
-	block_size = EVP_CIPHER_CTX_block_size(enc);
-	if (block_size < 0 || block_size > EVP_MAX_BLOCK_LENGTH)
+	if (!tls12_record_protection_block_size(rl->read, &block_size))
 		goto err;
 
 	/* Determine explicit IV length. */
 	eiv_len = 0;
-	if (rl->version != TLS1_VERSION &&
-	    EVP_CIPHER_CTX_mode(enc) == EVP_CIPH_CBC_MODE)
-		eiv_len = EVP_CIPHER_CTX_iv_length(enc);
-	if (eiv_len < 0 || eiv_len > EVP_MAX_IV_LENGTH)
-		goto err;
+	if (rl->version != TLS1_VERSION) {
+		if (!tls12_record_protection_eiv_len(rl->read, &eiv_len))
+			goto err;
+	}
 
 	mac_len = 0;
 	if (rl->read->hash_ctx != NULL) {
-		mac_len = EVP_MD_CTX_size(rl->read->hash_ctx);
-		if (mac_len <= 0 || mac_len > EVP_MAX_MD_SIZE)
+		if (!tls12_record_protection_mac_len(rl->read, &mac_len))
 			goto err;
 	}
 
@@ -808,8 +867,7 @@ tls12_record_layer_seal_record_protected_cipher(struct tls12_record_layer *rl,
     size_t content_len, CBB *out)
 {
 	EVP_CIPHER_CTX *enc = rl->write->cipher_ctx;
-	size_t mac_len, pad_len;
-	int block_size, eiv_len;
+	size_t block_size, eiv_len, mac_len, pad_len;
 	uint8_t *enc_data, *eiv, *pad, pad_val;
 	uint8_t *plain = NULL;
 	size_t plain_len = 0;
@@ -821,11 +879,10 @@ tls12_record_layer_seal_record_protected_cipher(struct tls12_record_layer *rl,
 
 	/* Add explicit IV if necessary. */
 	eiv_len = 0;
-	if (rl->version != TLS1_VERSION &&
-	    EVP_CIPHER_CTX_mode(enc) == EVP_CIPH_CBC_MODE)
-		eiv_len = EVP_CIPHER_CTX_iv_length(enc);
-	if (eiv_len < 0 || eiv_len > EVP_MAX_IV_LENGTH)
-		goto err;
+	if (rl->version != TLS1_VERSION) {
+		if (!tls12_record_protection_eiv_len(rl->write, &eiv_len))
+			goto err;
+	}
 	if (eiv_len > 0) {
 		if (!CBB_add_space(&cbb, &eiv, eiv_len))
 			goto err;
@@ -845,8 +902,7 @@ tls12_record_layer_seal_record_protected_cipher(struct tls12_record_layer *rl,
 	plain_len = (size_t)eiv_len + content_len + mac_len;
 
 	/* Add padding to block size, if necessary. */
-	block_size = EVP_CIPHER_CTX_block_size(enc);
-	if (block_size < 0 || block_size > EVP_MAX_BLOCK_LENGTH)
+	if (!tls12_record_protection_block_size(rl->write, &block_size))
 		goto err;
 	if (block_size > 1) {
 		pad_len = block_size - (plain_len % block_size);
