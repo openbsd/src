@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.660 2020/12/31 08:27:15 martijn Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.661 2021/01/19 09:16:20 claudio Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1687,7 +1687,7 @@ const char *ss_to_text(const struct sockaddr_storage *);
 const char *time_to_text(time_t);
 const char *duration_to_text(time_t);
 const char *rule_to_text(struct rule *);
-const char *sockaddr_to_text(struct sockaddr *);
+const char *sockaddr_to_text(const struct sockaddr *);
 const char *mailaddr_to_text(const struct mailaddr *);
 const char *expandnode_to_text(struct expandnode *);
 

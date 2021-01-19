@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.282 2020/12/31 08:27:15 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.283 2021/01/19 09:16:20 claudio Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -3472,6 +3472,17 @@ interface(struct listen_opts *lo)
 			*sin6 = *(struct sockaddr_in6 *)p->ifa_addr;
 			sin6->sin6_len = sizeof(struct sockaddr_in6);
 			sin6->sin6_port = lo->port;
+#ifdef __KAME__
+			if ((IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr) ||
+			    IN6_IS_ADDR_MC_LINKLOCAL(&sin6->sin6_addr) ||
+			    IN6_IS_ADDR_MC_INTFACELOCAL(&sin6->sin6_addr)) &&
+			    sin6->sin6_scope_id == 0) {
+				sin6->sin6_scope_id = ntohs(
+				    *(u_int16_t *)&sin6->sin6_addr.s6_addr[2]);
+				sin6->sin6_addr.s6_addr[2] = 0;
+				sin6->sin6_addr.s6_addr[3] = 0;
+			}
+#endif
 			if (IN6_IS_ADDR_LOOPBACK(&sin6->sin6_addr))
 				h->local = 1;
 			break;
