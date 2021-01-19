@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripe.c,v 1.27 2021/01/19 10:02:22 claudio Exp $ */
+/*	$OpenBSD: ripe.c,v 1.28 2021/01/19 10:09:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -471,6 +471,11 @@ ripe_shutdown(void)
 	}
 	while ((iface = LIST_FIRST(&oeconf->iface_list)) != NULL) {
 		LIST_REMOVE(iface, entry);
+
+		/* revert the demotion when the interface is deleted */
+		if (iface->state == IF_STA_DOWN)
+			ripe_demote_iface(iface, 1);
+
 		if_del(iface);
 	}
 
@@ -523,8 +528,7 @@ ripe_demote_iface(struct iface *iface, int active)
 {
 	struct demote_msg	dmsg;
 
-	if (ripd_process != PROC_RIP_ENGINE ||
-	    iface->demote_group[0] == '\0')
+	if (iface->demote_group[0] == '\0')
 		return;
 
 	bzero(&dmsg, sizeof(dmsg));

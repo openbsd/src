@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.15 2019/06/28 13:32:50 deraadt Exp $ */
+/*	$OpenBSD: interface.c,v 1.16 2021/01/19 10:09:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -460,10 +460,6 @@ if_del(struct iface *iface)
 	struct nbr	*nbr;
 
 	log_debug("if_del: interface %s", iface->name);
-
-	/* revert the demotion when the interface is deleted */
-	if (iface->state == IF_STA_DOWN)
-		ripe_demote_iface(iface, 1);
 
 	/* clear lists etc */
 	while ((nbr = LIST_FIRST(&iface->nbr_list)) != NULL)
