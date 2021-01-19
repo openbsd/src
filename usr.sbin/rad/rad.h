@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.h,v 1.19 2020/12/01 17:31:37 florian Exp $	*/
+/*	$OpenBSD: rad.h,v 1.20 2021/01/19 16:53:27 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -35,18 +35,6 @@
 #define	DEFAULT_RDNS_LIFETIME	600 * 1.5
 
 #define	IMSG_DATA_SIZE(imsg)	((imsg).hdr.len - IMSG_HEADER_SIZE)
-
-enum {
-	PROC_MAIN,
-	PROC_ENGINE,
-	PROC_FRONTEND
-} rad_process;
-
-static const char * const log_procnames[] = {
-	"main",
-	"engine",
-	"frontend",
-};
 
 struct imsgev {
 	struct imsgbuf	 ibuf;
