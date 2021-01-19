@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.h,v 1.3 2018/07/13 08:32:10 florian Exp $	*/
+/*	$OpenBSD: frontend.h,v 1.4 2021/01/19 16:54:00 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -16,8 +16,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-TAILQ_HEAD(ctl_conns, ctl_conn)	ctl_conns;
 
 void		 frontend(int, int);
 void		 frontend_dispatch_main(int, short, void *);
