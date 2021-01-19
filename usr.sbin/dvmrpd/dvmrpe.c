@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpe.c,v 1.19 2016/09/02 16:20:34 benno Exp $ */
+/*	$OpenBSD: dvmrpe.c,v 1.20 2021/01/19 11:46:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -170,9 +170,6 @@ dvmrpe(struct dvmrpd_conf *xconf, int pipe_parent2dvmrpe[2],
 	TAILQ_INIT(&ctl_conns);
 	control_listen();
 
-	if ((pkt_ptr = calloc(1, IBUF_READ_SIZE)) == NULL)
-		fatal("dvmrpe");
-
 	/* start interfaces */
 	LIST_FOREACH(iface, &deconf->iface_list, entry) {
 		if_init(xconf, iface);
@@ -216,7 +213,6 @@ dvmrpe_shutdown(void)
 	/* clean up */
 	free(iev_rde);
 	free(iev_main);
-	free(pkt_ptr);
 
 	log_info("dvmrp engine exiting");
 	_exit(0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpd.h,v 1.22 2016/09/02 16:20:34 benno Exp $ */
+/*	$OpenBSD: dvmrpd.h,v 1.23 2021/01/19 11:46:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -39,6 +39,7 @@
 #define NBR_IDSELF		1
 #define NBR_CNTSTART		(NBR_IDSELF + 1)
 
+#define	READ_BUF_SIZE		65535
 #define	RT_BUF_SIZE		16384
 
 #define	DVMRPD_FLAG_NO_FIB_UPDATE	0x0001

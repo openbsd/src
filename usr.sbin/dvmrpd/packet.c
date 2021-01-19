@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.5 2015/12/07 19:14:49 mmcc Exp $ */
+/*	$OpenBSD: packet.c,v 1.6 2021/01/19 11:46:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -97,6 +97,7 @@ recv_packet(int fd, short event, void *bula)
 	struct nbr		*nbr = NULL;
 	struct in_addr		 addr;
 	char			*buf;
+	char			 pkt[READ_BUF_SIZE];
 	ssize_t			 r;
 	u_int16_t		 len;
 	int			 l;
@@ -104,16 +105,14 @@ recv_packet(int fd, short event, void *bula)
 	if (event != EV_READ)
 		return;
 
-	/* setup buffer */
-	buf = pkt_ptr;
-
-	if ((r = recvfrom(fd, buf, IBUF_READ_SIZE, 0, NULL, NULL)) == -1) {
+	if ((r = recvfrom(fd, pkt, sizeof(pkt), 0, NULL, NULL)) == -1) {
 		if (errno != EAGAIN && errno != EINTR)
 			log_debug("recv_packet: error receiving packet");
 		return;
 	}
 
 	len = (u_int16_t)r;
+	buf = pkt;
 
 	/* IP header sanity checks */
 	if (len < sizeof(ip_hdr)) {

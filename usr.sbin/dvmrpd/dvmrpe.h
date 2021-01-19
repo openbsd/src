@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpe.h,v 1.5 2014/10/25 03:23:49 lteo Exp $ */
+/*	$OpenBSD: dvmrpe.h,v 1.6 2021/01/19 11:46:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -185,8 +185,6 @@ struct ctl_nbr	*nbr_to_ctl(struct nbr *);
 int		 gen_dvmrp_hdr(struct ibuf *, struct iface *, u_int8_t);
 int		 send_packet(struct iface *, void *, size_t, struct sockaddr_in *);
 void		 recv_packet(int, short, void *);
-
-char		*pkt_ptr;	/* packet buffer */
 
 /* probe.c */
 int		 send_probe(struct iface *);
