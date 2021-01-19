@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_ebus.c,v 1.23 2019/12/05 12:46:54 mpi Exp $	*/
+/*	$OpenBSD: com_ebus.c,v 1.24 2021/01/19 21:52:59 dlg Exp $	*/
 /*	$NetBSD: com_ebus.c,v 1.6 2001/07/24 19:27:10 eeh Exp $	*/
 
 /*
@@ -65,6 +65,21 @@ static char *com_names[] = {
 	NULL
 };
 
+static inline int
+com_match_ikkaku(void)
+{
+	char model[80];
+	int i;
+
+	i = OF_getproplen(findroot(), "model");
+	if (i == 0)
+		return (0);
+	if (OF_getprop(findroot(), "model", model, sizeof(model)) != i)
+		return (0);
+
+	return (strcmp(model, "IKKAKU") == 0);
+}
+
 int
 com_ebus_match(struct device *parent, void *match, void *aux)
 {
@@ -77,6 +92,10 @@ com_ebus_match(struct device *parent, void *match, void *aux)
 
 	if (strcmp(ea->ea_name, "serial") == 0) {
 		char compat[80];
+
+		/* blacklist com on m3000s because it causes hardware faults */
+		if (com_match_ikkaku())
+			return (0);
 
 		/* Could be anything. */
 		if ((i = OF_getproplen(ea->ea_node, "compatible")) &&
