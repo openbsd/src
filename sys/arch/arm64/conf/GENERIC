@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.182 2020/12/18 18:24:44 patrick Exp $
+# $OpenBSD: GENERIC,v 1.183 2021/01/19 19:14:39 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -281,6 +281,7 @@ re*		at pci?			# Realtek 8169/8169S/8110S
 rge*		at pci?			# Realtek 8125
 
 # PCI WiFi
+athn*		at pci?			# Atheros AR9k (802.11a/g/n)
 bwfm*		at pci?			# Broadcom FullMAC
 
 # PCI SCSI
