@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.61 2021/01/19 16:50:23 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.62 2021/01/19 16:50:50 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -151,7 +151,7 @@ struct uw_conf		*frontend_conf;
 struct imsgev		*iev_main;
 struct imsgev		*iev_resolver;
 struct event		 ev_route;
-int			 udp4sock = -1, udp6sock = -1, routesock = -1;
+int			 udp4sock = -1, udp6sock = -1;
 int			 tcp4sock = -1, tcp6sock = -1;
 int			 ta_fd = -1;
 
@@ -414,7 +414,9 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			event_add(&tcp6ev.ev, NULL);
 			evtimer_set(&tcp6ev.pause, accept_paused, &tcp6ev);
 			break;
-		case IMSG_ROUTESOCK:
+		case IMSG_ROUTESOCK: {
+			static int	 routesock = -1;
+
 			if (routesock != -1)
 				fatalx("%s: received unexpected routesock",
 				    __func__);
@@ -426,6 +428,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			event_set(&ev_route, fd, EV_READ | EV_PERSIST,
 			    route_receive, NULL);
 			break;
+		}
 		case IMSG_STARTUP:
 			frontend_startup();
 			break;
