@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_net_pton.c,v 1.10 2017/03/06 18:16:27 millert Exp $	*/
+/*	$OpenBSD: inet_net_pton.c,v 1.11 2021/01/19 16:43:44 florian Exp $	*/
 
 /*
  * Copyright (c) 2012 by Gilles Chehade <gilles@openbsd.org>
@@ -205,9 +205,10 @@ inet_net_pton_ipv4(const char *src, u_char *dst, size_t size)
 static int
 inet_net_pton_ipv6(const char *src, u_char *dst, size_t size)
 {
-	int	ret;
-	int	bits;
-	char	buf[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255:255:255:255/128")];
+	struct in6_addr	 in6;
+	int		 ret;
+	int		 bits;
+	char		 buf[INET6_ADDRSTRLEN + sizeof("/128")];
 	char		*sep;
 	const char	*errstr;
 
@@ -220,18 +221,24 @@ inet_net_pton_ipv6(const char *src, u_char *dst, size_t size)
 	if (sep != NULL)
 		*sep++ = '\0';
 
-	ret = inet_pton(AF_INET6, buf, dst);
+	ret = inet_pton(AF_INET6, buf, &in6);
 	if (ret != 1)
 		return (-1);
 
 	if (sep == NULL)
-		return 128;
-
-	bits = strtonum(sep, 0, 128, &errstr);
-	if (errstr) {
-		errno = EINVAL;
-		return (-1);
+		bits = 128;
+	else {
+		bits = strtonum(sep, 0, 128, &errstr);
+		if (errstr) {
+			errno = EINVAL;
+			return (-1);
+		}
 	}
 
-	return bits;
+	if ((bits + 7) / 8 > size) {
+		errno = EMSGSIZE;
+		return (-1);
+	}
+	memcpy(dst, &in6.s6_addr, size);
+	return (bits);
 }
