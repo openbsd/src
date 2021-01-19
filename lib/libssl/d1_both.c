@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.63 2020/12/05 19:34:57 tb Exp $ */
+/* $OpenBSD: d1_both.c,v 1.64 2021/01/19 18:51:08 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -218,7 +218,8 @@ dtls1_do_write(SSL *s, int type)
 {
 	int ret;
 	int curr_mtu;
-	unsigned int len, frag_off, mac_size, blocksize;
+	unsigned int len, frag_off;
+	size_t overhead;
 
 	/* AHA!  Figure out the MTU, and stick to the right size */
 	if (D1I(s)->mtu < dtls1_min_mtu() &&
@@ -246,21 +247,13 @@ dtls1_do_write(SSL *s, int type)
 		OPENSSL_assert(s->internal->init_num ==
 		    (int)D1I(s)->w_msg_hdr.msg_len + DTLS1_HM_HEADER_LENGTH);
 
-	if (s->internal->write_hash)
-		mac_size = EVP_MD_CTX_size(s->internal->write_hash);
-	else
-		mac_size = 0;
-
-	if (s->internal->enc_write_ctx &&
-	    (EVP_CIPHER_mode( s->internal->enc_write_ctx->cipher) & EVP_CIPH_CBC_MODE))
-		blocksize = 2 * EVP_CIPHER_block_size(s->internal->enc_write_ctx->cipher);
-	else
-		blocksize = 0;
+	if (!tls12_record_layer_write_overhead(s->internal->rl, &overhead))
+		return -1;
 
 	frag_off = 0;
 	while (s->internal->init_num) {
 		curr_mtu = D1I(s)->mtu - BIO_wpending(SSL_get_wbio(s)) -
-		    DTLS1_RT_HEADER_LENGTH - mac_size - blocksize;
+		    DTLS1_RT_HEADER_LENGTH - overhead;
 
 		if (curr_mtu <= DTLS1_HM_HEADER_LENGTH) {
 			/* grr.. we could get an error if MTU picked was wrong */
@@ -268,14 +261,13 @@ dtls1_do_write(SSL *s, int type)
 			if (ret <= 0)
 				return ret;
 			curr_mtu = D1I(s)->mtu - DTLS1_RT_HEADER_LENGTH -
-			    mac_size - blocksize;
+			    overhead;
 		}
 
 		if (s->internal->init_num > curr_mtu)
 			len = curr_mtu;
 		else
 			len = s->internal->init_num;
-
 
 		/* XDTLS: this function is too long.  split out the CCS part */
 		if (type == SSL3_RT_HANDSHAKE) {

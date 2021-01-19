@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_record_layer.c,v 1.10 2021/01/19 18:34:02 jsing Exp $ */
+/* $OpenBSD: tls12_record_layer.c,v 1.11 2021/01/19 18:51:08 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -166,6 +166,33 @@ void
 tls12_record_layer_alert(struct tls12_record_layer *rl, uint8_t *alert_desc)
 {
 	*alert_desc = rl->alert_desc;
+}
+
+int
+tls12_record_layer_write_overhead(struct tls12_record_layer *rl,
+    size_t *overhead)
+{
+	size_t block_size, eiv_len, mac_len;
+
+	*overhead = 0;
+
+	if (rl->write->aead_ctx != NULL) {
+		*overhead = rl->write->aead_ctx->tag_len;
+	} else if (rl->write->cipher_ctx != NULL) {
+		eiv_len = 0;
+		if (rl->version != TLS1_VERSION) {
+			if (!tls12_record_protection_eiv_len(rl->write, &eiv_len))
+				return 0;
+		}
+		if (!tls12_record_protection_block_size(rl->write, &block_size))
+			return 0;
+		if (!tls12_record_protection_mac_len(rl->write, &mac_len))
+			return 0;
+
+		*overhead = eiv_len + block_size + mac_len;
+	}
+
+	return 1;
 }
 
 void

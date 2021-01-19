@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.312 2021/01/13 18:20:54 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.313 2021/01/19 18:51:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -477,6 +477,8 @@ struct tls12_record_layer *tls12_record_layer_new(void);
 void tls12_record_layer_free(struct tls12_record_layer *rl);
 void tls12_record_layer_alert(struct tls12_record_layer *rl,
     uint8_t *alert_desc);
+int tls12_record_layer_write_overhead(struct tls12_record_layer *rl,
+    size_t *overhead);
 void tls12_record_layer_set_version(struct tls12_record_layer *rl,
     uint16_t version);
 void tls12_record_layer_set_write_epoch(struct tls12_record_layer *rl,
