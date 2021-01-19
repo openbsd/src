@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.23 2020/01/02 10:16:46 denis Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.24 2021/01/19 09:42:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -25,8 +25,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
-
-TAILQ_HEAD(ctl_conns, ctl_conn)	ctl_conns;
 
 struct lsa_entry {
 	TAILQ_ENTRY(lsa_entry)	 entry;
@@ -94,6 +92,8 @@ struct nbr {
 	u_int8_t		 dd_more;
 	u_int8_t		 dd_snapshot;	/* snapshot running */
 };
+
+struct ctl_conn;
 
 /* database.c */
 int	 send_db_description(struct nbr *);

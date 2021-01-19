@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.h,v 1.7 2020/09/16 20:50:10 remi Exp $ */
+/*	$OpenBSD: control.h,v 1.8 2021/01/19 09:42:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -23,12 +23,6 @@
 #include <sys/time.h>
 #include <event.h>
 
-struct {
-	struct event	ev;
-	struct event	evt;
-	int		fd;
-} control_state;
-
 struct ctl_conn {
 	TAILQ_ENTRY(ctl_conn)	entry;
 	struct imsgev		iev;
@@ -36,7 +30,7 @@ struct ctl_conn {
 
 int	control_check(char *);
 int	control_init(char *);
-int	control_listen(void);
+int	control_listen(int);
 void	control_accept(int, short, void *);
 void	control_dispatch_imsg(int, short, void *);
 int	control_imsg_relay(struct imsg *);
