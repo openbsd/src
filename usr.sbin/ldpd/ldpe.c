@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.79 2021/01/19 15:23:25 claudio Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.80 2021/01/19 15:59:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -148,9 +148,6 @@ ldpe(int debug, int verbose, char *sockname)
 	/* listen on ldpd control socket */
 	control_listen();
 
-	if ((pkt_ptr = calloc(1, IBUF_READ_SIZE)) == NULL)
-		fatal(__func__);
-
 	event_dispatch();
 
 	ldpe_shutdown();
@@ -191,7 +188,6 @@ ldpe_shutdown(void)
 	/* clean up */
 	free(iev_lde);
 	free(iev_main);
-	free(pkt_ptr);
 
 	log_info("ldp engine exiting");
 	exit(0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.h,v 1.91 2021/01/19 15:23:25 claudio Exp $ */
+/*	$OpenBSD: ldpd.h,v 1.92 2021/01/19 15:59:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -46,6 +46,7 @@
 #define TCP_MD5_KEY_LEN		80
 #define L2VPN_NAME_LEN		32
 
+#define	READ_BUF_SIZE		65535
 #define	RT_BUF_SIZE		16384
 #define	MAX_RTSOCK_BUF		(2 * 1024 * 1024)
 #define	LDP_BACKLOG		128

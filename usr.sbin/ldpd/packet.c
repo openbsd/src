@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.71 2019/01/23 02:02:04 dlg Exp $ */
+/*	$OpenBSD: packet.c,v 1.72 2021/01/19 15:59:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -40,6 +40,8 @@ static ssize_t			 session_get_pdu(struct ibuf_read *, char **);
 static void			 tcp_close(struct tcp_conn *);
 static struct pending_conn	*pending_conn_new(int, int, union ldpd_addr *);
 static void			 pending_conn_timeout(int, short, void *);
+
+static u_int8_t	*recv_buf;
 
 int
 gen_ldp_hdr(struct ibuf *buf, uint16_t size)
@@ -143,10 +145,14 @@ disc_recv_packet(int fd, short event, void *bula)
 	if (event != EV_READ)
 		return;
 
+	if (recv_buf == NULL)
+		if ((recv_buf = malloc(READ_BUF_SIZE)) == NULL)
+			fatal(__func__);
+
 	/* setup buffer */
 	memset(&m, 0, sizeof(m));
-	iov.iov_base = buf = pkt_ptr;
-	iov.iov_len = IBUF_READ_SIZE;
+	iov.iov_base = buf = recv_buf;
+	iov.iov_len = READ_BUF_SIZE;
 	m.msg_name = &from;
 	m.msg_namelen = sizeof(from);
 	m.msg_iov = &iov;
