@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.15 2021/01/19 10:28:07 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.16 2021/01/19 10:30:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -107,7 +107,7 @@ recv_packet(int fd, short event, void *bula)
 	bzero(&msg, sizeof(msg));
 
 	iov.iov_base = buf;
-	iov.iov_len = IBUF_READ_SIZE;
+	iov.iov_len = READ_BUF_SIZE;
 	msg.msg_name = &src;
 	msg.msg_namelen = sizeof(src);
 	msg.msg_iov = &iov;
