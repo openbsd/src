@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1100 2021/01/16 13:09:46 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1101 2021/01/19 22:22:23 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4184,11 +4184,6 @@ pf_translate(struct pf_pdesc *pd, struct pf_addr *saddr, u_int16_t sport,
     struct pf_addr *daddr, u_int16_t dport, u_int16_t virtual_type,
     int icmp_dir)
 {
-	/*
-	 * when called from bpf_mtap_pflog, there are extra constraints:
-	 * -mbuf is faked, m_data is the bpf buffer
-	 * -pd is not fully set up
-	 */
 	int	rewrite = 0;
 	int	afto = pd->af != pd->naf;
 
@@ -4203,18 +4198,17 @@ pf_translate(struct pf_pdesc *pd, struct pf_addr *saddr, u_int16_t sport,
 		break;
 
 	case IPPROTO_ICMP:
-		/* pf_translate() is also used when logging invalid packets */
 		if (pd->af != AF_INET)
 			return (0);
 
-		if (afto) {
 #ifdef INET6
+		if (afto) {
 			if (pf_translate_icmp_af(pd, AF_INET6, &pd->hdr.icmp))
 				return (0);
 			pd->proto = IPPROTO_ICMPV6;
 			rewrite = 1;
-#endif /* INET6 */
 		}
+#endif /* INET6 */
 		if (virtual_type == htons(ICMP_ECHO)) {
 			u_int16_t icmpid = (icmp_dir == PF_IN) ? sport : dport;
 			rewrite += pf_patch_16(pd,
@@ -4224,7 +4218,6 @@ pf_translate(struct pf_pdesc *pd, struct pf_addr *saddr, u_int16_t sport,
 
 #ifdef INET6
 	case IPPROTO_ICMPV6:
-		/* pf_translate() is also used when logging invalid packets */
 		if (pd->af != AF_INET6)
 			return (0);
 

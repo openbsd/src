@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.94 2021/01/13 09:13:30 mvs Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.95 2021/01/19 22:22:23 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -81,7 +81,6 @@ int	pflogoutput(struct ifnet *, struct mbuf *, struct sockaddr *,
 int	pflogioctl(struct ifnet *, u_long, caddr_t);
 int	pflog_clone_create(struct if_clone *, int);
 int	pflog_clone_destroy(struct ifnet *);
-void	pflog_mtap(caddr_t, struct pfloghdr *, struct mbuf *);
 struct	pflog_softc	*pflog_getif(int);
 
 struct if_clone			pflog_cloner =
@@ -242,144 +241,8 @@ pflog_packet(struct pf_pdesc *pd, u_int8_t reason, struct pf_rule *rm,
 	ifn->if_opackets++;
 	ifn->if_obytes += pd->m->m_pkthdr.len;
 
-	pflog_mtap(if_bpf, &hdr, pd->m);
+	bpf_mtap_hdr(if_bpf, &hdr, sizeof(hdr), pd->m, BPF_DIRECTION_OUT);
 #endif
 
 	return (0);
-}
-
-void
-pflog_mtap(caddr_t if_bpf, struct pfloghdr *pfloghdr, struct mbuf *m)
-{
-	struct mbuf		 mhdr;
-	struct m_hdr		 mptr;
-	struct mbuf		*mp;
-	u_char			*mdst;
-	int			 afto, hlen, off;
-
-	struct pf_pdesc		 pd;
-	struct pf_addr		 osaddr, odaddr;
-	u_int16_t		 osport = 0, odport = 0;
-	u_int8_t		 proto = 0;
-
-	afto = pfloghdr->af != pfloghdr->naf;
-
-	/*
-	 * temporary mbuf will hold an ip/ip6 header and 8 bytes
-	 * of the protocol header
-	 */
-	m_inithdr(&mhdr);
-	mhdr.m_len = 0;	/* XXX not done in m_inithdr() */
-
-#ifdef INET6
-	/* offset for a new header */
-	if (afto && pfloghdr->af == AF_INET)
-		mhdr.m_data += sizeof(struct ip6_hdr) -
-		    sizeof(struct ip);
-#endif /* INET6 */
-
-	mdst = mtod(&mhdr, char *);
-	switch (pfloghdr->af) {
-	case AF_INET: {
-		struct ip	*h;
-
-		if (m->m_pkthdr.len < sizeof(*h))
-			goto copy;
-		m_copydata(m, 0, sizeof(*h), mdst);
-		h = (struct ip *)mdst;
-		hlen = h->ip_hl << 2;
-		if (hlen > sizeof(*h) && (m->m_pkthdr.len >= hlen))
-			m_copydata(m, sizeof(*h), hlen - sizeof(*h),
-			    mdst + sizeof(*h));
-		break;
-	    }
-#ifdef INET6
-	case AF_INET6: {
-		struct ip6_hdr	*h;
-
-		if (m->m_pkthdr.len < sizeof(*h))
-			goto copy;
-		hlen = sizeof(struct ip6_hdr);
-		m_copydata(m, 0, hlen, mdst);
-		h = (struct ip6_hdr *)mdst;
-		proto = h->ip6_nxt;
-		break;
-	    }
-#endif /* INET6 */
-	default:
-		/* shouldn't happen ever :-) */
-		goto copy;
-	}
-
-	if (m->m_pkthdr.len < hlen + 8 && proto != IPPROTO_NONE)
-		goto copy;
-	else if (proto != IPPROTO_NONE) {
-		/* copy 8 bytes of the protocol header */
-		m_copydata(m, hlen, 8, mdst + hlen);
-		hlen += 8;
-	}
-
-	mhdr.m_len = hlen;
-	mhdr.m_pkthdr.len = hlen;
-
-	/* create a chain mhdr -> mptr, mptr->m_data = (m->m_data+hlen) */
-	mp = m_getptr(m, hlen, &off);
-	if (mp != NULL) {
-		mptr.mh_flags = 0;
-		mptr.mh_data = mp->m_data + off;
-		mptr.mh_len = mp->m_len - off;
-		mptr.mh_next = mp->m_next;
-
-		mhdr.m_next = (struct mbuf *)&mptr;
-	}
-
-	/*
-	 * Rewrite addresses if needed. Reason pointer must be NULL to avoid
-	 * counting the packet here again.
-	 */
-	if (pf_setup_pdesc(&pd, pfloghdr->af, pfloghdr->dir, NULL,
-	    &mhdr, NULL) != PF_PASS)
-		goto copy;
-	pd.naf = pfloghdr->naf;
-
-	pf_addrcpy(&osaddr, pd.src, pd.af);
-	pf_addrcpy(&odaddr, pd.dst, pd.af);
-	if (pd.sport)
-		osport = *pd.sport;
-	if (pd.dport)
-		odport = *pd.dport;
-
-	if (pd.virtual_proto != PF_VPROTO_FRAGMENT &&
-	    (pfloghdr->rewritten = pf_translate(&pd, &pfloghdr->saddr,
-	    pfloghdr->sport, &pfloghdr->daddr, pfloghdr->dport, 0,
-	    pfloghdr->dir))) {
-		m_copyback(pd.m, pd.off, min(pd.m->m_len - pd.off, pd.hdrlen),
-		    &pd.hdr, M_NOWAIT);
-#ifdef INET6
-		if (afto) {
-			pf_addrcpy(&pd.nsaddr, &pfloghdr->saddr, pd.naf);
-			pf_addrcpy(&pd.ndaddr, &pfloghdr->daddr, pd.naf);
-		}
-#endif /* INET6 */
-		pf_addrcpy(&pfloghdr->saddr, &osaddr, pd.af);
-		pf_addrcpy(&pfloghdr->daddr, &odaddr, pd.af);
-		pfloghdr->sport = osport;
-		pfloghdr->dport = odport;
-	}
-
-	pd.tot_len -= pd.m->m_data - pd.m->m_pktdat;
-
-#ifdef INET6
-	if (afto && pfloghdr->rewritten)
-		pf_translate_af(&pd);
-#endif /* INET6 */
-
-	m = pd.m;
-	KASSERT(m == &mhdr);
- copy:
-#if NBPFILTER > 0
-	bpf_mtap_hdr(if_bpf, pfloghdr, sizeof(*pfloghdr), m,
-	    BPF_DIRECTION_OUT);
-#endif
-	return;
 }
