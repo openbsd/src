@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.17 2021/01/19 16:53:27 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.18 2021/01/19 16:54:48 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -64,9 +64,9 @@ void			 remove_iface(uint32_t);
 struct engine_iface	*find_engine_iface_by_id(uint32_t);
 void			 iface_timeout(int, short, void *);
 
-struct rad_conf	*engine_conf;
-struct imsgev		*iev_frontend;
-struct imsgev		*iev_main;
+struct rad_conf		*engine_conf;
+static struct imsgev	*iev_frontend;
+static struct imsgev	*iev_main;
 struct sockaddr_in6	 all_nodes;
 
 void

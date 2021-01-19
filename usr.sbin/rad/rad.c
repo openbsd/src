@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.c,v 1.25 2021/01/19 16:53:27 florian Exp $	*/
+/*	$OpenBSD: rad.c,v 1.26 2021/01/19 16:54:48 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -77,15 +77,13 @@ int	main_sendboth(enum imsg_type, void *, uint16_t);
 
 void	in6_prefixlen2mask(struct in6_addr *, int len);
 
-struct rad_conf	*main_conf;
-struct imsgev		*iev_frontend;
-struct imsgev		*iev_engine;
+struct rad_conf		*main_conf;
+static struct imsgev	*iev_frontend;
+static struct imsgev	*iev_engine;
 char			*conffile;
-
-pid_t	 frontend_pid;
-pid_t	 engine_pid;
-
-uint32_t cmd_opts;
+pid_t			 frontend_pid;
+pid_t			 engine_pid;
+uint32_t		 cmd_opts;
 
 void
 main_sig_handler(int sig, short event, void *arg)

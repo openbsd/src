@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.38 2021/01/19 16:54:00 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.39 2021/01/19 16:54:48 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -151,8 +151,8 @@ void			 handle_route_message(struct rt_msghdr *,
 			     struct sockaddr **);
 
 struct rad_conf	*frontend_conf;
-struct imsgev		*iev_main;
-struct imsgev		*iev_engine;
+static struct imsgev	*iev_main;
+static struct imsgev	*iev_engine;
 struct event		 ev_route;
 int			 ioctlsock = -1, routesock = -1;
 struct ipv6_mreq	 all_routers;
