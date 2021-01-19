@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpe.c,v 1.20 2021/01/19 11:46:10 claudio Exp $ */
+/*	$OpenBSD: dvmrpe.c,v 1.21 2021/01/19 12:23:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -49,7 +49,6 @@ volatile sig_atomic_t	 dvmrpe_quit = 0;
 struct dvmrpd_conf	*deconf = NULL;
 struct imsgev		*iev_main;
 struct imsgev		*iev_rde;
-struct ctl_conn		*ctl_conn;
 
 void
 dvmrpe_sig_handler(int sig, short event, void *bula)
@@ -167,7 +166,6 @@ dvmrpe(struct dvmrpd_conf *xconf, int pipe_parent2dvmrpe[2],
 	event_add(&deconf->ev, NULL);
 
 	/* listen on dvmrpd control socket */
-	TAILQ_INIT(&ctl_conns);
 	control_listen();
 
 	/* start interfaces */
