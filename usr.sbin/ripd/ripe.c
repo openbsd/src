@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripe.c,v 1.29 2021/01/19 10:18:56 claudio Exp $ */
+/*	$OpenBSD: ripe.c,v 1.30 2021/01/19 10:20:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -46,8 +46,8 @@ void		 ripe_sig_handler(int, short, void *);
 __dead void	 ripe_shutdown(void);
 
 struct ripd_conf	*oeconf = NULL;
-struct imsgev		*iev_main;
-struct imsgev		*iev_rde;
+static struct imsgev	*iev_main;
+static struct imsgev	*iev_rde;
 
 /* ARGSUSED */
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.c,v 1.34 2021/01/19 10:18:56 claudio Exp $ */
+/*	$OpenBSD: ripd.c,v 1.35 2021/01/19 10:20:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -58,8 +58,8 @@ int			 pipe_parent2rde[2];
 int			 pipe_ripe2rde[2];
 
 struct ripd_conf	*conf = NULL;
-struct imsgev		*iev_ripe;
-struct imsgev		*iev_rde;
+static struct imsgev	*iev_ripe;
+static struct imsgev	*iev_rde;
 
 pid_t			 ripe_pid = 0;
 pid_t			 rde_pid = 0;

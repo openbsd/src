@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.23 2021/01/19 10:18:56 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.24 2021/01/19 10:20:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -41,8 +41,8 @@
 #define	MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 struct ripd_conf	*rdeconf = NULL;
-struct imsgev		*iev_ripe;
-struct imsgev		*iev_main;
+static struct imsgev	*iev_ripe;
+static struct imsgev	*iev_main;
 
 void	rde_sig_handler(int, short, void *);
 __dead void rde_shutdown(void);
