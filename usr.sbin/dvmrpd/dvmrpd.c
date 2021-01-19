@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpd.c,v 1.25 2016/09/02 16:20:34 benno Exp $ */
+/*	$OpenBSD: dvmrpd.c,v 1.26 2021/01/19 12:26:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -108,8 +108,7 @@ main(int argc, char *argv[])
 	size_t		 len;
 
 	conffile = CONF_FILE;
-	dvmrpd_process = PROC_MAIN;
-	log_procname = log_procnames[dvmrpd_process];
+	log_procname = "parent";
 
 	log_init(1);	/* log to stderr until daemonized */
 	log_verbose(1);

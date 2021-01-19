@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.29 2016/09/02 16:20:34 benno Exp $ */
+/*	$OpenBSD: rde.c,v 1.30 2021/01/19 12:26:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -97,8 +97,7 @@ rde(struct dvmrpd_conf *xconf, int pipe_parent2rde[2], int pipe_dvmrpe2rde[2],
 		fatal("chdir(\"/\")");
 
 	setproctitle("route decision engine");
-	dvmrpd_process = PROC_RDE_ENGINE;
-	log_procname = log_procnames[dvmrpd_process];
+	log_procname = "rde";
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||

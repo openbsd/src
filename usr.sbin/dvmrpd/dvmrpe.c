@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpe.c,v 1.21 2021/01/19 12:23:30 claudio Exp $ */
+/*	$OpenBSD: dvmrpe.c,v 1.22 2021/01/19 12:26:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -117,8 +117,7 @@ dvmrpe(struct dvmrpd_conf *xconf, int pipe_parent2dvmrpe[2],
 		fatal("chdir(\"/\")");
 
 	setproctitle("dvmrp engine");
-	dvmrpd_process = PROC_DVMRP_ENGINE;
-	log_procname = log_procnames[dvmrpd_process];
+	log_procname = "dvmrpe";
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
