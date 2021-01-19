@@ -1,4 +1,4 @@
-/* $OpenBSD: agtimer.c,v 1.15 2020/07/15 22:58:33 kettenis Exp $ */
+/* $OpenBSD: agtimer.c,v 1.16 2021/01/19 18:07:15 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
@@ -168,7 +168,7 @@ agtimer_attach(struct device *parent, struct device *self, void *aux)
 	    OF_getpropint(sc->sc_node, "clock-frequency", agtimer_frequency);
 	sc->sc_ticks_per_second = agtimer_frequency;
 
-	printf(": tick rate %d KHz\n", sc->sc_ticks_per_second /1000);
+	printf(": %d kHz\n", sc->sc_ticks_per_second / 1000);
 
 #ifdef AMPTIMER_DEBUG
 	evcount_attach(&sc->sc_clk_count, "clock", NULL);
@@ -283,8 +283,8 @@ agtimer_set_clockrate(int32_t new_frequency)
 
 	sc->sc_ticks_per_second = agtimer_frequency;
 	agtimer_timecounter.tc_frequency = sc->sc_ticks_per_second;
-	printf("agtimer0: adjusting clock: new tick rate %d KHz\n",
-	    sc->sc_ticks_per_second /1000);
+	printf("agtimer0: adjusting clock: new tick rate %d kHz\n",
+	    sc->sc_ticks_per_second / 1000);
 }
 
 void
