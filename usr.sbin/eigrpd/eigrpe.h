@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.h,v 1.17 2021/01/19 10:31:12 claudio Exp $ */
+/*	$OpenBSD: eigrpe.h,v 1.18 2021/01/19 10:37:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -24,8 +24,6 @@
 #include <sys/tree.h>
 
 #include <event.h>
-
-TAILQ_HEAD(ctl_conns, ctl_conn)	ctl_conns;
 
 struct pbuf {
 	struct ibuf		*buf;
@@ -72,6 +70,8 @@ RB_PROTOTYPE(nbr_pid_head, nbr, pid_tree, nbr_pid_compare)
 #define PREFIX_SIZE6(x)	((x == 128) ? 16 : ((x / 8) + 1))
 
 extern struct eigrpd_conf        *econf;
+
+struct ctl_conn;
 
 /* eigrpe.c */
 void		 eigrpe(int, int, char *);

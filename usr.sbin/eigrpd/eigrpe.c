@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.c,v 1.37 2021/01/19 10:31:12 claudio Exp $ */
+/*	$OpenBSD: eigrpe.c,v 1.38 2021/01/19 10:37:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -164,7 +164,6 @@ eigrpe(int debug, int verbose, char *sockname)
 	event_add(&ev6, NULL);
 
 	/* listen on eigrpd control socket */
-	TAILQ_INIT(&ctl_conns);
 	control_listen();
 
 	event_dispatch();

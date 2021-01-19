@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.8 2018/08/05 08:10:35 mestre Exp $ */
+/*	$OpenBSD: control.c,v 1.9 2021/01/19 10:37:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -30,6 +30,8 @@
 #include "control.h"
 #include "log.h"
 
+TAILQ_HEAD(ctl_conns, ctl_conn)	ctl_conns = TAILQ_HEAD_INITIALIZER(ctl_conns);
+
 #define	CONTROL_BACKLOG	5
 
 static void		 control_accept(int, short, void *);
@@ -37,6 +39,13 @@ static struct ctl_conn	*control_connbyfd(int);
 static struct ctl_conn	*control_connbypid(pid_t);
 static void		 control_close(int);
 static void		 control_dispatch_imsg(int, short, void *);
+
+struct {
+	struct event	ev;
+	struct event	evt;
+	int		fd;
+} control_state;
+
 
 int
 control_init(char *path)
@@ -86,7 +95,6 @@ control_init(char *path)
 int
 control_listen(void)
 {
-
 	if (listen(control_state.fd, CONTROL_BACKLOG) == -1) {
 		log_warn("%s: listen", __func__);
 		return (-1);
