@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.110 2019/11/19 09:55:55 remi Exp $ */
+/*	$OpenBSD: rde.c,v 1.111 2021/01/19 09:37:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -65,8 +65,8 @@ struct lsa	*orig_asext_lsa(struct kroute *, u_int32_t, u_int16_t);
 struct lsa	*orig_sum_lsa(struct rt_node *, struct area *, u_int8_t, int);
 
 struct ospfd_conf	*rdeconf = NULL, *nconf = NULL;
-struct imsgev		*iev_ospfe;
-struct imsgev		*iev_main;
+static struct imsgev	*iev_ospfe;
+static struct imsgev	*iev_main;
 struct rde_nbr		*nbrself;
 struct lsa_tree		 asext_tree;
 

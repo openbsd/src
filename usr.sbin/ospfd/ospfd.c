@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.114 2020/09/16 20:50:10 remi Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.115 2021/01/19 09:37:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -64,9 +64,10 @@ int	pipe_parent2ospfe[2];
 int	pipe_parent2rde[2];
 int	pipe_ospfe2rde[2];
 
+enum ospfd_process	 ospfd_process;
 struct ospfd_conf	*ospfd_conf = NULL;
-struct imsgev		*iev_ospfe;
-struct imsgev		*iev_rde;
+static struct imsgev	*iev_ospfe;
+static struct imsgev	*iev_rde;
 char			*conffile;
 
 pid_t			 ospfe_pid = 0;
