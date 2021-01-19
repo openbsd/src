@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.33 2020/10/14 16:57:33 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.34 2021/01/19 18:57:09 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -370,11 +370,12 @@ ssl3_get_record(SSL *s)
 
 		/* Lets check version */
 		if (!s->internal->first_packet && ssl_version != s->version) {
-			SSLerror(s, SSL_R_WRONG_VERSION_NUMBER);
 			if ((s->version & 0xFF00) == (ssl_version & 0xFF00) &&
-			    !s->internal->enc_write_ctx && !s->internal->write_hash)
+			    !tls12_record_layer_write_protected(s->internal->rl)) {
 				/* Send back error using their minor version number :-) */
 				s->version = ssl_version;
+			}
+			SSLerror(s, SSL_R_WRONG_VERSION_NUMBER);
 			al = SSL_AD_PROTOCOL_VERSION;
 			goto f_err;
 		}
@@ -569,8 +570,7 @@ do_ssl3_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 	 * (see http://www.openssl.org/~bodo/tls-cbc.txt). Note that this
 	 * is unnecessary for AEAD.
 	 */
-	if (sess != NULL && s->internal->enc_write_ctx != NULL &&
-	    EVP_MD_CTX_md(s->internal->write_hash) != NULL) {
+	if (sess != NULL && tls12_record_layer_write_protected(s->internal->rl)) {
 		if (S3I(s)->need_empty_fragments &&
 		    !S3I(s)->empty_fragment_done &&
 		    type == SSL3_RT_APPLICATION_DATA)
@@ -814,8 +814,8 @@ start:
 	if (type == rr->type) {
 		/* make sure that we are not getting application data when we
 		 * are doing a handshake for the first time */
-		if (SSL_in_init(s) && (type == SSL3_RT_APPLICATION_DATA) &&
-			(s->enc_read_ctx == NULL)) {
+		if (SSL_in_init(s) && type == SSL3_RT_APPLICATION_DATA &&
+		    !tls12_record_layer_read_protected(s->internal->rl)) {
 			al = SSL_AD_UNEXPECTED_MESSAGE;
 			SSLerror(s, SSL_R_APP_DATA_IN_HANDSHAKE);
 			goto f_err;

@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.88 2021/01/13 18:38:34 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.89 2021/01/19 18:57:09 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -642,13 +642,12 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		return (0);
 	}
 
-
-	if (type == rr->type) /* SSL3_RT_APPLICATION_DATA or SSL3_RT_HANDSHAKE */
-	{
+	/* SSL3_RT_APPLICATION_DATA or SSL3_RT_HANDSHAKE */
+	if (type == rr->type) {
 		/* make sure that we are not getting application data when we
 		 * are doing a handshake for the first time */
-		if (SSL_in_init(s) && (type == SSL3_RT_APPLICATION_DATA) &&
-			(s->enc_read_ctx == NULL)) {
+		if (SSL_in_init(s) && type == SSL3_RT_APPLICATION_DATA &&
+		    !tls12_record_layer_read_protected(s->internal->rl)) {
 			al = SSL_AD_UNEXPECTED_MESSAGE;
 			SSLerror(s, SSL_R_APP_DATA_IN_HANDSHAKE);
 			goto f_err;

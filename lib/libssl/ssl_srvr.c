@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.88 2020/10/14 16:57:33 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.89 2021/01/19 18:57:09 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -853,15 +853,15 @@ ssl3_get_client_hello(SSL *s)
 	if (!ssl_downgrade_max_version(s, &max_version))
 		goto err;
 	if (ssl_max_shared_version(s, client_version, &shared_version) != 1) {
-		SSLerror(s, SSL_R_WRONG_VERSION_NUMBER);
 		if ((s->client_version >> 8) == SSL3_VERSION_MAJOR &&
-		    !s->internal->enc_write_ctx && !s->internal->write_hash) {
+		    !tls12_record_layer_write_protected(s->internal->rl)) {
 			/*
 			 * Similar to ssl3_get_record, send alert using remote
 			 * version number.
 			 */
 			s->version = s->client_version;
 		}
+		SSLerror(s, SSL_R_WRONG_VERSION_NUMBER);
 		al = SSL_AD_PROTOCOL_VERSION;
 		goto f_err;
 	}

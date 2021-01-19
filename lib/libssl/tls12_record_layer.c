@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_record_layer.c,v 1.11 2021/01/19 18:51:08 jsing Exp $ */
+/* $OpenBSD: tls12_record_layer.c,v 1.12 2021/01/19 18:57:09 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -56,6 +56,12 @@ tls12_record_protection_free(struct tls12_record_protection *rp)
 	freezero(rp->mac_key, rp->mac_key_len);
 
 	freezero(rp, sizeof(struct tls12_record_protection));
+}
+
+static int
+tls12_record_protection_engaged(struct tls12_record_protection *rp)
+{
+	return rp->aead_ctx != NULL || rp->cipher_ctx != NULL;
 }
 
 static int
@@ -193,6 +199,18 @@ tls12_record_layer_write_overhead(struct tls12_record_layer *rl,
 	}
 
 	return 1;
+}
+
+int
+tls12_record_layer_read_protected(struct tls12_record_layer *rl)
+{
+	return tls12_record_protection_engaged(rl->read);
+}
+
+int
+tls12_record_layer_write_protected(struct tls12_record_layer *rl)
+{
+	return tls12_record_protection_engaged(rl->write);
 }
 
 void
