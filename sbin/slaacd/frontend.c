@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.47 2021/01/19 16:48:20 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.48 2021/01/19 16:49:10 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -142,10 +142,6 @@ frontend(int debug, int verbose)
 
 	log_init(debug, LOG_DAEMON);
 	log_setverbose(verbose);
-
-#ifndef	SMALL
-	control_state.fd = -1;
-#endif	/* SMALL */
 
 	if ((pw = getpwnam(SLAACD_USER)) == NULL)
 		fatal("getpwnam");
@@ -357,17 +353,12 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			break;
 #ifndef	SMALL
 		case IMSG_CONTROLFD:
-			if (control_state.fd != -1)
-				fatalx("%s: received unexpected controlsock",
-				    __func__);
 			if ((fd = imsg.fd) == -1)
 				fatalx("%s: expected to receive imsg "
 				    "control fd but didn't receive any",
 				    __func__);
-			control_state.fd = fd;
 			/* Listen on control socket. */
-			TAILQ_INIT(&ctl_conns);
-			control_listen();
+			control_listen(fd);
 			break;
 		case IMSG_CTL_END:
 			control_imsg_relay(&imsg);

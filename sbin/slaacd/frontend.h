@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.h,v 1.3 2017/12/10 10:07:54 florian Exp $	*/
+/*	$OpenBSD: frontend.h,v 1.4 2021/01/19 16:49:10 florian Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -15,10 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#ifndef	SMALL
-TAILQ_HEAD(ctl_conns, ctl_conn)	ctl_conns;
-#endif	/* SMALL */
 
 void		 frontend(int, int);
 void		 frontend_dispatch_main(int, short, void *);
