@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.108 2021/01/19 09:29:49 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.109 2021/01/19 09:33:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -457,10 +457,8 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 			if ((fd = imsg.fd) == -1)
 				fatalx("%s: expected to receive imsg control"
 				    "fd but didn't receive any", __func__);
-			control_state.fd = fd;
 			/* Listen on control socket. */
-			TAILQ_INIT(&ctl_conns);
-			control_listen();
+			control_listen(fd);
 			if (pledge("stdio inet mcast", NULL) == -1)
 				fatal("pledge");
 			break;
