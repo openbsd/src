@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpd.c,v 1.26 2021/01/19 12:26:38 claudio Exp $ */
+/*	$OpenBSD: dvmrpd.c,v 1.27 2021/01/19 12:29:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -62,8 +62,8 @@ int	pipe_parent2rde[2];
 int	pipe_dvmrpe2rde[2];
 
 struct dvmrpd_conf	*conf = NULL;
-struct imsgev		*iev_dvmrpe;
-struct imsgev		*iev_rde;
+static struct imsgev	*iev_dvmrpe;
+static struct imsgev	*iev_rde;
 
 pid_t			 dvmrpe_pid;
 pid_t			 rde_pid;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpe.c,v 1.22 2021/01/19 12:26:38 claudio Exp $ */
+/*	$OpenBSD: dvmrpe.c,v 1.23 2021/01/19 12:29:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -47,8 +47,8 @@ __dead void	 dvmrpe_shutdown(void);
 
 volatile sig_atomic_t	 dvmrpe_quit = 0;
 struct dvmrpd_conf	*deconf = NULL;
-struct imsgev		*iev_main;
-struct imsgev		*iev_rde;
+static struct imsgev	*iev_main;
+static struct imsgev	*iev_rde;
 
 void
 dvmrpe_sig_handler(int sig, short event, void *bula)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.30 2021/01/19 12:26:38 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.31 2021/01/19 12:29:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -48,8 +48,8 @@ int		 rde_select_ds_ifs(struct mfc *, struct iface *);
 volatile sig_atomic_t	 rde_quit = 0;
 struct dvmrpd_conf	*rdeconf = NULL;
 struct rde_nbr		*nbrself;
-struct imsgev		*iev_dvmrpe;
-struct imsgev		*iev_main;
+static struct imsgev	*iev_dvmrpe;
+static struct imsgev	*iev_main;
 
 void
 rde_sig_handler(int sig, short event, void *arg)
