@@ -1,4 +1,4 @@
-/*	$OpenBSD: ommmc.c,v 1.37 2020/07/05 06:56:34 jsg Exp $	*/
+/*	$OpenBSD: ommmc.c,v 1.38 2021/01/19 18:04:43 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
@@ -199,7 +199,7 @@ struct ommmc_softc {
 
 	struct device *sdmmc;		/* generic SD/MMC device */
 	int clockbit;			/* clock control bit */
-	uint32_t clkbase;		/* base clock frequency in KHz */
+	uint32_t clkbase;		/* base clock frequency in kHz */
 	int maxblklen;			/* maximum block length */
 	int flags;			/* flags for this host */
 	uint32_t ocr;			/* OCR value from capabilities */
@@ -687,7 +687,7 @@ ommmc_bus_power(sdmmc_chipset_handle_t sch, uint32_t ocr)
 
 /*
  * Return the smallest possible base clock frequency divisor value
- * for the CLOCK_CTL register to produce `freq' (KHz).
+ * for the CLOCK_CTL register to produce `freq' (kHz).
  */
 static int
 ommmc_clock_divisor(struct ommmc_softc *sc, uint32_t freq)

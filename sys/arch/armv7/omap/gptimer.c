@@ -1,4 +1,4 @@
-/* $OpenBSD: gptimer.c,v 1.10 2021/01/19 12:29:07 kettenis Exp $ */
+/* $OpenBSD: gptimer.c,v 1.11 2021/01/19 18:04:43 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -270,7 +270,7 @@ gptimer_intr(void *frame)
 
 /*
  * would be interesting to play with trigger mode while having one timer
- * in 32KHz mode, and the other timer running in sysclk mode and use
+ * in 32kHz mode, and the other timer running in sysclk mode and use
  * the high resolution speeds (matters more for delay than tick timer
  */
 

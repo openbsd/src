@@ -1,4 +1,4 @@
-/* $OpenBSD: amptimer.c,v 1.9 2020/07/14 15:34:14 patrick Exp $ */
+/* $OpenBSD: amptimer.c,v 1.10 2021/01/19 18:04:43 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -169,7 +169,7 @@ amptimer_attach(struct device *parent, struct device *self, void *args)
 		panic("amptimer_attach: bus_space_map priv timer failed!");
 
 	sc->sc_ticks_per_second = amptimer_frequency;
-	printf(": tick rate %d KHz\n", sc->sc_ticks_per_second /1000);
+	printf(": %d kHz\n", sc->sc_ticks_per_second / 1000);
 
 	sc->sc_ioh = ioh;
 	sc->sc_pioh = pioh;
@@ -331,8 +331,8 @@ amptimer_set_clockrate(int32_t new_frequency)
 
 	sc->sc_ticks_per_second = amptimer_frequency;
 	amptimer_timecounter.tc_frequency = sc->sc_ticks_per_second;
-	printf("amptimer0: adjusting clock: new tick rate %d KHz\n",
-	    sc->sc_ticks_per_second /1000);
+	printf("amptimer0: adjusting clock: new rate %d kHz\n",
+	    sc->sc_ticks_per_second / 1000);
 }
 
 void

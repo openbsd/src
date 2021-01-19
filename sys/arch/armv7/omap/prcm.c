@@ -1,4 +1,4 @@
-/* $OpenBSD: prcm.c,v 1.14 2020/04/05 13:11:13 kettenis Exp $ */
+/* $OpenBSD: prcm.c,v 1.15 2021/01/19 18:04:43 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -75,7 +75,7 @@ uint32_t prcm_imask_addr[PRCM_REG_MAX];
 uint32_t prcm_fmask_addr[PRCM_REG_MAX];
 
 #define SYS_CLK			13    /* SYS_CLK speed in MHz */
-#define PRCM_AM335X_MASTER_OSC	24000 /* KHz */
+#define PRCM_AM335X_MASTER_OSC	24000 /* kHz */
 
 
 struct prcm_softc {
