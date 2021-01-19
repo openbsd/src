@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripe.c,v 1.26 2021/01/19 10:00:36 claudio Exp $ */
+/*	$OpenBSD: ripe.c,v 1.27 2021/01/19 10:02:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -183,9 +183,6 @@ ripe(struct ripd_conf *xconf, int pipe_parent2ripe[2], int pipe_ripe2rde[2],
 
 	/* listen on ripd control socket */
 	control_listen();
-
-	if ((pkt_ptr = calloc(1, IBUF_READ_SIZE)) == NULL)
-		fatal("ripe");
 
 	/* start interfaces */
 	LIST_FOREACH(iface, &xconf->iface_list, entry) {
@@ -483,7 +480,6 @@ ripe_shutdown(void)
 	free(iev_rde);
 	free(iev_main);
 	free(oeconf);
-	free(pkt_ptr);
 
 	log_info("rip engine exiting");
 	_exit(0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripe.h,v 1.13 2021/01/19 10:00:36 claudio Exp $ */
+/*	$OpenBSD: ripe.h,v 1.14 2021/01/19 10:02:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -24,8 +24,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
-
-u_int8_t	*pkt_ptr;
 
 /* neighbor events */
 enum nbr_event {
