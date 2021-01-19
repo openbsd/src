@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.24 2021/01/19 09:42:11 claudio Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.25 2021/01/19 09:43:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -230,7 +230,5 @@ int	 gen_ospf_hdr(struct ibuf *, struct iface *, u_int8_t);
 int	 upd_ospf_hdr(struct ibuf *, struct iface *);
 int	 send_packet(struct iface *, struct ibuf *, struct in6_addr *);
 void	 recv_packet(int, short, void *);
-
-char	*pkt_ptr;	/* packet buffer */
 
 #endif	/* _OSPFE_H_ */
