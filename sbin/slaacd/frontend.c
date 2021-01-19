@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.46 2021/01/17 15:39:17 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.47 2021/01/19 16:48:20 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -155,9 +155,8 @@ frontend(int debug, int verbose)
 	if (chdir("/") == -1)
 		fatal("chdir(\"/\")");
 
-	slaacd_process = PROC_FRONTEND;
-	setproctitle("%s", log_procnames[slaacd_process]);
-	log_procinit(log_procnames[slaacd_process]);
+	setproctitle("%s", "frontend");
+	log_procinit("frontend");
 
 	if ((ioctlsock = socket(AF_INET6, SOCK_DGRAM | SOCK_CLOEXEC, 0)) == -1)
 		fatal("socket");
