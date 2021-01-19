@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.55 2021/01/19 16:48:20 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.56 2021/01/19 16:49:56 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -84,13 +84,13 @@ static int	main_imsg_send_ipc_sockets(struct imsgbuf *, struct imsgbuf *);
 int		main_imsg_compose_frontend(int, int, void *, uint16_t);
 int		main_imsg_compose_engine(int, pid_t, void *, uint16_t);
 
-struct imsgev		*iev_frontend;
-struct imsgev		*iev_engine;
+static struct imsgev	*iev_frontend;
+static struct imsgev	*iev_engine;
 
-pid_t	 frontend_pid;
-pid_t	 engine_pid;
+pid_t			 frontend_pid;
+pid_t			 engine_pid;
 
-int	 routesock, ioctl_sock, rtm_seq = 0;
+int			 routesock, ioctl_sock, rtm_seq = 0;
 
 void
 main_sig_handler(int sig, short event, void *arg)

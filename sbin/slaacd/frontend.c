@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.48 2021/01/19 16:49:10 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.49 2021/01/19 16:49:56 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -101,8 +101,8 @@ const char	*flags_to_str(int);
 #endif	/* SMALL */
 
 LIST_HEAD(, iface)		 interfaces;
-struct imsgev			*iev_main;
-struct imsgev			*iev_engine;
+static struct imsgev		*iev_main;
+static struct imsgev		*iev_engine;
 struct event			 ev_route;
 struct msghdr			 sndmhdr;
 struct iovec			 sndiov[4];

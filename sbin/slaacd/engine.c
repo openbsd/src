@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.58 2021/01/19 16:48:20 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.59 2021/01/19 16:49:56 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -329,8 +329,8 @@ int			 engine_imsg_compose_main(int, pid_t, void *, uint16_t);
 uint32_t		 real_lifetime(struct timespec *, uint32_t);
 void			 merge_dad_couters(struct radv *, struct radv *);
 
-struct imsgev		*iev_frontend;
-struct imsgev		*iev_main;
+static struct imsgev	*iev_frontend;
+static struct imsgev	*iev_main;
 int64_t			 proposal_id;
 
 uint32_t		 desync_factor;
