@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.35 2020/12/12 11:49:02 jan Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.36 2021/01/19 07:29:42 mvs Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -1065,31 +1065,36 @@ aggr_add_port(struct aggr_softc *sc, const struct trunk_reqport *rp)
 	if (sc->sc_nports > AGGR_MAX_PORTS)
 		return (ENOSPC);
 
-	ifp0 = ifunit(rp->rp_portname);
-	if (ifp0 == NULL || ifp0->if_index == ifp->if_index)
+	ifp0 = if_unit(rp->rp_portname);
+	if (ifp0 == NULL)
 		return (EINVAL);
 
-	if (ifp0->if_type != IFT_ETHER)
-		return (EPROTONOSUPPORT);
+	if (ifp0->if_index == ifp->if_index) {
+		error = EINVAL;
+		goto put;
+	}
+
+	if (ifp0->if_type != IFT_ETHER) {
+		error = EPROTONOSUPPORT;
+		goto put;
+	}
 
 	error = ether_brport_isset(ifp0);
 	if (error != 0)
-		return (error);
+		goto put;
 
-	if (ifp0->if_hardmtu < ifp->if_mtu)
-		return (ENOBUFS);
+	if (ifp0->if_hardmtu < ifp->if_mtu) {
+		error = ENOBUFS;
+		goto put;
+	}
 
 	ac0 = (struct arpcom *)ifp0;
-	if (ac0->ac_trunkport != NULL)
-		return (EBUSY);
+	if (ac0->ac_trunkport != NULL) {
+		error = EBUSY;
+		goto put;
+	}
 
 	/* let's try */
-
-	ifp0 = if_get(ifp0->if_index); /* get an actual reference */
-	if (ifp0 == NULL) {
-		/* XXX this should never happen */
-		return (EINVAL);
-	}
 
 	p = malloc(sizeof(*p), M_DEVBUF, M_WAITOK|M_ZERO|M_CANFAIL);
 	if (p == NULL) {
