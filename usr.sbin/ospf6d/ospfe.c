@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.65 2021/01/19 09:43:40 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.66 2021/01/19 09:48:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -47,7 +47,7 @@ __dead void	 ospfe_shutdown(void);
 void		 orig_rtr_lsa_all(struct area *);
 struct iface	*find_vlink(struct abr_rtr *);
 
-struct ospfd_conf	*oeconf = NULL, *nconf;
+struct ospfd_conf	*oeconf = NULL, *noeconf;
 struct imsgev		*iev_main;
 struct imsgev		*iev_rde;
 int			 oe_nofib;
@@ -367,13 +367,13 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 			orig_link_lsa(iface);
 			break;
 		case IMSG_RECONF_CONF:
-			if ((nconf = malloc(sizeof(struct ospfd_conf))) ==
+			if ((noeconf = malloc(sizeof(struct ospfd_conf))) ==
 			    NULL)
 				fatal(NULL);
-			memcpy(nconf, imsg.data, sizeof(struct ospfd_conf));
+			memcpy(noeconf, imsg.data, sizeof(struct ospfd_conf));
 
-			LIST_INIT(&nconf->area_list);
-			LIST_INIT(&nconf->cand_list);
+			LIST_INIT(&noeconf->area_list);
+			LIST_INIT(&noeconf->cand_list);
 			break;
 		case IMSG_RECONF_AREA:
 			if ((narea = area_new()) == NULL)
@@ -384,16 +384,16 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 			LIST_INIT(&narea->nbr_list);
 			RB_INIT(&narea->lsa_tree);
 
-			LIST_INSERT_HEAD(&nconf->area_list, narea, entry);
+			LIST_INSERT_HEAD(&noeconf->area_list, narea, entry);
 			break;
 		case IMSG_RECONF_END:
 			if ((oeconf->flags & OSPFD_FLAG_STUB_ROUTER) !=
-			    (nconf->flags & OSPFD_FLAG_STUB_ROUTER))
+			    (noeconf->flags & OSPFD_FLAG_STUB_ROUTER))
 				stub_changed = 1;
 			else
 				stub_changed = 0;
-			merge_config(oeconf, nconf);
-			nconf = NULL;
+			merge_config(oeconf, noeconf);
+			noeconf = NULL;
 			if (stub_changed)
 				orig_rtr_lsa_all(NULL);
 			break;
