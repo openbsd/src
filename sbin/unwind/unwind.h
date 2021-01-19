@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.h,v 1.50 2021/01/12 16:40:33 florian Exp $	*/
+/*	$OpenBSD: unwind.h,v 1.51 2021/01/19 16:50:23 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -43,18 +43,6 @@
 #define	KSK2017		".	172800	IN	DNSKEY	257 3 8 AwEAAaz/tAm8yTn4Mfeh5eyI96WSVexTBAvkMgJzkKTOiW1vkIbzxeF3+/4RgWOq7HrxRixHlFlExOLAJr5emLvN7SWXgnLh4+B5xQlNVz8Og8kvArMtNROxVQuCaSnIDdD5LKyWbRd2n9WGe2R8PzgCmr3EgVLrjyBxWezF0jLHwVN8efS3rCj/EWgvIWgb9tarpVUDK/b58Da+sqqls3eNbuv7pr+eoZG+SrDK6nWeL3c6H5Apxz7LjVc1uTIdsIXxuOLYA4/ilBmSVIzuDWfdRUfhHdY6+cn8HFRm+2hM8AnXGXws9555KrUB5qihylGa8subX2Nn6UwNR1AkUTV74bU="
 
 #define	IMSG_DATA_SIZE(imsg)	((imsg).hdr.len - IMSG_HEADER_SIZE)
-
-enum {
-	PROC_MAIN,
-	PROC_RESOLVER,
-	PROC_FRONTEND,
-} uw_process;
-
-static const char * const log_procnames[] = {
-	"main",
-	"resolver",
-	"frontend",
-};
 
 enum uw_resolver_type {
 	UW_RES_RECURSOR,

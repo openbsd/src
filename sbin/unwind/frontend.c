@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.60 2021/01/12 16:40:33 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.61 2021/01/19 16:50:23 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -198,9 +198,8 @@ frontend(int debug, int verbose)
 	if (chdir("/") == -1)
 		fatal("chdir(\"/\")");
 
-	uw_process = PROC_FRONTEND;
-	setproctitle("%s", log_procnames[uw_process]);
-	log_procinit(log_procnames[uw_process]);
+	setproctitle("%s", "frontend");
+	log_procinit("frontend");
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||

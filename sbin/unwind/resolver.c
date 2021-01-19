@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.129 2020/12/26 15:07:25 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.130 2021/01/19 16:50:23 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -355,9 +355,8 @@ resolver(int debug, int verbose)
 	if ((pw = getpwnam(UNWIND_USER)) == NULL)
 		fatal("getpwnam");
 
-	uw_process = PROC_RESOLVER;
-	setproctitle("%s", log_procnames[uw_process]);
-	log_procinit(log_procnames[uw_process]);
+	setproctitle("%s", "resolver");
+	log_procinit("resolver");
 
 	if (setgroups(1, &pw->pw_gid) ||
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
