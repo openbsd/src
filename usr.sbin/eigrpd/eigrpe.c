@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpe.c,v 1.36 2018/08/05 08:10:35 mestre Exp $ */
+/*	$OpenBSD: eigrpe.c,v 1.37 2021/01/19 10:31:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -167,9 +167,6 @@ eigrpe(int debug, int verbose, char *sockname)
 	TAILQ_INIT(&ctl_conns);
 	control_listen();
 
-	if ((pkt_ptr = calloc(1, READ_BUF_SIZE)) == NULL)
-		fatal("eigrpe");
-
 	event_dispatch();
 
 	eigrpe_shutdown();
@@ -196,7 +193,6 @@ eigrpe_shutdown(void)
 	/* clean up */
 	free(iev_rde);
 	free(iev_main);
-	free(pkt_ptr);
 
 	log_info("eigrp engine exiting");
 	exit(0);
