@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.228 2020/12/25 12:59:53 visa Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.229 2021/01/19 19:39:58 mvs Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -378,7 +378,7 @@ tun_dev_open(dev_t dev, const struct if_clone *ifc, int mode, struct proc *p)
 	rdomain = rtable_l2(p->p_p->ps_rtableid);
 
 	/* let's find or make an interface to work with */
-	while ((ifp = ifunit(name)) == NULL) {
+	while ((ifp = if_unit(name)) == NULL) {
 		error = if_clone_create(name, rdomain);
 		switch (error) {
 		case 0: /* it's probably ours */
@@ -397,12 +397,14 @@ tun_dev_open(dev_t dev, const struct if_clone *ifc, int mode, struct proc *p)
 		error = tsleep_nsec(sc, PCATCH, "tuninit", INFSLP);
 		if (error != 0) {
 			/* XXX if_clone_destroy if stayup? */
+			if_put(ifp);
 			return (error);
 		}
 	}
 
 	if (sc->sc_dev != 0) {
 		/* aww, we lost */
+		if_put(ifp);
 		return (EBUSY);
 	}
 	/* it's ours now */
@@ -411,6 +413,7 @@ tun_dev_open(dev_t dev, const struct if_clone *ifc, int mode, struct proc *p)
 
 	/* automatically mark the interface running on open */
 	SET(ifp->if_flags, IFF_UP | IFF_RUNNING);
+	if_put(ifp);
 	tun_link_state(sc, LINK_STATE_FULL_DUPLEX);
 
 	return (0);
