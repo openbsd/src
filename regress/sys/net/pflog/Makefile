@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2021/01/16 13:38:47 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.7 2021/01/20 13:50:09 bluhm Exp $
 
 # Copyright (c) 2021 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -284,52 +284,74 @@ run-bpf-matches: stamp-stop
 REGRESS_TARGETS +=	run-bpf-rdr
 run-bpf-rdr: stamp-stop
 	# loopback input logs redirected packet
-	grep 'regress\.2/.* pass in .*: 169.254.0.11 > 169.254.0.21:\
+	grep 'regress\.2/.* pass in .*:.* 169.254.0.11 > 169.254.0.21:\
 	    icmp: echo request' pflog${N1}.tcpdump
 	# loopback output redirects and logs original packet
-	grep 'regress\.18/.* pass out .*: 169.254.0.11 > 169.254.0.11:\
+	grep 'regress\.18/.* pass out .*:.* 169.254.0.11 > 169.254.0.11:\
 	    icmp: echo request' pflog${N1}.tcpdump
 
 REGRESS_TARGETS +=	run-bpf-rdr6
 run-bpf-rdr6: stamp-stop
 	# loopback input logs redirected packet
-	grep 'regress\.10/.* pass in .*: fc00::11 > fc00::21:\
+	grep 'regress\.10/.* pass in .*:.* fc00::11 > fc00::21:\
 	    icmp6: echo request' pflog${N1}.tcpdump
 	# loopback output redirects and logs original packet
-	grep 'regress\.20/.* pass out .*: fc00::11 > fc00::11:\
+	grep 'regress\.20/.* pass out .*:.* fc00::11 > fc00::11:\
 	    icmp6: echo request' pflog${N1}.tcpdump
 
 REGRESS_TARGETS +=	run-bpf-nat
 run-bpf-nat: stamp-stop
 	# loopback input logs redirected packet
-	grep 'regress\.2/.* pass in .*: 169.254.0.22 > 169.254.0.12:\
+	grep 'regress\.2/.* pass in .*:.* 169.254.0.22 > 169.254.0.12:\
 	    icmp: echo request' pflog${N1}.tcpdump
 	# loopback output redirects and logs original packet
-	grep 'regress\.19/.* pass out .*: 169.254.0.12 > 169.254.0.12:\
+	grep 'regress\.19/.* pass out .*:.* 169.254.0.12 > 169.254.0.12:\
 	    icmp: echo request' pflog${N1}.tcpdump
 
 REGRESS_TARGETS +=	run-bpf-nat6
 run-bpf-nat6: stamp-stop
 	# loopback input logs redirected packet
-	grep 'regress\.10/.* pass in .*: fc00::22 > fc00::12:\
+	grep 'regress\.10/.* pass in .*:.* fc00::22 > fc00::12:\
 	    icmp6: echo request' pflog${N1}.tcpdump
 	# loopback output redirects and logs original packet
-	grep 'regress\.21/.* pass out .*: fc00::12 > fc00::12:\
+	grep 'regress\.21/.* pass out .*:.* fc00::12 > fc00::12:\
 	    icmp6: echo request' pflog${N1}.tcpdump
 
 REGRESS_TARGETS +=	run-bpf-af
 run-bpf-af: stamp-stop
 	# pf in rule logs original IPv4 packet
-	# XXX address family in bpf is wrong
-	grep 'regress\.22/.* pass in .*:\
-	     bad-ip6-version 4' pflog${N1}.tcpdump
+	grep 'regress\.22/.* pass in .*:.* 169.254.0.14 > 169.254.0.14:\
+	     icmp: echo request' pflog${N1}.tcpdump
 
 REGRESS_TARGETS +=	run-bpf-af6
 run-bpf-af6: stamp-stop
 	# pf in rule logs original IPv6 packet
-	# XXX address family in bpf is wrong
-	grep 'regress\.23/.* pass in .*:\
-	     bad-ip-version 6' pflog${N1}.tcpdump
+	grep 'regress\.23/.* pass in .*:.* fc00::14 > fc00::14:\
+	     icmp6: echo request' pflog${N1}.tcpdump
+
+REGRESS_TARGETS +=	run-bpf-rewrite
+run-bpf-rewrite: stamp-stop
+	# rdr-to address has been rewritten
+	grep '\[rewritten: src 169.254.0.11:[0-9]*, dst 169.254.0.21:[0-9]*\]\
+	    169.254.0.11 > 169.254.0.11' pflog${N1}.tcpdump
+	# nat-to address has been rewritten
+	grep '\[rewritten: src 169.254.0.22:[0-9]*, dst 169.254.0.12:[0-9]*\]\
+	    169.254.0.12 > 169.254.0.12' pflog${N1}.tcpdump
+	# af-to address has been rewritten
+	grep '\[rewritten: src fc00::23:[0-9]*, dst fc00::24:[0-9]*\]\
+	    169.254.0.14 > 169.254.0.14' pflog${N1}.tcpdump
+
+REGRESS_TARGETS +=	run-bpf-rewrite6
+run-bpf-rewrite6: stamp-stop
+	# rdr-to address has been rewritten
+	grep '\[rewritten: src fc00::11:[0-9]*, dst fc00::21:[0-9]*\]\
+	    fc00::11 > fc00::11' pflog${N1}.tcpdump
+	# nat-to address has been rewritten
+	grep '\[rewritten: src fc00::22:[0-9]*, dst fc00::12:[0-9]*\]\
+	    fc00::12 > fc00::12' pflog${N1}.tcpdump
+	# af-to address has been rewritten
+	grep '\[rewritten: src 169.254.0.23:[0-9]*, dst 169.254.0.24:[0-9]*\]\
+	    fc00::14 > fc00::14' pflog${N1}.tcpdump
 
 CLEANFILES +=	addr.py *.pyc *.tcpdump *.log stamp-*
 
