@@ -1,4 +1,4 @@
-/* $OpenBSD: control-notify.c,v 1.27 2020/05/21 07:24:13 nicm Exp $ */
+/* $OpenBSD: control-notify.c,v 1.28 2021/01/20 07:16:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -49,7 +49,7 @@ control_notify_window_layout_changed(struct window *w)
 	char		*cp;
 
 	template = "%layout-change #{window_id} #{window_layout} "
-	    "#{window_visible_layout} #{window_flags}";
+	    "#{window_visible_layout} #{window_raw_flags}";
 
 	TAILQ_FOREACH(c, &clients, entry) {
 		if (!CONTROL_SHOULD_NOTIFY_CLIENT(c) || c->session == NULL)

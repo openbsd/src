@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-windows.c,v 1.46 2020/04/13 10:59:58 nicm Exp $ */
+/* $OpenBSD: cmd-list-windows.c,v 1.47 2021/01/20 07:16:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -28,14 +28,14 @@
  */
 
 #define LIST_WINDOWS_TEMPLATE					\
-	"#{window_index}: #{window_name}#{window_flags} "	\
+	"#{window_index}: #{window_name}#{window_raw_flags} "	\
 	"(#{window_panes} panes) "				\
 	"[#{window_width}x#{window_height}] "			\
 	"[layout #{window_layout}] #{window_id}"		\
 	"#{?window_active, (active),}";
 #define LIST_WINDOWS_WITH_SESSION_TEMPLATE			\
 	"#{session_name}:"					\
-	"#{window_index}: #{window_name}#{window_flags} "	\
+	"#{window_index}: #{window_name}#{window_raw_flags} "	\
 	"(#{window_panes} panes) "				\
 	"[#{window_width}x#{window_height}] "
 
