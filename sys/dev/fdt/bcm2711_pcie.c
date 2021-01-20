@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2711_pcie.c,v 1.3 2020/07/14 15:42:19 patrick Exp $	*/
+/*	$OpenBSD: bcm2711_pcie.c,v 1.4 2021/01/20 12:44:45 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -28,12 +28,18 @@
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/ppbreg.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
 
-#define PCIE_EXT_CFG_DATA	0x8000
-#define PCIE_EXT_CFG_INDEX	0x9000
+#define PCIE_MISC_CPU_2_PCIE_MEM_WIN0_LO		0x400c
+#define PCIE_MISC_CPU_2_PCIE_MEM_WIN0_HI		0x4010
+#define PCIE_MISC_CPU_2_PCIE_MEM_WIN0_BASE_LIMIT	0x4070
+#define PCIE_MISC_CPU_2_PCIE_MEM_WIN0_BASE_HI		0x4080
+#define PCIE_MISC_CPU_2_PCIE_MEM_WIN0_LIMIT_HI		0x4084
+#define PCIE_EXT_CFG_DATA				0x8000
+#define PCIE_EXT_CFG_INDEX				0x9000
 
 #define HREAD4(sc, reg)							\
 	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
@@ -174,6 +180,31 @@ bcmpcie_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	free(ranges, M_TEMP, rangeslen);
+
+	/*
+	 * Reprogram the outbound window to match the configuration in
+	 * the device tree.  This is necessary since the EDK2-based
+	 * UEFI firmware reprograms the window.
+	 */
+	for (i = 0; i < sc->sc_nranges; i++) {
+		if ((sc->sc_ranges[i].flags & 0x03000000) == 0x02000000) {
+			uint64_t cpu_base = sc->sc_ranges[i].phys_base;
+			uint64_t cpu_limit = sc->sc_ranges[i].phys_base +
+			    sc->sc_ranges[i].size - 1;
+
+			HWRITE4(sc, PCIE_MISC_CPU_2_PCIE_MEM_WIN0_LO,
+			    sc->sc_ranges[i].pci_base);
+			HWRITE4(sc, PCIE_MISC_CPU_2_PCIE_MEM_WIN0_HI,
+			    sc->sc_ranges[i].pci_base >> 32);
+			HWRITE4(sc, PCIE_MISC_CPU_2_PCIE_MEM_WIN0_BASE_LIMIT,
+			    (cpu_base & PPB_MEM_MASK) >> PPB_MEM_SHIFT |
+			    (cpu_limit & PPB_MEM_MASK));
+			HWRITE4(sc, PCIE_MISC_CPU_2_PCIE_MEM_WIN0_BASE_HI,
+			    cpu_base >> 32);
+			HWRITE4(sc, PCIE_MISC_CPU_2_PCIE_MEM_WIN0_LIMIT_HI,
+			    cpu_limit >> 32);
+		}
+	}
 
 	printf("\n");
 
