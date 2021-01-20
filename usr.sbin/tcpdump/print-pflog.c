@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pflog.c,v 1.32 2018/10/22 16:12:45 kn Exp $	*/
+/*	$OpenBSD: print-pflog.c,v 1.33 2021/01/20 13:40:15 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
@@ -64,7 +64,6 @@ pflog_if_print(u_char *user, const struct pcap_pkthdr *h,
 	const struct ip *ip;
 	const struct ip6_hdr *ip6;
 	const struct pfloghdr *hdr;
-	u_int8_t af;
 
 	ts_print(&h->ts);
 
@@ -153,34 +152,40 @@ pflog_if_print(u_char *user, const struct pcap_pkthdr *h,
 		if (vflag && hdr->rewritten) {
 			char buf[48];
 
-			if (inet_ntop(hdr->af, &hdr->saddr.v4, buf,
+			printf("[rewritten: ");
+			if (inet_ntop(hdr->naf, &hdr->saddr, buf,
 			    sizeof(buf)) == NULL)
-				printf("[orig src ?, ");
+				printf("src ?");
 			else
-				printf("[orig src %s:%u, ", buf,
-				    ntohs(hdr->sport));
-			if (inet_ntop(hdr->af, &hdr->daddr.v4, buf,
+				printf("src %s:%u", buf, ntohs(hdr->sport));
+			printf(", ");
+			if (inet_ntop(hdr->naf, &hdr->daddr, buf,
 			    sizeof(buf)) == NULL)
-				printf("dst ?] ");
+				printf("dst ?");
 			else
-				printf("dst %s:%u] ", buf,
-				    ntohs(hdr->dport));
+				printf("dst %s:%u", buf, ntohs(hdr->dport));
+			printf("] ");
 		}
 	}
-	af = hdr->naf;
 	length -= hdrlen;
-	if (af == AF_INET) {
+	switch(hdr->af) {
+	case AF_INET:
 		ip = (struct ip *)(p + hdrlen);
 		ip_print((const u_char *)ip, length);
 		if (xflag)
 			default_print((const u_char *)ip,
 			    caplen - hdrlen);
-	} else {
+		break;
+	case AF_INET6:
 		ip6 = (struct ip6_hdr *)(p + hdrlen);
 		ip6_print((const u_char *)ip6, length);
 		if (xflag)
 			default_print((const u_char *)ip6,
 			    caplen - hdrlen);
+		break;
+	default:
+		printf("unknown-af %d", hdr->af);
+		break;
 	}
 
 out:
