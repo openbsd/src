@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.294 2021/01/18 01:23:53 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.295 2021/01/20 18:44:28 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -911,6 +911,28 @@ ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
 		}
 		if (ikev2_handle_certreq(env, msg) != 0)
 			return (-1);
+	} else if (sa->sa_hdr.sh_initiator) {
+		old = sa->sa_policy;
+
+		/* verify policy on initiator */
+		sa->sa_policy = NULL;
+		if (policy_lookup(env, msg, &sa->sa_proposals) != 0 ||
+		    msg->msg_policy != old) {
+
+			/* get dstid */
+			if (msg->msg_id.id_type) {
+				memcpy(id, &msg->msg_id, sizeof(*id));
+				bzero(&msg->msg_id, sizeof(msg->msg_id));
+			}
+			log_warnx("%s: policy mismatch", SPI_SA(sa, __func__));
+			ikev2_send_auth_failed(env, sa);
+			TAILQ_REMOVE(&old->pol_sapeers, sa, sa_peer_entry);
+			if (old->pol_flags & IKED_POLICY_REFCNT)
+				policy_unref(env, old);
+			return (-1);
+		}
+		/* restore */
+		msg->msg_policy = sa->sa_policy = old;
 	}
 
 	/* AUTH payload is required for non-EAP */
