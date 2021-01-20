@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide_test.c,v 1.1 2021/01/19 16:04:46 claudio Exp $ */
+/*	$OpenBSD: rde_decide_test.c,v 1.2 2021/01/20 18:02:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -62,14 +62,21 @@ struct rde_peer peer4 = {
 	.remote_addr = { .aid = AID_INET, .v4.s_addr = 0xef000004 },
 };
 
-struct a {
+union a {
 	struct aspath	a;
-	uint8_t 	d[5];
+	struct {
+		LIST_ENTRY(aspath) entry;
+		u_int32_t source_as;
+		int refcnt;
+		uint16_t len;
+		uint16_t ascnt;
+		uint8_t	d[6];
+	} x;
 } asdata[] = {
-	{ .a = { .data = { 2 }, .len = 6, .ascnt = 2 }, .d = { 1, 0, 0, 0, 1 } },
-	{ .a = { .data = { 2 }, .len = 6, .ascnt = 3 }, .d = { 1, 0, 0, 0, 1 } },
-	{ .a = { .data = { 2 }, .len = 6, .ascnt = 2 }, .d = { 1, 0, 0, 0, 2 } },
-	{ .a = { .data = { 2 }, .len = 6, .ascnt = 3 }, .d = { 1, 0, 0, 0, 2 } },
+	{ .x = { .len = 6, .ascnt = 2, .d = { 2, 1, 0, 0, 0, 1 } } },
+	{ .x = { .len = 6, .ascnt = 3, .d = { 2, 1, 0, 0, 0, 1 } } },
+	{ .x = { .len = 6, .ascnt = 2, .d = { 2, 1, 0, 0, 0, 2 } } },
+	{ .x = { .len = 6, .ascnt = 3, .d = { 2, 1, 0, 0, 0, 2 } } },
 };
 
 struct rde_aspath asp[] = {
@@ -88,8 +95,6 @@ struct rde_aspath asp[] = {
 	{ .aspath = &asdata[0].a, .med = 200, .lpref = 100, .origin = ORIGIN_IGP },
 	/* 8: Weight */
 	{ .aspath = &asdata[0].a, .med = 100, .lpref = 100, .origin = ORIGIN_IGP, .weight = 100 },
-
-
 };
 
 #define T1	1610980000
@@ -98,7 +103,7 @@ struct rde_aspath asp[] = {
 struct test {
 	char *what;
 	struct prefix p;
-} testpfx[] = {
+} test_pfx[] = {
 	{ .what = "test prefix",
 	.p = { .re = &dummy_re, .aspath = &asp[0], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T1, } },
 	/* pathes with errors are not eligible */
@@ -143,36 +148,93 @@ struct test {
 	.p = { .re = &dummy_re, .aspath = &asp[0], .peer = &peer4, .nexthop = &nh_reach, .lastchange = T1, } },
 };
 
+struct rde_aspath med_asp[] = {
+	{ .aspath = &asdata[0].a, .med = 100, .lpref = 100, .origin = ORIGIN_EGP },
+	{ .aspath = &asdata[0].a, .med = 150, .lpref = 100, .origin = ORIGIN_EGP },
+	{ .aspath = &asdata[2].a, .med = 75,  .lpref = 100, .origin = ORIGIN_EGP },
+	{ .aspath = &asdata[2].a, .med = 125, .lpref = 100, .origin = ORIGIN_EGP },
+};
+
+struct prefix med_pfx1 = 
+	{ .re = &dummy_re, .aspath = &med_asp[0], .peer = &peer2, .nexthop = &nh_reach, .lastchange = T1, };
+struct prefix med_pfx2 = 
+	{ .re = &dummy_re, .aspath = &med_asp[1], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T1, };
+struct prefix med_pfx3 = 
+	{ .re = &dummy_re, .aspath = &med_asp[2], .peer = &peer3, .nexthop = &nh_reach, .lastchange = T1, };
+struct prefix med_pfx4 = 
+	{ .re = &dummy_re, .aspath = &med_asp[3], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T1, };
+
+struct prefix age_pfx1 = 
+	{ .re = &dummy_re, .aspath = &asp[0], .peer = &peer2, .nexthop = &nh_reach, .lastchange = T1, };
+struct prefix age_pfx2 = 
+	{ .re = &dummy_re, .aspath = &asp[0], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T2, };
+
 int     prefix_cmp(struct prefix *, struct prefix *);
+
+int	decision_flags = BGPD_FLAG_DECISION_ROUTEAGE;
+
+int	failed;
+
+void
+test(struct prefix *a, struct prefix *b)
+{
+	if (prefix_cmp(a, b) < 0) {
+		printf(" FAILED\n");
+		failed = 1;
+	} else if (prefix_cmp(b, a) > 0) {
+		printf(" reverse cmp FAILED\n");
+		failed = 1;
+	} else
+		printf(" OK\n");
+}
 
 int
 main(int argc, char **argv)
 {
 	size_t i, ntest;;
 
-	ntest = sizeof(testpfx) / sizeof(*testpfx);
+	ntest = sizeof(test_pfx) / sizeof(*test_pfx);
 	for (i = 1; i < ntest; i++) {
-		if (prefix_cmp(&testpfx[0].p, &testpfx[i].p) < 0)
-			errx(1, "prefix_cmp check #%zu failed: %s", i, testpfx[i].what);
-		if (prefix_cmp(&testpfx[i].p, &testpfx[0].p) > 0)
-			errx(1, "reverse prefix_cmp check #%zu failed: %s", i, testpfx[i].what);
-		printf("test %zu: %s OK\n", i, testpfx[i].what);
+		printf("test %zu: %s", i, test_pfx[i].what);
+		test(&test_pfx[0].p, &test_pfx[i].p);
 	}
 
-	printf("test NULL element in prefix_cmp\n");
-	if (prefix_cmp(&testpfx[0].p, NULL) < 0)
-		errx(1, "NULL check #1 failed");
-	if (prefix_cmp(NULL, &testpfx[0].p) > 0)
-		errx(1, "NULL check #2 failed");
+	printf("test NULL element");
+	test(&test_pfx[0].p, NULL);
 
-	printf("OK\n");
-	exit(0);
+	printf("test strict med 1");
+	test(&med_pfx1, &med_pfx2);
+	printf("test strict med 2");
+	test(&med_pfx1, &med_pfx3);
+	printf("test strict med 3");
+	test(&med_pfx4, &med_pfx1);
+
+	decision_flags |= BGPD_FLAG_DECISION_MED_ALWAYS;
+	printf("test always med 1");
+	test(&med_pfx1, &med_pfx2);
+	printf("test always med 2");
+	test(&med_pfx3, &med_pfx1);
+	printf("test always med 3");
+	test(&med_pfx1, &med_pfx4);
+
+	printf("test route-age evaluate");
+	test(&age_pfx1, &age_pfx2);
+	decision_flags &= ~BGPD_FLAG_DECISION_ROUTEAGE;
+	printf("test route-age ignore");
+	test(&age_pfx2, &age_pfx1);
+
+
+	if (failed)
+		printf("some tests FAILED\n");
+	else
+		printf("all tests OK\n");
+	exit(failed);
 }
 
 int
 rde_decisionflags(void)
 {
-	return BGPD_FLAG_DECISION_ROUTEAGE;
+	return decision_flags;
 }
 
 u_int32_t
