@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.93 2021/01/04 23:12:05 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.94 2021/01/20 10:04:26 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -164,6 +164,7 @@ CTASSERT(MCX_MAX_QUEUES * MCX_WQ_DOORBELL_STRIDE <
 #define MCX_REG_MTCAP			0x9009 /* mgmt temp capabilities */
 #define MCX_REG_MTMP			0x900a /* mgmt temp */
 #define MCX_REG_MCIA			0x9014
+#define MCX_REG_MCAM			0x907f
 
 #define MCX_ETHER_CAP_SGMII		0
 #define MCX_ETHER_CAP_1000_KX		1
@@ -569,6 +570,22 @@ enum mcx_ppcnt_rfc3635 {
 };
 CTASSERT((mcx_ppcnt_rfc3635_count * sizeof(uint64_t)) == 0x80);
 
+struct mcx_reg_mcam {
+	uint8_t			_reserved1[1];
+	uint8_t			mcam_feature_group;
+	uint8_t			_reserved2[1];
+	uint8_t			mcam_access_reg_group;
+	uint8_t			_reserved3[4];
+	uint8_t			mcam_access_reg_cap_mask[16];
+	uint8_t			_reserved4[16];
+	uint8_t			mcam_feature_cap_mask[16];
+	uint8_t			_reserved5[16];
+} __packed __aligned(4);
+
+#define MCX_BITFIELD_BIT(bf, b)	(bf[(sizeof bf - 1) - (b / 8)] & (b % 8))
+
+#define MCX_MCAM_FEATURE_CAP_SENSOR_MAP	6
+
 struct mcx_reg_mtcap {
 	uint8_t			_reserved1[3];
 	uint8_t			mtcap_sensor_count;
@@ -836,6 +853,7 @@ struct mcx_cap_device {
 	uint8_t			local_ca_ack_delay; /* 5 bits */
 #define MCX_CAP_DEVICE_LOCAL_CA_ACK_DELAY \
 					0x1f
+#define MCX_CAP_DEVICE_MCAM_REG		0x40
 	uint8_t			port_type;
 #define MCX_CAP_DEVICE_PORT_MODULE_EVENT \
 					0x80
@@ -2462,6 +2480,8 @@ struct mcx_softc {
 	struct mcx_queues	 sc_queues[MCX_MAX_QUEUES];
 	unsigned int		 sc_nqueues;
 
+	int			 sc_mcam_reg;
+
 #if NKSTAT > 0
 	struct kstat		*sc_kstat_ieee8023;
 	struct kstat		*sc_kstat_rfc2863;
@@ -3868,6 +3888,9 @@ mcx_hca_max_caps(struct mcx_softc *sc)
 	 */
 	sc->sc_bf_size = (1 << hca->log_bf_reg_size) / 2;
 	sc->sc_max_rqt_size = (1 << hca->log_max_rqt_size);
+	
+	if (hca->local_ca_ack_delay & MCX_CAP_DEVICE_MCAM_REG)
+		sc->sc_mcam_reg = 1;
 
 	sc->sc_mhz = bemtoh32(&hca->device_frequency_mhz);
 	sc->sc_khz = bemtoh32(&hca->device_frequency_khz);
@@ -8384,12 +8407,31 @@ static void
 mcx_kstat_attach_tmps(struct mcx_softc *sc)
 {
 	struct kstat *ks;
+	struct mcx_reg_mcam mcam;
 	struct mcx_reg_mtcap mtcap;
 	struct mcx_kstat_mtmp *ktmp;
 	uint64_t map;
 	unsigned int i, n;
 
 	memset(&mtcap, 0, sizeof(mtcap));
+	memset(&mcam, 0, sizeof(mcam));
+
+	if (sc->sc_mcam_reg == 0) {
+		/* no management capabilities */
+		return;
+	}
+
+	if (mcx_access_hca_reg(sc, MCX_REG_MCAM, MCX_REG_OP_READ,
+	    &mcam, sizeof(mcam)) != 0) {
+		/* unable to check management capabilities? */
+		return;
+	}
+
+	if (MCX_BITFIELD_BIT(mcam.mcam_feature_cap_mask,
+	    MCX_MCAM_FEATURE_CAP_SENSOR_MAP) == 0) {
+		/* no sensor map */
+		return;
+	}
 
 	if (mcx_access_hca_reg(sc, MCX_REG_MTCAP, MCX_REG_OP_READ,
 	    &mtcap, sizeof(mtcap)) != 0) {
