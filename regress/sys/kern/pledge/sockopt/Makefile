@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2020/04/01 15:26:53 claudio Exp $
+# $OpenBSD: Makefile,v 1.6 2021/01/21 17:02:37 bluhm Exp $
 
 # This table lists pledge(2), socket(2), getsockopt(2), and setsockopt(2)
 # calls with their expected outcome.  The constants are compiled into
@@ -12,7 +12,7 @@ TESTS =	inet		AF_INET		SOCK_STREAM	IPPROTO_TCP	get	SOL_SOCKET	SO_ERROR		0	0		0	\
 	inet		AF_INET		SOCK_DGRAM	IPPROTO_UDP	set	SOL_SOCKET	SO_RCVBUF		10000	0		0	\
 	unix		AF_LOCAL	SOCK_STREAM	0		set	SOL_SOCKET	SO_RCVBUF		10000	0		0	\
 	inet		AF_INET		SOCK_STREAM	IPPROTO_TCP	get	SOL_SOCKET	SO_TIMESTAMP		0	0		0	\
-	inet		AF_INET		SOCK_STREAM	IPPROTO_TCP	set	SOL_SOCKET	SO_RTABLE		0	22		inet	\
+	inet		AF_INET		SOCK_STREAM	IPPROTO_TCP	set	SOL_SOCKET	SO_RTABLE		0	22		wroute	\
 	0		AF_INET		SOCK_STREAM	IPPROTO_TCP	set	SOL_SOCKET	SO_RTABLE		0	0		0	\
 	inet		AF_INET		SOCK_STREAM	IPPROTO_TCP	set	IPPROTO_TCP	TCP_NODELAY		0	0		0	\
 	inet		AF_INET		SOCK_DGRAM	IPPROTO_UDP	get	IPPROTO_IP	IP_OPTIONS		0	0		0	\
@@ -36,11 +36,10 @@ TESTS =	inet		AF_INET		SOCK_STREAM	IPPROTO_TCP	get	SOL_SOCKET	SO_ERROR		0	0		0	\
 
 WARNINGS =	yes
 CLEANFILES =	sockopt sockopt.o ktrace.out
-REGRESS_TARGETS	=
 
 .for promises domain type protocol call level optname optval errno abort in ${TESTS}
-REGRESS_TARGETS +=	run-regress-${promises}-${domain}-${type}-${protocol}-${call}-${level}-${optname}-${optval}-${errno}-${abort}
-run-regress-${promises}-${domain}-${type}-${protocol}-${call}-${level}-${optname}-${optval}-${errno}-${abort}:
+REGRESS_TARGETS +=	run-${promises}-${domain}-${type}-${protocol}-${call}-${level}-${optname}-${optval}-${errno}-${abort}
+run-${promises}-${domain}-${type}-${protocol}-${call}-${level}-${optname}-${optval}-${errno}-${abort}:
 	@echo "\n$@"
 	rm -f sockopt sockopt.core
 	cd ${.CURDIR} && \
