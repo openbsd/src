@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.46 2020/10/01 07:58:54 otto Exp $	*/
+/*	$OpenBSD: tape.c,v 1.47 2021/01/21 00:16:36 mortimer Exp $	*/
 /*	$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $	*/
 
 /*-
@@ -55,15 +55,17 @@
 
 #define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
-int	writesize;		/* size of malloc()ed buffer for tape */
-int64_t	lastspclrec = -1;	/* tape block number of last written header */
-int	trecno = 0;		/* next record to write in current block */
-extern	int64_t blocksperfile;	/* number of blocks per output file */
-int64_t	blocksthisvol;		/* number of blocks on current output file */
-extern	int ntrec;		/* blocking factor on tape */
-extern	int cartridge;
-extern	char *host;
-char	*nexttape;
+ino_t   curino; 		/* current inumber; used globally */
+int     newtape;		/* new tape flag */
+union u_spcl u_spcl;		/* mapping of variables in a control block */
+
+static int tapefd;		/* tape file descriptor */
+static int64_t asize;		/* number of 0.1" units written on cur tape */
+static int writesize;		/* size of malloc()ed buffer for tape */
+static int64_t	lastspclrec = -1; /* tape block number of last written header */
+static int trecno = 0;		/* next record to write in current block */
+static int64_t blocksthisvol;	/* number of blocks on current output file */
+static char *nexttape;
 
 static	ssize_t atomic(ssize_t (*)(int, void *, size_t), int, char *, int);
 static	void doslave(int, int);
@@ -88,10 +90,10 @@ struct req {
 	daddr_t dblk;
 	int count;
 };
-int reqsiz;
+static int reqsiz;
 
 #define SLAVES 3		/* 1 slave writing, 1 reading, 1 for slack */
-struct slave {
+static struct slave {
 	int64_t tapea;		/* header number at start of this chunk */
 	int64_t firstrec;	/* record number of this block */
 	int count;		/* count to next header (used for TS_TAPE */
@@ -103,15 +105,15 @@ struct slave {
 	char (*tblock)[TP_BSIZE]; /* buffer for data blocks */
 	struct req *req;	/* buffer for requests */
 } slaves[SLAVES+1];
-struct slave *slp;
+static struct slave *slp;
 
-char	(*nextblock)[TP_BSIZE];
+static char	(*nextblock)[TP_BSIZE];
 
 static time_t tstart_volume;	/* time of volume start */
 static int64_t tapea_volume;	/* value of spcl.c_tapea at volume start */
 
-pid_t master;		/* pid of master, for sending error signals */
-int tenths;		/* length of tape used per block written */
+static pid_t master;		/* pid of master, for sending error signals */
+static int tenths;		/* length of tape used per block written */
 static volatile sig_atomic_t caught;	/* have we caught the signal to proceed? */
 
 int

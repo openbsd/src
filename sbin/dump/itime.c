@@ -1,4 +1,4 @@
-/*	$OpenBSD: itime.c,v 1.24 2019/06/28 13:32:43 deraadt Exp $	*/
+/*	$OpenBSD: itime.c,v 1.25 2021/01/21 00:16:36 mortimer Exp $	*/
 /*	$NetBSD: itime.c,v 1.4 1997/04/15 01:09:50 lukem Exp $	*/
 
 /*-
@@ -47,8 +47,10 @@
 
 #include "dump.h"
 
-struct	dumpdates **ddatev = NULL;
 int	nddates = 0;
+struct	dumpdates **ddatev = NULL;
+char	*dumpdates = NULL;
+char	lastlevel = 0;
 int	ddates_in = 0;
 struct	dumptime *dthead = NULL;
 

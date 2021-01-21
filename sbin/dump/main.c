@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.61 2019/06/28 13:32:43 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.62 2021/01/21 00:16:36 mortimer Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -60,15 +60,36 @@
 #include "dump.h"
 #include "pathnames.h"
 
-int	notify = 0;	/* notify operator flag */
-int64_t	blockswritten = 0;	/* number of blocks written on current tape */
-int	tapeno = 0;	/* current tape number */
-int	density = 0;	/* density in bytes/0.1" */
-int	ntrec = NTREC;	/* # tape blocks in each tape record */
-int	cartridge = 0;	/* Assume non-cartridge tape */
-int64_t	blocksperfile;	/* output blocks per file */
-char	*host = NULL;	/* remote host (if any) */
-int	maxbsize = 64*1024;	/* XXX MAXBSIZE from sys/param.h */
+int     mapsize;	/* size of the state maps */
+char    *usedinomap;	/* map of allocated inodes */
+char    *dumpdirmap;	/* map of directories to be dumped */
+char    *dumpinomap;	/* map of files to be dumped */
+char    *disk;		/* name of the disk file */
+char    *tape;		/* name of the tape file */
+char    level;		/* dump level of this dump */
+int     uflag;		/* update flag */
+int     diskfd;		/* disk file descriptor */
+int     pipeout;	/* true => output to standard output */
+int     density = 0;	/* density in bytes/0.1" */
+int64_t tapesize;	/* estimated tape size, blocks */
+int64_t tsize;		/* tape size in 0.1" units */
+int     etapes;		/* estimated number of tapes */
+int     nonodump;	/* if set, do not honor UF_NODUMP user flags */
+int     unlimited;	/* if set, write to end of medium */
+int     notify = 0;	/* notify operator flag */
+int64_t blockswritten = 0; /* number of blocks written on current tape */
+int     tapeno = 0;	/* current tape number */
+int     ntrec = NTREC;	/* # tape blocks in each tape record */
+int64_t blocksperfile;	/* output blocks per file */
+int     cartridge = 0;	/* Assume non-cartridge tape */
+char    *host = NULL;	/* remote host (if any) */
+time_t  tstart_writing;	/* when started writing the first tape block */
+long    xferrate;	/* averaged transfer rate of all volumes */
+struct fs *sblock;	/* the file system super block */
+char    sblock_buf[MAXBSIZE];
+int     tp_bshift;	/* log2(TP_BSIZE) */
+char    *duid;		/* duid of the disk being dumped */
+int     maxbsize = 64*1024; /* XXX MAXBSIZE from sys/param.h */
 
 struct disklabel lab;
 
@@ -106,7 +127,6 @@ main(int argc, char *argv[])
 	if ((tape = getenv("TAPE")) == NULL)
 		tape = _PATH_DEFTAPE;
 	dumpdates = _PATH_DUMPDATES;
-	temp = _PATH_DTMP;
 	if (TP_BSIZE / DEV_BSIZE == 0 || TP_BSIZE % DEV_BSIZE != 0)
 		quit("TP_BSIZE must be a multiple of DEV_BSIZE\n");
 	level = '0';

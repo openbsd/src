@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.6 2003/06/02 20:06:14 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.7 2021/01/21 00:16:36 mortimer Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.9 1997/04/15 07:00:47 lukem Exp $	*/
 
 /*
@@ -34,7 +34,6 @@
 
 #include <paths.h>
 
-#define	_PATH_DTMP	"/etc/dtmp"
 #define	_PATH_DUMPDATES	"/etc/dumpdates"
 #define	_PATH_LOCK	"/tmp/dumplockXXXXXX"
 #define	_PATH_RMT	"/etc/rmt"

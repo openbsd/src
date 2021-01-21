@@ -1,4 +1,4 @@
-/*	$OpenBSD: restore.h,v 1.9 2017/01/21 08:31:44 krw Exp $	*/
+/*	$OpenBSD: restore.h,v 1.10 2021/01/21 00:16:36 mortimer Exp $	*/
 /*	$NetBSD: restore.h,v 1.8 1997/07/01 05:37:54 lukem Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ struct entry {
 /*
  * The entry describes the next file available on the tape
  */
-struct context {
+extern struct context {
 	short	action;		/* action being taken on this file */
 	mode_t	mode;		/* mode of file */
 	ino_t	ino;		/* inumber of file */
