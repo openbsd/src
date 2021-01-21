@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.99 2019/12/19 18:36:37 bluhm Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.100 2021/01/21 19:12:13 florian Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -103,8 +103,6 @@
 #include <limits.h>
 #include <err.h>
 
-#include "gmt2local.h"
-
 /* packing rule for routing socket */
 #define ROUNDUP(a) \
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
@@ -113,7 +111,6 @@
 static pid_t pid;
 static int nflag;
 static int tflag;
-static int32_t thiszone;	/* time difference with gmt */
 static int rtsock = -1;
 static int repeat = 0;
 
@@ -147,7 +144,6 @@ main(int argc, char *argv[])
 	const char	*errstr;
 
 	pid = getpid();
-	thiszone = gmt2local(0);
 	rdomain = getrtable();
 	while ((ch = getopt(argc, argv, "acd:f:i:nstA:V:")) != -1) {
 		switch (ch) {
@@ -583,8 +579,16 @@ again:;
 			continue;
 		}
 		gettimeofday(&now, 0);
-		if (tflag)
-			ts_print(&now);
+		if (tflag) {
+			char buf[sizeof("00:00:00")];
+			struct tm *tm;
+
+			tm = localtime(&now.tv_sec);
+			if (tm != NULL) {
+				strftime(buf, sizeof(buf), "%H:%M:%S", tm);
+				printf("%s.%06ld ", buf, now.tv_usec);
+			}
+		}
 
 		addrwidth = strlen(host_buf);
 		if (addrwidth < W_ADDR)
@@ -908,19 +912,4 @@ sec2str(time_t total)
 	snprintf(p, ep - p, "%ds", secs);
 
 	return(result);
-}
-
-/*
- * Print the timestamp
- * from tcpdump/util.c
- */
-static void
-ts_print(const struct timeval *tvp)
-{
-	int s;
-
-	/* Default */
-	s = (tvp->tv_sec + thiszone) % 86400;
-	(void)printf("%02d:%02d:%02d.%06u ",
-	    s / 3600, (s % 3600) / 60, s % 60, (u_int32_t)tvp->tv_usec);
 }

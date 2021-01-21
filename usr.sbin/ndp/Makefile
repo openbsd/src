@@ -1,7 +1,6 @@
-# $OpenBSD: Makefile,v 1.4 2016/05/02 16:50:17 jca Exp $
+# $OpenBSD: Makefile,v 1.5 2021/01/21 19:12:13 florian Exp $
 
 PROG=	ndp
-SRCS=	ndp.c gmt2local.c
 MAN=	ndp.8
 
 .include <bsd.prog.mk>
