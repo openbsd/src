@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.350 2021/01/04 15:02:34 sashan Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.351 2021/01/21 13:18:07 mvs Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -2021,16 +2021,19 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 			break;
 		error = 1;
 		if (carpr.carpr_carpdev[0] != '\0' &&
-		    (ifp0 = ifunit(carpr.carpr_carpdev)) == NULL)
+		    (ifp0 = if_unit(carpr.carpr_carpdev)) == NULL)
 			return (EINVAL);
 		if (carpr.carpr_peer.s_addr == 0)
 			sc->sc_peer.s_addr = INADDR_CARP_GROUP;
 		else
 			sc->sc_peer.s_addr = carpr.carpr_peer.s_addr;
 		if (ifp0 != NULL && ifp0->if_index != sc->sc_carpdevidx) {
-			if ((error = carp_set_ifp(sc, ifp0)))
+			if ((error = carp_set_ifp(sc, ifp0))) {
+				if_put(ifp0);
 				return (error);
+			}
 		}
+		if_put(ifp0);
 		if (vhe->state != INIT && carpr.carpr_state != vhe->state) {
 			switch (carpr.carpr_state) {
 			case BACKUP:
