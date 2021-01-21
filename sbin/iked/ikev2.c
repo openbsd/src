@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.296 2021/01/21 16:46:47 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.297 2021/01/21 16:50:46 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1163,7 +1163,7 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
 		if (msg->msg_flags & IKED_MSG_FLAGS_NO_PROPOSAL_CHOSEN) {
 			log_info("%s: failed to negotiate IKE SA",
 			    SPI_SA(sa, __func__));
-			ikev2_ike_sa_setreason(sa, "no proposal chosen");
+			ikev2_ike_sa_setreason(sa, "no proposal chosen (IKE SA)");
 			sa_state(env, sa, IKEV2_STATE_CLOSED);
 			msg->msg_sa = NULL;
 			return;
@@ -1172,6 +1172,14 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
 		(void)ikev2_ike_auth_recv(env, sa, msg);
 		break;
 	case IKEV2_EXCHANGE_CREATE_CHILD_SA:
+		if (msg->msg_flags & IKED_MSG_FLAGS_NO_PROPOSAL_CHOSEN) {
+			log_info("%s: CREATE_CHILD_SA failed",
+			    SPI_SA(sa, __func__));
+			ikev2_ike_sa_setreason(sa, "no proposal chosen (CHILD SA)");
+			sa_state(env, sa, IKEV2_STATE_CLOSED);
+			msg->msg_sa = NULL;
+			return;
+		}
 		(void)ikev2_init_create_child_sa(env, msg);
 		break;
 	case IKEV2_EXCHANGE_INFORMATIONAL:
