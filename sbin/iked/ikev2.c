@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.295 2021/01/20 18:44:28 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.296 2021/01/21 16:46:47 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -103,7 +103,7 @@ ssize_t	 ikev2_handle_delete(struct iked *, struct iked_message *,
 	    struct ibuf *, struct ikev2_payload **, uint8_t *);
 
 int	 ikev2_send_create_child_sa(struct iked *, struct iked_sa *,
-	    struct iked_spi *, uint8_t);
+	    struct iked_spi *, uint8_t, uint16_t);
 int	 ikev2_ikesa_enable(struct iked *, struct iked_sa *, struct iked_sa *);
 void	 ikev2_ikesa_delete(struct iked *, struct iked_sa *, int);
 int	 ikev2_nonce_cmp(struct ibuf *, struct ibuf *);
@@ -593,6 +593,7 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 
 	initiator = (hdr->ike_flags & IKEV2_FLAG_INITIATOR) ? 0 : 1;
 	msg->msg_response = (hdr->ike_flags & IKEV2_FLAG_RESPONSE) ? 1 : 0;
+	msg->msg_exchange = hdr->ike_exchange;
 	msg->msg_sa = sa_lookup(env,
 	    betoh64(hdr->ike_ispi), betoh64(hdr->ike_rspi),
 	    initiator);
@@ -2952,7 +2953,10 @@ ikev2_handle_notifies(struct iked *env, struct iked_message *msg)
 {
 	struct iked_ipcomp	*ic;
 	struct iked_sa		*sa;
-	uint16_t		 group;
+	struct iked_spi		 rekey;
+	struct group		*group;
+	uint16_t		 groupid;
+	unsigned int		 protoid;
 
 	if ((sa = msg->msg_sa) == NULL)
 		return (-1);
@@ -2980,39 +2984,85 @@ ikev2_handle_notifies(struct iked *env, struct iked_message *msg)
 	}
 
 	if (msg->msg_flags & IKED_MSG_FLAGS_INVALID_KE) {
-		/* XXX chould also happen for PFS */
-		group = betoh16(msg->msg_group);
-		if (!sa->sa_hdr.sh_initiator) {
-			log_debug("%s: not an initiator", __func__);
-			ikev2_ike_sa_setreason(sa,
-			    "received invalid KE as responder");
-			sa_state(env, sa, IKEV2_STATE_CLOSED);
-			msg->msg_sa = NULL;
-			return (-1);
-		}
-		if (group_getid(group) == NULL) {
-			log_debug("%s: unable to select DH group %u", __func__,
-			    group);
+		groupid = betoh16(msg->msg_group);
+		if (group_getid(groupid) == NULL) {
+			log_debug("%s: unable to select DH group %u",
+			    __func__, groupid);
 			ikev2_ike_sa_setreason(sa,
 			    "unable to select DH group");
 			sa_state(env, sa, IKEV2_STATE_CLOSED);
 			msg->msg_sa = NULL;
 			return (-1);
 		}
-		msg->msg_policy->pol_peerdh = group;
 		log_debug("%s: responder selected DH group %u", __func__,
-		    group);
-		ikev2_ike_sa_setreason(sa,
-		    "reinitiating with new DH group");
-		sa_state(env, sa, IKEV2_STATE_CLOSED);
-		msg->msg_sa = NULL;
-
-		/*
-		 * XXX should also happen for PFS so we have to check state.
-		 */
-		timer_set(env, &env->sc_inittmr, ikev2_init_ike_sa, NULL);
-		timer_add(env, &env->sc_inittmr, IKED_INITIATOR_INITIAL);
-		return (-1);
+		    groupid);
+		switch (msg->msg_exchange) {
+		case IKEV2_EXCHANGE_IKE_SA_INIT:
+			protoid = IKEV2_SAPROTO_ESP;
+			if (!sa->sa_hdr.sh_initiator) {
+				log_debug("%s: not an initiator", __func__);
+				ikev2_ike_sa_setreason(sa,
+				    "received invalid KE as responder");
+				sa_state(env, sa, IKEV2_STATE_CLOSED);
+				msg->msg_sa = NULL;
+				return (-1);
+			}
+			if (config_findtransform_ext(&msg->msg_policy->pol_proposals,
+			    IKEV2_XFORMTYPE_DH, groupid, protoid) == NULL) {
+				log_debug("%s: DH group %u denied by policy",
+				    __func__, groupid);
+				ikev2_ike_sa_setreason(sa,
+				    "unsupported group in INVALID_KE message");
+				sa_state(env, sa, IKEV2_STATE_CLOSED);
+				msg->msg_sa = NULL;
+				return (-1);
+			}
+			ikev2_ike_sa_setreason(sa,
+			    "reinitiating with new DH group");
+			sa_state(env, sa, IKEV2_STATE_CLOSED);
+			msg->msg_sa = NULL;
+			msg->msg_policy->pol_peerdh = groupid;
+			timer_set(env, &env->sc_inittmr, ikev2_init_ike_sa, NULL);
+			timer_add(env, &env->sc_inittmr, IKED_INITIATOR_INITIAL);
+			return (-1);
+		case IKEV2_EXCHANGE_CREATE_CHILD_SA:
+			if (!(sa->sa_stateflags & IKED_REQ_CHILDSA)) {
+				log_debug("%s: IKED_REQ_CHILDSA missing",
+				     __func__);
+				return (-1);
+			}
+			sa->sa_stateflags &= ~IKED_REQ_CHILDSA;
+			protoid = sa->sa_rekeyspi ?
+			    IKEV2_SAPROTO_ESP : IKEV2_SAPROTO_IKE;
+			if (config_findtransform_ext(&msg->msg_policy->pol_proposals,
+			    IKEV2_XFORMTYPE_DH, groupid, protoid) == NULL) {
+				log_debug("%s: DH group %u denied by policy",
+				    __func__, groupid);
+				ikev2_ike_sa_setreason(sa,
+				    "unsupported group in INVALID_KE message");
+				sa_state(env, sa, IKEV2_STATE_CLOSED);
+				msg->msg_sa = NULL;
+				return (-1);
+			}
+			if (protoid == IKEV2_SAPROTO_ESP) {
+				/* CHILDSA */
+				rekey.spi = sa->sa_rekeyspi;
+				rekey.spi_size = 4;
+				rekey.spi_protoid = protoid;
+				(void)ikev2_send_create_child_sa(env, sa,
+				    &rekey, rekey.spi_protoid, groupid);
+			} else {
+				/* IKESA */
+				if ((group = group_get(groupid)) == NULL)
+					return -1;
+				group_free(sa->sa_dhgroup);
+				sa->sa_dhgroup = group;
+				timer_set(env, &sa->sa_rekey,
+				    ikev2_ike_sa_rekey, sa);
+				timer_add(env, &sa->sa_rekey, 0);
+			}
+			return (-1);
+		}
 	}
 
 	if (msg->msg_flags & IKED_MSG_FLAGS_IPCOMP_SUPPORTED) {
@@ -3762,7 +3812,7 @@ ikev2_set_sa_proposal(struct iked_sa *sa, struct iked_policy *pol,
 
 int
 ikev2_send_create_child_sa(struct iked *env, struct iked_sa *sa,
-    struct iked_spi *rekey, uint8_t protoid)
+    struct iked_spi *rekey, uint8_t protoid, uint16_t proposed_group)
 {
 	struct iked_policy		*pol = sa->sa_policy;
 	struct iked_childsa		*csa = NULL, *csb = NULL;
@@ -3862,6 +3912,13 @@ ikev2_send_create_child_sa(struct iked *env, struct iked_sa *sa,
 	    protoid)) {
 		log_debug("%s: enable PFS", __func__);
 		ikev2_sa_cleanup_dh(sa);
+		if (proposed_group) {
+			if ((sa->sa_dhgroup =
+			    group_get(proposed_group)) == NULL) {
+				log_debug("%s: failed to get group", __func__);
+				goto done;
+			}
+		}
 		if (ikev2_sa_initiator_dh(sa, NULL, protoid, NULL) < 0) {
 			log_debug("%s: failed to setup DH", __func__);
 			goto done;
@@ -6357,7 +6414,7 @@ ikev2_child_sa_acquire(struct iked *env, struct iked_flow *acquire)
 		if (sa->sa_stateflags & (IKED_REQ_CHILDSA|IKED_REQ_INF))
 			return (-1);	/* busy, retry later */
 		if (ikev2_send_create_child_sa(env, sa, NULL,
-		    flow->flow_saproto) != 0)
+		    flow->flow_saproto, 0) != 0)
 			log_warnx("%s: failed to initiate a "
 			    "CREATE_CHILD_SA exchange", SPI_SA(sa, __func__));
 	}
@@ -6407,7 +6464,7 @@ ikev2_child_sa_rekey(struct iked *env, struct iked_spi *rekey)
 		return (-1);	/* peer is busy, retry later */
 	if (csa->csa_allocated)	/* Peer SPI died first, get the local one */
 		rekey->spi = csa->csa_peerspi;
-	if (ikev2_send_create_child_sa(env, sa, rekey, rekey->spi_protoid))
+	if (ikev2_send_create_child_sa(env, sa, rekey, rekey->spi_protoid, 0))
 		log_warnx("%s: failed to initiate a CREATE_CHILD_SA exchange",
 		    SPI_SA(sa, __func__));
 	return (0);

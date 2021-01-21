@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.179 2020/12/21 22:49:36 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.180 2021/01/21 16:46:47 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -479,7 +479,7 @@ struct iked_sa {
 	struct iked_sa			*sa_previ;	/* matching back pointer */
 	struct iked_sa			*sa_nextr;	/* simultaneous rekey */
 	struct iked_sa			*sa_prevr;	/* matching back pointer */
-	uint64_t			 sa_rekeyspi;	/* peerspi CSA rekey*/
+	uint64_t			 sa_rekeyspi;	/* peerspi CSA rekey */
 	struct ibuf			*sa_simult;	/* simultaneous rekey */
 
 	struct iked_ipcomp		 sa_ipcompi;	/* IPcomp initator */
@@ -800,6 +800,8 @@ uint64_t
 	 config_getspi(void);
 struct iked_transform *
 	 config_findtransform(struct iked_proposals *, uint8_t, unsigned int);
+struct iked_transform *
+	 config_findtransform_ext(struct iked_proposals *, uint8_t,int, unsigned int);
 void	 config_free_policy(struct iked *, struct iked_policy *);
 struct iked_proposal *
 	 config_add_proposal(struct iked_proposals *, unsigned int,
