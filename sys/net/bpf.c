@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.202 2021/01/17 02:27:29 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.203 2021/01/21 12:33:14 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -379,7 +379,6 @@ bpfopen(dev_t dev, int flag, int mode, struct proc *p)
 	sigio_init(&bd->bd_sigio);
 
 	bd->bd_rtout = 0;	/* no timeout by default */
-	bd->bd_rnonblock = ISSET(flag, FNONBLOCK);
 
 	bpf_get(bd);
 	LIST_INSERT_HEAD(&bpf_d_list, bd, bd_list);
@@ -497,7 +496,7 @@ bpfread(dev_t dev, struct uio *uio, int ioflag)
 			ROTATE_BUFFERS(d);
 			break;
 		}
-		if (d->bd_rnonblock) {
+		if (ISSET(ioflag, IO_NDELAY)) {
 			/* User requested non-blocking I/O */
 			error = EWOULDBLOCK;
 		} else if (d->bd_rtout == 0) {
@@ -982,10 +981,7 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		break;
 
 	case FIONBIO:		/* Non-blocking I/O */
-		if (*(int *)addr)
-			d->bd_rnonblock = 1;
-		else
-			d->bd_rnonblock = 0;
+		/* let vfs to keep track of this */
 		break;
 
 	case FIOASYNC:		/* Send signal on receive packets */
