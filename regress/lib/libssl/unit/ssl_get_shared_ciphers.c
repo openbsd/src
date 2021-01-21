@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_get_shared_ciphers.c,v 1.7 2021/01/12 17:53:18 tb Exp $ */
+/*	$OpenBSD: ssl_get_shared_ciphers.c,v 1.8 2021/01/21 05:02:25 tb Exp $ */
 /*
  * Copyright (c) 2021 Theo Buehler <tb@openbsd.org>
  *
@@ -222,8 +222,6 @@ peer_config_to_ssl_ctx(const struct peer_config *config)
 		fprintf(stderr, "set_cipher_list(%s) failed\n", config->name);
 		goto err;
 	}
-
-	SSL_CTX_clear_mode(ctx, SSL_MODE_AUTO_RETRY);
 
 	if (config->server) {
 		if (!SSL_CTX_use_certificate_file(ctx, server_cert,
