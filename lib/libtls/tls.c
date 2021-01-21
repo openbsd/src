@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.86 2021/01/21 19:09:10 eric Exp $ */
+/* $OpenBSD: tls.c,v 1.87 2021/01/21 22:02:17 eric Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -439,7 +439,7 @@ tls_configure_ssl_keypair(struct tls *ctx, SSL_CTX *ssl_ctx,
  err:
 	EVP_PKEY_free(pkey);
 
-	return (1);
+	return (-1);
 }
 
 int
