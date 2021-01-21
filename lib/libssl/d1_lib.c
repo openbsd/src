@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_lib.c,v 1.51 2020/10/03 17:54:27 jsing Exp $ */
+/* $OpenBSD: d1_lib.c,v 1.52 2021/01/21 18:48:56 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -422,25 +422,4 @@ dtls1_listen(SSL *s, struct sockaddr *client)
 
 	(void)BIO_dgram_get_peer(SSL_get_rbio(s), client);
 	return 1;
-}
-
-void
-dtls1_build_sequence_number(unsigned char *dst, unsigned char *seq,
-    unsigned short epoch)
-{
-	CBB cbb;
-
-	if (!CBB_init_fixed(&cbb, dst, SSL3_SEQUENCE_SIZE))
-		goto err;
-	if (!CBB_add_u16(&cbb, epoch))
-		goto err;
-	if (!CBB_add_bytes(&cbb, &seq[2], SSL3_SEQUENCE_SIZE - 2))
-		goto err;
-	if (!CBB_finish(&cbb, NULL, NULL))
-		goto err;
-
-	return;
-
- err:
-	CBB_cleanup(&cbb);
 }
