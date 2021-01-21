@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.26 2020/12/07 18:28:09 bluhm Exp $ */
+/*	$OpenBSD: btrace.c,v 1.27 2021/01/21 13:19:25 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -1030,6 +1030,7 @@ baexpr2long(struct bt_arg *ba, struct dt_evt *dtev)
 long
 ba2long(struct bt_arg *ba, struct dt_evt *dtev)
 {
+	struct bt_var *bv;
 	long val;
 
 	switch (ba->ba_type) {
@@ -1039,6 +1040,11 @@ ba2long(struct bt_arg *ba, struct dt_evt *dtev)
 	case B_AT_VAR:
 		ba = ba_read(ba);
 		val = (long)ba->ba_value;
+		break;
+	case B_AT_MAP:
+		bv = ba->ba_value;
+		val = ba2long(map_get((struct map *)bv->bv_value,
+		    ba2str(ba->ba_key, dtev)), dtev);
 		break;
 	case B_AT_BI_NSECS:
 		val = builtin_nsecs(dtev);
