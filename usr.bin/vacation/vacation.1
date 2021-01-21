@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vacation.1,v 1.23 2015/11/30 17:03:05 jmc Exp $
+.\"	$OpenBSD: vacation.1,v 1.24 2021/01/21 12:43:30 jmc Exp $
 .\"	$NetBSD: vacation.1,v 1.5 1995/08/31 21:57:08 jtc Exp $
 .\"
 .\" Copyright (c) 1985, 1987, 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)vacation.1	8.2 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: November 30 2015 $
+.Dd $Mdocdate: January 21 2021 $
 .Dt VACATION 1
 .Os
 .Sh NAME
@@ -54,7 +54,7 @@ For example, your
 .Pa .forward
 file might have:
 .Bd -literal -offset indent
-\eeric, "|/usr/bin/vacation -a allman eric"
+eric, "|/usr/bin/vacation -a allman eric"
 .Ed
 .Pp
 which would send messages to you (assuming your login name was eric) and
@@ -107,7 +107,7 @@ option).
 Messages are from
 .Dq ???-REQUEST ,
 .Dq Postmaster ,
-.Dq Tn UUCP ,
+.Dq UUCP ,
 .Dq MAILER ,
 or
 .Dq MAILER-DAEMON
