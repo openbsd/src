@@ -1,4 +1,4 @@
-/*	$OpenBSD: canfield.c,v 1.28 2018/08/24 11:14:49 mestre Exp $	*/
+/*	$OpenBSD: canfield.c,v 1.29 2021/01/21 20:08:17 millert Exp $	*/
 /*	$NetBSD: canfield.c,v 1.7 1995/05/13 07:28:35 jtc Exp $	*/
 
 /*
@@ -1332,7 +1332,8 @@ getcmd(int row, int col, const char *cp)
 	do {
 		if ((ch = getch()) == ERR)
 			cleanup(0);
-		ch &= 0177;
+		if (ch >= KEY_MIN)
+			continue;
 		if (ch >= 'A' && ch <= 'Z')
 			ch += ('a' - 'A');
 		if (ch == '\f') {
