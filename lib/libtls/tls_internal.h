@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.77 2019/11/16 21:39:52 beck Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.78 2021/01/21 19:09:10 eric Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -111,6 +111,7 @@ struct tls_config {
 	int verify_name;
 	int verify_time;
 	int skip_private_key_check;
+	int use_fake_private_key;
 };
 
 struct tls_conninfo {
@@ -294,5 +295,6 @@ __END_HIDDEN_DECLS
 
 /* XXX this function is not fully hidden so relayd can use it */
 void tls_config_skip_private_key_check(struct tls_config *config);
+void tls_config_use_fake_private_key(struct tls_config *config);
 
 #endif /* HEADER_TLS_INTERNAL_H */

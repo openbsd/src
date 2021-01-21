@@ -45,6 +45,7 @@ tls_config_set_session_lifetime
 tls_config_set_session_fd
 tls_config_set_verify_depth
 tls_config_skip_private_key_check
+tls_config_use_fake_private_key
 tls_config_verify
 tls_config_verify_client
 tls_config_verify_client_optional

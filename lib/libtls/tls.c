@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.85 2020/05/24 15:12:54 jsing Exp $ */
+/* $OpenBSD: tls.c,v 1.86 2021/01/21 19:09:10 eric Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -326,12 +326,69 @@ tls_cert_pubkey_hash(X509 *cert, char **hash)
 	return (rv);
 }
 
+static int
+tls_keypair_to_pkey(struct tls *ctx, struct tls_keypair *keypair, EVP_PKEY **pkey)
+{
+	BIO *bio = NULL;
+	X509 *x509 = NULL;
+	char *mem;
+	size_t len;
+	int ret = -1;
+
+	*pkey = NULL;
+
+	if (ctx->config->use_fake_private_key) {
+		mem = keypair->cert_mem;
+		len = keypair->cert_len;
+	} else {
+		mem = keypair->key_mem;
+		len = keypair->key_len;
+	}
+
+	if (mem == NULL)
+		return (0);
+
+	if (len > INT_MAX) {
+		tls_set_errorx(ctx, ctx->config->use_fake_private_key ?
+		    "cert too long" : "key too long");
+		goto err;
+	}
+
+	if ((bio = BIO_new_mem_buf(mem, len)) == NULL) {
+		tls_set_errorx(ctx, "failed to create buffer");
+		goto err;
+	}
+
+	if (ctx->config->use_fake_private_key) {
+		if ((x509 = PEM_read_bio_X509(bio, NULL, tls_password_cb,
+		    NULL)) == NULL) {
+			tls_set_errorx(ctx, "failed to read X509 certificate");
+			goto err;
+		}
+		if ((*pkey = X509_get_pubkey(x509)) == NULL) {
+			tls_set_errorx(ctx, "failed to retrieve pubkey");
+			goto err;
+		}
+	} else {
+		if ((*pkey = PEM_read_bio_PrivateKey(bio, NULL, tls_password_cb,
+		    NULL)) ==  NULL) {
+			tls_set_errorx(ctx, "failed to read private key");
+			goto err;
+		}
+	}
+
+	ret = 0;
+ err:
+	BIO_free(bio);
+	X509_free(x509);
+	return (ret);
+}
+
 int
 tls_configure_ssl_keypair(struct tls *ctx, SSL_CTX *ssl_ctx,
     struct tls_keypair *keypair, int required)
 {
 	EVP_PKEY *pkey = NULL;
-	BIO *bio = NULL;
 
 	if (!required &&
 	    keypair->cert_mem == NULL &&
@@ -351,23 +408,9 @@ tls_configure_ssl_keypair(struct tls *ctx, SSL_CTX *ssl_ctx,
 		}
 	}
 
-	if (keypair->key_mem != NULL) {
-		if (keypair->key_len > INT_MAX) {
-			tls_set_errorx(ctx, "key too long");
-			goto err;
-		}
-
-		if ((bio = BIO_new_mem_buf(keypair->key_mem,
-		    keypair->key_len)) == NULL) {
-			tls_set_errorx(ctx, "failed to create buffer");
-			goto err;
-		}
-		if ((pkey = PEM_read_bio_PrivateKey(bio, NULL, tls_password_cb,
-		    NULL)) == NULL) {
-			tls_set_errorx(ctx, "failed to read private key");
-			goto err;
-		}
-
+	if (tls_keypair_to_pkey(ctx, keypair, &pkey) == -1)
+		goto err;
+	if (pkey != NULL) {
 		if (keypair->pubkey_hash != NULL) {
 			RSA *rsa;
 			/* XXX only RSA for now for relayd privsep */
@@ -381,8 +424,6 @@ tls_configure_ssl_keypair(struct tls *ctx, SSL_CTX *ssl_ctx,
 			tls_set_errorx(ctx, "failed to load private key");
 			goto err;
 		}
-		BIO_free(bio);
-		bio = NULL;
 		EVP_PKEY_free(pkey);
 		pkey = NULL;
 	}
@@ -397,7 +438,6 @@ tls_configure_ssl_keypair(struct tls *ctx, SSL_CTX *ssl_ctx,
 
  err:
 	EVP_PKEY_free(pkey);
-	BIO_free(bio);
 
 	return (1);
 }
