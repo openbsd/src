@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.87 2021/01/20 07:30:51 kn Exp $ */
+/* $OpenBSD: doas.c,v 1.88 2021/01/21 08:13:59 kn Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -206,15 +206,11 @@ authuser(char *myname, char *login_style, int persist)
 	auth_session_t *as;
 	int fd = -1;
 
-	if (persist) {
+	if (persist)
 		fd = open("/dev/tty", O_RDWR);
-		if (fd != -1) {
-			if (ioctl(fd, TIOCCHKVERAUTH) == 0)
-				goto good;
-		}
-	} else {
-		if (pledge("stdio rpath getpw exec id unveil", NULL) == -1)
-			err(1, "pledge");
+	if (fd != -1) {
+		if (ioctl(fd, TIOCCHKVERAUTH) == 0)
+			goto good;
 	}
 
 	if (!(as = auth_userchallenge(myname, login_style, "auth-doas",
