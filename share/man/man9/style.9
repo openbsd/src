@@ -22,9 +22,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.76 2020/05/10 00:56:06 guenther Exp $
+.\"	$OpenBSD: style.9,v 1.77 2021/01/22 14:13:57 millert Exp $
 .\"
-.Dd $Mdocdate: May 10 2020 $
+.Dd $Mdocdate: January 22 2021 $
 .Dt STYLE 9
 .Os
 .Sh NAME
@@ -34,7 +34,7 @@
 This file specifies the preferred style for kernel source files in the
 .Ox
 source tree.
-It is also a guide for preferred userland code style.
+It is also a guide for preferred userspace code style.
 These guidelines should be followed for all new code.
 In general, code can be considered
 .Dq new code
@@ -102,13 +102,15 @@ Then there's a blank line, and the user include files.
 #include "pathnames.h"	/* Local includes in double quotes. */
 .Ed
 .Pp
-All functions are prototyped somewhere.
+All non-static functions are prototyped somewhere.
 .Pp
 Function prototypes for private functions (i.e., functions not used
 elsewhere) go at the top of the first source module.
-In userland, functions local to one source module should be declared
+In the kernel, private functions do not require a prototype as long
+as they are defined before they are used.
+In userspace, functions local to one source module should be declared
 .Ql static .
-This should not be done in kernel land since it makes it impossible
+This should not be done in the kernel since it makes it impossible
 to use the kernel debugger.
 .Pp
 Functions used from other files are prototyped in the
