@@ -1,4 +1,4 @@
-/* $OpenBSD: servertest.c,v 1.4 2020/10/11 02:30:04 jsing Exp $ */
+/* $OpenBSD: servertest.c,v 1.5 2021/01/22 15:56:17 tb Exp $ */
 /*
  * Copyright (c) 2015, 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -159,7 +159,7 @@ server_hello_test(int testno, struct server_hello_test *sht)
 	wbio->references = 2;
 
 	SSL_set_bio(ssl, rbio, wbio);
-	
+
 	if (SSL_accept(ssl) != 0) {
 		fprintf(stderr, "SSL_accept() returned non-zero\n");
 		ERR_print_errors_fp(stderr);
@@ -172,8 +172,10 @@ server_hello_test(int testno, struct server_hello_test *sht)
 	SSL_CTX_free(ssl_ctx);
 	SSL_free(ssl);
 
-	rbio->references = 1;
-	wbio->references = 1;
+	if (rbio != NULL)
+		rbio->references = 1;
+	if (wbio != NULL)
+		wbio->references = 1;
 
 	BIO_free(rbio);
 	BIO_free(wbio);
