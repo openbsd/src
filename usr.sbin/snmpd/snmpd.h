@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.90 2020/09/06 15:51:28 martijn Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.91 2021/01/22 06:33:26 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -48,8 +48,8 @@
 #define CONF_FILE		"/etc/snmpd.conf"
 #define SNMPD_SOCKET		"/var/run/snmpd.sock"
 #define SNMPD_USER		"_snmpd"
-#define SNMPD_PORT		"161"
-#define SNMPD_TRAPPORT		"162"
+#define SNMP_PORT		"161"
+#define SNMPTRAP_PORT		"162"
 
 #define SNMPD_MAXSTRLEN		484
 #define SNMPD_MAXCOMMUNITYLEN	SNMPD_MAXSTRLEN
@@ -88,7 +88,7 @@ enum imsg_type {
 	IMSG_CTL_VERBOSE,
 	IMSG_CTL_RELOAD,
 	IMSG_CTL_PROCFD,
-	IMSG_ALERT
+	IMSG_TRAP_EXEC
 };
 
 struct imsgev {
@@ -110,7 +110,6 @@ struct imsgev {
 enum privsep_procid {
 	PROC_PARENT,	/* Parent process and application interface */
 	PROC_SNMPE,	/* SNMP engine */
-	PROC_TRAP,	/* SNMP trap receiver */
 	PROC_MAX
 };
 
@@ -384,8 +383,11 @@ struct snmp_message {
 	struct sockaddr_storage	 sm_ss;
 	socklen_t		 sm_slen;
 	int			 sm_sock_tcp;
+	int			 sm_aflags;
+	int			 sm_type;
 	struct event		 sm_sockev;
 	char			 sm_host[HOST_NAME_MAX+1];
+	in_port_t		 sm_port;
 
 	struct sockaddr_storage	 sm_local_ss;
 	socklen_t		 sm_local_slen;
@@ -482,6 +484,7 @@ struct address {
 	struct sockaddr_storage	 ss;
 	in_port_t		 port;
 	int			 type;
+	int			 flags;
 	int			 fd;
 	struct event		 ev;
 	struct event		 evt;
@@ -489,6 +492,10 @@ struct address {
 	TAILQ_ENTRY(address)	 entry;
 };
 TAILQ_HEAD(addresslist, address);
+
+#define ADDRESS_FLAG_READ 0x1
+#define ADDRESS_FLAG_WRITE 0x2
+#define ADDRESS_FLAG_NOTIFY 0x4
 
 struct trap_address {
 	struct sockaddr_storage	 ss;
@@ -761,9 +768,8 @@ struct imsgev *
 int	 proc_flush_imsg(struct privsep *, enum privsep_procid, int);
 
 /* traphandler.c */
-void	 traphandler(struct privsep *, struct privsep_proc *);
-void	 traphandler_shutdown(void);
-int	 snmpd_dispatch_traphandler(int, struct privsep_proc *, struct imsg *);
+int	 traphandler_parse(struct snmp_message *);
+int	 traphandler_priv_recvmsg(struct privsep_proc *, struct imsg *);
 void	 trapcmd_free(struct trapcmd *);
 int	 trapcmd_add(struct trapcmd *);
 struct trapcmd *

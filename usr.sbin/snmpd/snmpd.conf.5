@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.45 2020/10/24 14:52:11 jmc Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.46 2021/01/22 06:33:26 martijn Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 24 2020 $
+.Dd $Mdocdate: January 22 2021 $
 .Dt SNMPD.CONF 5
 .Os
 .Sh NAME
@@ -95,13 +95,37 @@ Routing table information will not be available, but CPU use will be
 reduced during bulk updates.
 The default is
 .Ic no .
-.It Ic listen on Oo Ic tcp | udp Oc Ar address Op Ic port Ar port
+.It Ic listen on Oo Ic tcp | udp Oc Ar address Oo Ic port Ar port Oc Op Ic read | Ic write | Ic notify
 Specify the local address
 .Xr snmpd 8
 should listen on for incoming SNMP messages.
+The
+.Ic read
+flag specifies if the listen statement accepts get, getnext and bulkget
+requests.
+The
+.Ic write
+flag specifies if the listen statement accepts set requests
+and
+.Ic notify
+flags specifes if the listen statements accepts trapv1 and trapv2 requests.
 Multiple
 .Ic listen on
-statements are supported, the default is UDP.
+statements are supported.
+The default protocol is
+.Ic udp.
+The default
+.Ar port
+is 161, unless the only listen flags contains
+.Ic notify
+which sets it to 162.
+If no flags are specified it defaults to
+.Dq Ic read Ic write ,
+or
+.Ic notify
+when
+.Ar port
+is 162.
 .It Ic read-only community Ar string
 Specify the name of the read-only community.
 The default value is

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.62 2020/10/30 07:43:48 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.63 2021/01/22 06:33:26 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -94,11 +94,10 @@ char		*symget(const char *);
 struct snmpd			*conf = NULL;
 static int			 errors = 0;
 static struct usmuser		*user = NULL;
-static char			*snmpd_port = SNMPD_PORT;
 
 int		 host(const char *, const char *, int,
 		    struct sockaddr_storage *, int);
-int		 listen_add(struct sockaddr_storage *, int);
+int		 listen_add(struct sockaddr_storage *, int, int);
 
 typedef struct {
 	union {
@@ -121,7 +120,7 @@ typedef struct {
 %}
 
 %token	INCLUDE
-%token  LISTEN ON
+%token  LISTEN ON READ WRITE NOTIFY
 %token	SYSTEM CONTACT DESCR LOCATION NAME OBJECTID SERVICES RTFILTER
 %token	READONLY READWRITE OCTETSTRING INTEGER COMMUNITY TRAP RECEIVER
 %token	SECLEVEL NONE AUTH ENC USER AUTHKEY ENCKEY ERROR DISABLED
@@ -130,7 +129,7 @@ typedef struct {
 %token  <v.number>	NUMBER
 %type	<v.string>	hostcmn
 %type	<v.string>	srcaddr port
-%type	<v.number>	optwrite yesno seclevel
+%type	<v.number>	optwrite yesno seclevel listenopt listenopts
 %type	<v.data>	objtype cmd
 %type	<v.oid>		oid hostoid trapoid
 %type	<v.auth>	auth
@@ -281,54 +280,74 @@ listenproto	: UDP listen_udp
 		| TCP listen_tcp
 		| listen_udp
 
-listen_udp	: STRING port			{
+listenopts	: /* empty */ { $$ = 0; }
+		| listenopts listenopt { $$ |= $2; }
+		;
+
+listenopt	: READ { $$ = ADDRESS_FLAG_READ; }
+		| WRITE { $$ = ADDRESS_FLAG_WRITE; }
+		| NOTIFY { $$ = ADDRESS_FLAG_NOTIFY; }
+		;
+
+listen_udp	: STRING port listenopts	{
 			struct sockaddr_storage ss[16];
 			int nhosts, i;
+			char *port = $2;
 
-			nhosts = host($1, $2, SOCK_DGRAM, ss, nitems(ss));
+			if (port == NULL) {
+				if ($3 == ADDRESS_FLAG_NOTIFY)
+					port = SNMPTRAP_PORT;
+				else
+					port = SNMP_PORT;
+			}
+
+			nhosts = host($1, port, SOCK_DGRAM, ss, nitems(ss));
 			if (nhosts < 1) {
 				yyerror("invalid address: %s", $1);
 				free($1);
-				if ($2 != snmpd_port)
-					free($2);
+				free($2);
 				YYERROR;
 			}
 			if (nhosts > (int)nitems(ss))
 				log_warn("%s:%s resolves to more than %zu hosts",
-				    $1, $2, nitems(ss));
+				    $1, port, nitems(ss));
 
 			free($1);
-			if ($2 != snmpd_port)
-				free($2);
+			free($2);
 			for (i = 0; i < nhosts; i++) {
-				if (listen_add(&(ss[i]), SOCK_DGRAM) == -1) {
+				if (listen_add(&(ss[i]), SOCK_DGRAM, $3) == -1) {
 					yyerror("calloc");
 					YYERROR;
 				}
 			}
 		}
 
-listen_tcp	: STRING port			{
+listen_tcp	: STRING port listenopts	{
 			struct sockaddr_storage ss[16];
 			int nhosts, i;
+			char *port = $2;
 
-			nhosts = host($1, $2, SOCK_STREAM, ss, nitems(ss));
+			if (port == NULL) {
+				if ($3 == ADDRESS_FLAG_NOTIFY)
+					port = SNMPTRAP_PORT;
+				else
+					port = SNMP_PORT;
+			}
+			nhosts = host($1, port, SOCK_STREAM, ss, nitems(ss));
 			if (nhosts < 1) {
 				yyerror("invalid address: %s", $1);
 				free($1);
-				if ($2 != snmpd_port)
-					free($2);
+				free($2);
 				YYERROR;
 			}
 			if (nhosts > (int)nitems(ss))
 				log_warn("%s:%s resolves to more than %zu hosts",
-				    $1, $2, nitems(ss));
+				    $1, port, nitems(ss));
 
 			free($1);
-			if ($2 != snmpd_port)
-				free($2);
+			free($2);
 			for (i = 0; i < nhosts; i++) {
-				if (listen_add(&(ss[i]), SOCK_STREAM) == -1) {
+				if (listen_add(&(ss[i]), SOCK_STREAM, $3) == -1) {
 					yyerror("calloc");
 					YYERROR;
 				}
@@ -336,7 +355,7 @@ listen_tcp	: STRING port			{
 		}
 
 port		: /* empty */			{
-			$$ = snmpd_port;
+			$$ = NULL;
 		}
 		| PORT STRING			{
 			$$ = $2;
@@ -497,7 +516,7 @@ hostdef		: STRING hostoid hostcmn srcaddr	{
 				YYERROR;
 			}
 
-			if (host($1, SNMPD_TRAPPORT, SOCK_DGRAM, &ss, 1) <= 0) {
+			if (host($1, SNMPTRAP_PORT, SOCK_DGRAM, &ss, 1) <= 0) {
 				yyerror("invalid host: %s", $1);
 				free($1);
 				free($2);
@@ -704,9 +723,11 @@ lookup(char *s)
 		{ "location",			LOCATION },
 		{ "name",			NAME },
 		{ "none",			NONE },
+		{ "notify",			NOTIFY },
 		{ "oid",			OBJECTID },
 		{ "on",				ON },
 		{ "port",			PORT },
+		{ "read",			READ },
 		{ "read-only",			READONLY },
 		{ "read-write",			READWRITE },
 		{ "receiver",			RECEIVER },
@@ -718,7 +739,8 @@ lookup(char *s)
 		{ "tcp",			TCP },
 		{ "trap",			TRAP },
 		{ "udp",			UDP },
-		{ "user",			USER }
+		{ "user",			USER },
+		{ "write",			WRITE }
 	};
 	const struct keywords	*p;
 
@@ -1110,27 +1132,29 @@ parse_config(const char *filename, u_int flags)
 
 	/* Setup default listen addresses */
 	if (TAILQ_EMPTY(&conf->sc_addresses)) {
-		if (host("0.0.0.0", SNMPD_PORT, SOCK_DGRAM, &ss, 1) != 1)
+		if (host("0.0.0.0", SNMP_PORT, SOCK_DGRAM, &ss, 1) != 1)
 			fatal("Unexpected resolving of 0.0.0.0");
-		if (listen_add(&ss, SOCK_DGRAM) == -1)
+		if (listen_add(&ss, SOCK_DGRAM, 0) == -1)
 			fatal("calloc");
-		if (host("::", SNMPD_PORT, SOCK_DGRAM, &ss, 1) != 1)
+		if (host("::", SNMP_PORT, SOCK_DGRAM, &ss, 1) != 1)
 			fatal("Unexpected resolving of ::");
-		if (listen_add(&ss, SOCK_DGRAM) == -1)
+		if (listen_add(&ss, SOCK_DGRAM, 0) == -1)
 			fatal("calloc");
 	}
-	if (conf->sc_traphandler) {
-		found = 0;
-		TAILQ_FOREACH(h, &conf->sc_addresses, entry) {
-			if (h->type == SOCK_DGRAM)
-				found = 1;
-		}
-		if (!found) {
-			log_warnx("trap handler needs at least one "
-			    "udp listen address");
-			free(conf);
-			return (NULL);
-		}
+	found = 0;
+	TAILQ_FOREACH(h, &conf->sc_addresses, entry) {
+		if (h->flags & ADDRESS_FLAG_NOTIFY)
+			found = 1;
+	}
+	if (conf->sc_traphandler && !found) {
+		log_warnx("trap handler needs at least one notify listener");
+		free(conf);
+		return (NULL);
+	}
+	if (!conf->sc_traphandler && found) {
+		log_warnx("notify listener needs at least one trap handler");
+		free(conf);
+		return (NULL);
 	}
 
 	/* Free macros and check which have not been used. */
@@ -1258,7 +1282,7 @@ host(const char *s, const char *port, int type, struct sockaddr_storage *ss,
 }
 
 int
-listen_add(struct sockaddr_storage *ss, int type)
+listen_add(struct sockaddr_storage *ss, int type, int flags)
 {
 	struct sockaddr_in *sin;
 	struct sockaddr_in6 *sin6;
@@ -1275,6 +1299,12 @@ listen_add(struct sockaddr_storage *ss, int type)
 		h->port = ntohs(sin6->sin6_port);
 	}
 	h->type = type;
+	if ((h->flags = flags) == 0) {
+		if (h->port == 162)
+			h->flags = ADDRESS_FLAG_NOTIFY;
+		else
+			h->flags = ADDRESS_FLAG_READ | ADDRESS_FLAG_WRITE;
+	}
 	TAILQ_INSERT_TAIL(&(conf->sc_addresses), h, entry);
 
 	return 0;

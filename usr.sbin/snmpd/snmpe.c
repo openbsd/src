@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.67 2020/09/06 17:29:35 martijn Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.68 2021/01/22 06:33:27 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -108,7 +108,7 @@ snmpe_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 			evtimer_set(&h->evt, snmpe_acceptcb, h);
 		} else {
 			event_set(&h->ev, h->fd, EV_READ|EV_PERSIST,
-			    snmpe_recvmsg, env);
+			    snmpe_recvmsg, h);
 		}
 		event_add(&h->ev, NULL);
 	}
@@ -271,6 +271,7 @@ snmpe_parse(struct snmp_message *msg)
 	if (class != BER_CLASS_CONTEXT)
 		goto parsefail;
 
+	msg->sm_type = type;
 	switch (type) {
 	case SNMP_C_GETBULKREQ:
 		if (msg->sm_version == SNMP_V1) {
@@ -288,6 +289,10 @@ snmpe_parse(struct snmp_message *msg)
 	case SNMP_C_GETNEXTREQ:
 		if (type == SNMP_C_GETNEXTREQ)
 			stats->snmp_ingetnexts++;
+		if (!(msg->sm_aflags & ADDRESS_FLAG_READ)) {
+			msg->sm_errstr = "read requests disabled";
+			goto fail;
+		}
 		if (msg->sm_version != SNMP_V3 &&
 		    strcmp(env->sc_rdcommunity, msg->sm_community) != 0 &&
 		    (env->sc_readonly ||
@@ -301,6 +306,10 @@ snmpe_parse(struct snmp_message *msg)
 
 	case SNMP_C_SETREQ:
 		stats->snmp_insetrequests++;
+		if (!(msg->sm_aflags & ADDRESS_FLAG_WRITE)) {
+			msg->sm_errstr = "write requests disabled";
+			goto fail;
+		}
 		if (msg->sm_version != SNMP_V3 &&
 		    (env->sc_readonly ||
 		    strcmp(env->sc_rwcommunity, msg->sm_community) != 0)) {
@@ -320,16 +329,40 @@ snmpe_parse(struct snmp_message *msg)
 		goto parsefail;
 
 	case SNMP_C_TRAP:
+		if (msg->sm_version != SNMP_V1) {
+			msg->sm_errstr = "trapv1 request on !SNMPv1 message";
+			goto parsefail;
+		}
 	case SNMP_C_TRAPV2:
-		if (msg->sm_version != SNMP_V3 &&
-		    strcmp(env->sc_trcommunity, msg->sm_community) != 0) {
+		if (type == SNMP_C_TRAPV2 &&
+		    !(msg->sm_version == SNMP_V2 ||
+		    msg->sm_version != SNMP_V3)) {
+			msg->sm_errstr = "trapv2 request on !SNMPv2C or "
+			    "!SNMPv3 message";
+			goto parsefail;
+		}
+		if (!(msg->sm_aflags & ADDRESS_FLAG_NOTIFY)) {
+			msg->sm_errstr = "notify requests disabled";
+			goto fail;
+		}
+		if (msg->sm_version == SNMP_V3) {
+			msg->sm_errstr = "SNMPv3 doesn't support traps yet";
+			goto fail;
+		}
+		if (strcmp(env->sc_trcommunity, msg->sm_community) != 0) {
 			stats->snmp_inbadcommunitynames++;
 			msg->sm_errstr = "wrong trap community";
 			goto fail;
 		}
 		stats->snmp_intraps++;
-		msg->sm_errstr = "received trap";
-		goto fail;
+		/*
+		 * This should probably go into parsevarbinds, but that's for a
+		 * next refactor
+		 */
+		if (traphandler_parse(msg) == -1)
+			goto fail;
+		/* Shortcircuit */
+		return 0;
 
 	default:
 		msg->sm_errstr = "invalid context";
@@ -356,15 +389,15 @@ snmpe_parse(struct snmp_message *msg)
 
 	print_host(ss, msg->sm_host, sizeof(msg->sm_host));
 	if (msg->sm_version == SNMP_V3)
-		log_debug("%s: %s: SNMPv3 context %d, flags %#x, "
+		log_debug("%s: %s:%hd: SNMPv3 context %d, flags %#x, "
 		    "secmodel %lld, user '%s', ctx-engine %s, ctx-name '%s', "
-		    "request %lld", __func__, msg->sm_host, msg->sm_context,
-		    msg->sm_flags, msg->sm_secmodel, msg->sm_username,
-		    tohexstr(msg->sm_ctxengineid, msg->sm_ctxengineid_len),
-		    msg->sm_ctxname, msg->sm_request);
+		    "request %lld", __func__, msg->sm_host, msg->sm_port,
+		    msg->sm_context, msg->sm_flags, msg->sm_secmodel,
+		    msg->sm_username, tohexstr(msg->sm_ctxengineid,
+		    msg->sm_ctxengineid_len), msg->sm_ctxname, msg->sm_request);
 	else
-		log_debug("%s: %s: SNMPv%d '%s' context %d request %lld",
-		    __func__, msg->sm_host, msg->sm_version + 1,
+		log_debug("%s: %s:%hd: SNMPv%d '%s' context %d request %lld",
+		    __func__, msg->sm_host, msg->sm_port, msg->sm_version + 1,
 		    msg->sm_community, msg->sm_context, msg->sm_request);
 
 	return (0);
@@ -373,7 +406,8 @@ snmpe_parse(struct snmp_message *msg)
 	stats->snmp_inasnparseerrs++;
  fail:
 	print_host(ss, msg->sm_host, sizeof(msg->sm_host));
-	log_debug("%s: %s: %s", __func__, msg->sm_host, msg->sm_errstr);
+	log_debug("%s: %s:%hd: %s", __func__, msg->sm_host, msg->sm_port,
+	    msg->sm_errstr);
 	return (-1);
 }
 
@@ -403,8 +437,8 @@ snmpe_parsevarbinds(struct snmp_message *msg)
 		if (o.bo_n < BER_MIN_OID_LEN || o.bo_n > BER_MAX_OID_LEN)
 			goto varfail;
 
-		log_debug("%s: %s: oid %s", __func__, msg->sm_host,
-		    smi_oid2string(&o, buf, sizeof(buf), 0));
+		log_debug("%s: %s:%hd: oid %s", __func__, msg->sm_host,
+		    msg->sm_port, smi_oid2string(&o, buf, sizeof(buf), 0));
 
 		/*
 		 * XXX intotalreqvars should only be incremented after all are
@@ -479,8 +513,8 @@ snmpe_parsevarbinds(struct snmp_message *msg)
 
 	return 0;
  varfail:
-	log_debug("%s: %s: %s, error index %d", __func__,
-	    msg->sm_host, msg->sm_errstr, i);
+	log_debug("%s: %s:%hd: %s, error index %d", __func__,
+	    msg->sm_host, msg->sm_port, msg->sm_errstr, i);
 	if (msg->sm_error == 0)
 		msg->sm_error = SNMP_ERROR_GENERR;
 	msg->sm_errorindex = i;
@@ -515,6 +549,10 @@ snmpe_acceptcb(int fd, short type, void *arg)
 	if ((msg = calloc(1, sizeof(*msg))) == NULL)
 		goto fail;
 
+	memcpy(&(msg->sm_ss), &ss, len);
+	msg->sm_slen = len;
+	msg->sm_aflags = h->flags;
+	msg->sm_port = h->port;
 	snmpe_prepare_read(msg, afd);
 	return;
 fail:
@@ -635,6 +673,10 @@ snmpe_writecb(int fd, short type, void *arg)
 
 	if ((nmsg = calloc(1, sizeof(*nmsg))) == NULL)
 		goto fail;
+	memcpy(&(nmsg->sm_ss), &(msg->sm_ss), msg->sm_slen);
+	nmsg->sm_slen = msg->sm_slen;
+	nmsg->sm_aflags = msg->sm_aflags;
+	nmsg->sm_port = msg->sm_port;
 
 	/*
 	 * Reuse the connection.
@@ -662,16 +704,18 @@ snmpe_writecb(int fd, short type, void *arg)
 void
 snmpe_recvmsg(int fd, short sig, void *arg)
 {
-	struct snmpd		*env = arg;
-	struct snmp_stats	*stats = &env->sc_stats;
+	struct address		*h = arg;
+	struct snmp_stats	*stats = &snmpd_env->sc_stats;
 	ssize_t			 len;
 	struct snmp_message	*msg;
 
 	if ((msg = calloc(1, sizeof(*msg))) == NULL)
 		return;
 
+	msg->sm_aflags = h->flags;
 	msg->sm_sock = fd;
 	msg->sm_slen = sizeof(msg->sm_ss);
+	msg->sm_port = h->port;
 	if ((len = recvfromto(fd, msg->sm_data, sizeof(msg->sm_data), 0,
 	    (struct sockaddr *)&msg->sm_ss, &msg->sm_slen,
 	    (struct sockaddr *)&msg->sm_local_ss, &msg->sm_local_slen)) < 1) {
@@ -715,6 +759,11 @@ snmpe_recvmsg(int fd, short sig, void *arg)
 void
 snmpe_dispatchmsg(struct snmp_message *msg)
 {
+	if (msg->sm_type == SNMP_C_TRAP ||
+	    msg->sm_type == SNMP_C_TRAPV2) {
+		snmp_msgfree(msg);
+		return;
+	}
 	/* dispatched to subagent */
 	/* XXX Do proper error handling */
 	(void) snmpe_parsevarbinds(msg);
