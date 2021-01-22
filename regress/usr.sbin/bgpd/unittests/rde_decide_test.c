@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide_test.c,v 1.2 2021/01/20 18:02:19 claudio Exp $ */
+/*	$OpenBSD: rde_decide_test.c,v 1.3 2021/01/22 13:57:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -52,14 +52,19 @@ struct rde_peer peer2 = {
 	.remote_addr = { .aid = AID_INET, .v4.s_addr = 0xef000002 },
 };
 struct rde_peer peer3 = {
-	.conf.ebgp = 0,
+	.conf.ebgp = 1,
 	.remote_bgpid = 3,
 	.remote_addr = { .aid = AID_INET, .v4.s_addr = 0xef000003 },
 };
-struct rde_peer peer4 = {
+struct rde_peer peer1_a4 = {
 	.conf.ebgp = 1,
 	.remote_bgpid = 1,
 	.remote_addr = { .aid = AID_INET, .v4.s_addr = 0xef000004 },
+};
+struct rde_peer peer1_i = {
+	.conf.ebgp = 0,
+	.remote_bgpid = 3,
+	.remote_addr = { .aid = AID_INET, .v4.s_addr = 0xef000003 },
 };
 
 union a {
@@ -131,7 +136,7 @@ struct test {
 	.p = { .re = &dummy_re, .aspath = &asp[7], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T1, } },
 	/* 6. EBGP is cooler than IBGP */
 	{ .what = "EBGP vs IBGP",
-	.p = { .re = &dummy_re, .aspath = &asp[0], .peer = &peer3, .nexthop = &nh_reach, .lastchange = T1, } },
+	.p = { .re = &dummy_re, .aspath = &asp[0], .peer = &peer1_i, .nexthop = &nh_reach, .lastchange = T1, } },
 	/* 7. weight */
 	{ .what = "local weight",
 	.p = { .re = &dummy_re, .aspath = &asp[8], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T1, } },
@@ -145,7 +150,7 @@ struct test {
 	/* 11. CLUSTER_LIST length, TODO */
 	/* 12. lowest peer address wins */
 	{ .what = "remote peer address",
-	.p = { .re = &dummy_re, .aspath = &asp[0], .peer = &peer4, .nexthop = &nh_reach, .lastchange = T1, } },
+	.p = { .re = &dummy_re, .aspath = &asp[0], .peer = &peer1_a4, .nexthop = &nh_reach, .lastchange = T1, } },
 };
 
 struct rde_aspath med_asp[] = {
@@ -155,6 +160,13 @@ struct rde_aspath med_asp[] = {
 	{ .aspath = &asdata[2].a, .med = 125, .lpref = 100, .origin = ORIGIN_EGP },
 };
 
+/*
+ * Test 'rde med compare strict' vs 'rde med compare always'
+ * med_pfx1 > med_pfx2 in both cases
+ * med_pfx1 > med_pfx3 for strict but med_pfx1 < med_pfx3 for always
+ * med_pfx1 < med_pfx4 for strict but med_pfx1 > med_pfx4 for always
+ * For med_pfx3 and med_pfx4 the strict case differs in the bgp-id.
+ */
 struct prefix med_pfx1 = 
 	{ .re = &dummy_re, .aspath = &med_asp[0], .peer = &peer2, .nexthop = &nh_reach, .lastchange = T1, };
 struct prefix med_pfx2 = 
@@ -164,6 +176,10 @@ struct prefix med_pfx3 =
 struct prefix med_pfx4 = 
 	{ .re = &dummy_re, .aspath = &med_asp[3], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T1, };
 
+/*
+ * Define two prefixes where pfx1 > pfx2 if 'rde route-age evaluate'
+ * but pfx1 < pfx2 if 'rde route-age ignore' 
+ */
 struct prefix age_pfx1 = 
 	{ .re = &dummy_re, .aspath = &asp[0], .peer = &peer2, .nexthop = &nh_reach, .lastchange = T1, };
 struct prefix age_pfx2 = 
@@ -202,25 +218,25 @@ main(int argc, char **argv)
 	printf("test NULL element");
 	test(&test_pfx[0].p, NULL);
 
-	printf("test strict med 1");
+	printf("test rde med compare strict 1");
 	test(&med_pfx1, &med_pfx2);
-	printf("test strict med 2");
+	printf("test rde med compare strict 2");
 	test(&med_pfx1, &med_pfx3);
-	printf("test strict med 3");
+	printf("test rde med compare strict 3");
 	test(&med_pfx4, &med_pfx1);
 
 	decision_flags |= BGPD_FLAG_DECISION_MED_ALWAYS;
-	printf("test always med 1");
+	printf("test rde med compare always 1");
 	test(&med_pfx1, &med_pfx2);
-	printf("test always med 2");
+	printf("test rde med compare always 2");
 	test(&med_pfx3, &med_pfx1);
-	printf("test always med 3");
+	printf("test rde med compare always 3");
 	test(&med_pfx1, &med_pfx4);
 
-	printf("test route-age evaluate");
+	printf("test rde route-age evaluate");
 	test(&age_pfx1, &age_pfx2);
 	decision_flags &= ~BGPD_FLAG_DECISION_ROUTEAGE;
-	printf("test route-age ignore");
+	printf("test rde route-age ignore");
 	test(&age_pfx2, &age_pfx1);
 
 
