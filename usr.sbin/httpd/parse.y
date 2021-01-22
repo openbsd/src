@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.123 2021/01/18 18:47:49 tb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.124 2021/01/22 13:07:17 benno Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -2143,6 +2143,7 @@ host_if(const char *s, struct addresslist *al, int max,
 				log_warnx("%s: interface name truncated",
 				    __func__);
 			freeifaddrs(ifap);
+			free(h);
 			return (-1);
 		}
 		if (ipproto != -1)
