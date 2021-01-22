@@ -1,4 +1,4 @@
-/*	$OpenBSD: clienttest.c,v 1.26 2020/11/19 09:35:50 tb Exp $ */
+/*	$OpenBSD: clienttest.c,v 1.27 2021/01/22 15:54:32 tb Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  *
@@ -456,8 +456,10 @@ client_hello_test(int testno, struct client_hello_test *cht)
 	SSL_CTX_free(ssl_ctx);
 	SSL_free(ssl);
 
-	rbio->references = 1;
-	wbio->references = 1;
+	if (rbio != NULL)
+		rbio->references = 1;
+	if (wbio != NULL)
+		wbio->references = 1;
 
 	BIO_free(rbio);
 	BIO_free(wbio);
