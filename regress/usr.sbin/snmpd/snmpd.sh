@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: snmpd.sh,v 1.12 2020/08/08 11:06:40 martijn Exp $
+# $OpenBSD: snmpd.sh,v 1.13 2021/01/22 06:35:26 martijn Exp $
 #/*
 # * Copyright (c) Rob Pierce <rob@openbsd.org>
 # *
@@ -65,7 +65,9 @@ cat > ${OBJDIR}/snmpd.conf <<EOF
 # This is config template (1) for snmpd regression testing
 # Restrict daemon to listen on localhost only
 listen on 127.0.0.1
+listen on 127.0.0.1 notify
 listen on ::1
+listen on ::1 notify
 
 # Specify a number of trap receivers
 trap receiver localhost
