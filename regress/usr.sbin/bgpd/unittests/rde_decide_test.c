@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide_test.c,v 1.3 2021/01/22 13:57:32 claudio Exp $ */
+/*	$OpenBSD: rde_decide_test.c,v 1.4 2021/01/22 17:18:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -158,6 +158,8 @@ struct rde_aspath med_asp[] = {
 	{ .aspath = &asdata[0].a, .med = 150, .lpref = 100, .origin = ORIGIN_EGP },
 	{ .aspath = &asdata[2].a, .med = 75,  .lpref = 100, .origin = ORIGIN_EGP },
 	{ .aspath = &asdata[2].a, .med = 125, .lpref = 100, .origin = ORIGIN_EGP },
+	{ .aspath = &asdata[1].a, .med = 110, .lpref = 100, .origin = ORIGIN_EGP },
+	{ .aspath = &asdata[1].a, .med = 90,  .lpref = 100, .origin = ORIGIN_EGP },
 };
 
 /*
@@ -174,7 +176,12 @@ struct prefix med_pfx2 =
 struct prefix med_pfx3 = 
 	{ .re = &dummy_re, .aspath = &med_asp[2], .peer = &peer3, .nexthop = &nh_reach, .lastchange = T1, };
 struct prefix med_pfx4 = 
-	{ .re = &dummy_re, .aspath = &med_asp[3], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T1, };
+	{ .re = &dummy_re, .aspath = &med_asp[3], .peer = &peer1_a4, .nexthop = &nh_reach, .lastchange = T1, };
+/* the next two prefixes have a longer aspath than med_pfx1 & 2 */
+struct prefix med_pfx5 = 
+	{ .re = &dummy_re, .aspath = &med_asp[5], .peer = &peer3, .nexthop = &nh_reach, .lastchange = T1, };
+struct prefix med_pfx6 = 
+	{ .re = &dummy_re, .aspath = &med_asp[4], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T1, };
 
 /*
  * Define two prefixes where pfx1 > pfx2 if 'rde route-age evaluate'
@@ -185,60 +192,134 @@ struct prefix age_pfx1 =
 struct prefix age_pfx2 = 
 	{ .re = &dummy_re, .aspath = &asp[0], .peer = &peer1, .nexthop = &nh_reach, .lastchange = T2, };
 
-int     prefix_cmp(struct prefix *, struct prefix *);
+int     prefix_cmp(struct prefix *, struct prefix *, int *);
 
 int	decision_flags = BGPD_FLAG_DECISION_ROUTEAGE;
 
 int	failed;
 
-void
-test(struct prefix *a, struct prefix *b)
+static int
+test(struct prefix *a, struct prefix *b, int v)
 {
-	if (prefix_cmp(a, b) < 0) {
-		printf(" FAILED\n");
-		failed = 1;
-	} else if (prefix_cmp(b, a) > 0) {
-		printf(" reverse cmp FAILED\n");
-		failed = 1;
-	} else
+	int rv = 0, dummy;
+	if (prefix_cmp(a, b, &dummy) < 0) {
+		if (v) printf(" FAILED\n");
+		failed = rv = 1;
+	} else if (prefix_cmp(b, a, &dummy) > 0) {
+		if (v) printf(" reverse cmp FAILED\n");
+		failed = rv = 1;
+	} else if (v)
 		printf(" OK\n");
+
+	return rv;
+}
+
+static size_t
+which(struct prefix **orig, struct prefix *p)
+{
+	size_t i;
+
+	for (i = 0; orig[i] != NULL; i++)
+		if (orig[i] == p)
+			return i;
+	return 9999;
+}
+
+/*
+ * Evaluate a set of prefixes in all possible ways.
+ * The input in orig should be in the expected order.
+ */
+static int
+test_evaluate(struct prefix **orig, struct prefix **in, size_t nin)
+{
+	struct prefix *next[nin - 1];
+	size_t i, j, n;
+	int r = 0;
+	
+	if (nin == 0) {
+		struct prefix *xp;
+
+		j = 0;
+		LIST_FOREACH(xp, &dummy_re.prefix_h, entry.list.rib)
+			if (which(orig, xp) != j++)
+				r = 1;
+		if (r != 0) {
+			printf("bad order");
+			LIST_FOREACH(xp, &dummy_re.prefix_h, entry.list.rib)
+				printf(" %zu", which(orig, xp));
+			printf(" FAILED\n");
+		}
+	}
+	for (i = 0; i < nin; i++) {
+		/* add prefix to dummy_re */
+		prefix_evaluate(&dummy_re, in[i], NULL);
+
+		for (n = j = 0; j < nin; j++) {
+			if (j == i)
+				continue;
+			next[n++] = in[j];
+		}
+		r |= test_evaluate(orig, next, n);
+
+		/* remove prefix from dummy_re */
+		prefix_evaluate(&dummy_re, NULL, in[i]);
+	}
+
+	return r;
 }
 
 int
 main(int argc, char **argv)
 {
-	size_t i, ntest;;
+	struct prefix *med_strict[7] = {
+		&med_pfx1, &med_pfx2, &med_pfx3, &med_pfx4,
+		&med_pfx5, &med_pfx6, NULL
+	};
+	struct prefix *med_always[7] = {
+		&med_pfx3, &med_pfx1, &med_pfx4, &med_pfx2,
+		&med_pfx5, &med_pfx6, NULL
+	};
+	size_t i, ntest;
 
 	ntest = sizeof(test_pfx) / sizeof(*test_pfx);
 	for (i = 1; i < ntest; i++) {
 		printf("test %zu: %s", i, test_pfx[i].what);
-		test(&test_pfx[0].p, &test_pfx[i].p);
+		test(&test_pfx[0].p, &test_pfx[i].p, 1);
 	}
 
 	printf("test NULL element");
-	test(&test_pfx[0].p, NULL);
+	test(&test_pfx[0].p, NULL, 1);
 
 	printf("test rde med compare strict 1");
-	test(&med_pfx1, &med_pfx2);
+	test(&med_pfx1, &med_pfx2, 1);
 	printf("test rde med compare strict 2");
-	test(&med_pfx1, &med_pfx3);
+	test(&med_pfx1, &med_pfx3, 1);
 	printf("test rde med compare strict 3");
-	test(&med_pfx4, &med_pfx1);
+	test(&med_pfx4, &med_pfx1, 1);
 
 	decision_flags |= BGPD_FLAG_DECISION_MED_ALWAYS;
 	printf("test rde med compare always 1");
-	test(&med_pfx1, &med_pfx2);
+	test(&med_pfx1, &med_pfx2, 1);
 	printf("test rde med compare always 2");
-	test(&med_pfx3, &med_pfx1);
+	test(&med_pfx3, &med_pfx1, 1);
 	printf("test rde med compare always 3");
-	test(&med_pfx1, &med_pfx4);
+	test(&med_pfx1, &med_pfx4, 1);
 
 	printf("test rde route-age evaluate");
-	test(&age_pfx1, &age_pfx2);
+	test(&age_pfx1, &age_pfx2, 1);
 	decision_flags &= ~BGPD_FLAG_DECISION_ROUTEAGE;
 	printf("test rde route-age ignore");
-	test(&age_pfx2, &age_pfx1);
+	test(&age_pfx2, &age_pfx1, 1);
 
+	decision_flags = 0;
+	printf("evaluate with rde med compare strict\n");
+	if (test_evaluate(med_strict, med_strict, 6) == 0)
+		printf("all OK\n");
+
+	decision_flags = BGPD_FLAG_DECISION_MED_ALWAYS;
+	printf("evaluate with rde med compare always\n");
+	if (test_evaluate(med_always, med_always, 6) == 0)
+		printf("all OK\n");
 
 	if (failed)
 		printf("some tests FAILED\n");
@@ -247,12 +328,16 @@ main(int argc, char **argv)
 	exit(failed);
 }
 
+/* this function is called by prefix_cmp to alter the decision process */
 int
 rde_decisionflags(void)
 {
 	return decision_flags;
 }
 
+/*
+ * Helper functions need to link and run the tests.
+ */
 u_int32_t
 rde_local_as(void)
 {
