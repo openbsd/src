@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.18 2021/01/22 03:20:56 rob Exp $ */
+/*	$OpenBSD: ber.c,v 1.19 2021/01/22 18:27:52 rob Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -781,7 +781,7 @@ ober_scanf_elements(struct ber_element *ber, char *fmt, ...)
 			continue;
 		case '}':
 		case ')':
-			if (parent[level] == NULL)
+			if (level < 0 || parent[level] == NULL)
 				goto fail;
 			ber = parent[level--];
 			ret++;
