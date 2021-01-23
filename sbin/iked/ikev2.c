@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.297 2021/01/21 16:50:46 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.298 2021/01/23 21:35:48 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -2755,7 +2755,7 @@ ikev2_resp_recv(struct iked *env, struct iked_message *msg,
 		}
 		if (ikev2_resp_ike_sa_init(env, msg) != 0) {
 			log_debug("%s: failed to send init response", __func__);
-			ikev2_ike_sa_setreason(sa, "SA_INIT reponse failed");
+			ikev2_ike_sa_setreason(sa, "SA_INIT response failed");
 			sa_state(env, sa, IKEV2_STATE_CLOSED);
 			return;
 		}
