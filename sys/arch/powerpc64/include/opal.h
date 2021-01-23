@@ -1,4 +1,4 @@
-/*	$OpenBSD: opal.h,v 1.18 2020/10/19 18:54:58 kettenis Exp $	*/
+/*	$OpenBSD: opal.h,v 1.19 2021/01/23 12:10:08 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -49,6 +49,8 @@
 #define OPAL_REINIT_CPUS		70
 #define OPAL_CHECK_TOKEN		80
 #define OPAL_SENSOR_READ		88
+#define OPAL_IPMI_SEND			107
+#define OPAL_IPMI_RECV			108
 #define OPAL_CONSOLE_FLUSH		117
 #define OPAL_XIVE_RESET			128
 #define OPAL_XIVE_GET_IRQ_INFO		129
@@ -78,6 +80,7 @@
 #define OPAL_HARDWARE_FROZEN		-13
 #define OPAL_WRONG_STATE		-14
 #define OPAL_ASYNC_COMPLETION		-15
+#define OPAL_EMPTY			-16
 
 /* OPAL_POLL_EVENT */
 #define OPAL_EVENT_CONSOLE_OUTPUT	0x00000008
@@ -125,6 +128,18 @@
 /* OPAL_CHECK_TOKEN */
 #define OPAL_TOKEN_ABSENT		0
 #define OPAL_TOKEN_PRESENT		1
+
+/* OPAL_IPMI_SEND/RECV */
+#define OPAL_IPMI_MSG_FORMAT_VERSION_1	1
+
+#ifndef _LOCORE
+struct opal_ipmi_msg {
+	uint8_t	version;
+	uint8_t	netfn;
+	uint8_t	cmd;
+	uint8_t	data[0];
+};
+#endif
 
 /* OPAL_XIVE_RESET */
 #define OPAL_XIVE_MODE_EMU		0
@@ -196,6 +211,8 @@ int64_t	opal_pci_reset(uint64_t, uint8_t, uint8_t);
 int64_t	opal_reinit_cpus(uint64_t);
 int64_t	opal_check_token(uint64_t);
 int64_t	opal_sensor_read(uint32_t, int, uint32_t *);
+int64_t	opal_ipmi_send(uint64_t, struct opal_ipmi_msg *, uint64_t);
+int64_t	opal_ipmi_recv(uint64_t, struct opal_ipmi_msg *, uint64_t *);
 int64_t	opal_console_flush(uint64_t);
 int64_t	opal_xive_reset(uint64_t);
 int64_t	opal_xive_get_irq_info(uint32_t, uint64_t *, uint64_t *,

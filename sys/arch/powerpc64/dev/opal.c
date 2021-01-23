@@ -1,4 +1,4 @@
-/*	$OpenBSD: opal.c,v 1.11 2020/12/30 06:06:30 gkoehler Exp $	*/
+/*	$OpenBSD: opal.c,v 1.12 2021/01/23 12:10:08 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -163,6 +163,11 @@ opal_attach(struct device *parent, struct device *self, void *aux)
 	node = OF_getnodebyname(faa->fa_node, "sensors");
 	if (node) {
 		for (node = OF_child(node); node; node = OF_peer(node))
+			opal_attach_node(sc, node);
+	}
+
+	for (node = OF_child(faa->fa_node); node; node = OF_peer(node)) {
+		if (OF_is_compatible(node, "ibm,opal-ipmi"))
 			opal_attach_node(sc, node);
 	}
 }

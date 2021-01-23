@@ -1,4 +1,4 @@
-# $OpenBSD: files.powerpc64,v 1.25 2020/10/26 21:13:56 kettenis Exp $
+# $OpenBSD: files.powerpc64,v 1.26 2021/01/23 12:10:08 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -85,6 +85,9 @@ file	arch/powerpc64/dev/opalcons.c		opalcons needs-flag
 device	opalsens
 attach	opalsens at fdt
 file	arch/powerpc64/dev/opalsens.c		opalsens
+
+attach	ipmi at fdt with ipmi_opal
+file	arch/powerpc64/dev/ipmi_opal.c		ipmi_opal
 
 device	phb: pcibus
 attach	phb at fdt

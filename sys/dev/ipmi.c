@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.114 2020/12/11 19:48:58 cheloha Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.115 2021/01/23 12:10:08 kettenis Exp $ */
 
 /*
  * Copyright (c) 2015 Masao Uebayashi
@@ -66,10 +66,6 @@ int	ipmi_enabled = 0;
 #define IPMI_BTMSG_CCODE		4
 #define IPMI_BTMSG_DATASND		4
 #define IPMI_BTMSG_DATARCV		5
-
-#define IPMI_MSG_NFLN			0
-#define IPMI_MSG_CMD			1
-#define IPMI_MSG_CCODE			2
 
 #define IPMI_SENSOR_TYPE_TEMP		0x0101
 #define IPMI_SENSOR_TYPE_VOLT		0x0102

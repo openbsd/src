@@ -1,4 +1,4 @@
-/* $OpenBSD: ipmivar.h,v 1.33 2020/03/29 09:31:10 kettenis Exp $ */
+/* $OpenBSD: ipmivar.h,v 1.34 2021/01/23 12:10:08 kettenis Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -175,6 +175,9 @@ int	ipmi_activate(struct device *, int);
 int	ipmi_sendcmd(struct ipmi_cmd *);
 int	ipmi_recvcmd(struct ipmi_cmd *);
 
+#define IPMI_MSG_NFLN			0
+#define IPMI_MSG_CMD			1
+#define IPMI_MSG_CCODE			2
 #define IPMI_MSG_DATASND		2
 #define IPMI_MSG_DATARCV		3
 
