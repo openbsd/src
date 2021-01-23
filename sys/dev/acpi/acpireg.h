@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.51 2021/01/17 14:27:24 patrick Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.52 2021/01/23 20:01:01 patrick Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -744,15 +744,13 @@ struct acpi_iort_smmu_global_interrupt {
 } __packed;
 
 struct acpi_iort_smmu_context_interrupt {
-	uint8_t		gsiv_flags;
-#define ACPI_IORT_SMMU_CONTEXT_INTERRUPT_GSIV(x) ((x) >> 0 & 0xf)
-#define ACPI_IORT_SMMU_CONTEXT_INTERRUPT_FLAGS(x) ((x) >> 4 & 0xf)
+	uint32_t	gsiv;
+	uint32_t	flags;
 } __packed;
 
 struct acpi_iort_smmu_pmu_interrupt {
-	uint8_t		gsiv_flags;
-#define ACPI_IORT_SMMU_PMU_INTERRUPT_GSIV(x) ((x) >> 0 & 0xf)
-#define ACPI_IORT_SMMU_PMU_INTERRUPT_FLAGS(x) ((x) >> 4 & 0xf)
+	uint32_t	gsiv;
+	uint32_t	flags;
 } __packed;
 
 struct acpi_iort_mapping {
