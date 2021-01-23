@@ -1,10 +1,10 @@
-.\" $OpenBSD: MAKEDEV.8,v 1.4 2020/10/24 21:14:25 kettenis Exp $
+.\" $OpenBSD: MAKEDEV.8,v 1.5 2021/01/23 17:36:23 deraadt Exp $
 .\"
 .\" THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 .\" generated from:
 .\"
-.\"	OpenBSD: etc.powerpc64/MAKEDEV.md,v 1.6 2020/10/24 21:10:41 kettenis Exp 
-.\"	OpenBSD: MAKEDEV.common,v 1.111 2020/07/06 06:11:26 dlg Exp 
+.\"	OpenBSD: etc.powerpc64/MAKEDEV.md,v 1.7 2021/01/23 05:08:33 thfr Exp 
+.\"	OpenBSD: MAKEDEV.common,v 1.112 2021/01/23 05:08:33 thfr Exp 
 .\"	OpenBSD: MAKEDEV.man,v 1.9 2017/06/06 08:11:23 tb Exp 
 .\"	OpenBSD: MAKEDEV.mansub,v 1.2 2004/02/20 19:13:01 miod Exp 
 .\"
@@ -23,7 +23,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 24 2020 $
+.Dd $Mdocdate: January 23 2021 $
 .Dt MAKEDEV 8 powerpc64
 .Os
 .Sh NAME
@@ -164,6 +164,9 @@ Generic HID devices, see
 .It Ar fido
 fido/* nodes, see
 .Xr fido 4 .
+.It Ar ujoy
+ujoy/* nodes, see
+.Xr ujoy 4 .
 .It Ar ulpt*
 Printer devices, see
 .Xr ulpt 4 .
