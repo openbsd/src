@@ -1,4 +1,4 @@
-/*	$OpenBSD: table_db.c,v 1.21 2019/06/28 13:32:51 deraadt Exp $	*/
+/*	$OpenBSD: table_db.c,v 1.22 2021/01/23 16:11:11 rob Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -255,7 +255,6 @@ static char *
 table_db_get_entry(void *hdl, const char *key, size_t *len)
 {
 	struct dbhandle	*handle = hdl;
-	int ret;
 	DBT dbk;
 	DBT dbv;
 	char pkey[LINE_MAX];
@@ -266,7 +265,7 @@ table_db_get_entry(void *hdl, const char *key, size_t *len)
 	dbk.data = pkey;
 	dbk.size = strlen(pkey) + 1;
 
-	if ((ret = handle->db->get(handle->db, &dbk, &dbv, 0)) != 0)
+	if (handle->db->get(handle->db, &dbk, &dbv, 0) != 0)
 		return NULL;
 
 	*len = dbv.size;

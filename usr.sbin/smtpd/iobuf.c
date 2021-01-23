@@ -1,4 +1,4 @@
-/*	$OpenBSD: iobuf.c,v 1.13 2020/04/24 11:34:07 eric Exp $	*/
+/*	$OpenBSD: iobuf.c,v 1.14 2021/01/23 16:11:11 rob Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -403,13 +403,12 @@ ssize_t
 iobuf_write_tls(struct iobuf *io, void *tls)
 {
 	struct ioqbuf	*q;
-	int		 r;
 	ssize_t		 n;
 
 	q = io->outq;
 	n = SSL_write(tls, q->buf + q->rpos, q->wpos - q->rpos);
 	if (n <= 0) {
-		switch ((r = SSL_get_error(tls, n))) {
+		switch (SSL_get_error(tls, n)) {
 		case SSL_ERROR_WANT_READ:
 			return (IOBUF_WANT_READ);
 		case SSL_ERROR_WANT_WRITE:
@@ -433,11 +432,10 @@ ssize_t
 iobuf_read_tls(struct iobuf *io, void *tls)
 {
 	ssize_t	n;
-	int	r;
 
 	n = SSL_read(tls, io->buf + io->wpos, iobuf_left(io));
 	if (n < 0) {
-		switch ((r = SSL_get_error(tls, n))) {
+		switch (SSL_get_error(tls, n)) {
 		case SSL_ERROR_WANT_READ:
 			return (IOBUF_WANT_READ);
 		case SSL_ERROR_WANT_WRITE:

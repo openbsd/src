@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.c,v 1.8 2019/06/28 13:32:50 deraadt Exp $	 */
+/* $OpenBSD: crypto.c,v 1.9 2021/01/23 16:11:11 rob Exp $	 */
 
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@openbsd.org>
@@ -68,7 +68,7 @@ crypto_encrypt_file(FILE * in, FILE * out)
 	uint8_t		iv[IV_SIZE];
 	uint8_t		tag[GCM_TAG_SIZE];
 	uint8_t		version = API_VERSION;
-	size_t		r, w;
+	size_t		r;
 	int		len;
 	int		ret = 0;
 	struct stat	sb;
@@ -80,13 +80,13 @@ crypto_encrypt_file(FILE * in, FILE * out)
 		return 0;
 
 	/* prepend version byte*/
-	if ((w = fwrite(&version, 1, sizeof version, out)) != sizeof version)
+	if (fwrite(&version, 1, sizeof version, out) != sizeof version)
 		return 0;
 
 	/* generate and prepend IV */
 	memset(iv, 0, sizeof iv);
 	arc4random_buf(iv, sizeof iv);
-	if ((w = fwrite(iv, 1, sizeof iv, out)) != sizeof iv)
+	if (fwrite(iv, 1, sizeof iv, out) != sizeof iv)
 		return 0;
 
 	ctx = EVP_CIPHER_CTX_new();
@@ -99,7 +99,7 @@ crypto_encrypt_file(FILE * in, FILE * out)
 	while ((r = fread(ibuf, 1, CRYPTO_BUFFER_SIZE, in)) != 0) {
 		if (!EVP_EncryptUpdate(ctx, obuf, &len, ibuf, r))
 			goto end;
-		if (len && (w = fwrite(obuf, len, 1, out)) != 1)
+		if (len && fwrite(obuf, len, 1, out) != 1)
 			goto end;
 	}
 	if (!feof(in))
@@ -108,12 +108,12 @@ crypto_encrypt_file(FILE * in, FILE * out)
 	/* finalize and write last chunk if any */
 	if (!EVP_EncryptFinal_ex(ctx, obuf, &len))
 		goto end;
-	if (len && (w = fwrite(obuf, len, 1, out)) != 1)
+	if (len && fwrite(obuf, len, 1, out) != 1)
 		goto end;
 
 	/* get and append tag */
 	EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, sizeof tag, tag);
-	if ((w = fwrite(tag, sizeof tag, 1, out)) != 1)
+	if (fwrite(tag, sizeof tag, 1, out) != 1)
 		goto end;
 
 	fflush(out);
@@ -133,7 +133,7 @@ crypto_decrypt_file(FILE * in, FILE * out)
 	uint8_t		iv[IV_SIZE];
 	uint8_t		tag[GCM_TAG_SIZE];
 	uint8_t		version;
-	size_t		r, w;
+	size_t		r;
 	off_t		sz;
 	int		len;
 	int		ret = 0;
@@ -190,7 +190,7 @@ crypto_decrypt_file(FILE * in, FILE * out)
 			break;
 		if (!EVP_DecryptUpdate(ctx, obuf, &len, ibuf, r))
 			goto end;
-		if (len && (w = fwrite(obuf, len, 1, out)) != 1)
+		if (len && fwrite(obuf, len, 1, out) != 1)
 			goto end;
 		sz -= r;
 	}
@@ -200,7 +200,7 @@ crypto_decrypt_file(FILE * in, FILE * out)
 	/* finalize, write last chunk if any and perform authentication check */
 	if (!EVP_DecryptFinal_ex(ctx, obuf, &len))
 		goto end;
-	if (len && (w = fwrite(obuf, len, 1, out)) != 1)
+	if (len && fwrite(obuf, len, 1, out) != 1)
 		goto end;
 
 	fflush(out);

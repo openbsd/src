@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioev.c,v 1.42 2019/06/12 17:42:53 eric Exp $	*/
+/*	$OpenBSD: ioev.c,v 1.43 2021/01/23 16:11:11 rob Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -858,7 +858,7 @@ void
 io_dispatch_accept_tls(int fd, short event, void *humppa)
 {
 	struct io	*io = humppa;
-	int		 e, ret;
+	int		 ret;
 
 	io_frame_enter("io_dispatch_accept_tls", io, event);
 
@@ -873,7 +873,7 @@ io_dispatch_accept_tls(int fd, short event, void *humppa)
 		goto leave;
 	}
 
-	switch ((e = SSL_get_error(io->tls, ret))) {
+	switch (SSL_get_error(io->tls, ret)) {
 	case SSL_ERROR_WANT_READ:
 		io_reset(io, EV_READ, io_dispatch_accept_tls);
 		break;
@@ -895,7 +895,7 @@ void
 io_dispatch_connect_tls(int fd, short event, void *humppa)
 {
 	struct io	*io = humppa;
-	int		 e, ret;
+	int		 ret;
 
 	io_frame_enter("io_dispatch_connect_tls", io, event);
 
@@ -910,7 +910,7 @@ io_dispatch_connect_tls(int fd, short event, void *humppa)
 		goto leave;
 	}
 
-	switch ((e = SSL_get_error(io->tls, ret))) {
+	switch (SSL_get_error(io->tls, ret)) {
 	case SSL_ERROR_WANT_READ:
 		io_reset(io, EV_READ, io_dispatch_connect_tls);
 		break;

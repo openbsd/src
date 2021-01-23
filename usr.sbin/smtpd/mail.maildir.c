@@ -129,7 +129,6 @@ maildir_engine(const char *dirname, int junk)
 	FILE    *fp;
 	char	*line = NULL;
 	size_t	linesize = 0;
-	ssize_t	linelen;
 	struct stat	sb;
 	char	*home;
 	char	*extension;
@@ -186,7 +185,7 @@ maildir_engine(const char *dirname, int junk)
 	if ((fp = fdopen(fd, "w")) == NULL)
 		err(EX_TEMPFAIL, NULL);
 
-	while ((linelen = getline(&line, &linesize, stdin)) != -1) {
+	while (getline(&line, &linesize, stdin) != -1) {
 		line[strcspn(line, "\n")] = '\0';
 		if (line[0] == '\0')
 			in_hdr = 0;

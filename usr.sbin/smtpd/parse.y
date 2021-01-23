@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.283 2021/01/19 09:16:20 claudio Exp $	*/
+/*	$OpenBSD: parse.y,v 1.284 2021/01/23 16:11:11 rob Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1840,7 +1840,6 @@ filter_phase_connect
 filterel:
 STRING	{
 	struct filter_config   *fr;
-	struct filter_proc     *fp;
 	size_t			i;
 
 	if ((fr = dict_get(conf->sc_filters_dict, $1)) == NULL) {
@@ -1863,7 +1862,7 @@ STRING	{
 	}
 
 	if (fr->proc) {
-		if ((fp = dict_get(&filter_config->chain_procs, fr->proc))) {
+		if (dict_get(&filter_config->chain_procs, fr->proc)) {
 			yyerror("no proc allowed twice within a filter chain: %s", fr->proc);
 			free($1);
 			YYERROR;
@@ -1887,7 +1886,6 @@ filterel
 
 filter:
 FILTER STRING PROC STRING {
-	struct filter_proc *fp;
 
 	if (dict_get(conf->sc_filters_dict, $2)) {
 		yyerror("filter already exists with that name: %s", $2);
@@ -1895,7 +1893,7 @@ FILTER STRING PROC STRING {
 		free($4);
 		YYERROR;
 	}
-	if ((fp = dict_get(conf->sc_filter_processes_dict, $4)) == NULL) {
+	if (dict_get(conf->sc_filter_processes_dict, $4) == NULL) {
 		yyerror("no processor exist with that name: %s", $4);
 		free($4);
 		YYERROR;
