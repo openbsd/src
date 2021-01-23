@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.275 2021/01/23 22:34:46 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.276 2021/01/23 22:56:35 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -915,7 +915,7 @@ vm_mprotect_ept(struct vm_mprotect_ept_params *vmep)
 	/* No execute only on EPT CPUs that don't have that capability */
 	if (vmm_softc->mode == VMM_MODE_EPT) {
 		msr = rdmsr(IA32_VMX_EPT_VPID_CAP);
-		if (prot == PROT_EXEC && 
+		if (prot == PROT_EXEC &&
 		    (msr & IA32_EPT_VPID_CAP_XO_TRANSLATIONS) == 0) {
 			DPRINTF("%s: Execute only permissions unsupported,"
 			   " adding read permission\n", __func__);
@@ -931,7 +931,7 @@ vm_mprotect_ept(struct vm_mprotect_ept_params *vmep)
 	/* size must be less then 512GB */
 	if (size >= NBPD_L4)
 		return (EINVAL);
-	
+
 	/* no wraparound */
 	if (sgpa + size < sgpa)
 		return (EINVAL);
@@ -4440,7 +4440,7 @@ vmm_translate_gva(struct vcpu *vcpu, uint64_t va, uint64_t *pa, int mode)
 			pte = pte | PG_M;
 		*hva = pte;
 
-		/* XXX: EINVAL if in 32bit and  PG_PS is 1 but CR4.PSE is 0 */
+		/* XXX: EINVAL if in 32bit and PG_PS is 1 but CR4.PSE is 0 */
 		if (pte & PG_PS)
 			break;
 
