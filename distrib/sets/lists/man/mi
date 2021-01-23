@@ -2011,6 +2011,7 @@
 ./usr/share/man/man4/uhid.4
 ./usr/share/man/man4/uhidev.4
 ./usr/share/man/man4/uipaq.4
+./usr/share/man/man4/ujoy.4
 ./usr/share/man/man4/uk.4
 ./usr/share/man/man4/ukbd.4
 ./usr/share/man/man4/ukphy.4
