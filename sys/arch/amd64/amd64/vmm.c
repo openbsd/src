@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.274 2020/09/10 17:03:03 mpi Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.275 2021/01/23 22:34:46 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -988,7 +988,7 @@ vmx_mprotect_ept(vm_map_t vm_map, paddr_t sgpa, paddr_t egpa, int prot)
 	for (addr = sgpa; addr < egpa; addr += PAGE_SIZE) {
 		pte = vmx_pmap_find_pte_ept(pmap, addr);
 		if (pte == NULL) {
-			ret = uvm_fault(vm_map, addr, VM_FAULT_INVALID,
+			ret = uvm_fault(vm_map, addr, VM_FAULT_WIRE,
 			    PROT_READ | PROT_WRITE | PROT_EXEC);
 			if (ret)
 				printf("%s: uvm_fault returns %d, GPA=0x%llx\n",
@@ -5455,12 +5455,9 @@ svm_get_guest_faulttype(struct vmcb *vmcb)
 int
 svm_fault_page(struct vcpu *vcpu, paddr_t gpa)
 {
-	int fault_type, ret;
-	struct vmcb *vmcb = (struct vmcb *)vcpu->vc_control_va;
+	int ret;
 
-	fault_type = svm_get_guest_faulttype(vmcb);
-
-	ret = uvm_fault(vcpu->vc_parent->vm_map, gpa, fault_type,
+	ret = uvm_fault(vcpu->vc_parent->vm_map, gpa, VM_FAULT_WIRE,
 	    PROT_READ | PROT_WRITE | PROT_EXEC);
 	if (ret)
 		printf("%s: uvm_fault returns %d, GPA=0x%llx, rip=0x%llx\n",
@@ -5512,20 +5509,9 @@ svm_handle_np_fault(struct vcpu *vcpu)
 int
 vmx_fault_page(struct vcpu *vcpu, paddr_t gpa)
 {
-	int fault_type, ret;
+	int ret;
 
-	fault_type = vmx_get_guest_faulttype();
-	if (fault_type == -1) {
-		printf("%s: invalid fault type\n", __func__);
-		return (EINVAL);
-	}
-
-	if (fault_type == VM_FAULT_PROTECT) {
-		vcpu->vc_exit.vee.vee_fault_type = VEE_FAULT_PROTECT;
-		return (EAGAIN);
-	}
-
-	ret = uvm_fault(vcpu->vc_parent->vm_map, gpa, fault_type,
+	ret = uvm_fault(vcpu->vc_parent->vm_map, gpa, VM_FAULT_WIRE,
 	    PROT_READ | PROT_WRITE | PROT_EXEC);
 
 	if (ret)
