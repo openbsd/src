@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ldomctl.8,v 1.29 2020/05/17 17:04:29 deraadt Exp $
+.\"     $OpenBSD: ldomctl.8,v 1.30 2021/01/23 21:39:54 kn Exp $
 .\"
 .\" Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 17 2020 $
+.Dd $Mdocdate: January 23 2021 $
 .Dt LDOMCTL 8 sparc64
 .Os
 .Sh NAME
@@ -83,7 +83,7 @@ Indicate the currently running configuration,
 and the configuration which will be used next
 (after resetting the machine) if it differs from the currently running one.
 .It Cm list-io
-List available PCIe devices.
+List available PCIe devices for the configuration in the current directory.
 .It Cm panic Oo Fl c Oc Ar domain
 Panic a guest domain.
 The exact behaviour of this command depends on the OS running in the domain.
