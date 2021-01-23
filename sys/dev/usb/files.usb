@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.143 2020/05/31 18:15:37 jcs Exp $
+#	$OpenBSD: files.usb,v 1.144 2021/01/23 05:08:36 thfr Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -74,12 +74,17 @@ file	dev/usb/uhidev.c		uhidev
 # Generic HID devices
 device	uhid: hid
 attach	uhid at uhidbus
-file	dev/usb/uhid.c			uhid | fido		needs-flag
+file	dev/usb/uhid.c			uhid | fido | ujoy	needs-flag
 
 # FIDO/U2F security keys
 device  fido: hid
 attach	fido at uhidbus
 file	dev/usb/fido.c			fido			needs-flag
+
+# USB Joysticks/Gamecontrollers
+device	ujoy: hid
+attach	ujoy at uhidbus
+file	dev/usb/ujoy.c			ujoy			needs-flag
 
 # Keyboards
 file	dev/usb/ukbdmap.c		hidkbd

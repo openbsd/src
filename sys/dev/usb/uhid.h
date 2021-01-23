@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.h,v 1.1 2019/12/17 13:08:54 reyk Exp $ */
+/*	$OpenBSD: uhid.h,v 1.2 2021/01/23 05:08:36 thfr Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -48,6 +48,7 @@ struct uhid_softc {
 
 extern struct cfdriver uhid_cd;
 extern struct cfdriver fido_cd;
+extern struct cfdriver ujoy_cd;
 
 #define	UHIDUNIT(dev)	(minor(dev))
 #define	UHID_CHUNK	128	/* chunk size for read */

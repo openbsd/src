@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.183 2021/01/19 19:14:39 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.184 2021/01/23 05:08:34 thfr Exp $
 #
 # GENERIC machine description file
 #
@@ -369,6 +369,7 @@ uslhcom*	at uhidev?		# Silicon Labs CP2110 USB HID UART
 ucom*		at uslhcom?
 uhid*		at uhidev?		# USB generic HID support
 fido*		at uhidev?		# FIDO/U2F security key support
+ujoy*		at uhidev?		# USB joystick/gamecontroller support
 upd*		at uhidev?		# USB Power Devices sensors
 aue*		at uhub?		# ADMtek AN986 Pegasus Ethernet
 atu*		at uhub?		# Atmel AT76c50x based 802.11b

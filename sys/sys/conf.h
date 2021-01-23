@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.155 2020/07/06 04:11:26 dlg Exp $	*/
+/*	$OpenBSD: conf.h,v 1.156 2021/01/23 05:08:36 thfr Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -383,6 +383,13 @@ extern struct cdevsw cdevsw[];
 	(dev_type_stop((*))) enodev, 0, dev_init(c,uhid,poll), \
 	(dev_type_mmap((*))) enodev, 0, 0, dev_init(c,uhid,kqfilter) }
 
+/* open, close, read, write, ioctl, poll, kqfilter */
+#define	cdev_ujoy_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,uhid,close), dev_init(c,uhid,read), \
+	dev_init(c,uhid,write), dev_init(c,ujoy,ioctl), \
+	(dev_type_stop((*))) enodev, 0, dev_init(c,uhid,poll), \
+	(dev_type_mmap((*))) enodev, 0, 0, dev_init(c,uhid,kqfilter) }
+
 /* open, close, init */
 #define cdev_pci_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
@@ -624,6 +631,7 @@ cdev_decl(usb);
 cdev_decl(ugen);
 cdev_decl(uhid);
 cdev_decl(fido);
+cdev_decl(ujoy);
 cdev_decl(ucom);
 cdev_decl(ulpt);
 cdev_decl(urio);

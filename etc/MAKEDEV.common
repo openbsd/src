@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.111 2020/07/06 06:11:26 dlg Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.112 2021/01/23 05:08:33 thfr Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -181,6 +181,7 @@ dnl
 target(usb, usb, 0, 1, 2, 3, 4, 5, 6, 7)dnl
 target(usb, uhid, 0, 1, 2, 3, 4, 5, 6, 7)dnl
 twrget(usb, fido, fido)dnl
+twrget(usb, ujoy, ujoy)dnl
 target(usb, ulpt, 0, 1)dnl
 target(usb, ugen, 0, 1, 2, 3, 4, 5, 6, 7)dnl
 target(usb, ttyU, 0, 1, 2, 3)dnl
@@ -365,6 +366,10 @@ __devitem(fido, fido, fido/* nodes, fido)dnl
 _mkdev(fido, fido, {-RMlist[${#RMlist[*]}]=";mkdir -p fido;rm -f" n=0
 	while [ $n -lt 4 ];do M fido/$n c major_fido_c $n 666;n=Add($n, 1);done
 	MKlist[${#MKlist[*]}]=";chmod 555 fido"-})dnl
+__devitem(ujoy, ujoy, ujoy/* nodes, ujoy)dnl
+_mkdev(ujoy, ujoy, {-RMlist[${#RMlist[*]}]=";mkdir -p ujoy;rm -f" n=0
+	while [ $n -lt 4 ];do M ujoy/$n c major_ujoy_c $n 444;n=Add($n, 1);done
+	MKlist[${#MKlist[*]}]=";chmod 555 ujoy"-})dnl
 __devitem(ulpt, ulpt*, Printer devices)dnl
 _mcdev({-ulpt-}, ulpt*, {-ulpt-}, {-major_ulpt_c-}, 600)dnl
 __devitem(ttyU, ttyU*, USB serial ports,ucom)dnl

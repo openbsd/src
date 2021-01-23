@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.70 2020/07/06 04:32:25 dlg Exp $	*/
+/*	$OpenBSD: conf.c,v 1.71 2021/01/23 05:08:35 thfr Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -114,6 +114,7 @@ cdev_decl(pci);
 #include "usb.h"
 #include "uhid.h"
 #include "fido.h"
+#include "ujoy.h"
 #include "ugen.h"
 #include "ulpt.h"
 #include "ucom.h"
@@ -191,6 +192,7 @@ struct cdevsw   cdevsw[] =
 	cdev_switch_init(NSWITCH,switch), /* 60: switch(4) control interface */
 	cdev_fido_init(NFIDO,fido),	/* 61: FIDO/U2F security key */
 	cdev_pppx_init(NPPPX,pppac),	/* 62: PPP Access Concentrator */
+	cdev_ujoy_init(NUJOY,ujoy),	/* 63: USB joystick/gamecontroller */
 };
 int nchrdev = nitems(cdevsw);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.81 2020/12/25 12:59:52 visa Exp $ */
+/*	$OpenBSD: uhid.c,v 1.82 2021/01/23 05:08:36 thfr Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -36,6 +36,7 @@
  */
 
 #include "fido.h"
+#include "ujoy.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,6 +97,10 @@ uhid_lookup(dev_t dev)
 #if NFIDO > 0
 	else if (cdev->d_open == fidoopen)
 		cd = &fido_cd;
+#endif
+#if NUJOY > 0
+	else if (cdev->d_open == ujoyopen)
+    		cd = &ujoy_cd;
 #endif
 	else
 		return (NULL);

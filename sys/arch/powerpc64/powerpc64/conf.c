@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.10 2020/10/24 21:06:56 kettenis Exp $	*/
+/*	$OpenBSD: conf.c,v 1.11 2021/01/23 05:08:36 thfr Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -64,6 +64,7 @@ cdev_decl(com);
 #include "drm.h"
 #include "dt.h"
 #include "fido.h"
+#include "ujoy.h"
 #include "fuse.h"
 #include "hotplug.h"
 #include "ipmi.h"
@@ -203,6 +204,7 @@ struct cdevsw cdevsw[] =
 #else
 	cdev_notdef(),			/* 93 */
 #endif
+	cdev_ujoy_init(NUJOY,ujoy),	/* 94: USB joystick/gamecontroller */
 };
 int	nchrdev = nitems(cdevsw);
 
