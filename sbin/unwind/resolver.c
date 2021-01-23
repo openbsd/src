@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.132 2021/01/23 16:27:24 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.133 2021/01/23 16:28:12 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -195,6 +195,7 @@ int			 running_query_cnt(void);
 int			*resolvers_to_restart(struct uw_conf *,
 			     struct uw_conf *);
 const char		*query_imsg2str(struct query_imsg *);
+char			*gen_resolv_conf(void);
 
 struct uw_conf			*resolver_conf;
 static struct imsgev		*iev_frontend;
@@ -1172,10 +1173,9 @@ create_resolver(enum uw_resolver_type type)
 {
 	struct uw_resolver	*res;
 	struct trust_anchor	*ta;
-	struct uw_forwarder	*uw_forwarder;
 	size_t			 i;
 	int			 err;
-	char			*resolv_conf = NULL, *tmp = NULL;
+	char			*resolv_conf;
 
 	if ((res = calloc(1, sizeof(*res))) == NULL) {
 		log_warn("%s", __func__);
@@ -1193,18 +1193,11 @@ create_resolver(enum uw_resolver_type type)
 			free(res);
 			return (NULL);
 		}
-		TAILQ_FOREACH(uw_forwarder, &autoconf_forwarder_list, entry) {
-			tmp = resolv_conf;
-			if (asprintf(&resolv_conf, "%snameserver %s\n", tmp ==
-			    NULL ? "" : tmp, uw_forwarder->ip) == -1) {
-				free(tmp);
-				free(res);
-				log_warnx("could not create asr context");
-				return (NULL);
-			}
-			free(tmp);
+		if ((resolv_conf = gen_resolv_conf()) == NULL) {
+			free(res);
+			log_warnx("could not create asr context");
+			return (NULL);
 		}
-
 		if ((res->asr_ctx = asr_resolver_from_string(resolv_conf)) ==
 		    NULL) {
 			free(res);
@@ -2145,4 +2138,22 @@ query_imsg2str(struct query_imsg *query_imsg)
 	snprintf(buf, sizeof(buf), "%s %s %s", query_imsg->qname, qclass_buf,
 	    qtype_buf);
 	return buf;
+}
+
+char *
+gen_resolv_conf()
+{
+	struct uw_forwarder	*uw_forwarder;
+	char			*resolv_conf = NULL, *tmp = NULL;
+
+	TAILQ_FOREACH(uw_forwarder, &autoconf_forwarder_list, entry) {
+		tmp = resolv_conf;
+		if (asprintf(&resolv_conf, "%snameserver %s\n", tmp ==
+		    NULL ? "" : tmp, uw_forwarder->ip) == -1) {
+			free(tmp);
+			return (NULL);
+		}
+		free(tmp);
+	}
+	return resolv_conf;
 }
