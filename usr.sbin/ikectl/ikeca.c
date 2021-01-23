@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikeca.c,v 1.49 2019/05/08 23:59:19 tedu Exp $	*/
+/*	$OpenBSD: ikeca.c,v 1.50 2021/01/23 21:51:29 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010 Jonathan Gray <jsg@openbsd.org>
@@ -133,8 +133,12 @@ ca_key_create(struct ca *ca, char *keyname)
 {
 	struct stat		 st;
 	char			 path[PATH_MAX];
+	int			 len;
 
-	snprintf(path, sizeof(path), "%s/private/%s.key", ca->sslpath, keyname);
+	len = snprintf(path, sizeof(path), "%s/private/%s.key",
+	    ca->sslpath, keyname);
+	if (len < 0 || (size_t)len >= sizeof(path))
+		err(1, "%s: snprintf", __func__);
 
 	/* don't recreate key if one is already present */
 	if (stat(path, &st) == 0) {
@@ -153,13 +157,17 @@ ca_key_import(struct ca *ca, char *keyname, char *import)
 {
 	struct stat		 st;
 	char			 dst[PATH_MAX];
+	int			 len;
 
 	if (stat(import, &st) != 0) {
 		warn("could not access keyfile %s", import);
 		return (1);
 	}
 
-	snprintf(dst, sizeof(dst), "%s/private/%s.key", ca->sslpath, keyname);
+	len = snprintf(dst, sizeof(dst), "%s/private/%s.key", ca->sslpath, keyname);
+	if (len < 0 || (size_t)len >= sizeof(dst))
+		err(1, "%s: snprintf", __func__);
+
 	fcopy(import, dst, 0600);
 
 	return (0);
@@ -169,8 +177,12 @@ int
 ca_key_delete(struct ca *ca, char *keyname)
 {
 	char			 path[PATH_MAX];
+	int			 len;
 
-	snprintf(path, sizeof(path), "%s/private/%s.key", ca->sslpath, keyname);
+	len = snprintf(path, sizeof(path), "%s/private/%s.key",
+	    ca->sslpath, keyname);
+	if (len < 0 || (size_t)len >= sizeof(path))
+		err(1, "%s: snprintf", __func__);
 	unlink(path);
 
 	return (0);
@@ -180,17 +192,26 @@ int
 ca_delkey(struct ca *ca, char *keyname)
 {
 	char		file[PATH_MAX];
+	int		len;
 
-	snprintf(file, sizeof(file), "%s/%s.crt", ca->sslpath, keyname);
+	len = snprintf(file, sizeof(file), "%s/%s.crt", ca->sslpath, keyname);
+	if (len < 0 || (size_t)len >= sizeof(file))
+		err(1, "%s: snprintf", __func__);
 	unlink(file);
 
-	snprintf(file, sizeof(file), "%s/private/%s.key", ca->sslpath, keyname);
+	len = snprintf(file, sizeof(file), "%s/private/%s.key", ca->sslpath, keyname);
+	if (len < 0 || (size_t)len >= sizeof(file))
+		err(1, "%s: snprintf", __func__);
 	unlink(file);
 
-	snprintf(file, sizeof(file), "%s/private/%s.csr", ca->sslpath, keyname);
+	len = snprintf(file, sizeof(file), "%s/private/%s.csr", ca->sslpath, keyname);
+	if (len < 0 || (size_t)len >= sizeof(file))
+		err(1, "%s: snprintf", __func__);
 	unlink(file);
 
-	snprintf(file, sizeof(file), "%s/private/%s.pfx", ca->sslpath, keyname);
+	len = snprintf(file, sizeof(file), "%s/private/%s.pfx", ca->sslpath, keyname);
+	if (len < 0 || (size_t)len >= sizeof(file))
+		err(1, "%s: snprintf", __func__);
 	unlink(file);
 
 	return (0);
@@ -203,6 +224,7 @@ ca_request(struct ca *ca, char *keyname, int type)
 	char		name[128];
 	char		key[PATH_MAX];
 	char		path[PATH_MAX];
+	int		len;
 
 	ca_setenv("$ENV::CERT_CN", keyname);
 
@@ -225,8 +247,12 @@ ca_request(struct ca *ca, char *keyname, int type)
 
 	ca_setcnf(ca, keyname);
 
-	snprintf(key, sizeof(key), "%s/private/%s.key", ca->sslpath, keyname);
-	snprintf(path, sizeof(path), "%s/private/%s.csr", ca->sslpath, keyname);
+	len = snprintf(key, sizeof(key), "%s/private/%s.key", ca->sslpath, keyname);
+	if (len < 0 || (size_t)len >= sizeof(key))
+		err(1, "%s: snprintf", __func__);
+	len = snprintf(path, sizeof(path), "%s/private/%s.csr", ca->sslpath, keyname);
+	if (len < 0 || (size_t)len >= sizeof(path))
+		err(1, "%s: snprintf", __func__);
 
 	char *cmd[] = { PATH_OPENSSL, "req", "-new", "-key", key, "-out", path,
 	    "-config", ca->sslcnf, ca->batch, NULL };
@@ -244,6 +270,7 @@ ca_sign(struct ca *ca, char *keyname, int type)
 	char		out[PATH_MAX];
 	char		in[PATH_MAX];
 	char		*extensions = NULL;
+	int		len;
 
 	if (type == HOST_IPADDR) {
 		extensions = "x509v3_IPAddr";
@@ -259,10 +286,18 @@ ca_sign(struct ca *ca, char *keyname, int type)
 	ca_setenv("$ENV::CASERIAL", ca->serial);
 	ca_setcnf(ca, keyname);
 
-	snprintf(cakey, sizeof(cakey), "%s/private/ca.key", ca->sslpath);
-	snprintf(cacrt, sizeof(cacrt), "%s/ca.crt", ca->sslpath);
-	snprintf(out, sizeof(out), "%s/%s.crt", ca->sslpath, keyname);
-	snprintf(in, sizeof(in), "%s/private/%s.csr", ca->sslpath, keyname);
+	len = snprintf(cakey, sizeof(cakey), "%s/private/ca.key", ca->sslpath);
+	if (len < 0 || (size_t)len >= sizeof(cakey))
+		err(1, "%s: snprintf", __func__);
+	len = snprintf(cacrt, sizeof(cacrt), "%s/ca.crt", ca->sslpath);
+	if (len < 0 || (size_t)len >= sizeof(cacrt))
+		err(1, "%s: snprintf", __func__);
+	len = snprintf(out, sizeof(out), "%s/%s.crt", ca->sslpath, keyname);
+	if (len < 0 || (size_t)len >= sizeof(out))
+		err(1, "%s: snprintf", __func__);
+	len = snprintf(in, sizeof(in), "%s/private/%s.csr", ca->sslpath, keyname);
+	if (len < 0 || (size_t)len >= sizeof(in))
+		err(1, "%s: snprintf", __func__);
 
 	char *cmd[] = { PATH_OPENSSL, "ca", "-config", ca->sslcnf,
 	    "-keyfile", cakey, "-cert", cacrt, "-extfile", ca->extcnf,
@@ -315,8 +350,11 @@ ca_key_install(struct ca *ca, char *keyname, char *dir)
 	char		 dst[PATH_MAX];
 	char		 out[PATH_MAX];
 	char		*p = NULL;
+	int		 len;
 
-	snprintf(src, sizeof(src), "%s/private/%s.key", ca->sslpath, keyname);
+	len = snprintf(src, sizeof(src), "%s/private/%s.key", ca->sslpath, keyname);
+	if (len < 0 || (size_t)len >= sizeof(src))
+		err(1, "%s: snprintf", __func__);
 	if (stat(src, &st) == -1) {
 		if (errno == ENOENT)
 			printf("key for '%s' does not exist\n", ca->caname);
@@ -330,10 +368,14 @@ ca_key_install(struct ca *ca, char *keyname, char *dir)
 
 	ca_hier(dir);
 
-	snprintf(dst, sizeof(dst), "%s/private/local.key", dir);
+	len = snprintf(dst, sizeof(dst), "%s/private/local.key", dir);
+	if (len < 0 || (size_t)len >= sizeof(dst))
+		err(1, "%s: snprintf", __func__);
 	fcopy(src, dst, 0600);
 
-	snprintf(out, sizeof(out), "%s/local.pub", dir);
+	len = snprintf(out, sizeof(out), "%s/local.pub", dir);
+	if (len < 0 || (size_t)len >= sizeof(out))
+		err(1, "%s: snprintf", __func__);
 
 	char *cmd[] = { PATH_OPENSSL, "rsa", "-out", out, "-in", dst,
 	    "-pubout", NULL };
@@ -351,6 +393,7 @@ ca_cert_install(struct ca *ca, char *keyname, char *dir)
 	char		 dst[PATH_MAX];
 	int		 r;
 	char		*p = NULL;
+	int		 len;
 
 	if (dir == NULL)
 		p = dir = strdup(KEYBASE);
@@ -362,8 +405,12 @@ ca_cert_install(struct ca *ca, char *keyname, char *dir)
 		return (r);
 	}
 
-	snprintf(src, sizeof(src), "%s/%s.crt", ca->sslpath, keyname);
-	snprintf(dst, sizeof(dst), "%s/certs/%s.crt", dir, keyname);
+	len = snprintf(src, sizeof(src), "%s/%s.crt", ca->sslpath, keyname);
+	if (len < 0 || (size_t)len >= sizeof(src))
+		err(1, "%s: snprintf", __func__);
+	len = snprintf(dst, sizeof(dst), "%s/certs/%s.crt", dir, keyname);
+	if (len < 0 || (size_t)len >= sizeof(dst))
+		err(1, "%s: snprintf", __func__);
 	fcopy(src, dst, 0644);
 
 	free(p);
@@ -408,10 +455,13 @@ ca_create(struct ca *ca)
 	char			 key[PATH_MAX];
 	char			 csr[PATH_MAX];
 	char			 crt[PATH_MAX];
+	int			 len;
 
 	ca_clrenv();
 
-	snprintf(key, sizeof(key), "%s/private/ca.key", ca->sslpath);
+	len = snprintf(key, sizeof(key), "%s/private/ca.key", ca->sslpath);
+	if (len < 0 || (size_t)len >= sizeof(key))
+		err(1, "%s: snprintf", __func__);
 	char *genrsa[] = { PATH_OPENSSL, "genrsa", "-aes256", "-out", key,
 	    "-passout", ca->passfile, "2048", NULL };
 	ca_execv(genrsa);
@@ -422,14 +472,18 @@ ca_create(struct ca *ca)
 	ca_setenv("$ENV::REQ_EXT", "x509v3_CA");
 	ca_setcnf(ca, "ca");
 
-	snprintf(csr, sizeof(csr), "%s/private/ca.csr", ca->sslpath);
+	len = snprintf(csr, sizeof(csr), "%s/private/ca.csr", ca->sslpath);
+	if (len < 0 || (size_t)len >= sizeof(csr))
+		err(1, "%s: snprintf", __func__);
 	char *reqcmd[] = { PATH_OPENSSL, "req", "-new", "-key", key,
 	    "-config", ca->sslcnf, "-out", csr,
 	    "-passin", ca->passfile, ca->batch, NULL };
 	ca_execv(reqcmd);
 	chmod(csr, 0600);
 
-	snprintf(crt, sizeof(crt), "%s/ca.crt", ca->sslpath);
+	len = snprintf(crt, sizeof(crt), "%s/ca.crt", ca->sslpath);
+	if (len < 0 || (size_t)len >= sizeof(crt))
+		err(1, "%s: snprintf", __func__);
 	char *x509[] = { PATH_OPENSSL, "x509", "-req", "-days", "4500",
 	    "-in", csr, "-signkey", key, "-sha256",
 	    "-extfile", ca->extcnf, "-extensions", "x509v3_CA",
@@ -449,8 +503,11 @@ ca_install(struct ca *ca, char *dir)
 	char		 src[PATH_MAX];
 	char		 dst[PATH_MAX];
 	char		*p = NULL;
+	int		 len;
 
-	snprintf(src, sizeof(src), "%s/ca.crt", ca->sslpath);
+	len = snprintf(src, sizeof(src), "%s/ca.crt", ca->sslpath);
+	if (len < 0 || (size_t)len >= sizeof(src))
+		err(1, "%s: snprintf", __func__);
 	if (stat(src, &st) == -1) {
 		printf("CA '%s' does not exist\n", ca->caname);
 		return (1);
@@ -461,14 +518,20 @@ ca_install(struct ca *ca, char *dir)
 
 	ca_hier(dir);
 
-	snprintf(dst, sizeof(dst), "%s/ca/ca.crt", dir);
+	len = snprintf(dst, sizeof(dst), "%s/ca/ca.crt", dir);
+	if (len < 0 || (size_t)len >= sizeof(dst))
+		err(1, "%s: snprintf", __func__);
 	if (fcopy(src, dst, 0644) == 0)
 		printf("certificate for CA '%s' installed into %s\n",
 		    ca->caname, dst);
 
-	snprintf(src, sizeof(src), "%s/ca.crl", ca->sslpath);
+	len = snprintf(src, sizeof(src), "%s/ca.crl", ca->sslpath);
+	if (len < 0 || (size_t)len >= sizeof(src))
+		err(1, "%s: snprintf", __func__);
 	if (stat(src, &st) == 0) {
-		snprintf(dst, sizeof(dst), "%s/crls/ca.crl", dir);
+		len = snprintf(dst, sizeof(dst), "%s/crls/ca.crl", dir);
+		if (len < 0 || (size_t)len >= sizeof(dst))
+			err(1, "%s: snprintf", __func__);
 		if (fcopy(src, dst, 0644) == 0)
 			printf("CRL for CA '%s' installed to %s\n",
 			    ca->caname, dst);
@@ -487,10 +550,13 @@ ca_show_certs(struct ca *ca, char *name)
 	char		 path[PATH_MAX];
 	char		*p;
 	struct stat	 st;
+	int		 len;
 
 	if (name != NULL) {
-		snprintf(path, sizeof(path), "%s/%s.crt",
+		len = snprintf(path, sizeof(path), "%s/%s.crt",
 		    ca->sslpath, name);
+		if (len < 0 || (size_t)len >= sizeof(path))
+			err(1, "%s: snprintf", __func__);
 		if (stat(path, &st) != 0)
 			err(1, "could not open file %s.crt", name);
 		char *cmd[] = { PATH_OPENSSL, "x509", "-text",
@@ -508,8 +574,10 @@ ca_show_certs(struct ca *ca, char *name)
 			p = de->d_name + de->d_namlen - 4;
 			if (strcmp(".crt", p) != 0)
 				continue;
-			snprintf(path, sizeof(path), "%s/%s", ca->sslpath,
+			len = snprintf(path, sizeof(path), "%s/%s", ca->sslpath,
 			    de->d_name);
+			if (len < 0 || (size_t)len >= sizeof(path))
+				err(1, "%s: snprintf", __func__);
 			char *cmd[] = { PATH_OPENSSL, "x509", "-subject",
 			    "-fingerprint", "-dates", "-noout", "-in", path,
 			    NULL };
@@ -660,6 +728,7 @@ ca_export(struct ca *ca, char *keyname, char *myname, char *password)
 	char		 tpl[] = "/tmp/ikectl.XXXXXXXXXX";
 	unsigned int	 i;
 	int		 fd;
+	int		 len;
 
 	if (keyname != NULL) {
 		if (strlcpy(oname, keyname, sizeof(oname)) >= sizeof(oname))
@@ -685,13 +754,25 @@ ca_export(struct ca *ca, char *keyname, char *myname, char *password)
 			errx(1, "passphrase does not match!");
 	}
 
-	snprintf(cacrt, sizeof(cacrt), "%s/ca.crt", ca->sslpath);
-	snprintf(capfx, sizeof(capfx), "%s/ca.pfx", ca->sslpath);
-	snprintf(key, sizeof(key), "%s/private/%s.key", ca->sslpath, keyname);
-	snprintf(crt, sizeof(crt), "%s/%s.crt", ca->sslpath, keyname);
-	snprintf(pfx, sizeof(pfx), "%s/private/%s.pfx", ca->sslpath, oname);
+	len = snprintf(cacrt, sizeof(cacrt), "%s/ca.crt", ca->sslpath);
+	if (len < 0 || (size_t)len >= sizeof(cacrt))
+		err(1, "%s: snprintf", __func__);
+	len = snprintf(capfx, sizeof(capfx), "%s/ca.pfx", ca->sslpath);
+	if (len < 0 || (size_t)len >= sizeof(capfx))
+		err(1, "%s: snprintf", __func__);
+	len = snprintf(key, sizeof(key), "%s/private/%s.key", ca->sslpath, keyname);
+	if (len < 0 || (size_t)len >= sizeof(key))
+		err(1, "%s: snprintf", __func__);
+	len = snprintf(crt, sizeof(crt), "%s/%s.crt", ca->sslpath, keyname);
+	if (len < 0 || (size_t)len >= sizeof(crt))
+		err(1, "%s: snprintf", __func__);
+	len = snprintf(pfx, sizeof(pfx), "%s/private/%s.pfx", ca->sslpath, oname);
+	if (len < 0 || (size_t)len >= sizeof(pfx))
+		err(1, "%s: snprintf", __func__);
 
-	snprintf(passenv, sizeof(passenv), "EXPASS=%s", pass);
+	len = snprintf(passenv, sizeof(passenv), "EXPASS=%s", pass);
+	if (len < 0 || (size_t)len >= sizeof(passenv))
+		err(1, "%s: snprintf", __func__);
 	putenv(passenv);
 
 	if (keyname != NULL) {
@@ -726,52 +807,85 @@ ca_export(struct ca *ca, char *keyname, char *myname, char *password)
 
 	/* create a file with the address of the peer to connect to */
 	if (myname != NULL) {
-		snprintf(dst, sizeof(dst), "%s/export/peer.txt", p);
+		len = snprintf(dst, sizeof(dst), "%s/export/peer.txt", p);
+		if (len < 0 || (size_t)len >= sizeof(dst))
+			err(1, "%s: snprintf", __func__);
 		if ((fd = open(dst, O_WRONLY|O_CREAT, 0644)) == -1)
 			err(1, "open %s", dst);
 		write(fd, myname, strlen(myname));
 		close(fd);
 	}
 
-	snprintf(src, sizeof(src), "%s/ca.pfx", ca->sslpath);
-	snprintf(dst, sizeof(dst), "%s/export/ca.pfx", p);
+	len = snprintf(src, sizeof(src), "%s/ca.pfx", ca->sslpath);
+	if (len < 0 || (size_t)len >= sizeof(src))
+		err(1, "%s: snprintf", __func__);
+	len = snprintf(dst, sizeof(dst), "%s/export/ca.pfx", p);
+	if (len < 0 || (size_t)len >= sizeof(dst))
+		err(1, "%s: snprintf", __func__);
 	fcopy(src, dst, 0644);
 
-	snprintf(src, sizeof(src), "%s/ca.crt", ca->sslpath);
-	snprintf(dst, sizeof(dst), "%s/ca/ca.crt", p);
+	len = snprintf(src, sizeof(src), "%s/ca.crt", ca->sslpath);
+	if (len < 0 || (size_t)len >= sizeof(src))
+		err(1, "%s: snprintf", __func__);
+	len = snprintf(dst, sizeof(dst), "%s/ca/ca.crt", p);
+	if (len < 0 || (size_t)len >= sizeof(dst))
+		err(1, "%s: snprintf", __func__);
 	fcopy(src, dst, 0644);
 
-	snprintf(src, sizeof(src), "%s/ca.crl", ca->sslpath);
+	len = snprintf(src, sizeof(src), "%s/ca.crl", ca->sslpath);
+	if (len < 0 || (size_t)len >= sizeof(src))
+		err(1, "%s: snprintf", __func__);
 	if (stat(src, &st) == 0) {
-		snprintf(dst, sizeof(dst), "%s/crls/ca.crl", p);
+		len = snprintf(dst, sizeof(dst), "%s/crls/ca.crl", p);
+		if (len < 0 || (size_t)len >= sizeof(dst))
+			err(1, "%s: snprintf", __func__);
 		fcopy(src, dst, 0644);
 	}
 
 	if (keyname != NULL) {
-		snprintf(src, sizeof(src), "%s/private/%s.pfx", ca->sslpath,
-		    oname);
-		snprintf(dst, sizeof(dst), "%s/export/%s.pfx", p, oname);
+		len = snprintf(src, sizeof(src), "%s/private/%s.pfx",
+		    ca->sslpath, oname);
+		if (len < 0 || (size_t)len >= sizeof(src))
+			err(1, "%s: snprintf", __func__);
+		len = snprintf(dst, sizeof(dst), "%s/export/%s.pfx", p, oname);
+		if (len < 0 || (size_t)len >= sizeof(dst))
+			err(1, "%s: snprintf", __func__);
 		fcopy(src, dst, 0644);
 
-		snprintf(src, sizeof(src), "%s/private/%s.key", ca->sslpath,
+		len = snprintf(src, sizeof(src), "%s/private/%s.key",
+		    ca->sslpath, keyname);
+		if (len < 0 || (size_t)len >= sizeof(src))
+			err(1, "%s: snprintf", __func__);
+		len = snprintf(dst, sizeof(dst), "%s/private/%s.key", p, keyname);
+		if (len < 0 || (size_t)len >= sizeof(dst))
+			err(1, "%s: snprintf", __func__);
+		fcopy(src, dst, 0600);
+		len = snprintf(dst, sizeof(dst), "%s/private/local.key", p);
+		if (len < 0 || (size_t)len >= sizeof(dst))
+			err(1, "%s: snprintf", __func__);
+		fcopy(src, dst, 0600);
+
+		len = snprintf(src, sizeof(src), "%s/%s.crt", ca->sslpath,
 		    keyname);
-		snprintf(dst, sizeof(dst), "%s/private/%s.key", p, keyname);
-		fcopy(src, dst, 0600);
-		snprintf(dst, sizeof(dst), "%s/private/local.key", p);
-		fcopy(src, dst, 0600);
-
-		snprintf(src, sizeof(src), "%s/%s.crt", ca->sslpath, keyname);
-		snprintf(dst, sizeof(dst), "%s/certs/%s.crt", p, keyname);
+		if (len < 0 || (size_t)len >= sizeof(src))
+			err(1, "%s: snprintf", __func__);
+		len = snprintf(dst, sizeof(dst), "%s/certs/%s.crt", p, keyname);
+		if (len < 0 || (size_t)len >= sizeof(dst))
+			err(1, "%s: snprintf", __func__);
 		fcopy(src, dst, 0644);
 
-		snprintf(dst, sizeof(dst), "%s/local.pub", p);
+		len = snprintf(dst, sizeof(dst), "%s/local.pub", p);
+		if (len < 0 || (size_t)len >= sizeof(dst))
+			err(1, "%s: snprintf", __func__);
 		char *cmd[] = { PATH_OPENSSL, "rsa", "-out", dst, "-in", key,
 		    "-pubout", NULL };
 		ca_execv(cmd);
 	}
 
 	if (stat(PATH_TAR, &st) == 0) {
-		snprintf(src, sizeof(src), "%s.tgz", oname);
+		len = snprintf(src, sizeof(src), "%s.tgz", oname);
+		if (len < 0 || (size_t)len >= sizeof(src))
+			err(1, "%s: snprintf", __func__);
 		if (keyname == NULL) {
 			char *cmd[] = { PATH_TAR, "-zcf", src,
 			    "-C", ca->sslpath, ".", NULL };
@@ -792,23 +906,31 @@ ca_export(struct ca *ca, char *keyname, char *myname, char *password)
 				if (!strcmp(de->d_name, ".") ||
 				    !strcmp(de->d_name, ".."))
 					continue;
-				snprintf(src, sizeof(src), "%s/%s", EXPDIR,
-				    de->d_name);
-				snprintf(dst, sizeof(dst), "%s/export/%s", p,
-				    de->d_name);
+				len = snprintf(src, sizeof(src), "%s/%s",
+				    EXPDIR, de->d_name);
+				if (len < 0 || (size_t)len >= sizeof(src))
+					err(1, "%s: snprintf", __func__);
+				len = snprintf(dst, sizeof(dst), "%s/export/%s",
+				    p, de->d_name);
+				if (len < 0 || (size_t)len >= sizeof(dst))
+					err(1, "%s: snprintf", __func__);
 				fcopy(src, dst, 0644);
 			}
 			closedir(dexp);
 		}
 
-		snprintf(dst, sizeof(dst), "%s/export", p);
+		len = snprintf(dst, sizeof(dst), "%s/export", p);
+		if (len < 0 || (size_t)len >= sizeof(dst))
+			err(1, "%s: snprintf", __func__);
 		if (getcwd(src, sizeof(src)) == NULL)
 			err(1, "could not get cwd");
 
 		if (chdir(dst) == -1)
 			err(1, "could not change %s", dst);
 
-		snprintf(dst, sizeof(dst), "%s/%s.zip", src, oname);
+		len = snprintf(dst, sizeof(dst), "%s/%s.zip", src, oname);
+		if (len < 0 || (size_t)len >= sizeof(dst))
+			err(1, "%s: snprintf", __func__);
 		char *cmd[] = { PATH_ZIP, "-qr", dst, ".", NULL };
 		ca_execv(cmd);
 		printf("exported files in %s\n", dst);
@@ -828,10 +950,12 @@ ca_create_index(struct ca *ca)
 {
 	struct stat	 st;
 	int		 fd;
+	int		 len;
 
-	if (snprintf(ca->index, sizeof(ca->index), "%s/index.txt",
-	    ca->sslpath) < 0)
-		err(1, "snprintf");
+	len = snprintf(ca->index, sizeof(ca->index), "%s/index.txt",
+	    ca->sslpath);
+	if (len < 0 || (size_t)len >= sizeof(ca->index))
+		err(1, "%s: snprintf", __func__);
 	if (stat(ca->index, &st) != 0) {
 		if  (errno == ENOENT) {
 			if ((fd = open(ca->index, O_WRONLY | O_CREAT, 0644))
@@ -842,9 +966,10 @@ ca_create_index(struct ca *ca)
 			err(1, "could not access %s", ca->index);
 	}
 
-	if (snprintf(ca->serial, sizeof(ca->serial), "%s/serial.txt",
-	    ca->sslpath) < 0)
-		err(1, "snprintf");
+	len = snprintf(ca->serial, sizeof(ca->serial), "%s/serial.txt",
+	    ca->sslpath);
+	if (len < 0 || (size_t)len >= sizeof(ca->serial))
+		err(1, "%s: snprintf", __func__);
 	if (stat(ca->serial, &st) != 0) {
 		if  (errno == ENOENT) {
 			if ((fd = open(ca->serial, O_WRONLY | O_CREAT, 0644))
@@ -866,10 +991,13 @@ ca_revoke(struct ca *ca, char *keyname)
 	char		 path[PATH_MAX];
 	char		 cakey[PATH_MAX];
 	char		 cacrt[PATH_MAX];
+	size_t		 len;
 
 	if (keyname) {
-		snprintf(path, sizeof(path), "%s/%s.crt",
+		len = snprintf(path, sizeof(path), "%s/%s.crt",
 		    ca->sslpath, keyname);
+		if (len < 0 || (size_t)len >= sizeof(path))
+			err(1, "%s: snprintf", __func__);
 		if (stat(path, &st) != 0) {
 			warn("Problem with certificate for '%s'", keyname);
 			return (1);
@@ -885,8 +1013,12 @@ ca_revoke(struct ca *ca, char *keyname)
 
 	ca_setcnf(ca, "ca-revoke");
 
-	snprintf(cakey, sizeof(cakey), "%s/private/ca.key", ca->sslpath);
-	snprintf(cacrt, sizeof(cacrt), "%s/ca.crt", ca->sslpath);
+	len = snprintf(cakey, sizeof(cakey), "%s/private/ca.key", ca->sslpath);
+	if (len < 0 || (size_t)len >= sizeof(cakey))
+		err(1, "%s: snprintf", __func__);
+	len = snprintf(cacrt, sizeof(cacrt), "%s/ca.crt", ca->sslpath);
+	if (len < 0 || (size_t)len >= sizeof(cacrt))
+		err(1, "%s: snprintf", __func__);
 
 	if (keyname) {
 		char *cmd[] = { PATH_OPENSSL, "ca", "-config", ca->sslcnf,
@@ -895,7 +1027,9 @@ ca_revoke(struct ca *ca, char *keyname)
 		ca_execv(cmd);
 	}
 
-	snprintf(path, sizeof(path), "%s/ca.crl", ca->sslpath);
+	len = snprintf(path, sizeof(path), "%s/ca.crl", ca->sslpath);
+	if (len < 0 || (size_t)len >= sizeof(path))
+		err(1, "%s: snprintf", __func__);
 	char *cmd[] = { PATH_OPENSSL, "ca", "-config", ca->sslcnf,
 	    "-keyfile", cakey, "-passin", ca->passfile, "-gencrl",
 	    "-cert", cacrt, "-crldays", "365", "-out", path, ca->batch, NULL };
@@ -939,6 +1073,7 @@ ca_setcnf(struct ca *ca, const char *keyname)
 {
 	struct stat	 st;
 	const char	*extcnf, *sslcnf;
+	int		 len;
 
 	if (stat(IKECA_CNF, &st) == 0) {
 		extcnf = IKECA_CNF;
@@ -948,10 +1083,14 @@ ca_setcnf(struct ca *ca, const char *keyname)
 		sslcnf = SSL_CNF;
 	}
 
-	snprintf(ca->extcnf, sizeof(ca->extcnf), "%s/%s-ext.cnf",
+	len = snprintf(ca->extcnf, sizeof(ca->extcnf), "%s/%s-ext.cnf",
 	    ca->sslpath, keyname);
-	snprintf(ca->sslcnf, sizeof(ca->sslcnf), "%s/%s-ssl.cnf",
+	if (len < 0 || (size_t)len >= sizeof(ca->extcnf))
+		err(1, "%s: snprintf", __func__);
+	len = snprintf(ca->sslcnf, sizeof(ca->sslcnf), "%s/%s-ssl.cnf",
 	    ca->sslpath, keyname);
+	if (len < 0 || (size_t)len >= sizeof(ca->sslcnf))
+		err(1, "%s: snprintf", __func__);
 
 	fcopy_env(extcnf, ca->extcnf, 0400);
 	fcopy_env(sslcnf, ca->sslcnf, 0400);
@@ -963,6 +1102,7 @@ ca_setup(char *caname, int create, int quiet, char *pass)
 	struct stat	 st;
 	struct ca	*ca;
 	char		 path[PATH_MAX];
+	int		 len;
 
 	if (stat(PATH_OPENSSL, &st) == -1)
 		err(1, "openssl binary not available");
@@ -971,7 +1111,9 @@ ca_setup(char *caname, int create, int quiet, char *pass)
 		err(1, "calloc");
 
 	ca->caname = strdup(caname);
-	snprintf(ca->sslpath, sizeof(ca->sslpath), SSLDIR "/%s", caname);
+	len = snprintf(ca->sslpath, sizeof(ca->sslpath), SSLDIR "/%s", caname);
+	if (len < 0 || (size_t)len >= sizeof(ca->sslpath))
+		err(1, "%s: snprintf", __func__);
 
 	if (quiet)
 		ca->batch = "-batch";
@@ -989,10 +1131,14 @@ ca_setup(char *caname, int create, int quiet, char *pass)
 	if (mkdir(path, 0700) == -1 && errno != EEXIST)
 		err(1, "failed to create dir %s", path);
 
-	snprintf(path, sizeof(path), "%s/ikeca.passwd", ca->sslpath);
+	len = snprintf(path, sizeof(path), "%s/ikeca.passwd", ca->sslpath);
+	if (len < 0 || (size_t)len >= sizeof(path))
+		err(1, "%s: snprintf", __func__);
 	if (create && stat(path, &st) == -1 && errno == ENOENT)
 		ca_newpass(path, pass);
-	snprintf(ca->passfile, sizeof(ca->passfile), "file:%s", path);
+	len = snprintf(ca->passfile, sizeof(ca->passfile), "file:%s", path);
+	if (len < 0 || (size_t)len >= sizeof(ca->passfile))
+		err(1, "%s: snprintf", __func__);
 
 	return (ca);
 }
