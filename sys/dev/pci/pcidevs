@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1950 2021/01/23 23:35:28 jsg Exp $
+$OpenBSD: pcidevs,v 1.1951 2021/01/24 01:56:44 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -7544,6 +7544,8 @@ product RDC R6060_OHCI		0x6060	R6060 USB
 product RDC R6061_EHCI		0x6061	R6061 USB2
 
 /* Realtek products */
+product REALTEK E2500V2		0x2502	E2500
+product REALTEK E2600		0x2600	E2600
 product REALTEK E3000		0x3000	Killer E3000
 product REALTEK RTS5208		0x5208	RTS5208 Card Reader
 product REALTEK RTS5209		0x5209	RTS5209 Card Reader
