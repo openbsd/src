@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.109 2020/07/13 10:35:55 dlg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.110 2021/01/24 10:21:43 jsg Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -651,6 +651,15 @@ em_set_mac_type(struct em_hw *hw)
 	case E1000_DEV_ID_PCH_TGP_I219_LM14:
 	case E1000_DEV_ID_PCH_TGP_I219_V14:
 	case E1000_DEV_ID_PCH_TGP_I219_LM15:
+	case E1000_DEV_ID_PCH_TGP_I219_V15:
+	case E1000_DEV_ID_PCH_ADP_I219_LM16:
+	case E1000_DEV_ID_PCH_ADP_I219_V16:
+	case E1000_DEV_ID_PCH_ADP_I219_LM17:
+	case E1000_DEV_ID_PCH_ADP_I219_V17:
+	case E1000_DEV_ID_PCH_MTP_I219_LM18:
+	case E1000_DEV_ID_PCH_MTP_I219_V18:
+	case E1000_DEV_ID_PCH_MTP_I219_LM19:
+	case E1000_DEV_ID_PCH_MTP_I219_V19:
 		hw->mac_type = em_pch_cnp;
 		break;
 	case E1000_DEV_ID_EP80579_LAN_1:

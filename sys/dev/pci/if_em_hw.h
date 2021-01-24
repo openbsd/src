@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.83 2020/07/13 10:35:55 dlg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.84 2021/01/24 10:21:43 jsg Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -589,6 +589,15 @@ uint32_t em_translate_82542_register(uint32_t);
 #define E1000_DEV_ID_PCH_TGP_I219_LM14   0x15F9
 #define E1000_DEV_ID_PCH_TGP_I219_V14    0x15FA
 #define E1000_DEV_ID_PCH_TGP_I219_LM15   0x15F4
+#define E1000_DEV_ID_PCH_TGP_I219_V15    0x15F5
+#define E1000_DEV_ID_PCH_ADP_I219_LM16   0x1A1E
+#define E1000_DEV_ID_PCH_ADP_I219_V16    0x1A1F
+#define E1000_DEV_ID_PCH_ADP_I219_LM17   0x1A1C
+#define E1000_DEV_ID_PCH_ADP_I219_V17    0x1A1D
+#define E1000_DEV_ID_PCH_MTP_I219_LM18   0x550A
+#define E1000_DEV_ID_PCH_MTP_I219_V18    0x550B
+#define E1000_DEV_ID_PCH_MTP_I219_LM19   0x550C
+#define E1000_DEV_ID_PCH_MTP_I219_V19    0x550D
 #define E1000_DEV_ID_82575EB_PT          0x10A7
 #define E1000_DEV_ID_82575EB_PF          0x10A9
 #define E1000_DEV_ID_82575GB_QP          0x10D6
