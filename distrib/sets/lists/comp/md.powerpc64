@@ -43,6 +43,7 @@
 ./usr/include/powerpc64/reloc.h
 ./usr/include/powerpc64/setjmp.h
 ./usr/include/powerpc64/signal.h
+./usr/include/powerpc64/smbiosvar.h
 ./usr/include/powerpc64/softintr.h
 ./usr/include/powerpc64/spinlock.h
 ./usr/include/powerpc64/tcb.h
