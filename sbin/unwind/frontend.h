@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.h,v 1.7 2021/01/19 16:52:12 florian Exp $	*/
+/*	$OpenBSD: frontend.h,v 1.8 2021/01/24 18:29:15 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -28,6 +28,12 @@ struct imsg_rdns_proposal {
 	uint32_t		 if_index;
 	int			 src;
 	struct sockaddr_rtdns	 rtdns;
+};
+
+struct dns64_prefix {
+	struct in6_addr	 in6;
+	int		 prefixlen;
+	int		 flags;
 };
 
 void		 frontend(int, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.133 2021/01/23 16:28:12 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.134 2021/01/24 18:29:15 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -96,6 +96,9 @@
 #define	INSECURE	0
 #define	BOGUS		1
 #define	SECURE		2
+
+#define	WKA1_FOUND	1
+#define	WKA2_FOUND	2
 
 struct uw_resolver {
 	struct event		 check_ev;
@@ -196,6 +199,12 @@ int			*resolvers_to_restart(struct uw_conf *,
 			     struct uw_conf *);
 const char		*query_imsg2str(struct query_imsg *);
 char			*gen_resolv_conf(void);
+void			 check_dns64(void);
+void			 check_dns64_done(struct asr_result *, void *);
+int			 dns64_prefixlen(const struct in6_addr *,
+			     const uint8_t *);
+void			 add_dns64_prefix(const struct in6_addr *, int,
+			     struct dns64_prefix *, int, int);
 
 struct uw_conf			*resolver_conf;
 static struct imsgev		*iev_frontend;
@@ -219,6 +228,8 @@ struct slabhash			*unified_msg_cache;
 struct rrset_cache		*unified_rrset_cache;
 struct key_cache		*unified_key_cache;
 struct val_neg_cache		*unified_neg_cache;
+
+int				 dns64_present;
 
 static const char * const	 as112_zones[] = {
 	/* RFC1918 */
@@ -1501,10 +1512,19 @@ check_resolver_done(struct uw_resolver *res, void *arg, int rcode,
 	}
 
 	if (sec == SECURE) {
-		if (prev_state != VALIDATING)
-			new_resolver(checked_resolver->type, VALIDATING);
-		if (!(evtimer_pending(&trust_anchor_timer, NULL)))
-			evtimer_add(&trust_anchor_timer, &tv);
+		if (dns64_present && (res->type == UW_RES_DHCP ||
+		    res->type == UW_RES_ODOT_DHCP)) {
+			/* do not upgrade to validating, DNS64 breaks DNSSEC */
+			if (prev_state != RESOLVING)
+				new_resolver(checked_resolver->type,
+				    RESOLVING);
+		} else {
+			if (prev_state != VALIDATING)
+				new_resolver(checked_resolver->type,
+				    VALIDATING);
+			if (!(evtimer_pending(&trust_anchor_timer, NULL)))
+				evtimer_add(&trust_anchor_timer, &tv);
+		}
 	 } else if (rcode == LDNS_RCODE_NOERROR &&
 	    LDNS_RCODE_WIRE((uint8_t*)answer_packet) == LDNS_RCODE_NOERROR) {
 		if (why_bogus) {
@@ -1989,6 +2009,7 @@ replace_autoconf_forwarders(struct imsg_rdns_proposal *rdns_proposal)
 		new_resolver(UW_RES_ASR, UNKNOWN);
 		new_resolver(UW_RES_DHCP, UNKNOWN);
 		new_resolver(UW_RES_ODOT_DHCP, UNKNOWN);
+		check_dns64();
 	} else {
 		while ((tmp = TAILQ_FIRST(&new_forwarder_list)) != NULL) {
 			TAILQ_REMOVE(&new_forwarder_list, tmp, entry);
@@ -2156,4 +2177,212 @@ gen_resolv_conf()
 		free(tmp);
 	}
 	return resolv_conf;
+}
+
+void
+check_dns64(void)
+{
+	struct asr_query	*aq = NULL;
+	char			*resolv_conf;
+	void			*asr_ctx;
+
+	if (TAILQ_EMPTY(&autoconf_forwarder_list))
+		return;
+
+	if ((resolv_conf = gen_resolv_conf()) == NULL) {
+		log_warnx("could not create asr context");
+		return;
+	}
+
+	if ((asr_ctx = asr_resolver_from_string(resolv_conf)) != NULL) {
+		if ((aq = res_query_async("ipv4only.arpa", LDNS_RR_CLASS_IN,
+		    LDNS_RR_TYPE_AAAA, asr_ctx)) == NULL) {
+			log_warn("%s: res_query_async", __func__);
+			asr_resolver_free(asr_ctx);
+		}
+		if (event_asr_run(aq, check_dns64_done, asr_ctx) == NULL) {
+			log_warn("%s: event_asr_run", __func__);
+			free(aq);
+			asr_resolver_free(asr_ctx);
+		}
+	} else
+		log_warnx("%s: could not create asr context", __func__);
+
+	free(resolv_conf);
+}
+
+void
+check_dns64_done(struct asr_result *ar, void *arg)
+{
+	/* RFC 7050: ipv4only.arpa resolves to 192.0.0.170 and 192.9.0.171 */
+	const uint8_t			 wka1[] = {192, 0, 0, 170};
+	const uint8_t			 wka2[] = {192, 0, 0, 171};
+	struct query_info		 skip, qinfo;
+	struct reply_info		*rinfo = NULL;
+	struct regional			*region = NULL;
+	struct sldns_buffer		*buf = NULL;
+	struct ub_packed_rrset_key	*an_rrset = NULL;
+	struct packed_rrset_data	*an_rrset_data;
+	struct alloc_cache		 alloc;
+	struct edns_data		 edns;
+	struct dns64_prefix		*prefixes = NULL;
+	size_t				 i;
+	int				 preflen, count = 0;
+	void				*asr_ctx = arg;
+
+	memset(&qinfo, 0, sizeof(qinfo));
+	alloc_init(&alloc, NULL, 0);
+
+	if (ar->ar_datalen < LDNS_HEADER_SIZE) {
+		log_warnx("%s: bad packet: too short: %d", __func__,
+		    ar->ar_datalen);
+		goto out;
+	}
+
+	if (ar->ar_datalen > UINT16_MAX) {
+		log_warnx("%s: bad packet: too large: %d", __func__,
+		    ar->ar_datalen);
+		goto out;
+	}
+
+	if (ar->ar_rcode == LDNS_RCODE_NXDOMAIN) {
+		/* XXX this means that the dhcp resolver is broken */
+		log_debug("%s: NXDOMAIN", __func__);
+		goto out;
+	}
+
+	if ((buf = sldns_buffer_new(ar->ar_datalen)) == NULL)
+		goto out;
+
+	if ((region = regional_create()) == NULL)
+		goto out;
+
+	sldns_buffer_write(buf, ar->ar_data, ar->ar_datalen);
+	sldns_buffer_flip(buf);
+
+	/* read past query section, no memory is allocated */
+	if (!query_info_parse(&skip, buf))
+		goto out;
+
+	if (reply_info_parse(buf, &alloc, &qinfo, &rinfo, region, &edns) != 0)
+		goto out;
+
+	if ((an_rrset = reply_find_answer_rrset(&qinfo, rinfo)) == NULL)
+		goto out;
+
+	an_rrset_data = (struct packed_rrset_data*)an_rrset->entry.data;
+
+	prefixes = calloc(an_rrset_data->count, sizeof(struct dns64_prefix));
+	if (prefixes == NULL)
+		goto out;
+
+	for (i = 0; i < an_rrset_data->count; i++) {
+		struct in6_addr	 in6;
+
+		/* check for AAAA record */
+		if (an_rrset_data->rr_len[i] != 18) /* 2 + 128/8 */
+			continue;
+		if (an_rrset_data->rr_data[i][0] != 0 &&
+		    an_rrset_data->rr_data[i][1] != 16)
+			continue;
+
+		memcpy(&in6, &an_rrset_data->rr_data[i][2],
+		    sizeof(in6));
+		if ((preflen = dns64_prefixlen(&in6, wka1)) != -1)
+			add_dns64_prefix(&in6, preflen, prefixes,
+			    an_rrset_data->count, WKA1_FOUND);
+		if ((preflen = dns64_prefixlen(&in6, wka2)) != -1)
+			add_dns64_prefix(&in6, preflen, prefixes,
+			    an_rrset_data->count, WKA2_FOUND);
+	}
+
+	for (i = 0; i < an_rrset_data->count && prefixes[i].flags != 0; i++)
+		if ((prefixes[i].flags & (WKA1_FOUND | WKA2_FOUND)) ==
+		    (WKA1_FOUND | WKA2_FOUND))
+			count++;
+
+	dns64_present = count > 0;
+
+	if (dns64_present) {
+		/* downgrade DHCP resolvers, DNS64 breaks DNSSEC */
+		if (resolvers[UW_RES_DHCP] != NULL &&
+		    resolvers[UW_RES_DHCP]->state == VALIDATING)
+			new_resolver(UW_RES_DHCP, RESOLVING);
+		if (resolvers[UW_RES_ODOT_DHCP] != NULL &&
+		    resolvers[UW_RES_ODOT_DHCP]->state == VALIDATING)
+			new_resolver(UW_RES_ODOT_DHCP, RESOLVING);
+	}
+
+	resolver_imsg_compose_frontend(IMSG_NEW_DNS64_PREFIXES_START, 0,
+	    &count, sizeof(count));
+	for (i = 0; i < an_rrset_data->count && prefixes[i].flags != 0; i++) {
+		if ((prefixes[i].flags & (WKA1_FOUND | WKA2_FOUND)) ==
+		    (WKA1_FOUND | WKA2_FOUND)) {
+			resolver_imsg_compose_frontend(IMSG_NEW_DNS64_PREFIX,
+			    0, &prefixes[i], sizeof(struct dns64_prefix));
+		}
+	}
+	resolver_imsg_compose_frontend(IMSG_NEW_DNS64_PREFIXES_DONE, 0, NULL,
+	    0);
+ out:
+	free(prefixes);
+	query_info_clear(&qinfo);
+	reply_info_parsedelete(rinfo, &alloc);
+	alloc_clear(&alloc);
+	regional_destroy(region);
+	sldns_buffer_free(buf);
+	free(ar->ar_data);
+	asr_resolver_free(asr_ctx);
+}
+
+int
+dns64_prefixlen(const struct in6_addr *in6, const uint8_t *wka)
+{
+	/* RFC 6052, 2.2 */
+	static const int	 possible_prefixes[] = {32, 40, 48, 56, 64, 96};
+	size_t			 i, j;
+	int			 found, pos;
+
+	for (i = 0; i < nitems(possible_prefixes); i++) {
+		pos = possible_prefixes[i] / 8;
+		found = 1;
+		for (j = 0; j < 4 && found; j++, pos++) {
+			if (pos == 8) {
+				if (in6->s6_addr[pos] != 0)
+					found = 0;
+				pos++;
+			}
+			if (in6->s6_addr[pos] != wka[j])
+				found = 0;
+		}
+		if (found)
+			return possible_prefixes[i];
+	}
+	return -1;
+}
+
+void
+add_dns64_prefix(const struct in6_addr *in6, int prefixlen,
+    struct dns64_prefix *prefixes, int prefixes_size, int flag)
+{
+	struct in6_addr	 tmp;
+	int		 i;
+
+	tmp = *in6;
+
+	for(i = prefixlen / 8; i < 16; i++)
+		tmp.s6_addr[i] = 0;
+
+	for (i = 0; i < prefixes_size; i++) {
+		if (prefixes[i].flags == 0) {
+			prefixes[i].in6 = tmp;
+			prefixes[i].prefixlen = prefixlen;
+			prefixes[i].flags |= flag;
+			break;
+		} else if (prefixes[i].prefixlen == prefixlen &&
+		    memcmp(&prefixes[i].in6, &tmp, sizeof(tmp)) == 0) {
+			prefixes[i].flags |= flag;
+			break;
+		}
+	}
 }

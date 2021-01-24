@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.64 2021/01/19 16:52:40 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.65 2021/01/24 18:29:15 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -60,6 +60,7 @@
 #include "unwind.h"
 #include "frontend.h"
 #include "control.h"
+#include "dns64_synth.h"
 
 #define	ROUTE_SOCKET_BUF_SIZE   16384
 
@@ -106,6 +107,7 @@ struct pending_query {
 	uint64_t			 imsg_id;
 	int				 fd;
 	int				 tcp;
+	int				 dns64_synthesize;
 };
 
 TAILQ_HEAD(, pending_query)	 pending_queries;
@@ -129,6 +131,8 @@ void			 tcp_response(int, short, void *);
 void			 tcp_timeout(int, short, void *);
 int			 check_query(sldns_buffer*);
 void			 noerror_answer(struct pending_query *);
+void			 synthesize_dns64_answer(struct pending_query *);
+void			 resend_dns64_query(struct pending_query *);
 void			 chaos_answer(struct pending_query *);
 void			 error_answer(struct pending_query *, int rcode);
 void			 send_answer(struct pending_query *);
@@ -160,6 +164,9 @@ static struct trust_anchor_head	 trust_anchors, new_trust_anchors;
 RB_HEAD(bl_tree, bl_node)	 bl_head = RB_INITIALIZER(&bl_head);
 RB_PROTOTYPE(bl_tree, bl_node, entry, bl_cmp)
 RB_GENERATE(bl_tree, bl_node, entry, bl_cmp)
+
+struct dns64_prefix	*dns64_prefixes;
+int			 dns64_prefix_count;
 
 void
 frontend_sig_handler(int sig, short event, void *bula)
@@ -469,6 +476,9 @@ frontend_dispatch_main(int fd, short event, void *bula)
 void
 frontend_dispatch_resolver(int fd, short event, void *bula)
 {
+	static struct dns64_prefix	*new_dns64_prefixes = NULL;
+	static int			 new_dns64_prefix_count = 0;
+	static int			 new_dns64_prefix_pos = 0;
 	struct pending_query		*pq;
 	struct imsgev			*iev = bula;
 	struct imsgbuf			*ibuf = &iev->ibuf;
@@ -548,8 +558,17 @@ frontend_dispatch_resolver(int fd, short event, void *bula)
 			if (sldns_buffer_position(pq->abuf) ==
 			    sldns_buffer_capacity(pq->abuf)) {
 				sldns_buffer_flip(pq->abuf);
-				noerror_answer(pq);
-				send_answer(pq);
+				if (pq->dns64_synthesize) {
+					synthesize_dns64_answer(pq);
+					send_answer(pq);
+				} else {
+					noerror_answer(pq);
+					if (pq->dns64_synthesize)
+						/* we did not find a answer */
+						resend_dns64_query(pq);
+					else
+						send_answer(pq);
+				}
 			}
 			break;
 		}
@@ -578,6 +597,42 @@ frontend_dispatch_resolver(int fd, short event, void *bula)
 			 */
 			if (ta_fd != -1)
 				write_trust_anchors(&trust_anchors, ta_fd);
+			break;
+		case IMSG_NEW_DNS64_PREFIXES_START:
+			if (IMSG_DATA_SIZE(imsg) !=
+			    sizeof(new_dns64_prefix_count))
+				fatalx("%s: IMSG_NEW_DNS64_PREFIXES_START "
+				    "wrong length: %lu", __func__,
+				    IMSG_DATA_SIZE(imsg));
+			memcpy(&new_dns64_prefix_count, imsg.data,
+			    sizeof(new_dns64_prefix_count));
+			free(new_dns64_prefixes);
+			new_dns64_prefixes = NULL;
+			if (new_dns64_prefix_count > 0)
+				new_dns64_prefixes =
+				    calloc(new_dns64_prefix_count,
+				    sizeof(struct dns64_prefix));
+			new_dns64_prefix_pos = 0;
+			break;
+		case IMSG_NEW_DNS64_PREFIX: {
+			if (IMSG_DATA_SIZE(imsg) != sizeof(struct dns64_prefix))
+				fatalx("%s: IMSG_NEW_DNS64_PREFIX wrong "
+				    "length: %lu", __func__,
+				    IMSG_DATA_SIZE(imsg));
+			if (new_dns64_prefixes == NULL)
+				break;
+			if (new_dns64_prefix_pos >= new_dns64_prefix_count)
+				fatalx("%s: IMSG_NEW_DNS64_PREFIX: too many "
+				    "prefixes", __func__);
+			memcpy(&new_dns64_prefixes[new_dns64_prefix_pos++],
+			    imsg.data, sizeof(struct dns64_prefix));
+			break;
+		}
+		case IMSG_NEW_DNS64_PREFIXES_DONE:
+			free(dns64_prefixes);
+			dns64_prefixes = new_dns64_prefixes;
+			dns64_prefix_count = new_dns64_prefix_count;
+			new_dns64_prefixes = NULL;
 			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
@@ -794,10 +849,12 @@ handle_query(struct pending_query *pq)
 void
 noerror_answer(struct pending_query *pq)
 {
-	struct query_info	 skip, qinfo;
-	struct reply_info	*rinfo = NULL;
-	struct alloc_cache	 alloc;
-	struct edns_data	 edns;
+	struct query_info		 skip, qinfo;
+	struct reply_info		*rinfo = NULL;
+	struct alloc_cache		 alloc;
+	struct edns_data		 edns;
+	struct ub_packed_rrset_key	*an_rrset = NULL;
+	struct packed_rrset_data	*an_rrset_data = NULL;
 
 	alloc_init(&alloc, NULL, 0);
 	memset(&qinfo, 0, sizeof(qinfo));
@@ -808,8 +865,20 @@ noerror_answer(struct pending_query *pq)
 	if (reply_info_parse(pq->abuf, &alloc, &qinfo, &rinfo, pq->region,
 	    &edns) != 0)
 		goto srvfail;
+
+	if ((an_rrset = reply_find_answer_rrset(&qinfo, rinfo)) != NULL)
+		an_rrset_data = (struct packed_rrset_data*)an_rrset->entry.data;
+
 	/* reply_info_parse() allocates memory */
 	query_info_clear(&qinfo);
+
+	/* XXX check that there a no AAAA records in answer section? */
+	if ((an_rrset_data == NULL || an_rrset_data->count == 0) &&
+	    !pq->dns64_synthesize && pq->qinfo.qtype == LDNS_RR_TYPE_AAAA &&
+	    pq->qinfo.qclass == LDNS_RR_CLASS_IN && dns64_prefix_count > 0) {
+		pq->dns64_synthesize = 1;
+		return;
+	}
 
 	sldns_buffer_clear(pq->abuf);
 	if (reply_info_encode(&pq->qinfo, rinfo, pq->qmsg->id, rinfo->flags,
@@ -825,6 +894,199 @@ noerror_answer(struct pending_query *pq)
 	reply_info_parsedelete(rinfo, &alloc);
 	alloc_clear(&alloc);
 	error_answer(pq, LDNS_RCODE_SERVFAIL);
+}
+
+void
+synthesize_dns64_answer(struct pending_query *pq)
+{
+	struct query_info		 skip, qinfo;
+	struct reply_info		*rinfo = NULL, *synth_rinfo = NULL;
+	struct alloc_cache		 alloc;
+	struct edns_data		 edns;
+	size_t				 i;
+
+	pq->dns64_synthesize = 0;
+
+	alloc_init(&alloc, NULL, 0);
+	memset(&qinfo, 0, sizeof(qinfo));
+	/* read past query section, no memory is allocated */
+	if (!query_info_parse(&skip, pq->abuf))
+		goto srvfail;
+
+	if (reply_info_parse(pq->abuf, &alloc, &qinfo, &rinfo, pq->region,
+	    &edns) != 0)
+		goto srvfail;
+
+	/* reply_info_parse() allocates memory */
+	query_info_clear(&qinfo);
+
+	synth_rinfo = construct_reply_info_base(pq->region, rinfo->flags,
+	    rinfo->qdcount, rinfo->ttl, rinfo->prefetch_ttl,
+	    rinfo->serve_expired_ttl, rinfo->an_numrrsets,
+	    rinfo->ns_numrrsets, rinfo->ar_numrrsets, rinfo->rrset_count,
+	    rinfo->security);
+
+	if (!synth_rinfo)
+		goto srvfail;
+
+	if(!reply_info_alloc_rrset_keys(synth_rinfo, NULL, pq->region))
+		goto srvfail;
+
+	for (i = 0; i < synth_rinfo->rrset_count; i++) {
+		struct ub_packed_rrset_key	*src_rrset_key, *dst_rrset_key;
+		struct packed_rrset_data	*src_rrset_data;
+		struct packed_rrset_data	*dst_rrset_data;
+
+		src_rrset_key = rinfo->rrsets[i];
+		src_rrset_data =
+		    (struct packed_rrset_data *)src_rrset_key->entry.data;
+		dst_rrset_key = synth_rinfo->rrsets[i];
+
+		dst_rrset_key->id = src_rrset_key->id;
+		dst_rrset_key->rk = src_rrset_key->rk;
+
+		if (i < rinfo->an_numrrsets && src_rrset_key->rk.type ==
+		    htons(LDNS_RR_TYPE_A)) {
+			dns64_synth_aaaa_data(src_rrset_key, src_rrset_data,
+			    dst_rrset_key, &dst_rrset_data, pq->region);
+			if (dst_rrset_data == NULL)
+				goto srvfail;
+		} else {
+			dst_rrset_key->entry.hash = src_rrset_key->entry.hash;
+			dst_rrset_key->rk.dname = regional_alloc_init(
+			    pq->region, src_rrset_key->rk.dname,
+			    src_rrset_key->rk.dname_len);
+			if (dst_rrset_key->rk.dname == NULL)
+				goto srvfail;
+
+			dst_rrset_data = regional_alloc_init(pq->region,
+			    src_rrset_data,
+			    packed_rrset_sizeof(src_rrset_data));
+			if (dst_rrset_data == NULL)
+				goto srvfail;
+		}
+
+		packed_rrset_ptr_fixup(dst_rrset_data);
+		dst_rrset_key->entry.data = dst_rrset_data;
+	}
+
+	if (!sldns_buffer_set_capacity(pq->abuf, pq->tcp ? UINT16_MAX :
+	    pq->edns.udp_size))
+		goto srvfail;
+
+	sldns_buffer_clear(pq->abuf);
+
+	if (reply_info_encode(&pq->qinfo, synth_rinfo, pq->qmsg->id,
+	    synth_rinfo->flags, pq->abuf, 0, pq->region,
+	    pq->tcp ? UINT16_MAX : pq->edns.udp_size,
+	    pq->edns.bits & EDNS_DO, MINIMIZE_ANSWER) == 0)
+		goto srvfail;
+
+	reply_info_parsedelete(rinfo, &alloc);
+	alloc_clear(&alloc);
+	return;
+
+ srvfail:
+	reply_info_parsedelete(rinfo, &alloc);
+	alloc_clear(&alloc);
+	error_answer(pq, LDNS_RCODE_SERVFAIL);
+}
+
+void
+resend_dns64_query(struct pending_query *opq) {
+	struct pending_query	*pq;
+	struct query_imsg	 query_imsg;
+	int			 rcode;
+	char			 dname[LDNS_MAX_DOMAINLEN + 1];
+
+	if ((pq = calloc(1, sizeof(*pq))) == NULL) {
+		log_warn(NULL);
+		return;
+	}
+
+	do {
+		arc4random_buf(&pq->imsg_id, sizeof(pq->imsg_id));
+	} while(find_pending_query(pq->imsg_id) != NULL);
+
+	TAILQ_INSERT_TAIL(&pending_queries, pq, entry);
+
+	pq->from = opq->from;
+	pq->fd = opq->fd;
+	opq->fd = -1;
+	pq->tcp = opq->tcp;
+	pq->qbuf = sldns_buffer_new(sldns_buffer_capacity(opq->qbuf));
+	pq->abuf = sldns_buffer_new(sldns_buffer_capacity(opq->abuf));
+	pq->region = regional_create();
+	pq->qmsg = regional_alloc(pq->region, sizeof(*pq->qmsg));
+
+	if (!pq->qbuf || !pq->abuf || !pq->region || !pq->qmsg) {
+		log_warnx("out of memory");
+		free_pending_query(pq);
+		free_pending_query(opq);
+		return;
+	}
+
+	sldns_buffer_rewind(opq->qbuf);
+	sldns_buffer_write(pq->qbuf, sldns_buffer_current(opq->qbuf),
+	    sldns_buffer_remaining(opq->qbuf));
+	sldns_buffer_flip(pq->qbuf);
+	memset(pq->qmsg, 0, sizeof(*pq->qmsg));
+
+	if (pq->tcp) {
+		struct timeval	 timeout = {TCP_TIMEOUT, 0};
+
+		event_set(&pq->ev, pq->fd, EV_READ | EV_PERSIST, tcp_request,
+		    pq);
+		event_set(&pq->resp_ev, pq->fd, EV_WRITE | EV_PERSIST,
+		    tcp_response, pq);
+		evtimer_set(&pq->tmo_ev, tcp_timeout, pq);
+		evtimer_add(&pq->tmo_ev, &timeout);
+	}
+
+	if (!query_info_parse(&pq->qinfo, pq->qbuf)) {
+		log_warnx("query_info_parse failed");
+		goto drop;
+	}
+
+	sldns_buffer_rewind(pq->qbuf);
+
+	if (parse_packet(pq->qbuf, pq->qmsg, pq->region) !=
+	    LDNS_RCODE_NOERROR) {
+		log_warnx("parse_packet failed");
+		goto drop;
+	}
+
+	rcode = parse_extract_edns(pq->qmsg, &pq->edns, pq->region);
+	if (rcode != LDNS_RCODE_NOERROR) {
+		error_answer(pq, rcode);
+		goto send_answer;
+	}
+
+	dname_str(pq->qinfo.qname, dname);
+	strlcpy(query_imsg.qname, dname, sizeof(query_imsg.qname));
+	query_imsg.id = pq->imsg_id;
+	query_imsg.t = LDNS_RR_TYPE_A;
+	query_imsg.c = pq->qinfo.qclass;
+
+	pq->dns64_synthesize = 1;
+
+	if (frontend_imsg_compose_resolver(IMSG_QUERY, 0, &query_imsg,
+	    sizeof(query_imsg)) == -1) {
+		error_answer(pq, LDNS_RCODE_SERVFAIL);
+		goto send_answer;
+	}
+
+	free_pending_query(opq);
+	return;
+
+ send_answer:
+	free_pending_query(opq);
+	send_answer(pq);
+	return;
+
+ drop:
+	free_pending_query(opq);
+	free_pending_query(pq);
 }
 
 void
