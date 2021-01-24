@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.251 2020/12/29 19:50:51 benno Exp $	*/
+/*	$OpenBSD: route.c,v 1.252 2021/01/24 08:58:50 florian Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -974,6 +974,7 @@ getaddr(int which, int af, char *s, struct hostent **hpp)
 			errx(1, "%s: resolved to multiple values", s);
 		memcpy(&su->sin6, res->ai_addr, sizeof(su->sin6));
 		freeaddrinfo(res);
+#ifdef __KAME__
 		if ((IN6_IS_ADDR_LINKLOCAL(&su->sin6.sin6_addr) ||
 		     IN6_IS_ADDR_MC_LINKLOCAL(&su->sin6.sin6_addr) ||
 		     IN6_IS_ADDR_MC_INTFACELOCAL(&su->sin6.sin6_addr)) &&
@@ -982,6 +983,7 @@ getaddr(int which, int af, char *s, struct hostent **hpp)
 				htons(su->sin6.sin6_scope_id);
 			su->sin6.sin6_scope_id = 0;
 		}
+#endif
 		if (hints.ai_flags == AI_NUMERICHOST) {
 			if (which == RTA_DST) {
 				if (sep == NULL && su->sin6.sin6_scope_id == 0 &&
