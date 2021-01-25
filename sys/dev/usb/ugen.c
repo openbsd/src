@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.109 2020/12/25 12:59:52 visa Exp $ */
+/*	$OpenBSD: ugen.c,v 1.110 2021/01/25 14:14:42 mglocker Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -46,9 +46,12 @@
 #include <sys/vnode.h>
 #include <sys/poll.h>
 
+#include <machine/bus.h>
+
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
+#include <dev/usb/usbdivar.h>
 
 #ifdef UGEN_DEBUG
 #define DPRINTF(x)	do { if (ugendebug) printf x; } while (0)
@@ -114,6 +117,7 @@ int ugen_do_close(struct ugen_softc *, int, int);
 int ugen_set_config(struct ugen_softc *sc, int configno);
 int ugen_set_interface(struct ugen_softc *, int, int);
 int ugen_get_alt_index(struct ugen_softc *sc, int ifaceidx);
+void ugen_clear_iface_eps(struct ugen_softc *, struct usbd_interface *);
 
 #define UGENUNIT(n) ((minor(n) >> 4) & 0xf)
 #define UGENENDPOINT(n) (minor(n) & 0xf)
@@ -302,6 +306,8 @@ ugenopen(dev_t dev, int flag, int mode, struct proc *p)
 		DPRINTFN(5, ("ugenopen: sc=%p, endpt=%d, dir=%d, sce=%p\n",
 			     sc, endpt, dir, sce));
 		edesc = sce->edesc;
+		/* Clear device endpoint toggle. */
+		ugen_clear_iface_eps(sc, sce->iface);
 		switch (UE_GET_XFERTYPE(edesc->bmAttributes)) {
 		case UE_INTERRUPT:
 			if (dir == OUT) {
@@ -329,6 +335,8 @@ ugenopen(dev_t dev, int flag, int mode, struct proc *p)
 				clfree(&sce->q);
 				return (EIO);
 			}
+			/* Clear HC endpoint toggle. */
+			usbd_clear_endpoint_toggle(sce->pipeh);
 			DPRINTFN(5, ("ugenopen: interrupt open done\n"));
 			break;
 		case UE_BULK:
@@ -336,6 +344,8 @@ ugenopen(dev_t dev, int flag, int mode, struct proc *p)
 				  edesc->bEndpointAddress, 0, &sce->pipeh);
 			if (err)
 				return (EIO);
+			/* Clear HC endpoint toggle. */
+			usbd_clear_endpoint_toggle(sce->pipeh);
 			break;
 		case UE_ISOCHRONOUS:
 			if (dir == OUT)
@@ -1417,4 +1427,42 @@ ugenkqfilter(dev_t dev, struct knote *kn)
 	splx(s);
 
 	return (0);
+}
+
+void
+ugen_clear_iface_eps(struct ugen_softc *sc, struct usbd_interface *iface)
+{
+	usb_interface_descriptor_t *id;
+	usb_endpoint_descriptor_t *ed;
+	uint8_t xfertype;
+	int i;
+
+	/* Only clear interface endpoints when none are in use. */
+	for (i = 0; i < USB_MAX_ENDPOINTS; i++) {
+		if (i == USB_CONTROL_ENDPOINT)
+			continue;
+		if (sc->sc_is_open[i] != 0)
+			return;
+	}
+	DPRINTFN(1,("%s: clear interface eps\n", __func__));
+
+	id = usbd_get_interface_descriptor(iface);
+	if (id == NULL)
+		goto bad;
+
+	for (i = 0; i < id->bNumEndpoints; i++) {
+		ed = usbd_interface2endpoint_descriptor(iface, i);
+		if (ed == NULL)
+			goto bad;
+
+		xfertype = UE_GET_XFERTYPE(ed->bmAttributes);
+		if (xfertype == UE_BULK || xfertype == UE_INTERRUPT) {
+			if (usbd_clear_endpoint_feature(sc->sc_udev,
+			    ed->bEndpointAddress, UF_ENDPOINT_HALT))
+				goto bad;
+		}
+	}
+	return;
+bad:
+	printf("%s: clear endpoints failed!\n", __func__);
 }
