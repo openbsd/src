@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.252 2020/11/07 09:51:40 denis Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.253 2021/01/25 03:40:46 dlg Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -94,6 +94,11 @@
 #ifdef IPSEC
 #include <netinet/ip_esp.h>
 #endif /* IPSEC */
+
+#include "stoeplitz.h"
+#if NSTOEPLITZ > 0
+#include <net/toeplitz.h>
+#endif
 
 const struct in_addr zeroin_addr;
 
@@ -516,6 +521,10 @@ in_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 	inp->inp_faddr = sin->sin_addr;
 	inp->inp_fport = sin->sin_port;
 	in_pcbrehash(inp);
+#if NSTOEPLITZ > 0
+	inp->inp_flowid = stoeplitz_ip4port(inp->inp_laddr.s_addr,
+	    inp->inp_faddr.s_addr, inp->inp_lport, inp->inp_fport);
+#endif
 #ifdef IPSEC
 	{
 		/* Cause an IPsec SA to be established. */
@@ -549,6 +558,7 @@ in_pcbdisconnect(struct inpcb *inp)
 	}
 
 	inp->inp_fport = 0;
+	inp->inp_flowid = 0;
 	in_pcbrehash(inp);
 	if (inp->inp_socket->so_state & SS_NOFDREF)
 		in_pcbdetach(inp);

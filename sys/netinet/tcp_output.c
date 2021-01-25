@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.128 2018/11/10 18:40:34 bluhm Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.129 2021/01/25 03:40:46 dlg Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -69,6 +69,7 @@
  */
 
 #include "pf.h"
+#include "stoeplitz.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1037,6 +1038,10 @@ send:
 				ip->ip_tos |= IPTOS_ECN_ECT0;
 #endif
 		}
+#if NSTOEPLITZ > 0
+		m->m_pkthdr.ph_flowid = tp->t_inpcb->inp_flowid;
+		SET(m->m_pkthdr.csum_flags, M_FLOWID);
+#endif
 		error = ip_output(m, tp->t_inpcb->inp_options,
 			&tp->t_inpcb->inp_route,
 			(ip_mtudisc ? IP_MTUDISC : 0), NULL, tp->t_inpcb, 0);

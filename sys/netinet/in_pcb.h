@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.120 2020/06/21 05:14:04 dlg Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.121 2021/01/25 03:40:46 dlg Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -148,6 +148,7 @@ struct inpcb {
 	void	*inp_upcall_arg;
 	u_int	inp_rtableid;
 	int	inp_pipex;		/* pipex indication */
+	uint16_t inp_flowid;
 };
 
 LIST_HEAD(inpcbhead, inpcb);

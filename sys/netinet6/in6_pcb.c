@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.110 2019/11/29 16:41:01 nayden Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.111 2021/01/25 03:40:47 dlg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,6 +100,7 @@
  */
 
 #include "pf.h"
+#include "stoeplitz.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,6 +119,10 @@
 #include <netinet/in_pcb.h>
 
 #include <netinet6/in6_var.h>
+
+#if NSTOEPLITZ > 0
+#include <net/toeplitz.h>
+#endif
 
 const struct in6_addr zeroin6_addr;
 
@@ -297,6 +302,10 @@ in6_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 	if (ip6_auto_flowlabel)
 		inp->inp_flowinfo |=
 		    (htonl(ip6_randomflowlabel()) & IPV6_FLOWLABEL_MASK);
+#if NSTOEPLITZ > 0
+	inp->inp_flowid = stoeplitz_ip6port(&inp->inp_laddr6,
+	    &inp->inp_faddr6, inp->inp_lport, inp->inp_fport);
+#endif
 	in_pcbrehash(inp);
 	return (0);
 }
