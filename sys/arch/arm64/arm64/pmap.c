@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.69 2020/12/09 12:11:13 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.70 2021/01/25 19:37:17 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -960,7 +960,7 @@ pmap_vp_destroy(pmap_t pm)
 	pm->pm_vp.l0 = NULL;
 }
 
-vaddr_t virtual_avail, virtual_end;
+vaddr_t virtual_avail;
 int	pmap_virtual_space_called;
 
 static inline uint64_t
@@ -1924,7 +1924,7 @@ void
 pmap_virtual_space(vaddr_t *start, vaddr_t *end)
 {
 	*start = virtual_avail;
-	*end = virtual_end;
+	*end = VM_MAX_KERNEL_ADDRESS;
 
 	/* Prevent further KVA stealing. */
 	pmap_virtual_space_called = 1;

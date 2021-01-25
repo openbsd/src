@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.34 2020/10/23 16:54:45 deraadt Exp $ */
+/* $OpenBSD: trap.c,v 1.35 2021/01/25 19:37:18 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -342,4 +342,19 @@ void
 do_el0_error(struct trapframe *frame)
 {
 	panic("do_el0_error");
+}
+
+void
+dumpregs(struct trapframe *frame)
+{
+	int i;
+
+	for (i = 0; i < 30; i += 2) {
+		printf("x%02d: 0x%016lx 0x%016lx\n",
+		    i, frame->tf_x[i], frame->tf_x[i+1]);
+	}
+	printf("sp: 0x%016lx\n", frame->tf_sp);
+	printf("lr: 0x%016lx\n", frame->tf_lr);
+	printf("pc: 0x%016lx\n", frame->tf_elr);
+	printf("spsr: 0x%016lx\n", frame->tf_spsr);
 }

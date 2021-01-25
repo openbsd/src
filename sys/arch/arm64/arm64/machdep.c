@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.55 2020/11/06 13:32:38 patrick Exp $ */
+/* $OpenBSD: machdep.c,v 1.56 2021/01/25 19:37:17 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -55,10 +55,13 @@
 #include <dev/softraidvar.h>
 #endif
 
+extern vaddr_t virtual_avail;
+extern uint64_t esym;
+
+extern char _start[];
+
 char *boot_args = NULL;
 uint8_t *bootmac = NULL;
-
-extern uint64_t esym;
 
 int stdout_node;
 int stdout_speed;
@@ -166,12 +169,12 @@ fdt_find_cons(const char *name)
 	return (NULL);
 }
 
-extern void	amluart_init_cons(void);
-extern void	com_fdt_init_cons(void);
-extern void	imxuart_init_cons(void);
-extern void	mvuart_init_cons(void);
-extern void	pluart_init_cons(void);
-extern void	simplefb_init_cons(bus_space_tag_t);
+void	amluart_init_cons(void);
+void	com_fdt_init_cons(void);
+void	imxuart_init_cons(void);
+void	mvuart_init_cons(void);
+void	pluart_init_cons(void);
+void	simplefb_init_cons(bus_space_tag_t);
 
 void
 consinit(void)
@@ -192,28 +195,28 @@ consinit(void)
 }
 
 void
-cpu_idle_enter()
+cpu_idle_enter(void)
 {
 }
 
 void
-cpu_idle_cycle()
+cpu_idle_cycle(void)
 {
-	restore_daif(0x0); // enable interrupts
+	enable_irq_daif();
 	__asm volatile("dsb sy");
 	__asm volatile("wfi");
 }
 
 void
-cpu_idle_leave()
+cpu_idle_leave(void)
 {
 }
 
+/* Dummy trapframe for proc0. */
+struct trapframe proc0tf;
 
-// XXX what? - not really used
-struct trapframe  proc0tf;
 void
-cpu_startup()
+cpu_startup(void)
 {
 	u_int loop;
 	paddr_t minaddr;
@@ -245,7 +248,7 @@ cpu_startup()
 	printf("%s", version);
 
 	printf("real mem  = %lu (%luMB)\n", ptoa(physmem),
-	    ptoa(physmem)/1024/1024);
+	    ptoa(physmem) / 1024 / 1024);
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
@@ -253,8 +256,7 @@ cpu_startup()
 	 */
 	minaddr = vm_map_min(kernel_map);
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
-
+	    16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
 	/*
 	 * Allocate a submap for physio
@@ -268,7 +270,7 @@ cpu_startup()
 	bufinit();
 
 	printf("avail mem = %lu (%luMB)\n", ptoa(uvmexp.free),
-	    ptoa(uvmexp.free)/1024/1024);
+	    ptoa(uvmexp.free) / 1024 / 1024);
 
 	curpcb = &proc0.p_addr->u_pcb;
 	curpcb->pcb_flags = 0;
@@ -380,8 +382,6 @@ doreset:
 	/* NOTREACHED */
 }
 
-/* Sync the discs and unmount the filesystems */
-
 void
 setregs(struct proc *p, struct exec_package *pack, u_long stack,
     register_t *retval)
@@ -441,8 +441,10 @@ cpu_dump(void)
 	kcore_seg_t *segp;
 	cpu_kcore_hdr_t *cpuhdrp;
 	phys_ram_seg_t *memsegp;
-	// caddr_t va;
-	// int i;
+#if 0
+	caddr_t va;
+	int i;
+#endif
 
 	dump = bdevsw[major(dumpdev)].d_dump;
 
@@ -462,10 +464,10 @@ cpu_dump(void)
 	 * Add the machine-dependent header info.
 	 */
 	cpuhdrp->kernelbase = KERNEL_BASE;
-	cpuhdrp->kerneloffs = 0; // XXX
-	cpuhdrp->staticsize = 0; // XXX
-	cpuhdrp->pmap_kernel_l1 = 0; // XXX
-	cpuhdrp->pmap_kernel_l1 = 0; // XXX
+	cpuhdrp->kerneloffs = 0;
+	cpuhdrp->staticsize = 0;
+	cpuhdrp->pmap_kernel_l1 = 0;
+	cpuhdrp->pmap_kernel_l1 = 0;
 
 #if 0
 	/*
@@ -487,10 +489,10 @@ cpu_dump(void)
 		va = (caddr_t)buf;
 	}
 	return (dump(dumpdev, dumplo, va, dbtob(1)));
-#endif
+#else
 	return ENOSYS;
+#endif
 }
-
 
 /*
  * This is called by main to set dumplo and dumpsize.
@@ -543,9 +545,10 @@ dumpsys(void)
 	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	int error;
 
+#if 0
 	/* Save registers. */
-	// XXX
-	//savectx(&dumppcb);
+	savectx(&dumppcb);
+#endif
 
 	if (dumpdev == NODEV)
 		return;
@@ -662,13 +665,11 @@ dumpsys(void)
 }
 
 
-/// XXX ?
 /*
  * Size of memory segments, before any memory is stolen.
  */
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int     mem_cluster_cnt;
-/// XXX ?
 
 /*
  * cpu_dumpsize: calculate size of machine-dependent kernel core dump headers.
@@ -687,15 +688,9 @@ cpu_dumpsize(void)
 }
 
 u_long
-cpu_dump_mempagecnt()
+cpu_dump_mempagecnt(void)
 {
 	return 0;
-}
-
-
-void
-install_coproc_handler()
-{
 }
 
 int64_t dcache_line_size;	/* The minimum D cache line size */
@@ -747,23 +742,22 @@ void	remap_efi_runtime(EFI_PHYSICAL_ADDRESS);
 void	collect_kernel_args(const char *);
 void	process_kernel_args(void);
 
+int	pmap_bootstrap_bs_map(bus_space_tag_t, bus_addr_t,
+	    bus_size_t, int, bus_space_handle_t *);
+
 void
 initarm(struct arm64_bootparams *abp)
 {
-	vaddr_t vstart, vend;
-	struct cpu_info *pcpup;
+	long kernbase = (long)_start & ~PAGE_MASK;
 	long kvo = abp->kern_delta;
-	//caddr_t kmdp;
 	paddr_t memstart, memend;
+	vaddr_t vstart;
 	void *config = abp->arg2;
 	void *fdt = NULL;
 	EFI_PHYSICAL_ADDRESS system_table = 0;
 	int (*map_func_save)(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
 
-	// NOTE that 1GB of ram is mapped in by default in
-	// the bootstrap memory config, so nothing is necessary
-	// until pmap_bootstrap_finalize is called??
 	pmap_map_early((paddr_t)config, PAGE_SIZE);
 	if (!fdt_init(config) || fdt_get_size(config) == 0)
 		panic("initarm: no FDT");
@@ -836,24 +830,17 @@ initarm(struct arm64_bootparams *abp)
 		}
 	}
 
-	/* Set the pcpu data, this is needed by pmap_bootstrap */
-	// smp
-	pcpup = &cpu_info_primary;
-
 	/*
-	 * Set the pcpu pointer with a backup in tpidr_el1 to be
+	 * Set the per-CPU pointer with a backup in tpidr_el1 to be
 	 * loaded when entering the kernel from userland.
 	 */
 	__asm __volatile(
 	    "mov x18, %0 \n"
-	    "msr tpidr_el1, %0" :: "r"(pcpup));
+	    "msr tpidr_el1, %0" :: "r"(&cpu_info_primary));
 
 	cache_setup();
 
 	process_kernel_args();
-
-	void _start(void);
-	long kernbase = (long)&_start & ~0x00fff;
 
 	/* The bootloader has loaded us into a 64MB block. */
 	memstart = KERNBASE + kvo;
@@ -863,7 +850,6 @@ initarm(struct arm64_bootparams *abp)
 	vstart = pmap_bootstrap(kvo, abp->kern_l1pt,
 	    kernbase, esym, memstart, memend);
 
-	// XX correctly sized?
 	proc0paddr = (struct user *)abp->kern_stack;
 
 	msgbufaddr = (caddr_t)vstart;
@@ -917,30 +903,16 @@ initarm(struct arm64_bootparams *abp)
 		vstart += size;
 	}
 
-	/*
-	 * Managed KVM space is what we have claimed up to end of
-	 * mapped kernel buffers.
-	 */
-	{
-	// export back to pmap
-	extern vaddr_t virtual_avail, virtual_end;
+	/* No more KVA stealing after this point. */
 	virtual_avail = vstart;
-	vend = VM_MAX_KERNEL_ADDRESS; // XXX
-	virtual_end = vend;
-	}
 
 	/* Now we can reinit the FDT, using the virtual address. */
 	if (fdt)
 		fdt_init(fdt);
 
-	// XXX
-	int pmap_bootstrap_bs_map(bus_space_tag_t t, bus_addr_t bpa,
-	    bus_size_t size, int flags, bus_space_handle_t *bshp);
-
 	map_func_save = arm64_bs_tag._space_map;
 	arm64_bs_tag._space_map = pmap_bootstrap_bs_map;
 
-	// cninit
 	consinit();
 
 	arm64_bs_tag._space_map = map_func_save;
@@ -949,7 +921,6 @@ initarm(struct arm64_bootparams *abp)
 	if (mmap_start != 0 && system_table != 0)
 		remap_efi_runtime(system_table);
 
-	/* XXX */
 	pmap_avail_fixup();
 
 	uvmexp.pagesize = PAGE_SIZE;
@@ -1197,8 +1168,7 @@ process_kernel_args(void)
 }
 
 /*
- * allow bootstrap to steal KVA after machdep has given it back to pmap.
- * XXX - need a mechanism to prevent this from being used too early or late.
+ * Allow bootstrap to steal KVA after machdep has given it back to pmap.
  */
 int
 pmap_bootstrap_bs_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
@@ -1207,12 +1177,7 @@ pmap_bootstrap_bs_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 	u_long startpa, pa, endpa;
 	vaddr_t va;
 
-	extern vaddr_t virtual_avail, virtual_end;
-
-	va = virtual_avail; // steal memory from virtual avail.
-
-	if (va == 0)
-		panic("pmap_bootstrap_bs_map, no virtual avail");
+	va = virtual_avail;	/* steal memory from virtual avail. */
 
 	startpa = trunc_page(bpa);
 	endpa = round_page((bpa + size));
@@ -1226,20 +1191,4 @@ pmap_bootstrap_bs_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 	virtual_avail = va;
 
 	return 0;
-}
-
-// debug function, not certain where this should go
-
-void
-dumpregs(struct trapframe *frame)
-{
-	int i;
-	for (i = 0; i < 30; i+=2) {
-		printf("x%02d: 0x%016lx 0x%016lx\n",
-		    i, frame->tf_x[i], frame->tf_x[i+1]);
-	}
-	printf("sp: 0x%016lx\n", frame->tf_sp);
-	printf("lr: 0x%016lx\n", frame->tf_lr);
-	printf("pc: 0x%016lx\n", frame->tf_elr);
-	printf("spsr: 0x%016lx\n", frame->tf_spsr);
 }
