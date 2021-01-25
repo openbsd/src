@@ -109,20 +109,16 @@ log_init(const char* filename, int use_syslog, const char* chrootdir)
 		fclose(cl);
 	}
 #ifdef HAVE_SYSLOG_H
-#if 0	/* unwind handles syslog for us */
 	if(logging_to_syslog) {
 		closelog();
 		logging_to_syslog = 0;
 	}
-#endif
 	if(use_syslog) {
 		/* do not delay opening until first write, because we may
 		 * chroot and no longer be able to access dev/log and so on */
 		/* the facility is LOG_DAEMON by default, but
 		 * --with-syslog-facility=LOCAL[0-7] can override it */
-#if 0	/* unwind handles syslog for us */
 		openlog(ident, LOG_NDELAY, UB_SYSLOG_FACILITY);
-#endif
 		logging_to_syslog = 1;
 		lock_basic_unlock(&log_lock);
 		return;
