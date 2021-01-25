@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.102 2021/01/07 09:31:02 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.103 2021/01/25 06:16:38 dlg Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -355,7 +355,7 @@ redistribute	: no REDISTRIBUTE NUMBER '/' NUMBER optlist dependonopt {
 			free($5);
 			$$ = r;
 		}
-		| no REDISTRIBUTE RTLABEL STRING optlist dependon {
+		| no REDISTRIBUTE RTLABEL STRING optlist dependonopt {
 			struct redistribute	*r;
 
 			if ((r = calloc(1, sizeof(*r))) == NULL)
