@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.411 2020/12/29 15:30:34 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.412 2021/01/25 09:15:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -622,6 +622,12 @@ conf_main	: AS as4number		{
 				conf->flags |= BGPD_FLAG_DECISION_TRANS_AS;
 			else
 				conf->flags &= ~BGPD_FLAG_DECISION_TRANS_AS;
+		}
+		| REJECT ASSET yesno	{
+			if ($3 == 1)
+				conf->flags |= BGPD_FLAG_NO_AS_SET;
+			else
+				conf->flags &= ~BGPD_FLAG_NO_AS_SET;
 		}
 		| LOG STRING		{
 			if (!strcmp($2, "updates"))
@@ -1656,6 +1662,12 @@ peeropts	: REMOTEAS as4number	{
 				YYERROR;
 			}
 			free($2);
+		}
+		| REJECT ASSET yesno	{
+			if ($3 == 1)
+				curpeer->conf.flags |= PEERFLAG_NO_AS_SET;
+			else
+				curpeer->conf.flags &= ~PEERFLAG_NO_AS_SET;
 		}
 		;
 
@@ -3815,6 +3827,8 @@ alloc_peer(void)
 
 	if (conf->flags & BGPD_FLAG_DECISION_TRANS_AS)
 		p->conf.flags |= PEERFLAG_TRANS_AS;
+	if (conf->flags & BGPD_FLAG_NO_AS_SET)
+		p->conf.flags |= PEERFLAG_NO_AS_SET;
 
 	return (p);
 }

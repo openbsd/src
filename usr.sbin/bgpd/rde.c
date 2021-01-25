@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.513 2021/01/18 12:15:36 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.514 2021/01/25 09:15:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -79,6 +79,7 @@ static void	 rde_softreconfig_in(struct rib_entry *, void *);
 static void	 rde_softreconfig_sync_reeval(struct rib_entry *, void *);
 static void	 rde_softreconfig_sync_fib(struct rib_entry *, void *);
 static void	 rde_softreconfig_sync_done(void *, u_int8_t);
+static int	 rde_no_as_set(struct rde_peer *);
 int		 rde_update_queue_pending(void);
 void		 rde_update_queue_runner(void);
 void		 rde_update6_queue_runner(u_int8_t);
@@ -1591,7 +1592,8 @@ bad_flags:
 	case ATTR_ASPATH:
 		if (!CHECK_FLAGS(flags, ATTR_WELL_KNOWN, 0))
 			goto bad_flags;
-		error = aspath_verify(p, attr_len, rde_as4byte(peer));
+		error = aspath_verify(p, attr_len, rde_as4byte(peer),
+		    rde_no_as_set(peer));
 		if (error == AS_ERR_SOFT) {
 			/*
 			 * soft errors like unexpected segment types are
@@ -1599,8 +1601,6 @@ bad_flags:
 			 * marked invalid.
 			 */
 			a->flags |= F_ATTR_PARSE_ERR;
-			log_peer_warnx(&peer->conf, "bad ASPATH, "
-			    "path invalidated and prefix withdrawn");
 		} else if (error != 0) {
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_ASPATH,
 			    NULL, 0);
@@ -1615,6 +1615,15 @@ bad_flags:
 			npath = aspath_inflate(p, attr_len, &nlen);
 			if (npath == NULL)
 				fatal("aspath_inflate");
+		}
+		if (error == AS_ERR_SOFT) {
+			char *str;
+
+			aspath_asprint(&str, npath, nlen);
+			log_peer_warnx(&peer->conf, "bad ASPATH %s, "
+			    "path invalidated and prefix withdrawn",
+			    str ? str : "(bad aspath)");
+			free(str);
 		}
 		a->flags |= F_ATTR_ASPATH;
 		a->aspath = aspath_get(npath, nlen);
@@ -1842,7 +1851,8 @@ bad_flags:
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE,
 		    ATTR_PARTIAL))
 			goto bad_flags;
-		if ((error = aspath_verify(p, attr_len, 1)) != 0) {
+		if ((error = aspath_verify(p, attr_len, 1,
+		    rde_no_as_set(peer))) != 0) {
 			/*
 			 * XXX RFC does not specify how to handle errors.
 			 * XXX Instead of dropping the session because of a
@@ -3583,6 +3593,12 @@ int
 rde_as4byte(struct rde_peer *peer)
 {
 	return (peer->capa.as4byte);
+}
+
+static int
+rde_no_as_set(struct rde_peer *peer)
+{
+	return (peer->conf.flags & PEERFLAG_NO_AS_SET);
 }
 
 /* End-of-RIB marker, RFC 4724 */

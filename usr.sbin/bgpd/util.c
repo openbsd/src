@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.59 2021/01/18 12:15:36 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.60 2021/01/25 09:15:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -328,7 +328,7 @@ aspath_extract(const void *seg, int pos)
  * Verify that the aspath is correctly encoded.
  */
 int
-aspath_verify(void *data, u_int16_t len, int as4byte)
+aspath_verify(void *data, u_int16_t len, int as4byte, int noset)
 {
 	u_int8_t	*seg = data;
 	u_int16_t	 seg_size, as_size = 2;
@@ -361,6 +361,12 @@ aspath_verify(void *data, u_int16_t len, int as4byte)
 		 * bgp session running.
 		 */
 		if (seg_type == AS_CONFED_SEQUENCE || seg_type == AS_CONFED_SET)
+			error = AS_ERR_SOFT;
+		/*
+		 * If AS_SET filtering (RFC6472) is on, error out on AS_SET
+		 * as well.
+		 */
+		if (noset && seg_type == AS_SET)
 			error = AS_ERR_SOFT;
 		if (seg_type != AS_SET && seg_type != AS_SEQUENCE &&
 		    seg_type != AS_CONFED_SEQUENCE && seg_type != AS_CONFED_SET)

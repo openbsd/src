@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.205 2020/05/16 16:58:11 jmc Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.206 2021/01/25 09:15:23 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 16 2020 $
+.Dd $Mdocdate: January 25 2021 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -329,6 +329,20 @@ typically more stable, route.
 This renders the decision process nondeterministic.
 The default is
 .Ic ignore .
+.Pp
+.It Xo
+.Ic reject Ic as-set
+.Pq Ic yes Ns | Ns Ic no
+.Xc
+If set to
+.Ic yes ,
+.Em AS paths
+attributes containing
+.Em AS_SET
+path segements will be rejected and
+all prefixes will be treated as withdraws.
+The default is
+.Ic no .
 .Pp
 .It Ic router-id Ar dotted-quad
 Set the BGP router ID, which must be non-zero and should be unique
@@ -1086,6 +1100,21 @@ statement defines the maximum hops the neighbor may be away.
 .Pp
 .It Ic passive
 Do not attempt to actively open a TCP connection to the neighbor system.
+.Pp
+.It Xo
+.Ic reject Ic as-set
+.Pq Ic yes Ns | Ns Ic no
+.Xc
+If set to
+.Ic yes ,
+.Em AS paths
+attributes containing
+.Em AS_SET
+path segements will be rejected and
+all prefixes will be treated as withdraws.
+The default is inherited from the global
+.Ic reject Ic as-set
+setting.
 .Pp
 .It Ic remote-as Ar as-number
 Set the AS number of the remote system.
