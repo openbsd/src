@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.70 2020/07/30 11:32:06 mvs Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.71 2021/01/25 19:47:16 mvs Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -531,6 +531,8 @@ void	bridge_flushrule(struct bridge_iflist *);
 void	bridge_fragment(struct ifnet *, struct ifnet *, struct ether_header *,
     struct mbuf *);
 struct bridge_iflist *bridge_getbif(struct ifnet *);
+int	bridge_findbif(struct bridge_softc *, const char *,
+    struct bridge_iflist **);
 
 #endif /* _KERNEL */
 #endif /* _NET_IF_BRIDGE_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.347 2021/01/08 23:31:53 dlg Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.348 2021/01/25 19:47:16 mvs Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -336,16 +336,9 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCBRDGDEL:
 		if ((error = suser(curproc)) != 0)
 			break;
-		ifs = ifunit(req->ifbr_ifsname);
-		if (ifs == NULL) {
-			error = ENOENT;
+		error = bridge_findbif(sc, req->ifbr_ifsname, &bif);
+		if (error != 0)
 			break;
-		}
-		if (ifs->if_bridgeidx != ifp->if_index) {
-			error = ESRCH;
-			break;
-		}
-		bif = bridge_getbif(ifs);
 		bridge_ifremove(bif);
 		break;
 	case SIOCBRDGIFS:
@@ -411,16 +404,9 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		bridge_spanremove(bif);
 		break;
 	case SIOCBRDGGIFFLGS:
-		ifs = ifunit(req->ifbr_ifsname);
-		if (ifs == NULL) {
-			error = ENOENT;
+		error = bridge_findbif(sc, req->ifbr_ifsname, &bif);
+		if (error != 0)
 			break;
-		}
-		if (ifs->if_bridgeidx != ifp->if_index) {
-			error = ESRCH;
-			break;
-		}
-		bif = bridge_getbif(ifs);
 		req->ifbr_ifsflags = bif->bif_flags;
 		req->ifbr_portno = bif->ifp->if_index & 0xfff;
 		req->ifbr_protected = bif->bif_protected;
@@ -428,22 +414,15 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			bridge_bifgetstp(sc, bif, req);
 		break;
 	case SIOCBRDGSIFFLGS:
-		if ((error = suser(curproc)) != 0)
-			break;
-		ifs = ifunit(req->ifbr_ifsname);
-		if (ifs == NULL) {
-			error = ENOENT;
-			break;
-		}
-		if (ifs->if_bridgeidx != ifp->if_index) {
-			error = ESRCH;
-			break;
-		}
 		if (req->ifbr_ifsflags & IFBIF_RO_MASK) {
 			error = EINVAL;
 			break;
 		}
-		bif = bridge_getbif(ifs);
+		if ((error = suser(curproc)) != 0)
+			break;
+		error = bridge_findbif(sc, req->ifbr_ifsname, &bif);
+		if (error != 0)
+			break;
 		if (req->ifbr_ifsflags & IFBIF_STP) {
 			if ((bif->bif_flags & IFBIF_STP) == 0) {
 				/* Enable STP */
@@ -489,16 +468,9 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		brop->ifbop_last_tc_time.tv_usec = bs->bs_last_tc_time.tv_usec;
 		break;
 	case SIOCBRDGSIFPROT:
-		ifs = ifunit(req->ifbr_ifsname);
-		if (ifs == NULL) {
-			error = ENOENT;
+		error = bridge_findbif(sc, req->ifbr_ifsname, &bif);
+		if (error != 0)
 			break;
-		}
-		if (ifs->if_bridgeidx != ifp->if_index) {
-			error = ESRCH;
-			break;
-		}
-		bif = bridge_getbif(ifs);
 		bif->bif_protected = req->ifbr_protected;
 		break;
 	case SIOCBRDGRTS:
@@ -701,6 +673,34 @@ done:
 	free(breqs, M_TEMP, total * sizeof(*breq));
 	bifc->ifbic_len = i * sizeof(*breq);
 	return (error);
+}
+
+int
+bridge_findbif(struct bridge_softc *sc, const char *name,
+    struct bridge_iflist **rbif)
+{
+	struct ifnet *ifp;
+	struct bridge_iflist *bif;
+
+	KERNEL_ASSERT_LOCKED();
+
+	if ((ifp = ifunit(name)) == NULL)
+		return (ENOENT);
+
+	if (ifp->if_bridgeidx != sc->sc_if.if_index)
+		return (ESRCH);
+
+	SMR_SLIST_FOREACH_LOCKED(bif, &sc->sc_iflist, bif_next) {
+		if (bif->ifp == ifp)
+			break;
+	}
+
+	if (bif == NULL)
+		return (ENOENT);
+
+	*rbif = bif;
+	
+	return (0);
 }
 
 struct bridge_iflist *

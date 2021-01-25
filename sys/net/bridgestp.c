@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.75 2020/07/30 11:32:06 mvs Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.76 2021/01/25 19:47:16 mvs Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -2136,23 +2136,15 @@ bstp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ifbrparam *ifbp = (struct ifbrparam *)data;
 	struct ifbreq *ifbr = (struct ifbreq *)data;
 	struct bridge_iflist *bif;
-	struct ifnet *ifs;
 	struct bstp_port *bp;
 	int r = 0, err = 0, val;
 
 	switch (cmd) {
 	case SIOCBRDGSIFPRIO:
 	case SIOCBRDGSIFCOST:
-		ifs = ifunit(ifbr->ifbr_ifsname);
-		if (ifs == NULL) {
-			err = ENOENT;
+		err = bridge_findbif(sc, ifbr->ifbr_ifsname, &bif);
+		if (err != 0)
 			break;
-		}
-		if (ifs->if_bridgeidx != ifp->if_index) {
-			err = ESRCH;
-			break;
-		}
-		bif = bridge_getbif(ifs);
 		if ((bif->bif_flags & IFBIF_STP) == 0) {
 			err = EINVAL;
 			break;

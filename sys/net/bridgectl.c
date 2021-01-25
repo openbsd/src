@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgectl.c,v 1.21 2020/06/24 22:03:42 cheloha Exp $	*/
+/*	$OpenBSD: bridgectl.c,v 1.22 2021/01/25 19:47:16 mvs Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -120,22 +120,15 @@ bridgectl_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		bparam->ifbrp_ctime = sc->sc_brttimeout;
 		break;
 	case SIOCBRDGARL:
-		ifs = ifunit(brlreq->ifbr_ifsname);
-		if (ifs == NULL) {
-			error = ENOENT;
-			break;
-		}
-		if (ifs->if_bridgeidx != ifp->if_index) {
-			error = ESRCH;
-			break;
-		}
 		if ((brlreq->ifbr_action != BRL_ACTION_BLOCK &&
 		    brlreq->ifbr_action != BRL_ACTION_PASS) ||
 		    (brlreq->ifbr_flags & (BRL_FLAG_IN|BRL_FLAG_OUT)) == 0) {
 			error = EINVAL;
 			break;
 		}
-		bif = bridge_getbif(ifs);
+		error = bridge_findbif(sc, brlreq->ifbr_ifsname, &bif);
+		if (error != 0)
+			break;
 		if (brlreq->ifbr_flags & BRL_FLAG_IN) {
 			error = bridge_addrule(bif, brlreq, 0);
 			if (error)
@@ -148,29 +141,15 @@ bridgectl_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 	case SIOCBRDGFRL:
-		ifs = ifunit(brlreq->ifbr_ifsname);
-		if (ifs == NULL) {
-			error = ENOENT;
+		error = bridge_findbif(sc, brlreq->ifbr_ifsname, &bif);
+		if (error != 0)
 			break;
-		}
-		if (ifs->if_bridgeidx != ifp->if_index) {
-			error = ESRCH;
-			break;
-		}
-		bif = bridge_getbif(ifs);
 		bridge_flushrule(bif);
 		break;
 	case SIOCBRDGGRL:
-		ifs = ifunit(bc->ifbrl_ifsname);
-		if (ifs == NULL) {
-			error = ENOENT;
+		error = bridge_findbif(sc, bc->ifbrl_ifsname, &bif);
+		if (error != 0)
 			break;
-		}
-		if (ifs->if_bridgeidx != ifp->if_index) {
-			error = ESRCH;
-			break;
-		}
-		bif = bridge_getbif(ifs);
 		error = bridge_brlconf(bif, bc);
 		break;
 	default:
