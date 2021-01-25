@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.134 2021/01/24 18:29:15 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.135 2021/01/25 16:56:59 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -498,7 +498,7 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 				    "%lu", __func__,
 				    IMSG_DATA_SIZE(imsg));
 			memcpy(&verbose, imsg.data, sizeof(verbose));
-			if ((log_getverbose() & OPT_VERBOSE3)
+			if (log_getdebug() && (log_getverbose() & OPT_VERBOSE3)
 			    != (verbose & OPT_VERBOSE3))
 				restart_ub_resolvers();
 			log_setverbose(verbose);
@@ -1257,13 +1257,14 @@ create_resolver(enum uw_resolver_type type)
 
 		if (!log_getdebug()) {
 			if((err = ub_ctx_set_option(res->ctx, "use-syslog:",
-			    "yes")) != 0) {
+			    "no")) != 0) {
 				ub_ctx_delete(res->ctx);
 				free(res);
-				log_warnx("error setting use-syslog: yes: %s",
+				log_warnx("error setting use-syslog: no: %s",
 				    ub_strerror(err));
 				return (NULL);
 			}
+			ub_ctx_debugout(res->ctx, NULL);
 		}
 
 		break;
