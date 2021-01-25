@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.96 2021/01/25 09:36:48 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.97 2021/01/25 12:27:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -85,7 +85,7 @@
 #define MCX_LOG_RQ_SIZE			10
 #define MCX_LOG_SQ_SIZE			11
 
-#define MCX_MAX_QUEUES			1
+#define MCX_MAX_QUEUES			16
 
 /* completion event moderation - about 10khz, or 90% of the cq */
 #define MCX_CQ_MOD_PERIOD		50
@@ -2479,7 +2479,7 @@ struct mcx_softc {
 	uint32_t		 sc_khz;
 
 	struct intrmap		*sc_intrmap;
-	struct mcx_queues	 sc_queues[MCX_MAX_QUEUES];
+	struct mcx_queues	*sc_queues;
 
 	int			 sc_mcam_reg;
 
@@ -2885,6 +2885,12 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: unable to create interrupt map\n", DEVNAME(sc));
 		goto teardown;
 	}
+	sc->sc_queues = mallocarray(intrmap_count(sc->sc_intrmap),
+	    sizeof(*sc->sc_queues), M_DEVBUF, M_WAITOK|M_ZERO);
+	if (sc->sc_queues == NULL) {
+		printf("%s: unable to create queues\n", DEVNAME(sc));
+		goto intrunmap;
+	}
 
 	strlcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
 	ifp->if_softc = sc;
@@ -2996,6 +3002,9 @@ intrdisestablish:
 		pci_intr_disestablish(sc->sc_pc, q->q_ihc);
 		q->q_ihc = NULL;
 	}
+	free(sc->sc_queues, M_DEVBUF,
+	    intrmap_count(sc->sc_intrmap) * sizeof(*sc->sc_queues));
+intrunmap:
 	intrmap_destroy(sc->sc_intrmap);
 	sc->sc_intrmap = NULL;
 teardown:
