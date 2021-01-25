@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.c,v 1.14 2020/09/01 19:06:59 tb Exp $ */
+/*	$OpenBSD: if_wg.c,v 1.15 2021/01/25 09:11:36 yasuoka Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -2270,7 +2270,7 @@ wg_ioctl_set(struct wg_softc *sc, struct wg_data_io *data)
 
 		/* Peer must have public key */
 		if (!(peer_o.p_flags & WG_PEER_HAS_PUBLIC))
-			continue;
+			goto next_peer;
 
 		/* 0 = latest protocol, 1 = this protocol */
 		if (peer_o.p_protocol_version != 0) {
@@ -2283,7 +2283,7 @@ wg_ioctl_set(struct wg_softc *sc, struct wg_data_io *data)
 		/* Get local public and check that peer key doesn't match */
 		if (noise_local_keys(&sc->sc_local, public, NULL) == 0 &&
 		    bcmp(public, peer_o.p_public, WG_KEY_SIZE) == 0)
-			continue;
+			goto next_peer;
 
 		/* Lookup peer, or create if it doesn't exist */
 		if ((peer = wg_peer_lookup(sc, peer_o.p_public)) == NULL) {
@@ -2291,7 +2291,7 @@ wg_ioctl_set(struct wg_softc *sc, struct wg_data_io *data)
 			 * Also, don't create a new one if we only want to
 			 * update. */
 			if (peer_o.p_flags & (WG_PEER_REMOVE|WG_PEER_UPDATE))
-				continue;
+				goto next_peer;
 
 			if ((peer = wg_peer_create(sc,
 			    peer_o.p_public)) == NULL) {
@@ -2303,7 +2303,7 @@ wg_ioctl_set(struct wg_softc *sc, struct wg_data_io *data)
 		/* Remove peer and continue if specified */
 		if (peer_o.p_flags & WG_PEER_REMOVE) {
 			wg_peer_destroy(peer);
-			continue;
+			goto next_peer;
 		}
 
 		if (peer_o.p_flags & WG_PEER_HAS_ENDPOINT)
@@ -2332,6 +2332,11 @@ wg_ioctl_set(struct wg_softc *sc, struct wg_data_io *data)
 			aip_p++;
 		}
 
+		peer_p = (struct wg_peer_io *)aip_p;
+		continue;
+next_peer:
+		aip_p = &peer_p->p_aips[0];
+		aip_p += peer_o.p_aips_count;
 		peer_p = (struct wg_peer_io *)aip_p;
 	}
 
