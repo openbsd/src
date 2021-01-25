@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.95 2021/01/25 01:45:55 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.96 2021/01/25 09:36:48 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -6807,7 +6807,7 @@ mcx_process_rx(struct mcx_softc *sc, struct mcx_rx *rx,
 
 	flags = bemtoh32(&cqe->cq_flags);
 	if (flags & MCX_CQ_ENTRY_FLAGS_L3_OK)
-		m->m_pkthdr.csum_flags = M_IPV4_CSUM_IN_OK;
+		m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
 	if (flags & MCX_CQ_ENTRY_FLAGS_L4_OK)
 		m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK |
 		    M_UDP_CSUM_IN_OK;
