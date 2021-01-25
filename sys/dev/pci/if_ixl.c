@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.71 2020/12/22 06:55:16 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.72 2021/01/25 11:11:22 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -837,7 +837,8 @@ struct ixl_rx_rd_desc_32 {
 } __packed __aligned(16);
 
 struct ixl_rx_wb_desc_16 {
-	uint64_t		qword0;
+	uint32_t		_reserved1;
+	uint32_t		filter_status;
 	uint64_t		qword1;
 #define IXL_RX_DESC_DD			(1 << 0)
 #define IXL_RX_DESC_EOP			(1 << 1)
@@ -3180,6 +3181,13 @@ ixl_rxeof(struct ixl_softc *sc, struct ixl_rx_ring *rxr)
 		if (ISSET(word, IXL_RX_DESC_EOP)) {
 			if (!ISSET(word,
 			    IXL_RX_DESC_RXE | IXL_RX_DESC_OVERSIZE)) {
+				if ((word & IXL_RX_DESC_FLTSTAT_MASK) ==
+				    IXL_RX_DESC_FLTSTAT_RSS) {
+					m->m_pkthdr.ph_flowid =
+					    lemtoh32(&rxd->filter_status);
+					m->m_pkthdr.csum_flags |= M_FLOWID;
+				}
+
 				ml_enqueue(&ml, m);
 			} else {
 				ifp->if_ierrors++; /* XXX */
