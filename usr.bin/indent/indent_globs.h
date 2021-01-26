@@ -1,4 +1,4 @@
-/*	$OpenBSD: indent_globs.h,v 1.14 2015/09/27 17:00:46 guenther Exp $ */
+/*	$OpenBSD: indent_globs.h,v 1.15 2021/01/26 18:21:25 deraadt Exp $ */
 /*
  * Copyright (c) 1985 Sun Microsystems, Inc.
  * Copyright (c) 1980, 1993
@@ -48,8 +48,8 @@
 #define true  1
 
 
-FILE       *input;		/* the fid for the input file */
-FILE       *output;		/* the output file */
+extern FILE *input;		/* the fid for the input file */
+extern FILE *output;		/* the output file */
 
 #define CHECK_SIZE_CODE \
 	if (e_code >= l_code) { \
@@ -96,89 +96,89 @@ FILE       *output;		/* the output file */
 	    s_token = tokenbuf + 1; \
 	}
 
-char       *labbuf;		/* buffer for label */
-char       *s_lab;		/* start ... */
-char       *e_lab;		/* .. and end of stored label */
-char       *l_lab;		/* limit of label buffer */
+extern char *labbuf;		/* buffer for label */
+extern char *s_lab;		/* start ... */
+extern char *e_lab;		/* .. and end of stored label */
+extern char *l_lab;		/* limit of label buffer */
 
-char       *codebuf;		/* buffer for code section */
-char       *s_code;		/* start ... */
-char       *e_code;		/* .. and end of stored code */
-char       *l_code;		/* limit of code section */
+extern char *codebuf;		/* buffer for code section */
+extern char *s_code;		/* start ... */
+extern char *e_code;		/* .. and end of stored code */
+extern char *l_code;		/* limit of code section */
 
-char       *combuf;		/* buffer for comments */
-char       *s_com;		/* start ... */
-char       *e_com;		/* ... and end of stored comments */
-char       *l_com;		/* limit of comment buffer */
+extern char *combuf;		/* buffer for comments */
+extern char *s_com;		/* start ... */
+extern char *e_com;		/* ... and end of stored comments */
+extern char *l_com;		/* limit of comment buffer */
 
 #define token s_token
-char       *tokenbuf;		/* the last token scanned */
-char	   *s_token;
-char       *e_token;
-char	   *l_token;
+extern char *tokenbuf;		/* the last token scanned */
+extern char *s_token;
+extern char *e_token;
+extern char *l_token;
 
-char       *in_buffer;		/* input buffer */
-char	   *in_buffer_limit;	/* the end of the input buffer */
-char       *buf_ptr;		/* ptr to next character to be taken from
+extern char *in_buffer;		/* input buffer */
+extern char *in_buffer_limit;	/* the end of the input buffer */
+extern char *buf_ptr;		/* ptr to next character to be taken from
 				 * in_buffer */
-char       *buf_end;		/* ptr to first after last char in in_buffer */
+extern char *buf_end;		/* ptr to first after last char in in_buffer */
 
-char        save_com[sc_size];	/* input text is saved here when looking for
+extern char  save_com[sc_size];	/* input text is saved here when looking for
 				 * the brace after an if, while, etc */
-char       *sc_end;		/* pointer into save_com buffer */
+extern char  *sc_end;		/* pointer into save_com buffer */
 
-char       *bp_save;		/* saved value of buf_ptr when taking input
+extern char  *bp_save;		/* saved value of buf_ptr when taking input
 				 * from save_com */
-char       *be_save;		/* similarly saved value of buf_end */
+extern char  *be_save;		/* similarly saved value of buf_end */
 
 
-int         pointer_as_binop;
-int         blanklines_after_declarations;
-int         blanklines_before_blockcomments;
-int         blanklines_after_procs;
-int         blanklines_around_conditional_compilation;
-int         swallow_optional_blanklines;
-int         n_real_blanklines;
-int         prefix_blankline_requested;
-int         postfix_blankline_requested;
-int         break_comma;	/* when true and not in parens, break after a
+extern int  pointer_as_binop;
+extern int  blanklines_after_declarations;
+extern int  blanklines_before_blockcomments;
+extern int  blanklines_after_procs;
+extern int  blanklines_around_conditional_compilation;
+extern int  swallow_optional_blanklines;
+extern int  n_real_blanklines;
+extern int  prefix_blankline_requested;
+extern int  postfix_blankline_requested;
+extern int  break_comma;	/* when true and not in parens, break after a
 				 * comma */
-int         btype_2;		/* when true, brace should be on same line as
+extern int  btype_2;		/* when true, brace should be on same line as
 				 * if, while, etc */
-float       case_ind;		/* indentation level to be used for a "case
+extern float case_ind;		/* indentation level to be used for a "case
 				 * n:" */
-int         code_lines;		/* count of lines with code */
-int         had_eof;		/* set to true when input is exhausted */
-int         line_no;		/* the current line number. */
-int         max_col;		/* the maximum allowable line length */
-int         verbose;		/* when true, non-essential error messages are
+extern int code_lines;		/* count of lines with code */
+extern int had_eof;		/* set to true when input is exhausted */
+extern int line_no;		/* the current line number. */
+extern int max_col;		/* the maximum allowable line length */
+extern int verbose;		/* when true, non-essential error messages are
 				 * printed */
-int         cuddle_else;	/* true if else should cuddle up to '}' */
-int         star_comment_cont;	/* true iff comment continuation lines should
+extern int cuddle_else;	/* true if else should cuddle up to '}' */
+extern int star_comment_cont;	/* true iff comment continuation lines should
 				 * have stars at the beginning of each line. */
-int         comment_delimiter_on_blankline;
-int         troff;		/* true iff were generating troff input */
-int         procnames_start_line;	/* if true, the names of procedures
+extern int  comment_delimiter_on_blankline;
+extern int  troff;		/* true iff were generating troff input */
+extern int  procnames_start_line;	/* if true, the names of procedures
 					 * being defined get placed in column
 					 * 1 (ie. a newline is placed between
 					 * the type of the procedure and its
 					 * name) */
-int         proc_calls_space;	/* If true, procedure calls look like:
+extern int proc_calls_space;	/* If true, procedure calls look like:
 				 * foo(bar) rather than foo (bar) */
-int         format_col1_comments;	/* If comments which start in column 1
+extern int  format_col1_comments;	/* If comments which start in column 1
 					 * are to be magically reformatted
 					 * (just like comments that begin in
 					 * later columns) */
-int         inhibit_formatting;	/* true if INDENT OFF is in effect */
-int         suppress_blanklines;/* set iff following blanklines should be
+extern int inhibit_formatting;	/* true if INDENT OFF is in effect */
+extern int suppress_blanklines;/* set iff following blanklines should be
 				 * suppressed */
-int         continuation_indent;/* set to the indentation between the edge of
+extern int continuation_indent;/* set to the indentation between the edge of
 				 * code and continuation lines */
-int         lineup_to_parens;	/* if true, continued code within parens will
+extern int lineup_to_parens;	/* if true, continued code within parens will
 				 * be lined up to the open paren */
-int         Bill_Shannon;	/* true iff a blank should always be inserted
+extern int Bill_Shannon;	/* true iff a blank should always be inserted
 				 * after sizeof */
-int         blanklines_after_declarations_at_proctop;	/* This is vaguely
+extern int blanklines_after_declarations_at_proctop;	/* This is vaguely
 							 * similar to
 							 * blanklines_after_decla
 							 * rations except that
@@ -191,14 +191,14 @@ int         blanklines_after_declarations_at_proctop;	/* This is vaguely
 							 * to be generated even
 							 * if there are no
 							 * declarations */
-int         block_comment_max_col;
-int         extra_expression_indent;	/* True if continuation lines from the
+extern int  block_comment_max_col;
+extern int  extra_expression_indent;	/* True if continuation lines from the
 					 * expression part of "if(e)",
 					 * "while(e)", "for(e;e;e)" should be
 					 * indented an extra tab stop so that
 					 * they don't conflict with the code
 					 * that follows */
-int	    use_tabs;			/* set true to use tabs for spacing,
+extern int  use_tabs;			/* set true to use tabs for spacing,
 					 * false uses all spaces */
 
 /* -troff font state information */
@@ -209,7 +209,7 @@ struct fstate {
     int         allcaps:1;
 };
 
-struct fstate
+extern struct fstate
             keywordf,		/* keyword font */
             stringf,		/* string font */
             boxcomf,		/* Box comment font */
@@ -220,7 +220,7 @@ struct fstate
 
 #define STACKSIZE 150
 
-struct parser_state {
+extern struct parser_state {
     int         last_token;
     struct fstate cfont;	/* Current font */
     int         p_stack[STACKSIZE];	/* this is the parsers stack */
@@ -315,10 +315,10 @@ struct parser_state {
     int         just_saw_decl;
 }           ps;
 
-int         ifdef_level;
-int	    rparen_count;
-struct parser_state state_stack[5];
-struct parser_state match_state[5];
+extern int ifdef_level;
+extern int rparen_count;
+extern struct parser_state state_stack[5];
+extern struct parser_state match_state[5];
 
 int compute_code_target(void);
 int compute_label_target(void);
