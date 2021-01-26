@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.34 2019/06/28 13:35:02 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.35 2021/01/26 18:21:47 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.7 1997/05/13 06:15:57 mikel Exp $	*/
 
 /*
@@ -34,6 +34,58 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include "extern.h"
+
+int	msgCount;			/* Count of messages read in */
+int	rcvmode;			/* True if receiving mail */
+int	sawcom;				/* Set after first command */
+int	senderr;			/* An error while checking */
+int	edit;				/* Indicates editing a file */
+int	readonly;			/* Will be unable to rewrite file */
+int	noreset;			/* String resets suspended */
+int	sourcing;			/* Currently reading variant file */
+int	loading;			/* Loading user definitions */
+int	cond;				/* Current state of conditional exc. */
+FILE	*itf;				/* Input temp file buffer */
+FILE	*otf;				/* Output temp file buffer */
+int	image;				/* File descriptor for image of msg */
+FILE	*input;				/* Current command input file */
+char	mailname[PATHSIZE];		/* Name of current file */
+char	prevfile[PATHSIZE];		/* Name of previous file */
+char	*homedir;			/* Path name of home directory */
+const char
+	*myname;			/* My login name */
+off_t	mailsize;			/* Size of system mailbox */
+int	lexnumber;			/* Number of TNUMBER from scan() */
+char	lexstring[STRINGLEN];		/* String from TSTRING, scan() */
+int	regretp;			/* Pointer to TOS of regret tokens */
+int	regretstack[REGDEP];		/* Stack of regretted tokens */
+char	*string_stack[REGDEP];		/* Stack of regretted strings */
+int	numberstack[REGDEP];		/* Stack of regretted numbers */
+struct	message	*dot;			/* Pointer to current message */
+struct	message	*message;		/* The actual message structure */
+struct	var	*variables[HSHSIZE];	/* Pointer to active var list */
+struct	grouphead	*groups[HSHSIZE];/* Pointer to active groups */
+struct	ignoretab	ignore[2];	/* ignored and retained fields
+					   0 is ignore, 1 is retain */
+struct	ignoretab	saveignore[2];	/* ignored and retained fields
+					   on save to folder */
+struct	ignoretab	ignoreall[2];	/* special, ignore all headers */
+char	**altnames;			/* List of alternate names for user */
+int	debug;				/* Debug flag set */
+int	screenwidth;			/* Screen width, or best guess */
+int	screenheight;			/* Screen height, or best guess,
+					   for "header" command */
+int	realscreenheight;		/* the real screen height */
+int	uflag;				/* Are we in -u mode? */
+sigset_t intset;			/* Signal set that is just SIGINT */
+
+/*
+ * The pointers for the string allocation routines,
+ * there are NSPACE independent areas.
+ * The first holds STRINGSIZE bytes, the next
+ * twice as much, and so on.
+ */
+struct strings stringdope[NSPACE];
 
 __dead	void	usage(void);
 	int	main(int, char **);
