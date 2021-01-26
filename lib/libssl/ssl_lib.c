@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.242 2021/01/26 18:43:41 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.243 2021/01/26 18:45:32 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -460,7 +460,7 @@ SSL_set1_host(SSL *s, const char *hostname)
 {
 	struct in_addr ina;
 	struct in6_addr in6a;
-	
+
 	if (hostname != NULL && *hostname != '\0' &&
 	    (inet_pton(AF_INET, hostname, &ina) == 1 ||
 	    inet_pton(AF_INET6, hostname, &in6a) == 1))
