@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.240 2021/01/09 10:34:29 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.241 2021/01/26 14:22:19 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2612,8 +2612,6 @@ ssl_clear_cipher_read_state(SSL *s)
 	s->read_hash = NULL;
 
 	tls12_record_layer_clear_read_state(s->internal->rl);
-	tls12_record_layer_set_read_seq_num(s->internal->rl,
-	    S3I(s)->read_sequence);
 
 	if (s->internal->aead_read_ctx != NULL) {
 		EVP_AEAD_CTX_cleanup(&s->internal->aead_read_ctx->ctx);
@@ -2631,8 +2629,6 @@ ssl_clear_cipher_write_state(SSL *s)
 	s->internal->write_hash = NULL;
 
 	tls12_record_layer_clear_write_state(s->internal->rl);
-	tls12_record_layer_set_write_seq_num(s->internal->rl,
-	    S3I(s)->write_sequence);
 
 	if (s->internal->aead_write_ctx != NULL) {
 		EVP_AEAD_CTX_cleanup(&s->internal->aead_write_ctx->ctx);

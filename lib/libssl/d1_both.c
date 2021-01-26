@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_both.c,v 1.65 2021/01/19 19:07:39 jsing Exp $ */
+/* $OpenBSD: d1_both.c,v 1.66 2021/01/26 14:22:19 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -1009,7 +1009,6 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
 	unsigned long header_length;
 	unsigned char seq64be[8];
 	struct dtls1_retransmit_state saved_state;
-	unsigned char save_write_sequence[8];
 
 	/*
 	  OPENSSL_assert(s->internal->init_num == 0);
@@ -1059,14 +1058,6 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
 	if (!tls12_record_layer_use_write_epoch(s->internal->rl, D1I(s)->w_epoch))
 		return 0;
 
-	if (frag->msg_header.saved_retransmit_state.epoch ==
-	    saved_state.epoch - 1) {
-		memcpy(save_write_sequence, S3I(s)->write_sequence,
-		    sizeof(S3I(s)->write_sequence));
-		memcpy(S3I(s)->write_sequence, D1I(s)->last_write_sequence,
-		    sizeof(S3I(s)->write_sequence));
-	}
-
 	ret = dtls1_do_write(s, frag->msg_header.is_ccs ?
 	    SSL3_RT_CHANGE_CIPHER_SPEC : SSL3_RT_HANDSHAKE);
 
@@ -1076,14 +1067,6 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
 
 	if (!tls12_record_layer_use_write_epoch(s->internal->rl, D1I(s)->w_epoch))
 		return 0;
-
-	if (frag->msg_header.saved_retransmit_state.epoch ==
-	    saved_state.epoch - 1) {
-		memcpy(D1I(s)->last_write_sequence, S3I(s)->write_sequence,
-		    sizeof(S3I(s)->write_sequence));
-		memcpy(S3I(s)->write_sequence, save_write_sequence,
-		    sizeof(S3I(s)->write_sequence));
-	}
 
 	D1I(s)->retransmitting = 0;
 

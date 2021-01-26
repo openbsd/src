@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.316 2021/01/21 18:48:57 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.317 2021/01/26 14:22:20 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -491,10 +491,7 @@ void tls12_record_layer_write_epoch_done(struct tls12_record_layer *rl,
     uint16_t epoch);
 void tls12_record_layer_clear_read_state(struct tls12_record_layer *rl);
 void tls12_record_layer_clear_write_state(struct tls12_record_layer *rl);
-void tls12_record_layer_set_read_seq_num(struct tls12_record_layer *rl,
-    uint8_t *seq_num);
-void tls12_record_layer_set_write_seq_num(struct tls12_record_layer *rl,
-    uint8_t *seq_num);
+void tls12_record_layer_reflect_seq_num(struct tls12_record_layer *rl);
 int tls12_record_layer_set_read_aead(struct tls12_record_layer *rl,
     SSL_AEAD_CTX *aead_ctx);
 int tls12_record_layer_set_write_aead(struct tls12_record_layer *rl,
@@ -844,9 +841,6 @@ typedef struct ssl3_buffer_internal_st {
 } SSL3_BUFFER_INTERNAL;
 
 typedef struct ssl3_state_internal_st {
-	unsigned char read_sequence[SSL3_SEQUENCE_SIZE];
-	unsigned char write_sequence[SSL3_SEQUENCE_SIZE];
-
 	SSL3_BUFFER_INTERNAL rbuf;	/* read IO goes into here */
 	SSL3_BUFFER_INTERNAL wbuf;	/* write IO goes into here */
 
@@ -989,9 +983,6 @@ typedef struct dtls1_state_internal_st {
 	unsigned short next_handshake_write_seq;
 
 	unsigned short handshake_read_seq;
-
-	/* save last sequence number for retransmissions */
-	unsigned char last_write_sequence[SSL3_SEQUENCE_SIZE];
 
 	/* Received handshake records (processed and unprocessed) */
 	record_pqueue unprocessed_rcds;

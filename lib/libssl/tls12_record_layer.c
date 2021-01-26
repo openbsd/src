@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_record_layer.c,v 1.14 2021/01/20 07:05:25 tb Exp $ */
+/* $OpenBSD: tls12_record_layer.c,v 1.15 2021/01/26 14:22:20 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -23,6 +23,7 @@
 
 struct tls12_record_protection {
 	uint16_t epoch;
+	uint8_t seq_num[SSL3_SEQUENCE_SIZE];
 
 	int stream_mac;
 
@@ -37,8 +38,6 @@ struct tls12_record_protection {
 
 	EVP_CIPHER_CTX *cipher_ctx;
 	EVP_MD_CTX *hash_ctx;
-
-	uint8_t *seq_num;
 };
 
 static struct tls12_record_protection *
@@ -48,12 +47,22 @@ tls12_record_protection_new(void)
 }
 
 static void
+tls12_record_protection_clear(struct tls12_record_protection *rp)
+{
+	memset(rp->seq_num, 0, sizeof(rp->seq_num));
+
+	freezero(rp->mac_key, rp->mac_key_len);
+	rp->mac_key = NULL;
+	rp->mac_key_len = 0;
+}
+
+static void
 tls12_record_protection_free(struct tls12_record_protection *rp)
 {
 	if (rp == NULL)
 		return;
 
-	freezero(rp->mac_key, rp->mac_key_len);
+	tls12_record_protection_clear(rp);
 
 	freezero(rp, sizeof(struct tls12_record_protection));
 }
@@ -294,32 +303,24 @@ void
 tls12_record_layer_clear_read_state(struct tls12_record_layer *rl)
 {
 	tls12_record_layer_set_read_state(rl, NULL, NULL, NULL, 0);
-	tls12_record_layer_set_read_mac_key(rl, NULL, 0);
-	rl->read->seq_num = NULL;
+	tls12_record_protection_clear(rl->read);
 }
 
 void
 tls12_record_layer_clear_write_state(struct tls12_record_layer *rl)
 {
 	tls12_record_layer_set_write_state(rl, NULL, NULL, NULL, 0);
-	rl->write->seq_num = NULL;
+	tls12_record_protection_clear(rl->write);
 
 	tls12_record_protection_free(rl->write_previous);
 	rl->write_previous = NULL;
 }
 
 void
-tls12_record_layer_set_read_seq_num(struct tls12_record_layer *rl,
-    uint8_t *seq_num)
+tls12_record_layer_reflect_seq_num(struct tls12_record_layer *rl)
 {
-	rl->read->seq_num = seq_num;
-}
-
-void
-tls12_record_layer_set_write_seq_num(struct tls12_record_layer *rl,
-    uint8_t *seq_num)
-{
-	rl->write->seq_num = seq_num;
+	memcpy(rl->write->seq_num, rl->read->seq_num,
+	    sizeof(rl->write->seq_num));
 }
 
 int
@@ -391,6 +392,8 @@ tls12_record_layer_change_read_cipher_state(struct tls12_record_layer *rl,
 	if ((read_new = tls12_record_protection_new()) == NULL)
 		goto err;
 
+	/* Read sequence number gets reset to zero. */
+
 	/* XXX - change cipher state. */
 
 	tls12_record_protection_free(rl->read_current);
@@ -416,6 +419,8 @@ tls12_record_layer_change_write_cipher_state(struct tls12_record_layer *rl,
 	if ((write_new = tls12_record_protection_new()) == NULL)
 		goto err;
 
+	/* Write sequence number gets reset to zero. */
+
 	/* XXX - change cipher state. */
 
 	if (rl->dtls) {
@@ -434,6 +439,7 @@ tls12_record_layer_change_write_cipher_state(struct tls12_record_layer *rl,
 
 	return ret;
 }
+
 static int
 tls12_record_layer_build_seq_num(struct tls12_record_layer *rl, CBB *cbb,
     uint16_t epoch, uint8_t *seq_num, size_t seq_num_len)
@@ -896,7 +902,7 @@ tls12_record_layer_open_record(struct tls12_record_layer *rl, uint8_t *buf,
 	uint8_t content_type;
 
 	CBS_init(&cbs, buf, buf_len);
-	CBS_init(&seq_num, rl->read->seq_num, SSL3_SEQUENCE_SIZE);
+	CBS_init(&seq_num, rl->read->seq_num, sizeof(rl->read->seq_num));
 
 	if (!CBS_get_u8(&cbs, &content_type))
 		return 0;
@@ -911,6 +917,9 @@ tls12_record_layer_open_record(struct tls12_record_layer *rl, uint8_t *buf,
 		 * we need to extract from the DTLS record header.
 		 */
 		if (!CBS_get_bytes(&cbs, &seq_num, SSL3_SEQUENCE_SIZE))
+			return 0;
+		if (!CBS_write_bytes(&seq_num, rl->read->seq_num,
+		    sizeof(rl->read->seq_num), NULL))
 			return 0;
 	}
 	if (!CBS_get_u16_length_prefixed(&cbs, &fragment))
@@ -1096,7 +1105,7 @@ tls12_record_layer_seal_record(struct tls12_record_layer *rl,
 	if (!CBB_init(&seq_num_cbb, SSL3_SEQUENCE_SIZE))
 		goto err;
 	if (!tls12_record_layer_build_seq_num(rl, &seq_num_cbb, rl->write->epoch,
-	    rl->write->seq_num, SSL3_SEQUENCE_SIZE))
+	    rl->write->seq_num, sizeof(rl->write->seq_num)))
 		goto err;
 	if (!CBB_finish(&seq_num_cbb, &seq_num_data, &seq_num_len))
 		goto err;

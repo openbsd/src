@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.89 2021/01/19 18:57:09 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.90 2021/01/26 14:22:20 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -328,9 +328,8 @@ ssl3_accept(SSL *s)
 				 * stateless while listening.
 				 */
 				if (listen) {
-					memcpy(S3I(s)->write_sequence,
-					    S3I(s)->read_sequence,
-					    sizeof(S3I(s)->write_sequence));
+					tls12_record_layer_reflect_seq_num(
+					    s->internal->rl);
 				}
 
 				/* If we're just listening, stop here */

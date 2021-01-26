@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.90 2021/01/19 19:07:39 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.91 2021/01/26 14:22:19 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -204,9 +204,6 @@ dtls1_copy_record(SSL *s, DTLS1_RECORD_DATA_INTERNAL *rdata)
 	s->internal->packet_length = rdata->packet_length;
 	memcpy(&(S3I(s)->rbuf), &(rdata->rbuf), sizeof(SSL3_BUFFER_INTERNAL));
 	memcpy(&(S3I(s)->rrec), &(rdata->rrec), sizeof(SSL3_RECORD_INTERNAL));
-
-	/* Set proper sequence number for mac calculation */
-	memcpy(&(S3I(s)->read_sequence[2]), &(rdata->packet[5]), 6);
 
 	return (1);
 }
@@ -417,10 +414,6 @@ again:
 			goto again;
 
 		if (!CBS_get_u16(&header, &len))
-			goto again;
-
-		if (!CBS_write_bytes(&seq_no, &(S3I(s)->read_sequence[2]),
-		    sizeof(S3I(s)->read_sequence) - 2, NULL))
 			goto again;
 
 		if (!CBS_write_bytes(&seq_no, &rr->seq_num[2],
@@ -1241,12 +1234,8 @@ dtls1_reset_seq_numbers(SSL *s, int rw)
 		memcpy(&(D1I(s)->bitmap), &(D1I(s)->next_bitmap),
 		    sizeof(DTLS1_BITMAP));
 		memset(&(D1I(s)->next_bitmap), 0, sizeof(DTLS1_BITMAP));
-		memset(S3I(s)->read_sequence, 0, sizeof(S3I(s)->read_sequence));
 	} else {
 		D1I(s)->w_epoch++;
 		tls12_record_layer_set_write_epoch(s->internal->rl, D1I(s)->w_epoch);
-		memcpy(D1I(s)->last_write_sequence, S3I(s)->write_sequence,
-		    sizeof(S3I(s)->write_sequence));
-		memset(S3I(s)->write_sequence, 0, sizeof(S3I(s)->write_sequence));
 	}
 }

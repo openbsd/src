@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.129 2021/01/19 19:07:39 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.130 2021/01/26 14:22:20 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -494,7 +494,7 @@ tls1_change_cipher_state(SSL *s, int which)
 	const unsigned char *client_write_iv, *server_write_iv;
 	const unsigned char *mac_secret, *key, *iv;
 	int mac_secret_size, key_len, iv_len;
-	unsigned char *key_block, *seq;
+	unsigned char *key_block;
 	const EVP_CIPHER *cipher;
 	const EVP_AEAD *aead;
 	char is_read, use_client_keys;
@@ -516,15 +516,6 @@ tls1_change_cipher_state(SSL *s, int which)
 	 */
 	use_client_keys = ((which == SSL3_CHANGE_CIPHER_CLIENT_WRITE) ||
 	    (which == SSL3_CHANGE_CIPHER_SERVER_READ));
-
-	/*
-	 * Reset sequence number to zero - for DTLS this is handled in
-	 * dtls1_reset_seq_numbers().
-	 */
-	if (!SSL_is_dtls(s)) {
-		seq = is_read ? S3I(s)->read_sequence : S3I(s)->write_sequence;
-		memset(seq, 0, SSL3_SEQUENCE_SIZE);
-	}
 
 	if (aead != NULL) {
 		key_len = EVP_AEAD_key_length(aead);
@@ -569,14 +560,10 @@ tls1_change_cipher_state(SSL *s, int which)
 		if (!tls12_record_layer_change_read_cipher_state(s->internal->rl,
 		    mac_secret, mac_secret_size, key, key_len, iv, iv_len))
 			goto err;
-		tls12_record_layer_set_read_seq_num(s->internal->rl,
-		    S3I(s)->read_sequence);
 	} else {
 		if (!tls12_record_layer_change_write_cipher_state(s->internal->rl,
 		    mac_secret, mac_secret_size, key, key_len, iv, iv_len))
 			goto err;
-		tls12_record_layer_set_write_seq_num(s->internal->rl,
-		    S3I(s)->write_sequence);
 	}
 
 	if (aead != NULL) {
