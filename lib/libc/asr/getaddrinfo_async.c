@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo_async.c,v 1.56 2018/11/03 09:13:24 eric Exp $	*/
+/*	$OpenBSD: getaddrinfo_async.c,v 1.57 2021/01/26 12:27:28 florian Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -676,11 +676,15 @@ static int
 addrconfig_setup(struct asr_query *as)
 {
 	struct ifaddrs		*ifa, *ifa0;
+	struct if_data		*ifa_data;
 	struct sockaddr_in	*sinp;
 	struct sockaddr_in6	*sin6p;
+	int			 rtable, ifa_rtable = -1;
 
 	if (getifaddrs(&ifa0) == -1)
 		return (-1);
+
+	rtable = getrtable();
 
 	as->as_flags |= ASYNC_NO_INET | ASYNC_NO_INET6;
 
@@ -689,7 +693,15 @@ addrconfig_setup(struct asr_query *as)
 			continue;
 
 		switch (ifa->ifa_addr->sa_family) {
+		case PF_LINK:
+			/* AF_LINK comes before inet / inet6 on an interface */
+			ifa_data = (struct if_data *)ifa->ifa_data;
+			ifa_rtable = ifa_data->ifi_rdomain;
+			break;
 		case PF_INET:
+			if (ifa_rtable != rtable)
+				continue;
+
 			sinp = (struct sockaddr_in *)ifa->ifa_addr;
 
 			if (sinp->sin_addr.s_addr == htonl(INADDR_LOOPBACK))
@@ -698,6 +710,9 @@ addrconfig_setup(struct asr_query *as)
 			as->as_flags &= ~ASYNC_NO_INET;
 			break;
 		case PF_INET6:
+			if (ifa_rtable != rtable)
+				continue;
+
 			sin6p = (struct sockaddr_in6 *)ifa->ifa_addr;
 
 			if (IN6_IS_ADDR_LOOPBACK(&sin6p->sin6_addr))
