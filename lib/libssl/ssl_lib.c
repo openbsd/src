@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.241 2021/01/26 14:22:19 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.242 2021/01/26 18:43:41 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -467,6 +467,12 @@ SSL_set1_host(SSL *s, const char *hostname)
 		return X509_VERIFY_PARAM_set1_ip_asc(s->param, hostname);
 	else
 		return X509_VERIFY_PARAM_set1_host(s->param, hostname, 0);
+}
+
+void
+SSL_set_hostflags(SSL *s, unsigned int flags)
+{
+	X509_VERIFY_PARAM_set_hostflags(s->param, flags);
 }
 
 const char *
