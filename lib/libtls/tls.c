@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.87 2021/01/21 22:02:17 eric Exp $ */
+/* $OpenBSD: tls.c,v 1.88 2021/01/26 12:51:22 eric Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -384,6 +384,50 @@ tls_keypair_to_pkey(struct tls *ctx, struct tls_keypair *keypair, EVP_PKEY **pke
 	return (ret);
 }
 
+static int
+tls_keypair_setup_pkey(struct tls *ctx, struct tls_keypair *keypair, EVP_PKEY *pkey)
+{
+	RSA *rsa = NULL;
+	EC_KEY *eckey = NULL;
+	int ret = -1;
+
+	/* Only install the pubkey hash if fake private keys are used. */
+	if (!ctx->config->skip_private_key_check)
+		return (0);
+
+	if (keypair->pubkey_hash == NULL) {
+		tls_set_errorx(ctx, "public key hash not set");
+		goto err;
+	}
+
+	switch (EVP_PKEY_id(pkey)) {
+	case EVP_PKEY_RSA:
+		if ((rsa = EVP_PKEY_get1_RSA(pkey)) == NULL ||
+		    RSA_set_ex_data(rsa, 0, keypair->pubkey_hash) == 0) {
+			tls_set_errorx(ctx, "failed to setup RSA key");
+			goto err;
+		}
+		break;
+	case EVP_PKEY_EC:
+		if ((eckey = EVP_PKEY_get1_EC_KEY(pkey)) == NULL ||
+		    ECDSA_set_ex_data(eckey, 0, keypair->pubkey_hash) == 0) {
+			tls_set_errorx(ctx, "failed to setup EC key");
+			goto err;
+		}
+		break;
+	default:
+		tls_set_errorx(ctx, "incorrect key type");
+		goto err;
+	}
+
+	ret = 0;
+
+ err:
+	RSA_free(rsa);
+	EC_KEY_free(eckey);
+	return (ret);
+}
+
 int
 tls_configure_ssl_keypair(struct tls *ctx, SSL_CTX *ssl_ctx,
     struct tls_keypair *keypair, int required)
@@ -411,15 +455,8 @@ tls_configure_ssl_keypair(struct tls *ctx, SSL_CTX *ssl_ctx,
 	if (tls_keypair_to_pkey(ctx, keypair, &pkey) == -1)
 		goto err;
 	if (pkey != NULL) {
-		if (keypair->pubkey_hash != NULL) {
-			RSA *rsa;
-			/* XXX only RSA for now for relayd privsep */
-			if ((rsa = EVP_PKEY_get1_RSA(pkey)) != NULL) {
-				RSA_set_ex_data(rsa, 0, keypair->pubkey_hash);
-				RSA_free(rsa);
-			}
-		}
-
+		if (tls_keypair_setup_pkey(ctx, keypair, pkey) == -1)
+			goto err;
 		if (SSL_CTX_use_PrivateKey(ssl_ctx, pkey) != 1) {
 			tls_set_errorx(ctx, "failed to load private key");
 			goto err;
