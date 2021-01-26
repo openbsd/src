@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.75 2020/06/12 06:22:32 remi Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.76 2021/01/26 18:22:45 deraadt Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -40,34 +40,34 @@
 /* a bit of magic to print addresses as they should */
 #define	FAKE_PTR(p)	(PLEN - ((p) ? 0 : 2)), p, ((p) ? "" : "x0")
 
-int	Aflag;		/* show addresses of protocol control block */
-int	aflag;		/* show all sockets (including servers) */
-int	Bflag;		/* show TCP send and receive buffer sizes */
-int	bflag;		/* show bytes instead of packets */
-int	dflag;		/* show i/f dropped packets */
-int	Fflag;		/* show routes whose gateways are in specified AF */
-int	gflag;		/* show group (multicast) routing or stats */
-int	hflag;		/* print human numbers */
-int	iflag;		/* show interfaces */
-int	lflag;		/* show only listening sockets (only servers), */
+extern int	Aflag;		/* show addresses of protocol control block */
+extern int	aflag;		/* show all sockets (including servers) */
+extern int	Bflag;		/* show TCP send and receive buffer sizes */
+extern int	bflag;		/* show bytes instead of packets */
+extern int	dflag;		/* show i/f dropped packets */
+extern int	Fflag;		/* show routes whose gateways are in specified AF */
+extern int	gflag;		/* show group (multicast) routing or stats */
+extern int	hflag;		/* print human numbers */
+extern int	iflag;		/* show interfaces */
+extern int	lflag;		/* show only listening sockets (only servers), */
 			/* with -g, show routing table with use and ref */
-int	mflag;		/* show memory stats */
-int	nflag;		/* show addresses numerically */
-int	pflag;		/* show given protocol */
-int	Pflag;		/* show given PCB */
-int	qflag;		/* only display non-zero values for output */
-int	rflag;		/* show routing tables (or routing stats) */
-int	Rflag;		/* show rdomain and rtable summary */
-int	sflag;		/* show protocol statistics */
-int	tflag;		/* show i/f watchdog timers */
-int	vflag;		/* be verbose */
-int	Wflag;		/* show net80211 protocol statistics */
+extern int	mflag;		/* show memory stats */
+extern int	nflag;		/* show addresses numerically */
+extern int	pflag;		/* show given protocol */
+extern int	Pflag;		/* show given PCB */
+extern int qflag;		/* only display non-zero values for output */
+extern int	rflag;		/* show routing tables (or routing stats) */
+extern int	Rflag;		/* show rdomain and rtable summary */
+extern int	sflag;		/* show protocol statistics */
+extern int	tflag;		/* show i/f watchdog timers */
+extern int	vflag;		/* be verbose */
+extern int	Wflag;		/* show net80211 protocol statistics */
 
-int	interval;	/* repeat interval for i/f stats */
+extern int	interval;	/* repeat interval for i/f stats */
 
-char	*interface;	/* desired i/f for stats, or NULL for all i/fs */
+extern char	*interface;	/* desired i/f for stats, or NULL for all i/fs */
 
-int	af;		/* address family */
+extern int	af;		/* address family */
 
 extern	char *__progname; /* program name, from crt0.o */
 

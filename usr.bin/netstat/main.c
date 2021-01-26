@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.120 2020/06/16 14:03:42 jmc Exp $	*/
+/*	$OpenBSD: main.c,v 1.121 2021/01/26 18:22:45 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -105,6 +105,35 @@ static struct protox *knownname(char *);
 void gettable(u_int);
 
 kvm_t *kvmd;
+
+int     Aflag;          /* show addresses of protocol control block */
+int     aflag;          /* show all sockets (including servers) */
+int     Bflag;          /* show TCP send and receive buffer sizes */
+int     bflag;          /* show bytes instead of packets */
+int     dflag;          /* show i/f dropped packets */
+int     Fflag;          /* show routes whose gateways are in specified AF */
+int     gflag;          /* show group (multicast) routing or stats */
+int     hflag;          /* print human numbers */
+int     iflag;          /* show interfaces */
+int     lflag;          /* show only listening sockets (only servers), */
+                        /* with -g, show routing table with use and ref */
+int     mflag;          /* show memory stats */
+int     nflag;          /* show addresses numerically */
+int     pflag;          /* show given protocol */
+int     Pflag;          /* show given PCB */
+int     qflag;          /* only display non-zero values for output */
+int     rflag;          /* show routing tables (or routing stats) */
+int     Rflag;          /* show rdomain and rtable summary */
+int     sflag;          /* show protocol statistics */
+int     tflag;          /* show i/f watchdog timers */
+int     vflag;          /* be verbose */
+int     Wflag;          /* show net80211 protocol statistics */
+
+int     interval;       /* repeat interval for i/f stats */
+
+char    *interface;     /* desired i/f for stats, or NULL for all i/fs */
+
+int     af;             /* address family */
 
 int
 main(int argc, char *argv[])
