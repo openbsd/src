@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.180 2021/01/21 16:46:47 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.181 2021/01/26 23:06:23 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -334,6 +334,7 @@ struct iked_dsa {
 	void		*dsa_key;	/* parsed public or private key */
 	int		 dsa_hmac;	/* HMAC or public/private key */
 	int		 dsa_sign;	/* Sign or verify operation */
+	uint32_t	 dsa_flags;	/* State flags */
 };
 
 struct iked_id {

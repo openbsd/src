@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.31 2020/12/06 19:46:42 tobhe Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.32 2021/01/26 23:06:23 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -139,6 +139,7 @@ static const uint8_t rsapss_sha512nt[] = {
 };
 
 #define FLAG_RSA_PSS	0x00001
+int force_rsa_pss = 0;	/* XXX move to API */
 
 static const struct {
 	int		 sc_keytype;
@@ -167,7 +168,7 @@ static const struct {
 	    FLAG_RSA_PSS },
 };
 
-int	_dsa_verify_init(struct iked_dsa *, const uint8_t *, size_t, int *);
+int	_dsa_verify_init(struct iked_dsa *, const uint8_t *, size_t);
 int	_dsa_verify_prepare(struct iked_dsa *, uint8_t **, size_t *,
 	    uint8_t **);
 int	_dsa_sign_encode(struct iked_dsa *, uint8_t *, size_t, size_t *);
@@ -880,14 +881,12 @@ dsa_setkey(struct iked_dsa *dsa, void *key, size_t keylen, uint8_t type)
 }
 
 int
-_dsa_verify_init(struct iked_dsa *dsa, const uint8_t *sig, size_t len,
-    int *flags)
+_dsa_verify_init(struct iked_dsa *dsa, const uint8_t *sig, size_t len)
 {
 	uint8_t			 oidlen;
 	size_t			 i;
 	int			 keytype;
 
-	*flags = 0;
 	if (dsa->dsa_priv != NULL)
 		return (0);
 	/*
@@ -926,7 +925,7 @@ _dsa_verify_init(struct iked_dsa *dsa, const uint8_t *sig, size_t len,
 		    memcmp(sig + 1, schemes[i].sc_oid,
 		    schemes[i].sc_len) == 0) {
 			dsa->dsa_priv = (*schemes[i].sc_md)();
-			*flags = schemes[i].sc_flags;
+			dsa->dsa_flags = schemes[i].sc_flags;
 			log_debug("%s: signature scheme %zd selected",
 			    __func__, i);
 			return (0);
@@ -939,7 +938,7 @@ _dsa_verify_init(struct iked_dsa *dsa, const uint8_t *sig, size_t len,
 int
 dsa_init(struct iked_dsa *dsa, const void *buf, size_t len)
 {
-	int	 	 ret, flags = 0;
+	int	 	 ret;
 	EVP_PKEY_CTX	*pctx = NULL;
 
 	if (dsa->dsa_hmac) {
@@ -949,21 +948,24 @@ dsa_init(struct iked_dsa *dsa, const void *buf, size_t len)
 		return (0);
 	}
 
-	if (dsa->dsa_sign)
-		ret = EVP_DigestSignInit(dsa->dsa_ctx, NULL, dsa->dsa_priv,
+	if (dsa->dsa_sign) {
+		if (force_rsa_pss &&
+		    EVP_PKEY_base_id(dsa->dsa_key) == EVP_PKEY_RSA)
+			dsa->dsa_flags = FLAG_RSA_PSS;
+		ret = EVP_DigestSignInit(dsa->dsa_ctx, &pctx, dsa->dsa_priv,
 		    NULL, dsa->dsa_key);
-	else {
-		/* set dsa_priv */
-		if ((ret = _dsa_verify_init(dsa, buf, len, &flags)) != 0)
+	} else {
+		/* sets dsa_priv, dsa_flags */
+		if ((ret = _dsa_verify_init(dsa, buf, len)) != 0)
 			return (ret);
 		ret = EVP_DigestVerifyInit(dsa->dsa_ctx, &pctx, dsa->dsa_priv,
 		    NULL, dsa->dsa_key);
-		if (ret == 1 && flags == FLAG_RSA_PSS) {
-			if (EVP_PKEY_CTX_set_rsa_padding(pctx,
-			    RSA_PKCS1_PSS_PADDING) <= 0 ||
-			    EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, -1) <= 0)
-				return (-1);
-		}
+	}
+	if (ret == 1 && dsa->dsa_flags == FLAG_RSA_PSS) {
+		if (EVP_PKEY_CTX_set_rsa_padding(pctx,
+		    RSA_PKCS1_PSS_PADDING) <= 0 ||
+		    EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, -1) <= 0)
+			return (-1);
 	}
 
 	return (ret == 1 ? 0 : -1);
@@ -1001,6 +1003,7 @@ _dsa_sign_encode(struct iked_dsa *dsa, uint8_t *ptr, size_t len, size_t *offp)
 	for (i = 0; i < nitems(schemes); i++) {
 		/* XXX should avoid calling sc_md() each time... */
 		if (keytype == schemes[i].sc_keytype &&
+		    dsa->dsa_flags == schemes[i].sc_flags &&
 		    (dsa->dsa_priv == (*schemes[i].sc_md)()))
 			break;
 	}
