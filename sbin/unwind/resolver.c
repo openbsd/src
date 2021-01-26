@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.135 2021/01/25 16:56:59 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.136 2021/01/26 12:46:46 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1120,6 +1120,7 @@ new_resolver(enum uw_resolver_type type, enum uw_resolver_state state)
 		return;
 
 	switch (state) {
+	case DEAD:
 	case UNKNOWN:
 		check_resolver(resolvers[type]);
 		break;
@@ -1129,9 +1130,6 @@ new_resolver(enum uw_resolver_type type, enum uw_resolver_state state)
 	case RESOLVING:
 		resolvers[type]->state = state;
 		break;
-	default:
-		fatalx("%s: invalid resolver state: %s", __func__,
-		    uw_resolver_state_str[state]);
 	}
 }
 
