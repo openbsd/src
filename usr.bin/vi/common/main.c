@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.41 2017/11/10 18:31:36 martijn Exp $	*/
+/*	$OpenBSD: main.c,v 1.42 2021/01/26 18:19:43 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -34,6 +34,8 @@
 static void	 attach(GS *);
 #endif
 static int	 v_obsolete(char *[]);
+
+enum pmode pmode;
 
 /*
  * editor --
