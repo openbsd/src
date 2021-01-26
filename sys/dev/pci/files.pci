@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.352 2020/07/17 06:33:07 dlg Exp $
+#	$OpenBSD: files.pci,v 1.353 2021/01/26 08:01:09 deraadt Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -718,7 +718,7 @@ attach	vic at pci
 file	dev/pci/if_vic.c		vic
 
 # VMware VMXNET3 virtual interface
-device	vmx: ether, ifnet, ifmedia, stoeplitz, intrmap
+device	vmx: ether, ifnet, ifmedia, intrmap, stoeplitz
 attach	vmx at pci
 file	dev/pci/if_vmx.c		vmx
 
@@ -831,7 +831,7 @@ attach	bnxt at pci
 file	dev/pci/if_bnxt.c		bnxt
 
 # Mellanox ConnectX-4 and later
-device  mcx: ether, ifnet, ifmedia, stoeplitz
+device  mcx: ether, ifnet, ifmedia, intrmap, stoeplitz
 attach  mcx at pci
 file    dev/pci/if_mcx.c                mcx
 
