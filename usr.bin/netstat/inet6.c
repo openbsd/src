@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.54 2019/12/08 11:08:22 sashan Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.55 2021/01/26 18:22:35 deraadt Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -58,8 +58,6 @@
 #include <unistd.h>
 #include <limits.h>
 #include "netstat.h"
-
-struct	socket sockb;
 
 char	*inet6name(struct in6_addr *);
 

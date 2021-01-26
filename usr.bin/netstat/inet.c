@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.170 2021/01/17 05:23:34 visa Exp $	*/
+/*	$OpenBSD: inet.c,v 1.171 2021/01/26 18:22:35 deraadt Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -87,7 +87,6 @@
 
 struct	inpcb inpcb;
 struct	tcpcb tcpcb;
-struct	socket sockb;
 
 char	*inetname(struct in_addr *);
 void	inetprint(struct in_addr *, in_port_t, const char *, int);
