@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.201 2020/10/14 16:57:33 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.202 2021/01/26 18:47:08 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2658,8 +2658,8 @@ ssl3_read_internal(SSL *s, void *buf, int len, int peek)
 	    SSL3_RT_APPLICATION_DATA, buf, len, peek);
 	if ((ret == -1) && (S3I(s)->in_read_app_data == 2)) {
 		/*
-		 * ssl3_read_bytes decided to call s->internal->handshake_func, which
-		 * called ssl3_read_bytes to read handshake data.
+		 * ssl3_read_bytes decided to call s->internal->handshake_func,
+		 * which called ssl3_read_bytes to read handshake data.
 		 * However, ssl3_read_bytes actually found application data
 		 * and thinks that application data makes sense here; so disable
 		 * handshake processing and try to read application data again.
