@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.110 2021/01/25 14:14:42 mglocker Exp $ */
+/*	$OpenBSD: ugen.c,v 1.111 2021/01/27 08:32:46 mglocker Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -107,16 +107,16 @@ struct ugen_softc {
 	u_char sc_secondary;
 };
 
-void ugenintr(struct usbd_xfer *xfer, void *addr, usbd_status status);
-void ugen_isoc_rintr(struct usbd_xfer *xfer, void *addr, usbd_status status);
+void ugenintr(struct usbd_xfer *, void *, usbd_status);
+void ugen_isoc_rintr(struct usbd_xfer *, void *, usbd_status);
 int ugen_do_read(struct ugen_softc *, int, struct uio *, int);
 int ugen_do_write(struct ugen_softc *, int, struct uio *, int);
 int ugen_do_ioctl(struct ugen_softc *, int, u_long, caddr_t, int,
 	struct proc *);
 int ugen_do_close(struct ugen_softc *, int, int);
-int ugen_set_config(struct ugen_softc *sc, int configno);
+int ugen_set_config(struct ugen_softc *, int configno);
 int ugen_set_interface(struct ugen_softc *, int, int);
-int ugen_get_alt_index(struct ugen_softc *sc, int ifaceidx);
+int ugen_get_alt_index(struct ugen_softc *, int ifaceidx);
 void ugen_clear_iface_eps(struct ugen_softc *, struct usbd_interface *);
 
 #define UGENUNIT(n) ((minor(n) >> 4) & 0xf)
