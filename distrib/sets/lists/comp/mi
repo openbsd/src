@@ -2096,6 +2096,7 @@
 ./usr/share/man/man3/SSL_get_ex_data_X509_STORE_CTX_idx.3
 ./usr/share/man/man3/SSL_get_ex_new_index.3
 ./usr/share/man/man3/SSL_get_fd.3
+./usr/share/man/man3/SSL_get_finished.3
 ./usr/share/man/man3/SSL_get_peer_cert_chain.3
 ./usr/share/man/man3/SSL_get_peer_certificate.3
 ./usr/share/man/man3/SSL_get_rbio.3
