@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1101 2021/01/19 22:22:23 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1102 2021/01/27 03:02:06 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6039,7 +6039,7 @@ pf_route(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 	if (ifp == NULL)
 		goto bad;
 
-	if (pd->kif->pfik_ifp != ifp) {
+	if (r->rt != PF_DUPTO && pd->kif->pfik_ifp != ifp) {
 		if (pf_test(AF_INET, PF_OUT, ifp, &m0) != PF_PASS)
 			goto bad;
 		else if (m0 == NULL)
@@ -6194,7 +6194,7 @@ pf_route6(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 	if (ifp == NULL)
 		goto bad;
 
-	if (pd->kif->pfik_ifp != ifp) {
+	if (r->rt != PF_DUPTO && pd->kif->pfik_ifp != ifp) {
 		if (pf_test(AF_INET6, PF_OUT, ifp, &m0) != PF_PASS)
 			goto bad;
 		else if (m0 == NULL)
