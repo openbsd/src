@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.65 2021/01/24 18:29:15 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.66 2021/01/27 08:30:50 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -32,6 +32,7 @@
 
 #include <errno.h>
 #include <event.h>
+#include <ifaddrs.h>
 #include <imsg.h>
 #include <netdb.h>
 #include <pwd.h>
@@ -150,6 +151,7 @@ void			 parse_blocklist(int);
 int			 bl_cmp(struct bl_node *, struct bl_node *);
 void			 free_bl(void);
 int			 pending_query_cnt(void);
+void			 check_available_af(void);
 
 struct uw_conf		*frontend_conf;
 static struct imsgev	*iev_main;
@@ -212,7 +214,7 @@ frontend(int debug, int verbose)
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
 
-	if (pledge("stdio unix recvfd", NULL) == -1)
+	if (pledge("stdio dns unix recvfd", NULL) == -1)
 		fatal("pledge");
 
 	event_init();
@@ -660,6 +662,7 @@ frontend_startup(void)
 	event_add(&ev_route, NULL);
 
 	frontend_imsg_compose_main(IMSG_STARTUP_DONE, 0, NULL, 0);
+	check_available_af();
 }
 
 void
@@ -1362,6 +1365,11 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 		frontend_imsg_compose_resolver(IMSG_REPLACE_DNS, 0,
 		    &rdns_proposal, sizeof(rdns_proposal));
 		break;
+	case RTM_NEWADDR:
+	case RTM_DELADDR:
+	case RTM_DESYNC:
+		check_available_af();
+		break;
 	default:
 		break;
 	}
@@ -1764,4 +1772,68 @@ void
 tcp_timeout(int fd, short events, void *arg)
 {
 	free_pending_query(arg);
+}
+
+void
+check_available_af()
+{
+	static int		 available_af = HAVE_IPV4 | HAVE_IPV6;
+	static int		 rtable = -1;
+	struct ifaddrs		*ifap, *ifa;
+	struct if_data		*ifa_data;
+	struct sockaddr_in	*sin4;
+	struct sockaddr_in6	*sin6;
+	int			 new_available_af = 0, ifa_rtable = -1;
+
+	if (rtable == -1)
+		rtable = getrtable();
+
+	if (getifaddrs(&ifap) != 0) {
+		log_warn("getifaddrs");
+		return;
+	}
+
+	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
+		if (ifa->ifa_addr == NULL)
+			continue;
+		switch(ifa->ifa_addr->sa_family) {
+		case AF_LINK:
+			/* AF_LINK comes before inet / inet6 on an interface */
+			ifa_data = (struct if_data *)ifa->ifa_data;
+			ifa_rtable = ifa_data->ifi_rdomain;
+			break;
+		case AF_INET:
+			if (ifa_rtable != rtable)
+				continue;
+
+			sin4 = (struct sockaddr_in *)ifa->ifa_addr;
+			if ((ntohl(sin4->sin_addr.s_addr) >> 24) ==
+			    IN_LOOPBACKNET)
+				continue;
+			new_available_af |= HAVE_IPV4;
+			break;
+		case AF_INET6:
+			if (ifa_rtable != rtable)
+				continue;
+
+			sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
+			if (IN6_IS_ADDR_LOOPBACK(&sin6->sin6_addr) ||
+			    IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr) ||
+			    IN6_IS_ADDR_MC_LINKLOCAL(&sin6->sin6_addr) ||
+			    IN6_IS_ADDR_MC_INTFACELOCAL(&sin6->sin6_addr))
+				continue;
+			new_available_af |= HAVE_IPV6;
+			break;
+		default:
+			break;
+		}
+		if (new_available_af == (HAVE_IPV4 | HAVE_IPV6))
+			break;
+	}
+	freeifaddrs(ifap);
+	if (new_available_af != available_af) {
+		available_af = new_available_af;
+		frontend_imsg_compose_resolver(IMSG_CHANGE_AFS, 0,
+		    &available_af, sizeof(available_af));
+	}
 }

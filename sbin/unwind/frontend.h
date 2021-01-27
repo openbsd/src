@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.h,v 1.8 2021/01/24 18:29:15 florian Exp $	*/
+/*	$OpenBSD: frontend.h,v 1.9 2021/01/27 08:30:50 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -16,6 +16,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#define	HAVE_IPV4	1
+#define	HAVE_IPV6	2
 
 struct trust_anchor {
 	TAILQ_ENTRY(trust_anchor)	 entry;

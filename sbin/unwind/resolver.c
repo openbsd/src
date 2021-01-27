@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.136 2021/01/26 12:46:46 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.137 2021/01/27 08:30:50 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -230,6 +230,7 @@ struct key_cache		*unified_key_cache;
 struct val_neg_cache		*unified_neg_cache;
 
 int				 dns64_present;
+int				 available_afs = HAVE_IPV4 | HAVE_IPV6;
 
 static const char * const	 as112_zones[] = {
 	/* RFC1918 */
@@ -462,13 +463,13 @@ resolver_imsg_compose_frontend(int type, pid_t pid, void *data,
 void
 resolver_dispatch_frontend(int fd, short event, void *bula)
 {
-	struct imsgev			*iev = bula;
-	struct imsgbuf			*ibuf;
-	struct imsg			 imsg;
-	struct query_imsg		*query_imsg;
-	ssize_t				 n;
-	int				 shut = 0, verbose, i;
-	char				*ta;
+	struct imsgev		*iev = bula;
+	struct imsgbuf		*ibuf;
+	struct imsg		 imsg;
+	struct query_imsg	*query_imsg;
+	ssize_t			 n;
+	int			 shut = 0, verbose, i, new_available_afs;
+	char			*ta;
 
 	ibuf = &iev->ibuf;
 
@@ -566,6 +567,18 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 				    __func__, IMSG_DATA_SIZE(imsg));
 			replace_autoconf_forwarders((struct
 			    imsg_rdns_proposal *)imsg.data);
+			break;
+		case IMSG_CHANGE_AFS:
+			if (IMSG_DATA_SIZE(imsg) !=
+			    sizeof(new_available_afs))
+				fatalx("%s: IMSG_CHANGE_AFS wrong length: %lu",
+				    __func__, IMSG_DATA_SIZE(imsg));
+			memcpy(&new_available_afs, imsg.data,
+			    sizeof(new_available_afs));
+			if (new_available_afs != available_afs) {
+				available_afs = new_available_afs;
+				restart_ub_resolvers();
+			}
 			break;
 		default:
 			log_debug("%s: unexpected imsg %d", __func__,
@@ -1248,6 +1261,28 @@ create_resolver(enum uw_resolver_type type)
 				free(res);
 				log_warnx("error setting %s: %s: %s",
 				    options[i].name, options[i].value,
+				    ub_strerror(err));
+				return (NULL);
+			}
+		}
+
+		if (!(available_afs & HAVE_IPV4)) {
+			if((err = ub_ctx_set_option(res->ctx, "do-ip4:",
+			    "no")) != 0) {
+				ub_ctx_delete(res->ctx);
+				free(res);
+				log_warnx("error setting do-ip4: no: %s",
+				    ub_strerror(err));
+				return (NULL);
+			}
+		}
+
+		if (!(available_afs & HAVE_IPV6)) {
+			if((err = ub_ctx_set_option(res->ctx, "do-ip6:",
+			    "no")) != 0) {
+				ub_ctx_delete(res->ctx);
+				free(res);
+				log_warnx("error setting do-ip6: no: %s",
 				    ub_strerror(err));
 				return (NULL);
 			}
