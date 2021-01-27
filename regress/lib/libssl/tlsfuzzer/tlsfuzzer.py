@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.21 2020/10/07 13:31:00 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.22 2021/01/27 20:16:58 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -73,7 +73,8 @@ tls13_unsupported_ciphers = [
 # Both alerts appear to be reasonable in this context, so work around this
 # in the test instead of the library.
 def generate_test_tls13_finished_args():
-    assertion = "Expected alert description \"decode_error\" does not match received \"decrypt_error\""
+    assertion = "Expected alert description \"decode_error\""
+    assertion += " does not match received \"decrypt_error\""
     paddings = [
         ("TLS_AES_128_GCM_SHA256", 0, 1),
         ("TLS_AES_128_GCM_SHA256", 0, 2),
