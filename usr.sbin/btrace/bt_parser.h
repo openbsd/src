@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parser.h,v 1.10 2020/09/14 18:45:19 jasper Exp $	*/
+/*	$OpenBSD: bt_parser.h,v 1.11 2021/01/27 07:19:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Martin Pieuchot <mpi@openbsd.org>
@@ -175,8 +175,8 @@ struct bt_stmt {
 	}			 bs_act;
 };
 
-struct bt_ruleq		 g_rules;	/* Successfully parsed rules. */
-int			 g_nprobes;	/* # of probes to attach */
+extern struct bt_ruleq	 g_rules;	/* Successfully parsed rules. */
+extern int		 g_nprobes;	/* # of probes to attach */
 
 int			 btparse(const char *, size_t, const char *, int);
 
