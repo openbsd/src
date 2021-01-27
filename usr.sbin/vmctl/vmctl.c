@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.75 2020/09/02 19:57:33 tb Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.76 2021/01/27 07:21:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -48,6 +48,8 @@ uint32_t info_id;
 char info_name[VMM_MAX_NAME_LEN];
 enum actions info_action;
 unsigned int info_flags;
+
+struct imsgbuf *ibuf;
 
 /*
  * vm_start

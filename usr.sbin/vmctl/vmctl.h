@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.h,v 1.33 2019/12/17 09:43:00 kn Exp $	*/
+/*	$OpenBSD: vmctl.h,v 1.34 2021/01/27 07:21:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -71,7 +71,7 @@ struct ctl_command {
 	int			 has_pledge;
 };
 
-struct imsgbuf	*ibuf;
+extern struct imsgbuf	*ibuf;
 
 /* main.c */
 int	 vmmaction(struct parse_result *);
