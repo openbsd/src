@@ -33,6 +33,9 @@
 #define yypv    c_pv
 #define yys     c_s
 #define yyss    c_ss
+#define yysslim c_sslimit
+#define yyssp   c_ssp
+#define yystacksize c_stacksize
 #define yy_yys  c_yys
 #define yystate c_state
 #define yytmp   c_tmp
