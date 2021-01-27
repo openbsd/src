@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.88 2021/01/21 08:13:59 kn Exp $ */
+/* $OpenBSD: doas.c,v 1.89 2021/01/27 17:02:50 millert Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -136,7 +136,7 @@ static int
 permit(uid_t uid, gid_t *groups, int ngroups, const struct rule **lastr,
     uid_t target, const char *cmd, const char **cmdargs)
 {
-	int i;
+	size_t i;
 
 	*lastr = NULL;
 	for (i = 0; i < nrules; i++) {

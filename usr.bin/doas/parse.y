@@ -1,4 +1,4 @@
-/* $OpenBSD: parse.y,v 1.28 2020/10/09 07:43:38 kn Exp $ */
+/* $OpenBSD: parse.y,v 1.29 2021/01/27 17:02:50 millert Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -47,8 +47,8 @@ typedef struct {
 FILE *yyfp;
 
 struct rule **rules;
-int nrules;
-static int maxrules;
+size_t nrules;
+static size_t maxrules;
 
 int parse_errors = 0;
 
@@ -95,12 +95,12 @@ rule:		action ident target cmd {
 			r->cmdargs = $4.cmdargs;
 			if (nrules == maxrules) {
 				if (maxrules == 0)
-					maxrules = 63;
-				else
-					maxrules *= 2;
-				if (!(rules = reallocarray(rules, maxrules,
-				    sizeof(*rules))))
+					maxrules = 32;
+				rules = reallocarray(rules, maxrules,
+				    2 * sizeof(*rules));
+				if (!rules)
 					errx(1, "can't allocate rules");
+				maxrules *= 2;
 			}
 			rules[nrules++] = r;
 		} ;
@@ -222,7 +222,8 @@ int
 yylex(void)
 {
 	char buf[1024], *ebuf, *p, *str;
-	int i, c, quotes = 0, escape = 0, qpos = -1, nonkw = 0;
+	int c, quotes = 0, escape = 0, qpos = -1, nonkw = 0;
+	size_t i;
 
 	p = buf;
 	ebuf = buf + sizeof(buf);
