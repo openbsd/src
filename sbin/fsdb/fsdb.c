@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsdb.c,v 1.33 2020/05/28 15:48:28 otto Exp $	*/
+/*	$OpenBSD: fsdb.c,v 1.34 2021/01/27 05:03:25 deraadt Exp $	*/
 /*	$NetBSD: fsdb.c,v 1.7 1997/01/11 06:50:53 lukem Exp $	*/
 
 /*-
@@ -69,6 +69,53 @@ static int dotime(char *, time_t *, int32_t *);
 int returntosingle = 0;
 union dinode *curinode;
 ino_t curinum;
+
+struct inostatlist *inostathead;
+
+struct bufarea bufhead;		/* head of list of other blks in filesys */
+struct bufarea sblk;		/* file system superblock */
+struct bufarea asblk;		/* alternate file system superblock */
+struct bufarea *pdirbp;		/* current directory contents */
+struct bufarea *pbp;		/* current inode block */
+
+struct dups *duplist;		/* head of dup list */
+struct dups *muldup;		/* end of unique duplicate dup block numbers */
+
+struct zlncnt *zlnhead;		/* head of zero link count list */
+
+struct inoinfo **inphead, **inpsort;
+
+extern long numdirs, listmax, inplast;
+
+long	secsize;		/* actual disk sector size */
+char	nflag;			/* assume a no response */
+char	yflag;			/* assume a yes response */
+daddr_t	bflag;			/* location of alternate super block */
+int	debug;			/* output debugging info */
+int	cvtlevel;		/* convert to newer file system format */
+char    usedsoftdep;            /* just fix soft dependency inconsistencies */
+int	preen;			/* just fix normal inconsistencies */
+char    resolved;               /* cleared if unresolved changes => not clean */
+char	havesb;			/* superblock has been read */
+char	skipclean;		/* skip clean file systems if preening */
+int	fsmodified;		/* 1 => write done to file system */
+int	fsreadfd;		/* file descriptor for reading file system */
+int	fswritefd;		/* file descriptor for writing file system */
+int	rerun;			/* rerun fsck.  Only used in non-preen mode */
+
+daddr_t	maxfsblock;		/* number of blocks in the file system */
+char	*blockmap;		/* ptr to primary blk allocation map */
+ino_t	maxino;			/* number of inodes in file system */
+ino_t	lastino;		/* last inode in use */
+
+ino_t	lfdir;			/* lost & found directory inode number */
+
+daddr_t	n_blks;			/* number of blocks in use */
+int64_t	n_files;		/* number of files in use */
+
+struct ufs1_dinode ufs1_zino;
+struct ufs2_dinode ufs2_zino;
+
 
 static void
 usage(void)

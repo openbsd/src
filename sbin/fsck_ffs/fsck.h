@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.h,v 1.33 2020/07/13 06:52:53 otto Exp $	*/
+/*	$OpenBSD: fsck.h,v 1.34 2021/01/27 05:03:25 deraadt Exp $	*/
 /*	$NetBSD: fsck.h,v 1.13 1996/10/11 20:15:46 thorpej Exp $	*/
 
 /*
@@ -86,7 +86,7 @@ struct inostat {
  * Inode state information is contained on per cylinder group lists
  * which are described by the following structure.
  */
-struct inostatlist {
+extern struct inostatlist {
 	long    il_numalloced;  /* number of inodes allocated in this cg */
 	struct inostat *il_stat;/* inostat info for this cylinder group */
 } *inostathead;
@@ -133,12 +133,12 @@ struct bufarea {
 #define	B_INUSE 1
 
 #define	MINBUFS		5	/* minimum number of buffers required */
-struct bufarea bufhead;		/* head of list of other blks in filesys */
-struct bufarea sblk;		/* file system superblock */
-struct bufarea asblk;		/* alternate file system superblock */
-struct bufarea *pdirbp;		/* current directory contents */
-struct bufarea *pbp;		/* current inode block */
-struct bufarea *getdatablk(daddr_t, long);
+extern struct bufarea bufhead;		/* head of list of other blks in filesys */
+extern struct bufarea sblk;		/* file system superblock */
+extern struct bufarea asblk;		/* alternate file system superblock */
+extern struct bufarea *pdirbp;		/* current directory contents */
+extern struct bufarea *pbp;		/* current inode block */
+extern struct bufarea *getdatablk(daddr_t, long);
 
 #define	dirty(bp)	(bp)->b_dirty = 1
 #define	initbarea(bp) \
@@ -195,8 +195,8 @@ struct dups {
 	struct dups *next;
 	daddr_t dup;
 };
-struct dups *duplist;		/* head of dup list */
-struct dups *muldup;		/* end of unique duplicate dup block numbers */
+extern struct dups *duplist;		/* head of dup list */
+extern struct dups *muldup;		/* end of unique duplicate dup block numbers */
 
 /*
  * Linked list of inodes with zero link counts.
@@ -205,12 +205,12 @@ struct zlncnt {
 	struct zlncnt *next;
 	ino_t zlncnt;
 };
-struct zlncnt *zlnhead;		/* head of zero link count list */
+extern struct zlncnt *zlnhead;		/* head of zero link count list */
 
 /*
  * Inode cache data structures.
  */
-struct inoinfo {
+extern struct inoinfo {
 	struct	inoinfo *i_nexthash;	/* next entry in hash chain */
 	struct	inoinfo	*i_child, *i_sibling;
 	size_t	i_isize;		/* size of inode */
@@ -223,33 +223,33 @@ struct inoinfo {
 
 extern long numdirs, listmax, inplast;
 
-long	secsize;		/* actual disk sector size */
-char	nflag;			/* assume a no response */
-char	yflag;			/* assume a yes response */
-daddr_t	bflag;			/* location of alternate super block */
-int	debug;			/* output debugging info */
-int	cvtlevel;		/* convert to newer file system format */
-char    usedsoftdep;            /* just fix soft dependency inconsistencies */
-int	preen;			/* just fix normal inconsistencies */
-char    resolved;               /* cleared if unresolved changes => not clean */
-char	havesb;			/* superblock has been read */
-char	skipclean;		/* skip clean file systems if preening */
-int	fsmodified;		/* 1 => write done to file system */
-int	fsreadfd;		/* file descriptor for reading file system */
-int	fswritefd;		/* file descriptor for writing file system */
-int	rerun;			/* rerun fsck.  Only used in non-preen mode */
+extern long	secsize;		/* actual disk sector size */
+extern char	nflag;			/* assume a no response */
+extern char	yflag;			/* assume a yes response */
+extern daddr_t	bflag;			/* location of alternate super block */
+extern int	debug;			/* output debugging info */
+extern int	cvtlevel;		/* convert to newer file system format */
+extern char    usedsoftdep;            /* just fix soft dependency inconsistencies */
+extern int	preen;			/* just fix normal inconsistencies */
+extern char    resolved;               /* cleared if unresolved changes => not clean */
+extern char	havesb;			/* superblock has been read */
+extern char	skipclean;		/* skip clean file systems if preening */
+extern int	fsmodified;		/* 1 => write done to file system */
+extern int	fsreadfd;		/* file descriptor for reading file system */
+extern int	fswritefd;		/* file descriptor for writing file system */
+extern int	rerun;			/* rerun fsck.  Only used in non-preen mode */
 
-daddr_t	maxfsblock;		/* number of blocks in the file system */
-char	*blockmap;		/* ptr to primary blk allocation map */
-ino_t	maxino;			/* number of inodes in file system */
-ino_t	lastino;		/* last inode in use */
+extern daddr_t	maxfsblock;		/* number of blocks in the file system */
+extern char	*blockmap;		/* ptr to primary blk allocation map */
+extern ino_t	maxino;			/* number of inodes in file system */
+extern ino_t	lastino;		/* last inode in use */
 
-ino_t	lfdir;			/* lost & found directory inode number */
-char	*lfname;		/* lost & found directory name */
-int	lfmode;			/* lost & found directory creation mode */
+extern ino_t	lfdir;			/* lost & found directory inode number */
+extern char	*lfname;		/* lost & found directory name */
+extern int	lfmode;			/* lost & found directory creation mode */
 
-daddr_t	n_blks;			/* number of blocks in use */
-int64_t	n_files;		/* number of files in use */
+extern daddr_t	n_blks;			/* number of blocks in use */
+extern int64_t	n_files;		/* number of files in use */
 
 #define	clearinode(dp)	\
 	if (sblock.fs_magic == FS_UFS1_MAGIC) {	\
@@ -258,8 +258,8 @@ int64_t	n_files;		/* number of files in use */
 		(dp)->dp2 = ufs2_zino;		\
 	}
 
-struct ufs1_dinode ufs1_zino;
-struct ufs2_dinode ufs2_zino;
+extern struct ufs1_dinode ufs1_zino;
+extern struct ufs2_dinode ufs2_zino;
 
 #define	setbmap(blkno)	setbit(blockmap, blkno)
 #define	testbmap(blkno)	isset(blockmap, blkno)
@@ -280,5 +280,5 @@ void *Malloc(size_t);
 void *Calloc(size_t, size_t);
 void *Reallocarray(void *, size_t, size_t);
 
-int	(*info_fn)(char *, size_t);
-char	*info_filesys;
+extern int	(*info_fn)(char *, size_t);
+extern char	*info_filesys;

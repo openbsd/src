@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.28 2018/09/24 21:26:02 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.29 2021/01/27 05:03:23 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.1 1997/06/11 11:21:50 bouyer Exp $	*/
 
 /*
@@ -58,6 +58,49 @@ static int	argtoi(int, char *, char *, int);
 static int	checkfilesys(char *, char *, long, int);
 static  void usage(void);
 
+struct bufarea bufhead;		/* head of list of other blks in filesys */
+struct bufarea sblk;		/* file system superblock */
+struct bufarea asblk;		/* first alternate superblock */
+struct bufarea *pdirbp;		/* current directory contents */
+struct bufarea *pbp;		/* current inode block */
+struct bufarea *getdatablk(daddr32_t, long);
+struct m_ext2fs sblock;
+
+struct dups *duplist;		/* head of dup list */
+struct dups *muldup;		/* end of unique duplicate dup block numbers */
+
+struct zlncnt *zlnhead;		/* head of zero link count list */
+
+struct inoinfo **inphead, **inpsort;
+long numdirs, listmax, inplast;
+
+long	secsize;		/* actual disk sector size */
+char	nflag;			/* assume a no response */
+char	yflag;			/* assume a yes response */
+int	bflag;			/* location of alternate super block */
+int	debug;			/* output debugging info */
+int	preen;			/* just fix normal inconsistencies */
+char	havesb;			/* superblock has been read */
+char	skipclean;		/* skip clean file systems if preening */
+int	fsmodified;		/* 1 => write done to file system */
+int	fsreadfd;		/* file descriptor for reading file system */
+int	fswritefd;		/* file descriptor for writing file system */
+int	rerun;			/* rerun fsck.  Only used in non-preen mode */
+
+daddr32_t	maxfsblock;		/* number of blocks in the file system */
+char	*blockmap;		/* ptr to primary blk allocation map */
+ino_t	maxino;			/* number of inodes in file system */
+ino_t	lastino;		/* last inode in use */
+char	*statemap;		/* ptr to inode state table */
+u_char	*typemap;		/* ptr to inode type table */
+int16_t	*lncntp;		/* ptr to link count table */
+
+ino_t	lfdir;			/* lost & found directory inode number */
+
+daddr32_t	n_blks;			/* number of blocks in use */
+daddr32_t	n_files;		/* number of files in use */
+
+struct	ext2fs_dinode zino;
 
 int
 main(int argc, char *argv[])

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.h,v 1.12 2015/01/19 18:20:47 deraadt Exp $	*/
+/*	$OpenBSD: fsck.h,v 1.13 2021/01/27 05:03:23 deraadt Exp $	*/
 /*	$NetBSD: fsck.h,v 1.1 1997/06/11 11:21:47 bouyer Exp $	*/
 
 /*
@@ -68,13 +68,13 @@ struct bufarea {
 #define	B_INUSE 1
 
 #define	MINBUFS		5	/* minimum number of buffers required */
-struct bufarea bufhead;		/* head of list of other blks in filesys */
-struct bufarea sblk;		/* file system superblock */
-struct bufarea asblk;		/* first alternate superblock */
-struct bufarea *pdirbp;		/* current directory contents */
-struct bufarea *pbp;		/* current inode block */
-struct bufarea *getdatablk(daddr32_t, long);
-struct m_ext2fs sblock;
+extern struct bufarea bufhead;		/* head of list of other blks in filesys */
+extern struct bufarea sblk;		/* file system superblock */
+extern struct bufarea asblk;		/* first alternate superblock */
+extern struct bufarea *pdirbp;		/* current directory contents */
+extern struct bufarea *pbp;		/* current inode block */
+extern struct bufarea *getdatablk(daddr32_t, long);
+extern struct m_ext2fs sblock;
 
 #define	dirty(bp)	(bp)->b_dirty = 1
 #define	initbarea(bp) \
@@ -130,8 +130,8 @@ struct dups {
 	struct dups *next;
 	daddr32_t dup;
 };
-struct dups *duplist;		/* head of dup list */
-struct dups *muldup;		/* end of unique duplicate dup block numbers */
+extern struct dups *duplist;		/* head of dup list */
+extern struct dups *muldup;		/* end of unique duplicate dup block numbers */
 
 /*
  * Linked list of inodes with zero link counts.
@@ -140,12 +140,12 @@ struct zlncnt {
 	struct zlncnt *next;
 	ino_t zlncnt;
 };
-struct zlncnt *zlnhead;		/* head of zero link count list */
+extern struct zlncnt *zlnhead;		/* head of zero link count list */
 
 /*
  * Inode cache data structures.
  */
-struct inoinfo {
+extern struct inoinfo {
 	struct	inoinfo *i_nexthash;	/* next entry in hash chain */
 	struct	inoinfo	*i_child, *i_sibling, *i_parentp;
 	ino_t	i_number;		/* inode number of this entry */
@@ -155,38 +155,38 @@ struct inoinfo {
 	u_int	i_numblks;		/* size of block array in bytes */
 	daddr32_t	i_blks[1];		/* actually longer */
 } **inphead, **inpsort;
-long numdirs, listmax, inplast;
+extern long numdirs, listmax, inplast;
 
-long	secsize;		/* actual disk sector size */
-char	nflag;			/* assume a no response */
-char	yflag;			/* assume a yes response */
-int	bflag;			/* location of alternate super block */
-int	debug;			/* output debugging info */
-int	preen;			/* just fix normal inconsistencies */
-char	havesb;			/* superblock has been read */
-char	skipclean;		/* skip clean file systems if preening */
-int	fsmodified;		/* 1 => write done to file system */
-int	fsreadfd;		/* file descriptor for reading file system */
-int	fswritefd;		/* file descriptor for writing file system */
-int	rerun;			/* rerun fsck.  Only used in non-preen mode */
+extern long	secsize;		/* actual disk sector size */
+extern char	nflag;			/* assume a no response */
+extern char	yflag;			/* assume a yes response */
+extern int	bflag;			/* location of alternate super block */
+extern int	debug;			/* output debugging info */
+extern int	preen;			/* just fix normal inconsistencies */
+extern char	havesb;			/* superblock has been read */
+extern char	skipclean;		/* skip clean file systems if preening */
+extern int	fsmodified;		/* 1 => write done to file system */
+extern int	fsreadfd;		/* file descriptor for reading file system */
+extern int	fswritefd;		/* file descriptor for writing file system */
+extern int	rerun;			/* rerun fsck.  Only used in non-preen mode */
 
-daddr32_t	maxfsblock;		/* number of blocks in the file system */
-char	*blockmap;		/* ptr to primary blk allocation map */
-ino_t	maxino;			/* number of inodes in file system */
-ino_t	lastino;		/* last inode in use */
-char	*statemap;		/* ptr to inode state table */
-u_char	*typemap;		/* ptr to inode type table */
-int16_t	*lncntp;		/* ptr to link count table */
+extern daddr32_t	maxfsblock;		/* number of blocks in the file system */
+extern char	*blockmap;		/* ptr to primary blk allocation map */
+extern ino_t	maxino;			/* number of inodes in file system */
+extern ino_t	lastino;		/* last inode in use */
+extern char	*statemap;		/* ptr to inode state table */
+extern u_char	*typemap;		/* ptr to inode type table */
+extern int16_t	*lncntp;		/* ptr to link count table */
 
-ino_t	lfdir;			/* lost & found directory inode number */
-char	*lfname;		/* lost & found directory name */
-int	lfmode;			/* lost & found directory creation mode */
+extern ino_t	lfdir;			/* lost & found directory inode number */
+extern char	*lfname;		/* lost & found directory name */
+extern int	lfmode;			/* lost & found directory creation mode */
 
-daddr32_t	n_blks;			/* number of blocks in use */
-daddr32_t	n_files;		/* number of files in use */
+extern daddr32_t	n_blks;			/* number of blocks in use */
+extern daddr32_t	n_files;		/* number of files in use */
 
 #define	clearinode(dp)	(*(dp) = zino)
-struct	ext2fs_dinode zino;
+extern struct	ext2fs_dinode zino;
 
 #define	setbmap(blkno)	setbit(blockmap, blkno)
 #define	testbmap(blkno)	isset(blockmap, blkno)

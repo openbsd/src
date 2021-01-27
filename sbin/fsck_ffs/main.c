@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.52 2018/09/24 21:26:02 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.53 2021/01/27 05:03:25 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1996/10/11 20:15:48 thorpej Exp $	*/
 
 /*
@@ -53,6 +53,52 @@ int	checkfilesys(char *, char *, long, int);
 int	main(int, char *[]);
 
 extern char *__progname;
+
+struct inostatlist *inostathead;
+
+struct bufarea bufhead;		/* head of list of other blks in filesys */
+struct bufarea sblk;		/* file system superblock */
+struct bufarea asblk;		/* alternate file system superblock */
+struct bufarea *pdirbp;		/* current directory contents */
+struct bufarea *pbp;		/* current inode block */
+
+struct dups *duplist;		/* head of dup list */
+struct dups *muldup;		/* end of unique duplicate dup block numbers */
+
+struct zlncnt *zlnhead;		/* head of zero link count list */
+
+struct inoinfo **inphead, **inpsort;
+
+extern long numdirs, listmax, inplast;
+
+long	secsize;		/* actual disk sector size */
+char	nflag;			/* assume a no response */
+char	yflag;			/* assume a yes response */
+daddr_t	bflag;			/* location of alternate super block */
+int	debug;			/* output debugging info */
+int	cvtlevel;		/* convert to newer file system format */
+char    usedsoftdep;            /* just fix soft dependency inconsistencies */
+int	preen;			/* just fix normal inconsistencies */
+char    resolved;               /* cleared if unresolved changes => not clean */
+char	havesb;			/* superblock has been read */
+char	skipclean;		/* skip clean file systems if preening */
+int	fsmodified;		/* 1 => write done to file system */
+int	fsreadfd;		/* file descriptor for reading file system */
+int	fswritefd;		/* file descriptor for writing file system */
+int	rerun;			/* rerun fsck.  Only used in non-preen mode */
+
+daddr_t	maxfsblock;		/* number of blocks in the file system */
+char	*blockmap;		/* ptr to primary blk allocation map */
+ino_t	maxino;			/* number of inodes in file system */
+ino_t	lastino;		/* last inode in use */
+
+ino_t	lfdir;			/* lost & found directory inode number */
+
+daddr_t	n_blks;			/* number of blocks in use */
+int64_t	n_files;		/* number of files in use */
+
+struct ufs1_dinode ufs1_zino;
+struct ufs2_dinode ufs2_zino;
 
 void
 usage(void)
