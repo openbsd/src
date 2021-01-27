@@ -1,4 +1,4 @@
-/*	$OpenBSD: relay.c,v 1.252 2021/01/09 08:53:58 denis Exp $	*/
+/*	$OpenBSD: relay.c,v 1.253 2021/01/27 20:33:05 eric Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -2128,7 +2128,7 @@ relay_tls_ctx_create_proto(struct protocol *proto, struct tls_config *tls_cfg)
  * This function is not publicy exported because it is a hack until libtls
  * has a proper privsep setup
  */
-void tls_config_skip_private_key_check(struct tls_config *config);
+void tls_config_use_fake_private_key(struct tls_config *config);
 
 int
 relay_tls_ctx_create(struct relay *rlay)
@@ -2136,8 +2136,7 @@ relay_tls_ctx_create(struct relay *rlay)
 	struct tls_config	*tls_cfg, *tls_client_cfg;
 	struct tls		*tls = NULL;
 	struct relay_cert	*cert;
-	const char		*fake_key;
-	int			 fake_keylen, keyfound = 0;
+	int			 keyfound = 0;
 	char			*buf = NULL, *cabuf = NULL, *ocspbuf = NULL;
 	off_t			 len = 0, calen = 0, ocsplen = 0;
 
@@ -2193,10 +2192,8 @@ relay_tls_ctx_create(struct relay *rlay)
 		 * parameters are hidden in an extra process that will be
 		 * contacted by the RSA engine.  The SSL/TLS library needs at
 		 * least the public key parameters in the current process.
-		 * For this we need to skip the private key check done by
-		 * libtls.
 		 */
-		tls_config_skip_private_key_check(tls_cfg);
+		tls_config_use_fake_private_key(tls_cfg);
 
 		TAILQ_FOREACH(cert, env->sc_certs, cert_entry) {
 			if (cert->cert_relayid != rlay->rl_conf.id ||
@@ -2221,15 +2218,9 @@ relay_tls_ctx_create(struct relay *rlay)
 				purge_key(&ocspbuf, ocsplen);
 			cert->cert_ocsp_fd = -1;
 
-			if ((fake_keylen = ssl_ctx_fake_private_key(buf, len,
-			    &fake_key)) == -1) {
-				/* error already printed */
-				goto err;
-			}
-
 			if (keyfound == 1 &&
 			    tls_config_set_keypair_ocsp_mem(tls_cfg, buf, len,
-			    fake_key, fake_keylen, ocspbuf, ocsplen) != 0) {
+			    NULL, 0, ocspbuf, ocsplen) != 0) {
 				log_warnx("failed to set tls certificate: %s",
 				    tls_config_error(tls_cfg));
 				goto err;
@@ -2241,7 +2232,7 @@ relay_tls_ctx_create(struct relay *rlay)
 				goto err;
 
 			if (tls_config_add_keypair_ocsp_mem(tls_cfg, buf, len,
-			    fake_key, fake_keylen, ocspbuf, ocsplen) != 0) {
+			    NULL, 0, ocspbuf, ocsplen) != 0) {
 				log_warnx("failed to add tls certificate: %s",
 				    tls_config_error(tls_cfg));
 				goto err;
@@ -2302,8 +2293,6 @@ relay_tls_inspect_create(struct relay *rlay, struct ctl_relay_event *cre)
 {
 	struct tls_config	*tls_cfg;
 	struct tls		*tls = NULL;
-	const char		*fake_key;
-	int			 fake_keylen;
 
 	/* TLS inspection: use session-specific certificate */
 	if ((tls_cfg = tls_config_new()) == NULL) {
@@ -2315,17 +2304,10 @@ relay_tls_inspect_create(struct relay *rlay, struct ctl_relay_event *cre)
 		goto err;
 	}
 
-	tls_config_skip_private_key_check(tls_cfg);
+	tls_config_use_fake_private_key(tls_cfg);
 
-	log_debug("%s: loading intercepted certificate", __func__);
-	if ((fake_keylen = ssl_ctx_fake_private_key(cre->tlscert,
-	    cre->tlscert_len, &fake_key)) == -1) {
-		/* error already printed */
-		goto err;
-	}
 	if (tls_config_set_keypair_ocsp_mem(tls_cfg,
-	    cre->tlscert, cre->tlscert_len, fake_key, fake_keylen,
-	    NULL, 0) != 0) {
+	    cre->tlscert, cre->tlscert_len, NULL, 0, NULL, 0) != 0) {
 		log_warnx("failed to set tls certificate: %s",
 		    tls_config_error(tls_cfg));
 		goto err;
