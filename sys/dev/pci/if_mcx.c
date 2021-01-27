@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.97 2021/01/25 12:27:42 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.98 2021/01/27 07:46:11 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -2831,6 +2831,12 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 		goto teardown;
 	}
 
+	msix = pci_intr_msix_count(pa->pa_pc, pa->pa_tag);
+	if (msix < 2) {
+		printf(": not enough msi-x vectors\n");
+		goto teardown;
+	}
+
 	/*
 	 * PRM makes no mention of msi interrupts, just legacy and msi-x.
 	 * mellanox support tells me legacy interrupts are not supported,
@@ -2878,7 +2884,7 @@ mcx_attach(struct device *parent, struct device *self, void *aux)
 	printf(", %s, address %s\n", intrstr,
 	    ether_sprintf(sc->sc_ac.ac_enaddr));
 
-	msix = pci_intr_msix_count(pa->pa_pc, pa->pa_tag);
+	msix--; /* admin ops took one */
 	sc->sc_intrmap = intrmap_create(&sc->sc_dev, msix, MCX_MAX_QUEUES,
 	    INTRMAP_POWEROF2);
 	if (sc->sc_intrmap == NULL) {
