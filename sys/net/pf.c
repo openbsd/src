@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1103 2021/01/27 04:46:21 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1104 2021/01/27 23:53:35 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6055,6 +6055,10 @@ pf_route(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 
 	rt = rtalloc(sintosa(dst), RT_RESOLVE, rtableid);
 	if (!rtisvalid(rt)) {
+		if (r->rt != PF_DUPTO) {
+			pf_send_icmp(m0, ICMP_UNREACH, ICMP_UNREACH_HOST,
+			    0, pd->af, s->rule.ptr, pd->rdomain);
+		}
 		ipstat_inc(ips_noroute);
 		goto bad;
 	}
@@ -6210,6 +6214,11 @@ pf_route6(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 		dst->sin6_addr.s6_addr16[1] = htons(ifp->if_index);
 	rt = rtalloc(sin6tosa(dst), RT_RESOLVE, rtableid);
 	if (!rtisvalid(rt)) {
+		if (r->rt != PF_DUPTO) {
+			pf_send_icmp(m0, ICMP6_DST_UNREACH,
+			    ICMP6_DST_UNREACH_NOROUTE, 0,
+			    pd->af, s->rule.ptr, pd->rdomain);
+ 		}
 		ip6stat_inc(ip6s_noroute);
 		goto bad;
 	}
