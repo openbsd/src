@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.18 2018/08/09 17:51:22 mestre Exp $	*/
+/*	$OpenBSD: main.c,v 1.19 2021/01/27 01:57:37 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.4 1995/04/22 10:59:10 cgd Exp $	*/
 
 /*
@@ -38,6 +38,16 @@
 
 #include "getpar.h"
 #include "trek.h"
+
+struct quad Quad[NQUADS][NQUADS];
+char Sect[NSECTS][NSECTS];
+struct event  Event[MAXEVENTS];
+struct Ship Ship;
+struct Game Game;
+struct Move Move;
+struct Param Param;
+struct Now Now;
+struct Etc Etc;
 
 /*
 **	 ####  #####	#    ####	   #####  ####	 #####	#   #
