@@ -1,4 +1,4 @@
-/*	$OpenBSD: makemap.c,v 1.73 2020/02/24 16:16:07 millert Exp $	*/
+/*	$OpenBSD: makemap.c,v 1.74 2021/01/27 07:20:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -53,7 +53,6 @@ static int	 make_aliases(DBT *, char *);
 static char	*conf_aliases(char *);
 static int	 dump_db(const char *, DBTYPE);
 
-struct smtpd	*env;
 char		*source;
 static int	 mode;
 
