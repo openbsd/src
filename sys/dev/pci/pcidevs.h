@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1952 2021/01/24 10:16:58 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1953 2021/01/27 10:47:58 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1160,6 +1160,9 @@
 #define	PCI_PRODUCT_ATI_RAVEN_VEGA_HDA	0x15de		/* Radeon Vega HD Audio */
 #define	PCI_PRODUCT_ATI_RENOIR	0x1636		/* Renoir */
 #define	PCI_PRODUCT_ATI_RENOIR_HDA	0x1637		/* Renoir HD Audio */
+#define	PCI_PRODUCT_ATI_CEZANNE	0x1638		/* Cezanne */
+#define	PCI_PRODUCT_ATI_VANGOGH	0x163f		/* Van Gogh */
+#define	PCI_PRODUCT_ATI_LUCIENNE	0x164c		/* Lucienne */
 #define	PCI_PRODUCT_ATI_RADEON_HD6500D_HDA	0x1714		/* Radeon HD 6500D HD Audio */
 #define	PCI_PRODUCT_ATI_RADEON_M241P	0x3150		/* Mobility Radeon X600 */
 #define	PCI_PRODUCT_ATI_FIREMV_2400_1	0x3151		/* FireMV 2400 */
@@ -1902,6 +1905,38 @@
 #define	PCI_PRODUCT_ATI_RADEON_RX1650_XT_2	0x72b1		/* Radeon RX1650 XT Sec */
 #define	PCI_PRODUCT_ATI_FIJI_1	0x7300		/* Fiji */
 #define	PCI_PRODUCT_ATI_FIJI_2	0x730f		/* Fiji */
+#define	PCI_PRODUCT_ATI_NAVI10_1	0x7310		/* Navi 10 */
+#define	PCI_PRODUCT_ATI_NAVI10_2	0x7312		/* Radeon Pro W5700 */
+#define	PCI_PRODUCT_ATI_NAVI10_3	0x7318		/* Navi 10 */
+#define	PCI_PRODUCT_ATI_NAVI10_4	0x7319		/* Navi 10 */
+#define	PCI_PRODUCT_ATI_NAVI10_5	0x731a		/* Navi 10 */
+#define	PCI_PRODUCT_ATI_NAVI10_6	0x731b		/* Navi 10 */
+#define	PCI_PRODUCT_ATI_NAVI10_7	0x731e		/* Navi 10 */
+#define	PCI_PRODUCT_ATI_NAVI10_8	0x731f		/* Navi 10 */
+#define	PCI_PRODUCT_ATI_NAVI14_1	0x7340		/* Navi 14 */
+#define	PCI_PRODUCT_ATI_NAVI14_2	0x7341		/* Radeon Pro W5500 */
+#define	PCI_PRODUCT_ATI_NAVI14_3	0x7347		/* Radeon Pro W5500M */
+#define	PCI_PRODUCT_ATI_NAVI14_4	0x734f		/* Navi 14 */
+#define	PCI_PRODUCT_ATI_NAVI12_1	0x7360		/* Navi 12 */
+#define	PCI_PRODUCT_ATI_NAVI12_2	0x7362		/* Navi 12 */
+#define	PCI_PRODUCT_ATI_ARCTURUS_1	0x7388		/* Arcturus */
+#define	PCI_PRODUCT_ATI_ARCTURUS_2	0x738c		/* Arcturus */
+#define	PCI_PRODUCT_ATI_ARCTURUS_3	0x738e		/* Arcturus */
+#define	PCI_PRODUCT_ATI_ARCTURUS_4	0x7390		/* Arcturus */
+#define	PCI_PRODUCT_ATI_SIENNA_CICHLID_1	0x73a0		/* Navi 21 */
+#define	PCI_PRODUCT_ATI_SIENNA_CICHLID_2	0x73a2		/* Navi 21 */
+#define	PCI_PRODUCT_ATI_SIENNA_CICHLID_3	0x73a3		/* Navi 21 */
+#define	PCI_PRODUCT_ATI_SIENNA_CICHLID_4	0x73ab		/* Navi 21 */
+#define	PCI_PRODUCT_ATI_SIENNA_CICHLID_5	0x73ae		/* Navi 21 */
+#define	PCI_PRODUCT_ATI_SIENNA_CICHLID_6	0x73bf		/* Navi 21 */
+#define	PCI_PRODUCT_ATI_NAVY_FLOUNDER_1	0x73c0		/* Navi 22 */
+#define	PCI_PRODUCT_ATI_NAVY_FLOUNDER_2	0x73c1		/* Navi 22 */
+#define	PCI_PRODUCT_ATI_NAVY_FLOUNDER_3	0x73c3		/* Navi 22 */
+#define	PCI_PRODUCT_ATI_NAVY_FLOUNDER_4	0x73df		/* Navi 22 */
+#define	PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_1	0x73e0		/* Navi 23 */
+#define	PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_2	0x73e1		/* Navi 23 */
+#define	PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_3	0x73e2		/* Navi 23 */
+#define	PCI_PRODUCT_ATI_DIMGREY_CAVEFISH_4	0x73ff		/* Navi 23 */
 #define	PCI_PRODUCT_ATI_RADEON_9000IGP	0x7834		/* Radeon 9000/9100 IGP */
 #define	PCI_PRODUCT_ATI_RADEON_RS350IGP	0x7835		/* Radeon RS350IGP */
 #define	PCI_PRODUCT_ATI_RS690_HB	0x7910		/* RS690 Host */
