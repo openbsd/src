@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.255 2020/09/23 19:11:50 martijn Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.256 2021/01/27 14:59:10 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: September 23 2020 $
+.Dd $Mdocdate: January 27 2021 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -118,13 +118,13 @@ file.
 .It Cm forward-only
 Only accept the message if the recipient results in a remote address
 after the processing of aliases or forward file.
-.It Cm lmtp Ar destination Op Ar rcpt-to
+.It Cm lmtp Ar destination Op Cm rcpt-to
 Deliver the message to an LMTP server at
 .Ar destination .
 The location may be expressed as host:port or as a UNIX socket.
 .Pp
 Optionally,
-.Ar rcpt-to
+.Cm rcpt-to
 might be specified to use the
 recipient email address (after expansion) instead of the
 local user in the LMTP session as RCPT TO.
