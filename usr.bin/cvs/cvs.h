@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.184 2017/06/01 08:08:24 joris Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.185 2021/01/27 07:18:17 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -189,7 +189,7 @@ struct cvs_var {
 	TAILQ_ENTRY(cvs_var) cv_link;
 };
 
-TAILQ_HEAD(, cvs_var) cvs_variables;
+extern TAILQ_HEAD(cvs_varhead, cvs_var) cvs_variables;
 
 #define CVS_ROOT_CONNECTED	0x01
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.87 2017/06/01 08:08:24 joris Exp $	*/
+/*	$OpenBSD: tag.c,v 1.88 2021/01/27 07:18:17 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -34,7 +34,7 @@ void	cvs_tag_local(struct cvs_file *);
 static int tag_del(struct cvs_file *);
 static int tag_add(struct cvs_file *);
 
-struct file_info_list	files_info;
+struct file_info_list	tag_files_info;
 
 static int	runflags = 0;
 static int	tag_errors = 0;
@@ -199,7 +199,7 @@ cvs_tag(int argc, char **argv)
 	if (cvs_cmdop == CVS_OP_RTAG && chdir(current_cvsroot->cr_dir) == -1)
 		fatal("cvs_tag: %s", strerror(errno));
 
-	TAILQ_INIT(&files_info);
+	TAILQ_INIT(&tag_files_info);
 	cvs_get_repository_name(".", repo, PATH_MAX);
 	line_list = cvs_trigger_getlines(CVS_PATH_TAGINFO, repo);
 
@@ -216,7 +216,7 @@ cvs_tag(int argc, char **argv)
 
 	if (line_list != NULL) {
 		if (cvs_trigger_handle(CVS_TRIGGER_TAGINFO, repo, NULL,
-		    line_list, &files_info))
+		    line_list, &tag_files_info))
 			fatal("Pre-tag check failed");
 		cvs_trigger_freelist(line_list);
 	}
@@ -229,7 +229,7 @@ cvs_tag(int argc, char **argv)
 		cvs_file_run(1, &arg, &cr);
 
 	if (line_list != NULL)
-		cvs_trigger_freeinfo(&files_info);
+		cvs_trigger_freeinfo(&tag_files_info);
 
 	return (0);
 }
@@ -309,7 +309,7 @@ cvs_tag_check_files(struct cvs_file *cf)
 	else
 		fi->tag_op = "add";
 
-	TAILQ_INSERT_TAIL(&files_info, fi, flist);
+	TAILQ_INSERT_TAIL(&tag_files_info, fi, flist);
 	return;
 
 bad:
