@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.159 2021/01/17 05:56:32 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.160 2021/01/27 02:58:03 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -205,6 +205,8 @@ KQRELE(struct kqueue *kq)
 		LIST_REMOVE(kq, kq_next);
 		fdpunlock(fdp);
 	}
+
+	KASSERT(TAILQ_EMPTY(&kq->kq_head));
 
 	free(kq->kq_knlist, M_KEVENT, kq->kq_knlistsize *
 	    sizeof(struct knlist));
@@ -1265,7 +1267,15 @@ kqueue_purge(struct proc *p, struct kqueue *kq)
 void
 kqueue_terminate(struct proc *p, struct kqueue *kq)
 {
-	KASSERT(TAILQ_EMPTY(&kq->kq_head));
+	struct knote *kn;
+
+	/*
+	 * Any remaining entries should be scan markers.
+	 * They are removed when the ongoing scans finish.
+	 */
+	KASSERT(kq->kq_count == 0);
+	TAILQ_FOREACH(kn, &kq->kq_head, kn_tqe)
+		KASSERT(kn->kn_filter == EVFILT_MARKER);
 
 	kq->kq_state |= KQ_DYING;
 	kqueue_wakeup(kq);
