@@ -1,4 +1,4 @@
-/*	$OpenBSD: gprof.c,v 1.26 2016/10/08 19:55:39 guenther Exp $	*/
+/*	$OpenBSD: gprof.c,v 1.27 2021/01/27 07:18:41 deraadt Exp $	*/
 /*	$NetBSD: gprof.c,v 1.8 1995/04/19 07:15:59 cgd Exp $	*/
 
 /*
@@ -36,6 +36,43 @@ int valcmp(const void *, const void *);
 
 static struct gmonhdr	gmonhdr;
 extern char *__progname;
+
+long    hz;
+char    *a_outname;
+char    *gmonname;
+nltype  *nl;                    /* the whole namelist */
+nltype  *npe;                   /* the virtual end of the namelist */
+int     nname;                  /* the number of function names */
+arctype *archead;               /* the head of arcs in current cycle list */
+cltype  *cyclehead;             /* the head of the list */
+int     cyclecnt;               /* the number of cycles found */
+nltype  *cyclenl;               /* cycle header namelist */
+int     ncycle;                 /* number of cycles discovered */
+int     debug;
+UNIT    *samples;
+unsigned long   s_lowpc;        /* lowpc from the profile file */
+unsigned long   s_highpc;       /* highpc from the profile file */
+unsigned long   lowpc, highpc;  /* range profiled, in UNIT's */
+unsigned sampbytes;             /* number of bytes of samples */
+int     nsamples;               /* number of samples */
+double  actime;                 /* accumulated time thus far for putprofline */
+double  totime;                 /* total time for all routines */
+double  printtime;              /* total of time being printed */
+double  scale;                  /* scale factor converting samples to pc */
+unsigned char   *textspace;     /* text space of a.out in core */
+int     cyclethreshold;         /* with -C, minimum cycle size to ignore */
+bool    aflag;                          /* suppress static functions */
+bool    bflag;                          /* blurbs, too */
+bool    cflag;                          /* discovered call graph, too */
+bool    Cflag;                          /* find cut-set to eliminate cycles */
+bool    dflag;                          /* debugging options */
+bool    eflag;                          /* specific functions excluded */
+bool    Eflag;                          /* functions excluded with time */
+bool    fflag;                          /* specific functions requested */
+bool    Fflag;                          /* functions requested with time */
+bool    kflag;                          /* arcs to be deleted */
+bool    sflag;                          /* sum multiple gmon.out files */
+bool    zflag;                          /* zero time/called functions, too */
 
 int
 main(int argc, char *argv[])
