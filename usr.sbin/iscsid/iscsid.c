@@ -1,4 +1,4 @@
-/*	$OpenBSD: iscsid.c,v 1.20 2017/01/23 08:40:07 benno Exp $ */
+/*	$OpenBSD: iscsid.c,v 1.21 2021/01/27 07:21:54 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -38,7 +38,7 @@ void		main_sig_handler(int, short, void *);
 __dead void	usage(void);
 void		shutdown_cb(int, short, void *);
 
-struct initiator *initiator;
+extern struct initiator *initiator;
 struct event exit_ev;
 int exit_rounds;
 #define ISCSI_EXIT_WAIT 5

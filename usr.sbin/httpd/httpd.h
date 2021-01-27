@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.153 2020/10/29 12:30:52 denis Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.154 2021/01/27 07:21:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -168,7 +168,7 @@ struct control_sock {
 };
 TAILQ_HEAD(control_socks, control_sock);
 
-struct {
+extern struct {
 	struct event	 ev;
 	int		 fd;
 } control_state;
@@ -230,7 +230,8 @@ enum privsep_procid {
 	PROC_SERVER,
 	PROC_LOGGER,
 	PROC_MAX
-} privsep_process;
+};
+extern enum privsep_procid privsep_process;
 
 /* Attach the control socket to the following process */
 #define PROC_CONTROL	PROC_LOGGER
@@ -438,7 +439,7 @@ struct log_file {
 	uint32_t		log_id;
 	TAILQ_ENTRY(log_file)	log_entry;
 };
-TAILQ_HEAD(log_files, log_file) log_files;
+extern TAILQ_HEAD(log_files, log_file) log_files;
 
 struct media_type {
 	char			 media_name[MEDIATYPE_NAMEMAX];

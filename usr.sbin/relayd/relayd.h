@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.263 2021/01/09 08:53:58 denis Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.264 2021/01/27 07:21:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -914,7 +914,7 @@ struct control_sock {
 };
 TAILQ_HEAD(control_socks, control_sock);
 
-struct {
+extern struct {
 	struct event	 ev;
 	int		 fd;
 } control_state;
@@ -1019,7 +1019,8 @@ enum privsep_procid {
 	PROC_PFE,
 	PROC_CA,
 	PROC_MAX
-} privsep_process;
+};
+extern enum privsep_procid privsep_process;
 
 /* Attach the control socket to the following process */
 #define PROC_CONTROL	PROC_PFE

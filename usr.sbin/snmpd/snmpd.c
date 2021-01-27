@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.c,v 1.43 2021/01/22 06:33:26 martijn Exp $	*/
+/*	$OpenBSD: snmpd.c,v 1.44 2021/01/27 07:21:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -53,6 +53,8 @@ struct snmpd	*snmpd_env;
 static struct privsep_proc procs[] = {
 	{ "snmpe", PROC_SNMPE, snmpd_dispatch_snmpe, snmpe, snmpe_shutdown },
 };
+
+enum privsep_procid privsep_process;
 
 void
 snmpd_sig_handler(int sig, short event, void *arg)

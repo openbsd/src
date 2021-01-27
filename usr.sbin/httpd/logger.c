@@ -1,4 +1,4 @@
-/*	$OpenBSD: logger.c,v 1.23 2020/12/31 14:15:40 tb Exp $	*/
+/*	$OpenBSD: logger.c,v 1.24 2021/01/27 07:21:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -44,6 +44,8 @@ int		 logger_start(void);
 int		 logger_log(struct imsg *);
 
 static uint32_t		 last_log_id = 0;
+
+struct log_files log_files;
 
 static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	logger_dispatch_parent },

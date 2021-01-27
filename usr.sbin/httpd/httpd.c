@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.c,v 1.70 2020/08/03 11:05:24 benno Exp $	*/
+/*	$OpenBSD: httpd.c,v 1.71 2021/01/27 07:21:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -66,6 +66,8 @@ static struct privsep_proc procs[] = {
 	{ "server",	PROC_SERVER, parent_dispatch_server, server },
 	{ "logger",	PROC_LOGGER, parent_dispatch_logger, logger }
 };
+
+enum privsep_procid privsep_process;
 
 void
 parent_sig_handler(int sig, short event, void *arg)

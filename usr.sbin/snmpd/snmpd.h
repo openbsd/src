@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.91 2021/01/22 06:33:26 martijn Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.92 2021/01/27 07:21:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -113,7 +113,7 @@ enum privsep_procid {
 	PROC_MAX
 };
 
-enum privsep_procid privsep_process;
+extern enum privsep_procid privsep_process;
 
 /* Attach the control socket to the following process */
 #define PROC_CONTROL	PROC_SNMPE

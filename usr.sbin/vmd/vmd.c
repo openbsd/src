@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.119 2020/09/23 19:18:18 martijn Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.120 2021/01/27 07:21:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -74,6 +74,8 @@ static struct privsep_proc procs[] = {
 	{ "control",	PROC_CONTROL,	vmd_dispatch_control, control },
 	{ "vmm",	PROC_VMM,	vmd_dispatch_vmm, vmm, vmm_shutdown },
 };
+
+enum privsep_procid privsep_process;
 
 struct event staggered_start_timer;
 
