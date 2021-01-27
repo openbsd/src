@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.152 2020/08/27 19:34:37 mglocker Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.153 2021/01/27 17:28:19 mglocker Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -644,7 +644,7 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 	if (dev->config != USB_UNCONFIG_NO) {
 		DPRINTF(("%s: free old config\n", __func__));
 		/* Free all configuration data structures. */
-		nifc = dev->cdesc->bNumInterface;
+		nifc = dev->cdesc->bNumInterfaces;
 		for (ifcidx = 0; ifcidx < nifc; ifcidx++)
 			usbd_free_iface_data(dev, ifcidx);
 		free(dev->ifaces, M_USB, nifc * sizeof(*dev->ifaces));
@@ -770,7 +770,7 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 	}
 
 	/* Allocate and fill interface data. */
-	nifc = cdp->bNumInterface;
+	nifc = cdp->bNumInterfaces;
 	dev->ifaces = mallocarray(nifc, sizeof(*dev->ifaces), M_USB,
 	    M_NOWAIT | M_ZERO);
 	if (dev->ifaces == NULL) {
@@ -918,7 +918,7 @@ usbd_probe_and_attach(struct device *parent, struct usbd_device *dev, int port,
 
  			goto fail;
 		}
-		nifaces = dev->cdesc->bNumInterface;
+		nifaces = dev->cdesc->bNumInterfaces;
 		uaa.configno = dev->cdesc->bConfigurationValue;
 		ifaces = mallocarray(nifaces, sizeof(*ifaces), M_USB, M_NOWAIT);
 		if (ifaces == NULL) {
@@ -1406,7 +1406,7 @@ usb_free_device(struct usbd_device *dev)
 	if (dev->default_pipe != NULL)
 		usbd_close_pipe(dev->default_pipe);
 	if (dev->ifaces != NULL) {
-		nifc = dev->cdesc->bNumInterface;
+		nifc = dev->cdesc->bNumInterfaces;
 		for (ifcidx = 0; ifcidx < nifc; ifcidx++)
 			usbd_free_iface_data(dev, ifcidx);
 		free(dev->ifaces, M_USB, nifc * sizeof(*dev->ifaces));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.76 2020/11/13 13:04:53 patrick Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.77 2021/01/27 17:28:19 mglocker Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -339,7 +339,7 @@ uplcom_attach(struct device *parent, struct device *self, void *aux)
 	 *   BulkIN(0x02)   |
 	 *   BulkOUT(0x83)  |
 	 */
-	if (cdesc->bNumInterface == 2) {
+	if (cdesc->bNumInterfaces == 2) {
 		err = usbd_device2interface_handle(dev,
 				UPLCOM_SECOND_IFACE_INDEX, &sc->sc_iface);
 		if (err) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.111 2021/01/27 08:32:46 mglocker Exp $ */
+/*	$OpenBSD: ugen.c,v 1.112 2021/01/27 17:28:19 mglocker Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -224,7 +224,7 @@ ugen_set_config(struct ugen_softc *sc, int configno)
 	}
 
 	memset(sc->sc_endpoints, 0, sizeof sc->sc_endpoints);
-	for (ifaceno = 0; ifaceno < cdesc->bNumInterface; ifaceno++) {
+	for (ifaceno = 0; ifaceno < cdesc->bNumInterfaces; ifaceno++) {
 		DPRINTFN(1,("ugen_set_config: ifaceno %d\n", ifaceno));
 		if (usbd_iface_claimed(sc->sc_udev, ifaceno)) {
 			DPRINTF(("%s: iface %d not available\n", __func__,
@@ -906,7 +906,7 @@ ugen_set_interface(struct ugen_softc *sc, int ifaceidx, int altno)
 	DPRINTFN(15, ("ugen_set_interface %d %d\n", ifaceidx, altno));
 
 	cdesc = usbd_get_config_descriptor(sc->sc_udev);
-	if (ifaceidx < 0 || ifaceidx >= cdesc->bNumInterface ||
+	if (ifaceidx < 0 || ifaceidx >= cdesc->bNumInterfaces ||
 	    usbd_iface_claimed(sc->sc_udev, ifaceidx))
 		return (USBD_INVAL);
 

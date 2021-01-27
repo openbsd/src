@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.106 2020/04/03 20:11:47 patrick Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.107 2021/01/27 17:28:19 mglocker Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -640,7 +640,7 @@ usbd_device2interface_handle(struct usbd_device *dev, u_int8_t ifaceno,
 {
 	if (dev->cdesc == NULL)
 		return (USBD_NOT_CONFIGURED);
-	if (ifaceno >= dev->cdesc->bNumInterface)
+	if (ifaceno >= dev->cdesc->bNumInterfaces)
 		return (USBD_INVAL);
 	*iface = &dev->ifaces[ifaceno];
 	return (USBD_NORMAL_COMPLETION);

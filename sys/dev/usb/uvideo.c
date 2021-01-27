@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.210 2020/11/17 12:39:56 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.211 2021/01/27 17:28:19 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -2685,7 +2685,7 @@ uvideo_dump_desc_config(struct uvideo_softc *sc,
 	printf("bLength=%d\n", d->bLength);
 	printf("bDescriptorType=0x%02x\n", d->bDescriptorType);
 	printf("wTotalLength=%d\n", UGETW(d->wTotalLength));
-	printf("bNumInterface=0x%02x\n", d->bNumInterface);
+	printf("bNumInterfaces=0x%02x\n", d->bNumInterfaces);
 	printf("bConfigurationValue=0x%02x\n", d->bConfigurationValue);
 	printf("iConfiguration=0x%02x\n", d->iConfiguration);
 	printf("bmAttributes=0x%02x\n", d->bmAttributes);
