@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1102 2021/01/27 03:02:06 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1103 2021/01/27 04:46:21 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5988,6 +5988,7 @@ pf_route(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 		if ((r->rt == PF_REPLYTO) == (r->direction == pd->dir))
 			return;
 		m0 = pd->m;
+		pd->m = NULL;
 	}
 
 	if (m0->m_len < sizeof(struct ip)) {
@@ -6108,8 +6109,6 @@ pf_route(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 		ipstat_inc(ips_fragmented);
 
 done:
-	if (r->rt != PF_DUPTO)
-		pd->m = NULL;
 	rtfree(rt);
 	return;
 
@@ -6146,6 +6145,7 @@ pf_route6(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 		if ((r->rt == PF_REPLYTO) == (r->direction == pd->dir))
 			return;
 		m0 = pd->m;
+		pd->m = NULL;
 	}
 
 	if (m0->m_len < sizeof(struct ip6_hdr)) {
@@ -6237,8 +6237,6 @@ pf_route6(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 	}
 
 done:
-	if (r->rt != PF_DUPTO)
-		pd->m = NULL;
 	rtfree(rt);
 	return;
 
