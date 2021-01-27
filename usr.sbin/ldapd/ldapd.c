@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.c,v 1.26 2020/03/05 07:39:25 martijn Exp $ */
+/*	$OpenBSD: ldapd.c,v 1.27 2021/01/27 22:12:28 rob Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -30,6 +30,7 @@
 #include <event.h>
 #include <fcntl.h>
 #include <login_cap.h>
+#include <paths.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,7 +50,6 @@ static void	 ldapd_needfd(struct imsgev *iev);
 static void	 ldapd_auth_request(struct imsgev *iev, struct imsg *imsg);
 static void	 ldapd_open_request(struct imsgev *iev, struct imsg *imsg);
 static void	 ldapd_log_verbose(struct imsg *imsg);
-static void	 ldapd_cleanup(char *);
 static pid_t	 start_child(enum ldapd_process, char *, int, int, int,
 		    char *, char *);
 
@@ -236,35 +236,28 @@ main(int argc, char *argv[])
 	imsgev_init(iev_ldape, pipe_parent2ldap[0], NULL, ldapd_imsgev,
 	    ldapd_needfd);
 
+	if (unveil(_PATH_NOLOGIN, "r") == -1)
+		err(1, "unveil");
+	if (unveil(_PATH_LOGIN_CONF, "r") == -1)
+		err(1, "unveil");
+	if (unveil(_PATH_LOGIN_CONF ".db", "r") == -1)
+		err(1, "unveil");
+	if (unveil(_PATH_AUTHPROGDIR, "x") == -1)
+		err(1, "unveil");
+	if (unveil(datadir, "rw") == -1)
+		err(1, "unveil");
+	if (unveil(NULL, NULL) == -1)
+		err(1, "unveil");
+
 	if (pledge("stdio rpath wpath cpath getpw sendfd proc exec",
 	    NULL) == -1)
 		err(1, "pledge");
 
 	event_dispatch();
 
-	ldapd_cleanup(csockpath);
 	log_debug("ldapd: exiting");
 
 	return 0;
-}
-
-static void
-ldapd_cleanup(char * csockpath)
-{
-	struct listener		*l;
-	struct sockaddr_un	*sun = NULL;
-
-	/* Remove control socket. */
-	(void)unlink(csockpath);
-
-	/* Remove unix listening sockets. */
-	TAILQ_FOREACH(l, &conf->listeners, entry) {
-		if (l->ss.ss_family == AF_UNIX) {
-			sun = (struct sockaddr_un *)&l->ss;
-			log_info("ldapd: removing unix socket %s", sun->sun_path);
-			(void)unlink(sun->sun_path);
-		}
-	}
 }
 
 static void
