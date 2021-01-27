@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.33 2019/05/16 12:44:17 florian Exp $
+#	$OpenBSD: Makefile,v 1.34 2021/01/27 22:27:41 sthen Exp $
 
-# Define SMALL to disable command line editing and https support
+# Define SMALL to disable command line editing and some other features,
+# NOSSL to disable https support.
 #CFLAGS+=-DSMALL
 
 PROG=	ftp
