@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.181 2021/01/26 23:06:23 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.182 2021/01/28 01:20:37 mortimer Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -99,7 +99,7 @@ struct ctl_conn {
 TAILQ_HEAD(ctl_connlist, ctl_conn);
 extern  struct ctl_connlist ctl_conns;
 
-enum privsep_procid privsep_process;
+extern enum privsep_procid privsep_process;
 
 /*
  * Runtime structures
