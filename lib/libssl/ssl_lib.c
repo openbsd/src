@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.243 2021/01/26 18:45:32 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.244 2021/01/28 17:00:38 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2618,12 +2618,6 @@ ssl_clear_cipher_read_state(SSL *s)
 	s->read_hash = NULL;
 
 	tls12_record_layer_clear_read_state(s->internal->rl);
-
-	if (s->internal->aead_read_ctx != NULL) {
-		EVP_AEAD_CTX_cleanup(&s->internal->aead_read_ctx->ctx);
-		free(s->internal->aead_read_ctx);
-		s->internal->aead_read_ctx = NULL;
-	}
 }
 
 void
@@ -2635,12 +2629,6 @@ ssl_clear_cipher_write_state(SSL *s)
 	s->internal->write_hash = NULL;
 
 	tls12_record_layer_clear_write_state(s->internal->rl);
-
-	if (s->internal->aead_write_ctx != NULL) {
-		EVP_AEAD_CTX_cleanup(&s->internal->aead_write_ctx->ctx);
-		free(s->internal->aead_write_ctx);
-		s->internal->aead_write_ctx = NULL;
-	}
 }
 
 /* Fix this function so that it takes an optional type parameter */

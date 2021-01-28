@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.317 2021/01/26 14:22:20 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.318 2021/01/28 17:00:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -481,6 +481,8 @@ int tls12_record_layer_write_overhead(struct tls12_record_layer *rl,
     size_t *overhead);
 int tls12_record_layer_read_protected(struct tls12_record_layer *rl);
 int tls12_record_layer_write_protected(struct tls12_record_layer *rl);
+void tls12_record_layer_set_aead(struct tls12_record_layer *rl,
+    const EVP_AEAD *aead);
 void tls12_record_layer_set_version(struct tls12_record_layer *rl,
     uint16_t version);
 void tls12_record_layer_set_write_epoch(struct tls12_record_layer *rl,
@@ -757,14 +759,6 @@ typedef struct ssl_internal_st {
 	int hit;		/* reusing a previous session */
 
 	STACK_OF(SSL_CIPHER) *cipher_list_tls13;
-
-	SSL_AEAD_CTX *aead_read_ctx;	/* AEAD context. If non-NULL, then
-					   enc_read_ctx and read_hash are
-					   ignored. */
-
-	SSL_AEAD_CTX *aead_write_ctx;	/* AEAD context. If non-NULL, then
-					   enc_write_ctx and write_hash are
-					   ignored. */
 
 	EVP_CIPHER_CTX *enc_write_ctx;		/* cryptographic state */
 	EVP_MD_CTX *write_hash;			/* used for mac generation */
