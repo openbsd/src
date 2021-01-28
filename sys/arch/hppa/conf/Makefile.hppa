@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hppa,v 1.108 2019/11/07 20:42:28 guenther Exp $
+#	$OpenBSD: Makefile.hppa,v 1.109 2021/01/28 17:39:03 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -33,12 +33,12 @@ CMACHFLAGS+=	-fno-stack-protector
 SORTR=		sort -R
 .if ${IDENT:M-DSMALL_KERNEL}
 SORTR=		cat
-COPTS?=		-Oz
+COPTIMIZE?=	-Oz
 .endif
 
 DEBUG?=		-g
-COPTS?=		-O2
-CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
+COPTIMIZE?=	-O2
+CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTIMIZE} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE -x assembler-with-cpp ${CWARNFLAGS} ${CMACHFLAGS}
 LINKFLAGS=	-X -T ld.script -Ttext 80000 --warn-common -nopie
 

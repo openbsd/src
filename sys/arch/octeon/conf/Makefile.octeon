@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.octeon,v 1.56 2019/11/07 20:42:28 guenther Exp $
+#	$OpenBSD: Makefile.octeon,v 1.57 2021/01/28 17:39:03 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -42,7 +42,7 @@ CMACHFLAGS+=	-fno-stack-protector
 .endif
 .if ${IDENT:M-DSMALL_KERNEL}
 SORTR=		cat
-COPTS?=		-Oz
+COPTIMIZE?=	-Oz
 .endif
 .if ${COMPILER_VERSION:Mclang}
 NO_INTEGR_AS=	-no-integrated-as
@@ -51,8 +51,8 @@ CWARNFLAGS+=	-Wno-address-of-packed-member -Wno-constant-conversion
 .endif
 
 DEBUG?=		-g
-COPTS?=		-O2
-CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
+COPTIMIZE?=	-O2
+CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTIMIZE} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE -x assembler-with-cpp ${CWARNFLAGS} ${CMACHFLAGS}
 LINKFLAGS=	-e start -T ld.script -Ttext=${LINK_ADDRESS} --warn-common -nopie
 

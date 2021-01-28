@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.alpha,v 1.114 2019/11/07 20:42:28 guenther Exp $
+#	$OpenBSD: Makefile.alpha,v 1.115 2021/01/28 17:39:01 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -37,12 +37,12 @@ CMACHFLAGS+=	-fno-stack-protector
 .endif
 .if ${IDENT:M-DSMALL_KERNEL}
 SORTR=		cat
-COPTS?=		-Oz
+COPTIMIZE?=	-Oz
 .endif
 
 DEBUG?=		-g
-COPTS?=		-O2
-CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
+COPTIMIZE?=	-O2
+CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTIMIZE} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE -x assembler-with-cpp ${CWARNFLAGS} ${CMACHFLAGS}
 LINKFLAGS=	-T ld.script -X -N -G 4 --warn-common -nopie
 

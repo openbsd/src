@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.macppc,v 1.100 2020/11/29 18:57:29 gkoehler Exp $
+#	$OpenBSD: Makefile.macppc,v 1.101 2021/01/28 17:39:03 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -40,7 +40,7 @@ CMACHFLAGS+=	-fno-stack-protector
 .endif
 .if ${IDENT:M-DSMALL_KERNEL}
 SORTR=		cat
-COPTS?=		-Oz
+COPTIMIZE?=	-Oz
 .endif
 .if ${COMPILER_VERSION:Mclang}
 NO_INTEGR_AS=	-no-integrated-as
@@ -48,8 +48,8 @@ CWARNFLAGS+=	-Wno-address-of-packed-member -Wno-constant-conversion
 .endif
 
 DEBUG?=		-g
-COPTS?=		-O2
-CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
+COPTIMIZE?=	-O2
+CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTIMIZE} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE ${CMACHFLAGS}
 LINKFLAGS=	-N -Ttext 100114 -e start --warn-common -nopie
 

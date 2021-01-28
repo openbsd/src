@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.landisk,v 1.81 2019/11/07 20:42:28 guenther Exp $
+#	$OpenBSD: Makefile.landisk,v 1.82 2021/01/28 17:39:03 deraadt Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -37,12 +37,12 @@ CMACHFLAGS+=	-fno-stack-protector
 .endif
 .if ${IDENT:M-DSMALL_KERNEL}
 SORTR=		cat
-#COPTS?=	-Oz # locks up during boot
+#COPTIMIZE?=-Oz # locks up during boot
 .endif
 
 DEBUG?=		-g
-COPTS?=		-O2
-CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
+COPTIMIZE?=	-O2
+CFLAGS=		${DEBUG} ${CWARNFLAGS} ${CMACHFLAGS} ${COPTIMIZE} ${COPTS} ${PIPE}
 AFLAGS=		-D_LOCORE -x assembler-with-cpp ${CWARNFLAGS} ${CMACHFLAGS}
 LINKFLAGS=	-N -Ttext 0x8c002000 -e start --warn-common -nopie
 
