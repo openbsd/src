@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.1 2019/05/10 21:20:42 mlarkin Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.2 2021/01/28 18:54:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -36,7 +36,7 @@
 
 u_int cnvmem, extmem;		/* XXX - compatibility */
 
-bios_memmap_t bios_memmap[64];	/* This is easier */
+extern bios_memmap_t bios_memmap[64];	/* This is easier */
 
 void
 dump_biosmem(bios_memmap_t *tm)

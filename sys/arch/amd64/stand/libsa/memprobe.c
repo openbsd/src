@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.18 2019/05/10 21:20:43 mlarkin Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.19 2021/01/28 18:54:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -37,6 +37,7 @@
 u_int cnvmem, extmem;		/* XXX - compatibility */
 
 bios_memmap_t bios_memmap[64];	/* This is easier */
+
 /*
  * Check gateA20
  *
