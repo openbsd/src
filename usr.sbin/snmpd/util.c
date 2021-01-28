@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.10 2020/06/30 17:11:49 martijn Exp $	*/
+/*	$OpenBSD: util.c,v 1.11 2021/01/28 20:45:14 martijn Exp $	*/
 /*
  * Copyright (c) 2014 Bret Stephen Lambert <blambert@openbsd.org>
  *
@@ -150,30 +150,6 @@ recvfromto(int s, void *buf, size_t len, int flags, struct sockaddr *from,
 	}
 
 	return (ret);
-}
-
-void
-print_debug(const char *emsg, ...)
-{
-	va_list	 ap;
-
-	if (log_getverbose() > 2) {
-		va_start(ap, emsg);
-		vfprintf(stderr, emsg, ap);
-		va_end(ap);
-	}
-}
-
-void
-print_verbose(const char *emsg, ...)
-{
-	va_list	 ap;
-
-	if (log_getverbose()) {
-		va_start(ap, emsg);
-		vfprintf(stderr, emsg, ap);
-		va_end(ap);
-	}
 }
 
 const char *

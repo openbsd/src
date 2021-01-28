@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.92 2021/01/27 07:21:54 deraadt Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.93 2021/01/28 20:45:14 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -780,8 +780,6 @@ ssize_t	 sendtofrom(int, void *, size_t, int, struct sockaddr *,
 	    socklen_t, struct sockaddr *, socklen_t);
 ssize_t	 recvfromto(int, void *, size_t, int, struct sockaddr *,
 	    socklen_t *, struct sockaddr *, socklen_t *);
-void	 print_debug(const char *, ...);
-void	 print_verbose(const char *, ...);
 const char *log_in6addr(const struct in6_addr *);
 const char *print_host(struct sockaddr_storage *, char *, size_t);
 
