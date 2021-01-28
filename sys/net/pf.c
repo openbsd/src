@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1104 2021/01/27 23:53:35 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1105 2021/01/28 09:37:20 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3937,20 +3937,6 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 		m_copyback(pd->m, pd->off, pd->hdrlen, &pd->hdr, M_NOWAIT);
 	}
 
-#if NPFSYNC > 0
-	if (*sm != NULL && !ISSET((*sm)->state_flags, PFSTATE_NOSYNC) &&
-	    pd->dir == PF_OUT && pfsync_up()) {
-		/*
-		 * We want the state created, but we dont
-		 * want to send this in case a partner
-		 * firewall has to know about it to allow
-		 * replies through it.
-		 */
-		if (pfsync_defer(*sm, pd->m))
-			return (PF_DEFER);
-	}
-#endif	/* NPFSYNC > 0 */
-
 	if (r->rule_flag & PFRULE_ONCE) {
 		u_int32_t	rule_flag;
 
@@ -3966,6 +3952,20 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 			SLIST_INSERT_HEAD(&pf_rule_gcl, r, gcle);
 		}
 	}
+
+#if NPFSYNC > 0
+	if (*sm != NULL && !ISSET((*sm)->state_flags, PFSTATE_NOSYNC) &&
+	    pd->dir == PF_OUT && pfsync_up()) {
+		/*
+		 * We want the state created, but we dont
+		 * want to send this in case a partner
+		 * firewall has to know about it to allow
+		 * replies through it.
+		 */
+		if (pfsync_defer(*sm, pd->m))
+			return (PF_DEFER);
+	}
+#endif	/* NPFSYNC > 0 */
 
 	return (action);
 
