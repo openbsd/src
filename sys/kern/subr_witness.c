@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.43 2021/01/09 20:59:06 gnezdo Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.44 2021/01/28 15:13:27 visa Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -1084,6 +1084,9 @@ witness_checkorder(struct lock_object *lock, int flags,
 					    w1->w_class->lc_name);
 					stacktrace_print(
 					    &wlod1->wlod_stack, printf);
+				} else {
+					printf("lock order data "
+					    "w2 -> w1 missing\n");
 				}
 				if (wlod2 != NULL) {
 					printf("lock order \"%s\"(%s) -> "
@@ -1094,6 +1097,9 @@ witness_checkorder(struct lock_object *lock, int flags,
 					    w->w_class->lc_name);
 					stacktrace_print(
 					    &wlod2->wlod_stack, printf);
+				} else {
+					printf("lock order data "
+					    "w1 -> w2 missing\n");
 				}
 			}
 			witness_debugger(0);
@@ -2436,6 +2442,7 @@ witness_lock_order_check(struct witness *parent, struct witness *child)
 static int
 witness_lock_order_add(struct witness *parent, struct witness *child)
 {
+	static int lofree_empty_reported = 0;
 	struct witness_lock_order_data *data = NULL;
 	struct witness_lock_order_key key;
 	unsigned int hash;
@@ -2453,8 +2460,13 @@ witness_lock_order_add(struct witness *parent, struct witness *child)
 	    sizeof(key)) % w_lohash.wloh_size;
 	w_rmatrix[parent->w_index][child->w_index] |= WITNESS_LOCK_ORDER_KNOWN;
 	data = w_lofree;
-	if (data == NULL)
+	if (data == NULL) {
+		if (!lofree_empty_reported) {
+			lofree_empty_reported = 1;
+			printf("witness: out of free lock order entries\n");
+		}
 		return (0);
+	}
 	w_lofree = data->wlod_next;
 	data->wlod_next = w_lohash.wloh_array[hash];
 	data->wlod_key = key;
