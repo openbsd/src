@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_record_layer.c,v 1.16 2021/01/28 17:00:39 jsing Exp $ */
+/* $OpenBSD: tls12_record_layer.c,v 1.17 2021/01/28 18:32:46 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -292,11 +292,8 @@ tls12_record_layer_write_epoch_done(struct tls12_record_layer *rl, uint16_t epoc
 
 static void
 tls12_record_layer_set_read_state(struct tls12_record_layer *rl,
-    SSL_AEAD_CTX *aead_ctx, EVP_CIPHER_CTX *cipher_ctx, EVP_MD_CTX *hash_ctx,
-    int stream_mac)
+    EVP_CIPHER_CTX *cipher_ctx, EVP_MD_CTX *hash_ctx, int stream_mac)
 {
-	rl->read->aead_ctx = aead_ctx;
-
 	rl->read->cipher_ctx = cipher_ctx;
 	rl->read->hash_ctx = hash_ctx;
 	rl->read->stream_mac = stream_mac;
@@ -304,11 +301,8 @@ tls12_record_layer_set_read_state(struct tls12_record_layer *rl,
 
 static void
 tls12_record_layer_set_write_state(struct tls12_record_layer *rl,
-    SSL_AEAD_CTX *aead_ctx, EVP_CIPHER_CTX *cipher_ctx, EVP_MD_CTX *hash_ctx,
-    int stream_mac)
+    EVP_CIPHER_CTX *cipher_ctx, EVP_MD_CTX *hash_ctx, int stream_mac)
 {
-	rl->write->aead_ctx = aead_ctx;
-
 	rl->write->cipher_ctx = cipher_ctx;
 	rl->write->hash_ctx = hash_ctx;
 	rl->write->stream_mac = stream_mac;
@@ -317,14 +311,14 @@ tls12_record_layer_set_write_state(struct tls12_record_layer *rl,
 void
 tls12_record_layer_clear_read_state(struct tls12_record_layer *rl)
 {
-	tls12_record_layer_set_read_state(rl, NULL, NULL, NULL, 0);
+	tls12_record_layer_set_read_state(rl, NULL, NULL, 0);
 	tls12_record_protection_clear(rl->read);
 }
 
 void
 tls12_record_layer_clear_write_state(struct tls12_record_layer *rl)
 {
-	tls12_record_layer_set_write_state(rl, NULL, NULL, NULL, 0);
+	tls12_record_layer_set_write_state(rl, NULL, NULL, 0);
 	tls12_record_protection_clear(rl->write);
 
 	tls12_record_protection_free(rl->write_previous);
@@ -342,7 +336,7 @@ int
 tls12_record_layer_set_read_cipher_hash(struct tls12_record_layer *rl,
     EVP_CIPHER_CTX *cipher_ctx, EVP_MD_CTX *hash_ctx, int stream_mac)
 {
-	tls12_record_layer_set_read_state(rl, NULL, cipher_ctx, hash_ctx,
+	tls12_record_layer_set_read_state(rl, cipher_ctx, hash_ctx,
 	    stream_mac);
 
 	return 1;
@@ -352,7 +346,7 @@ int
 tls12_record_layer_set_write_cipher_hash(struct tls12_record_layer *rl,
     EVP_CIPHER_CTX *cipher_ctx, EVP_MD_CTX *hash_ctx, int stream_mac)
 {
-	tls12_record_layer_set_write_state(rl, NULL, cipher_ctx, hash_ctx,
+	tls12_record_layer_set_write_state(rl, cipher_ctx, hash_ctx,
 	    stream_mac);
 
 	return 1;
