@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.112 2021/01/27 17:28:19 mglocker Exp $ */
+/*	$OpenBSD: ugen.c,v 1.113 2021/01/28 12:50:28 mglocker Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -114,9 +114,9 @@ int ugen_do_write(struct ugen_softc *, int, struct uio *, int);
 int ugen_do_ioctl(struct ugen_softc *, int, u_long, caddr_t, int,
 	struct proc *);
 int ugen_do_close(struct ugen_softc *, int, int);
-int ugen_set_config(struct ugen_softc *, int configno);
+int ugen_set_config(struct ugen_softc *, int);
 int ugen_set_interface(struct ugen_softc *, int, int);
-int ugen_get_alt_index(struct ugen_softc *, int ifaceidx);
+int ugen_get_alt_index(struct ugen_softc *, int);
 void ugen_clear_iface_eps(struct ugen_softc *, struct usbd_interface *);
 
 #define UGENUNIT(n) ((minor(n) >> 4) & 0xf)
