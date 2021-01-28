@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.137 2021/01/27 08:30:50 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.138 2021/01/28 07:34:34 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1513,8 +1513,6 @@ check_resolver(struct uw_resolver *resolver_to_check)
 		evtimer_add(&resolver_to_check->check_ev,
 		    &resolver_to_check->check_tv);
 	}
-
-
 }
 
 void
@@ -1528,6 +1526,12 @@ check_resolver_done(struct uw_resolver *res, void *arg, int rcode,
 	char			*str;
 
 	checked_resolver->check_running--;
+
+	if (checked_resolver != resolvers[checked_resolver->type]) {
+		log_debug("%s: %s: ignoring late check result", __func__,
+		    uw_resolver_type_str[checked_resolver->type]);
+		goto out;
+	}
 
 	prev_state = checked_resolver->state;
 
