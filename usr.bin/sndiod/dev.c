@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.82 2021/01/28 11:15:31 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.83 2021/01/28 11:17:58 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1273,6 +1273,8 @@ dev_abort(struct dev *d)
 			c->ops->exit(c->arg);
 		c->ops = NULL;
 	}
+
+	midi_abort(d->midi);
 
 	if (d->pstate != DEV_CFG)
 		dev_close(d);

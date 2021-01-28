@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.26 2021/01/12 15:46:53 naddy Exp $	*/
+/*	$OpenBSD: midi.c,v 1.27 2021/01/28 11:17:58 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -417,6 +417,22 @@ midi_out(struct midi *oep, unsigned char *idata, int icount)
 	}
 }
 
+/*
+ * disconnect clients attached to this end-point
+ */
+void
+midi_abort(struct midi *p)
+{
+	int i;
+	struct midi *ep;
+
+	for (i = 0; i < MIDI_NEP; i++) {
+		ep = midi_ep + i;
+		if ((ep->txmask & p->self) || (p->txmask & ep->self))
+			ep->ops->exit(ep->arg);
+	}
+}
+
 void
 port_log(struct port *p)
 {
@@ -560,23 +576,6 @@ port_open(struct port *c)
 	}
 	c->state = PORT_INIT;
 	return 1;
-}
-
-void
-port_abort(struct port *c)
-{
-	int i;
-	struct midi *ep;
-
-	for (i = 0; i < MIDI_NEP; i++) {
-		ep = midi_ep + i;
-		if ((ep->txmask & c->midi->self) ||
-		    (c->midi->txmask & ep->self))
-			ep->ops->exit(ep->arg);
-	}
-
-	if (c->state != PORT_CFG)
-		port_close(c);
 }
 
 int
