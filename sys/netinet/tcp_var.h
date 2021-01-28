@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.135 2020/08/18 05:21:21 gnezdo Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.136 2021/01/28 14:53:20 visa Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -694,8 +694,10 @@ void	 tcp_update_rcvspace(struct tcpcb *);
 void	 tcp_slowtimo(void);
 struct mbuf *
 	 tcp_template(struct tcpcb *);
+#ifndef SMALL_KERNEL
 void	 tcp_trace(short, short, struct tcpcb *, struct tcpcb *, caddr_t,
 		int, int);
+#endif
 struct tcpcb *
 	 tcp_usrclosed(struct tcpcb *);
 int	 tcp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
@@ -727,6 +729,14 @@ void	 syn_cache_unreach(struct sockaddr *, struct sockaddr *,
 	   struct tcphdr *, u_int);
 void	 syn_cache_init(void);
 void	 syn_cache_cleanup(struct tcpcb *);
+
+#ifdef SMALL_KERNEL
+static inline void
+tcp_trace(short act, short ostate, struct tcpcb *tp, struct tcpcb *otp,
+    caddr_t headers, int req, int len)
+{
+}
+#endif
 
 #endif /* _KERNEL */
 #endif /* _NETINET_TCP_VAR_H_ */

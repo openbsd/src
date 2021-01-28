@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.692 2020/11/17 14:30:13 patrick Exp $
+#	$OpenBSD: files,v 1.693 2021/01/28 14:53:20 visa Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -872,7 +872,7 @@ file netinet/ip_input.c
 file netinet/ip_mroute.c		mrouting
 file netinet/ip_output.c
 file netinet/raw_ip.c
-file netinet/tcp_debug.c
+file netinet/tcp_debug.c		!small_kernel
 file netinet/tcp_input.c
 file netinet/tcp_output.c
 file netinet/tcp_subr.c
