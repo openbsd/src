@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.52 2020/04/03 20:11:47 patrick Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.53 2021/01/28 01:48:54 kurt Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -643,7 +643,7 @@ STATIC const struct dwc2_config_desc dwc2_confd = {
 		.bLength = USB_CONFIG_DESCRIPTOR_SIZE,
 		.bDescriptorType = UDESC_CONFIG,
 		.wTotalLength[0] = sizeof(dwc2_confd),
-		.bNumInterface = 1,
+		.bNumInterfaces = 1,
 		.bConfigurationValue = 1,
 		.iConfiguration = 0,
 		.bmAttributes = UC_BUS_POWERED | UC_SELF_POWERED,
