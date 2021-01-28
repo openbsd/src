@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgectl.c,v 1.22 2021/01/25 19:47:16 mvs Exp $	*/
+/*	$OpenBSD: bridgectl.c,v 1.23 2021/01/28 20:06:38 mvs Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -79,12 +79,13 @@ bridgectl_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		bridge_rtflush(sc, req->ifbr_ifsflags);
 		break;
 	case SIOCBRDGSADDR:
-		ifs = ifunit(bareq->ifba_ifsname);
+		ifs = if_unit(bareq->ifba_ifsname);
 		if (ifs == NULL) {			/* no such interface */
 			error = ENOENT;
 			break;
 		}
 		if (ifs->if_bridgeidx != ifp->if_index) {
+			if_put(ifs);
 			error = ESRCH;
 			break;
 		}
@@ -92,6 +93,7 @@ bridgectl_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (bridge_rtupdate(sc, &bareq->ifba_dst, ifs, 1,
 		    bareq->ifba_flags, NULL))
 			error = ENOMEM;
+		if_put(ifs);
 		break;
 	case SIOCBRDGDADDR:
 		error = bridge_rtdaddr(sc, &bareq->ifba_dst);
