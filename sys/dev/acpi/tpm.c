@@ -1,4 +1,4 @@
-/* $OpenBSD: tpm.c,v 1.10 2020/05/22 10:16:37 kettenis Exp $ */
+/* $OpenBSD: tpm.c,v 1.11 2021/01/28 17:19:40 cheloha Exp $ */
 
 /*
  * Minimal interface to Trusted Platform Module chips implementing the
@@ -158,7 +158,6 @@ int	tpm_request_locality(struct tpm_softc *, int);
 void	tpm_release_locality(struct tpm_softc *);
 int	tpm_getburst(struct tpm_softc *);
 uint8_t	tpm_status(struct tpm_softc *);
-int	tpm_tmotohz(int);
 
 struct cfattach tpm_ca = {
 	sizeof(struct tpm_softc),
@@ -385,7 +384,7 @@ tpm_request_locality(struct tpm_softc *sc, int l)
 	bus_space_write_1(sc->sc_bt, sc->sc_bh, TPM_ACCESS,
 	    TPM_ACCESS_REQUEST_USE);
 
-	to = tpm_tmotohz(TPM_ACCESS_TMO);
+	to = TPM_ACCESS_TMO * 100;	/* steps of 10 microseconds */
 
 	while ((r = bus_space_read_1(sc->sc_bt, sc->sc_bh, TPM_ACCESS) &
 	    (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY)) !=
@@ -420,7 +419,7 @@ tpm_getburst(struct tpm_softc *sc)
 {
 	int burst, burst2, to;
 
-	to = tpm_tmotohz(TPM_BURST_TMO);
+	to = TPM_BURST_TMO * 100;	/* steps of 10 microseconds */
 
 	burst = 0;
 	while (burst == 0 && to--) {
@@ -453,29 +452,21 @@ tpm_status(struct tpm_softc *sc)
 }
 
 int
-tpm_tmotohz(int tmo)
+tpm_waitfor(struct tpm_softc *sc, uint8_t mask, int msecs)
 {
-	struct timeval tv;
-
-	tv.tv_sec = tmo / 1000;
-	tv.tv_usec = 1000 * (tmo % 1000);
-
-	return tvtohz(&tv);
-}
-
-int
-tpm_waitfor(struct tpm_softc *sc, uint8_t mask, int tries)
-{
+	int usecs;
 	uint8_t status;
 
+	usecs = msecs * 1000;
+
 	while (((status = tpm_status(sc)) & mask) != mask) {
-		if (tries == 0) {
+		if (usecs == 0) {
 			DPRINTF(("%s: %s: timed out, status 0x%x != 0x%x\n",
 			    sc->sc_dev.dv_xname, __func__, status, mask));
 			return status;
 		}
 
-		tries--;
+		usecs--;
 		DELAY(1);
 	}
 
