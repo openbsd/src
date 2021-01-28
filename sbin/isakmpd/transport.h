@@ -1,4 +1,4 @@
-/* $OpenBSD: transport.h,v 1.22 2018/01/15 09:54:48 mpi Exp $	 */
+/* $OpenBSD: transport.h,v 1.23 2021/01/28 01:18:44 mortimer Exp $	 */
 /* $EOM: transport.h,v 1.16 2000/07/17 18:57:59 provos Exp $	 */
 
 /*
@@ -47,7 +47,8 @@
 
 struct transport;
 
-LIST_HEAD(transport_list, transport) transport_list;
+LIST_HEAD(transport_list, transport);
+extern struct transport_list transport_list;
 
 /* This describes a transport "method" like UDP or similar.  */
 struct transport_vtbl {

@@ -1,4 +1,4 @@
-/* $OpenBSD: transport.c,v 1.38 2017/12/05 20:31:45 jca Exp $	 */
+/* $OpenBSD: transport.c,v 1.39 2021/01/28 01:18:44 mortimer Exp $	 */
 /* $EOM: transport.c,v 1.43 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -47,6 +47,8 @@
 #define RETRANSMIT_DEFAULT 10
 
 LIST_HEAD(transport_method_list, transport_vtbl) transport_method_list;
+
+struct transport_list transport_list;
 
 /* Call the reinit function of the various transports.  */
 void
