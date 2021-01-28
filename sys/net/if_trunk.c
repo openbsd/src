@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.150 2020/09/12 20:12:09 kn Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.151 2021/01/28 20:04:44 mvs Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -463,6 +463,7 @@ trunk_port_destroy(struct trunk_port *tp)
 	/* Reset the port lladdr */
 	trunk_port_lladdr(tp, tp->tp_lladdr);
 
+	if_put(ifp);
 	free(tp, M_DEVBUF, sizeof *tp);
 
 	/* Update trunk capabilities */
@@ -477,6 +478,7 @@ trunk_port_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct trunk_reqport *rp = (struct trunk_reqport *)data;
 	struct trunk_softc *tr;
 	struct trunk_port *tp = NULL;
+	struct ifnet *ifp0 = NULL;
 	int error = 0;
 
 	/* Should be checked by the caller */
@@ -490,10 +492,12 @@ trunk_port_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	switch (cmd) {
 	case SIOCGTRUNKPORT:
 		if (rp->rp_portname[0] == '\0' ||
-		    ifunit(rp->rp_portname) != ifp) {
+		    (ifp0 = if_unit(rp->rp_portname)) != ifp) {
+			if_put(ifp0);
 			error = EINVAL;
 			break;
 		}
+		if_put(ifp0);
 
 		/* Search in all trunks if the global flag is set */
 		if ((tp = trunk_port_get(rp->rp_flags & TRUNK_PORT_GLOBAL ?
@@ -782,14 +786,17 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCGTRUNKPORT:
 		if (rp->rp_portname[0] == '\0' ||
-		    (tpif = ifunit(rp->rp_portname)) == NULL) {
+		    (tpif = if_unit(rp->rp_portname)) == NULL) {
 			error = EINVAL;
 			break;
 		}
 
 		/* Search in all trunks if the global flag is set */
-		if ((tp = trunk_port_get(rp->rp_flags & TRUNK_PORT_GLOBAL ?
-		    NULL : tr, tpif)) == NULL) {
+		tp = trunk_port_get(rp->rp_flags & TRUNK_PORT_GLOBAL ?
+		    NULL : tr, tpif);
+		if_put(tpif);
+
+		if(tp == NULL) {
 			error = ENOENT;
 			break;
 		}
@@ -802,11 +809,13 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		}
 		if (rp->rp_portname[0] == '\0' ||
-		    (tpif = ifunit(rp->rp_portname)) == NULL) {
+		    (tpif = if_unit(rp->rp_portname)) == NULL) {
 			error = EINVAL;
 			break;
 		}
 		error = trunk_port_create(tr, tpif);
+		if (error != 0)
+			if_put(tpif);
 		break;
 	case SIOCSTRUNKDELPORT:
 		if ((error = suser(curproc)) != 0) {
@@ -814,14 +823,17 @@ trunk_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		}
 		if (rp->rp_portname[0] == '\0' ||
-		    (tpif = ifunit(rp->rp_portname)) == NULL) {
+		    (tpif = if_unit(rp->rp_portname)) == NULL) {
 			error = EINVAL;
 			break;
 		}
 
 		/* Search in all trunks if the global flag is set */
-		if ((tp = trunk_port_get(rp->rp_flags & TRUNK_PORT_GLOBAL ?
-		    NULL : tr, tpif)) == NULL) {
+		tp = trunk_port_get(rp->rp_flags & TRUNK_PORT_GLOBAL ?
+		    NULL : tr, tpif);
+		if_put(tpif);
+
+		if(tp == NULL) {
 			error = ENOENT;
 			break;
 		}
