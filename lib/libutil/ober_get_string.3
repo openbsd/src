@@ -1,4 +1,4 @@
-.\" $OpenBSD: ober_get_string.3,v 1.2 2019/10/25 04:00:10 tb Exp $
+.\" $OpenBSD: ober_get_string.3,v 1.3 2021/01/28 19:56:33 martijn Exp $
 .\"
 .\" Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 25 2019 $
+.Dd $Mdocdate: January 28 2021 $
 .Dt OBER_GET_STRING 3
 .Os
 .Sh NAME
@@ -81,6 +81,7 @@ per byte.
 The following bytes are valid:
 .Bl -column -offset indent bytes ober_get_enumerated() "1: struct ber_element **"
 .It Sy byte Ta Sy function Ta Sy arguments
+.It $ Ta see below              Ta 0
 .It B Ta Fn ober_get_bitstring  Ta 2: Vt void ** , size_t *
 .It b Ta Fn ober_get_boolean    Ta 1: Vt int *
 .It d Ta Fn ober_get_integer    Ta 1: Vt int *
@@ -121,6 +122,9 @@ For
 .Sq t ,
 the class and type of the element are stored in the two corresponding
 variables, but if the element contains a value, that value is ignored.
+A
+.Sq $
+mandates the end of a sequence or set.
 .Pp
 For an opening parenthesis or brace, it is checked that the element
 is a sequence or a set, and parsing continues with its children.
