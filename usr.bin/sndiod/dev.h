@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.29 2020/06/28 05:21:39 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.30 2021/01/28 11:02:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -309,6 +309,9 @@ void slot_start(struct slot *);
 void slot_stop(struct slot *);
 void slot_read(struct slot *);
 void slot_write(struct slot *);
+void slot_initconv(struct slot *);
+void slot_attach(struct slot *);
+void slot_detach(struct slot *);
 
 /*
  * control related functions

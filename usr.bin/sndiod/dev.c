@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.77 2020/07/19 11:13:35 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.78 2021/01/28 11:02:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -79,14 +79,9 @@ void slot_ctlname(struct slot *, char *, size_t);
 void slot_log(struct slot *);
 void slot_del(struct slot *);
 void slot_setvol(struct slot *, unsigned int);
-void slot_attach(struct slot *);
 void slot_ready(struct slot *);
 void slot_allocbufs(struct slot *);
 void slot_freebufs(struct slot *);
-void slot_initconv(struct slot *);
-void slot_start(struct slot *);
-void slot_detach(struct slot *);
-void slot_stop(struct slot *);
 void slot_skip_update(struct slot *);
 void slot_write(struct slot *);
 void slot_read(struct slot *);
@@ -2574,16 +2569,4 @@ dev_label(struct dev *d, int i)
 		return;
 	strlcpy(c->node0.name, name, CTL_NAMEMAX);
 	c->desc_mask = ~0;
-}
-
-int
-dev_nctl(struct dev *d)
-{
-	struct ctl *c;
-	int n;
-
-	n = 0;
-	for (c = d->ctl_list; c != NULL; c = c->next)
-		n++;
-	return n;
 }
