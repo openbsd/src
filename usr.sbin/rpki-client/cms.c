@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.7 2020/04/02 09:16:43 claudio Exp $ */
+/*	$OpenBSD: cms.c,v 1.8 2021/01/29 10:13:16 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -36,17 +36,16 @@
  */
 unsigned char *
 cms_parse_validate(X509 **xp, const char *fn,
-    const char *oid, const unsigned char *dgst, size_t *rsz)
+    const char *oid, size_t *rsz)
 {
 	const ASN1_OBJECT	*obj;
 	ASN1_OCTET_STRING	**os = NULL;
-	BIO			*bio = NULL, *shamd;
+	BIO			*bio = NULL;
 	CMS_ContentInfo		*cms;
 	FILE			*f;
-	char			 buf[128], mdbuf[EVP_MAX_MD_SIZE];
+	char			 buf[128];
 	int			 rc = 0, sz;
 	STACK_OF(X509)		*certs = NULL;
-	EVP_MD			*md;
 	unsigned char		*res = NULL;
 
 	*rsz = 0;
@@ -66,46 +65,9 @@ cms_parse_validate(X509 **xp, const char *fn,
 		return NULL;
 	}
 
-	/*
-	 * If we have a digest specified, create an MD chain that will
-	 * automatically compute a digest during the CMS creation.
-	 */
-
-	if (dgst != NULL) {
-		if ((shamd = BIO_new(BIO_f_md())) == NULL)
-			cryptoerrx("BIO_new");
-		if (!BIO_set_md(shamd, EVP_sha256()))
-			cryptoerrx("BIO_set_md");
-		if ((bio = BIO_push(shamd, bio)) == NULL)
-			cryptoerrx("BIO_push");
-	}
-
 	if ((cms = d2i_CMS_bio(bio, NULL)) == NULL) {
 		cryptowarnx("%s: RFC 6488: failed CMS parse", fn);
 		goto out;
-	}
-
-	/*
-	 * If we have a digest, find it in the chain (we'll already have
-	 * made it, so assert otherwise) and verify it.
-	 */
-
-	if (dgst != NULL) {
-		shamd = BIO_find_type(bio, BIO_TYPE_MD);
-		assert(shamd != NULL);
-
-		if (!BIO_get_md(shamd, &md))
-			cryptoerrx("BIO_get_md");
-		assert(EVP_MD_type(md) == NID_sha256);
-
-		if ((sz = BIO_gets(shamd, mdbuf, EVP_MAX_MD_SIZE)) < 0)
-			cryptoerrx("BIO_gets");
-		assert(sz == SHA256_DIGEST_LENGTH);
-
-		if (memcmp(mdbuf, dgst, SHA256_DIGEST_LENGTH)) {
-			warnx("%s: RFC 6488: bad message digest", fn);
-			goto out;
-		}
 	}
 
 	/*

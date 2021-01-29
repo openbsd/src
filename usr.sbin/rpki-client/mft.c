@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.23 2021/01/08 08:09:07 claudio Exp $ */
+/*	$OpenBSD: mft.c,v 1.24 2021/01/29 10:13:16 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -384,7 +384,7 @@ mft_parse(X509 **x509, const char *fn)
 	p.fn = fn;
 
 	cms = cms_parse_validate(x509, fn, "1.2.840.113549.1.9.16.1.26",
-	    NULL, &cmsz);
+	    &cmsz);
 	if (cms == NULL)
 		return NULL;
 	assert(*x509 != NULL);

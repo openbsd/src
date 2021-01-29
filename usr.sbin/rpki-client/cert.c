@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.22 2021/01/08 08:09:07 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.23 2021/01/29 10:13:16 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -973,18 +973,16 @@ out:
  * is also dereferenced.
  */
 static struct cert *
-cert_parse_inner(X509 **xp, const char *fn, const unsigned char *dgst, int ta)
+cert_parse_inner(X509 **xp, const char *fn, int ta)
 {
-	int		 rc = 0, extsz, c, sz;
+	int		 rc = 0, extsz, c;
 	size_t		 i;
 	X509		*x = NULL;
 	X509_EXTENSION	*ext = NULL;
 	ASN1_OBJECT	*obj;
 	struct parse	 p;
-	BIO		*bio = NULL, *shamd;
+	BIO		*bio = NULL;
 	FILE		*f;
-	EVP_MD		*md;
-	char		 mdbuf[EVP_MAX_MD_SIZE];
 
 	*xp = NULL;
 
@@ -1004,47 +1002,9 @@ cert_parse_inner(X509 **xp, const char *fn, const unsigned char *dgst, int ta)
 	if ((p.res = calloc(1, sizeof(struct cert))) == NULL)
 		err(1, NULL);
 
-	/*
-	 * If we have a digest specified, create an MD chain that will
-	 * automatically compute a digest during the X509 creation.
-	 */
-
-	if (dgst != NULL) {
-		if ((shamd = BIO_new(BIO_f_md())) == NULL)
-			cryptoerrx("BIO_new");
-		if (!BIO_set_md(shamd, EVP_sha256()))
-			cryptoerrx("BIO_set_md");
-		if ((bio = BIO_push(shamd, bio)) == NULL)
-			cryptoerrx("BIO_push");
-	}
-
 	if ((x = *xp = d2i_X509_bio(bio, NULL)) == NULL) {
 		cryptowarnx("%s: d2i_X509_bio", p.fn);
 		goto out;
-	}
-
-	/*
-	 * If we have a digest, find it in the chain (we'll already have
-	 * made it, so assert otherwise) and verify it.
-	 */
-
-	if (dgst != NULL) {
-		shamd = BIO_find_type(bio, BIO_TYPE_MD);
-		assert(shamd != NULL);
-
-		if (!BIO_get_md(shamd, &md))
-			cryptoerrx("BIO_get_md");
-		assert(EVP_MD_type(md) == NID_sha256);
-
-		if ((sz = BIO_gets(shamd, mdbuf, EVP_MAX_MD_SIZE)) < 0)
-			cryptoerrx("BIO_gets");
-		assert(sz == SHA256_DIGEST_LENGTH);
-
-		if (memcmp(mdbuf, dgst, SHA256_DIGEST_LENGTH)) {
-			if (verbose > 0)
-				warnx("%s: bad message digest", p.fn);
-			goto out;
-		}
 	}
 
 	/* Look for X509v3 extensions. */
@@ -1156,10 +1116,10 @@ out:
 }
 
 struct cert *
-cert_parse(X509 **xp, const char *fn, const unsigned char *dgst)
+cert_parse(X509 **xp, const char *fn)
 {
 
-	return cert_parse_inner(xp, fn, dgst, 0);
+	return cert_parse_inner(xp, fn, 0);
 }
 
 struct cert *
@@ -1169,7 +1129,7 @@ ta_parse(X509 **xp, const char *fn, const unsigned char *pkey, size_t pkeysz)
 	struct cert	*p;
 	int		 rc = 0;
 
-	if ((p = cert_parse_inner(xp, fn, NULL, 1)) == NULL)
+	if ((p = cert_parse_inner(xp, fn, 1)) == NULL)
 		return NULL;
 
 	if (pkey != NULL) {

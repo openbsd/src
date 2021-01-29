@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.90 2021/01/08 08:45:55 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.91 2021/01/29 10:13:16 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -109,8 +109,6 @@ static struct	repotab {
 struct	entity {
 	enum rtype	 type; /* type of entity (not RTYPE_EOF) */
 	char		*uri; /* file or rsync:// URI */
-	int		 has_dgst; /* whether dgst is specified */
-	unsigned char	 dgst[SHA256_DIGEST_LENGTH]; /* optional */
 	ssize_t		 repo; /* repo index or <0 if w/o repo */
 	int		 has_pkey; /* whether pkey/sz is specified */
 	unsigned char	*pkey; /* public key (optional) */
@@ -227,9 +225,6 @@ entity_read_req(int fd, struct entity *ent)
 
 	io_simple_read(fd, &ent->type, sizeof(enum rtype));
 	io_str_read(fd, &ent->uri);
-	io_simple_read(fd, &ent->has_dgst, sizeof(int));
-	if (ent->has_dgst)
-		io_simple_read(fd, ent->dgst, sizeof(ent->dgst));
 	io_simple_read(fd, &ent->has_pkey, sizeof(int));
 	if (ent->has_pkey)
 		io_buf_read_alloc(fd, (void **)&ent->pkey, &ent->pkeysz);
@@ -246,9 +241,6 @@ entity_buffer_req(struct ibuf *b, const struct entity *ent)
 
 	io_simple_buffer(b, &ent->type, sizeof(ent->type));
 	io_str_buffer(b, ent->uri);
-	io_simple_buffer(b, &ent->has_dgst, sizeof(int));
-	if (ent->has_dgst)
-		io_simple_buffer(b, ent->dgst, sizeof(ent->dgst));
 	io_simple_buffer(b, &ent->has_pkey, sizeof(int));
 	if (ent->has_pkey)
 		io_buf_buffer(b, ent->pkey, ent->pkeysz);
@@ -370,8 +362,8 @@ repo_filename(const struct repo *repo, const char *uri)
  */
 static void
 entityq_add(struct msgbuf *msgq, struct entityq *q, char *file, enum rtype type,
-    const struct repo *rp, const unsigned char *dgst,
-    const unsigned char *pkey, size_t pkeysz, char *descr)
+    const struct repo *rp, const unsigned char *pkey, size_t pkeysz,
+    char *descr)
 {
 	struct entity	*p;
 
@@ -381,10 +373,7 @@ entityq_add(struct msgbuf *msgq, struct entityq *q, char *file, enum rtype type,
 	p->type = type;
 	p->uri = file;
 	p->repo = (rp != NULL) ? (ssize_t)rp->id : -1;
-	p->has_dgst = dgst != NULL;
 	p->has_pkey = pkey != NULL;
-	if (p->has_dgst)
-		memcpy(p->dgst, dgst, sizeof(p->dgst));
 	if (p->has_pkey) {
 		p->pkeysz = pkeysz;
 		if ((p->pkey = malloc(pkeysz)) == NULL)
@@ -435,7 +424,7 @@ queue_add_from_mft(struct msgbuf *msgq, struct entityq *q, const char *mft,
 	 * that the repository has already been loaded.
 	 */
 
-	entityq_add(msgq, q, nfile, type, NULL, file->hash, NULL, 0, NULL);
+	entityq_add(msgq, q, nfile, type, NULL, NULL, 0, NULL);
 }
 
 /*
@@ -526,7 +515,7 @@ queue_add_tal(struct msgbuf *msgq, struct entityq *q, const char *file)
 	}
 
 	/* Not in a repository, so directly add to queue. */
-	entityq_add(msgq, q, nfile, RTYPE_TAL, NULL, NULL, NULL, 0, buf);
+	entityq_add(msgq, q, nfile, RTYPE_TAL, NULL, NULL, 0, buf);
 	/* entityq_add makes a copy of buf */
 	free(buf);
 }
@@ -557,7 +546,7 @@ queue_add_from_tal(struct msgbuf *procq, struct msgbuf *rsyncq,
 	repo = repo_lookup(rsyncq, uri);
 	nfile = repo_filename(repo, uri);
 
-	entityq_add(procq, q, nfile, RTYPE_CER, repo, NULL, tal->pkey,
+	entityq_add(procq, q, nfile, RTYPE_CER, repo, tal->pkey,
 	    tal->pkeysz, tal->descr);
 }
 
@@ -578,7 +567,7 @@ queue_add_from_cert(struct msgbuf *procq, struct msgbuf *rsyncq,
 	repo = repo_lookup(rsyncq, rsyncuri);
 	nfile = repo_filename(repo, rsyncuri);
 
-	entityq_add(procq, q, nfile, RTYPE_MFT, repo, NULL, NULL, 0, NULL);
+	entityq_add(procq, q, nfile, RTYPE_MFT, repo, NULL, 0, NULL);
 }
 
 /*
@@ -598,8 +587,7 @@ proc_parser_roa(struct entity *entp,
 	STACK_OF(X509)		*chain;
 	STACK_OF(X509_CRL)	*crls;
 
-	assert(entp->has_dgst);
-	if ((roa = roa_parse(&x509, entp->uri, entp->dgst)) == NULL)
+	if ((roa = roa_parse(&x509, entp->uri)) == NULL)
 		return NULL;
 
 	a = valid_ski_aki(entp->uri, auths, roa->ski, roa->aki);
@@ -662,7 +650,6 @@ proc_parser_mft(struct entity *entp, X509_STORE *store, X509_STORE_CTX *ctx,
 	struct auth		*a;
 	STACK_OF(X509)		*chain;
 
-	assert(!entp->has_dgst);
 	if ((mft = mft_parse(&x509, entp->uri)) == NULL)
 		return NULL;
 
@@ -717,12 +704,11 @@ proc_parser_cert(const struct entity *entp,
 	STACK_OF(X509)		*chain;
 	STACK_OF(X509_CRL)	*crls;
 
-	assert(entp->has_dgst);
 	assert(!entp->has_pkey);
 
 	/* Extract certificate data and X509. */
 
-	cert = cert_parse(&x509, entp->uri, entp->dgst);
+	cert = cert_parse(&x509, entp->uri);
 	if (cert == NULL)
 		return NULL;
 
@@ -814,7 +800,6 @@ proc_parser_root_cert(const struct entity *entp,
 	struct auth		*na;
 	char			*tal;
 
-	assert(!entp->has_dgst);
 	assert(entp->has_pkey);
 
 	/* Extract certificate data and X509. */
@@ -902,10 +887,8 @@ proc_parser_crl(struct entity *entp, X509_STORE *store,
 {
 	X509_CRL		*x509_crl;
 	struct crl		*crl;
-	const unsigned char	*dgst;
 
-	dgst = entp->has_dgst ? entp->dgst : NULL;
-	if ((x509_crl = crl_parse(entp->uri, dgst)) != NULL) {
+	if ((x509_crl = crl_parse(entp->uri)) != NULL) {
 		if ((crl = malloc(sizeof(*crl))) == NULL)
 			err(1, NULL);
 		if ((crl->aki = x509_crl_get_aki(x509_crl)) == NULL)
@@ -1105,18 +1088,17 @@ proc_parser(int fd)
 
 		switch (entp->type) {
 		case RTYPE_TAL:
-			assert(!entp->has_dgst);
 			if ((tal = tal_parse(entp->uri, entp->descr)) == NULL)
 				goto out;
 			tal_buffer(b, tal);
 			tal_free(tal);
 			break;
 		case RTYPE_CER:
-			if (entp->has_dgst)
-				cert = proc_parser_cert(entp, store, ctx,
+			if (entp->has_pkey)
+				cert = proc_parser_root_cert(entp, store, ctx,
 				    &auths, &crlt);
 			else
-				cert = proc_parser_root_cert(entp, store, ctx,
+				cert = proc_parser_cert(entp, store, ctx,
 				    &auths, &crlt);
 			c = (cert != NULL);
 			io_simple_buffer(b, &c, sizeof(int));
@@ -1140,7 +1122,6 @@ proc_parser(int fd)
 			proc_parser_crl(entp, store, ctx, &crlt);
 			break;
 		case RTYPE_ROA:
-			assert(entp->has_dgst);
 			roa = proc_parser_roa(entp, store, ctx, &auths, &crlt);
 			c = (roa != NULL);
 			io_simple_buffer(b, &c, sizeof(int));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbr.c,v 1.2 2020/12/29 14:51:11 job Exp $ */
+/*	$OpenBSD: gbr.c,v 1.3 2021/01/29 10:13:16 claudio Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -52,7 +52,7 @@ gbr_parse(X509 **x509, const char *fn)
 	/* OID from section 9.1, RFC 6493. */
 
 	cms = cms_parse_validate(x509, fn,
-	    "1.2.840.113549.1.9.16.1.35", NULL, &cmsz);
+	    "1.2.840.113549.1.9.16.1.35", &cmsz);
 	if (cms == NULL)
 		return NULL;
 

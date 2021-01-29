@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.37 2021/01/08 08:09:07 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.38 2021/01/29 10:13:16 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -299,7 +299,7 @@ struct tal	*tal_read(int);
 
 void		 cert_buffer(struct ibuf *, const struct cert *);
 void		 cert_free(struct cert *);
-struct cert	*cert_parse(X509 **, const char *, const unsigned char *);
+struct cert	*cert_parse(X509 **, const char *);
 struct cert	*ta_parse(X509 **, const char *, const unsigned char *, size_t);
 struct cert	*cert_read(int);
 
@@ -311,7 +311,7 @@ struct mft	*mft_read(int);
 
 void		 roa_buffer(struct ibuf *, const struct roa *);
 void		 roa_free(struct roa *);
-struct roa	*roa_parse(X509 **, const char *, const unsigned char *);
+struct roa	*roa_parse(X509 **, const char *);
 struct roa	*roa_read(int);
 void		 roa_insert_vrps(struct vrp_tree *, struct roa *, size_t *,
 		    size_t *);
@@ -320,7 +320,7 @@ void		 gbr_free(struct gbr *);
 struct gbr	*gbr_parse(X509 **, const char *);
 
 /* crl.c */
-X509_CRL	*crl_parse(const char *, const unsigned char *);
+X509_CRL	*crl_parse(const char *);
 void		 free_crl(struct crl *);
 
 /* Validation of our objects. */
@@ -336,7 +336,7 @@ int		 valid_roa(const char *, struct auth_tree *, struct roa *);
 /* Working with CMS files. */
 
 unsigned char	*cms_parse_validate(X509 **, const char *,
-			const char *, const unsigned char *, size_t *);
+			const char *, size_t *);
 
 /* Work with RFC 3779 IP addresses, prefixes, ranges. */
 
