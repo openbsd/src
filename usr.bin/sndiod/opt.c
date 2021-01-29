@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.c,v 1.4 2018/06/26 07:12:35 ratchov Exp $	*/
+/*	$OpenBSD: opt.c,v 1.5 2021/01/29 11:21:00 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2011 Alexandre Ratchov <alex@caoua.org>
  *
@@ -19,6 +19,8 @@
 #include "dev.h"
 #include "opt.h"
 #include "utils.h"
+
+struct opt *opt_list;
 
 /*
  * create a new audio sub-device "configuration"
@@ -54,6 +56,7 @@ opt_new(struct dev *d, char *name,
 		}
 	}
 	o = xmalloc(sizeof(struct opt));
+	o->dev = d;
 	if (mode & MODE_PLAY) {
 		o->pmin = pmin;
 		o->pmax = pmax;
@@ -67,8 +70,8 @@ opt_new(struct dev *d, char *name,
 	o->dup = dup;
 	o->mode = mode;
 	memcpy(o->name, name, len + 1);
-	o->next = d->opt_list;
-	d->opt_list = o;
+	o->next = opt_list;
+	opt_list = o;
 	if (log_level >= 2) {
 		dev_log(d);
 		log_puts(".");
@@ -110,7 +113,9 @@ opt_byname(struct dev *d, char *name)
 {
 	struct opt *o;
 
-	for (o = d->opt_list; o != NULL; o = o->next) {
+	for (o = opt_list; o != NULL; o = o->next) {
+		if (d != NULL && o->dev != d)
+			continue;
 		if (strcmp(name, o->name) == 0)
 			return o;
 	}
@@ -118,11 +123,11 @@ opt_byname(struct dev *d, char *name)
 }
 
 void
-opt_del(struct dev *d, struct opt *o)
+opt_del(struct opt *o)
 {
 	struct opt **po;
 
-	for (po = &d->opt_list; *po != o; po = &(*po)->next) {
+	for (po = &opt_list; *po != o; po = &(*po)->next) {
 #ifdef DEBUG
 		if (*po == NULL) {
 			log_puts("opt_del: not on list\n");

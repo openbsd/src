@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.85 2021/01/29 10:55:19 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.86 2021/01/29 11:21:00 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1044,7 +1044,6 @@ dev_new(char *path, struct aparams *par,
 	d->alt_list = NULL;
 	dev_addname(d,path);
 	d->num = dev_sndnum++;
-	d->opt_list = NULL;
 	d->alt_num = -1;
 
 	/*
@@ -1501,8 +1500,6 @@ dev_del(struct dev *d)
 		log_puts(": deleting\n");
 	}
 #endif
-	while (d->opt_list != NULL)
-		opt_del(d, d->opt_list);
 	if (d->pstate != DEV_CFG)
 		dev_close(d);
 	for (p = &dev_list; *p != d; p = &(*p)->next) {

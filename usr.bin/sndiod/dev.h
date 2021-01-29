@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.33 2021/01/29 10:55:19 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.34 2021/01/29 11:21:00 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -114,18 +114,6 @@ struct slot {
 	unsigned int id;			/* process id */
 };
 
-struct opt {
-	struct opt *next;
-#define OPT_NAMEMAX 11
-	char name[OPT_NAMEMAX + 1];
-	int maxweight;		/* max dynamic range for clients */
-	int pmin, pmax;		/* play channels */
-	int rmin, rmax;		/* recording channels */
-	int mmc;		/* true if MMC control enabled */
-	int dup;		/* true if join/expand enabled */
-	int mode;		/* bitmap of MODE_XXX */
-};
-
 /*
  * subset of channels of a stream
  */
@@ -171,7 +159,6 @@ struct ctlslot {
 struct dev {
 	struct dev *next;
 	struct slot *slot_list;			/* audio streams attached */
-	struct opt *opt_list;
 	struct midi *midi;
 
 	/*
