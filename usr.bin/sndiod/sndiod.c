@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.41 2020/06/18 05:11:13 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.42 2021/01/29 10:51:24 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -495,6 +495,8 @@ main(int argc, char **argv)
 	mode = MODE_PLAY | MODE_REC;
 	tcpaddr_list = NULL;
 	devindex = 0;
+
+	slot_array_init();
 
 	while ((c = getopt(argc, argv,
 	    "a:b:c:C:de:F:f:j:L:m:Q:q:r:s:t:U:v:w:x:z:")) != -1) {

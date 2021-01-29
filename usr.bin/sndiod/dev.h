@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.31 2021/01/28 11:15:31 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.32 2021/01/29 10:51:24 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -26,6 +26,11 @@
 #define CTLADDR_MASTER		(DEV_NSLOT)
 #define CTLADDR_ALT_SEL		(CTLADDR_MASTER + 1)
 #define CTLADDR_END		(CTLADDR_ALT_SEL + DEV_NMAX)
+
+/*
+ * preallocated audio clients
+ */
+#define DEV_NSLOT	8
 
 /*
  * audio stream state structure
@@ -182,13 +187,6 @@ struct dev {
 	unsigned char *decbuf;			/* buffer for decoding */
 
 	/*
-	 * preallocated audio sub-devices
-	 */
-#define DEV_NSLOT	8
-	struct slot slot[DEV_NSLOT];
-	unsigned int serial;			/* for slot allocation */
-
-	/*
 	 * current position, relative to the current cycle
 	 */
 	int delta;
@@ -265,6 +263,9 @@ struct dev {
 };
 
 extern struct dev *dev_list;
+extern struct slot slot_array[DEV_NSLOT];
+
+void slot_array_init(void);
 
 void dev_log(struct dev *);
 void dev_abort(struct dev *);

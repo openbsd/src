@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.36 2021/01/28 11:15:31 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.37 2021/01/29 10:51:24 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1238,7 +1238,7 @@ sock_execmsg(struct sock *f)
 		slot_setvol(s, ctl);
 		dev_midi_vol(s->dev, s);
 		dev_onval(s->dev,
-		    CTLADDR_SLOT_LEVEL(f->slot - s->dev->slot), ctl);
+		    CTLADDR_SLOT_LEVEL(f->slot - slot_array), ctl);
 		break;
 	case AMSG_CTLSUB:
 #ifdef DEBUG
