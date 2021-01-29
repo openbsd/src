@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.138 2021/01/28 07:34:34 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.139 2021/01/29 17:48:58 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -175,7 +175,7 @@ void			 replace_forwarders(struct uw_forwarder_head *,
 void			 resolver_ref(struct uw_resolver *);
 void			 resolver_unref(struct uw_resolver *);
 int			 resolver_cmp(const void *, const void *);
-void			 restart_ub_resolvers(void);
+void			 restart_ub_resolvers(int);
 void			 show_status(pid_t);
 void			 show_autoconf(pid_t);
 void			 show_mem(pid_t);
@@ -501,7 +501,7 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 			memcpy(&verbose, imsg.data, sizeof(verbose));
 			if (log_getdebug() && (log_getverbose() & OPT_VERBOSE3)
 			    != (verbose & OPT_VERBOSE3))
-				restart_ub_resolvers();
+				restart_ub_resolvers(0);
 			log_setverbose(verbose);
 			break;
 		case IMSG_QUERY:
@@ -545,7 +545,7 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 			break;
 		case IMSG_NEW_TAS_DONE:
 			if (merge_tas(&new_trust_anchors, &trust_anchors))
-				restart_ub_resolvers();
+				restart_ub_resolvers(1);
 			break;
 		case IMSG_NETWORK_CHANGED:
 			clock_gettime(CLOCK_MONOTONIC, &last_network_change);
@@ -577,7 +577,7 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 			    sizeof(new_available_afs));
 			if (new_available_afs != available_afs) {
 				available_afs = new_available_afs;
-				restart_ub_resolvers();
+				restart_ub_resolvers(1);
 			}
 			break;
 		default:
@@ -1754,14 +1754,20 @@ resolver_cmp(const void *_a, const void *_b)
 }
 
 void
-restart_ub_resolvers(void)
+restart_ub_resolvers(int recheck)
 {
-	int	 i;
+	int			 i;
+	enum uw_resolver_state	 state;
 
-	for (i = 0; i < UW_RES_NONE; i++)
-		if (i != UW_RES_ASR)
-			new_resolver(i, resolvers[i] != NULL ?
-			    resolvers[i]->state : UNKNOWN);
+	for (i = 0; i < UW_RES_NONE; i++) {
+		if (i == UW_RES_ASR)
+			continue;
+		if (recheck || resolvers[i] == NULL)
+			state = UNKNOWN;
+		else
+			state = resolvers[i]->state;
+		new_resolver(i, state);
+	}
 }
 
 void
