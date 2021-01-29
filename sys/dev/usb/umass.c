@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.79 2020/11/23 21:33:37 krw Exp $ */
+/*	$OpenBSD: umass.c,v 1.80 2021/01/29 17:12:19 sthen Exp $ */
 /*	$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $	*/
 
 /*
@@ -61,10 +61,10 @@
 
 /*
  * Universal Serial Bus Mass Storage Class specs:
- * http://www.usb.org/developers/devclass_docs/usb_msc_overview_1.2.pdf
- * http://www.usb.org/developers/devclass_docs/usbmassbulk_10.pdf
- * http://www.usb.org/developers/devclass_docs/usb_msc_cbi_1.1.pdf
- * http://www.usb.org/developers/devclass_docs/usbmass-ufi10.pdf
+ * https://www.usb.org/sites/default/files/Mass_Storage_Specification_Overview_v1.4_2-19-2010.pdf
+ * https://www.usb.org/sites/default/files/usbmassbulk_10.pdf
+ * https://www.usb.org/sites/default/files/usb_msc_cbi_1.1.pdf
+ * https://www.usb.org/sites/default/files/usbmass-ufi10.pdf
  */
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.66 2020/07/31 10:49:33 mglocker Exp $ */
+/*	$OpenBSD: umodem.c,v 1.67 2021/01/29 17:12:19 sthen Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -32,8 +32,8 @@
  */
 
 /*
- * Comm Class spec:  http://www.usb.org/developers/devclass_docs/usbccs10.pdf
- *                   http://www.usb.org/developers/devclass_docs/usbcdc11.pdf
+ * Comm Class spec:  https://www.usb.org/sites/default/files/usbccs10.pdf
+ *                   https://www.usb.org/sites/default/files/CDC1.2_WMC1.1_012011.zip
  */
 
 /*
