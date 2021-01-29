@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.40 2021/01/29 11:36:44 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.41 2021/01/29 11:38:23 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -616,7 +616,7 @@ int
 sock_setpar(struct sock *f)
 {
 	struct slot *s = f->slot;
-	struct dev *d = s->dev;
+	struct dev *d = s->opt->dev;
 	struct amsg_par *p = &f->rmsg.u.par;
 	unsigned int min, max;
 	uint32_t rate, appbufsz;
@@ -929,7 +929,7 @@ sock_hello(struct sock *f)
 	opt = opt_byname(d, p->opt);
 	if (opt == NULL)
 		return 0;
-	f->slot = slot_new(d, opt, id, p->who, &sock_slotops, f, mode);
+	f->slot = slot_new(opt, id, p->who, &sock_slotops, f, mode);
 	if (f->slot == NULL)
 		return 0;
 	f->midi = NULL;
@@ -1239,8 +1239,8 @@ sock_execmsg(struct sock *f)
 		f->rstate = SOCK_RMSG;
 		f->lastvol = ctl; /* dont trigger feedback message */
 		slot_setvol(s, ctl);
-		dev_midi_vol(s->dev, s);
-		dev_onval(s->dev,
+		dev_midi_vol(s->opt->dev, s);
+		dev_onval(s->opt->dev,
 		    CTLADDR_SLOT_LEVEL(f->slot - slot_array), ctl);
 		break;
 	case AMSG_CTLSUB:
