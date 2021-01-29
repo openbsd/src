@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.270 2021/01/20 07:16:54 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.271 2021/01/29 09:48:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3037,9 +3037,6 @@ format_defaults_pane(struct format_tree *ft, struct window_pane *wp)
 	format_add(ft, "history_limit", "%u", gd->hlimit);
 	format_add_cb(ft, "history_bytes", format_cb_history_bytes);
 	format_add_cb(ft, "history_all_bytes", format_cb_history_all_bytes);
-
-	format_add(ft, "pane_written", "%zu", wp->written);
-	format_add(ft, "pane_skipped", "%zu", wp->skipped);
 
 	if (window_pane_index(wp, &idx) != 0)
 		fatalx("index not found");
