@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.32 2021/01/29 10:51:24 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.33 2021/01/29 10:55:19 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -31,6 +31,11 @@
  * preallocated audio clients
  */
 #define DEV_NSLOT	8
+
+/*
+ * preallocated control clients
+ */
+#define DEV_NCTLSLOT 8
 
 /*
  * audio stream state structure
@@ -258,12 +263,11 @@ struct dev {
 	 */
 
 	struct ctl *ctl_list;
-#define DEV_NCTLSLOT 8
-	struct ctlslot ctlslot[DEV_NCTLSLOT];
 };
 
 extern struct dev *dev_list;
 extern struct slot slot_array[DEV_NSLOT];
+extern struct ctlslot ctlslot_array[DEV_NCTLSLOT];
 
 void slot_array_init(void);
 

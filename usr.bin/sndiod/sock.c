@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.37 2021/01/29 10:51:24 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.38 2021/01/29 10:55:19 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -114,7 +114,7 @@ sock_log(struct sock *f)
 		midi_log(f->midi);
 	else if (f->ctlslot) {
 		log_puts("ctlslot");
-		log_putu(f->ctlslot - f->ctlslot->dev->ctlslot);
+		log_putu(f->ctlslot - ctlslot_array);
 	} else
 		log_puts("sock");
 #ifdef DEBUG
