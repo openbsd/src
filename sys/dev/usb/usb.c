@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.126 2020/09/02 12:36:12 mglocker Exp $	*/
+/*	$OpenBSD: usb.c,v 1.127 2021/01/29 16:59:41 sthen Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -33,8 +33,7 @@
 
 /*
  * USB specifications and other documentation can be found at
- * http://www.usb.org/developers/docs/ and
- * http://www.usb.org/developers/devclass_docs/
+ * https://www.usb.org/documents
  */
 
 #include "ohci.h"

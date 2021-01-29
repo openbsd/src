@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.82 2021/01/23 05:08:36 thfr Exp $ */
+/*	$OpenBSD: uhid.c,v 1.83 2021/01/29 16:59:41 sthen Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 /*
- * HID spec: http://www.usb.org/developers/devclass_docs/HID1_11.pdf
+ * HID spec: https://www.usb.org/sites/default/files/hid1_11.pdf
  */
 
 #include "fido.h"
