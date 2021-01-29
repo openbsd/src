@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.303 2020/08/23 09:35:32 kn Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.304 2021/01/29 10:47:24 claudio Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -453,7 +453,7 @@ getnewvnode(enum vtagtype tag, struct mount *mp, const struct vops *vops,
 		splx(s);
 #endif
 		vp->v_flag = 0;
-		vp->v_socket = 0;
+		vp->v_socket = NULL;
 	}
 	cache_purge(vp);
 	vp->v_type = VNON;
