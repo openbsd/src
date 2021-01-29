@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.107 2021/01/27 17:28:19 mglocker Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.108 2021/01/29 11:44:06 edd Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -638,12 +638,23 @@ usbd_status
 usbd_device2interface_handle(struct usbd_device *dev, u_int8_t ifaceno,
     struct usbd_interface **iface)
 {
+	u_int8_t idx;
+
 	if (dev->cdesc == NULL)
 		return (USBD_NOT_CONFIGURED);
-	if (ifaceno >= dev->cdesc->bNumInterfaces)
-		return (USBD_INVAL);
-	*iface = &dev->ifaces[ifaceno];
-	return (USBD_NORMAL_COMPLETION);
+	/*
+	 * The correct interface should be at dev->ifaces[ifaceno], but we've
+	 * seen non-compliant devices in the wild which present non-contiguous
+	 * interface numbers and this skews the indices. For this reason we
+	 * linearly search the interface array.
+	 */
+	for (idx = 0; idx < dev->cdesc->bNumInterfaces; idx++) {
+		if (dev->ifaces[idx].idesc->bInterfaceNumber == ifaceno) {
+			*iface = &dev->ifaces[idx];
+			return (USBD_NORMAL_COMPLETION);
+		}
+	}
+	return (USBD_INVAL);
 }
 
 /* XXXX use altno */
