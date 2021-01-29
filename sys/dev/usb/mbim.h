@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbim.h,v 1.4 2017/04/18 13:27:55 gerhard Exp $ */
+/*	$OpenBSD: mbim.h,v 1.5 2021/01/29 17:06:19 sthen Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -19,7 +19,7 @@
 
 /*
  * Mobile Broadband Interface Model
- * http://www.usb.org/developers/docs/devclass_docs/MBIM-Compliance-1.0.pdf
+ * https://www.usb.org/sites/default/files/MBIM-Compliance-1.0.pdf
  */
 #ifndef _MBIM_H_
 #define _MBIM_H_

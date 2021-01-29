@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.h,v 1.6 2020/02/18 08:09:37 gerhard Exp $ */
+/*	$OpenBSD: if_umb.h,v 1.7 2021/01/29 17:06:19 sthen Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -19,7 +19,7 @@
 
 /*
  * Mobile Broadband Interface Model
- * http://www.usb.org/developers/docs/devclass_docs/MBIM-Compliance-1.0.pdf
+ * https://www.usb.org/sites/default/files/MBIM-Compliance-1.0.pdf
  */
 
 struct umb_valdescr {
