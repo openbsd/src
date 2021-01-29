@@ -2,7 +2,6 @@
 ./usr/bin/as
 ./usr/bin/gdb
 ./usr/bin/readelf
-./usr/include/altivec.h
 ./usr/include/ieeefp.h
 ./usr/include/macppc
 ./usr/include/macppc/_float.h
@@ -96,9 +95,6 @@
 ./usr/include/powerpc/spinlock.h
 ./usr/include/powerpc/tcb.h
 ./usr/include/powerpc/trap.h
-./usr/include/ppc-asm.h
-./usr/include/spe.h
-./usr/include/unwind.h
 ./usr/libdata/ldscripts
 ./usr/libdata/ldscripts/elf32ppc_obsd.x
 ./usr/libdata/ldscripts/elf32ppc_obsd.xbn
