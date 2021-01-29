@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.119 2020/06/22 13:21:29 landry Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.120 2021/01/29 15:58:56 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: June 22 2020 $
+.Dd $Mdocdate: January 29 2021 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -43,6 +43,7 @@
 .Op Fl W Ar libspec
 .Fl d Ar desc
 .Fl D Ar COMMENT Ns = Ns Ar value
+.Fl D Ar FULLPKGPATH Ns = Ns Ar value
 .Fl D Ar PORTSDIR Ns = Ns Ar value
 .Fl f Ar packinglist
 .Fl p Ar prefix
@@ -143,7 +144,11 @@ Record checksums of files in permanent location
 Set to the port's Makefile
 .Va PERMIT_PACKAGE_FTP .
 .It Cm FULLPKGPATH
-Strongly recommended, otherwise updates won't work.
+Location in the ports tree, mandatory for updates to work
+.Po
+see
+.Xr pkg_add 1
+.Pc .
 .It Cm HOMEPAGE
 If defined, appended to the description.
 .It Cm MAINTAINER
