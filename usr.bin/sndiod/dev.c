@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.86 2021/01/29 11:21:00 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.87 2021/01/29 11:31:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -2319,13 +2319,13 @@ ctlslot_new(struct dev *d, struct ctlops *ops, void *arg)
 		i++;
 	}
 	s->dev = d;
-	s->mask = 1 << i;
+	s->self = 1 << i;
 	if (!dev_ref(d))
 		return NULL;
 	s->ops = ops;
 	s->arg = arg;
 	for (c = d->ctl_list; c != NULL; c = c->next)
-		c->refs_mask |= s->mask;
+		c->refs_mask |= s->self;
 	return s;
 }
 
@@ -2339,7 +2339,7 @@ ctlslot_del(struct ctlslot *s)
 
 	pc = &s->dev->ctl_list;
 	while ((c = *pc) != NULL) {
-		c->refs_mask &= ~s->mask;
+		c->refs_mask &= ~s->self;
 		if (c->refs_mask == 0) {
 			*pc = c->next;
 			xfree(c);

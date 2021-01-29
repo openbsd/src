@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.38 2021/01/29 10:55:19 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.39 2021/01/29 11:31:28 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1263,7 +1263,7 @@ sock_execmsg(struct sock *f)
 		}
 		if (m->u.ctlsub.desc) {
 			if (!(f->ctlops & SOCK_CTLDESC)) {
-				ctl = f->ctlslot->mask;
+				ctl = f->ctlslot->self;
 				c = f->ctlslot->dev->ctl_list;
 				while (c != NULL) {
 					c->desc_mask |= ctl;
@@ -1550,7 +1550,7 @@ sock_buildmsg(struct sock *f)
 	 */
 	if (f->ctlslot && (f->ctlops & SOCK_CTLDESC)) {
 		desc = f->ctldesc;
-		mask = f->ctlslot->mask;
+		mask = f->ctlslot->self;
 		size = 0;
 		pc = &f->ctlslot->dev->ctl_list;
 		while ((c = *pc) != NULL) {
@@ -1608,7 +1608,7 @@ sock_buildmsg(struct sock *f)
 		}
 	}
 	if (f->ctlslot && (f->ctlops & SOCK_CTLVAL)) {
-		mask = f->ctlslot->mask;
+		mask = f->ctlslot->self;
 		for (c = f->ctlslot->dev->ctl_list; c != NULL; c = c->next) {
 			if ((c->val_mask & mask) == 0)
 				continue;
