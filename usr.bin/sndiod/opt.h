@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.h,v 1.3 2021/01/29 11:21:00 ratchov Exp $	*/
+/*	$OpenBSD: opt.h,v 1.4 2021/01/29 11:25:05 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -17,11 +17,14 @@
 #ifndef OPT_H
 #define OPT_H
 
+#define OPT_NMAX		16
+
 struct dev;
 
 struct opt {
 	struct opt *next;
 	struct dev *dev;
+	int num;
 #define OPT_NAMEMAX 11
 	char name[OPT_NAMEMAX + 1];
 	int maxweight;		/* max dynamic range for clients */
