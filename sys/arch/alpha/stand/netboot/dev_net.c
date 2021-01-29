@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_net.c,v 1.4 2014/07/13 15:31:20 mpi Exp $	*/
+/*	$OpenBSD: dev_net.c,v 1.5 2021/01/29 16:22:36 deraadt Exp $	*/
 /*	$NetBSD: dev_net.c,v 1.4 1997/04/06 08:41:24 cgd Exp $	*/
 
 /*
@@ -73,19 +73,6 @@ extern int nfs_root_node[];	/* XXX - get from nfs_mount() */
 /* for arp.c, rarp.c */
 u_char bcea[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 #endif
-
-struct	in_addr myip;		/* my ip address */
-struct	in_addr rootip;		/* root ip address */
-struct	in_addr gateip;		/* swap ip address */
-u_int32_t	netmask;		/* subnet or net mask */
-
-char rootpath[FNAME_SIZE];
-
-int hostnamelen;
-char hostname[FNAME_SIZE];
-
-int domainnamelen;
-char domainname[FNAME_SIZE];
 
 /*
  * Local things...
