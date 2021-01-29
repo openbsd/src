@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.39 2021/01/29 11:31:28 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.40 2021/01/29 11:36:44 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -906,7 +906,10 @@ sock_hello(struct sock *f)
 			}
 			return 0;
 		}
-		f->ctlslot = ctlslot_new(d, &sock_ctlops, f);
+		opt = opt_byname(d, p->opt);
+		if (opt == NULL)
+			return 0;
+		f->ctlslot = ctlslot_new(opt, &sock_ctlops, f);
 		if (f->ctlslot == NULL) {
 			if (log_level >= 2) {
 				sock_log(f);
@@ -1264,7 +1267,7 @@ sock_execmsg(struct sock *f)
 		if (m->u.ctlsub.desc) {
 			if (!(f->ctlops & SOCK_CTLDESC)) {
 				ctl = f->ctlslot->self;
-				c = f->ctlslot->dev->ctl_list;
+				c = f->ctlslot->opt->dev->ctl_list;
 				while (c != NULL) {
 					c->desc_mask |= ctl;
 					c = c->next;
@@ -1298,7 +1301,7 @@ sock_execmsg(struct sock *f)
 			sock_close(f);
 			return 0;
 		}
-		if (!dev_setctl(f->ctlslot->dev,
+		if (!dev_setctl(f->ctlslot->opt->dev,
 			ntohs(m->u.ctlset.addr),
 			ntohs(m->u.ctlset.val))) {
 #ifdef DEBUG
@@ -1552,7 +1555,7 @@ sock_buildmsg(struct sock *f)
 		desc = f->ctldesc;
 		mask = f->ctlslot->self;
 		size = 0;
-		pc = &f->ctlslot->dev->ctl_list;
+		pc = &f->ctlslot->opt->dev->ctl_list;
 		while ((c = *pc) != NULL) {
 			if ((c->desc_mask & mask) == 0 ||
 			    (c->refs_mask & mask) == 0) {
@@ -1609,7 +1612,7 @@ sock_buildmsg(struct sock *f)
 	}
 	if (f->ctlslot && (f->ctlops & SOCK_CTLVAL)) {
 		mask = f->ctlslot->self;
-		for (c = f->ctlslot->dev->ctl_list; c != NULL; c = c->next) {
+		for (c = f->ctlslot->opt->dev->ctl_list; c != NULL; c = c->next) {
 			if ((c->val_mask & mask) == 0)
 				continue;
 			c->val_mask &= ~mask;

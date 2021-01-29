@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.35 2021/01/29 11:31:28 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.36 2021/01/29 11:36:44 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -148,7 +148,7 @@ struct ctl {
 struct ctlslot {
 	struct ctlops *ops;
 	void *arg;
-	struct dev *dev;
+	struct opt *opt;
 	unsigned int self;		/* equal to (1 << index) */
 	unsigned int mode;
 };
@@ -309,7 +309,7 @@ void slot_detach(struct slot *);
  * control related functions
  */
 void ctl_log(struct ctl *);
-struct ctlslot *ctlslot_new(struct dev *, struct ctlops *, void *);
+struct ctlslot *ctlslot_new(struct opt *, struct ctlops *, void *);
 void ctlslot_del(struct ctlslot *);
 int dev_setctl(struct dev *, int, int);
 int dev_onval(struct dev *, int, int);

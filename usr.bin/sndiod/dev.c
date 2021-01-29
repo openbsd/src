@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.87 2021/01/29 11:31:28 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.88 2021/01/29 11:36:44 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1279,7 +1279,7 @@ dev_abort(struct dev *d)
 	d->slot_list = NULL;
 
 	for (c = ctlslot_array, i = DEV_NCTLSLOT; i > 0; i--, c++) {
-		if (c->dev != d)
+		if (c->opt->dev != d)
 			continue;
 		if (c->ops)
 			c->ops->exit(c->arg);
@@ -2303,7 +2303,7 @@ slot_read(struct slot *s)
  * allocate at control slot
  */
 struct ctlslot *
-ctlslot_new(struct dev *d, struct ctlops *ops, void *arg)
+ctlslot_new(struct opt *o, struct ctlops *ops, void *arg)
 {
 	struct ctlslot *s;
 	struct ctl *c;
@@ -2318,13 +2318,13 @@ ctlslot_new(struct dev *d, struct ctlops *ops, void *arg)
 			break;
 		i++;
 	}
-	s->dev = d;
+	s->opt = o;
 	s->self = 1 << i;
-	if (!dev_ref(d))
+	if (!dev_ref(o->dev))
 		return NULL;
 	s->ops = ops;
 	s->arg = arg;
-	for (c = d->ctl_list; c != NULL; c = c->next)
+	for (c = o->dev->ctl_list; c != NULL; c = c->next)
 		c->refs_mask |= s->self;
 	return s;
 }
@@ -2337,7 +2337,7 @@ ctlslot_del(struct ctlslot *s)
 {
 	struct ctl *c, **pc;
 
-	pc = &s->dev->ctl_list;
+	pc = &s->opt->dev->ctl_list;
 	while ((c = *pc) != NULL) {
 		c->refs_mask &= ~s->self;
 		if (c->refs_mask == 0) {
@@ -2347,7 +2347,7 @@ ctlslot_del(struct ctlslot *s)
 			pc = &c->next;
 	}
 	s->ops = NULL;
-	dev_unref(s->dev);
+	dev_unref(s->opt->dev);
 }
 
 void
@@ -2505,7 +2505,7 @@ dev_ctlsync(struct dev *d)
 	}
 
 	for (s = ctlslot_array, i = DEV_NCTLSLOT; i > 0; i--, s++) {
-		if (s->dev == d && s->ops)
+		if (s->ops && s->opt->dev == d)
 			s->ops->sync(s->arg);
 	}
 }
