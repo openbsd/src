@@ -1,4 +1,4 @@
-/*	$Id: test-cert.c,v 1.6 2020/12/09 11:22:47 claudio Exp $ */
+/*	$Id: test-cert.c,v 1.7 2021/01/29 10:15:42 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -145,7 +145,7 @@ main(int argc, char *argv[])
 		}
 	} else {
 		for (i = 0; i < argc; i++) {
-			p = cert_parse(&xp, argv[i], NULL);
+			p = cert_parse(&xp, argv[i]);
 			if (p == NULL)
 				break;
 			if (verb)

@@ -1,4 +1,4 @@
-/*	$Id: test-roa.c,v 1.7 2020/11/09 16:13:02 tb Exp $ */
+/*	$Id: test-roa.c,v 1.8 2021/01/29 10:15:42 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -87,7 +87,7 @@ main(int argc, char *argv[])
 		errx(1, "argument missing");
 
 	for (i = 0; i < argc; i++) {
-		if ((p = roa_parse(&xp, argv[i], NULL)) == NULL)
+		if ((p = roa_parse(&xp, argv[i])) == NULL)
 			break;
 		if (verb)
 			roa_print(p);
