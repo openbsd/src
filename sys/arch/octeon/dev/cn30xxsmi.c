@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxsmi.c,v 1.7 2019/09/28 22:20:25 deraadt Exp $	*/
+/*	$OpenBSD: cn30xxsmi.c,v 1.8 2021/01/30 14:59:13 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -179,14 +179,14 @@ cn30xxsmi_get_phy(int phandle, int port, struct cn30xxsmi_softc **psmi,
 		if (smi == NULL)
 			return ENOENT;
 
-		switch (octeon_boot_info->board_type) {
-		case BOARD_TYPE_UBIQUITI_E100:
-		case BOARD_TYPE_UBIQUITI_E120:
+		switch (octeon_board) {
+		case BOARD_UBIQUITI_E100:
+		case BOARD_UBIQUITI_E120:
 			if (port > 2)
 				return ENOENT;
 			reg = 7 - port;
 			break;
-		case BOARD_TYPE_CN3010_EVB_HS5:
+		case BOARD_CN3010_EVB_HS5:
 			if (port >= nitems(cam0100_phys))
 				return ENOENT;
 			reg = cam0100_phys[port];

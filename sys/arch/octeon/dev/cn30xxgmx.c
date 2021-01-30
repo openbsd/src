@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.47 2020/09/08 15:46:36 visa Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.48 2021/01/30 14:59:13 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -1333,14 +1333,14 @@ cn30xxgmx_rgmii_timing(struct cn30xxgmx_port_softc *sc)
 	 * > ...
 	 */
 
-	switch (octeon_boot_info->board_type) {
+	switch (octeon_board) {
 	default:
 		/* Default parameter of CN30XX */
 		clk_tx_setting = 24;
 		clk_rx_setting = 24;
 		break;
-	case BOARD_TYPE_UBIQUITI_E100:
-	case BOARD_TYPE_UBIQUITI_E120:
+	case BOARD_UBIQUITI_E100:
+	case BOARD_UBIQUITI_E120:
 		clk_tx_setting = 16;
 		clk_rx_setting = 0;
 		break;

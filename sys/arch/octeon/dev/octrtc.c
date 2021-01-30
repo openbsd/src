@@ -1,4 +1,4 @@
-/*	$OpenBSD: octrtc.c,v 1.12 2020/06/30 14:47:16 visa Exp $	*/
+/*	$OpenBSD: octrtc.c,v 1.13 2021/01/30 14:59:13 visa Exp $	*/
 
 /*
  * Copyright (c) 2013, 2014 Paul Irofti.
@@ -80,14 +80,14 @@ union mio_tws_sw_twsi_reg {
 };
 
 
-static const uint16_t no_rtc_boards[] = {
-	BOARD_TYPE_UBIQUITI_E100,
-	BOARD_TYPE_UBIQUITI_E120,
-	BOARD_TYPE_UBIQUITI_E200,
-	BOARD_TYPE_UBIQUITI_E220,
-	BOARD_TYPE_UBIQUITI_E300,
-	BOARD_TYPE_UBIQUITI_E1000,
-	BOARD_TYPE_RHINOLABS_SHASTA
+static const enum octeon_board no_rtc_boards[] = {
+	BOARD_UBIQUITI_E100,
+	BOARD_UBIQUITI_E120,
+	BOARD_UBIQUITI_E200,
+	BOARD_UBIQUITI_E220,
+	BOARD_UBIQUITI_E300,
+	BOARD_UBIQUITI_E1000,
+	BOARD_RHINOLABS_UTM8,
 };
 
 int
@@ -100,7 +100,7 @@ octrtc_match(struct device *parent, void *match, void *aux)
 	if (strcmp(maa->maa_name, cf->cf_driver->cd_name) != 0)
 		return 0;
 	for (i = 0; i < nitems(no_rtc_boards); i++)
-		if (octeon_boot_info->board_type == no_rtc_boards[i])
+		if (octeon_board == no_rtc_boards[i])
 			return 0;
 	return 1;
 }

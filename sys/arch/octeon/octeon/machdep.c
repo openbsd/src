@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.127 2020/07/18 08:37:44 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.128 2021/01/30 14:59:14 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -102,6 +102,7 @@ vm_map_t phys_map;
 extern struct timecounter cp0_timecounter;
 extern uint8_t dt_blob_start[];
 
+enum octeon_board octeon_board;
 struct boot_desc *octeon_boot_desc;
 struct boot_info *octeon_boot_info;
 
@@ -139,6 +140,7 @@ int		octeon_cpuspeed(int *);
 void		octeon_tlb_init(void);
 static void	process_bootargs(void);
 static uint64_t	get_ncpusfound(void);
+static enum octeon_board get_octeon_board(void);
 
 cons_decl(octuart);
 struct consdev uartcons = cons_init(octuart);
@@ -441,8 +443,8 @@ mips_init(register_t a0, register_t a1, register_t a2, register_t a3)
 		 bootcpu_hwinfo.clock / 1000000);
 
 	cpu_cpuspeed = octeon_cpuspeed;
-
 	ncpusfound = get_ncpusfound();
+	octeon_board = get_octeon_board();
 
 	process_bootargs();
 
@@ -820,6 +822,35 @@ get_ncpusfound(void)
 		ncpus++;
 
 	return ncpus;
+}
+
+static enum octeon_board
+get_octeon_board(void)
+{
+	switch (octeon_boot_info->board_type) {
+	case 11:
+		return BOARD_CN3010_EVB_HS5;
+	case 20002:
+		return BOARD_UBIQUITI_E100;
+	case 20003:
+		return BOARD_UBIQUITI_E200;
+	case 20004:
+		return BOARD_UBIQUITI_E120;
+	case 20005:
+		return BOARD_UBIQUITI_E220;
+	case 20010:
+		return BOARD_UBIQUITI_E1000;
+	case 20012:
+		return BOARD_RHINOLABS_UTM8;
+	case 20015:
+		return BOARD_DLINK_DSR_500;
+	case 20300:
+		return BOARD_UBIQUITI_E300;
+	default:
+		break;
+	}
+
+	return BOARD_UNKNOWN;
 }
 
 static void

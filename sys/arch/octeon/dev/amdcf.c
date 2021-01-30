@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdcf.c,v 1.6 2018/05/30 14:53:56 fcambus Exp $	*/
+/*	$OpenBSD: amdcf.c,v 1.7 2021/01/30 14:59:13 visa Exp $	*/
 
 /*
  * Copyright (c) 2007, Juniper Networks, Inc.
@@ -218,7 +218,7 @@ amdcf_match(struct device *parent, void *match, void *aux)
 		return 0;
 
 	/* Only for DSR machines */
-	if (octeon_boot_info->board_type != BOARD_TYPE_DSR_500)
+	if (octeon_board != BOARD_DLINK_DSR_500)
 		return 0;
 
 	return 1;
