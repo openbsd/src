@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.h,v 1.6 2016/01/09 18:10:57 krw Exp $	*/
+/*	$OpenBSD: gpt.h,v 1.7 2021/01/30 18:16:36 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -16,15 +16,17 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-int GPT_get_hdr(off_t);
-int GPT_get_partition_table(off_t);
-void GPT_get_gpt(int);
-int GPT_init(void);
-int GPT_write(void);
+void		GPT_get_gpt(int);
+int		GPT_get_hdr(off_t);
+int		GPT_get_partition_table(off_t);
+int		GPT_get_lba_start(unsigned int);
+int		GPT_get_lba_end(unsigned int);
 
-void GPT_print(char *, int);
-void GPT_print_part(int, char *, int);
-void GPT_print_parthdr(int);
+int		GPT_init(void);
+int		GPT_write(void);
+void		GPT_print(char *, int);
+void		GPT_print_part(int, char *, int);
+void		GPT_print_parthdr(int);
 
 extern struct gpt_header gh;
 extern struct gpt_partition gp[NGPTPARTITIONS];

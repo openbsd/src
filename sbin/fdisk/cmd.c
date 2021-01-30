@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.98 2017/11/13 21:00:32 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.99 2021/01/30 18:16:36 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -167,7 +167,6 @@ Xgedit(char *args)
 	struct gpt_partition *gg;
 	char *name;
 	u_int16_t *utf;
-	u_int64_t bs, ns;
 	int i, pn;
 
 	pn = strtonum(args, 0, NGPTPARTITIONS - 1, &errstr);
@@ -187,13 +186,11 @@ Xgedit(char *args)
 		goto done;
 	}
 
-	bs = getuint64("Partition offset", letoh64(gg->gp_lba_start),
-	    letoh64(gh.gh_lba_start), letoh64(gh.gh_lba_end));
-	ns = getuint64("Partition size", letoh64(gg->gp_lba_end) - bs + 1,
-	    1, letoh64(gh.gh_lba_end) - bs + 1);
-
-	gg->gp_lba_start = htole64(bs);
-	gg->gp_lba_end = htole64(bs + ns - 1);
+	if (GPT_get_lba_start(pn) == -1 ||
+	    GPT_get_lba_end(pn) == -1) {
+		*gg = oldpart;
+		goto done;
+	}
 
 	name = ask_string("Partition name", utf16le_to_string(gg->gp_name));
 	if (strlen(name) >= GPTPARTNAMESIZE) {

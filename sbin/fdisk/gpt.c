@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.11 2016/03/28 16:55:09 mestre Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.12 2021/01/30 18:16:36 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -41,6 +41,9 @@
 
 struct gpt_header gh;
 struct gpt_partition gp[NGPTPARTITIONS];
+
+struct gpt_partition	**sort_gpt(void);
+int			  lba_start_cmp(const void *e1, const void *e2);
 
 int
 GPT_get_header(off_t where)
@@ -455,4 +458,132 @@ GPT_write(void)
 	ioctl(disk.fd, DIOCRLDINFO, 0);
 
 	return (0);
+}
+
+int
+gp_lba_start_cmp(const void *e1, const void *e2)
+{
+	struct gpt_partition *p1 = *(struct gpt_partition **)e1;
+	struct gpt_partition *p2 = *(struct gpt_partition **)e2;
+	u_int64_t o1;
+	u_int64_t o2;
+
+	o1 = letoh64(p1->gp_lba_start);
+	o2 = letoh64(p2->gp_lba_start);
+
+	if (o1 < o2)
+		return -1;
+	else if (o1 > o2)
+		return 1;
+	else
+		return 0;
+}
+
+struct gpt_partition **
+sort_gpt(void)
+{
+	static struct gpt_partition *sgp[NGPTPARTITIONS+2];
+	unsigned int i, j;
+
+	memset(sgp, 0, sizeof(sgp));
+
+	j = 0;
+	for (i = 0; i < letoh32(gh.gh_part_num); i++) {
+		if (letoh64(gp[i].gp_lba_start) >= letoh64(gh.gh_lba_start))
+			sgp[j++] = &gp[i];
+	}
+
+	if (j > 1) {
+		if (mergesort(sgp, j, sizeof(sgp[0]), gp_lba_start_cmp) == -1) {
+			printf("unable to sort gpt by lba start\n");
+			return NULL;
+		}
+	}
+
+	return (sgp);
+}
+
+int
+GPT_get_lba_start(unsigned int pn)
+{
+	struct gpt_partition	**sgp;
+	uint64_t		  bs, bigbs, nextbs, ns;
+	unsigned int		  i;
+
+	bs = letoh64(gh.gh_lba_start);
+
+	if (letoh64(gp[pn].gp_lba_start) >= bs) {
+		bs = letoh64(gp[pn].gp_lba_start);
+	} else {
+		sgp = sort_gpt();
+		if (sgp == NULL)
+			return -1;
+		if (sgp[0] != NULL) {
+			bigbs = bs;
+			ns = 0;
+			for (i = 0; sgp[i] != NULL; i++) {
+				nextbs = letoh64(sgp[i]->gp_lba_start);
+				if (bs < nextbs && ns < nextbs - bs) {
+					ns = nextbs - bs;
+					bigbs = bs;
+				}
+				bs = letoh64(sgp[i]->gp_lba_end) + 1;
+			}
+			nextbs = letoh64(gh.gh_lba_end) + 1;
+			if (bs < nextbs && ns < nextbs - bs) {
+				ns = nextbs - bs;
+				bigbs = bs;
+			}
+			if (ns == 0) {
+				printf("no space for partition %u\n", pn);
+				return -1;
+			}
+			bs = bigbs;
+		}
+	}
+
+	bs = getuint64("Partition offset", bs, letoh64(gh.gh_lba_start),
+	    letoh64(gh.gh_lba_end));
+
+	for (i = 0; i < letoh32(gh.gh_part_num); i++) {
+		if (i == pn)
+			continue;
+		if (bs >= letoh64(gp[i].gp_lba_start) &&
+		    bs <= letoh64(gp[i].gp_lba_end)) {
+			printf("partition %u can't start inside partition %u\n",
+			    pn, i);
+			return -1;
+		}
+	}
+
+	gp[pn].gp_lba_start = htole64(bs);
+
+	return 0;
+}
+
+int
+GPT_get_lba_end(unsigned int pn)
+{
+	struct gpt_partition	**sgp;
+	uint64_t		  bs, nextbs, ns;
+	unsigned int		  i;
+
+	sgp = sort_gpt();
+	if (sgp == NULL)
+		return -1;
+
+	bs = letoh64(gp[pn].gp_lba_start);
+	ns = letoh64(gh.gh_lba_end) - bs + 1;
+	for (i = 0; sgp[i] != NULL; i++) {
+		nextbs = letoh64(sgp[i]->gp_lba_start);
+		if (nextbs > bs) {
+			ns = nextbs - bs;
+			break;
+		}
+	}
+	ns = getuint64("Partition size", ns, 1, ns);
+
+	gp[pn].gp_lba_end = htole64(bs + ns - 1);
+
+	return 0;
 }
