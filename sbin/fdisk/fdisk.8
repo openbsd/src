@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.95 2019/04/29 18:54:12 krw Exp $
+.\"	$OpenBSD: fdisk.8,v 1.96 2021/01/30 15:15:20 naddy Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 29 2019 $
+.Dd $Mdocdate: January 30 2021 $
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -399,9 +399,11 @@ A unit
 .Sq b ,
 .Sq k ,
 .Sq m ,
+.Sq g ,
 or
-.Sq g
-may be appended to indicate bytes, kilobytes, megabytes, or gigabytes.
+.Sq t
+may be appended to indicate bytes, kilobytes, megabytes, gigabytes,
+or terabytes.
 The special size value
 .Sq *
 will cause the partition to be sized to use the remainder of the disk.
@@ -445,9 +447,11 @@ A
 .Sq b ,
 .Sq k ,
 .Sq m ,
+.Sq g ,
 or
-.Sq g
-may be appended to indicate bytes, kilobytes, megabytes, or gigabytes.
+.Sq t
+may be appended to indicate bytes, kilobytes, megabytes, gigabytes,
+or terabytes.
 Otherwise the number of sectors is printed.
 .It Cm write
 Write the in-memory copy of the partition table to disk.
