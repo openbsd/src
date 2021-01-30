@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1160 2020/12/23 17:22:07 krw Exp $
+#	$OpenBSD: install.sub,v 1.1161 2021/01/30 18:21:06 krw Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2437,7 +2437,7 @@ enable_network() {
 	local _f _gw _v4set=false _v6set=false _hn _if _trunks _svlans _vlans
 
 	# Use installed network configuration files during upgrade.
-	for _f in resolv.conf resolv.conf.tail; do
+	for _f in dhclient.conf resolv.conf resolv.conf.tail; do
 		if [[ -f /mnt/etc/$_f ]]; then
 			cp /mnt/etc/$_f /etc/$_f
 		fi
