@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Term.pm,v 1.41 2021/01/30 10:43:43 espie Exp $
+# $OpenBSD: Term.pm,v 1.42 2021/01/30 11:19:01 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -202,6 +202,7 @@ sub _show
 sub message
 {
 	my ($self, $message) = @_;
+	return unless $self->can_output;
 	if ($self->{cleareol}) {
 		$message .= $self->{cleareol};
 	} elsif ($self->{playfield} > length($message)) {
@@ -217,6 +218,8 @@ sub message
 sub show
 {
 	my ($self, $current, $total) = @_;
+
+	return unless $self->can_output;
 
 	if ($self->{playfield}) {
 		my $stars = int (($current * $self->{playfield}) / $total + 0.5);
@@ -244,10 +247,12 @@ sub clear
 {
 	my $self = shift;
 	return unless length($self->{lastdisplay}) > 0;
-	if ($self->{cleareol}) {
-		print "\r", $self->{cleareol};
-	} else {
-		print "\r", ' 'x length($self->{lastdisplay}), "\r";
+	if ($self->can_output) {
+		if ($self->{cleareol}) {
+			print "\r", $self->{cleareol};
+		} else {
+			print "\r", ' 'x length($self->{lastdisplay}), "\r";
+		}
 	}
 	$self->{lastdisplay} = '';
 	delete $self->{stars};
@@ -256,7 +261,7 @@ sub clear
 sub disable
 {
 	my $self = shift;
-	print "\n" if length($self->{lastdisplay}) > 0;
+	print "\n" if length($self->{lastdisplay}) > 0 and $self->can_output;
 
 	bless $self, "OpenBSD::ProgressMeter::Stub";
 }
@@ -267,7 +272,7 @@ sub next
 	$self->clear;
 
 	$todo //= 'ok';
-	print "\r$self->{header}: $todo\n";
+	print "\r$self->{header}: $todo\n" if $self->can_output;
 }
 
 package ProgressSizer;
