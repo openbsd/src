@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.93 2020/01/11 13:46:39 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.94 2021/01/30 10:24:19 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -351,7 +351,7 @@ sub run_quirks
 			# interface version number.
 			$state->{quirks} = OpenBSD::Quirks->new(1);
 		};
-		if ($@) {
+		if ($@ && !$state->{not}) {
 			my $show = $state->verbose >= 2;
 			if (!$show) {
 				my $l = $state->repo->installed->match_locations(OpenBSD::Search::Stem->new('quirks'));
