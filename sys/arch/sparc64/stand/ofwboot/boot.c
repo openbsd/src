@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.35 2020/05/26 16:34:41 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.36 2021/01/30 21:06:45 deraadt Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2001/05/31 08:55:19 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -90,7 +90,7 @@ char *kernels[] = {
 };
 
 char bootdev[128];
-char bootfile[128];
+extern char bootfile[128];
 int boothowto;
 int debug;
 
