@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.22 2020/09/14 18:09:57 kn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.23 2021/01/30 19:32:44 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
@@ -64,6 +64,7 @@ int		 lungetc(int);
 int		 findeol(void);
 
 struct ldom_config		*conf;
+struct domain			*domain;
 
 struct vcpu_opts {
 	uint64_t	count;

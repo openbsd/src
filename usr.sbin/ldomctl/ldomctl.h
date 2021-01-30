@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.h,v 1.14 2020/02/21 19:39:28 kn Exp $	*/
+/*	$OpenBSD: ldomctl.h,v 1.15 2021/01/30 19:32:44 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -188,7 +188,7 @@ struct domain {
 	SIMPLEQ_HEAD(, vnet) vnet_list;
 	SIMPLEQ_HEAD(, var) var_list;
 	SIMPLEQ_HEAD(, iodev) iodev_list;
-} *domain;
+};
 
 struct ldom_config {
 	SIMPLEQ_HEAD(, domain) domain_list;
