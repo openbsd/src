@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddCreateDelete.pm,v 1.49 2021/01/30 10:43:43 espie Exp $
+# $OpenBSD: AddCreateDelete.pm,v 1.50 2021/01/30 11:16:58 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -109,6 +109,7 @@ sub find_window_size
 sub handle_continue
 {
 	my $state = shift;
+	$state->SUPER::handle_continue;
 	$state->{progressmeter}->handle_continue;
 }
 
