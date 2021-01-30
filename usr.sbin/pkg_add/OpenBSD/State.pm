@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.65 2021/01/08 14:21:37 espie Exp $
+# $OpenBSD: State.pm,v 1.66 2021/01/30 10:37:22 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -126,6 +126,12 @@ sub repo
 {
 	my $self = shift;
 	return $self->{repo};
+}
+
+sub handle_continue
+{
+	my $self = shift;
+	$self->find_window_size(1);
 }
 
 sub sync_display
@@ -375,7 +381,7 @@ sub find_window_size
 		};
 	}
 	$SIG{'CONT'} = sub {
-		$self->find_window_size(1);
+		$self->handle_continue;
 	}
 }
 

@@ -1,4 +1,4 @@
-$OpenBSD: State.pod,v 1.1 2020/12/20 15:30:58 daniel Exp $
+$OpenBSD: State.pod,v 1.2 2021/01/30 10:37:22 espie Exp $
 
 =head1 NAME
 
@@ -107,6 +107,11 @@ string.
 
 basic formatting function used by C<print> and friends, return the formatted
 string.
+
+=item $state->handle_continue;
+
+callback for C<SIGCONT>, to be overridden by subclasses if some specific
+treatment (such as terminal redraw/reset) is needed.
 
 =back
 
