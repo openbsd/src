@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomctl.c,v 1.38 2020/02/02 00:49:06 kn Exp $	*/
+/*	$OpenBSD: ldomctl.c,v 1.39 2021/01/30 19:34:13 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -92,7 +92,6 @@ int hvctl_fd;
 
 void *hvmd_buf;
 size_t hvmd_len;
-struct md *hvmd;
 uint64_t hv_mdpa;
 uint64_t hv_membase;
 uint64_t hv_memsize;
