@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.13 2020/12/09 18:10:19 krw Exp $	*/
+/*	$OpenBSD: conf.c,v 1.14 2021/01/30 14:37:01 deraadt Exp $	*/
 /*
  * Copyright (c) 2007 Dale Rahn <drahn@openbsd.org>
  *
@@ -22,7 +22,7 @@
 
 
 const char version[] = "1.11";
-int     debug = 0;
+extern int     debug;
 
 void ofc_probe(struct consdev *);
 void ofc_init(struct consdev *);

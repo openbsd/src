@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.6 2019/09/02 23:40:29 kettenis Exp $	*/
+/*	$OpenBSD: net.c,v 1.7 2021/01/30 14:37:01 deraadt Exp $	*/
 /*	$NetBSD: net.c,v 1.1 1997/04/16 20:29:18 thorpej Exp $	*/
 
 /*
@@ -67,7 +67,7 @@
 
 int net_mountroot(void);
 
-char	rootpath[FNAME_SIZE];
+extern char	rootpath[FNAME_SIZE];
 
 static	int netdev_sock = -1;
 static	int open_count;
