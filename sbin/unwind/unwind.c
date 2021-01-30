@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.58 2021/01/29 17:46:04 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.59 2021/01/30 10:31:52 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -49,6 +49,8 @@
 #include "control.h"
 
 #define	TRUST_ANCHOR_FILE	"/var/db/unwind.key"
+#define	WAIT_TA_FD_TIMEOUT	5
+#define	WAIT_TA_FD_MAX_RETRY	3
 
 enum uw_process {
 	PROC_MAIN,
@@ -74,6 +76,8 @@ int		main_sendall(enum imsg_type, void *, uint16_t);
 void		open_ports(void);
 void		solicit_dns_proposals(void);
 void		send_blocklist_fd(void);
+void		open_trustanchor(void);
+void		open_trustanchor_timeout(int, short, void *);
 
 struct uw_conf		*main_conf;
 static struct imsgev	*iev_frontend;
@@ -83,6 +87,7 @@ pid_t			 frontend_pid;
 pid_t			 resolver_pid;
 uint32_t		 cmd_opts;
 int			 routesock;
+struct event		 ta_timo_ev;
 
 void
 main_sig_handler(int sig, short event, void *arg)
@@ -125,7 +130,7 @@ main(int argc, char *argv[])
 	int		 ch, debug = 0, resolver_flag = 0, frontend_flag = 0;
 	int		 frontend_routesock, rtfilter;
 	int		 pipe_main2frontend[2], pipe_main2resolver[2];
-	int		 control_fd, ta_fd;
+	int		 control_fd;
 	char		*csock, *saved_argv0;
 
 	csock = UNWIND_SOCKET;
@@ -280,12 +285,6 @@ main(int argc, char *argv[])
 		fatal("route socket");
 	shutdown(SHUT_RD, routesock);
 
-	if ((ta_fd = open(TRUST_ANCHOR_FILE, O_RDWR | O_CREAT, 0644)) == -1)
-		log_warn("%s", TRUST_ANCHOR_FILE);
-
-	/* receiver handles failed open correctly */
-	main_imsg_compose_frontend_fd(IMSG_TAFD, 0, ta_fd);
-
 	main_imsg_compose_frontend_fd(IMSG_CONTROLFD, 0, control_fd);
 	main_imsg_compose_frontend_fd(IMSG_ROUTESOCK, 0, frontend_routesock);
 	main_imsg_send_config(main_conf);
@@ -293,8 +292,16 @@ main(int argc, char *argv[])
 	if (main_conf->blocklist_file != NULL)
 		send_blocklist_fd();
 
-	if (pledge("stdio rpath sendfd", NULL) == -1)
+	/* this is the best we can do, when we startup /var is not mounted */
+	if (unveil("/var", "rwc") == -1)
+		fatal("unveil");
+	if (unveil("/", "r") == -1)
+		fatal("unveil");
+	if (pledge("stdio rpath wpath cpath sendfd", NULL) == -1)
 		fatal("pledge");
+
+	evtimer_set(&ta_timo_ev, open_trustanchor_timeout, NULL);
+	open_trustanchor();
 
 	main_imsg_compose_frontend(IMSG_STARTUP, 0, NULL, 0);
 	main_imsg_compose_resolver(IMSG_STARTUP, 0, NULL, 0);
@@ -958,4 +965,32 @@ imsg_receive_config(struct imsg *imsg, struct uw_conf **xconf)
 		    imsg->hdr.type);
 		break;
 	}
+}
+
+void
+open_trustanchor(void)
+{
+	static int			 retry;
+	static const struct timeval	 timeout = { WAIT_TA_FD_TIMEOUT, 0};
+	int				 fd;
+
+	fd = open(TRUST_ANCHOR_FILE, O_RDWR | O_CREAT, 0644);
+
+	if (fd != -1)
+		main_imsg_compose_frontend_fd(IMSG_TAFD, 0, fd);
+	else if (retry++ < WAIT_TA_FD_MAX_RETRY) {
+		/* /var is not mounted yet, try a bit later */
+		evtimer_add(&ta_timo_ev, &timeout);
+		return;
+	} else
+		log_warn("giving up on %s", TRUST_ANCHOR_FILE);
+
+	if (pledge("stdio rpath sendfd", NULL) == -1)
+		fatal("pledge");
+}
+
+void
+open_trustanchor_timeout(int fd, short events, void *arg)
+{
+	open_trustanchor();
 }
