@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Term.pm,v 1.40 2018/12/16 10:16:43 espie Exp $
+# $OpenBSD: Term.pm,v 1.41 2021/01/30 10:43:43 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -126,13 +126,10 @@ sub init
 
 sub compute_playfield
 {
-	my ($self, $cont) = @_;
+	my $self = shift;
 	$self->{playfield} = $self->width - length($self->{header}) - 7;
 	if ($self->{playfield} < 5) {
 		$self->{playfield} = 0;
-	}
-	if ($cont) {
-		$self->{continued} = 1;
 	}
 }
 
