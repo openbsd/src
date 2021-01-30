@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_get_finished.3,v 1.1 2021/01/27 17:59:57 tb Exp $
+.\" $OpenBSD: SSL_get_finished.3,v 1.2 2021/01/30 10:48:15 tb Exp $
 .\"
 .\" Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 27 2021 $
+.Dd $Mdocdate: January 30 2021 $
 .Dt SSL_GET_FINISHED 3
 .Os
 .Sh NAME
@@ -46,7 +46,7 @@ i.e., 64 bytes.
 .\" In TLSv1.3 the length is equal to the length of the hash algorithm
 .\" used by the hash-based message authentication code (HMAC),
 .\" which is currently either 32 bytes for SHA-256 or 48 bytes for SHA-384.
-.\" In TLSv1.2 the length defaults to 12 bytes, but it can explicitly
+.\" In TLSv1.2 the length defaults to 12 bytes, but it can explicitly be
 .\" specified by the ciphersuite to be longer.
 .\" In TLS versions 1.1 and 1.0, the finished message has a fixed length
 .\" of 12 bytes.
