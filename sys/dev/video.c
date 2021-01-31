@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.47 2021/01/06 18:57:58 jca Exp $	*/
+/*	$OpenBSD: video.c,v 1.48 2021/01/31 19:32:01 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -188,7 +188,7 @@ videoread(dev_t dev, struct uio *uio, int ioflag)
  			return (error);
 		sc->sc_vidmode = VIDMODE_READ;
  	}
- 
+
 	DPRINTF(("resid=%zu\n", uio->uio_resid));
 
 	if (sc->sc_frames_ready < 1) {
