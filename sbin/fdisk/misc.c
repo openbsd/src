@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.63 2019/07/03 03:24:01 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.64 2021/01/31 14:24:47 naddy Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -64,20 +64,18 @@ unit_lookup(char *units)
 int
 string_from_line(char *buf, size_t buflen)
 {
-	char *line;
-	size_t sz;
+	static char *line;
+	static size_t sz;
+	ssize_t len;
 
-	line = fgetln(stdin, &sz);
-	if (line == NULL)
+	len = getline(&line, &sz, stdin);
+	if (len == -1)
 		return (1);
 
-	if (line[sz - 1] == '\n')
-		sz--;
-	if (sz >= buflen)
-		sz = buflen - 1;
+	if (line[len - 1] == '\n')
+		line[len - 1] = '\0';
 
-	memcpy(buf, line, sz);
-	buf[sz] = '\0';
+	strlcpy(buf, line, buflen);
 
 	return (0);
 }
