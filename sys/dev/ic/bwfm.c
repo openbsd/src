@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.79 2020/12/17 15:37:09 jcs Exp $ */
+/* $OpenBSD: bwfm.c,v 1.80 2021/01/31 11:07:51 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -1323,6 +1323,8 @@ bwfm_chip_sr_capable(struct bwfm_softc *sc)
 		reg = sc->sc_buscore_ops->bc_read(sc, core->co_base +
 		    BWFM_CHIP_REG_SR_CONTROL1);
 		return reg != 0;
+	case BRCM_CC_4378_CHIP_ID:
+		return 0;
 	default:
 		core = bwfm_chip_get_pmu(sc);
 		reg = sc->sc_buscore_ops->bc_read(sc, core->co_base +
@@ -1481,6 +1483,9 @@ bwfm_chip_tcm_rambase(struct bwfm_softc *sc)
 		break;
 	case CY_CC_4373_CHIP_ID:
 		sc->sc_chip.ch_rambase = 0x160000;
+		break;
+	case BRCM_CC_4378_CHIP_ID:
+		sc->sc_chip.ch_rambase = 0x352000;
 		break;
 	default:
 		printf("%s: unknown chip: %d\n", DEVNAME(sc),

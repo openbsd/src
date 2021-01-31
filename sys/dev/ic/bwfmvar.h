@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmvar.h,v 1.21 2020/12/02 17:06:35 krw Exp $ */
+/* $OpenBSD: bwfmvar.h,v 1.22 2021/01/31 11:07:51 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -48,6 +48,7 @@
 #define BRCM_CC_4365_CHIP_ID		0x4365
 #define BRCM_CC_4366_CHIP_ID		0x4366
 #define BRCM_CC_4371_CHIP_ID		0x4371
+#define BRCM_CC_4378_CHIP_ID		0x4378
 #define CY_CC_4373_CHIP_ID		0x4373
 
 /* Defaults */
