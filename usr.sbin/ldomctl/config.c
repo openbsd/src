@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.41 2020/06/29 18:25:26 kn Exp $	*/
+/*	$OpenBSD: config.c,v 1.42 2021/01/31 05:14:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012, 2018 Mark Kettenis
@@ -80,6 +80,7 @@ struct device **pcie_busses;
 struct device **network_devices;
 struct mblock **mblocks;
 struct ldc_endpoint **ldc_endpoints;
+extern struct domain *domain;
 
 TAILQ_HEAD(, rootcomplex) rootcomplexes;
 
