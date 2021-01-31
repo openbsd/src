@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.299 2021/01/31 17:15:38 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.300 2021/01/31 17:23:45 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -6969,7 +6969,7 @@ ikev2_cp_fixaddr(struct iked_sa *sa, struct iked_addr *addr,
 			return (-1);
 		in4 = (struct sockaddr_in *)&addr->addr;
 		if (in4->sin_addr.s_addr)
-			return (-1);
+			return (-2);
 		memcpy(patched, naddr, sizeof(*patched));
 		patched->addr_net = 0;
 		patched->addr_mask = 32;
@@ -6981,7 +6981,7 @@ ikev2_cp_fixaddr(struct iked_sa *sa, struct iked_addr *addr,
 			return (-1);
 		in6 = (struct sockaddr_in6 *)&addr->addr;
 		if (!IN6_IS_ADDR_UNSPECIFIED(&in6->sin6_addr))
-			return (-1);
+			return (-2);
 		memcpy(patched, naddr, sizeof(*patched));
 		patched->addr_net = 0;
 		patched->addr_mask = 128;
