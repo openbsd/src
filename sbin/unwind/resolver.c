@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.140 2021/01/30 10:31:51 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.141 2021/01/31 16:07:27 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1998,19 +1998,19 @@ replace_autoconf_forwarders(struct imsg_rdns_proposal *rdns_proposal)
 		switch (af) {
 		case AF_INET:
 			memcpy(&addr4, src, sizeof(struct in_addr));
+			src += sizeof(struct in_addr);
 			if (addr4.s_addr == INADDR_LOOPBACK)
 				continue;
 			ns = inet_ntop(af, &addr4, ntopbuf,
 			    INET6_ADDRSTRLEN);
-			src += sizeof(struct in_addr);
 			break;
 		case AF_INET6:
 			memcpy(&addr6, src, sizeof(struct in6_addr));
+			src += sizeof(struct in6_addr);
 			if (IN6_IS_ADDR_LOOPBACK(&addr6))
 				continue;
 			ns = inet_ntop(af, &addr6, ntopbuf,
 			    INET6_ADDRSTRLEN);
-			src += sizeof(struct in6_addr);
 		}
 
 		if ((uw_forwarder = calloc(1, sizeof(struct uw_forwarder))) ==
