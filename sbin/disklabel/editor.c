@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.363 2019/11/19 06:20:37 otto Exp $	*/
+/*	$OpenBSD: editor.c,v 1.364 2021/01/31 14:18:44 naddy Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -2377,7 +2377,7 @@ get_token(char **s, size_t *len)
 	size_t	 tlen = 0;
 
 	p = *s;
-	while (*len > 0 && !isspace((u_char)*s[0])) {
+	while (*len > 0 && !isspace((u_char)**s)) {
 		(*s)++;
 		(*len)--;
 		tlen++;
@@ -2386,7 +2386,7 @@ get_token(char **s, size_t *len)
 		return (NULL);
 
 	/* eat whitespace */
-	while (*len > 0 && isspace((u_char)*s[0])) {
+	while (*len > 0 && isspace((u_char)**s)) {
 		(*s)++;
 		(*len)--;
 	}
