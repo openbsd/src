@@ -1,4 +1,4 @@
-/* $OpenBSD: sshsig.c,v 1.19 2021/01/26 00:49:30 djm Exp $ */
+/* $OpenBSD: sshsig.c,v 1.20 2021/01/31 10:50:10 dtucker Exp $ */
 /*
  * Copyright (c) 2019 Google LLC
  *
@@ -851,6 +851,7 @@ sshsig_check_allowed_keys(const char *path, const struct sshkey *sign_key,
 		    principal, sig_namespace);
 		free(line);
 		line = NULL;
+		linesize = 0;
 		if (r == SSH_ERR_KEY_NOT_FOUND)
 			continue;
 		else if (r == 0) {
@@ -996,6 +997,7 @@ sshsig_find_principals(const char *path, const struct sshkey *sign_key,
 		    sign_key, principals);
 		free(line);
 		line = NULL;
+		linesize = 0;
 		if (r == SSH_ERR_KEY_NOT_FOUND)
 			continue;
 		else if (r == 0) {
