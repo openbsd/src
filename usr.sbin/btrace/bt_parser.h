@@ -1,7 +1,7 @@
-/*	$OpenBSD: bt_parser.h,v 1.11 2021/01/27 07:19:54 deraadt Exp $	*/
+/*	$OpenBSD: bt_parser.h,v 1.12 2021/02/01 11:26:29 mpi Exp $	*/
 
 /*
- * Copyright (c) 2019-2020 Martin Pieuchot <mpi@openbsd.org>
+ * Copyright (c) 2019-2021 Martin Pieuchot <mpi@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -41,24 +41,35 @@ struct bt_probe {
 #define bp_unit	bp_func
 };
 
+
 /*
- * Filters correspond to predicates performed in kernel.
- *
- * When a probe fires the check is performed, if it isn't true no event
- * is recorded.
+ * Event filters correspond to checks performed in-kernel.
  */
-struct bt_filter {
+struct bt_evtfilter {
 	enum bt_operand {
 		B_OP_NONE = 1,
 		B_OP_EQ,
 		B_OP_NE,
-	}			 bf_op;
-	enum  bt_filtervar {
+	}			bf_op;
+	enum bt_filtervar {
 		B_FV_NONE = 1,
 		B_FV_PID,
 		B_FV_TID
 	}			 bf_var;
 	uint32_t		 bf_val;
+};
+
+/*
+ * Filters, also known as predicates, describe under which set of
+ * conditions a rule is executed.
+ *
+ * Depending on their type they are performed in-kernel or when a rule
+ * is evaluated.  In the first case they might prevent the recording of
+ * events, in the second case events might be discarded at runtime.
+ */
+struct bt_filter {
+	struct bt_evtfilter	  bf_evtfilter;	/* in-kernel event filter */
+	struct bt_stmt		 *bf_condition;	/* per event condition */
 };
 
 TAILQ_HEAD(bt_ruleq, bt_rule);
@@ -170,6 +181,7 @@ struct bt_stmt {
 		B_AC_PRINT,			/* print(@map, 10) */
 		B_AC_PRINTF,			/* printf("hello!\n") */
 		B_AC_STORE,			/* @a = 3 */
+		B_AC_TEST,			/* if (@a) */
 		B_AC_TIME,			/* time("%H:%M:%S  ") */
 		B_AC_ZERO,			/* zero(@map) */
 	}			 bs_act;

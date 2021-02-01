@@ -1,7 +1,7 @@
-/*	$OpenBSD: bt_parse.y,v 1.21 2021/01/10 11:06:08 jmatthew Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.22 2021/02/01 11:26:28 mpi Exp $	*/
 
 /*
- * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
+ * Copyright (c) 2019-2021 Martin Pieuchot <mpi@openbsd.org>
  * Copyright (c) 2019 Tobias Heider <tobhe@openbsd.org>
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -117,7 +117,7 @@ static int pflag;
 %type	<v.probe>	probe probeval
 %type	<v.filter>	predicate
 %type	<v.stmt>	action stmt stmtlist
-%type	<v.arg>		expr vargs map mexpr printargs term
+%type	<v.arg>		expr vargs map mexpr printargs term condition
 %type	<v.rtype>	beginend
 
 %left	'|'
@@ -158,6 +158,11 @@ oper		: OP_EQ				{ $$ = B_OP_EQ; }
 predicate	: /* empty */			{ $$ = NULL; }
 		| '/' filterval oper NUMBER '/' { $$ = bf_new($3, $2, $4); }
 		| '/' NUMBER oper filterval '/' { $$ = bf_new($3, $4, $2); }
+		| '/' condition '/' 		{ $$ = bc_new($2); }
+		;
+
+condition	: gvar				{ $$ = bv_get($1); }
+		| map				{ $$ = $1; }
 		;
 
 builtin		: PID 				{ $$ = B_AT_BI_PID; }
@@ -232,7 +237,7 @@ br_new(struct bt_probe *probe, struct bt_filter *filter, struct bt_stmt *head,
 {
 	struct bt_rule *br;
 
-	br = calloc(1, sizeof(struct bt_rule));
+	br = calloc(1, sizeof(*br));
 	if (br == NULL)
 		err(1, "bt_rule: calloc");
 	br->br_probe = probe;
@@ -251,23 +256,38 @@ br_new(struct bt_probe *probe, struct bt_filter *filter, struct bt_stmt *head,
 	return br;
 }
 
-/* Create a new filter */
+/* Create a new event filter */
 struct bt_filter *
 bf_new(enum bt_operand op, enum bt_filtervar var, int val)
 {
-	struct bt_filter *df;
+	struct bt_filter *bf;
 
 	if (val < 0 || val > INT_MAX)
 		errx(1, "invalid pid '%d'", val);
 
-	df = calloc(1, sizeof(struct bt_filter));
-	if (df == NULL)
+	bf = calloc(1, sizeof(*bf));
+	if (bf == NULL)
 		err(1, "bt_filter: calloc");
-	df->bf_op = op;
-	df->bf_var = var;
-	df->bf_val = val;
+	bf->bf_evtfilter.bf_op = op;
+	bf->bf_evtfilter.bf_var = var;
+	bf->bf_evtfilter.bf_val = val;
 
-	return df;
+	return bf;
+}
+
+/* Create a new condition */
+struct bt_filter *
+bc_new(struct bt_arg *ba)
+{
+	struct bt_filter *bf;
+
+	bf = calloc(1, sizeof(*bf));
+	if (bf == NULL)
+		err(1, "bt_filter: calloc");
+
+	bf->bf_condition = bs_new(B_AC_TEST, ba, NULL);
+
+	return bf;
 }
 
 /* Create a new probe */
@@ -279,7 +299,7 @@ bp_new(const char *prov, const char *func, const char *name, int32_t rate)
 	if (rate < 0 || rate > INT32_MAX)
 		errx(1, "only positive values permitted");
 
-	bp = calloc(1, sizeof(struct bt_probe));
+	bp = calloc(1, sizeof(*bp));
 	if (bp == NULL)
 		err(1, "bt_probe: calloc");
 	bp->bp_prov = prov;
@@ -296,7 +316,7 @@ ba_new0(void *val, enum bt_argtype type)
 {
 	struct bt_arg *ba;
 
-	ba = calloc(1, sizeof(struct bt_arg));
+	ba = calloc(1, sizeof(*ba));
 	if (ba == NULL)
 		err(1, "bt_arg: calloc");
 	ba->ba_value = val;
@@ -365,7 +385,7 @@ bs_new(enum bt_action act, struct bt_arg *head, struct bt_var *var)
 {
 	struct bt_stmt *bs;
 
-	bs = calloc(1, sizeof(struct bt_stmt));
+	bs = calloc(1, sizeof(*bs));
 	if (bs == NULL)
 		err(1, "bt_stmt: calloc");
 	bs->bs_act = act;
@@ -424,7 +444,7 @@ bv_new(const char *vname)
 {
 	struct bt_var *bv;
 
-	bv = calloc(1, sizeof(struct bt_var));
+	bv = calloc(1, sizeof(*bv));
 	if (bv == NULL)
 		err(1, "bt_var: calloc");
 	bv->bv_name = vname;

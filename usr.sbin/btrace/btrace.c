@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.27 2021/01/21 13:19:25 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.28 2021/02/01 11:26:29 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -29,6 +29,7 @@
 #include <locale.h>
 #include <signal.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -86,6 +87,7 @@ void			 stmt_delete(struct bt_stmt *, struct dt_evt *);
 void			 stmt_insert(struct bt_stmt *, struct dt_evt *);
 void			 stmt_print(struct bt_stmt *, struct dt_evt *);
 void			 stmt_store(struct bt_stmt *, struct dt_evt *);
+bool			 stmt_test(struct bt_stmt *, struct dt_evt *);
 void			 stmt_time(struct bt_stmt *, struct dt_evt *);
 void			 stmt_zero(struct bt_stmt *);
 struct bt_arg		*ba_read(struct bt_arg *);
@@ -431,8 +433,9 @@ rules_setup(int fd, int tracepid)
 
 		r->br_pbn = dtpi->dtpi_pbn;
 		dtrq->dtrq_pbn = dtpi->dtpi_pbn;
-		if (r->br_filter) {
-			struct bt_filter *df = r->br_filter;
+		if (r->br_filter != NULL &&
+		    r->br_filter->bf_condition == NULL) {
+			struct bt_evtfilter *df = &r->br_filter->bf_evtfilter;
 
 			dtrq->dtrq_filter.dtf_operand = dop2dt(df->bf_op);
 			dtrq->dtrq_filter.dtf_variable = dvar2dt(df->bf_var);
@@ -532,6 +535,11 @@ rule_eval(struct bt_rule *r, struct dt_evt *dtev)
 	struct bt_stmt *bs;
 
 	debug("eval rule '%s'\n", debug_rule_name(r));
+
+	if (r->br_filter != NULL && r->br_filter->bf_condition != NULL) {
+		if (stmt_test(r->br_filter->bf_condition, dtev) == false)
+			return;
+	}
 
 	SLIST_FOREACH(bs, &r->br_action, bs_next) {
 		switch (bs->bs_act) {
@@ -802,7 +810,7 @@ stmt_print(struct bt_stmt *bs, struct dt_evt *dtev)
 }
 
 /*
- * Variable store: 	{ var = 3; }
+ * Variable store: 	{ @var = 3; }
  *
  * In this case '3' is represented by `ba', the argument of a STORE
  * action.
@@ -833,6 +841,27 @@ stmt_store(struct bt_stmt *bs, struct dt_evt *dtev)
 	}
 
 	debug("bv=%p var '%s' store (%p) \n", bv, bv_name(bv), bv->bv_value);
+}
+
+/*
+ * Expression test:	{ if (expr) stmt; }
+ */
+bool
+stmt_test(struct bt_stmt *bs, struct dt_evt *dtev)
+{
+	struct bt_arg *ba;
+	long val;
+
+	if (bs == NULL)
+		return true;
+
+	assert(bs->bs_var == NULL);
+	ba = SLIST_FIRST(&bs->bs_args);
+	val = ba2long(ba, dtev);
+
+	debug("ba=%p test (%ld != 0)\n", ba, val);
+
+	return val != 0;
 }
 
 /*
@@ -1241,7 +1270,7 @@ debugx(const char *fmt, ...)
 }
 
 static inline const char *
-debug_getfiltervar(struct bt_filter *df)
+debug_getfiltervar(struct bt_evtfilter *df)
 {
 	switch (df->bf_var) {
 	case B_FV_PID:	return "pid";
@@ -1250,12 +1279,10 @@ debug_getfiltervar(struct bt_filter *df)
 	default:
 		xabort("invalid filtervar %d", df->bf_var);
 	}
-
-
 }
 
 static inline const char *
-debug_getfilterop(struct bt_filter *df)
+debug_getfilterop(struct bt_evtfilter *df)
 {
 	switch (df->bf_op) {
 	case B_OP_EQ:	return "==";
@@ -1269,9 +1296,11 @@ debug_getfilterop(struct bt_filter *df)
 void
 debug_dump_filter(struct bt_rule *r)
 {
-	if (r->br_filter) {
-		debugx(" / %s %s %u /", debug_getfiltervar(r->br_filter),
-		    debug_getfilterop(r->br_filter), r->br_filter->bf_val);
+	if (r->br_filter != NULL && r->br_filter->bf_condition == NULL) {
+		struct bt_evtfilter *df = &r->br_filter->bf_evtfilter;
+
+		debugx(" / %s %s %u /", debug_getfiltervar(df),
+		    debug_getfilterop(df), df->bf_val);
 	}
 	debugx("\n");
 }
