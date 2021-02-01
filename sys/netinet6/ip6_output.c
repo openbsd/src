@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.249 2021/01/11 13:28:54 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.250 2021/02/01 12:08:50 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -214,12 +214,12 @@ ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
 	if (ipsec_in_use || inp) {
 		tdb = ip6_output_ipsec_lookup(m, &error, inp);
 		if (error != 0) {
-		        /*
+			/*
 			 * -EINVAL is used to indicate that the packet should
 			 * be silently dropped, typically because we've asked
 			 * key management for an SA.
 			 */
-		        if (error == -EINVAL) /* Should silently drop packet */
+			if (error == -EINVAL) /* Should silently drop packet */
 				error = 0;
 
 			goto freehdrs;
@@ -301,7 +301,8 @@ ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
 		 */
 		if (exthdrs.ip6e_dest2) {
 			if (!hdrsplit)
-				panic("%s: assumption failed: hdr not split", __func__);
+				panic("%s: assumption failed: hdr not split",
+				    __func__);
 			exthdrs.ip6e_dest2->m_next = m->m_next;
 			m->m_next = exthdrs.ip6e_dest2;
 			*mtod(exthdrs.ip6e_dest2, u_char *) = ip6->ip6_nxt;
@@ -346,16 +347,16 @@ ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
 		    struct ip6_rthdr *));
 		switch (rh->ip6r_type) {
 		case IPV6_RTHDR_TYPE_0:
-			 rh0 = (struct ip6_rthdr0 *)rh;
-			 addr = (struct in6_addr *)(rh0 + 1);
-			 ip6->ip6_dst = addr[0];
-			 bcopy(&addr[1], &addr[0],
-			     sizeof(struct in6_addr) * (rh0->ip6r0_segleft - 1));
-			 addr[rh0->ip6r0_segleft - 1] = finaldst;
-			 break;
+			rh0 = (struct ip6_rthdr0 *)rh;
+			addr = (struct in6_addr *)(rh0 + 1);
+			ip6->ip6_dst = addr[0];
+			bcopy(&addr[1], &addr[0],
+			    sizeof(struct in6_addr) * (rh0->ip6r0_segleft - 1));
+			addr[rh0->ip6r0_segleft - 1] = finaldst;
+			break;
 		default:	/* is it possible? */
-			 error = EINVAL;
-			 goto bad;
+			error = EINVAL;
+			goto bad;
 		}
 	}
 
@@ -408,7 +409,8 @@ reroute:
 		if ((ip6->ip6_flow & htonl(0x03 << 20)) == 0)
 			mask |= 0x03;
 		if (mask != 0)
-			ip6->ip6_flow |= htonl((opt->ip6po_tclass & mask) << 20);
+			ip6->ip6_flow |=
+			    htonl((opt->ip6po_tclass & mask) << 20);
 	}
 
 	/* fill in or override the hop limit field, if necessary. */
@@ -592,9 +594,8 @@ reroute:
 			mtu = IPV6_MMTU;
 		else if (opt && opt->ip6po_minmtu == IP6PO_MINMTU_ALL)
 			mtu = IPV6_MMTU;
-		else if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst) &&
-			 (opt == NULL ||
-			  opt->ip6po_minmtu != IP6PO_MINMTU_DISABLE)) {
+		else if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst) && (opt == NULL ||
+		    opt->ip6po_minmtu != IP6PO_MINMTU_DISABLE)) {
 			mtu = IPV6_MMTU;
 		}
 	}
@@ -992,7 +993,7 @@ ip6_insertfraghdr(struct mbuf *m0, struct mbuf *m, int hlen,
 
 	if ((mlast->m_flags & M_EXT) == 0 &&
 	    m_trailingspace(mlast) >= sizeof(struct ip6_frag)) {
-		/* use the trailing space of the last mbuf for the fragment hdr */
+		/* use the trailing space of the last mbuf for fragment hdr */
 		*frghdrp = (struct ip6_frag *)(mtod(mlast, caddr_t) +
 		    mlast->m_len);
 		mlast->m_len += sizeof(struct ip6_frag);
@@ -1145,10 +1146,8 @@ do { \
 
 				optp = &inp->inp_outputopts6;
 				error = ip6_pcbopt(IPV6_HOPLIMIT,
-						   (u_char *)&optval,
-						   sizeof(optval),
-						   optp,
-						   privileged, uproto);
+				    (u_char *)&optval, sizeof(optval), optp,
+				    privileged, uproto);
 				break;
 			}
 
@@ -1185,8 +1184,8 @@ do { \
 				 * available only prior to bind(2).
 				 * see ipng mailing list, Jun 22 2001.
 				 */
-				if (inp->inp_lport ||
-				    !IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6)) {
+				if (inp->inp_lport || !IN6_IS_ADDR_UNSPECIFIED(
+				    &inp->inp_laddr6)) {
 					error = EINVAL;
 					break;
 				}
@@ -1220,11 +1219,8 @@ do { \
 			{
 				struct ip6_pktopts **optp;
 				optp = &inp->inp_outputopts6;
-				error = ip6_pcbopt(optname,
-						   (u_char *)&optval,
-						   sizeof(optval),
-						   optp,
-						   privileged, uproto);
+				error = ip6_pcbopt(optname, (u_char *)&optval,
+				    sizeof(optval), optp, privileged, uproto);
 				break;
 			}
 
@@ -1251,9 +1247,8 @@ do { \
 				optbuflen = 0;
 			}
 			optp = &inp->inp_outputopts6;
-			error = ip6_pcbopt(optname,
-					   optbuf, optbuflen,
-					   optp, privileged, uproto);
+			error = ip6_pcbopt(optname, optbuf, optbuflen, optp,
+			    privileged, uproto);
 			break;
 		}
 #undef OPTSET
@@ -1322,7 +1317,7 @@ do { \
 
 			switch (optname) {
 			case IPV6_AUTH_LEVEL:
-			        if (optval < IPSEC_AUTH_LEVEL_DEFAULT &&
+				if (optval < IPSEC_AUTH_LEVEL_DEFAULT &&
 				    suser(p)) {
 					error = EACCES;
 					break;
@@ -1331,7 +1326,7 @@ do { \
 				break;
 
 			case IPV6_ESP_TRANS_LEVEL:
-			        if (optval < IPSEC_ESP_TRANS_LEVEL_DEFAULT &&
+				if (optval < IPSEC_ESP_TRANS_LEVEL_DEFAULT &&
 				    suser(p)) {
 					error = EACCES;
 					break;
@@ -1340,7 +1335,7 @@ do { \
 				break;
 
 			case IPV6_ESP_NETWORK_LEVEL:
-			        if (optval < IPSEC_ESP_NETWORK_LEVEL_DEFAULT &&
+				if (optval < IPSEC_ESP_NETWORK_LEVEL_DEFAULT &&
 				    suser(p)) {
 					error = EACCES;
 					break;
@@ -1349,7 +1344,7 @@ do { \
 				break;
 
 			case IPV6_IPCOMP_LEVEL:
-			        if (optval < IPSEC_IPCOMP_LEVEL_DEFAULT &&
+				if (optval < IPSEC_IPCOMP_LEVEL_DEFAULT &&
 				    suser(p)) {
 					error = EACCES;
 					break;
@@ -1633,7 +1628,8 @@ ip6_raw_ctloutput(int op, struct socket *so, int level, int optname,
 				 * values or -1 as a special value.
 				 */
 				error = EINVAL;
-			} else if (so->so_proto->pr_protocol == IPPROTO_ICMPV6) {
+			} else if (so->so_proto->pr_protocol ==
+			    IPPROTO_ICMPV6) {
 				if (optval != icmp6off)
 					error = EINVAL;
 			} else
@@ -1824,7 +1820,8 @@ ip6_clearpktopts(struct ip6_pktopts *pktopt, int optname)
 #define PKTOPT_EXTHDRCPY(type) \
 do {\
 	if (src->type) {\
-		size_t hlen = (((struct ip6_ext *)src->type)->ip6e_len + 1) << 3;\
+		size_t hlen;\
+		hlen = (((struct ip6_ext *)src->type)->ip6e_len + 1) << 3;\
 		dst->type = malloc(hlen, M_IP6OPT, M_NOWAIT);\
 		if (dst->type == NULL)\
 			goto bad;\
@@ -2798,9 +2795,9 @@ ip6_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route_in6 *ro,
 	in6_proto_cksum_out(m, encif);
 #endif
 
-        /* Check if we are allowed to fragment */
-        ip6 = mtod(m, struct ip6_hdr *);
-        if (ip_mtudisc && tdb->tdb_mtu &&
+	/* Check if we are allowed to fragment */
+	ip6 = mtod(m, struct ip6_hdr *);
+	if (ip_mtudisc && tdb->tdb_mtu &&
 	    sizeof(struct ip6_hdr) + ntohs(ip6->ip6_plen) > tdb->tdb_mtu &&
 	    tdb->tdb_mtutimeout > gettime()) {
 		struct rtentry *rt = NULL;
