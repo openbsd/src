@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd_iface.c,v 1.14 2021/01/02 13:15:15 mvs Exp $ */
+/*	$OpenBSD: npppd_iface.c,v 1.15 2021/02/01 07:44:58 mvs Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: npppd_iface.c,v 1.14 2021/01/02 13:15:15 mvs Exp $ */
+/* $Id: npppd_iface.c,v 1.15 2021/02/01 07:44:58 mvs Exp $ */
 /**@file
  * The interface of npppd and kernel.
  * This is an implementation to use tun(4) or pppx(4).
@@ -275,7 +275,6 @@ npppd_iface_reinit(npppd_iface *_this, struct iface *iface)
 int
 npppd_iface_start(npppd_iface *_this)
 {
-	int             x;
 	char            buf[PATH_MAX];
 
 	NPPPD_IFACE_ASSERT(_this != NULL);
@@ -285,16 +284,6 @@ npppd_iface_start(npppd_iface *_this)
 	if ((_this->devf = priv_open(buf, O_RDWR | O_NONBLOCK)) < 0) {
 		npppd_iface_log(_this, LOG_ERR, "open(%s) failed: %m", buf);
 		goto fail;
-	}
-
-	if (_this->using_pppx == 0) {
-		x = IFF_BROADCAST;
-		if (ioctl(_this->devf, TUNSIFMODE, &x) != 0) {
-			npppd_iface_log(_this, LOG_ERR,
-			    "ioctl(TUNSIFMODE=IFF_BROADCAST) failed "
-			    "in %s(): %m", __func__);
-			goto fail;
-		}
 	}
 
 	event_set(&_this->ev, _this->devf, EV_READ | EV_PERSIST,
