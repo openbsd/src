@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.166 2019/11/19 14:35:08 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.167 2021/02/01 01:42:21 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -84,9 +84,10 @@ void
 dispatch(struct interface_info *ifi, int routefd)
 {
 	struct pollfd		 fds[3];
+	struct timespec		 timeout;
+	struct timespec		*ts;
 	void			(*func)(struct interface_info *);
-	time_t			 cur_time, howlong;
-	int			 nfds, to_msec;
+	int			 nfds;
 
 	while (quit == 0 || quit == RESTART) {
 		if (quit == RESTART) {
@@ -99,26 +100,18 @@ dispatch(struct interface_info *ifi, int routefd)
 			ifi->state = S_PREBOOT;
 			state_preboot(ifi);
 		}
-		if (ifi->timeout_func != NULL) {
-			time(&cur_time);
-			if (ifi->timeout <= cur_time) {
+		if (timespecisset(&ifi->timeout)) {
+			clock_gettime(CLOCK_REALTIME, &timeout);
+			if (timespeccmp(&timeout, &ifi->timeout, >=)) {
 				func = ifi->timeout_func;
 				cancel_timeout(ifi);
 				(*(func))(ifi);
 				continue;
 			}
-			/*
-			 * Figure timeout in milliseconds, and check for
-			 * potential overflow, so we can cram into an
-			 * int for poll, while not polling with a
-			 * negative timeout and blocking indefinitely.
-			 */
-			howlong = ifi->timeout - cur_time;
-			if (howlong > INT_MAX / 1000)
-				howlong = INT_MAX / 1000;
-			to_msec = howlong * 1000;
+			timespecsub(&ifi->timeout, &timeout, &timeout);
+			ts = &timeout;
 		} else
-			to_msec = -1;
+			ts = NULL;
 
 		/*
 		 * Set up the descriptors to be polled.
@@ -135,7 +128,7 @@ dispatch(struct interface_info *ifi, int routefd)
 		if (unpriv_ibuf->w.queued)
 			fds[2].events |= POLLOUT;
 
-		nfds = poll(fds, 3, to_msec);
+		nfds = ppoll(fds, 3, ts, NULL);
 		if (nfds == -1) {
 			if (errno == EINTR)
 				continue;
@@ -307,15 +300,18 @@ void
 set_timeout(struct interface_info *ifi, time_t secs,
     void (*where)(struct interface_info *))
 {
-	time(&ifi->timeout);
-	if (secs > 0)
-		ifi->timeout += secs;
+	struct timespec		cur_time;
+
+	clock_gettime(CLOCK_REALTIME, &cur_time);
+	timespecclear(&ifi->timeout);
+	ifi->timeout.tv_sec = secs;
+	timespecadd(&ifi->timeout, &cur_time, &ifi->timeout);
 	ifi->timeout_func = where;
 }
 
 void
 cancel_timeout(struct interface_info *ifi)
 {
-	ifi->timeout = 0;
+	timespecclear(&ifi->timeout);
 	ifi->timeout_func = NULL;
 }
