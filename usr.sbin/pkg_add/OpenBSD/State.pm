@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.68 2021/01/31 15:22:55 espie Exp $
+# $OpenBSD: State.pm,v 1.69 2021/02/01 20:15:01 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -143,10 +143,13 @@ OpenBSD::Auto::cache(can_output,
 	sub {
 		require POSIX;
 
+		return 1 if !-t STDOUT;
 		# XXX uses POSIX semantics so fd, we can hardcode stdout ;)
 		my $s = POSIX::tcgetpgrp(1);
-		# note that STDOUT may be redirected (tcgetpgrp() will fail)
-		return $s == -1 || getpgrp() == $s;
+		# note that STDOUT may be redirected 
+		# (tcgetpgrp() returns 0 for pipes and -1 for files)
+		# (we shouldn't be there because of the tty test)
+		return $s <= 0 || getpgrp() == $s;
 	});
 
 sub sync_display
