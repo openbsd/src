@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.108 2021/01/29 11:44:06 edd Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.109 2021/02/01 09:21:51 mglocker Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -98,15 +98,15 @@ usbd_get_devcnt(struct usbd_device *dev)
 }
 
 void
-usbd_claim_iface(struct usbd_device *dev, int ifaceidx)
+usbd_claim_iface(struct usbd_device *dev, int ifaceno)
 {
-	dev->ifaces[ifaceidx].claimed = 1;
+	dev->ifaces[ifaceno].claimed = 1;
 }
 
 int
-usbd_iface_claimed(struct usbd_device *dev, int ifaceidx)
+usbd_iface_claimed(struct usbd_device *dev, int ifaceno)
 {
-	return (dev->ifaces[ifaceidx].claimed);
+	return (dev->ifaces[ifaceno].claimed);
 }
 
 #ifdef USB_DEBUG
@@ -659,7 +659,7 @@ usbd_device2interface_handle(struct usbd_device *dev, u_int8_t ifaceno,
 
 /* XXXX use altno */
 usbd_status
-usbd_set_interface(struct usbd_interface *iface, int altidx)
+usbd_set_interface(struct usbd_interface *iface, int altno)
 {
 	usb_device_request_t req;
 	usbd_status err;
@@ -671,7 +671,7 @@ usbd_set_interface(struct usbd_interface *iface, int altidx)
 
 	endpoints = iface->endpoints;
 	nendpt = iface->nendpt;
-	err = usbd_fill_iface_data(iface->device, iface->index, altidx);
+	err = usbd_fill_iface_data(iface->device, iface->index, altno);
 	if (err)
 		return (err);
 

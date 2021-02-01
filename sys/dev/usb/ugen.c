@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.113 2021/01/28 12:50:28 mglocker Exp $ */
+/*	$OpenBSD: ugen.c,v 1.114 2021/02/01 09:21:51 mglocker Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -893,7 +893,7 @@ ugen_isoc_rintr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 }
 
 int 
-ugen_set_interface(struct ugen_softc *sc, int ifaceidx, int altno)
+ugen_set_interface(struct ugen_softc *sc, int ifaceno, int altno)
 {
 	struct usbd_interface *iface;
 	usb_config_descriptor_t *cdesc;
@@ -903,14 +903,14 @@ ugen_set_interface(struct ugen_softc *sc, int ifaceidx, int altno)
 	uint8_t  endptno, endpt;
 	int dir, err;
 
-	DPRINTFN(15, ("ugen_set_interface %d %d\n", ifaceidx, altno));
+	DPRINTFN(15, ("ugen_set_interface %d %d\n", ifaceno, altno));
 
 	cdesc = usbd_get_config_descriptor(sc->sc_udev);
-	if (ifaceidx < 0 || ifaceidx >= cdesc->bNumInterfaces ||
-	    usbd_iface_claimed(sc->sc_udev, ifaceidx))
+	if (ifaceno < 0 || ifaceno >= cdesc->bNumInterfaces ||
+	    usbd_iface_claimed(sc->sc_udev, ifaceno))
 		return (USBD_INVAL);
 
-	err = usbd_device2interface_handle(sc->sc_udev, ifaceidx, &iface);
+	err = usbd_device2interface_handle(sc->sc_udev, ifaceno, &iface);
 	if (err)
 		return (err);
 	id = usbd_get_interface_descriptor(iface);
@@ -941,12 +941,12 @@ ugen_set_interface(struct ugen_softc *sc, int ifaceidx, int altno)
 }
 
 int
-ugen_get_alt_index(struct ugen_softc *sc, int ifaceidx)
+ugen_get_alt_index(struct ugen_softc *sc, int ifaceno)
 {
 	struct usbd_interface *iface;
 	usbd_status err;
 
-	err = usbd_device2interface_handle(sc->sc_udev, ifaceidx, &iface);
+	err = usbd_device2interface_handle(sc->sc_udev, ifaceno, &iface);
 	if (err)
 		return (-1);
 	return (usbd_get_interface_altindex(iface));

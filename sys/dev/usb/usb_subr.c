@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.153 2021/01/27 17:28:19 mglocker Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.154 2021/02/01 09:21:51 mglocker Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -428,7 +428,7 @@ usbd_reset_port(struct usbd_device *dev, int port)
 }
 
 usb_interface_descriptor_t *
-usbd_find_idesc(usb_config_descriptor_t *cd, int ifaceidx, int altidx)
+usbd_find_idesc(usb_config_descriptor_t *cd, int ifaceno, int altno)
 {
 	char *p = (char *)cd;
 	char *end = p + UGETW(cd->wTotalLength);
@@ -437,9 +437,9 @@ usbd_find_idesc(usb_config_descriptor_t *cd, int ifaceidx, int altidx)
 
 	for (curidx = lastidx = -1; p < end; ) {
 		d = (usb_interface_descriptor_t *)p;
-		DPRINTFN(4,("usbd_find_idesc: idx=%d(%d) altidx=%d(%d) len=%d "
-			    "type=%d\n",
-			    ifaceidx, curidx, altidx, curaidx,
+		DPRINTFN(4,("usbd_find_idesc: ifaceno=%d(%d) altno=%d(%d) "
+			    "len=%d type=%d\n",
+			    ifaceno, curidx, altno, curaidx,
 			    d->bLength, d->bDescriptorType));
 		if (d->bLength == 0) /* bad descriptor */
 			break;
@@ -451,7 +451,7 @@ usbd_find_idesc(usb_config_descriptor_t *cd, int ifaceidx, int altidx)
 				curaidx = 0;
 			} else
 				curaidx++;
-			if (ifaceidx == curidx && altidx == curaidx)
+			if (ifaceno == curidx && altno == curaidx)
 				return (d);
 		}
 	}
@@ -459,7 +459,7 @@ usbd_find_idesc(usb_config_descriptor_t *cd, int ifaceidx, int altidx)
 }
 
 usb_endpoint_descriptor_t *
-usbd_find_edesc(usb_config_descriptor_t *cd, int ifaceidx, int altidx,
+usbd_find_edesc(usb_config_descriptor_t *cd, int ifaceno, int altno,
 		int endptidx)
 {
 	char *p = (char *)cd;
@@ -468,7 +468,7 @@ usbd_find_edesc(usb_config_descriptor_t *cd, int ifaceidx, int altidx,
 	usb_endpoint_descriptor_t *e;
 	int curidx;
 
-	d = usbd_find_idesc(cd, ifaceidx, altidx);
+	d = usbd_find_idesc(cd, ifaceno, altno);
 	if (d == NULL)
 		return (NULL);
 	if (endptidx >= d->bNumEndpoints) /* quick exit */
@@ -492,15 +492,15 @@ usbd_find_edesc(usb_config_descriptor_t *cd, int ifaceidx, int altidx,
 }
 
 usbd_status
-usbd_fill_iface_data(struct usbd_device *dev, int ifaceidx, int altidx)
+usbd_fill_iface_data(struct usbd_device *dev, int ifaceno, int altno)
 {
-	struct usbd_interface *ifc = &dev->ifaces[ifaceidx];
+	struct usbd_interface *ifc = &dev->ifaces[ifaceno];
 	usb_interface_descriptor_t *idesc;
 	int nendpt;
 
-	DPRINTFN(4,("%s: ifaceidx=%d altidx=%d\n", __func__, ifaceidx, altidx));
+	DPRINTFN(4,("%s: ifaceno=%d altno=%d\n", __func__, ifaceno, altno));
 
-	idesc = usbd_find_idesc(dev->cdesc, ifaceidx, altidx);
+	idesc = usbd_find_idesc(dev->cdesc, ifaceno, altno);
 	if (idesc == NULL)
 		return (USBD_INVAL);
 
@@ -509,8 +509,8 @@ usbd_fill_iface_data(struct usbd_device *dev, int ifaceidx, int altidx)
 
 	ifc->device = dev;
 	ifc->idesc = idesc;
-	ifc->index = ifaceidx;
-	ifc->altindex = altidx;
+	ifc->index = ifaceno;
+	ifc->altindex = altno;
 	ifc->endpoints = NULL;
 	ifc->priv = NULL;
 	LIST_INIT(&ifc->pipes);

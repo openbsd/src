@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.h,v 1.70 2018/05/01 18:14:46 landry Exp $ */
+/*	$OpenBSD: usbdi.h,v 1.71 2021/02/01 09:21:51 mglocker Exp $ */
 /*	$NetBSD: usbdi.h,v 1.62 2002/07/11 21:14:35 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -136,7 +136,7 @@ int usbd_get_interface_altindex(struct usbd_interface *iface);
 usb_interface_descriptor_t *usbd_find_idesc(usb_config_descriptor_t *cd,
     int iindex, int ano);
 usb_endpoint_descriptor_t *usbd_find_edesc(usb_config_descriptor_t *cd,
-    int ifaceidx, int altidx, int endptidx);
+    int ifaceno, int altno, int endptidx);
 
 void usbd_dopoll(struct usbd_device *);
 void usbd_set_polling(struct usbd_device *iface, int on);
