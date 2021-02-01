@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.150 2020/12/27 11:38:35 visa Exp $	*/
+/*	$OpenBSD: systm.h,v 1.151 2021/02/01 15:55:07 visa Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -151,11 +151,6 @@ int	enosys(void);
 int	enoioctl(void);
 int	enxio(void);
 int	eopnotsupp(void *);
-
-struct vnodeopv_desc;
-void vfs_opv_init_explicit(struct vnodeopv_desc *);
-void vfs_opv_init_default(struct vnodeopv_desc *);
-void vfs_op_init(void);
 
 int	seltrue(dev_t dev, int which, struct proc *);
 int	selfalse(dev_t dev, int which, struct proc *);
