@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.8,v 1.62 2019/11/10 20:51:53 landry Exp $
+.\" $OpenBSD: bgpd.8,v 1.63 2021/02/01 07:39:59 jmc Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 10 2019 $
+.Dd $Mdocdate: February 1 2021 $
 .Dt BGPD 8
 .Os
 .Sh NAME
@@ -205,15 +205,19 @@ Only check the configuration file for validity.
 Produce more verbose output.
 .El
 .Sh FILES
-.Bl -tag -width "/var/run/bgpd.sockXXX" -compact
+.Bl -tag -width "/var/run/bgpd.sock.<rdomain>" -compact
 .It Pa /etc/bgpd.conf
-default
+Default
 .Nm
-configuration file
-.It Pa /var/run/bgpd.sock
-default
+configuration file.
+.It Pa /var/run/bgpd.sock.<rdomain>
+Default
 .Nm
-control socket
+control socket, where
+.Ar <rdomain>
+is the routing domain in which
+.Nm
+has been started.
 .El
 .Sh SEE ALSO
 .Xr bgpd.conf 5 ,
