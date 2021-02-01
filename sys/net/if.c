@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.625 2021/01/18 09:55:43 mvs Exp $	*/
+/*	$OpenBSD: if.c,v 1.626 2021/02/01 07:43:33 mvs Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1654,23 +1654,6 @@ if_watchdog_task(void *xifidx)
 }
 
 /*
- * Map interface name to interface structure pointer (legacy).
- */
-struct ifnet *
-ifunit(const char *name)
-{
-	struct ifnet *ifp;
-
-	KERNEL_ASSERT_LOCKED();
-
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
-		if (strcmp(ifp->if_xname, name) == 0)
-			return (ifp);
-	}
-	return (NULL);
-}
-
-/*
  * Map interface name to interface structure pointer.
  */
 struct ifnet *
@@ -1678,10 +1661,16 @@ if_unit(const char *name)
 {
 	struct ifnet *ifp;
 
-	if ((ifp = ifunit(name)) != NULL)
-		if_ref(ifp);
+	KERNEL_ASSERT_LOCKED();
 
-	return (ifp);
+	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+		if (strcmp(ifp->if_xname, name) == 0) {
+			if_ref(ifp);
+			return (ifp);
+		}
+	}
+
+	return (NULL);
 }
 
 /*
