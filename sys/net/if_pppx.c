@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.107 2021/02/01 07:44:58 mvs Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.108 2021/02/01 07:46:55 mvs Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -371,8 +371,12 @@ pppxwrite(dev_t dev, struct uio *uio, int ioflag)
 	/* Find the interface */
 	th = mtod(top, struct pppx_hdr *);
 	m_adj(top, sizeof(struct pppx_hdr));
+
+	NET_LOCK();
+
 	pxi = pppx_if_find(pxd, th->pppx_id, th->pppx_proto);
 	if (pxi == NULL) {
+		NET_UNLOCK();
 		m_freem(top);
 		return (EINVAL);
 	}
@@ -385,8 +389,6 @@ pppxwrite(dev_t dev, struct uio *uio, int ioflag)
 	/* strip the tunnel header */
 	proto = ntohl(*(uint32_t *)(th + 1));
 	m_adj(top, sizeof(uint32_t));
-
-	NET_LOCK();
 
 	switch (proto) {
 	case AF_INET:
