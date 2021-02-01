@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1105 2021/01/28 09:37:20 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1106 2021/02/01 00:31:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1180,6 +1180,7 @@ pf_state_export(struct pfsync_state *sp, struct pf_state *st)
 
 	/* copy from state */
 	strlcpy(sp->ifname, st->kif->pfik_name, sizeof(sp->ifname));
+	sp->rt = st->rt;
 	sp->rt_addr = st->rt_addr;
 	sp->creation = htonl(getuptime() - st->creation);
 	expire = pf_state_expires(st);
@@ -3430,16 +3431,13 @@ pf_set_rt_ifp(struct pf_state *s, struct pf_addr *saddr, sa_family_t af,
 	struct pf_rule *r = s->rule.ptr;
 	int	rv;
 
-	s->rt_kif = NULL;
 	if (!r->rt)
 		return (0);
 
 	rv = pf_map_addr(af, r, saddr, &s->rt_addr, NULL, sns, 
 	    &r->route, PF_SN_ROUTE);
-	if (rv == 0) {
-		s->rt_kif = r->route.kif;
-		s->natrule.ptr = r;
-	}
+	if (rv == 0)
+		s->rt = r->rt;
 
 	return (rv);
 }
@@ -5963,15 +5961,13 @@ pf_rtlabel_match(struct pf_addr *addr, sa_family_t af, struct pf_addr_wrap *aw,
 
 /* pf_route() may change pd->m, adjust local copies after calling */
 void
-pf_route(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
+pf_route(struct pf_pdesc *pd, struct pf_state *s)
 {
 	struct mbuf		*m0, *m1;
 	struct sockaddr_in	*dst, sin;
 	struct rtentry		*rt = NULL;
 	struct ip		*ip;
 	struct ifnet		*ifp = NULL;
-	struct pf_addr		 naddr;
-	struct pf_src_node	*sns[PF_SN_MAX];
 	int			 error = 0;
 	unsigned int		 rtableid;
 
@@ -5981,11 +5977,11 @@ pf_route(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 		return;
 	}
 
-	if (r->rt == PF_DUPTO) {
+	if (s->rt == PF_DUPTO) {
 		if ((m0 = m_dup_pkt(pd->m, max_linkhdr, M_NOWAIT)) == NULL)
 			return;
 	} else {
-		if ((r->rt == PF_REPLYTO) == (r->direction == pd->dir))
+		if ((s->rt == PF_REPLYTO) == (s->direction == pd->dir))
 			return;
 		m0 = pd->m;
 		pd->m = NULL;
@@ -5999,48 +5995,45 @@ pf_route(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 
 	ip = mtod(m0, struct ip *);
 
-	memset(&sin, 0, sizeof(sin));
-	dst = &sin;
-	dst->sin_family = AF_INET;
-	dst->sin_len = sizeof(*dst);
-	dst->sin_addr = ip->ip_dst;
-	rtableid = m0->m_pkthdr.ph_rtableid;
-
 	if (pd->dir == PF_IN) {
 		if (ip->ip_ttl <= IPTTLDEC) {
-			if (r->rt != PF_DUPTO)
+			if (s->rt != PF_DUPTO) {
 				pf_send_icmp(m0, ICMP_TIMXCEED,
 				    ICMP_TIMXCEED_INTRANS, 0,
-				    pd->af, r, pd->rdomain);
+				    pd->af, s->rule.ptr, pd->rdomain);
+			}
 			goto bad;
 		}
 		ip->ip_ttl -= IPTTLDEC;
 	}
 
-	if (s == NULL) {
-		memset(sns, 0, sizeof(sns));
-		if (pf_map_addr(AF_INET, r,
-		    (struct pf_addr *)&ip->ip_src,
-		    &naddr, NULL, sns, &r->route, PF_SN_ROUTE)) {
-			DPFPRINTF(LOG_ERR,
-			    "%s: pf_map_addr() failed", __func__);
-			goto bad;
-		}
+	memset(&sin, 0, sizeof(sin));
+	dst = &sin;
+	dst->sin_family = AF_INET;
+	dst->sin_len = sizeof(*dst);
+	dst->sin_addr = s->rt_addr.v4;
+	rtableid = m0->m_pkthdr.ph_rtableid;
 
-		if (!PF_AZERO(&naddr, AF_INET))
-			dst->sin_addr.s_addr = naddr.v4.s_addr;
-		ifp = r->route.kif ?
-		    r->route.kif->pfik_ifp : NULL;
-	} else {
-		if (!PF_AZERO(&s->rt_addr, AF_INET))
-			dst->sin_addr.s_addr =
-			    s->rt_addr.v4.s_addr;
-		ifp = s->rt_kif ? s->rt_kif->pfik_ifp : NULL;
+	rt = rtalloc(sintosa(dst), RT_RESOLVE, rtableid);
+	if (!rtisvalid(rt)) {
+		if (s->rt != PF_DUPTO) {
+			pf_send_icmp(m0, ICMP_UNREACH, ICMP_UNREACH_HOST,
+			    0, pd->af, s->rule.ptr, pd->rdomain);
+		}
+		ipstat_inc(ips_noroute);
+		goto bad;
 	}
+
+	ifp = if_get(rt->rt_ifidx);
 	if (ifp == NULL)
 		goto bad;
 
-	if (r->rt != PF_DUPTO && pd->kif->pfik_ifp != ifp) {
+	/* A locally generated packet may have invalid source address. */
+	if ((ntohl(ip->ip_src.s_addr) >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET &&
+	    (ifp->if_flags & IFF_LOOPBACK) == 0)
+		ip->ip_src = ifatoia(rt->rt_ifa)->ia_addr.sin_addr;
+
+	if (s->rt != PF_DUPTO && pd->kif->pfik_ifp != ifp) {
 		if (pf_test(AF_INET, PF_OUT, ifp, &m0) != PF_PASS)
 			goto bad;
 		else if (m0 == NULL)
@@ -6052,20 +6045,6 @@ pf_route(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 		}
 		ip = mtod(m0, struct ip *);
 	}
-
-	rt = rtalloc(sintosa(dst), RT_RESOLVE, rtableid);
-	if (!rtisvalid(rt)) {
-		if (r->rt != PF_DUPTO) {
-			pf_send_icmp(m0, ICMP_UNREACH, ICMP_UNREACH_HOST,
-			    0, pd->af, s->rule.ptr, pd->rdomain);
-		}
-		ipstat_inc(ips_noroute);
-		goto bad;
-	}
-	/* A locally generated packet may have invalid source address. */
-	if ((ntohl(ip->ip_src.s_addr) >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET &&
-	    (ifp->if_flags & IFF_LOOPBACK) == 0)
-		ip->ip_src = ifatoia(rt->rt_ifa)->ia_addr.sin_addr;
 
 	in_proto_cksum_out(m0, ifp);
 
@@ -6087,9 +6066,9 @@ pf_route(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 	 */
 	if (ip->ip_off & htons(IP_DF)) {
 		ipstat_inc(ips_cantfrag);
-		if (r->rt != PF_DUPTO)
+		if (s->rt != PF_DUPTO)
 			pf_send_icmp(m0, ICMP_UNREACH, ICMP_UNREACH_NEEDFRAG,
-			    ifp->if_mtu, pd->af, r, pd->rdomain);
+			    ifp->if_mtu, pd->af, s->rule.ptr, pd->rdomain);
 		goto bad;
 	}
 
@@ -6113,6 +6092,7 @@ pf_route(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 		ipstat_inc(ips_fragmented);
 
 done:
+	if_put(ifp);
 	rtfree(rt);
 	return;
 
@@ -6124,15 +6104,13 @@ bad:
 #ifdef INET6
 /* pf_route6() may change pd->m, adjust local copies after calling */
 void
-pf_route6(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
+pf_route6(struct pf_pdesc *pd, struct pf_state *s)
 {
 	struct mbuf		*m0;
 	struct sockaddr_in6	*dst, sin6;
 	struct rtentry		*rt = NULL;
 	struct ip6_hdr		*ip6;
 	struct ifnet		*ifp = NULL;
-	struct pf_addr		 naddr;
-	struct pf_src_node	*sns[PF_SN_MAX];
 	struct m_tag		*mtag;
 	unsigned int		 rtableid;
 
@@ -6142,11 +6120,11 @@ pf_route6(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 		return;
 	}
 
-	if (r->rt == PF_DUPTO) {
+	if (s->rt == PF_DUPTO) {
 		if ((m0 = m_dup_pkt(pd->m, max_linkhdr, M_NOWAIT)) == NULL)
 			return;
 	} else {
-		if ((r->rt == PF_REPLYTO) == (r->direction == pd->dir))
+		if ((s->rt == PF_REPLYTO) == (s->direction == pd->dir))
 			return;
 		m0 = pd->m;
 		pd->m = NULL;
@@ -6159,46 +6137,48 @@ pf_route6(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 	}
 	ip6 = mtod(m0, struct ip6_hdr *);
 
-	memset(&sin6, 0, sizeof(sin6));
-	dst = &sin6;
-	dst->sin6_family = AF_INET6;
-	dst->sin6_len = sizeof(*dst);
-	dst->sin6_addr = ip6->ip6_dst;
-	rtableid = m0->m_pkthdr.ph_rtableid;
-
 	if (pd->dir == PF_IN) {
 		if (ip6->ip6_hlim <= IPV6_HLIMDEC) {
-			if (r->rt != PF_DUPTO)
+			if (s->rt != PF_DUPTO) {
 				pf_send_icmp(m0, ICMP6_TIME_EXCEEDED,
 				    ICMP6_TIME_EXCEED_TRANSIT, 0,
-				    pd->af, r, pd->rdomain);
+				    pd->af, s->rule.ptr, pd->rdomain);
+			}
 			goto bad;
 		}
 		ip6->ip6_hlim -= IPV6_HLIMDEC;
 	}
 
-	if (s == NULL) {
-		memset(sns, 0, sizeof(sns));
-		if (pf_map_addr(AF_INET6, r, (struct pf_addr *)&ip6->ip6_src,
-		    &naddr, NULL, sns, &r->route, PF_SN_ROUTE)) {
-			DPFPRINTF(LOG_ERR,
-			    "%s: pf_map_addr() failed", __func__);
-			goto bad;
+	memset(&sin6, 0, sizeof(sin6));
+	dst = &sin6;
+	dst->sin6_family = AF_INET6;
+	dst->sin6_len = sizeof(*dst);
+	dst->sin6_addr = s->rt_addr.v6;
+	rtableid = m0->m_pkthdr.ph_rtableid;
+
+	if (IN6_IS_SCOPE_EMBED(&dst->sin6_addr))
+		dst->sin6_addr.s6_addr16[1] = htons(ifp->if_index);
+	rt = rtalloc(sin6tosa(dst), RT_RESOLVE, rtableid);
+	if (!rtisvalid(rt)) {
+		if (s->rt != PF_DUPTO) {
+			pf_send_icmp(m0, ICMP6_DST_UNREACH,
+			    ICMP6_DST_UNREACH_NOROUTE, 0,
+			    pd->af, s->rule.ptr, pd->rdomain);
 		}
-		if (!PF_AZERO(&naddr, AF_INET6))
-			pf_addrcpy((struct pf_addr *)&dst->sin6_addr,
-			    &naddr, AF_INET6);
-		ifp = r->route.kif ? r->route.kif->pfik_ifp : NULL;
-	} else {
-		if (!PF_AZERO(&s->rt_addr, AF_INET6))
-			pf_addrcpy((struct pf_addr *)&dst->sin6_addr,
-			    &s->rt_addr, AF_INET6);
-		ifp = s->rt_kif ? s->rt_kif->pfik_ifp : NULL;
+		ip6stat_inc(ip6s_noroute);
+		goto bad;
 	}
+
+	ifp = if_get(rt->rt_ifidx);
 	if (ifp == NULL)
 		goto bad;
 
-	if (r->rt != PF_DUPTO && pd->kif->pfik_ifp != ifp) {
+	/* A locally generated packet may have invalid source address. */
+	if (IN6_IS_ADDR_LOOPBACK(&ip6->ip6_src) &&
+	    (ifp->if_flags & IFF_LOOPBACK) == 0)
+		ip6->ip6_src = ifatoia6(rt->rt_ifa)->ia_addr.sin6_addr;
+
+	if (s->rt != PF_DUPTO && pd->kif->pfik_ifp != ifp) {
 		if (pf_test(AF_INET6, PF_OUT, ifp, &m0) != PF_PASS)
 			goto bad;
 		else if (m0 == NULL)
@@ -6209,23 +6189,6 @@ pf_route6(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 			goto bad;
 		}
 	}
-
-	if (IN6_IS_SCOPE_EMBED(&dst->sin6_addr))
-		dst->sin6_addr.s6_addr16[1] = htons(ifp->if_index);
-	rt = rtalloc(sin6tosa(dst), RT_RESOLVE, rtableid);
-	if (!rtisvalid(rt)) {
-		if (r->rt != PF_DUPTO) {
-			pf_send_icmp(m0, ICMP6_DST_UNREACH,
-			    ICMP6_DST_UNREACH_NOROUTE, 0,
-			    pd->af, s->rule.ptr, pd->rdomain);
- 		}
-		ip6stat_inc(ip6s_noroute);
-		goto bad;
-	}
-	/* A locally generated packet may have invalid source address. */
-	if (IN6_IS_ADDR_LOOPBACK(&ip6->ip6_src) &&
-	    (ifp->if_flags & IFF_LOOPBACK) == 0)
-		ip6->ip6_src = ifatoia6(rt->rt_ifa)->ia_addr.sin6_addr;
 
 	in6_proto_cksum_out(m0, ifp);
 
@@ -6239,13 +6202,14 @@ pf_route6(struct pf_pdesc *pd, struct pf_rule *r, struct pf_state *s)
 		ifp->if_output(ifp, m0, sin6tosa(dst), rt);
 	} else {
 		ip6stat_inc(ip6s_cantfrag);
-		if (r->rt != PF_DUPTO)
+		if (s->rt != PF_DUPTO)
 			pf_send_icmp(m0, ICMP6_PACKET_TOO_BIG, 0,
-			    ifp->if_mtu, pd->af, r, pd->rdomain);
+			    ifp->if_mtu, pd->af, s->rule.ptr, pd->rdomain);
 		goto bad;
 	}
 
 done:
+	if_put(ifp);
 	rtfree(rt);
 	return;
 
@@ -7286,14 +7250,14 @@ done:
 		pd.m = NULL;
 		break;
 	default:
-		if (r->rt) {
+		if (s && s->rt) {
 			switch (pd.af) {
 			case AF_INET:
-				pf_route(&pd, r, s);
+				pf_route(&pd, s);
 				break;
 #ifdef INET6
 			case AF_INET6:
-				pf_route6(&pd, r, s);
+				pf_route6(&pd, s);
 				break;
 #endif /* INET6 */
 			}

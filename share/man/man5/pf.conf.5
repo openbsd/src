@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.585 2020/12/07 08:29:41 sashan Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.586 2021/02/01 00:31:04 dlg Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 7 2020 $
+.Dd $Mdocdate: February 1 2021 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -1113,8 +1113,8 @@ the incoming connection arrived through (symmetric routing enforcement).
 .It Cm route-to
 The
 .Cm route-to
-option routes the packet to the specified interface with an optional address
-for the next hop.
+option routes the packet to the specified destination address instead
+of the destination address in the packet header.
 When a
 .Cm route-to
 rule creates state, only packets that pass in the same direction as the
@@ -2858,8 +2858,7 @@ ifspec         = ( [ "!" ] ( interface-name | interface-group ) ) |
 interface-list = [ "!" ] ( interface-name | interface-group )
                  [ [ "," ] interface-list ]
 route          = ( "route-to" | "reply-to" | "dup-to" )
-                 ( routehost | "{" routehost-list "}" )
-                 [ pooltype ]
+                 ( redirhost | "{" redirhost-list "}" )
 af             = "inet" | "inet6"
 
 protospec      = "proto" ( proto-name | proto-number |
@@ -2878,14 +2877,11 @@ host           = [ "!" ] ( address [ "weight" number ] |
                  address [ "/" mask-bits ] [ "weight" number ] |
                  "<" string ">" )
 redirhost      = address [ "/" mask-bits ]
-routehost      = host | host "@" interface-name |
-                 "(" interface-name [ address [ "/" mask-bits ] ] ")"
 address        = ( interface-name | interface-group |
                  "(" ( interface-name | interface-group ) ")" |
                  hostname | ipv4-dotted-quad | ipv6-coloned-hex )
 host-list      = host [ [ "," ] host-list ]
 redirhost-list = redirhost [ [ "," ] redirhost-list ]
-routehost-list = routehost [ [ "," ] routehost-list ]
 
 port           = "port" ( unary-op | binary-op | "{" op-list "}" )
 portspec       = "port" ( number | name ) [ ":" ( "*" | number | name ) ]

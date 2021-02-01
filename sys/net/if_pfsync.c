@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.281 2021/01/18 18:29:19 mvs Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.282 2021/02/01 00:31:05 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -613,6 +613,7 @@ pfsync_state_import(struct pfsync_state *sp, int flags)
 
 	/* copy to state */
 	st->rt_addr = sp->rt_addr;
+	st->rt = sp->rt;
 	st->creation = getuptime() - ntohl(sp->creation);
 	st->expire = getuptime();
 	if (ntohl(sp->expire)) {
@@ -643,7 +644,6 @@ pfsync_state_import(struct pfsync_state *sp, int flags)
 
 	st->rule.ptr = r;
 	st->anchor.ptr = NULL;
-	st->rt_kif = NULL;
 
 	st->pfsync_time = getuptime();
 	st->sync_state = PFSYNC_S_NONE;
@@ -1860,7 +1860,7 @@ pfsync_undefer(struct pfsync_deferral *pd, int drop)
 	if (drop)
 		m_freem(pd->pd_m);
 	else {
-		if (st->rule.ptr->rt == PF_ROUTETO) {
+		if (st->rt == PF_ROUTETO) {
 			if (pf_setup_pdesc(&pdesc, st->key[PF_SK_WIRE]->af,
 			    st->direction, st->kif, pd->pd_m, NULL) !=
 			    PF_PASS) {
@@ -1869,11 +1869,11 @@ pfsync_undefer(struct pfsync_deferral *pd, int drop)
 			}
 			switch (st->key[PF_SK_WIRE]->af) {
 			case AF_INET:
-				pf_route(&pdesc, st->rule.ptr, st);
+				pf_route(&pdesc, st);
 				break;
 #ifdef INET6
 			case AF_INET6:
-				pf_route6(&pdesc, st->rule.ptr, st);
+				pf_route6(&pdesc, st);
 				break;
 #endif /* INET6 */
 			default:

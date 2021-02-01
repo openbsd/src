@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.345 2021/01/12 00:10:34 bluhm Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.346 2021/02/01 00:31:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1615,16 +1615,11 @@ host(const char *s, int opts)
 {
 	struct node_host	*h = NULL, *n;
 	int			 mask = -1;
-	char			*p, *ps, *if_name;
+	char			*p, *ps;
 	const char		*errstr;
 
 	if ((ps = strdup(s)) == NULL)
 		err(1, "%s: strdup", __func__);
-
-	if ((if_name = strrchr(ps, '@')) != NULL) {
-		if_name[0] = '\0';
-		if_name++;
-	}
 
 	if ((p = strchr(ps, '/')) != NULL) {
 		mask = strtonum(p+1, 0, 128, &errstr);
@@ -1642,10 +1637,6 @@ host(const char *s, int opts)
 		goto error;
 	}
 
-	if (if_name && if_name[0])
-		for (n = h; n != NULL; n = n->next)
-			if ((n->ifname = strdup(if_name)) == NULL)
-				err(1, "%s: strdup", __func__);
 	for (n = h; n != NULL; n = n->next) {
 		n->addr.type = PF_ADDR_ADDRMASK;
 		n->weight = 0;

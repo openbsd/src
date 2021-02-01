@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.708 2021/01/12 00:10:34 bluhm Exp $	*/
+/*	$OpenBSD: parse.y,v 1.709 2021/02/01 00:31:04 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -276,6 +276,7 @@ struct filter_opts {
 	struct redirspec	 nat;
 	struct redirspec	 rdr;
 	struct redirspec	 rroute;
+	u_int8_t		 rt;
 
 	/* scrub opts */
 	int			 nodf;
@@ -283,15 +284,6 @@ struct filter_opts {
 	int			 settos;
 	int			 randomid;
 	int			 max_mss;
-
-	/* route opts */
-	struct {
-		struct node_host	*host;
-		u_int8_t		 rt;
-		u_int8_t		 pool_opts;
-		sa_family_t		 af;
-		struct pf_poolhashkey	*key;
-	}			 route;
 
 	struct {
 		u_int32_t	limit;
@@ -372,7 +364,7 @@ void		 expand_label(char *, size_t, const char *, u_int8_t,
 		    struct node_port *, u_int8_t);
 int		 expand_divertspec(struct pf_rule *, struct divertspec *);
 int		 collapse_redirspec(struct pf_pool *, struct pf_rule *,
-		    struct redirspec *rs, u_int8_t);
+		    struct redirspec *rs, int);
 int		 apply_redirspec(struct pf_pool *, struct pf_rule *,
 		    struct redirspec *, int, struct node_port *);
 void		 expand_rule(struct pf_rule *, int, struct node_if *,
@@ -518,7 +510,6 @@ int	parseport(char *, struct range *r, int);
 %type	<v.host>		ipspec xhost host dynaddr host_list
 %type	<v.host>		table_host_list tablespec
 %type	<v.host>		redir_host_list redirspec
-%type	<v.host>		route_host route_host_list routespec
 %type	<v.os>			os xos os_list
 %type	<v.port>		portspec port_list port_item
 %type	<v.uid>			uids uid_list uid_item
@@ -975,7 +966,7 @@ anchorrule	: ANCHOR anchorname dir quick interface af proto fromto
 				YYERROR;
 			}
 
-			if ($9.route.rt) {
+			if ($9.rt) {
 				yyerror("cannot specify route handling "
 				    "on anchors");
 				YYERROR;
@@ -1843,37 +1834,13 @@ pfrule		: action dir logquick interface af proto fromto
 			decide_address_family($7.src.host, &r.af);
 			decide_address_family($7.dst.host, &r.af);
 
-			if ($8.route.rt) {
-				if (!r.direction) {
+			if ($8.rt) {
+				if ($8.rt != PF_DUPTO && !r.direction) {
 					yyerror("direction must be explicit "
 					    "with rules that specify routing");
 					YYERROR;
 				}
-				r.rt = $8.route.rt;
-				r.route.opts = $8.route.pool_opts;
-				if ($8.route.key != NULL)
-					memcpy(&r.route.key, $8.route.key,
-					    sizeof(struct pf_poolhashkey));
-			}
-			if (r.rt) {
-				decide_address_family($8.route.host, &r.af);
-				if ((r.route.opts & PF_POOL_TYPEMASK) ==
-				    PF_POOL_NONE && ($8.route.host->next != NULL ||
-				    $8.route.host->addr.type == PF_ADDR_TABLE ||
-				    DYNIF_MULTIADDR($8.route.host->addr)))
-					r.route.opts |= PF_POOL_ROUNDROBIN;
-				if ($8.route.host->next != NULL) {
-					if (!PF_POOL_DYNTYPE(r.route.opts)) {
-						yyerror("address pool option "
-						    "not supported by type");
-						YYERROR;
-					}
-				}
-				/* fake redirspec */
-				if (($8.rroute.rdr = calloc(1,
-				    sizeof(*$8.rroute.rdr))) == NULL)
-					err(1, "$8.rroute.rdr");
-				$8.rroute.rdr->host = $8.route.host;
+				r.rt = $8.rt;
 			}
 
 			if (expand_divertspec(&r, &$8.divert))
@@ -2137,30 +2104,14 @@ filter_opt	: USER uids {
 			    sizeof(filter_opts.nat.pool_opts));
 			filter_opts.nat.pool_opts.staticport = 1;
 		}
-		| ROUTETO routespec pool_opts {
-			filter_opts.route.host = $2;
-			filter_opts.route.rt = PF_ROUTETO;
-			filter_opts.route.pool_opts = $3.type | $3.opts;
-			memcpy(&filter_opts.rroute.pool_opts, &$3,
-			    sizeof(filter_opts.rroute.pool_opts));
-			if ($3.key != NULL)
-				filter_opts.route.key = $3.key;
+		| ROUTETO routespec {
+			filter_opts.rt = PF_ROUTETO;
 		}
-		| REPLYTO routespec pool_opts {
-			filter_opts.route.host = $2;
-			filter_opts.route.rt = PF_REPLYTO;
-			filter_opts.route.pool_opts = $3.type | $3.opts;
-			if ($3.key != NULL)
-				filter_opts.route.key = $3.key;
+		| REPLYTO routespec {
+			filter_opts.rt = PF_REPLYTO;
 		}
-		| DUPTO routespec pool_opts {
-			filter_opts.route.host = $2;
-			filter_opts.route.rt = PF_DUPTO;
-			filter_opts.route.pool_opts = $3.type | $3.opts;
-			memcpy(&filter_opts.rroute.pool_opts, &$3,
-			    sizeof(filter_opts.rroute.pool_opts));
-			if ($3.key != NULL)
-				filter_opts.route.key = $3.key;
+		| DUPTO routespec {
+			filter_opts.rt = PF_DUPTO;
 		}
 		| not RECEIVEDON if_item {
 			if (filter_opts.rcv) {
@@ -3743,122 +3694,21 @@ pool_opt	: BITMASK	{
 		}
 		;
 
-route_host	: STRING			{
-			/* try to find @if0 address specs */
-			if (strrchr($1, '@') != NULL) {
-				if (($$ = host($1, pf->opts)) == NULL)	{
-					yyerror("invalid host for route spec");
-					YYERROR;
-				}
-				free($1);
-			} else {
-				$$ = calloc(1, sizeof(struct node_host));
-				if ($$ == NULL)
-					err(1, "route_host: calloc");
-				$$->ifname = $1;
-				$$->addr.type = PF_ADDR_NONE;
-				set_ipmask($$, 128);
-				$$->next = NULL;
-				$$->tail = $$;
-			}
-		}
-		| STRING '/' STRING 		{
-			char	*buf;
-
-			if (asprintf(&buf, "%s/%s", $1, $3) == -1)
-				err(1, "host: asprintf");
-			free($1);
-			if (($$ = host(buf, pf->opts)) == NULL)	{
-				/* error. "any" is handled elsewhere */
-				free(buf);
-				yyerror("could not parse host specification");
+routespec	: redirspec pool_opts {
+			struct redirection *redir;
+			if (filter_opts.rt != PF_NOPFROUTE) {
+				yyerror("cannot respecify "
+				    "route-to/reply-to/dup-to");
 				YYERROR;
 			}
-			free(buf);
+			redir = calloc(1, sizeof(*redir));
+			if (redir == NULL)
+				err(1, "routespec calloc");
+			redir->host = $1;
+			filter_opts.rroute.rdr = redir;
+			memcpy(&filter_opts.rroute.pool_opts, &$2,
+			    sizeof(filter_opts.rroute.pool_opts));
 		}
-		| '<' STRING '>'	{
-			if (strlen($2) >= PF_TABLE_NAME_SIZE) {
-				yyerror("table name '%s' too long", $2);
-				free($2);
-				YYERROR;
-			}
-			$$ = calloc(1, sizeof(struct node_host));
-			if ($$ == NULL)
-				err(1, "host: calloc");
-			$$->addr.type = PF_ADDR_TABLE;
-			if (strlcpy($$->addr.v.tblname, $2,
-			    sizeof($$->addr.v.tblname)) >=
-			    sizeof($$->addr.v.tblname))
-				errx(1, "host: strlcpy");
-			free($2);
-			$$->next = NULL;
-			$$->tail = $$;
-		}
-		| dynaddr '/' NUMBER		{
-			struct node_host	*n;
-
-			if ($3 < 0 || $3 > 128) {
-				yyerror("bit number too big");
-				YYERROR;
-			}
-			$$ = $1;
-			for (n = $1; n != NULL; n = n->next)
-				set_ipmask(n, $3);
-		}
-		| '(' STRING host ')'		{
-			struct node_host	*n;
-
-			$$ = $3;
-			/* XXX check masks, only full mask should be allowed */
-			for (n = $3; n != NULL; n = n->next) {
-				if ($$->ifname) {
-					yyerror("cannot specify interface twice "
-					    "in route spec");
-					YYERROR;
-				}
-				if (($$->ifname = strdup($2)) == NULL)
-					errx(1, "host: strdup");
-			}
-			free($2);
-		}
-		;
-
-route_host_list	: route_host optweight optnl		{ 
-			if ($2 > 0) {
-				struct node_host	*n;
-				for (n = $1; n != NULL; n = n->next)
-					n->weight = $2;
-			}
-			$$ = $1;
-		}
-		| route_host_list comma route_host optweight optnl {
-			if ($1->af == 0)
-				$1->af = $3->af;
-			if ($1->af != $3->af) {
-				yyerror("all pool addresses must be in the "
-				    "same address family");
-				YYERROR;
-			}
-			$1->tail->next = $3;
-			$1->tail = $3->tail;
-			if ($4 > 0) {
-				struct node_host	*n;
-				for (n = $3; n != NULL; n = n->next)
-					n->weight = $4;
-			}
-			$$ = $1;
-		}
-		;
-
-routespec	: route_host optweight			{
-			if ($2 > 0) {
-				struct node_host	*n;
-				for (n = $1; n != NULL; n = n->next)
-					n->weight = $2;
-			}
-			$$ = $1;
-		}
-		| '{' optnl route_host_list '}'	{ $$ = $3; }
 		;
 
 timeout_spec	: STRING NUMBER
@@ -4056,6 +3906,10 @@ rule_consistent(struct pf_rule *r)
 	}
 	if (r->action != PF_PASS && r->keep_state) {
 		yyerror("keep state is great, but only for pass rules");
+		problems++;
+	}
+	if (r->rt && !r->keep_state) {
+		yyerror("route-to, reply-to and dup-to require keep state");
 		problems++;
 	}
 	if (r->rule_flag & PFRULE_STATESLOPPY &&
@@ -4478,7 +4332,7 @@ expand_divertspec(struct pf_rule *r, struct divertspec *ds)
 
 int
 collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
-    struct redirspec *rs, u_int8_t allow_if)
+    struct redirspec *rs, int routing)
 {
 	struct pf_opt_tbl *tbl = NULL;
 	struct node_host *h, *hprev = NULL;
@@ -4494,6 +4348,15 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
 		r->naf = rs->af;
 
 	for (h = rs->rdr->host; h != NULL; h = h->next) {
+		if (routing) {
+			if (h->addr.type == PF_ADDR_DYNIFTL &&
+			    h->addr.iflags != PFI_AFLAG_PEER) {
+				yyerror("route spec requires :peer with "
+				    "dynamic interface addresses");
+				return (1);
+			}
+		}
+
 		/* set rule address family if redirect spec has one */
 		if (rs->af && !r->af && !af) {
 			/* swap address families for af-to */
@@ -4515,7 +4378,7 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
 			if (!r->af && af && af != h->af) {
 				yyerror("%s spec contains addresses with "
 				    "different address families",
-				    allow_if ? "routing" : "translation");
+				    routing ? "routing" : "translation");
 				return (1);
 			}
 		} else if (h->af) {	/* af-to case */
@@ -4526,7 +4389,7 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
 			if (rs->af && rs->af != h->af) {
 				yyerror("%s spec contains addresses that "
 				    "don't match target address family",
-				    allow_if ? "routing" : "translation");
+				    routing ? "routing" : "translation");
 				return (1);
 			}
 		}
@@ -4541,8 +4404,9 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
 
 		if (naddr == 0) {	/* the first host */
 			rpool->addr = h->addr;
-			if (!allow_if && h->ifname) {
-				yyerror("@if not permitted for translation");
+			if (h->ifname) {
+				yyerror("@if not permitted for %s",
+				    routing ? "routing" : "translation");
 				return (1);
 			}
 			if (h->ifname && strlcpy(rpool->ifname, h->ifname,
@@ -4564,8 +4428,9 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
 				    "not supported for translation or routing");
 				return (1);
 			}
-			if (!allow_if && h->ifname) {
-				yyerror("@if not permitted for translation");
+			if (h->ifname) {
+				yyerror("@if not permitted for %s",
+				    routing ? "routing" : "translation");
 				return (1);
 			}
 			if (hprev) {
@@ -4596,7 +4461,7 @@ collapse_redirspec(struct pf_pool *rpool, struct pf_rule *r,
 		r->af = af;
 	if (!naddr) {
 		yyerror("af mismatch in %s spec",
-		    allow_if ? "routing" : "translation");
+		    routing ? "routing" : "translation");
 		return (1);
 	}
 	if (tbl) {
@@ -5992,7 +5857,7 @@ filteropts_to_rule(struct pf_rule *r, struct filter_opts *opts)
 		yyerror("af-to can only be used with direction in");
 		return (1);
 	}
-	if ((opts->marker & FOM_AFTO) && opts->route.rt) {
+	if ((opts->marker & FOM_AFTO) && opts->rt) {
 		yyerror("af-to cannot be used together with "
 		    "route-to, reply-to, dup-to");
 		return (1);
