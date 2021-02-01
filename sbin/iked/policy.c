@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.74 2020/12/21 22:49:36 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.75 2021/02/01 16:37:48 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -76,7 +76,8 @@ policy_init(struct iked *env)
  */
 int
 policy_lookup(struct iked *env, struct iked_message *msg,
-    struct iked_proposals *proposals)
+    struct iked_proposals *proposals, struct iked_flows *flows,
+    int nflows)
 {
 	struct iked_policy	 pol;
 	char			*s, idstr[IKED_ID_SIZE];
@@ -92,6 +93,9 @@ policy_lookup(struct iked *env, struct iked_message *msg,
 	if (proposals != NULL)
 		pol.pol_proposals = *proposals;
 	pol.pol_af = msg->msg_peer.ss_family;
+	if (flows)
+		pol.pol_flows = *flows;
+	pol.pol_nflows = nflows;
 	if (msg->msg_flags & IKED_MSG_FLAGS_USE_TRANSPORT)
 		pol.pol_flags |= IKED_POLICY_TRANSPORT;
 	memcpy(&pol.pol_peer.addr, &msg->msg_peer, sizeof(msg->msg_peer));
