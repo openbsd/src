@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.193 2020/11/25 00:05:48 krw Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.194 2021/02/01 16:29:22 cheloha Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -551,7 +551,7 @@ int
 default_route_index(int rdomain, int routefd)
 {
 	struct pollfd		 fds[1];
-	time_t			 start_time, cur_time;
+	struct timespec		 now, stop, timeout;
 	int			 nfds;
 	struct iovec		 iov[3];
 	struct sockaddr_in	 sin;
@@ -584,8 +584,10 @@ default_route_index(int rdomain, int routefd)
 	iov[2].iov_len = sizeof(sin);
 
 	pid = getpid();
-	if (time(&start_time) == -1)
-		fatal("start time");
+	clock_gettime(CLOCK_REALTIME, &now);
+	timespecclear(&timeout);
+	timeout.tv_sec = 3;
+	timespecadd(&now, &timeout, &stop);
 
 	if (writev(routefd, iov, 3) == -1) {
 		if (errno == ESRCH)
@@ -596,16 +598,19 @@ default_route_index(int rdomain, int routefd)
 		return 0;
 	}
 
-	do {
-		if (time(&cur_time) == -1)
-			fatal("current time");
+	for (;;) {
+		clock_gettime(CLOCK_REALTIME, &now);
+		if (timespeccmp(&stop, &now, <=))
+			break;
+		timespecsub(&stop, &now, &timeout);
+
 		fds[0].fd = routefd;
 		fds[0].events = POLLIN;
-		nfds = poll(fds, 1, 3);
+		nfds = ppoll(fds, 1, &timeout, NULL);
 		if (nfds == -1) {
 			if (errno == EINTR)
 				continue;
-			log_warn("%s: poll(routefd)", log_procname);
+			log_warn("%s: ppoll(routefd)", log_procname);
 			break;
 		}
 		if ((fds[0].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0) {
@@ -636,7 +641,7 @@ default_route_index(int rdomain, int routefd)
 			}
 			return m_rtmsg.m_rtm.rtm_index;
 		}
-	} while ((cur_time - start_time) <= 3);
+	}
 
 	return 0;
 }
