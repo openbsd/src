@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.360 2021/01/17 20:35:31 sthen Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.361 2021/02/01 16:39:50 sthen Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: January 17 2021 $
+.Dd $Mdocdate: February 1 2021 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -1405,17 +1405,17 @@ Specify the group.
 .It Cm carpdemote Op Ar number
 Increase
 .Xr carp 4
-demote count for given interface group by
+demotion counter for given interface group by
 .Ar number .
 Acceptable values are 0 to 128.
 If
 .Ar number
 is omitted, it is increased by 1.
-Demote count can be set up to 255.
+The maximum value for a demotion counter is 255.
 .It Cm -carpdemote Op Ar number
 Decrease
 .Xr carp 4
-demote count for given interface group by
+demotion counter for given interface group by
 .Ar number .
 Acceptable values are 0 to 128.
 If

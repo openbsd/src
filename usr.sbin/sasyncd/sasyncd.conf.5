@@ -1,4 +1,4 @@
-.\" $OpenBSD: sasyncd.conf.5,v 1.19 2020/02/10 13:18:22 schwarze Exp $
+.\" $OpenBSD: sasyncd.conf.5,v 1.20 2021/02/01 16:39:50 sthen Exp $
 .\"
 .\" Copyright (c) 2005 Håkan Olsson.  All rights reserved.
 .\"
@@ -27,7 +27,7 @@
 .\"
 .\" Manual page for sasyncd.conf
 .\"
-.Dd $Mdocdate: February 10 2020 $
+.Dd $Mdocdate: February 1 2021 $
 .Dt SASYNCD.CONF 5
 .Os
 .Sh NAME
@@ -77,7 +77,7 @@ should track master/slave state on.
 .Xc
 Specify on which interface group
 .Xr sasyncd 8
-should increase the demote counter.
+should increase the demotion counter.
 This has the effect of suppressing
 .Xr carp 4
 preemption while initial
