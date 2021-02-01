@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.88 2021/01/26 12:51:22 eric Exp $ */
+/* $OpenBSD: tls.c,v 1.89 2021/02/01 15:35:41 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -404,14 +404,14 @@ tls_keypair_setup_pkey(struct tls *ctx, struct tls_keypair *keypair, EVP_PKEY *p
 	case EVP_PKEY_RSA:
 		if ((rsa = EVP_PKEY_get1_RSA(pkey)) == NULL ||
 		    RSA_set_ex_data(rsa, 0, keypair->pubkey_hash) == 0) {
-			tls_set_errorx(ctx, "failed to setup RSA key");
+			tls_set_errorx(ctx, "RSA key setup failure");
 			goto err;
 		}
 		break;
 	case EVP_PKEY_EC:
 		if ((eckey = EVP_PKEY_get1_EC_KEY(pkey)) == NULL ||
 		    ECDSA_set_ex_data(eckey, 0, keypair->pubkey_hash) == 0) {
-			tls_set_errorx(ctx, "failed to setup EC key");
+			tls_set_errorx(ctx, "EC key setup failure");
 			goto err;
 		}
 		break;
