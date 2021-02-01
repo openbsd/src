@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdstore.c,v 1.13 2021/01/31 05:14:24 deraadt Exp $	*/
+/*	$OpenBSD: mdstore.c,v 1.14 2021/02/01 16:27:06 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -542,9 +542,9 @@ struct frag {
 	uint64_t base;
 };
 
-extern TAILQ_HEAD(frag_head, frag) free_frags;
+TAILQ_HEAD(frag_head, frag) mdstore_frags;
 
-extern uint64_t fragsize;
+uint64_t mdstore_fragsize;
 
 void
 frag_init(void)
@@ -553,8 +553,8 @@ frag_init(void)
 	struct md_prop *prop;
 
 	node = md_find_node(hvmd, "frag_space");
-	md_get_prop_val(hvmd, node, "fragsize", &fragsize);
-	TAILQ_INIT(&free_frags);
+	md_get_prop_val(hvmd, node, "fragsize", &mdstore_fragsize);
+	TAILQ_INIT(&mdstore_frags);
 	TAILQ_FOREACH(prop, &node->prop_list, link) {
 		if (prop->tag == MD_PROP_ARC &&
 		    strcmp(prop->name->str, "fwd") == 0)
@@ -570,10 +570,10 @@ add_frag_mblock(struct md_node *node)
 
 	md_get_prop_val(hvmd, node, "base", &base);
 	md_get_prop_val(hvmd, node, "size", &size);
-	while (size > fragsize) {
+	while (size > mdstore_fragsize) {
 		add_frag(base);
-		size -= fragsize;
-		base += fragsize;
+		size -= mdstore_fragsize;
+		base += mdstore_fragsize;
 	}
 
 	delete_frag(hv_mdpa);
@@ -588,7 +588,7 @@ add_frag(uint64_t base)
 
 	frag = xmalloc(sizeof(*frag));
 	frag->base = base;
-	TAILQ_INSERT_TAIL(&free_frags, frag, link);
+	TAILQ_INSERT_TAIL(&mdstore_frags, frag, link);
 }
 
 void
@@ -597,9 +597,9 @@ delete_frag(uint64_t base)
 	struct frag *frag;
 	struct frag *tmp;
 
-	TAILQ_FOREACH_SAFE(frag, &free_frags, link, tmp) {
+	TAILQ_FOREACH_SAFE(frag, &mdstore_frags, link, tmp) {
 		if (frag->base == base) {
-			TAILQ_REMOVE(&free_frags, frag, link);
+			TAILQ_REMOVE(&mdstore_frags, frag, link);
 			free(frag);
 		}
 	}
@@ -611,11 +611,11 @@ alloc_frag(void)
 	struct frag *frag;
 	uint64_t base;
 
-	frag = TAILQ_FIRST(&free_frags);
+	frag = TAILQ_FIRST(&mdstore_frags);
 	if (frag == NULL)
 		return -1;
 
-	TAILQ_REMOVE(&free_frags, frag, link);
+	TAILQ_REMOVE(&mdstore_frags, frag, link);
 	base = frag->base;
 	free(frag);
 
