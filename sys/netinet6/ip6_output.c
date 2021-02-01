@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.250 2021/02/01 12:08:50 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.251 2021/02/01 13:25:04 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -682,6 +682,10 @@ reroute:
 	else
 		dontfrag = 0;
 	if (dontfrag && tlen > ifp->if_mtu) {	/* case 2-b */
+#ifdef IPSEC
+		if (ip_mtudisc)
+			ipsec_adjust_mtu(m, mtu);
+#endif
 		error = EMSGSIZE;
 		goto bad;
 	}
@@ -2851,6 +2855,9 @@ ip6_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route_in6 *ro,
 		m_freem(m);
 		return EMSGSIZE;
 	}
+	/* propagate don't fragment for v6-over-v6 */
+	if (ip_mtudisc)
+		SET(m->m_pkthdr.csum_flags, M_IPV6_DF_OUT);
 
 	/*
 	 * Clear these -- they'll be set in the recursive invocation
