@@ -1,4 +1,4 @@
-/*	$OpenBSD: pinctrl.c,v 1.3 2019/04/23 18:32:26 kettenis Exp $	*/
+/*	$OpenBSD: pinctrl.c,v 1.4 2021/02/01 14:30:01 jsg Exp $	*/
 /*
  * Copyright (c) 2018, 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -45,6 +45,7 @@ struct pinctrl_softc {
 
 	uint32_t		sc_reg_width;
 	uint32_t		sc_func_mask;
+	uint32_t		sc_ncells;
 };
 
 int	pinctrl_match(struct device *, void *, void *);
@@ -88,6 +89,7 @@ pinctrl_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	sc->sc_ncells = OF_getpropint(faa->fa_node, "#pinctrl-cells", 1);
 	sc->sc_func_mask = OF_getpropint(faa->fa_node,
 	    "pinctrl-single,function-mask", 0);
 
@@ -149,10 +151,13 @@ pinctrl_pinctrl(uint32_t phandle, void *cookie)
 	pins = malloc(len, M_TEMP, M_WAITOK);
 	OF_getpropintarray(node, "pinctrl-single,pins", pins, len);
 
-	for (i = 0; i < len / sizeof(uint32_t); i += 2) {
+	for (i = 0; i < len / sizeof(uint32_t); i += (1 + sc->sc_ncells)) {
 		uint32_t reg = pins[i];
 		uint32_t func = pins[i + 1];
 		uint32_t val = 0;
+
+		if (sc->sc_ncells == 2)
+			func |= pins[i + 2];
 		
 		if (sc->sc_reg_width == 16)
 			val = HREAD2(sc, reg);
