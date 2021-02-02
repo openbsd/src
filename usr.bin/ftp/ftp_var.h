@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp_var.h,v 1.45 2020/09/01 12:33:48 jca Exp $	*/
+/*	$OpenBSD: ftp_var.h,v 1.46 2021/02/02 12:58:42 robert Exp $	*/
 /*	$NetBSD: ftp_var.h,v 1.18 1997/08/18 10:20:25 lukem Exp $	*/
 
 /*
@@ -157,6 +157,7 @@ extern char	 *cursor_pos;	/* cursor position we're looking for */
 extern size_t	  cursor_argc;	/* location of cursor in margv */
 extern size_t	  cursor_argo;	/* offset of cursor in margv[cursor_argc] */
 extern int	  resume;	/* continue transfer */
+extern int	  timestamp;    /* send an If-Modified-Since header */
 extern char	 *srcaddr;	/* source address to bind to */
 #endif /* !SMALL */
 

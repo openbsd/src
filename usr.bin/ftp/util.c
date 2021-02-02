@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.94 2020/10/18 20:35:18 naddy Exp $	*/
+/*	$OpenBSD: util.c,v 1.95 2021/02/02 12:58:42 robert Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -1099,3 +1099,17 @@ connect_wait(int s)
 	}
 	return 0;
 }
+
+#ifndef SMALL
+ssize_t
+http_time(time_t t, char *tmbuf, size_t len)
+{
+	struct tm tm;
+ 
+	/* New HTTP/1.1 RFC 7231 prefers IMF-fixdate from RFC 5322 */
+	if (gmtime_r(&t, &tm) == NULL)
+		return 0;
+	else
+		return (strftime(tmbuf, len, "%a, %d %h %Y %T %Z", &tm));
+}
+#endif /* !SMALL */

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp.1,v 1.121 2020/09/06 09:15:04 tb Exp $
+.\"	$OpenBSD: ftp.1,v 1.122 2021/02/02 12:58:42 robert Exp $
 .\"	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd $Mdocdate: September 6 2020 $
+.Dd $Mdocdate: February 2 2021 $
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -57,7 +57,7 @@
 .Sm on
 .Ar ...
 .Nm ftp
-.Op Fl C
+.Op Fl CTu
 .Op Fl c Ar cookie
 .Op Fl N Ar name
 .Op Fl o Ar output
@@ -289,6 +289,11 @@ will be used.
 .It Fl s Ar sourceaddr
 Set the source address for connections, which is useful on machines
 with multiple interfaces.
+.It Fl T
+Send an
+.Dq If-Modified-Since
+header to the remote to determine if the remote file's timestamp
+has changed.
 .It Fl t
 Enables packet tracing.
 .It Fl U Ar useragent
@@ -297,6 +302,13 @@ Set
 as the User-Agent for HTTP(S) URL requests.
 If not specified, the default User-Agent is
 .Dq OpenBSD ftp .
+.It Fl u
+Disable setting the local file's timestamps based
+on the
+.Dq Last-Modified
+header.
+By default the local file's timestamps are set to match those
+from the remote.
 .It Fl V
 Disable verbose mode, overriding the default of enabled when input
 is from a terminal.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.135 2020/09/06 09:49:11 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.136 2021/02/02 12:58:42 robert Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -144,6 +144,7 @@ size_t	  cursor_argc;
 size_t	  cursor_argo;
 int	  resume;
 char	 *srcaddr;
+int  	  timestamp;
 #endif /* !SMALL */
 
 char	 *cookiefile;
@@ -188,6 +189,11 @@ char macbuf[4096];
 FILE	*ttyout;
 
 int connect_timeout;
+
+#ifndef SMALL
+/* enable using server timestamps by default */
+int server_timestamps = 1;
+#endif
 
 #ifndef NOSSL
 char * const ssl_verify_opts[] = {
@@ -341,6 +347,7 @@ main(volatile int argc, char *argv[])
 	el = NULL;
 	hist = NULL;
 	resume = 0;
+	timestamp = 0;
 	srcaddr = NULL;
 	marg_sl = sl_init();
 #endif /* !SMALL */
@@ -415,7 +422,7 @@ main(volatile int argc, char *argv[])
 	httpuseragent = NULL;
 
 	while ((ch = getopt(argc, argv,
-		    "46AaCc:dD:EeN:gik:Mmno:pP:r:S:s:tU:vVw:")) != -1) {
+		    "46AaCc:dD:EeN:gik:Mmno:pP:r:S:s:TtU:uvVw:")) != -1) {
 		switch (ch) {
 		case '4':
 			family = PF_INET;
@@ -537,6 +544,11 @@ main(volatile int argc, char *argv[])
 #endif /* !SMALL */
 			break;
 
+#ifndef SMALL
+		case 'T':
+			timestamp = 1;
+			break;
+#endif /* !SMALL */
 		case 't':
 			trace = 1;
 			break;
@@ -550,6 +562,9 @@ main(volatile int argc, char *argv[])
 			    optarg) == -1)
 				errx(1, "Can't allocate memory for HTTP(S) "
 				    "User-Agent");
+			break;
+		case 'u':
+			server_timestamps = 0;
 			break;
 #endif /* !SMALL */
 

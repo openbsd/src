@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.199 2021/01/01 17:39:54 chrisz Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.200 2021/02/02 12:58:42 robert Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -58,6 +58,7 @@
 #include <unistd.h>
 #include <util.h>
 #include <resolv.h>
+#include <utime.h>
 
 #ifndef NOSSL
 #include <tls.h>
@@ -339,6 +340,11 @@ url_get(const char *origline, const char *proxyenv, const char *outfile, int las
 	const char *scheme;
 	char *locbase;
 	struct addrinfo *ares = NULL;
+	char tmbuf[32];
+	time_t mtime = 0;
+	struct stat stbuf;
+	struct tm lmt = { 0 };
+	struct timespec ts[2];
 #endif /* !SMALL */
 	struct tls *tls = NULL;
 	int status;
@@ -731,13 +737,16 @@ noslash:
 		if (verbose)
 			fprintf(ttyout, "Requesting %s\n", origline);
 #ifndef SMALL
-		if (resume) {
-			struct stat stbuf;
-
-			if (stat(savefile, &stbuf) == 0)
-				restart_point = stbuf.st_size;
-			else
+		if (resume || timestamp) {
+			if (stat(savefile, &stbuf) == 0) {
+				if (resume)
+					restart_point = stbuf.st_size;
+				if (timestamp)
+					mtime = stbuf.st_mtime;
+			} else {
 				restart_point = 0;
+				mtime = 0;
+			}
 		}
 #endif	/* SMALL */
 		ftp_printf(fin,
@@ -777,6 +786,12 @@ noslash:
 		if (port && strcmp(port, "80") != 0)
 			ftp_printf(fin, ":%s", port);
 #endif /* !NOSSL */
+
+#ifndef SMALL
+		if (mtime && (http_time(mtime, tmbuf, sizeof(tmbuf)) != 0))
+			ftp_printf(fin, "\r\nIf-Modified-Since: %s", tmbuf);
+#endif /* SMALL */
+
 		ftp_printf(fin, "\r\n%s%s\r\n",
 		    buf ? buf : "", httpuseragent);
 		if (credentials)
@@ -851,6 +866,9 @@ noslash:
 		}
 		break;
 #ifndef SMALL
+	case 304:	/* Not Modified */
+		warnx("File is not modified on the server");
+		goto cleanup_url_get;
 	case 416:	/* Requested Range Not Satisfiable */
 		warnx("File is already fully retrieved.");
 		goto cleanup_url_get;
@@ -973,6 +991,15 @@ noslash:
 			cp[strcspn(cp, " \t")] = '\0';
 			if (strcasecmp(cp, "chunked") == 0)
 				chunked = 1;
+#ifndef SMALL
+#define LAST_MODIFIED "Last-Modified: "
+		} else if (strncasecmp(cp, LAST_MODIFIED,
+			    sizeof(LAST_MODIFIED) - 1) == 0) {
+			cp += sizeof(LAST_MODIFIED) - 1;
+			cp[strcspn(cp, "\t")] = '\0';
+			if (strptime(cp, "%a, %d %h %Y %T %Z", &lmt) == NULL)
+				server_timestamps = 0;
+#endif /* !SMALL */
 		}
 		free(buf);
 	}
@@ -1114,8 +1141,19 @@ cleanup_url_get:
 	free(sslhost);
 #endif /* !NOSSL */
 	ftp_close(&fin, &tls, &fd);
-	if (out >= 0 && out != fileno(stdout))
+	if (out >= 0 && out != fileno(stdout)) {
+#ifndef SMALL
+		if (server_timestamps && lmt.tm_zone != 0) {
+			ts[0].tv_nsec = UTIME_NOW;
+			ts[1].tv_nsec = 0;
+			setenv("TZ", lmt.tm_zone, 1);
+			if (((ts[1].tv_sec = mktime(&lmt)) != -1) &&
+			    (futimens(out, ts) == -1))
+				warnx("Unable to set file modification time");
+		}
+#endif /* !SMALL */
 		close(out);
+	}
 	free(buf);
 	free(pathbuf);
 	free(proxyhost);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.51 2019/05/16 12:44:17 florian Exp $	*/
+/*	$OpenBSD: extern.h,v 1.52 2021/02/02 12:58:42 robert Exp $	*/
 /*	$NetBSD: extern.h,v 1.17 1997/08/18 10:20:19 lukem Exp $	*/
 
 /*
@@ -125,6 +125,7 @@ void	parse_list(char **, char *);
 char   *remglob2(char **, int, char **, FILE **ftemp, char *type);
 int	ruserpass(const char *, char **, char **, char **);
 void	sendrequest(const char *, const char *, const char *, int);
+ssize_t http_time(time_t, char *, size_t);
 #endif /* !SMALL */
 
 extern jmp_buf	abortprox;
@@ -144,6 +145,7 @@ extern char	*action;
 
 #ifndef SMALL
 extern int	NCMDS;
+extern int	server_timestamps;
 #endif /* !SMALL */
 
 extern char *__progname;		/* from crt0.o */
