@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.136 2021/02/02 12:58:42 robert Exp $	*/
+/*	$OpenBSD: main.c,v 1.137 2021/02/02 21:41:12 jmc Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -1081,7 +1081,7 @@ usage(void)
 	    "           [-s sourceaddr] [host [port]]\n"
 	    "       ftp [-C] [-N name] [-o output] [-s sourceaddr]\n"
 	    "           ftp://[user:password@]host[:port]/file[/] ...\n"
-	    "       ftp [-C] [-c cookie] [-N name] [-o output] [-S ssl_options] "
+	    "       ftp [-CTu] [-c cookie] [-N name] [-o output] [-S ssl_options] "
 	    "[-s sourceaddr]\n"
 	    "           [-U useragent] [-w seconds] "
 	    "http[s]://[user:password@]host[:port]/file ...\n"
