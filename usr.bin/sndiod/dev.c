@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.89 2021/01/29 11:38:23 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.90 2021/02/02 11:18:57 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1281,12 +1281,12 @@ dev_abort(struct dev *d)
 	d->slot_list = NULL;
 
 	for (c = ctlslot_array, i = DEV_NCTLSLOT; i > 0; i--, c++) {
+		if (c->ops == NULL)
+			continue;
 		if (c->opt->dev != d)
 			continue;
-		if (c->ops) {
-			c->ops->exit(c->arg);
-			c->ops = NULL;
-		}
+		c->ops->exit(c->arg);
+		c->ops = NULL;
 	}
 
 	midi_abort(d->midi);
