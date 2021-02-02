@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.690 2020/12/10 18:35:31 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.691 2021/02/02 15:46:16 cheloha Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2367,11 +2367,11 @@ fork_privchld(struct interface_info *ifi, int fd, int fd2)
 		pfd[0].fd = priv_ibuf->fd;
 		pfd[0].events = POLLIN;
 
-		nfds = poll(pfd, 1, INFTIM);
+		nfds = ppoll(pfd, 1, NULL, NULL);
 		if (nfds == -1) {
 			if (errno == EINTR)
 				continue;
-			log_warn("%s: poll(priv_ibuf)", log_procname);
+			log_warn("%s: ppoll(priv_ibuf)", log_procname);
 			break;
 		}
 		if ((pfd[0].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0)
@@ -2531,18 +2531,17 @@ cleanup:
 int
 take_charge(struct interface_info *ifi, int routefd, char *leasespath)
 {
+	const struct timespec	 max_timeout = { 9, 0 };
+	const struct timespec	 resend_intvl = { 3, 0 };
+	const struct timespec	 leasefile_intvl = { 0, 3000000 };
+	struct timespec		 now, resend, stop, timeout;
 	struct pollfd		 fds[1];
 	struct rt_msghdr	 rtm;
-	time_t			 cur_time, sent_time, start_time;
 	int			 fd, nfds;
 
-#define	MAXSECONDS		9
-#define	SENTSECONDS		3
-#define	POLLMILLISECONDS	3
-
-	if (time(&start_time) == -1)
-		fatal("time");
-	sent_time = start_time;
+	clock_gettime(CLOCK_REALTIME, &now);
+	resend = now;
+	timespecadd(&now, &max_timeout, &stop);
 
 	/*
 	 * Send RTM_PROPOSAL with RTF_PROTO3 set.
@@ -2561,32 +2560,35 @@ take_charge(struct interface_info *ifi, int routefd, char *leasespath)
 	rtm.rtm_addrs = 0;
 	rtm.rtm_flags = RTF_UP | RTF_PROTO3;
 
-	rtm.rtm_seq = ifi->xid = arc4random();
-	if (write(routefd, &rtm, sizeof(rtm)) == -1)
-		fatal("write(routefd)");
-
 	for (fd = -1; fd == -1 && quit != TERMINATE;) {
-		if (time(&cur_time) == -1)
-			fatal("time");
-		if (cur_time - start_time >= MAXSECONDS)
+		clock_gettime(CLOCK_REALTIME, &now);
+		if (timespeccmp(&now, &stop, >=))
 			fatalx("failed to take charge");
 
 		if ((ifi->flags & IFI_IN_CHARGE) == 0) {
-			if ((cur_time - sent_time) >= SENTSECONDS) {
-				sent_time = cur_time;
+			if (timespeccmp(&now, &resend, >=)) {
+				timespecadd(&resend, &resend_intvl, &resend);
 				rtm.rtm_seq = ifi->xid = arc4random();
 				if (write(routefd, &rtm, sizeof(rtm)) == -1)
 					fatal("write(routefd)");
 			}
+			timespecsub(&resend, &now, &timeout);
+		} else {
+			/*
+			 * Keep trying to open leasefile in 3ms intervals
+			 * while continuing to process any RTM_* messages
+			 * that come in.
+			 */
+			 timeout = leasefile_intvl;
 		}
 
 		fds[0].fd = routefd;
 		fds[0].events = POLLIN;
-		nfds = poll(fds, 1, POLLMILLISECONDS);
+		nfds = ppoll(fds, 1, &timeout, NULL);
 		if (nfds == -1) {
 			if (errno == EINTR)
 				continue;
-			fatal("poll(routefd)");
+			fatal("ppoll(routefd)");
 		}
 
 		if ((fds[0].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0)
@@ -2801,13 +2803,14 @@ release_lease(struct interface_info *ifi)
 void
 propose_release(struct interface_info *ifi)
 {
+	const struct timespec	 max_timeout = { 3, 0 };
+	struct timespec		 now, stop, timeout;
 	struct pollfd		 fds[1];
 	struct rt_msghdr	 rtm;
-	time_t			 start_time, cur_time;
 	int			 nfds, routefd, rtfilter;
 
-	if (time(&start_time) == -1)
-		fatal("time");
+	clock_gettime(CLOCK_REALTIME, &now);
+	timespecadd(&now, &max_timeout, &stop);
 
 	if ((routefd = socket(AF_ROUTE, SOCK_RAW, AF_INET)) == -1)
 		fatal("socket(AF_ROUTE, SOCK_RAW)");
@@ -2838,17 +2841,17 @@ propose_release(struct interface_info *ifi)
 	log_debug("%s: sent RTM_PROPOSAL to release lease", log_procname);
 
 	while (quit == 0) {
-		if (time(&cur_time) == -1)
-			fatal("time");
-		if ((cur_time - start_time) > 3)
+		clock_gettime(CLOCK_REALTIME, &now);
+		if (timespeccmp(&now, &stop, >=))
 			break;
+		timespecsub(&stop, &now, &timeout);
 		fds[0].fd = routefd;
 		fds[0].events = POLLIN;
-		nfds = poll(fds, 1, 3);
+		nfds = ppoll(fds, 1, &timeout, NULL);
 		if (nfds == -1) {
 			if (errno == EINTR)
 				continue;
-			fatal("poll(routefd)");
+			fatal("ppoll(routefd)");
 		}
 		if ((fds[0].revents & (POLLERR | POLLHUP | POLLNVAL)) != 0)
 			fatalx("routefd: ERR|HUP|NVAL");
