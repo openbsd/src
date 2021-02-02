@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.252 2021/02/02 17:53:02 claudio Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.253 2021/02/02 17:55:12 claudio Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1916,7 +1916,8 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m,
 				error = ENXIO;	/* XXX EINVAL? */
 				break;
 			}
-			if ((ifp->if_flags & IFF_MULTICAST) == 0) {
+			if (ifp->if_rdomain != rtable_l2(rtableid) ||
+			    (ifp->if_flags & IFF_MULTICAST) == 0) {
 				error = EADDRNOTAVAIL;
 				if_put(ifp);
 				break;
@@ -2023,7 +2024,8 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m,
 		 * See if we found an interface, and confirm that it
 		 * supports multicast
 		 */
-		if (ifp == NULL || (ifp->if_flags & IFF_MULTICAST) == 0) {
+		if (ifp == NULL || ifp->if_rdomain != rtable_l2(rtableid) ||
+		    (ifp->if_flags & IFF_MULTICAST) == 0) {
 			if_put(ifp);
 			error = EADDRNOTAVAIL;
 			break;
