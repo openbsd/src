@@ -257,7 +257,11 @@ id-smime-ct 6		: id-smime-ct-contentInfo
 id-smime-ct 7		: id-smime-ct-DVCSRequestData
 id-smime-ct 8		: id-smime-ct-DVCSResponseData
 id-smime-ct 9		: id-smime-ct-compressedData
+id-smime-ct 24		: id-ct-routeOriginAuthz
+id-smime-ct 26		: id-ct-rpkiManifest
 id-smime-ct 27		: id-ct-asciiTextWithCRLF
+id-smime-ct 35		: id-ct-rpkiGhostbusters
+id-smime-ct 36		: id-ct-resourceTaggedAttest
 
 # S/MIME Attributes
 id-smime-aa 1		: id-smime-aa-receiptRequest
@@ -436,6 +440,7 @@ id-pkix 9		: id-pda
 id-pkix 10		: id-aca
 id-pkix 11		: id-qcs
 id-pkix 12		: id-cct
+id-pkix 14		: id-cp
 id-pkix 21		: id-ppl
 id-pkix 48		: id-ad
 
@@ -472,6 +477,8 @@ id-pe 10		: ac-proxying
 !Cname sinfo-access
 id-pe 11		: subjectInfoAccess	: Subject Information Access
 id-pe 14		: proxyCertInfo		: Proxy Certificate Information
+id-pe 28		: sbgp-ipAddrBlockv2
+id-pe 29		: sbgp-autonomousSysNumv2
 
 # PKIX policyQualifiers for Internet policy qualifiers
 id-qt 1			: id-qt-cps		: Policy Qualifier CPS
@@ -589,6 +596,10 @@ id-cct 1		: id-cct-crs
 id-cct 2		: id-cct-PKIData
 id-cct 3		: id-cct-PKIResponse
 
+# PKIX Certificate Policies
+id-cp 2			: ipAddr-asNumber
+id-cp 3			: ipAddr-asNumberv2
+
 # Predefined Proxy Certificate policy languages
 id-ppl 0		: id-ppl-anyLanguage	: Any language
 id-ppl 1		: id-ppl-inheritAll	: Inherit all
@@ -604,7 +615,9 @@ id-ad 3			: ad_timestamping	: AD Time Stamping
 !Cname ad-dvcs
 id-ad 4			: AD_DVCS		: ad dvcs
 id-ad 5			: caRepository		: CA Repository
-
+id-ad 10		: rpkiManifest		: RPKI Manifest
+id-ad 11		: signedObject		: Signed Object
+id-ad 13		: rpkiNotify		: RPKI Notify
 
 !Alias id-pkix-OCSP ad-OCSP
 !module id-pkix-OCSP
