@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.251 2021/02/01 13:25:04 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.252 2021/02/02 17:53:02 claudio Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -2071,8 +2071,7 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m,
 		}
 		mreq = mtod(m, struct ipv6_mreq *);
 		if (IN6_IS_ADDR_UNSPECIFIED(&mreq->ipv6mr_multiaddr)) {
-			if (suser(p))
-			{
+			if (suser(p)) {
 				error = EACCES;
 				break;
 			}
