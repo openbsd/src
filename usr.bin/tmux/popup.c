@@ -1,4 +1,4 @@
-/* $OpenBSD: popup.c,v 1.20 2020/09/22 06:44:52 nicm Exp $ */
+/* $OpenBSD: popup.c,v 1.21 2021/02/02 13:03:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -323,8 +323,8 @@ popup_key_cb(struct client *c, struct key_event *event)
 			return (0);
 		if (KEYC_IS_MOUSE(event->key)) {
 			/* Must be inside, checked already. */
-			if (!input_key_get_mouse(&pd->s, m, m->x - pd->px,
-			    m->y - pd->py, &buf, &len))
+			if (!input_key_get_mouse(&pd->s, m, m->x - pd->px - 1,
+			    m->y - pd->py - 1, &buf, &len))
 				return (0);
 			bufferevent_write(job_get_event(pd->job), buf, len);
 			return (0);
