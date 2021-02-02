@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ungetwc.3,v 1.5 2017/12/01 11:18:40 schwarze Exp $
+.\"	$OpenBSD: ungetwc.3,v 1.6 2021/02/02 07:33:29 jmc Exp $
 .\"
 .\"	$NetBSD: ungetwc.3,v 1.7 2003/09/08 17:54:32 wiz Exp $
 .\"
@@ -35,7 +35,7 @@
 .\"
 .\"     @(#)ungetc.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: December 1 2017 $
+.Dd $Mdocdate: February 2 2021 $
 .Dt UNGETWC 3
 .Os
 .Sh NAME
@@ -51,7 +51,7 @@ The
 .Fn ungetwc
 function pushes the wide character
 .Fa wc
-(converted to an wchar_t)
+(converted to a wchar_t)
 back onto the input stream pointed to by
 .Fa stream .
 The pushed-backed wide characters will be returned by subsequent reads on the

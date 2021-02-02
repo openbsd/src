@@ -1,4 +1,4 @@
-.\" $OpenBSD: agentx.3,v 1.5 2020/12/03 22:47:21 jmc Exp $
+.\" $OpenBSD: agentx.3,v 1.6 2021/02/02 07:33:29 jmc Exp $
 .\"
 .\" Copyright (c) 2020 Martijn van Duren <martijn@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 3 2020 $
+.Dd $Mdocdate: February 2 2021 $
 .Dt AGENTX 3
 .Os
 .Sh NAME
@@ -529,7 +529,7 @@ Set the return value to an opaque value.
 .It Fn agentx_varbind_counter64
 Set the return value to an uint64_t of type counter64.
 .It Fn agentx_varbind_notfound
-When the request is of type GET return an nosuchinstance error.
+When the request is of type GET return a nosuchinstance error.
 When the request is of type GETNEXT or GETBULK return an endofmibview error.
 On endofmibview the next object is queried.
 This function can only be called on objects that contain one or more *_dynamic
