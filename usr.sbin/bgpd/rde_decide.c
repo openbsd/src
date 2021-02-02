@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.80 2021/01/14 08:29:26 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.81 2021/02/02 15:24:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -26,7 +26,9 @@
 #include "rde.h"
 #include "log.h"
 
-int	prefix_cmp(struct prefix *, struct prefix *);
+int	prefix_cmp(struct prefix *, struct prefix *, int *);
+void	prefix_insert(struct prefix *, struct prefix *, struct rib_entry *);
+void	prefix_remove(struct prefix *, struct rib_entry *);
 /*
  * Decision Engine RFC implementation:
  *  Phase 1:
@@ -107,13 +109,24 @@ int	prefix_cmp(struct prefix *, struct prefix *);
  * already added prefix.
  */
 int
-prefix_cmp(struct prefix *p1, struct prefix *p2)
+prefix_cmp(struct prefix *p1, struct prefix *p2, int *testall)
 {
 	struct rde_aspath	*asp1, *asp2;
 	struct rde_peer		*peer1, *peer2;
 	struct attr		*a;
 	u_int32_t		 p1id, p2id;
 	int			 p1cnt, p2cnt, i;
+
+	/*
+	 * If a match happens before the MED check then the list is
+	 * correctly sorted. If a match happens after MED then further
+	 * elements may need to be checked to ensure that all paths
+	 * which could affect this path were considered. This only
+	 * matters for strict MED evaluation and in that case testall
+	 * is set to 1. If the check happens to be on the MED check
+	 * itself testall is set to 2.
+	 */
+	*testall = 0;
 
 	if (p1 == NULL)
 		return -1;
@@ -166,16 +179,23 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 	/*
 	 * 5. MED decision
 	 * Only comparable between the same neighboring AS or if
-	 * 'rde med compare always' is set.
+	 * 'rde med compare always' is set. In the first case
+	 * set the testall flag since further elements need to be
+	 * evaluated as well.
 	 */
 	if ((rde_decisionflags() & BGPD_FLAG_DECISION_MED_ALWAYS) ||
 	    aspath_neighbor(asp1->aspath) == aspath_neighbor(asp2->aspath)) {
+		if (!(rde_decisionflags() & BGPD_FLAG_DECISION_MED_ALWAYS))
+			*testall = 2;
 		/* lowest value wins */
 		if (asp1->med < asp2->med)
 			return 1;
 		if (asp1->med > asp2->med)
 			return -1;
 	}
+
+	if (!(rde_decisionflags() & BGPD_FLAG_DECISION_MED_ALWAYS))
+		*testall = 1;
 
 	/*
 	 * 6. EBGP is cooler than IBGP
@@ -264,6 +284,119 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 	fatalx("Uh, oh a politician in the decision process");
 }
 
+void
+prefix_insert(struct prefix *new, struct prefix *ep, struct rib_entry *re)
+{
+	struct prefix_list redo = LIST_HEAD_INITIALIZER(redo);
+	struct prefix *xp, *np, *rp, *ip = ep;
+	int testall, selected = 0;
+
+	/* start scan at the entry point (ep) or if the head if ep == NULL */
+	if (ep == NULL)
+		ep = LIST_FIRST(&re->prefix_h);
+
+	for (xp = ep; xp != NULL; xp = np) {
+		np = LIST_NEXT(xp, entry.list.rib);
+
+		if (prefix_cmp(new, xp, &testall) > 0) {
+			/* new is preferred over xp */
+			if (testall == 0)
+				break;		/* we're done */
+			else if (testall == 2) {
+				/*
+				 * MED inversion, take out prefix and
+				 * put it onto redo queue.
+				 */
+				LIST_REMOVE(xp, entry.list.rib);
+				if (LIST_EMPTY(&redo))
+					LIST_INSERT_HEAD(&redo, xp,
+					    entry.list.rib);
+				else
+					LIST_INSERT_AFTER(rp, xp,
+					    entry.list.rib);
+				rp = xp;
+			} else {
+				/*
+				 * lock insertion point and
+				 * continue on with scan
+				 */
+				selected = 1;
+				continue;
+			}
+		} else {
+			/*
+			 * p is less preferred, remember insertion point
+			 * If p got selected during a testall traverse 
+			 * do not alter the insertion point unless this
+			 * happened on an actual MED check.
+			 */
+			if (testall == 2)
+				selected = 0;
+			if (!selected)
+				ip = xp;
+		}
+	}
+
+	if (ip == NULL)
+		LIST_INSERT_HEAD(&re->prefix_h, new, entry.list.rib);
+	else
+		LIST_INSERT_AFTER(ip, new, entry.list.rib);
+
+	/* Fixup MED order again. All elements are < new */
+	while (!LIST_EMPTY(&redo)) {
+		xp = LIST_FIRST(&redo);
+		LIST_REMOVE(xp, entry.list.rib);
+
+		prefix_insert(xp, new, re);
+	}
+}
+
+void
+prefix_remove(struct prefix *old, struct rib_entry *re)
+{
+	struct prefix_list redo = LIST_HEAD_INITIALIZER(redo);
+	struct prefix *xp, *np, *rp;
+	int testall;
+
+	xp = LIST_NEXT(old, entry.list.rib);
+	LIST_REMOVE(old, entry.list.rib);
+	/* check if a MED inversion could be possible */
+	prefix_cmp(old, xp, &testall);
+	if (testall > 0) {
+		/* maybe MED route, scan tail for other possible routes */
+		for (; xp != NULL; xp = np) {
+			np = LIST_NEXT(xp, entry.list.rib);
+
+			/* only interested in the testall result */
+			prefix_cmp(old, xp, &testall);
+			if (testall == 0)
+				break;		/* we're done */
+			else if (testall == 2) {
+				/*
+				 * possible MED inversion, take out prefix and
+				 * put it onto redo queue.
+				 */
+				LIST_REMOVE(xp, entry.list.rib);
+				if (LIST_EMPTY(&redo))
+					LIST_INSERT_HEAD(&redo, xp,
+					    entry.list.rib);
+				else
+					LIST_INSERT_AFTER(rp, xp,
+					    entry.list.rib);
+				rp = xp;
+			}
+		}
+	}
+
+	/* Fixup MED order again, reinsert prefixes from the start */
+	while (!LIST_EMPTY(&redo)) {
+		xp = LIST_FIRST(&redo);
+		LIST_REMOVE(xp, entry.list.rib);
+
+		prefix_insert(xp, NULL, re);
+	}
+}
+
 /*
  * Find the correct place to insert the prefix in the prefix list.
  * If the active prefix has changed we need to send an update.
@@ -294,27 +427,10 @@ prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 	}
 
 	if (old != NULL)
-		LIST_REMOVE(old, entry.list.rib);
-		
-	if (new != NULL) {
-		if (LIST_EMPTY(&re->prefix_h))
-			LIST_INSERT_HEAD(&re->prefix_h, new, entry.list.rib);
-		else {
-			LIST_FOREACH(xp, &re->prefix_h, entry.list.rib) {
-				if (prefix_cmp(new, xp) > 0) {
-					LIST_INSERT_BEFORE(xp, new,
-					    entry.list.rib);
-					break;
-				} else if (LIST_NEXT(xp, entry.list.rib) ==
-				    NULL) {
-					/* if xp last element ... */
-					LIST_INSERT_AFTER(xp, new,
-					    entry.list.rib);
-					break;
-				}
-			}
-		}
-	}
+		prefix_remove(old, re);
+
+	if (new != NULL)
+		prefix_insert(new, NULL, re);
 
 	xp = LIST_FIRST(&re->prefix_h);
 	if (xp != NULL) {
