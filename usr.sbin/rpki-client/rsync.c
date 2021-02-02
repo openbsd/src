@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.14 2021/01/12 09:22:11 claudio Exp $ */
+/*	$OpenBSD: rsync.c,v 1.15 2021/02/02 18:35:38 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -173,8 +173,7 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 {
 	size_t			 id, i, idsz = 0;
 	ssize_t			 ssz;
-	char			*host = NULL, *mod = NULL, *uri = NULL,
-				*dst = NULL, *path, *save, *cmd;
+	char			*uri = NULL, *dst = NULL, *path, *save, *cmd;
 	const char		*pp;
 	pid_t			 pid;
 	char			*args[32];
@@ -227,6 +226,9 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 		err(1, "unveil");
 	if (unveil(NULL, NULL) == -1)
 		err(1, "unveil");
+
+	if (pledge("stdio cpath proc exec", NULL) == -1)
+		err(1, "pledge");
 
 	/* Initialise retriever for children exiting. */
 
@@ -314,10 +316,10 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 
 		/* Read host and module. */
 
-		io_str_read(fd, &host);
-		io_str_read(fd, &mod);
-		assert(host);
-		assert(mod);
+		io_str_read(fd, &dst);
+		io_str_read(fd, &uri);
+		assert(dst);
+		assert(uri);
 
 		/*
 		 * Create source and destination locations.
@@ -325,16 +327,8 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 		 * will not build the destination for us.
 		 */
 
-		if (mkdir(host, 0700) == -1 && EEXIST != errno)
-			err(1, "%s", host);
-
-		if (asprintf(&dst, "%s/%s", host, mod) == -1)
-			err(1, NULL);
-		if (mkdir(dst, 0700) == -1 && EEXIST != errno)
+		if (mkpath(dst))
 			err(1, "%s", dst);
-
-		if (asprintf(&uri, "rsync://%s/%s", host, mod) == -1)
-			err(1, NULL);
 
 		/* Run process itself, wait for exit, check error. */
 
@@ -378,9 +372,7 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 
 		/* Clean up temporary values. */
 
-		free(mod);
 		free(dst);
-		free(host);
 	}
 
 	/* No need for these to be hanging around. */

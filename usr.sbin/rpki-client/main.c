@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.91 2021/01/29 10:13:16 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.92 2021/02/02 18:35:38 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -83,10 +83,11 @@
  * An rsync repository.
  */
 struct	repo {
-	char	*host; /* hostname */
-	char	*module; /* module name */
-	int	 loaded; /* whether loaded or not */
-	size_t	 id; /* identifier (array index) */
+	char		*repo;	/* repository rsync URI */
+	char		*local;	/* local path name */
+	char		*notify; /* RRDB notify URI if available */
+	size_t		 id; /* identifier (array index) */
+	int		 loaded; /* whether loaded or not */
 };
 
 size_t	entity_queue;
@@ -288,6 +289,7 @@ repo_lookup(struct msgbuf *msgq, const char *uri)
 {
 	const char	*host, *mod;
 	size_t		 hostsz, modsz, i;
+	char		*local;
 	struct repo	*rp;
 	struct ibuf	*b;
 
@@ -295,17 +297,16 @@ repo_lookup(struct msgbuf *msgq, const char *uri)
 	    &mod, &modsz, NULL, NULL, NULL, uri))
 		errx(1, "%s: malformed", uri);
 
+	if (asprintf(&local, "%.*s/%.*s", (int)hostsz, host,
+	    (int)modsz, mod) == -1)
+		err(1, "asprintf");
+
 	/* Look up in repository table. */
 
 	for (i = 0; i < rt.reposz; i++) {
-		if (strlen(rt.repos[i].host) != hostsz)
+		if (strcmp(rt.repos[i].local, local))
 			continue;
-		if (strlen(rt.repos[i].module) != modsz)
-			continue;
-		if (strncasecmp(rt.repos[i].host, host, hostsz))
-			continue;
-		if (strncasecmp(rt.repos[i].module, mod, modsz))
-			continue;
+		free(local);
 		return &rt.repos[i];
 	}
 
@@ -317,25 +318,25 @@ repo_lookup(struct msgbuf *msgq, const char *uri)
 	rp = &rt.repos[rt.reposz++];
 	memset(rp, 0, sizeof(struct repo));
 	rp->id = rt.reposz - 1;
+	rp->local = local;
 
-	if ((rp->host = strndup(host, hostsz)) == NULL ||
-	    (rp->module = strndup(mod, modsz)) == NULL)
-		err(1, "strndup");
-
-	i = rt.reposz - 1;
+	if ((rp->repo = strndup(uri, mod + modsz - uri)) == NULL)
+		err(1, "strdup");
 
 	if (!noop) {
-		logx("%s/%s: pulling from network", rp->host, rp->module);
-		if ((b = ibuf_dynamic(128, UINT_MAX)) == NULL)
+		if (asprintf(&local, "%s", rp->local) == -1)
+			err(1, "asprintf");
+		logx("%s: pulling from network", local);
+		if ((b = ibuf_dynamic(256, UINT_MAX)) == NULL)
 			err(1, NULL);
-		io_simple_buffer(b, &i, sizeof(i));
-		io_str_buffer(b, rp->host);
-		io_str_buffer(b, rp->module);
-
+		io_simple_buffer(b, &rp->id, sizeof(rp->id));
+		io_str_buffer(b, local);
+		io_str_buffer(b, rp->repo);
 		ibuf_close(msgq, b);
+		free(local);
 	} else {
 		rp->loaded = 1;
-		logx("%s/%s: using cache", rp->host, rp->module);
+		logx("%s: using cache", rp->local);
 		stats.repos++;
 		/* there is nothing in the queue so no need to flush */
 	}
@@ -350,9 +351,8 @@ repo_filename(const struct repo *repo, const char *uri)
 {
 	char *nfile;
 
-	uri += 8 + strlen(repo->host) + 1 + strlen(repo->module) + 1;
-
-	if (asprintf(&nfile, "%s/%s/%s", repo->host, repo->module, uri) == -1)
+	uri += strlen(repo->repo) + 1;
+	if (asprintf(&nfile, "%s/%s", repo->local, uri) == -1)
 		err(1, "asprintf");
 	return nfile;
 }
@@ -411,8 +411,6 @@ queue_add_from_mft(struct msgbuf *msgq, struct entityq *q, const char *mft,
 	char		*cp, *nfile;
 
 	/* Construct local path from filename. */
-	/* We know this is host/module/... */
-
 	cp = strrchr(mft, '/');
 	assert(cp != NULL);
 	assert(cp - mft < INT_MAX);
@@ -555,17 +553,13 @@ queue_add_from_tal(struct msgbuf *procq, struct msgbuf *rsyncq,
  */
 static void
 queue_add_from_cert(struct msgbuf *procq, struct msgbuf *rsyncq,
-    struct entityq *q, const char *rsyncuri, const char *rrdpuri)
+    struct entityq *q, const struct cert *cert)
 {
-	char			*nfile;
 	const struct repo	*repo;
+	char			*nfile;
 
-	if (rsyncuri == NULL)
-		return;
-
-	/* Look up the repository. */
-	repo = repo_lookup(rsyncq, rsyncuri);
-	nfile = repo_filename(repo, rsyncuri);
+	repo = repo_lookup(rsyncq, cert->mft);
+	nfile = repo_filename(repo, cert->mft);
 
 	entityq_add(procq, q, nfile, RTYPE_MFT, repo, NULL, 0, NULL);
 }
@@ -1206,7 +1200,7 @@ entity_process(int proc, struct msgbuf *procq, struct msgbuf *rsyncq,
 			 * process the MFT.
 			 */
 			queue_add_from_cert(procq, rsyncq,
-			    q, cert->mft, cert->notify);
+			    q, cert);
 		} else
 			st->certs_invalid++;
 		cert_free(cert);
@@ -1311,8 +1305,7 @@ repo_cleanup(const char *cachedir)
 		err(1, "%s: chdir", cachedir);
 
 	for (i = 0; i < rt.reposz; i++) {
-		if (asprintf(&argv[0], "%s/%s", rt.repos[i].host,
-		    rt.repos[i].module) == -1)
+		if (asprintf(&argv[0], "%s", rt.repos[i].local) == -1)
 			err(1, NULL);
 		argv[1] = NULL;
 		if ((fts = fts_open(argv, FTS_PHYSICAL | FTS_NOSTAT,
@@ -1603,8 +1596,11 @@ main(int argc, char *argv[])
 
 		if (c == 0) {
 			for (i = j = 0; i < rt.reposz; i++)
-				if (!rt.repos[i].loaded)
+				if (!rt.repos[i].loaded) {
+					logx("pending repo %s",
+					    rt.repos[i].local);
 					j++;
+				}
 			logx("period stats: %zu pending repos", j);
 			logx("period stats: %zu pending entries", entity_queue);
 			continue;
@@ -1646,15 +1642,15 @@ main(int argc, char *argv[])
 			io_simple_read(rsync, &i, sizeof(size_t));
 			io_simple_read(rsync, &ok, sizeof(ok));
 			assert(i < rt.reposz);
+
 			assert(!rt.repos[i].loaded);
 			rt.repos[i].loaded = 1;
 			if (ok)
-				logx("%s/%s: loaded from network",
-				    rt.repos[i].host, rt.repos[i].module);
+				logx("%s: loaded from network",
+				    rt.repos[i].local);
 			else
-				logx("%s/%s: load from network failed, "
-				    "fallback to cache",
-				    rt.repos[i].host, rt.repos[i].module);
+				logx("%s: load from network failed, "
+				    "fallback to cache", rt.repos[i].local);
 			stats.repos++;
 			entityq_flush(&procq, &q, &rt.repos[i]);
 		}
@@ -1733,8 +1729,8 @@ main(int argc, char *argv[])
 
 	/* Memory cleanup. */
 	for (i = 0; i < rt.reposz; i++) {
-		free(rt.repos[i].host);
-		free(rt.repos[i].module);
+		free(rt.repos[i].local);
+		free(rt.repos[i].repo);
 	}
 	free(rt.repos);
 
