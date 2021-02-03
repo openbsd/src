@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.15 2021/02/02 18:35:38 claudio Exp $ */
+/*	$OpenBSD: rsync.c,v 1.16 2021/02/03 09:29:22 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -327,7 +327,7 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 		 * will not build the destination for us.
 		 */
 
-		if (mkpath(dst))
+		if (mkpath(dst) == -1)
 			err(1, "%s", dst);
 
 		/* Run process itself, wait for exit, check error. */
