@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.131 2021/01/28 17:00:39 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.132 2021/02/03 15:14:44 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -618,6 +618,11 @@ tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
 	unsigned char *val = NULL;
 	size_t vallen, currentvalpos;
 	int rv;
+
+	if (!SSL_is_init_finished(s)) {
+		SSLerror(s, SSL_R_BAD_STATE);
+		return 0;
+	}
 
 	/* construct PRF arguments
 	 * we construct the PRF argument ourself rather than passing separate
