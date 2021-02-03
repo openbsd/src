@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.109 2021/02/01 09:21:51 mglocker Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.110 2021/02/03 11:34:24 mglocker Exp $ */
 /*	$NetBSD: usbdi.c,v 1.103 2002/09/27 15:37:38 provos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -642,6 +642,10 @@ usbd_device2interface_handle(struct usbd_device *dev, u_int8_t ifaceno,
 
 	if (dev->cdesc == NULL)
 		return (USBD_NOT_CONFIGURED);
+	if (ifaceno < dev->cdesc->bNumInterfaces) {
+		*iface = &dev->ifaces[ifaceno];
+		return (USBD_NORMAL_COMPLETION);
+	}
 	/*
 	 * The correct interface should be at dev->ifaces[ifaceno], but we've
 	 * seen non-compliant devices in the wild which present non-contiguous
