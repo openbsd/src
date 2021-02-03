@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.365 2021/02/02 15:42:00 naddy Exp $	*/
+/*	$OpenBSD: editor.c,v 1.366 2021/02/03 14:41:40 naddy Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -2331,8 +2331,8 @@ void
 parse_autotable(char *filename)
 {
 	FILE	*cfile;
-	size_t	 bufsize = 0;
-	char	*buf = NULL, *t;
+	size_t	 linesize = 0;
+	char	*line = NULL, *buf, *t;
 	uint	 idx = 0, pctsum = 0;
 	struct space_allocation *sa;
 
@@ -2342,7 +2342,7 @@ parse_autotable(char *filename)
 		err(1, NULL);
 	alloc_table_nitems = 1;
 
-	while (getline(&buf, &bufsize, cfile) != -1) {
+	while (getline(&line, &linesize, cfile) != -1) {
 		if ((alloc_table[0].table = reallocarray(alloc_table[0].table,
 		    idx + 1, sizeof(*sa))) == NULL)
 			err(1, NULL);
@@ -2350,6 +2350,7 @@ parse_autotable(char *filename)
 		memset(sa, 0, sizeof(*sa));
 		idx++;
 
+		buf = line;
 		if ((sa->mp = get_token(&buf)) == NULL ||
 		    (sa->mp[0] != '/' && strcmp(sa->mp, "swap")))
 			errx(1, "%s: parse error on line %u", filename, idx);
@@ -2367,7 +2368,7 @@ parse_autotable(char *filename)
 	if (pctsum > 100)
 		errx(1, "%s: sum of extra space allocation > 100%%", filename);
 	alloc_table[0].sz = idx;
-	free(buf);
+	free(line);
 	fclose(cfile);
 }
 
