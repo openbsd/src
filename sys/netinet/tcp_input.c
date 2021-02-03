@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.365 2020/06/19 22:47:22 procter Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.366 2021/02/03 13:40:06 jan Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -165,8 +165,8 @@ do { \
 #endif
 
 /*
- * Macro to compute ACK transmission behavior.  Delay the ACK unless
- * we have already delayed an ACK (must send an ACK every two segments).
+ * Macro to compute ACK transmission behavior.  Delay the ACK until
+ * a read from the socket buffer or the delayed ACK timer causes one.
  * We also ACK immediately if we received a PUSH and the ACK-on-PUSH
  * option is enabled or when the packet is coming from a loopback
  * interface.
@@ -176,8 +176,7 @@ do { \
 	struct ifnet *ifp = NULL; \
 	if (m && (m->m_flags & M_PKTHDR)) \
 		ifp = if_get(m->m_pkthdr.ph_ifidx); \
-	if (TCP_TIMER_ISARMED(tp, TCPT_DELACK) || \
-	    (tcp_ack_on_push && (tiflags) & TH_PUSH) || \
+	if ((tcp_ack_on_push && (tiflags) & TH_PUSH) || \
 	    (ifp && (ifp->if_flags & IFF_LOOPBACK))) \
 		tp->t_flags |= TF_ACKNOW; \
 	else \
