@@ -1,4 +1,4 @@
-/* $OpenBSD: exuart.c,v 1.17 2020/01/10 06:45:27 jsg Exp $ */
+/* $OpenBSD: exuart.c,v 1.18 2021/02/04 23:28:20 patrick Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -39,7 +39,6 @@
 #include <machine/fdt.h>
 #include <arm/armv7/armv7var.h>
 #include <armv7/exynos/exuartreg.h>
-#include <armv7/exynos/exuartvar.h>
 #include <armv7/exynos/exclockvar.h>
 
 #include <dev/ofw/fdt.h>
