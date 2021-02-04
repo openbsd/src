@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.2 2021/02/04 08:13:57 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.3 2021/02/04 08:58:19 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -32,6 +32,7 @@
 
 #include <openssl/asn1.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
 #include <openssl/x509.h>
 
 #include "extern.h"
