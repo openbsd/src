@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acct.5,v 1.23 2021/01/30 16:48:31 rob Exp $
+.\"	$OpenBSD: acct.5,v 1.24 2021/02/04 02:03:53 rob Exp $
 .\"	$NetBSD: acct.5,v 1.4 1995/10/22 01:40:10 ghudson Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)acct.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: January 30 2021 $
+.Dd $Mdocdate: February 4 2021 $
 .Dt ACCT 5
 .Os
 .Sh NAME
@@ -69,7 +69,6 @@ struct acct {
 	dev_t	  ac_tty;	/* controlling tty */
 
 #define	AFORK	0x01		/* fork'd but not exec'd */
-#define	ASU	0x02		/* used super-user permissions */
 #define	AMAP	0x04		/* system call or stack mapping violation */
 #define	ACORE	0x08		/* dumped core */
 #define	AXSIG	0x10		/* killed by a signal */
@@ -104,9 +103,6 @@ A new process was created via
 .Xr fork 2
 that was not followed by a call to
 .Xr execve 2 .
-.It Dv ASU
-The process used super-user permissions.
-This flag is never set and is provided for source compatibility only.
 .It Dv AMAP
 The process terminated abnormally due to a system call or stack mapping
 violation.

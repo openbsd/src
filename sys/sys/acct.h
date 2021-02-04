@@ -1,4 +1,4 @@
-/*	$OpenBSD: acct.h,v 1.9 2019/09/09 20:02:26 bluhm Exp $	*/
+/*	$OpenBSD: acct.h,v 1.10 2021/02/04 02:03:53 rob Exp $	*/
 /*	$NetBSD: acct.h,v 1.16 1995/03/26 20:23:52 jtc Exp $	*/
 
 /*-
@@ -57,7 +57,6 @@ struct acct {
 	dev_t	  ac_tty;	/* controlling tty */
 
 #define	AFORK	0x01		/* fork'd but not exec'd */
-#define	ASU	0x02		/* used super-user permissions */
 #define	AMAP	0x04		/* system call or stack mapping violation */
 #define	ACORE	0x08		/* dumped core */
 #define	AXSIG	0x10		/* killed by a signal */
