@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.183 2021/02/01 16:37:48 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.184 2021/02/04 20:38:26 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -369,7 +369,7 @@ struct iked_kex {
 	struct ibuf			*kex_inonce;	/* Ni */
 	struct ibuf			*kex_rnonce;	/* Nr */
 
-	struct group			*kex_dhgroup;	/* DH group */
+	struct dh_group			*kex_dhgroup;	/* DH group */
 	struct ibuf			*kex_dhiexchange;
 	struct ibuf			*kex_dhrexchange;
 	struct ibuf			*kex_dhpeer;	/* pointer to i or r */

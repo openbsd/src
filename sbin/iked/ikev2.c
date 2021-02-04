@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.302 2021/02/04 19:59:15 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.303 2021/02/04 20:38:26 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1244,7 +1244,7 @@ ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
 	struct ikev2_notify		*n;
 	struct iked_sa			*sa = NULL;
 	struct ibuf			*buf, *cookie = NULL;
-	struct group			*group;
+	struct dh_group			*group;
 	ssize_t				 len;
 	int				 ret = -1;
 	struct iked_socket		*sock;
@@ -2964,7 +2964,7 @@ ikev2_handle_notifies(struct iked *env, struct iked_message *msg)
 	struct iked_ipcomp	*ic;
 	struct iked_sa		*sa;
 	struct iked_spi		 rekey;
-	struct group		*group;
+	struct dh_group		*group;
 	uint16_t		 groupid;
 	unsigned int		 protoid;
 
@@ -3113,7 +3113,7 @@ ikev2_resp_ike_sa_init(struct iked *env, struct iked_message *msg)
 	struct ikev2_keyexchange	*ke;
 	struct iked_sa			*sa = msg->msg_sa;
 	struct ibuf			*buf;
-	struct group			*group;
+	struct dh_group			*group;
 	ssize_t				 len;
 	int				 ret = -1;
 
@@ -3829,7 +3829,7 @@ ikev2_send_create_child_sa(struct iked *env, struct iked_sa *sa,
 	struct ikev2_notify		*n;
 	struct ikev2_payload		*pld = NULL;
 	struct ikev2_keyexchange	*ke;
-	struct group			*group;
+	struct dh_group			*group;
 	struct ibuf			*e = NULL, *nonce = NULL;
 	uint8_t				*ptr;
 	uint8_t				 firstpayload;
@@ -4004,7 +4004,7 @@ ikev2_ike_sa_rekey(struct iked *env, void *arg)
 	struct iked_sa			*nsa = NULL;
 	struct ikev2_payload		*pld = NULL;
 	struct ikev2_keyexchange	*ke;
-	struct group			*group;
+	struct dh_group			*group;
 	struct ibuf			*e = NULL, *nonce = NULL;
 	ssize_t				 len = 0;
 	int				 ret = -1;
@@ -5378,7 +5378,7 @@ ikev2_sa_keys(struct iked *env, struct iked_sa *sa, struct ibuf *key)
 {
 	struct iked_hash	*prf, *integr;
 	struct iked_cipher	*encr;
-	struct group		*group;
+	struct dh_group		*group;
 	struct ibuf		*ninr, *dhsecret, *skeyseed, *s, *t;
 	size_t			 nonceminlen, ilen, rlen, tmplen;
 	uint64_t		 ispi, rspi;
@@ -5828,7 +5828,7 @@ ikev2_childsa_negotiate(struct iked *env, struct iked_sa *sa,
 	struct iked_flow	*flow, *saflow, *flowa, *flowb;
 	struct iked_ipcomp	*ic;
 	struct ibuf		*keymat = NULL, *seed = NULL, *dhsecret = NULL;
-	struct group		*group;
+	struct dh_group		*group;
 	uint32_t		 spi = 0;
 	unsigned int		 i;
 	size_t			 ilen = 0;
