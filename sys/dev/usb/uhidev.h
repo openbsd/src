@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.h,v 1.25 2018/08/25 18:32:05 jcs Exp $	*/
+/*	$OpenBSD: uhidev.h,v 1.26 2021/02/04 16:18:34 anton Exp $	*/
 /*	$NetBSD: uhidev.h,v 1.3 2002/10/08 09:56:17 dan Exp $	*/
 
 /*
@@ -95,3 +95,4 @@ int uhidev_get_report(struct uhidev_softc *, int, int, void *, int);
 int uhidev_get_report_async(struct uhidev_softc *, int, int, void *, int,
     void *, void (*)(void *, int, void *, int));
 usbd_status uhidev_write(struct uhidev_softc *, void *, int);
+int uhidev_set_report_dev(struct uhidev_softc *, struct uhidev *, int);

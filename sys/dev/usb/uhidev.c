@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.85 2021/01/29 16:59:41 sthen Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.86 2021/02/04 16:18:34 anton Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -256,8 +256,13 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 	/* Look for a driver claiming all report IDs first. */
 	dev = config_found_sm(self, &uha, NULL, uhidevsubmatch);
 	if (dev != NULL) {
-		for (repid = 0; repid < nrepid; repid++)
-			sc->sc_subdevs[repid] = (struct uhidev *)dev;
+		for (repid = 0; repid < nrepid; repid++) {
+			/*
+			 * Could already be assigned by uhidev_set_report_dev().
+			 */
+			if (sc->sc_subdevs[repid] == NULL)
+				sc->sc_subdevs[repid] = (struct uhidev *)dev;
+		}
 		return;
 	}
 
@@ -270,7 +275,9 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 
 		uha.reportid = repid;
 		dev = config_found_sm(self, &uha, uhidevprint, uhidevsubmatch);
-		sc->sc_subdevs[repid] = (struct uhidev *)dev;
+		/* Could already be assigned by uhidev_set_report_dev(). */
+		if (sc->sc_subdevs[repid] == NULL)
+			sc->sc_subdevs[repid] = (struct uhidev *)dev;
 	}
 }
 
@@ -991,4 +998,16 @@ uhidev_clear_iface_eps(struct uhidev_softc *sc, struct usbd_interface *iface)
 	return;
 bad:
 	printf("%s: clear endpoints failed!\n", __func__);
+}
+
+int
+uhidev_set_report_dev(struct uhidev_softc *sc, struct uhidev *dev, int repid)
+{
+	if ((dev->sc_state & UHIDEV_OPEN) == 0)
+		return ENODEV;
+	if (repid >= sc->sc_nrepid)
+		return EINVAL;
+
+	sc->sc_subdevs[repid] = dev;
+	return 0;
 }
