@@ -2010,6 +2010,7 @@
 ./usr/share/man/man4/uhci.4
 ./usr/share/man/man4/uhid.4
 ./usr/share/man/man4/uhidev.4
+./usr/share/man/man4/uhidpp.4
 ./usr/share/man/man4/uipaq.4
 ./usr/share/man/man4/ujoy.4
 ./usr/share/man/man4/uk.4
