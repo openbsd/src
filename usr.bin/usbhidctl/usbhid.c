@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhid.c,v 1.15 2019/06/28 13:35:05 deraadt Exp $	*/
+/*	$OpenBSD: usbhid.c,v 1.16 2021/02/04 06:57:19 anton Exp $	*/
 /*      $NetBSD: usbhid.c,v 1.22 2002/02/20 20:30:42 christos Exp $ */
 
 /*
@@ -394,13 +394,7 @@ allocreport(struct Sreport *report, report_desc_t rd, int repindex)
 	report->size = reptsize;
 
 	if (report->size > 0) {
-		/*
-		 * Allocate a buffer with enough space for the
-		 * report in the variable-sized data field.
-		 */
-		report->buffer = malloc(sizeof(*report->buffer) -
-					sizeof(report->buffer->ucr_data) +
-					report->size);
+		report->buffer = malloc(sizeof(*report->buffer));
 		if (report->buffer == NULL)
 			err(1, NULL);
 	} else
