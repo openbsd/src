@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.3 2021/02/04 08:58:19 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.4 2021/02/04 14:32:01 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -57,10 +57,10 @@ proc_parser_roa(struct entity *entp,
 	STACK_OF(X509)		*chain;
 	STACK_OF(X509_CRL)	*crls;
 
-	if ((roa = roa_parse(&x509, entp->uri)) == NULL)
+	if ((roa = roa_parse(&x509, entp->file)) == NULL)
 		return NULL;
 
-	a = valid_ski_aki(entp->uri, auths, roa->ski, roa->aki);
+	a = valid_ski_aki(entp->file, auths, roa->ski, roa->aki);
 
 	build_chain(a, &chain);
 	build_crls(a, crlt, &crls);
@@ -76,7 +76,7 @@ proc_parser_roa(struct entity *entp,
 		c = X509_STORE_CTX_get_error(ctx);
 		X509_STORE_CTX_cleanup(ctx);
 		if (verbose > 0 || c != X509_V_ERR_UNABLE_TO_GET_CRL)
-			warnx("%s: %s", entp->uri,
+			warnx("%s: %s", entp->file,
 			    X509_verify_cert_error_string(c));
 		X509_free(x509);
 		roa_free(roa);
@@ -94,7 +94,7 @@ proc_parser_roa(struct entity *entp,
 	 * the code around roa_read() to check the "valid" field itself.
 	 */
 
-	if (valid_roa(entp->uri, auths, roa))
+	if (valid_roa(entp->file, auths, roa))
 		roa->valid = 1;
 
 	return roa;
@@ -120,10 +120,10 @@ proc_parser_mft(struct entity *entp, X509_STORE *store, X509_STORE_CTX *ctx,
 	struct auth		*a;
 	STACK_OF(X509)		*chain;
 
-	if ((mft = mft_parse(&x509, entp->uri)) == NULL)
+	if ((mft = mft_parse(&x509, entp->file)) == NULL)
 		return NULL;
 
-	a = valid_ski_aki(entp->uri, auths, mft->ski, mft->aki);
+	a = valid_ski_aki(entp->file, auths, mft->ski, mft->aki);
 	build_chain(a, &chain);
 
 	if (!X509_STORE_CTX_init(ctx, store, x509, chain))
@@ -135,7 +135,7 @@ proc_parser_mft(struct entity *entp, X509_STORE *store, X509_STORE_CTX *ctx,
 	if (X509_verify_cert(ctx) <= 0) {
 		c = X509_STORE_CTX_get_error(ctx);
 		X509_STORE_CTX_cleanup(ctx);
-		warnx("%s: %s", entp->uri, X509_verify_cert_error_string(c));
+		warnx("%s: %s", entp->file, X509_verify_cert_error_string(c));
 		mft_free(mft);
 		X509_free(x509);
 		sk_X509_free(chain);
@@ -146,7 +146,7 @@ proc_parser_mft(struct entity *entp, X509_STORE *store, X509_STORE_CTX *ctx,
 	sk_X509_free(chain);
 	X509_free(x509);
 
-	if (!mft_check(entp->uri, mft)) {
+	if (!mft_check(entp->file, mft)) {
 		mft_free(mft);
 		return NULL;
 	}
@@ -178,11 +178,11 @@ proc_parser_cert(const struct entity *entp,
 
 	/* Extract certificate data and X509. */
 
-	cert = cert_parse(&x509, entp->uri);
+	cert = cert_parse(&x509, entp->file);
 	if (cert == NULL)
 		return NULL;
 
-	a = valid_ski_aki(entp->uri, auths, cert->ski, cert->aki);
+	a = valid_ski_aki(entp->file, auths, cert->ski, cert->aki);
 	build_chain(a, &chain);
 	build_crls(a, crlt, &crls);
 
@@ -201,7 +201,7 @@ proc_parser_cert(const struct entity *entp,
 
 	if (X509_verify_cert(ctx) <= 0) {
 		c = X509_STORE_CTX_get_error(ctx);
-		warnx("%s: %s", entp->uri,
+		warnx("%s: %s", entp->file,
 		    X509_verify_cert_error_string(c));
 		X509_STORE_CTX_cleanup(ctx);
 		cert_free(cert);
@@ -216,7 +216,7 @@ proc_parser_cert(const struct entity *entp,
 	sk_X509_CRL_free(crls);
 
 	/* Validate the cert to get the parent */
-	if (!valid_cert(entp->uri, auths, cert)) {
+	if (!valid_cert(entp->file, auths, cert)) {
 		X509_free(x509); // needed? XXX
 		return cert;
 	}
@@ -236,7 +236,7 @@ proc_parser_cert(const struct entity *entp,
 	na->parent = a;
 	na->cert = cert;
 	na->tal = tal;
-	na->fn = strdup(entp->uri);
+	na->fn = strdup(entp->file);
 	if (na->fn == NULL)
 		err(1, NULL);
 
@@ -274,42 +274,42 @@ proc_parser_root_cert(const struct entity *entp,
 
 	/* Extract certificate data and X509. */
 
-	cert = ta_parse(&x509, entp->uri, entp->pkey, entp->pkeysz);
+	cert = ta_parse(&x509, entp->file, entp->pkey, entp->pkeysz);
 	if (cert == NULL)
 		return NULL;
 
 	if ((name = X509_get_subject_name(x509)) == NULL) {
-		warnx("%s Unable to get certificate subject", entp->uri);
+		warnx("%s Unable to get certificate subject", entp->file);
 		goto badcert;
 	}
 	if (X509_NAME_oneline(name, subject, sizeof(subject)) == NULL) {
 		warnx("%s: Unable to parse certificate subject name",
-		    entp->uri);
+		    entp->file);
 		goto badcert;
 	}
 	if ((notBefore = X509_get_notBefore(x509)) == NULL) {
 		warnx("%s: certificate has invalid notBefore, subject='%s'",
-		    entp->uri, subject);
+		    entp->file, subject);
 		goto badcert;
 	}
 	if ((notAfter = X509_get_notAfter(x509)) == NULL) {
 		warnx("%s: certificate has invalid notAfter, subject='%s'",
-		    entp->uri, subject);
+		    entp->file, subject);
 		goto badcert;
 	}
 	if (X509_cmp_current_time(notBefore) != -1) {
-		warnx("%s: certificate not yet valid, subject='%s'", entp->uri,
+		warnx("%s: certificate not yet valid, subject='%s'", entp->file,
 		    subject);
 		goto badcert;
 	}
 	if (X509_cmp_current_time(notAfter) != 1)  {
-		warnx("%s: certificate has expired, subject='%s'", entp->uri,
+		warnx("%s: certificate has expired, subject='%s'", entp->file,
 		    subject);
 		goto badcert;
 	}
-	if (!valid_ta(entp->uri, auths, cert)) {
+	if (!valid_ta(entp->file, auths, cert)) {
 		warnx("%s: certificate not a valid ta, subject='%s'",
-		    entp->uri, subject);
+		    entp->file, subject);
 		goto badcert;
 	}
 
@@ -330,7 +330,7 @@ proc_parser_root_cert(const struct entity *entp,
 	na->parent = NULL;
 	na->cert = cert;
 	na->tal = tal;
-	na->fn = strdup(entp->uri);
+	na->fn = strdup(entp->file);
 	if (na->fn == NULL)
 		err(1, NULL);
 
@@ -358,7 +358,7 @@ proc_parser_crl(struct entity *entp, X509_STORE *store,
 	X509_CRL		*x509_crl;
 	struct crl		*crl;
 
-	if ((x509_crl = crl_parse(entp->uri)) != NULL) {
+	if ((x509_crl = crl_parse(entp->file)) != NULL) {
 		if ((crl = malloc(sizeof(*crl))) == NULL)
 			err(1, NULL);
 		if ((crl->aki = x509_crl_get_aki(x509_crl)) == NULL)
@@ -366,7 +366,7 @@ proc_parser_crl(struct entity *entp, X509_STORE *store,
 		crl->x509_crl = x509_crl;
 
 		if (RB_INSERT(crl_tree, crlt, crl) != NULL) {
-			warnx("%s: duplicate AKI %s", entp->uri, crl->aki);
+			warnx("%s: duplicate AKI %s", entp->file, crl->aki);
 			free_crl(crl);
 		}
 	}
@@ -386,10 +386,10 @@ proc_parser_gbr(struct entity *entp, X509_STORE *store,
 	STACK_OF(X509)		*chain;
 	STACK_OF(X509_CRL)	*crls;
 
-	if ((gbr = gbr_parse(&x509, entp->uri)) == NULL)
+	if ((gbr = gbr_parse(&x509, entp->file)) == NULL)
 		return;
 
-	a = valid_ski_aki(entp->uri, auths, gbr->ski, gbr->aki);
+	a = valid_ski_aki(entp->file, auths, gbr->ski, gbr->aki);
 
 	build_chain(a, &chain);
 	build_crls(a, crlt, &crls);
@@ -404,7 +404,7 @@ proc_parser_gbr(struct entity *entp, X509_STORE *store,
 	if (X509_verify_cert(ctx) <= 0) {
 		c = X509_STORE_CTX_get_error(ctx);
 		if (verbose > 0 || c != X509_V_ERR_UNABLE_TO_GET_CRL)
-			warnx("%s: %s", entp->uri,
+			warnx("%s: %s", entp->file,
 			    X509_verify_cert_error_string(c));
 	}
 
@@ -558,7 +558,7 @@ proc_parser(int fd)
 
 		switch (entp->type) {
 		case RTYPE_TAL:
-			if ((tal = tal_parse(entp->uri, entp->descr)) == NULL)
+			if ((tal = tal_parse(entp->file, entp->descr)) == NULL)
 				goto out;
 			tal_buffer(b, tal);
 			tal_free(tal);

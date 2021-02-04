@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.96 2021/02/04 13:38:27 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.97 2021/02/04 14:32:01 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -180,7 +180,7 @@ entity_free(struct entity *ent)
 		return;
 
 	free(ent->pkey);
-	free(ent->uri);
+	free(ent->file);
 	free(ent->descr);
 	free(ent);
 }
@@ -195,7 +195,7 @@ entity_read_req(int fd, struct entity *ent)
 {
 
 	io_simple_read(fd, &ent->type, sizeof(enum rtype));
-	io_str_read(fd, &ent->uri);
+	io_str_read(fd, &ent->file);
 	io_simple_read(fd, &ent->has_pkey, sizeof(int));
 	if (ent->has_pkey)
 		io_buf_read_alloc(fd, (void **)&ent->pkey, &ent->pkeysz);
@@ -214,7 +214,7 @@ entity_write_req(const struct entity *ent)
 	if ((b = ibuf_dynamic(sizeof(*ent), UINT_MAX)) == NULL)
 		err(1, NULL);
 	io_simple_buffer(b, &ent->type, sizeof(ent->type));
-	io_str_buffer(b, ent->uri);
+	io_str_buffer(b, ent->file);
 	io_simple_buffer(b, &ent->has_pkey, sizeof(int));
 	if (ent->has_pkey)
 		io_buf_buffer(b, ent->pkey, ent->pkeysz);
@@ -254,7 +254,7 @@ entityq_add(struct entityq *q, char *file, enum rtype type,
 		err(1, "calloc");
 
 	p->type = type;
-	p->uri = file;
+	p->file = file;
 	p->repo = (rp != NULL) ? (ssize_t)rp->id : -1;
 	p->has_pkey = pkey != NULL;
 	if (p->has_pkey) {

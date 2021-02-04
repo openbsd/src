@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.40 2021/02/04 08:10:24 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.41 2021/02/04 14:32:01 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -265,7 +265,7 @@ enum rtype {
  */
 struct	entity {
 	enum rtype	 type; /* type of entity (not RTYPE_EOF) */
-	char		*uri; /* file or rsync:// URI */
+	char		*file; /* local path to file */
 	ssize_t		 repo; /* repo index or <0 if w/o repo */
 	int		 has_pkey; /* whether pkey/sz is specified */
 	unsigned char	*pkey; /* public key (optional) */
