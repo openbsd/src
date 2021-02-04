@@ -1,4 +1,4 @@
-.\" $OpenBSD: tcpbench.1,v 1.28 2020/05/04 12:13:09 sthen Exp $
+.\" $OpenBSD: tcpbench.1,v 1.29 2021/02/04 18:46:25 bluhm Exp $
 .\"
 .\" Copyright (c) 2008 Damien Miller <djm@mindrot.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 4 2020 $
+.Dd $Mdocdate: February 4 2021 $
 .Dt TCPBENCH 1
 .Os
 .Sh NAME
@@ -24,7 +24,7 @@
 .Nm
 .Fl l
 .Nm
-.Op Fl 46RUuv
+.Op Fl 46DRUuv
 .Op Fl B Ar buf
 .Op Fl b Ar sourceaddr
 .Op Fl k Ar kvars
@@ -39,7 +39,7 @@
 .Nm
 .Bk -words
 .Fl s
-.Op Fl 46Uuv
+.Op Fl 46DUuv
 .Op Fl B Ar buf
 .Op Fl k Ar kvars
 .Op Fl p Ar port
@@ -111,6 +111,8 @@ stream.
 .It Fl b Ar sourceaddr
 Specify the IP address to send the packets from,
 which is useful on machines with multiple interfaces.
+.It Fl D
+Enable debugging on the socket.
 .It Fl k Ar kvars
 Specify one or more kernel variables to monitor; multiple variables must be
 separated with commas.
