@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.39 2021/02/02 18:33:11 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.40 2021/02/04 08:10:24 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -17,6 +17,7 @@
 #ifndef EXTERN_H
 #define EXTERN_H
 
+#include <sys/queue.h>
 #include <sys/tree.h>
 #include <sys/time.h>
 
@@ -259,6 +260,22 @@ enum rtype {
 };
 
 /*
+ * An entity (MFT, ROA, certificate, etc.) that needs to be downloaded
+ * and parsed.
+ */
+struct	entity {
+	enum rtype	 type; /* type of entity (not RTYPE_EOF) */
+	char		*uri; /* file or rsync:// URI */
+	ssize_t		 repo; /* repo index or <0 if w/o repo */
+	int		 has_pkey; /* whether pkey/sz is specified */
+	unsigned char	*pkey; /* public key (optional) */
+	size_t		 pkeysz; /* public key length (optional) */
+	char		*descr; /* tal description */
+	TAILQ_ENTRY(entity) entries;
+};
+TAILQ_HEAD(entityq, entity);
+
+/*
  * Statistics collected during run-time.
  */
 struct	stats {
@@ -366,6 +383,11 @@ int		 as_check_overlap(const struct cert_as *, const char *,
 			const struct cert_as *, size_t);
 int		 as_check_covered(uint32_t, uint32_t,
 			const struct cert_as *, size_t);
+
+/* Parser-specific */
+void		 entity_free(struct entity *);
+void		 entity_read_req(int fd, struct entity *);
+void		 proc_parser(int) __attribute__((noreturn));
 
 /* Rsync-specific. */
 
