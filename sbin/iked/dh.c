@@ -1,4 +1,4 @@
-/*	$OpenBSD: dh.c,v 1.25 2021/02/04 19:59:15 tobhe Exp $	*/
+/*	$OpenBSD: dh.c,v 1.26 2021/02/04 20:15:02 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2014 Reyk Floeter <reyk@openbsd.org>
@@ -608,16 +608,9 @@ ec_point2raw(struct group *group, const EC_POINT *point,
 	if ((ecgroup = EC_KEY_get0_group(group->ec)) == NULL)
 		goto done;
 
-	if (EC_METHOD_get_field_type(EC_GROUP_method_of(ecgroup)) ==
-	    NID_X9_62_prime_field) {
-		if (!EC_POINT_get_affine_coordinates_GFp(ecgroup,
-		    point, x, y, bnctx))
-			goto done;
-	} else {
-		if (!EC_POINT_get_affine_coordinates_GF2m(ecgroup,
-		    point, x, y, bnctx))
-			goto done;
-	}
+	if (!EC_POINT_get_affine_coordinates_GFp(ecgroup,
+	    point, x, y, bnctx))
+		goto done;
 
 	xoff = xlen - BN_num_bytes(x);
 	bzero(buf, xoff);
@@ -676,16 +669,9 @@ ec_raw2point(struct group *group, uint8_t *buf, size_t len)
 	if ((point = EC_POINT_new(ecgroup)) == NULL)
 		goto done;
 
-	if (EC_METHOD_get_field_type(EC_GROUP_method_of(ecgroup)) ==
-	    NID_X9_62_prime_field) {
-		if (!EC_POINT_set_affine_coordinates_GFp(ecgroup,
-		    point, x, y, bnctx))
-			goto done;
-	} else {
-		if (!EC_POINT_set_affine_coordinates_GF2m(ecgroup,
-		    point, x, y, bnctx))
-			goto done;
-	}
+	if (!EC_POINT_set_affine_coordinates_GFp(ecgroup,
+	    point, x, y, bnctx))
+		goto done;
 
 	ret = 0;
  done:
