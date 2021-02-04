@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1107 2021/02/03 07:41:12 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1108 2021/02/04 00:55:41 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6935,7 +6935,7 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 		PF_STATE_EXIT_READ();
 		if (action == PF_PASS || action == PF_AFRT) {
 #if NPFSYNC > 0
-			pfsync_update_state(s, &have_pf_lock);
+			pfsync_update_state(s);
 #endif /* NPFSYNC > 0 */
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
@@ -6967,7 +6967,7 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 		PF_STATE_EXIT_READ();
 		if (action == PF_PASS || action == PF_AFRT) {
 #if NPFSYNC > 0
-			pfsync_update_state(s, &have_pf_lock);
+			pfsync_update_state(s);
 #endif /* NPFSYNC > 0 */
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
@@ -7043,7 +7043,7 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 
 		if (action == PF_PASS || action == PF_AFRT) {
 #if NPFSYNC > 0
-			pfsync_update_state(s, &have_pf_lock);
+			pfsync_update_state(s);
 #endif /* NPFSYNC > 0 */
 			r = s->rule.ptr;
 			a = s->anchor.ptr;
