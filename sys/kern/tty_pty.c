@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.105 2020/12/25 12:59:52 visa Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.106 2021/02/04 07:54:51 claudio Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -1093,6 +1093,7 @@ ptmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct nameidata cnd, snd;
 	struct filedesc *fdp = p->p_fd;
 	struct file *cfp = NULL, *sfp = NULL;
+	struct vnode *cvp = NULL, *svp = NULL;
 	int cindx, sindx;
 	uid_t uid;
 	gid_t gid;
@@ -1102,24 +1103,11 @@ ptmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 
 	switch (cmd) {
 	case PTMGET:
-		fdplock(fdp);
-		/* Grab two filedescriptors. */
-		if ((error = falloc(p, &cfp, &cindx)) != 0) {
-			fdpunlock(fdp);
-			break;
-		}
-		if ((error = falloc(p, &sfp, &sindx)) != 0) {
-			fdremove(fdp, cindx);
-			closef(cfp, p);
-			fdpunlock(fdp);
-			break;
-		}
-
 retry:
 		/* Find and open a free master pty. */
 		newdev = pty_getfree();
 		if ((error = check_pty(newdev)))
-			goto bad;
+			return (error);
 		pti = pt_softc[minor(newdev)];
 		NDINIT(&cnd, LOOKUP, NOFOLLOW|LOCKLEAF, UIO_SYSSPACE,
 		    pti->pty_pn, p);
@@ -1131,13 +1119,10 @@ retry:
 			 */
 			if (error == EIO && !pty_isfree(minor(newdev)))
 				goto retry;
-			goto bad;
+			return (error);
 		}
-		cfp->f_flag = FREAD|FWRITE;
-		cfp->f_type = DTYPE_VNODE;
-		cfp->f_ops = &vnops;
-		cfp->f_data = (caddr_t) cnd.ni_vp;
-		VOP_UNLOCK(cnd.ni_vp);
+		cvp = cnd.ni_vp;
+		VOP_UNLOCK(cvp);
 
 		/*
 		 * Open the slave.
@@ -1190,11 +1175,31 @@ retry:
 		/* now open it */
 		if ((error = ptm_vn_open(&snd)) != 0)
 			goto bad;
+		svp = snd.ni_vp;
+		VOP_UNLOCK(svp);
+
+		fdplock(fdp);
+		/* Grab two filedescriptors. */
+		if ((error = falloc(p, &cfp, &cindx)) != 0) {
+			fdpunlock(fdp);
+			goto bad;
+		}
+		if ((error = falloc(p, &sfp, &sindx)) != 0) {
+			fdremove(fdp, cindx);
+			closef(cfp, p);
+			fdpunlock(fdp);
+			goto bad;
+		}
+
+		cfp->f_flag = FREAD|FWRITE;
+		cfp->f_type = DTYPE_VNODE;
+		cfp->f_ops = &vnops;
+		cfp->f_data = (caddr_t)cvp;
+
 		sfp->f_flag = FREAD|FWRITE;
 		sfp->f_type = DTYPE_VNODE;
 		sfp->f_ops = &vnops;
-		sfp->f_data = (caddr_t) snd.ni_vp;
-		VOP_UNLOCK(snd.ni_vp);
+		sfp->f_data = (caddr_t)svp;
 
 		/* now, put the indexen and names into struct ptmget */
 		ptm->cfd = cindx;
@@ -1214,11 +1219,11 @@ retry:
 		break;
 	}
 	return (error);
+
 bad:
-	fdremove(fdp, cindx);
-	closef(cfp, p);
-	fdremove(fdp, sindx);
-	closef(sfp, p);
-	fdpunlock(fdp);
+	if (svp)
+		vrele(svp);
+	if (cvp)
+		vrele(cvp);
 	return (error);
 }
