@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhtest.c,v 1.3 2020/11/03 20:45:58 tobhe Exp $	*/
+/*	$OpenBSD: dhtest.c,v 1.4 2021/02/04 20:45:13 tobhe Exp $	*/
 /*	$EOM: dhtest.c,v 1.1 1998/07/18 21:14:20 provos Exp $	*/
 
 /*
@@ -56,7 +56,7 @@ main(void)
 	struct ibuf *buf, *buf2;
 	struct ibuf *sec, *sec2;
 	uint8_t *raw, *raw2;
-	struct group *group, *group2;
+	struct dh_group *group, *group2;
 	const char *name[] = { "MODP", "ECP", "CURVE25519" };
 
 	group_init();
