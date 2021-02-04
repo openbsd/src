@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.128 2021/01/30 14:59:14 visa Exp $ */
+/*	$OpenBSD: machdep.c,v 1.129 2021/02/04 16:16:11 visa Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -835,6 +835,9 @@ get_octeon_board(void)
 	case 20003:
 		return BOARD_UBIQUITI_E200;
 	case 20004:
+		/* E120 has two cores, whereas UTM25 has one core. */
+		if (ncpusfound == 1)
+			return BOARD_NETGEAR_UTM25;
 		return BOARD_UBIQUITI_E120;
 	case 20005:
 		return BOARD_UBIQUITI_E220;

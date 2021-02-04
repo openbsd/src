@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeonvar.h,v 1.50 2021/01/30 14:59:14 visa Exp $	*/
+/*	$OpenBSD: octeonvar.h,v 1.51 2021/02/04 16:16:11 visa Exp $	*/
 /*	$NetBSD: maltavar.h,v 1.3 2002/03/18 10:10:16 simonb Exp $	*/
 
 /*-
@@ -215,6 +215,7 @@ enum octeon_board {
 	BOARD_UNKNOWN,
 	BOARD_CN3010_EVB_HS5,
 	BOARD_DLINK_DSR_500,
+	BOARD_NETGEAR_UTM25,
 	BOARD_RHINOLABS_UTM8,
 	BOARD_UBIQUITI_E100,
 	BOARD_UBIQUITI_E120,
