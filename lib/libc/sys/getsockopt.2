@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockopt.2,v 1.56 2019/07/22 15:34:07 robert Exp $
+.\"	$OpenBSD: getsockopt.2,v 1.57 2021/02/04 18:51:01 bluhm Exp $
 .\"	$NetBSD: getsockopt.2,v 1.7 1995/02/27 12:33:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getsockopt.2	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: July 22 2019 $
+.Dd $Mdocdate: February 4 2021 $
 .Dt GETSOCKOPT 2
 .Os
 .Sh NAME
@@ -182,6 +182,8 @@ get the protocol of the socket (get only)
 .Pp
 .Dv SO_DEBUG
 enables debugging in the underlying protocol modules.
+Transliterate the protocol trace with
+.Xr trpt 8 .
 .Dv SO_REUSEADDR
 indicates that the rules used in validating addresses supplied in a
 .Xr bind 2
