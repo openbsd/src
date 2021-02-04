@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.133 2021/01/23 05:08:34 thfr Exp $
+#	$OpenBSD: GENERIC,v 1.134 2021/02/04 16:25:39 anton Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -322,6 +322,7 @@ ucom*	at uslhcom?
 uhid*	at uhidev?		# USB generic HID support
 fido*	at uhidev?		# FIDO/U2F security key support
 ujoy*	at uhidev?		# USB joystick/gamecontroller support
+uhidpp*	at uhidev?		# Logitech HID++ Devices
 upd*	at uhidev?		# USB Power Devices sensors
 aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
 atu*	at uhub?		# Atmel AT76c50x based 802.11b

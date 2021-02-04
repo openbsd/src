@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC-IP30,v 1.60 2021/01/23 05:08:36 thfr Exp $
+#	$OpenBSD: GENERIC-IP30,v 1.61 2021/02/04 16:25:39 anton Exp $
 #
 # THIS KERNEL IS FOR Octane and Octane 2 (IP30) SYSTEMS ONLY.
 #
@@ -120,6 +120,7 @@ ucom*		at uslhcom?
 uhid*		at uhidev?	# USB generic HID support
 fido*		at uhidev?	# FIDO/U2F security key support
 ujoy*		at uhidev?	# USB joystick/gamecontroller support
+uhidpp*		at uhidev?	# Logitech HID++ Devices
 atu*		at uhub?	# Atmel AT76c50x based 802.11b
 aue*		at uhub?	# ADMtek AN986 Pegasus Ethernet  
 axe*		at uhub?	# ASIX Electronics AX88172 USB Ethernet
