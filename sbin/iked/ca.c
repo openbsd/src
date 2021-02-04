@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.75 2020/12/05 19:10:47 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.76 2021/02/04 19:59:15 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -511,6 +511,8 @@ ca_getreq(struct iked *env, struct imsg *imsg)
 	struct ibuf		*buf;
 	struct iked_static_id	 id;
 	char			 idstr[IKED_ID_SIZE];
+	X509_NAME		*subj;
+	char			*subj_name;
 
 	ptr = (uint8_t *)imsg->data;
 	len = IMSG_DATA_SIZE(imsg);
@@ -558,11 +560,16 @@ ca_getreq(struct iked *env, struct imsg *imsg)
 			if ((ca = ca_by_subjectpubkey(store->ca_cas, ptr + i,
 			    SHA_DIGEST_LENGTH)) == NULL)
 				continue;
-
-			log_debug("%s: found CA %s", __func__, ca->name);
+			subj = X509_get_subject_name(ca);
+			if (subj == NULL)
+				return (-1);
+			subj_name = X509_NAME_oneline(subj, NULL, 0);
+			if (subj_name == NULL)
+				return (-1);
+			log_debug("%s: found CA %s", __func__, subj_name);
 
 			if ((cert = ca_by_issuer(store->ca_certs,
-			    X509_get_subject_name(ca), &id)) != NULL) {
+			    subj, &id)) != NULL) {
 				/* XXX
 				 * should we re-validate our own cert here?
 				 */
@@ -605,8 +612,14 @@ ca_getreq(struct iked *env, struct imsg *imsg)
 			break;
 		}
 
+		subj = X509_get_subject_name(cert);
+		if (subj == NULL)
+			return (-1);
+		subj_name = X509_NAME_oneline(subj, NULL, 0);
+		if (subj_name == NULL)
+			return (-1);
 		log_debug("%s: found local certificate %s", __func__,
-		    cert->name);
+		    subj_name);
 
 		if ((buf = ca_x509_serialize(cert)) == NULL)
 			return (-1);
@@ -699,6 +712,8 @@ ca_reload(struct iked *env)
 	DIR			*dir;
 	int			 i, iovcnt = 0;
 	unsigned int		 len;
+	X509_NAME		*subj;
+	char			*subj_name;
 
 	/*
 	 * Load CAs
@@ -763,16 +778,22 @@ ca_reload(struct iked *env)
 	if ((env->sc_certreq = ibuf_new(NULL, 0)) == NULL)
 		return (-1);
 
-	h = store->ca_cas->objs;
+	h = X509_STORE_get0_objects(store->ca_cas);
 	for (i = 0; i < sk_X509_OBJECT_num(h); i++) {
 		xo = sk_X509_OBJECT_value(h, i);
-		if (xo->type != X509_LU_X509)
+		if (X509_OBJECT_get_type(xo) != X509_LU_X509)
 			continue;
 
-		x509 = xo->data.x509;
+		x509 = X509_OBJECT_get0_X509(xo);
 		len = sizeof(md);
 		ca_subjectpubkey_digest(x509, md, &len);
-		log_debug("%s: %s", __func__, x509->name);
+		subj = X509_get_subject_name(x509);
+		if (subj == NULL)
+			return (-1);
+		subj_name = X509_NAME_oneline(subj, NULL, 0);
+		if (subj_name == NULL)
+			return (-1);
+		log_debug("%s: %s", __func__, subj_name);
 
 		if (ibuf_add(env->sc_certreq, md, len) != 0) {
 			ibuf_release(env->sc_certreq);
@@ -825,13 +846,13 @@ ca_reload(struct iked *env)
 	}
 	closedir(dir);
 
-	h = store->ca_certs->objs;
+	h = X509_STORE_get0_objects(store->ca_certs);
 	for (i = 0; i < sk_X509_OBJECT_num(h); i++) {
 		xo = sk_X509_OBJECT_value(h, i);
-		if (xo->type != X509_LU_X509)
+		if (X509_OBJECT_get_type(xo) != X509_LU_X509)
 			continue;
 
-		x509 = xo->data.x509;
+		x509 = X509_OBJECT_get0_X509(xo);
 
 		(void)ca_validate_cert(env, NULL, x509, 0, NULL);
 	}
@@ -861,14 +882,14 @@ ca_by_subjectpubkey(X509_STORE *ctx, uint8_t *sig, size_t siglen)
 	unsigned int		 len;
 	uint8_t			 md[EVP_MAX_MD_SIZE];
 
-	h = ctx->objs;
+	h = X509_STORE_get0_objects(ctx);
 
 	for (i = 0; i < sk_X509_OBJECT_num(h); i++) {
 		xo = sk_X509_OBJECT_value(h, i);
-		if (xo->type != X509_LU_X509)
+		if (X509_OBJECT_get_type(xo) != X509_LU_X509)
 			continue;
 
-		ca = xo->data.x509;
+		ca = X509_OBJECT_get0_X509(xo);
 		len = sizeof(md);
 		ca_subjectpubkey_digest(ca, md, &len);
 
@@ -891,13 +912,13 @@ ca_by_issuer(X509_STORE *ctx, X509_NAME *subject, struct iked_static_id *id)
 	if (subject == NULL)
 		return (NULL);
 
-	h = ctx->objs;
+	h = X509_STORE_get0_objects(ctx);
 	for (i = 0; i < sk_X509_OBJECT_num(h); i++) {
 		xo = sk_X509_OBJECT_value(h, i);
-		if (xo->type != X509_LU_X509)
+		if (X509_OBJECT_get_type(xo) != X509_LU_X509)
 			continue;
 
-		cert = xo->data.x509;
+		cert = X509_OBJECT_get0_X509(xo);
 		if ((issuer = X509_get_issuer_name(cert)) == NULL)
 			continue;
 		else if (X509_NAME_cmp(subject, issuer) == 0) {
@@ -925,13 +946,13 @@ ca_by_subjectaltname(X509_STORE *ctx, struct iked_static_id *id)
 	X509			*cert;
 	int			 i;
 
-	h = ctx->objs;
+	h = X509_STORE_get0_objects(ctx);
 	for (i = 0; i < sk_X509_OBJECT_num(h); i++) {
 		xo = sk_X509_OBJECT_value(h, i);
-		if (xo->type != X509_LU_X509)
+		if (X509_OBJECT_get_type(xo) != X509_LU_X509)
 			continue;
 
-		cert = xo->data.x509;
+		cert = X509_OBJECT_get0_X509(xo);
 		switch (id->id_type) {
 		case IKEV2_ID_ASN1_DN:
 			if (ca_x509_subject_cmp(cert, id) == 0)
@@ -955,12 +976,12 @@ ca_store_certs_info(const char *msg, X509_STORE *ctx)
 	X509			*cert;
 	int			 i;
 
-	h = ctx->objs;
+	h = X509_STORE_get0_objects(ctx);
 	for (i = 0; i < sk_X509_OBJECT_num(h); i++) {
 		xo = sk_X509_OBJECT_value(h, i);
-		if (xo->type != X509_LU_X509)
+		if (X509_OBJECT_get_type(xo) != X509_LU_X509)
 			continue;
-		cert = xo->data.x509;
+		cert = X509_OBJECT_get0_X509(xo);
 		ca_cert_info(msg, cert);
 	}
 }
@@ -972,18 +993,24 @@ ca_cert_info(const char *msg, X509 *cert)
 	BUF_MEM		*memptr;
 	BIO		*rawserial = NULL;
 	char		 buf[BUFSIZ];
+	X509_NAME	*name;
 
 	if ((asn1_serial = X509_get_serialNumber(cert)) == NULL ||
 	    (rawserial = BIO_new(BIO_s_mem())) == NULL ||
 	    i2a_ASN1_INTEGER(rawserial, asn1_serial) <= 0)
 		goto out;
-	if (X509_NAME_oneline(X509_get_issuer_name(cert), buf, sizeof(buf)))
+
+	name = X509_get_issuer_name(cert);
+	if (name != NULL &&
+	    X509_NAME_oneline(name, buf, sizeof(buf)))
 		log_info("%s: issuer: %s", msg, buf);
 	BIO_get_mem_ptr(rawserial, &memptr);
 	if (memptr->data != NULL && memptr->length < INT32_MAX)
 		log_info("%s: serial: %.*s", msg, (int)memptr->length,
 		    memptr->data);
-	if (X509_NAME_oneline(X509_get_subject_name(cert), buf, sizeof(buf)))
+	name = X509_get_subject_name(cert);
+	if (name != NULL &&
+	    X509_NAME_oneline(name, buf, sizeof(buf)))
 		log_info("%s: subject: %s", msg, buf);
 	ca_x509_subjectaltname_log(cert, msg);
 out:
@@ -1053,7 +1080,7 @@ ca_pubkey_serialize(EVP_PKEY *key, struct iked_id *id)
 	int		 len = 0;
 	int		 ret = -1;
 
-	switch (key->type) {
+	switch (EVP_PKEY_id(key)) {
 	case EVP_PKEY_RSA:
 		id->id_type = 0;
 		id->id_offset = 0;
@@ -1099,7 +1126,8 @@ ca_pubkey_serialize(EVP_PKEY *key, struct iked_id *id)
 		id->id_type = IKEV2_CERT_ECDSA;
 		break;
 	default:
-		log_debug("%s: unsupported key type %d", __func__, key->type);
+		log_debug("%s: unsupported key type %d", __func__,
+		    EVP_PKEY_id(key));
 		return (-1);
 	}
 
@@ -1124,7 +1152,7 @@ ca_privkey_serialize(EVP_PKEY *key, struct iked_id *id)
 	int		 len = 0;
 	int		 ret = -1;
 
-	switch (key->type) {
+	switch (EVP_PKEY_id(key)) {
 	case EVP_PKEY_RSA:
 		id->id_type = 0;
 		id->id_offset = 0;
@@ -1170,7 +1198,8 @@ ca_privkey_serialize(EVP_PKEY *key, struct iked_id *id)
 		id->id_type = IKEV2_CERT_ECDSA;
 		break;
 	default:
-		log_debug("%s: unsupported key type %d", __func__, key->type);
+		log_debug("%s: unsupported key type %d", __func__,
+		    EVP_PKEY_id(key));
 		return (-1);
 	}
 
@@ -1472,13 +1501,16 @@ int
 ca_validate_cert(struct iked *env, struct iked_static_id *id,
     void *data, size_t len, X509 **issuerp)
 {
-	struct ca_store	*store = env->sc_priv;
-	X509_STORE_CTX	 csc;
-	BIO		*rawcert = NULL;
-	X509		*cert = NULL;
-	EVP_PKEY	*pkey;
-	int		 ret = -1, result, error;
-	const char	*errstr = "failed";
+	struct ca_store		*store = env->sc_priv;
+	X509_STORE_CTX		*csc = NULL;
+	X509_VERIFY_PARAM	*param;
+	BIO			*rawcert = NULL;
+	X509			*cert = NULL;
+	EVP_PKEY		*pkey;
+	int			 ret = -1, result, error;
+	const char		*errstr = "failed";
+	X509_NAME		*subj;
+	char			*subj_name;
 
 	if (issuerp)
 		*issuerp = NULL;
@@ -1527,24 +1559,29 @@ ca_validate_cert(struct iked *env, struct iked_static_id *id,
 		}
 	}
 
-	bzero(&csc, sizeof(csc));
-	X509_STORE_CTX_init(&csc, store->ca_cas, cert, NULL);
-	if (store->ca_cas->param->flags & X509_V_FLAG_CRL_CHECK) {
-		X509_STORE_CTX_set_flags(&csc, X509_V_FLAG_CRL_CHECK);
-		X509_STORE_CTX_set_flags(&csc, X509_V_FLAG_CRL_CHECK_ALL);
+	csc = X509_STORE_CTX_new();
+	if (csc == NULL) {
+		errstr = "failed to alloc csc";
+		goto done;
+	}
+	X509_STORE_CTX_init(csc, store->ca_cas, cert, NULL);
+	param = X509_STORE_get0_param(store->ca_cas);
+	if (X509_VERIFY_PARAM_get_flags(param) & X509_V_FLAG_CRL_CHECK) {
+		X509_STORE_CTX_set_flags(csc, X509_V_FLAG_CRL_CHECK);
+		X509_STORE_CTX_set_flags(csc, X509_V_FLAG_CRL_CHECK_ALL);
 	}
 	if (env->sc_cert_partial_chain)
-		X509_STORE_CTX_set_flags(&csc, X509_V_FLAG_PARTIAL_CHAIN);
+		X509_STORE_CTX_set_flags(csc, X509_V_FLAG_PARTIAL_CHAIN);
 
-	result = X509_verify_cert(&csc);
-	error = csc.error;
+	result = X509_verify_cert(csc);
+	error = X509_STORE_CTX_get_error(csc);
 	if (error == 0 && issuerp) {
-		if (X509_STORE_CTX_get1_issuer(issuerp, &csc, cert) != 1) {
+		if (X509_STORE_CTX_get1_issuer(issuerp, csc, cert) != 1) {
 			log_debug("%s: cannot get issuer", __func__);
 			*issuerp = NULL;
 		}
 	}
-	X509_STORE_CTX_cleanup(&csc);
+	X509_STORE_CTX_cleanup(csc);
 	if (error != 0) {
 		errstr = X509_verify_cert_error_string(error);
 		goto done;
@@ -1561,14 +1598,25 @@ ca_validate_cert(struct iked *env, struct iked_static_id *id,
 	errstr = "ok";
 
  done:
-	if (cert != NULL)
-		log_debug("%s: %s %.100s", __func__, cert->name, errstr);
+	if (cert != NULL) {
+		subj = X509_get_subject_name(cert);
+		if (subj == NULL)
+			goto err;
+		subj_name = X509_NAME_oneline(subj, NULL, 0);
+		if (subj_name == NULL)
+			goto err;
+		log_debug("%s: %s %.100s", __func__, subj_name, errstr);
+	}
+ err:
 
 	if (rawcert != NULL) {
 		BIO_free(rawcert);
 		if (cert != NULL)
 			X509_free(cert);
 	}
+
+	if (csc != NULL)
+		X509_STORE_CTX_free(csc);
 
 	return (ret);
 }
