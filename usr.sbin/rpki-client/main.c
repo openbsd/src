@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.93 2021/02/04 08:10:24 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.94 2021/02/04 08:21:50 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -52,8 +52,8 @@
 
 #include <assert.h>
 #include <err.h>
+#include <errno.h>
 #include <dirent.h>
-#include <fcntl.h>
 #include <fnmatch.h>
 #include <fts.h>
 #include <poll.h>
@@ -66,10 +66,6 @@
 #include <syslog.h>
 #include <unistd.h>
 #include <imsg.h>
-
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/x509v3.h>
 
 #include "extern.h"
 
