@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.120 2021/01/18 10:27:54 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.121 2021/02/05 12:29:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1045,14 +1045,14 @@ grid_duplicate_lines(struct grid *dst, u_int dy, struct grid *src, u_int sy,
 			    srcl->cellsize * sizeof *dstl->celldata);
 		} else
 			dstl->celldata = NULL;
-
 		if (srcl->extdsize != 0) {
 			dstl->extdsize = srcl->extdsize;
 			dstl->extddata = xreallocarray(NULL, dstl->extdsize,
 			    sizeof *dstl->extddata);
 			memcpy(dstl->extddata, srcl->extddata, dstl->extdsize *
 			    sizeof *dstl->extddata);
-		}
+		} else
+			dstl->extddata = NULL;
 
 		sy++;
 		dy++;

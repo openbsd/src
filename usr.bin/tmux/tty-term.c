@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-term.c,v 1.85 2020/10/13 07:29:24 nicm Exp $ */
+/* $OpenBSD: tty-term.c,v 1.86 2021/02/05 12:29:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -58,6 +58,7 @@ static const struct tty_term_code_entry tty_term_codes[] = {
 	[TTYC_AX] = { TTYCODE_FLAG, "AX" },
 	[TTYC_BCE] = { TTYCODE_FLAG, "bce" },
 	[TTYC_BEL] = { TTYCODE_STRING, "bel" },
+	[TTYC_BIDI] = { TTYCODE_STRING, "Bidi" },
 	[TTYC_BLINK] = { TTYCODE_STRING, "blink" },
 	[TTYC_BOLD] = { TTYCODE_STRING, "bold" },
 	[TTYC_CIVIS] = { TTYCODE_STRING, "civis" },
