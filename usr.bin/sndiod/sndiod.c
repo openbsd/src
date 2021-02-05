@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.43 2021/01/29 11:21:00 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.44 2021/02/05 17:59:33 jcs Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -477,11 +477,11 @@ main(int argc, char **argv)
 	/*
 	 * global options defaults
 	 */
-	vol = 118;
+	vol = 127;
 	dup = 1;
 	mmc = 0;
 	hold = 0;
-	autovol = 1;
+	autovol = 0;
 	bufsz = 0;
 	round = 0;
 	rate = DEFAULT_RATE;

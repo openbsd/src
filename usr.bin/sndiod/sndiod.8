@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sndiod.8,v 1.9 2021/02/01 07:09:37 jmc Exp $
+.\"	$OpenBSD: sndiod.8,v 1.10 2021/02/05 17:59:33 jcs Exp $
 .\"
 .\" Copyright (c) 2006-2012 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 1 2021 $
+.Dd $Mdocdate: February 5 2021 $
 .Dt SNDIOD 8
 .Os
 .Sh NAME
@@ -343,7 +343,7 @@ Reducing the volume in advance allows a client's volume to stay independent
 from the number of clients as long as their number is small enough.
 18 volume units (i.e. \-6dB attenuation) allows the number
 of playback programs to be doubled.
-The default is 118 i.e. \-3dB.
+The default is 127.
 .It Fl w Ar flag
 Control
 .Nm
@@ -355,11 +355,8 @@ option.
 If the flag is
 .Va on ,
 then the master volume is automatically adjusted to avoid clipping.
-Using
-.Va off
-makes sense in the rare situation where all programs lower their volumes.
 The default is
-.Va on .
+.Va off .
 .It Fl z Ar nframes
 The audio device block size in frames.
 This is the number of frames between audio clock ticks,
