@@ -138,6 +138,7 @@
 ./usr/include/dev/eisa/eisareg.h
 ./usr/include/dev/eisa/eisavar.h
 ./usr/include/dev/fdt
+./usr/include/dev/fdt/exuartreg.h
 ./usr/include/dev/fdt/if_mvnetareg.h
 ./usr/include/dev/fdt/if_mvppreg.h
 ./usr/include/dev/fdt/imxanatopvar.h
