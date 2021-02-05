@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.145 2020/12/18 18:24:45 patrick Exp $
+#	$OpenBSD: files.fdt,v 1.146 2021/02/05 00:05:20 patrick Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -147,6 +147,10 @@ file	dev/fdt/bcm2835_dwctwo.c	bcmdwctwo	needs-flag
 device	exrtc
 attach	exrtc at fdt
 file	dev/fdt/exrtc.c			exrtc
+
+device	exuart
+attach	exuart at fdt
+file	dev/fdt/exuart.c		exuart
 
 # ARM PrimeCell PL061 General Purpose Input/Output
 device	plgpio

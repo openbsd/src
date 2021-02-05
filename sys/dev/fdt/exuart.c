@@ -1,4 +1,4 @@
-/* $OpenBSD: exuart.c,v 1.19 2021/02/04 23:36:31 patrick Exp $ */
+/* $OpenBSD: exuart.c,v 1.1 2021/02/05 00:05:20 patrick Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -29,19 +29,20 @@
 #include <sys/select.h>
 #include <sys/kernel.h>
 
+#include <machine/bus.h>
+#include <machine/fdt.h>
+
 #include <dev/cons.h>
 
 #ifdef DDB
 #include <ddb/db_var.h>
 #endif
 
-#include <machine/bus.h>
-#include <machine/fdt.h>
 #include <arm/armv7/armv7var.h>
-#include <armv7/exynos/exuartreg.h>
+#include <dev/fdt/exuartreg.h>
 
-#include <dev/ofw/fdt.h>
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/fdt.h>
 
 #define DEVUNIT(x)      (minor(x) & 0x7f)
 #define DEVCUA(x)       (minor(x) & 0x80)
