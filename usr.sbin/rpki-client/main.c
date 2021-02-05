@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.97 2021/02/04 14:32:01 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.98 2021/02/05 12:26:52 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -738,7 +738,7 @@ main(int argc, char *argv[])
 {
 	int		 rc = 1, c, proc, st, rsync,
 			 fl = SOCK_STREAM | SOCK_CLOEXEC;
-	size_t		 i, j, outsz = 0, talsz = 0;
+	size_t		 i, outsz = 0, talsz = 0;
 	pid_t		 procpid, rsyncpid;
 	int		 fd[2];
 	struct entityq	 q;
@@ -952,24 +952,10 @@ main(int argc, char *argv[])
 		if (procq.queued)
 			pfd[1].events = POLLOUT;
 
-		if ((c = poll(pfd, 2, verbose ? 10000 : INFTIM)) == -1) {
+		if ((c = poll(pfd, 2, INFTIM)) == -1) {
 			if (errno == EINTR)
 				continue;
 			err(1, "poll");
-		}
-
-		/* Debugging: print some statistics if we stall. */
-
-		if (c == 0) {
-			for (i = j = 0; i < rt.reposz; i++)
-				if (!rt.repos[i].loaded) {
-					logx("pending repo %s",
-					    rt.repos[i].local);
-					j++;
-				}
-			logx("period stats: %zu pending repos", j);
-			logx("period stats: %zu pending entries", entity_queue);
-			continue;
 		}
 
 		if ((pfd[0].revents & (POLLERR|POLLNVAL)) ||
