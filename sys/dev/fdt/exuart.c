@@ -1,4 +1,4 @@
-/* $OpenBSD: exuart.c,v 1.2 2021/02/05 00:08:26 patrick Exp $ */
+/* $OpenBSD: exuart.c,v 1.3 2021/02/05 00:13:37 patrick Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -893,7 +893,7 @@ exuartcnattach(bus_space_tag_t iot, bus_addr_t iobase, int rate, tcflag_t cflag)
 	};
 
 	if (bus_space_map(iot, iobase, 0x100, 0, &exuartconsioh))
-			return ENOMEM;
+		return ENOMEM;
 
 	cn_tab = &exuartcons;
 	cn_tab->cn_dev = makedev(12 /* XXX */, 0);
