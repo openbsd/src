@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.93 2021/01/28 20:45:14 martijn Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.94 2021/02/05 10:30:45 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -399,6 +399,8 @@ struct snmp_message {
 	u_int8_t		 sm_data[READ_BUF_SIZE];
 	size_t			 sm_datalen;
 
+	uint32_t		 sm_transactionid;
+
 	u_int			 sm_version;
 
 	/* V1, V2c */
@@ -436,7 +438,11 @@ struct snmp_message {
 
 	struct ber_element	*sm_varbind;
 	struct ber_element	*sm_varbindresp;
+
+	RB_ENTRY(snmp_message)	 sm_entry;
 };
+RB_HEAD(snmp_messages, snmp_message);
+extern struct snmp_messages snmp_messages;
 
 /* Defined in SNMPv2-MIB.txt (RFC 3418) */
 struct snmp_stats {
@@ -642,6 +648,8 @@ struct kif_arp	*karp_getaddr(struct sockaddr *, u_short, int);
 void		 snmpe(struct privsep *, struct privsep_proc *);
 void		 snmpe_shutdown(void);
 void		 snmpe_dispatchmsg(struct snmp_message *);
+int		 snmp_messagecmp(struct snmp_message *, struct snmp_message *);
+RB_PROTOTYPE(snmp_messages, snmp_message, sm_entry, snmp_messagecmp)
 
 /* trap.c */
 void		 trap_init(void);
