@@ -1,4 +1,4 @@
-/* $OpenBSD: exuart.c,v 1.1 2021/02/05 00:05:20 patrick Exp $ */
+/* $OpenBSD: exuart.c,v 1.2 2021/02/05 00:08:26 patrick Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -38,7 +38,6 @@
 #include <ddb/db_var.h>
 #endif
 
-#include <arm/armv7/armv7var.h>
 #include <dev/fdt/exuartreg.h>
 
 #include <dev/ofw/openfirm.h>
@@ -87,8 +86,8 @@ struct exuart_softc {
 };
 
 
-int     exuartprobe(struct device *parent, void *self, void *aux);
-void    exuartattach(struct device *parent, struct device *self, void *aux);
+int	 exuart_match(struct device *, void *, void *);
+void	 exuart_attach(struct device *, struct device *, void *);
 
 void exuartcnprobe(struct consdev *cp);
 void exuartcninit(struct consdev *cp);
@@ -116,7 +115,7 @@ struct cfdriver exuart_cd = {
 };
 
 struct cfattach exuart_ca = {
-	sizeof(struct exuart_softc), exuartprobe, exuartattach
+	sizeof(struct exuart_softc), exuart_match, exuart_attach
 };
 
 bus_space_tag_t	exuartconsiot;
@@ -124,6 +123,9 @@ bus_space_handle_t exuartconsioh;
 bus_addr_t	exuartconsaddr;
 tcflag_t	exuartconscflag = TTYDEF_CFLAG;
 int		exuartdefaultrate = B115200;
+
+struct cdevsw exuartdev =
+	cdev_tty_init(3/*XXX NEXUART */ ,exuart);		/* 12: serial port */
 
 void
 exuart_init_cons(void)
@@ -148,34 +150,32 @@ exuart_init_cons(void)
 	if (fdt_get_reg(node, 0, &reg))
 		return;
 
-	exuartcnattach(&armv7_bs_tag, reg.addr, B115200, TTYDEF_CFLAG);
+	exuartcnattach(fdt_cons_bs_tag, reg.addr, B115200, TTYDEF_CFLAG);
 }
 
 int
-exuartprobe(struct device *parent, void *self, void *aux)
+exuart_match(struct device *parent, void *self, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
 	return OF_is_compatible(faa->fa_node, "samsung,exynos4210-uart");
 }
 
-struct cdevsw exuartdev =
-	cdev_tty_init(3/*XXX NEXUART */ ,exuart);		/* 12: serial port */
-
 void
-exuartattach(struct device *parent, struct device *self, void *aux)
+exuart_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct fdt_attach_args *faa = aux;
 	struct exuart_softc *sc = (struct exuart_softc *) self;
+	struct fdt_attach_args *faa = aux;
 	int maj;
 
 	if (faa->fa_nreg < 1)
 		return;
 
-	sc->sc_iot = faa->fa_iot;
 
 	sc->sc_irq = arm_intr_establish_fdt(faa->fa_node, IPL_TTY,
 	    exuart_intr, sc, sc->sc_dev.dv_xname);
+
+	sc->sc_iot = faa->fa_iot;
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr, faa->fa_reg[0].size,
 	    0, &sc->sc_ioh))
 		panic("%s: bus_space_map failed!", __func__);
