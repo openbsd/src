@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2835_dwctwo.c,v 1.1 2020/05/14 15:44:07 kettenis Exp $	*/
+/*	$OpenBSD: bcm2835_dwctwo.c,v 1.2 2021/02/05 00:42:25 patrick Exp $	*/
 /*
  * Copyright (c) 2015 Masao Uebayashi <uebayasi@tombiinc.com>
  *
@@ -115,7 +115,7 @@ bcm_dwctwo_attach(struct device *parent, struct device *self, void *aux)
 	if (idx == -1)
 		idx = 1;
 
-	sc->sc_ih = arm_intr_establish_fdt_idx(faa->fa_node, idx, IPL_USB,
+	sc->sc_ih = fdt_intr_establish_idx(faa->fa_node, idx, IPL_USB,
 	    dwc2_intr, (void *)&sc->sc_dwc2, sc->sc_dwc2.sc_bus.bdev.dv_xname);
 	if (sc->sc_ih == NULL)
 		panic("%s: intr_establish failed!", __func__);

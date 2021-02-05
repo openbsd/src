@@ -1,4 +1,4 @@
-/* $OpenBSD: tcpci.c,v 1.1 2020/04/27 21:30:52 patrick Exp $ */
+/* $OpenBSD: tcpci.c,v 1.2 2021/02/05 00:42:25 patrick Exp $ */
 /*
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
  *
@@ -232,7 +232,7 @@ tcpci_attach(struct device *parent, struct device *self, void *aux)
 	pinctrl_byname(sc->sc_node, "default");
 
 	task_set(&sc->sc_task, tcpci_task, sc);
-	sc->sc_ih = arm_intr_establish_fdt(sc->sc_node, IPL_BIO,
+	sc->sc_ih = fdt_intr_establish(sc->sc_node, IPL_BIO,
 	    tcpci_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": unable to establish interrupt\n");

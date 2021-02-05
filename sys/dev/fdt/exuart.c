@@ -1,4 +1,4 @@
-/* $OpenBSD: exuart.c,v 1.3 2021/02/05 00:13:37 patrick Exp $ */
+/* $OpenBSD: exuart.c,v 1.4 2021/02/05 00:42:25 patrick Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -146,7 +146,7 @@ exuart_init_cons(void)
 		}
 		stdout_node = OF_finddevice("/serial@13800000");
 	}
-	
+
 	if (fdt_get_reg(node, 0, &reg))
 		return;
 
@@ -171,8 +171,7 @@ exuart_attach(struct device *parent, struct device *self, void *aux)
 	if (faa->fa_nreg < 1)
 		return;
 
-
-	sc->sc_irq = arm_intr_establish_fdt(faa->fa_node, IPL_TTY,
+	sc->sc_irq = fdt_intr_establish(faa->fa_node, IPL_TTY,
 	    exuart_intr, sc, sc->sc_dev.dv_xname);
 
 	sc->sc_iot = faa->fa_iot;
