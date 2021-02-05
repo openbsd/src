@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.114 2021/02/01 09:21:51 mglocker Exp $ */
+/*	$OpenBSD: ugen.c,v 1.115 2021/02/05 08:17:22 mglocker Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -220,6 +220,10 @@ ugen_set_config(struct ugen_softc *sc, int configno)
 			err = usbd_set_config_no(dev, configno, 1);
 			if (err)
 				return (err);
+			cdesc = usbd_get_config_descriptor(dev);
+			if (cdesc == NULL ||
+			    cdesc->bConfigurationValue != configno)
+				return (USBD_INVAL);
 		}
 	}
 
