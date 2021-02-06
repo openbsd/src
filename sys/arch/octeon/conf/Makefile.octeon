@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.octeon,v 1.57 2021/01/28 17:39:03 deraadt Exp $
+#	$OpenBSD: Makefile.octeon,v 1.58 2021/02/06 09:31:47 visa Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -124,7 +124,18 @@ ioconf.o: ioconf.c
 	${NORMAL_C}
 
 ld.script: ${_machdir}/conf/ld.script
+.if ${IDENT:M-DNO_RANDOMIZE}
+	# Some broken firmware try to load ELF .openbsd.randomdata segment.
+	# This fails because the segment overlaps with the actual kernel
+	# ELF LOAD segment, and the firmware cannot allocate the memory region
+	# as it is already in use. Avoid this by omitting PT_OPENBSD_RANDOMIZE.
+	sed -e '/PT_OPENBSD_RANDOMIZE/d' \
+	    -e 's/ :openbsd_randomize//' \
+	    ${_machdir}/conf/ld.script > $@.tmp
+	mv $@.tmp $@
+.else
 	cp ${_machdir}/conf/ld.script $@
+.endif
 
 gapdummy.o:
 	echo '__asm(".section .rodata,\"a\"");' > gapdummy.c

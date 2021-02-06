@@ -1,32 +1,63 @@
-/*	$OpenBSD: ld.script,v 1.5 2019/11/09 20:07:00 guenther Exp $	*/
+/*	$OpenBSD: ld.script,v 1.6 2021/02/06 09:31:47 visa Exp $	*/
 
 OUTPUT_FORMAT("elf64-tradbigmips")
 OUTPUT_ARCH(mips)
 ENTRY(__start)
 
+/*
+ * When the kernel is built with option NO_RANDOMIZE, PT_OPENBSD_RANDOMIZE
+ * and :openbsd_randomize are removed by the Makefile.
+ */
+
+PHDRS
+{
+	text PT_LOAD;
+	openbsd_randomize PT_OPENBSD_RANDOMIZE;
+}
+
 SECTIONS
 {
-	.text :		{ *(.text .text.* .gnu.linkonce.t.*) }
+	.text :
+	{
+		*(.text .text.* .gnu.linkonce.t.*)
+	} :text
 	PROVIDE (etext = .);
-	.rodata :	{ *(.rodata .rodata.* .gnu.linkonce.r.*) }
-	_gp = ALIGN(16) + 0x7ff0;
-	.data :		{ *(.data .data.* .gnu.linkonce.d.*) }
-	__kernel_randomdata = .;
+	.rodata :
+	{
+		*(.rodata .rodata.* .gnu.linkonce.r.*)
+	} :text
+
+	. = ALIGN(8);
+	PROVIDE (__kernel_randomdata = .);
 	.openbsd.randomdata :
 	{
-		/* XXX shouldn't this be placed next to rodata? */
 		__retguard_start = ABSOLUTE(.);
 		*(.openbsd.randomdata.retguard .openbsd.randomdata.retguard.*)
 		/* XXX . = ALIGN(0x1000); */
 		__retguard_end = ABSOLUTE(.);
 		*(.openbsd.randomdata .openbsd.randomdata.*)
-	}
-	__kernel_randomdata_end = .;
+	} :text :openbsd_randomize
+	. = ALIGN(8);
+	PROVIDE (__kernel_randomdata_end = .);
+
+	_gp = ALIGN(16) + 0x7ff0;
+	.data :
+	{
+		*(.data .data.* .gnu.linkonce.d.*)
+	} :text
 	PROVIDE (edata = .);
-	.sbss :		{ *(.sbss .sbss.* .gnu.linkonce.sb.* .scommon) }
-	.bss :		{ *(.bss .bss.* .gnu.linkonce.b.* COMMON) }
+	.sbss :
+	{
+		*(.sbss .sbss.* .gnu.linkonce.sb.* .scommon)
+	}
+	.bss :
+	{
+		*(.bss .bss.* .gnu.linkonce.b.* COMMON)
+	}
+	. = ALIGN(8);
 	PROVIDE (_end = .);
 	PROVIDE (end = .);
+
 	/DISCARD/ :
 	{
 		*(.pdr)
