@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.363 2021/02/02 17:47:42 claudio Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.364 2021/02/06 13:15:37 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -79,6 +79,7 @@ void ip_mloopback(struct ifnet *, struct mbuf *, struct sockaddr_in *);
 static __inline u_int16_t __attribute__((__unused__))
     in_cksum_phdr(u_int32_t, u_int32_t, u_int32_t);
 void in_delayed_cksum(struct mbuf *);
+int in_ifcap_cksum(struct mbuf *, struct ifnet *, int);
 
 #ifdef IPSEC
 struct tdb *
@@ -458,8 +459,7 @@ sendit:
 	 */
 	if (ntohs(ip->ip_len) <= mtu) {
 		ip->ip_sum = 0;
-		if ((ifp->if_capabilities & IFCAP_CSUM_IPv4) &&
-		    (ifp->if_bridgeidx == 0))
+		if (in_ifcap_cksum(m, ifp, IFCAP_CSUM_IPv4))
 			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
 		else {
 			ipstat_inc(ips_outswcsum);
@@ -719,9 +719,7 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 		m->m_pkthdr.ph_ifidx = 0;
 		mhip->ip_off = htons((u_int16_t)mhip->ip_off);
 		mhip->ip_sum = 0;
-		if ((ifp != NULL) &&
-		    (ifp->if_capabilities & IFCAP_CSUM_IPv4) &&
-		    (ifp->if_bridgeidx == 0))
+		if (in_ifcap_cksum(m, ifp, IFCAP_CSUM_IPv4))
 			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
 		else {
 			ipstat_inc(ips_outswcsum);
@@ -740,9 +738,7 @@ ip_fragment(struct mbuf *m, struct ifnet *ifp, u_long mtu)
 	ip->ip_len = htons((u_int16_t)m->m_pkthdr.len);
 	ip->ip_off |= htons(IP_MF);
 	ip->ip_sum = 0;
-	if ((ifp != NULL) &&
-	    (ifp->if_capabilities & IFCAP_CSUM_IPv4) &&
-	    (ifp->if_bridgeidx == 0))
+	if (in_ifcap_cksum(m, ifp, IFCAP_CSUM_IPv4))
 		m->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
 	else {
 		ipstat_inc(ips_outswcsum);
@@ -1855,15 +1851,15 @@ in_proto_cksum_out(struct mbuf *m, struct ifnet *ifp)
 	}
 
 	if (m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT) {
-		if (!ifp || !(ifp->if_capabilities & IFCAP_CSUM_TCPv4) ||
-		    ip->ip_hl != 5 || ifp->if_bridgeidx != 0) {
+		if (!in_ifcap_cksum(m, ifp, IFCAP_CSUM_TCPv4) ||
+		    ip->ip_hl != 5) {
 			tcpstat_inc(tcps_outswcsum);
 			in_delayed_cksum(m);
 			m->m_pkthdr.csum_flags &= ~M_TCP_CSUM_OUT; /* Clear */
 		}
 	} else if (m->m_pkthdr.csum_flags & M_UDP_CSUM_OUT) {
-		if (!ifp || !(ifp->if_capabilities & IFCAP_CSUM_UDPv4) ||
-		    ip->ip_hl != 5 || ifp->if_bridgeidx != 0) {
+		if (!in_ifcap_cksum(m, ifp, IFCAP_CSUM_UDPv4) ||
+		    ip->ip_hl != 5) {
 			udpstat_inc(udps_outswcsum);
 			in_delayed_cksum(m);
 			m->m_pkthdr.csum_flags &= ~M_UDP_CSUM_OUT; /* Clear */
@@ -1872,4 +1868,23 @@ in_proto_cksum_out(struct mbuf *m, struct ifnet *ifp)
 		in_delayed_cksum(m);
 		m->m_pkthdr.csum_flags &= ~M_ICMP_CSUM_OUT; /* Clear */
 	}
+}
+
+int
+in_ifcap_cksum(struct mbuf *m, struct ifnet *ifp, int ifcap)
+{
+	if ((ifp == NULL) ||
+	    !ISSET(ifp->if_capabilities, ifcap) ||
+	    (ifp->if_bridgeidx != 0))
+		return (0);
+	/*
+	 * Simplex interface sends packet back without hardware cksum.
+	 * Keep this check in sync with the condition where ether_resolve()
+	 * calls if_input_local().
+	 */
+	if (ISSET(m->m_flags, M_BCAST) &&
+	    ISSET(ifp->if_flags, IFF_SIMPLEX) &&
+	    !m->m_pkthdr.pf.routed)
+		return (0);
+	return (1);
 }

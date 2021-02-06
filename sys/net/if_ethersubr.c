@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.269 2021/02/05 16:47:48 bluhm Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.270 2021/02/06 13:15:37 bluhm Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -227,7 +227,11 @@ ether_resolve(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 			return (error);
 		eh->ether_type = htons(ETHERTYPE_IP);
 
-		/* If broadcasting on a simplex interface, loopback a copy */
+		/*
+		 * If broadcasting on a simplex interface, loopback a copy.
+		 * The checksum must be calculated in software.  Keep the
+		 * condition in sync with in_ifcap_cksum().
+		 */
 		if (ISSET(m->m_flags, M_BCAST) &&
 		    ISSET(ifp->if_flags, IFF_SIMPLEX) &&
 		    !m->m_pkthdr.pf.routed) {
