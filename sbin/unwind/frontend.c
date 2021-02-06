@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.67 2021/01/30 10:31:51 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.68 2021/02/06 18:01:02 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -258,6 +258,8 @@ frontend(int debug, int verbose)
 	TAILQ_INIT(&trust_anchors);
 	TAILQ_INIT(&new_trust_anchors);
 
+	add_new_ta(&trust_anchors, KSK2017);
+
 	event_dispatch();
 
 	frontend_shutdown();
@@ -446,21 +448,10 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			control_listen(fd);
 			break;
 		case IMSG_TAFD:
-			if ((ta_fd = imsg.fd) == -1)
-				fatalx("%s: expected to receive imsg trust "
-				    "anchor fd but didn't receive any",
-				    __func__);
-			if (TAILQ_EMPTY(&trust_anchors)) {
-				/*
-				 * We did not receive a trustanchor from DNS,
-				 * maybe the built-in one is out of date, try
-				 * with the one from disk.
-				 */
+			if ((ta_fd = imsg.fd) != -1)
 				parse_trust_anchor(&trust_anchors, ta_fd);
-				if (!TAILQ_EMPTY(&trust_anchors))
-					send_trust_anchors(&trust_anchors);
-			} else
-				write_trust_anchors(&trust_anchors, ta_fd);
+			if (!TAILQ_EMPTY(&trust_anchors))
+				send_trust_anchors(&trust_anchors);
 			break;
 		case IMSG_BLFD:
 			if ((fd = imsg.fd) == -1)

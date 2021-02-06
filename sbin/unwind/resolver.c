@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.141 2021/01/31 16:07:27 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.142 2021/02/06 18:01:02 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -422,8 +422,6 @@ resolver(int debug, int verbose)
 	TAILQ_INIT(&trust_anchors);
 	TAILQ_INIT(&new_trust_anchors);
 	TAILQ_INIT(&running_queries);
-
-	add_new_ta(&trust_anchors, KSK2017);
 
 	event_dispatch();
 
