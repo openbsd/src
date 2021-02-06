@@ -1,4 +1,4 @@
-/* $OpenBSD: engine.c,v 1.26 2021/01/09 12:49:09 jasper Exp $	 */
+/* $OpenBSD: engine.c,v 1.27 2021/02/06 06:19:28 tb Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -1139,7 +1139,7 @@ command_set(struct command *cmd, const char *init)
 			cmdbuf[0] = 0;
 		}
 	}
-	curr_message = NULL;
+	message_set(NULL);
 	curr_cmd = cmd;
 	need_update = 1;
 	return prev;
@@ -1235,7 +1235,7 @@ keyboard(void)
 
 	if (curr_message != NULL) {
 		if (ch > 0) {
-			curr_message = NULL;
+			message_set(NULL);
 			need_update = 1;
 		}
 	}
