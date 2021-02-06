@@ -1,4 +1,4 @@
-/* $OpenBSD: dtlstest.c,v 1.4 2020/10/16 17:57:20 tb Exp $ */
+/* $OpenBSD: dtlstest.c,v 1.5 2021/02/06 07:33:27 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -284,7 +284,7 @@ static void
 dtls_info_callback(const SSL *ssl, int type, int val)
 {
 	/*
-	 * Squeal's ahead... remove the bbio from the info callback, so we can
+	 * Squeals ahead... remove the bbio from the info callback, so we can
 	 * drop specific messages. Ideally this would be an option for the SSL.
 	 */
 	if (ssl->wbio == ssl->bbio)
@@ -425,6 +425,38 @@ do_accept(SSL *ssl, const char *name, int *done, short *events)
 	}
 
 	return ssl_error(ssl, name, "accept", ssl_ret, events);
+}
+
+static int
+do_read(SSL *ssl, const char *name, int *done, short *events)
+{
+	uint8_t buf[512];
+	int ssl_ret;
+
+	if ((ssl_ret = SSL_read(ssl, buf, sizeof(buf))) > 0) {
+		fprintf(stderr, "INFO: %s read done\n", name);
+		if (debug)
+			hexdump(buf, ssl_ret);
+		*done = 1;
+		return 1;
+	}
+
+	return ssl_error(ssl, name, "read", ssl_ret, events);
+}
+
+static int
+do_write(SSL *ssl, const char *name, int *done, short *events)
+{
+	const uint8_t buf[] = "Hello, World!\n";
+	int ssl_ret;
+
+	if ((ssl_ret = SSL_write(ssl, buf, sizeof(buf))) > 0) {
+		fprintf(stderr, "INFO: %s write done\n", name);
+		*done = 1;
+		return 1;
+	}
+
+	return ssl_error(ssl, name, "write", ssl_ret, events);
 }
 
 static int
@@ -657,7 +689,21 @@ dtlstest(const struct dtls_test *dt)
 		goto failure;
 	}
 
-	/* XXX - do reads and writes. */
+	pfd[0].events = POLLIN;
+	pfd[1].events = POLLOUT;
+
+	if (!do_client_server_loop(client, do_read, server, do_write, pfd)) {
+		fprintf(stderr, "FAIL: client read and server write I/O failed\n");
+		goto failure;
+	}
+
+	pfd[0].events = POLLOUT;
+	pfd[1].events = POLLIN;
+
+	if (!do_client_server_loop(client, do_write, server, do_read, pfd)) {
+		fprintf(stderr, "FAIL: client write and server read I/O failed\n");
+		goto failure;
+	}
 
 	pfd[0].events = POLLOUT;
 	pfd[1].events = POLLOUT;
