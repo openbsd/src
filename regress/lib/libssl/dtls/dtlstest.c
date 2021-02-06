@@ -1,4 +1,4 @@
-/* $OpenBSD: dtlstest.c,v 1.5 2021/02/06 07:33:27 jsing Exp $ */
+/* $OpenBSD: dtlstest.c,v 1.6 2021/02/06 07:34:34 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -149,7 +149,8 @@ bio_packet_monkey_write(BIO *bio, const char *in, int in_len)
 	if (debug) {
 		fprintf(stderr, "DEBUG: %s packet...\n",
 		    drop ? "dropping" : "writing");
-		hexdump(in, in_len);
+		if (debug > 1)
+			hexdump(in, in_len);
 	}
 	if (drop)
 		return in_len;
@@ -435,7 +436,7 @@ do_read(SSL *ssl, const char *name, int *done, short *events)
 
 	if ((ssl_ret = SSL_read(ssl, buf, sizeof(buf))) > 0) {
 		fprintf(stderr, "INFO: %s read done\n", name);
-		if (debug)
+		if (debug > 1)
 			hexdump(buf, ssl_ret);
 		*done = 1;
 		return 1;
