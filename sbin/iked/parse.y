@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.125 2021/02/01 15:13:15 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.126 2021/02/07 00:51:53 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -3209,6 +3209,8 @@ expand_flows(struct iked_policy *pol, struct ipsec_addr_wrap *src,
 		if (create_flow(pol, ipa, ipb))
 			goto done;
 
+		iaw_free(ipa);
+		iaw_free(ipb);
 		src->af = dst->af = AF_INET6;
 		ipa = expand_keyword(src);
 		ipb = expand_keyword(dst);
@@ -3234,8 +3236,8 @@ expand_flows(struct iked_policy *pol, struct ipsec_addr_wrap *src,
 		goto done;
 	ret = 0;
  done:
-	free(ipa);
-	free(ipb);
+	iaw_free(ipa);
+	iaw_free(ipb);
 	return (ret);
 }
 
