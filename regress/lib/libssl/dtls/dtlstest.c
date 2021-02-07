@@ -1,4 +1,4 @@
-/* $OpenBSD: dtlstest.c,v 1.6 2021/02/06 07:34:34 jsing Exp $ */
+/* $OpenBSD: dtlstest.c,v 1.7 2021/02/07 14:52:17 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -344,6 +344,7 @@ dtls_server(int sock, long options, long mtu)
 
 	SSL_CTX_set_cookie_generate_cb(ssl_ctx, dtls_cookie_generate);
 	SSL_CTX_set_cookie_verify_cb(ssl_ctx, dtls_cookie_verify);
+	SSL_CTX_set_dh_auto(ssl_ctx, 2);
 	SSL_CTX_set_options(ssl_ctx, options);
 	SSL_CTX_set_read_ahead(ssl_ctx, 1);
 
@@ -563,34 +564,34 @@ static const struct dtls_test dtls_tests[] = {
 	},
 	{
 		.desc = "DTLS with dropped ServerHello",
-		.ssl_options = 0,
+		.ssl_options = SSL_OP_NO_TICKET,
 		.server_bbio_off = 1,
 		.server_drops = { 1 },
 	},
 	{
 		.desc = "DTLS with dropped server Certificate",
-		.ssl_options = 0,
+		.ssl_options = SSL_OP_NO_TICKET,
 		.server_bbio_off = 1,
 		.server_drops = { 2 },
 	},
 	{
 		.desc = "DTLS with dropped ServerKeyExchange",
-		.ssl_options = 0,
+		.ssl_options = SSL_OP_NO_TICKET,
 		.server_bbio_off = 1,
 		.server_drops = { 3 },
 	},
-#if 0
-	/*
-	 * These three currently result in the server accept completing and the
-	 * client looping on a timeout. Presumably the server should not
-	 * complete until the client Finished is received...
-	 */
 	{
 		.desc = "DTLS with dropped ServerHelloDone",
-		.ssl_options = 0,
+		.ssl_options = SSL_OP_NO_TICKET,
 		.server_bbio_off = 1,
 		.server_drops = { 4 },
 	},
+#if 0
+	/*
+	 * These two result in the server accept completing and the
+	 * client looping on a timeout. Presumably the server should not
+	 * complete until the client Finished is received...
+	 */
 	{
 		.desc = "DTLS with dropped server CCS",
 		.ssl_options = 0,
@@ -611,7 +612,7 @@ static const struct dtls_test dtls_tests[] = {
 		.client_drops = { 2 },
 	},
 	{
-		.desc = "DTLS with dropped Client CCS",
+		.desc = "DTLS with dropped client CCS",
 		.ssl_options = 0,
 		.client_bbio_off = 1,
 		.client_drops = { 3 },
