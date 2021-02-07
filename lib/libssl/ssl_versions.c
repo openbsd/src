@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_versions.c,v 1.8 2021/01/04 19:19:12 tb Exp $ */
+/* $OpenBSD: ssl_versions.c,v 1.9 2021/02/07 15:04:10 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -230,4 +230,14 @@ ssl_downgrade_max_version(SSL *s, uint16_t *max_ver)
 	*max_ver = max_version;
 
 	return 1;
+}
+
+int
+ssl_legacy_stack_version(SSL *s, uint16_t version)
+{
+	if (SSL_is_dtls(s))
+		return version == DTLS1_VERSION;
+
+	return version == TLS1_VERSION || version == TLS1_1_VERSION ||
+	    version == TLS1_2_VERSION;
 }

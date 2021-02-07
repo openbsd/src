@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.90 2021/01/26 14:22:20 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.91 2021/02/07 15:04:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -213,19 +213,12 @@ ssl3_accept(SSL *s)
 			if (cb != NULL)
 				cb(s, SSL_CB_HANDSHAKE_START, 1);
 
-			if (SSL_is_dtls(s)) {
-				if ((s->version & 0xff00) != (DTLS1_VERSION & 0xff00)) {
-					SSLerror(s, ERR_R_INTERNAL_ERROR);
-					ret = -1;
-					goto end;
-				}
-			} else {
-				if ((s->version >> 8) != 3) {
-					SSLerror(s, ERR_R_INTERNAL_ERROR);
-					ret = -1;
-					goto end;
-				}
+			if (!ssl_legacy_stack_version(s, s->version)) {
+				SSLerror(s, ERR_R_INTERNAL_ERROR);
+				ret = -1;
+				goto end;
 			}
+
 			s->internal->type = SSL_ST_ACCEPT;
 
 			if (!ssl3_setup_init_buffer(s)) {
