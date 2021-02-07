@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.77 2021/02/07 15:04:10 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.78 2021/02/07 15:26:32 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2238,7 +2238,8 @@ ssl3_send_client_kex_gost(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 		goto err;
 	}
 
-	if (ssl_get_algorithm2(s) & SSL_HANDSHAKE_MAC_GOST94)
+	/* XXX check handshake hash instead. */
+	if (S3I(s)->hs.new_cipher->algorithm2 & SSL_HANDSHAKE_MAC_GOST94)
 		nid = NID_id_GostR3411_94;
 	else
 		nid = NID_id_tc26_gost3411_2012_256;

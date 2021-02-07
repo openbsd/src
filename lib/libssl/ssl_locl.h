@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.319 2021/02/07 15:04:10 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.320 2021/02/07 15:26:32 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1382,8 +1382,6 @@ int ssl_check_serverhello_tlsext(SSL *s);
 #define TLS1_TICKET_DECRYPTED		 3
 
 int tls1_process_ticket(SSL *s, CBS *ext_block, int *alert, SSL_SESSION **ret);
-
-long ssl_get_algorithm2(SSL *s);
 
 int tls1_check_ec_server_key(SSL *s);
 
