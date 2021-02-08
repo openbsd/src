@@ -1,4 +1,4 @@
-.\"	$OpenBSD: softraid.4,v 1.44 2020/10/26 13:42:07 schwarze Exp $
+.\"	$OpenBSD: softraid.4,v 1.45 2021/02/08 20:05:20 stsp Exp $
 .\"
 .\" Copyright (c) 2007 Todd T. Fries   <todd@OpenBSD.org>
 .\" Copyright (c) 2007 Marco Peereboom <marco@OpenBSD.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 26 2020 $
+.Dd $Mdocdate: February 8 2021 $
 .Dt SOFTRAID 4
 .Os
 .Sh NAME
@@ -98,6 +98,18 @@ A
 discipline.
 It writes data to each chunk in sequence to provide increased capacity.
 CONCAT does not provide redundancy.
+.It RAID 1C
+A
+.Em mirroring
+and
+.Em encrypting
+discipline.
+It encrypts data to provide for data confidentiality and copies the
+encrypted data across more than one chunk to prevent data loss in
+case of a chunk failure.
+Unlike traditional RAID 1,
+.Nm
+supports the use of more than two chunks in a RAID 1C setup.
 .El
 .Pp
 .Xr installboot 8
