@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.85 2020/10/14 16:57:33 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.86 2021/02/08 17:20:47 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -401,9 +401,6 @@ tlsext_ecpf_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 int
 tlsext_ecpf_server_needs(SSL *s, uint16_t msg_type)
 {
-	if (s->version == DTLS1_VERSION)
-		return 0;
-
 	return ssl_using_ecc_cipher(s);
 }
 
@@ -848,14 +845,12 @@ tlsext_sni_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 
 
 /*
- *Certificate Status Request - RFC 6066 section 8.
+ * Certificate Status Request - RFC 6066 section 8.
  */
 
 int
 tlsext_ocsp_client_needs(SSL *s, uint16_t msg_type)
 {
-	if (SSL_is_dtls(s))
-		return 0;
 	if (msg_type != SSL_TLSEXT_MSG_CH)
 		return 0;
 
