@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.22 2021/02/01 11:26:28 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.23 2021/02/08 09:46:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Martin Pieuchot <mpi@openbsd.org>
@@ -55,7 +55,7 @@ SLIST_HEAD(, bt_var)	 g_variables;
 
 struct bt_rule	*br_new(struct bt_probe *, struct bt_filter *, struct bt_stmt *,
 		     enum bt_rtype);
-struct bt_filter *bf_new(enum bt_operand, enum bt_filtervar, int);
+struct bt_filter *bf_new(enum bt_argtype, enum bt_filtervar, int);
 struct bt_probe	*bp_new(const char *, const char *, const char *, int32_t);
 struct bt_arg	*ba_append(struct bt_arg *, struct bt_arg *);
 struct bt_stmt	*bs_new(enum bt_action, struct bt_arg *, struct bt_var *);
@@ -102,7 +102,7 @@ static int	 yylex(void);
 static int pflag;
 %}
 
-%token	ERROR OP_EQ OP_NEQ BEGIN END HZ
+%token	ERROR OP_EQ OP_NE OP_LE OP_GE OP_LAND OP_LOR BEGIN END HZ
 /* Builtins */
 %token	BUILTIN PID TID
 /* Functions and Map operators */
@@ -111,7 +111,7 @@ static int pflag;
 %token	<v.number>	NUMBER
 
 %type	<v.string>	gvar
-%type	<v.i>		filterval oper builtin
+%type	<v.i>		fval testop binop builtin
 %type	<v.i>		BUILTIN F_DELETE F_PRINT FUNC0 FUNC1 FUNCN OP1 OP4
 %type	<v.i>		MOP0 MOP1
 %type	<v.probe>	probe probeval
@@ -147,17 +147,30 @@ probeval	: STRING ':' STRING ':' STRING	{ $$ = bp_new($1, $3, $5, 0); }
 		;
 
 
-filterval	: PID				{ $$ = B_FV_PID; }
+fval		: PID				{ $$ = B_FV_PID; }
 		| TID				{ $$ = B_FV_TID; }
 		;
 
-oper		: OP_EQ				{ $$ = B_OP_EQ; }
-		| OP_NEQ			{ $$ = B_OP_NE; }
+testop		: OP_EQ				{ $$ = B_AT_OP_EQ; }
+		| OP_NE				{ $$ = B_AT_OP_NE; }
+		| OP_LE				{ $$ = B_AT_OP_LE; }
+		| OP_GE				{ $$ = B_AT_OP_GE; }
+		| OP_LAND			{ $$ = B_AT_OP_LAND; }
+		| OP_LOR			{ $$ = B_AT_OP_LOR; }
+		;
+
+binop		: testop
+		| '+'				{ $$ = B_AT_OP_PLUS; }
+		| '-'				{ $$ = B_AT_OP_MINUS; }
+		| '*'				{ $$ = B_AT_OP_MULT; }
+		| '/'				{ $$ = B_AT_OP_DIVIDE; }
+		| '&'				{ $$ = B_AT_OP_BAND; }
+		| '|'				{ $$ = B_AT_OP_BOR; }
 		;
 
 predicate	: /* empty */			{ $$ = NULL; }
-		| '/' filterval oper NUMBER '/' { $$ = bf_new($3, $2, $4); }
-		| '/' NUMBER oper filterval '/' { $$ = bf_new($3, $4, $2); }
+		| '/' fval testop NUMBER '/'	{ $$ = bf_new($3, $2, $4); }
+		| '/' NUMBER testop fval '/'	{ $$ = bf_new($3, $4, $2); }
 		| '/' condition '/' 		{ $$ = bc_new($2); }
 		;
 
@@ -180,12 +193,7 @@ expr		: CSTRING			{ $$ = ba_new($1, B_AT_STR); }
 		;
 
 term		: '(' term ')'			{ $$ = $2; }
-		| term '+' term			{ $$ = ba_op('+', $1, $3); }
-		| term '-' term			{ $$ = ba_op('-', $1, $3); }
-		| term '/' term			{ $$ = ba_op('/', $1, $3); }
-		| term '*' term			{ $$ = ba_op('*', $1, $3); }
-		| term '&' term			{ $$ = ba_op('&', $1, $3); }
-		| term '|' term			{ $$ = ba_op('|', $1, $3); }
+		| term binop term		{ $$ = ba_op($2, $1, $3); }
 		| NUMBER			{ $$ = ba_new($1, B_AT_LONG); }
 		| builtin			{ $$ = ba_new(NULL, $1); }
 		| gvar				{ $$ = bv_get($1); }
@@ -258,7 +266,7 @@ br_new(struct bt_probe *probe, struct bt_filter *filter, struct bt_stmt *head,
 
 /* Create a new event filter */
 struct bt_filter *
-bf_new(enum bt_operand op, enum bt_filtervar var, int val)
+bf_new(enum bt_argtype op, enum bt_filtervar var, int val)
 {
 	struct bt_filter *bf;
 
@@ -349,33 +357,8 @@ ba_append(struct bt_arg *da0, struct bt_arg *da1)
 
 /* Create an operator argument */
 struct bt_arg *
-ba_op(const char op, struct bt_arg *da0, struct bt_arg *da1)
+ba_op(enum bt_argtype type, struct bt_arg *da0, struct bt_arg *da1)
 {
-	enum bt_argtype type;
-
-	switch (op) {
-	case '+':
-		type = B_AT_OP_ADD;
-		break;
-	case '-':
-		type = B_AT_OP_MINUS;
-		break;
-	case '*':
-		type = B_AT_OP_MULT;
-		break;
-	case '/':
-		type = B_AT_OP_DIVIDE;
-		break;
-	case '&':
-		type = B_AT_OP_AND;
-		break;
-	case '|':
-		type = B_AT_OP_OR;
-		break;
-	default:
-		assert(0);
-	}
-
 	return ba_new(ba_append(da0, da1), type);
 }
 
@@ -581,8 +564,6 @@ struct keyword *
 lookup(char *s)
 {
 	static const struct keyword kws[] = {
-		{ "!=",		OP_NEQ,		0 },
-		{ "==",		OP_EQ,		0 },
 		{ "BEGIN",	BEGIN,		0 },
 		{ "END",	END,		0 },
 		{ "arg0",	BUILTIN,	B_AT_BI_ARG0 },
@@ -699,9 +680,22 @@ again:
 	}
 
 	switch (c) {
+	case '!':
 	case '=':
-		if (peek() == '=')
-			break;
+		if (peek() == '=') {
+			lgetc();
+			return (c == '=') ? OP_EQ : OP_NE;
+		}
+	case '&':
+		if (peek() == '&') {
+			lgetc();
+			return OP_LAND;
+		}
+	case '|':
+		if (peek() == '|') {
+			lgetc();
+			return OP_LOR;
+		}
 	case ',':
 	case '(':
 	case ')':
@@ -788,7 +782,7 @@ again:
 		}
 	}
 
-#define allowed_in_string(x) (isalnum(c) || c == '!' || c == '=' || c == '_')
+#define allowed_in_string(x) (isalnum(c) || c == '_')
 
 	/* parsing next word */
 	if (allowed_in_string(c)) {

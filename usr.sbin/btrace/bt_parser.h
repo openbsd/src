@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parser.h,v 1.12 2021/02/01 11:26:29 mpi Exp $	*/
+/*	$OpenBSD: bt_parser.h,v 1.13 2021/02/08 09:46:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Martin Pieuchot <mpi@openbsd.org>
@@ -46,11 +46,7 @@ struct bt_probe {
  * Event filters correspond to checks performed in-kernel.
  */
 struct bt_evtfilter {
-	enum bt_operand {
-		B_OP_NONE = 1,
-		B_OP_EQ,
-		B_OP_NE,
-	}			bf_op;
+	int			bf_op;
 	enum bt_filtervar {
 		B_FV_NONE = 1,
 		B_FV_PID,
@@ -150,12 +146,18 @@ struct bt_arg {
 		B_AT_MF_MIN,			/* @map[key] = min(pid) */
 		B_AT_MF_SUM,			/* @map[key] = sum(@elapsed) */
 
-		B_AT_OP_ADD,
+		B_AT_OP_PLUS,
 		B_AT_OP_MINUS,
 		B_AT_OP_MULT,
 		B_AT_OP_DIVIDE,
-		B_AT_OP_AND,
-		B_AT_OP_OR,
+		B_AT_OP_BAND,
+		B_AT_OP_BOR,
+		B_AT_OP_EQ,
+		B_AT_OP_NE,
+		B_AT_OP_LE,
+		B_AT_OP_GE,
+		B_AT_OP_LAND,
+		B_AT_OP_LOR,
 	}			 ba_type;
 };
 
