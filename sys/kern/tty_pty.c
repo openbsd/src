@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.107 2021/02/04 13:32:33 claudio Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.108 2021/02/08 09:18:30 claudio Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -1088,12 +1088,12 @@ ptmclose(dev_t dev, int flag, int mode, struct proc *p)
 int
 ptmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-	dev_t newdev, error;
+	dev_t newdev;
 	struct pt_softc * pti;
 	struct nameidata cnd, snd;
 	struct filedesc *fdp = p->p_fd;
 	struct file *cfp = NULL, *sfp = NULL;
-	int cindx, sindx;
+	int cindx, sindx, error;
 	uid_t uid;
 	gid_t gid;
 	struct vattr vattr;
@@ -1110,10 +1110,11 @@ ptmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		}
 		if ((error = falloc(p, &sfp, &sindx)) != 0) {
 			fdremove(fdp, cindx);
-			closef(cfp, p);
 			fdpunlock(fdp);
+			closef(cfp, p);
 			break;
 		}
+		fdpunlock(fdp);
 
 retry:
 		/* Find and open a free master pty. */
@@ -1203,6 +1204,7 @@ retry:
 		memcpy(ptm->sn, pti->pty_sn, sizeof(pti->pty_sn));
 
 		/* insert files now that we've passed all errors */
+		fdplock(fdp);
 		fdinsert(fdp, cindx, 0, cfp);
 		fdinsert(fdp, sindx, 0, sfp);
 		fdpunlock(fdp);
@@ -1215,10 +1217,11 @@ retry:
 	}
 	return (error);
 bad:
+	fdplock(fdp);
 	fdremove(fdp, cindx);
-	closef(cfp, p);
 	fdremove(fdp, sindx);
-	closef(sfp, p);
 	fdpunlock(fdp);
+	closef(cfp, p);
+	closef(sfp, p);
 	return (error);
 }
