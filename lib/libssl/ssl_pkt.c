@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.34 2021/01/19 18:57:09 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.35 2021/02/08 17:18:39 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -227,14 +227,14 @@ ssl3_read_n(SSL *s, int n, int max, int extend)
 		return -1;
 	}
 
-	if (!s->internal->read_ahead) {
-		/* ignore max parameter */
-		max = n;
-	} else {
+	if (s->internal->read_ahead || SSL_is_dtls(s)) {
 		if (max < n)
 			max = n;
 		if (max > (int)(rb->len - rb->offset))
 			max = rb->len - rb->offset;
+	} else {
+		/* ignore max parameter */
+		max = n;
 	}
 
 	while (left < n) {
