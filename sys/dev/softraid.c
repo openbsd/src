@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.417 2020/12/16 18:16:34 cheloha Exp $ */
+/* $OpenBSD: softraid.c,v 1.418 2021/02/08 11:20:03 stsp Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -1397,7 +1397,7 @@ sr_boot_assembly(struct sr_softc *sc)
 		 * key disk...
 		 */
 		bcr.bc_key_disk = NODEV;
-		if (bv->sbv_level == 'C') {
+		if (bv->sbv_level == 'C' || bv->sbv_level == 0x1C) {
 			SLIST_FOREACH(bc, &kdh, sbc_link) {
 				if (bcmp(&bc->sbc_metadata->ssdi.ssd_uuid,
 				    &bv->sbv_uuid,
@@ -1447,7 +1447,7 @@ sr_boot_assembly(struct sr_softc *sc)
 		bcr.bc_flags = BIOC_SCDEVT |
 		    (bv->sbv_flags & BIOC_SCNOAUTOASSEMBLE);
 
-		if (bv->sbv_level == 'C' &&
+		if ((bv->sbv_level == 'C' || bv->sbv_level == 0x1C) &&
 		    bcmp(&sr_bootuuid, &bv->sbv_uuid, sizeof(sr_bootuuid)) == 0)
 			data = sr_bootkey;
 
@@ -2585,7 +2585,8 @@ sr_ioctl_vol(struct sr_softc *sc, struct bioc_vol *bv)
 		bv->bv_nodisk = sd->sd_meta->ssdi.ssd_chunk_no;
 
 #ifdef CRYPTO
-		if (sd->sd_meta->ssdi.ssd_level == 'C' &&
+		if ((sd->sd_meta->ssdi.ssd_level == 'C' ||
+		    sd->sd_meta->ssdi.ssd_level == 0x1C) &&
 		    sd->mds.mdd_crypto.key_disk != NULL)
 			bv->bv_nodisk++;
 #endif
@@ -2641,7 +2642,8 @@ sr_ioctl_disk(struct sr_softc *sc, struct bioc_disk *bd)
 			src = sd->sd_vol.sv_chunks[bd->bd_diskid];
 #ifdef CRYPTO
 		else if (bd->bd_diskid == sd->sd_meta->ssdi.ssd_chunk_no &&
-		    sd->sd_meta->ssdi.ssd_level == 'C' &&
+		    (sd->sd_meta->ssdi.ssd_level == 'C' ||
+		    sd->sd_meta->ssdi.ssd_level == 0x1C) &&
 		    sd->mds.mdd_crypto.key_disk != NULL)
 			src = sd->mds.mdd_crypto.key_disk;
 #endif
@@ -3398,7 +3400,11 @@ sr_ioctl_createraid(struct sr_softc *sc, struct bioc_createraid *bc,
 	} else {
 
 		/* Ensure we are assembling the correct # of chunks. */
-		if (sd->sd_meta->ssdi.ssd_chunk_no != no_chunk) {
+		if (bc->bc_level == 0x1C &&
+		    sd->sd_meta->ssdi.ssd_chunk_no > no_chunk) {
+			sr_warn(sc, "trying to bring up %s degraded",
+			    sd->sd_meta->ssd_devname);
+		} else if (sd->sd_meta->ssdi.ssd_chunk_no != no_chunk) {
 			sr_error(sc, "volume chunk count does not match metadata "
 			    "chunk count");
 			goto unwind;
@@ -3976,6 +3982,9 @@ sr_discipline_init(struct sr_discipline *sd, int level)
 #ifdef CRYPTO
 	case 'C':
 		sr_crypto_discipline_init(sd);
+		break;
+	case 0x1C:
+		sr_raid1c_discipline_init(sd);
 		break;
 #endif
 	case 'c':

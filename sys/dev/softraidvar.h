@@ -1,4 +1,4 @@
-/* $OpenBSD: softraidvar.h,v 1.171 2020/07/22 13:16:04 krw Exp $ */
+/* $OpenBSD: softraidvar.h,v 1.172 2021/02/08 11:20:04 stsp Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -444,6 +444,19 @@ struct sr_raid6 {
 TAILQ_HEAD(sr_crypto_wu_head, sr_crypto_wu);
 #define SR_CRYPTO_NOWU		16
 
+/*
+ * The per-I/O data that we need to preallocate. We cannot afford to allow I/O
+ * to start failing when memory pressure kicks in. We can store this in the WU
+ * because we assert that only one ccb per WU will ever be active during crypto.
+ */
+struct sr_crypto_wu {
+	struct sr_workunit		 cr_wu;		/* Must be first. */
+	struct uio			 cr_uio;
+	struct iovec			 cr_iov;
+	struct cryptop	 		*cr_crp;
+	void				*cr_dmabuf;
+};
+
 struct sr_crypto {
 	struct sr_meta_crypto	*scr_meta;
 	struct sr_chunk		*key_disk;
@@ -455,11 +468,17 @@ struct sr_crypto {
 	u_int8_t		scr_key[SR_CRYPTO_MAXKEYS][SR_CRYPTO_KEYBYTES];
 	u_int8_t		scr_maskkey[SR_CRYPTO_MAXKEYBYTES];
 	u_int64_t		scr_sid[SR_CRYPTO_MAXKEYS];
+
+	struct sr_raid1		scr_raid1; /* for RAID1C */
 };
 
 #define SR_CONCAT_NOWU		16
 struct sr_concat {
 };
+
+/* RAID 1C */
+#define SR_RAID1C_NOWU		16
+/* Uses sr_crypto */
 
 struct sr_chunk {
 	struct sr_meta_chunk	src_meta;	/* chunk meta data */
@@ -505,6 +524,7 @@ struct sr_discipline {
 	/* SR_MD_RAID4 was 7. */
 #define	SR_MD_RAID6		8
 #define	SR_MD_CONCAT		9
+#define	SR_MD_RAID1C		10
 	char			sd_name[10];	/* human readable dis name */
 	u_int16_t		sd_target;	/* scsibus target discipline uses */
 
@@ -707,6 +727,7 @@ void			sr_raid5_discipline_init(struct sr_discipline *);
 void			sr_raid6_discipline_init(struct sr_discipline *);
 void			sr_crypto_discipline_init(struct sr_discipline *);
 void			sr_concat_discipline_init(struct sr_discipline *);
+void			sr_raid1c_discipline_init(struct sr_discipline *);
 
 /* Crypto discipline hooks. */
 int			sr_crypto_get_kdf(struct bioc_createraid *,

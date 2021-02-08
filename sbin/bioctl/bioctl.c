@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.145 2020/10/30 13:55:48 schwarze Exp $ */
+/* $OpenBSD: bioctl.c,v 1.146 2021/02/08 11:20:03 stsp Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -131,7 +131,9 @@ main(int argc, char *argv[])
 			break;
 		case 'c': /* create */
 			func |= BIOC_CREATERAID;
-			if (isdigit((unsigned char)*optarg)) {
+			if (strcmp(optarg, "1C") == 0) {
+				cr_level = 0x1C;
+			} else if (isdigit((unsigned char)*optarg)) {
 				cr_level = strtonum(optarg, 0, 10, &errstr);
 				if (errstr != NULL)
 					errx(1, "Invalid RAID level");
@@ -498,6 +500,11 @@ bio_inq(char *name)
 				    volname, status, size, bv.bv_dev,
 				    percent, seconds);
 				break;
+			case 0x1C:
+				printf("%11s %-10s %14s %-7s RAID%X%s%s %s\n",
+				    volname, status, size, bv.bv_dev,
+				    bv.bv_level, percent, seconds, cache);
+				break;
 			default:
 				printf("%11s %-10s %14s %-7s RAID%u%s%s %s\n",
 				    volname, status, size, bv.bv_dev,
@@ -847,6 +854,7 @@ bio_createraid(u_int16_t level, char *dev_list, char *key_disk)
 		min_disks = 3;
 		break;
 	case 'C':
+	case 0x1C:
 		min_disks = 1;
 		break;
 	case 'c':
@@ -871,7 +879,7 @@ bio_createraid(u_int16_t level, char *dev_list, char *key_disk)
 	create.bc_flags = BIOC_SCDEVT | cflags;
 	create.bc_key_disk = NODEV;
 
-	if (level == 'C' && key_disk == NULL) {
+	if ((level == 'C' || level == 0x1C) && key_disk == NULL) {
 
 		memset(&kdfinfo, 0, sizeof(kdfinfo));
 		memset(&kdfhint, 0, sizeof(kdfhint));
@@ -899,7 +907,7 @@ bio_createraid(u_int16_t level, char *dev_list, char *key_disk)
 		create.bc_opaque_size = sizeof(kdfinfo);
 		create.bc_opaque_flags = BIOC_SOIN;
 
-	} else if (level == 'C' && key_disk != NULL) {
+	} else if ((level == 'C' || level == 0x1C) && key_disk != NULL) {
 
 		/* Get device number for key disk. */
 		fd = opendev(key_disk, O_RDONLY, OPENDEV_BLCK, NULL);

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_crypto.c,v 1.139 2020/07/13 00:06:22 kn Exp $ */
+/* $OpenBSD: softraid_crypto.c,v 1.140 2021/02/08 11:20:04 stsp Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -54,20 +54,6 @@
 
 #include <dev/softraidvar.h>
 
-/*
- * The per-I/O data that we need to preallocate. We cannot afford to allow I/O
- * to start failing when memory pressure kicks in. We can store this in the WU
- * because we assert that only one ccb per WU will ever be active.
- */
-struct sr_crypto_wu {
-	struct sr_workunit		 cr_wu;		/* Must be first. */
-	struct uio			 cr_uio;
-	struct iovec			 cr_iov;
-	struct cryptop	 		*cr_crp;
-	void				*cr_dmabuf;
-};
-
-
 struct sr_crypto_wu *sr_crypto_prepare(struct sr_workunit *, int);
 int		sr_crypto_create_keys(struct sr_discipline *);
 int		sr_crypto_get_kdf(struct bioc_createraid *,
@@ -79,6 +65,8 @@ int		sr_crypto_change_maskkey(struct sr_discipline *,
 		    struct sr_crypto_kdfinfo *, struct sr_crypto_kdfinfo *);
 int		sr_crypto_create(struct sr_discipline *,
 		    struct bioc_createraid *, int, int64_t);
+int		sr_crypto_meta_create(struct sr_discipline *,
+		    struct bioc_createraid *);
 int		sr_crypto_assemble(struct sr_discipline *,
 		    struct bioc_createraid *, int, void *);
 int		sr_crypto_alloc_resources(struct sr_discipline *);
@@ -131,18 +119,34 @@ int
 sr_crypto_create(struct sr_discipline *sd, struct bioc_createraid *bc,
     int no_chunk, int64_t coerced_size)
 {
-	struct sr_meta_opt_item	*omi;
-	int			rv = EINVAL;
+	int rv = EINVAL;
 
 	if (no_chunk != 1) {
 		sr_error(sd->sd_sc, "%s requires exactly one chunk",
 		    sd->sd_name);
-		goto done;
+		return (rv);
 	}
 
-	if (coerced_size > SR_CRYPTO_MAXSIZE) {
+	sd->sd_meta->ssdi.ssd_size = coerced_size;
+
+	rv = sr_crypto_meta_create(sd, bc);
+	if (rv)
+		return (rv);
+
+	sd->sd_max_ccb_per_wu = no_chunk;
+	return (0);
+}
+
+int
+sr_crypto_meta_create(struct sr_discipline *sd, struct bioc_createraid *bc)
+{
+	struct sr_meta_opt_item	*omi;
+	int			rv = EINVAL;
+
+	if (sd->sd_meta->ssdi.ssd_size > SR_CRYPTO_MAXSIZE) {
 		sr_error(sd->sd_sc, "%s exceeds maximum size (%lli > %llu)",
-		    sd->sd_name, coerced_size, SR_CRYPTO_MAXSIZE);
+		    sd->sd_name, sd->sd_meta->ssdi.ssd_size,
+		    SR_CRYPTO_MAXSIZE);
 		goto done;
 	}
 
@@ -184,11 +188,7 @@ sr_crypto_create(struct sr_discipline *sd, struct bioc_createraid *bc,
 	if (!(bc->bc_flags & BIOC_SCNOAUTOASSEMBLE) && bc->bc_key_disk == NODEV)
 		goto done;
 
-	sd->sd_meta->ssdi.ssd_size = coerced_size;
-
 	sr_crypto_create_keys(sd);
-
-	sd->sd_max_ccb_per_wu = no_chunk;
 
 	rv = 0;
 done:
@@ -1182,6 +1182,9 @@ sr_crypto_done(struct sr_workunit *wu)
 	struct scsi_xfer	*xs = wu->swu_xs;
 	struct sr_crypto_wu	*crwu;
 	int			s;
+
+	if (ISSET(wu->swu_flags, SR_WUF_REBUILD)) /* RAID 1C */
+		return;
 
 	/* If this was a successful read, initiate decryption of the data. */
 	if (ISSET(xs->flags, SCSI_DATA_IN) && xs->error == XS_NOERROR) {
