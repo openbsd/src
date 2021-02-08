@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.91 2021/01/26 14:22:19 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.92 2021/02/08 17:17:02 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -575,16 +575,8 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 	 * so process data buffered during the last handshake
 	 * in advance, if any.
 	 */
-	if (S3I(s)->hs.state == SSL_ST_OK && rr->length == 0) {
-		pitem *item;
-		item = pqueue_pop(D1I(s)->buffered_app_data.q);
-		if (item) {
-			dtls1_copy_record(s, item->data);
-
-			free(item->data);
-			pitem_free(item);
-		}
-	}
+	if (S3I(s)->hs.state == SSL_ST_OK && rr->length == 0)
+		dtls1_retrieve_buffered_record(s, &(D1I(s)->buffered_app_data));
 
 	/* Check for timeout */
 	if (dtls1_handle_timeout(s) > 0)
