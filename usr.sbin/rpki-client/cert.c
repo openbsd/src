@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.24 2021/02/04 08:58:19 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.25 2021/02/08 09:22:53 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -194,6 +194,7 @@ sbgp_sia_resource_mft(struct parse *p,
 		    p->fn);
 		return 0;
 	}
+
 	if (strcasecmp(d + dsz - 4, ".mft") != 0) {
 		warnx("%s: RFC 6487 section 4.8.8: SIA: "
 		    "invalid rsync URI suffix", p->fn);
@@ -208,6 +209,43 @@ sbgp_sia_resource_mft(struct parse *p,
 	}
 
 	if ((p->res->mft = strndup((const char *)d, dsz)) == NULL)
+		err(1, NULL);
+
+	return 1;
+}
+
+/*
+ * Parse the SIA manifest, 4.8.8.1.
+ * Returns zero on failure, non-zero on success.
+ */
+static int
+sbgp_sia_resource_carepo(struct parse *p,
+	const unsigned char *d, size_t dsz)
+{
+	size_t i;
+
+	if (p->res->repo != NULL) {
+		warnx("%s: RFC 6487 section 4.8.8: SIA: "
+		    "CA repository already specified", p->fn);
+		return 0;
+	}
+
+	/* Make sure it's an rsync:// address. */
+	if (dsz <= 8 || strncasecmp(d, "rsync://", 8)) {
+		warnx("%s: RFC 6487 section 4.8.8: not using rsync schema",
+		    p->fn);
+		return 0;
+	}
+
+	/* make sure only US-ASCII chars are in the URL */
+	for (i = 0; i < dsz; i++) {
+		if (isalnum(d[i]) || ispunct(d[i]))
+			continue;
+		warnx("%s: invalid URI", p->fn);
+		return 0;
+	}
+
+	if ((p->res->repo = strndup((const char *)d, dsz)) == NULL)
 		err(1, NULL);
 
 	return 1;
@@ -271,11 +309,13 @@ sbgp_sia_resource_entry(struct parse *p,
 	/*
 	 * Ignore all but manifest and RRDP notify URL.
 	 * Things we may see:
+	 *  - 1.3.6.1.5.5.7.48.5 (caRepository)
 	 *  - 1.3.6.1.5.5.7.48.10 (rpkiManifest)
 	 *  - 1.3.6.1.5.5.7.48.13 (rpkiNotify)
-	 *  - 1.3.6.1.5.5.7.48.5 (CA repository)
 	 */
-	if (strcmp(buf, "1.3.6.1.5.5.7.48.10") == 0)
+	if (strcmp(buf, "1.3.6.1.5.5.7.48.5") == 0)
+		rc = sbgp_sia_resource_carepo(p, d, plen);
+	else if (strcmp(buf, "1.3.6.1.5.5.7.48.10") == 0)
 		rc = sbgp_sia_resource_mft(p, d, plen);
 	else if (strcmp(buf, "1.3.6.1.5.5.7.48.13") == 0)
 		rc = sbgp_sia_resource_notify(p, d, plen);
@@ -317,6 +357,12 @@ sbgp_sia_resource(struct parse *p, const unsigned char *d, size_t dsz)
 			goto out;
 	}
 
+	if (strstr(p->res->mft, p->res->repo) != p->res->mft) {
+		warnx("%s: RFC 6487 section 4.8.8: SIA: "
+		    "conflicting URIs for caRepository and rpkiManifest",
+		    p->fn);
+		goto out;
+	}
 	rc = 1;
 out:
 	sk_ASN1_TYPE_pop_free(seq, ASN1_TYPE_free);
@@ -1172,6 +1218,7 @@ cert_free(struct cert *p)
 		return;
 
 	free(p->crl);
+	free(p->repo);
 	free(p->mft);
 	free(p->notify);
 	free(p->ips);
@@ -1230,6 +1277,7 @@ cert_buffer(struct ibuf *b, const struct cert *p)
 
 	io_str_buffer(b, p->mft);
 	io_str_buffer(b, p->notify);
+	io_str_buffer(b, p->repo);
 	io_str_buffer(b, p->crl);
 	io_str_buffer(b, p->aki);
 	io_str_buffer(b, p->ski);
@@ -1297,6 +1345,7 @@ cert_read(int fd)
 	io_str_read(fd, &p->mft);
 	assert(p->mft);
 	io_str_read(fd, &p->notify);
+	io_str_read(fd, &p->repo);
 	io_str_read(fd, &p->crl);
 	io_str_read(fd, &p->aki);
 	io_str_read(fd, &p->ski);
