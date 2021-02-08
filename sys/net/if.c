@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.626 2021/02/01 07:43:33 mvs Exp $	*/
+/*	$OpenBSD: if.c,v 1.627 2021/02/08 12:30:10 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2601,7 +2601,7 @@ if_creategroup(const char *groupname)
 		return (NULL);
 
 	strlcpy(ifg->ifg_group, groupname, sizeof(ifg->ifg_group));
-	ifg->ifg_refcnt = 0;
+	ifg->ifg_refcnt = 1;
 	ifg->ifg_carp_demoted = 0;
 	TAILQ_INIT(&ifg->ifg_members);
 #if NPF > 0
@@ -2642,13 +2642,17 @@ if_addgroup(struct ifnet *ifp, const char *groupname)
 		if (!strcmp(ifg->ifg_group, groupname))
 			break;
 
-	if (ifg == NULL && (ifg = if_creategroup(groupname)) == NULL) {
-		free(ifgl, M_TEMP, sizeof(*ifgl));
-		free(ifgm, M_TEMP, sizeof(*ifgm));
-		return (ENOMEM);
-	}
+	if (ifg == NULL) {
+		ifg = if_creategroup(groupname);
+		if (ifg == NULL) {
+			free(ifgl, M_TEMP, sizeof(*ifgl));
+			free(ifgm, M_TEMP, sizeof(*ifgm));
+			return (ENOMEM);
+		}
+	} else
+		ifg->ifg_refcnt++;
+	KASSERT(ifg->ifg_refcnt != 0);
 
-	ifg->ifg_refcnt++;
 	ifgl->ifgl_group = ifg;
 	ifgm->ifgm_ifp = ifp;
 
@@ -2692,6 +2696,7 @@ if_delgroup(struct ifnet *ifp, const char *groupname)
 	pfi_group_change(groupname);
 #endif
 
+	KASSERT(ifgl->ifgl_group->ifg_refcnt != 0);
 	if (--ifgl->ifgl_group->ifg_refcnt == 0) {
 		TAILQ_REMOVE(&ifg_head, ifgl->ifgl_group, ifg_next);
 #if NPF > 0
