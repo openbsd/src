@@ -1,4 +1,4 @@
-/*	$Id: test-cert.c,v 1.7 2021/01/29 10:15:42 claudio Exp $ */
+/*	$Id: test-cert.c,v 1.8 2021/02/08 09:28:58 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -44,6 +44,7 @@ cert_print(const struct cert *p)
 	assert(p != NULL);
 
 	printf("Manifest: %s\n", p->mft);
+	printf("caRepository: %s\n", p->repo);
 	if (p->notify != NULL)
 		printf("Notify URL: %s\n", p->notify);
 	if (p->crl != NULL)
