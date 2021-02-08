@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.129 2021/01/25 03:40:46 dlg Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.130 2021/02/08 19:37:15 jan Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -203,7 +203,6 @@ tcp_output(struct tcpcb *tp)
 	int idle, sendalot = 0;
 	int i, sack_rxmit = 0;
 	struct sackhole *p;
-	int maxburst = TCP_MAXBURST;
 #ifdef TCP_SIGNATURE
 	unsigned int sigoff;
 #endif /* TCP_SIGNATURE */
@@ -1120,7 +1119,7 @@ out:
 	tp->last_ack_sent = tp->rcv_nxt;
 	tp->t_flags &= ~TF_ACKNOW;
 	TCP_TIMER_DISARM(tp, TCPT_DELACK);
-	if (sendalot && --maxburst)
+	if (sendalot)
 		goto again;
 	return (0);
 }
