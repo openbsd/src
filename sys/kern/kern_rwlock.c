@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.46 2021/01/11 18:49:38 mpi Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.47 2021/02/08 08:18:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
@@ -279,15 +279,13 @@ retry:
 		prio = op->wait_prio;
 		if (flags & RW_INTR)
 			prio |= PCATCH;
-		sleep_setup(&sls, rwl, prio, rwl->rwl_name);
-		if (flags & RW_INTR)
-			sleep_setup_signal(&sls);
+		sleep_setup(&sls, rwl, prio, rwl->rwl_name, 0);
 
 		do_sleep = !rw_cas(&rwl->rwl_owner, o, set);
 
-		sleep_finish(&sls, do_sleep);
+		error = sleep_finish(&sls, do_sleep);
 		if ((flags & RW_INTR) &&
-		    (error = sleep_finish_signal(&sls)) != 0)
+		    (error != 0))
 			return (error);
 		if (flags & RW_SLEEPFAIL)
 			return (EAGAIN);

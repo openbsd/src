@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.68 2021/01/09 20:57:46 gnezdo Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.69 2021/02/08 08:18:45 mpi Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -674,7 +674,7 @@ sched_stop_secondary_cpus(void)
 		if (CPU_IS_PRIMARY(ci))
 			continue;
 		while ((spc->spc_schedflags & SPCF_HALTED) == 0) {
-			sleep_setup(&sls, spc, PZERO, "schedstate");
+			sleep_setup(&sls, spc, PZERO, "schedstate", 0);
 			sleep_finish(&sls,
 			    (spc->spc_schedflags & SPCF_HALTED) == 0);
 		}

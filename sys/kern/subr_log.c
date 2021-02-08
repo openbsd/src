@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.71 2021/01/08 11:23:57 visa Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.72 2021/02/08 08:18:45 mpi Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -246,10 +246,8 @@ logread(dev_t dev, struct uio *uio, int flag)
 		 * Set up and enter sleep manually instead of using msleep()
 		 * to keep log_mtx as a leaf lock.
 		 */
-		sleep_setup(&sls, mbp, LOG_RDPRI | PCATCH, "klog");
-		sleep_setup_signal(&sls);
-		sleep_finish(&sls, logsoftc.sc_state & LOG_RDWAIT);
-		error = sleep_finish_signal(&sls);
+		sleep_setup(&sls, mbp, LOG_RDPRI | PCATCH, "klog", 0);
+		error = sleep_finish(&sls, logsoftc.sc_state & LOG_RDWAIT);
 		mtx_enter(&log_mtx);
 		if (error)
 			goto out;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.76 2021/01/13 01:04:49 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.77 2021/02/08 08:18:45 mpi Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -110,14 +110,14 @@ schedule_timeout(long timeout)
 {
 	struct sleep_state sls;
 	unsigned long deadline;
-	int wait, spl;
+	int wait, spl, timo = 0;
 
 	MUTEX_ASSERT_LOCKED(&sch_mtx);
 	KASSERT(!cold);
 
-	sleep_setup(&sls, sch_ident, sch_priority, "schto");
 	if (timeout != MAX_SCHEDULE_TIMEOUT)
-		sleep_setup_timeout(&sls, timeout);
+		timo = timeout;
+	sleep_setup(&sls, sch_ident, sch_priority, "schto", timo);
 
 	wait = (sch_proc == curproc && timeout > 0);
 
@@ -125,11 +125,9 @@ schedule_timeout(long timeout)
 	MUTEX_OLDIPL(&sch_mtx) = splsched();
 	mtx_leave(&sch_mtx);
 
-	sleep_setup_signal(&sls);
-
 	if (timeout != MAX_SCHEDULE_TIMEOUT)
 		deadline = jiffies + timeout;
-	sleep_finish_all(&sls, wait);
+	sleep_finish(&sls, wait);
 	if (timeout != MAX_SCHEDULE_TIMEOUT)
 		timeout = deadline - jiffies;
 

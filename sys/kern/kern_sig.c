@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.270 2020/12/25 12:59:52 visa Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.271 2021/02/08 08:18:45 mpi Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -2106,7 +2106,7 @@ single_thread_wait(struct process *pr, int recheck)
 	/* wait until they're all suspended */
 	wait = pr->ps_singlecount > 0;
 	while (wait) {
-		sleep_setup(&sls, &pr->ps_singlecount, PWAIT, "suspend");
+		sleep_setup(&sls, &pr->ps_singlecount, PWAIT, "suspend", 0);
 		wait = pr->ps_singlecount > 0;
 		sleep_finish(&sls, wait);
 		if (!recheck)

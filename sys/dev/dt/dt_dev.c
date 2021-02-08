@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.10 2020/09/28 13:16:58 kettenis Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.11 2021/02/08 08:18:45 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -225,10 +225,8 @@ dtread(dev_t dev, struct uio *uio, int flags)
 		return (EMSGSIZE);
 
 	while (!sc->ds_evtcnt) {
-		sleep_setup(&sls, sc, PWAIT | PCATCH, "dtread");
-		sleep_setup_signal(&sls);
-		sleep_finish(&sls, !sc->ds_evtcnt);
-		error = sleep_finish_signal(&sls);
+		sleep_setup(&sls, sc, PWAIT | PCATCH, "dtread", 0);
+		error = sleep_finish(&sls, !sc->ds_evtcnt);
 		if (error == EINTR || error == ERESTART)
 			break;
 	}
