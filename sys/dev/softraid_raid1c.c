@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid_raid1c.c,v 1.1 2021/02/08 11:21:53 stsp Exp $ */
+/* $OpenBSD: softraid_raid1c.c,v 1.2 2021/02/08 20:07:04 stsp Exp $ */
 /*
  * Copyright (c) 2007 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Hans-Joerg Hoexer <hshoexer@openbsd.org>
@@ -88,7 +88,7 @@ sr_raid1c_discipline_init(struct sr_discipline *sd)
 	/* Fill out discipline members. */
 	sd->sd_wu_size = sizeof(struct sr_crypto_wu);
 	sd->sd_type = SR_MD_RAID1C;
-	strlcpy(sd->sd_name, "RAID1C", sizeof(sd->sd_name));
+	strlcpy(sd->sd_name, "RAID 1C", sizeof(sd->sd_name));
 	sd->sd_capabilities = SR_CAP_SYSTEM_DISK | SR_CAP_AUTO_ASSEMBLE |
 	    SR_CAP_REBUILD | SR_CAP_REDUNDANT;
 	sd->sd_max_wu = SR_RAID1C_NOWU;
