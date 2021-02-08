@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.367 2021/01/18 11:14:23 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.368 2021/02/08 08:33:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2454,6 +2454,8 @@ server_client_get_flags(struct client *c)
 	*s = '\0';
 	if (c->flags & CLIENT_ATTACHED)
 		strlcat(s, "attached,", sizeof s);
+	if (c->flags & CLIENT_FOCUSED)
+		strlcat(s, "focused,", sizeof s);
 	if (c->flags & CLIENT_CONTROL)
 		strlcat(s, "control-mode,", sizeof s);
 	if (c->flags & CLIENT_IGNORESIZE)
