@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.75 2021/01/21 16:46:47 tobhe Exp $	*/
+/*	$OpenBSD: config.c,v 1.76 2021/02/08 16:13:58 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -531,14 +531,14 @@ config_getreset(struct iked *env, struct imsg *imsg)
 	IMSG_SIZE_CHECK(imsg, &mode);
 	memcpy(&mode, imsg->data, sizeof(mode));
 
-	if (mode == RESET_ALL || mode == RESET_POLICY) {
+	if (mode == RESET_EXIT || mode == RESET_ALL || mode == RESET_POLICY) {
 		log_debug("%s: flushing policies", __func__);
 		TAILQ_FOREACH_SAFE(pol, &env->sc_policies, pol_entry, poltmp) {
 			config_free_policy(env, pol);
 		}
 	}
 
-	if (mode == RESET_ALL || mode == RESET_SA) {
+	if (mode == RESET_EXIT || mode == RESET_ALL || mode == RESET_SA) {
 		log_debug("%s: flushing SAs", __func__);
 		while ((sa = RB_MIN(iked_sas, &env->sc_sas))) {
 			/* for RESET_SA we try send a DELETE */
@@ -552,13 +552,16 @@ config_getreset(struct iked *env, struct imsg *imsg)
 		}
 	}
 
-	if (mode == RESET_ALL || mode == RESET_USER) {
+	if (mode == RESET_EXIT || mode == RESET_ALL || mode == RESET_USER) {
 		log_debug("%s: flushing users", __func__);
 		while ((usr = RB_MIN(iked_users, &env->sc_users))) {
 			RB_REMOVE(iked_users, &env->sc_users, usr);
 			free(usr);
 		}
 	}
+
+	if (mode == RESET_EXIT)
+		proc_compose(&env->sc_ps, PROC_PARENT, IMSG_CTL_EXIT, NULL, 0);
 
 	return (0);
 }
