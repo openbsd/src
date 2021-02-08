@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.77 2020/12/07 16:55:29 mpi Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.78 2021/02/08 10:51:02 mpi Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -369,7 +369,7 @@ uvm_swapout_threads(void)
 		 * the smallest p_slptime
 		 */
 		slpp = NULL;
-		SMR_TAILQ_FOREACH_LOCKED(p, &pr->ps_threads, p_thr_link) {
+		TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link) {
 			switch (p->p_stat) {
 			case SRUN:
 			case SONPROC:

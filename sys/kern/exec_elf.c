@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.157 2021/01/17 15:28:21 mvs Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.158 2021/02/08 10:51:01 mpi Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -85,7 +85,6 @@
 #include <sys/signalvar.h>
 #include <sys/stat.h>
 #include <sys/pledge.h>
-#include <sys/smr.h>
 
 #include <sys/mman.h>
 
@@ -1361,7 +1360,7 @@ coredump_notes_elf(struct proc *p, void *iocookie, size_t *sizep)
 	 * threads in the process have been stopped and the list can't
 	 * change.
 	 */
-	SMR_TAILQ_FOREACH_LOCKED(q, &pr->ps_threads, p_thr_link) {
+	TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link) {
 		if (q == p)		/* we've taken care of this thread */
 			continue;
 		error = coredump_note_elf(q, iocookie, &notesize);

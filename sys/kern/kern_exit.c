@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.194 2021/01/17 15:28:21 mvs Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.195 2021/02/08 10:51:01 mpi Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -63,7 +63,6 @@
 #ifdef SYSVSEM
 #include <sys/sem.h>
 #endif
-#include <sys/smr.h>
 #include <sys/witness.h>
 
 #include <sys/mount.h>
@@ -162,7 +161,7 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 	}
 
 	/* unlink ourselves from the active threads */
-	SMR_TAILQ_REMOVE_LOCKED(&pr->ps_threads, p, p_thr_link);
+	TAILQ_REMOVE(&pr->ps_threads, p, p_thr_link);
 	if ((p->p_flag & P_THREAD) == 0) {
 		/* main thread gotta wait because it has the pid, et al */
 		while (pr->ps_refcnt > 1)
@@ -728,7 +727,7 @@ process_zap(struct process *pr)
 	if (pr->ps_ptstat != NULL)
 		free(pr->ps_ptstat, M_SUBPROC, sizeof(*pr->ps_ptstat));
 	pool_put(&rusage_pool, pr->ps_ru);
-	KASSERT(SMR_TAILQ_EMPTY_LOCKED(&pr->ps_threads));
+	KASSERT(TAILQ_EMPTY(&pr->ps_threads));
 	lim_free(pr->ps_limit);
 	crfree(pr->ps_ucred);
 	pool_put(&process_pool, pr);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.70 2020/12/07 16:55:28 mpi Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.71 2021/02/08 10:51:01 mpi Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -212,7 +212,7 @@ donice(struct proc *curp, struct process *chgpr, int n)
 		return (EACCES);
 	chgpr->ps_nice = n;
 	SCHED_LOCK(s);
-	SMR_TAILQ_FOREACH_LOCKED(p, &chgpr->ps_threads, p_thr_link) {
+	TAILQ_FOREACH(p, &chgpr->ps_threads, p_thr_link) {
 		setpriority(p, p->p_estcpu, n);
 	}
 	SCHED_UNLOCK(s);
@@ -488,7 +488,7 @@ dogetrusage(struct proc *p, int who, struct rusage *rup)
 			memset(rup, 0, sizeof(*rup));
 
 		/* add on all living threads */
-		SMR_TAILQ_FOREACH_LOCKED(q, &pr->ps_threads, p_thr_link) {
+		TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link) {
 			ruadd(rup, &q->p_ru);
 			tuagg(pr, q);
 		}

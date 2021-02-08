@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.271 2021/02/08 08:18:45 mpi Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.272 2021/02/08 10:51:01 mpi Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -925,7 +925,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 			 * delayed.  Otherwise, mark it pending on the
 			 * main thread.
 			 */
-			SMR_TAILQ_FOREACH_LOCKED(q, &pr->ps_threads, p_thr_link) {
+			TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link) {
 				/* ignore exiting threads */
 				if (q->p_flag & P_WEXIT)
 					continue;
@@ -1009,7 +1009,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 	 * XXX delay processing of SA_STOP signals unless action == SIG_DFL?
 	 */
 	if (prop & (SA_CONT | SA_STOP) && type != SPROPAGATED)
-		SMR_TAILQ_FOREACH_LOCKED(q, &pr->ps_threads, p_thr_link)
+		TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link)
 			if (q != p)
 				ptsignal(q, signum, SPROPAGATED);
 
@@ -2038,7 +2038,7 @@ single_thread_set(struct proc *p, enum single_thread_mode mode, int deep)
 	pr->ps_singlecount = 0;
 	membar_producer();
 	pr->ps_single = p;
-	SMR_TAILQ_FOREACH_LOCKED(q, &pr->ps_threads, p_thr_link) {
+	TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link) {
 		if (q == p)
 			continue;
 		if (q->p_flag & P_WEXIT) {
@@ -2130,7 +2130,7 @@ single_thread_clear(struct proc *p, int flag)
 	SCHED_LOCK(s);
 	pr->ps_single = NULL;
 	atomic_clearbits_int(&pr->ps_flags, PS_SINGLEUNWIND | PS_SINGLEEXIT);
-	SMR_TAILQ_FOREACH_LOCKED(q, &pr->ps_threads, p_thr_link) {
+	TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link) {
 		if (q == p || (q->p_flag & P_SUSPSINGLE) == 0)
 			continue;
 		atomic_clearbits_int(&q->p_flag, P_SUSPSINGLE);

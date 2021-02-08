@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_proc2.c,v 1.32 2020/12/07 16:55:28 mpi Exp $	*/
+/*	$OpenBSD: kvm_proc2.c,v 1.33 2021/02/08 10:51:01 mpi Exp $	*/
 /*	$NetBSD: kvm_proc.c,v 1.30 1999/03/24 05:50:50 mrg Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -341,9 +341,8 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct process *pr,
 			kp.p_pctcpu = 0;
 			kp.p_stat = (process.ps_flags & PS_ZOMBIE) ? SDEAD :
 			    SIDL;
-			for (p = SMR_TAILQ_FIRST_LOCKED(&process.ps_threads);
-			    p != NULL;
-			    p = SMR_TAILQ_NEXT_LOCKED(&proc, p_thr_link)) {
+			for (p = TAILQ_FIRST(&process.ps_threads); p != NULL; 
+			    p = TAILQ_NEXT(&proc, p_thr_link)) {
 				if (KREAD(kd, (u_long)p, &proc)) {
 					_kvm_err(kd, kd->program,
 					    "can't read proc at %lx",
@@ -377,8 +376,8 @@ kvm_proclist(kvm_t *kd, int op, int arg, struct process *pr,
 		if (!dothreads)
 			continue;
 
-		for (p = SMR_TAILQ_FIRST_LOCKED(&process.ps_threads); p != NULL;
-		    p = SMR_TAILQ_NEXT_LOCKED(&proc, p_thr_link)) {
+		for (p = TAILQ_FIRST(&process.ps_threads); p != NULL; 
+		    p = TAILQ_NEXT(&proc, p_thr_link)) {
 			if (KREAD(kd, (u_long)p, &proc)) {
 				_kvm_err(kd, kd->program,
 				    "can't read proc at %lx",

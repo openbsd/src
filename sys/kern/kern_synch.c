@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.175 2021/02/08 08:18:45 mpi Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.176 2021/02/08 10:51:02 mpi Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -50,7 +50,6 @@
 #include <sys/pool.h>
 #include <sys/refcnt.h>
 #include <sys/atomic.h>
-#include <sys/smr.h>
 #include <sys/witness.h>
 #include <sys/tracepoint.h>
 
@@ -599,7 +598,7 @@ sys_sched_yield(struct proc *p, void *v, register_t *retval)
 	 * can make some progress.
 	 */
 	newprio = p->p_usrpri;
-	SMR_TAILQ_FOREACH_LOCKED(q, &p->p_p->ps_threads, p_thr_link)
+	TAILQ_FOREACH(q, &p->p_p->ps_threads, p_thr_link)
 		newprio = max(newprio, q->p_runpri);
 	setrunqueue(p->p_cpu, p, newprio);
 	p->p_ru.ru_nvcsw++;
