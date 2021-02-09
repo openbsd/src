@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_output.h,v 1.16 2013/12/12 21:00:09 guenther Exp $ */
+/*	$OpenBSD: db_output.h,v 1.17 2021/02/09 14:37:13 jcs Exp $ */
 /*	$NetBSD: db_output.h,v 1.9 1996/04/04 05:13:50 cgd Exp $	*/
 
 /* 
@@ -41,6 +41,7 @@ int db_printf(const char *, ...)
 int db_vprintf(const char *, va_list)
     __attribute__((__format__(__kprintf__,1,0)));
 void db_end_line(int);
+void db_resize(int, int);
 
 /*
  * This is a replacement for the non-standard %z, %n and %r printf formats

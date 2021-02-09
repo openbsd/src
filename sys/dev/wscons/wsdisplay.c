@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.142 2020/08/05 13:50:25 fcambus Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.143 2021/02/09 14:37:13 jcs Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -63,6 +63,10 @@
 #if NWSKBD > 0
 #include <dev/wscons/wseventvar.h>
 #include <dev/wscons/wsmuxvar.h>
+#endif
+
+#ifdef DDB
+#include <ddb/db_output.h>
 #endif
 
 #include "wsmoused.h"
@@ -836,6 +840,10 @@ wsdisplay_cnattach(const struct wsscreen_descr *type, void *cookie, int ccol,
 		cn_tab = &wsdisplay_cons;
 
 	wsdisplay_console_initted = 1;
+
+#ifdef DDB
+	db_resize(type->ncols, type->nrows);
+#endif
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_output.c,v 1.35 2020/10/15 03:14:00 deraadt Exp $	*/
+/*	$OpenBSD: db_output.c,v 1.36 2021/02/09 14:37:13 jcs Exp $	*/
 /*	$NetBSD: db_output.c,v 1.13 1996/04/01 17:27:14 christos Exp $	*/
 
 /*
@@ -251,4 +251,11 @@ stacktrace_print(struct stacktrace *st, int (*pr)(const char *, ...))
 	}
 	if (st->st_count == 0)
 		(*pr)("<empty stack trace>\n");
+}
+
+void
+db_resize(int cols, int rows)
+{
+	db_max_width = cols;
+	db_max_line = rows;
 }
