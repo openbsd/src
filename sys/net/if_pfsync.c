@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.283 2021/02/04 00:55:41 sashan Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.284 2021/02/09 14:06:19 patrick Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -294,14 +294,12 @@ void	pfsync_bulk_fail(void *);
 void	pfsync_grab_snapshot(struct pfsync_snapshot *, struct pfsync_softc *);
 void	pfsync_drop_snapshot(struct pfsync_snapshot *);
 
-#ifdef WITH_PF_LOCK
 void	pfsync_send_dispatch(void *);
 void	pfsync_send_pkt(struct mbuf *);
 
 static struct mbuf_queue	pfsync_mq;
 static struct task	pfsync_task =
     TASK_INITIALIZER(pfsync_send_dispatch, &pfsync_mq);
-#endif	/* WITH_PF_LOCK */
 
 #define PFSYNC_MAX_BULKTRIES	12
 int	pfsync_sync_ok;
@@ -314,9 +312,7 @@ pfsyncattach(int npfsync)
 {
 	if_clone_attach(&pfsync_cloner);
 	pfsynccounters = counters_alloc(pfsyncs_ncounters);
-#ifdef WITH_PF_LOCK
 	mq_init(&pfsync_mq, 4096, IPL_SOFTNET);
-#endif	/* WITH_PF_LOCK */
 }
 
 int
@@ -1676,7 +1672,6 @@ pfsync_drop(struct pfsync_softc *sc)
 	pfsync_drop_snapshot(&sn);
 }
 
-#ifdef WITH_PF_LOCK
 void
 pfsync_send_dispatch(void *xmq)
 {
@@ -1721,7 +1716,6 @@ pfsync_send_pkt(struct mbuf *m)
 	} else
 		task_add(net_tq(0), &pfsync_task);
 }
-#endif	/* WITH_PF_LOCK */
 
 void
 pfsync_sendout(void)
@@ -1900,14 +1894,7 @@ pfsync_sendout(void)
 
 	m->m_pkthdr.ph_rtableid = sc->sc_if.if_rdomain;
 
-#ifdef WITH_PF_LOCK
 	pfsync_send_pkt(m);
-#else	/* !WITH_PF_LOCK */
-	if (ip_output(m, NULL, NULL, IP_RAWOUTPUT, &sc->sc_imo, NULL, 0) == 0)
-		pfsyncstat_inc(pfsyncs_opackets);
-	else
-		pfsyncstat_inc(pfsyncs_oerrors);
-#endif	/* WITH_PF_LOCK */
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.219 2020/06/24 22:03:43 cheloha Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.220 2021/02/09 14:06:19 patrick Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -152,17 +152,11 @@ struct pool		 pf_frent_pl, pf_frag_pl, pf_frnode_pl;
 struct pool		 pf_state_scrub_pl;
 int			 pf_nfrents;
 
-#ifdef WITH_PF_LOCK
 struct mutex		 pf_frag_mtx;
 
 #define PF_FRAG_LOCK_INIT()	mtx_init(&pf_frag_mtx, IPL_SOFTNET)
 #define PF_FRAG_LOCK()		mtx_enter(&pf_frag_mtx)
 #define PF_FRAG_UNLOCK()	mtx_leave(&pf_frag_mtx)
-#else /* !WITH_PF_LOCK */
-#define PF_FRAG_LOCK_INIT()	(void)(0)
-#define PF_FRAG_LOCK()		(void)(0)
-#define PF_FRAG_UNLOCK()	(void)(0)
-#endif /* WITH_PF_LOCK */
 
 void
 pf_normalize_init(void)

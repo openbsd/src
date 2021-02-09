@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar_priv.h,v 1.5 2018/09/11 07:53:38 sashan Exp $	*/
+/*	$OpenBSD: pfvar_priv.h,v 1.6 2021/02/09 14:06:19 patrick Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -104,7 +104,6 @@ extern struct timeout	pf_purge_to;
 struct pf_state		*pf_state_ref(struct pf_state *);
 void			 pf_state_unref(struct pf_state *);
 
-#ifdef WITH_PF_LOCK
 extern struct rwlock	pf_lock;
 extern struct rwlock	pf_state_lock;
 
@@ -151,20 +150,6 @@ extern struct rwlock	pf_state_lock;
 			splassert_fail(RW_WRITE,	\
 			    rw_status(&pf_state_lock), __func__);\
 	} while (0)
-
-#else /* !WITH_PF_LOCK */
-#define PF_LOCK()		(void)(0)
-#define PF_UNLOCK()		(void)(0)
-#define PF_ASSERT_LOCKED()	(void)(0)
-#define PF_ASSERT_UNLOCKED()	(void)(0)
-
-#define PF_STATE_ENTER_READ()	(void)(0)
-#define PF_STATE_EXIT_READ()	(void)(0)
-#define PF_STATE_ENTER_WRITE()	(void)(0)
-#define PF_STATE_EXIT_WRITE()	(void)(0)
-#define PF_ASSERT_STATE_LOCKED()	(void)(0)
-
-#endif /* WITH_PF_LOCK */
 
 extern void			 pf_purge_timeout(void *);
 extern void			 pf_purge(void *);

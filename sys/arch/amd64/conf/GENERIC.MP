@@ -1,8 +1,7 @@
-#	$OpenBSD: GENERIC.MP,v 1.15 2021/02/04 00:55:41 sashan Exp $
+#	$OpenBSD: GENERIC.MP,v 1.16 2021/02/09 14:06:19 patrick Exp $
 
 include "arch/amd64/conf/GENERIC"
 
-#option	WITH_PF_LOCK
 option	MULTIPROCESSOR
 #option	MP_LOCKDEBUG
 #option	WITNESS
