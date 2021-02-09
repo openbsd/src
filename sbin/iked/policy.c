@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.75 2021/02/01 16:37:48 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.76 2021/02/09 21:35:48 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1009,7 +1009,8 @@ proposals_match(struct iked_proposal *local, struct iked_proposal *peer,
 			 */
 			if (rekey && requiredh == 0 &&
 			    protoid == IKEV2_SAPROTO_ESP &&
-			    tlocal->xform_type == IKEV2_XFORMTYPE_DH)
+			    tlocal->xform_type == IKEV2_XFORMTYPE_DH &&
+			    tlocal->xform_id != IKEV2_XFORMDH_NONE)
 				requiredh = 1;
 
 			/* Compare peer and local proposals */

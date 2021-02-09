@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.126 2021/02/07 00:51:53 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.127 2021/02/09 21:35:48 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -192,6 +192,7 @@ struct iked_transform ikev2_default_esp_transforms[] = {
 	{ IKEV2_XFORMTYPE_INTEGR, IKEV2_XFORMAUTH_HMAC_SHA2_384_192 },
 	{ IKEV2_XFORMTYPE_INTEGR, IKEV2_XFORMAUTH_HMAC_SHA2_512_256 },
 	{ IKEV2_XFORMTYPE_INTEGR, IKEV2_XFORMAUTH_HMAC_SHA1_96 },
+	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_NONE },
 	{ IKEV2_XFORMTYPE_ESN,	IKEV2_XFORMESN_ESN },
 	{ IKEV2_XFORMTYPE_ESN,	IKEV2_XFORMESN_NONE },
 	{ 0 }
@@ -202,6 +203,7 @@ size_t ikev2_default_nesp_transforms = ((sizeof(ikev2_default_esp_transforms) /
 struct iked_transform ikev2_default_esp_transforms_noauth[] = {
 	{ IKEV2_XFORMTYPE_ENCR,	IKEV2_XFORMENCR_AES_GCM_16, 128 },
 	{ IKEV2_XFORMTYPE_ENCR,	IKEV2_XFORMENCR_AES_GCM_16, 256 },
+	{ IKEV2_XFORMTYPE_DH,	IKEV2_XFORMDH_NONE },
 	{ IKEV2_XFORMTYPE_ESN,	IKEV2_XFORMESN_ESN },
 	{ IKEV2_XFORMTYPE_ESN,	IKEV2_XFORMESN_NONE },
 	{ 0 }
@@ -267,6 +269,7 @@ const struct ipsec_xf ipsecencxfs[] = {
 };
 
 const struct ipsec_xf groupxfs[] = {
+	{ "none",		IKEV2_XFORMDH_NONE },
 	{ "modp768",		IKEV2_XFORMDH_MODP_768 },
 	{ "grp1",		IKEV2_XFORMDH_MODP_768 },
 	{ "modp1024",		IKEV2_XFORMDH_MODP_1024 },
@@ -2839,6 +2842,13 @@ create_ike(char *name, int af, uint8_t ipproto,
 					noauth++;
 				else
 					auth++;
+			}
+			for (j = 0; j < ike_sa->xfs[i]->ngroupxf; j++) {
+				if (ike_sa->xfs[i]->groupxf[j]->id
+				    == IKEV2_XFORMDH_NONE) {
+					yyerror("IKE group can not be \"none\".");
+					goto done;
+				}
 			}
 			if (ike_sa->xfs[i]->nauthxf)
 				auth++;
