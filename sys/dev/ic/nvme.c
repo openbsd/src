@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme.c,v 1.89 2020/10/15 13:22:13 krw Exp $ */
+/*	$OpenBSD: nvme.c,v 1.90 2021/02/09 01:50:10 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -993,6 +993,8 @@ nvme_q_complete(struct nvme_softc *sc, struct nvme_queue *q)
 		flags = lemtoh16(&cqe->flags);
 		if ((flags & NVME_CQE_PHASE) != q->q_cq_phase)
 			break;
+
+		membar_consumer();
 
 		ccb = &sc->sc_ccbs[cqe->cid];
 		ccb->ccb_done(sc, ccb, cqe);
