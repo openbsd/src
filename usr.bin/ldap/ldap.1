@@ -1,4 +1,4 @@
-.\" $OpenBSD: ldap.1,v 1.10 2018/08/01 10:42:55 rob Exp $
+.\" $OpenBSD: ldap.1,v 1.11 2021/02/10 06:52:05 jmc Exp $
 .\"
 .\" Copyright (c) 2018 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 1 2018 $
+.Dd $Mdocdate: February 10 2021 $
 .Dt LDAP 1
 .Os
 .Sh NAME
@@ -139,8 +139,7 @@ instead.
 Request the server to abort the search request after
 .Ar timelimit
 seconds.
-The default value is 0
-for no limit.
+The default value is 0 for no limit.
 .It Fl s Ar scope
 Specify the
 .Ar scope
@@ -153,7 +152,7 @@ The default is
 .Ic sub
 for subtree searches.
 .It Fl v
-Product more verbose output.
+Produce more verbose output.
 .It Fl W
 Prompt for the bind secret with echo turned off.
 .It Fl w Ar secret
@@ -176,8 +175,7 @@ Enable TLS using the StartTLS operation.
 Request the server to limit the search result to a maximum number of
 .Ar sizelimit
 entries.
-The default value is 0.
-for no limit.
+The default value is 0 for no limit.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/ssl/cert.pemXXX" -compact
