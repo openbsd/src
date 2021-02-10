@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.820 2021/02/08 14:46:53 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.821 2021/02/10 07:17:07 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 8 2021 $
+.Dd $Mdocdate: February 10 2021 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -872,12 +872,12 @@ arguments are
 commands.
 This may be a single argument passed to the shell, for example:
 .Bd -literal -offset indent
-new-window 'vi /etc/passwd'
+new-window 'vi ~/.tmux.conf'
 .Ed
 .Pp
 Will run:
 .Bd -literal -offset indent
-/bin/sh -c 'vi /etc/passwd'
+/bin/sh -c 'vi ~/.tmux.conf'
 .Ed
 .Pp
 Additionally, the
@@ -894,7 +894,7 @@ to be given as multiple arguments and executed directly (without
 This can avoid issues with shell quoting.
 For example:
 .Bd -literal -offset indent
-$ tmux new-window vi /etc/passwd
+$ tmux new-window vi ~/.tmux.conf
 .Ed
 .Pp
 Will run
@@ -940,7 +940,7 @@ $ tmux kill-window -t :1
 
 $ tmux new-window \e; split-window -d
 
-$ tmux new-session -d 'vi /etc/passwd' \e; split-window -d \e; attach
+$ tmux new-session -d 'vi ~/.tmux.conf' \e; split-window -d \e; attach
 .Ed
 .Sh CLIENTS AND SESSIONS
 The
