@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.108 2021/02/01 07:46:55 mvs Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.109 2021/02/10 13:38:46 mvs Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -930,7 +930,6 @@ RBT_GENERATE(pppx_ifs, pppx_if, pxi_entry, pppx_if_cmp);
 
 struct pppac_softc {
 	struct ifnet	sc_if;
-	unsigned int	sc_dead;	/* [N] */
 	dev_t		sc_dev;		/* [I] */
 	LIST_ENTRY(pppac_softc)
 			sc_entry;	/* [K] */
@@ -1305,16 +1304,15 @@ pppacclose(dev_t dev, int flags, int mode, struct proc *p)
 	int s;
 
 	NET_LOCK();
-	sc->sc_dead = 1;
 	CLR(ifp->if_flags, IFF_RUNNING);
 	NET_UNLOCK();
+
+	if_detach(ifp);
 
 	s = splhigh();
 	klist_invalidate(&sc->sc_rsel.si_note);
 	klist_invalidate(&sc->sc_wsel.si_note);
 	splx(s);
-
-	if_detach(ifp);
 
 	pool_put(&pipex_session_pool, sc->sc_multicast_session);
 	NET_LOCK();
@@ -1330,12 +1328,8 @@ pppacclose(dev_t dev, int flags, int mode, struct proc *p)
 static int
 pppac_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-	struct pppac_softc *sc = ifp->if_softc;
 	/* struct ifreq *ifr = (struct ifreq *)data; */
 	int error = 0;
-
-	if (sc->sc_dead)
-		return (ENXIO);
 
 	switch (cmd) {
 	case SIOCSIFADDR:
