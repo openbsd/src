@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.304 2021/02/09 21:35:48 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.305 2021/02/10 22:25:54 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -4566,7 +4566,15 @@ ikev2_ikesa_recv_delete(struct iked *env, struct iked_sa *sa)
 		sa->sa_nexti = NULL;	/* reset by sa_free */
 	}
 	ikev2_ike_sa_setreason(sa, "received delete");
-	sa_state(env, sa, IKEV2_STATE_CLOSED);
+	if (env->sc_stickyaddress) {
+		/* delay deletion if client reconnects soon */
+		sa_state(env, sa, IKEV2_STATE_CLOSING);
+		timer_del(env, &sa->sa_timer);
+		timer_set(env, &sa->sa_timer, ikev2_ike_sa_timeout, sa);
+		timer_add(env, &sa->sa_timer, 3 * IKED_RETRANSMIT_TIMEOUT);
+	} else {
+		sa_state(env, sa, IKEV2_STATE_CLOSED);
+	}
 }
 
 int
