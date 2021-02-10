@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.627 2021/02/08 12:30:10 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.628 2021/02/10 14:41:53 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2621,9 +2621,11 @@ if_addgroup(struct ifnet *ifp, const char *groupname)
 	struct ifg_list		*ifgl;
 	struct ifg_group	*ifg = NULL;
 	struct ifg_member	*ifgm;
+	size_t			 namelen;
 
-	if (groupname[0] && groupname[strlen(groupname) - 1] >= '0' &&
-	    groupname[strlen(groupname) - 1] <= '9')
+	namelen = strlen(groupname);
+	if (namelen == 0 || namelen >= IFNAMSIZ ||
+	    (groupname[namelen - 1] >= '0' && groupname[namelen - 1] <= '9'))
 		return (EINVAL);
 
 	TAILQ_FOREACH(ifgl, &ifp->if_groups, ifgl_next)
