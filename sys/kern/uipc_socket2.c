@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.104 2020/04/11 14:07:06 claudio Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.105 2021/02/10 08:20:09 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -52,6 +52,8 @@ u_long	sb_max = SB_MAX;		/* patchable */
 
 extern struct pool mclpools[];
 extern struct pool mbpool;
+
+extern struct rwlock unp_lock;
 
 /*
  * Procedures to manipulate state flags of socket
@@ -282,6 +284,8 @@ solock(struct socket *so)
 		NET_LOCK();
 		break;
 	case PF_UNIX:
+		rw_enter_write(&unp_lock);
+		break;
 	case PF_ROUTE:
 	case PF_KEY:
 	default:
@@ -306,6 +310,8 @@ sounlock(struct socket *so, int s)
 		NET_UNLOCK();
 		break;
 	case PF_UNIX:
+		rw_exit_write(&unp_lock);
+		break;
 	case PF_ROUTE:
 	case PF_KEY:
 	default:
@@ -323,6 +329,8 @@ soassertlocked(struct socket *so)
 		NET_ASSERT_LOCKED();
 		break;
 	case PF_UNIX:
+		rw_assert_wrlock(&unp_lock);
+		break;
 	case PF_ROUTE:
 	case PF_KEY:
 	default:
@@ -335,12 +343,24 @@ int
 sosleep_nsec(struct socket *so, void *ident, int prio, const char *wmesg,
     uint64_t nsecs)
 {
-	if ((so->so_proto->pr_domain->dom_family != PF_UNIX) &&
-	    (so->so_proto->pr_domain->dom_family != PF_ROUTE) &&
-	    (so->so_proto->pr_domain->dom_family != PF_KEY)) {
-		return rwsleep_nsec(ident, &netlock, prio, wmesg, nsecs);
-	} else
-		return tsleep_nsec(ident, prio, wmesg, nsecs);
+	int ret;
+
+	switch (so->so_proto->pr_domain->dom_family) {
+	case PF_INET:
+	case PF_INET6:
+		ret = rwsleep_nsec(ident, &netlock, prio, wmesg, nsecs);
+		break;
+	case PF_UNIX:
+		ret = rwsleep_nsec(ident, &unp_lock, prio, wmesg, nsecs);
+		break;
+	case PF_ROUTE:
+	case PF_KEY:
+	default:
+		ret = tsleep_nsec(ident, prio, wmesg, nsecs);
+		break;
+	}
+
+	return ret;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: unpcb.h,v 1.17 2019/07/15 12:28:06 bluhm Exp $	*/
+/*	$OpenBSD: unpcb.h,v 1.18 2021/02/10 08:20:09 mvs Exp $	*/
 /*	$NetBSD: unpcb.h,v 1.6 1994/06/29 06:46:08 cgd Exp $	*/
 
 /*
@@ -56,22 +56,27 @@
  * Stream sockets keep copies of receive sockbuf sb_cc and sb_mbcnt
  * so that changes in the sockbuf may be computed to modify
  * back pressure on the sender accordingly.
+ *
+ * Locks used to protect struct members:
+ *      I       immutable after creation
+ *      U       unp_lock
  */
 
+
 struct	unpcb {
-	struct	socket *unp_socket;	/* pointer back to socket */
-	struct	vnode *unp_vnode;	/* if associated with file */
-	struct	file *unp_file;		/* backpointer for unp_gc() */
-	struct	unpcb *unp_conn;	/* control block of connected socket */
-	ino_t	unp_ino;		/* fake inode number */
-	SLIST_HEAD(,unpcb) unp_refs;	/* referencing socket linked list */
-	SLIST_ENTRY(unpcb) unp_nextref;	/* link in unp_refs list */
-	struct	mbuf *unp_addr;		/* bound address of socket */
-	long	unp_msgcount;		/* references from socket rcv buf */
-	int	unp_flags;		/* this unpcb contains peer eids */
-	struct	sockpeercred unp_connid;/* id of peer process */
-	struct	timespec unp_ctime;	/* holds creation time */
-	LIST_ENTRY(unpcb) unp_link;	/* link in per-AF list of sockets */
+	struct	socket *unp_socket;	/* [I] pointer back to socket */
+	struct	vnode *unp_vnode;	/* [U] if associated with file */
+	struct	file *unp_file;		/* [U] backpointer for unp_gc() */
+	struct	unpcb *unp_conn;	/* [U] control block of connected socket */
+	ino_t	unp_ino;		/* [U] fake inode number */
+	SLIST_HEAD(,unpcb) unp_refs;	/* [U] referencing socket linked list */
+	SLIST_ENTRY(unpcb) unp_nextref;	/* [U] link in unp_refs list */
+	struct	mbuf *unp_addr;		/* [U] bound address of socket */
+	long	unp_msgcount;		/* [U] references from socket rcv buf */
+	int	unp_flags;		/* [U] this unpcb contains peer eids */
+	struct	sockpeercred unp_connid;/* [U] id of peer process */
+	struct	timespec unp_ctime;	/* [I] holds creation time */
+	LIST_ENTRY(unpcb) unp_link;	/* [U] link in per-AF list of sockets */
 };
 
 /*
@@ -82,6 +87,8 @@ struct	unpcb {
 #define UNP_GCMARK	0x04		/* mark during unp_gc() */
 #define UNP_GCDEFER	0x08		/* ref'd, but not marked in this pass */
 #define UNP_GCDEAD	0x10		/* unref'd in this pass */
+#define UNP_BINDING	0x20		/* unp is binding now */
+#define UNP_CONNECTING	0x40		/* unp is connecting now */
 
 #define	sotounpcb(so)	((struct unpcb *)((so)->so_pcb))
 
