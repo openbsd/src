@@ -1,7 +1,7 @@
-# $OpenBSD: Makefile,v 1.12 2021/01/12 08:59:03 claudio Exp $
+# $OpenBSD: Makefile,v 1.13 2021/02/10 16:37:29 claudio Exp $
 
 REGRESS_TARGETS	= 	network_statement md5 ovs mrt \
-			maxprefix maxprefixout as0
+			maxprefix maxprefixout as0 med
 
 BGPD ?=			/usr/sbin/bgpd
 
