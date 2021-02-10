@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.432 2021/01/16 17:44:29 claudio Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.433 2021/02/10 14:45:27 bluhm Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1634,16 +1634,20 @@ void
 setifgroup(const char *group_name, int dummy)
 {
 	struct ifgroupreq ifgr;
+	size_t namelen;
 
 	memset(&ifgr, 0, sizeof(ifgr));
 	strlcpy(ifgr.ifgr_name, ifname, IFNAMSIZ);
 
-	if (group_name[0] &&
-	    isdigit((unsigned char)group_name[strlen(group_name) - 1]))
+	namelen = strlen(group_name);
+	if (namelen == 0)
+		errx(1, "setifgroup: group name empty");
+	if (namelen >= IFNAMSIZ)
+		errx(1, "setifgroup: group name too long");
+	if (isdigit((unsigned char)group_name[namelen - 1]))
 		errx(1, "setifgroup: group names may not end in a digit");
 
-	if (strlcpy(ifgr.ifgr_group, group_name, IFNAMSIZ) >= IFNAMSIZ)
-		errx(1, "setifgroup: group name too long");
+	strlcpy(ifgr.ifgr_group, group_name, IFNAMSIZ);
 	if (ioctl(sock, SIOCAIFGROUP, (caddr_t)&ifgr) == -1) {
 		if (errno != EEXIST)
 			err(1," SIOCAIFGROUP");
@@ -1658,10 +1662,6 @@ unsetifgroup(const char *group_name, int dummy)
 
 	memset(&ifgr, 0, sizeof(ifgr));
 	strlcpy(ifgr.ifgr_name, ifname, IFNAMSIZ);
-
-	if (group_name[0] &&
-	    isdigit((unsigned char)group_name[strlen(group_name) - 1]))
-		errx(1, "unsetifgroup: group names may not end in a digit");
 
 	if (strlcpy(ifgr.ifgr_group, group_name, IFNAMSIZ) >= IFNAMSIZ)
 		errx(1, "unsetifgroup: group name too long");
