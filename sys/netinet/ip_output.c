@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.364 2021/02/06 13:15:37 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.365 2021/02/10 18:28:06 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -108,7 +108,10 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 	struct sockaddr_in *dst;
 	struct tdb *tdb = NULL;
 	u_long mtu;
-#if defined(MROUTING)
+#if NPF > 0
+	u_int orig_rtableid;
+#endif
+#ifdef MROUTING
 	int rv;
 #endif
 
@@ -151,6 +154,7 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 	}
 
 #if NPF > 0
+	orig_rtableid = m->m_pkthdr.ph_rtableid;
 reroute:
 #endif
 
@@ -480,6 +484,15 @@ sendit:
 			ipsec_adjust_mtu(m, ifp->if_mtu);
 #endif
 		error = EMSGSIZE;
+#if NPF > 0
+		/* pf changed routing table, use orig rtable for path MTU */
+		if (ro->ro_tableid != orig_rtableid) {
+			rtfree(ro->ro_rt);
+			ro->ro_tableid = orig_rtableid;
+			ro->ro_rt = icmp_mtudisc_clone(
+			    satosin(&ro->ro_dst)->sin_addr, ro->ro_tableid, 0);
+		}
+#endif
 		/*
 		 * This case can happen if the user changed the MTU
 		 * of an interface after enabling IP on it.  Because
