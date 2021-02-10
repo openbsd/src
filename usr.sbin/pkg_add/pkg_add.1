@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.163 2020/01/24 21:10:46 schwarze Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.164 2021/02/10 22:04:14 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: January 24 2020 $
+.Dd $Mdocdate: February 10 2021 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -406,13 +406,12 @@ Installs packages from the raw output of
 .Xr pkg_info 1 ,
 as saved in
 .Ar file .
-Generally, use with
-.Li pkg_info -mz \*(Gtfile ,
-to reproduce an installation from machine to machine.
-With
-.Fl l
-.Nm
-will try its best to reproduce the installation.
+Generally, to reproduce an installation from machine to machine,
+use
+.Li pkg_info -mz \*(Gtinstalled_list
+on the source machine and
+.Li pkg_add -l installed_list
+on the destination machine.
 .It Fl m
 Causes
 .Nm
