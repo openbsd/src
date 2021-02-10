@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.46 2021/01/29 08:48:19 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.47 2021/02/10 20:51:27 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -242,6 +242,7 @@ cpu_identify(struct cpu_info *ci)
 		if (clidr & CLIDR_CTYPE_INSN) {
 			WRITE_SPECIALREG(csselr_el1,
 			    i << CSSELR_LEVEL_SHIFT | CSSELR_IND);
+			__asm volatile("isb");
 			ccsidr = READ_SPECIALREG(ccsidr_el1);
 			sets = CCSIDR_SETS(ccsidr);
 			ways = CCSIDR_WAYS(ccsidr);
@@ -254,6 +255,7 @@ cpu_identify(struct cpu_info *ci)
 		}
 		if (clidr & CLIDR_CTYPE_DATA) {
 			WRITE_SPECIALREG(csselr_el1, i << CSSELR_LEVEL_SHIFT);
+			__asm volatile("isb");
 			ccsidr = READ_SPECIALREG(ccsidr_el1);
 			sets = CCSIDR_SETS(ccsidr);
 			ways = CCSIDR_WAYS(ccsidr);
@@ -264,6 +266,7 @@ cpu_identify(struct cpu_info *ci)
 		}
 		if (clidr & CLIDR_CTYPE_UNIFIED) {
 			WRITE_SPECIALREG(csselr_el1, i << CSSELR_LEVEL_SHIFT);
+			__asm volatile("isb");
 			ccsidr = READ_SPECIALREG(ccsidr_el1);
 			sets = CCSIDR_SETS(ccsidr);
 			ways = CCSIDR_WAYS(ccsidr);
