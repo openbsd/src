@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.252 2021/02/01 21:48:36 jca Exp $
+.\"	$OpenBSD: port-modules.5,v 1.253 2021/02/10 12:44:13 espie Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 1 2021 $
+.Dd $Mdocdate: February 10 2021 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -1578,79 +1578,6 @@ and
 by appending
 .Ev MODINTLTOOL_OVERRIDE
 to them.
-.It www/drupal7
-Can be used to install plugins (default), themes if
-.Ev MODDRUPAL_THEME
-is yes, or languages packs if
-.Ev DRUPAL_LANG
-is set to the desired language.
-.Pp
-The module may set or add to default values for
-.Ev HOMEPAGE ,
-.Ev MASTER_SITES ,
-.Ev PREFIX ,
-.Ev DISTNAME ,
-.Ev DIST_SUBDIR ,
-.Ev CATEGORIES ,
-.Ev PKGNAME ,
-.Ev PKG_ARCH ,
-.Ev WRKDIST ,
-.Ev RUN_DEPENDS .
-Drupal modules normally don't have any build part, just an installation part
-that defaults to copying the plugin/theme/language files into the right
-location through
-.Ev MODDRUPAL_INSTALL .
-.Pp
-The module sets
-.Ev DRUPAL
-to drupal7,
-.Ev DRUPAL_ROOT
-to htdocs/${DRUPAL}
-.Ev DRUPAL_MODS
-to ${DRUPAL_ROOT}/site/all/modules
-.Ev DRUPAL_THEMES
-to ${DRUPAL_ROOT}/site/all/themes
-and
-.Ev DRUPAL_TRANSLATIONS
-to ${DRUPAL_ROOT}/profiles/standard/translations.
-So, by default, modules and themes are installed for all sites,
-and translations are activated at install.
-.Pp
-.Ev DRUPAL_OWNER , DRUPAL_GROUP
-are set to root, daemon, since drupal doesn't need to write
-to any file except the files/ directory and the site settings (those
-belong to www instead).
-.Pp
-Most modules are actually separate projects on the drupal site.
-If
-.Ev MODDRUPAL_PROJECT
-is set,
-.Ev HOMEPAGE
-will lead to the corresponding project.
-If
-.Ev MODDRUPAL_VERSION
-is also set,
-.Ev DISTNAME
-will default to
-.Pa ${MODDRUPAL_PROJECT}-7.x-${MODDRUPAL_VERSION} ,
-MODDRUPAL_PKGNAME
-will default to
-.Pa ${MODDRUPAL_PROJECT}
-and
-.Ev PKGNAME
-will default to
-.Pa drupal7-${MODDRUPAL_PKGNAME}-${MODDRUPAL_VERSION} .
-.Pp
-Translations are handled by setting
-.Ev DRUPAL_LANG
-to the language letter code, and by setting
-.Ev LANGFILES
-to a list of module names/version pairs.
-.Pp
-With drupal7, all translations have been put in separate .po files.
-It has been deemed simplest to pack all translations for a given language
-into a single package, since translations for non installed modules won't
-affect anything.
 .It www/mozilla
 Sets
 .Ev PKGNAME ,
