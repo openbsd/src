@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.4 2021/02/11 07:23:48 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.5 2021/02/11 07:24:50 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -153,8 +153,8 @@ int uhidpp_debug = 1;
 
 /* Feature access report used by the HID++ 2.0 (and greater) protocol. */
 struct fap {
-	uint8_t feature_index;
-	uint8_t funcindex_clientid;
+	uint8_t feature_idx;
+	uint8_t funcidx_swid;
 	uint8_t params[HIDPP_REPORT_LONG_PARAMS_MAX];
 };
 
@@ -709,9 +709,9 @@ uhidpp_is_notification(struct uhidpp_softc *sc, struct uhidpp_report *rep)
 
 	/* An error must always be a response. */
 	if ((rep->rap.sub_id == HIDPP_ERROR ||
-		    rep->fap.feature_index == HIDPP20_ERROR) &&
-	    rep->fap.funcindex_clientid == sc->sc_req->fap.feature_index &&
-	    rep->fap.params[0] == sc->sc_req->fap.funcindex_clientid)
+		    rep->fap.feature_idx == HIDPP20_ERROR) &&
+	    rep->fap.funcidx_swid == sc->sc_req->fap.feature_idx &&
+	    rep->fap.params[0] == sc->sc_req->fap.funcidx_swid)
 		return 0;
 
 	return 1;
@@ -865,7 +865,7 @@ hidpp10_enable_notifications(struct uhidpp_softc *sc, uint8_t device_id)
 
 int
 hidpp20_root_get_feature(struct uhidpp_softc *sc, uint8_t device_id,
-    uint16_t feature, uint8_t *feature_index, uint8_t *feature_type)
+    uint16_t feature, uint8_t *feature_idx, uint8_t *feature_type)
 {
 	struct uhidpp_report resp;
 	uint8_t params[2] = { feature >> 8, feature & 0xff };
@@ -883,14 +883,14 @@ hidpp20_root_get_feature(struct uhidpp_softc *sc, uint8_t device_id,
 	if (resp.fap.params[0] == 0)
 		return -ENOENT;
 
-	*feature_index = resp.fap.params[0];
+	*feature_idx = resp.fap.params[0];
 	*feature_type = resp.fap.params[1];
 	return 0;
 }
 
 int
 hidpp20_battery_get_level_status(struct uhidpp_softc *sc, uint8_t device_id,
-    uint8_t feature_index, uint8_t *level, uint8_t *next_level, uint8_t *status)
+    uint8_t feature_idx, uint8_t *level, uint8_t *next_level, uint8_t *status)
 {
 	struct uhidpp_report resp;
 	int error;
@@ -898,7 +898,7 @@ hidpp20_battery_get_level_status(struct uhidpp_softc *sc, uint8_t device_id,
 	error = hidpp_send_fap_report(sc,
 	    HIDPP_REPORT_ID_LONG,
 	    device_id,
-	    feature_index,
+	    feature_idx,
 	    HIDPP20_FEAT_BATTERY_LEVEL_FUNC,
 	    NULL, 0, &resp);
 	if (error)
@@ -912,7 +912,7 @@ hidpp20_battery_get_level_status(struct uhidpp_softc *sc, uint8_t device_id,
 
 int
 hidpp20_battery_get_capability(struct uhidpp_softc *sc, uint8_t device_id,
-    uint8_t feature_index, uint8_t *nlevels)
+    uint8_t feature_idx, uint8_t *nlevels)
 {
 	struct uhidpp_report resp;
 	int error;
@@ -920,7 +920,7 @@ hidpp20_battery_get_capability(struct uhidpp_softc *sc, uint8_t device_id,
 	error = hidpp_send_fap_report(sc,
 	    HIDPP_REPORT_ID_LONG,
 	    device_id,
-	    feature_index,
+	    feature_idx,
 	    HIDPP20_FEAT_BATTERY_CAPABILITY_FUNC,
 	    NULL, 0, &resp);
 	if (error)
@@ -946,7 +946,7 @@ hidpp_send_validate(uint8_t report_id, int nparams)
 
 int
 hidpp_send_fap_report(struct uhidpp_softc *sc, uint8_t report_id,
-    uint8_t device_id, uint8_t feature_index, uint8_t funcindex_clientid,
+    uint8_t device_id, uint8_t feature_idx, uint8_t funcidx_swid,
     uint8_t *params, int nparams, struct uhidpp_report *resp)
 {
 	struct uhidpp_report req;
@@ -958,9 +958,9 @@ hidpp_send_fap_report(struct uhidpp_softc *sc, uint8_t report_id,
 
 	memset(&req, 0, sizeof(req));
 	req.device_id = device_id;
-	req.fap.feature_index = feature_index;
-	req.fap.funcindex_clientid =
-	    (funcindex_clientid << HIDPP_SOFTWARE_ID_LEN) | HIDPP_SOFTWARE_ID;
+	req.fap.feature_idx = feature_idx;
+	req.fap.funcidx_swid =
+	    (funcidx_swid << HIDPP_SOFTWARE_ID_LEN) | HIDPP_SOFTWARE_ID;
 	memcpy(req.fap.params, params, nparams);
 	return hidpp_send_report(sc, report_id, &req, resp);
 }
@@ -1041,7 +1041,7 @@ hidpp_send_report(struct uhidpp_softc *sc, uint8_t report_id,
 	    resp->rap.sub_id == HIDPP_ERROR)
 		error = resp->rap.params[1];
 	else if (sc->sc_resp_state == HIDPP_REPORT_ID_LONG &&
-	    resp->fap.feature_index == HIDPP20_ERROR)
+	    resp->fap.feature_idx == HIDPP20_ERROR)
 		error = resp->fap.params[1];
 
 out:
