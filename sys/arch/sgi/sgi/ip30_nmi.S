@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip30_nmi.S,v 1.6 2012/10/03 11:18:23 miod Exp $	*/
+/*	$OpenBSD: ip30_nmi.S,v 1.7 2021/02/11 14:44:14 visa Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -71,7 +71,6 @@ ip30_nmi:
 	.set	at
 
 	PTR_ADDU sp, k0, 0x2000
-	LA	gp, _gp
 	
 	/*
 	 * Interrupts should be disabled. Just in case they aren't,

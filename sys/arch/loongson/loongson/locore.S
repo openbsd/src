@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.8 2017/06/08 11:44:00 visa Exp $ */
+/*	$OpenBSD: locore.S,v 1.9 2021/02/11 14:44:13 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -53,7 +53,6 @@ locore_start:
 	 * Initialize stack and call machine startup.
 	 */
 	LA	t0, start - FRAMESZ(CF_SZ)
-	LA	gp, _gp
 	PTR_S	ra, CF_RA_OFFS(t0)		# save pmon return address
 	PTR_S	sp, 0(t0)			# and stack
 	move	sp, t0
@@ -111,7 +110,7 @@ LEAF(hw_cpu_spinup_trampoline, 0)
 	LA	t0, cpu_spinup_sp
 	ld	sp, 0(t0)
 	jal	hw_cpu_hatch
-	 LA	gp, _gp
+	nop
 END(hw_cpu_spinup_trampoline)
 
 LEAF(hw_getcurcpu, 0)

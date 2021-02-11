@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.19 2019/06/30 07:37:47 visa Exp $ */
+/*	$OpenBSD: locore.S,v 1.20 2021/02/11 14:44:14 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -55,7 +55,6 @@ locore_start:
 	 * Initialize stack and call machine startup.
 	 */
 	LA	sp, start - FRAMESZ(CF_SZ)
-	LA	gp, _gp
 	jal	mips_init			# mips_init(argc, argv, envp)
 	PTR_S	zero, CF_RA_OFFS(sp)		# Zero out old ra for debugger
 
@@ -73,7 +72,6 @@ LEAF(hw_cpu_spinup_trampoline, 0)
 	ori	v0, SR_KX | SR_UX
 	MTC0	v0, COP_0_STATUS_REG		# disable all interrupts
 	MTC0	zero, COP_0_CAUSE_REG		# Clear soft interrupts
-	LA	gp, _gp
 	jal	hw_cpu_hatch
 	 NOP
 END(hw_cpu_spinup_trampoline)
@@ -122,7 +120,6 @@ LEAF(ip27_cpu_spinup_trampoline, 0)
 	and	v0, v1
 	MTC0	v0, COP_0_STATUS_REG		# Disable all interrupts.
 	MTC0	zero, COP_0_CAUSE_REG		# Clear soft interrupts.
-	LA	gp, _gp
 
 	/* Wait the turn of this CPU. */
 	LA	v1, ip27_spinup_turn

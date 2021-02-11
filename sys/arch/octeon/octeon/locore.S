@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.21 2020/07/11 15:18:08 visa Exp $ */
+/*	$OpenBSD: locore.S,v 1.22 2021/02/11 14:44:14 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -71,8 +71,6 @@ locore_start:
 	mtc0    v0, COP_0_STATUS_REG    # disable all interrupts
 
 	mtc0	zero, COP_0_CAUSE_REG	# Clear soft interrupts
-
-	LA	gp, _gp
 
 	/* Let the init core continue. The others have to wait. */
 	bne	a2, zero, 2f

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ld.script,v 1.6 2021/02/06 09:31:47 visa Exp $	*/
+/*	$OpenBSD: ld.script,v 1.7 2021/02/11 14:44:13 visa Exp $	*/
 
 OUTPUT_FORMAT("elf64-tradbigmips")
 OUTPUT_ARCH(mips)
@@ -40,7 +40,6 @@ SECTIONS
 	. = ALIGN(8);
 	PROVIDE (__kernel_randomdata_end = .);
 
-	_gp = ALIGN(16) + 0x7ff0;
 	.data :
 	{
 		*(.data .data.* .gnu.linkonce.d.*)

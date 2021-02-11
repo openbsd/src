@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception_tfp.S,v 1.7 2018/05/09 15:03:04 visa Exp $	*/
+/*	$OpenBSD: exception_tfp.S,v 1.8 2021/02/11 14:44:13 visa Exp $	*/
 
 /*
  * Copyright (c) 2012 Miodrag Vallat.
@@ -288,7 +288,6 @@ u_intr:
 	SAVE_CPU(k0, 0)
 	SAVE_CPU_SREG(k0, 0)
 	PTR_ADDU sp, k0, USPACE-FRAMESZ(CF_SZ)
-	LA	gp, _gp
 	.set	at
 	and	t0, a1, ~(SR_COP_1_BIT | SR_EXL | SR_INT_ENAB | SR_KSU_MASK)
 	DMTC0	t0, COP_0_STATUS_REG
@@ -400,7 +399,6 @@ k_intr:
 #endif
 	.set	at
 	move	sp, k0			# Already on kernel stack
-	LA	gp, _gp
 	and	t0, a1, ~(SR_COP_1_BIT | SR_EXL | SR_INT_ENAB | SR_KSU_MASK)
 	DMTC0	t0, COP_0_STATUS_REG
 	MTC0_SR_IE_HAZARD

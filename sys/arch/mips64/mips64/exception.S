@@ -1,4 +1,4 @@
-/*	$OpenBSD: exception.S,v 1.40 2019/05/06 12:54:51 visa Exp $ */
+/*	$OpenBSD: exception.S,v 1.41 2021/02/11 14:44:13 visa Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -205,7 +205,6 @@ NNON_LEAF(k_intr, FRAMESZ(KERN_EXC_FRAME_SIZE), ra)
 #endif
 	.set	at
 	move	sp, k0			# Already on kernel stack
-	LA	gp, _gp
 	and	t0, a1, ~(SR_COP_1_BIT | SR_EXL | SR_INT_ENAB | SR_KSU_MASK)
 	MTC0	t0, COP_0_STATUS_REG
 	MTC0_SR_IE_HAZARD
@@ -242,7 +241,6 @@ NNON_LEAF(u_intr, FRAMESZ(CF_SZ), ra)
 	SAVE_REG(v1, IC, k0, 0)
 #endif
 	PTR_ADDU sp, k0, USPACE-FRAMESZ(CF_SZ)
-	LA	gp, _gp
 	.set	at
 	and	t0, a1, ~(SR_COP_1_BIT | SR_EXL | SR_INT_ENAB | SR_KSU_MASK)
 	MTC0	t0, COP_0_STATUS_REG
@@ -328,7 +326,6 @@ NNON_LEAF(k_general, FRAMESZ(KERN_EXC_FRAME_SIZE), ra)
 #endif
 	.set	at
 	move	sp, k0			# Already on kernel stack
-	LA	gp, _gp
 	and	t0, a1, ~(SR_COP_1_BIT | SR_EXL | SR_INT_ENAB | SR_KSU_MASK)
 	MTC0	t0, COP_0_STATUS_REG
 	MTC0_SR_IE_HAZARD
@@ -370,7 +367,6 @@ NNON_LEAF(u_general, FRAMESZ(CF_SZ), ra)
 #endif
 	SAVE_CPU_SREG(k0, 0)
 	PTR_ADDU sp, k0, USPACE-FRAMESZ(CF_SZ)
-	LA	gp, _gp
 	.set	at
 	and	t0, a1, ~(SR_COP_1_BIT | SR_EXL | SR_INT_ENAB | SR_KSU_MASK)
 	MTC0	t0, COP_0_STATUS_REG
