@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.3 2021/02/11 07:22:21 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.4 2021/02/11 07:23:48 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -112,7 +112,6 @@ int uhidpp_debug = 1;
  * greater than zero which is reserved for notifications.
  */
 #define HIDPP_SOFTWARE_ID			0x01
-#define HIDPP_SOFTWARE_ID_MASK			0x0f
 #define HIDPP_SOFTWARE_ID_LEN			4
 
 #define HIDPP20_FEAT_ROOT_IDX			0x00
