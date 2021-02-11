@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.5 2021/02/11 07:24:50 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.6 2021/02/11 07:26:03 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -184,6 +184,8 @@ struct uhidpp_notification {
 struct uhidpp_device {
 	uint8_t d_id;
 	uint8_t d_connected;
+	uint8_t d_major;
+	uint8_t d_minor;
 	struct {
 		struct ksensor b_sens[UHIDPP_NSENSORS];
 		uint8_t b_feature_idx;
@@ -236,7 +238,8 @@ struct uhidpp_notification *uhidpp_claim_notification(struct uhidpp_softc *);
 int uhidpp_consume_notification(struct uhidpp_softc *, struct uhidpp_report *);
 int uhidpp_is_notification(struct uhidpp_softc *, struct uhidpp_report *);
 
-int hidpp_get_protocol_version(struct uhidpp_softc  *, uint8_t, int *, int *);
+int hidpp_get_protocol_version(struct uhidpp_softc  *, uint8_t, uint8_t *,
+    uint8_t *);
 
 int hidpp10_get_name(struct uhidpp_softc *, uint8_t, char *, size_t);
 int hidpp10_get_serial(struct uhidpp_softc *, uint8_t, uint8_t *, size_t);
@@ -536,7 +539,7 @@ void
 uhidpp_device_connect(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 {
 	struct ksensor *sens;
-	int error, major, minor;
+	int error;
 	uint8_t feature_type;
 
 	MUTEX_ASSERT_LOCKED(&sc->sc_mtx);
@@ -545,7 +548,8 @@ uhidpp_device_connect(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 	if (dev->d_connected)
 		return;
 
-	error = hidpp_get_protocol_version(sc, dev->d_id, &major, &minor);
+	error = hidpp_get_protocol_version(sc, dev->d_id,
+	    &dev->d_major, &dev->d_minor);
 	if (error) {
 		DPRINTF("%s: protocol version failure: device_id=%d, "
 		    "error=%d\n",
@@ -554,22 +558,28 @@ uhidpp_device_connect(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 	}
 
 	DPRINTF("%s: device_id=%d, version=%d.%d\n",
-	    __func__, dev->d_id, major, minor);
+	    __func__, dev->d_id, dev->d_major, dev->d_minor);
 
-	error = hidpp20_root_get_feature(sc, dev->d_id,
-	    HIDPP20_FEAT_BATTERY_IDX,
-	    &dev->d_battery.b_feature_idx, &feature_type);
-	if (error) {
-		DPRINTF("%s: battery feature index failure: device_id=%d, "
-		    "error=%d\n", __func__, dev->d_id, error);
-		return;
-	}
+	if (dev->d_major >= 2) {
+		error = hidpp20_root_get_feature(sc, dev->d_id,
+		    HIDPP20_FEAT_BATTERY_IDX,
+		    &dev->d_battery.b_feature_idx, &feature_type);
+		if (error) {
+			DPRINTF("%s: battery feature index failure: "
+			    "device_id=%d, error=%d\n",
+			    __func__, dev->d_id, error);
+			return;
+		}
 
-	error = hidpp20_battery_get_capability(sc, dev->d_id,
-	    dev->d_battery.b_feature_idx, &dev->d_battery.b_nlevels);
-	if (error) {
-		DPRINTF("%s: battery capability failure: device_id=%d, "
-		    "error=%d\n", __func__, dev->d_id, error);
+		error = hidpp20_battery_get_capability(sc, dev->d_id,
+		    dev->d_battery.b_feature_idx, &dev->d_battery.b_nlevels);
+		if (error) {
+			DPRINTF("%s: battery capability failure: device_id=%d, "
+			    "error=%d\n", __func__, dev->d_id, error);
+			return;
+		}
+
+	} else {
 		return;
 	}
 
@@ -596,44 +606,47 @@ uhidpp_device_refresh(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 
 	MUTEX_ASSERT_LOCKED(&sc->sc_mtx);
 
-	error = hidpp20_battery_get_level_status(sc, dev->d_id,
-	    dev->d_battery.b_feature_idx,
-	    &dev->d_battery.b_level, &dev->d_battery.b_next_level,
-	    &dev->d_battery.b_status);
-	if (error) {
-		DPRINTF("%s: battery level status failure: device_id=%d, "
-		    "error=%d\n", __func__, dev->d_id, error);
-		return;
-	}
+	if (dev->d_major >= 2) {
+		error = hidpp20_battery_get_level_status(sc, dev->d_id,
+		    dev->d_battery.b_feature_idx,
+		    &dev->d_battery.b_level, &dev->d_battery.b_next_level,
+		    &dev->d_battery.b_status);
+		if (error) {
+			DPRINTF("%s: battery status failure: device_id=%d, "
+			    "error=%d\n",
+			    __func__, dev->d_id, error);
+			return;
+		}
 
-	dev->d_battery.b_sens[0].value = dev->d_battery.b_level * 1000;
-	dev->d_battery.b_sens[0].flags &= ~SENSOR_FUNKNOWN;
-	if (dev->d_battery.b_nlevels < 10) {
-		/*
-		 * According to the HID++ 2.0 specification, less than 10 levels
-		 * should be mapped to the following 4 levels:
-		 *
-		 * [0, 10]   critical
-		 * [11, 30]  low
-		 * [31, 80]  good
-		 * [81, 100] full
-		 *
-		 * Since sensors are limited to 3 valid statuses, clamp it even
-		 * further.
-		 */
-		if (dev->d_battery.b_level <= 10)
-			dev->d_battery.b_sens[0].status = SENSOR_S_CRIT;
-		else if (dev->d_battery.b_level <= 30)
-			dev->d_battery.b_sens[0].status = SENSOR_S_WARN;
-		else
-			dev->d_battery.b_sens[0].status = SENSOR_S_OK;
-	} else {
-		/*
-		 * XXX the device supports battery mileage. The current level
-		 * must be checked against resp.fap.params[3] given by
-		 * hidpp20_battery_get_capability().
-		 */
-		dev->d_battery.b_sens[0].status = SENSOR_S_UNKNOWN;
+		dev->d_battery.b_sens[0].value = dev->d_battery.b_level * 1000;
+		dev->d_battery.b_sens[0].flags &= ~SENSOR_FUNKNOWN;
+		if (dev->d_battery.b_nlevels < 10) {
+			/*
+			 * According to the HID++ 2.0 specification, less than
+			 * 10 levels should be mapped to the following 4 levels:
+			 *
+			 * [0, 10]   critical
+			 * [11, 30]  low
+			 * [31, 80]  good
+			 * [81, 100] full
+			 *
+			 * Since sensors are limited to 3 valid statuses, clamp
+			 * it even further.
+			 */
+			if (dev->d_battery.b_level <= 10)
+				dev->d_battery.b_sens[0].status = SENSOR_S_CRIT;
+			else if (dev->d_battery.b_level <= 30)
+				dev->d_battery.b_sens[0].status = SENSOR_S_WARN;
+			else
+				dev->d_battery.b_sens[0].status = SENSOR_S_OK;
+		} else {
+			/*
+			 * XXX the device supports battery mileage. The current
+			 * level must be checked against resp.fap.params[3]
+			 * given by hidpp20_battery_get_capability().
+			 */
+			dev->d_battery.b_sens[0].status = SENSOR_S_UNKNOWN;
+		}
 	}
 }
 
@@ -719,7 +732,7 @@ uhidpp_is_notification(struct uhidpp_softc *sc, struct uhidpp_report *rep)
 
 int
 hidpp_get_protocol_version(struct uhidpp_softc  *sc, uint8_t device_id,
-    int *major, int *minor)
+    uint8_t *major, uint8_t *minor)
 {
 	struct uhidpp_report resp;
 	uint8_t params[3] = { 0, 0, HIDPP_FEAT_ROOT_PING_DATA };
