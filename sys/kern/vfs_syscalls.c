@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.348 2020/10/02 15:45:22 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.349 2021/02/11 12:08:21 claudio Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -1104,8 +1104,10 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 	cloexec = (oflags & O_CLOEXEC) ? UF_EXCLOSE : 0;
 
 	fdplock(fdp);
-	if ((error = falloc(p, &fp, &indx)) != 0)
-		goto out;
+	if ((error = falloc(p, &fp, &indx)) != 0) {
+		fdpunlock(fdp);
+		return (error);
+	}
 	fdpunlock(fdp);
 
 	flags = FFLAGS(oflags);
@@ -1139,15 +1141,17 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 		    p->p_dupfd >= 0 &&			/* XXX from fdopen */
 		    (error =
 			dupfdopen(p, indx, flags)) == 0) {
+			fdpunlock(fdp);
 			closef(fp, p);
 			*retval = indx;
-			goto out;
+			return (error);
 		}
 		if (error == ERESTART)
 			error = EINTR;
 		fdremove(fdp, indx);
+		fdpunlock(fdp);
 		closef(fp, p);
-		goto out;
+		return (error);
 	}
 	p->p_dupfd = 0;
 	vp = nd.ni_vp;
@@ -1172,8 +1176,9 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 			fdplock(fdp);
 			/* closef will vn_close the file for us. */
 			fdremove(fdp, indx);
+			fdpunlock(fdp);
 			closef(fp, p);
-			goto out;
+			return (error);
 		}
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		atomic_setbits_int(&fp->f_iflags, FIF_HASLOCK);
@@ -1195,17 +1200,17 @@ doopenat(struct proc *p, int fd, const char *path, int oflags, mode_t mode,
 			fdplock(fdp);
 			/* closef will close the file for us. */
 			fdremove(fdp, indx);
+			fdpunlock(fdp);
 			closef(fp, p);
-			goto out;
+			return (error);
 		}
 	}
 	VOP_UNLOCK(vp);
 	*retval = indx;
 	fdplock(fdp);
 	fdinsert(fdp, indx, cloexec, fp);
-	FRELE(fp, p);
-out:
 	fdpunlock(fdp);
+	FRELE(fp, p);
 	return (error);
 }
 
@@ -1235,8 +1240,10 @@ sys___tmpfd(struct proc *p, void *v, register_t *retval)
 	cloexec = (oflags & O_CLOEXEC) ? UF_EXCLOSE : 0;
 
 	fdplock(fdp);
-	if ((error = falloc(p, &fp, &indx)) != 0)
-		goto out;
+	if ((error = falloc(p, &fp, &indx)) != 0) {
+		fdpunlock(fdp);
+		return (error);
+	}
 	fdpunlock(fdp);
 
 	flags = FFLAGS(oflags);
@@ -1250,12 +1257,13 @@ sys___tmpfd(struct proc *p, void *v, register_t *retval)
 	cmode = 0600;
 	NDINITAT(&nd, 0, KERNELPATH, UIO_SYSSPACE, AT_FDCWD, path, p);
 	if ((error = vn_open(&nd, flags, cmode)) != 0) {
-		fdplock(fdp);
 		if (error == ERESTART)
 			error = EINTR;
+		fdplock(fdp);
 		fdremove(fdp, indx);
+		fdpunlock(fdp);
 		closef(fp, p);
-		goto out;
+		return (error);
 	}
 	vp = nd.ni_vp;
 	fp->f_flag = flags & FMASK;
@@ -1266,6 +1274,7 @@ sys___tmpfd(struct proc *p, void *v, register_t *retval)
 	*retval = indx;
 	fdplock(fdp);
 	fdinsert(fdp, indx, cloexec, fp);
+	fdpunlock(fdp);
 	FRELE(fp, p);
 
 	/* unlink it */
@@ -1288,8 +1297,6 @@ sys___tmpfd(struct proc *p, void *v, register_t *retval)
 		}
 	}
 
-out:
-	fdpunlock(fdp);
 	return (error);
 }
 
@@ -1370,9 +1377,11 @@ sys_fhopen(struct proc *p, void *v, register_t *retval)
 
 	fdplock(fdp);
 	if ((error = falloc(p, &fp, &indx)) != 0) {
+		fdpunlock(fdp);
 		fp = NULL;
 		goto bad;
 	}
+	fdpunlock(fdp);
 
 	if ((error = copyin(SCARG(uap, fhp), &fh, sizeof(fhandle_t))) != 0)
 		goto bad;
@@ -1449,6 +1458,7 @@ sys_fhopen(struct proc *p, void *v, register_t *retval)
 	}
 	VOP_UNLOCK(vp);
 	*retval = indx;
+	fdplock(fdp);
 	fdinsert(fdp, indx, cloexec, fp);
 	fdpunlock(fdp);
 	FRELE(fp, p);
@@ -1456,12 +1466,13 @@ sys_fhopen(struct proc *p, void *v, register_t *retval)
 
 bad:
 	if (fp) {
+		fdplock(fdp);
 		fdremove(fdp, indx);
+		fdpunlock(fdp);
 		closef(fp, p);
 		if (vp != NULL)
 			vput(vp);
 	}
-	fdpunlock(fdp);
 	return (error);
 }
 
