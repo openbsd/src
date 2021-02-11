@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.138 2021/01/19 19:14:39 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.139 2021/02/11 23:54:40 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -109,6 +109,9 @@ vioscsi*	at virtio?
 
 simplefb*	at fdt?
 wsdisplay*	at simplefb?
+
+# Apple
+exuart*		at fdt?
 
 # iMX
 imxccm*		at fdt? early 1
