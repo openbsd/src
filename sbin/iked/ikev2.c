@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.305 2021/02/10 22:25:54 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.306 2021/02/11 22:02:41 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1011,6 +1011,7 @@ ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
 			certlen = ibuf_length(msg->msg_cert.id_buf);
 			bzero(&msg->msg_cert, sizeof(msg->msg_cert));
 		}
+		sa->sa_stateflags &= ~IKED_REQ_CERTVALID;
 		if (ca_setcert(env, &sa->sa_hdr, id, certtype, cert, certlen, PROC_CERT) == -1)
 			return (-1);
 	}
