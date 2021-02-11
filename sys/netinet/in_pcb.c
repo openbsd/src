@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.253 2021/01/25 03:40:46 dlg Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.254 2021/02/11 10:41:19 patrick Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -522,8 +522,8 @@ in_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 	inp->inp_fport = sin->sin_port;
 	in_pcbrehash(inp);
 #if NSTOEPLITZ > 0
-	inp->inp_flowid = stoeplitz_ip4port(inp->inp_laddr.s_addr,
-	    inp->inp_faddr.s_addr, inp->inp_lport, inp->inp_fport);
+	inp->inp_flowid = stoeplitz_ip4port(inp->inp_faddr.s_addr,
+	    inp->inp_laddr.s_addr, inp->inp_fport, inp->inp_lport);
 #endif
 #ifdef IPSEC
 	{
