@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.1 2021/02/04 16:25:39 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.2 2021/02/11 06:56:49 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -281,7 +281,8 @@ uhidpp_match(struct device *parent, void *match, void *aux)
 	void *desc;
 	int descsiz, siz;
 
-	if (uha->reportid != UHIDEV_CLAIM_ALLREPORTID)
+	if (uha->reportid != HIDPP_REPORT_ID_SHORT &&
+	    uha->reportid != HIDPP_REPORT_ID_LONG)
 		return UMATCH_NONE;
 
 	if (usb_lookup(uhidpp_devs,
@@ -325,7 +326,7 @@ uhidpp_attach(struct device *parent, struct device *self, void *aux)
 
 	error = uhidev_open(&sc->sc_hdev);
 	if (error) {
-		printf(" error %d\n", error);
+		printf(" open error %d\n", error);
 		return;
 	}
 
@@ -338,10 +339,18 @@ uhidpp_attach(struct device *parent, struct device *self, void *aux)
 	 * in order to receive responses. Necessary as uhidev by default
 	 * performs the wiring after the attach routine has returned.
 	 */
-	uhidev_set_report_dev(sc->sc_hdev.sc_parent, &sc->sc_hdev,
+	error = uhidev_set_report_dev(sc->sc_hdev.sc_parent, &sc->sc_hdev,
 	    HIDPP_REPORT_ID_SHORT);
-	uhidev_set_report_dev(sc->sc_hdev.sc_parent, &sc->sc_hdev,
+	if (error) {
+		printf(" short report error %d\n", error);
+		return;
+	}
+	error = uhidev_set_report_dev(sc->sc_hdev.sc_parent, &sc->sc_hdev,
 	    HIDPP_REPORT_ID_LONG);
+	if (error) {
+		printf(" long report error %d\n", error);
+		return;
+	}
 
 	/* Probe paired devices. */
 	for (i = 0; i < UHIDPP_NDEVICES; i++) {
@@ -407,6 +416,14 @@ uhidpp_detach(struct device *self, int flags)
 		for (j = 0; j < UHIDPP_NSENSORS; j++)
 			sensor_detach(&sc->sc_sensdev, &dev->d_battery.b_sens[j]);
 	}
+
+	/*
+	 * Since this driver has multiple device handlers attached, remove all
+	 * of them preventing the uhidev parent from calling this detach routine
+	 * more than once.
+	 */
+	uhidev_unset_report_dev(sc->sc_hdev.sc_parent, HIDPP_REPORT_ID_SHORT);
+	uhidev_unset_report_dev(sc->sc_hdev.sc_parent, HIDPP_REPORT_ID_LONG);
 
 	uhidev_close(&sc->sc_hdev);
 
