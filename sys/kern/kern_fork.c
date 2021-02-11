@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.232 2021/02/08 10:51:01 mpi Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.233 2021/02/11 13:40:28 otto Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -299,7 +299,7 @@ fork_check_maxthread(uid_t uid)
 		static struct timeval lasttfm;
 
 		if (ratecheck(&lasttfm, &fork_tfmrate))
-			tablefull("proc");
+			tablefull("thread");
 		return EAGAIN;
 	}
 	nthreads++;
