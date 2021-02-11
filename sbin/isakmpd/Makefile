@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.88 2017/07/10 21:30:37 espie Exp $
+#	$OpenBSD: Makefile,v 1.89 2021/02/11 19:41:05 bluhm Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -87,4 +87,6 @@ generated: ${GENERATED}
 BUILDFIRST = ${GENERATED}
 
 .include <bsd.prog.mk>
-.include <bsd.subdir.mk>
+
+# Don't compile isakmpd as static binary by default
+LDSTATIC=
