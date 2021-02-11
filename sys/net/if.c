@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.628 2021/02/10 14:41:53 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.629 2021/02/11 20:28:01 mvs Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -423,8 +423,6 @@ if_attachsetup(struct ifnet *ifp)
 
 	NET_ASSERT_LOCKED();
 
-	TAILQ_INIT(&ifp->if_groups);
-
 	if_addgroup(ifp, IFG_ALL);
 
 	if_attachdomain(ifp);
@@ -596,6 +594,7 @@ if_attach_common(struct ifnet *ifp)
 
 	TAILQ_INIT(&ifp->if_addrlist);
 	TAILQ_INIT(&ifp->if_maddrlist);
+	TAILQ_INIT(&ifp->if_groups);
 
 	if (!ISSET(ifp->if_xflags, IFXF_MPSAFE)) {
 		KASSERTMSG(ifp->if_qstart == NULL,
