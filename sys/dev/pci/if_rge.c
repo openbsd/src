@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rge.c,v 1.11 2020/12/24 06:34:03 deraadt Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.12 2021/02/11 16:22:06 stsp Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020 Kevin Lo <kevlo@openbsd.org>
@@ -311,6 +311,7 @@ rge_activate(struct device *self, int act)
 #ifndef SMALL_KERNEL
 		rge_wol_power(sc);
 #endif
+		break;
 	default:
 		rv = config_activate_children(self, act);
 		break;
