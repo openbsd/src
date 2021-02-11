@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.105 2021/02/10 08:20:09 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.106 2021/02/11 20:28:57 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -973,7 +973,7 @@ sbdrop(struct socket *so, struct sockbuf *sb, int len)
 	KASSERT(sb == &so->so_rcv || sb == &so->so_snd);
 	soassertlocked(so);
 
-	next = (m = sb->sb_mb) ? m->m_nextpkt : 0;
+	next = (m = sb->sb_mb) ? m->m_nextpkt : NULL;
 	while (len > 0) {
 		if (m == NULL) {
 			if (next == NULL)
