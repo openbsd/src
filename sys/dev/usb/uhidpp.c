@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.6 2021/02/11 07:26:03 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.7 2021/02/11 11:03:57 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -360,7 +360,7 @@ uhidpp_attach(struct device *parent, struct device *self, void *aux)
 		uint8_t serial[4];
 		struct uhidpp_device *dev = &sc->sc_devices[i];
 		const char *type;
-		uint8_t device_id = device_id + 1;
+		uint8_t device_id = i + 1;
 
 		dev->d_id = device_id;
 
