@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.84 2020/11/18 17:40:42 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.85 2021/02/11 04:56:43 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -910,7 +910,8 @@ check_name_constraints(X509_STORE_CTX *ctx)
 
 /* Given a certificate try and find an exact match in the store */
 
-static X509 *lookup_cert_match(X509_STORE_CTX *ctx, X509 *x)
+static X509 *
+lookup_cert_match(X509_STORE_CTX *ctx, X509 *x)
 {
 	STACK_OF(X509) *certs;
 	X509 *xtmp = NULL;
@@ -937,7 +938,8 @@ static X509 *lookup_cert_match(X509_STORE_CTX *ctx, X509 *x)
 	return xtmp;
 }
 
-static int check_trust(X509_STORE_CTX *ctx)
+static int
+check_trust(X509_STORE_CTX *ctx)
 {
 	size_t i;
 	int ok;
@@ -991,7 +993,8 @@ static int check_trust(X509_STORE_CTX *ctx)
 	return X509_TRUST_UNTRUSTED;
 }
 
-int x509_vfy_check_trust(X509_STORE_CTX *ctx)
+int
+x509_vfy_check_trust(X509_STORE_CTX *ctx)
 {
 	return check_trust(ctx);
 }
