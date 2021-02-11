@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.2 2021/02/11 06:56:49 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.3 2021/02/11 07:22:21 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -548,7 +548,8 @@ uhidpp_device_connect(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 
 	error = hidpp_get_protocol_version(sc, dev->d_id, &major, &minor);
 	if (error) {
-		DPRINTF("%s: protocol version failure: device_id=%d, error=%d\n",
+		DPRINTF("%s: protocol version failure: device_id=%d, "
+		    "error=%d\n",
 		    __func__, dev->d_id, error);
 		return;
 	}
