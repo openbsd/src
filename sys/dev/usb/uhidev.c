@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.86 2021/02/04 16:18:34 anton Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.87 2021/02/11 06:53:44 anton Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -273,11 +273,13 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 		    hid_report_size(desc, size, hid_feature, repid) == 0)
 			continue;
 
+		/* Could already be assigned by uhidev_set_report_dev(). */
+		if (sc->sc_subdevs[repid] != NULL)
+			continue;
+
 		uha.reportid = repid;
 		dev = config_found_sm(self, &uha, uhidevprint, uhidevsubmatch);
-		/* Could already be assigned by uhidev_set_report_dev(). */
-		if (sc->sc_subdevs[repid] == NULL)
-			sc->sc_subdevs[repid] = (struct uhidev *)dev;
+		sc->sc_subdevs[repid] = (struct uhidev *)dev;
 	}
 }
 
