@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.22 2021/01/15 06:14:41 jmatthew Exp $ */
+/*	$OpenBSD: vmt.c,v 1.23 2021/02/11 11:57:32 mestre Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -1289,7 +1289,7 @@ vmt_xdr_nic_info(char *data)
 	struct ifnet *iface;
 	struct vm_nicinfo_nic_list nl;
 	size_t total, nictotal;
-	char *listdata;
+	char *listdata = NULL;
 	int nics;
 
 	NET_ASSERT_LOCKED();
