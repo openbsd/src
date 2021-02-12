@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ssl.8,v 1.68 2019/05/10 12:41:49 sthen Exp $
+.\"	$OpenBSD: ssl.8,v 1.69 2021/02/12 14:19:11 sthen Exp $
 .\"
 .\" Copyright (c) 1999 Theo de Raadt, Bob Beck
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 10 2019 $
+.Dd $Mdocdate: February 12 2021 $
 .Dt SSL 8
 .Os
 .Sh NAME
@@ -64,6 +64,7 @@ key file is kept secure.
 To support HTTPS transactions in
 .Xr httpd 8
 you will need to generate an RSA certificate.
+Start by creating a private key of the desired length:
 .Bd -literal -offset indent
 # openssl genrsa -out /etc/ssl/private/server.key 4096
 .Ed
@@ -74,8 +75,13 @@ have to type in when starting servers
 # openssl genrsa -aes256 -out /etc/ssl/private/server.key 4096
 .Ed
 .Pp
-The next step is to generate a Certificate Signing Request (CSR) which is
-used to get a Certificate Authority (CA) to sign your certificate.
+If you are only generating a private key to use with
+.Xr acme-client 1
+(for example, with a non-default key length)
+you may stop here.
+.Pp
+Otherwise, the next step is to generate a Certificate Signing Request (CSR)
+which is used to get a Certificate Authority (CA) to sign your certificate.
 To do this use the command:
 .Bd -literal -offset indent
 # openssl req -new -key /etc/ssl/private/server.key \e
@@ -123,25 +129,25 @@ with the certificate signed by your Certificate Authority, and then
 restarting
 .Xr httpd 8 .
 .Sh GENERATING ECDSA SERVER CERTIFICATES
-First, generate parameters for ECDSA keys.
+First, generate a private ECDSA key.
 The following command will use a NIST/SECG curve over a 384-bit
 prime field:
 .Bd -literal -offset indent
-# openssl ecparam -out ec-secp384r1.pem -name secp384r1
+# openssl ecparam -name secp384r1 -genkey \e
+  -noout -out /etc/ssl/private/eccert.key
 .Ed
 .Pp
-Once you have the ECDSA parameters generated, you can generate a
-CSR and unencrypted private key using the command:
-.Bd -literal -offset indent
-# openssl req -nodes -newkey ec:ec-secp384r1.pem \e
-  -keyout /etc/ssl/private/eccert.key -new \e
-  -out /etc/ssl/private/eccert.csr
-.Ed
+Note that some Certificate Authorities will only issue certificates for
+keys generated using prime256v1 parameters.
 .Pp
-To generate an encrypted private key, you would use:
+If you are only generating a private key to use with
+.Xr acme-client 1 ,
+you may stop here.
+Otherwise, the next step is to generate a Certificate Signing Request (CSR)
+which is used to get a Certificate Authority (CA) to sign your certificate.
+To do this use the command:
 .Bd -literal -offset indent
-# openssl req -newkey ec:ec-secp384r1.pem \e
-  -keyout /etc/ssl/private/eccert.key -new \e
+# openssl req -key /etc/ssl/private/eccert.key -new \e
   -out /etc/ssl/private/eccert.csr
 .Ed
 .Pp
@@ -157,6 +163,7 @@ You can also sign the key yourself, using the command:
   -out /etc/ssl/eccert.crt
 .Ed
 .Sh SEE ALSO
+.Xr acme-client 1 ,
 .Xr openssl 1 ,
 .Xr ssh 1 ,
 .Xr ssl 3 ,
