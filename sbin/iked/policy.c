@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.76 2021/02/09 21:35:48 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.77 2021/02/12 19:30:34 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -154,8 +154,8 @@ policy_lookup_sa(struct iked *env, struct iked_sa *sa)
 	pol.pol_af = sa->sa_peer.addr_af;
 	if (sa->sa_used_transport_mode)
 		pol.pol_flags |= IKED_POLICY_TRANSPORT;
-	memcpy(&pol.pol_peer.addr, &sa->sa_peer, sizeof(sa->sa_peer));
-	memcpy(&pol.pol_local.addr, &sa->sa_local, sizeof(sa->sa_local));
+	memcpy(&pol.pol_peer.addr, &sa->sa_peer.addr, sizeof(sa->sa_peer.addr));
+	memcpy(&pol.pol_local.addr, &sa->sa_local.addr, sizeof(sa->sa_local.addr));
 	pol.pol_flows = sa->sa_policy->pol_flows;
 	pol.pol_nflows = sa->sa_policy->pol_nflows;
 
