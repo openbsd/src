@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.loongson/MAKEDEV.md,v 1.33 2021/01/23 05:08:33 thfr Exp 
-#	OpenBSD: MAKEDEV.common,v 1.112 2021/01/23 05:08:33 thfr Exp 
+#	OpenBSD: etc.loongson/MAKEDEV.md,v 1.34 2021/02/12 10:26:34 jsg Exp 
+#	OpenBSD: MAKEDEV.common,v 1.113 2021/02/12 10:26:33 jsg Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -67,6 +67,7 @@
 #	bpf	Berkeley Packet Filter
 #	dt	Dynamic Tracer
 #	diskmap	Disk mapper
+#	dri	Direct Rendering Infrastructure
 #	drm*	Direct Rendering Manager
 #	fd	fd/* nodes
 #	fuse	Userland Filesystem
@@ -295,6 +296,19 @@ drm*)
 	M drmR$r c 87 $r 600
 	;;
 
+dri)
+	RMlist[${#RMlist[*]}]=";mkdir -p dri;rm -f"
+	n=0
+	while [ $n -lt 4 ]
+	do
+		M dri/card$n c 87 $n 600
+		r=$(($n+128))
+		M dri/renderD$r c 87 $r 600
+		n=$(($n+1))
+	done
+	MKlist[${#MKlist[*]}]=";chmod 555 dri"
+	;;
+
 diskmap)
 	M diskmap c 70 0 640 operator
 	;;
@@ -476,9 +490,9 @@ ramdisk)
 	;;
 
 all)
-	R drm0 drm1 drm2 drm3 switch0 switch1 switch2 switch3 vnd0
-	R vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 cd0
-	R cd1 rd0 tap0 tap1 tap2 tap3 tun0 tun1 tun2 tun3 bio pty0
+	R drm0 drm1 drm2 drm3 dri switch0 switch1 switch2 switch3
+	R vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9
+	R cd0 cd1 rd0 tap0 tap1 tap2 tap3 tun0 tun1 tun2 tun3 bio pty0
 	R pty1 pty2 diskmap vscsi0 audio0 audio1 audio2 audio3 kstat
 	R dt bpf fuse pppac pppx hotplug ptm local wscons pci0 pci1
 	R pci2 pci3 uall video0 video1 uk0 random tty00 tty01 tty02

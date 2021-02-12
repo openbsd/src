@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.i386/MAKEDEV.md,v 1.92 2021/01/23 05:08:33 thfr Exp 
-#	OpenBSD: MAKEDEV.common,v 1.112 2021/01/23 05:08:33 thfr Exp 
+#	OpenBSD: etc.i386/MAKEDEV.md,v 1.93 2021/02/12 10:26:34 jsg Exp 
+#	OpenBSD: MAKEDEV.common,v 1.113 2021/02/12 10:26:33 jsg Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -74,6 +74,7 @@
 #	bpf	Berkeley Packet Filter
 #	dt	Dynamic Tracer
 #	diskmap	Disk mapper
+#	dri	Direct Rendering Infrastructure
 #	drm*	Direct Rendering Manager
 #	fd	fd/* nodes
 #	fuse	Userland Filesystem
@@ -369,6 +370,19 @@ drm*)
 	M drmR$r c 88 $r 600
 	;;
 
+dri)
+	RMlist[${#RMlist[*]}]=";mkdir -p dri;rm -f"
+	n=0
+	while [ $n -lt 4 ]
+	do
+		M dri/card$n c 88 $n 600
+		r=$(($n+128))
+		M dri/renderD$r c 88 $r 600
+		n=$(($n+1))
+	done
+	MKlist[${#MKlist[*]}]=";chmod 555 dri"
+	;;
+
 diskmap)
 	M diskmap c 91 0 640 operator
 	;;
@@ -592,18 +606,18 @@ local)
 
 all)
 	R switch0 switch1 switch2 switch3 ipmi0 amdmsr drm0 drm1 drm2
-	R drm3 nvram gpio0 gpio1 gpio2 bktr0 vnd0 vnd1 vnd2 vnd3 sd0
-	R sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0 tap0 tap1
-	R tap2 tap3 tun0 tun1 tun2 tun3 bio pty0 fd1 fd1B fd1C fd1D
-	R fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H
-	R diskmap vscsi0 ch0 audio0 audio1 audio2 audio3 kstat dt kcov
-	R bpf pvbus0 pvbus1 fuse pppac pppx hotplug ptm local wscons
-	R pci0 pci1 pci2 pci3 uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4
-	R rmidi5 rmidi6 rmidi7 tuner0 radio0 speaker video0 video1 uk0
-	R random joy0 joy1 lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 tty00 tty01
-	R tty02 tty03 tty04 tty05 tty06 tty07 tty08 tty09 tty0a tty0b
-	R ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7 apm pf pctr
-	R wd0 wd1 wd2 wd3 std st0 st1 fd
+	R drm3 dri nvram gpio0 gpio1 gpio2 bktr0 vnd0 vnd1 vnd2 vnd3
+	R sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0 tap0
+	R tap1 tap2 tap3 tun0 tun1 tun2 tun3 bio pty0 fd1 fd1B fd1C
+	R fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G
+	R fd0H diskmap vscsi0 ch0 audio0 audio1 audio2 audio3 kstat dt
+	R kcov bpf pvbus0 pvbus1 fuse pppac pppx hotplug ptm local
+	R wscons pci0 pci1 pci2 pci3 uall rmidi0 rmidi1 rmidi2 rmidi3
+	R rmidi4 rmidi5 rmidi6 rmidi7 tuner0 radio0 speaker video0
+	R video1 uk0 random joy0 joy1 lpa0 lpa1 lpa2 lpt0 lpt1 lpt2
+	R tty00 tty01 tty02 tty03 tty04 tty05 tty06 tty07 tty08 tty09
+	R tty0a tty0b ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7
+	R apm pf pctr wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 
 wd*|sd*)

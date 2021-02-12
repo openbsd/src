@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.96 2021/01/23 05:08:33 thfr Exp 
-#	OpenBSD: MAKEDEV.common,v 1.112 2021/01/23 05:08:33 thfr Exp 
+#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.97 2021/02/12 10:26:34 jsg Exp 
+#	OpenBSD: MAKEDEV.common,v 1.113 2021/02/12 10:26:33 jsg Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -79,6 +79,7 @@
 #	bio	ioctl tunnel pseudo-device
 #	bpf	Berkeley Packet Filter
 #	diskmap	Disk mapper
+#	dri	Direct Rendering Infrastructure
 #	drm*	Direct Rendering Manager
 #	fd	fd/* nodes
 #	dt	Dynamic Tracer
@@ -354,6 +355,19 @@ drm*)
 	M drm$U c 87 $U 600
 	r=$(($U+128))
 	M drmR$r c 87 $r 600
+	;;
+
+dri)
+	RMlist[${#RMlist[*]}]=";mkdir -p dri;rm -f"
+	n=0
+	while [ $n -lt 4 ]
+	do
+		M dri/card$n c 87 $n 600
+		r=$(($n+128))
+		M dri/renderD$r c 87 $r 600
+		n=$(($n+1))
+	done
+	MKlist[${#MKlist[*]}]=";chmod 555 dri"
 	;;
 
 diskmap)
@@ -652,7 +666,7 @@ all)
 	R ldom12 ldom13 ldom14 ldom15 spds hvctl ttyV0 ttyV1 ttyV2
 	R ttyV3 ttyV4 ttyV5 ttyV6 ttyV7 ttyV8 ttyV9 ttyVa ttyVb ttyVc
 	R ttyVd ttyVe ttyVf cuaa cuab cuac cuad ttya ttyb ttyc ttyd
-	R switch0 switch1 switch2 switch3 drm0 drm1 drm2 drm3 bpp0
+	R switch0 switch1 switch2 switch3 drm0 drm1 drm2 drm3 dri bpp0
 	R vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9
 	R cd0 cd1 rd0 tap0 tap1 tap2 tap3 tun0 tun1 tun2 tun3 bio pty0
 	R fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D
