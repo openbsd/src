@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.112 2021/01/23 05:08:33 thfr Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.113 2021/02/12 10:26:33 jsg Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -343,6 +343,17 @@ _mkdev(pty, pty*, {-if [ $U -gt 15 ]; then
 		n=Add($n, 1)
 	done-})dnl
 __devitem(dc, dc*, {-4 channel serial interface (keyboard{-,-} mouse{-,-}modem{-,-} printer)-})dnl
+__devitem(dri, dri, Direct Rendering Infrastructure, drm)dnl
+_mkdev(dri, dri, {-RMlist[${#RMlist[*]}]=";mkdir -p dri;rm -f"
+	n=0
+	while [ $n -lt 4 ]
+	do
+		M dri/card$n c major_dri_c $n 600
+		r=Add($n, 128)
+		M dri/renderD$r c major_dri_c $r 600
+		n=Add($n, 1)
+	done
+	MKlist[${#MKlist[*]}]=";chmod 555 dri"-})dnl
 __devitem(drm, drm*, {-Direct Rendering Manager-})dnl
 _mkdev(drm, drm*, {-M drm$U c major_drm_c $U 600
 	r=Add($U, 128)
