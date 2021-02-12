@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: rand.3,v 1.19 2014/12/09 21:55:39 jmc Exp $
+.\"	$OpenBSD: rand.3,v 1.20 2021/02/12 17:03:51 deraadt Exp $
 .\"
-.Dd $Mdocdate: December 9 2014 $
+.Dd $Mdocdate: February 12 2021 $
 .Dt RAND 3
 .Os
 .Sh NAME
@@ -78,6 +78,9 @@ can be substituted for
 then subsequent
 .Fn rand
 calls will return results using the deterministic algorithm.
+The deterministic sequence algorithm changed a number of times since
+original development, is underspecified, and should not be relied upon to
+remain consistent between platforms and over time.
 .Pp
 The
 .Fn rand

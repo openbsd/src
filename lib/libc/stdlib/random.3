@@ -25,9 +25,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: random.3,v 1.28 2014/12/09 21:55:39 jmc Exp $
+.\"	$OpenBSD: random.3,v 1.29 2021/02/12 17:03:51 deraadt Exp $
 .\"
-.Dd $Mdocdate: December 9 2014 $
+.Dd $Mdocdate: February 12 2021 $
 .Dt RANDOM 3
 .Os
 .Sh NAME
@@ -96,6 +96,9 @@ a default table of size 31 long integers to return successive pseudo-random
 numbers in the range from 0 to (2**31)\-1.
 The period of this random number generator is very large, approximately
 16*((2**31)\-1), but the results are a deterministic sequence from the seed.
+The deterministic sequence algorithm changed a number of times since
+original development, is underspecified, and should not be relied upon to
+remain consistent between platforms and over time.
 .Pp
 The
 .Fn initstate
