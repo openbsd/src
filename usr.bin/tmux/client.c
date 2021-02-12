@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.153 2021/02/11 09:39:29 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.154 2021/02/12 06:52:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -553,8 +553,10 @@ static void
 client_dispatch(struct imsg *imsg, __unused void *arg)
 {
 	if (imsg == NULL) {
-		client_exitreason = CLIENT_EXIT_LOST_SERVER;
-		client_exitval = 1;
+		if (!client_exitflag) {
+			client_exitreason = CLIENT_EXIT_LOST_SERVER;
+			client_exitval = 1;
+		}
 		proc_exit(client_proc);
 		return;
 	}

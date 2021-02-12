@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.9 2021/02/11 09:39:29 nicm Exp $ */
+/* $OpenBSD: file.c,v 1.10 2021/02/12 06:52:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -485,7 +485,7 @@ file_write_left(struct client_files *files)
 	size_t			 left;
 	int			 waiting = 0;
 
-	RB_FOREACH (cf, client_files, files) {
+	RB_FOREACH(cf, client_files, files) {
 		if (cf->event == NULL)
 			continue;
 		left = EVBUFFER_LENGTH(cf->event->output);
