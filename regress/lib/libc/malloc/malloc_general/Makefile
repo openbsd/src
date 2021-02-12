@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.4 2019/06/04 05:30:39 otto Exp $
+#	$OpenBSD: Makefile,v 1.5 2021/02/12 12:03:39 otto Exp $
 
-REGRESS_TARGETS=        t1 t2 t3 t4 t5 t6 t7
+REGRESS_TARGETS=        t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11
 PROG=			malloc_general
 
 .include <bsd.regress.mk>
@@ -25,3 +25,15 @@ t6:	malloc_general
 
 t7:	malloc_general
 	MALLOC_OPTIONS=cfgjuFGJ ${.OBJDIR}//malloc_general
+
+t8:	malloc_general
+	MALLOC_OPTIONS=cfgjuCJ ${.OBJDIR}/malloc_general
+
+t9:	malloc_general
+	MALLOC_OPTIONS=cfgjuCJJ ${.OBJDIR}/malloc_general
+
+t10:	malloc_general
+	MALLOC_OPTIONS=cfgjuJS ${.OBJDIR}//malloc_general
+
+t11:	malloc_general
+	MALLOC_OPTIONS=cfgjuFGJJ ${.OBJDIR}//malloc_general
