@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1109 2021/02/12 13:48:31 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1110 2021/02/12 16:16:10 patrick Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1404,6 +1404,10 @@ pf_remove_divert_state(struct pf_state_key *sk)
 {
 	struct pf_state_item	*si;
 
+	PF_ASSERT_UNLOCKED();
+
+	PF_LOCK();
+	PF_STATE_ENTER_WRITE();
 	TAILQ_FOREACH(si, &sk->states, entry) {
 		if (sk == si->s->key[PF_SK_STACK] && si->s->rule.ptr &&
 		    (si->s->rule.ptr->divert.type == PF_DIVERT_TO ||
@@ -1412,6 +1416,8 @@ pf_remove_divert_state(struct pf_state_key *sk)
 			break;
 		}
 	}
+	PF_STATE_EXIT_WRITE();
+	PF_UNLOCK();
 }
 
 void
