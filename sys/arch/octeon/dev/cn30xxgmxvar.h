@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmxvar.h,v 1.11 2020/09/08 13:54:48 visa Exp $	*/
+/*	$OpenBSD: cn30xxgmxvar.h,v 1.12 2021/02/13 17:12:38 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -61,7 +61,6 @@ struct cn30xxgmx_port_softc {
 	bus_space_handle_t	sc_port_regh;
 	int			sc_port_no;	/* GMX0:0, GMX0:1, ... */
 	int			sc_port_type;
-	uint64_t		sc_mac;
 	uint64_t		sc_link;
 	struct mii_data		*sc_port_mii;
 	struct arpcom		*sc_port_ac;
@@ -111,7 +110,6 @@ int		cn30xxgmx_rx_frm_ctl_enable(struct cn30xxgmx_port_softc *,
 int		cn30xxgmx_rx_frm_ctl_disable(struct cn30xxgmx_port_softc *,
 		    uint64_t rx_frm_ctl);
 int		cn30xxgmx_tx_thresh(struct cn30xxgmx_port_softc *, int);
-int		cn30xxgmx_set_mac_addr(struct cn30xxgmx_port_softc *, uint8_t *);
 int		cn30xxgmx_set_filter(struct cn30xxgmx_port_softc *);
 int		cn30xxgmx_port_enable(struct cn30xxgmx_port_softc *, int);
 int		cn30xxgmx_reset_speed(struct cn30xxgmx_port_softc *);

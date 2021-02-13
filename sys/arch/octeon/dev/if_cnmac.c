@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.80 2020/12/12 11:48:52 jan Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.81 2021/02/13 17:12:38 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -247,7 +247,6 @@ cnmac_attach(struct device *parent, struct device *self, void *aux)
 	struct cnmac_softc *sc = (void *)self;
 	struct cn30xxgmx_attach_args *ga = aux;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	uint8_t enaddr[ETHER_ADDR_LEN];
 
 	if (cnmac_npowgroups >= OCTEON_POW_GROUP_MAX) {
 		printf(": out of POW groups\n");
@@ -275,8 +274,8 @@ cnmac_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->sc_ip_offset = 0/* XXX */;
 
-	cnmac_board_mac_addr(enaddr);
-	printf(", address %s\n", ether_sprintf(enaddr));
+	cnmac_board_mac_addr(sc->sc_arpcom.ac_enaddr);
+	printf(", address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	ml_init(&sc->sc_sendq);
 	sc->sc_soft_req_thresh = 15/* XXX */;
@@ -319,12 +318,9 @@ cnmac_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_TCPv4 |
 	    IFCAP_CSUM_UDPv4 | IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6;
 
-	cn30xxgmx_set_mac_addr(sc->sc_gmx_port, enaddr);
 	cn30xxgmx_set_filter(sc->sc_gmx_port);
 
 	if_attach(ifp);
-
-	memcpy(sc->sc_arpcom.ac_enaddr, enaddr, ETHER_ADDR_LEN);
 	ether_ifattach(ifp);
 
 	cnmac_buf_init(sc);
@@ -1011,7 +1007,6 @@ cnmac_init(struct ifnet *ifp)
 
 	cn30xxpip_stats_init(sc->sc_pip);
 	cn30xxgmx_stats_init(sc->sc_gmx_port);
-	cn30xxgmx_set_mac_addr(sc->sc_gmx_port, sc->sc_arpcom.ac_enaddr);
 	cn30xxgmx_set_filter(sc->sc_gmx_port);
 
 	timeout_add_sec(&sc->sc_tick_misc_ch, 1);

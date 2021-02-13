@@ -3,7 +3,7 @@
  * DONT EDIT THIS FILE
  */
 
-/*	$OpenBSD: cn30xxgmxreg.h,v 1.7 2020/09/08 13:54:48 visa Exp $	*/
+/*	$OpenBSD: cn30xxgmxreg.h,v 1.8 2021/02/13 17:12:38 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -64,12 +64,7 @@
 #define	GMX0_RX0_STATS_PKTS_BAD			0x0c0
 #define	GMX0_RX0_ADR_CTL			0x100
 #define	GMX0_RX0_ADR_CAM_EN			0x108
-#define	GMX0_RX0_ADR_CAM0			0x180
-#define	GMX0_RX0_ADR_CAM1			0x188
-#define	GMX0_RX0_ADR_CAM2			0x190
-#define	GMX0_RX0_ADR_CAM3			0x198
-#define	GMX0_RX0_ADR_CAM4			0x1a0
-#define	GMX0_RX0_ADR_CAM5			0x1a8
+#define	GMX0_RX0_ADR_CAM(i)			(0x180 + (i) * 8)
 #define	GMX0_TX0_CLK				0x208
 #define	GMX0_TX0_THRESH				0x210
 #define	GMX0_TX0_APPEND				0x218

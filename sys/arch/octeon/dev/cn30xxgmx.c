@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxgmx.c,v 1.49 2021/02/04 16:16:10 visa Exp $	*/
+/*	$OpenBSD: cn30xxgmx.c,v 1.50 2021/02/13 17:12:38 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -47,22 +47,7 @@
 #include <octeon/dev/cn30xxpipvar.h>
 #include <octeon/dev/cn30xxsmivar.h>
 
-#define	dprintf(...)
-#define	OCTEON_ETH_KASSERT	KASSERT
-
-#define	ADDR2UINT64(u, a) \
-	do { \
-		u = \
-		    (((uint64_t)a[0] << 40) | ((uint64_t)a[1] << 32) | \
-		     ((uint64_t)a[2] << 24) | ((uint64_t)a[3] << 16) | \
-		     ((uint64_t)a[4] <<  8) | ((uint64_t)a[5] <<  0)); \
-	} while (0)
-#define	UINT642ADDR(a, u) \
-	do { \
-		a[0] = (uint8_t)((u) >> 40); a[1] = (uint8_t)((u) >> 32); \
-		a[2] = (uint8_t)((u) >> 24); a[3] = (uint8_t)((u) >> 16); \
-		a[4] = (uint8_t)((u) >>  8); a[5] = (uint8_t)((u) >>  0); \
-	} while (0)
+#define GMX_NCAM	8
 
 #define	_GMX_RD8(sc, off) \
 	bus_space_read_8((sc)->sc_port_gmx->sc_regt, (sc)->sc_port_gmx->sc_regh, (off))
@@ -126,11 +111,6 @@ int	cn30xxgmx_rx_pause_enable(struct cn30xxgmx_port_softc *, int);
 int	cn30xxgmx_rgmii_speed_newlink_log(struct cn30xxgmx_port_softc *,
 	    uint64_t);
 #endif
-
-static const int	cn30xxgmx_rx_adr_cam_regs[] = {
-	GMX0_RX0_ADR_CAM0, GMX0_RX0_ADR_CAM1, GMX0_RX0_ADR_CAM2,
-	GMX0_RX0_ADR_CAM3, GMX0_RX0_ADR_CAM4, GMX0_RX0_ADR_CAM5
-};
 
 struct cn30xxgmx_port_ops cn30xxgmx_port_ops_agl = {
 	.port_ops_enable = cn30xxgmx_agl_enable,
@@ -643,42 +623,17 @@ cn30xxgmx_tx_thresh(struct cn30xxgmx_port_softc *sc, int cnt)
 }
 
 int
-cn30xxgmx_set_mac_addr(struct cn30xxgmx_port_softc *sc, uint8_t *addr)
-{
-	uint64_t mac;
-	int i;
-
-	ADDR2UINT64(mac, addr);
-
-	cn30xxgmx_link_enable(sc, 0);
-
-	sc->sc_mac = mac;
-	_GMX_PORT_WR8(sc, GMX0_SMAC0, mac);
-	for (i = 0; i < 6; i++)
-		_GMX_PORT_WR8(sc, cn30xxgmx_rx_adr_cam_regs[i], addr[i]);
-
-	cn30xxgmx_link_enable(sc, 1);
-
-	return 0;
-}
-
-int
 cn30xxgmx_set_filter(struct cn30xxgmx_port_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_port_ac->ac_if;
 	struct arpcom *ac = sc->sc_port_ac;
 	struct ether_multi *enm;
 	struct ether_multistep step;
-	uint64_t cam_en = 0x01ULL;
+	uint64_t cam[ETHER_ADDR_LEN];
+	uint64_t cam_en = 0;
 	uint64_t ctl = 0;
-	int multi = 0;
-
-	cn30xxgmx_link_enable(sc, 0);
-
-	SET(ctl, RXN_ADR_CTL_CAM_MODE);
-	CLR(ctl, RXN_ADR_CTL_MCST_ACCEPT | RXN_ADR_CTL_MCST_AFCAM |
-	    RXN_ADR_CTL_MCST_REJECT);
-	CLR(ifp->if_flags, IFF_ALLMULTI);
+	uint64_t mac;
+	int i, cidx;
 
 	/*
 	 * Always accept broadcast frames.
@@ -687,63 +642,53 @@ cn30xxgmx_set_filter(struct cn30xxgmx_port_softc *sc)
 
 	if (ISSET(ifp->if_flags, IFF_PROMISC)) {
 		SET(ifp->if_flags, IFF_ALLMULTI);
-		CLR(ctl, RXN_ADR_CTL_CAM_MODE);
 		SET(ctl, RXN_ADR_CTL_MCST_ACCEPT);
-		cam_en = 0x00ULL;
-	} else if (ac->ac_multirangecnt > 0 || ac->ac_multicnt > 7) {
+	} else if (ac->ac_multirangecnt > 0 || ac->ac_multicnt >= GMX_NCAM) {
 		SET(ifp->if_flags, IFF_ALLMULTI);
+		SET(ctl, RXN_ADR_CTL_CAM_MODE);
 		SET(ctl, RXN_ADR_CTL_MCST_ACCEPT);
 	} else {
-		/*
-		 * Note first entry is self MAC address; other 7 entires are
-		 * available for multicast addresses.
-		 */
-		ETHER_FIRST_MULTI(step, sc->sc_port_ac, enm);
-		while (enm != NULL) {
-			int i;
-
-			dprintf("%d: %02x:%02x:%02x:%02x:%02x:%02x\n"
-			    multi + 1,
-			    enm->enm_addrlo[0], enm->enm_addrlo[1],
-			    enm->enm_addrlo[2], enm->enm_addrlo[3],
-			    enm->enm_addrlo[4], enm->enm_addrlo[5]);
-			multi++;
-
-			SET(cam_en, 1ULL << multi); /* XXX */
-
-			for (i = 0; i < 6; i++) {
-				uint64_t tmp;
-
-				/* XXX */
-				tmp = _GMX_PORT_RD8(sc,
-				    cn30xxgmx_rx_adr_cam_regs[i]);
-				CLR(tmp, 0xffULL << (8 * multi));
-				SET(tmp, (uint64_t)enm->enm_addrlo[i] <<
-				    (8 * multi));
-				_GMX_PORT_WR8(sc, cn30xxgmx_rx_adr_cam_regs[i],
-				    tmp);
-			}
-
-			for (i = 0; i < 6; i++)
-				dprintf("cam%d = %016llx\n", i,
-				    _GMX_PORT_RD8(sc,
-				    cn30xxgmx_rx_adr_cam_regs[i]));
-
-			ETHER_NEXT_MULTI(step, enm);
-		}
-
-		if (multi)
-			SET(ctl, RXN_ADR_CTL_MCST_AFCAM);
-		else
-			SET(ctl, RXN_ADR_CTL_MCST_REJECT);
-
-		OCTEON_ETH_KASSERT(enm == NULL);
+		CLR(ifp->if_flags, IFF_ALLMULTI);
+		SET(ctl, RXN_ADR_CTL_CAM_MODE);
+		SET(ctl, RXN_ADR_CTL_MCST_AFCAM);
 	}
 
-	dprintf("ctl = %llx, cam_en = %llx\n", ctl, cam_en);
-	_GMX_PORT_WR8(sc, GMX0_RX0_ADR_CTL, ctl);
-	_GMX_PORT_WR8(sc, GMX0_RX0_ADR_CAM_EN, cam_en);
+	mac = 0;
+	for (i = 0; i < ETHER_ADDR_LEN; i++)
+		mac |= (uint64_t)ac->ac_enaddr[i] <<
+		    ((ETHER_ADDR_LEN - 1 - i) * 8);
 
+	/*
+	 * The first CAM entry is used for the local unicast MAC.
+	 * The remaining entries are used for multicast MACs.
+	 */
+	memset(cam, 0, sizeof(cam));
+	cidx = 0;
+	if (!ISSET(ifp->if_flags, IFF_PROMISC)) {
+		for (i = 0; i < ETHER_ADDR_LEN; i++)
+			cam[i] |= (uint64_t)ac->ac_enaddr[i] << (cidx * 8);
+		cam_en |= 1U << cidx;
+		cidx++;
+	}
+	if (!ISSET(ifp->if_flags, IFF_ALLMULTI)) {
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL && cidx < GMX_NCAM) {
+			for (i = 0; i < ETHER_ADDR_LEN; i++)
+				cam[i] |= (uint64_t)enm->enm_addrlo[i] <<
+				    (cidx * 8);
+			cam_en |= 1U << cidx;
+			cidx++;
+			ETHER_NEXT_MULTI(step, enm);
+		}
+	}
+
+	cn30xxgmx_link_enable(sc, 0);
+	_GMX_PORT_WR8(sc, GMX0_SMAC0, mac);
+	_GMX_PORT_WR8(sc, GMX0_RX0_ADR_CTL, ctl);
+	for (i = 0; i < ETHER_ADDR_LEN; i++)
+		_GMX_PORT_WR8(sc, GMX0_RX0_ADR_CAM(i), cam[i]);
+	_GMX_PORT_WR8(sc, GMX0_RX0_ADR_CAM_EN, cam_en);
+	(void)_GMX_PORT_RD8(sc, GMX0_RX0_ADR_CAM_EN);
 	cn30xxgmx_link_enable(sc, 1);
 
 	return 0;
