@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.271 2020/12/13 06:14:35 gnezdo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.272 2021/02/13 07:46:44 mlarkin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1258,7 +1258,7 @@ void cpu_init_idt(void)
 	struct region_descriptor region;
 
 	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
-	lidt(&region); 
+	lidt(&region);
 }
 
 void
@@ -1463,7 +1463,7 @@ init_x86_64(paddr_t first_avail)
 	 * We need to go through the BIOS memory map given, and
 	 * fill out mem_clusters and mem_cluster_cnt stuff, taking
 	 * into account all the points listed above.
-	 */ 
+	 */
 	avail_end = mem_cluster_cnt = 0;
 	for (bmp = bios_memmap; bmp->type != BIOS_MAP_END; bmp++) {
 		paddr_t s1, s2, e1, e2;
@@ -1757,7 +1757,7 @@ cpu_reset(void)
 	 * invalid and causing a fault.
 	 */
 	memset((caddr_t)idt, 0, NIDT * sizeof(idt[0]));
-	__asm volatile("divl %0,%1" : : "q" (0), "a" (0)); 
+	__asm volatile("divl %0,%1" : : "q" (0), "a" (0));
 
 	for (;;)
 		continue;
@@ -1891,7 +1891,7 @@ splassert_check(int wantipl, const char *func)
 	if (floor > wantipl) {
 		splassert_fail(wantipl, floor, func);
 	}
-	
+
 }
 #endif
 
@@ -2031,7 +2031,7 @@ check_context(const struct reg *regs, struct trapframe *tf)
 		return EINVAL;
 
 	sel = regs->r_ss & 0xffff;
-	if (!VALID_USER_DSEL(sel)) 
+	if (!VALID_USER_DSEL(sel))
 		return EINVAL;
 
 	sel = regs->r_cs & 0xffff;
