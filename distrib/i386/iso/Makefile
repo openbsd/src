@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.31 2021/02/13 18:46:52 semarie Exp $
+#	$OpenBSD: Makefile,v 1.32 2021/02/13 18:48:23 semarie Exp $
 
 FS=		install${OSrev}.img
 FSSIZE=		921600
@@ -27,7 +27,7 @@ ${FS}: ${BASE} ${XBASE} bsd.rd
 	disklabel -w `cat vnd` ${FSDISKTYPE}
 	newfs -O 1 -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
 	mount /dev/`cat vnd`a ${MOUNT_POINT}
-	objcopy -S -R .comment -R .SUNW_ctf ${DESTDIR}/usr/mdec/boot ${MOUNT_POINT}/boot
+	objcopy -S -R .comment ${DESTDIR}/usr/mdec/boot ${MOUNT_POINT}/boot
 	installboot -v -r ${MOUNT_POINT} `cat vnd` \
 	    ${DESTDIR}/usr/mdec/biosboot ${MOUNT_POINT}/boot
 	install -c -m 555 -o root -g wheel bsd.rd ${MOUNT_POINT}/bsd

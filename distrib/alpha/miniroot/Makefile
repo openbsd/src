@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2021/02/13 18:41:52 semarie Exp $
+#	$OpenBSD: Makefile,v 1.21 2021/02/13 18:48:23 semarie Exp $
 
 FS=		miniroot${OSrev}.img
 FSSIZE=		5760
@@ -90,7 +90,7 @@ instbin.mk instbin.cache instbin.c: instbin.conf
 
 instbin: instbin.mk instbin.cache instbin.c
 	${MAKE} -f instbin.mk SRCLIBDIR=${.CURDIR}/../../../lib all
-	strip -R .eh_frame -R .SUNW_ctf -R .shstrtab instbin
+	strip -R .eh_frame -R .shstrtab instbin
 
 instbin.conf: ${LISTS}
 	awk -f ${UTILS}/makeconf.awk  ${LISTS} > instbin.conf

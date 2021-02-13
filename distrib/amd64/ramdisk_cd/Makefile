@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.26 2021/02/13 18:46:52 semarie Exp $
+#	$OpenBSD: Makefile,v 1.27 2021/02/13 18:48:23 semarie Exp $
 
 FS=		miniroot${OSrev}.img
 FSSIZE=		9920
@@ -27,7 +27,7 @@ ${FS}: bsd.gz
 	umount ${MOUNT_POINT}
 	newfs -O 1 -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
 	mount /dev/`cat vnd`a ${MOUNT_POINT}
-	objcopy -S -R .comment -R .SUNW_ctf ${DESTDIR}/usr/mdec/boot ${.OBJDIR}/boot
+	objcopy -S -R .comment ${DESTDIR}/usr/mdec/boot ${.OBJDIR}/boot
 	installboot -v -r ${MOUNT_POINT} `cat vnd` \
 	    ${DESTDIR}/usr/mdec/biosboot ${.OBJDIR}/boot
 	install -c -m 555 -o root -g wheel bsd.gz ${MOUNT_POINT}/bsd
@@ -84,7 +84,7 @@ instbin.mk instbin.cache instbin.c: instbin.conf
 
 instbin: instbin.mk instbin.cache instbin.c
 	${MAKE} -f instbin.mk SRCLIBDIR=${.CURDIR}/../../../lib all
-	strip -R .comment -R .SUNW_ctf instbin
+	strip -R .comment instbin
 
 instbin.conf: ${LISTS}
 	awk -f ${UTILS}/makeconf.awk  ${LISTS} > instbin.conf
