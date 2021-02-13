@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.23 2020/05/18 06:20:44 otto Exp $
+#	$OpenBSD: Makefile,v 1.24 2021/02/13 18:39:40 semarie Exp $
 
 FS=		miniroot${OSrev}.img
 FSSIZE=		6400
@@ -10,8 +10,6 @@ RAMDISK=	RAMDISK
 
 LISTS=		${.CURDIR}/list
 UTILS=		${.CURDIR}/../../miniroot
-
-STRIPOPTS=	-R .SUNW_ctf
 
 MRDISKTYPE=	rdroot
 MRMAKEFSARGS=	-o disklabel=${MRDISKTYPE},minfree=0,density=4096
@@ -62,7 +60,7 @@ ${CDROM}: bsd.rd ${FS}
 
 bsd.gz: bsd.rd
 	objcopy -Sg -R .comment bsd.rd bsd.strip
-	strip ${STRIPOPTS} bsd.strip
+	strip -R .SUNW_ctf bsd.strip
 	gzip -9cn bsd.strip > bsd.gz
 
 bsd.rd: mr.fs bsd
