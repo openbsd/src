@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm_support.S,v 1.16 2019/05/17 19:07:16 guenther Exp $	*/
+/*	$OpenBSD: vmm_support.S,v 1.17 2021/02/13 07:47:37 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -24,7 +24,7 @@
 
 /*
  * XXX duplicated in vmmvar.h due to song-and-dance with sys/rwlock.h inclusion
- * here 
+ * here
  */
 #define VMX_FAIL_LAUNCH_UNKNOWN 1
 #define VMX_FAIL_LAUNCH_INVALID_VMCS 2
@@ -317,9 +317,9 @@ l1df_load_cache:
 	/* XXX get the right cacheline size from cpuid */
 	addq	$0x40, %r9
 	cmpq	$VMX_L1D_FLUSH_SIZE, %r9
-	jne	l1df_load_cache	
+	jne	l1df_load_cache
 	lfence
-	
+
 done_flush:
 	testq	%r8, %r8
 	jnz	do_resume
@@ -475,7 +475,7 @@ restore_host:
 	popq	%r15
 
 	RETGUARD_POP(r11)
-	
+
 	/*
 	 * Restore saved MSRs
 	 */
@@ -489,7 +489,7 @@ restore_host:
 	popq	%rax
 	movq	$MSR_CSTAR, %rcx
 	wrmsr
-	
+
 	popq	%rdx
 	popq	%rax
 	movq	$MSR_LSTAR, %rcx
@@ -514,7 +514,7 @@ restore_host:
 	popq	%rdx
 	popq	%rax
 	movq	$MSR_GSBASE, %rcx
-	wrmsr	
+	wrmsr
 
 	popw	%fs
 	popq	%rdx
@@ -533,8 +533,8 @@ restore_host:
 
 	movq	%rdi, %rax
 	RETGUARD_CHECK(vmx_enter_guest, r11)
-	ret	
-	
+	ret
+
 _C_LABEL(svm_enter_guest):
 	RETGUARD_SETUP(svm_enter_guest, r11)
 	clgi
@@ -686,7 +686,7 @@ restore_host_svm:
 	popq	%r15
 
 	RETGUARD_POP(r11)
-	
+
 	/*
 	 * Restore saved MSRs
 	 */
@@ -700,7 +700,7 @@ restore_host_svm:
 	popq	%rax
 	movq	$MSR_CSTAR, %rcx
 	wrmsr
-	
+
 	popq	%rdx
 	popq	%rax
 	movq	$MSR_LSTAR, %rcx
@@ -726,7 +726,7 @@ restore_host_svm:
 	popq	%rdx
 	popq	%rax
 	movq	$MSR_GSBASE, %rcx
-	wrmsr	
+	wrmsr
 
 	popw	%fs
 	popq	%rdx
@@ -752,7 +752,7 @@ restore_host_svm:
 
 	/* rdx = GDTR base addr */
 	andb	$0xF9, 5(%rdx, %rax)
-	
+
 	ltrw	%ax
 
 	popfq
@@ -760,4 +760,4 @@ restore_host_svm:
 	movq	%rdi, %rax
 
 	RETGUARD_CHECK(svm_enter_guest, r11)
-	ret	
+	ret
