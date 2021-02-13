@@ -1,4 +1,4 @@
-.\"	$OpenBSD: table.5,v 1.11 2019/08/11 13:00:57 gilles Exp $
+.\"	$OpenBSD: table.5,v 1.12 2021/02/13 08:05:57 jmc Exp $
 .\"
 .\" Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
 .\" Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
@@ -16,7 +16,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: August 11 2019 $
+.Dd $Mdocdate: February 13 2021 $
 .Dt TABLE 5
 .Os
 .Sh NAME
@@ -90,7 +90,7 @@ user3	otheruser@example.com
 .Ed
 .Pp
 In a virtual domain context, the key is either a user part, a full email
-address or a catch all, following selection rules described in
+address or a catch-all, following selection rules described in
 .Xr smtpd.conf 5 ,
 and the value is one or many recipients as described in
 .Xr aliases 5 :
@@ -172,7 +172,7 @@ ipv6:::1
 192.168.1.0/24
 .Ed
 .Ss Userinfo tables
-User info tables are used in rule context to specify an alternate user base,
+Userinfo tables are used in rule context to specify an alternate userbase,
 mapping virtual users to local system users by UID, GID and home directory.
 .Pp
 .D1 Ic action Ar name method Cm userbase Pf < Ar table Ns >
