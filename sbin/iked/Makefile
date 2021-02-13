@@ -1,10 +1,10 @@
-# $OpenBSD: Makefile,v 1.17 2017/07/19 12:50:32 espie Exp $
+# $OpenBSD: Makefile,v 1.18 2021/02/13 16:14:12 tobhe Exp $
 
 PROG=		iked
 SRCS=		ca.c chap_ms.c config.c control.c crypto.c dh.c \
 		eap.c iked.c ikev2.c ikev2_msg.c ikev2_pld.c \
 		log.c ocsp.c pfkey.c policy.c proc.c timer.c util.c \
-		imsg_util.c smult_curve25519_ref.c
+		imsg_util.c smult_curve25519_ref.c vroute.c
 SRCS+=		eap_map.c ikev2_map.c
 SRCS+=		parse.y
 MAN=		iked.conf.5 iked.8

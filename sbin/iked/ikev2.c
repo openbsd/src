@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.306 2021/02/11 22:02:41 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.307 2021/02/13 16:14:12 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1616,6 +1616,7 @@ ikev2_init_done(struct iked *env, struct iked_sa *sa)
 		ikev2_enable_timer(env, sa);
 		ikev2_log_established(sa);
 		ikev2_record_dstid(env, sa);
+		sa_configure_iface(env, sa, 1);
 	}
 
 	if (ret)

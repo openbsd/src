@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.76 2021/02/08 16:13:58 tobhe Exp $	*/
+/*	$OpenBSD: config.c,v 1.77 2021/02/13 16:14:12 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -117,6 +117,7 @@ config_free_sa(struct iked *env, struct iked_sa *sa)
 	config_free_fragments(&sa->sa_fragments);
 	config_free_proposals(&sa->sa_proposals, 0);
 	config_free_childsas(env, &sa->sa_childsas, NULL, NULL);
+	sa_configure_iface(env, sa, 0);
 	sa_free_flows(env, &sa->sa_flows);
 
 	if (sa->sa_addrpool) {

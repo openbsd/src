@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.127 2021/02/09 21:35:48 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.128 2021/02/13 16:14:12 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -408,7 +408,7 @@ int			 create_ike(char *, int, uint8_t,
 			    uint8_t, char *, char *,
 			    uint32_t, struct iked_lifetime *,
 			    struct iked_auth *, struct ipsec_filters *,
-			    struct ipsec_addr_wrap *);
+			    struct ipsec_addr_wrap *, char *);
 int			 create_user(const char *, const char *);
 int			 get_id_type(char *);
 uint8_t			 x2i(unsigned char *);
@@ -471,7 +471,7 @@ typedef struct {
 %token	STICKYADDRESS NOSTICKYADDRESS
 %token	TOLERATE MAXAGE DYNAMIC
 %token	CERTPARTIALCHAIN
-%token	REQUEST
+%token	REQUEST IFACE
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.string>		string
@@ -494,7 +494,7 @@ typedef struct {
 %type	<v.mode>		ike_sas child_sas
 %type	<v.lifetime>		lifetime
 %type	<v.number>		byte_spec time_spec ikelifetime
-%type	<v.string>		name
+%type	<v.string>		name iface
 %type	<v.cfg>			cfg ikecfg ikecfgvals
 %type	<v.string>		transform_esn
 %%
@@ -584,10 +584,10 @@ user		: USER STRING STRING		{
 
 ikev2rule	: IKEV2 name ikeflags satype af proto rdomain hosts_list peers
 		    ike_sas child_sas ids ikelifetime lifetime ikeauth ikecfg
-		    filters {
+		    iface filters {
 			if (create_ike($2, $5, $6, $7, $8, &$9, $10, $11, $4,
 			    $3, $12.srcid, $12.dstid, $13, &$14, &$15,
-			    $17, $16) == -1) {
+			    $18, $16, $17) == -1) {
 				yyerror("create_ike failed");
 				YYERROR;
 			}
@@ -1238,6 +1238,13 @@ filter		: TAG STRING
 		}
 		;
 
+iface		:		{
+			$$ = NULL;
+		}
+		| IFACE STRING	{
+			$$ = $2;
+		}
+
 string		: string STRING
 		{
 			if (asprintf(&$$, "%s %s", $1, $2) == -1)
@@ -1363,6 +1370,7 @@ lookup(char *s)
 		{ "fragmentation",	FRAGMENTATION },
 		{ "from",		FROM },
 		{ "group",		GROUP },
+		{ "iface",		IFACE },
 		{ "ike",		IKEV1 },
 		{ "ikelifetime",	IKELIFETIME },
 		{ "ikesa",		IKESA },
@@ -2451,6 +2459,7 @@ print_policy(struct iked_policy *pol)
 	struct iked_cfg		*cfg;
 	unsigned int		 i, j;
 	const struct ipsec_xf	*xfs = NULL;
+	char			 iface[IF_NAMESIZE];
 
 	print_verbose("ikev2");
 
@@ -2623,6 +2632,9 @@ print_policy(struct iked_policy *pol)
 	if (pol->pol_tag[0] != '\0')
 		print_verbose(" tag \"%s\"", pol->pol_tag);
 
+	if (pol->pol_iface != 0 && if_indextoname(pol->pol_iface, iface) != NULL)
+		print_verbose(" iface %s", iface);
+
 	if (pol->pol_tap != 0)
 		print_verbose(" tap \"enc%u\"", pol->pol_tap);
 
@@ -2677,7 +2689,7 @@ create_ike(char *name, int af, uint8_t ipproto,
     uint8_t flags, char *srcid, char *dstid,
     uint32_t ikelifetime, struct iked_lifetime *lt,
     struct iked_auth *authtype, struct ipsec_filters *filter,
-    struct ipsec_addr_wrap *ikecfg)
+    struct ipsec_addr_wrap *ikecfg, char *iface)
 {
 	char			 idstr[IKED_ID_SIZE];
 	struct ipsec_addr_wrap	*ipa, *ipb;
@@ -2713,6 +2725,14 @@ create_ike(char *name, int af, uint8_t ipproto,
 	} else {
 		snprintf(pol.pol_name, sizeof(pol.pol_name),
 		    "policy%d", policy_id);
+	}
+
+	if (iface != NULL) {
+		pol.pol_iface = if_nametoindex(iface);
+		if (pol.pol_iface == 0) {
+			yyerror("invalid iface");
+			return (-1);
+		}
 	}
 
 	if (srcid) {

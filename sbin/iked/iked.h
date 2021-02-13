@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.184 2021/02/04 20:38:26 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.185 2021/02/13 16:14:12 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -153,6 +153,7 @@ struct iked_flow {
 	unsigned int			 flow_dir;	/* in/out */
 	int				 flow_rdomain;
 	struct iked_addr		 flow_prenat;
+	int				 flow_fixed;
 
 	unsigned int			 flow_loaded;	/* pfkey done */
 
@@ -236,6 +237,7 @@ struct iked_lifetime {
 struct iked_policy {
 	unsigned int			 pol_id;
 	char				 pol_name[IKED_ID_SIZE];
+	unsigned int			 pol_iface;
 
 #define IKED_SKIP_FLAGS			 0
 #define IKED_SKIP_AF			 1
@@ -751,6 +753,7 @@ struct iked {
 	struct event			 sc_pfkeyev;
 	uint8_t				 sc_certreqtype;
 	struct ibuf			*sc_certreq;
+	void				*sc_vroute;
 
 	struct iked_socket		*sc_sock4[2];
 	struct iked_socket		*sc_sock6[2];
@@ -864,6 +867,7 @@ struct iked_sa *
 	    struct iked_policy *);
 void	 sa_free(struct iked *, struct iked_sa *);
 void	 sa_free_flows(struct iked *, struct iked_saflows *);
+int	 sa_configure_iface(struct iked *, struct iked_sa *, int);
 int	 sa_address(struct iked_sa *, struct iked_addr *, struct sockaddr *);
 void	 childsa_free(struct iked_childsa *);
 struct iked_childsa *
@@ -936,6 +940,18 @@ size_t	 dsa_length(struct iked_dsa *);
 int	 dsa_update(struct iked_dsa *, const void *, size_t);
 ssize_t	 dsa_sign_final(struct iked_dsa *, void *, size_t);
 ssize_t	 dsa_verify_final(struct iked_dsa *, void *, size_t);
+
+/* vroute.c */
+void vroute_init(struct iked *);
+int vroute_getaddr(struct iked *, struct imsg *);
+int vroute_setaddroute(struct iked *, uint8_t, struct sockaddr *,
+    uint8_t, struct sockaddr *);
+int vroute_setcloneroute(struct iked *, uint8_t, struct sockaddr *,
+    uint8_t, struct sockaddr *);
+int vroute_setdelroute(struct iked *, uint8_t, struct sockaddr *,
+    uint8_t, struct sockaddr *);
+int vroute_getroute(struct iked *, struct imsg *);
+int vroute_getcloneroute(struct iked *, struct imsg *);
 
 /* ikev2.c */
 pid_t	 ikev2(struct privsep *, struct privsep_proc *);

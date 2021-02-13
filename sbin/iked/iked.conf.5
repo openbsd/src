@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.83 2021/01/24 19:10:19 tobhe Exp $
+.\" $OpenBSD: iked.conf.5,v 1.84 2021/02/13 16:14:12 tobhe Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 24 2021 $
+.Dd $Mdocdate: February 13 2021 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -659,6 +659,9 @@ included.
 .It Ic access-server Ar address
 The address of an internal remote access server.
 .El
+.It Ic iface Ar interface
+Configure requested addresses and routes on the specified
+.Ar interface .
 .It Ic tag Ar string
 Add a
 .Xr pf 4

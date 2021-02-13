@@ -1,6 +1,7 @@
-/*	$OpenBSD: policy.c,v 1.77 2021/02/12 19:30:34 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.78 2021/02/13 16:14:12 tobhe Exp $	*/
 
 /*
+ * Copyright (c) 2020-2021 Tobias Heider <tobhe@openbsd.org>
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
  * Copyright (c) 2001 Daniel Hartmeier
  *
@@ -21,6 +22,8 @@
 #include <sys/socket.h>
 #include <sys/uio.h>
 #include <sys/tree.h>
+
+#include <netinet/in.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -664,6 +667,121 @@ sa_address(struct iked_sa *sa, struct iked_addr *addr, struct sockaddr *peer)
 		log_debug("%s: invalid address", __func__);
 		return (-1);
 	}
+	return (0);
+}
+
+int
+sa_configure_iface(struct iked *env, struct iked_sa *sa, int add)
+{
+	struct iked_flow	*saflow;
+	struct iovec		 iov[4];
+	int			 iovcnt;
+	struct sockaddr		*caddr;
+	struct sockaddr_in	*addr;
+	struct sockaddr_in	 mask;
+	struct sockaddr_in6	*addr6;
+	struct sockaddr_in6	 mask6;
+	int			 rdomain;
+
+	if (sa->sa_policy->pol_iface == 0)
+		return (0);
+
+	if (sa->sa_cp_addr) {
+		iovcnt = 0;
+		addr = (struct sockaddr_in *)&sa->sa_cp_addr->addr;
+		iov[0].iov_base = addr;
+		iov[0].iov_len = sizeof(*addr);
+		iovcnt++;
+
+		bzero(&mask, sizeof(mask));
+		mask.sin_addr.s_addr =
+		    prefixlen2mask(sa->sa_cp_addr->addr_mask ?
+		    sa->sa_cp_addr->addr_mask : 32);
+		mask.sin_family = AF_INET;
+		mask.sin_len = sizeof(mask);
+		iov[1].iov_base = &mask;
+		iov[1].iov_len = sizeof(mask);
+		iovcnt++;
+
+		iov[2].iov_base = &sa->sa_policy->pol_iface;
+		iov[2].iov_len = sizeof(sa->sa_policy->pol_iface);
+		iovcnt++;
+
+		if(proc_composev(&env->sc_ps, PROC_PARENT,
+		    add ? IMSG_IF_ADDADDR : IMSG_IF_DELADDR,
+		    iov, iovcnt))
+			return (-1);
+	}
+	if (sa->sa_cp_addr6) {
+		iovcnt = 0;
+		addr6 = (struct sockaddr_in6 *)&sa->sa_cp_addr6->addr;
+		iov[0].iov_base = addr6;
+		iov[0].iov_len = sizeof(*addr6);
+		iovcnt++;
+
+		bzero(&mask6, sizeof(mask6));
+		prefixlen2mask6(sa->sa_cp_addr6->addr_mask ?
+		    sa->sa_cp_addr6->addr_mask : 128,
+		    (uint32_t *)&mask6.sin6_addr.s6_addr);
+		mask6.sin6_family = AF_INET6;
+		mask6.sin6_len = sizeof(mask6);
+		iov[1].iov_base = &mask6;
+		iov[1].iov_len = sizeof(mask6);
+		iovcnt++;
+
+		iov[2].iov_base = &sa->sa_policy->pol_iface;
+		iov[2].iov_len = sizeof(sa->sa_policy->pol_iface);
+		iovcnt++;
+
+		if(proc_composev(&env->sc_ps, PROC_PARENT,
+		    add ? IMSG_IF_ADDADDR : IMSG_IF_DELADDR,
+		    iov, iovcnt))
+			return (-1);
+	}
+
+	if (add) {
+		/* Add direct route to peer */
+		if (vroute_setcloneroute(env, getrtable(),
+		    (struct sockaddr *)&sa->sa_peer.addr, 0, NULL))
+			return (-1);
+	} else {
+		if (vroute_setdelroute(env, getrtable(),
+		    (struct sockaddr *)&sa->sa_peer.addr,
+		    0, NULL))
+			return (-1);
+	}
+
+	TAILQ_FOREACH(saflow, &sa->sa_flows, flow_entry) {
+		rdomain = saflow->flow_rdomain == -1 ?
+		    getrtable() : saflow->flow_rdomain;
+
+		switch(saflow->flow_src.addr_af) {
+		case AF_INET:
+			caddr = (struct sockaddr *)&sa->sa_cp_addr->addr;
+			break;
+		case AF_INET6:
+			caddr = (struct sockaddr *)&sa->sa_cp_addr6->addr;
+			break;
+		default:
+			return (-1);
+		}
+		if (sockaddr_cmp((struct sockaddr *)&saflow->flow_src.addr,
+		    caddr, -1) != 0)
+			continue;
+
+		if (add) {
+			if (vroute_setaddroute(env, rdomain,
+			    (struct sockaddr *)&saflow->flow_dst.addr,
+			    saflow->flow_dst.addr_mask, caddr))
+				return (-1);
+		} else {
+			if (vroute_setdelroute(env, rdomain,
+			    (struct sockaddr *)&saflow->flow_dst.addr,
+			    saflow->flow_dst.addr_mask, caddr))
+				return (-1);
+		}
+	}
+
 	return (0);
 }
 
