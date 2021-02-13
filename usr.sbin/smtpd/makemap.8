@@ -1,4 +1,4 @@
-.\"	$OpenBSD: makemap.8,v 1.30 2018/11/25 14:41:16 gilles Exp $
+.\"	$OpenBSD: makemap.8,v 1.31 2021/02/13 07:37:13 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@openbsd.org>
 .\" Copyright (c) 2008-2009 Gilles Chehade <gilles@poolp.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 25 2018 $
+.Dd $Mdocdate: February 13 2021 $
 .Dt MAKEMAP 8
 .Os
 .Sh NAME
@@ -29,7 +29,7 @@
 .Op Fl t Ar type
 .Ar file
 .Sh DESCRIPTION
-Maps provide a generic interface for associating textual key to a value.
+Maps provide a generic interface for associating a textual key to a value.
 Such associations may be accessed through a plaintext file, database, or DNS.
 The format of these file types is described below.
 .Nm
@@ -39,7 +39,7 @@ itself creates the database maps used by keyed map lookups specified in
 .Nm
 reads input from
 .Ar file
-and writes data to a file whose name is made by adding a
+and writes data to a file which is named by adding a
 .Dq .db
 suffix to
 .Ar file .
@@ -76,7 +76,7 @@ Specify the format of the resulting map file.
 The default map format is suitable for storing simple, unstructured,
 key-to-value string associations.
 However, if the mapped value has special meaning,
-as in the case of the virtual domains file,
+as in the case of a virtual domains file,
 a suitable
 .Ar type
 must be provided.
@@ -132,7 +132,7 @@ to provide a global catch-all for all domains.
 .Xr smtpd 8
 will perform the lookups in that specific order.
 .Pp
-To create single virtual address, add
+To create a single virtual address, add
 .Dq user@example.com user
 to the users map.
 To handle all mail destined to any user at example.com, add
