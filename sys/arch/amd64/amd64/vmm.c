@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.276 2021/01/23 22:56:35 mlarkin Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.277 2021/02/13 07:55:38 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -6151,7 +6151,7 @@ vmx_handle_cr(struct vcpu *vcpu)
 
 	/*
 	 * Bits 5:4 indicate the direction of operation (or special CR-modifying
-	 * instruction
+	 * instruction)
 	 */
 	dir = (exit_qual & 0x30) >> 4;
 
