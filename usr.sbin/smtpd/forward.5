@@ -1,4 +1,4 @@
-.\"	$OpenBSD: forward.5,v 1.9 2015/03/13 22:41:54 eric Exp $
+.\"	$OpenBSD: forward.5,v 1.10 2021/02/13 07:26:18 jmc Exp $
 .\"
 .\" Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 13 2015 $
+.Dd $Mdocdate: February 13 2021 $
 .Dt FORWARD 5
 .Os
 .Sh NAME
@@ -49,9 +49,9 @@ group or world-writable;
 if the home directory is group writeable;
 or if the file is not owned by the user.
 .Pp
-Users should avoid editing directly the
+Users should avoid editing the
 .Nm .forward
-file to prevent delivery failures from occurring if a message
+file directly, to prevent delivery failures from occurring if a message
 arrives while the file is not fully written.
 The best option is to use a temporary file and use the
 .Xr mv 1
