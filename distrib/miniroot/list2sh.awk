@@ -1,4 +1,4 @@
-#	$OpenBSD: list2sh.awk,v 1.22 2019/04/30 17:46:04 deraadt Exp $
+#	$OpenBSD: list2sh.awk,v 1.23 2021/02/13 18:46:52 semarie Exp $
 
 BEGIN {
 	printf("cd ${OBJDIR}\n");
@@ -27,8 +27,7 @@ $1 == "MKDIR" {
 $1 == "STRIP" {
 	printf("echo '%s'\n", $0);
 	printf("test -f ${TARGDIR}/%s && rm -fr ${TARGDIR}/%s\n", $3, $3);
-	printf("cp %s ${TARGDIR}/%s\n", $2, $3);
-	printf("strip ${TARGDIR}/%s\n", $3);
+	printf("objcopy -S %s ${TARGDIR}/%s\n", $2, $3);
 	next;
 }
 $1 == "LINK" {
