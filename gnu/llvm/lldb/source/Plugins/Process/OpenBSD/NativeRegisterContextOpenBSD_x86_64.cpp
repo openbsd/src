@@ -41,62 +41,74 @@ using namespace lldb_private::process_openbsd;
 namespace {
 // x86 64-bit general purpose registers.
 static const uint32_t g_gpr_regnums_x86_64[] = {
-    lldb_rax_x86_64,    lldb_rbx_x86_64,    lldb_rcx_x86_64, lldb_rdx_x86_64,
-    lldb_rdi_x86_64,    lldb_rsi_x86_64,    lldb_rbp_x86_64, lldb_rsp_x86_64,
-    lldb_r8_x86_64,     lldb_r9_x86_64,     lldb_r10_x86_64, lldb_r11_x86_64,
-    lldb_r12_x86_64,    lldb_r13_x86_64,    lldb_r14_x86_64, lldb_r15_x86_64,
-    lldb_rip_x86_64,    lldb_rflags_x86_64, lldb_cs_x86_64,  lldb_fs_x86_64,
-    lldb_gs_x86_64,     lldb_ss_x86_64,     lldb_ds_x86_64,  lldb_es_x86_64,
-    lldb_eax_x86_64,    lldb_ebx_x86_64,    lldb_ecx_x86_64, lldb_edx_x86_64,
-    lldb_edi_x86_64,    lldb_esi_x86_64,    lldb_ebp_x86_64, lldb_esp_x86_64,
-    lldb_r8d_x86_64,  // Low 32 bits or r8
-    lldb_r9d_x86_64,  // Low 32 bits or r9
-    lldb_r10d_x86_64, // Low 32 bits or r10
-    lldb_r11d_x86_64, // Low 32 bits or r11
-    lldb_r12d_x86_64, // Low 32 bits or r12
-    lldb_r13d_x86_64, // Low 32 bits or r13
-    lldb_r14d_x86_64, // Low 32 bits or r14
-    lldb_r15d_x86_64, // Low 32 bits or r15
-    lldb_ax_x86_64,     lldb_bx_x86_64,     lldb_cx_x86_64,  lldb_dx_x86_64,
-    lldb_di_x86_64,     lldb_si_x86_64,     lldb_bp_x86_64,  lldb_sp_x86_64,
-    lldb_r8w_x86_64,  // Low 16 bits or r8
-    lldb_r9w_x86_64,  // Low 16 bits or r9
-    lldb_r10w_x86_64, // Low 16 bits or r10
-    lldb_r11w_x86_64, // Low 16 bits or r11
-    lldb_r12w_x86_64, // Low 16 bits or r12
-    lldb_r13w_x86_64, // Low 16 bits or r13
-    lldb_r14w_x86_64, // Low 16 bits or r14
-    lldb_r15w_x86_64, // Low 16 bits or r15
-    lldb_ah_x86_64,     lldb_bh_x86_64,     lldb_ch_x86_64,  lldb_dh_x86_64,
-    lldb_al_x86_64,     lldb_bl_x86_64,     lldb_cl_x86_64,  lldb_dl_x86_64,
-    lldb_dil_x86_64,    lldb_sil_x86_64,    lldb_bpl_x86_64, lldb_spl_x86_64,
-    lldb_r8l_x86_64,    // Low 8 bits or r8
-    lldb_r9l_x86_64,    // Low 8 bits or r9
-    lldb_r10l_x86_64,   // Low 8 bits or r10
-    lldb_r11l_x86_64,   // Low 8 bits or r11
-    lldb_r12l_x86_64,   // Low 8 bits or r12
-    lldb_r13l_x86_64,   // Low 8 bits or r13
-    lldb_r14l_x86_64,   // Low 8 bits or r14
-    lldb_r15l_x86_64,   // Low 8 bits or r15
+    lldb_rax_x86_64,    lldb_rbx_x86_64,    lldb_rcx_x86_64,  lldb_rdx_x86_64,
+    lldb_rdi_x86_64,    lldb_rsi_x86_64,    lldb_rbp_x86_64,  lldb_rsp_x86_64,
+    lldb_r8_x86_64,     lldb_r9_x86_64,     lldb_r10_x86_64,  lldb_r11_x86_64,
+    lldb_r12_x86_64,    lldb_r13_x86_64,    lldb_r14_x86_64,  lldb_r15_x86_64,
+    lldb_rip_x86_64,    lldb_rflags_x86_64, lldb_cs_x86_64,   lldb_fs_x86_64,
+    lldb_gs_x86_64,     lldb_ss_x86_64,     lldb_ds_x86_64,   lldb_es_x86_64,
+    lldb_eax_x86_64,    lldb_ebx_x86_64,    lldb_ecx_x86_64,  lldb_edx_x86_64,
+    lldb_edi_x86_64,    lldb_esi_x86_64,    lldb_ebp_x86_64,  lldb_esp_x86_64,
+    lldb_r8d_x86_64,    lldb_r9d_x86_64,    lldb_r10d_x86_64, lldb_r11d_x86_64,
+    lldb_r12d_x86_64,   lldb_r13d_x86_64,   lldb_r14d_x86_64, lldb_r15d_x86_64,
+    lldb_ax_x86_64,     lldb_bx_x86_64,     lldb_cx_x86_64,   lldb_dx_x86_64,
+    lldb_di_x86_64,     lldb_si_x86_64,     lldb_bp_x86_64,   lldb_sp_x86_64,
+    lldb_r8w_x86_64,    lldb_r9w_x86_64,    lldb_r10w_x86_64, lldb_r11w_x86_64,
+    lldb_r12w_x86_64,   lldb_r13w_x86_64,   lldb_r14w_x86_64, lldb_r15w_x86_64,
+    lldb_ah_x86_64,     lldb_bh_x86_64,     lldb_ch_x86_64,   lldb_dh_x86_64,
+    lldb_al_x86_64,     lldb_bl_x86_64,     lldb_cl_x86_64,   lldb_dl_x86_64,
+    lldb_dil_x86_64,    lldb_sil_x86_64,    lldb_bpl_x86_64,  lldb_spl_x86_64,
+    lldb_r8l_x86_64,    lldb_r9l_x86_64,    lldb_r10l_x86_64, lldb_r11l_x86_64,
+    lldb_r12l_x86_64,   lldb_r13l_x86_64,   lldb_r14l_x86_64, lldb_r15l_x86_64,
     LLDB_INVALID_REGNUM // register sets need to end with this flag
 };
-static_assert((sizeof(g_gpr_regnums_x86_64) / sizeof(g_gpr_regnums_x86_64[0])) -
-                      1 ==
-                  k_num_gpr_registers_x86_64,
-              "g_gpr_regnums_x86_64 has wrong number of register infos");
+static_assert(
+  (sizeof(g_gpr_regnums_x86_64) / sizeof(g_gpr_regnums_x86_64[0])) - 1
+      == k_num_gpr_registers_x86_64,
+  "g_gpr_regnums_x86_64 has wrong number of register infos");
+
+// x86 64-bit floating point registers.
+static const uint32_t g_fpu_regnums_x86_64[] = {
+    lldb_fctrl_x86_64,     lldb_fstat_x86_64, lldb_ftag_x86_64,
+    lldb_fop_x86_64,       lldb_fiseg_x86_64, lldb_fioff_x86_64,
+    lldb_foseg_x86_64,     lldb_fooff_x86_64, lldb_mxcsr_x86_64,
+    lldb_mxcsrmask_x86_64, lldb_st0_x86_64,   lldb_st1_x86_64,
+    lldb_st2_x86_64,       lldb_st3_x86_64,   lldb_st4_x86_64,
+    lldb_st5_x86_64,       lldb_st6_x86_64,   lldb_st7_x86_64,
+    lldb_mm0_x86_64,       lldb_mm1_x86_64,   lldb_mm2_x86_64,
+    lldb_mm3_x86_64,       lldb_mm4_x86_64,   lldb_mm5_x86_64,
+    lldb_mm6_x86_64,       lldb_mm7_x86_64,   lldb_xmm0_x86_64,
+    lldb_xmm1_x86_64,      lldb_xmm2_x86_64,  lldb_xmm3_x86_64,
+    lldb_xmm4_x86_64,      lldb_xmm5_x86_64,  lldb_xmm6_x86_64,
+    lldb_xmm7_x86_64,      lldb_xmm8_x86_64,  lldb_xmm9_x86_64,
+    lldb_xmm10_x86_64,     lldb_xmm11_x86_64, lldb_xmm12_x86_64,
+    lldb_xmm13_x86_64,     lldb_xmm14_x86_64, lldb_xmm15_x86_64,
+    LLDB_INVALID_REGNUM // register sets need to end with this flag
+};
+static_assert(
+  (sizeof(g_fpu_regnums_x86_64) / sizeof(g_fpu_regnums_x86_64[0])) - 1
+      == k_num_fpr_registers_x86_64,
+  "g_fpu_regnums_x86_64 has wrong number of register infos");
 
 // Number of register sets provided by this context.
-enum { k_num_extended_register_sets = 2, k_num_register_sets = 4 };
+enum { k_num_register_sets = 2 };
 
 // Register sets for x86 64-bit.
 static const RegisterSet g_reg_sets_x86_64[k_num_register_sets] = {
     {"General Purpose Registers", "gpr", k_num_gpr_registers_x86_64,
      g_gpr_regnums_x86_64},
+    {"Floating Point Registers", "fpu", k_num_fpr_registers_x86_64,
+     g_fpu_regnums_x86_64},
 };
 
-#define REG_CONTEXT_SIZE (GetRegisterInfoInterface().GetGPRSize())
+struct x86_fpu_addr {
+  uint32_t offset;
+  uint32_t selector;
+};
 
 } // namespace
+
+#define REG_CONTEXT_SIZE (GetGPRSize() + GetFPRSize())
 
 NativeRegisterContextOpenBSD *
 NativeRegisterContextOpenBSD::CreateHostNativeRegisterContextOpenBSD(
@@ -121,18 +133,17 @@ NativeRegisterContextOpenBSD_x86_64::NativeRegisterContextOpenBSD_x86_64(
     const ArchSpec &target_arch, NativeThreadProtocol &native_thread)
     : NativeRegisterContextOpenBSD(native_thread,
                                   CreateRegisterInfoInterface(target_arch)),
-      m_gpr_x86_64(), m_fpr_x86_64() {}
+      m_gpr(), m_fpr() {}
 
-// CONSIDER after local and llgs debugging are merged, register set support can
-// be moved into a base x86-64 class with IsRegisterSetAvailable made virtual.
+uint32_t NativeRegisterContextOpenBSD_x86_64::GetUserRegisterCount() const {
+	uint32_t count = 0;
+	for (uint32_t set_index = 0; set_index < k_num_register_sets; ++set_index)
+		count += g_reg_sets_x86_64[set_index].num_registers;
+	return count;
+}
+
 uint32_t NativeRegisterContextOpenBSD_x86_64::GetRegisterSetCount() const {
-  uint32_t sets = 0;
-  for (uint32_t set_index = 0; set_index < k_num_register_sets; ++set_index) {
-    if (GetSetForNativeRegNum(set_index) != -1)
-      ++sets;
-  }
-
-  return sets;
+  return k_num_register_sets;
 }
 
 const RegisterSet *
@@ -150,18 +161,10 @@ NativeRegisterContextOpenBSD_x86_64::GetRegisterSet(uint32_t set_index) const {
 
 int NativeRegisterContextOpenBSD_x86_64::GetSetForNativeRegNum(
     int reg_num) const {
-  if (reg_num <= k_last_gpr_x86_64)
+  if (reg_num >= k_first_gpr_x86_64 && reg_num <= k_last_gpr_x86_64)
     return GPRegSet;
-  else if (reg_num <= k_last_fpr_x86_64)
+  else if (reg_num >= k_first_fpr_x86_64 && reg_num <= k_last_fpr_x86_64)
     return FPRegSet;
-  else if (reg_num <= k_last_avx_x86_64)
-    return -1; // AVX
-  else if (reg_num <= k_last_mpxr_x86_64)
-    return -1; // MPXR
-  else if (reg_num <= k_last_mpxc_x86_64)
-    return -1; // MPXC
-  else if (reg_num <= lldb_dr7_x86_64)
-    return -1; // DBR
   else
     return -1;
 }
@@ -232,106 +235,118 @@ NativeRegisterContextOpenBSD_x86_64::ReadRegister(const RegisterInfo *reg_info,
 
   switch (reg) {
   case lldb_rax_x86_64:
-    reg_value = (uint64_t)m_gpr_x86_64.r_rax;
+    reg_value = (uint64_t)m_gpr.r_rax;
     break;
   case lldb_rbx_x86_64:
-    reg_value = (uint64_t)m_gpr_x86_64.r_rbx;
+    reg_value = (uint64_t)m_gpr.r_rbx;
     break;
   case lldb_rcx_x86_64:
-    reg_value = (uint64_t)m_gpr_x86_64.r_rcx;
+    reg_value = (uint64_t)m_gpr.r_rcx;
     break;
   case lldb_rdx_x86_64:
-    reg_value = (uint64_t)m_gpr_x86_64.r_rdx;
+    reg_value = (uint64_t)m_gpr.r_rdx;
     break;
   case lldb_rdi_x86_64:
-    reg_value = (uint64_t)m_gpr_x86_64.r_rdi;
+    reg_value = (uint64_t)m_gpr.r_rdi;
     break;
   case lldb_rsi_x86_64:
-    reg_value = (uint64_t)m_gpr_x86_64.r_rsi;
+    reg_value = (uint64_t)m_gpr.r_rsi;
     break;
   case lldb_rbp_x86_64:
-    reg_value = (uint64_t)m_gpr_x86_64.r_rbp;
+    reg_value = (uint64_t)m_gpr.r_rbp;
     break;
   case lldb_rsp_x86_64:
-    reg_value = (uint64_t)m_gpr_x86_64.r_rsp;
+    reg_value = (uint64_t)m_gpr.r_rsp;
     break;
   case lldb_r8_x86_64:
-    reg_value = (uint64_t)m_gpr_x86_64.r_r8;
+    reg_value = (uint64_t)m_gpr.r_r8;
     break;
   case lldb_r9_x86_64:
-    reg_value = (uint64_t)m_gpr_x86_64.r_r9;
+    reg_value = (uint64_t)m_gpr.r_r9;
     break;
   case lldb_r10_x86_64:
-    reg_value = (uint64_t)m_gpr_x86_64.r_r10;
+    reg_value = (uint64_t)m_gpr.r_r10;
     break;
   case lldb_r11_x86_64:
-    reg_value = (uint64_t)m_gpr_x86_64.r_r11;
+    reg_value = (uint64_t)m_gpr.r_r11;
     break;
   case lldb_r12_x86_64:
-    reg_value = (uint64_t)m_gpr_x86_64.r_r12;
+    reg_value = (uint64_t)m_gpr.r_r12;
     break;
   case lldb_r13_x86_64:
-    reg_value = (uint64_t)m_gpr_x86_64.r_r13;
+    reg_value = (uint64_t)m_gpr.r_r13;
     break;
   case lldb_r14_x86_64:
-    reg_value = (uint64_t)m_gpr_x86_64.r_r14;
+    reg_value = (uint64_t)m_gpr.r_r14;
     break;
   case lldb_r15_x86_64:
-    reg_value = (uint64_t)m_gpr_x86_64.r_r15;
+    reg_value = (uint64_t)m_gpr.r_r15;
     break;
   case lldb_rip_x86_64:
-    reg_value = (uint64_t)m_gpr_x86_64.r_rip;
+    reg_value = (uint64_t)m_gpr.r_rip;
     break;
   case lldb_rflags_x86_64:
-    reg_value = (uint64_t)m_gpr_x86_64.r_rflags;
+    reg_value = (uint64_t)m_gpr.r_rflags;
     break;
   case lldb_cs_x86_64:
-    reg_value = (uint64_t)m_gpr_x86_64.r_cs;
+    reg_value = (uint64_t)m_gpr.r_cs;
     break;
   case lldb_fs_x86_64:
-    reg_value = (uint64_t)m_gpr_x86_64.r_fs;
+    reg_value = (uint64_t)m_gpr.r_fs;
     break;
   case lldb_gs_x86_64:
-    reg_value = (uint64_t)m_gpr_x86_64.r_gs;
+    reg_value = (uint64_t)m_gpr.r_gs;
     break;
   case lldb_ss_x86_64:
-    reg_value = (uint64_t)m_gpr_x86_64.r_ss;
+    reg_value = (uint64_t)m_gpr.r_ss;
     break;
   case lldb_ds_x86_64:
-    reg_value = (uint64_t)m_gpr_x86_64.r_ds;
+    reg_value = (uint64_t)m_gpr.r_ds;
     break;
   case lldb_es_x86_64:
-    reg_value = (uint64_t)m_gpr_x86_64.r_es;
+    reg_value = (uint64_t)m_gpr.r_es;
     break;
   case lldb_fctrl_x86_64:
-    reg_value = (uint16_t)m_fpr_x86_64.fxstate.fx_fcw;
+    reg_value = (uint16_t)m_fpr.fxstate.fx_fcw;
     break;
   case lldb_fstat_x86_64:
-    reg_value = (uint16_t)m_fpr_x86_64.fxstate.fx_fsw;
+    reg_value = (uint16_t)m_fpr.fxstate.fx_fsw;
     break;
   case lldb_ftag_x86_64:
-    reg_value = (uint8_t)m_fpr_x86_64.fxstate.fx_ftw;
+    reg_value = (uint8_t)m_fpr.fxstate.fx_ftw;
     break;
   case lldb_fop_x86_64:
-    reg_value = (uint64_t)m_fpr_x86_64.fxstate.fx_fop;
-    break;
-  case lldb_fiseg_x86_64:
-    reg_value = (uint64_t)m_fpr_x86_64.fxstate.fx_rip;
+    reg_value = (uint64_t)m_fpr.fxstate.fx_fop;
     break;
   case lldb_fioff_x86_64:
-    reg_value = (uint32_t)m_fpr_x86_64.fxstate.fx_rip;
-    break;
-  case lldb_foseg_x86_64:
-    reg_value = (uint64_t)m_fpr_x86_64.fxstate.fx_rdp;
-    break;
+    {
+      struct x86_fpu_addr *fp = (struct x86_fpu_addr *)&m_fpr.fxstate.fx_rip;
+      reg_value = fp->offset;
+      break;
+    }
+  case lldb_fiseg_x86_64:
+    {
+      struct x86_fpu_addr *fp = (struct x86_fpu_addr *)&m_fpr.fxstate.fx_rip;
+      reg_value = fp->selector;
+      break;
+    }
   case lldb_fooff_x86_64:
-    reg_value = (uint32_t)m_fpr_x86_64.fxstate.fx_rdp;
-    break;
+    {
+      struct x86_fpu_addr *fp = (struct x86_fpu_addr *)&m_fpr.fxstate.fx_rdp;
+      reg_value = fp->offset;
+      break;
+    }
+  case lldb_foseg_x86_64:
+    {
+      struct x86_fpu_addr *fp = (struct x86_fpu_addr *)&m_fpr.fxstate.fx_rdp;
+      reg_value = fp->selector;
+      break;
+    }
   case lldb_mxcsr_x86_64:
-    reg_value = (uint32_t)m_fpr_x86_64.fxstate.fx_mxcsr;
+    reg_value = (uint32_t)m_fpr.fxstate.fx_mxcsr;
     break;
   case lldb_mxcsrmask_x86_64:
-    reg_value = (uint32_t)m_fpr_x86_64.fxstate.fx_mxcsr_mask;
+    reg_value = (uint32_t)m_fpr.fxstate.fx_mxcsr_mask;
     break;
   case lldb_st0_x86_64:
   case lldb_st1_x86_64:
@@ -341,7 +356,7 @@ NativeRegisterContextOpenBSD_x86_64::ReadRegister(const RegisterInfo *reg_info,
   case lldb_st5_x86_64:
   case lldb_st6_x86_64:
   case lldb_st7_x86_64:
-    reg_value.SetBytes(&m_fpr_x86_64.fxstate.fx_st[reg - lldb_st0_x86_64],
+    reg_value.SetBytes(&m_fpr.fxstate.fx_st[reg - lldb_st0_x86_64],
                        reg_info->byte_size, endian::InlHostByteOrder());
     break;
   case lldb_mm0_x86_64:
@@ -352,7 +367,7 @@ NativeRegisterContextOpenBSD_x86_64::ReadRegister(const RegisterInfo *reg_info,
   case lldb_mm5_x86_64:
   case lldb_mm6_x86_64:
   case lldb_mm7_x86_64:
-    reg_value.SetBytes(&m_fpr_x86_64.fxstate.fx_xmm[reg - lldb_mm0_x86_64],
+    reg_value.SetBytes(&m_fpr.fxstate.fx_st[reg - lldb_mm0_x86_64],
                        reg_info->byte_size, endian::InlHostByteOrder());
     break;
   case lldb_xmm0_x86_64:
@@ -371,7 +386,7 @@ NativeRegisterContextOpenBSD_x86_64::ReadRegister(const RegisterInfo *reg_info,
   case lldb_xmm13_x86_64:
   case lldb_xmm14_x86_64:
   case lldb_xmm15_x86_64:
-    reg_value.SetBytes(&m_fpr_x86_64.fxstate.fx_xmm[reg - lldb_xmm0_x86_64],
+    reg_value.SetBytes(&m_fpr.fxstate.fx_xmm[reg - lldb_xmm0_x86_64],
                        reg_info->byte_size, endian::InlHostByteOrder());
     break;
   }
@@ -418,106 +433,118 @@ Status NativeRegisterContextOpenBSD_x86_64::WriteRegister(
 
   switch (reg) {
   case lldb_rax_x86_64:
-    m_gpr_x86_64.r_rax = reg_value.GetAsUInt64();
+    m_gpr.r_rax = reg_value.GetAsUInt64();
     break;
   case lldb_rbx_x86_64:
-    m_gpr_x86_64.r_rbx = reg_value.GetAsUInt64();
+    m_gpr.r_rbx = reg_value.GetAsUInt64();
     break;
   case lldb_rcx_x86_64:
-    m_gpr_x86_64.r_rcx = reg_value.GetAsUInt64();
+    m_gpr.r_rcx = reg_value.GetAsUInt64();
     break;
   case lldb_rdx_x86_64:
-    m_gpr_x86_64.r_rdx = reg_value.GetAsUInt64();
+    m_gpr.r_rdx = reg_value.GetAsUInt64();
     break;
   case lldb_rdi_x86_64:
-    m_gpr_x86_64.r_rdi = reg_value.GetAsUInt64();
+    m_gpr.r_rdi = reg_value.GetAsUInt64();
     break;
   case lldb_rsi_x86_64:
-    m_gpr_x86_64.r_rsi = reg_value.GetAsUInt64();
+    m_gpr.r_rsi = reg_value.GetAsUInt64();
     break;
   case lldb_rbp_x86_64:
-    m_gpr_x86_64.r_rbp = reg_value.GetAsUInt64();
+    m_gpr.r_rbp = reg_value.GetAsUInt64();
     break;
   case lldb_rsp_x86_64:
-    m_gpr_x86_64.r_rsp = reg_value.GetAsUInt64();
+    m_gpr.r_rsp = reg_value.GetAsUInt64();
     break;
   case lldb_r8_x86_64:
-    m_gpr_x86_64.r_r8 = reg_value.GetAsUInt64();
+    m_gpr.r_r8 = reg_value.GetAsUInt64();
     break;
   case lldb_r9_x86_64:
-    m_gpr_x86_64.r_r9 = reg_value.GetAsUInt64();
+    m_gpr.r_r9 = reg_value.GetAsUInt64();
     break;
   case lldb_r10_x86_64:
-    m_gpr_x86_64.r_r10 = reg_value.GetAsUInt64();
+    m_gpr.r_r10 = reg_value.GetAsUInt64();
     break;
   case lldb_r11_x86_64:
-    m_gpr_x86_64.r_r11 = reg_value.GetAsUInt64();
+    m_gpr.r_r11 = reg_value.GetAsUInt64();
     break;
   case lldb_r12_x86_64:
-    m_gpr_x86_64.r_r12 = reg_value.GetAsUInt64();
+    m_gpr.r_r12 = reg_value.GetAsUInt64();
     break;
   case lldb_r13_x86_64:
-    m_gpr_x86_64.r_r13 = reg_value.GetAsUInt64();
+    m_gpr.r_r13 = reg_value.GetAsUInt64();
     break;
   case lldb_r14_x86_64:
-    m_gpr_x86_64.r_r14 = reg_value.GetAsUInt64();
+    m_gpr.r_r14 = reg_value.GetAsUInt64();
     break;
   case lldb_r15_x86_64:
-    m_gpr_x86_64.r_r15 = reg_value.GetAsUInt64();
+    m_gpr.r_r15 = reg_value.GetAsUInt64();
     break;
   case lldb_rip_x86_64:
-    m_gpr_x86_64.r_rip = reg_value.GetAsUInt64();
+    m_gpr.r_rip = reg_value.GetAsUInt64();
     break;
   case lldb_rflags_x86_64:
-    m_gpr_x86_64.r_rflags = reg_value.GetAsUInt64();
+    m_gpr.r_rflags = reg_value.GetAsUInt64();
     break;
   case lldb_cs_x86_64:
-    m_gpr_x86_64.r_cs = reg_value.GetAsUInt64();
+    m_gpr.r_cs = reg_value.GetAsUInt64();
     break;
   case lldb_fs_x86_64:
-    m_gpr_x86_64.r_fs = reg_value.GetAsUInt64();
+    m_gpr.r_fs = reg_value.GetAsUInt64();
     break;
   case lldb_gs_x86_64:
-    m_gpr_x86_64.r_gs = reg_value.GetAsUInt64();
+    m_gpr.r_gs = reg_value.GetAsUInt64();
     break;
   case lldb_ss_x86_64:
-    m_gpr_x86_64.r_ss = reg_value.GetAsUInt64();
+    m_gpr.r_ss = reg_value.GetAsUInt64();
     break;
   case lldb_ds_x86_64:
-    m_gpr_x86_64.r_ds = reg_value.GetAsUInt64();
+    m_gpr.r_ds = reg_value.GetAsUInt64();
     break;
   case lldb_es_x86_64:
-    m_gpr_x86_64.r_es = reg_value.GetAsUInt64();
+    m_gpr.r_es = reg_value.GetAsUInt64();
     break;
   case lldb_fctrl_x86_64:
-    m_fpr_x86_64.fxstate.fx_fcw = reg_value.GetAsUInt16();
+    m_fpr.fxstate.fx_fcw = reg_value.GetAsUInt16();
     break;
   case lldb_fstat_x86_64:
-    m_fpr_x86_64.fxstate.fx_fsw = reg_value.GetAsUInt16();
+    m_fpr.fxstate.fx_fsw = reg_value.GetAsUInt16();
     break;
   case lldb_ftag_x86_64:
-    m_fpr_x86_64.fxstate.fx_ftw = reg_value.GetAsUInt8();
+    m_fpr.fxstate.fx_ftw = reg_value.GetAsUInt8();
     break;
   case lldb_fop_x86_64:
-    m_fpr_x86_64.fxstate.fx_fop = reg_value.GetAsUInt16();
-    break;
-  case lldb_fiseg_x86_64:
-    m_fpr_x86_64.fxstate.fx_rip = reg_value.GetAsUInt64();
+    m_fpr.fxstate.fx_fop = reg_value.GetAsUInt16();
     break;
   case lldb_fioff_x86_64:
-    m_fpr_x86_64.fxstate.fx_rip = reg_value.GetAsUInt32();
-    break;
-  case lldb_foseg_x86_64:
-    m_fpr_x86_64.fxstate.fx_rdp = reg_value.GetAsUInt64();
-    break;
+    {
+      struct x86_fpu_addr *fp = (struct x86_fpu_addr *)&m_fpr.fxstate.fx_rip;
+      fp->offset = reg_value.GetAsUInt32();
+      break;
+    }
+  case lldb_fiseg_x86_64:
+    {
+      struct x86_fpu_addr *fp = (struct x86_fpu_addr *)&m_fpr.fxstate.fx_rip;
+      fp->selector = reg_value.GetAsUInt32();
+      break;
+    }
   case lldb_fooff_x86_64:
-    m_fpr_x86_64.fxstate.fx_rdp = reg_value.GetAsUInt32();
-    break;
+    {
+      struct x86_fpu_addr *fp = (struct x86_fpu_addr *)&m_fpr.fxstate.fx_rdp;
+      fp->offset = reg_value.GetAsUInt32();
+      break;
+    }
+  case lldb_foseg_x86_64:
+    {
+      struct x86_fpu_addr *fp = (struct x86_fpu_addr *)&m_fpr.fxstate.fx_rdp;
+      fp->selector = reg_value.GetAsUInt32();
+      break;
+    }
   case lldb_mxcsr_x86_64:
-    m_fpr_x86_64.fxstate.fx_mxcsr = reg_value.GetAsUInt32();
+    m_fpr.fxstate.fx_mxcsr = reg_value.GetAsUInt32();
     break;
   case lldb_mxcsrmask_x86_64:
-    m_fpr_x86_64.fxstate.fx_mxcsr_mask = reg_value.GetAsUInt32();
+    m_fpr.fxstate.fx_mxcsr_mask = reg_value.GetAsUInt32();
     break;
   case lldb_st0_x86_64:
   case lldb_st1_x86_64:
@@ -527,7 +554,7 @@ Status NativeRegisterContextOpenBSD_x86_64::WriteRegister(
   case lldb_st5_x86_64:
   case lldb_st6_x86_64:
   case lldb_st7_x86_64:
-    ::memcpy(&m_fpr_x86_64.fxstate.fx_st[reg - lldb_st0_x86_64],
+    ::memcpy(&m_fpr.fxstate.fx_st[reg - lldb_st0_x86_64],
              reg_value.GetBytes(), reg_value.GetByteSize());
     break;
   case lldb_mm0_x86_64:
@@ -538,7 +565,7 @@ Status NativeRegisterContextOpenBSD_x86_64::WriteRegister(
   case lldb_mm5_x86_64:
   case lldb_mm6_x86_64:
   case lldb_mm7_x86_64:
-    ::memcpy(&m_fpr_x86_64.fxstate.fx_xmm[reg - lldb_mm0_x86_64],
+    ::memcpy(&m_fpr.fxstate.fx_st[reg - lldb_mm0_x86_64],
              reg_value.GetBytes(), reg_value.GetByteSize());
     break;
   case lldb_xmm0_x86_64:
@@ -557,7 +584,7 @@ Status NativeRegisterContextOpenBSD_x86_64::WriteRegister(
   case lldb_xmm13_x86_64:
   case lldb_xmm14_x86_64:
   case lldb_xmm15_x86_64:
-    ::memcpy(&m_fpr_x86_64.fxstate.fx_xmm[reg - lldb_xmm0_x86_64],
+    ::memcpy(&m_fpr.fxstate.fx_xmm[reg - lldb_xmm0_x86_64],
              reg_value.GetBytes(), reg_value.GetByteSize());
     break;
   }
@@ -580,10 +607,6 @@ Status NativeRegisterContextOpenBSD_x86_64::ReadAllRegisterValues(
     return error;
   }
 
-  error = ReadGPR();
-  if (error.Fail())
-    return error;
-
   uint8_t *dst = data_sp->GetBytes();
   if (dst == nullptr) {
     error.SetErrorStringWithFormat("DataBufferHeap instance of size %zu"
@@ -592,14 +615,18 @@ Status NativeRegisterContextOpenBSD_x86_64::ReadAllRegisterValues(
     return error;
   }
 
-  ::memcpy(dst, &m_gpr_x86_64, GetRegisterInfoInterface().GetGPRSize());
-  dst += GetRegisterInfoInterface().GetGPRSize();
+  error = ReadGPR();
+  if (error.Fail())
+    return error;
+  ::memcpy(dst, &m_gpr, GetGPRSize());
+  dst += GetGPRSize();
 
-  RegisterValue value((uint64_t)-1);
-  const RegisterInfo *reg_info =
-      GetRegisterInfoInterface().GetDynamicRegisterInfo("orig_eax");
-  if (reg_info == nullptr)
-    reg_info = GetRegisterInfoInterface().GetDynamicRegisterInfo("orig_rax");
+  error = ReadFPR();
+  if (error.Fail())
+    return error;
+  ::memcpy(dst, &m_fpr, GetFPRSize());
+  dst += GetFPRSize();
+
   return error;
 }
 
@@ -630,232 +657,20 @@ Status NativeRegisterContextOpenBSD_x86_64::WriteAllRegisterValues(
                                    __FUNCTION__);
     return error;
   }
-  ::memcpy(&m_gpr_x86_64, src, GetRegisterInfoInterface().GetGPRSize());
 
+  ::memcpy(&m_gpr, src, GetGPRSize());
   error = WriteGPR();
   if (error.Fail())
     return error;
-  src += GetRegisterInfoInterface().GetGPRSize();
+  src += GetGPRSize();
+
+  ::memcpy(&m_fpr, src, GetFPRSize());
+  error = WriteFPR();
+  if (error.Fail())
+    return error;
+  src += GetFPRSize();
 
   return error;
-}
-
-Status NativeRegisterContextOpenBSD_x86_64::IsWatchpointHit(uint32_t wp_index,
-                                                           bool &is_hit) {
-  if (wp_index >= NumSupportedHardwareWatchpoints())
-    return Status("Watchpoint index out of range");
-
-  RegisterValue reg_value;
-  const RegisterInfo *const reg_info = GetRegisterInfoAtIndex(lldb_dr6_x86_64);
-  Status error = ReadRegister(reg_info, reg_value);
-  if (error.Fail()) {
-    is_hit = false;
-    return error;
-  }
-
-  uint64_t status_bits = reg_value.GetAsUInt64();
-
-  is_hit = status_bits & (1 << wp_index);
-
-  return error;
-}
-
-Status NativeRegisterContextOpenBSD_x86_64::GetWatchpointHitIndex(
-    uint32_t &wp_index, lldb::addr_t trap_addr) {
-  uint32_t num_hw_wps = NumSupportedHardwareWatchpoints();
-  for (wp_index = 0; wp_index < num_hw_wps; ++wp_index) {
-    bool is_hit;
-    Status error = IsWatchpointHit(wp_index, is_hit);
-    if (error.Fail()) {
-      wp_index = LLDB_INVALID_INDEX32;
-      return error;
-    } else if (is_hit) {
-      return error;
-    }
-  }
-  wp_index = LLDB_INVALID_INDEX32;
-  return Status();
-}
-
-Status NativeRegisterContextOpenBSD_x86_64::IsWatchpointVacant(uint32_t wp_index,
-                                                              bool &is_vacant) {
-  if (wp_index >= NumSupportedHardwareWatchpoints())
-    return Status("Watchpoint index out of range");
-
-  RegisterValue reg_value;
-  const RegisterInfo *const reg_info = GetRegisterInfoAtIndex(lldb_dr7_x86_64);
-  Status error = ReadRegister(reg_info, reg_value);
-  if (error.Fail()) {
-    is_vacant = false;
-    return error;
-  }
-
-  uint64_t control_bits = reg_value.GetAsUInt64();
-
-  is_vacant = !(control_bits & (1 << (2 * wp_index)));
-
-  return error;
-}
-
-Status NativeRegisterContextOpenBSD_x86_64::SetHardwareWatchpointWithIndex(
-    lldb::addr_t addr, size_t size, uint32_t watch_flags, uint32_t wp_index) {
-
-  if (wp_index >= NumSupportedHardwareWatchpoints())
-    return Status("Watchpoint index out of range");
-
-  // Read only watchpoints aren't supported on x86_64. Fall back to read/write
-  // waitchpoints instead.
-  // TODO: Add logic to detect when a write happens and ignore that watchpoint
-  // hit.
-  if (watch_flags == 0x2)
-    watch_flags = 0x3;
-
-  if (watch_flags != 0x1 && watch_flags != 0x3)
-    return Status("Invalid read/write bits for watchpoint");
-
-  if (size != 1 && size != 2 && size != 4 && size != 8)
-    return Status("Invalid size for watchpoint");
-
-  bool is_vacant;
-  Status error = IsWatchpointVacant(wp_index, is_vacant);
-  if (error.Fail())
-    return error;
-  if (!is_vacant)
-    return Status("Watchpoint index not vacant");
-
-  RegisterValue reg_value;
-  const RegisterInfo *const reg_info_dr7 =
-      GetRegisterInfoAtIndex(lldb_dr7_x86_64);
-  error = ReadRegister(reg_info_dr7, reg_value);
-  if (error.Fail())
-    return error;
-
-  // for watchpoints 0, 1, 2, or 3, respectively, set bits 1, 3, 5, or 7
-  uint64_t enable_bit = 1 << (2 * wp_index);
-
-  // set bits 16-17, 20-21, 24-25, or 28-29
-  // with 0b01 for write, and 0b11 for read/write
-  uint64_t rw_bits = watch_flags << (16 + 4 * wp_index);
-
-  // set bits 18-19, 22-23, 26-27, or 30-31
-  // with 0b00, 0b01, 0b10, or 0b11
-  // for 1, 2, 8 (if supported), or 4 bytes, respectively
-  uint64_t size_bits = (size == 8 ? 0x2 : size - 1) << (18 + 4 * wp_index);
-
-  uint64_t bit_mask = (0x3 << (2 * wp_index)) | (0xF << (16 + 4 * wp_index));
-
-  uint64_t control_bits = reg_value.GetAsUInt64() & ~bit_mask;
-
-  control_bits |= enable_bit | rw_bits | size_bits;
-
-  const RegisterInfo *const reg_info_drN =
-      GetRegisterInfoAtIndex(lldb_dr0_x86_64 + wp_index);
-  error = WriteRegister(reg_info_drN, RegisterValue(addr));
-  if (error.Fail())
-    return error;
-
-  error = WriteRegister(reg_info_dr7, RegisterValue(control_bits));
-  if (error.Fail())
-    return error;
-
-  error.Clear();
-  return error;
-}
-
-bool NativeRegisterContextOpenBSD_x86_64::ClearHardwareWatchpoint(
-    uint32_t wp_index) {
-  if (wp_index >= NumSupportedHardwareWatchpoints())
-    return false;
-
-  RegisterValue reg_value;
-
-  // for watchpoints 0, 1, 2, or 3, respectively, clear bits 0, 1, 2, or 3 of
-  // the debug status register (DR6)
-  const RegisterInfo *const reg_info_dr6 =
-      GetRegisterInfoAtIndex(lldb_dr6_x86_64);
-  Status error = ReadRegister(reg_info_dr6, reg_value);
-  if (error.Fail())
-    return false;
-  uint64_t bit_mask = 1 << wp_index;
-  uint64_t status_bits = reg_value.GetAsUInt64() & ~bit_mask;
-  error = WriteRegister(reg_info_dr6, RegisterValue(status_bits));
-  if (error.Fail())
-    return false;
-
-  // for watchpoints 0, 1, 2, or 3, respectively, clear bits {0-1,16-19},
-  // {2-3,20-23}, {4-5,24-27}, or {6-7,28-31} of the debug control register
-  // (DR7)
-  const RegisterInfo *const reg_info_dr7 =
-      GetRegisterInfoAtIndex(lldb_dr7_x86_64);
-  error = ReadRegister(reg_info_dr7, reg_value);
-  if (error.Fail())
-    return false;
-  bit_mask = (0x3 << (2 * wp_index)) | (0xF << (16 + 4 * wp_index));
-  uint64_t control_bits = reg_value.GetAsUInt64() & ~bit_mask;
-  return WriteRegister(reg_info_dr7, RegisterValue(control_bits)).Success();
-}
-
-Status NativeRegisterContextOpenBSD_x86_64::ClearAllHardwareWatchpoints() {
-  RegisterValue reg_value;
-
-  // clear bits {0-4} of the debug status register (DR6)
-  const RegisterInfo *const reg_info_dr6 =
-      GetRegisterInfoAtIndex(lldb_dr6_x86_64);
-  Status error = ReadRegister(reg_info_dr6, reg_value);
-  if (error.Fail())
-    return error;
-  uint64_t bit_mask = 0xF;
-  uint64_t status_bits = reg_value.GetAsUInt64() & ~bit_mask;
-  error = WriteRegister(reg_info_dr6, RegisterValue(status_bits));
-  if (error.Fail())
-    return error;
-
-  // clear bits {0-7,16-31} of the debug control register (DR7)
-  const RegisterInfo *const reg_info_dr7 =
-      GetRegisterInfoAtIndex(lldb_dr7_x86_64);
-  error = ReadRegister(reg_info_dr7, reg_value);
-  if (error.Fail())
-    return error;
-  bit_mask = 0xFF | (0xFFFF << 16);
-  uint64_t control_bits = reg_value.GetAsUInt64() & ~bit_mask;
-  return WriteRegister(reg_info_dr7, RegisterValue(control_bits));
-}
-
-uint32_t NativeRegisterContextOpenBSD_x86_64::SetHardwareWatchpoint(
-    lldb::addr_t addr, size_t size, uint32_t watch_flags) {
-  Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_WATCHPOINTS));
-  const uint32_t num_hw_watchpoints = NumSupportedHardwareWatchpoints();
-  for (uint32_t wp_index = 0; wp_index < num_hw_watchpoints; ++wp_index) {
-    bool is_vacant;
-    Status error = IsWatchpointVacant(wp_index, is_vacant);
-    if (is_vacant) {
-      error = SetHardwareWatchpointWithIndex(addr, size, watch_flags, wp_index);
-      if (error.Success())
-        return wp_index;
-    }
-    if (error.Fail() && log) {
-      log->Printf("NativeRegisterContextOpenBSD_x86_64::%s Error: %s",
-                  __FUNCTION__, error.AsCString());
-    }
-  }
-  return LLDB_INVALID_INDEX32;
-}
-
-lldb::addr_t
-NativeRegisterContextOpenBSD_x86_64::GetWatchpointAddress(uint32_t wp_index) {
-  if (wp_index >= NumSupportedHardwareWatchpoints())
-    return LLDB_INVALID_ADDRESS;
-  RegisterValue reg_value;
-  const RegisterInfo *const reg_info_drN =
-      GetRegisterInfoAtIndex(lldb_dr0_x86_64 + wp_index);
-  if (ReadRegister(reg_info_drN, reg_value).Fail())
-    return LLDB_INVALID_ADDRESS;
-  return reg_value.GetAsUInt64();
-}
-
-uint32_t NativeRegisterContextOpenBSD_x86_64::NumSupportedHardwareWatchpoints() {
-  // Available debug address registers: dr0, dr1, dr2, dr3
-  return 4;
 }
 
 #endif // defined(__x86_64__)

@@ -39,14 +39,16 @@ public:
 
   NativeRegisterContext& GetRegisterContext() override;
 
+  // OpenBSD does not expose hardware debug registers to userland
+  // so these functions will just return a Status error.
+  Status SetHardwareBreakpoint(lldb::addr_t addr, size_t size) override;
+  Status RemoveHardwareBreakpoint(lldb::addr_t addr) override;
+
+  // Similarly, until software watchpoints are implemented in lldb,
+  // these functions will just return a Status error.
   Status SetWatchpoint(lldb::addr_t addr, size_t size, uint32_t watch_flags,
                        bool hardware) override;
-
   Status RemoveWatchpoint(lldb::addr_t addr) override;
-
-  Status SetHardwareBreakpoint(lldb::addr_t addr, size_t size) override;
-
-  Status RemoveHardwareBreakpoint(lldb::addr_t addr) override;
 
 private:
   // ---------------------------------------------------------------------
@@ -57,7 +59,6 @@ private:
   void SetStoppedByBreakpoint();
   void SetStoppedByTrace();
   void SetStoppedByExec();
-  void SetStoppedByWatchpoint(uint32_t wp_index);
   void SetStopped();
   void SetRunning();
   void SetStepping();
@@ -69,9 +70,6 @@ private:
   ThreadStopInfo m_stop_info;
   std::unique_ptr<NativeRegisterContext> m_reg_context_up;
   std::string m_stop_description;
-  using WatchpointIndexMap = std::map<lldb::addr_t, uint32_t>;
-  WatchpointIndexMap m_watchpoint_index_map;
-  WatchpointIndexMap m_hw_break_index_map;
 };
 
 typedef std::shared_ptr<NativeThreadOpenBSD> NativeThreadOpenBSDSP;
