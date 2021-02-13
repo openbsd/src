@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.24 2021/01/05 15:10:42 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.25 2021/02/13 18:44:18 semarie Exp $
 
 FS=		miniroot${OSrev}.img
 FSSIZE=		9920
@@ -28,7 +28,6 @@ ${FS}: bsd.gz
 	newfs -O 1 -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
 	mount /dev/`cat vnd`a ${MOUNT_POINT}
 	cp ${DESTDIR}/usr/mdec/boot ${.OBJDIR}/boot
-	strip ${.OBJDIR}/boot
 	strip -R .comment -R .SUNW_ctf ${.OBJDIR}/boot
 	installboot -v -r ${MOUNT_POINT} `cat vnd` \
 	    ${DESTDIR}/usr/mdec/biosboot ${.OBJDIR}/boot
@@ -59,7 +58,6 @@ MRMAKEFSARGS=	-o disklabel=${MRDISKTYPE},minfree=0,density=4096
 
 bsd.gz: bsd.rd
 	cp bsd.rd bsd.strip
-	strip bsd.strip
 	strip -R .comment -R .SUNW_ctf bsd.strip
 	gzip -9cn bsd.strip > bsd.gz
 
