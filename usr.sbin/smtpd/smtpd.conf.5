@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.256 2021/01/27 14:59:10 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.257 2021/02/13 07:59:54 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: January 27 2021 $
+.Dd $Mdocdate: February 13 2021 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -202,7 +202,7 @@ function.
 .Pp
 The
 .Cm userbase
-does not apply for the
+does not apply to the
 .Cm user
 option.
 .It Cm virtual Pf < Ar table Ns >
@@ -322,13 +322,13 @@ If the list contains more than one address, all of them are used
 in such a way that traffic is routed as efficiently as possible.
 .El
 .It Ic admd Ar authservid
-The Administrative Management Domain this mailserver belongs to.
+The Administrative Management Domain this mail server belongs to.
 The authservid will be forwarded to filters using it to identify or mark
 authentication-results headers.
 If omitted it defaults to the server name.
 .It Ic bounce Cm warn-interval Ar delay Op , Ar delay ...
 Send warning messages to the envelope sender when temporary delivery
-failures cause a message to remain on the queue for longer than
+failures cause a message to remain in the queue for longer than
 .Ar delay .
 Each
 .Ar delay
@@ -359,11 +359,11 @@ directive.
 .It Ic filter Ar chain-name Ic chain Brq Ar filter-name Op , Ar ...
 Register a chain of filters
 .Ar chain-name ,
-consisting of the filters listed from
+consisting of the filters listed in
 .Ar filter-name .
-Filters part of a filter chain are executed in order of declaration for
+Filters in a filter chain are executed in order of declaration for
 each phase that they are registered for.
-A filter chain may be used in place of a filter for any directive but
+A filter chain may be used in place of a filter for any directive except
 filter chains themselves.
 .It Ic filter Ar filter-name Ic phase Ar phase-name Ic match Ar conditions decision
 Register a filter
@@ -395,7 +395,7 @@ from
 If
 .Ar command
 starts with a slash it is executed with an absolute path,
-else it will be run from
+otherwise it will be run from
 .Dq /usr/local/libexec/smtpd/ .
 .It Ic include Qq Ar pathname
 Replace this directive with the content of the additional configuration
@@ -404,7 +404,7 @@ file at the absolute
 .It Ic listen on Ar interface Oo Ar family Oc Op Ar options
 Listen on the
 .Ar interface
-for incoming connections, using the same syntax as for
+for incoming connections, using the same syntax as
 .Xr ifconfig 8 .
 The
 .Ar interface
@@ -485,7 +485,7 @@ Listen on the given
 instead of the default port 25.
 .It Cm proxy-v2
 Support the PROXYv2 protocol,
-rewriting appropriately source address received from proxy.
+appropriately rewriting the source address received from proxy.
 .It Cm received-auth
 In
 .Dq Received
@@ -691,7 +691,7 @@ Specify that session may only originate from regex or regex table
 which can be a specific address or a subnet expressed in CIDR-notation.
 .El
 .Pp
-In addition, the following transaction options:
+In addition, the following transaction options may be matched:
 .Bl -tag -width Ds
 .It Xo
 .Op Ic \&!
@@ -731,14 +731,14 @@ Specify that session's HELO / EHLO should match the regex or regex table
 .Cm mail-from
 .Ar sender | Pf < Ar sender Ns >
 .Xc
-Specify that transactions's MAIL FROM should match the string or list table
+Specify that transaction's MAIL FROM should match the string or list table
 .Ar sender .
 .It Xo
 .Op Ic \&!
 .Cm mail-from regex
 .Ar sender | Pf < Ar sender Ns >
 .Xc
-Specify that transactions's MAIL FROM should match the regex or regex table
+Specify that transaction's MAIL FROM should match the regex or regex table
 .Ar sender .
 .It Xo
 .Op Ic \&!
@@ -852,7 +852,7 @@ Such processes may be used to share the same instance between multiple filters.
 If
 .Ar command
 starts with a slash it is executed with an absolute path,
-else it will be run from
+otherwise it will be run from
 .Dq /usr/local/libexec/smtpd/ .
 .It Ic queue Cm compression
 Store queue files in a compressed format.
@@ -1010,8 +1010,8 @@ These conditions may all be negated by prefixing them with an exclamation mark:
 .It !fcrdns                     Ta forward-confirmed reverse DNS is invalid
 .El
 .Pp
-Any conditions using a table may indicate that tables hold regex by
-prefixing the table name with the keyword regex.
+Any conditions using a table may indicate that the table contains regular
+expressions by prefixing the table name with the keyword regex.
 .Bl -column XXXXXXXXXXXXXXXXXXXXX -offset indent
 .It helo regex Pf < Ar table Ns >       Ta helo name matches a regex in table
 .El
@@ -1029,7 +1029,7 @@ header is added to any messages
 .Pp
 Decisions that involve a message require that the message be RFC valid,
 meaning that they should either start with a 4xx or 5xx status code.
-Descisions can be taken at any phase,
+Decisions can be taken at any phase,
 though junking can only happen before a message is committed.
 .Ss FORMAT SPECIFIERS
 Some configuration directives support expansion of their parameters at runtime.
@@ -1120,7 +1120,7 @@ and allows for mail from users and daemons on the local machine,
 as well as permitting email to remote servers.
 Some more complex configurations are given below.
 .Pp
-This first example is the same as the default configuration,
+This first example is similar to the default configuration,
 but all outgoing mail is forwarded to a remote SMTP server.
 A secrets file is needed to specify a username and password:
 .Bd -literal -offset indent
