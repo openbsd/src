@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchgen.c,v 1.21 2018/10/18 14:25:14 naddy Exp $	 */
+/* $OpenBSD: crunchgen.c,v 1.22 2021/02/13 18:52:08 semarie Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -928,7 +928,7 @@ top_makefile_rules(FILE * outmk)
 	    execfname, execfname);
 	fprintf(outmk, "\t$(CC) -static -L. ${LDFLAGS} -o $@ %s.o $(CRUNCHED_OBJS) $(LIBS)\n",
 	    execfname);
-	fprintf(outmk, "\t$(STRIP) %s\n", execfname);
+	fprintf(outmk, "\t$(STRIP) -R .comment %s\n", execfname);
 
 	fprintf(outmk, "\n");
 	fprintf(outmk, ".if !empty(CLIB)\n");
