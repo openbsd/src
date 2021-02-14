@@ -1,4 +1,4 @@
-/*	$OpenBSD: workqueue.h,v 1.3 2020/06/08 04:48:15 jsg Exp $	*/
+/*	$OpenBSD: workqueue.h,v 1.4 2021/02/14 03:42:55 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -79,7 +79,7 @@ typedef void (*work_func_t)(struct work_struct *);
 static inline void
 INIT_WORK(struct work_struct *work, work_func_t func)
 {
-	work->tq = (struct taskq *)system_wq;
+	work->tq = NULL;
 	task_set(&work->task, (void (*)(void *))func, work);
 }
 
@@ -139,6 +139,7 @@ INIT_DELAYED_WORK_ONSTACK(struct delayed_work *dwork, work_func_t func)
 static inline bool
 schedule_work(struct work_struct *work)
 {
+	work->tq = (struct taskq *)system_wq;
 	return task_add(work->tq, &work->task);
 }
 
