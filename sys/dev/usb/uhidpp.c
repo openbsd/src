@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.9 2021/02/14 14:40:38 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.10 2021/02/14 14:41:35 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -398,7 +398,6 @@ uhidpp_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(sc->sc_sensdev.xname, sc->sc_hdev.sc_dev.dv_xname,
 	    sizeof(sc->sc_sensdev.xname));
 	sensordev_install(&sc->sc_sensdev);
-	sc->sc_senstsk = sensor_task_register(sc, uhidpp_refresh, 6);
 
 out:
 	mtx_leave(&sc->sc_mtx);
@@ -621,6 +620,9 @@ uhidpp_device_connect(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 	sens->type = SENSOR_INTEGER;
 	sens->value = dev->d_battery.b_nlevels;
 	sensor_attach(&sc->sc_sensdev, sens);
+
+	if (sc->sc_senstsk == NULL)
+		sc->sc_senstsk = sensor_task_register(sc, uhidpp_refresh, 6);
 
 	dev->d_connected = 1;
 	uhidpp_device_refresh(sc, dev);
