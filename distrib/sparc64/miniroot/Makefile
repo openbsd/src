@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.26 2021/02/14 17:11:02 semarie Exp $
+#	$OpenBSD: Makefile,v 1.27 2021/02/14 17:14:42 semarie Exp $
 
 FS=		miniroot${OSrev}.img
 FSSIZE=		6400
@@ -59,7 +59,9 @@ ${CDROM}: bsd.rd ${FS}
 	mksuncd f ${CDROM} ${FS}
 
 bsd.gz: bsd.rd
-	objcopy -S -R .comment -R .SUNW_ctf bsd.rd bsd.strip
+	objcopy -S -R .comment -R .SUNW_ctf \
+	    -K rd_root_size -K rd_root_image \
+	    bsd.rd bsd.strip
 	gzip -9cn bsd.strip > bsd.gz
 
 bsd.rd: mr.fs bsd
