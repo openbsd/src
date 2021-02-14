@@ -1,4 +1,4 @@
-/* $OpenBSD: exuart.c,v 1.5 2021/02/11 23:53:42 patrick Exp $ */
+/* $OpenBSD: exuart.c,v 1.6 2021/02/14 13:39:24 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -55,6 +55,11 @@ struct exuart_softc {
 	struct tty	*sc_tty;
 	struct timeout	sc_diag_tmo;
 	struct timeout	sc_dtr_tmo;
+
+	uint32_t	sc_rx_fifo_cnt_mask;
+	uint32_t	sc_rx_fifo_full;
+	uint32_t	sc_tx_fifo_full;
+
 	int		sc_fifo;
 	int		sc_overflows;
 	int		sc_floods;
@@ -125,6 +130,10 @@ bus_addr_t	exuartconsaddr;
 tcflag_t	exuartconscflag = TTYDEF_CFLAG;
 int		exuartdefaultrate = B115200;
 
+uint32_t	exuart_rx_fifo_cnt_mask;
+uint32_t	exuart_rx_fifo_full;
+uint32_t	exuart_tx_fifo_full;
+
 struct cdevsw exuartdev =
 	cdev_tty_init(3/*XXX NEXUART */ ,exuart);		/* 12: serial port */
 
@@ -150,6 +159,10 @@ exuart_init_cons(void)
 
 	if (fdt_get_reg(node, 0, &reg))
 		return;
+
+	exuart_rx_fifo_cnt_mask = EXUART_UFSTAT_RX_FIFO_CNT_MASK;
+	exuart_rx_fifo_full = EXUART_UFSTAT_RX_FIFO_FULL;
+	exuart_tx_fifo_full = EXUART_UFSTAT_TX_FIFO_FULL;
 
 	exuartcnattach(fdt_cons_bs_tag, reg.addr, B115200, TTYDEF_CFLAG);
 }
@@ -189,6 +202,10 @@ exuart_attach(struct device *parent, struct device *self, void *aux)
 
 		printf(": console");
 	}
+
+	sc->sc_rx_fifo_cnt_mask = EXUART_UFSTAT_RX_FIFO_CNT_MASK;
+	sc->sc_rx_fifo_full = EXUART_UFSTAT_RX_FIFO_FULL;
+	sc->sc_tx_fifo_full = EXUART_UFSTAT_TX_FIFO_FULL;
 
 	/* Mask and clear interrupts. */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, EXUART_UINTM,
@@ -239,8 +256,8 @@ exuart_intr(void *arg)
 		p = sc->sc_ibufp;
 
 		while (bus_space_read_4(iot, ioh, EXUART_UFSTAT) &
-		    (EXUART_UFSTAT_RX_FIFO_CNT_MASK|EXUART_UFSTAT_RX_FIFO_FULL)) {
-			c = bus_space_read_1(iot, ioh, EXUART_URXH);
+		    (sc->sc_rx_fifo_cnt_mask | sc->sc_rx_fifo_full)) {
+			c = bus_space_read_4(iot, ioh, EXUART_URXH);
 			if (p >= sc->sc_ibufend) {
 				sc->sc_floods++;
 				if (sc->sc_errors++ == 0)
@@ -278,7 +295,7 @@ exuart_intr(void *arg)
 	p = sc->sc_ibufp;
 
 	while(ISSET(bus_space_read_2(iot, ioh, EXUART_USR2), EXUART_SR2_RDR)) {
-		c = bus_space_read_1(iot, ioh, EXUART_URXH);
+		c = bus_space_read_4(iot, ioh, EXUART_URXH);
 		if (p >= sc->sc_ibufend) {
 			sc->sc_floods++;
 			if (sc->sc_errors++ == 0)
@@ -422,7 +439,7 @@ exuart_start(struct tty *tp)
 
 		n = q_to_b(&tp->t_outq, buffer, sizeof buffer);
 		for (i = 0; i < n; i++)
-			bus_space_write_1(iot, ioh, EXUART_UTXH, buffer[i]);
+			bus_space_write_4(iot, ioh, EXUART_UTXH, buffer[i]);
 		bzero(buffer, n);
 	}
 
@@ -921,9 +938,9 @@ exuartcngetc(dev_t dev)
 	while((bus_space_read_4(exuartconsiot, exuartconsioh, EXUART_UTRSTAT) &
 	    EXUART_UTRSTAT_RXBREADY) == 0 &&
 	      (bus_space_read_4(exuartconsiot, exuartconsioh, EXUART_UFSTAT) &
-	    (EXUART_UFSTAT_RX_FIFO_CNT_MASK|EXUART_UFSTAT_RX_FIFO_FULL)) == 0)
+	    (exuart_rx_fifo_cnt_mask | exuart_rx_fifo_full)) == 0)
 		;
-	c = bus_space_read_1(exuartconsiot, exuartconsioh, EXUART_URXH);
+	c = bus_space_read_4(exuartconsiot, exuartconsioh, EXUART_URXH);
 	splx(s);
 	return c;
 }
@@ -934,9 +951,9 @@ exuartcnputc(dev_t dev, int c)
 	int s;
 	s = splhigh();
 	while (bus_space_read_4(exuartconsiot, exuartconsioh, EXUART_UFSTAT) &
-	   EXUART_UFSTAT_TX_FIFO_FULL)
+	   exuart_tx_fifo_full)
 		;
-	bus_space_write_1(exuartconsiot, exuartconsioh, EXUART_UTXH, c);
+	bus_space_write_4(exuartconsiot, exuartconsioh, EXUART_UTXH, c);
 	splx(s);
 }
 
