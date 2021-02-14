@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.8 2021/02/14 14:39:25 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.9 2021/02/14 14:40:38 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -387,20 +387,22 @@ uhidpp_attach(struct device *parent, struct device *self, void *aux)
 		    serial[0], serial[1], serial[2], serial[3]);
 		npaired++;
 	}
+	if (npaired == 0)
+		goto out;
 
 	/* Enable notifications for the receiver. */
 	error = hidpp10_enable_notifications(sc, HIDPP_DEVICE_ID_RECEIVER);
 	if (error)
 		printf(" error %d", error);
 
-	printf("\n");
-
 	strlcpy(sc->sc_sensdev.xname, sc->sc_hdev.sc_dev.dv_xname,
 	    sizeof(sc->sc_sensdev.xname));
 	sensordev_install(&sc->sc_sensdev);
 	sc->sc_senstsk = sensor_task_register(sc, uhidpp_refresh, 6);
 
+out:
 	mtx_leave(&sc->sc_mtx);
+	printf("\n");
 }
 
 int
@@ -416,7 +418,8 @@ uhidpp_detach(struct device *self, int flags)
 
 	KASSERT(sc->sc_resp_state == UHIDPP_RESP_NONE);
 
-	sensordev_deinstall(&sc->sc_sensdev);
+	if (sc->sc_sensdev.xname[0] != '\0')
+		sensordev_deinstall(&sc->sc_sensdev);
 
 	for (i = 0; i < UHIDPP_NDEVICES; i++) {
 		struct uhidpp_device *dev = &sc->sc_devices[i];
