@@ -1,4 +1,4 @@
-/* $OpenBSD: exclock.c,v 1.7 2017/05/21 17:49:45 kettenis Exp $ */
+/* $OpenBSD: exclock.c,v 1.8 2021/02/14 19:22:44 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -53,7 +53,7 @@
 #define BPLL_FOUT_SEL_SHIFT			0x0
 #define BPLL_FOUT_SEL_MASK			0x1
 
-#define HCLK_FREQ				24000
+#define HCLK_FREQ				24000000
 
 #define HREAD4(sc, reg)							\
 	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
@@ -84,16 +84,17 @@ enum clocks {
 	GPLL,		/* Graphic 3D processor clock or other clocks for DVFS flexibility */
 	EPLL,		/* Audio interface clocks and clocks for other external device interfaces */
 	VPLL,		/* dithered PLL, helps to reduce the EMI of display and camera */
+	KPLL,
 };
 
 struct exclock_softc *exclock_sc;
 
-int exclock_match(struct device *, void *, void *);
-void exclock_attach(struct device *, struct device *, void *);
-int exclock_cpuspeed(int *);
-unsigned int exclock_decode_pll_clk(enum clocks, unsigned int, unsigned int);
-unsigned int exclock_get_pll_clk(enum clocks);
-unsigned int exclock_get_armclk(void);
+int	exclock_match(struct device *, void *, void *);
+void	exclock_attach(struct device *, struct device *, void *);
+uint32_t exclock_decode_pll_clk(enum clocks, unsigned int, unsigned int);
+uint32_t exclock_get_pll_clk(struct exclock_softc *, enum clocks);
+uint32_t exclock_get_armclk(struct exclock_softc *);
+uint32_t exclock_get_kfcclk(struct exclock_softc *);
 unsigned int exclock_get_i2cclk(void);
 
 struct cfattach	exclock_ca = {
@@ -116,8 +117,11 @@ exclock_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return (OF_is_compatible(faa->fa_node, "samsung,exynos5250-clock") ||
-	    OF_is_compatible(faa->fa_node, "samsung,exynos5800-clock"));
+	if (OF_is_compatible(faa->fa_node, "samsung,exynos5250-clock") ||
+	    OF_is_compatible(faa->fa_node, "samsung,exynos5800-clock"))
+		return 10;	/* Must beat syscon(4). */
+
+	return 0;
 }
 
 void
@@ -127,15 +131,13 @@ exclock_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args *faa = aux;
 
 	sc->sc_iot = faa->fa_iot;
-
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
 	    faa->fa_reg[0].size, 0, &sc->sc_ioh))
 		panic("%s: bus_space_map failed!", __func__);
 
 	exclock_sc = sc;
 
-	printf(": Exynos 5 CPU freq: %d MHz\n",
-	    exclock_get_armclk() / 1000);
+	printf("\n");
 
 	if (OF_is_compatible(faa->fa_node, "samsung,exynos5250-clock")) {
 		/* Exynos 5250 */
@@ -152,18 +154,25 @@ exclock_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_cd.cd_node = faa->fa_node;
 	sc->sc_cd.cd_cookie = sc;
 	clock_register(&sc->sc_cd);
-
-	cpu_cpuspeed = exclock_cpuspeed;
 }
 
 /*
  * Exynos 5250
  */
 
+/* Clocks */
+#define EXYNOS5250_CLK_ARM_CLK		9
+
 uint32_t
 exynos5250_get_frequency(void *cookie, uint32_t *cells)
 {
+	struct exclock_softc *sc = cookie;
 	uint32_t idx = cells[0];
+
+	switch (idx) {
+	case EXYNOS5250_CLK_ARM_CLK:
+		return exclock_get_armclk(sc);
+	}
 
 	printf("%s: 0x%08x\n", __func__, idx);
 	return 0;
@@ -173,6 +182,11 @@ int
 exynos5250_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 {
 	uint32_t idx = cells[0];
+
+	switch (idx) {
+	case EXYNOS5250_CLK_ARM_CLK:
+		return -1;
+	}
 
 	printf("%s: 0x%08x\n", __func__, idx);
 	return -1;
@@ -194,8 +208,13 @@ exynos5250_enable(void *cookie, uint32_t *cells, int on)
 #define EXYNOS5420_CLK_FIN_PLL		1
 #define EXYNOS5420_CLK_FOUT_RPLL	6
 #define EXYNOS5420_CLK_FOUT_SPLL	8
+#define EXYNOS5420_CLK_ARM_CLK		13
+#define EXYNOS5420_CLK_KFC_CLK		14
 #define EXYNOS5420_CLK_SCLK_MMC2	134
 #define EXYNOS5420_CLK_MMC2		353
+#define EXYNOS5420_CLK_USBH20		365
+#define EXYNOS5420_CLK_USBD300		366
+#define EXYNOS5420_CLK_USBD301		367
 #define EXYNOS5420_CLK_SCLK_SPLL	-1
 
 /* Registers */
@@ -207,6 +226,9 @@ exynos5250_enable(void *cookie, uint32_t *cells, int on)
 #define EXYNOS5420_SRC_FSYS		0x10244
 #define EXYNOS5420_GATE_TOP_SCLK_FSYS	0x10840
 #define EXYNOS5420_GATE_IP_FSYS		0x10944
+#define EXYNOS5420_KPLL_CON0		0x28100
+#define EXYNOS5420_SRC_KFC		0x28200
+#define EXYNOS5420_DIV_KFC0		0x28500
 
 uint32_t
 exynos5420_get_frequency(void *cookie, uint32_t *cells)
@@ -220,6 +242,10 @@ exynos5420_get_frequency(void *cookie, uint32_t *cells)
 	switch (idx) {
 	case EXYNOS5420_CLK_FIN_PLL:
 		return 24000000;
+	case EXYNOS5420_CLK_ARM_CLK:
+		return exclock_get_armclk(sc);
+	case EXYNOS5420_CLK_KFC_CLK:
+		return exclock_get_kfcclk(sc);
 	case EXYNOS5420_CLK_SCLK_MMC2:
 		reg = HREAD4(sc, EXYNOS5420_DIV_FSYS1);
 		div = ((reg >> 20) & ((1 << 10) - 1)) + 1;
@@ -279,6 +305,12 @@ exynos5420_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 {
 	uint32_t idx = cells[0];
 
+	switch (idx) {
+	case EXYNOS5420_CLK_ARM_CLK:
+	case EXYNOS5420_CLK_KFC_CLK:
+		return -1;
+	}
+
 	printf("%s: 0x%08x\n", __func__, idx);
 	return -1;
 }
@@ -291,6 +323,9 @@ exynos5420_enable(void *cookie, uint32_t *cells, int on)
 	switch (idx) {
 	case EXYNOS5420_CLK_SCLK_MMC2:	/* CLK_GATE_TOP_SCLK_FSYS */
 	case EXYNOS5420_CLK_MMC2:	/* CLK_GATE_IP_FSYS */
+	case EXYNOS5420_CLK_USBH20:	/* CLK_GATE_IP_FSYS */
+	case EXYNOS5420_CLK_USBD300:	/* CLK_GATE_IP_FSYS */
+	case EXYNOS5420_CLK_USBD301:	/* CLK_GATE_IP_FSYS */
 		/* Enabled by default. */
 		return;
 	}
@@ -298,17 +333,11 @@ exynos5420_enable(void *cookie, uint32_t *cells, int on)
 	printf("%s: 0x%08x\n", __func__, idx);
 }
 
-int
-exclock_cpuspeed(int *freq)
-{
-	*freq = exclock_get_armclk() / 1000;
-	return (0);
-}
-
-unsigned int
+uint32_t
 exclock_decode_pll_clk(enum clocks pll, unsigned int r, unsigned int k)
 {
-	uint32_t m, p, s = 0, mask, fout, freq;
+	uint64_t freq;
+	uint32_t m, p, s = 0, mask, fout;
 	/*
 	 * APLL_CON: MIDV [25:16]
 	 * MPLL_CON: MIDV [25:16]
@@ -322,6 +351,7 @@ exclock_decode_pll_clk(enum clocks pll, unsigned int r, unsigned int k)
 	case APLL:
 	case MPLL:
 	case BPLL:
+	case KPLL:
 		mask = 0x3ff;
 		break;
 	default:
@@ -353,27 +383,23 @@ exclock_decode_pll_clk(enum clocks pll, unsigned int r, unsigned int k)
 	return fout;
 }
 
-unsigned int
-exclock_get_pll_clk(enum clocks pll)
+uint32_t
+exclock_get_pll_clk(struct exclock_softc *sc, enum clocks pll)
 {
-	struct exclock_softc *sc = exclock_sc;
 	uint32_t freq;
 
 	switch (pll) {
 	case APLL:
 		freq = exclock_decode_pll_clk(pll,
-		    HREAD4(sc, CLOCK_APLL_CON0),
-		    0);
+		    HREAD4(sc, CLOCK_APLL_CON0), 0);
 		break;
 	case MPLL:
 		freq = exclock_decode_pll_clk(pll,
-		    HREAD4(sc, CLOCK_MPLL_CON0),
-		    0);
+		    HREAD4(sc, CLOCK_MPLL_CON0), 0);
 		break;
 	case BPLL:
 		freq = exclock_decode_pll_clk(pll,
-		    HREAD4(sc, CLOCK_BPLL_CON0),
-		    0);
+		    HREAD4(sc, CLOCK_BPLL_CON0), 0);
 		break;
 	case EPLL:
 		freq = exclock_decode_pll_clk(pll,
@@ -384,6 +410,10 @@ exclock_get_pll_clk(enum clocks pll)
 		freq = exclock_decode_pll_clk(pll,
 		    HREAD4(sc, CLOCK_VPLL_CON0),
 		    HREAD4(sc, CLOCK_VPLL_CON1));
+		break;
+	case KPLL:
+		freq = exclock_decode_pll_clk(pll,
+		    HREAD4(sc, EXYNOS5420_KPLL_CON0), 0);
 		break;
 	default:
 		return 0;
@@ -418,10 +448,9 @@ exclock_get_pll_clk(enum clocks pll)
 	return freq;
 }
 
-unsigned int
-exclock_get_armclk(void)
+uint32_t
+exclock_get_armclk(struct exclock_softc *sc)
 {
-	struct exclock_softc *sc = exclock_sc;
 	uint32_t div, armclk, arm_ratio, arm2_ratio;
 
 	div = HREAD4(sc, CLOCK_CLK_DIV_CPU0);
@@ -430,10 +459,23 @@ exclock_get_armclk(void)
 	arm_ratio = (div >> 0) & 0x7;
 	arm2_ratio = (div >> 28) & 0x7;
 
-	armclk = exclock_get_pll_clk(APLL) / (arm_ratio + 1);
+	armclk = exclock_get_pll_clk(sc, APLL) / (arm_ratio + 1);
 	armclk /= (arm2_ratio + 1);
 
 	return armclk;
+}
+
+uint32_t
+exclock_get_kfcclk(struct exclock_softc *sc)
+{
+	uint32_t div, kfc_ratio;
+
+	div = HREAD4(sc, EXYNOS5420_DIV_KFC0);
+
+	/* KFC_RATIO: [2:0] */
+	kfc_ratio = (div >> 0) & 0x7;
+
+	return exclock_get_pll_clk(sc, KPLL) / (kfc_ratio + 1);
 }
 
 unsigned int
@@ -444,10 +486,10 @@ exclock_get_i2cclk(void)
 
 	div = HREAD4(sc, CLOCK_CLK_DIV_TOP1);
 	ratio = (div >> 24) & 0x7;
-	aclk_66_pre = exclock_get_pll_clk(MPLL) / (ratio + 1);
+	aclk_66_pre = exclock_get_pll_clk(sc, MPLL) / (ratio + 1);
 	div = HREAD4(sc, CLOCK_CLK_DIV_TOP0);
 	ratio = (div >> 0) & 0x7;
 	aclk_66 = aclk_66_pre / (ratio + 1);
 
-	return aclk_66;
+	return aclk_66 / 1000;
 }
