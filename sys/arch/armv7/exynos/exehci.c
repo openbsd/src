@@ -1,4 +1,4 @@
-/*	$OpenBSD: exehci.c,v 1.8 2017/12/23 10:23:34 kettenis Exp $ */
+/*	$OpenBSD: exehci.c,v 1.9 2021/02/14 19:24:38 kettenis Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -127,7 +127,7 @@ exehci_attach(struct device *parent, struct device *self, void *aux)
 
 	node = OF_child(faa->fa_node);
 	if (node == 0)
-		return;
+		node = faa->fa_node;
 
 	if (OF_getpropintarray(node, "phys", phys,
 	    sizeof(phys)) != sizeof(phys))
@@ -159,6 +159,8 @@ exehci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf("\n");
+
+	clock_enable_all(faa->fa_node);
 
 	exehci_setup(sc);
 
