@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1954 2021/01/31 10:51:53 patrick Exp 
+ *	OpenBSD: pcidevs,v 1.1955 2021/02/14 17:20:47 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -2370,6 +2370,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BCM5701,
 	    "BCM5701",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_M1_PCIE,
+	    "M1 PCIe",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_NVME1,
@@ -9518,6 +9522,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_FRESCO, PCI_PRODUCT_FRESCO_FL1009,
 	    "FL1009 xHCI",
+	},
+	{
+	    PCI_VENDOR_FRESCO, PCI_PRODUCT_FRESCO_FL1100,
+	    "FL1100 xHCI",
 	},
 	{
 	    PCI_VENDOR_FRESCO, PCI_PRODUCT_FRESCO_FL1400,

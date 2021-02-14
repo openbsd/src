@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1954 2021/01/31 10:51:53 patrick Exp 
+ *	OpenBSD: pcidevs,v 1.1955 2021/02/14 17:20:47 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1029,6 +1029,7 @@
 #define	PCI_PRODUCT_APPLE_INTREPID2_FW	0x006a		/* Intrepid 2 FireWire */
 #define	PCI_PRODUCT_APPLE_INTREPID2_GMAC	0x006b		/* Intrepid 2 GMAC */
 #define	PCI_PRODUCT_APPLE_BCM5701	0x1645		/* BCM5701 */
+#define	PCI_PRODUCT_APPLE_M1_PCIE	0x100c		/* M1 PCIe */
 #define	PCI_PRODUCT_APPLE_NVME1	0x2001		/* NVMe */
 #define	PCI_PRODUCT_APPLE_NVME2	0x2003		/* NVMe */
 
@@ -2977,6 +2978,7 @@
 /* Fresco Logic products */
 #define	PCI_PRODUCT_FRESCO_FL1000	0x1000		/* FL1000 xHCI */
 #define	PCI_PRODUCT_FRESCO_FL1009	0x1009		/* FL1009 xHCI */
+#define	PCI_PRODUCT_FRESCO_FL1100	0x1100		/* FL1100 xHCI */
 #define	PCI_PRODUCT_FRESCO_FL1400	0x1400		/* FL1400 xHCI */
 
 /* Fujitsu products */
