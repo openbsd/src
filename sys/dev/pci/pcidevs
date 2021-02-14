@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1954 2021/01/31 10:51:53 patrick Exp $
+$OpenBSD: pcidevs,v 1.1955 2021/02/14 17:20:47 kettenis Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1024,6 +1024,7 @@ product APPLE INTREPID2_ATA	0x0069	Intrepid 2 ATA
 product APPLE INTREPID2_FW	0x006a	Intrepid 2 FireWire
 product APPLE INTREPID2_GMAC	0x006b	Intrepid 2 GMAC
 product APPLE BCM5701		0x1645	BCM5701
+product APPLE M1_PCIE		0x100c	M1 PCIe
 product APPLE NVME1		0x2001	NVMe
 product APPLE NVME2		0x2003	NVMe
 
@@ -2972,6 +2973,7 @@ product FREESCALE MPC8343	0x0087	MPC8343
 /* Fresco Logic products */
 product FRESCO FL1000		0x1000	FL1000 xHCI
 product FRESCO FL1009		0x1009	FL1009 xHCI
+product FRESCO FL1100		0x1100	FL1100 xHCI
 product FRESCO FL1400		0x1400	FL1400 xHCI
 
 /* Fujitsu products */
