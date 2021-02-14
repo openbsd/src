@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2021/02/13 18:52:08 semarie Exp $
+#	$OpenBSD: Makefile,v 1.23 2021/02/14 17:11:02 semarie Exp $
 
 FS=		miniroot${OSrev}.img
 FSSIZE=		8064
@@ -35,18 +35,18 @@ ${FS}: bsd.gz
 
 ${CDROM}: bsd.rd
 	rm -rf ${.OBJDIR}/cd-dir
-	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/i386
+	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 	mkdir -p ${.OBJDIR}/cd-dir/etc
-	echo "set image /${OSREV}/i386/bsd.rd" > ${.OBJDIR}/cd-dir/etc/boot.conf
-	cp ${.OBJDIR}/bsd.rd ${.OBJDIR}/cd-dir/${OSREV}/i386
-	cp ${DESTDIR}/usr/mdec/cdbr ${.OBJDIR}/cd-dir/${OSREV}/i386
-	cp ${DESTDIR}/usr/mdec/cdboot ${.OBJDIR}/cd-dir/${OSREV}/i386/cdboot
+	echo "set image /${OSREV}/${MACHINE}/bsd.rd" > ${.OBJDIR}/cd-dir/etc/boot.conf
+	cp ${.OBJDIR}/bsd.rd ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
+	cp ${DESTDIR}/usr/mdec/cdbr ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
+	cp ${DESTDIR}/usr/mdec/cdboot ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/cdboot
 	mkhybrid -a -R -T -L -l -d -D -N -o ${.OBJDIR}/${CDROM} \
-	    -A "OpenBSD ${OSREV} i386 bootonly CD" \
+	    -A "OpenBSD ${OSREV} ${MACHINE} bootonly CD" \
 	    -P "Copyright (c) `date +%Y` Theo de Raadt, The OpenBSD project" \
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
-	    -V "OpenBSD/i386    ${OSREV} boot-only CD" \
-	    -b ${OSREV}/i386/cdbr -c ${OSREV}/i386/boot.catalog \
+	    -V "OpenBSD/${MACHINE}    ${OSREV} boot-only CD" \
+	    -b ${OSREV}/${MACHINE}/cdbr -c ${OSREV}/${MACHINE}/boot.catalog \
 	    ${.OBJDIR}/cd-dir
 
 MRDISKTYPE=	rdrootb

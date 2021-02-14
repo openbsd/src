@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 2021/02/13 18:41:52 semarie Exp $
+#	$OpenBSD: Makefile,v 1.26 2021/02/14 17:11:02 semarie Exp $
 
 FS=		miniroot${OSrev}.img
 FSSIZE=		6400
@@ -34,10 +34,10 @@ ${FS}: bsd.gz
 
 ${CDROM}: bsd.rd ${FS}
 	rm -rf ${.OBJDIR}/cd-dir
-	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/sparc64
-	cp ${.OBJDIR}/bsd.rd ${.OBJDIR}/cd-dir/${OSREV}/sparc64
-	ln ${.OBJDIR}/cd-dir/${OSREV}/sparc64/bsd.rd ${.OBJDIR}/cd-dir/${OSREV}/sparc64/bsd
-	cp ${DESTDIR}/usr/mdec/ofwboot ${.OBJDIR}/cd-dir/${OSREV}/sparc64
+	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
+	cp ${.OBJDIR}/bsd.rd ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
+	ln ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/bsd.rd ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/bsd
+	cp ${DESTDIR}/usr/mdec/ofwboot ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 
 	echo 'm 1	sun4' > ${.OBJDIR}/cd-dir/.slicemapfile
 	echo 'm 2	sun4c' >> ${.OBJDIR}/cd-dir/.slicemapfile
@@ -47,13 +47,13 @@ ${CDROM}: bsd.rd ${FS}
 	echo 'm 5	sun4us' >> ${.OBJDIR}/cd-dir/.slicemapfile
 	echo 'm 6	sun4v' >> ${.OBJDIR}/cd-dir/.slicemapfile
 	mkhybrid -a -R -r -T -L -d -D -N \
-	    -A "OpenBSD ${OSREV} sparc64 bootonly CD" \
+	    -A "OpenBSD ${OSREV} ${MACHINE} bootonly CD" \
 	    -P "Copyright (c) `date +%Y` Theo de Raadt, The OpenBSD project" \
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
-	    -V "OpenBSD/sparc64 ${OSREV} boot-only CD" \
+	    -V "OpenBSD/${MACHINE} ${OSREV} boot-only CD" \
 	    -o ${.OBJDIR}/${CDROM} ${.OBJDIR}/cd-dir
 	vnconfig -v ${CDROM} > vnd
-	disklabel -w `cat vnd` fakecdrom "OpenBSD${OSrev}sparc64"
+	disklabel -w `cat vnd` fakecdrom "OpenBSD${OSrev}${MACHINE}"
 	vnconfig -u `cat vnd`
 	rm -f vnd
 	mksuncd f ${CDROM} ${FS}

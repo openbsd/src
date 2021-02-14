@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.30 2020/05/18 06:20:43 otto Exp $
+#	$OpenBSD: Makefile,v 1.31 2021/02/14 17:11:02 semarie Exp $
 
 FS=		miniroot${OSrev}.img
 CDROM=		cd${OSrev}.iso
@@ -19,16 +19,16 @@ SGIVOLSZ=	33500
 ${CDROM}:
 	dd if=/dev/zero of=${FS} bs=1m count=${CDFSMB}
 	vnconfig -v ${FS} > vnd
-	disklabel -w `cat vnd` minicdroot "OpenBSD/sgi     "
+	disklabel -w `cat vnd` minicdroot "OpenBSD/${MACHINE}"
 	newfs -O 1 -m 0 -o space -i 524288 /dev/r`cat vnd`a
 	mount /dev/`cat vnd`a ${MOUNT_POINT}
-	mkdir -p ${MOUNT_POINT}/${OSrev}/sgi
+	mkdir -p ${MOUNT_POINT}/${OSrev}/${MACHINE}
 .for IP in ${ALLIP}
 	gzip -9cf ${.OBJDIR}/../ramdisk/bsd.rd.IP${IP} > \
 	    ${MOUNT_POINT}/bsd.IP${IP}
 	ln ${MOUNT_POINT}/bsd.IP${IP} ${MOUNT_POINT}/bsd.rd.IP${IP}
-	ln ${MOUNT_POINT}/bsd.IP${IP} ${MOUNT_POINT}/${OSrev}/sgi/bsd.IP${IP}
-	ln ${MOUNT_POINT}/bsd.IP${IP} ${MOUNT_POINT}/${OSrev}/sgi/bsd.rd.IP${IP}
+	ln ${MOUNT_POINT}/bsd.IP${IP} ${MOUNT_POINT}/${OSrev}/${MACHINE}/bsd.IP${IP}
+	ln ${MOUNT_POINT}/bsd.IP${IP} ${MOUNT_POINT}/${OSrev}/${MACHINE}/bsd.rd.IP${IP}
 .endfor
 	cp ${DESTDIR}/usr/mdec/bootecoff ${MOUNT_POINT}/bootecoff
 	cp ${DESTDIR}/usr/mdec/boot32 ${MOUNT_POINT}/boot32

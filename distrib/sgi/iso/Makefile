@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.38 2020/05/18 06:20:43 otto Exp $
+#	$OpenBSD: Makefile,v 1.39 2021/02/14 17:11:02 semarie Exp $
 
 CDROM=		install${OSrev}.iso
 RELXDIR?=	/home/relx-${MACHINE}
@@ -68,7 +68,7 @@ ${CDROM}:
 
 	vnconfig -v -t cdroot ${CDROM} > vnd
 
-	disklabel -w `cat vnd` cdroot "OpenBSD/sgi     "
+	disklabel -w `cat vnd` cdroot "OpenBSD/${MACHINE}"
 	newfs -O 1 -m 0 -o space -i 524288 /dev/r`cat vnd`a
 	mount /dev/`cat vnd`a ${.OBJDIR}/cd-dir
 	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}

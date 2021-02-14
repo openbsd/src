@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.46 2020/05/17 17:04:27 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.47 2021/02/14 17:11:02 semarie Exp $
 
 LIF=		lif${OSrev}.img
 CDROM=		cd${OSrev}.iso
@@ -20,10 +20,10 @@ ${CDROM}: bsd.rd
 	rm -rf ${.OBJDIR}/cd-dir/
 	mkdir -p ${.OBJDIR}/cd-dir/
 	cp bsd.rd ${.OBJDIR}/cd-dir/bsd.rd
-	mkhybrid -A "OpenBSD ${OSREV} hppa bootonly CD" \
+	mkhybrid -A "OpenBSD ${OSREV} ${MACHINE} bootonly CD" \
 	    -P "Copyright (c) `date +%Y` Theo de Raadt, The OpenBSD project" \
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
-	    -V "OpenBSD/hppa ${OSREV} boot-only CD" \
+	    -V "OpenBSD/${MACHINE} ${OSREV} boot-only CD" \
 	    -o ${.OBJDIR}/${CDROM} ${.OBJDIR}/cd-dir
 	dd if=${DESTDIR}/usr/mdec/cdboot of=${.OBJDIR}/${CDROM} \
 	    bs=32k count=1 conv=notrunc

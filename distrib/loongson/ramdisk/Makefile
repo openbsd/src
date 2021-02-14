@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.29 2021/02/13 18:46:52 semarie Exp $
+#	$OpenBSD: Makefile,v 1.30 2021/02/14 17:11:02 semarie Exp $
 
 FS=		miniroot${OSrev}.img
 FSSIZE=		18432
@@ -33,15 +33,15 @@ ${FS}: bsd.strip
 
 ${CDROM}: bsd.rd
 	rm -rf ${.OBJDIR}/cd-dir
-	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/loongson
+	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 	mkdir -p ${.OBJDIR}/cd-dir/etc
-	echo "set image /${OSREV}/loongson/bsd.rd" > ${.OBJDIR}/cd-dir/etc/boot.conf
-	cp ${.OBJDIR}/bsd.rd ${.OBJDIR}/cd-dir/${OSREV}/loongson
+	echo "set image /${OSREV}/${MACHINE}/bsd.rd" > ${.OBJDIR}/cd-dir/etc/boot.conf
+	cp ${.OBJDIR}/bsd.rd ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 	mkhybrid -a -R -T -L -l -d -D -N -o ${.OBJDIR}/${CDROM} \
-	    -A "OpenBSD ${OSREV} loongson bootonly CD" \
+	    -A "OpenBSD ${OSREV} ${MACHINE} bootonly CD" \
 	    -P "Copyright (c) `date +%Y` Theo de Raadt, The OpenBSD project" \
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
-	    -V "OpenBSD/loongson ${OSREV} boot CD" \
+	    -V "OpenBSD/${MACHINE} ${OSREV} boot CD" \
 	    ${.OBJDIR}/cd-dir
 
 bsd.strip: bsd.rd
