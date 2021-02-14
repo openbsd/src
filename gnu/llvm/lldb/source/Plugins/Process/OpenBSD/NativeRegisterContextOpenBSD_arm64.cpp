@@ -7,8 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if defined(__arm64__) || defined(__aarch64__)
-
 #include <elf.h>
 #include <err.h>
 #include <stdint.h>
@@ -108,10 +106,10 @@ static const RegisterSet g_reg_sets_arm64[k_num_register_sets] = {
     {"Floating Point Registers", "fpu", k_num_fpr_registers_arm64,
      g_fpu_regnums_arm64}};
 
-NativeRegisterContextOpenBSD *
+std::unique_ptr<NativeRegisterContextOpenBSD>
 NativeRegisterContextOpenBSD::CreateHostNativeRegisterContextOpenBSD(
     const ArchSpec &target_arch, NativeThreadProtocol &native_thread) {
-  return new NativeRegisterContextOpenBSD_arm64(target_arch, native_thread);
+  return std::make_unique<NativeRegisterContextOpenBSD_arm64>(target_arch, native_thread);
 }
 
 // ----------------------------------------------------------------------------
@@ -558,5 +556,3 @@ int NativeRegisterContextOpenBSD_arm64::WriteRegisterSet(uint32_t set) {
   }
   return -1;
 }
-
-#endif // defined(__arm64__) || defined(__aarch64__)

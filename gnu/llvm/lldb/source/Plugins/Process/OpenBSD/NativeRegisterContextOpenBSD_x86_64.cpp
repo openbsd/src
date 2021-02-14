@@ -7,8 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if defined(__x86_64__)
-
 #include <elf.h>
 #include <err.h>
 #include <stdint.h>
@@ -110,10 +108,10 @@ struct x86_fpu_addr {
 
 #define REG_CONTEXT_SIZE (GetGPRSize() + GetFPRSize())
 
-NativeRegisterContextOpenBSD *
+std::unique_ptr<NativeRegisterContextOpenBSD>
 NativeRegisterContextOpenBSD::CreateHostNativeRegisterContextOpenBSD(
     const ArchSpec &target_arch, NativeThreadProtocol &native_thread) {
-  return new NativeRegisterContextOpenBSD_x86_64(target_arch, native_thread);
+  return std::make_unique<NativeRegisterContextOpenBSD_x86_64>(target_arch, native_thread);
 }
 
 // ----------------------------------------------------------------------------
@@ -672,5 +670,3 @@ Status NativeRegisterContextOpenBSD_x86_64::WriteAllRegisterValues(
 
   return error;
 }
-
-#endif // defined(__x86_64__)

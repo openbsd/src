@@ -7,8 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if defined(__arm64__) || defined(__aarch64__)
-
 #ifndef lldb_NativeRegisterContextOpenBSD_arm64_h
 #define lldb_NativeRegisterContextOpenBSD_arm64_h
 
@@ -83,5 +81,3 @@ private:
 } // namespace lldb_private
 
 #endif // #ifndef lldb_NativeRegisterContextOpenBSD_arm64_h
-
-#endif // defined(__arm64__) || defined(__aarch64__)

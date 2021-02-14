@@ -7,8 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if defined(__x86_64__)
-
 #ifndef lldb_NativeRegisterContextOpenBSD_x86_64_h
 #define lldb_NativeRegisterContextOpenBSD_x86_64_h
 
@@ -70,5 +68,3 @@ private:
 } // namespace lldb_private
 
 #endif // #ifndef lldb_NativeRegisterContextOpenBSD_x86_64_h
-
-#endif // defined(__x86_64__)

@@ -28,7 +28,7 @@ public:
   // NativeRegisterContextOpenBSD. The implementations can't collide as only one
   // NativeRegisterContextOpenBSD_* variant should be compiled into the final
   // executable.
-  static NativeRegisterContextOpenBSD *
+  static std::unique_ptr<NativeRegisterContextOpenBSD>
   CreateHostNativeRegisterContextOpenBSD(const ArchSpec &target_arch,
                                         NativeThreadProtocol &native_thread);
 

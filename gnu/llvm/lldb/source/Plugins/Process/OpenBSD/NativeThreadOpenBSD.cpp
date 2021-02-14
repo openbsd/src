@@ -27,9 +27,11 @@ using namespace lldb_private::process_openbsd;
 NativeThreadOpenBSD::NativeThreadOpenBSD(NativeProcessOpenBSD &process,
                                        lldb::tid_t tid)
     : NativeThreadProtocol(process, tid), m_state(StateType::eStateInvalid),
-      m_stop_info(), m_reg_context_up(
-NativeRegisterContextOpenBSD::CreateHostNativeRegisterContextOpenBSD(process.GetArchitecture(), *this)
-), m_stop_description() {}
+      m_stop_info(), m_stop_description() {
+  m_reg_context_up = NativeRegisterContextOpenBSD::CreateHostNativeRegisterContextOpenBSD(process.GetArchitecture(), *this);
+  if (!m_reg_context_up)
+    llvm_unreachable("This architecture does not support debugging running processes.");
+}
 
 void NativeThreadOpenBSD::SetStoppedBySignal(uint32_t signo,
                                             const siginfo_t *info) {
