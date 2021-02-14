@@ -1,4 +1,4 @@
-#	$OpenBSD: files.exynos,v 1.13 2021/02/05 00:05:20 patrick Exp $
+#	$OpenBSD: files.exynos,v 1.14 2021/02/14 10:57:40 kettenis Exp $
 
 #device exdisplay: wsemuldisplaydev, rasops16
 #attach exdisplay at exynos
@@ -8,7 +8,7 @@ device exclock
 attach exclock at fdt
 file	arch/armv7/exynos/exclock.c		exclock
 
-device expower
+device expower: fdt
 attach expower at fdt
 file	arch/armv7/exynos/expower.c		expower
 
