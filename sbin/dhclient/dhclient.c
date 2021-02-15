@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.691 2021/02/02 15:46:16 cheloha Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.692 2021/02/15 14:20:11 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -126,7 +126,7 @@ int		 get_ifa_family(char *, int);
 struct ifaddrs	*get_link_ifa(const char *, struct ifaddrs *);
 void		 interface_state(struct interface_info *);
 struct interface_info *initialize_interface(char *, int);
-void		 tick_msg(const char *, int, time_t);
+void		 tick_msg(const char *, int);
 void		 rtm_dispatch(struct interface_info *, struct rt_msghdr *);
 
 struct client_lease *apply_defaults(struct client_lease *);
@@ -174,6 +174,11 @@ struct client_lease *get_recorded_lease(struct interface_info *);
 #define ROUNDUP(a)	\
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 #define	ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
+
+#define	TICK_WAIT	0
+#define	TICK_SUCCESS	1
+#define	TICK_SLEEP	2
+#define	TICK_NEWLINE	3
 
 static FILE *leaseFile;
 
@@ -250,10 +255,13 @@ interface_state(struct interface_info *ifi)
 
 	newlinkup = LINK_STATE_IS_UP(ifi->link_state);
 	if (newlinkup != oldlinkup) {
-		tick_msg("", 0, INT64_MAX);
-		log_debug("%s: link %s -> %s", log_procname,
-		    (oldlinkup != 0) ? "up" : "down",
-		    (newlinkup != 0) ? "up" : "down");
+		tick_msg("link", newlinkup ? TICK_SUCCESS : TICK_WAIT);
+		if (log_getverbose()) {
+			tick_msg("", TICK_NEWLINE);
+			log_debug("%s: link %s -> %s", log_procname,
+			    (oldlinkup != 0) ? "up" : "down",
+			    (newlinkup != 0) ? "up" : "down");
+		}
 	}
 
 	if (newlinkup != 0) {
@@ -262,8 +270,10 @@ interface_state(struct interface_info *ifi)
 		memcpy(ifi->hw_address.ether_addr_octet, LLADDR(sdl),
 		    ETHER_ADDR_LEN);
 		if (memcmp(&hw, &ifi->hw_address, sizeof(hw))) {
-			tick_msg("", 0, INT64_MAX);
-			log_debug("%s: LLADDR changed", log_procname);
+			if (log_getverbose()) {
+				tick_msg("", TICK_NEWLINE);
+				log_debug("%s: LLADDR changed", log_procname);
+			}
 			quit = RESTART;
 		}
 	}
@@ -583,8 +593,10 @@ rtm_dispatch(struct interface_info *ifi, struct rt_msghdr *rtm)
 		ifie = &((struct if_ieee80211_msghdr *)rtm)->ifim_ifie;
 		if (ifi->ssid_len != ifie->ifie_nwid_len || memcmp(ifi->ssid,
 		    ifie->ifie_nwid, ifie->ifie_nwid_len) != 0) {
-			tick_msg("", 0, INT64_MAX);
-			log_debug("%s: SSID changed", log_procname);
+			if (log_getverbose()) {
+				tick_msg("", TICK_NEWLINE);
+				log_debug("%s: SSID changed", log_procname);
+			}
 			quit = RESTART;
 			return;
 		}
@@ -785,15 +797,17 @@ state_preboot(struct interface_info *ifi)
 	interface_state(ifi);
 	if (quit != 0)
 		return;
-	tick_msg("link", LINK_STATE_IS_UP(ifi->link_state), ifi->startup_time);
 
 	if (LINK_STATE_IS_UP(ifi->link_state)) {
+		tick_msg("link", TICK_SUCCESS);
 		ifi->state = S_REBOOTING;
 		state_reboot(ifi);
 	} else {
 		if (cur_time < ifi->startup_time + config->link_timeout) {
+			tick_msg("link", TICK_WAIT);
 			set_timeout(ifi, 1, state_preboot);
 		} else {
+			tick_msg("link", TICK_SLEEP);
 			go_daemon();
 			cancel_timeout(ifi); /* Wait for RTM_IFINFO. */
 		}
@@ -1055,7 +1069,7 @@ bind_lease(struct interface_info *ifi)
 
 	time(&cur_time);
 	if (log_getverbose() == 0)
-		tick_msg("lease", 1, ifi->first_sending);
+		tick_msg("lease", TICK_SUCCESS);
 
 	lease = apply_defaults(ifi->offer);
 
@@ -1155,7 +1169,7 @@ newlease:
 	ifi->offer_src = NULL;
 
 	if (msg != NULL) {
-		tick_msg("", 0, INT64_MAX);
+		tick_msg("", TICK_NEWLINE);
 		if ((cmd_opts & OPT_FOREGROUND) != 0) {
 			/* log msg on console only. */
 			;
@@ -1455,10 +1469,10 @@ send_discover(struct interface_info *ifi)
 	 */
 	if (cur_time < ifi->startup_time + config->link_timeout) {
 		if (log_getverbose() == 0)
-			tick_msg("lease", 0, ifi->first_sending);
+			tick_msg("lease", TICK_WAIT);
 		ifi->interval = 1;
 	} else {
-		tick_msg("lease", 0, ifi->first_sending);
+		tick_msg("lease", TICK_SLEEP);
 	}
 
 	/* Record the number of seconds since we started sending. */
@@ -1573,10 +1587,10 @@ send_request(struct interface_info *ifi)
 	 */
 	if (cur_time < ifi->startup_time + config->link_timeout) {
 		if (log_getverbose() == 0)
-			tick_msg("lease", 0, ifi->first_sending);
+			tick_msg("lease", TICK_SLEEP);
 		ifi->interval = 1;
 	} else {
-		tick_msg("lease", 0, ifi->first_sending);
+		tick_msg("lease", TICK_WAIT);
 	}
 
 	/*
@@ -2707,51 +2721,61 @@ lease_rebind(struct client_lease *lease)
 }
 
 void
-tick_msg(const char *preamble, int success, time_t start)
+tick_msg(const char *preamble, int action)
 {
-	static int	preamble_sent, sleeping;
-	static time_t	stop;
-	time_t		cur_time;
+	const struct timespec		grace_intvl = {3, 0};
+	const struct timespec		link_intvl = {config->link_timeout, 0};
+	static struct timespec		grace, stop;
+	struct timespec			now;
+	static int			preamble_sent, sleeping;
 
-#define	GRACE_SECONDS	3
+	if (isatty(STDERR_FILENO) == 0 || sleeping == 1)
+		return;
 
-	time(&cur_time);
+	clock_gettime(CLOCK_REALTIME, &now);
 
-	if (start == INT64_MAX) {
-		if (preamble_sent == 1) {
-			fprintf(stderr, "\n");
-			fflush(stderr);
-			preamble_sent = 0;
-		}
+	if (!timespecisset(&stop)) {
+		preamble_sent = 0;
+		timespecadd(&now, &link_intvl, &stop);
+		timespecadd(&now, &grace_intvl, &grace);
 		return;
 	}
-
-	if (stop == 0)
-		stop = cur_time + config->link_timeout;
-
-	if (isatty(STDERR_FILENO) == 0 || sleeping == 1 || cur_time < start +
-	    GRACE_SECONDS)
+	if (timespeccmp(&now, &grace, <))
 		return;
+	if (timespeccmp(&now, &stop, >=))
+		action = TICK_SLEEP;
 
 	if (preamble_sent == 0) {
 		fprintf(stderr, "%s: no %s...", log_procname, preamble);
-		fflush(stderr);
 		preamble_sent = 1;
 	}
 
-	if (success != 0) {
-		fprintf(stderr, " got %s\n", preamble);
-		fflush(stderr);
-		preamble_sent = 0;
-	} else if (cur_time < stop) {
+	switch (action) {
+	case TICK_SUCCESS:
+		fprintf(stderr, "got %s\n", preamble);
+		timespecclear(&stop);
+		break;
+	case TICK_WAIT:
 		fprintf(stderr, ".");
-		fflush(stderr);
-	} else {
-		fprintf(stderr, " sleeping\n");
-		fflush(stderr);
+		break;
+	case TICK_SLEEP:
+		fprintf(stderr, "sleeping\n");
 		go_daemon();
 		sleeping = 1;	/* OPT_FOREGROUND means isatty() == 1! */
+		timespecclear(&stop);
+		break;
+	case TICK_NEWLINE:
+		if (preamble_sent == 1) {
+			fprintf(stderr, "\n");
+			preamble_sent = 0;
+		}
+		break;
+	default:
+		break;
+
 	}
+
+	fflush(stderr);
 }
 
 /*
