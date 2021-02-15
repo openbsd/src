@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.14 2020/10/21 21:53:47 deraadt Exp $ */
+/* $OpenBSD: pmap.h,v 1.15 2021/02/15 20:44:08 kettenis Exp $ */
 /*
  * Copyright (c) 2008,2009,2014 Dale Rahn <drahn@dalerahn.com>
  *
@@ -74,6 +74,7 @@ struct pmap {
 #define PMAP_PA_MASK	~((paddr_t)PAGE_MASK) /* to remove the flags */
 #define PMAP_NOCACHE	0x1 /* non-cacheable memory */
 #define PMAP_DEVICE	0x2 /* device memory */
+#define PMAP_WC		PMAP_DEVICE
 
 #define PG_PMAP_MOD		PG_PMAP0
 #define PG_PMAP_REF		PG_PMAP1
