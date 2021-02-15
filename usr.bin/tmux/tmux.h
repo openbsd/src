@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1090 2021/02/11 09:39:29 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1091 2021/02/15 09:39:38 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2526,6 +2526,7 @@ const char *colour_tostring(int);
 int	 colour_fromstring(const char *s);
 int	 colour_256toRGB(int);
 int	 colour_256to16(int);
+int	 colour_byname(const char *);
 
 /* attributes.c */
 const char *attributes_tostring(int);
