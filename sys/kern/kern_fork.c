@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.233 2021/02/11 13:40:28 otto Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.234 2021/02/15 09:35:59 mpi Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -558,13 +558,13 @@ thread_fork(struct proc *curp, void *stack, void *tcb, pid_t *tidptr,
 
 	LIST_INSERT_HEAD(&allproc, p, p_list);
 	LIST_INSERT_HEAD(TIDHASH(p->p_tid), p, p_hash);
-	TAILQ_INSERT_TAIL(&pr->ps_threads, p, p_thr_link);
 
+	SCHED_LOCK(s);
+	TAILQ_INSERT_TAIL(&pr->ps_threads, p, p_thr_link);
 	/*
 	 * if somebody else wants to take us to single threaded mode,
 	 * count ourselves in.
 	 */
-	SCHED_LOCK(s);
 	if (pr->ps_single) {
 		atomic_inc_int(&pr->ps_singlecount);
 		atomic_setbits_int(&p->p_flag, P_SUSPSINGLE);

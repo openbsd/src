@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.308 2021/02/08 10:51:02 mpi Exp $	*/
+/*	$OpenBSD: proc.h,v 1.309 2021/02/15 09:35:59 mpi Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -167,7 +167,7 @@ struct process {
 	struct	ucred *ps_ucred;	/* Process owner's identity. */
 
 	LIST_ENTRY(process) ps_list;	/* List of all processes. */
-	TAILQ_HEAD(,proc) ps_threads;	/* Threads in this process. */
+	TAILQ_HEAD(,proc) ps_threads;	/* [K|S] Threads in this process. */
 
 	LIST_ENTRY(process) ps_pglist;	/* List of processes in pgrp. */
 	struct	process *ps_pptr; 	/* Pointer to parent process. */

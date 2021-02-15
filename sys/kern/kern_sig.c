@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.272 2021/02/08 10:51:01 mpi Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.273 2021/02/15 09:35:59 mpi Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1209,11 +1209,7 @@ issignal(struct proc *p)
 		    signum != SIGKILL) {
 			pr->ps_xsig = signum;
 
-			if (dolock)
-				KERNEL_LOCK();
 			single_thread_set(p, SINGLE_PTRACE, 0);
-			if (dolock)
-				KERNEL_UNLOCK();
 
 			if (dolock)
 				SCHED_LOCK(s);
@@ -2009,7 +2005,6 @@ single_thread_set(struct proc *p, enum single_thread_mode mode, int deep)
 	struct proc *q;
 	int error, s;
 
-	KERNEL_ASSERT_LOCKED();
 	KASSERT(curproc == p);
 
 	SCHED_LOCK(s);

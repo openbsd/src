@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.195 2021/02/08 10:51:01 mpi Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.196 2021/02/15 09:35:59 mpi Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -124,6 +124,7 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 {
 	struct process *pr, *qr, *nqr;
 	struct rusage *rup;
+	int s;
 
 	atomic_setbits_int(&p->p_flag, P_WEXIT);
 
@@ -161,7 +162,9 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 	}
 
 	/* unlink ourselves from the active threads */
+	SCHED_LOCK(s);
 	TAILQ_REMOVE(&pr->ps_threads, p, p_thr_link);
+	SCHED_UNLOCK(s);
 	if ((p->p_flag & P_THREAD) == 0) {
 		/* main thread gotta wait because it has the pid, et al */
 		while (pr->ps_refcnt > 1)
