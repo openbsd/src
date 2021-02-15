@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.13 2020/11/03 18:50:25 tb Exp $ */
+/* $OpenBSD: verify.c,v 1.14 2021/02/15 17:57:58 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -379,8 +379,6 @@ check(X509_STORE *ctx, char *file, STACK_OF(X509) *uchain,
 	if (x == NULL)
 		goto end;
 
-	fprintf(stdout, "%s: ", certfile);
-
 	if ((csc = X509_STORE_CTX_new()) == NULL)
 		goto end;
 	X509_STORE_set_flags(ctx, vflags);
@@ -395,7 +393,7 @@ check(X509_STORE *ctx, char *file, STACK_OF(X509) *uchain,
 	verify_err = X509_STORE_CTX_get_error(csc);
 
 	if (i > 0 && verify_err == X509_V_OK) {
-		fprintf(stdout, "OK\n");
+		fprintf(stdout, "%s: OK\n", certfile);
 		ret = 1;
 	} else {
 		fprintf(stdout, "%s: verification failed: %d (%s)\n", certfile,
