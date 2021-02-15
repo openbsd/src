@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.113 2021/01/19 13:21:36 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.114 2021/02/15 12:12:54 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -381,7 +381,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 				pmap_page_protect(pg, PROT_NONE);
 				KASSERT(anon->an_ref == 0);
 				if (locked)
-					uvmfault_unlockall(ufi, amap, NULL);
+					uvmfault_unlockall(ufi, NULL, NULL);
 				uvm_anon_release(anon);	/* frees page for us */
 				counters_inc(uvmexp_counters, flt_pgrele);
 				return (VM_PAGER_REFAULT);	/* refault! */
@@ -412,7 +412,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 				uvm_unlock_pageq();
 
 				if (locked)
-					uvmfault_unlockall(ufi, amap, NULL);
+					uvmfault_unlockall(ufi, NULL, NULL);
 				rw_exit(anon->an_lock);
 				return (VM_PAGER_ERROR);
 			}
