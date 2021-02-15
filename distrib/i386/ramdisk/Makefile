@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2021/02/14 17:14:42 semarie Exp $
+#	$OpenBSD: Makefile,v 1.15 2021/02/15 06:59:03 deraadt Exp $
 
 FS=		floppy${OSrev}.img
 FSSIZE=		2880
@@ -35,7 +35,6 @@ MRMAKEFSARGS=	-o disklabel=${MRDISKTYPE},minfree=0,density=4096
 
 bsd.gz: bsd.rd
 	objcopy -S -R .comment -R .SUNW_ctf \
-	    -K rd_root_size -K rd_root_image \
 	    bsd.rd bsd.strip
 	gzip -9cn bsd.strip > bsd.gz
 
