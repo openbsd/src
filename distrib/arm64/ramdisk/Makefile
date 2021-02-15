@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2020/05/18 06:20:43 otto Exp $
+#	$OpenBSD: Makefile,v 1.21 2021/02/15 07:06:03 semarie Exp $
 
 FS=		miniroot${OSrev}.img
 FSSIZE=		67584
@@ -23,10 +23,6 @@ UTILS=		${.CURDIR}/../../miniroot
 
 MRFSDISKTYPE=	rdroot
 MRMAKEFSARGS=	-o disklabel=${MRFSDISKTYPE},minfree=0,density=4096
-
-DIRS=\
-	pine64 \
-	rpi
 
 PIFILES=\
 	bootcode.bin \
@@ -85,9 +81,6 @@ bsd:
 mr.fs: instbin
 	rm -rf $@.d
 	install -d -o root -g wheel $@.d
-.for DIR in ${DIRS}
-	mkdir -p $@.d/usr/mdec/${DIR}
-.endfor
 	mtree -def ${MTREE} -p $@.d -u
 	CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} OSrev=${OSrev} \
 	    TARGDIR=$@.d UTILS=${UTILS} RELEASEDIR=${RELEASEDIR} \

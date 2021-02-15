@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.12 2019/11/17 06:03:39 jsg Exp $
+#	$OpenBSD: list,v 1.13 2021/02/15 07:06:03 semarie Exp $
 
 SRCDIRS distrib/special
 
@@ -91,6 +91,7 @@ COPY	${DESTDIR}/etc/firmware/atu-rfmd2958-int etc/firmware/atu-rfmd2958-int
 COPY	${DESTDIR}/etc/firmware/atu-rfmd2958smc-ext etc/firmware/atu-rfmd2958smc-ext
 COPY	${DESTDIR}/etc/firmware/atu-rfmd2958smc-int etc/firmware/atu-rfmd2958smc-int
 
+MKDIR	usr/mdec/rpi
 COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2710-rpi-3-b.dtb usr/mdec/rpi/bcm2710-rpi-3-b.dtb
 COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2710-rpi-3-b-plus.dtb usr/mdec/rpi/bcm2710-rpi-3-b-plus.dtb
 COPY	/usr/local/share/raspberrypi-firmware/boot/bcm2710-rpi-cm3.dtb usr/mdec/rpi/bcm2710-rpi-cm3.dtb
@@ -100,6 +101,7 @@ COPY	/usr/local/share/raspberrypi-firmware/boot/fixup.dat usr/mdec/rpi/fixup.dat
 COPY	/usr/local/share/raspberrypi-firmware/boot/overlays/disable-bt.dtbo usr/mdec/rpi/disable-bt.dtbo
 COPY	/usr/local/share/u-boot/rpi_3/u-boot.bin usr/mdec/rpi/u-boot.bin
 
+MKDIR	usr/mdec/pine64
 COPY	/usr/local/share/u-boot/pine64_plus/u-boot-sunxi-with-spl.bin usr/mdec/pine64/u-boot-sunxi-with-spl.bin
 
 # copy the MAKEDEV script and make some devices
