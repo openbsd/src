@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.304 2020/11/07 09:51:40 denis Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.305 2021/02/15 19:01:30 mvs Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -301,6 +301,9 @@ route_attach(struct socket *so, int proto)
 	struct rtpcb	*rop;
 	int		 error;
 
+	error = soreserve(so, ROUTESNDQ, ROUTERCVQ);
+	if (error)
+		return (error);
 	/*
 	 * use the rawcb but allocate a rtpcb, this
 	 * code does not care about the additional fields
@@ -311,15 +314,6 @@ route_attach(struct socket *so, int proto)
 	/* Init the timeout structure */
 	timeout_set(&rop->rop_timeout, rtm_senddesync_timer, so);
 	refcnt_init(&rop->rop_refcnt);
-
-	if (curproc == NULL)
-		error = EACCES;
-	else
-		error = soreserve(so, ROUTESNDQ, ROUTERCVQ);
-	if (error) {
-		pool_put(&rtpcb_pool, rop);
-		return (error);
-	}
 
 	rop->rop_socket = so;
 	rop->rop_proto = proto;
