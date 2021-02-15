@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.98 2021/01/27 07:46:11 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.99 2021/02/15 03:42:00 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -6950,9 +6950,6 @@ mcx_process_cq(struct mcx_softc *sc, struct mcx_queues *q, struct mcx_cq *cq)
 	bus_dmamap_sync(sc->sc_dmat, MCX_DMA_MAP(&cq->cq_mem),
 	    0, MCX_DMA_LEN(&cq->cq_mem), BUS_DMASYNC_PREREAD);
 
-	cq->cq_count++;
-	mcx_arm_cq(sc, cq, q->q_uar);
-
 	if (rxfree > 0) {
 		if_rxr_put(&rx->rx_rxr, rxfree);
 		if (ifiq_input(rx->rx_ifiq, &ml))
@@ -6962,6 +6959,10 @@ mcx_process_cq(struct mcx_softc *sc, struct mcx_queues *q, struct mcx_cq *cq)
 		if (if_rxr_inuse(&rx->rx_rxr) == 0)
 			timeout_add(&rx->rx_refill, 1);
 	}
+
+	cq->cq_count++;
+	mcx_arm_cq(sc, cq, q->q_uar);
+
 	if (txfree > 0) {
 		tx->tx_cons += txfree;
 		if (ifq_is_oactive(tx->tx_ifq))
