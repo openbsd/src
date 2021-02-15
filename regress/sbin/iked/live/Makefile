@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.28 2020/12/17 00:51:12 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.29 2021/02/15 20:53:24 tobhe Exp $
 
 # Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
 #
@@ -374,9 +374,19 @@ run-psk-fail:
 	leftid=left-from-ca-both; \
 	rightid=right-from-ca-both; \
 	flowtype=esp; \
-	    side=left; psk=`openssl rand -hex 20`; \
+	    side=left; \
+	    srcid=$$leftid; \
+	    local=${LEFT_ADDR}; \
+	    peer=${RIGHT_ADDR}; \
+	    dstid="dstid $$rightid"; \
+	    psk=`openssl rand -hex 20`; \
 	    ${SETUP_CONFIG}; \
-	    side=right; psk=`openssl rand -hex 20`; \
+	    side=right; \
+	    srcid=$$rightid; \
+	    local=${RIGHT_ADDR}; \
+	    peer=${LEFT_ADDR}; \
+	    dstid="dstid $$leftid"; \
+	    psk=`openssl rand -hex 20`; \
 	    ${SETUP_CONFIG}; \
 	    ${DEPLOY_CONFIGS}
 	${SETUP_START}
