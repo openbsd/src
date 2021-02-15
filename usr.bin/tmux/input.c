@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.186 2021/02/15 09:39:38 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.187 2021/02/15 14:22:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2101,6 +2101,7 @@ input_csi_dispatch_sgr(struct input_ctx *ictx)
 			gc->attr |= GRID_ATTR_UNDERSCORE;
 			break;
 		case 5:
+		case 6:
 			gc->attr |= GRID_ATTR_BLINK;
 			break;
 		case 7:
@@ -2111,6 +2112,10 @@ input_csi_dispatch_sgr(struct input_ctx *ictx)
 			break;
 		case 9:
 			gc->attr |= GRID_ATTR_STRIKETHROUGH;
+			break;
+		case 21:
+			gc->attr &= ~GRID_ATTR_ALL_UNDERSCORE;
+			gc->attr |= GRID_ATTR_UNDERSCORE_2;
 			break;
 		case 22:
 			gc->attr &= ~(GRID_ATTR_BRIGHT|GRID_ATTR_DIM);
