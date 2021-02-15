@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.88 2021/02/11 06:55:10 anton Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.89 2021/02/15 11:26:00 mglocker Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -98,7 +98,6 @@ int uhidev_activate(struct device *, int);
 
 void uhidev_get_report_async_cb(struct usbd_xfer *, void *, usbd_status);
 void uhidev_set_report_async_cb(struct usbd_xfer *, void *, usbd_status);
-void uhidev_clear_iface_eps(struct uhidev_softc *, struct usbd_interface *);
 
 struct cfdriver uhidev_cd = {
 	NULL, "uhidev", DV_DULL
@@ -518,9 +517,6 @@ uhidev_open(struct uhidev *scd)
 	DPRINTF(("uhidev_open: isize=%d, ep=0x%02x\n", sc->sc_isize,
 	    sc->sc_iep_addr));
 
-	/* Clear device endpoint toggle. */
-	uhidev_clear_iface_eps(sc, sc->sc_iface);
-
 	err = usbd_open_pipe_intr(sc->sc_iface, sc->sc_iep_addr,
 		  USBD_SHORT_XFER_OK, &sc->sc_ipipe, sc, sc->sc_ibuf,
 		  sc->sc_isize, uhidev_intr, USBD_DEFAULT_INTERVAL);
@@ -530,8 +526,6 @@ uhidev_open(struct uhidev *scd)
 		error = EIO;
 		goto out1;
 	}
-	/* Clear HC endpoint toggle. */
-	usbd_clear_endpoint_toggle(sc->sc_ipipe);
 
 	DPRINTF(("uhidev_open: sc->sc_ipipe=%p\n", sc->sc_ipipe));
 
@@ -557,8 +551,6 @@ uhidev_open(struct uhidev *scd)
 			error = EIO;
 			goto out2;
 		}
-		/* Clear HC endpoint toggle. */
-		usbd_clear_endpoint_toggle(sc->sc_opipe);
 
 		DPRINTF(("uhidev_open: sc->sc_opipe=%p\n", sc->sc_opipe));
 
@@ -966,40 +958,6 @@ uhidev_ioctl(struct uhidev *sc, u_long cmd, caddr_t addr, int flag,
 		return -1;
 	}
 	return 0;
-}
-
-void
-uhidev_clear_iface_eps(struct uhidev_softc *sc, struct usbd_interface *iface)
-{
-	usb_interface_descriptor_t *id;
-	usb_endpoint_descriptor_t *ed;
-	uint8_t xfertype;
-	int i;
-
-	/* Only clear interface endpoints when none are in use. */
-	if (sc->sc_ipipe || sc->sc_opipe)
-		return;
-	DPRINTFN(1,("%s: clear interface eps\n", __func__));
-
-	id = usbd_get_interface_descriptor(iface);
-	if (id == NULL)
-		goto bad;
-
-	for (i = 0; i < id->bNumEndpoints; i++) {
-		ed = usbd_interface2endpoint_descriptor(iface, i);
-		if (ed == NULL)
-			goto bad;
-
-		xfertype = UE_GET_XFERTYPE(ed->bmAttributes);
-		if (xfertype == UE_BULK || xfertype == UE_INTERRUPT) {
-			if (usbd_clear_endpoint_feature(sc->sc_udev,
-			    ed->bEndpointAddress, UF_ENDPOINT_HALT))
-				goto bad;
-		}
-	}
-	return;
-bad:
-	printf("%s: clear endpoints failed!\n", __func__);
 }
 
 int
