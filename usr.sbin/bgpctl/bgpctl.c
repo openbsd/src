@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.264 2020/12/30 07:31:19 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.265 2021/02/16 08:30:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -216,6 +216,9 @@ main(int argc, char *argv[])
 	case SHOW_SET:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_SET, 0, 0, -1, NULL, 0);
 		break;
+	case SHOW_RTR:
+		imsg_compose(ibuf, IMSG_CTL_SHOW_RTR, 0, 0, -1, NULL, 0);
+		break;
 	case SHOW_NEIGHBOR:
 	case SHOW_NEIGHBOR_TIMERS:
 	case SHOW_NEIGHBOR_TERSE:
@@ -393,18 +396,19 @@ int
 show(struct imsg *imsg, struct parse_result *res)
 {
 	struct peer		*p;
-	struct ctl_timer	*t;
+	struct ctl_timer	 t;
 	struct ctl_show_interface	*iface;
 	struct ctl_show_nexthop	*nh;
-	struct ctl_show_set	*set;
+	struct ctl_show_set	 set;
+	struct ctl_show_rtr	 rtr;
 	struct kroute_full	*kf;
 	struct ktable		*kt;
 	struct ctl_show_rib	 rib;
+	struct rde_memstats	 stats;
+	struct rde_hashstats	 hash;
 	u_char			*asdata;
-	struct rde_memstats	stats;
-	struct rde_hashstats	hash;
-	u_int			rescode, ilen;
-	size_t			aslen;
+	u_int			 rescode, ilen;
+	size_t			 aslen;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_NEIGHBOR:
@@ -412,9 +416,11 @@ show(struct imsg *imsg, struct parse_result *res)
 		output->neighbor(p, res);
 		break;
 	case IMSG_CTL_SHOW_TIMER:
-		t = imsg->data;
-		if (t->type > 0 && t->type < Timer_Max)
-			output->timer(t);
+		if (imsg->hdr.len < IMSG_HEADER_SIZE + sizeof(t))
+			errx(1, "wrong imsg len");
+		memcpy(&t, imsg->data, sizeof(t));
+		if (t.type > 0 && t.type < Timer_Max)
+			output->timer(&t);
 		break;
 	case IMSG_CTL_SHOW_INTERFACE:
 		iface = imsg->data;
@@ -463,16 +469,28 @@ show(struct imsg *imsg, struct parse_result *res)
 		output->attr(imsg->data, ilen, res);
 		break;
 	case IMSG_CTL_SHOW_RIB_MEM:
+		if (imsg->hdr.len < IMSG_HEADER_SIZE + sizeof(stats))
+			errx(1, "wrong imsg len");
 		memcpy(&stats, imsg->data, sizeof(stats));
 		output->rib_mem(&stats);
 		break;
 	case IMSG_CTL_SHOW_RIB_HASH:
+		if (imsg->hdr.len < IMSG_HEADER_SIZE + sizeof(hash))
+			errx(1, "wrong imsg len");
 		memcpy(&hash, imsg->data, sizeof(hash));
 		output->rib_hash(&hash);
 		break;
 	case IMSG_CTL_SHOW_SET:
-		set = imsg->data;
-		output->set(set);
+		if (imsg->hdr.len < IMSG_HEADER_SIZE + sizeof(set))
+			errx(1, "wrong imsg len");
+		memcpy(&set, imsg->data, sizeof(set));
+		output->set(&set);
+		break;
+	case IMSG_CTL_SHOW_RTR:
+		if (imsg->hdr.len < IMSG_HEADER_SIZE + sizeof(rtr))
+			errx(1, "wrong imsg len");
+		memcpy(&rtr, imsg->data, sizeof(rtr));
+		output->rtr(&rtr);
 		break;
 	case IMSG_CTL_RESULT:
 		if (imsg->hdr.len != IMSG_HEADER_SIZE + sizeof(rescode)) {

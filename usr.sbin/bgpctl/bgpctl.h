@@ -31,6 +31,7 @@ struct output {
 	void	(*rib_hash)(struct rde_hashstats *);
 	void	(*rib_mem)(struct rde_memstats *);
 	void	(*set)(struct ctl_show_set *);
+	void	(*rtr)(struct ctl_show_rtr *);
 	void	(*result)(u_int);
 	void	(*tail)(void);
 };

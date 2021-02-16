@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.6 2021/01/25 09:17:33 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.7 2021/02/16 08:30:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -202,10 +202,10 @@ json_neighbor_full(struct peer *p)
 	json_neighbor_stats(p);
 
 	/* errors */
-	if (*(p->conf.reason))
+	if (p->conf.reason[0])
 		json_do_printf("my_shutdown_reason", "%s",
 		    log_reason(p->conf.reason));
-	if (*(p->stats.last_reason))
+	if (p->stats.last_reason[0])
 		json_do_printf("last_shutdown_reason", "%s",
 		    log_reason(p->stats.last_reason));
 	errstr = fmt_errstr(p->stats.last_sent_errcode,
@@ -937,6 +937,43 @@ json_rib_set(struct ctl_show_set *set)
 }
 
 static void
+json_rtr(struct ctl_show_rtr *rtr)
+{
+	json_do_array("rtrs");
+
+	json_do_object("rtr");
+	if (rtr->descr[0])
+		json_do_printf("descr", "%s", rtr->descr);
+	json_do_printf("remote_addr", "%s", log_addr(&rtr->remote_addr));
+	json_do_uint("remote_port", rtr->remote_port);
+	if (rtr->local_addr.aid != AID_UNSPEC)
+		json_do_printf("local_addr", "%s", log_addr(&rtr->local_addr));
+
+	if (rtr->session_id != -1) {
+		json_do_uint("session_id", rtr->session_id);
+		json_do_uint("serial", rtr->serial);
+	}
+	json_do_uint("refresh", rtr->refresh);
+	json_do_uint("retry", rtr->retry);
+	json_do_uint("expire", rtr->expire);
+
+	if (rtr->last_sent_error != NO_ERROR) {
+		json_do_printf("last_sent_error", "%s",
+		    log_rtr_error(rtr->last_sent_error));
+		if (rtr->last_sent_msg[0])
+			json_do_printf("last_sent_msg", "%s",
+			    log_reason(rtr->last_sent_msg));
+	}
+	if (rtr->last_recv_error != NO_ERROR) {
+		json_do_printf("last_recv_error", "%s",
+		    log_rtr_error(rtr->last_recv_error));
+		if (rtr->last_recv_msg[0])
+			json_do_printf("last_recv_msg", "%s",
+			    log_reason(rtr->last_recv_msg));
+	}
+}
+
+static void
 json_result(u_int rescode)
 {
 	if (rescode == 0)
@@ -971,6 +1008,7 @@ const struct output json_output = {
 	.rib_mem = json_rib_mem,
 	.rib_hash = json_rib_hash,
 	.set = json_rib_set,
+	.rtr = json_rtr,
 	.result = json_result,
 	.tail = json_tail
 };

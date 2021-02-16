@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.12 2021/01/25 09:17:33 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.13 2021/02/16 08:30:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -266,7 +266,7 @@ show_neighbor_full(struct peer *p, struct parse_result *res)
 	if (p->conf.down) {
 		printf(", marked down");
 	}
-	if (*(p->conf.reason)) {
+	if (p->conf.reason[0]) {
 		printf(" with shutdown reason \"%s\"",
 		    log_reason(p->conf.reason));
 	}
@@ -301,7 +301,7 @@ show_neighbor_full(struct peer *p, struct parse_result *res)
 
 	show_neighbor_msgstats(p);
 	printf("\n");
-	if (*(p->stats.last_reason)) {
+	if (p->stats.last_reason[0]) {
 		printf("  Last received shutdown reason: \"%s\"\n",
 		    log_reason(p->stats.last_reason));
 	}
@@ -978,6 +978,45 @@ show_rib_set(struct ctl_show_set *set)
 }
 
 static void
+show_rtr(struct ctl_show_rtr *rtr)
+{
+	static int not_first;
+
+	if (not_first)
+		printf("\n");
+	not_first = 1;
+
+	printf("RTR neighbor is %s, port %u\n",
+	    log_addr(&rtr->remote_addr), rtr->remote_port);
+	if (rtr->descr[0])
+		printf(" Description: %s\n", rtr->descr);
+	if (rtr->local_addr.aid != AID_UNSPEC)
+		printf(" Local Address: %s\n", log_addr(&rtr->local_addr));
+	if (rtr->session_id != -1)
+		printf (" Session ID: %d Serial #: %u\n",
+		    rtr->session_id, rtr->serial);
+	printf(" Refresh: %u, Retry: %u, Expire: %u\n",
+	    rtr->refresh, rtr->retry, rtr->expire);
+
+	if (rtr->last_sent_error != NO_ERROR) {
+		printf(" Last sent error: %s\n",
+		  log_rtr_error(rtr->last_sent_error));
+		if (rtr->last_sent_msg[0])
+			printf(" with reason \"%s\"",
+			    log_reason(rtr->last_sent_msg));
+	}
+	if (rtr->last_recv_error != NO_ERROR) {
+		printf("Last received error: %s\n",
+		  log_rtr_error(rtr->last_recv_error));
+		if (rtr->last_recv_msg[0])
+			printf(" with reason \"%s\"",
+			    log_reason(rtr->last_recv_msg));
+	}
+
+	printf("\n");
+}
+
+static void
 show_result(u_int rescode)
 {
 	if (rescode == 0)
@@ -1009,6 +1048,7 @@ const struct output show_output = {
 	.rib_mem = show_rib_mem,
 	.rib_hash = show_rib_hash,
 	.set = show_rib_set,
+	.rtr = show_rtr,
 	.result = show_result,
 	.tail = show_tail
 };

@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.95 2020/05/10 13:38:46 deraadt Exp $
+.\" $OpenBSD: bgpctl.8,v 1.96 2021/02/16 08:30:21 claudio Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 10 2020 $
+.Dd $Mdocdate: February 16 2021 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -33,7 +33,7 @@ program controls the
 .Xr bgpd 8
 daemon.
 Commands may be abbreviated to the minimum unambiguous prefix; for example,
-.Cm s s
+.Cm s su
 for
 .Cm show summary .
 .Pp
@@ -409,6 +409,18 @@ or
 Multiple options can be used at the same time and the
 .Ar neighbor
 filter can be combined with other filters.
+.It Cm show rtr
+Show a list of all
+.Em RTR
+sessions, including information about the session state.
+.It Cm show sets
+Show a list summarizing all
+.Em roa-set ,
+.Em as-set ,
+.Em prefix-set ,
+and
+.Em origin-set
+tables.
 .It Cm show summary
 Show a list of all neighbors, including information about the session state
 and message counters:
