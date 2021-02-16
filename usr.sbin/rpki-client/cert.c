@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.25 2021/02/08 09:22:53 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.26 2021/02/16 07:58:30 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1079,6 +1079,11 @@ cert_parse_inner(X509 **xp, const char *fn, int ta)
 		case NID_crl_distribution_points:
 			/* ignored here, handled later */
 			break;
+		case NID_info_access:
+			free(p.res->aia);
+			p.res->aia = x509_get_aia(x, p.fn);
+			c = (p.res->aia != NULL);
+			break;
 		case NID_authority_key_identifier:
 			free(p.res->aki);
 			p.res->aki = x509_get_aki_ext(ext, p.fn);
@@ -1223,6 +1228,7 @@ cert_free(struct cert *p)
 	free(p->notify);
 	free(p->ips);
 	free(p->as);
+	free(p->aia);
 	free(p->aki);
 	free(p->ski);
 	X509_free(p->x509);
@@ -1279,6 +1285,7 @@ cert_buffer(struct ibuf *b, const struct cert *p)
 	io_str_buffer(b, p->notify);
 	io_str_buffer(b, p->repo);
 	io_str_buffer(b, p->crl);
+	io_str_buffer(b, p->aia);
 	io_str_buffer(b, p->aki);
 	io_str_buffer(b, p->ski);
 }
@@ -1347,6 +1354,7 @@ cert_read(int fd)
 	io_str_read(fd, &p->notify);
 	io_str_read(fd, &p->repo);
 	io_str_read(fd, &p->crl);
+	io_str_read(fd, &p->aia);
 	io_str_read(fd, &p->aki);
 	io_str_read(fd, &p->ski);
 	assert(p->ski);

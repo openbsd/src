@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.14 2020/09/12 15:46:48 claudio Exp $ */
+/*	$OpenBSD: x509.c,v 1.15 2021/02/16 07:58:30 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -169,18 +169,66 @@ out:
 }
 
 /*
- * Wraps around x509_get_ski_ext and x509_get_aki_ext.
+ * Parse the Authority Information Access (AIA) extension
+ * See RFC 6487, section 4.8.7 for details.
+ * Returns NULL on failure, on success returns the AIA URI
+ * (which has to be freed after use).
+ */
+char *
+x509_get_aia(X509 *x, const char *fn)
+{
+	ACCESS_DESCRIPTION		*ad;
+	AUTHORITY_INFO_ACCESS		*info;
+	char				*aia = NULL;
+
+	info = X509_get_ext_d2i(x, NID_info_access, NULL, NULL);
+	if (info == NULL) {
+		warnx("%s: RFC 6487 section 4.8.7: AIA: extension missing", fn);
+		return NULL;
+	}
+	if (sk_ACCESS_DESCRIPTION_num(info) != 1) {
+		warnx("%s: RFC 6487 section 4.8.7: AIA: "
+		    "want 1 element, have %d", fn,
+		    sk_ACCESS_DESCRIPTION_num(info));
+		goto out;
+	}
+
+	ad = sk_ACCESS_DESCRIPTION_value(info, 0);
+	if (OBJ_obj2nid(ad->method) != NID_ad_ca_issuers) {
+		warnx("%s: RFC 6487 section 4.8.7: AIA: "
+		    "expected caIssuers, have %d", fn, OBJ_obj2nid(ad->method));
+		goto out;
+	}
+	if (ad->location->type != GEN_URI) {
+		warnx("%s: RFC 6487 section 4.8.7: AIA: "
+		    "want GEN_URI type, have %d", fn, ad->location->type);
+		goto out;
+	}
+
+	aia = strndup(
+	    ASN1_STRING_get0_data(ad->location->d.uniformResourceIdentifier),
+	    ASN1_STRING_length(ad->location->d.uniformResourceIdentifier));
+	if (aia == NULL)
+		err(1, NULL);
+
+out:
+	AUTHORITY_INFO_ACCESS_free(info);
+	return aia;
+}
+
+/*
+ * Wraps around x509_get_ski_ext, x509_get_aki_ext, and x509_get_aia.
  * Returns zero on failure (out pointers are NULL) or non-zero on
  * success (out pointers must be freed).
  */
 int
-x509_get_ski_aki(X509 *x, const char *fn, char **ski, char **aki)
+x509_get_extensions(X509 *x, const char *fn, char **aia, char **aki, char **ski)
 {
 	X509_EXTENSION		*ext = NULL;
 	const ASN1_OBJECT	*obj;
 	int			 extsz, i;
 
-	*ski = *aki = NULL;
+	*aia = *aki = *ski = NULL;
 
 	if ((extsz = X509_get_ext_count(x)) < 0)
 		cryptoerrx("X509_get_ext_count");
@@ -199,21 +247,20 @@ x509_get_ski_aki(X509 *x, const char *fn, char **ski, char **aki)
 			free(*aki);
 			*aki = x509_get_aki_ext(ext, fn);
 			break;
+		case NID_info_access:
+			free(*aia);
+			*aia = x509_get_aia(x, fn);
+			break;
 		}
 	}
 
-	if (*aki == NULL) {
-		cryptowarnx("%s: RFC 6487 section 4.8.3: AKI: "
-		    "missing AKI X509 extension", fn);
-		free(*ski);
-		*ski = NULL;
-		return 0;
-	}
-	if (*ski == NULL) {
-		cryptowarnx("%s: RFC 6487 section 4.8.2: AKI: "
-		    "missing SKI X509 extension", fn);
+	if (*aia == NULL || *aki == NULL || *ski == NULL) {
+		cryptowarnx("%s: RFC 6487 section 4.8: "
+		    "missing AIA, AKI or SKI X509 extension", fn);
+		free(*aia);
 		free(*aki);
-		*aki = NULL;
+		free(*ski);
+		*aia = *aki = *ski = NULL;
 		return 0;
 	}
 

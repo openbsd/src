@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.25 2021/02/04 08:58:19 claudio Exp $ */
+/*	$OpenBSD: mft.c,v 1.26 2021/02/16 07:58:30 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -395,7 +395,8 @@ mft_parse(X509 **x509, const char *fn)
 		err(1, NULL);
 	if ((p.res->file = strdup(fn)) == NULL)
 		err(1, NULL);
-	if (!x509_get_ski_aki(*x509, fn, &p.res->ski, &p.res->aki))
+	if (!x509_get_extensions(*x509, fn, &p.res->ski, &p.res->aki,
+	    &p.res->aia))
 		goto out;
 
 	/*
@@ -509,6 +510,7 @@ mft_free(struct mft *p)
 		for (i = 0; i < p->filesz; i++)
 			free(p->files[i].file);
 
+	free(p->aia);
 	free(p->aki);
 	free(p->ski);
 	free(p->file);
@@ -534,6 +536,7 @@ mft_buffer(struct ibuf *b, const struct mft *p)
 		io_simple_buffer(b, p->files[i].hash, SHA256_DIGEST_LENGTH);
 	}
 
+	io_str_buffer(b, p->aia);
 	io_str_buffer(b, p->aki);
 	io_str_buffer(b, p->ski);
 }
@@ -564,9 +567,10 @@ mft_read(int fd)
 		io_simple_read(fd, p->files[i].hash, SHA256_DIGEST_LENGTH);
 	}
 
+	io_str_read(fd, &p->aia);
 	io_str_read(fd, &p->aki);
 	io_str_read(fd, &p->ski);
-	assert(p->aki && p->ski);
+	assert(p->aia && p->aki && p->ski);
 
 	return p;
 }

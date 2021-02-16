@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.42 2021/02/08 09:22:53 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.43 2021/02/16 07:58:30 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -116,6 +116,7 @@ struct cert {
 	char		*mft; /* manifest (rsync:// uri) */
 	char		*notify; /* RRDP notify (https:// uri) */
 	char		*crl; /* CRL location (rsync:// or NULL) */
+	char		*aia; /* AIA (or NULL, for trust anchor) */
 	char		*aki; /* AKI (or NULL, for trust anchor) */
 	char		*ski; /* SKI */
 	int		 valid; /* validated resources */
@@ -155,8 +156,9 @@ struct mft {
 	struct mftfile	*files; /* file and hash */
 	size_t		 filesz; /* number of filenames */
 	int		 stale; /* if a stale manifest */
-	char		*ski; /* SKI */
+	char		*aia; /* AIA */
 	char		*aki; /* AKI */
+	char		*ski; /* SKI */
 };
 
 /*
@@ -181,8 +183,9 @@ struct roa {
 	struct roa_ip	*ips; /* IP prefixes */
 	size_t		 ipsz; /* number of IP prefixes */
 	int		 valid; /* validated resources */
-	char		*ski; /* SKI */
+	char		*aia; /* AIA */
 	char		*aki; /* AKI */
+	char		*ski; /* SKI */
 	char		*tal; /* basename of TAL for this cert */
 };
 
@@ -191,8 +194,9 @@ struct roa {
  */
 struct gbr {
 	char		*vcard;
-	char		*ski; /* SKI */
+	char		*aia; /* AIA */
 	char		*aki; /* AKI */
+	char		*ski; /* SKI */
 };
 
 /*
@@ -248,7 +252,7 @@ struct auth *auth_find(struct auth_tree *, const char *);
 
 /*
  * Resource types specified by the RPKI profiles.
- * There are others (e.g., gbr) that we don't consider.
+ * There might be others we don't consider.
  */
 enum rtype {
 	RTYPE_EOF = 0,
@@ -418,9 +422,11 @@ void		 io_str_read(int, char **);
 
 /* X509 helpers. */
 
+char		*x509_get_aia(X509 *, const char *);
 char		*x509_get_aki_ext(X509_EXTENSION *, const char *);
 char		*x509_get_ski_ext(X509_EXTENSION *, const char *);
-int		 x509_get_ski_aki(X509 *, const char *, char **, char **);
+int		 x509_get_extensions(X509 *, const char *, char **, char **,
+			char **);
 char		*x509_get_crl(X509 *, const char *);
 char		*x509_crl_get_aki(X509_CRL *);
 
