@@ -444,7 +444,7 @@ if ($GSP) {
         $symbols{data}{common} = $symbols{data}{bss};
     }
 
-    ok($symbols{data}{common}{PL_hash_seed_w}{'globals.o'}, "has PL_hash_seed_w");
+    ok($symbols{data}{common}{PL_hash_seed}{'globals.o'}, "has PL_hash_seed");
     ok($symbols{data}{data}{PL_ppaddr}{'globals.o'}, "has PL_ppaddr");
 
     # None of the GLOBAL_STRUCT* business here.
