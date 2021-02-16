@@ -1,4 +1,4 @@
-/* $OpenBSD: exuart.c,v 1.6 2021/02/14 13:39:24 kettenis Exp $ */
+/* $OpenBSD: exuart.c,v 1.7 2021/02/16 21:58:14 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -143,7 +143,8 @@ exuart_init_cons(void)
 	struct fdt_reg reg;
 	void *node, *root;
 
-	if ((node = fdt_find_cons("samsung,exynos4210-uart")) == NULL)
+	if ((node = fdt_find_cons("apple,s5l-uart")) == NULL &&
+	    (node = fdt_find_cons("samsung,exynos4210-uart")) == NULL)
 		return;
 
 	/* dtb uses serial2, qemu uses serial0 */
@@ -160,9 +161,15 @@ exuart_init_cons(void)
 	if (fdt_get_reg(node, 0, &reg))
 		return;
 
-	exuart_rx_fifo_cnt_mask = EXUART_UFSTAT_RX_FIFO_CNT_MASK;
-	exuart_rx_fifo_full = EXUART_UFSTAT_RX_FIFO_FULL;
-	exuart_tx_fifo_full = EXUART_UFSTAT_TX_FIFO_FULL;
+	if (fdt_is_compatible(node, "apple,s5l-uart")) {
+		exuart_rx_fifo_cnt_mask = EXUART_S5L_UFSTAT_RX_FIFO_CNT_MASK;
+		exuart_rx_fifo_full = EXUART_S5L_UFSTAT_RX_FIFO_FULL;
+		exuart_tx_fifo_full = EXUART_S5L_UFSTAT_TX_FIFO_FULL;
+	} else {
+		exuart_rx_fifo_cnt_mask = EXUART_UFSTAT_RX_FIFO_CNT_MASK;
+		exuart_rx_fifo_full = EXUART_UFSTAT_RX_FIFO_FULL;
+		exuart_tx_fifo_full = EXUART_UFSTAT_TX_FIFO_FULL;
+	}
 
 	exuartcnattach(fdt_cons_bs_tag, reg.addr, B115200, TTYDEF_CFLAG);
 }
@@ -172,7 +179,8 @@ exuart_match(struct device *parent, void *self, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "samsung,exynos4210-uart");
+	return (OF_is_compatible(faa->fa_node, "apple,s5l-uart") ||
+	    OF_is_compatible(faa->fa_node, "samsung,exynos4210-uart"));
 }
 
 void
@@ -203,9 +211,15 @@ exuart_attach(struct device *parent, struct device *self, void *aux)
 		printf(": console");
 	}
 
-	sc->sc_rx_fifo_cnt_mask = EXUART_UFSTAT_RX_FIFO_CNT_MASK;
-	sc->sc_rx_fifo_full = EXUART_UFSTAT_RX_FIFO_FULL;
-	sc->sc_tx_fifo_full = EXUART_UFSTAT_TX_FIFO_FULL;
+	if (OF_is_compatible(faa->fa_node, "apple,s5l-uart")) {
+		sc->sc_rx_fifo_cnt_mask = EXUART_S5L_UFSTAT_RX_FIFO_CNT_MASK;
+		sc->sc_rx_fifo_full = EXUART_S5L_UFSTAT_RX_FIFO_FULL;
+		sc->sc_tx_fifo_full = EXUART_S5L_UFSTAT_TX_FIFO_FULL;
+	} else {
+		sc->sc_rx_fifo_cnt_mask = EXUART_UFSTAT_RX_FIFO_CNT_MASK;
+		sc->sc_rx_fifo_full = EXUART_UFSTAT_RX_FIFO_FULL;
+		sc->sc_tx_fifo_full = EXUART_UFSTAT_TX_FIFO_FULL;
+	}
 
 	/* Mask and clear interrupts. */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, EXUART_UINTM,

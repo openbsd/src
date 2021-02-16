@@ -1,4 +1,4 @@
-/* $OpenBSD: exuartreg.h,v 1.2 2021/02/05 00:25:19 patrick Exp $ */
+/* $OpenBSD: exuartreg.h,v 1.3 2021/02/16 21:58:14 kettenis Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -86,6 +86,12 @@
 #define		EXUART_UFSTAT_TX_FIFO_CNT(x)		(((x) >> 16) & 0xff) /* 0 when full */
 #define		EXUART_UFSTAT_TX_FIFO_CNT_MASK		(0xff << 16) /* 0 when full */
 #define		EXUART_UFSTAT_TX_FIFO_FULL		(0x1 << 24)
+#define		EXUART_S5L_UFSTAT_RX_FIFO_CNT(x)	(((x) >> 0) & 0xf) /* 0 when full */
+#define		EXUART_S5L_UFSTAT_RX_FIFO_CNT_MASK	(0xf << 0) /* 0 when full */
+#define		EXUART_S5L_UFSTAT_RX_FIFO_FULL		(0x1 << 8)
+#define		EXUART_S5L_UFSTAT_TX_FIFO_CNT(x)	(((x) >> 4) & 0xf) /* 0 when full */
+#define		EXUART_S5L_UFSTAT_TX_FIFO_CNT_MASK	(0xf << 4) /* 0 when full */
+#define		EXUART_S5L_UFSTAT_TX_FIFO_FULL		(0x1 << 9)
 #define	EXUART_UMSTAT				0x1c
 #define		EXUART_UMSTAT_CTS			(0x1 << 0)
 #define		EXUART_UMSTAT_DELTA_CTS			(0x1 << 4)
