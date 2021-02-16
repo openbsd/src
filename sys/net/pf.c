@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1110 2021/02/12 16:16:10 patrick Exp $ */
+/*	$OpenBSD: pf.c,v 1.1111 2021/02/16 03:12:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6020,7 +6020,7 @@ pf_route(struct pf_pdesc *pd, struct pf_state *s)
 	dst->sin_addr = s->rt_addr.v4;
 	rtableid = m0->m_pkthdr.ph_rtableid;
 
-	rt = rtalloc(sintosa(dst), RT_RESOLVE, rtableid);
+	rt = rtalloc_mpath(sintosa(dst), &ip->ip_src.s_addr, rtableid);
 	if (!rtisvalid(rt)) {
 		if (s->rt != PF_DUPTO) {
 			pf_send_icmp(m0, ICMP_UNREACH, ICMP_UNREACH_HOST,
@@ -6162,7 +6162,8 @@ pf_route6(struct pf_pdesc *pd, struct pf_state *s)
 	dst->sin6_addr = s->rt_addr.v6;
 	rtableid = m0->m_pkthdr.ph_rtableid;
 
-	rt = rtalloc(sin6tosa(dst), RT_RESOLVE, rtableid);
+	rt = rtalloc_mpath(sin6tosa(dst), &ip6->ip6_src.s6_addr32[0],
+	    rtableid);
 	if (!rtisvalid(rt)) {
 		if (s->rt != PF_DUPTO) {
 			pf_send_icmp(m0, ICMP6_DST_UNREACH,
