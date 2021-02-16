@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.6 2018/03/19 03:41:40 beck Exp $
+#	$OpenBSD: Makefile,v 1.7 2021/02/16 21:39:17 jan Exp $
 
-SUBDIR= options
+SUBDIR= options x509
 
 CLEANFILES+= testdsa.key testdsa.pem rsakey.pem rsacert.pem dsa512.pem
 CLEANFILES+= appstest_dir
