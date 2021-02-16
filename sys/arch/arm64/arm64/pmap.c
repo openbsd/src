@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.70 2021/01/25 19:37:17 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.71 2021/02/16 12:33:22 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -472,7 +472,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	if (pa & PMAP_NOCACHE)
 		cache = PMAP_CACHE_CI;
 	if (pa & PMAP_DEVICE)
-		cache = PMAP_CACHE_DEV;
+		cache = PMAP_CACHE_DEV_NGNRNE;
 	pg = PHYS_TO_VM_PAGE(pa);
 
 	pmap_lock(pm);
@@ -648,7 +648,7 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 	pmap_pte_insert(pted);
 
 	ttlb_flush(pm, va & ~PAGE_MASK);
-	if (cache == PMAP_CACHE_CI || cache == PMAP_CACHE_DEV)
+	if (cache == PMAP_CACHE_CI || cache == PMAP_CACHE_DEV_NGNRNE)
 		cpu_idcache_wbinv_range(va & ~PAGE_MASK, PAGE_SIZE);
 }
 
@@ -735,7 +735,9 @@ pmap_fill_pte(pmap_t pm, vaddr_t va, paddr_t pa, struct pte_desc *pted,
 		break;
 	case PMAP_CACHE_CI:
 		break;
-	case PMAP_CACHE_DEV:
+	case PMAP_CACHE_DEV_NGNRNE:
+		break;
+	case PMAP_CACHE_DEV_NGNRE:
 		break;
 	default:
 		panic("pmap_fill_pte:invalid cache mode");
@@ -1637,8 +1639,12 @@ pmap_pte_update(struct pte_desc *pted, uint64_t *pl3)
 		attr |= ATTR_IDX(PTE_ATTR_CI);
 		attr |= ATTR_SH(SH_INNER);
 		break;
-	case PMAP_CACHE_DEV:
-		attr |= ATTR_IDX(PTE_ATTR_DEV);
+	case PMAP_CACHE_DEV_NGNRNE:
+		attr |= ATTR_IDX(PTE_ATTR_DEV_NGNRNE);
+		attr |= ATTR_SH(SH_INNER);
+		break;
+	case PMAP_CACHE_DEV_NGNRE:
+		attr |= ATTR_IDX(PTE_ATTR_DEV_NGNRE);
 		attr |= ATTR_SH(SH_INNER);
 		break;
 	default:

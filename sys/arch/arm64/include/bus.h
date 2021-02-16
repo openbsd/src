@@ -1,4 +1,4 @@
-/* $OpenBSD: bus.h,v 1.7 2020/04/13 21:34:54 kettenis Exp $ */
+/* $OpenBSD: bus.h,v 1.8 2021/02/16 12:33:22 kettenis Exp $ */
 /*
  * Copyright (c) 2003-2004 Opsycon AB Sweden.  All rights reserved.
  *
@@ -129,10 +129,10 @@ struct bus_space {
 #define	bus_space_subregion(t, h, o, s, p) \
     (*(t)->_space_subregion)((t), (h), (o), (s), (p))
 
-#define	BUS_SPACE_MAP_CACHEABLE		0x01
-#define BUS_SPACE_MAP_KSEG0		0x02
-#define	BUS_SPACE_MAP_LINEAR		0x04
-#define	BUS_SPACE_MAP_PREFETCHABLE	0x08
+#define BUS_SPACE_MAP_CACHEABLE		0x01
+#define BUS_SPACE_MAP_POSTED		0x02
+#define BUS_SPACE_MAP_LINEAR		0x04
+#define BUS_SPACE_MAP_PREFETCHABLE	0x08
 
 #define	bus_space_vaddr(t, h)	(*(t)->_space_vaddr)((t), (h))
 #define	bus_space_mmap(t, a, o, p, f) \

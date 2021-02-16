@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.15 2021/02/15 20:44:08 kettenis Exp $ */
+/* $OpenBSD: pmap.h,v 1.16 2021/02/16 12:33:22 kettenis Exp $ */
 /*
  * Copyright (c) 2008,2009,2014 Dale Rahn <drahn@dalerahn.com>
  *
@@ -42,7 +42,8 @@
 #define PMAP_CACHE_CI		(PMAP_MD0)		/* cache inhibit */
 #define PMAP_CACHE_WT		(PMAP_MD1)	 	/* writethru */
 #define PMAP_CACHE_WB		(PMAP_MD1|PMAP_MD0)	/* writeback */
-#define PMAP_CACHE_DEV		(PMAP_MD2)		/* device mapping */
+#define PMAP_CACHE_DEV_NGNRNE	(PMAP_MD2)		/* device nGnRnE */
+#define PMAP_CACHE_DEV_NGNRE	(PMAP_MD2|PMAP_MD0)	/* device nGnRE */
 #define PMAP_CACHE_BITS		(PMAP_MD0|PMAP_MD1|PMAP_MD2)	
 
 #define PTED_VA_MANAGED_M	(PMAP_MD3)

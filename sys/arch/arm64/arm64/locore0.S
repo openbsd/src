@@ -1,4 +1,4 @@
-/* $OpenBSD: locore0.S,v 1.5 2019/05/28 20:32:30 patrick Exp $ */
+/* $OpenBSD: locore0.S,v 1.6 2021/02/16 12:33:22 kettenis Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -34,8 +34,8 @@
 #include <machine/pte.h>
 
 #define	DEVICE_MEM	0
-#define	NORMAL_UNCACHED	1
-#define	NORMAL_MEM	2
+#define	NORMAL_UNCACHED	2
+#define	NORMAL_MEM	3
 
 /*
  * We assume:
