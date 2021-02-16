@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.98 2021/01/04 13:42:11 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.99 2021/02/16 08:29:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -60,6 +60,7 @@ new_config(void)
 	SIMPLEQ_INIT(&conf->rde_originsets);
 	RB_INIT(&conf->roa);
 	SIMPLEQ_INIT(&conf->as_sets);
+	SIMPLEQ_INIT(&conf->rtrs);
 
 	TAILQ_INIT(conf->filters);
 	TAILQ_INIT(conf->listen_addrs);
@@ -163,6 +164,18 @@ free_roatree(struct roa_tree *r)
 }
 
 void
+free_rtrs(struct rtr_config_head *rh)
+{
+	struct rtr_config	*r;
+
+	while (!SIMPLEQ_EMPTY(rh)) {
+		r = SIMPLEQ_FIRST(rh);
+		SIMPLEQ_REMOVE_HEAD(rh, entry);
+		free(r);
+	}
+}
+
+void
 free_config(struct bgpd_config *conf)
 {
 	struct peer		*p, *next;
@@ -178,6 +191,7 @@ free_config(struct bgpd_config *conf)
 	free_rde_prefixsets(&conf->rde_originsets);
 	as_sets_free(&conf->as_sets);
 	free_roatree(&conf->roa);
+	free_rtrs(&conf->rtrs);
 
 	while ((la = TAILQ_FIRST(conf->listen_addrs)) != NULL) {
 		TAILQ_REMOVE(conf->listen_addrs, la, entry);
@@ -245,6 +259,10 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf)
 	/* then move the RB tree root */
 	RB_ROOT(&xconf->roa) = RB_ROOT(&conf->roa);
 	RB_ROOT(&conf->roa) = NULL;
+
+	/* switch the rtr_configs, first remove the old ones */
+	free_rtrs(&xconf->rtrs);
+	SIMPLEQ_CONCAT(&xconf->rtrs, &conf->rtrs);
 
 	/* switch the prefixsets, first remove the old ones */
 	free_prefixsets(&xconf->prefixsets);
@@ -582,7 +600,7 @@ prefixset_cmp(struct prefixset_item *a, struct prefixset_item *b)
 
 RB_GENERATE(prefixset_tree, prefixset_item, entry, prefixset_cmp);
 
-static inline int
+int
 roa_cmp(struct roa *a, struct roa *b)
 {
 	int i;

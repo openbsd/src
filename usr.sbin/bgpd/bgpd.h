@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.411 2021/01/25 09:15:23 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.412 2021/02/16 08:29:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -120,7 +120,8 @@
 enum bgpd_process {
 	PROC_MAIN,
 	PROC_SE,
-	PROC_RDE
+	PROC_RDE,
+	PROC_RTR,
 };
 
 enum reconf_action {
@@ -266,6 +267,9 @@ SIMPLEQ_HEAD(as_set_head, as_set);
 struct filter_rule;
 TAILQ_HEAD(filter_head, filter_rule);
 
+struct rtr_config;
+SIMPLEQ_HEAD(rtr_config_head, rtr_config);
+
 struct bgpd_config {
 	struct peer_head			 peers;
 	struct l3vpn_head			 l3vpns;
@@ -278,8 +282,8 @@ struct bgpd_config {
 	struct roa_tree				 roa;
 	struct rde_prefixset_head		 rde_prefixsets;
 	struct rde_prefixset_head		 rde_originsets;
-	struct rde_prefixset			 rde_roa;
 	struct as_set_head			 as_sets;
+	struct rtr_config_head			 rtrs;
 	char					*csock;
 	char					*rcsock;
 	int					 flags;
@@ -433,6 +437,44 @@ struct network {
 	TAILQ_ENTRY(network)		entry;
 };
 
+enum rtr_error {
+	NO_ERROR = -1,
+	CORRUPT_DATA = 0,
+	INTERNAL_ERROR,
+	NO_DATA_AVAILABLE,
+	INVALID_REQUEST,
+	UNSUPP_PROTOCOL_VERS,
+	UNSUPP_PDU_TYPE,
+	UNK_REC_WDRAWL,
+	DUP_REC_RECV,
+	UNEXP_PROTOCOL_VERS,
+};
+
+struct rtr_config {
+	SIMPLEQ_ENTRY(rtr_config)	entry;
+	char				descr[PEER_DESCR_LEN];
+	struct bgpd_addr		remote_addr;
+	struct bgpd_addr		local_addr;
+	u_int32_t			id;
+	in_addr_t			remote_port;
+};
+
+struct ctl_show_rtr {
+	char			descr[PEER_DESCR_LEN];
+	struct bgpd_addr	remote_addr;
+	struct bgpd_addr	local_addr;
+	uint32_t		serial;
+	uint32_t		refresh;
+	uint32_t		retry;
+	uint32_t		expire;
+	int			session_id;
+	in_addr_t		remote_port;
+	enum rtr_error 		last_sent_error;
+	enum rtr_error		last_recv_error;
+	char			last_sent_msg[REASON_LEN];
+	char			last_recv_msg[REASON_LEN];
+};
+
 enum imsg_type {
 	IMSG_NONE,
 	IMSG_CTL_END,
@@ -462,6 +504,7 @@ enum imsg_type {
 	IMSG_CTL_LOG_VERBOSE,
 	IMSG_CTL_SHOW_FIB_TABLES,
 	IMSG_CTL_SHOW_SET,
+	IMSG_CTL_SHOW_RTR,
 	IMSG_CTL_TERMINATE,
 	IMSG_NETWORK_ADD,
 	IMSG_NETWORK_ASPATH,
@@ -472,6 +515,7 @@ enum imsg_type {
 	IMSG_FILTER_SET,
 	IMSG_SOCKET_CONN,
 	IMSG_SOCKET_CONN_CTL,
+	IMSG_SOCKET_CONN_RTR,
 	IMSG_RECONF_CONF,
 	IMSG_RECONF_RIB,
 	IMSG_RECONF_PEER,
@@ -490,6 +534,7 @@ enum imsg_type {
 	IMSG_RECONF_ORIGIN_SET,
 	IMSG_RECONF_ROA_SET,
 	IMSG_RECONF_ROA_ITEM,
+	IMSG_RECONF_RTR_CONFIG,
 	IMSG_RECONF_DRAIN,
 	IMSG_RECONF_DONE,
 	IMSG_UPDATE,
@@ -1194,11 +1239,13 @@ void		free_prefixsets(struct prefixset_head *);
 void		free_rde_prefixsets(struct rde_prefixset_head *);
 void		free_prefixtree(struct prefixset_tree *);
 void		free_roatree(struct roa_tree *);
+void		free_rtrs(struct rtr_config_head *);
 void		filterlist_free(struct filter_head *);
 int		host(const char *, struct bgpd_addr *, u_int8_t *);
 u_int32_t	get_bgpid(void);
 void		expand_networks(struct bgpd_config *);
 RB_PROTOTYPE(prefixset_tree, prefixset_item, entry, prefixset_cmp);
+int		roa_cmp(struct roa *, struct roa *);
 RB_PROTOTYPE(roa_tree, roa, entry, roa_cmp);
 
 /* kroute.c */
@@ -1262,8 +1309,10 @@ void		 pftable_unref(u_int16_t);
 u_int16_t	 pftable_ref(u_int16_t);
 
 /* parse.y */
-int		 cmdline_symset(char *);
-struct prefixset *find_prefixset(char *, struct prefixset_head *);
+int		 	cmdline_symset(char *);
+struct prefixset	*find_prefixset(char *, struct prefixset_head *);
+struct bgpd_config	*parse_config(char *, struct peer_head *,
+			    struct rtr_config_head *);
 
 /* pftable.c */
 int	pftable_exists(const char *);
@@ -1320,6 +1369,7 @@ const char	*log_as(u_int32_t);
 const char	*log_rd(u_int64_t);
 const char	*log_ext_subtype(short, u_int8_t);
 const char	*log_reason(const char *);
+const char	*log_rtr_error(enum rtr_error);
 int		 aspath_snprint(char *, size_t, void *, u_int16_t);
 int		 aspath_asprint(char **, void *, u_int16_t);
 size_t		 aspath_strlen(void *, u_int16_t);
@@ -1356,7 +1406,8 @@ const char *	 get_baudrate(unsigned long long, char *);
 static const char * const log_procnames[] = {
 	"parent",
 	"SE",
-	"RDE"
+	"RDE",
+	"RTR"
 };
 
 /* logmsg.c and needed by bgpctl */
@@ -1485,6 +1536,10 @@ static const char * const timernames[] = {
 	"IdleHoldTimer",
 	"IdleHoldResetTimer",
 	"CarpUndemoteTimer",
+	"RestartTimer",
+	"RTR RefreshTimer",
+	"RTR RetryTimer",
+	"RTR ExpireTimer",
 	""
 };
 

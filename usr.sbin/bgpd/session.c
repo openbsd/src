@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.410 2021/01/05 10:02:44 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.411 2021/02/16 08:29:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2829,6 +2829,8 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 		case IMSG_CTL_SHOW_NEXTHOP:
 		case IMSG_CTL_SHOW_INTERFACE:
 		case IMSG_CTL_SHOW_FIB_TABLES:
+		case IMSG_CTL_SHOW_RTR:
+		case IMSG_CTL_SHOW_TIMER:
 			if (idx != PFD_PIPE_MAIN)
 				fatalx("ctl kroute request not from parent");
 			control_imsg_relay(&imsg);

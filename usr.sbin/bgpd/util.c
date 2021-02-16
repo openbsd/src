@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.60 2021/01/25 09:15:24 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.61 2021/02/16 08:29:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -159,6 +159,38 @@ log_reason(const char *communication) {
 	strnvis(buf, communication, sizeof(buf), VIS_NL | VIS_OCTAL);
 
 	return buf;
+}
+
+const char *
+log_rtr_error(enum rtr_error err)
+{
+	static char buf[20];
+
+	switch (err) {
+	case NO_ERROR:
+		return "No Error";
+	case CORRUPT_DATA:
+		return "Corrupt Data";
+	case INTERNAL_ERROR:
+		return "Internal Error";
+	case NO_DATA_AVAILABLE:
+		return "No Data Available";
+	case INVALID_REQUEST:
+		return "Invalid Request";
+	case UNSUPP_PROTOCOL_VERS:
+		return "Unsupported Protocol Version";
+	case UNSUPP_PDU_TYPE:
+		return "Unsupported PDU Type";
+	case UNK_REC_WDRAWL:
+		return "Withdrawl of Unknown Record";
+	case DUP_REC_RECV:
+		return "Duplicate Announcement Received";
+	case UNEXP_PROTOCOL_VERS:
+		return "Unexpected Protocol Version";
+	default:
+		snprintf(buf, sizeof(buf), "unknown %u", err);
+		return buf;
+	}
 }
 
 const char *

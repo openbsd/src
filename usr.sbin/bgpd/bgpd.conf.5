@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.207 2021/01/27 14:57:29 jmc Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.208 2021/02/16 08:29:16 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 27 2021 $
+.Dd $Mdocdate: February 16 2021 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -494,6 +494,39 @@ and the Origin Validation State (OVS) is set.
 roa-set { 192.0.2.0/24 maxlen 24 source-as 64511
           203.0.113.0/24 source-as 64496 }
 .Ed
+.Pp
+.It Xo
+.Ic rtr Ar address
+.Ic { Ar ... Ic }
+.Xc
+The
+.Ic rtr
+block specifies a
+.Em RPKI to Router Protocol
+session.
+The rtr session properties are as follows:
+.Pp
+.Bl -tag -width Ds -compact
+.It Ic descr Ar description
+Add a description.
+The description is used in logging and status reports, but has no further
+meaning for
+.Xr bgpd 8 .
+.Pp
+.It Ic local-address Ar address
+Bind to the specific IP address before opening the TCP connection to the
+.Em rtr
+server.
+.Pp
+.It Ic port Ar number
+Specify the TCP destination port for the
+.Em rtr
+session.
+If not specified the default
+.Ic port
+is
+.Em 323 .
+.El
 .El
 .Sh NETWORK ANNOUNCEMENTS
 .Ic network

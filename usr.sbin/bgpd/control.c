@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.103 2020/12/30 07:29:56 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.104 2021/02/16 08:29:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -448,6 +448,7 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 		case IMSG_CTL_RELOAD:
 		case IMSG_CTL_SHOW_INTERFACE:
 		case IMSG_CTL_SHOW_FIB_TABLES:
+		case IMSG_CTL_SHOW_RTR:
 			c->ibuf.pid = imsg.hdr.pid;
 			imsg_ctl_parent(imsg.hdr.type, 0, imsg.hdr.pid,
 			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);

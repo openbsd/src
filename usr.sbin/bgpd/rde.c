@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.514 2021/01/25 09:15:24 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.515 2021/02/16 08:29:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -32,7 +32,6 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
-#include <err.h>
 
 #include "bgpd.h"
 #include "rde.h"
@@ -42,11 +41,13 @@
 #define PFD_PIPE_MAIN		0
 #define PFD_PIPE_SESSION	1
 #define PFD_PIPE_SESSION_CTL	2
-#define PFD_PIPE_COUNT		3
+#define PFD_PIPE_ROA		3
+#define PFD_PIPE_COUNT		4
 
 void		 rde_sighdlr(int);
 void		 rde_dispatch_imsg_session(struct imsgbuf *);
 void		 rde_dispatch_imsg_parent(struct imsgbuf *);
+void		 rde_dispatch_imsg_rtr(struct imsgbuf *);
 void		 rde_dispatch_imsg_peer(struct rde_peer *, void *);
 void		 rde_update_dispatch(struct rde_peer *, struct imsg *);
 int		 rde_update_update(struct rde_peer *, struct filterstate *,
@@ -79,6 +80,7 @@ static void	 rde_softreconfig_in(struct rib_entry *, void *);
 static void	 rde_softreconfig_sync_reeval(struct rib_entry *, void *);
 static void	 rde_softreconfig_sync_fib(struct rib_entry *, void *);
 static void	 rde_softreconfig_sync_done(void *, u_int8_t);
+static void	 rde_roa_reload(void);
 static int	 rde_no_as_set(struct rde_peer *);
 int		 rde_update_queue_pending(void);
 void		 rde_update_queue_runner(void);
@@ -102,8 +104,10 @@ int		 ovs_match(struct prefix *, u_int32_t);
 
 static struct imsgbuf		*ibuf_se;
 static struct imsgbuf		*ibuf_se_ctl;
+static struct imsgbuf		*ibuf_rtr;
 static struct imsgbuf		*ibuf_main;
 static struct bgpd_config	*conf, *nconf;
+static struct rde_prefixset	 rde_roa, roa_new;
 
 volatile sig_atomic_t	 rde_quit = 0;
 struct filter_head	*out_rules, *out_rules_tmp;
@@ -231,6 +235,7 @@ rde_main(int debug, int verbose)
 		set_pollfd(&pfd[PFD_PIPE_MAIN], ibuf_main);
 		set_pollfd(&pfd[PFD_PIPE_SESSION], ibuf_se);
 		set_pollfd(&pfd[PFD_PIPE_SESSION_CTL], ibuf_se_ctl);
+		set_pollfd(&pfd[PFD_PIPE_ROA], ibuf_rtr);
 
 		i = PFD_PIPE_COUNT;
 		for (mctx = LIST_FIRST(&rde_mrts); mctx != 0; mctx = xmctx) {
@@ -281,6 +286,14 @@ rde_main(int debug, int verbose)
 			ibuf_se_ctl = NULL;
 		} else
 			rde_dispatch_imsg_session(ibuf_se_ctl);
+
+		if (handle_pollfd(&pfd[PFD_PIPE_ROA], ibuf_rtr) == -1) {
+			log_warnx("RDE: Lost connection to ROA");
+			msgbuf_clear(&ibuf_rtr->w);
+			free(ibuf_rtr);
+			ibuf_rtr = NULL;
+		} else
+			rde_dispatch_imsg_rtr(ibuf_rtr);
 
 		for (j = PFD_PIPE_COUNT, mctx = LIST_FIRST(&rde_mrts);
 		    j < i && mctx != 0; j++) {
@@ -578,7 +591,7 @@ badnetdel:
 			break;
 		case IMSG_CTL_SHOW_SET:
 			/* first roa set */
-			pset = &conf->rde_roa;
+			pset = &rde_roa;
 			memset(&cset, 0, sizeof(cset));
 			cset.type = ROA_SET;
 			strlcpy(cset.name, "RPKI ROA", sizeof(cset.name));
@@ -668,7 +681,6 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 	static struct l3vpn	*vpn;
 	struct imsg		 imsg;
 	struct mrt		 xmrt;
-	struct roa		 roa;
 	struct rde_rib		 rr;
 	struct filterstate	 state;
 	struct imsgbuf		*i;
@@ -693,15 +705,17 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 		switch (imsg.hdr.type) {
 		case IMSG_SOCKET_CONN:
 		case IMSG_SOCKET_CONN_CTL:
+		case IMSG_SOCKET_CONN_RTR:
 			if ((fd = imsg.fd) == -1) {
-				log_warnx("expected to receive imsg fd to "
-				    "SE but didn't receive any");
+				log_warnx("expected to receive imsg fd "
+				    "but didn't receive any");
 				break;
 			}
 			if ((i = malloc(sizeof(struct imsgbuf))) == NULL)
 				fatal(NULL);
 			imsg_init(i, fd);
-			if (imsg.hdr.type == IMSG_SOCKET_CONN) {
+			switch (imsg.hdr.type) {
+			case IMSG_SOCKET_CONN:
 				if (ibuf_se) {
 					log_warnx("Unexpected imsg connection "
 					    "to SE received");
@@ -709,7 +723,8 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 					free(ibuf_se);
 				}
 				ibuf_se = i;
-			} else {
+				break;
+			case IMSG_SOCKET_CONN_CTL:
 				if (ibuf_se_ctl) {
 					log_warnx("Unexpected imsg ctl "
 					    "connection to SE received");
@@ -717,6 +732,16 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 					free(ibuf_se_ctl);
 				}
 				ibuf_se_ctl = i;
+				break;
+			case IMSG_SOCKET_CONN_RTR:
+				if (ibuf_rtr) {
+					log_warnx("Unexpected imsg ctl "
+					    "connection to ROA received");
+					msgbuf_clear(&ibuf_rtr->w);
+					free(ibuf_rtr);
+				}
+				ibuf_rtr = i;
+				break;
 			}
 			break;
 		case IMSG_NETWORK_ADD:
@@ -865,17 +890,6 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			}
 			last_prefixset = ps;
 			break;
-		case IMSG_RECONF_ROA_SET:
-			strlcpy(nconf->rde_roa.name, "RPKI ROA",
-			    sizeof(nconf->rde_roa.name));
-			last_prefixset = &nconf->rde_roa;
-			break;
-		case IMSG_RECONF_ROA_ITEM:
-			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(roa))
-				fatalx("IMSG_RECONF_ROA_ITEM bad len");
-			memcpy(&roa, imsg.data, sizeof(roa));
-			rv = trie_roa_add(&last_prefixset->th, &roa);
-			break;
 		case IMSG_RECONF_PREFIX_SET_ITEM:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(psi))
 				fatalx("IMSG_RECONF_PREFIX_SET_ITEM bad len");
@@ -886,7 +900,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			    &psi.p.addr, psi.p.len,
 			    psi.p.len_min, psi.p.len_max);
 			if (rv == -1)
-				log_warnx("trie_add(%s) %s/%u) failed",
+				log_warnx("trie_add(%s) %s/%u failed",
 				    last_prefixset->name, log_addr(&psi.p.addr),
 				    psi.p.len);
 			break;
@@ -991,6 +1005,46 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			/* ignore end message because a dump is atomic */
 			break;
 		default:
+			fatalx("unhandled IMSG %u", imsg.hdr.type);
+		}
+		imsg_free(&imsg);
+	}
+}
+
+void
+rde_dispatch_imsg_rtr(struct imsgbuf *ibuf)
+{
+	struct imsg	 imsg;
+	struct roa	 roa;
+	int		 n;
+
+	while (ibuf) {
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
+			fatal("rde_dispatch_imsg_parent: imsg_get error");
+		if (n == 0)
+			break;
+
+		switch (imsg.hdr.type) {
+		case IMSG_RECONF_ROA_SET:
+			/* start of update */
+			break;
+		case IMSG_RECONF_ROA_ITEM:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
+			    sizeof(roa))
+				fatalx("IMSG_RECONF_ROA_ITEM bad len");
+			memcpy(&roa, imsg.data, sizeof(roa));
+			if (trie_roa_add(&roa_new.th, &roa) != 0) {
+				struct bgpd_addr p = {
+					.aid = roa.aid,
+					.v6 = roa.prefix.inet6
+				};
+				log_warnx("trie_roa_add %s/%u failed",
+				    log_addr(&p), roa.prefixlen);
+			}
+			break;
+		case IMSG_RECONF_DONE:
+			/* end of update */
+			rde_roa_reload();
 			break;
 		}
 		imsg_free(&imsg);
@@ -1439,7 +1493,7 @@ rde_update_update(struct rde_peer *peer, struct filterstate *in,
 	const char		*wmsg = "filtered, withdraw";
 
 	peer->prefix_rcvd_update++;
-	vstate = rde_roa_validity(&conf->rde_roa, prefix, prefixlen,
+	vstate = rde_roa_validity(&rde_roa, prefix, prefixlen,
 	    aspath_origin(in->aspath.aspath));
 
 	/* add original path to the Adj-RIB-In */
@@ -3153,7 +3207,6 @@ rde_reload_done(void)
 	struct filter_head	*fh;
 	struct rde_prefixset_head prefixsets_old;
 	struct rde_prefixset_head originsets_old;
-	struct rde_prefixset	 roa_old;
 	struct as_set_head	 as_sets_old;
 	u_int16_t		 rid;
 	int			 reload = 0;
@@ -3166,7 +3219,6 @@ rde_reload_done(void)
 	SIMPLEQ_CONCAT(&prefixsets_old, &conf->rde_prefixsets);
 	SIMPLEQ_CONCAT(&originsets_old, &conf->rde_originsets);
 	SIMPLEQ_CONCAT(&as_sets_old, &conf->as_sets);
-	roa_old = conf->rde_roa;
 
 	/* merge the main config */
 	copy_config(conf, nconf);
@@ -3175,10 +3227,6 @@ rde_reload_done(void)
 	SIMPLEQ_CONCAT(&conf->rde_prefixsets, &nconf->rde_prefixsets);
 	SIMPLEQ_CONCAT(&conf->rde_originsets, &nconf->rde_originsets);
 	SIMPLEQ_CONCAT(&conf->as_sets, &nconf->as_sets);
-
-	conf->rde_roa = nconf->rde_roa;
-	conf->rde_roa.lastchange = roa_old.lastchange;
-	memset(&nconf->rde_roa, 0, sizeof(nconf->rde_roa));
 
 	/* apply new set of l3vpn, sync will be done later */
 	free_l3vpns(&conf->l3vpns);
@@ -3196,16 +3244,6 @@ rde_reload_done(void)
 	peerself->conf.remote_addr.v4.s_addr = conf->bgpid;
 	peerself->conf.remote_masklen = 32;
 	peerself->short_as = conf->short_as;
-
-	/* check if roa changed */
-	if (trie_equal(&conf->rde_roa.th, &roa_old.th) == 0) {
-		log_debug("roa change: reloading Adj-RIB-In");
-		conf->rde_roa.dirty = 1;
-		conf->rde_roa.lastchange = getmonotime();
-		reload++;	/* run softreconf in */
-	}
-
-	trie_free(&roa_old.th);	/* old roa no longer needed */
 
 	rde_mark_prefixsets_dirty(&prefixsets_old, &conf->rde_prefixsets);
 	rde_mark_prefixsets_dirty(&originsets_old, &conf->rde_originsets);
@@ -3443,8 +3481,6 @@ rde_softreconfig_in(struct rib_entry *re, void *bula)
 	struct rde_aspath	*asp;
 	enum filter_actions	 action;
 	struct bgpd_addr	 prefix;
-	int			 force_eval;
-	u_int8_t		 vstate;
 	u_int16_t		 i;
 
 	pt = re->prefix;
@@ -3452,17 +3488,6 @@ rde_softreconfig_in(struct rib_entry *re, void *bula)
 	LIST_FOREACH(p, &re->prefix_h, entry.list.rib) {
 		asp = prefix_aspath(p);
 		peer = prefix_peer(p);
-		force_eval = 0;
-
-		if (conf->rde_roa.dirty) {
-			/* ROA validation state update */
-			vstate = rde_roa_validity(&conf->rde_roa,
-			    &prefix, pt->prefixlen, aspath_origin(asp->aspath));
-			if (vstate != p->validation_state) {
-				force_eval = 1;
-				p->validation_state = vstate;
-			}
-		}
 
 		/* skip announced networks, they are never filtered */
 		if (asp->flags & F_PREFIX_ANNOUNCED)
@@ -3473,7 +3498,7 @@ rde_softreconfig_in(struct rib_entry *re, void *bula)
 			if (rib == NULL)
 				continue;
 
-			if (rib->state != RECONF_RELOAD && !force_eval)
+			if (rib->state != RECONF_RELOAD)
 				continue;
 
 			rde_filterstate_prep(&state, asp, prefix_communities(p),
@@ -3572,6 +3597,99 @@ rde_softreconfig_sync_done(void *arg, u_int8_t aid)
 	/* check if other dumps are still running */
 	if (--softreconfig == 0)
 		rde_softreconfig_done();
+}
+
+/*
+ * ROA specific functions. The roa set is updated independent of the config
+ * so this runs outside of the softreconfig handlers.
+ */
+static void
+rde_roa_softreload(struct rib_entry *re, void *bula)
+{
+	struct filterstate	 state;
+	struct rib		*rib;
+	struct prefix		*p;
+	struct pt_entry		*pt;
+	struct rde_peer		*peer;
+	struct rde_aspath	*asp;
+	enum filter_actions	 action;
+	struct bgpd_addr	 prefix;
+	u_int8_t		 vstate;
+	u_int16_t		 i;
+
+	pt = re->prefix;
+	pt_getaddr(pt, &prefix);
+	LIST_FOREACH(p, &re->prefix_h, entry.list.rib) {
+		asp = prefix_aspath(p);
+		peer = prefix_peer(p);
+
+		/* ROA validation state update */
+		vstate = rde_roa_validity(&rde_roa,
+		    &prefix, pt->prefixlen, aspath_origin(asp->aspath));
+		if (vstate == p->validation_state)
+			continue;
+		p->validation_state = vstate;
+
+		/* skip announced networks, they are never filtered */
+		if (asp->flags & F_PREFIX_ANNOUNCED)
+			continue;
+
+		for (i = RIB_LOC_START; i < rib_size; i++) {
+			rib = rib_byid(i);
+			if (rib == NULL)
+				continue;
+
+			rde_filterstate_prep(&state, asp, prefix_communities(p),
+			    prefix_nexthop(p), prefix_nhflags(p));
+			action = rde_filter(rib->in_rules, peer, peer, &prefix,
+			    pt->prefixlen, p->validation_state, &state);
+
+			if (action == ACTION_ALLOW) {
+				/* update Local-RIB */
+				prefix_update(rib, peer, &state, &prefix,
+				    pt->prefixlen, p->validation_state);
+			} else if (action == ACTION_DENY) {
+				/* remove from Local-RIB */
+				prefix_withdraw(rib, peer, &prefix,
+				    pt->prefixlen);
+			}
+
+			rde_filterstate_clean(&state);
+		}
+	}
+}
+
+static void
+rde_roa_softreload_done(void *arg, u_int8_t aid)
+{
+	/* the roa update is done */
+	log_info("ROA softreload done");
+}
+
+static void
+rde_roa_reload(void)
+{
+	struct rde_prefixset roa_old;
+
+	roa_old = rde_roa;
+	rde_roa = roa_new;
+	memset(&roa_new, 0, sizeof(roa_new));
+
+	/* check if roa changed */
+	if (trie_equal(&rde_roa.th, &roa_old.th)) {
+		rde_roa.lastchange = roa_old.lastchange;
+		trie_free(&roa_old.th);	/* old roa no longer needed */
+		return;
+	}
+
+	rde_roa.lastchange = getmonotime();
+	trie_free(&roa_old.th);	/* old roa no longer needed */
+
+	log_debug("ROA change: reloading Adj-RIB-In");
+	if (rib_dump_new(RIB_ADJ_IN, AID_UNSPEC, RDE_RUNNER_ROUNDS,
+	    rib_byid(RIB_ADJ_IN), rde_roa_softreload,
+	    rde_roa_softreload_done, NULL) == -1)
+		fatal("%s: rib_dump_new", __func__);
 }
 
 /*
@@ -3737,7 +3855,7 @@ network_add(struct network_config *nc, struct filterstate *state)
 		rde_apply_set(vpnset, peerself, peerself, state,
 		    nc->prefix.aid);
 
-	vstate = rde_roa_validity(&conf->rde_roa, &nc->prefix,
+	vstate = rde_roa_validity(&rde_roa, &nc->prefix,
 	    nc->prefixlen, aspath_origin(state->aspath.aspath));
 	if (prefix_update(rib_byid(RIB_ADJ_IN), peerself, state, &nc->prefix,
 	    nc->prefixlen, vstate) == 1)

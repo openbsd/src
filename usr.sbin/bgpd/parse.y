@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.412 2021/01/25 09:15:23 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.413 2021/02/16 08:29:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -89,12 +89,14 @@ char		*symget(const char *);
 static struct bgpd_config	*conf;
 static struct network_head	*netconf;
 static struct peer_head		*new_peers, *cur_peers;
+static struct rtr_config_head	*cur_rtrs;
 static struct peer		*curpeer;
 static struct peer		*curgroup;
 static struct rde_rib		*currib;
 static struct l3vpn		*curvpn;
 static struct prefixset		*curpset, *curoset;
 static struct roa_tree		*curroatree;
+static struct rtr_config	*currtr;
 static struct filter_head	*filter_l;
 static struct filter_head	*peerfilter_l;
 static struct filter_head	*groupfilter_l;
@@ -162,6 +164,8 @@ static void	 add_as_set(u_int32_t);
 static void	 done_as_set(void);
 static struct prefixset	*new_prefix_set(char *, int);
 static void	 add_roa_set(struct prefixset_item *, u_int32_t, u_int8_t);
+static struct rtr_config	*get_rtr(struct bgpd_addr *);
+static int	 insert_rtr(struct rtr_config *);
 
 typedef struct {
 	union {
@@ -196,7 +200,7 @@ typedef struct {
 
 %token	AS ROUTERID HOLDTIME YMIN LISTEN ON FIBUPDATE FIBPRIORITY RTABLE
 %token	NONE UNICAST VPN RD EXPORT EXPORTTRGT IMPORTTRGT DEFAULTROUTE
-%token	RDE RIB EVALUATE IGNORE COMPARE
+%token	RDE RIB EVALUATE IGNORE COMPARE RTR PORT
 %token	GROUP NEIGHBOR NETWORK
 %token	EBGP IBGP
 %token	LOCALAS REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX RESTART
@@ -252,6 +256,7 @@ grammar		: /* empty */
 		| grammar prefixset '\n'
 		| grammar roa_set '\n'
 		| grammar origin_set '\n'
+		| grammar rtr '\n'
 		| grammar rib '\n'
 		| grammar conf_main '\n'
 		| grammar l3vpn '\n'
@@ -548,6 +553,59 @@ roa_set_l	: prefixset_item SOURCEAS as4number_any			{
 			}
 			add_roa_set($3, $5, $3->p.len_max);
 			free($3);
+		}
+		;
+
+rtr		: RTR address	{
+			currtr = get_rtr(&$2);
+			currtr->remote_port = 323;
+			if (insert_rtr(currtr) == -1) {
+				free(currtr);
+				YYERROR;
+			}
+			currtr = NULL;
+		}
+		| RTR address	{
+			currtr = get_rtr(&$2);
+			currtr->remote_port = 323;
+		} '{' optnl rtropt_l optnl '}' {
+			if (insert_rtr(currtr) == -1) {
+				free(currtr);
+				YYERROR;
+			}
+			currtr = NULL;
+		}
+		;
+
+rtropt_l	: rtropt
+		| rtropt_l optnl rtropt
+
+rtropt		: DESCR STRING		{
+			if (strlcpy(currtr->descr, $2,
+			    sizeof(currtr->descr)) >=
+			    sizeof(currtr->descr)) {
+				yyerror("descr \"%s\" too long: max %zu",
+				    $2, sizeof(currtr->descr) - 1);
+				free($2);
+				YYERROR;
+			}
+			free($2);
+		}
+		| LOCALADDR address	{
+			if ($2.aid != currtr->remote_addr.aid) {
+				yyerror("Bad address family %s for "
+				    "local-addr", aid2str($2.aid));
+				YYERROR;
+			}
+			currtr->local_addr = $2;
+		}
+		| PORT NUMBER {
+			if ($2 < 1 || $2 > USHRT_MAX) {
+				yyerror("local-port must be between %u and %u",
+				    1, USHRT_MAX);
+				YYERROR;
+			}
+			currtr->remote_port = $2;
 		}
 		;
 
@@ -2866,6 +2924,7 @@ lookup(char *s)
 		{ "password",		PASSWORD},
 		{ "peer-as",		PEERAS},
 		{ "pftable",		PFTABLE},
+		{ "port",		PORT},
 		{ "prefix",		PREFIX},
 		{ "prefix-set",		PREFIXSET},
 		{ "prefixlen",		PREFIXLEN},
@@ -2887,6 +2946,7 @@ lookup(char *s)
 		{ "router-id",		ROUTERID},
 		{ "rtable",		RTABLE},
 		{ "rtlabel",		RTLABEL},
+		{ "rtr",		RTR},
 		{ "self",		SELF},
 		{ "set",		SET},
 		{ "socket",		SOCKET },
@@ -3285,7 +3345,7 @@ init_config(struct bgpd_config *c)
 }
 
 struct bgpd_config *
-parse_config(char *filename, struct peer_head *ph)
+parse_config(char *filename, struct peer_head *ph, struct rtr_config_head *rh)
 {
 	struct sym		*sym, *next;
 	struct rde_rib		*rr;
@@ -3309,6 +3369,7 @@ parse_config(char *filename, struct peer_head *ph)
 	curgroup = NULL;
 
 	cur_peers = ph;
+	cur_rtrs = rh;
 	new_peers = &conf->peers;
 	netconf = &conf->networks;
 
@@ -4567,4 +4628,58 @@ add_roa_set(struct prefixset_item *npsi, u_int32_t as, u_int8_t max)
 	if (r != NULL)
 		/* just ignore duplicates */
 		free(roa);
+}
+
+static struct rtr_config *
+get_rtr(struct bgpd_addr *addr)
+{
+	struct rtr_config *n;
+
+	n = calloc(1, sizeof(*n));
+	if (n == NULL) {
+		yyerror("out of memory");
+		return NULL;
+	}
+
+	n->remote_addr = *addr;
+	strlcpy(n->descr, log_addr(addr), sizeof(currtr->descr));
+
+	return n;
+}
+
+static int
+insert_rtr(struct rtr_config *new)
+{
+	static uint32_t id;
+	struct rtr_config *r;
+
+	if (id == UINT32_MAX) {
+		yyerror("out of rtr session IDs");
+		return -1;
+	}
+
+	SIMPLEQ_FOREACH(r, &conf->rtrs, entry)
+		if (memcmp(&r->remote_addr, &new->remote_addr,
+		    sizeof(r->remote_addr)) == 0 &&
+		    r->remote_port == new->remote_port) {
+			yyerror("duplicate rtr session to %s:%u",
+			    log_addr(&new->remote_addr), new->remote_port);
+			return -1;
+		}
+
+	if (cur_rtrs)
+		SIMPLEQ_FOREACH(r, cur_rtrs, entry)
+			if (memcmp(&r->remote_addr, &new->remote_addr,
+			    sizeof(r->remote_addr)) == 0 &&
+			    r->remote_port == new->remote_port) {
+				new->id = r->id;
+				break;
+			}
+
+	if (new->id == 0)
+		new->id = ++id;
+
+	SIMPLEQ_INSERT_TAIL(&conf->rtrs, currtr, entry);
+
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.233 2021/01/04 17:44:14 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.234 2021/02/16 08:29:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -47,7 +47,9 @@ int		send_config(struct bgpd_config *);
 int		dispatch_imsg(struct imsgbuf *, int, struct bgpd_config *);
 int		control_setup(struct bgpd_config *);
 static void	getsockpair(int [2]);
-int		imsg_send_sockets(struct imsgbuf *, struct imsgbuf *);
+int		imsg_send_sockets(struct imsgbuf *, struct imsgbuf *,
+		    struct imsgbuf *);
+void		bgpd_rtr_connect(struct rtr_config *);
 
 int			 cflags;
 volatile sig_atomic_t	 mrtdump;
@@ -57,6 +59,7 @@ pid_t			 reconfpid;
 int			 reconfpending;
 struct imsgbuf		*ibuf_se;
 struct imsgbuf		*ibuf_rde;
+struct imsgbuf		*ibuf_rtr;
 struct rib_names	 ribnames = SIMPLEQ_HEAD_INITIALIZER(ribnames);
 char			*cname;
 char			*rcname;
@@ -91,9 +94,10 @@ usage(void)
 
 #define PFD_PIPE_SESSION	0
 #define PFD_PIPE_RDE		1
-#define PFD_SOCK_ROUTE		2
-#define PFD_SOCK_PFKEY		3
-#define POLL_MAX		4
+#define PFD_PIPE_RTR		2
+#define PFD_SOCK_ROUTE		3
+#define PFD_SOCK_PFKEY		4
+#define POLL_MAX		5
 #define MAX_TIMEOUT		3600
 
 int	 cmd_opts;
@@ -107,7 +111,7 @@ main(int argc, char *argv[])
 	struct peer		*p;
 	struct pollfd		 pfd[POLL_MAX];
 	time_t			 timeout;
-	pid_t			 se_pid = 0, rde_pid = 0, pid;
+	pid_t			 se_pid = 0, rde_pid = 0, rtr_pid = 0, pid;
 	char			*conffile;
 	char			*saved_argv0;
 	int			 debug = 0;
@@ -115,6 +119,7 @@ main(int argc, char *argv[])
 	int			 ch, status;
 	int			 pipe_m2s[2];
 	int			 pipe_m2r[2];
+	int			 pipe_m2roa[2];
 
 	conffile = CONFFILE;
 
@@ -126,7 +131,7 @@ main(int argc, char *argv[])
 	if (saved_argv0 == NULL)
 		saved_argv0 = "bgpd";
 
-	while ((ch = getopt(argc, argv, "cdD:f:nRSv")) != -1) {
+	while ((ch = getopt(argc, argv, "cdD:f:nRSTv")) != -1) {
 		switch (ch) {
 		case 'c':
 			cmd_opts |= BGPD_OPT_FORCE_DEMOTE;
@@ -156,6 +161,9 @@ main(int argc, char *argv[])
 		case 'S':
 			proc = PROC_SE;
 			break;
+		case 'T':
+			proc = PROC_RTR;
+			break;
 		default:
 			usage();
 			/* NOTREACHED */
@@ -168,7 +176,7 @@ main(int argc, char *argv[])
 		usage();
 
 	if (cmd_opts & BGPD_OPT_NOACTION) {
-		if ((conf = parse_config(conffile, NULL)) == NULL)
+		if ((conf = parse_config(conffile, NULL, NULL)) == NULL)
 			exit(1);
 
 		if (cmd_opts & BGPD_OPT_VERBOSE)
@@ -193,6 +201,9 @@ main(int argc, char *argv[])
 	case PROC_SE:
 		session_main(debug, cmd_opts & BGPD_OPT_VERBOSE);
 		/* NOTREACHED */
+	case PROC_RTR:
+		rtr_main(debug, cmd_opts & BGPD_OPT_VERBOSE);
+		/* NOTREACHED */
 	}
 
 	if (geteuid())
@@ -201,7 +212,7 @@ main(int argc, char *argv[])
 	if (getpwnam(BGPD_USER) == NULL)
 		errx(1, "unknown user %s", BGPD_USER);
 
-	if ((conf = parse_config(conffile, NULL)) == NULL) {
+	if ((conf = parse_config(conffile, NULL, NULL)) == NULL) {
 		log_warnx("config file %s has errors", conffile);
 		exit(1);
 	}
@@ -219,11 +230,14 @@ main(int argc, char *argv[])
 
 	getsockpair(pipe_m2s);
 	getsockpair(pipe_m2r);
+	getsockpair(pipe_m2roa);
 
 	/* fork children */
 	rde_pid = start_child(PROC_RDE, saved_argv0, pipe_m2r[1], debug,
 	    cmd_opts & BGPD_OPT_VERBOSE);
 	se_pid = start_child(PROC_SE, saved_argv0, pipe_m2s[1], debug,
+	    cmd_opts & BGPD_OPT_VERBOSE);
+	rtr_pid = start_child(PROC_RTR, saved_argv0, pipe_m2roa[1], debug,
 	    cmd_opts & BGPD_OPT_VERBOSE);
 
 	signal(SIGTERM, sighdlr);
@@ -234,10 +248,12 @@ main(int argc, char *argv[])
 	signal(SIGPIPE, SIG_IGN);
 
 	if ((ibuf_se = malloc(sizeof(struct imsgbuf))) == NULL ||
-	    (ibuf_rde = malloc(sizeof(struct imsgbuf))) == NULL)
+	    (ibuf_rde = malloc(sizeof(struct imsgbuf))) == NULL ||
+	    (ibuf_rtr = malloc(sizeof(struct imsgbuf))) == NULL)
 		fatal(NULL);
 	imsg_init(ibuf_se, pipe_m2s[0]);
 	imsg_init(ibuf_rde, pipe_m2r[0]);
+	imsg_init(ibuf_rtr, pipe_m2roa[0]);
 	mrt_init(ibuf_rde, ibuf_se);
 	if (kr_init(&rfd) == -1)
 		quit = 1;
@@ -262,7 +278,7 @@ BROKEN	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd",
 		fatal("pledge");
 #endif
 
-	if (imsg_send_sockets(ibuf_se, ibuf_rde))
+	if (imsg_send_sockets(ibuf_se, ibuf_rde, ibuf_rtr))
 		fatal("could not establish imsg links");
 	/* control setup needs to happen late since it sends imsgs */
 	if (control_setup(conf) == -1)
@@ -285,6 +301,7 @@ BROKEN	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd",
 
 		set_pollfd(&pfd[PFD_PIPE_SESSION], ibuf_se);
 		set_pollfd(&pfd[PFD_PIPE_RDE], ibuf_rde);
+		set_pollfd(&pfd[PFD_PIPE_RTR], ibuf_rtr);
 
 		if (timeout < 0 || timeout > MAX_TIMEOUT)
 			timeout = MAX_TIMEOUT;
@@ -313,8 +330,18 @@ BROKEN	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd",
 			ibuf_rde = NULL;
 			quit = 1;
 		} else {
-			if (dispatch_imsg(ibuf_rde, PFD_PIPE_RDE, conf) ==
-			    -1)
+			if (dispatch_imsg(ibuf_rde, PFD_PIPE_RDE, conf) == -1)
+				quit = 1;
+		}
+
+		if (handle_pollfd(&pfd[PFD_PIPE_RTR], ibuf_rtr) == -1) {
+			log_warnx("main: Lost connection to RTR");
+			msgbuf_clear(&ibuf_rtr->w);
+			free(ibuf_rtr);
+			ibuf_rtr = NULL;
+			quit = 1;
+		} else {
+			if (dispatch_imsg(ibuf_rtr, PFD_PIPE_RTR, conf) == -1)
 				quit = 1;
 		}
 
@@ -377,6 +404,12 @@ BROKEN	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd",
 		free(ibuf_rde);
 		ibuf_rde = NULL;
 	}
+	if (ibuf_rtr) {
+		msgbuf_clear(&ibuf_rtr->w);
+		close(ibuf_rtr->fd);
+		free(ibuf_rtr);
+		ibuf_rtr = NULL;
+	}
 
 	/* cleanup kernel data structures */
 	carp_demote_shutdown();
@@ -404,6 +437,8 @@ BROKEN	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd",
 				name = "route decision engine";
 			else if (pid == se_pid)
 				name = "session engine";
+			else if (pid == rtr_pid)
+				name = "rtr engine";
 			log_warnx("%s terminated; signal %d", name,
 				WTERMSIG(status));
 		}
@@ -449,6 +484,9 @@ start_child(enum bgpd_process p, char *argv0, int fd, int debug, int verbose)
 	case PROC_SE:
 		argv[argc++] = "-S";
 		break;
+	case PROC_RTR:
+		argv[argc++] = "-T";
+		break;
 	}
 	if (debug)
 		argv[argc++] = "-d";
@@ -481,7 +519,8 @@ reconfigure(char *conffile, struct bgpd_config *conf)
 		return (2);
 
 	log_info("rereading config");
-	if ((new_conf = parse_config(conffile, &conf->peers)) == NULL)
+	if ((new_conf = parse_config(conffile, &conf->peers,
+	    &conf->rtrs)) == NULL)
 		return (1);
 
 	merge_config(conf, new_conf);
@@ -509,8 +548,9 @@ send_config(struct bgpd_config *conf)
 	struct prefixset	*ps;
 	struct prefixset_item	*psi, *npsi;
 	struct roa		*roa, *nroa;
+	struct rtr_config	*rtr;
 
-	reconfpending = 2;	/* one per child */
+	reconfpending = 3;	/* one per child */
 
 	expand_networks(conf);
 
@@ -521,6 +561,9 @@ send_config(struct bgpd_config *conf)
 	    conf, sizeof(*conf)) == -1)
 		return (-1);
 	if (imsg_compose(ibuf_rde, IMSG_RECONF_CONF, 0, 0, -1,
+	    conf, sizeof(*conf)) == -1)
+		return (-1);
+	if (imsg_compose(ibuf_rtr, IMSG_RECONF_CONF, 0, 0, -1,
 	    conf, sizeof(*conf)) == -1)
 		return (-1);
 
@@ -595,17 +638,18 @@ send_config(struct bgpd_config *conf)
 		free(ps);
 	}
 
-	if (!RB_EMPTY(&conf->roa)) {
-		if (imsg_compose(ibuf_rde, IMSG_RECONF_ROA_SET, 0, 0, -1,
-		    NULL, 0) == -1)
+	/* roa table and rtr config are sent to the RTR engine */
+	RB_FOREACH_SAFE(roa, roa_tree, &conf->roa, nroa) {
+		RB_REMOVE(roa_tree, &conf->roa, roa);
+		if (imsg_compose(ibuf_rtr, IMSG_RECONF_ROA_ITEM, 0, 0,
+		    -1, roa, sizeof(*roa)) == -1)
 			return (-1);
-		RB_FOREACH_SAFE(roa, roa_tree, &conf->roa, nroa) {
-			RB_REMOVE(roa_tree, &conf->roa, roa);
-			if (imsg_compose(ibuf_rde, IMSG_RECONF_ROA_ITEM, 0, 0,
-			    -1, roa, sizeof(*roa)) == -1)
-				return (-1);
-			free(roa);
-		}
+		free(roa);
+	}
+	SIMPLEQ_FOREACH(rtr, &conf->rtrs, entry) {
+		if (imsg_compose(ibuf_rtr, IMSG_RECONF_RTR_CONFIG, rtr->id,
+		    0, -1, rtr->descr, sizeof(rtr->descr)) == -1)
+			return (-1);
 	}
 
 	/* as-sets for filters in the RDE */
@@ -695,6 +739,8 @@ send_config(struct bgpd_config *conf)
 		return (-1);
 	if (imsg_compose(ibuf_rde, IMSG_RECONF_DRAIN, 0, 0, -1, NULL, 0) == -1)
 		return (-1);
+	if (imsg_compose(ibuf_rtr, IMSG_RECONF_DRAIN, 0, 0, -1, NULL, 0) == -1)
+		return (-1);
 
 	/* mrt changes can be sent out of bound */
 	mrt_reconfigure(conf->mrt);
@@ -706,6 +752,7 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct bgpd_config *conf)
 {
 	struct imsg		 imsg;
 	struct peer		*p;
+	struct rtr_config	*r;
 	ssize_t			 n;
 	int			 rv, verbose;
 
@@ -874,6 +921,9 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct bgpd_config *conf)
 				break;
 			}
 			if (idx == PFD_PIPE_SESSION) {
+				imsg_compose(ibuf_rtr, IMSG_RECONF_DONE, 0,
+				    0, -1, NULL, 0);
+			} else if (idx == PFD_PIPE_RTR) {
 				imsg_compose(ibuf_rde, IMSG_RECONF_DONE, 0,
 				    0, -1, NULL, 0);
 
@@ -898,8 +948,65 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct bgpd_config *conf)
 				 */
 				imsg_compose(ibuf_se, IMSG_RECONF_DONE, 0,
 				    0, -1, NULL, 0);
-				reconfpending = 2; /* expecting 2 DONE msg */
+				reconfpending = 3; /* expecting 2 DONE msg */
 			}
+			break;
+		case IMSG_SOCKET_CONN:
+			if (idx != PFD_PIPE_RTR) {
+				log_warnx("connect request not from RTR");
+			} else {
+				SIMPLEQ_FOREACH(r, &conf->rtrs, entry) {
+					if (imsg.hdr.peerid == r->id)
+						break;
+				}
+				if (r == NULL)
+					log_warnx("unknown rtr id %d",
+					    imsg.hdr.peerid);
+				else
+					bgpd_rtr_connect(r);
+			}
+			break;
+		case IMSG_CTL_SHOW_RTR:
+			if (idx == PFD_PIPE_SESSION) {
+				SIMPLEQ_FOREACH(r, &conf->rtrs, entry) {
+					imsg_compose(ibuf_rtr, imsg.hdr.type,
+					    r->id, imsg.hdr.pid, -1, NULL, 0);
+				}
+				imsg_compose(ibuf_rtr, IMSG_CTL_END,
+				    0, imsg.hdr.pid, -1, NULL, 0);
+			} else if (imsg.hdr.len != IMSG_HEADER_SIZE +
+			    sizeof(struct ctl_show_rtr)) {
+				log_warnx("IMSG_CTL_SHOW_RTR with wrong len");
+			} else if (idx == PFD_PIPE_RTR) {
+				SIMPLEQ_FOREACH(r, &conf->rtrs, entry) {
+					if (imsg.hdr.peerid == r->id)
+						break;
+				}
+				if (r != NULL) {
+					struct ctl_show_rtr *msg;
+					msg = imsg.data;
+					strlcpy(msg->descr, r->descr,
+					    sizeof(msg->descr));
+					msg->local_addr = r->local_addr;
+					msg->remote_addr = r->remote_addr;
+					msg->remote_port = r->remote_port;
+
+					imsg_compose(ibuf_se, imsg.hdr.type,
+					    imsg.hdr.peerid, imsg.hdr.pid,
+					    -1, imsg.data,
+					    imsg.hdr.len - IMSG_HEADER_SIZE);
+				}
+			}
+			break;
+		case IMSG_CTL_END:
+		case IMSG_CTL_SHOW_TIMER:
+			if (idx != PFD_PIPE_RTR) {
+				log_warnx("connect request not from RTR");
+				break;
+			}
+			imsg_compose(ibuf_se, imsg.hdr.type, imsg.hdr.peerid,
+			    imsg.hdr.pid, -1, imsg.data,
+			    imsg.hdr.len - IMSG_HEADER_SIZE);
 			break;
 		default:
 			break;
@@ -1117,13 +1224,15 @@ getsockpair(int pipe[2])
 }
 
 int
-imsg_send_sockets(struct imsgbuf *se, struct imsgbuf *rde)
+imsg_send_sockets(struct imsgbuf *se, struct imsgbuf *rde, struct imsgbuf *roa)
 {
 	int pipe_s2r[2];
 	int pipe_s2r_ctl[2];
+	int pipe_r2r[2];
 
 	getsockpair(pipe_s2r);
 	getsockpair(pipe_s2r_ctl);
+	getsockpair(pipe_r2r);
 
 	if (imsg_compose(se, IMSG_SOCKET_CONN, 0, 0, pipe_s2r[0],
 	    NULL, 0) == -1)
@@ -1139,5 +1248,44 @@ imsg_send_sockets(struct imsgbuf *se, struct imsgbuf *rde)
 	    NULL, 0) == -1)
 		return (-1);
 
+	if (imsg_compose(roa, IMSG_SOCKET_CONN_RTR, 0, 0, pipe_r2r[0],
+	    NULL, 0) == -1)
+		return (-1);
+	if (imsg_compose(rde, IMSG_SOCKET_CONN_RTR, 0, 0, pipe_r2r[1],
+	    NULL, 0) == -1)
+		return (-1);
+
 	return (0);
+}
+
+void
+bgpd_rtr_connect(struct rtr_config *r)
+{
+	socklen_t len;
+	int fd;
+
+	/* XXX should be non-blocking */
+	fd = socket(aid2af(r->remote_addr.aid), SOCK_STREAM, 0);
+	if (fd == -1) {
+		log_warn("rtr %s", r->descr);
+		return;
+	}
+	if (r->local_addr.aid != AID_UNSPEC) {
+		if (bind(fd,  addr2sa(&r->local_addr, 0, &len), len) == -1) {
+			log_warn("rtr %s: bind to %s", r->descr,
+			    log_addr(&r->local_addr));
+			close(fd);
+			return;
+		}
+	}
+
+	if (connect(fd, addr2sa(&r->remote_addr, r->remote_port, &len), len) ==
+	    -1) {
+		log_warn("rtr %s: connect to %s:%u", r->descr,
+		    log_addr(&r->remote_addr), r->remote_port);
+		close(fd);
+		return;
+	}
+
+	imsg_compose(ibuf_rtr, IMSG_SOCKET_CONN, r->id, 0, fd, NULL, 0);
 }
