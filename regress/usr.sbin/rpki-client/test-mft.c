@@ -1,4 +1,4 @@
-/*	$Id: test-mft.c,v 1.10 2020/11/09 16:13:02 tb Exp $ */
+/*	$Id: test-mft.c,v 1.11 2021/02/16 08:53:53 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -54,6 +54,7 @@ mft_print(const struct mft *p)
 
 	printf("Subject key identifier: %s\n", p->ski);
 	printf("Authority key identifier: %s\n", p->aki);
+	printf("Authority info access: %s\n", p->aia);
 	for (i = 0; i < p->filesz; i++) {
 		b64_ntop(p->files[i].hash, sizeof(p->files[i].hash),
 		    hash, sizeof(hash));

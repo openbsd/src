@@ -1,4 +1,4 @@
-/*	$Id: test-cert.c,v 1.8 2021/02/08 09:28:58 claudio Exp $ */
+/*	$Id: test-cert.c,v 1.9 2021/02/16 08:53:53 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -52,6 +52,8 @@ cert_print(const struct cert *p)
 	printf("Subject key identifier: %s\n", p->ski);
 	if (p->aki != NULL)
 		printf("Authority key identifier: %s\n", p->aki);
+	if (p->aia != NULL)
+		printf("Authority info access: %s\n", p->aia);
 
 	for (i = 0; i < p->asz; i++)
 		switch (p->as[i].type) {
