@@ -1,4 +1,4 @@
-/*	$OpenBSD: cookie.c,v 1.9 2019/05/16 12:44:17 florian Exp $	*/
+/*	$OpenBSD: cookie.c,v 1.10 2021/02/16 16:27:34 naddy Exp $	*/
 
 /*
  * Copyright (c) 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -58,10 +58,10 @@ void
 cookie_load(void)
 {
 	field_t		 field;
-	size_t		 len;
 	time_t		 date;
 	char		*line;
-	char		*lbuf;
+	char		*lbuf = NULL;
+	size_t		 lbufsize = 0;
 	char		*param;
 	const char	*estr;
 	FILE		*fp;
@@ -75,19 +75,9 @@ cookie_load(void)
 	if (fp == NULL)
 		err(1, "cannot open cookie file %s", cookiefile);
 	date = time(NULL);
-	lbuf = NULL;
-	while ((line = fgetln(fp, &len)) != NULL) {
-		if (line[len - 1] == '\n') {
-			line[len - 1] = '\0';
-			--len;
-		} else {
-			if ((lbuf = malloc(len + 1)) == NULL)
-				err(1, NULL);
-			memcpy(lbuf, line, len);
-			lbuf[len] = '\0';
-			line = lbuf;
-		}
-		line[strcspn(line, "\r")] = '\0';
+	while (getline(&lbuf, &lbufsize, fp) != -1) {
+		line = lbuf;
+		line[strcspn(line, "\r\n")] = '\0';
 
 		line += strspn(line, " \t");
 		if ((*line == '#') || (*line == '\0')) {
