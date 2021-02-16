@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.49 2021/02/16 13:50:46 mglocker Exp $	*/
+/*	$OpenBSD: video.c,v 1.50 2021/02/16 19:36:03 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -36,9 +36,10 @@
 #include <uvm/uvm_extern.h>
 
 #ifdef VIDEO_DEBUG
-#define	DPRINTF(x)	do { printf x; } while (0)
+int video_debug = 1;
+#define DPRINTF(l, x...) do { if ((l) <= video_debug) printf(x); } while (0)
 #else
-#define DPRINTF(x)
+#define DPRINTF(l, x...)
 #endif
 
 struct video_softc {
@@ -136,11 +137,11 @@ videoopen(dev_t dev, int flags, int fmt, struct proc *p)
 		return (ENXIO);
 
 	if (sc->sc_open) {
-		DPRINTF(("%s: device already open\n", __func__));
+		DPRINTF(1, "%s: device already open\n", __func__);
 		return (0);
 	} else {
 		sc->sc_open = 1;
-		DPRINTF(("%s: set device to open\n", __func__));
+		DPRINTF(1, "%s: set device to open\n", __func__);
 	}
 
 	sc->sc_vidmode = VIDMODE_NONE;
@@ -161,7 +162,7 @@ videoclose(dev_t dev, int flags, int fmt, struct proc *p)
 
 	KERNEL_ASSERT_LOCKED();
 
-	DPRINTF(("%s: last close\n", __func__));
+	DPRINTF(1, "%s: last close\n", __func__);
 
 	sc = video_cd.cd_devs[VIDEOUNIT(dev)];
 
@@ -202,7 +203,7 @@ videoread(dev_t dev, struct uio *uio, int ioflag)
 		sc->sc_vidmode = VIDMODE_READ;
  	}
 
-	DPRINTF(("resid=%zu\n", uio->uio_resid));
+	DPRINTF(1, "resid=%zu\n", uio->uio_resid);
 
 	if (sc->sc_frames_ready < 1) {
 		/* block userland read until a frame is ready */
@@ -222,7 +223,7 @@ videoread(dev_t dev, struct uio *uio, int ioflag)
 	if (error)
 		return (error);
 
-	DPRINTF(("uiomove successfully done (%zu bytes)\n", size));
+	DPRINTF(1, "uiomove successfully done (%zu bytes)\n", size);
 
 	return (0);
 }
@@ -241,8 +242,8 @@ videoioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	    (sc = video_cd.cd_devs[unit]) == NULL || sc->hw_if == NULL)
 		return (ENXIO);
 
-	DPRINTF(("video_ioctl(%zu, '%c', %zu)\n",
-	    IOCPARM_LEN(cmd), (int) IOCGROUP(cmd), cmd & 0xff));
+	DPRINTF(3, "video_ioctl(%zu, '%c', %zu)\n",
+	    IOCPARM_LEN(cmd), (int) IOCGROUP(cmd), cmd & 0xff);
 
 	error = EOPNOTSUPP;
 	switch (cmd) {
@@ -407,7 +408,7 @@ videopoll(dev_t dev, int events, struct proc *p)
 	if ((error = video_claim(sc, p->p_p)))
 		return (error);
 
-	DPRINTF(("%s: events=0x%x\n", __func__, events));
+	DPRINTF(1, "%s: events=0x%x\n", __func__, events);
 
 	if (events & (POLLIN | POLLRDNORM)) {
 		if (sc->sc_frames_ready > 0)
@@ -431,7 +432,7 @@ videopoll(dev_t dev, int events, struct proc *p)
 		}
 	}
 
-	DPRINTF(("%s: revents=0x%x\n", __func__, revents));
+	DPRINTF(1, "%s: revents=0x%x\n", __func__, revents);
 
 	return (revents);
 }
@@ -446,7 +447,7 @@ videommap(dev_t dev, off_t off, int prot)
 
 	KERNEL_ASSERT_LOCKED();
 
-	DPRINTF(("%s: off=%lld, prot=%d\n", __func__, off, prot));
+	DPRINTF(2, "%s: off=%lld, prot=%d\n", __func__, off, prot);
 
 	unit = VIDEOUNIT(dev);
 	if (unit >= video_cd.cd_ndevs ||
@@ -575,7 +576,7 @@ video_intr(void *addr)
 {
 	struct video_softc *sc = (struct video_softc *)addr;
 
-	DPRINTF(("video_intr sc=%p\n", sc));
+	DPRINTF(3, "video_intr sc=%p\n", sc);
 	if (sc->sc_vidmode != VIDMODE_NONE)
 		sc->sc_frames_ready++;
 	else
@@ -590,7 +591,7 @@ video_stop(struct video_softc *sc)
 {
 	int error = 0;
 
-	DPRINTF(("%s: stream close\n", __func__));
+	DPRINTF(1, "%s: stream close\n", __func__);
 
 	if (sc->hw_if->close != NULL)
 		error = sc->hw_if->close(sc->hw_hdl);
@@ -606,13 +607,13 @@ int
 video_claim(struct video_softc *sc, struct process *p)
 {
 	if (sc->sc_owner != NULL && sc->sc_owner != p) {
-		DPRINTF(("%s: already owned=%p\n", __func__, sc->sc_owner));
+		DPRINTF(1, "%s: already owned=%p\n", __func__, sc->sc_owner);
 		return (EBUSY);
 	}
 
 	if (sc->sc_owner == NULL) {
 		sc->sc_owner = p;
-		DPRINTF(("%s: new owner=%p\n", __func__, sc->sc_owner));
+		DPRINTF(1, "%s: new owner=%p\n", __func__, sc->sc_owner);
 	}
 
 	return (0);
