@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.99 2021/02/16 08:52:00 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.100 2021/02/16 16:50:41 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -351,7 +351,8 @@ ta_lookup(const struct tal *tal)
 	for (i = 0, j = 0; i < tal->urisz && j < 2; i++) {
 		if (strncasecmp(tal->uri[i], "rsync://", 8) != 0)
 			continue;	/* ignore non rsync URI for now */
-		rp->uris[j++] = tal->uri[i];
+		if ((rp->uris[j++] = strdup(tal->uri[i])) == NULL)
+			err(1, "strdup");
 	}
 	if (j == 0)
 		errx(1, "TAL file has no rsync:// URI");
