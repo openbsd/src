@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.43 2021/02/16 07:58:30 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.44 2021/02/16 08:52:00 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -396,9 +396,7 @@ void		 proc_parser(int) __attribute__((noreturn));
 
 /* Rsync-specific. */
 
-int		 rsync_uri_parse(const char **, size_t *,
-			const char **, size_t *, const char **, size_t *,
-			enum rtype *, const char *);
+char		*rsync_base_uri(const char *);
 void		 proc_rsync(char *, char *, int) __attribute__((noreturn));
 
 /* Logging (though really used for OpenSSL errors). */

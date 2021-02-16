@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.98 2021/02/05 12:26:52 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.99 2021/02/16 08:52:00 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -78,11 +78,12 @@
  * An rsync repository.
  */
 struct	repo {
-	char		*repo;	/* repository rsync URI */
-	char		*local;	/* local path name */
-	char		*notify; /* RRDB notify URI if available */
-	size_t		 id; /* identifier (array index) */
-	int		 loaded; /* whether loaded or not */
+	char		*repouri;	/* CA repository base URI */
+	char		*local;		/* local path name */
+	char		*uris[2];	/* URIs to fetch from */
+	size_t		 id;		/* identifier (array index) */
+	int		 uriidx;	/* which URI is fetched */
+	int		 loaded;	/* whether loaded or not */
 };
 
 size_t	entity_queue;
@@ -284,64 +285,112 @@ entityq_add(struct entityq *q, char *file, enum rtype type,
 }
 
 /*
- * Look up a repository, queueing it for discovery if not found.
+ * Allocat a new repository be extending the repotable.
  */
-static const struct repo *
-repo_lookup(const char *uri)
+static struct repo *
+repo_alloc(void)
 {
-	const char	*host, *mod;
-	size_t		 hostsz, modsz, i;
-	char		*local;
-	struct repo	*rp;
-	struct ibuf	*b;
+	struct repo *rp;
 
-	if (!rsync_uri_parse(&host, &hostsz,
-	    &mod, &modsz, NULL, NULL, NULL, uri))
-		errx(1, "%s: malformed", uri);
-
-	if (asprintf(&local, "%.*s/%.*s", (int)hostsz, host,
-	    (int)modsz, mod) == -1)
-		err(1, "asprintf");
-
-	/* Look up in repository table. */
-
-	for (i = 0; i < rt.reposz; i++) {
-		if (strcmp(rt.repos[i].local, local))
-			continue;
-		free(local);
-		return &rt.repos[i];
-	}
-
-	rt.repos = reallocarray(rt.repos,
-		rt.reposz + 1, sizeof(struct repo));
+	rt.repos = reallocarray(rt.repos, rt.reposz + 1, sizeof(struct repo));
 	if (rt.repos == NULL)
 		err(1, "reallocarray");
 
 	rp = &rt.repos[rt.reposz++];
 	memset(rp, 0, sizeof(struct repo));
 	rp->id = rt.reposz - 1;
-	rp->local = local;
 
-	if ((rp->repo = strndup(uri, mod + modsz - uri)) == NULL)
-		err(1, "strdup");
+	return rp;
+}
 
-	if (!noop) {
-		if (asprintf(&local, "%s", rp->local) == -1)
-			err(1, "asprintf");
-		logx("%s: pulling from network", local);
-		if ((b = ibuf_dynamic(256, UINT_MAX)) == NULL)
-			err(1, NULL);
-		io_simple_buffer(b, &rp->id, sizeof(rp->id));
-		io_str_buffer(b, local);
-		io_str_buffer(b, rp->repo);
-		ibuf_close(&rsyncq, b);
-		free(local);
-	} else {
+static void
+repo_fetch(struct repo *rp)
+{
+	struct ibuf	*b;
+
+	if (noop) {
 		rp->loaded = 1;
 		logx("%s: using cache", rp->local);
 		stats.repos++;
 		/* there is nothing in the queue so no need to flush */
+		return;
 	}
+
+	logx("%s: pulling from network", rp->local);
+	if ((b = ibuf_dynamic(256, UINT_MAX)) == NULL)
+		err(1, NULL);
+	io_simple_buffer(b, &rp->id, sizeof(rp->id));
+	io_str_buffer(b, rp->local);
+	io_str_buffer(b, rp->uris[0]);
+	ibuf_close(&rsyncq, b);
+}
+
+/*
+ * Look up a trust anchor, queueing it for download if not found.
+ */
+static const struct repo *
+ta_lookup(const struct tal *tal)
+{
+	struct repo	*rp;
+	char		*local;
+	size_t		i, j;
+
+	if (asprintf(&local, "ta/%s", tal->descr) == -1)
+		err(1, "asprinf");
+
+	/* Look up in repository table. (Lookup should actually fail here) */
+	for (i = 0; i < rt.reposz; i++) {
+		if (strcmp(rt.repos[i].local, local) != 0)
+			continue;
+		free(local);
+		return &rt.repos[i];
+	}
+
+	rp = repo_alloc();
+	rp->local = local;
+	for (i = 0, j = 0; i < tal->urisz && j < 2; i++) {
+		if (strncasecmp(tal->uri[i], "rsync://", 8) != 0)
+			continue;	/* ignore non rsync URI for now */
+		rp->uris[j++] = tal->uri[i];
+	}
+	if (j == 0)
+		errx(1, "TAL file has no rsync:// URI");
+
+	repo_fetch(rp);
+	return rp;
+}
+
+/*
+ * Look up a repository, queueing it for discovery if not found.
+ */
+static const struct repo *
+repo_lookup(const char *uri)
+{
+	char		*local, *repo;
+	struct repo	*rp;
+	size_t		 i;
+
+	if ((repo = rsync_base_uri(uri)) == NULL)
+		return NULL;
+
+	/* Look up in repository table. */
+	for (i = 0; i < rt.reposz; i++) {
+		if (rt.repos[i].repouri == NULL ||
+		    strcmp(rt.repos[i].repouri, repo) != 0)
+			continue;
+		free(repo);
+		return &rt.repos[i];
+	}
+
+	rp = repo_alloc();
+	rp->repouri = repo;
+	local = strchr(repo, ':') + strlen("://");
+	if (asprintf(&rp->local, "rsync/%s", local) == -1)
+		err(1, "asprintf");
+	if ((rp->uris[0] = strdup(repo)) == NULL)
+		err(1, "strdup");
+
+	repo_fetch(rp);
 	return rp;
 }
 
@@ -353,7 +402,10 @@ repo_filename(const struct repo *repo, const char *uri)
 {
 	char *nfile;
 
-	uri += strlen(repo->repo) + 1;
+	if (strstr(uri, repo->repouri) != uri)
+		errx(1, "%s: URI outside of repository", uri);
+	uri += strlen(repo->repouri) + 1;	/* skip base and '/' */
+
 	if (asprintf(&nfile, "%s/%s", repo->local, uri) == -1)
 		err(1, "asprintf");
 	return nfile;
@@ -484,22 +536,17 @@ queue_add_from_tal(struct entityq *q, const struct tal *tal)
 {
 	char			*nfile;
 	const struct repo	*repo;
-	const char		*uri = NULL;
-	size_t			 i;
+	const char		*uri;
 
 	assert(tal->urisz);
 
-	for (i = 0; i < tal->urisz; i++) {
-		uri = tal->uri[i];
-		if (strncasecmp(uri, "rsync://", 8) == 0)
-			break;
-	}
-	if (uri == NULL)
-		errx(1, "TAL file has no rsync:// URI");
-
 	/* Look up the repository. */
-	repo = repo_lookup(uri);
-	nfile = repo_filename(repo, uri);
+	repo = ta_lookup(tal);
+
+	uri = strrchr(repo->uris[0], '/');
+	assert(uri);
+	if (asprintf(&nfile, "%s/%s", repo->local, uri + 1) == -1)
+		err(1, "asprintf");
 
 	entityq_add(q, nfile, RTYPE_CER, repo, tal->pkey,
 	    tal->pkeysz, tal->descr);
@@ -515,6 +562,9 @@ queue_add_from_cert(struct entityq *q, const struct cert *cert)
 	char			*nfile;
 
 	repo = repo_lookup(cert->mft);
+	if (repo == NULL) /* bad repository URI */
+		return;
+
 	nfile = repo_filename(repo, cert->mft);
 
 	entityq_add(q, nfile, RTYPE_MFT, repo, NULL, 0, NULL);
@@ -1081,8 +1131,10 @@ main(int argc, char *argv[])
 
 	/* Memory cleanup. */
 	for (i = 0; i < rt.reposz; i++) {
+		free(rt.repos[i].repouri);
 		free(rt.repos[i].local);
-		free(rt.repos[i].repo);
+		free(rt.repos[i].uris[0]);
+		free(rt.repos[i].uris[1]);
 	}
 	free(rt.repos);
 
