@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.10 2021/02/14 14:41:35 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.11 2021/02/16 18:35:26 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -257,6 +257,10 @@ int hidpp10_enable_notifications(struct uhidpp_softc *, uint8_t);
 
 int hidpp20_root_get_feature(struct uhidpp_softc *, uint8_t, uint16_t,
     uint8_t *, uint8_t *);
+int hidpp20_feature_get_count(struct uhidpp_softc *, uint8_t, uint8_t,
+    uint8_t *);
+int hidpp20_feature_get_id(struct uhidpp_softc *, uint8_t, uint8_t, uint8_t,
+    uint16_t *, uint8_t *);
 int hidpp20_battery_get_level_status(struct uhidpp_softc *, uint8_t, uint8_t,
     uint8_t *, uint8_t *, uint8_t *);
 int hidpp20_battery_get_capability(struct uhidpp_softc *, uint8_t, uint8_t,
@@ -685,7 +689,6 @@ uhidpp_device_refresh(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 int
 uhidpp_device_features(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 {
-	struct uhidpp_report resp;
 	int error;
 	uint8_t count, feature_idx, feature_type, i;
 
@@ -701,38 +704,27 @@ uhidpp_device_features(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 		return error;
 	}
 
-	error = hidpp_send_fap_report(sc,
-	    HIDPP_REPORT_ID_LONG,
-	    dev->d_id,
-	    feature_idx,
-	    HIDPP20_FEAT_FEATURE_COUNT_FUNC,
-	    NULL, 0, &resp);
+	error = hidpp20_feature_get_count(sc, dev->d_id, feature_idx, &count);
 	if (error) {
 		DPRINTF("%s: feature count failure: device_id=%d, error=%d\n",
 		    __func__, dev->d_id, error);
 		return error;
 	}
-	count = resp.fap.params[0];
 
 	for (i = 1; i <= count; i++) {
-		uint8_t params[1] = { i };
 		uint16_t id;
+		uint8_t type;
 
-		error = hidpp_send_fap_report(sc,
-		    HIDPP_REPORT_ID_LONG,
-		    dev->d_id,
-		    feature_idx,
-		    HIDPP20_FEAT_FEATURE_ID_FUNC,
-		    params, sizeof(params), &resp);
+		error = hidpp20_feature_get_id(sc, dev->d_id, feature_idx, i,
+		    &id, &type);
 		if (error)
 			continue;
 
-		id = bemtoh16(resp.fap.params);
 		if (id == HIDPP20_FEAT_BATTERY_ID)
 			dev->d_features |= UHIDPP_DEVICE_FEATURE_BATTERY;
 
 		DPRINTF("%s: idx=%d, id=%x, type=%x device_id=%d\n",
-		    __func__, i, id, resp.fap.params[2], dev->d_id);
+		    __func__, i, id, type, dev->d_id);
 	}
 	DPRINTF("%s: device_id=%d, count=%d, features=%x\n",
 	    __func__, dev->d_id, count, dev->d_features);
@@ -990,6 +982,48 @@ hidpp20_root_get_feature(struct uhidpp_softc *sc, uint8_t device_id,
 
 	*feature_idx = resp.fap.params[0];
 	*feature_type = resp.fap.params[1];
+	return 0;
+}
+
+int
+hidpp20_feature_get_count(struct uhidpp_softc *sc, uint8_t device_id,
+    uint8_t feature_idx, uint8_t *count)
+{
+	struct uhidpp_report resp;
+	int error;
+
+	error = hidpp_send_fap_report(sc,
+	    HIDPP_REPORT_ID_LONG,
+	    device_id,
+	    feature_idx,
+	    HIDPP20_FEAT_FEATURE_COUNT_FUNC,
+	    NULL, 0, &resp);
+	if (error)
+		return error;
+
+	*count = resp.fap.params[0];
+	return 0;
+}
+
+int
+hidpp20_feature_get_id(struct uhidpp_softc *sc, uint8_t device_id,
+    uint8_t feature_idx, uint8_t idx, uint16_t *id, uint8_t *type)
+{
+	struct uhidpp_report resp;
+	uint8_t params[1] = { idx };
+	int error;
+
+	error = hidpp_send_fap_report(sc,
+	    HIDPP_REPORT_ID_LONG,
+	    device_id,
+	    feature_idx,
+	    HIDPP20_FEAT_FEATURE_ID_FUNC,
+	    params, sizeof(params), &resp);
+	if (error)
+		return error;
+
+	*id = bemtoh16(resp.fap.params);
+	*type = resp.fap.params[2];
 	return 0;
 }
 
