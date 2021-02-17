@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.16 2020/07/17 08:07:33 patrick Exp $ */
+/*	$OpenBSD: intr.h,v 1.17 2021/02/17 12:11:45 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -81,14 +81,13 @@
 #include <sys/device.h>
 #include <sys/queue.h>
 
-int	 splraise(int);
-int	 spllower(int);
-void	 splx(int);
+int	splraise(int);
+int	spllower(int);
+void	splx(int);
 
-void	 arm_do_pending_intr(int);
-void	 arm_set_intr_handler(int (*raise)(int), int (*lower)(int),
-    void (*x)(int), void (*setipl)(int),
-    void (*intr_handle)(void *));
+void	arm_do_pending_intr(int);
+void	arm_set_intr_handler(int (*)(int), int (*)(int), void (*)(int),
+	    void (*)(int), void (*)(void *), void (*)(void *));
 
 struct arm_intr_handle {
 	struct interrupt_controller *ih_ic;

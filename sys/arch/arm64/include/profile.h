@@ -1,4 +1,4 @@
-/* $OpenBSD: profile.h,v 1.1 2016/12/17 23:38:33 patrick Exp $ */
+/* $OpenBSD: profile.h,v 1.2 2021/02/17 12:11:45 kettenis Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  *
@@ -61,7 +61,7 @@ __asm__ (".text;"						\
 #ifdef _KERNEL
 // Change this to dair read/set, then restore.
 #define MCOUNT_ENTER						\
-__asm__ ("mrs %x0,daif; msr daifset, #0x2": "=r"(s));
+__asm__ ("mrs %x0, daif; msr daifset, #0x3": "=r"(s));
 #define	MCOUNT_EXIT						\
 __asm__ ("msr daif, %x0":: "r"(s));
 	

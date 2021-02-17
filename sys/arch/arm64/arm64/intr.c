@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.19 2020/07/17 08:07:33 patrick Exp $ */
+/* $OpenBSD: intr.c,v 1.20 2021/02/17 12:11:44 kettenis Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -39,8 +39,11 @@ int arm_dflt_spllower(int);
 void arm_dflt_splx(int);
 void arm_dflt_setipl(int);
 
-void arm_dflt_intr(void *);
-void arm_cpu_intr(void *);
+void arm_dflt_irq(void *);
+void arm_dflt_fiq(void *);
+
+void arm_cpu_irq(void *);
+void arm_cpu_fiq(void *);
 
 #define SI_TO_IRQBIT(x) (1 << (x))
 uint32_t arm_smask[NIPL];
@@ -52,21 +55,40 @@ struct arm_intr_func arm_intr_func = {
 	arm_dflt_setipl
 };
 
-void (*arm_intr_dispatch)(void *) = arm_dflt_intr;
+void
+arm_dflt_irq(void *frame)
+{
+	panic("%s", __func__);
+}
 
 void
-arm_cpu_intr(void *frame)
+arm_dflt_fiq(void *frame)
+{
+	panic("%s", __func__);
+}
+
+void (*arm_irq_dispatch)(void *) = arm_dflt_irq;
+
+void
+arm_cpu_irq(void *frame)
 {
 	struct cpu_info	*ci = curcpu();
 
 	ci->ci_idepth++;
-	(*arm_intr_dispatch)(frame);
+	(*arm_irq_dispatch)(frame);
 	ci->ci_idepth--;
 }
+
+void (*arm_fiq_dispatch)(void *) = arm_dflt_fiq;
+
 void
-arm_dflt_intr(void *frame)
+arm_cpu_fiq(void *frame)
 {
-	panic("arm_dflt_intr() called");
+	struct cpu_info	*ci = curcpu();
+
+	ci->ci_idepth++;
+	(*arm_fiq_dispatch)(frame);
+	ci->ci_idepth--;
 }
 
 /*
@@ -669,15 +691,20 @@ arm_do_pending_intr(int pcpl)
 	restore_interrupts(oldirqstate);
 }
 
-void arm_set_intr_handler(int (*raise)(int), int (*lower)(int),
-    void (*x)(int), void (*setipl)(int),
-	void (*intr_handle)(void *))
+void
+arm_set_intr_handler(int (*raise)(int), int (*lower)(int),
+    void (*x)(int), void (*setipl)(int), void (*irq_dispatch)(void *),
+    void (*fiq_dispatch)(void *))
 {
-	arm_intr_func.raise		= raise;
-	arm_intr_func.lower		= lower;
-	arm_intr_func.x			= x;
-	arm_intr_func.setipl		= setipl;
-	arm_intr_dispatch		= intr_handle;
+	arm_intr_func.raise = raise;
+	arm_intr_func.lower = lower;
+	arm_intr_func.x	= x;
+	arm_intr_func.setipl = setipl;
+
+	if (irq_dispatch)
+		arm_irq_dispatch = irq_dispatch;
+	if (fiq_dispatch)
+		arm_fiq_dispatch = fiq_dispatch;
 }
 
 void

@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.18 2020/06/05 23:16:24 naddy Exp $ */
+/* $OpenBSD: cpu.h,v 1.19 2021/02/17 12:11:45 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -256,7 +256,7 @@ void board_startup(void);
 
 // functions to manipulate interrupt state
 static __inline uint32_t
-get_daif()
+get_daif(void)
 {
 	uint32_t daif;
 	
@@ -271,23 +271,23 @@ restore_daif(uint32_t daif)
 }
 
 static __inline void
-enable_irq_daif()
+enable_irq_daif(void)
 {
-	__asm volatile ("msr daifclr, #2");
+	__asm volatile ("msr daifclr, #3");
 }
 
 static __inline void
-disable_irq_daif()
+disable_irq_daif(void)
 {
-	__asm volatile ("msr daifset, #2");
+	__asm volatile ("msr daifset, #3");
 }
 
 static __inline uint32_t
-disable_irq_daif_ret()
+disable_irq_daif_ret(void)
 {
 	uint32_t daif;
 	__asm volatile ("mrs %x0, daif": "=r"(daif));
-	__asm volatile ("msr daifset, #2");
+	__asm volatile ("msr daifset, #3");
 	return daif;
 }
 

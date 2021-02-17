@@ -1,4 +1,4 @@
-/*	$OpenBSD: trampoline.S,v 1.2 2019/12/17 22:25:56 deraadt Exp $	*/
+/*	$OpenBSD: trampoline.S,v 1.3 2021/02/17 12:11:44 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -63,7 +63,7 @@ trampoline_vectors:
 
 	vector el0_sync		/* Synchronous 64-bit EL0 */
 	vector el0_irq		/* IRQ 64-bit EL0 */
-	vempty			/* FIQ 64-bit EL0 */
+	vector el0_fiq		/* FIQ 64-bit EL0 */
 	vector el0_error	/* Error 64-bit EL0 */
 
 	vempty			/* Synchronous 32-bit EL0 */
@@ -109,6 +109,10 @@ tramp_el0_sync:
 tramp_el0_irq:
 	tramp_enter
 	b	handle_el0_irq
+
+tramp_el0_fiq:
+	tramp_enter
+	b	handle_el0_fiq
 
 tramp_el0_error:
 	tramp_enter

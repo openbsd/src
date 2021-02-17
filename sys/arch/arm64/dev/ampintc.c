@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.20 2020/09/05 14:47:21 deraadt Exp $ */
+/* $OpenBSD: ampintc.c,v 1.21 2021/02/17 12:11:45 kettenis Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -302,7 +302,7 @@ ampintc_attach(struct device *parent, struct device *self, void *aux)
 
 	/* insert self as interrupt handler */
 	arm_set_intr_handler(ampintc_splraise, ampintc_spllower, ampintc_splx,
-	    ampintc_setipl, ampintc_irq_handler);
+	    ampintc_setipl, ampintc_irq_handler, NULL);
 
 #ifdef MULTIPROCESSOR
 	/* setup IPI interrupts */

@@ -1,4 +1,4 @@
-/* $OpenBSD: exception.S,v 1.11 2020/03/17 17:27:12 kettenis Exp $ */
+/* $OpenBSD: exception.S,v 1.12 2021/02/17 12:11:44 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -68,7 +68,7 @@
 
 .macro	restore_registers el
 .if \el == 1
-	msr	daifset, #2
+	msr	daifset, #3
 	/*
 	 * Disable interrupts, x18 may change in the interrupt exception
 	 * handler.  For EL0 exceptions, do_ast already did this.
@@ -116,7 +116,7 @@
 	/* Disable interrupts */
 	mrs	x19, daif
 1:
-	msr	daifset, #2
+	msr	daifset, #3
 
 	/* Check for astpending */
 	mrs	x18, tpidr_el1
@@ -171,7 +171,18 @@ handle_el1h_sync:
 handle_el1h_irq:
 	save_registers 1
 	mov	x0, sp
-	bl	arm_cpu_intr
+	bl	arm_cpu_irq
+	restore_registers 1
+	eret
+	dsb nsh
+	isb
+
+	.globl handle_el1h_fiq
+	.type handle_el1h_fiq,@function
+handle_el1h_fiq:
+	save_registers 1
+	mov	x0, sp
+	bl	arm_cpu_fiq
 	restore_registers 1
 	eret
 	dsb nsh
@@ -210,7 +221,21 @@ handle_el0_irq:
 	disable_ss
 	bl	_C_LABEL(vfp_save)
 	mov	x0, sp
-	bl	arm_cpu_intr
+	bl	arm_cpu_irq
+	do_ast
+	bl	_C_LABEL(vfp_enable)
+	allow_ss
+	restore_registers 0
+	return
+
+	.globl handle_el0_fiq
+	.type handle_el0_fiq,@function
+handle_el0_fiq:
+	save_registers 0
+	disable_ss
+	bl	_C_LABEL(vfp_save)
+	mov	x0, sp
+	bl	arm_cpu_fiq
 	do_ast
 	bl	_C_LABEL(vfp_enable)
 	allow_ss
@@ -253,7 +278,7 @@ exception_vectors:
 
 	vector el1h_sync	/* Synchronous EL1h */
 	vector el1h_irq		/* IRQ EL1h */
-	vempty			/* FIQ EL1h */
+	vector el1h_fiq		/* FIQ EL1h */
 	vector el1h_error	/* Error EL1h */
 
 	vempty			/* Synchronous 64-bit EL0 */
