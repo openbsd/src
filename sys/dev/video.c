@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.53 2021/02/17 17:09:12 mglocker Exp $	*/
+/*	$OpenBSD: video.c,v 1.54 2021/02/17 17:21:58 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -124,13 +124,12 @@ videoattach(struct device *parent, struct device *self, void *aux)
 int
 videoopen(dev_t dev, int flags, int fmt, struct proc *p)
 {
-	int	unit;
+	int unit = VIDEOUNIT(dev);
 	struct video_softc *sc;
 	int error = 0;
 
 	KERNEL_ASSERT_LOCKED();
 
-	unit = VIDEOUNIT(dev);
 	if (unit >= video_cd.cd_ndevs ||
 	    (sc = video_cd.cd_devs[unit]) == NULL ||
 	     sc->hw_if == NULL)
@@ -177,13 +176,13 @@ videoclose(dev_t dev, int flags, int fmt, struct proc *p)
 int
 videoread(dev_t dev, struct uio *uio, int ioflag)
 {
+	int unit = VIDEOUNIT(dev);
 	struct video_softc *sc;
-	int unit, error;
+	int error;
 	size_t size;
 
 	KERNEL_ASSERT_LOCKED();
 
-	unit = VIDEOUNIT(dev);
 	if (unit >= video_cd.cd_ndevs ||
 	    (sc = video_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
@@ -233,13 +232,13 @@ videoread(dev_t dev, struct uio *uio, int ioflag)
 int
 videoioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
+	int unit = VIDEOUNIT(dev);
 	struct video_softc *sc;
 	struct v4l2_buffer *vb = (struct v4l2_buffer *)data;
-	int unit, error;
+	int error;
 
 	KERNEL_ASSERT_LOCKED();
 
-	unit = VIDEOUNIT(dev);
 	if (unit >= video_cd.cd_ndevs ||
 	    (sc = video_cd.cd_devs[unit]) == NULL || sc->hw_if == NULL)
 		return (ENXIO);
@@ -442,8 +441,8 @@ videopoll(dev_t dev, int events, struct proc *p)
 paddr_t
 videommap(dev_t dev, off_t off, int prot)
 {
+	int unit = VIDEOUNIT(dev);
 	struct video_softc *sc;
-	int unit;
 	caddr_t p;
 	paddr_t pa;
 
@@ -451,7 +450,6 @@ videommap(dev_t dev, off_t off, int prot)
 
 	DPRINTF(2, "%s: off=%lld, prot=%d\n", __func__, off, prot);
 
-	unit = VIDEOUNIT(dev);
 	if (unit >= video_cd.cd_ndevs ||
 	    (sc = video_cd.cd_devs[unit]) == NULL)
 		return (-1);
