@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.52 2021/02/17 08:51:40 mglocker Exp $	*/
+/*	$OpenBSD: video.c,v 1.53 2021/02/17 17:09:12 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -139,17 +139,19 @@ videoopen(dev_t dev, int flags, int fmt, struct proc *p)
 	if (sc->sc_open) {
 		DPRINTF(1, "%s: device already open\n", __func__);
 		return (0);
-	} else {
-		sc->sc_open = 1;
-		DPRINTF(1, "%s: set device to open\n", __func__);
 	}
 
 	sc->sc_vidmode = VIDMODE_NONE;
 	sc->sc_frames_ready = 0;
 
-	if (sc->hw_if->open != NULL)
+	if (sc->hw_if->open != NULL) {
 		error = sc->hw_if->open(sc->hw_hdl, flags, &sc->sc_fsize,
 		    sc->sc_fbuffer, video_intr, sc);
+	}
+	if (error == 0) {
+		sc->sc_open = 1;
+		DPRINTF(1, "%s: set device to open\n", __func__);
+	}
 
 	return (error);
 }
