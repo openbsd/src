@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.81 2021/02/13 17:12:38 visa Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.82 2021/02/17 14:12:29 visa Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -450,15 +450,11 @@ void
 cnmac_mii_statchg(struct device *self)
 {
 	struct cnmac_softc *sc = (struct cnmac_softc *)self;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	cn30xxpko_port_enable(sc->sc_pko, 0);
 	cn30xxgmx_port_enable(sc->sc_gmx_port, 0);
 
 	cnmac_reset(sc);
-
-	if (ISSET(ifp->if_flags, IFF_RUNNING))
-		cn30xxgmx_set_filter(sc->sc_gmx_port);
 
 	cn30xxpko_port_enable(sc->sc_pko, 1);
 	cn30xxgmx_port_enable(sc->sc_gmx_port, 1);
