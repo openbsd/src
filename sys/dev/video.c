@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.51 2021/02/17 07:08:15 mglocker Exp $	*/
+/*	$OpenBSD: video.c,v 1.52 2021/02/17 08:51:40 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -604,15 +604,15 @@ video_stop(struct video_softc *sc)
 }
 
 int
-video_claim(struct video_softc *sc, struct process *p)
+video_claim(struct video_softc *sc, struct process *pr)
 {
-	if (sc->sc_owner != NULL && sc->sc_owner != p) {
+	if (sc->sc_owner != NULL && sc->sc_owner != pr) {
 		DPRINTF(1, "%s: already owned=%p\n", __func__, sc->sc_owner);
 		return (EBUSY);
 	}
 
 	if (sc->sc_owner == NULL) {
-		sc->sc_owner = p;
+		sc->sc_owner = pr;
 		DPRINTF(1, "%s: new owner=%p\n", __func__, sc->sc_owner);
 	}
 
