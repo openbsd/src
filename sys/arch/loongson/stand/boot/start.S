@@ -1,4 +1,4 @@
-/*	$OpenBSD: start.S,v 1.3 2018/04/20 14:36:42 visa Exp $	*/
+/*	$OpenBSD: start.S,v 1.4 2021/02/17 14:42:20 visa Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -35,7 +35,6 @@ pmon_sp:
 	.ent	__start, 0
 __start:
 	LA	t0, __start - FRAMESZ(CF_SZ)
-	LA	gp, _gp
 	PTR_S	ra, pmon_ra		# save pmon return address
 	PTR_S	sp, pmon_sp		# and stack
 	move	sp, t0
