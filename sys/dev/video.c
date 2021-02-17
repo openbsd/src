@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.50 2021/02/16 19:36:03 mglocker Exp $	*/
+/*	$OpenBSD: video.c,v 1.51 2021/02/17 07:08:15 mglocker Exp $	*/
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -369,7 +369,7 @@ videoioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 			    (int)*data);
 		if (!error) {
 			/* Release device ownership and streaming buffers. */
-			video_stop(sc);
+			error = video_stop(sc);
 		}
 		break;
 	case VIDIOC_TRY_FMT:
