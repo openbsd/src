@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.307 2021/02/13 16:14:12 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.308 2021/02/18 21:30:52 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -5162,10 +5162,8 @@ ikev2_sa_initiator_dh(struct iked_sa *sa, struct iked_message *msg,
 			log_debug("%s: invalid peer dh exchange", __func__);
 			return (-1);
 		}
-		if ((sa->sa_dhrexchange = ibuf_dup(msg->msg_ke)) == NULL) {
-			log_debug("%s: failed to copy dh exchange", __func__);
-			return (-1);
-		}
+		sa->sa_dhrexchange = msg->msg_ke;
+		msg->msg_ke = NULL;
 	}
 
 	/* Set a pointer to the peer exchange */
@@ -5322,13 +5320,8 @@ ikev2_sa_responder_dh(struct iked_kex *kex, struct iked_proposals *proposals,
 	}
 
 	if (!ibuf_length(kex->kex_dhiexchange)) {
-		if ((kex->kex_dhiexchange = ibuf_dup(msg->msg_ke)) == NULL) {
-			/* XXX send notification to peer */
-			log_info("%s: invalid dh, size %zu",
-			    SPI_SA(msg->msg_sa, __func__),
-			    ibuf_length(msg->msg_ke));
-			return (-1);
-		}
+		kex->kex_dhiexchange = msg->msg_ke;
+		msg->msg_ke = NULL;
 	}
 
 	if (!ibuf_length(kex->kex_dhrexchange)) {
