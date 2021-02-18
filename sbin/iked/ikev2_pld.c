@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.115 2021/02/16 21:07:43 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.116 2021/02/18 21:39:36 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -688,7 +688,6 @@ ikev2_pld_ke(struct iked *env, struct ikev2_payload *pld,
 			log_info("%s: duplicate KE payload", __func__);
 			return (-1);
 		}
-		ibuf_release(msg->msg_parent->msg_ke);
 		if ((msg->msg_parent->msg_ke = ibuf_new(buf, len)) == NULL) {
 			log_debug("%s: failed to get exchange", __func__);
 			return (-1);
