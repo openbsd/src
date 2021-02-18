@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.26 2021/02/16 07:58:30 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.27 2021/02/18 16:23:17 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -1080,19 +1080,10 @@ cert_parse_inner(X509 **xp, const char *fn, int ta)
 			/* ignored here, handled later */
 			break;
 		case NID_info_access:
-			free(p.res->aia);
-			p.res->aia = x509_get_aia(x, p.fn);
-			c = (p.res->aia != NULL);
 			break;
 		case NID_authority_key_identifier:
-			free(p.res->aki);
-			p.res->aki = x509_get_aki_ext(ext, p.fn);
-			c = (p.res->aki != NULL);
 			break;
 		case NID_subject_key_identifier:
-			free(p.res->ski);
-			p.res->ski = x509_get_ski_ext(ext, p.fn);
-			c = (p.res->ski != NULL);
 			break;
 		default:
 			/* {
@@ -1107,8 +1098,12 @@ cert_parse_inner(X509 **xp, const char *fn, int ta)
 			goto out;
 	}
 
-	if (!ta)
+	p.res->aki = x509_get_aki(x, ta, p.fn);
+	p.res->ski = x509_get_ski(x, p.fn);
+	if (!ta) {
+		p.res->aia = x509_get_aia(x, p.fn);
 		p.res->crl = x509_get_crl(x, p.fn);
+	}
 
 	/* Validation on required fields. */
 
@@ -1131,6 +1126,16 @@ cert_parse_inner(X509 **xp, const char *fn, int ta)
 	} else if (!ta && strcmp(p.res->aki, p.res->ski) == 0) {
 		warnx("%s: RFC 6487 section 8.4.2: "
 		    "non-trust anchor AKI may not match SKI", p.fn);
+		goto out;
+	}
+
+	if (!ta && p.res->aia == NULL) {
+		warnx("%s: RFC 6487 section 8.4.7: "
+		    "non-trust anchor missing AIA", p.fn);
+		goto out;
+	} else if (ta && p.res->aia != NULL) {
+		warnx("%s: RFC 6487 section 8.4.7: "
+		    "trust anchor must not have AIA", p.fn);
 		goto out;
 	}
 

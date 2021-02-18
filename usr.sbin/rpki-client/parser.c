@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.4 2021/02/04 14:32:01 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.5 2021/02/18 16:23:17 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -361,7 +361,8 @@ proc_parser_crl(struct entity *entp, X509_STORE *store,
 	if ((x509_crl = crl_parse(entp->file)) != NULL) {
 		if ((crl = malloc(sizeof(*crl))) == NULL)
 			err(1, NULL);
-		if ((crl->aki = x509_crl_get_aki(x509_crl)) == NULL)
+		if ((crl->aki = x509_crl_get_aki(x509_crl, entp->file)) ==
+		    NULL)
 			errx(1, "x509_crl_get_aki failed");
 		crl->x509_crl = x509_crl;
 

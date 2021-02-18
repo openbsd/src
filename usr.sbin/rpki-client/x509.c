@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.15 2021/02/16 07:58:30 job Exp $ */
+/*	$OpenBSD: x509.c,v 1.16 2021/02/18 16:23:17 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -30,126 +30,53 @@
 #include "extern.h"
 
 /*
- * Wrapper around ASN1_get_object() that preserves the current start
- * state and returns a more meaningful value.
- * Return zero on failure, non-zero on success.
- */
-static int
-ASN1_frame(const char *fn, size_t sz,
-    const unsigned char **cnt, long *cntsz, int *tag)
-{
-	int	 ret, pcls;
-
-	assert(cnt != NULL && *cnt != NULL);
-	assert(sz > 0);
-	ret = ASN1_get_object(cnt, cntsz, tag, &pcls, sz);
-	if ((ret & 0x80)) {
-		cryptowarnx("%s: ASN1_get_object", fn);
-		return 0;
-	}
-	return ASN1_object_size((ret & 0x01) ? 2 : 0, *cntsz, *tag);
-}
-
-/*
  * Parse X509v3 authority key identifier (AKI), RFC 6487 sec. 4.8.3.
  * Returns the AKI or NULL if it could not be parsed.
  * The AKI is formatted as aa:bb:cc:dd, with each being a hex value.
  */
 char *
-x509_get_aki_ext(X509_EXTENSION *ext, const char *fn)
+x509_get_aki(X509 *x, int ta, const char *fn)
 {
 	const unsigned char	*d;
-	const ASN1_TYPE		*t;
-	const ASN1_OCTET_STRING	*os = NULL;
-	ASN1_SEQUENCE_ANY	*seq = NULL;
-	int			 dsz, ptag;
-	long			 i, plen;
+	AUTHORITY_KEYID		*akid;
+	ASN1_OCTET_STRING	*os;
+	int			 i, dsz, crit;
 	char			 buf[4];
 	char			*res = NULL;
 
-	assert(NID_authority_key_identifier ==
-	    OBJ_obj2nid(X509_EXTENSION_get_object(ext)));
-	os = X509_EXTENSION_get_data(ext);
-	assert(os != NULL);
+	akid = X509_get_ext_d2i(x, NID_authority_key_identifier, &crit, NULL);
+	if (akid == NULL) {
+		if (!ta)
+			warnx("%s: RFC 6487 section 4.8.3: AKI: "
+			    "extension missing", fn);
+		return NULL;
+	}
+	if (crit != 0) {
+		warnx("%s: RFC 6487 section 4.8.3: "
+		    "AKI: extension not non-critical", fn);
+		goto out;
+	}
+	if (akid->issuer != NULL || akid->serial != NULL) {
+		warnx("%s: RFC 6487 section 4.8.3: AKI: "
+		    "authorityCertIssuer or authorityCertSerialNumber present",
+		    fn);
+		goto out;
+	}
+
+	os = akid->keyid;
+	if (os == NULL) {
+		warnx("%s: RFC 6487 section 4.8.3: AKI: "
+		    "Key Identifier missing", fn);
+		goto out;
+	}
 
 	d = os->data;
 	dsz = os->length;
 
-	if ((seq = d2i_ASN1_SEQUENCE_ANY(NULL, &d, dsz)) == NULL) {
-		cryptowarnx("%s: RFC 6487 section 4.8.3: AKI: "
-		    "failed ASN.1 sub-sequence parse", fn);
-		goto out;
-	}
-	if (sk_ASN1_TYPE_num(seq) != 1) {
-		warnx("%s: RFC 6487 section 4.8.3: AKI: "
-		    "want 1 element, have %d", fn, sk_ASN1_TYPE_num(seq));
-		goto out;
-	}
-
-	t = sk_ASN1_TYPE_value(seq, 0);
-	if (t->type != V_ASN1_OTHER) {
-		warnx("%s: RFC 6487 section 4.8.3: AKI: "
-		    "want ASN.1 external, have %s (NID %d)",
-		    fn, ASN1_tag2str(t->type), t->type);
-		goto out;
-	}
-
-	d = t->value.asn1_string->data;
-	dsz = t->value.asn1_string->length;
-
-	if (!ASN1_frame(fn, dsz, &d, &plen, &ptag))
-		goto out;
-
-	/* Make room for [hex1, hex2, ":"]*, NUL. */
-
-	if ((res = calloc(plen * 3 + 1, 1)) == NULL)
-		err(1, NULL);
-
-	for (i = 0; i < plen; i++) {
-		snprintf(buf, sizeof(buf), "%02X:", d[i]);
-		strlcat(res, buf, plen * 3 + 1);
-	}
-	res[plen * 3 - 1] = '\0';
-out:
-	sk_ASN1_TYPE_pop_free(seq, ASN1_TYPE_free);
-	return res;
-}
-
-/*
- * Parse X509v3 subject key identifier (SKI), RFC 6487 sec. 4.8.2.
- * Returns the SKI or NULL if it could not be parsed.
- * The SKI is formatted as aa:bb:cc:dd, with each being a hex value.
- */
-char *
-x509_get_ski_ext(X509_EXTENSION *ext, const char *fn)
-{
-	const unsigned char	*d;
-	const ASN1_OCTET_STRING	*os;
-	ASN1_OCTET_STRING	*oss = NULL;
-	int			 i, dsz;
-	char			 buf[4];
-	char			*res = NULL;
-
-	assert(NID_subject_key_identifier ==
-	    OBJ_obj2nid(X509_EXTENSION_get_object(ext)));
-
-	os = X509_EXTENSION_get_data(ext);
-	assert(os != NULL);
-	d = os->data;
-	dsz = os->length;
-
-	if ((oss = d2i_ASN1_OCTET_STRING(NULL, &d, dsz)) == NULL) {
-		cryptowarnx("%s: RFC 6487 section 4.8.2: SKI: "
-		    "failed ASN.1 octet string parse", fn);
-		goto out;
-	}
-
-	d = oss->data;
-	dsz = oss->length;
-
-	if (dsz != 20) {
-		warnx("%s: RFC 6487 section 4.8.2: SKI: "
-		    "want 20 B SHA1 hash, have %d B", fn, dsz);
+	if (dsz != SHA_DIGEST_LENGTH) {
+		warnx("%s: RFC 6487 section 4.8.2: AKI: "
+		    "want %d bytes SHA1 hash, have %d bytes",
+		    fn, SHA_DIGEST_LENGTH, dsz);
 		goto out;
 	}
 
@@ -164,7 +91,57 @@ x509_get_ski_ext(X509_EXTENSION *ext, const char *fn)
 	}
 	res[dsz * 3 - 1] = '\0';
 out:
-	ASN1_OCTET_STRING_free(oss);
+	AUTHORITY_KEYID_free(akid);
+	return res;
+}
+
+/*
+ * Parse X509v3 subject key identifier (SKI), RFC 6487 sec. 4.8.2.
+ * Returns the SKI or NULL if it could not be parsed.
+ * The SKI is formatted as aa:bb:cc:dd, with each being a hex value.
+ */
+char *
+x509_get_ski(X509 *x, const char *fn)
+{
+	const unsigned char	*d;
+	ASN1_OCTET_STRING	*os;
+	int			 i, dsz, crit;
+	char			 buf[4];
+	char			*res = NULL;
+
+	os = X509_get_ext_d2i(x, NID_subject_key_identifier, &crit, NULL);
+	if (os == NULL) {
+		warnx("%s: RFC 6487 section 4.8.2: SKI: extension missing", fn);
+		return NULL;
+	}
+	if (crit != 0) {
+		warnx("%s: RFC 6487 section 4.8.2: "
+		    "SKI: extension not non-critical", fn);
+		goto out;
+	}
+
+	d = os->data;
+	dsz = os->length;
+
+	if (dsz != SHA_DIGEST_LENGTH) {
+		warnx("%s: RFC 6487 section 4.8.2: SKI: "
+		    "want %d bytes SHA1 hash, have %d bytes",
+		    fn, SHA_DIGEST_LENGTH, dsz);
+		goto out;
+	}
+
+	/* Make room for [hex1, hex2, ":"]*, NUL. */
+
+	if ((res = calloc(dsz * 3 + 1, 1)) == NULL)
+		err(1, NULL);
+
+	for (i = 0; i < dsz; i++) {
+		snprintf(buf, sizeof(buf), "%02X:", d[i]);
+		strlcat(res, buf, dsz * 3 + 1);
+	}
+	res[dsz * 3 - 1] = '\0';
+out:
+	ASN1_OCTET_STRING_free(os);
 	return res;
 }
 
@@ -180,11 +157,17 @@ x509_get_aia(X509 *x, const char *fn)
 	ACCESS_DESCRIPTION		*ad;
 	AUTHORITY_INFO_ACCESS		*info;
 	char				*aia = NULL;
+	int				 crit;
 
-	info = X509_get_ext_d2i(x, NID_info_access, NULL, NULL);
+	info = X509_get_ext_d2i(x, NID_info_access, &crit, NULL);
 	if (info == NULL) {
 		warnx("%s: RFC 6487 section 4.8.7: AIA: extension missing", fn);
 		return NULL;
+	}
+	if (crit != 0) {
+		warnx("%s: RFC 6487 section 4.8.7: "
+		    "AIA: extension not non-critical", fn);
+		goto out;
 	}
 	if (sk_ACCESS_DESCRIPTION_num(info) != 1) {
 		warnx("%s: RFC 6487 section 4.8.7: AIA: "
@@ -217,45 +200,21 @@ out:
 }
 
 /*
- * Wraps around x509_get_ski_ext, x509_get_aki_ext, and x509_get_aia.
+ * Wraps around x509_get_aia, x509_get_aki, and x509_get_ski.
  * Returns zero on failure (out pointers are NULL) or non-zero on
  * success (out pointers must be freed).
  */
 int
 x509_get_extensions(X509 *x, const char *fn, char **aia, char **aki, char **ski)
 {
-	X509_EXTENSION		*ext = NULL;
-	const ASN1_OBJECT	*obj;
-	int			 extsz, i;
-
 	*aia = *aki = *ski = NULL;
 
-	if ((extsz = X509_get_ext_count(x)) < 0)
-		cryptoerrx("X509_get_ext_count");
-
-	for (i = 0; i < extsz; i++) {
-		ext = X509_get_ext(x, i);
-		assert(ext != NULL);
-		obj = X509_EXTENSION_get_object(ext);
-		assert(obj != NULL);
-		switch (OBJ_obj2nid(obj)) {
-		case NID_subject_key_identifier:
-			free(*ski);
-			*ski = x509_get_ski_ext(ext, fn);
-			break;
-		case NID_authority_key_identifier:
-			free(*aki);
-			*aki = x509_get_aki_ext(ext, fn);
-			break;
-		case NID_info_access:
-			free(*aia);
-			*aia = x509_get_aia(x, fn);
-			break;
-		}
-	}
+	*aia = x509_get_aia(x, fn);
+	*aki = x509_get_aki(x, 0, fn);
+	*ski = x509_get_ski(x, fn);
 
 	if (*aia == NULL || *aki == NULL || *ski == NULL) {
-		cryptowarnx("%s: RFC 6487 section 4.8: "
+		warnx("%s: RFC 6487 section 4.8: "
 		    "missing AIA, AKI or SKI X509 extension", fn);
 		free(*aia);
 		free(*aki);
@@ -277,49 +236,55 @@ x509_get_extensions(X509 *x, const char *fn, char **aia, char **aki, char **ski)
 char *
 x509_get_crl(X509 *x, const char *fn)
 {
-	STACK_OF(DIST_POINT)	*crldp;
+	CRL_DIST_POINTS		*crldp;
 	DIST_POINT		*dp;
 	GENERAL_NAME		*name;
-	char			*crl;
+	char			*crl = NULL;
+	int			 crit;
 
-	crldp = X509_get_ext_d2i(x, NID_crl_distribution_points, NULL, NULL);
+	crldp = X509_get_ext_d2i(x, NID_crl_distribution_points, &crit, NULL);
 	if (crldp == NULL) {
 		warnx("%s: RFC 6487 section 4.8.6: CRL: "
 		    "no CRL distribution point extension", fn);
 		return NULL;
+	}
+	if (crit != 0) {
+		warnx("%s: RFC 6487 section 4.8.6: "
+		    "CRL distribution point: extension not non-critical", fn);
+		goto out;
 	}
 
 	if (sk_DIST_POINT_num(crldp) != 1) {
 		warnx("%s: RFC 6487 section 4.8.6: CRL: "
 		    "want 1 element, have %d", fn,
 		    sk_DIST_POINT_num(crldp));
-		return NULL;
+		goto out;
 	}
 
 	dp = sk_DIST_POINT_value(crldp, 0);
 	if (dp->distpoint == NULL) {
 		warnx("%s: RFC 6487 section 4.8.6: CRL: "
 		    "no distribution point name", fn);
-		return NULL;
+		goto out;
 	}
 	if (dp->distpoint->type != 0) {
 		warnx("%s: RFC 6487 section 4.8.6: CRL: "
 		    "expected GEN_OTHERNAME, have %d", fn, dp->distpoint->type);
-		return NULL;
+		goto out;
 	}
 
 	if (sk_GENERAL_NAME_num(dp->distpoint->name.fullname) != 1) {
 		warnx("%s: RFC 6487 section 4.8.6: CRL: "
 		    "want 1 full name, have %d", fn,
 		    sk_GENERAL_NAME_num(dp->distpoint->name.fullname));
-		return NULL;
+		goto out;
 	}
 
 	name = sk_GENERAL_NAME_value(dp->distpoint->name.fullname, 0);
 	if (name->type != GEN_URI) {
 		warnx("%s: RFC 6487 section 4.8.6: CRL: "
 		    "want URI type, have %d", fn, name->type);
-		return NULL;
+		goto out;
 	}
 
 	crl = strndup(ASN1_STRING_get0_data(name->d.uniformResourceIdentifier),
@@ -327,21 +292,67 @@ x509_get_crl(X509 *x, const char *fn)
 	if (crl == NULL)
 		err(1, NULL);
 
+out:
+	CRL_DIST_POINTS_free(crldp);
 	return crl;
 }
 
 char *
-x509_crl_get_aki(X509_CRL *crl)
+x509_crl_get_aki(X509_CRL *crl, const char *fn)
 {
-	X509_EXTENSION *ext;
-	int loc;
+	const unsigned char	*d;
+	AUTHORITY_KEYID		*akid;
+	ASN1_OCTET_STRING	*os;
+	int			 i, dsz, crit;
+	char			 buf[4];
+	char			*res = NULL;
 
-	loc = X509_CRL_get_ext_by_NID(crl, NID_authority_key_identifier, -1);
-	if (loc == -1) {
-		warnx("%s: CRL without AKI extension", __func__);
+	akid = X509_CRL_get_ext_d2i(crl, NID_authority_key_identifier, &crit,
+	    NULL);
+	if (akid == NULL) {
+		warnx("%s: RFC 6487 section 4.8.3: AKI: extension missing", fn);
 		return NULL;
 	}
-	ext = X509_CRL_get_ext(crl, loc);
+	if (crit != 0) {
+		warnx("%s: RFC 6487 section 4.8.3: "
+		    "AKI: extension not non-critical", fn);
+		goto out;
+	}
+	if (akid->issuer != NULL || akid->serial != NULL) {
+		warnx("%s: RFC 6487 section 4.8.3: AKI: "
+		    "authorityCertIssuer or authorityCertSerialNumber present",
+		    fn);
+		goto out;
+	}
 
-	return x509_get_aki_ext(ext, "x509_crl_get_aki");
+	os = akid->keyid;
+	if (os == NULL) {
+		warnx("%s: RFC 6487 section 4.8.3: AKI: "
+		    "Key Identifier missing", fn);
+		goto out;
+	}
+
+	d = os->data;
+	dsz = os->length;
+
+	if (dsz != SHA_DIGEST_LENGTH) {
+		warnx("%s: RFC 6487 section 4.8.2: AKI: "
+		    "want %d bytes SHA1 hash, have %d bytes",
+		    fn, SHA_DIGEST_LENGTH, dsz);
+		goto out;
+	}
+
+	/* Make room for [hex1, hex2, ":"]*, NUL. */
+
+	if ((res = calloc(dsz * 3 + 1, 1)) == NULL)
+		err(1, NULL);
+
+	for (i = 0; i < dsz; i++) {
+		snprintf(buf, sizeof(buf), "%02X:", d[i]);
+		strlcat(res, buf, dsz * 3 + 1);
+	}
+	res[dsz * 3 - 1] = '\0';
+out:
+	AUTHORITY_KEYID_free(akid);
+	return res;
 }

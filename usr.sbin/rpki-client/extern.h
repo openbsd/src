@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.44 2021/02/16 08:52:00 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.45 2021/02/18 16:23:17 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -421,12 +421,12 @@ void		 io_str_read(int, char **);
 /* X509 helpers. */
 
 char		*x509_get_aia(X509 *, const char *);
-char		*x509_get_aki_ext(X509_EXTENSION *, const char *);
-char		*x509_get_ski_ext(X509_EXTENSION *, const char *);
+char		*x509_get_aki(X509 *, int, const char *);
+char		*x509_get_ski(X509 *, const char *);
 int		 x509_get_extensions(X509 *, const char *, char **, char **,
 			char **);
 char		*x509_get_crl(X509 *, const char *);
-char		*x509_crl_get_aki(X509_CRL *);
+char		*x509_crl_get_aki(X509_CRL *, const char *);
 
 /* Output! */
 
