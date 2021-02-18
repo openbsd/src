@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.308 2021/02/18 21:30:52 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.309 2021/02/18 22:00:31 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -4304,7 +4304,8 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 		return (-1);
 	}
 	ibuf_release(sa->sa_rnonce);
-	sa->sa_rnonce = ibuf_dup(msg->msg_nonce);
+	sa->sa_rnonce = msg->msg_nonce;
+	msg->msg_nonce = NULL;
 
 	if (csa && (ni = sa->sa_simult) != NULL) {
 		log_info("%s: resolving simultaneous CHILD SA rekeying",
@@ -4727,7 +4728,8 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 			goto fail;
 		}
 		ibuf_release(kex->kex_inonce);
-		kex->kex_inonce = ibuf_dup(msg->msg_nonce);
+		kex->kex_inonce = msg->msg_nonce;
+		msg->msg_nonce = NULL;
 
 		/* Generate new responder's nonce */
 		if ((nonce = ibuf_random(IKED_NONCE_SIZE)) == NULL)
@@ -5267,11 +5269,8 @@ ikev2_sa_initiator(struct iked *env, struct iked_sa *sa,
 			    SPI_SA(sa, __func__));
 			return (-1);
 		}
-		if ((sa->sa_rnonce = ibuf_dup(msg->msg_nonce)) == NULL) {
-			log_info("%s: failed to get peer nonce",
-			    SPI_SA(sa, __func__));
-			return (-1);
-		}
+		sa->sa_rnonce = msg->msg_nonce;
+		msg->msg_nonce = NULL;
 	}
 
 	if (ikev2_sa_negotiate_common(env, sa, msg) != 0)
@@ -5381,11 +5380,12 @@ ikev2_sa_responder(struct iked *env, struct iked_sa *sa, struct iked_sa *osa,
 	}
 
 	if (!ibuf_length(sa->sa_inonce) &&
-	    ((ibuf_length(msg->msg_nonce) < IKED_NONCE_MIN) ||
-	    (sa->sa_inonce = ibuf_dup(msg->msg_nonce)) == NULL)) {
+	    (ibuf_length(msg->msg_nonce) < IKED_NONCE_MIN)) {
 		log_debug("%s: failed to get peer nonce", __func__);
 		return (-1);
 	}
+	sa->sa_inonce = msg->msg_nonce;
+	msg->msg_nonce = NULL;
 
 	if (ikev2_sa_negotiate_common(env, sa, msg) != 0)
 		return (-1);
