@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: rcctl.sh,v 1.108 2020/03/31 08:03:44 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.109 2021/02/18 06:17:35 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -54,7 +54,7 @@ ls_rcscripts()
 
 	cd /etc/rc.d && set -- *
 	for _s; do
-		[[ ${_s} = *.* ]] && continue
+		[[ ${_s} == +([[:alnum:]_]) ]] || continue
 		[ ! -d "${_s}" ] && echo "${_s}"
 	done
 }
