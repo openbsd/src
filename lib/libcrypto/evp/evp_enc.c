@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.43 2019/04/14 17:16:57 jsing Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.44 2021/02/18 19:12:29 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -337,6 +338,17 @@ EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 			return 1;
 		} else {
 			j = bl - i;
+
+			/*
+			 * Once we've processed the first j bytes from in, the
+			 * amount of data left that is a multiple of the block
+			 * length is (inl - j) & ~(bl - 1).  Ensure this plus
+			 * the block processed from ctx-buf doesn't overflow.
+			 */
+			if (((inl - j) & ~(bl - 1)) > INT_MAX - bl) {
+				EVPerror(EVP_R_TOO_LARGE);
+				return 0;
+			}
 			memcpy(&(ctx->buf[i]), in, j);
 			if (!M_do_cipher(ctx, out, ctx->buf, bl))
 				return 0;
@@ -451,6 +463,16 @@ EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	}
 
 	if (ctx->final_used) {
+		/*
+		 * final_used is only ever set if buf_len is 0. Therefore the
+		 * maximum length output we will ever see from EVP_EncryptUpdate
+		 * is inl & ~(b - 1). Since final_used is set, the final output
+		 * length is (inl & ~(b - 1)) + b. Ensure it doesn't overflow.
+		 */
+		if ((inl & ~(b - 1)) > INT_MAX - b) {
+			EVPerror(EVP_R_TOO_LARGE);
+			return 0;
+		}
 		memcpy(out, ctx->final, b);
 		out += b;
 		fix_len = 1;
