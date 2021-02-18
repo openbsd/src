@@ -1,4 +1,4 @@
-/* $OpenBSD: simplebus.c,v 1.16 2020/04/29 15:25:07 kettenis Exp $ */
+/* $OpenBSD: simplebus.c,v 1.17 2021/02/18 00:04:13 jsg Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -23,6 +23,8 @@
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
+#include <dev/ofw/ofw_clock.h>
+#include <dev/ofw/ofw_power.h>
 
 #include <arm/fdt.h>
 #include <arm/simplebus/simplebusvar.h>
@@ -54,10 +56,8 @@ simplebus_match(struct device *parent, void *cfdata, void *aux)
 	if (fa->fa_node == 0)
 		return (0);
 
-	if (!OF_is_compatible(fa->fa_node, "simple-bus"))
-		return (0);
-
-	return (1);
+	return (OF_is_compatible(fa->fa_node, "simple-bus") ||
+	    OF_is_compatible(fa->fa_node, "simple-pm-bus"));
 }
 
 void
@@ -108,6 +108,11 @@ simplebus_attach(struct device *parent, struct device *self, void *aux)
 		    M_TEMP, M_WAITOK);
 		OF_getpropintarray(sc->sc_node, "dma-ranges",
 		    sc->sc_dmaranges, sc->sc_dmarangeslen);
+	}
+
+	if (OF_is_compatible(sc->sc_node, "simple-pm-bus")) {
+		power_domain_enable(sc->sc_node);
+		clock_enable_all(sc->sc_node);
 	}
 
 	/* Scan the whole tree. */
