@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2021/02/16 21:39:17 jan Exp $
+# $OpenBSD: Makefile,v 1.2 2021/02/18 00:34:14 tb Exp $
 
 # Copyright (c) 2021 Jan Klemkow <j.klemkow@wemelug.de>
 #
@@ -41,6 +41,7 @@ REGRESS_TARGETS +=	test-alternative-chain
 REGRESS_CLEANUP =	cleanup-ssl
 REGRESS_SETUP_ONCE =	create-libressl-test-certs
 
+REGRESS_EXPECTED_FAILURES +=	test-inlabel-wildcard-cert-no-CA-client
 REGRESS_EXPECTED_FAILURES +=	test-unusual-wildcard-cert-no-CA-client
 REGRESS_EXPECTED_FAILURES +=	test-common-wildcard-cert-no-CA-client
 REGRESS_EXPECTED_FAILURES +=	test-common-wildcard-cert-CA-client
