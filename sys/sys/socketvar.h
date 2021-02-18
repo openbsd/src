@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.92 2021/01/17 05:23:34 visa Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.93 2021/02/18 11:40:20 mvs Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -325,7 +325,6 @@ int	soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 	    struct mbuf **mp0, struct mbuf **controlp, int *flagsp,
 	    socklen_t controllen);
 int	soreserve(struct socket *so, u_long sndcc, u_long rcvcc);
-void	sorflush(struct socket *so);
 int	sosend(struct socket *so, struct mbuf *addr, struct uio *uio,
 	    struct mbuf *top, struct mbuf *control, int flags);
 int	sosetopt(struct socket *so, int level, int optname, struct mbuf *m);

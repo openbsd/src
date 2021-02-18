@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.254 2021/01/17 05:23:34 visa Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.255 2021/02/18 11:40:19 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -66,6 +66,7 @@ void	sotask(void *);
 void	soreaper(void *);
 void	soput(void *);
 int	somove(struct socket *, int);
+void	sorflush(struct socket *);
 
 void	filt_sordetach(struct knote *kn);
 int	filt_soread(struct knote *kn, long hint);
@@ -1116,8 +1117,8 @@ void
 sorflush(struct socket *so)
 {
 	struct sockbuf *sb = &so->so_rcv;
+	struct mbuf *m;
 	const struct protosw *pr = so->so_proto;
-	struct socket aso;
 	int error;
 
 	sb->sb_flags |= SB_NOINTR;
@@ -1126,14 +1127,14 @@ sorflush(struct socket *so)
 	KASSERT(error == 0);
 	socantrcvmore(so);
 	sbunlock(so, sb);
-	aso.so_proto = pr;
-	aso.so_rcv = *sb;
+	m = sb->sb_mb;
 	memset(&sb->sb_startzero, 0,
 	     (caddr_t)&sb->sb_endzero - (caddr_t)&sb->sb_startzero);
 	sb->sb_timeo_nsecs = INFSLP;
 	if (pr->pr_flags & PR_RIGHTS && pr->pr_domain->dom_dispose)
-		(*pr->pr_domain->dom_dispose)(aso.so_rcv.sb_mb);
-	sbrelease(&aso, &aso.so_rcv);
+		(*pr->pr_domain->dom_dispose)(m);
+	while (m != NULL)
+		m = m_freem(m);
 }
 
 #ifdef SOCKET_SPLICE
