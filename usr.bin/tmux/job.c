@@ -1,4 +1,4 @@
-/* $OpenBSD: job.c,v 1.58 2020/05/16 15:24:28 nicm Exp $ */
+/* $OpenBSD: job.c,v 1.59 2021/02/19 09:09:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -114,10 +114,10 @@ job_run(const char *cmd, struct session *s, const char *cwd,
 		proc_clear_signals(server_proc, 1);
 		sigprocmask(SIG_SETMASK, &oldset, NULL);
 
-		if (cwd == NULL || chdir(cwd) != 0) {
-			if ((home = find_home()) == NULL || chdir(home) != 0)
-				chdir("/");
-		}
+		if ((cwd == NULL || chdir(cwd) != 0) &&
+		    ((home = find_home()) == NULL || chdir(home) != 0) &&
+		    chdir("/") != 0)
+			fatal("chdir failed");
 
 		environ_push(env);
 		environ_free(env);
