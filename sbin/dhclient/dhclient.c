@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.693 2021/02/15 19:33:21 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.694 2021/02/19 13:46:59 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -137,6 +137,9 @@ void state_init(struct interface_info *);
 void state_selecting(struct interface_info *);
 void state_bound(struct interface_info *);
 void state_panic(struct interface_info *);
+
+void set_interval(struct interface_info *, time_t);
+void set_secs(struct interface_info *, time_t);
 
 void send_discover(struct interface_info *);
 void send_request(struct interface_info *);
@@ -1416,6 +1419,58 @@ decline:
 	return NULL;
 }
 
+void
+set_interval(struct interface_info *ifi, time_t cur_time)
+{
+	time_t interval = ifi->interval;
+
+	if (interval == 0) {
+		if (ifi->state == S_REBOOTING)
+			interval = config->reboot_timeout;
+		else
+			interval = config->initial_interval;
+	} else {
+		interval += arc4random_uniform(2 * interval);
+		if (interval > config->backoff_cutoff)
+			interval = config->backoff_cutoff;
+	}
+
+	switch (ifi->state) {
+	case S_REBOOTING:
+	case S_RENEWING:
+		if (cur_time + interval > ifi->expiry)
+			interval = ifi->expiry - cur_time;
+		break;
+	case S_REQUESTING:
+		if (cur_time + interval > ifi->first_sending + config->timeout)
+			interval = (ifi->first_sending + config->timeout) - cur_time;
+		break;
+	default:
+		break;
+	}
+
+	if (cur_time < ifi->startup_time + config->link_timeout)
+		interval = 1;
+
+	ifi->interval = interval ? interval : 1;
+}
+
+void
+set_secs(struct interface_info *ifi, time_t cur_time)
+{
+	time_t		secs;
+
+	if (ifi->state != S_REQUESTING) {
+		/* Update the number of seconds since we started sending. */
+		secs = cur_time - ifi->first_sending;
+		if (secs > UINT16_MAX)
+			secs = UINT16_MAX;
+		ifi->secs = secs;
+	}
+
+	ifi->sent_packet.secs = htons(ifi->secs);
+}
+
 /*
  * Send out a DHCPDISCOVER packet, and set a timeout to send out another
  * one after the right interval has expired.  If we don't get an offer by
@@ -1424,63 +1479,21 @@ decline:
 void
 send_discover(struct interface_info *ifi)
 {
-	struct dhcp_packet	*packet = &ifi->sent_packet;
-	time_t			 cur_time, interval;
+	time_t			 cur_time;
 	ssize_t			 rslt;
 
 	time(&cur_time);
 
-	/* Figure out how long it's been since we started transmitting. */
-	interval = cur_time - ifi->first_sending;
-	if (interval > config->timeout) {
+	if (log_getverbose())
+		tick_msg("lease", TICK_WAIT);
+
+	if (cur_time > ifi->first_sending + config->timeout) {
 		state_panic(ifi);
 		return;
 	}
 
-	/*
-	 * If we're supposed to increase the interval, do so.  If it's
-	 * currently zero (i.e., we haven't sent any packets yet), set
-	 * it to initial_interval; otherwise, add to it a random
-	 * number between zero and two times itself.  On average, this
-	 * means that it will double with every transmission.
-	 */
-	if (ifi->interval == 0)
-		ifi->interval = config->initial_interval;
-	else {
-		ifi->interval += arc4random_uniform(2 * ifi->interval);
-	}
-
-	/* Don't backoff past cutoff. */
-	if (ifi->interval > config->backoff_cutoff)
-		ifi->interval = config->backoff_cutoff;
-
-	/*
-	 * If the backoff would take us to the panic timeout, just use that
-	 * as the interval.
-	 */
-	if (cur_time + ifi->interval > ifi->first_sending + config->timeout)
-		ifi->interval = (ifi->first_sending +
-		    config->timeout) - cur_time + 1;
-
-	/*
-	 * If we are still starting up, backoff 1 second. If we are past
-	 * link_timeout we just go daemon and finish things up in the
-	 * background.
-	 */
-	if (cur_time < ifi->startup_time + config->link_timeout) {
-		if (log_getverbose() == 0)
-			tick_msg("lease", TICK_WAIT);
-		ifi->interval = 1;
-	} else {
-		tick_msg("lease", TICK_SLEEP);
-	}
-
-	/* Record the number of seconds since we started sending. */
-	if (interval < UINT16_MAX)
-		packet->secs = htons(interval);
-	else
-		packet->secs = htons(UINT16_MAX);
-	ifi->secs = packet->secs;
+	set_interval(ifi, cur_time);
+	set_secs(ifi, cur_time);
 
 	rslt = send_packet(ifi, inaddr_any, inaddr_broadcast, "DHCPDISCOVER");
 	if (rslt != -1)
@@ -1526,11 +1539,13 @@ send_request(struct interface_info *ifi)
 {
 	struct sockaddr_in	 destination;
 	struct in_addr		 from;
-	struct dhcp_packet	*packet = &ifi->sent_packet;
 	ssize_t			 rslt;
 	time_t			 cur_time, interval;
 
+	cancel_timeout(ifi);
 	time(&cur_time);
+	if (log_getverbose())
+		tick_msg("lease", TICK_WAIT);
 
 	/* Figure out how long it's been since we started transmitting. */
 	interval = cur_time - ifi->first_sending;
@@ -1539,88 +1554,49 @@ send_request(struct interface_info *ifi)
 	case S_REBOOTING:
 		if (interval > config->reboot_timeout)
 			ifi->state = S_INIT;
+		else {
+			destination.sin_addr.s_addr = INADDR_BROADCAST;
+			if (ifi->active == NULL)
+				from.s_addr = INADDR_ANY;
+			else
+				from.s_addr = ifi->active->address.s_addr;
+		}
 		break;
 	case S_RENEWING:
 		if (cur_time > ifi->expiry)
 			ifi->state = S_INIT;
+		else {
+			if (cur_time > ifi->rebind)
+				destination.sin_addr.s_addr = INADDR_BROADCAST;
+			else
+				destination.sin_addr.s_addr = ifi->destination.s_addr;
+			if (ifi->active == NULL)
+				from.s_addr = INADDR_ANY;
+			else
+				from.s_addr = ifi->active->address.s_addr;
+		}
 		break;
 	case S_REQUESTING:
 		if (interval > config->timeout)
 			ifi->state = S_INIT;
+		else {
+			destination.sin_addr.s_addr = INADDR_BROADCAST;
+			from.s_addr = INADDR_ANY;
+		}
 		break;
 	default:
-		/* Something has gone wrong. Start over. */
 		ifi->state = S_INIT;
 		break;
 	}
+
 	if (ifi->state == S_INIT) {
-		cancel_timeout(ifi);
+		/* Something has gone wrong. Start over. */
 		state_init(ifi);
 		return;
 	}
 
-	/* Do the exponential backoff. */
-	if (ifi->interval == 0) {
-		if (ifi->state == S_REBOOTING)
-			ifi->interval = config->reboot_timeout;
-		else
-			ifi->interval = config->initial_interval;
-	} else
-		ifi->interval += arc4random_uniform(2 * ifi->interval);
-
-	/* Don't backoff past cutoff. */
-	if (ifi->interval > config->backoff_cutoff)
-		ifi->interval = config->backoff_cutoff;
-
-	/*
-	 * If the backoff would take us to the expiry time, just set the
-	 * timeout to the expiry time.
-	 */
-	if (ifi->state != S_REQUESTING && cur_time + ifi->interval >
-	    ifi->expiry)
-		ifi->interval = ifi->expiry - cur_time + 1;
-
-	/*
-	 * If we are still starting up, backoff 1 second. If we are past
-	 * link_timeout we just go daemon and finish things up in the
-	 * background.
-	 */
-	if (cur_time < ifi->startup_time + config->link_timeout) {
-		if (log_getverbose() == 0)
-			tick_msg("lease", TICK_SLEEP);
-		ifi->interval = 1;
-	} else {
-		tick_msg("lease", TICK_WAIT);
-	}
-
-	/*
-	 * If the reboot timeout has expired, or the lease rebind time has
-	 * elapsed, or if we're not yet bound, broadcast the DHCPREQUEST rather
-	 * than unicasting.
-	 */
-	memset(&destination, 0, sizeof(destination));
-	if (ifi->state == S_REQUESTING ||
-	    ifi->state == S_REBOOTING ||
-	    cur_time > ifi->rebind ||
-	    interval > config->reboot_timeout)
-		destination.sin_addr.s_addr = INADDR_BROADCAST;
-	else
-		destination.sin_addr.s_addr = ifi->destination.s_addr;
-
-	if (ifi->state != S_REQUESTING && ifi->active != NULL)
-		from.s_addr = ifi->active->address.s_addr;
-	else
-		from.s_addr = INADDR_ANY;
-
-	/* Record the number of seconds since we started sending. */
-	if (ifi->state == S_REQUESTING)
-		packet->secs = ifi->secs;
-	else {
-		if (interval < UINT16_MAX)
-			packet->secs = htons(interval);
-		else
-			packet->secs = htons(UINT16_MAX);
-	}
+	set_interval(ifi, cur_time);
+	set_secs(ifi, cur_time);
 
 	rslt = send_packet(ifi, from, destination.sin_addr, "DHCPREQUEST");
 	if (rslt != -1)
