@@ -1,4 +1,4 @@
-/* $OpenBSD: term_tag.h,v 1.3 2020/07/21 15:08:49 schwarze Exp $ */
+/* $OpenBSD: term_tag.h,v 1.4 2021/02/19 19:49:49 kn Exp $ */
 /*
  * Copyright (c) 2015, 2018, 2019, 2020 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -28,7 +28,7 @@ struct	tag_files {
 };
 
 
-struct tag_files	*term_tag_init(const char *, const char *);
+struct tag_files	*term_tag_init(const char *, const char *, const char *);
 void			 term_tag_write(struct roff_node *, size_t);
 int			 term_tag_close(void);
 void			 term_tag_unlink(void);

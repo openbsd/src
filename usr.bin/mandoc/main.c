@@ -1,4 +1,4 @@
-/* $OpenBSD: main.c,v 1.255 2020/07/21 15:08:48 schwarze Exp $ */
+/* $OpenBSD: main.c,v 1.256 2021/02/19 19:49:49 kn Exp $ */
 /*
  * Copyright (c) 2010-2012, 2014-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -824,6 +824,7 @@ process_onefile(struct mparse *mp, struct manpage *resp, int startdir,
 	if (outst->use_pager) {
 		outst->use_pager = 0;
 		outst->tag_files = term_tag_init(conf->output.outfilename,
+		    outst->outtype == OUTT_HTML ? ".html" : "",
 		    conf->output.tagfilename);
 		if ((conf->output.outfilename != NULL ||
 		     conf->output.tagfilename != NULL) &&
