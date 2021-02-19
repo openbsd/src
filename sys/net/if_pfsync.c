@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.284 2021/02/09 14:06:19 patrick Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.285 2021/02/19 06:12:44 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1978,7 +1978,7 @@ pfsync_undefer_notify(struct pfsync_deferral *pd)
 	struct pf_pdesc pdesc;
 	struct pf_state *st = pd->pd_st;
 
-	if (st->rule.ptr->rt == PF_ROUTETO) {
+	if (st->rt == PF_ROUTETO) {
 		if (pf_setup_pdesc(&pdesc, st->key[PF_SK_WIRE]->af,
 		    st->direction, st->kif, pd->pd_m, NULL) != PF_PASS) {
 			m_freem(pd->pd_m);
