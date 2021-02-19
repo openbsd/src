@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.101 2021/02/18 10:10:20 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.102 2021/02/19 08:14:49 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -27,6 +27,7 @@
 #include <err.h>
 #include <errno.h>
 #include <dirent.h>
+#include <fcntl.h>
 #include <fnmatch.h>
 #include <fts.h>
 #include <poll.h>
@@ -91,6 +92,7 @@ RB_PROTOTYPE(filepath_tree, filepath, entry, filepathcmp);
 
 static struct filepath_tree	fpt = RB_INITIALIZER(&fpt);
 static struct msgbuf		procq, rsyncq;
+static int			cachefd;
 
 const char	*bird_tablename = "ROAS";
 
@@ -288,6 +290,15 @@ repo_fetch(struct repo *rp)
 		/* there is nothing in the queue so no need to flush */
 		return;
 	}
+
+	/*
+	 * Create destination location.
+	 * Build up the tree to this point because GPL rsync(1)
+	 * will not build the destination for us.
+	 */
+
+	if (mkpath(cachefd, rp->local) == -1)
+		err(1, "%s", rp->local);
 
 	logx("%s: pulling from network", rp->local);
 	if ((b = ibuf_dynamic(256, UINT_MAX)) == NULL)
@@ -684,7 +695,7 @@ add_to_del(char **del, size_t *dsz, char *file)
 }
 
 static size_t
-repo_cleanup(const char *cachedir)
+repo_cleanup(int dirfd)
 {
 	size_t i, delsz = 0;
 	char *argv[2], **del = NULL;
@@ -692,8 +703,8 @@ repo_cleanup(const char *cachedir)
 	FTSENT *e;
 
 	/* change working directory to the cache directory */
-	if (chdir(cachedir) == -1)
-		err(1, "%s: chdir", cachedir);
+	if (fchdir(dirfd) == -1)
+		err(1, "fchdir");
 
 	for (i = 0; i < rt.reposz; i++) {
 		if (asprintf(&argv[0], "%s", rt.repos[i].local) == -1)
@@ -866,6 +877,9 @@ main(int argc, char *argv[])
 		goto usage;
 	}
 
+	if ((cachefd = open(cachedir, O_RDONLY, 0)) == -1)
+		err(1, "cache directory %s", cachedir);
+
 	if (outformats == 0)
 		outformats = FORMAT_OPENBGPD;
 
@@ -891,8 +905,8 @@ main(int argc, char *argv[])
 		close(fd[1]);
 
 		/* change working directory to the cache directory */
-		if (chdir(cachedir) == -1)
-			err(1, "%s: chdir", cachedir);
+		if (fchdir(cachefd) == -1)
+			err(1, "fchdir");
 
 		/* Only allow access to the cache directory. */
 		if (unveil(cachedir, "r") == -1)
@@ -924,8 +938,8 @@ main(int argc, char *argv[])
 			close(fd[1]);
 
 			/* change working directory to the cache directory */
-			if (chdir(cachedir) == -1)
-				err(1, "%s: chdir", cachedir);
+			if (fchdir(cachefd) == -1)
+				err(1, "fchdir");
 
 			if (pledge("stdio rpath cpath proc exec unveil", NULL)
 			    == -1)
@@ -1088,7 +1102,7 @@ main(int argc, char *argv[])
 	if (outputfiles(&v, &stats))
 		rc = 1;
 
-	stats.del_files = repo_cleanup(cachedir);
+	stats.del_files = repo_cleanup(cachefd);
 
 	logx("Route Origin Authorizations: %zu (%zu failed parse, %zu invalid)",
 	    stats.roas, stats.roas_fail, stats.roas_invalid);

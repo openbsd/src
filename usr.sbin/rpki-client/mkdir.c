@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkdir.c,v 1.1 2021/02/02 18:33:11 claudio Exp $	*/
+/*	$OpenBSD: mkdir.c,v 1.2 2021/02/19 08:14:49 claudio Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@
  *	dir_mode - file mode of intermediate directories
  */
 int
-mkpath(const char *dir)
+mkpath(int dirfd, const char *dir)
 {
 	char *path, *slash;
 	int done;
@@ -59,7 +59,7 @@ mkpath(const char *dir)
 		done = (*slash == '\0');
 		*slash = '\0';
 
-		if (mkdir(path, 0700) == -1 && errno != EEXIST) {
+		if (mkdirat(dirfd, path, 0700) == -1 && errno != EEXIST) {
 			free(path);
 			return (-1);
 		}
