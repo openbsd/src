@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.167 2021/02/01 01:42:21 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.168 2021/02/19 13:33:37 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -132,7 +132,7 @@ dispatch(struct interface_info *ifi, int routefd)
 		if (nfds == -1) {
 			if (errno == EINTR)
 				continue;
-			log_warn("%s: poll(bpffd, routefd, unpriv_ibuf)",
+			log_warn("%s: ppoll(bpffd, routefd, unpriv_ibuf)",
 			    log_procname);
 			break;
 		}
