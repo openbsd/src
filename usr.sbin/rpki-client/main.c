@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.102 2021/02/19 08:14:49 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.103 2021/02/19 12:18:23 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -267,12 +267,12 @@ repo_alloc(void)
 {
 	struct repo *rp;
 
-	rt.repos = reallocarray(rt.repos, rt.reposz + 1, sizeof(struct repo));
+	rt.repos = recallocarray(rt.repos, rt.reposz, rt.reposz + 1,
+	    sizeof(struct repo));
 	if (rt.repos == NULL)
-		err(1, "reallocarray");
+		err(1, "recallocarray");
 
 	rp = &rt.repos[rt.reposz++];
-	memset(rp, 0, sizeof(struct repo));
 	rp->id = rt.reposz - 1;
 
 	return rp;

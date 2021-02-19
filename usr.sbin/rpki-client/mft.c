@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.26 2021/02/16 07:58:30 job Exp $ */
+/*	$OpenBSD: mft.c,v 1.27 2021/02/19 12:18:23 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -193,13 +193,12 @@ mft_parse_filehash(struct parse *p, const ASN1_OCTET_STRING *os)
 
 	/* Insert the filename and hash value. */
 
-	p->res->files = reallocarray(p->res->files, p->res->filesz + 1,
-	    sizeof(struct mftfile));
+	p->res->files = recallocarray(p->res->files, p->res->filesz,
+	    p->res->filesz + 1, sizeof(struct mftfile));
 	if (p->res->files == NULL)
 		err(1, NULL);
 
 	fent = &p->res->files[p->res->filesz++];
-	memset(fent, 0, sizeof(struct mftfile));
 
 	fent->file = fn;
 	fn = NULL;

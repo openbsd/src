@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.14 2021/02/16 07:58:30 job Exp $ */
+/*	$OpenBSD: roa.c,v 1.15 2021/02/19 12:18:23 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -111,12 +111,11 @@ roa_parse_addr(const ASN1_OCTET_STRING *os, enum afi afi, struct parse *p)
 		/* FIXME: maximum check. */
 	}
 
-	p->res->ips = reallocarray(p->res->ips,
-		p->res->ipsz + 1, sizeof(struct roa_ip));
+	p->res->ips = recallocarray(p->res->ips, p->res->ipsz, p->res->ipsz + 1,
+	    sizeof(struct roa_ip));
 	if (p->res->ips == NULL)
 		err(1, NULL);
 	res = &p->res->ips[p->res->ipsz++];
-	memset(res, 0, sizeof(struct roa_ip));
 
 	res->addr = addr;
 	res->afi = afi;
