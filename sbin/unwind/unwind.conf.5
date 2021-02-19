@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unwind.conf.5,v 1.25 2020/12/26 19:05:13 kn Exp $
+.\"	$OpenBSD: unwind.conf.5,v 1.26 2021/02/19 07:56:56 solene Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 26 2020 $
+.Dd $Mdocdate: February 19 2021 $
 .Dt UNWIND.CONF 5
 .Os
 .Sh NAME
@@ -140,6 +140,30 @@ The default
 .Xr unwind 8
 configuration file.
 .El
+.Sh EXAMPLES
+Block requests from hostnames in
+.Pa /etc/blocklist
+and log each blocked request:
+.Pp
+.Bd -literal -offset indent
+block list "/etc/blocklist" log
+.Ed
+.Pp
+Define a DNS over TLS (DoT) forwarder and make it the preferred resolver:
+.Bd -literal -offset indent
+forwarder 192.168.1.250 port 8080 authentication name "resolver.local" DoT
+preference DoT
+.Ed
+.Pp
+Where a domain requires a specific nameserver
+and it may only exist in a nameserver available on the local network,
+force
+.Xr unwind 8
+to use a specific resolver type:
+.Pp
+.Bd -literal -offset indent
+force dhcp { domain.local }
+.Ed
 .Sh SEE ALSO
 .Xr rc.conf.local 8 ,
 .Xr unwind 8 ,
