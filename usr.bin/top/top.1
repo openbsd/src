@@ -1,4 +1,4 @@
-.\"	$OpenBSD: top.1,v 1.77 2020/08/26 16:21:28 kn Exp $
+.\"	$OpenBSD: top.1,v 1.78 2021/02/19 19:59:36 lum Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 26 2020 $
+.Dd $Mdocdate: February 19 2021 $
 .Dt TOP 1
 .Os
 .Sh NAME
@@ -32,7 +32,7 @@
 .Sh SYNOPSIS
 .Nm top
 .Bk -words
-.Op Fl 1bCHIinqSu
+.Op Fl 1bCHIinqStu
 .Op Fl d Ar count
 .Op Fl g Ar string
 .Op Fl o Oo - Oc Ns Ar field
@@ -188,6 +188,9 @@ shows processes associated with all routing tables.
 The
 .Sq -
 prefix hides proccesses associated with a single routing table.
+.It Fl t
+Display routing tables.
+By default, routing tables are not shown.
 .It Fl U Oo - Oc Ns Ar user
 Show only those processes owned by username or UID
 .Ar user .
