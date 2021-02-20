@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.180 2021/01/26 18:43:41 tb Exp $ */
+/* $OpenBSD: ssl.h,v 1.181 2021/02/20 08:11:57 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -301,6 +301,9 @@ extern "C" {
 #define SSL_TXT_STREEBOG512		"STREEBOG512"
 
 #define SSL_TXT_DTLS1		"DTLSv1"
+#if defined(LIBRESSL_HAS_DTLS1_2) || defined(LIBRESSL_INTERNAL)
+#define SSL_TXT_DTLS1_2		"DTLSv1.2"
+#endif
 #define SSL_TXT_SSLV2		"SSLv2"
 #define SSL_TXT_SSLV3		"SSLv3"
 #define SSL_TXT_TLSV1		"TLSv1"
@@ -518,6 +521,11 @@ struct ssl_session_st {
 
 #if defined(LIBRESSL_HAS_TLS1_3) || defined(LIBRESSL_INTERNAL)
 #define SSL_OP_NO_TLSv1_3				0x20000000L
+#endif
+
+#if defined(LIBRESSL_HAS_DTLS1_2) || defined(LIBRESSL_INTERNAL)
+#define SSL_OP_NO_DTLSv1				0x40000000L
+#define SSL_OP_NO_DTLSv1_2				0x80000000L
 #endif
 
 /* SSL_OP_ALL: various bug workarounds that should be rather harmless. */

@@ -1,4 +1,4 @@
-/* $OpenBSD: dtls1.h,v 1.23 2020/03/12 17:01:53 jsing Exp $ */
+/* $OpenBSD: dtls1.h,v 1.24 2021/02/20 08:11:57 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -74,6 +74,10 @@ extern "C" {
 #endif
 
 #define DTLS1_VERSION			0xFEFF
+#if defined(LIBRESSL_HAS_DTLS1_2) || defined(LIBRESSL_INTERNAL)
+#define DTLS1_2_VERSION			0xFEFD
+#define DTLS1_VERSION_MAJOR		0xFE
+#endif
 
 /* lengths of messages */
 #define DTLS1_COOKIE_LENGTH                     256
