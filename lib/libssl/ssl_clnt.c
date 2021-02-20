@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.78 2021/02/07 15:26:32 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.79 2021/02/20 08:19:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -812,6 +812,10 @@ ssl3_get_dtls_hello_verify(SSL *s)
 
 	if (!CBS_get_u16(&hello_verify_request, &ssl_version))
 		goto truncated;
+	if (!CBS_get_u8_length_prefixed(&hello_verify_request, &cookie))
+		goto truncated;
+	if (CBS_len(&hello_verify_request) != 0)
+		goto truncated;
 
 	if (ssl_version != s->version) {
 		SSLerror(s, SSL_R_WRONG_SSL_VERSION);
@@ -819,9 +823,6 @@ ssl3_get_dtls_hello_verify(SSL *s)
 		al = SSL_AD_PROTOCOL_VERSION;
 		goto f_err;
 	}
-
-	if (!CBS_get_u8_length_prefixed(&hello_verify_request, &cookie))
-		goto truncated;
 
 	if (!CBS_write_bytes(&cookie, D1I(s)->cookie,
 	    sizeof(D1I(s)->cookie), &cookie_len)) {
