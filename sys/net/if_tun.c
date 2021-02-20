@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.229 2021/01/19 19:39:58 mvs Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.230 2021/02/20 04:39:16 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -239,6 +239,9 @@ tun_create(struct if_clone *ifc, int unit, int flags)
 	if_counters_alloc(ifp);
 
 	if ((flags & TUN_LAYER2) == 0) {
+#if NBPFILTER > 0
+		ifp->if_bpf_mtap = bpf_mtap;
+#endif
 		ifp->if_input = tun_input;
 		ifp->if_output = tun_output;
 		ifp->if_mtu = ETHERMTU;
