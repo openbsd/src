@@ -297,7 +297,6 @@ int amdgpu_gem_create_ioctl(struct drm_device *dev, void *data,
 int amdgpu_gem_userptr_ioctl(struct drm_device *dev, void *data,
 			     struct drm_file *filp)
 {
-	STUB();
 	return -ENOSYS;
 #ifdef notyet
 	struct ttm_operation_ctx ctx = { true, false };
