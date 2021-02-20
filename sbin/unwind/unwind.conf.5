@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unwind.conf.5,v 1.26 2021/02/19 07:56:56 solene Exp $
+.\"	$OpenBSD: unwind.conf.5,v 1.27 2021/02/20 12:37:59 jmc Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 19 2021 $
+.Dd $Mdocdate: February 20 2021 $
 .Dt UNWIND.CONF 5
 .Os
 .Sh NAME
@@ -144,7 +144,6 @@ configuration file.
 Block requests from hostnames in
 .Pa /etc/blocklist
 and log each blocked request:
-.Pp
 .Bd -literal -offset indent
 block list "/etc/blocklist" log
 .Ed
@@ -160,7 +159,6 @@ and it may only exist in a nameserver available on the local network,
 force
 .Xr unwind 8
 to use a specific resolver type:
-.Pp
 .Bd -literal -offset indent
 force dhcp { domain.local }
 .Ed
