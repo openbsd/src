@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.94 2021/02/20 14:14:16 tb Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.95 2021/02/20 14:16:56 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1126,8 +1126,8 @@ ssl3_get_client_hello(SSL *s)
 	/*
 	 * We now have the following setup.
 	 * client_random
-	 * cipher_list 		- our prefered list of ciphers
-	 * ciphers 		- the clients prefered list of ciphers
+	 * cipher_list		- our prefered list of ciphers
+	 * ciphers		- the clients prefered list of ciphers
 	 * compression		- basically ignored right now
 	 * ssl version is set	- sslv3
 	 * s->session		- The ssl session has been setup.
@@ -1786,7 +1786,7 @@ ssl3_get_client_kex_rsa(SSL *s, CBS *cbs)
 
 	s->session->master_key_length =
 	    tls1_generate_master_secret(s,
-	        s->session->master_key, p, SSL_MAX_MASTER_KEY_LENGTH);
+		s->session->master_key, p, SSL_MAX_MASTER_KEY_LENGTH);
 
 	freezero(pms, pms_len);
 
@@ -1968,7 +1968,7 @@ ssl3_get_client_kex_ecdhe_ecx(SSL *s, CBS *cbs)
 static int
 ssl3_get_client_kex_ecdhe(SSL *s, CBS *cbs)
 {
-        if (S3I(s)->tmp.x25519 != NULL)
+	if (S3I(s)->tmp.x25519 != NULL)
 		return ssl3_get_client_kex_ecdhe_ecx(s, cbs);
 
 	return ssl3_get_client_kex_ecdhe_ecp(s, cbs);
@@ -2356,7 +2356,7 @@ ssl3_get_client_certificate(SSL *s)
 	if (S3I(s)->tmp.message_type == SSL3_MT_CLIENT_KEY_EXCHANGE) {
 		if ((s->verify_mode & SSL_VERIFY_PEER) &&
 		    (s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)) {
-		    	SSLerror(s, SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE);
+			SSLerror(s, SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE);
 			al = SSL_AD_HANDSHAKE_FAILURE;
 			goto fatal_err;
 		}

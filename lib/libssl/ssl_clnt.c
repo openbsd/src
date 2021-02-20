@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.82 2021/02/20 14:14:16 tb Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.83 2021/02/20 14:16:56 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -694,10 +694,10 @@ ssl3_send_client_hello(SSL *s)
 		 * 1.0.
 		 *
 		 * Possible scenario with previous logic:
-		 * 	1. Client hello indicates TLS 1.2
-		 * 	2. Server hello says TLS 1.0
+		 *	1. Client hello indicates TLS 1.2
+		 *	2. Server hello says TLS 1.0
 		 *	3. RSA encrypted premaster secret uses 1.2.
-		 * 	4. Handhaked proceeds using TLS 1.0.
+		 *	4. Handhaked proceeds using TLS 1.0.
 		 *	5. Server sends hello request to renegotiate.
 		 *	6. Client hello indicates TLS v1.0 as we now
 		 *	   know that is maximum server supports.
@@ -1646,7 +1646,7 @@ int
 ssl3_get_certificate_request(SSL *s)
 {
 	int			 ok, ret = 0;
-	long		 	 n;
+	long			 n;
 	uint8_t			 ctype_num;
 	CBS			 cert_request, ctypes, rdn_list;
 	X509_NAME		*xn = NULL;
@@ -1918,9 +1918,9 @@ ssl3_get_cert_status(SSL *s)
 
 	if (!CBS_stow(&response, &s->internal->tlsext_ocsp_resp,
 	    &s->internal->tlsext_ocsp_resp_len)) {
- 		al = SSL_AD_INTERNAL_ERROR;
- 		SSLerror(s, ERR_R_MALLOC_FAILURE);
- 		goto fatal_err;
+		al = SSL_AD_INTERNAL_ERROR;
+		SSLerror(s, ERR_R_MALLOC_FAILURE);
+		goto fatal_err;
 	}
 
 	if (s->ctx->internal->tlsext_status_cb) {
