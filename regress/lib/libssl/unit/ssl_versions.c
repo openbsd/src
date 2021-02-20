@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_versions.c,v 1.10 2021/01/09 12:39:23 tb Exp $ */
+/* $OpenBSD: ssl_versions.c,v 1.11 2021/02/20 09:45:14 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -192,6 +192,8 @@ test_ssl_enabled_version_range(void)
 	SSL *ssl = NULL;
 	int failed = 1;
 	size_t i;
+
+	fprintf(stderr, "INFO: starting enabled version range tests...\n");
 
 	if ((ssl_ctx = SSL_CTX_new(TLS_method())) == NULL) {
 		fprintf(stderr, "SSL_CTX_new() returned NULL\n");
@@ -437,6 +439,8 @@ test_ssl_max_shared_version(void)
 
 	failed = 0;
 
+	fprintf(stderr, "INFO: starting max shared version tests...\n");
+
 	for (i = 0; i < N_SHARED_VERSION_TESTS; i++) {
 		svt = &shared_version_tests[i];
 
@@ -485,6 +489,8 @@ struct min_max_version_test {
 	const uint16_t maxver;
 	const uint16_t want_minver;
 	const uint16_t want_maxver;
+	const int want_min_fail;
+	const int want_max_fail;
 };
 
 static struct min_max_version_test min_max_version_tests[] = {
@@ -492,28 +498,28 @@ static struct min_max_version_test min_max_version_tests[] = {
 		.ssl_method = TLS_method,
 		.minver = 0,
 		.maxver = 0,
-		.want_minver = TLS1_VERSION,
-		.want_maxver = TLS1_3_VERSION,
+		.want_minver = 0,
+		.want_maxver = 0,
 	},
 	{
 		.ssl_method = TLS_method,
 		.minver = TLS1_VERSION,
 		.maxver = 0,
 		.want_minver = TLS1_VERSION,
-		.want_maxver = TLS1_3_VERSION,
+		.want_maxver = 0,
 	},
 	{
 		.ssl_method = TLS_method,
 		.minver = 0,
 		.maxver = TLS1_2_VERSION,
-		.want_minver = TLS1_VERSION,
+		.want_minver = 0,
 		.want_maxver = TLS1_2_VERSION,
 	},
 	{
 		.ssl_method = TLS_method,
 		.minver = 0,
 		.maxver = TLS1_3_VERSION,
-		.want_minver = TLS1_VERSION,
+		.want_minver = 0,
 		.want_maxver = TLS1_3_VERSION,
 	},
 	{
@@ -528,56 +534,54 @@ static struct min_max_version_test min_max_version_tests[] = {
 		.minver = TLS1_1_VERSION,
 		.maxver = 0,
 		.want_minver = TLS1_1_VERSION,
-		.want_maxver = TLS1_3_VERSION,
+		.want_maxver = 0,
 	},
 	{
 		.ssl_method = TLS_method,
 		.minver = TLS1_2_VERSION,
 		.maxver = 0,
 		.want_minver = TLS1_2_VERSION,
-		.want_maxver = TLS1_3_VERSION,
+		.want_maxver = 0,
 	},
 	{
 		.ssl_method = TLS_method,
 		.minver = 0x0300,
 		.maxver = 0,
 		.want_minver = TLS1_VERSION,
-		.want_maxver = TLS1_3_VERSION,
+		.want_maxver = 0,
 	},
 	{
 		.ssl_method = TLS_method,
 		.minver = 0x0305,
 		.maxver = 0,
-		.want_minver = 0,
-		.want_maxver = 0,
+		.want_min_fail = 1,
 	},
 	{
 		.ssl_method = TLS_method,
 		.minver = 0,
 		.maxver = 0x0305,
-		.want_minver = TLS1_VERSION,
+		.want_minver = 0,
 		.want_maxver = TLS1_3_VERSION,
 	},
 	{
 		.ssl_method = TLS_method,
 		.minver = 0,
 		.maxver = TLS1_1_VERSION,
-		.want_minver = TLS1_VERSION,
+		.want_minver = 0,
 		.want_maxver = TLS1_1_VERSION,
 	},
 	{
 		.ssl_method = TLS_method,
 		.minver = 0,
 		.maxver = TLS1_VERSION,
-		.want_minver = TLS1_VERSION,
+		.want_minver = 0,
 		.want_maxver = TLS1_VERSION,
 	},
 	{
 		.ssl_method = TLS_method,
 		.minver = 0,
 		.maxver = 0x0300,
-		.want_minver = 0,
-		.want_maxver = 0,
+		.want_max_fail = 1,
 	},
 	{
 		.ssl_method = TLS_method,
@@ -585,13 +589,14 @@ static struct min_max_version_test min_max_version_tests[] = {
 		.maxver = TLS1_1_VERSION,
 		.want_minver = TLS1_2_VERSION,
 		.want_maxver = 0,
+		.want_max_fail = 1,
 	},
 	{
 		.ssl_method = TLSv1_1_method,
 		.minver = 0,
 		.maxver = 0,
-		.want_minver = TLS1_1_VERSION,
-		.want_maxver = TLS1_1_VERSION,
+		.want_minver = 0,
+		.want_maxver = 0,
 	},
 	{
 		.ssl_method = TLSv1_1_method,
@@ -606,6 +611,7 @@ static struct min_max_version_test min_max_version_tests[] = {
 		.maxver = 0,
 		.want_minver = 0,
 		.want_maxver = 0,
+		.want_min_fail = 1,
 	},
 	{
 		.ssl_method = TLSv1_1_method,
@@ -613,26 +619,27 @@ static struct min_max_version_test min_max_version_tests[] = {
 		.maxver = TLS1_VERSION,
 		.want_minver = 0,
 		.want_maxver = 0,
+		.want_max_fail = 1,
 	},
 	{
 		.ssl_method = DTLSv1_method,
 		.minver = 0,
 		.maxver = 0,
-		.want_minver = DTLS1_VERSION,
-		.want_maxver = DTLS1_VERSION,
+		.want_minver = 0,
+		.want_maxver = 0,
 	},
 	{
 		.ssl_method = DTLSv1_method,
 		.minver = DTLS1_VERSION,
 		.maxver = 0,
 		.want_minver = DTLS1_VERSION,
-		.want_maxver = DTLS1_VERSION,
+		.want_maxver = 0,
 	},
 	{
 		.ssl_method = DTLSv1_method,
 		.minver = 0,
 		.maxver = DTLS1_VERSION,
-		.want_minver = DTLS1_VERSION,
+		.want_minver = 0,
 		.want_maxver = DTLS1_VERSION,
 	},
 	{
@@ -641,6 +648,8 @@ static struct min_max_version_test min_max_version_tests[] = {
 		.maxver = TLS1_2_VERSION,
 		.want_minver = 0,
 		.want_maxver = 0,
+		.want_min_fail = 1,
+		.want_max_fail = 1,
 	},
 };
 
@@ -658,6 +667,8 @@ test_ssl_min_max_version(void)
 
 	failed = 0;
 
+	fprintf(stderr, "INFO: starting min max version tests...\n");
+
 	for (i = 0; i < N_MIN_MAX_VERSION_TESTS; i++) {
 		mmvt = &min_max_version_tests[i];
 
@@ -666,16 +677,16 @@ test_ssl_min_max_version(void)
 			return 1;
 		}
 
-		if (SSL_CTX_set_min_proto_version(ssl_ctx, mmvt->minver) != 1) {
-			if (mmvt->want_minver != 0) {
+		if (!SSL_CTX_set_min_proto_version(ssl_ctx, mmvt->minver)) {
+			if (!mmvt->want_min_fail) {
 				fprintf(stderr, "FAIL: test %zu - failed to set "
 				    "SSL_CTX min version\n", i);
 				failed++;
 			}
 			goto next;
 		}
-		if (SSL_CTX_set_max_proto_version(ssl_ctx, mmvt->maxver) != 1) {
-			if (mmvt->want_maxver != 0) {
+		if (!SSL_CTX_set_max_proto_version(ssl_ctx, mmvt->maxver)) {
+			if (!mmvt->want_max_fail) {
 				fprintf(stderr, "FAIL: test %zu - failed to set "
 				    "SSL_CTX min version\n", i);
 				failed++;
@@ -683,13 +694,13 @@ test_ssl_min_max_version(void)
 			goto next;
 		}
 
-		if (mmvt->want_minver == 0) {
+		if (mmvt->want_min_fail) {
 			fprintf(stderr, "FAIL: test %zu - successfully set "
 			    "SSL_CTX min version, should have failed\n", i);
 			failed++;
 			goto next;
 		}
-		if (mmvt->want_maxver == 0) {
+		if (mmvt->want_max_fail) {
 			fprintf(stderr, "FAIL: test %zu - successfully set "
 			    "SSL_CTX max version, should have failed\n", i);
 			failed++;
@@ -731,16 +742,16 @@ test_ssl_min_max_version(void)
 			goto next;
 		}
 
-		if (SSL_set_min_proto_version(ssl, mmvt->minver) != 1) {
-			if (mmvt->want_minver != 0) {
+		if (!SSL_set_min_proto_version(ssl, mmvt->minver)) {
+			if (mmvt->want_min_fail) {
 				fprintf(stderr, "FAIL: test %zu - failed to set "
 				    "SSL min version\n", i);
 				failed++;
 			}
 			goto next;
 		}
-		if (SSL_set_max_proto_version(ssl, mmvt->maxver) != 1) {
-			if (mmvt->want_maxver != 0) {
+		if (!SSL_set_max_proto_version(ssl, mmvt->maxver)) {
+			if (mmvt->want_max_fail) {
 				fprintf(stderr, "FAIL: test %zu - failed to set "
 				    "SSL min version\n", i);
 				failed++;
@@ -748,13 +759,13 @@ test_ssl_min_max_version(void)
 			goto next;
 		}
 
-		if (mmvt->want_minver == 0) {
+		if (mmvt->want_min_fail) {
 			fprintf(stderr, "FAIL: test %zu - successfully set SSL "
 			    "min version, should have failed\n", i);
 			failed++;
 			goto next;
 		}
-		if (mmvt->want_maxver == 0) {
+		if (mmvt->want_max_fail) {
 			fprintf(stderr, "FAIL: test %zu - successfully set SSL "
 			    "max version, should have failed\n", i);
 			failed++;
