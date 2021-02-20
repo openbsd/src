@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.630 2021/02/20 01:11:43 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.631 2021/02/20 04:37:26 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -629,6 +629,10 @@ if_attach_common(struct ifnet *ifp)
 		ifp->if_rtrequest = if_rtrequest_dummy;
 	if (ifp->if_enqueue == NULL)
 		ifp->if_enqueue = if_enqueue_ifq;
+#if NBPFILTER > 0
+	if (ifp->if_bpf_mtap == NULL)
+		ifp->if_bpf_mtap = bpf_mtap_ether;
+#endif
 	ifp->if_llprio = IFQ_DEFPRIO;
 }
 
@@ -852,7 +856,7 @@ if_vinput(struct ifnet *ifp, struct mbuf *m)
 #if NBPFILTER > 0
 	if_bpf = ifp->if_bpf;
 	if (if_bpf) {
-		if (bpf_mtap_ether(if_bpf, m, BPF_DIRECTION_IN)) {
+		if ((*ifp->if_bpf_mtap)(if_bpf, m, BPF_DIRECTION_IN)) {
 			m_freem(m);
 			return;
 		}
