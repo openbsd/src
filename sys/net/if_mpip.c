@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mpip.c,v 1.12 2020/08/21 22:59:27 kn Exp $ */
+/*	$OpenBSD: if_mpip.c,v 1.13 2021/02/20 05:03:37 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 Rafael Zalamena <rzalamena@openbsd.org>
@@ -112,6 +112,8 @@ mpip_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_flags = IFF_POINTOPOINT | IFF_MULTICAST;
 	ifp->if_xflags = IFXF_CLONED;
 	ifp->if_ioctl = mpip_ioctl;
+	ifp->if_bpf_mtap = p2p_bpf_mtap;
+	ifp->if_input = p2p_input;
 	ifp->if_output = mpip_output;
 	ifp->if_start = mpip_start;
 	ifp->if_rtrequest = p2p_rtrequest;
@@ -460,7 +462,6 @@ mpip_input(struct mpip_softc *sc, struct mbuf *m)
 	uint32_t shim, exp;
 	struct mbuf *n;
 	uint8_t ttl, tos;
-	void (*input)(struct ifnet *, struct mbuf *);
 
 	if (!ISSET(ifp->if_flags, IFF_RUNNING))
 		goto drop;
@@ -552,7 +553,7 @@ mpip_input(struct mpip_softc *sc, struct mbuf *m)
 			if (m == NULL)
 				return;
 		}
-		input = ipv4_input;
+
 		m->m_pkthdr.ph_family = AF_INET;
 		break;
 	}
@@ -574,7 +575,7 @@ mpip_input(struct mpip_softc *sc, struct mbuf *m)
 			if (m == NULL)
 				return;
 		}
-		input = ipv6_input;
+
 		m->m_pkthdr.ph_family = AF_INET6;
 		break;
 	}
@@ -599,23 +600,7 @@ mpip_input(struct mpip_softc *sc, struct mbuf *m)
 		break;
 	}
 
-	m->m_pkthdr.ph_ifidx = ifp->if_index;
-	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
-
-	/* packet has not been processed by PF yet. */
-	KASSERT(m->m_pkthdr.pf.statekey == NULL);
-
-#if NBPFILTER > 0
-	{
-		caddr_t if_bpf = ifp->if_bpf;
-		if (if_bpf) {
-			bpf_mtap_af(if_bpf, m->m_pkthdr.ph_family,
-			    m, BPF_DIRECTION_IN);
-		}
-	}
-#endif
-
-	(*input)(ifp, m);
+	if_vinput(ifp, m);
 	return;
 drop:
 	m_freem(m);

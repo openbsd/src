@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.97 2020/08/21 22:59:27 kn Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.98 2021/02/20 05:03:37 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -108,6 +108,8 @@ mpe_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_softc = sc;
 	ifp->if_mtu = MPE_MTU;
 	ifp->if_ioctl = mpe_ioctl;
+	ifp->if_bpf_mtap = p2p_bpf_mtap;
+	ifp->if_input = p2p_input;
 	ifp->if_output = mpe_output;
 	ifp->if_start = mpe_start;
 	ifp->if_type = IFT_MPLS;
@@ -117,6 +119,8 @@ mpe_clone_create(struct if_clone *ifc, int unit)
 
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
+	if_counters_alloc(ifp);
+
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(u_int32_t));
 #endif
@@ -454,7 +458,6 @@ mpe_input(struct ifnet *ifp, struct mbuf *m)
 	struct mbuf 	*n;
 	uint8_t		 ttl, tos;
 	uint32_t	 exp;
-	void (*input)(struct ifnet *, struct mbuf *);
 	int rxprio = sc->sc_rxhprio;
 
 	shim = mtod(m, struct shim_hdr *);
@@ -488,7 +491,7 @@ mpe_input(struct ifnet *ifp, struct mbuf *m)
 			if (m == NULL)
 				return;
 		}
-		input = ipv4_input;
+
 		m->m_pkthdr.ph_family = AF_INET;
 		break;
 	}
@@ -510,7 +513,7 @@ mpe_input(struct ifnet *ifp, struct mbuf *m)
 			if (m == NULL)
 				return;
 		}
-		input = ipv6_input;
+
 		m->m_pkthdr.ph_family = AF_INET6;
 		break;
 	}
@@ -534,21 +537,7 @@ mpe_input(struct ifnet *ifp, struct mbuf *m)
 		break;
 	}
 
-	/* new receive if and move into correct rtable */
-	m->m_pkthdr.ph_ifidx = ifp->if_index;
-	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
-
-	/* packet has not been processed by PF yet. */
-	KASSERT(m->m_pkthdr.pf.statekey == NULL);
-
-#if NBPFILTER > 0
-	if (ifp->if_bpf) {
-		bpf_mtap_af(ifp->if_bpf, m->m_pkthdr.ph_family,
-		    m, BPF_DIRECTION_IN);
-	}
-#endif
-
-	(*input)(ifp, m);
+	if_vinput(ifp, m);
 	return;
 drop:
 	m_freem(m);
