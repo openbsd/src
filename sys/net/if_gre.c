@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.164 2021/01/19 07:31:47 mvs Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.165 2021/02/20 05:01:33 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -590,6 +590,8 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_mtu = GREMTU;
 	ifp->if_flags = IFF_POINTOPOINT|IFF_MULTICAST;
 	ifp->if_xflags = IFXF_CLONED;
+	ifp->if_bpf_mtap = p2p_bpf_mtap;
+	ifp->if_input = p2p_input;
 	ifp->if_output = gre_output;
 	ifp->if_start = gre_start;
 	ifp->if_ioctl = gre_ioctl;
@@ -659,6 +661,8 @@ mgre_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_mtu = GREMTU;
 	ifp->if_flags = IFF_MULTICAST|IFF_SIMPLEX;
 	ifp->if_xflags = IFXF_CLONED;
+	ifp->if_bpf_mtap = p2p_bpf_mtap;
+	ifp->if_input = p2p_input;
 	ifp->if_rtrequest = mgre_rtrequest;
 	ifp->if_output = mgre_output;
 	ifp->if_start = mgre_start;
@@ -1006,12 +1010,8 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af, uint8_t otos,
 	caddr_t buf;
 	struct gre_header *gh;
 	struct gre_h_key *gkh;
-	void (*input)(struct ifnet *, struct mbuf *);
 	struct mbuf *(*patch)(const struct gre_tunnel *, struct mbuf *,
 	    uint8_t *, uint8_t);
-#if NBPFILTER > 0
-	int bpf_af = AF_UNSPEC; /* bpf */
-#endif
 	int mcast = 0;
 	uint8_t itos;
 
@@ -1114,19 +1114,13 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af, uint8_t otos,
 		/* FALLTHROUGH */
 	}
 	case htons(ETHERTYPE_IP):
-#if NBPFILTER > 0
-		bpf_af = AF_INET;
-#endif
+		m->m_pkthdr.ph_family = AF_INET;
 		patch = gre_ipv4_patch;
-		input = ipv4_input;
 		break;
 #ifdef INET6
 	case htons(ETHERTYPE_IPV6):
-#if NBPFILTER > 0
-		bpf_af = AF_INET6;
-#endif
+		m->m_pkthdr.ph_family = AF_INET6;
 		patch = gre_ipv6_patch;
-		input = ipv6_input;
 		break;
 #endif
 #ifdef MPLS
@@ -1134,11 +1128,8 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af, uint8_t otos,
 		mcast = M_MCAST|M_BCAST;
 		/* fallthrough */
 	case htons(ETHERTYPE_MPLS):
-#if NBPFILTER > 0
-		bpf_af = AF_MPLS;
-#endif
+		m->m_pkthdr.ph_family = AF_MPLS;
 		patch = gre_mpls_patch;
-		input = mpls_input;
 		break;
 #endif
 	case htons(0):
@@ -1189,22 +1180,8 @@ gre_input_key(struct mbuf **mp, int *offp, int type, int af, uint8_t otos,
 
 	m->m_flags &= ~(M_MCAST|M_BCAST);
 	m->m_flags |= mcast;
-	m->m_pkthdr.ph_ifidx = ifp->if_index;
-	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 
-#if NPF > 0
-	pf_pkt_addr_changed(m);
-#endif
-
-	counters_pkt(ifp->if_counters,
-	    ifc_ipackets, ifc_ibytes, m->m_pkthdr.len);
-
-#if NBPFILTER > 0
-	if (ifp->if_bpf)
-		bpf_mtap_af(ifp->if_bpf, bpf_af, m, BPF_DIRECTION_IN);
-#endif
-
-	(*input)(ifp, m);
+	if_vinput(ifp, m);
 	return (IPPROTO_DONE);
 decline:
 	*mp = m;
@@ -1332,10 +1309,6 @@ egre_input(const struct gre_tunnel *key, struct mbuf *m, int hlen, uint8_t otos)
 	}
 
 	m->m_flags &= ~(M_MCAST|M_BCAST);
-
-#if NPF > 0
-	pf_pkt_addr_changed(m);
-#endif
 
 	gre_l2_prio(&sc->sc_tunnel, m, otos);
 
@@ -1581,13 +1554,9 @@ nvgre_input(const struct gre_tunnel *key, struct mbuf *m, int hlen,
 	SET(m->m_pkthdr.csum_flags, M_FLOWID);
 	m->m_pkthdr.ph_flowid = bemtoh32(&key->t_key) & ~GRE_KEY_ENTROPY;
 
-	gre_l2_prio(&sc->sc_tunnel, m, otos);
-
 	m->m_flags &= ~(M_MCAST|M_BCAST);
 
-#if NPF > 0
-	pf_pkt_addr_changed(m);
-#endif
+	gre_l2_prio(&sc->sc_tunnel, m, otos);
 
 	if_vinput(&sc->sc_ac.ac_if, m);
 
@@ -4213,13 +4182,9 @@ eoip_input(struct gre_tunnel *key, struct mbuf *m,
 	if (m->m_pkthdr.len != len)
 		m_adj(m, len - m->m_pkthdr.len);
 
-	gre_l2_prio(&sc->sc_tunnel, m, otos);
-
 	m->m_flags &= ~(M_MCAST|M_BCAST);
 
-#if NPF > 0
-	pf_pkt_addr_changed(m);
-#endif
+	gre_l2_prio(&sc->sc_tunnel, m, otos);
 
 	if_vinput(&sc->sc_ac.ac_if, m);
 
