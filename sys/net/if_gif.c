@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.131 2020/08/21 22:59:27 kn Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.132 2021/02/20 04:58:29 dlg Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -166,6 +166,8 @@ gif_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_flags  = IFF_POINTOPOINT | IFF_MULTICAST;
 	ifp->if_xflags = IFXF_CLONED;
 	ifp->if_ioctl  = gif_ioctl;
+	ifp->if_bpf_mtap = p2p_bpf_mtap;
+	ifp->if_input  = p2p_input;
 	ifp->if_start  = gif_start;
 	ifp->if_output = gif_output;
 	ifp->if_rtrequest = p2p_rtrequest;
@@ -174,6 +176,7 @@ gif_clone_create(struct if_clone *ifc, int unit)
 
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
+	if_counters_alloc(ifp);
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(uint32_t));
@@ -787,7 +790,6 @@ gif_input(struct gif_tunnel *key, struct mbuf **mp, int *offp, int proto,
 	struct mbuf *m = *mp;
 	struct gif_softc *sc;
 	struct ifnet *ifp;
-	void (*input)(struct ifnet *, struct mbuf *);
 	uint8_t itos;
 	int rxhprio;
 
@@ -830,7 +832,6 @@ gif_input(struct gif_tunnel *key, struct mbuf **mp, int *offp, int proto,
 			ip_tos_patch(ip, itos);
 
 		m->m_pkthdr.ph_family = AF_INET;
-		input = ipv4_input;
 		break;
 	}
 #ifdef INET6
@@ -851,7 +852,6 @@ gif_input(struct gif_tunnel *key, struct mbuf **mp, int *offp, int proto,
 		SET(ip6->ip6_flow, htonl(itos << 20));
 
 		m->m_pkthdr.ph_family = AF_INET6;
-		input = ipv6_input;
 		break;
 	}
 #endif /* INET6 */
@@ -866,7 +866,6 @@ gif_input(struct gif_tunnel *key, struct mbuf **mp, int *offp, int proto,
 		itos = (ntohl(shim) >> MPLS_EXP_OFFSET) << 5;
 	
 		m->m_pkthdr.ph_family = AF_MPLS;
-		input = mpls_input;
 		break;
 	}
 #endif /* MPLS */
@@ -875,8 +874,6 @@ gif_input(struct gif_tunnel *key, struct mbuf **mp, int *offp, int proto,
 	}
 
 	m->m_flags &= ~(M_MCAST|M_BCAST);
-	m->m_pkthdr.ph_ifidx = ifp->if_index;
-	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
 
 	switch (rxhprio) {
 	case IF_HDRPRIO_PACKET:
@@ -893,25 +890,8 @@ gif_input(struct gif_tunnel *key, struct mbuf **mp, int *offp, int proto,
 		break;
 	}
 
-#if NPF > 0
-	pf_pkt_addr_changed(m);
-#endif
-
-	ifp->if_ipackets++;
-	ifp->if_ibytes += m->m_pkthdr.len;
-
-#if NBPFILTER > 0
-	{
-		caddr_t if_bpf = ifp->if_bpf;
-		if (if_bpf) {
-			bpf_mtap_af(ifp->if_bpf, m->m_pkthdr.ph_family,
-			    m, BPF_DIRECTION_IN);
-		}
-	}
-#endif
-
 	*mp = NULL;
-	(*input)(ifp, m);
+	if_vinput(ifp, m);
 	return (IPPROTO_DONE);
 
  drop:
