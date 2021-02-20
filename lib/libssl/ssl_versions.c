@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_versions.c,v 1.10 2021/02/20 08:30:52 jsing Exp $ */
+/* $OpenBSD: ssl_versions.c,v 1.11 2021/02/20 09:43:29 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -36,12 +36,13 @@ ssl_clamp_version_range(uint16_t *min_ver, uint16_t *max_ver,
 
 int
 ssl_version_set_min(const SSL_METHOD *meth, uint16_t ver, uint16_t max_ver,
-    uint16_t *out_ver)
+    uint16_t *out_ver, uint16_t *out_proto_ver)
 {
 	uint16_t min_version, max_version;
 
 	if (ver == 0) {
 		*out_ver = meth->internal->min_version;
+		*out_proto_ver = 0;
 		return 1;
 	}
 
@@ -52,19 +53,20 @@ ssl_version_set_min(const SSL_METHOD *meth, uint16_t ver, uint16_t max_ver,
 	    meth->internal->min_version, meth->internal->max_version))
 		return 0;
 
-	*out_ver = min_version;
+	*out_ver = *out_proto_ver = min_version;
 
 	return 1;
 }
 
 int
 ssl_version_set_max(const SSL_METHOD *meth, uint16_t ver, uint16_t min_ver,
-    uint16_t *out_ver)
+    uint16_t *out_ver, uint16_t *out_proto_ver)
 {
 	uint16_t min_version, max_version;
 
 	if (ver == 0) {
 		*out_ver = meth->internal->max_version;
+		*out_proto_ver = 0;
 		return 1;
 	}
 
@@ -75,7 +77,7 @@ ssl_version_set_max(const SSL_METHOD *meth, uint16_t ver, uint16_t min_ver,
 	    meth->internal->min_version, meth->internal->max_version))
 		return 0;
 
-	*out_ver = max_version;
+	*out_ver = *out_proto_ver = max_version;
 
 	return 1;
 }

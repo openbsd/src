@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.320 2021/02/07 15:26:32 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.321 2021/02/20 09:43:29 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -520,6 +520,13 @@ typedef struct ssl_ctx_internal_st {
 	uint16_t min_version;
 	uint16_t max_version;
 
+	/*
+	 * These may be zero to imply minimum or maximum version supported by
+	 * the method.
+	 */
+	uint16_t min_proto_version;
+	uint16_t max_proto_version;
+
 	unsigned long options;
 	unsigned long mode;
 
@@ -681,6 +688,13 @@ typedef struct ssl_internal_st {
 
 	uint16_t min_version;
 	uint16_t max_version;
+
+	/*
+	 * These may be zero to imply minimum or maximum version supported by
+	 * the method.
+	 */
+	uint16_t min_proto_version;
+	uint16_t max_proto_version;
 
 	unsigned long options; /* protocol behaviour */
 	unsigned long mode; /* API behaviour */
@@ -1111,9 +1125,9 @@ int ssl_enabled_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver);
 int ssl_supported_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver);
 int ssl_max_shared_version(SSL *s, uint16_t peer_ver, uint16_t *max_ver);
 int ssl_version_set_min(const SSL_METHOD *meth, uint16_t ver, uint16_t max_ver,
-    uint16_t *out_ver);
+    uint16_t *out_ver, uint16_t *out_proto_ver);
 int ssl_version_set_max(const SSL_METHOD *meth, uint16_t ver, uint16_t min_ver,
-    uint16_t *out_ver);
+    uint16_t *out_ver, uint16_t *out_proto_ver);
 int ssl_downgrade_max_version(SSL *s, uint16_t *max_ver);
 int ssl_legacy_stack_version(SSL *s, uint16_t version);
 int ssl_cipher_in_list(STACK_OF(SSL_CIPHER) *ciphers, const SSL_CIPHER *cipher);
