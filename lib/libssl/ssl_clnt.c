@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.79 2021/02/20 08:19:01 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.80 2021/02/20 08:22:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -817,7 +817,12 @@ ssl3_get_dtls_hello_verify(SSL *s)
 	if (CBS_len(&hello_verify_request) != 0)
 		goto truncated;
 
-	if (ssl_version != s->version) {
+	/*
+	 * Per RFC 6347 section 4.2.1, the HelloVerifyRequest should always
+	 * contain DTLSv1.0 the version that is going to be negotiated.
+	 * Tolerate DTLSv1.2 just in case.
+	 */
+	if (ssl_version != DTLS1_VERSION && ssl_version != DTLS1_2_VERSION) {
 		SSLerror(s, SSL_R_WRONG_SSL_VERSION);
 		s->version = (s->version & 0xff00) | (ssl_version & 0xff);
 		al = SSL_AD_PROTOCOL_VERSION;

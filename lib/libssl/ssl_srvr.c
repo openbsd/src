@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.91 2021/02/07 15:04:10 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.92 2021/02/20 08:22:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1171,10 +1171,15 @@ ssl3_send_dtls_hello_verify_request(SSL *s)
 			return 0;
 		}
 
+		/*
+		 * Per RFC 6347 section 4.2.1, the HelloVerifyRequest should
+		 * always contain DTLSv1.0 regardless of the version that is
+		 * going to be negotiated.
+		 */
 		if (!ssl3_handshake_msg_start(s, &cbb, &verify,
 		    DTLS1_MT_HELLO_VERIFY_REQUEST))
 			goto err;
-		if (!CBB_add_u16(&verify, s->version))
+		if (!CBB_add_u16(&verify, DTLS1_VERSION))
 			goto err;
 		if (!CBB_add_u8_length_prefixed(&verify, &cookie))
 			goto err;
