@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.631 2021/02/20 04:37:26 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.632 2021/02/20 04:55:52 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -853,6 +853,10 @@ if_vinput(struct ifnet *ifp, struct mbuf *m)
 	counters_pkt(ifp->if_counters,
 	    ifc_ipackets, ifc_ibytes, m->m_pkthdr.len);
 
+#if NPF > 0
+	pf_pkt_addr_changed(m);
+#endif
+
 #if NBPFILTER > 0
 	if_bpf = ifp->if_bpf;
 	if (if_bpf) {
@@ -1501,6 +1505,42 @@ p2p_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 	}
 }
 
+int
+p2p_bpf_mtap(caddr_t if_bpf, const struct mbuf *m, u_int dir)
+{
+#if NBPFILTER > 0
+	return (bpf_mtap_af(if_bpf, m->m_pkthdr.ph_family, m, dir));
+#else
+	return (0);
+#endif
+}
+
+void
+p2p_input(struct ifnet *ifp, struct mbuf *m)
+{
+	void (*input)(struct ifnet *, struct mbuf *);
+
+	switch (m->m_pkthdr.ph_family) {
+	case AF_INET:
+		input = ipv4_input;
+		break;
+#ifdef INET6
+	case AF_INET6:
+		input = ipv6_input;
+		break;
+#endif
+#ifdef MPLS
+	case AF_MPLS:
+		input = mpls_input;
+		break;
+#endif
+	default:
+		m_freem(m);
+		return;
+	}
+
+	(*input)(ifp, m);
+}
 
 /*
  * Bring down all interfaces
