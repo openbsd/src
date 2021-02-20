@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.694 2021/02/19 13:46:59 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.695 2021/02/20 14:56:59 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1071,7 +1071,7 @@ bind_lease(struct interface_info *ifi)
 	int			 rslt, seen;
 
 	time(&cur_time);
-	if (log_getverbose() == 0)
+	if (log_getverbose())
 		tick_msg("lease", TICK_SUCCESS);
 
 	lease = apply_defaults(ifi->offer);
