@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.206 2021/02/01 07:43:33 mvs Exp $	*/
+/*	$OpenBSD: if.h,v 1.207 2021/02/20 01:11:44 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -230,6 +230,7 @@ struct if_status_description {
 #define	IFXF_AUTOCONF6		0x20	/* [N] v6 autoconf enabled */
 #define IFXF_INET6_NOSOII	0x40	/* [N] don't do RFC 7217 */
 #define	IFXF_AUTOCONF4		0x80	/* [N] v4 autoconf (aka dhcp) enabled */
+#define	IFXF_MONITOR		0x100	/* [N] only used for bpf */
 
 #define	IFXF_CANTCHANGE \
 	(IFXF_MPSAFE|IFXF_CLONED)

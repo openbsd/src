@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.41 2020/07/07 00:00:03 dlg Exp $ */
+/*	$OpenBSD: ifq.c,v 1.42 2021/02/20 01:11:44 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -715,10 +715,12 @@ ifiq_input(struct ifiqueue *ifiq, struct mbuf_list *ml)
 	ifiq->ifiq_bytes += bytes;
 
 	len = ml_len(&ifiq->ifiq_ml);
-	if (len > ifiq_maxlen_drop)
-		ifiq->ifiq_qdrops += ml_len(ml);
-	else
-		ml_enlist(&ifiq->ifiq_ml, ml);
+	if (__predict_true(!ISSET(ifp->if_xflags, IFXF_MONITOR))) {
+		if (len > ifiq_maxlen_drop)
+			ifiq->ifiq_qdrops += ml_len(ml);
+		else
+			ml_enlist(&ifiq->ifiq_ml, ml);
+	}
 	mtx_leave(&ifiq->ifiq_mtx);
 
 	if (ml_empty(ml))
