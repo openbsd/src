@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.35 2021/02/08 17:18:39 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.36 2021/02/20 14:14:16 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -377,7 +377,7 @@ ssl3_get_record(SSL *s)
 			}
 			SSLerror(s, SSL_R_WRONG_VERSION_NUMBER);
 			al = SSL_AD_PROTOCOL_VERSION;
-			goto f_err;
+			goto fatal_err;
 		}
 
 		if ((ssl_version >> 8) != SSL3_VERSION_MAJOR) {
@@ -388,7 +388,7 @@ ssl3_get_record(SSL *s)
 		if (rr->length > rb->len - SSL3_RT_HEADER_LENGTH) {
 			al = SSL_AD_RECORD_OVERFLOW;
 			SSLerror(s, SSL_R_PACKET_LENGTH_TOO_LONG);
-			goto f_err;
+			goto fatal_err;
 		}
 	}
 
@@ -419,7 +419,7 @@ ssl3_get_record(SSL *s)
 			SSLerror(s, SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC);
 
 		al = alert_desc;
-		goto f_err;
+		goto fatal_err;
 	}
 
 	rr->data = out;
@@ -450,7 +450,7 @@ ssl3_get_record(SSL *s)
 
 	return (1);
 
- f_err:
+ fatal_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
  err:
 	return (ret);
@@ -760,7 +760,7 @@ ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		}
 	}
 
-start:
+ start:
 	/*
 	 * Do not process more than three consecutive records, otherwise the
 	 * peer can cause us to loop indefinitely. Instead, return with an
@@ -798,7 +798,7 @@ start:
 	    && (rr->type != SSL3_RT_HANDSHAKE)) {
 		al = SSL_AD_UNEXPECTED_MESSAGE;
 		SSLerror(s, SSL_R_DATA_BETWEEN_CCS_AND_FINISHED);
-		goto f_err;
+		goto fatal_err;
 	}
 
 	/* If the other end has shut down, throw anything we read away
@@ -818,7 +818,7 @@ start:
 		    !tls12_record_layer_read_protected(s->internal->rl)) {
 			al = SSL_AD_UNEXPECTED_MESSAGE;
 			SSLerror(s, SSL_R_APP_DATA_IN_HANDSHAKE);
-			goto f_err;
+			goto fatal_err;
 		}
 
 		if (len <= 0)
@@ -900,7 +900,7 @@ start:
 		    (S3I(s)->handshake_fragment[3] != 0)) {
 			al = SSL_AD_DECODE_ERROR;
 			SSLerror(s, SSL_R_BAD_HELLO_REQUEST);
-			goto f_err;
+			goto fatal_err;
 		}
 
 		if (s->internal->msg_callback)
@@ -944,7 +944,7 @@ start:
 	    S3I(s)->handshake_fragment[0] == SSL3_MT_CLIENT_HELLO &&
 	    (s->internal->options & SSL_OP_NO_CLIENT_RENEGOTIATION)) {
 		al = SSL_AD_NO_RENEGOTIATION;
-		goto f_err;
+		goto fatal_err;
 	}
 	/* If we are a server and get a client hello when renegotiation isn't
 	 * allowed send back a no renegotiation alert and carry on.
@@ -999,7 +999,7 @@ start:
 			else if (alert_descr == SSL_AD_NO_RENEGOTIATION) {
 				al = SSL_AD_HANDSHAKE_FAILURE;
 				SSLerror(s, SSL_R_NO_RENEGOTIATION);
-				goto f_err;
+				goto fatal_err;
 			}
 		} else if (alert_level == SSL3_AL_FATAL) {
 			s->internal->rwstate = SSL_NOTHING;
@@ -1013,7 +1013,7 @@ start:
 		} else {
 			al = SSL_AD_ILLEGAL_PARAMETER;
 			SSLerror(s, SSL_R_UNKNOWN_ALERT_TYPE);
-			goto f_err;
+			goto fatal_err;
 		}
 
 		goto start;
@@ -1033,21 +1033,21 @@ start:
 			(rr->data[0] != SSL3_MT_CCS)) {
 			al = SSL_AD_ILLEGAL_PARAMETER;
 			SSLerror(s, SSL_R_BAD_CHANGE_CIPHER_SPEC);
-			goto f_err;
+			goto fatal_err;
 		}
 
 		/* Check we have a cipher to change to */
 		if (S3I(s)->hs.new_cipher == NULL) {
 			al = SSL_AD_UNEXPECTED_MESSAGE;
 			SSLerror(s, SSL_R_CCS_RECEIVED_EARLY);
-			goto f_err;
+			goto fatal_err;
 		}
 
 		/* Check that we should be receiving a Change Cipher Spec. */
 		if (!(s->s3->flags & SSL3_FLAGS_CCS_OK)) {
 			al = SSL_AD_UNEXPECTED_MESSAGE;
 			SSLerror(s, SSL_R_CCS_RECEIVED_EARLY);
-			goto f_err;
+			goto fatal_err;
 		}
 		s->s3->flags &= ~SSL3_FLAGS_CCS_OK;
 
@@ -1108,7 +1108,7 @@ start:
 		}
 		al = SSL_AD_UNEXPECTED_MESSAGE;
 		SSLerror(s, SSL_R_UNEXPECTED_RECORD);
-		goto f_err;
+		goto fatal_err;
 	case SSL3_RT_CHANGE_CIPHER_SPEC:
 	case SSL3_RT_ALERT:
 	case SSL3_RT_HANDSHAKE:
@@ -1117,7 +1117,7 @@ start:
 		 * should not happen when type != rr->type */
 		al = SSL_AD_UNEXPECTED_MESSAGE;
 		SSLerror(s, ERR_R_INTERNAL_ERROR);
-		goto f_err;
+		goto fatal_err;
 	case SSL3_RT_APPLICATION_DATA:
 		/* At this point, we were expecting handshake data,
 		 * but have application data.  If the library was
@@ -1139,14 +1139,14 @@ start:
 		} else {
 			al = SSL_AD_UNEXPECTED_MESSAGE;
 			SSLerror(s, SSL_R_UNEXPECTED_RECORD);
-			goto f_err;
+			goto fatal_err;
 		}
 	}
 	/* not reached */
 
-f_err:
+ fatal_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
-err:
+ err:
 	return (-1);
 }
 

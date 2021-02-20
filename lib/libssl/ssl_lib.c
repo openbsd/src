@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.247 2021/02/20 09:43:29 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.248 2021/02/20 14:14:16 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1600,7 +1600,7 @@ SSL_select_next_proto(unsigned char **out, unsigned char *outlen,
 	result = client;
 	status = OPENSSL_NPN_NO_OVERLAP;
 
-found:
+ found:
 	*out = (unsigned char *) result + 1;
 	*outlen = result[0];
 	return (status);
@@ -1942,9 +1942,9 @@ SSL_CTX_new(const SSL_METHOD *meth)
 	ret->internal->options |= SSL_OP_LEGACY_SERVER_CONNECT;
 
 	return (ret);
-err:
+ err:
 	SSLerrorx(ERR_R_MALLOC_FAILURE);
-err2:
+ err2:
 	SSL_CTX_free(ret);
 	return (NULL);
 }

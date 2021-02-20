@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.23 2021/01/07 15:32:59 jsing Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.24 2021/02/20 14:14:16 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -256,7 +256,7 @@ ssl3_get_finished(SSL *s, int a, int b)
 	if (!S3I(s)->change_cipher_spec) {
 		al = SSL_AD_UNEXPECTED_MESSAGE;
 		SSLerror(s, SSL_R_GOT_A_FIN_BEFORE_A_CCS);
-		goto f_err;
+		goto fatal_err;
 	}
 	S3I(s)->change_cipher_spec = 0;
 
@@ -265,7 +265,7 @@ ssl3_get_finished(SSL *s, int a, int b)
 	if (n < 0) {
 		al = SSL_AD_DECODE_ERROR;
 		SSLerror(s, SSL_R_BAD_DIGEST_LENGTH);
-		goto f_err;
+		goto fatal_err;
 	}
 
 	CBS_init(&cbs, s->internal->init_msg, n);
@@ -274,13 +274,13 @@ ssl3_get_finished(SSL *s, int a, int b)
 	    CBS_len(&cbs) != md_len) {
 		al = SSL_AD_DECODE_ERROR;
 		SSLerror(s, SSL_R_BAD_DIGEST_LENGTH);
-		goto f_err;
+		goto fatal_err;
 	}
 
 	if (!CBS_mem_equal(&cbs, S3I(s)->tmp.peer_finish_md, CBS_len(&cbs))) {
 		al = SSL_AD_DECRYPT_ERROR;
 		SSLerror(s, SSL_R_DIGEST_CHECK_FAILED);
-		goto f_err;
+		goto fatal_err;
 	}
 
 	/* Copy finished so we can use it for renegotiation checks. */
@@ -296,7 +296,7 @@ ssl3_get_finished(SSL *s, int a, int b)
 	}
 
 	return (1);
-f_err:
+ fatal_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
 	return (0);
 }
@@ -450,7 +450,7 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 		if ((mt >= 0) && (S3I(s)->tmp.message_type != mt)) {
 			al = SSL_AD_UNEXPECTED_MESSAGE;
 			SSLerror(s, SSL_R_UNEXPECTED_MESSAGE);
-			goto f_err;
+			goto fatal_err;
 		}
 		*ok = 1;
 		s->internal->init_msg = s->internal->init_buf->data + 4;
@@ -502,7 +502,7 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 		if ((mt >= 0) && (*p != mt)) {
 			al = SSL_AD_UNEXPECTED_MESSAGE;
 			SSLerror(s, SSL_R_UNEXPECTED_MESSAGE);
-			goto f_err;
+			goto fatal_err;
 		}
 
 		CBS_init(&cbs, p, 4);
@@ -516,7 +516,7 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 		if (l > (unsigned long)max) {
 			al = SSL_AD_ILLEGAL_PARAMETER;
 			SSLerror(s, SSL_R_EXCESSIVE_MESSAGE_SIZE);
-			goto f_err;
+			goto fatal_err;
 		}
 		if (l && !BUF_MEM_grow_clean(s->internal->init_buf, l + 4)) {
 			SSLerror(s, ERR_R_BUF_LIB);
@@ -564,7 +564,7 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 	*ok = 1;
 	return (s->internal->init_num);
 
-f_err:
+ fatal_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
 err:
 	*ok = 0;

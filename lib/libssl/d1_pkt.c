@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.92 2021/02/08 17:17:02 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.93 2021/02/20 14:14:16 tb Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -328,7 +328,7 @@ dtls1_process_record(SSL *s)
 		else if (alert_desc == SSL_AD_BAD_RECORD_MAC)
 			SSLerror(s, SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC);
 
-		goto f_err;
+		goto fatal_err;
 	}
 
 	rr->data = out;
@@ -339,7 +339,7 @@ dtls1_process_record(SSL *s)
 
 	return (1);
 
- f_err:
+ fatal_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, alert_desc);
  err:
 	return (0);
@@ -635,7 +635,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		    !tls12_record_layer_read_protected(s->internal->rl)) {
 			al = SSL_AD_UNEXPECTED_MESSAGE;
 			SSLerror(s, SSL_R_APP_DATA_IN_HANDSHAKE);
-			goto f_err;
+			goto fatal_err;
 		}
 
 		if (len <= 0)
@@ -698,7 +698,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 			/* Not certain if this is the right error handling */
 			al = SSL_AD_UNEXPECTED_MESSAGE;
 			SSLerror(s, SSL_R_UNEXPECTED_RECORD);
-			goto f_err;
+			goto fatal_err;
 		}
 
 		if (dest_maxlen > 0) {
@@ -735,7 +735,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		    (D1I(s)->handshake_fragment[3] != 0)) {
 			al = SSL_AD_DECODE_ERROR;
 			SSLerror(s, SSL_R_BAD_HELLO_REQUEST);
-			goto f_err;
+			goto fatal_err;
 		}
 
 		/* no need to check sequence number on HELLO REQUEST messages */
@@ -821,7 +821,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		} else {
 			al = SSL_AD_ILLEGAL_PARAMETER;
 			SSLerror(s, SSL_R_UNKNOWN_ALERT_TYPE);
-			goto f_err;
+			goto fatal_err;
 		}
 
 		goto start;
@@ -847,7 +847,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		    (rr->off != 0) || (rr->data[0] != SSL3_MT_CCS)) {
 			al = SSL_AD_DECODE_ERROR;
 			SSLerror(s, SSL_R_BAD_CHANGE_CIPHER_SPEC);
-			goto f_err;
+			goto fatal_err;
 		}
 
 		rr->length = 0;
@@ -941,7 +941,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		}
 		al = SSL_AD_UNEXPECTED_MESSAGE;
 		SSLerror(s, SSL_R_UNEXPECTED_RECORD);
-		goto f_err;
+		goto fatal_err;
 	case SSL3_RT_CHANGE_CIPHER_SPEC:
 	case SSL3_RT_ALERT:
 	case SSL3_RT_HANDSHAKE:
@@ -950,7 +950,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		 * should not happen when type != rr->type */
 		al = SSL_AD_UNEXPECTED_MESSAGE;
 		SSLerror(s, ERR_R_INTERNAL_ERROR);
-		goto f_err;
+		goto fatal_err;
 	case SSL3_RT_APPLICATION_DATA:
 		/* At this point, we were expecting handshake data,
 		 * but have application data.  If the library was
@@ -972,12 +972,12 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		} else {
 			al = SSL_AD_UNEXPECTED_MESSAGE;
 			SSLerror(s, SSL_R_UNEXPECTED_RECORD);
-			goto f_err;
+			goto fatal_err;
 		}
 	}
 	/* not reached */
 
- f_err:
+ fatal_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
  err:
 	return (-1);
