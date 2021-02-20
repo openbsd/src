@@ -75,7 +75,7 @@ extern "C" _Unwind_Reason_Code __libunwind_seh_personality(
 
 namespace libunwind {
 
-static UnwindInfoSectionsCache uwis_cache;
+static thread_local UnwindInfoSectionsCache uwis_cache;
 
 #if defined(_LIBUNWIND_SUPPORT_DWARF_UNWIND)
 /// Cache of recently found FDEs.
