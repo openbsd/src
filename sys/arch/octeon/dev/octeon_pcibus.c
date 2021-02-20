@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_pcibus.c,v 1.20 2018/06/13 14:38:42 visa Exp $	*/
+/*	$OpenBSD: octeon_pcibus.c,v 1.21 2021/02/20 14:42:51 visa Exp $	*/
 /*	$NetBSD: bonito_mainbus.c,v 1.11 2008/04/28 20:23:10 martin Exp $	*/
 /*	$NetBSD: bonito_pci.c,v 1.5 2008/04/28 20:23:28 martin Exp $	*/
 
@@ -419,14 +419,7 @@ octeon_pcibus_pci_intr_establish(void *cookie, pci_intr_handle_t ih, int level,
 void
 octeon_pcibus_pci_intr_disestablish(void *cookie, void *ihp)
 {
-	struct octeon_pcibus_softc *sc;
-	struct iobus_attach_args *aa;
-
-	sc = (struct octeon_pcibus_softc *)cookie;
-	aa = sc->sc_aa;
-
-// XXX: this cause panic...
-//	iobus_intr_disestablish(ihp);
+	octeon_intr_disestablish(ihp);
 }
 
 /*
