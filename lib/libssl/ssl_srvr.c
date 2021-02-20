@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.92 2021/02/20 08:22:55 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.93 2021/02/20 14:03:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -741,7 +741,7 @@ ssl3_accept(SSL *s)
 		}
 		skip = 0;
 	}
-end:
+ end:
 	/* BIO_flush(s->wbio); */
 	s->internal->in_handshake--;
 	if (cb != NULL)
@@ -819,11 +819,11 @@ ssl3_get_client_hello(SSL *s)
 
 	/* Parse client hello up until the extensions (if any). */
 	if (!CBS_get_u16(&cbs, &client_version))
-		goto truncated;
+		goto decode_err;
 	if (!CBS_get_bytes(&cbs, &client_random, SSL3_RANDOM_SIZE))
-		goto truncated;
+		goto decode_err;
 	if (!CBS_get_u8_length_prefixed(&cbs, &session_id))
-		goto truncated;
+		goto decode_err;
 	if (CBS_len(&session_id) > SSL3_SESSION_ID_SIZE) {
 		al = SSL_AD_ILLEGAL_PARAMETER;
 		SSLerror(s, SSL_R_SSL3_SESSION_ID_TOO_LONG);
@@ -831,12 +831,12 @@ ssl3_get_client_hello(SSL *s)
 	}
 	if (SSL_is_dtls(s)) {
 		if (!CBS_get_u8_length_prefixed(&cbs, &cookie))
-			goto truncated;
+			goto decode_err;
 	}
 	if (!CBS_get_u16_length_prefixed(&cbs, &cipher_suites))
-		goto truncated;
+		goto decode_err;
 	if (!CBS_get_u8_length_prefixed(&cbs, &compression_methods))
-		goto truncated;
+		goto decode_err;
 
 	/*
 	 * Use version from inside client hello, not from record header.
@@ -1003,7 +1003,7 @@ ssl3_get_client_hello(SSL *s)
 	comp_null = 0;
 	while (CBS_len(&compression_methods) > 0) {
 		if (!CBS_get_u8(&compression_methods, &comp_method))
-			goto truncated;
+			goto decode_err;
 		if (comp_method == 0)
 			comp_null = 1;
 	}
@@ -1144,13 +1144,13 @@ ssl3_get_client_hello(SSL *s)
 	ret = cookie_valid ? 2 : 1;
 
 	if (0) {
-truncated:
+ decode_err:
 		al = SSL_AD_DECODE_ERROR;
 		SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
-f_err:
+ f_err:
 		ssl3_send_alert(s, SSL3_AL_FATAL, al);
 	}
-err:
+ err:
 	sk_SSL_CIPHER_free(ciphers);
 
 	return (ret);
@@ -1738,7 +1738,7 @@ ssl3_get_client_kex_rsa(SSL *s, CBS *cbs)
 	p = pms;
 
 	if (!CBS_get_u16_length_prefixed(cbs, &enc_pms))
-		goto truncated;
+		goto decode_err;
 	if (CBS_len(cbs) != 0 || CBS_len(&enc_pms) != RSA_size(rsa)) {
 		SSLerror(s, SSL_R_TLS_RSA_ENCRYPTED_VALUE_LENGTH_IS_WRONG);
 		goto err;
@@ -1792,7 +1792,7 @@ ssl3_get_client_kex_rsa(SSL *s, CBS *cbs)
 
 	return (1);
 
- truncated:
+ decode_err:
 	al = SSL_AD_DECODE_ERROR;
 	SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
  f_err:
@@ -1814,9 +1814,9 @@ ssl3_get_client_kex_dhe(SSL *s, CBS *cbs)
 	DH *dh;
 
 	if (!CBS_get_u16_length_prefixed(cbs, &dh_Yc))
-		goto truncated;
+		goto decode_err;
 	if (CBS_len(cbs) != 0)
-		goto truncated;
+		goto decode_err;
 
 	if (S3I(s)->tmp.dh == NULL) {
 		al = SSL_AD_HANDSHAKE_FAILURE;
@@ -1865,7 +1865,7 @@ ssl3_get_client_kex_dhe(SSL *s, CBS *cbs)
 
 	return (1);
 
- truncated:
+ decode_err:
 	al = SSL_AD_DECODE_ERROR;
 	SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
  f_err:
@@ -2011,9 +2011,9 @@ ssl3_get_client_kex_gost(SSL *s, CBS *cbs)
 
 	/* Decrypt session key */
 	if (!CBS_get_asn1(cbs, &gostblob, CBS_ASN1_SEQUENCE))
-		goto truncated;
+		goto decode_err;
 	if (CBS_len(cbs) != 0)
-		goto truncated;
+		goto decode_err;
 	if (EVP_PKEY_decrypt(pkey_ctx, premaster_secret, &outlen,
 	    CBS_data(&gostblob), CBS_len(&gostblob)) <= 0) {
 		SSLerror(s, SSL_R_DECRYPTION_FAILED);
@@ -2039,7 +2039,7 @@ ssl3_get_client_kex_gost(SSL *s, CBS *cbs)
 	else
 		goto err;
 
- truncated:
+ decode_err:
 	al = SSL_AD_DECODE_ERROR;
 	SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
@@ -2183,7 +2183,7 @@ ssl3_get_cert_verify(SSL *s)
 		uint16_t sigalg_value;
 
 		if (!CBS_get_u16(&cbs, &sigalg_value))
-			goto truncated;
+			goto decode_err;
 		if ((sigalg = ssl_sigalg(sigalg_value, tls12_sigalgs,
 		    tls12_sigalgs_len)) == NULL ||
 		    (md = sigalg->md()) == NULL) {
@@ -2324,7 +2324,7 @@ ssl3_get_cert_verify(SSL *s)
 
 	ret = 1;
 	if (0) {
- truncated:
+ decode_err:
 		al = SSL_AD_DECODE_ERROR;
 		SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
  f_err:
@@ -2381,7 +2381,7 @@ ssl3_get_client_certificate(SSL *s)
 	}
 
 	if (n < 0)
-		goto truncated;
+		goto decode_err;
 
 	CBS_init(&cbs, s->internal->init_msg, n);
 
@@ -2392,7 +2392,7 @@ ssl3_get_client_certificate(SSL *s)
 
 	if (!CBS_get_u24_length_prefixed(&cbs, &client_certs) ||
 	    CBS_len(&cbs) != 0)
-		goto truncated;
+		goto decode_err;
 
 	while (CBS_len(&client_certs) > 0) {
 		CBS cert;
@@ -2470,13 +2470,13 @@ ssl3_get_client_certificate(SSL *s)
 
 	ret = 1;
 	if (0) {
-truncated:
+ decode_err:
 		al = SSL_AD_DECODE_ERROR;
 		SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
-f_err:
+ f_err:
 		ssl3_send_alert(s, SSL3_AL_FATAL, al);
 	}
-err:
+ err:
 	X509_free(x);
 	sk_X509_pop_free(sk, X509_free);
 

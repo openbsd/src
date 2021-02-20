@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.80 2021/02/20 08:22:55 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.81 2021/02/20 14:03:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -634,7 +634,7 @@ ssl3_connect(SSL *s)
 		skip = 0;
 	}
 
-end:
+ end:
 	s->internal->in_handshake--;
 	if (cb != NULL)
 		cb(s, SSL_CB_CONNECT_EXIT, ret);
@@ -779,7 +779,7 @@ ssl3_send_client_hello(SSL *s)
 	/* SSL3_ST_CW_CLNT_HELLO_B */
 	return (ssl3_handshake_write(s));
 
-err:
+ err:
 	CBB_cleanup(&cbb);
 
 	return (-1);
@@ -806,16 +806,16 @@ ssl3_get_dtls_hello_verify(SSL *s)
 	}
 
 	if (n < 0)
-		goto truncated;
+		goto decode_err;
 
 	CBS_init(&hello_verify_request, s->internal->init_msg, n);
 
 	if (!CBS_get_u16(&hello_verify_request, &ssl_version))
-		goto truncated;
+		goto decode_err;
 	if (!CBS_get_u8_length_prefixed(&hello_verify_request, &cookie))
-		goto truncated;
+		goto decode_err;
 	if (CBS_len(&hello_verify_request) != 0)
-		goto truncated;
+		goto decode_err;
 
 	/*
 	 * Per RFC 6347 section 4.2.1, the HelloVerifyRequest should always
@@ -840,9 +840,9 @@ ssl3_get_dtls_hello_verify(SSL *s)
 
 	return 1;
 
-truncated:
+ decode_err:
 	al = SSL_AD_DECODE_ERROR;
-f_err:
+ f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
 	return -1;
 }
@@ -869,7 +869,7 @@ ssl3_get_server_hello(SSL *s)
 	s->internal->first_packet = 0;
 
 	if (n < 0)
-		goto truncated;
+		goto decode_err;
 
 	CBS_init(&cbs, s->internal->init_msg, n);
 
@@ -894,7 +894,7 @@ ssl3_get_server_hello(SSL *s)
 	}
 
 	if (!CBS_get_u16(&cbs, &server_version))
-		goto truncated;
+		goto decode_err;
 
 	if (ssl_supported_version_range(s, &min_version, &max_version) != 1) {
 		SSLerror(s, SSL_R_NO_PROTOCOLS_AVAILABLE);
@@ -917,7 +917,7 @@ ssl3_get_server_hello(SSL *s)
 
 	/* Server random. */
 	if (!CBS_get_bytes(&cbs, &server_random, SSL3_RANDOM_SIZE))
-		goto truncated;
+		goto decode_err;
 	if (!CBS_write_bytes(&server_random, s->s3->server_random,
 	    sizeof(s->s3->server_random), NULL))
 		goto err;
@@ -950,7 +950,7 @@ ssl3_get_server_hello(SSL *s)
 
 	/* Session ID. */
 	if (!CBS_get_u8_length_prefixed(&cbs, &session_id))
-		goto truncated;
+		goto decode_err;
 
 	if (CBS_len(&session_id) > SSL3_SESSION_ID_SIZE) {
 		al = SSL_AD_ILLEGAL_PARAMETER;
@@ -960,7 +960,7 @@ ssl3_get_server_hello(SSL *s)
 
 	/* Cipher suite. */
 	if (!CBS_get_u16(&cbs, &cipher_suite))
-		goto truncated;
+		goto decode_err;
 
 	/*
 	 * Check if we want to resume the session based on external
@@ -1063,7 +1063,7 @@ ssl3_get_server_hello(SSL *s)
 		tls1_transcript_free(s);
 
 	if (!CBS_get_u8(&cbs, &compression_method))
-		goto truncated;
+		goto decode_err;
 
 	if (compression_method != 0) {
 		al = SSL_AD_ILLEGAL_PARAMETER;
@@ -1098,13 +1098,13 @@ ssl3_get_server_hello(SSL *s)
 
 	return (1);
 
-truncated:
+ decode_err:
 	/* wrong packet length */
 	al = SSL_AD_DECODE_ERROR;
 	SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
-f_err:
+ f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
-err:
+ err:
 	return (-1);
 }
 
@@ -1143,11 +1143,11 @@ ssl3_get_server_certificate(SSL *s)
 	}
 
 	if (n < 0)
-		goto truncated;
+		goto decode_err;
 
 	CBS_init(&cbs, s->internal->init_msg, n);
 	if (CBS_len(&cbs) < 3)
-		goto truncated;
+		goto decode_err;
 
 	if (!CBS_get_u24_length_prefixed(&cbs, &cert_list) ||
 	    CBS_len(&cbs) != 0) {
@@ -1160,7 +1160,7 @@ ssl3_get_server_certificate(SSL *s)
 		CBS cert;
 
 		if (CBS_len(&cert_list) < 3)
-			goto truncated;
+			goto decode_err;
 		if (!CBS_get_u24_length_prefixed(&cert_list, &cert)) {
 			al = SSL_AD_DECODE_ERROR;
 			SSLerror(s, SSL_R_CERT_LENGTH_MISMATCH);
@@ -1246,14 +1246,14 @@ ssl3_get_server_certificate(SSL *s)
 	ret = 1;
 
 	if (0) {
-truncated:
+ decode_err:
 		/* wrong packet length */
 		al = SSL_AD_DECODE_ERROR;
 		SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
-f_err:
+ f_err:
 		ssl3_send_alert(s, SSL3_AL_FATAL, al);
 	}
-err:
+ err:
 	EVP_PKEY_free(pkey);
 	X509_free(x);
 	sk_X509_pop_free(sk, X509_free);
@@ -1280,21 +1280,21 @@ ssl3_get_server_kex_dhe(SSL *s, EVP_PKEY **pkey, CBS *cbs)
 	}
 
 	if (!CBS_get_u16_length_prefixed(cbs, &dhp))
-		goto truncated;
+		goto decode_err;
 	if ((dh->p = BN_bin2bn(CBS_data(&dhp), CBS_len(&dhp), NULL)) == NULL) {
 		SSLerror(s, ERR_R_BN_LIB);
 		goto err;
 	}
 
 	if (!CBS_get_u16_length_prefixed(cbs, &dhg))
-		goto truncated;
+		goto decode_err;
 	if ((dh->g = BN_bin2bn(CBS_data(&dhg), CBS_len(&dhg), NULL)) == NULL) {
 		SSLerror(s, ERR_R_BN_LIB);
 		goto err;
 	}
 
 	if (!CBS_get_u16_length_prefixed(cbs, &dhpk))
-		goto truncated;
+		goto decode_err;
 	if ((dh->pub_key = BN_bin2bn(CBS_data(&dhpk), CBS_len(&dhpk),
 	    NULL)) == NULL) {
 		SSLerror(s, ERR_R_BN_LIB);
@@ -1320,7 +1320,7 @@ ssl3_get_server_kex_dhe(SSL *s, EVP_PKEY **pkey, CBS *cbs)
 
 	return (1);
 
- truncated:
+ decode_err:
 	al = SSL_AD_DECODE_ERROR;
 	SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
@@ -1428,7 +1428,7 @@ ssl3_get_server_kex_ecdhe(SSL *s, EVP_PKEY **pkey, CBS *cbs)
 	}
 
 	if (!CBS_get_u8_length_prefixed(cbs, &public))
-		goto truncated;
+		goto decode_err;
 
 	if (nid == NID_X25519) {
 		if (ssl3_get_server_kex_ecdhe_ecx(s, sc, nid, &public) != 1)
@@ -1453,7 +1453,7 @@ ssl3_get_server_kex_ecdhe(SSL *s, EVP_PKEY **pkey, CBS *cbs)
 
 	return (1);
 
- truncated:
+ decode_err:
 	al = SSL_AD_DECODE_ERROR;
 	SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
 
@@ -1552,7 +1552,7 @@ ssl3_get_server_key_exchange(SSL *s)
 			uint16_t sigalg_value;
 
 			if (!CBS_get_u16(&cbs, &sigalg_value))
-				goto truncated;
+				goto decode_err;
 			if ((sigalg = ssl_sigalg(sigalg_value, tls12_sigalgs,
 			    tls12_sigalgs_len)) == NULL) {
 				SSLerror(s, SSL_R_UNKNOWN_DIGEST);
@@ -1581,7 +1581,7 @@ ssl3_get_server_key_exchange(SSL *s)
 		md = sigalg->md();
 
 		if (!CBS_get_u16_length_prefixed(&cbs, &signature))
-			goto truncated;
+			goto decode_err;
 		if (CBS_len(&signature) > EVP_PKEY_size(pkey)) {
 			al = SSL_AD_DECODE_ERROR;
 			SSLerror(s, SSL_R_WRONG_SIGNATURE_LENGTH);
@@ -1628,7 +1628,7 @@ ssl3_get_server_key_exchange(SSL *s)
 
 	return (1);
 
- truncated:
+ decode_err:
 	al = SSL_AD_DECODE_ERROR;
 	SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
 
@@ -1684,7 +1684,7 @@ ssl3_get_certificate_request(SSL *s)
 	}
 
 	if (n < 0)
-		goto truncated;
+		goto decode_err;
 	CBS_init(&cert_request, s->internal->init_msg, n);
 
 	if ((ca_sk = sk_X509_NAME_new(ca_dn_cmp)) == NULL) {
@@ -1694,7 +1694,7 @@ ssl3_get_certificate_request(SSL *s)
 
 	/* get the certificate types */
 	if (!CBS_get_u8(&cert_request, &ctype_num))
-		goto truncated;
+		goto decode_err;
 
 	if (ctype_num > SSL3_CT_NUMBER)
 		ctype_num = SSL3_CT_NUMBER;
@@ -1783,10 +1783,10 @@ ssl3_get_certificate_request(SSL *s)
 
 	ret = 1;
 	if (0) {
-truncated:
+ decode_err:
 		SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
 	}
-err:
+ err:
 	X509_NAME_free(xn);
 	sk_X509_NAME_pop_free(ca_sk, X509_NAME_free);
 	return (ret);
@@ -1867,9 +1867,9 @@ ssl3_get_new_session_ticket(SSL *s)
 	    EVP_sha256(), NULL);
 	ret = 1;
 	return (ret);
-f_err:
+ f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
-err:
+ err:
 	return (-1);
 }
 
@@ -1921,7 +1921,7 @@ ssl3_get_cert_status(SSL *s)
  		al = SSL_AD_INTERNAL_ERROR;
  		SSLerror(s, ERR_R_MALLOC_FAILURE);
  		goto f_err;
- 	}
+	}
 
 	if (s->ctx->internal->tlsext_status_cb) {
 		int ret;
@@ -1939,7 +1939,7 @@ ssl3_get_cert_status(SSL *s)
 		}
 	}
 	return (1);
-f_err:
+ f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
 	return (-1);
 }
@@ -2016,7 +2016,7 @@ ssl3_send_client_kex_rsa(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 
 	ret = 1;
 
-err:
+ err:
 	explicit_bzero(pms, sizeof(pms));
 	EVP_PKEY_free(pkey);
 	free(enc_pms);
@@ -2079,7 +2079,7 @@ ssl3_send_client_kex_dhe(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 
 	ret = 1;
 
-err:
+ err:
 	DH_free(dh_clnt);
 	freezero(key, key_size);
 
@@ -2349,7 +2349,7 @@ ssl3_send_client_key_exchange(SSL *s)
 	/* SSL3_ST_CW_KEY_EXCH_B */
 	return (ssl3_handshake_write(s));
 
-err:
+ err:
 	CBB_cleanup(&cbb);
 
 	return (-1);
@@ -2767,9 +2767,9 @@ ssl3_check_cert_and_algorithm(SSL *s)
 	}
 
 	return (1);
-f_err:
+ f_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
-err:
+ err:
 	return (0);
 }
 
