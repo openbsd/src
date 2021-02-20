@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.309 2021/02/18 22:00:31 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.310 2021/02/20 22:00:32 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -6905,6 +6905,8 @@ ikev2_cp_setaddr_pool(struct iked *env, struct iked_sa *sa,
 			memcpy(&in6->sin6_addr.s6_addr[12], &nhost,
 			    sizeof(uint32_t));
 			break;
+		default:
+			return (-1);
 		}
 		if ((addr.addr_af == AF_INET &&
 		    !RB_FIND(iked_addrpool, &env->sc_addrpool, &key)) ||
