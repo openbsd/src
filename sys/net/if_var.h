@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.112 2020/07/29 12:09:31 mvs Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.113 2021/02/20 04:35:41 dlg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -161,6 +161,7 @@ struct ifnet {				/* and the entries */
 
 	/* procedure handles */
 	void	(*if_input)(struct ifnet *, struct mbuf *);
+	int	(*if_bpf_mtap)(caddr_t, const struct mbuf *, u_int);
 	int	(*if_output)(struct ifnet *, struct mbuf *, struct sockaddr *,
 		     struct rtentry *);	/* output routine (enqueue) */
 					/* link level output function */
