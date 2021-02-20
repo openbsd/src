@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.245 2021/02/08 17:20:47 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.246 2021/02/20 08:30:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2455,8 +2455,6 @@ const char *
 ssl_version_string(int ver)
 {
 	switch (ver) {
-	case DTLS1_VERSION:
-		return (SSL_TXT_DTLS1);
 	case TLS1_VERSION:
 		return (SSL_TXT_TLSV1);
 	case TLS1_1_VERSION:
@@ -2465,6 +2463,10 @@ ssl_version_string(int ver)
 		return (SSL_TXT_TLSV1_2);
 	case TLS1_3_VERSION:
 		return (SSL_TXT_TLSV1_3);
+	case DTLS1_VERSION:
+		return (SSL_TXT_DTLS1);
+	case DTLS1_2_VERSION:
+		return (SSL_TXT_DTLS1_2);
 	default:
 		return ("unknown");
 	}

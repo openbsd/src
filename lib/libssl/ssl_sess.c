@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.101 2020/10/11 02:22:27 jsing Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.102 2021/02/20 08:30:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -345,6 +345,7 @@ ssl_get_new_session(SSL *s, int session)
 		case TLS1_1_VERSION:
 		case TLS1_2_VERSION:
 		case DTLS1_VERSION:
+		case DTLS1_2_VERSION:
 			ss->ssl_version = s->version;
 			ss->session_id_length = SSL3_SSL_SESSION_ID_LENGTH;
 			break;
