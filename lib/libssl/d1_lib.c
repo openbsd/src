@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_lib.c,v 1.52 2021/01/21 18:48:56 jsing Exp $ */
+/* $OpenBSD: d1_lib.c,v 1.53 2021/02/20 07:29:07 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -251,14 +251,15 @@ dtls1_ctrl(SSL *s, int cmd, long larg, void *parg)
 const SSL_CIPHER *
 dtls1_get_cipher(unsigned int u)
 {
-	const SSL_CIPHER *ciph = ssl3_get_cipher(u);
+	const SSL_CIPHER *cipher;
 
-	if (ciph != NULL) {
-		if (ciph->algorithm_enc == SSL_RC4)
-			return NULL;
-	}
+	if ((cipher = ssl3_get_cipher(u)) == NULL)
+		return NULL;
 
-	return ciph;
+	if (cipher->algorithm_enc == SSL_RC4)
+		return NULL;
+
+	return cipher;
 }
 
 void
