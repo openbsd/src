@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.181 2021/02/20 08:11:57 jsing Exp $ */
+/* $OpenBSD: ssl.h,v 1.182 2021/02/20 08:33:17 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1527,6 +1527,12 @@ const SSL_METHOD *TLS_client_method(void);	/* TLS v1.0 or later */
 const SSL_METHOD *DTLSv1_method(void);		/* DTLSv1.0 */
 const SSL_METHOD *DTLSv1_server_method(void);	/* DTLSv1.0 */
 const SSL_METHOD *DTLSv1_client_method(void);	/* DTLSv1.0 */
+
+#if defined(LIBRESSL_HAS_DTLS1_2) || defined(LIBRESSL_INTERNAL)
+const SSL_METHOD *DTLSv1_2_method(void);	/* DTLSv1.2 */
+const SSL_METHOD *DTLSv1_2_server_method(void);	/* DTLSv1.2 */
+const SSL_METHOD *DTLSv1_2_client_method(void);	/* DTLSv1.2 */
+#endif
 
 const SSL_METHOD *DTLS_method(void);		/* DTLS v1.0 or later */
 const SSL_METHOD *DTLS_server_method(void);	/* DTLS v1.0 or later */

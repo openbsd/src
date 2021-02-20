@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_methods.c,v 1.21 2020/12/01 07:46:02 tb Exp $ */
+/* $OpenBSD: ssl_methods.c,v 1.22 2021/02/20 08:33:17 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,6 +59,66 @@
 #include "ssl_locl.h"
 #include "tls13_internal.h"
 
+#ifdef LIBRESSL_HAS_DTLS1_2
+static const SSL_METHOD_INTERNAL DTLS_method_internal_data = {
+	.dtls = 1,
+	.server = 1,
+	.version = DTLS1_2_VERSION,
+	.min_version = DTLS1_VERSION,
+	.max_version = DTLS1_2_VERSION,
+	.ssl_new = dtls1_new,
+	.ssl_clear = dtls1_clear,
+	.ssl_free = dtls1_free,
+	.ssl_accept = ssl3_accept,
+	.ssl_connect = ssl3_connect,
+	.ssl_shutdown = ssl3_shutdown,
+	.ssl_renegotiate = ssl3_renegotiate,
+	.ssl_renegotiate_check = ssl3_renegotiate_check,
+	.ssl_pending = ssl3_pending,
+	.ssl_read_bytes = dtls1_read_bytes,
+	.ssl_write_bytes = dtls1_write_app_data_bytes,
+	.enc_flags = TLSV1_2_ENC_FLAGS,
+};
+
+static const SSL_METHOD DTLS_method_data = {
+	.ssl_dispatch_alert = dtls1_dispatch_alert,
+	.num_ciphers = ssl3_num_ciphers,
+	.get_cipher = dtls1_get_cipher,
+	.get_cipher_by_char = ssl3_get_cipher_by_char,
+	.put_cipher_by_char = ssl3_put_cipher_by_char,
+	.internal = &DTLS_method_internal_data,
+};
+
+static const SSL_METHOD_INTERNAL DTLS_client_method_internal_data = {
+	.dtls = 1,
+	.server = 0,
+	.version = DTLS1_2_VERSION,
+	.min_version = DTLS1_VERSION,
+	.max_version = DTLS1_2_VERSION,
+	.ssl_new = dtls1_new,
+	.ssl_clear = dtls1_clear,
+	.ssl_free = dtls1_free,
+	.ssl_accept = ssl_undefined_function,
+	.ssl_connect = ssl3_connect,
+	.ssl_shutdown = ssl3_shutdown,
+	.ssl_renegotiate = ssl3_renegotiate,
+	.ssl_renegotiate_check = ssl3_renegotiate_check,
+	.ssl_pending = ssl3_pending,
+	.ssl_read_bytes = dtls1_read_bytes,
+	.ssl_write_bytes = dtls1_write_app_data_bytes,
+	.enc_flags = TLSV1_2_ENC_FLAGS,
+};
+
+static const SSL_METHOD DTLS_client_method_data = {
+	.ssl_dispatch_alert = dtls1_dispatch_alert,
+	.num_ciphers = ssl3_num_ciphers,
+	.get_cipher = dtls1_get_cipher,
+	.get_cipher_by_char = ssl3_get_cipher_by_char,
+	.put_cipher_by_char = ssl3_put_cipher_by_char,
+	.internal = &DTLS_client_method_internal_data,
+};
+#endif
+
 static const SSL_METHOD_INTERNAL DTLSv1_method_internal_data = {
 	.dtls = 1,
 	.server = 1,
@@ -117,6 +177,64 @@ static const SSL_METHOD DTLSv1_client_method_data = {
 	.internal = &DTLSv1_client_method_internal_data,
 };
 
+static const SSL_METHOD_INTERNAL DTLSv1_2_method_internal_data = {
+	.dtls = 1,
+	.server = 1,
+	.version = DTLS1_2_VERSION,
+	.min_version = DTLS1_2_VERSION,
+	.max_version = DTLS1_2_VERSION,
+	.ssl_new = dtls1_new,
+	.ssl_clear = dtls1_clear,
+	.ssl_free = dtls1_free,
+	.ssl_accept = ssl3_accept,
+	.ssl_connect = ssl3_connect,
+	.ssl_shutdown = ssl3_shutdown,
+	.ssl_renegotiate = ssl3_renegotiate,
+	.ssl_renegotiate_check = ssl3_renegotiate_check,
+	.ssl_pending = ssl3_pending,
+	.ssl_read_bytes = dtls1_read_bytes,
+	.ssl_write_bytes = dtls1_write_app_data_bytes,
+	.enc_flags = TLSV1_2_ENC_FLAGS,
+};
+
+static const SSL_METHOD DTLSv1_2_method_data = {
+	.ssl_dispatch_alert = dtls1_dispatch_alert,
+	.num_ciphers = ssl3_num_ciphers,
+	.get_cipher = dtls1_get_cipher,
+	.get_cipher_by_char = ssl3_get_cipher_by_char,
+	.put_cipher_by_char = ssl3_put_cipher_by_char,
+	.internal = &DTLSv1_2_method_internal_data,
+};
+
+static const SSL_METHOD_INTERNAL DTLSv1_2_client_method_internal_data = {
+	.dtls = 1,
+	.server = 0,
+	.version = DTLS1_2_VERSION,
+	.min_version = DTLS1_2_VERSION,
+	.max_version = DTLS1_2_VERSION,
+	.ssl_new = dtls1_new,
+	.ssl_clear = dtls1_clear,
+	.ssl_free = dtls1_free,
+	.ssl_accept = ssl_undefined_function,
+	.ssl_connect = ssl3_connect,
+	.ssl_shutdown = ssl3_shutdown,
+	.ssl_renegotiate = ssl3_renegotiate,
+	.ssl_renegotiate_check = ssl3_renegotiate_check,
+	.ssl_pending = ssl3_pending,
+	.ssl_read_bytes = dtls1_read_bytes,
+	.ssl_write_bytes = dtls1_write_app_data_bytes,
+	.enc_flags = TLSV1_2_ENC_FLAGS,
+};
+
+static const SSL_METHOD DTLSv1_2_client_method_data = {
+	.ssl_dispatch_alert = dtls1_dispatch_alert,
+	.num_ciphers = ssl3_num_ciphers,
+	.get_cipher = dtls1_get_cipher,
+	.get_cipher_by_char = ssl3_get_cipher_by_char,
+	.put_cipher_by_char = ssl3_put_cipher_by_char,
+	.internal = &DTLSv1_2_client_method_internal_data,
+};
+
 const SSL_METHOD *
 DTLSv1_client_method(void)
 {
@@ -136,21 +254,51 @@ DTLSv1_server_method(void)
 }
 
 const SSL_METHOD *
+DTLSv1_2_client_method(void)
+{
+	return &DTLSv1_2_client_method_data;
+}
+
+const SSL_METHOD *
+DTLSv1_2_method(void)
+{
+	return &DTLSv1_2_method_data;
+}
+
+const SSL_METHOD *
+DTLSv1_2_server_method(void)
+{
+	return &DTLSv1_2_method_data;
+}
+
+const SSL_METHOD *
 DTLS_client_method(void)
 {
+#ifdef LIBRESSL_HAS_DTLS1_2
+	return &DTLS_client_method_data;
+#else
 	return DTLSv1_client_method();
+#endif
 }
 
 const SSL_METHOD *
 DTLS_method(void)
 {
+#ifdef LIBRESSL_HAS_DTLS1_2
+	return &DTLS_method_data;
+#else
 	return DTLSv1_method();
+#endif
 }
 
 const SSL_METHOD *
 DTLS_server_method(void)
 {
-	return DTLSv1_method();
+#ifdef LIBRESSL_HAS_DTLS1_2
+	return &DTLS_method_data;
+#else
+	return DTLSv1_server_method();
+#endif
 }
 
 #if defined(LIBRESSL_HAS_TLS1_3_CLIENT) && defined(LIBRESSL_HAS_TLS1_3_SERVER)
@@ -566,6 +714,8 @@ ssl_get_method(uint16_t version)
 		return (TLSv1_method());
 	if (version == DTLS1_VERSION)
 		return (DTLSv1_method());
+	if (version == DTLS1_2_VERSION)
+		return (DTLSv1_2_method());
 
 	return (NULL);
 }
