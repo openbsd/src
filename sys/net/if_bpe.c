@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bpe.c,v 1.15 2021/01/19 07:30:19 mvs Exp $ */
+/*	$OpenBSD: if_bpe.c,v 1.16 2021/02/21 03:35:17 dlg Exp $ */
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
  *
@@ -27,6 +27,7 @@
 #include <sys/timeout.h>
 #include <sys/pool.h>
 #include <sys/tree.h>
+#include <sys/smr.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
@@ -40,7 +41,7 @@
 
 /* for bridge stuff */
 #include <net/if_bridge.h>
-
+#include <net/if_etherbridge.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -74,42 +75,17 @@ static inline int bpe_cmp(const struct bpe_key *, const struct bpe_key *);
 RBT_PROTOTYPE(bpe_tree, bpe_key, k_entry, bpe_cmp);
 RBT_GENERATE(bpe_tree, bpe_key, k_entry, bpe_cmp);
 
-struct bpe_entry {
-	struct ether_addr	be_c_da; /* customer address - must be first */
-	struct ether_addr	be_b_da; /* bridge address */
-	unsigned int		be_type;
-#define BPE_ENTRY_DYNAMIC		0
-#define BPE_ENTRY_STATIC		1
-	struct refcnt		be_refs;
-	time_t			be_age;
-
-	RBT_ENTRY(bpe_entry)	be_entry;
-};
-
-RBT_HEAD(bpe_map, bpe_entry);
-
-static inline int bpe_entry_cmp(const struct bpe_entry *,
-    const struct bpe_entry *);
-
-RBT_PROTOTYPE(bpe_map, bpe_entry, be_entry, bpe_entry_cmp);
-RBT_GENERATE(bpe_map, bpe_entry, be_entry, bpe_entry_cmp);
-
 struct bpe_softc {
 	struct bpe_key		sc_key; /* must be first */
 	struct arpcom		sc_ac;
 	int			sc_txhprio;
 	int			sc_rxhprio;
-	uint8_t			sc_group[ETHER_ADDR_LEN];
+	struct ether_addr	sc_group;
 
 	struct task		sc_ltask;
 	struct task		sc_dtask;
 
-	struct bpe_map		sc_bridge_map;
-	struct rwlock		sc_bridge_lock;
-	unsigned int		sc_bridge_num;
-	unsigned int		sc_bridge_max;
-	int			sc_bridge_tmo; /* seconds */
-	struct timeout		sc_bridge_age;
+	struct etherbridge	sc_eb;
 };
 
 void		bpeattach(int);
@@ -132,16 +108,26 @@ static void	bpe_link_hook(void *);
 static void	bpe_link_state(struct bpe_softc *, u_char, uint64_t);
 static void	bpe_detach_hook(void *);
 
-static void	bpe_input_map(struct bpe_softc *,
-		    const uint8_t *, const uint8_t *);
-static void	bpe_bridge_age(void *);
-
 static struct if_clone bpe_cloner =
     IF_CLONE_INITIALIZER("bpe", bpe_clone_create, bpe_clone_destroy);
 
+static int	 bpe_eb_port_eq(void *, void *, void *);
+static void	*bpe_eb_port_take(void *, void *);
+static void	 bpe_eb_port_rele(void *, void *);
+static size_t	 bpe_eb_port_ifname(void *, char *, size_t, void *);
+static void	 bpe_eb_port_sa(void *, struct sockaddr_storage *, void *);
+
+static const struct etherbridge_ops bpe_etherbridge_ops = {
+	bpe_eb_port_eq,
+	bpe_eb_port_take,
+	bpe_eb_port_rele,
+	bpe_eb_port_ifname,
+	bpe_eb_port_sa,
+};
+
 static struct bpe_tree bpe_interfaces = RBT_INITIALIZER();
 static struct rwlock bpe_lock = RWLOCK_INITIALIZER("bpeifs");
-static struct pool bpe_entry_pool;
+static struct pool bpe_endpoint_pool;
 
 void
 bpeattach(int count)
@@ -154,17 +140,26 @@ bpe_clone_create(struct if_clone *ifc, int unit)
 {
 	struct bpe_softc *sc;
 	struct ifnet *ifp;
+	int error;
 
-	if (bpe_entry_pool.pr_size == 0) {
-		pool_init(&bpe_entry_pool, sizeof(struct bpe_entry), 0,
+	if (bpe_endpoint_pool.pr_size == 0) {
+		pool_init(&bpe_endpoint_pool, sizeof(struct ether_addr), 0,
 		    IPL_NONE, 0, "bpepl", NULL);
 	}
 
 	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
+
 	ifp = &sc->sc_ac.ac_if;
 
 	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d",
 	    ifc->ifc_name, unit);
+
+	error = etherbridge_init(&sc->sc_eb, ifp->if_xname,
+	    &bpe_etherbridge_ops, sc);
+	if (error == -1) {
+		free(sc, M_DEVBUF, sizeof(*sc));
+		return (error);
+	}
 
 	sc->sc_key.k_if = 0;
 	sc->sc_key.k_isid = 0;
@@ -175,13 +170,6 @@ bpe_clone_create(struct if_clone *ifc, int unit)
 
 	task_set(&sc->sc_ltask, bpe_link_hook, sc);
 	task_set(&sc->sc_dtask, bpe_detach_hook, sc);
-
-	rw_init(&sc->sc_bridge_lock, "bpebr");
-	RBT_INIT(bpe_map, &sc->sc_bridge_map);
-	sc->sc_bridge_num = 0;
-	sc->sc_bridge_max = 100; /* XXX */
-	sc->sc_bridge_tmo = 240;
-	timeout_set_proc(&sc->sc_bridge_age, bpe_bridge_age, sc);
 
 	ifp->if_softc = sc;
 	ifp->if_hardmtu = ETHER_MAX_HARDMTU_LEN;
@@ -211,25 +199,9 @@ bpe_clone_destroy(struct ifnet *ifp)
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 
+	etherbridge_destroy(&sc->sc_eb);
+
 	free(sc, M_DEVBUF, sizeof(*sc));
-
-	return (0);
-}
-
-static inline int
-bpe_entry_valid(struct bpe_softc *sc, const struct bpe_entry *be)
-{
-	time_t diff;
-
-	if (be == NULL)
-		return (0);
-
-	if (be->be_type == BPE_ENTRY_STATIC)
-		return (1);
-
-	diff = getuptime() - be->be_age;
-	if (diff < sc->sc_bridge_tmo)
-		return (1);
 
 	return (0);
 }
@@ -287,23 +259,21 @@ bpe_start(struct ifnet *ifp)
 		beh = mtod(m, struct ether_header *);
 
 		if (ETHER_IS_BROADCAST(ceh->ether_dhost)) {
-			memcpy(beh->ether_dhost, sc->sc_group,
+			memcpy(beh->ether_dhost, &sc->sc_group,
 			    sizeof(beh->ether_dhost));
 		} else {
-			struct bpe_entry *be;
+			struct ether_addr *endpoint;
 
-			rw_enter_read(&sc->sc_bridge_lock);
-			be = RBT_FIND(bpe_map, &sc->sc_bridge_map,
-			    (struct bpe_entry *)ceh->ether_dhost);
-			if (bpe_entry_valid(sc, be)) {
-				memcpy(beh->ether_dhost, &be->be_b_da,
-				    sizeof(beh->ether_dhost));
-			} else {
+			smr_read_enter();
+			endpoint = etherbridge_resolve(&sc->sc_eb,
+			    (struct ether_addr *)ceh->ether_dhost);
+			if (endpoint == NULL) {
 				/* "flood" to unknown hosts */
-				memcpy(beh->ether_dhost, sc->sc_group,
-				    sizeof(beh->ether_dhost));
+				endpoint = &sc->sc_group;
 			}
-			rw_exit_read(&sc->sc_bridge_lock);
+			memcpy(beh->ether_dhost, endpoint,
+			    sizeof(beh->ether_dhost));
+			smr_read_leave();
 		}
 
 		memcpy(beh->ether_shost, ((struct arpcom *)ifp0)->ac_enaddr,
@@ -324,121 +294,6 @@ bpe_start(struct ifnet *ifp)
 
 done:
 	if_put(ifp0);
-}
-
-static void
-bpe_bridge_age(void *arg)
-{
-	struct bpe_softc *sc = arg;
-	struct bpe_entry *be, *nbe;
-	time_t diff;
-
-	timeout_add_sec(&sc->sc_bridge_age, BPE_BRIDGE_AGE_TMO);
-
-	rw_enter_write(&sc->sc_bridge_lock);
-	RBT_FOREACH_SAFE(be, bpe_map, &sc->sc_bridge_map, nbe) {
-		if (be->be_type != BPE_ENTRY_DYNAMIC)
-			continue;
-
-		diff = getuptime() - be->be_age;
-		if (diff < sc->sc_bridge_tmo)
-			continue;
-
-		sc->sc_bridge_num--;
-		RBT_REMOVE(bpe_map, &sc->sc_bridge_map, be);
-		if (refcnt_rele(&be->be_refs))
-			pool_put(&bpe_entry_pool, be);
-	}
-	rw_exit_write(&sc->sc_bridge_lock);
-}
-
-static int
-bpe_rtfind(struct bpe_softc *sc, struct ifbaconf *baconf)
-{
-	struct ifnet *ifp = &sc->sc_ac.ac_if;
-	struct bpe_entry *be;
-	struct ifbareq bareq;
-	caddr_t uaddr, end;
-	int error;
-	time_t age;
-	struct sockaddr_dl *sdl;
-
-	if (baconf->ifbac_len == 0) {
-		/* single read is atomic */
-		baconf->ifbac_len = sc->sc_bridge_num * sizeof(bareq);
-		return (0);
-	}
-
-	uaddr = baconf->ifbac_buf;
-	end = uaddr + baconf->ifbac_len;
-
-	rw_enter_read(&sc->sc_bridge_lock);
-	RBT_FOREACH(be, bpe_map, &sc->sc_bridge_map) {
-		if (uaddr >= end)
-			break;
-
-		memcpy(bareq.ifba_name, ifp->if_xname,
-		    sizeof(bareq.ifba_name));
-		memcpy(bareq.ifba_ifsname, ifp->if_xname,
-		    sizeof(bareq.ifba_ifsname));
-		memcpy(&bareq.ifba_dst, &be->be_c_da,
-		    sizeof(bareq.ifba_dst));
-
-		memset(&bareq.ifba_dstsa, 0, sizeof(bareq.ifba_dstsa));
-
-		bzero(&bareq.ifba_dstsa, sizeof(bareq.ifba_dstsa));
-		sdl = (struct sockaddr_dl *)&bareq.ifba_dstsa;
-		sdl->sdl_len = sizeof(sdl);
-		sdl->sdl_family = AF_LINK;
-		sdl->sdl_index = 0;
-		sdl->sdl_type = IFT_ETHER;
-		sdl->sdl_nlen = 0;
-		sdl->sdl_alen = sizeof(be->be_b_da);
-		CTASSERT(sizeof(sdl->sdl_data) >= sizeof(be->be_b_da));
-		memcpy(sdl->sdl_data, &be->be_b_da, sizeof(be->be_b_da));
-
-		switch (be->be_type) {
-		case BPE_ENTRY_DYNAMIC:
-			age = getuptime() - be->be_age;
-			bareq.ifba_age = MIN(age, 0xff);
-			bareq.ifba_flags = IFBAF_DYNAMIC;
-			break;
-		case BPE_ENTRY_STATIC:
-			bareq.ifba_age = 0;
-			bareq.ifba_flags = IFBAF_STATIC;
-			break;
-		}
-
-		error = copyout(&bareq, uaddr, sizeof(bareq));
-		if (error != 0) {
-			rw_exit_read(&sc->sc_bridge_lock);
-			return (error);
-		}
-
-		uaddr += sizeof(bareq);
-	}
-	baconf->ifbac_len = sc->sc_bridge_num * sizeof(bareq);
-	rw_exit_read(&sc->sc_bridge_lock);
-
-	return (0);
-}
-
-static void
-bpe_flush_map(struct bpe_softc *sc, uint32_t flags)
-{
-	struct bpe_entry *be, *nbe;
-
-	rw_enter_write(&sc->sc_bridge_lock);
-	RBT_FOREACH_SAFE(be, bpe_map, &sc->sc_bridge_map, nbe) {
-		if (flags == IFBF_FLUSHDYN &&
-		    be->be_type != BPE_ENTRY_DYNAMIC)
-			continue;
-
-		RBT_REMOVE(bpe_map, &sc->sc_bridge_map, be);
-		if (refcnt_rele(&be->be_refs))
-			pool_put(&bpe_entry_pool, be);
-	}
-	rw_exit_write(&sc->sc_bridge_lock);
 }
 
 static int
@@ -510,16 +365,10 @@ bpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (error != 0)
 			break;
 
-		if (bparam->ifbrp_csize < 1) {
-			error = EINVAL;
-			break;
-		}
-
-		/* commit */
-		sc->sc_bridge_max = bparam->ifbrp_csize;
+		error = etherbridge_set_max(&sc->sc_eb, bparam);
 		break;
 	case SIOCBRDGGCACHE:
-		bparam->ifbrp_csize = sc->sc_bridge_max;
+		error = etherbridge_get_max(&sc->sc_eb, bparam);
 		break;
 
 	case SIOCBRDGSTO:
@@ -527,26 +376,22 @@ bpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (error != 0)
 			break;
 
-		if (bparam->ifbrp_ctime < 8 ||
-		    bparam->ifbrp_ctime > 3600) {
-			error = EINVAL;
-			break;
-		}
-		sc->sc_bridge_tmo = bparam->ifbrp_ctime;
+		error = etherbridge_set_tmo(&sc->sc_eb, bparam);
 		break;
 	case SIOCBRDGGTO:
-		bparam->ifbrp_ctime = sc->sc_bridge_tmo;
+		error = etherbridge_get_tmo(&sc->sc_eb, bparam);
 		break;
 
 	case SIOCBRDGRTS:
-		error = bpe_rtfind(sc, (struct ifbaconf *)data);
+		error = etherbridge_rtfind(&sc->sc_eb,
+		    (struct ifbaconf *)data);
 		break;
 	case SIOCBRDGFLUSH:
 		error = suser(curproc);
 		if (error != 0)
 			break;
 
-		bpe_flush_map(sc,
+		etherbridge_flush(&sc->sc_eb,
 		    ((struct ifbreq *)data)->ifbr_ifsflags);
 		break;
 
@@ -580,16 +425,22 @@ bpe_up(struct bpe_softc *sc)
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct ifnet *ifp0;
 	struct bpe_softc *osc;
-	int error = 0;
+	int error;
 	u_int hardmtu;
 	u_int hlen = sizeof(struct ether_header) + sizeof(uint32_t);
 
 	KASSERT(!ISSET(ifp->if_flags, IFF_RUNNING));
 	NET_ASSERT_LOCKED();
 
+	error = etherbridge_up(&sc->sc_eb);
+	if (error != 0)
+		return (error);
+
 	ifp0 = if_get(sc->sc_key.k_if);
-	if (ifp0 == NULL)
-		return (ENXIO);
+	if (ifp0 == NULL) {
+		error = ENXIO;
+		goto down;
+	}
 
 	/* check again if bpe will work on top of the parent */
 	if (ifp0->if_type != IFT_ETHER) {
@@ -643,8 +494,6 @@ bpe_up(struct bpe_softc *sc)
 
 	if_put(ifp0);
 
-	timeout_add_sec(&sc->sc_bridge_age, BPE_BRIDGE_AGE_TMO);
-
 	return (0);
 
 remove:
@@ -656,6 +505,8 @@ scrub:
 	ifp->if_hardmtu = 0xffff;
 put:
 	if_put(ifp0);
+down:
+	etherbridge_down(&sc->sc_eb);
 
 	return (error);
 }
@@ -685,6 +536,8 @@ bpe_down(struct bpe_softc *sc)
 	CLR(ifp->if_flags, IFF_SIMPLEX);
 	ifp->if_hardmtu = 0xffff;
 
+	etherbridge_down(&sc->sc_eb);
+
 	return (0);
 }
 
@@ -702,7 +555,7 @@ bpe_multi(struct bpe_softc *sc, struct ifnet *ifp0, u_long cmd)
 	CTASSERT(sizeof(sa->sa_data) >= sizeof(sc->sc_group));
 
 	sa->sa_family = AF_UNSPEC;
-	memcpy(sa->sa_data, sc->sc_group, sizeof(sc->sc_group));
+	memcpy(sa->sa_data, &sc->sc_group, sizeof(sc->sc_group));
 
 	return ((*ifp0->if_ioctl)(ifp0, cmd, (caddr_t)&ifr));
 }
@@ -710,7 +563,7 @@ bpe_multi(struct bpe_softc *sc, struct ifnet *ifp0, u_long cmd)
 static void
 bpe_set_group(struct bpe_softc *sc, uint32_t isid)
 {
-	uint8_t *group = sc->sc_group;
+	uint8_t *group = sc->sc_group.ether_addr_octet;
 
 	group[0] = 0x01;
 	group[1] = 0x1e;
@@ -740,7 +593,7 @@ bpe_set_vnetid(struct bpe_softc *sc, const struct ifreq *ifr)
 	/* commit */
 	sc->sc_key.k_isid = isid;
 	bpe_set_group(sc, isid);
-	bpe_flush_map(sc, IFBF_FLUSHALL);
+	etherbridge_flush(&sc->sc_eb, IFBF_FLUSHALL);
 
 	return (0);
 }
@@ -771,7 +624,7 @@ bpe_set_parent(struct bpe_softc *sc, const struct if_parent *p)
 
 	/* commit */
 	sc->sc_key.k_if = ifp0->if_index;
-	bpe_flush_map(sc, IFBF_FLUSHALL);
+	etherbridge_flush(&sc->sc_eb, IFBF_FLUSHALL);
 
 put:
 	if_put(ifp0);
@@ -804,7 +657,7 @@ bpe_del_parent(struct bpe_softc *sc)
 
 	/* commit */
 	sc->sc_key.k_if = 0;
-	bpe_flush_map(sc, IFBF_FLUSHALL);
+	etherbridge_flush(&sc->sc_eb, IFBF_FLUSHALL);
 
 	return (0);
 }
@@ -820,75 +673,6 @@ bpe_find(struct ifnet *ifp0, uint32_t isid)
 	rw_exit_read(&bpe_lock);
 
 	return (sc);
-}
-
-static void
-bpe_input_map(struct bpe_softc *sc, const uint8_t *ba, const uint8_t *ca)
-{
-	struct bpe_entry *be;
-	int new = 0;
-
-	if (ETHER_IS_MULTICAST(ca))
-		return;
-
-	/* remember where it came from */
-	rw_enter_read(&sc->sc_bridge_lock);
-	be = RBT_FIND(bpe_map, &sc->sc_bridge_map, (struct bpe_entry *)ca);
-	if (be == NULL)
-		new = 1;
-	else {
-		be->be_age = getuptime(); /* only a little bit racy */
-
-		if (be->be_type != BPE_ENTRY_DYNAMIC ||
-		    ETHER_IS_EQ(ba, &be->be_b_da))
-			be = NULL;
-		else
-			refcnt_take(&be->be_refs);
-	}
-	rw_exit_read(&sc->sc_bridge_lock);
-
-	if (new) {
-		struct bpe_entry *obe;
-		unsigned int num;
-
-		be = pool_get(&bpe_entry_pool, PR_NOWAIT);
-		if (be == NULL) {
-			/* oh well */
-			return;
-		}
-
-		memcpy(&be->be_c_da, ca, sizeof(be->be_c_da));
-		memcpy(&be->be_b_da, ba, sizeof(be->be_b_da));
-		be->be_type = BPE_ENTRY_DYNAMIC;
-		refcnt_init(&be->be_refs);
-		be->be_age = getuptime();
-
-		rw_enter_write(&sc->sc_bridge_lock);
-		num = sc->sc_bridge_num;
-		if (++num > sc->sc_bridge_max)
-			obe = be;
-		else {
-			/* try and give the ref to the map */
-			obe = RBT_INSERT(bpe_map, &sc->sc_bridge_map, be);
-			if (obe == NULL) {
-				/* count the insert */
-				sc->sc_bridge_num = num;
-			}
-		}
-		rw_exit_write(&sc->sc_bridge_lock);
-
-		if (obe != NULL)
-			pool_put(&bpe_entry_pool, obe);
-	} else if (be != NULL) {
-		rw_enter_write(&sc->sc_bridge_lock);
-		memcpy(&be->be_b_da, ba, sizeof(be->be_b_da));
-		rw_exit_write(&sc->sc_bridge_lock);
-
-		if (refcnt_rele(&be->be_refs)) {
-			/* ioctl may have deleted the entry */
-			pool_put(&bpe_entry_pool, be);
-		}
-	}
 }
 
 void
@@ -928,7 +712,8 @@ bpe_input(struct ifnet *ifp0, struct mbuf *m)
 
 	ceh = (struct ether_header *)(itagp + 1);
 
-	bpe_input_map(sc, beh->ether_shost, ceh->ether_shost);
+	etherbridge_map(&sc->sc_eb, ceh->ether_shost,
+	    (struct ether_addr *)beh->ether_shost);
 
 	m_adj(m, sizeof(*beh) + sizeof(*itagp));
 
@@ -1035,12 +820,62 @@ bpe_cmp(const struct bpe_key *a, const struct bpe_key *b)
 		return (1);
 	if (a->k_isid < b->k_isid)
 		return (-1);
-
+ 
 	return (0);
 }
 
-static inline int
-bpe_entry_cmp(const struct bpe_entry *a, const struct bpe_entry *b)
+static int
+bpe_eb_port_eq(void *arg, void *a, void *b)
 {
-	return memcmp(&a->be_c_da, &b->be_c_da, sizeof(a->be_c_da));
+	struct ether_addr *ea = a, *eb = b;
+
+	return (memcmp(ea, eb, sizeof(*ea)) == 0);
+}
+
+static void *
+bpe_eb_port_take(void *arg, void *port)
+{
+	struct ether_addr *ea = port;
+	struct ether_addr *endpoint;
+
+	endpoint = pool_get(&bpe_endpoint_pool, PR_NOWAIT);
+	if (endpoint == NULL)
+		return (NULL);
+
+	memcpy(endpoint, ea, sizeof(*endpoint));
+
+	return (endpoint);
+}
+
+static void
+bpe_eb_port_rele(void *arg, void *port)
+{
+	struct ether_addr *endpoint = port;
+
+	pool_put(&bpe_endpoint_pool, endpoint);
+}
+
+static size_t
+bpe_eb_port_ifname(void *arg, char *dst, size_t len, void *port)
+{
+	struct bpe_softc *sc = arg;
+
+	return (strlcpy(dst, sc->sc_ac.ac_if.if_xname, len));
+}
+
+static void
+bpe_eb_port_sa(void *arg, struct sockaddr_storage *ss, void *port)
+{
+	struct ether_addr *endpoint = port;
+	struct sockaddr_dl *sdl;
+
+	sdl = (struct sockaddr_dl *)ss;
+	sdl->sdl_len = sizeof(sdl);
+	sdl->sdl_family = AF_LINK;
+	sdl->sdl_index = 0;
+	sdl->sdl_type = IFT_ETHER;
+	sdl->sdl_nlen = 0;
+	sdl->sdl_alen = sizeof(*endpoint);
+	CTASSERT(sizeof(sdl->sdl_data) >= sizeof(*endpoint));
+	memcpy(sdl->sdl_data, endpoint, sizeof(*endpoint));
 }
