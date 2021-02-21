@@ -1,4 +1,4 @@
-.\" $OpenBSD: stoeplitz_to_key.9,v 1.5 2021/02/21 02:40:41 dlg Exp $
+.\" $OpenBSD: stoeplitz_to_key.9,v 1.6 2021/02/21 02:43:17 dlg Exp $
 .\"
 .\" Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
 .\"
@@ -19,6 +19,7 @@
 .Os
 .Sh NAME
 .Nm stoeplitz_to_key ,
+.Nm stoeplizt_eaddr ,
 .Nm stoeplitz_ip4 ,
 .Nm stoeplitz_ip4 ,
 .Nm stoeplitz_ip4port ,
@@ -29,6 +30,10 @@
 .In net/toeplitz.h
 .Ft void
 .Fn stoeplitz_to_key "void *key" "size_t keylen"
+.Ft uint16_t
+.Fo stoeplitz_eaddr
+.Fa "const uint8_t *eaddr"
+.Fc
 .Ft uint16_t
 .Fo stoeplitz_ip4
 .Fa "uint32_t srcaddr"
@@ -83,6 +88,9 @@ argument.
 .Fa keylen
 must be a multiple of 2 bytes.
 .Pp
+.Fn stoeplitz_eaddr
+calculates a hash value for a single Ethernet address.
+.Pp
 .Fn stoeplitz_ip4
 calculates a hash value for a pair of IPv4 addresses.
 .Pp
@@ -98,6 +106,7 @@ calculates a hash value for a pair of IPv6 addresses and ports as
 used by protocols like TCP or UDP.
 .Sh CONTEXT
 .Fn stoeplitz_to_key ,
+.Fn stoeplitz_eaddr ,
 .Fn stoeplitz_ip4 ,
 .Fn stoeplitz_ip4port ,
 .Fn stoeplitz_ip6 ,
@@ -106,6 +115,7 @@ and
 can be called during autoconf, from process context, or from an
 interrupt context.
 .Sh RETURN VALUES
+.Fn stoeplitz_eaddr ,
 .Fn stoeplitz_ip4 ,
 .Fn stoeplitz_ip4port ,
 .Fn stoeplitz_ip6 ,
