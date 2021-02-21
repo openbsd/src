@@ -1,4 +1,4 @@
-/*	$OpenBSD: clparse.c,v 1.201 2020/12/10 18:35:31 krw Exp $	*/
+/*	$OpenBSD: clparse.c,v 1.202 2021/02/21 18:16:59 krw Exp $	*/
 
 /* Parser for dhclient config and lease files. */
 
@@ -94,17 +94,17 @@ init_config(void)
 	TAILQ_INIT(&config->reject_list);
 
 	/* Set some defaults. */
-	config->link_timeout = 10;	/* secs before going daemon w/o lease */
+	config->link_interval = 10;	/* secs before going daemon w/o lease */
 	config->select_interval = 0;	/* secs to wait for other OFFERs */
 	config->retry_interval = 1;	/* secs before asking for OFFER */
 #ifdef SMALL
 	config->backoff_cutoff = 2;	/* max secs between packet retries */
-	config->reboot_timeout = 5;	/* secs before giving up on reboot */
-	config->timeout = 10;		/* secs to wait for an OFFER */
+	config->reboot_interval = 5;	/* secs before giving up on reboot */
+	config->offer_interval = 10;		/* secs to wait for an OFFER */
 #else
 	config->backoff_cutoff = 10;	/* max secs between packet retries */
-	config->reboot_timeout = 1;	/* secs before giving up on reboot */
-	config->timeout = 30;		/* secs to wait for an OFFER */
+	config->reboot_interval = 1;	/* secs before giving up on reboot */
+	config->offer_interval = 30;		/* secs to wait for an OFFER */
 #endif
 	config->initial_interval = 1;	/* secs before 1st retry */
 
@@ -327,7 +327,7 @@ parse_conf_decl(FILE *cfile, char *name)
 		parse_interface(cfile, name);
 		return;
 	case TOK_LINK_TIMEOUT:
-		if (parse_number(cfile, &config->link_timeout, 0, INT32_MAX)
+		if (parse_number(cfile, &config->link_interval, 0, INT32_MAX)
 		    == 0)
 			return;
 		break;
@@ -344,7 +344,7 @@ parse_conf_decl(FILE *cfile, char *name)
 		config->default_actions[i] = action;
 		break;
 	case TOK_REBOOT:
-		if (parse_number(cfile, &config->reboot_timeout, 0, INT32_MAX)
+		if (parse_number(cfile, &config->reboot_interval, 0, INT32_MAX)
 		    == 0)
 			return;
 		break;
@@ -388,7 +388,8 @@ parse_conf_decl(FILE *cfile, char *name)
 		config->default_actions[i] = ACTION_SUPERSEDE;
 		break;
 	case TOK_TIMEOUT:
-		if (parse_number(cfile, &config->timeout, 0, INT32_MAX) == 0)
+		if (parse_number(cfile, &config->offer_interval, 0, INT32_MAX)
+		    == 0)
 			return;
 		break;
 	case TOK_USELEASE:

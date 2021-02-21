@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.291 2021/02/01 01:42:20 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.292 2021/02/21 18:16:59 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -101,12 +101,12 @@ struct client_config {
 	uint8_t			 requested_options[DHO_COUNT];
 	int			 requested_option_count;
 	int			 required_option_count;
-	time_t			 timeout;
+	time_t			 offer_interval;
 	time_t			 initial_interval;
-	time_t			 link_timeout;
+	time_t			 link_interval;
 	time_t			 retry_interval;
 	time_t			 select_interval;
-	time_t			 reboot_timeout;
+	time_t			 reboot_interval;
 	time_t			 backoff_cutoff;
 	TAILQ_HEAD(, reject_elem) reject_list;
 	char			*filename;

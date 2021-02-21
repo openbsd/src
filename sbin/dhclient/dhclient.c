@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.696 2021/02/21 14:30:29 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.697 2021/02/21 18:16:59 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1416,7 +1416,7 @@ set_interval(struct interface_info *ifi, time_t cur_time)
 
 	if (interval == 0) {
 		if (ifi->state == S_REBOOTING)
-			interval = config->reboot_timeout;
+			interval = config->reboot_interval;
 		else
 			interval = config->initial_interval;
 	} else {
@@ -1432,14 +1432,14 @@ set_interval(struct interface_info *ifi, time_t cur_time)
 			interval = ifi->expiry - cur_time;
 		break;
 	case S_REQUESTING:
-		if (cur_time + interval > ifi->first_sending + config->timeout)
-			interval = (ifi->first_sending + config->timeout) - cur_time;
+		if (cur_time + interval > ifi->first_sending + config->offer_interval)
+			interval = (ifi->first_sending + config->offer_interval) - cur_time;
 		break;
 	default:
 		break;
 	}
 
-	if (cur_time < ifi->startup_time + config->link_timeout)
+	if (cur_time < ifi->startup_time + config->link_interval)
 		interval = 1;
 
 	ifi->interval = interval ? interval : 1;
@@ -1477,7 +1477,7 @@ send_discover(struct interface_info *ifi)
 	if (log_getverbose())
 		tick_msg("lease", TICK_WAIT);
 
-	if (cur_time > ifi->first_sending + config->timeout) {
+	if (cur_time > ifi->first_sending + config->offer_interval) {
 		state_panic(ifi);
 		return;
 	}
@@ -1542,7 +1542,7 @@ send_request(struct interface_info *ifi)
 
 	switch (ifi->state) {
 	case S_REBOOTING:
-		if (interval > config->reboot_timeout)
+		if (interval > config->reboot_interval)
 			ifi->state = S_INIT;
 		else {
 			destination.sin_addr.s_addr = INADDR_BROADCAST;
@@ -1567,7 +1567,7 @@ send_request(struct interface_info *ifi)
 		}
 		break;
 	case S_REQUESTING:
-		if (interval > config->timeout)
+		if (interval > config->offer_interval)
 			ifi->state = S_INIT;
 		else {
 			destination.sin_addr.s_addr = INADDR_BROADCAST;
@@ -2690,7 +2690,7 @@ void
 tick_msg(const char *preamble, int action)
 {
 	const struct timespec		grace_intvl = {3, 0};
-	const struct timespec		link_intvl = {config->link_timeout, 0};
+	const struct timespec		link_intvl = {config->link_interval, 0};
 	static struct timespec		grace, stop;
 	struct timespec			now;
 	static int			preamble_sent, sleeping;
