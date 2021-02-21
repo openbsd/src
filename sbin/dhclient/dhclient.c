@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.695 2021/02/20 14:56:59 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.696 2021/02/21 14:30:29 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -793,10 +793,6 @@ usage(void)
 void
 state_preboot(struct interface_info *ifi)
 {
-	time_t		 cur_time;
-
-	time(&cur_time);
-
 	interface_state(ifi);
 	if (quit != 0)
 		return;
@@ -806,14 +802,8 @@ state_preboot(struct interface_info *ifi)
 		ifi->state = S_REBOOTING;
 		state_reboot(ifi);
 	} else {
-		if (cur_time < ifi->startup_time + config->link_timeout) {
-			tick_msg("link", TICK_WAIT);
-			set_timeout(ifi, 1, state_preboot);
-		} else {
-			tick_msg("link", TICK_SLEEP);
-			go_daemon();
-			cancel_timeout(ifi); /* Wait for RTM_IFINFO. */
-		}
+		tick_msg("link", TICK_WAIT);
+		set_timeout(ifi, 1, state_preboot);
 	}
 }
 
