@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.11 2020/11/06 13:32:38 patrick Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.12 2021/02/21 14:55:16 tobhe Exp $	*/
 /*
  * Copyright (c) 2009 Miodrag Vallat.
  *
@@ -30,6 +30,11 @@
 #include <netinet/if_ether.h>
 #endif
 
+#ifdef CRYPTO
+void	cryptox_setup(void);
+extern int arm64_has_aes;
+#endif
+
 #include <machine/bootconfig.h>
 
 extern void dumpconf(void);
@@ -55,6 +60,11 @@ cpu_configure(void)
 	config_rootfound("mainbus", NULL);
 
 	unmap_startup();
+
+#ifdef CRYPTO
+	if (arm64_has_aes)
+		cryptox_setup();
+#endif
 
 	cold = 0;
 	spl0();

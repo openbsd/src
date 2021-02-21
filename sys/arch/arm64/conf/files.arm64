@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.32 2020/07/25 12:26:09 tobhe Exp $
+# $OpenBSD: files.arm64,v 1.33 2021/02/21 14:55:17 tobhe Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -39,6 +39,9 @@ file	arch/arm64/arm64/bus_dma.c
 
 file	arch/arm64/dev/arm64_bus_space.c
 file	arch/arm64/dev/pci_machdep.c
+
+file	arch/arm64/arm64/cryptox.c		crypto
+file	arch/arm64/arm64/aesv8-armx.S		crypto
 
 file	arch/arm64/arm64/db_disasm.c		ddb
 file	arch/arm64/arm64/db_interface.c		ddb

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.47 2021/02/10 20:51:27 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.48 2021/02/21 14:55:16 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -152,6 +152,10 @@ const struct implementers {
 
 char cpu_model[64];
 int cpu_node;
+
+#ifdef CRYPTO
+int arm64_has_aes;
+#endif
 
 struct cpu_info *cpu_info_list = &cpu_info_primary;
 
@@ -378,6 +382,9 @@ cpu_identify(struct cpu_info *ci)
 	if (ID_AA64ISAR0_AES(id) >= ID_AA64ISAR0_AES_BASE) {
 		printf("%sAES", sep);
 		sep = ",";
+#ifdef CRYPTO
+		arm64_has_aes = 1;
+#endif
 	}
 	if (ID_AA64ISAR0_AES(id) >= ID_AA64ISAR0_AES_PMULL)
 		printf("+PMULL");
