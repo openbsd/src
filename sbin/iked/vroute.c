@@ -1,4 +1,4 @@
-/*	$OpenBSD: vroute.c,v 1.1 2021/02/13 16:14:12 tobhe Exp $	*/
+/*	$OpenBSD: vroute.c,v 1.2 2021/02/21 14:21:37 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2021 Tobias Heider <tobhe@openbsd.org>
@@ -169,10 +169,6 @@ vroute_setroute(struct iked *env, uint8_t rdomain, struct sockaddr *dst,
 		return (-1);
 	af = dst->sa_family;
 
-	iov[iovcnt].iov_base = &af;
-	iov[iovcnt].iov_len = sizeof(af);
-	iovcnt++;
-
 	iov[iovcnt].iov_base = &rdomain;
 	iov[iovcnt].iov_len = sizeof(rdomain);
 	iovcnt++;
@@ -221,16 +217,10 @@ vroute_getroute(struct iked *env, struct imsg *imsg)
 	size_t			 left;
 	int			 addrs = 0;
 	int			 type, flags;
-	uint8_t			 af, rdomain;
+	uint8_t			 rdomain;
 
 	ptr = (uint8_t *)imsg->data;
 	left = IMSG_DATA_SIZE(imsg);
-
-	if (left < sizeof(af))
-		return (-1);
-	af = *ptr;
-	ptr += sizeof(af);
-	left -= sizeof(af);
 
 	if (left < sizeof(rdomain))
 		return (-1);
