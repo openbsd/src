@@ -1,4 +1,4 @@
-.\" $OpenBSD: stoeplitz_to_key.9,v 1.4 2020/06/19 08:50:59 dlg Exp $
+.\" $OpenBSD: stoeplitz_to_key.9,v 1.5 2021/02/21 02:40:41 dlg Exp $
 .\"
 .\" Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,39 +14,40 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 19 2020 $
+.Dd $Mdocdate: February 21 2021 $
 .Dt STOEPLITZ_TO_KEY 9
 .Os
 .Sh NAME
 .Nm stoeplitz_to_key ,
-.Nm stoeplitz_hash_ip4 ,
-.Nm stoeplitz_hash_ip4port ,
-.Nm stoeplitz_hash_ip6 ,
-.Nm stoeplitz_hash_ip6port
+.Nm stoeplitz_ip4 ,
+.Nm stoeplitz_ip4 ,
+.Nm stoeplitz_ip4port ,
+.Nm stoeplitz_ip6 ,
+.Nm stoeplitz_ip6port
 .Nd symmetric Toeplitz hash API
 .Sh SYNOPSIS
 .In net/toeplitz.h
 .Ft void
 .Fn stoeplitz_to_key "void *key" "size_t keylen"
 .Ft uint16_t
-.Fo stoeplitz_hash_ip4
+.Fo stoeplitz_ip4
 .Fa "uint32_t srcaddr"
 .Fa "uint32_t dstaddr"
 .Fc
 .Ft uint16_t
-.Fo stoeplitz_hash_ip4port
+.Fo stoeplitz_ip4port
 .Fa "uint32_t srcaddr"
 .Fa "uint32_t dstaddr"
 .Fa "uint16_t srcport"
 .Fa "uint16_t dstport"
 .Fc
 .Ft uint16_t
-.Fo stoeplitz_hash_ip6
+.Fo stoeplitz_ip6
 .Fa "const struct in6_addr *srcaddr"
 .Fa "const struct in6_addr *dstaddr"
 .Fc
 .Ft uint16_t
-.Fo stoeplitz_hash_ip6port
+.Fo stoeplitz_ip6port
 .Fa "const struct in6_addr *srcaddr"
 .Fa "const struct in6_addr *dstaddr"
 .Fa "uint16_t srcport"
@@ -82,34 +83,34 @@ argument.
 .Fa keylen
 must be a multiple of 2 bytes.
 .Pp
-.Fn stoeplitz_hash_ip4
+.Fn stoeplitz_ip4
 calculates a hash value for a pair of IPv4 addresses.
 .Pp
-.Fn stoeplitz_hash_ip4port
+.Fn stoeplitz_ip4port
 calculates a hash value for a pair of IPv4 addresses and ports as
 used by protocols like TCP or UDP.
 .Pp
-.Fn stoeplitz_hash_ip6
+.Fn stoeplitz_ip6
 calculates a hash value for a pair of IPv6 addresses.
 .Pp
-.Fn stoeplitz_hash_ip6port
+.Fn stoeplitz_ip6port
 calculates a hash value for a pair of IPv6 addresses and ports as
 used by protocols like TCP or UDP.
 .Sh CONTEXT
 .Fn stoeplitz_to_key ,
-.Fn stoeplitz_hash_ip4 ,
-.Fn stoeplitz_hash_ip4port ,
-.Fn stoeplitz_hash_ip6 ,
+.Fn stoeplitz_ip4 ,
+.Fn stoeplitz_ip4port ,
+.Fn stoeplitz_ip6 ,
 and
-.Fn stoeplitz_hash_ip6port
+.Fn stoeplitz_ip6port
 can be called during autoconf, from process context, or from an
 interrupt context.
 .Sh RETURN VALUES
-.Fn stoeplitz_hash_ip4 ,
-.Fn stoeplitz_hash_ip4port ,
-.Fn stoeplitz_hash_ip6 ,
+.Fn stoeplitz_ip4 ,
+.Fn stoeplitz_ip4port ,
+.Fn stoeplitz_ip6 ,
 and
-.Fn stoeplitz_hash_ip6port
+.Fn stoeplitz_ip6port
 return a 16-bit hash value in host byte order.
 .\" .Sh SEE ALSO
 .\" .Xr mbuf 9 ,
