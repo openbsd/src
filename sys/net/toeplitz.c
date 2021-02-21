@@ -1,4 +1,4 @@
-/* $OpenBSD: toeplitz.c,v 1.9 2020/09/01 19:18:26 tb Exp $ */
+/* $OpenBSD: toeplitz.c,v 1.10 2021/02/21 02:37:38 dlg Exp $ */
 
 /*
  * Copyright (c) 2009 The DragonFly Project.  All rights reserved.
@@ -186,6 +186,15 @@ stoeplitz_hash_ip6port(const struct stoeplitz_cache *scache,
 	return (stoeplitz_hash_n32(scache, n32));
 }
 #endif /* INET6 */
+
+uint16_t
+stoeplitz_hash_eaddr(const struct stoeplitz_cache *scache,
+    const uint8_t ea[static 6])
+{
+	const uint16_t *ea16 = (const uint16_t *)ea;
+
+	return (stoeplitz_hash_n16(scache, ea16[0] ^ ea16[1] ^ ea16[2]));
+}
 
 void
 stoeplitz_to_key(void *key, size_t klen)
