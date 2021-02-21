@@ -1,4 +1,4 @@
-/*	$OpenBSD: toeplitz.h,v 1.4 2021/02/21 02:37:38 dlg Exp $ */
+/*	$OpenBSD: toeplitz.h,v 1.5 2021/02/21 15:56:25 deraadt Exp $ */
 
 /*
  * Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
@@ -54,7 +54,7 @@ uint16_t	stoeplitz_hash_ip6port(const struct stoeplitz_cache *,
 #endif
 
 uint16_t	stoeplitz_hash_eaddr(const struct stoeplitz_cache *,
-		    const uint8_t [static 6]);
+		    const uint8_t []);
 
 /* hash a uint16_t in network byte order */
 static __unused inline uint16_t
