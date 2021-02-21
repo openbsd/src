@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.243 2020/12/29 16:40:47 florian Exp $	*/
+/*	$OpenBSD: ping.c,v 1.244 2021/02/21 10:38:42 sthen Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -145,7 +145,7 @@ int options;
 #define	F_QUIET		0x0010
 #define	F_RROUTE	0x0020
 #define	F_SO_DEBUG	0x0040
-/*			0x0080 */
+#define	F_SHOWCHAR	0x0080
 #define	F_VERBOSE	0x0100
 /*			0x0200 */
 #define	F_HDRINCL	0x0400
@@ -297,8 +297,8 @@ main(int argc, char *argv[])
 	preload = 0;
 	datap = &outpack[ECHOLEN + ECHOTMLEN];
 	while ((ch = getopt(argc, argv, v6flag ?
-	    "c:DdEefHh:I:i:Ll:mNnp:qS:s:T:V:vw:" :
-	    "DEI:LRS:c:defHi:l:np:qs:T:t:V:vw:")) != -1) {
+	    "c:DdEefgHh:I:i:Ll:mNnp:qS:s:T:V:vw:" :
+	    "DEI:LRS:c:defgHi:l:np:qs:T:t:V:vw:")) != -1) {
 		switch(ch) {
 		case 'c':
 			npackets = strtonum(optarg, 0, INT64_MAX, &errstr);
@@ -325,6 +325,9 @@ main(int argc, char *argv[])
 				errc(1, EPERM, NULL);
 			options |= F_FLOOD;
 			setvbuf(stdout, NULL, _IONBF, 0);
+			break;
+		case 'g':
+			options |= F_SHOWCHAR;
 			break;
 		case 'H':
 			options |= F_HOSTNAME;
@@ -879,6 +882,11 @@ main(int argc, char *argv[])
 				if (!(options & F_FLOOD) &&
 				    (options & F_AUD_MISS))
 					fputc('\a', stderr);
+				if ((options & F_SHOWCHAR) &&
+				    !(options & F_FLOOD)) {
+					putchar('.');
+					fflush(stdout);
+				}
 			}
 			continue;
 		}
@@ -1329,7 +1337,14 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 
 		if (options & F_FLOOD)
 			write(STDOUT_FILENO, &BSPACE, 1);
-		else {
+		else if (options & F_SHOWCHAR) {
+			if (dupflag)
+				putchar('D');
+			else if (cc - ECHOLEN < datalen)
+				putchar('T');
+			else
+				putchar('!');
+		} else {
 			printf("%d bytes from %s: icmp_seq=%u", cc,
 			    pr_addr(from, fromlen), ntohs(seq));
 			if (v6flag)
@@ -1386,9 +1401,11 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 		pr_ipopt(hlen, buf);
 
 	if (!(options & F_FLOOD)) {
-		putchar('\n');
-		if (v6flag && (options & F_VERBOSE))
-			pr_exthdrs(mhdr);
+		if (!(options & F_SHOWCHAR)) {
+			putchar('\n');
+			if (v6flag && (options & F_VERBOSE))
+				pr_exthdrs(mhdr);
+		}
 		fflush(stdout);
 		if (options & F_AUD_RECV)
 			fputc('\a', stderr);
@@ -2236,13 +2253,13 @@ usage(void)
 {
 	if (v6flag) {
 		fprintf(stderr,
-		    "usage: ping6 [-DdEefHLmnqv] [-c count] [-h hoplimit] "
+		    "usage: ping6 [-DdEefgHLmnqv] [-c count] [-h hoplimit] "
 		    "[-I sourceaddr]\n\t[-i interval] [-l preload] "
 		    "[-p pattern] [-s packetsize] [-T toskeyword]\n"
 		    "\t[-V rtable] [-w maxwait] host\n");
 	} else {
 		fprintf(stderr,
-		    "usage: ping [-DdEefHLnqRv] [-c count] [-I sourceaddr] "
+		    "usage: ping [-DdEefgHLnqRv] [-c count] [-I sourceaddr] "
 		    "[-i interval]\n\t[-l preload] [-p pattern] [-s packetsize]"
 #ifndef	SMALL
 		    " [-T toskeyword]"
