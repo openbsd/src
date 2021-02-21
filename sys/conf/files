@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.694 2021/02/08 11:20:03 stsp Exp $
+#	$OpenBSD: files,v 1.695 2021/02/21 03:26:46 dlg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -13,6 +13,7 @@ define	audio {}
 define	scsi {}
 define	atascsi {}
 define	ifmedia
+define	etherbridge
 define	mii {[phy = -1]}
 define	midibus {}
 define	radiobus {}
@@ -813,6 +814,7 @@ file net/if_tun.c			tun			needs-count
 file net/if_bridge.c			bridge			needs-count
 file net/bridgectl.c			bridge
 file net/bridgestp.c			bridge
+file net/if_etherbridge.c		etherbridge
 file net/if_vlan.c			vlan			needs-count
 file net/if_switch.c			switch			needs-count
 file net/switchctl.c			switch
@@ -841,7 +843,7 @@ file net/if_wg.c			wg
 file net/wg_noise.c			wg
 file net/wg_cookie.c			wg
 file net/bfd.c				bfd
-file net/toeplitz.c			stoeplitz		needs-flag
+file net/toeplitz.c			stoeplitz | etherbridge	needs-flag
 file net80211/ieee80211.c		wlan
 file net80211/ieee80211_amrr.c		wlan
 file net80211/ieee80211_crypto.c	wlan
