@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.202 2021/01/11 16:45:25 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.203 2021/02/22 23:17:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -2789,6 +2789,9 @@ ENTRY(hw_cpu_spinup_trampoline, 0)
 	stw,ma	r0, HPPA_FRAME_SIZE(sp)
 	stw	r0, HPPA_FRAME_CRP(sp)
 	stw	r0, HPPA_FRAME_PSP(sp)
+
+	ldil	L%TFF_LAST, t1
+	stw	t1, TF_FLAGS-TRAPFRAME_SIZEOF(sp)
 
 	/* Provide CPU with page tables. */
 	ldil	L%hppa_vtop, t1
