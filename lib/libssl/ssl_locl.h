@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.321 2021/02/20 09:43:29 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.322 2021/02/22 15:59:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1123,12 +1123,14 @@ extern const SSL_CIPHER ssl3_ciphers[];
 const char *ssl_version_string(int ver);
 int ssl_enabled_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver);
 int ssl_supported_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver);
-int ssl_max_shared_version(SSL *s, uint16_t peer_ver, uint16_t *max_ver);
 int ssl_version_set_min(const SSL_METHOD *meth, uint16_t ver, uint16_t max_ver,
     uint16_t *out_ver, uint16_t *out_proto_ver);
 int ssl_version_set_max(const SSL_METHOD *meth, uint16_t ver, uint16_t min_ver,
     uint16_t *out_ver, uint16_t *out_proto_ver);
 int ssl_downgrade_max_version(SSL *s, uint16_t *max_ver);
+int ssl_max_supported_version(SSL *s, uint16_t *max_ver);
+int ssl_max_shared_version(SSL *s, uint16_t peer_ver, uint16_t *max_ver);
+int ssl_check_version_from_server(SSL *s, uint16_t server_version);
 int ssl_legacy_stack_version(SSL *s, uint16_t version);
 int ssl_cipher_in_list(STACK_OF(SSL_CIPHER) *ciphers, const SSL_CIPHER *cipher);
 int ssl_cipher_allowed_in_version_range(const SSL_CIPHER *cipher,

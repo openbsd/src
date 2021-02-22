@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.83 2021/02/20 14:16:56 tb Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.84 2021/02/22 15:59:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -655,7 +655,7 @@ ssl3_send_client_hello(SSL *s)
 	if (S3I(s)->hs.state == SSL3_ST_CW_CLNT_HELLO_A) {
 		SSL_SESSION *sess = s->session;
 
-		if (ssl_supported_version_range(s, NULL, &max_version) != 1) {
+		if (!ssl_max_supported_version(s, &max_version)) {
 			SSLerror(s, SSL_R_NO_PROTOCOLS_AVAILABLE);
 			return (-1);
 		}
@@ -852,7 +852,7 @@ ssl3_get_server_hello(SSL *s)
 {
 	CBS cbs, server_random, session_id;
 	uint16_t server_version, cipher_suite;
-	uint16_t min_version, max_version;
+	uint16_t max_version;
 	uint8_t compression_method;
 	const SSL_CIPHER *cipher;
 	const SSL_METHOD *method;
@@ -896,12 +896,7 @@ ssl3_get_server_hello(SSL *s)
 	if (!CBS_get_u16(&cbs, &server_version))
 		goto decode_err;
 
-	if (ssl_supported_version_range(s, &min_version, &max_version) != 1) {
-		SSLerror(s, SSL_R_NO_PROTOCOLS_AVAILABLE);
-		goto err;
-	}
-
-	if (server_version < min_version || server_version > max_version) {
+	if (!ssl_check_version_from_server(s, server_version)) {
 		SSLerror(s, SSL_R_WRONG_SSL_VERSION);
 		s->version = (s->version & 0xff00) | (server_version & 0xff);
 		al = SSL_AD_PROTOCOL_VERSION;

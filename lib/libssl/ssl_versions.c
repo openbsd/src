@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_versions.c,v 1.11 2021/02/20 09:43:29 jsing Exp $ */
+/* $OpenBSD: ssl_versions.c,v 1.12 2021/02/22 15:59:10 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -163,6 +163,17 @@ ssl_supported_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver)
 }
 
 int
+ssl_max_supported_version(SSL *s, uint16_t *max_ver)
+{
+	*max_ver = 0;
+
+	if (!ssl_supported_version_range(s, NULL, max_ver))
+		return 0;
+
+	return 1;
+}
+
+int
 ssl_max_shared_version(SSL *s, uint16_t peer_ver, uint16_t *max_ver)
 {
 	uint16_t min_version, max_version, shared_version;
@@ -232,6 +243,22 @@ ssl_downgrade_max_version(SSL *s, uint16_t *max_ver)
 	*max_ver = max_version;
 
 	return 1;
+}
+
+int
+ssl_check_version_from_server(SSL *s, uint16_t server_version)
+{
+	uint16_t min_version, max_version;
+
+	/* Ensure that the version selected by the server is valid. */
+
+	if (SSL_is_dtls(s))
+		return (server_version == DTLS1_VERSION);
+
+	if (!ssl_supported_version_range(s, &min_version, &max_version))
+		return 0;
+
+	return (server_version >= min_version && server_version <= max_version);
 }
 
 int
