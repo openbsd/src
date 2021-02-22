@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.20 2021/01/28 19:56:33 martijn Exp $ */
+/*	$OpenBSD: ber.c,v 1.21 2021/02/22 17:15:02 martijn Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -213,7 +213,8 @@ ober_get_integer(struct ber_element *elm, long long *n)
 	if (elm->be_encoding != BER_TYPE_INTEGER)
 		return -1;
 
-	*n = elm->be_numeric;
+	if (n != NULL)
+		*n = elm->be_numeric;
 	return 0;
 }
 
@@ -223,7 +224,8 @@ ober_get_enumerated(struct ber_element *elm, long long *n)
 	if (elm->be_encoding != BER_TYPE_ENUMERATED)
 		return -1;
 
-	*n = elm->be_numeric;
+	if (n != NULL)
+		*n = elm->be_numeric;
 	return 0;
 }
 
@@ -249,7 +251,8 @@ ober_get_boolean(struct ber_element *elm, int *b)
 	if (elm->be_encoding != BER_TYPE_BOOLEAN)
 		return -1;
 
-	*b = !(elm->be_numeric == 0);
+	if (b != NULL)
+		*b = !(elm->be_numeric == 0);
 	return 0;
 }
 
@@ -299,7 +302,8 @@ ober_get_string(struct ber_element *elm, char **s)
 		return -1;
 #endif
 
-	*s = elm->be_val;
+	if (s != NULL)
+		*s = elm->be_val;
 	return 0;
 }
 
@@ -309,8 +313,14 @@ ober_get_nstring(struct ber_element *elm, void **p, size_t *len)
 	if (elm->be_encoding != BER_TYPE_OCTETSTRING)
 		return -1;
 
-	*p = elm->be_val;
-	*len = elm->be_len;
+	if (len != NULL)
+		*len = elm->be_len;
+	if (p != NULL) {
+		if (len != NULL)
+			*p = elm->be_val;
+		else
+			*p = NULL;
+	}
 	return 0;
 }
 
@@ -320,8 +330,10 @@ ober_get_ostring(struct ber_element *elm, struct ber_octetstring *s)
 	if (elm->be_encoding != BER_TYPE_OCTETSTRING)
 		return -1;
 
-	s->ostr_val = elm->be_val;
-	s->ostr_len = elm->be_len;
+	if (s != NULL) {
+		s->ostr_val = elm->be_val;
+		s->ostr_len = elm->be_len;
+	}
 	return 0;
 }
 
@@ -354,8 +366,14 @@ ober_get_bitstring(struct ber_element *elm, void **v, size_t *len)
 	if (elm->be_encoding != BER_TYPE_BITSTRING)
 		return -1;
 
-	*v = elm->be_val;
-	*len = elm->be_len;
+	if (len != NULL)
+		*len = elm->be_len;
+	if (v != NULL) {
+		if (len != NULL)
+			*v = elm->be_val;
+		else
+			*v = NULL;
+	}
 	return 0;
 }
 
@@ -543,6 +561,9 @@ ober_get_oid(struct ber_element *elm, struct ber_oid *o)
 	if (elm->be_encoding != BER_TYPE_OBJECT)
 		return (-1);
 
+	if (o == NULL)
+		return 0;
+
 	buf = elm->be_val;
 	len = elm->be_len;
 
@@ -709,7 +730,8 @@ ober_scanf_elements(struct ber_element *ber, char *fmt, ...)
 			d = va_arg(ap, int *);
 			if (ober_get_integer(ber, &l) == -1)
 				goto fail;
-			*d = l;
+			if (d != NULL)
+				*d = l;
 			ret++;
 			break;
 		case 'e':
@@ -747,8 +769,10 @@ ober_scanf_elements(struct ber_element *ber, char *fmt, ...)
 		case 't':
 			d = va_arg(ap, int *);
 			t = va_arg(ap, unsigned int *);
-			*d = ber->be_class;
-			*t = ber->be_type;
+			if (d != NULL)
+				*d = ber->be_class;
+			if (t != NULL)
+				*t = ber->be_type;
 			ret++;
 			continue;
 		case 'x':
