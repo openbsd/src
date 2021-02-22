@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.44 2018/02/28 22:16:56 krw Exp $	*/
+/*	$OpenBSD: packet.c,v 1.45 2021/02/22 23:43:59 jsg Exp $	*/
 
 /* Packet assembly code, originally contributed by Archie Cobbs. */
 
@@ -101,21 +101,6 @@ assemble_eh_header(struct ether_addr shost, struct ether_header *eh)
 	    sizeof(eh->ether_shost));
 
 	eh->ether_type = htons(ETHERTYPE_IP);
-}
-
-ssize_t
-decode_hw_header(unsigned char *buf, uint32_t buflen, struct ether_addr *from)
-{
-	struct ether_header	 eh;
-
-	if (buflen < sizeof(eh))
-		return -1;
-
-	memcpy(&eh, buf, sizeof(eh));
-
-	memcpy(from->ether_addr_octet, eh.ether_shost, ETHER_ADDR_LEN);
-
-	return sizeof(eh);
 }
 
 ssize_t

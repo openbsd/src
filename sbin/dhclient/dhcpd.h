@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.293 2021/02/22 02:19:03 krw Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.294 2021/02/22 23:43:59 jsg Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -231,8 +231,6 @@ char		*rfc1035_as_string(unsigned char *, size_t);
 
 /* packet.c */
 void		 assemble_eh_header(struct ether_addr, struct ether_header *);
-ssize_t		 decode_hw_header(unsigned char *, uint32_t,
-    struct ether_addr *);
 ssize_t		 decode_udp_ip_header(unsigned char *, uint32_t,
     struct sockaddr_in *);
 uint32_t	 checksum(unsigned char *, uint32_t, uint32_t);
