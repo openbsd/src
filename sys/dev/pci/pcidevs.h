@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1955 2021/02/14 17:20:47 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1956 2021/02/22 01:17:23 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -351,6 +351,7 @@
 #define	PCI_VENDOR_SSSTC	0x1e95		/* SSSTC */
 #define	PCI_VENDOR_TEHUTI	0x1fc9		/* Tehuti Networks */
 #define	PCI_VENDOR_SUNIX2	0x1fd4		/* Sunix */
+#define	PCI_VENDOR_KINGSTON	0x2646		/* Kingston */
 #define	PCI_VENDOR_HINT	0x3388		/* Hint */
 #define	PCI_VENDOR_3DLABS	0x3d3d		/* 3D Labs */
 #define	PCI_VENDOR_AVANCE2	0x4005		/* Avance Logic */
@@ -727,6 +728,14 @@
 #define	PCI_PRODUCT_AMD_15_3X_PCIE_2	0x1425		/* 15h PCIE */
 #define	PCI_PRODUCT_AMD_15_3X_PCIE_3	0x1426		/* 15h PCIE */
 #define	PCI_PRODUCT_AMD_16_PCIE	0x1439		/* 16h PCIE */
+#define	PCI_PRODUCT_AMD_17_7X_DF_1	0x1440		/* 17h Data Fabric */
+#define	PCI_PRODUCT_AMD_17_7X_DF_2	0x1441		/* 17h Data Fabric */
+#define	PCI_PRODUCT_AMD_17_7X_DF_3	0x1442		/* 17h Data Fabric */
+#define	PCI_PRODUCT_AMD_17_7X_DF_4	0x1443		/* 17h Data Fabric */
+#define	PCI_PRODUCT_AMD_17_7X_DF_5	0x1444		/* 17h Data Fabric */
+#define	PCI_PRODUCT_AMD_17_7X_DF_6	0x1445		/* 17h Data Fabric */
+#define	PCI_PRODUCT_AMD_17_7X_DF_7	0x1446		/* 17h Data Fabric */
+#define	PCI_PRODUCT_AMD_17_7X_DF_8	0x1447		/* 17h Data Fabric */
 #define	PCI_PRODUCT_AMD_17_6X_DF_0	0x1448		/* 17h/6xh Data Fabric */
 #define	PCI_PRODUCT_AMD_17_6X_DF_1	0x1449		/* 17h/6xh Data Fabric */
 #define	PCI_PRODUCT_AMD_17_6X_DF_2	0x144a		/* 17h/6xh Data Fabric */
@@ -755,9 +764,14 @@
 #define	PCI_PRODUCT_AMD_17_CCP_2	0x1468		/* 17h Crypto */
 #define	PCI_PRODUCT_AMD_17_PCIE_4	0x1470		/* 17h PCIE */
 #define	PCI_PRODUCT_AMD_17_PCIE_5	0x1471		/* 17h PCIE */
-#define	PCI_PRODUCT_AMD_17_3X_RC	0x1480		/* 17h/3xh Root Complex */
-#define	PCI_PRODUCT_AMD_17_3X_CCP	0x1486		/* 17h/3xh Crypto */
-#define	PCI_PRODUCT_AMD_17_3X_HDA	0x1487		/* 17h/3xh HD Audio */
+#define	PCI_PRODUCT_AMD_17_3X_RC	0x1480		/* 17h Root Complex */
+#define	PCI_PRODUCT_AMD_17_7X_IOMMU	0x1481		/* 17h IOMMU */
+#define	PCI_PRODUCT_AMD_17_7X_HB	0x1482		/* 17h Host */
+#define	PCI_PRODUCT_AMD_17_7X_PCIE_1	0x1483		/* 17h PCIE */
+#define	PCI_PRODUCT_AMD_17_7X_PCIE_2	0x1484		/* 17h PCIE */
+#define	PCI_PRODUCT_AMD_17_3X_CCP	0x1486		/* 17h Crypto */
+#define	PCI_PRODUCT_AMD_17_3X_HDA	0x1487		/* 17h HD Audio */
+#define	PCI_PRODUCT_AMD_17_7X_XHCI	0x149c		/* 17h xHCI */
 #define	PCI_PRODUCT_AMD_14_HB	0x1510		/* 14h Host */
 #define	PCI_PRODUCT_AMD_14_PCIE_1	0x1512		/* 14h PCIE */
 #define	PCI_PRODUCT_AMD_14_PCIE_2	0x1513		/* 14h PCIE */
@@ -866,6 +880,10 @@
 #define	PCI_PRODUCT_AMD_400SERIES_PCIE_2	0x43c7		/* 400 Series PCIE */
 #define	PCI_PRODUCT_AMD_400SERIES_AHCI	0x43c8		/* 400 Series AHCI */
 #define	PCI_PRODUCT_AMD_400SERIES_XHCI	0x43d0		/* 400 Series xHCI */
+#define	PCI_PRODUCT_AMD_500SERIES_PCIE_1	0x43e9		/* 500 Series PCIE */
+#define	PCI_PRODUCT_AMD_500SERIES_PCIE_2	0x43ea		/* 500 Series PCIE */
+#define	PCI_PRODUCT_AMD_500SERIES_AHCI	0x43eb		/* 500 Series AHCI */
+#define	PCI_PRODUCT_AMD_500SERIES_XHCI	0x43ee		/* 500 Series xHCI */
 /* http://www.amd.com/products/cpg/athlon/techdocs/pdf/21910.pdf */
 #define	PCI_PRODUCT_AMD_SC751_SC	0x7006		/* 751 System */
 #define	PCI_PRODUCT_AMD_SC751_PPB	0x7007		/* 751 */
@@ -1156,6 +1174,8 @@
 #define	PCI_PRODUCT_ATI_KAVERI_20	0x131b		/* Kaveri Radeon R4 */
 #define	PCI_PRODUCT_ATI_KAVERI_21	0x131c		/* Kaveri Radeon R7 */
 #define	PCI_PRODUCT_ATI_KAVERI_22	0x131d		/* Kaveri Radeon R6 */
+#define	PCI_PRODUCT_ATI_NAVI10_PPB_1	0x1478		/* Navi 10 PCIE */
+#define	PCI_PRODUCT_ATI_NAVI10_PPB_2	0x1479		/* Navi 10 PCIE */
 #define	PCI_PRODUCT_ATI_PICASSO	0x15d8		/* Picasso */
 #define	PCI_PRODUCT_ATI_RAVEN_VEGA	0x15dd		/* Radeon Vega */
 #define	PCI_PRODUCT_ATI_RAVEN_VEGA_HDA	0x15de		/* Radeon Vega HD Audio */
@@ -2207,6 +2227,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_HD7700_HDA	0xaab0		/* Radeon HD 7700 Audio */
 #define	PCI_PRODUCT_ATI_RADEON_PRO_HDA	0xaae0		/* Radeon Pro Audio */
 #define	PCI_PRODUCT_ATI_VEGA10_HDA_1	0xaaf8		/* Radeon Rx Vega HD Audio */
+#define	PCI_PRODUCT_ATI_NAVI10_HDA_1	0xab38		/* Navi 10 HD Audio */
 #define	PCI_PRODUCT_ATI_RS100_AGP	0xcab0		/* RS100 AGP */
 #define	PCI_PRODUCT_ATI_RS200_AGP	0xcab2		/* RS200 AGP */
 #define	PCI_PRODUCT_ATI_RS250_AGP	0xcab3		/* RS250 AGP */
@@ -6197,6 +6218,9 @@
 #define	PCI_PRODUCT_JMICRON_SDMMC_2	0x2392		/* SD/MMC */
 #define	PCI_PRODUCT_JMICRON_MS_2	0x2393		/* Memory Stick */
 #define	PCI_PRODUCT_JMICRON_XD_2	0x2394		/* xD */
+
+/* Kingston */
+#define	PCI_PRODUCT_KINGSTON_A2000	0x2263		/* A2000 */
 
 /* KTI */
 #define	PCI_PRODUCT_KTI_KTIE	0x3000		/* KTI */
