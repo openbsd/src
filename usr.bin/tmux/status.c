@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.219 2021/01/08 08:22:10 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.220 2021/02/22 06:53:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1319,12 +1319,14 @@ append_key:
 	}
 
 	if (c->prompt_flags & PROMPT_SINGLE) {
-		s = utf8_tocstr(c->prompt_buffer);
-		if (strlen(s) != 1)
+		if (utf8_strlen(c->prompt_buffer) != 1)
 			status_prompt_clear(c);
-		else if (c->prompt_inputcb(c, c->prompt_data, s, 1) == 0)
-			status_prompt_clear(c);
-		free(s);
+		else {
+			s = utf8_tocstr(c->prompt_buffer);
+			if (c->prompt_inputcb(c, c->prompt_data, s, 1) == 0)
+				status_prompt_clear(c);
+			free(s);
+		}
 	}
 
 changed:
