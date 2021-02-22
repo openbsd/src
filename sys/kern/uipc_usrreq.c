@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.143 2021/02/10 08:20:09 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.144 2021/02/22 19:14:01 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -444,7 +444,7 @@ unp_detach(struct unpcb *unp)
 	m_freem(unp->unp_addr);
 	pool_put(&unpcb_pool, unp);
 	if (unp_rights)
-		task_add(systq, &unp_gc_task);
+		task_add(systqmp, &unp_gc_task);
 
 	if (vp != NULL) {
 		/*
@@ -1197,7 +1197,7 @@ unp_discard(struct fdpass *rp, int nfds)
 	memset(rp, 0, sizeof(*rp) * nfds);
 	SLIST_INSERT_HEAD(&unp_deferred, defer, ud_link);
 
-	task_add(systq, &unp_gc_task);
+	task_add(systqmp, &unp_gc_task);
 }
 
 int
