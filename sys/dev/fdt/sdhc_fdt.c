@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_fdt.c,v 1.12 2020/05/31 11:47:09 kettenis Exp $	*/
+/*	$OpenBSD: sdhc_fdt.c,v 1.13 2021/02/22 18:53:26 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -428,8 +428,8 @@ phy_init:
 	    XENON_EMMC_PHY_TIMING_ADJUST);
 	reg |= XENON_EMMC_PHY_TIMING_ADJUST_SAMPL_INV_QSP_PHASE_SELECT;
 	reg &= ~XENON_EMMC_PHY_TIMING_ADJUST_SLOW_MODE;
-	if (timing == SDMMC_TIMING_LEGACY ||
-	    timing == SDMMC_TIMING_HIGHSPEED || sc->sc_slow_mode)
+	if ((timing == SDMMC_TIMING_LEGACY ||
+	    timing == SDMMC_TIMING_HIGHSPEED) && sc->sc_slow_mode)
 		reg |= XENON_EMMC_PHY_TIMING_ADJUST_SLOW_MODE;
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 	    XENON_EMMC_PHY_TIMING_ADJUST, reg);
