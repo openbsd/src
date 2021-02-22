@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.822 2021/02/15 09:39:38 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.823 2021/02/22 08:18:13 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 15 2021 $
+.Dd $Mdocdate: February 22 2021 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -4763,6 +4763,7 @@ The following variables are available, where appropriate:
 .It Li "buffer_name" Ta "" Ta "Name of buffer"
 .It Li "buffer_sample" Ta "" Ta "Sample of start of buffer"
 .It Li "buffer_size" Ta "" Ta "Size of the specified buffer in bytes"
+.It Li "config_files" Ta "" Ta "List of configuration files loaded"
 .It Li "client_activity" Ta "" Ta "Time client last had activity"
 .It Li "client_cell_height" Ta "" Ta "Height of each client cell in pixels"
 .It Li "client_cell_width" Ta "" Ta "Width of each client cell in pixels"
