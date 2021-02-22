@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.71 2021/02/22 16:13:31 tb Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.72 2021/02/22 16:15:49 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -230,7 +230,7 @@ tls13_server_hello_process(struct tls13_ctx *ctx, CBS *cbs)
 	if (tls13_server_hello_is_legacy(cbs)) {
 		if (ctx->hs->max_version >= TLS1_3_VERSION) {
 			/*
-			 * RFC 8446 section 4.1.3, We must not downgrade if
+			 * RFC 8446 section 4.1.3: we must not downgrade if
 			 * the server random value contains the TLS 1.2 or 1.1
 			 * magical value.
 			 */
