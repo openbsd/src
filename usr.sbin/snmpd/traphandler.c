@@ -1,4 +1,4 @@
-/*	$OpenBSD: traphandler.c,v 1.20 2021/01/22 06:33:27 martijn Exp $	*/
+/*	$OpenBSD: traphandler.c,v 1.21 2021/02/22 11:31:09 martijn Exp $	*/
 
 /*
  * Copyright (c) 2014 Bret Stephen Lambert <blambert@openbsd.org>
@@ -67,7 +67,7 @@ traphandler_parse(struct snmp_message *msg)
 	struct privsep		*ps = &snmpd_env->sc_ps;
 	struct snmp_stats	*stats = &snmpd_env->sc_stats;
 	struct ber		 ber = {0};
-	struct ber_element	*vblist = NULL, *elm, *elm2;
+	struct ber_element	*vblist = NULL, *elm;
 	struct ber_oid		 o1, o2, snmpTrapOIDOID;
 	struct ber_oid		 snmpTrapOID, sysUpTimeOID;
 	int			 sysUpTime;
@@ -82,7 +82,7 @@ traphandler_parse(struct snmp_message *msg)
 			goto done;
 		break;
 	case SNMP_C_TRAPV2:
-		if (ober_scanf_elements(msg->sm_pdu, "{SSe}", &elm) == -1) {
+		if (ober_scanf_elements(msg->sm_pdu, "{SSe}$", &elm) == -1) {
 			stats->snmp_inasnparseerrs++;
 			goto done;
 		}
@@ -98,7 +98,7 @@ traphandler_parse(struct snmp_message *msg)
 
 	(void)ober_string2oid("1.3.6.1.2.1.1.3.0", &sysUpTimeOID);
 	(void)ober_string2oid("1.3.6.1.6.3.1.1.4.1.0", &snmpTrapOIDOID);
-	if (ober_scanf_elements(vblist, "{{od}{oo}", &o1, &sysUpTime, &o2,
+	if (ober_scanf_elements(vblist, "{{od$}{oo$}", &o1, &sysUpTime, &o2,
 	    &snmpTrapOID) == -1 ||
 	    ober_oid_cmp(&o1, &sysUpTimeOID) != 0 ||
 	    ober_oid_cmp(&o2, &snmpTrapOIDOID) != 0) {
@@ -107,8 +107,7 @@ traphandler_parse(struct snmp_message *msg)
 	}
 	(void)ober_scanf_elements(vblist, "{Se", &elm);
 	for (elm = elm->be_next; elm != NULL; elm = elm->be_next) {
-		if (ober_scanf_elements(elm, "{oe}", &o1, &elm2) == -1 ||
-		    elm2->be_next != NULL) {
+		if (ober_scanf_elements(elm, "{oS$}", &o1) == -1) {
 			stats->snmp_inasnparseerrs++;
 			goto done;
 		}
@@ -153,7 +152,7 @@ traphandler_v1translate(struct snmp_message *msg, int proxy)
 	int generic_trap, specific_trap, time_stamp;
 	int hasaddress = 0, hascommunity = 0, hasenterprise = 0;
 
-	if (ober_scanf_elements(msg->sm_pdu, "{oxddde", &enterprise,
+	if (ober_scanf_elements(msg->sm_pdu, "{oxdddeS$}$", &enterprise,
 	    &agent_addr, &agent_addrlen, &generic_trap, &specific_trap,
 	    &time_stamp, &vblist) == -1 ||
 	    agent_addrlen != 4 ||
@@ -379,7 +378,7 @@ trapcmd_exec(struct trapcmd *cmd, struct sockaddr *sa,
 		goto out;
 
 	for (; vb != NULL; vb = vb->be_next) {
-		if (ober_scanf_elements(vb, "{oe}", &oid, &elm) == -1)
+		if (ober_scanf_elements(vb, "{oeS$}", &oid, &elm) == -1)
 			goto out;
 		if ((value = smi_print_element(elm)) == NULL)
 			goto out;

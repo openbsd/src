@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.69 2021/02/05 10:30:45 martijn Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.70 2021/02/22 11:31:09 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -227,7 +227,7 @@ snmpe_parse(struct snmp_message *msg)
 	case SNMP_V2:
 		if (env->sc_min_seclevel != 0)
 			goto badversion;
-		if (ober_scanf_elements(a, "se", &comn, &msg->sm_pdu) != 0)
+		if (ober_scanf_elements(a, "seS$", &comn, &msg->sm_pdu) != 0)
 			goto parsefail;
 		if (strlcpy(msg->sm_community, comn,
 		    sizeof(msg->sm_community)) >= sizeof(msg->sm_community)) {
@@ -237,7 +237,7 @@ snmpe_parse(struct snmp_message *msg)
 		}
 		break;
 	case SNMP_V3:
-		if (ober_scanf_elements(a, "{iisi}e",
+		if (ober_scanf_elements(a, "{iisi$}e",
 		    &msg->sm_msgid, &msg->sm_max_msg_size, &flagstr,
 		    &msg->sm_secmodel, &a) != 0)
 			goto parsefail;
@@ -255,7 +255,7 @@ snmpe_parse(struct snmp_message *msg)
 			goto parsefail;
 		}
 
-		if (ober_scanf_elements(a, "{xxe",
+		if (ober_scanf_elements(a, "{xxeS$}$",
 		    &msg->sm_ctxengineid, &msg->sm_ctxengineid_len,
 		    &ctxname, &len, &msg->sm_pdu) != 0)
 			goto parsefail;
@@ -377,7 +377,7 @@ snmpe_parse(struct snmp_message *msg)
 	}
 
 	/* SNMP PDU */
-	if (ober_scanf_elements(a, "iiie{et",
+	if (ober_scanf_elements(a, "iiie{et}$",
 	    &req, &errval, &erridx, &msg->sm_pduend,
 	    &msg->sm_varbind, &class, &type) != 0) {
 		stats->snmp_silentdrops++;
@@ -436,7 +436,7 @@ snmpe_parsevarbinds(struct snmp_message *msg)
 
 	for (i = 1; varbind != NULL && i < SNMPD_MAXVARBIND;
 	    varbind = varbind->be_next, i++) {
-		if (ober_scanf_elements(varbind, "{oe}", &o, &value) == -1) {
+		if (ober_scanf_elements(varbind, "{oeS$}", &o, &value) == -1) {
 			stats->snmp_inasnparseerrs++;
 			msg->sm_errstr = "invalid varbind";
 			goto varfail;
