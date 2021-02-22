@@ -1,4 +1,4 @@
-/* $OpenBSD: exuart.c,v 1.7 2021/02/16 21:58:14 kettenis Exp $ */
+/* $OpenBSD: exuart.c,v 1.8 2021/02/22 18:32:02 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -59,6 +59,9 @@ struct exuart_softc {
 	uint32_t	sc_rx_fifo_cnt_mask;
 	uint32_t	sc_rx_fifo_full;
 	uint32_t	sc_tx_fifo_full;
+	int		sc_type;
+#define EXUART_TYPE_EXYNOS	0
+#define EXUART_TYPE_S5L		1
 
 	int		sc_fifo;
 	int		sc_overflows;
@@ -110,6 +113,7 @@ void exuart_softint(void *arg);
 struct exuart_softc *exuart_sc(dev_t dev);
 
 int exuart_intr(void *);
+int exuart_s5l_intr(void *);
 
 /* XXX - we imitate 'com' serial ports and take over their entry points */
 /* XXX: These belong elsewhere */
@@ -193,9 +197,6 @@ exuart_attach(struct device *parent, struct device *self, void *aux)
 	if (faa->fa_nreg < 1)
 		return;
 
-	sc->sc_irq = fdt_intr_establish(faa->fa_node, IPL_TTY,
-	    exuart_intr, sc, sc->sc_dev.dv_xname);
-
 	sc->sc_iot = faa->fa_iot;
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr, faa->fa_reg[0].size,
 	    0, &sc->sc_ioh))
@@ -212,28 +213,57 @@ exuart_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (OF_is_compatible(faa->fa_node, "apple,s5l-uart")) {
+		sc->sc_type = EXUART_TYPE_S5L;
 		sc->sc_rx_fifo_cnt_mask = EXUART_S5L_UFSTAT_RX_FIFO_CNT_MASK;
 		sc->sc_rx_fifo_full = EXUART_S5L_UFSTAT_RX_FIFO_FULL;
 		sc->sc_tx_fifo_full = EXUART_S5L_UFSTAT_TX_FIFO_FULL;
+
+		/* Mask and clear interrupts. */
+		sc->sc_ucon = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		    EXUART_UCON);
+		CLR(sc->sc_ucon, EXUART_S5L_UCON_RX_TIMEOUT);
+		CLR(sc->sc_ucon, EXUART_S5L_UCON_RXTHRESH);
+		CLR(sc->sc_ucon, EXUART_S5L_UCON_TXTHRESH);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, EXUART_UCON,
+		    sc->sc_ucon);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, EXUART_UTRSTAT,
+		    EXUART_S5L_UTRSTAT_RX_TIMEOUT |
+		    EXUART_S5L_UTRSTAT_RXTHRESH |
+		    EXUART_S5L_UTRSTAT_TXTHRESH);
+
+		sc->sc_ucon = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		    EXUART_UCON);
+		SET(sc->sc_ucon, EXUART_UCON_RX_TIMEOUT);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, EXUART_UCON,
+		    sc->sc_ucon);
+
+		sc->sc_irq = fdt_intr_establish(faa->fa_node, IPL_TTY,
+		    exuart_s5l_intr, sc, sc->sc_dev.dv_xname);
 	} else {
+		sc->sc_type = EXUART_TYPE_EXYNOS;
 		sc->sc_rx_fifo_cnt_mask = EXUART_UFSTAT_RX_FIFO_CNT_MASK;
 		sc->sc_rx_fifo_full = EXUART_UFSTAT_RX_FIFO_FULL;
 		sc->sc_tx_fifo_full = EXUART_UFSTAT_TX_FIFO_FULL;
+
+		/* Mask and clear interrupts. */
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, EXUART_UINTM,
+		    EXUART_UINTM_RXD | EXUART_UINTM_ERROR |
+		    EXUART_UINTM_TXD | EXUART_UINTM_MODEM);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, EXUART_UINTP,
+		    EXUART_UINTP_RXD | EXUART_UINTP_ERROR |
+		    EXUART_UINTP_TXD | EXUART_UINTP_MODEM);
+
+		sc->sc_ucon = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		    EXUART_UCON);
+		CLR(sc->sc_ucon, EXUART_UCON_RX_TIMEOUT_EMPTY_FIFO);
+		SET(sc->sc_ucon, EXUART_UCON_RX_INT_TYPE_LEVEL);
+		SET(sc->sc_ucon, EXUART_UCON_RX_TIMEOUT);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, EXUART_UCON,
+		    sc->sc_ucon);
+
+		sc->sc_irq = fdt_intr_establish(faa->fa_node, IPL_TTY,
+		    exuart_intr, sc, sc->sc_dev.dv_xname);
 	}
-
-	/* Mask and clear interrupts. */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, EXUART_UINTM,
-	    EXUART_UINTM_RXD | EXUART_UINTM_ERROR |
-	    EXUART_UINTM_TXD | EXUART_UINTM_MODEM);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, EXUART_UINTP,
-	    EXUART_UINTP_RXD | EXUART_UINTP_ERROR |
-	    EXUART_UINTP_TXD | EXUART_UINTP_MODEM);
-
-	sc->sc_ucon = bus_space_read_4(sc->sc_iot, sc->sc_ioh, EXUART_UCON);
-	CLR(sc->sc_ucon, EXUART_UCON_RX_TIMEOUT_EMPTY_FIFO);
-	SET(sc->sc_ucon, EXUART_UCON_RX_INT_TYPE_LEVEL);
-	SET(sc->sc_ucon, EXUART_UCON_RX_TIMEOUT);
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, EXUART_UCON, sc->sc_ucon);
 
 	timeout_set(&sc->sc_diag_tmo, exuart_diag, sc);
 	timeout_set(&sc->sc_dtr_tmo, exuart_raisedtr, sc);
@@ -246,16 +276,59 @@ exuart_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 }
 
+void
+exuart_rx_intr(struct exuart_softc *sc)
+{
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	u_int16_t *p;
+	u_int16_t c;
+
+	p = sc->sc_ibufp;
+
+	while (bus_space_read_4(iot, ioh, EXUART_UFSTAT) &
+	    (sc->sc_rx_fifo_cnt_mask | sc->sc_rx_fifo_full)) {
+		c = bus_space_read_4(iot, ioh, EXUART_URXH);
+		if (p >= sc->sc_ibufend) {
+			sc->sc_floods++;
+			if (sc->sc_errors++ == 0)
+				timeout_add_sec(&sc->sc_diag_tmo, 60);
+		} else {
+			*p++ = c;
+#if 0
+			if (p == sc->sc_ibufhigh &&
+			    ISSET(tp->t_cflag, CRTSCTS)) {
+				/* XXX */
+			}
+#endif
+		}
+	}
+
+	sc->sc_ibufp = p;
+
+	softintr_schedule(sc->sc_si);
+}
+
+void
+exuart_tx_intr(struct exuart_softc *sc)
+{
+	struct tty *tp = sc->sc_tty;
+
+	if (ISSET(tp->t_state, TS_BUSY)) {
+		CLR(tp->t_state, TS_BUSY | TS_FLUSH);
+		if (sc->sc_halt > 0)
+			wakeup(&tp->t_outq);
+		(*linesw[tp->t_line].l_start)(tp);
+	}
+}
+
 int
 exuart_intr(void *arg)
 {
 	struct exuart_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	struct tty *tp;
 	u_int32_t uintp;
-	u_int16_t *p;
-	u_int16_t c;
 
 	uintp = bus_space_read_4(iot, ioh, EXUART_UINTP);
 	if (uintp == 0)
@@ -264,41 +337,13 @@ exuart_intr(void *arg)
 	if (sc->sc_tty == NULL)
 		return (0);
 
-	tp = sc->sc_tty;
-
 	if (ISSET(uintp, EXUART_UINTP_RXD)) {
-		p = sc->sc_ibufp;
-
-		while (bus_space_read_4(iot, ioh, EXUART_UFSTAT) &
-		    (sc->sc_rx_fifo_cnt_mask | sc->sc_rx_fifo_full)) {
-			c = bus_space_read_4(iot, ioh, EXUART_URXH);
-			if (p >= sc->sc_ibufend) {
-				sc->sc_floods++;
-				if (sc->sc_errors++ == 0)
-					timeout_add_sec(&sc->sc_diag_tmo, 60);
-			} else {
-				*p++ = c;
-#if 0
-				if (p == sc->sc_ibufhigh &&
-				    ISSET(tp->t_cflag, CRTSCTS)) {
-					/* XXX */
-				}
-#endif
-			}
-		}
-
-		sc->sc_ibufp = p;
-
-		softintr_schedule(sc->sc_si);
-
+		exuart_rx_intr(sc);
 		bus_space_write_4(iot, ioh, EXUART_UINTP, EXUART_UINTP_RXD);
 	}
 
-	if (ISSET(uintp, EXUART_UINTP_TXD) && ISSET(tp->t_state, TS_BUSY)) {
-		CLR(tp->t_state, TS_BUSY | TS_FLUSH);
-		if (sc->sc_halt > 0)
-			wakeup(&tp->t_outq);
-		(*linesw[tp->t_line].l_start)(tp);
+	if (ISSET(uintp, EXUART_UINTP_TXD)) {
+		exuart_tx_intr(sc);
 		bus_space_write_4(iot, ioh, EXUART_UINTP, EXUART_UINTP_TXD);
 	}
 
@@ -329,6 +374,31 @@ exuart_intr(void *arg)
 
 	softintr_schedule(sc->sc_si);
 #endif
+
+	return 1;
+}
+
+int
+exuart_s5l_intr(void *arg)
+{
+	struct exuart_softc *sc = arg;
+	bus_space_tag_t iot = sc->sc_iot;
+	bus_space_handle_t ioh = sc->sc_ioh;
+	u_int32_t utrstat;
+
+	utrstat = bus_space_read_4(iot, ioh, EXUART_UTRSTAT);
+
+	if (sc->sc_tty == NULL)
+		return (0);
+
+	if (utrstat & (EXUART_S5L_UTRSTAT_RXTHRESH |
+	    EXUART_S5L_UTRSTAT_RX_TIMEOUT))
+		exuart_rx_intr(sc);
+
+	if (utrstat & EXUART_S5L_UTRSTAT_TXTHRESH)
+		exuart_tx_intr(sc);
+
+	bus_space_write_4(iot, ioh, EXUART_UTRSTAT, utrstat);
 
 	return 1;
 }
@@ -457,18 +527,32 @@ exuart_start(struct tty *tp)
 		bzero(buffer, n);
 	}
 
-	if (ISSET(sc->sc_uintm, EXUART_UINTM_TXD)) {
-		CLR(sc->sc_uintm, EXUART_UINTM_TXD);
-		bus_space_write_4(iot, ioh, EXUART_UINTM, sc->sc_uintm);
+	if (sc->sc_type == EXUART_TYPE_S5L) {
+		if (!ISSET(sc->sc_ucon, EXUART_S5L_UCON_TXTHRESH)) {
+			SET(sc->sc_ucon, EXUART_S5L_UCON_TXTHRESH);
+			bus_space_write_4(iot, ioh, EXUART_UCON, sc->sc_ucon);
+		}
+	} else {
+		if (ISSET(sc->sc_uintm, EXUART_UINTM_TXD)) {
+			CLR(sc->sc_uintm, EXUART_UINTM_TXD);
+			bus_space_write_4(iot, ioh, EXUART_UINTM, sc->sc_uintm);
+		}
 	}
 
 out:
 	splx(s);
 	return;
 stopped:
-	if (!ISSET(sc->sc_uintm, EXUART_UINTM_TXD)) {
-		SET(sc->sc_uintm, EXUART_UINTM_TXD);
-		bus_space_write_4(iot, ioh, EXUART_UINTM, sc->sc_uintm);
+	if (sc->sc_type == EXUART_TYPE_S5L) {
+		if (ISSET(sc->sc_ucon, EXUART_S5L_UCON_TXTHRESH)) {
+			CLR(sc->sc_ucon, EXUART_S5L_UCON_TXTHRESH);
+			bus_space_write_4(iot, ioh, EXUART_UCON, sc->sc_ucon);
+		}
+	} else {
+		if (!ISSET(sc->sc_uintm, EXUART_UINTM_TXD)) {
+			SET(sc->sc_uintm, EXUART_UINTM_TXD);
+			bus_space_write_4(iot, ioh, EXUART_UINTM, sc->sc_uintm);
+		}
 	}
 	splx(s);
 }
@@ -640,9 +724,16 @@ exuartopen(dev_t dev, int flag, int mode, struct proc *p)
 		sc->sc_ufcon = bus_space_read_4(iot, ioh, EXUART_UFCON);
 		sc->sc_umcon = bus_space_read_4(iot, ioh, EXUART_UMCON);
 
-		sc->sc_uintm = bus_space_read_4(iot, ioh, EXUART_UINTM);
-		CLR(sc->sc_uintm, EXUART_UINTM_RXD);
-		bus_space_write_4(iot, ioh, EXUART_UINTM, sc->sc_uintm);
+		if (sc->sc_type == EXUART_TYPE_S5L) {
+			SET(sc->sc_ucon, EXUART_UCON_RX_TIMEOUT);
+			SET(sc->sc_ucon, EXUART_S5L_UCON_RXTHRESH);
+			SET(sc->sc_ucon, EXUART_S5L_UCON_RX_TIMEOUT);
+			bus_space_write_4(iot, ioh, EXUART_UCON, sc->sc_ucon);
+		} else {
+			sc->sc_uintm = bus_space_read_4(iot, ioh, EXUART_UINTM);
+			CLR(sc->sc_uintm, EXUART_UINTM_RXD);
+			bus_space_write_4(iot, ioh, EXUART_UINTM, sc->sc_uintm);
+		}
 
 #if 0
 		/* interrupt after one char on tx/rx */

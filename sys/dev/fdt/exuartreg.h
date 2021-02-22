@@ -1,4 +1,4 @@
-/* $OpenBSD: exuartreg.h,v 1.3 2021/02/16 21:58:14 kettenis Exp $ */
+/* $OpenBSD: exuartreg.h,v 1.4 2021/02/22 18:32:02 kettenis Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -54,12 +54,15 @@
 #define		EXUART_UCON_TX_DMA_BURST_4B		(0x1 << 20)
 #define		EXUART_UCON_TX_DMA_BURST_8B		(0x2 << 20)
 #define		EXUART_UCON_TX_DMA_BURST_16B		(0x3 << 20)
+#define		EXUART_S5L_UCON_RX_TIMEOUT		(0x1 << 9)
+#define		EXUART_S5L_UCON_RXTHRESH		(0x1 << 12)
+#define		EXUART_S5L_UCON_TXTHRESH		(0x1 << 13)
 #define	EXUART_UFCON				0x08
 #define		EXUART_UFCON_FIFO_ENABLE		(0x1 << 0)
 #define		EXUART_UFCON_RX_FIFO_RESET		(0x1 << 1)
 #define		EXUART_UFCON_TX_FIFO_RESET		(0x1 << 2)
-#define		EXUART_UFCON_RX_FIFO_TRIGGER_LEVEL	(((x) & 0x7) << 4)
-#define		EXUART_UFCON_TX_FIFO_TRIGGER_LEVEL	(((x) & 0x7) << 8)
+#define		EXUART_UFCON_RX_FIFO_TRIGGER_LEVEL(x)	(((x) & 0x7) << 4)
+#define		EXUART_UFCON_TX_FIFO_TRIGGER_LEVEL(x)	(((x) & 0x7) << 8)
 #define	EXUART_UMCON				0x0c
 #define		EXUART_UMCON_RTS			(0x1 << 0)
 #define		EXUART_UMCON_MODEM_INT_EN		(0x1 << 3)
@@ -73,6 +76,9 @@
 #define		EXUART_UTRSTAT_RX_DMA_FSM_STS(x)	(((x) >> 8) & 0xf)
 #define		EXUART_UTRSTAT_TX_DMA_FSM_STS(x)	(((x) >> 12) & 0xf)
 #define		EXUART_UTRSTAT_RX_FIFO_CNT_TIMEOUT(x)	(((x) >> 16) & 0xff)
+#define		EXUART_S5L_UTRSTAT_RXTHRESH		(0x1 << 4)
+#define		EXUART_S5L_UTRSTAT_TXTHRESH		(0x1 << 5)
+#define		EXUART_S5L_UTRSTAT_RX_TIMEOUT		(0x1 << 9)
 #define	EXUART_UERSTAT				0x14
 #define		EXUART_UERSTAT_OVERRUN			(0x1 << 0)
 #define		EXUART_UERSTAT_PARITY			(0x1 << 1)
