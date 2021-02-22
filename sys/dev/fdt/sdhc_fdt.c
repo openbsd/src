@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_fdt.c,v 1.13 2021/02/22 18:53:26 patrick Exp $	*/
+/*	$OpenBSD: sdhc_fdt.c,v 1.14 2021/02/22 18:55:23 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -275,8 +275,10 @@ sdhc_fdt_attach(struct device *parent, struct device *self, void *aux)
 		    SDHC_CAPABILITIES);
 		if (OF_getpropint(faa->fa_node, "bus-width", 1) != 8)
 			cap &= ~SDHC_8BIT_MODE_SUPP;
-		if (OF_getproplen(faa->fa_node, "no-1-8-v") == 0)
+		if (OF_getproplen(faa->fa_node, "no-1-8-v") == 0) {
 			cap &= ~SDHC_VOLTAGE_SUPP_1_8V;
+			sc->sc.sc_flags |= SDHC_F_NODDR50;
+		}
 		if (OF_getproplen(faa->fa_node,
 		    "marvell,xenon-phy-slow-mode") == 0)
 			sc->sc_slow_mode = 1;
