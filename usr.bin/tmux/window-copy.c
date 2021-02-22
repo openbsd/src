@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.315 2021/02/22 06:53:04 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.316 2021/02/22 07:09:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -710,7 +710,7 @@ window_copy_get_line(struct window_pane *wp, u_int y)
 	return (format_grid_line(gd, gd->hsize + y));
 }
 
-static char *
+static void *
 window_copy_cursor_word_cb(struct format_tree *ft)
 {
 	struct window_pane		*wp = format_get_pane(ft);
@@ -720,7 +720,7 @@ window_copy_cursor_word_cb(struct format_tree *ft)
 	return (window_copy_get_word(wp, data->cx, data->cy));
 }
 
-static char *
+static void *
 window_copy_cursor_line_cb(struct format_tree *ft)
 {
 	struct window_pane		*wp = format_get_pane(ft);
@@ -730,7 +730,7 @@ window_copy_cursor_line_cb(struct format_tree *ft)
 	return (window_copy_get_line(wp, data->cy));
 }
 
-static char *
+static void *
 window_copy_search_match_cb(struct format_tree *ft)
 {
 	struct window_pane		*wp = format_get_pane(ft);

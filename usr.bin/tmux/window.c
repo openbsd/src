@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.268 2021/01/20 07:16:54 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.269 2021/02/22 07:09:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -62,17 +62,6 @@ struct window_pane_tree all_window_panes;
 static u_int	next_window_pane_id;
 static u_int	next_window_id;
 static u_int	next_active_point;
-
-/* List of window modes. */
-const struct window_mode *all_window_modes[] = {
-	&window_buffer_mode,
-	&window_client_mode,
-	&window_clock_mode,
-	&window_copy_mode,
-	&window_tree_mode,
-	&window_view_mode,
-	NULL
-};
 
 struct window_pane_input_data {
 	struct cmdq_item	*item;
