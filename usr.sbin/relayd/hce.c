@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.79 2018/08/06 17:31:31 benno Exp $	*/
+/*	$OpenBSD: hce.c,v 1.80 2021/02/22 01:24:59 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -139,7 +139,6 @@ hce_launch_checks(int fd, short event, void *arg)
 		TAILQ_FOREACH(host, &table->hosts, entry) {
 			if ((host->flags & F_CHECK_DONE) == 0)
 				host->he = HCE_INTERVAL_TIMEOUT;
-			host->flags &= ~(F_CHECK_SENT|F_CHECK_DONE);
 			if (event_initialized(&host->cte.ev)) {
 				event_del(&host->cte.ev);
 				close(host->cte.s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_script.c,v 1.21 2017/05/28 10:39:15 benno Exp $	*/
+/*	$OpenBSD: check_script.c,v 1.22 2021/02/22 01:24:59 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -38,6 +38,9 @@ check_script(struct relayd *env, struct host *host)
 	struct ctl_script	 scr;
 	struct table		*table;
 
+	if ((host->flags & (F_CHECK_SENT|F_CHECK_DONE)) == F_CHECK_SENT)
+		return;
+
 	if ((table = table_find(env, host->conf.tableid)) == NULL)
 		fatalx("%s: invalid table id", __func__);
 
@@ -52,7 +55,9 @@ check_script(struct relayd *env, struct host *host)
 		fatalx("invalid script path");
 	memcpy(&scr.timeout, &table->conf.timeout, sizeof(scr.timeout));
 
-	proc_compose(env->sc_ps, PROC_PARENT, IMSG_SCRIPT, &scr, sizeof(scr));
+	if (proc_compose(env->sc_ps, PROC_PARENT, IMSG_SCRIPT, &scr,
+	    sizeof(scr)) == 0)
+		host->flags |= F_CHECK_SENT;
 }
 
 void
