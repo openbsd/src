@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.697 2021/02/21 18:16:59 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.698 2021/02/22 02:19:03 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -813,7 +813,9 @@ state_preboot(struct interface_info *ifi)
 void
 state_reboot(struct interface_info *ifi)
 {
-	struct client_lease		*lease;
+	const struct timespec	 reboot_intvl = {config->reboot_interval, 0};
+	struct timespec		 now;
+	struct client_lease	*lease;
 
 	cancel_timeout(ifi);
 
@@ -836,7 +838,9 @@ state_reboot(struct interface_info *ifi)
 	make_request(ifi, ifi->active);
 
 	ifi->destination.s_addr = INADDR_BROADCAST;
-	time(&ifi->first_sending);
+	clock_gettime(CLOCK_REALTIME, &now);
+	ifi->first_sending = now.tv_sec;
+	timespecadd(&now, &reboot_intvl, &ifi->reboot_timeout);
 	ifi->interval = 0;
 
 	send_request(ifi);
@@ -1529,11 +1533,13 @@ send_request(struct interface_info *ifi)
 {
 	struct sockaddr_in	 destination;
 	struct in_addr		 from;
+	struct timespec		 now;
 	ssize_t			 rslt;
 	time_t			 cur_time, interval;
 
 	cancel_timeout(ifi);
-	time(&cur_time);
+	clock_gettime(CLOCK_REALTIME, &now);
+	cur_time = now.tv_sec;
 	if (log_getverbose())
 		tick_msg("lease", TICK_WAIT);
 
@@ -1542,7 +1548,7 @@ send_request(struct interface_info *ifi)
 
 	switch (ifi->state) {
 	case S_REBOOTING:
-		if (interval > config->reboot_interval)
+		if (timespeccmp(&now, &ifi->reboot_timeout, >=))
 			ifi->state = S_INIT;
 		else {
 			destination.sin_addr.s_addr = INADDR_BROADCAST;
