@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.220 2021/02/09 14:06:19 patrick Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.221 2021/02/22 13:04:56 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -665,10 +665,35 @@ pf_fillup_fragment(struct pf_frnode *key, u_int32_t id,
 
 		aftercut = frent->fe_off + frent->fe_len - after->fe_off;
 		if (aftercut < after->fe_len) {
+			int old_index, new_index;
+
 			DPFPRINTF(LOG_NOTICE, "frag tail overlap %d", aftercut);
 			m_adj(after->fe_m, aftercut);
+			old_index = pf_frent_index(after);
 			after->fe_off += aftercut;
 			after->fe_len -= aftercut;
+			new_index = pf_frent_index(after);
+			if (old_index != new_index) {
+				DPFPRINTF(LOG_DEBUG, "frag index %d, new %d",
+				    old_index, new_index);
+				/* Fragment switched queue as fe_off changed */
+				after->fe_off -= aftercut;
+				after->fe_len += aftercut;
+				/* Remove restored fragment from old queue */
+				pf_frent_remove(frag, after);
+				after->fe_off += aftercut;
+				after->fe_len -= aftercut;
+				/* Insert into correct queue */
+				if (pf_frent_insert(frag, after, prev)) {
+					DPFPRINTF(LOG_WARNING,
+					    "fragment requeue limit exceeded");
+					m_freem(after->fe_m);
+					pool_put(&pf_frent_pl, after);
+					pf_nfrents--;
+					/* There is not way to recover */
+					goto free_fragment;
+				}
+			}
 			break;
 		}
 
