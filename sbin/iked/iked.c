@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.54 2021/02/13 16:14:12 tobhe Exp $	*/
+/*	$OpenBSD: iked.c,v 1.55 2021/02/22 21:58:12 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -228,7 +228,7 @@ parent_configure(struct iked *env)
 	}
 
 	env->sc_pfkey = -1;
-	config_setpfkey(env, PROC_IKEV2);
+	config_setpfkey(env);
 
 	/* Send private and public keys to cert after forking the children */
 	if (config_setkeys(env) == -1)
