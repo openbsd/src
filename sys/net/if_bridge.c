@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.350 2021/02/23 09:51:08 dlg Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.351 2021/02/23 11:44:53 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1555,7 +1555,7 @@ bridge_ipsec(struct ifnet *ifp, struct ether_header *eh, int hassnap,
 		case IPPROTO_IPCOMP:
 			m_copydata(m, hlen + sizeof(u_int16_t),
 			    sizeof(u_int16_t), (caddr_t)&cpi);
-			spi = ntohl(htons(cpi));
+			spi = htonl(ntohs(cpi));
 			break;
 		}
 
