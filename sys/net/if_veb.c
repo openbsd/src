@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.2 2021/02/23 04:40:27 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.3 2021/02/23 05:01:00 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -68,6 +68,9 @@ static const union veb_addr veb_8021_group = {
 static const union veb_addr veb_8021_group_mask = {
 	.ea = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xf0 }
 };
+
+/* SIOCBRDGIFFLGS, SIOCBRDGIFFLGS */
+#define VEB_IFBIF_FLAGS	(IFBIF_LEARNING|IFBIF_DISCOVER)
 
 struct veb_rule {
 	TAILQ_ENTRY(veb_rule)		vr_entry;
@@ -185,6 +188,8 @@ static int	veb_add_port(struct veb_softc *,
 static int	veb_del_port(struct veb_softc *,
 		    const struct ifbreq *, unsigned int);
 static int	veb_port_list(struct veb_softc *, struct ifbifconf *);
+static int	veb_port_set_flags(struct veb_softc *, struct ifbreq *);
+static int	veb_port_get_flags(struct veb_softc *, struct ifbreq *);
 static int	veb_port_set_protected(struct veb_softc *,
 		    const struct ifbreq *);
 
@@ -835,6 +840,13 @@ veb_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = veb_port_set_protected(sc, (struct ifbreq *)data);
 		break;
 
+	case SIOCBRDGSIFFLGS:
+		error = veb_port_set_flags(sc, (struct ifbreq *)data);
+		break;
+	case SIOCBRDGGIFFLGS:
+		error = veb_port_get_flags(sc, (struct ifbreq *)data);
+		break;
+
 	case SIOCBRDGARL:
 		error = veb_rule_add(sc, (struct ifbrlreq *)data);
 		break;
@@ -1369,6 +1381,41 @@ veb_port_list(struct veb_softc *sc, struct ifbifconf *bifc)
 done:
 	bifc->ifbic_len = n * sizeof(breq);
 	return (error);
+}
+
+static int
+veb_port_set_flags(struct veb_softc *sc, struct ifbreq *ifbr)
+{
+	struct veb_port *p;
+
+	if (ISSET(ifbr->ifbr_ifsflags, ~VEB_IFBIF_FLAGS))
+		return (EINVAL);
+
+	p = veb_port_get(sc, ifbr->ifbr_ifsname);
+	if (p == NULL)
+		return (ESRCH);
+
+	p->p_bif_flags = ifbr->ifbr_ifsflags;
+
+	veb_port_put(sc, p);
+	return (0);
+}
+
+static int
+veb_port_get_flags(struct veb_softc *sc, struct ifbreq *ifbr)
+{
+	struct veb_port *p;
+
+	p = veb_port_get(sc, ifbr->ifbr_ifsname);
+	if (p == NULL)
+		return (ESRCH);
+
+	ifbr->ifbr_ifsflags = p->p_bif_flags;
+	ifbr->ifbr_portno = p->p_ifp0->if_index;
+	ifbr->ifbr_protected = p->p_protected;
+
+	veb_port_put(sc, p);
+	return (0);
 }
 
 static int
