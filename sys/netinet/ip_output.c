@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.366 2021/02/23 11:43:41 mvs Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.367 2021/02/23 12:14:10 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -110,9 +110,6 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 	u_long mtu;
 #if NPF > 0
 	u_int orig_rtableid;
-#endif
-#ifdef MROUTING
-	int rv;
 #endif
 
 	NET_ASSERT_LOCKED();
@@ -250,8 +247,7 @@ reroute:
 			/* Should silently drop packet */
 			if (error == -EINVAL)
 				error = 0;
-			m_freem(m);
-			goto done;
+			goto bad;
 		}
 		if (tdb != NULL) {
 			/*
@@ -348,13 +344,13 @@ reroute:
 			 */
 			if (ipmforwarding && ip_mrouter[ifp->if_rdomain] &&
 			    (flags & IP_FORWARDING) == 0) {
+				int rv;
+
 				KERNEL_LOCK();
 				rv = ip_mforward(m, ifp);
 				KERNEL_UNLOCK();
-				if (rv != 0) {
-					m_freem(m);
-					goto done;
-				}
+				if (rv != 0)
+					goto bad;
 			}
 		}
 #endif
@@ -366,10 +362,8 @@ reroute:
 		 * loop back a copy if this host actually belongs to the
 		 * destination group on the loopback interface.
 		 */
-		if (ip->ip_ttl == 0 || (ifp->if_flags & IFF_LOOPBACK) != 0) {
-			m_freem(m);
-			goto done;
-		}
+		if (ip->ip_ttl == 0 || (ifp->if_flags & IFF_LOOPBACK) != 0)
+			goto bad;
 
 		goto sendit;
 	}
@@ -427,8 +421,7 @@ sendit:
 	if (pf_test(AF_INET, (flags & IP_FORWARDING) ? PF_FWD : PF_OUT,
 	    ifp, &m) != PF_PASS) {
 		error = EACCES;
-		m_freem(m);
-		goto done;
+		goto bad;
 	}
 	if (m == NULL)
 		goto done;
@@ -453,8 +446,7 @@ sendit:
 	if (ipsec_in_use && (flags & IP_FORWARDING) && (ipforwarding == 2) &&
 	    (m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL) == NULL)) {
 		error = EHOSTUNREACH;
-		m_freem(m);
-		goto done;
+		goto bad;
 	}
 #endif
 
@@ -534,7 +526,7 @@ done:
 	if_put(ifp);
 	return (error);
 bad:
-	m_freem(m0);
+	m_freem(m);
 	goto done;
 }
 
