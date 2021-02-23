@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.119 2019/11/28 16:23:11 guenther Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.120 2021/02/23 13:50:16 jsg Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -395,7 +395,6 @@ void	free(void *, int, size_t);
 int	sysctl_malloc(int *, u_int, void *, size_t *, void *, size_t,
 	    struct proc *);
 
-size_t malloc_roundup(size_t);
 void	malloc_printit(int (*)(const char *, ...));
 
 void	poison_mem(void *, size_t);
