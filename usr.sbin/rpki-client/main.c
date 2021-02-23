@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.104 2021/02/22 09:46:05 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.105 2021/02/23 14:25:29 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -941,8 +941,7 @@ main(int argc, char *argv[])
 			if (fchdir(cachefd) == -1)
 				err(1, "fchdir");
 
-			if (pledge("stdio rpath cpath proc exec unveil", NULL)
-			    == -1)
+			if (pledge("stdio rpath proc exec unveil", NULL) == -1)
 				err(1, "pledge");
 
 			proc_rsync(rsync_prog, bind_addr, fd[0]);

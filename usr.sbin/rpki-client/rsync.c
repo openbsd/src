@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.18 2021/02/19 08:14:49 claudio Exp $ */
+/*	$OpenBSD: rsync.c,v 1.19 2021/02/23 14:25:29 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -159,13 +159,6 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 		free(save);
 	} else if (unveil(prog, "x") == -1)
 		err(1, "%s: unveil", prog);
-
-	/* Unveil the repository directory and terminate unveiling. */
-
-	if (unveil(".", "c") == -1)
-		err(1, "unveil");
-	if (unveil(NULL, NULL) == -1)
-		err(1, "unveil");
 
 	if (pledge("stdio proc exec", NULL) == -1)
 		err(1, "pledge");
