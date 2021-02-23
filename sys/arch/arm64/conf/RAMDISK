@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.141 2021/02/22 21:51:48 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.142 2021/02/23 17:01:17 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -112,6 +112,7 @@ wsdisplay*	at simplefb?
 
 # Apple
 apldog*		at fdt? early 1
+aplintc*	at fdt? early 1
 exuart*		at fdt?
 
 # iMX

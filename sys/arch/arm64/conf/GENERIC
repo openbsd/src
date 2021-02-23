@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.188 2021/02/22 21:51:48 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.189 2021/02/23 17:01:17 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -128,6 +128,7 @@ wsdisplay*	at amdgpu?
 
 # Apple
 apldog*		at fdt? early 1
+aplintc*	at fdt? early 1
 exuart*		at fdt?
 
 # iMX
