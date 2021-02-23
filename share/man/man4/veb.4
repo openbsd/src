@@ -1,4 +1,4 @@
-.\" $OpenBSD: veb.4,v 1.1 2021/02/23 04:13:17 dlg Exp $
+.\" $OpenBSD: veb.4,v 1.2 2021/02/23 11:43:41 dlg Exp $
 .\"
 .\" Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
 .\"
@@ -66,7 +66,7 @@ on individual ports.
 provides multiple mechanisms for filtering packets traversing the
 bridge.
 By default it filters IEEE 802.1Q VLAN and SVLAN packets, but can
-be configured to forward them by setting the link2 flag.
+be configured to forward them by setting the link0 flag.
 .Nm veb
 can filter Ethernet packets entering or leaving ports using bridge
 rules.
@@ -78,13 +78,13 @@ communication between them.
 .Xr pf 4
 can be used to filter IP packets as they enter or leave the bridge.
 By default this filtering is disabled, but can be enabled by setting
-the linkX flag.
+the link1 flag.
 The exception to this policy is on
 .Nm vport
 interfaces, where
 .Xr pf 4
 runs as packets enter and leave the network stack regardless of
-the value of the linkX flag.
+the value of the link1 flag.
 A consequence of this behaviour is that packets traversing
 .Nm vport
 interfaces appear to travel in the opposite direction to packets
@@ -95,7 +95,7 @@ travelling over other ports.
 .\" .Pp
 .\" Transparent
 .\" .Xr ipsec 4
-.\" processing can be enabled by setting the linkXX flag on the bridge.
+.\" processing can be enabled by setting the link2 flag on the bridge.
 .Pp
 .Nm veb
 supports the addition of span ports to the bridge.
