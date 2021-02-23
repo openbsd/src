@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.87 2019/06/22 15:38:15 lum Exp $	*/
+/*	$OpenBSD: main.c,v 1.88 2021/02/23 08:10:51 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -48,7 +48,8 @@ extern void     closetags(void);
 static __dead void
 usage()
 {
-	fprintf(stderr, "usage: %s [-nR] [-f mode] [+number] [file ...]\n",
+	fprintf(stderr, "usage: %s [-nR] [-f mode] [-u file] [+number] "
+	    "[file ...]\n",
 	    __progname);
 	exit(1);
 }
@@ -56,7 +57,7 @@ usage()
 int
 main(int argc, char **argv)
 {
-	char		*cp, *init_fcn_name = NULL;
+	char		*cp, *conffile = NULL, *init_fcn_name = NULL;
 	PF		 init_fcn = NULL;
 	int	 	 o, i, nfiles;
 	int	  	 nobackups = 0;
@@ -66,7 +67,7 @@ main(int argc, char **argv)
 	    NULL) == -1)
 		err(1, "pledge");
 
-	while ((o = getopt(argc, argv, "nRf:")) != -1)
+	while ((o = getopt(argc, argv, "nRf:u:")) != -1)
 		switch (o) {
 		case 'R':
 			allbro = 1;
@@ -79,6 +80,9 @@ main(int argc, char **argv)
 				errx(1, "cannot specify more than one "
 				    "initial function");
 			init_fcn_name = optarg;
+			break;
+		case 'u':
+			conffile = optarg;
 			break;
 		default:
 			usage();
@@ -129,7 +133,7 @@ main(int argc, char **argv)
 	update(CMODE);
 
 	/* user startup file. */
-	if ((cp = startupfile(NULL)) != NULL)
+	if ((cp = startupfile(NULL, conffile)) != NULL)
 		(void)load(cp);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttykbd.c,v 1.19 2017/12/17 14:37:57 bcallah Exp $	*/
+/*	$OpenBSD: ttykbd.c,v 1.20 2021/02/23 08:10:51 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -58,7 +58,8 @@ ttykeymapinit(void)
 		dobindkey(fundamental_map, "delete-char", key_dc);
 
 	if ((cp = getenv("TERM"))) {
-		if (((cp = startupfile(cp)) != NULL) && (load(cp) != TRUE))
+		if (((cp = startupfile(cp, NULL)) != NULL) &&
+		    (load(cp) != TRUE))
 			ewprintf("Error reading key initialization file");
 	}
 	if (keypad_xmit)
