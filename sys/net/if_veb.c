@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.3 2021/02/23 05:01:00 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.4 2021/02/23 05:23:02 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -70,7 +70,7 @@ static const union veb_addr veb_8021_group_mask = {
 };
 
 /* SIOCBRDGIFFLGS, SIOCBRDGIFFLGS */
-#define VEB_IFBIF_FLAGS	(IFBIF_LEARNING|IFBIF_DISCOVER)
+#define VEB_IFBIF_FLAGS	(IFBIF_LEARNING|IFBIF_DISCOVER|IFBIF_BLOCKNONIP)
 
 struct veb_rule {
 	TAILQ_ENTRY(veb_rule)		vr_entry;
@@ -358,6 +358,25 @@ veb_span(struct veb_softc *sc, struct mbuf *m0)
 		if_enqueue(ifp0, m); /* XXX count error */
 	}
 	smr_read_leave();
+}
+
+static int
+veb_ip_filter(const struct mbuf *m)
+{
+	const struct ether_header *eh;
+
+	eh = mtod(m, struct ether_header *);
+	switch (ntohs(eh->ether_type)) {
+	case ETHERTYPE_IP:
+	case ETHERTYPE_ARP:
+	case ETHERTYPE_REVARP:
+	case ETHERTYPE_IPV6:
+		return (0);
+	default:
+		break;
+	}
+
+	return (1);
 }
 
 static int
@@ -680,6 +699,10 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, void *brport)
 #endif
 
 	veb_span(sc, m);
+
+	if (ISSET(p->p_bif_flags, IFBIF_BLOCKNONIP) &&
+	    veb_ip_filter(m))
+		goto drop;
 
 	if (!ISSET(ifp->if_flags, IFF_LINK2) &&
 	    veb_vlan_filter(m))
