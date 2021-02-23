@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.4 2021/02/23 05:23:02 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.5 2021/02/23 07:29:07 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -704,7 +704,7 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, void *brport)
 	    veb_ip_filter(m))
 		goto drop;
 
-	if (!ISSET(ifp->if_flags, IFF_LINK2) &&
+	if (!ISSET(ifp->if_flags, IFF_LINK0) &&
 	    veb_vlan_filter(m))
 		goto drop;
 
