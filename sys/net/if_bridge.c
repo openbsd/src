@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.349 2021/01/28 20:06:38 mvs Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.350 2021/02/23 09:51:08 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1534,7 +1534,7 @@ bridge_ipsec(struct ifnet *ifp, struct ether_header *eh, int hassnap,
 			bzero(&dst, sizeof(union sockaddr_union));
 			dst.sa.sa_family = AF_INET6;
 			dst.sin6.sin6_len = sizeof(struct sockaddr_in6);
-			m_copydata(m, offsetof(struct ip6_hdr, ip6_nxt),
+			m_copydata(m, offsetof(struct ip6_hdr, ip6_dst),
 			    sizeof(struct in6_addr),
 			    (caddr_t)&dst.sin6.sin6_addr);
 
