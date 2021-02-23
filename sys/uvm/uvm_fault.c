@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.115 2021/02/16 09:10:17 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.116 2021/02/23 10:41:59 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -598,10 +598,37 @@ uvm_fault(vm_map_t orig_map, vaddr_t vaddr, vm_fault_t fault_type,
 			/* case 1: fault on an anon in our amap */
 			error = uvm_fault_upper(&ufi, &flt, anons, fault_type);
 		} else {
-			/* case 2: fault on backing object or zero fill */
-			KERNEL_LOCK();
-			error = uvm_fault_lower(&ufi, &flt, pages, fault_type);
-			KERNEL_UNLOCK();
+			struct uvm_object *uobj = ufi.entry->object.uvm_obj;
+
+			/*
+			 * if the desired page is not shadowed by the amap and
+			 * we have a backing object, then we check to see if
+			 * the backing object would prefer to handle the fault
+			 * itself (rather than letting us do it with the usual
+			 * pgo_get hook).  the backing object signals this by
+			 * providing a pgo_fault routine.
+			 */
+			if (uobj != NULL && uobj->pgops->pgo_fault != NULL) {
+				KERNEL_LOCK();
+				error = uobj->pgops->pgo_fault(&ufi,
+				    flt.startva, pages, flt.npages,
+				    flt.centeridx, fault_type, flt.access_type,
+				    PGO_LOCKED);
+				KERNEL_UNLOCK();
+
+				if (error == VM_PAGER_OK)
+					error = 0;
+				else if (error == VM_PAGER_REFAULT)
+					error = ERESTART;
+				else
+					error = EACCES;
+			} else {
+				/* case 2: fault on backing obj or zero fill */
+				KERNEL_LOCK();
+				error = uvm_fault_lower(&ufi, &flt, pages,
+				    fault_type);
+				KERNEL_UNLOCK();
+			}
 		}
 	}
 
@@ -1054,26 +1081,6 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	struct vm_anon *anon = NULL;
 	vaddr_t currva;
 	voff_t uoff;
-
-	/*
-	 * if the desired page is not shadowed by the amap and we have a
-	 * backing object, then we check to see if the backing object would
-	 * prefer to handle the fault itself (rather than letting us do it
-	 * with the usual pgo_get hook).  the backing object signals this by
-	 * providing a pgo_fault routine.
-	 */
-	if (uobj != NULL && uobj->pgops->pgo_fault != NULL) {
-		result = uobj->pgops->pgo_fault(ufi, flt->startva, pages,
-		    flt->npages, flt->centeridx, fault_type, flt->access_type,
-		    PGO_LOCKED);
-
-		if (result == VM_PAGER_OK)
-			return (0);		/* pgo_fault did pmap enter */
-		else if (result == VM_PAGER_REFAULT)
-			return ERESTART;	/* try again! */
-		else
-			return (EACCES);
-	}
 
 	/*
 	 * now, if the desired page is not shadowed by the amap and we have
