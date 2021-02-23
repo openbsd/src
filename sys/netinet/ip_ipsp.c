@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.236 2020/06/24 22:03:43 cheloha Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.237 2021/02/23 19:43:54 tobhe Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -46,6 +46,7 @@
 #include <sys/socket.h>
 #include <sys/kernel.h>
 #include <sys/timeout.h>
+#include <sys/pool.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -89,6 +90,8 @@ int		tdb_hash(u_int32_t, union sockaddr_union *, u_int8_t);
 int ipsec_in_use = 0;
 u_int64_t ipsec_last_added = 0;
 int ipsec_ids_idle = 100;		/* keep free ids for 100s */
+
+struct pool tdb_pool;
 
 /* Protected by the NET_LOCK(). */
 u_int32_t ipsec_ids_next_flow = 1;	/* may not be zero */
@@ -796,10 +799,16 @@ struct tdb *
 tdb_alloc(u_int rdomain)
 {
 	struct tdb *tdbp;
+	static int initialized = 0;
 
 	NET_ASSERT_LOCKED();
 
-	tdbp = malloc(sizeof(*tdbp), M_TDB, M_WAITOK | M_ZERO);
+	if (!initialized) {
+		pool_init(&tdb_pool, sizeof(struct tdb), 0, IPL_SOFTNET, 0,
+		    "tdb", NULL);
+		initialized = 1;
+	}
+	tdbp = pool_get(&tdb_pool, PR_WAITOK | PR_ZERO);
 
 	TAILQ_INIT(&tdbp->tdb_policy_head);
 
@@ -879,7 +888,7 @@ tdb_reaper(void *xtdbp)
 {
 	struct tdb *tdbp = xtdbp;
 
-	free(tdbp, M_TDB, 0);
+	pool_put(&tdb_pool, tdbp);
 }
 
 /*
