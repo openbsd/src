@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.68 2021/02/23 04:44:31 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.69 2021/02/23 15:47:53 cheloha Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -215,10 +215,7 @@ int timerblurb = 10; /* Guess a value; used before clock is attached */
  * own special match function to call it the "clock".
  */
 static int
-clockmatch_sbus(parent, cf, aux)
-	struct device *parent;
-	void *cf;
-	void *aux;
+clockmatch_sbus(struct device *parent, void *cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 
@@ -226,10 +223,7 @@ clockmatch_sbus(parent, cf, aux)
 }
 
 static int
-clockmatch_ebus(parent, cf, aux)
-	struct device *parent;
-	void *cf;
-	void *aux;
+clockmatch_ebus(struct device *parent, void *cf, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 
@@ -237,10 +231,7 @@ clockmatch_ebus(parent, cf, aux)
 }
 
 static int
-clockmatch_fhc(parent, cf, aux)
-	struct device *parent;
-	void *cf;
-	void *aux;
+clockmatch_fhc(struct device *parent, void *cf, void *aux)
 {
 	struct fhc_attach_args *fa = aux;
         
@@ -270,11 +261,8 @@ clockmatch_fhc(parent, cf, aux)
  * a non-trivial operation.  
  */
 
-/* ARGSUSED */
 static void
-clockattach_sbus(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+clockattach_sbus(struct device *parent, struct device *self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	bus_space_tag_t bt = sa->sa_bustag;
@@ -309,9 +297,7 @@ clockattach_sbus(parent, self, aux)
  * change are not atomic.
  */
 int
-clock_bus_wenable(handle, onoff)
-	struct todr_chip_handle *handle;
-	int onoff;
+clock_bus_wenable(struct todr_chip_handle *handle, int onoff)
 {
 	int s, err = 0;
 	int prot; /* nonzero => change prot */
@@ -335,11 +321,8 @@ clock_bus_wenable(handle, onoff)
 	return (err);
 }
 
-/* ARGSUSED */
 static void
-clockattach_ebus(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+clockattach_ebus(struct device *parent, struct device *self, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 	bus_space_tag_t bt;
@@ -380,9 +363,7 @@ clockattach_ebus(parent, self, aux)
 }
 
 static void
-clockattach_fhc(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+clockattach_fhc(struct device *parent, struct device *self, void *aux)
 {
 	struct fhc_attach_args *fa = aux;
 	bus_space_tag_t bt = fa->fa_bustag;
@@ -409,10 +390,7 @@ clockattach_fhc(parent, self, aux)
 }
 
 static void
-clockattach(node, bt, bh)
-	int node;
-	bus_space_tag_t bt;
-	bus_space_handle_t bh;
+clockattach(int node, bus_space_tag_t bt, bus_space_handle_t bh)
 {
 	char *model;
 	struct idprom *idp;
@@ -467,10 +445,7 @@ getidprom(void)
  * the lame UltraSPARC IIi PCI machines that don't have them.
  */
 static int
-timermatch(parent, cf, aux)
-	struct device *parent;
-	void *cf;
-	void *aux;
+timermatch(struct device *parent, void *cf, void *aux)
 {
 #ifndef MULTIPROCESSOR
 	struct mainbus_attach_args *ma = aux;
@@ -483,9 +458,7 @@ timermatch(parent, cf, aux)
 }
 
 static void
-timerattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+timerattach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	u_int *va = ma->ma_address;
@@ -518,8 +491,7 @@ timerattach(parent, self, aux)
 }
 
 void
-stopcounter(creg)
-	struct timer_4u *creg;
+stopcounter(struct timer_4u *creg)
 {
 	/* Stop the clock */
 	volatile int discard;
@@ -531,8 +503,7 @@ stopcounter(creg)
  * XXX this belongs elsewhere
  */
 void
-myetheraddr(cp)
-	u_char *cp;
+myetheraddr(u_char *cp)
 {
 	struct idprom *idp;
 
@@ -714,10 +685,8 @@ cpu_initclocks(void)
 /*
  * Dummy setstatclockrate(), since we know profhz==hz.
  */
-/* ARGSUSED */
 void
-setstatclockrate(newhz)
-	int newhz;
+setstatclockrate(int newhz)
 {
 	/* nothing */
 }
@@ -731,8 +700,7 @@ setstatclockrate(newhz)
 static int clockcheck = 0;
 #endif
 int
-clockintr(cap)
-	void *cap;
+clockintr(void *cap)
 {
 #ifdef DEBUG
 	static int64_t tick_base = 0;
@@ -778,8 +746,7 @@ clockintr(cap)
  * locore.s to a level 10.
  */
 int
-tickintr(cap)
-	void *cap;
+tickintr(void *cap)
 {
 	struct cpu_info *ci = curcpu();
 	u_int64_t s;
@@ -803,8 +770,7 @@ tickintr(cap)
 }
 
 int
-sys_tickintr(cap)
-	void *cap;
+sys_tickintr(void *cap)
 {
 	struct cpu_info *ci = curcpu();
 	u_int64_t s;
@@ -827,8 +793,7 @@ sys_tickintr(cap)
 }
 
 int
-stickintr(cap)
-	void *cap;
+stickintr(void *cap)
 {
 	struct cpu_info *ci = curcpu();
 	u_int64_t s;
@@ -854,8 +819,7 @@ stickintr(cap)
  * Level 14 (stat clock) interrupt handler.
  */
 int
-statintr(cap)
-	void *cap;
+statintr(void *cap)
 {
 	u_long newint, r, var;
 	struct cpu_info *ci = curcpu();
@@ -893,8 +857,7 @@ statintr(cap)
 }
 
 int
-schedintr(arg)
-	void *arg;
+schedintr(void *arg)
 {
 	if (curproc)
 		schedclock(curproc);
