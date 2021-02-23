@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1111 2021/02/16 03:12:32 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1112 2021/02/23 11:43:40 mvs Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6087,7 +6087,7 @@ pf_route(struct pf_pdesc *pd, struct pf_state *s)
 
 	for (m0 = m1; m0; m0 = m1) {
 		m1 = m0->m_nextpkt;
-		m0->m_nextpkt = 0;
+		m0->m_nextpkt = NULL;
 		if (error == 0)
 			error = ifp->if_output(ifp, m0, sintosa(dst), rt);
 		else

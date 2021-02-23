@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.253 2021/02/02 17:55:12 claudio Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.254 2021/02/23 11:43:41 mvs Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -753,11 +753,11 @@ reroute:
 	 * Remove leading garbages.
 	 */
 	m = m0->m_nextpkt;
-	m0->m_nextpkt = 0;
+	m0->m_nextpkt = NULL;
 	m_freem(m0);
 	for (m0 = m; m; m = m0) {
 		m0 = m->m_nextpkt;
-		m->m_nextpkt = 0;
+		m->m_nextpkt = NULL;
 		if (error == 0) {
 			ip6stat_inc(ip6s_ofragments);
 			error = ifp->if_output(ifp, m, sin6tosa(dst),

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.365 2021/02/10 18:28:06 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.366 2021/02/23 11:43:41 mvs Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -518,7 +518,7 @@ sendit:
 
 	for (; m; m = m0) {
 		m0 = m->m_nextpkt;
-		m->m_nextpkt = 0;
+		m->m_nextpkt = NULL;
 		if (error == 0)
 			error = ifp->if_output(ifp, m, sintosa(dst), ro->ro_rt);
 		else
