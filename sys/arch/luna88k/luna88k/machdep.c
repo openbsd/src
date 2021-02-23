@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.134 2020/05/31 06:23:57 dlg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.135 2021/02/23 11:48:21 aoyama Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -995,9 +995,9 @@ luna88k_bootstrap()
 	cmmu = &cmmu8820x;
 
 	/* clear and disable all interrupts */
-	*(volatile uint32_t *)INT_ST_MASK0 =
-	*(volatile uint32_t *)INT_ST_MASK1 =
-	*(volatile uint32_t *)INT_ST_MASK2 =
+	*(volatile uint32_t *)INT_ST_MASK0 = 0;
+	*(volatile uint32_t *)INT_ST_MASK1 = 0;
+	*(volatile uint32_t *)INT_ST_MASK2 = 0;
 	*(volatile uint32_t *)INT_ST_MASK3 = 0;
 
 	/* clear software interrupts; just read registers */
