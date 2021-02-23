@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.6 2021/02/23 11:40:28 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.7 2021/02/23 23:42:17 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -1143,6 +1143,10 @@ veb_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCBRDGIFS:
 		error = veb_port_list(sc, (struct ifbifconf *)data);
+		break;
+	case SIOCBRDGFLUSH:
+		etherbridge_flush(&sc->sc_eb,
+		    ((struct ifbreq *)data)->ifbr_ifsflags);
 		break;
 
 	case SIOCBRDGSIFPROT:
