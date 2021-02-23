@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mg.1,v 1.119 2021/02/23 08:10:51 lum Exp $
+.\"	$OpenBSD: mg.1,v 1.120 2021/02/23 18:45:33 lum Exp $
 .\" This file is in the public domain.
 .\"
 .Dd $Mdocdate: February 23 2021 $
@@ -39,15 +39,15 @@ line of the file, +-2 will be second last, and so on.
 Run the mode command for all buffers created from
 arguments on the command line, including the
 scratch buffer and all files.
+.It Fl n
+Turn off backup file generation.
+.It Fl R
+Files specified on the command line will be opened read-only.
 .It Fl u Ar file
 Use
 .Ar file
 as the startup file, instead of the default
 .Pa ~/.mg .
-.It Fl n
-Turn off backup file generation.
-.It Fl R
-Files specified on the command line will be opened read-only.
 .El
 .Sh WINDOWS AND BUFFERS
 When a file is loaded into
