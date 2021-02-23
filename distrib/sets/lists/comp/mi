@@ -261,7 +261,6 @@
 ./usr/include/dev/ic/cs4231reg.h
 ./usr/include/dev/ic/cyreg.h
 ./usr/include/dev/ic/dc21040reg.h
-./usr/include/dev/ic/dc503reg.h
 ./usr/include/dev/ic/dcreg.h
 ./usr/include/dev/ic/dl10019reg.h
 ./usr/include/dev/ic/dl10019var.h
@@ -275,14 +274,12 @@
 ./usr/include/dev/ic/dwiicvar.h
 ./usr/include/dev/ic/elink3reg.h
 ./usr/include/dev/ic/elink3var.h
-./usr/include/dev/ic/espreg.h
 ./usr/include/dev/ic/fxpreg.h
 ./usr/include/dev/ic/fxpvar.h
 ./usr/include/dev/ic/gdtreg.h
 ./usr/include/dev/ic/gdtvar.h
 ./usr/include/dev/ic/gemreg.h
 ./usr/include/dev/ic/gemvar.h
-./usr/include/dev/ic/hayespreg.h
 ./usr/include/dev/ic/hmereg.h
 ./usr/include/dev/ic/hmevar.h
 ./usr/include/dev/ic/i8042reg.h
@@ -291,13 +288,10 @@
 ./usr/include/dev/ic/i8237reg.h
 ./usr/include/dev/ic/i8253reg.h
 ./usr/include/dev/ic/i82586reg.h
-./usr/include/dev/ic/i82595reg.h
 ./usr/include/dev/ic/i82596reg.h
 ./usr/include/dev/ic/i82596var.h
 ./usr/include/dev/ic/i8259reg.h
 ./usr/include/dev/ic/i82802reg.h
-./usr/include/dev/ic/i82810reg.h
-./usr/include/dev/ic/ibm525reg.h
 ./usr/include/dev/ic/ibm561reg.h
 ./usr/include/dev/ic/ibm561var.h
 ./usr/include/dev/ic/ics2101reg.h
@@ -307,7 +301,6 @@
 ./usr/include/dev/ic/if_wivar.h
 ./usr/include/dev/ic/iha.h
 ./usr/include/dev/ic/imxiicvar.h
-./usr/include/dev/ic/intersil7170.h
 ./usr/include/dev/ic/lancereg.h
 ./usr/include/dev/ic/lancevar.h
 ./usr/include/dev/ic/lemacreg.h
@@ -448,14 +441,11 @@
 ./usr/include/dev/isa/isareg.h
 ./usr/include/dev/isa/isavar.h
 ./usr/include/dev/isa/itvar.h
-./usr/include/dev/isa/madreg.h
 ./usr/include/dev/isa/pasreg.h
 ./usr/include/dev/isa/pcdisplayvar.h
 ./usr/include/dev/isa/pcppireg.h
 ./usr/include/dev/isa/pcppivar.h
 ./usr/include/dev/isa/pnpdevs.h
-./usr/include/dev/isa/rtreg.h
-./usr/include/dev/isa/rtvar.h
 ./usr/include/dev/isa/sbdspvar.h
 ./usr/include/dev/isa/sbreg.h
 ./usr/include/dev/isa/sbvar.h
@@ -483,7 +473,6 @@
 ./usr/include/dev/mii/mii_bitbang.h
 ./usr/include/dev/mii/miidevs.h
 ./usr/include/dev/mii/miivar.h
-./usr/include/dev/mii/mtdphyreg.h
 ./usr/include/dev/mii/nsgphyreg.h
 ./usr/include/dev/mii/nsphyreg.h
 ./usr/include/dev/mii/nsphyterreg.h
@@ -493,7 +482,6 @@
 ./usr/include/dev/mii/tlphyreg.h
 ./usr/include/dev/mii/tlphyvar.h
 ./usr/include/dev/mii/tqphyreg.h
-./usr/include/dev/mii/txphyreg.h
 ./usr/include/dev/mii/urlphyreg.h
 ./usr/include/dev/mii/xmphyreg.h
 ./usr/include/dev/mulaw.h
@@ -531,7 +519,6 @@
 ./usr/include/dev/pci/bktr/bktr_os.h
 ./usr/include/dev/pci/bktr/bktr_reg.h
 ./usr/include/dev/pci/bktr/bktr_tuner.h
-./usr/include/dev/pci/bt8370reg.h
 ./usr/include/dev/pci/cmpcireg.h
 ./usr/include/dev/pci/cmpcivar.h
 ./usr/include/dev/pci/cs4280reg.h
@@ -634,7 +621,6 @@
 ./usr/include/dev/pci/pciide_cmd_reg.h
 ./usr/include/dev/pci/pciide_cy693_reg.h
 ./usr/include/dev/pci/pciide_hpt_reg.h
-./usr/include/dev/pci/pciide_i31244_reg.h
 ./usr/include/dev/pci/pciide_ite_reg.h
 ./usr/include/dev/pci/pciide_ixp_reg.h
 ./usr/include/dev/pci/pciide_jmicron_reg.h
