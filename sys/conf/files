@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.697 2021/02/21 03:46:34 dlg Exp $
+#	$OpenBSD: files,v 1.698 2021/02/23 03:30:04 dlg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -557,6 +557,7 @@ pseudo-device bpfilter: ifnet
 pseudo-device enc: ifnet
 pseudo-device etherip: ifnet, ether, ifmedia
 pseudo-device bridge: ifnet, ether
+pseudo-device veb: ifnet, ether, etherbridge
 pseudo-device vlan: ifnet, ether
 pseudo-device carp: ifnet, ether
 pseudo-device sppp: ifnet
@@ -815,6 +816,7 @@ file net/if_bridge.c			bridge			needs-count
 file net/bridgectl.c			bridge
 file net/bridgestp.c			bridge
 file net/if_etherbridge.c		etherbridge
+file net/if_veb.c			veb
 file net/if_vlan.c			vlan			needs-count
 file net/if_switch.c			switch			needs-count
 file net/switchctl.c			switch
