@@ -1,4 +1,4 @@
-/* $OpenBSD: gptimer.c,v 1.11 2021/01/19 18:04:43 kettenis Exp $ */
+/* $OpenBSD: gptimer.c,v 1.12 2021/02/23 04:44:30 cheloha Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -113,7 +113,14 @@ int gptimer_irq = 0;
 u_int gptimer_get_timecount(struct timecounter *);
 
 static struct timecounter gptimer_timecounter = {
-	gptimer_get_timecount, NULL, 0xffffffff, 0, "gptimer", 0, NULL, 0
+	.tc_get_timecount = gptimer_get_timecount,
+	.tc_poll_pps = NULL,
+	.tc_counter_mask = 0xffffffff,
+	.tc_frequency = 0,
+	.tc_name = "gptimer",
+	.tc_quality = 0,
+	.tc_priv = NULL,
+	.tc_user = 0,
 };
 
 volatile u_int32_t nexttickevent;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.77 2020/07/06 13:33:08 pirofti Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.78 2021/02/23 04:44:31 cheloha Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -127,7 +127,14 @@ extern struct sparc_pci_chipset _sparc_pci_chipset;
 u_int stick_get_timecount(struct timecounter *);
 
 struct timecounter stick_timecounter = {
-	stick_get_timecount, NULL, ~0u, 0, "stick", 1000, NULL, 0
+	.tc_get_timecount = stick_get_timecount,
+	.tc_poll_pps = NULL,
+	.tc_counter_mask = ~0u,
+	.tc_frequency = 0,
+	.tc_name = "stick",
+	.tc_quality = 1000,
+	.tc_priv = NULL,
+	.tc_user = 0,
 };
 
 /*

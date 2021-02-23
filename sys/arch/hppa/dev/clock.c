@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.31 2020/07/06 13:33:07 pirofti Exp $	*/
+/*	$OpenBSD: clock.c,v 1.32 2021/02/23 04:44:30 cheloha Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -47,7 +47,14 @@ int	cpu_hardclock(void *);
 u_int	itmr_get_timecount(struct timecounter *);
 
 struct timecounter itmr_timecounter = {
-	itmr_get_timecount, NULL, 0xffffffff, 0, "itmr", 0, NULL, 0
+	.tc_get_timecount = itmr_get_timecount,
+	.tc_poll_pps = NULL,
+	.tc_counter_mask = 0xffffffff,
+	.tc_frequency = 0,
+	.tc_name = "itmr",
+	.tc_quality = 0,
+	.tc_priv = NULL,
+	.tc_user = 0,
 };
 
 extern todr_chip_handle_t todr_handle;

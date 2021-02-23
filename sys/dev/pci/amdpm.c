@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdpm.c,v 1.36 2020/07/06 13:33:09 pirofti Exp $	*/
+/*	$OpenBSD: amdpm.c,v 1.37 2021/02/23 04:44:31 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -77,14 +77,14 @@ u_int amdpm_get_timecount(struct timecounter *tc);
 #endif
 
 static struct timecounter amdpm_timecounter = {
-	amdpm_get_timecount,	/* get_timecount */
-	0,			/* no poll_pps */
-	0xffffff,		/* counter_mask */
-	AMDPM_FREQUENCY,	/* frequency */
-	"AMDPM",		/* name */
-	1000,			/* quality */
-	NULL,			/* private bits */
-	0,			/* expose to user */
+	.tc_get_timecount = amdpm_get_timecount,
+	.tc_poll_pps = 0,
+	.tc_counter_mask = 0xffffff,
+	.tc_frequency = AMDPM_FREQUENCY,
+	.tc_name = "AMDPM",
+	.tc_quality = 1000,
+	.tc_priv = NULL,
+	.tc_user = 0,
 };
 
 #define	AMDPM_CONFREG	0x40

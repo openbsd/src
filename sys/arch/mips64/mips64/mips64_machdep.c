@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips64_machdep.c,v 1.34 2021/01/13 16:28:49 cheloha Exp $ */
+/*	$OpenBSD: mips64_machdep.c,v 1.35 2021/02/23 04:44:30 cheloha Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
@@ -267,14 +267,14 @@ delay(int n)
 u_int cp0_get_timecount(struct timecounter *);
 
 struct timecounter cp0_timecounter = {
-	cp0_get_timecount,	/* get_timecount */
-	0,			/* no poll_pps */
-	0xffffffff,		/* counter_mask */
-	0,			/* frequency */
-	"CP0",			/* name */
-	0,			/* quality */
-	NULL,			/* private bits */
-	0,			/* expose to user */
+	.tc_get_timecount = cp0_get_timecount,
+	.tc_poll_pps = 0,
+	.tc_counter_mask = 0xffffffff,
+	.tc_frequency = 0,
+	.tc_name = "CP0",
+	.tc_quality = 0,
+	.tc_priv = NULL,
+	.tc_user = 0,
 };
 
 u_int

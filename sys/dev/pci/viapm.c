@@ -1,4 +1,4 @@
-/*	$OpenBSD: viapm.c,v 1.19 2020/07/06 13:33:09 pirofti Exp $	*/
+/*	$OpenBSD: viapm.c,v 1.20 2021/02/23 04:44:31 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis <kettenis@openbsd.org>
@@ -172,14 +172,14 @@ u_int	viapm_get_timecount(struct timecounter *tc);
 #endif
 
 static struct timecounter viapm_timecounter = {
-	viapm_get_timecount,	/* get_timecount */
-	0,			/* no poll_pps */
-	0xffffff,		/* counter_mask */
-	VIAPM_FREQUENCY,	/* frequency */
-	"VIAPM",		/* name */
-	1000,			/* quality */
-	NULL,			/* private bits */
-	0,			/* expose to user */
+	.tc_get_timecount = viapm_get_timecount,
+	.tc_poll_pps = 0,
+	.tc_counter_mask = 0xffffff,
+	.tc_frequency = VIAPM_FREQUENCY,
+	.tc_name = "VIAPM",
+	.tc_quality = 1000,
+	.tc_priv = NULL,
+	.tc_user = 0,
 };
 
 struct timeout viapm_timeout;

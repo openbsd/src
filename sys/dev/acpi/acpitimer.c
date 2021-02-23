@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitimer.c,v 1.13 2020/07/06 13:33:08 pirofti Exp $ */
+/* $OpenBSD: acpitimer.c,v 1.14 2021/02/23 04:44:31 cheloha Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -31,14 +31,14 @@ void acpitimerattach(struct device *, struct device *, void *);
 u_int acpi_get_timecount(struct timecounter *tc);
 
 static struct timecounter acpi_timecounter = {
-	acpi_get_timecount,	/* get_timecount */
-	0,			/* no poll_pps */
-	0x00ffffff,		/* counter_mask (24 bits) */
-	ACPI_FREQUENCY,		/* frequency */
-	0,			/* name */
-	1000,			/* quality */
-	NULL,			/* private bits */
-	0,			/* expose to user */
+	.tc_get_timecount = acpi_get_timecount,
+	.tc_poll_pps = 0,
+	.tc_counter_mask = 0x00ffffff,		/* 24 bits */
+	.tc_frequency = ACPI_FREQUENCY,
+	.tc_name = 0,
+	.tc_quality = 1000,
+	.tc_priv = NULL,
+	.tc_user = 0,
 };
 
 struct acpitimer_softc {

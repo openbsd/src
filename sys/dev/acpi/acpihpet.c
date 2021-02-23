@@ -1,4 +1,4 @@
-/* $OpenBSD: acpihpet.c,v 1.24 2020/07/06 13:33:08 pirofti Exp $ */
+/* $OpenBSD: acpihpet.c,v 1.25 2021/02/23 04:44:31 cheloha Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -40,14 +40,14 @@ void		acpihpet_w(bus_space_tag_t _iot, bus_space_handle_t _ioh,
 		    bus_size_t _ioa, uint64_t _val);
 
 static struct timecounter hpet_timecounter = {
-	acpihpet_gettime,	/* get_timecount */
-	0,			/* no poll_pps */
-	0xffffffff,		/* counter_mask (32 bits) */
-	0,			/* frequency */
-	0,			/* name */
-	1000,			/* quality */
-	NULL,			/* private bits */
-	0,			/* expose to user */
+	.tc_get_timecount = acpihpet_gettime,
+	.tc_poll_pps = 0,
+	.tc_counter_mask = 0xffffffff,
+	.tc_frequency = 0,
+	.tc_name = 0,
+	.tc_quality = 1000,
+	.tc_priv = NULL,
+	.tc_user = 0,
 };
 
 #define HPET_TIMERS	3

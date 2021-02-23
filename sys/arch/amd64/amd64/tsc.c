@@ -1,4 +1,4 @@
-/*	$OpenBSD: tsc.c,v 1.22 2020/12/24 04:20:48 jsg Exp $	*/
+/*	$OpenBSD: tsc.c,v 1.23 2021/02/23 04:44:30 cheloha Exp $	*/
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * Copyright (c) 2016,2017 Reyk Floeter <reyk@openbsd.org>
@@ -52,7 +52,14 @@ extern u_int32_t lapic_per_second;
 #endif
 
 struct timecounter tsc_timecounter = {
-	tsc_get_timecount, NULL, ~0u, 0, "tsc", -1000, NULL, TC_TSC
+	.tc_get_timecount = tsc_get_timecount,
+	.tc_poll_pps = NULL,
+	.tc_counter_mask = ~0u,
+	.tc_frequency = 0,
+	.tc_name = "tsc",
+	.tc_quality = -1000,
+	.tc_priv = NULL,
+	.tc_user = TC_TSC,
 };
 
 uint64_t

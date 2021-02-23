@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.59 2020/07/06 13:33:07 pirofti Exp $	*/
+/*	$OpenBSD: clock.c,v 1.60 2021/02/23 04:44:30 cheloha Exp $	*/
 /*	$NetBSD: clock.c,v 1.39 1996/05/12 23:11:54 mycroft Exp $	*/
 
 /*-
@@ -129,7 +129,14 @@ u_int i8254_get_timecount(struct timecounter *tc);
 u_int i8254_simple_get_timecount(struct timecounter *tc);
 
 static struct timecounter i8254_timecounter = {
-	i8254_get_timecount, NULL, ~0u, TIMER_FREQ, "i8254", 0, NULL, 0
+	.tc_get_timecount = i8254_get_timecount,
+	.tc_poll_pps = NULL,
+	.tc_counter_mask = ~0u,
+	.tc_frequency = TIMER_FREQ,
+	.tc_name = "i8254",
+	.tc_quality = 0,
+	.tc_priv = NULL,
+	.tc_user = 0,
 };
 struct mutex timer_mutex = MUTEX_INITIALIZER(IPL_HIGH);
 u_long rtclock_tval;

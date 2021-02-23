@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_tc.c,v 1.70 2020/12/05 04:46:34 gnezdo Exp $ */
+/*	$OpenBSD: kern_tc.c,v 1.71 2021/02/23 04:44:31 cheloha Exp $ */
 
 /*
  * Copyright (c) 2000 Poul-Henning Kamp <phk@FreeBSD.org>
@@ -55,7 +55,14 @@ dummy_get_timecount(struct timecounter *tc)
 }
 
 static struct timecounter dummy_timecounter = {
-	dummy_get_timecount, 0, ~0u, 1000000, "dummy", -1000000, NULL, 0
+	.tc_get_timecount = dummy_get_timecount,
+	.tc_poll_pps = 0,
+	.tc_counter_mask = ~0u,
+	.tc_frequency = 1000000,
+	.tc_name = "dummy",
+	.tc_quality = -1000000,
+	.tc_priv = NULL,
+	.tc_user = 0,
 };
 
 /*

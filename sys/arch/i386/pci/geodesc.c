@@ -1,4 +1,4 @@
-/*	$OpenBSD: geodesc.c,v 1.15 2020/07/06 13:33:07 pirofti Exp $	*/
+/*	$OpenBSD: geodesc.c,v 1.16 2021/02/23 04:44:30 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl <markus@openbsd.org>
@@ -60,14 +60,14 @@ struct cfdriver geodesc_cd = {
 u_int   geodesc_get_timecount(struct timecounter *tc);
 
 struct timecounter geodesc_timecounter = {
-	geodesc_get_timecount,	/* get_timecount */
-	0,			/* no poll_pps */
-	0xffffffff,		/* counter_mask */
-	27000000,		/* frequency */
-	"GEOTSC",		/* name */
-	2000,			/* quality */
-	NULL,			/* private bits */
-	0			/* expose to user */
+	.tc_get_timecount = geodesc_get_timecount,
+	.tc_poll_pps = 0,
+	.tc_counter_mask = 0xffffffff,
+	.tc_frequency = 27000000,
+	.tc_name = "GEOTSC",
+	.tc_quality = 2000,
+	.tc_priv = NULL,
+	.tc_user = 0,
 };
 
 int

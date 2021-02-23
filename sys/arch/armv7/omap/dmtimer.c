@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmtimer.c,v 1.9 2021/01/19 18:04:43 kettenis Exp $	*/
+/*	$OpenBSD: dmtimer.c,v 1.10 2021/02/23 04:44:30 cheloha Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Raphael Graf <r@undefined.ch>
@@ -111,7 +111,13 @@ void dmtimer_setstatclockrate(int newhz);
 u_int dmtimer_get_timecount(struct timecounter *);
 
 static struct timecounter dmtimer_timecounter = {
-	dmtimer_get_timecount, NULL, 0xffffffff, 0, "dmtimer", 0, NULL
+	.tc_get_timecount = dmtimer_get_timecount,
+	.tc_poll_pps = NULL,
+	.tc_counter_mask = 0xffffffff,
+	.tc_frequency = 0,
+	.tc_name = "dmtimer",
+	.tc_quality = 0,
+	.tc_priv = NULL,
 };
 
 bus_space_handle_t dmtimer_ioh0;

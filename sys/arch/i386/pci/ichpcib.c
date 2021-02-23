@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichpcib.c,v 1.29 2020/07/06 13:33:07 pirofti Exp $	*/
+/*	$OpenBSD: ichpcib.c,v 1.30 2021/02/23 04:44:30 cheloha Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -58,14 +58,14 @@ void    pcibattach(struct device *, struct device *, void *);
 u_int	ichpcib_get_timecount(struct timecounter *tc);
 
 struct timecounter ichpcib_timecounter = {
-	ichpcib_get_timecount,	/* get_timecount */
-	0,			/* no poll_pps */
-	0xffffff,		/* counter_mask */
-	3579545,		/* frequency */
-	"ICHPM",		/* name */
-	1000,			/* quality */
-	NULL,			/* private bits */
-	0			/* expose to user */
+	.tc_get_timecount = ichpcib_get_timecount,
+	.tc_poll_pps = 0,
+	.tc_counter_mask = 0xffffff,
+	.tc_frequency = 3579545,
+	.tc_name = "ICHPM",
+	.tc_quality = 1000,
+	.tc_priv = NULL,
+	.tc_user = 0,
 };
 
 struct cfattach ichpcib_ca = {

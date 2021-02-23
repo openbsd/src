@@ -1,4 +1,4 @@
-/* $OpenBSD: amptimer.c,v 1.10 2021/01/19 18:04:43 kettenis Exp $ */
+/* $OpenBSD: amptimer.c,v 1.11 2021/02/23 04:44:30 cheloha Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -67,7 +67,14 @@ int32_t amptimer_frequency = TIMER_FREQUENCY;
 u_int amptimer_get_timecount(struct timecounter *);
 
 static struct timecounter amptimer_timecounter = {
-	amptimer_get_timecount, NULL, 0xffffffff, 0, "amptimer", 0, NULL, 0
+	.tc_get_timecount = amptimer_get_timecount,
+	.tc_poll_pps = NULL,
+	.tc_counter_mask = 0xffffffff,
+	.tc_frequency = 0,
+	.tc_name = "amptimer",
+	.tc_quality = 0,
+	.tc_priv = NULL,
+	.tc_user = 0,
 };
 
 #define MAX_ARM_CPUS	8
