@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.40 2021/01/19 19:39:14 mvs Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.41 2021/02/23 15:13:58 mvs Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -196,6 +196,7 @@ switch_clone_destroy(struct ifnet *ifp)
 	struct switch_port	*swpo, *tp;
 	struct ifnet		*ifs;
 
+	NET_LOCK();
 	TAILQ_FOREACH_SAFE(swpo, &sc->sc_swpo_list, swpo_list_next, tp) {
 		if ((ifs = if_get(swpo->swpo_ifindex)) != NULL) {
 			switch_port_detach(ifs);
@@ -204,6 +205,7 @@ switch_clone_destroy(struct ifnet *ifp)
 			log(LOG_ERR, "failed to cleanup on ifindex(%d)\n",
 			    swpo->swpo_ifindex);
 	}
+	NET_UNLOCK();
 	LIST_REMOVE(sc, sc_switch_next);
 	bstp_destroy(sc->sc_stp);
 	swofp_destroy(sc);
