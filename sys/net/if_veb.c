@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.1 2021/02/23 03:30:04 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.2 2021/02/23 04:40:27 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -56,6 +56,18 @@
 #if NVLAN > 0
 #include <net/if_vlan_var.h>
 #endif
+
+union veb_addr {
+	struct ether_addr		ea;
+	uint64_t			word;
+};
+
+static const union veb_addr veb_8021_group = {
+	.ea = { 0x01, 0x80, 0xc2, 0x00, 0x00, 0x00 }
+};
+static const union veb_addr veb_8021_group_mask = {
+	.ea = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xf0 }
+};
 
 struct veb_rule {
 	TAILQ_ENTRY(veb_rule)		vr_entry;
@@ -614,6 +626,7 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, void *brport)
 	struct veb_softc *sc = p->p_veb;
 	struct ifnet *ifp = &sc->sc_if;
 	struct ether_header *eh;
+	union veb_addr dst = { .word = 0 };
 #if NBPFILTER > 0
 	caddr_t if_bpf;
 #endif
@@ -625,6 +638,13 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, void *brport)
 
 	if (!ISSET(ifp->if_flags, IFF_RUNNING))
 		return (m);
+
+	eh = mtod(m, struct ether_header *);
+	dst.ea = *(struct ether_addr *)eh->ether_dhost;
+
+	/* Is this a MAC Bridge component Reserved address? */
+	if ((dst.word & veb_8021_group_mask.word) == veb_8021_group.word)
+		goto drop;
 
 #if NVLAN > 0
 	/*
