@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.80 2021/01/31 11:07:51 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.81 2021/02/24 10:13:08 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -1078,7 +1078,8 @@ bwfm_chip_dmp_erom_scan(struct bwfm_softc *sc)
 		rev = (val & BWFM_DMP_COMP_REVISION)
 		    >> BWFM_DMP_COMP_REVISION_S;
 
-		if (nmw + nsw == 0 && id != BWFM_AGENT_CORE_PMU)
+		if (nmw + nsw == 0 && id != BWFM_AGENT_CORE_PMU &&
+		    id != BWFM_AGENT_CORE_GCI)
 			continue;
 
 		if (bwfm_chip_dmp_get_regaddr(sc, &erom, &base, &wrap))
@@ -1142,7 +1143,8 @@ bwfm_chip_dmp_get_regaddr(struct bwfm_softc *sc, uint32_t *erom,
 			else
 				*erom += 4;
 		}
-		if (sztype != BWFM_DMP_SLAVE_SIZE_4K)
+		if (sztype != BWFM_DMP_SLAVE_SIZE_4K &&
+		    sztype != BWFM_DMP_SLAVE_SIZE_8K)
 			continue;
 
 		stype = (val & BWFM_DMP_SLAVE_TYPE) >> BWFM_DMP_SLAVE_TYPE_S;
