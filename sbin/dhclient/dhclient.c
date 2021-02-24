@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.699 2021/02/24 16:18:59 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.700 2021/02/24 16:21:33 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1093,7 +1093,7 @@ bind_lease(struct interface_info *ifi)
 
 newlease:
 	/*
-	 * Remove previous dynamic lease(es) for this address, and any expired
+	 * Remove previous dynamic lease(s) for this address, and any expired
 	 * dynamic leases.
 	 */
 	seen = 0;
