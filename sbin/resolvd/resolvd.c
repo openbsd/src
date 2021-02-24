@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2021 Florian Obser <florian@openbsd.org>
- * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
+ * Copyright (c) 2021 Theo de Raadt <deraadt@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -29,9 +29,8 @@
 
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <event.h>
-#include <poll.h>
-#include <signal.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,11 +38,11 @@
 #include <unistd.h>
 
 #define	ROUTE_SOCKET_BUF_SIZE	16384
-#define	ASR_MAXNS		5
-#define	ASR_RESCONF_SIZE	4096	/* maximum size asr will handle */
-#define	UNWIND_SOCKET		"/dev/unwind.sock"
-#define	RESOLV_CONF		"/etc/resolv.conf"
-#define	RESOLVD_STATE		"/etc/resolvd.state"
+#define	ASR_MAXNS		10
+#define	_PATH_UNWIND_SOCKET	"/dev/unwind.sock"
+#define	_PATH_RESCONF		"/etc/resolv.conf"
+#define	_PATH_RESCONF_NEW	"/etc/resolv.conf.new"
+#define _PATH_LOCKFILE		"/var/run/resolvd.lock"
 #define	STARTUP_WAIT_TIMO	1
 
 #ifndef nitems
@@ -52,31 +51,25 @@
 
 __dead void	usage(void);
 
+struct rdns_proposal {
+	uint32_t	 if_index;
+	int		 af;
+	int		 prio;
+	char		 ip[INET6_ADDRSTRLEN];
+};
+
 void		route_receive(int);
 void		handle_route_message(struct rt_msghdr *, struct sockaddr **);
 void		get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 void		solicit_dns_proposals(int);
-void		gen_resolvconf(void);
+void		regen_resolvconf(char *reason);
 int		cmp(const void *, const void *);
-int		parse_resolv_conf(void);
-void		find_markers(void);
+int		findslot(struct rdns_proposal *);
+void		zeroslot(struct rdns_proposal *);
 
-struct rdns_proposal {
-	uint32_t	 if_index;
-	int		 src;
-	char		 ip[INET6_ADDRSTRLEN];
-};
-
-struct rdns_proposal	 active_proposal[ASR_MAXNS], new_proposal[ASR_MAXNS];
-int			 startup_wait = 1, resolv_conf_kq = -1;
-int			 resolvd_state_kq = -1;
-uint8_t			 rsock_buf[ROUTE_SOCKET_BUF_SIZE];
-FILE			*f_resolv_conf, *f_resolvd_state;
-char			 resolv_conf[ASR_RESCONF_SIZE];
-char			 new_resolv_conf[ASR_RESCONF_SIZE];
-char			 resolvd_state[ASR_RESCONF_SIZE];
-char			*resolv_conf_pre = resolv_conf;
-char			*resolv_conf_our, *resolv_conf_post;
+struct rdns_proposal	 learned[ASR_MAXNS];
+int			 resolvfd = -1;
+int			 newkevent = 1;
 
 #ifndef SMALL
 int			 open_unwind_ctl(void);
@@ -97,13 +90,16 @@ struct loggers {
 	    __attribute__((__format__ (printf, 1, 2)));
 };
 
+void		warnx_verbose(const char *, ...)
+		    __attribute__((__format__ (printf, 1, 2)));
+
 const struct loggers conslogger = {
 	err,
 	errx,
 	warn,
 	warnx,
-	warnx, /* info */
-	warnx /* debug */
+	warnx_verbose, /* info */
+	warnx_verbose /* debug */
 };
 
 __dead void	syslog_err(int, const char *, ...)
@@ -120,6 +116,8 @@ void		syslog_debug(const char *, ...)
 		    __attribute__((__format__ (printf, 1, 2)));
 void		syslog_vstrerror(int, int, const char *, va_list)
 		    __attribute__((__format__ (printf, 3, 0)));
+
+int verbose = 0;
 
 const struct loggers syslogger = {
 	syslog_err,
@@ -147,18 +145,24 @@ const struct loggers *logger = &conslogger;
 #define ldebug(x...) do {} while(0)
 #endif /* SMALL */
 
+enum {
+	KQ_ROUTE,
+	KQ_RESOLVE_CONF,
+	KQ_UNWIND,
+};
+
 int
 main(int argc, char *argv[])
 {
-	struct pollfd		 pfd[4];
-	struct kevent		 ke;
-	struct timespec		 now, stop, *timop = NULL, zero = {0, 0};
-	struct timespec		 timeout = {STARTUP_WAIT_TIMO, 0};
 	struct timespec		 one = {1, 0};
-	int			 ch, debug = 0, verbose = 0, routesock;
-	int			 rtfilter, nready, first_poll =1;
+	int			 kq, ch, debug = 0, routesock;
+	int			 rtfilter, nready, lockfd;
+	struct kevent		 kev[3];
+#ifndef SMALL
+	int			 unwindsock;
+#endif
 
-	while ((ch = getopt(argc, argv, "dEFs:v")) != -1) {
+	while ((ch = getopt(argc, argv, "dv")) != -1) {
 		switch (ch) {
 		case 'd':
 			debug = 1;
@@ -180,6 +184,10 @@ main(int argc, char *argv[])
 	if (geteuid())
 		errx(1, "need root privileges");
 
+	lockfd = open(_PATH_LOCKFILE, O_CREAT|O_RDWR|O_EXLOCK|O_NONBLOCK, 0600);
+	if (lockfd == -1)
+		errx(1, "already running, " _PATH_LOCKFILE);
+
 	if (!debug)
 		daemon(0, 0);
 
@@ -187,7 +195,6 @@ main(int argc, char *argv[])
 		openlog("resolvd", LOG_PID|LOG_NDELAY, LOG_DAEMON);
 		logger = &syslogger;
 	}
-
 
 	if ((routesock = socket(AF_ROUTE, SOCK_RAW, 0)) == -1)
 		lerr(1, "route socket");
@@ -197,133 +204,121 @@ main(int argc, char *argv[])
 	    sizeof(rtfilter)) == -1)
 		lerr(1, "setsockopt(ROUTE_MSGFILTER)");
 
-	if (unveil("/etc", "rwc") == -1)
-		lerr(1, "unveil");
-	if (unveil("/dev", "r") == -1)
-		lerr(1, "unveil");
+	solicit_dns_proposals(routesock);
 
-	if (pledge("stdio unix rpath wpath cpath fattr", NULL) == -1)
+	if (unveil("/etc", "rwc") == -1)
+		lerr(1, "unveil /etc");
+	if (unveil(_PATH_UNWIND_SOCKET, "r") == -1)
+		lerr(1, "unveil" _PATH_UNWIND_SOCKET);
+
+	if (pledge("stdio unix rpath wpath cpath", NULL) == -1)
 		lerr(1, "pledge");
 
-	if ((resolv_conf_kq = kqueue()) == -1)
+	if ((kq = kqueue()) == -1)
 		lerr(1, "kqueue");
-	if ((resolvd_state_kq = kqueue()) == -1)
-		lerr(1, "kqueue");
-
-	solicit_dns_proposals(routesock);
-	pfd[0].fd = routesock;
-	pfd[0].events = POLLIN;
-	pfd[1].fd = resolv_conf_kq;
-	pfd[1].events = POLLIN;
-	pfd[2].fd = resolvd_state_kq;
-	pfd[2].events = POLLIN;
-	pfd[3].fd = -1;
-	pfd[3].events = POLLIN;
-
-	parse_resolv_conf();
 
 	for(;;) {
+		int	i;
+
 #ifndef SMALL
 		if (!unwind_running && check_unwind) {
 			check_unwind = 0;
-			pfd[3].fd = open_unwind_ctl();
-			unwind_running = pfd[3].fd != -1;
+			unwindsock = open_unwind_ctl();
+			unwind_running = unwindsock != -1;
 			if (unwind_running)
-				gen_resolvconf();
+				regen_resolvconf("new unwind");
 		}
+#endif
+
+		if (newkevent) {
+			int kevi = 0;
+
+			if (routesock != -1)
+				EV_SET(&kev[kevi++], routesock, EVFILT_READ,
+				    EV_ADD, 0, 0,
+				    (void *)KQ_ROUTE);
+			if (resolvfd != -1)
+				EV_SET(&kev[kevi++], resolvfd, EVFILT_VNODE,
+				    EV_ADD | EV_CLEAR,
+				    NOTE_DELETE | NOTE_RENAME | NOTE_TRUNCATE | NOTE_WRITE, 0,
+				    (void *)KQ_RESOLVE_CONF);
+
+#ifndef SMALL
+			if (unwind_running) {
+				EV_SET(&kev[kevi++], unwindsock, EVFILT_READ,
+				    EV_ADD, 0, 0,
+				    (void *)KQ_UNWIND);
+			}
 #endif /* SMALL */
-		nready = ppoll(pfd, nitems(pfd), timop, NULL);
-		if (first_poll) {
-			first_poll = 0;
-			clock_gettime(CLOCK_REALTIME, &now);
-			timespecadd(&now, &timeout, &stop);
-			timop = &timeout;
+
+			if (kevent(kq, kev, kevi, NULL, 0, NULL) == -1)
+				lerr(1, "kevent");
+			newkevent = 0;
 		}
-		if (timop != NULL) {
-			clock_gettime(CLOCK_REALTIME, &now);
-			if (timespeccmp(&stop, &now, <=)) {
-				startup_wait = 0;
-				timop = NULL;
-				gen_resolvconf();
-			} else
-				timespecsub(&stop, &now, &timeout);
-		}
+
+		nready = kevent(kq, NULL, 0, kev, nitems(kev), NULL);
 		if (nready == -1) {
 			if (errno == EINTR)
 				continue;
-			lerr(1, "poll");
+			lerr(1, "kevent");
 		}
 
 		if (nready == 0)
 			continue;
 
-		if ((pfd[0].revents & (POLLIN|POLLHUP)))
-			route_receive(routesock);
-		if ((pfd[1].revents & (POLLIN|POLLHUP))) {
-			if ((nready = kevent(resolv_conf_kq, NULL, 0, &ke, 1,
-			    &zero)) == -1) {
-				close(resolv_conf_kq);
-				fclose(f_resolv_conf);
-				f_resolv_conf = NULL;
-			}
-			if (nready > 0) {
-				if (ke.fflags & (NOTE_DELETE | NOTE_RENAME)) {
-					fclose(f_resolv_conf);
-					f_resolv_conf = NULL;
-					parse_resolv_conf();
-					gen_resolvconf();
-				}
-				if (ke.fflags & (NOTE_TRUNCATE | NOTE_WRITE)) {
-					/* some editors truncate and write */
-					if (ke.fflags & NOTE_TRUNCATE)
-						nanosleep(&one, NULL);
-					parse_resolv_conf();
-					gen_resolvconf();
-				}
-			}
-		}
-		if ((pfd[2].revents & (POLLIN|POLLHUP))) {
-			if ((nready = kevent(resolvd_state_kq, NULL, 0, &ke, 1,
-			    &zero)) == -1) {
-				close(resolvd_state_kq);
-				fclose(f_resolv_conf);
-				f_resolv_conf = NULL;
-			}
-			if (nready > 0) {
+		for (i = 0; i < nready; i++) {
+			unsigned short fflags = kev[i].fflags;
 
-				if (ke.fflags & (NOTE_DELETE | NOTE_RENAME)) {
-					fclose(f_resolvd_state);
-					f_resolvd_state = NULL;
-					parse_resolv_conf();
-					gen_resolvconf();
+			switch ((int)kev[i].udata) {
+			case KQ_ROUTE:
+				route_receive(routesock);
+				break;
+
+			case KQ_RESOLVE_CONF:
+				if (fflags & (NOTE_DELETE | NOTE_RENAME)) {
+					close(resolvfd);
+					resolvfd = -1;
+					regen_resolvconf("file delete/rename");
 				}
-				if (ke.fflags & (NOTE_TRUNCATE | NOTE_WRITE)) {
-					parse_resolv_conf();
-					gen_resolvconf();
+				if (fflags & (NOTE_TRUNCATE | NOTE_WRITE)) {
+					/* some editors truncate and write */
+					if (fflags & NOTE_TRUNCATE)
+						nanosleep(&one, NULL);
+					regen_resolvconf("file trunc/write");
 				}
-			}
-		}
+				break;
+
 #ifndef SMALL
-		if ((pfd[3].revents & (POLLIN|POLLHUP))) {
-			ssize_t	 n;
-			if ((n = read(pfd[3].fd, rsock_buf, sizeof(rsock_buf))
-			    == -1)) {
-				if (errno == EAGAIN || errno == EINTR)
-					continue;
+			case KQ_UNWIND: {
+				uint8_t buf[1024];
+				ssize_t	n;
+
+				n = read(unwindsock, buf, sizeof(buf));
+				if (n == -1) {
+					if (errno == EAGAIN || errno == EINTR)
+						continue;
+				}
+				if (n == 0 || n == -1) {
+					if (n == -1)
+						check_unwind = 1;
+					newkevent = 1;
+					close(unwindsock);
+					unwindsock = -1;
+					unwind_running = 0;
+					regen_resolvconf("unwind closed");
+				} else
+					lwarnx("read %ld from unwind ctl", n);
+				break;
 			}
-			if (n == 0 || n == -1) {
-				if (n == -1)
-					check_unwind = 1;
-				close(pfd[3].fd);
-				pfd[3].fd = -1;
-				unwind_running = 0;
-				gen_resolvconf();
-			} else
-				lwarnx("read %ld from unwind ctl", n);
+#endif
+
+			default:
+				lwarnx("unknown kqueue event on %lu",
+				    kev[i].ident);
+			}
 		}
-#endif /* SMALL */
 	}
-	return (0);
+	return 0;
 }
 
 __dead void
@@ -336,8 +331,9 @@ usage(void)
 void
 route_receive(int fd)
 {
-	struct rt_msghdr	*rtm;
+	uint8_t			 rsock_buf[ROUTE_SOCKET_BUF_SIZE];
 	struct sockaddr		*sa, *rti_info[RTAX_MAX];
+	struct rt_msghdr	*rtm;
 	ssize_t			 n;
 
 	rtm = (struct rt_msghdr *) rsock_buf;
@@ -359,38 +355,58 @@ route_receive(int fd)
 	if (rtm->rtm_version != RTM_VERSION)
 		return;
 
+	if (rtm->rtm_pid == getpid())
+		return;
+
 	sa = (struct sockaddr *)(rsock_buf + rtm->rtm_hdrlen);
 	get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
-
 	handle_route_message(rtm, rti_info);
+}
+
+void
+zeroslot(struct rdns_proposal *tab)
+{
+	tab->prio = 0;
+	tab->af = 0;
+	tab->if_index = 0;
+	tab->ip[0] = '\0';
+}
+
+int
+findslot(struct rdns_proposal *tab)
+{
+	int i;
+
+	for (i = 0; i < ASR_MAXNS; i++)
+		if (tab[i].prio == 0)
+			return i;
+
+	/* New proposals might be important, so replace the last slot */
+	i = ASR_MAXNS - 1;
+	zeroslot(&tab[i]);
+	return i;
 }
 
 void
 handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 {
+	struct rdns_proposal		 learning[ASR_MAXNS];
 	struct sockaddr_rtdns		*rtdns;
 	struct if_announcemsghdr	*ifan;
-	int				 rdns_count, af, i, new = 0;
+	int				 rdns_count, af, i;
 	char				*src;
 
-	if (rtm->rtm_pid == getpid())
-		return;
-
-	memset(&new_proposal, 0, sizeof(new_proposal));
+	memcpy(learning, learned, sizeof learned);
 
 	switch (rtm->rtm_type) {
 	case RTM_IFANNOUNCE:
 		ifan = (struct if_announcemsghdr *)rtm;
 		if (ifan->ifan_what == IFAN_ARRIVAL)
 			return;
-		for (i = 0; i < ASR_MAXNS; i++) {
-			if (active_proposal[i].src == 0)
-				continue;
-			if (active_proposal[i].if_index == ifan->ifan_index)
-				continue;
-			memcpy(&new_proposal[new++], &active_proposal[i],
-			    sizeof(struct rdns_proposal));
-		}
+		/* Delete proposals learned from departing interfaces */
+		for (i = 0; i < ASR_MAXNS; i++)
+			if (learning[i].if_index == ifan->ifan_index)
+				zeroslot(&learning[i]);
 		break;
 	case RTM_PROPOSAL:
 		if (rtm->rtm_priority == RTP_PROPOSAL_SOLICIT) {
@@ -399,6 +415,7 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 #endif /* SMALL */
 			return;
 		}
+
 		if (!(rtm->rtm_addrs & RTA_DNS))
 			return;
 
@@ -406,17 +423,6 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 		src = rtdns->sr_dns;
 		af = rtdns->sr_family;
 
-		for (i = 0; i < ASR_MAXNS; i++) {
-			if (active_proposal[i].src == 0)
-				continue;
-			/* rtm_index of zero means drop all proposals */
-			if (active_proposal[i].src == rtm->rtm_priority &&
-			    (active_proposal[i].if_index == rtm->rtm_index ||
-			    rtm->rtm_index == 0))
-				continue;
-			memcpy(&new_proposal[new++], &active_proposal[i],
-			    sizeof(struct rdns_proposal));
-		}
 		switch (af) {
 		case AF_INET:
 			if ((rtdns->sr_len - 2) % sizeof(struct in_addr) != 0) {
@@ -439,22 +445,30 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 			return;
 		}
 
-		for (i = 0; i < rdns_count && new < ASR_MAXNS; i++) {
+		/* New proposal from interface means previous proposals expire */
+		for (i = 0; i < ASR_MAXNS; i++)
+			if (learning[i].af == af &&
+			    learning[i].if_index == rtm->rtm_index)
+				zeroslot(&learning[i]);
+
+		/* Add the new proposals */
+		for (i = 0; i < rdns_count; i++) {
 			struct in_addr addr4;
 			struct in6_addr addr6;
+			int new;
+
 			switch (af) {
 			case AF_INET:
 				memcpy(&addr4, src, sizeof(struct in_addr));
 				src += sizeof(struct in_addr);
 				if (addr4.s_addr == INADDR_LOOPBACK)
 					continue;
-				if(inet_ntop(af, &addr4, new_proposal[new].ip,
+				new = findslot(learning);
+				if (inet_ntop(af, &addr4, learning[new].ip,
 				    INET6_ADDRSTRLEN) != NULL) {
-					new_proposal[new].src =
-					    rtm->rtm_priority;
-					new_proposal[new].if_index =
-					    rtm->rtm_index;
-					new++;
+					learning[new].prio = rtm->rtm_priority;
+					learning[new].if_index = rtm->rtm_index;
+					learning[new].af = af;
 				} else
 					lwarn("inet_ntop");
 				break;
@@ -463,15 +477,15 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 				src += sizeof(struct in6_addr);
 				if (IN6_IS_ADDR_LOOPBACK(&addr6))
 					continue;
-				if(inet_ntop(af, &addr6, new_proposal[new].ip,
+				new = findslot(learning);
+				if (inet_ntop(af, &addr6, learning[new].ip,
 				    INET6_ADDRSTRLEN) != NULL) {
-					new_proposal[new].src =
-					    rtm->rtm_priority;
-					new_proposal[new].if_index =
-					    rtm->rtm_index;
-					new++;
+					learning[new].prio = rtm->rtm_priority;
+					learning[new].if_index = rtm->rtm_index;
+					learning[new].af = af;
 				} else
 					lwarn("inet_ntop");
+				break;
 			}
 		}
 		break;
@@ -479,18 +493,25 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 		return;
 	}
 
-	/* normalize to avoid fs churn when only the order changes */
-	qsort(new_proposal, ASR_MAXNS, sizeof(new_proposal[0]), cmp);
+	/* Sort proposals, based upon priority and IP */
+	qsort(learning, ASR_MAXNS, sizeof(learning[0]), cmp);
 
-	if (memcmp(new_proposal, active_proposal, sizeof(new_proposal)) !=
-	    0) {
-		memcpy(active_proposal, new_proposal, sizeof(new_proposal));
-#ifndef SMALL
-		if (!unwind_running)
-#endif /* SMALL */
-			gen_resolvconf();
+	/* Eliminate duplicates */
+	for (i = 0; i < ASR_MAXNS - 1; i++) {
+		if (learning[i].prio == 0)
+			continue;
+		if (learning[i].if_index == learning[i+1].if_index &&
+		    strcmp(learning[i].ip, learning[i+1].ip) == 0) {
+			zeroslot(&learning[i + 1]);
+			i--;	/* backup and re-check */
+		}
 	}
 
+	/* If proposal result is different, rebuild the file */
+	if (memcmp(learned, learning, sizeof(learned)) != 0) {
+		memcpy(learned, learning, sizeof(learned));
+		regen_resolvconf("route proposals");
+	}
 }
 
 #define ROUNDUP(a) \
@@ -536,125 +557,80 @@ solicit_dns_proposals(int routesock)
 }
 
 void
-gen_resolvconf()
+regen_resolvconf(char *why)
 {
-	size_t	 buf_len, state_buf_len;
-	int	 len, state_len, i, fd;
-	char	*buf_p = NULL, *state_buf_p = NULL;
-	char	 tmpl[] = RESOLV_CONF"-XXXXXXXXXX";
-	char	 state_tmpl[] = RESOLVD_STATE"-XXXXXXXXXX";
+	int	 i, fd;
 
-	if (resolv_conf_our == NULL || startup_wait)
-		return;
+	linfo("rebuilding: %s", why);
 
-	buf_len = sizeof(new_resolv_conf);
-	buf_p = new_resolv_conf;
-	memset(buf_p, 0, buf_len);
-
-	state_buf_len = sizeof(resolvd_state);
-	state_buf_p = resolvd_state;
-	memset(state_buf_p, 0, state_buf_len);
-
-	len = snprintf(buf_p, buf_len, "%.*s", (int)(resolv_conf_our -
-	    resolv_conf_pre), resolv_conf_pre);
-	if (len < 0 || (size_t)len > buf_len) {
-		lwarnx("failed to generate new resolv.conf");
+	if ((fd = open(_PATH_RESCONF_NEW, O_CREAT|O_TRUNC|O_RDWR, 0644)) == -1) {
+		lwarn(_PATH_RESCONF_NEW);
 		return;
 	}
-	buf_p += len;
-	buf_len -= len;
+
+	/* serial the file for debugging */
+	dprintf(fd, "# resolvd: serial %u\n", arc4random());
 
 #ifndef SMALL
-	if (unwind_running) {
-		state_len = snprintf(state_buf_p, state_buf_len,
-		    "nameserver 127.0.0.1\n");
-		if (state_len < 0 || (size_t)state_len > state_buf_len) {
-			lwarnx("failed to generate new resolv.conf");
-			return;
-		}
-		state_buf_p += state_len;
-		state_buf_len -= state_len;
-	} else
+	if (unwind_running)
+		dprintf(fd, "nameserver 127.0.0.1 # resolvd: unwind\n");
+
 #endif /* SMALL */
-		for (i = 0; i < ASR_MAXNS; i++) {
-			if (active_proposal[i].if_index != 0) {
-				state_len = snprintf(state_buf_p, state_buf_len,
-				    "nameserver %s\n", active_proposal[i].ip);
-				if (state_len < 0 || (size_t)state_len >
-				    state_buf_len) {
-					lwarnx("failed to generate new "
-					    "resolv.conf");
-					return;
-				}
-				state_buf_p += state_len;
-				state_buf_len -= state_len;
-			}
+	for (i = 0; i < ASR_MAXNS; i++) {
+		if (learned[i].prio != 0) {
+			char ifnambuf[IF_NAMESIZE], *ifnam;
+
+			ifnam = if_indextoname(learned[i].if_index,
+			    ifnambuf);
+			dprintf(fd, "%snameserver %s # resolvd: %s\n",
+			    unwind_running ? "#" : "",
+			    learned[i].ip,
+			    ifnam ? ifnam : "");
 		}
-
-	len = snprintf(buf_p, buf_len, "%s", resolvd_state);
-	if (len < 0 || (size_t)len > buf_len) {
-		lwarnx("failed to generate new resolv.conf");
-		return;
-	}
-	buf_p += len;
-	buf_len -= len;
-
-	len = snprintf(buf_p, buf_len, "%s", resolv_conf_post);
-	if (len < 0 || (size_t)len > buf_len) {
-		lwarnx("failed to generate new resolv.conf");
-		return;
-	}
-	if (strcmp(new_resolv_conf, resolv_conf) == 0)
-		return;
-
-	ldebug("new resolv.conf:\n%s", new_resolv_conf);
-
-	memcpy(resolv_conf, new_resolv_conf, sizeof(resolv_conf));
-
-	if ((fd = mkstemp(tmpl)) == -1) {
-		lwarn("mkstemp");
-		return;
 	}
 
-	if (write(fd, resolv_conf, strlen(resolv_conf)) == -1)
-		goto err;
+	/* Replay user-managed lines from old resolv.conf file */
+	if (resolvfd == -1)
+		resolvfd = open(_PATH_RESCONF, O_RDWR);
+	if (resolvfd != -1) {
+		char *line = NULL;
+		size_t linesize = 0;
+		ssize_t linelen;
+		FILE *fp;
 
-	if (fchmod(fd, 0644) == -1)
-		goto err;
-
-	if (rename(tmpl, RESOLV_CONF) == -1)
-		goto err;
-	if (f_resolv_conf != NULL)
-		fclose(f_resolv_conf);
-	f_resolv_conf = NULL;
-
-	close(fd);
-
-	if ((fd = mkstemp(state_tmpl)) == -1) {
-		lwarn("mkstemp");
-		return;
+		lseek(resolvfd, 0, SEEK_SET);
+		fp = fdopen(resolvfd, "r");
+		if (fp == NULL)
+			goto err;
+		while ((linelen = getline(&line, &linesize, fp)) != -1) {
+			char *end = strchr(line, '\n');
+			if (end)
+				*end = '\0';
+			if (strstr(line, "# resolvd: "))
+				continue;
+			dprintf(fd, "%s\n", line);
+		}
+		free(line);
 	}
 
-	if (write(fd, resolvd_state, strlen(resolvd_state)) == -1)
+	if (rename(_PATH_RESCONF_NEW, _PATH_RESCONF) == -1)
 		goto err;
 
-	if (fchmod(fd, 0644) == -1)
-		goto err;
+	if (resolvfd == -1) {
+		close(fd);
+		resolvfd = open(_PATH_RESCONF, O_RDWR | O_CREAT);
+	} else {
+		dup2(fd, resolvfd);
+		close(fd);
+	}
 
-	if (rename(state_tmpl, RESOLVD_STATE) == -1)
-		goto err;
-	if(f_resolvd_state)
-		fclose(f_resolvd_state);
-	f_resolvd_state = NULL;
-
-	close(fd);
-	parse_resolv_conf();
-
+	newkevent = 1;
 	return;
+
  err:
 	if (fd != -1)
 		close(fd);
-	unlink(tmpl);
+	unlink(_PATH_RESCONF_NEW);
 }
 
 int
@@ -665,121 +641,10 @@ cmp(const void *a, const void *b)
 	rpa = a;
 	rpb = b;
 
-	if (rpa->src == rpb->src)
+	if (rpa->prio == rpb->prio)
 		return strcmp(rpa->ip, rpb->ip);
 	else
-		return rpa->src < rpb->src ? -1 : 1;
-}
-
-int
-parse_resolv_conf(void)
-{
-	struct kevent	 ke;
-	ssize_t		 n;
-
-	resolv_conf_our = NULL;
-	resolv_conf_post = NULL;
-
-	if (f_resolvd_state != NULL) {
-		if (fseek(f_resolvd_state, 0, SEEK_SET) == -1) {
-			lwarn("fseek");
-			fclose(f_resolvd_state);
-			f_resolvd_state = NULL;
-		}
-	}
-	if (f_resolvd_state == NULL) {
-		if ((f_resolvd_state = fopen(RESOLVD_STATE, "r")) == NULL)
-			resolvd_state[0] = '\0';
-		else {
-			EV_SET(&ke, fileno(f_resolvd_state), EVFILT_VNODE,
-			    EV_ENABLE | EV_ADD | EV_CLEAR, NOTE_DELETE |
-			    NOTE_RENAME | NOTE_TRUNCATE | NOTE_WRITE, 0, NULL);
-			if (kevent(resolvd_state_kq, &ke, 1, NULL, 0, NULL)
-			    == -1)
-				lwarn("kevent");
-			n = fread(resolvd_state, 1, sizeof(resolvd_state) - 1,
-			    f_resolvd_state);
-			if (!feof(f_resolvd_state)) {
-				fclose(f_resolvd_state);
-				f_resolvd_state = NULL;
-				lwarnx("/etc/resolvd.state too big");
-				return -1;
-			}
-			if (ferror(f_resolvd_state)) {
-				fclose(f_resolvd_state);
-				f_resolvd_state = NULL;
-				return -1;
-			}
-
-			resolvd_state[n] = '\0';
-		}
-	}
-
-	/* -------------------- */
-
-	if (f_resolv_conf != NULL) {
-		if (fseek(f_resolv_conf, 0, SEEK_SET) == -1) {
-			lwarn("fseek");
-			fclose(f_resolv_conf);
-			f_resolv_conf = NULL;
-		}
-	}
-	if (f_resolv_conf == NULL) {
-		if ((f_resolv_conf = fopen(RESOLV_CONF, "r")) == NULL) {
-			if (errno == ENOENT) {
-				/* treat as empty, which makes it ours */
-				resolv_conf[0] = '\0';
-				find_markers();
-				return 0;
-			}
-			return -1;
-		}
-
-		EV_SET(&ke, fileno(f_resolv_conf), EVFILT_VNODE,
-		    EV_ENABLE | EV_ADD | EV_CLEAR, NOTE_DELETE | NOTE_RENAME |
-		    NOTE_TRUNCATE | NOTE_WRITE, 0, NULL);
-		if (kevent(resolv_conf_kq, &ke, 1, NULL, 0, NULL) == -1)
-			lwarn("kevent");
-	}
-
-	n = fread(resolv_conf, 1, sizeof(resolv_conf) - 1, f_resolv_conf);
-
-	if (!feof(f_resolv_conf)) {
-		fclose(f_resolv_conf);
-		f_resolv_conf = NULL;
-		lwarnx("/etc/resolv.conf too big");
-		return -1;
-	}
-	if (ferror(f_resolv_conf)) {
-		fclose(f_resolv_conf);
-		f_resolv_conf = NULL;
-		return -1;
-	}
-
-	resolv_conf[n] = '\0';
-
-	find_markers();
-
-	return 0;
-}
-
-void
-find_markers(void)
-{
-	resolv_conf_post = NULL;
-	if (*resolvd_state ==  '\0' && *resolv_conf_pre != '\0') {
-		resolv_conf_our = NULL;
-		return;
-	}
-	if (*resolv_conf_pre == '\0') {
-		/* empty file, it's ours */
-		resolv_conf_our = resolv_conf_post = resolv_conf_pre;
-		return;
-	}
-	if ((resolv_conf_our = strstr(resolv_conf_pre, resolvd_state)) == NULL)
-		return;
-
-	resolv_conf_post = resolv_conf_our + strlen(resolvd_state);
+		return rpa->prio < rpb->prio ? -1 : 1;
 }
 
 #ifndef SMALL
@@ -791,7 +656,7 @@ open_unwind_ctl(void)
 
 	if (sun.sun_family == 0) {
 		sun.sun_family = AF_UNIX;
-		strlcpy(sun.sun_path, UNWIND_SOCKET, sizeof(sun.sun_path));
+		strlcpy(sun.sun_path, _PATH_UNWIND_SOCKET, sizeof(sun.sun_path));
 	}
 
 	if ((s = socket(AF_UNIX, SOCK_STREAM, 0)) != -1) {
@@ -800,6 +665,7 @@ open_unwind_ctl(void)
 			s = -1;
 		}
 	}
+	newkevent = 1;
 	return s;
 }
 
@@ -877,4 +743,16 @@ syslog_debug(const char *fmt, ...)
 	vsyslog(LOG_DEBUG, fmt, ap);
 	va_end(ap);
 }
+
+void
+warnx_verbose(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	if (verbose)
+		vwarnx(fmt, ap);
+	va_end(ap);
+}
+
 #endif /* SMALL */
