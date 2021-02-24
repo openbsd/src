@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.700 2021/02/24 16:21:33 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.701 2021/02/24 16:27:05 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -1098,8 +1098,6 @@ newlease:
 	 */
 	seen = 0;
 	TAILQ_FOREACH_SAFE(ll, &ifi->lease_db, next, pl) {
-		if (ifi->active == NULL)
-			continue;
 		if (ifi->ssid_len != ll->ssid_len)
 			continue;
 		if (memcmp(ifi->ssid, ll->ssid, ll->ssid_len) != 0)
