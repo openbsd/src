@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.7 2021/02/23 23:42:17 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.8 2021/02/24 01:20:03 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -207,6 +207,8 @@ static int	veb_port_set_flags(struct veb_softc *, struct ifbreq *);
 static int	veb_port_get_flags(struct veb_softc *, struct ifbreq *);
 static int	veb_port_set_protected(struct veb_softc *,
 		    const struct ifbreq *);
+static int	veb_add_addr(struct veb_softc *, const struct ifbareq *);
+static int	veb_del_addr(struct veb_softc *, const struct ifbareq *);
 
 static int	veb_rule_add(struct veb_softc *, const struct ifbrlreq *);
 static int	veb_rule_list_flush(struct veb_softc *,
@@ -1148,6 +1150,12 @@ veb_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		etherbridge_flush(&sc->sc_eb,
 		    ((struct ifbreq *)data)->ifbr_ifsflags);
 		break;
+	case SIOCBRDGSADDR:
+		error = veb_add_addr(sc, (struct ifbareq *)data);
+		break;
+	case SIOCBRDGDADDR:
+		error = veb_del_addr(sc, (struct ifbareq *)data);
+		break;
 
 	case SIOCBRDGSIFPROT:
 		error = veb_port_set_protected(sc, (struct ifbreq *)data);
@@ -1729,6 +1737,46 @@ veb_port_get_flags(struct veb_softc *sc, struct ifbreq *ifbr)
 
 	veb_port_put(sc, p);
 	return (0);
+}
+
+static int
+veb_add_addr(struct veb_softc *sc, const struct ifbareq *ifba)
+{
+	struct veb_port *p;
+	int error = 0;
+	unsigned int type;
+
+	if (ISSET(ifba->ifba_flags, ~IFBAF_TYPEMASK))
+		return (EINVAL);
+	switch (ifba->ifba_flags & IFBAF_TYPEMASK) {
+	case IFBAF_DYNAMIC:
+		type = EBE_DYNAMIC;
+		break;
+	case IFBAF_STATIC:
+		type = EBE_STATIC;
+		break;
+	default:
+		return (EINVAL);
+	}
+
+	if (ifba->ifba_dstsa.ss_family != AF_UNSPEC)
+		return (EAFNOSUPPORT);
+
+	p = veb_port_get(sc, ifba->ifba_ifsname);
+	if (p == NULL)
+		return (ESRCH);
+
+	error = etherbridge_add_addr(&sc->sc_eb, p, &ifba->ifba_dst, type);
+
+	veb_port_put(sc, p);
+
+	return (error);
+}
+
+static int
+veb_del_addr(struct veb_softc *sc, const struct ifbareq *ifba)
+{
+	return (etherbridge_del_addr(&sc->sc_eb, &ifba->ifba_dst));
 }
 
 static int

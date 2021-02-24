@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherbridge.h,v 1.1 2021/02/21 03:26:46 dlg Exp $ */
+/*	$OpenBSD: if_etherbridge.h,v 1.2 2021/02/24 01:20:03 dlg Exp $ */
 
 /*
  * Copyright (c) 2018, 2021 David Gwynne <dlg@openbsd.org>
@@ -92,6 +92,9 @@ int	 etherbridge_get_max(struct etherbridge *, struct ifbrparam *);
 int	 etherbridge_set_tmo(struct etherbridge *, struct ifbrparam *);
 int	 etherbridge_get_tmo(struct etherbridge *, struct ifbrparam *);
 int	 etherbridge_rtfind(struct etherbridge *, struct ifbaconf *);
+int	 etherbridge_add_addr(struct etherbridge *, void *,
+	     const struct ether_addr *, unsigned int);
+int	 etherbridge_del_addr(struct etherbridge *, const struct ether_addr *);
 void	 etherbridge_flush(struct etherbridge *, uint32_t);
 
 static inline unsigned int

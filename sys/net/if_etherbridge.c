@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherbridge.c,v 1.1 2021/02/21 03:26:46 dlg Exp $ */
+/*	$OpenBSD: if_etherbridge.c,v 1.2 2021/02/24 01:20:03 dlg Exp $ */
 
 /*
  * Copyright (c) 2018, 2021 David Gwynne <dlg@openbsd.org>
@@ -203,6 +203,12 @@ ebt_insert(struct etherbridge *eb, struct eb_entry *ebe)
 	return (RBT_INSERT(eb_tree, &eb->eb_tree, ebe));
 }
 
+static inline struct eb_entry *
+ebt_find(struct etherbridge *eb, const struct eb_entry *ebe)
+{
+	return (RBT_FIND(eb_tree, &eb->eb_tree, ebe));
+}
+
 static inline void
 ebt_replace(struct etherbridge *eb, struct eb_entry *oebe,
     struct eb_entry *nebe)
@@ -362,6 +368,95 @@ etherbridge_map(struct etherbridge *eb, void *port,
 		 */
 		ebe_rele(oebe);
 	}
+}
+
+int
+etherbridge_add_addr(struct etherbridge *eb, void *port,
+    const struct ether_addr *ea, unsigned int type)
+{
+	struct eb_list *ebl;
+	struct eb_entry *nebe;
+	unsigned int num;
+	void *nport;
+	int error = 0;
+
+	if (ETHER_IS_MULTICAST(ea->ether_addr_octet) ||
+	    ETHER_IS_EQ(ea->ether_addr_octet, etheranyaddr))
+		return (EADDRNOTAVAIL);
+
+	nport = eb_port_take(eb, port);
+	if (nport == NULL)
+		return (ENOMEM);
+
+	nebe = pool_get(&eb_entry_pool, PR_NOWAIT);
+	if (nebe == NULL) {
+		eb_port_rele(eb, nport);
+		return (ENOMEM);
+	}
+
+	smr_init(&nebe->ebe_smr_entry);
+	refcnt_init(&nebe->ebe_refs);
+	nebe->ebe_etherbridge = eb;
+
+	nebe->ebe_addr = *ea;
+	nebe->ebe_port = nport;
+	nebe->ebe_type = type;
+	nebe->ebe_age = getuptime();
+
+	ebl = etherbridge_list(eb, ea);
+
+	mtx_enter(&eb->eb_lock);
+	num = eb->eb_num + 1;
+	if (num >= eb->eb_max)
+		error = ENOSPC;
+	else if (ebt_insert(eb, nebe) != NULL)
+		error = EADDRINUSE;
+	else {
+		/* we win, do the insert */
+		ebl_insert(ebl, nebe); /* give the ref to etherbridge */
+		eb->eb_num = num;
+	}
+	mtx_leave(&eb->eb_lock);
+
+	if (error != 0) {
+		/*
+		 * the new entry didnt make it into the
+		 * table, so it can be freed directly.
+		 */
+		ebe_free(nebe);
+	}
+
+	return (error);
+}
+int
+etherbridge_del_addr(struct etherbridge *eb, const struct ether_addr *ea)
+{
+	struct eb_list *ebl;
+	struct eb_entry *oebe;
+	const struct eb_entry key = {
+		.ebe_addr = *ea,
+	};
+	int error = 0;
+
+	ebl = etherbridge_list(eb, ea);
+
+	mtx_enter(&eb->eb_lock);
+	oebe = ebt_find(eb, &key);
+	if (oebe == NULL)
+		error = ESRCH;
+	else {
+		KASSERT(eb->eb_num > 0);
+		eb->eb_num--;
+
+		ebl_remove(ebl, oebe); /* it's our ref now */
+		ebt_remove(eb, oebe);
+	}
+	mtx_leave(&eb->eb_lock);
+
+	if (oebe != NULL)
+		ebe_rele(oebe);
+
+	return (error);
 }
 
 static void
