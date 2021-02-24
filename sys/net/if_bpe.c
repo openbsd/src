@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bpe.c,v 1.16 2021/02/21 03:35:17 dlg Exp $ */
+/*	$OpenBSD: if_bpe.c,v 1.17 2021/02/24 02:04:03 dlg Exp $ */
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
  *
@@ -104,6 +104,9 @@ static void	bpe_set_group(struct bpe_softc *, uint32_t);
 static int	bpe_set_parent(struct bpe_softc *, const struct if_parent *);
 static int	bpe_get_parent(struct bpe_softc *, struct if_parent *);
 static int	bpe_del_parent(struct bpe_softc *);
+static int	bpe_add_addr(struct bpe_softc *, const struct ifbareq *);
+static int	bpe_del_addr(struct bpe_softc *, const struct ifbareq *);
+
 static void	bpe_link_hook(void *);
 static void	bpe_link_state(struct bpe_softc *, u_char, uint64_t);
 static void	bpe_detach_hook(void *);
@@ -394,6 +397,12 @@ bpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		etherbridge_flush(&sc->sc_eb,
 		    ((struct ifbreq *)data)->ifbr_ifsflags);
 		break;
+	case SIOCBRDGSADDR:
+		error = bpe_add_addr(sc, (struct ifbareq *)data);
+		break;
+	case SIOCBRDGDADDR:
+		error = bpe_del_addr(sc, (struct ifbareq *)data);
+		break;
 
 	default:
 		error = ether_ioctl(ifp, &sc->sc_ac, cmd, data);
@@ -660,6 +669,48 @@ bpe_del_parent(struct bpe_softc *sc)
 	etherbridge_flush(&sc->sc_eb, IFBF_FLUSHALL);
 
 	return (0);
+}
+
+static int
+bpe_add_addr(struct bpe_softc *sc, const struct ifbareq *ifba)
+{
+	const struct sockaddr_dl *sdl;
+	const struct ether_addr *endpoint;
+	unsigned int type;
+
+	/* ignore ifba_ifsname */
+
+	if (ISSET(ifba->ifba_flags, ~IFBAF_TYPEMASK))
+		return (EINVAL);
+	switch (ifba->ifba_flags & IFBAF_TYPEMASK) {
+	case IFBAF_DYNAMIC:
+		type = EBE_DYNAMIC;
+		break;
+	case IFBAF_STATIC:
+		type = EBE_STATIC;
+		break;
+	default:
+		return (EINVAL);
+	}
+
+	if (ifba->ifba_dstsa.ss_family != AF_LINK)
+		return (EAFNOSUPPORT);
+	sdl = (struct sockaddr_dl *)&ifba->ifba_dstsa;
+	if (sdl->sdl_type != IFT_ETHER)
+		return (EAFNOSUPPORT);
+	if (sdl->sdl_alen != ETHER_ADDR_LEN)
+		return (EINVAL);
+	endpoint = (struct ether_addr *)LLADDR(sdl);
+	/* check endpoint for multicast or broadcast? */
+
+	return (etherbridge_add_addr(&sc->sc_eb, (void *)endpoint,
+	    &ifba->ifba_dst, type));
+}
+
+static int
+bpe_del_addr(struct bpe_softc *sc, const struct ifbareq *ifba)
+{
+	return (etherbridge_del_addr(&sc->sc_eb, &ifba->ifba_dst));
 }
 
 static inline struct bpe_softc *
