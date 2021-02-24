@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.255 2021/02/18 11:40:19 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.256 2021/02/24 13:19:48 bluhm Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1133,8 +1133,7 @@ sorflush(struct socket *so)
 	sb->sb_timeo_nsecs = INFSLP;
 	if (pr->pr_flags & PR_RIGHTS && pr->pr_domain->dom_dispose)
 		(*pr->pr_domain->dom_dispose)(m);
-	while (m != NULL)
-		m = m_freem(m);
+	m_purge(m);
 }
 
 #ifdef SOCKET_SPLICE
