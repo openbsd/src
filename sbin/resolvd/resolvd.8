@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolvd.8,v 1.1 2021/02/24 18:10:41 florian Exp $
+.\"	$OpenBSD: resolvd.8,v 1.2 2021/02/24 19:00:38 deraadt Exp $
 .\"
 .\" Copyright (c) 2021 Florian Obser <florian@openbsd.org>
 .\"
@@ -26,19 +26,34 @@
 .Sh DESCRIPTION
 .Nm
 handles the contents of
-.Pa /etc/resolv.conf .
-It monitors the routing socket for nameserver proposals send by
-.Xr dhclient 8
-or
-.Xr slaacd 8
-and adds them to
-.Pa /etc/resolv.conf .
-It also monitors if
+.Pa /etc/resolv.conf ,
+which contains details of the system's DNS nameservers, and is
+read by the resolver routines in the C library.
+.Pp
+.Nm
+checks whether
 .Xr unwind 8
-is running and if so puts
+is running and
+monitors the routing socket for proposals send by
+.Xr dhclient 8 ,
+.Xr slaacd 8 ,
+or network devices which learn DNS information such as
+.Xr umb 4 .
+.Pp
+If
+.Xr unwind 8
+is running it prepends the following to
+.Pa /etc/resolv.conf :
+.Pp
 .Dl nameserver 127.0.0.1
-into
-.Pa /etc/resolv.conf .
+.Pp
+It also adds any other DNS proposals,
+but commented out.
+If
+.Xr unwind 8
+is not running is simply adds any other DNS proposals.
+After that, it appends user-edited lines to the file.
+.Pp
 .Nm
 keeps track of which parts it managed in the past and will only change those.
 It will also create
@@ -56,11 +71,6 @@ will run in the foreground and log to
 .It Fl v
 Produce more verbose output.
 .El
-.Sh FILES
-.Bl -tag -width "/etc/resolvd.stateXXX" -compact
-.It Pa /etc/resolvd.state
-.Nm
-state file.
 .Sh SEE ALSO
 .Xr resolv.conf 5 ,
 .Xr dhclient 8 ,
