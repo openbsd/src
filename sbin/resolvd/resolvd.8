@@ -1,0 +1,79 @@
+.\"	$OpenBSD: resolvd.8,v 1.1 2021/02/24 18:10:41 florian Exp $
+.\"
+.\" Copyright (c) 2021 Florian Obser <florian@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: February 24 2021 $
+.Dt RESOLVD 8
+.Os
+.Sh NAME
+.Nm resolvd
+.Nd a daemon to handle nameserver configuration
+.Sh SYNOPSIS
+.Nm
+.Op Fl dv
+.Sh DESCRIPTION
+.Nm
+handles the contents of
+.Pa /etc/resolv.conf .
+It monitors the routing socket for nameserver proposals send by
+.Xr dhclient 8
+or
+.Xr slaacd 8
+and adds them to
+.Pa /etc/resolv.conf .
+It also monitors if
+.Xr unwind 8
+is running and if so puts
+.Dl nameserver 127.0.0.1
+into
+.Pa /etc/resolv.conf .
+.Nm
+keeps track of which parts it managed in the past and will only change those.
+It will also create
+.Pa /etc/resolv.conf
+if it does not exist or if it is empty.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl d
+Do not daemonize.
+If this option is specified,
+.Nm
+will run in the foreground and log to
+.Em stderr .
+.It Fl v
+Produce more verbose output.
+.El
+.Sh FILES
+.Bl -tag -width "/etc/resolvd.stateXXX" -compact
+.It Pa /etc/resolvd.state
+.Nm
+state file.
+.Sh SEE ALSO
+.Xr resolv.conf 5 ,
+.Xr dhclient 8 ,
+.Xr slaacd 8 ,
+.Xr unwind 8
+.Sh HISTORY
+The
+.Nm
+program first appeared in
+.Ox 6.9 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+program was written by
+.An Florian Obser Aq Mt florian@openbsd.org .
