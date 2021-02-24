@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.194 2021/02/01 16:29:22 cheloha Exp $	*/
+/*	$OpenBSD: kroute.c,v 1.195 2021/02/24 16:18:59 krw Exp $	*/
 
 /*
  * Copyright 2012 Kenneth R Westerback <krw@openbsd.org>
@@ -917,7 +917,6 @@ priv_propose(char *name, int ioctlfd, struct proposal *proposal,
     int *lastidx)
 {
 	struct unwind_info	 unwind_info;
-	struct ifreq		 ifr;
 	uint8_t			*dns, *domains, *routes;
 	char			*search = NULL;
 	int			 rslt;
@@ -931,13 +930,6 @@ priv_propose(char *name, int ioctlfd, struct proposal *proposal,
 	routes = (uint8_t *)proposal + sizeof(struct proposal);
 	domains = routes + proposal->routes_len;
 	dns = domains + proposal->domains_len;
-
-	memset(&ifr, 0, sizeof(ifr));
-	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	if (ioctl(ioctlfd, SIOCGIFXFLAGS, (caddr_t)&ifr) < 0)
-		fatal("SIOGIFXFLAGS");
-	if ((ifr.ifr_flags & IFXF_AUTOCONF4) == 0)
-		return;
 
 	memset(&unwind_info, 0, sizeof(unwind_info));
 	if (proposal->ns_len >= sizeof(in_addr_t)) {
@@ -1016,8 +1008,7 @@ tell_unwind(struct unwind_info *unwind_info, int ifi_flags)
 	struct	unwind_info	 	 noinfo;
 	int				 rslt;
 
-	if ((ifi_flags & IFI_AUTOCONF) == 0 ||
-	    (ifi_flags & IFI_IN_CHARGE) == 0)
+	if ((ifi_flags & IFI_IN_CHARGE) == 0)
 		return;
 
 	if (unwind_info != NULL)

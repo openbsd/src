@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.698 2021/02/22 02:19:03 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.699 2021/02/24 16:18:59 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -119,7 +119,6 @@ void		 get_address(struct interface_info *);
 void		 get_ssid(struct interface_info *, int);
 void		 get_sockets(struct interface_info *);
 int		 get_routefd(int);
-void		 set_autoconf(struct interface_info *, int);
 void		 set_iff_up(struct interface_info *, int);
 void		 set_user(char *);
 int		 get_ifa_family(char *, int);
@@ -311,10 +310,8 @@ initialize_interface(char *name, int noaction)
 	get_sockets(ifi);
 	get_ssid(ifi, ioctlfd);
 
-	if (noaction == 0) {
-		set_autoconf(ifi, ioctlfd);
+	if (noaction == 0)
 		set_iff_up(ifi, ioctlfd);
-	}
 
 	close(ioctlfd);
 
@@ -387,25 +384,6 @@ get_ssid(struct interface_info *ifi, int ioctlfd)
 		memcpy(ifi->ssid, nwid.i_nwid, nwid.i_len);
 		ifi->ssid_len = nwid.i_len;
 	}
-}
-
-void
-set_autoconf(struct interface_info *ifi, int ioctlfd)
-{
-	struct ifreq		ifr;
-
-	memset(&ifr, 0, sizeof(ifr));
-	strlcpy(ifr.ifr_name, ifi->name, sizeof(ifr.ifr_name));
-
-	if (ioctl(ioctlfd, SIOCGIFXFLAGS, (caddr_t)&ifr) < 0)
-		fatal("SIOGIFXFLAGS");
-	if ((ifr.ifr_flags & IFXF_AUTOCONF4) == 0) {
-		ifr.ifr_flags |= IFXF_AUTOCONF4;
-		if (ioctl(ioctlfd, SIOCSIFXFLAGS, (caddr_t)&ifr) == -1)
-			fatal("SIOCSIFXFLAGS");
-	}
-
-	ifi->flags |= IFI_AUTOCONF;
 }
 
 void
@@ -568,19 +546,6 @@ rtm_dispatch(struct interface_info *ifi, struct rt_msghdr *rtm)
 		if ((rtm->rtm_flags & RTF_UP) == 0)
 			fatalx("down");
 
- 		if ((ifm->ifm_xflags & IFXF_AUTOCONF4) == 0 &&
-		    (ifi->flags & IFI_AUTOCONF) != 0) {
-			/* Tell unwind when IFI_AUTOCONF is cleared. */
-			tell_unwind(NULL, ifi->flags);
-			ifi->flags &= ~IFI_AUTOCONF;
-		} else if ((ifm->ifm_xflags & IFXF_AUTOCONF4) != 0 &&
-		    (ifi->flags & IFI_AUTOCONF) == 0) {
-			/* Get new lease when IFI_AUTOCONF is set. */
-			ifi->flags |= IFI_AUTOCONF;
-			quit = RESTART;
-			break;
-		}
-
 		oldmtu = ifi->mtu;
 		interface_state(ifi);
 		if (oldmtu == ifi->mtu)
@@ -629,7 +594,6 @@ rtm_dispatch(struct interface_info *ifi, struct rt_msghdr *rtm)
 	 * Responsibility for resolv.conf may have changed hands.
 	 */
 	if (quit == 0 && ifi->active != NULL &&
-	    (ifi->flags & IFI_AUTOCONF) != 0 &&
 	    (ifi->flags & IFI_IN_CHARGE) != 0 &&
 	    ifi->state == S_BOUND)
 		write_resolv_conf();
