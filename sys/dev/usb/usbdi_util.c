@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi_util.c,v 1.45 2021/01/25 14:05:57 mglocker Exp $ */
+/*	$OpenBSD: usbdi_util.c,v 1.46 2021/02/24 03:54:05 jsg Exp $ */
 /*	$NetBSD: usbdi_util.c,v 1.40 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.c,v 1.14 1999/11/17 22:33:50 n_hibma Exp $	*/
 
@@ -84,19 +84,6 @@ usbd_get_device_status(struct usbd_device *dev, usb_status_t *st)
 }
 
 usbd_status
-usbd_get_hub_status(struct usbd_device *dev, usb_hub_status_t *st)
-{
-	usb_device_request_t req;
-
-	req.bmRequestType = UT_READ_CLASS_DEVICE;
-	req.bRequest = UR_GET_STATUS;
-	USETW(req.wValue, 0);
-	USETW(req.wIndex, 0);
-	USETW(req.wLength, sizeof(usb_hub_status_t));
-	return (usbd_do_request(dev, &req, st));
-}
-
-usbd_status
 usbd_get_hub_descriptor(struct usbd_device *dev, usb_hub_descriptor_t *hd,
     uint8_t nports)
 {
@@ -137,32 +124,6 @@ usbd_get_port_status(struct usbd_device *dev, int port, usb_port_status_t *ps)
 	USETW(req.wIndex, port);
 	USETW(req.wLength, sizeof *ps);
 	return (usbd_do_request(dev, &req, ps));
-}
-
-usbd_status
-usbd_clear_hub_feature(struct usbd_device *dev, int sel)
-{
-	usb_device_request_t req;
-
-	req.bmRequestType = UT_WRITE_CLASS_DEVICE;
-	req.bRequest = UR_CLEAR_FEATURE;
-	USETW(req.wValue, sel);
-	USETW(req.wIndex, 0);
-	USETW(req.wLength, 0);
-	return (usbd_do_request(dev, &req, 0));
-}
-
-usbd_status
-usbd_set_hub_feature(struct usbd_device *dev, int sel)
-{
-	usb_device_request_t req;
-
-	req.bmRequestType = UT_WRITE_CLASS_DEVICE;
-	req.bRequest = UR_SET_FEATURE;
-	USETW(req.wValue, sel);
-	USETW(req.wIndex, 0);
-	USETW(req.wLength, 0);
-	return (usbd_do_request(dev, &req, 0));
 }
 
 usbd_status
