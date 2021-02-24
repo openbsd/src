@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.702 2021/02/24 16:36:47 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.703 2021/02/24 16:53:18 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2744,10 +2744,10 @@ release_lease(struct interface_info *ifi)
 	imsg_flush(unpriv_ibuf);
 
 	TAILQ_REMOVE(&ifi->lease_db, ifi->active, next);
-	write_lease_db(&ifi->lease_db);
-
 	free_client_lease(ifi->active);
 	ifi->active = NULL;
+	write_lease_db(&ifi->lease_db);
+
 	free(ifi->configured);
 	ifi->configured = NULL;
 	free(ifi->unwind_info);
