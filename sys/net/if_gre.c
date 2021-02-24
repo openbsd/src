@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.166 2021/02/21 03:46:34 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.167 2021/02/24 03:20:48 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -448,6 +448,9 @@ static void	nvgre_detach(void *);
 static int	nvgre_input(const struct gre_tunnel *, struct mbuf *, int,
 		    uint8_t);
 static void	nvgre_send(void *);
+
+static int	nvgre_add_addr(struct nvgre_softc *, const struct ifbareq *);
+static int	nvgre_del_addr(struct nvgre_softc *, const struct ifbareq *);
 
 static int	 nvgre_eb_port_eq(void *, void *, void *);
 static void	*nvgre_eb_port_take(void *, void *);
@@ -2692,6 +2695,12 @@ nvgre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		etherbridge_flush(&sc->sc_eb,
 		    ((struct ifbreq *)data)->ifbr_ifsflags);
 		break;
+	case SIOCBRDGSADDR:
+		error = nvgre_add_addr(sc, (struct ifbareq *)data);
+		break;
+	case SIOCBRDGDADDR:
+		error = nvgre_del_addr(sc, (struct ifbareq *)data);
+		break;
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
@@ -3536,6 +3545,85 @@ nvgre_set_parent(struct nvgre_softc *sc, const char *parent)
 	if_put(ifp0);
 
 	return (0);
+}
+
+static int
+nvgre_add_addr(struct nvgre_softc *sc, const struct ifbareq *ifba)
+{
+	struct sockaddr_in *sin;
+#ifdef INET6
+	struct sockaddr_in6 *sin6;
+	struct sockaddr_in6 src6 = {
+		.sin6_len = sizeof(src6),
+		.sin6_family = AF_UNSPEC,
+	};
+	int error;
+#endif
+	union gre_addr endpoint;
+	unsigned int type;
+
+	/* ignore ifba_ifsname */
+
+	if (ISSET(ifba->ifba_flags, ~IFBAF_TYPEMASK))
+		return (EINVAL);
+	switch (ifba->ifba_flags & IFBAF_TYPEMASK) {
+	case IFBAF_DYNAMIC:
+		type = EBE_DYNAMIC;
+		break;
+	case IFBAF_STATIC:
+		type = EBE_STATIC;
+		break;
+	default:
+		return (EINVAL);
+	}
+
+	memset(&endpoint, 0, sizeof(endpoint));
+
+	if (ifba->ifba_dstsa.ss_family != sc->sc_tunnel.t_af)
+		return (EAFNOSUPPORT);
+	switch (ifba->ifba_dstsa.ss_family) {
+	case AF_INET:
+		sin = (struct sockaddr_in *)&ifba->ifba_dstsa;
+		if (in_nullhost(sin->sin_addr) ||
+		    IN_MULTICAST(sin->sin_addr.s_addr))
+			return (EADDRNOTAVAIL);
+
+		endpoint.in4 = sin->sin_addr;
+		break;
+		memset(sin6, 0, sizeof(*sin6));
+		sin6->sin6_family = AF_INET6;
+		sin6->sin6_len = sizeof(*sin6);
+
+#ifdef INET6
+	case AF_INET6:
+		sin6 = (struct sockaddr_in6 *)&ifba->ifba_dstsa;
+		if (IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr) ||
+		    IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr))
+			return (EADDRNOTAVAIL);
+
+		in6_recoverscope(&src6, &sc->sc_tunnel.t_src6);
+
+		if (src6.sin6_scope_id != sin6->sin6_scope_id)
+			return (EADDRNOTAVAIL);
+
+		error = in6_embedscope(&endpoint.in6, sin6, NULL);
+		if (error != 0)
+			return (error);
+
+		break;
+#endif
+	default: /* AF_UNSPEC */
+		return (EADDRNOTAVAIL);
+	}
+
+	return (etherbridge_add_addr(&sc->sc_eb, &endpoint,
+	    &ifba->ifba_dst, type));
+}
+
+static int
+nvgre_del_addr(struct nvgre_softc *sc, const struct ifbareq *ifba)
+{
+	return (etherbridge_del_addr(&sc->sc_eb, &ifba->ifba_dst));
 }
 
 static void
