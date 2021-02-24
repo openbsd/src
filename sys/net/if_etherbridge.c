@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherbridge.c,v 1.2 2021/02/24 01:20:03 dlg Exp $ */
+/*	$OpenBSD: if_etherbridge.c,v 1.3 2021/02/24 08:23:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2018, 2021 David Gwynne <dlg@openbsd.org>
@@ -626,8 +626,8 @@ etherbridge_rtfind(struct etherbridge *eb, struct ifbaconf *baconf)
 		}
 
 		memcpy(buf + len, &bareq, sizeof(bareq));
-                len = nlen;
-        }
+		len = nlen;
+	}
 	nlen = baconf->ifbac_len;
 	baconf->ifbac_len = eb->eb_num * sizeof(bareq);
 	mtx_leave(&eb->eb_lock);
@@ -635,7 +635,7 @@ etherbridge_rtfind(struct etherbridge *eb, struct ifbaconf *baconf)
 	error = copyout(buf, baconf->ifbac_buf, len);
 	free(buf, M_TEMP, nlen);
 
-        return (error);
+	return (error);
 }
 
 int
