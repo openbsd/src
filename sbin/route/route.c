@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.252 2021/01/24 08:58:50 florian Exp $	*/
+/*	$OpenBSD: route.c,v 1.253 2021/02/24 16:12:42 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -2037,9 +2037,9 @@ print_rtdns(struct sockaddr_rtdns *rtdns)
 		    sizeof(rtdns->sr_dns));
 		return;
 	}
-	printf(" [");
 	switch (rtdns->sr_family) {
 	case AF_INET:
+		printf(" INET [");
 		/* An array of IPv4 addresses. */
 		servercnt = srclen / sizeof(struct in_addr);
 		if (servercnt * sizeof(struct in_addr) != srclen) {
@@ -2054,6 +2054,7 @@ print_rtdns(struct sockaddr_rtdns *rtdns)
 		}
 		break;
 	case AF_INET6:
+		printf(" INET6 [");
 		servercnt = srclen / sizeof(struct in6_addr);
 		if (servercnt * sizeof(struct in6_addr) != srclen) {
 			printf("<invalid server count>\n");
@@ -2067,6 +2068,7 @@ print_rtdns(struct sockaddr_rtdns *rtdns)
 		}
 		break;
 	default:
+		printf(" UNKNOWN [");
 		break;
 	}
 	printf("]");
