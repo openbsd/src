@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.154 2021/02/01 09:21:51 mglocker Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.155 2021/02/24 04:06:45 jsg Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -61,7 +61,6 @@ extern int usbdebug;
 
 usbd_status	usbd_set_config(struct usbd_device *, int);
 void		usbd_devinfo(struct usbd_device *, int, char *, size_t);
-char		*usbd_get_device_string(struct usbd_device *, uByte);
 char		*usbd_get_string(struct usbd_device *, int, char *, size_t);
 int		usbd_getnewaddr(struct usbd_bus *);
 int		usbd_print(void *, const char *);
@@ -210,25 +209,6 @@ usbd_trim_spaces(char *p)
 		if (*p++ != ' ') /* remember last non-space */
 			e = p;
 	*e = 0;			/* kill trailing spaces */
-}
-
-char *
-usbd_get_device_string(struct usbd_device *dev, uByte index)
-{
-	char *buf;
-
-	buf = malloc(USB_MAX_STRING_LEN, M_USB, M_NOWAIT);
-	if (buf == NULL)
-		return (NULL);
-
-	if (usbd_get_string(dev, index, buf, USB_MAX_STRING_LEN) != NULL) {
-		usbd_trim_spaces(buf);
-	} else {
-		free(buf, M_USB, USB_MAX_STRING_LEN);
-		buf = NULL;
-	}
-
-	return (buf);
 }
 
 int
