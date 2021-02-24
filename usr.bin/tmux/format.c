@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.276 2021/02/22 08:18:13 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.277 2021/02/24 09:22:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1319,8 +1319,8 @@ format_cb_client_prefix(struct format_tree *ft)
 	if (ft->c != NULL) {
 		name = server_client_get_key_table(ft->c);
 		if (strcmp(ft->c->keytable->name, name) == 0)
-			return (xstrdup("1"));
-		return (xstrdup("0"));
+			return (xstrdup("0"));
+		return (xstrdup("1"));
 	}
 	return (NULL);
 }
