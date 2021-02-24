@@ -300,6 +300,7 @@
 ./sbin/quotacheck
 ./sbin/rdump
 ./sbin/reboot
+./sbin/resolvd
 ./sbin/restore
 ./sbin/route
 ./sbin/rrestore
