@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.30 2021/01/09 03:51:42 jsing Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.31 2021/02/24 17:59:05 tb Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -195,7 +195,7 @@ x509_verify_ctx_cert_is_root(struct x509_verify_ctx *ctx, X509 *cert)
 
 static int
 x509_verify_ctx_set_xsc_chain(struct x509_verify_ctx *ctx,
-    struct x509_verify_chain *chain, int set_error)
+    struct x509_verify_chain *chain, int set_error, int is_trusted)
 {
 	X509 *last = x509_verify_chain_last(chain);
 	size_t depth;
@@ -205,10 +205,16 @@ x509_verify_ctx_set_xsc_chain(struct x509_verify_ctx *ctx,
 		return 1;
 
 	depth = sk_X509_num(chain->certs);
-	if (depth > 0)
+	if (is_trusted && depth > 0)
 		depth--;
+	/*
+	 * XXX last_untrusted is actually the number of untrusted certs at the
+	 * bottom of the chain. This works now since we stop at the first
+	 * trusted cert. This will need fixing once we allow more than one
+	 * trusted certificate.
+	 */
+	ctx->xsc->last_untrusted = depth;
 
-	ctx->xsc->last_untrusted = depth ? depth - 1 : 0;
 	sk_X509_pop_free(ctx->xsc->chain, X509_free);
 	ctx->xsc->chain = X509_chain_up_ref(chain->certs);
 	if (ctx->xsc->chain == NULL)
@@ -264,7 +270,7 @@ x509_verify_ctx_add_chain(struct x509_verify_ctx *ctx,
 		ctx->xsc->error = X509_V_OK;
 		ctx->xsc->error_depth = 0;
 
-		if (!x509_verify_ctx_set_xsc_chain(ctx, chain, 0))
+		if (!x509_verify_ctx_set_xsc_chain(ctx, chain, 0, 0))
 			return 0;
 
 		/*
@@ -430,7 +436,7 @@ x509_verify_consider_candidate(struct x509_verify_ctx *ctx, X509 *cert,
 	 * give up.
 	 */
 	if (is_root_cert) {
-		if (!x509_verify_ctx_set_xsc_chain(ctx, new_chain, 0)) {
+		if (!x509_verify_ctx_set_xsc_chain(ctx, new_chain, 0, 1)) {
 			x509_verify_chain_free(new_chain);
 			return 0;
 		}
@@ -555,7 +561,7 @@ x509_verify_build_chains(struct x509_verify_ctx *ctx, X509 *cert,
 		if (depth == 0 &&
 		    ctx->error == X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY)
 			ctx->error = X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE;
-		if (!x509_verify_ctx_set_xsc_chain(ctx, current_chain, 0))
+		if (!x509_verify_ctx_set_xsc_chain(ctx, current_chain, 0, 0))
 			return;
 		(void) x509_verify_cert_error(ctx, cert, depth,
 		    ctx->error, 0);
@@ -1041,7 +1047,8 @@ x509_verify(struct x509_verify_ctx *ctx, X509 *leaf, char *name)
 		ctx->xsc->error = ctx->error;
 		if (ctx->chains_count > 0) {
 			/* Take the first chain we found. */
-			if (!x509_verify_ctx_set_xsc_chain(ctx, ctx->chains[0], 1))
+			if (!x509_verify_ctx_set_xsc_chain(ctx, ctx->chains[0],
+			    1, 1))
 				goto err;
 		}
 		return ctx->xsc->verify_cb(ctx->chains_count > 0, ctx->xsc);
