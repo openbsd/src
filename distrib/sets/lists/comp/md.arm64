@@ -25,7 +25,6 @@
 ./usr/include/arm64/hypervisor.h
 ./usr/include/arm64/ieee.h
 ./usr/include/arm64/ieeefp.h
-./usr/include/arm64/internal_types.h
 ./usr/include/arm64/intr.h
 ./usr/include/arm64/kcore.h
 ./usr/include/arm64/limits.h
