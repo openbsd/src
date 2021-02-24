@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.160 2021/01/27 02:58:03 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.161 2021/02/24 14:59:52 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -95,6 +95,11 @@ void	kqueue_do_check(struct kqueue *kq, const char *func, int line);
 
 void	kqpoll_dequeue(struct proc *p);
 
+static int	filter_attach(struct knote *kn);
+static void	filter_detach(struct knote *kn);
+static int	filter_event(struct knote *kn, long hint);
+static int	filter_modify(struct kevent *kev, struct knote *kn);
+static int	filter_process(struct knote *kn, struct kevent *kev);
 static void	kqueue_expand_hash(struct kqueue *kq);
 static void	kqueue_expand_list(struct kqueue *kq, int fd);
 static void	kqueue_task(void *);
@@ -374,7 +379,7 @@ filt_proc(struct knote *kn, long hint)
 		kev.flags = kn->kn_flags | EV_ADD | EV_ENABLE | EV_FLAG1;
 		kev.fflags = kn->kn_sfflags;
 		kev.data = kn->kn_id;			/* parent */
-		kev.udata = kn->kn_kevent.udata;	/* preserve udata */
+		kev.udata = kn->kn_udata;		/* preserve udata */
 		error = kqueue_register(kn->kn_kq, &kev, NULL);
 		if (error)
 			kn->kn_fflags |= NOTE_TRACKERR;
@@ -469,6 +474,20 @@ filt_seltrue(struct knote *kn, long hint)
 	return (1);
 }
 
+int
+filt_seltruemodify(struct kevent *kev, struct knote *kn)
+{
+	knote_modify(kev, kn);
+	return (1);
+}
+
+int
+filt_seltrueprocess(struct knote *kn, struct kevent *kev)
+{
+	knote_submit(kn, kev);
+	return (1);
+}
+
 /*
  * This provides full kqfilter entry for device switch tables, which
  * has same effect as filter using filt_seltrue() as filter method.
@@ -480,10 +499,12 @@ filt_seltruedetach(struct knote *kn)
 }
 
 const struct filterops seltrue_filtops = {
-	.f_flags	= FILTEROP_ISFD,
+	.f_flags	= FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach	= NULL,
 	.f_detach	= filt_seltruedetach,
 	.f_event	= filt_seltrue,
+	.f_modify	= filt_seltruemodify,
+	.f_process	= filt_seltrueprocess,
 };
 
 int
@@ -519,10 +540,12 @@ filt_deaddetach(struct knote *kn)
 }
 
 const struct filterops dead_filtops = {
-	.f_flags	= FILTEROP_ISFD,
+	.f_flags	= FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach	= NULL,
 	.f_detach	= filt_deaddetach,
 	.f_event	= filt_dead,
+	.f_modify	= filt_seltruemodify,
+	.f_process	= filt_seltrueprocess,
 };
 
 static int
@@ -535,11 +558,103 @@ filt_badfd(struct knote *kn, long hint)
 
 /* For use with kqpoll. */
 const struct filterops badfd_filtops = {
-	.f_flags	= FILTEROP_ISFD,
+	.f_flags	= FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach	= NULL,
 	.f_detach	= filt_deaddetach,
 	.f_event	= filt_badfd,
+	.f_modify	= filt_seltruemodify,
+	.f_process	= filt_seltrueprocess,
 };
+
+static int
+filter_attach(struct knote *kn)
+{
+	int error;
+
+	if (kn->kn_fop->f_flags & FILTEROP_MPSAFE) {
+		error = kn->kn_fop->f_attach(kn);
+	} else {
+		KERNEL_LOCK();
+		error = kn->kn_fop->f_attach(kn);
+		KERNEL_UNLOCK();
+	}
+	return (error);
+}
+
+static void
+filter_detach(struct knote *kn)
+{
+	if (kn->kn_fop->f_flags & FILTEROP_MPSAFE) {
+		kn->kn_fop->f_detach(kn);
+	} else {
+		KERNEL_LOCK();
+		kn->kn_fop->f_detach(kn);
+		KERNEL_UNLOCK();
+	}
+}
+
+static int
+filter_event(struct knote *kn, long hint)
+{
+	if ((kn->kn_fop->f_flags & FILTEROP_MPSAFE) == 0)
+		KERNEL_ASSERT_LOCKED();
+
+	return (kn->kn_fop->f_event(kn, hint));
+}
+
+static int
+filter_modify(struct kevent *kev, struct knote *kn)
+{
+	int active, s;
+
+	if (kn->kn_fop->f_flags & FILTEROP_MPSAFE) {
+		active = kn->kn_fop->f_modify(kev, kn);
+	} else {
+		KERNEL_LOCK();
+		if (kn->kn_fop->f_modify != NULL) {
+			active = kn->kn_fop->f_modify(kev, kn);
+		} else {
+			/* Emulate f_modify using f_event. */
+			s = splhigh();
+			knote_modify(kev, kn);
+			active = kn->kn_fop->f_event(kn, 0);
+			splx(s);
+		}
+		KERNEL_UNLOCK();
+	}
+	return (active);
+}
+
+static int
+filter_process(struct knote *kn, struct kevent *kev)
+{
+	int active, s;
+
+	if (kn->kn_fop->f_flags & FILTEROP_MPSAFE) {
+		active = kn->kn_fop->f_process(kn, kev);
+	} else {
+		KERNEL_LOCK();
+		if (kn->kn_fop->f_process != NULL) {
+			active = kn->kn_fop->f_process(kn, kev);
+		} else {
+			/* Emulate f_process using f_event. */
+			s = splhigh();
+			/*
+			 * If called from kqueue_scan(), skip f_event
+			 * when EV_ONESHOT is set, to preserve old behaviour.
+			 */
+			if (kev != NULL && (kn->kn_flags & EV_ONESHOT))
+				active = 1;
+			else
+				active = kn->kn_fop->f_event(kn, 0);
+			if (active)
+				knote_submit(kn, kev);
+			splx(s);
+		}
+		KERNEL_UNLOCK();
+	}
+	return (active);
+}
 
 void
 kqpoll_init(void)
@@ -918,7 +1033,8 @@ again:
 			kn->kn_kevent = *kev;
 
 			knote_attach(kn);
-			if ((error = fops->f_attach(kn)) != 0) {
+			error = filter_attach(kn);
+			if (error != 0) {
 				knote_drop(kn, p);
 				goto done;
 			}
@@ -937,28 +1053,29 @@ again:
 				 * seen it. This corresponds to the insert
 				 * happening in full before the close.
 				 */
-				kn->kn_fop->f_detach(kn);
+				filter_detach(kn);
 				knote_drop(kn, p);
 				goto done;
 			}
+
+			/* Check if there is a pending event. */
+			if (filter_process(kn, NULL))
+				knote_activate(kn);
 		} else {
 			/*
 			 * The user may change some filter values after the
 			 * initial EV_ADD, but doing so will not reset any
 			 * filters which have already been triggered.
 			 */
-			kn->kn_sfflags = kev->fflags;
-			kn->kn_sdata = kev->data;
-			kn->kn_kevent.udata = kev->udata;
+			if (filter_modify(kev, kn))
+				knote_activate(kn);
+			if (kev->flags & EV_ERROR) {
+				error = kev->data;
+				goto release;
+			}
 		}
-
-		s = splhigh();
-		if (kn->kn_fop->f_event(kn, 0))
-			knote_activate(kn);
-		splx(s);
-
 	} else if (kev->flags & EV_DELETE) {
-		kn->kn_fop->f_detach(kn);
+		filter_detach(kn);
 		knote_drop(kn, p);
 		goto done;
 	}
@@ -973,14 +1090,13 @@ again:
 	if ((kev->flags & EV_ENABLE) && (kn->kn_status & KN_DISABLED)) {
 		s = splhigh();
 		kn->kn_status &= ~KN_DISABLED;
-		if (kn->kn_fop->f_event(kn, 0))
-			kn->kn_status |= KN_ACTIVE;
-		if ((kn->kn_status & KN_ACTIVE) &&
-		    ((kn->kn_status & KN_QUEUED) == 0))
-			knote_enqueue(kn);
 		splx(s);
+		/* Check if there is a pending event. */
+		if (filter_process(kn, NULL))
+			knote_activate(kn);
 	}
 
+release:
 	s = splhigh();
 	knote_release(kn);
 	splx(s);
@@ -1110,39 +1226,36 @@ retry:
 			knote_release(kn);
 			continue;
 		}
-		if ((kn->kn_flags & EV_ONESHOT) == 0 &&
-		    kn->kn_fop->f_event(kn, 0) == 0) {
+
+		splx(s);
+
+		memset(kevp, 0, sizeof(*kevp));
+		if (filter_process(kn, kevp) == 0) {
+			s = splhigh();
 			if ((kn->kn_status & KN_QUEUED) == 0)
 				kn->kn_status &= ~KN_ACTIVE;
 			knote_release(kn);
 			kqueue_check(kq);
 			continue;
 		}
-		*kevp = kn->kn_kevent;
-		kevp++;
-		nkev++;
-		scan->kqs_nevent++;
 
 		/*
 		 * Post-event action on the note
 		 */
-		if (kn->kn_flags & EV_ONESHOT) {
-			splx(s);
-			kn->kn_fop->f_detach(kn);
+		if (kevp->flags & EV_ONESHOT) {
+			filter_detach(kn);
 			knote_drop(kn, p);
 			s = splhigh();
-		} else if (kn->kn_flags & (EV_CLEAR | EV_DISPATCH)) {
-			if (kn->kn_flags & EV_CLEAR) {
-				kn->kn_data = 0;
-				kn->kn_fflags = 0;
-			}
-			if (kn->kn_flags & EV_DISPATCH)
+		} else if (kevp->flags & (EV_CLEAR | EV_DISPATCH)) {
+			s = splhigh();
+			if (kevp->flags & EV_DISPATCH)
 				kn->kn_status |= KN_DISABLED;
 			if ((kn->kn_status & KN_QUEUED) == 0)
 				kn->kn_status &= ~KN_ACTIVE;
 			KASSERT(kn->kn_status & KN_ATTACHED);
 			knote_release(kn);
 		} else {
+			s = splhigh();
 			if ((kn->kn_status & KN_QUEUED) == 0) {
 				kqueue_check(kq);
 				kq->kq_count++;
@@ -1153,6 +1266,10 @@ retry:
 			knote_release(kn);
 		}
 		kqueue_check(kq);
+
+		kevp++;
+		nkev++;
+		scan->kqs_nevent++;
 	}
 	TAILQ_REMOVE(&kq->kq_head, &scan->kqs_start, kn_tqe);
 	splx(s);
@@ -1449,7 +1566,7 @@ knote(struct klist *list, long hint)
 	KLIST_ASSERT_LOCKED(list);
 
 	SLIST_FOREACH_SAFE(kn, &list->kl_list, kn_selnext, kn0)
-		if (kn->kn_fop->f_event(kn, hint))
+		if (filter_event(kn, hint))
 			knote_activate(kn);
 }
 
@@ -1469,7 +1586,7 @@ knote_remove(struct proc *p, struct knlist *list, int purge)
 			continue;
 		}
 		splx(s);
-		kn->kn_fop->f_detach(kn);
+		filter_detach(kn);
 
 		/*
 		 * Notify poll(2) and select(2) when a monitored
@@ -1655,6 +1772,36 @@ knote_dequeue(struct knote *kn)
 	kqueue_check(kq);
 }
 
+/*
+ * Modify the knote's parameters.
+ *
+ * The knote's object lock must be held.
+ */
+void
+knote_modify(const struct kevent *kev, struct knote *kn)
+{
+	kn->kn_sfflags = kev->fflags;
+	kn->kn_sdata = kev->data;
+	kn->kn_udata = kev->udata;
+}
+
+/*
+ * Submit the knote's event for delivery.
+ *
+ * The knote's object lock must be held.
+ */
+void
+knote_submit(struct knote *kn, struct kevent *kev)
+{
+	if (kev != NULL) {
+		*kev = kn->kn_kevent;
+		if (kn->kn_flags & EV_CLEAR) {
+			kn->kn_fflags = 0;
+			kn->kn_data = 0;
+		}
+	}
+}
+
 void
 klist_init(struct klist *klist, const struct klistops *ops, void *arg)
 {
@@ -1737,10 +1884,10 @@ klist_invalidate(struct klist *list)
 		}
 		klist_unlock(list, ls);
 		splx(s);
-		kn->kn_fop->f_detach(kn);
+		filter_detach(kn);
 		if (kn->kn_fop->f_flags & FILTEROP_ISFD) {
 			kn->kn_fop = &dead_filtops;
-			kn->kn_fop->f_event(kn, 0);
+			filter_event(kn, 0);
 			knote_activate(kn);
 			s = splhigh();
 			knote_release(kn);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.53 2021/01/17 05:56:32 visa Exp $	*/
+/*	$OpenBSD: event.h,v 1.54 2021/02/24 14:59:52 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -165,30 +165,85 @@ struct klist {
  */
 #define NOTE_SIGNAL	0x08000000
 
+/*
+ * = Event filter interface
+ *
+ * == .f_flags
+ *
+ * Defines properties of the event filter:
+ *
+ * - FILTEROP_ISFD      Each knote of this filter is associated
+ *                      with a file descriptor.
+ *
+ * - FILTEROP_MPSAFE    The kqueue subsystem can invoke .f_attach(),
+ *                      .f_detach(), .f_modify() and .f_process() without
+ *                      the kernel lock.
+ *
+ * == .f_attach()
+ *
+ * Attaches the knote to the object.
+ *
+ * == .f_detach()
+ *
+ * Detaches the knote from the object. The object must not use this knote
+ * for delivering events after this callback has returned.
+ *
+ * == .f_event()
+ *
+ * Notifies the filter about an event. Called through knote().
+ *
+ * == .f_modify()
+ *
+ * Modifies the knote with new state from the user.
+ *
+ * Returns non-zero if the knote has become active.
+ *
+ * == .f_process()
+ *
+ * Checks if the event is active and returns non-zero if the event should be
+ * returned to the user.
+ *
+ * If kev is non-NULL and the event is active, the callback should store
+ * the event's state in kev for delivery to the user.
+ *
+ * == Concurrency control
+ *
+ * The kqueue subsystem serializes calls of .f_attach(), .f_detach(),
+ * .f_modify() and .f_process().
+ */
+
 #define FILTEROP_ISFD		0x00000001	/* ident == filedescriptor */
+#define FILTEROP_MPSAFE		0x00000002	/* safe without kernel lock */
 
 struct filterops {
 	int	f_flags;
 	int	(*f_attach)(struct knote *kn);
 	void	(*f_detach)(struct knote *kn);
 	int	(*f_event)(struct knote *kn, long hint);
+	int	(*f_modify)(struct kevent *kev, struct knote *kn);
+	int	(*f_process)(struct knote *kn, struct kevent *kev);
 };
 
+/*
+ * Locking:
+ *	I	immutable after creation
+ *	o	object lock
+ */
 struct knote {
 	SLIST_ENTRY(knote)	kn_link;	/* for fd */
 	SLIST_ENTRY(knote)	kn_selnext;	/* for struct selinfo */
 	TAILQ_ENTRY(knote)	kn_tqe;
-	struct			kqueue *kn_kq;	/* which queue we are on */
+	struct			kqueue *kn_kq;	/* [I] which queue we are on */
 	struct			kevent kn_kevent;
 	int			kn_status;
-	int			kn_sfflags;	/* saved filter flags */
-	__int64_t		kn_sdata;	/* saved data field */
+	int			kn_sfflags;	/* [o] saved filter flags */
+	__int64_t		kn_sdata;	/* [o] saved data field */
 	union {
 		struct		file *p_fp;	/* file data pointer */
 		struct		process *p_process;	/* process pointer */
 	} kn_ptr;
 	const struct		filterops *kn_fop;
-	void			*kn_hook;
+	void			*kn_hook;	/* [o] */
 #define KN_ACTIVE	0x0001			/* event has been triggered */
 #define KN_QUEUED	0x0002			/* event is on queue */
 #define KN_DISABLED	0x0004			/* event is disabled */
@@ -198,12 +253,13 @@ struct knote {
 #define KN_ATTACHED	0x0040			/* knote is attached to
 						 * a knlist of the kqueue */
 
-#define kn_id		kn_kevent.ident
-#define kn_filter	kn_kevent.filter
-#define kn_flags	kn_kevent.flags
-#define kn_fflags	kn_kevent.fflags
-#define kn_data		kn_kevent.data
-#define kn_fp		kn_ptr.p_fp
+#define kn_id		kn_kevent.ident		/* [I] */
+#define kn_filter	kn_kevent.filter	/* [I] */
+#define kn_flags	kn_kevent.flags		/* [o] */
+#define kn_fflags	kn_kevent.fflags	/* [o] */
+#define kn_data		kn_kevent.data		/* [o] */
+#define kn_udata	kn_kevent.udata		/* [o] */
+#define kn_fp		kn_ptr.p_fp		/* [o] */
 };
 
 struct klistops {
@@ -234,6 +290,8 @@ extern void	kqpoll_exit(void);
 extern void	knote(struct klist *list, long hint);
 extern void	knote_fdclose(struct proc *p, int fd);
 extern void	knote_processexit(struct proc *);
+extern void	knote_modify(const struct kevent *, struct knote *);
+extern void	knote_submit(struct knote *, struct kevent *);
 extern int	kqueue_register(struct kqueue *kq,
 		    struct kevent *kev, struct proc *p);
 extern int	kqueue_scan(struct kqueue_scan_state *, int, struct kevent *,
