@@ -1,4 +1,4 @@
-/*      $OpenBSD: interpreter.c,v 1.5 2019/07/20 11:06:33 lum Exp $	*/
+/*      $OpenBSD: interpreter.c,v 1.6 2021/02/24 14:17:18 lum Exp $	*/
 /*
  * This file is in the public domain.
  *
@@ -138,7 +138,10 @@ multiarg(char *funstr)
 		return (dobeep_msgs("Command takes no arguments: ", cmdp));
 
 	/* now find the first argument */
-	p = fendp + 1;
+	if (fendp)
+		p = fendp + 1;
+	else
+		p = "";
 	p = skipwhite(p);
 	if (strlcpy(argbuf, p, sizeof(argbuf)) >= sizeof(argbuf))
 		return (dobeep_msg("strlcpy error"));
@@ -268,7 +271,7 @@ static int
 foundlist(char *defstr)
 {
 	struct varentry *vt, *v1 = NULL;
-	const char	 e[1] = "e", t[1] = "t";
+	const char	 e[2] = "e", t[2] = "t";
 	char		*p, *vnamep, *vendp = NULL, *valp, *o;
 	int		 spc;
 
@@ -336,7 +339,9 @@ foundlist(char *defstr)
 			spc = 0;
 		}
 	}
-	*vendp = '\0';
+	if (vendp)
+		*vendp = '\0';
+
 	if ((v1->vals = strndup(valp, BUFSIZE)) == NULL)
 		return(dobeep_msg("strndup error"));
 
