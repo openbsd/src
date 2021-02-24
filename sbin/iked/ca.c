@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.77 2021/02/07 00:56:06 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.78 2021/02/24 22:17:48 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1660,7 +1660,7 @@ ca_x509_subjectaltname_do(X509 *cert, int mode, const char *logmsg,
 	ASN1_STRING *cstr;
 	char idstr[IKED_ID_SIZE];
 	int idx, ret, i, type, len;
-	uint8_t *data;
+	const uint8_t *data;
 
 	ret = -1;
 	idx = -1;
@@ -1700,7 +1700,7 @@ ca_x509_subjectaltname_do(X509 *cert, int mode, const char *logmsg,
 				continue;
 			}
 			len = ASN1_STRING_length(cstr);
-			data = ASN1_STRING_data(cstr);
+			data = ASN1_STRING_get0_data(cstr);
 			if (mode == MODE_ALT_LOG) {
 				struct iked_id sanid;
 
