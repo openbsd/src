@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.h,v 1.2 2018/01/05 23:30:16 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.h,v 1.3 2021/02/25 23:26:05 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -69,7 +69,7 @@
 
 #define BWFM_SHARED_INFO			0x000
 #define  BWFM_SHARED_INFO_MIN_VERSION			5
-#define  BWFM_SHARED_INFO_MAX_VERSION			6
+#define  BWFM_SHARED_INFO_MAX_VERSION			7
 #define  BWFM_SHARED_INFO_VERSION_MASK			0x00FF
 #define  BWFM_SHARED_INFO_DMA_INDEX			0x10000
 #define  BWFM_SHARED_INFO_DMA_2B_IDX			0x100000

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.40 2021/02/25 02:48:20 dlg Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.41 2021/02/25 23:26:05 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -617,11 +617,13 @@ bwfm_pci_preinit(struct bwfm_softc *bwfm)
 	    d2h_w_idx_ptr, d2h_r_idx_ptr, 0, idx_offset,
 	    &ring_mem_ptr))
 		goto cleanup;
-	if (bwfm_pci_setup_ring(sc, &sc->sc_tx_complete, 1024, 16,
+	if (bwfm_pci_setup_ring(sc, &sc->sc_tx_complete, 1024,
+	    sc->sc_shared_version >= 7 ? 24 : 16,
 	    d2h_w_idx_ptr, d2h_r_idx_ptr, 1, idx_offset,
 	    &ring_mem_ptr))
 		goto cleanup;
-	if (bwfm_pci_setup_ring(sc, &sc->sc_rx_complete, 512, 32,
+	if (bwfm_pci_setup_ring(sc, &sc->sc_rx_complete, 512,
+	    sc->sc_shared_version >= 7 ? 40 : 32,
 	    d2h_w_idx_ptr, d2h_r_idx_ptr, 2, idx_offset,
 	    &ring_mem_ptr))
 		goto cleanup;
