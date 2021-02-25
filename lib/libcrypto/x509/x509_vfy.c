@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.85 2021/02/11 04:56:43 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.86 2021/02/25 17:29:22 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -240,12 +240,13 @@ x509_vfy_check_id(X509_STORE_CTX *ctx) {
  * Oooooooh..
  */
 static int
-X509_verify_cert_legacy_build_chain(X509_STORE_CTX *ctx, int *bad)
+X509_verify_cert_legacy_build_chain(X509_STORE_CTX *ctx, int *bad, int *out_ok)
 {
 	X509 *x, *xtmp, *xtmp2, *chain_ss = NULL;
 	int bad_chain = 0;
 	X509_VERIFY_PARAM *param = ctx->param;
-	int depth, i, ok = 0;
+	int ok = 0, ret = 0;
+	int depth, i;
 	int num, j, retry, trust;
 	int (*cb) (int xok, X509_STORE_CTX *xctx);
 	STACK_OF(X509) *sktmp = NULL;
@@ -517,11 +518,15 @@ X509_verify_cert_legacy_build_chain(X509_STORE_CTX *ctx, int *bad)
 		if (!ok)
 			goto end;
 	}
+
+	ret = 1;
  end:
 	sk_X509_free(sktmp);
 	X509_free(chain_ss);
 	*bad = bad_chain;
-	return ok;
+	*out_ok = ok;
+
+	return ret;
 }
 
 static int
@@ -531,8 +536,7 @@ X509_verify_cert_legacy(X509_STORE_CTX *ctx)
 
 	ctx->error = X509_V_OK; /* Initialize to OK */
 
-	ok = X509_verify_cert_legacy_build_chain(ctx, &bad_chain);
-	if (!ok)
+	if (!X509_verify_cert_legacy_build_chain(ctx, &bad_chain, &ok))
 		goto end;
 
 	/* We have the chain complete: now we need to check its purpose */
