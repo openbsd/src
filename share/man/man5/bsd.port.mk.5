@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.537 2021/02/04 22:12:03 sthen Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.538 2021/02/25 21:46:25 sthen Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 4 2021 $
+.Dd $Mdocdate: February 25 2021 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1832,6 +1832,11 @@ before running
 Used for build systems which set paranoid permissions at build time.
 Defaults to
 .Sq \&No .
+.It Ev FIX_CRLF_FILES
+Name(s) of files with line endings to correct after extraction.
+Sometimes a port will include files with MS-DOS line endings (CR LF).
+To avoid problems with patches (especially when sent by email)
+these should be converted to LF.
 .It Ev FIX_EXTRACT_PERMISSIONS
 If
 .Sq Yes ,
