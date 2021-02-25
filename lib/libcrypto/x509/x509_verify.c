@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.32 2021/02/25 16:57:10 jsing Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.33 2021/02/25 16:58:59 jsing Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -197,22 +197,22 @@ static int
 x509_verify_ctx_set_xsc_chain(struct x509_verify_ctx *ctx,
     struct x509_verify_chain *chain, int set_error, int is_trusted)
 {
-	size_t depth;
+	size_t num_untrusted;
 	int i;
 
 	if (ctx->xsc == NULL)
 		return 1;
 
-	depth = sk_X509_num(chain->certs);
-	if (is_trusted && depth > 0)
-		depth--;
 	/*
 	 * XXX last_untrusted is actually the number of untrusted certs at the
 	 * bottom of the chain. This works now since we stop at the first
 	 * trusted cert. This will need fixing once we allow more than one
 	 * trusted certificate.
 	 */
-	ctx->xsc->last_untrusted = depth;
+	num_untrusted = sk_X509_num(chain->certs);
+	if (is_trusted && num_untrusted > 0)
+		num_untrusted--;
+	ctx->xsc->last_untrusted = num_untrusted;
 
 	sk_X509_pop_free(ctx->xsc->chain, X509_free);
 	ctx->xsc->chain = X509_chain_up_ref(chain->certs);
