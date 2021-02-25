@@ -1,4 +1,4 @@
-/* $OpenBSD: pciecam.c,v 1.11 2020/11/19 17:42:19 kettenis Exp $ */
+/* $OpenBSD: pciecam.c,v 1.12 2021/02/25 23:07:48 patrick Exp $ */
 /*
  * Copyright (c) 2013,2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -100,6 +100,7 @@ void pciecam_decompose_tag(void *, pcitag_t, int *, int *, int *);
 int pciecam_conf_size(void *, pcitag_t);
 pcireg_t pciecam_conf_read(void *, pcitag_t, int);
 void pciecam_conf_write(void *, pcitag_t, int, pcireg_t);
+int pciecam_probe_device_hook(void *, struct pci_attach_args *);
 int pciecam_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *pciecam_intr_string(void *, pci_intr_handle_t);
 void *pciecam_intr_establish(void *, pci_intr_handle_t, int,
@@ -228,6 +229,7 @@ pciecam_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc.pc_conf_size = pciecam_conf_size;
 	sc->sc_pc.pc_conf_read = pciecam_conf_read;
 	sc->sc_pc.pc_conf_write = pciecam_conf_write;
+	sc->sc_pc.pc_probe_device_hook = pciecam_probe_device_hook;
 
 	sc->sc_pc.pc_intr_v = sc;
 	sc->sc_pc.pc_intr_map = pciecam_intr_map;
@@ -317,6 +319,12 @@ pciecam_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 	pciecam_decompose_tag(sc, tag, &bus, &dev, &fn);
 
 	HWRITE4(sc, PCIE_ADDR_OFFSET(bus, dev, fn, reg & ~0x3), data);
+}
+
+int
+pciecam_probe_device_hook(void *v, struct pci_attach_args *pa)
+{
+	return 0;
 }
 
 int

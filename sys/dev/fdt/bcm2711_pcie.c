@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2711_pcie.c,v 1.4 2021/01/20 12:44:45 kettenis Exp $	*/
+/*	$OpenBSD: bcm2711_pcie.c,v 1.5 2021/02/25 23:07:49 patrick Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -100,6 +100,7 @@ void	bcmpcie_decompose_tag(void *, pcitag_t, int *, int *, int *);
 int	bcmpcie_conf_size(void *, pcitag_t);
 pcireg_t bcmpcie_conf_read(void *, pcitag_t, int);
 void	bcmpcie_conf_write(void *, pcitag_t, int, pcireg_t);
+int	bcmpcie_probe_device_hook(void *, struct pci_attach_args *);
 
 int	bcmpcie_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *bcmpcie_intr_string(void *, pci_intr_handle_t);
@@ -223,6 +224,7 @@ bcmpcie_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc.pc_conf_size = bcmpcie_conf_size;
 	sc->sc_pc.pc_conf_read = bcmpcie_conf_read;
 	sc->sc_pc.pc_conf_write = bcmpcie_conf_write;
+	sc->sc_pc.pc_probe_device_hook = bcmpcie_probe_device_hook;
 
 	sc->sc_pc.pc_intr_v = sc;
 	sc->sc_pc.pc_intr_map = bcmpcie_intr_map;
@@ -315,6 +317,12 @@ bcmpcie_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 
 	HWRITE4(sc, PCIE_EXT_CFG_INDEX, tag);
 	HWRITE4(sc, PCIE_EXT_CFG_DATA + reg, data);
+}
+
+int
+bcmpcie_probe_device_hook(void *v, struct pci_attach_args *pa)
+{
+	return 0;
 }
 
 int

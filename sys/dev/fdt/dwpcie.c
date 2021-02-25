@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.24 2020/12/28 12:24:31 kettenis Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.25 2021/02/25 23:07:49 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -264,6 +264,7 @@ void	dwpcie_decompose_tag(void *, pcitag_t, int *, int *, int *);
 int	dwpcie_conf_size(void *, pcitag_t);
 pcireg_t dwpcie_conf_read(void *, pcitag_t, int);
 void	dwpcie_conf_write(void *, pcitag_t, int, pcireg_t);
+int	dwpcie_probe_device_hook(void *, struct pci_attach_args *);
 
 int	dwpcie_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *dwpcie_intr_string(void *, pci_intr_handle_t);
@@ -535,6 +536,7 @@ dwpcie_attach_deferred(struct device *self)
 	sc->sc_pc.pc_conf_size = dwpcie_conf_size;
 	sc->sc_pc.pc_conf_read = dwpcie_conf_read;
 	sc->sc_pc.pc_conf_write = dwpcie_conf_write;
+	sc->sc_pc.pc_probe_device_hook = dwpcie_probe_device_hook;
 
 	sc->sc_pc.pc_intr_v = sc;
 	sc->sc_pc.pc_intr_map = dwpcie_intr_map;
@@ -1128,6 +1130,12 @@ dwpcie_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 		dwpcie_atu_config(sc, IATU_VIEWPORT_INDEX1,
 		    IATU_REGION_CTRL_1_TYPE_IO, sc->sc_io_base,
 		    sc->sc_io_bus_addr, sc->sc_io_size);
+}
+
+int
+dwpcie_probe_device_hook(void *v, struct pci_attach_args *pa)
+{
+	return 0;
 }
 
 int

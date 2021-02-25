@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpcie.c,v 1.11 2020/07/14 15:42:19 patrick Exp $	*/
+/*	$OpenBSD: rkpcie.c,v 1.12 2021/02/25 23:07:49 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -140,6 +140,7 @@ void	rkpcie_decompose_tag(void *, pcitag_t, int *, int *, int *);
 int	rkpcie_conf_size(void *, pcitag_t);
 pcireg_t rkpcie_conf_read(void *, pcitag_t, int);
 void	rkpcie_conf_write(void *, pcitag_t, int, pcireg_t);
+int	rkpcie_probe_device_hook(void *, struct pci_attach_args *);
 
 int	rkpcie_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *rkpcie_intr_string(void *, pci_intr_handle_t);
@@ -357,6 +358,7 @@ rkpcie_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc.pc_conf_size = rkpcie_conf_size;
 	sc->sc_pc.pc_conf_read = rkpcie_conf_read;
 	sc->sc_pc.pc_conf_write = rkpcie_conf_write;
+	sc->sc_pc.pc_probe_device_hook = rkpcie_probe_device_hook;
 
 	sc->sc_pc.pc_intr_v = sc;
 	sc->sc_pc.pc_intr_map = rkpcie_intr_map;
@@ -544,6 +546,12 @@ rkpcie_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 		bus_space_write_4(sc->sc_iot, sc->sc_axi_ioh, tag | reg, data);
 		return;
 	}
+}
+
+int
+rkpcie_probe_device_hook(void *v, struct pci_attach_args *pa)
+{
+	return 0;
 }
 
 int

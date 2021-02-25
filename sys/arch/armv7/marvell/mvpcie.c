@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvpcie.c,v 1.2 2020/07/14 15:42:19 patrick Exp $	*/
+/*	$OpenBSD: mvpcie.c,v 1.3 2021/02/25 23:07:48 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -194,6 +194,7 @@ void	 mvpcie_decompose_tag(void *, pcitag_t, int *, int *, int *);
 int	 mvpcie_conf_size(void *, pcitag_t);
 pcireg_t mvpcie_conf_read(void *, pcitag_t, int);
 void	 mvpcie_conf_write(void *, pcitag_t, int, pcireg_t);
+int	 mvpcie_probe_device_hook(void *, struct pci_attach_args *);
 
 int	 mvpcie_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 int	 mvpcie_intr_map_msi(struct pci_attach_args *, pci_intr_handle_t *);
@@ -421,6 +422,7 @@ mvpcie_port_attach(struct mvpcie_softc *sc, struct mvpcie_port *po, int node)
 	po->po_pc.pc_conf_size = mvpcie_conf_size;
 	po->po_pc.pc_conf_read = mvpcie_conf_read;
 	po->po_pc.pc_conf_write = mvpcie_conf_write;
+	po->po_pc.pc_probe_device_hook = mvpcie_probe_device_hook;
 
 	po->po_pc.pc_intr_v = po;
 	po->po_pc.pc_intr_map = mvpcie_intr_map;
@@ -773,6 +775,12 @@ mvpcie_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 	HWRITE4(po, PCIE_CONF_ADDR, PCIE_CONF_BUS(bus) | PCIE_CONF_DEV(dev) |
 	     PCIE_CONF_FUNC(fn) | PCIE_CONF_REG(reg) | PCIE_CONF_ADDR_EN);
 	HWRITE4(po, PCIE_CONF_DATA, data);
+}
+
+int
+mvpcie_probe_device_hook(void *v, struct pci_attach_args *pa)
+{
+	return 0;
 }
 
 struct mvpcie_intr_handle {

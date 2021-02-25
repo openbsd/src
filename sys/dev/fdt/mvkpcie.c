@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvkpcie.c,v 1.8 2021/01/19 19:46:40 kettenis Exp $	*/
+/*	$OpenBSD: mvkpcie.c,v 1.9 2021/02/25 23:07:49 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
@@ -231,6 +231,7 @@ void	mvkpcie_decompose_tag(void *, pcitag_t, int *, int *, int *);
 int	mvkpcie_conf_size(void *, pcitag_t);
 pcireg_t mvkpcie_conf_read(void *, pcitag_t, int);
 void	mvkpcie_conf_write(void *, pcitag_t, int, pcireg_t);
+int	mvkpcie_probe_device_hook(void *, struct pci_attach_args *);
 
 int	mvkpcie_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *mvkpcie_intr_string(void *, pci_intr_handle_t);
@@ -516,6 +517,7 @@ mvkpcie_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc.pc_conf_size = mvkpcie_conf_size;
 	sc->sc_pc.pc_conf_read = mvkpcie_conf_read;
 	sc->sc_pc.pc_conf_write = mvkpcie_conf_write;
+	sc->sc_pc.pc_probe_device_hook = mvkpcie_probe_device_hook;
 
 	sc->sc_pc.pc_intr_v = sc;
 	sc->sc_pc.pc_intr_map = mvkpcie_intr_map;
@@ -725,6 +727,12 @@ mvkpcie_conf_write(void *v, pcitag_t tag, int off, pcireg_t data)
 		printf("%s: timeout\n", sc->sc_dev.dv_xname);
 		return;
 	}
+}
+
+int
+mvkpcie_probe_device_hook(void *v, struct pci_attach_args *pa)
+{
+	return 0;
 }
 
 int

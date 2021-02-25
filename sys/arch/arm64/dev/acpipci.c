@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.24 2021/01/15 20:49:38 patrick Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.25 2021/02/25 23:07:48 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -106,6 +106,7 @@ void	acpipci_decompose_tag(void *, pcitag_t, int *, int *, int *);
 int	acpipci_conf_size(void *, pcitag_t);
 pcireg_t acpipci_conf_read(void *, pcitag_t, int);
 void	acpipci_conf_write(void *, pcitag_t, int, pcireg_t);
+int	acpipci_probe_device_hook(void *, struct pci_attach_args *);
 
 int	acpipci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char *acpipci_intr_string(void *, pci_intr_handle_t);
@@ -180,6 +181,8 @@ acpipci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_pc = pci_lookup_segment(seg);
 	KASSERT(sc->sc_pc->pc_intr_v == NULL);
+
+	sc->sc_pc->pc_probe_device_hook = acpipci_probe_device_hook;
 
 	sc->sc_pc->pc_intr_v = sc;
 	sc->sc_pc->pc_intr_map = acpipci_intr_map;
@@ -338,6 +341,12 @@ acpipci_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 		return;
 
 	bus_space_write_4(am->am_iot, am->am_ioh, tag | reg, data);
+}
+
+int
+acpipci_probe_device_hook(void *v, struct pci_attach_args *pa)
+{
+	return 0;
 }
 
 int
