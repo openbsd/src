@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.27 2020/11/30 17:57:36 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.28 2021/02/25 22:14:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -838,4 +838,96 @@ mii_byphandle(uint32_t phandle)
 		return NULL;
 
 	return mii_bynode(node);
+}
+
+/* IOMMU support */
+
+LIST_HEAD(, iommu_device) iommu_devices =
+	LIST_HEAD_INITIALIZER(iommu_devices);
+
+void
+iommu_device_register(struct iommu_device *id)
+{
+	id->id_phandle = OF_getpropint(id->id_node, "phandle", 0);
+	if (id->id_phandle == 0)
+		return;
+
+	LIST_INSERT_HEAD(&iommu_devices, id, id_list);
+}
+
+bus_dma_tag_t
+iommu_device_do_map(uint32_t phandle, uint32_t *cells, bus_dma_tag_t dmat)
+{
+	struct iommu_device *id;
+
+	if (phandle == 0)
+		return dmat;
+
+	LIST_FOREACH(id, &iommu_devices, id_list) {
+		if (id->id_phandle == phandle)
+			return id->id_map(id->id_cookie, cells, dmat);
+	}
+
+	return dmat;
+}
+
+bus_dma_tag_t
+iommu_device_map_pci(int node, uint32_t rid, bus_dma_tag_t dmat)
+{
+	uint64_t sid_base, sid = 0;
+	uint32_t phandle = 0;
+	uint32_t *cell;
+	uint32_t *map;
+	uint32_t mask, rid_base;
+	uint32_t scells[2];
+	int i, len, length, icells, ncells;
+
+	len = OF_getproplen(node, "iommu-map");
+	if (len <= 0)
+		return dmat;
+
+	map = malloc(len, M_TEMP, M_WAITOK);
+	OF_getpropintarray(node, "iommu-map", map, len);
+
+	mask = OF_getpropint(node, "msi-map-mask", 0xffff);
+	rid = rid & mask;
+
+	cell = map;
+	ncells = len / sizeof(uint32_t);
+	while (ncells > 1) {
+		node = OF_getnodebyphandle(cell[1]);
+		if (node == 0)
+			goto out;
+
+		icells = OF_getpropint(node, "#iommu-cells", 1);
+		if (ncells < icells + 3)
+			goto out;
+
+		/* We support 64-bit stream IDs. */
+		KASSERT(icells >= 1 && icells <= 2);
+
+		rid_base = cell[0];
+		length = cell[2 + icells];
+		sid_base = cell[2];
+		for (i = 1; i < icells; i++) {
+			sid_base <<= 32;
+			sid_base |= cell[2 + i];
+		}
+		if (rid >= rid_base && rid < rid_base + length) {
+			sid = sid_base + (rid - rid_base);
+			phandle = cell[1];
+			break;
+		}
+
+		cell += (3 + icells);
+		ncells -= (3 + icells);
+	}
+
+out:
+	free(map, M_TEMP, len);
+
+	/* Map stream ID back into cells. */
+	scells[0] = sid >> 32;
+	scells[1] = sid & 0xffffffff;
+	return iommu_device_do_map(phandle, scells, dmat);
 }

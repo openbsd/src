@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.h,v 1.17 2020/11/30 17:57:36 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.h,v 1.18 2021/02/25 22:14:54 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -232,5 +232,19 @@ struct mii_bus {
 void	mii_register(struct mii_bus *);
 struct mii_bus *mii_bynode(int);
 struct mii_bus *mii_byphandle(uint32_t);
+
+/* IOMMU support */
+
+struct iommu_device {
+	int	id_node;
+	void	*id_cookie;
+	bus_dma_tag_t (*id_map)(void *, uint32_t *, bus_dma_tag_t);
+
+	LIST_ENTRY(iommu_device) id_list;
+	uint32_t id_phandle;
+};
+
+void	iommu_device_register(struct iommu_device *);
+bus_dma_tag_t iommu_device_map_pci(int, uint32_t, bus_dma_tag_t);
 
 #endif /* _DEV_OFW_MISC_H_ */
