@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.41 2021/02/25 23:26:05 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.42 2021/02/25 23:55:41 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -781,7 +781,7 @@ bwfm_pci_load_microcode(struct bwfm_pci_softc *sc, const u_char *ucode, size_t s
 	}
 	bwfm_chip_set_active(bwfm, *(uint32_t *)ucode);
 
-	for (i = 0; i < 40; i++) {
+	for (i = 0; i < 100; i++) {
 		delay(50 * 1000);
 		shared = bus_space_read_4(sc->sc_tcm_iot, sc->sc_tcm_ioh,
 		    bwfm->sc_chip.ch_rambase + bwfm->sc_chip.ch_ramsize - 4);

@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.81 2021/02/24 10:13:08 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.82 2021/02/25 23:55:41 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -69,6 +69,7 @@ void	 bwfm_process_clm_blob(struct bwfm_softc *);
 
 int	 bwfm_chip_attach(struct bwfm_softc *);
 int	 bwfm_chip_detach(struct bwfm_softc *, int);
+struct bwfm_core *bwfm_chip_get_core_idx(struct bwfm_softc *, int, int);
 struct bwfm_core *bwfm_chip_get_core(struct bwfm_softc *, int);
 struct bwfm_core *bwfm_chip_get_pmu(struct bwfm_softc *);
 int	 bwfm_chip_ai_isup(struct bwfm_softc *, struct bwfm_core *);
@@ -927,16 +928,22 @@ bwfm_chip_attach(struct bwfm_softc *sc)
 }
 
 struct bwfm_core *
-bwfm_chip_get_core(struct bwfm_softc *sc, int id)
+bwfm_chip_get_core_idx(struct bwfm_softc *sc, int id, int idx)
 {
 	struct bwfm_core *core;
 
 	LIST_FOREACH(core, &sc->sc_chip.ch_list, co_link) {
-		if (core->co_id == id)
+		if (core->co_id == id && idx-- == 0)
 			return core;
 	}
 
 	return NULL;
+}
+
+struct bwfm_core *
+bwfm_chip_get_core(struct bwfm_softc *sc, int id)
+{
+	return bwfm_chip_get_core_idx(sc, id, 0);
 }
 
 struct bwfm_core *
@@ -1017,9 +1024,15 @@ void
 bwfm_chip_ai_reset(struct bwfm_softc *sc, struct bwfm_core *core,
     uint32_t prereset, uint32_t reset, uint32_t postreset)
 {
+	struct bwfm_core *core2 = NULL;
 	int i;
 
+	if (core->co_id == BWFM_AGENT_CORE_80211)
+		core2 = bwfm_chip_get_core_idx(sc, BWFM_AGENT_CORE_80211, 1);
+
 	bwfm_chip_ai_disable(sc, core, prereset, reset);
+	if (core2)
+		bwfm_chip_ai_disable(sc, core2, prereset, reset);
 
 	for (i = 50; i > 0; i--) {
 		if ((sc->sc_buscore_ops->bc_read(sc,
@@ -1032,12 +1045,32 @@ bwfm_chip_ai_reset(struct bwfm_softc *sc, struct bwfm_core *core,
 	}
 	if (i == 0)
 		printf("%s: timeout on core reset\n", DEVNAME(sc));
+	if (core2) {
+		for (i = 50; i > 0; i--) {
+			if ((sc->sc_buscore_ops->bc_read(sc,
+			    core2->co_wrapbase + BWFM_AGENT_RESET_CTL) &
+			    BWFM_AGENT_RESET_CTL_RESET) == 0)
+				break;
+			sc->sc_buscore_ops->bc_write(sc,
+			    core2->co_wrapbase + BWFM_AGENT_RESET_CTL, 0);
+			delay(60);
+		}
+		if (i == 0)
+			printf("%s: timeout on core reset\n", DEVNAME(sc));
+	}
 
 	sc->sc_buscore_ops->bc_write(sc,
 	    core->co_wrapbase + BWFM_AGENT_IOCTL,
 	    postreset | BWFM_AGENT_IOCTL_CLK);
 	sc->sc_buscore_ops->bc_read(sc,
 	    core->co_wrapbase + BWFM_AGENT_IOCTL);
+	if (core2) {
+		sc->sc_buscore_ops->bc_write(sc,
+		    core2->co_wrapbase + BWFM_AGENT_IOCTL,
+		    postreset | BWFM_AGENT_IOCTL_CLK);
+		sc->sc_buscore_ops->bc_read(sc,
+		    core2->co_wrapbase + BWFM_AGENT_IOCTL);
+	}
 }
 
 void
