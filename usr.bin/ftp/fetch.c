@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.201 2021/02/16 16:27:34 naddy Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.202 2021/02/25 20:51:55 naddy Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -1002,6 +1002,7 @@ noslash:
 		}
 	}
 	free(buf);
+	buf = NULL;
 
 	/* Content-Length should be ignored for Transfer-Encoding: chunked */
 	if (chunked)
