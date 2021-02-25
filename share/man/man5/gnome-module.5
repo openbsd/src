@@ -1,0 +1,180 @@
+.\"	$OpenBSD: gnome-module.5,v 1.1 2021/02/25 09:13:18 espie Exp $
+.\"
+.\" Copyright (c) 2008 Marc Espie
+.\"
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE DEVELOPERS ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE DEVELOPERS BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd $Mdocdate: February 25 2021 $
+.Dt GNOME-MODULE 5
+.Os
+.Sh NAME
+.Nm gnome-module
+.Nd x11/gnome port module
+.Sh DESCRIPTION
+This manual page documents the behavior of setting
+.Li MODULE=x11/gnome
+in the
+.Xr ports 7
+tree.
+.Pp
+This module has full support for the
+.Ar gnu ,
+.Ar simple
+and
+.Ar cmake
+CONFIGURE_STYLE.
+.Pp
+If both
+.Ev GNOME_PROJECT
+and
+.Ev GNOME_VERSION
+are set, this module defines
+.Ev DISTNAME ,
+.Ev VERSION ,
+.Ev MASTER_SITES ,
+adds x11/gnome to
+.Ev CATEGORIES
+and
+.Ev EXTRACT_SUFX
+will default to .tar.xz if unset.
+Unless
+.Li NO_BUILD=Yes ,
+.Pa textproc/intltool
+is also appended to
+.Ev MODULES
+and when CONFIGURE_STYLE is set to
+.Ar gnu
+or
+.Ar simple ,
+.Ev USE_GMAKE
+is set to "Yes".
+.Pp
+When CONFIGURE_STYLE is set to
+.Ar gnu
+or
+.Ar simple ,
+if none of
+.Ev AUTOCONF_VERSION
+nor
+.Ev AUTOMAKE_VERSION
+are defined, then "--disable-maintainer-mode" is appended to
+.Ev CONFIGURE_ARGS .
+When CONFIGURE_STYLE is set to
+.Ar cmake ,
+"-DENABLE_MAINTAINER_MODE=OFF" and -DSYSCONF_INSTALL_DIR=${SYSCONFDIR}
+are appended to CONFIGURE_ARGS.
+.Pp
+MODGNOME_CPPFLAGS and MODGNOME_LDFLAGS can be used to add compiler and linker
+flags.
+.Li CPPFLAGS="-I${LOCALBASE}/include"
+and
+.Li LDFLAGS="-L${LOCALBASE}/lib"
+are always appended to
+.Ev CONFIGURE_ENV .
+.Pp
+Certain build/run dependencies and configure arguments and environment
+can be set by appending desktop-file-utils, docbook, gobject-introspection,
+gtk-update-icon-cache, shared-mime-info, vala and/or yelp to
+.Ev MODGNOME_TOOLS .
+They are disabled otherwise.
+If
+.Ev MODGNOME_TOOLS
+is set to desktop-file-utils,
+a dependency on
+.Pa devel/desktop-file-utils
+is appended to
+.Ev MODGNOME_RUN_DEPENDS
+and a link to /usr/bin/true is created under
+.Pa ${WRKDIR}/bin/desktop-file-validate .
+If
+.Ev MODGNOME_TOOLS
+is set to docbook,
+.Pa textproc/docbook-xsl
+is appended to
+.Ev MODGNOME_BUILD_DEPENDS .
+This option is used when the generation of the man pages included in the
+source tarball requires docbook XML/SGML/XSL definitions and stylesheets.
+If
+.Ev MODGNOME_TOOLS
+is set to gtk-update-icon-cache, a dependency on
+.Pa x11/gtk+3,-guic
+is appended to
+.Ev MODGNOME_RUN_DEPENDS .
+If
+.Ev MODGNOME_TOOLS
+is set to shared-mime-info, a dependency on
+.Pa misc/shared-mime-info
+is appended to
+.Ev MODGNOME_RUN_DEPENDS
+and a link to /usr/bin/true is created under
+.Pa ${WRKDIR}/bin/update-mime-database .
+If
+.Ev MODGNOME_TOOLS
+is set to yelp,
+.Pa textproc/itstool
+and
+.Pa x11/gnome/doc-utils
+are appended to
+.Ev MODGNOME_BUILD_DEPENDS .
+Furthermore,
+.Pa x11/gnome/yelp
+is appended to
+.Ev MODGNOME_RUN_DEPENDS
+if
+.Ev MODGNOME_TOOLS
+also contains "desktop-file-utils"
+This option is to be used when any files are installed into
+.Pa share/gnome/help/
+or page files are installed into
+.Pa share/help/ .
+.Ev MODGNOME_BUILD_DEPENDS
+and
+.Ev MODGNOME_RUN_DEPENDS
+are appended to the
+corresponding
+.Ev BUILD_DEPENDS
+and
+.Ev RUN_DEPENDS .
+.Pp
+Some tools require the following goo in the PLIST:
+.Pp
+.Ar desktop-file-utils
+.Bd -literal -offset indent
+@exec %D/bin/update-desktop-database
+@unexec-delete %D/bin/update-desktop-database
+.Ed
+.Pp
+.Ar gtk-update-icon-cache
+($icon-theme is the theme directory)
+.Bd -literal -offset indent
+@exec %D/bin/gtk-update-icon-cache -q -t %D/share/icons/$icon-theme
+@unexec-delete %D/bin/gtk-update-icon-cache -q -t %D/share/icons/$icon-theme
+.Ed
+.Pp
+.Ar shared-mime-info
+.Bd -literal -offset indent
+@exec %D/bin/update-mime-database %D/share/mime
+@unexec-delete %D/bin/update-mime-database %D/share/mime
+.Ed
+.Sh SEE ALSO
+.Xr port-modules 5
