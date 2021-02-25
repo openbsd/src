@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.31 2021/02/24 17:59:05 tb Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.32 2021/02/25 16:57:10 jsing Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -197,7 +197,6 @@ static int
 x509_verify_ctx_set_xsc_chain(struct x509_verify_ctx *ctx,
     struct x509_verify_chain *chain, int set_error, int is_trusted)
 {
-	X509 *last = x509_verify_chain_last(chain);
 	size_t depth;
 	int i;
 
@@ -218,7 +217,7 @@ x509_verify_ctx_set_xsc_chain(struct x509_verify_ctx *ctx,
 	sk_X509_pop_free(ctx->xsc->chain, X509_free);
 	ctx->xsc->chain = X509_chain_up_ref(chain->certs);
 	if (ctx->xsc->chain == NULL)
-		return x509_verify_cert_error(ctx, last, depth,
+		return x509_verify_cert_error(ctx, NULL, 0,
 		    X509_V_ERR_OUT_OF_MEM, 0);
 
 	if (set_error) {
