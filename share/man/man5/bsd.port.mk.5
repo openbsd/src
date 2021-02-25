@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.540 2021/02/25 22:58:27 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.541 2021/02/25 23:06:52 sthen Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -1839,6 +1839,8 @@ Name(s) of files with line endings to correct at the end of
 Sometimes a port will include files with MS-DOS line endings (CR LF).
 To avoid problems with patches (especially when sent by email)
 these should be converted to LF.
+.Nm
+changes to WRKDIST before converting files - shell wildcards may be used.
 .It Ev FIX_EXTRACT_PERMISSIONS
 If
 .Sq Yes ,
