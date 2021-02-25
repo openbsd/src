@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.42 2021/02/25 23:55:41 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.43 2021/02/25 23:59:54 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -788,8 +788,14 @@ bwfm_pci_load_microcode(struct bwfm_pci_softc *sc, const u_char *ucode, size_t s
 		if (shared != written)
 			break;
 	}
-	if (!shared) {
+	if (shared == written) {
 		printf("%s: firmware did not come up\n", DEVNAME(sc));
+		return 1;
+	}
+	if (shared < bwfm->sc_chip.ch_rambase ||
+	    shared >= bwfm->sc_chip.ch_rambase + bwfm->sc_chip.ch_ramsize) {
+		printf("%s: invalid shared RAM address 0x%08x\n", DEVNAME(sc),
+		    shared);
 		return 1;
 	}
 
