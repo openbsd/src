@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.33 2021/02/04 19:59:15 tobhe Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.34 2021/02/25 20:13:24 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -486,7 +486,7 @@ cipher_new(uint8_t type, uint16_t id, uint16_t id_length)
 }
 
 struct ibuf *
-cipher_setkey(struct iked_cipher *encr, void *key, size_t keylen)
+cipher_setkey(struct iked_cipher *encr, const void *key, size_t keylen)
 {
 	ibuf_release(encr->encr_key);
 	if ((encr->encr_key = ibuf_new(key, keylen)) == NULL) {
@@ -497,7 +497,7 @@ cipher_setkey(struct iked_cipher *encr, void *key, size_t keylen)
 }
 
 struct ibuf *
-cipher_setiv(struct iked_cipher *encr, void *iv, size_t len)
+cipher_setiv(struct iked_cipher *encr, const void *iv, size_t len)
 {
 	ibuf_release(encr->encr_iv);
 	encr->encr_iv = NULL;
@@ -605,7 +605,7 @@ cipher_init_decrypt(struct iked_cipher *encr)
 }
 
 void
-cipher_aad(struct iked_cipher *encr, void *in, size_t inlen,
+cipher_aad(struct iked_cipher *encr, const void *in, size_t inlen,
     size_t *outlen)
 {
 	int	 olen = 0;
@@ -619,7 +619,7 @@ cipher_aad(struct iked_cipher *encr, void *in, size_t inlen,
 }
 
 int
-cipher_update(struct iked_cipher *encr, void *in, size_t inlen,
+cipher_update(struct iked_cipher *encr, const void *in, size_t inlen,
     void *out, size_t *outlen)
 {
 	int	 olen;

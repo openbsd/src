@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.186 2021/02/22 21:58:12 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.187 2021/02/25 20:13:24 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -908,17 +908,17 @@ size_t	 hash_length(struct iked_hash *);
 struct iked_cipher *
 	 cipher_new(uint8_t, uint16_t, uint16_t);
 struct ibuf *
-	 cipher_setkey(struct iked_cipher *, void *, size_t);
+	 cipher_setkey(struct iked_cipher *, const void *, size_t);
 struct ibuf *
-	 cipher_setiv(struct iked_cipher *, void *, size_t);
+	 cipher_setiv(struct iked_cipher *, const void *, size_t);
 int	 cipher_settag(struct iked_cipher *, uint8_t *, size_t);
 int	 cipher_gettag(struct iked_cipher *, uint8_t *, size_t);
 void	 cipher_free(struct iked_cipher *);
 int	 cipher_init(struct iked_cipher *, int);
 int	 cipher_init_encrypt(struct iked_cipher *);
 int	 cipher_init_decrypt(struct iked_cipher *);
-void	 cipher_aad(struct iked_cipher *, void *, size_t, size_t *);
-int	 cipher_update(struct iked_cipher *, void *, size_t, void *, size_t *);
+void	 cipher_aad(struct iked_cipher *, const void *, size_t, size_t *);
+int	 cipher_update(struct iked_cipher *, const void *, size_t, void *, size_t *);
 int	 cipher_final(struct iked_cipher *);
 size_t	 cipher_length(struct iked_cipher *);
 size_t	 cipher_keylength(struct iked_cipher *);
