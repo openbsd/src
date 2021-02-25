@@ -168,7 +168,9 @@ main(int argc, char *argv[])
 			debug = 1;
 			break;
 		case 'v':
+#ifndef SMALL
 			verbose++;
+#endif
 			break;
 		default:
 			usage();
@@ -191,10 +193,12 @@ main(int argc, char *argv[])
 	if (!debug)
 		daemon(0, 0);
 
+#ifndef SMALL
 	if (!debug) {
 		openlog("resolvd", LOG_PID|LOG_NDELAY, LOG_DAEMON);
 		logger = &syslogger;
 	}
+#endif
 
 	if ((routesock = socket(AF_ROUTE, SOCK_RAW, 0)) == -1)
 		lerr(1, "route socket");
@@ -583,7 +587,11 @@ regen_resolvconf(char *why)
 			ifnam = if_indextoname(learned[i].if_index,
 			    ifnambuf);
 			dprintf(fd, "%snameserver %s # resolvd: %s\n",
+#ifndef SMALL
 			    unwind_running ? "#" : "",
+#else
+			    "",
+#endif
 			    learned[i].ip,
 			    ifnam ? ifnam : "");
 		}
