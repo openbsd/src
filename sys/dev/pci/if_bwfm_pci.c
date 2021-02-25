@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.39 2021/01/31 11:07:51 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.40 2021/02/25 02:48:20 dlg Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -2017,7 +2017,7 @@ bwfm_pci_msgbuf_query_dcmd(struct bwfm_softc *bwfm, int ifidx,
 	*len = min(ctl->retlen, m->m_len);
 	*len = min(*len, buflen);
 	if (buf)
-		m_copydata(ctl->m, 0, *len, (caddr_t)buf);
+		m_copydata(ctl->m, 0, *len, buf);
 	m_freem(ctl->m);
 
 	if (ctl->status < 0) {

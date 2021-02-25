@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.351 2021/02/23 11:44:53 dlg Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.352 2021/02/25 02:48:21 dlg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -958,7 +958,7 @@ bridgeintr_frame(struct ifnet *brifp, struct ifnet *src_if, struct mbuf *m)
 	bif = bridge_getbif(src_if);
 	KASSERT(bif != NULL);
 
-	m_copydata(m, 0, ETHER_HDR_LEN, (caddr_t)&eh);
+	m_copydata(m, 0, ETHER_HDR_LEN, &eh);
 	dst = (struct ether_addr *)&eh.ether_dhost[0];
 	src = (struct ether_addr *)&eh.ether_shost[0];
 
@@ -1457,8 +1457,7 @@ bridge_blocknonip(struct ether_header *eh, struct mbuf *m)
 	    (ETHER_HDR_LEN + LLC_SNAPFRAMELEN))
 		return (1);
 
-	m_copydata(m, ETHER_HDR_LEN, LLC_SNAPFRAMELEN,
-	    (caddr_t)&llc);
+	m_copydata(m, ETHER_HDR_LEN, LLC_SNAPFRAMELEN, &llc);
 
 	etype = ntohs(llc.llc_snap.ether_type);
 	if (llc.llc_dsap == LLC_SNAP_LSAP &&
@@ -1512,8 +1511,7 @@ bridge_ipsec(struct ifnet *ifp, struct ether_header *eh, int hassnap,
 			dst.sa.sa_family = AF_INET;
 			dst.sin.sin_len = sizeof(struct sockaddr_in);
 			m_copydata(m, offsetof(struct ip, ip_dst),
-			    sizeof(struct in_addr),
-			    (caddr_t)&dst.sin.sin_addr);
+			    sizeof(struct in_addr), &dst.sin.sin_addr);
 
 			break;
 #ifdef INET6
@@ -1535,8 +1533,7 @@ bridge_ipsec(struct ifnet *ifp, struct ether_header *eh, int hassnap,
 			dst.sa.sa_family = AF_INET6;
 			dst.sin6.sin6_len = sizeof(struct sockaddr_in6);
 			m_copydata(m, offsetof(struct ip6_hdr, ip6_dst),
-			    sizeof(struct in6_addr),
-			    (caddr_t)&dst.sin6.sin6_addr);
+			    sizeof(struct in6_addr), &dst.sin6.sin6_addr);
 
 			break;
 #endif /* INET6 */
@@ -1546,15 +1543,15 @@ bridge_ipsec(struct ifnet *ifp, struct ether_header *eh, int hassnap,
 
 		switch (proto) {
 		case IPPROTO_ESP:
-			m_copydata(m, hlen, sizeof(u_int32_t), (caddr_t)&spi);
+			m_copydata(m, hlen, sizeof(u_int32_t), &spi);
 			break;
 		case IPPROTO_AH:
 			m_copydata(m, hlen + sizeof(u_int32_t),
-			    sizeof(u_int32_t), (caddr_t)&spi);
+			    sizeof(u_int32_t), &spi);
 			break;
 		case IPPROTO_IPCOMP:
 			m_copydata(m, hlen + sizeof(u_int16_t),
-			    sizeof(u_int16_t), (caddr_t)&cpi);
+			    sizeof(u_int16_t), &cpi);
 			spi = htonl(ntohs(cpi));
 			break;
 		}
@@ -1654,8 +1651,7 @@ bridge_ip(struct ifnet *brifp, int dir, struct ifnet *ifp,
 		    ETHER_HDR_LEN))
 			return (m);
 
-		m_copydata(m, ETHER_HDR_LEN,
-		    LLC_SNAPFRAMELEN, (caddr_t)&llc);
+		m_copydata(m, ETHER_HDR_LEN, LLC_SNAPFRAMELEN, &llc);
 
 		if (llc.llc_dsap != LLC_SNAP_LSAP ||
 		    llc.llc_ssap != LLC_SNAP_LSAP ||
@@ -1885,8 +1881,7 @@ bridge_fragment(struct ifnet *brifp, struct ifnet *ifp, struct ether_header *eh,
 		    ETHER_HDR_LEN))
 			goto dropit;
 
-		m_copydata(m, ETHER_HDR_LEN,
-		    LLC_SNAPFRAMELEN, (caddr_t)&llc);
+		m_copydata(m, ETHER_HDR_LEN, LLC_SNAPFRAMELEN, &llc);
 
 		if (llc.llc_dsap != LLC_SNAP_LSAP ||
 		    llc.llc_ssap != LLC_SNAP_LSAP ||

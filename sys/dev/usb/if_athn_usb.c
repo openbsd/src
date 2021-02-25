@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.59 2020/11/30 16:09:33 krw Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.60 2021/02/25 02:48:20 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -1766,7 +1766,7 @@ athn_usb_swba(struct athn_usb_softc *usc)
 	memset(bcn, 0, sizeof(*bcn));
 	bcn->vif_idx = 0;
 
-	m_copydata(m, 0, m->m_pkthdr.len, (caddr_t)&bcn[1]);
+	m_copydata(m, 0, m->m_pkthdr.len, &bcn[1]);
 
 	usbd_setup_xfer(data->xfer, usc->tx_data_pipe, data, data->buf,
 	    sizeof(*hdr) + sizeof(*htc) + sizeof(*bcn) + m->m_pkthdr.len,
@@ -2377,7 +2377,7 @@ athn_usb_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		frm = (uint8_t *)&txm[1];
 	}
 	/* Copy payload. */
-	m_copydata(m, 0, m->m_pkthdr.len, (caddr_t)frm);
+	m_copydata(m, 0, m->m_pkthdr.len, frm);
 	frm += m->m_pkthdr.len;
 	m_freem(m);
 

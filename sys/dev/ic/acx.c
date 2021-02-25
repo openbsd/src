@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.124 2020/07/10 13:26:37 patrick Exp $ */
+/*	$OpenBSD: acx.c,v 1.125 2021/02/25 02:48:19 dlg Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -2373,7 +2373,7 @@ acx_set_probe_resp_tmplt(struct acx_softc *sc, struct ieee80211_node *ni)
 	IEEE80211_ADDR_COPY(wh->i_addr3, ni->ni_bssid);
 	*(u_int16_t *)wh->i_seq = 0;
 
-	m_copydata(m, 0, m->m_pkthdr.len, (caddr_t)&resp.data);
+	m_copydata(m, 0, m->m_pkthdr.len, &resp.data);
 	len = m->m_pkthdr.len + sizeof(resp.size);
 	m_freem(m); 
 
@@ -2427,7 +2427,7 @@ acx_set_beacon_tmplt(struct acx_softc *sc, struct ieee80211_node *ni)
 		return (1);
 	}
 
-	m_copydata(m, 0, off, (caddr_t)&beacon.data);
+	m_copydata(m, 0, off, &beacon.data);
 	len = off + sizeof(beacon.size);
 
 	if (acx_set_tmplt(sc, ACXCMD_TMPLT_BEACON, &beacon, len) != 0) {
@@ -2442,7 +2442,7 @@ acx_set_beacon_tmplt(struct acx_softc *sc, struct ieee80211_node *ni)
 		return (0);
 	}
 
-	m_copydata(m, off, len, (caddr_t)&tim.data);
+	m_copydata(m, off, len, &tim.data);
 	len += sizeof(beacon.size);
 	m_freem(m);
 

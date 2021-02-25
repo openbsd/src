@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.99 2021/02/15 03:42:00 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.100 2021/02/25 02:48:20 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -7754,7 +7754,7 @@ mcx_start(struct ifqueue *ifq)
 			    &sqe->sqe_inline_headers;
 
 			/* slightly cheaper vlan_inject() */
-			m_copydata(m, 0, ETHER_HDR_LEN, (caddr_t)evh);
+			m_copydata(m, 0, ETHER_HDR_LEN, evh);
 			evh->evl_proto = evh->evl_encap_proto;
 			evh->evl_encap_proto = htons(ETHERTYPE_VLAN);
 			evh->evl_tag = htons(m->m_pkthdr.ether_vtag);
@@ -7764,7 +7764,7 @@ mcx_start(struct ifqueue *ifq)
 #endif
 		{
 			m_copydata(m, 0, MCX_SQ_INLINE_SIZE,
-			    (caddr_t)sqe->sqe_inline_headers);
+			    sqe->sqe_inline_headers);
 			m_adj(m, MCX_SQ_INLINE_SIZE);
 		}
 

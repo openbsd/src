@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.81 2020/08/21 22:59:27 kn Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.82 2021/02/25 02:48:21 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -637,7 +637,7 @@ vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
 	skip = iphlen + sizeof(*uh);
 	if (m->m_pkthdr.len - skip < sizeof(v))
 		return (0);
-	m_copydata(m, skip, sizeof(v), (caddr_t)&v);
+	m_copydata(m, skip, sizeof(v), &v);
 	skip += sizeof(v);
 
 	if (v.vxlan_flags & htonl(VXLAN_RESERVED1) ||

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rsu.c,v 1.48 2020/11/30 16:09:33 krw Exp $	*/
+/*	$OpenBSD: if_rsu.c,v 1.49 2021/02/25 02:48:20 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1609,7 +1609,7 @@ rsu_tx(struct rsu_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 #endif
 
 	xferlen = sizeof(*txd) + m->m_pkthdr.len;
-	m_copydata(m, 0, m->m_pkthdr.len, (caddr_t)&txd[1]);
+	m_copydata(m, 0, m->m_pkthdr.len, &txd[1]);
 	m_freem(m);
 
 	data->pipe = pipe;

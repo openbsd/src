@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.230 2020/11/16 06:44:39 gnezdo Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.231 2021/02/25 02:48:21 dlg Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -650,7 +650,7 @@ ip6_check_rh0hdr(struct mbuf *m, int *offp)
 				return (1);
 			}
 
-			m_copydata(m, off, sizeof(rthdr), (caddr_t)&rthdr);
+			m_copydata(m, off, sizeof(rthdr), &rthdr);
 
 			if (rthdr.ip6r_type == IPV6_RTHDR_TYPE_0) {
 				*offp += offsetof(struct ip6_rthdr, ip6r_type);
@@ -673,7 +673,7 @@ ip6_check_rh0hdr(struct mbuf *m, int *offp)
 				return (0);
 			}
 
-			m_copydata(m, off, sizeof(opt6), (caddr_t)&opt6);
+			m_copydata(m, off, sizeof(opt6), &opt6);
 
 			if (proto == IPPROTO_AH)
 				off += (opt6.ip6e_len + 2) * 4;
@@ -1143,7 +1143,7 @@ ip6_pullexthdr(struct mbuf *m, size_t off, int nxt)
 	if (off + sizeof(ip6e) > m->m_pkthdr.len)
 		return NULL;
 
-	m_copydata(m, off, sizeof(ip6e), (caddr_t)&ip6e);
+	m_copydata(m, off, sizeof(ip6e), &ip6e);
 	if (nxt == IPPROTO_AH)
 		elen = (ip6e.ip6e_len + 2) << 2;
 	else
@@ -1195,7 +1195,7 @@ ip6_get_prevhdr(struct mbuf *m, int off)
 		len = sizeof(struct ip6_hdr);
 		nlen = 0;
 		while (len < off) {
-			m_copydata(m, len, sizeof(ip6e), (caddr_t)&ip6e);
+			m_copydata(m, len, sizeof(ip6e), &ip6e);
 
 			switch (nxt) {
 			case IPPROTO_FRAGMENT:
@@ -1236,7 +1236,7 @@ ip6_nexthdr(struct mbuf *m, int off, int proto, int *nxtp)
 	case IPPROTO_IPV6:
 		if (m->m_pkthdr.len < off + sizeof(ip6))
 			return -1;
-		m_copydata(m, off, sizeof(ip6), (caddr_t)&ip6);
+		m_copydata(m, off, sizeof(ip6), &ip6);
 		if (nxtp)
 			*nxtp = ip6.ip6_nxt;
 		off += sizeof(ip6);
@@ -1249,7 +1249,7 @@ ip6_nexthdr(struct mbuf *m, int off, int proto, int *nxtp)
 		 */
 		if (m->m_pkthdr.len < off + sizeof(fh))
 			return -1;
-		m_copydata(m, off, sizeof(fh), (caddr_t)&fh);
+		m_copydata(m, off, sizeof(fh), &fh);
 		if ((fh.ip6f_offlg & IP6F_OFF_MASK) != 0)
 			return -1;
 		if (nxtp)
@@ -1260,7 +1260,7 @@ ip6_nexthdr(struct mbuf *m, int off, int proto, int *nxtp)
 	case IPPROTO_AH:
 		if (m->m_pkthdr.len < off + sizeof(ip6e))
 			return -1;
-		m_copydata(m, off, sizeof(ip6e), (caddr_t)&ip6e);
+		m_copydata(m, off, sizeof(ip6e), &ip6e);
 		if (nxtp)
 			*nxtp = ip6e.ip6e_nxt;
 		off += (ip6e.ip6e_len + 2) << 2;
@@ -1273,7 +1273,7 @@ ip6_nexthdr(struct mbuf *m, int off, int proto, int *nxtp)
 	case IPPROTO_DSTOPTS:
 		if (m->m_pkthdr.len < off + sizeof(ip6e))
 			return -1;
-		m_copydata(m, off, sizeof(ip6e), (caddr_t)&ip6e);
+		m_copydata(m, off, sizeof(ip6e), &ip6e);
 		if (nxtp)
 			*nxtp = ip6e.ip6e_nxt;
 		off += (ip6e.ip6e_len + 1) << 3;

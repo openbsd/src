@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_switch.c,v 1.41 2021/02/23 15:13:58 mvs Exp $	*/
+/*	$OpenBSD: if_switch.c,v 1.42 2021/02/25 02:48:21 dlg Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -692,7 +692,7 @@ switch_port_ingress(struct switch_softc *sc, struct ifnet *src_if,
 	sc->sc_if.if_ipackets++;
 	sc->sc_if.if_ibytes += m->m_pkthdr.len;
 
-	m_copydata(m, 0, ETHER_HDR_LEN, (caddr_t)&eh);
+	m_copydata(m, 0, ETHER_HDR_LEN, &eh);
 #if 0
 	/* It's the "#if 0" because it doesn't test switch(4) with pf(4)
 	 * or with ipsec(4).
@@ -722,7 +722,7 @@ switch_port_egress(struct switch_softc *sc, struct switch_fwdp_queue *fwdp_q,
 		bpf_mtap(sc->sc_if.if_bpf, m, BPF_DIRECTION_OUT);
 #endif
 
-	m_copydata(m, 0, ETHER_HDR_LEN, (caddr_t)&eh);
+	m_copydata(m, 0, ETHER_HDR_LEN, &eh);
 	TAILQ_FOREACH(swpo, fwdp_q, swpo_fwdp_next) {
 
 		if ((dst_if = if_get(swpo->swpo_ifindex)) == NULL)
@@ -1549,7 +1549,7 @@ ofp_split_mbuf(struct mbuf *m, struct mbuf **mtail)
 		return (-1);
 
 	m_copydata(m, offsetof(struct ofp_header, oh_length), sizeof(ohlen),
-	    (caddr_t)&ohlen);
+	    &ohlen);
 	ohlen = ntohs(ohlen);
 
 	/* We got an invalid packet header, skip it. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.205 2021/01/21 13:17:13 mvs Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.206 2021/02/25 02:48:21 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -340,7 +340,7 @@ vlan_inject(struct mbuf *m, uint16_t type, uint16_t tag)
 {
 	struct ether_vlan_header evh;
 
-	m_copydata(m, 0, ETHER_HDR_LEN, (caddr_t)&evh);
+	m_copydata(m, 0, ETHER_HDR_LEN, &evh);
 	evh.evl_proto = evh.evl_encap_proto;
 	evh.evl_encap_proto = htons(type);
 	evh.evl_tag = htons(tag);

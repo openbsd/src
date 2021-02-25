@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.69 2020/07/10 13:22:21 patrick Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.70 2021/02/25 02:48:20 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -2649,10 +2649,10 @@ urtw_tx_start(struct urtw_softc *sc, struct ieee80211_node *ni, struct mbuf *m0,
 		data->buf[8] = 3;		/* CW minimum */
 		data->buf[8] |= (7 << 4);	/* CW maximum */
 		data->buf[9] |= 11;		/* retry limitation */
-		m_copydata(m0, 0, m0->m_pkthdr.len, (uint8_t *)&data->buf[12]);
+		m_copydata(m0, 0, m0->m_pkthdr.len, &data->buf[12]);
 	} else {
 		data->buf[21] |= 11;		/* retry limitation */
-		m_copydata(m0, 0, m0->m_pkthdr.len, (uint8_t *)&data->buf[32]);
+		m_copydata(m0, 0, m0->m_pkthdr.len, &data->buf[32]);
 	}
 
 	data->ni = ni;

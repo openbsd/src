@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.145 2020/12/18 12:30:23 tobhe Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.146 2021/02/25 02:48:21 dlg Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -327,7 +327,7 @@ ah_massage_headers(struct mbuf **m0, int af, int skip, int alg, int out)
 #ifdef INET6
 	case AF_INET6:  /* Ugly... */
 		/* Copy and "cook" the IPv6 header. */
-		m_copydata(m, 0, sizeof(ip6), (caddr_t) &ip6);
+		m_copydata(m, 0, sizeof(ip6), &ip6);
 
 		/* We don't do IPv6 Jumbograms. */
 		if (ip6.ip6_plen == 0) {
@@ -464,8 +464,7 @@ ah_massage_headers(struct mbuf **m0, int af, int skip, int alg, int out)
 					    sizeof(struct in6_addr) *
 					    (rh0->ip6r0_segleft - 1));
 
-					m_copydata(m, 0, sizeof(ip6),
-					    (caddr_t)&ip6);
+					m_copydata(m, 0, sizeof(ip6), &ip6);
 					addr[0] = ip6.ip6_dst;
 					ip6.ip6_dst = finaldst;
 					error = m_copyback(m, 0, sizeof(ip6),
@@ -539,13 +538,12 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	rplen = AH_FLENGTH + sizeof(u_int32_t);
 
 	/* Save the AH header, we use it throughout. */
-	m_copydata(m, skip + offsetof(struct ah, ah_hl), sizeof(u_int8_t),
-	    (caddr_t) &hl);
+	m_copydata(m, skip + offsetof(struct ah, ah_hl), sizeof(u_int8_t), &hl);
 
 	/* Replay window checking, if applicable. */
 	if (tdb->tdb_wnd > 0) {
 		m_copydata(m, skip + offsetof(struct ah, ah_rpl),
-		    sizeof(u_int32_t), (caddr_t) &btsx);
+		    sizeof(u_int32_t), &btsx);
 		btsx = ntohl(btsx);
 
 		switch (checkreplaywindow(tdb, btsx, &esn, 0)) {
@@ -668,7 +666,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	 * Save the authenticator, the skipped portion of the packet,
 	 * and the AH header.
 	 */
-	m_copydata(m, 0, skip + rplen + ahx->authsize, (caddr_t) (tc + 1));
+	m_copydata(m, 0, skip + rplen + ahx->authsize, tc + 1);
 
 	/* Zeroize the authenticator on the packet. */
 	m_copyback(m, skip + rplen, ahx->authsize, ipseczeroes, M_NOWAIT);
@@ -751,7 +749,7 @@ ah_input_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m, int clen)
 	/* Replay window checking, if applicable. */
 	if (tdb->tdb_wnd > 0) {
 		m_copydata(m, skip + offsetof(struct ah, ah_rpl),
-		    sizeof(u_int32_t), (caddr_t) &btsx);
+		    sizeof(u_int32_t), &btsx);
 		btsx = ntohl(btsx);
 
 		switch (checkreplaywindow(tdb, btsx, &esn, 1)) {
@@ -1034,7 +1032,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	ah = (struct ah *)(mtod(mi, caddr_t) + roff);
 
 	/* Initialize the AH header. */
-	m_copydata(m, protoff, sizeof(u_int8_t), (caddr_t) &ah->ah_nh);
+	m_copydata(m, protoff, sizeof(u_int8_t), &ah->ah_nh);
 	ah->ah_hl = (rplen + ahx->authsize - AH_FLENGTH) / sizeof(u_int32_t);
 	ah->ah_rv = 0;
 	ah->ah_spi = tdb->tdb_spi;
@@ -1087,7 +1085,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	}
 
 	/* Save the skipped portion of the packet. */
-	m_copydata(m, 0, skip, (caddr_t) (tc + 1));
+	m_copydata(m, 0, skip, tc + 1);
 
 	/*
 	 * Fix IP header length on the header used for

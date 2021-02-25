@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.184 2020/12/20 21:15:47 bluhm Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.185 2021/02/25 02:48:21 dlg Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -259,7 +259,7 @@ icmp_do_error(struct mbuf *n, int type, int code, u_int32_t dest, int destmtu)
 	}
 
 	icp->icmp_code = code;
-	m_copydata(n, 0, icmplen, (caddr_t)&icp->icmp_ip);
+	m_copydata(n, 0, icmplen, &icp->icmp_ip);
 
 	/*
 	 * Now, copy old ip header (without options)

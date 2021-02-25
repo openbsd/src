@@ -1,4 +1,4 @@
-/*	$OpenBSD: safe.c,v 1.44 2020/05/29 04:42:25 deraadt Exp $	*/
+/*	$OpenBSD: safe.c,v 1.45 2021/02/25 02:48:20 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2003 Sam Leffler, Errno Consulting
@@ -467,7 +467,7 @@ safe_process(struct cryptop *crp)
 				bcopy(enccrd->crd_iv, iv, ivsize);
 			else if (crp->crp_flags & CRYPTO_F_IMBUF)
 				m_copydata(re->re_src_m, enccrd->crd_inject,
-				    ivsize, (caddr_t)iv);
+				    ivsize, iv);
 			else if (crp->crp_flags & CRYPTO_F_IOV)
 				cuio_copydata(re->re_src_io, enccrd->crd_inject,
 				    ivsize, (caddr_t)iv);

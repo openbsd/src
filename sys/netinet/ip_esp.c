@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.161 2020/12/18 12:30:23 tobhe Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.162 2021/02/25 02:48:21 dlg Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -373,7 +373,7 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	/* Replay window checking, if appropriate -- no value commitment. */
 	if (tdb->tdb_wnd > 0) {
 		m_copydata(m, skip + sizeof(u_int32_t), sizeof(u_int32_t),
-		    (unsigned char *) &btsx);
+		    &btsx);
 		btsx = ntohl(btsx);
 
 		switch (checkreplaywindow(tdb, btsx, &esn, 0)) {
@@ -484,7 +484,7 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 			crda->crd_len = m->m_pkthdr.len - (skip + alen);
 
 		/* Copy the authenticator */
-		m_copydata(m, m->m_pkthdr.len - alen, alen, (caddr_t)(tc + 1));
+		m_copydata(m, m->m_pkthdr.len - alen, alen, tc + 1);
 	} else
 		crde = &crp->crp_desc[0];
 
@@ -576,7 +576,7 @@ esp_input_cb(struct tdb *tdb, struct tdb_crypto *tc, struct mbuf *m, int clen)
 	/* Replay window checking, if appropriate */
 	if (tdb->tdb_wnd > 0) {
 		m_copydata(m, skip + sizeof(u_int32_t), sizeof(u_int32_t),
-		    (unsigned char *) &btsx);
+		    &btsx);
 		btsx = ntohl(btsx);
 
 		switch (checkreplaywindow(tdb, btsx, &esn, 1)) {

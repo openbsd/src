@@ -1,4 +1,4 @@
-/*	$OpenBSD: octcrypto.c,v 1.3 2019/03/10 14:20:44 visa Exp $	*/
+/*	$OpenBSD: octcrypto.c,v 1.4 2021/02/25 02:48:19 dlg Exp $	*/
 
 /*
  * Copyright (c) 2018 Visa Hankala
@@ -739,7 +739,7 @@ octcrypto_authenc_gmac(struct cryptop *crp, struct cryptodesc *crde,
 		} else {
 			if (crp->crp_flags & CRYPTO_F_IMBUF)
 				m_copydata((struct mbuf *)crp->crp_buf,
-				    crde->crd_inject, ivlen, (uint8_t *)iv);
+				    crde->crd_inject, ivlen, iv);
 			else
 				cuio_copydata((struct uio *)crp->crp_buf,
 				    crde->crd_inject, ivlen, (uint8_t *)iv);
@@ -1035,10 +1035,8 @@ octcrypto_authenc_hmac(struct cryptop *crp, struct cryptodesc *crde,
 				memcpy(iv, crde->crd_iv, ivlen);
 			} else {
 				if (crp->crp_flags & CRYPTO_F_IMBUF)
-					m_copydata(
-					    (struct mbuf *)crp->crp_buf,
-					    crde->crd_inject, ivlen,
-					    (uint8_t *)iv);
+					m_copydata((struct mbuf *)crp->crp_buf,
+					    crde->crd_inject, ivlen, iv);
 				else
 					cuio_copydata(
 					    (struct uio *)crp->crp_buf,

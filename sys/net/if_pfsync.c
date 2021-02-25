@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.286 2021/02/19 06:14:07 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.287 2021/02/25 02:48:21 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -792,7 +792,7 @@ pfsync_input(struct mbuf **mp, int *offp, int proto, int af)
 
 	offset += sizeof(*ph);
 	while (offset <= len - sizeof(subh)) {
-		m_copydata(m, offset, sizeof(subh), (caddr_t)&subh);
+		m_copydata(m, offset, sizeof(subh), &subh);
 		offset += sizeof(subh);
 
 		mlen = subh.len << 2;

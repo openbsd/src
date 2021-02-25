@@ -1,4 +1,4 @@
-/*	$OpenBSD: switchofp.c,v 1.78 2021/01/19 19:39:14 mvs Exp $	*/
+/*	$OpenBSD: switchofp.c,v 1.79 2021/02/25 02:48:21 dlg Exp $	*/
 
 /*
  * Copyright (c) 2016 Kazuya GODA <goda@openbsd.org>
@@ -3261,7 +3261,7 @@ swofp_action_pop_vlan(struct switch_softc *sc, struct mbuf *m,
 		return (NULL);
 	}
 
-	m_copydata(m, 0, ETHER_HDR_LEN, (caddr_t)&eh);
+	m_copydata(m, 0, ETHER_HDR_LEN, &eh);
 	eh.ether_type = evl->evl_proto;
 
 	m_adj(m, sizeof(*evl));
@@ -3346,7 +3346,7 @@ swofp_action_push_vlan(struct switch_softc *sc, struct mbuf *m,
 		swfcl->swfcl_vlan->vlan_vid = htons(1);
 	}
 
-	m_copydata(m, 0, ETHER_HDR_LEN, (caddr_t)&evh);
+	m_copydata(m, 0, ETHER_HDR_LEN, &evh);
 	evh.evl_proto = evh.evl_encap_proto;
 	evh.evl_encap_proto = oap->ap_ethertype;
 	evh.evl_tag = (swfcl->swfcl_vlan->vlan_vid |
@@ -5481,7 +5481,7 @@ swofp_group_mod_add(struct switch_softc *sc, struct mbuf *m)
 		}
 
 		m_copydata(m, offsetof(struct ofp_group_mod, gm_buckets),
-		    swge->swge_buckets_len, (caddr_t)swge->swge_buckets);
+		    swge->swge_buckets_len, swge->swge_buckets);
 	}
 
 	swofp_group_entry_add(sc, swge);
@@ -5541,7 +5541,7 @@ swofp_group_mod_modify(struct switch_softc *sc, struct mbuf *m)
 
 	if (swge->swge_buckets != NULL)
 		m_copydata(m, offsetof(struct ofp_group_mod, gm_buckets),
-		    swge->swge_buckets_len, (caddr_t)swge->swge_buckets);
+		    swge->swge_buckets_len, swge->swge_buckets);
 
 	m_freem(m);
 	return (0);

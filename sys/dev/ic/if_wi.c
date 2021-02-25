@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.174 2020/07/10 13:26:37 patrick Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.175 2021/02/25 02:48:20 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -768,7 +768,7 @@ wi_rxeof(struct wi_softc *sc)
 				break;
 			case WI_CRYPTO_SOFTWARE_WEP:
 				m_copydata(m, 0, m->m_pkthdr.len,
-				    (caddr_t)sc->wi_rxbuf);
+				    sc->wi_rxbuf);
 				len = m->m_pkthdr.len -
 				    sizeof(struct ether_header);
 				if (wi_do_hostdecrypt(sc, sc->wi_rxbuf +
@@ -2400,7 +2400,7 @@ nextpkt:
 
 			m_copydata(m0, sizeof(struct ether_header),
 			    m0->m_pkthdr.len - sizeof(struct ether_header),
-			    (caddr_t)&sc->wi_txbuf[12]);
+			    &sc->wi_txbuf[12]);
 
 			wi_do_hostencrypt(sc, (caddr_t)&sc->wi_txbuf,
 			    tx_frame.wi_dat_len);
@@ -2418,7 +2418,7 @@ nextpkt:
 		} else {
 			m_copydata(m0, sizeof(struct ether_header),
 			    m0->m_pkthdr.len - sizeof(struct ether_header),
-			    (caddr_t)&sc->wi_txbuf);
+			    &sc->wi_txbuf);
 
 			tx_frame.wi_dat_len = htole16(tx_frame.wi_dat_len);
 			wi_write_data(sc, id, 0, (caddr_t)&tx_frame,
@@ -2438,8 +2438,7 @@ nextpkt:
 			    ": host encrypt not implemented for 802.3\n",
 			    WI_PRT_ARG(sc));
 		} else {
-			m_copydata(m0, 0, m0->m_pkthdr.len,
-			    (caddr_t)&sc->wi_txbuf);
+			m_copydata(m0, 0, m0->m_pkthdr.len, &sc->wi_txbuf);
 
 			wi_write_data(sc, id, 0, (caddr_t)&tx_frame,
 			    sizeof(struct wi_frame));

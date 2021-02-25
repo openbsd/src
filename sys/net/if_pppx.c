@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.109 2021/02/10 13:38:46 mvs Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.110 2021/02/25 02:48:21 dlg Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -1441,7 +1441,7 @@ pppac_qstart(struct ifqueue *ifq)
 		case AF_INET:
 			if (m->m_pkthdr.len < sizeof(struct ip))
 				goto bad;
-			m_copydata(m, 0, sizeof(struct ip), (caddr_t)&ip);
+			m_copydata(m, 0, sizeof(struct ip), &ip);
 			if (IN_MULTICAST(ip.ip_dst.s_addr)) {
 				/* pass a copy to pipex */
 				m0 = m_copym(m, 0, M_COPYALL, M_NOWAIT);

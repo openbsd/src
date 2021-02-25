@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.305 2021/02/15 19:01:30 mvs Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.306 2021/02/25 02:48:21 dlg Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -724,7 +724,7 @@ route_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 			goto fail;
 		}
 		rtm = malloc(len, M_RTABLE, M_WAITOK);
-		m_copydata(m, 0, len, (caddr_t)rtm);
+		m_copydata(m, 0, len, rtm);
 		break;
 	default:
 		error = EPROTONOSUPPORT;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.68 2020/11/30 16:09:33 krw Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.69 2021/02/25 02:48:20 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1380,7 +1380,7 @@ otus_tx(struct otus_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 #endif
 
 	xferlen = sizeof (*head) + m->m_pkthdr.len;
-	m_copydata(m, 0, m->m_pkthdr.len, (caddr_t)&head[1]);
+	m_copydata(m, 0, m->m_pkthdr.len, &head[1]);
 	m_freem(m);
 
 	DPRINTFN(5, ("tx queued=%d len=%d mac=0x%04x phy=0x%08x rate=%d\n",

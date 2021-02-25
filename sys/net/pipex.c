@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.130 2021/01/19 19:37:42 mvs Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.131 2021/02/25 02:48:21 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -991,7 +991,7 @@ pipex_common_input(struct pipex_session *session, struct mbuf *m0, int hlen,
 	case PPP_CCP:
 		code = 0;
 		KASSERT(m0->m_pkthdr.len >= hlen + ppphlen + 1);
-		m_copydata(m0, hlen + ppphlen, 1, (caddr_t)&code);
+		m_copydata(m0, hlen + ppphlen, 1, &code);
 		if (code != CCP_RESETREQ && code != CCP_RESETACK)
 			goto not_ours;
 		break;
@@ -1096,7 +1096,7 @@ pipex_pppoe_lookup_session(struct mbuf *m0)
 		return (NULL);
 
 	m_copydata(m0, sizeof(struct ether_header),
-	    sizeof(struct pipex_pppoe_header), (caddr_t)&pppoe);
+	    sizeof(struct pipex_pppoe_header), &pppoe);
 	pppoe.session_id = ntohs(pppoe.session_id);
 	session = pipex_lookup_by_session_id(PIPEX_PROTO_PPPOE,
 	    pppoe.session_id);
@@ -1123,7 +1123,7 @@ pipex_pppoe_input(struct mbuf *m0, struct pipex_session *session)
 	    sizeof(pppoe)));
 
 	m_copydata(m0, sizeof(struct ether_header),
-	    sizeof(struct pipex_pppoe_header), (caddr_t)&pppoe);
+	    sizeof(struct pipex_pppoe_header), &pppoe);
 
 	hlen = sizeof(struct ether_header) + sizeof(struct pipex_pppoe_header);
 	if ((m0 = pipex_common_input(session, m0, hlen, ntohs(pppoe.length)))
@@ -1287,7 +1287,7 @@ pipex_pptp_lookup_session(struct mbuf *m0)
 	}
 
 	/* get ip header info */
-	m_copydata(m0, 0, sizeof(struct ip), (caddr_t)&ip);
+	m_copydata(m0, 0, sizeof(struct ip), &ip);
 	hlen = ip.ip_hl << 2;
 
 	/*
@@ -1296,7 +1296,7 @@ pipex_pptp_lookup_session(struct mbuf *m0)
 	 */
 
 	/* get gre flags */
-	m_copydata(m0, hlen, sizeof(gre), (caddr_t)&gre);
+	m_copydata(m0, hlen, sizeof(gre), &gre);
 	flags = ntohs(gre.flags);
 
 	/* gre version must be '1' */
@@ -1521,7 +1521,7 @@ pipex_pptp_userland_lookup_session(struct mbuf *m0, struct sockaddr *sa)
 	}
 
 	/* get flags */
-	m_copydata(m0, 0, sizeof(struct pipex_gre_header), (caddr_t)&gre);
+	m_copydata(m0, 0, sizeof(struct pipex_gre_header), &gre);
 	flags = ntohs(gre.flags);
 
 	/* gre version must be '1' */
@@ -1571,7 +1571,7 @@ pipex_pptp_userland_output(struct mbuf *m0, struct pipex_session *session)
 	uint32_t val32;
 
 	len = sizeof(struct pipex_gre_header);
-	m_copydata(m0, 0, len, (caddr_t)&gre0);
+	m_copydata(m0, 0, len, &gre0);
 	gre = &gre0;
 	flags = ntohs(gre->flags);
 	if ((flags & PIPEX_GRE_SFLAG) != 0)
@@ -1801,7 +1801,7 @@ pipex_l2tp_input(struct mbuf *m0, int off0, struct pipex_session *session,
 	l2tp_session->ipsecflowinfo = ipsecflowinfo;
 	nsp = nrp = NULL;
 
-	m_copydata(m0, off0, sizeof(flags), (caddr_t)&flags);
+	m_copydata(m0, off0, sizeof(flags), &flags);
 
 	flags = ntohs(flags) & PIPEX_L2TP_FLAG_MASK;
 	KASSERT((flags & PIPEX_L2TP_FLAG_TYPE) == 0);
@@ -1953,7 +1953,7 @@ pipex_l2tp_userland_lookup_session(struct mbuf *m0, struct sockaddr *sa)
 	}
 
 	/* get flags */
-	m_copydata(m0, 0, sizeof(l2tp), (caddr_t)&l2tp);
+	m_copydata(m0, 0, sizeof(l2tp), &l2tp);
 	flags = ntohs(l2tp.flagsver);
 
 	/* l2tp version must be '2' */
