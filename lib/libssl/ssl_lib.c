@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.248 2021/02/20 14:14:16 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.249 2021/02/25 17:06:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -254,8 +254,8 @@ SSL_new(SSL_CTX *ctx)
 	if ((s->internal = calloc(1, sizeof(*s->internal))) == NULL)
 		goto err;
 
-	s->internal->min_version = ctx->internal->min_version;
-	s->internal->max_version = ctx->internal->max_version;
+	s->internal->min_tls_version = ctx->internal->min_tls_version;
+	s->internal->max_tls_version = ctx->internal->max_tls_version;
 	s->internal->min_proto_version = ctx->internal->min_proto_version;
 	s->internal->max_proto_version = ctx->internal->max_proto_version;
 
@@ -1336,7 +1336,7 @@ SSL_get1_supported_ciphers(SSL *s)
 
 	if (s == NULL)
 		return NULL;
-	if (!ssl_supported_version_range(s, &min_vers, &max_vers))
+	if (!ssl_supported_tls_version_range(s, &min_vers, &max_vers))
 		return NULL;
 	if ((ciphers = SSL_get_ciphers(s)) == NULL)
 		return NULL;
@@ -1346,7 +1346,7 @@ SSL_get1_supported_ciphers(SSL *s)
 	for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
 		if ((cipher = sk_SSL_CIPHER_value(ciphers, i)) == NULL)
 			goto err;
-		if (!ssl_cipher_allowed_in_version_range(cipher, min_vers,
+		if (!ssl_cipher_allowed_in_tls_version_range(cipher, min_vers,
 		    max_vers))
 			continue;
 		if (!sk_SSL_CIPHER_push(supported_ciphers, cipher))
@@ -1829,8 +1829,8 @@ SSL_CTX_new(const SSL_METHOD *meth)
 	}
 
 	ret->method = meth;
-	ret->internal->min_version = meth->internal->min_version;
-	ret->internal->max_version = meth->internal->max_version;
+	ret->internal->min_tls_version = meth->internal->min_tls_version;
+	ret->internal->max_tls_version = meth->internal->max_tls_version;
 	ret->internal->min_proto_version = 0;
 	ret->internal->max_proto_version = 0;
 	ret->internal->mode = SSL_MODE_AUTO_RETRY;
@@ -3027,7 +3027,7 @@ int
 SSL_CTX_set_min_proto_version(SSL_CTX *ctx, uint16_t version)
 {
 	return ssl_version_set_min(ctx->method, version,
-	    ctx->internal->max_version, &ctx->internal->min_version,
+	    ctx->internal->max_tls_version, &ctx->internal->min_tls_version,
 	    &ctx->internal->min_proto_version);
 }
 
@@ -3041,7 +3041,7 @@ int
 SSL_CTX_set_max_proto_version(SSL_CTX *ctx, uint16_t version)
 {
 	return ssl_version_set_max(ctx->method, version,
-	    ctx->internal->min_version, &ctx->internal->max_version,
+	    ctx->internal->min_tls_version, &ctx->internal->max_tls_version,
 	    &ctx->internal->max_proto_version);
 }
 
@@ -3055,7 +3055,7 @@ int
 SSL_set_min_proto_version(SSL *ssl, uint16_t version)
 {
 	return ssl_version_set_min(ssl->method, version,
-	    ssl->internal->max_version, &ssl->internal->min_version,
+	    ssl->internal->max_tls_version, &ssl->internal->min_tls_version,
 	    &ssl->internal->min_proto_version);
 }
 int
@@ -3068,7 +3068,7 @@ int
 SSL_set_max_proto_version(SSL *ssl, uint16_t version)
 {
 	return ssl_version_set_max(ssl->method, version,
-	    ssl->internal->min_version, &ssl->internal->max_version,
+	    ssl->internal->min_tls_version, &ssl->internal->max_tls_version,
 	    &ssl->internal->max_proto_version);
 }
 

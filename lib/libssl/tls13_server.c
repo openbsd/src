@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.69 2021/01/09 10:41:48 tb Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.70 2021/02/25 17:06:05 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -29,7 +29,7 @@ tls13_server_init(struct tls13_ctx *ctx)
 {
 	SSL *s = ctx->ssl;
 
-	if (!ssl_supported_version_range(s, &ctx->hs->min_version,
+	if (!ssl_supported_tls_version_range(s, &ctx->hs->min_version,
 	    &ctx->hs->max_version)) {
 		SSLerror(s, SSL_R_NO_PROTOCOLS_AVAILABLE);
 		return 0;

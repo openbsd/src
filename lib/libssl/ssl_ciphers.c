@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_ciphers.c,v 1.9 2020/09/15 15:28:38 schwarze Exp $ */
+/*	$OpenBSD: ssl_ciphers.c,v 1.10 2021/02/25 17:06:05 jsing Exp $ */
 /*
  * Copyright (c) 2015-2017 Doug Hogan <doug@openbsd.org>
  * Copyright (c) 2015-2018, 2020 Joel Sing <jsing@openbsd.org>
@@ -36,28 +36,17 @@ ssl_cipher_in_list(STACK_OF(SSL_CIPHER) *ciphers, const SSL_CIPHER *cipher)
 }
 
 int
-ssl_cipher_allowed_in_version_range(const SSL_CIPHER *cipher, uint16_t min_ver,
+ssl_cipher_allowed_in_tls_version_range(const SSL_CIPHER *cipher, uint16_t min_ver,
     uint16_t max_ver)
 {
-	/* XXX: We only support DTLSv1 which is effectively TLSv1.1 */
-	if (min_ver == DTLS1_VERSION || max_ver == DTLS1_VERSION)
-		min_ver = max_ver = TLS1_1_VERSION;
-
 	switch(cipher->algorithm_ssl) {
 	case SSL_SSLV3:
-		if (min_ver <= TLS1_2_VERSION)
-			return 1;
-		break;
+		return (min_ver <= TLS1_2_VERSION);
 	case SSL_TLSV1_2:
-		if (min_ver <= TLS1_2_VERSION && TLS1_2_VERSION <= max_ver)
-			return 1;
-		break;
+		return (min_ver <= TLS1_2_VERSION && TLS1_2_VERSION <= max_ver);
 	case SSL_TLSV1_3:
-		if (min_ver <= TLS1_3_VERSION && TLS1_3_VERSION <= max_ver)
-			return 1;
-		break;
+		return (min_ver <= TLS1_3_VERSION && TLS1_3_VERSION <= max_ver);
 	}
-
 	return 0;
 }
 
@@ -72,13 +61,13 @@ ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *ciphers, CBB *cbb)
 	if (ciphers == NULL)
 		return 0;
 
-	if (!ssl_supported_version_range(s, &min_vers, &max_vers))
+	if (!ssl_supported_tls_version_range(s, &min_vers, &max_vers))
 		return 0;
 
 	for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
 		if ((cipher = sk_SSL_CIPHER_value(ciphers, i)) == NULL)
 			return 0;
-		if (!ssl_cipher_allowed_in_version_range(cipher, min_vers,
+		if (!ssl_cipher_allowed_in_tls_version_range(cipher, min_vers,
 		    max_vers))
 			continue;
 		if (!CBB_add_u16(cbb, ssl3_cipher_get_value(cipher)))

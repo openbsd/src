@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.72 2021/02/22 16:15:49 tb Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.73 2021/02/25 17:06:05 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -31,7 +31,7 @@ tls13_client_init(struct tls13_ctx *ctx)
 	size_t groups_len;
 	SSL *s = ctx->ssl;
 
-	if (!ssl_supported_version_range(s, &ctx->hs->min_version,
+	if (!ssl_supported_tls_version_range(s, &ctx->hs->min_version,
 	    &ctx->hs->max_version)) {
 		SSLerror(s, SSL_R_NO_PROTOCOLS_AVAILABLE);
 		return 0;

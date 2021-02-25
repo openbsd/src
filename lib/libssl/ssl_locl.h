@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.322 2021/02/22 15:59:10 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.323 2021/02/25 17:06:05 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -362,8 +362,8 @@ typedef struct ssl_method_internal_st {
 	int server;
 	int version;
 
-	uint16_t min_version;
-	uint16_t max_version;
+	uint16_t min_tls_version;
+	uint16_t max_tls_version;
 
 	int (*ssl_new)(SSL *s);
 	void (*ssl_clear)(SSL *s);
@@ -517,8 +517,8 @@ int tls12_record_layer_seal_record(struct tls12_record_layer *rl,
     CBB *out);
 
 typedef struct ssl_ctx_internal_st {
-	uint16_t min_version;
-	uint16_t max_version;
+	uint16_t min_tls_version;
+	uint16_t max_tls_version;
 
 	/*
 	 * These may be zero to imply minimum or maximum version supported by
@@ -686,8 +686,8 @@ typedef struct ssl_ctx_internal_st {
 typedef struct ssl_internal_st {
 	struct tls13_ctx *tls13;
 
-	uint16_t min_version;
-	uint16_t max_version;
+	uint16_t min_tls_version;
+	uint16_t max_tls_version;
 
 	/*
 	 * These may be zero to imply minimum or maximum version supported by
@@ -1121,19 +1121,19 @@ struct ssl_aead_ctx_st {
 extern const SSL_CIPHER ssl3_ciphers[];
 
 const char *ssl_version_string(int ver);
-int ssl_enabled_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver);
-int ssl_supported_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver);
-int ssl_version_set_min(const SSL_METHOD *meth, uint16_t ver, uint16_t max_ver,
-    uint16_t *out_ver, uint16_t *out_proto_ver);
-int ssl_version_set_max(const SSL_METHOD *meth, uint16_t ver, uint16_t min_ver,
-    uint16_t *out_ver, uint16_t *out_proto_ver);
+int ssl_version_set_min(const SSL_METHOD *meth, uint16_t proto_ver,
+    uint16_t max_tls_ver, uint16_t *out_tls_ver, uint16_t *out_proto_ver);
+int ssl_version_set_max(const SSL_METHOD *meth, uint16_t proto_ver,
+    uint16_t min_tls_ver, uint16_t *out_tls_ver, uint16_t *out_proto_ver);
+int ssl_enabled_tls_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver);
+int ssl_supported_tls_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver);
 int ssl_downgrade_max_version(SSL *s, uint16_t *max_ver);
 int ssl_max_supported_version(SSL *s, uint16_t *max_ver);
 int ssl_max_shared_version(SSL *s, uint16_t peer_ver, uint16_t *max_ver);
 int ssl_check_version_from_server(SSL *s, uint16_t server_version);
 int ssl_legacy_stack_version(SSL *s, uint16_t version);
 int ssl_cipher_in_list(STACK_OF(SSL_CIPHER) *ciphers, const SSL_CIPHER *cipher);
-int ssl_cipher_allowed_in_version_range(const SSL_CIPHER *cipher,
+int ssl_cipher_allowed_in_tls_version_range(const SSL_CIPHER *cipher,
     uint16_t min_ver, uint16_t max_ver);
 
 const SSL_METHOD *tls_legacy_method(void);
