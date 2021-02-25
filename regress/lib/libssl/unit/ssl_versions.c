@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_versions.c,v 1.11 2021/02/20 09:45:14 jsing Exp $ */
+/* $OpenBSD: ssl_versions.c,v 1.12 2021/02/25 17:07:52 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -214,10 +214,10 @@ test_ssl_enabled_version_range(void)
 		SSL_set_options(ssl, vrt->options);
 
 		minver = maxver = 0xffff;
-		ssl->internal->min_version = vrt->minver;
-		ssl->internal->max_version = vrt->maxver;
+		ssl->internal->min_tls_version = vrt->minver;
+		ssl->internal->max_tls_version = vrt->maxver;
 
-		if (ssl_enabled_version_range(ssl, &minver, &maxver) != 1) {
+		if (ssl_enabled_tls_version_range(ssl, &minver, &maxver) != 1) {
 			if (vrt->want_minver != 0 || vrt->want_maxver != 0) {
 				fprintf(stderr, "FAIL: test %zu - failed but "
 				    "wanted non-zero versions\n", i);
@@ -458,8 +458,8 @@ test_ssl_max_shared_version(void)
 		SSL_set_options(ssl, svt->options);
 
 		maxver = 0;
-		ssl->internal->min_version = svt->minver;
-		ssl->internal->max_version = svt->maxver;
+		ssl->internal->min_tls_version = svt->minver;
+		ssl->internal->max_tls_version = svt->maxver;
 
 		if (ssl_max_shared_version(ssl, svt->peerver, &maxver) != 1) {
 			if (svt->want_maxver != 0) {
