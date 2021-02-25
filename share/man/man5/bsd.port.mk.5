@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.538 2021/02/25 21:46:25 sthen Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.539 2021/02/25 22:41:51 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -239,6 +239,7 @@ Extract the distribution files under
 .Pa ${WRKDIR}
 (but see
 .Ev EXTRACT_ONLY ,
+.It Ev FIX_CRLF_FILES ,
 .Ev FIX_EXTRACT_PERMISSIONS
 and
 .Ev NO_DEPENDS ) .
@@ -1833,7 +1834,8 @@ Used for build systems which set paranoid permissions at build time.
 Defaults to
 .Sq \&No .
 .It Ev FIX_CRLF_FILES
-Name(s) of files with line endings to correct after extraction.
+Name(s) of files with line endings to correct at the end of
+.Cm extract .
 Sometimes a port will include files with MS-DOS line endings (CR LF).
 To avoid problems with patches (especially when sent by email)
 these should be converted to LF.
