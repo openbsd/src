@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.h,v 1.3 2021/02/25 23:26:05 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.h,v 1.4 2021/02/26 00:14:28 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -48,7 +48,8 @@
 
 #define BWFM_PCI_PCIE2REG_CONFIGADDR		0x120
 #define BWFM_PCI_PCIE2REG_CONFIGDATA		0x124
-#define BWFM_PCI_PCIE2REG_H2D_MAILBOX		0x140
+#define BWFM_PCI_PCIE2REG_H2D_MAILBOX_0		0x140
+#define BWFM_PCI_PCIE2REG_H2D_MAILBOX_1		0x144
 
 #define BWFM_PCI_CFGREG_STATUS_CMD		0x004
 #define BWFM_PCI_CFGREG_PM_CSR			0x04C
@@ -73,6 +74,7 @@
 #define  BWFM_SHARED_INFO_VERSION_MASK			0x00FF
 #define  BWFM_SHARED_INFO_DMA_INDEX			0x10000
 #define  BWFM_SHARED_INFO_DMA_2B_IDX			0x100000
+#define  BWFM_SHARED_INFO_HOSTRDY_DB1			0x10000000
 #define BWFM_SHARED_CONSOLE_ADDR		0x14
 #define BWFM_SHARED_MAX_RXBUFPOST		0x22
 #define  BWFM_SHARED_MAX_RXBUFPOST_DEFAULT		255

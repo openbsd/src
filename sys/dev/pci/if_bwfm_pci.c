@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.45 2021/02/26 00:07:41 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.46 2021/02/26 00:14:28 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -200,6 +200,7 @@ int		 bwfm_pci_detach(struct device *, int);
 int		 bwfm_pci_intr(void *);
 void		 bwfm_pci_intr_enable(struct bwfm_pci_softc *);
 void		 bwfm_pci_intr_disable(struct bwfm_pci_softc *);
+void		 bwfm_pci_hostready(struct bwfm_pci_softc *);
 int		 bwfm_pci_load_microcode(struct bwfm_pci_softc *, const u_char *,
 		    size_t, const u_char *, size_t);
 void		 bwfm_pci_select_core(struct bwfm_pci_softc *, int );
@@ -643,6 +644,7 @@ bwfm_pci_preinit(struct bwfm_softc *bwfm)
 
 	bwfm_pci_select_core(sc, BWFM_AGENT_CORE_PCIE2);
 	bwfm_pci_intr_enable(sc);
+	bwfm_pci_hostready(sc);
 
 	/* Maps RX mbufs to a packet id and back. */
 	sc->sc_rx_pkts.npkt = BWFM_NUM_RX_PKTIDS;
@@ -1066,7 +1068,7 @@ bwfm_pci_ring_bell(struct bwfm_pci_softc *sc,
     struct bwfm_pci_msgring *ring)
 {
 	bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
-	    BWFM_PCI_PCIE2REG_H2D_MAILBOX, 1);
+	    BWFM_PCI_PCIE2REG_H2D_MAILBOX_0, 1);
 }
 
 void
@@ -1930,6 +1932,16 @@ bwfm_pci_intr_disable(struct bwfm_pci_softc *sc)
 {
 	bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
 	    BWFM_PCI_PCIE2REG_MAILBOXMASK, 0);
+}
+
+void
+bwfm_pci_hostready(struct bwfm_pci_softc *sc)
+{
+	if ((sc->sc_shared_flags & BWFM_SHARED_INFO_HOSTRDY_DB1) == 0)
+		return;
+
+	bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+	    BWFM_PCI_PCIE2REG_H2D_MAILBOX_1, 1);
 }
 
 /* Msgbuf protocol implementation */
