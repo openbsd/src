@@ -1,4 +1,4 @@
-/*	$OpenBSD: vroute.c,v 1.3 2021/02/26 20:22:11 tobhe Exp $	*/
+/*	$OpenBSD: vroute.c,v 1.4 2021/02/26 21:06:02 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2021 Tobias Heider <tobhe@openbsd.org>
@@ -238,7 +238,7 @@ vroute_getroute(struct iked *env, struct imsg *imsg)
 	left -= dest->sa_len;
 	addrs |= RTA_DST;
 
-	flags = RTF_UP | RTF_STATIC;
+	flags = RTF_UP | RTF_GATEWAY | RTF_STATIC;
 	if (left != 0) {
 		if (left < sizeof(struct sockaddr))
 			return (-1);
@@ -312,7 +312,7 @@ vroute_getcloneroute(struct iked *env, struct imsg *imsg)
 	left -= dst->sa_len;
 
 	/* Get route to peer */
-	flags = RTF_UP | RTF_GATEWAY | RTF_HOST | RTF_STATIC;
+	flags = RTF_UP | RTF_HOST | RTF_STATIC;
 	if (vroute_doroute(env, flags, RTA_DST, rdomain, RTM_GET,
 	    (struct sockaddr *)&dest, (struct sockaddr *)&mask,
 	    (struct sockaddr *)&addr))
