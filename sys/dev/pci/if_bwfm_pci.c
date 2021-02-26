@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.47 2021/02/26 00:19:41 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.48 2021/02/26 11:22:10 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -676,10 +676,10 @@ bwfm_pci_preinit(struct bwfm_softc *bwfm)
 	/*
 	 * For whatever reason, could also be a bug somewhere in this
 	 * driver, the firmware needs a bunch of RX buffers otherwise
-	 * it won't send any RX complete messages.  64 buffers don't
-	 * suffice, but 128 buffers are enough.
+	 * it won't send any RX complete messages.
 	 */
-	if_rxr_init(&sc->sc_rxbuf_ring, 128, sc->sc_max_rxbufpost);
+	if_rxr_init(&sc->sc_rxbuf_ring, min(256, sc->sc_max_rxbufpost),
+	    sc->sc_max_rxbufpost);
 	if_rxr_init(&sc->sc_ioctl_ring, 8, 8);
 	if_rxr_init(&sc->sc_event_ring, 8, 8);
 	bwfm_pci_fill_rx_rings(sc);
