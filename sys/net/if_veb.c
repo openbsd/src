@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.9 2021/02/26 00:16:41 deraadt Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.10 2021/02/26 01:28:51 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -71,18 +71,6 @@
 #if NVLAN > 0
 #include <net/if_vlan_var.h>
 #endif
-
-union veb_addr {
-	struct ether_addr		ea;
-	uint64_t			word;
-};
-
-static const union veb_addr veb_8021_group = {
-	.ea = { { 0x01, 0x80, 0xc2, 0x00, 0x00, 0x00 } }
-};
-static const union veb_addr veb_8021_group_mask = {
-	.ea = { { 0xff, 0xff, 0xff, 0xff, 0xff, 0xf0 } }
-};
 
 /* SIOCBRDGIFFLGS, SIOCBRDGIFFLGS */
 #define VEB_IFBIF_FLAGS	(IFBIF_LEARNING|IFBIF_DISCOVER|IFBIF_BLOCKNONIP)
@@ -932,7 +920,7 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, void *brport)
 	struct veb_softc *sc = p->p_veb;
 	struct ifnet *ifp = &sc->sc_if;
 	struct ether_header *eh;
-	union veb_addr dst = { .word = 0 };
+	uint64_t dst;
 #if NBPFILTER > 0
 	caddr_t if_bpf;
 #endif
@@ -946,10 +934,10 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, void *brport)
 		return (m);
 
 	eh = mtod(m, struct ether_header *);
-	dst.ea = *(struct ether_addr *)eh->ether_dhost;
+	dst = ether_addr_to_e64((struct ether_addr *)eh->ether_dhost);
 
 	/* Is this a MAC Bridge component Reserved address? */
-	if ((dst.word & veb_8021_group_mask.word) == veb_8021_group.word)
+	if (ETH64_IS_8021_RSVD(dst))
 		goto drop;
 
 #if NVLAN > 0
@@ -1008,19 +996,18 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, void *brport)
 	eh = mtod(m, struct ether_header *);
 
 	if (ISSET(p->p_bif_flags, IFBIF_LEARNING)) {
-		etherbridge_map(&sc->sc_eb, p,
+		etherbridge_map_ea(&sc->sc_eb, p,
 		    (struct ether_addr *)eh->ether_shost);
 	}
 
 	CLR(m->m_flags, M_BCAST|M_MCAST);
 	SET(m->m_flags, M_PROTO1);
 
-	if (!ETHER_IS_MULTICAST(eh->ether_dhost)) {
+	if (!ETH64_IS_MULTICAST(dst)) {
 		struct veb_port *tp = NULL;
 
 		smr_read_enter();
-		tp = etherbridge_resolve(&sc->sc_eb,
-		    (struct ether_addr *)eh->ether_dhost);
+		tp = etherbridge_resolve(&sc->sc_eb, dst);
 		m = veb_transmit(sc, p, tp, m);
 		smr_read_leave();
 
@@ -1029,8 +1016,7 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, void *brport)
 
 		/* unknown unicast address */
 	} else {
-		SET(m->m_flags,
-		    ETHER_IS_BROADCAST(eh->ether_dhost) ? M_BCAST : M_MCAST);
+		SET(m->m_flags, ETH64_IS_BROADCAST(dst) ? M_BCAST : M_MCAST);
 	}
 
 	veb_broadcast(sc, p, m);

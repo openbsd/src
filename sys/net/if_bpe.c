@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bpe.c,v 1.17 2021/02/24 02:04:03 dlg Exp $ */
+/*	$OpenBSD: if_bpe.c,v 1.18 2021/02/26 01:28:51 dlg Exp $ */
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
  *
@@ -268,7 +268,7 @@ bpe_start(struct ifnet *ifp)
 			struct ether_addr *endpoint;
 
 			smr_read_enter();
-			endpoint = etherbridge_resolve(&sc->sc_eb,
+			endpoint = etherbridge_resolve_ea(&sc->sc_eb,
 			    (struct ether_addr *)ceh->ether_dhost);
 			if (endpoint == NULL) {
 				/* "flood" to unknown hosts */
@@ -763,7 +763,7 @@ bpe_input(struct ifnet *ifp0, struct mbuf *m)
 
 	ceh = (struct ether_header *)(itagp + 1);
 
-	etherbridge_map(&sc->sc_eb, ceh->ether_shost,
+	etherbridge_map_ea(&sc->sc_eb, ceh->ether_shost,
 	    (struct ether_addr *)beh->ether_shost);
 
 	m_adj(m, sizeof(*beh) + sizeof(*itagp));

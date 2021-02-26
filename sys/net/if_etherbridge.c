@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherbridge.c,v 1.3 2021/02/24 08:23:04 dlg Exp $ */
+/*	$OpenBSD: if_etherbridge.c,v 1.4 2021/02/26 01:28:51 dlg Exp $ */
 
 /*
  * Copyright (c) 2018, 2021 David Gwynne <dlg@openbsd.org>
@@ -156,20 +156,22 @@ etherbridge_destroy(struct etherbridge *eb)
 }
 
 static struct eb_list *
-etherbridge_list(struct etherbridge *eb, const struct ether_addr *ea)
+etherbridge_list(struct etherbridge *eb, uint64_t eba)
 {
-	uint16_t hash = stoeplitz_eaddr(ea->ether_addr_octet);
-	hash &= ETHERBRIDGE_TABLE_MASK;
+	uint16_t hash;
+
+	hash = stoeplitz_h64(eba) & ETHERBRIDGE_TABLE_MASK;
+
 	return (&eb->eb_table[hash]);
 }
 
 static struct eb_entry *
-ebl_find(struct eb_list *ebl, const struct ether_addr *ea)
+ebl_find(struct eb_list *ebl, uint64_t eba)
 {
 	struct eb_entry *ebe;
 
 	SMR_TAILQ_FOREACH(ebe, ebl, ebe_lentry) {
-		if (ETHER_IS_EQ(ea, &ebe->ebe_addr))
+		if (ebe->ebe_addr == eba)
 			return (ebe);
 	}
 
@@ -191,8 +193,11 @@ ebl_remove(struct eb_list *ebl, struct eb_entry *ebe)
 static inline int
 ebt_cmp(const struct eb_entry *aebe, const struct eb_entry *bebe)
 {
-	return (memcmp(&aebe->ebe_addr, &bebe->ebe_addr,
-	    sizeof(aebe->ebe_addr)));
+	if (aebe->ebe_addr > bebe->ebe_addr)
+		return (1);
+	if (aebe->ebe_addr < bebe->ebe_addr)
+		return (-1);
+	return (0);
 }
 
 RBT_GENERATE(eb_tree, eb_entry, ebe_tentry, ebt_cmp);
@@ -251,14 +256,21 @@ ebe_free(void *arg)
 }
 
 void *
-etherbridge_resolve(struct etherbridge *eb, const struct ether_addr *ea)
+etherbridge_resolve_ea(struct etherbridge *eb,
+    const struct ether_addr *ea)
 {
-	struct eb_list *ebl = etherbridge_list(eb, ea);
+	return (etherbridge_resolve(eb, ether_addr_to_e64(ea)));
+}
+
+void *
+etherbridge_resolve(struct etherbridge *eb, uint64_t eba)
+{
+	struct eb_list *ebl = etherbridge_list(eb, eba);
 	struct eb_entry *ebe;
 
 	SMR_ASSERT_CRITICAL();
 
-	ebe = ebl_find(ebl, ea);
+	ebe = ebl_find(ebl, eba);
 	if (ebe != NULL) {
 		if (ebe->ebe_type == EBE_DYNAMIC) {
 			int diff = getuptime() - ebe->ebe_age;
@@ -273,8 +285,14 @@ etherbridge_resolve(struct etherbridge *eb, const struct ether_addr *ea)
 }
 
 void
-etherbridge_map(struct etherbridge *eb, void *port,
+etherbridge_map_ea(struct etherbridge *eb, void *port,
     const struct ether_addr *ea)
+{
+	etherbridge_map(eb, port, ether_addr_to_e64(ea));
+}
+
+void
+etherbridge_map(struct etherbridge *eb, void *port, uint64_t eba)
 {
 	struct eb_list *ebl;
 	struct eb_entry *oebe, *nebe;
@@ -282,14 +300,13 @@ etherbridge_map(struct etherbridge *eb, void *port,
 	void *nport;
 	int new = 0;
 
-	if (ETHER_IS_MULTICAST(ea->ether_addr_octet) ||
-	    ETHER_IS_EQ(ea->ether_addr_octet, etheranyaddr))
+	if (ETH64_IS_MULTICAST(eba) || ETH64_IS_ANYADDR(eba))
 		return;
 
-	ebl = etherbridge_list(eb, ea);
+	ebl = etherbridge_list(eb, eba);
 
 	smr_read_enter();
-	oebe = ebl_find(ebl, ea);
+	oebe = ebl_find(ebl, eba);
 	if (oebe == NULL)
 		new = 1;
 	else {
@@ -325,7 +342,7 @@ etherbridge_map(struct etherbridge *eb, void *port,
 	refcnt_init(&nebe->ebe_refs);
 	nebe->ebe_etherbridge = eb;
 
-	nebe->ebe_addr = *ea;
+	nebe->ebe_addr = eba;
 	nebe->ebe_port = nport;
 	nebe->ebe_type = EBE_DYNAMIC;
 	nebe->ebe_age = getuptime();
@@ -374,14 +391,14 @@ int
 etherbridge_add_addr(struct etherbridge *eb, void *port,
     const struct ether_addr *ea, unsigned int type)
 {
+	uint64_t eba = ether_addr_to_e64(ea);
 	struct eb_list *ebl;
 	struct eb_entry *nebe;
 	unsigned int num;
 	void *nport;
 	int error = 0;
 
-	if (ETHER_IS_MULTICAST(ea->ether_addr_octet) ||
-	    ETHER_IS_EQ(ea->ether_addr_octet, etheranyaddr))
+	if (ETH64_IS_MULTICAST(eba) || ETH64_IS_ANYADDR(eba))
 		return (EADDRNOTAVAIL);
 
 	nport = eb_port_take(eb, port);
@@ -398,12 +415,12 @@ etherbridge_add_addr(struct etherbridge *eb, void *port,
 	refcnt_init(&nebe->ebe_refs);
 	nebe->ebe_etherbridge = eb;
 
-	nebe->ebe_addr = *ea;
+	nebe->ebe_addr = eba;
 	nebe->ebe_port = nport;
 	nebe->ebe_type = type;
 	nebe->ebe_age = getuptime();
 
-	ebl = etherbridge_list(eb, ea);
+	ebl = etherbridge_list(eb, eba);
 
 	mtx_enter(&eb->eb_lock);
 	num = eb->eb_num + 1;
@@ -431,14 +448,15 @@ etherbridge_add_addr(struct etherbridge *eb, void *port,
 int
 etherbridge_del_addr(struct etherbridge *eb, const struct ether_addr *ea)
 {
+	uint64_t eba = ether_addr_to_e64(ea);
 	struct eb_list *ebl;
 	struct eb_entry *oebe;
 	const struct eb_entry key = {
-		.ebe_addr = *ea,
+		.ebe_addr = eba,
 	};
 	int error = 0;
 
-	ebl = etherbridge_list(eb, ea);
+	ebl = etherbridge_list(eb, eba);
 
 	mtx_enter(&eb->eb_lock);
 	oebe = ebt_find(eb, &key);
@@ -607,8 +625,7 @@ etherbridge_rtfind(struct etherbridge *eb, struct ifbaconf *baconf)
 		eb_port_ifname(eb,
 		    bareq.ifba_ifsname, sizeof(bareq.ifba_ifsname),
 		    ebe->ebe_port);
-		memcpy(&bareq.ifba_dst, &ebe->ebe_addr,
-		    sizeof(bareq.ifba_dst));
+		ether_e64_to_addr(&bareq.ifba_dst, ebe->ebe_addr);
 
 		memset(&bareq.ifba_dstsa, 0, sizeof(bareq.ifba_dstsa));
 		eb_port_sa(eb, &bareq.ifba_dstsa, ebe->ebe_port);

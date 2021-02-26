@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.167 2021/02/24 03:20:48 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.168 2021/02/26 01:28:51 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -1363,7 +1363,7 @@ nvgre_input(const struct gre_tunnel *key, struct mbuf *m, int hlen,
 		return (0);
 
 	eh = mtod(m, struct ether_header *);
-	etherbridge_map(&sc->sc_eb, (void *)&key->t_dst,
+	etherbridge_map_ea(&sc->sc_eb, (void *)&key->t_dst,
 	    (struct ether_addr *)eh->ether_shost);
 
 	SET(m->m_pkthdr.csum_flags, M_FLOWID);
@@ -3658,7 +3658,7 @@ nvgre_start(struct ifnet *ifp)
 			const union gre_addr *endpoint;
 
 			smr_read_enter();
-			endpoint = etherbridge_resolve(&sc->sc_eb,
+			endpoint = etherbridge_resolve_ea(&sc->sc_eb,
 			    (struct ether_addr *)eh->ether_dhost);
 			if (endpoint == NULL) {
 				/* "flood" to unknown hosts */
