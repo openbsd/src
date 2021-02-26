@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.43 2021/02/25 23:59:54 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.44 2021/02/26 00:02:07 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -1554,10 +1554,10 @@ bwfm_pci_buscore_activate(struct bwfm_softc *bwfm, uint32_t rstvec)
 }
 
 static int bwfm_pci_prio2fifo[8] = {
-	1, /* best effort */
-	0, /* IPTOS_PREC_IMMEDIATE */
-	0, /* IPTOS_PREC_PRIORITY */
-	1, /* IPTOS_PREC_FLASH */
+	0, /* best effort */
+	1, /* IPTOS_PREC_IMMEDIATE */
+	1, /* IPTOS_PREC_PRIORITY */
+	0, /* IPTOS_PREC_FLASH */
 	2, /* IPTOS_PREC_FLASHOVERRIDE */
 	2, /* IPTOS_PREC_CRITIC_ECP */
 	3, /* IPTOS_PREC_INTERNETCONTROL */
