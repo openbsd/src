@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherbridge.c,v 1.4 2021/02/26 01:28:51 dlg Exp $ */
+/*	$OpenBSD: if_etherbridge.c,v 1.5 2021/02/26 08:31:23 dlg Exp $ */
 
 /*
  * Copyright (c) 2018, 2021 David Gwynne <dlg@openbsd.org>
@@ -299,10 +299,12 @@ etherbridge_map(struct etherbridge *eb, void *port, uint64_t eba)
 	unsigned int num;
 	void *nport;
 	int new = 0;
+	time_t now;
 
 	if (ETH64_IS_MULTICAST(eba) || ETH64_IS_ANYADDR(eba))
 		return;
 
+	now = getuptime();
 	ebl = etherbridge_list(eb, eba);
 
 	smr_read_enter();
@@ -310,7 +312,8 @@ etherbridge_map(struct etherbridge *eb, void *port, uint64_t eba)
 	if (oebe == NULL)
 		new = 1;
 	else {
-		oebe->ebe_age = getuptime();
+		if (oebe->ebe_age != now)
+			oebe->ebe_age = now;
 
 		/* does this entry need to be replaced? */
 		if (oebe->ebe_type == EBE_DYNAMIC &&
@@ -345,7 +348,7 @@ etherbridge_map(struct etherbridge *eb, void *port, uint64_t eba)
 	nebe->ebe_addr = eba;
 	nebe->ebe_port = nport;
 	nebe->ebe_type = EBE_DYNAMIC;
-	nebe->ebe_age = getuptime();
+	nebe->ebe_age = now;
 
 	mtx_enter(&eb->eb_lock);
 	num = eb->eb_num + (oebe == NULL);
