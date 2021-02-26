@@ -1,13 +1,13 @@
-#	$OpenBSD: Makefile,v 1.211 2020/09/12 17:55:10 semarie Exp $
+#	$OpenBSD: Makefile,v 1.212 2021/02/26 17:17:03 florian Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR=	ac accton acme-client acpidump adduser amd apm apmd arp \
 	authpf bgpctl bgpd btrace chroot config cron crunchgen dev_mkdb \
-	dhcpd dhcrelay dhcrelay6 dvmrpctl dvmrpd edquota eeprom eigrpd eigrpctl \
-	fdformat ftp-proxy gpioctl hostapd hostctl hotplugd httpd identd \
-	ifstated ikectl inetd installboot iostat iscsictl iscsid kgmon \
-	kvm_mkdb ldapd ldapctl ldomctl ldomd ldpd ldpctl lpr makefs \
+	dhcpd dhcpleasectl dhcrelay dhcrelay6 dvmrpctl dvmrpd edquota eeprom \
+	eigrpd eigrpctl fdformat ftp-proxy gpioctl hostapd hostctl hotplugd \
+	httpd identd ifstated ikectl inetd installboot iostat iscsictl iscsid \
+	kgmon kvm_mkdb ldapd ldapctl ldomctl ldomd ldpd ldpctl lpr makefs \
 	mailwrapper map-mbone memconfig mksuncd mkuboot mopd mrinfo \
 	mrouted mtrace mtree ndp netgroup_mkdb \
 	npppctl npppd nsd ntpd ocspcheck ospfctl ospfd ospf6d ospf6ctl \
