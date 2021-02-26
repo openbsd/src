@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.270 2021/02/06 13:15:37 bluhm Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.271 2021/02/26 01:12:37 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -995,4 +995,29 @@ ether_delmulti(struct ifreq *ifr, struct arpcom *ac)
 	 * and its reception filter should be adjusted accordingly.
 	 */
 	return (ENETRESET);
+}
+
+uint64_t
+ether_addr_to_e64(const struct ether_addr *ea)
+{
+	uint64_t e64 = 0;
+	size_t i;
+
+	for (i = 0; i < nitems(ea->ether_addr_octet); i++) {
+		e64 <<= 8;
+		e64 |= ea->ether_addr_octet[i];
+	}
+
+	return (e64);
+}
+
+void
+ether_e64_to_addr(struct ether_addr *ea, uint64_t e64)
+{
+	size_t i = nitems(ea->ether_addr_octet);
+
+	do {
+		ea->ether_addr_octet[--i] = e64;
+		e64 >>= 8;
+	} while (i > 0);
 }

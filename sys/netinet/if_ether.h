@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.78 2020/07/22 02:16:02 dlg Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.79 2021/02/26 01:12:37 dlg Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -116,6 +116,24 @@ struct  ether_vlan_header {
 	  (addr)[3] | (addr)[4] | (addr)[5]) == 0x00)
 #define	ETHER_IS_EQ(a1, a2)	(memcmp((a1), (a2), ETHER_ADDR_LEN) == 0)
 
+/*
+ * It can be faster to work with ethernet addresses as a uint64_t.
+ * Provide some constants and functionality centrally to better
+ * support this.
+ */
+
+#define ETH64_IS_MULTICAST(_e64)	((_e64) & 0x010000000000ULL)
+#define ETH64_IS_BROADCAST(_e64)	((_e64) == 0xffffffffffffULL)
+#define ETH64_IS_ANYADDR(_e64)		((_e64) == 0x000000000000ULL)
+
+#define ETH64_8021_RSVD_PREFIX		0x0180c2000000ULL
+#define ETH64_8021_RSVD_MASK		0xfffffffffff0ULL
+#define ETH64_IS_8021_RSVD(_e64)	\
+    (((_e64) & ETH64_8021_RSVD_MASK) == ETH64_8021_RSVD_PREFIX)
+
+/*
+ * Ethernet MTU constants.
+ */
 #define	ETHERMTU	(ETHER_MAX_LEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
 #define	ETHERMIN	(ETHER_MIN_LEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
 
@@ -271,6 +289,9 @@ const struct ether_brport *
 	ether_brport_get(struct ifnet *);
 const struct ether_brport *
 	ether_brport_get_locked(struct ifnet *);
+
+uint64_t	ether_addr_to_e64(const struct ether_addr *);
+void		ether_e64_to_addr(struct ether_addr *, uint64_t);
 
 /*
  * Ethernet multicast address structure.  There is one of these for each
