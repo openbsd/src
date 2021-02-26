@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmreg.h,v 1.20 2021/02/24 10:13:08 patrick Exp $ */
+/* $OpenBSD: bwfmreg.h,v 1.21 2021/02/26 12:33:59 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -89,6 +89,10 @@
 #define  BWFM_ARMCR4_BANKINFO_BSZ_MASK			0x3f
 #define  BWFM_ARMCR4_BANKINFO_BSZ_MULT			8192
 #define BWFM_ARMCR4_BANKPDA			0x004C
+
+/* GCI (OTP) registers */
+#define BWFM_OTP_SIZE				64
+#define BWFM_OTP_4378_BASE			0x1120
 
 /* SOCRAM registers */
 #define BWFM_SOCRAM_COREINFO			0x0000

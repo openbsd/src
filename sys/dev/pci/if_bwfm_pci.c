@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.50 2021/02/26 12:29:36 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.51 2021/02/26 12:33:59 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -26,6 +26,11 @@
 #include <sys/device.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
+
+#if defined(__HAVE_FDT)
+#include <machine/fdt.h>
+#include <dev/ofw/openfirm.h>
+#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -196,6 +201,12 @@ struct bwfm_pci_dmamem {
 int		 bwfm_pci_match(struct device *, void *, void *);
 void		 bwfm_pci_attach(struct device *, struct device *, void *);
 int		 bwfm_pci_detach(struct device *, int);
+
+#if defined(__HAVE_FDT)
+int		 bwfm_pci_read_otp(struct bwfm_pci_softc *);
+void		 bwfm_pci_process_otp_tuple(struct bwfm_pci_softc *, uint8_t,
+		    uint8_t, uint8_t *);
+#endif
 
 int		 bwfm_pci_intr(void *);
 void		 bwfm_pci_intr_enable(struct bwfm_pci_softc *);
@@ -409,6 +420,13 @@ bwfm_pci_preinit(struct bwfm_softc *bwfm)
 		printf("%s: cannot attach chip\n", DEVNAME(sc));
 		return 1;
 	}
+
+#if defined(__HAVE_FDT)
+	if (bwfm_pci_read_otp(sc)) {
+		printf("%s: cannot read OTP\n", DEVNAME(sc));
+		return 1;
+	}
+#endif
 
 	bwfm_pci_select_core(sc, BWFM_AGENT_CORE_PCIE2);
 	bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
@@ -806,6 +824,120 @@ bwfm_pci_detach(struct device *self, int flags)
 	bwfm_pci_dmamem_free(sc, sc->sc_dma_idx_buf);
 	return 0;
 }
+
+#if defined(__HAVE_FDT)
+int
+bwfm_pci_read_otp(struct bwfm_pci_softc *sc)
+{
+	struct bwfm_softc *bwfm = (void *)sc;
+	struct bwfm_core *core;
+	uint8_t otp[BWFM_OTP_SIZE];
+	int i;
+
+	if (bwfm->sc_chip.ch_chip != BRCM_CC_4378_CHIP_ID)
+		return 0;
+
+	core = bwfm_chip_get_core(bwfm, BWFM_AGENT_CORE_GCI);
+	if (core == NULL)
+		return 1;
+
+	for (i = 0; i < (sizeof(otp) / sizeof(uint32_t)); i++)
+		((uint32_t *)otp)[i] = bwfm_pci_buscore_read(bwfm,
+		    core->co_base + BWFM_OTP_4378_BASE + i * sizeof(uint32_t));
+
+	for (i = 0; i < BWFM_OTP_SIZE - 1; ) {
+		if (otp[i + 0] == 0) {
+			i++;
+			continue;
+		}
+		if (i + otp[i + 1] > BWFM_OTP_SIZE)
+			break;
+		bwfm_pci_process_otp_tuple(sc, otp[i + 0], otp[i + 1],
+		    &otp[i + 2]);
+		i += otp[i + 1];
+	}
+
+	return 0;
+}
+
+void
+bwfm_pci_process_otp_tuple(struct bwfm_pci_softc *sc, uint8_t type, uint8_t size,
+    uint8_t *data)
+{
+	struct bwfm_softc *bwfm = (void *)sc;
+	char chiprev[8] = "", module[8] = "", modrev[8] = "", vendor[8] = "", chip[8] = "";
+	char product[16] = "unknown";
+	int node, len;
+
+	switch (type) {
+	case 0x15: /* system vendor OTP */
+		DPRINTF(("%s: system vendor OTP\n", DEVNAME(sc)));
+		if (size < sizeof(uint32_t))
+			return;
+		if (data[0] != 0x08 || data[1] != 0x00 ||
+		    data[2] != 0x00 || data[3] != 0x00)
+			return;
+		size -= sizeof(uint32_t);
+		data += sizeof(uint32_t);
+		while (size) {
+			/* reached end */
+			if (data[0] == 0xff)
+				break;
+			for (len = 0; len < size; len++)
+				if (data[len] == 0x00 || data[len] == ' ' ||
+				    data[len] == 0xff)
+					break;
+			if (len < 3 || len > 9) /* X=abcdef */
+				goto next;
+			if (data[1] != '=')
+				goto next;
+			/* NULL-terminate string */
+			if (data[len] == ' ')
+				data[len] = '\0';
+			switch (data[0]) {
+			case 's':
+				strlcpy(chiprev, &data[2], sizeof(chiprev));
+				break;
+			case 'M':
+				strlcpy(module, &data[2], sizeof(module));
+				break;
+			case 'm':
+				strlcpy(modrev, &data[2], sizeof(modrev));
+				break;
+			case 'V':
+				strlcpy(vendor, &data[2], sizeof(vendor));
+				break;
+			}
+next:
+			/* skip content */
+			data += len;
+			size -= len;
+			/* skip spacer tag */
+			if (size) {
+				data++;
+				size--;
+			}
+		}
+		snprintf(chip, sizeof(chip),
+		    bwfm->sc_chip.ch_chip > 40000 ? "%05d" : "%04x",
+		    bwfm->sc_chip.ch_chip);
+		node = OF_finddevice("/chosen");
+		if (node != -1)
+			OF_getprop(node, "module-wlan0", product, sizeof(product));
+		printf("%s: firmware C-%s%s%s/P-%s_M-%s_V-%s__m-%s\n",
+		    DEVNAME(sc), chip,
+		    *chiprev ? "__s-" : "", *chiprev ? chiprev : "",
+		    product, module, vendor, modrev);
+		break;
+	case 0x80: /* Broadcom CIS */
+		DPRINTF(("%s: Broadcom CIS\n", DEVNAME(sc)));
+		break;
+	default:
+		DPRINTF(("%s: unknown OTP tuple\n", DEVNAME(sc)));
+		break;
+	}
+}
+#endif
 
 /* DMA code */
 struct bwfm_pci_dmamem *
