@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1956 2021/02/22 01:17:23 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1957 2021/02/26 10:36:45 jan Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
