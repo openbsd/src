@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.11 2021/02/26 01:42:47 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.12 2021/02/26 01:57:20 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -939,8 +939,27 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, void *brport)
 	dst = ether_addr_to_e64((struct ether_addr *)eh->ether_dhost);
 
 	/* Is this a MAC Bridge component Reserved address? */
-	if (ETH64_IS_8021_RSVD(dst))
-		goto drop;
+	if (ETH64_IS_8021_RSVD(dst)) {
+		if (!ISSET(ifp->if_flags, IFF_LINK0)) {
+			/*
+			 * letting vlans through implies this is
+			 * an s-vlan component.
+			 */
+			goto drop;
+		}
+
+		 /* look at the last nibble of the 802.1 reserved address */
+		switch (dst & 0xf) {
+		case 0x0: /* Nearest Customer Bridge Group Address */
+		case 0xb: /* EDE-SS PEP (IEEE Std 802.1AEcg) */
+		case 0xc: /* reserved */
+		case 0xd: /* Provider Bridge MVRP Address */
+		case 0xf: /* reserved */
+			break;
+		default:
+			goto drop;
+		}
+	}
 
 #if NVLAN > 0
 	/*
