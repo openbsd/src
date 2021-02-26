@@ -1,4 +1,4 @@
-/*	$OpenBSD: vroute.c,v 1.2 2021/02/21 14:21:37 tobhe Exp $	*/
+/*	$OpenBSD: vroute.c,v 1.3 2021/02/26 20:22:11 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2021 Tobias Heider <tobhe@openbsd.org>
@@ -285,18 +285,12 @@ vroute_getcloneroute(struct iked *env, struct imsg *imsg)
 	struct sockaddr_storage	 addr;
 	uint8_t			*ptr;
 	size_t			 left;
-	uint8_t			 af, rdomain;
+	uint8_t			 rdomain;
 	int			 flags;
 	int			 addrs;
 
 	ptr = (uint8_t *)imsg->data;
 	left = IMSG_DATA_SIZE(imsg);
-
-	if (left < sizeof(af))
-		return (-1);
-	af = *ptr;
-	ptr += sizeof(af);
-	left -= sizeof(af);
 
 	if (left < sizeof(rdomain))
 		return (-1);
@@ -308,26 +302,14 @@ vroute_getcloneroute(struct iked *env, struct imsg *imsg)
 	bzero(&mask, sizeof(mask));
 	bzero(&addr, sizeof(addr));
 
-	switch(af) {
-	case AF_INET:
-		if (left < sizeof(struct sockaddr_in))
-			return (-1);
-		dst = (struct sockaddr *)ptr;;
-		memcpy(&dest, ptr, sizeof(struct sockaddr_in));;
-		ptr += sizeof(struct sockaddr_in);
-		left -= sizeof(struct sockaddr_in);
-		break;
-	case AF_INET6:
-		if (left < sizeof(struct sockaddr_in6))
-			return (-1);
-		dst = (struct sockaddr *)ptr;;
-		memcpy(&dest, ptr, sizeof(struct sockaddr_in6));;
-		ptr += sizeof(struct sockaddr_in6);
-		left -= sizeof(struct sockaddr_in6);
-		break;
-	default:
+	if (left < sizeof(struct sockaddr))
 		return (-1);
-	}
+	dst = (struct sockaddr *)ptr;
+	if (left < dst->sa_len)
+		return (-1);
+	memcpy(&dest, ptr, dst->sa_len);
+	ptr += dst->sa_len;
+	left -= dst->sa_len;
 
 	/* Get route to peer */
 	flags = RTF_UP | RTF_GATEWAY | RTF_HOST | RTF_STATIC;
