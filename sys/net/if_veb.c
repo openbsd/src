@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.10 2021/02/26 01:28:51 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.11 2021/02/26 01:42:47 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -93,8 +93,8 @@ struct veb_rule {
 #define VEB_R_F_TPA				(1U << 9)
 	uint16_t			 vr_arp_op;
 
-	struct ether_addr		 vr_src;
-	struct ether_addr		 vr_dst;
+	uint64_t			 vr_src;
+	uint64_t			 vr_dst;
 	struct ether_addr		 vr_arp_sha;
 	struct ether_addr		 vr_arp_tha;
 	struct in_addr			 vr_arp_spa;
@@ -453,10 +453,9 @@ veb_rule_arp_match(const struct veb_rule *vr, struct mbuf *m)
 }
 
 static int
-veb_rule_list_test(struct veb_rule *vr, int dir, struct mbuf *m)
+veb_rule_list_test(struct veb_rule *vr, int dir, struct mbuf *m,
+    uint64_t src, uint64_t dst)
 {
-	struct ether_header *eh = mtod(m, struct ether_header *);
-
 	SMR_ASSERT_CRITICAL();
 
 	do {
@@ -465,10 +464,10 @@ veb_rule_list_test(struct veb_rule *vr, int dir, struct mbuf *m)
 			continue;
 
 		if (ISSET(vr->vr_flags, VEB_R_F_SRC) &&
-		    !ETHER_IS_EQ(&vr->vr_src, eh->ether_shost))
+		    vr->vr_src != src)
 			continue;
 		if (ISSET(vr->vr_flags, VEB_R_F_DST) &&
-		    !ETHER_IS_EQ(&vr->vr_dst, eh->ether_dhost))
+		    vr->vr_dst != dst)
 			continue;
 
 		if (vr->vr_action == VEB_R_BLOCK)
@@ -484,7 +483,8 @@ veb_rule_list_test(struct veb_rule *vr, int dir, struct mbuf *m)
 }
 
 static inline int
-veb_rule_filter(struct veb_port *p, int dir, struct mbuf *m)
+veb_rule_filter(struct veb_port *p, int dir, struct mbuf *m,
+    uint64_t src, uint64_t dst)
 {
 	struct veb_rule *vr;
 
@@ -492,7 +492,7 @@ veb_rule_filter(struct veb_port *p, int dir, struct mbuf *m)
 	if (vr == NULL)
 		return (0);
 
-	return (veb_rule_list_test(vr, dir, m) == VEB_R_BLOCK);
+	return (veb_rule_list_test(vr, dir, m, src, dst) == VEB_R_BLOCK);
 }
 
 #if NPF > 0
@@ -800,7 +800,8 @@ veb_ipsec_out(struct ifnet *ifp0, struct mbuf *m)
 #endif /* IPSEC */
 
 static void
-veb_broadcast(struct veb_softc *sc, struct veb_port *rp, struct mbuf *m0)
+veb_broadcast(struct veb_softc *sc, struct veb_port *rp, struct mbuf *m0,
+    uint64_t src, uint64_t dst)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	struct veb_port *tp;
@@ -851,7 +852,7 @@ veb_broadcast(struct veb_softc *sc, struct veb_port *rp, struct mbuf *m0)
 			continue;
 		}
 
-		if (veb_rule_filter(tp, VEB_RULE_LIST_OUT, m0))
+		if (veb_rule_filter(tp, VEB_RULE_LIST_OUT, m0, src, dst))
 			continue;
 
 		m = m_dup_pkt(m0, max_linkhdr + ETHER_ALIGN, M_NOWAIT);
@@ -869,7 +870,7 @@ veb_broadcast(struct veb_softc *sc, struct veb_port *rp, struct mbuf *m0)
 
 static struct mbuf *
 veb_transmit(struct veb_softc *sc, struct veb_port *rp, struct veb_port *tp,
-    struct mbuf *m)
+    struct mbuf *m, uint64_t src, uint64_t dst)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	struct ifnet *ifp0;
@@ -885,7 +886,7 @@ veb_transmit(struct veb_softc *sc, struct veb_port *rp, struct veb_port *tp,
 		goto drop;
 	}
 
-	if (veb_rule_filter(tp, VEB_RULE_LIST_OUT, m))
+	if (veb_rule_filter(tp, VEB_RULE_LIST_OUT, m, src, dst))
 		goto drop;
 
 	ifp0 = tp->p_ifp0;
@@ -920,7 +921,7 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, void *brport)
 	struct veb_softc *sc = p->p_veb;
 	struct ifnet *ifp = &sc->sc_if;
 	struct ether_header *eh;
-	uint64_t dst;
+	uint64_t src, dst;
 #if NBPFILTER > 0
 	caddr_t if_bpf;
 #endif
@@ -934,6 +935,7 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, void *brport)
 		return (m);
 
 	eh = mtod(m, struct ether_header *);
+	src = ether_addr_to_e64((struct ether_addr *)eh->ether_shost);
 	dst = ether_addr_to_e64((struct ether_addr *)eh->ether_dhost);
 
 	/* Is this a MAC Bridge component Reserved address? */
@@ -978,7 +980,7 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, void *brport)
 	    veb_vlan_filter(m))
 		goto drop;
 
-	if (veb_rule_filter(p, VEB_RULE_LIST_IN, m))
+	if (veb_rule_filter(p, VEB_RULE_LIST_IN, m, src, dst))
 		goto drop;
 
 #if NPF > 0
@@ -995,10 +997,8 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, void *brport)
 
 	eh = mtod(m, struct ether_header *);
 
-	if (ISSET(p->p_bif_flags, IFBIF_LEARNING)) {
-		etherbridge_map_ea(&sc->sc_eb, p,
-		    (struct ether_addr *)eh->ether_shost);
-	}
+	if (ISSET(p->p_bif_flags, IFBIF_LEARNING))
+		etherbridge_map(&sc->sc_eb, p, src);
 
 	CLR(m->m_flags, M_BCAST|M_MCAST);
 	SET(m->m_flags, M_PROTO1);
@@ -1008,7 +1008,7 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, void *brport)
 
 		smr_read_enter();
 		tp = etherbridge_resolve(&sc->sc_eb, dst);
-		m = veb_transmit(sc, p, tp, m);
+		m = veb_transmit(sc, p, tp, m, src, dst);
 		smr_read_leave();
 
 		if (m == NULL)
@@ -1019,7 +1019,7 @@ veb_port_input(struct ifnet *ifp0, struct mbuf *m, void *brport)
 		SET(m->m_flags, ETH64_IS_BROADCAST(dst) ? M_BCAST : M_MCAST);
 	}
 
-	veb_broadcast(sc, p, m);
+	veb_broadcast(sc, p, m, src, dst);
 	return (NULL);
 
 drop:
@@ -1378,11 +1378,11 @@ veb_rule_add(struct veb_softc *sc, const struct ifbrlreq *ifbr)
 
 	if (ISSET(ifbr->ifbr_flags, BRL_FLAG_SRCVALID)) {
 		SET(vr.vr_flags, VEB_R_F_SRC);
-		vr.vr_src = ifbr->ifbr_src;
+		vr.vr_src = ether_addr_to_e64(&ifbr->ifbr_src);
 	}
 	if (ISSET(ifbr->ifbr_flags, BRL_FLAG_DSTVALID)) {
 		SET(vr.vr_flags, VEB_R_F_DST);
-		vr.vr_dst = ifbr->ifbr_dst;
+		vr.vr_dst = ether_addr_to_e64(&ifbr->ifbr_dst);
 	}
 
 	/* ARP rule */
@@ -1532,11 +1532,11 @@ veb_rule2ifbr(struct ifbrlreq *ifbr, const struct veb_rule *vr)
 
 	if (ISSET(vr->vr_flags, VEB_R_F_SRC)) {
 		SET(ifbr->ifbr_flags, BRL_FLAG_SRCVALID);
-		ifbr->ifbr_src = vr->vr_src;
+		ether_e64_to_addr(&ifbr->ifbr_src, vr->vr_src);
 	}
 	if (ISSET(vr->vr_flags, VEB_R_F_DST)) {
 		SET(ifbr->ifbr_flags, BRL_FLAG_DSTVALID);
-		ifbr->ifbr_dst = vr->vr_dst;
+		ether_e64_to_addr(&ifbr->ifbr_dst, vr->vr_dst);
 	}
 
 	/* ARP rule */
