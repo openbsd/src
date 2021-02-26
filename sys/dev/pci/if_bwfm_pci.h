@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.h,v 1.4 2021/02/26 00:14:28 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.h,v 1.5 2021/02/26 00:19:41 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -122,6 +122,7 @@ struct bwfm_pci_ringinfo {
 #define MSGBUF_IOCTL_RESP_TIMEOUT		2000 /* msecs */
 #define MSGBUF_IOCTL_REQ_PKTID			0xFFFE
 #define MSGBUF_MAX_PKT_SIZE			2048
+#define MSGBUF_MAX_CTL_PKT_SIZE			8192
 
 #define MSGBUF_TYPE_GEN_STATUS			0x1
 #define MSGBUF_TYPE_RING_STATUS			0x2

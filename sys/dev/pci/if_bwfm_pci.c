@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.46 2021/02/26 00:14:28 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.47 2021/02/26 00:19:41 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -651,8 +651,8 @@ bwfm_pci_preinit(struct bwfm_softc *bwfm)
 	sc->sc_rx_pkts.pkts = malloc(BWFM_NUM_RX_PKTIDS *
 	    sizeof(struct bwfm_pci_buf), M_DEVBUF, M_WAITOK | M_ZERO);
 	for (i = 0; i < BWFM_NUM_RX_PKTIDS; i++)
-		bus_dmamap_create(sc->sc_dmat, MSGBUF_MAX_PKT_SIZE,
-		    BWFM_NUM_RX_DESCS, MSGBUF_MAX_PKT_SIZE, 0, BUS_DMA_WAITOK,
+		bus_dmamap_create(sc->sc_dmat, MSGBUF_MAX_CTL_PKT_SIZE,
+		    BWFM_NUM_RX_DESCS, MSGBUF_MAX_CTL_PKT_SIZE, 0, BUS_DMA_WAITOK,
 		    &sc->sc_rx_pkts.pkts[i].bb_map);
 
 	/* Maps TX mbufs to a packet id and back. */
@@ -953,12 +953,12 @@ bwfm_pci_fill_rx_ioctl_ring(struct bwfm_pci_softc *sc, struct if_rxring *rxring,
 		req = bwfm_pci_ring_write_reserve(sc, &sc->sc_ctrl_submit);
 		if (req == NULL)
 			break;
-		m = MCLGETL(NULL, M_DONTWAIT, MSGBUF_MAX_PKT_SIZE);
+		m = MCLGETL(NULL, M_DONTWAIT, MSGBUF_MAX_CTL_PKT_SIZE);
 		if (m == NULL) {
 			bwfm_pci_ring_write_cancel(sc, &sc->sc_ctrl_submit, 1);
 			break;
 		}
-		m->m_len = m->m_pkthdr.len = MSGBUF_MAX_PKT_SIZE;
+		m->m_len = m->m_pkthdr.len = MSGBUF_MAX_CTL_PKT_SIZE;
 		if (bwfm_pci_pktid_new(sc, &sc->sc_rx_pkts, m, &pktid, &paddr)) {
 			bwfm_pci_ring_write_cancel(sc, &sc->sc_ctrl_submit, 1);
 			m_freem(m);
@@ -967,7 +967,7 @@ bwfm_pci_fill_rx_ioctl_ring(struct bwfm_pci_softc *sc, struct if_rxring *rxring,
 		memset(req, 0, sizeof(*req));
 		req->msg.msgtype = msgtype;
 		req->msg.request_id = htole32(pktid);
-		req->host_buf_len = htole16(MSGBUF_MAX_PKT_SIZE);
+		req->host_buf_len = htole16(MSGBUF_MAX_CTL_PKT_SIZE);
 		req->host_buf_addr.high_addr = htole32((uint64_t)paddr >> 32);
 		req->host_buf_addr.low_addr = htole32(paddr & 0xffffffff);
 		bwfm_pci_ring_write_commit(sc, &sc->sc_ctrl_submit);
