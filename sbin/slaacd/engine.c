@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.59 2021/01/19 16:49:56 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.60 2021/02/26 02:28:50 jsg Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -310,17 +310,11 @@ void			 rdns_proposal_timeout(int, short, void *);
 #endif	/* SMALL */
 void			 iface_timeout(int, short, void *);
 struct radv		*find_ra(struct slaacd_iface *, struct sockaddr_in6 *);
-struct address_proposal	*find_address_proposal_by_id(struct slaacd_iface *,
-			     int64_t);
 struct address_proposal	*find_address_proposal_by_addr(struct slaacd_iface *,
 			     struct sockaddr_in6 *);
-struct dfr_proposal	*find_dfr_proposal_by_id(struct slaacd_iface *,
-			     int64_t);
 struct dfr_proposal	*find_dfr_proposal_by_gw(struct slaacd_iface *,
 			     struct sockaddr_in6 *);
 #ifndef	SMALL
-struct rdns_proposal	*find_rdns_proposal_by_id(struct slaacd_iface *,
-			     int64_t);
 struct rdns_proposal	*find_rdns_proposal_by_gw(struct slaacd_iface *,
 			     struct sockaddr_in6 *);
 #endif	/* SMALL */
@@ -2595,19 +2589,6 @@ find_ra(struct slaacd_iface *iface, struct sockaddr_in6 *from)
 }
 
 struct address_proposal*
-find_address_proposal_by_id(struct slaacd_iface *iface, int64_t id)
-{
-	struct address_proposal	*addr_proposal;
-
-	LIST_FOREACH (addr_proposal, &iface->addr_proposals, entries) {
-		if (addr_proposal->id == id)
-			return (addr_proposal);
-	}
-
-	return (NULL);
-}
-
-struct address_proposal*
 find_address_proposal_by_addr(struct slaacd_iface *iface, struct sockaddr_in6
     *addr)
 {
@@ -2616,19 +2597,6 @@ find_address_proposal_by_addr(struct slaacd_iface *iface, struct sockaddr_in6
 	LIST_FOREACH (addr_proposal, &iface->addr_proposals, entries) {
 		if (memcmp(&addr_proposal->addr, addr, sizeof(*addr)) == 0)
 			return (addr_proposal);
-	}
-
-	return (NULL);
-}
-
-struct dfr_proposal*
-find_dfr_proposal_by_id(struct slaacd_iface *iface, int64_t id)
-{
-	struct dfr_proposal	*dfr_proposal;
-
-	LIST_FOREACH (dfr_proposal, &iface->dfr_proposals, entries) {
-		if (dfr_proposal->id == id)
-			return (dfr_proposal);
 	}
 
 	return (NULL);
@@ -2649,19 +2617,6 @@ find_dfr_proposal_by_gw(struct slaacd_iface *iface, struct sockaddr_in6
 }
 
 #ifndef	SMALL
-struct rdns_proposal*
-find_rdns_proposal_by_id(struct slaacd_iface *iface, int64_t id)
-{
-	struct rdns_proposal	*rdns_proposal;
-
-	LIST_FOREACH (rdns_proposal, &iface->rdns_proposals, entries) {
-		if (rdns_proposal->id == id)
-			return (rdns_proposal);
-	}
-
-	return (NULL);
-}
-
 struct rdns_proposal*
 find_rdns_proposal_by_gw(struct slaacd_iface *iface, struct sockaddr_in6
     *from)
