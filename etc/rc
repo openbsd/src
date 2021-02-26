@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.546 2021/02/26 17:18:41 florian Exp $
+#	$OpenBSD: rc,v 1.547 2021/02/26 18:29:16 kn Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -454,7 +454,7 @@ sh /etc/netstart
 mount -s /usr >/dev/null 2>&1
 mount -s /var >/dev/null 2>&1
 
-start_daemon unwind >/dev/null 2>&1
+start_daemon unwind resolvd >/dev/null 2>&1
 
 # Load pf rules and bring up pfsync interface.
 if [[ $pf != NO ]]; then
