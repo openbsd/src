@@ -145,6 +145,7 @@
 ./etc/rc.d/bootparamd
 ./etc/rc.d/cron
 ./etc/rc.d/dhcpd
+./etc/rc.d/dhcpleased
 ./etc/rc.d/dhcrelay
 ./etc/rc.d/dhcrelay6
 ./etc/rc.d/dvmrpd
@@ -253,6 +254,7 @@
 ./sbin/chown
 ./sbin/clri
 ./sbin/dhclient
+./sbin/dhcpleased
 ./sbin/disklabel
 ./sbin/dmesg
 ./sbin/dump
@@ -2506,6 +2508,7 @@
 ./usr/sbin/cryptoinit
 ./usr/sbin/dev_mkdb
 ./usr/sbin/dhcpd
+./usr/sbin/dhcpleasectl
 ./usr/sbin/dhcrelay
 ./usr/sbin/dhcrelay6
 ./usr/sbin/dvmrpctl
@@ -6261,6 +6264,7 @@
 ./var/cron/tabs
 ./var/db
 ./var/db/acpi
+./var/db/dhcpleased
 ./var/db/ldap
 ./var/db/ns
 ./var/db/pkg
