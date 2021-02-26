@@ -13292,6 +13292,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "I225",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X710_10G_T,
+	    "X710 10GBaseT",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE5G_H_PCIE_X16,
 	    "Core 5G PCIE",
 	},

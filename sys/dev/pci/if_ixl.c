@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.72 2021/01/25 11:11:22 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.73 2021/02/26 10:36:45 jan Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1622,6 +1622,7 @@ static const struct ixl_device ixl_devices[] = {
 	{ &ixl_710, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X710_T4_10G },
 	{ &ixl_710, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XXV710_25G_BP },
 	{ &ixl_710, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XXV710_25G_SFP28, },
+	{ &ixl_710, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X710_10G_T, },
 	{ &ixl_722, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X722_10G_KX },
 	{ &ixl_722, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X722_10G_QSFP },
 	{ &ixl_722, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X722_10G_SFP_1 },
