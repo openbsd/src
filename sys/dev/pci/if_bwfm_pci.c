@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.48 2021/02/26 11:22:10 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.49 2021/02/26 12:28:45 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -200,6 +200,8 @@ int		 bwfm_pci_detach(struct device *, int);
 int		 bwfm_pci_intr(void *);
 void		 bwfm_pci_intr_enable(struct bwfm_pci_softc *);
 void		 bwfm_pci_intr_disable(struct bwfm_pci_softc *);
+uint32_t	 bwfm_pci_intr_status(struct bwfm_pci_softc *);
+void		 bwfm_pci_intr_ack(struct bwfm_pci_softc *, uint32_t);
 void		 bwfm_pci_hostready(struct bwfm_pci_softc *);
 int		 bwfm_pci_load_microcode(struct bwfm_pci_softc *, const u_char *,
 		    size_t, const u_char *, size_t);
@@ -1067,8 +1069,14 @@ void
 bwfm_pci_ring_bell(struct bwfm_pci_softc *sc,
     struct bwfm_pci_msgring *ring)
 {
-	bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
-	    BWFM_PCI_PCIE2REG_H2D_MAILBOX_0, 1);
+	struct bwfm_softc *bwfm = (void *)sc;
+
+	if (bwfm->sc_chip.ch_chip == BRCM_CC_4378_CHIP_ID)
+		bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+		    BWFM_PCI_64_PCIE2REG_H2D_MAILBOX_0, 1);
+	else
+		bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+		    BWFM_PCI_PCIE2REG_H2D_MAILBOX_0, 1);
 }
 
 void
@@ -1516,11 +1524,9 @@ bwfm_pci_buscore_reset(struct bwfm_softc *bwfm)
 		}
 	}
 
-	reg = bus_space_read_4(sc->sc_reg_iot, sc->sc_reg_ioh,
-	    BWFM_PCI_PCIE2REG_MAILBOXINT);
+	reg = bwfm_pci_intr_status(sc);
 	if (reg != 0xffffffff)
-		bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
-		    BWFM_PCI_PCIE2REG_MAILBOXINT, reg);
+		bwfm_pci_intr_ack(sc, reg);
 
 	return 0;
 }
@@ -1884,23 +1890,34 @@ int
 bwfm_pci_intr(void *v)
 {
 	struct bwfm_pci_softc *sc = (void *)v;
+	struct bwfm_softc *bwfm = (void *)sc;
 	struct ifnet *ifp = &sc->sc_sc.sc_ic.ic_if;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
-	uint32_t status;
+	uint32_t status, mask;
 
-	if ((status = bus_space_read_4(sc->sc_reg_iot, sc->sc_reg_ioh,
-	    BWFM_PCI_PCIE2REG_MAILBOXINT)) == 0)
+	if (!sc->sc_initialized)
+		return 0;
+
+	status = bwfm_pci_intr_status(sc);
+	/* FIXME: interrupt status seems to be zero? */
+	if (status == 0 && bwfm->sc_chip.ch_chip == BRCM_CC_4378_CHIP_ID)
+		status |= BWFM_PCI_64_PCIE2REG_MAILBOXMASK_INT_D2H_DB;
+	if (status == 0)
 		return 0;
 
 	bwfm_pci_intr_disable(sc);
-	bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
-	    BWFM_PCI_PCIE2REG_MAILBOXINT, status);
+	bwfm_pci_intr_ack(sc, status);
 
-	if (status & (BWFM_PCI_PCIE2REG_MAILBOXMASK_INT_FN0_0 |
-	    BWFM_PCI_PCIE2REG_MAILBOXMASK_INT_FN0_1))
+	if (bwfm->sc_chip.ch_chip != BRCM_CC_4378_CHIP_ID &&
+	    (status & (BWFM_PCI_PCIE2REG_MAILBOXMASK_INT_FN0_0 |
+	    BWFM_PCI_PCIE2REG_MAILBOXMASK_INT_FN0_1)))
 		printf("%s: handle MB data\n", __func__);
 
-	if (status & BWFM_PCI_PCIE2REG_MAILBOXMASK_INT_D2H_DB) {
+	mask = BWFM_PCI_PCIE2REG_MAILBOXMASK_INT_D2H_DB;
+	if (bwfm->sc_chip.ch_chip == BRCM_CC_4378_CHIP_ID)
+		mask = BWFM_PCI_64_PCIE2REG_MAILBOXMASK_INT_D2H_DB;
+
+	if (status & mask) {
 		bwfm_pci_ring_rx(sc, &sc->sc_rx_complete, &ml);
 		bwfm_pci_ring_rx(sc, &sc->sc_tx_complete, &ml);
 		bwfm_pci_ring_rx(sc, &sc->sc_ctrl_complete, &ml);
@@ -1920,28 +1937,73 @@ bwfm_pci_intr(void *v)
 void
 bwfm_pci_intr_enable(struct bwfm_pci_softc *sc)
 {
-	bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
-	    BWFM_PCI_PCIE2REG_MAILBOXMASK,
-	    BWFM_PCI_PCIE2REG_MAILBOXMASK_INT_FN0_0 |
-	    BWFM_PCI_PCIE2REG_MAILBOXMASK_INT_FN0_1 |
-	    BWFM_PCI_PCIE2REG_MAILBOXMASK_INT_D2H_DB);
+	struct bwfm_softc *bwfm = (void *)sc;
+
+	if (bwfm->sc_chip.ch_chip == BRCM_CC_4378_CHIP_ID)
+		bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+		    BWFM_PCI_64_PCIE2REG_MAILBOXMASK,
+		    BWFM_PCI_64_PCIE2REG_MAILBOXMASK_INT_D2H_DB);
+	else
+		bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+		    BWFM_PCI_PCIE2REG_MAILBOXMASK,
+		    BWFM_PCI_PCIE2REG_MAILBOXMASK_INT_FN0_0 |
+		    BWFM_PCI_PCIE2REG_MAILBOXMASK_INT_FN0_1 |
+		    BWFM_PCI_PCIE2REG_MAILBOXMASK_INT_D2H_DB);
 }
 
 void
 bwfm_pci_intr_disable(struct bwfm_pci_softc *sc)
 {
-	bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
-	    BWFM_PCI_PCIE2REG_MAILBOXMASK, 0);
+	struct bwfm_softc *bwfm = (void *)sc;
+
+	if (bwfm->sc_chip.ch_chip == BRCM_CC_4378_CHIP_ID)
+		bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+		    BWFM_PCI_64_PCIE2REG_MAILBOXMASK, 0);
+	else
+		bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+		    BWFM_PCI_PCIE2REG_MAILBOXMASK, 0);
+}
+
+uint32_t
+bwfm_pci_intr_status(struct bwfm_pci_softc *sc)
+{
+	struct bwfm_softc *bwfm = (void *)sc;
+
+	if (bwfm->sc_chip.ch_chip == BRCM_CC_4378_CHIP_ID)
+		return bus_space_read_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+		    BWFM_PCI_64_PCIE2REG_MAILBOXINT);
+	else
+		return bus_space_read_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+		    BWFM_PCI_PCIE2REG_MAILBOXINT);
+}
+
+void
+bwfm_pci_intr_ack(struct bwfm_pci_softc *sc, uint32_t status)
+{
+	struct bwfm_softc *bwfm = (void *)sc;
+
+	if (bwfm->sc_chip.ch_chip == BRCM_CC_4378_CHIP_ID)
+		bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+		    BWFM_PCI_64_PCIE2REG_MAILBOXINT, status);
+	else
+		bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+		    BWFM_PCI_PCIE2REG_MAILBOXINT, status);
 }
 
 void
 bwfm_pci_hostready(struct bwfm_pci_softc *sc)
 {
+	struct bwfm_softc *bwfm = (void *)sc;
+
 	if ((sc->sc_shared_flags & BWFM_SHARED_INFO_HOSTRDY_DB1) == 0)
 		return;
 
-	bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
-	    BWFM_PCI_PCIE2REG_H2D_MAILBOX_1, 1);
+	if (bwfm->sc_chip.ch_chip == BRCM_CC_4378_CHIP_ID)
+		bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+		    BWFM_PCI_64_PCIE2REG_H2D_MAILBOX_1, 1);
+	else
+		bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+		    BWFM_PCI_PCIE2REG_H2D_MAILBOX_1, 1);
 }
 
 /* Msgbuf protocol implementation */
