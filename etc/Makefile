@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.480 2020/09/13 11:29:52 ajacoutot Exp $
+#	$OpenBSD: Makefile,v 1.481 2021/02/26 17:18:41 florian Exp $
 
 .include <bsd.own.mk>
 
@@ -58,9 +58,9 @@ EXAMPLES_600=bgpd.conf doas.conf dvmrpd.conf eigrpd.conf hostapd.conf \
 	snmpd.conf vm.conf ypldap.conf
 
 # -r-xr-xr-x
-RCDAEMONS=amd apmd bgpd bootparamd cron dhcpd dhcrelay dhcrelay6 dvmrpd \
-	eigrpd ftpd ftpproxy ftpproxy6 hostapd hotplugd httpd identd ifstated \
-	iked inetd isakmpd iscsid ldapd ldattach ldomd ldpd lockd \
+RCDAEMONS=amd apmd bgpd bootparamd cron dhcpd dhcpleased dhcrelay dhcrelay6 \
+	dvmrpd eigrpd ftpd ftpproxy ftpproxy6 hostapd hotplugd httpd identd \
+	ifstated iked inetd isakmpd iscsid ldapd ldattach ldomd ldpd lockd \
 	lpd mopd mountd mrouted nfsd npppd nsd ntpd ospf6d ospfd \
 	pflogd portmap rad radiusd rarpd rbootd relayd ripd route6d \
 	sasyncd sensorsd slowcgi slaacd smtpd sndiod snmpd spamd \

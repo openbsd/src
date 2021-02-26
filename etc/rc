@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.545 2021/02/09 21:42:04 naddy Exp $
+#	$OpenBSD: rc,v 1.546 2021/02/26 17:18:41 florian Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -441,7 +441,7 @@ fill_baddynamic tcp
 
 sysctl_conf
 
-start_daemon slaacd >/dev/null 2>&1
+start_daemon dhcpleased slaacd >/dev/null 2>&1
 
 echo 'starting network'
 
