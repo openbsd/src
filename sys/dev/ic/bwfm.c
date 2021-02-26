@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.82 2021/02/25 23:55:41 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.83 2021/02/26 00:07:41 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -27,6 +27,11 @@
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
+
+#if defined(__HAVE_FDT)
+#include <machine/fdt.h>
+#include <dev/ofw/openfirm.h>
+#endif
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -2900,4 +2905,116 @@ out:
 	free(sc->sc_clm, M_DEVBUF, sc->sc_clmsize);
 	sc->sc_clm = NULL;
 	sc->sc_clmsize = 0;
+}
+
+#if defined(__HAVE_FDT)
+const char *
+bwfm_sysname(void)
+{
+	static char sysfw[128];
+	int len;
+	char *p;
+
+	len = OF_getprop(OF_peer(0), "compatible", sysfw, sizeof(sysfw));
+	if (len > 0 && len < sizeof(sysfw)) {
+		sysfw[len] = '\0';
+		if ((p = strchr(sysfw, '/')) != NULL)
+			*p = '\0';
+		return sysfw;
+	}
+	return NULL;
+}
+#else
+const char *
+bwfm_sysname(void)
+{
+	return NULL;
+}
+#endif
+
+int
+bwfm_loadfirmware(struct bwfm_softc *sc, const char *chip, const char *bus,
+    u_char **ucode, size_t *size, u_char **nvram, size_t *nvsize, size_t *nvlen)
+{
+	const char *sysname = NULL;
+	char name[128];
+	int r;
+
+	*ucode = *nvram = NULL;
+	*size = *nvsize = *nvlen = 0;
+
+	sysname = bwfm_sysname();
+
+	if (sysname != NULL) {
+		r = snprintf(name, sizeof(name), "brcmfmac%s%s.%s.bin", chip,
+		    bus, sysname);
+		if ((r > 0 && r < sizeof(name)) &&
+		    loadfirmware(name, ucode, size) != 0)
+			*size = 0;
+	}
+	if (*size == 0) {
+		snprintf(name, sizeof(name), "brcmfmac%s%s.bin", chip, bus);
+		if (loadfirmware(name, ucode, size) != 0) {
+			printf("%s: failed loadfirmware of file %s\n",
+			    DEVNAME(sc), name);
+			return 1;
+		}
+	}
+
+	/* .txt needs to be processed first */
+	if (sysname != NULL) {
+		r = snprintf(name, sizeof(name), "brcmfmac%s%s.%s.txt", chip,
+		    bus, sysname);
+		if ((r > 0 && r < sizeof(name)) &&
+		    loadfirmware(name, nvram, nvsize) == 0) {
+			if (bwfm_nvram_convert(*nvram, *nvsize, nvlen) != 0) {
+				printf("%s: failed to process file %s\n",
+				    DEVNAME(sc), name);
+				free(*ucode, M_DEVBUF, *size);
+				free(*nvram, M_DEVBUF, *nvsize);
+				return 1;
+			}
+		}
+	}
+
+	if (*nvlen == 0) {
+		snprintf(name, sizeof(name), "brcmfmac%s%s.txt", chip, bus);
+		if (loadfirmware(name, nvram, nvsize) == 0) {
+			if (bwfm_nvram_convert(*nvram, *nvsize, nvlen) != 0) {
+				printf("%s: failed to process file %s\n",
+				    DEVNAME(sc), name);
+				free(*ucode, M_DEVBUF, *size);
+				free(*nvram, M_DEVBUF, *nvsize);
+				return 1;
+			}
+		}
+	}
+
+	/* .nvram is the pre-processed version */
+	if (*nvlen == 0) {
+		snprintf(name, sizeof(name), "brcmfmac%s%s.nvram", chip, bus);
+		if (loadfirmware(name, nvram, nvsize) == 0)
+			*nvlen = *nvsize;
+	}
+
+	if (*nvlen == 0 && strcmp(bus, "-sdio") == 0) {
+		snprintf(name, sizeof(name), "brcmfmac%s%s.txt", chip, bus);
+		printf("%s: failed loadfirmware of file %s\n",
+		    DEVNAME(sc), name);
+		free(*ucode, M_DEVBUF, *size);
+		return 1;
+	}
+
+	if (sysname != NULL) {
+		r = snprintf(name, sizeof(name), "brcmfmac%s%s.%s.clm_blob",
+		    chip, bus, sysname);
+		if (r > 0 && r < sizeof(name))
+			loadfirmware(name, &sc->sc_clm, &sc->sc_clmsize);
+	}
+	if (sc->sc_clmsize == 0) {
+		snprintf(name, sizeof(name), "brcmfmac%s%s.clm_blob", chip, bus);
+		loadfirmware(name, &sc->sc_clm, &sc->sc_clmsize);
+	}
+
+	return 0;
 }

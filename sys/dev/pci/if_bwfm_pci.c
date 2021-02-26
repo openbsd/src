@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.44 2021/02/26 00:02:07 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.45 2021/02/26 00:07:41 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -390,9 +390,8 @@ bwfm_pci_preinit(struct bwfm_softc *bwfm)
 	struct bwfm_pci_softc *sc = (void *)bwfm;
 	struct bwfm_pci_ringinfo ringinfo;
 	const char *chip = NULL;
-	char name[128];
-	u_char *ucode, *nvram = NULL;
-	size_t size, nvsize, nvlen = 0;
+	u_char *ucode, *nvram;
+	size_t size, nvsize, nvlen;
 	uint32_t d2h_w_idx_ptr, d2h_r_idx_ptr;
 	uint32_t h2d_w_idx_ptr, h2d_r_idx_ptr;
 	uint32_t idx_offset, reg;
@@ -441,31 +440,9 @@ bwfm_pci_preinit(struct bwfm_softc *bwfm)
 		return 1;
 	}
 
-	snprintf(name, sizeof(name), "brcmfmac%s-pcie.bin", chip);
-	if (loadfirmware(name, &ucode, &size) != 0) {
-		printf("%s: failed loadfirmware of file %s\n",
-		    DEVNAME(sc), name);
+	if (bwfm_loadfirmware(bwfm, chip, "-pcie", &ucode, &size,
+	    &nvram, &nvsize, &nvlen) != 0)
 		return 1;
-	}
-
-	/* .txt needs to be processed first */
-	snprintf(name, sizeof(name), "brcmfmac%s-pcie.txt", chip);
-	if (loadfirmware(name, &nvram, &nvsize) == 0) {
-		if (bwfm_nvram_convert(nvram, nvsize, &nvlen) != 0) {
-			printf("%s: failed to process file %s\n",
-			    DEVNAME(sc), name);
-			free(ucode, M_DEVBUF, size);
-			free(nvram, M_DEVBUF, nvsize);
-			return 1;
-		}
-	}
-
-	/* .nvram is the pre-processed version */
-	if (nvlen == 0) {
-		snprintf(name, sizeof(name), "brcmfmac%s-pcie.nvram", chip);
-		if (loadfirmware(name, &nvram, &nvsize) == 0)
-			nvlen = nvsize;
-	}
 
 	/* Retrieve RAM size from firmware. */
 	if (size >= BWFM_RAMSIZE + 8) {
