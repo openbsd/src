@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.315 2020/06/29 17:26:24 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.316 2021/02/26 17:19:21 florian Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -631,6 +631,8 @@ var
     # ./var/db
     db
         acpi
+	..
+        dhcpleased
 	..
         ldap			mode=0700
         ..
