@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.278 2021/02/26 07:53:26 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.279 2021/02/26 21:53:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -4696,12 +4696,12 @@ format_defaults(struct format_tree *ft, struct client *c, struct session *s,
 	if (c != NULL && s != NULL && c->session != s)
 		log_debug("%s: session does not match", __func__);
 
-	if (s != NULL)
-		ft->type = FORMAT_TYPE_SESSION;
+	if (wp != NULL)
+		ft->type = FORMAT_TYPE_PANE;
 	else if (wl != NULL)
 		ft->type = FORMAT_TYPE_WINDOW;
-	else if (wp != NULL)
-		ft->type = FORMAT_TYPE_PANE;
+	else if (s != NULL)
+		ft->type = FORMAT_TYPE_SESSION;
 	else
 		ft->type = FORMAT_TYPE_UNKNOWN;
 
