@@ -31,6 +31,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <event.h>
+#include <signal.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -199,6 +200,8 @@ main(int argc, char *argv[])
 		logger = &syslogger;
 	}
 #endif
+
+	signal(SIGHUP, SIG_IGN);
 
 	if ((routesock = socket(AF_ROUTE, SOCK_RAW, 0)) == -1)
 		lerr(1, "route socket");
