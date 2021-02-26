@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.95 2021/02/26 01:17:21 lum Exp $	*/
+/*	$OpenBSD: dired.c,v 1.96 2021/02/26 07:21:23 lum Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -818,7 +818,7 @@ refreshbuffer(struct buffer *bp)
 static int
 d_makename(struct line *lp, char *fn, size_t len)
 {
-	int	 start, nlen;
+	int	 start, nlen, ret;
 	char	*namep;
 
 	if (d_warpdot(lp, &start) == FALSE)
@@ -826,7 +826,8 @@ d_makename(struct line *lp, char *fn, size_t len)
 	namep = &lp->l_text[start];
 	nlen = llength(lp) - start;
 
-	if (snprintf(fn, len, "%s%.*s", curbp->b_fname, nlen, namep) >= len)
+	ret = snprintf(fn, len, "%s%.*s", curbp->b_fname, nlen, namep);
+	if (ret < 0 || ret >= (int)len)
 		return (ABORT); /* Name is too long. */
 
 	/* Return TRUE if the entry is a directory. */
@@ -1073,7 +1074,10 @@ createlist(struct buffer *bp)
 				free(d2);
 				return (ABORT);
 			}
-			SLIST_INSERT_AFTER(d1, d2, entry);
+			if (!d1)
+				SLIST_INSERT_HEAD(&delhead, d2, entry);
+			else
+				SLIST_INSERT_AFTER(d1, d2, entry);
 			d1 = d2;				
 		}
 		ret = TRUE;
@@ -1086,7 +1090,6 @@ int
 d_gotofile(int f, int n)
 {
 	struct line	*lp, *nlp;
-	struct buffer   *curbp;
 	size_t		 lenfpath;
 	char		 fpath[NFILEN], fname[NFILEN];
 	char		*p, *fpth, *fnp = NULL;
@@ -1102,8 +1105,8 @@ d_gotofile(int f, int n)
 	else if (fnp[0] == '\0')
 		return (FALSE);
 
-	fpth = adjustname(fpath, TRUE);		/* Removes last '/' if	*/
-	if (strlen(fpth) == lenfpath - 1) {	/* directory, hence -1.	*/
+	fpth = adjustname(fpath, TRUE);		/* Removes last '/' if dir...  */
+	if (fpth == NULL || strlen(fpth) == lenfpath - 1) { /* ...hence -1.    */
 		ewprintf("No file to find");	/* Current directory given so  */
 		return (TRUE);			/* return at present location. */
 	}
