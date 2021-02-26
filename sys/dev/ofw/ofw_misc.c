@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.28 2021/02/25 22:14:54 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.29 2021/02/26 11:28:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -874,13 +874,12 @@ iommu_device_do_map(uint32_t phandle, uint32_t *cells, bus_dma_tag_t dmat)
 bus_dma_tag_t
 iommu_device_map_pci(int node, uint32_t rid, bus_dma_tag_t dmat)
 {
-	uint64_t sid_base, sid = 0;
+	uint32_t sid_base, sid = 0;
 	uint32_t phandle = 0;
 	uint32_t *cell;
 	uint32_t *map;
 	uint32_t mask, rid_base;
-	uint32_t scells[2];
-	int i, len, length, icells, ncells;
+	int len, length, icells, ncells;
 
 	len = OF_getproplen(node, "iommu-map");
 	if (len <= 0)
@@ -903,31 +902,23 @@ iommu_device_map_pci(int node, uint32_t rid, bus_dma_tag_t dmat)
 		if (ncells < icells + 3)
 			goto out;
 
-		/* We support 64-bit stream IDs. */
-		KASSERT(icells >= 1 && icells <= 2);
+		KASSERT(icells == 1);
 
 		rid_base = cell[0];
-		length = cell[2 + icells];
 		sid_base = cell[2];
-		for (i = 1; i < icells; i++) {
-			sid_base <<= 32;
-			sid_base |= cell[2 + i];
-		}
+		length = cell[3];
 		if (rid >= rid_base && rid < rid_base + length) {
 			sid = sid_base + (rid - rid_base);
 			phandle = cell[1];
 			break;
 		}
 
-		cell += (3 + icells);
-		ncells -= (3 + icells);
+		cell += 4;
+		ncells -= 4;
 	}
 
 out:
 	free(map, M_TEMP, len);
 
-	/* Map stream ID back into cells. */
-	scells[0] = sid >> 32;
-	scells[1] = sid & 0xffffffff;
-	return iommu_device_do_map(phandle, scells, dmat);
+	return iommu_device_do_map(phandle, &sid, dmat);
 }
