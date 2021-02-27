@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1957 2021/02/26 10:36:45 jan Exp $
+$OpenBSD: pcidevs,v 1.1958 2021/02/27 02:36:33 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -4189,6 +4189,61 @@ product INTEL ATOMC2000_PCU_SMB	0x1f3c	Atom C2000 PCU SMBus
 product INTEL I354_BP_1GBPS	0x1f40	I354
 product INTEL I354_SGMII	0x1f41	I354 SGMII
 product INTEL I354_BP_2_5GBPS	0x1f45	I354
+product INTEL XEONS_UBOX_1	0x2014	Xeon Scalable Ubox
+product INTEL XEONS_UBOX_2	0x2015	Xeon Scalable Ubox
+product INTEL XEONS_UBOX_3	0x2016	Xeon Scalable Ubox
+product INTEL XEONS_M2PCI	0x2018	Xeon Scalable M2PCI
+product INTEL XEONS_HB		0x2020	Xeon Scalable Host
+product INTEL XEONS_CBDMA	0x2021	Xeon Scalable CBDMA
+product INTEL XEONS_VTD_1	0x2024	Xeon Scalable VT-d
+product INTEL XEONS_RAS_1	0x2025	Xeon Scalable RAS
+product INTEL XEONS_IOAPIC	0x2026	Xeon Scalable I/O APIC
+product INTEL XEONS_PCIE_1	0x2030	Xeon Scalable PCIE
+product INTEL XEONS_PCIE_2	0x2031	Xeon Scalable PCIE
+product INTEL XEONS_PCIE_3	0x2032	Xeon Scalable PCIE
+product INTEL XEONS_PCIE_4	0x2033	Xeon Scalable PCIE
+product INTEL XEONS_VTD_2	0x2034	Xeon Scalable VT-d
+product INTEL XEONS_RAS_2	0x2035	Xeon Scalable RAS
+product INTEL XEONS_IOXAPIC	0x2036	Xeon Scalable IOxAPIC
+product INTEL XEONS_IMC_1	0x2040	Xeon Scalable IMC
+product INTEL XEONS_IMC_2	0x2041	Xeon Scalable IMC
+product INTEL XEONS_IMC_3	0x2042	Xeon Scalable IMC
+product INTEL XEONS_IMC_4	0x2043	Xeon Scalable IMC
+product INTEL XEONS_IMC_5	0x2044	Xeon Scalable IMC
+product INTEL XEONS_LM_C1	0x2045	Xeon Scalable LM
+product INTEL XEONS_LMS_C1	0x2046	Xeon Scalable LMS
+product INTEL XEONS_LMDP_C1	0x2047	Xeon Scalable LMDP
+product INTEL XEONS_DECS_C2	0x2048	Xeon Scalable DECS
+product INTEL XEONS_LM_C2	0x2049	Xeon Scalable LM
+product INTEL XEONS_LMS_C2	0x204a	Xeon Scalable LMS
+product INTEL XEONS_LMDP_C2	0x204b	Xeon Scalable LMDP
+product INTEL XEONS_M3KTI_1	0x204c	Xeon Scalable M3KTI
+product INTEL XEONS_M3KTI_2	0x204d	Xeon Scalable M3KTI
+product INTEL XEONS_M3KTI_3	0x204e	Xeon Scalable M3KTI
+product INTEL XEONS_CHA_1	0x2054	Xeon Scalable CHA
+product INTEL XEONS_CHA_2	0x2055	Xeon Scalable CHA
+product INTEL XEONS_CHA_3	0x2056	Xeon Scalable CHA
+product INTEL XEONS_CHA_4	0x2057	Xeon Scalable CHA
+product INTEL XEONS_KTI		0x2058	Xeon Scalable KTI
+product INTEL XEONS_UPI		0x2059	Xeon Scalable UPI
+product INTEL XEONS_IMC		0x2066	Xeon Scalable IMC
+product INTEL XEONS_DDRIO_1	0x2068	Xeon Scalable DDRIO
+product INTEL XEONS_DDRIO_2	0x2069	Xeon Scalable DDRIO
+product INTEL XEONS_DDRIO_3	0x206a	Xeon Scalable DDRIO
+product INTEL XEONS_DDRIO_4	0x206b	Xeon Scalable DDRIO
+product INTEL XEONS_DDRIO_5	0x206c	Xeon Scalable DDRIO
+product INTEL XEONS_DDRIO_6	0x206d	Xeon Scalable DDRIO
+product INTEL XEONS_DDRIO_7	0x206e	Xeon Scalable DDRIO
+product INTEL XEONS_PCU_1	0x2080	Xeon Scalable PCU
+product INTEL XEONS_PCU_2	0x2081	Xeon Scalable PCU
+product INTEL XEONS_PCU_3	0x2082	Xeon Scalable PCU
+product INTEL XEONS_PCU_4	0x2083	Xeon Scalable PCU
+product INTEL XEONS_PCU_5	0x2084	Xeon Scalable PCU
+product INTEL XEONS_PCU_6	0x2085	Xeon Scalable PCU
+product INTEL XEONS_PCU_7	0x2086	Xeon Scalable PCU
+product INTEL XEONS_M2PCIE	0x2088	Xeon Scalable M2PCIe
+product INTEL XEONS_CHA_5	0x208d	Xeon Scalable CHA
+product INTEL XEONS_CHA_6	0x208e	Xeon Scalable CHA
 product INTEL BSW_HB		0x2280	Braswell Host
 product INTEL BSW_HDA		0x2284	Braswell HD Audio
 product INTEL BSW_SIO_DMA_2	0x2286	Braswell SIO DMA
@@ -5623,6 +5678,11 @@ product INTEL C610_MS_SPSR	0x8d7c	C610 MS SPSR
 product INTEL C610_MS_SMB_1	0x8d7d	C610 MS SMBus
 product INTEL C610_MS_SMB_2	0x8d7e	C610 MS SMBus
 product INTEL C610_MS_SMB_3	0x8d7f	C610 MS SMBus
+product INTEL I2OPCIB		0x9620	I2O RAID
+product INTEL RCU21		0x9621	RCU21 I2O RAID
+product INTEL RCUXX		0x9622	RCUxx I2O RAID
+product INTEL RCU31		0x9641	RCU31 I2O RAID
+product INTEL RCU31L		0x96a1	RCU31L I2O RAID
 product INTEL TGL_UP4_2C_HB	0x9a02	Core 11G Host
 product INTEL TGL_DTT		0x9a03	Core 11G DTT
 product INTEL TGL_UP3_2C_HB	0x9a04	Core 11G Host
@@ -5642,11 +5702,6 @@ product INTEL TGL_PCIE_3	0x9a25	Core 11G PCIE
 product INTEL TGL_PCIE_4	0x9a27	Core 11G PCIE
 product INTEL TGL_PCIE_5	0x9a29	Core 11G PCIE
 product INTEL TGL_NPK		0x9a33	Core 11G NPK
-product INTEL I2OPCIB		0x9620	I2O RAID
-product INTEL RCU21		0x9621	RCU21 I2O RAID
-product INTEL RCUXX		0x9622	RCUxx I2O RAID
-product INTEL RCU31		0x9641	RCU31 I2O RAID
-product INTEL RCU31L		0x96a1	RCU31L I2O RAID
 product INTEL TGL_GT2_1		0x9a40	Xe Graphics
 product INTEL TGL_GT2_2		0x9a49	Xe Graphics
 product INTEL TGL_GT2_3		0x9a59	Graphics
@@ -5680,8 +5735,8 @@ product INTEL CML_U_GT1_3	0x9bac	UHD Graphics
 product INTEL CML_GT2_4		0x9bc2	UHD Graphics
 product INTEL CML_GT2_3		0x9bc4	UHD Graphics
 product INTEL CML_GT2_1		0x9bc5	UHD Graphics 630
-product INTEL CML_GT2_2		0x9bc8	UHD Graphics 630
 product INTEL CML_GT2_5		0x9bc6	UHD Graphics P630
+product INTEL CML_GT2_2		0x9bc8	UHD Graphics 630
 product INTEL CML_U_GT2_2	0x9bca	UHD Graphics
 product INTEL CML_U_GT2_3	0x9bcc	UHD Graphics
 product INTEL CML_GT2_6		0x9be6	UHD Graphics P630
@@ -6002,6 +6057,7 @@ product INTEL Q250_LPC		0xa2c7	Q250 LPC
 product INTEL B250_LPC		0xa2c8	B250 LPC
 product INTEL Z370_LPC		0xa2c9	Z370 LPC
 product INTEL X299_LPC		0xa2d2	X299 LPC
+product INTEL C422_LPC		0xa2d3	C422 LPC
 product INTEL 200SERIES_I2C_1	0xa2e0	200 Series I2C
 product INTEL 200SERIES_I2C_2	0xa2e1	200 Series I2C
 product INTEL 200SERIES_I2C_3	0xa2e2	200 Series I2C
