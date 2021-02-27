@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.24 2020/11/09 04:22:05 tb Exp $	*/
+/*	$OpenBSD: parse.y,v 1.25 2021/02/27 10:32:28 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -783,7 +783,7 @@ parse_config(char *filename)
 
 	conf = config_new_empty();
 
-	file = pushfile(filename != NULL ? filename : CONF_FILE, 0);
+	file = pushfile(filename != NULL ? filename : _PATH_CONF_FILE, 0);
 	if (file == NULL) {
 		/* no default config file is fine */
 		if (errno == ENOENT && filename == NULL)

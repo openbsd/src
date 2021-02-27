@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.60 2021/02/06 18:01:02 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.61 2021/02/27 10:32:28 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -128,7 +128,7 @@ main(int argc, char *argv[])
 	int		 control_fd, ta_fd;
 	char		*csock, *saved_argv0;
 
-	csock = UNWIND_SOCKET;
+	csock = _PATH_UNWIND_SOCKET;
 
 	log_init(1, LOG_DAEMON);	/* Log to stderr until daemonized. */
 	log_setverbose(1);

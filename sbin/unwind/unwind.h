@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.h,v 1.53 2021/01/27 08:30:50 florian Exp $	*/
+/*	$OpenBSD: unwind.h,v 1.54 2021/02/27 10:32:28 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -30,9 +30,9 @@
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
 #endif
 
-#define CONF_FILE	"/etc/unwind.conf"
-#define	UNWIND_SOCKET	"/dev/unwind.sock"
-#define UNWIND_USER	"_unwind"
+#define _PATH_CONF_FILE		"/etc/unwind.conf"
+#define	_PATH_UNWIND_SOCKET	"/dev/unwind.sock"
+#define UNWIND_USER		"_unwind"
 
 #define OPT_VERBOSE	0x00000001
 #define OPT_VERBOSE2	0x00000002
