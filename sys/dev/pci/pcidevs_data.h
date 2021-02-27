@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1957 2021/02/26 10:36:45 jan Exp 
+ *	OpenBSD: pcidevs,v 1.1958 2021/02/27 02:36:33 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -14200,6 +14200,226 @@ static const struct pci_known_product pci_known_products[] = {
 	    "I354",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_UBOX_1,
+	    "Xeon Scalable Ubox",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_UBOX_2,
+	    "Xeon Scalable Ubox",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_UBOX_3,
+	    "Xeon Scalable Ubox",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_M2PCI,
+	    "Xeon Scalable M2PCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_HB,
+	    "Xeon Scalable Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_CBDMA,
+	    "Xeon Scalable CBDMA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_VTD_1,
+	    "Xeon Scalable VT-d",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_RAS_1,
+	    "Xeon Scalable RAS",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_IOAPIC,
+	    "Xeon Scalable I/O APIC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_PCIE_1,
+	    "Xeon Scalable PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_PCIE_2,
+	    "Xeon Scalable PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_PCIE_3,
+	    "Xeon Scalable PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_PCIE_4,
+	    "Xeon Scalable PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_VTD_2,
+	    "Xeon Scalable VT-d",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_RAS_2,
+	    "Xeon Scalable RAS",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_IOXAPIC,
+	    "Xeon Scalable IOxAPIC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_IMC_1,
+	    "Xeon Scalable IMC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_IMC_2,
+	    "Xeon Scalable IMC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_IMC_3,
+	    "Xeon Scalable IMC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_IMC_4,
+	    "Xeon Scalable IMC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_IMC_5,
+	    "Xeon Scalable IMC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_LM_C1,
+	    "Xeon Scalable LM",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_LMS_C1,
+	    "Xeon Scalable LMS",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_LMDP_C1,
+	    "Xeon Scalable LMDP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_DECS_C2,
+	    "Xeon Scalable DECS",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_LM_C2,
+	    "Xeon Scalable LM",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_LMS_C2,
+	    "Xeon Scalable LMS",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_LMDP_C2,
+	    "Xeon Scalable LMDP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_M3KTI_1,
+	    "Xeon Scalable M3KTI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_M3KTI_2,
+	    "Xeon Scalable M3KTI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_M3KTI_3,
+	    "Xeon Scalable M3KTI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_CHA_1,
+	    "Xeon Scalable CHA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_CHA_2,
+	    "Xeon Scalable CHA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_CHA_3,
+	    "Xeon Scalable CHA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_CHA_4,
+	    "Xeon Scalable CHA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_KTI,
+	    "Xeon Scalable KTI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_UPI,
+	    "Xeon Scalable UPI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_IMC,
+	    "Xeon Scalable IMC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_DDRIO_1,
+	    "Xeon Scalable DDRIO",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_DDRIO_2,
+	    "Xeon Scalable DDRIO",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_DDRIO_3,
+	    "Xeon Scalable DDRIO",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_DDRIO_4,
+	    "Xeon Scalable DDRIO",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_DDRIO_5,
+	    "Xeon Scalable DDRIO",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_DDRIO_6,
+	    "Xeon Scalable DDRIO",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_DDRIO_7,
+	    "Xeon Scalable DDRIO",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_PCU_1,
+	    "Xeon Scalable PCU",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_PCU_2,
+	    "Xeon Scalable PCU",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_PCU_3,
+	    "Xeon Scalable PCU",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_PCU_4,
+	    "Xeon Scalable PCU",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_PCU_5,
+	    "Xeon Scalable PCU",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_PCU_6,
+	    "Xeon Scalable PCU",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_PCU_7,
+	    "Xeon Scalable PCU",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_M2PCIE,
+	    "Xeon Scalable M2PCIe",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_CHA_5,
+	    "Xeon Scalable CHA",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XEONS_CHA_6,
+	    "Xeon Scalable CHA",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BSW_HB,
 	    "Braswell Host",
 	},
@@ -19936,6 +20156,26 @@ static const struct pci_known_product pci_known_products[] = {
 	    "C610 MS SMBus",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I2OPCIB,
+	    "I2O RAID",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_RCU21,
+	    "RCU21 I2O RAID",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_RCUXX,
+	    "RCUxx I2O RAID",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_RCU31,
+	    "RCU31 I2O RAID",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_RCU31L,
+	    "RCU31L I2O RAID",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_TGL_UP4_2C_HB,
 	    "Core 11G Host",
 	},
@@ -20010,26 +20250,6 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_TGL_NPK,
 	    "Core 11G NPK",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I2OPCIB,
-	    "I2O RAID",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_RCU21,
-	    "RCU21 I2O RAID",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_RCUXX,
-	    "RCUxx I2O RAID",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_RCU31,
-	    "RCU31 I2O RAID",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_RCU31L,
-	    "RCU31L I2O RAID",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_TGL_GT2_1,
@@ -20164,12 +20384,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "UHD Graphics 630",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CML_GT2_2,
-	    "UHD Graphics 630",
-	},
-	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CML_GT2_5,
 	    "UHD Graphics P630",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CML_GT2_2,
+	    "UHD Graphics 630",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CML_U_GT2_2,
@@ -21450,6 +21670,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_X299_LPC,
 	    "X299 LPC",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C422_LPC,
+	    "C422 LPC",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_200SERIES_I2C_1,
