@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.168 2021/02/26 01:28:51 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.169 2021/02/27 09:20:38 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -4329,7 +4329,7 @@ nvgre_eb_port_sa(void *arg, struct sockaddr_storage *ss, void *port)
 
 		sin6->sin6_len = sizeof(*sin6);
 		sin6->sin6_family = AF_INET6;
-		sin6->sin6_addr = endpoint->in6;
+		in6_recoverscope(sin6, &endpoint->in6);
 
 		break;
 	}
