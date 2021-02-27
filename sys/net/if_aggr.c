@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.36 2021/01/19 07:29:42 mvs Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.37 2021/02/27 01:19:11 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -108,6 +108,7 @@ struct ether_slowproto_hdr {
 
 #define LACP_ADDR_C_BRIDGE		{ 0x01, 0x80, 0xc2, 0x00, 0x00, 0x00 }
 #define LACP_ADDR_SLOW			{ 0x01, 0x80, 0xc2, 0x00, 0x00, 0x02 }
+#define LACP_ADDR_SLOW_E64		0x0180c2000002
 #define LACP_ADDR_NON_TPMR_BRIDGE	{ 0x01, 0x80, 0xc2, 0x00, 0x00, 0x03 }
 
 struct lacp_tlv_hdr {
@@ -505,8 +506,6 @@ static void	aggr_unselected(struct aggr_port *);
 
 static void	aggr_selection_logic(struct aggr_softc *, struct aggr_port *);
 
-#define ETHER_IS_SLOWADDR(_a)	ETHER_IS_EQ((_a), lacp_address_slow)
-
 static struct if_clone aggr_cloner =
     IF_CLONE_INITIALIZER("aggr", aggr_clone_create, aggr_clone_destroy);
 
@@ -719,8 +718,13 @@ aggr_start(struct ifqueue *ifq)
 static inline int
 aggr_eh_is_slow(const struct ether_header *eh)
 {
-	return (ETHER_IS_SLOWADDR(eh->ether_dhost) &&
-	    eh->ether_type == htons(ETHERTYPE_SLOW));
+	uint64_t dst;
+
+	if (eh->ether_type != htons(ETHERTYPE_SLOW))
+		return (0);
+
+	dst = ether_addr_to_e64((struct ether_addr *)eh->ether_dhost);
+	return (dst == LACP_ADDR_SLOW_E64);
 }
 
 static void
