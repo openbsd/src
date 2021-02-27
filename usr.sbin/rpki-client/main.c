@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.105 2021/02/23 14:25:29 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.106 2021/02/27 08:59:29 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -984,10 +984,10 @@ main(int argc, char *argv[])
 	while (entity_queue > 0 && !killme) {
 		pfd[0].events = POLLIN;
 		if (rsyncq.queued)
-			pfd[0].events = POLLOUT;
+			pfd[0].events |= POLLOUT;
 		pfd[1].events = POLLIN;
 		if (procq.queued)
-			pfd[1].events = POLLOUT;
+			pfd[1].events |= POLLOUT;
 
 		if ((c = poll(pfd, 2, INFTIM)) == -1) {
 			if (errno == EINTR)
