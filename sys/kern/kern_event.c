@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.161 2021/02/24 14:59:52 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.162 2021/02/27 13:43:16 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -1605,7 +1605,7 @@ knote_remove(struct proc *p, struct knlist *list, int purge)
 			kn->kn_fp = NULL;
 
 			kn->kn_fop = &badfd_filtops;
-			kn->kn_fop->f_event(kn, 0);
+			filter_event(kn, 0);
 			knote_activate(kn);
 			s = splhigh();
 			knote_release(kn);
