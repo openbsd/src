@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.c,v 1.3 2021/02/27 10:21:08 florian Exp $	*/
+/*	$OpenBSD: dhcpleased.c,v 1.4 2021/02/27 17:53:23 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -771,6 +771,9 @@ deconfigure_interface(struct imsg_configure_interface *imsg)
 
 	memset(&ifaliasreq, 0, sizeof(ifaliasreq));
 
+	if (imsg->router.s_addr != INADDR_ANY)
+		configure_gateway(imsg, RTM_DELETE);
+
 	if (if_indextoname(imsg->if_index, ifaliasreq.ifra_name) == NULL) {
 		log_warnx("%s: cannot find interface %d", __func__,
 		    imsg->if_index);
@@ -810,7 +813,7 @@ configure_gateway(struct imsg_configure_interface *imsg, uint8_t rtm_type)
 	rtm.rtm_seq = ++rtm_seq;
 	rtm.rtm_priority = RTP_NONE;
 	rtm.rtm_addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK | RTA_LABEL;
-	rtm.rtm_flags = RTF_UP | RTF_GATEWAY | RTF_STATIC;
+	rtm.rtm_flags = RTF_UP | RTF_GATEWAY | RTF_STATIC | RTF_MPATH;
 
 	iov[iovcnt].iov_base = &rtm;
 	iov[iovcnt++].iov_len = sizeof(rtm);
