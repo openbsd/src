@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.h,v 1.2 2021/02/27 10:07:41 florian Exp $	*/
+/*	$OpenBSD: dhcpleased.h,v 1.3 2021/02/27 10:21:08 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -18,12 +18,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define	DHCPLEASED_SOCKET	"/dev/dhcpleased.sock"
+#define	_PATH_DHCPLEASED_SOCKET	"/dev/dhcpleased.sock"
 #define	DHCPLEASED_USER		"_dhcp"
 #define	DHCPLEASED_RTA_LABEL	"dhcpleased"
 #define	SERVER_PORT		67
 #define	CLIENT_PORT		68
-#define	LEASE_PATH		"/var/db/dhcpleased/"
+#define	_PATH_LEASE		"/var/db/dhcpleased/"
 #define	LEASE_PREFIX		"version: 1\nip: "
 #define	LEASE_SIZE		sizeof(LEASE_PREFIX"xxx.xxx.xxx.xxx\n")
 /* MAXDNAME from arpa/namesr.h */

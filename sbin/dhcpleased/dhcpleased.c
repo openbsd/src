@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.c,v 1.2 2021/02/27 10:07:41 florian Exp $	*/
+/*	$OpenBSD: dhcpleased.c,v 1.3 2021/02/27 10:21:08 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -131,7 +131,7 @@ main(int argc, char *argv[])
 	int			 pipe_main2engine[2];
 	int			 frontend_routesock, rtfilter;
 	int			 rtable_any = RTABLE_ANY;
-	char			*csock = DHCPLEASED_SOCKET;
+	char			*csock = _PATH_DHCPLEASED_SOCKET;
 #ifndef SMALL
 	int			 control_fd;
 #endif /* SMALL */
@@ -267,7 +267,7 @@ main(int argc, char *argv[])
 	if (unveil("/dev/bpf", "rw") == -1)
 		fatal("unveil");
 
-	if (unveil(LEASE_PATH, "rwc") == -1)
+	if (unveil(_PATH_LEASE, "rwc") == -1)
 		fatal("unveil");
 
 	if (unveil(NULL, NULL) == -1)
@@ -621,9 +621,9 @@ configure_interface(struct imsg_configure_interface *imsg)
 	char			*if_name;
 	char			 ntop_buf[INET_ADDRSTRLEN];
 	char			 lease_buf[LEASE_SIZE];
-	char			 lease_file_buf[sizeof(LEASE_PATH) +
+	char			 lease_file_buf[sizeof(_PATH_LEASE) +
 	    IF_NAMESIZE];
-	char			 tmpl[] = LEASE_PATH"XXXXXXXXXX";
+	char			 tmpl[] = _PATH_LEASE"XXXXXXXXXX";
 
 	log_debug("%s", __func__);
 
@@ -721,7 +721,7 @@ configure_interface(struct imsg_configure_interface *imsg)
 	}
 
 	len = snprintf(lease_file_buf, sizeof(lease_file_buf), "%s%s",
-	    LEASE_PATH, if_name);
+	    _PATH_LEASE, if_name);
 	if ( len == -1 || (size_t) len >= sizeof(lease_file_buf)) {
 		log_warnx("%s: failed to encode lease path for %s", __func__,
 		    if_name);
@@ -960,7 +960,7 @@ read_lease_file(struct imsg_ifinfo *imsg_ifinfo)
 {
 	int	 len, fd;
 	char	 if_name[IF_NAMESIZE];
-	char	 lease_file_buf[sizeof(LEASE_PATH) + IF_NAMESIZE];
+	char	 lease_file_buf[sizeof(_PATH_LEASE) + IF_NAMESIZE];
 
 	memset(imsg_ifinfo->lease, 0, sizeof(imsg_ifinfo->lease));
 
@@ -971,7 +971,7 @@ read_lease_file(struct imsg_ifinfo *imsg_ifinfo)
 	}
 
 	len = snprintf(lease_file_buf, sizeof(lease_file_buf), "%s%s",
-	    LEASE_PATH, if_name);
+	    _PATH_LEASE, if_name);
 	if ( len == -1 || (size_t) len >= sizeof(lease_file_buf)) {
 		log_warnx("%s: failed to encode lease path for %s", __func__,
 		    if_name);
