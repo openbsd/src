@@ -397,7 +397,7 @@ findslot(struct rdns_proposal *tab)
 void
 handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 {
-	struct rdns_proposal		 learning[ASR_MAXNS];
+	struct rdns_proposal		 learning[nitems(learned)];
 	struct sockaddr_rtdns		*rtdns;
 	struct if_announcemsghdr	*ifan;
 	int				 rdns_count, af, i;
