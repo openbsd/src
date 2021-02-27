@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.306 2021/02/25 02:48:21 dlg Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.307 2021/02/27 11:44:48 mvs Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -118,7 +118,7 @@ int	route_arp_conflict(struct rtentry *, struct rt_addrinfo *);
 int	route_cleargateway(struct rtentry *, void *, unsigned int);
 void	rtm_senddesync_timer(void *);
 void	rtm_senddesync(struct socket *);
-int	rtm_sendup(struct socket *, struct mbuf *, int);
+int	rtm_sendup(struct socket *, struct mbuf *);
 
 int	rtm_getifa(struct rt_addrinfo *, unsigned int);
 int	rtm_output(struct rt_msghdr *, struct rtentry **, struct rt_addrinfo *,
@@ -489,7 +489,6 @@ route_input(struct mbuf *m0, struct socket *so0, sa_family_t sa_family)
 	struct rtpcb *rop;
 	struct rt_msghdr *rtm;
 	struct mbuf *m = m0;
-	struct socket *last = NULL;
 	struct srp_ref sr;
 	int s;
 
@@ -519,11 +518,8 @@ route_input(struct mbuf *m0, struct socket *so0, sa_family_t sa_family)
 		 */
 		if ((so0 == so && !(so0->so_options & SO_USELOOPBACK)) ||
 		    !(so->so_state & SS_ISCONNECTED) ||
-		    (so->so_state & SS_CANTRCVMORE)) {
-next:
-			sounlock(so, s);
-			continue;
-		}
+		    (so->so_state & SS_CANTRCVMORE))
+			goto next;
 
 		/* filter messages that the process does not want */
 		rtm = mtod(m, struct rt_msghdr *);
@@ -568,43 +564,27 @@ next:
 		 */
 		if ((rop->rop_flags & ROUTECB_FLAG_FLUSH) != 0)
 			goto next;
-		sounlock(so, s);
 
-		if (last) {
-			s = solock(last);
-			rtm_sendup(last, m, 1);
-			sounlock(last, s);
-			refcnt_rele_wake(&sotortpcb(last)->rop_refcnt);
-		}
-		/* keep a reference for last */
-		refcnt_take(&rop->rop_refcnt);
-		last = rop->rop_socket;
+		rtm_sendup(so, m);
+next:
+		sounlock(so, s);
 	}
 	SRPL_LEAVE(&sr);
 
-	if (last) {
-		s = solock(last);
-		rtm_sendup(last, m, 0);
-		sounlock(last, s);
-		refcnt_rele_wake(&sotortpcb(last)->rop_refcnt);
-	} else
-		m_freem(m);
+	m_freem(m);
 }
 
 int
-rtm_sendup(struct socket *so, struct mbuf *m0, int more)
+rtm_sendup(struct socket *so, struct mbuf *m0)
 {
 	struct rtpcb *rop = sotortpcb(so);
 	struct mbuf *m;
 
 	soassertlocked(so);
 
-	if (more) {
-		m = m_copym(m0, 0, M_COPYALL, M_NOWAIT);
-		if (m == NULL)
-			return (ENOMEM);
-	} else
-		m = m0;
+	m = m_copym(m0, 0, M_COPYALL, M_NOWAIT);
+	if (m == NULL)
+		return (ENOMEM);
 
 	if (sbspace(so, &so->so_rcv) < (2 * MSIZE) ||
 	    sbappendaddr(so, &so->so_rcv, &route_src, m, NULL) == 0) {
