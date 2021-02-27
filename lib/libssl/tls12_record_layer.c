@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_record_layer.c,v 1.17 2021/01/28 18:32:46 jsing Exp $ */
+/* $OpenBSD: tls12_record_layer.c,v 1.18 2021/02/27 13:38:35 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -250,7 +250,7 @@ void
 tls12_record_layer_set_version(struct tls12_record_layer *rl, uint16_t version)
 {
 	rl->version = version;
-	rl->dtls = (version == DTLS1_VERSION);
+	rl->dtls = ((version >> 8) == DTLS1_VERSION_MAJOR);
 }
 
 void
