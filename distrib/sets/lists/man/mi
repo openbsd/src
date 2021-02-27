@@ -1228,8 +1228,10 @@
 ./usr/share/man/man4/arm64
 ./usr/share/man/man4/arm64/agtimer.4
 ./usr/share/man/man4/arm64/ampintc.4
+./usr/share/man/man4/arm64/apldart.4
 ./usr/share/man/man4/arm64/apldog.4
 ./usr/share/man/man4/arm64/aplintc.4
+./usr/share/man/man4/arm64/aplpcie.4
 ./usr/share/man/man4/arm64/apm.4
 ./usr/share/man/man4/arm64/efi.4
 ./usr/share/man/man4/arm64/intro.4
