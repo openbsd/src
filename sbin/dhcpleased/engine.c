@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.1 2021/02/26 16:16:37 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.2 2021/02/27 10:07:41 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -110,7 +110,7 @@ void			 engine_dispatch_main(int, short, void *);
 void			 send_interface_info(struct dhcpleased_iface *, pid_t);
 void			 engine_showinfo_ctl(struct imsg *, uint32_t);
 #endif	/* SMALL */
-void			 engine_update_iface(struct imsg_ifinfo *, int);
+void			 engine_update_iface(struct imsg_ifinfo *);
 struct dhcpleased_iface	*get_dhcpleased_iface_by_id(uint32_t);
 void			 remove_dhcpleased_iface(uint32_t);
 void			 parse_dhcp(struct dhcpleased_iface *,
@@ -124,7 +124,8 @@ void			 send_configure_interface(struct dhcpleased_iface *);
 void			 send_rdns_proposal(struct dhcpleased_iface *);
 void			 send_deconfigure_interface(struct dhcpleased_iface *);
 void			 send_rdns_withdraw(struct dhcpleased_iface *);
-void			 parse_lease(int, struct dhcpleased_iface *);
+void			 parse_lease(struct dhcpleased_iface *,
+			     struct imsg_ifinfo *);
 int			 engine_imsg_compose_main(int, pid_t, void *, uint16_t);
 
 static struct imsgev	*iev_frontend;
@@ -406,13 +407,17 @@ engine_dispatch_main(int fd, short event, void *bula)
 			iev_frontend->events, iev_frontend->handler,
 			    iev_frontend);
 			event_add(&iev_frontend->ev, NULL);
+
+			if (pledge("stdio", NULL) == -1)
+				fatal("pledge");
+
 			break;
 		case IMSG_UPDATE_IF:
 			if (IMSG_DATA_SIZE(imsg) != sizeof(imsg_ifinfo))
 				fatalx("%s: IMSG_UPDATE_IF wrong length: %lu",
 				    __func__, IMSG_DATA_SIZE(imsg));
 			memcpy(&imsg_ifinfo, imsg.data, sizeof(imsg_ifinfo));
-			engine_update_iface(&imsg_ifinfo, imsg.fd);
+			engine_update_iface(&imsg_ifinfo);
 			break;
 		default:
 			log_debug("%s: unexpected imsg %d", __func__,
@@ -481,7 +486,7 @@ engine_showinfo_ctl(struct imsg *imsg, uint32_t if_index)
 }
 #endif	/* SMALL */
 void
-engine_update_iface(struct imsg_ifinfo *imsg_ifinfo, int fd)
+engine_update_iface(struct imsg_ifinfo *imsg_ifinfo)
 {
 	struct dhcpleased_iface	*iface;
 	int			 need_refresh = 0;
@@ -502,14 +507,9 @@ engine_update_iface(struct imsg_ifinfo *imsg_ifinfo, int fd)
 		memcpy(&iface->hw_address, &imsg_ifinfo->hw_address,
 		    sizeof(struct ether_addr));
 		LIST_INSERT_HEAD(&dhcpleased_interfaces, iface, entries);
-
-		if (fd != -1)
-			parse_lease(fd, iface);
+		parse_lease(iface, imsg_ifinfo);
 		need_refresh = 1;
 	} else {
-		if (fd != -1)
-			close(fd);
-
 		if (memcmp(&iface->hw_address, &imsg_ifinfo->hw_address,
 		    sizeof(struct ether_addr)) != 0) {
 			memcpy(&iface->hw_address, &imsg_ifinfo->hw_address,
@@ -1300,28 +1300,23 @@ send_rdns_withdraw(struct dhcpleased_iface *iface)
 }
 
 void
-parse_lease(int fd, struct dhcpleased_iface *iface)
+parse_lease(struct dhcpleased_iface *iface, struct imsg_ifinfo *imsg_ifinfo)
 {
-	ssize_t	 len;
-	char	 lease_buf[LEASE_SIZE], *p, *p1;
+	char	*p, *p1;
 
-	memset(lease_buf, 0, sizeof(lease_buf));
+	/* make sure this is a string */
+	imsg_ifinfo->lease[sizeof(imsg_ifinfo->lease) - 1] = '\0';
 
-	len = read(fd, lease_buf, sizeof(lease_buf) - 1);
+	iface->requested_ip.s_addr = INADDR_ANY;
 
-	if (len <= 0)
-		goto out;
-
-	if ((p = strstr(lease_buf, LEASE_PREFIX)) == NULL)
-		goto out;
+	if ((p = strstr(imsg_ifinfo->lease, LEASE_PREFIX)) == NULL)
+		return;
 
 	p += sizeof(LEASE_PREFIX) - 1;
 	if ((p1 = strchr(p, '\n')) == NULL)
-		goto out;
+		return;
 	*p1 = '\0';
 
 	if (inet_pton(AF_INET, p, &iface->requested_ip) != 1)
 		iface->requested_ip.s_addr = INADDR_ANY;
- out:
-	close(fd);
 }

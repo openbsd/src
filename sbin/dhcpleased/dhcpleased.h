@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.h,v 1.1 2021/02/26 16:16:37 florian Exp $	*/
+/*	$OpenBSD: dhcpleased.h,v 1.2 2021/02/27 10:07:41 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -222,6 +222,7 @@ struct imsg_ifinfo {
 	int			running;
 	int			link_state;
 	struct ether_addr	hw_address;
+	char			lease[LEASE_SIZE];
 };
 
 struct imsg_propose_rdns {

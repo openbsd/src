@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.c,v 1.1 2021/02/26 16:16:37 florian Exp $	*/
+/*	$OpenBSD: dhcpleased.c,v 1.2 2021/02/27 10:07:41 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -78,7 +78,7 @@ void	 configure_interface(struct imsg_configure_interface *);
 void	 deconfigure_interface(struct imsg_configure_interface *);
 void	 propose_rdns(struct imsg_propose_rdns *);
 void	 configure_gateway(struct imsg_configure_interface *, uint8_t);
-int	 open_lease_file(int);
+void	 read_lease_file(struct imsg_ifinfo *);
 
 static int	main_imsg_send_ipc_sockets(struct imsgbuf *, struct imsgbuf *);
 int		main_imsg_compose_frontend(int, int, void *, uint16_t);
@@ -426,9 +426,9 @@ main_dispatch_frontend(int fd, short event, void *bula)
 				fatalx("%s: IMSG_UPDATE_IF wrong length: %lu",
 				    __func__, IMSG_DATA_SIZE(imsg));
 			memcpy(&imsg_ifinfo, imsg.data, sizeof(imsg_ifinfo));
-			main_imsg_compose_engine(IMSG_UPDATE_IF,
-			    open_lease_file(imsg_ifinfo.if_index), &imsg_ifinfo,
-			    sizeof(imsg_ifinfo));
+			read_lease_file(&imsg_ifinfo);
+			main_imsg_compose_engine(IMSG_UPDATE_IF, -1,
+			    &imsg_ifinfo, sizeof(imsg_ifinfo));
 			break;
 		default:
 			log_debug("%s: error handling imsg %d", __func__,
@@ -955,16 +955,19 @@ propose_rdns(struct imsg_propose_rdns *rdns)
 		log_warn("failed to send route message");
 }
 
-int
-open_lease_file(int if_index)
+void
+read_lease_file(struct imsg_ifinfo *imsg_ifinfo)
 {
-	int	 len;
+	int	 len, fd;
 	char	 if_name[IF_NAMESIZE];
 	char	 lease_file_buf[sizeof(LEASE_PATH) + IF_NAMESIZE];
 
-	if (if_indextoname(if_index, if_name) == 0) {
-		log_warnx("%s: cannot find interface %d", __func__, if_index);
-		return -1;
+	memset(imsg_ifinfo->lease, 0, sizeof(imsg_ifinfo->lease));
+
+	if (if_indextoname(imsg_ifinfo->if_index, if_name) == 0) {
+		log_warnx("%s: cannot find interface %d", __func__,
+		    imsg_ifinfo->if_index);
+		return;
 	}
 
 	len = snprintf(lease_file_buf, sizeof(lease_file_buf), "%s%s",
@@ -972,8 +975,13 @@ open_lease_file(int if_index)
 	if ( len == -1 || (size_t) len >= sizeof(lease_file_buf)) {
 		log_warnx("%s: failed to encode lease path for %s", __func__,
 		    if_name);
-		return -1;
+		return;
 	}
 
-	return (open(lease_file_buf, O_RDONLY));
+	if ((fd = open(lease_file_buf, O_RDONLY)) == -1)
+		return;
+
+	/* no need for error handling, we'll just do a DHCP discover */
+	read(fd, imsg_ifinfo->lease, sizeof(imsg_ifinfo->lease) - 1);
+	close(fd);
 }
