@@ -1,5 +1,6 @@
-.\" 	$OpenBSD: rc.subr.8,v 1.37 2020/02/21 00:47:21 kn Exp $
+.\" 	$OpenBSD: rc.subr.8,v 1.38 2021/02/27 09:28:05 ajacoutot Exp $
 .\"
+.\" Copyright (c) 2021 Antoine Jacoutot
 .\" Copyright (c) 2011 Robert Nagy, Antoine Jacoutot, Ingo Schwarze
 .\" All rights reserved.
 .\"
@@ -24,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 21 2020 $
+.Dd $Mdocdate: February 27 2021 $
 .Dt RC.SUBR 8
 .Os
 .Sh NAME
@@ -247,6 +248,10 @@ If no such login class exists then
 will be used.
 .It Va daemon_flags
 Arguments to call the daemon with.
+.It Ar daemon Ns _logger
+Redirect standard output and error to
+.Xr logger 1
+using the configured priority (e.g. "daemon.info").
 .It Va daemon_rtable
 Routing table to run the daemon under, using
 .Xr route 8 .
@@ -333,6 +338,7 @@ Global defaults are provided by
 .Bd -literal -offset indent
 daemon_class=daemon
 daemon_flags=
+daemon_logger=
 daemon_rtable=0
 daemon_timeout=30
 daemon_user=root
@@ -352,6 +358,7 @@ site-specific values provided in
 .Xr rc.conf.local 8
 for
 .Va daemon_flags ,
+.Va daemon_logger ,
 .Va daemon_rtable ,
 .Va daemon_timeout ,
 and

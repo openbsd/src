@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcctl.8,v 1.35 2018/09/20 12:24:14 solene Exp $
+.\"	$OpenBSD: rcctl.8,v 1.36 2021/02/27 09:28:04 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 20 2018 $
+.Dd $Mdocdate: February 27 2021 $
 .Dt RCCTL 8
 .Os
 .Sh NAME
@@ -58,6 +58,7 @@ The following commands are available
 can be one of
 .Cm class ,
 .Cm flags ,
+.Cm logger ,
 .Cm status ,
 .Cm timeout
 or
@@ -198,6 +199,7 @@ flags:
 # rcctl get apmd
 apmd_class=daemon
 apmd_flags=-A
+apmd_logger=
 apmd_rtable=0
 apmd_timeout=30
 apmd_user=root

@@ -1,8 +1,8 @@
 #!/bin/ksh
 #
-# $OpenBSD: rcctl.sh,v 1.109 2021/02/18 06:17:35 ajacoutot Exp $
+# $OpenBSD: rcctl.sh,v 1.110 2021/02/27 09:28:04 ajacoutot Exp $
 #
-# Copyright (c) 2014, 2015 Antoine Jacoutot <ajacoutot@openbsd.org>
+# Copyright (c) 2014, 2015-2021 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -251,7 +251,8 @@ svc_get()
 	[ -n "${_svc}" ] || return
 
 	local _status=0 _val _var=$2
-	local daemon_class daemon_flags daemon_rtable daemon_timeout daemon_user
+	local daemon_class daemon_flags daemon_logger daemon_rtable
+	local daemon_timeout daemon_user
 
 	if svc_is_special ${_svc}; then
 		daemon_flags="$(eval echo \${${_svc}})"
@@ -276,6 +277,12 @@ svc_get()
 					daemon_flags="$(eval echo \"\${${_svc}_flags}\")"
 				[ -z "${daemon_flags}" ] && \
 					daemon_flags="$(svc_getdef ${_svc} flags)"
+			fi
+			if [ -z "${_var}" -o "${_var}" = "logger" ]; then
+				[ -z "${daemon_logger}" ] && \
+					daemon_logger="$(eval echo \"\${${_svc}_logger}\")"
+				[ -z "${daemon_logger}" ] && \
+					daemon_logger="$(svc_getdef ${_svc} logger)"
 			fi
 			if [ -z "${_var}" -o "${_var}" = "rtable" ]; then
 				[ -z "${daemon_rtable}" ] && \
@@ -311,6 +318,7 @@ svc_get()
 		else
 			echo "${_svc}_class=${daemon_class}"
 			echo "${_svc}_flags=${daemon_flags}"
+			echo "${_svc}_logger=${daemon_logger}"
 			echo "${_svc}_rtable=${daemon_rtable}"
 			echo "${_svc}_timeout=${daemon_timeout}"
 			echo "${_svc}_user=${daemon_user}"
@@ -326,7 +334,8 @@ svc_getdef()
 	[ -n "${_svc}" ] || return
 
 	local _status=0 _val _var=$2
-	local daemon_class daemon_flags daemon_rtable daemon_timeout daemon_user
+	local daemon_class daemon_flags daemon_logger daemon_rtable
+	local daemon_timeout daemon_user
 
 	if svc_is_special ${_svc}; then
 		# unconditionally parse: we always output flags and/or status
@@ -367,6 +376,7 @@ svc_getdef()
 		else
 			echo "${_svc}_class=${daemon_class}"
 			echo "${_svc}_flags=${daemon_flags}"
+			echo "${_svc}_logger=${daemon_logger}"
 			echo "${_svc}_rtable=${daemon_rtable}"
 			echo "${_svc}_timeout=${daemon_timeout}"
 			echo "${_svc}_user=${daemon_user}"
@@ -386,7 +396,7 @@ svc_rm()
 		( svc_getdef ${_svc} status ) && \
 			echo "${_svc}=NO" >>${_TMP_RCCONF}
 	else
-		grep -Ev "^${_svc}_(flags|rtable|timeout|user).*=" \
+		grep -Ev "^${_svc}_(flags|logger|rtable|timeout|user).*=" \
 			/etc/rc.conf.local >${_TMP_RCCONF}
 		( svc_getdef ${_svc} status ) && \
 			echo "${_svc}_flags=NO" >>${_TMP_RCCONF}
@@ -439,6 +449,10 @@ svc_set()
 	fi
 
 	if [ -n "${_args}" ]; then
+		if [ "${_var}" = "logger" ]; then
+			logger -p "${_args}" </dev/null >/dev/null 2>&1 ||
+				rcctl_err "unknown priority name: \"${_args}\""
+		fi
 		if [ "${_var}" = "rtable" ]; then
 			[[ ${_args} != +([[:digit:]]) || ${_args} -lt 0 ]] && \
 				rcctl_err "\"${_args}\" is not an integer"
@@ -518,13 +532,13 @@ case ${action} in
 			rcctl_err "service ${svc} does not exist" 2
 		if [ -n "${var}" ]; then
 			[ "${svc}" = "all" ] && usage
-			[[ ${var} != @(class|flags|status|rtable|timeout|user) ]] && usage
+			[[ ${var} != @(class|flags|logger|rtable|status|timeout|user) ]] && usage
 			if svc_is_meta ${svc}; then
 				[ "${var}" != "status" ] && \
 					rcctl_err "/etc/rc.d/${svc} is a meta script, cannot \"${action} ${var}\""
 			fi
 			if svc_is_special ${svc}; then
-				[[ ${var} == @(class|rtable|timeout|user) ]] && \
+				[[ ${var} == @(class|logger|rtable|timeout|user) ]] && \
 					rcctl_err "\"${svc}\" is a special variable, cannot \"${action} ${var}\""
 			fi
 		fi
@@ -540,7 +554,7 @@ case ${action} in
 			svc_is_avail ${svc} || \
 				rcctl_err "service ${svc} does not exist" 2
 		fi
-		[[ ${var} != @(class|flags|rtable|status|timeout|user) ]] && usage
+		[[ ${var} != @(class|flags|logger|rtable|status|timeout|user) ]] && usage
 		svc_is_meta ${svc} && [ "${var}" != "status" ] && \
 			rcctl_err "/etc/rc.d/${svc} is a meta script, cannot \"${action} ${var}\""
 		[[ ${var} = flags && ${args} = NO ]] && \
