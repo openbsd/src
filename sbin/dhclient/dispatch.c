@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.168 2021/02/19 13:33:37 krw Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.169 2021/02/27 13:59:00 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -88,6 +88,9 @@ dispatch(struct interface_info *ifi, int routefd)
 	struct timespec		*ts;
 	void			(*func)(struct interface_info *);
 	int			 nfds;
+
+	log_debug("%s: link is %s", log_procname,
+	    LINK_STATE_IS_UP(ifi->link_state) ? "up" : "down");
 
 	while (quit == 0 || quit == RESTART) {
 		if (quit == RESTART) {
