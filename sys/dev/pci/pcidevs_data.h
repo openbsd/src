@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1958 2021/02/27 02:36:33 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1959 2021/02/27 03:00:54 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -2436,12 +2436,12 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Intrepid 2 GMAC",
 	},
 	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BCM5701,
-	    "BCM5701",
-	},
-	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_M1_PCIE,
 	    "M1 PCIe",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BCM5701,
+	    "BCM5701",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_NVME1,
@@ -28684,6 +28684,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "966 HD Audio",
 	},
 	{
+	    PCI_VENDOR_SKHYNIX, PCI_PRODUCT_SKHYNIX_SSD,
+	    "BC501 NVMe",
+	},
+	{
 	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_83C170,
 	    "83C170",
 	},
@@ -29374,10 +29378,6 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_SYNOPSYS, PCI_PRODUCT_SYNOPSYS_DW_PCIE,
 	    "DesignWare PCIE",
-	},
-	{
-	    PCI_VENDOR_SKHYNIX, PCI_PRODUCT_SKHYNIX_SSD,
-	    "BC501 NVMe",
 	},
 	{
 	    PCI_VENDOR_TAMARACK, PCI_PRODUCT_TAMARACK_TC9021,

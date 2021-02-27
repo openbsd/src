@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1958 2021/02/27 02:36:33 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1959 2021/02/27 03:00:54 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1046,8 +1046,8 @@
 #define	PCI_PRODUCT_APPLE_INTREPID2_ATA	0x0069		/* Intrepid 2 ATA */
 #define	PCI_PRODUCT_APPLE_INTREPID2_FW	0x006a		/* Intrepid 2 FireWire */
 #define	PCI_PRODUCT_APPLE_INTREPID2_GMAC	0x006b		/* Intrepid 2 GMAC */
-#define	PCI_PRODUCT_APPLE_BCM5701	0x1645		/* BCM5701 */
 #define	PCI_PRODUCT_APPLE_M1_PCIE	0x100c		/* M1 PCIe */
+#define	PCI_PRODUCT_APPLE_BCM5701	0x1645		/* BCM5701 */
 #define	PCI_PRODUCT_APPLE_NVME1	0x2001		/* NVMe */
 #define	PCI_PRODUCT_APPLE_NVME2	0x2003		/* NVMe */
 
@@ -8038,6 +8038,9 @@
 #define	PCI_PRODUCT_SIS_7300	0x7300		/* 7300 VGA */
 #define	PCI_PRODUCT_SIS_966_HDA	0x7502		/* 966 HD Audio */
 
+/* SK hynix products */
+#define	PCI_PRODUCT_SKHYNIX_SSD	0x1327		/* BC501 NVMe */
+
 /* SMC products */
 #define	PCI_PRODUCT_SMC_83C170	0x0005		/* 83C170 */
 #define	PCI_PRODUCT_SMC_83C175	0x0006		/* 83C175 */
@@ -8248,9 +8251,6 @@
 
 /* Synopsys products */
 #define	PCI_PRODUCT_SYNOPSYS_DW_PCIE	0xabcd		/* DesignWare PCIE */
-
-/* SK hynix products */
-#define	PCI_PRODUCT_SKHYNIX_SSD	0x1327		/* BC501 NVMe */
 
 /* Tamarack Microelectronics */
 #define	PCI_PRODUCT_TAMARACK_TC9021	0x1021		/* TC9021 */
