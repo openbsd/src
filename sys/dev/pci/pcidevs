@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1958 2021/02/27 02:36:33 jsg Exp $
+$OpenBSD: pcidevs,v 1.1959 2021/02/27 03:00:54 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1041,8 +1041,8 @@ product APPLE INTREPID2_PCI2	0x0068	Intrepid 2 PCI
 product APPLE INTREPID2_ATA	0x0069	Intrepid 2 ATA
 product APPLE INTREPID2_FW	0x006a	Intrepid 2 FireWire
 product APPLE INTREPID2_GMAC	0x006b	Intrepid 2 GMAC
-product APPLE BCM5701		0x1645	BCM5701
 product APPLE M1_PCIE		0x100c	M1 PCIe
+product APPLE BCM5701		0x1645	BCM5701
 product APPLE NVME1		0x2001	NVMe
 product APPLE NVME2		0x2003	NVMe
 
@@ -8033,6 +8033,9 @@ product SIS 7019		0x7019	7019 Audio
 product SIS 7300		0x7300	7300 VGA
 product SIS 966_HDA		0x7502	966 HD Audio
 
+/* SK hynix products */
+product SKHYNIX SSD		0x1327	BC501 NVMe
+
 /* SMC products */
 product SMC 83C170		0x0005	83C170
 product SMC 83C175		0x0006	83C175
@@ -8243,9 +8246,6 @@ product SYMPHONY2 82C101	0x0001	82C101
 
 /* Synopsys products */
 product SYNOPSYS DW_PCIE	0xabcd	DesignWare PCIE
-
-/* SK hynix products */
-product SKHYNIX SSD		0x1327	BC501 NVMe
 
 /* Tamarack Microelectronics */
 product TAMARACK TC9021		0x1021	TC9021
