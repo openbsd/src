@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacctl.c,v 1.20 2020/09/14 09:07:05 florian Exp $	*/
+/*	$OpenBSD: slaacctl.c,v 1.21 2021/02/27 10:28:12 florian Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -73,7 +73,7 @@ main(int argc, char *argv[])
 	int			 ch;
 	char			*sockname;
 
-	sockname = SLAACD_SOCKET;
+	sockname = _PATH_SLAACD_SOCKET;
 	while ((ch = getopt(argc, argv, "s:")) != -1) {
 		switch (ch) {
 		case 's':

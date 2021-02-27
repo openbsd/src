@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.28 2021/01/19 16:48:20 florian Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.29 2021/02/27 10:28:12 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -18,7 +18,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define	SLAACD_SOCKET		"/dev/slaacd.sock"
+#define	_PATH_SLAACD_SOCKET	"/dev/slaacd.sock"
 #define SLAACD_USER		"_slaacd"
 #define SLAACD_RTA_LABEL	"slaacd"
 

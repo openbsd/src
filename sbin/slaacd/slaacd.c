@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.c,v 1.56 2021/01/19 16:49:56 florian Exp $	*/
+/*	$OpenBSD: slaacd.c,v 1.57 2021/02/27 10:28:12 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -131,7 +131,7 @@ main(int argc, char *argv[])
 	int			 pipe_main2engine[2];
 	int			 frontend_routesock, rtfilter;
 	int			 rtable_any = RTABLE_ANY;
-	char			*csock = SLAACD_SOCKET;
+	char			*csock = _PATH_SLAACD_SOCKET;
 #ifndef SMALL
 	struct imsg_propose_rdns rdns;
 	int			 control_fd;
