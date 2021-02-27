@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.h,v 1.20 2021/01/19 16:53:27 florian Exp $	*/
+/*	$OpenBSD: rad.h,v 1.21 2021/02/27 10:35:20 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -18,8 +18,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define	CONF_FILE		"/etc/rad.conf"
-#define	RAD_SOCKET		"/var/run/rad.sock"
+#define	_PATH_CONF_FILE		"/etc/rad.conf"
+#define	_PATH_RAD_SOCKET	"/var/run/rad.sock"
 #define	RAD_USER		"_rad"
 
 #define	OPT_VERBOSE	0x00000001

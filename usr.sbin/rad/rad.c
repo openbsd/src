@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.c,v 1.26 2021/01/19 16:54:48 florian Exp $	*/
+/*	$OpenBSD: rad.c,v 1.27 2021/02/27 10:35:20 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -133,8 +133,8 @@ main(int argc, char *argv[])
 	int			 control_fd;
 	char			*csock;
 
-	conffile = CONF_FILE;
-	csock = RAD_SOCKET;
+	conffile = _PATH_CONF_FILE;
+	csock = _PATH_RAD_SOCKET;
 
 	log_init(1, LOG_DAEMON);	/* Log to stderr until daemonized. */
 	log_setverbose(1);

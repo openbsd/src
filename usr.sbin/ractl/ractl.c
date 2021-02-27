@@ -1,4 +1,4 @@
-/*	$OpenBSD: ractl.c,v 1.2 2019/11/01 18:15:28 florian Exp $	*/
+/*	$OpenBSD: ractl.c,v 1.3 2021/02/27 10:35:20 florian Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -67,7 +67,7 @@ main(int argc, char *argv[])
 	int			 ch;
 	char			*sockname;
 
-	sockname = RAD_SOCKET;
+	sockname = _PATH_RAD_SOCKET;
 	while ((ch = getopt(argc, argv, "s:")) != -1) {
 		switch (ch) {
 		case 's':
