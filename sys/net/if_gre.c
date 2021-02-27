@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.169 2021/02/27 09:20:38 dlg Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.170 2021/02/27 09:21:22 dlg Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -3590,9 +3590,6 @@ nvgre_add_addr(struct nvgre_softc *sc, const struct ifbareq *ifba)
 
 		endpoint.in4 = sin->sin_addr;
 		break;
-		memset(sin6, 0, sizeof(*sin6));
-		sin6->sin6_family = AF_INET6;
-		sin6->sin6_len = sizeof(*sin6);
 
 #ifdef INET6
 	case AF_INET6:
