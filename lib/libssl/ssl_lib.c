@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.249 2021/02/25 17:06:05 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.250 2021/02/27 14:20:50 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2616,22 +2616,14 @@ ssl_clear_cipher_state(SSL *s)
 void
 ssl_clear_cipher_read_state(SSL *s)
 {
-	EVP_CIPHER_CTX_free(s->enc_read_ctx);
-	s->enc_read_ctx = NULL;
-	EVP_MD_CTX_free(s->read_hash);
-	s->read_hash = NULL;
-
 	tls12_record_layer_clear_read_state(s->internal->rl);
+	tls12_record_layer_read_cipher_hash(s->internal->rl,
+	    &s->enc_read_ctx, &s->read_hash);
 }
 
 void
 ssl_clear_cipher_write_state(SSL *s)
 {
-	EVP_CIPHER_CTX_free(s->internal->enc_write_ctx);
-	s->internal->enc_write_ctx = NULL;
-	EVP_MD_CTX_free(s->internal->write_hash);
-	s->internal->write_hash = NULL;
-
 	tls12_record_layer_clear_write_state(s->internal->rl);
 }
 

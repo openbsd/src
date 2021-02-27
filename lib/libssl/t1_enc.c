@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.132 2021/02/03 15:14:44 tb Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.133 2021/02/27 14:20:50 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -310,98 +310,6 @@ tls1_generate_key_block(SSL *s, uint8_t *key_block, size_t key_block_len)
 	    NULL, 0, NULL, 0, key_block, key_block_len);
 }
 
-/*
- * tls1_change_cipher_state_cipher performs the work needed to switch cipher
- * states when using EVP_CIPHER. The argument is_read is true iff this function
- * is being called due to reading, as opposed to writing, a ChangeCipherSpec
- * message.
- */
-static int
-tls1_change_cipher_state_cipher(SSL *s, char is_read,
-    const unsigned char *mac_secret, unsigned int mac_secret_size,
-    const unsigned char *key, unsigned int key_len, const unsigned char *iv,
-    unsigned int iv_len)
-{
-	EVP_CIPHER_CTX *cipher_ctx;
-	const EVP_CIPHER *cipher;
-	EVP_MD_CTX *mac_ctx;
-	EVP_PKEY *mac_key;
-	const EVP_MD *mac;
-	int stream_mac;
-	int mac_type;
-
-	cipher = S3I(s)->tmp.new_sym_enc;
-	mac = S3I(s)->tmp.new_hash;
-	mac_type = S3I(s)->tmp.new_mac_pkey_type;
-	stream_mac = S3I(s)->hs.new_cipher->algorithm2 & TLS1_STREAM_MAC;
-
-	if (is_read) {
-		ssl_clear_cipher_read_state(s);
-
-		if ((cipher_ctx = EVP_CIPHER_CTX_new()) == NULL)
-			goto err;
-		s->enc_read_ctx = cipher_ctx;
-		if ((mac_ctx = EVP_MD_CTX_new()) == NULL)
-			goto err;
-		s->read_hash = mac_ctx;
-
-		if (!tls12_record_layer_set_read_cipher_hash(s->internal->rl,
-		    cipher_ctx, mac_ctx, stream_mac))
-			goto err;
-
-		if (!tls12_record_layer_set_read_mac_key(s->internal->rl,
-		    mac_secret, mac_secret_size))
-			goto err;
-	} else {
-		/*
-		 * DTLS fragments retain a pointer to the compression, cipher
-		 * and hash contexts, so that it can restore state in order
-		 * to perform retransmissions. As such, we cannot free write
-		 * contexts that are used for DTLS - these are instead freed
-		 * by DTLS when its frees a ChangeCipherSpec fragment.
-		 */
-		if (!SSL_is_dtls(s))
-			ssl_clear_cipher_write_state(s);
-
-		if ((cipher_ctx = EVP_CIPHER_CTX_new()) == NULL)
-			goto err;
-		s->internal->enc_write_ctx = cipher_ctx;
-		if ((mac_ctx = EVP_MD_CTX_new()) == NULL)
-			goto err;
-		s->internal->write_hash = mac_ctx;
-
-		if (!tls12_record_layer_set_write_cipher_hash(s->internal->rl,
-		    cipher_ctx, mac_ctx, stream_mac))
-			goto err;
-	}
-
-	EVP_CipherInit_ex(cipher_ctx, cipher, NULL, key, iv, !is_read);
-
-	if ((mac_key = EVP_PKEY_new_mac_key(mac_type, NULL, mac_secret,
-	    mac_secret_size)) == NULL)
-		goto err;
-	EVP_DigestSignInit(mac_ctx, NULL, mac, NULL, mac_key);
-	EVP_PKEY_free(mac_key);
-
-	if (S3I(s)->hs.new_cipher->algorithm_enc == SSL_eGOST2814789CNT) {
-		int nid;
-		if (S3I(s)->hs.new_cipher->algorithm2 & SSL_HANDSHAKE_MAC_GOST94)
-			nid = NID_id_Gost28147_89_CryptoPro_A_ParamSet;
-		else
-			nid = NID_id_tc26_gost_28147_param_Z;
-
-		EVP_CIPHER_CTX_ctrl(cipher_ctx, EVP_CTRL_GOST_SET_SBOX, nid, 0);
-		if (S3I(s)->hs.new_cipher->algorithm_mac == SSL_GOST89MAC)
-			EVP_MD_CTX_ctrl(mac_ctx, EVP_MD_CTRL_GOST_SET_SBOX, nid, 0);
-	}
-
-	return (1);
-
-err:
-	SSLerrorx(ERR_R_MALLOC_FAILURE);
-	return (0);
-}
-
 int
 tls1_change_cipher_state(SSL *s, int which)
 {
@@ -476,17 +384,14 @@ tls1_change_cipher_state(SSL *s, int which)
 		if (!tls12_record_layer_change_read_cipher_state(s->internal->rl,
 		    mac_secret, mac_secret_size, key, key_len, iv, iv_len))
 			goto err;
+		tls12_record_layer_read_cipher_hash(s->internal->rl,
+		    &s->enc_read_ctx, &s->read_hash);
 	} else {
 		if (!tls12_record_layer_change_write_cipher_state(s->internal->rl,
 		    mac_secret, mac_secret_size, key, key_len, iv, iv_len))
 			goto err;
 	}
-
-	if (aead != NULL)
-		return 1;
-
-	return tls1_change_cipher_state_cipher(s, is_read,
-	    mac_secret, mac_secret_size, key, key_len, iv, iv_len);
+	return (1);
 
  err:
 	return (0);
@@ -501,7 +406,8 @@ tls1_setup_key_block(SSL *s)
 	int key_len, iv_len;
 	const EVP_CIPHER *cipher = NULL;
 	const EVP_AEAD *aead = NULL;
-	const EVP_MD *mac = NULL;
+	const EVP_MD *handshake_hash = NULL;
+	const EVP_MD *mac_hash = NULL;
 	int ret = 0;
 
 	if (S3I(s)->hs.key_block_len != 0)
@@ -516,8 +422,8 @@ tls1_setup_key_block(SSL *s)
 		key_len = EVP_AEAD_key_length(aead);
 		iv_len = SSL_CIPHER_AEAD_FIXED_NONCE_LEN(s->session->cipher);
 	} else {
-		if (!ssl_cipher_get_evp(s->session, &cipher, &mac, &mac_type,
-		    &mac_secret_size)) {
+		if (!ssl_cipher_get_evp(s->session, &cipher, &mac_hash,
+		    &mac_type, &mac_secret_size)) {
 			SSLerror(s, SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
 			return (0);
 		}
@@ -525,13 +431,16 @@ tls1_setup_key_block(SSL *s)
 		iv_len = EVP_CIPHER_iv_length(cipher);
 	}
 
+	if (!ssl_get_handshake_evp_md(s, &handshake_hash))
+		return (0);
+
 	S3I(s)->tmp.new_aead = aead;
 	S3I(s)->tmp.new_sym_enc = cipher;
-	S3I(s)->tmp.new_hash = mac;
-	S3I(s)->tmp.new_mac_pkey_type = mac_type;
 	S3I(s)->tmp.new_mac_secret_size = mac_secret_size;
 
 	tls12_record_layer_set_aead(s->internal->rl, aead);
+	tls12_record_layer_set_cipher_hash(s->internal->rl, cipher,
+	    handshake_hash, mac_hash);
 
 	tls1_cleanup_key_block(s);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.323 2021/02/25 17:06:05 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.324 2021/02/27 14:20:50 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -483,6 +483,9 @@ int tls12_record_layer_read_protected(struct tls12_record_layer *rl);
 int tls12_record_layer_write_protected(struct tls12_record_layer *rl);
 void tls12_record_layer_set_aead(struct tls12_record_layer *rl,
     const EVP_AEAD *aead);
+void tls12_record_layer_set_cipher_hash(struct tls12_record_layer *rl,
+    const EVP_CIPHER *cipher, const EVP_MD *handshake_hash,
+    const EVP_MD *mac_hash);
 void tls12_record_layer_set_version(struct tls12_record_layer *rl,
     uint16_t version);
 void tls12_record_layer_set_write_epoch(struct tls12_record_layer *rl,
@@ -494,16 +497,8 @@ void tls12_record_layer_write_epoch_done(struct tls12_record_layer *rl,
 void tls12_record_layer_clear_read_state(struct tls12_record_layer *rl);
 void tls12_record_layer_clear_write_state(struct tls12_record_layer *rl);
 void tls12_record_layer_reflect_seq_num(struct tls12_record_layer *rl);
-int tls12_record_layer_set_read_aead(struct tls12_record_layer *rl,
-    SSL_AEAD_CTX *aead_ctx);
-int tls12_record_layer_set_write_aead(struct tls12_record_layer *rl,
-    SSL_AEAD_CTX *aead_ctx);
-int tls12_record_layer_set_read_cipher_hash(struct tls12_record_layer *rl,
-    EVP_CIPHER_CTX *cipher_ctx, EVP_MD_CTX *hash_ctx, int stream_mac);
-int tls12_record_layer_set_write_cipher_hash(struct tls12_record_layer *rl,
-    EVP_CIPHER_CTX *cipher_ctx, EVP_MD_CTX *hash_ctx, int stream_mac);
-int tls12_record_layer_set_read_mac_key(struct tls12_record_layer *rl,
-    const uint8_t *mac_key, size_t mac_key_len);
+void tls12_record_layer_read_cipher_hash(struct tls12_record_layer *rl,
+    EVP_CIPHER_CTX **cipher, EVP_MD_CTX **hash);
 int tls12_record_layer_change_read_cipher_state(struct tls12_record_layer *rl,
     const uint8_t *mac_key, size_t mac_key_len, const uint8_t *key,
     size_t key_len, const uint8_t *iv, size_t iv_len);
@@ -774,9 +769,6 @@ typedef struct ssl_internal_st {
 
 	STACK_OF(SSL_CIPHER) *cipher_list_tls13;
 
-	EVP_CIPHER_CTX *enc_write_ctx;		/* cryptographic state */
-	EVP_MD_CTX *write_hash;			/* used for mac generation */
-
 	struct tls12_record_layer *rl;
 
 	/* session info */
@@ -902,8 +894,6 @@ typedef struct ssl3_state_internal_st {
 	SSL_HANDSHAKE_TLS13 hs_tls13;
 
 	struct	{
-		int new_mac_secret_size;
-
 		unsigned char cert_verify_md[EVP_MAX_MD_SIZE];
 
 		unsigned char finish_md[EVP_MAX_MD_SIZE];
@@ -931,8 +921,8 @@ typedef struct ssl3_state_internal_st {
 
 		const EVP_CIPHER *new_sym_enc;
 		const EVP_AEAD *new_aead;
-		const EVP_MD *new_hash;
-		int new_mac_pkey_type;
+		int new_mac_secret_size;
+
 		int cert_request;
 	} tmp;
 
