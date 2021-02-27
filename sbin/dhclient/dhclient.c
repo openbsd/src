@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.704 2021/02/27 13:59:00 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.705 2021/02/27 17:44:58 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2571,9 +2571,6 @@ get_recorded_lease(struct interface_info *ifi)
 
 		break;
 	}
-
-	if (lp != NULL && lp->epoch == 0)
-		lp->epoch = cur_time;
 
 	return lp;
 }
