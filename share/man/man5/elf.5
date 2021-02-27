@@ -1,4 +1,4 @@
-.\"	$OpenBSD: elf.5,v 1.37 2019/12/01 13:10:51 jsg Exp $
+.\"	$OpenBSD: elf.5,v 1.38 2021/02/27 18:58:59 jmc Exp $
 .\"Copyright (c) 1999 Jeroen Ruigrok van der Werven
 .\"All rights reserved.
 .\"
@@ -25,7 +25,7 @@
 .\"
 .\"	$FreeBSD: src/share/man/man5/elf.5,v 1.21 2001/10/01 16:09:23 ru Exp $
 .\"
-.Dd $Mdocdate: December 1 2019 $
+.Dd $Mdocdate: February 27 2021 $
 .Dt ELF 5
 .Os
 .Sh NAME
@@ -1026,10 +1026,9 @@ This section is of type
 .Dv SHT_NOTE .
 No attribute types are used.
 .Ox
-native executables usually contain a
+native executables must contain a
 .Sy .note.openbsd.ident
-section to identify themselves, for the kernel to bypass any compatibility
-ELF binary emulation tests when loading the file.
+section to identify themselves.
 .It .plt
 This section holds the procedure linkage table.
 This section is of type
