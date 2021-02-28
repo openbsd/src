@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.29 2021/02/26 11:28:13 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.30 2021/02/28 21:09:44 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -869,6 +869,49 @@ iommu_device_do_map(uint32_t phandle, uint32_t *cells, bus_dma_tag_t dmat)
 	}
 
 	return dmat;
+}
+
+bus_dma_tag_t
+iommu_device_map(int node, bus_dma_tag_t dmat)
+{
+	uint32_t sid = 0;
+	uint32_t phandle = 0;
+	uint32_t *cell;
+	uint32_t *map;
+	int len, icells, ncells;
+
+	len = OF_getproplen(node, "iommus");
+	if (len <= 0)
+		return dmat;
+
+	map = malloc(len, M_TEMP, M_WAITOK);
+	OF_getpropintarray(node, "iommus", map, len);
+
+	cell = map;
+	ncells = len / sizeof(uint32_t);
+	while (ncells > 1) {
+		node = OF_getnodebyphandle(cell[0]);
+		if (node == 0)
+			goto out;
+
+		icells = OF_getpropint(node, "#iommu-cells", 1);
+		if (ncells < icells + 1)
+			goto out;
+
+		KASSERT(icells == 1);
+
+		phandle = cell[0];
+		sid = cell[1];
+		break;
+
+		cell += (1 + icells);
+		ncells -= (1 + icells);
+	}
+
+out:
+	free(map, M_TEMP, len);
+
+	return iommu_device_do_map(phandle, &sid, dmat);
 }
 
 bus_dma_tag_t

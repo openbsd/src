@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.h,v 1.18 2021/02/25 22:14:54 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.h,v 1.19 2021/02/28 21:09:44 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -245,6 +245,7 @@ struct iommu_device {
 };
 
 void	iommu_device_register(struct iommu_device *);
+bus_dma_tag_t iommu_device_map(int, bus_dma_tag_t);
 bus_dma_tag_t iommu_device_map_pci(int, uint32_t, bus_dma_tag_t);
 
 #endif /* _DEV_OFW_MISC_H_ */
