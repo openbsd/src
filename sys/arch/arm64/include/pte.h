@@ -1,4 +1,4 @@
-/* $OpenBSD: pte.h,v 1.6 2021/02/16 12:33:22 kettenis Exp $ */
+/* $OpenBSD: pte.h,v 1.7 2021/02/28 21:28:33 patrick Exp $ */
 /*
  * Copyright (c) 2014 Dale Rahn <drahn@dalerahn.com>
  *
@@ -58,6 +58,12 @@
 #define		PTE_ATTR_CI		2
 #define		PTE_ATTR_WB		3
 #define		PTE_ATTR_WT		4
+
+#define		PTE_MEMATTR_DEV_NGNRNE	0x0
+#define		PTE_MEMATTR_DEV_NGNRE	0x1
+#define		PTE_MEMATTR_CI		0x5
+#define		PTE_MEMATTR_WB		0xf
+#define		PTE_MEMATTR_WT		0xa
 
 #define		SH_INNER	3
 #define		SH_OUTER	2
