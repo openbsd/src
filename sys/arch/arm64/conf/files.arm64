@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.37 2021/02/27 16:19:14 kettenis Exp $
+# $OpenBSD: files.arm64,v 1.38 2021/02/28 21:40:11 patrick Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -160,15 +160,28 @@ device	pciecam: pcibus
 attach	pciecam at fdt
 file	arch/arm64/dev/pciecam.c		pciecam
 
+device	smmu
+attach	smmu at fdt with smmu_fdt
+file	arch/arm64/dev/smmu.c			smmu
+file	arch/arm64/dev/smmu_fdt.c		smmu_fdt
+
 # ACPI
 include "dev/acpi/files.acpi"
 
 attach	acpi at fdt with acpi_fdt
 file	arch/arm64/arm64/acpi_machdep.c		acpi_fdt
 
+define	acpiiort {}
+device	acpiiort: acpiiort
+attach	acpiiort at acpi
+file	arch/arm64/dev/acpiiort.c		acpiiort
+
 device	acpipci: pcibus
 attach	acpipci at acpi
 file	arch/arm64/dev/acpipci.c		acpipci
+
+attach	smmu at acpiiort with smmu_acpi
+file	arch/arm64/dev/smmu_acpi.c		smmu_acpi
 
 device  apm
 attach  apm at mainbus
