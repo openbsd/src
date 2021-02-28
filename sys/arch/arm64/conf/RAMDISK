@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.144 2021/02/27 16:31:33 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.145 2021/02/28 21:41:07 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -51,6 +51,8 @@ efi0		at mainbus?
 acpi0		at mainbus?
 acpiec*		at acpi?
 acpimcfg*	at acpi?
+acpiiort*	at acpi?
+#smmu*		at acpiiort?
 acpipci*	at acpi?
 pci*		at acpipci?
 ahci*		at acpi?
@@ -84,6 +86,7 @@ pci*		at pciecam?
 sdhc*		at fdt?
 sdmmc*		at sdhc?
 bwfm*		at sdmmc?	# Broadcom FullMAC
+#smmu*		at fdt?
 xhci*		at fdt?
 ccp*		at fdt?		# AMD Cryptographic Co-processor
 
