@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.2 2021/02/27 10:07:41 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.3 2021/02/28 15:26:26 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -50,7 +50,13 @@
 #include "dhcpleased.h"
 #include "engine.h"
 
-#define	MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
+/*
+ * RFC 2131 4.1 p23 has "SHOULD be 4 seconds", we are a bit more aggressive,
+ * networks are faster these days.
+ */
+#define	START_EXP_BACKOFF	 1
+#define	MAX_EXP_BACKOFF		64 /* RFC 2131 4.1 p23 */
+#define	MINIMUM(a, b)		(((a) < (b)) ? (a) : (b))
 
 enum if_state {
 	IF_DOWN,
@@ -1087,32 +1093,29 @@ state_transition(struct dhcpleased_iface *iface, enum if_state new_state)
 			    sizeof(iface->nameservers));
 		}
 		if (old_state == IF_INIT) {
-			iface->timo.tv_sec *= 2;
-			if (iface->timo.tv_sec > 64)
-				iface->timo.tv_sec = 64;
+			if (iface->timo.tv_sec < MAX_EXP_BACKOFF)
+				iface->timo.tv_sec *= 2;
 		} else
-			iface->timo.tv_sec = 1;
+			iface->timo.tv_sec = START_EXP_BACKOFF;
 		request_dhcp_discover(iface);
 		break;
 	case IF_REBOOTING:
 		if (old_state == IF_REBOOTING) {
-			iface->timo.tv_sec *= 2;
-			if (iface->timo.tv_sec > 64)
-				iface->timo.tv_sec = 64;
+			if (iface->timo.tv_sec < MAX_EXP_BACKOFF)
+				iface->timo.tv_sec *= 2;
 		} else {
 			/* make sure we send broadcast */
 			iface->dhcp_server.s_addr = INADDR_ANY;
-			iface->timo.tv_sec = 1;
+			iface->timo.tv_sec = START_EXP_BACKOFF;
 		}
 		request_dhcp_request(iface);
 		break;
 	case IF_REQUESTING:
 		if (old_state == IF_REQUESTING) {
-			iface->timo.tv_sec *= 2;
-			if (iface->timo.tv_sec > 64)
-				iface->timo.tv_sec = 64;
+			if (iface->timo.tv_sec < MAX_EXP_BACKOFF)
+				iface->timo.tv_sec *= 2;
 		} else
-			iface->timo.tv_sec = 1;
+			iface->timo.tv_sec = START_EXP_BACKOFF;
 		request_dhcp_request(iface);
 		break;
 	case IF_BOUND:
@@ -1176,13 +1179,13 @@ iface_timeout(int fd, short events, void *arg)
 		state_transition(iface, IF_INIT);
 		break;
 	case IF_REBOOTING:
-		if (iface->timo.tv_sec >= 64)
+		if (iface->timo.tv_sec >= MAX_EXP_BACKOFF)
 			state_transition(iface, IF_INIT);
 		else
 			state_transition(iface, IF_REBOOTING);
 		break;
 	case IF_REQUESTING:
-		if (iface->timo.tv_sec >= 64)
+		if (iface->timo.tv_sec >= MAX_EXP_BACKOFF)
 			state_transition(iface, IF_INIT);
 		else
 			state_transition(iface, IF_REQUESTING);
