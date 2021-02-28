@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.705 2021/02/27 17:44:58 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.706 2021/02/28 17:33:45 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -2685,8 +2685,11 @@ tick_msg(const char *preamble, int action)
 		if (printmsg)
 			fprintf(stderr, "got %s\n", preamble);
 		preamble_sent = 0;
-		if (strcmp("link", preamble) == 0)
+		if (strcmp("link", preamble) == 0) {
 			linkup = 1;
+			/* New silent period for "no lease ... got lease". */
+			timespecadd(&now, &grace_intvl, &grace);
+		}
 		break;
 	case TICK_WAIT:
 		if (printmsg)
