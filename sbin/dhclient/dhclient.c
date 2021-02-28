@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.706 2021/02/28 17:33:45 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.707 2021/02/28 17:49:01 krw Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -256,10 +256,10 @@ interface_state(struct interface_info *ifi)
 
 	newlinkup = LINK_STATE_IS_UP(ifi->link_state);
 	if (newlinkup != oldlinkup) {
-		tick_msg("link", newlinkup ? TICK_SUCCESS : TICK_WAIT);
 		log_debug("%s: link %s -> %s", log_procname,
 		    (oldlinkup != 0) ? "up" : "down",
 		    (newlinkup != 0) ? "up" : "down");
+		tick_msg("link", newlinkup ? TICK_SUCCESS : TICK_WAIT);
 	}
 
 	if (newlinkup != 0) {
@@ -1433,8 +1433,6 @@ send_discover(struct interface_info *ifi)
 		return;
 	}
 
-	tick_msg("lease", TICK_WAIT);
-
 	set_interval(ifi, cur_time);
 	set_secs(ifi, cur_time);
 
@@ -1443,6 +1441,7 @@ send_discover(struct interface_info *ifi)
 		log_debug("%s: DHCPDISCOVER - interval %lld", log_procname,
 		    (long long)ifi->interval);
 
+	tick_msg("lease", TICK_WAIT);
 	set_timeout(ifi, ifi->interval, send_discover);
 }
 
@@ -1489,7 +1488,6 @@ send_request(struct interface_info *ifi)
 	cancel_timeout(ifi);
 	clock_gettime(CLOCK_REALTIME, &now);
 	cur_time = now.tv_sec;
-	tick_msg("lease", TICK_WAIT);
 
 	/* Figure out how long it's been since we started transmitting. */
 	interval = cur_time - ifi->first_sending;
@@ -1547,6 +1545,7 @@ send_request(struct interface_info *ifi)
 		log_debug("%s: DHCPREQUEST to %s", log_procname,
 		    inet_ntoa(destination.sin_addr));
 
+	tick_msg("lease", TICK_WAIT);
 	set_timeout(ifi, ifi->interval, send_request);
 }
 
