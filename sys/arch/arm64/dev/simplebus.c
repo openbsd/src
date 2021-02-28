@@ -1,4 +1,4 @@
-/* $OpenBSD: simplebus.c,v 1.12 2020/11/19 17:42:59 kettenis Exp $ */
+/* $OpenBSD: simplebus.c,v 1.13 2021/02/28 21:10:22 patrick Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -21,8 +21,10 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 
+#include <machine/fdt.h>
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
+#include <dev/ofw/ofw_misc.h>
 
 #include <arm64/fdt.h>
 #include <arm64/dev/simplebusvar.h>
@@ -251,6 +253,8 @@ simplebus_attach_node(struct device *self, int node)
 		memcpy(fa.fa_dmat, &sc->sc_dma, sizeof(sc->sc_dma));
 		fa.fa_dmat->_flags |= BUS_DMA_COHERENT;
 	}
+
+	fa.fa_dmat = iommu_device_map(fa.fa_node, fa.fa_dmat);
 
 	child = config_found_sm(self, &fa, sc->sc_early ? NULL :
 	    simplebus_print, simplebus_submatch);
