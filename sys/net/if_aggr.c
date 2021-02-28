@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.37 2021/02/27 01:19:11 dlg Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.38 2021/02/28 03:59:25 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -108,7 +108,7 @@ struct ether_slowproto_hdr {
 
 #define LACP_ADDR_C_BRIDGE		{ 0x01, 0x80, 0xc2, 0x00, 0x00, 0x00 }
 #define LACP_ADDR_SLOW			{ 0x01, 0x80, 0xc2, 0x00, 0x00, 0x02 }
-#define LACP_ADDR_SLOW_E64		0x0180c2000002
+#define LACP_ADDR_SLOW_E64		0x0180c2000002ULL
 #define LACP_ADDR_NON_TPMR_BRIDGE	{ 0x01, 0x80, 0xc2, 0x00, 0x00, 0x03 }
 
 struct lacp_tlv_hdr {
