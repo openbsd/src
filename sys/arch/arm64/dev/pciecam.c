@@ -1,4 +1,4 @@
-/* $OpenBSD: pciecam.c,v 1.12 2021/02/25 23:07:48 patrick Exp $ */
+/* $OpenBSD: pciecam.c,v 1.13 2021/02/28 21:06:58 patrick Exp $ */
 /*
  * Copyright (c) 2013,2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -35,6 +35,7 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_pinctrl.h>
+#include <dev/ofw/ofw_misc.h>
 
 /* Assembling ECAM Configuration Address */
 #define PCIE_BUS_SHIFT			20
@@ -324,6 +325,12 @@ pciecam_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 int
 pciecam_probe_device_hook(void *v, struct pci_attach_args *pa)
 {
+	struct pciecam_softc *sc = (struct pciecam_softc *)v;
+	uint16_t rid;
+
+	rid = pci_requester_id(pa->pa_pc, pa->pa_tag);
+	pa->pa_dmat = iommu_device_map_pci(sc->sc_node, rid, pa->pa_dmat);
+
 	return 0;
 }
 
