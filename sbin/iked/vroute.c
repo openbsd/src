@@ -1,4 +1,4 @@
-/*	$OpenBSD: vroute.c,v 1.5 2021/02/27 17:07:04 tobhe Exp $	*/
+/*	$OpenBSD: vroute.c,v 1.6 2021/02/28 19:25:59 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2021 Tobias Heider <tobhe@openbsd.org>
@@ -212,7 +212,7 @@ vroute_setroute(struct iked *env, uint8_t rdomain, struct sockaddr *dst,
 int
 vroute_getroute(struct iked *env, struct imsg *imsg)
 {
-	struct sockaddr		*dest, *mask = NULL, *addr = NULL;
+	struct sockaddr		*dest, *mask = NULL, *gateway = NULL;
 	uint8_t			*ptr;
 	size_t			 left;
 	int			 addrs = 0;
@@ -252,12 +252,12 @@ vroute_getroute(struct iked *env, struct imsg *imsg)
 
 		if (left < sizeof(struct sockaddr))
 			return (-1);
-		addr = (struct sockaddr *)ptr;
-		if (left < addr->sa_len)
+		gateway = (struct sockaddr *)ptr;
+		if (left < gateway->sa_len)
 			return (-1);
-		socket_setport(addr, 0);
-		ptr += addr->sa_len;
-		left -= addr->sa_len;
+		socket_setport(gateway, 0);
+		ptr += gateway->sa_len;
+		left -= gateway->sa_len;
 		addrs |= RTA_GATEWAY;
 	} else {
 		flags |= RTF_HOST;
@@ -273,7 +273,7 @@ vroute_getroute(struct iked *env, struct imsg *imsg)
 	}
 
 	return (vroute_doroute(env, flags, addrs, rdomain, type,
-	    dest, mask, addr, NULL));
+	    dest, mask, gateway, NULL));
 }
 
 int
