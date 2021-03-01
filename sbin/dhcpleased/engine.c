@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.4 2021/03/01 15:54:49 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.5 2021/03/01 15:56:00 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -1134,9 +1134,6 @@ state_transition(struct dhcpleased_iface *iface, enum if_state new_state)
 			iface->timo.tv_sec /= 2;
 		request_dhcp_request(iface);
 		break;
-	default:
-		fatal("%s: unhandled state: %s", __func__,
-		    if_state_name[new_state]);
 	}
 	log_debug("%s %s -> %s, timo: %lld", __func__, if_state_name[old_state],
 	    if_state_name[new_state], iface->timo.tv_sec);
@@ -1197,8 +1194,6 @@ iface_timeout(int fd, short events, void *arg)
 			state_transition(iface, IF_INIT);
 		else
 			state_transition(iface, IF_REBINDING);
-		break;
-	default:
 		break;
 	}
 }
