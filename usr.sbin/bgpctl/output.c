@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.13 2021/02/16 08:30:21 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.14 2021/03/01 08:02:34 jsg Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1021,7 +1021,7 @@ show_result(u_int rescode)
 {
 	if (rescode == 0)
 		printf("request processed\n");
-	else if (rescode >
+	else if (rescode >=
 	    sizeof(ctl_res_strerror)/sizeof(ctl_res_strerror[0]))
 		printf("unknown result error code %u\n", rescode);
 	else

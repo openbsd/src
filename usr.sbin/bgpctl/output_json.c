@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.7 2021/02/16 08:30:21 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.8 2021/03/01 08:02:34 jsg Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -978,7 +978,7 @@ json_result(u_int rescode)
 {
 	if (rescode == 0)
 		json_do_printf("status", "OK");
-	else if (rescode >
+	else if (rescode >=
 	    sizeof(ctl_res_strerror)/sizeof(ctl_res_strerror[0])) {
 		json_do_printf("status", "FAILED");
 		json_do_printf("error", "unknown error %d", rescode);
