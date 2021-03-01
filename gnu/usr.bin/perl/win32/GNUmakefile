@@ -1817,6 +1817,7 @@ distclean: realclean
 	-if exist $(LIBDIR)\MIME rmdir /s /q $(LIBDIR)\MIME
 	-if exist $(LIBDIR)\Module rmdir /s /q $(LIBDIR)\Module
 	-if exist $(LIBDIR)\Net\FTP rmdir /s /q $(LIBDIR)\Net\FTP
+	-if exist $(LIBDIR)\OpenBSD rmdir /s /q $(LIBDIR)\OpenBSD
 	-if exist $(LIBDIR)\Params rmdir /s /q $(LIBDIR)\Params
 	-if exist $(LIBDIR)\Parse rmdir /s /q $(LIBDIR)\Parse
 	-if exist $(LIBDIR)\Perl rmdir /s /q $(LIBDIR)\Perl

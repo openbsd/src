@@ -36,27 +36,35 @@
 
 #if defined(PERL_HASH_FUNC_SIPHASH)
 # define __PERL_HASH_FUNC "SIPHASH_2_4"
-# define __PERL_HASH_SEED_BYTES 16
-# define __PERL_HASH_STATE_BYTES 32
+# define __PERL_HASH_WORD_TYPE U64
+# define __PERL_HASH_WORD_SIZE sizeof(__PERL_HASH_WORD_TYPE)
+# define __PERL_HASH_SEED_BYTES (__PERL_HASH_WORD_SIZE * 2)
+# define __PERL_HASH_STATE_BYTES (__PERL_HASH_WORD_SIZE * 4)
 # define __PERL_HASH_SEED_STATE(seed,state) S_perl_siphash_seed_state(seed,state)
 # define __PERL_HASH_WITH_STATE(state,str,len) S_perl_hash_siphash_2_4_with_state((state),(U8*)(str),(len))
 #elif defined(PERL_HASH_FUNC_SIPHASH13)
 # define __PERL_HASH_FUNC "SIPHASH_1_3"
-# define __PERL_HASH_SEED_BYTES 16
-# define __PERL_HASH_STATE_BYTES 32
+# define __PERL_HASH_WORD_TYPE U64
+# define __PERL_HASH_WORD_SIZE sizeof(__PERL_HASH_WORD_TYPE)
+# define __PERL_HASH_SEED_BYTES (__PERL_HASH_WORD_SIZE * 2)
+# define __PERL_HASH_STATE_BYTES (__PERL_HASH_WORD_SIZE * 4)
 # define __PERL_HASH_SEED_STATE(seed,state) S_perl_siphash_seed_state(seed,state)
 # define __PERL_HASH_WITH_STATE(state,str,len) S_perl_hash_siphash_1_3_with_state((state),(U8*)(str),(len))
 #elif defined(PERL_HASH_FUNC_STADTX)
 # define __PERL_HASH_FUNC "STADTX"
-# define __PERL_HASH_SEED_BYTES 16
-# define __PERL_HASH_STATE_BYTES 32
+# define __PERL_HASH_WORD_TYPE U64
+# define __PERL_HASH_WORD_SIZE sizeof(__PERL_HASH_WORD_TYPE)
+# define __PERL_HASH_SEED_BYTES (__PERL_HASH_WORD_SIZE * 2)
+# define __PERL_HASH_STATE_BYTES (__PERL_HASH_WORD_SIZE * 4)
 # define __PERL_HASH_SEED_STATE(seed,state) stadtx_seed_state(seed,state)
 # define __PERL_HASH_WITH_STATE(state,str,len) (U32)stadtx_hash_with_state((state),(U8*)(str),(len))
 # include "stadtx_hash.h"
 #elif defined(PERL_HASH_FUNC_ZAPHOD32)
 # define __PERL_HASH_FUNC "ZAPHOD32"
-# define __PERL_HASH_SEED_BYTES 12
-# define __PERL_HASH_STATE_BYTES 12
+# define __PERL_HASH_WORD_TYPE U32
+# define __PERL_HASH_WORD_SIZE sizeof(__PERL_HASH_WORD_TYPE)
+# define __PERL_HASH_SEED_BYTES (__PERL_HASH_WORD_SIZE * 3)
+# define __PERL_HASH_STATE_BYTES (__PERL_HASH_WORD_SIZE * 3)
 # define __PERL_HASH_SEED_STATE(seed,state) zaphod32_seed_state(seed,state)
 # define __PERL_HASH_WITH_STATE(state,str,len) (U32)zaphod32_hash_with_state((state),(U8*)(str),(len))
 # include "zaphod32_hash.h"
@@ -73,6 +81,12 @@
 #endif
 
 
+#define __PERL_HASH_SEED_roundup(x, y)   ( ( ( (x) + ( (y) - 1 ) ) / (y) ) * (y) )
+#define _PERL_HASH_SEED_roundup(x) __PERL_HASH_SEED_roundup(x,__PERL_HASH_WORD_SIZE)
+
+#define PL_hash_seed ((U8 *)PL_hash_seed_w)
+#define PL_hash_state ((U8 *)PL_hash_state_w)
+
 #if PERL_HASH_USE_SBOX32_ALSO != 1
 # define _PERL_HASH_FUNC                        __PERL_HASH_FUNC
 # define _PERL_HASH_SEED_BYTES                  __PERL_HASH_SEED_BYTES
@@ -82,8 +96,8 @@
 #else
 
 #define _PERL_HASH_FUNC         "SBOX32_WITH_" __PERL_HASH_FUNC
-
-#define _PERL_HASH_SEED_BYTES   ( __PERL_HASH_SEED_BYTES + (int)( 3 * sizeof(U32) ) )
+/* note the 3 in the below code comes from the fact the seed to initialize the SBOX is 96 bits */
+#define _PERL_HASH_SEED_BYTES   ( __PERL_HASH_SEED_BYTES + (int)( 3 * sizeof(U32)) )
 
 #define _PERL_HASH_STATE_BYTES  \
     ( __PERL_HASH_STATE_BYTES + ( ( 1 + ( 256 * SBOX32_MAX_LEN ) ) * sizeof(U32) ) )
@@ -100,22 +114,18 @@
 
 #endif
 
-PERL_STATIC_INLINE
-U32 S_perl_hash_with_seed(const U8 * const seed, const U8 * const str, const STRLEN len)
-{
-    U8 state[_PERL_HASH_STATE_BYTES];
-    _PERL_HASH_SEED_STATE(seed,state);
-    return _PERL_HASH_WITH_STATE(state,str,len);
-}
-
 #define PERL_HASH_WITH_SEED(seed,hash,str,len) \
     (hash) = S_perl_hash_with_seed((const U8 *) seed, (const U8 *) str,len)
 #define PERL_HASH_WITH_STATE(state,hash,str,len) \
     (hash) = _PERL_HASH_WITH_STATE((state),(U8*)(str),(len))
+
 #define PERL_HASH_SEED_STATE(seed,state) _PERL_HASH_SEED_STATE(seed,state)
-#define PERL_HASH_SEED_BYTES _PERL_HASH_SEED_BYTES
-#define PERL_HASH_STATE_BYTES _PERL_HASH_STATE_BYTES
+#define PERL_HASH_SEED_BYTES _PERL_HASH_SEED_roundup(_PERL_HASH_SEED_BYTES)
+#define PERL_HASH_STATE_BYTES _PERL_HASH_SEED_roundup(_PERL_HASH_STATE_BYTES)
 #define PERL_HASH_FUNC        _PERL_HASH_FUNC
+
+#define PERL_HASH_SEED_WORDS (PERL_HASH_SEED_BYTES/__PERL_HASH_WORD_SIZE)
+#define PERL_HASH_STATE_WORDS (PERL_HASH_STATE_BYTES/__PERL_HASH_WORD_SIZE)
 
 #ifdef PERL_USE_SINGLE_CHAR_HASH_CACHE
 #define PERL_HASH(state,str,len) \
@@ -283,6 +293,13 @@ PERL_SIPHASH_FNC(
 
 #endif /* defined(CAN64BITHASH) */
 
+
+PERL_STATIC_INLINE U32
+S_perl_hash_with_seed(const U8 * seed, const U8 *str, STRLEN len) {
+    __PERL_HASH_WORD_TYPE state[PERL_HASH_STATE_WORDS];
+    _PERL_HASH_SEED_STATE(seed,(U8*)state);
+    return _PERL_HASH_WITH_STATE((U8*)state,str,len);
+}
 
 #endif /*compile once*/
 

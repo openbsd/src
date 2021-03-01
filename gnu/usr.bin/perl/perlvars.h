@@ -279,9 +279,9 @@ PERLVAR(G, malloc_mutex, perl_mutex)	/* Mutex for malloc */
 #endif
 
 PERLVARI(G, hash_seed_set, bool, FALSE)	/* perl.c */
-PERLVARA(G, hash_seed, PERL_HASH_SEED_BYTES, unsigned char) /* perl.c and hv.h */
+PERLVARA(G, hash_seed_w, PERL_HASH_SEED_WORDS, __PERL_HASH_WORD_TYPE) /* perl.c and hv.h */
 #if defined(PERL_HASH_STATE_BYTES)
-PERLVARA(G, hash_state, PERL_HASH_STATE_BYTES, unsigned char) /* perl.c and hv.h */
+PERLVARA(G, hash_state_w, PERL_HASH_STATE_WORDS, __PERL_HASH_WORD_TYPE) /* perl.c and hv.h */
 #endif
 #if defined(PERL_USE_SINGLE_CHAR_HASH_CACHE)
 PERLVARA(G, hash_chars, (1+256) * sizeof(U32), unsigned char) /* perl.c and hv.h */

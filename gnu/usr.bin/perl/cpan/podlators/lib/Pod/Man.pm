@@ -900,6 +900,8 @@ sub devise_title {
                     $cut = $i + 1;
                     $cut++ if ($dirs[$i + 1] && $dirs[$i + 1] eq 'lib');
                     last;
+                } elsif ($dirs[$i] eq 'lib' && $dirs[$i + 1] && $dirs[0] eq 'ext') {
+                    $cut = $i + 1;
                 }
             }
             if ($cut > 0) {

@@ -4500,6 +4500,9 @@ Perl_parse_unicode_opts(pTHX_ const char **popt)
 U32
 Perl_seed(pTHX)
 {
+#if defined(__OpenBSD__)
+	return arc4random();
+#else
     /*
      * This is really just a quick hack which grabs various garbage
      * values.  It really should be a real hash algorithm which
@@ -4568,6 +4571,7 @@ Perl_seed(pTHX)
     u += SEED_C5 * (U32)PTR2UV(&when);
 #endif
     return u;
+#endif
 }
 
 void

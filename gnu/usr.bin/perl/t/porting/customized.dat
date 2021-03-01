@@ -5,8 +5,8 @@ Config::Perl::V cpan/Config-Perl-V/V.pm 0a0f7207e6505b78ee345a933acb0246a13579f5
 Digest cpan/Digest/Digest.pm 43f7f544cb11842b2f55c73e28930da50774e081
 Digest::MD5 cpan/Digest-MD5/Makefile.PL 3bf781444ee671da63f1c6360e0a31f11d9ba520
 Digest::MD5 cpan/Digest-MD5/MD5.pm df5f0663f0f755be7eda6e3d2f008f2629246b19
-Digest::MD5 cpan/Digest-MD5/MD5.xs 249bed648232192ce018f7f894ad127c3a639831
-Digest::MD5 cpan/Digest-MD5/t/files.t e987329d2411ff60ad9a2bdf93fdf5f6943467e8
+Digest::MD5 cpan/Digest-MD5/MD5.xs 434fa3e21878f736edbc95a71b66704ba26b944b
+Digest::MD5 cpan/Digest-MD5/t/files.t 6f74e20fe4d958fc0e0f2e5b70c9c02d33b54a51
 Filter::Util::Call pod/perlfilter.pod e9833bf4ebc51087dfee5c553e0f8a5eef67212d
 Locale::Maketext::Simple cpan/Locale-Maketext-Simple/lib/Locale/Maketext/Simple.pm 57ed38905791a17c150210cd6f42ead22a7707b6
 Math::Complex cpan/Math-Complex/lib/Math/Complex.pm 198ea6c6c584f5ea79a0fd7e9d411d0878f3b2af
@@ -19,10 +19,10 @@ Pod::Checker cpan/Pod-Checker/t/pod/contains_bad_pod.xr 73538fd80dfe6e19ad561fe0
 Pod::Checker cpan/Pod-Checker/t/pod/selfcheck.t 8ce3cfd38e4b9bcf5bc7fe7f2a14195e49aed7d8
 Pod::Checker cpan/Pod-Checker/t/pod/testcmp.pl a0cd5c8eca775c7753f4464eee96fa916e3d8a16
 Pod::Checker cpan/Pod-Checker/t/pod/testpchk.pl b2072c7f4379fd050e15424175d7cac5facf5b3b
-Pod::Perldoc cpan/Pod-Perldoc/lib/Pod/Perldoc.pm 582be34c077c9ff44d99914724a0cc2140bcd48c
+Pod::Perldoc cpan/Pod-Perldoc/lib/Pod/Perldoc.pm d97aa26b722e6e3120b19ee0d7cf9af04dfdfb7f
 Pod::Usage cpan/Pod-Usage/t/pod/testp2pt.pl d43ea8391bd95aefdb710ab2947771155a88d424
 Win32API::File cpan/Win32API-File/File.pm 8fd212857f821cb26648878b96e57f13bf21b99e
 Win32API::File cpan/Win32API-File/File.xs beb870fed4490d2faa547b4a8576b8d64d1d27c5
 experimental cpan/experimental/t/basic.t cb9da8dd05b854375809872a05dd32637508d5da
 version cpan/version/lib/version.pm 7ef9219d1d5f1d71f08a79f3b0577df138b21b12
-version vutil.c 601cc57bbc0070ae33eab7fd2d667f20efbe15f8
+version vutil.c bc2101e9d378cddaa41c02b3a95bbb148c172f55

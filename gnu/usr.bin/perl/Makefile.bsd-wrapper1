@@ -77,10 +77,13 @@ _quick3p=
     perl5280delta 1			pod/perl5280delta.pod \
     perl5281delta 1			pod/perl5281delta.pod \
     perl5282delta 1			pod/perl5282delta.pod \
+    perl5283delta 1			pod/perl5283delta.pod \
     perl5300delta 1			pod/perl5300delta.pod \
     perl5301delta 1			pod/perl5301delta.pod \
     perl5302delta 1			pod/perl5302delta.pod \
     perl5303delta 1			pod/perl5303delta.pod \
+    perl5320delta 1			pod/perl5320delta.pod \
+    perl5321delta 1			pod/perl5321delta.pod \
     perl561delta 1			pod/perl561delta.pod \
     perl56delta 1			pod/perl56delta.pod \
     perl581delta 1			pod/perl581delta.pod \
@@ -130,6 +133,7 @@ _quick3p=
     perlfunc 1				pod/perlfunc.pod \
     perlgit 1				pod/perlgit.pod \
     perlglossary 1			lib/perlglossary.pod \
+    perlgov 1				pod/perlgov.pod \
     perlguts 1				pod/perlguts.pod \
     perlhack 1				pod/perlhack.pod \
     perlhacktips 1			pod/perlhacktips.pod \
@@ -177,6 +181,7 @@ _quick3p=
     perlretut 1				pod/perlretut.pod \
     perlrun 1				pod/perlrun.pod \
     perlsec 1				pod/perlsec.pod \
+    perlsecpolicy 1			pod/perlsecpolicy.pod \
     perlsource 1			pod/perlsource.pod \
     perlstyle 1				pod/perlstyle.pod \
     perlsub 1				pod/perlsub.pod \
@@ -207,10 +212,10 @@ _quick3p=
     pod2text 1				cpan/podlators/blib/script/pod2text \
     pod2usage 1				cpan/Pod-Usage/blib/script/pod2usage \
     podchecker 1			cpan/Pod-Checker/blib/script/podchecker \
-    podselect 1				cpan/Pod-Parser/blib/script/podselect \
     prove 1				utils/prove \
     splain 1				utils/splain \
-    xsubpp 1				utils/xsubpp \
+    streamzip 1				utils/streamzip \
+    xsubpp 1				lib/ExtUtils/xsubpp \
     AnyDBM_File 3p			lib/AnyDBM_File.pm \
     App::Cpan 3p			lib/App/Cpan.pm \
     App::Prove 3p			lib/App/Prove.pm \
@@ -550,14 +555,10 @@ _quick3p=
     PerlIO::via::QuotedPrint 3p		lib/PerlIO/via/QuotedPrint.pm \
     Pod::Checker 3p			lib/Pod/Checker.pm \
     Pod::Escapes 3p			lib/Pod/Escapes.pm \
-    Pod::Find 3p			lib/Pod/Find.pm \
     Pod::Functions 3p			lib/Pod/Functions.pm \
     Pod::Html 3p			lib/Pod/Html.pm \
-    Pod::InputObjects 3p		lib/Pod/InputObjects.pm \
     Pod::Man 3p				lib/Pod/Man.pm \
     Pod::ParseLink 3p			lib/Pod/ParseLink.pm \
-    Pod::Parser 3p			lib/Pod/Parser.pm \
-    Pod::ParseUtils 3p			lib/Pod/ParseUtils.pm \
     Pod::Perldoc 3p			lib/Pod/Perldoc.pm \
     Pod::Perldoc::BaseTo 3p		lib/Pod/Perldoc/BaseTo.pm \
     Pod::Perldoc::GetOptsOO 3p		lib/Pod/Perldoc/GetOptsOO.pm \
@@ -571,8 +572,6 @@ _quick3p=
     Pod::Perldoc::ToText 3p		lib/Pod/Perldoc/ToText.pm \
     Pod::Perldoc::ToTk 3p		lib/Pod/Perldoc/ToTk.pm \
     Pod::Perldoc::ToXml 3p		lib/Pod/Perldoc/ToXml.pm \
-    Pod::PlainText 3p			lib/Pod/PlainText.pm \
-    Pod::Select 3p			lib/Pod/Select.pm \
     Pod::Simple 3p			lib/Pod/Simple.pod \
     Pod::Simple::Checker 3p		lib/Pod/Simple/Checker.pm \
     Pod::Simple::Debug 3p		lib/Pod/Simple/Debug.pm \
@@ -580,6 +579,7 @@ _quick3p=
     Pod::Simple::DumpAsXML 3p		lib/Pod/Simple/DumpAsXML.pm \
     Pod::Simple::HTML 3p		lib/Pod/Simple/HTML.pm \
     Pod::Simple::HTMLBatch 3p		lib/Pod/Simple/HTMLBatch.pm \
+    Pod::Simple::JustPod 3p		lib/Pod/Simple/JustPod.pm \
     Pod::Simple::LinkSection 3p		lib/Pod/Simple/LinkSection.pm \
     Pod::Simple::Methody 3p		lib/Pod/Simple/Methody.pm \
     Pod::Simple::PullParser 3p		lib/Pod/Simple/PullParser.pm \

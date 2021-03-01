@@ -17,6 +17,7 @@ caretx.c		C file to create $^X
 cflags.SH		A script that emits C compilation flags per file
 Changes			Describe how to peruse changes between releases
 charclass_invlists.h	Compiled-in inversion lists
+config.over		Site-specific overrides for Configure defaults
 config_h.SH		Produces config.h
 configpm		Produces lib/Config.pm
 Configure		Portability tool
@@ -1505,6 +1506,16 @@ cpan/NEXT/t/dynamically_scoped_regex_vars.t	NEXT
 cpan/NEXT/t/next.t		NEXT
 cpan/NEXT/t/stringify.t		NEXT
 cpan/NEXT/t/unseen.t		NEXT
+cpan/OpenBSD-MkTemp/lib/OpenBSD/MkTemp.pm		OpenBSD::MkTemp
+cpan/OpenBSD-MkTemp/MkTemp.xs		OpenBSD::MkTemp
+cpan/OpenBSD-MkTemp/README		OpenBSD::MkTemp Readme
+cpan/OpenBSD-MkTemp/t/OpenBSD-MkTemp.t		OpenBSD::MkTemp test file
+cpan/OpenBSD-Pledge/lib/OpenBSD/Pledge.pm	OpenBSD::Pledge
+cpan/OpenBSD-Pledge/Pledge.xs	OpenBSD::Pledge
+cpan/OpenBSD-Pledge/t/OpenBSD-Pledge.t	OpenBSD::Pledge test file
+cpan/OpenBSD-Unveil/lib/OpenBSD/Unveil.pm	OpenBSD::Unveil
+cpan/OpenBSD-Unveil/t/OpenBSD-Unveil.t	OpenBSD::Unveil test file
+cpan/OpenBSD-Unveil/Unveil.xs	OpenBSD::Unveil
 cpan/Params-Check/lib/Params/Check.pm	Params::Check
 cpan/Params-Check/t/01_Params-Check.t	Params::Check tests
 cpan/parent/lib/parent.pm			Establish an ISA relationship with base classes at compile time
@@ -2027,6 +2038,17 @@ cpan/Term-ANSIColor/t/module/true-color.t
 cpan/Term-ANSIColor/t/taint/basic.t
 cpan/Term-Cap/Cap.pm			Perl module supporting termcap usage
 cpan/Term-Cap/test.pl			See if Term::Cap works
+cpan/Term-ReadKey/Changes			Term::ReadKey
+cpan/Term-ReadKey/Configure.pm			Term::ReadKey
+cpan/Term-ReadKey/example/test.pl		Term::ReadKey
+cpan/Term-ReadKey/genchars.pl			Term::ReadKey
+cpan/Term-ReadKey/Makefile.PL			Term::ReadKey
+cpan/Term-ReadKey/ppport.h			Term::ReadKey
+cpan/Term-ReadKey/ReadKey.xs			Term::ReadKey
+cpan/Term-ReadKey/ReadKey.pm.PL		Term::ReadKey
+cpan/Term-ReadKey/README			Term::ReadKey
+cpan/Term-ReadKey/t/01_basic.t			Term::ReadKey
+cpan/Term-ReadKey/t/02_terminal_functions.t	Term::ReadKey
 cpan/Test-Harness/bin/prove				The prove harness utility
 cpan/Test-Harness/lib/App/Prove.pm			Gubbins for the prove utility
 cpan/Test-Harness/lib/App/Prove/State.pm		Gubbins for the prove utility
@@ -4099,7 +4121,6 @@ ext/B/B/Showlex.pm	Compiler Showlex backend
 ext/B/B/Terse.pm	Compiler Terse backend
 ext/B/B/Xref.pm		Compiler Xref backend
 ext/B/hints/darwin.pl	Hints for named architecture
-ext/B/hints/openbsd.pl	Hints for named architecture
 ext/B/Makefile.PL	Compiler backend makefile writer
 ext/B/O.pm		Compiler front-end module (-MO=...)
 ext/B/t/b.t		See if B works
@@ -4573,6 +4594,7 @@ fakesdio.h			stdio in terms of PerlIO
 feature.h			Feature header
 form.h				Public declarations for formats
 generate_uudmap.c		Generate uudmap.h, the uuencode decoding map
+git_version.h			Pre-generated git_version.h for OpenBSD
 globals.c			File to declare global symbols (for shared library)
 globvar.sym			Global variables that need hiding when embedded
 gv.c				Glob value code
@@ -4718,6 +4740,7 @@ lib/Class/Struct.t		See if Class::Struct works
 lib/Config.t			See if Config works
 lib/Config/Extensions.pm	Convenient hash lookup for built extensions
 lib/Config/Extensions.t		See if Config::Extensions works
+lib/Config_git.pl		Pre-generated Config_git.pl for OpenBSD
 lib/CORE.pod			document the CORE namespace
 lib/DB.pm			Debugger API (draft)
 lib/DB.t			See if DB works

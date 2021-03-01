@@ -5491,6 +5491,25 @@ default|recommended)
 		eval $checkccflag
 		;;
 	esac
+	case "$gccversion" in
+	1*) ;;
+	2*) ;;
+	?*) 	echo " "
+		echo "Checking if your compiler accepts -fno-delete-null-pointer-checks" 2>&1
+		echo 'int main(void) { return 0; }' > gcctest.c
+		if $cc -O2 -fno-delete-null-pointer-checks -o gcctest gcctest.c; then
+			echo "Yes, it does." 2>&1
+			case "$ccflags" in
+			*delete-null-pointer-checks*)
+				echo "Leaving current flags $ccflags alone." 2>&1
+				;;
+			*) dflt="$dflt -fno-delete-null-pointer-checks" ;;
+			esac
+		else
+			echo "Nope, it doesn't, but that's ok." 2>&1
+		fi
+		;;
+	esac
 	# For gcc, adding -pipe speeds up compilations for some, but apparently
 	# some assemblers can't read from stdin.  (It also slows down compilations
 	# in other cases, but those are apparently rarer these days.)  AD 5/2004.
@@ -20630,9 +20649,9 @@ case "$ccflags" in
 	;;
 esac
 
-randfunc=Perl_drand48
-drand01="Perl_drand48()"
-seedfunc="Perl_drand48_init"
+randfunc=drand48
+drand01="drand48()"
+seedfunc="srand48"
 randbits=48
 randseedtype=U32
 
@@ -23486,6 +23505,7 @@ xs_extensions=''
 find_extensions='
     for xxx in *; do
 	case "$xxx" in
+	    CVS) ;;
 	    DynaLoader|dynaload) ;;
 	    *)
 	    this_ext=`echo "$xxx" | $sed -e s/-/\\\//g`;
@@ -23723,6 +23743,8 @@ esac
 nonxs_ext=''
 for xxx in $nonxs_extensions ; do
 	case "$xxx" in
+	CVS|RCS|SCCS|.svn)
+		;;
 	VMS*)
 		;;
 	*)	nonxs_ext="$nonxs_ext $xxx"

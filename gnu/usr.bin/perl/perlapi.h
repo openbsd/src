@@ -125,12 +125,12 @@ END_EXTERN_C
 #define PL_fold_locale		(*Perl_Gfold_locale_ptr(NULL))
 #undef  PL_hash_chars
 #define PL_hash_chars		(*Perl_Ghash_chars_ptr(NULL))
-#undef  PL_hash_seed
-#define PL_hash_seed		(*Perl_Ghash_seed_ptr(NULL))
 #undef  PL_hash_seed_set
 #define PL_hash_seed_set	(*Perl_Ghash_seed_set_ptr(NULL))
-#undef  PL_hash_state
-#define PL_hash_state		(*Perl_Ghash_state_ptr(NULL))
+#undef  PL_hash_seed_w
+#define PL_hash_seed_w		(*Perl_Ghash_seed_w_ptr(NULL))
+#undef  PL_hash_state_w
+#define PL_hash_state_w		(*Perl_Ghash_state_w_ptr(NULL))
 #undef  PL_hints_mutex
 #define PL_hints_mutex		(*Perl_Ghints_mutex_ptr(NULL))
 #undef  PL_keyword_plugin
