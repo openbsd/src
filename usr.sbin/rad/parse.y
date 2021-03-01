@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.17 2021/01/19 17:38:41 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.18 2021/03/01 08:05:40 jsg Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -377,7 +377,7 @@ searchoptsl	: STRING {
 				err(1, "%s", __func__);
 
 			if ((len = strlcpy(ra_dnssl_conf->search, $1,
-			    sizeof(ra_dnssl_conf->search))) >
+			    sizeof(ra_dnssl_conf->search))) >=
 			    sizeof(ra_dnssl_conf->search)) {
 				yyerror("search string too long");
 				free($1);
