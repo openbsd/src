@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu.c,v 1.2 2021/03/01 21:35:03 patrick Exp $ */
+/* $OpenBSD: smmu.c,v 1.3 2021/03/01 21:38:20 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
@@ -774,14 +774,18 @@ smmu_domain_create(struct smmu_softc *sc, uint32_t sid)
 		paddr_t msi_pa = 0x78020000; /* Ampere */
 		paddr_t msi_pa = 0x6020000; /* LX2K */
 		size_t msi_len = 0x20000;
-		paddr_t msi_pa = 0x280000; /* 8040 */
-		size_t msi_len = 0x4000;
+		paddr_t msi_pa = 0xf0280000; /* 8040 GICv2 */
+		size_t msi_len = 0x40000;
 		while (msi_len) {
 			smmu_enter(dom, msi_pa, msi_pa, PROT_READ | PROT_WRITE,
 			    PROT_READ | PROT_WRITE, PMAP_CACHE_WB);
 			msi_pa += PAGE_SIZE;
 			msi_len -= PAGE_SIZE;
 		}
+		msi_pa = 0xf03f0000; /* 8040 GICP */
+		msi_len = 0x1000;
+		smmu_enter(dom, msi_pa, msi_pa, PROT_READ | PROT_WRITE,
+		    PROT_READ | PROT_WRITE, PMAP_CACHE_WB);
 	}
 #endif
 
