@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_id.c,v 1.14 2020/06/24 22:03:44 cheloha Exp $	*/
+/*	$OpenBSD: ip6_id.c,v 1.15 2021/03/01 11:05:43 bluhm Exp $	*/
 /*	$NetBSD: ip6_id.c,v 1.7 2003/09/13 21:32:59 itojun Exp $	*/
 /*	$KAME: ip6_id.c,v 1.8 2003/09/06 13:41:06 itojun Exp $	*/
 
@@ -83,6 +83,7 @@
 
 #include <sys/param.h>
 #include <sys/kernel.h>
+#include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
 

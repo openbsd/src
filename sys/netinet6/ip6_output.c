@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.254 2021/02/23 11:43:41 mvs Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.255 2021/03/01 11:05:43 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -154,12 +154,12 @@ struct idgen32_ctx ip6_id_ctx;
  * which is rt_mtu.
  */
 int
-ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
+ip6_output(struct mbuf *m, struct ip6_pktopts *opt, struct route_in6 *ro,
     int flags, struct ip6_moptions *im6o, struct inpcb *inp)
 {
 	struct ip6_hdr *ip6;
 	struct ifnet *ifp = NULL;
-	struct mbuf *m = m0;
+	struct mbuf_list fml;
 	int hlen, tlen;
 	struct route_in6 ip6route;
 	struct rtentry *rt = NULL;
@@ -174,6 +174,7 @@ ip6_output(struct mbuf *m0, struct ip6_pktopts *opt, struct route_in6 *ro,
 	struct route_in6 *ro_pmtu = NULL;
 	int hdrsplit = 0;
 	u_int8_t sproto = 0;
+	u_char nextproto;
 #ifdef IPSEC
 	struct tdb *tdb = NULL;
 #endif /* IPSEC */
@@ -709,64 +710,47 @@ reroute:
 		/* jumbo payload cannot be fragmented */
 		error = EMSGSIZE;
 		goto bad;
-	} else {
-		u_char nextproto;
-#if 0
-		struct ip6ctlparam ip6cp;
-		u_int32_t mtu32;
-#endif
-
-		/*
-		 * Too large for the destination or interface;
-		 * fragment if possible.
-		 * Must be able to put at least 8 bytes per fragment.
-		 */
-		hlen = unfragpartlen;
-		if (mtu > IPV6_MAXPACKET)
-			mtu = IPV6_MAXPACKET;
-
-		/*
-		 * Change the next header field of the last header in the
-		 * unfragmentable part.
-		 */
-		if (exthdrs.ip6e_rthdr) {
-			nextproto = *mtod(exthdrs.ip6e_rthdr, u_char *);
-			*mtod(exthdrs.ip6e_rthdr, u_char *) = IPPROTO_FRAGMENT;
-		} else if (exthdrs.ip6e_dest1) {
-			nextproto = *mtod(exthdrs.ip6e_dest1, u_char *);
-			*mtod(exthdrs.ip6e_dest1, u_char *) = IPPROTO_FRAGMENT;
-		} else if (exthdrs.ip6e_hbh) {
-			nextproto = *mtod(exthdrs.ip6e_hbh, u_char *);
-			*mtod(exthdrs.ip6e_hbh, u_char *) = IPPROTO_FRAGMENT;
-		} else {
-			nextproto = ip6->ip6_nxt;
-			ip6->ip6_nxt = IPPROTO_FRAGMENT;
-		}
-
-		m0 = m;
-		error = ip6_fragment(m0, hlen, nextproto, mtu);
-		if (error)
-			ip6stat_inc(ip6s_odropped);
 	}
 
 	/*
-	 * Remove leading garbages.
+	 * Too large for the destination or interface;
+	 * fragment if possible.
+	 * Must be able to put at least 8 bytes per fragment.
 	 */
-	m = m0->m_nextpkt;
-	m0->m_nextpkt = NULL;
-	m_freem(m0);
-	for (m0 = m; m; m = m0) {
-		m0 = m->m_nextpkt;
-		m->m_nextpkt = NULL;
-		if (error == 0) {
-			ip6stat_inc(ip6s_ofragments);
-			error = ifp->if_output(ifp, m, sin6tosa(dst),
-			    ro->ro_rt);
-		} else
-			m_freem(m);
+	hlen = unfragpartlen;
+	if (mtu > IPV6_MAXPACKET)
+		mtu = IPV6_MAXPACKET;
+
+	/*
+	 * Change the next header field of the last header in the
+	 * unfragmentable part.
+	 */
+	if (exthdrs.ip6e_rthdr) {
+		nextproto = *mtod(exthdrs.ip6e_rthdr, u_char *);
+		*mtod(exthdrs.ip6e_rthdr, u_char *) = IPPROTO_FRAGMENT;
+	} else if (exthdrs.ip6e_dest1) {
+		nextproto = *mtod(exthdrs.ip6e_dest1, u_char *);
+		*mtod(exthdrs.ip6e_dest1, u_char *) = IPPROTO_FRAGMENT;
+	} else if (exthdrs.ip6e_hbh) {
+		nextproto = *mtod(exthdrs.ip6e_hbh, u_char *);
+		*mtod(exthdrs.ip6e_hbh, u_char *) = IPPROTO_FRAGMENT;
+	} else {
+		nextproto = ip6->ip6_nxt;
+		ip6->ip6_nxt = IPPROTO_FRAGMENT;
 	}
 
-	if (error == 0)
+	error = ip6_fragment(m, &fml, hlen, nextproto, mtu);
+	if (error)
+		goto done;
+
+	while ((m = ml_dequeue(&fml)) != NULL) {
+		error = ifp->if_output(ifp, m, sin6tosa(dst), ro->ro_rt);
+		if (error)
+			break;
+	}
+	if (error)
+		ml_purge(&fml);
+	else
 		ip6stat_inc(ip6s_fragmented);
 
 done:
@@ -776,7 +760,6 @@ done:
 	} else if (ro_pmtu == &ip6route && ro_pmtu->ro_rt) {
 		rtfree(ro_pmtu->ro_rt);
 	}
-
 	return (error);
 
 freehdrs:
@@ -791,45 +774,48 @@ bad:
 }
 
 int
-ip6_fragment(struct mbuf *m0, int hlen, u_char nextproto, u_long mtu)
+ip6_fragment(struct mbuf *m0, struct mbuf_list *fml, int hlen,
+    u_char nextproto, u_long mtu)
 {
-	struct mbuf	*m, **mnext, *m_frgpart;
+	struct mbuf	*m, *m_frgpart;
 	struct ip6_hdr	*mhip6;
 	struct ip6_frag	*ip6f;
 	u_int32_t	 id;
 	int		 tlen, len, off;
 	int		 error;
 
-	id = htonl(ip6_randomid());
-
-	mnext = &m0->m_nextpkt;
-	*mnext = NULL;
+	ml_init(fml);
 
 	tlen = m0->m_pkthdr.len;
 	len = (mtu - hlen - sizeof(struct ip6_frag)) & ~7;
-	if (len < 8)
-		return (EMSGSIZE);
+	if (len < 8) {
+		error = EMSGSIZE;
+		goto bad;
+	}
+
+	id = htonl(ip6_randomid());
 
 	/*
 	 * Loop through length of segment after first fragment,
-	 * make new header and copy data of each part and link onto
-	 * chain.
+	 * make new header and copy data of each part and link onto chain.
 	 */
 	for (off = hlen; off < tlen; off += len) {
 		struct mbuf *mlast;
 
-		if ((m = m_gethdr(M_DONTWAIT, MT_HEADER)) == NULL)
-			return (ENOBUFS);
-		*mnext = m;
-		mnext = &m->m_nextpkt;
+		MGETHDR(m, M_DONTWAIT, MT_HEADER);
+		if (m == NULL) {
+			error = ENOBUFS;
+			goto bad;
+		}
+		ml_enqueue(fml, m);
 		if ((error = m_dup_pkthdr(m, m0, M_DONTWAIT)) != 0)
-			return (error);
+			goto bad;
 		m->m_data += max_linkhdr;
 		mhip6 = mtod(m, struct ip6_hdr *);
 		*mhip6 = *mtod(m0, struct ip6_hdr *);
 		m->m_len = sizeof(*mhip6);
 		if ((error = ip6_insertfraghdr(m0, m, hlen, &ip6f)) != 0)
-			return (error);
+			goto bad;
 		ip6f->ip6f_offlg = htons((u_int16_t)((off - hlen) & ~7));
 		if (off + len >= tlen)
 			len = tlen - off;
@@ -837,8 +823,10 @@ ip6_fragment(struct mbuf *m0, int hlen, u_char nextproto, u_long mtu)
 			ip6f->ip6f_offlg |= IP6F_MORE_FRAG;
 		mhip6->ip6_plen = htons((u_int16_t)(len + hlen +
 		    sizeof(*ip6f) - sizeof(struct ip6_hdr)));
-		if ((m_frgpart = m_copym(m0, off, len, M_DONTWAIT)) == NULL)
-			return (ENOBUFS);
+		if ((m_frgpart = m_copym(m0, off, len, M_DONTWAIT)) == NULL) {
+			error = ENOBUFS;
+			goto bad;
+		}
 		for (mlast = m; mlast->m_next; mlast = mlast->m_next)
 			;
 		mlast->m_next = m_frgpart;
@@ -848,7 +836,15 @@ ip6_fragment(struct mbuf *m0, int hlen, u_char nextproto, u_long mtu)
 		ip6f->ip6f_nxt = nextproto;
 	}
 
+	ip6stat_add(ip6s_ofragments, ml_len(fml));
+	m_freem(m0);
 	return (0);
+
+bad:
+	ip6stat_inc(ip6s_odropped);
+	ml_purge(fml);
+	m_freem(m0);
+	return (error);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.221 2021/02/22 13:04:56 bluhm Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.222 2021/03/01 11:05:42 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -966,12 +966,13 @@ int
 pf_refragment6(struct mbuf **m0, struct m_tag *mtag, struct sockaddr_in6 *dst,
     struct ifnet *ifp, struct rtentry *rt)
 {
-	struct mbuf		*m = *m0, *t;
+	struct mbuf		*m = *m0;
+	struct mbuf_list	 fml;
 	struct pf_fragment_tag	*ftag = (struct pf_fragment_tag *)(mtag + 1);
 	u_int32_t		 mtu;
 	u_int16_t		 hdrlen, extoff, maxlen;
 	u_int8_t		 proto;
-	int			 error, action;
+	int			 error;
 
 	hdrlen = ftag->ft_hdrlen;
 	extoff = ftag->ft_extoff;
@@ -1009,39 +1010,25 @@ pf_refragment6(struct mbuf **m0, struct m_tag *mtag, struct sockaddr_in6 *dst,
 	 * we drop the packet.
 	 */
 	mtu = hdrlen + sizeof(struct ip6_frag) + maxlen;
-	error = ip6_fragment(m, hdrlen, proto, mtu);
-
-	m = (*m0)->m_nextpkt;
-	(*m0)->m_nextpkt = NULL;
-	if (error == 0) {
-		/* The first mbuf contains the unfragmented packet */
-		m_freemp(m0);
-		action = PF_PASS;
-	} else {
-		/* Drop expects an mbuf to free */
+	error = ip6_fragment(m, &fml, hdrlen, proto, mtu);
+	*m0 = NULL;	/* ip6_fragment() has consumed original packet. */
+	if (error) {
 		DPFPRINTF(LOG_NOTICE, "refragment error %d", error);
-		action = PF_DROP;
+		return (PF_DROP);
 	}
 
-	for (t = m; m; m = t) {
-		t = m->m_nextpkt;
-		m->m_nextpkt = NULL;
+	while ((m = ml_dequeue(&fml)) != NULL) {
 		m->m_pkthdr.pf.flags |= PF_TAG_REFRAGMENTED;
-		if (error == 0) {
-			if (ifp == NULL) {
-				ip6_forward(m, NULL, 0);
-			} else if ((u_long)m->m_pkthdr.len <= ifp->if_mtu) {
-				ifp->if_output(ifp, m, sin6tosa(dst), rt);
-			} else {
-				icmp6_error(m, ICMP6_PACKET_TOO_BIG, 0,
-				    ifp->if_mtu);
-			}
+		if (ifp == NULL) {
+			ip6_forward(m, NULL, 0);
+		} else if ((u_long)m->m_pkthdr.len <= ifp->if_mtu) {
+			ifp->if_output(ifp, m, sin6tosa(dst), rt);
 		} else {
-			m_freem(m);
+			icmp6_error(m, ICMP6_PACKET_TOO_BIG, 0, ifp->if_mtu);
 		}
 	}
 
-	return (action);
+	return (PF_PASS);
 }
 #endif /* INET6 */
 

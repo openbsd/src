@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.86 2019/12/08 11:08:22 sashan Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.87 2021/03/01 11:05:42 bluhm Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -145,6 +145,12 @@ ipstat_inc(enum ipstat_counters c)
 	counters_inc(ipcounters, c);
 }
 
+static inline void
+ipstat_add(enum ipstat_counters c, uint64_t v)
+{
+	counters_add(ipcounters, c, v);
+}
+
 /*
  * Structure attached to inpcb.ip_moptions and
  * passed to ip_output when IP multicast options are in use.
@@ -218,7 +224,7 @@ struct inpcb;
 
 int	 ip_ctloutput(int, struct socket *, int, int, struct mbuf *);
 void	 ip_flush(void);
-int	 ip_fragment(struct mbuf *, struct ifnet *, u_long);
+int	 ip_fragment(struct mbuf *, struct mbuf_list *, struct ifnet *, u_long);
 void	 ip_freef(struct ipq *);
 void	 ip_freemoptions(struct ip_moptions *);
 int	 ip_getmoptions(int, struct ip_moptions *, struct mbuf *);

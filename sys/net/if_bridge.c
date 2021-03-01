@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.352 2021/02/25 02:48:21 dlg Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.353 2021/03/01 11:05:42 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1853,7 +1853,7 @@ bridge_fragment(struct ifnet *brifp, struct ifnet *ifp, struct ether_header *eh,
     struct mbuf *m)
 {
 	struct llc llc;
-	struct mbuf *m0;
+	struct mbuf_list fml;
 	int error = 0;
 	int hassnap = 0;
 	u_int16_t etype;
@@ -1911,40 +1911,32 @@ bridge_fragment(struct ifnet *brifp, struct ifnet *ifp, struct ether_header *eh,
 		return;
 	}
 
-	error = ip_fragment(m, ifp, ifp->if_mtu);
-	if (error) {
-		m = NULL;
-		goto dropit;
-	}
+	error = ip_fragment(m, &fml, ifp, ifp->if_mtu);
+	if (error)
+		return;
 
-	for (; m; m = m0) {
-		m0 = m->m_nextpkt;
-		m->m_nextpkt = NULL;
-		if (error == 0) {
-			if (hassnap) {
-				M_PREPEND(m, LLC_SNAPFRAMELEN, M_DONTWAIT);
-				if (m == NULL) {
-					error = ENOBUFS;
-					continue;
-				}
-				bcopy(&llc, mtod(m, caddr_t),
-				    LLC_SNAPFRAMELEN);
-			}
-			M_PREPEND(m, sizeof(*eh), M_DONTWAIT);
+	while ((m = ml_dequeue(&fml)) != NULL) {
+		if (hassnap) {
+			M_PREPEND(m, LLC_SNAPFRAMELEN, M_DONTWAIT);
 			if (m == NULL) {
 				error = ENOBUFS;
-				continue;
+				break;
 			}
-			bcopy(eh, mtod(m, caddr_t), sizeof(*eh));
-			error = bridge_ifenqueue(brifp, ifp, m);
-			if (error) {
-				continue;
-			}
-		} else
-			m_freem(m);
+			bcopy(&llc, mtod(m, caddr_t), LLC_SNAPFRAMELEN);
+		}
+		M_PREPEND(m, sizeof(*eh), M_DONTWAIT);
+		if (m == NULL) {
+			error = ENOBUFS;
+			break;
+		}
+		bcopy(eh, mtod(m, caddr_t), sizeof(*eh));
+		error = bridge_ifenqueue(brifp, ifp, m);
+		if (error)
+			break;
 	}
-
-	if (error == 0)
+	if (error)
+		ml_purge(&fml);
+	else
 		ipstat_inc(ips_fragmented);
 
 	return;
