@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-term.c,v 1.87 2021/02/17 07:18:36 nicm Exp $ */
+/* $OpenBSD: tty-term.c,v 1.88 2021/03/01 10:50:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -520,9 +520,6 @@ tty_term_create(struct tty *tty, char *name, char **caps, u_int ncaps,
 			tty_add_features(feat, s + offset, ":");
 		a = options_array_next(a);
 	}
-
-	/* Delete curses data. */
-	del_curterm(cur_term);
 
 	/* Apply overrides so any capabilities used for features are changed. */
 	tty_term_apply_overrides(term);
