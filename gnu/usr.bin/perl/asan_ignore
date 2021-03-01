@@ -16,13 +16,11 @@
 # suffix with =foo for a "tool-specific category", but neither =undefined
 # nor =signed-integer-overflow worked.
 
-fun:Perl_pp_i_*
-
-# Perl's << is defined as using the underlying C's << operator, with the
-# same undefined behaviour for shifts greater than the word size.
-# (UVs normally, IVs with 'use integer')
-
-fun:Perl_pp_left_shift
+fun:Perl_pp_i_add
+fun:Perl_pp_i_divide
+fun:Perl_pp_i_negate
+fun:Perl_pp_i_multiply
+fun:Perl_pp_i_subtract
 
 # this function numifies the field width in eg printf "%10f".
 # It has its own overflow detection, so don't warn about it

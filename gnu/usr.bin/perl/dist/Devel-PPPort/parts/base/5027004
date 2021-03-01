@@ -1,0 +1,6 @@
+5.027004
+mg_freeext                     # U
+Perl_langinfo                  # U
+sv_rvunweaken                  # U
+Perl_my_mkstemp                # F added by devel/scanprov
+save_to_buffer                 # F added by devel/scanprov

@@ -6,7 +6,10 @@
 # (tests _fill_offsets_to() )
 #
 
-my $file = "tf$$.txt";
+use strict;
+use warnings;
+
+my $file = "tf12-$$.txt";
 my $data = "rec0blahrec1blahrec2blah";
 
 print "1..5\n";
@@ -20,7 +23,7 @@ binmode F;
 print F $data;
 close F;
 
-
+my @a;
 my $o = tie @a, 'Tie::File', $file, autochomp => 0, recsep => 'blah';
 print $o ? "ok $N\n" : "not ok $N\n";
 $N++;

@@ -9,9 +9,7 @@ README.new - Cross-compilation for linux
 =head1 DESCRIPTION
 
 This is second approach to linux cross-compilation, which should allow
-building full perl and extensions for target platform. Cross-compilation
-for linux uses similar approach and shares the same files as
-cross-compilation for WinCE.
+building full perl and extensions for target platform.
 
 We refer to HOST as the platform where the build is performed, and to
 TARGET as where final executables will run.
@@ -20,7 +18,7 @@ TARGET as where final executables will run.
 
 =head3 common
 
-Unlike WinCE, output files from GCC cross-compiler are produced in the same
+Output files from GCC cross-compiler are produced in the same
 directory where C files are. All TARGET binaries have different extensions
 so to distinguish HOST and TARGET binaries. Namely, object files for C<arm>
 cross-compilation will have extension C<.armo>, executable files will have

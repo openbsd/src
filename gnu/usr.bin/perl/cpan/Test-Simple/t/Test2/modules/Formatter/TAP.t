@@ -1,6 +1,7 @@
 use strict;
 use warnings;
 # HARNESS-NO-PRELOAD
+# HARNESS-NO-STREAM
 
 my $CLASS;
 my %BEFORE_LOAD;
@@ -1019,7 +1020,7 @@ my $can_table      = $CLASS->supports_tables;
 my $author_testing = $ENV{AUTHOR_TESTING};
 
 if ($author_testing && !$can_table) {
-    die "This test requires Term::Table to be installed, and must be run in AUTHOR_TESTING mode";
+    die "You are running this test under AUTHOR_TESTING, doing so requires Term::Table to be installed, but it is not currently installed, this is a fatal error. Please install Term::Table before attempting to run this test under AUTHOR_TESTING.";
 }
 elsif ($can_table) {
     tests tables => sub {

@@ -44,14 +44,13 @@ if (opendir(D, ".")) {
    @correct = grep { !/^\./ } sort readdir(D);
    closedir D;
 }
-{
-    local $@;
-    my $expect =
-        qr/File::Glob::glob\(\) was removed in perl 5\.30\. Use File::Glob::bsd_glob\(\) instead/;
-    eval { File::Glob::glob("*", 0); };
-    like $@, $expect,
-        "Got expected error message for removal of File::Glob::glob()";
-}
+
+is(
+    File::Glob->can('glob'),
+    undef,
+    'Did not find glob() function in File::Glob',
+);
+
 chdir '..' or die "chdir .. $!";
 
 # look up the user's home directory

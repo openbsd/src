@@ -10,10 +10,12 @@
 #
 ################################################################################
 
+use FindBin ();
+
 BEGIN {
   if ($ENV{'PERL_CORE'}) {
     chdir 't' if -d 't';
-    @INC = ('../lib', '../ext/Devel-PPPort/t') if -d '../lib' && -d '../ext';
+    unshift @INC, '../lib' if -d '../lib' && -d '../ext';
     require Config; import Config;
     use vars '%Config';
     if (" $Config{'extensions'} " !~ m[ Devel/PPPort ]) {
@@ -21,13 +23,15 @@ BEGIN {
       exit 0;
     }
   }
-  else {
-    unshift @INC, 't';
-  }
+
+  use lib "$FindBin::Bin";
+  use lib "$FindBin::Bin/../parts/inc";
+
+  die qq[Cannot find "$FindBin::Bin/../parts/inc"] unless -d "$FindBin::Bin/../parts/inc";
 
   sub load {
-    eval "use Test";
-    require 'testutil.pl' if $@;
+    require 'testutil.pl';
+    require 'inctools';
   }
 
   if (49) {
@@ -38,7 +42,7 @@ BEGIN {
 
 use Devel::PPPort;
 use strict;
-$^W = 1;
+BEGIN { $^W = 1; }
 
 package Devel::PPPort;
 use vars '@ISA';
@@ -50,71 +54,71 @@ package main;
 
 my $mhx = "mhx";
 
-ok(&Devel::PPPort::SvPVbyte($mhx), 3);
+is(&Devel::PPPort::SvPVbyte($mhx), 3);
 
 my $i = 42;
 
-ok(&Devel::PPPort::SvPV_nolen($mhx), $i++);
-ok(&Devel::PPPort::SvPV_const($mhx), $i++);
-ok(&Devel::PPPort::SvPV_mutable($mhx), $i++);
-ok(&Devel::PPPort::SvPV_flags($mhx), $i++);
-ok(&Devel::PPPort::SvPV_flags_const($mhx), $i++);
+is(&Devel::PPPort::SvPV_nolen($mhx), $i++);
+is(&Devel::PPPort::SvPV_const($mhx), $i++);
+is(&Devel::PPPort::SvPV_mutable($mhx), $i++);
+is(&Devel::PPPort::SvPV_flags($mhx), $i++);
+is(&Devel::PPPort::SvPV_flags_const($mhx), $i++);
 
-ok(&Devel::PPPort::SvPV_flags_const_nolen($mhx), $i++);
-ok(&Devel::PPPort::SvPV_flags_mutable($mhx), $i++);
-ok(&Devel::PPPort::SvPV_force($mhx), $i++);
-ok(&Devel::PPPort::SvPV_force_nolen($mhx), $i++);
-ok(&Devel::PPPort::SvPV_force_mutable($mhx), $i++);
+is(&Devel::PPPort::SvPV_flags_const_nolen($mhx), $i++);
+is(&Devel::PPPort::SvPV_flags_mutable($mhx), $i++);
+is(&Devel::PPPort::SvPV_force($mhx), $i++);
+is(&Devel::PPPort::SvPV_force_nolen($mhx), $i++);
+is(&Devel::PPPort::SvPV_force_mutable($mhx), $i++);
 
-ok(&Devel::PPPort::SvPV_force_nomg($mhx), $i++);
-ok(&Devel::PPPort::SvPV_force_nomg_nolen($mhx), $i++);
-ok(&Devel::PPPort::SvPV_force_flags($mhx), $i++);
-ok(&Devel::PPPort::SvPV_force_flags_nolen($mhx), $i++);
-ok(&Devel::PPPort::SvPV_force_flags_mutable($mhx), $i++);
+is(&Devel::PPPort::SvPV_force_nomg($mhx), $i++);
+is(&Devel::PPPort::SvPV_force_nomg_nolen($mhx), $i++);
+is(&Devel::PPPort::SvPV_force_flags($mhx), $i++);
+is(&Devel::PPPort::SvPV_force_flags_nolen($mhx), $i++);
+is(&Devel::PPPort::SvPV_force_flags_mutable($mhx), $i++);
 
-ok(&Devel::PPPort::SvPV_nolen_const($mhx), $i++);
-ok(&Devel::PPPort::SvPV_nomg($mhx), $i++);
-ok(&Devel::PPPort::SvPV_nomg_const($mhx), $i++);
-ok(&Devel::PPPort::SvPV_nomg_const_nolen($mhx), $i++);
-ok(&Devel::PPPort::SvPV_nomg_nolen($mhx), $i++);
+is(&Devel::PPPort::SvPV_nolen_const($mhx), $i++);
+is(&Devel::PPPort::SvPV_nomg($mhx), $i++);
+is(&Devel::PPPort::SvPV_nomg_const($mhx), $i++);
+is(&Devel::PPPort::SvPV_nomg_const_nolen($mhx), $i++);
+is(&Devel::PPPort::SvPV_nomg_nolen($mhx), $i++);
 
-$mhx = 42; ok(&Devel::PPPort::SvPV_nolen($mhx), 0);
-$mhx = 42; ok(&Devel::PPPort::SvPV_const($mhx), 2);
-$mhx = 42; ok(&Devel::PPPort::SvPV_mutable($mhx), 2);
-$mhx = 42; ok(&Devel::PPPort::SvPV_flags($mhx), 2);
-$mhx = 42; ok(&Devel::PPPort::SvPV_flags_const($mhx), 2);
+$mhx = 42; is(&Devel::PPPort::SvPV_nolen($mhx), 0);
+$mhx = 42; is(&Devel::PPPort::SvPV_const($mhx), 2);
+$mhx = 42; is(&Devel::PPPort::SvPV_mutable($mhx), 2);
+$mhx = 42; is(&Devel::PPPort::SvPV_flags($mhx), 2);
+$mhx = 42; is(&Devel::PPPort::SvPV_flags_const($mhx), 2);
 
-$mhx = 42; ok(&Devel::PPPort::SvPV_flags_const_nolen($mhx), 0);
-$mhx = 42; ok(&Devel::PPPort::SvPV_flags_mutable($mhx), 2);
-$mhx = 42; ok(&Devel::PPPort::SvPV_force($mhx), 2);
-$mhx = 42; ok(&Devel::PPPort::SvPV_force_nolen($mhx), 0);
-$mhx = 42; ok(&Devel::PPPort::SvPV_force_mutable($mhx), 2);
+$mhx = 42; is(&Devel::PPPort::SvPV_flags_const_nolen($mhx), 0);
+$mhx = 42; is(&Devel::PPPort::SvPV_flags_mutable($mhx), 2);
+$mhx = 42; is(&Devel::PPPort::SvPV_force($mhx), 2);
+$mhx = 42; is(&Devel::PPPort::SvPV_force_nolen($mhx), 0);
+$mhx = 42; is(&Devel::PPPort::SvPV_force_mutable($mhx), 2);
 
-$mhx = 42; ok(&Devel::PPPort::SvPV_force_nomg($mhx), 2);
-$mhx = 42; ok(&Devel::PPPort::SvPV_force_nomg_nolen($mhx), 0);
-$mhx = 42; ok(&Devel::PPPort::SvPV_force_flags($mhx), 2);
-$mhx = 42; ok(&Devel::PPPort::SvPV_force_flags_nolen($mhx), 0);
-$mhx = 42; ok(&Devel::PPPort::SvPV_force_flags_mutable($mhx), 2);
+$mhx = 42; is(&Devel::PPPort::SvPV_force_nomg($mhx), 2);
+$mhx = 42; is(&Devel::PPPort::SvPV_force_nomg_nolen($mhx), 0);
+$mhx = 42; is(&Devel::PPPort::SvPV_force_flags($mhx), 2);
+$mhx = 42; is(&Devel::PPPort::SvPV_force_flags_nolen($mhx), 0);
+$mhx = 42; is(&Devel::PPPort::SvPV_force_flags_mutable($mhx), 2);
 
-$mhx = 42; ok(&Devel::PPPort::SvPV_nolen_const($mhx), 0);
-$mhx = 42; ok(&Devel::PPPort::SvPV_nomg($mhx), 2);
-$mhx = 42; ok(&Devel::PPPort::SvPV_nomg_const($mhx), 2);
-$mhx = 42; ok(&Devel::PPPort::SvPV_nomg_const_nolen($mhx), 0);
-$mhx = 42; ok(&Devel::PPPort::SvPV_nomg_nolen($mhx), 0);
+$mhx = 42; is(&Devel::PPPort::SvPV_nolen_const($mhx), 0);
+$mhx = 42; is(&Devel::PPPort::SvPV_nomg($mhx), 2);
+$mhx = 42; is(&Devel::PPPort::SvPV_nomg_const($mhx), 2);
+$mhx = 42; is(&Devel::PPPort::SvPV_nomg_const_nolen($mhx), 0);
+$mhx = 42; is(&Devel::PPPort::SvPV_nomg_nolen($mhx), 0);
 
 my $str = "";
 &Devel::PPPort::SvPV_force($str);
 my($s2, $before, $after) = &Devel::PPPort::SvPV_renew($str, 81, "x"x80);
-ok($str, "x"x80);
-ok($s2, "x"x80);
+is($str, "x"x80);
+is($s2, "x"x80);
 ok($before < 81);
-ok($after, 81);
+is($after, 81);
 
 $str = "x"x400;
 &Devel::PPPort::SvPV_force($str);
 ($s2, $before, $after) = &Devel::PPPort::SvPV_renew($str, 41, "x"x40);
-ok($str, "x"x40);
-ok($s2, "x"x40);
+is($str, "x"x40);
+is($s2, "x"x40);
 ok($before > 41);
-ok($after, 41);
+is($after, 41);
 

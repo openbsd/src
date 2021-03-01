@@ -63,7 +63,7 @@ if ($Config{ptrsize} > 4 and !$has_too_many) {
           [ 'huge array',
             sub { my @x; $x[$huge] = undef; \@x } ];
     } else {
-        diag "skip huge array, need PERL_TEST_MEMORY >= 8";
+        diag "skip huge array, need PERL_TEST_MEMORY >= 55";
     }
 }
 
@@ -78,7 +78,7 @@ if (!$has_too_many) {
           ['huge hash',
            sub { my %x = (0 .. $huge); \%x } ];
     } else {
-        diag "skip huge hash, need PERL_TEST_MEMORY >= 16";
+        diag "skip huge hash, need PERL_TEST_MEMORY >= 96";
     }
 }
 

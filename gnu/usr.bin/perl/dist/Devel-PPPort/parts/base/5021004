@@ -1,5 +1,14 @@
 5.021004
+CALL_CHECKER_REQUIRE_GV        # E
 cv_set_call_checker_flags      # U
 grok_infnan                    # U
 isinfnan                       # U
-sync_locale                    # U
+add_multi_match                # F added by devel/scanprov
+cntrl_to_mnemonic              # F added by devel/scanprov
+cv_undef_flags                 # F added by devel/scanprov
+gv_stashpvn_internal           # F added by devel/scanprov
+gv_stashsvpvn_cached           # F added by devel/scanprov
+Perl_cvgv_from_hek             # F added by devel/scanprov
+put_charclass_bitmap_innards   # F added by devel/scanprov
+put_code_point                 # F added by devel/scanprov
+quadmath_format_needed         # F added by devel/scanprov

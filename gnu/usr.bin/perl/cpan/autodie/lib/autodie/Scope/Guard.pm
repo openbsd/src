@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 # ABSTRACT: Wrapper class for calling subs at end of scope
-our $VERSION = '2.29'; # VERSION
+our $VERSION = '2.32'; # VERSION
 
 # This code schedules the cleanup of subroutines at the end of
 # scope.  It's directly inspired by chocolateboy's excellent

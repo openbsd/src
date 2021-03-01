@@ -1,1 +1,11 @@
 5.021009
+WARN_EXPERIMENTAL__BITWISE     # E
+advance_one_SB                 # F added by devel/scanprov
+advance_one_WB                 # F added by devel/scanprov
+backup_one_SB                  # F added by devel/scanprov
+backup_one_WB                  # F added by devel/scanprov
+isGCB                          # F added by devel/scanprov
+isSB                           # F added by devel/scanprov
+isWB                           # F added by devel/scanprov
+multideref_stringify           # F added by devel/scanprov
+my_bytes_to_utf8               # F added by devel/scanprov

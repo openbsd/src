@@ -11,7 +11,7 @@ BEGIN {
 use strict;
 use warnings;
 
-plan tests => 6;
+plan tests => 10;
 
 use Fcntl qw(:seek);
 
@@ -31,6 +31,16 @@ use Fcntl qw(:seek);
     is($data, "the right read stuff", "found the right stuff");
 }
 
-
+SKIP:
+{
+    ok((open my $fh, "+>>", undef), "open my \$fh, '+>>', undef")
+      or skip "can't open temp for append: $!", 3;
+    print $fh "abc";
+    ok(seek($fh, 0, SEEK_SET), "seek to zero");
+    print $fh "xyz";
+    ok(seek($fh, 0, SEEK_SET), "seek to zero again");
+    my $data = <$fh>;
+    is($data, "abcxyz", "check the second write appended");
+}
 
 

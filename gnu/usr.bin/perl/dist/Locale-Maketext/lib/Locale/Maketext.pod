@@ -1387,16 +1387,16 @@ L<I18N::LangTags|I18N::LangTags>.
 L<Win32::Locale|Win32::Locale>.
 
 RFC 3066, I<Tags for the Identification of Languages>,
-as at http://sunsite.dk/RFC/rfc/rfc3066.html
+as at L<http://sunsite.dk/RFC/rfc/rfc3066.html>
 
 RFC 2277, I<IETF Policy on Character Sets and Languages>
-is at http://sunsite.dk/RFC/rfc/rfc2277.html -- much of it is
+is at L<http://sunsite.dk/RFC/rfc/rfc2277.html> -- much of it is
 just things of interest to protocol designers, but it explains
 some basic concepts, like the distinction between locales and
 language-tags.
 
 The manual for GNU C<gettext>.  The gettext dist is available in
-C<ftp://prep.ai.mit.edu/pub/gnu/> -- get
+C<L<ftp://prep.ai.mit.edu/pub/gnu/>> -- get
 a recent gettext tarball and look in its "doc/" directory, there's
 an easily browsable HTML version in there.  The
 gettext documentation asks lots of questions worth thinking

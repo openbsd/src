@@ -39,7 +39,7 @@ my @perl = ( which_perl(), "-I../lib" );
 # the other reader reads one line, waits a few seconds and then
 # exits to test the waitpid function.
 #
-# Using 4+ arg open for the children that sleep so that that we're
+# Using 4+ arg open for the children that sleep so that we're
 # killing the perl process instead of an intermediate shell, this
 # allows harness to see the file handles closed sooner.  I didn't
 # convert them all since I wanted 3-arg open to continue to be

@@ -16,7 +16,6 @@ __END__
 use warnings 'syntax' ;
 @ISA = qw(Fred); joe()
 EXPECT
-Can't locate package Fred for @main::ISA at - line 3.
 Undefined subroutine &main::joe called at - line 3.
 ########
 # gv.c
@@ -24,6 +23,86 @@ no warnings 'syntax' ;
 @ISA = qw(Fred); joe()
 EXPECT
 Undefined subroutine &main::joe called at - line 3.
+########
+# gv.c
+use warnings 'syntax' ;
+@ISA = qw(Fred); __PACKAGE__->joe()
+EXPECT
+While trying to resolve method call main->joe() can not locate package "Fred" yet it is mentioned in @main::ISA (perhaps you forgot to load "Fred"?) at - line 3.
+Can't locate object method "joe" via package "main" at - line 3.
+########
+# gv.c
+no warnings 'syntax' ;
+@ISA = qw(Fred); __PACKAGE__->joe()
+EXPECT
+Can't locate object method "joe" via package "main" at - line 3.
+########
+# gv.c
+use warnings 'syntax' ;
+{
+    package AA;    # this is a deliberate error
+#   package A;     # should be this
+    sub foo {
+       print STDERR "I'm in A's foo\n";
+    }
+}
+{
+   package B;
+   sub foo {
+       print STDERR "I'm in B's foo\n";
+   }
+}
+@C::ISA = qw(A B);
+$a = bless [], 'C';
+$a->foo();
+__END__
+EXPECT
+While trying to resolve method call C->foo() can not locate package "A" yet it is mentioned in @C::ISA (perhaps you forgot to load "A"?) at - line 18.
+I'm in B's foo
+########
+# gv.c
+no warnings 'syntax' ;
+{
+    package AA;    # this is a deliberate error
+#   package A;     # should be this
+    sub foo {
+       print STDERR "I'm in A's foo\n";
+    }
+}
+{
+   package B;
+   sub foo {
+       print STDERR "I'm in B's foo\n";
+   }
+}
+@C::ISA = qw(A B);
+$a = bless [], 'C';
+$a->foo();
+__END__
+EXPECT
+I'm in B's foo
+########
+# gv.c
+use warnings 'syntax' ;
+{
+#   package AA;    # this would be an error
+    package A;     # the right thing
+    sub foo {
+       print STDERR "I'm in A's foo\n";
+    }
+}
+{
+   package B;
+   sub foo {
+       print STDERR "I'm in B's foo\n";
+   }
+}
+@C::ISA = qw(A B);
+$a = bless [], 'C';
+$a->foo();
+__END__
+EXPECT
+I'm in A's foo
 ########
 # gv.c
 $a = ${^ENCODING};
@@ -38,7 +117,6 @@ use open qw( :utf8 :std );
 package Ｙ;
 @ISA = qw(Fred); joe()
 EXPECT
-Can't locate package Fred for @Ｙ::ISA at - line 6.
 Undefined subroutine &Ｙ::joe called at - line 6.
 ########
 # gv.c

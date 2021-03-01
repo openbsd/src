@@ -1,0 +1,20 @@
+5.027009
+PERL_MAGIC_nonelem             # E
+switch_to_global_locale        # U
+sync_locale                    # E (Perl_sync_locale)
+thread_locale_init             # U
+thread_locale_term             # U
+utf8n_to_uvchr_msgs            # U
+uvchr_to_utf8_flags_msgs       # U
+WARN_EXPERIMENTAL__ALPHA_ASSERTIONS # E
+av_nonelem                     # F added by devel/scanprov
+emulate_setlocale              # F added by devel/scanprov
+find_next_masked               # F added by devel/scanprov
+find_span_end                  # F added by devel/scanprov
+find_span_end_mask             # F added by devel/scanprov
+get_ANYOFM_contents            # F added by devel/scanprov
+magic_setnonelem               # F added by devel/scanprov
+new_msg_hv                     # F added by devel/scanprov
+restore_switched_locale        # F added by devel/scanprov
+switch_category_locale_to_template # F added by devel/scanprov
+uvoffuni_to_utf8_flags_msgs    # F added by devel/scanprov

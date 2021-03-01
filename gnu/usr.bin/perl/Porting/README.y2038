@@ -2,7 +2,7 @@ The y2038 implementation for perl
 ===========================================================================
 This is an implementation of POSIX time.h which solves the year 2038 bug on
 systems where time_t is only 32 bits.  It is implemented in bog-standard
-ANSI C.  The latest version can be found at http://y2038.googlecode.com/
+ANSI C.  The latest version can be found at https://github.com/evalEmpire/y2038
 
 It makes use of the system's native 32 bit functions to perform time zone
 and daylight savings time calculations and thus does *not* need to ship its

@@ -1,12 +1,45 @@
 5.013006
-LINKLIST                       # U
-SvTRUE_nomg                    # U
 ck_entersub_args_list          # U
 ck_entersub_args_proto         # U
 ck_entersub_args_proto_or_list # U
 cv_get_call_checker            # E
 cv_set_call_checker            # E
+isALNUMC_A                     # U
+isALNUMC_L1                    # U
+isALPHA_A                      # U
+isALPHA_L1                     # U
+isASCII_A                      # U
+isBLANK_A                      # U
+isBLANK_L1                     # U
+isCNTRL_A                      # U
+isCNTRL_L1                     # U
+isDIGIT_A                      # U
+isDIGIT_L1                     # U
+isGRAPH_A                      # U
+isGRAPH_L1                     # U
+isIDFIRST_A                    # U
+isIDFIRST_L1                   # U
+isLOWER_A                      # U
+isLOWER_L1                     # U
+isOCTAL_A                      # U
+isOCTAL_L1                     # U
+isPRINT_A                      # U
+isPRINT_L1                     # U
+isPSXSPC_A                     # U
+isPSXSPC_L1                    # U
+isPUNCT_A                      # U
+isPUNCT_L1                     # U
+isSPACE_A                      # U
+isSPACE_L1                     # U
+isUPPER_A                      # U
+isUPPER_L1                     # U
 isWORDCHAR                     # U
+isWORDCHAR_A                   # U
+isWORDCHAR_L1                  # U
+isXDIGIT_A                     # U
+isXDIGIT_L1                    # U
+lex_stuff_pv                   # U
+LINKLIST                       # U
 mg_free_type                   # U
 newSVpv_share                  # U
 op_append_elem                 # U
@@ -14,7 +47,11 @@ op_append_list                 # U
 op_contextualize               # U
 op_linklist                    # U
 op_prepend_elem                # U
+parse_stmtseq                  # U
+PERL_MAGIC_checkcall           # E
 rv2cv_op_cv                    # U
+RV2CVOPCV_MARK_EARLY           # E
+RV2CVOPCV_RETURN_NAME_GV       # E
 savesharedpvs                  # U
 savesharedsvpv                 # U
 sv_2bool_flags                 # U
@@ -28,3 +65,7 @@ sv_cmp_locale_flags            # U
 sv_collxfrm_flags              # U
 sv_eq_flags                    # U
 sv_setpvs_mg                   # U
+sv_setref_pvs                  # U
+SvTRUE_nomg                    # U
+mro_package_moved              # F added by devel/scanprov
+Perl_populate_isa              # F added by devel/scanprov

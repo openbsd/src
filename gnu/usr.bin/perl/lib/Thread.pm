@@ -4,7 +4,7 @@ use strict;
 use warnings;
 no warnings 'redefine';
 
-our $VERSION = '3.04';
+our $VERSION = '3.05';
 $VERSION = eval $VERSION;
 
 BEGIN {
@@ -117,7 +117,7 @@ C<new> starts a new thread of execution in the referenced subroutine. The
 optional list is passed as parameters to the subroutine. Execution
 continues in both the subroutine and the code after the C<new> call.
 
-C<Thread-&gt;new> returns a thread object representing the newly created
+C<< Thread->new >> returns a thread object representing the newly created
 thread.
 
 =item lock VARIABLE
@@ -148,7 +148,7 @@ C<lock(\$a)> is equivalent to C<lock($a)>, while C<lock(\\$a)> is not.
 
 C<async> creates a thread to execute the block immediately following
 it.  This block is treated as an anonymous sub, and so must have a
-semi-colon after the closing brace. Like C<Thread-&gt;new>, C<async>
+semi-colon after the closing brace. Like C<< Thread->new >>, C<async>
 returns a thread object.
 
 =item Thread->self

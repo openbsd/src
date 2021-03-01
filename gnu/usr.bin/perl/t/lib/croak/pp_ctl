@@ -51,3 +51,11 @@ use 5.01;
 default{}
 EXPECT
 Can't "default" outside a topicalizer at - line 2.
+########
+# NAME croak with read only $@
+eval '"a" =~ /${*@=\_})/';
+die;
+# this would previously recurse infinitely in the eval
+EXPECT
+Unmatched ) in regex; marked by <-- HERE in m/_) <-- HERE / at (eval 1) line 1.
+	...propagated at - line 2.

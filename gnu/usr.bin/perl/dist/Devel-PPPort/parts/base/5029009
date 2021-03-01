@@ -1,0 +1,9 @@
+5.029009
+newSVsv_flags                  # U
+newSVsv_nomg                   # U
+UTF8_SAFE_SKIP                 # U
+WARN_EXPERIMENTAL__PRIVATE_USE # E
+WARN_EXPERIMENTAL__UNIPROP_WILDCARDS # E
+WARN_EXPERIMENTAL__VLB         # E
+get_and_check_backslash_N_name_wrapper # F added by devel/scanprov
+Perl_dup_warnings              # F added by devel/scanprov

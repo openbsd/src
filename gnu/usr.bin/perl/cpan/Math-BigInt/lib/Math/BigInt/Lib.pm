@@ -4,7 +4,7 @@ use 5.006001;
 use strict;
 use warnings;
 
-our $VERSION = '1.999816';
+our $VERSION = '1.999818';
 
 use Carp;
 
@@ -251,13 +251,6 @@ use overload
 
   ;
 
-# Do we need api_version() at all, now that we have a virtual parent class that
-# will provide any missing methods? Fixme!
-
-sub api_version () {
-    croak "@{[(caller 0)[3]]} method not implemented";
-}
-
 sub _new {
     croak "@{[(caller 0)[3]]} method not implemented";
 }
@@ -384,6 +377,20 @@ sub _alen {
 sub _digit {
     my ($class, $x, $n) = @_;
     substr($class ->_str($x), -($n+1), 1);
+}
+
+sub _digitsum {
+    my ($class, $x) = @_;
+
+    my $len = $class -> _len($x);
+    my $sum = $class -> _zero();
+    for (my $i = 0 ; $i < $len ; ++$i) {
+        my $digit = $class -> _digit($x, $i);
+        $digit = $class -> _new($digit);
+        $sum = $class -> _add($sum, $digit);
+    }
+
+    return $sum;
 }
 
 sub _zeros {
@@ -1428,16 +1435,20 @@ sub _to_base {
     if (@_) {
         $collseq = shift();
     } else {
-        if ($class -> _acmp($base, $class -> _new("62")) <= 0) {
-            $collseq = '0123456789' . 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-                                    . 'abcdefghijklmnopqrstuvwxyz';
+        if ($class -> _acmp($base, $class -> _new("94")) <= 0) {
+            $collseq = '0123456789'                     #  48 ..  57
+                     . 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'     #  65 ..  90
+                     . 'abcdefghijklmnopqrstuvwxyz'     #  97 .. 122
+                     . '!"#$%&\'()*+,-./'               #  33 ..  47
+                     . ':;<=>?@'                        #  58 ..  64
+                     . '[\\]^_`'                        #  91 ..  96
+                     . '{|}~';                          # 123 .. 126
         } else {
-            croak "When base > 62, a collation sequence must be given";
+            croak "When base > 94, a collation sequence must be given";
         }
     }
 
     my @collseq = split '', $collseq;
-    my %collseq = map { $_ => $collseq[$_] } 0 .. $#collseq;
 
     my $str   = '';
     my $tmp   = $class -> _copy($x);
@@ -1573,11 +1584,16 @@ sub _from_base {
         if ($class -> _acmp($base, $class -> _new("36")) <= 0) {
             $str = uc $str;
             $collseq = '0123456789' . 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        } elsif ($class -> _acmp($base, $class -> _new("62")) <= 0) {
-            $collseq = '0123456789' . 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-                                    . 'abcdefghijklmnopqrstuvwxyz';
+        } elsif ($class -> _acmp($base, $class -> _new("94")) <= 0) {
+            $collseq = '0123456789'                     #  48 ..  57
+                     . 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'     #  65 ..  90
+                     . 'abcdefghijklmnopqrstuvwxyz'     #  97 .. 122
+                     . '!"#$%&\'()*+,-./'               #  33 ..  47
+                     . ':;<=>?@'                        #  58 ..  64
+                     . '[\\]^_`'                        #  91 ..  96
+                     . '{|}~';                          # 123 .. 126
         } else {
-            croak "When base > 62, a collation sequence must be given";
+            croak "When base > 94, a collation sequence must be given";
         }
         $collseq = substr $collseq, 0, $class -> _num($base);
     }
@@ -1920,11 +1936,8 @@ comparison routines.
 
 =item CLASS-E<gt>api_version()
 
-Return API version as a Perl scalar, 1 for Math::BigInt v1.70, 2 for
-Math::BigInt v1.83.
-
-This method is no longer used. Methods that are not implemented by a subclass
-will be inherited from this class.
+This method is no longer used and can be omitted. Methods that are not
+implemented by a subclass will be inherited from this class.
 
 =back
 
@@ -1986,10 +1999,20 @@ COLLSEQ. Each character in STR represents a numerical value identical to the
 character's position in COLLSEQ. All characters in STR must be present in
 COLLSEQ.
 
-If BASE is less than or equal to 62, and a collation sequence is not specified,
-a default collation sequence consisting of the 62 characters 0..9, A..Z, and
-a..z is used. If the default collation sequence is used, and the BASE is less
-than or equal to 36, the letter case in STR is ignored.
+If BASE is less than or equal to 94, and a collation sequence is not specified,
+the following default collation sequence is used. It contains of all the 94
+printable ASCII characters except space/blank:
+
+    0123456789                  # ASCII  48 to  57
+    ABCDEFGHIJKLMNOPQRSTUVWXYZ  # ASCII  65 to  90
+    abcdefghijklmnopqrstuvwxyz  # ASCII  97 to 122
+    !"#$%&'()*+,-./             # ASCII  33 to  47
+    :;<=>?@                     # ASCII  58 to  64
+    [\]^_`                      # ASCII  91 to  96
+    {|}~                        # ASCII 123 to 126
+
+If the default collation sequence is used, and the BASE is less than or equal
+to 36, the letter case in STR is ignored.
 
 For instance, with base 3 and collation sequence "-/|", the character "-"
 represents 0, "/" represents 1, and "|" represents 2. So if STR is "/|-", the
@@ -2005,10 +2028,12 @@ conversion. All examples return 250.
 
 Some more examples, all returning 250:
 
-    $x = $class -> _from_base("100021", 3, "012")
-    $x = $class -> _from_base("3322", 4, "0123")
-    $x = $class -> _from_base("2000", 5, "01234")
+    $x = $class -> _from_base("100021", 3)
+    $x = $class -> _from_base("3322", 4)
+    $x = $class -> _from_base("2000", 5)
     $x = $class -> _from_base("caaa", 5, "abcde")
+    $x = $class -> _from_base("42", 62)
+    $x = $class -> _from_base("2!", 94)
 
 =back
 
@@ -2301,6 +2326,10 @@ from the left (most significant digit). If $obj represents the number 123, then
     CLASS->_digit($obj,  2)     # returns 1
     CLASS->_digit($obj, -1)     # returns 1
 
+=item CLASS-E<gt>_digitsum(OBJ)
+
+Returns the sum of the base 10 digits.
+
 =item CLASS-E<gt>_check(OBJ)
 
 Returns true if the object is invalid and false otherwise. Preferably, the true
@@ -2394,11 +2423,11 @@ L<http://annocpan.org/dist/Math-BigInt>
 
 =item * CPAN Ratings
 
-L<http://cpanratings.perl.org/dist/Math-BigInt>
+L<https://cpanratings.perl.org/dist/Math-BigInt>
 
-=item * Search CPAN
+=item * MetaCPAN
 
-L<http://search.cpan.org/dist/Math-BigInt/>
+L<https://metacpan.org/release/Math-BigInt>
 
 =item * CPAN Testers Matrix
 

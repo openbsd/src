@@ -338,7 +338,7 @@ ${prefix}_VALt $match_name( const unsigned char * const key, const U16 key_len )
     U32 s;
     U32 n;
     do {
-        h ^= *ptr;
+        h ^= NATIVE_TO_LATIN1(*ptr);    /* table collated in Latin1 */
         h *= ${prefix}_FNV_CONST;
     } while ( ++ptr < ptr_end );
     n= h % ${prefix}_BUCKETS;
@@ -479,7 +479,7 @@ unless (caller) {
     my %hash;
     {
         no warnings;
-        do "../perl/lib/unicore/Heavy.pl";
+        do "../perl/lib/unicore/UCD.pl";
         %hash= %utf8::loose_to_file_of;
     }
     if ($ENV{MERGE_KEYS}) {

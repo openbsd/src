@@ -2,7 +2,7 @@ package Test2::EventFacet::Plan;
 use strict;
 use warnings;
 
-our $VERSION = '1.302162';
+our $VERSION = '1.302175';
 
 BEGIN { require Test2::EventFacet; our @ISA = qw(Test2::EventFacet) }
 use Test2::Util::HashBase qw{ -count -skip -none };

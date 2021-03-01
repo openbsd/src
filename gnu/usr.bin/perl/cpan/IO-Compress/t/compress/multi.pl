@@ -216,7 +216,8 @@ EOM
                         ok $gz->eof(), "      eof()";
                         is $gz->streamCount(), $stream, "    streamCount is $stream"
                             or diag "Stream count is " . $gz->streamCount();
-                        ok $un eq $buff, "    expected output" ;
+                        is $un, $buff, "    expected output" 
+                            or diag "Stream count is " . $gz->streamCount();                        ;
                         #is $gz->tell(), length $buff, "    tell is ok";
                         is $gz->nextStream(), 1, "    nextStream ok";
                         is $gz->tell(), 0, "    tell is 0";

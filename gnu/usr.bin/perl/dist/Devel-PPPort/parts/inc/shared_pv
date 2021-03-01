@@ -27,14 +27,14 @@ __UNDEFINED__
 #if { NEED newSVpvn_share }
 
 SV *
-newSVpvn_share(pTHX_ const char *src, I32 len, U32 hash)
+newSVpvn_share(pTHX_ const char *s, I32 len, U32 hash)
 {
   SV *sv;
   if (len < 0)
     len = -len;
   if (!hash)
-    PERL_HASH(hash, (char*) src, len);
-  sv = newSVpvn((char *) src, len);
+    PERL_HASH(hash, (char*) s, len);
+  sv = newSVpvn((char *) s, len);
   sv_upgrade(sv, SVt_PVIV);
   SvIVX(sv) = hash;
   SvREADONLY_on(sv);
@@ -87,4 +87,4 @@ newSVpvn_share()
 
 =tests plan => 1
 
-ok(&Devel::PPPort::newSVpvn_share(), 6);
+is(&Devel::PPPort::newSVpvn_share(), 6);

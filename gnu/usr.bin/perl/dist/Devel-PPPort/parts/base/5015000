@@ -1,1 +1,3 @@
 5.015000
+hv_free_ent_ret                # F added by devel/scanprov
+Perl_hfree_next_entry          # F added by devel/scanprov

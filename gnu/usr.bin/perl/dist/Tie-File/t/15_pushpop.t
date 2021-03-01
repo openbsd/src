@@ -9,9 +9,12 @@
 # Then, it checks the actual contents of the file against the expected
 # contents.
 
+use strict;
+use warnings;
+
 use POSIX 'SEEK_SET';
 
-my $file = "tf$$.txt";
+my $file = "tf15-$$.txt";
 1 while unlink $file;
 $: = Tie::File::_default_recsep();
 my $data = "rec0$:rec1$:rec2$:";
@@ -22,6 +25,7 @@ my $N = 1;
 use Tie::File;
 print "ok $N\n"; $N++;  # partial credit just for showing up
 
+my @a;
 my $o = tie @a, 'Tie::File', $file, autochomp => 0;
 print $o ? "ok $N\n" : "not ok $N\n";
 $N++;

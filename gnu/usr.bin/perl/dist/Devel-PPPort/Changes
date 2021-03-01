@@ -1,5 +1,75 @@
 Revision history for Devel-PPPort
 
+ 3.57 - 2020-01-31
+
+ * Fix eval_sv for Perl versions prior to 5.6.0 (Pali)
+ * Fix t/ppphtest.t for Perl versions prior to 5.6.0 (Pali)
+ * Fix compilation of sv_setsv_flags when GCC extensions are not present (Pali)
+ * Fix SV_NOSTEAL on 5.7.2 (Karl Williamson)
+ * Fix multiple unit test issues (Craig A. Berry, Karl Williamson, Pali)
+ * Avoid generating warnings on early Perls (Karl Williamson)
+ * Backport memCHRs (Karl Williamson)
+ * Implement sv_setsv_flags() with SV_NOSTEAL and SV_GMAGIC flags for Perl versions < 5.7.3 (Pali)
+ * Implement UTF8f format and its UTF8fARG macro (Pali)
+
+ 3.56 - 2019-11-25
+
+ * mktests.PL: use FindBin for INC setup
+ * devel/regenerate: Adjust POD line length
+ * Fix compilation with Visual C++ bugs introduced in 3.55 (Tomasz Konojacki)
+ * Fix mess.t failures when on VC++ when $0 contains backslashes (Tomasz Konojacki)
+ * Fix failing builds on 5.20.[1-3] introduced in 3.55 (Karl Williamson)
+ * Change tests to accept and use Test::More-like functions (Karl Williamson)
+
+ 3.55 - 2019-11-07
+
+  * Fix p5-Text-Xslate on Perl 5.8.5 (Nicolas R)
+  * Fix EBCDIC build problem (Karl Williamson)
+  * Fix isGRAPH_L1() bug (Karl Williamson)
+  * utf8_to_uvchr_buf: Fix error checking on early EBCDICs and proper length (Karl Williamson)
+  * HACKERS: fix typos and clarification (Karl Williamson)
+  * Update bugtracker and repository URLs (Nicolas R)  (upstream/urls)
+  * Add warning about UTF-8 unreliable in early perls (Karl Williamson)
+  * Add withinCOUNT and inRANGE (Karl Williamson)
+  * Implement G_RETHROW for eval_sv (Pali)
+  * Backport some isFOO_LC macros (Karl Williamson)
+  * Backport isFOO_LC_utf8_safe() (Karl Williamson)
+  * Backport toFOO_uvchr() (Karl Williamson)
+  * Backport isFOO_uvchr() (Karl Williamson)
+  * Backport isFOO_utf8_safe() macros (Karl Williamson)
+  * Backport toLOWER_utf8_safe and kin (Karl Williamson)
+  * Backport UTF8_MAXBYTES_CASE (Karl Williamson)
+  * Backport UTF8_CHK_SKIP (Karl Williamson)
+  * Backport UTF8_SKIP (Karl Williamson)
+  * Backport UNI to/from NATIVE (Karl Williamson)
+
+ 3.54 - 2019-09-27
+
+  * Fix Unix-format path in Devel::PPPort's Makefile.PL
+  * Fix utf8_to_uvchr_buf for 5.7.0
+  * Add hint for utf8_to_uvchr()
+  * Fix hints for is_ascii_string
+  * Use numeric comparisons with $]
+  * Fix 'for loops' to work on early perls
+  * Can't use GCC brace groups before 5.4
+  * Add script to regenerate ppport.fnc
+  * Suppress useless warning
+  * Fix mktests.PL for Perl 5.8.0
+  * Implement sv_len_utf8_nomg() and sv_len_utf8()
+  * Fix eval_pv for Perl versions prior to 5.31.2
+  * Consolidate UTF-8 functions/macros into new file
+  * Implement sv_mortalcopy_flags()
+  * Implement newSVsv_flags()
+  * Enable Perl compile-time warnings at all place
+  * Improve Makefile.PL
+  * Add tests for IVdf, UVuf, IV_MAX and UV_MAX
+
+ 3.53 - 2019-09-27
+
+  * Rename PPPort_xs.PL to RealPPPort_xs.PL
+  * Fix compilation issues with version older than 5.010
+  * Fix compilation issues with version older than 5.010
+
  3.52 - 2019-05-14
 
    * fix utf8_to_uvchr_buf retval in 5.30

@@ -5,8 +5,17 @@
 #define CAN64BITHASH
 #endif
 
+#ifdef CAN64BITHASH
+  #ifndef U64TYPE
+  /* This probably isn't going to work, but failing with a compiler error due to
+   lack of uint64_t is no worse than failing right now with an #error.  */
+  #define U64 uint64_t
+  #endif
+#endif
+
+
 /*-----------------------------------------------------------------------------
- * Endianess, misalignment capabilities and util macros
+ * Endianess and util macros
  *
  * The following 3 macros are defined in this section. The other macros defined
  * are only needed to help derive these 3.
@@ -20,35 +29,30 @@
  * ROTR64(x,r)      Rotate x right by r bits
  */
 
-#ifndef U32_ALIGNMENT_REQUIRED
-  #if (BYTEORDER == 0x1234 || BYTEORDER == 0x12345678)
-    #define U8TO16_LE(ptr)   (*((const U16*)(ptr)))
-    #define U8TO32_LE(ptr)   (*((const U32*)(ptr)))
-    #define U8TO64_LE(ptr)   (*((const U64*)(ptr)))
-  #elif (BYTEORDER == 0x4321 || BYTEORDER == 0x87654321)
-    #if defined(__GNUC__) && (__GNUC__>4 || (__GNUC__==4 && __GNUC_MINOR__>=3))
-      #define U8TO16_LE(ptr)   (__builtin_bswap16(*((U16*)(ptr))))
-      #define U8TO32_LE(ptr)   (__builtin_bswap32(*((U32*)(ptr))))
-      #define U8TO64_LE(ptr)   (__builtin_bswap64(*((U64*)(ptr))))
-    #endif
-  #endif
-#endif
-
 #ifndef U8TO16_LE
-    /* Without a known fast bswap32 we're just as well off doing this */
-  #define U8TO16_LE(ptr)   ((U32)(ptr)[0]|(U32)(ptr)[1]<<8)
-  #define U8TO32_LE(ptr)   ((U32)(ptr)[0]|(U32)(ptr)[1]<<8|(U32)(ptr)[2]<<16|(U32)(ptr)[3]<<24)
-  #define U8TO64_LE(ptr)   ((U64)(ptr)[0]|(U64)(ptr)[1]<<8|(U64)(ptr)[2]<<16|(U64)(ptr)[3]<<24|\
-                            (U64)(ptr)[4]<<32|(U64)(ptr)[5]<<40|\
-                            (U64)(ptr)[6]<<48|(U64)(ptr)[7]<<56)
-#endif
+  #define _shifted_octet(type,ptr,idx,shift) (((type)(((U8*)(ptr))[(idx)]))<<(shift))
+    #ifdef USE_UNALIGNED_PTR_DEREF
+        #define U8TO16_LE(ptr)   (*((const U16*)(ptr)))
+        #define U8TO32_LE(ptr)   (*((const U32*)(ptr)))
+        #define U8TO64_LE(ptr)   (*((const U64*)(ptr)))
+    #else
+        #define U8TO16_LE(ptr)   (_shifted_octet(U16,(ptr),0, 0)|\
+                                  _shifted_octet(U16,(ptr),1, 8))
 
-#ifdef CAN64BITHASH
-  #ifndef U64TYPE
-  /* This probably isn't going to work, but failing with a compiler error due to
-   lack of uint64_t is no worse than failing right now with an #error.  */
-  #define U64 uint64_t
-  #endif
+        #define U8TO32_LE(ptr)   (_shifted_octet(U32,(ptr),0, 0)|\
+                                  _shifted_octet(U32,(ptr),1, 8)|\
+                                  _shifted_octet(U32,(ptr),2,16)|\
+                                  _shifted_octet(U32,(ptr),3,24))
+
+        #define U8TO64_LE(ptr)   (_shifted_octet(U64,(ptr),0, 0)|\
+                                  _shifted_octet(U64,(ptr),1, 8)|\
+                                  _shifted_octet(U64,(ptr),2,16)|\
+                                  _shifted_octet(U64,(ptr),3,24)|\
+                                  _shifted_octet(U64,(ptr),4,32)|\
+                                  _shifted_octet(U64,(ptr),5,40)|\
+                                  _shifted_octet(U64,(ptr),6,48)|\
+                                  _shifted_octet(U64,(ptr),7,56))
+    #endif
 #endif
 
 /* Find best way to ROTL32/ROTL64 */

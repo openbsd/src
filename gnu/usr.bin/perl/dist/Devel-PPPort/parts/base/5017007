@@ -1,2 +1,13 @@
 5.017007
+isALNUMC_LC_uvchr              # U
+isASCII_LC_uvchr               # U
+isBLANK_LC_uvchr               # U
+isPSXSPC_LC_uvchr              # U
+isWORDCHAR_LC                  # U
+isWORDCHAR_LC_uvchr            # U
+isXDIGIT_LC                    # U
+isXDIGIT_LC_uvchr              # U
 SvREFCNT_dec_NN                # U
+forget_pmop                    # F added by devel/scanprov
+isFOO_lc                       # F added by devel/scanprov
+_is_uni_perl_idstart           # F added by devel/scanprov

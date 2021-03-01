@@ -2,7 +2,7 @@ package Test2::EventFacet::About;
 use strict;
 use warnings;
 
-our $VERSION = '1.302162';
+our $VERSION = '1.302175';
 
 BEGIN { require Test2::EventFacet; our @ISA = qw(Test2::EventFacet) }
 use Test2::Util::HashBase qw{ -package -no_display -uuid -eid };

@@ -1,30 +1,50 @@
 5.008001
+C_ARRAY_LENGTH                 # U
 CvPADLIST                      # E
-PL_comppad                     # E
-SvVOK                          # U
-XSRETURN_UV                    # U
 doing_taint                    # U
 find_runcv                     # U
 is_utf8_string_loc             # U
 packlist                       # U
 pad_add_anon                   # U
 pad_new                        # E
+pad_setsv                      # U
+pad_tidy                       # E
+PERL_ABS                       # U
+PERL_MAGIC_utf8                # E
+PERL_MAGIC_vstring             # E
+PERL_SCAN_SILENT_ILLDIGIT      # E
+PL_comppad                     # E
 save_bool                      # U
 savestack_grow_cnt             # U
 seed                           # U
 sv_cat_decode                  # U
+SV_COW_DROP_PV                 # E
 sv_setpviv                     # U
 sv_setpviv_mg                  # U
+SvVOK                          # U
 unpackstring                   # U
-C_ARRAY_LENGTH                 # added by devel/scanprov
-IN_PERL_COMPILETIME            # added by devel/scanprov
-PERL_ABS                       # added by devel/scanprov
-PERL_GCC_BRACE_GROUPS_FORBIDDEN # added by devel/scanprov
-PERL_MAGIC_utf8                # added by devel/scanprov
-PERL_MAGIC_vstring             # added by devel/scanprov
-PERL_SCAN_SILENT_ILLDIGIT      # added by devel/scanprov
-PERL_SIGNALS_UNSAFE_FLAG       # added by devel/scanprov
-PL_signals                     # added by devel/scanprov
-SV_COW_DROP_PV                 # added by devel/scanprov
-SV_UTF8_NO_ENCODING            # added by devel/scanprov
-XST_mUV                        # added by devel/scanprov
+XSRETURN_UV                    # U
+XST_mUV                        # U
+IN_PERL_COMPILETIME            # M added by devel/scanprov
+PERL_SIGNALS_UNSAFE_FLAG       # M added by devel/scanprov
+PL_signals                     # M added by devel/scanprov
+SV_UTF8_NO_ENCODING            # M added by devel/scanprov
+allocmy                        # F added by devel/scanprov
+deb_stack_all                  # F added by devel/scanprov
+deb_stack_n                    # F added by devel/scanprov
+do_dump_pad                    # F added by devel/scanprov
+doopen_pm                      # F added by devel/scanprov
+free_tied_hv_pool              # F added by devel/scanprov
+get_debug_opts                 # F added by devel/scanprov
+get_hash_seed                  # F added by devel/scanprov
+get_num                        # F added by devel/scanprov
+magic_setregexp                # F added by devel/scanprov
+magic_setutf8                  # F added by devel/scanprov
+pack_rec                       # F added by devel/scanprov
+pad_block_start                # F added by devel/scanprov
+pad_check_dup                  # F added by devel/scanprov
+pad_fixup_inner_anons          # F added by devel/scanprov
+pad_push                       # F added by devel/scanprov
+parse_unicode_opts             # F added by devel/scanprov
+unpack_rec                     # F added by devel/scanprov
+write_to_stderr                # F added by devel/scanprov

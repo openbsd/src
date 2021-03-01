@@ -1,7 +1,7 @@
 package open;
 use warnings;
 
-our $VERSION = '1.11';
+our $VERSION = '1.12';
 
 require 5.008001; # for PerlIO::get_layers()
 
@@ -147,103 +147,101 @@ open - perl pragma to set default PerlIO layers for input and output
 
 =head1 SYNOPSIS
 
-    use open IN  => ":crlf", OUT => ":bytes";
-    use open OUT => ':utf8';
-    use open IO  => ":encoding(iso-8859-7)";
+    use open IN  => ':crlf', OUT => ':raw';
+    open my $in, '<', 'foo.txt' or die "open failed: $!";
+    my $line = <$in>; # CRLF translated
+    close $in;
+    open my $out, '>', 'bar.txt' or die "open failed: $!";
+    print $out $line; # no translation of bytes
+    close $out;
+
+    use open OUT => ':encoding(UTF-8)';
+    use open IN  => ':encoding(iso-8859-7)';
 
     use open IO  => ':locale';
 
+    # IO implicit only for :utf8, :encoding, :locale
     use open ':encoding(UTF-8)';
-    use open ':locale';
     use open ':encoding(iso-8859-7)';
+    use open ':locale';
 
-    use open ':std';
+    # with :std, also affect global standard handles
+    use open ':std', ':encoding(UTF-8)';
+    use open ':std', OUT => ':encoding(cp1252)';
+    use open ':std', IO => ':raw :encoding(UTF-16LE)';
 
 =head1 DESCRIPTION
 
 Full-fledged support for I/O layers is now implemented provided
-Perl is configured to use PerlIO as its IO system (which is now the
-default).
+Perl is configured to use PerlIO as its IO system (which has been the
+default since 5.8, and the only supported configuration since 5.16).
 
 The C<open> pragma serves as one of the interfaces to declare default
-"layers" (also known as "disciplines") for all I/O. Any two-argument
-open(), readpipe() (aka qx//) and similar operators found within the
-lexical scope of this pragma will use the declared defaults.
-Even three-argument opens may be affected by this pragma
-when they don't specify IO layers in MODE.
+"layers" (previously known as "disciplines") for all I/O. Any open(),
+readpipe() (aka qx//) and similar operators found within the
+lexical scope of this pragma will use the declared defaults via the
+L<C<${^OPEN}>|perlvar/${^OPEN}> variable.
+
+Layers are specified with a leading colon by convention. You can
+specify a stack of multiple layers as a space-separated string.
+See L<PerlIO> for more information on the available layers.
 
 With the C<IN> subpragma you can declare the default layers
 of input streams, and with the C<OUT> subpragma you can declare
-the default layers of output streams.  With the C<IO>  subpragma
-you can control both input and output streams simultaneously.
+the default layers of output streams.  With the C<IO> subpragma
+(may be omitted for C<:utf8>, C<:locale>, or C<:encoding>) you
+can control both input and output streams simultaneously.
 
-If you have a legacy encoding, you can use the C<:encoding(...)> tag.
+When open() is given an explicit list of layers (with the three-arg
+syntax), they override the list declared using this pragma.  open() can
+also be given a single colon (:) for a layer name, to override this pragma
+and use the default as detailed in
+L<PerlIO/Defaults and how to override them>.
+
+To translate from and to an arbitrary text encoding, use the C<:encoding>
+layer.  The matching of encoding names in C<:encoding> is loose: case does
+not matter, and many encodings have several aliases.  See
+L<Encode::Supported> for details and the list of supported locales.
 
 If you want to set your encoding layers based on your
-locale environment variables, you can use the C<:locale> tag.
+locale environment variables, you can use the C<:locale> pseudo-layer.
 For example:
 
     $ENV{LANG} = 'ru_RU.KOI8-R';
     # the :locale will probe the locale environment variables like LANG
     use open OUT => ':locale';
-    open(O, ">koi8");
-    print O chr(0x430); # Unicode CYRILLIC SMALL LETTER A = KOI8-R 0xc1
-    close O;
-    open(I, "<koi8");
-    printf "%#x\n", ord(<I>), "\n"; # this should print 0xc1
-    close I;
+    open(my $out, '>', 'koi8') or die "open failed: $!";
+    print $out chr(0x430); # CYRILLIC SMALL LETTER A = KOI8-R 0xc1
+    close $out;
+    open(my $in, '<', 'koi8') or die "open failed: $!";
+    printf "%#x\n", ord(<$in>); # this should print 0xc1
+    close $in;
 
-These are equivalent
-
-    use open ':encoding(UTF-8)';
-    use open IO => ':encoding(UTF-8)';
-
-as are these
-
-    use open ':locale';
-    use open IO => ':locale';
-
-and these
-
-    use open ':encoding(iso-8859-7)';
-    use open IO => ':encoding(iso-8859-7)';
-
-The matching of encoding names is loose: case does not matter, and
-many encodings have several aliases.  See L<Encode::Supported> for
-details and the list of supported locales.
-
-When open() is given an explicit list of layers (with the three-arg
-syntax), they override the list declared using this pragma.  open() can
-also be given a single colon (:) for a layer name, to override this pragma
-and use the default (C<:raw> on Unix, C<:crlf> on Windows).
-
-The C<:std> subpragma on its own has no effect, but if combined with
-the C<:utf8> or C<:encoding> subpragmas, it converts the standard
-filehandles (STDIN, STDOUT, STDERR) to comply with encoding selected
-for input/output handles.  For example, if both input and out are
-chosen to be C<:encoding(UTF-8)>, a C<:std> will mean that STDIN, STDOUT,
-and STDERR are also in C<:encoding(UTF-8)>.  On the other hand, if only
-output is chosen to be in C<< :encoding(koi8r) >>, a C<:std> will cause
-only the STDOUT and STDERR to be in C<koi8r>.  The C<:locale> subpragma
-implicitly turns on C<:std>.
-
-The logic of C<:locale> is described in full in L<encoding>,
+The logic of C<:locale> is described in full in
+L<encoding/The C<:locale> sub-pragma>,
 but in short it is first trying nl_langinfo(CODESET) and then
 guessing from the LC_ALL and LANG locale environment variables.
+C<:locale> also implicitly turns on C<:std>.
 
-Directory handles may also support PerlIO layers in the future.
+C<:std> is not a layer but an additional subpragma.  When specified in the
+import list, it activates an additional functionality of pushing the
+layers selected for input/output handles to the standard filehandles
+(STDIN, STDOUT, STDERR).  If the new layers and existing layer stack both
+end with an C<:encoding> layer, the existing C<:encoding> layer will also
+be removed.
 
-=head1 NONPERLIO FUNCTIONALITY
+For example, if both input and out are chosen to be C<:encoding(UTF-8)>, a
+C<:std> will mean that STDIN, STDOUT, and STDERR will also have
+C<:encoding(UTF-8)> set.  On the other hand, if only output is chosen to
+be in C<:encoding(koi8r)>, a C<:std> will cause only the STDOUT and STDERR
+to be in C<koi8r>.
 
-If Perl is not built to use PerlIO as its IO system then only the two
-pseudo-layers C<:bytes> and C<:crlf> are available.
+The effect of C<:std> is not lexical as it modifies the layer stack of the
+global handles.  If you wish to apply only this global effect and not the
+effect on handles that are opened in that scope, you can isolate the call
+to this pragma in its own lexical scope.
 
-The C<:bytes> layer corresponds to "binary mode" and the C<:crlf>
-layer corresponds to "text mode" on platforms that distinguish
-between the two modes when opening files (which is many DOS-like
-platforms, including Windows).  These two layers are no-ops on
-platforms where binmode() is a no-op, but perform their functions
-everywhere if PerlIO is enabled.
+    { use open ':std', IO => ':encoding(UTF-8)' }
 
 =head1 IMPLEMENTATION DETAILS
 

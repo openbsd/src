@@ -2,7 +2,7 @@ package Test2::API::Stack;
 use strict;
 use warnings;
 
-our $VERSION = '1.302162';
+our $VERSION = '1.302175';
 
 
 use Test2::Hub();
@@ -61,6 +61,12 @@ sub cull {
 sub all {
     my $self = shift;
     return @$self;
+}
+
+sub root {
+    my $self = shift;
+    return unless @$self;
+    return $self->[0];
 }
 
 sub clear {

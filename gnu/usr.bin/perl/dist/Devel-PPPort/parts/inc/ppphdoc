@@ -290,6 +290,10 @@ to display information for all known API elements.
 
 =head1 BUGS
 
+Some of the suggested edits and/or generated patches may not compile as-is
+without tweaking manually.  This is generally due to the need for an extra
+parameter to be added to the call to prevent buffer overflow.
+
 If this version of F<ppport.h> is causing failure during
 the compilation of this module, please check if newer versions
 of either this module or C<Devel::PPPort> are available on CPAN

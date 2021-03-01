@@ -1,0 +1,16 @@
+5.025006
+is_c9strict_utf8_string        # U
+is_c9strict_utf8_string_loc    # U
+is_c9strict_utf8_string_loclen # U
+is_strict_utf8_string          # U
+is_strict_utf8_string_loc      # U
+is_strict_utf8_string_loclen   # U
+is_utf8_fixed_width_buf_flags  # U
+is_utf8_fixed_width_buf_loc_flags # U
+is_utf8_fixed_width_buf_loclen_flags # U
+is_utf8_string_flags           # U
+is_utf8_string_loc_flags       # U
+is_utf8_string_loclen_flags    # U
+SvPVCLEAR                      # U
+sv_setpv_bufsize               # U
+utf8n_to_uvchr_error           # U

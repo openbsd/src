@@ -1,1 +1,4 @@
 5.015005
+_to_fold_latin1                # F added by devel/scanprov
+to_lower_latin1                # F added by devel/scanprov
+_to_upper_title_latin1         # F added by devel/scanprov

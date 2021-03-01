@@ -19,20 +19,12 @@ newRV_noinc
 __UNDEFINED__  newRV_inc(sv)  newRV(sv)   /* Replace */
 
 #ifndef newRV_noinc
-#if { NEED newRV_noinc }
-SV *
-newRV_noinc(SV *sv)
-{
-  SV *rv = (SV *)newRV(sv);
-  SvREFCNT_dec(sv);
-  return rv;
-}
+#if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
+#  define newRV_noinc(sv) ({ SV *_sv = (SV *)newRV((sv)); SvREFCNT_dec((sv)); _sv; })
+#else
+#  define newRV_noinc(sv) ((PL_Sv = (SV *)newRV((sv))), SvREFCNT_dec((sv)), PL_Sv)
 #endif
 #endif
-
-=xsinit
-
-#define NEED_newRV_noinc
 
 =xsubs
 
@@ -63,5 +55,5 @@ newRV_noinc_REFCNT()
 
 =tests plan => 2
 
-ok(&Devel::PPPort::newRV_inc_REFCNT, 1);
-ok(&Devel::PPPort::newRV_noinc_REFCNT, 1);
+is(&Devel::PPPort::newRV_inc_REFCNT, 1);
+is(&Devel::PPPort::newRV_noinc_REFCNT, 1);

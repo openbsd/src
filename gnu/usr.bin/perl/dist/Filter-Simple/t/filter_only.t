@@ -4,7 +4,7 @@ BEGIN {
 
 use Filter::Simple::FilterOnlyTest qr/not ok/ => "ok", 
                                    "bad" => "ok", fail => "die";
-print "1..9\n";
+print "1..11\n";
 
 sub fail { print "ok ", $_[0], "\n" }
 sub ok { print "ok ", $_[0], "\n" }
@@ -41,3 +41,20 @@ print "ok 8\n";
 
 print "not " unless "bad" =~ /bad/;
 print "ok 9\n";
+
+use Filter::Simple::ExeNoComments;
+
+=for us
+
+shromplex
+
+=cut
+
+# shromplex
+
+# test the difference from code*
+my $x = "ABC";
+
+print $x eq "TEST" ? "" : "not ", "ok 10 # check strings processed\n";
+
+print "ok 11 # executable_no_comments\n";

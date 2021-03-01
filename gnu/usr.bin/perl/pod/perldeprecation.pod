@@ -14,6 +14,10 @@ features are available.
 The deprecated features will be grouped by the version of Perl in
 which they will be removed.
 
+=head2 Perl 5.34
+
+There are no deprecations or fatalizations scheduled for Perl 5.34.
+
 =head2 Perl 5.32
 
 =head3 Constants from lexical variables potentially modified elsewhere
@@ -48,13 +52,13 @@ changes to the variable that it closes over, add an explicit C<return>:
     my $var;
     $sub = sub () { return $var };
 
-This usage has been deprecated, and will no longer be allowed in Perl 5.32.
+This usage was deprecated and as of Perl 5.32 is no longer allowed.
 
 =head3 Use of strings with code points over 0xFF as arguments to C<vec>
 
 C<vec> views its string argument as a sequence of bits.  A string
 containing a code point over 0xFF is nonsensical.  This usage is
-deprecated in Perl 5.28, and will be removed in Perl 5.32.
+deprecated in Perl 5.28, and was removed in Perl 5.32.
 
 =head3 Use of code points over 0xFF in string bitwise operators
 
@@ -65,14 +69,14 @@ nonsensical. Some instances of these have been deprecated since Perl
 the wide characters did not affect the end result, no deprecation
 notice was raised, and so remain legal.  Now, all occurrences either are
 fatal or raise a deprecation warning, so that the remaining legal
-occurrences will be fatal in 5.32.
+occurrences became fatal in 5.32.
 
 An example of this is
 
  "" & "\x{100}"
 
 The wide character is not used in the C<&> operation because the left
-operand is shorter.  This now warns anyway.
+operand is shorter.  This now throws an exception.
 
 =head3 hostname() doesn't accept any arguments
 
@@ -81,8 +85,7 @@ been documented to be called with no arguments.  Historically it has not
 enforced this, and has actually accepted and ignored any arguments.  As a
 result, some users have got the mistaken impression that an argument does
 something useful.  To avoid these bugs, the function is being made strict.
-Passing arguments was deprecated in Perl 5.28, and will become fatal in
-Perl 5.32.
+Passing arguments was deprecated in Perl 5.28 and became fatal in Perl 5.32.
 
 =head3 Unescaped left braces in regular expressions
 
@@ -98,7 +101,7 @@ also be escaped to avoid confusing the parser, for example,
 
 Forcing literal C<{> characters to be escaped will enable the Perl
 language to be extended in various ways in future releases.  To avoid
-needlessly breaking existing code, the restriction is is not enforced in
+needlessly breaking existing code, the restriction is not enforced in
 contexts where there are unlikely to ever be extensions that could
 conflict with the use there of C<{> as a literal.  A non-deprecation
 warning that the left brace is being taken literally is raised in
@@ -109,11 +112,14 @@ started to give deprecation warnings since. These cases were made fatal
 in Perl 5.26. Due to an oversight, not all cases of a use of a literal
 C<{> got a deprecation warning.  Some cases started warning in Perl 5.26,
 and were made fatal in Perl 5.30.  Other cases started in Perl 5.28,
-and will be made fatal in 5.32.
+and were made fatal in 5.32.
 
 =head3 In XS code, use of various macros dealing with UTF-8.
 
-These macros will require an extra parameter in Perl 5.32:
+The macros below now require an extra parameter than in versions prior
+to Perl 5.32.  The final parameter in each one is a pointer into the
+string supplied by the first parameter beyond which the input will not
+be read.  This prevents potential reading beyond the end of the buffer.
 C<isALPHANUMERIC_utf8>,
 C<isASCII_utf8>,
 C<isBLANK_utf8>,
@@ -148,18 +154,28 @@ C<toTITLE_utf8>,
 and
 C<toUPPER_utf8>.
 
-There is now a macro that corresponds to each one of these, simply by
-appending C<_safe> to the name.  It takes the extra parameter.
-For example, C<isDIGIT_utf8_safe> corresponds to C<isDIGIT_utf8>, but
-takes the extra parameter, and its use doesn't generate a deprecation
-warning.  All are documented in L<perlapi/Character case changing> and
+Since Perl 5.26, this functionality with the extra parameter has been
+available by using a corresponding macro to each one of these, and whose
+name is formed by appending C<_safe> to the base name.  There is no
+change to the functionality of those.  For example, C<isDIGIT_utf8_safe>
+corresponds to C<isDIGIT_utf8>, and both now behave identically.  All
+are documented in L<perlapi/Character case changing> and
 L<perlapi/Character classification>.
 
-You can change to use these versions at any time, or, if you can live
-with the deprecation messages, wait until 5.32 and add the parameter to
-the existing calls, without changing the names.
+This change was originally scheduled for 5.30, but was delayed until
+5.32.
 
-This change was originally scheduled for 5.30, but was delayed.
+=head3 C<< File::Glob::glob() >> was removed
+
+C<< File::Glob >> has a function called C<< glob >>, which just calls
+C<< bsd_glob >>.
+
+C<< File::Glob::glob() >> was deprecated in Perl 5.8. A deprecation
+message was issued from Perl 5.26 onwards, and the function has now
+disappeared in Perl 5.30.
+
+Code using C<< File::Glob::glob() >> should call
+C<< File::Glob::bsd_glob() >> instead.
 
 =head2 Perl 5.30
 
@@ -226,7 +242,7 @@ See L<perlfunc/dump>.
 There has been a long-standing bug in Perl that causes a lexical variable
 not to be cleared at scope exit when its declaration includes a false
 conditional.  Some people have exploited this bug to achieve a kind of
-static variable.  Since we intend to fix this bug, we don't want people
+static variable.  To allow us to fix this bug, people should not be
 relying on this behavior.
 
 Instead, it's recommended one uses C<state> variables to achieve the
@@ -240,7 +256,7 @@ same effect:
 C<state> variables were introduced in Perl 5.10.
 
 Alternatively, you can achieve a similar static effect by
-declaring the variable in a separate block outside the function, eg
+declaring the variable in a separate block outside the function, e.g.,
 
     sub f { my $x if 0; return $x++ }
 
@@ -249,7 +265,7 @@ becomes
     { my $x; sub f { return $x++ } }
 
 The use of C<my()> in a false conditional has been deprecated in
-Perl 5.10, and it will become a fatal error in Perl 5.30.
+Perl 5.10, and became a fatal error in Perl 5.30.
 
 
 =head3 Reading/writing bytes from/to :utf8 handles.
@@ -297,7 +313,6 @@ Because Unicode is never going to assign L<non-character code
 points|perlunicode/Noncharacter code points>, nor L<code points that are
 above the legal Unicode maximum|perlunicode/Beyond Unicode code
 points>, those can be delimiters.
-
 
 =head2 Perl 5.28
 

@@ -1,1 +1,4 @@
 5.019009
+WARN_EXPERIMENTAL__SIGNATURES  # E
+_get_regclass_nonbitmap_data   # F added by devel/scanprov
+put_range                      # F added by devel/scanprov

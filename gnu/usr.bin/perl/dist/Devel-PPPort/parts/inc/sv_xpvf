@@ -26,16 +26,10 @@ sv_vsetpvf_mg
 =implementation
 
 #if { VERSION >= 5.004 } && !defined(vnewSVpvf)
-#if { NEED vnewSVpvf }
-
-SV *
-vnewSVpvf(pTHX_ const char *pat, va_list *args)
-{
-  register SV *sv = newSV(0);
-  sv_vsetpvfn(sv, pat, strlen(pat), args, Null(SV**), 0, Null(bool*));
-  return sv;
-}
-
+#if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
+#  define vnewSVpvf(pat, args) ({ SV *_sv = newSV(0); sv_vsetpvfn(_sv, (pat), strlen((pat)), (args), Null(SV**), 0, Null(bool*)); _sv; })
+#else
+#  define vnewSVpvf(pat, args) ((PL_Sv = newSV(0)), sv_vsetpvfn(PL_Sv, (pat), strlen((pat)), (args), Null(SV**), 0, Null(bool*)), PL_Sv)
 #endif
 #endif
 
@@ -51,7 +45,7 @@ vnewSVpvf(pTHX_ const char *pat, va_list *args)
 #if { NEED sv_catpvf_mg }
 
 void
-sv_catpvf_mg(pTHX_ SV *sv, const char *pat, ...)
+sv_catpvf_mg(pTHX_ SV * const sv, const char * const pat, ...)
 {
   va_list args;
   va_start(args, pat);
@@ -68,7 +62,7 @@ sv_catpvf_mg(pTHX_ SV *sv, const char *pat, ...)
 #if { NEED sv_catpvf_mg_nocontext }
 
 void
-sv_catpvf_mg_nocontext(SV *sv, const char *pat, ...)
+sv_catpvf_mg_nocontext(SV * const sv, const char * const pat, ...)
 {
   dTHX;
   va_list args;
@@ -103,7 +97,7 @@ sv_catpvf_mg_nocontext(SV *sv, const char *pat, ...)
 #if { NEED sv_setpvf_mg }
 
 void
-sv_setpvf_mg(pTHX_ SV *sv, const char *pat, ...)
+sv_setpvf_mg(pTHX_ SV * const sv, const char * const pat, ...)
 {
   va_list args;
   va_start(args, pat);
@@ -120,7 +114,7 @@ sv_setpvf_mg(pTHX_ SV *sv, const char *pat, ...)
 #if { NEED sv_setpvf_mg_nocontext }
 
 void
-sv_setpvf_mg_nocontext(SV *sv, const char *pat, ...)
+sv_setpvf_mg_nocontext(SV * const sv, const char * const pat, ...)
 {
   dTHX;
   va_list args;
@@ -153,7 +147,6 @@ sv_setpvf_mg_nocontext(SV *sv, const char *pat, ...)
 
 =xsinit
 
-#define NEED_vnewSVpvf
 #define NEED_sv_catpvf_mg
 #define NEED_sv_catpvf_mg_nocontext
 #define NEED_sv_setpvf_mg
@@ -290,24 +283,24 @@ tie %h, 'Tie::StdHash';
 $h{foo} = 'foo-';
 $h{bar} = '';
 
-ok(&Devel::PPPort::vnewSVpvf(), "$]" >= 5.004 ? 'Perl-42' : '%s-%d');
-ok(&Devel::PPPort::sv_vcatpvf('1-2-3-'), "$]" >= 5.004 ? '1-2-3-Perl-42' : '1-2-3-%s-%d');
-ok(&Devel::PPPort::sv_vsetpvf('1-2-3-'), "$]" >= 5.004 ? 'Perl-42' : '%s-%d');
+is(&Devel::PPPort::vnewSVpvf(), "$]" >= 5.004 ? 'Perl-42' : '%s-%d');
+is(&Devel::PPPort::sv_vcatpvf('1-2-3-'), "$]" >= 5.004 ? '1-2-3-Perl-42' : '1-2-3-%s-%d');
+is(&Devel::PPPort::sv_vsetpvf('1-2-3-'), "$]" >= 5.004 ? 'Perl-42' : '%s-%d');
 
 &Devel::PPPort::sv_catpvf_mg($h{foo});
-ok($h{foo}, "$]" >= 5.004 ? 'foo-Perl-42' : 'foo-');
+is($h{foo}, "$]" >= 5.004 ? 'foo-Perl-42' : 'foo-');
 
 &Devel::PPPort::Perl_sv_catpvf_mg($h{foo});
-ok($h{foo}, "$]" >= 5.004 ? 'foo-Perl-42-Perl-43' : 'foo-');
+is($h{foo}, "$]" >= 5.004 ? 'foo-Perl-42-Perl-43' : 'foo-');
 
 &Devel::PPPort::sv_catpvf_mg_nocontext($h{foo});
-ok($h{foo}, "$]" >= 5.004 ? 'foo-Perl-42-Perl-43-Perl-44' : 'foo-');
+is($h{foo}, "$]" >= 5.004 ? 'foo-Perl-42-Perl-43-Perl-44' : 'foo-');
 
 &Devel::PPPort::sv_setpvf_mg($h{bar});
-ok($h{bar}, "$]" >= 5.004 ? 'mhx-42' : '');
+is($h{bar}, "$]" >= 5.004 ? 'mhx-42' : '');
 
 &Devel::PPPort::Perl_sv_setpvf_mg($h{bar});
-ok($h{bar}, "$]" >= 5.004 ? 'foo-43' : '');
+is($h{bar}, "$]" >= 5.004 ? 'foo-43' : '');
 
 &Devel::PPPort::sv_setpvf_mg_nocontext($h{bar});
-ok($h{bar}, "$]" >= 5.004 ? 'bar-44' : '');
+is($h{bar}, "$]" >= 5.004 ? 'bar-44' : '');

@@ -1,0 +1,549 @@
+5.003007
+amagic_call                    # T
+av_clear                       # T
+av_extend                      # T
+av_fetch                       # T
+av_fill                        # T
+AvFILL                         # T
+av_len                         # T
+av_make                        # T
+av_pop                         # T
+av_push                        # T
+av_shift                       # T
+av_store                       # T
+av_undef                       # T
+av_unshift                     # T
+ax                             # T
+BIN                            # T
+BYTEORDER                      # T
+CASTFLAGS                      # T
+Copy                           # T
+CPPMINUS                       # T
+CPPSTDIN                       # T
+cv_clone                       # T
+cv_const_sv                    # T
+CvDEPTH                        # T
+CvGV                           # T
+CvSTASH                        # T
+cv_undef                       # T
+cxinc                          # T
+dMARK                          # T
+do_close                       # T
+do_join                        # T
+do_open                        # T
+dORIGMARK                      # T
+do_sprintf                     # T
+dounwind                       # T
+dowantarray                    # T
+dSP                            # T
+dTHX                           # T
+dXSARGS                        # T
+ENTER                          # T
+EXTEND                         # T
+filter_add                     # T
+filter_del                     # T
+filter_read                    # T
+free_tmps                      # T
+FREETMPS                       # T
+G_ARRAY                        # T
+G_DISCARD                      # T
+G_EVAL                         # T
+GIMME                          # T
+G_NOARGS                       # T
+gp_free                        # T
+gp_ref                         # T
+G_SCALAR                       # T
+GV_ADD                         # T
+GV_ADDMULTI                    # T
+GvAV                           # T
+gv_AVadd                       # T
+gv_check                       # T
+GvCV                           # T
+gv_efullname                   # T
+gv_efullname3                  # T
+gv_fetchfile                   # T
+gv_fetchmeth                   # T
+gv_fetchmethod                 # T
+gv_fetchpv                     # T
+gv_fullname                    # T
+gv_fullname3                   # T
+GvHV                           # T
+gv_HVadd                       # T
+gv_init                        # T
+gv_IOadd                       # T
+gv_stashpv                     # T
+gv_stashpvn                    # T
+gv_stashsv                     # T
+GvSV                           # T
+HEf_SVKEY                      # T
+HeHASH                         # T
+HeKEY                          # T
+HeKLEN                         # T
+HeSVKEY                        # T
+HeSVKEY_force                  # T
+HeVAL                          # T
+hv_clear                       # T
+hv_delete                      # T
+hv_delete_ent                  # T
+hv_exists                      # T
+hv_exists_ent                  # T
+hv_fetch                       # T
+hv_fetch_ent                   # T
+HvFILL                         # T
+hv_iterinit                    # T
+hv_iterkey                     # T
+hv_iterkeysv                   # T
+hv_iternext                    # T
+hv_iternextsv                  # T
+hv_iterval                     # T
+hv_ksplit                      # T
+hv_magic                       # T
+HvNAME                         # T
+hv_store                       # T
+hv_store_ent                   # T
+hv_undef                       # T
+ibcmp                          # T
+instr                          # T
+INTSIZE                        # T
+isALNUM                        # T
+isALPHA                        # T
+isDIGIT                        # T
+isIDFIRST                      # T
+isLOWER                        # T
+isSPACE                        # T
+isUPPER                        # T
+LEAVE                          # T
+leave_scope                    # T
+looks_like_number              # T
+MARK                           # T
+mg_clear                       # T
+mg_copy                        # T
+mg_find                        # T
+mg_free                        # T
+mg_get                         # T
+mg_magical                     # T
+mg_set                         # T
+moreswitches                   # T
+Move                           # T
+my_exit                        # T
+my_pclose                      # T
+my_popen                       # T
+my_setenv                      # T
+newANONHASH                    # T
+newANONLIST                    # T
+newANONSUB                     # T
+newASSIGNOP                    # T
+newAV                          # T
+newAVREF                       # T
+newBINOP                       # T
+newCONDOP                      # T
+newCVREF                       # T
+newFORM                        # T
+newGVgen                       # T
+newGVOP                        # T
+newGVREF                       # T
+newHV                          # T
+newHVREF                       # T
+newIO                          # T
+newLISTOP                      # T
+newLOGOP                       # T
+newLOOPEX                      # T
+newLOOPOP                      # T
+newNULLLIST                    # T
+newOP                          # T
+newPMOP                        # T
+newPROG                        # T
+newPVOP                        # T
+newRANGE                       # T
+newRV                          # T
+newSLICEOP                     # T
+newSTATEOP                     # T
+newSUB                         # T
+newSV                          # T
+newSViv                        # T
+newSVOP                        # T
+newSVpv                        # T
+newSVREF                       # T
+newSVrv                        # T
+newSVsv                        # T
+newUNOP                        # T
+ninstr                         # T
+Nullav                         # T
+Nullch                         # T
+Nullcv                         # T
+Nullhv                         # T
+Nullsv                         # T
+OPf_KIDS                       # T
+op_free                        # T
+OPpENTERSUB_AMPER              # T
+ORIGMARK                       # T
+OSNAME                         # T
+pad_alloc                      # T
+perl_alloc                     # T
+perl_construct                 # T
+perl_free                      # T
+PERL_HASH                      # T
+PERL_INT_MAX                   # T
+PERL_INT_MIN                   # T
+PerlIO_canset_cnt              # T
+PerlIO_exportFILE              # T
+PerlIO_fast_gets               # T
+PerlIO_fdopen                  # T
+PerlIO_findFILE                # T
+PerlIO_getc                    # T
+PerlIO_getpos                  # T
+PerlIO_has_base                # T
+PerlIO_has_cntptr              # T
+PerlIO_importFILE              # T
+PerlIO_open                    # T
+PerlIO_putc                    # T
+PerlIO_puts                    # T
+PerlIO_releaseFILE             # T
+PerlIO_reopen                  # T
+PerlIO_rewind                  # T
+PerlIO_setpos                  # T
+PerlIO_ungetc                  # T
+PerlIO_vprintf                 # T
+PERL_LONG_MAX                  # T
+PERL_LONG_MIN                  # T
+PERL_QUAD_MAX                  # T
+PERL_QUAD_MIN                  # T
+perl_run                       # T
+PERL_SHORT_MAX                 # T
+PERL_SHORT_MIN                 # T
+PERL_SYS_INIT                  # T
+PERL_SYS_TERM                  # T
+PERL_UCHAR_MAX                 # T
+PERL_UCHAR_MIN                 # T
+PERL_UINT_MAX                  # T
+PERL_ULONG_MAX                 # T
+PERL_ULONG_MIN                 # T
+PERL_UQUAD_MAX                 # T
+PERL_UQUAD_MIN                 # T
+PERL_USHORT_MAX                # T
+PERL_USHORT_MIN                # T
+POPi                           # T
+POPl                           # T
+POPp                           # T
+POPs                           # T
+pop_scope                      # T
+pregexec                       # T
+pregfree                       # T
+PRIVLIB                        # T
+PUSHi                          # T
+PUSHMARK                       # T
+PUSHp                          # T
+PUSHs                          # T
+push_scope                     # T
+PUTBACK                        # T
+RANDBITS                       # T
+Renew                          # T
+Renewc                         # T
+repeatcpy                      # T
+rninstr                        # T
+Safefree                       # T
+save_aptr                      # T
+save_ary                       # T
+save_clearsv                   # T
+save_delete                    # T
+save_freepv                    # T
+save_freesv                    # T
+save_hash                      # T
+save_hptr                      # T
+save_I32                       # T
+save_int                       # T
+save_item                      # T
+save_list                      # T
+save_long                      # T
+save_nogv                      # T
+save_pptr                      # T
+savepv                         # T
+savepvn                        # T
+save_scalar                    # T
+save_sptr                      # T
+savestack_grow                 # T
+save_svref                     # T
+SAVETMPS                       # T
+setdefout                      # T
+SITELIB                        # T
+SP                             # T
+SPAGAIN                        # T
+ST                             # T
+stack_grow                     # T
+STARTPERL                      # T
+STDCHAR                        # T
+strEQ                          # T
+strGE                          # T
+strGT                          # T
+strLE                          # T
+strLT                          # T
+strNE                          # T
+strnEQ                         # T
+strnNE                         # T
+sv_2bool                       # T
+sv_2cv                         # T
+sv_2io                         # T
+sv_2iv                         # T
+sv_2mortal                     # T
+sv_2pv                         # T
+sv_backoff                     # T
+sv_bless                       # T
+sv_catpv                       # T
+sv_catpvn                      # T
+sv_catsv                       # T
+sv_chop                        # T
+sv_clear                       # T
+sv_cmp                         # T
+SvCUR                          # T
+SvCUR_set                      # T
+sv_dec                         # T
+sv_dump                        # T
+SvEND                          # T
+sv_eq                          # T
+sv_free                        # T
+sv_gets                        # T
+sv_grow                        # T
+SvGROW                         # T
+sv_inc                         # T
+sv_insert                      # T
+SvIOK                          # T
+SvIOK_off                      # T
+SvIOK_on                       # T
+SvIOK_only                     # T
+SvIOKp                         # T
+sv_isa                         # T
+sv_isobject                    # T
+SvIV                           # T
+SvIV_set                       # T
+SvIVX                          # T
+SvIVx                          # T
+sv_len                         # T
+SvLEN                          # T
+SvLEN_set                      # T
+sv_magic                       # T
+sv_mortalcopy                  # T
+sv_newmortal                   # T
+sv_newref                      # T
+SvNIOK                         # T
+SvNIOK_off                     # T
+SvNIOKp                        # T
+SvNOK                          # T
+SvNOK_off                      # T
+SvNOK_on                       # T
+SvNOK_only                     # T
+SvNOKp                         # T
+SvOK                           # T
+SvOOK                          # T
+SvPOK                          # T
+SvPOK_off                      # T
+SvPOK_on                       # T
+SvPOK_only                     # T
+SvPOKp                         # T
+SvPV                           # T
+SvPV_force                     # T
+sv_pvn_force                   # T
+SvPV_set                       # T
+SvPVX                          # T
+SvPVx                          # T
+SvREADONLY                     # T
+SvREADONLY_off                 # T
+SvREADONLY_on                  # T
+SvREFCNT                       # T
+SvREFCNT_dec                   # T
+SvREFCNT_inc                   # T
+sv_reftype                     # T
+sv_replace                     # T
+sv_report_used                 # T
+sv_reset                       # T
+SvROK                          # T
+SvROK_off                      # T
+SvROK_on                       # T
+SvRV                           # T
+sv_setiv                       # T
+SvSETMAGIC                     # T
+sv_setpv                       # T
+sv_setpvn                      # T
+sv_setref_iv                   # T
+sv_setref_pv                   # T
+sv_setref_pvn                  # T
+sv_setsv                       # T
+SvSetSV                        # T
+SvSTASH                        # T
+SVs_TEMP                       # T
+SvTAINT                        # T
+SVt_IV                         # T
+SVt_NULL                       # T
+SVt_NV                         # T
+SVt_PV                         # T
+SVt_PVAV                       # T
+SVt_PVCV                       # T
+SVt_PVFM                       # T
+SVt_PVGV                       # T
+SVt_PVHV                       # T
+SVt_PVIO                       # T
+SVt_PVIV                       # T
+SVt_PVLV                       # T
+SVt_PVMG                       # T
+SVt_PVNV                       # T
+SvTRUE                         # T
+SvTRUEx                        # T
+SvTYPE                         # T
+sv_unmagic                     # T
+sv_unref                       # T
+sv_upgrade                     # T
+SvUPGRADE                      # T
+sv_usepvn                      # T
+taint_env                      # T
+taint_proper                   # T
+toLOWER                        # T
+toUPPER                        # T
+unsharepvn                     # T
+whichsig                       # T
+XPUSHi                         # T
+XPUSHp                         # T
+XPUSHs                         # T
+XSRETURN                       # T
+XSRETURN_EMPTY                 # T
+XSRETURN_IV                    # T
+XSRETURN_NO                    # T
+XSRETURN_PV                    # T
+XSRETURN_UNDEF                 # T
+XSRETURN_YES                   # T
+XST_mIV                        # T
+XST_mNO                        # T
+XST_mPV                        # T
+XST_mUNDEF                     # T
+XST_mYES                       # T
+XS_VERSION                     # T
+XS_VERSION_BOOTCHECK           # T
+Zero                           # T
+RETVAL                         # X added by devel/scanprov
+CALL                           # X added by devel/scanprov
+THIS                           # X added by devel/scanprov
+dXSI32                         # M added by devel/scanprov
+items                          # M added by devel/scanprov
+ix                             # M added by devel/scanprov
+PERL_UINT_MIN                  # M added by devel/scanprov
+STMT_END                       # M added by devel/scanprov
+STMT_START                     # M added by devel/scanprov
+StructCopy                     # M added by devel/scanprov
+svtype                         # M added by devel/scanprov
+XS                             # M added by devel/scanprov
+apply                          # F added by devel/scanprov
+bind_match                     # F added by devel/scanprov
+boot_core_UNIVERSAL            # F added by devel/scanprov
+cando                          # F added by devel/scanprov
+checkcomma                     # F added by devel/scanprov
+check_uni                      # F added by devel/scanprov
+do_chomp                       # F added by devel/scanprov
+do_eof                         # F added by devel/scanprov
+do_exec                        # F added by devel/scanprov
+dofindlabel                    # F added by devel/scanprov
+do_ipcctl                      # F added by devel/scanprov
+do_ipcget                      # F added by devel/scanprov
+do_msgrcv                      # F added by devel/scanprov
+do_msgsnd                      # F added by devel/scanprov
+dopoptoeval                    # F added by devel/scanprov
+do_print                       # F added by devel/scanprov
+do_readline                    # F added by devel/scanprov
+do_seek                        # F added by devel/scanprov
+do_semop                       # F added by devel/scanprov
+do_shmio                       # F added by devel/scanprov
+do_tell                        # F added by devel/scanprov
+do_trans                       # F added by devel/scanprov
+do_vecset                      # F added by devel/scanprov
+do_vop                         # F added by devel/scanprov
+dump_mstats                    # F added by devel/scanprov
+fold_constants                 # F added by devel/scanprov
+force_ident                    # F added by devel/scanprov
+force_list                     # F added by devel/scanprov
+force_next                     # F added by devel/scanprov
+force_word                     # F added by devel/scanprov
+gen_constant_list              # F added by devel/scanprov
+ingroup                        # F added by devel/scanprov
+intuit_more                    # F added by devel/scanprov
+invert                         # F added by devel/scanprov
+io_close                       # F added by devel/scanprov
+jmaybe                         # F added by devel/scanprov
+keyword                        # F added by devel/scanprov
+list                           # F added by devel/scanprov
+listkids                       # F added by devel/scanprov
+localize                       # F added by devel/scanprov
+magic_clearenv                 # F added by devel/scanprov
+magic_clearpack                # F added by devel/scanprov
+magic_clearsig                 # F added by devel/scanprov
+magic_existspack               # F added by devel/scanprov
+magic_get                      # F added by devel/scanprov
+magic_getarylen                # F added by devel/scanprov
+magic_getpack                  # F added by devel/scanprov
+magic_getpos                   # F added by devel/scanprov
+magic_getsig                   # F added by devel/scanprov
+magic_gettaint                 # F added by devel/scanprov
+magic_getuvar                  # F added by devel/scanprov
+magic_nextpack                 # F added by devel/scanprov
+magic_set                      # F added by devel/scanprov
+magic_setarylen                # F added by devel/scanprov
+magic_setdbline                # F added by devel/scanprov
+magic_setenv                   # F added by devel/scanprov
+magic_setisa                   # F added by devel/scanprov
+magic_setmglob                 # F added by devel/scanprov
+magic_setnkeys                 # F added by devel/scanprov
+magic_setpack                  # F added by devel/scanprov
+magic_setpos                   # F added by devel/scanprov
+magic_setsig                   # F added by devel/scanprov
+magic_setsubstr                # F added by devel/scanprov
+magic_settaint                 # F added by devel/scanprov
+magic_setuvar                  # F added by devel/scanprov
+magic_setvec                   # F added by devel/scanprov
+magic_wipepack                 # F added by devel/scanprov
+mem_collxfrm                   # F added by devel/scanprov
+modkids                        # F added by devel/scanprov
+my_chsize                      # F added by devel/scanprov
+my_unexec                      # F added by devel/scanprov
+nextargv                       # F added by devel/scanprov
+no_fh_allowed                  # F added by devel/scanprov
+no_op                          # F added by devel/scanprov
+oopsAV                         # F added by devel/scanprov
+oopsHV                         # F added by devel/scanprov
+package                        # F added by devel/scanprov
+pad_free                       # F added by devel/scanprov
+pad_leavemy                    # F added by devel/scanprov
+pad_reset                      # F added by devel/scanprov
+pad_sv                         # F added by devel/scanprov
+pad_swipe                      # F added by devel/scanprov
+peep                           # F added by devel/scanprov
+pidgone                        # F added by devel/scanprov
+pmruntime                      # F added by devel/scanprov
+pmtrans                        # F added by devel/scanprov
+ref                            # F added by devel/scanprov
+refkids                        # F added by devel/scanprov
+regprop                        # F added by devel/scanprov
+same_dirent                    # F added by devel/scanprov
+sawparens                      # F added by devel/scanprov
+scalar                         # F added by devel/scanprov
+scalarkids                     # F added by devel/scanprov
+scalarseq                      # F added by devel/scanprov
+scalarvoid                     # F added by devel/scanprov
+scan_const                     # F added by devel/scanprov
+scan_formline                  # F added by devel/scanprov
+scan_heredoc                   # F added by devel/scanprov
+scan_ident                     # F added by devel/scanprov
+scan_inputsymbol               # F added by devel/scanprov
+scan_pat                       # F added by devel/scanprov
+scan_str                       # F added by devel/scanprov
+scan_subst                     # F added by devel/scanprov
+scan_trans                     # F added by devel/scanprov
+scan_word                      # F added by devel/scanprov
+sighandler                     # F added by devel/scanprov
+sv_add_arena                   # F added by devel/scanprov
+sv_clean_all                   # F added by devel/scanprov
+sv_clean_objs                  # F added by devel/scanprov
+sv_free_arenas                 # F added by devel/scanprov
+unlnk                          # F added by devel/scanprov
+utilize                        # F added by devel/scanprov
+wait4pid                       # F added by devel/scanprov
+watch                          # F added by devel/scanprov
+yyerror                        # F added by devel/scanprov
+yylex                          # F added by devel/scanprov
+yyparse                        # F added by devel/scanprov
+yywarn                         # F added by devel/scanprov

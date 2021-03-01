@@ -3,11 +3,11 @@
 # Test suite for stringify interaction.
 #
 # Copyright 2011 Revilo Reegiles
-# Copyright 2011, 2014 Russ Allbery <rra@cpan.org>
+# Copyright 2011, 2014, 2020 Russ Allbery <rra@cpan.org>
 #
-# This program is free software; you may redistribute it and/or modify it
-# under the same terms as Perl itself.
+# SPDX-License-Identifier: GPL-1.0-or-later OR Artistic-1.0-Perl
 
+use 5.008;
 use strict;
 use warnings;
 
@@ -17,7 +17,7 @@ use Test::More tests => 6;
 ## no critic (Modules::ProhibitMultiplePackages)
 package Test::Stringify;
 use overload '""' => 'stringify';
-sub new { return bless({}, 'Test::Stringify') }
+sub new       { return bless({}, 'Test::Stringify') }
 sub stringify { return "Foo Bar\n" }
 
 # Back to the main package.
@@ -27,6 +27,7 @@ package main;
 BEGIN {
     delete $ENV{ANSI_COLORS_ALIASES};
     delete $ENV{ANSI_COLORS_DISABLED};
+    delete $ENV{NO_COLOR};
     use_ok('Term::ANSIColor', qw(colored));
 }
 

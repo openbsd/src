@@ -4,9 +4,12 @@
 # PUSH POP SHIFT UNSHIFT
 #
 
+use strict;
+use warnings;
+
 use POSIX 'SEEK_SET';
 
-my $file = "tf$$.txt";
+my $file = "tf05-$$.txt";
 my ($o, $n);
 
 print "1..16\n";
@@ -19,6 +22,8 @@ print "ok $N\n"; $N++;
 open F, '>', $file or die $!;
 binmode F;
 close F;
+
+my @a;
 $o = tie @a, 'Tie::File', $file;
 print $o ? "ok $N\n" : "not ok $N\n";
 $N++;

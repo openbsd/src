@@ -102,6 +102,7 @@ SKIP: {
         }
     }
 
+
     # open syslog with a "local0" facility
     SKIP: {
         # openlog()
@@ -122,15 +123,16 @@ SKIP: {
     }
 }
 
-
-BEGIN { $tests += 22 * 8 }
 # try to open a syslog using all the available connection methods
+# handle inet and udp in a separate test file
+
 my @passed = ();
-for my $sock_type (qw(native eventlog unix pipe stream inet tcp udp)) {
+
+BEGIN { $tests += 22 * 6 }
+for my $sock_type (qw(native eventlog unix pipe stream tcp )) {
     SKIP: {
         skip "the 'stream' mechanism because a previous mechanism with similar interface succeeded", 22 
             if $sock_type eq 'stream' and grep {/pipe|unix/} @passed;
-
         # setlogsock() called with an arrayref
         $r = eval { setlogsock([$sock_type]) } || 0;
         skip "can't use '$sock_type' socket", 22 unless $r;
@@ -198,7 +200,6 @@ for my $sock_type (qw(native eventlog unix pipe stream inet tcp udp)) {
         }
     }
 }
-
 
 BEGIN { $tests += 10 }
 SKIP: {

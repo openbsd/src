@@ -2,21 +2,22 @@
 #
 # Basic test suite for the Term::ANSIColor Perl module.
 #
-# Copyright 1997, 1998, 2000, 2001, 2002, 2005, 2006, 2009, 2010, 2012, 2014
+# Copyright 1997-1998, 2000-2002, 2005-2006, 2009-2010, 2012, 2014, 2020
 #     Russ Allbery <rra@cpan.org>
 #
-# This program is free software; you may redistribute it and/or modify it
-# under the same terms as Perl itself.
+# SPDX-License-Identifier: GPL-1.0-or-later OR Artistic-1.0-Perl
 
+use 5.008;
 use strict;
 use warnings;
 
-use Test::More tests => 152;
+use Test::More tests => 169;
 
 # Load the module.
 BEGIN {
     delete $ENV{ANSI_COLORS_ALIASES};
     delete $ENV{ANSI_COLORS_DISABLED};
+    delete $ENV{NO_COLOR};
     use_ok('Term::ANSIColor',
         qw(:pushpop color colored uncolor colorstrip colorvalid));
 }
@@ -24,7 +25,7 @@ BEGIN {
 # Various basic tests.
 is(color('blue on_green', 'bold'), "\e[34;42;1m", 'Simple attributes');
 is(colored('testing', 'blue', 'bold'), "\e[34;1mtesting\e[0m", 'colored');
-is((BLUE BOLD 'testing'), "\e[34m\e[1mtesting", 'Constants');
+is((BLUE BOLD 'testing'),              "\e[34m\e[1mtesting",   'Constants');
 is(join(q{}, BLUE, BOLD, 'testing'),
     "\e[34m\e[1mtesting", 'Constants with commas');
 is((BLUE 'test', 'ing'), "\e[34mtesting", 'Constants with multiple strings');
@@ -90,6 +91,18 @@ is(color('bold'), "\e[1m", '...likewise when set to an empty string');
 is((BOLD),        "\e[1m", '...likewise for constants');
 delete $ENV{ANSI_COLORS_DISABLED};
 
+# Similar tests for NO_COLOR, although NO_COLOR may be set to any value.
+local $ENV{NO_COLOR} = 1;
+is(color('blue'), q{}, 'color support for NO_COLOR');
+is(colored('testing', 'blue', 'on_red'),
+    'testing', 'colored support for NO_COLOR');
+is((BLUE 'testing'), 'testing', 'Constant support for NO_COLOR');
+local $ENV{NO_COLOR} = q{};
+is(color('blue'), q{}, 'color support for NO_COLOR with empty string');
+is((RED 'testing'),
+    'testing', 'Constant support for NO_COLOR with empty string');
+delete $ENV{NO_COLOR};
+
 # Make sure DARK is exported.  This was omitted in versions prior to 1.07.
 is((DARK 'testing'), "\e[2mtesting", 'DARK');
 
@@ -130,7 +143,7 @@ is((POPCOLOR 'text'),       "\e[31m\e[42mtext", '...and POPCOLOR works');
 is((LOCALCOLOR GREEN ON_BLUE 'text'),
     "\e[32m\e[44mtext\e[31m\e[42m", 'LOCALCOLOR');
 $Term::ANSIColor::AUTOLOCAL = 1;
-is((BLUE 'text'), "\e[34mtext\e[31m\e[42m", 'AUTOLOCAL');
+is((BLUE 'text'),     "\e[34mtext\e[31m\e[42m", 'AUTOLOCAL');
 is((BLUE 'te', 'xt'), "\e[34mtext\e[31m\e[42m", 'AUTOLOCAL with commas');
 $Term::ANSIColor::AUTOLOCAL = 0;
 is((POPCOLOR 'text'), "\e[0mtext", 'POPCOLOR with empty stack');
@@ -299,6 +312,22 @@ is(ON_GREEN,      q{}, '...and for ON_GREEN');
 is(ON_BLUE,       q{}, '...and for ON_BLUE');
 is(RESET,         q{}, '...and for RESET');
 delete $ENV{ANSI_COLORS_DISABLED};
+
+# Do the same for disabled colors with NO_COLOR.
+local $ENV{NO_COLOR} = 1;
+is(BOLD,          q{}, 'NO_COLOR works for BOLD');
+is(BLUE,          q{}, '...and for BLUE');
+is(GREEN,         q{}, '...and for GREEN');
+is(DARK,          q{}, '...and for DARK');
+is(FAINT,         q{}, '...and for FAINT');
+is(BRIGHT_RED,    q{}, '...and for BRIGHT_RED');
+is(ON_BRIGHT_RED, q{}, '...and for ON_BRIGHT_RED');
+is(ITALIC,        q{}, '...and for ITALIC');
+is(RED,           q{}, '...and for RED');
+is(ON_GREEN,      q{}, '...and for ON_GREEN');
+is(ON_BLUE,       q{}, '...and for ON_BLUE');
+is(RESET,         q{}, '...and for RESET');
+delete $ENV{NO_COLOR};
 
 # Do the same for AUTORESET.
 $Term::ANSIColor::AUTORESET = 1;

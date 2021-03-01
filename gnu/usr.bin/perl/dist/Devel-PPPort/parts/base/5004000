@@ -1,52 +1,76 @@
 5.004000
-GIMME_V                        # E
-G_VOID                         # E
-HePV                           # A
-HeSVKEY_set                    # U
-POPu                           # E
-PUSHu                          # U
-SvSetMagicSV                   # U
-SvSetMagicSV_nosteal           # U
-SvSetSV_nosteal                # U
-SvTAINTED                      # U
-SvTAINTED_off                  # U
-SvTAINTED_on                   # U
-SvUV                           # U
-SvUVX                          # U
-SvUVx                          # U
-XPUSHu                         # U
+ARCHNAME                       # E
 block_end                      # E (Perl_block_end)
 block_gimme                    # E
 block_start                    # E (Perl_block_start)
-boolSV                         # U
+boolSV                         # E
 call_list                      # E
 delimcpy                       # U
-gv_autoload4                   # U
+GIMME_V                        # E
+gv_autoload4                   # E
 gv_fetchmethod_autoload        # E
+G_VOID                         # E
+HePV                           # A
+HeSVKEY_set                    # E
 hv_delayfree_ent               # E
 hv_free_ent                    # E
-ibcmp_locale                   # U
+ibcmp_locale                   # E
 intro_my                       # E
-isPRINT                        # U
-memEQ                          # U
-memNE                          # U
+isALNUM_LC                     # E
+isALPHA_LC                     # E
+isDIGIT_LC                     # E
+isIDFIRST_LC                   # E
+isLOWER_LC                     # E
+isPRINT                        # E
+isPRINT_LC                     # E
+isSPACE_LC                     # E
+isUPPER_LC                     # E
+LONGSIZE                       # E
+memEQ                          # E
+memNE                          # E
 my_failure_exit                # E
-newRV_inc                      # U
+newRV_inc                      # E
 newRV_noinc                    # E
+POPu                           # E
+PUSHu                          # E
 rsignal                        # E
 rsignal_state                  # E
-save_I16                       # E
 save_gp                        # E
+save_I16                       # E
 share_hek                      # E
+SHORTSIZE                      # E
 start_subparse                 # E (Perl_start_subparse)
 sv_2uv                         # U
-sv_cmp_locale                  # E
+sv_cmp_locale                  # U
 sv_derived_from                # E
+SvSetMagicSV                   # E
+SvSetMagicSV_nosteal           # E
+SvSetSV_nosteal                # E
 sv_setuv                       # E
 sv_taint                       # U
 sv_tainted                     # E
+SvTAINTED                      # E
+SvTAINTED_off                  # E
+SvTAINTED_on                   # E
 sv_untaint                     # E
+SvUV                           # E
+SvUVX                          # E
+SvUVx                          # E
+SvUVXx                         # E
 sv_vcatpvfn                    # E
 sv_vsetpvfn                    # E
-toLOWER_LC                     # U
-SvUVXx                         # added by devel/scanprov
+toLOWER_LC                     # E
+XPUSHu                         # E
+do_sysseek                     # F added by devel/scanprov
+magic_getdefelem               # F added by devel/scanprov
+magic_setcollxfrm              # F added by devel/scanprov
+magic_setdefelem               # F added by devel/scanprov
+rsignal_restore                # F added by devel/scanprov
+rsignal_save                   # F added by devel/scanprov
+rxres_free                     # F added by devel/scanprov
+rxres_restore                  # F added by devel/scanprov
+rxres_save                     # F added by devel/scanprov
+sub_crush_depth                # F added by devel/scanprov
+unshare_hek                    # F added by devel/scanprov
+vivify_defelem                 # F added by devel/scanprov
+vivify_ref                     # F added by devel/scanprov

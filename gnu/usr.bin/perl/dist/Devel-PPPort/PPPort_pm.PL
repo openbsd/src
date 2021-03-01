@@ -2,6 +2,9 @@
 #
 #  PPPort_pm.PL -- generate PPPort.pm
 #
+# Set the environment variable DPPP_CHECK_LEVEL to more than zero for some
+# extra checking. 1 or 2 currently
+
 ################################################################################
 #
 #  Version 3.x, Copyright (C) 2004-2013, Marcus Holland-Moritz.
@@ -15,27 +18,42 @@
 ################################################################################
 
 use strict;
-$^W = 1;
+BEGIN { $^W = 1; }
 require "./parts/ppptools.pl";
+require "./parts/inc/inctools";
 
 my $INCLUDE = 'parts/inc';
 my $DPPP = 'DPPP_';
 
+# The keys of %embed are the names of the items found in all the .fnc files,
+# and each value is all the information parse_embed returns for that item.
 my %embed = map { ( $_->{name} => $_ ) }
             parse_embed(qw(parts/embed.fnc parts/apidoc.fnc parts/ppport.fnc));
 
 my(%provides, %prototypes, %explicit);
 
 my $data = do { local $/; <DATA> };
+
+# Call include(file, params) for every line that begins with %include
+# These fill in %provides and %prototypes.
+# The keys of %provides are the items provided by Devel::PPPort, and each
+# value is the name of the file (in parts/inc/) that has the code to provide
+# it.
+# An entry in %prototypes looks like:
+#   'grok_bin' => 'UV grok_bin(pTHX_ const char * start, STRLEN * len_p, I32 * flags, NV * result)',
+
 $data =~ s{^\%(include)\s+(\w+)((?:[^\S\r\n]+.*?)?)\s*$}
           {eval "$1('$2', $3)" or die $@}gem;
 
+# And expand it.
 $data = expand($data);
 
-my @api = sort { lc $a cmp lc $b or $a cmp $b } keys %provides;
+# Just the list of provided items.
+my @provided = sort dictionary_order keys %provides;
 
+# which further expands $data.
 $data =~ s{^(.*)__PROVIDED_API__(\s*?)^}
-          {join '', map "$1$_\n", @api}gem;
+          {join '', map "$1$_\n", @provided}gem;
 
 {
   my $len = 0;
@@ -49,79 +67,182 @@ $data =~ s!^(.*)__EXPLICIT_API__(\s*?)^!
            sprintf("$1$format\n", 'Function / Variable', 'Static Request', 'Global Request') .
            $1 . '-'x$len . "\n" .
            join('', map { sprintf "$1$format\n", $explicit{$_} eq 'var' ? $_ : "$_()", "NEED_$_", "NEED_${_}_GLOBAL" }
-                    sort keys %explicit)
+                    sort dictionary_order keys %explicit)
           !gem;
 }
 
+# These hashes look like:
+#   { ...  'gv_check' => '5.003007',
+#          'gv_const_sv' => '5.009003',
+#          'gv_dump' => '5.006000',
+#     ... },
+
+# What's provided when without ppport.h, as far as we've been able to
+# determine
 my %raw_base = %{&parse_todo('parts/base')};
+
+# What's provided when using ppport.h, as far as we've been able to
+# determine
 my %raw_todo = %{&parse_todo('parts/todo')};
 
+# Invert so each key is the 7 digit version number, and it's value is an array
+# of all symbols within it, like:
+#          '5005003' => [
+#                         'POPpx',
+#                         'get_vtbl',
+#                         'save_generic_svref'
+#                       ],
 my %todo;
 for (keys %raw_todo) {
-  push @{$todo{$raw_todo{$_}}}, $_;
+  push @{$todo{int_parse_version($raw_todo{$_}{version})}}, $_;
 }
 
-# check consistency
-for (@api) {
-  if (exists $raw_todo{$_} and exists $raw_base{$_}) {
-    if ($raw_base{$_} eq $raw_todo{$_}) {
+# Most recent first
+my @todo_list = reverse sort keys %todo;
+
+# Here, @todo_list contains the integer version numbers that have support.
+# The first and final elements give the extremes of the supported versions.
+# (Use defaults that were reasonable at the time of this commit if the
+# directories are empty (which should only happen during regeneration of the
+# base and todo files).).  Actually the final element is for blead (at the
+# time things were regenerated), which is 1 beyond the max version supported.
+my $INT_MAX_PERL = (@todo_list) ? $todo_list[0] - 1 : '5030000'; # used for __MAX_PERL__
+my $MAX_PERL = format_version($INT_MAX_PERL);
+my $INT_MIN_PERL = (@todo_list) ? $todo_list[-1] : 5003007;
+my $MIN_PERL = format_version($INT_MIN_PERL);
+
+# Get rid of blead.  It contains the things marked as todo, meaning they
+# don't compile at all, and not getting rid of it would mean they would be
+# listed as working but introduced in blead.
+shift @todo_list if @todo_list && $todo_list[0] > $INT_MAX_PERL;
+
+# check consistency between our list of everything provided, and our lists of
+# what got provided when
+for (@provided) {
+  if (   exists $raw_todo{$_}
+      && $raw_todo{$_}{version} > $INT_MIN_PERL # INT_MIN_PERL contents are real
+                                                # symbols, not something to do
+      && $raw_todo{$_}{version} <= $INT_MAX_PERL # Above this would be things that
+                                                 # don't compile in blead
+      && exists $raw_base{$_})
+  {
+    if ($raw_base{$_}{version} == $raw_todo{$_}{version}) {
       warn "$INCLUDE/$provides{$_} provides $_, which is still marked "
            . "todo for " . format_version($raw_todo{$_}) . "\n";
     }
     else {
-      check(2, "$_ was ported back to " . format_version($raw_todo{$_}) .
-               " (baseline revision: " . format_version($raw_base{$_}) . ").");
+      check(2, "$_ was ported back to " . format_version($raw_todo{$_}{version})
+            .  " (baseline revision: "  . format_version($raw_base{$_}{version})
+            . ").");
     }
   }
 }
 
 my @perl_api;
-for (keys %provides) {
+for (@provided) {
   next if /^Perl_(.*)/ && exists $embed{$1};
   next if exists $embed{$_};
   push @perl_api, $_;
   check(2, "No API definition for provided element $_ found.");
 }
 
-push @perl_api, keys %embed;
+# At this point @perl_api is the list of things we provide that weren't found
+# in the .fnc files.
+my @prototype_unknown = @perl_api;
 
-for (@perl_api) {
+# Add in the .fnc file definitions.
+push @perl_api, keys %embed;
+@perl_api = sort dictionary_order @perl_api;
+
+for (@perl_api) {   # $_ is the item name
   if (exists $provides{$_} && !exists $raw_base{$_}) {
     check(2, "Mmmh, $_ doesn't seem to need backporting.");
   }
-  my $line = "$_|" . (exists $provides{$_} && exists $raw_base{$_} ? $raw_base{$_} : '') . '|';
-  $line .= ($raw_todo{$_} || '') . '|';
+
+  # Create the lines that ppport.h reads.  These look like
+  #     CopyD|5.009002|5.003007|p
+  my $line = "$_|";
+  $line .= $raw_base{$_}{version} if exists $raw_base{$_}
+                # If is above the max, it means it never actually got defined
+            && int_parse_version($raw_base{$_}{version}) <= $INT_MAX_PERL;
+  $line .= '|';
+  $line .= $raw_todo{$_}{version}
+                if exists $raw_todo{$_}
+                && int_parse_version($raw_todo{$_}{version}) <= $INT_MAX_PERL;
+  $line .= '|';
   $line .= 'p' if exists $provides{$_};
-  if (exists $embed{$_}) {
-    my $e = $embed{$_};
-    if (exists $e->{flags}{p}) {
+  my $e;
+  $e = $embed{$_} if exists $embed{$_};
+  my $is_documented = 0;
+  my $is_accessible = 0;
+  if (defined $e) {
+    if (exists $e->{flags}{'p'}) {    # Has 'Perl_' prefix
       my $args = $e->{args};
       $line .= 'v' if @$args && $args->[-1][0] eq '...';
     }
-    $line .= 'n' if exists $e->{flags}{n};
+    $line .= 'o' if exists $e->{ppport_fnc};
+    $line .= 'n' if exists $e->{flags}{'T'};  # No thread context parameter
+    $line .= 'd' if exists $e->{flags}{'D'};  # deprecated
+    $line .= 'x' if exists $e->{flags}{'x'};  # experimental
+    $line .= 'c' if        exists $e->{flags}{'C'}      # core-only
+                   || (    exists $e->{flags}{'X'}
+                       && (exists $e->{flags}{'E'} || ! exists $e->{flags}{'m'}));
+    $is_accessible = 1 if exists $e->{flags}{'A'}
+                       || exists $e->{flags}{'C'}
+                       || (     exists $e->{flags}{'X'}
+                           && ! exists $e->{flags}{'E'}
+                           &&   exists $e->{flags}{'m'});
+    $is_documented = 1 if exists $e->{flags}{'d'};
   }
+
+  # scanprov adds the M and F flags.  The M is for provided macros; F for
+  # functions we didn't find in testing (usually because they are hidden
+  # behind ifdefs, like PERL_GLOBAL_STRUCT_PRIVATE).  None of them were
+  # verified
+  if (exists $raw_base{$_}{code}) {
+    $line .= 'V' if $raw_base{$_}{code} =~ /[MFX]/;
+    $is_accessible = 1 if $raw_base{$_}{code} =~ /M/;
+  }
+  $line .= 'i' unless $is_accessible;
+  $line .= 'u' unless $is_documented;
+
   $_ = $line;
 }
 
 $data =~ s/^([\t ]*)__PERL_API__(\s*?)$/
-           join "\n", map "$1$_", sort @perl_api
+           join "\n", map "$1$_", sort dictionary_order @perl_api
           /gem;
 
+my $undocumented = "(undocumented)";
+
 my @todo;
-for (reverse sort keys %todo) {
+for (@todo_list) {
   my $ver = format_version($_);
+  $ver .= " (at least)" if $_ == $todo_list[-1];
   my $todo = "=item perl $ver\n\n";
-  for (sort @{$todo{$_}}) {
-    $todo .= "  $_\n";
+  for (sort dictionary_order @{$todo{$_}}) {
+    $todo .= "  $_";
+    $todo .= "  (DEPRECATED)" if  $embed{$_}->{flags}{'D'};
+    $todo .= "  (marked experimental)" if $embed{$_}->{flags}{'x'};
+    $todo .= "  $undocumented" unless $embed{$_}->{flags}{'d'};
+    $todo .= "\n";
   }
   push @todo, $todo;
+}
+
+if (@prototype_unknown) {
+    my $todo = "=item Backported version unknown\n\n";
+    for (sort dictionary_order @prototype_unknown) {
+        $todo .= " $_  $undocumented\n";
+    }
+    push @todo, $todo;
 }
 
 $data =~ s{^__UNSUPPORTED_API__(\s*?)^}
           {join "\n", @todo}gem;
 
-$data =~ s{__MIN_PERL__}{5.003}g;
-$data =~ s{__MAX_PERL__}{5.30}g;
+$data =~ s{__MIN_PERL__}{$MIN_PERL}g;
+$data =~ s{__MAX_PERL__}{$MAX_PERL}g;
 
 open FH, ">PPPort.pm" or die "PPPort.pm: $!\n";
 print FH $data;
@@ -150,6 +271,7 @@ sub include
 
   for (keys %{$data->{prototypes}}) {
     $prototypes{$_} = $data->{prototypes}{$_};
+    $prototypes{$_} = normalize_prototype($data->{prototypes}{$_});
     $data->{implementation} =~ s/^$_(?=\s*\()/$DPPP(my_$_)/mg;
   }
 
@@ -167,7 +289,7 @@ sub expand
   my $code = shift;
   $code =~ s{^(\s*#\s*(?:el)?if\s+)(.*)$}{$1.expand_pp_expressions($2)}gem;
   $code =~ s{^\s*
-              __UNDEFINED__
+              __(?:UNDEFINED|UNDEF_NOT_PROVIDED)__
               \s+
               (
                 ( \w+ )
@@ -274,7 +396,14 @@ sub expand_pp_expr
     my $proto = make_prototype($e);
     if (exists $prototypes{$func}) {
       if (compare_prototypes($proto, $prototypes{$func})) {
-        check(1, "differing prototypes for $func:\n  API: $proto\n  PPP: $prototypes{$func}");
+        my $proto_no_pTHX = $proto;
+        $proto_no_pTHX =~ s/pTHX_\s*//;
+        if (compare_prototypes($proto_no_pTHX, $prototypes{$func})) {
+            check(1, "differing prototypes for $func:\n  API: $proto\n  PPP: $prototypes{$func}");
+        }
+        else {
+            check(1, "prototypes differ in pTHX_ for $func:\n  API: $proto\n  PPP: $prototypes{$func}");
+        }
         $proto = $prototypes{$func};
       }
     }
@@ -309,8 +438,8 @@ sub make_embed
   my $a = do { my $x = 'a'; join ',', map { $x++ } 1 .. @{$f->{args}} };
   my $lastarg = ${$f->{args}}[-1];
 
-  if ($f->{flags}{n}) {
-    if ($f->{flags}{p}) {
+  if ($f->{flags}{'T'}) {
+    if ($f->{flags}{'p'}) {
       return "#define $n $DPPP(my_$n)\n" .
              "#define Perl_$n $DPPP(my_$n)";
     }
@@ -324,8 +453,8 @@ sub make_embed
 #  undef $n
 #endif
 UNDEF
-    if ($f->{flags}{p}) {
-      if ($f->{flags}{f}) {
+    if ($f->{flags}{'p'}) {
+      if ($f->{flags}{'f'}) {
         return "#define Perl_$n $DPPP(my_$n)";
       }
       elsif (@$lastarg && $lastarg->[0] =~ /\.\.\./) {
@@ -424,7 +553,7 @@ You should use F<ppport.h> in modern code so that your code will work
 with the widest range of Perl interpreters possible, without significant
 additional work.
 
-You should attempt older code to fully use F<ppport.h>, because the
+You should attempt to get older code to fully use F<ppport.h>, because the
 reduced pollution of newer Perl versions is an important thing. It's so
 important that the old polluting ways of original Perl modules will not be
 supported very far into the future, and your module will almost certainly
@@ -434,7 +563,7 @@ having done the electronic ecology some good.
 =head2 How to use ppport.h
 
 Don't direct the users of your module to download C<Devel::PPPort>.
-They are most probably no XS writers. Also, don't make F<ppport.h>
+They are most probably not XS writers. Also, don't make F<ppport.h>
 optional. Rather, just take the most recent copy of F<ppport.h> that
 you can find (e.g. by generating it with the latest C<Devel::PPPort>
 release from CPAN), copy it into your project, adjust your project to
@@ -478,20 +607,51 @@ in threaded and non-threaded configurations.
 
 =head2 Provided Perl compatibility API
 
-The header file written by this module, typically F<ppport.h>, provides
-access to the following elements of the Perl API that is not available
-in older Perl releases:
+The header file written by this module, typically F<ppport.h>, provides access
+to the following elements of the Perl API that are not otherwise available in
+Perl releases older than when the elements were first introduced.  (Note that
+many of these are not supported all the way back to __MIN_PERL__, but it may
+be that they are supported back as far as you need; see L</Supported Perl API,
+sorted by version> for that information.)
 
     __PROVIDED_API__
 
-=head2 Perl API not supported by ppport.h
+=head2 Supported Perl API, sorted by version
 
-There is still a big part of the API not supported by F<ppport.h>.
-Either because it doesn't make sense to back-port that part of the API,
-or simply because it hasn't been implemented yet. Patches welcome!
+The table in this section lists all the Perl API elements available, sorted by
+the version in which support starts.  This includes all the elements that
+F<ppport.h> helps out with, as well as those elements that it doesn't.
 
-Here's a list of the currently unsupported API, and also the version of
-Perl below which it is unsupported:
+In some cases, it doesn't make practical sense for elements to be supported
+earlier than they already are.  For example, UTF-8 functionality isn't
+provided prior to the release where it was first introduced.
+
+But in other cases, it just is that no one has implemented support yet.
+Patches welcome!  Some elements are ported backward for some releases, but not
+all the way to __MIN_PERL__.
+
+If an element, call it ELEMENT, is not on this list, try using this command to
+find out why:
+
+ perl ppport.h --api-info=ELEMENT
+
+A few of the entries in the list below are marked as DEPRECATED.  You should
+not use these for new code, and should be converting existing uses to use
+something better.
+
+Some of the entries in the list are marked as "experimental".  This means
+these should not generally be used.  They may be removed or changed without
+notice.  You can ask why they are experimental by sending email to
+L<mailto:perl5-porters@perl.org>.
+
+And some of the entries are marked as "undocumented".  This means that they
+aren't necessarily considered stable, and could be changed or removed in some
+future release without warning.  It is therefore a bad idea to use them
+without further checking.  It could be that these are considered to be for
+perl core use only; or it could be, though, that C<Devel::PPPort> doesn't know
+where to find their documentation, or that it's just an oversight that they
+haven't been documented.  If you want to use one, and potentially have it
+backported, first send mail to L<mailto:perl5-porters@perl.org>.
 
 =over 4
 
@@ -503,7 +663,7 @@ __UNSUPPORTED_API__
 
 If you find any bugs, C<Devel::PPPort> doesn't seem to build on your
 system, or any of its tests fail, please send a bug report to
-L<perlbug@perl.org|mailto:perlbug@perl.org>.
+L<https://github.com/Dual-Life/Devel-PPPort/issues/new>.
 
 =head1 AUTHORS
 
@@ -521,9 +681,9 @@ Version 2.x was ported to the Perl core by Paul Marquess.
 
 Version 3.x was ported back to CPAN by Marcus Holland-Moritz.
 
-=item * 
+=item *
 
-Versions >= 3.22 are maintained with support from Matthew Horsfall (alh).
+Versions >= 3.22 are maintained by perl5 porters
 
 =back
 
@@ -551,7 +711,7 @@ package Devel::PPPort;
 use strict;
 use vars qw($VERSION $data);
 
-$VERSION = '3.52';
+$VERSION = '3.57';
 
 sub _init_data
 {
@@ -607,6 +767,8 @@ SKIP
 
 %include ppphdoc { indent => '|>' }
 
+%include inctools
+
 %include ppphbin
 
 __DATA__
@@ -628,19 +790,29 @@ __DATA__
 
 %include limits
 
+%include variables
+
+%include subparse
+
+%include newCONSTSUB
+
+%include magic_defs
+
 %include misc
 
+%include sv_xpvf
+
+%include SvPV
+
 %include warn
+
+%include format
 
 %include uv
 
 %include memory
 
-%include magic_defs
-
 %include mess
-
-%include variables
 
 %include mPUSH
 
@@ -648,11 +820,7 @@ __DATA__
 
 %include newRV
 
-%include newCONSTSUB
-
 %include MY_CXT
-
-%include format
 
 %include SvREFCNT
 
@@ -660,11 +828,7 @@ __DATA__
 
 %include newSVpv
 
-%include SvPV
-
 %include Sv_set
-
-%include sv_xpvf
 
 %include shared_pv
 
@@ -688,7 +852,11 @@ __DATA__
 
 %include strlfuncs
 
+%include utf8
+
 %include pv_tools
+
+%include locale
 
 #endif /* _P_P_PORTABILITY_H_ */
 

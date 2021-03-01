@@ -8,7 +8,7 @@ BEGIN {
 
 use strict;
 use lib '../lib';
-use Test::More tests => 87;
+use Test::More tests => 103;
 #use Test::More 'no_plan';
 
 use_ok('Pod::Simple::XHTML') or exit;
@@ -113,6 +113,45 @@ for my $spec (
     $p->output_string( \$output );
     is $indent, $p->strip_verbatim_indent($indent),
         'Set stripper for XHTML to ' . (defined $indent ? qq{"$indent"} : 'undef');
+    ok $p->parse_string_document( $pod ), "Parse POD to XHTML for $desc";
+    is $output, $xhtml, "Should have expected XHTML output for $desc";
+}
+
+for my $spec (
+    [
+        "\n=pod\n\n\t\tfoo bar baz\n",
+        0,
+        "<pre><code>\t\tfoo bar baz</code></pre>\n\n",
+        'preserve tabs'
+    ],
+    [
+        "\n=pod\n\n\t\tfoo bar baz\n",
+        undef,
+        "<pre><code>                foo bar baz</code></pre>\n\n",
+        'preserve tabs'
+    ],
+    [
+        "\n=pod\n\n\t\tfoo bar baz\n",
+        -1,
+        "<pre><code>                foo bar baz</code></pre>\n\n",
+        'preserve tabs'
+    ],
+    [
+        "\n=pod\n\n\t\tfoo bar baz\n",
+        1,
+        "<pre><code>  foo bar baz</code></pre>\n\n",
+        'tabs are xlate to one space each'
+    ],
+) {
+    my ($pod, $tabs, $xhtml, $desc) = @$spec;
+    # Test XHTML output.
+    ok my $p = Pod::Simple::XHTML->new, "Construct XHMTL parser to test $desc";
+    $p->html_header('');
+    $p->html_footer('');
+    my $output = '';
+    $p->output_string( \$output );
+    is $tabs, $p->expand_verbatim_tabs($tabs),
+        'Set tab  for XHTML to ' . (defined $tabs ? qq{"$tabs"} : 'undef');
     ok $p->parse_string_document( $pod ), "Parse POD to XHTML for $desc";
     is $output, $xhtml, "Should have expected XHTML output for $desc";
 }

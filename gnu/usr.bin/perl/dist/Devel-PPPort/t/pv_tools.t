@@ -10,10 +10,12 @@
 #
 ################################################################################
 
+use FindBin ();
+
 BEGIN {
   if ($ENV{'PERL_CORE'}) {
     chdir 't' if -d 't';
-    @INC = ('../lib', '../ext/Devel-PPPort/t') if -d '../lib' && -d '../ext';
+    unshift @INC, '../lib' if -d '../lib' && -d '../ext';
     require Config; import Config;
     use vars '%Config';
     if (" $Config{'extensions'} " !~ m[ Devel/PPPort ]) {
@@ -21,13 +23,15 @@ BEGIN {
       exit 0;
     }
   }
-  else {
-    unshift @INC, 't';
-  }
+
+  use lib "$FindBin::Bin";
+  use lib "$FindBin::Bin/../parts/inc";
+
+  die qq[Cannot find "$FindBin::Bin/../parts/inc"] unless -d "$FindBin::Bin/../parts/inc";
 
   sub load {
-    eval "use Test";
-    require 'testutil.pl' if $@;
+    require 'testutil.pl';
+    require 'inctools';
   }
 
   if (13) {
@@ -38,7 +42,7 @@ BEGIN {
 
 use Devel::PPPort;
 use strict;
-$^W = 1;
+BEGIN { $^W = 1; }
 
 package Devel::PPPort;
 use vars '@ISA';
@@ -56,21 +60,29 @@ ok($uni ? "$]" >= 5.006 : "$]" < 5.008);
 my @r;
 
 @r = &Devel::PPPort::pv_pretty();
-ok($r[0], $r[1]);
-ok($r[0], "foobarbaz");
-ok($r[2], $r[3]);
-ok($r[2], '<leftpv_p\retty\nright>');
-ok($r[4], $r[5]);
-skip(ord("A") != 65 ? "Skip for non-ASCII platform" : 0,
-     $r[4], $uni ? 'N\375 Batter\355' : 'N\303\275 Batter\303');
-ok($r[6], $r[7]);
-skip(ord("A") != 65 ? "Skip for non-ASCII platform" : 0,
-     $r[6], $uni ? '\301g\346tis Byrju...' : '\303\201g\303\246t...');
+is($r[0], $r[1]);
+is($r[0], "foobarbaz");
+is($r[2], $r[3]);
+is($r[2], '<leftpv_p\retty\nright>');
+is($r[4], $r[5]);
+if(ord("A") == 65) {
+    is($r[4], $uni ? 'N\375 Batter\355' : 'N\303\275 Batter\303');
+}
+else {
+    skip("Skip for non-ASCII platform");
+}
+is($r[6], $r[7]);
+if(ord("A") == 65) {
+    is($r[6], $uni ? '\301g\346tis Byrju...' : '\303\201g\303\246t...');
+}
+else {
+    skip("Skip for non-ASCII platform");
+}
 
 @r = &Devel::PPPort::pv_display();
-ok($r[0], $r[1]);
-ok($r[0], '"foob\0rbaz"\0');
-ok($r[2], $r[3]);
+is($r[0], $r[1]);
+is($r[0], '"foob\0rbaz"\0');
+is($r[2], $r[3]);
 ok($r[2] eq '"pv_di"...\0' ||
    $r[2] eq '"pv_d"...\0');  # some perl implementations are broken... :(
 

@@ -1,2 +1,8 @@
 5.021010
 DECLARATION_FOR_LC_NUMERIC_MANIPULATION # E
+RESTORE_LC_NUMERIC             # E
+STORE_LC_NUMERIC_FORCE_TO_UNDERLYING # E
+STORE_LC_NUMERIC_SET_TO_NEEDED # E
+grok_atoUV                     # F added by devel/scanprov
+regex_set_precedence           # F added by devel/scanprov
+sv_only_taint_gmagic           # F added by devel/scanprov

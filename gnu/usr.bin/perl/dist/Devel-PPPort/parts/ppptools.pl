@@ -2,6 +2,9 @@
 #
 #  ppptools.pl -- various utility functions
 #
+#  WARNING: This will be called by old perls.  You can't use modern constructs
+#  in it.
+#
 ################################################################################
 #
 #  Version 3.x, Copyright (C) 2004-2013, Marcus Holland-Moritz.
@@ -12,6 +15,8 @@
 #  modify it under the same terms as Perl itself.
 #
 ################################################################################
+
+require './parts/inc/inctools';
 
 sub cat_file
 {
@@ -33,6 +38,18 @@ sub all_files_in_dir
 
 sub parse_todo
 {
+  # Creates a hash with the keys being all symbols found in all the files in
+  # the input directory (default 'parts/todo'), and the values being each a
+  # subhash like so:
+  #     'utf8_hop_forward' => {
+  #                               'code' => 'U',
+  #                               'version' => '5.025007'
+  #                           },
+  #
+  # The input line that generated that was this:
+  #
+  #     utf8_hop_forward               # U
+
   my $dir = shift || 'parts/todo';
   local *TODO;
   my %todo;
@@ -40,16 +57,18 @@ sub parse_todo
 
   for $todo (all_files_in_dir($dir)) {
     open TODO, $todo or die "cannot open $todo: $!\n";
-    my $perl = <TODO>;
-    chomp $perl;
+    my $version = <TODO>;
+    chomp $version;
     while (<TODO>) {
       chomp;
-      s/#.*//;
+      s/#(?: (\w)\b)?.*//;  # 'code' is optional
+      my $code = $1;
       s/^\s+//; s/\s+$//;
       /^\s*$/ and next;
       /^\w+$/ or die "invalid identifier: $_\n";
-      exists $todo{$_} and die "duplicate identifier: $_ ($todo{$_} <=> $perl)\n";
-      $todo{$_} = $perl;
+      exists $todo{$_} and die "duplicate identifier: $_ ($todo{$_} <=> $version)\n";
+      $todo{$_}{'version'} = $version;
+      $todo{$_}{'code'} = $code if $code;
     }
     close TODO;
   }
@@ -70,6 +89,7 @@ sub parse_partspec
 {
   my $file = shift;
   my $section = 'implementation';
+
   my $vsec = join '|', qw( provides dontwarn implementation
                            xsubs xsinit xsmisc xshead xsboot tests );
   my(%data, %options);
@@ -82,7 +102,9 @@ sub parse_partspec
       m!//! && !m!(?:=~|s/).*//! && !m!(?:ht|f)tp(?:s)://!
           and warn "$file:$.: warning: potential C++ comment\n";
     }
+
     /^##/ and next;
+
     if (/^=($vsec)(?:\s+(.*))?/) {
       $section = $1;
       if (defined $2) {
@@ -103,8 +125,14 @@ sub parse_partspec
     $data{$_} = join '', @v;
   }
 
-  unless (exists $data{provides}) {
-    $data{provides} = ($file =~ /(\w+)\.?$/)[0];
+  if (! exists $data{provides}) {
+    if ($file =~ /inctools$/) { # This file is special, it doesn't 'provide'
+                                # any API, but has subs to use internally
+      $data{provides} = "";
+    }
+    else {
+      $data{provides} = ($file =~ /(\w+)\.?$/)[0];
+    }
   }
   $data{provides} = [$data{provides} =~ /(\S+)/g];
 
@@ -224,7 +252,8 @@ sub ppcond
   join " && ", @c;
 }
 
-sub trim_arg
+sub trim_arg        # Splits the argument into type and name, returning the
+                    # pair: (type, name)
 {
   my $in = shift;
   my $remove = join '|', qw( NN NULLOK VOL );
@@ -232,40 +261,45 @@ sub trim_arg
   $in eq '...' and return ($in);
 
   local $_ = $in;
-  my $id;
+  my $name;                 # Work on the name
 
-  s/[*()]/ /g;
-  s/\[[^\]]*\]/ /g;
+  s/[*()]/ /g;              # Get rid of this punctuation
+  s/ \[ [^\]]* \] / /xg;    # Get rid of dimensions
   s/\b(?:auto|const|extern|inline|register|static|volatile|restrict)\b//g;
   s/\b(?:$remove)\b//;
-  s/^\s*//; s/\s*$//;
+  s/^\s+//; s/\s+$//;       # No leading, trailing space
 
-  if( /^\b(?:struct|union|enum)\s+\w+(?:\s+(\w+))?$/ ) {
-    defined $1 and $id = $1;
+  if( /^\b (?:struct|union|enum) \s+ \w+ (?: \s+ ( \w+ ) )? $/x ) {
+    defined $1 and $name = $1;    # Extract the name for one of these declarations
   }
   else {
     if( s/\b(?:char|double|float|int|long|short|signed|unsigned|void)\b//g ) {
-      /^\s*(\w+)\s*$/ and $id = $1;
+      /^ \s* (\w+) \s* $/x and $name = $1;    # Similarly for these
+    }
+    elsif (/^ \s* " [^"]+ " \s+ (\w+) \s* $/x) { # A literal string (is special)
+        $name = $1;
     }
     else {
-      /^\s*\w+\s+(\w+)\s*$/ and $id = $1;
+      /^ \s* \w+ \s+ (\w+) \s* $/x and $name = $1; # Everything else.
     }
   }
 
-  $_ = $in;
+  $_ = $in;     # Now work on the type.
 
-  defined $id and s/\b$id\b//;
+  # Get rid of the name if we found one
+  defined $name and s/\b$name\b//;
 
-  # these don't matter at all
+  # these don't matter at all; note that const does matter
   s/\b(?:auto|extern|inline|register|static|volatile|restrict)\b//g;
   s/\b(?:$remove)\b//;
 
-  s/(?=<\*)\s+(?=\*)//g;
-  s/\s*(\*+)\s*/ $1 /g;
-  s/^\s*//; s/\s*$//;
-  s/\s+/ /g;
+  while (s/ \* \s+ \* /**/xg) {}  # No spaces within pointer sequences
+  s/ \s* ( \*+ ) \s* / $1 /xg;    # Normalize pointer sequences to be surrounded
+                                  # by a single space
+  s/^\s+//; s/\s+$//;             # No leading, trailing spacd
+  s/\s+/ /g;                      # Collapse multiple space into one
 
-  return ($_, $id);
+  return ($_, $name);
 }
 
 sub parse_embed
@@ -306,7 +340,27 @@ sub parse_embed
         my @e = split /\s*\|\s*/, $line;
         if( @e >= 3 ) {
           my($flags, $ret, $name, @args) = @e;
-          next if $flags =~ /[DM]/; # Skip entries marked as deprecated or unstable
+
+          # Skip non-name entries, like
+          #    PL_parser-E<gt>linestr
+          # which documents a struct entry rather than a function.  We retain
+          # all other entries, so that our caller has full information, and
+          # may skip things like non-public functions.
+          next if $flags =~ /N/;
+
+          # M implies m for the purposes of this module.
+          $flags .= 'm' if $flags =~ /M/;
+
+          # An entry marked 'b' is in mathoms, so is effectively deprecated,
+          # as it can be removed at anytime.  But if it also has a macro to
+          # implement it, that macro stays when mathoms is removed, so the
+          # non-'Perl_' form isn't deprecated.  embed.fnc is supposed to have
+          # already set this up, but make sure.
+          if ($flags =~ /b/ && $flags !~ /m/ && $flags !~ /D/) {
+            warn "Expecting D flag for '$name', since it is b without [Mm]";
+            $flags .= 'D';
+          }
+
           if ($name =~ /^[^\W\d]\w*$/) {
             for (@args) {
               $_ = [trim_arg($_)];
@@ -319,11 +373,7 @@ sub parse_embed
               args  => \@args,
               cond  => ppcond(\@pps),
             };
-          }
-          elsif ($name =~ /^[^\W\d]\w*-E<gt>[^\W\d]\w*$/) {
-            # silenty ignore entries of the form
-            #    PL_parser-E<gt>linestr
-            # which documents a struct entry rather than a function
+            $func[-1]{'ppport_fnc'} = 1 if $file =~ /ppport\.fnc/;
           }
           else {
             warn "mysterious name [$name] in $file, line $.\n";
@@ -335,7 +385,85 @@ sub parse_embed
     close FILE;
   }
 
+  # Here's what two elements of the array look like:
+  # {
+  #              'args' => [
+  #                          [
+  #                            'const nl_item',
+  #                            'item'
+  #                          ]
+  #                        ],
+  #              'cond' => '(defined(HAS_NL_LANGINFO) && defined(PERL_LANGINFO_H))',
+  #              'flags' => {
+  #                           'A' => 1,
+  #                           'T' => 1,
+  #                           'd' => 1,
+  #                           'o' => 1
+  #                         },
+  #              'name' => 'Perl_langinfo',
+  #              'ret' => 'const char *'
+  #            },
+  #            {
+  #              'args' => [
+  #                          [
+  #                            'const int',
+  #                            'item'
+  #                          ]
+  #                        ],
+  #              'cond' => '!(defined(HAS_NL_LANGINFO) && defined(PERL_LANGINFO_H))',
+  #              'flags' => {
+  #                           'A' => 1,
+  #                           'T' => 1,
+  #                           'd' => 1,
+  #                           'o' => 1
+  #                         },
+  #              'name' => 'Perl_langinfo',
+  #              'ret' => 'const char *'
+  #            },
+
   return @func;
+}
+
+sub known_but_hard_to_test_for
+{
+    # This returns a list of functions/symbols that are in Perl, but the tests
+    # for their existence don't work, usually as a result of them being XS,
+    # and using XS to test.  Effectively, any XS code that compiles and works
+    # is exercising most of these XS-related ones.
+    #
+    # The values for the keys are each the version that ppport.h makes them
+    # work on, and were gleaned by manually looking at the code parts/inc/*.
+    # For non-ppport.h, scanprov will automatically figure out the version
+    # they were introduced in.
+
+    my %return;
+
+    for (qw(CLASS dXSI32 items ix pTHX_ RETVAL StructCopy svtype
+            STMT_START STMT_END STR_WITH_LEN THIS XS))
+    {
+        # __MIN_PERL__ is this at the time of this commit.  This is the
+        # earliest these have been tested to at the time of the commit, but
+        # likely go back further.
+        $return{$_} = '5.003_07';
+    }
+    for (qw(_pMY_CXT pMY_CXT_)) {
+        $return{$_} = '5.9.0';
+    }
+    for (qw(XopDISABLE XopENABLE XopENTRY XopENTRYCUSTOM XopENTRY_set)) {
+        $return{$_} = '5.13.7';
+    }
+    for (qw(XS_EXTERNAL XS_INTERNAL)) {
+        $return{$_} = '5.15.2';
+    }
+
+    return \%return;
+}
+
+sub normalize_prototype  # So that they can be compared more easily
+{
+    my $proto = shift;
+    $proto =~ s/\s* \* \s* / * /xg;
+    return $proto;
 }
 
 sub make_prototype
@@ -343,63 +471,8 @@ sub make_prototype
   my $f = shift;
   my @args = map { "@$_" } @{$f->{args}};
   my $proto;
-  my $pTHX_ = exists $f->{flags}{n} ? "" : "pTHX_ ";
+  my $pTHX_ = exists $f->{flags}{T} ? "" : "pTHX_ ";
   $proto = "$f->{ret} $f->{name}" . "($pTHX_" . join(', ', @args) . ')';
-  return $proto;
+  return normalize_prototype($proto);
 }
-
-sub format_version
-{
-  my $ver = shift;
-
-  $ver =~ s/$/000000/;
-  my($r,$v,$s) = $ver =~ /(\d+)\.(\d{3})(\d{3})/;
-
-  $v = int $v;
-  $s = int $s;
-
-  if ($r < 5 || ($r == 5 && $v < 6)) {
-    if ($s % 10) {
-      die "invalid version '$ver'\n";
-    }
-    $s /= 10;
-
-    $ver = sprintf "%d.%03d", $r, $v;
-    $s > 0 and $ver .= sprintf "_%02d", $s;
-
-    return $ver;
-  }
-
-  return sprintf "%d.%d.%d", $r, $v, $s;
-}
-
-sub parse_version
-{
-  my $ver = shift;
-
-  if ($ver =~ /^(\d+)\.(\d+)\.(\d+)$/) {
-    return ($1, $2, $3);
-  }
-  elsif ($ver !~ /^\d+\.\d{3}(?:_\d{2})?$/) {
-    die "cannot parse version '$ver'\n";
-  }
-
-  $ver =~ s/_//g;
-  $ver =~ s/$/000000/;
-
-  my($r,$v,$s) = $ver =~ /(\d+)\.(\d{3})(\d{3})/;
-
-  $v = int $v;
-  $s = int $s;
-
-  if ($r < 5 || ($r == 5 && $v < 6)) {
-    if ($s % 10) {
-      die "cannot parse version '$ver'\n";
-    }
-    $s /= 10;
-  }
-
-  return ($r, $v, $s);
-}
-
 1;

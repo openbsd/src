@@ -16,11 +16,11 @@ BEGIN {
 BEGIN
 {
     if ($^O eq 'darwin'
-	&& (split(/\./, $Config{osvers}))[0] < 7 # Mac OS X 10.3 == Darwin 7
-	&& $Config{db_version_major} == 1
-	&& $Config{db_version_minor} == 0
-	&& $Config{db_version_patch} == 0) {
-	warn <<EOM;
+        && (split(/\./, $Config{osvers}))[0] < 7 # Mac OS X 10.3 == Darwin 7
+        && $Config{db_version_major} == 1
+        && $Config{db_version_minor} == 0
+        && $Config{db_version_patch} == 0) {
+        warn <<EOM;
 #
 # This test is known to crash in Mac OS X versions 10.2 (or earlier)
 # because of the buggy Berkeley DB version included with the OS.
@@ -69,17 +69,17 @@ sub lexical
     {
         my $class = shift ;
         my $filename = shift ;
-	my $fh = gensym ;
-	open ($fh, ">$filename") || die "Cannot open $filename: $!" ;
-	my $real_stdout = select($fh) ;
-	return bless [$fh, $real_stdout ] ;
+        my $fh = gensym ;
+        open ($fh, ">$filename") || die "Cannot open $filename: $!" ;
+        my $real_stdout = select($fh) ;
+        return bless [$fh, $real_stdout ] ;
 
     }
     sub DESTROY
     {
         my $self = shift ;
-	close $self->[0] ;
-	select($self->[1]) ;
+        close $self->[0] ;
+        select($self->[1]) ;
     }
 }
 
@@ -124,7 +124,7 @@ sub safeUntie
 
 my $db185mode =  ($DB_File::db_version == 1 && ! $DB_File::db_185_compat) ;
 my $null_keys_allowed = ($DB_File::db_ver < 2.004010 
-				|| $DB_File::db_ver >= 3.1 );
+                                || $DB_File::db_ver >= 3.1 );
 
 my $TEMPDIR = tempdir( CLEANUP => 1 );
 chdir $TEMPDIR;
@@ -263,8 +263,8 @@ ok(25, $#keys == 29 && $#values == 29) ;
 $i = 0 ;
 while (($key,$value) = each(%h)) {
     if ($key eq $keys[$i] && $value eq $values[$i] && $key eq lc($value)) {
-	$key =~ y/a-z/A-Z/;
-	$i++ if $key eq $value;
+        $key =~ y/a-z/A-Z/;
+        $i++ if $key eq $value;
     }
 }
 
@@ -412,7 +412,7 @@ ok(61, $key eq 'replace key' );
 ok(62, $value eq 'replace value' );
 $status = $X->get('y', $value) ;
 ok(63, 1) ; # hard-wire to always pass. the previous test ($status == 1)
-	    # only worked because of a bug in 1.85/6
+            # only worked because of a bug in 1.85/6
 
 # use seq to walk forwards through a file 
 
@@ -520,7 +520,7 @@ ok(82, keys %smith == 1 && $smith{'John'}) ;
 
 my %wall = $YY->get_dup('Wall', 1) ;
 ok(83, keys %wall == 3 && $wall{'Larry'} == 1 && $wall{'Stone'} == 1 
-		&& $wall{'Brick'} == 2);
+                && $wall{'Brick'} == 2);
 
 undef $YY ;
 untie %hh ;
@@ -534,8 +534,8 @@ my $Dfile3 = "btree3" ;
  
 my $dbh1 = new DB_File::BTREEINFO ;
 $dbh1->{compare} = sub { 
-	no warnings 'numeric' ;
-	$_[0] <=> $_[1] } ; 
+        no warnings 'numeric' ;
+        $_[0] <=> $_[1] } ; 
  
 my $dbh2 = new DB_File::BTREEINFO ;
 $dbh2->{compare} = sub { $_[0] cmp $_[1] } ;
@@ -647,37 +647,37 @@ unlink $Dfile1 ;
    @EXPORT = @DB_File::EXPORT ;
 
    sub STORE { 
-	my $self = shift ;
+        my $self = shift ;
         my $key = shift ;
         my $value = shift ;
         $self->SUPER::STORE($key, $value * 2) ;
    }
 
    sub FETCH { 
-	my $self = shift ;
+        my $self = shift ;
         my $key = shift ;
         $self->SUPER::FETCH($key) - 1 ;
    }
 
    sub put { 
-	my $self = shift ;
+        my $self = shift ;
         my $key = shift ;
         my $value = shift ;
         $self->SUPER::put($key, $value * 3) ;
    }
 
    sub get { 
-	my $self = shift ;
+        my $self = shift ;
         $self->SUPER::get($_[0], $_[1]) ;
-	$_[1] -= 2 ;
+        $_[1] -= 2 ;
    }
 
    sub A_new_method
    {
-	my $self = shift ;
+        my $self = shift ;
         my $key = shift ;
         my $value = $self->FETCH($key) ;
-	return "[[$value]]" ;
+        return "[[$value]]" ;
    }
 
    1 ;
@@ -691,8 +691,8 @@ EOM
     my %h ;
     my $X ;
     eval '
-	$X = tie(%h, "SubDB","dbbtree.tmp", O_RDWR|O_CREAT, 0640, $DB_BTREE );
-	' ;
+        $X = tie(%h, "SubDB","dbbtree.tmp", O_RDWR|O_CREAT, 0640, $DB_BTREE );
+        ' ;
 
     main::ok(92, $@ eq "") ;
 
@@ -732,8 +732,8 @@ EOM
        my($fk, $sk, $fv, $sv) = @_ ;
        return
            $fetch_key eq $fk && $store_key eq $sk && 
-	   $fetch_value eq $fv && $store_value eq $sv &&
-	   $_ eq 'original' ;
+           $fetch_value eq $fv && $store_value eq $sv &&
+           $_ eq 'original' ;
    }
    
    ok(101, $db = tie(%h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0640, $DB_BTREE ) );
@@ -761,13 +761,13 @@ EOM
 
    # replace the filters, but remember the previous set
    my ($old_fk) = $db->filter_fetch_key   
-   			(sub { $_ = uc $_ ; $fetch_key = $_ }) ;
+                        (sub { $_ = uc $_ ; $fetch_key = $_ }) ;
    my ($old_sk) = $db->filter_store_key   
-   			(sub { $_ = lc $_ ; $store_key = $_ }) ;
+                        (sub { $_ = lc $_ ; $store_key = $_ }) ;
    my ($old_fv) = $db->filter_fetch_value 
-   			(sub { $_ = "[$_]"; $fetch_value = $_ }) ;
+                        (sub { $_ = "[$_]"; $fetch_value = $_ }) ;
    my ($old_sv) = $db->filter_store_value 
-   			(sub { s/o/x/g; $store_value = $_ }) ;
+                        (sub { s/o/x/g; $store_value = $_ }) ;
    
    ($fetch_key, $store_key, $fetch_value, $store_value) = ("") x 4 ;
    $h{"Fred"} = "Joe" ;
@@ -840,13 +840,13 @@ EOM
     sub Closure
     {
         my ($name) = @_ ;
-	my $count = 0 ;
-	my @kept = () ;
+        my $count = 0 ;
+        my @kept = () ;
 
-	return sub { ++$count ; 
-		     push @kept, $_ ; 
-		     $result{$name} = "$name - $count: [@kept]" ;
-		   }
+        return sub { ++$count ; 
+                     push @kept, $_ ; 
+                     $result{$name} = "$name - $count: [@kept]" ;
+                   }
     }
 
     $db->filter_store_key(Closure("store key")) ;
@@ -887,7 +887,7 @@ EOM
     undef $db ;
     untie %h;
     unlink $Dfile;
-}		
+}               
 
 {
    # DBM Filter recursion detection
@@ -986,7 +986,7 @@ EOM
     $DB_BTREE->{'flags'} = R_DUP ;
  
     tie %h, "DB_File", $filename, O_RDWR|O_CREAT, 0640, $DB_BTREE 
-	or die "Cannot open $filename: $!\n";
+        or die "Cannot open $filename: $!\n";
  
     # Add some key/value pairs to the file
     $h{'Wall'} = 'Larry' ;
@@ -998,7 +998,7 @@ EOM
     # iterate through the associative array
     # and print each key/value pair.
     foreach (keys %h)
-      { print "$_	-> $h{$_}\n" }
+      { print "$_ -> $h{$_}\n" }
 
     untie %h ;
 
@@ -1006,17 +1006,17 @@ EOM
   }  
 
   ok(148, docat_del($file) eq ($db185mode ? <<'EOM' : <<'EOM') ) ;
-Smith	-> John
-Wall	-> Brick
-Wall	-> Brick
-Wall	-> Brick
-mouse	-> mickey
+Smith -> John
+Wall -> Brick
+Wall -> Brick
+Wall -> Brick
+mouse -> mickey
 EOM
-Smith	-> John
-Wall	-> Larry
-Wall	-> Larry
-Wall	-> Larry
-mouse	-> mickey
+Smith -> John
+Wall -> Larry
+Wall -> Larry
+Wall -> Larry
+mouse -> mickey
 EOM
 
   {
@@ -1038,7 +1038,7 @@ EOM
     $DB_BTREE->{'flags'} = R_DUP ;
  
     $x = tie %h, "DB_File", $filename, O_RDWR|O_CREAT, 0640, $DB_BTREE 
-	or die "Cannot open $filename: $!\n";
+        or die "Cannot open $filename: $!\n";
  
     # Add some key/value pairs to the file
     $h{'Wall'} = 'Larry' ;
@@ -1053,7 +1053,7 @@ EOM
     for ($status = $x->seq($key, $value, R_FIRST) ;
          $status == 0 ;
          $status = $x->seq($key, $value, R_NEXT) )
-      {  print "$key	-> $value\n" }
+      {  print "$key -> $value\n" }
  
  
     undef $x ;
@@ -1061,17 +1061,17 @@ EOM
   }
 
   ok(149, docat_del($file) eq ($db185mode == 1 ? <<'EOM' : <<'EOM') ) ;
-Smith	-> John
-Wall	-> Brick
-Wall	-> Brick
-Wall	-> Larry
-mouse	-> mickey
+Smith -> John
+Wall -> Brick
+Wall -> Brick
+Wall -> Larry
+mouse -> mickey
 EOM
-Smith	-> John
-Wall	-> Larry
-Wall	-> Brick
-Wall	-> Brick
-mouse	-> mickey
+Smith -> John
+Wall -> Larry
+Wall -> Brick
+Wall -> Brick
+mouse -> mickey
 EOM
 
 
@@ -1093,7 +1093,7 @@ EOM
     $DB_BTREE->{'flags'} = R_DUP ;
  
     $x = tie %h, "DB_File", $filename, O_RDWR|O_CREAT, 0640, $DB_BTREE 
-	or die "Cannot open $filename: $!\n";
+        or die "Cannot open $filename: $!\n";
  
     my $cnt  = $x->get_dup("Wall") ;
     print "Wall occurred $cnt times\n" ;
@@ -1103,13 +1103,13 @@ EOM
     print "There are $hash{'Brick'} Brick Walls\n" ;
 
     my @list = sort $x->get_dup("Wall") ;
-    print "Wall =>	[@list]\n" ;
+    print "Wall => [@list]\n" ;
 
     @list = $x->get_dup("Smith") ;
-    print "Smith =>	[@list]\n" ;
+    print "Smith => [@list]\n" ;
  
     @list = $x->get_dup("Dog") ;
-    print "Dog =>	[@list]\n" ; 
+    print "Dog => [@list]\n" ; 
  
     undef $x ;
     untie %h ;
@@ -1119,9 +1119,9 @@ EOM
 Wall occurred 3 times
 Larry is there
 There are 2 Brick Walls
-Wall =>	[Brick Brick Larry]
-Smith =>	[John]
-Dog =>	[]
+Wall => [Brick Brick Larry]
+Smith => [John]
+Dog => []
 EOM
 
   {
@@ -1142,7 +1142,7 @@ EOM
     $DB_BTREE->{'flags'} = R_DUP ;
  
     $x = tie %h, "DB_File", $filename, O_RDWR|O_CREAT, 0640, $DB_BTREE 
-	or die "Cannot open $filename: $!\n";
+        or die "Cannot open $filename: $!\n";
 
     $found = ( $x->find_dup("Wall", "Larry") == 0 ? "" : "not") ; 
     print "Larry Wall is $found there\n" ;
@@ -1177,7 +1177,7 @@ EOM
     $DB_BTREE->{'flags'} = R_DUP ;
  
     $x = tie %h, "DB_File", $filename, O_RDWR|O_CREAT, 0640, $DB_BTREE 
-	or die "Cannot open $filename: $!\n";
+        or die "Cannot open $filename: $!\n";
 
     $x->del_dup("Wall", "Larry") ;
 
@@ -1213,7 +1213,7 @@ EOM
         my $value = 0;
         my $orig_key = $key ;
         $x->seq($key, $value, R_CURSOR) ;
-        print "$orig_key\t-> $key\t-> $value\n" ;
+        print "$orig_key -> $key -> $value\n" ;
     }
 
     $filename = "tree" ;
@@ -1232,10 +1232,10 @@ EOM
     $key = $value = 0 ;
     print "IN ORDER\n" ;
     for ($st = $x->seq($key, $value, R_FIRST) ;
-	 $st == 0 ;
+         $st == 0 ;
          $st = $x->seq($key, $value, R_NEXT) )
-	
-      {  print "$key	-> $value\n" }
+        
+      {  print "$key -> $value\n" }
  
     print "\nPARTIAL MATCH\n" ;
 
@@ -1252,15 +1252,15 @@ EOM
 
   ok(153, docat_del($file) eq <<'EOM') ;
 IN ORDER
-Smith	-> John
-Wall	-> Larry
-Walls	-> Brick
-mouse	-> mickey
+Smith -> John
+Wall -> Larry
+Walls -> Brick
+mouse -> mickey
 
 PARTIAL MATCH
-Wa	-> Wall	-> Larry
-A	-> Smith	-> John
-a	-> mouse	-> mickey
+Wa -> Wall -> Larry
+A -> Smith -> John
+a -> mouse -> mickey
 EOM
 
 }
@@ -1280,7 +1280,7 @@ EOM
     local $SIG{__WARN__} = sub {$a = $_[0]} ;
     
     tie %h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0664, $DB_BTREE
-	or die "Can't open file: $!\n" ;
+        or die "Can't open file: $!\n" ;
     $h{ABC} = undef;
     ok(154, $a eq "") ;
     untie %h ;
@@ -1300,7 +1300,7 @@ EOM
     local $SIG{__WARN__} = sub {$a = $_[0]} ;
     
     tie %h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0664, $DB_BTREE
-	or die "Can't open file: $!\n" ;
+        or die "Can't open file: $!\n" ;
     %h = (); ;
     ok(155, $a eq "") ;
     untie %h ;
@@ -1373,9 +1373,9 @@ EOM
 #    my (%h);
 #    ok(164, tie(%hash, 'DB_File',$Dfile, O_RDWR|O_CREAT, 0640, $dbh ) );
 #
-#    eval {	$hash{1} = 2;
-#    		$hash{4} = 5;
-#	 };
+#    eval {     $hash{1} = 2;
+#               $hash{4} = 5;
+#        };
 #
 #    ok(165, $@ =~ /^DB_File btree_compare: recursion detected/);
 #    {

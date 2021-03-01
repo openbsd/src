@@ -132,6 +132,13 @@ use_ok( 'Module::Load::Conditional' );
     is( $rv->{version}, 2,          "   Version is correct" );
 }
 
+### test finding a version of a module that has a VERSION error in a HereDoc
+{   my $rv = check_install( module => 'HereDoc' );
+    ok( $rv,                        'Testing $VERSION in HEREDOC' );
+    ok( !$rv->{version},            "   No Version found" );
+    is( $rv->{version}, undef,      "   Version is correct" );
+}
+
 ### test that no package statement means $VERSION is $main::VERSION
 {
     my $rv = check_install( module => 'NotMain' );

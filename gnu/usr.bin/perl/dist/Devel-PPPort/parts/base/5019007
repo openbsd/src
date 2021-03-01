@@ -1,2 +1,4 @@
 5.019007
+__ASSERT_                      # E
 OP_TYPE_IS                     # U
+fixup_errno_string             # F added by devel/scanprov

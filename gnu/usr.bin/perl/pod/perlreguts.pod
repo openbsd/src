@@ -108,7 +108,8 @@ perl source, we will call the nodes in a regex program "regops".
 The program is represented by an array of C<regnode> structures, one or
 more of which represent a single regop of the program. Struct
 C<regnode> is the smallest struct needed, and has a field structure which is
-shared with all the other larger structures.
+shared with all the other larger structures.  (Outside this document, the term
+"regnode" is sometimes used to mean "regop", which could be confusing.)
 
 The "next" pointers of all regops except C<BRANCH> implement concatenation;
 a "next" pointer with a C<BRANCH> on both ends of it is connecting two
@@ -160,7 +161,7 @@ arguments instead:
 
 C<regnode_string> structures, used for literal strings, follow the header
 with a one-byte length and then the string data. Strings are padded on
-the end with zero bytes so that the total length of the node is a
+the tail end with zero bytes so that the total length of the node is a
 multiple of four bytes:
 
     regnode_string           char string[1];
@@ -257,11 +258,9 @@ involves the following steps:
 
 =over 5
 
-=item 1. Parsing for size
+=item 1. Parsing
 
-=item 2. Parsing for construction
-
-=item 3. Peep-hole optimisation and analysis
+=item 2. Peep-hole optimisation and analysis
 
 =back
 
@@ -269,9 +268,9 @@ involves the following steps:
 
 =over 5
 
-=item 4. Start position and no-match optimisations
+=item 3. Start position and no-match optimisations
 
-=item 5. Program execution
+=item 4. Program execution
 
 =back
 
@@ -304,32 +303,14 @@ fields. Likewise there are many macros which operate on this
 variable: anything that looks like C<RExC_xxxx> is a macro that operates on
 this pointer/structure.
 
-=head3 Parsing for size
-
-In this pass the input pattern is parsed in order to calculate how much
-space is needed for each regop we would need to emit. The size is also
-used to determine whether long jumps will be required in the program.
-
-This stage is controlled by the macro C<SIZE_ONLY> being set.
-
-The parse proceeds pretty much exactly as it does during the
-construction phase, except that most routines are short-circuited to
-change the size field C<RExC_size> and not do anything else.
-
-=head3 Parsing for construction
-
-Once the size of the program has been determined, the pattern is parsed
-again, but this time for real. Now C<SIZE_ONLY> will be false, and the
-actual construction can occur.
-
 C<reg()> is the start of the parse process. It is responsible for
 parsing an arbitrary chunk of pattern up to either the end of the
 string, or the first closing parenthesis it encounters in the pattern.
 This means it can be used to parse the top-level regex, or any section
 inside of a grouping parenthesis. It also handles the "special parens"
-that perl's regexes have. For instance when parsing C</x(?:foo)y/> C<reg()>
-will at one point be called to parse from the "?" symbol up to and
-including the ")".
+that perl's regexes have. For instance when parsing C</x(?:foo)y/>,
+C<reg()> will at one point be called to parse from the "?" symbol up to
+and including the ")".
 
 Additionally, C<reg()> is responsible for parsing the one or more
 branches from the pattern, and for "finishing them off" by correctly
@@ -343,6 +324,34 @@ handles "things" followed by a quantifier. In order to parse the
 parses out constant strings, character classes, and the
 various special symbols like C<$>. If C<regatom()> encounters a "("
 character it in turn calls C<reg()>.
+
+There used to be two main passes involved in parsing, the first to
+calculate the size of the compiled program, and the second to actually
+compile it.  But now there is only one main pass, with an initial crude
+guess based on the length of the input pattern, which is increased if
+necessary as parsing proceeds, and afterwards, trimmed to the actual
+amount used.
+
+However, it may happen that parsing must be restarted at the beginning
+when various circumstances occur along the way.  An example is if the
+program turns out to be so large that there are jumps in it that won't
+fit in the normal 16 bits available.  There are two special regops that
+can hold bigger jump destinations, BRANCHJ and LONGBRANCH.  The parse is
+restarted, and these are used instead of the normal shorter ones.
+Whenever restarting the parse is required, the function returns failure
+and sets a flag as to what needs to be done.  This is passed up to the
+top level routine which takes the appropriate action and restarts from
+scratch.  In the case of needing longer jumps, the C<RExC_use_BRANCHJ>
+flag is set in the C<RExC_state_t> structure, which the functions know
+to inspect before deciding how to do branches.
+
+In most instances, the function that discovers the issue sets the causal
+flag and returns failure immediately.  L</Parsing complications>
+contains an explicit example of how this works.  In other cases, such as
+a forward reference to a numbered parenthetical grouping, we need to
+finish the parse to know if that numbered grouping actually appears in
+the pattern.  In those cases, the parse is just redone at the end, with
+the knowledge of how many groupings occur in it.
 
 The routine C<regtail()> is called by both C<reg()> and C<regbranch()>
 in order to "set the tail pointer" correctly. When executing and
@@ -419,19 +428,16 @@ efficient representation can be used, and starts sizing on this basis.
 However, if it then encounters something in the pattern which must be stored
 as Unicode, such as an C<\x{...}> escape sequence representing a character
 literal, then this means that all previously calculated sizes need to be
-redone, using values appropriate for the Unicode representation. Currently,
-all regular expression constructions which can trigger this are parsed by code
-in C<regatom()>.
-
-To avoid wasted work when a restart is needed, the sizing pass is abandoned
-- C<regatom()> immediately returns NULL, setting the flag C<RESTART_UTF8>.
-(This action is encapsulated using the macro C<REQUIRE_UTF8>.) This restart
-request is propagated up the call chain in a similar fashion, until it is
-"caught" in C<Perl_re_op_compile()>, which marks the pattern as containing
-Unicode, and restarts the sizing pass. It is also possible for constructions
-within run-time code blocks to turn out to need Unicode representation.,
-which is signalled by C<S_compile_runtime_code()> returning false to
-C<Perl_re_op_compile()>.
+redone, using values appropriate for the Unicode representation.  This
+is another instance where the parsing needs to be restarted, and it can
+and is done immediately.  The function returns failure, and sets the
+flag C<RESTART_UTF8> (encapsulated by using the macro C<REQUIRE_UTF8>).
+This restart request is propagated up the call chain in a similar
+fashion, until it is "caught" in C<Perl_re_op_compile()>, which marks
+the pattern as containing Unicode, and restarts the sizing pass. It is
+also possible for constructions within run-time code blocks to turn out
+to need Unicode representation., which is signalled by
+C<S_compile_runtime_code()> returning false to C<Perl_re_op_compile()>.
 
 The restart was previously implemented using a C<longjmp> in C<regatom()>
 back to a C<setjmp> in C<Perl_re_op_compile()>, but this proved to be
@@ -440,9 +446,10 @@ variables, which interact badly with the emergent control flow of C<setjmp>.
 
 =head3 Debug Output
 
-In the 5.9.x development version of perl you can C<< use re Debug => 'PARSE' >>
-to see some trace information about the parse process. We will start with some
-simple patterns and build up to more complex patterns.
+Starting in the 5.9.x development version of perl you can C<< use re
+Debug => 'PARSE' >> to see some trace information about the parse
+process. We will start with some simple patterns and build up to more
+complex patterns.
 
 So when we parse C</foo/> we see something like the following table. The
 left shows what is being parsed, and the number indicates where the next regop
@@ -891,14 +898,16 @@ With excerpts from Perl, and contributions and suggestions from
 Ronald J. Kimball, Dave Mitchell, Dominic Dunlop, Mark Jason Dominus,
 Stephen McCamant, and David Landgren.
 
+Now maintained by Perl 5 Porters.
+
 =head1 LICENCE
 
 Same terms as Perl.
 
 =head1 REFERENCES
 
-[1] L<http://perl.plover.com/Rx/paper/>
+[1] L<https://perl.plover.com/Rx/paper/>
 
-[2] L<http://www.unicode.org>
+[2] L<https://www.unicode.org/>
 
 =cut

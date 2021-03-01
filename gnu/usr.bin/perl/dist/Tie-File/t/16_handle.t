@@ -3,7 +3,10 @@
 # Basic operation, initializing the object from an already-open handle
 # instead of from a filename
 
-my $file = "tf$$.txt";
+use strict;
+use warnings;
+
+my $file = "tf16-$$.txt";
 $: = Tie::File::_default_recsep();
 
 if ($^O =~ /vms/i) {
@@ -22,6 +25,7 @@ sysopen F, $file, O_CREAT | O_RDWR
   or die "Couldn't create temp file $file: $!; aborting";
 binmode F;
 
+my @a;
 my $o = tie @a, 'Tie::File', \*F, autochomp => 0, autodefer => 0;
 print $o ? "ok $N\n" : "not ok $N\n";
 $N++;

@@ -1,1 +1,3 @@
 5.014000
+_to_uni_fold_flags             # F added by devel/scanprov
+_to_utf8_fold_flags            # F added by devel/scanprov

@@ -68,7 +68,7 @@ should be more time expensive as an option.
 
 =head1 DECIMAL PLACES IN NUMBER FORMATTING
 
-I<After CPAN RT #36136 (https://rt.cpan.org/Ticket/Display.html?id=36136)>
+I<After CPAN RT #36136 (L<https://rt.cpan.org/Ticket/Display.html?id=36136>)>
 
 The documentation of L<Locale::Maketext> advises that 
 the standard bracket method C<numf> is limited and that

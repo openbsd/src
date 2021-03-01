@@ -10,10 +10,12 @@
 #
 ################################################################################
 
+use FindBin ();
+
 BEGIN {
   if ($ENV{'PERL_CORE'}) {
     chdir 't' if -d 't';
-    @INC = ('../lib', '../ext/Devel-PPPort/t') if -d '../lib' && -d '../ext';
+    unshift @INC, '../lib' if -d '../lib' && -d '../ext';
     require Config; import Config;
     use vars '%Config';
     if (" $Config{'extensions'} " !~ m[ Devel/PPPort ]) {
@@ -21,24 +23,26 @@ BEGIN {
       exit 0;
     }
   }
-  else {
-    unshift @INC, 't';
-  }
+
+  use lib "$FindBin::Bin";
+  use lib "$FindBin::Bin/../parts/inc";
+
+  die qq[Cannot find "$FindBin::Bin/../parts/inc"] unless -d "$FindBin::Bin/../parts/inc";
 
   sub load {
-    eval "use Test";
-    require 'testutil.pl' if $@;
+    require 'testutil.pl';
+    require 'inctools';
   }
 
-  if (52) {
+  if (11) {
     load();
-    plan(tests => 52);
+    plan(tests => 11);
   }
 }
 
 use Devel::PPPort;
 use strict;
-$^W = 1;
+BEGIN { $^W = 1; }
 
 package Devel::PPPort;
 use vars '@ISA';
@@ -48,127 +52,17 @@ bootstrap Devel::PPPort;
 
 package main;
 
-ok(&Devel::PPPort::sv_setuv(42), 42);
-ok(&Devel::PPPort::newSVuv(123), 123);
-ok(&Devel::PPPort::sv_2uv("4711"), 4711);
-ok(&Devel::PPPort::sv_2uv("1735928559"), 1735928559);
-ok(&Devel::PPPort::SvUVx("1735928559"), 1735928559);
-ok(&Devel::PPPort::SvUVx(1735928559), 1735928559);
-ok(&Devel::PPPort::SvUVx(0xdeadbeef), 0xdeadbeef);
-ok(&Devel::PPPort::XSRETURN_UV(), 42);
-ok(&Devel::PPPort::PUSHu(), 42);
-ok(&Devel::PPPort::XPUSHu(), 43);
-ok(&Devel::PPPort::UTF8_SAFE_SKIP("A", 0), 1);
-ok(&Devel::PPPort::UTF8_SAFE_SKIP("A", -1), 0);
-ok(&Devel::PPPort::my_strnlen("abc\0def", 7), 3);
+BEGIN { require warnings if "$]" > '5.006' }
 
-my $ret = &Devel::PPPort::utf8_to_uvchr("A");
-ok($ret->[0], ord("A"));
-ok($ret->[1], 1);
-
-$ret = &Devel::PPPort::utf8_to_uvchr("\0");
-ok($ret->[0], 0);
-ok($ret->[1], 1);
-
-$ret = &Devel::PPPort::utf8_to_uvchr_buf("A", 0);
-ok($ret->[0], ord("A"));
-ok($ret->[1], 1);
-
-$ret = &Devel::PPPort::utf8_to_uvchr_buf("\0", 0);
-ok($ret->[0], 0);
-ok($ret->[1], 1);
-
-if (ord("A") != 65) {   # tests not valid for EBCDIC
-    ok(1, 1) for 1 .. (2 + 4 + (5 * 5));
-}
-else {
-    $ret = &Devel::PPPort::utf8_to_uvchr_buf("\xc4\x80", 0);
-    ok($ret->[0], 0x100);
-    ok($ret->[1], 2);
-
-    my @warnings;
-    local $SIG{__WARN__} = sub { push @warnings, @_; };
-
-    {
-        use warnings 'utf8';
-        $ret = &Devel::PPPort::utf8_to_uvchr("\xe0\0\x80");
-        ok($ret->[0], 0);
-        ok($ret->[1], -1);
-
-        no warnings;
-        $ret = &Devel::PPPort::utf8_to_uvchr("\xe0\0\x80");
-        ok($ret->[0], 0xFFFD);
-        ok($ret->[1], 1);
-    }
-
-    my @buf_tests = (
-        {
-            input      => "A",
-            adjustment => -1,
-            warning    => qr/empty/,
-            no_warnings_returned_length => 0,
-        },
-        {
-            input      => "\xc4\xc5",
-            adjustment => 0,
-            warning    => qr/non-continuation/,
-            no_warnings_returned_length => 1,
-        },
-        {
-            input      => "\xc4\x80",
-            adjustment => -1,
-            warning    => qr/short|1 byte, need 2/,
-            no_warnings_returned_length => 1,
-        },
-        {
-            input      => "\xc0\x81",
-            adjustment => 0,
-            warning    => qr/overlong|2 bytes, need 1/,
-            no_warnings_returned_length => 2,
-        },
-        {                 # Old algorithm supposedly failed to detect this
-            input      => "\xff\x80\x90\x90\x90\xbf\xbf\xbf\xbf\xbf\xbf\xbf\xbf",
-            adjustment => 0,
-            warning    => qr/overflow/,
-            no_warnings_returned_length => 13,
-        },
-    );
-
-    # An empty input is an assertion failure on debugging builds.  It is
-    # deliberately the first test.
-    require Config; import Config;
-    use vars '%Config';
-    if ($Config{ccflags} =~ /-DDEBUGGING/) {
-        shift @buf_tests;
-        ok(1, 1) for 1..5;
-    }
-
-    for my $test (@buf_tests) {
-        my $input = $test->{'input'};
-        my $adjustment = $test->{'adjustment'};
-        my $display = 'utf8_to_uvchr_buf("';
-        for (my $i = 0; $i < length($input) + $adjustment; $i++) {
-            $display .= sprintf "\\x%02x", ord substr($input, $i, 1);
-        }
-
-        $display .= '")';
-        my $warning = $test->{'warning'};
-
-        undef @warnings;
-        use warnings 'utf8';
-        $ret = &Devel::PPPort::utf8_to_uvchr_buf($input, $adjustment);
-        ok($ret->[0], 0,  "returned value $display; warnings enabled");
-        ok($ret->[1], -1, "returned length $display; warnings enabled");
-        my $all_warnings = join "; ", @warnings;
-        my $contains = grep { $_ =~ $warning } $all_warnings;
-        ok($contains, 1, $display . "; '$all_warnings' contains '$warning'");
-
-        undef @warnings;
-        no warnings 'utf8';
-        $ret = &Devel::PPPort::utf8_to_uvchr_buf($input, $adjustment);
-        ok($ret->[0], 0xFFFD,  "returned value $display; warnings disabled");
-        ok($ret->[1], $test->{'no_warnings_returned_length'},
-                      "returned length $display; warnings disabled");
-    }
-}
+is(&Devel::PPPort::sv_setuv(42), 42);
+is(&Devel::PPPort::newSVuv(123), 123);
+is(&Devel::PPPort::sv_2uv("4711"), 4711);
+is(&Devel::PPPort::sv_2uv("1735928559"), 1735928559);
+is(&Devel::PPPort::SvUVx("1735928559"), 1735928559);
+is(&Devel::PPPort::SvUVx(1735928559), 1735928559);
+is(&Devel::PPPort::SvUVx(0xdeadbeef), 0xdeadbeef);
+is(&Devel::PPPort::XSRETURN_UV(), 42);
+is(&Devel::PPPort::PUSHu(), 42);
+is(&Devel::PPPort::XPUSHu(), 43);
+is(&Devel::PPPort::my_strnlen("abc\0def", 7), 3);
 

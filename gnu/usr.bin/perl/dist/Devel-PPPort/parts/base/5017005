@@ -1,1 +1,4 @@
 5.017005
+sv_mortalcopy_flags            # U
+WARN_EXPERIMENTAL__LEXICAL_SUBS # E
+sv_resetpvn                    # F added by devel/scanprov

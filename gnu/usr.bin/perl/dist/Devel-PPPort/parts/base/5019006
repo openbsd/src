@@ -1,1 +1,5 @@
 5.019006
+XopENTRYCUSTOM                 # M added by devel/scanprov
+custom_op_get_field            # F added by devel/scanprov
+gv_override                    # F added by devel/scanprov
+set_caret_X                    # F added by devel/scanprov

@@ -1,9 +1,8 @@
 #!/perl -w
 use strict;
 
-# See "Writing a test" in perlhack.pod for the instructions about the order that
-# testing directories run, and which constructions should be avoided in the
-# early tests.
+# See "TESTING" in perlhack.pod for the instructions about where test files
+# are located and which constructions should be avoided in the early tests.
 
 # This regression tests ensures that the rules aren't accidentally overlooked.
 
@@ -36,8 +35,13 @@ while (my $file = <$fh>) {
     # avoid PERL_UNICODE causing us to read non-UTF-8 files as UTF-8
     binmode $t;
     my $contents = <$t>;
-    # Make sure that we don't match ourselves
-    unlike($contents, qr/use\s+Test::More/, "$file doesn't use Test::\QMore");
+    # Don't 'use' Test::* modules under 't/' --
+    # but exclude this file from that test.
+    unlike(
+        $contents,
+        qr/use\s+Test::(?:Simple|More)/,
+        "$file doesn't use Test::Simple or Test::More"
+    ) unless ($file =~ m|porting/test_bootstrap\.t|);
     next unless $file =~ m!^base/! or $file =~ m!^comp!;
 
     # Remove only the excepted constructions for the specific files.

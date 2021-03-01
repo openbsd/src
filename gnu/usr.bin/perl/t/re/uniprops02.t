@@ -29,7 +29,7 @@ do '../lib/unicore/TestProp.pl';
 # Since TestProp.pl explicitly exits, we will only get here if it
 # could not load.
 if (defined &DynaLoader::boot_DynaLoader # not miniperl
- || eval 'require "unicore/Heavy.pl"'    # or tables are built
+ || eval 'require "unicore/UCD.pl"'    # or tables are built
 ) {
     die "Could not run lib/unicore/TestProp.pl: ", $@||$!;
 }

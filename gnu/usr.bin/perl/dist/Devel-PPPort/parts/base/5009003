@@ -1,20 +1,14 @@
 5.009003
-Newx                           # E
-Newxc                          # E
-Newxz                          # E
-PL_check                       # E
-SvMAGIC_set                    # U
-SvRV_set                       # U
-SvSTASH_set                    # U
-SvUV_set                       # U
 av_arylen_p                    # U
 ckwarn                         # U
 ckwarn_d                       # U
-csighandler                    # E (Perl_csighandler)
 dAXMARK                        # E
 dMULTICALL                     # E
 doref                          # U
+dVAR                           # E
 gv_const_sv                    # U
+GV_NOADD_NOINIT                # E
+GV_NOEXPAND                    # E
 gv_stashpvs                    # U
 hv_eiter_p                     # U
 hv_eiter_set                   # U
@@ -25,42 +19,88 @@ hv_placeholders_set            # U
 hv_riter_p                     # U
 hv_riter_set                   # U
 is_utf8_string_loclen          # U
+MULTICALL                      # E
 my_sprintf                     # U
 newGIVENOP                     # U
 newSVhek                       # U
 newSVpvs                       # U
 newSVpvs_share                 # U
-newWHENOP                      # U
-pad_compname_type              # U
+Newx                           # E
+Newxc                          # E
+Newxz                          # E
+PERL_MAGIC_arylen_p            # E
+PERL_MAGIC_rhash               # E
+PERL_MAGIC_symtab              # E
+PL_check                       # E
+POP_MULTICALL                  # E
 savepvs                        # U
 sortsv_flags                   # U
 sv_catpvs                      # U
+SvMAGIC_set                    # U
+SvRV_set                       # U
+SV_SMAGIC                      # E
+SvSTASH_set                    # U
+SvUV_set                       # U
 vverify                        # U
-HvNAMELEN_get                  # added by devel/scanprov
-HvNAME_get                     # added by devel/scanprov
-PERLIO_FUNCS_CAST              # added by devel/scanprov
-PERLIO_FUNCS_DECL              # added by devel/scanprov
-PERL_UNUSED_ARG                # added by devel/scanprov
-PTR2nat                        # added by devel/scanprov
-STR_WITH_LEN                   # added by devel/scanprov
-SV_CONST_RETURN                # added by devel/scanprov
-SV_MUTABLE_RETURN              # added by devel/scanprov
-SV_SMAGIC                      # added by devel/scanprov
-SvPVX_const                    # added by devel/scanprov
-SvPVX_mutable                  # added by devel/scanprov
-SvPV_const                     # added by devel/scanprov
-SvPV_flags_const               # added by devel/scanprov
-SvPV_flags_const_nolen         # added by devel/scanprov
-SvPV_flags_mutable             # added by devel/scanprov
-SvPV_force_flags_mutable       # added by devel/scanprov
-SvPV_force_flags_nolen         # added by devel/scanprov
-SvPV_force_mutable             # added by devel/scanprov
-SvPV_force_nolen               # added by devel/scanprov
-SvPV_force_nomg_nolen          # added by devel/scanprov
-SvPV_mutable                   # added by devel/scanprov
-SvPV_nolen_const               # added by devel/scanprov
-SvPV_nomg_const                # added by devel/scanprov
-SvPV_nomg_const_nolen          # added by devel/scanprov
-SvPV_renew                     # added by devel/scanprov
-SvSHARED_HASH                  # added by devel/scanprov
-dVAR                           # added by devel/scanprov
+GvSVn                          # M added by devel/scanprov
+HvNAME_get                     # M added by devel/scanprov
+HvNAMELEN_get                  # M added by devel/scanprov
+PERLIO_FUNCS_CAST              # M added by devel/scanprov
+PERLIO_FUNCS_DECL              # M added by devel/scanprov
+PERL_UNUSED_ARG                # M added by devel/scanprov
+PTR2nat                        # M added by devel/scanprov
+STR_WITH_LEN                   # M added by devel/scanprov
+SV_CONST_RETURN                # M added by devel/scanprov
+SV_MUTABLE_RETURN              # M added by devel/scanprov
+SvPV_const                     # M added by devel/scanprov
+SvPV_flags_const               # M added by devel/scanprov
+SvPV_flags_const_nolen         # M added by devel/scanprov
+SvPV_flags_mutable             # M added by devel/scanprov
+SvPV_force_flags_mutable       # M added by devel/scanprov
+SvPV_force_flags_nolen         # M added by devel/scanprov
+SvPV_force_mutable             # M added by devel/scanprov
+SvPV_force_nolen               # M added by devel/scanprov
+SvPV_force_nomg_nolen          # M added by devel/scanprov
+SvPV_mutable                   # M added by devel/scanprov
+SvPV_nolen_const               # M added by devel/scanprov
+SvPV_nomg_const                # M added by devel/scanprov
+SvPV_nomg_const_nolen          # M added by devel/scanprov
+SvPV_renew                     # M added by devel/scanprov
+SvPVX_const                    # M added by devel/scanprov
+SvPVX_mutable                  # M added by devel/scanprov
+SvSHARED_HASH                  # M added by devel/scanprov
+amagic_cmp                     # F added by devel/scanprov
+amagic_cmp_locale              # F added by devel/scanprov
+amagic_i_ncmp                  # F added by devel/scanprov
+amagic_ncmp                    # F added by devel/scanprov
+check_type_and_open            # F added by devel/scanprov
+dump_sv_child                  # F added by devel/scanprov
+F0convert                      # F added by devel/scanprov
+first_symbol                   # F added by devel/scanprov
+free_global_struct             # F added by devel/scanprov
+hv_auxinit                     # F added by devel/scanprov
+incpush_if_exists              # F added by devel/scanprov
+init_global_struct             # F added by devel/scanprov
+is_utf8_common                 # F added by devel/scanprov
+magic_freearylen_p             # F added by devel/scanprov
+mg_localize                    # F added by devel/scanprov
+my_clearenv                    # F added by devel/scanprov
+need_utf8                      # F added by devel/scanprov
+Perl_hv_backreferences_p       # F added by devel/scanprov
+Perl_hv_placeholders_p         # F added by devel/scanprov
+Perl_sv_add_backref            # F added by devel/scanprov
+Perl_sv_kill_backrefs          # F added by devel/scanprov
+restore_magic                  # F added by devel/scanprov
+run_user_filter                # F added by devel/scanprov
+sequence_num                   # F added by devel/scanprov
+sortcv                         # F added by devel/scanprov
+sortcv_stacked                 # F added by devel/scanprov
+sortcv_xsub                    # F added by devel/scanprov
+strip_return                   # F added by devel/scanprov
+sv_exp_grow                    # F added by devel/scanprov
+sv_i_ncmp                      # F added by devel/scanprov
+sv_ncmp                        # F added by devel/scanprov
+tokenize_use                   # F added by devel/scanprov
+uiv_2buf                       # F added by devel/scanprov
+unwind_handler_stack           # F added by devel/scanprov
+varname                        # F added by devel/scanprov

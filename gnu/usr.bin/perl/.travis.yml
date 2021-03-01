@@ -3,11 +3,9 @@ cache: ccache
 
 os:
   - linux
-  - osx
 
 compiler:
   - gcc
-  - clang
 
 install:
   - git fetch --unshallow --tags # t/porting/cmp_version.t
@@ -19,20 +17,19 @@ env:
     global:
         - JOBS=4
     matrix:
+        # exercise a variety of build options
+        # threads often cause build issues
         - CONFIGURE_ARGS='-Uusethreads'
         - CONFIGURE_ARGS='-Dusethreads'
-        - CONFIGURE_ARGS='-DPERL_GLOBAL_STRUCT'
+        # it's easy to miss dVAR
         - CONFIGURE_ARGS='-DPERL_GLOBAL_STRUCT_PRIVATE'
-        - CONFIGURE_ARGS='-Duseshrplib -Dusesitecustomize'
-        - CONFIGURE_ARGS='-Duserelocatableinc'
+        # test scripts can be sensitive to PERL_UNICODE, and check long doubles
+        - CONFIGURE_ARGS='-Duseshrplib -Dusesitecustomize -Duselongdouble' PERL_UNICODE='' LANG='en_US.UTF-8'
+        # we've rarely had a problem with non-Englush locales, and exercise quadmath
+        - CONFIGURE_ARGS='-Duseshrplib -Dusequadmath -Dusecbacktrace -Dusethreads' PERL_UNICODE='' LANG='de_DE.UTF-8'
 
-# only use gcc on linux, and only use clang on osx for now
 matrix:
-  exclude:
-  - compiler: clang
-    os: linux
-  - compiler: gcc
-    os: osx
+  fast_finish: true
 
 script:
   - ./Configure -des -Dusedevel -Uversiononly -Dcc="ccache $CC" $CONFIGURE_ARGS -Dprefix=$HOME/perl-blead -DDEBUGGING
@@ -68,7 +65,7 @@ notifications:
       - "Report for %{repository} (%{commit}) from %{author} (%{elapsed_time})"
       - "Status: %{message}"
       - "Build URL: %{build_url}"
-      - "GitHub URL: https://github.com/p5h/perl5demo/commit/%{commit}" # adjust this url to use the production repo
+      - "GitHub URL: https://github.com/%{repository_slug}/commit/%{commit}"
     on_success: change # default: always
     on_failure: always # default: always
 #    use_notice: true

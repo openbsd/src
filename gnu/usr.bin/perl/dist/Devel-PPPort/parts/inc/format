@@ -55,9 +55,64 @@ croak_NVgf(num)
         PPCODE:
                 Perl_croak(aTHX_ "%.20" NVgf "\n", num);
 
-=tests plan => 1
+#if { VERSION >= 5.004 }
+
+SV *
+sprintf_iv(iv)
+        IV iv
+CODE:
+        RETVAL = newSVpvf("XX_%" IVdf "_XX", iv);
+OUTPUT:
+        RETVAL
+
+SV *
+sprintf_uv(uv)
+        UV uv
+CODE:
+        RETVAL = newSVpvf("XX_%" UVuf "_XX", uv);
+OUTPUT:
+        RETVAL
+
+SV *
+sprintf_ivmax()
+CODE:
+        RETVAL = newSVpvf("%" IVdf, IV_MAX);
+OUTPUT:
+        RETVAL
+
+SV *
+sprintf_uvmax()
+CODE:
+        RETVAL = newSVpvf("%" UVuf, UV_MAX);
+OUTPUT:
+        RETVAL
+
+#endif
+
+=tests plan => 5
+
+use Config;
+
+if ("$]" < '5.004') {
+    skip 'skip: No newSVpvf support', 5;
+    exit;
+}
 
 my $num = 1.12345678901234567890;
 
 eval { Devel::PPPort::croak_NVgf($num) };
 ok($@ =~ /^1.1234567890/);
+
+is(Devel::PPPort::sprintf_iv(-8), 'XX_-8_XX');
+is(Devel::PPPort::sprintf_uv(15), 'XX_15_XX');
+
+my $ivsize = $Config::Config{ivsize};
+if ($ivsize && ($ivsize == 4 || $ivsize == 8)) {
+    my $ivmax = ($ivsize == 4) ? '2147483647' : '9223372036854775807';
+    my $uvmax = ($ivsize == 4) ? '4294967295' : '18446744073709551615';
+    is(Devel::PPPort::sprintf_ivmax(), $ivmax);
+    is(Devel::PPPort::sprintf_uvmax(), $uvmax);
+}
+else {
+    skip 'skip: unknown ivsize', 2;
+}

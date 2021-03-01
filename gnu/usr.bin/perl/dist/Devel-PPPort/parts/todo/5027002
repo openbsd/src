@@ -1,0 +1,4 @@
+5.027002
+Perl_setlocale                 # U
+UTF8_DISALLOW_PERL_EXTENDED    # E
+UTF8_WARN_PERL_EXTENDED        # E

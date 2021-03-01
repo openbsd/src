@@ -1,10 +1,18 @@
 5.013002
-SvNV_nomg                      # U
+C_ARRAY_END                    # U
+clone_params_del               # U
+clone_params_new               # U
 find_rundefsv                  # U
 foldEQ                         # U
 foldEQ_locale                  # U
 foldEQ_utf8                    # U
 hv_fill                        # U
 sv_dec_nomg                    # U
+sv_dup_inc                     # U
 sv_inc_nomg                    # U
-C_ARRAY_END                    # added by devel/scanprov
+SvNV_nomg                      # U
+padlist_dup                    # F added by devel/scanprov
+Perl_try_amagic_bin            # F added by devel/scanprov
+Perl_try_amagic_un             # F added by devel/scanprov
+sv_dup_common                  # F added by devel/scanprov
+unreferenced_to_tmp_stack      # F added by devel/scanprov

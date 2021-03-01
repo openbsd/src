@@ -1,22 +1,29 @@
 5.010001
-HeUTF8                         # U
 croak_xs_usage                 # U
+HeUTF8                         # U
 mPUSHs                         # U
-mXPUSHs                        # U
 mro_get_from_name              # U
 mro_get_private_data           # U
 mro_register                   # U
 mro_set_mro                    # U
 mro_set_private_data           # U
+mXPUSHs                        # U
 newSVpvn_flags                 # U
 newSVpvn_utf8                  # U
 newSVpvs_flags                 # U
+save_freeop                    # U (Perl_save_freeop)
 save_hints                     # U
+save_op                        # U (Perl_save_op)
 save_padsv_and_mortalize       # U
 save_pushi32ptr                # U
 save_pushptr                   # U
 save_pushptrptr                # U
 sv_insert_flags                # U
-DEFSV_set                      # added by devel/scanprov
-MUTABLE_PTR                    # added by devel/scanprov
-MUTABLE_SV                     # added by devel/scanprov
+DEFSV_set                      # M added by devel/scanprov
+MUTABLE_PTR                    # M added by devel/scanprov
+MUTABLE_SV                     # M added by devel/scanprov
+magic_clearisa                 # F added by devel/scanprov
+malloc_good_size               # F added by devel/scanprov
+mem_log_common                 # F added by devel/scanprov
+save_pushptri32ptr             # F added by devel/scanprov
+search_const                   # F added by devel/scanprov

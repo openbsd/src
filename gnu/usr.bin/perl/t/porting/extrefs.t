@@ -6,7 +6,7 @@
 # code on CPAN, and can break cflags.SH.
 #
 # Why do we test this?
-# See https://rt.perl.org/rt3/Ticket/Display.html?id=116989
+# See https://github.com/Perl/perl5/issues/12824
 #
 # It's broken - how do I fix it?
 # You added an initializer or static function to a header file that

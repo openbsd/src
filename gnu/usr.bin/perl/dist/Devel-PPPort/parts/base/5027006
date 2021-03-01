@@ -1,0 +1,10 @@
+5.027006
+my_strnlen                     # U
+wrap_keyword_plugin            # U
+multiconcat_stringify          # F added by devel/scanprov
+my_memrchr                     # F added by devel/scanprov
+my_nl_langinfo                 # F added by devel/scanprov
+optimize_op                    # F added by devel/scanprov
+optimize_optree                # F added by devel/scanprov
+set_numeric_underlying         # F added by devel/scanprov
+win32_setlocale                # F added by devel/scanprov

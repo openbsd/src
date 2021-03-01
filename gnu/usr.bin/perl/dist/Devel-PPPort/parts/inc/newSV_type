@@ -16,24 +16,12 @@ newSV_type
 =implementation
 
 #ifndef newSV_type
-
-#if { NEED newSV_type }
-
-SV*
-newSV_type(pTHX_ svtype const t)
-{
-  SV* const sv = newSV(0);
-  sv_upgrade(sv, t);
-  return sv;
-}
-
+#if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
+#  define newSV_type(t) ({ SV *_sv = newSV(0); sv_upgrade(_sv, (t)); _sv; })
+#else
+#  define newSV_type(t) ((PL_Sv = newSV(0)), sv_upgrade(PL_Sv, (t)), PL_Sv)
 #endif
-
 #endif
-
-=xsinit
-
-#define NEED_newSV_type
 
 =xsubs
 
@@ -76,4 +64,4 @@ newSV_type()
 
 =tests plan => 1
 
-ok(Devel::PPPort::newSV_type(), 4);
+is(Devel::PPPort::newSV_type(), 4);

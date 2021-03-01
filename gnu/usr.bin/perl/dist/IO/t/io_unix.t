@@ -1,9 +1,16 @@
 #!./perl
 
 use Config;
+use IO::Socket;
 
 BEGIN {
     my $reason;
+    my $can_fork = $Config{d_fork} ||
+		    (($^O eq 'MSWin32' || $^O eq 'NetWare') and
+		     $Config{useithreads} and
+		     $Config{ccflags} =~ /-DPERL_IMPLICIT_SYS/
+		    );
+
     if ($ENV{PERL_CORE} and $Config{'extensions'} !~ /\bSocket\b/) {
 	$reason = 'Socket extension unavailable';
     }
@@ -11,18 +18,25 @@ BEGIN {
 	$reason = 'IO extension unavailable';
     }
     elsif ($^O eq 'os2') {
-	require IO::Socket;
-
 	eval {IO::Socket::pack_sockaddr_un('/foo/bar') || 1}
 	  or $@ !~ /not implemented/ or
 	    $reason = 'compiled without TCP/IP stack v4';
     }
-    elsif ($^O =~ m/^(?:qnx|nto|vos|MSWin32)$/ ) {
+    elsif ($^O =~ m/^(?:qnx|nto|vos)$/ ) {
 	$reason = "UNIX domain sockets not implemented on $^O";
     }
-    elsif (! $Config{'d_fork'}) {
+    elsif (! $can_fork) {
 	$reason = 'no fork';
     }
+    elsif ($^O eq 'MSWin32') {
+      if ($ENV{CONTINUOUS_INTEGRATION}) {
+         $reason = 'Skipping on Windows CI, see gh17575 and gh17429';
+      } else {
+       $reason = "AF_UNIX unavailable or disabled on this platform"
+         unless eval { socket(my $sock, PF_UNIX, SOCK_STREAM, 0) };
+      }
+    }
+
     if ($reason) {
 	print "1..0 # Skip: $reason\n";
 	exit 0;
@@ -49,8 +63,6 @@ unlink($PATH) or $^O eq 'os2' or die "Can't unlink $PATH: $!";
 # Start testing
 $| = 1;
 print "1..5\n";
-
-use IO::Socket;
 
 $listen = IO::Socket::UNIX->new(Local => $PATH, Listen => 0);
 

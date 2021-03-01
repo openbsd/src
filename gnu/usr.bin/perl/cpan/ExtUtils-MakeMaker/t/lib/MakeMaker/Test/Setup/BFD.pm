@@ -54,6 +54,9 @@ program - this is a program
 
 1;
 END
+             'Big-Dummy/usrbin/interp'       => <<'END',
+This is a dummy interpreter
+END
 
              'Big-Dummy/test.pl'          => <<'END',
 print "1..1\n";

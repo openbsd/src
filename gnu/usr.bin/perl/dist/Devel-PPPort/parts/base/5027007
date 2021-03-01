@@ -1,0 +1,4 @@
+5.027007
+WARN_SHADOW                    # E
+is_utf8_non_invariant_string   # F added by devel/scanprov
+variant_under_utf8_count       # F added by devel/scanprov

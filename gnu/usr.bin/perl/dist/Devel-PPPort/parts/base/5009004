@@ -1,8 +1,32 @@
 5.009004
+gv_name_set                    # U
+hv_copy_hints_hv               # U
+hv_stores                      # U
+LIKELY                         # U
+my_snprintf                    # U
+my_strlcat                     # U
+my_strlcpy                     # U
+my_vsnprintf                   # U
+newXS_flags                    # U
 PerlIO_context_layers          # U
+PERL_MAGIC_hints               # E
+PERL_MAGIC_hintselem           # E
+PERL_PV_ESCAPE_ALL             # E
+PERL_PV_ESCAPE_FIRSTCHAR       # E
+PERL_PV_ESCAPE_NOBACKSLASH     # E
+PERL_PV_ESCAPE_NOCLEAR         # E
+PERL_PV_ESCAPE_QUOTE           # E
+PERL_PV_ESCAPE_UNI             # E
+PERL_PV_ESCAPE_UNI_DETECT      # E
+PERL_PV_PRETTY_LTGT            # E
+PERL_PV_PRETTY_QUOTE           # E
 PoisonFree                     # E
 PoisonNew                      # E
 PoisonWith                     # E
+pv_escape                      # U
+pv_pretty                      # U
+sv_does                        # U
+SV_HAS_TRAILING_NUL            # E
 SvREFCNT_inc_NN                # U
 SvREFCNT_inc_simple            # U
 SvREFCNT_inc_simple_NN         # U
@@ -10,31 +34,44 @@ SvREFCNT_inc_simple_void       # U
 SvREFCNT_inc_simple_void_NN    # U
 SvREFCNT_inc_void              # U
 SvREFCNT_inc_void_NN           # U
-gv_name_set                    # U
-hv_copy_hints_hv               # U
-hv_stores                      # U
-my_snprintf                    # U
-my_strlcat                     # U
-my_strlcpy                     # U
-my_vsnprintf                   # U
-pv_escape                      # U
-pv_pretty                      # U
-sv_does                        # U
 sv_setpvs                      # U
 sv_usepvn_flags                # U
-PERL_PV_ESCAPE_ALL             # added by devel/scanprov
-PERL_PV_ESCAPE_FIRSTCHAR       # added by devel/scanprov
-PERL_PV_ESCAPE_NOBACKSLASH     # added by devel/scanprov
-PERL_PV_ESCAPE_NOCLEAR         # added by devel/scanprov
-PERL_PV_ESCAPE_QUOTE           # added by devel/scanprov
-PERL_PV_ESCAPE_UNI             # added by devel/scanprov
-PERL_PV_ESCAPE_UNI_DETECT      # added by devel/scanprov
-PERL_PV_PRETTY_DUMP            # added by devel/scanprov
-PERL_PV_PRETTY_LTGT            # added by devel/scanprov
-PERL_PV_PRETTY_QUOTE           # added by devel/scanprov
-PERL_PV_PRETTY_REGPROP         # added by devel/scanprov
-PERL_UNUSED_CONTEXT            # added by devel/scanprov
-PERL_USE_GCC_BRACE_GROUPS      # added by devel/scanprov
-SV_HAS_TRAILING_NUL            # added by devel/scanprov
-SvVSTRING_mg                   # added by devel/scanprov
-gv_fetchpvs                    # added by devel/scanprov
+UNLIKELY                       # U
+gv_fetchpvs                    # M added by devel/scanprov
+isGV_with_GP                   # M added by devel/scanprov
+PERL_PV_PRETTY_DUMP            # M added by devel/scanprov
+PERL_PV_PRETTY_REGPROP         # M added by devel/scanprov
+PERL_UNUSED_CONTEXT            # M added by devel/scanprov
+PERL_USE_GCC_BRACE_GROUPS      # M added by devel/scanprov
+SvVSTRING_mg                   # M added by devel/scanprov
+clear_placeholders             # F added by devel/scanprov
+create_eval_scope              # F added by devel/scanprov
+debug_start_match              # F added by devel/scanprov
+delete_eval_scope              # F added by devel/scanprov
+dump_exec_pos                  # F added by devel/scanprov
+dump_trie                      # F added by devel/scanprov
+dump_trie_interim_list         # F added by devel/scanprov
+dump_trie_interim_table        # F added by devel/scanprov
+exec_failed                    # F added by devel/scanprov
+find_array_subscript           # F added by devel/scanprov
+find_hash_subscript            # F added by devel/scanprov
+glob_2number                   # F added by devel/scanprov
+glob_assign_glob               # F added by devel/scanprov
+join_exact                     # F added by devel/scanprov
+magic_clearhint                # F added by devel/scanprov
+magic_sethint                  # F added by devel/scanprov
+more_sv                        # F added by devel/scanprov
+Perl_newGP                     # F added by devel/scanprov
+Perl_new_warnings_bitfield     # F added by devel/scanprov
+pm_description                 # F added by devel/scanprov
+printbuf                       # F added by devel/scanprov
+ptr_table_find                 # F added by devel/scanprov
+refcounted_he_value            # F added by devel/scanprov
+regtail_study                  # F added by devel/scanprov
+space_join_names_mortal        # F added by devel/scanprov
+sv_2iuv_common                 # F added by devel/scanprov
+sv_pos_b2u_midway              # F added by devel/scanprov
+sv_pos_u2b_cached              # F added by devel/scanprov
+sv_pos_u2b_forwards            # F added by devel/scanprov
+sv_pos_u2b_midway              # F added by devel/scanprov
+utf8_mg_pos_cache_update       # F added by devel/scanprov

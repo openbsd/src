@@ -56,7 +56,7 @@ runtime behavior (see L</"TEST">).
 
 =over 4
 
-=item * C<PATH>
+=item *               C<PATH>
 
 Set the C<PATH> environment variable so that Configure finds the Cygwin
 versions of programs.  Any Windows directories should be removed or

@@ -1,7 +1,10 @@
 5.009004
-PerlIO_context_layers          # U
 gv_name_set                    # U
 hv_copy_hints_hv               # U
 my_vsnprintf                   # U
+newXS_flags                    # U
+PerlIO_context_layers          # U
+PERL_MAGIC_hints               # E
+PERL_MAGIC_hintselem           # E
 sv_does                        # U
 sv_usepvn_flags                # U

@@ -1,6 +1,9 @@
 #!/usr/bin/perl
 
-my $file = "tf$$.txt";
+use strict;
+use warnings;
+
+my $file = "tf09-$$.txt";
 
 print "1..59\n";
 
@@ -10,7 +13,9 @@ my $N = 1;
 use Tie::File;
 print "ok $N\n"; $N++;
 
-$RECSEP = 'blah';
+my $RECSEP = 'blah';
+
+my @a;
 my $o = tie @a, 'Tie::File', $file, 
     recsep => $RECSEP, autochomp => 0, autodefer => 0;
 print $o ? "ok $N\n" : "not ok $N\n";
@@ -197,6 +202,7 @@ sub check_contents {
 
   # now check FETCH:
   my $good = 1;
+  my $msg = '';
   for (0.. $#c) {
     unless ($a[$_] eq "$c[$_]$RECSEP") {
       $msg = "expected $c[$_]$RECSEP, got $a[$_]";

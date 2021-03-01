@@ -87,7 +87,7 @@ We removed a false claim in L<perlunitut> that all text strings are Unicode stri
 
 =item *
 
-We updated the Github mirror link in L<perlrepository> to mirrors/perl, not github/perl
+We updated the GitHub mirror link in L<perlrepository> to mirrors/perl, not github/perl
 
 =item *
 

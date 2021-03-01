@@ -1,6 +1,22 @@
 5.021007
+is_invariant_string            # U
+newPADNAMELIST                 # U
+newPADNAMEouter                # U
+newPADNAMEpvn                  # U
+newUNOP_AUX                    # E
 OpHAS_SIBLING                  # U
 OpSIBLING                      # U
-PadnameUTF8                    # E
-is_invariant_string            # U
-newUNOP_AUX                    # E
+padnamelist_fetch              # U
+PadnamelistREFCNT              # U
+PadnamelistREFCNT_dec          # U
+padnamelist_store              # U
+PadnameREFCNT                  # U
+PadnameREFCNT_dec              # U
+PADNAMEt_OUTER                 # E
+gv_fetchmeth_internal          # F added by devel/scanprov
+opmethod_stash                 # F added by devel/scanprov
+pad_add_weakref                # F added by devel/scanprov
+padname_dup                    # F added by devel/scanprov
+padnamelist_dup                # F added by devel/scanprov
+Perl_padname_free              # F added by devel/scanprov
+Perl_padnamelist_free          # F added by devel/scanprov

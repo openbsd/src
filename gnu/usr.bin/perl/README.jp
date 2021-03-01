@@ -55,13 +55,15 @@ Perl 自身は Unicode で動作します。Perl スクリプト内の文字列�
    piconv -f FOO -t utf8 < file.FOO > file.utf8
    piconv -f utf8 -t FOO < file.utf8 > file.FOO
 
-=head2 About (jcode.pl|Jcode.pm|JPerl)
+=head2 (jcode.pl|Jcode.pm|JPerl) からの移行
 
 5.8以前の、スクリプトがEUC-JPであればリテラルだけは扱うことができました。また、入出力を扱うモジュールとしてはJcode.pmが( L<http://openlab.ring.gr.jp/Jcode/> )、perl4用のユーティリティとしてはjcode.plがそれぞれ存在し、日本語の扱えるCGIでよく利用されていることを御存じの方も少なくないかと思われます。ただし、日本語による正規表現をうまく扱うことは不可能でした。
 
-5.005以前のPerlには、日本語に特化したローカライズ版、Jperlが存在しました( L<http://homepage2.nifty.com/kipp/perl/jperl/index.html> )。また、Mac OS 9.x/Classic用のPerl、MacPerlの日本語版もMacJPerlとして存在してました。( L<http://habilis.net/macjperl/> ).これらでは文字コードとしてEUC-JPに加えShift_JISもそのまま扱うことができ、また日本語による正規表現を扱うことも可能でした。
+5.005以前のPerlには、日本語に特化したローカライズ版、Jperlが存在しました( L<http://homepage2.nifty.com/kipp/perl/jperl/index.html> ※1)。また、Mac OS 9.x/Classic用のPerl、MacPerlの日本語版もMacJPerlとして存在してました。( L<https://habilis.net/macjperl/> ).これらでは文字コードとしてEUC-JPに加えShift_JISもそのまま扱うことができ、また日本語による正規表現を扱うことも可能でした。
 
 Perl5.8では、これらの機能がすべてPerl本体だけで実現できる上に、日本語のみならず上記114の文字コードをすべて、しかも同時に扱うことができます。さらに、CPANなどから新しい文字コード用のモジュールを入手することも簡単にできるようになっています。
+
+※1: ホスティングサービスの終了により現在は閲覧できません。 Vector( L<https://www.vector.co.jp/soft/win95/util/se098198.html> )からWindow用のバイナリを、CPAN( L<https://www.cpan.org/src/unsupported/4.036/jperl/> )からperl4用のパッチを入手することができます。
 
 =over 4
 
@@ -69,7 +71,7 @@ Perl5.8では、これらの機能がすべてPerl本体だけで実現できる
 
 入出力
 
-以下の例はいづれもShift_JISの入力をEUC-JPに変換して出力します。
+以下の例はいずれもShift_JISの入力をEUC-JPに変換して出力します。
 
   # jcode.pl
   require "jcode.pl";
@@ -120,17 +122,29 @@ Perlには膨大な資料が付属しており、Perlの新機能やUnicodeサ�
 
 =over 4
 
-=item L<http://www.perl.com/>
+=item L<https://www.perl.org/>
 
-Perl ホームページ (O'Reilly and Associates)
+Perl ホームページ
 
-=item L<http://www.cpan.org/>
+=item L<https://www.perl.com/>
+
+Perl 財団が営業する文章作品集
+
+=item L<https://www.cpan.org/>
 
 CPAN (Comprehensive Perl Archive Network)
 
-=item L<http://lists.perl.org/>
+=item L<https://metacpan.org/>
+
+MetaCPAN CPANの検索エンジン
+
+=item L<https://lists.perl.org/>
 
 Perl メーリングリスト集
+
+=item L<https://perldoc.jp/>
+
+perldoc.jp Perl の公式ドキュメント、モジュールドキュメントの日本語訳
 
 =back
 
@@ -146,17 +160,23 @@ O'Reilly 社のPerl関連書籍(繁体字中国語)
 
 O'Reilly 社のPerl関連書籍(簡体字中国語)
 
-=item L<http://www.oreilly.co.jp/catalog/>
+=item L<https://www.oreilly.co.jp/catalog/>
 
 オライリー社のPerl関連書籍(日本語)
 
 =back
 
-=head2 Perl ユーザーグループ
+=head2 Perl に関する団体
 
 =over 4
 
-=item L<http://www.pm.org/groups/asia.html>
+=item L<https://www.pm.org/groups/asia.html>
+
+アジア地域の Perl Mongers (Perlのユーザーグループ) 一覧
+
+=item L<https://japan.perlassociation.org>
+
+一般社団法人Japan Perl Association (JPA) Perl技術及び文化の啓蒙・促進のための組織
 
 =back
 
@@ -164,15 +184,15 @@ O'Reilly 社のPerl関連書籍(簡体字中国語)
 
 =over 4
 
-=item L<http://www.unicode.org/>
+=item L<https://www.unicode.org/>
 
 Unicode コンソーシアム (Unicode規格の選定団体)
 
-=item L<http://www.cl.cam.ac.uk/%7Emgk25/unicode.html>
+=item L<https://www.cl.cam.ac.uk/%7Emgk25/unicode.html>
 
 UTF-8 and Unicode FAQ for Unix/Linux
 
-=item L<http://wiki.kldp.org/Translations/html/UTF8-Unicode-KLDP/UTF8-Unicode-KLDP.html>
+=item L<https://wiki.kldp.org/Translations/html/UTF8-Unicode-KLDP/UTF8-Unicode-KLDP.html>
 
 UTF-8 and Unicode FAQ for Unix/Linux (ハングル訳)
 
@@ -180,7 +200,14 @@ UTF-8 and Unicode FAQ for Unix/Linux (ハングル訳)
 
 =head1 AUTHORS
 
-Jarkko Hietaniemi E<lt>jhi@iki.fiE<gt>
-Dan Kogai (小飼　弾) E<lt>dankogai@dan.co.jpE<gt>
+=over
+
+=item * Jarkko Hietaniemi E<lt>jhi@iki.fiE<gt>
+
+=item * Dan Kogai (小飼　弾) E<lt>dankogai@dan.co.jpE<gt>
+
+=item * Shogo Ichinose (一野瀬　翔吾) E<lt>shogo82148@gmail.comE<gt>
+
+=back
 
 =cut

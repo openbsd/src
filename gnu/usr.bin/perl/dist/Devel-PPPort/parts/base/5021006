@@ -1,3 +1,12 @@
 5.021006
+DOUBLEKIND                     # E
 newDEFSVOP                     # U
 op_convert_list                # U
+WARN_LOCALE                    # E
+newXS_deffile                  # F added by devel/scanprov
+noperl_die                     # F added by devel/scanprov
+PerlIO_restore_errno           # F added by devel/scanprov
+PerlIO_save_errno              # F added by devel/scanprov
+Perl_xs_handshake              # F added by devel/scanprov
+set_padlist                    # F added by devel/scanprov
+xs_boot_epilog                 # F added by devel/scanprov

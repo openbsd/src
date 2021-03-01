@@ -21,6 +21,10 @@ BEGIN {
     print "1..0 \# Skip: no echo port\n";
     exit;
   }
+  unless (Socket::getaddrinfo('localhost', &Socket::AF_INET())) {
+    print "1..0 \# Skip: no localhost resolver on $^O\n";
+    exit;
+  }
 }
 
 use Test::More tests => 8;
@@ -41,12 +45,17 @@ is($Net::Ping::hires, 0, 'Make sure disable works');
 $p -> hires(1);
 isnt($Net::Ping::hires, 0, 'Enable hires again');
 
-# Test on the default port
-my ($ret, $duration) = $p -> ping("localhost");
+SKIP: {
+  skip "unreliable ping localhost on $^O", 2
+    if $^O =~ /^(?:hpux|os390|irix|freebsd)$/;
 
-isnt($ret, 0, 'localhost should always be reachable');
+  # Test on the default port
+  my ($ret, $duration) = $p -> ping("localhost");
 
-# It is extremely likely that the duration contains a decimal
-# point if Time::HiRes is functioning properly, except when it
-# is fast enough to be "0", or slow enough to be exactly "1".
-like($duration, qr/\.|^[01]$/, 'returned duration is valid');
+  isnt($ret, 0, 'localhost should always be reachable');
+
+  # It is extremely likely that the duration contains a decimal
+  # point if Time::HiRes is functioning properly, except when it
+  # is fast enough to be "0", or slow enough to be exactly "1".
+  like($duration, qr/\.|^[01]$/, 'returned duration is valid');
+}

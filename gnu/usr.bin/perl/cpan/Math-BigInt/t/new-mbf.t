@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 50;
+use Test::More tests => 69;
 
 my $class;
 
@@ -80,6 +80,43 @@ infinity:inf
 #+inf:NaN
 #-inf:NaN
 0x.p+0:NaN
+
+# This is more or less the same data as in from_oct-mbf.t, except that some of
+# them are commented out, since new() only treats input as octal if it has a
+# "0" prefix and a binary exponent, and possibly a leading "+" or "-" sign.
+# Duplicates from above are also commented out.
+
+01p+0:1
+00.4p+1:1
+00.2p+2:1
+00.1p+3:1
+00.04p+4:1
+02p-1:1
+04p-2:1
+010p-3:1
+
+-01p+0:-1
+
+00p+0:0
+00p+7:0
+00p-7:0
+00.p+0:0
+00.0p+0:0
+#00.0p+0:0
+
+#145376:51966
+#0145376:51966
+#00145376:51966
+
+03.1p+2:12.5
+022.15p-1:9.1015625
+-00.361152746757p+32:-2023406814.9375
+044.3212636115p+30:39093746765
+
+#NaN:NaN
+#+inf:NaN
+#-inf:NaN
+0.p+0:NaN
 
 # This is the same data as in from_bin-mbf.t, except that some of them are
 # commented out, since new() only treats input as binary if it has a "0b" or

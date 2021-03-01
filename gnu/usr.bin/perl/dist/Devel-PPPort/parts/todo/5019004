@@ -1,3 +1,4 @@
 5.019004
+IS_SAFE_SYSCALL                # U
 is_safe_syscall                # U
-uvoffuni_to_utf8_flags         # U
+WARN_SYSCALLS                  # E

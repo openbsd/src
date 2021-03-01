@@ -57,7 +57,7 @@ Perl 也内附了 "piconv", 一支完全以 Perl 写成的字符转换工具程�
 
 =head2 额外的中文编码
 
-如果需要更多的中文编码, 可以从 CPAN (L<http://www.cpan.org/>) 下载
+如果需要更多的中文编码, 可以从 CPAN (L<https://www.cpan.org/>) 下载
 Encode::HanExtra 模块. 它目前提供下列编码方式:
 
     gb18030	扩充过的国标码, 包含繁体中文
@@ -83,15 +83,23 @@ Perl 的知识, 以及 Unicode 的使用方式. 不过, 外部的资源相当丰
 
 =over 4
 
-=item L<http://www.perl.com/>
+=item L<https://www.perl.org/>
 
-Perl 的首页 (由欧莱礼公司维护)
+=back
 
-=item L<http://www.cpan.org/>
+Perl 的首页
+
+=over 4
+
+=item L<https://www.perl.com/>
+
+由 Perl 基金会所营运的文章辑录
+
+=item L<https://www.cpan.org/>
 
 Perl 综合典藏网 (Comprehensive Perl Archive Network)
 
-=item L<http://lists.perl.org/>
+=item L<https://lists.perl.org/>
 
 Perl 邮递论坛一览
 
@@ -111,7 +119,7 @@ Perl 邮递论坛一览
 
 =over 4
 
-=item L<http://www.pm.org/groups/asia.html>
+=item L<https://www.pm.org/groups/asia.html>
 
 中国 Perl 推广组一览
 
@@ -121,11 +129,11 @@ Perl 邮递论坛一览
 
 =over 4
 
-=item L<http://www.unicode.org/>
+=item L<https://www.unicode.org/>
 
 Unicode 学术学会 (Unicode 标准的制定者)
 
-=item L<http://www.cl.cam.ac.uk/%7Emgk25/unicode.html>
+=item L<https://www.cl.cam.ac.uk/%7Emgk25/unicode.html>
 
 Unix/Linux 上的 UTF-8 及 Unicode 答客问
 

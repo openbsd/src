@@ -18,6 +18,12 @@ my_sprintf
 #if !defined(my_sprintf)
 #if { NEED my_sprintf }
 
+/* Warning: my_sprintf
+   It's safer to use my_snprintf instead
+*/
+
+/* Replace my_sprintf with my_snprintf */
+
 int
 my_sprintf(char *buffer, const char* pat, ...)
 {
@@ -51,5 +57,5 @@ my_sprintf()
 =tests plan => 2
 
 my($l, $s) = Devel::PPPort::my_sprintf();
-ok($l, 8);
-ok($s, "foobar42");
+is($l, 8);
+is($s, "foobar42");

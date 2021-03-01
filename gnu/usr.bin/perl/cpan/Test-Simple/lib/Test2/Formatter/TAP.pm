@@ -2,7 +2,7 @@ package Test2::Formatter::TAP;
 use strict;
 use warnings;
 
-our $VERSION = '1.302162';
+our $VERSION = '1.302175';
 
 use Test2::Util qw/clone_io/;
 
@@ -16,16 +16,17 @@ sub OUT_ERR() { 1 }
 
 BEGIN { require Test2::Formatter; our @ISA = qw(Test2::Formatter) }
 
-# Not constants because this is a method, and can be overriden
-BEGIN {
-    local $SIG{__DIE__} = 'DEFAULT';
-    local $@;
-    if (($INC{'Term/Table.pm'} && $INC{'Term/Table/Util.pm'}) || eval { require Term::Table; require Term::Table::Util; 1 }) {
-        *supports_tables = sub { 1 };
+my $supports_tables;
+sub supports_tables {
+    if (!defined $supports_tables) {
+        local $SIG{__DIE__} = 'DEFAULT';
+        local $@;
+        $supports_tables
+            = ($INC{'Term/Table.pm'} && $INC{'Term/Table/Util.pm'})
+            || eval { require Term::Table; require Term::Table::Util; 1 }
+            || 0;
     }
-    else {
-        *supports_tables = sub { 0 };
-    }
+    return $supports_tables;
 }
 
 sub _autoflush {
@@ -270,7 +271,10 @@ sub assert_tap {
         }
 
         my %seen;
-        my @order = grep { !$seen{$_}++ } sort keys %directives;
+
+        # Sort so that TODO comes before skip even on systems where lc sorts
+        # before uc, as other code depends on that ordering.
+        my @order = grep { !$seen{$_}++ } sort { lc $b cmp lc $a } keys %directives;
 
         $directives = ' # ' . join ' & ' => @order;
 

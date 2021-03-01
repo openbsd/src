@@ -13,6 +13,10 @@
 
 newCONSTSUB
 
+=dontwarn
+
+NEED_newCONSTSUB    /* Because we define this weirdly */
+
 =implementation
 
 /* Hint: newCONSTSUB
@@ -22,6 +26,11 @@ newCONSTSUB
 
 /* newCONSTSUB from IO.xs is in the core starting with 5.004_63 */
 #if { VERSION < 5.004_63 } && { VERSION != 5.004_05 }
+
+/* And before that, we need to make sure this gets compiled for the functions
+ * that rely on it */
+#define NEED_newCONSTSUB
+
 #if { NEED newCONSTSUB }
 
 /* This is just a trick to avoid a dependency of newCONSTSUB on PL_parser */
@@ -43,13 +52,7 @@ newCONSTSUB(HV *stash, const char *name, SV *sv)
 
         newSUB(
 
-#if   { VERSION <  5.003_22 }
-                start_subparse(),
-#elif { VERSION == 5.003_22 }
-                start_subparse(0),
-#else  /* 5.003_23  onwards */
                 start_subparse(FALSE, 0),
-#endif
 
                 newSVOP(OP_CONST, 0, newSVpv((char *) name, 0)),
                 newSVOP(OP_CONST, 0, &PL_sv_no),   /* SvPV(&PL_sv_no) == "" -- GMB */
@@ -95,10 +98,10 @@ call_newCONSTSUB_3()
 =tests plan => 3
 
 &Devel::PPPort::call_newCONSTSUB_1();
-ok(&Devel::PPPort::test_value_1(), 1);
+is(&Devel::PPPort::test_value_1(), 1);
 
 &Devel::PPPort::call_newCONSTSUB_2();
-ok(&Devel::PPPort::test_value_2(), 2);
+is(&Devel::PPPort::test_value_2(), 2);
 
 &Devel::PPPort::call_newCONSTSUB_3();
-ok(&Devel::PPPort::test_value_3(), 3);
+is(&Devel::PPPort::test_value_3(), 3);

@@ -81,7 +81,7 @@ LONGPATH(CHAR_T *path)
 	*start = sep;
 	if (fhand != INVALID_HANDLE_VALUE) {
 	    STRLEN len = FN_STRLEN(fdata.cFileName);
-	    if ((STRLEN)(tmpbuf + sizeof(tmpbuf) - tmpstart) > len) {
+	    if (len < (STRLEN)(tmpbuf - tmpstart + sizeof(tmpbuf))) {
 		FN_STRCPY(tmpstart, fdata.cFileName);
 		tmpstart += len;
 		FindClose(fhand);

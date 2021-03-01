@@ -23,7 +23,7 @@ Pod::Simple
 Pod::Simple::BlackBox	Pod::Simple::Checker	Pod::Simple::DumpAsText
 Pod::Simple::DumpAsXML	Pod::Simple::HTML	Pod::Simple::HTMLBatch
 Pod::Simple::HTMLLegacy	Pod::Simple::LinkSection	Pod::Simple::Methody
-Pod::Simple::Progress	Pod::Simple::PullParser
+Pod::Simple::JustPod	Pod::Simple::Progress	Pod::Simple::PullParser
 Pod::Simple::PullParserEndToken	Pod::Simple::PullParserStartToken
 Pod::Simple::PullParserTextToken	Pod::Simple::PullParserToken
 Pod::Simple::RTF	Pod::Simple::Search	Pod::Simple::SimpleTree

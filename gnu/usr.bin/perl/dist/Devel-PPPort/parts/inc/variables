@@ -18,6 +18,7 @@ PL_DBsingle
 PL_DBsub
 PL_DBtrace
 PL_Sv
+PL_Xpv
 PL_bufend
 PL_bufptr
 PL_compiling
@@ -58,6 +59,7 @@ PL_tainted
 PL_tainting
 PL_tokenbuf
 PL_signals
+PL_mess_sv
 PERL_SIGNALS_UNSAFE_FLAG
 
 =implementation
@@ -97,6 +99,7 @@ __NEED_VAR__ U32 PL_signals = D_PPP_PERL_SIGNALS_INIT;
 #  define PL_DBsub                  DBsub
 #  define PL_DBtrace                DBtrace
 #  define PL_Sv                     Sv
+#  define PL_Xpv                    Xpv
 #  define PL_bufend                 bufend
 #  define PL_bufptr                 bufptr
 #  define PL_compiling              compiling
@@ -134,13 +137,14 @@ __NEED_VAR__ U32 PL_signals = D_PPP_PERL_SIGNALS_INIT;
 #  define PL_tainted                tainted
 #  define PL_tainting               tainting
 #  define PL_tokenbuf               tokenbuf
+#  define PL_mess_sv                mess_sv
 /* Replace: 0 */
 #endif
 
 /* Warning: PL_parser
  * For perl versions earlier than 5.9.5, this is an always
  * non-NULL dummy. Also, it cannot be dereferenced. Don't
- * use it if you can avoid is and unless you absolutely know
+ * use it if you can avoid it, and unless you absolutely know
  * what you're doing.
  * If you always check that PL_parser is non-NULL, you can
  * define DPPP_PL_parser_NO_DUMMY to avoid the creation of
@@ -438,13 +442,13 @@ ok(Devel::PPPort::compare_PL_signals());
 ok(!defined(&Devel::PPPort::PL_sv_undef()));
 ok(&Devel::PPPort::PL_sv_yes());
 ok(!&Devel::PPPort::PL_sv_no());
-ok(&Devel::PPPort::PL_na("abcd"), 4);
-ok(&Devel::PPPort::PL_Sv(), "mhx");
+is(&Devel::PPPort::PL_na("abcd"), 4);
+is(&Devel::PPPort::PL_Sv(), "mhx");
 ok(defined &Devel::PPPort::PL_tokenbuf());
 ok("$]" >= 5.009005 || &Devel::PPPort::PL_parser());
 ok(&Devel::PPPort::PL_hexdigit() =~ /^[0-9a-zA-Z]+$/);
 ok(defined &Devel::PPPort::PL_hints());
-ok(&Devel::PPPort::PL_ppaddr("mhx"), "MHX");
+is(&Devel::PPPort::PL_ppaddr("mhx"), "MHX");
 
 for (&Devel::PPPort::other_variables()) {
   ok($_ != 0);
@@ -470,7 +474,7 @@ for (&Devel::PPPort::other_variables()) {
   else {
     ok(@w == 0);
   }
-  ok($fail, 0);
+  is($fail, 0);
 }
 
 ok(&Devel::PPPort::no_dummy_parser_vars(1) >= ("$]" < 5.009005 ? 1 : 0));
@@ -478,7 +482,7 @@ ok(&Devel::PPPort::no_dummy_parser_vars(1) >= ("$]" < 5.009005 ? 1 : 0));
 eval { &Devel::PPPort::no_dummy_parser_vars(0) };
 
 if ("$]" < 5.009005) {
-  ok($@, '');
+  is($@, '');
 }
 else {
   if ($@) {

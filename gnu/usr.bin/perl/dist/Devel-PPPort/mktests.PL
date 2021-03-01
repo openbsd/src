@@ -14,7 +14,7 @@
 ################################################################################
 
 use strict;
-$^W = 1;
+BEGIN { $^W = 1; }
 require "./parts/ppptools.pl";
 
 my $template = do { local $/; <DATA> };
@@ -41,11 +41,14 @@ sub generate_tests
       print "generating $testfile\n";
 
       my $tmpl = $template;
-      $tmpl =~ s/__SOURCE__/$file/mg;
+      my $canonfile = $file;
+      $canonfile =~ tr!\\!/!; # MSWin32 use backslashes
+      $tmpl =~ s/__SOURCE__/$canonfile/mg;
       $tmpl =~ s/__PLAN__/$spec->{OPTIONS}{tests}{plan}/mg;
       $tmpl =~ s/^__TESTS__$/$spec->{tests}/mg;
 
       open FH, ">$testfile" or die "$testfile: $!\n";
+      binmode FH;
       print FH $tmpl;
       close FH;
 
@@ -69,10 +72,12 @@ __DATA__
 #
 ################################################################################
 
+use FindBin ();
+
 BEGIN {
   if ($ENV{'PERL_CORE'}) {
     chdir 't' if -d 't';
-    @INC = ('../lib', '../ext/Devel-PPPort/t') if -d '../lib' && -d '../ext';
+    unshift @INC, '../lib' if -d '../lib' && -d '../ext';
     require Config; import Config;
     use vars '%Config';
     if (" $Config{'extensions'} " !~ m[ Devel/PPPort ]) {
@@ -80,13 +85,15 @@ BEGIN {
       exit 0;
     }
   }
-  else {
-    unshift @INC, 't';
-  }
+
+  use lib "$FindBin::Bin";
+  use lib "$FindBin::Bin/../parts/inc";
+
+  die qq[Cannot find "$FindBin::Bin/../parts/inc"] unless -d "$FindBin::Bin/../parts/inc";
 
   sub load {
-    eval "use Test";
-    require 'testutil.pl' if $@;
+    require 'testutil.pl';
+    require 'inctools';
   }
 
   if (__PLAN__) {
@@ -97,7 +104,7 @@ BEGIN {
 
 use Devel::PPPort;
 use strict;
-$^W = 1;
+BEGIN { $^W = 1; }
 
 package Devel::PPPort;
 use vars '@ISA';

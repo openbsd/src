@@ -2,7 +2,7 @@ package Test2::Hub;
 use strict;
 use warnings;
 
-our $VERSION = '1.302162';
+our $VERSION = '1.302175';
 
 
 use Carp qw/carp croak confess/;
@@ -813,7 +813,7 @@ Get the IPC object used by the hub.
 
 This can be used to disable auto-ending behavior for a hub. The auto-ending
 behavior is triggered by an end block and is used to cull IPC events, and
-output the final plan if the plan was 'no_plan'.
+output the final plan if the plan was 'NO PLAN'.
 
 =item $bool = $hub->active
 
@@ -861,7 +861,7 @@ pass/fail status.
 =item $plan = $hub->plan
 
 Get or set the plan. The plan must be an integer larger than 0, the string
-'no_plan', or the string 'skip_all'.
+'NO PLAN', or the string 'SKIP'.
 
 =item $bool = $hub->check_plan
 

@@ -2,6 +2,8 @@ package Test2::EventFacet::Info::Table;
 use strict;
 use warnings;
 
+our $VERSION = '1.302175';
+
 use Carp qw/confess/;
 
 use Test2::Util::HashBase qw{-header -rows -collapse -no_collapse -as_string};

@@ -2,7 +2,7 @@ package Test2::Event;
 use strict;
 use warnings;
 
-our $VERSION = '1.302162';
+our $VERSION = '1.302175';
 
 use Scalar::Util qw/blessed reftype/;
 use Carp qw/croak/;
@@ -526,11 +526,11 @@ perhaps to say that an event of an unknown type was seen.
 Facets are produced by the C<facet_data()> subroutine, which you should
 nearly-always override. C<facet_data()> is expected to return a hashref where
 each key is the facet type, and the value is either a hashref with the data for
-that facet, or an array of hashref's. Some facets must be defined as single
+that facet, or an array of hashrefs. Some facets must be defined as single
 hashrefs, some must be defined as an array of hashrefs, No facets allow both.
 
 C<facet_data()> B<MUST NOT> bless the data it returns, the main hashref, and
-nested facet hashref's B<MUST> be bare, though items contained within each
+nested facet hashrefs B<MUST> be bare, though items contained within each
 facet may be blessed. The data returned by this method B<should> also be copies
 of the internal data in order to prevent accidental state modification.
 

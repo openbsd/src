@@ -57,7 +57,7 @@ In this code, wherever there is a  FILE *, the error condition is checked; and o
 then the corresponding operation is done. Otherwise the error value is returned.
 This is done because the file operations like "open" in the Perl code returns the FILE *,
 returning a valid value if the file is found or NULL when the particular file is not found.
-Now, if the return value is NULL, then an operation say "fgets", "fopen" etc. using this this NULL value
+Now, if the return value is NULL, then an operation say "fgets", "fopen" etc. using this NULL value
 for FILE * will abend the server. If the check is made then an operation on a non existing file
 does not abend the server.
 **/

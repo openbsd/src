@@ -1,5 +1,30 @@
 5.017004
-PL_comppad_name                # E
-PadlistREFCNT                  # U
+GV_SUPER                       # E
 newMYSUB                       # E (Perl_newMYSUB)
 newSVpadname                   # E
+PadARRAY                       # U
+PadlistARRAY                   # U
+PadlistMAX                     # U
+PadlistNAMES                   # E
+PadlistNAMESARRAY              # E
+PadlistNAMESMAX                # U
+PadlistREFCNT                  # U
+PadMAX                         # U
+PadnameLEN                     # E
+PadnamelistARRAY               # E
+PadnamelistMAX                 # E
+PadnamePV                      # E
+PadnameSV                      # E
+PadnameUTF8                    # E
+PL_comppad_name                # E
+WARN_EXPERIMENTAL              # E
+sv_len_utf8_nomg               # M added by devel/scanprov
+av_extend_guts                 # F added by devel/scanprov
+cv_clone_into                  # F added by devel/scanprov
+force_ident_maybe_lex          # F added by devel/scanprov
+get_invlist_previous_index_addr # F added by devel/scanprov
+_invlist_len                   # F added by devel/scanprov
+invlist_previous_index         # F added by devel/scanprov
+invlist_set_previous_index     # F added by devel/scanprov
+padlist_store                  # F added by devel/scanprov
+pending_ident                  # F added by devel/scanprov

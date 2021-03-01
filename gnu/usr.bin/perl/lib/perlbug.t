@@ -69,7 +69,7 @@ like($result, qr/Please use perlbug interactively./,
 # test -okay (mostly noninteractive)
 $result = runperl( progfile => $extracted_program,
                    args     => ['-okay', '-F', $testreport] );
-like($result, qr/Message saved/, 'build report saved');
+like($result, qr/Report saved/, 'build report saved');
 like(_slurp($testreport), qr/Perl reported to build OK on this system/,
      'build report looks sane');
 unlink $testreport;
@@ -82,7 +82,7 @@ $result = runperl( progfile => $extracted_program,
                                 '-nokay',
                                 '-e', 'file',
                                 '-F', $testreport] );
-like($result, qr/Message saved/, 'build failure report saved');
+like($result, qr/Report saved/, 'build failure report saved');
 like(_slurp($testreport), qr/This is a build failure report for perl/,
      'build failure report looks sane');
 unlink $testreport;
@@ -104,7 +104,7 @@ $result = runperl( progfile => $extracted_program,
                                 '-b', 'testreportbody',
                                 '-e', 'file',
                                 '-F', $testreport] );
-like($result, qr/Message saved/, 'fake bug report saved');
+like($result, qr/Report saved/, 'fake bug report saved');
 my $contents = _slurp($testreport);
 like($contents, qr/Subject: testingperlbug/,
      'Subject included in fake bug report');
@@ -136,7 +136,7 @@ $result = runperl( progfile => $extracted_program,
                                 '-p', $attachment,
                                 '-e', 'file',
                                 '-F', $testreport] );
-like($result, qr/Message saved/, 'fake bug report saved');
+like($result, qr/Report saved/, 'fake bug report saved');
 my $contents = _slurp($testreport);
 unlink $testreport, $body, $attachment;
 like($contents, qr/Subject: testing perlbug/,

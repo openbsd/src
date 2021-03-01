@@ -1,6 +1,7 @@
 5.019001
-re_intuit_start                # A
 toFOLD                         # U
-toFOLD_utf8                    # U
 toLOWER_L1                     # U
 toTITLE                        # U
+UTF8f                          # E
+find_lexical_cv                # F added by devel/scanprov
+path_is_searchable             # F added by devel/scanprov

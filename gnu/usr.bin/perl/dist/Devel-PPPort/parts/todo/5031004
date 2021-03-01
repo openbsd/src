@@ -1,0 +1,13 @@
+5.031004
+sv_2pvbyte_flags               # U
+sv_2pvutf8_flags               # U
+SvAMAGIC_off                   # U
+SvAMAGIC_on                    # U
+SvPVbyte_nomg                  # U
+SvPVbyte_or_null               # U
+SvPVbyte_or_null_nomg          # U
+SvPVutf8_nomg                  # U
+SvPVutf8_or_null               # U
+SvPVutf8_or_null_nomg          # U
+sv_utf8_downgrade_flags        # U
+sv_utf8_downgrade_nomg         # U

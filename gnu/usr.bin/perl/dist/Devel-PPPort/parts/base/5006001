@@ -1,14 +1,27 @@
 5.006001
-SvGAMAGIC                      # U
+apply_attrs_string             # U
+bytes_to_utf8                  # U
+G_METHOD                       # E
 gv_efullname4                  # U
 gv_fullname4                   # U
 isBLANK                        # U
+isBLANK_LC                     # U
 isPSXSPC                       # U
+isPSXSPC_LC                    # U
 is_utf8_string                 # U
+NVef                           # E
+NVff                           # E
+NVgf                           # E
+NVSIZE                         # E
 save_generic_pvref             # U
-utf16_to_utf8                  # E (Perl_utf16_to_utf8)
-utf16_to_utf8_reversed         # E (Perl_utf16_to_utf8_reversed)
-G_METHOD                       # added by devel/scanprov
-NVef                           # added by devel/scanprov
-NVff                           # added by devel/scanprov
-NVgf                           # added by devel/scanprov
+SvGAMAGIC                      # U
+utf8_to_bytes                  # U
+do_trans_complex               # F added by devel/scanprov
+do_trans_count                 # F added by devel/scanprov
+do_trans_simple                # F added by devel/scanprov
+find_in_my_stash               # F added by devel/scanprov
+magic_regdatum_set             # F added by devel/scanprov
+report_evil_fh                 # F added by devel/scanprov
+swallow_bom                    # F added by devel/scanprov
+sys_intern_clear               # F added by devel/scanprov
+sys_intern_init                # F added by devel/scanprov

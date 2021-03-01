@@ -17,20 +17,7 @@ sv_2pvbyte
 sv_2pv_flags
 sv_pvn_force_flags
 
-=dontwarn
-
-NEED_sv_2pv_flags
-NEED_sv_2pv_flags_GLOBAL
-
 =implementation
-
-/* Backwards compatibility stuff... :-( */
-#if !defined(NEED_sv_2pv_flags) && defined(NEED_sv_2pv_nolen)
-#  define NEED_sv_2pv_flags
-#endif
-#if !defined(NEED_sv_2pv_flags_GLOBAL) && defined(NEED_sv_2pv_nolen_GLOBAL)
-#  define NEED_sv_2pv_flags_GLOBAL
-#endif
 
 /* Hint: sv_2pv_nolen
  * Use the SvPV_nolen() or SvPV_nolen_const() macros instead of sv_2pv_nolen().
@@ -47,20 +34,13 @@ __UNDEFINED__  sv_2pv_nolen(sv)   SvPV_nolen(sv)
 
 #if { VERSION < 5.7.0 }
 
-#if { NEED sv_2pvbyte }
-
-char *
-sv_2pvbyte(pTHX_ SV *sv, STRLEN *lp)
-{
-  sv_utf8_downgrade(sv,0);
-  return SvPV(sv,*lp);
-}
-
-#endif
+__UNDEFINED__ sv_2pvbyte(sv, lp) (sv_utf8_downgrade((sv), 0), SvPV((sv), *(lp)))
 
 /* Hint: sv_2pvbyte
  * Use the SvPVbyte() macro instead of sv_2pvbyte().
  */
+
+/* Replace sv_2pvbyte with SvPVbyte */
 
 #undef SvPVbyte
 
@@ -83,46 +63,31 @@ __UNDEFINED__  sv_2pvbyte_nolen(sv)  sv_2pv_nolen(sv)
  * Always use the SvPV() macro instead of sv_pvn().
  */
 
+/* Replace sv_pvn with SvPV */
+
 /* Hint: sv_pvn_force
  * Always use the SvPV_force() macro instead of sv_pvn_force().
  */
+
+/* Replace sv_pvn_force with SvPV_force */
 
 /* If these are undefined, they're not handled by the core anyway */
 __UNDEFINED__  SV_IMMEDIATE_UNREF       0
 __UNDEFINED__  SV_GMAGIC                0
 __UNDEFINED__  SV_COW_DROP_PV           0
 __UNDEFINED__  SV_UTF8_NO_ENCODING      0
-__UNDEFINED__  SV_NOSTEAL               0
 __UNDEFINED__  SV_CONST_RETURN          0
 __UNDEFINED__  SV_MUTABLE_RETURN        0
 __UNDEFINED__  SV_SMAGIC                0
 __UNDEFINED__  SV_HAS_TRAILING_NUL      0
 __UNDEFINED__  SV_COW_SHARED_HASH_KEYS  0
 
-#if { VERSION < 5.7.2 }
-
-#if { NEED sv_2pv_flags }
-
-char *
-sv_2pv_flags(pTHX_ SV *sv, STRLEN *lp, I32 flags)
-{
-  STRLEN n_a = (STRLEN) flags;
-  return sv_2pv(sv, lp ? lp : &n_a);
-}
-
-#endif
-
-#if { NEED sv_pvn_force_flags }
-
-char *
-sv_pvn_force_flags(pTHX_ SV *sv, STRLEN *lp, I32 flags)
-{
-  STRLEN n_a = (STRLEN) flags;
-  return sv_pvn_force(sv, lp ? lp : &n_a);
-}
-
-#endif
-
+#if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
+  __UNDEFINED__ sv_2pv_flags(sv, lp, flags) ({ SV *_sv = (sv); const I32 _flags = (flags); STRLEN *_lp = lp; _lp = _lp ? : &PL_na; (!(_flags & SV_GMAGIC) && SvGMAGICAL(_sv)) ? ({ char *_pv; SvGMAGICAL_off(_sv); _pv = sv_2pv(_sv, _lp); SvGMAGICAL_on(_sv); _pv; }) : sv_2pv(_sv, _lp); })
+  __UNDEFINED__ sv_pvn_force_flags(sv, lp, flags) ({ SV *_sv = (sv); const I32 _flags = (flags); STRLEN *_lp = lp; _lp = _lp ? : &PL_na; (!(_flags & SV_GMAGIC) && SvGMAGICAL(_sv)) ? ({ char *_pv; SvGMAGICAL_off(_sv); _pv = sv_pvn_force(_sv, _lp); SvGMAGICAL_on(_sv); _pv; }) : sv_pvn_force(_sv, _lp); })
+#else
+  __UNDEFINED__ sv_2pv_flags(sv, lp, flags) ((PL_Sv = (sv)), (!((flags) & SV_GMAGIC) && SvGMAGICAL(PL_Sv)) ? (SvGMAGICAL_off(PL_Sv), (PL_Xpv = (XPV *)sv_2pv(PL_Sv, (lp) ? (lp) : &PL_na)), SvGMAGICAL_on(PL_Sv), (char *)PL_Xpv) : sv_2pv(PL_Sv, (lp) ? (lp) : &PL_na))
+  __UNDEFINED__ sv_pvn_force_flags(sv, lp, flags) ((PL_Sv = (sv)), (!((flags) & SV_GMAGIC) && SvGMAGICAL(PL_Sv)) ? (SvGMAGICAL_off(PL_Sv), (PL_Xpv = (XPV *)sv_pvn_force(PL_Sv, (lp) ? (lp) : &PL_na)), SvGMAGICAL_on(PL_Sv), (char *)PL_Xpv) : sv_pvn_force(PL_Sv, (lp) ? (lp) : &PL_na))
 #endif
 
 #if { VERSION < 5.8.8 } || ( { VERSION >= 5.9.0 } && { VERSION < 5.9.3 } )
@@ -190,12 +155,6 @@ __UNDEFINED__  SvPV_renew(sv,n) STMT_START { SvLEN_set(sv, n); \
                  SvPV_set((sv), (char *) saferealloc(          \
                        (Malloc_t)SvPVX(sv), (MEM_SIZE)((n)))); \
                } STMT_END
-
-=xsinit
-
-#define NEED_sv_2pv_flags
-#define NEED_sv_pvn_force_flags
-#define NEED_sv_2pvbyte
 
 =xsubs
 
@@ -465,70 +424,70 @@ SvPV_renew(sv, nlen, insv)
 
 my $mhx = "mhx";
 
-ok(&Devel::PPPort::SvPVbyte($mhx), 3);
+is(&Devel::PPPort::SvPVbyte($mhx), 3);
 
 my $i = 42;
 
-ok(&Devel::PPPort::SvPV_nolen($mhx), $i++);
-ok(&Devel::PPPort::SvPV_const($mhx), $i++);
-ok(&Devel::PPPort::SvPV_mutable($mhx), $i++);
-ok(&Devel::PPPort::SvPV_flags($mhx), $i++);
-ok(&Devel::PPPort::SvPV_flags_const($mhx), $i++);
+is(&Devel::PPPort::SvPV_nolen($mhx), $i++);
+is(&Devel::PPPort::SvPV_const($mhx), $i++);
+is(&Devel::PPPort::SvPV_mutable($mhx), $i++);
+is(&Devel::PPPort::SvPV_flags($mhx), $i++);
+is(&Devel::PPPort::SvPV_flags_const($mhx), $i++);
 
-ok(&Devel::PPPort::SvPV_flags_const_nolen($mhx), $i++);
-ok(&Devel::PPPort::SvPV_flags_mutable($mhx), $i++);
-ok(&Devel::PPPort::SvPV_force($mhx), $i++);
-ok(&Devel::PPPort::SvPV_force_nolen($mhx), $i++);
-ok(&Devel::PPPort::SvPV_force_mutable($mhx), $i++);
+is(&Devel::PPPort::SvPV_flags_const_nolen($mhx), $i++);
+is(&Devel::PPPort::SvPV_flags_mutable($mhx), $i++);
+is(&Devel::PPPort::SvPV_force($mhx), $i++);
+is(&Devel::PPPort::SvPV_force_nolen($mhx), $i++);
+is(&Devel::PPPort::SvPV_force_mutable($mhx), $i++);
 
-ok(&Devel::PPPort::SvPV_force_nomg($mhx), $i++);
-ok(&Devel::PPPort::SvPV_force_nomg_nolen($mhx), $i++);
-ok(&Devel::PPPort::SvPV_force_flags($mhx), $i++);
-ok(&Devel::PPPort::SvPV_force_flags_nolen($mhx), $i++);
-ok(&Devel::PPPort::SvPV_force_flags_mutable($mhx), $i++);
+is(&Devel::PPPort::SvPV_force_nomg($mhx), $i++);
+is(&Devel::PPPort::SvPV_force_nomg_nolen($mhx), $i++);
+is(&Devel::PPPort::SvPV_force_flags($mhx), $i++);
+is(&Devel::PPPort::SvPV_force_flags_nolen($mhx), $i++);
+is(&Devel::PPPort::SvPV_force_flags_mutable($mhx), $i++);
 
-ok(&Devel::PPPort::SvPV_nolen_const($mhx), $i++);
-ok(&Devel::PPPort::SvPV_nomg($mhx), $i++);
-ok(&Devel::PPPort::SvPV_nomg_const($mhx), $i++);
-ok(&Devel::PPPort::SvPV_nomg_const_nolen($mhx), $i++);
-ok(&Devel::PPPort::SvPV_nomg_nolen($mhx), $i++);
+is(&Devel::PPPort::SvPV_nolen_const($mhx), $i++);
+is(&Devel::PPPort::SvPV_nomg($mhx), $i++);
+is(&Devel::PPPort::SvPV_nomg_const($mhx), $i++);
+is(&Devel::PPPort::SvPV_nomg_const_nolen($mhx), $i++);
+is(&Devel::PPPort::SvPV_nomg_nolen($mhx), $i++);
 
-$mhx = 42; ok(&Devel::PPPort::SvPV_nolen($mhx), 0);
-$mhx = 42; ok(&Devel::PPPort::SvPV_const($mhx), 2);
-$mhx = 42; ok(&Devel::PPPort::SvPV_mutable($mhx), 2);
-$mhx = 42; ok(&Devel::PPPort::SvPV_flags($mhx), 2);
-$mhx = 42; ok(&Devel::PPPort::SvPV_flags_const($mhx), 2);
+$mhx = 42; is(&Devel::PPPort::SvPV_nolen($mhx), 0);
+$mhx = 42; is(&Devel::PPPort::SvPV_const($mhx), 2);
+$mhx = 42; is(&Devel::PPPort::SvPV_mutable($mhx), 2);
+$mhx = 42; is(&Devel::PPPort::SvPV_flags($mhx), 2);
+$mhx = 42; is(&Devel::PPPort::SvPV_flags_const($mhx), 2);
 
-$mhx = 42; ok(&Devel::PPPort::SvPV_flags_const_nolen($mhx), 0);
-$mhx = 42; ok(&Devel::PPPort::SvPV_flags_mutable($mhx), 2);
-$mhx = 42; ok(&Devel::PPPort::SvPV_force($mhx), 2);
-$mhx = 42; ok(&Devel::PPPort::SvPV_force_nolen($mhx), 0);
-$mhx = 42; ok(&Devel::PPPort::SvPV_force_mutable($mhx), 2);
+$mhx = 42; is(&Devel::PPPort::SvPV_flags_const_nolen($mhx), 0);
+$mhx = 42; is(&Devel::PPPort::SvPV_flags_mutable($mhx), 2);
+$mhx = 42; is(&Devel::PPPort::SvPV_force($mhx), 2);
+$mhx = 42; is(&Devel::PPPort::SvPV_force_nolen($mhx), 0);
+$mhx = 42; is(&Devel::PPPort::SvPV_force_mutable($mhx), 2);
 
-$mhx = 42; ok(&Devel::PPPort::SvPV_force_nomg($mhx), 2);
-$mhx = 42; ok(&Devel::PPPort::SvPV_force_nomg_nolen($mhx), 0);
-$mhx = 42; ok(&Devel::PPPort::SvPV_force_flags($mhx), 2);
-$mhx = 42; ok(&Devel::PPPort::SvPV_force_flags_nolen($mhx), 0);
-$mhx = 42; ok(&Devel::PPPort::SvPV_force_flags_mutable($mhx), 2);
+$mhx = 42; is(&Devel::PPPort::SvPV_force_nomg($mhx), 2);
+$mhx = 42; is(&Devel::PPPort::SvPV_force_nomg_nolen($mhx), 0);
+$mhx = 42; is(&Devel::PPPort::SvPV_force_flags($mhx), 2);
+$mhx = 42; is(&Devel::PPPort::SvPV_force_flags_nolen($mhx), 0);
+$mhx = 42; is(&Devel::PPPort::SvPV_force_flags_mutable($mhx), 2);
 
-$mhx = 42; ok(&Devel::PPPort::SvPV_nolen_const($mhx), 0);
-$mhx = 42; ok(&Devel::PPPort::SvPV_nomg($mhx), 2);
-$mhx = 42; ok(&Devel::PPPort::SvPV_nomg_const($mhx), 2);
-$mhx = 42; ok(&Devel::PPPort::SvPV_nomg_const_nolen($mhx), 0);
-$mhx = 42; ok(&Devel::PPPort::SvPV_nomg_nolen($mhx), 0);
+$mhx = 42; is(&Devel::PPPort::SvPV_nolen_const($mhx), 0);
+$mhx = 42; is(&Devel::PPPort::SvPV_nomg($mhx), 2);
+$mhx = 42; is(&Devel::PPPort::SvPV_nomg_const($mhx), 2);
+$mhx = 42; is(&Devel::PPPort::SvPV_nomg_const_nolen($mhx), 0);
+$mhx = 42; is(&Devel::PPPort::SvPV_nomg_nolen($mhx), 0);
 
 my $str = "";
 &Devel::PPPort::SvPV_force($str);
 my($s2, $before, $after) = &Devel::PPPort::SvPV_renew($str, 81, "x"x80);
-ok($str, "x"x80);
-ok($s2, "x"x80);
+is($str, "x"x80);
+is($s2, "x"x80);
 ok($before < 81);
-ok($after, 81);
+is($after, 81);
 
 $str = "x"x400;
 &Devel::PPPort::SvPV_force($str);
 ($s2, $before, $after) = &Devel::PPPort::SvPV_renew($str, 41, "x"x40);
-ok($str, "x"x40);
-ok($s2, "x"x40);
+is($str, "x"x40);
+is($s2, "x"x40);
 ok($before > 41);
-ok($after, 41);
+is($after, 41);

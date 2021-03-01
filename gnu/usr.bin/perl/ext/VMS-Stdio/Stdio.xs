@@ -137,7 +137,7 @@ binmode(fh)
 	   io = sv_2io(fh);
            fp = io ? IoOFP(io) : NULL;
 	   iotype = io ? IoTYPE(io) : '\0';
-	    if (fp == NULL || strchr(">was+-|",iotype) == NULL) {
+	    if (fp == NULL || memCHRs(">was+-|",iotype) == NULL) {
 	      set_errno(EBADF); set_vaxc_errno(SS$_IVCHAN); XSRETURN_UNDEF;
 	    }
            if (!PerlIO_getname(fp,filespec)) XSRETURN_UNDEF;
@@ -432,7 +432,7 @@ writeof(mysv)
 	    struct dsc$descriptor devdsc = {0, DSC$K_DTYPE_T, DSC$K_CLASS_S, devnam};
 	    IO *io = sv_2io(mysv);
            PerlIO *fp = io ? IoOFP(io) : NULL;
-	    if (fp == NULL || strchr(">was+-|",IoTYPE(io)) == NULL) {
+	    if (fp == NULL || memCHRs(">was+-|",IoTYPE(io)) == NULL) {
 	      set_errno(EBADF); set_vaxc_errno(SS$_IVCHAN); XSRETURN_UNDEF;
 	    }
            if (PerlIO_getname(fp,devnam) == NULL) { ST(0) = &PL_sv_undef; XSRETURN(1); }

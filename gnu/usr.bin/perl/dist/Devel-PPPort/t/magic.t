@@ -10,10 +10,12 @@
 #
 ################################################################################
 
+use FindBin ();
+
 BEGIN {
   if ($ENV{'PERL_CORE'}) {
     chdir 't' if -d 't';
-    @INC = ('../lib', '../ext/Devel-PPPort/t') if -d '../lib' && -d '../ext';
+    unshift @INC, '../lib' if -d '../lib' && -d '../ext';
     require Config; import Config;
     use vars '%Config';
     if (" $Config{'extensions'} " !~ m[ Devel/PPPort ]) {
@@ -21,24 +23,26 @@ BEGIN {
       exit 0;
     }
   }
-  else {
-    unshift @INC, 't';
-  }
+
+  use lib "$FindBin::Bin";
+  use lib "$FindBin::Bin/../parts/inc";
+
+  die qq[Cannot find "$FindBin::Bin/../parts/inc"] unless -d "$FindBin::Bin/../parts/inc";
 
   sub load {
-    eval "use Test";
-    require 'testutil.pl' if $@;
+    require 'testutil.pl';
+    require 'inctools';
   }
 
-  if (23) {
+  if (63) {
     load();
-    plan(tests => 23);
+    plan(tests => 63);
   }
 }
 
 use Devel::PPPort;
 use strict;
-$^W = 1;
+BEGIN { $^W = 1; }
 
 package Devel::PPPort;
 use vars '@ISA';
@@ -50,27 +54,27 @@ package main;
 
 # Find proper magic
 ok(my $obj1 = Devel::PPPort->new_with_mg());
-ok(Devel::PPPort::as_string($obj1), 'hello');
+is(Devel::PPPort::as_string($obj1), 'hello');
 
 # Find with no magic
 my $obj = bless {}, 'Fake::Class';
-ok(Devel::PPPort::as_string($obj), "Sorry, your princess is in another castle.");
+is(Devel::PPPort::as_string($obj), "Sorry, your princess is in another castle.");
 
 # Find with other magic (not the magic we are looking for)
 ok($obj = Devel::PPPort->new_with_other_mg());
-ok(Devel::PPPort::as_string($obj), "Sorry, your princess is in another castle.");
+is(Devel::PPPort::as_string($obj), "Sorry, your princess is in another castle.");
 
 # Okay, attempt to remove magic that isn't there
 Devel::PPPort::remove_other_magic($obj1);
-ok(Devel::PPPort::as_string($obj1), 'hello');
+is(Devel::PPPort::as_string($obj1), 'hello');
 
 # Remove magic that IS there
 Devel::PPPort::remove_null_magic($obj1);
-ok(Devel::PPPort::as_string($obj1), "Sorry, your princess is in another castle.");
+is(Devel::PPPort::as_string($obj1), "Sorry, your princess is in another castle.");
 
 # Removing when no magic present
 Devel::PPPort::remove_null_magic($obj1);
-ok(Devel::PPPort::as_string($obj1), "Sorry, your princess is in another castle.");
+is(Devel::PPPort::as_string($obj1), "Sorry, your princess is in another castle.");
 
 use Tie::Hash;
 my %h;
@@ -79,34 +83,34 @@ $h{foo} = 'foo';
 $h{bar} = '';
 
 &Devel::PPPort::sv_catpv_mg($h{foo}, 'bar');
-ok($h{foo}, 'foobar');
+is($h{foo}, 'foobar');
 
 &Devel::PPPort::sv_catpvn_mg($h{bar}, 'baz');
-ok($h{bar}, 'baz');
+is($h{bar}, 'baz');
 
 &Devel::PPPort::sv_catsv_mg($h{foo}, '42');
-ok($h{foo}, 'foobar42');
+is($h{foo}, 'foobar42');
 
 &Devel::PPPort::sv_setiv_mg($h{bar}, 42);
-ok($h{bar}, 42);
+is($h{bar}, 42);
 
 &Devel::PPPort::sv_setnv_mg($h{PI}, 3.14159);
 ok(abs($h{PI} - 3.14159) < 0.01);
 
 &Devel::PPPort::sv_setpv_mg($h{mhx}, 'mhx');
-ok($h{mhx}, 'mhx');
+is($h{mhx}, 'mhx');
 
 &Devel::PPPort::sv_setpvn_mg($h{mhx}, 'Marcus');
-ok($h{mhx}, 'Marcus');
+is($h{mhx}, 'Marcus');
 
 &Devel::PPPort::sv_setsv_mg($h{sv}, 'SV');
-ok($h{sv}, 'SV');
+is($h{sv}, 'SV');
 
 &Devel::PPPort::sv_setuv_mg($h{sv}, 4711);
-ok($h{sv}, 4711);
+is($h{sv}, 4711);
 
 &Devel::PPPort::sv_usepvn_mg($h{sv}, 'Perl');
-ok($h{sv}, 'Perl');
+is($h{sv}, 'Perl');
 
 # v1 is treated as a bareword in older perls...
 my $ver = do { local $SIG{'__WARN__'} = sub {}; eval qq[v1.2.0] };
@@ -117,4 +121,109 @@ ok(!Devel::PPPort::SvVSTRING_mg(4711));
 my $foo = 'bar';
 ok(Devel::PPPort::sv_magic_portable($foo));
 ok($foo eq 'bar');
+
+    tie my $scalar, 'TieScalarCounter', 10;
+    my $fetch = $scalar;
+
+    is tied($scalar)->{fetch}, 1;
+    is tied($scalar)->{store}, 0;
+    is Devel::PPPort::magic_SvIV_nomg($scalar), 10;
+    is tied($scalar)->{fetch}, 1;
+    is tied($scalar)->{store}, 0;
+    is Devel::PPPort::magic_SvUV_nomg($scalar), 10;
+    is tied($scalar)->{fetch}, 1;
+    is tied($scalar)->{store}, 0;
+    is Devel::PPPort::magic_SvNV_nomg($scalar), 10;
+    is tied($scalar)->{fetch}, 1;
+    is tied($scalar)->{store}, 0;
+    is Devel::PPPort::magic_SvPV_nomg_nolen($scalar), 10;
+    is tied($scalar)->{fetch}, 1;
+    is tied($scalar)->{store}, 0;
+    ok Devel::PPPort::magic_SvTRUE_nomg($scalar);
+    is tied($scalar)->{fetch}, 1;
+    is tied($scalar)->{store}, 0;
+
+    my $object = OverloadedObject->new('string', 5.5, 0);
+
+    is Devel::PPPort::magic_SvIV_nomg($object), 5;
+    is Devel::PPPort::magic_SvUV_nomg($object), 5;
+    is Devel::PPPort::magic_SvNV_nomg($object), 5.5;
+    is Devel::PPPort::magic_SvPV_nomg_nolen($object), 'string';
+    ok !Devel::PPPort::magic_SvTRUE_nomg($object);
+
+tie my $negative, 'TieScalarCounter', -1;
+$fetch = $negative;
+
+is tied($negative)->{fetch}, 1;
+is tied($negative)->{store}, 0;
+is Devel::PPPort::magic_SvIV_nomg($negative), -1;
+if (ivers($]) >= ivers(5.6)) {
+    ok !Devel::PPPort::SVf_IVisUV($negative);
+} else {
+    skip 'SVf_IVisUV is unsupported', 1;
+}
+is tied($negative)->{fetch}, 1;
+is tied($negative)->{store}, 0;
+Devel::PPPort::magic_SvUV_nomg($negative);
+if (ivers($]) >= ivers(5.6)) {
+    ok !Devel::PPPort::SVf_IVisUV($negative);
+} else {
+    skip 'SVf_IVisUV is unsupported', 1;
+}
+is tied($negative)->{fetch}, 1;
+is tied($negative)->{store}, 0;
+
+tie my $big, 'TieScalarCounter', Devel::PPPort::above_IV_MAX();
+$fetch = $big;
+
+is tied($big)->{fetch}, 1;
+is tied($big)->{store}, 0;
+Devel::PPPort::magic_SvIV_nomg($big);
+if (ivers($]) >= ivers(5.6)) {
+    ok Devel::PPPort::SVf_IVisUV($big);
+} else {
+    skip 'SVf_IVisUV is unsupported', 1;
+}
+is tied($big)->{fetch}, 1;
+is tied($big)->{store}, 0;
+is Devel::PPPort::magic_SvUV_nomg($big), Devel::PPPort::above_IV_MAX();
+if (ivers($]) >= ivers(5.6)) {
+    ok Devel::PPPort::SVf_IVisUV($big);
+} else {
+    skip 'SVf_IVisUV is unsupported', 1;
+}
+is tied($big)->{fetch}, 1;
+is tied($big)->{store}, 0;
+
+package TieScalarCounter;
+
+sub TIESCALAR {
+    my ($class, $value) = @_;
+    return bless { fetch => 0, store => 0, value => $value }, $class;
+}
+
+sub FETCH {
+    my ($self) = @_;
+    $self->{fetch}++;
+    return $self->{value};
+}
+
+sub STORE {
+    my ($self, $value) = @_;
+    $self->{store}++;
+    $self->{value} = $value;
+}
+
+package OverloadedObject;
+
+sub new {
+    my ($class, $str, $num, $bool) = @_;
+    return bless { str => $str, num => $num, bool => $bool }, $class;
+}
+
+use overload
+    '""' => sub { $_[0]->{str} },
+    '0+' => sub { $_[0]->{num} },
+    'bool' => sub { $_[0]->{bool} },
+    ;
 

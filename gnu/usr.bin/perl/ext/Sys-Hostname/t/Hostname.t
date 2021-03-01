@@ -10,7 +10,7 @@ BEGIN {
 
 use Sys::Hostname;
 
-use Test::More tests => 4;
+use Test::More tests => 2;
 
 SKIP:
 {
@@ -23,15 +23,10 @@ SKIP:
 }
 
 {
-    use warnings;
-    my $warn;
-    local $SIG{__WARN__} = sub { $warn = "@_" };
-    eval { hostname("dummy") };
-    ok($warn, "warns with an argument");
-    like($warn, qr/hostname\(\) doesn't accept any arguments/,
-         "appropriate message");
-    no warnings "deprecated";
-    undef $warn;
-    eval { hostname("dummy") };
-    is($warn, undef, "no warning when disabled");
+    local $@;
+    eval { hostname("dummy"); };
+    like($@,
+        qr/hostname\(\) does not accepts arguments \(it used to silently discard any provided\)/,
+        "hostname no longer accepts arguments"
+    );
 }

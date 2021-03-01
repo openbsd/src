@@ -1,5 +1,10 @@
 CHANGES
 -------
+2.72  Thu 28 Mar 2019 09:01:39 AM CET (rurban)
+      Features
+      - add .cirrus.yml smoker https://cirrus-ci.com/github/rurban/Net-Ping
+      Test fixes
+      - Skip failing freebsd localhost resolver tests
 
 2.71  Tue Oct 16 18:41:51 CEST 2018 (rurban)
        Features

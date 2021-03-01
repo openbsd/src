@@ -1,0 +1,10 @@
+5.031006
+UTF8_CHK_SKIP                  # U
+do_trans_count_invmap          # F added by devel/scanprov
+do_trans_invmap                # F added by devel/scanprov
+invmap_dump                    # F added by devel/scanprov
+_is_utf8_FOO                   # F added by devel/scanprov
+_is_utf8_perl_idcont           # F added by devel/scanprov
+_is_utf8_perl_idstart          # F added by devel/scanprov
+make_exactf_invlist            # F added by devel/scanprov
+sv_derived_from_svpvn          # F added by devel/scanprov

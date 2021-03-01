@@ -10,10 +10,12 @@
 #
 ################################################################################
 
+use FindBin ();
+
 BEGIN {
   if ($ENV{'PERL_CORE'}) {
     chdir 't' if -d 't';
-    @INC = ('../lib', '../ext/Devel-PPPort/t') if -d '../lib' && -d '../ext';
+    unshift @INC, '../lib' if -d '../lib' && -d '../ext';
     require Config; import Config;
     use vars '%Config';
     if (" $Config{'extensions'} " !~ m[ Devel/PPPort ]) {
@@ -21,13 +23,15 @@ BEGIN {
       exit 0;
     }
   }
-  else {
-    unshift @INC, 't';
-  }
+
+  use lib "$FindBin::Bin";
+  use lib "$FindBin::Bin/../parts/inc";
+
+  die qq[Cannot find "$FindBin::Bin/../parts/inc"] unless -d "$FindBin::Bin/../parts/inc";
 
   sub load {
-    eval "use Test";
-    require 'testutil.pl' if $@;
+    require 'testutil.pl';
+    require 'inctools';
   }
 
   if (52) {
@@ -38,7 +42,7 @@ BEGIN {
 
 use Devel::PPPort;
 use strict;
-$^W = 1;
+BEGIN { $^W = 1; }
 
 package Devel::PPPort;
 use vars '@ISA';
@@ -53,13 +57,13 @@ ok(Devel::PPPort::compare_PL_signals());
 ok(!defined(&Devel::PPPort::PL_sv_undef()));
 ok(&Devel::PPPort::PL_sv_yes());
 ok(!&Devel::PPPort::PL_sv_no());
-ok(&Devel::PPPort::PL_na("abcd"), 4);
-ok(&Devel::PPPort::PL_Sv(), "mhx");
+is(&Devel::PPPort::PL_na("abcd"), 4);
+is(&Devel::PPPort::PL_Sv(), "mhx");
 ok(defined &Devel::PPPort::PL_tokenbuf());
 ok("$]" >= 5.009005 || &Devel::PPPort::PL_parser());
 ok(&Devel::PPPort::PL_hexdigit() =~ /^[0-9a-zA-Z]+$/);
 ok(defined &Devel::PPPort::PL_hints());
-ok(&Devel::PPPort::PL_ppaddr("mhx"), "MHX");
+is(&Devel::PPPort::PL_ppaddr("mhx"), "MHX");
 
 for (&Devel::PPPort::other_variables()) {
   ok($_ != 0);
@@ -85,7 +89,7 @@ for (&Devel::PPPort::other_variables()) {
   else {
     ok(@w == 0);
   }
-  ok($fail, 0);
+  is($fail, 0);
 }
 
 ok(&Devel::PPPort::no_dummy_parser_vars(1) >= ("$]" < 5.009005 ? 1 : 0));
@@ -93,7 +97,7 @@ ok(&Devel::PPPort::no_dummy_parser_vars(1) >= ("$]" < 5.009005 ? 1 : 0));
 eval { &Devel::PPPort::no_dummy_parser_vars(0) };
 
 if ("$]" < 5.009005) {
-  ok($@, '');
+  is($@, '');
 }
 else {
   if ($@) {

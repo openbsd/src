@@ -1,37 +1,116 @@
 5.005000
-PL_curpad                      # E
-PL_modglobal                   # E
 cx_dump                        # U
 debop                          # U
 debprofdump                    # U
+DOUBLESIZE                     # E
 fbm_compile                    # E (Perl_fbm_compile)
 fbm_instr                      # E (Perl_fbm_instr)
 get_op_descs                   # E
 get_op_names                   # E
 init_stacks                    # E
+mg_length                      # E
 mg_size                        # E
 newHVhv                        # E
 new_stackinfo                  # E
+PL_curpad                      # E
+PL_modglobal                   # E
+PTRSIZE                        # E
 regdump                        # U
 regexec_flags                  # E
 regnext                        # E (Perl_regnext)
 runops_debug                   # E
 runops_standard                # E
 save_iv                        # E (save_iv)
-save_op                        # U
 sv_iv                          # E
 sv_peek                        # U
 sv_pvn                         # E
 sv_true                        # E
 sv_uv                          # E
-CPERLscope                     # added by devel/scanprov
-END_EXTERN_C                   # added by devel/scanprov
-EXTERN_C                       # added by devel/scanprov
-NOOP                           # added by devel/scanprov
-PL_DBsignal                    # added by devel/scanprov
-PL_Sv                          # added by devel/scanprov
-PL_hexdigit                    # added by devel/scanprov
-PL_hints                       # added by devel/scanprov
-PL_laststatval                 # added by devel/scanprov
-PL_statcache                   # added by devel/scanprov
-START_EXTERN_C                 # added by devel/scanprov
+CPERLscope                     # M added by devel/scanprov
+END_EXTERN_C                   # M added by devel/scanprov
+EXTERN_C                       # M added by devel/scanprov
+NOOP                           # M added by devel/scanprov
+PL_DBsignal                    # M added by devel/scanprov
+PL_DBtrace                     # M added by devel/scanprov
+PL_hexdigit                    # M added by devel/scanprov
+PL_hints                       # M added by devel/scanprov
+PL_laststatval                 # M added by devel/scanprov
+PL_mess_sv                     # M added by devel/scanprov
+PL_statcache                   # M added by devel/scanprov
+PL_Sv                          # M added by devel/scanprov
+PL_Xpv                         # M added by devel/scanprov
+START_EXTERN_C                 # M added by devel/scanprov
+add_data                       # F added by devel/scanprov
+ao                             # F added by devel/scanprov
+debprof                        # F added by devel/scanprov
+del_sv                         # F added by devel/scanprov
+div128                         # F added by devel/scanprov
+docatch                        # F added by devel/scanprov
+doform                         # F added by devel/scanprov
+doparseform                    # F added by devel/scanprov
+dopoptolabel                   # F added by devel/scanprov
+dopoptoloop                    # F added by devel/scanprov
+dopoptosub_at                  # F added by devel/scanprov
+dumpuntil                      # F added by devel/scanprov
+filter_gets                    # F added by devel/scanprov
+find_beginning                 # F added by devel/scanprov
+forbid_setid                   # F added by devel/scanprov
+force_version                  # F added by devel/scanprov
+get_no_modify                  # F added by devel/scanprov
+get_opargs                     # F added by devel/scanprov
+hsplit                         # F added by devel/scanprov
+incline                        # F added by devel/scanprov
+incpush                        # F added by devel/scanprov
+init_debugger                  # F added by devel/scanprov
+init_ids                       # F added by devel/scanprov
+init_interp                    # F added by devel/scanprov
+init_main_stash                # F added by devel/scanprov
+init_perllib                   # F added by devel/scanprov
+init_postdump_symbols          # F added by devel/scanprov
+init_predump_symbols           # F added by devel/scanprov
+intuit_method                  # F added by devel/scanprov
+isa_lookup                     # F added by devel/scanprov
+is_an_int                      # F added by devel/scanprov
+lop                            # F added by devel/scanprov
+magic_methpack                 # F added by devel/scanprov
+magic_sizepack                 # F added by devel/scanprov
+malloced_size                  # F added by devel/scanprov
+mess_alloc                     # F added by devel/scanprov
+missingterm                    # F added by devel/scanprov
+mul128                         # F added by devel/scanprov
+my_exit_jump                   # F added by devel/scanprov
+new_he                         # F added by devel/scanprov
+new_logop                      # F added by devel/scanprov
+nextchar                       # F added by devel/scanprov
+not_a_number                   # F added by devel/scanprov
+nuke_stacks                    # F added by devel/scanprov
+open_script                    # F added by devel/scanprov
+pad_findlex                    # F added by devel/scanprov
+refto                          # F added by devel/scanprov
+reg                            # F added by devel/scanprov
+reganode                       # F added by devel/scanprov
+regatom                        # F added by devel/scanprov
+regbranch                      # F added by devel/scanprov
+regclass                       # F added by devel/scanprov
+regcppop                       # F added by devel/scanprov
+regcppush                      # F added by devel/scanprov
+reginclass                     # F added by devel/scanprov
+reginsert                      # F added by devel/scanprov
+regmatch                       # F added by devel/scanprov
+reg_node                       # F added by devel/scanprov
+regpiece                       # F added by devel/scanprov
+regrepeat                      # F added by devel/scanprov
+regtail                        # F added by devel/scanprov
+regtry                         # F added by devel/scanprov
+save_lines                     # F added by devel/scanprov
+save_scalar_at                 # F added by devel/scanprov
+scalarboolean                  # F added by devel/scanprov
+scan_commit                    # F added by devel/scanprov
+study_chunk                    # F added by devel/scanprov
+sublex_done                    # F added by devel/scanprov
+sublex_push                    # F added by devel/scanprov
+sublex_start                   # F added by devel/scanprov
+sv_unglob                      # F added by devel/scanprov
+tokeq                          # F added by devel/scanprov
+usage                          # F added by devel/scanprov
+visit                          # F added by devel/scanprov

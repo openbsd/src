@@ -43,58 +43,6 @@
 #define STMT_END while(0)
 #endif
 
-#ifndef STADTX_ALLOW_UNALIGNED_AND_LITTLE_ENDIAN
-/* STADTX_ALLOW_UNALIGNED_AND_LITTLE_ENDIAN only matters if nothing has defined U8TO64_LE etc,
- * and when built with Perl these should be defined before this file is loaded.
- */
-#ifdef U32_ALIGNMENT_REQUIRED
-#define STADTX_ALLOW_UNALIGNED_AND_LITTLE_ENDIAN 0
-#else
-#define STADTX_ALLOW_UNALIGNED_AND_LITTLE_ENDIAN 1
-#endif
-#endif
-
-#ifndef U8TO64_LE
-#if STADTX_ALLOW_UNALIGNED_AND_LITTLE_ENDIAN
-#define U8TO64_LE(ptr)  (*((const U64 *)(ptr)))
-#else
-#define U8TO64_LE(ptr)  (\
-    (U64)(ptr)[7] << 56 | \
-    (U64)(ptr)[6] << 48 | \
-    (U64)(ptr)[5] << 40 | \
-    (U64)(ptr)[4] << 32 | \
-    (U64)(ptr)[3] << 24 | \
-    (U64)(ptr)[2] << 16 | \
-    (U64)(ptr)[1] << 8  | \
-    (U64)(ptr)[0]         \
-)
-#endif
-#endif
-
-#ifndef U8TO32_LE
-#if STADTX_ALLOW_UNALIGNED_AND_LITTLE_ENDIAN
-#define U8TO32_LE(ptr)  (*((const U32 *)(ptr)))
-#else
-#define U8TO32_LE(ptr)  (\
-    (U32)(ptr)[3] << 24 | \
-    (U32)(ptr)[2] << 16 | \
-    (U32)(ptr)[1] << 8  | \
-    (U32)(ptr)[0]         \
-)
-#endif
-#endif
-
-#ifndef U8TO16_LE
-#if STADTX_ALLOW_UNALIGNED_AND_LITTLE_ENDIAN
-#define U8TO16_LE(ptr)  (*((const U16 *)(ptr)))
-#else
-#define U8TO16_LE(ptr)  (\
-    (U16)(ptr)[1] << 8  | \
-    (U16)(ptr)[0]         \
-)
-#endif
-#endif
-
 /* Find best way to ROTL32/ROTL64 */
 #if defined(_MSC_VER)
   #include <stdlib.h>  /* Microsoft put _rotl declaration in here */

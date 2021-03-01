@@ -1,15 +1,26 @@
 5.011000
-Gv_AMupdate                    # E (Perl_Gv_AMupdate)
-PL_opfreehook                  # E
-SVt_REGEXP                     # E
-SvOOK_offset                   # U
 av_iter_p                      # U
 gv_add_by_type                 # U
+Gv_AMupdate                    # A
 is_ascii_string                # U
+PL_opfreehook                  # E
 pregfree2                      # U
+PUSH_MULTICALL                 # U
+re_dup_guts                    # U
 save_adelete                   # U
 save_aelem_flags               # U
 save_hdelete                   # U
 save_helem_flags               # U
+SvOOK_offset                   # U
+SVt_REGEXP                     # E
 sv_utf8_upgrade_flags_grow     # U
-get_cvs                        # added by devel/scanprov
+WARN_IMPRECISION               # E
+get_cvs                        # M added by devel/scanprov
+do_delete_local                # F added by devel/scanprov
+dump_all_perl                  # F added by devel/scanprov
+dump_packsubs_perl             # F added by devel/scanprov
+dump_sub_perl                  # F added by devel/scanprov
+get_aux_mg                     # F added by devel/scanprov
+incpush_use_sep                # F added by devel/scanprov
+magic_clearhints               # F added by devel/scanprov
+sv_dup_inc_multiple            # F added by devel/scanprov

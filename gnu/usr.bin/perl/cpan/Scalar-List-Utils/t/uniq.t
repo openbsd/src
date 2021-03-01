@@ -2,9 +2,9 @@
 
 use strict;
 use warnings;
-
-use Test::More tests => 30;
-use List::Util qw( uniqnum uniqstr uniq );
+use Config; # to determine ivsize
+use Test::More tests => 31;
+use List::Util qw( uniqstr uniqint uniq );
 
 use Tie::Array;
 
@@ -67,48 +67,52 @@ SKIP: {
     is( $warnings, "", 'No warnings are printed when handling Unicode strings' );
 }
 
-is_deeply( [ uniqnum qw( 1 1.0 1E0 2 3 ) ],
+is_deeply( [ uniqint ],
+           [],
+           'uniqint of empty list' );
+
+is_deeply( [ uniqint 5, 5 ],
+           [ 5 ],
+           'uniqint of repeated-element list' );
+
+is_deeply( [ uniqint 1, 2, 1, 3 ],
            [ 1, 2, 3 ],
-           'uniqnum compares numbers' );
+           'uniqint removes subsequent duplicates' );
 
-is_deeply( [ uniqnum qw( 1 1.1 1.2 1.3 ) ],
-           [ 1, 1.1, 1.2, 1.3 ],
-           'uniqnum distinguishes floats' );
-
-# Hard to know for sure what an Inf is going to be. Lets make one
-my $Inf = 0 + 1E1000;
-my $NaN;
-$Inf **= 1000 while ( $NaN = $Inf - $Inf ) == $NaN;
-
-is_deeply( [ uniqnum 0, 1, 12345, $Inf, -$Inf, $NaN, 0, $Inf, $NaN ],
-           [ 0, 1, 12345, $Inf, -$Inf, $NaN ],
-           'uniqnum preserves the special values of +-Inf and Nan' );
-
-{
-    my $maxuint = ~0;
-    my $maxint = ~0 >> 1;
-    my $minint = -(~0 >> 1) - 1;
-
-    my @nums = ($maxuint, $maxuint-1, -1, $Inf, $NaN, $maxint, $minint, 1 );
-
-    is_deeply( [ uniqnum @nums, 1.0 ],
-               [ @nums ],
-               'uniqnum preserves uniqness of full integer range' );
-}
+is_deeply( [ uniqint 6.1, 6.2, 6.3 ],
+           [ 6 ],
+           'uniqint compares as and returns integers' );
 
 {
     my $warnings = "";
     local $SIG{__WARN__} = sub { $warnings .= join "", @_ };
 
-    is_deeply( [ uniqnum 0, undef ],
+    is_deeply( [ uniqint 0, undef ],
                [ 0 ],
-               'uniqnum considers undef and zero equivalent' );
+               'uniqint considers undef and zero equivalent' );
 
-    ok( length $warnings, 'uniqnum on undef yields a warning' );
+    ok( length $warnings, 'uniqint on undef yields a warning' );
 
-    is_deeply( [ uniqnum undef ],
+    is_deeply( [ uniqint undef ],
                [ 0 ],
-               'uniqnum on undef coerces to zero' );
+               'uniqint on undef coerces to zero' );
+}
+
+SKIP: {
+    skip('UVs are not reliable on this perl version', 2) unless $] ge "5.008000";
+
+    my $maxbits = $Config{ivsize} * 8 - 1;
+
+    # An integer guaranteed to be a UV
+    my $uv = 1 << $maxbits;
+    is_deeply( [ uniqint $uv, $uv + 1 ],
+               [ $uv, $uv + 1 ],
+               'uniqint copes with UVs' );
+
+    my $nvuv = 2 ** $maxbits;
+    is_deeply( [ uniqint $nvuv, 0 ],
+               [ int($nvuv), 0 ],
+               'uniqint copes with NVUV dualvars' );
 }
 
 is_deeply( [ uniq () ],
@@ -148,24 +152,21 @@ is( scalar( uniqstr qw( a b c d a b e ) ), 5, 'uniqstr() in scalar context' );
                'uniqstr respects stringify overload' );
 }
 
-{
-    package Numify;
+SKIP: {
+    skip('int overload requires perl version 5.8.0', 1) unless $] ge "5.008000";
 
-    use overload '0+' => sub { return $_[0]->{num} };
+    package Googol;
 
-    sub new { bless { num => $_[1] }, $_[0] }
+    use overload '""' => sub { "1" . ( "0"x100 ) },
+                 'int' => sub { $_[0] };
+
+    sub new { bless {}, $_[0] }
 
     package main;
-    use Scalar::Util qw( refaddr );
 
-    my @nums = map { Numify->new( $_ ) } qw( 2 2 5 );
-
-    # is_deeply wants to use eq overloading
-    my @ret = uniqnum @nums;
-    ok( scalar @ret == 2 &&
-        refaddr $ret[0] == refaddr $nums[0] &&
-        refaddr $ret[1] == refaddr $nums[2],
-               'uniqnum respects numify overload' );
+    is_deeply( [ uniqint( Googol->new, Googol->new ) ],
+               [ "1" . ( "0"x100 ) ],
+               'uniqint respects int overload' );
 }
 
 {
@@ -198,11 +199,6 @@ is( scalar( uniqstr qw( a b c d a b e ) ), 5, 'uniqstr() in scalar context' );
     is_deeply( [ uniqstr $1, $2, $3 ],
                [qw( a b )],
                'uniqstr handles magic' );
-
-    "1 1 2" =~ m/(.) (.) (.)/;
-    is_deeply( [ uniqnum $1, $2, $3 ],
-               [ 1, 2 ],
-               'uniqnum handles magic' );
 }
 
 {

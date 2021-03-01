@@ -439,7 +439,7 @@ foreach my $stdio ( ['-', '-'], [*STDIN, *STDOUT])
 
     # missing parameters
     eval ' $fil = gzopen()  ' ;
-    like $@, mkEvalErr('Not enough arguments for Compress::Zlib::gzopen'),
+    like $@, mkEvalErr('Not enough arguments .*? Compress::Zlib::gzopen'),
         '  gzopen with missing mode fails' ;
 
     # unknown parameters

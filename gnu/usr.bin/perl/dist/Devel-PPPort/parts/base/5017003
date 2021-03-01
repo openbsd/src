@@ -1,1 +1,7 @@
 5.017003
+compute_EXACTish               # F added by devel/scanprov
+grok_bslash_N                  # F added by devel/scanprov
+init_constants                 # F added by devel/scanprov
+_invlist_contains_cp           # F added by devel/scanprov
+_invlist_search                # F added by devel/scanprov
+op_unscope                     # F added by devel/scanprov

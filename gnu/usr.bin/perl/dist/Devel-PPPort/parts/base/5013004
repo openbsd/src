@@ -1,1 +1,4 @@
 5.013004
+XS_APIVERSION_BOOTCHECK        # E
+Perl_hv_kill_backrefs          # F added by devel/scanprov
+Perl_init_dbargs               # F added by devel/scanprov

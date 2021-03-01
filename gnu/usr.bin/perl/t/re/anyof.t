@@ -35,13 +35,15 @@ BEGIN {
 # NOTE:  If the pattern contains (?8) it will be upgraded to UTF-8 after
 #        stripping that
 
-# 2**32-1 or 2**64-1
-my $highest_cp_string = "F" x (($Config{uvsize} < 8) ? 8 : 16);
+use Unicode::UCD;
+my $highest_cp = $Unicode::UCD::MAX_CP;
+my $highest_cp_string = sprintf "%X", $highest_cp;
+$highest_cp_string = "$highest_cp_string";
 
-my $next_highest_cp_string = $highest_cp_string =~ s/ F $ /E/xr;
-
-my $highest_cp = "\\x{$highest_cp_string}";
-my $next_highest_cp = "\\x{$next_highest_cp_string}";
+my $infinity = $highest_cp_string;
+$infinity =~ s/^7/F/;  # Make infinity larger than the largest legal one, and
+                       # at the time of this writing, we really internally
+                       # allow UV_MAX to be infinity.
 
 sub  get_compiled ($) {
     # Convert platform-independent values to what is suitable for the
@@ -49,8 +51,8 @@ sub  get_compiled ($) {
 
     my $pattern = shift;
 
-    $pattern =~ s/\{INFTY\}/$highest_cp/g;
-    $pattern =~ s/\{INFTY_minus_1\}/$next_highest_cp/g;
+    $pattern =~ s/{INFTY}/\\x{$infinity}/g;
+    $pattern =~ s/{HIGHEST_CP}/\\x{$highest_cp_string}/g;
     my $use_utf8 = ($pattern =~ s/\Q(?8)//);
 
     $pattern = "my \$a = '$pattern';";
@@ -60,7 +62,7 @@ sub  get_compiled ($) {
 
     my $result = fresh_perl($actual_pattern);
     if ($? != 0) {  # Re-run so as to display STDERR.
-        fail($pattern);
+        fail($pattern, "Until this is fixed, the planned number of tests will be wrong");
         fresh_perl($actual_pattern, { stderr => 0, verbose => 1 });
         return;
     }
@@ -78,8 +80,8 @@ sub  get_compiled ($) {
     s/ ^ \s* \d+ : \s* //x;     # ... And the node number
 
     # Use platform-independent values
-    s/$highest_cp_string/INFTY/g;
-    s/$next_highest_cp_string/INFTY_minus_1/g;
+    s/$infinity/INFTY/ig;
+    s/$highest_cp_string/HIGHEST_CP/ig;
 
     return $_;
 }
@@ -137,8 +139,10 @@ my @tests = (
     '[_[:^blank:]]' => 'NPOSIXD[:blank:]',
     '[\xA0[:^blank:]]' => 'ANYOF[^\t ][0100-167F 1681-1FFF 200B-202E 2030-205E 2060-2FFF 3001-INFTY]',
     '(?d:[_[:^blank:]])' => 'NPOSIXD[:blank:]',
-    '[\x{07}-\x{0B}]' => 'ANYOF[\a\b\t\n\x0B]',
-    '(?il)[\x{212A}]' => 'ANYOFL{i}[{utf8 locale}Kk][212A]',
+    '[\x{07}-\x{0B}]' => 'ANYOFR[\a\b\t\n\x0B]',
+    '(?l)[\x{2029}]' => 'EXACTL <\x{2029}>',
+    '(?l)(?[\x{2029}])' => 'ANYOFL{utf8-locale-reqd}[2029]', # regex sets requires utf8 locale for /l
+    '(?il)[\x{212A}]' => 'EXACTFL <\\x{212a}>',
     '(?il)(?[\x{212A}])' => 'ANYOFL{utf8-locale-reqd}[Kk][212A]',
 
     '(?i)b[s]\xe0' => 'ANYOFM[Bb]',    # The s goes into a 2nd node
@@ -459,11 +463,12 @@ my @tests = (
     '(?i)(?u)[\D\w]' => 'SANY',
     '(?i)(?a)[\d\w]' => 'POSIXA[\w]',
     '(?i)(?a)[\D\w]' => 'SANY',
-    '(?l:[\x{212A}])' => 'ANYOFL[212A]',
+    '(?l:[\x{212A}])' => 'EXACTL <\x{212a}>',
     '(?l:[\s\x{212A}])' => 'ANYOFPOSIXL[\s][1680 2000-200A 2028-2029 202F 205F 212A 3000]',
     '(?l:[^\S\x{202F}])' => 'ANYOFPOSIXL[^\\S][1680 2000-200A 2028-2029 205F 3000]',
-    '(?li:[a-z])' => 'ANYOFL{i}[a-z{utf8 locale}\x{017F}\x{212A}]',
-
+    '(?li:[a-z])' => (($::IS_ASCII)
+                     ? 'ANYOFL{i}[a-z{utf8 locale}\x{017F}\x{212A}]'
+                     : 'ANYOFL{i}[a-ij-rs-z{utf8 locale}\x{017F}\x{212A}]'),
     '\p{All}' => 'SANY',
     '\P{All}' => 'OPFAIL',
     '[\p{Any}]' => 'ANYOF[\x00-\xFF][0100-10FFFF]',
@@ -476,163 +481,157 @@ my @tests = (
     '[^\p{All}\p{IsMyRuntimeProperty}]' => 'OPFAIL',
     '[\p{All}\p{IsMyRuntimeProperty}]' => 'SANY',
 
-    '[\x{00}-{INFTY_minus_1}]' => 'ANYOF[\x00-\xFF][0100-INFTY_minus_1]',
+    '[\x{00}-{HIGHEST_CP}]' => 'ANYOF[\x00-\xFF][0100-HIGHEST_CP]',
     '[\x{00}-{INFTY}]' => 'SANY',
-    '(?i)[\x{100}]' => 'ANYOFH[0100-0101]',
     '[\x{101}-{INFTY}]' => 'ANYOFH[0101-INFTY]',
-    '[\x{101}-{INFTY_minus_1}]' => 'ANYOFH[0101-INFTY_minus_1]',
-    '[\x{102}\x{104}]' => 'ANYOFH[0102 0104]',
-    '[\x{102}-\x{104}{INFTY}]' => 'ANYOFH[0102-0104 INFTY-INFTY]',
-    '[\x{102}-\x{104}{INFTY_minus_1}]' => 'ANYOFH[0102-0104 INFTY_minus_1]',
-    '[\x{102}-\x{104}\x{101}]' => 'ANYOFH[0101-0104]',
+    '[\x{101}-{HIGHEST_CP}]' => 'ANYOFH[0101-HIGHEST_CP]',
+    '[\x{102}\x{104}]' => 'ANYOFHb[0102 0104]',
+    '[\x{102}-\x{104}{HIGHEST_CP}]' => 'ANYOFH[0102-0104 HIGHEST_CP]',
+    '[\x{102}-\x{104}\x{101}]' => 'ANYOFRb[0101-0104]',
     '[\x{102}-\x{104}\x{101}-{INFTY}]' => 'ANYOFH[0101-INFTY]',
-    '[\x{102}-\x{104}\x{101}-{INFTY_minus_1}]' => 'ANYOFH[0101-INFTY_minus_1]',
-    '[\x{102}-\x{104}\x{102}]' => 'ANYOFH[0102-0104]',
+    '[\x{102}-\x{104}\x{101}-{HIGHEST_CP}]' => 'ANYOFH[0101-HIGHEST_CP]',
+    '[\x{102}-\x{104}\x{102}]' => 'ANYOFRb[0102-0104]',
     '[\x{102}-\x{104}\x{102}-{INFTY}]' => 'ANYOFH[0102-INFTY]',
-    '[\x{102}-\x{104}\x{102}-{INFTY_minus_1}]' => 'ANYOFH[0102-INFTY_minus_1]',
-    '[\x{102}-\x{104}\x{103}]' => 'ANYOFH[0102-0104]',
+    '[\x{102}-\x{104}\x{102}-{HIGHEST_CP}]' => 'ANYOFH[0102-HIGHEST_CP]',
+    '[\x{102}-\x{104}\x{103}]' => 'ANYOFRb[0102-0104]',
     '[\x{102}-\x{104}\x{103}-{INFTY}]' => 'ANYOFH[0102-INFTY]',
-    '[\x{102}-\x{104}\x{103}-{INFTY_minus_1}]' => 'ANYOFH[0102-INFTY_minus_1]',
-    '[\x{102}-\x{104}\x{104}]' => 'ANYOFH[0102-0104]',
+    '[\x{102}-\x{104}\x{103}-{HIGHEST_CP}]' => 'ANYOFH[0102-HIGHEST_CP]',
+    '[\x{102}-\x{104}\x{104}]' => 'ANYOFRb[0102-0104]',
     '[\x{102}-\x{104}\x{104}-{INFTY}]' => 'ANYOFH[0102-INFTY]',
-    '[\x{102}-\x{104}\x{104}-{INFTY_minus_1}]' => 'ANYOFH[0102-INFTY_minus_1]',
-    '[\x{102}-\x{104}\x{105}]' => 'ANYOFH[0102-0105]',
+    '[\x{102}-\x{104}\x{104}-{HIGHEST_CP}]' => 'ANYOFH[0102-HIGHEST_CP]',
+    '[\x{102}-\x{104}\x{105}]' => 'ANYOFRb[0102-0105]',
     '[\x{102}-\x{104}\x{105}-{INFTY}]' => 'ANYOFH[0102-INFTY]',
-    '[\x{102}-\x{104}\x{105}-{INFTY_minus_1}]' => 'ANYOFH[0102-INFTY_minus_1]',
-    '[\x{102}-\x{104}\x{106}]' => 'ANYOFH[0102-0104 0106]',
+    '[\x{102}-\x{104}\x{105}-{HIGHEST_CP}]' => 'ANYOFH[0102-HIGHEST_CP]',
+    '[\x{102}-\x{104}\x{106}]' => 'ANYOFHb[0102-0104 0106]',
     '[\x{102}-\x{104}\x{106}-{INFTY}]' => 'ANYOFH[0102-0104 0106-INFTY]',
-    '[\x{102}-\x{104}\x{106}-{INFTY_minus_1}]' => 'ANYOFH[0102-0104 0106-INFTY_minus_1]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}{INFTY}]' => 'ANYOFH[0102-0104 0108-010A INFTY-INFTY]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}{INFTY_minus_1}]' => 'ANYOFH[0102-0104 0108-010A INFTY_minus_1]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{101}]' => 'ANYOFH[0101-0104 0108-010A]',
+    '[\x{102}-\x{104}\x{106}-{HIGHEST_CP}]' => 'ANYOFH[0102-0104 0106-HIGHEST_CP]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}{HIGHEST_CP}]' => 'ANYOFH[0102-0104 0108-010A HIGHEST_CP]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{101}]' => 'ANYOFHb[0101-0104 0108-010A]',
     '[\x{102}-\x{104}\x{108}-\x{10A}\x{101}-{INFTY}]' => 'ANYOFH[0101-INFTY]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{101}-{INFTY_minus_1}]' => 'ANYOFH[0101-INFTY_minus_1]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{101}-\x{102}]' => 'ANYOFH[0101-0104 0108-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{101}-\x{103}]' => 'ANYOFH[0101-0104 0108-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{101}-\x{104}]' => 'ANYOFH[0101-0104 0108-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{101}-\x{105}]' => 'ANYOFH[0101-0105 0108-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{101}-\x{106}]' => 'ANYOFH[0101-0106 0108-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{101}-\x{107}]' => 'ANYOFH[0101-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{101}-\x{108}]' => 'ANYOFH[0101-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{101}-\x{109}]' => 'ANYOFH[0101-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{101}-\x{10A}]' => 'ANYOFH[0101-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{101}-\x{10B}]' => 'ANYOFH[0101-010B]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{102}]' => 'ANYOFH[0102-0104 0108-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{101}-{HIGHEST_CP}]' => 'ANYOFH[0101-HIGHEST_CP]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{101}-\x{102}]' => 'ANYOFHb[0101-0104 0108-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{101}-\x{103}]' => 'ANYOFHb[0101-0104 0108-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{101}-\x{104}]' => 'ANYOFHb[0101-0104 0108-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{101}-\x{105}]' => 'ANYOFHb[0101-0105 0108-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{101}-\x{106}]' => 'ANYOFHb[0101-0106 0108-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{101}-\x{107}]' => 'ANYOFRb[0101-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{101}-\x{108}]' => 'ANYOFRb[0101-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{101}-\x{109}]' => 'ANYOFRb[0101-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{101}-\x{10A}]' => 'ANYOFRb[0101-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{101}-\x{10B}]' => 'ANYOFRb[0101-010B]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{102}]' => 'ANYOFHb[0102-0104 0108-010A]',
     '[\x{102}-\x{104}\x{108}-\x{10A}\x{102}-{INFTY}]' => 'ANYOFH[0102-INFTY]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{102}-{INFTY_minus_1}]' => 'ANYOFH[0102-INFTY_minus_1]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{102}-\x{102}]' => 'ANYOFH[0102-0104 0108-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{102}-\x{103}]' => 'ANYOFH[0102-0104 0108-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{102}-\x{104}]' => 'ANYOFH[0102-0104 0108-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{102}-\x{105}]' => 'ANYOFH[0102-0105 0108-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{102}-\x{106}]' => 'ANYOFH[0102-0106 0108-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{102}-\x{107}]' => 'ANYOFH[0102-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{102}-\x{108}]' => 'ANYOFH[0102-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{102}-\x{109}]' => 'ANYOFH[0102-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{102}-\x{10A}]' => 'ANYOFH[0102-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{102}-\x{10B}]' => 'ANYOFH[0102-010B]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{102}-\x{10C}]' => 'ANYOFH[0102-010C]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{103}]' => 'ANYOFH[0102-0104 0108-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{102}-{HIGHEST_CP}]' => 'ANYOFH[0102-HIGHEST_CP]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{102}-\x{102}]' => 'ANYOFHb[0102-0104 0108-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{102}-\x{103}]' => 'ANYOFHb[0102-0104 0108-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{102}-\x{104}]' => 'ANYOFHb[0102-0104 0108-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{102}-\x{105}]' => 'ANYOFHb[0102-0105 0108-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{102}-\x{106}]' => 'ANYOFHb[0102-0106 0108-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{102}-\x{107}]' => 'ANYOFRb[0102-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{102}-\x{108}]' => 'ANYOFRb[0102-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{102}-\x{109}]' => 'ANYOFRb[0102-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{102}-\x{10A}]' => 'ANYOFRb[0102-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{102}-\x{10B}]' => 'ANYOFRb[0102-010B]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{102}-\x{10C}]' => 'ANYOFRb[0102-010C]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{103}]' => 'ANYOFHb[0102-0104 0108-010A]',
     '[\x{102}-\x{104}\x{108}-\x{10A}\x{103}-{INFTY}]' => 'ANYOFH[0102-INFTY]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{103}-{INFTY_minus_1}]' => 'ANYOFH[0102-INFTY_minus_1]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{103}-\x{104}]' => 'ANYOFH[0102-0104 0108-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{103}-\x{105}]' => 'ANYOFH[0102-0105 0108-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{103}-\x{106}]' => 'ANYOFH[0102-0106 0108-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{103}-\x{107}]' => 'ANYOFH[0102-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{103}-\x{108}]' => 'ANYOFH[0102-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{103}-\x{109}]' => 'ANYOFH[0102-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{103}-\x{10A}]' => 'ANYOFH[0102-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{103}-\x{10B}]' => 'ANYOFH[0102-010B]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{103}-\x{10C}]' => 'ANYOFH[0102-010C]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{104}]' => 'ANYOFH[0102-0104 0108-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{103}-{HIGHEST_CP}]' => 'ANYOFH[0102-HIGHEST_CP]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{103}-\x{104}]' => 'ANYOFHb[0102-0104 0108-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{103}-\x{105}]' => 'ANYOFHb[0102-0105 0108-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{103}-\x{106}]' => 'ANYOFHb[0102-0106 0108-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{103}-\x{107}]' => 'ANYOFRb[0102-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{103}-\x{108}]' => 'ANYOFRb[0102-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{103}-\x{109}]' => 'ANYOFRb[0102-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{103}-\x{10A}]' => 'ANYOFRb[0102-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{103}-\x{10B}]' => 'ANYOFRb[0102-010B]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{103}-\x{10C}]' => 'ANYOFRb[0102-010C]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{104}]' => 'ANYOFHb[0102-0104 0108-010A]',
     '[\x{102}-\x{104}\x{108}-\x{10A}\x{104}-{INFTY}]' => 'ANYOFH[0102-INFTY]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{104}-{INFTY_minus_1}]' => 'ANYOFH[0102-INFTY_minus_1]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{104}-\x{105}]' => 'ANYOFH[0102-0105 0108-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{104}-\x{106}]' => 'ANYOFH[0102-0106 0108-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{104}-\x{107}]' => 'ANYOFH[0102-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{104}-\x{108}]' => 'ANYOFH[0102-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{104}-\x{109}]' => 'ANYOFH[0102-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{104}-\x{10A}]' => 'ANYOFH[0102-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{104}-\x{10B}]' => 'ANYOFH[0102-010B]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{104}-\x{10C}]' => 'ANYOFH[0102-010C]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{105}]' => 'ANYOFH[0102-0105 0108-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{104}-{HIGHEST_CP}]' => 'ANYOFH[0102-HIGHEST_CP]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{104}-\x{105}]' => 'ANYOFHb[0102-0105 0108-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{104}-\x{106}]' => 'ANYOFHb[0102-0106 0108-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{104}-\x{107}]' => 'ANYOFRb[0102-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{104}-\x{108}]' => 'ANYOFRb[0102-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{104}-\x{109}]' => 'ANYOFRb[0102-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{104}-\x{10A}]' => 'ANYOFRb[0102-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{104}-\x{10B}]' => 'ANYOFRb[0102-010B]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{104}-\x{10C}]' => 'ANYOFRb[0102-010C]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{105}]' => 'ANYOFHb[0102-0105 0108-010A]',
     '[\x{102}-\x{104}\x{108}-\x{10A}\x{105}-{INFTY}]' => 'ANYOFH[0102-INFTY]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{105}-{INFTY_minus_1}]' => 'ANYOFH[0102-INFTY_minus_1]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{105}-\x{106}]' => 'ANYOFH[0102-0106 0108-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{105}-\x{107}]' => 'ANYOFH[0102-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{105}-\x{108}]' => 'ANYOFH[0102-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{105}-\x{109}]' => 'ANYOFH[0102-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{105}-\x{10A}]' => 'ANYOFH[0102-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{105}-\x{10B}]' => 'ANYOFH[0102-010B]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{105}-\x{10C}]' => 'ANYOFH[0102-010C]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{106}]' => 'ANYOFH[0102-0104 0106 0108-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{105}-{HIGHEST_CP}]' => 'ANYOFH[0102-HIGHEST_CP]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{105}-\x{106}]' => 'ANYOFHb[0102-0106 0108-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{105}-\x{107}]' => 'ANYOFRb[0102-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{105}-\x{108}]' => 'ANYOFRb[0102-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{105}-\x{109}]' => 'ANYOFRb[0102-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{105}-\x{10A}]' => 'ANYOFRb[0102-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{105}-\x{10B}]' => 'ANYOFRb[0102-010B]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{105}-\x{10C}]' => 'ANYOFRb[0102-010C]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{106}]' => 'ANYOFHb[0102-0104 0106 0108-010A]',
     '[\x{102}-\x{104}\x{108}-\x{10A}\x{106}-{INFTY}]' => 'ANYOFH[0102-0104 0106-INFTY]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{106}-{INFTY_minus_1}]' => 'ANYOFH[0102-0104 0106-INFTY_minus_1]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{106}-\x{107}]' => 'ANYOFH[0102-0104 0106-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{106}-\x{108}]' => 'ANYOFH[0102-0104 0106-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{106}-\x{109}]' => 'ANYOFH[0102-0104 0106-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{106}-\x{10A}]' => 'ANYOFH[0102-0104 0106-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{106}-\x{10B}]' => 'ANYOFH[0102-0104 0106-010B]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{106}-\x{10C}]' => 'ANYOFH[0102-0104 0106-010C]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{107}]' => 'ANYOFH[0102-0104 0107-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{108}]' => 'ANYOFH[0102-0104 0108-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{109}]' => 'ANYOFH[0102-0104 0108-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{10A}]' => 'ANYOFH[0102-0104 0108-010A]',
-    '[\x{102}-\x{104}\x{108}-\x{10A}\x{10B}]' => 'ANYOFH[0102-0104 0108-010B]',
-    '[\x{103}\x{102}]' => 'ANYOFH[0102-0103]',
-    '[\x{104}\x{102}]' => 'ANYOFH[0102 0104]',
-    '[\x{104}\x{102}\x{103}]' => 'ANYOFH[0102-0104]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{106}-{HIGHEST_CP}]' => 'ANYOFH[0102-0104 0106-HIGHEST_CP]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{106}-\x{107}]' => 'ANYOFHb[0102-0104 0106-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{106}-\x{108}]' => 'ANYOFHb[0102-0104 0106-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{106}-\x{109}]' => 'ANYOFHb[0102-0104 0106-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{106}-\x{10A}]' => 'ANYOFHb[0102-0104 0106-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{106}-\x{10B}]' => 'ANYOFHb[0102-0104 0106-010B]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{106}-\x{10C}]' => 'ANYOFHb[0102-0104 0106-010C]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{107}]' => 'ANYOFHb[0102-0104 0107-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{108}]' => 'ANYOFHb[0102-0104 0108-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{109}]' => 'ANYOFHb[0102-0104 0108-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{10A}]' => 'ANYOFHb[0102-0104 0108-010A]',
+    '[\x{102}-\x{104}\x{108}-\x{10A}\x{10B}]' => 'ANYOFHb[0102-0104 0108-010B]',
+    '[\x{103}\x{102}]' => 'EXACTFU_REQ8 <\x{103}>',
+    '[\x{104}\x{102}]' => 'ANYOFHb[0102 0104]',
+    '[\x{104}\x{102}\x{103}]' => 'ANYOFRb[0102-0104]',
     '[\x{106}-{INFTY}\x{104}]' => 'ANYOFH[0104 0106-INFTY]',
     '[\x{106}-{INFTY}\x{104}-{INFTY}]' => 'ANYOFH[0104-INFTY]',
-    '[\x{106}-{INFTY}\x{104}-{INFTY_minus_1}]' => 'ANYOFH[0104-INFTY]',
+    '[\x{106}-{INFTY}\x{104}-{HIGHEST_CP}]' => 'ANYOFH[0104-INFTY]',
     '[\x{106}-{INFTY}\x{104}-\x{105}]' => 'ANYOFH[0104-INFTY]',
     '[\x{106}-{INFTY}\x{104}-\x{106}]' => 'ANYOFH[0104-INFTY]',
     '[\x{106}-{INFTY}\x{104}-\x{107}]' => 'ANYOFH[0104-INFTY]',
     '[\x{106}-{INFTY}\x{105}]' => 'ANYOFH[0105-INFTY]',
     '[\x{106}-{INFTY}\x{105}-{INFTY}]' => 'ANYOFH[0105-INFTY]',
-    '[\x{106}-{INFTY}\x{105}-{INFTY_minus_1}]' => 'ANYOFH[0105-INFTY]',
+    '[\x{106}-{INFTY}\x{105}-{HIGHEST_CP}]' => 'ANYOFH[0105-INFTY]',
     '[\x{106}-{INFTY}\x{105}-\x{106}]' => 'ANYOFH[0105-INFTY]',
     '[\x{106}-{INFTY}\x{105}-\x{107}]' => 'ANYOFH[0105-INFTY]',
     '[\x{106}-{INFTY}\x{106}]' => 'ANYOFH[0106-INFTY]',
     '[\x{106}-{INFTY}\x{106}-{INFTY}]' => 'ANYOFH[0106-INFTY]',
-    '[\x{106}-{INFTY}\x{106}-{INFTY_minus_1}]' => 'ANYOFH[0106-INFTY]',
+    '[\x{106}-{INFTY}\x{106}-{HIGHEST_CP}]' => 'ANYOFH[0106-INFTY]',
     '[\x{106}-{INFTY}\x{106}-\x{107}]' => 'ANYOFH[0106-INFTY]',
     '[\x{106}-{INFTY}\x{107}]' => 'ANYOFH[0106-INFTY]',
     '[\x{106}-{INFTY}\x{107}-{INFTY}]' => 'ANYOFH[0106-INFTY]',
-    '[\x{106}-{INFTY}\x{107}-{INFTY_minus_1}]' => 'ANYOFH[0106-INFTY]',
+    '[\x{106}-{INFTY}\x{107}-{HIGHEST_CP}]' => 'ANYOFH[0106-INFTY]',
     '[\x{106}-{INFTY}\x{107}-\x{107}]' => 'ANYOFH[0106-INFTY]',
-    '[\x{10C}-{INFTY}{INFTY}]' => 'ANYOFH[010C-INFTY]',
-    '[\x{10C}-{INFTY}{INFTY_minus_1}]' => 'ANYOFH[010C-INFTY]',
-    '[\x{10C}-{INFTY}\x{00}-{INFTY_minus_1}]' => 'SANY',
+    '[\x{10C}-{INFTY}{HIGHEST_CP}]' => 'ANYOFH[010C-INFTY]',
+    '[\x{10C}-{INFTY}\x{00}-{HIGHEST_CP}]' => 'SANY',
     '[\x{10C}-{INFTY}\x{00}-{INFTY}]' => 'SANY',
     '[\x{10C}-{INFTY}\x{101}-{INFTY}]' => 'ANYOFH[0101-INFTY]',
-    '[\x{10C}-{INFTY}\x{101}-{INFTY_minus_1}]' => 'ANYOFH[0101-INFTY]',
+    '[\x{10C}-{INFTY}\x{101}-{HIGHEST_CP}]' => 'ANYOFH[0101-INFTY]',
     '[\x{10C}-{INFTY}\x{102}\x{104}]' => 'ANYOFH[0102 0104 010C-INFTY]',
-    '[\x{10C}-{INFTY}\x{102}-\x{104}{INFTY}]' => 'ANYOFH[0102-0104 010C-INFTY]',
-    '[\x{10C}-{INFTY}\x{102}-\x{104}{INFTY_minus_1}]' => 'ANYOFH[0102-0104 010C-INFTY]',
+    '[\x{10C}-{INFTY}\x{102}-\x{104}{HIGHEST_CP}]' => 'ANYOFH[0102-0104 010C-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{100}]' => 'ANYOFH[0100 0102-0104 010C-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{101}]' => 'ANYOFH[0101-0104 010C-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{101}-{INFTY}]' => 'ANYOFH[0101-INFTY]',
-    '[\x{10C}-{INFTY}\x{102}-\x{104}\x{101}-{INFTY_minus_1}]' => 'ANYOFH[0101-INFTY]',
+    '[\x{10C}-{INFTY}\x{102}-\x{104}\x{101}-{HIGHEST_CP}]' => 'ANYOFH[0101-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{102}]' => 'ANYOFH[0102-0104 010C-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{102}-{INFTY}]' => 'ANYOFH[0102-INFTY]',
-    '[\x{10C}-{INFTY}\x{102}-\x{104}\x{102}-{INFTY_minus_1}]' => 'ANYOFH[0102-INFTY]',
+    '[\x{10C}-{INFTY}\x{102}-\x{104}\x{102}-{HIGHEST_CP}]' => 'ANYOFH[0102-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{103}]' => 'ANYOFH[0102-0104 010C-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{103}-{INFTY}]' => 'ANYOFH[0102-INFTY]',
-    '[\x{10C}-{INFTY}\x{102}-\x{104}\x{103}-{INFTY_minus_1}]' => 'ANYOFH[0102-INFTY]',
+    '[\x{10C}-{INFTY}\x{102}-\x{104}\x{103}-{HIGHEST_CP}]' => 'ANYOFH[0102-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{104}]' => 'ANYOFH[0102-0104 010C-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{104}-{INFTY}]' => 'ANYOFH[0102-INFTY]',
-    '[\x{10C}-{INFTY}\x{102}-\x{104}\x{104}-{INFTY_minus_1}]' => 'ANYOFH[0102-INFTY]',
+    '[\x{10C}-{INFTY}\x{102}-\x{104}\x{104}-{HIGHEST_CP}]' => 'ANYOFH[0102-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{105}]' => 'ANYOFH[0102-0105 010C-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{105}-{INFTY}]' => 'ANYOFH[0102-INFTY]',
-    '[\x{10C}-{INFTY}\x{102}-\x{104}\x{105}-{INFTY_minus_1}]' => 'ANYOFH[0102-INFTY]',
+    '[\x{10C}-{INFTY}\x{102}-\x{104}\x{105}-{HIGHEST_CP}]' => 'ANYOFH[0102-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{106}]' => 'ANYOFH[0102-0104 0106 010C-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{106}-{INFTY}]' => 'ANYOFH[0102-0104 0106-INFTY]',
-    '[\x{10C}-{INFTY}\x{102}-\x{104}\x{106}-{INFTY_minus_1}]' => 'ANYOFH[0102-0104 0106-INFTY]',
-    '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}{INFTY}]' => 'ANYOFH[0102-0104 0108-010A 010C-INFTY]',
-    '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}{INFTY_minus_1}]' => 'ANYOFH[0102-0104 0108-010A 010C-INFTY]',
+    '[\x{10C}-{INFTY}\x{102}-\x{104}\x{106}-{HIGHEST_CP}]' => 'ANYOFH[0102-0104 0106-INFTY]',
+    '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}{HIGHEST_CP}]' => 'ANYOFH[0102-0104 0108-010A 010C-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{101}]' => 'ANYOFH[0101-0104 0108-010A 010C-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{101}-{INFTY}]' => 'ANYOFH[0101-INFTY]',
-    '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{101}-{INFTY_minus_1}]' => 'ANYOFH[0101-INFTY]',
+    '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{101}-{HIGHEST_CP}]' => 'ANYOFH[0101-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{101}-\x{102}]' => 'ANYOFH[0101-0104 0108-010A 010C-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{101}-\x{103}]' => 'ANYOFH[0101-0104 0108-010A 010C-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{101}-\x{104}]' => 'ANYOFH[0101-0104 0108-010A 010C-INFTY]',
@@ -645,7 +644,7 @@ my @tests = (
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{101}-\x{10B}]' => 'ANYOFH[0101-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{102}]' => 'ANYOFH[0102-0104 0108-010A 010C-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{102}-{INFTY}]' => 'ANYOFH[0102-INFTY]',
-    '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{102}-{INFTY_minus_1}]' => 'ANYOFH[0102-INFTY]',
+    '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{102}-{HIGHEST_CP}]' => 'ANYOFH[0102-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{102}-\x{102}]' => 'ANYOFH[0102-0104 0108-010A 010C-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{102}-\x{103}]' => 'ANYOFH[0102-0104 0108-010A 010C-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{102}-\x{104}]' => 'ANYOFH[0102-0104 0108-010A 010C-INFTY]',
@@ -659,7 +658,7 @@ my @tests = (
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{102}-\x{10C}]' => 'ANYOFH[0102-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{103}]' => 'ANYOFH[0102-0104 0108-010A 010C-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{103}-{INFTY}]' => 'ANYOFH[0102-INFTY]',
-    '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{103}-{INFTY_minus_1}]' => 'ANYOFH[0102-INFTY]',
+    '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{103}-{HIGHEST_CP}]' => 'ANYOFH[0102-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{103}-\x{104}]' => 'ANYOFH[0102-0104 0108-010A 010C-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{103}-\x{105}]' => 'ANYOFH[0102-0105 0108-010A 010C-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{103}-\x{106}]' => 'ANYOFH[0102-0106 0108-010A 010C-INFTY]',
@@ -671,7 +670,7 @@ my @tests = (
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{103}-\x{10C}]' => 'ANYOFH[0102-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{104}]' => 'ANYOFH[0102-0104 0108-010A 010C-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{104}-{INFTY}]' => 'ANYOFH[0102-INFTY]',
-    '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{104}-{INFTY_minus_1}]' => 'ANYOFH[0102-INFTY]',
+    '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{104}-{HIGHEST_CP}]' => 'ANYOFH[0102-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{104}-\x{105}]' => 'ANYOFH[0102-0105 0108-010A 010C-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{104}-\x{106}]' => 'ANYOFH[0102-0106 0108-010A 010C-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{104}-\x{107}]' => 'ANYOFH[0102-010A 010C-INFTY]',
@@ -682,7 +681,7 @@ my @tests = (
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{104}-\x{10C}]' => 'ANYOFH[0102-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{105}]' => 'ANYOFH[0102-0105 0108-010A 010C-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{105}-{INFTY}]' => 'ANYOFH[0102-INFTY]',
-    '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{105}-{INFTY_minus_1}]' => 'ANYOFH[0102-INFTY]',
+    '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{105}-{HIGHEST_CP}]' => 'ANYOFH[0102-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{105}-\x{106}]' => 'ANYOFH[0102-0106 0108-010A 010C-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{105}-\x{107}]' => 'ANYOFH[0102-010A 010C-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{105}-\x{108}]' => 'ANYOFH[0102-010A 010C-INFTY]',
@@ -692,7 +691,7 @@ my @tests = (
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{105}-\x{10C}]' => 'ANYOFH[0102-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{106}]' => 'ANYOFH[0102-0104 0106 0108-010A 010C-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{106}-{INFTY}]' => 'ANYOFH[0102-0104 0106-INFTY]',
-    '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{106}-{INFTY_minus_1}]' => 'ANYOFH[0102-0104 0106-INFTY]',
+    '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{106}-{HIGHEST_CP}]' => 'ANYOFH[0102-0104 0106-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{106}-\x{107}]' => 'ANYOFH[0102-0104 0106-010A 010C-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{106}-\x{108}]' => 'ANYOFH[0102-0104 0106-010A 010C-INFTY]',
     '[\x{10C}-{INFTY}\x{102}-\x{104}\x{108}-\x{10A}\x{106}-\x{109}]' => 'ANYOFH[0102-0104 0106-010A 010C-INFTY]',
@@ -707,21 +706,20 @@ my @tests = (
     '[\x{10C}-{INFTY}\x{103}\x{102}]' => 'ANYOFH[0102-0103 010C-INFTY]',
     '[\x{10C}-{INFTY}\x{104}\x{102}]' => 'ANYOFH[0102 0104 010C-INFTY]',
     '[\x{10C}-{INFTY}\x{104}\x{102}\x{103}]' => 'ANYOFH[0102-0104 010C-INFTY]',
-    '[{INFTY_minus_1}]' => 'ANYOFH[INFTY_minus_1]',
-    '[{INFTY}]' => 'ANYOFH[INFTY-INFTY]',
+    '[{HIGHEST_CP}]' => 'EXACT_REQ8 <\x{HIGHEST_CP}>',
 
-    '(?8)(?i)[\x{100}]' => 'EXACTFU_ONLY8 <\x{101}>',
-    '(?8)(?i)[\x{399}]' => 'EXACTFU_ONLY8 <\x{3b9}>',
-    '(?8)(?i)[\x{345}\x{399}\x{3B9}\x{1FBE}]' => 'EXACTFU_ONLY8 <\x{3b9}>',
-    '(?i)[\x{2b9}]' => 'ANYOFH[02B9]',           # Doesn't participate in a fold
-    '(?8)(?i)[\x{2b9}]' => 'EXACT_ONLY8 <\x{2b9}>',
-    '(?i)[\x{2bc}]' => 'EXACTFU_ONLY8 <\x{2bc}>', # Part of a multi-char fold, ASCII component
-    '(?i)[\x{390}]' => 'EXACTFU_ONLY8 <\x{3b9}\x{308}\x{301}>', # Part of a multi-char fold, no ASCII component
+    '(?8)(?i)[\x{410}]' => 'EXACTFU_REQ8 <\x{430}>',
+    '(?8)(?i)[\x{399}]' => 'EXACTFU_REQ8 <\x{3b9}>',
+    '(?8)(?i)[\x{345}\x{399}\x{3B9}\x{1FBE}]' => 'EXACTFU_REQ8 <\x{3b9}>',
+    '(?i)[\x{2b9}]' => 'EXACT_REQ8 <\x{2b9}>',           # Doesn't participate in a fold
+    '(?8)(?i)[\x{2b9}]' => 'EXACT_REQ8 <\x{2b9}>',
+    '(?i)[\x{2bc}]' => 'EXACTFU_REQ8 <\x{2bc}>', # Part of a multi-char fold, ASCII component
+    '(?i)[\x{390}]' => 'EXACTFU_REQ8 <\x{3b9}\x{308}\x{301}>', # Part of a multi-char fold, no ASCII component
 
     '(?i)[\x{1E9E}]' => 'EXACTFU <ss>',
     '(?iaa)[\x{1E9E}]' => 'EXACTFAA <\x{17f}\x{17f}>',
     '(?i)[\x{FB00}]' => 'EXACTFU <ff>',
-    '(?iaa)[\x{FB00}]' => 'ANYOFH[FB00]',
+    '(?iaa)[\x{FB00}]' => 'EXACT_REQ8 <\x{fb00}>',
     '(?i)[\x{FB00}]' => 'EXACTFU <ff>',
     '(?i)[\x{FB01}]' => 'EXACTFU <fi>',
     '(?i)[\x{FB02}]' => 'EXACTFU <fl>',
@@ -731,11 +729,11 @@ my @tests = (
     '(?i)[\x{FB06}]' => 'EXACTFU <st>',
 
     '[a][b]' => 'EXACT <ab>',
-    '[a]\x{100}' => 'EXACT_ONLY8 <a\x{100}>',
-    '(?8)[\x{100}]a' => 'EXACT_ONLY8 <\x{100}a>',
+    '[a]\x{100}' => 'EXACT_REQ8 <a\x{100}>',
+    '(?8)[\x{100}]a' => 'EXACT_REQ8 <\x{100}a>',
     '(?i)[b][c]' => 'EXACTFU <bc>',
-    '(?i)[b]\x{100}' => 'EXACTFU_ONLY8 <b\x{101}>',
-    '(?8)(?i)[\x{100}]b' => 'EXACTFU_ONLY8 <\x{101}b>',
+    '(?i)[b]\x{100}' => 'EXACTFU_REQ8 <b\x{101}>',
+    '(?8)(?i)[\x{100}]b' => 'EXACTFU_REQ8 <\x{101}b>',
     '(?i)b[s]' => 'EXACTFU <bs>',
     '(?i)b[s]c' => 'EXACTFU <bsc>',
     '(?i)bs[s]c' => 'EXACTF <bss>',  # The c goes into a 2nd node
@@ -785,6 +783,7 @@ my @single_chars_to_test =
     "\x{106}",
     "\x{107}",
     "\x{108}",
+    "\x{2029}",
 );
 
 my @single_tests;
@@ -820,29 +819,40 @@ for my $char (@single_chars_to_test) {
                     push @single_tests, get_compiled("$upgrade$modifiers\\x{$hex}");
                 }
                 else {
-                    my $interior = "";
-                    my @list = $cp;
+                    use feature 'fc';
+
+                    my %list = ( sprintf("%X", $cp) => 1 );
                     if ($fold) {
-                        if (lc $char ne $char) {
-                            push @list, ord lc $char;
-                        }
-                        elsif (uc $char ne $char) {
-                            push @list, ord uc $char;
+                        for my $op (qw(fc lc uc)) {
+                            my $result = eval "$op(\"$char\")";
+                            $list{sprintf "%X", ord $result} = 1;
                         }
                     }
-                    @list = sort { $a <=> $b } @list;
-                    if (@list == 1) {
-                        $interior = sprintf "%04X", $list[0];
-                    }
-                    elsif (@list == 2) {
-                        my $separator = ($list[1] == $list[0] + 1) ? '-' : ', ';
-                        $interior = sprintf "%04X$separator%04X", $list[0], $list[1];
+
+                    my $mod_cp = $cp;
+                    my $op;
+
+                    if (! $fold || scalar keys %list == 1) {
+                        $op = ($charset eq 'l')
+                                ? 'EXACTL'
+                                : ($cp < 256)
+                                ? 'EXACT'
+                                : 'EXACT_REQ8';
                     }
                     else {
-                        die join ", ", @list;
+                        $op = ($charset eq 'aa')
+                        ? 'EXACTFAA'
+                        : ($charset eq 'l')
+                            ? (($cp < 256)
+                            ? 'EXACTFL'
+                            : 'EXACTFLU8')
+                            : ($cp < 256)
+                            ? 'EXACTFU'
+                            : 'EXACTFU_REQ8';
+                        $mod_cp = ord fc $char;
                     }
-                    my $anyof = ($charset eq "l") ? "ANYOFL" : "ANYOFH";
-                    push @single_tests, "$anyof\[$interior\]";
+
+                    push @single_tests, sprintf "$op <\\x{%X}>", $mod_cp;
                 }
             }
         }
@@ -867,18 +877,17 @@ while (defined (my $test = shift @tests)) {
         skip("test not ported to EBCDIC", 1) if $skip_ebcdic;
 
         my $display_expected = $expected
-                                  =~ s/ INFTY_minus_1 /$next_highest_cp/xgr;
+                                        =~ s/ HIGHEST_CP /$highest_cp_string/xgr;
         my $test_name = "Verify compilation of $test displays as"
-                      . " $display_expected";
+                      . " $expected";
 
         my $result = get_compiled($test);
-        if ($expected =~ / ^ ANYOFH /x) {
+        if ($expected =~ / ^ ANYOF[HR] /x) {
             like($result, qr/ ^ \Q$expected\E (?:\Q (First UTF-8 byte=\x\E
-                              [[:xdigit:]]{2}\) )? $ /x, $test_name);
+                              [[:xdigit:]]{2} )? /x, $test_name);
         }
         else {
-            is($result, $expected,
-               "Verify compilation of $test displays as $test_name");
+            is($result, $expected, $test_name);
         }
     }
 }

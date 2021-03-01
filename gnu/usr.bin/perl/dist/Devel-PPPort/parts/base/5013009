@@ -1,1 +1,14 @@
 5.013009
+PERL_PV_ESCAPE_NONASCII        # E
+UTF8_DISALLOW_ILLEGAL_INTERCHANGE # E
+UTF8_DISALLOW_NONCHAR          # E
+UTF8_DISALLOW_SUPER            # E
+UTF8_DISALLOW_SURROGATE        # E
+UTF8_WARN_ILLEGAL_INTERCHANGE  # E
+UTF8_WARN_NONCHAR              # E
+UTF8_WARN_SUPER                # E
+UTF8_WARN_SURROGATE            # E
+check_utf8_print               # F added by devel/scanprov
+curse                          # F added by devel/scanprov
+report_wrongway_fh             # F added by devel/scanprov
+tied_method                    # F added by devel/scanprov

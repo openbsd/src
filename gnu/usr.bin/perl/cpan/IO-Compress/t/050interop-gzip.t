@@ -56,7 +56,7 @@ sub readWithGzip
         return 1 
     }
 
-    diag "'$comp' failed: $?";
+    diag "'$comp' failed: \$?=$? \$!=$!";
     return 0 ;
 }
 
@@ -80,7 +80,7 @@ sub writeWithGzip
     return 1 
         if system($comp) == 0 ;
 
-    diag "'$comp' failed: $?";
+    diag "'$comp' failed: \$?=$? \$!=$!";
     return 0 ;
 }
 

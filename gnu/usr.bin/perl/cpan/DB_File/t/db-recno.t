@@ -50,17 +50,17 @@ sub ok
     {
         my $class = shift ;
         my $filename = shift ;
-	my $fh = gensym ;
-	open ($fh, ">$filename") || die "Cannot open $filename: $!" ;
-	my $real_stdout = select($fh) ;
-	return bless [$fh, $real_stdout ] ;
+        my $fh = gensym ;
+        open ($fh, ">$filename") || die "Cannot open $filename: $!" ;
+        my $real_stdout = select($fh) ;
+        return bless [$fh, $real_stdout ] ;
 
     }
     sub DESTROY
     {
         my $self = shift ;
-	close $self->[0] ;
-	select($self->[1]) ;
+        close $self->[0] ;
+        select($self->[1]) ;
     }
 }
 
@@ -95,23 +95,23 @@ sub safeUntie
 sub bad_one
 {
     unless ($bad_ones++) {
-	print STDERR <<EOM ;
+        print STDERR <<EOM ;
 #
 # Some older versions of Berkeley DB version 1 will fail db-recno
 # tests 61, 63, 64 and 65.
 EOM
         if ($^O eq 'darwin'
-	    && $Config{db_version_major} == 1
-	    && $Config{db_version_minor} == 0
-	    && $Config{db_version_patch} == 0) {
-	    print STDERR <<EOM ;
+            && $Config{db_version_major} == 1
+            && $Config{db_version_minor} == 0
+            && $Config{db_version_patch} == 0) {
+            print STDERR <<EOM ;
 #
 # For example Mac OS X 10.2 (or earlier) has such an old
 # version of Berkeley DB.
 EOM
-	}
+        }
 
-	print STDERR <<EOM ;
+        print STDERR <<EOM ;
 #
 # You can safely ignore the errors if you're never going to use the
 # broken functionality (recno databases with a modified bval). 
@@ -205,7 +205,7 @@ ok(17, $X = tie @h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0640, $DB_RECNO ) ;
 my %noMode = map { $_, 1} qw( amigaos MSWin32 NetWare cygwin ) ;
 
 ok(18, ((stat($Dfile))[2] & 0777) == (($^O eq 'os2' || $^O eq 'MacOS') ? 0666 : 0640)
-	||  $noMode{$^O} );
+        ||  $noMode{$^O} );
 
 #my $l = @h ;
 my $l = $X->length ;
@@ -429,37 +429,37 @@ unlink $Dfile;
    @EXPORT = @DB_File::EXPORT ;
 
    sub STORE { 
-	my $self = shift ;
+        my $self = shift ;
         my $key = shift ;
         my $value = shift ;
         $self->SUPER::STORE($key, $value * 2) ;
    }
 
    sub FETCH { 
-	my $self = shift ;
+        my $self = shift ;
         my $key = shift ;
         $self->SUPER::FETCH($key) - 1 ;
    }
 
    sub put { 
-	my $self = shift ;
+        my $self = shift ;
         my $key = shift ;
         my $value = shift ;
         $self->SUPER::put($key, $value * 3) ;
    }
 
    sub get { 
-	my $self = shift ;
+        my $self = shift ;
         $self->SUPER::get($_[0], $_[1]) ;
-	$_[1] -= 2 ;
+        $_[1] -= 2 ;
    }
 
    sub A_new_method
    {
-	my $self = shift ;
+        my $self = shift ;
         my $key = shift ;
         my $value = $self->FETCH($key) ;
-	return "[[$value]]" ;
+        return "[[$value]]" ;
    }
 
    1 ;
@@ -473,8 +473,8 @@ EOM
     my @h ;
     my $X ;
     eval '
-	$X = tie(@h, "SubDB","recno.tmp", O_RDWR|O_CREAT, 0640, $DB_RECNO );
-	' ;
+        $X = tie(@h, "SubDB","recno.tmp", O_RDWR|O_CREAT, 0640, $DB_RECNO );
+        ' ;
     die "Could not tie: $!" unless $X;
 
     main::ok(73, $@ eq "") ;
@@ -586,8 +586,8 @@ EOM
 
        return
            $fetch_key   eq $fk && $store_key   eq $sk && 
-	   $fetch_value eq $fv && $store_value eq $sv &&
-	   $_ eq 'original' ;
+           $fetch_value eq $fv && $store_value eq $sv &&
+           $_ eq 'original' ;
    }
    
    ok(99, $db = tie(@h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0640, $DB_RECNO ) );
@@ -615,13 +615,13 @@ EOM
 
    # replace the filters, but remember the previous set
    my ($old_fk) = $db->filter_fetch_key   
-   			(sub { ++ $_ ; $fetch_key = $_ }) ;
+                        (sub { ++ $_ ; $fetch_key = $_ }) ;
    my ($old_sk) = $db->filter_store_key   
-   			(sub { $_ *= 2 ; $store_key = $_ }) ;
+                        (sub { $_ *= 2 ; $store_key = $_ }) ;
    my ($old_fv) = $db->filter_fetch_value 
-   			(sub { $_ = "[$_]"; $fetch_value = $_ }) ;
+                        (sub { $_ = "[$_]"; $fetch_value = $_ }) ;
    my ($old_sv) = $db->filter_store_value 
-   			(sub { s/o/x/g; $store_value = $_ }) ;
+                        (sub { s/o/x/g; $store_value = $_ }) ;
    
    ($fetch_key, $store_key, $fetch_value, $store_value) = ("") x 4 ;
    $h[1] = "Joe" ;
@@ -694,13 +694,13 @@ EOM
     sub Closure
     {
         my ($name) = @_ ;
-	my $count = 0 ;
-	my @kept = () ;
+        my $count = 0 ;
+        my @kept = () ;
 
-	return sub { ++$count ; 
-		     push @kept, $_ ; 
-		     $result{$name} = "$name - $count: [@kept]" ;
-		   }
+        return sub { ++$count ; 
+                     push @kept, $_ ; 
+                     $result{$name} = "$name - $count: [@kept]" ;
+                   }
     }
 
     $db->filter_store_key(Closure("store key")) ;
@@ -741,7 +741,7 @@ EOM
     undef $db ;
     ok(144, safeUntie \@h);
     unlink $Dfile;
-}		
+}               
 
 {
    # DBM Filter recursion detection
@@ -944,7 +944,7 @@ EOM
     local $SIG{__WARN__} = sub {$a = $_[0]} ;
     
     tie @h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0664, $DB_RECNO 
-	or die "Can't open file: $!\n" ;
+        or die "Can't open file: $!\n" ;
     $h[0] = undef;
     ok(150, $a eq "") ;
     ok(151, safeUntie \@h);
@@ -964,7 +964,7 @@ EOM
     my @h ;
     
     tie @h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0664, $DB_RECNO 
-	or die "Can't open file: $!\n" ;
+        or die "Can't open file: $!\n" ;
     @h = (); ;
     ok(152, $a eq "") ;
     ok(153, safeUntie \@h);
@@ -1170,7 +1170,7 @@ EOM
     $value = '' ;
     $status = $db->get(undef, $value) ;
     ok 178, $status == 0
-	or print "# get failed - status $status\n" ;
+        or print "# get failed - status $status\n" ;
     ok(179, $db->get(undef, $value) == 0) or print "# get failed\n" ;
     ok 180, $value eq 'fred' or print "# got [$value]\n" ;
     ok 181, $warned eq '' 
@@ -1202,7 +1202,7 @@ exit unless $FA ;
     my @tied ;
     
     tie @tied, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0664, $DB_RECNO 
-	or die "Can't open file: $!\n" ;
+        or die "Can't open file: $!\n" ;
 
     # uninitialized offset
     use warnings;
@@ -1271,52 +1271,52 @@ exit unless $FA ;
 # Perl's built-in splice().
 # 
 my @tests = ([ [ 'falsely', 'dinosaur', 'remedy', 'commotion',
-		 'rarely', 'paleness' ],
-	       -4, -2,
-	       [ 'redoubled', 'Taylorize', 'Zoe', 'halogen' ],
-	       'void' ],
+                 'rarely', 'paleness' ],
+               -4, -2,
+               [ 'redoubled', 'Taylorize', 'Zoe', 'halogen' ],
+               'void' ],
 
-	     [ [ 'a' ], -2, 1, [ 'B' ], 'void' ],
+             [ [ 'a' ], -2, 1, [ 'B' ], 'void' ],
 
-	     [ [ 'Hartley', 'Islandia', 'assents', 'wishful' ],
-	       0, -4,
-	       [ 'maids' ],
-	       'void' ],
+             [ [ 'Hartley', 'Islandia', 'assents', 'wishful' ],
+               0, -4,
+               [ 'maids' ],
+               'void' ],
 
-	     [ [ 'visibility', 'pocketful', 'rectangles' ],
-	       -10, 0,
-	       [ 'garbages' ],
-	       'void' ],
+             [ [ 'visibility', 'pocketful', 'rectangles' ],
+               -10, 0,
+               [ 'garbages' ],
+               'void' ],
 
-	     [ [ 'sleeplessly' ],
-	       8, -4,
-	       [ 'Margery', 'clearing', 'repercussion', 'clubs',
-		 'arise' ],
-	       'void' ],
+             [ [ 'sleeplessly' ],
+               8, -4,
+               [ 'Margery', 'clearing', 'repercussion', 'clubs',
+                 'arise' ],
+               'void' ],
 
-	     [ [ 'chastises', 'recalculates' ],
-	       0, 0,
-	       [ 'momentariness', 'mediates', 'accents', 'toils',
-		 'regaled' ],
-	       'void' ],
+             [ [ 'chastises', 'recalculates' ],
+               0, 0,
+               [ 'momentariness', 'mediates', 'accents', 'toils',
+                 'regaled' ],
+               'void' ],
 
-	     [ [ 'b', '' ],
-	       9, 8,
-	       [ 'otrb', 'stje', 'ixrpw', 'vxfx', 'lhhf' ],
-	       'scalar' ],
+             [ [ 'b', '' ],
+               9, 8,
+               [ 'otrb', 'stje', 'ixrpw', 'vxfx', 'lhhf' ],
+               'scalar' ],
 
-	     [ [ 'b', '' ],
-	       undef, undef,
-	       [ 'otrb', 'stje', 'ixrpw', 'vxfx', 'lhhf' ],
-	       'scalar' ],
-	     
-	     [ [ 'riheb' ], -8, undef, [], 'void' ],
+             [ [ 'b', '' ],
+               undef, undef,
+               [ 'otrb', 'stje', 'ixrpw', 'vxfx', 'lhhf' ],
+               'scalar' ],
+             
+             [ [ 'riheb' ], -8, undef, [], 'void' ],
 
-	     [ [ 'uft', 'qnxs', '' ],
-	       6, -2,
-	       [ 'znp', 'mhnkh', 'bn' ],
-	       'void' ],
-	    );
+             [ [ 'uft', 'qnxs', '' ],
+               6, -2,
+               [ 'znp', 'mhnkh', 'bn' ],
+               'void' ],
+            );
 
 my $testnum = 194;
 my $failed = 0;
@@ -1324,10 +1324,10 @@ my $tmp = "dbr$$";
 foreach my $test (@tests) {
     my $err = test_splice(@$test);
     if (defined $err) {
-	print STDERR "# failed: ", Dumper($test);
-	print STDERR "# error: $err\n";
-	$failed = 1;
-	ok($testnum++, 0);
+        print STDERR "# failed: ", Dumper($test);
+        print STDERR "# error: $err\n";
+        $failed = 1;
+        ok($testnum++, 0);
     }
     else { ok($testnum++, 1) }
 }
@@ -1341,15 +1341,15 @@ else {
     $failed = 0;
     srand(0);
     foreach (0 .. 1000 - 1) {
-	my $test = rand_test();
-	my $err = test_splice(@$test);
-	if (defined $err) {
-	    print STDERR "# failed: ", Dumper($test);
-	    print STDERR "# error: $err\n";
-	    $failed = 1;
-	    print STDERR "# skipping any remaining random tests\n";
-	    last;
-	}
+        my $test = rand_test();
+        my $err = test_splice(@$test);
+        if (defined $err) {
+            print STDERR "# failed: ", Dumper($test);
+            print STDERR "# error: $err\n";
+            $failed = 1;
+            print STDERR "# skipping any remaining random tests\n";
+            last;
+        }
     }
 
     ok($testnum++, not $failed);
@@ -1403,77 +1403,77 @@ sub test_splice {
 
     my $gather_warning = sub { push @s_warnings, $_[0] };
     if ($context eq 'list') {
-	my @r;
-	eval {
-	    local $SIG{__WARN__} = $gather_warning;
-	    @r = splice @array, $offset, $length, @list;
-	};
-	$s_error = $@;
-	$s_r = \@r;
+        my @r;
+        eval {
+            local $SIG{__WARN__} = $gather_warning;
+            @r = splice @array, $offset, $length, @list;
+        };
+        $s_error = $@;
+        $s_r = \@r;
     }
     elsif ($context eq 'scalar') {
-	my $r;
-	eval {
-	    local $SIG{__WARN__} = $gather_warning;
-	    $r = splice @array, $offset, $length, @list;
-	};
-	$s_error = $@;
-	$s_r = [ $r ];
+        my $r;
+        eval {
+            local $SIG{__WARN__} = $gather_warning;
+            $r = splice @array, $offset, $length, @list;
+        };
+        $s_error = $@;
+        $s_r = [ $r ];
     }
     elsif ($context eq 'void') {
-	eval {
-	    local $SIG{__WARN__} = $gather_warning;
-	    splice @array, $offset, $length, @list;
-	};
-	$s_error = $@;
-	$s_r = [];
+        eval {
+            local $SIG{__WARN__} = $gather_warning;
+            splice @array, $offset, $length, @list;
+        };
+        $s_error = $@;
+        $s_r = [];
     }
     else {
-	die "bad context $context";
+        die "bad context $context";
     }
 
     foreach ($s_error, @s_warnings) {
-	chomp;
-	s/ at \S+ line \d+\.$//;
-	# only built-in splice identifies name of uninit value
-	s/(uninitialized value) \$\w+/$1/;
+        chomp;
+        s/ at \S+ line \d+\.$//;
+        # only built-in splice identifies name of uninit value
+        s/(uninitialized value) \$\w+/$1/;
     }
 
     # Now do the same for DB_File's version of splice
     my ($ms_r, $ms_error, @ms_warnings);
     $gather_warning = sub { push @ms_warnings, $_[0] };
     if ($context eq 'list') {
-	my @r;
-	eval {
-	    local $SIG{__WARN__} = $gather_warning;
-	    @r = splice @h, $offset, $length, @list;
-	};
-	$ms_error = $@;
-	$ms_r = \@r;
+        my @r;
+        eval {
+            local $SIG{__WARN__} = $gather_warning;
+            @r = splice @h, $offset, $length, @list;
+        };
+        $ms_error = $@;
+        $ms_r = \@r;
     }
     elsif ($context eq 'scalar') {
-	my $r;
-	eval {
-	    local $SIG{__WARN__} = $gather_warning;
-	    $r = splice @h, $offset, $length, @list;
-	};
-	$ms_error = $@;
-	$ms_r = [ $r ];
+        my $r;
+        eval {
+            local $SIG{__WARN__} = $gather_warning;
+            $r = splice @h, $offset, $length, @list;
+        };
+        $ms_error = $@;
+        $ms_r = [ $r ];
     }
     elsif ($context eq 'void') {
-	eval {
-	    local $SIG{__WARN__} = $gather_warning;
-	    splice @h, $offset, $length, @list;
-	};
-	$ms_error = $@;
-	$ms_r = [];
+        eval {
+            local $SIG{__WARN__} = $gather_warning;
+            splice @h, $offset, $length, @list;
+        };
+        $ms_error = $@;
+        $ms_r = [];
     }
     else {
-	die "bad context $context";
+        die "bad context $context";
     }
 
     foreach ($ms_error, @ms_warnings) {
-	chomp;
+        chomp;
     s/ at \S+(\s+\S+)*? line \d+\.?.*//s;
     }
 
@@ -1485,26 +1485,26 @@ sub test_splice {
       if list_diff(\@array, \@h);
 
     if ((scalar @s_warnings) != (scalar @ms_warnings)) {
-	return 'different number of warnings';
+        return 'different number of warnings';
     }
 
     while (@s_warnings) {
-	my $sw  = shift @s_warnings;
-	my $msw = shift @ms_warnings;
-	
-	if (defined $sw and defined $msw) {
-	    $msw =~ s/ \(.+\)$//;
-	    $msw =~ s/ in splice$// if $] < 5.006;
-	    if ($sw ne $msw) {
-		return "different warning: '$sw' vs '$msw'";
-	    }
-	}
-	elsif (not defined $sw and not defined $msw) {
-	    # Okay.
-	}
-	else {
-	    return "one warning defined, another undef";
-	}
+        my $sw  = shift @s_warnings;
+        my $msw = shift @ms_warnings;
+        
+        if (defined $sw and defined $msw) {
+            $msw =~ s/ \(.+\)$//;
+            $msw =~ s/ in splice$// if $] < 5.006;
+            if ($sw ne $msw) {
+                return "different warning: '$sw' vs '$msw'";
+            }
+        }
+        elsif (not defined $sw and not defined $msw) {
+            # Okay.
+        }
+        else {
+            return "one warning defined, another undef";
+        }
     }
     
     undef $H;
@@ -1514,7 +1514,7 @@ sub test_splice {
     @h = <TEXT>; normalise @h; chomp @h;
     close TEXT or die "cannot close $tmp: $!";
     return('list is different when re-read from disk: '
-	   . Dumper(\@array) . ' vs ' . Dumper(\@h))
+           . Dumper(\@array) . ' vs ' . Dumper(\@h))
       if list_diff(\@array, \@h);
 
     unlink $tmp;
@@ -1543,16 +1543,16 @@ sub list_diff {
     my @a = @$a; my @b = @$b;
     return 1 if (scalar @a) != (scalar @b);
     for (my $i = 0; $i < @a; $i++) {
-	my ($ae, $be) = ($a[$i], $b[$i]);
-	if (defined $ae and defined $be) {
-	    return 1 if $ae ne $be;
-	}
-	elsif (not defined $ae and not defined $be) {
-	    # Two undefined values are 'equal'
-	}
-	else {
-	    return 1;
-	}
+        my ($ae, $be) = ($a[$i], $b[$i]);
+        if (defined $ae and defined $be) {
+            return 1 if $ae ne $be;
+        }
+        elsif (not defined $ae and not defined $be) {
+            # Two undefined values are 'equal'
+        }
+        else {
+            return 1;
+        }
     }
     return 0;
 } 
@@ -1569,10 +1569,10 @@ sub rand_test {
     my @contexts = qw<list scalar void>;
     my $context = $contexts[int(rand @contexts)];
     return [ rand_list(),
-	     (rand() < 0.5) ? (int(rand(20)) - 10) : undef,
-	     (rand() < 0.5) ? (int(rand(20)) - 10) : undef,
-	     rand_list(),
-	     $context ];
+             (rand() < 0.5) ? (int(rand(20)) - 10) : undef,
+             (rand() < 0.5) ? (int(rand(20)) - 10) : undef,
+             rand_list(),
+             $context ];
 }
 
 
@@ -1581,7 +1581,7 @@ sub rand_list {
     my @r;
 
     while (rand() > 0.1 * (scalar @r + 1)) {
-	push @r, rand_word();
+        push @r, rand_word();
     }
     return \@r;
 }
@@ -1592,7 +1592,7 @@ sub rand_word {
     my $r = '';
     my @chars = qw<a b c d e f g h i j k l m n o p q r s t u v w x y z>;
     while (rand() > 0.1 * (length($r) + 1)) {
-	$r .= $chars[int(rand(scalar @chars))];
+        $r .= $chars[int(rand(scalar @chars))];
     }
     return $r;
 }

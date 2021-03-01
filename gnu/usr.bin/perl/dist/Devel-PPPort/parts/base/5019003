@@ -1,3 +1,7 @@
 5.019003
-croak_memory_wrap              # U (Perl_croak_memory_wrap)
+PERL_EXIT_ABORT                # E
+PERL_EXIT_WARN                 # E
 sv_pos_b2u_flags               # U
+adjust_size_and_find_bucket    # F added by devel/scanprov
+cv_const_sv_or_av              # F added by devel/scanprov
+_invlist_dump                  # F added by devel/scanprov

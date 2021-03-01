@@ -1,6 +1,20 @@
 5.009000
+_aMY_CXT                       # E
+aMY_CXT                        # E
+aMY_CXT_                       # E
+dMY_CXT                        # E
+hek_dup                        # U
+MY_CXT                         # E
+MY_CXT_INIT                    # E
+my_cxt_init                    # U
 new_version                    # U
+parser_dup                     # E
+pMY_CXT                        # E
+regdupe_internal               # U
 save_set_svflags               # U
+SVs_PADSTALE                   # E
 vcmp                           # U
 vnumify                        # U
 vstringify                     # U
+Perl_sv_free2                  # F added by devel/scanprov
+sv_setsv_cow                   # F added by devel/scanprov

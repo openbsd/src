@@ -6,15 +6,15 @@
 # processing and lose its value or leak $@ values to the calling program.
 # This is a regression test to ensure that this problem doesn't return.
 #
-# Copyright 2012, 2013, 2014 Russ Allbery <rra@cpan.org>
+# Copyright 2012-2014, 2020 Russ Allbery <rra@cpan.org>
 #
-# This program is free software; you may redistribute it and/or modify it
-# under the same terms as Perl itself.
+# SPDX-License-Identifier: GPL-1.0-or-later OR Artistic-1.0-Perl
 
+use 5.008;
 use strict;
 use warnings;
 
-use Test::More tests => 15;
+use Test::More tests => 17;
 
 # We refer to $@ in the test descriptions.
 ## no critic (ValuesAndExpressions::RequireInterpolationOfMetachars)
@@ -23,6 +23,7 @@ use Test::More tests => 15;
 BEGIN {
     delete $ENV{ANSI_COLORS_ALIASES};
     delete $ENV{ANSI_COLORS_DISABLED};
+    delete $ENV{NO_COLOR};
     use_ok('Term::ANSIColor', qw(:constants));
 }
 
@@ -42,6 +43,12 @@ local $ENV{ANSI_COLORS_DISABLED} = 1;
 is(BOLD,  q{}, 'ANSI_COLORS_DISABLED works for BOLD');
 is(BLINK, q{}, '...and for BLINK');
 delete $ENV{ANSI_COLORS_DISABLED};
+
+# Now, NO_COLOR.
+local $ENV{NO_COLOR} = 'foo';
+is(BOLD,  q{}, 'NO_COLOR works for BOLD');
+is(BLINK, q{}, '...and for BLINK');
+delete $ENV{NO_COLOR};
 
 # Now, AUTORESET.
 $Term::ANSIColor::AUTORESET = 1;

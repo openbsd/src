@@ -1,19 +1,14 @@
 #!/usr/bin/perl
 
+# test caching timeout
+
 use lib '..';
 use Memoize;
-BEGIN {
-  eval {require Time::HiRes};
-  if ($@ || $ENV{SLOW}) {
-#    $SLOW_TESTS = 1;
-  } else {
-    'Time::HiRes'->import('time');
-  }
-}
 
 my $DEBUG = 0;
+my $LIFETIME = 15;
 
-my $n = 0;
+my $test = 0;
 $| = 1;
 
 if (-e '.fast') {
@@ -21,116 +16,93 @@ if (-e '.fast') {
   exit 0;
 }
 
-# Perhaps nobody will notice if we don't say anything
-# print "# Warning: I'm testing the timed expiration policy.\n# This will take about thirty seconds.\n";
+print "# Testing the timed expiration policy.\n";
+print "# This will take about thirty seconds.\n";
 
-print "1..15\n";
-$| = 1;
+print "1..26\n";
 
-# (1)
-++$n; print "ok $n\n";
-
-# (2)
 require Memoize::Expire;
-++$n; print "ok $n\n";
-
-sub close_enough {
-#  print "Close enough? @_[0,1]\n";
-  abs($_[0] - $_[1]) <= 2;
-}
-
-sub very_close {
-#  print "Close enough? @_[0,1]\n";
-  abs($_[0] - $_[1]) <= 0.01;
-}
-
-my $t0;
-sub start_timer {
-  $t0 = time;
-  $DEBUG and print "# $t0\n";
-}
-
-sub wait_until {
-  my $until = shift();
-  my $diff = $until - (time() - $t0);
-  $DEBUG and print "# until $until; diff = $diff\n";
-  return if $diff <= 0;
-  select undef, undef, undef, $diff;
-}
+++$test; print "ok $test - Expire loaded\n";
 
 sub now {
 #  print "NOW: @_ ", time(), "\n";
   time;
 }
 
-tie my %cache => 'Memoize::Expire', LIFETIME => 15;
+tie my %cache => 'Memoize::Expire', LIFETIME => $LIFETIME;
+
 memoize 'now',
     SCALAR_CACHE => [HASH => \%cache ],
     LIST_CACHE => 'FAULT'
     ;
 
-# (3)
-++$n; print "ok $n\n";
+++$test; print "ok $test - function memoized\n";
 
+my (@before, @after, @now);
 
-# (4-6)
-# T
-start_timer();
-for (1,2,3) {
-  $when{$_} = now($_);
-  ++$n;
-  print "not " unless close_enough($when{$_}, time());
-  print "ok $n\n";
-  sleep 6 if $_ < 3;
-  $DEBUG and print "# ", time()-$t0, "\n";
+# Once a second call now(), with three varying indices. Record when
+# (within a range) it was called last, and depending on the value returned
+# on the next call with the same index, decide whether it correctly
+# returned the old value or expired the cache entry.
+
+for my $iteration (0..($LIFETIME/2)) {
+    for my $i (0..2) {
+        my $before = time;
+        my $now = now($i);
+        my $after = time;
+
+        # the time returned by now() should either straddle the
+        # current time range, or if it returns a cached value, the
+        # time range of the previous time it was called.
+        # $before..$after represents the time range within which now() must have
+        # been called. On very slow platforms, $after - $before may be > 1.
+
+        my $in_range0 = !$iteration || ($before[$i] <= $now && $now <= $after[$i]);
+        my $in_range1 = ($before <= $now && $now <= $after);
+
+        my $ok;
+        if ($iteration) {
+            if ($in_range0) {
+                if ($in_range1) {
+                    $ok = 0; # this should never happen
+                }
+                else {
+                    # cached value, so cache shouldn't have expired
+                    $ok = $after[$i] + $LIFETIME >= $before && $now[$i] == $now;
+                }
+            }
+            else {
+                if ($in_range1) {
+                    # not cached value, so any cache should have have expired
+                    $ok = $before[$i] + $LIFETIME <= $after && $now[$i] != $now;
+                }
+                else {
+                    # not in any range; caching broken
+                    $ok = 0;
+                }
+            }
+        }
+        else {
+            $ok = $in_range1;
+        }
+
+        $test++;
+        print "not " unless $ok;
+        print "ok $test - $iteration:$i\n";
+        if (!$ok || $DEBUG) {
+            print STDERR sprintf
+                "expmod_t.t: %d:%d: r0=%d r1=%d prev=(%s..%s) cur=(%s..%s) now=(%s,%s)\n",
+                $iteration, $i, $in_range0, $in_range1,
+                $before[$i]||-1, $after[$i]||-1, $before, $after, $now[$i]||-1, $now;
+        }
+
+        if (!defined($now[$i]) || $now[$i] != $now) {
+            # cache expired; record value of new cache
+            $before[$i] = $before;
+            $after[$i]  = $after;
+            $now[$i]    = $now;
+        }
+
+        sleep 1;
+    }
 }
-# values will now expire at T=15, 21, 27
-# it is now T=12
-
-# T+12
-for (1,2,3) {
-  $again{$_} = now($_); # Should be the same as before, because of memoization
-}
-
-# (7-9)
-# T+12
-foreach (1,2,3) {
-  ++$n;
-  if (very_close($when{$_}, $again{$_})) {
-    print "ok $n\n";
-  } else {
-    print "not ok $n # expected $when{$_}, got $again{$_}\n";
-  }
-}
-
-# (10)
-wait_until(18);  # now(1) expires
-print "not " unless close_enough(time, $again{1} = now(1));
-++$n; print "ok $n\n";
-
-# (11-12)
-# T+18
-foreach (2,3) {			# Should not have expired yet.
-  ++$n;
-  print "not " unless now($_) == $again{$_};
-  print "ok $n\n";
-}
-
-wait_until(24);  # now(2) expires
-
-# (13)
-# T+24
-print "not " unless close_enough(time, $again{2} = now(2));
-++$n; print "ok $n\n";
-
-# (14-15)
-# T+24
-foreach (1,3) {  # 1 is good again because it was recomputed after it expired
-  ++$n;
-  if (very_close(scalar(now($_)), $again{$_})) {
-    print "ok $n\n";
-  } else {
-    print "not ok $n # expected $when{$_}, got $again{$_}\n";
-  }
-}
-

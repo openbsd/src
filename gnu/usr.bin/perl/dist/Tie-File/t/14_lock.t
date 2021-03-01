@@ -8,6 +8,9 @@
 # portable test for flocking.  I checked the Perl core distribution,
 # and found that Perl doesn't test flock either!
 
+use strict;
+use warnings;
+
 BEGIN {
   eval { flock STDOUT, 0 };
   if ($@ && $@ =~ /unimplemented/) {
@@ -18,7 +21,7 @@ BEGIN {
 
 use Fcntl ':flock';             # This works at least back to 5.004_04
 
-my $file = "tf$$.txt";
+my $file = "tf14-$$.txt";
 my ($o, $n);
 my @a;
 

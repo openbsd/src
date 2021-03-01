@@ -12,7 +12,7 @@ use Carp '&croak';
 use DynaLoader ();
 use Exporter ();
 
-our $VERSION = '2.44';
+our $VERSION = '2.45';
 our @ISA = qw( Exporter DynaLoader IO::File );
 our @EXPORT = qw( &O_APPEND &O_CREAT &O_EXCL  &O_NDELAY &O_NOWAIT
               &O_RDONLY &O_RDWR  &O_TRUNC &O_WRONLY );

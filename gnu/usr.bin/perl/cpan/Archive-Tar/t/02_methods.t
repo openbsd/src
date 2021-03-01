@@ -99,9 +99,11 @@ my $TARX        = $Class->new;
 my $TAR_FILE        = File::Spec->catfile( @ROOT, 'bar.tar' );
 my $TGZ_FILE        = File::Spec->catfile( @ROOT, 'foo.tgz' );
 my $TBZ_FILE        = File::Spec->catfile( @ROOT, 'foo.tbz' );
+my $TXZ_FILE        = File::Spec->catfile( @ROOT, 'foo.txz' );
 my $OUT_TAR_FILE    = File::Spec->catfile( @ROOT, 'out.tar' );
 my $OUT_TGZ_FILE    = File::Spec->catfile( @ROOT, 'out.tgz' );
 my $OUT_TBZ_FILE    = File::Spec->catfile( @ROOT, 'out.tbz' );
+my $OUT_TXZ_FILE    = File::Spec->catfile( @ROOT, 'out.txz' );
 
 my $COMPRESS_FILE = 'copy';
 $^O eq 'VMS' and $COMPRESS_FILE .= '.';
@@ -110,8 +112,8 @@ chmod 0644, $COMPRESS_FILE;
 
 ### done setting up environment ###
 
-### check for zlib/bzip2 support
-{   for my $meth ( qw[has_zlib_support has_bzip2_support] ) {
+### check for zlib/bzip2/xz support
+{   for my $meth ( qw[has_zlib_support has_bzip2_support has_xz_support] ) {
         can_ok( $Class, $meth );
     }
 }
@@ -167,6 +169,7 @@ chmod 0644, $COMPRESS_FILE;
 {   my @to_try = ($TAR_FILE);
     push @to_try, $TGZ_FILE if $Class->has_zlib_support;
     push @to_try, $TBZ_FILE if $Class->has_bzip2_support;
+    push @to_try, $TXZ_FILE if $Class->has_xz_support;
 
     for my $type( @to_try ) {
 
@@ -462,6 +465,7 @@ SKIP: {                             ### pesky warnings
         {   my @out;
             push @out, [ $OUT_TGZ_FILE => 1             ] if $Class->has_zlib_support;
             push @out, [ $OUT_TBZ_FILE => COMPRESS_BZIP ] if $Class->has_bzip2_support;
+            push @out, [ $OUT_TXZ_FILE => COMPRESS_XZ   ] if $Class->has_xz_support;
 
             for my $entry ( @out ) {
 
@@ -786,8 +790,14 @@ sub slurp_compressed_file {
     my $file = shift;
     my $fh;
 
+    ### xz
+    if( $file =~ /.txz$/ ) {
+        require IO::Uncompress::UnXz;
+        $fh = IO::Uncompress::UnXz->new( $file )
+            or warn( "Error opening '$file' with IO::Uncompress::UnXz" ), return
+
     ### bzip2
-    if( $file =~ /.tbz$/ ) {
+    } elsif( $file =~ /.tbz$/ ) {
         require IO::Uncompress::Bunzip2;
         $fh = IO::Uncompress::Bunzip2->new( $file )
             or warn( "Error opening '$file' with IO::Uncompress::Bunzip2" ), return

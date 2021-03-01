@@ -20,7 +20,7 @@ run_multiple_progs('', \*DATA);
 done_testing();
 
 __END__
-# http://rt.perl.org/rt3/Ticket/Display.html?id=28106#txn-82657
+# https://github.com/Perl/perl5/issues/7207#issuecomment-543940952
 while (<DATA>) {
     chomp;
     print "$.: '$_'\n";
@@ -35,7 +35,7 @@ EXPECT
 2: '2'
 3: '3'
 ########
-# http://rt.perl.org/rt3/Ticket/Display.html?id=28106#txn-83113
+# https://github.com/Perl/perl5/issues/7207#issuecomment-543940955
 my $line1 = <DATA>;
 `echo foo`;
 my $line2 = <DATA>;
@@ -48,7 +48,7 @@ EXPECT
 ok 1
 ok 2
 ########
-# http://rt.perl.org/rt3/Ticket/Attachment/828796/403048/perlbug.rep.txt
+# https://github.com/Perl/perl5/issues/7207#issuecomment-543940992
 my @data_positions = tell(DATA);
 while (<DATA>){
     if (/^__DATA__$/) {

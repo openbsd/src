@@ -10,10 +10,12 @@
 #
 ################################################################################
 
+use FindBin ();
+
 BEGIN {
   if ($ENV{'PERL_CORE'}) {
     chdir 't' if -d 't';
-    @INC = ('../lib', '../ext/Devel-PPPort/t') if -d '../lib' && -d '../ext';
+    unshift @INC, '../lib' if -d '../lib' && -d '../ext';
     require Config; import Config;
     use vars '%Config';
     if (" $Config{'extensions'} " !~ m[ Devel/PPPort ]) {
@@ -21,13 +23,15 @@ BEGIN {
       exit 0;
     }
   }
-  else {
-    unshift @INC, 't';
-  }
+
+  use lib "$FindBin::Bin";
+  use lib "$FindBin::Bin/../parts/inc";
+
+  die qq[Cannot find "$FindBin::Bin/../parts/inc"] unless -d "$FindBin::Bin/../parts/inc";
 
   sub load {
-    eval "use Test";
-    require 'testutil.pl' if $@;
+    require 'testutil.pl';
+    require 'inctools';
   }
 
   if (7) {
@@ -38,7 +42,7 @@ BEGIN {
 
 use Devel::PPPort;
 use strict;
-$^W = 1;
+BEGIN { $^W = 1; }
 
 package Devel::PPPort;
 use vars '@ISA';
@@ -48,16 +52,16 @@ bootstrap Devel::PPPort;
 
 package main;
 
-ok(Devel::PPPort::GvSVn(), 1);
+is(Devel::PPPort::GvSVn(), 1);
 
-ok(Devel::PPPort::isGV_with_GP(), 2);
+is(Devel::PPPort::isGV_with_GP(), 2);
 
-ok(Devel::PPPort::get_cvn_flags(), 3);
+is(Devel::PPPort::get_cvn_flags(), 3);
 
-ok(Devel::PPPort::gv_fetchpvn_flags(), \*Devel::PPPort::VERSION);
+is(Devel::PPPort::gv_fetchpvn_flags(), \*Devel::PPPort::VERSION);
 
-ok(Devel::PPPort::gv_fetchsv("Devel::PPPort::VERSION"), \*Devel::PPPort::VERSION);
+is(Devel::PPPort::gv_fetchsv("Devel::PPPort::VERSION"), \*Devel::PPPort::VERSION);
 
-ok(Devel::PPPort::gv_init_type("sanity_check", 0, 0), "*main::sanity_check");
+is(Devel::PPPort::gv_init_type("sanity_check", 0, 0), "*main::sanity_check");
 ok($::{sanity_check});
 

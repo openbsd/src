@@ -4,6 +4,8 @@ use strict;
 use Test::More;
 use Encode;
 
+plan skip_all => 'Unclear how EBCIDC should behave' if ord "A" != 65;
+
 use XS::APItest qw(utf16_to_utf8 utf16_to_utf8_reversed);
 
 for my $ord (0, 10, 13, 78, 255, 256, 0xD7FF, 0xE000, 0xFFFD,

@@ -76,7 +76,7 @@ as needed.
 =head3 The Problem
 
 An early change, in fact the change that made Test2 an idea, was a change to
-the indentation of the subtest note. IT was decided it would be more readable
+the indentation of the subtest note. It was decided it would be more readable
 to outdent the subtest note instead of having it inline with the subtest:
 
     # subtest foo
@@ -104,7 +104,7 @@ This breaks tests that do string comparison of TAP output.
     );
 
 Check if C<$INC{'Test2/API.pm'}> is set, if it is then no indentation should be
-expected. If it is not set than the old Test::Builder is in use, indentation
+expected. If it is not set, then the old Test::Builder is in use, indentation
 should be expected.
 
 =head1 DISTRIBUTIONS THAT BREAK OR NEED TO BE UPGRADED
@@ -128,13 +128,6 @@ appears to have been fixed by Test2, which means the workaround causes a
 failure. This can be easily updated, but nobody has done so yet.
 
 Known broken in versions: 1.0.9 and older
-
-=item Test::Kit
-
-This actually works fine, but will not install because L<Test::Aggregate> is in
-the dependency chain.
-
-See the L<Test::Aggregate> info below for additional information.
 
 =item Device::Chip
 
@@ -200,6 +193,13 @@ This was broken by a bugfix to how planning is done. The test was updated after
 the bugfix.
 
 Fixed in version: 0.04
+
+=item Test::Kit
+
+Old versions work fine, but would not install because L<Test::Aggregate> was in
+the dependency chain. An upgrade should not be needed.
+
+Fixed in version: 2.15
 
 =item autouse
 
@@ -274,8 +274,8 @@ Fixed in version: 0.007
 
 This distribution directly accesses the hash keys in the L<Test::Builder>
 singleton. It also approaches the problem from the wrong angle, please consider
-using L<Test2::Harness> or L<App::ForkProve> which both solve the same problem
-at the harness level.
+using L<Test2::Aggregate> for similar functionality and L<Test2::Harness>
+which allows module preloading at the harness level.
 
 Still broken as of version: 0.373
 

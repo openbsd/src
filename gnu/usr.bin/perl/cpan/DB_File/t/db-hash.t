@@ -40,17 +40,17 @@ sub ok
     {
         my $class = shift ;
         my $filename = shift ;
-	my $fh = gensym ;
-	open ($fh, ">$filename") || die "Cannot open $filename: $!" ;
-	my $real_stdout = select($fh) ;
-	return bless [$fh, $real_stdout ] ;
+        my $fh = gensym ;
+        open ($fh, ">$filename") || die "Cannot open $filename: $!" ;
+        my $real_stdout = select($fh) ;
+        return bless [$fh, $real_stdout ] ;
 
     }
     sub DESTROY
     {
         my $self = shift ;
-	close $self->[0] ;
-	select($self->[1]) ;
+        close $self->[0] ;
+        select($self->[1]) ;
     }
 }
 
@@ -89,7 +89,7 @@ chdir $TEMPDIR;
 my $Dfile = "dbhash.tmp";
 my $Dfile2 = "dbhash2.tmp";
 my $null_keys_allowed = ($DB_File::db_ver < 2.004010 
-				|| $DB_File::db_ver >= 3.1 );
+                                || $DB_File::db_ver >= 3.1 );
 
 unlink $Dfile;
 
@@ -225,8 +225,8 @@ ok(23, $#keys == 29 && $#values == 29) ;
 $i = 0 ;
 while (($key,$value) = each(%h)) {
     if ($key eq $keys[$i] && $value eq $values[$i] && $key eq lc($value)) {
-	$key =~ y/a-z/A-Z/;
-	$i++ if $key eq $value;
+        $key =~ y/a-z/A-Z/;
+        $i++ if $key eq $value;
     }
 }
 
@@ -427,37 +427,37 @@ untie %h ;
    @EXPORT = @DB_File::EXPORT ;
 
    sub STORE { 
-	my $self = shift ;
+        my $self = shift ;
         my $key = shift ;
         my $value = shift ;
         $self->SUPER::STORE($key, $value * 2) ;
    }
 
    sub FETCH { 
-	my $self = shift ;
+        my $self = shift ;
         my $key = shift ;
         $self->SUPER::FETCH($key) - 1 ;
    }
 
    sub put { 
-	my $self = shift ;
+        my $self = shift ;
         my $key = shift ;
         my $value = shift ;
         $self->SUPER::put($key, $value * 3) ;
    }
 
    sub get { 
-	my $self = shift ;
+        my $self = shift ;
         $self->SUPER::get($_[0], $_[1]) ;
-	$_[1] -= 2 ;
+        $_[1] -= 2 ;
    }
 
    sub A_new_method
    {
-	my $self = shift ;
+        my $self = shift ;
         my $key = shift ;
         my $value = $self->FETCH($key) ;
-	return "[[$value]]" ;
+        return "[[$value]]" ;
    }
 
    1 ;
@@ -471,8 +471,8 @@ EOM
     my %h ;
     my $X ;
     eval '
-	$X = tie(%h, "SubDB","dbhash.tmp", O_RDWR|O_CREAT, 0640, $DB_HASH );
-	' ;
+        $X = tie(%h, "SubDB","dbhash.tmp", O_RDWR|O_CREAT, 0640, $DB_HASH );
+        ' ;
 
     main::ok(54, $@ eq "") ;
 
@@ -525,8 +525,8 @@ EOM
 
        return
            $fetch_key   eq $fk && $store_key   eq $sk && 
-	   $fetch_value eq $fv && $store_value eq $sv &&
-	   $_ eq 'original' ;
+           $fetch_value eq $fv && $store_value eq $sv &&
+           $_ eq 'original' ;
    }
    
    ok(63, $db = tie(%h, 'DB_File', $Dfile, O_RDWR|O_CREAT, 0640, $DB_HASH ) );
@@ -558,13 +558,13 @@ EOM
 
    # replace the filters, but remember the previous set
    my ($old_fk) = $db->filter_fetch_key   
-   			(sub { $_ = uc $_ ; $fetch_key = $_ }) ;
+                        (sub { $_ = uc $_ ; $fetch_key = $_ }) ;
    my ($old_sk) = $db->filter_store_key   
-   			(sub { $_ = lc $_ ; $store_key = $_ }) ;
+                        (sub { $_ = lc $_ ; $store_key = $_ }) ;
    my ($old_fv) = $db->filter_fetch_value 
-   			(sub { $_ = "[$_]"; $fetch_value = $_ }) ;
+                        (sub { $_ = "[$_]"; $fetch_value = $_ }) ;
    my ($old_sv) = $db->filter_store_value 
-   			(sub { s/o/x/g; $store_value = $_ }) ;
+                        (sub { s/o/x/g; $store_value = $_ }) ;
    
    ($fetch_key, $store_key, $fetch_value, $store_value) = ("") x 4 ;
    $h{"Fred"} = "Joe" ;
@@ -649,13 +649,13 @@ EOM
     sub Closure
     {
         my ($name) = @_ ;
-	my $count = 0 ;
-	my @kept = () ;
+        my $count = 0 ;
+        my @kept = () ;
 
-	return sub { ++$count ; 
-		     push @kept, $_ ; 
-		     $result{$name} = "$name - $count: [@kept]" ;
-		   }
+        return sub { ++$count ; 
+                     push @kept, $_ ; 
+                     $result{$name} = "$name - $count: [@kept]" ;
+                   }
     }
 
     $db->filter_store_key(Closure("store key")) ;
@@ -696,7 +696,7 @@ EOM
     undef $db ;
     untie %h;
     unlink $Dfile;
-}		
+}               
 
 {
    # DBM Filter recursion detection
@@ -868,9 +868,9 @@ EOM
 # 
 #    ok(127, tie(%hash, 'DB_File',$Dfile, O_RDWR|O_CREAT, 0640, $dbh ) );
 #
-#    eval {	$hash{1} = 2;
-#    		$hash{4} = 5;
-#	 };
+#    eval {     $hash{1} = 2;
+#               $hash{4} = 5;
+#        };
 #
 #    ok(128, $@ =~ /^DB_File hash callback: recursion detected/);
 #    {

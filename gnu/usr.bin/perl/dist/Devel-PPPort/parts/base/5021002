@@ -1,3 +1,8 @@
 5.021002
 grok_number_flags              # U
 op_sibling_splice              # U
+PERL_SCAN_TRAILING             # E
+WARN_MISSING                   # E
+WARN_REDUNDANT                 # E
+not_incrementable              # F added by devel/scanprov
+sv_display                     # F added by devel/scanprov

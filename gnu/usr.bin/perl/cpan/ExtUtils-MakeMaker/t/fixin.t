@@ -9,7 +9,7 @@ BEGIN {
 
 use File::Spec;
 
-use Test::More tests => 22;
+use Test::More tests => 30;
 
 use Config;
 use TieOut;
@@ -122,4 +122,36 @@ blah blah blah
 END
         }
     );
+}
+
+SKIP: {
+    eval { chmod(0755, "usrbin/interp") }
+        or skip "no chmod", 8;
+    skip "Not relevant on VMS or MSWin32", 8 if $^O eq 'VMS' || $^O eq 'MSWin32' || $^O eq 'cygwin';
+
+    my $dir = getcwd();
+    local $ENV{PATH} = join $Config{path_sep}, map "$dir/$_", qw(usrbin bin);
+
+    test_fixin(<<END,
+#!$dir/bin/interp
+
+blah blah blah
+END
+         sub {
+             is $_[0], "#!$dir/usrbin/interp\n", 'interpreter updated to one found in PATH';
+         }
+     );
+
+    eval { symlink("../usrbin/interp", "bin/interp") }
+        or skip "no symlinks", 4;
+
+    test_fixin(<<END,
+#!$dir/bin/interp
+
+blah blah blah
+END
+         sub {
+             is $_[0], "#!$dir/bin/interp\n", 'symlinked interpreter later in PATH not mangled';
+         }
+     );
 }

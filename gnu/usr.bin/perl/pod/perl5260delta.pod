@@ -2665,7 +2665,7 @@ L<[perl #129149]|https://rt.perl.org/Public/Bug/Display.html?id=129149>
 
 Supplying a format's picture argument as part of the format argument list
 where the picture specifies modifying the argument could cause an
-access to the new freed compiled form.at.
+access to the new freed compiled format.
 L<[perl #129125]|https://rt.perl.org/Public/Bug/Display.html?id=129125>
 
 =item *

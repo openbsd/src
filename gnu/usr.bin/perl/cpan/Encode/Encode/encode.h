@@ -280,6 +280,14 @@ S_new_msg_hv(const char * const message, /* The message text */
 #    define PERL_UNUSED_ARG(x) ((void)x)
 #  endif
 
+#  ifndef memGT
+#    define memGT(s1,s2,l) (memcmp(s1,s2,l) > 0)
+#  endif
+
+#  ifndef MIN
+#    define MIN(a,b) ((a) < (b) ? (a) : (b))
+#  endif
+
 static const char malformed_text[] = "Malformed UTF-8 character";
 
 static char *

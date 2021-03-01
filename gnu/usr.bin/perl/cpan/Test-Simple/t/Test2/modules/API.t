@@ -1,6 +1,8 @@
 use strict;
 use warnings;
 
+BEGIN { no warnings 'once'; $main::cleanup1 = bless {}, 'My::Cleanup' }
+
 use Test2::API qw/context/;
 
 my ($LOADED, $INIT);
@@ -26,6 +28,7 @@ ok(Test2::API->can($_), "$_ method is present") for qw{
     test2_tid
     test2_stack
     test2_no_wait
+    test2_is_testing_done
 
     test2_add_callback_context_init
     test2_add_callback_context_release
@@ -285,5 +288,23 @@ is((grep { $_ == $sub } Test2::API::test2_list_context_release_callbacks()), 2, 
 is((grep { $_ == $sub } Test2::API::test2_list_exit_callbacks()),            2, "got the two instances of the hook");
 is((grep { $_ == $sub } Test2::API::test2_list_post_load_callbacks()),       2, "got the two instances of the hook");
 
+ok(!Test2::API::test2_is_testing_done(), "Testing is not done");
+
 done_testing;
 
+die "Testing should be done, but it is not!" unless Test2::API::test2_is_testing_done();
+
+{
+    package My::Cleanup;
+
+    sub DESTROY {
+        return if Test2::API::test2_is_testing_done();
+        print "not ok - Testing should be done, but it is not!\n";
+        warn "Testing should be done, but it is not!";
+        eval "END { $? = 255 }; 1" or die $@;
+        exit 255;
+    }
+}
+
+# This should destroy the thing
+END { no warnings 'once'; $main::cleanup2 = bless {}, 'My::Cleanup' }

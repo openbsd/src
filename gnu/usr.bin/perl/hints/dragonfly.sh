@@ -77,3 +77,13 @@ EOCBU
 case "$usemallocwrap" in
 '') usemallocwrap='define' ;;
 esac
+
+test "$optimize" || optimize='-O2'
+
+# Configure can't find dlopen() when using g++
+# linux, freebsd and solaris hints have the same workaround
+case "$cc" in
+*g++*)
+  d_dlopen='define'
+  ;;
+esac

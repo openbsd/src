@@ -148,7 +148,7 @@ sub heavy_export {
 		    if (!$export_cache->{$sym}) {
 			# accumulate the non-exports
 			push @carp,
-			  qq["$sym" is not exported by the $pkg module\n];
+			  qq["$sym" is not exported by the $pkg module];
 			$oops++;
 		    }
 		}
@@ -156,7 +156,7 @@ sub heavy_export {
 	}
 	if ($oops) {
 	    require Carp;
-	    Carp::croak("@{carp}Can't continue after import errors");
+	    Carp::croak(join("\n", @carp, "Can't continue after import errors"));
 	}
     }
     else {

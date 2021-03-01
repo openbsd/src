@@ -3,8 +3,12 @@
 # Tests for various caching errors
 #
 
+use strict;
+use warnings;
+
 use Config;
-my $file = "tf$$.txt";
+
+my $file = "tf24-$$.txt";
 unless ($Config{d_alarm}) {
   print "1..0\n"; exit;
 }
@@ -27,6 +31,7 @@ close F;
 # Limit cache size to 30 bytes 
 my $MAX = 30;
 #  -- that's enough space for 3 records, but not 4, on both \n and \r\n systems
+my @a;
 my $o = tie @a, 'Tie::File', $file, memory => $MAX, autodefer => 1;
 print $o ? "ok $N\n" : "not ok $N\n";
 $N++;

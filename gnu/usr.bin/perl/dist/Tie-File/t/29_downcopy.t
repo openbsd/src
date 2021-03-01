@@ -1,4 +1,8 @@
 #!/usr/bin/perl
+
+use strict;
+use warnings;
+
 #
 # Unit tests of _downcopy function
 #
@@ -10,7 +14,7 @@
 #
 #
 
-my $file = "tf$$.txt";
+my $file = "tf29-$$.txt";
 
 print "1..718\n";
 
@@ -162,7 +166,7 @@ try(    0,     0,     0);  # old=0        , new=0        ; old = new
 
 # (224-277)
 # These tests all take place at the end of the file
-$FLEN = 40960;  # Force the file to be exactly 40960 bytes long
+my $FLEN = 40960;  # Force the file to be exactly 40960 bytes long
 try(32768,  8192,  8192);  # old=<x>      , new=<x       ; old = new
 try(32768,  8192,  4026);  # old=<x>      , new=<x       ; old > new
 try(24576, 16384,  1917);  # old=<x><x>   , new=<x       ; old > new
@@ -315,54 +319,6 @@ sub try {
   }
 }
 
-
-
-use POSIX 'SEEK_SET';
-sub check_contents {
-  my @c = @_;
-  my $x = join $:, @c, '';
-  local *FH = $o->{fh};
-  seek FH, 0, SEEK_SET;
-#  my $open = open FH, '<', $file;
-  my $a;
-  { local $/; $a = <FH> }
-  $a = "" unless defined $a;
-  if ($a eq $x) {
-    print "ok $N\n";
-  } else {
-    ctrlfix($a, $x);
-    print "not ok $N\n# expected <$x>, got <$a>\n";
-  }
-  $N++;
-
-  # now check FETCH:
-  my $good = 1;
-  my $msg;
-  for (0.. $#c) {
-    my $aa = $a[$_];
-    unless ($aa eq "$c[$_]$:") {
-      $msg = "expected <$c[$_]$:>, got <$aa>";
-      ctrlfix($msg);
-      $good = 0;
-    }
-  }
-  print $good ? "ok $N\n" : "not ok $N # $msg\n";
-  $N++;
-
-  print $o->_check_integrity($file, $ENV{INTEGRITY}) 
-      ? "ok $N\n" : "not ok $N\n";
-  $N++;
-}
-
-sub ctrlfix {
-  for (@_) {
-    s/\n/\\n/g;
-    s/\r/\\r/g;
-  }
-}
-
 END {
-  undef $o;
-  untie @a;
   1 while unlink $file;
 }

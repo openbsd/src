@@ -1,4 +1,6 @@
 5.015001
+cop_fetch_label                # U
+cop_store_label                # U
 pad_add_name_pv                # U
 pad_add_name_pvn               # U
 pad_add_name_pvs               # U

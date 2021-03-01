@@ -5,7 +5,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 148;
+use Test::More tests => 164;
 
 ##############################################################################
 
@@ -76,6 +76,12 @@ __END__
 &is_negative
 1:0
 -1:1
+&is_non_positive
+1:0
+-1:1
+&is_non_negative
+1:1
+-1:0
 &is_nan
 abc:1
 1:0

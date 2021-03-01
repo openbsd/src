@@ -4,7 +4,10 @@
 # (04_splice.t checks its effect on the file)
 #
 
-my $file = "tf$$.txt";
+use strict;
+use warnings;
+
+my $file = "tf11-$$.txt";
 my $data = "rec0blahrec1blahrec2blah";
 
 print "1..50\n";
@@ -15,6 +18,7 @@ print "ok $N\n"; $N++;  # partial credit just for showing up
 
 init_file($data);
 
+my @a;
 my $o = tie @a, 'Tie::File', $file, autochomp => 0, recsep => 'blah';
 print $o ? "ok $N\n" : "not ok $N\n";
 $N++;
@@ -22,7 +26,7 @@ $N++;
 my $n;
 
 # (3-12) splicing at the beginning
-@r = splice(@a, 0, 0, "rec4");
+my @r = splice(@a, 0, 0, "rec4");
 check_result();
 @r = splice(@a, 0, 1, "rec5");       # same length
 check_result("rec4");

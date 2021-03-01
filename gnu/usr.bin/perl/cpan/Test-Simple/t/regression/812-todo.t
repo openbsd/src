@@ -5,7 +5,6 @@ use Test2::API qw/intercept/;
 use Test::More;
 
 my @values = (
-    "",               # false but defined -> inconsistent
     0,                # false but defined -> inconsistent
     0.0,              # false but defined -> inconsistent
     "0.0",            # true -> TODO
@@ -17,5 +16,13 @@ for my $value (@values) {
     my $x = defined($value) ? "\"$value\"" : 'UNDEF';
     fail "Testing: $x";
 }
+
+my $e = intercept {
+    local $TODO = "";
+    fail "Testing: '\"\"'";
+};
+
+ok(!$e->[0]->effective_pass, "Test was not TODO when set to \"\"");
+like($e->[1]->message, qr/Failed test '/, "Did not add TODO to the diagnostics");
 
 done_testing;

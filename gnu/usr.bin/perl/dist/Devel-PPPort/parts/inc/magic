@@ -18,6 +18,11 @@ __UNDEFINED__
 /sv_\w+_mg/
 sv_magic_portable
 
+SvIV_nomg
+SvUV_nomg
+SvNV_nomg
+SvTRUE_nomg
+
 =implementation
 
 __UNDEFINED__  SvGETMAGIC(x) STMT_START { if (SvGMAGICAL(x)) mg_get(x); } STMT_END
@@ -27,8 +32,22 @@ __UNDEFINED__  sv_catpvn_nomg     sv_catpvn
 __UNDEFINED__  sv_catsv_nomg      sv_catsv
 __UNDEFINED__  sv_setsv_nomg      sv_setsv
 __UNDEFINED__  sv_pvn_nomg        sv_pvn
-__UNDEFINED__  SvIV_nomg          SvIV
-__UNDEFINED__  SvUV_nomg          SvUV
+
+#ifdef SVf_IVisUV
+#if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
+__UNDEFINED__ SvIV_nomg(sv) (!SvGMAGICAL((sv)) ? SvIV((sv)) : ({ SV *_sviv = sv_mortalcopy_flags((sv), SV_NOSTEAL); IV _iv = SvIV(_sviv); SvFLAGS((sv)) = (SvFLAGS((sv)) & ~SVf_IVisUV) | (SvFLAGS(_sviv) & SVf_IVisUV); _iv; }))
+__UNDEFINED__ SvUV_nomg(sv) (!SvGMAGICAL((sv)) ? SvUV((sv)) : ({ SV *_svuv = sv_mortalcopy_flags((sv), SV_NOSTEAL); UV _uv = SvUV(_svuv); SvFLAGS((sv)) = (SvFLAGS((sv)) & ~SVf_IVisUV) | (SvFLAGS(_svuv) & SVf_IVisUV); _uv; }))
+#else
+__UNDEFINED__ SvIV_nomg(sv) (!SvGMAGICAL((sv)) ? SvIV((sv)) : ((PL_Sv = sv_mortalcopy_flags((sv), SV_NOSTEAL)), sv_upgrade(PL_Sv, SVt_PVIV), (SvIVX(PL_Sv) = SvIV(PL_Sv)), (SvFLAGS((sv)) = (SvFLAGS((sv)) & ~SVf_IVisUV) | (SvFLAGS(PL_Sv) & SVf_IVisUV)), SvIVX(PL_Sv)))
+__UNDEFINED__ SvUV_nomg(sv) (!SvGMAGICAL((sv)) ? SvIV((sv)) : ((PL_Sv = sv_mortalcopy_flags((sv), SV_NOSTEAL)), sv_upgrade(PL_Sv, SVt_PVIV), (SvUVX(PL_Sv) = SvUV(PL_Sv)), (SvFLAGS((sv)) = (SvFLAGS((sv)) & ~SVf_IVisUV) | (SvFLAGS(PL_Sv) & SVf_IVisUV)), SvUVX(PL_Sv)))
+#endif
+#else
+__UNDEFINED__ SvIV_nomg(sv) (!SvGMAGICAL((sv)) ? SvIV((sv)) : SvIVx(sv_mortalcopy_flags((sv), SV_NOSTEAL)))
+__UNDEFINED__ SvUV_nomg(sv) (!SvGMAGICAL((sv)) ? SvUV((sv)) : SvUVx(sv_mortalcopy_flags((sv), SV_NOSTEAL)))
+#endif
+
+__UNDEFINED__ SvNV_nomg(sv) (!SvGMAGICAL((sv)) ? SvNV((sv)) : SvNVx(sv_mortalcopy_flags((sv), SV_NOSTEAL)))
+__UNDEFINED__ SvTRUE_nomg(sv) (!SvGMAGICAL((sv)) ? SvTRUE((sv)) : SvTRUEx(sv_mortalcopy_flags((sv), SV_NOSTEAL)))
 
 #ifndef sv_catpv_mg
 #  define sv_catpv_mg(sv, ptr)          \
@@ -167,7 +186,7 @@ __UNDEFINED__  SvVSTRING_mg(sv)  (SvMAGICAL(sv) ? mg_find(sv, PERL_MAGIC_vstring
 #if { NEED mg_findext }
 
 MAGIC *
-mg_findext(SV * sv, int type, const MGVTBL *vtbl) {
+mg_findext(const SV * sv, int type, const MGVTBL *vtbl) {
     if (sv) {
         MAGIC *mg;
 
@@ -481,31 +500,110 @@ sv_magic_portable(sv)
         OUTPUT:
                 RETVAL
 
-=tests plan => 23
+UV
+above_IV_MAX()
+        CODE:
+                RETVAL = (UV)IV_MAX+100;
+        OUTPUT:
+                RETVAL
+
+#ifdef SVf_IVisUV
+
+U32
+SVf_IVisUV(sv)
+        SV *sv
+        CODE:
+                RETVAL = (SvFLAGS(sv) & SVf_IVisUV);
+        OUTPUT:
+                RETVAL
+
+#endif
+
+#ifdef SvIV_nomg
+
+IV
+magic_SvIV_nomg(sv)
+        SV *sv
+        CODE:
+                RETVAL = SvIV_nomg(sv);
+        OUTPUT:
+                RETVAL
+
+#endif
+
+#ifdef SvUV_nomg
+
+UV
+magic_SvUV_nomg(sv)
+        SV *sv
+        CODE:
+                RETVAL = SvUV_nomg(sv);
+        OUTPUT:
+                RETVAL
+
+#endif
+
+#ifdef SvNV_nomg
+
+NV
+magic_SvNV_nomg(sv)
+        SV *sv
+        CODE:
+                RETVAL = SvNV_nomg(sv);
+        OUTPUT:
+                RETVAL
+
+#endif
+
+#ifdef SvTRUE_nomg
+
+bool
+magic_SvTRUE_nomg(sv)
+        SV *sv
+        CODE:
+                RETVAL = SvTRUE_nomg(sv);
+        OUTPUT:
+                RETVAL
+
+#endif
+
+#ifdef SvPV_nomg_nolen
+
+char *
+magic_SvPV_nomg_nolen(sv)
+        SV *sv
+        CODE:
+                RETVAL = SvPV_nomg_nolen(sv);
+        OUTPUT:
+                RETVAL
+
+#endif
+
+=tests plan => 63
 
 # Find proper magic
 ok(my $obj1 = Devel::PPPort->new_with_mg());
-ok(Devel::PPPort::as_string($obj1), 'hello');
+is(Devel::PPPort::as_string($obj1), 'hello');
 
 # Find with no magic
 my $obj = bless {}, 'Fake::Class';
-ok(Devel::PPPort::as_string($obj), "Sorry, your princess is in another castle.");
+is(Devel::PPPort::as_string($obj), "Sorry, your princess is in another castle.");
 
 # Find with other magic (not the magic we are looking for)
 ok($obj = Devel::PPPort->new_with_other_mg());
-ok(Devel::PPPort::as_string($obj), "Sorry, your princess is in another castle.");
+is(Devel::PPPort::as_string($obj), "Sorry, your princess is in another castle.");
 
 # Okay, attempt to remove magic that isn't there
 Devel::PPPort::remove_other_magic($obj1);
-ok(Devel::PPPort::as_string($obj1), 'hello');
+is(Devel::PPPort::as_string($obj1), 'hello');
 
 # Remove magic that IS there
 Devel::PPPort::remove_null_magic($obj1);
-ok(Devel::PPPort::as_string($obj1), "Sorry, your princess is in another castle.");
+is(Devel::PPPort::as_string($obj1), "Sorry, your princess is in another castle.");
 
 # Removing when no magic present
 Devel::PPPort::remove_null_magic($obj1);
-ok(Devel::PPPort::as_string($obj1), "Sorry, your princess is in another castle.");
+is(Devel::PPPort::as_string($obj1), "Sorry, your princess is in another castle.");
 
 use Tie::Hash;
 my %h;
@@ -514,34 +612,34 @@ $h{foo} = 'foo';
 $h{bar} = '';
 
 &Devel::PPPort::sv_catpv_mg($h{foo}, 'bar');
-ok($h{foo}, 'foobar');
+is($h{foo}, 'foobar');
 
 &Devel::PPPort::sv_catpvn_mg($h{bar}, 'baz');
-ok($h{bar}, 'baz');
+is($h{bar}, 'baz');
 
 &Devel::PPPort::sv_catsv_mg($h{foo}, '42');
-ok($h{foo}, 'foobar42');
+is($h{foo}, 'foobar42');
 
 &Devel::PPPort::sv_setiv_mg($h{bar}, 42);
-ok($h{bar}, 42);
+is($h{bar}, 42);
 
 &Devel::PPPort::sv_setnv_mg($h{PI}, 3.14159);
 ok(abs($h{PI} - 3.14159) < 0.01);
 
 &Devel::PPPort::sv_setpv_mg($h{mhx}, 'mhx');
-ok($h{mhx}, 'mhx');
+is($h{mhx}, 'mhx');
 
 &Devel::PPPort::sv_setpvn_mg($h{mhx}, 'Marcus');
-ok($h{mhx}, 'Marcus');
+is($h{mhx}, 'Marcus');
 
 &Devel::PPPort::sv_setsv_mg($h{sv}, 'SV');
-ok($h{sv}, 'SV');
+is($h{sv}, 'SV');
 
 &Devel::PPPort::sv_setuv_mg($h{sv}, 4711);
-ok($h{sv}, 4711);
+is($h{sv}, 4711);
 
 &Devel::PPPort::sv_usepvn_mg($h{sv}, 'Perl');
-ok($h{sv}, 'Perl');
+is($h{sv}, 'Perl');
 
 # v1 is treated as a bareword in older perls...
 my $ver = do { local $SIG{'__WARN__'} = sub {}; eval qq[v1.2.0] };
@@ -552,3 +650,108 @@ ok(!Devel::PPPort::SvVSTRING_mg(4711));
 my $foo = 'bar';
 ok(Devel::PPPort::sv_magic_portable($foo));
 ok($foo eq 'bar');
+
+    tie my $scalar, 'TieScalarCounter', 10;
+    my $fetch = $scalar;
+
+    is tied($scalar)->{fetch}, 1;
+    is tied($scalar)->{store}, 0;
+    is Devel::PPPort::magic_SvIV_nomg($scalar), 10;
+    is tied($scalar)->{fetch}, 1;
+    is tied($scalar)->{store}, 0;
+    is Devel::PPPort::magic_SvUV_nomg($scalar), 10;
+    is tied($scalar)->{fetch}, 1;
+    is tied($scalar)->{store}, 0;
+    is Devel::PPPort::magic_SvNV_nomg($scalar), 10;
+    is tied($scalar)->{fetch}, 1;
+    is tied($scalar)->{store}, 0;
+    is Devel::PPPort::magic_SvPV_nomg_nolen($scalar), 10;
+    is tied($scalar)->{fetch}, 1;
+    is tied($scalar)->{store}, 0;
+    ok Devel::PPPort::magic_SvTRUE_nomg($scalar);
+    is tied($scalar)->{fetch}, 1;
+    is tied($scalar)->{store}, 0;
+
+    my $object = OverloadedObject->new('string', 5.5, 0);
+
+    is Devel::PPPort::magic_SvIV_nomg($object), 5;
+    is Devel::PPPort::magic_SvUV_nomg($object), 5;
+    is Devel::PPPort::magic_SvNV_nomg($object), 5.5;
+    is Devel::PPPort::magic_SvPV_nomg_nolen($object), 'string';
+    ok !Devel::PPPort::magic_SvTRUE_nomg($object);
+
+tie my $negative, 'TieScalarCounter', -1;
+$fetch = $negative;
+
+is tied($negative)->{fetch}, 1;
+is tied($negative)->{store}, 0;
+is Devel::PPPort::magic_SvIV_nomg($negative), -1;
+if (ivers($]) >= ivers(5.6)) {
+    ok !Devel::PPPort::SVf_IVisUV($negative);
+} else {
+    skip 'SVf_IVisUV is unsupported', 1;
+}
+is tied($negative)->{fetch}, 1;
+is tied($negative)->{store}, 0;
+Devel::PPPort::magic_SvUV_nomg($negative);
+if (ivers($]) >= ivers(5.6)) {
+    ok !Devel::PPPort::SVf_IVisUV($negative);
+} else {
+    skip 'SVf_IVisUV is unsupported', 1;
+}
+is tied($negative)->{fetch}, 1;
+is tied($negative)->{store}, 0;
+
+tie my $big, 'TieScalarCounter', Devel::PPPort::above_IV_MAX();
+$fetch = $big;
+
+is tied($big)->{fetch}, 1;
+is tied($big)->{store}, 0;
+Devel::PPPort::magic_SvIV_nomg($big);
+if (ivers($]) >= ivers(5.6)) {
+    ok Devel::PPPort::SVf_IVisUV($big);
+} else {
+    skip 'SVf_IVisUV is unsupported', 1;
+}
+is tied($big)->{fetch}, 1;
+is tied($big)->{store}, 0;
+is Devel::PPPort::magic_SvUV_nomg($big), Devel::PPPort::above_IV_MAX();
+if (ivers($]) >= ivers(5.6)) {
+    ok Devel::PPPort::SVf_IVisUV($big);
+} else {
+    skip 'SVf_IVisUV is unsupported', 1;
+}
+is tied($big)->{fetch}, 1;
+is tied($big)->{store}, 0;
+
+package TieScalarCounter;
+
+sub TIESCALAR {
+    my ($class, $value) = @_;
+    return bless { fetch => 0, store => 0, value => $value }, $class;
+}
+
+sub FETCH {
+    my ($self) = @_;
+    $self->{fetch}++;
+    return $self->{value};
+}
+
+sub STORE {
+    my ($self, $value) = @_;
+    $self->{store}++;
+    $self->{value} = $value;
+}
+
+package OverloadedObject;
+
+sub new {
+    my ($class, $str, $num, $bool) = @_;
+    return bless { str => $str, num => $num, bool => $bool }, $class;
+}
+
+use overload
+    '""' => sub { $_[0]->{str} },
+    '0+' => sub { $_[0]->{num} },
+    'bool' => sub { $_[0]->{bool} },
+    ;

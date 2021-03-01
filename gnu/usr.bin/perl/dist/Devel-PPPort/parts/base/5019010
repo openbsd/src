@@ -1,2 +1,7 @@
 5.019010
 OP_TYPE_IS_OR_WAS              # U
+do_open6                       # F added by devel/scanprov
+do_open_raw                    # F added by devel/scanprov
+hv_auxinit_internal            # F added by devel/scanprov
+openn_cleanup                  # F added by devel/scanprov
+openn_setup                    # F added by devel/scanprov

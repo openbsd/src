@@ -10,10 +10,12 @@
 #
 ################################################################################
 
+use FindBin ();
+
 BEGIN {
   if ($ENV{'PERL_CORE'}) {
     chdir 't' if -d 't';
-    @INC = ('../lib', '../ext/Devel-PPPort/t') if -d '../lib' && -d '../ext';
+    unshift @INC, '../lib' if -d '../lib' && -d '../ext';
     require Config; import Config;
     use vars '%Config';
     if (" $Config{'extensions'} " !~ m[ Devel/PPPort ]) {
@@ -21,13 +23,15 @@ BEGIN {
       exit 0;
     }
   }
-  else {
-    unshift @INC, 't';
-  }
+
+  use lib "$FindBin::Bin";
+  use lib "$FindBin::Bin/../parts/inc";
+
+  die qq[Cannot find "$FindBin::Bin/../parts/inc"] unless -d "$FindBin::Bin/../parts/inc";
 
   sub load {
-    eval "use Test";
-    require 'testutil.pl' if $@;
+    require 'testutil.pl';
+    require 'inctools';
   }
 
   if (238) {
@@ -38,7 +42,7 @@ BEGIN {
 
 use Devel::PPPort;
 use strict;
-$^W = 1;
+BEGIN { $^W = 1; }
 
 package Devel::PPPort;
 use vars '@ISA';
@@ -50,9 +54,7 @@ package main;
 
 BEGIN {
   if ($ENV{'SKIP_SLOW_TESTS'}) {
-    for (1 .. 238) {
-      skip("skip: SKIP_SLOW_TESTS", 0);
-    }
+    skip("skip: SKIP_SLOW_TESTS", 238);
     exit 0;
   }
 }
@@ -96,7 +98,7 @@ END {
 ok(&Devel::PPPort::WriteFile("ppport.h"));
 
 # Check GetFileContents()
-ok(-e "ppport.h", 1);
+is(-e "ppport.h", 1);
 
 my $data;
 
@@ -106,8 +108,8 @@ while(<F>) {
 }
 close(F);
 
-ok(Devel::PPPort::GetFileContents("ppport.h"), $data);
-ok(Devel::PPPort::GetFileContents(), $data);
+is(Devel::PPPort::GetFileContents("ppport.h"), $data);
+is(Devel::PPPort::GetFileContents(), $data);
 
 sub comment
 {
@@ -205,7 +207,7 @@ for $t (@tests) {
     $err =~ s/^/# *** /mg;
     print "# *** ERROR ***\n$err\n";
   }
-  ok($@, '');
+  is($@, '');
 
   for (keys %{$t->{files}}) {
     unlink $_ or die "unlink('$_'): $!\n";
@@ -251,8 +253,8 @@ ok($o =~ /^This is.*ppport.*\d+\.\d+(?:_?\d+)?\.$/);
 $o = ppport(qw(--nochanges));
 ok($o =~ /^Scanning.*test\.xs/mi);
 ok($o =~ /Analyzing.*test\.xs/mi);
-ok(matches($o, '^Scanning', 'm'), 1);
-ok(matches($o, 'Analyzing', 'm'), 1);
+is(matches($o, '^Scanning', 'm'), 1);
+is(matches($o, 'Analyzing', 'm'), 1);
 ok($o =~ /Uses Perl_newSViv instead of newSViv/);
 
 $o = ppport(qw(--quiet --nochanges));
@@ -269,7 +271,7 @@ Perl_newSViv();
 my $o = ppport(qw(--copy=a));
 ok($o =~ /^Scanning.*MyExt\.xs/mi);
 ok($o =~ /Analyzing.*MyExt\.xs/mi);
-ok(matches($o, '^Scanning', 'm'), 1);
+is(matches($o, '^Scanning', 'm'), 1);
 ok($o =~ /^Needs to include.*ppport\.h/m);
 ok($o !~ /^Uses grok_bin/m);
 ok($o !~ /^Uses newSVpv/m);
@@ -281,7 +283,7 @@ ok(eq_files('MyExt.xsa', 'MyExt.ra'));
 $o = ppport(qw(--copy=b --cplusplus));
 ok($o =~ /^Scanning.*MyExt\.xs/mi);
 ok($o =~ /Analyzing.*MyExt\.xs/mi);
-ok(matches($o, '^Scanning', 'm'), 1);
+is(matches($o, '^Scanning', 'm'), 1);
 ok($o =~ /^Needs to include.*ppport\.h/m);
 ok($o !~ /^Uses grok_bin/m);
 ok($o !~ /^Uses newSVpv/m);
@@ -387,7 +389,6 @@ ok($o =~ /^\s*$/);
 ---------------------------- file1.xs -----------------------------------------
 
 #define NEED_newCONSTSUB
-#define NEED_sv_2pv_flags
 #define NEED_PL_parser
 #include "ppport.h"
 
@@ -404,7 +405,7 @@ mXPUSHp(foo);
 my $o = ppport(qw(--nochanges));
 ok($o =~ /^Scanning.*FooBar\.xs/mi);
 ok($o =~ /Analyzing.*FooBar\.xs/mi);
-ok(matches($o, '^Scanning', 'm'), 1);
+is(matches($o, '^Scanning', 'm'), 1);
 ok($o !~ /^Looks good/m);
 ok($o =~ /^Uses grok_bin/m);
 
@@ -424,7 +425,7 @@ ok($o =~ /Analyzing.*second\.h/mi);
 ok($o =~ /^Scanning.*sub.*third\.c/mi);
 ok($o =~ /Analyzing.*sub.*third\.c/mi);
 ok($o !~ /^Scanning.*foobar/mi);
-ok(matches($o, '^Scanning', 'm'), 3);
+is(matches($o, '^Scanning', 'm'), 3);
 
 ---------------------------- First.xs -----------------------------------------
 
@@ -460,9 +461,9 @@ for (qw(main.xs mod1.c mod2.c mod3.c mod4.c mod5.c)) {
   ok($o =~ /^Scanning.*\Q$_\E/mi);
   ok($o =~ /Analyzing.*\Q$_\E/i);
 }
-ok(matches($o, '^Scanning', 'm'), 6);
+is(matches($o, '^Scanning', 'm'), 6);
 
-ok(matches($o, '^Writing copy of', 'm'), 5);
+is(matches($o, '^Writing copy of', 'm'), 5);
 ok(!-e "mod5.cf");
 
 for (qw(main.xs mod1.c mod2.c mod3.c mod4.c)) {
@@ -559,7 +560,6 @@ call_pv();
 #define NEED_eval_pv_GLOBAL
 #define NEED_grok_hex
 #define NEED_newCONSTSUB_GLOBAL
-#define NEED_sv_2pv_flags_GLOBAL
 #include "ppport.h"
 
 newCONSTSUB();
@@ -672,7 +672,7 @@ SvPVutf8_force();
 
 my $o = ppport(qw(--nochanges));
 ok($o !~ /potentially required change/);
-ok(matches($o, '^Looks good', 'm'), 2);
+is(matches($o, '^Looks good', 'm'), 2);
 
 ---------------------------- FooBar.xs ----------------------------------------
 
@@ -695,20 +695,20 @@ call_pv();
 
 my $o = ppport(qw(--api-info=INT2PTR));
 my %found = map {($_ => 1)} $o =~ /^===\s+(\w+)\s+===/mg;
-ok(scalar keys %found, 1);
+is(scalar keys %found, 1, "found 1 key");
 ok(exists $found{INT2PTR});
-ok(matches($o, '^Supported at least starting from perl-5\.6\.0\.', 'm'), 1);
-ok(matches($o, '^Support by .*ppport.* provided back to perl-5\.003\.', 'm'), 1);
+is(matches($o, '^Supported at least since perl-5\.6\.0', 'm'), 1, "INT2PTR supported without ppport.h to 5.6.0");
+is(matches($o, '^ppport.h additionally provides support at least back to perl-5\.003', 'm'), 1, "INT2PTR supported with ppport.h to 5.003");
 
 $o = ppport(qw(--api-info=Zero));
 %found = map {($_ => 1)} $o =~ /^===\s+(\w+)\s+===/mg;
-ok(scalar keys %found, 1);
+is(scalar keys %found, 1, "found 1 key");
 ok(exists $found{Zero});
-ok(matches($o, '^No portability information available\.', 'm'), 1);
+is(matches($o, '^Supported at least since perl-5.003', 'm'), 1, "Zero supported to 5.003");
 
 $o = ppport(qw(--api-info=/Zero/));
 %found = map {($_ => 1)} $o =~ /^===\s+(\w+)\s+===/mg;
-ok(scalar keys %found, 2);
+is(scalar keys %found, 2, "found 2 keys");
 ok(exists $found{Zero});
 ok(exists $found{ZeroD});
 
@@ -725,32 +725,32 @@ for (@o) {
   $p{$name} = defined $flags ? { map { ($_ => 1) } $flags =~ /(\w+)/g } : '';
 }
 ok(@o > 100);
-ok($fail, 0);
+is($fail, 0);
 
 ok(exists $p{call_pv});
 ok(not ref $p{call_pv});
 
 ok(exists $p{grok_bin});
-ok(ref $p{grok_bin}, 'HASH');
-ok(scalar keys %{$p{grok_bin}}, 2);
+is(ref $p{grok_bin}, 'HASH');
+is(scalar keys %{$p{grok_bin}}, 2);
 ok($p{grok_bin}{explicit});
 ok($p{grok_bin}{depend});
 
 ok(exists $p{gv_stashpvn});
-ok(ref $p{gv_stashpvn}, 'HASH');
-ok(scalar keys %{$p{gv_stashpvn}}, 2);
+is(ref $p{gv_stashpvn}, 'HASH');
+is(scalar keys %{$p{gv_stashpvn}}, 2);
 ok($p{gv_stashpvn}{depend});
 ok($p{gv_stashpvn}{hint});
 
 ok(exists $p{sv_catpvf_mg});
-ok(ref $p{sv_catpvf_mg}, 'HASH');
-ok(scalar keys %{$p{sv_catpvf_mg}}, 2);
+is(ref $p{sv_catpvf_mg}, 'HASH');
+is(scalar keys %{$p{sv_catpvf_mg}}, 2);
 ok($p{sv_catpvf_mg}{explicit});
 ok($p{sv_catpvf_mg}{depend});
 
 ok(exists $p{PL_signals});
-ok(ref $p{PL_signals}, 'HASH');
-ok(scalar keys %{$p{PL_signals}}, 1);
+is(ref $p{PL_signals}, 'HASH');
+is(scalar keys %{$p{PL_signals}}, 1);
 ok($p{PL_signals}{explicit});
 
 ===============================================================================
@@ -766,13 +766,13 @@ for (@o) {
   $p{$name} = $ver;
 }
 ok(@o > 100);
-ok($fail, 0);
+is($fail, 0);
 
 ok(exists $p{utf8_distance});
-ok($p{utf8_distance}, '5.6.0');
+is($p{utf8_distance}, '5.6.0');
 
 ok(exists $p{save_generic_svref});
-ok($p{save_generic_svref}, '5.005_03');
+is($p{save_generic_svref}, '5.005_03');
 
 ===============================================================================
 
@@ -781,17 +781,17 @@ ok($p{save_generic_svref}, '5.005_03');
 my $o = ppport(qw(--nochanges));
 ok($o =~ /^Scanning.*foo\.cpp/mi);
 ok($o =~ /Analyzing.*foo\.cpp/mi);
-ok(matches($o, '^Scanning', 'm'), 1);
-ok(matches($o, 'Analyzing', 'm'), 1);
+is(matches($o, '^Scanning', 'm'), 1);
+is(matches($o, 'Analyzing', 'm'), 1);
 
 $o = ppport(qw(--nochanges foo.cpp foo.o Makefile.PL));
 ok($o =~ /Skipping the following files \(use --nofilter to avoid this\):/m);
-ok(matches($o, '^\|\s+foo\.o', 'mi'), 1);
-ok(matches($o, '^\|\s+Makefile\.PL', 'mi'), 1);
+is(matches($o, '^\|\s+foo\.o', 'mi'), 1);
+is(matches($o, '^\|\s+Makefile\.PL', 'mi'), 1);
 ok($o =~ /^Scanning.*foo\.cpp/mi);
 ok($o =~ /Analyzing.*foo\.cpp/mi);
-ok(matches($o, '^Scanning', 'm'), 1);
-ok(matches($o, 'Analyzing', 'm'), 1);
+is(matches($o, '^Scanning', 'm'), 1);
+is(matches($o, 'Analyzing', 'm'), 1);
 
 $o = ppport(qw(--nochanges --nofilter foo.cpp foo.o Makefile.PL));
 ok($o =~ /^Scanning.*foo\.cpp/mi);
@@ -800,8 +800,8 @@ ok($o =~ /^Scanning.*foo\.o/mi);
 ok($o =~ /Analyzing.*foo\.o/mi);
 ok($o =~ /^Scanning.*Makefile/mi);
 ok($o =~ /Analyzing.*Makefile/mi);
-ok(matches($o, '^Scanning', 'm'), 3);
-ok(matches($o, 'Analyzing', 'm'), 3);
+is(matches($o, '^Scanning', 'm'), 3);
+is(matches($o, 'Analyzing', 'm'), 3);
 
 ---------------------------- foo.cpp ------------------------------------------
 
@@ -916,8 +916,6 @@ for (qw(file.xs)) {
 
 ---------------------------- file.xs -----------------------------------------
 
-#define NEED_sv_2pv_flags
-#define NEED_vnewSVpvf
 #define NEED_warner
 #include "ppport.h"
 Perl_croak_nocontext("foo");
@@ -931,8 +929,6 @@ warner("foo");
 
 ---------------------------- file.xsr -----------------------------------------
 
-#define NEED_sv_2pv_flags
-#define NEED_vnewSVpvf
 #define NEED_warner
 #include "ppport.h"
 Perl_croak_nocontext("foo");

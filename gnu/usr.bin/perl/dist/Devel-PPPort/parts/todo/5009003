@@ -2,10 +2,11 @@
 av_arylen_p                    # U
 ckwarn                         # U
 ckwarn_d                       # U
-csighandler                    # E (Perl_csighandler)
 dMULTICALL                     # E
 doref                          # U
 gv_const_sv                    # U
+GV_NOADD_NOINIT                # E
+GV_NOEXPAND                    # E
 hv_eiter_p                     # U
 hv_eiter_set                   # U
 hv_name_set                    # U
@@ -14,10 +15,13 @@ hv_placeholders_set            # U
 hv_riter_p                     # U
 hv_riter_set                   # U
 is_utf8_string_loclen          # U
+MULTICALL                      # E
 newGIVENOP                     # U
 newSVhek                       # U
-newWHENOP                      # U
-pad_compname_type              # U
+PERL_MAGIC_arylen_p            # E
+PERL_MAGIC_rhash               # E
+PERL_MAGIC_symtab              # E
+POP_MULTICALL                  # E
 savepvs                        # U
 sortsv_flags                   # U
 vverify                        # U

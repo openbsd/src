@@ -2,7 +2,7 @@ package Test2::Event::V2;
 use strict;
 use warnings;
 
-our $VERSION = '1.302162';
+our $VERSION = '1.302175';
 
 use Scalar::Util qw/reftype/;
 use Carp qw/croak/;
@@ -60,8 +60,8 @@ sub facet_data {
     for my $k (keys %$f) {
         next if substr($k, 0, 1) eq '_';
 
-        my $data = $f->{$k};
-        my $is_list = reftype($data) eq 'ARRAY';
+        my $data = $f->{$k} or next; # Key is there, but no facet
+        my $is_list = 'ARRAY' eq (reftype($data) || '');
         $out{$k} = $is_list ? [ map { {%{$_}} } @$data ] : {%$data};
     }
 

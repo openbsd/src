@@ -20,6 +20,7 @@ call_method
 load_module
 vload_module
 G_METHOD
+G_RETHROW
 
 =implementation
 
@@ -28,13 +29,28 @@ __UNDEFINED__  call_sv       perl_call_sv
 __UNDEFINED__  call_pv       perl_call_pv
 __UNDEFINED__  call_argv     perl_call_argv
 __UNDEFINED__  call_method   perl_call_method
-
 __UNDEFINED__  eval_sv       perl_eval_sv
+#if { VERSION >= 5.3.98 } && { VERSION < 5.6.0 }
+__UNDEFINED__  eval_pv       perl_eval_pv
+#endif
 /* Replace: 0 */
+
+#if { VERSION < 5.6.0 }
+__UNDEFINED__ Perl_eval_sv   perl_eval_sv
+#if { VERSION >= 5.3.98 }
+__UNDEFINED__ Perl_eval_pv   perl_eval_pv
+#endif
+#endif
 
 __UNDEFINED__ PERL_LOADMOD_DENY         0x1
 __UNDEFINED__ PERL_LOADMOD_NOIMPORT     0x2
 __UNDEFINED__ PERL_LOADMOD_IMPORT_OPS   0x4
+
+#if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
+# define D_PPP_CROAK_IF_ERROR(cond) ({ SV *_errsv; ((cond) && (_errsv = ERRSV) && (SvROK(_errsv) || SvTRUE(_errsv)) && (croak_sv(_errsv), 1)); })
+#else
+# define D_PPP_CROAK_IF_ERROR(cond) ((cond) && (SvROK(ERRSV) || SvTRUE(ERRSV)) && (croak_sv(ERRSV), 1))
+#endif
 
 #ifndef G_METHOD
 # define G_METHOD               64
@@ -50,13 +66,36 @@ __UNDEFINED__ PERL_LOADMOD_IMPORT_OPS   0x4
 # endif
 #endif
 
-/* Replace perl_eval_pv with eval_pv */
+#ifndef G_RETHROW
+# define G_RETHROW 8192
+# ifdef eval_sv
+#  undef eval_sv
+# endif
+# if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
+#  define eval_sv(sv, flags) ({ I32 _flags = (flags); I32 _ret = Perl_eval_sv(aTHX_ sv, (_flags & ~G_RETHROW)); D_PPP_CROAK_IF_ERROR(_flags & G_RETHROW); _ret; })
+# else
+#  define eval_sv(sv, flags) ((PL_na = Perl_eval_sv(aTHX_ sv, ((flags) & ~G_RETHROW))), D_PPP_CROAK_IF_ERROR((flags) & G_RETHROW), (I32)PL_na)
+# endif
+#endif
 
+/* Older Perl versions have broken croak_on_error=1 */
+#if { VERSION < 5.31.2 }
+# ifdef eval_pv
+#  undef eval_pv
+#  if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
+#   define eval_pv(p, croak_on_error) ({ SV *_sv = Perl_eval_pv(aTHX_ p, 0); D_PPP_CROAK_IF_ERROR(croak_on_error); _sv; })
+#  else
+#   define eval_pv(p, croak_on_error) ((PL_Sv = Perl_eval_pv(aTHX_ p, 0)), D_PPP_CROAK_IF_ERROR(croak_on_error), PL_Sv)
+#  endif
+# endif
+#endif
+
+/* This is backport for Perl 5.3.97d and older which do not provide perl_eval_pv */
 #ifndef eval_pv
 #if { NEED eval_pv }
 
 SV*
-eval_pv(char *p, I32 croak_on_error)
+eval_pv(const char *p, I32 croak_on_error)
 {
     dSP;
     SV* sv = newSVpv(p, 0);
@@ -69,8 +108,7 @@ eval_pv(char *p, I32 croak_on_error)
     sv = POPs;
     PUTBACK;
 
-    if (croak_on_error && SvTRUEx(ERRSV))
-        croak_sv(ERRSV);
+    D_PPP_CROAK_IF_ERROR(croak_on_error);
 
     return sv;
 }
@@ -78,7 +116,7 @@ eval_pv(char *p, I32 croak_on_error)
 #endif
 #endif
 
-#ifndef vload_module
+#if ! defined(vload_module) && defined(start_subparse)
 #if { NEED vload_module }
 
 void
@@ -121,16 +159,11 @@ vload_module(U32 flags, SV *name, SV *ver, va_list *args)
         COP * const ocurcop = PL_curcop;
         const int oexpect = PL_expect;
 
-#if { VERSION >= 5.004 }
         utilize(!(flags & PERL_LOADMOD_DENY), start_subparse(FALSE, 0),
-                veop, modname, imop);
-#elif { VERSION > 5.003 }
-        utilize(!(flags & PERL_LOADMOD_DENY), start_subparse(),
-                veop, modname, imop);
-#else
-        utilize(!(flags & PERL_LOADMOD_DENY), start_subparse(),
-                modname, imop);
+#if { VERSION > 5.003 }
+                veop,
 #endif
+                modname, imop);
         PL_expect = oexpect;
         PL_copline = ocopline;
         PL_curcop = ocurcop;
@@ -181,6 +214,13 @@ I32
 G_DISCARD()
         CODE:
                 RETVAL = G_DISCARD;
+        OUTPUT:
+                RETVAL
+
+I32
+G_RETHROW()
+        CODE:
+                RETVAL = G_RETHROW;
         OUTPUT:
                 RETVAL
 
@@ -304,13 +344,7 @@ load_module(flags, name, version, ...)
                 Perl_load_module(aTHX_ flags, SvREFCNT_inc_simple(name),
                                  SvREFCNT_inc_simple(version), NULL);
 
-=tests plan => 52
-
-sub eq_array
-{
-  my($a, $b) = @_;
-  join(':', @$a) eq join(':', @$b);
-}
+=tests plan => 88
 
 sub f
 {
@@ -356,9 +390,69 @@ for $test (
     ok(eq_array( [ &Devel::PPPort::call_sv_G_METHOD('meth', $flags, $obj, @$args) ], $expected));
 };
 
-ok(&Devel::PPPort::eval_pv('f()', 0), 'y');
-ok(&Devel::PPPort::eval_pv('f(qw(a b c))', 0), 'y');
+is(&Devel::PPPort::eval_pv('f()', 0), 'y');
+is(&Devel::PPPort::eval_pv('f(qw(a b c))', 0), 'y');
 
-ok(!defined $::{'less::'}, 1, "Hadn't loaded less yet");
+is(!defined $::{'less::'}, 1, "Hadn't loaded less yet");
 Devel::PPPort::load_module(0, "less", undef);
-ok(defined $::{'less::'}, 1, "Have now loaded less");
+is(defined $::{'less::'}, 1, "Have now loaded less");
+
+ok(eval { Devel::PPPort::eval_pv('die', 0); 1 });
+ok(!eval { Devel::PPPort::eval_pv('die', 1); 1 });
+ok($@ =~ /^Died at \(eval [0-9]+\) line 1\.\n$/);
+ok(eval { $@ = 'string1'; Devel::PPPort::eval_pv('', 0); 1 });
+ok(eval { $@ = 'string1'; Devel::PPPort::eval_pv('', 1); 1 });
+ok(eval { $@ = 'string1'; Devel::PPPort::eval_pv('$@ = "string2"', 0); 1 });
+ok(eval { $@ = 'string1'; Devel::PPPort::eval_pv('$@ = "string2"', 1); 1 });
+ok(eval { $@ = 'string1'; Devel::PPPort::eval_pv('$@ = "string2"; die "string3"', 0); 1 });
+ok(!eval { $@ = 'string1'; Devel::PPPort::eval_pv('$@ = "string2"; die "string3"', 1); 1 });
+ok($@ =~ /^string3 at \(eval [0-9]+\) line 1\.\n$/);
+ok(!eval { Devel::PPPort::eval_pv('die False->new', 1); 1 }, 'check false value is rethrown');
+
+if ("$]" >= '5.007003' or ("$]" >= '5.006001' and "$]" < '5.007')) {
+    my $hashref = { key => 'value' };
+    is(eval { Devel::PPPort::eval_pv('die $hashref', 1); 1 }, undef, 'check plain hashref is rethrown');
+    is(ref($@), 'HASH', 'check $@ is hashref') and
+        is($@->{key}, 'value', 'check $@ hashref has correct value');
+
+    my $false = False->new;
+    ok(!$false);
+    is(eval { Devel::PPPort::eval_pv('die $false', 1); 1 }, undef, 'check false objects are rethrown');
+    is(ref($@), 'False', 'check that $@ contains False object');
+    is("$@", "$false", 'check we got the expected object');
+} else {
+    skip 'skip: no support for references in $@', 7;
+}
+
+ok(eval { Devel::PPPort::eval_sv('die', 0); 1 });
+ok(!eval { Devel::PPPort::eval_sv('die', &Devel::PPPort::G_RETHROW); 1 });
+ok($@ =~ /^Died at \(eval [0-9]+\) line 1\.\n$/);
+ok(eval { $@ = 'string1'; Devel::PPPort::eval_sv('', 0); 1 });
+ok(eval { $@ = 'string1'; Devel::PPPort::eval_sv('', &Devel::PPPort::G_RETHROW); 1 });
+ok(eval { $@ = 'string1'; Devel::PPPort::eval_sv('$@ = "string2"', 0); 1 });
+ok(eval { $@ = 'string1'; Devel::PPPort::eval_sv('$@ = "string2"', &Devel::PPPort::G_RETHROW); 1 });
+ok(eval { $@ = 'string1'; Devel::PPPort::eval_sv('$@ = "string2"; die "string3"', 0); 1 });
+ok(!eval { $@ = 'string1'; Devel::PPPort::eval_sv('$@ = "string2"; die "string3"', &Devel::PPPort::G_RETHROW); 1 });
+ok($@ =~ /^string3 at \(eval [0-9]+\) line 1\.\n$/);
+ok(!eval { Devel::PPPort::eval_sv('die False->new', &Devel::PPPort::G_RETHROW); 1 }, 'check false value is rethrown');
+
+if ("$]" >= '5.007003' or ("$]" >= '5.006001' and "$]" < '5.007')) {
+    my $hashref = { key => 'value' };
+    is(eval { Devel::PPPort::eval_sv('die $hashref', &Devel::PPPort::G_RETHROW); 1 }, undef, 'check plain hashref is rethrown');
+    is(ref($@), 'HASH', 'check $@ is hashref') and
+        is($@->{key}, 'value', 'check $@ hashref has correct value');
+
+    my $false = False->new;
+    ok(!$false);
+    is(eval { Devel::PPPort::eval_sv('die $false', &Devel::PPPort::G_RETHROW); 1 }, undef, 'check false objects are rethrown');
+    is(ref($@), 'False', 'check that $@ contains False object');
+    is("$@", "$false", 'check we got the expected object');
+} else {
+    skip 'skip: no support for references in $@', 7;
+}
+
+{
+    package False;
+    use overload bool => sub { 0 }, '""' => sub { 'Foo' };
+    sub new { bless {}, shift }
+}

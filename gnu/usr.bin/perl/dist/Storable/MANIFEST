@@ -1,4 +1,3 @@
-__Storable__.pm
 ChangeLog
 hints/gnukfreebsd.pl
 hints/gnuknetbsd.pl
@@ -11,7 +10,7 @@ META.yml			Module meta-data (added by MakeMaker)
 ppport.h
 README
 stacksize
-Storable.pm.PL
+Storable.pm
 Storable.xs
 t/attach.t
 t/attach_errors.t

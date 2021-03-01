@@ -1,0 +1,4 @@
+5.025004
+alloc_LOGOP                    # F added by devel/scanprov
+croak_caller                   # F added by devel/scanprov
+print_collxfrm_input_and_return # F added by devel/scanprov

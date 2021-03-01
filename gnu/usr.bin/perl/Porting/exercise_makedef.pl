@@ -48,11 +48,11 @@ $SIG{INT} = sub { die }; # Trigger END processing
     close $out or die "Can't close $mpm: $!";
 }
 
-my @args = (platform => [map {"PLATFORM=$_"} qw(aix win32 wince os2 netware vms test)],
+my @args = (platform => [map {"PLATFORM=$_"} qw(aix win32 os2 netware vms test)],
 	    cflags => ['', 'CCFLAGS=-Dperl=rules -Dzzz'],
 	    Deq => ['', '-Dbeer=foamy'],
 	    D => ['', '-DPERL_IMPLICIT_SYS'],
-	    cctype => ['', map {"CCTYPE=$_"} qw (MSVC60 GCC)],
+	    cctype => ['', 'CCTYPE=GCC'],
 	    filetype => ['', 'FILETYPE=def', 'FILETYPE=imp'],
 	    targ_dir => ['', 'TARG_DIR=t/../'],
 	   );

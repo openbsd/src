@@ -5,7 +5,7 @@ BEGIN {
     @INC = '../lib';
 }
 
-use Test::More tests => 27;
+use Test::More tests => 29;
 
 use_ok('Tie::StdHandle');
 
@@ -71,6 +71,17 @@ is($b, "rhubarbX\n", "b eq rhubarbX");
 
 $b = <$f>;
 is($b, "89\n", "b eq 89");
+
+# binmode should pass through layer argument
+
+binmode $f, ':raw';
+ok !grep( $_ eq 'utf8', PerlIO::get_layers(tied(*$f)) ),
+    'no utf8 in layers after binmode :raw';
+binmode $f, ':utf8';
+ok grep( $_ eq 'utf8', PerlIO::get_layers(tied(*$f)) ),
+    'utf8 is in layers after binmode :utf8';
+
+# finish up
 
 ok(eof($f), "eof");
 ok(close($f), "close");

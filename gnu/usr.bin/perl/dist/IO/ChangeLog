@@ -1,3 +1,26 @@
+IO 1.42 - Jan 20 2020 - Todd Rinaldo
+  * Point IO support to perl/perl5 not dual-life/IO
+
+IO 1.41 - Jan 20 2020 - Todd Rinaldo
+  * Switch pre-release testing to github actions.
+  * Update MANIFEST with new test.
+
+IO 1.41_50 -- Dec 16 2019 - Ricardo Signes
+  * [ TRIAL RELEASE ]
+  * Loading IO is now threadsafe, avoiding the core bug reported as GH #14816.
+    Implemented by converting getline() and getlines() to XS code.
+
+IO 1.41 -- Dec 12 2019 - Ricardo Signes
+  * [ TRIAL RELEASE ]
+  * import the latest from blead, so some changes may be in intermediate
+    versions found only in releases of perl5
+  * (perl #133936) make send() a bit saner
+  * (perl #133936) document differences between IO::Socket::* and builtin
+  * (perl #133936) ensure TO is honoured for UDP $sock->send()
+  * Remove vestiges of mpeix support (removed in 5.17.x)
+  * Documentation formatting fixes
+  * Improve isolation of tests as they run
+
 IO 1.38 -- Apr 19 2018 - Todd Rinaldo
   * Remove pre 5.8 logic from code base.
   * Bump all IO modules to 1.38 and set required Perl to 5.8.1

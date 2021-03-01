@@ -152,14 +152,14 @@ checkOptree ( name	=> 'myyes() as coderef',
 	      strip_open_hints => 1,
 	      expect	=> <<'EOT_EOT', expect_nt => <<'EONT_EONT');
 # 6  <@> leave[1 ref] vKP/REFC ->(end)
-# 1     <0> enter ->2
+# 1     <0> enter v ->2
 # 2     <;> nextstate(main 2 -e:1) v:>,<,%,{ ->3
 # 5     <@> print vK ->6
 # 3        <0> pushmark s ->4
 # 4        <$> const[SPECIAL sv_yes] s*/FOLD ->5
 EOT_EOT
 # 6  <@> leave[1 ref] vKP/REFC ->(end)
-# 1     <0> enter ->2
+# 1     <0> enter v ->2
 # 2     <;> nextstate(main 2 -e:1) v:>,<,%,{ ->3
 # 5     <@> print vK ->6
 # 3        <0> pushmark s ->4
@@ -176,14 +176,14 @@ checkOptree ( name	=> 'myno() as coderef',
 	      strip_open_hints => 1,
 	      expect	=> <<'EOT_EOT', expect_nt => <<'EONT_EONT');
 # 6  <@> leave[1 ref] vKP/REFC ->(end)
-# 1     <0> enter ->2
+# 1     <0> enter v ->2
 # 2     <;> nextstate(main 2 -e:1) v:>,<,%,{ ->3
 # 5     <@> print vK ->6
 # 3        <0> pushmark s ->4
 # 4        <$> const[SPECIAL sv_no] s*/FOLD ->5
 EOT_EOT
 # 6  <@> leave[1 ref] vKP/REFC ->(end)
-# 1     <0> enter ->2
+# 1     <0> enter v ->2
 # 2     <;> nextstate(main 2 -e:1) v:>,<,%,{ ->3
 # 5     <@> print vK ->6
 # 3        <0> pushmark s ->4

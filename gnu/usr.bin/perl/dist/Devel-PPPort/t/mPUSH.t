@@ -10,10 +10,12 @@
 #
 ################################################################################
 
+use FindBin ();
+
 BEGIN {
   if ($ENV{'PERL_CORE'}) {
     chdir 't' if -d 't';
-    @INC = ('../lib', '../ext/Devel-PPPort/t') if -d '../lib' && -d '../ext';
+    unshift @INC, '../lib' if -d '../lib' && -d '../ext';
     require Config; import Config;
     use vars '%Config';
     if (" $Config{'extensions'} " !~ m[ Devel/PPPort ]) {
@@ -21,13 +23,15 @@ BEGIN {
       exit 0;
     }
   }
-  else {
-    unshift @INC, 't';
-  }
+
+  use lib "$FindBin::Bin";
+  use lib "$FindBin::Bin/../parts/inc";
+
+  die qq[Cannot find "$FindBin::Bin/../parts/inc"] unless -d "$FindBin::Bin/../parts/inc";
 
   sub load {
-    eval "use Test";
-    require 'testutil.pl' if $@;
+    require 'testutil.pl';
+    require 'inctools';
   }
 
   if (10) {
@@ -38,7 +42,7 @@ BEGIN {
 
 use Devel::PPPort;
 use strict;
-$^W = 1;
+BEGIN { $^W = 1; }
 
 package Devel::PPPort;
 use vars '@ISA';
@@ -48,15 +52,15 @@ bootstrap Devel::PPPort;
 
 package main;
 
-ok(join(':', &Devel::PPPort::mPUSHs()), "foo:bar:42");
-ok(join(':', &Devel::PPPort::mPUSHp()), "one:two:three");
-ok(join(':', &Devel::PPPort::mPUSHn()), "0.5:-0.25:0.125");
-ok(join(':', &Devel::PPPort::mPUSHi()), "-1:2:-3");
-ok(join(':', &Devel::PPPort::mPUSHu()), "1:2:3");
+is(join(':', &Devel::PPPort::mPUSHs()), "foo:bar:42");
+is(join(':', &Devel::PPPort::mPUSHp()), "one:two:three");
+is(join(':', &Devel::PPPort::mPUSHn()), "0.5:-0.25:0.125");
+is(join(':', &Devel::PPPort::mPUSHi()), "-1:2:-3");
+is(join(':', &Devel::PPPort::mPUSHu()), "1:2:3");
 
-ok(join(':', &Devel::PPPort::mXPUSHs()), "foo:bar:42");
-ok(join(':', &Devel::PPPort::mXPUSHp()), "one:two:three");
-ok(join(':', &Devel::PPPort::mXPUSHn()), "0.5:-0.25:0.125");
-ok(join(':', &Devel::PPPort::mXPUSHi()), "-1:2:-3");
-ok(join(':', &Devel::PPPort::mXPUSHu()), "1:2:3");
+is(join(':', &Devel::PPPort::mXPUSHs()), "foo:bar:42");
+is(join(':', &Devel::PPPort::mXPUSHp()), "one:two:three");
+is(join(':', &Devel::PPPort::mXPUSHn()), "0.5:-0.25:0.125");
+is(join(':', &Devel::PPPort::mXPUSHi()), "-1:2:-3");
+is(join(':', &Devel::PPPort::mXPUSHu()), "1:2:3");
 

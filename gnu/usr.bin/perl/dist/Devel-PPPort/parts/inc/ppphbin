@@ -15,6 +15,8 @@
 
 use strict;
 
+BEGIN { require warnings if "$]" > '5.006' }
+
 # Disable broken TRIE-optimization
 BEGIN { eval '${^RE_TRIE_MAXBUF} = -1' if "$]" >= 5.009004 && "$]" <= 5.009005 }
 
@@ -63,26 +65,31 @@ if ($opt{version}) {
 usage() if $opt{help};
 strip() if $opt{strip};
 
-if (exists $opt{'compat-version'}) {
-  my($r,$v,$s) = eval { parse_version($opt{'compat-version'}) };
-  if ($@) {
-    die "Invalid version number format: '$opt{'compat-version'}'\n";
-  }
-  die "Only Perl 5 is supported\n" if $r != 5;
-  die "Invalid version number: $opt{'compat-version'}\n" if $v >= 1000 || $s >= 1000;
-  $opt{'compat-version'} = sprintf "%d.%03d%03d", $r, $v, $s;
-}
-else {
-  $opt{'compat-version'} = 5;
-}
+$opt{'compat-version'} = __MIN_PERL__ unless exists $opt{'compat-version'};
+$opt{'compat-version'} = int_parse_version($opt{'compat-version'});
 
+my $int_min_perl = int_parse_version(__MIN_PERL__);
+
+# Each element of this hash looks something like:
+# 'Poison' => {
+#                         'base' => '5.008000',
+#                         'provided' => 1,
+#                         'todo' => '5.003007'
+#             },
 my %API = map { /^(\w+)\|([^|]*)\|([^|]*)\|(\w*)$/
                 ? ( $1 => {
                       ($2                  ? ( base     => $2 ) : ()),
                       ($3                  ? ( todo     => $3 ) : ()),
                       (index($4, 'v') >= 0 ? ( varargs  => 1  ) : ()),
                       (index($4, 'p') >= 0 ? ( provided => 1  ) : ()),
-                      (index($4, 'n') >= 0 ? ( nothxarg => 1  ) : ()),
+                      (index($4, 'n') >= 0 ? ( noTHXarg => 1  ) : ()),
+                      (index($4, 'c') >= 0 ? ( core_only    => 1  ) : ()),
+                      (index($4, 'd') >= 0 ? ( deprecated   => 1  ) : ()),
+                      (index($4, 'i') >= 0 ? ( inaccessible => 1  ) : ()),
+                      (index($4, 'x') >= 0 ? ( experimental => 1  ) : ()),
+                      (index($4, 'u') >= 0 ? ( undocumented => 1  ) : ()),
+                      (index($4, 'o') >= 0 ? ( ppport_fnc => 1  ) : ()),
+                      (index($4, 'V') >= 0 ? ( unverified => 1  ) : ()),
                     } )
                 : die "invalid spec: $_" } qw(
 __PERL_API__
@@ -90,14 +97,19 @@ __PERL_API__
 
 if (exists $opt{'list-unsupported'}) {
   my $f;
-  for $f (sort { lc $a cmp lc $b } keys %API) {
+  for $f (sort dictionary_order keys %API) {
+    next if $API{$f}{core_only};
+    next if $API{$f}{beyond_depr};
+    next if $API{$f}{inaccessible};
+    next if $API{$f}{experimental};
     next unless $API{$f}{todo};
+    next if int_parse_version($API{$f}{todo}) <= $int_min_perl;
     print "$f ", '.'x(40-length($f)), " ", format_version($API{$f}{todo}), "\n";
   }
   exit 0;
 }
 
-# Scan for possible replacement candidates
+# Scan for hints, possible replacement candidates, etc.
 
 my(%replace, %need, %hints, %warnings, %depends);
 my $replace = 0;
@@ -105,6 +117,7 @@ my($hint, $define, $function);
 
 sub find_api
 {
+  BEGIN { 'warnings'->unimport('uninitialized') if "$]" > '5.006' }
   my $code = shift;
   $code =~ s{
     / (?: \*[^*]*\*+(?:[^$ccs][^*]*\*+)* / | /[^\r\n]*)
@@ -115,24 +128,65 @@ sub find_api
 
 while (<DATA>) {
   if ($hint) {
-    my $h = $hint->[0] eq 'Hint' ? \%hints : \%warnings;
-    if (m{^\s*\*\s(.*?)\s*$}) {
-      for (@{$hint->[1]}) {
-        $h->{$_} ||= '';  # suppress warning with older perls
-        $h->{$_} .= "$1\n";
-      }
+
+    # Here, we are in the middle of accumulating a hint or warning.
+    my $end_of_hint = 0;
+
+    # A line containing a comment end marker closes the hint.  Remove that
+    # marker for processing below.
+    if (s/\s*$rcce(.*?)\s*$//) {
+        die "Nothing can follow the end of comment in '$_'\n" if length $1 > 0;
+        $end_of_hint = 1;
     }
-    else { undef $hint }
+
+    # Set $h to the hash of which type.
+    my $h = $hint->[0] eq 'Hint' ? \%hints : \%warnings;
+
+    # Ignore any leading and trailing white space, and an optional star comment
+    # continuation marker, then place the meat of the line into $1
+    m/^\s*(?:\*\s*)?(.*?)\s*$/;
+
+    # Add the meat of this line to the hash value of each API element it
+    # applies to
+    for (@{$hint->[1]}) {
+      $h->{$_} ||= '';  # avoid the warning older perls generate
+      $h->{$_} .= "$1\n";
+    }
+
+    # If the line had a comment close, we are through with this hint
+    undef $hint if $end_of_hint;
+
+    next;
   }
 
-  $hint = [$1, [split /,?\s+/, $2]]
-      if m{^\s*$rccs\s+(Hint|Warning):\s+(\w+(?:,?\s+\w+)*)\s*$};
+  # Set up $hint if this is the beginning of a Hint: or Warning:
+  # These are from a multi-line C comment in the file, with the first line
+  # looking like (a space has been inserted because this file can't have C
+  # comment markers in it):
+  #   / * Warning: PL_expect, PL_copline, PL_rsfp
+  #
+  # $hint becomes
+  #     [
+  #      'Warning',
+  #                [
+  #                  'PL_expect',
+  #                  'PL_copline',
+  #                  'PL_rsfp',
+  #                ],
+  #     ]
+  if (m{^\s*$rccs\s+(Hint|Warning):\s+(\w+(?:,?\s+\w+)*)\s*$}) {
+      $hint = [$1, [split /,?\s+/, $2]];
+      next;
+  }
 
-  if ($define) {
+  if ($define) { # If in the middle of a definition...
+
+    # append a continuation line ending with backslash.
     if ($define->[1] =~ /\\$/) {
       $define->[1] .= $_;
     }
-    else {
+    else {  # Otherwise this line ends the definition, make foo depend on bar
+            # (and what bar depends on) if its not one of ppp's own constructs
       if (exists $API{$define->[0]} && $define->[1] !~ /^DPPP_\(/) {
         my @n = find_api($define->[1]);
         push @{$depends{$define->[0]}}, @n if @n
@@ -141,6 +195,8 @@ while (<DATA>) {
     }
   }
 
+  # For '#define foo bar' or '#define foo(a,b,c) bar', $define becomes a
+  # reference to [ foo, bar ]
   $define = [$1, $2] if m{^\s*#\s*define\s+(\w+)(?:\([^)]*\))?\s+(.*)};
 
   if ($function) {
@@ -158,11 +214,29 @@ while (<DATA>) {
 
   $function = [$1, ''] if m{^DPPP_\(my_(\w+)\)};
 
+  # Set $replace to the number given for lines that look like
+  # / * Replace: \d+ * /
+  # (blanks added to keep real C comments from appearing in this file)
+  # Thus setting it to 1 starts a region where replacements are automatically
+  # done, and setting it to 0 ends that region.
   $replace     = $1 if m{^\s*$rccs\s+Replace:\s+(\d+)\s+$rcce\s*$};
+
+  # Add bar => foo to %replace  for lines like '#define foo bar in a region
+  # where $replace is non-zero
   $replace{$2} = $1 if $replace and m{^\s*#\s*define\s+(\w+)(?:\([^)]*\))?\s+(\w+)};
+
+  # Add bar => foo to %replace for lines like '#define foo bar  / * Replace * /
+  # (blanks added to keep real C comments from appearing in this file)
   $replace{$2} = $1 if m{^\s*#\s*define\s+(\w+)(?:\([^)]*\))?\s+(\w+).*$rccs\s+Replace\s+$rcce};
+
+  # Add foo => bar to %replace for lines like / * Replace foo with bar * /
+  # (blanks added to keep real C comments from appearing in this file)
   $replace{$1} = $2 if m{^\s*$rccs\s+Replace (\w+) with (\w+)\s+$rcce\s*$};
 
+  # For lines like / * foo, bar depends on baz, bat * /
+  # create a list of the elements on the rhs, and make that list apply to each
+  # element in the lhs, which becomes a key in \%depends.
+  # (blanks added to keep real C comments from appearing in this file)
   if (m{^\s*$rccs\s+(\w+(\s*,\s*\w+)*)\s+depends\s+on\s+(\w+(\s*,\s*\w+)*)\s+$rcce\s*$}) {
     my @deps = map { s/\s+//g; $_ } split /,/, $3;
     my $d;
@@ -175,43 +249,145 @@ while (<DATA>) {
 }
 
 for (values %depends) {
-  my %s;
-  $_ = [sort grep !$s{$_}++, @$_];
+  my %seen;
+  $_ = [sort dictionary_order grep !$seen{$_}++, @$_];
 }
 
 if (exists $opt{'api-info'}) {
   my $f;
   my $count = 0;
   my $match = $opt{'api-info'} =~ m!^/(.*)/$! ? $1 : "^\Q$opt{'api-info'}\E\$";
-  for $f (sort { lc $a cmp lc $b } keys %API) {
+  for $f (sort dictionary_order keys %API) {
     next unless $f =~ /$match/;
-    print "\n=== $f ===\n\n";
+    print "\n=== $f ===\n";
     my $info = 0;
-    if ($API{$f}{base} || $API{$f}{todo}) {
-      my $base = format_version($API{$f}{base} || $API{$f}{todo});
-      print "Supported at least starting from perl-$base.\n";
-      $info++;
+    my $base;
+    $base = int_parse_version($API{$f}{base}) if $API{$f}{base};
+    my $todo;
+    $todo = int_parse_version($API{$f}{todo}) if $API{$f}{todo};
+
+    # Output information if it is generally publicly usable
+    if ($base && ! $API{$f}{inaccessible} && ! $API{$f}{core_only}) {
+        my $with_or= "";
+        if (    $base <= $int_min_perl
+            || (   (! $API{$f}{provided} && ! $todo)
+                || ($todo && $todo >= $base)))
+        {
+            $with_or= " with or";
+        }
+        print "\nSupported at least since perl-",
+              format_version($base), ",$with_or without $ppport.";
+        if ($API{$f}{unverified}) {
+            print "\nThis information is based on inspection of the source code",
+                  " and has not been\n",
+                  "verified by successful compilation.";
+        }
+        print "\n";
+        $info++;
+     }
+     if ($API{$f}{provided} || $todo) {
+        print "\nThis is only supported by $ppport, and NOT by perl versions going forward.\n" unless $base;
+        if ($todo) {
+            if (! $base || $todo < $base) {
+                my $additionally = "";
+                $additionally .= " additionally" if $base;
+                print "$ppport$additionally provides support at least back to perl-",
+                    format_version($todo),
+                    ".\n";
+            }
+        }
+        elsif (! $base || $base > $int_min_perl) {
+            if (exists $depends{$f}) {
+                my $max = 0;
+                for (@{$depends{$f}}) {
+                    $max = int_parse_version($API{$_}{todo}) if $API{$_}{todo} && $API{$_}{todo} > $max;
+                    # XXX What to assume unspecified values are?  This effectively makes them MIN_PERL
+                }
+                $todo = $max if $max;
+            }
+            print "\n$ppport provides support for this, but ironically, does not",
+                  " currently know,\n",
+                  "for this report, the minimum version it supports for this";
+            if ($API{$f}{undocumented}) {
+                print " and many things\n",
+                      "it provides that are implemented as macros and aren't",
+                      " documented.  You can\n",
+                      "help by submitting a documentation patch";
+            }
+            print ".\n";
+            if ($todo) {
+                if ($todo <= $int_min_perl) {
+                    print "It may very well be supported all the way back to ",
+                          format_version(__MIN_PERL__), ".\n";
+                }
+                else {
+                    print "But given the things $f depends on, it's a good",
+                          " guess that it isn't\n",
+                          "supported prior to ", format_version($todo), ".\n";
+                }
+            }
+        }
     }
     if ($API{$f}{provided}) {
-      my $todo = $API{$f}{todo} ? format_version($API{$f}{todo}) : "__MIN_PERL__";
-      print "Support by $ppport provided back to perl-$todo.\n";
-      print "Support needs to be explicitly requested by NEED_$f.\n" if exists $need{$f};
-      print "Depends on: ", join(', ', @{$depends{$f}}), ".\n" if exists $depends{$f};
+      print "Support needs to be explicitly requested by #define NEED_$f\n",
+            "(or #define NEED_${f}_GLOBAL).\n"              if exists $need{$f};
+      $info++;
+    }
+
+    if ($base || ! $API{$f}{ppport_fnc}) {
+      my $email = "Send email to perl5-porters\@perl.org if you need to have this functionality.\n";
+      if ($API{$f}{inaccessible}) {
+        print "\nThis is not part of the public API, and may not even be accessible to XS code.\n";
+        $info++;
+      }
+      elsif ($API{$f}{core_only}) {
+        print "\nThis is not part of the public API, and should not be used by XS code.\n";
+        $info++;
+      }
+      elsif ($API{$f}{deprecated}) {
+        print "\nThis is deprecated and should not be used.  Convert existing uses.\n";
+        $info++;
+      }
+      elsif ($API{$f}{experimental}) {
+        print "\nThe API for this is unstable and should not be used by XS code.\n", $email;
+        $info++;
+      }
+      elsif ($API{$f}{undocumented}) {
+        print "\nSince this is undocumented, the API should be considered unstable.\n";
+        if ($API{$f}{provided}) {
+            print "Consider bringing this up on the list: perl5-porters\@perl.org.\n";
+        }
+        else {
+            print "It may be that this is not intended for XS use, or it may just be\n",
+                  "that no one has gotten around to documenting it.\n", $email;
+        }
+        $info++;
+      }
+      unless ($info) {
+        print "No portability information available.  Check your spelling; or",
+              " this could be\na bug in Devel::PPPort.  To report an issue:\n",
+              "https://github.com/Dual-Life/Devel-PPPort/issues/new\n";
+      }
+    }
+
+    print "\nDepends on: ", join(', ', @{$depends{$f}}), ".\n"
+                                                         if exists $depends{$f};
+    if (exists $hints{$f} || exists $warnings{$f}) {
       print "\n$hints{$f}" if exists $hints{$f};
       print "\nWARNING:\n$warnings{$f}" if exists $warnings{$f};
       $info++;
     }
-    print "No portability information available.\n" unless $info;
     $count++;
   }
-  $count or print "Found no API matching '$opt{'api-info'}'.";
+
+  $count or print "\nFound no API matching '$opt{'api-info'}'.";
   print "\n";
   exit 0;
 }
 
 if (exists $opt{'list-provided'}) {
   my $f;
-  for $f (sort { lc $a cmp lc $b } keys %API) {
+  for $f (sort dictionary_order keys %API) {
     next unless $API{$f}{provided};
     my @flags;
     push @flags, 'explicit' if exists $need{$f};
@@ -317,7 +493,9 @@ for $filename (@files) {
       $file{uses_Perl}{$func}++ if $c =~ /\bPerl_$func\b/;
       if (exists $API{$func}{provided}) {
         $file{uses_provided}{$func}++;
-        if (!exists $API{$func}{base} || $API{$func}{base} > $opt{'compat-version'}) {
+        if ( ! exists $API{$func}{base}
+            || int_parse_version($API{$func}{base}) > $opt{'compat-version'})
+        {
           $file{uses}{$func}++;
           my @deps = rec_depend($func);
           if (@deps) {
@@ -331,7 +509,9 @@ for $filename (@files) {
           }
         }
       }
-      if (exists $API{$func}{todo} && $API{$func}{todo} > $opt{'compat-version'}) {
+      if (   exists $API{$func}{todo}
+          && int_parse_version($API{$func}{todo}) > $opt{'compat-version'})
+      {
         if ($c =~ /\b$func\b/) {
           $file{uses_todo}{$func}++;
         }
@@ -382,9 +562,9 @@ for $filename (@files) {
   my $c = $file{code};
   my $warnings = 0;
 
-  for $func (sort keys %{$file{uses_Perl}}) {
+  for $func (sort dictionary_order keys %{$file{uses_Perl}}) {
     if ($API{$func}{varargs}) {
-      unless ($API{$func}{nothxarg}) {
+      unless ($API{$func}{noTHXarg}) {
         my $changes = ($c =~ s{\b(Perl_$func\s*\(\s*)(?!aTHX_?)(\)|[^\s)]*\))}
                               { $1 . ($2 eq ')' ? 'aTHX' : 'aTHX_ ') . $2 }ge);
         if ($changes) {
@@ -400,12 +580,12 @@ for $filename (@files) {
     }
   }
 
-  for $func (sort keys %{$file{uses_replace}}) {
+  for $func (sort dictionary_order keys %{$file{uses_replace}}) {
     warning("Uses $func instead of $replace{$func}");
     $file{changes} += ($c =~ s/\b$func\b/$replace{$func}/g);
   }
 
-  for $func (sort keys %{$file{uses_provided}}) {
+  for $func (sort dictionary_order keys %{$file{uses_provided}}) {
     if ($file{uses}{$func}) {
       if (exists $file{uses_deps}{$func}) {
         diag("Uses $func, which depends on ", join(', ', @{$file{uses_deps}{$func}}));
@@ -418,14 +598,15 @@ for $filename (@files) {
   }
 
   unless ($opt{quiet}) {
-    for $func (sort keys %{$file{uses_todo}}) {
+    for $func (sort dictionary_order keys %{$file{uses_todo}}) {
+      next if int_parse_version($API{$func}{todo}) <= $int_min_perl;
       print "*** WARNING: Uses $func, which may not be portable below perl ",
             format_version($API{$func}{todo}), ", even with '$ppport'\n";
       $warnings++;
     }
   }
 
-  for $func (sort keys %{$file{needed_static}}) {
+  for $func (sort dictionary_order keys %{$file{needed_static}}) {
     my $message = '';
     if (not exists $file{uses}{$func}) {
       $message = "No need to define NEED_$func if $func is never used";
@@ -439,7 +620,7 @@ for $filename (@files) {
     }
   }
 
-  for $func (sort keys %{$file{needed_global}}) {
+  for $func (sort dictionary_order keys %{$file{needed_global}}) {
     my $message = '';
     if (not exists $global{uses}{$func}) {
       $message = "No need to define NEED_${func}_GLOBAL if $func is never used";
@@ -463,7 +644,7 @@ for $filename (@files) {
   if ($file{needs_inc_ppport}) {
     my $pp = '';
 
-    for $func (sort keys %{$file{needs}}) {
+    for $func (sort dictionary_order keys %{$file{needs}}) {
       my $type = $file{needs}{$func};
       next if $type eq 'extern';
       my $suffix = $type eq 'global' ? '_GLOBAL' : '';
@@ -658,59 +839,6 @@ sub rec_depend
   return () if $seen->{$func}++;
   my %s;
   grep !$s{$_}++, map { ($_, rec_depend($_, $seen)) } @{$depends{$func}};
-}
-
-sub parse_version
-{
-  my $ver = shift;
-
-  if ($ver =~ /^(\d+)\.(\d+)\.(\d+)$/) {
-    return ($1, $2, $3);
-  }
-  elsif ($ver !~ /^\d+\.[\d_]+$/) {
-    die "cannot parse version '$ver'\n";
-  }
-
-  $ver =~ s/_//g;
-  $ver =~ s/$/000000/;
-
-  my($r,$v,$s) = $ver =~ /(\d+)\.(\d{3})(\d{3})/;
-
-  $v = int $v;
-  $s = int $s;
-
-  if ($r < 5 || ($r == 5 && $v < 6)) {
-    if ($s % 10) {
-      die "cannot parse version '$ver'\n";
-    }
-  }
-
-  return ($r, $v, $s);
-}
-
-sub format_version
-{
-  my $ver = shift;
-
-  $ver =~ s/$/000000/;
-  my($r,$v,$s) = $ver =~ /(\d+)\.(\d{3})(\d{3})/;
-
-  $v = int $v;
-  $s = int $s;
-
-  if ($r < 5 || ($r == 5 && $v < 6)) {
-    if ($s % 10) {
-      die "invalid version '$ver'\n";
-    }
-    $s /= 10;
-
-    $ver = sprintf "%d.%03d", $r, $v;
-    $s > 0 and $ver .= sprintf "_%02d", $s;
-
-    return $ver;
-  }
-
-  return sprintf "%d.%d.%d", $r, $v, $s;
 }
 
 sub info

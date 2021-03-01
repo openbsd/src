@@ -1,1 +1,5 @@
 5.019008
+newATTRSUB_x                   # F added by devel/scanprov
+_setup_canned_invlist          # F added by devel/scanprov
+sv_buf_to_ro                   # F added by devel/scanprov
+sv_buf_to_rw                   # F added by devel/scanprov

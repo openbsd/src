@@ -1,4 +1,22 @@
 5.021005
 cv_name                        # A
+CV_NAME_NOTQUAL                # E
 newMETHOP                      # U
 newMETHOP_named                # U
+PERL_MAGIC_debugvar            # E
+PERL_MAGIC_lvref               # E
+SV_CATBYTES                    # E
+SV_CATUTF8                     # E
+WARN_EXPERIMENTAL__REFALIASING # E
+assignment_type                # F added by devel/scanprov
+gv_setref                      # F added by devel/scanprov
+isinfnansv                     # F added by devel/scanprov
+is_ssc_worth_it                # F added by devel/scanprov
+magic_getdebugvar              # F added by devel/scanprov
+magic_setdebugvar              # F added by devel/scanprov
+magic_setlvref                 # F added by devel/scanprov
+newMETHOP_internal             # F added by devel/scanprov
+op_relocate_sv                 # F added by devel/scanprov
+reg2Lanode                     # F added by devel/scanprov
+regnode_guts                   # F added by devel/scanprov
+tmps_grow_p                    # F added by devel/scanprov

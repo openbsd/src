@@ -1,0 +1,5 @@
+5.025010
+op_class                       # E
+abort_execution                # F added by devel/scanprov
+notify_parser_that_changed_to_utf8 # F added by devel/scanprov
+yyquit                         # F added by devel/scanprov

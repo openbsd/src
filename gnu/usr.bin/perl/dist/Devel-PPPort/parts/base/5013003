@@ -1,3 +1,10 @@
 5.013003
 blockhook_register             # E
 croak_no_modify                # U
+anonymise_cv_maybe             # F added by devel/scanprov
+assert_uft8_cache_coherent     # F added by devel/scanprov
+cvgv_set                       # F added by devel/scanprov
+grok_bslash_o                  # F added by devel/scanprov
+my_lstat_flags                 # F added by devel/scanprov
+my_stat_flags                  # F added by devel/scanprov
+utf8_mg_len_cache_update       # F added by devel/scanprov

@@ -218,16 +218,16 @@ Perl은 기본적으로 내부에서 UTF-8을 사용하며 Encode 모듈을 통�
 
 =item * L<encoding>
 
-=item * L<http://www.unicode.org/>
+=item * L<https://www.unicode.org/>
 
 유니코드 컨소시엄
 
-=item * L<http://std.dkuug.dk/JTC1/SC2/WG2>
+=item * L<https://std.dkuug.dk/JTC1/SC2/WG2>
 
 기본적으로 Unicode와 같은 ISO 표준인  ISO/IEC 10646 UCS(Universal
 Character Set)을 만드는 ISO/IEC JTC1/SC2/WG2의 웹 페이지
 
-=item * L<http://www.cl.cam.ac.uk/~mgk25/unicode.html>
+=item * L<https://www.cl.cam.ac.uk/~mgk25/unicode.html>
 
 유닉스/리눅스 사용자를 위한 UTF-8 및 유니코드 관련 FAQ
 
@@ -244,35 +244,35 @@ Character Set)을 만드는 ISO/IEC JTC1/SC2/WG2의 웹 페이지
 
 =over 4
 
-=item * L<http://www.perl.org/>
+=item * L<https://www.perl.org/>
 
 Perl 공식 홈페이지
 
-=item * L<http://www.perl.com/>
+=item * L<https://www.perl.com/>
 
 O'Reilly의 Perl 웹 페이지
 
-=item * L<http://www.cpan.org/>
+=item * L<https://www.cpan.org/>
 
 CPAN - Comprehensive Perl Archive Network, 통합적 Perl 파일 보관 네트워크
 
-=item * L<http://metacpan.org>
+=item * L<https://metacpan.org>
 
 메타 CPAN
 
-=item * L<http://lists.perl.org/>
+=item * L<https://lists.perl.org/>
 
 Perl 메일링 리스트
 
-=item * L<http://blogs.perl.org/>
+=item * L<https://blogs.perl.org/>
 
 Perl 메타 블로그
 
-=item * L<http://www.perlmonks.org/>
+=item * L<https://www.perlmonks.org/>
 
 Perl 수도승들을 위한 수도원
 
-=item * L<http://www.pm.org/groups/asia.html>
+=item * L<https://www.pm.org/groups/asia.html>
 
 아시아 지역 Perl 몽거스 모임
 
@@ -287,15 +287,15 @@ Perl 크리스마스 달력
 
 =over 4
 
-=item * L<http://perl.kr/>
+=item * L<https://perl.kr/>
 
 한국 Perl 커뮤니티 공식 포털
 
-=item * L<http://doc.perl.kr/>
+=item * L<https://doc.perl.kr/>
 
 Perl 문서 한글화 프로젝트
 
-=item * L<http://cafe.naver.com/perlstudy.cafe>
+=item * L<https://cafe.naver.com/perlstudy.cafe>
 
 네이버 Perl 카페
 
@@ -303,17 +303,13 @@ Perl 문서 한글화 프로젝트
 
 한국 Perl 사용자 모임
 
-=item * L<http://advent.perl.kr>
+=item * L<https://advent.perl.kr>
 
 Seoul.pm Perl 크리스마스 달력 (2010 ~ 2012)
 
 =item * L<http://gypark.pe.kr/wiki/Perl>
 
 GYPARK(Geunyoung Park)의 Perl 관련 한글 문서 저장소
-
-=item * L<http://seoul.pm.org>
-
-Seoul.pm - 서울 Perl 몽거스
 
 =back
 

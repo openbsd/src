@@ -1,3 +1,5 @@
 5.017009
 av_tindex                      # U
 av_top_index                   # U
+handle_regex_sets              # F added by devel/scanprov
+parse_lparen_question_flags    # F added by devel/scanprov

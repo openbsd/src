@@ -10,10 +10,12 @@
 #
 ################################################################################
 
+use FindBin ();
+
 BEGIN {
   if ($ENV{'PERL_CORE'}) {
     chdir 't' if -d 't';
-    @INC = ('../lib', '../ext/Devel-PPPort/t') if -d '../lib' && -d '../ext';
+    unshift @INC, '../lib' if -d '../lib' && -d '../ext';
     require Config; import Config;
     use vars '%Config';
     if (" $Config{'extensions'} " !~ m[ Devel/PPPort ]) {
@@ -21,24 +23,26 @@ BEGIN {
       exit 0;
     }
   }
-  else {
-    unshift @INC, 't';
-  }
+
+  use lib "$FindBin::Bin";
+  use lib "$FindBin::Bin/../parts/inc";
+
+  die qq[Cannot find "$FindBin::Bin/../parts/inc"] unless -d "$FindBin::Bin/../parts/inc";
 
   sub load {
-    eval "use Test";
-    require 'testutil.pl' if $@;
+    require 'testutil.pl';
+    require 'inctools';
   }
 
-  if (5) {
+  if (15) {
     load();
-    plan(tests => 5);
+    plan(tests => 15);
   }
 }
 
 use Devel::PPPort;
 use strict;
-$^W = 1;
+BEGIN { $^W = 1; }
 
 package Devel::PPPort;
 use vars '@ISA';
@@ -49,17 +53,59 @@ bootstrap Devel::PPPort;
 package main;
 
 my $foo = 5;
-ok(&Devel::PPPort::TestSvUV_set($foo, 12345), 42);
-ok(&Devel::PPPort::TestSvPVX_const("mhx"), 43);
-ok(&Devel::PPPort::TestSvPVX_mutable("mhx"), 44);
+is(&Devel::PPPort::TestSvUV_set($foo, 12345), 42);
+is(&Devel::PPPort::TestSvPVX_const("mhx"), 43);
+is(&Devel::PPPort::TestSvPVX_mutable("mhx"), 44);
 
 my $bar = [];
 
 bless $bar, 'foo';
-ok($bar->x(), 'foobar');
+is($bar->x(), 'foobar');
 
 Devel::PPPort::TestSvSTASH_set($bar, 'bar');
-ok($bar->x(), 'hacker');
+is($bar->x(), 'hacker');
+
+    if (ivers($]) != ivers(5.7.2)) {
+        ok(Devel::PPPort::Test_sv_setsv_SV_NOSTEAL());
+    }
+    else {
+        skip("7.2 broken for NOSTEAL", 1);
+    }
+
+    tie my $scalar, 'TieScalarCounter', 'string';
+
+    is tied($scalar)->{fetch}, 0;
+    is tied($scalar)->{store}, 0;
+    my $copy = Devel::PPPort::newSVsv_nomg($scalar);
+    is tied($scalar)->{fetch}, 0;
+    is tied($scalar)->{store}, 0;
+
+    my $fetch = $scalar;
+    is tied($scalar)->{fetch}, 1;
+    is tied($scalar)->{store}, 0;
+    my $copy2 = Devel::PPPort::newSVsv_nomg($scalar);
+    is tied($scalar)->{fetch}, 1;
+    is tied($scalar)->{store}, 0;
+    is $copy2, 'string';
+
+package TieScalarCounter;
+
+sub TIESCALAR {
+    my ($class, $value) = @_;
+    return bless { fetch => 0, store => 0, value => $value }, $class;
+}
+
+sub FETCH {
+    my ($self) = @_;
+    $self->{fetch}++;
+    return $self->{value};
+}
+
+sub STORE {
+    my ($self, $value) = @_;
+    $self->{store}++;
+    $self->{value} = $value;
+}
 
 package foo;
 

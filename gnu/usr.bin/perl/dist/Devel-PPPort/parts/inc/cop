@@ -74,7 +74,7 @@ DPPP_dopoptosub_at(const PERL_CONTEXT *cxstk, I32 startingblock)
 # if { NEED caller_cx }
 
 const PERL_CONTEXT *
-caller_cx(pTHX_ I32 count, const PERL_CONTEXT **dbcxp)
+caller_cx(pTHX_ I32 level, const PERL_CONTEXT **dbcxp)
 {
     register I32 cxix = DPPP_dopoptosub_at(cxstack, cxstack_ix);
     register const PERL_CONTEXT *cx;
@@ -93,8 +93,8 @@ caller_cx(pTHX_ I32 count, const PERL_CONTEXT **dbcxp)
 	/* caller() should not report the automatic calls to &DB::sub */
 	if (PL_DBsub && GvCV(PL_DBsub) && cxix >= 0 &&
 		ccstack[cxix].blk_sub.cv == GvCV(PL_DBsub))
-	    count++;
-	if (!count--)
+	    level++;
+	if (!level--)
 	    break;
 	cxix = DPPP_dopoptosub_at(ccstack, cxix - 1);
     }
@@ -167,7 +167,7 @@ caller_cx(level)
 
 #endif /* 5.6.0 */
 
-=tests plan => 28
+=tests plan => 8
 
 my $package;
 {
@@ -175,7 +175,7 @@ my $package;
   $package = &Devel::PPPort::CopSTASHPV();
 }
 print "# $package\n";
-ok($package, "MyPackage");
+is($package, "MyPackage");
 
 my $file = &Devel::PPPort::CopFILE();
 print "# $file\n";
@@ -183,10 +183,7 @@ ok($file =~ /cop/i);
 
 BEGIN {
   if ("$]" < 5.006000) {
-    # Skip
-    for (1..28) {
-      ok(1, 1);
-    }
+    skip("Perl version too early", 8);
     exit;
   }
 }
@@ -223,9 +220,6 @@ for (
 ) {
     my ($sub, $arg, @want) = @$_;
     my @got = $sub->($arg);
-    ok(@got, @want);
-    for (0..$#want) {
-        ok($got[$_], $want[$_]);
-    }
+    ok(eq_array(\@got, \@want));
 }
 

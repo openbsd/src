@@ -1,0 +1,13 @@
+5.025005
+BOM_UTF8                       # E
+isC9_STRICT_UTF8_CHAR          # U
+isSTRICT_UTF8_CHAR             # U
+isUTF8_CHAR_flags              # U
+is_utf8_invariant_string       # U
+is_utf8_valid_partial_char     # U
+is_utf8_valid_partial_char_flags # U
+REPLACEMENT_CHARACTER_UTF8     # E
+UTF8_DISALLOW_ILLEGAL_C9_INTERCHANGE # E
+UTF8_WARN_ILLEGAL_C9_INTERCHANGE # E
+delimcpy_no_escape             # F added by devel/scanprov
+is_utf8_cp_above_31_bits       # F added by devel/scanprov

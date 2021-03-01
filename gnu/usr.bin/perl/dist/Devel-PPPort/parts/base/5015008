@@ -1,3 +1,8 @@
 5.015008
+isASCII_LC                     # U
 is_utf8_char_buf               # U
 wrap_op_checker                # U
+amagic_is_enabled              # F added by devel/scanprov
+_invlist_intersection_maybe_complement_2nd # F added by devel/scanprov
+_invlist_union_maybe_complement_2nd # F added by devel/scanprov
+_new_invlist_C_array           # F added by devel/scanprov

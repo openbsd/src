@@ -1,5 +1,17 @@
 5.008000
-Poison                         # E
+hv_iternext_flags              # U
+HV_ITERNEXT_WANTPLACEHOLDERS   # E
+hv_store_flags                 # U
 nothreadhook                   # U
-WARN_LAYER                     # added by devel/scanprov
-WARN_THREADS                   # added by devel/scanprov
+Poison                         # E
+WARN_LAYER                     # E
+WARN_THREADS                   # E
+do_aspawn                      # F added by devel/scanprov
+do_spawn                       # F added by devel/scanprov
+do_spawn_nowait                # F added by devel/scanprov
+hv_notallowed                  # F added by devel/scanprov
+save_hek_flags                 # F added by devel/scanprov
+share_hek_flags                # F added by devel/scanprov
+to_byte_substr                 # F added by devel/scanprov
+to_utf8_substr                 # F added by devel/scanprov
+unshare_hek_or_pvn             # F added by devel/scanprov

@@ -1,4 +1,8 @@
 #!/usr/bin/perl
+
+use strict;
+use warnings;
+
 #
 # Check ->defer and ->flush methods
 #
@@ -8,7 +12,7 @@
 #
 
 use POSIX 'SEEK_SET';
-my $file = "tf$$.txt";
+my $file = "tf30-$$.txt";
 $: = Tie::File::_default_recsep();
 my $data = "rec0$:rec1$:rec2$:";
 my ($o, $n);
@@ -23,6 +27,8 @@ open F, '>', $file or die $!;
 binmode F;
 print F $data;
 close F;
+
+my @a;
 $o = tie @a, 'Tie::File', $file;
 print $o ? "ok $N\n" : "not ok $N\n";
 $N++;

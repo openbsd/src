@@ -27,6 +27,8 @@ __UNDEFINED__  memEQs(s1, l, s2) \
                    (sizeof(s2)-1 == l && memEQ(s1, (s2 ""), (sizeof(s2)-1)))
 __UNDEFINED__  memNEs(s1, l, s2) !memEQs(s1, l, s2)
 
+__UNDEFINED__  memCHRs(s, c) ((const char *) memchr("" s "" , c, sizeof(s)-1))
+
 __UNDEFINED__  MoveD(s,d,n,t)  memmove((char*)(d),(char*)(s), (n) * sizeof(t))
 __UNDEFINED__  CopyD(s,d,n,t)  memcpy((char*)(d),(char*)(s), (n) * sizeof(t))
 #ifdef HAS_MEMSET
@@ -82,4 +84,4 @@ checkmem()
 
 =tests plan => 1
 
-ok(Devel::PPPort::checkmem(), 6);
+is(Devel::PPPort::checkmem(), 6);

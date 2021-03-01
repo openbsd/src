@@ -40,23 +40,27 @@ my %opt = (
   install   => 1,
   oneshot   => 0,
   configure => 0,
+  jobs => 1,
   'test-archives' => 0,
 );
 
+my $Configure_extra = '-Dman1dir="none" -Dman3dir="none"';
+
+
 my %config = (
   default     => {
-                   config_args => '-des',
+                   config_args => "-des $Configure_extra" ,
                  },
   thread      => {
-                   config_args     => '-des -Dusethreads',
+                   config_args     => "-des -Dusethreads $Configure_extra",
                    masked_versions => [ qr/^5\.00[01234]/ ],
                  },
   thread5005  => {
-                   config_args     => '-des -Duse5005threads',
+                   config_args     => "-des -Duse5005threads $Configure_extra",
                    masked_versions => [ qr/^5\.00[012345]|^5\.(9|\d\d)|^5\.8\.9/ ],
                  },
   debug       => {
-                   config_args => '-des -Doptimize=-g',
+                   config_args => "-des -Doptimize=-g $Configure_extra",
                  },
 );
 
@@ -161,9 +165,13 @@ GetOptions(\%opt, qw(
   test-archives=i
   patch!
   oneshot
+  jobs=i
 )) or pod2usage(2);
 
 my %current;
+
+my $job_string = "";
+$job_string = "-j$opt{jobs}" if $opt{jobs} != 1;
 
 if ($opt{patch} || $opt{oneshot}) {
   @{$opt{perl}} == 1 or die "Exactly one --perl must be given with --patch or --oneshot\n";
@@ -359,10 +367,10 @@ sub build_and_install
   if (-f "x2p/makefile") {
     run_or_die("sed -i -e '/^.*<builtin>/d' -e '/^.*<built-in>/d' -e '/^.*<command line>/d' -e '/^.*<command-line>/d' makefile x2p/makefile");
   }
-  run_or_die("make all");
-  run("make test") if $opt{test};
+  run_or_die("make $job_string all");
+  run("TEST_JOBS=$opt{jobs} make $job_string test") if $opt{test};
   if ($opt{install}) {
-    run_or_die("make install");
+    run("make $job_string install");
   }
   else {
     print "\n*** NOT INSTALLING PERL ***\n\n";
@@ -540,6 +548,10 @@ buildperl.pl - build/install perl distributions
                               /tmp/perl/install/<config>/<perl>]
 
   --config=configuration      build this configuration [MULTI]
+                              The possibilities for this parameter are:
+                                'thread', 'thread5005', 'debug';
+                                 and 'default',
+                                 which means none of the others.
                               [default: all possible configurations]
 
   --perl=version              build this version of perl [MULTI]
@@ -558,6 +570,9 @@ buildperl.pl - build/install perl distributions
   --oneshot                   build from the perl source in the current
                               directory (extra arguments are passed to
                               Configure)
+
+  -j N                        Build and test with N parallel jobs
+                              [default: 1]
 
   options tagged with [MULTI] can be given multiple times
 

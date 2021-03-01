@@ -10,10 +10,12 @@
 #
 ################################################################################
 
+use FindBin ();
+
 BEGIN {
   if ($ENV{'PERL_CORE'}) {
     chdir 't' if -d 't';
-    @INC = ('../lib', '../ext/Devel-PPPort/t') if -d '../lib' && -d '../ext';
+    unshift @INC, '../lib' if -d '../lib' && -d '../ext';
     require Config; import Config;
     use vars '%Config';
     if (" $Config{'extensions'} " !~ m[ Devel/PPPort ]) {
@@ -21,13 +23,15 @@ BEGIN {
       exit 0;
     }
   }
-  else {
-    unshift @INC, 't';
-  }
+
+  use lib "$FindBin::Bin";
+  use lib "$FindBin::Bin/../parts/inc";
+
+  die qq[Cannot find "$FindBin::Bin/../parts/inc"] unless -d "$FindBin::Bin/../parts/inc";
 
   sub load {
-    eval "use Test";
-    require 'testutil.pl' if $@;
+    require 'testutil.pl';
+    require 'inctools';
   }
 
   if (7) {
@@ -38,7 +42,7 @@ BEGIN {
 
 use Devel::PPPort;
 use strict;
-$^W = 1;
+BEGIN { $^W = 1; }
 
 package Devel::PPPort;
 use vars '@ISA';
@@ -53,15 +57,15 @@ my $rv;
 $Devel::PPPort::exception_caught = undef;
 
 $rv = eval { &Devel::PPPort::exception(0) };
-ok($@, '');
+is($@, '');
 ok(defined $rv);
-ok($rv, 42);
-ok($Devel::PPPort::exception_caught, 0);
+is($rv, 42);
+is($Devel::PPPort::exception_caught, 0);
 
 $Devel::PPPort::exception_caught = undef;
 
 $rv = eval { &Devel::PPPort::exception(1) };
-ok($@, "boo\n");
+is($@, "boo\n");
 ok(not defined $rv);
-ok($Devel::PPPort::exception_caught, 1);
+is($Devel::PPPort::exception_caught, 1);
 

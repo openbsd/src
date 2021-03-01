@@ -10,10 +10,12 @@
 #
 ################################################################################
 
+use FindBin ();
+
 BEGIN {
   if ($ENV{'PERL_CORE'}) {
     chdir 't' if -d 't';
-    @INC = ('../lib', '../ext/Devel-PPPort/t') if -d '../lib' && -d '../ext';
+    unshift @INC, '../lib' if -d '../lib' && -d '../ext';
     require Config; import Config;
     use vars '%Config';
     if (" $Config{'extensions'} " !~ m[ Devel/PPPort ]) {
@@ -21,13 +23,15 @@ BEGIN {
       exit 0;
     }
   }
-  else {
-    unshift @INC, 't';
-  }
+
+  use lib "$FindBin::Bin";
+  use lib "$FindBin::Bin/../parts/inc";
+
+  die qq[Cannot find "$FindBin::Bin/../parts/inc"] unless -d "$FindBin::Bin/../parts/inc";
 
   sub load {
-    eval "use Test";
-    require 'testutil.pl' if $@;
+    require 'testutil.pl';
+    require 'inctools';
   }
 
   if (12) {
@@ -38,7 +42,7 @@ BEGIN {
 
 use Devel::PPPort;
 use strict;
-$^W = 1;
+BEGIN { $^W = 1; }
 
 package Devel::PPPort;
 use vars '@ISA';
@@ -50,24 +54,24 @@ package main;
 
 my $x = 'foo';
 
-ok(Devel::PPPort::newSVpvs(), "newSVpvs");
-ok(Devel::PPPort::newSVpvs_flags(), "newSVpvs_flags");
-ok(Devel::PPPort::newSVpvs_share(), 3);
+is(Devel::PPPort::newSVpvs(), "newSVpvs");
+is(Devel::PPPort::newSVpvs_flags(), "newSVpvs_flags");
+is(Devel::PPPort::newSVpvs_share(), 3);
 
 Devel::PPPort::sv_catpvs($x);
-ok($x, "foosv_catpvs");
+is($x, "foosv_catpvs");
 
 Devel::PPPort::sv_setpvs($x);
-ok($x, "sv_setpvs");
+is($x, "sv_setpvs");
 
 my %h = ('hv_fetchs' => 42);
 Devel::PPPort::hv_stores(\%h, 4711);
-ok(scalar keys %h, 2);
+is(scalar keys %h, 2);
 ok(exists $h{'hv_stores'});
-ok($h{'hv_stores'}, 4711);
-ok(Devel::PPPort::hv_fetchs(\%h), 42);
-ok(Devel::PPPort::gv_fetchpvs(), \*Devel::PPPort::VERSION);
-ok(Devel::PPPort::gv_stashpvs(), \%Devel::PPPort::);
+is($h{'hv_stores'}, 4711);
+is(Devel::PPPort::hv_fetchs(\%h), 42);
+is(Devel::PPPort::gv_fetchpvs(), \*Devel::PPPort::VERSION);
+is(Devel::PPPort::gv_stashpvs(), \%Devel::PPPort::);
 
-ok(Devel::PPPort::get_cvs(), 3);
+is(Devel::PPPort::get_cvs(), 3);
 

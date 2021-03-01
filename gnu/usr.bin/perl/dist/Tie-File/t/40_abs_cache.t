@@ -1,4 +1,8 @@
 #!/usr/bin/perl
+
+use strict;
+use warnings;
+
 #
 # Unit tests for abstract cache implementation
 #
@@ -58,14 +62,14 @@ for (1..10) {
 for (1..10) {
   push @R, $h->expire;
 }
-$iota = iota('a',9);
+my $iota = iota('a',9);
 print "@R" eq $iota
   ? "ok $N\n" : "not ok $N \# expected ($iota), got (@R)\n";
 $N++;
 check($h);
 
 # (6-7) Remove from empty heap
-$n = $h->expire;
+my $n = $h->expire;
 print ! defined $n ? "ok $N\n" : "not ok $N \# expected UNDEF, got $n";
 $N++;
 check($h);

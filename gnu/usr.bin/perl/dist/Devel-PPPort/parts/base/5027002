@@ -1,0 +1,7 @@
+5.027002
+Perl_setlocale                 # U
+UTF8_DISALLOW_PERL_EXTENDED    # E
+UTF8_WARN_PERL_EXTENDED        # E
+hv_free_entries                # F added by devel/scanprov
+print_bytes_for_locale         # F added by devel/scanprov
+setlocale_debug_string         # F added by devel/scanprov

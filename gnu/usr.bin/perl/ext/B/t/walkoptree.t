@@ -42,7 +42,7 @@ my $victim = sub {
 
 is (B::walkoptree_debug, 0, 'walkoptree_debug() is 0');
 B::walkoptree(B::svref_2object($victim)->ROOT, "pie");
-foreach (qw(substcont split split leavesub)) {
+foreach (qw(substcont split leavesub)) {
     is ($seen{$_}, 1, "Our victim had a $_ OP");
 }
 is_deeply ([keys %debug], [], 'walkoptree_debug was not called');
@@ -52,7 +52,7 @@ is (B::walkoptree_debug, 1, 'walkoptree_debug() is 1');
 %seen = ();
 
 B::walkoptree(B::svref_2object($victim)->ROOT, "pie");
-foreach (qw(substcont split split leavesub)) {
+foreach (qw(substcont split leavesub)) {
     is ($seen{$_}, 1, "Our victim had a $_ OP");
 }
 is_deeply (\%debug, \%seen, 'walkoptree_debug was called correctly');

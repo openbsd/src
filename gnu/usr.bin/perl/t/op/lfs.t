@@ -134,7 +134,7 @@ if ($r or not seek(BIG, 5_000_000_000, SEEK_SET)) {
 }
 
 # Either the print or (more likely, thanks to buffering) the close will
-# fail if there are are filesize limitations (process or fs).
+# fail if there are filesize limitations (process or fs).
 my $print = print BIG "big";
 print "# print failed: $!\n" unless $print;
 my $close = close BIG;

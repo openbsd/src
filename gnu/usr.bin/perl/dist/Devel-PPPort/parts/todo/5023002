@@ -1,1 +1,4 @@
 5.023002
+UTF8_IS_NONCHAR                # U
+UTF8_IS_SUPER                  # A
+UTF8_IS_SURROGATE              # A

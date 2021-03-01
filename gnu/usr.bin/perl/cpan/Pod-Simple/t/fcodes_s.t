@@ -43,17 +43,17 @@ skip( $unless_ascii,
 skip( $unless_ascii,
     $x->_out( sub { $_[0]->nbsp_for_S(1) },
     qq{=pod\n\nI like S<L</"bric-a-brac a gogo">>.\n}),
-'<Document><Para>I like <L content-implicit="yes" section="bric-a-brac a gogo" type="pod">&#34;bric-a-brac&#160;a&#160;gogo&#34;</L>.</Para></Document>'
+'<Document><Para>I like <L content-implicit="yes" raw="/&#34;bric-a-brac a gogo&#34;" section="bric-a-brac a gogo" type="pod">&#34;bric-a-brac&#160;a&#160;gogo&#34;</L>.</Para></Document>'
 );
 skip( $unless_ascii,
     $x->_out( sub { $_[0]->nbsp_for_S(1) },
     qq{=pod\n\nI like S<L<Stuff like that|/"bric-a-brac a gogo">>.\n}),
-'<Document><Para>I like <L section="bric-a-brac a gogo" type="pod">Stuff&#160;like&#160;that</L>.</Para></Document>'
+'<Document><Para>I like <L raw="Stuff like that|/&#34;bric-a-brac a gogo&#34;" section="bric-a-brac a gogo" type="pod">Stuff&#160;like&#160;that</L>.</Para></Document>'
 );
 skip( $unless_ascii,
     $x->_out( sub { $_[0]->nbsp_for_S(1) },
     qq{=pod\n\nI like S<L<Stuff I<like that>|/"bric-a-brac a gogo">>.\n}),
-'<Document><Para>I like <L section="bric-a-brac a gogo" type="pod">Stuff&#160;<I>like&#160;that</I></L>.</Para></Document>'
+'<Document><Para>I like <L raw="Stuff I&#60;like that&#62;|/&#34;bric-a-brac a gogo&#34;" section="bric-a-brac a gogo" type="pod">Stuff&#160;<I>like&#160;that</I></L>.</Para></Document>'
 );
 
 &ok( $x->_duo( sub { $_[0]->nbsp_for_S(1) },
@@ -219,7 +219,7 @@ ok(
 
 # Test HTML output of links.
 use Pod::Simple::HTML;
-my $PERLDOC = "http://search.cpan.org/perldoc";
+my $PERLDOC = "https://metacpan.org/pod";
 my $MANURL = "http://man.he.net/man";
 sub x ($) {
     Pod::Simple::HTML->_out(
@@ -230,12 +230,12 @@ sub x ($) {
 
 ok(
     x(qq{L<Net::Ping>\n}),
-    qq{\n<p><a href="$PERLDOC?Net%3A%3APing" class="podlinkpod"\n>Net::Ping</a></p>\n}
+    qq{\n<p><a href="$PERLDOC/Net%3A%3APing" class="podlinkpod"\n>Net::Ping</a></p>\n}
 );
 
 ok(
     x(qq{Be sure to read the L<Net::Ping> docs\n}),
-    qq{\n<p>Be sure to read the <a href="$PERLDOC?Net%3A%3APing" class="podlinkpod"\n>Net::Ping</a> docs</p>\n}
+    qq{\n<p>Be sure to read the <a href="$PERLDOC/Net%3A%3APing" class="podlinkpod"\n>Net::Ping</a> docs</p>\n}
 );
 
 ok(
@@ -250,7 +250,7 @@ ok(
 
 ok(
     x(qq{L<Net::Ping/Ping-pong>\n}),
-    qq{\n<p><a href="$PERLDOC?Net%3A%3APing#Ping-pong" class="podlinkpod"\n>&#34;Ping-pong&#34; in Net::Ping</a></p>\n}
+    qq{\n<p><a href="$PERLDOC/Net%3A%3APing#Ping-pong" class="podlinkpod"\n>&#34;Ping-pong&#34; in Net::Ping</a></p>\n}
 );
 
 ok(
@@ -270,7 +270,7 @@ ok(
 
 ok(
     x(qq{L<Net::Ping/Ping-E<112>ong>\n}),
-    qq{\n<p><a href="$PERLDOC?Net%3A%3APing#Ping-pong" class="podlinkpod"\n>&#34;Ping-pong&#34; in Net::Ping</a></p>\n}
+    qq{\n<p><a href="$PERLDOC/Net%3A%3APing#Ping-pong" class="podlinkpod"\n>&#34;Ping-pong&#34; in Net::Ping</a></p>\n}
 );
 
 ok(
@@ -315,17 +315,17 @@ ok(
 
 ok(
     x(qq{L<Perl Error Messages|perldiag>\n}),
-    qq{\n<p><a href="$PERLDOC?perldiag" class="podlinkpod"\n>Perl Error Messages</a></p>\n}
+    qq{\n<p><a href="$PERLDOC/perldiag" class="podlinkpod"\n>Perl Error Messages</a></p>\n}
 );
 
 ok(
     x(qq{L<Perl\nError\nMessages|perldiag>\n}),
-    qq{\n<p><a href="$PERLDOC?perldiag" class="podlinkpod"\n>Perl Error Messages</a></p>\n}
+    qq{\n<p><a href="$PERLDOC/perldiag" class="podlinkpod"\n>Perl Error Messages</a></p>\n}
 );
 
 ok(
     x(qq{L<Perl\nError\t  Messages|perldiag>\n}),
-    qq{\n<p><a href="$PERLDOC?perldiag" class="podlinkpod"\n>Perl Error Messages</a></p>\n}
+    qq{\n<p><a href="$PERLDOC/perldiag" class="podlinkpod"\n>Perl Error Messages</a></p>\n}
 );
 
 ok(
@@ -352,12 +352,12 @@ sub o ($) {
 
 ok(
     o(qq{L<Net::Ping>}),
-    qq{<p><a href="$PERLDOC?Net::Ping">Net::Ping</a></p>\n\n}
+    qq{<p><a href="$PERLDOC/Net::Ping">Net::Ping</a></p>\n\n}
 );
 
 ok(
     o(qq{Be sure to read the L<Net::Ping> docs}),
-    qq{<p>Be sure to read the <a href="$PERLDOC?Net::Ping">Net::Ping</a> docs</p>\n\n}
+    qq{<p>Be sure to read the <a href="$PERLDOC/Net::Ping">Net::Ping</a> docs</p>\n\n}
 );
 
 ok(
@@ -372,7 +372,7 @@ ok(
 
 ok(
     o(qq{L<Net::Ping/Ping-pong>}),
-    qq{<p><a href="$PERLDOC?Net::Ping#Ping-pong">&quot;Ping-pong&quot; in Net::Ping</a></p>\n\n}
+    qq{<p><a href="$PERLDOC/Net::Ping#Ping-pong">&quot;Ping-pong&quot; in Net::Ping</a></p>\n\n}
 );
 
 ok(
@@ -392,7 +392,7 @@ ok(
 
 ok(
     o(qq{L<Net::Ping/Ping-E<112>ong>}),
-    qq{<p><a href="$PERLDOC?Net::Ping#Ping-pong">&quot;Ping-pong&quot; in Net::Ping</a></p>\n\n}
+    qq{<p><a href="$PERLDOC/Net::Ping#Ping-pong">&quot;Ping-pong&quot; in Net::Ping</a></p>\n\n}
 );
 
 ok(
@@ -437,17 +437,17 @@ ok(
 
 ok(
     o(qq{L<Perl Error Messages|perldiag>}),
-    qq{<p><a href="$PERLDOC?perldiag">Perl Error Messages</a></p>\n\n}
+    qq{<p><a href="$PERLDOC/perldiag">Perl Error Messages</a></p>\n\n}
 );
 
 ok(
     o(qq{L<Perl\nError\nMessages|perldiag>}),
-    qq{<p><a href="$PERLDOC?perldiag">Perl Error Messages</a></p>\n\n}
+    qq{<p><a href="$PERLDOC/perldiag">Perl Error Messages</a></p>\n\n}
 );
 
 ok(
     o(qq{L<Perl\nError\t  Messages|perldiag>}),
-    qq{<p><a href="$PERLDOC?perldiag">Perl Error Messages</a></p>\n\n}
+    qq{<p><a href="$PERLDOC/perldiag">Perl Error Messages</a></p>\n\n}
 );
 
 ok(

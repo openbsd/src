@@ -4,7 +4,11 @@
 # EXTEND, CLEAR, DELETE, EXISTS
 #
 
-my $file = "tf$$.txt";
+use strict;
+use warnings;
+
+
+my $file = "tf17-$$.txt";
 $: = Tie::File::_default_recsep();
 1 while unlink $file;
 
@@ -14,6 +18,7 @@ my $N = 1;
 use Tie::File;
 print "ok $N\n"; $N++;
 
+my @a;
 my $o = tie @a, 'Tie::File', $file, autodefer => 0;
 print $o ? "ok $N\n" : "not ok $N\n";
 $N++;

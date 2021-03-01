@@ -24,7 +24,7 @@ BEGIN {
     $extra = 1
         if eval { require Test::NoWarnings ;  import Test::NoWarnings; 1 };
 
-    plan tests => 219 + $extra ;
+    plan tests => 227 + $extra ;
 
     #use_ok('IO::Compress::Zip', qw(zip $ZipError :zip_method)) ;
     use_ok('IO::Compress::Zip', qw(:all)) ;
@@ -160,6 +160,55 @@ sub zipGetHeader
          CanonicalName => 0,
          FilterName => sub { s/joe/jim/ });
     is $hdr->{Name}, File::Spec->catfile("", "fred", "jim"), "  Name is '/fred/jim'" ;
+}
+
+{
+    title "Detect encrypted zip file";
+
+    my $files = "./t/" ;
+    $files = "./" if $ENV{PERL_CORE} ;
+    $files .= "files/";
+
+    my $zipfile = "$files/encrypt-standard.zip" ;
+    my $output;
+
+    ok ! unzip "$files/encrypt-standard.zip" => \$output ;
+    like $UnzipError, qr/Encrypted content not supported/ ;
+
+    ok ! unzip "$files/encrypt-aes.zip" => \$output ;
+    like $UnzipError, qr/Encrypted content not supported/ ;
+}
+
+{
+    title "jar file with deflated directory";
+
+    # Create Jar as follow
+    #   echo test > file && jar c file > jar.zip
+
+    # Note the deflated directory META-INF with length 0 & size 2
+    #
+    # $ unzip -vl t/files/jar.zip
+    # Archive:  t/files/jar.zip
+    #  Length   Method    Size  Cmpr    Date    Time   CRC-32   Name
+    # --------  ------  ------- ---- ---------- ----- --------  ----
+    #        0  Defl:N        2   0% 2019-09-07 22:35 00000000  META-INF/
+    #       54  Defl:N       53   2% 2019-09-07 22:35 934e49ff  META-INF/MANIFEST.MF
+    #        5  Defl:N        7 -40% 2019-09-07 22:35 3bb935c6  file
+    # --------          -------  ---                            -------
+    #       59               62  -5%                            3 files
+
+
+    my $files = "./t/" ;
+    $files = "./" if $ENV{PERL_CORE} ;
+    $files .= "files/";
+
+    my $zipfile = "$files/jar.zip" ;
+    my $output;
+
+    ok unzip $zipfile => \$output ;
+
+    is $output, "" ;
+
 }
 
 for my $stream (0, 1)

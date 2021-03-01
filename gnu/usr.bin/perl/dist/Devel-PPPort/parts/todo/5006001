@@ -1,8 +1,14 @@
 5.006001
-SvGAMAGIC                      # U
+apply_attrs_string             # U
+bytes_to_utf8                  # U
 gv_efullname4                  # U
 gv_fullname4                   # U
+isPSXSPC_LC                    # U
+isUTF8_CHAR                    # U
 is_utf8_string                 # U
+NVSIZE                         # E
 save_generic_pvref             # U
-utf16_to_utf8                  # E (Perl_utf16_to_utf8)
-utf16_to_utf8_reversed         # E (Perl_utf16_to_utf8_reversed)
+SvGAMAGIC                      # U
+utf8_to_bytes                  # U
+utf8_to_uvchr                  # U
+utf8_to_uvchr_buf              # U

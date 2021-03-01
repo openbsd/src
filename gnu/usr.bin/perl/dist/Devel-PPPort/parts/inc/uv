@@ -14,16 +14,8 @@
 __UNDEFINED__
 my_strnlen
 SvUOK
-utf8_to_uvchr_buf
-
-=dontwarn
-
-_ppport_utf8_to_uvchr_buf_callee
-_ppport_MIN
 
 =implementation
-
-#define _ppport_MIN(a,b) (((a) <= (b)) ? (a) : (b))
 
 __UNDEFINED__  sv_setuv(sv, uv)                     \
                STMT_START {                         \
@@ -36,15 +28,26 @@ __UNDEFINED__  sv_setuv(sv, uv)                     \
 
 __UNDEFINED__  newSVuv(uv)     ((uv) <= IV_MAX ? newSViv((IV)uv) : newSVnv((NV)uv))
 
+#if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
+__UNDEFINED__  sv_2uv(sv)      ({ SV *_sv = (sv); (UV) (SvNOK(_sv) ? SvNV(_sv) : sv_2nv(_sv)); })
+#else
 __UNDEFINED__  sv_2uv(sv)      ((PL_Sv = (sv)), (UV) (SvNOK(PL_Sv) ? SvNV(PL_Sv) : sv_2nv(PL_Sv)))
+#endif
+
 __UNDEFINED__  SvUVX(sv)       ((UV)SvIVX(sv))
 __UNDEFINED__  SvUVXx(sv)      SvUVX(sv)
 __UNDEFINED__  SvUV(sv)        (SvIOK(sv) ? SvUVX(sv) : sv_2uv(sv))
+
+#if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
+__UNDEFINED__  SvUVx(sv)       ({ SV *_sv = (sv)); SvUV(_sv); })
+#else
 __UNDEFINED__  SvUVx(sv)       ((PL_Sv = (sv)), SvUV(PL_Sv))
+#endif
 
 /* Hint: sv_uv
  * Always use the SvUVx() macro instead of sv_uv().
  */
+/* Replace sv_uv with SvUVx */
 __UNDEFINED__  sv_uv(sv)       SvUVx(sv)
 
 #if !defined(SvUOK) && defined(SvIOK_UV)
@@ -57,21 +60,10 @@ __UNDEFINED__  XSRETURN_UV(v)  STMT_START { XST_mUV(0,v);  XSRETURN(1); } STMT_E
 __UNDEFINED__  PUSHu(u)        STMT_START { sv_setuv(TARG, (UV)(u)); PUSHTARG;  } STMT_END
 __UNDEFINED__  XPUSHu(u)       STMT_START { sv_setuv(TARG, (UV)(u)); XPUSHTARG; } STMT_END
 
-#if defined UTF8SKIP
-
-/* Don't use official version because it uses MIN, which may not be available */
-#undef UTF8_SAFE_SKIP
-
-__UNDEFINED__  UTF8_SAFE_SKIP(s, e)  (                                          \
-                                      ((((e) - (s)) <= 0)                       \
-                                      ? 0                                       \
-                                      : _ppport_MIN(((e) - (s)), UTF8SKIP(s))))
-#endif
-
 #if !defined(my_strnlen)
 #if { NEED my_strnlen }
 
-STRLEN
+Size_t
 my_strnlen(const char *str, Size_t maxlen)
 {
     const char *p = str;
@@ -85,212 +77,9 @@ my_strnlen(const char *str, Size_t maxlen)
 #endif
 #endif
 
-#if { VERSION < 5.31.2 }
-        /* Versions prior to this accepted things that are now considered
-         * malformations, and didn't return -1 on error with warnings enabled
-         * */
-#  undef utf8_to_uvchr_buf
-#endif
-
-/* This implementation brings modern, generally more restricted standards to
- * utf8_to_uvchr_buf.  Some of these are security related, and clearly must
- * be done.  But its arguable that the others need not, and hence should not.
- * The reason they're here is that a module that intends to play with the
- * latest perls shoud be able to work the same in all releases.  An example is
- * that perl no longer accepts any UV for a code point, but limits them to
- * IV_MAX or below.  This is for future internal use of the larger code points.
- * If it turns out that some of these changes are breaking code that isn't
- * intended to work with modern perls, the tighter restrictions could be
- * relaxed.  khw thinks this is unlikely, but has been wrong in the past. */
-
-#ifndef utf8_to_uvchr_buf
-   /* Choose which underlying implementation to use.  At least one must be
-    * present or the perl is too early to handle this function */
-#  if defined(utf8n_to_uvchr) || defined(utf8_to_uv)
-#    if defined(utf8n_to_uvchr)   /* This is the preferred implementation */
-#      define _ppport_utf8_to_uvchr_buf_callee utf8n_to_uvchr
-#    else
-#      define _ppport_utf8_to_uvchr_buf_callee utf8_to_uv
-#    endif
-
-#  endif
-
-#ifdef _ppport_utf8_to_uvchr_buf_callee
-#  if { NEED utf8_to_uvchr_buf }
-
-UV
-utf8_to_uvchr_buf(pTHX_ const U8 *s, const U8 *send, STRLEN *retlen)
-{
-    UV ret;
-    STRLEN curlen;
-    bool overflows = 0;
-    const U8 *cur_s = s;
-    const bool do_warnings = ckWARN_d(WARN_UTF8);
-
-    if (send > s) {
-        curlen = send - s;
-    }
-    else {
-        assert(0);  /* Modern perls die under this circumstance */
-        curlen = 0;
-        if (! do_warnings) {    /* Handle empty here if no warnings needed */
-            if (retlen) *retlen = 0;
-            return UNICODE_REPLACEMENT;
-        }
-    }
-
-    /* The modern version allows anything that evaluates to a legal UV, but not
-     * overlongs nor an empty input */
-    ret = _ppport_utf8_to_uvchr_buf_callee(
-                s, curlen, retlen,   (UTF8_ALLOW_ANYUV
-                                  & ~(UTF8_ALLOW_LONG|UTF8_ALLOW_EMPTY)));
-
-    /* But actually, modern versions restrict the UV to being no more than what
-     * an IV can hold */
-    if (ret > PERL_INT_MAX) {
-        overflows = 1;
-    }
-
-#    if { VERSION < 5.26.0 }
-#      ifndef EBCDIC
-
-        /* There are bugs in versions earlier than this on non-EBCDIC platforms
-         * in which it did not detect all instances of overflow, which could be
-         * a security hole.  Also, earlier versions did not allow the overflow
-         * malformation under any circumstances, and modern ones do.  So we
-         * need to check here.  */
-
-    else if (curlen > 0 && *s >= 0xFE) {
-
-        /* If the main routine detected overflow, great; it returned 0.  But if the
-         * input's first byte indicates it could overflow, we need to verify.
-         * First, on a 32-bit machine the first byte being at least \xFE
-         * automatically is overflow */
-        if (sizeof(ret) < 8) {
-            overflows = 1;
-        }
-        else {
-            const U8 highest[] =    /* 2*63-1 */
-                        "\xFF\x80\x87\xBF\xBF\xBF\xBF\xBF\xBF\xBF\xBF\xBF\xBF";
-            const U8 *cur_h = highest;
-
-            for (cur_s = s; cur_s < send; cur_s++, cur_h++) {
-                if (UNLIKELY(*cur_s == *cur_h)) {
-                    continue;
-                }
-
-                /* If this byte is larger than the corresponding highest UTF-8
-                * byte, the sequence overflows; otherwise the byte is less than
-                * (as we handled the equality case above), and so the sequence
-                * doesn't overflow */
-                overflows = *cur_s > *cur_h;
-                break;
-
-            }
-
-            /* Here, either we set the bool and broke out of the loop, or got
-             * to the end and all bytes are the same which indicates it doesn't
-             * overflow. */
-        }
-    }
-
-#      endif
-#    endif  /* < 5.26 */
-
-    if (UNLIKELY(overflows)) {
-        if (! do_warnings) {
-            if (retlen) {
-                *retlen = _ppport_MIN(*retlen, UTF8SKIP(s));
-                *retlen = _ppport_MIN(*retlen, curlen);
-            }
-            return UNICODE_REPLACEMENT;
-        }
-        else {
-
-            /* On versions that correctly detect overflow, but forbid it
-             * always, 0 will be returned, but also a warning will have been
-             * raised.  Don't repeat it */
-            if (ret != 0) {
-                /* We use the error message in use from 5.8-5.14 */
-                Perl_warner(aTHX_ packWARN(WARN_UTF8),
-                    "Malformed UTF-8 character (overflow at 0x%" UVxf
-                    ", byte 0x%02x, after start byte 0x%02x)",
-                    ret, *cur_s, *s);
-            }
-            if (retlen) {
-                *retlen = (STRLEN) -1;
-            }
-            return 0;
-        }
-    }
-
-    /* If failed and warnings are off, to emulate the behavior of the real
-     * utf8_to_uvchr(), try again, allowing anything.  (Note a return of 0 is
-     * ok if the input was '\0') */
-    if (UNLIKELY(ret == 0 && (curlen == 0 || *s != '\0'))) {
-
-        /* If curlen is 0, we already handled the case where warnings are
-         * disabled, so this 'if' will be true, and we won't look at the
-         * contents of 's' */
-        if (do_warnings) {
-            *retlen = (STRLEN) -1;
-        }
-        else {
-            ret = _ppport_utf8_to_uvchr_buf_callee(
-                                            s, curlen, retlen, UTF8_ALLOW_ANY);
-            /* Override with the REPLACEMENT character, as that is what the
-             * modern version of this function returns */
-            ret = UNICODE_REPLACEMENT;
-
-#           if { VERSION < 5.16.0 }
-
-            /* Versions earlier than this don't necessarily return the proper
-             * length.  It should not extend past the end of string, nor past
-             * what the first byte indicates the length is, nor past the
-             * continuation characters */
-            if (retlen && *retlen >= 0) {
-                *retlen = _ppport_MIN(*retlen, curlen);
-                *retlen = _ppport_MIN(*retlen, UTF8SKIP(s));
-                unsigned int i = 1;
-                do {
-                    if (s[i] < 0x80 || s[i] > 0xBF) {
-                        *retlen = i;
-                        break;
-                    }
-                } while (++i < *retlen);
-            }
-
-#           endif
-
-        }
-    }
-
-    return ret;
-}
-
-#  endif
-#endif
-#endif
-
-#if defined(UTF8SKIP) && defined(utf8_to_uvchr_buf)
-#undef utf8_to_uvchr /* Always redefine this unsafe function so that it refuses
-                        to read past a NUL, making it much less likely to read
-                        off the end of the buffer.  A NUL indicates the start
-                        of the next character anyway.  If the input isn't
-                        NUL-terminated, the function remains unsafe, as it
-                        always has been. */
-
-__UNDEFINED__  utf8_to_uvchr(s, lp)                                             \
-    ((*(s) == '\0')                                                             \
-    ? utf8_to_uvchr_buf(s,((s)+1), lp) /* Handle single NUL specially */        \
-    : utf8_to_uvchr_buf(s, (s) + my_strnlen((char *) (s), UTF8SKIP(s)), (lp)))
-
-#endif
-
 =xsinit
 
 #define NEED_my_strnlen
-#define NEED_utf8_to_uvchr_buf
 
 =xsubs
 
@@ -353,16 +142,6 @@ XPUSHu()
                 XSRETURN(1);
 
 STRLEN
-UTF8_SAFE_SKIP(s, adjustment)
-        unsigned char * s
-        int adjustment
-        CODE:
-            /* Instead of passing in an 'e' ptr, use the real end, adjusted */
-            RETVAL = UTF8_SAFE_SKIP(s, s + UTF8SKIP(s) + adjustment);
-        OUTPUT:
-            RETVAL
-
-STRLEN
 my_strnlen(s, max)
         char * s
         STRLEN max
@@ -371,169 +150,18 @@ my_strnlen(s, max)
         OUTPUT:
             RETVAL
 
-AV *
-utf8_to_uvchr_buf(s, adjustment)
-        unsigned char *s
-        int adjustment
-        PREINIT:
-            AV *av;
-            STRLEN len;
-        CODE:
-            av = newAV();
-            av_push(av, newSVuv(utf8_to_uvchr_buf(s,
-                                                  s + UTF8SKIP(s) + adjustment,
-                                                  &len)));
-            if (len == (STRLEN) -1) {
-                av_push(av, newSViv(-1));
-            }
-            else {
-                av_push(av, newSVuv(len));
-            }
-            RETVAL = av;
-        OUTPUT:
-                RETVAL
+=tests plan => 11
 
-AV *
-utf8_to_uvchr(s)
-        unsigned char *s
-        PREINIT:
-            AV *av;
-            STRLEN len;
-        CODE:
-            av = newAV();
-            av_push(av, newSVuv(utf8_to_uvchr(s, &len)));
-            if (len == (STRLEN) -1) {
-                av_push(av, newSViv(-1));
-            }
-            else {
-                av_push(av, newSVuv(len));
-            }
-            RETVAL = av;
-        OUTPUT:
-                RETVAL
+BEGIN { require warnings if "$]" > '5.006' }
 
-=tests plan => 52
-
-ok(&Devel::PPPort::sv_setuv(42), 42);
-ok(&Devel::PPPort::newSVuv(123), 123);
-ok(&Devel::PPPort::sv_2uv("4711"), 4711);
-ok(&Devel::PPPort::sv_2uv("1735928559"), 1735928559);
-ok(&Devel::PPPort::SvUVx("1735928559"), 1735928559);
-ok(&Devel::PPPort::SvUVx(1735928559), 1735928559);
-ok(&Devel::PPPort::SvUVx(0xdeadbeef), 0xdeadbeef);
-ok(&Devel::PPPort::XSRETURN_UV(), 42);
-ok(&Devel::PPPort::PUSHu(), 42);
-ok(&Devel::PPPort::XPUSHu(), 43);
-ok(&Devel::PPPort::UTF8_SAFE_SKIP("A", 0), 1);
-ok(&Devel::PPPort::UTF8_SAFE_SKIP("A", -1), 0);
-ok(&Devel::PPPort::my_strnlen("abc\0def", 7), 3);
-
-my $ret = &Devel::PPPort::utf8_to_uvchr("A");
-ok($ret->[0], ord("A"));
-ok($ret->[1], 1);
-
-$ret = &Devel::PPPort::utf8_to_uvchr("\0");
-ok($ret->[0], 0);
-ok($ret->[1], 1);
-
-$ret = &Devel::PPPort::utf8_to_uvchr_buf("A", 0);
-ok($ret->[0], ord("A"));
-ok($ret->[1], 1);
-
-$ret = &Devel::PPPort::utf8_to_uvchr_buf("\0", 0);
-ok($ret->[0], 0);
-ok($ret->[1], 1);
-
-if (ord("A") != 65) {   # tests not valid for EBCDIC
-    ok(1, 1) for 1 .. (2 + 4 + (5 * 5));
-}
-else {
-    $ret = &Devel::PPPort::utf8_to_uvchr_buf("\xc4\x80", 0);
-    ok($ret->[0], 0x100);
-    ok($ret->[1], 2);
-
-    my @warnings;
-    local $SIG{__WARN__} = sub { push @warnings, @_; };
-
-    {
-        use warnings 'utf8';
-        $ret = &Devel::PPPort::utf8_to_uvchr("\xe0\0\x80");
-        ok($ret->[0], 0);
-        ok($ret->[1], -1);
-
-        no warnings;
-        $ret = &Devel::PPPort::utf8_to_uvchr("\xe0\0\x80");
-        ok($ret->[0], 0xFFFD);
-        ok($ret->[1], 1);
-    }
-
-    my @buf_tests = (
-        {
-            input      => "A",
-            adjustment => -1,
-            warning    => qr/empty/,
-            no_warnings_returned_length => 0,
-        },
-        {
-            input      => "\xc4\xc5",
-            adjustment => 0,
-            warning    => qr/non-continuation/,
-            no_warnings_returned_length => 1,
-        },
-        {
-            input      => "\xc4\x80",
-            adjustment => -1,
-            warning    => qr/short|1 byte, need 2/,
-            no_warnings_returned_length => 1,
-        },
-        {
-            input      => "\xc0\x81",
-            adjustment => 0,
-            warning    => qr/overlong|2 bytes, need 1/,
-            no_warnings_returned_length => 2,
-        },
-        {                 # Old algorithm supposedly failed to detect this
-            input      => "\xff\x80\x90\x90\x90\xbf\xbf\xbf\xbf\xbf\xbf\xbf\xbf",
-            adjustment => 0,
-            warning    => qr/overflow/,
-            no_warnings_returned_length => 13,
-        },
-    );
-
-    # An empty input is an assertion failure on debugging builds.  It is
-    # deliberately the first test.
-    require Config; import Config;
-    use vars '%Config';
-    if ($Config{ccflags} =~ /-DDEBUGGING/) {
-        shift @buf_tests;
-        ok(1, 1) for 1..5;
-    }
-
-    for my $test (@buf_tests) {
-        my $input = $test->{'input'};
-        my $adjustment = $test->{'adjustment'};
-        my $display = 'utf8_to_uvchr_buf("';
-        for (my $i = 0; $i < length($input) + $adjustment; $i++) {
-            $display .= sprintf "\\x%02x", ord substr($input, $i, 1);
-        }
-
-        $display .= '")';
-        my $warning = $test->{'warning'};
-
-        undef @warnings;
-        use warnings 'utf8';
-        $ret = &Devel::PPPort::utf8_to_uvchr_buf($input, $adjustment);
-        ok($ret->[0], 0,  "returned value $display; warnings enabled");
-        ok($ret->[1], -1, "returned length $display; warnings enabled");
-        my $all_warnings = join "; ", @warnings;
-        my $contains = grep { $_ =~ $warning } $all_warnings;
-        ok($contains, 1, $display . "; '$all_warnings' contains '$warning'");
-
-        undef @warnings;
-        no warnings 'utf8';
-        $ret = &Devel::PPPort::utf8_to_uvchr_buf($input, $adjustment);
-        ok($ret->[0], 0xFFFD,  "returned value $display; warnings disabled");
-        ok($ret->[1], $test->{'no_warnings_returned_length'},
-                      "returned length $display; warnings disabled");
-    }
-}
+is(&Devel::PPPort::sv_setuv(42), 42);
+is(&Devel::PPPort::newSVuv(123), 123);
+is(&Devel::PPPort::sv_2uv("4711"), 4711);
+is(&Devel::PPPort::sv_2uv("1735928559"), 1735928559);
+is(&Devel::PPPort::SvUVx("1735928559"), 1735928559);
+is(&Devel::PPPort::SvUVx(1735928559), 1735928559);
+is(&Devel::PPPort::SvUVx(0xdeadbeef), 0xdeadbeef);
+is(&Devel::PPPort::XSRETURN_UV(), 42);
+is(&Devel::PPPort::PUSHu(), 42);
+is(&Devel::PPPort::XPUSHu(), 43);
+is(&Devel::PPPort::my_strnlen("abc\0def", 7), 3);

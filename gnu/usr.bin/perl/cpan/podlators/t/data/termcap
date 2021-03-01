@@ -6,3 +6,4 @@
 # provide this file anyway to ensure the test suite will still run.
 
 xterm:co=#80:do=^J:md=\E[1m:us=\E[4m:me=\E[m
+unknown:co=#80:do=^J

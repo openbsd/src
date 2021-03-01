@@ -6,7 +6,7 @@ use warnings;
 use autodie::Scope::Guard;
 
 # ABSTRACT: Hook stack for managing scopes via %^H
-our $VERSION = '2.29'; # VERSION
+our $VERSION = '2.32'; # VERSION
 
 my $H_KEY_STEM = __PACKAGE__ . '/guard';
 my $COUNTER = 0;

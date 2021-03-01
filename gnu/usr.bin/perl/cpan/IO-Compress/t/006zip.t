@@ -19,7 +19,7 @@ BEGIN {
     $extra = 1
         if eval { require Test::NoWarnings ;  import Test::NoWarnings; 1 };
 
-    plan tests => 101 + $extra ;
+    plan tests => 108 + $extra ;
 
     use_ok('IO::Compress::Zip', qw(:all)) ;
     use_ok('IO::Uncompress::Unzip', qw(unzip $UnzipError)) ;
@@ -360,3 +360,45 @@ for my $method (ZIP_CM_DEFLATE, ZIP_CM_STORE, ZIP_CM_BZIP2)
     is $u->getHeaderInfo()->{Name}, "0", "Name is '0'";
 }
 
+
+{
+    title "nexStream regression";
+    # https://github.com/pmqs/IO-Compress/issues/3
+
+    my $lex = new LexFile my $file1;
+
+    my $content1 = qq["organisation_path","collection_occasion_key","episode_key"\n] ;
+                 
+    my $zip = new IO::Compress::Zip $file1,
+                    Name => "one";
+    isa_ok $zip, "IO::Compress::Zip";
+
+    print $zip $content1;
+
+    $zip->newStream(Name=> "two");
+
+    my $content2 = <<EOM;
+"key","value"
+"version","2"
+"type","PMHC"
+EOM
+    print $zip $content2;
+
+    ok $zip->close(), "closed";                    
+
+
+    my $u = new IO::Uncompress::Unzip $file1, Append => 1, @_
+        or die "Cannot open $file1: $UnzipError";
+
+    isa_ok $u, "IO::Uncompress::Unzip";
+
+    my $name = $u->getHeaderInfo()->{Name};
+    
+    is $u->getHeaderInfo()->{Name}, "one", "Name is 'one'";
+
+    ok $u->nextStream(), "nextStream OK";
+
+    my $line = <$u>;
+
+    is $line, qq["key","value"\n], "got line 1 from second member";
+}

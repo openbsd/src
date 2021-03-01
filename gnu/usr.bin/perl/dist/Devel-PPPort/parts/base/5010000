@@ -1,10 +1,16 @@
 5.010000
 hv_common                      # U
 hv_common_key_len              # U
+PERL_PV_PRETTY_ELLIPSES        # E
+reentrant_free                 # U
+reentrant_init                 # U
+reentrant_retry                # U
+reentrant_size                 # U
+START_MY_CXT                   # E
 sv_destroyable                 # U
 sys_init                       # U
 sys_init3                      # U
 sys_term                       # U
-PERL_PV_PRETTY_ELLIPSES        # added by devel/scanprov
-PERL_PV_PRETTY_NOCLEAR         # added by devel/scanprov
-XSPROTO                        # added by devel/scanprov
+PERL_PV_PRETTY_NOCLEAR         # M added by devel/scanprov
+XSPROTO                        # M added by devel/scanprov
+sv_2num                        # F added by devel/scanprov

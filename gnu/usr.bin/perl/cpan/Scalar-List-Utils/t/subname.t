@@ -3,10 +3,11 @@ use warnings;
 
 BEGIN { $^P |= 0x210 }
 
-use Test::More tests => 18;
+use Test::More tests => 21;
 
 use B::Deparse;
 use Sub::Util qw( subname set_subname );
+use Symbol qw( delete_package ) ;
 
 {
   sub localfunc {}
@@ -76,6 +77,20 @@ is($x->(), "main::foo");
 {
   is(subname(set_subname "my-scary-name-here", sub {}), "main::my-scary-name-here",
     'subname of set_subname');
+}
+
+# this used to segfault
+
+{
+    sub ToDelete::foo {}
+
+    my $foo = \&ToDelete::foo;
+
+    delete_package 'ToDelete';
+
+    is( subname($foo), "$]" >= 5.010 ? '__ANON__::foo' : 'ToDelete::foo', 'subname in deleted package' );
+    ok( set_subname('NewPackage::foo', $foo), 'rename from deleted package' );
+    is( subname($foo), 'NewPackage::foo', 'subname after rename' );
 }
 
 # vim: ft=perl

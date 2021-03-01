@@ -56,7 +56,7 @@ $N = 1;
 
 $ELAPSED = 0;
 
-my $LONG_RUN = 10;
+my $LONG_RUN = 11;
 
 while (1) {
   my $start = time;
@@ -88,10 +88,11 @@ $COUNT=0;
 $start = time;
 $RESULT2 = fib($N);
 $ELAPSED2 = time - $start + .001; # prevent division by 0 errors
-
 print (($RESULT == $RESULT2) ? "ok 1\n" : "not ok 1\n");
 # If it's not ten times as fast, something is seriously wrong.
+print "# ELAPSED2=$ELAPSED2 seconds.\n";
 print (($ELAPSED/$ELAPSED2 > 10) ? "ok 2\n" : "not ok 2\n");
+
 # If it called the function more than $N times, it wasn't memoized properly
 print (($COUNT > $N) ? "ok 3\n" : "not ok 3\n");
 
@@ -100,8 +101,8 @@ $COUNT = 0;
 $start = time;
 $RESULT2 = fib($N);
 $ELAPSED2 = time - $start + .001; # prevent division by 0 errors
-
 print (($RESULT == $RESULT2) ? "ok 4\n" : "not ok 4\n");
+print "# ELAPSED2=$ELAPSED2 seconds.\n";
 print (($ELAPSED/$ELAPSED2 > 10) ? "ok 5\n" : "not ok 5\n");
 # This time it shouldn't have called the function at all.
 print ($COUNT == 0 ? "ok 6\n" : "not ok 6\n");

@@ -1,2 +1,11 @@
 5.015006
 newCONSTSUB_flags              # A
+check_locale_boundary_crossing # F added by devel/scanprov
+mayberelocate                  # F added by devel/scanprov
+minus_v                        # F added by devel/scanprov
+newXS_len_flags                # F added by devel/scanprov
+report_redefined_cv            # F added by devel/scanprov
+_to_utf8_lower_flags           # F added by devel/scanprov
+_to_utf8_title_flags           # F added by devel/scanprov
+_to_utf8_upper_flags           # F added by devel/scanprov
+translate_substr_offsets       # F added by devel/scanprov

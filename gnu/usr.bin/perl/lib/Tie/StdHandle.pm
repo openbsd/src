@@ -4,7 +4,7 @@ use strict;
 
 use Tie::Handle;
 our @ISA = 'Tie::Handle';
-our $VERSION = '4.5';
+our $VERSION = '4.6';
 
 =head1 NAME
 
@@ -48,7 +48,7 @@ sub TELL    { tell($_[0]) }
 sub FILENO  { fileno($_[0]) }
 sub SEEK    { seek($_[0],$_[1],$_[2]) }
 sub CLOSE   { close($_[0]) }
-sub BINMODE { binmode($_[0]) }
+sub BINMODE { &CORE::binmode(shift, @_) }
 
 sub OPEN
 {

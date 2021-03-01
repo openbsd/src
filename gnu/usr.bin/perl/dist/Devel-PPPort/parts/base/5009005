@@ -1,32 +1,69 @@
 5.009005
-PL_parser                      # E
-SvRX                           # U
-SvRXOK                         # U
+av_create_and_push             # U
+av_create_and_unshift_one      # U
+CopLABEL                       # U
 get_cvn_flags                  # U
 gv_fetchfile_flags             # U
+lex_start                      # E (Perl_lex_start)
+memEQs                         # U
+memNEs                         # U
 mro_get_linear_isa             # U
 mro_method_changed_in          # U
 my_dirfd                       # U
 newSV_type                     # U
+PERL_PV_ESCAPE_RE              # E
+Perl_signbit                   # U
+PL_parser                      # E
 pregcomp                       # E (Perl_pregcomp)
+ptr_table_clear                # U
 ptr_table_fetch                # U
 ptr_table_free                 # U
 ptr_table_new                  # U
 ptr_table_split                # U
 ptr_table_store                # U
 re_compile                     # U
+regfree_internal               # U
 reg_named_buff_all             # U
 reg_named_buff_exists          # U
 reg_named_buff_fetch           # U
 reg_named_buff_firstkey        # U
 reg_named_buff_nextkey         # U
 reg_named_buff_scalar          # U
-regfree_internal               # U
 savesharedpvn                  # U
 scan_vstring                   # E (Perl_scan_vstring)
+SVfARG                         # U
+SvRX                           # U
+SvRXOK                         # U
 upg_version                    # E (Perl_upg_version)
-PERL_PV_ESCAPE_RE              # added by devel/scanprov
-SV_COW_SHARED_HASH_KEYS        # added by devel/scanprov
-SVfARG                         # added by devel/scanprov
-memEQs                         # added by devel/scanprov
-memNEs                         # added by devel/scanprov
+GV_NOADD_MASK                  # M added by devel/scanprov
+SV_COW_SHARED_HASH_KEYS        # M added by devel/scanprov
+boot_core_mro                  # F added by devel/scanprov
+find_and_forget_pmops          # F added by devel/scanprov
+mro_get_linear_isa_dfs         # F added by devel/scanprov
+mro_isa_changed_in             # F added by devel/scanprov
+mro_meta_dup                   # F added by devel/scanprov
+parser_free                    # F added by devel/scanprov
+Perl_emulate_cop_io            # F added by devel/scanprov
+Perl_get_db_sub                # F added by devel/scanprov
+Perl_get_re_arg                # F added by devel/scanprov
+Perl_mro_meta_init             # F added by devel/scanprov
+Perl_my_cxt_index              # F added by devel/scanprov
+Perl_op_refcnt_dec             # F added by devel/scanprov
+Perl_op_refcnt_inc             # F added by devel/scanprov
+Perl_softref2xv                # F added by devel/scanprov
+process_special_blocks         # F added by devel/scanprov
+reg_check_named_buff_matched   # F added by devel/scanprov
+regdump_extflags               # F added by devel/scanprov
+reghop4                        # F added by devel/scanprov
+reg_named_buff                 # F added by devel/scanprov
+reg_named_buff_iter            # F added by devel/scanprov
+reg_numbered_buff_fetch        # F added by devel/scanprov
+reg_numbered_buff_length       # F added by devel/scanprov
+reg_numbered_buff_store        # F added by devel/scanprov
+reg_qr_package                 # F added by devel/scanprov
+reg_scan_name                  # F added by devel/scanprov
+reg_skipcomment                # F added by devel/scanprov
+reg_temp_copy                  # F added by devel/scanprov
+require_tie_mod                # F added by devel/scanprov
+Slab_to_rw                     # F added by devel/scanprov
+update_debugger_info           # F added by devel/scanprov

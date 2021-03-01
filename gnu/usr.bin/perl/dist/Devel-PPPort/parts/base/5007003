@@ -1,7 +1,31 @@
 5.007003
+ckWARN3                        # U
+ckWARN3_d                      # U
+ckWARN4                        # U
+ckWARN4_d                      # U
+custom_op_desc                 # U
+custom_op_name                 # U
+cx_dup                         # E (Perl_cx_dup)
+deb                            # U
+deb_nocontext                  # U
+debstack                       # U
+debstackptrs                   # U
+fp_dup                         # A
+gp_dup                         # E (Perl_gp_dup)
+grok_bin                       # U
+grok_hex                       # U
+grok_oct                       # U
+gv_fetchmeth_autoload          # U
+he_dup                         # E (Perl_he_dup)
+ibcmp_utf8                     # U
+IS_NUMBER_NAN                  # E
+mg_dup                         # E (Perl_mg_dup)
+my_fork                        # U
+my_socketpair                  # U
 OP_DESC                        # U
 OP_NAME                        # U
-PL_peepp                       # E
+perl_destruct                  # E (perl_destruct)
+PERL_EXIT_DESTRUCT_END         # E
 PerlIO_clearerr                # U (PerlIO_clearerr)
 PerlIO_close                   # U (PerlIO_close)
 PerlIO_eof                     # U (PerlIO_eof)
@@ -16,63 +40,51 @@ PerlIO_get_ptr                 # U (PerlIO_get_ptr)
 PerlIO_read                    # U (PerlIO_read)
 PerlIO_seek                    # U (PerlIO_seek)
 PerlIO_set_cnt                 # U (PerlIO_set_cnt)
-PerlIO_set_ptrcnt              # U (PerlIO_set_ptrcnt)
 PerlIO_setlinebuf              # U (PerlIO_setlinebuf)
+PerlIO_set_ptrcnt              # U (PerlIO_set_ptrcnt)
 PerlIO_stderr                  # U (PerlIO_stderr)
 PerlIO_stdin                   # U (PerlIO_stdin)
 PerlIO_stdout                  # U (PerlIO_stdout)
 PerlIO_tell                    # U (PerlIO_tell)
 PerlIO_unread                  # U (PerlIO_unread)
 PerlIO_write                   # U (PerlIO_write)
-SvLOCK                         # U
-SvSHARE                        # U
-SvUNLOCK                       # U
-atfork_lock                    # U
-atfork_unlock                  # U
-custom_op_desc                 # U
-custom_op_name                 # U
-deb                            # U
-debstack                       # U
-debstackptrs                   # U
-grok_bin                       # U
-grok_hex                       # U
-grok_oct                       # U
-gv_fetchmeth_autoload          # U
-ibcmp_utf8                     # U
-my_fork                        # U
-my_socketpair                  # U
-pack_cat                       # U
-perl_destruct                  # E (perl_destruct)
+PERL_MAGIC_shared              # E
+PERL_MAGIC_shared_scalar       # E
+PERL_MAGIC_uvar_elem           # E
+PERL_SCAN_ALLOW_UNDERSCORES    # E
+PERL_SCAN_DISALLOW_PREFIX      # E
+PERL_SCAN_GREATER_THAN_UV_MAX  # E
+PL_peepp                       # E
 pv_uni_display                 # U
-save_shared_pvref              # U
+rvpv_dup                       # E
 savesharedpv                   # U
+save_shared_pvref              # U
+si_dup                         # E (Perl_si_dup)
 sortsv                         # U
+ss_dup                         # E (Perl_ss_dup)
+sv_copypv                      # U
+sv_dup                         # E (Perl_sv_dup)
+SvLOCK                         # U
 sv_magicext                    # U
 sv_nolocking                   # U
 sv_nosharing                   # U
+sv_nounlocking                 # U
 sv_pvn_nomg                    # U
 sv_recode_to_utf8              # U
+SvSHARE                        # U
 sv_uni_display                 # U
+SvUNLOCK                       # U
 unpack_str                     # U
 uvchr_to_utf8_flags            # U
-uvuni_to_utf8_flags            # U
 vdeb                           # U
-IS_NUMBER_NAN                  # added by devel/scanprov
-MY_CXT                         # added by devel/scanprov
-MY_CXT_INIT                    # added by devel/scanprov
-PERL_MAGIC_shared              # added by devel/scanprov
-PERL_MAGIC_shared_scalar       # added by devel/scanprov
-PERL_MAGIC_uvar_elem           # added by devel/scanprov
-PERL_SCAN_ALLOW_UNDERSCORES    # added by devel/scanprov
-PERL_SCAN_DISALLOW_PREFIX      # added by devel/scanprov
-PERL_SCAN_GREATER_THAN_UV_MAX  # added by devel/scanprov
-START_MY_CXT                   # added by devel/scanprov
-_aMY_CXT                       # added by devel/scanprov
-_pMY_CXT                       # added by devel/scanprov
-aMY_CXT                        # added by devel/scanprov
-aMY_CXT_                       # added by devel/scanprov
-dMY_CXT                        # added by devel/scanprov
-dMY_CXT_SV                     # added by devel/scanprov
-pMY_CXT                        # added by devel/scanprov
-pMY_CXT_                       # added by devel/scanprov
-packWARN                       # added by devel/scanprov
+dMY_CXT_SV                     # M added by devel/scanprov
+packWARN                       # M added by devel/scanprov
+_pMY_CXT                       # M added by devel/scanprov
+pMY_CXT_                       # M added by devel/scanprov
+apply_attrs_my                 # F added by devel/scanprov
+group_end                      # F added by devel/scanprov
+init_argv_symbols              # F added by devel/scanprov
+measure_struct                 # F added by devel/scanprov
+next_symbol                    # F added by devel/scanprov
+Slab_Free                      # F added by devel/scanprov
+uvuni_to_utf8_flags            # F added by devel/scanprov

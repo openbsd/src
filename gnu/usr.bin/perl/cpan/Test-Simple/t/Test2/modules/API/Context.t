@@ -477,4 +477,30 @@ sub {
 
 }->();
 
+sub ctx_destroy_test {
+    my (undef, undef, $line1) = caller();
+    my (@warn, $line2);
+    local $SIG{__WARN__} = sub { push @warn => $_[0] };
+
+    { my $ctx = context(); $ctx = undef } $line2 = __LINE__;
+
+    use Data::Dumper;
+#    print Dumper(@warn);
+
+    like($warn[0], qr/context appears to have been destroyed without first calling release/, "Is normal context warning");
+    like($warn[0], qr{\QContext destroyed at ${ \__FILE__ } line $line2\E}, "Reported context destruction trace");
+
+    my $created = <<"    EOT";
+Here are the context creation details, just in case a tool forgot to call
+release():
+  File: ${ \__FILE__ }
+  Line: $line1
+  Tool: main::ctx_destroy_test
+    EOT
+
+    like($warn[0], qr{\Q$created\E}, "Reported context creation details");
+};
+
+ctx_destroy_test();
+
 done_testing;
