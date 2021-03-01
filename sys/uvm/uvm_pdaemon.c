@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.88 2020/11/24 13:49:09 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.89 2021/03/01 09:13:33 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -460,7 +460,13 @@ uvmpd_scan_inactive(struct pglist *pglst)
 			if (p->pg_flags & PQ_ANON) {
 				anon = p->uanon;
 				KASSERT(anon != NULL);
+				if (rw_enter(anon->an_lock,
+				    RW_WRITE|RW_NOSLEEP)) {
+					/* lock failed, skip this page */
+					continue;
+				}
 				if (p->pg_flags & PG_BUSY) {
+					rw_exit(anon->an_lock);
 					uvmexp.pdbusy++;
 					/* someone else owns page, skip it */
 					continue;
@@ -504,6 +510,7 @@ uvmpd_scan_inactive(struct pglist *pglst)
 
 					/* remove from object */
 					anon->an_page = NULL;
+					rw_exit(anon->an_lock);
 				}
 				continue;
 			}
@@ -513,6 +520,9 @@ uvmpd_scan_inactive(struct pglist *pglst)
 			 * free target when all the current pageouts complete.
 			 */
 			if (free + uvmexp.paging > uvmexp.freetarg << 2) {
+				if (anon) {
+					rw_exit(anon->an_lock);
+				}
 				continue;
 			}
 
@@ -525,6 +535,9 @@ uvmpd_scan_inactive(struct pglist *pglst)
 			if ((p->pg_flags & PQ_SWAPBACKED) && uvm_swapisfull()) {
 				dirtyreacts++;
 				uvm_pageactivate(p);
+				if (anon) {
+					rw_exit(anon->an_lock);
+				}
 				continue;
 			}
 
@@ -591,6 +604,8 @@ uvmpd_scan_inactive(struct pglist *pglst)
 						    &p->pg_flags,
 						    PG_BUSY);
 						UVM_PAGE_OWN(p, NULL);
+						if (anon)
+							rw_exit(anon->an_lock);
 						continue;
 					}
 					swcpages = 0;	/* cluster is empty */
@@ -622,6 +637,9 @@ uvmpd_scan_inactive(struct pglist *pglst)
 		 */
 		if (swap_backed) {
 			if (p) {	/* if we just added a page to cluster */
+				if (anon)
+					rw_exit(anon->an_lock);
+
 				/* cluster not full yet? */
 				if (swcpages < swnpages)
 					continue;
@@ -730,6 +748,12 @@ uvmpd_scan_inactive(struct pglist *pglst)
 			/* relock p's object: page queues not lock yet, so
 			 * no need for "try" */
 
+			/* !swap_backed case: already locked... */
+			if (swap_backed) {
+				if (anon)
+					rw_enter(anon->an_lock, RW_WRITE);
+			}
+
 #ifdef DIAGNOSTIC
 			if (result == VM_PAGER_UNLOCK)
 				panic("pagedaemon: pageout returned "
@@ -754,6 +778,7 @@ uvmpd_scan_inactive(struct pglist *pglst)
 				anon->an_page = NULL;
 				p->uanon = NULL;
 
+				rw_exit(anon->an_lock);
 				uvm_anfree(anon);	/* kills anon */
 				pmap_page_protect(p, PROT_NONE);
 				anon = NULL;
@@ -787,6 +812,8 @@ uvmpd_scan_inactive(struct pglist *pglst)
 			 * the inactive queue can't be re-queued [note: not
 			 * true for active queue]).
 			 */
+			if (anon)
+				rw_exit(anon->an_lock);
 
 			if (nextpg && (nextpg->pg_flags & PQ_INACTIVE) == 0) {
 				nextpg = TAILQ_FIRST(pglst);	/* reload! */
@@ -893,9 +920,11 @@ uvmpd_scan(void)
 		if (p->pg_flags & PG_BUSY)
 			continue;
 
-		if (p->pg_flags & PQ_ANON)
+		if (p->pg_flags & PQ_ANON) {
 			KASSERT(p->uanon != NULL);
-		else
+			if (rw_enter(p->uanon->an_lock, RW_WRITE|RW_NOSLEEP))
+				continue;
+		} else
 			KASSERT(p->uobject != NULL);
 
 		/*
@@ -932,6 +961,8 @@ uvmpd_scan(void)
 			uvmexp.pddeact++;
 			inactive_shortage--;
 		}
+		if (p->pg_flags & PQ_ANON)
+			rw_exit(p->uanon->an_lock);
 	}
 }
 
