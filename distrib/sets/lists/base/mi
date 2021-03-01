@@ -185,6 +185,7 @@
 ./etc/rc.d/rbootd
 ./etc/rc.d/rc.subr
 ./etc/rc.d/relayd
+./etc/rc.d/resolvd
 ./etc/rc.d/ripd
 ./etc/rc.d/route6d
 ./etc/rc.d/sasyncd
