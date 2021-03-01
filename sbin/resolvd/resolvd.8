@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolvd.8,v 1.4 2021/02/27 15:20:54 florian Exp $
+.\"	$OpenBSD: resolvd.8,v 1.5 2021/03/01 05:15:37 deraadt Exp $
 .\"
 .\" Copyright (c) 2021 Florian Obser <florian@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 27 2021 $
+.Dd $Mdocdate: March 1 2021 $
 .Dt RESOLVD 8
 .Os
 .Sh NAME
@@ -34,7 +34,7 @@ read by the resolver routines in the C library.
 checks whether
 .Xr unwind 8
 is running and
-monitors the routing socket for proposals send by
+monitors the routing socket for proposals sent by
 .Xr dhclient 8 ,
 .Xr slaacd 8 ,
 or network devices which learn DNS information such as
