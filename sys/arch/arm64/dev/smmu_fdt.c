@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu_fdt.c,v 1.1 2021/02/28 21:39:31 patrick Exp $ */
+/* $OpenBSD: smmu_fdt.c,v 1.2 2021/03/01 21:35:03 patrick Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -70,6 +70,7 @@ smmu_fdt_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	sc->sc_dmat = faa->fa_dmat;
 	sc->sc_iot = faa->fa_iot;
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
 	    faa->fa_reg[0].size, 0, &sc->sc_ioh)) {

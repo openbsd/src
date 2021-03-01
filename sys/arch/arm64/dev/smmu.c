@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu.c,v 1.1 2021/02/28 21:39:31 patrick Exp $ */
+/* $OpenBSD: smmu.c,v 1.2 2021/03/01 21:35:03 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
@@ -514,33 +514,25 @@ smmu_device_hook(struct smmu_softc *sc, uint32_t sid, bus_dma_tag_t dmat)
 	dom = smmu_domain_lookup(sc, sid);
 	if (dom == NULL)
 		return dmat;
-	if (dom->sd_parent_dmat == NULL)
-		dom->sd_parent_dmat = dmat;
-	if (dom->sd_parent_dmat != dmat &&
-	    memcmp(dom->sd_parent_dmat, dmat, sizeof(*dmat)) != 0) {
-		printf("%s: different dma tag for same stream\n",
-		    sc->sc_dev.dv_xname);
-		return dmat;
-	}
 
-	if (dom->sd_device_dmat == NULL) {
-		dom->sd_device_dmat = malloc(sizeof(*dom->sd_device_dmat),
+	if (dom->sd_dmat == NULL) {
+		dom->sd_dmat = malloc(sizeof(*dom->sd_dmat),
 		    M_DEVBUF, M_WAITOK);
-		memcpy(dom->sd_device_dmat, dom->sd_parent_dmat,
-		    sizeof(*dom->sd_device_dmat));
-		dom->sd_device_dmat->_cookie = dom;
-		dom->sd_device_dmat->_dmamap_create = smmu_dmamap_create;
-		dom->sd_device_dmat->_dmamap_destroy = smmu_dmamap_destroy;
-		dom->sd_device_dmat->_dmamap_load = smmu_dmamap_load;
-		dom->sd_device_dmat->_dmamap_load_mbuf = smmu_dmamap_load_mbuf;
-		dom->sd_device_dmat->_dmamap_load_uio = smmu_dmamap_load_uio;
-		dom->sd_device_dmat->_dmamap_load_raw = smmu_dmamap_load_raw;
-		dom->sd_device_dmat->_dmamap_unload = smmu_dmamap_unload;
-		dom->sd_device_dmat->_dmamap_sync = smmu_dmamap_sync;
-		dom->sd_device_dmat->_dmamem_map = smmu_dmamem_map;
+		memcpy(dom->sd_dmat, sc->sc_dmat,
+		    sizeof(*dom->sd_dmat));
+		dom->sd_dmat->_cookie = dom;
+		dom->sd_dmat->_dmamap_create = smmu_dmamap_create;
+		dom->sd_dmat->_dmamap_destroy = smmu_dmamap_destroy;
+		dom->sd_dmat->_dmamap_load = smmu_dmamap_load;
+		dom->sd_dmat->_dmamap_load_mbuf = smmu_dmamap_load_mbuf;
+		dom->sd_dmat->_dmamap_load_uio = smmu_dmamap_load_uio;
+		dom->sd_dmat->_dmamap_load_raw = smmu_dmamap_load_raw;
+		dom->sd_dmat->_dmamap_unload = smmu_dmamap_unload;
+		dom->sd_dmat->_dmamap_sync = smmu_dmamap_sync;
+		dom->sd_dmat->_dmamem_map = smmu_dmamem_map;
 	}
 
-	return dom->sd_device_dmat;
+	return dom->sd_dmat;
 }
 
 void
@@ -1265,7 +1257,7 @@ smmu_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 {
 	struct smmu_domain *dom = t->_cookie;
 
-	return dom->sd_parent_dmat->_dmamap_create(dom->sd_parent_dmat, size,
+	return dom->sd_sc->sc_dmat->_dmamap_create(dom->sd_sc->sc_dmat, size,
 	    nsegments, maxsegsz, boundary, flags, dmamp);
 }
 
@@ -1274,7 +1266,7 @@ smmu_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	struct smmu_domain *dom = t->_cookie;
 
-	dom->sd_parent_dmat->_dmamap_destroy(dom->sd_parent_dmat, map);
+	dom->sd_sc->sc_dmat->_dmamap_destroy(dom->sd_sc->sc_dmat, map);
 }
 
 int
@@ -1284,14 +1276,14 @@ smmu_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	struct smmu_domain *dom = t->_cookie;
 	int error;
 
-	error = dom->sd_parent_dmat->_dmamap_load(dom->sd_parent_dmat, map,
+	error = dom->sd_sc->sc_dmat->_dmamap_load(dom->sd_sc->sc_dmat, map,
 	    buf, buflen, p, flags);
 	if (error)
 		return error;
 
 	error = smmu_load_map(dom, map);
 	if (error)
-		dom->sd_parent_dmat->_dmamap_unload(dom->sd_parent_dmat, map);
+		dom->sd_sc->sc_dmat->_dmamap_unload(dom->sd_sc->sc_dmat, map);
 
 	return error;
 }
@@ -1303,14 +1295,14 @@ smmu_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	struct smmu_domain *dom = t->_cookie;
 	int error;
 
-	error = dom->sd_parent_dmat->_dmamap_load_mbuf(dom->sd_parent_dmat, map,
+	error = dom->sd_sc->sc_dmat->_dmamap_load_mbuf(dom->sd_sc->sc_dmat, map,
 	    m0, flags);
 	if (error)
 		return error;
 
 	error = smmu_load_map(dom, map);
 	if (error)
-		dom->sd_parent_dmat->_dmamap_unload(dom->sd_parent_dmat, map);
+		dom->sd_sc->sc_dmat->_dmamap_unload(dom->sd_sc->sc_dmat, map);
 
 	return error;
 }
@@ -1322,14 +1314,14 @@ smmu_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	struct smmu_domain *dom = t->_cookie;
 	int error;
 
-	error = dom->sd_parent_dmat->_dmamap_load_uio(dom->sd_parent_dmat, map,
+	error = dom->sd_sc->sc_dmat->_dmamap_load_uio(dom->sd_sc->sc_dmat, map,
 	    uio, flags);
 	if (error)
 		return error;
 
 	error = smmu_load_map(dom, map);
 	if (error)
-		dom->sd_parent_dmat->_dmamap_unload(dom->sd_parent_dmat, map);
+		dom->sd_sc->sc_dmat->_dmamap_unload(dom->sd_sc->sc_dmat, map);
 
 	return error;
 }
@@ -1341,14 +1333,14 @@ smmu_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map, bus_dma_segment_t *segs,
 	struct smmu_domain *dom = t->_cookie;
 	int error;
 
-	error = dom->sd_parent_dmat->_dmamap_load_raw(dom->sd_parent_dmat, map,
+	error = dom->sd_sc->sc_dmat->_dmamap_load_raw(dom->sd_sc->sc_dmat, map,
 	    segs, nsegs, size, flags);
 	if (error)
 		return error;
 
 	error = smmu_load_map(dom, map);
 	if (error)
-		dom->sd_parent_dmat->_dmamap_unload(dom->sd_parent_dmat, map);
+		dom->sd_sc->sc_dmat->_dmamap_unload(dom->sd_sc->sc_dmat, map);
 
 	return error;
 }
@@ -1359,7 +1351,7 @@ smmu_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	struct smmu_domain *dom = t->_cookie;
 
 	smmu_unload_map(dom, map);
-	dom->sd_parent_dmat->_dmamap_unload(dom->sd_parent_dmat, map);
+	dom->sd_sc->sc_dmat->_dmamap_unload(dom->sd_sc->sc_dmat, map);
 }
 
 void
@@ -1367,7 +1359,7 @@ smmu_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t addr,
     bus_size_t size, int op)
 {
 	struct smmu_domain *dom = t->_cookie;
-	dom->sd_parent_dmat->_dmamap_sync(dom->sd_parent_dmat, map,
+	dom->sd_sc->sc_dmat->_dmamap_sync(dom->sd_sc->sc_dmat, map,
 	    addr, size, op);
 }
 
@@ -1379,7 +1371,7 @@ smmu_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	bus_addr_t addr, end;
 	int cache, seg, error;
 
-	error = dom->sd_parent_dmat->_dmamem_map(dom->sd_parent_dmat, segs,
+	error = dom->sd_sc->sc_dmat->_dmamem_map(dom->sd_sc->sc_dmat, segs,
 	    nsegs, size, kvap, flags);
 	if (error)
 		return error;

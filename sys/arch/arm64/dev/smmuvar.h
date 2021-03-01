@@ -1,4 +1,4 @@
-/* $OpenBSD: smmuvar.h,v 1.1 2021/02/28 21:39:31 patrick Exp $ */
+/* $OpenBSD: smmuvar.h,v 1.2 2021/03/01 21:35:03 patrick Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -19,8 +19,7 @@ struct smmu_softc;
 struct smmu_domain {
 	struct smmu_softc		*sd_sc;
 	uint32_t			 sd_sid;
-	bus_dma_tag_t			 sd_parent_dmat;
-	bus_dma_tag_t			 sd_device_dmat;
+	bus_dma_tag_t			 sd_dmat;
 	int				 sd_cb_idx;
 	int				 sd_smr_idx;
 	int				 sd_stage;
