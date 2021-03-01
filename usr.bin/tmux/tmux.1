@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.824 2021/02/26 07:53:26 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.825 2021/03/01 10:44:38 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 26 2021 $
+.Dd $Mdocdate: March 1 2021 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -521,6 +521,69 @@ Commands separated by semicolons together form a
 .Ql command sequence
 - if a command in the sequence encounters an error, no subsequent commands are
 executed.
+.Pp
+It is recommended that a semicolon used as a command separator should be
+written as an individual token, for example from
+.Xr sh 1 :
+.Bd -literal -offset indent
+$ tmux neww \\; splitw
+.Ed
+.Pp
+Or:
+.Bd -literal -offset indent
+$ tmux neww ';' splitw
+.Ed
+.Pp
+Or from the tmux command prompt:
+.Bd -literal -offset indent
+neww ; splitw
+.Ed
+.Pp
+However, a trailing semicolon is also interpreted as a command separator,
+for example in these
+.Xr sh 1
+commands:
+.Bd -literal -offset indent
+$ tmux neww\\; splitw
+.Ed
+.Pp
+Or:
+.Bd -literal -offset indent
+$ tmux 'neww;' splitw
+.Ed
+.Pp
+As in these examples, when running tmux from the shell extra care must be taken
+to properly quote semicolons:
+.Bl -enum -offset Ds
+.It
+Semicolons that should be interpreted as a command separator
+should be escaped according to the shell conventions.
+For
+.Xr sh 1
+this typically means quoted (such as
+.Ql neww ';' splitw )
+or escaped (such as
+.Ql neww \\\\; splitw ) .
+.It
+Individual semicolons or trailing semicolons that should be interpreted as
+arguments should be escaped twice: once according to the shell conventions and
+a second time for
+.Nm ;
+for example:
+.Bd -literal -offset indent
+$ tmux neww 'foo\\;' bar
+$ tmux neww foo\\\\; bar
+.Ed
+.Pp
+.It
+Semicolons that are not individual tokens or trailing another token should only
+be escaped once according to shell conventions; for example:
+.Bd -literal -offset indent
+$ tmux neww 'foo-;-bar'
+$ tmux neww foo-\\;-bar
+.Ed
+.Pp
+.El
 .Pp
 Comments are marked by the unquoted # character - any remaining text after a
 comment is ignored until the end of the line.
