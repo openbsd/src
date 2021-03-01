@@ -368,6 +368,7 @@
 ./usr/share/man/man1/pkg-config.1
 ./usr/share/man/man1/pkg_check-manpages.1
 ./usr/share/man/man1/pkg_check-problems.1
+./usr/share/man/man1/pkg_check-version.1
 ./usr/share/man/man1/pkg_create.1
 ./usr/share/man/man1/pkg_delete.1
 ./usr/share/man/man1/pkg_info.1
