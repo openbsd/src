@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.5 2021/03/01 15:56:00 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.6 2021/03/01 15:56:31 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -39,6 +39,7 @@
 #include <pwd.h>
 #include <signal.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -126,6 +127,8 @@ void			 state_transition(struct dhcpleased_iface *, enum
 void			 iface_timeout(int, short, void *);
 void			 request_dhcp_discover(struct dhcpleased_iface *);
 void			 request_dhcp_request(struct dhcpleased_iface *);
+void			 log_lease(struct dhcpleased_iface *, int);
+void			 log_rdns(struct dhcpleased_iface *, int);
 void			 send_configure_interface(struct dhcpleased_iface *);
 void			 send_rdns_proposal(struct dhcpleased_iface *);
 void			 send_deconfigure_interface(struct dhcpleased_iface *);
@@ -1226,9 +1229,35 @@ request_dhcp_request(struct dhcpleased_iface *iface)
 }
 
 void
+log_lease(struct dhcpleased_iface *iface, int deconfigure)
+{
+	char	 hbuf_lease[INET_ADDRSTRLEN], hbuf_server[INET_ADDRSTRLEN];
+	char	 if_name[IF_NAMESIZE];
+
+	memset(if_name, 0, sizeof(if_name));
+
+	if (if_indextoname(iface->if_index, if_name) == 0)
+		if_name[0] = '?';
+	inet_ntop(AF_INET, &iface->requested_ip, hbuf_lease,
+	    sizeof(hbuf_lease));
+	inet_ntop(AF_INET, &iface->server_identifier, hbuf_server,
+	    sizeof(hbuf_server));
+
+
+	if (deconfigure)
+		log_info("deleting %s from %s (lease from %s)", hbuf_lease,
+		    if_name, hbuf_server);
+	else
+		log_info("adding %s to %s (lease from %s)", hbuf_lease,
+		    if_name, hbuf_server);
+}
+
+void
 send_configure_interface(struct dhcpleased_iface *iface)
 {
 	struct imsg_configure_interface	 imsg;
+
+	log_lease(iface, 0);
 
 	imsg.if_index = iface->if_index;
 	imsg.rdomain = iface->rdomain;
@@ -1243,6 +1272,8 @@ void
 send_deconfigure_interface(struct dhcpleased_iface *iface)
 {
 	struct imsg_configure_interface	 imsg;
+
+	log_lease(iface, 1);
 
 	imsg.if_index = iface->if_index;
 	imsg.rdomain = iface->rdomain;
@@ -1260,9 +1291,50 @@ send_deconfigure_interface(struct dhcpleased_iface *iface)
 }
 
 void
+log_rdns(struct dhcpleased_iface *iface, int withdraw)
+{
+	int	 i;
+	char	 hbuf_rdns[INET_ADDRSTRLEN], hbuf_server[INET_ADDRSTRLEN];
+	char	 if_name[IF_NAMESIZE], *rdns_buf = NULL, *tmp_buf;
+
+	memset(if_name, 0, sizeof(if_name));
+
+	if (if_indextoname(iface->if_index, if_name) == 0)
+		if_name[0] = '?';
+
+	inet_ntop(AF_INET, &iface->server_identifier, hbuf_server,
+	    sizeof(hbuf_server));
+
+	for (i = 0; i < MAX_RDNS_COUNT && iface->nameservers[i].s_addr !=
+		 INADDR_ANY; i++) {
+		inet_ntop(AF_INET, &iface->nameservers[i], hbuf_rdns,
+		    sizeof(hbuf_rdns));
+		tmp_buf = rdns_buf;
+		if (asprintf(&rdns_buf, "%s %s", tmp_buf ? tmp_buf : "",
+		    hbuf_rdns) < 0) {
+			rdns_buf = NULL;
+			break;
+		}
+		free(tmp_buf);
+	}
+
+	if (rdns_buf != NULL) {
+		if (withdraw)
+			log_info("deleting nameservers%s (lease from %s on %s)",
+			    rdns_buf, hbuf_server, if_name);
+		else
+			log_info("adding nameservers%s (lease from %s on %s)",
+			    rdns_buf, hbuf_server, if_name);
+		free(rdns_buf);
+	}
+}
+
+void
 send_rdns_proposal(struct dhcpleased_iface *iface)
 {
 	struct imsg_propose_rdns	 imsg;
+
+	log_rdns(iface, 0);
 
 	memset(&imsg, 0, sizeof(imsg));
 
@@ -1280,6 +1352,8 @@ void
 send_rdns_withdraw(struct dhcpleased_iface *iface)
 {
 	struct imsg_propose_rdns	 imsg;
+
+	log_rdns(iface, 1);
 
 	memset(&imsg, 0, sizeof(imsg));
 
